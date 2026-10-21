@@ -7,7 +7,8 @@
 // - que la semilla es la primera que llega, que los períodos se reemplazan enteros y que
 //   «borrar mis datos» no toca a nadie más;
 // - que borrar la cuenta borra todo en cascada;
-// - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base.
+// - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
+//   ellos con el repositorio SQLite del iPhone.
 // Uso: npm run supabase:verificar   → sale con código 1 si algo falla.
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -148,9 +149,11 @@ const quedan = (await db.query(`select (select count(*) from moss.habitos) + (se
 comprobar(Number(quedan) === 0, 'borrar la cuenta borra todo en cascada');
 
 // ------------------------------------------------------------ 7. La app contra esta base
-// El código de la app es TypeScript con `@/` e imports sin extensión: Node lo corre si se le dice dónde está cada archivo.
+// El código de la app es TypeScript con `@/` e imports sin extensión: Node lo corre si se le dice
+// dónde está cada archivo. expo-sqlite es del teléfono: acá va sobre el SQLite de Node.
 registerHooks({
   resolve(especificador, contexto, siguiente) {
+    if (especificador === 'expo-sqlite') especificador = pathToFileURL(join(raiz, 'herramientas/expo-sqlite-node.mjs')).href;
     if (especificador.startsWith('@/')) especificador = pathToFileURL(join(raiz, 'src', especificador.slice(2))).href;
     if (/^(\.|file:)/.test(especificador) && !/\.[a-z]+$/i.test(especificador)) {
       for (const final of ['.ts', '/index.ts']) {
@@ -166,6 +169,7 @@ registerHooks({
 });
 const { crearAlmacen } = await import('../src/almacen/almacen.ts');
 const { repositorioEnMemoria, sinCambios } = await import('../src/almacen/repositorio.ts');
+const { repositorioSQLite } = await import('../src/almacen/sqlite.ts');
 const { crearSincronizador } = await import('../src/almacen/sincronizar.ts');
 const { remotoSupabase } = await import('../src/almacen/remoto.ts');
 const { mismosPeriodos } = await import('../src/dominio/constelaciones.ts');
@@ -216,10 +220,13 @@ const pasa = (minutos = 1) => { reloj += minutos * 60_000; };
 const todosLosDias = [0, 1, 2, 3, 4, 5, 6];
 const habito = (id, orden) => ({ id, nombre: id, icono: 'star', dias: todosLosDias, fuente: { tipo: 'manual' }, orden, desde: '2026-10-19' });
 
-/** Un teléfono de un usuario: su almacén en memoria, el reloj de todos y su sincronización, con un espía en el medio. */
-async function telefono(usuario, semillaPropia) {
+/**
+ * Un teléfono de un usuario: su almacén (en SQLite, como en el iPhone, o en memoria), el reloj de
+ * todos y su sincronización, con un espía en el medio.
+ */
+async function telefono(usuario, semillaPropia, conSQLite = false) {
   const almacen = crearAlmacen({
-    abrir: async () => repositorioEnMemoria(), catalogo, ahora: () => new Date(reloj), zona: () => 'America/Montevideo',
+    abrir: conSQLite ? () => repositorioSQLite() : async () => repositorioEnMemoria(), catalogo, ahora: () => new Date(reloj), zona: () => 'America/Montevideo',
     sembrar: () => [habito('meditar', 0), habito('leer', 1), habito('agua', 2)], nuevaSemilla: () => semillaPropia,
   });
   await almacen.iniciar();
@@ -247,7 +254,8 @@ const hechosDeHoy = (t) => t.almacen.estado().dias.get(t.almacen.estado().hoy).h
 const pendiente = async (t) => !sinCambios(await t.almacen.enCola((r) => r.pendientes()));
 const enLaCuenta = async (sql) => Number((await db.query(sql.replaceAll('$U', `'${C}'`))).rows[0].n);
 
-const a = await telefono(C, 'semilla-a');
+// El teléfono A guarda en SQLite, con el repositorio del iPhone; los otros, en memoria.
+const a = await telefono(C, 'semilla-a', true);
 a.almacen.marcar('meditar', true, 'toque');
 a.almacen.responderCuestionario({ edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' });
 await a.sinc.vuelta();

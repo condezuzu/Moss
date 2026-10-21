@@ -320,7 +320,8 @@ hacen falta las cuentas anónimas.
   las migraciones con lo mínimo de Supabase (roles, `auth.users`, `auth.uid()`).
   La app de verdad sincroniza varios teléfonos contra ese Postgres, con un
   cliente que traduce a SQL lo que pide supabase-js (`npm run
-  supabase:verificar`).
+  supabase:verificar`). Uno de los teléfonos guarda con el repositorio SQLite
+  del iPhone, sobre el SQLite que trae Node (`herramientas/expo-sqlite-node.mjs`).
 - **Galería interactiva**, no capturas como la de Ascent: lo que hay que aprobar
   son animaciones y toques.
 - **Rama `cimientos`**, que sale de `master` (el commit inicial de la plantilla).

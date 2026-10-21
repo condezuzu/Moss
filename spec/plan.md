@@ -135,7 +135,8 @@ Hecho (21/10/2026), lo que no depende de la galería:
     llegó cada fila para que los teléfonos bajen solo lo nuevo.
   - `npm run supabase:verificar` lo prueba en un Postgres local (PGlite), sin
     tocar Supabase: 23 comprobaciones del SQL y 12 de la app de verdad
-    sincronizando dos y tres teléfonos contra él.
+    sincronizando dos y tres teléfonos contra él. Uno de los teléfonos guarda
+    con el SQLite del iPhone (`sqlite.ts`), sobre el SQLite que trae Node.
 - **La sincronización** en `src/almacen/`: `sincronizar.ts`, `remoto.ts` y
   `mezclar.ts`.
   - El teléfono guarda primero y sube lo pendiente a los pocos segundos.
