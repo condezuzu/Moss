@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=GFS+Didot&family=Jost:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap">
 <style>
 /* Galería de revisión: a la izquierda el teléfono vivo, a la derecha lo que hay que mirar y decidir.
    Un solo mundo visual, de noche: la galería no tiene modo claro a propósito. */
@@ -16,7 +16,6 @@
   --oro-claro: #f6e3a6;
   --musgo: #b9e36b;
   --titulos: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
-  --griego: 'GFS Didot', 'Cormorant Garamond', 'Times New Roman', serif;
   --texto: 'Jost', 'Futura', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   color-scheme: dark;
@@ -62,6 +61,8 @@ section.item p { margin: 0; max-width: 64ch; }
 .lista li { position: relative; padding-left: 22px; }
 .lista li::before { content: ''; position: absolute; left: 3px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--oro); box-shadow: 0 0 10px rgba(232, 196, 106, 0.7); }
 .lista b { font-weight: 500; color: var(--tinta); }
+.lista ul { margin: 6px 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.lista ul li::before { width: 4px; height: 4px; top: 0.68em; background: var(--tenue); box-shadow: none; }
 
 .controles { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .boton {
@@ -127,11 +128,11 @@ section.item p { margin: 0; max-width: 64ch; }
 .cab { position: absolute; top: var(--arriba); left: 24px; right: 24px; transition: opacity 0.6s; will-change: transform; }
 .cab-dia { font: 400 11px/1.2 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
 .cab-dia::first-letter { text-transform: uppercase; }
-.cab-fila { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 8px; }
-.cab-nombre { font: 500 36px/0.95 var(--titulos); letter-spacing: -0.005em; text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
-.cab-griego { font: 400 12.5px/1 var(--griego); letter-spacing: 0.22em; color: var(--oro); opacity: 0.78; margin-left: 4px; vertical-align: 0.5em; }
+.cab-fila { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+/* El nombre de la constelación, chico y discreto: el cielo es el protagonista. */
+.cab-nombre { margin-top: 5px; font: italic 400 16px/1.15 var(--titulos); color: rgba(239, 230, 207, 0.62); text-shadow: 0 0 12px rgba(3, 5, 12, 0.9); }
 .cab-luz { text-align: right; display: grid; justify-items: end; }
-.cab-luz b { font: 500 30px/0.9 var(--titulos); color: var(--oro-claro); font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 0 18px rgba(232, 196, 106, 0.35); }
+.cab-luz b { font: 500 26px/0.95 var(--titulos); color: var(--oro-claro); font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 0 18px rgba(232, 196, 106, 0.35); }
 .cab-luz span { margin-top: 4px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
 .cab-cuenta { margin-top: 8px; font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.6); letter-spacing: 0.02em; }
 .cab.completa .cab-cuenta { color: var(--oro); letter-spacing: 0.18em; text-transform: uppercase; font-size: 10.5px; }
@@ -153,16 +154,123 @@ section.item p { margin: 0; max-width: 64ch; }
 .uetq.hoy { color: var(--tinta); }
 .uetq.hoy b { color: var(--oro-claro); }
 
-.tarjeta { position: absolute; left: 18px; right: 18px; bottom: calc(var(--abajo) + 2px); text-align: center; opacity: 0; translate: 0 18px; transition: opacity 0.9s ease, translate 1.4s cubic-bezier(0.2, 0.7, 0.2, 1); pointer-events: none; text-shadow: 0 0 14px #03050c, 0 0 4px #03050c; }
-.tarjeta.visible { opacity: 1; translate: 0 0; }
-.tj-dia { font: 400 10.5px/1 var(--texto); letter-spacing: 0.26em; text-transform: uppercase; color: var(--oro); }
-.tj-nombre { margin: 8px 0 0; font: 500 40px/0.95 var(--titulos); color: #fbf2d9; text-shadow: 0 0 26px rgba(232, 196, 106, 0.5), 0 0 6px #03050c; }
-.tj-griego { margin-top: 6px; font: 400 13px/1 var(--griego); letter-spacing: 0.32em; color: rgba(232, 196, 106, 0.85); }
-.tj-mito { margin: 10px auto 0; max-width: 31ch; font: italic 400 15px/1.32 var(--titulos); color: rgba(239, 230, 207, 0.85); }
-.tj-chips { margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.tj-chips span { font: 400 11px/1 var(--texto); padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.36); color: #f3dc9b; background: rgba(9, 14, 30, 0.55); }
-.ui.con-tarjeta .frase, .ui.con-tarjeta .cab-cuenta { opacity: 0; }
 .cab-cuenta { transition: opacity 0.6s; }
+.ui, .entrada, .ajustes { transform-origin: 50% 44%; will-change: transform, opacity; }
+
+/* ---------------- la entrada a la app ---------------- */
+.tel .entrada { position: absolute; inset: 0; z-index: 2; color: var(--tinta); }
+.ent-pantalla {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: calc(var(--arriba) + 34px) 28px calc(var(--abajo) + 26px); animation: ent-entra 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.ent-pantalla.saliendo { animation: ent-sale 0.4s ease-in both; pointer-events: none; }
+@keyframes ent-entra { from { opacity: 0; transform: translateY(26px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes ent-sale { to { opacity: 0; transform: translateY(-34px); filter: blur(6px); } }
+.ent-titulo { margin: 0; font: 500 32px/1.08 var(--titulos); text-wrap: balance; text-shadow: 0 0 22px rgba(3, 5, 12, 0.95); }
+.ent-texto { margin: 12px 0 0; max-width: 30ch; font: 300 15px/1.45 var(--texto); color: rgba(239, 230, 207, 0.78); text-wrap: balance; text-shadow: 0 0 12px rgba(3, 5, 12, 0.95); }
+.ent-chico { margin: 12px 0 0; font: 400 12px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); text-wrap: balance; }
+.ent-legal { margin-top: 6px; font-size: 10.5px; color: rgba(239, 230, 207, 0.4); }
+.ent-enlace { text-decoration: underline; text-underline-offset: 3px; }
+
+/* La frase de apertura: las palabras aparecen una por una, desde el desenfoque. */
+.ent-frase { margin-top: 18vh; margin-top: min(18vh, 150px); }
+.ent-frase-texto { margin: 0; max-width: 17ch; font: italic 400 29px/1.22 var(--titulos); color: #fbf2d9; text-wrap: balance; text-shadow: 0 0 24px rgba(232, 196, 106, 0.35), 0 0 6px #03050c; }
+.ent-frase-texto span { display: inline-block; opacity: 0; animation: ent-palabra 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes ent-palabra { from { opacity: 0; filter: blur(8px); transform: translateY(8px); } to { opacity: 1; filter: none; transform: none; } }
+.ent-frase-autor { margin: 18px 0 0; font: 400 10.5px/1 var(--texto); letter-spacing: 0.22em; text-transform: uppercase; color: rgba(185, 227, 107, 0.75); opacity: 0; animation: ent-palabra 1s 1.7s both; }
+
+/* El botón que se llena: no se puede tocar hasta que el aro se completa (2,5 s). */
+.ent-circulo { margin-top: auto; width: 64px; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; }
+.ent-circulo:disabled { cursor: default; }
+.ent-circulo svg { width: 100%; height: 100%; overflow: visible; }
+.ent-circulo-fondo { fill: rgba(6, 10, 22, 0.35); stroke: rgba(239, 230, 207, 0.16); stroke-width: 1.2; }
+.ent-circulo-aro { fill: none; stroke: var(--oro); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 182.2; stroke-dashoffset: 182.2; transform: rotate(-90deg); transform-origin: 32px 32px; }
+.ent-circulo.llenando .ent-circulo-aro { stroke-dashoffset: 0; transition: stroke-dashoffset 2.5s linear; }
+.ent-circulo-flecha { fill: none; stroke: rgba(239, 230, 207, 0.35); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.4s; }
+.ent-circulo.listo .ent-circulo-flecha { stroke: var(--oro-claro); }
+.ent-circulo.listo { animation: ent-late 1.8s ease-in-out infinite; }
+@keyframes ent-late { 0%, 100% { filter: drop-shadow(0 0 0 rgba(232, 196, 106, 0)); } 50% { filter: drop-shadow(0 0 12px rgba(232, 196, 106, 0.55)); } }
+
+/* La luna de la comida: se llena con lo que se come; los arcos son los macros. */
+.ent-escenario-luna { position: relative; width: 230px; height: 230px; margin: 26px auto 0; }
+.ent-luna { width: 100%; height: 100%; overflow: visible; }
+.ent-luna-halo { fill: rgba(246, 227, 166, 0.10); filter: blur(10px); }
+.ent-luna-sombra { fill: rgba(239, 230, 207, 0.05); stroke: rgba(246, 227, 166, 0.18); stroke-width: 0.8; }
+.ent-luna-fase { filter: drop-shadow(0 0 14px rgba(246, 227, 166, 0.45)); }
+.ent-arco { fill: none; stroke-width: 2.4; stroke-linecap: round; transform: rotate(-90deg); }
+.ent-arco-p { stroke: var(--oro-claro); }
+.ent-arco-c { stroke: var(--musgo); }
+.ent-arco-g { stroke: #a9c4f5; }
+.ent-chispa { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: #fbf2d9; box-shadow: 0 0 10px 3px rgba(246, 227, 166, 0.6); opacity: 0; animation: ent-chispa 1.1s cubic-bezier(0.5, 0, 0.8, 0.6) both; }
+@keyframes ent-chispa { from { transform: translate(var(--dx), var(--dy)) scale(0.9); opacity: 0; } 25% { opacity: 1; } to { transform: translate(0, 0) scale(0.3); opacity: 0; } }
+
+/* La cuenta. */
+.ent-cuenta { justify-content: center; }
+.ent-marca { margin: 0; font: 500 66px/1 var(--titulos); letter-spacing: 0.01em; color: #fbf2d9; text-shadow: 0 0 34px rgba(232, 196, 106, 0.45); }
+.ent-marca span { display: inline-block; opacity: 0; animation: ent-palabra 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ent-lema { margin: 10px 0 0; font: italic 400 18px/1.3 var(--titulos); color: rgba(239, 230, 207, 0.72); opacity: 0; animation: ent-palabra 1s 0.8s both; }
+.ent-botones { width: 100%; max-width: 330px; margin-top: 44px; display: grid; gap: 10px; opacity: 0; animation: ent-entra 0.8s 1s both; }
+.ent-boton { appearance: none; cursor: pointer; width: 100%; min-height: 50px; border-radius: 999px; font: 500 15.5px/1 var(--texto); letter-spacing: 0.01em; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; }
+.ent-boton:disabled { opacity: 0.35; cursor: default; }
+.ent-apple { background: #fff; color: #000; }
+.ent-apple svg { width: 18px; height: 18px; fill: #000; margin-top: -2px; }
+.ent-secundario { background: rgba(6, 10, 22, 0.45); color: var(--oro-claro); border-color: rgba(232, 196, 106, 0.45); }
+.ent-principal { background: var(--oro); color: #1a1406; }
+.ent-formulario { display: grid; gap: 10px; }
+.ent-campo { text-align: left; padding: 15px 18px; border-radius: 14px; background: rgba(6, 10, 22, 0.6); border: 1px solid rgba(239, 230, 207, 0.16); font: 400 15px/1 var(--texto); color: rgba(239, 230, 207, 0.4); }
+
+/* El cuestionario: una pregunta por pantalla, con su barra de avance. */
+.ent-cuestionario { align-items: stretch; text-align: left; }
+.ent-cuestionario .ent-texto { max-width: none; }
+.ent-progreso { height: 2px; border-radius: 2px; background: rgba(239, 230, 207, 0.12); overflow: hidden; margin-top: -14px; }
+.ent-progreso i { display: block; height: 100%; background: var(--oro); box-shadow: 0 0 10px rgba(232, 196, 106, 0.7); transition: width 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.ent-paso { display: block; margin: 16px 0 10px; font: 400 10.5px/1 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.5); }
+.ent-pie { margin-top: auto; padding-top: 18px; display: grid; gap: 10px; width: 100%; max-width: 340px; align-self: center; }
+.ent-numero { margin-top: 38px; display: flex; align-items: baseline; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.ent-numero b { font: 500 78px/1 var(--titulos); color: #fbf2d9; font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 0 30px rgba(232, 196, 106, 0.35); }
+.ent-numero span { font: 400 16px/1 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.ent-de-salud { display: inline-block; margin-left: 4px; padding: 5px 9px; border-radius: 999px; font: normal 400 11px/1 var(--texto); color: var(--musgo); border: 1px solid rgba(185, 227, 107, 0.4); }
+.ent-sexo .ent-de-salud, .ent-cuestionario > .ent-de-salud { align-self: flex-start; margin: 14px 0 0; }
+.ent-rango { width: 100%; margin-top: 26px; accent-color: var(--oro); height: 28px; }
+.ent-opciones { margin-top: 22px; display: grid; gap: 10px; }
+.ent-opciones.ent-dos { grid-template-columns: 1fr 1fr; }
+.ent-opcion { appearance: none; cursor: pointer; text-align: left; padding: 15px 16px; border-radius: 16px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.14); color: var(--tinta); display: grid; gap: 4px; transition: border-color 0.25s, background 0.25s, box-shadow 0.25s; }
+.ent-opcion b { font: 500 16px/1.2 var(--texto); }
+.ent-opcion span { font: 300 13px/1.35 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.ent-opcion[aria-pressed='true'] { border-color: rgba(232, 196, 106, 0.75); background: rgba(232, 196, 106, 0.1); box-shadow: 0 0 22px rgba(232, 196, 106, 0.18); }
+.ent-dos .ent-opcion { text-align: center; }
+.ent-ritmo { margin-top: 20px; }
+.ent-ritmo .ent-paso { margin-top: 0; }
+.ent-ritmo .ent-opciones { margin-top: 0; }
+.ent-opciones.ent-segmento { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ent-segmento .ent-opcion { text-align: center; padding: 11px 6px; }
+.ent-segmento .ent-opcion b { font-size: 13.5px; }
+.ent-salud { margin: 38px auto 0; display: flex; gap: 16px; justify-content: center; }
+.ent-salud-icono { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(185, 227, 107, 0.25); color: rgba(239, 230, 207, 0.3); animation: ent-enciende 0.6s ease-out both; }
+.ent-salud-icono svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes ent-enciende { from { color: rgba(239, 230, 207, 0.25); box-shadow: none; } to { color: var(--musgo); border-color: rgba(185, 227, 107, 0.6); box-shadow: 0 0 18px rgba(185, 227, 107, 0.3); } }
+
+/* El resultado: la luna llena con los tres macros y la meta del día. */
+.ent-resultado .ent-escenario-luna { width: 196px; height: 196px; margin-top: 14px; }
+.ent-kcal { margin-top: 2px; text-align: center; }
+.ent-kcal b { display: block; font: 500 44px/1 var(--titulos); color: #fbf2d9; text-shadow: 0 0 20px rgba(3, 5, 12, 0.95); font-variant-numeric: lining-nums tabular-nums; }
+.ent-kcal span { font: 400 10.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.6); }
+.ent-macros { text-align: left; margin: 22px auto 0; width: 100%; max-width: 300px; display: grid; gap: 8px; }
+.ent-macro { display: grid; grid-template-columns: 10px 1fr auto; gap: 10px; align-items: center; font: 400 14px/1 var(--texto); color: rgba(239, 230, 207, 0.8); }
+.ent-macro i { width: 8px; height: 8px; border-radius: 50%; }
+.ent-macro-p i { background: var(--oro-claro); box-shadow: 0 0 8px var(--oro-claro); }
+.ent-macro-c i { background: var(--musgo); box-shadow: 0 0 8px var(--musgo); }
+.ent-macro-g i { background: #a9c4f5; box-shadow: 0 0 8px #a9c4f5; }
+.ent-macro b { font-weight: 500; color: #fbf2d9; font-variant-numeric: tabular-nums; }
+
+/* Ajustes de maqueta, para ver el viaje de ida y vuelta. */
+.tel .ajustes { position: absolute; inset: 0; z-index: 2; padding: calc(var(--arriba) + 30px) 24px calc(var(--abajo) + 20px); display: flex; flex-direction: column; }
+.ajustes h2 { margin: 0 0 18px; font: 500 34px/1 var(--titulos); text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
+.ajustes ul { margin: 0; padding: 0; list-style: none; border-radius: 18px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.1); }
+.ajustes li { display: flex; justify-content: space-between; gap: 12px; padding: 16px 18px; font: 400 15px/1.2 var(--texto); }
+.ajustes li + li { border-top: 1px solid rgba(239, 230, 207, 0.08); }
+.ajustes li b { font-weight: 400; color: rgba(239, 230, 207, 0.55); }
+.ajustes-volver { margin-top: auto; appearance: none; cursor: pointer; min-height: 50px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.45); background: rgba(6, 10, 22, 0.45); color: var(--oro-claro); font: 500 15px/1 var(--texto); }
 
 .aviso { position: absolute; left: 50%; bottom: calc(var(--abajo) + 82px); translate: -50% 12px; opacity: 0; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: rgba(8, 13, 28, 0.8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(232, 196, 106, 0.22); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 32px); }
 .aviso.visible { opacity: 1; translate: -50% 0; pointer-events: auto; }
@@ -200,7 +308,8 @@ section.item p { margin: 0; max-width: 64ch; }
 .pie { margin-top: 48px; color: var(--tenue); font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tarjeta, .aviso, .cab, .frase { transition: none; }
+  .aviso, .cab, .frase { transition: none; }
+  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa { animation-duration: 0.01s; animation-delay: 0s; }
 }
 </style>
 
@@ -213,7 +322,8 @@ section.item p { margin: 0; max-width: 64ch; }
       <div class="barra-inmersiva">
         <button type="button" id="salir-inmersivo">Salir</button>
         <div>
-          <button type="button" data-accion="reiniciar">Reiniciar</button>
+          <button type="button" data-accion="entrada">Entrada</button>
+          <button type="button" data-accion="ajustes">Ajustes</button>
           <button type="button" data-accion="salud">Pasos ✓</button>
           <button type="button" data-accion="zona">Universo</button>
         </div>
@@ -232,7 +342,7 @@ section.item p { margin: 0; max-width: 64ch; }
 
     <section class="item" id="hoy">
       <h2><span class="n">1</span>El cielo de hoy</h2>
-      <p>Miércoles con seis hábitos: le toca la <b>Lira</b>, seis estrellas principales. Tres ya están encendidas. Tocá <b>Escribir</b> y <b>Agua 2 L</b> para encenderlas (tocalas de nuevo, o usá Deshacer, para apagarlas). Los <b>8.000 pasos</b> se encienden solos desde Salud: simulalo con el botón. Con las seis se completa el día.</p>
+      <p>Miércoles con seis hábitos: le toca la Lira, seis estrellas principales. Tres ya están encendidas. Tocá <b>Escribir</b> y <b>Agua 2 L</b> para encenderlas (tocalas de nuevo, o usá Deshacer, para apagarlas). Los <b>8.000 pasos</b> se encienden solos desde Salud: simulalo con el botón. Con las seis se completa el día.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-accion="salud" id="b-salud">Simular Salud: llegar a 8.000 pasos</button>
@@ -242,58 +352,131 @@ section.item p { margin: 0; max-width: 64ch; }
         </div>
         <div class="controles">
           <button class="boton" type="button" data-accion="zona" id="b-zona">Subir a tu universo</button>
+          <button class="boton" type="button" data-accion="fugaz">Estrella fugaz</button>
           <button class="boton" type="button" id="b-inmersivo">Ver a pantalla completa</button>
         </div>
         <div class="controles">
           <div class="grupo"><span>Idioma de la app</span>
             <div class="segmento" id="s-idioma"><button type="button" data-valor="es" aria-pressed="true">Español</button><button type="button" data-valor="en" aria-pressed="false">English</button></div>
           </div>
-          <div class="grupo"><span>Musgo acumulado</span>
-            <div class="deslizador"><input type="range" id="r-musgo" min="0" max="100" value="60" aria-label="Musgo acumulado"><output id="o-musgo">60%</output></div>
+          <div class="grupo"><span>Riqueza del cielo: la luz juntada desde siempre</span>
+            <div class="deslizador"><input type="range" id="r-riqueza" min="0" max="100" value="60" aria-label="Riqueza del cielo"><output id="o-riqueza">60%</output></div>
           </div>
         </div>
       </div>
       <ul class="lista">
+        <li><b>El progreso es el cielo.</b> No hay capítulos ni historias: la luz que juntás desde el primer día hace el cielo más rico. Aparecen más estrellas, la vía láctea se hace más intensa, las auroras crecen y el musgo se expande. Movelo con el deslizador:
+          <ul>
+            <li>0 % es el primer día.</li>
+            <li>60 % son unos tres meses, y es el cielo que ya aprobaste.</li>
+            <li>100 % es un año y medio.</li>
+          </ul>
+          Lo que ya estaba nunca se mueve: solo se suman estrellas y musgo.</li>
+        <li><b>La constelación</b> sigue siendo real, una por día, pero su nombre va chico, debajo de la fecha.</li>
+        <li><b>Día completo</b>: las líneas se encienden desde la estrella más brillante, una onda recorre el cielo y la aurora sube y se dora. Sin texto ni historia: el momento es del cielo.</li>
+        <li><b>Estrella fugaz</b> nueva: nace con la estela corta, que se estira mientras cae, se afina y pasa del blanco cálido a un verde tenue. Va dejando chispas y, cuando se apaga, la estela queda un instante. Una de cada cinco es una bola de fuego que estalla antes de apagarse. Probala con el botón.</li>
         <li><b>Vía láctea</b> con el núcleo cálido sobre el horizonte, la Gran Grieta de polvo y miles de estrellas en tres capas, más densas dentro de la banda.</li>
         <li><b>Auroras</b> en verde musgo con el borde dorado. Al completar el día suben, se aceleran y el borde se dora: la subtormenta de una aurora real.</li>
-        <li><b>Musgo</b> en primer plano, con cápsulas que brillan (hay un musgo real, <i>Schistostega</i>, que reluce dorado en la oscuridad). De ahí suben esporas que se vuelven estrellas: el punto donde musgo y cielo se juntan. Crece con la luz acumulada y nunca baja; probalo con el deslizador.</li>
+        <li><b>Musgo</b> en primer plano, con luz atrapada adentro, en manchones de puntitos. Así reluce en la oscuridad un musgo real, <i>Schistostega</i>, sin tallos. De ahí suben esporas que se vuelven estrellas: el punto donde musgo y cielo se juntan.</li>
         <li><b>Estrellas apagadas</b> con un aro que late; las automáticas llevan un arco con el avance del día (6.240 de 8.000 pasos).</li>
         <li><b>El toque</b> responde en el mismo cuadro: destello, onda y vibración. En iPhone con iOS 18 o más, la vibración se siente desde Safari.</li>
-        <li><b>Día completo</b>: las líneas se encienden desde la estrella más brillante, una onda recorre el cielo, aparece la lira dorada y las cuerdas vibran.</li>
         <li><b>Cielo continuo</b>: arrastrá el cielo hacia abajo (en el teléfono, a pantalla completa) y la cámara sube a tu universo con las siete constelaciones de la semana. El musgo se mueve más rápido que las estrellas: es lo que da la profundidad.</li>
       </ul>
     </section>
 
+    <section class="item" id="entrada">
+      <h2><span class="n">2</span>La entrada a la app</h2>
+      <p>Lo primero que ve alguien que instala Moss. Es obligatoria, como en Ascent. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida que avanzás, el musgo queda abajo y al final un <b>flum</b> te deja en el cielo de hoy. Vincular con Ascent no aparece acá: queda para después, en Ajustes y en las funciones bloqueadas.</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-accion="entrada" id="b-entrada">Ver la entrada desde el principio</button>
+        </div>
+        <div class="controles">
+          <div class="grupo"><span>La frase y las diapositivas pasan</span>
+            <div class="segmento" id="s-avance"><button type="button" data-valor="tocando" aria-pressed="true">Tocando (como Ascent)</button><button type="button" data-valor="solo" aria-pressed="false">Solas</button></div>
+          </div>
+        </div>
+        <div class="controles" id="saltos-entrada">
+          <button class="boton" type="button" data-paso="frase">Frase</button>
+          <button class="boton" type="button" data-paso="habitos">Estrellas</button>
+          <button class="boton" type="button" data-paso="comida">Comida</button>
+          <button class="boton" type="button" data-paso="cuenta">Cuenta</button>
+          <button class="boton" type="button" data-paso="salud">Cuestionario</button>
+          <button class="boton" type="button" data-paso="resultado">Resultado</button>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>La frase</b> aparece palabra por palabra, desde el desenfoque, mientras el cielo se enciende sobre el musgo. Abajo dice «Atribuida a John Dryden», porque la atribución es dudosa.</li>
+        <li><b>Las dos diapositivas</b> también tienen animación propia:
+          <ul>
+            <li>En «Tus hábitos son estrellas», Casiopea se enciende sola, toque por toque, con los mismos efectos que un toque real, y al final se conecta.</li>
+            <li>En «Tu comida, a tu medida», lo que se come vuela hasta una luna que se llena. Los arcos de alrededor son proteína, carbohidratos y grasas.</li>
+          </ul>
+          La frase y las diapositivas no se pueden saltear durante 2,5 s: el aro del botón se llena y recién ahí se puede tocar, como el circulito de Ascent. Con «Solas» pasan sin tocar.</li>
+        <li><b>La cuenta</b> se abre con Apple o con correo y contraseña. Con correo y contraseña entra cualquiera que ya use Ascent, porque es la misma cuenta. Los campos son una maqueta: no se escribe nada.</li>
+        <li><b>El cuestionario</b> va justo después:
+          <ul>
+            <li>Primero Salud: si la conectás, la edad, el sexo, la altura y el peso vienen completos y marcados «de Salud».</li>
+            <li>Después nivel de actividad y objetivo. Si el objetivo es bajar o subir, también el ritmo.</li>
+            <li>La meta inicial sale de la fórmula de Mifflin-St Jeor por el nivel de actividad, con un piso de calorías. La proteína va por kilo, las grasas son al menos el 27 % y los carbohidratos son el resto.</li>
+          </ul></li>
+        <li><b>Empezar</b> te lleva al cielo de hoy con un flum.</li>
+      </ul>
+    </section>
+
+    <section class="item" id="viajes">
+      <h2><span class="n">3</span>Moverse entre secciones: el flum</h2>
+      <p>Pasar de inicio a Ajustes, al menú o a cualquier otra sección es un salto de un segundo, como moverse muy lejos y muy rápido:</p>
+      <ul class="lista">
+        <li>La cámara acelera hacia un punto de fuga y las estrellas se estiran en estelas.</li>
+        <li>La pantalla que se va crece y se desvanece contra la cámara.</li>
+        <li>En la mitad hay un destello y la sección nueva llega de lejos, chica y borrosa, y frena hasta quedar quieta.</li>
+        <li>Detrás de Ajustes queda el mismo cielo, más cerca y más oscuro, como si estuvieras en otra parte de él.</li>
+      </ul>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-accion="ajustes" id="b-ajustes">Ir a Ajustes</button>
+        </div>
+      </div>
+      <ul class="lista tenue">
+        <li>Dentro de la entrada el cielo se desliza más suave. El flum queda para cambiar de sección y para el final de la entrada.</li>
+        <li>En el teléfono, el flum lleva una vibración al salir y otra al llegar. Si se agrega sonido, sería un soplido corto.</li>
+        <li>La pantalla de Ajustes es una maqueta: acá solo importa el viaje.</li>
+      </ul>
+    </section>
+
     <section class="item" id="catalogo">
-      <h2><span class="n">2</span>Una constelación por cantidad de hábitos</h2>
-      <p>El catálogo de constelaciones reales, agrupado por cantidad de estrellas principales, con su mito griego. Tocá cualquiera para verla como el cielo de hoy, con hábitos de mentira.</p>
+      <h2><span class="n">4</span>Una constelación por cantidad de hábitos</h2>
+      <p>El catálogo de constelaciones reales, agrupado por cantidad de estrellas principales. Debajo del nombre va la estrella más brillante: es la del primer hábito del día. Tocá cualquiera para verla como el cielo de hoy, con hábitos de mentira.</p>
       <div class="catalogo" id="lista-catalogo"><p class="vacio">Cargando catálogo…</p></div>
     </section>
 
     <section class="item" id="calidad">
-      <h2><span class="n">3</span>Calidad gráfica</h2>
-      <p>Lo caro (la vía láctea y las estrellas débiles) se dibuja una sola vez a una imagen y después solo se desplaza. Por cuadro se calculan la aurora, a resolución reducida, y unas setecientas luces. Así el toque no espera a nada.</p>
+      <h2><span class="n">5</span>Calidad gráfica</h2>
+      <p>Lo caro (la vía láctea y las estrellas débiles) se dibuja una sola vez a una imagen y después solo se desplaza. Por cuadro se calculan la aurora y las estrellas que titilan, en el mismo shader que va a usar la app, y unas pocas cientos de luces. Así el toque no espera a nada.</p>
       <div class="panel">
         <div class="controles">
           <div class="segmento" id="s-calidad"><button type="button" data-valor="alta" aria-pressed="true">Alta</button><button type="button" data-valor="media" aria-pressed="false">Media</button><button type="button" data-valor="baja" aria-pressed="false">Baja</button></div>
           <button class="boton" type="button" id="b-fps" aria-pressed="false">Mostrar cuadros por segundo</button>
         </div>
         <ul class="lista tenue">
-          <li><b>Alta</b>: pantalla a 2×, tres cortinas de aurora a media resolución, tres capas de estrellas, 520 estrellas que titilan.</li>
-          <li><b>Media</b>: 1,5×, dos cortinas, 320 estrellas que titilan, menos partículas.</li>
-          <li><b>Baja</b>: 1×, la aurora se recalcula un cuadro sí y uno no, dos capas de estrellas, 160 que titilan.</li>
+          <li><b>Alta</b>: pantalla a 2×, tres cortinas de aurora a media resolución, tres capas de estrellas débiles y una de estrellas que titilan.</li>
+          <li><b>Media</b>: 1,5×, dos cortinas, menos estrellas que titilan y menos partículas.</li>
+          <li><b>Baja</b>: 1×, la aurora se recalcula un cuadro sí y uno no, dos capas de estrellas débiles y la mitad de las que titilan.</li>
           <li>En la app, el valor de fábrica sale del modelo de iPhone (más una medición de los primeros segundos) y se cambia en Ajustes.</li>
         </ul>
       </div>
     </section>
 
     <section class="item" id="decidir">
-      <h2><span class="n">4</span>Para decidir</h2>
+      <h2><span class="n">6</span>Para decidir</h2>
       <ol class="decisiones">
-        <li><span><b>Tipografías.</b> Cormorant Garamond para nombres y frases, GFS Didot para el griego y Jost para la interfaz. Las tres son libres (OFL) y van dentro de la app.</span></li>
+        <li><span><b>La riqueza del cielo, de noche o al instante.</b> Propongo que la luz del día se sume al cielo al día siguiente: abrís Moss y el cielo crece frente a vos, con estrellas nuevas que aparecen y musgo que sube, sin texto. La otra opción es que crezca apenas termina la animación del día completo.</span></li>
+        <li><span><b>El cielo de la entrada.</b> Ahora es el de 60 % de riqueza, el más lindo que ya aprobaste. Después de la entrada, el cielo propio empieza en 0 % y crece con vos. ¿Lo dejamos así, o la entrada usa el cielo del primer día?</span></li>
+        <li><span><b>La luna de la comida.</b> Propongo que la comida tenga su zona del cielo con una luna que se llena con lo que comés, y tres arcos para los macros: dorado para proteína, verde para carbohidratos y azul estrella para grasas.</span></li>
+        <li><span><b>La frase y las diapositivas.</b> Pasan tocando, como en Ascent, o solas después de 2,5 s.</span></li>
+        <li><span><b>Tipografías.</b> Cormorant Garamond para nombres y frases y Jost para la interfaz. Las dos son libres (OFL) y van dentro de la app. GFS Didot se fue con los nombres griegos.</span></li>
         <li><span><b>Color de la aurora.</b> Verde musgo con borde dorado, como ahora, o el verde azulado de una aurora real, más frío.</span></li>
-        <li><span><b>La frase del día en el musgo.</b> Inscrita abajo, sobre la loma de adelante, o arriba, debajo del nombre de la constelación.</span></li>
-        <li><span><b>Las figuras de los mitos.</b> La lira es trazo dorado dibujado a mano. Para el resto del catálogo propongo partir de los grabados de dominio público de Hevelius (1690) y Bode (1801), redibujados en el mismo trazo, para que todas tengan la misma mano.</span></li>
         <li><span><b>Orientación.</b> Norte arriba siempre, como en los atlas. Desde Uruguay casi todas se ven al revés en el cielo real; propongo no imitarlo.</span></li>
       </ol>
     </section>

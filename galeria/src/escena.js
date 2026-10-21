@@ -1,6 +1,9 @@
 // La escena del cielo: estado de mentira, animaciones, toques y el día completo.
 // Cada cuadro arma listas de sprites y líneas y se las pasa al motor. Nada de esto toca el
 // navegador más allá del contenedor que recibe: es la misma lógica que va a correr en Skia.
+// Tiene tres modos: «hoy» (la pantalla principal), «entrada» (el cielo solo, sin la constelación
+// del día, para la entrada a la app) y «ajustes» (el cielo de fondo, lejos, detrás de Ajustes).
+// Entre uno y otro se viaja con el «flum» (viajar).
 
 const Escena = (() => {
   const TAU = Math.PI * 2;
@@ -18,11 +21,14 @@ const Escena = (() => {
   const PERGAMINO = [0.94, 0.9, 0.81];
   const MUSGO_LUZ = [0.74, 0.93, 0.45];
   const BLANCO_CALIDO = [1.0, 0.96, 0.86];
+  // Segundos que la estela de una estrella fugaz sigue a la vista después de que se apaga la cabeza.
+  const RESTO_DE_LA_ESTELA = 0.45;
 
   const CALIDADES = {
-    alta: { dpr: 2, octavas: 6, capas: 3, aurora: 0.5, cortinas: 3, estrellas: 520, particulas: 1, cadaCuantos: 1 },
-    media: { dpr: 1.5, octavas: 5, capas: 3, aurora: 0.34, cortinas: 2, estrellas: 320, particulas: 0.6, cadaCuantos: 1 },
-    baja: { dpr: 1, octavas: 4, capas: 2, aurora: 0.25, cortinas: 2, estrellas: 160, particulas: 0.3, cadaCuantos: 2 },
+    // densidad: qué fracción de las celdas de 64 px tiene una estrella que titila (vivo.glsl).
+    alta: { dpr: 2, octavas: 6, capas: 3, aurora: 0.5, cortinas: 3, densidad: 0.42, particulas: 1, cadaCuantos: 1 },
+    media: { dpr: 1.5, octavas: 5, capas: 3, aurora: 0.34, cortinas: 2, densidad: 0.26, particulas: 0.6, cadaCuantos: 1 },
+    baja: { dpr: 1, octavas: 4, capas: 2, aurora: 0.25, cortinas: 2, densidad: 0.14, particulas: 0.3, cadaCuantos: 2 },
   };
 
   function azar(semilla) {
@@ -48,12 +54,6 @@ const Escena = (() => {
     let s = 0, a = 0.5, t = 0;
     for (let k = 0; k < octavas; k++) { s += a * ruido1(x, semilla + k * 13.7); t += a; x *= 2.07; a *= 0.5; }
     return s / t;
-  }
-
-  function temperatura(t) {
-    if (t < 0.5) { const k = t / 0.5; return [1, mezclar(0.74, 0.96, k), mezclar(0.5, 0.9, k)]; }
-    const k = (t - 0.5) / 0.5;
-    return [mezclar(1, 0.72, k), mezclar(0.96, 0.82, k), mezclar(0.9, 1, k)];
   }
 
   // Proyección gnomónica centrada en la constelación, con el norte arriba y el este a la
@@ -103,130 +103,6 @@ const Escena = (() => {
     return prof.map((p) => (p === Infinity ? 0 : p));
   }
 
-  // ------------------------------------------------------------------ figura de la Lira
-  // La lira se dibuja en un sistema propio (puente en y=12, yugo en y=84) y se lleva a las
-  // estrellas con un ajuste afín: así el yugo, el puente y las cuerdas de los bordes caen justo
-  // sobre las líneas de la constelación, y el cuerno derecho termina en Vega.
-
-  function ajusteAfin(pares) {
-    const m = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-    const bx = [0, 0, 0], by = [0, 0, 0];
-    pares.forEach(([[x, y], [X, Y]]) => {
-      const f = [x, y, 1];
-      for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) m[i][j] += f[i] * f[j];
-        bx[i] += f[i] * X;
-        by[i] += f[i] * Y;
-      }
-    });
-    const det = (a) => a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
-    const d = det(m);
-    const resolver = (b) => [0, 1, 2].map((k) => det(m.map((fila, i) => fila.map((v, j) => (j === k ? b[i] : v)))) / d);
-    const [a, b, c] = resolver(bx);
-    const [e, f, g] = resolver(by);
-    return { a, b, c, e, f, g };
-  }
-
-  const aplicarAfin = (M, [x, y]) => [M.a * x + M.b * y + M.c, M.e * x + M.f * y + M.g];
-  function invertirAfin(M, [X, Y]) {
-    const d = M.a * M.f - M.b * M.e;
-    const x = X - M.c, y = Y - M.g;
-    return [(M.f * x - M.b * y) / d, (-M.e * x + M.a * y) / d];
-  }
-
-  function cubica(p0, p1, p2, p3, n) {
-    const pts = [];
-    for (let i = 1; i <= n; i++) {
-      const t = i / n, u = 1 - t;
-      pts.push([
-        u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0],
-        u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1],
-      ]);
-    }
-    return pts;
-  }
-
-  // Un trazo es una lista de comandos ['M',x,y] ['L',x,y] ['C',x1,y1,x2,y2,x,y].
-  function aPuntos(comandos) {
-    let pts = [];
-    let actual = null;
-    comandos.forEach((c) => {
-      if (c[0] === 'M') { actual = [c[1], c[2]]; pts.push(actual); }
-      else if (c[0] === 'L') { actual = [c[1], c[2]]; pts.push(actual); }
-      else if (c[0] === 'C') {
-        const fin = [c[5], c[6]];
-        pts = pts.concat(cubica(actual, [c[1], c[2]], [c[3], c[4]], fin, 14));
-        actual = fin;
-      }
-    });
-    return pts;
-  }
-
-  function circulo(cx, cy, r, n) {
-    const pts = [];
-    for (let i = 0; i <= n; i++) { const a = (i / n) * TAU; pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
-    return pts;
-  }
-
-  function figuraLira(pos) {
-    const M = ajusteAfin([
-      [[-14, 12], pos.gamma],
-      [[14, 12], pos.beta],
-      [[-14, 84], pos.delta],
-      [[14, 84], pos.zeta],
-    ]);
-    const [vx, vy] = invertirAfin(M, pos.vega);
-    const [ex, ey] = invertirAfin(M, pos.epsilon);
-    // Brazos angostos hasta el yugo; arriba se abren en cuernos de carnero: el derecho sale hasta
-    // Vega y se enrosca hacia adentro hasta ε. El izquierdo es su espejo.
-    const subida = [[16, 9], [23, 26], [24, 54], [20, 76]];
-    const brazo = (s) => aPuntos([
-      ['M', s * subida[0][0], subida[0][1]],
-      ['C', s * subida[1][0], subida[1][1], s * subida[2][0], subida[2][1], s * subida[3][0], subida[3][1]],
-      ['C', s * 18.5, 84, s * (vx - 12), vy - 6, s * vx, vy],
-      ['C', s * (vx + 6), vy + 6, s * (ex + 16), ey + 6, s * ex, ey],
-      ['C', s * (ex - 5), ey - 1, s * (ex - 4.5), ey - 6.5, s * (ex - 0.5), ey - 6],
-    ]);
-    // El yugo va de brazo a brazo a la altura de δ y ζ.
-    const enYugo = cubica([20, 76], [18.5, 84], [vx - 12, vy - 6], [vx, vy], 80).reduce((m, p) => (Math.abs(p[1] - 84) < Math.abs(m[1] - 84) ? p : m));
-    const xYugo = enYugo[0];
-    const trazos = [];
-    const agregar = (pts, t0, t1, ancho, brillo, cuerda) => trazos.push({ pts: pts.map((p) => aplicarAfin(M, p)), t0, t1, ancho, brillo, cuerda: cuerda == null ? -1 : cuerda });
-    agregar(brazo(1), 0.0, 0.45, 1.6, 0.85);
-    agregar(brazo(-1), 0.0, 0.45, 1.6, 0.85);
-    agregar(aPuntos([['M', -17, 9], ['C', -22, -1, -15, -12, 0, -13], ['C', 15, -12, 22, -1, 17, 9]]), 0.12, 0.5, 1.5, 0.85);
-    agregar(aPuntos([['M', -17, 9], ['C', -8, 12.5, 8, 12.5, 17, 9]]), 0.3, 0.5, 1.1, 0.6);
-    agregar(aPuntos([['M', -xYugo, 84], ['L', xYugo, 84]]), 0.34, 0.52, 1.6, 0.9);
-    agregar(circulo(-xYugo, 84, 1.8, 12), 0.45, 0.55, 1.1, 0.8);
-    agregar(circulo(xYugo, 84, 1.8, 12), 0.45, 0.55, 1.1, 0.8);
-    agregar(aPuntos([['M', -15.5, 12], ['L', 15.5, 12]]), 0.4, 0.54, 1.4, 0.85);
-    for (let i = 0; i < 7; i++) {
-      const x = -14 + (28 * i) / 6;
-      agregar([[x, 12], [x, 84]], 0.5 + i * 0.045, 0.62 + i * 0.045, 0.85, 0.62, i);
-      agregar([[x, 12], [x * 0.3, -7]], 0.56 + i * 0.03, 0.72 + i * 0.03, 0.6, 0.32);
-    }
-    agregar(aPuntos([['M', -5, -7], ['L', 5, -7]]), 0.62, 0.74, 1.1, 0.6);
-    agregar(aPuntos([['M', -14, 0], ['C', -6, -3, 6, -3, 14, 0]]), 0.66, 0.9, 0.7, 0.4);
-    agregar(aPuntos([['M', -9, -8], ['C', -3, -10, 3, -10, 9, -8]]), 0.7, 0.94, 0.7, 0.4);
-    agregar(aPuntos([['M', -8, 9], ['C', -9, 1, -8, -6, -5, -11]]), 0.72, 0.96, 0.7, 0.35);
-    agregar(aPuntos([['M', 8, 9], ['C', 9, 1, 8, -6, 5, -11]]), 0.72, 0.96, 0.7, 0.35);
-    return trazos.map((tr) => {
-      let largo = 0;
-      const tramos = [];
-      for (let i = 1; i < tr.pts.length; i++) {
-        const l = Math.hypot(tr.pts[i][0] - tr.pts[i - 1][0], tr.pts[i][1] - tr.pts[i - 1][1]);
-        tramos.push({ a: tr.pts[i - 1], b: tr.pts[i], desde: largo, largo: l });
-        largo += l;
-      }
-      return Object.assign(tr, { tramos, largo });
-    });
-  }
-
-  function letraBayer(e) {
-    const m = /^([α-ω])/.exec(e.bayer || '');
-    return m ? m[1] : '';
-  }
-
   // ------------------------------------------------------------------ escena
 
   function crear(contenedor, fuentes, opciones) {
@@ -236,7 +112,6 @@ const Escena = (() => {
     const sp = { datos: new Float32Array(6000 * 12), n: 0, cap: 6000 };
     const spFrente = { datos: new Float32Array(1500 * 12), n: 0, cap: 1500 };
     const ln = { datos: new Float32Array(1200 * 12), n: 0, cap: 1200 };
-    const lnFrente = { datos: new Float32Array(400 * 12), n: 0, cap: 400 };
     const lnUniverso = { datos: new Float32Array(400 * 12), n: 0, cap: 400 };
 
     const e = {
@@ -253,8 +128,15 @@ const Escena = (() => {
       completo: false, tCompleto: -1, rafagaHecha: false,
       aurora: { tiempo: 40, intensidad: 1, oleada: 0 },
       efectos: [], particulas: [], esporasSalud: [],
-      musgo: { crecimiento: opciones.musgo == null ? 0.6 : opciones.musgo, lomas: [], capsulas: [], alturas: [] },
-      brillantes: [],
+      // El progreso de toda la vida (0 a 1): más estrellas, vía láctea, aurora y musgo.
+      riqueza: opciones.riqueza == null ? 0.6 : opciones.riqueza,
+      musgo: { lomas: [], brotes: [] },
+      modo: 'hoy',
+      // El «flum» en curso y cómo queda el cielo al llegar (detrás de Ajustes: cerca y oscuro).
+      viaje: null,
+      fondoViaje: { zoom: 1, velo: 0 },
+      // La constelación que se enciende sola en la entrada.
+      demo: null,
       universo: null,
       ultimoToque: null,
       fps: { cuadros: 0, desde: 0, valor: 0 },
@@ -279,11 +161,12 @@ const Escena = (() => {
     const luzDelDia = (hechos) => (hechos > 0 ? hechos + 2 : 0);
 
     // ---------------------------------------------------------------- interfaz HTML
+    // El cielo es el protagonista: el nombre de la constelación va chico, debajo de la fecha, y el
+    // día completo no tiene texto propio.
     ui.innerHTML = `
       <header class="cab">
-        <div class="cab-dia"></div>
         <div class="cab-fila">
-          <div class="cab-nombre"><span class="cab-es"></span> <span class="cab-griego"></span></div>
+          <div><div class="cab-dia"></div><div class="cab-nombre"></div></div>
           <div class="cab-luz"><b></b><span></span></div>
         </div>
         <div class="cab-cuenta"></div>
@@ -291,21 +174,13 @@ const Escena = (() => {
       <div class="etiquetas"></div>
       <div class="universo-titulo"></div>
       <div class="universo-etiquetas"></div>
-      <section class="tarjeta" aria-live="polite">
-        <div class="tj-dia"></div>
-        <h3 class="tj-nombre"></h3>
-        <div class="tj-griego"></div>
-        <p class="tj-mito"></p>
-        <div class="tj-chips"></div>
-      </section>
       <div class="aviso" role="status"><span class="aviso-txt"></span><button type="button" class="aviso-btn"></button></div>
       <footer class="frase"><q></q><cite></cite></footer>
       <div class="fps" hidden></div>`;
     const $ = (s) => ui.querySelector(s);
     const dom = {
-      dia: $('.cab-dia'), es: $('.cab-es'), griego: $('.cab-griego'), luz: $('.cab-luz b'), luzTxt: $('.cab-luz span'),
-      cuenta: $('.cab-cuenta'), etiquetas: $('.etiquetas'), tarjeta: $('.tarjeta'), tjDia: $('.tj-dia'), tjNombre: $('.tj-nombre'),
-      tjGriego: $('.tj-griego'), tjMito: $('.tj-mito'), tjChips: $('.tj-chips'), aviso: $('.aviso'), avisoTxt: $('.aviso-txt'),
+      dia: $('.cab-dia'), nombre: $('.cab-nombre'), luz: $('.cab-luz b'), luzTxt: $('.cab-luz span'),
+      cuenta: $('.cab-cuenta'), etiquetas: $('.etiquetas'), aviso: $('.aviso'), avisoTxt: $('.aviso-txt'),
       avisoBtn: $('.aviso-btn'), frase: $('.frase q'), cita: $('.frase cite'), fps: $('.fps'), cab: $('.cab'),
       uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'),
     };
@@ -368,8 +243,7 @@ const Escena = (() => {
       if (!c) return;
       const hechos = e.habitos.filter((h) => h.encendido).length;
       dom.dia.textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + opciones.diaSemana), num: opciones.diaMes, mes: tx('fecha.mesesCortos.' + opciones.mes) });
-      dom.es.textContent = nombreDe(c.datos.nombres);
-      dom.griego.textContent = c.datos.nombres.grc || '';
+      dom.nombre.textContent = nombreDe(c.datos.nombres);
       dom.luz.textContent = luzDelDia(hechos);
       dom.luzTxt.textContent = tx('cielo.luzDeHoy');
       dom.cuenta.textContent = e.completo ? tx('cielo.completa') : tx('cielo.encendidas', { n: hechos, total: e.habitos.length });
@@ -377,24 +251,6 @@ const Escena = (() => {
       const f = opciones.frase;
       dom.frase.textContent = nombreDe(f.texto);
       dom.cita.textContent = nombreDe(f.autor);
-      refrescarTarjeta();
-    }
-
-    function refrescarTarjeta() {
-      const c = e.constelacion;
-      if (!c) return;
-      const m = c.datos.mito || {};
-      dom.tjDia.textContent = tx('cielo.diaCompleto');
-      dom.tjNombre.textContent = nombreDe(c.datos.nombres);
-      dom.tjGriego.textContent = c.datos.nombres.grc || '';
-      // En la tarjeta entra una sola oración del resumen; el mito completo va en su zona del cielo.
-      const resumen = nombreDe(m.resumen) || '';
-      const primera = /^(.+?[.;])(\s|$)/.exec(resumen);
-      dom.tjMito.textContent = nombreDe(c.datos.frase) || (primera ? primera[1].replace(/;$/, '.') : resumen);
-      const cap = c.capitulo || { n: 1, total: 6 };
-      dom.tjChips.innerHTML = '';
-      [tx('cielo.masLuz', { n: luzDelDia(e.habitos.length) }), tx('cielo.capitulo', { n: cap.n, total: cap.total }) + (cap.titulo ? ' · ' + nombreDe(cap.titulo) : '')]
-        .forEach((t) => { const s = document.createElement('span'); s.textContent = t; dom.tjChips.appendChild(s); });
     }
 
     // ---------------------------------------------------------------- tamaño y mundo
@@ -409,6 +265,15 @@ const Escena = (() => {
       motor.redimensionar(r.width * dpr, r.height * dpr, dpr);
       e.escala = motor.estado.alto;
       e.escalaCss = r.height;
+      redimensionarFondo();
+      armarMusgo();
+      if (e.constelacion) ubicarConstelacion();
+      armarUniverso();
+    }
+
+    // El cielo fijo se arma aparte y reemplaza al de antes cuando está entero (motor.avanzarFondo).
+    function redimensionarFondo() {
+      const cfg = CALIDADES[e.calidad];
       const margenX = 0.08;
       motor.prepararFondo({
         mundoMin: [-e.aspecto / 2 - margenX, -0.5 - 0.12],
@@ -418,24 +283,9 @@ const Escena = (() => {
         octavas: cfg.octavas,
         capas: cfg.capas,
         semilla: 7,
+        riqueza: e.riqueza,
       });
       e.fondoListo = false;
-      armarBrillantes();
-      armarMusgo();
-      if (e.constelacion) ubicarConstelacion();
-      armarUniverso();
-    }
-
-    function armarBrillantes() {
-      const cfg = CALIDADES[e.calidad];
-      const r = azar(1234);
-      e.brillantes = [];
-      for (let i = 0; i < cfg.estrellas; i++) {
-        const x = (r() - 0.5) * (e.aspecto + 0.16);
-        const y = HORIZONTE + 0.02 + r() * (0.5 + ZONA_UNIVERSO + 0.08 - HORIZONTE);
-        const m = Math.pow(r(), 2.6);
-        e.brillantes.push({ x, y, tam: 3 + 9 * m, brillo: 0.18 + 0.75 * m, color: temperatura(r()), fase: r() * TAU, vel: 0.7 + r() * 2.4, brazos: m > 0.75 ? 0.35 : 0 });
-      }
     }
 
     // ---------------------------------------------------------------- musgo
@@ -451,10 +301,11 @@ const Escena = (() => {
       return h;
     }
 
+    // Crece con la riqueza del cielo. Cada loma y los manchones de luz tienen su propio azar: al
+    // crecer, lo que ya estaba queda donde estaba y solo se suma lo nuevo.
     function armarMusgo() {
       e.musgo.lomas.forEach((l) => motor.borrarLoma(l.malla));
-      const g = e.musgo.crecimiento;
-      const r = azar(99);
+      const g = e.riqueza;
       const ancho = e.aspecto / 2 + 0.25;
       // De atrás hacia adelante: la de atrás más azulada y clara (aire de por medio), la de
       // adelante casi negra con el borde encendido por la aurora.
@@ -466,6 +317,7 @@ const Escena = (() => {
       const franja = 1.6 / e.escalaCss;
       e.musgo.lomas = defs.map((d, k) => {
         const capa = Object.assign({}, d, { cojines: [] });
+        const r = azar(99 + 101 * k);
         // Cojines bajos y anchos: el musgo crece en almohadones, no en copas como un árbol.
         const n = Math.round(d.cojines * (0.45 + 0.9 * g));
         for (let i = 0; i < n; i++) {
@@ -486,21 +338,25 @@ const Escena = (() => {
         }
         return { capa, malla: motor.crearLoma(new Float32Array(v)), par: PARALAJE.lomas[k], franja };
       });
-      // Cápsulas que brillan sobre la loma de adelante (el musgo luminoso de verdad, Schistostega,
-      // refleja la poca luz que hay y reluce dorado verdoso).
+      // Luz atrapada en el musgo de adelante: el musgo luminoso de verdad (Schistostega) no tiene
+      // tallos que brillan, refleja la poca luz que hay desde adentro, en manchones de puntitos.
       const frente = e.musgo.lomas[2].capa;
-      const nCap = Math.round(10 + 46 * g);
-      e.musgo.capsulas = [];
-      for (let i = 0; i < nCap; i++) {
-        const x = (r() * 2 - 1) * (e.aspecto / 2 + 0.03);
-        const y = alturaLoma(frente, x) - 0.002;
-        e.musgo.capsulas.push({ x, y, largo: 0.006 + r() * 0.016, inclina: (r() - 0.5) * 0.008, fase: r() * TAU, brillo: 0.45 + r() * 0.55 });
+      const r = azar(7777);
+      const manchones = Math.round(4 + 8 * g);
+      e.musgo.brotes = [];
+      for (let m = 0; m < manchones; m++) {
+        const cx = (r() * 2 - 1) * (e.aspecto / 2 + 0.02);
+        const n = 4 + Math.floor(r() * 6);
+        for (let i = 0; i < n; i++) {
+          const x = cx + (r() - 0.5) * 0.04;
+          e.musgo.brotes.push({ x, y: alturaLoma(frente, x) - 0.002 - r() * 0.013, tam: 0.6 + r() * 0.8, fase: r() * TAU, brillo: 0.4 + r() * 0.6 });
+        }
       }
     }
 
     // ---------------------------------------------------------------- constelación de hoy
-    function ponerConstelacion(datos, habitos, extra) {
-      e.constelacion = { datos, capitulo: extra && extra.capitulo };
+    function ponerConstelacion(datos, habitos) {
+      e.constelacion = { datos };
       e.habitos = habitos.map((h) => Object.assign({ valor: 0, meta: 0 }, h, { luz: h.encendido ? 1 : 0, pop: 0 }));
       e.completo = e.habitos.length > 0 && e.habitos.every((h) => h.encendido);
       e.tCompleto = e.completo ? e.t - 30 : -1;
@@ -511,30 +367,21 @@ const Escena = (() => {
       ubicarConstelacion();
       armarEtiquetas();
       refrescarCabecera();
-      dom.tarjeta.classList.remove('visible');
       e.alCambiar();
     }
 
     function ubicarConstelacion() {
       const c = e.constelacion;
       const plano = proyectar(c.datos.estrellas);
-      // Abajo queda lugar para la tarjeta del día completo, que aparece sobre el musgo.
+      // Abajo queda lugar para la frase del día, sobre el musgo.
       c.pos = encajar(plano, [0, 0.075], e.aspecto * 0.68, 0.4);
       c.lineas = c.datos.lineas.map(([a, b]) => [a, b]);
       c.prof = profundidades(c.pos.length, c.lineas);
       c.lineas = c.lineas.map(([a, b]) => (c.prof[a] <= c.prof[b] ? [a, b] : [b, a]));
       c.avance = c.lineas.map(() => (e.completo ? 1 : 0));
       c.centro = c.pos.reduce((s, p) => [s[0] + p[0] / c.pos.length, s[1] + p[1] / c.pos.length], [0, 0]);
-      c.figura = null;
-      c.figuraAvance = e.completo ? 1 : 0;
-      if (c.datos.id === 'lyra') {
-        const p = {};
-        const letras = { 'α': 'vega', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ζ': 'zeta', 'ε': 'epsilon' };
-        c.datos.estrellas.forEach((s, i) => { if (letras[letraBayer(s)]) p[letras[letraBayer(s)]] = c.pos[i]; });
-        if (Object.keys(p).length === 6) c.figura = figuraLira(p);
-      }
-      // Cada etiqueta va del lado de afuera de la figura, para no taparle las líneas. Nunca arriba:
-      // la estrella más alta quedaría pegada a la cabecera.
+      // Cada etiqueta va del lado de afuera de la constelación, para no taparle las líneas. Nunca
+      // arriba: la estrella más alta quedaría pegada a la cabecera.
       let x0 = Infinity, x1 = -Infinity;
       c.pos.forEach(([x]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); });
       const ancho = Math.max(x1 - x0, 1e-6);
@@ -624,13 +471,12 @@ const Escena = (() => {
         e.haptico('completo');
       } else if (!todos && e.completo) {
         e.completo = false;
-        dom.tarjeta.classList.remove('visible');
       }
     }
 
     function tocar(px, py) {
       const c = e.constelacion;
-      if (!c) return;
+      if (!c || e.modo !== 'hoy' || e.viaje) return;
       let mejor = -1, dist = 34;
       c.pos.forEach(([x, y], i) => {
         const [sx, sy] = posPantalla(x, y, PARALAJE.cielo);
@@ -725,8 +571,6 @@ const Escena = (() => {
           if (e.completo) c.avance[k] = salida((dc - 0.15 - c.prof[c.lineas[k][0]] * 0.3) / 0.4);
           else c.avance[k] = Math.max(0, c.avance[k] - dt * 2.6);
         });
-        if (e.completo) c.figuraAvance = clamp((dc - 1.15) / 2.6, 0, 1);
-        else c.figuraAvance = Math.max(0, c.figuraAvance - dt * 1.4);
         if (e.completo && !e.rafagaHecha && dc >= 1.0) {
           e.rafagaHecha = true;
           const r = azar(4242);
@@ -737,11 +581,6 @@ const Escena = (() => {
               e.particulas.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v + 0.02, vida: 0, max: 0.9 + r() * 1.6, tam: 1.6 + r() * 3.4, color: r() < 0.6 ? ORO : ORO_CLARO, brillo: 0.85, frena: 1.6, sube: 0.012, par: 1 });
             }
           });
-        }
-        const debeVerse = e.completo && dc >= 1.8 && dc < 8.5;
-        if (debeVerse !== dom.tarjeta.classList.contains('visible')) {
-          dom.tarjeta.classList.toggle('visible', debeVerse);
-          ui.classList.toggle('con-tarjeta', debeVerse);
         }
       }
 
@@ -754,11 +593,11 @@ const Escena = (() => {
       });
       e.efectos = e.efectos.filter((f) => e.t - f.t0 < f.dur);
 
-      // Esporas: suben despacio desde las cápsulas y, si llegan alto, se vuelven estrellas.
-      const tasa = (0.5 + 2.4 * e.musgo.crecimiento) * CALIDADES[e.calidad].particulas;
-      if (Math.random() < tasa * dt && e.musgo.capsulas.length) {
-        const cap = e.musgo.capsulas[Math.floor(Math.random() * e.musgo.capsulas.length)];
-        e.particulas.push({ espora: true, x: cap.x + cap.inclina, y: cap.y + cap.largo, x0: cap.x, vx: 0, vy: 0.018 + Math.random() * 0.03, vida: 0, max: 5 + Math.random() * 5, tam: 1.8 + Math.random() * 1.6, color: MUSGO_LUZ, brillo: 0.7, frena: 0, sube: 0, fase: Math.random() * TAU, par: PARALAJE.lomas[2] });
+      // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas.
+      const tasa = (0.3 + 1.4 * e.riqueza) * CALIDADES[e.calidad].particulas;
+      if (Math.random() < tasa * dt && e.musgo.brotes.length) {
+        const k = e.musgo.brotes[Math.floor(Math.random() * e.musgo.brotes.length)];
+        e.particulas.push({ espora: true, x: k.x, y: k.y, x0: k.x, vx: 0, vy: 0.018 + Math.random() * 0.03, vida: 0, max: 5 + Math.random() * 5, tam: 1.8 + Math.random() * 1.6, color: MUSGO_LUZ, brillo: 0.7, frena: 0, sube: 0, fase: Math.random() * TAU, par: PARALAJE.lomas[2] });
       }
       e.particulas.forEach((p) => {
         if (!p.espora) return;
@@ -766,17 +605,22 @@ const Escena = (() => {
         p.par = mezclar(PARALAJE.lomas[2], 1, suave(HORIZONTE - 0.02, HORIZONTE + 0.3, p.y));
       });
 
-      // Una estrella fugaz cada tanto, solo en la zona de hoy.
-      if (!e.fugaz && e.t > e.proximaFugaz && !opciones.movimientoReducido) {
+      // Una estrella fugaz cada tanto, en la zona de hoy: cae en diagonal y rápido. Una de cada
+      // cinco es una bola de fuego, más brillante, que estalla antes de apagarse. La cabeza se apaga
+      // y la estela queda un instante donde estaba.
+      if (!e.fugaz && e.t >= e.proximaFugaz && !opciones.movimientoReducido) {
         const r = Math.random;
         const izquierda = r() < 0.5;
-        const a = [(r() - 0.5) * e.aspecto * 0.8, 0.12 + r() * 0.3];
-        const ang = (izquierda ? Math.PI : 0) + (izquierda ? 1 : -1) * (0.35 + r() * 0.3);
-        const largo = 0.18 + r() * 0.14;
-        e.fugaz = { a, d: [Math.cos(ang), Math.sin(ang)], largo, t0: e.t, dur: 0.75 + r() * 0.45 };
-        e.proximaFugaz = e.t + 18 + r() * 30;
+        const ang = (izquierda ? Math.PI : 0) + (izquierda ? 1 : -1) * (0.45 + r() * 0.45);
+        e.fugaz = {
+          a: [(r() - 0.5) * e.aspecto * 0.7, e.cam.y + 0.2 + r() * 0.28], d: [Math.cos(ang), Math.sin(ang)],
+          recorrido: 0.32 + r() * 0.22, largo: 0.16 + r() * 0.1, t0: e.t, dur: 0.45 + r() * 0.35, bola: r() < 0.2,
+        };
+        e.proximaFugaz = e.t + 12 + r() * 24;
       }
-      if (e.fugaz && e.t - e.fugaz.t0 > e.fugaz.dur) e.fugaz = null;
+      if (e.fugaz && e.t - e.fugaz.t0 > e.fugaz.dur + RESTO_DE_LA_ESTELA) e.fugaz = null;
+
+      actualizarDemo(dt);
 
       // La luz que sube desde el musgo hasta un hábito automático.
       e.esporasSalud = e.esporasSalud.filter((s) => {
@@ -811,7 +655,7 @@ const Escena = (() => {
 
     function dibujarConstelacion() {
       const c = e.constelacion;
-      if (!c) return;
+      if (!c || e.modo !== 'hoy') return;
       const dc = e.completo ? e.t - e.tCompleto : -1;
       const pulso = e.completo ? 1 + 0.55 * Math.exp(-Math.pow((dc - 1.05) / 0.13, 2)) : 1;
 
@@ -821,25 +665,6 @@ const Escena = (() => {
         const av = c.avance[k];
         linea(ln, c.pos[a], c.pos[b], ORO, 0.95, 1.7, av, 0, av > 0 && av < 1 ? 1 : 0);
       });
-
-      if (c.figura && c.figuraAvance > 0) {
-        const P = c.figuraAvance;
-        const alfa = e.completo ? 1 : P;
-        const quieta = e.completo ? suave(3.6, 4.4, dc) : 0;
-        c.figura.forEach((tr) => {
-          const u = clamp((P - tr.t0) / (tr.t1 - tr.t0), 0, 1);
-          if (u <= 0) return;
-          const hasta = salida(u) * tr.largo;
-          let brillo = tr.brillo * alfa;
-          if (tr.cuerda >= 0) brillo *= 1 + quieta * 0.35 * Math.sin(e.t * 6.5 + tr.cuerda * 1.4);
-          tr.tramos.forEach((s) => {
-            if (s.desde >= hasta) return;
-            const f = clamp((hasta - s.desde) / s.largo, 0, 1);
-            const punta = f < 1 && u < 1 ? 0.8 : 0;
-            linea(ln, s.a, s.b, ORO, brillo * 0.85, tr.ancho, f, 0, punta);
-          });
-        });
-      }
 
       e.habitos.forEach((h, i) => {
         const [x, y] = c.pos[i];
@@ -861,6 +686,10 @@ const Escena = (() => {
         }
       });
 
+    }
+
+    // El destello, la onda y el aro que se cierra de un toque (de verdad o de la demostración).
+    function dibujarEfectos() {
       e.efectos.forEach((f) => {
         const u = (e.t - f.t0) / f.dur;
         if (f.tipo === 'destello') sprite(sp, f.x, f.y, mezclar(14, 70, salida(u)), 1, ORO_CLARO, 1.1 * (1 - u), 4);
@@ -869,8 +698,74 @@ const Escena = (() => {
       });
     }
 
+    // ---------------------------------------------------------------- la demostración de la entrada
+    // «Tus hábitos son estrellas»: una constelación de verdad que se enciende sola, toque por toque,
+    // con los mismos efectos que un toque real; al final se conecta como un día completo.
+    function ponerDemo(datos, centro, maxAncho, maxAlto) {
+      const pos = encajar(proyectar(datos.estrellas), centro, maxAncho, maxAlto);
+      const prof = profundidades(pos.length, datos.lineas);
+      const lineas = datos.lineas.map(([a, b]) => (prof[a] <= prof[b] ? [a, b] : [b, a]));
+      e.demo = { pos, prof, lineas, t0: e.t, luz: pos.map(() => 0), pop: pos.map(() => 0), encendida: pos.map(() => false), avance: lineas.map(() => 0), completo: false, tCompleto: 0 };
+    }
+
+    const DEMO_PRIMERA = 0.45;
+    const DEMO_ENTRE = 0.3;
+
+    function actualizarDemo(dt) {
+      const d = e.demo;
+      if (!d) return;
+      const td = e.t - d.t0;
+      d.pos.forEach(([x, y], i) => {
+        if (!d.encendida[i] && td >= DEMO_PRIMERA + DEMO_ENTRE * i) {
+          d.encendida[i] = true;
+          d.pop[i] = 1;
+          e.efectos.push({ tipo: 'destello', x, y, t0: e.t, dur: 0.42 });
+          e.efectos.push({ tipo: 'onda', x, y, t0: e.t, dur: 0.75 });
+          const r = azar(Math.floor(e.t * 1000) + i);
+          for (let k = 0; k < 10; k++) {
+            const a = r() * TAU, v = 0.05 + r() * 0.1;
+            e.particulas.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vida: 0, max: 0.4 + r() * 0.5, tam: 2 + r() * 2.5, color: r() < 0.5 ? ORO_CLARO : ORO, brillo: 0.9, frena: 3.2, sube: 0, par: 1 });
+          }
+          e.haptico('toque');
+        }
+        d.luz[i] += ((d.encendida[i] ? 1 : 0) - d.luz[i]) * (1 - Math.exp(-dt * 16));
+        d.pop[i] *= Math.exp(-dt * 6);
+      });
+      if (!d.completo && d.encendida.every(Boolean) && td >= DEMO_PRIMERA + DEMO_ENTRE * (d.pos.length - 1) + 0.25) {
+        d.completo = true;
+        d.tCompleto = e.t;
+      }
+      if (d.completo) {
+        const dc = e.t - d.tCompleto;
+        d.avance = d.lineas.map(([a]) => salida((dc - d.prof[a] * 0.22) / 0.35));
+      }
+    }
+
+    function dibujarDemo() {
+      const d = e.demo;
+      if (!d) return;
+      const td = e.t - d.t0;
+      d.lineas.forEach(([a, b], k) => {
+        linea(ln, d.pos[a], d.pos[b], PERGAMINO, 0.16 * (1 - d.avance[k]), 0.8, 1, 7, 0);
+        linea(ln, d.pos[a], d.pos[b], ORO, 0.95, 1.7, d.avance[k], 0, d.avance[k] > 0 && d.avance[k] < 1 ? 1 : 0);
+      });
+      d.pos.forEach(([x, y], i) => {
+        const luz = d.luz[i];
+        sprite(sp, x, y, (30 + 30 * luz) * (1 + 0.3 * d.pop[i]), 1, ORO, 0.1 + 0.45 * luz, 0);
+        sprite(sp, x, y, (13 + 10 * luz) * (1 + 0.6 * d.pop[i]), 1, BLANCO_CALIDO, 0.32 + 0.95 * luz, 1, 0.12 + 0.55 * luz, 0, e.t * 0.05 + i);
+        if (luz < 0.99) sprite(sp, x, y, 18, 1, PERGAMINO, (0.3 + 0.13 * Math.sin(e.t * 2.2 + i * 1.7)) * (1 - luz), 2, 0.84, 0.075);
+        // El dedo: un aro que se cierra sobre la estrella justo antes de que se encienda.
+        const antes = DEMO_PRIMERA + DEMO_ENTRE * i - td;
+        if (antes > 0 && antes < 0.28) {
+          const u = 1 - antes / 0.28;
+          sprite(sp, x, y, mezclar(40, 20, u), 1, BLANCO_CALIDO, 0.5 * u, 2, 0.9, 0.06);
+          sprite(sp, x, y, 22, 1, BLANCO_CALIDO, 0.14 * u, 0);
+        }
+      });
+    }
+
     function dibujarUniverso() {
-      if (!e.universo) return;
+      if (!e.universo || e.modo !== 'hoy') return;
       e.universo.forEach((d) => {
         const lineasVisibles = d.hoy ? e.completo : d.hechos >= d.datos.estrellas.length;
         d.datos.lineas.forEach(([a, b]) => {
@@ -888,33 +783,28 @@ const Escena = (() => {
     }
 
     function dibujarCielo() {
-      sp.n = 0; spFrente.n = 0; ln.n = 0; lnFrente.n = 0; lnUniverso.n = 0;
+      sp.n = 0; spFrente.n = 0; ln.n = 0; lnUniverso.n = 0;
       const cielo = [0, e.cam.y * PARALAJE.cielo];
 
-      const tw = e.t;
-      e.brillantes.forEach((s) => {
-        const tit = 0.72 + 0.28 * Math.sin(tw * s.vel + s.fase) * Math.sin(tw * s.vel * 0.37 + s.fase * 2.1);
-        sprite(sp, s.x, s.y, s.tam * 2.4, 1, s.color, s.brillo * 0.16 * tit, 0);
-        sprite(sp, s.x, s.y, s.tam, 1, s.color, s.brillo * tit, 1, s.brazos, 0, 0.2);
-      });
-
+      // Las estrellas que titilan y la estrella fugaz se dibujan en el shader (vivo.glsl): acá
+      // solo se calcula dónde está la fugaz.
+      let fugaz = [0, 0, 1, 0], fugazEstela = [0, 0, 0, 0];
       if (e.fugaz) {
         const f = e.fugaz;
         const u = (e.t - f.t0) / f.dur;
-        const brillo = Math.sin(Math.PI * clamp(u, 0, 1));
-        const cabeza = [f.a[0] + f.d[0] * f.largo * u, f.a[1] + f.d[1] * f.largo * u];
-        // La estela se apaga hacia atrás: cuatro tramos de menos a más.
-        for (let k = 0; k < 4; k++) {
-          const d0 = 0.07 * (k + 1), d1 = 0.07 * k;
-          const p0 = [cabeza[0] - f.d[0] * d0, cabeza[1] - f.d[1] * d0];
-          const p1 = [cabeza[0] - f.d[0] * d1, cabeza[1] - f.d[1] * d1];
-          linea(ln, p0, p1, BLANCO_CALIDO, brillo * (0.18 + 0.2 * (3 - k)), 0.9 + 0.3 * (3 - k), 1, 0, 0);
-        }
-        sprite(sp, cabeza[0], cabeza[1], 10, 1, BLANCO_CALIDO, brillo * 0.9, 0);
+        const vuelo = clamp(u, 0, 1);
+        const recorrido = f.recorrido * (0.65 * vuelo + 0.35 * vuelo * vuelo * (3 - 2 * vuelo));
+        let cabeza = suave(0, 0.12, u) * (1 - suave(0.7, 1, u)) * (f.bola ? 1.5 : 1);
+        if (f.bola) cabeza += 1.8 * Math.exp(-Math.pow((u - 0.86) / 0.06, 2));
+        const estela = u < 1 ? suave(0, 0.2, u) : 1 - suave(0, RESTO_DE_LA_ESTELA, e.t - f.t0 - f.dur);
+        fugaz = [f.a[0] + f.d[0] * recorrido, f.a[1] + f.d[1] * recorrido, f.d[0], f.d[1]];
+        fugazEstela = [recorrido, f.largo, u < 1 ? cabeza : 0, estela * (f.bola ? 1.3 : 1)];
       }
 
       dibujarConstelacion();
       dibujarUniverso();
+      dibujarDemo();
+      dibujarEfectos();
 
       e.particulas.forEach((p) => {
         if (p.espora) return;
@@ -929,15 +819,11 @@ const Escena = (() => {
       });
 
       // Musgo: lomas de atrás hacia adelante, y lo que crece sobre la de adelante.
-      const capsulaCol = [0.8, 0.92, 0.5];
-      e.musgo.capsulas.forEach((k) => {
-        const balanceo = 0.0016 * Math.sin(e.t * 0.8 + k.fase);
-        const punta = [k.x + k.inclina + balanceo, k.y + k.largo];
-        linea(lnFrente, [k.x, k.y], punta, [0.45, 0.62, 0.32], 0.32, 0.7, 1, 0, 0);
-        const tit = 0.75 + 0.25 * Math.sin(e.t * 1.3 + k.fase * 3);
-        const luzAurora = 0.75 + 0.25 * e.aurora.intensidad;
-        sprite(spFrente, punta[0], punta[1], 7.5, PARALAJE.lomas[2], capsulaCol, 0.42 * k.brillo * tit * luzAurora, 0);
-        sprite(spFrente, punta[0], punta[1], 2.6, PARALAJE.lomas[2], [1, 0.95, 0.7], 0.85 * k.brillo * tit, 4);
+      const luzAurora = 0.75 + 0.25 * e.aurora.intensidad;
+      e.musgo.brotes.forEach((k) => {
+        const tit = 0.7 + 0.3 * Math.sin(e.t * 0.9 + k.fase * 3);
+        sprite(spFrente, k.x, k.y, 5.5 * k.tam, PARALAJE.lomas[2], [0.72, 0.9, 0.42], 0.3 * k.brillo * tit * luzAurora, 0);
+        sprite(spFrente, k.x, k.y, 1.8 * k.tam, PARALAJE.lomas[2], [0.95, 0.96, 0.7], 0.7 * k.brillo * tit, 4);
       });
       e.particulas.forEach((p) => {
         if (!p.espora) return;
@@ -958,6 +844,7 @@ const Escena = (() => {
         intensidad: e.aurora.intensidad,
         oleada: e.aurora.oleada,
         cortinas: CALIDADES[e.calidad].cortinas,
+        riqueza: e.riqueza,
         saltar: CALIDADES[e.calidad].cadaCuantos > 1 && e.cuadro % CALIDADES[e.calidad].cadaCuantos !== 0,
       });
 
@@ -967,7 +854,12 @@ const Escena = (() => {
         if (dc > 1.0 && dc < 3.4) onda = [e.constelacion.centro[0], e.constelacion.centro[1], (dc - 1.0) * 0.85, 0.9 * Math.pow(1 - (dc - 1.0) / 2.4, 1.5)];
       }
       e.aparicion = Math.min(1, e.aparicion + (e.fondoListo ? 0.03 : 0));
-      motor.componer({ camFondo: cielo, escala: e.escala, onda, aparicion: salida(e.aparicion) });
+      const viaje = paramsViaje();
+      motor.empezarCuadro(!!viaje);
+      motor.componer({
+        camFondo: cielo, escala: e.escala, onda, aparicion: salida(e.aparicion),
+        tiempo: e.t, densidad: CALIDADES[e.calidad].densidad, riqueza: e.riqueza, fugaz, fugazEstela,
+      });
       const cam = [0, e.cam.y];
       motor.dibujarLineas(lnUniverso.datos, lnUniverso.n, cam, e.escala, 1);
       motor.dibujarLineas(ln.datos, ln.n, cam, e.escala, 1);
@@ -976,8 +868,75 @@ const Escena = (() => {
         const luzBorde = l.capa.luz * (0.65 + 0.35 * e.aurora.intensidad);
         motor.dibujarLoma(l.malla, { cam, escala: e.escala, paralaje: l.par, franja: l.franja, cuerpo: l.capa.cuerpo, borde: l.capa.borde, luz: luzBorde });
       });
-      motor.dibujarLineas(lnFrente.datos, lnFrente.n, cam, e.escala, PARALAJE.lomas[2]);
       motor.dibujarSprites(spFrente.datos, spFrente.n, cam, e.escala);
+      motor.terminarCuadro(viaje);
+    }
+
+    // ---------------------------------------------------------------- viajes («flum»)
+    // Pasar de una sección a otra es un salto de un segundo: la cámara acelera hacia un punto de
+    // fuga, las estrellas se estiran en estelas, en la mitad cambia lo que se ve (alCambiar) y
+    // después todo frena hasta quedar quieto. La pantalla que se va crece y se desvanece hacia
+    // la cámara; la que llega viene de lejos, chica y borrosa, y se asienta.
+    const DUR_VIAJE = 1.0;
+    const MITAD_VIAJE = 0.45;
+
+    function viajar({ hasta, sale, llega, alCambiar, alLlegar }) {
+      if (e.viaje) return false;
+      e.viaje = { t0: e.t, desde: Object.assign({}, e.fondoViaje), hasta: hasta || { zoom: 1, velo: 0 }, sale, llega, alCambiar, alLlegar, cambiado: false };
+      if (llega) { llega.hidden = false; estiloViaje(llega, 0, false); }
+      e.haptico('suave');
+      return true;
+    }
+
+    function estiloViaje(el, k, saliendo) {
+      if (!el) return;
+      if (saliendo) {
+        el.style.transform = `scale(${(1 + 0.22 * k).toFixed(3)})`;
+        el.style.opacity = String(1 - k);
+        el.style.filter = k > 0.01 ? `blur(${(5 * k).toFixed(1)}px)` : '';
+      } else {
+        el.style.transform = `scale(${(0.88 + 0.12 * k).toFixed(3)})`;
+        el.style.opacity = String(k);
+        el.style.filter = k < 0.99 ? `blur(${(7 * (1 - k)).toFixed(1)}px)` : '';
+      }
+    }
+
+    // Lo que usa la pasada de viaje del motor este cuadro, o null si no hace falta.
+    function paramsViaje() {
+      const centro = [motor.estado.ancho / 2, motor.estado.alto * 0.56];
+      const v = e.viaje;
+      if (!v) {
+        const f = e.fondoViaje;
+        if (f.zoom === 1 && f.velo === 0) return null;
+        return { centro, zoom: f.zoom, estela: 0, brillo: 1, velo: f.velo };
+      }
+      const u = clamp((e.t - v.t0) / DUR_VIAJE, 0, 1);
+      let p;
+      if (u < MITAD_VIAJE) {
+        const k = Math.pow(u / MITAD_VIAJE, 2.2);
+        p = { zoom: v.desde.zoom * (1 + 1.5 * k), estela: 1.1 * k, brillo: 1 + 0.35 * k, velo: mezclar(v.desde.velo, Math.max(v.desde.velo, 0.2), k) };
+        estiloViaje(v.sale, suave(0, 0.85, u / MITAD_VIAJE), true);
+        estiloViaje(v.llega, 0, false);
+      } else {
+        if (!v.cambiado) {
+          v.cambiado = true;
+          if (v.sale) v.sale.hidden = true;
+          if (v.alCambiar) v.alCambiar();
+        }
+        const k = salida((u - MITAD_VIAJE) / (1 - MITAD_VIAJE));
+        const destello = 0.35 * Math.exp(-Math.pow((u - MITAD_VIAJE) / 0.05, 2));
+        p = { zoom: v.hasta.zoom * (1 + 0.6 * (1 - k)), estela: 1.1 * (1 - k), brillo: 1 + 0.35 * (1 - k) + destello, velo: mezclar(Math.max(v.hasta.velo, 0.2), v.hasta.velo, k) };
+        estiloViaje(v.llega, suave(0.1, 1, k), false);
+      }
+      if (u >= 1) {
+        e.fondoViaje = { zoom: v.hasta.zoom, velo: v.hasta.velo };
+        if (v.sale) { v.sale.style.transform = ''; v.sale.style.opacity = ''; v.sale.style.filter = ''; }
+        if (v.llega) { v.llega.style.transform = ''; v.llega.style.opacity = ''; v.llega.style.filter = ''; }
+        e.viaje = null;
+        e.haptico('toque');
+        if (v.alLlegar) v.alLlegar();
+      }
+      return Object.assign({ centro }, p);
     }
 
     function ubicarEtiquetas() {
@@ -1011,11 +970,12 @@ const Escena = (() => {
       dom.cab.style.transform = `translate3d(0, ${desplazamiento.toFixed(1)}px, 0)`;
       ui.querySelector('.frase').style.transform = `translate3d(0, ${(desplazamiento * PARALAJE.lomas[2]).toFixed(1)}px, 0)`;
       const opac = 1 - suave(0.15, 0.6, e.cam.y);
-      // Mientras aparece la figura, las etiquetas se corren a un costado: el momento es del mito.
+      // Mientras la constelación se conecta y sube la aurora, las etiquetas se apagan un poco: el
+      // momento es del cielo.
       const dc = e.completo ? e.t - e.tCompleto : -1;
       const momento = e.completo ? suave(0.6, 1.4, dc) * (1 - suave(7.5, 9.0, dc)) : 0;
       dom.cab.style.opacity = opac;
-      dom.etiquetas.style.opacity = opac * (1 - 0.72 * momento);
+      dom.etiquetas.style.opacity = opac * (1 - 0.55 * momento);
       dom.uEtiquetas.style.opacity = suave(0.5, 1.1, e.cam.y);
       dom.uTitulo.style.opacity = suave(0.6, 1.15, e.cam.y);
     }
@@ -1032,11 +992,13 @@ const Escena = (() => {
     });
 
     let ultimo = 0;
+    // Menos de 1 para revisar las animaciones en cámara lenta (capturas por software).
+    let velocidad = 1;
     function cuadro(ahora) {
       if (e.pausado) { ultimo = 0; return; }
       requestAnimationFrame(cuadro);
       if (e.perdido) return;
-      const dt = ultimo ? Math.min(0.05, (ahora - ultimo) / 1000) : 1 / 60;
+      const dt = (ultimo ? Math.min(0.05, (ahora - ultimo) / 1000) : 1 / 60) * velocidad;
       ultimo = ahora;
       e.cuadro++;
       if (!e.fondoListo) e.fondoListo = motor.avanzarFondo(2);
@@ -1103,7 +1065,6 @@ const Escena = (() => {
         if (!e.completo) return;
         e.tCompleto = e.t;
         e.rafagaHecha = false;
-        e.constelacion.figuraAvance = 0;
         e.constelacion.avance = e.constelacion.avance.map(() => 0);
         e.haptico('completo');
       },
@@ -1111,7 +1072,26 @@ const Escena = (() => {
       zona() { return e.cam.objetivo > 0 ? 'universo' : 'hoy'; },
       ponerCalidad(n) { e.calidad = n; redimensionar(); },
       ponerIdioma(id) { e.idioma = id; refrescarEtiquetas(); refrescarCabecera(); refrescarUniverso(); },
-      ponerMusgo(g) { e.musgo.crecimiento = g; armarMusgo(); },
+      ponerRiqueza(r) {
+        if (Math.abs(r - e.riqueza) < 0.001) return;
+        e.riqueza = r;
+        armarMusgo();
+        redimensionarFondo();
+      },
+      lanzarFugaz() { if (!e.fugaz) e.proximaFugaz = e.t; },
+      velocidad(v) { velocidad = v; },
+      viajar,
+      get viajando() { return !!e.viaje; },
+      // La entrada: el cielo solo, con la cámara donde la pida cada pantalla.
+      ponerModo(modo) { e.modo = modo; ui.hidden = modo !== 'hoy'; },
+      get modo() { return e.modo; },
+      camara(y, deUna) { e.cam.objetivo = y; e.cam.v = 0; if (deUna) e.cam.y = y; },
+      aparecer() { e.aparicion = 0; },
+      ponerDemo,
+      quitarDemo() { e.demo = null; },
+      get riqueza() { return e.riqueza; },
+      get idioma() { return e.idioma; },
+      haptico: (tipo) => e.haptico(tipo),
       ponerSemana(semana) { opciones.semana = semana; armarUniverso(); },
       mostrarFps(si) { dom.fps.hidden = !si; },
       pausar(si) { const antes = e.pausado; e.pausado = si; if (antes && !si) requestAnimationFrame(cuadro); },
@@ -1123,5 +1103,11 @@ const Escena = (() => {
     };
   }
 
-  return { crear, proyectar };
+  // Las mismas cuentas que src/cielo/mundo.ts: la riqueza sale de la luz juntada desde siempre.
+  const LUZ_PLENA = 3650;
+  const ESCALA_DE_RIQUEZA = 40;
+  const riquezaDe = (luz) => Math.min(1, Math.log1p(Math.max(0, luz) / ESCALA_DE_RIQUEZA) / Math.log1p(LUZ_PLENA / ESCALA_DE_RIQUEZA));
+  const luzParaRiqueza = (r) => ESCALA_DE_RIQUEZA * Math.expm1(r * Math.log1p(LUZ_PLENA / ESCALA_DE_RIQUEZA));
+
+  return { crear, proyectar, riquezaDe, luzParaRiqueza };
 })();

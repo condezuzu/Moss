@@ -21,12 +21,13 @@ uniform float uHorizonte;
 uniform float uOctavas;
 uniform float uCapas;
 uniform float uSemilla;
+uniform float uRiqueza;
 out vec4 color;
 ${comun}
 ${fondo}
 void main() {
   vec2 w = uMundoMin + gl_FragCoord.xy / uRes * uMundoTam;
-  vec3 c = colorFondo(w, uPxPorUnidad, uHorizonte, uOctavas, uCapas, uSemilla);
+  vec3 c = colorFondo(w, uPxPorUnidad, uHorizonte, uOctavas, uCapas, uSemilla, uRiqueza);
   // Tramado: sin esto el degradé azul se ve en escalones en una pantalla OLED.
   c += (hash12(gl_FragCoord.xy + 0.5) - 0.5) / 255.0;
   color = vec4(c, 1.0);
@@ -41,15 +42,16 @@ uniform float uHorizonte;
 uniform float uIntensidad;
 uniform float uOleada;
 uniform float uCortinas;
+uniform float uRiqueza;
 out vec4 color;
 ${comun}
 ${aurora}
 void main() {
   vec2 w = uCam + (gl_FragCoord.xy - 0.5 * uRes) / uEscala;
-  color = vec4(colorAurora(w, uTiempo, uHorizonte, uIntensidad, uOleada, uCortinas), 1.0);
+  color = vec4(colorAurora(w, uTiempo, uHorizonte, uIntensidad, uOleada, uCortinas, uRiqueza), 1.0);
 }`;
 
-  const fsComponer = (comun) => ENCABEZADO + `
+  const fsComponer = (comun, vivo) => ENCABEZADO + `
 uniform sampler2D uFondo;
 uniform sampler2D uAurora;
 uniform vec2 uLienzo;
@@ -59,24 +61,64 @@ uniform vec2 uCamFondo;
 uniform float uEscala;
 uniform vec4 uOnda;
 uniform float uAparicion;
+uniform float uTiempo;
+uniform float uDensidad;
+uniform float uRiqueza;
+uniform vec4 uFugaz;
+uniform vec4 uFugazEstela;
 out vec4 color;
 ${comun}
+${vivo}
 void main() {
   vec2 px = gl_FragCoord.xy;
   vec2 w = uCamFondo + (px - 0.5 * uLienzo) / uEscala;
   vec3 c = texture(uFondo, (w - uMundoMin) / uMundoTam).rgb;
-  // La onda del día completo: un anillo que enciende el cielo a su paso.
-  if (uOnda.w > 0.0) {
-    float d = length(w - uOnda.xy);
-    float anillo = exp(-pow((d - uOnda.z) / 0.07, 2.0));
-    c *= 1.0 + uOnda.w * anillo * 1.8;
-    c += vec3(1.0, 0.84, 0.52) * uOnda.w * anillo * 0.03;
-  }
+  float onda = ondaDelDia(w, uOnda.xy, uOnda.z, uOnda.w);
+  c = c * (1.0 + onda * 1.8) + vec3(1.0, 0.84, 0.52) * onda * 0.03;
   c += texture(uAurora, px / uLienzo).rgb;
+  c += estrellasVivas(w, uEscala, uTiempo, uDensidad * crece(uRiqueza, 0.5, 1.3));
+  c += estrellaFugaz(w, uFugaz.xy, uFugaz.zw, uFugazEstela, uEscala);
   vec2 q = px / uLienzo - 0.5;
   c *= 1.0 - 0.40 * dot(q, q);
   c *= uAparicion;
   c += (hash12(px + 0.5) - 0.5) / 255.0;
+  color = vec4(c, 1.0);
+}`;
+
+  // El viaje entre secciones («flum»): el cuadro entero se dibuja a una textura y acá se estira
+  // hacia un punto de fuga, con estelas, como si la cámara saliera disparada muy lejos. Con la
+  // estela en cero queda solo el acercamiento (el fondo de Ajustes, por ejemplo).
+  const FS_VIAJE = ENCABEZADO + `
+uniform sampler2D uCuadro;
+uniform vec2 uLienzo;
+uniform vec2 uCentro;
+uniform float uZoom;
+uniform float uEstela;
+uniform float uBrillo;
+uniform float uVelo;
+out vec4 color;
+void main() {
+  vec2 d = gl_FragCoord.xy - uCentro;
+  vec3 c;
+  if (uEstela < 0.001) {
+    c = texture(uCuadro, (uCentro + d / uZoom) / uLienzo).rgb;
+  } else {
+    vec3 suma = vec3(0.0);
+    float peso = 0.0;
+    for (int i = 0; i < 24; i++) {
+      float t = float(i) / 23.0;
+      float w = 1.0 - 0.75 * t;
+      suma += texture(uCuadro, (uCentro + d / (uZoom * (1.0 + uEstela * t))) / uLienzo).rgb * w;
+      peso += w;
+    }
+    // Al estirarse, una estrella reparte su luz en la estela: se compensa para que no se apague.
+    c = suma / peso * (1.0 + 1.3 * uEstela);
+  }
+  c *= uBrillo;
+  // Las esquinas se oscurecen con la velocidad: el ojo va al punto de fuga.
+  vec2 q = gl_FragCoord.xy / uLienzo - 0.5;
+  c *= 1.0 - min(0.6, uEstela * 1.1) * dot(q, q) * 2.0;
+  c = mix(c, vec3(0.010, 0.016, 0.036), uVelo);
   color = vec4(c, 1.0);
 }`;
 
@@ -312,10 +354,11 @@ void main() {
     const prog = {
       fondo: programa(gl, VS_PANTALLA, fsFondo(fuentes.comun, fuentes.fondo)),
       aurora: programa(gl, VS_PANTALLA, fsAurora(fuentes.comun, fuentes.aurora)),
-      componer: programa(gl, VS_PANTALLA, fsComponer(fuentes.comun)),
+      componer: programa(gl, VS_PANTALLA, fsComponer(fuentes.comun, fuentes.vivo)),
       sprites: programa(gl, VS_SPRITES, FS_SPRITES),
       lineas: programa(gl, VS_LINEAS, FS_LINEAS),
       musgo: programa(gl, VS_MUSGO, fsMusgo(fuentes.comun)),
+      viaje: programa(gl, VS_PANTALLA, FS_VIAJE),
     };
 
     const vaoPantalla = gl.createVertexArray();
@@ -333,8 +376,12 @@ void main() {
     const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     const estado = {
       ancho: 1, alto: 1, dpr: 1,
-      fondo: null, aurora: null,
-      fondoCfg: null, franjaSiguiente: 0, franjas: 1,
+      fondo: null, aurora: null, fondoCfg: null,
+      // El fondo nuevo se arma aparte y reemplaza al viejo cuando está entero: así cambiar la
+      // riqueza o la calidad nunca deja el cielo a medio dibujar.
+      fondoNuevo: null, fondoNuevoCfg: null, franjaSiguiente: 0, franjas: 1,
+      // Durante un viaje el cuadro se dibuja acá y después pasa por FS_VIAJE.
+      cuadro: null, destino: null,
     };
 
     function redimensionar(anchoPx, altoPx, dpr) {
@@ -348,7 +395,7 @@ void main() {
     // El fondo se arma por franjas a lo largo de varios cuadros: un solo dibujo enorme en un
     // teléfono puede tardar tanto que el sistema mata el contexto, y además congela la página.
     function prepararFondo(cfg) {
-      borrarDestino(gl, estado.fondo);
+      borrarDestino(gl, estado.fondoNuevo);
       let escalaTex = cfg.escala;
       const altoTex = cfg.mundoTam[1] * escalaTex;
       const anchoTex = cfg.mundoTam[0] * escalaTex;
@@ -356,16 +403,16 @@ void main() {
       escalaTex *= ajuste;
       const w = Math.ceil(cfg.mundoTam[0] * escalaTex);
       const h = Math.ceil(cfg.mundoTam[1] * escalaTex);
-      estado.fondo = crearDestino(gl, w, h);
-      estado.fondoCfg = Object.assign({}, cfg, { pxPorUnidad: escalaTex });
+      estado.fondoNuevo = crearDestino(gl, w, h);
+      estado.fondoNuevoCfg = Object.assign({}, cfg, { pxPorUnidad: escalaTex });
       estado.franjas = Math.max(4, Math.ceil(h / 220));
       estado.franjaSiguiente = 0;
     }
 
     function avanzarFondo(cuantas) {
-      const f = estado.fondo;
-      const cfg = estado.fondoCfg;
-      if (!f || estado.franjaSiguiente >= estado.franjas) return true;
+      const f = estado.fondoNuevo;
+      const cfg = estado.fondoNuevoCfg;
+      if (!f) return true;
       const p = prog.fondo;
       gl.bindFramebuffer(gl.FRAMEBUFFER, f.fb);
       gl.viewport(0, 0, f.ancho, f.alto);
@@ -378,6 +425,7 @@ void main() {
       gl.uniform1f(p.u.uOctavas, cfg.octavas);
       gl.uniform1f(p.u.uCapas, cfg.capas);
       gl.uniform1f(p.u.uSemilla, cfg.semilla);
+      gl.uniform1f(p.u.uRiqueza, cfg.riqueza);
       gl.enable(gl.SCISSOR_TEST);
       gl.disable(gl.BLEND);
       gl.bindVertexArray(vaoPantalla);
@@ -389,7 +437,13 @@ void main() {
       }
       gl.disable(gl.SCISSOR_TEST);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      return estado.franjaSiguiente >= estado.franjas;
+      if (estado.franjaSiguiente < estado.franjas) return false;
+      borrarDestino(gl, estado.fondo);
+      estado.fondo = f;
+      estado.fondoCfg = cfg;
+      estado.fondoNuevo = null;
+      estado.fondoNuevoCfg = null;
+      return true;
     }
 
     function pasadaAurora(cfg) {
@@ -413,16 +467,47 @@ void main() {
       gl.uniform1f(p.u.uIntensidad, cfg.intensidad);
       gl.uniform1f(p.u.uOleada, cfg.oleada);
       gl.uniform1f(p.u.uCortinas, cfg.cortinas);
+      gl.uniform1f(p.u.uRiqueza, cfg.riqueza);
       gl.bindVertexArray(vaoPantalla);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+
+    // Con un viaje en curso, todo lo del cuadro va a una textura del tamaño del lienzo.
+    function empezarCuadro(conViaje) {
+      if (conViaje && (!estado.cuadro || estado.cuadro.ancho !== estado.ancho || estado.cuadro.alto !== estado.alto)) {
+        borrarDestino(gl, estado.cuadro);
+        estado.cuadro = crearDestino(gl, estado.ancho, estado.alto);
+      }
+      estado.destino = conViaje ? estado.cuadro.fb : null;
+    }
+
+    function terminarCuadro(viaje) {
+      if (!viaje || !estado.destino) return;
+      const p = prog.viaje;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, estado.ancho, estado.alto);
+      gl.disable(gl.BLEND);
+      gl.useProgram(p.p);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, estado.cuadro.tex);
+      gl.uniform1i(p.u.uCuadro, 0);
+      gl.uniform2f(p.u.uLienzo, estado.ancho, estado.alto);
+      gl.uniform2f(p.u.uCentro, viaje.centro[0], viaje.centro[1]);
+      gl.uniform1f(p.u.uZoom, viaje.zoom);
+      gl.uniform1f(p.u.uEstela, viaje.estela);
+      gl.uniform1f(p.u.uBrillo, viaje.brillo);
+      gl.uniform1f(p.u.uVelo, viaje.velo);
+      gl.bindVertexArray(vaoPantalla);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      estado.destino = null;
     }
 
     function componer(cfg) {
       if (!estado.fondo || !estado.aurora) return;
       const p = prog.componer;
       const f = estado.fondoCfg;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, estado.destino);
       gl.viewport(0, 0, estado.ancho, estado.alto);
       gl.disable(gl.BLEND);
       gl.useProgram(p.p);
@@ -439,6 +524,11 @@ void main() {
       gl.uniform1f(p.u.uEscala, cfg.escala);
       gl.uniform4f(p.u.uOnda, cfg.onda[0], cfg.onda[1], cfg.onda[2], cfg.onda[3]);
       gl.uniform1f(p.u.uAparicion, cfg.aparicion);
+      gl.uniform1f(p.u.uTiempo, cfg.tiempo);
+      gl.uniform1f(p.u.uDensidad, cfg.densidad);
+      gl.uniform1f(p.u.uRiqueza, cfg.riqueza);
+      gl.uniform4f(p.u.uFugaz, cfg.fugaz[0], cfg.fugaz[1], cfg.fugaz[2], cfg.fugaz[3]);
+      gl.uniform4f(p.u.uFugazEstela, cfg.fugazEstela[0], cfg.fugazEstela[1], cfg.fugazEstela[2], cfg.fugazEstela[3]);
       gl.bindVertexArray(vaoPantalla);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
@@ -526,6 +616,8 @@ void main() {
       prepararFondo,
       avanzarFondo,
       pasadaAurora,
+      empezarCuadro,
+      terminarCuadro,
       componer,
       dibujarSprites,
       dibujarLineas,

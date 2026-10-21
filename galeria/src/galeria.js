@@ -1,11 +1,12 @@
-// La página de revisión: datos de mentira, controles y el catálogo.
-// CATALOGO, TEXTOS y SHADERS los inyecta galeria/construir.mjs desde src/ (una sola fuente).
+// La página de revisión: datos de mentira, controles, la entrada a la app, el viaje a Ajustes y
+// el catálogo. CATALOGO, TEXTOS y SHADERS los inyecta galeria/construir.mjs desde src/ (una sola
+// fuente).
 
 (() => {
   // La Lira de la demo sale del catálogo; esta copia es solo por si el armado viene sin él.
   const LIRA_RESPALDO = {
     id: 'lyra', iau: 'Lyr', tipo: 'constelacion',
-    nombres: { la: 'Lyra', es: 'Lira', en: 'Lyra', grc: 'Λύρα' },
+    nombres: { la: 'Lyra', es: 'Lira', en: 'Lyra' },
     estrellas: [
       { id: 'vega', nombre: 'Vega', bayer: 'α Lyr', hr: 7001, ra: 279.2346, dec: 38.7836, mag: 0.03 },
       { id: 'sulafat', nombre: 'Sulafat', bayer: 'γ Lyr', hr: 7178, ra: 284.7358, dec: 32.6894, mag: 3.24 },
@@ -15,19 +16,10 @@
       { id: 'epsilon1-lyr', nombre: 'ε¹ Lyr', bayer: 'ε¹ Lyr', hr: 7051, ra: 281.085, dec: 39.67, mag: 5.06 },
     ],
     lineas: [[0, 4], [0, 5], [1, 2], [1, 3], [2, 4], [3, 4], [4, 5]],
-    mito: {
-      figura: { es: 'La lira de Orfeo', en: 'The lyre of Orpheus' },
-      heroe: { es: 'Orfeo', en: 'Orpheus' },
-      resumen: { es: 'Hermes la hizo con un caparazón de tortuga; con ella, Orfeo conmovió al Hades.', en: 'Hermes made it from a tortoise shell; with it, Orpheus moved Hades himself.' },
-      fuentes: ['Himno homérico a Hermes', 'Eratóstenes, Catasterismos 24', 'Ovidio, Metamorfosis X'],
-    },
   };
 
   const lista = (typeof CATALOGO !== 'undefined' && CATALOGO && CATALOGO.constelaciones) || [];
-  const liraCatalogo = lista.find((c) => c.id === 'lyra');
-  const LIRA = Object.assign({}, liraCatalogo || LIRA_RESPALDO, {
-    frase: { es: 'Hermes la hizo con un caparazón de tortuga; con ella, Orfeo conmovió al Hades.', en: 'Hermes made it from a tortoise shell; with it, Orpheus moved Hades himself.' },
-  });
+  const LIRA = lista.find((c) => c.id === 'lyra') || LIRA_RESPALDO;
 
   const ICONOS = {
     loto: '<path d="M12 4c2 2.5 2 6.5 0 9-2-2.5-2-6.5 0-9z"/><path d="M12 13c-3-.5-6-2.5-7-6 3.5 0 6 2 7 6zm0 0c3-.5 6-2.5 7-6-3.5 0-6 2-7 6z"/><path d="M5 17h14"/>',
@@ -42,6 +34,7 @@
     nota: '<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>',
     corazon: '<path d="M12 19s-7-4.3-7-9.2A4 4 0 0 1 12 7.5a4 4 0 0 1 7 2.3C19 14.7 12 19 12 19z"/>',
     sol: '<circle cx="12" cy="12" r="3.6"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M6 18l1.4-1.4M16.6 7.4 18 6"/>',
+    balanza: '<rect x="4" y="4.5" width="16" height="15" rx="3.5"/><path d="M9 9.5a4 4 0 0 1 6 0M12 9.5l1.4-1.6"/>',
   };
   const icono = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n] || ICONOS.circulo}</svg>`;
 
@@ -155,6 +148,7 @@
   try {
     escena = Escena.crear(tel, SHADERS, {
       calidad: 'alta',
+      riqueza: 0.6,
       idioma: 'es',
       textos: TEXTOS,
       icono,
@@ -178,28 +172,89 @@
   }
 
   function cargarLira() {
-    escena.ponerConstelacion(LIRA, habitosLira(), { capitulo: { n: 2, total: 6, titulo: { es: 'El regalo de Apolo', en: "Apollo's gift" } } });
+    escena.ponerConstelacion(LIRA, habitosLira());
   }
-  cargarLira();
+
+  // ------------------------------------------------------------ la entrada a la app
+  let avanceSolo = false;
+  const entrada = Entrada.crear(tel, escena, {
+    textos: TEXTOS,
+    catalogo: lista,
+    icono,
+    aspecto: () => tel.clientWidth / Math.max(1, tel.clientHeight),
+    avanceSolo: () => avanceSolo,
+    alCambiar: () => refrescarControles(),
+  });
+
+  // ------------------------------------------------------------ Ajustes, para ver el «flum»
+  // Una pantalla de Ajustes de maqueta: lo que importa acá es el viaje de ida y vuelta.
+  const ajustes = document.createElement('section');
+  ajustes.className = 'ajustes';
+  ajustes.hidden = true;
+  tel.appendChild(ajustes);
+  const tx = (clave) => clave.split('.').reduce((o, k) => (o ? o[k] : undefined), TEXTOS[idiomaActual()]) || clave;
+  function armarAjustes() {
+    const filas = [
+      ['ajustes.calidad', 'Alta'], ['ajustes.idioma', idiomaActual() === 'es' ? 'Español' : 'English'],
+      ['ajustes.salud', '✓'], ['ajustes.ascent', ''], ['ajustes.cuenta', ''],
+    ];
+    ajustes.innerHTML = `<h2>${tx('ajustes.titulo')}</h2><ul>${filas.map(([k, v]) => `<li><span>${tx(k)}</span><b>${v}</b></li>`).join('')}</ul>`
+      + `<button type="button" class="ajustes-volver">${tx('ajustes.volver')}</button>`;
+    ajustes.querySelector('.ajustes-volver').addEventListener('click', () => viajar('hoy'));
+  }
+  let enAjustes = false;
+  function viajar(destino) {
+    if (escena.viajando || entrada.paso) return;
+    const ui = tel.querySelector('.ui');
+    if (destino === 'ajustes' && !enAjustes) {
+      armarAjustes();
+      escena.viajar({
+        hasta: { zoom: 2.2, velo: 0.62 }, sale: ui, llega: ajustes,
+        alCambiar: () => { enAjustes = true; escena.ponerModo('ajustes'); },
+        alLlegar: refrescarControles,
+      });
+    } else if (destino === 'hoy' && enAjustes) {
+      escena.viajar({
+        hasta: { zoom: 1, velo: 0 }, sale: ajustes, llega: ui,
+        alCambiar: () => { enAjustes = false; escena.ponerModo('hoy'); },
+        alLlegar: refrescarControles,
+      });
+    }
+    refrescarControles();
+  }
 
   function refrescarControles() {
     if (!escena) return;
-    $('#b-repetir').disabled = !escena.completo;
-    $('#b-salud').disabled = !escena.hayAutoPendiente;
-    $('#b-completar').disabled = escena.completo;
+    const enEntrada = !!entrada.paso;
+    $('#b-repetir').disabled = !escena.completo || enEntrada || enAjustes;
+    $('#b-salud').disabled = !escena.hayAutoPendiente || enEntrada || enAjustes;
+    $('#b-completar').disabled = escena.completo || enEntrada || enAjustes;
     const enUniverso = escena.zona() === 'universo';
     $('#b-zona').textContent = enUniverso ? 'Volver a hoy' : 'Subir a tu universo';
     $$('.barra-inmersiva [data-accion="zona"]').forEach((b) => { b.textContent = enUniverso ? 'Hoy' : 'Universo'; });
+    $('#b-entrada').textContent = enEntrada ? 'Salir de la entrada' : 'Ver la entrada desde el principio';
+    $('#b-ajustes').textContent = enAjustes ? 'Volver al cielo' : 'Ir a Ajustes';
+    $('#b-ajustes').disabled = enEntrada;
   }
 
   const acciones = {
     salud: () => escena.simularSalud(),
     completar: () => escena.completarDia(),
     repetir: () => escena.repetirAnimacion(),
-    reiniciar: () => { cargarLira(); escena.irA('hoy'); },
+    reiniciar: () => { if (entrada.paso) entrada.salir(); cargarLira(); escena.irA('hoy'); },
     zona: () => { escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo'); },
+    fugaz: () => escena.lanzarFugaz(),
+    entrada: () => { if (enAjustes) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
+    ajustes: () => viajar(enAjustes ? 'hoy' : 'ajustes'),
   };
+  // Va después de todo lo que usa refrescarControles (la escena lo llama al poner la constelación).
+  cargarLira();
   $$('[data-accion]').forEach((b) => b.addEventListener('click', () => { acciones[b.dataset.accion](); refrescarControles(); }));
+  $$('#saltos-entrada [data-paso]').forEach((b) => b.addEventListener('click', () => {
+    if (enAjustes) return;
+    entrada.irA(b.dataset.paso);
+    refrescarControles();
+  }));
 
   function segmento(id, alElegir) {
     const cont = document.getElementById(id);
@@ -210,16 +265,27 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); dibujarCatalogo(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); dibujarCatalogo(); if (enAjustes) armarAjustes(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
+  segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
 
-  const rMusgo = $('#r-musgo');
-  let esperaMusgo = 0;
-  rMusgo.addEventListener('input', () => {
-    $('#o-musgo').textContent = rMusgo.value + '%';
-    clearTimeout(esperaMusgo);
-    esperaMusgo = setTimeout(() => escena.ponerMusgo(rMusgo.value / 100), 60);
+  // La riqueza del cielo, como la luz juntada desde siempre y el tiempo que lleva juntarla con
+  // unos 7 de luz por día (seis hábitos casi todos los días).
+  const rRiqueza = $('#r-riqueza');
+  let esperaRiqueza = 0;
+  function mostrarRiqueza() {
+    const r = rRiqueza.value / 100;
+    const luz = Math.round(Escena.luzParaRiqueza(r));
+    const dias = luz / 7;
+    const tiempo = r === 0 ? 'el primer día' : dias < 14 ? `unos ${Math.max(1, Math.round(dias))} días` : dias < 60 ? `unas ${Math.round(dias / 7)} semanas` : dias < 540 ? `unos ${Math.round(dias / 30)} meses` : 'un año y medio';
+    $('#o-riqueza').textContent = `${rRiqueza.value}% · ${luz.toLocaleString('es-UY')} de luz · ${tiempo}`;
+  }
+  rRiqueza.addEventListener('input', () => {
+    mostrarRiqueza();
+    clearTimeout(esperaRiqueza);
+    esperaRiqueza = setTimeout(() => escena.ponerRiqueza(rRiqueza.value / 100), 80);
   });
+  mostrarRiqueza();
 
   const bFps = $('#b-fps');
   bFps.addEventListener('click', () => {
@@ -305,14 +371,15 @@
         const tipo = c.tipo === 'asterismo' ? 'Asterismo' : c.tipo === 'estrella' ? 'Estrella' : 'Constelación';
         b.innerHTML = `<canvas></canvas><b></b><span></span><span class="tipo"></span>`;
         b.querySelector('b').textContent = nombreDe(c.nombres);
-        b.querySelector('span').textContent = nombreDe(c.mito && c.mito.heroe) || '';
+        // La más brillante: es la que lleva el primer hábito del día.
+        b.querySelector('span').textContent = c.estrellas[0] ? c.estrellas[0].nombre : '';
         b.querySelector('.tipo').textContent = tipo + (n >= 16 ? ' · ' + c.estrellas.length : '');
-        b.title = nombreDe(c.mito && c.mito.resumen) || '';
         miniatura(b.querySelector('canvas'), c);
         b.addEventListener('click', () => {
+          if (entrada.paso || enAjustes) return;
           const datos = c.id === 'lyra' ? LIRA : c;
           const habitos = c.id === 'lyra' ? habitosLira() : habitosDeMentira(c.estrellas.length);
-          escena.ponerConstelacion(datos, habitos, { capitulo: { n: 1, total: 5 } });
+          escena.ponerConstelacion(datos, habitos);
           escena.irA('hoy');
           refrescarControles();
           if (!tel.classList.contains('inmersivo')) tel.scrollIntoView({ behavior: movimientoReducido ? 'auto' : 'smooth', block: 'center' });
@@ -330,4 +397,8 @@
   window.__accion = (nombre) => { acciones[nombre](); refrescarControles(); };
   window.__idioma = (v) => document.querySelector(`#s-idioma [data-valor="${v}"]`).click();
   window.__calidad = (v) => document.querySelector(`#s-calidad [data-valor="${v}"]`).click();
+  window.__riqueza = (r) => { rRiqueza.value = Math.round(r * 100); mostrarRiqueza(); escena.ponerRiqueza(r); };
+  window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
+  window.__metas = () => entrada.metas();
+  window.__velocidad = (v) => escena.velocidad(v);
 })();

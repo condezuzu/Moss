@@ -67,6 +67,55 @@ const pasos = {
     await pagina.evaluate(() => window.__calidad('alta'));
     await pagina.waitForTimeout(2500);
   },
+  async riqueza() {
+    for (const r of [0, 1, 0.6]) {
+      await pagina.evaluate((v) => window.__riqueza(v), r);
+      await pagina.waitForTimeout(3500);
+      if (r !== 0.6) await foto('riqueza-' + Math.round(r * 100));
+    }
+  },
+  async fugaz() {
+    await pagina.evaluate(() => window.__accion('fugaz'));
+    for (const ms of [150, 350, 600, 900]) {
+      await pagina.waitForTimeout(ms === 150 ? 150 : 200);
+      await foto('fugaz-' + ms);
+    }
+  },
+  async entrada() {
+    await pagina.evaluate(() => window.__accion('entrada'));
+    await pagina.waitForTimeout(900);
+    await foto('entrada-frase-0900');
+    await pagina.waitForTimeout(2200);
+    await foto('entrada-frase-3100');
+    for (const [paso, esperas] of [['habitos', [900, 2600]], ['comida', [1100, 2800]], ['cuenta', [2400]], ['salud', [1400]], ['edad', [900]], ['sexo', [900]], ['peso', [900]], ['actividad', [900]], ['objetivo', [900]], ['resultado', [2600]]]) {
+      await pagina.evaluate((p) => window.__entrada(p), paso);
+      let t = 0;
+      for (const ms of esperas) {
+        await pagina.waitForTimeout(ms - t);
+        t = ms;
+        await foto(`entrada-${paso}-${ms}`);
+      }
+    }
+    // Empezar: el flum hasta el cielo de hoy.
+    await pagina.click('.ent-resultado .ent-principal');
+    for (const ms of [200, 420, 520, 750, 1400]) {
+      await pagina.waitForTimeout(ms === 200 ? 200 : ms - [200, 420, 520, 750, 1400][[200, 420, 520, 750, 1400].indexOf(ms) - 1]);
+      await foto('entrada-fin-' + ms);
+    }
+  },
+  async flum() {
+    // En cámara lenta: por software cada cuadro tarda, y a velocidad real el salto ya terminó
+    // antes de la primera foto. Se saca una cada 600 ms hasta que llega.
+    await pagina.evaluate(() => window.__velocidad(0.3));
+    for (const [sentido, accion] of [['ida', 'ajustes'], ['vuelta', 'ajustes']]) {
+      await pagina.evaluate((a) => window.__accion(a), accion);
+      for (let i = 1; i <= 10; i++) {
+        await pagina.waitForTimeout(600);
+        await foto(`flum-${sentido}-${String(i).padStart(2, '0')}`);
+      }
+    }
+    await pagina.evaluate(() => window.__velocidad(1));
+  },
 };
 
 for (const e of escenarios.length ? escenarios : ['inicio', 'tocar', 'completo', 'universo']) {

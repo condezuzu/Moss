@@ -15,14 +15,16 @@ const shaders = {
   comun: leer('src/cielo/shaders/comun.glsl'),
   fondo: leer('src/cielo/shaders/fondo.glsl'),
   aurora: leer('src/cielo/shaders/aurora.glsl'),
+  vivo: leer('src/cielo/shaders/vivo.glsl'),
 };
 
 const catalogo = leerJson('src/datos/constelaciones.json');
 const textos = { es: leerJson('src/textos/es.json'), en: leerJson('src/textos/en.json') };
 
 const claves = ['comun.deshacer', 'fecha.dias', 'fecha.diasCortos', 'fecha.mesesCortos', 'cielo.fecha', 'cielo.luzDeHoy', 'cielo.encendidas',
-  'cielo.completa', 'cielo.diaCompleto', 'cielo.encendida', 'cielo.apagada', 'cielo.seEnciendeSola', 'cielo.desdeSalud',
-  'cielo.masLuz', 'cielo.capitulo', 'cielo.horasMinutos', 'cielo.tuUniverso'];
+  'cielo.completa', 'cielo.encendida', 'cielo.apagada', 'cielo.seEnciendeSola', 'cielo.desdeSalud', 'cielo.horasMinutos',
+  'cielo.tuUniverso', 'entrada.frase', 'entrada.fraseAutor', 'entrada.habitosTitulo', 'entrada.comidaTitulo', 'entrada.cuenta.apple',
+  'entrada.cuestionario.resultadoTitulo', 'ajustes.titulo'];
 const faltan = [];
 for (const idioma of ['es', 'en']) {
   if (!textos[idioma]) { faltan.push(`src/textos/${idioma}.json`); continue; }
@@ -44,6 +46,7 @@ const js = [
   `const TEXTOS = ${json(textos)};`,
   leer('galeria/src/motor.js'),
   leer('galeria/src/escena.js'),
+  leer('galeria/src/entrada.js'),
   leer('galeria/src/galeria.js'),
 ].join('\n');
 
