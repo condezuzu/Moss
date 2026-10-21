@@ -1,10 +1,11 @@
 # Catálogo de constelaciones de Moss
 
-Cada hábito es una estrella y cada día de la semana forma una constelación real con su mito griego. El **número de hábitos de un día es el número de estrellas principales** de la constelación asignada. Este documento resume [`src/datos/constelaciones.json`](../src/datos/constelaciones.json) (52 entradas) y explica de dónde salen los datos.
+Cada hábito es una estrella y cada día de la semana forma una constelación real. El **número de hábitos de un día es el número de estrellas principales** de la constelación asignada. Este documento resume [`src/datos/constelaciones.json`](../src/datos/constelaciones.json) (52 entradas) y explica de dónde salen los datos.
 
 - Posiciones y magnitudes: reales, del *Yale Bright Star Catalogue* (J2000).
 - Figuras: trazadas a mano siguiendo las cartas IAU / *Sky & Telescope*, con simplificaciones documentadas abajo.
-- Mitos: solo mitos griegos con fuente antigua citada; no se inventa nada. Cuando hay varias versiones antiguas, el resumen elige una y lo indica.
+- La estrella más brillante de cada entrada es la del primer hábito del día: los hábitos siguen el orden de brillo.
+- Desde el cambio de foco del 21/10/2026 el catálogo no lleva mitos: los resúmenes, el héroe y la figura de cada entrada quedaron en el historial de git (el último commit que los tiene es `fed8acd`).
 
 ## Catálogo por número de estrellas principales
 
@@ -12,135 +13,135 @@ Todas las cuentas del 1 al 15 tienen al menos dos entradas, y del 3 al 10 al men
 
 ### 1 estrella (4)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Capella | estrella | Amaltea | La cabra Amaltea | Aur |
-| Sirio | estrella | Orión | El perro de Orión | CMa |
-| Vindemiatrix | estrella | Ámpelo | Ámpelo, el vendimiador | Vir |
-| Mérope | estrella | Mérope | Mérope, la Pléyade que se oculta | Tau |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Capella | estrella | Capella | Aur |
+| Sirio | estrella | Sirius | CMa |
+| Vindemiatrix | estrella | Vindemiatrix | Vir |
+| Mérope | estrella | Merope | Tau |
 
 ### 2 estrellas (3)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Can Menor | constelación | Mera | Mera, la perra de Icario | CMi |
-| Los Cabritos | asterismo | Amaltea | Los dos cabritos de Amaltea | Aur |
-| Cástor y Pólux | asterismo | Cástor y Pólux | Las cabezas de los gemelos Dioscuros | Gem |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Can Menor | constelación | Procyon | CMi |
+| Los Cabritos | asterismo | Haedus | Aur |
+| Cástor y Pólux | asterismo | Pollux | Gem |
 
 ### 3 estrellas (3)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Triángulo | constelación | Hermes | La letra delta, colocada por Hermes | Tri |
-| Cabellera de Berenice | asterismo | Berenice | El rizo consagrado de la reina Berenice | Com |
-| Los Asnos y el Pesebre | asterismo | Dioniso | Los asnos de Dioniso junto a su pesebre | Cnc |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Triángulo | constelación | β Tri | Tri |
+| Cabellera de Berenice | asterismo | β Com | Com |
+| Los Asnos y el Pesebre | asterismo | Asellus Australis | Cnc |
 
 ### 4 estrellas (3)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Flecha | constelación | Apolo | La flecha de Apolo | Sge |
-| Aries | constelación | Frixo | El carnero del vellocino de oro | Ari |
-| Cuervo | constelación | Apolo | El cuervo de Apolo | Crv |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Flecha | constelación | γ Sge | Sge |
+| Aries | constelación | Hamal | Ari |
+| Cuervo | constelación | Gienah | Crv |
 
 ### 5 estrellas (4)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Casiopea | constelación | Casiopea | La reina Casiopea en su trono | Cas |
-| Cáncer | constelación | Hera | El cangrejo que mordió a Heracles | Cnc |
-| Las Híades | asterismo | Las Híades | Las hermanas que lloran a Hías | Tau |
-| Delfín | constelación | Poseidón | El delfín de Poseidón | Del |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Casiopea | constelación | Schedar | Cas |
+| Cáncer | constelación | Tarf | Cnc |
+| Las Híades | asterismo | Aldebaran | Tau |
+| Delfín | constelación | Rotanev | Del |
 
 ### 6 estrellas (3)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Lira | constelación | Orfeo | La lira de Orfeo | Lyr |
-| Copa | constelación | Apolo | La copa de Apolo | Crt |
-| Corona Boreal | constelación | Ariadna | La corona de Ariadna | CrB |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Lira | constelación | Vega | Lyr |
+| Copa | constelación | δ Crt | Crt |
+| Corona Boreal | constelación | Alphecca | CrB |
 
 ### 7 estrellas (3)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| El Carro (Osa Mayor) | asterismo | Calisto | La ninfa Calisto convertida en osa | UMa |
-| Osa Menor | constelación | Cinosura | Cinosura, nodriza de Zeus | UMi |
-| Las Pléyades | asterismo | Las Pléyades | Las siete hijas de Atlas | Tau |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| El Carro (Osa Mayor) | asterismo | Alioth | UMa |
+| Osa Menor | constelación | Polaris | UMi |
+| Las Pléyades | asterismo | Alcyone | Tau |
 
 ### 8 estrellas (4)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Pez Austral | constelación | Derceto | El gran pez que salvó a Derceto | PsA |
-| Altar | constelación | Zeus | El altar de los dioses | Ara |
-| Liebre | constelación | Hermes | La liebre perseguida por el perro de Orión | Lep |
-| Boyero | constelación | Árcade | Árcade, guardián de la Osa | Boo |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Pez Austral | constelación | Fomalhaut | PsA |
+| Altar | constelación | β Ara | Ara |
+| Liebre | constelación | Arneb | Lep |
+| Boyero | constelación | Arcturus | Boo |
 
 ### 9 estrellas (4)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Leo | constelación | Heracles | El león de Nemea | Leo |
-| Cisne | constelación | Zeus | Zeus transformado en cisne | Cyg |
-| Águila | constelación | Zeus | El águila de Zeus | Aql |
-| Auriga (el Cochero) | constelación | Erictonio | Erictonio, inventor de la cuadriga | Aur |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Leo | constelación | Regulus | Leo |
+| Cisne | constelación | Deneb | Cyg |
+| Águila | constelación | Altair | Aql |
+| Auriga (el Cochero) | constelación | Capella | Aur |
 
 ### 10 estrellas (4)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Ofiuco (el Serpentario) | constelación | Asclepio | Asclepio, el portador de la serpiente | Oph |
-| Cefeo | constelación | Cefeo | El rey Cefeo de Etiopía | Cep |
-| Capricornio | constelación | Egipán (Pan) | Egipán, el dios cabra con cola de pez | Cap |
-| Sagitario | constelación | Croto | Croto, el arquero | Sgr |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Ofiuco (el Serpentario) | constelación | Rasalhague | Oph |
+| Cefeo | constelación | Alderamin | Cep |
+| Capricornio | constelación | Deneb Algedi | Cap |
+| Sagitario | constelación | Kaus Australis | Sgr |
 
 ### 11 estrellas (2)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Virgo | constelación | Dike (Astrea) | Dike, la Justicia | Vir |
-| Tauro | constelación | Europa | Zeus convertido en toro | Tau |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Virgo | constelación | Spica | Vir |
+| Tauro | constelación | Aldebaran | Tau |
 
 ### 12 estrellas (3)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Andrómeda | constelación | Andrómeda | La princesa encadenada | And |
-| Can Mayor | constelación | Lélape | Lélape, el perro que nunca fallaba | CMa |
-| Ballena (el Monstruo marino) | constelación | Poseidón | El monstruo marino de Poseidón | Cet |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Andrómeda | constelación | Alpheratz | And |
+| Can Mayor | constelación | Sirius | CMa |
+| Ballena (el Monstruo marino) | constelación | Diphda | Cet |
 
 ### 13 estrellas (2)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Perseo | constelación | Perseo | Perseo con la cabeza de Medusa | Per |
-| Acuario | constelación | Ganimedes | Ganimedes, el copero de los dioses | Aqr |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Perseo | constelación | Mirfak | Per |
+| Acuario | constelación | Sadalsuud | Aqr |
 
 ### 14 estrellas (2)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Dragón | constelación | Ladón | El dragón de las Hespérides | Dra |
-| Pegaso | constelación | Pegaso | Pegaso, el caballo alado | Peg |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Dragón | constelación | Eltanin | Dra |
+| Pegaso | constelación | Alpheratz | Peg |
 
 ### 15 estrellas (3)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Escorpio | constelación | Ártemis | El escorpión que mató a Orión | Sco |
-| Hércules | constelación | Heracles | Heracles arrodillado frente al dragón | Her |
-| Géminis | constelación | Cástor y Pólux | Los gemelos Cástor y Pólux | Gem |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Escorpio | constelación | Antares | Sco |
+| Hércules | constelación | Kornephoros | Her |
+| Géminis | constelación | Pollux | Gem |
 
 ### 16 o más estrellas (5)
 
-| Constelación o asterismo | Tipo | Héroe o dios | Figura del mito | IAU |
-|---|---|---|---|---|
-| Hidra (17) | constelación | Apolo | La serpiente de agua | Hya |
-| Centauro (17) | constelación | Quirón | Quirón, el centauro sabio | Cen |
-| Piscis (17) | constelación | Afrodita | Afrodita y Eros convertidos en peces | Psc |
-| Orión (19) | constelación | Orión | Orión, el gigante cazador | Ori |
-| Erídano (22) | constelación | Faetón | El río de Faetón | Eri |
+| Constelación o asterismo | Tipo | Estrella más brillante | IAU |
+|---|---|---|---|
+| Hidra (17) | constelación | Alphard | Hya |
+| Centauro (17) | constelación | Rigil Kentaurus | Cen |
+| Piscis (17) | constelación | Alpherg | Psc |
+| Orión (19) | constelación | Rigel | Ori |
+| Erídano (22) | constelación | Achernar | Eri |
 
 **Cobertura:** 1: 4 · 2: 3 · 3: 3 · 4: 3 · 5: 4 · 6: 3 · 7: 3 · 8: 4 · 9: 4 · 10: 4 · 11: 2 · 12: 3 · 13: 2 · 14: 2 · 15: 3 · 16+: 5.
 
@@ -150,7 +151,6 @@ Todas las cuentas del 1 al 15 tienen al menos dos entradas, y del 3 al 10 al men
 - **Comprobación independiente.** `verificar.mjs` contrasta ocho separaciones conocidas (Dubhe–Merak 5,37°, Betelgeuse–Rigel 18,61°, Cástor–Pólux 4,51°, Sirio–Proción 25,70°, etc.) con valores calculados a partir de posiciones de SIMBAD/Hipparcos; todas coinciden con un margen de pocos segundos de arco.
 - **Nombres propios de estrellas.** *IAU Catalog of Star Names* del Grupo de Trabajo de Nombres de Estrellas (WGSN), versión 2022-04-04 (CC BY 4.0). Los nombres añadidos por el WGSN después de 2022 (por ejemplo «Kautoki» para ζ¹ Lyr, aprobado en 2026) no se usan, para conservar los nombres tradicionales asentados; esas estrellas llevan su designación de Bayer o Flamsteed.
 - **Figuras.** Aristas propias, trazadas siguiendo las cartas de constelaciones de la IAU y *Sky & Telescope* (Roger Sinnott y Rick Fienberg), consultadas solo como referencia visual. No se copió ninguna base de datos de líneas.
-- **Mitos.** Resúmenes propios a partir de: Eratóstenes, *Catasterismos* (numeración de la Epítome); Higino, *Astronomía* (libro II, numeración de la traducción de M. Grant) y *Fábulas*; Arato, *Fenómenos* (numeración de versos de la traducción de G. R. Mair); Ovidio, *Fastos* y *Metamorfosis*; Apolodoro, *Biblioteca*; Homero, *Ilíada*; Píndaro, *Nemeas*; Calímaco, *Aitia*; Catulo, *Poemas*; Apolonio de Rodas, *Argonáuticas*. Los textos de Higino, Arato, Ovidio y Homero se cotejaron con las traducciones de dominio público de Theoi y ToposText; para Eratóstenes se usó la numeración estándar de capítulos y los resúmenes de *Star Tales* de Ian Ridpath.
 
 ## Simplificaciones respecto a las figuras estándar
 
@@ -191,11 +191,9 @@ Para que «estrellas principales» tenga sentido se omiten estrellas débiles o 
 
 ## Criterios y decisiones
 
-- **Selección.** Solo constelaciones de Ptolomeo con mito griego y asterismos antiguos dentro de ellas con mito propio (Pléyades, Híades, el Carro, los Asnos, los Cabritos, Cástor y Pólux, la Cabellera de Berenice). Las entradas de una estrella son estrellas con mito propio y fuente antigua: Capella (Amaltea), Sirio («el perro de Orión» en Homero), Vindemiatrix (Ámpelo, en Ovidio) y Mérope (la Pléyade que se oculta).
-- **Mitos compartidos.** Algunas entradas comparten historia por ser partes de un mismo mito: el Cuervo, la Copa y la Hidra (el cuervo de Apolo); Capella y los Cabritos (Amaltea); Cástor y Pólux y Géminis (los Dioscuros); el Carro y el Boyero (Calisto y Árcade); Cefeo, Casiopea, Andrómeda, Perseo, la Ballena y Pegaso (el ciclo de Perseo); Orión, Escorpio, Sirio y la Liebre (el ciclo de Orión).
+- **Selección.** Se armó cuando cada constelación iba con su mito, y se mantiene: constelaciones de Ptolomeo y asterismos antiguos dentro de ellas (Pléyades, Híades, el Carro, los Asnos, los Cabritos, Cástor y Pólux, la Cabellera de Berenice). Las entradas de una estrella son estrellas con mito propio y fuente antigua: Capella (Amaltea), Sirio («el perro de Orión» en Homero), Vindemiatrix (Ámpelo, en Ovidio) y Mérope (la Pléyade que se oculta).
 - **Casos límite que conviene conocer.** La *Cabellera de Berenice* es una leyenda helenística de corte cortesano (Conón, siglo III a. C.), no un mito de dioses; era un asterismo dentro del León de Ptolomeo y hoy es una constelación moderna, por eso su código IAU es `Com`. El *Pez Austral* tiene un mito de origen sirio (Derceto) transmitido por autores griegos. El héroe del *Hércules* es una identificación de Eratóstenes: Arato dice que nadie sabía quién era «el Arrodillado».
 - **Constelaciones de Ptolomeo no incluidas.** *Libra* (para los griegos eran las Pinzas del Escorpión, sin mito propio); *Lupus* (la «bestia» que el Centauro ofrece en el Altar, sin mito propio); *Corona Australis* (sin mito antiguo propio); *Equuleus* (Eratóstenes e Higino no lo mencionan); *Serpens* (sus dos mitades solo se unen a través de Ofiuco, y su mito es el de Asclepio); *Argo Navis* (no tiene código IAU y no existe una figura IAU única para ella); la *Osa Mayor* completa (su mito, Calisto, ya lo representa el Carro).
-- **Héroe o dios.** Es el personaje central que «aparece» al completar el día: el protagonista representado (Perseo, Andrómeda, Orión), el dueño del objeto (Orfeo para la Lira, Apolo para la Flecha) o, en las figuras de animales con nombre propio, el propio animal (Pegaso, Lélape, Mera, Ladón, Amaltea).
 
 ## Editar y verificar
 
