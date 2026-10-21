@@ -1,0 +1,307 @@
+<title>Galería de Moss</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=GFS+Didot&family=Jost:wght@300;400;500&display=swap">
+<style>
+/* Galería de revisión: a la izquierda el teléfono vivo, a la derecha lo que hay que mirar y decidir.
+   Un solo mundo visual, de noche: la galería no tiene modo claro a propósito. */
+:root {
+  --fondo: #04060d;
+  --panel: #0a1022;
+  --linea: rgba(232, 196, 106, 0.16);
+  --tinta: #efe6cf;
+  --tenue: #a3a8b6;
+  --oro: #e8c46a;
+  --oro-claro: #f6e3a6;
+  --musgo: #b9e36b;
+  --titulos: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
+  --griego: 'GFS Didot', 'Cormorant Garamond', 'Times New Roman', serif;
+  --texto: 'Jost', 'Futura', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--fondo); }
+body { background: var(--fondo); color: var(--tinta); font: 300 15.5px/1.6 var(--texto); -webkit-font-smoothing: antialiased; }
+body.inmersivo { overflow: hidden; }
+::selection { background: rgba(232, 196, 106, 0.3); }
+a { color: var(--oro-claro); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--oro); outline-offset: 3px; }
+
+.pagina {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 96px;
+  display: grid;
+  gap: 40px;
+}
+@media (min-width: 1000px) {
+  .pagina { grid-template-columns: auto minmax(0, 1fr); align-items: start; column-gap: 64px; }
+  .columna-tel { position: sticky; top: 24px; }
+}
+.columna-tel { display: grid; justify-items: center; gap: 12px; min-width: 0; }
+.columna-texto { min-width: 0; display: grid; gap: 0; }
+
+.etiqueta { font: 400 11px/1.4 var(--texto); letter-spacing: 0.22em; text-transform: uppercase; color: var(--tenue); }
+h1 { font: 500 clamp(38px, 6vw, 56px)/1.02 var(--titulos); margin: 10px 0 12px; letter-spacing: -0.01em; text-wrap: balance; }
+h1 em { font-style: italic; color: var(--oro-claro); }
+.bajada { margin: 0; color: var(--tenue); max-width: 62ch; }
+.lema { margin: 18px 0 0; font: italic 400 19px/1.35 var(--titulos); color: var(--oro-claro); }
+.lema span { display: block; margin-top: 4px; font: 400 10.5px var(--texto); font-style: normal; letter-spacing: 0.2em; text-transform: uppercase; color: var(--tenue); }
+
+section.item { padding-top: 30px; margin-top: 32px; border-top: 1px solid var(--linea); display: grid; gap: 14px; min-width: 0; }
+section.item h2 { margin: 0; font: 500 30px/1.1 var(--titulos); display: flex; gap: 14px; align-items: baseline; text-wrap: balance; }
+section.item h2 .n { font: 400 13px var(--mono); color: var(--oro); letter-spacing: 0.04em; }
+section.item p { margin: 0; max-width: 64ch; }
+.tenue { color: var(--tenue); }
+.lista { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; max-width: 66ch; }
+.lista li { position: relative; padding-left: 22px; }
+.lista li::before { content: ''; position: absolute; left: 3px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--oro); box-shadow: 0 0 10px rgba(232, 196, 106, 0.7); }
+.lista b { font-weight: 500; color: var(--tinta); }
+
+.controles { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.boton {
+  appearance: none; cursor: pointer; border: 1px solid rgba(232, 196, 106, 0.34); background: rgba(232, 196, 106, 0.06);
+  color: var(--oro-claro); padding: 9px 16px; border-radius: 999px; font: 400 13.5px/1 var(--texto); letter-spacing: 0.02em;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+}
+.boton:hover { background: rgba(232, 196, 106, 0.14); border-color: rgba(232, 196, 106, 0.6); }
+.boton:disabled { opacity: 0.35; cursor: default; }
+.boton.principal { background: var(--oro); color: #1a1406; border-color: var(--oro); font-weight: 500; }
+.boton.principal:hover { background: var(--oro-claro); }
+.segmento { display: inline-flex; border: 1px solid rgba(232, 196, 106, 0.3); border-radius: 999px; padding: 3px; gap: 2px; }
+.segmento button { appearance: none; border: 0; background: transparent; padding: 6px 13px; border-radius: 999px; cursor: pointer; font: 400 13px/1 var(--texto); color: var(--tenue); }
+.segmento button[aria-pressed='true'] { background: rgba(232, 196, 106, 0.16); color: var(--oro-claro); }
+.grupo { display: grid; gap: 8px; }
+.grupo > span { font: 400 11px var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: var(--tenue); }
+.deslizador { display: flex; align-items: center; gap: 12px; }
+.deslizador input { width: min(260px, 60vw); accent-color: var(--musgo); }
+.deslizador output { font: 400 13px var(--mono); color: var(--musgo); min-width: 4ch; }
+.panel { background: linear-gradient(180deg, rgba(14, 22, 46, 0.6), rgba(10, 16, 34, 0.35)); border: 1px solid var(--linea); border-radius: 20px; padding: 18px; display: grid; gap: 16px; }
+
+/* ---------------- el teléfono ---------------- */
+.tel {
+  --arriba: 58px;
+  --abajo: 28px;
+  position: relative;
+  height: min(852px, calc(100svh - 48px));
+  aspect-ratio: 393 / 852;
+  max-width: 100%;
+  border-radius: 54px;
+  overflow: hidden;
+  background: #03050c;
+  box-shadow: 0 0 0 1px rgba(232, 196, 106, 0.2), 0 0 0 10px #0b0e17, 0 0 0 11px rgba(255, 255, 255, 0.07), 0 50px 140px rgba(0, 0, 0, 0.7);
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.tel canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
+.tel .ui { position: absolute; inset: 0; pointer-events: none; color: var(--tinta); }
+.tel .isla { position: absolute; top: 11px; left: 50%; width: 124px; height: 35px; translate: -50% 0; background: #000; border-radius: 22px; z-index: 3; pointer-events: none; }
+.tel .hora { position: absolute; top: 19px; left: 38px; font: 500 15px/1 var(--texto); color: #fff; z-index: 3; pointer-events: none; font-variant-numeric: tabular-nums; }
+.tel .barra-inmersiva { display: none; }
+@media (max-width: 999px) {
+  .tel { --arriba: 22px; --abajo: 16px; width: 100%; height: min(820px, calc(100svh - 28px)); aspect-ratio: auto; border-radius: 30px; box-shadow: 0 0 0 1px rgba(232, 196, 106, 0.2); }
+  .tel .isla, .tel .hora { display: none; }
+}
+.tel.inmersivo {
+  --arriba: calc(env(safe-area-inset-top, 0px) + 58px);
+  --abajo: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  position: fixed; inset: 0; z-index: 100; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; box-shadow: none;
+}
+.tel.inmersivo canvas { touch-action: none; }
+.tel.inmersivo .isla, .tel.inmersivo .hora { display: none; }
+.tel.inmersivo .barra-inmersiva {
+  display: flex; position: absolute; z-index: 4; left: 0; right: 0; top: 0; gap: 8px; align-items: center; justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
+}
+.barra-inmersiva div { display: flex; gap: 6px; }
+.barra-inmersiva button { appearance: none; cursor: pointer; border: 1px solid rgba(232, 196, 106, 0.3); background: rgba(6, 10, 22, 0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: var(--oro-claro); padding: 8px 12px; border-radius: 999px; font: 400 12.5px/1 var(--texto); }
+
+/* ---------------- lo que se ve adentro de la app ---------------- */
+.cab { position: absolute; top: var(--arriba); left: 24px; right: 24px; transition: opacity 0.6s; will-change: transform; }
+.cab-dia { font: 400 11px/1.2 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
+.cab-dia::first-letter { text-transform: uppercase; }
+.cab-fila { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.cab-nombre { font: 500 36px/0.95 var(--titulos); letter-spacing: -0.005em; text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
+.cab-griego { font: 400 12.5px/1 var(--griego); letter-spacing: 0.22em; color: var(--oro); opacity: 0.78; margin-left: 4px; vertical-align: 0.5em; }
+.cab-luz { text-align: right; display: grid; justify-items: end; }
+.cab-luz b { font: 500 30px/0.9 var(--titulos); color: var(--oro-claro); font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 0 18px rgba(232, 196, 106, 0.35); }
+.cab-luz span { margin-top: 4px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
+.cab-cuenta { margin-top: 8px; font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.6); letter-spacing: 0.02em; }
+.cab.completa .cab-cuenta { color: var(--oro); letter-spacing: 0.18em; text-transform: uppercase; font-size: 10.5px; }
+
+.etq { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; white-space: nowrap; font: 400 11.5px/1.15 var(--texto); color: rgba(239, 230, 207, 0.64); text-shadow: 0 0 8px #03050c, 0 0 3px #03050c; transition: color 0.35s; will-change: transform; }
+.etq[data-lado='abajo'] { translate: -50% 0; }
+.etq[data-lado='arriba'] { translate: -50% -100%; }
+.etq[data-lado='der'] { translate: 0 -50%; align-items: flex-start; }
+.etq[data-lado='izq'] { translate: -100% -50%; align-items: flex-end; }
+.etq.encendida { color: #f3dc9b; }
+.etq-nombre { display: inline-flex; align-items: center; gap: 5px; }
+.etq svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; flex: none; }
+.etq-auto { font: 400 10px/1 var(--texto); color: var(--musgo); letter-spacing: 0.03em; font-variant-numeric: tabular-nums; opacity: 0.9; }
+.etq.encendida .etq-auto { opacity: 0.7; }
+
+.universo-titulo { position: absolute; left: 0; top: 0; translate: -50% -50%; white-space: nowrap; font: 500 28px/1 var(--titulos); color: var(--tinta); text-shadow: 0 0 18px #03050c; }
+.uetq { position: absolute; left: 0; top: 0; translate: -50% 0; text-align: center; white-space: nowrap; font: 400 10.5px/1.25 var(--texto); color: rgba(239, 230, 207, 0.6); text-shadow: 0 0 8px #03050c; }
+.uetq b { display: block; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; font-size: 9.5px; color: rgba(232, 196, 106, 0.8); }
+.uetq.hoy { color: var(--tinta); }
+.uetq.hoy b { color: var(--oro-claro); }
+
+.tarjeta { position: absolute; left: 18px; right: 18px; bottom: calc(var(--abajo) + 2px); text-align: center; opacity: 0; translate: 0 18px; transition: opacity 0.9s ease, translate 1.4s cubic-bezier(0.2, 0.7, 0.2, 1); pointer-events: none; text-shadow: 0 0 14px #03050c, 0 0 4px #03050c; }
+.tarjeta.visible { opacity: 1; translate: 0 0; }
+.tj-dia { font: 400 10.5px/1 var(--texto); letter-spacing: 0.26em; text-transform: uppercase; color: var(--oro); }
+.tj-nombre { margin: 8px 0 0; font: 500 40px/0.95 var(--titulos); color: #fbf2d9; text-shadow: 0 0 26px rgba(232, 196, 106, 0.5), 0 0 6px #03050c; }
+.tj-griego { margin-top: 6px; font: 400 13px/1 var(--griego); letter-spacing: 0.32em; color: rgba(232, 196, 106, 0.85); }
+.tj-mito { margin: 10px auto 0; max-width: 31ch; font: italic 400 15px/1.32 var(--titulos); color: rgba(239, 230, 207, 0.85); }
+.tj-chips { margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.tj-chips span { font: 400 11px/1 var(--texto); padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.36); color: #f3dc9b; background: rgba(9, 14, 30, 0.55); }
+.ui.con-tarjeta .frase, .ui.con-tarjeta .cab-cuenta { opacity: 0; }
+.cab-cuenta { transition: opacity 0.6s; }
+
+.aviso { position: absolute; left: 50%; bottom: calc(var(--abajo) + 82px); translate: -50% 12px; opacity: 0; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: rgba(8, 13, 28, 0.8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(232, 196, 106, 0.22); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 32px); }
+.aviso.visible { opacity: 1; translate: -50% 0; pointer-events: auto; }
+.aviso-txt { overflow: hidden; text-overflow: ellipsis; }
+.aviso-btn { appearance: none; cursor: pointer; font: 500 11px/1 var(--texto); letter-spacing: 0.12em; text-transform: uppercase; color: var(--oro); background: rgba(232, 196, 106, 0.12); border: 0; border-radius: 999px; padding: 8px 12px; }
+.aviso-btn[hidden] { display: none; }
+
+.frase { position: absolute; left: 26px; right: 26px; bottom: var(--abajo); text-align: center; transition: opacity 0.6s; will-change: transform; }
+.frase q { display: block; font: italic 400 14px/1.32 var(--titulos); color: rgba(239, 230, 207, 0.74); quotes: '“' '”'; text-wrap: balance; }
+.frase cite { display: block; margin-top: 5px; font: 400 9px/1 var(--texto); font-style: normal; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(185, 227, 107, 0.6); }
+.fps { position: absolute; right: 12px; top: calc(var(--arriba) - 30px); font: 500 10px/1 var(--mono); color: var(--musgo); background: rgba(3, 5, 12, 0.6); padding: 4px 7px; border-radius: 6px; z-index: 5; }
+.error-cielo { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; text-align: center; color: var(--tenue); font-size: 14px; }
+
+/* ---------------- catálogo ---------------- */
+.catalogo { display: grid; gap: 22px; }
+.fila-cat { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 14px; align-items: start; }
+.fila-cat > .num { font: 500 30px/1 var(--titulos); color: var(--oro-claro); text-align: right; padding-top: 18px; font-variant-numeric: lining-nums; }
+.fila-cat > .num small { display: block; margin-top: 4px; font: 400 9px/1.2 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: var(--tenue); }
+.tarjetas-cat { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: rgba(232, 196, 106, 0.3) transparent; }
+.cat {
+  flex: 0 0 150px; appearance: none; text-align: left; cursor: pointer; border: 1px solid var(--linea); border-radius: 16px; padding: 8px 8px 11px; display: grid; gap: 4px;
+  background: radial-gradient(120% 90% at 50% 30%, #0f1a3a 0%, #080d1d 60%, #060912 100%); color: var(--tinta); transition: border-color 0.2s, transform 0.2s;
+}
+.cat:hover { border-color: rgba(232, 196, 106, 0.5); transform: translateY(-2px); }
+.cat canvas { width: 132px; height: 104px; display: block; }
+.cat b { font: 500 17px/1.1 var(--titulos); padding: 0 4px; }
+.cat span { font: 400 11px/1.3 var(--texto); color: var(--tenue); padding: 0 4px; }
+.cat .tipo { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(232, 196, 106, 0.7); }
+.vacio { color: var(--tenue); font-style: italic; }
+
+.decisiones { counter-reset: d; display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; max-width: 68ch; }
+.decisiones li { counter-increment: d; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; }
+.decisiones li::before { content: counter(d, upper-alpha); font: 500 18px/1.3 var(--titulos); color: var(--oro); }
+.decisiones b { font-weight: 500; }
+.pie { margin-top: 48px; color: var(--tenue); font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta, .aviso, .cab, .frase { transition: none; }
+}
+</style>
+
+<main class="pagina">
+  <div class="columna-tel">
+    <div class="tel" id="tel">
+      <canvas aria-label="El cielo de hoy: tocá una estrella para encenderla"></canvas>
+      <div class="isla" aria-hidden="true"></div>
+      <div class="hora" aria-hidden="true">21:47</div>
+      <div class="barra-inmersiva">
+        <button type="button" id="salir-inmersivo">Salir</button>
+        <div>
+          <button type="button" data-accion="reiniciar">Reiniciar</button>
+          <button type="button" data-accion="salud">Pasos ✓</button>
+          <button type="button" data-accion="zona">Universo</button>
+        </div>
+      </div>
+      <div class="ui"></div>
+    </div>
+  </div>
+
+  <div class="columna-texto">
+    <header>
+      <div class="etiqueta">Moss · galería privada · <span id="fecha-galeria">21 de octubre de 2026</span></div>
+      <h1>El cielo, <em>para aprobar</em></h1>
+      <p class="bajada">Prototipo interactivo con datos de mentira. Es la referencia visual que después se pasa a Skia en la app: los shaders del cielo son los mismos archivos, y los tiempos y proporciones también.</p>
+      <p class="lema">“Do so much volume that it will be unreasonable to fail.”<span>El lema de Moss</span></p>
+    </header>
+
+    <section class="item" id="hoy">
+      <h2><span class="n">1</span>El cielo de hoy</h2>
+      <p>Miércoles con cinco hábitos: le toca la <b>Lira</b>, cinco estrellas principales. Tres ya están encendidas. Tocá <b>Escribir</b> para encenderla (tocala de nuevo, o usá Deshacer, para apagarla). Los <b>8.000 pasos</b> se encienden solos desde Salud: simulalo con el botón. Con las cinco se completa el día.</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-accion="salud" id="b-salud">Simular Salud: llegar a 8.000 pasos</button>
+          <button class="boton" type="button" data-accion="completar" id="b-completar">Completar el día</button>
+          <button class="boton" type="button" data-accion="repetir" id="b-repetir" disabled>Repetir la animación</button>
+          <button class="boton" type="button" data-accion="reiniciar">Reiniciar</button>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-accion="zona" id="b-zona">Subir a tu universo</button>
+          <button class="boton" type="button" id="b-inmersivo">Ver a pantalla completa</button>
+        </div>
+        <div class="controles">
+          <div class="grupo"><span>Idioma de la app</span>
+            <div class="segmento" id="s-idioma"><button type="button" data-valor="es" aria-pressed="true">Español</button><button type="button" data-valor="en" aria-pressed="false">English</button></div>
+          </div>
+          <div class="grupo"><span>Musgo acumulado</span>
+            <div class="deslizador"><input type="range" id="r-musgo" min="0" max="100" value="60" aria-label="Musgo acumulado"><output id="o-musgo">60%</output></div>
+          </div>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>Vía láctea</b> con el núcleo cálido sobre el horizonte, la Gran Grieta de polvo y miles de estrellas en tres capas, más densas dentro de la banda.</li>
+        <li><b>Auroras</b> en verde musgo con el borde dorado. Al completar el día suben, se aceleran y el borde se dora: la subtormenta de una aurora real.</li>
+        <li><b>Musgo</b> en primer plano, con cápsulas que brillan (hay un musgo real, <i>Schistostega</i>, que reluce dorado en la oscuridad). De ahí suben esporas que se vuelven estrellas: el punto donde musgo y cielo se juntan. Crece con la luz acumulada y nunca baja; probalo con el deslizador.</li>
+        <li><b>Estrellas apagadas</b> con un aro que late; las automáticas llevan un arco con el avance del día (6.240 de 8.000 pasos).</li>
+        <li><b>El toque</b> responde en el mismo cuadro: destello, onda y vibración. En iPhone con iOS 18 o más, la vibración se siente desde Safari.</li>
+        <li><b>Día completo</b>: las líneas se encienden desde la estrella más brillante, una onda recorre el cielo, aparece la lira dorada y las cuerdas vibran.</li>
+        <li><b>Cielo continuo</b>: arrastrá el cielo hacia abajo (en el teléfono, a pantalla completa) y la cámara sube a tu universo con las siete constelaciones de la semana. El musgo se mueve más rápido que las estrellas: es lo que da la profundidad.</li>
+      </ul>
+    </section>
+
+    <section class="item" id="catalogo">
+      <h2><span class="n">2</span>Una constelación por cantidad de hábitos</h2>
+      <p>El catálogo de constelaciones reales, agrupado por cantidad de estrellas principales, con su mito griego. Tocá cualquiera para verla como el cielo de hoy, con hábitos de mentira.</p>
+      <div class="catalogo" id="lista-catalogo"><p class="vacio">Cargando catálogo…</p></div>
+    </section>
+
+    <section class="item" id="calidad">
+      <h2><span class="n">3</span>Calidad gráfica</h2>
+      <p>Lo caro (la vía láctea y las estrellas débiles) se dibuja una sola vez a una imagen y después solo se desplaza. Por cuadro se calculan la aurora, a resolución reducida, y unas setecientas luces. Así el toque no espera a nada.</p>
+      <div class="panel">
+        <div class="controles">
+          <div class="segmento" id="s-calidad"><button type="button" data-valor="alta" aria-pressed="true">Alta</button><button type="button" data-valor="media" aria-pressed="false">Media</button><button type="button" data-valor="baja" aria-pressed="false">Baja</button></div>
+          <button class="boton" type="button" id="b-fps" aria-pressed="false">Mostrar cuadros por segundo</button>
+        </div>
+        <ul class="lista tenue">
+          <li><b>Alta</b>: pantalla a 2×, tres cortinas de aurora a media resolución, tres capas de estrellas, 520 estrellas que titilan.</li>
+          <li><b>Media</b>: 1,5×, dos cortinas, 320 estrellas que titilan, menos partículas.</li>
+          <li><b>Baja</b>: 1×, la aurora se recalcula un cuadro sí y uno no, dos capas de estrellas, 160 que titilan.</li>
+          <li>En la app, el valor de fábrica sale del modelo de iPhone (más una medición de los primeros segundos) y se cambia en Ajustes.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="item" id="decidir">
+      <h2><span class="n">4</span>Para decidir</h2>
+      <ol class="decisiones">
+        <li><span><b>Tipografías.</b> Cormorant Garamond para nombres y frases, GFS Didot para el griego y Jost para la interfaz. Las tres son libres (OFL) y van dentro de la app.</span></li>
+        <li><span><b>Color de la aurora.</b> Verde musgo con borde dorado, como ahora, o el verde azulado de una aurora real, más frío.</span></li>
+        <li><span><b>La frase del día en el musgo.</b> Inscrita abajo, sobre la loma de adelante, o arriba, debajo del nombre de la constelación.</span></li>
+        <li><span><b>Las figuras de los mitos.</b> La lira es trazo dorado dibujado a mano. Para el resto del catálogo propongo partir de los grabados de dominio público de Hevelius (1690) y Bode (1801), redibujados en el mismo trazo, para que todas tengan la misma mano.</span></li>
+        <li><span><b>Orientación.</b> Norte arriba siempre, como en los atlas. Desde Uruguay casi todas se ven al revés en el cielo real; propongo no imitarlo.</span></li>
+      </ol>
+    </section>
+
+    <p class="pie">Datos de mentira. Las posiciones de las estrellas sí son reales (catálogo de estrellas brillantes de Yale, J2000). Esta página se actualiza en el mismo enlace cada vez que hay algo nuevo para mirar.</p>
+  </div>
+</main>
+
+<script>
+/*@SCRIPTS*/
+</script>

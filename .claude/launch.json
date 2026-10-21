@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "galeria",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["galeria/servir.mjs"],
+      "port": 4173
+    }
+  ]
+}
