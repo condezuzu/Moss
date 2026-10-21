@@ -51,7 +51,8 @@
     "typecheck": "tsc --noEmit",
     "galeria": "node galeria/construir.mjs",
     "galeria:ver": "node galeria/servir.mjs",
-    "galeria:capturas": "node herramientas/capturar-galeria.mjs capturas/galeria"
+    "galeria:capturas": "node herramientas/capturar-galeria.mjs capturas/galeria",
+    "catalogo:verificar": "node herramientas/verificar-catalogo.mjs"
   },
   "private": true
 }
