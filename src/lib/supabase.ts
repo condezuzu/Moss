@@ -34,6 +34,9 @@ function crearCliente() {
   return nuevo;
 }
 
+/** Si la build sabe a dónde conectarse. Sin las variables (la web de prueba, por ejemplo), Moss anda sin cuenta. */
+export const haySupabase = () => Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+
 let cliente: ReturnType<typeof crearCliente> | undefined;
 
 // Se crea en el primer pedido: sin las variables la app arranca igual y el error aparece solo al usar el cliente.

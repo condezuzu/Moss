@@ -17,26 +17,36 @@ export type Dia = {
   hechos: string[];
   luz: number;
   completo: boolean;
+  /** Cuándo se resumió por última vez: entre dos teléfonos, gana el más nuevo. */
+  actualizado?: string;
 };
 
 export const claveDeMarca = (habito: string, dia: ClaveDia) => `${habito}|${dia}`;
 
-export function resumirDia(clave: ClaveDia, habitosDelDia: Habito[], marcas: Marca[], constelacion: string | null): Dia {
+function armarDia(clave: ClaveDia, habitos: string[], marcas: Marca[], constelacion: string | null): Dia {
   const hecho = new Map<string, Marca>();
   for (const m of marcas) {
     if (m.dia !== clave) continue;
     const antes = hecho.get(m.habito);
     if (!antes || antes.momento <= m.momento) hecho.set(m.habito, m);
   }
-  const hechos = habitosDelDia.filter((h) => hecho.get(h.id)?.hecho).map((h) => h.id);
-  return {
-    clave,
-    constelacion,
-    habitos: habitosDelDia.map((h) => h.id),
-    hechos,
-    luz: luzDelDia(hechos.length),
-    completo: habitosDelDia.length > 0 && hechos.length === habitosDelDia.length,
-  };
+  const hechos = habitos.filter((id) => hecho.get(id)?.hecho);
+  return { clave, constelacion, habitos, hechos, luz: luzDelDia(hechos.length), completo: habitos.length > 0 && hechos.length === habitos.length };
+}
+
+export function resumirDia(clave: ClaveDia, habitosDelDia: Habito[], marcas: Marca[], constelacion: string | null): Dia {
+  return armarDia(clave, habitosDelDia.map((h) => h.id), marcas, constelacion);
+}
+
+/** Un día ya vivido con lo hecho según estas marcas: los hábitos que tocaban y la constelación quedan los suyos. */
+export function rehacerDia(dia: Dia, marcas: Marca[]): Dia {
+  return armarDia(dia.clave, dia.habitos, marcas, dia.constelacion);
+}
+
+/** Si dos resúmenes dicen lo mismo, sin mirar cuándo se hicieron ni el orden de sus campos. */
+export function mismoResumen(a: Dia | undefined, b: Dia): boolean {
+  return !!a && a.clave === b.clave && a.constelacion === b.constelacion && a.luz === b.luz && a.completo === b.completo
+    && a.habitos.join() === b.habitos.join() && a.hechos.join() === b.hechos.join();
 }
 
 /** La luz de todos los días o, con `antesDe`, solo la de los días anteriores a ese. */

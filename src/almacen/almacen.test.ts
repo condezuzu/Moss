@@ -4,7 +4,9 @@ import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
 import { progresoPorConstelacion } from '../dominio/dias';
 import type { Habito } from '../dominio/habitos';
-import { crearAlmacen } from './almacen';
+import { metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
+import { crearAlmacen, metaVigente } from './almacen';
+import type { Datos } from './mezclar';
 import { repositorioEnMemoria, type Repositorio } from './repositorio';
 
 const catalogo = datos.constelaciones as unknown as Constelacion[];
@@ -122,5 +124,65 @@ describe('los días', () => {
     almacen.marcar('agua', true, 'toque');
     almacen.archivarHabito('agua');
     expect(hoy(almacen)).toMatchObject({ habitos: ['meditar', 'leer'], hechos: [] });
+  });
+});
+
+describe('el cuestionario, el peso y las metas', () => {
+  const respuestas: Cuestionario = { edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
+
+  it('el final de la entrada guarda el perfil, el peso de hoy y la meta de arranque, listos para subir', async () => {
+    const { almacen, repositorio } = await armar();
+    const meta = almacen.responderCuestionario(respuestas);
+    expect(meta).toMatchObject({ ...metasIniciales(respuestas).metas, gasto: metasIniciales(respuestas).gasto, desde: '2026-10-21', motivo: 'inicial' });
+    expect(almacen.estado().perfil).toMatchObject({ nacimiento: 1990, sexo: 'm', alturaCm: 178, objetivo: 'mantener' });
+    expect(almacen.estado().pesos).toEqual([expect.objectContaining({ fecha: '2026-10-21', kg: 80, origen: 'manual' })]);
+    await almacen.esperar();
+    const pendientes = await repositorio.pendientes();
+    expect([pendientes.perfil?.nacimiento, pendientes.metas.length, pendientes.pesos.length]).toEqual([1990, 1, 1]);
+    const otra = await armar(repositorio);
+    expect(otra.almacen.estado()).toMatchObject({ perfil: almacen.estado().perfil, metas: [meta], pesos: almacen.estado().pesos });
+  });
+
+  it('un peso por día: queda el último', async () => {
+    const { almacen, ir } = await armar();
+    almacen.anotarPeso(80.4, 'manual');
+    ir('2026-10-21T20:00:00Z');
+    almacen.anotarPeso(80.1, 'salud');
+    almacen.anotarPeso(81, 'salud', '2026-10-19');
+    expect(almacen.estado().pesos.map((p) => [p.fecha, p.kg, p.origen])).toEqual([['2026-10-19', 81, 'salud'], ['2026-10-21', 80.1, 'salud']]);
+  });
+
+  it('la meta de un día es la última que empezó ese día o antes', () => {
+    const meta = (desde: string): MetaGuardada => ({ desde, kcal: 2400, proteina: 120, carbohidratos: 300, grasas: 80, gasto: 2400, motivo: 'control', momento: `${desde}T10:00:00.000Z` });
+    const estado = { metas: [meta('2026-10-01'), meta('2026-10-15')] };
+    expect(metaVigente(estado, '2026-09-30')).toBeNull();
+    expect(metaVigente(estado, '2026-10-14')?.desde).toBe('2026-10-01');
+    expect(metaVigente(estado, '2026-10-15')?.desde).toBe('2026-10-15');
+  });
+});
+
+describe('lo que baja de la cuenta', () => {
+  const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null });
+
+  it('se guarda sin quedar pendiente y rearma el día de hoy', async () => {
+    const { almacen, repositorio } = await armar();
+    await almacen.esperar();
+    await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
+    expect(almacen.mezclar({ ...nada(), marcas: [{ habito: 'leer', dia: '2026-10-21', hecho: true, momento: '2026-10-21T16:00:00.000Z', origen: 'toque' }] })).toBe(true);
+    expect(hoy(almacen)).toMatchObject({ hechos: ['leer'], luz: 3 });
+    await almacen.esperar();
+    const pendientes = await repositorio.pendientes();
+    // La marca ya está en la cuenta; el resumen de hoy se rehízo acá.
+    expect(pendientes.marcas).toEqual([]);
+    expect(pendientes.dias.map((d) => d.hechos)).toEqual([['leer']]);
+  });
+
+  it('lo que ya estaba no cambia nada', async () => {
+    const { almacen } = await armar();
+    almacen.marcar('leer', true, 'toque');
+    const e = almacen.estado();
+    const version = e.version;
+    expect(almacen.mezclar({ ...nada(), habitos: e.habitos, periodos: [...e.periodos].reverse(), marcas: [...e.marcas.values()], dias: [...e.dias.values()], logros: e.logros, semilla: e.semilla })).toBe(false);
+    expect(almacen.estado().version).toBe(version);
   });
 });

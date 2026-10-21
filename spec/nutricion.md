@@ -107,7 +107,8 @@ Se usan solo como referencia. La propuesta:
 ## Las metas
 
 Es el método de MacroFactor, con fórmulas públicas. El detalle exacto de
-MacroFactor no está publicado.
+MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
+`src/dominio/control.ts`, con sus tests.
 
 1. **Meta inicial**
    - **Gasto:** Mifflin-St Jeor por el nivel de actividad. Una revisión la
@@ -115,27 +116,37 @@ MacroFactor no está publicado.
    - **Niveles:** poco 1,35, algo 1,5, bastante 1,65 y mucho 1,85.
    - **Ritmo:** bajar es 0,25, 0,5 o 0,75 % del peso por semana; subir es 0,1,
      0,25 o 0,4 %; se pasa a kcal con 7.700 kcal por kilo.
+   - **Menores de 18:** bajar «rápido» no está; se usa el recomendado.
    - **Pisos:** 1.200 kcal para mujeres y 1.400 para hombres.
-   - Es la cuenta de la galería (`galeria/src/entrada.js`, `metas`).
+   - **Redondeo:** el gasto y las kcal, a la decena.
+   - Es la cuenta de la galería (`galeria/src/entrada.js`, `metas`). El ejemplo
+     de la galería da 2.770 kcal, con 119 g de proteína, 387 de carbohidratos y
+     83 de grasas.
 2. **Macros**
    - **Proteína primero, por kilo:** 2,0 g al bajar, 1,6 al mantener y 1,8 al
-     subir, siempre dentro de 1,2–2,2.
+     subir, siempre dentro de 1,2–2,2. Nunca pasa del 40 % de las kcal: con
+     mucho peso y pocas calorías se comería el resto.
    - **Grasas:** al menos el 27 % de las kcal y nunca menos de 0,6 g por kilo
      (el rango recomendado es 20–35 %).
    - **Carbohidratos:** el resto.
 3. **Tendencia del peso:** media móvil exponencial (α = 0,1, unas tres semanas).
-   Los días sin peso se rellenan entre los vecinos.
+   Los días sin peso se rellenan en línea recta entre los vecinos.
 4. **Control semanal**
+   - **Qué mira:** días enteros, hasta ayer. Las últimas 3 semanas, o desde la
+     primera pesada si hay menos; con menos de 7 días no mide.
    - **Gasto real:** comida promedio − (cambio de la tendencia × 7.700 kcal/kg)
-     ÷ días, sobre 2 a 4 semanas, mezclado con la estimación anterior para que
-     no salte.
-   - **Meta nueva:** gasto ± el ritmo.
+     ÷ días.
+   - **Suaviza:** toma un cuarto de la diferencia entre el gasto medido y el
+     anterior cada semana. Una caída de 500 kcal se nota de a poco, en unas tres
+     o cuatro semanas.
+   - **Meta nueva:** gasto ± el ritmo, con el peso de la tendencia.
    - **Neutral al cumplimiento:** nunca «compensa» lo que comiste de más o de
      menos.
    - **Pide datos mínimos:** al menos 4 días con comida registrada y un peso en
-     la semana. Si no los hay, la meta queda como estaba y la app dice por qué.
-   - **Suaviza:** una caída de 500 kcal en el gasto mueve la meta de a poco, en
-     unas tres semanas.
+     la última semana. Si no los hay, la meta queda como estaba y la app dice
+     por qué (`faltanDatos`).
+   - **Lo que usó** (días con comida, pesadas, promedio, cambio de la
+     tendencia, gasto medido) queda a mano para mostrar «cómo se calcula».
 5. **Ascent** (ver [`ascent.md`](ascent.md)):
    - El peso de Ascent entra en la tendencia.
    - Los días de entrenamiento redistribuyen la meta de la semana sin cambiar el
@@ -199,6 +210,8 @@ resultado del cuestionario. Se aprueba ahí antes de armar la zona completa.
 ## Datos (esquema `moss`)
 
 Todo es local primero: el teléfono guarda al instante y Supabase sincroniza.
+`pesos` y `metas` ya están en `supabase/moss/0001_esquema.sql`; el resto llega
+con la etapa 6.
 
 | Tabla | Qué guarda |
 |---|---|
@@ -206,9 +219,8 @@ Todo es local primero: el teléfono guarda al instante y Supabase sincroniza.
 | `alimentos_propios` | lo creado desde la etiqueta, con los cuatro valores por 100 g y la porción |
 | `recetas` | ingredientes en gramos y porciones que rinde |
 | `productos_off` | caché de lo escaneado, con su fecha |
-| `pesos` | fecha, kg y origen (salud, manual o ascent) |
-| `controles` | semana, gasto estimado, metas resultantes y por qué |
-| `metas` | vigentes: kcal, proteína, carbohidratos, grasas y reparto por día |
+| `pesos` | uno por día: fecha, kg y origen (salud, manual o ascent) |
+| `metas` | desde cada fecha: kcal, proteína, carbohidratos, grasas, el gasto del que salieron y por qué (inicial, control, faltan datos o a mano). Cada control semanal deja una fila: no hace falta otra tabla de controles. El reparto por día llega con Ascent. |
 
 ## Riesgos
 

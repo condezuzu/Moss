@@ -24,6 +24,8 @@ export type Habito = {
   /** El primer día en que toca y, si se archivó, el último. */
   desde: ClaveDia;
   hasta?: ClaveDia;
+  /** Cuándo cambió por última vez: entre dos teléfonos, gana el más nuevo. */
+  actualizado?: string;
 };
 
 export const esAutomatico = (h: Habito) => h.fuente.tipo !== 'manual';

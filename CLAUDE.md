@@ -44,9 +44,22 @@ SDK y la memoria no alcanza.
 - **Local primero**:
   - Todo pasa por el almacén (`src/almacen/`): actualiza en memoria al instante y
     guarda atrás, en orden.
-  - Los días vividos quedan resumidos en `dias` y no se recalculan.
+  - Los días vividos quedan resumidos en `dias`. Solo se rearman los de las
+    últimas dos semanas, cuando llegan marcas de otro teléfono.
   - Para cambiar el esquema de SQLite, se suma un bloque en `migrar()`
     (`src/almacen/sqlite.ts`).
+- **Sincronización**:
+  - Cada cosa lleva la hora de su cambio, y entre dos versiones gana la más
+    nueva:
+    - en el teléfono, con `src/almacen/mezclar.ts`;
+    - en Supabase, con el trigger `al_recibir`.
+  - Lo que baja de la cuenta se guarda sin quedar pendiente, así no rebota.
+  - Una tabla nueva que sincroniza lleva:
+    - la hora del cambio y `recibido`;
+    - el trigger y RLS;
+    - su regla en `mezclar.ts`;
+    - sus filas en `remoto.ts`;
+    - una comprobación en `herramientas/verificar-supabase.mjs`.
 - **Supabase es el proyecto de Ascent**:
   - Moss vive en el esquema `moss` y **nunca toca `public`** (es de Ascent).
   - **Nunca llama funciones de Ascent**: lee sus tablas desde funciones propias
@@ -56,6 +69,8 @@ SDK y la memoria no alcanza.
 - **Antes de dar algo por terminado:**
   - `npm test`, `npm run typecheck`, `npx expo lint`, `npx expo-doctor` y
     `npx expo export --platform ios --output-dir <carpeta temporal>`.
+  - Si tocaste `supabase/`, `src/almacen/` o `src/dominio/`:
+    `npm run supabase:verificar`.
   - Si tocaste los shaders: `npm run shaders:verificar`.
   - Si tocaste el cielo de la app: `npm run web:exportar` y
     `npm run app:capturas` (con `npm run web:ver` prendido).
@@ -77,7 +92,8 @@ SDK y la memoria no alcanza.
 
 | Comando | Qué hace |
 |---|---|
-| `npm test` | los tests del dominio y del almacén (Jest con `jest-expo`) |
+| `npm test` | los tests del dominio, del almacén y de la sincronización (Jest con `jest-expo`) |
+| `npm run supabase:verificar` | el esquema de `supabase/moss/` en un Postgres local (PGlite): RLS, conflictos, semilla, borrar, y la app de verdad sincronizando varios teléfonos contra él |
 | `npm run typecheck` | tipos (incluye que `en.json` tenga las claves de `es.json`) |
 | `npx expo lint` | ESLint con la configuración de Expo, que incluye las reglas de React |
 | `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo y los textos de `src/` |
@@ -117,14 +133,15 @@ El render por software es lento. Por eso la galería tiene cámara lenta
 | Carpeta | Qué hay |
 |---|---|
 | `src/app/` | rutas de Expo Router (hoy, un solo cielo) |
-| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana |
-| `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), sus ganchos y los hábitos de ejemplo |
+| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida y control semanal |
+| `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
+| `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
 | `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |
 | `src/datos/` | catálogo de constelaciones |
 | `src/textos/` | el diccionario y `t()`: cielo, entrada, ajustes, diagnóstico |
-| `src/lib/supabase.ts` | cliente, esquema `moss` |
+| `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
 | `herramientas/` | capturas y verificaciones |
 

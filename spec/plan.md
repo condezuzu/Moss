@@ -5,8 +5,10 @@ Lo visual nuevo se aprueba primero en la galería y recién después se programa
 (ver [`especificacion.md`](especificacion.md), «Cómo trabajamos»).
 
 **Dónde estamos (21/10/2026):** las etapas 1 y 2 están hechas en código y probadas
-en la web: el cielo nativo, y la app que guarda y recuerda. Falta la primera build
-en tu iPhone, que necesita dos pasos tuyos. En la galería, para aprobar:
+en la web: el cielo nativo, y la app que guarda y recuerda. De la etapa 3 está lo
+que no depende de la galería: el esquema de Supabase, la sincronización y la
+fórmula de las metas. Falta la primera build en tu iPhone, que necesita dos pasos
+tuyos. En la galería, para aprobar:
 
 - la entrada a la app;
 - el flum;
@@ -123,6 +125,47 @@ Lo pedido para esta etapa:
 **Sale:** la app guarda y recuerda, todavía sin cuentas.
 
 ## Etapa 3 · La entrada, las cuentas y la sincronización
+
+Hecho (21/10/2026), lo que no depende de la galería:
+
+- **El esquema** en [`supabase/moss/0001_esquema.sql`](../supabase/moss/0001_esquema.sql):
+  perfil, hábitos, constelaciones por día, marcas, días, logros, pesos y metas.
+  - Todo en `moss`, con RLS en cada tabla.
+  - En un conflicto la base se queda con el cambio más nuevo, y anota a qué hora
+    llegó cada fila para que los teléfonos bajen solo lo nuevo.
+  - `npm run supabase:verificar` lo prueba en un Postgres local (PGlite), sin
+    tocar Supabase: 23 comprobaciones del SQL y 12 de la app de verdad
+    sincronizando dos y tres teléfonos contra él.
+- **La sincronización** en `src/almacen/`: `sincronizar.ts`, `remoto.ts` y
+  `mezclar.ts`.
+  - El teléfono guarda primero y sube lo pendiente a los pocos segundos.
+  - Al volver del fondo baja lo nuevo.
+  - La primera vez en un teléfono baja todo antes de subir: así un teléfono
+    nuevo recibe tus constelaciones en lugar de pisarlas.
+  - Sin conexión no se pierde nada: se reintenta cada vez más espaciado.
+  - Las reglas de cada conflicto están en `decisiones.md`.
+  - Se conecta sola cuando hay sesión. Como todavía no hay pantalla de cuenta,
+    hoy no arranca nunca.
+- **La meta inicial y el control semanal** en `src/dominio/metas.ts` y
+  `control.ts`, con 15 tests: la fórmula de [`nutricion.md`](nutricion.md), con
+  los números de la galería.
+- **El cuestionario ya tiene dónde guardarse**: el almacén guarda el perfil, el
+  peso del día y la meta de arranque, y los sube.
+
+Falta:
+
+- La entrada, cuando la apruebes en la galería.
+- Las pantallas de la cuenta (Apple y correo).
+- Borrar la cuenta y los datos.
+- **Cerrar sesión borra los datos del teléfono.** Si entra otra cuenta en un
+  teléfono con datos de la anterior, la sincronización no arranca, para no
+  mezclarlas.
+- Tus pasos en Supabase (`ascent.md`, «Lo que tenés que hacer vos»).
+- **Validar en cada pantalla los rangos del esquema** (peso de 20 a 400 kg,
+  altura de 50 a 260 cm). Si una fila no los cumple, Supabase la rechaza, y esa
+  tabla deja de subir hasta corregirla.
+
+Lo pedido para esta etapa:
 
 - **La entrada**, tal como se apruebe en la galería:
   - la frase;

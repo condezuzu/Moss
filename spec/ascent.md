@@ -258,14 +258,18 @@ cosa va cuando llegue su etapa del [plan](plan.md).
 
 **En Supabase**, proyecto `okeanaihymbvbdmrdqph`, para la etapa de cuentas:
 
-1. Settings › Data API › *Exposed schemas*: sumar `moss`.
-2. Authentication › URL Configuration › *Redirect URLs*: sumar `moss://**`.
-3. Authentication › Sign In / Providers › **Apple**: activarlo y poner en
+1. SQL Editor: correr `supabase/moss/0001_esquema.sql`, entero y una sola vez.
+   - Ya está escrito y probado con `npm run supabase:verificar`.
+   - Solo crea el esquema `moss`: no toca nada de Ascent.
+   - Conviene correrlo cuando estén las pantallas de la cuenta. Así, si cambia
+     algo antes, no hace falta una migración.
+2. Settings › Data API › *Exposed schemas*: sumar `moss`. Va después del paso 1,
+   porque el esquema tiene que existir.
+3. Authentication › URL Configuration › *Redirect URLs*: sumar `moss://**`.
+4. Authentication › Sign In / Providers › **Apple**: activarlo y poner en
    *Client IDs* `uy.moss.app`. Cuando Ascent tenga Apple, sumar `uy.ascent.app`.
    Para el inicio nativo en iPhone alcanza con los identificadores.
-4. Authentication › Sign In / Providers: activar *Allow manual linking*.
-5. SQL Editor: correr `supabase/moss/0001_esquema.sql`. Lo escribo en la etapa
-   de cuentas y te aviso.
+5. Authentication › Sign In / Providers: activar *Allow manual linking*.
 6. Antes de lanzar:
    - plan Pro (Settings › Billing);
    - SMTP propio (Authentication › Emails › SMTP Settings);

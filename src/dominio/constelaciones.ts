@@ -91,4 +91,10 @@ export function asignar(periodos: Periodo[], cantidades: number[], hoy: ClaveDia
   return lista;
 }
 
-const cuantas = (periodos: Periodo[], id: string) => periodos.filter((p) => !p.hasta && p.constelacion === id).length;
+/** Si dos listas tienen los mismos períodos, aunque vengan en otro orden (como bajan de la cuenta). */
+export function mismosPeriodos(a: Periodo[], b: Periodo[]): boolean {
+  const firma = (lista: Periodo[]) => lista.map((p) => `${p.dia}|${p.desde}|${p.hasta ?? ''}|${p.constelacion}|${p.cantidad}`).sort().join();
+  return a.length === b.length && firma(a) === firma(b);
+}
+
+const cuantas =(periodos: Periodo[], id: string) => periodos.filter((p) => !p.hasta && p.constelacion === id).length;

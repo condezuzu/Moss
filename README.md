@@ -21,6 +21,8 @@ Documentos:
 npm install
 npm run galeria && npm run galeria:ver   # la galería en http://localhost:4173
 npm run web:exportar && npm run web:ver  # la app (Skia) en la web, en http://localhost:4174
+npm test                                 # el dominio, el almacén y la sincronización
+npm run supabase:verificar               # el esquema de Supabase y la app sincronizando, en un Postgres local
 npm run typecheck
 ```
 

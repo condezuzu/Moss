@@ -281,6 +281,46 @@ hacen falta las cuentas anónimas.
   - Solsticio es un día con 8 hábitos (10 de luz).
   - Cometa es volver después de 7 días enteros sin luz.
   - Los de Ascent, la comida y el sueño llegan con sus etapas.
+- **La sincronización** (etapa 3):
+  - **Qué gana:** cada cosa lleva la hora de su cambio, y entre dos versiones
+    gana la más nueva. Pasa igual en el teléfono y en Supabase (el trigger
+    `al_recibir`), así una subida atrasada nunca pisa algo más nuevo.
+  - **Qué falta subir:** cada escritura en el teléfono lleva un número que solo
+    crece, y lo que pasa del último subido está pendiente. Lo que baja de la
+    cuenta se guarda con 0, así no vuelve a subir.
+  - **El orden:**
+    - La primera vez en un teléfono, baja todo antes de subir nada.
+    - Después sube a los 3 segundos de cada cambio, juntando los toques.
+    - Al volver del fondo, baja solo lo que llegó a la cuenta desde la última
+      vez. Para eso cuenta la hora del servidor (`recibido`), nunca la del
+      teléfono, con un minuto de margen.
+  - **Reintentos:** a los 10 segundos, y después el doble cada vez, hasta 5
+    minutos.
+  - **Las constelaciones y la semilla son de la cuenta:**
+    - La semilla es la primera que llega.
+    - Los períodos se reemplazan enteros.
+    - Un teléfono nuevo adopta los de la cuenta antes de subir los suyos.
+  - **Dos teléfonos sin conexión el mismo día:** los días de las últimas dos
+    semanas se rearman con las marcas de los dos, así ninguna luz se pierde.
+    Hoy se rearma siempre.
+  - **Logros:** nunca se pierden. Si dos teléfonos ganan el mismo, queda la
+    fecha del primero que lo subió.
+  - **Hábitos de ejemplo:** llevan la hora más vieja posible, así nunca le ganan
+    a un cambio de verdad.
+  - **Datos de otra cuenta:** si en el teléfono hay datos de otra cuenta, no se
+    sincroniza nada. Cerrar sesión tiene que borrar los datos del teléfono.
+  - **Sin Supabase Realtime:** para una app de un solo teléfono alcanza con
+    bajar al volver. Se puede sumar después.
+- **El perfil guarda el año de nacimiento**, no la edad, así no envejece.
+- **Bajar «rápido» queda para mayores de 18:** a un menor se le aplica el ritmo
+  recomendado.
+- **Las metas llevan la hora en que se fijaron.** Si dos teléfonos hacen el
+  control de la misma semana, queda el último.
+- **Probar Supabase sin Supabase:** PGlite (Postgres 18 en WebAssembly) corre
+  las migraciones con lo mínimo de Supabase (roles, `auth.users`, `auth.uid()`).
+  La app de verdad sincroniza varios teléfonos contra ese Postgres, con un
+  cliente que traduce a SQL lo que pide supabase-js (`npm run
+  supabase:verificar`).
 - **Galería interactiva**, no capturas como la de Ascent: lo que hay que aprobar
   son animaciones y toques.
 - **Rama `cimientos`**, que sale de `master` (el commit inicial de la plantilla).
