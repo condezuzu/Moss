@@ -2,18 +2,19 @@
 // CATALOGO, TEXTOS y SHADERS los inyecta galeria/construir.mjs desde src/ (una sola fuente).
 
 (() => {
-  // La Lira de la demo. Si el catálogo trae una Lira de cinco estrellas, se usa esa.
+  // La Lira de la demo sale del catálogo; esta copia es solo por si el armado viene sin él.
   const LIRA_RESPALDO = {
     id: 'lyra', iau: 'Lyr', tipo: 'constelacion',
     nombres: { la: 'Lyra', es: 'Lira', en: 'Lyra', grc: 'Λύρα' },
     estrellas: [
-      { id: 'vega', nombre: 'Vega', bayer: 'α Lyr', hr: 7001, ra: 279.2347, dec: 38.7837, mag: 0.03 },
-      { id: 'sulafat', nombre: 'Sulafat', bayer: 'γ Lyr', hr: 7178, ra: 284.7359, dec: 32.6896, mag: 3.24 },
-      { id: 'sheliak', nombre: 'Sheliak', bayer: 'β Lyr', hr: 7106, ra: 282.52, dec: 33.3627, mag: 3.45 },
-      { id: 'delta2-lyr', nombre: 'δ² Lyr', bayer: 'δ² Lyr', hr: 7139, ra: 283.6262, dec: 36.8986, mag: 4.3 },
-      { id: 'zeta1-lyr', nombre: 'ζ¹ Lyr', bayer: 'ζ¹ Lyr', hr: 7056, ra: 281.1931, dec: 37.605, mag: 4.36 },
+      { id: 'vega', nombre: 'Vega', bayer: 'α Lyr', hr: 7001, ra: 279.2346, dec: 38.7836, mag: 0.03 },
+      { id: 'sulafat', nombre: 'Sulafat', bayer: 'γ Lyr', hr: 7178, ra: 284.7358, dec: 32.6894, mag: 3.24 },
+      { id: 'sheliak', nombre: 'Sheliak', bayer: 'β Lyr', hr: 7106, ra: 282.52, dec: 33.3628, mag: 3.45 },
+      { id: 'delta2-lyr', nombre: 'δ² Lyr', bayer: 'δ² Lyr', hr: 7139, ra: 283.6258, dec: 36.8989, mag: 4.3 },
+      { id: 'zeta1-lyr', nombre: 'ζ¹ Lyr', bayer: 'ζ¹ Lyr', hr: 7056, ra: 281.1933, dec: 37.605, mag: 4.36 },
+      { id: 'epsilon1-lyr', nombre: 'ε¹ Lyr', bayer: 'ε¹ Lyr', hr: 7051, ra: 281.085, dec: 39.67, mag: 5.06 },
     ],
-    lineas: [[0, 4], [4, 3], [3, 1], [1, 2], [2, 4]],
+    lineas: [[0, 4], [0, 5], [1, 2], [1, 3], [2, 4], [3, 4], [4, 5]],
     mito: {
       figura: { es: 'La lira de Orfeo', en: 'The lyre of Orpheus' },
       heroe: { es: 'Orfeo', en: 'Orpheus' },
@@ -23,7 +24,7 @@
   };
 
   const lista = (typeof CATALOGO !== 'undefined' && CATALOGO && CATALOGO.constelaciones) || [];
-  const liraCatalogo = lista.find((c) => c.id === 'lyra' && c.estrellas.length === 5);
+  const liraCatalogo = lista.find((c) => c.id === 'lyra');
   const LIRA = Object.assign({}, liraCatalogo || LIRA_RESPALDO, {
     frase: { es: 'Hermes la hizo con un caparazón de tortuga; con ella, Orfeo conmovió al Hades.', en: 'Hermes made it from a tortoise shell; with it, Orpheus moved Hades himself.' },
   });
@@ -50,6 +51,7 @@
     { nombre: { es: 'Leer 20 páginas', en: 'Read 20 pages' }, icono: 'libro', encendido: true },
     { nombre: { es: 'Escribir', en: 'Journal' }, icono: 'pluma', encendido: false },
     { nombre: { es: '8.000 pasos', en: '8,000 steps' }, icono: 'huellas', encendido: false, auto: 'pasos', valor: 6240, meta: 8000 },
+    { nombre: { es: 'Agua 2 L', en: 'Water 2 L' }, icono: 'gota', encendido: false },
   ];
 
   const POZO = [
@@ -84,10 +86,12 @@
   }
 
   // Semana de mentira: cantidades del ejemplo de la especificación.
+  // Semana de mentira: el lunes y el sábado tienen la misma cantidad, igual que el miércoles y
+  // el domingo, para ver que cada día recibe una constelación distinta.
   const SEMANA = [
     { dia: 1, total: 4, hechos: 4 },
-    { dia: 2, total: 6, hechos: 4 },
-    { dia: 3, total: 5, hoy: true },
+    { dia: 2, total: 5, hechos: 3 },
+    { dia: 3, total: 6, hoy: true },
     { dia: 4, total: 3, hechos: 0 },
     { dia: 5, total: 7, hechos: 0 },
     { dia: 6, total: 4, hechos: 0 },
@@ -306,8 +310,8 @@
         b.title = nombreDe(c.mito && c.mito.resumen) || '';
         miniatura(b.querySelector('canvas'), c);
         b.addEventListener('click', () => {
-          const datos = c.id === 'lyra' && c.estrellas.length === 5 ? LIRA : c;
-          const habitos = c.id === 'lyra' && c.estrellas.length === 5 ? habitosLira() : habitosDeMentira(c.estrellas.length);
+          const datos = c.id === 'lyra' ? LIRA : c;
+          const habitos = c.id === 'lyra' ? habitosLira() : habitosDeMentira(c.estrellas.length);
           escena.ponerConstelacion(datos, habitos, { capitulo: { n: 1, total: 5 } });
           escena.irA('hoy');
           refrescarControles();

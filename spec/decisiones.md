@@ -70,12 +70,27 @@ altas anónimas (Supabase permite 30 por hora por IP de fábrica). Ascent pasó 
 revisión con login obligatorio, pero Ascent tiene amigos y ranking desde el
 inicio.
 
-### D3 · Qué pasa si dos días tienen la misma cantidad de hábitos
+### D3 · Varios días con la misma cantidad de hábitos (importante)
 
-Cada día recibe una constelación distinta del grupo de esa cantidad. Si el grupo
-no alcanza, propongo **repetir** la constelación, cada día con su propio
-progreso, en vez de inventar figuras o usar una de otra cantidad. Con el
-catálogo actual pasa poco: ver [`catalogo.md`](catalogo.md).
+Lo más común va a ser tener los mismos hábitos todos los días: entonces los siete
+días tienen la misma cantidad y piden siete constelaciones distintas de esa
+cantidad. El catálogo real ([`catalogo.md`](catalogo.md)) tiene como mucho
+**cuatro por cantidad**: de 3 a 10 estrellas hay tres o cuatro, de 11 a 15 hay
+dos o tres.
+
+Opciones:
+
+1. **Repetir**: dos días con la misma constelación, cada uno con su progreso.
+   Es simple, pero el universo queda con repetidas.
+2. **Sumar asterismos tradicionales** de las constelaciones grandes (el Cinturón
+   de Orión, el Gran Cuadrado de Pegaso, la Hoz de Leo, la Tetera de Sagitario,
+   la Cruz del Norte, la Piedra Angular de Hércules…), cada uno con capítulos
+   propios del mito de su constelación. Así se llega a unas siete por cantidad
+   entre 3 y 8, que es donde va a estar casi todo el mundo.
+3. **Usar la cantidad vecina** con estrellas "del mito" que no son hábitos.
+   Rompe la regla de la especificación.
+
+Recomiendo la 2, y la 1 solo como último recurso para cantidades raras.
 
 ### D4 · El lema
 

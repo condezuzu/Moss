@@ -35,7 +35,7 @@ SDK y la memoria no alcanza.
 
 | | |
 |---|---|
-| Galería privada | https://claude.ai/artifact/PENDIENTE — se publica con la herramienta Artifact desde `galeria/dist/index.html`, siempre en el mismo enlace |
+| Galería privada | https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr — se republica con la herramienta Artifact desde `galeria/dist/index.html` (después de `npm run galeria`), pasando ese enlace como `url`: así queda en el mismo lugar |
 | Rama | `cimientos` (sale de `master`) |
 | App | `uy.moss.app` · equipo `XF9N8X9KJG` · EAS `condeag` |
 | Supabase | PENDIENTE (D1 en `spec/decisiones.md`) |

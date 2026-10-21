@@ -176,23 +176,29 @@ const Escena = (() => {
       [[14, 84], pos.zeta],
     ]);
     const [vx, vy] = invertirAfin(M, pos.vega);
-    // Brazos en U, apenas más anchos que las cuerdas, que se abren arriba como cuernos: el
-    // derecho termina en Vega. Caja de resonancia chica, de caparazón de tortuga.
-    const cuerno = (s) => aPuntos([
-      ['M', s * 16, 9],
-      ['C', s * 23, 26, s * 24, 54, s * 20, 76],
-      ['C', s * 17.5, 88, s * (vx - 16), vy + 6, s * vx, vy],
-      ['C', s * (vx + 4), vy - 1, s * (vx + 3), vy - 6, s * (vx - 1), vy - 5],
+    const [ex, ey] = invertirAfin(M, pos.epsilon);
+    // Brazos angostos hasta el yugo; arriba se abren en cuernos de carnero: el derecho sale hasta
+    // Vega y se enrosca hacia adentro hasta ε. El izquierdo es su espejo.
+    const subida = [[16, 9], [23, 26], [24, 54], [20, 76]];
+    const brazo = (s) => aPuntos([
+      ['M', s * subida[0][0], subida[0][1]],
+      ['C', s * subida[1][0], subida[1][1], s * subida[2][0], subida[2][1], s * subida[3][0], subida[3][1]],
+      ['C', s * 18.5, 84, s * (vx - 12), vy - 6, s * vx, vy],
+      ['C', s * (vx + 6), vy + 6, s * (ex + 16), ey + 6, s * ex, ey],
+      ['C', s * (ex - 5), ey - 1, s * (ex - 4.5), ey - 6.5, s * (ex - 0.5), ey - 6],
     ]);
+    // El yugo va de brazo a brazo a la altura de δ y ζ.
+    const enYugo = cubica([20, 76], [18.5, 84], [vx - 12, vy - 6], [vx, vy], 80).reduce((m, p) => (Math.abs(p[1] - 84) < Math.abs(m[1] - 84) ? p : m));
+    const xYugo = enYugo[0];
     const trazos = [];
     const agregar = (pts, t0, t1, ancho, brillo, cuerda) => trazos.push({ pts: pts.map((p) => aplicarAfin(M, p)), t0, t1, ancho, brillo, cuerda: cuerda == null ? -1 : cuerda });
-    agregar(cuerno(1), 0.0, 0.45, 1.6, 0.85);
-    agregar(cuerno(-1), 0.0, 0.45, 1.6, 0.85);
+    agregar(brazo(1), 0.0, 0.45, 1.6, 0.85);
+    agregar(brazo(-1), 0.0, 0.45, 1.6, 0.85);
     agregar(aPuntos([['M', -17, 9], ['C', -22, -1, -15, -12, 0, -13], ['C', 15, -12, 22, -1, 17, 9]]), 0.12, 0.5, 1.5, 0.85);
     agregar(aPuntos([['M', -17, 9], ['C', -8, 12.5, 8, 12.5, 17, 9]]), 0.3, 0.5, 1.1, 0.6);
-    agregar(aPuntos([['M', -21.5, 84], ['L', 21.5, 84]]), 0.34, 0.52, 1.6, 0.9);
-    agregar(circulo(-23, 84, 1.8, 12), 0.45, 0.55, 1.1, 0.8);
-    agregar(circulo(23, 84, 1.8, 12), 0.45, 0.55, 1.1, 0.8);
+    agregar(aPuntos([['M', -xYugo, 84], ['L', xYugo, 84]]), 0.34, 0.52, 1.6, 0.9);
+    agregar(circulo(-xYugo, 84, 1.8, 12), 0.45, 0.55, 1.1, 0.8);
+    agregar(circulo(xYugo, 84, 1.8, 12), 0.45, 0.55, 1.1, 0.8);
     agregar(aPuntos([['M', -15.5, 12], ['L', 15.5, 12]]), 0.4, 0.54, 1.4, 0.85);
     for (let i = 0; i < 7; i++) {
       const x = -14 + (28 * i) / 6;
@@ -226,7 +232,7 @@ const Escena = (() => {
   function crear(contenedor, fuentes, opciones) {
     const lienzo = contenedor.querySelector('canvas');
     const ui = contenedor.querySelector('.ui');
-    const motor = Motor.crear(lienzo, fuentes);
+    let motor = Motor.crear(lienzo, fuentes);
     const sp = { datos: new Float32Array(6000 * 12), n: 0, cap: 6000 };
     const spFrente = { datos: new Float32Array(1500 * 12), n: 0, cap: 1500 };
     const ln = { datos: new Float32Array(1200 * 12), n: 0, cap: 1200 };
@@ -254,6 +260,8 @@ const Escena = (() => {
       fps: { cuadros: 0, desde: 0, valor: 0 },
       cuadro: 0,
       pausado: false,
+      perdido: false,
+      fugaz: null, proximaFugaz: 7,
       alCambiar: opciones.alCambiar || (() => {}),
       haptico: opciones.haptico || (() => {}),
     };
@@ -379,7 +387,10 @@ const Escena = (() => {
       dom.tjDia.textContent = tx('cielo.diaCompleto');
       dom.tjNombre.textContent = nombreDe(c.datos.nombres);
       dom.tjGriego.textContent = c.datos.nombres.grc || '';
-      dom.tjMito.textContent = nombreDe(c.datos.frase || m.resumen) || '';
+      // En la tarjeta entra una sola oración del resumen; el mito completo va en su zona del cielo.
+      const resumen = nombreDe(m.resumen) || '';
+      const primera = /^(.+?[.;])(\s|$)/.exec(resumen);
+      dom.tjMito.textContent = nombreDe(c.datos.frase) || (primera ? primera[1].replace(/;$/, '.') : resumen);
       const cap = c.capitulo || { n: 1, total: 6 };
       dom.tjChips.innerHTML = '';
       [tx('cielo.masLuz', { n: luzDelDia(e.habitos.length) }), tx('cielo.capitulo', { n: cap.n, total: cap.total }) + (cap.titulo ? ' · ' + nombreDe(cap.titulo) : '')]
@@ -516,17 +527,11 @@ const Escena = (() => {
       c.centro = c.pos.reduce((s, p) => [s[0] + p[0] / c.pos.length, s[1] + p[1] / c.pos.length], [0, 0]);
       c.figura = null;
       c.figuraAvance = e.completo ? 1 : 0;
-      if (c.datos.id === 'lyra' && c.datos.estrellas.length === 5) {
+      if (c.datos.id === 'lyra') {
         const p = {};
-        c.datos.estrellas.forEach((s, i) => {
-          const l = letraBayer(s);
-          if (l === 'α') p.vega = c.pos[i];
-          if (l === 'β') p.beta = c.pos[i];
-          if (l === 'γ') p.gamma = c.pos[i];
-          if (l === 'δ') p.delta = c.pos[i];
-          if (l === 'ζ') p.zeta = c.pos[i];
-        });
-        if (p.vega && p.beta && p.gamma && p.delta && p.zeta) c.figura = figuraLira(p);
+        const letras = { 'α': 'vega', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ζ': 'zeta', 'ε': 'epsilon' };
+        c.datos.estrellas.forEach((s, i) => { if (letras[letraBayer(s)]) p[letras[letraBayer(s)]] = c.pos[i]; });
+        if (Object.keys(p).length === 6) c.figura = figuraLira(p);
       }
       // Cada etiqueta va del lado de afuera de la figura, para no taparle las líneas. Nunca arriba:
       // la estrella más alta quedaría pegada a la cabecera.
@@ -761,6 +766,18 @@ const Escena = (() => {
         p.par = mezclar(PARALAJE.lomas[2], 1, suave(HORIZONTE - 0.02, HORIZONTE + 0.3, p.y));
       });
 
+      // Una estrella fugaz cada tanto, solo en la zona de hoy.
+      if (!e.fugaz && e.t > e.proximaFugaz && !opciones.movimientoReducido) {
+        const r = Math.random;
+        const izquierda = r() < 0.5;
+        const a = [(r() - 0.5) * e.aspecto * 0.8, 0.12 + r() * 0.3];
+        const ang = (izquierda ? Math.PI : 0) + (izquierda ? 1 : -1) * (0.35 + r() * 0.3);
+        const largo = 0.18 + r() * 0.14;
+        e.fugaz = { a, d: [Math.cos(ang), Math.sin(ang)], largo, t0: e.t, dur: 0.75 + r() * 0.45 };
+        e.proximaFugaz = e.t + 18 + r() * 30;
+      }
+      if (e.fugaz && e.t - e.fugaz.t0 > e.fugaz.dur) e.fugaz = null;
+
       // La luz que sube desde el musgo hasta un hábito automático.
       e.esporasSalud = e.esporasSalud.filter((s) => {
         const u = (e.t - s.t0) / s.dur;
@@ -857,13 +874,15 @@ const Escena = (() => {
       e.universo.forEach((d) => {
         const lineasVisibles = d.hoy ? e.completo : d.hechos >= d.datos.estrellas.length;
         d.datos.lineas.forEach(([a, b]) => {
-          linea(lnUniverso, d.pos[a], d.pos[b], lineasVisibles ? ORO : PERGAMINO, lineasVisibles ? 0.7 : 0.08, lineasVisibles ? 1.1 : 0.7, 1, lineasVisibles ? 0 : 6, 0);
+          linea(lnUniverso, d.pos[a], d.pos[b], lineasVisibles ? ORO : PERGAMINO, lineasVisibles ? 0.7 : 0.15, lineasVisibles ? 1.1 : 0.7, 1, lineasVisibles ? 0 : 6, 0);
         });
         const hechos = d.hoy ? e.habitos.filter((h) => h.encendido).length : d.hechos;
         d.pos.forEach(([x, y], i) => {
           const on = i < hechos;
-          sprite(sp, x, y, on ? 20 : 12, 1, ORO, on ? 0.32 : 0.08, 0);
-          sprite(sp, x, y, on ? 9 : 6, 1, BLANCO_CALIDO, on ? 0.9 : 0.28, 1, on ? 0.35 : 0.05, 0, 0.3);
+          sprite(sp, x, y, on ? 20 : 13, 1, on ? ORO : PERGAMINO, on ? 0.32 : 0.1, 0);
+          sprite(sp, x, y, on ? 9 : 7, 1, BLANCO_CALIDO, on ? 0.9 : 0.5, 1, on ? 0.35 : 0.05, 0, 0.3);
+          // Las de días que todavía no llegaron se ven como las apagadas de hoy: con su aro.
+          if (!on) sprite(sp, x, y, 9, 1, PERGAMINO, 0.22, 2, 0.8, 0.1);
         });
       });
     }
@@ -878,6 +897,21 @@ const Escena = (() => {
         sprite(sp, s.x, s.y, s.tam * 2.4, 1, s.color, s.brillo * 0.16 * tit, 0);
         sprite(sp, s.x, s.y, s.tam, 1, s.color, s.brillo * tit, 1, s.brazos, 0, 0.2);
       });
+
+      if (e.fugaz) {
+        const f = e.fugaz;
+        const u = (e.t - f.t0) / f.dur;
+        const brillo = Math.sin(Math.PI * clamp(u, 0, 1));
+        const cabeza = [f.a[0] + f.d[0] * f.largo * u, f.a[1] + f.d[1] * f.largo * u];
+        // La estela se apaga hacia atrás: cuatro tramos de menos a más.
+        for (let k = 0; k < 4; k++) {
+          const d0 = 0.07 * (k + 1), d1 = 0.07 * k;
+          const p0 = [cabeza[0] - f.d[0] * d0, cabeza[1] - f.d[1] * d0];
+          const p1 = [cabeza[0] - f.d[0] * d1, cabeza[1] - f.d[1] * d1];
+          linea(ln, p0, p1, BLANCO_CALIDO, brillo * (0.18 + 0.2 * (3 - k)), 0.9 + 0.3 * (3 - k), 1, 0, 0);
+        }
+        sprite(sp, cabeza[0], cabeza[1], 10, 1, BLANCO_CALIDO, brillo * 0.9, 0);
+      }
 
       dibujarConstelacion();
       dibujarUniverso();
@@ -986,10 +1020,22 @@ const Escena = (() => {
       dom.uTitulo.style.opacity = suave(0.6, 1.15, e.cam.y);
     }
 
+    // Safari descarta el contexto gráfico cuando la pestaña pasa mucho tiempo en segundo plano:
+    // al volver, se rearma todo lo de la GPU y el estado de la escena sigue igual.
+    lienzo.addEventListener('webglcontextlost', (ev) => { ev.preventDefault(); e.perdido = true; });
+    lienzo.addEventListener('webglcontextrestored', () => {
+      motor = Motor.crear(lienzo, fuentes);
+      e.musgo.lomas = [];
+      e.perdido = false;
+      redimensionar();
+      e.aparicion = 0;
+    });
+
     let ultimo = 0;
     function cuadro(ahora) {
       if (e.pausado) { ultimo = 0; return; }
       requestAnimationFrame(cuadro);
+      if (e.perdido) return;
       const dt = ultimo ? Math.min(0.05, (ahora - ultimo) / 1000) : 1 / 60;
       ultimo = ahora;
       e.cuadro++;
