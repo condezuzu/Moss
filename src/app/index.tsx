@@ -1,24 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
-
-import { t } from '@/textos';
-import { colores } from '@/tema';
+import PantallaDelCielo from '@/cielo/PantallaDelCielo';
 
 export default function Inicio() {
-  return (
-    <View style={estilos.pantalla}>
-      <Text style={estilos.texto}>{t('cielo.armandose')}</Text>
-    </View>
-  );
+  return <PantallaDelCielo />;
 }
-
-const estilos = StyleSheet.create({
-  pantalla: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colores.noche0,
-  },
-  texto: {
-    color: colores.pergamino,
-  },
-});

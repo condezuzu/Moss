@@ -8,25 +8,147 @@
     "luzDeHoy": "light today",
     "encendidas": "{n} of {total} lit",
     "completa": "Day complete",
-    "diaCompleto": "Day complete",
     "encendida": "{habito} · lit",
     "apagada": "{habito} · unlit",
     "seEnciendeSola": "Lights up on its own from Health",
     "desdeSalud": "{habito} · lit from Health",
-    "masLuz": "+{n} light",
-    "capitulo": "Chapter {n} of {total}",
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Your universe"
   },
+  "entrada": {
+    "frase": "We first make our habits, and then our habits make us.",
+    "fraseAutor": "Attributed to John Dryden",
+    "seguir": "Continue",
+    "habitosTitulo": "Your habits are stars",
+    "habitosTexto": "Tap a star to light it. Every day has its own constellation.",
+    "comidaTitulo": "Food, made to measure",
+    "comidaTexto": "Log what you eat and Moss adjusts your targets every week.",
+    "cuenta": {
+      "lema": "Your sky starts here.",
+      "apple": "Continue with Apple",
+      "correo": "Continue with email",
+      "correoCampo": "Email",
+      "claveCampo": "Password",
+      "entrar": "Sign in",
+      "crear": "Create account",
+      "olvide": "I forgot my password",
+      "ascent": "Already on Ascent? Use the same account.",
+      "legal": "By continuing you accept the Terms and the Privacy Policy."
+    },
+    "cuestionario": {
+      "paso": "{n} of {total}",
+      "deSalud": "from Health",
+      "saludTitulo": "Moss works with Health",
+      "saludTexto": "Steps, sleep, mindfulness, water and weight: what Health already knows lights your habits on its own and answers these questions.",
+      "conectar": "Connect to Health",
+      "ahoraNo": "Not now",
+      "edadTitulo": "How old are you?",
+      "anos": "years",
+      "sexoTitulo": "Sex",
+      "sexoTexto": "Only used in your energy expenditure formula.",
+      "femenino": "Female",
+      "masculino": "Male",
+      "alturaTitulo": "How tall are you?",
+      "pesoTitulo": "How much do you weigh?",
+      "pesoTexto": "Moss follows your weight trend, not a single day's number.",
+      "actividadTitulo": "How much do you move on a normal day?",
+      "actividad": {
+        "poco": [
+          "Little",
+          "Desk work, almost no exercise."
+        ],
+        "algo": [
+          "Some",
+          "You walk or train 1 to 3 days a week."
+        ],
+        "activo": [
+          "Quite a lot",
+          "You train 3 to 5 days a week."
+        ],
+        "muy": [
+          "A lot",
+          "You train almost every day or have a physical job."
+        ]
+      },
+      "objetivoTitulo": "What do you want to achieve?",
+      "bajar": "Lose weight",
+      "mantener": "Keep my weight",
+      "subir": "Gain weight",
+      "ritmo": "Pace",
+      "suave": "Gentle",
+      "recomendado": "Recommended",
+      "rapido": "Fast",
+      "ritmoTexto": "{pct}% of your weight a week",
+      "resultadoTitulo": "Your starting point",
+      "resultadoTexto": "Moss adjusts your targets every week from your weight and what you eat.",
+      "kcal": "kcal a day",
+      "proteina": "Protein",
+      "carbohidratos": "Carbs",
+      "grasas": "Fat",
+      "gasto": "Estimated expenditure: {n} kcal",
+      "empezar": "Start"
+    }
+  },
+  "ajustes": {
+    "titulo": "Settings",
+    "calidad": "Animation quality",
+    "idioma": "Language",
+    "salud": "Apple Health",
+    "ascent": "Link with Ascent",
+    "cuenta": "Account",
+    "volver": "Back to the sky"
+  },
   "fecha": {
-    "dias": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    "diasCortos": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    "mesesCortos": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    "dias": [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
+    "diasCortos": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
+    "mesesCortos": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ]
   },
   "comun": {
     "deshacer": "Undo",
     "cancelar": "Cancel",
     "guardar": "Save",
     "listo": "Done"
+  },
+  "diagnostico": {
+    "salud": "Simulate Health",
+    "completar": "Complete the day",
+    "repetir": "Replay the animation",
+    "universo": "Today / Universe",
+    "fugaz": "Shooting star",
+    "reiniciar": "Reset",
+    "cuadros": "{n} fps · {calidad}",
+    "alta": "high",
+    "media": "medium",
+    "baja": "low",
+    "riqueza": "Sky {n}%"
   }
 }

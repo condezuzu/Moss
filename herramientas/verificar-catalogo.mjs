@@ -51,13 +51,9 @@ lista.forEach((e, n) => {
   else idsEntrada.add(e.id);
   if (!texto(e.iau) || !IAU88.has(e.iau)) fallo(`${ctx}: código IAU inválido (${e.iau})`);
   if (!TIPOS.has(e.tipo)) fallo(`${ctx}: tipo inválido (${e.tipo})`);
-  for (const k of ['la', 'es', 'en', 'grc']) if (!texto(e.nombres?.[k])) fallo(`${ctx}: nombres.${k} vacío o ausente`);
-  const m = e.mito;
-  if (!m || typeof m !== 'object') fallo(`${ctx}: falta "mito"`);
-  else {
-    for (const k of ['figura', 'heroe', 'resumen']) for (const l of ['es', 'en']) if (!texto(m[k]?.[l])) fallo(`${ctx}: mito.${k}.${l} vacío o ausente`);
-    if (!Array.isArray(m.fuentes) || m.fuentes.length === 0 || !m.fuentes.every(texto)) fallo(`${ctx}: mito.fuentes debe ser una lista no vacía de textos`);
-  }
+  for (const k of ['la', 'es', 'en']) if (!texto(e.nombres?.[k])) fallo(`${ctx}: nombres.${k} vacío o ausente`);
+  // Los mitos ya no van en la app (el cielo es el protagonista): una entrada no debe traerlos.
+  if ('mito' in e || 'grc' in (e.nombres ?? {})) fallo(`${ctx}: trae mito o nombre griego, que ya no se usan`);
   if ('nota' in e && !texto(e.nota)) fallo(`${ctx}: "nota" presente pero vacía`);
 
   // estrellas

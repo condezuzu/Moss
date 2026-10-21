@@ -1,7 +1,9 @@
 // Las auroras: cortinas con el borde de abajo nítido y rayos que se desvanecen hacia arriba,
-// como las de verdad. Se calcula en cada cuadro pero a resolución reducida (son suaves).
+// como las de verdad. Se calcula en cada cuadro y en el teléfono a resolución completa, así que
+// todo lo que depende solo de la columna usa ruido de una dimensión (ruido1), que es barato.
 // `oleada` va de 0 a 1 cuando se completa el día: las cortinas suben, se aceleran y el borde
-// se vuelve dorado, como una subtormenta real.
+// se vuelve dorado, como una subtormenta real. `riqueza` (ver crece) es el progreso de toda la
+// vida: con más luz juntada, los rayos llegan más alto y la aurora brilla más.
 // Necesita comun.glsl antes.
 
 float alturaCortina(float x, float t, float k, float base, float amp) {
@@ -9,11 +11,23 @@ float alturaCortina(float x, float t, float k, float base, float amp) {
       0.55 * sin(x * 1.7 + t * 0.11 + k * 2.1)
     + 0.30 * sin(x * 3.9 - t * 0.17 + k * 4.3)
     + 0.12 * sin(x * 9.0 + t * 0.35 + k)
-    + 0.80 * (ruido(vec2(x * 1.3 + t * 0.045, k * 7.7)) - 0.5));
+    + 0.80 * (ruido1(x * 1.3 + t * 0.045 + k * 7.7) - 0.5));
 }
 
-vec3 colorAurora(vec2 w, float t, float horizonte, float intensidad, float oleada, float cortinas) {
+// La pendiente sale de los senos solos: el ruido cambia lento y casi no la mueve.
+float pendienteCortina(float x, float t, float k, float amp) {
+  return amp * (
+      0.55 * 1.7 * cos(x * 1.7 + t * 0.11 + k * 2.1)
+    + 0.30 * 3.9 * cos(x * 3.9 - t * 0.17 + k * 4.3)
+    + 0.12 * 9.0 * cos(x * 9.0 + t * 0.35 + k));
+}
+
+vec3 colorAurora(vec2 w, float t, float horizonte, float intensidad, float oleada, float cortinas, float riqueza) {
   vec3 suma = vec3(0.0);
+  if (w.y < horizonte) {
+    return suma;
+  }
+  float crecida = crece(riqueza, 0.7, 1.4);
   for (int i = 0; i < 3; i++) {
     float k = float(i);
     if (k >= cortinas) {
@@ -22,19 +36,18 @@ vec3 colorAurora(vec2 w, float t, float horizonte, float intensidad, float olead
     float x = w.x * (1.0 + 0.22 * k) + k * 3.7;
     float base = horizonte + 0.15 + 0.075 * k + 0.04 * oleada;
     float amp = 0.045 + 0.02 * k + 0.035 * oleada;
-    float h = alturaCortina(x, t, k, base, amp);
-    float e = 0.004;
-    float pendiente = (alturaCortina(x + e, t, k, base, amp) - alturaCortina(x - e, t, k, base, amp)) / (2.0 * e);
-    float dy = w.y - h;
+    float dy = w.y - alturaCortina(x, t, k, base, amp);
+    float pendiente = pendienteCortina(x, t, k, amp);
 
     // Una cortina no ocupa todo el cielo: aparece en tramos, con huecos oscuros entre medio.
-    float tramo = smoothstep(0.14, 0.62, ruido(vec2(x * 0.9 + t * 0.018, k * 3.3 + 1.0)));
+    float tramo = smoothstep(0.14, 0.62, ruido1(x * 0.9 + t * 0.018 + k * 3.3 + 1.0));
     tramo = mix(tramo, 1.0, 0.55 * oleada);
 
-    float rayos = ruido(vec2(x * 42.0, t * 0.22 + k * 5.0));
-    float finos = ruido(vec2(x * 110.0, t * 0.35 + k * 9.0));
+    // Los rayos se corren de costado despacio, como en una aurora de verdad.
+    float rayos = ruido1(x * 42.0 + t * 0.22 + k * 5.0);
+    float finos = ruido1(x * 110.0 - t * 0.35 + k * 9.0);
     // Los rayos más brillantes también llegan más alto.
-    float alto = (0.09 + 0.10 * rayos + 0.06 * ruido(vec2(x * 2.0, t * 0.05 + k))) * (1.0 + 0.9 * oleada);
+    float alto = (0.09 + 0.10 * rayos + 0.06 * ruido1(x * 2.0 + t * 0.05 + k)) * (1.0 + 0.9 * oleada) * crecida;
     float perfil = dy < 0.0 ? exp(dy * 55.0) : exp(-dy / alto);
     // Los rayos mandan también en el borde: si no, la base de la cortina es una barra horizontal.
     float estrias = 0.1 + 0.9 * pow(smoothstep(0.2, 0.95, rayos), 1.5) * (0.7 + 0.3 * finos);
@@ -53,5 +66,5 @@ vec3 colorAurora(vec2 w, float t, float horizonte, float intensidad, float olead
     suma += c * fuerza;
   }
   suma *= smoothstep(horizonte + 0.01, horizonte + 0.12, w.y);
-  return suma * intensidad;
+  return suma * intensidad * crece(riqueza, 0.55, 1.35);
 }

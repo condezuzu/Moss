@@ -55,7 +55,10 @@
         "expo-localization",
         {
           "supportedLocales": {
-            "ios": ["es", "en"]
+            "ios": [
+              "es",
+              "en"
+            ]
           }
         }
       ],
@@ -67,7 +70,8 @@
           "background": false
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

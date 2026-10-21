@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["galeria/servir.mjs"],
       "port": 4173
+    },
+    {
+      "name": "app-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["herramientas/servir-web.mjs"],
+      "port": 4174
     }
   ]
 }

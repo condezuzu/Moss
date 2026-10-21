@@ -8,25 +8,147 @@
     "luzDeHoy": "luz de hoy",
     "encendidas": "{n} de {total} encendidas",
     "completa": "Día completo",
-    "diaCompleto": "Día completo",
     "encendida": "{habito} · encendida",
     "apagada": "{habito} · apagada",
     "seEnciendeSola": "Se enciende sola con Salud",
     "desdeSalud": "{habito} · encendida desde Salud",
-    "masLuz": "+{n} de luz",
-    "capitulo": "Capítulo {n} de {total}",
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Tu universo"
   },
+  "entrada": {
+    "frase": "Primero hacemos nuestros hábitos, después nuestros hábitos nos hacen a nosotros.",
+    "fraseAutor": "Atribuida a John Dryden",
+    "seguir": "Seguir",
+    "habitosTitulo": "Tus hábitos son estrellas",
+    "habitosTexto": "Toca una estrella para encenderla. Cada día tiene su propia constelación.",
+    "comidaTitulo": "Tu comida, a tu medida",
+    "comidaTexto": "Registras lo que comes y Moss ajusta tus metas cada semana.",
+    "cuenta": {
+      "lema": "Tu cielo empieza aquí.",
+      "apple": "Continuar con Apple",
+      "correo": "Continuar con correo",
+      "correoCampo": "Correo",
+      "claveCampo": "Contraseña",
+      "entrar": "Entrar",
+      "crear": "Crear cuenta",
+      "olvide": "Olvidé mi contraseña",
+      "ascent": "¿Ya usas Ascent? Entra con la misma cuenta.",
+      "legal": "Al continuar aceptas los Términos y la Política de privacidad."
+    },
+    "cuestionario": {
+      "paso": "{n} de {total}",
+      "deSalud": "de Salud",
+      "saludTitulo": "Moss se lleva bien con Salud",
+      "saludTexto": "Pasos, sueño, atención plena, agua y peso: lo que Salud ya sabe enciende tus hábitos solo y completa estas preguntas.",
+      "conectar": "Conectar con Salud",
+      "ahoraNo": "Ahora no",
+      "edadTitulo": "¿Cuántos años tienes?",
+      "anos": "años",
+      "sexoTitulo": "Sexo",
+      "sexoTexto": "Solo se usa en la fórmula de tu gasto de energía.",
+      "femenino": "Femenino",
+      "masculino": "Masculino",
+      "alturaTitulo": "¿Cuánto mides?",
+      "pesoTitulo": "¿Cuánto pesas?",
+      "pesoTexto": "Moss sigue la tendencia de tu peso, no el número de un día.",
+      "actividadTitulo": "¿Cuánto te mueves en un día normal?",
+      "actividad": {
+        "poco": [
+          "Poco",
+          "Trabajo sentado, casi sin ejercicio."
+        ],
+        "algo": [
+          "Algo",
+          "Caminas o entrenas de 1 a 3 días por semana."
+        ],
+        "activo": [
+          "Bastante",
+          "Entrenas de 3 a 5 días por semana."
+        ],
+        "muy": [
+          "Mucho",
+          "Entrenas casi todos los días o tu trabajo es físico."
+        ]
+      },
+      "objetivoTitulo": "¿Qué quieres lograr?",
+      "bajar": "Bajar de peso",
+      "mantener": "Mantener mi peso",
+      "subir": "Subir de peso",
+      "ritmo": "Ritmo",
+      "suave": "Suave",
+      "recomendado": "Recomendado",
+      "rapido": "Rápido",
+      "ritmoTexto": "{pct} % de tu peso por semana",
+      "resultadoTitulo": "Tu punto de partida",
+      "resultadoTexto": "Moss ajusta tus metas cada semana con tu peso y lo que comes.",
+      "kcal": "kcal por día",
+      "proteina": "Proteína",
+      "carbohidratos": "Carbohidratos",
+      "grasas": "Grasas",
+      "gasto": "Gasto estimado: {n} kcal",
+      "empezar": "Empezar"
+    }
+  },
+  "ajustes": {
+    "titulo": "Ajustes",
+    "calidad": "Calidad de las animaciones",
+    "idioma": "Idioma",
+    "salud": "Apple Salud",
+    "ascent": "Vincular con Ascent",
+    "cuenta": "Cuenta",
+    "volver": "Volver al cielo"
+  },
   "fecha": {
-    "dias": ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
-    "diasCortos": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
-    "mesesCortos": ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+    "dias": [
+      "domingo",
+      "lunes",
+      "martes",
+      "miércoles",
+      "jueves",
+      "viernes",
+      "sábado"
+    ],
+    "diasCortos": [
+      "Dom",
+      "Lun",
+      "Mar",
+      "Mié",
+      "Jue",
+      "Vie",
+      "Sáb"
+    ],
+    "mesesCortos": [
+      "ene",
+      "feb",
+      "mar",
+      "abr",
+      "may",
+      "jun",
+      "jul",
+      "ago",
+      "sep",
+      "oct",
+      "nov",
+      "dic"
+    ]
   },
   "comun": {
     "deshacer": "Deshacer",
     "cancelar": "Cancelar",
     "guardar": "Guardar",
     "listo": "Listo"
+  },
+  "diagnostico": {
+    "salud": "Simular Salud",
+    "completar": "Completar el día",
+    "repetir": "Repetir la animación",
+    "universo": "Hoy / Universo",
+    "fugaz": "Estrella fugaz",
+    "reiniciar": "Reiniciar",
+    "cuadros": "{n} cps · {calidad}",
+    "alta": "alta",
+    "media": "media",
+    "baja": "baja",
+    "riqueza": "Cielo {n} %"
   }
 }

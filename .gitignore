@@ -43,3 +43,6 @@ yarn-error.*
 
 # capturas de la galería (se regeneran con npm run galeria:capturas)
 capturas/
+
+# CanvasKit para probar Skia en la web (lo copia npm run web:preparar)
+public/canvaskit.wasm
