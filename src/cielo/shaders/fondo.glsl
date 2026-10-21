@@ -48,7 +48,9 @@ vec4 viaLactea(vec2 w, float horizonte, float octavas) {
   vec2 nor = vec2(dir.y, -dir.x);
   vec2 q = w - centro;
   float largo = dot(q, dir);
-  float ancho = dot(q, nor);
+  // Se arquea hacia la derecha al subir, como en una foto panorámica: así cruza el cielo de hoy
+  // y vuelve a pasar por el centro del universo, más arriba.
+  float ancho = dot(q, nor) - 0.18 * largo * largo;
   // El borde serpentea: una banda recta se ve dibujada.
   ancho += (fbm(vec2(largo * 1.1, 4.3), 3.0) - 0.5) * 0.16;
   float bulbo = exp(-pow(largo / 0.40, 2.0));
