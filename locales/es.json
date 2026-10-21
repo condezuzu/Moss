@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Moss",
+    "NSHealthShareUsageDescription": "Moss lee tus pasos, agua, minutos de mindfulness y sueño para encender solas las estrellas de esos hábitos.",
+    "NSHealthUpdateUsageDescription": "Moss no escribe nada en Salud: solo lee los datos que eliges."
+  }
+}

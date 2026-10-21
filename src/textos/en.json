@@ -1,0 +1,32 @@
+{
+  "app": {
+    "nombre": "Moss"
+  },
+  "cielo": {
+    "armandose": "The sky is coming together.",
+    "fecha": "{dia} · {mes} {num}",
+    "luzDeHoy": "light today",
+    "encendidas": "{n} of {total} lit",
+    "completa": "Day complete",
+    "diaCompleto": "Day complete",
+    "encendida": "{habito} · lit",
+    "apagada": "{habito} · unlit",
+    "seEnciendeSola": "Lights up on its own from Health",
+    "desdeSalud": "{habito} · lit from Health",
+    "masLuz": "+{n} light",
+    "capitulo": "Chapter {n} of {total}",
+    "horasMinutos": "{h} h {m} min",
+    "tuUniverso": "Your universe"
+  },
+  "fecha": {
+    "dias": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "diasCortos": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "mesesCortos": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  },
+  "comun": {
+    "deshacer": "Undo",
+    "cancelar": "Cancel",
+    "guardar": "Save",
+    "listo": "Done"
+  }
+}

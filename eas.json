@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json.schemastore.org/eas.json",
+  "cli": {
+    "version": ">= 13.4.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "dev": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "dev",
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium"
+      },
+      "environment": "preview"
+    },
+    "telefono": {
+      "distribution": "internal",
+      "channel": "telefono",
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium"
+      },
+      "environment": "preview"
+    },
+    "simulador": {
+      "distribution": "internal",
+      "channel": "dev",
+      "ios": {
+        "simulator": true,
+        "resourceClass": "m-medium"
+      },
+      "environment": "preview"
+    },
+    "store": {
+      "distribution": "store",
+      "channel": "store",
+      "autoIncrement": true,
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium"
+      },
+      "environment": "preview"
+    }
+  },
+  "submit": {
+    "store": {
+      "ios": {
+        "appleTeamId": "XF9N8X9KJG"
+      }
+    }
+  }
+}
