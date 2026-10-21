@@ -712,7 +712,7 @@ const Escena = (() => {
       if (e.completo) {
         const sube = suave(0.8, 2.2, dc);
         const baja = suave(3.2, 9.0, dc);
-        objI = 1 + sube * (1.7 - 1.0 * baja);
+        objI = 1 + sube * (1.2 - 0.7 * baja);
         objO = sube * (1 - 0.45 * baja);
       }
       const ritmo = 1 - Math.exp(-dt * (e.completo ? 5 : 1.1));

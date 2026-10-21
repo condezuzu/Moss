@@ -43,7 +43,7 @@ vec3 colorAurora(vec2 w, float t, float horizonte, float intensidad, float olead
     float ondas = 0.55 + 0.45 * sin(x * 5.0 - t * (0.55 + 0.9 * oleada) + k * 1.3);
     // Donde la cortina se dobla se ve de canto y brilla más.
     float pliegue = 1.0 + 1.1 * smoothstep(0.4, 1.6, abs(pendiente));
-    float fuerza = perfil * ondas * pliegue * tramo * (0.62 - 0.16 * k);
+    float fuerza = perfil * ondas * pliegue * tramo * (0.38 - 0.10 * k);
 
     vec3 borde = mix(vec3(0.78, 1.00, 0.62), vec3(1.00, 0.86, 0.50), oleada);
     vec3 cuerpo = mix(vec3(0.20, 0.92, 0.55), vec3(0.34, 1.00, 0.60), oleada);
