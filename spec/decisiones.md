@@ -256,6 +256,31 @@ hacen falta las cuentas anónimas.
   interfaz, un toque en un botón (Deshacer, el panel de prueba) le llega además
   al cielo y enciende la estrella de abajo. Lo encontré probando la app en la
   web.
+- **Datos en el teléfono** (etapa 2):
+  - SQLite con `expo-sqlite`, que trae la búsqueda de texto de SQLite (FTS5) para
+    la comida.
+  - Las versiones del esquema van en `PRAGMA user_version`.
+  - En la web, solo para probar, localStorage.
+  - Lo de cada día queda resumido aparte (`dias`): si después cambian los
+    hábitos, los días vividos no se tocan.
+- **Tests con Jest y `jest-expo`**, lo que recomienda Expo. El dominio no importa
+  nada del teléfono, así se prueba solo.
+- **Las constelaciones del dominio**, mientras D3 sigue pendiente:
+  - **Si no alcanzan:** se repite la menos repetida (la opción 1 de D3). Si
+    elegís sumar asterismos (la 2), solo se agregan al catálogo.
+  - **Orden del catálogo:** cada usuario recibe el suyo, así dos personas con
+    los mismos hábitos tienen cielos distintos.
+  - **La primera vez** la semana arranca el lunes, así tu universo ya muestra
+    los siete días.
+  - **Volver a una cantidad:** el día recupera la constelación que tuvo con ella.
+  - **Con más de 15 hábitos en un día** (raro), se usa la más chica de las que
+    tienen más estrellas, con sus estrellas más brillantes.
+- **D5 quedó como una sola línea** (`CRECE_DE_NOCHE` en `src/cielo/dia.ts`):
+  hoy el cielo crece de noche, como recomendé, y cambiarlo es poner `false`.
+- **Las condiciones de los logros** (los nombres esperan D6):
+  - Solsticio es un día con 8 hábitos (10 de luz).
+  - Cometa es volver después de 7 días enteros sin luz.
+  - Los de Ascent, la comida y el sueño llegan con sus etapas.
 - **Galería interactiva**, no capturas como la de Ascent: lo que hay que aprobar
   son animaciones y toques.
 - **Rama `cimientos`**, que sale de `master` (el commit inicial de la plantilla).

@@ -4,9 +4,9 @@ Cada etapa termina en algo que se puede mirar o probar: la galería o el teléfo
 Lo visual nuevo se aprueba primero en la galería y recién después se programa
 (ver [`especificacion.md`](especificacion.md), «Cómo trabajamos»).
 
-**Dónde estamos (21/10/2026):** la etapa 1 está hecha en código y probada en la
-web. Falta la primera build en tu iPhone, que necesita dos pasos tuyos. En la
-galería, para aprobar:
+**Dónde estamos (21/10/2026):** las etapas 1 y 2 están hechas en código y probadas
+en la web: el cielo nativo, y la app que guarda y recuerda. Falta la primera build
+en tu iPhone, que necesita dos pasos tuyos. En la galería, para aprobar:
 
 - la entrada a la app;
 - el flum;
@@ -65,7 +65,36 @@ Falta:
 **Sale:** el cielo de la galería corriendo en tu iPhone, con toque, deshacer y
 día completo, todavía con datos de mentira.
 
-## Etapa 2 · Dominio y datos en el teléfono
+## Etapa 2 · Dominio y datos en el teléfono — hecha en código (21/10/2026)
+
+Hecho:
+
+- **El dominio** en `src/dominio/`: fechas, luz y riqueza, hábitos,
+  constelaciones por día, el resumen de cada día, logros y la semana.
+  - Son funciones puras, sin nada del teléfono, con 42 tests (`npm test`).
+- **El almacén** en `src/almacen/`.
+  - Local primero: un toque se ve al instante y se guarda atrás, en orden.
+  - En el teléfono guarda en SQLite (`moss.db`, con versiones del esquema); en
+    la web, en localStorage.
+- **El cielo lee del almacén**:
+  - la constelación de hoy;
+  - los hábitos y lo encendido;
+  - tu semana;
+  - la riqueza con la luz hasta ayer (D5).
+
+  Cambia de día a la medianoche y al volver a la app.
+- **Hábitos de ejemplo**: la primera vez se arman los de la galería, repartidos
+  en la semana, hasta que exista el editor (etapa 4).
+- **Probado en la web:** se toca una estrella, se recarga y sigue encendida.
+
+Quedan para otras etapas:
+
+- los valores de los hábitos automáticos (Salud, etapa 5);
+- crear y editar hábitos desde la pantalla (etapa 4);
+- dos etiquetas pueden pisarse cuando dos estrellas quedan muy juntas: es un
+  arreglo visual, primero en la galería.
+
+Lo pedido para esta etapa:
 
 - **Hábito**: nombre, ícono, días de la semana, a mano o automático (Salud, y
   después Ascent y la comida) con su meta.

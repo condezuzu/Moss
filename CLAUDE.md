@@ -38,6 +38,15 @@ SDK y la memoria no alcanza.
   `npm run catalogo:verificar`; fuentes y simplificaciones en `spec/catalogo.md`.
 - **Marcar un hábito es instantáneo**: nada caro en el camino del toque. Lo
   espectacular va en el cielo y en las animaciones.
+- **El dominio es puro**: `src/dominio/` no importa nada del teléfono ni de
+  React, y cada regla tiene su test. Las fechas son claves `AAAA-MM-DD` en la
+  hora local del momento en que pasa cada cosa.
+- **Local primero**:
+  - Todo pasa por el almacén (`src/almacen/`): actualiza en memoria al instante y
+    guarda atrás, en orden.
+  - Los días vividos quedan resumidos en `dias` y no se recalculan.
+  - Para cambiar el esquema de SQLite, se suma un bloque en `migrar()`
+    (`src/almacen/sqlite.ts`).
 - **Supabase es el proyecto de Ascent**:
   - Moss vive en el esquema `moss` y **nunca toca `public`** (es de Ascent).
   - **Nunca llama funciones de Ascent**: lee sus tablas desde funciones propias
@@ -45,7 +54,7 @@ SDK y la memoria no alcanza.
 - Paquetes siempre con `npx expo install`.
 - Comentá solo las líneas que tienen un porqué no obvio.
 - **Antes de dar algo por terminado:**
-  - `npm run typecheck`, `npx expo-doctor` y
+  - `npm test`, `npm run typecheck`, `npx expo lint`, `npx expo-doctor` y
     `npx expo export --platform ios --output-dir <carpeta temporal>`.
   - Si tocaste los shaders: `npm run shaders:verificar`.
   - Si tocaste el cielo de la app: `npm run web:exportar` y
@@ -68,13 +77,15 @@ SDK y la memoria no alcanza.
 
 | Comando | Qué hace |
 |---|---|
+| `npm test` | los tests del dominio y del almacén (Jest con `jest-expo`) |
 | `npm run typecheck` | tipos (incluye que `en.json` tenga las claves de `es.json`) |
+| `npx expo lint` | ESLint con la configuración de Expo, que incluye las reglas de React |
 | `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo y los textos de `src/` |
 | `npm run galeria:ver` | sirve la galería en http://localhost:4173 |
 | `npm run galeria:capturas` | capturas a 393×852 @2× en `capturas/galeria` (ver los escenarios abajo) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
 | `npm run web:exportar` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
-| `npm run app:capturas` | capturas de la app en la web: calidad, riqueza, toque, día completo y universo |
+| `npm run app:capturas` | capturas de la app en la web: calidad, riqueza, toque, que se acuerde al recargar, día completo y universo |
 | `npm run catalogo:verificar` | valida el catálogo y las distancias entre estrellas |
 | `npx expo start` | Metro para la build `dev` del teléfono (Expo Go no sirve: Salud necesita build propia) |
 
@@ -106,6 +117,9 @@ El render por software es lento. Por eso la galería tiene cámara lenta
 | Carpeta | Qué hay |
 |---|---|
 | `src/app/` | rutas de Expo Router (hoy, un solo cielo) |
+| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana |
+| `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), sus ganchos y los hábitos de ejemplo |
+| `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |
 | `src/datos/` | catálogo de constelaciones |
@@ -117,9 +131,11 @@ El render por software es lento. Por eso la galería tiene cámara lenta
 `src/cielo/` tiene estas piezas:
 
 - `Cielo.tsx`: el lienzo y los valores por cuadro.
+- `dia.ts`: lo que el cielo de hoy toma del almacén. Separa la forma, que rehace
+  la escena, de lo encendido, que no la rehace.
 - `escena.ts`: los worklets de cada cuadro.
 - `Interfaz.tsx`: el texto y el panel de prueba.
-- `plano.ts`, `musgo.ts` y `mundo.ts`: la geometría y la curva de riqueza.
+- `plano.ts`, `musgo.ts` y `mundo.ts`: la geometría.
 
 `galeria/src/` tiene estas piezas:
 

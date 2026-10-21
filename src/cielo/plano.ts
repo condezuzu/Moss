@@ -8,7 +8,7 @@ import { Skia, type SkPath } from '@shopify/react-native-skia';
 
 import type { Texto } from '@/datos/catalogo';
 import type { EstrellaDelUniverso } from './escena';
-import type { DiaDeMentira } from './mentira';
+import type { DiaDelCielo } from './dia';
 import { encajar, mundoDelFondo, profundidades, proyectar, ZONA_UNIVERSO, type Punto } from './mundo';
 import { armarMusgo, type Brote } from './musgo';
 
@@ -42,15 +42,18 @@ export type PlanoDelMusgo = {
 
 const HUECOS_DEL_UNIVERSO: Punto[] = [[-0.55, 0.3], [0.5, 0.24], [-0.06, 0.07], [-0.58, -0.12], [0.52, -0.1], [-0.24, -0.32], [0.42, -0.36]];
 
-export function armarPlano(ancho: number, alto: number, dia: DiaDeMentira): Plano {
+export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo): Plano {
   const aspecto = ancho / alto;
   const aPantalla = ([x, y]: Punto): Punto => [ancho / 2 + x * alto, alto / 2 - y * alto];
 
+  // Un día sin hábitos no tiene constelación: queda el cielo solo.
   const c = dia.constelacion;
-  const estrellas = encajar(proyectar(c.estrellas), [0, 0.075], aspecto * 0.68, 0.4);
-  const prof = profundidades(estrellas.length, c.lineas);
-  const lineas = c.lineas.map(([a, b]) => (prof[a] <= prof[b] ? { a, b, prof: prof[a] } : { a: b, b: a, prof: prof[b] }));
-  const centro = estrellas.reduce<Punto>((s, p) => [s[0] + p[0] / estrellas.length, s[1] + p[1] / estrellas.length], [0, 0]);
+  const estrellas = c ? encajar(proyectar(c.estrellas), [0, 0.075], aspecto * 0.68, 0.4) : [];
+  const prof = c ? profundidades(estrellas.length, c.lineas) : [];
+  const lineas = (c?.lineas ?? []).map(([a, b]) => (prof[a] <= prof[b] ? { a, b, prof: prof[a] } : { a: b, b: a, prof: prof[b] }));
+  const centro = estrellas.length
+    ? estrellas.reduce<Punto>((s, p) => [s[0] + p[0] / estrellas.length, s[1] + p[1] / estrellas.length], [0, 0])
+    : ([0, 0.075] as Punto);
 
   // Cada etiqueta va del lado de afuera de la constelación, para no taparle las líneas. Nunca
   // arriba: la estrella más alta quedaría pegada a la cabecera. Si de costado no entra, va abajo.
@@ -60,7 +63,7 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDeMentira): Plan
   const etiquetas = estrellas.map((p, i) => {
     const [sx, sy] = aPantalla(p);
     const h = dia.habitos[i];
-    const largo = Math.max(h.nombre.es.length, h.nombre.en.length);
+    const largo = h.nombre.length;
     const anchoEtiqueta = 18 + 6.4 * largo;
     const dx = (p[0] - centro[0]) / anchoFigura;
     let lado: Lado = estrellas.length < 2 || Math.abs(dx) < 0.22 ? 'abajo' : dx > 0 ? 'der' : 'izq';

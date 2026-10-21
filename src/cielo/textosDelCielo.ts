@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import type { Texto } from '@/datos/catalogo';
 import { idioma, t } from '@/textos';
-import type { HabitoDeMentira } from './mentira';
+import type { HabitoDelCielo } from './dia';
 
 // Separador de miles a mano: Intl en español no separa los números de cuatro cifras (8000), y
 // la especificación escribe "8.000 pasos".
@@ -14,12 +14,11 @@ export function nombreEn(texto: Texto) {
   return texto[idioma()];
 }
 
-export function valorAutomatico(h: HabitoDeMentira) {
-  if (h.auto === 'pasos') return `${miles(h.valor ?? 0)} / ${miles(h.meta ?? 0)}`;
-  if (h.auto === 'sueno') {
-    const minutos = h.valor ?? 0;
-    return t('cielo.horasMinutos', { h: Math.floor(minutos / 60), m: minutos % 60 });
-  }
+/** Lo que lleva hoy un hábito automático, o nada si todavía no hay datos (Salud llega en la etapa 5). */
+export function valorAutomatico(h: HabitoDelCielo) {
+  if (h.valor === undefined) return '';
+  if (h.auto === 'pasos') return `${miles(h.valor)} / ${miles(h.meta ?? 0)}`;
+  if (h.auto === 'sueno') return t('cielo.horasMinutos', { h: Math.floor(h.valor / 60), m: h.valor % 60 });
   return '';
 }
 

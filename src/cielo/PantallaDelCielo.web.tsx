@@ -5,21 +5,19 @@
 import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useAlmacenListo } from '@/almacen';
 import { t } from '@/textos';
 import { colores } from '@/tema';
 
 export default function PantallaDelCielo() {
-  return (
-    <WithSkiaWeb
-      opts={{ locateFile: (archivo: string) => `/${archivo}` }}
-      getComponent={() => import('./Cielo')}
-      fallback={
-        <View style={estilos.espera}>
-          <Text style={estilos.texto}>{t('cielo.armandose')}</Text>
-        </View>
-      }
-    />
+  const listo = useAlmacenListo();
+  const espera = (
+    <View style={estilos.espera}>
+      <Text style={estilos.texto}>{t('cielo.armandose')}</Text>
+    </View>
   );
+  if (!listo) return espera;
+  return <WithSkiaWeb opts={{ locateFile: (archivo: string) => `/${archivo}` }} getComponent={() => import('./Cielo')} fallback={espera} />;
 }
 
 const estilos = StyleSheet.create({

@@ -64,7 +64,7 @@ export type Escena = {
   brotes: Brote[];
   universo: EstrellaDelUniverso[];
   factorParticulas: number;
-  /** La riqueza del cielo (0 a 1): el progreso de toda la vida. Ver mundo.ts, riquezaDe. */
+  /** La riqueza del cielo (0 a 1): el progreso de toda la vida. Ver dominio/luz.ts, riquezaDe. */
   riqueza: number;
   movimientoReducido: boolean;
   fondoListo: boolean;

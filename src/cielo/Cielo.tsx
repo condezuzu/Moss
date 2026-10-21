@@ -22,13 +22,16 @@ import {
   type SkPath,
 } from '@shopify/react-native-skia';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, PixelRatio, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { AccessibilityInfo, PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import { useDerivedValue, useFrameCallback, useSharedValue, type DerivedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
+import { elAlmacen } from '@/almacen';
+import { riquezaDe } from '@/dominio/luz';
 import { calidadDeFabrica, unEscalonMenos } from './calidad';
+import { useCieloDeHoy, useEncendidos } from './dia';
 import { efectos } from './efectos';
 import {
   CAPACIDAD_CIELO,
@@ -46,8 +49,8 @@ import {
   type Evento,
 } from './escena';
 import { Interfaz, type Aviso } from './Interfaz';
-import { diaDeMentira } from './mentira';
-import { CALIDADES, HORIZONTE, PARALAJE, riquezaDe, ZONA_UNIVERSO, type Calidad } from './mundo';
+import { CALIDADES, HORIZONTE, PARALAJE, ZONA_UNIVERSO, type Calidad } from './mundo';
+import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
 import { useTextos } from './textosDelCielo';
 import { colores } from '@/tema';
@@ -65,16 +68,18 @@ export default function Cielo() {
   const [calidad, setCalidad] = useState<Calidad>(calidadDeFabrica);
   const ajustes = CALIDADES[calidad];
   const [movimientoReducido, setMovimientoReducido] = useState(false);
-  const dia = useMemo(diaDeMentira, []);
-  // Lo que React sabe del día: alcanza para el texto. Lo que se anima vive en la escena.
-  const [encendidos, setEncendidos] = useState(() => dia.habitos.map((h) => h.encendido));
-  const [completo, setCompleto] = useState(() => dia.habitos.every((h) => h.encendido));
+  // El día viene del almacén. Lo que React sabe alcanza para el texto; lo que se anima vive en la
+  // escena, y un toque se guarda después de verse.
+  const dia = useCieloDeHoy();
+  const encendidos = useEncendidos();
+  const completo = encendidos.length > 0 && encendidos.every(Boolean);
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [cuadros, setCuadros] = useState(0);
   const [fondoListo, setFondoListo] = useState(false);
   const [vuelta, setVuelta] = useState(0);
-  // El progreso es el cielo: sale de la luz juntada desde siempre (el panel de prueba la cambia).
-  const [riqueza, setRiqueza] = useState(() => riquezaDe(dia.luzAcumulada));
+  // El progreso es el cielo: sale de la luz juntada desde siempre. El panel de prueba la puede forzar.
+  const [riquezaForzada, setRiquezaForzada] = useState<number | null>(null);
+  const riqueza = riquezaForzada ?? riquezaDe(dia.luzAcumulada);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setMovimientoReducido).catch(() => {});
@@ -83,33 +88,42 @@ export default function Cielo() {
   const plano: Plano = useMemo(() => armarPlano(ancho, alto, dia), [ancho, alto, dia]);
   const musgo = useMemo(() => armarPlanoDelMusgo(ancho, alto, riqueza), [ancho, alto, riqueza]);
 
-  // Lo que la escena toma del momento en que se arma. La calidad y la riqueza no la rehacen: se
-  // cambian en la que está (más abajo), así el cielo no vuelve a aparecer desde negro.
-  const actual = useRef({ encendidos, particulas: ajustes.particulas, brotes: musgo.brotes, riqueza });
-  actual.current = { encendidos, particulas: ajustes.particulas, brotes: musgo.brotes, riqueza };
-
-  const nuevaEscena = useCallback(() => {
-    const a = actual.current;
-    return crearEscena({
-      ancho,
-      alto,
-      habitos: plano.estrellas.map(([x, y], i) => ({ x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto })),
-      lineas: plano.lineas,
-      centro: plano.centro,
-      brotes: a.brotes,
-      universo: plano.universo.estrellas,
-      factorParticulas: a.particulas,
-      riqueza: a.riqueza,
-      movimientoReducido,
-    });
-  }, [ancho, alto, plano, dia, movimientoReducido]);
-
-  const [escenaInicial] = useState(nuevaEscena);
-  const escena = useSharedValue<Escena>(escenaInicial);
-  // Otro tamaño o reiniciar: escena nueva con los hábitos como están.
+  // Solo en la web, que es donde se prueba: dónde quedó cada estrella, para las capturas automáticas.
   useEffect(() => {
-    escena.value = nuevaEscena();
-    setFondoListo(false);
+    if (Platform.OS !== 'web') return;
+    (globalThis as { __cielo?: unknown }).__cielo = {
+      estrellas: plano.etiquetas.map((e) => [e.x, e.y]),
+      habitos: dia.habitos.map((h) => ({ nombre: h.nombre, auto: !!h.auto })),
+    };
+  }, [plano, dia]);
+
+  const nuevaEscena = useCallback(
+    (a: { encendidos: boolean[]; particulas: number; brotes: Brote[]; riqueza: number }) =>
+      crearEscena({
+        ancho,
+        alto,
+        habitos: plano.estrellas.map(([x, y], i) => ({ x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto })),
+        lineas: plano.lineas,
+        centro: plano.centro,
+        brotes: a.brotes,
+        universo: plano.universo.estrellas,
+        factorParticulas: a.particulas,
+        riqueza: a.riqueza,
+        movimientoReducido,
+      }),
+    [ancho, alto, plano, dia, movimientoReducido],
+  );
+
+  // Lo que la escena toma del momento en que se arma. Lo encendido, la calidad y la riqueza no la
+  // rehacen: se cambian en la que está (más abajo), así el cielo no vuelve a aparecer desde negro.
+  const deAhora = () => ({ encendidos, particulas: ajustes.particulas, brotes: musgo.brotes, riqueza });
+  const valoresDeAhora = useEffectEvent(deAhora);
+  const [escenaInicial] = useState(() => nuevaEscena(deAhora()));
+  const escena = useSharedValue<Escena>(escenaInicial);
+  // Otro tamaño, otro día u otros hábitos, o reiniciar: escena nueva con los hábitos como están.
+  // La textura del cielo fijo sigue siendo la misma, así que el cielo aparece enseguida.
+  useEffect(() => {
+    escena.value = nuevaEscena(valoresDeAhora());
   }, [nuevaEscena, vuelta, escena]);
   useEffect(() => {
     const particulas = ajustes.particulas;
@@ -177,20 +191,20 @@ export default function Cielo() {
         if (ev.tipo === 'lento') { setCalidad((c) => unEscalonMenos(c)); continue; }
         if (ev.tipo === 'listo') { setFondoListo(true); continue; }
         if (ev.tipo === 'completo') {
-          setCompleto(true);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
           continue;
         }
-        if (ev.tipo === 'incompleto') { setCompleto(false); continue; }
+        if (ev.tipo === 'incompleto') continue;
         const h = dia.habitos[ev.indice];
-        const nombre = t.nombre(h.nombre);
+        const nombre = h.nombre;
         if (ev.tipo === 'automatico') {
           Haptics.selectionAsync().catch(() => {});
-          setAviso({ texto: `${t.t('cielo.seEnciendeSola')} · ${t.valorAutomatico(h)}`, clave: Date.now() });
+          const valor = t.valorAutomatico(h);
+          setAviso({ texto: valor ? `${t.t('cielo.seEnciendeSola')} · ${valor}` : t.t('cielo.seEnciendeSola'), clave: Date.now() });
           continue;
         }
         const prendida = ev.tipo !== 'apagada';
-        setEncendidos((antes) => antes.map((v, i) => (i === ev.indice ? prendida : v)));
+        elAlmacen().marcar(h.id, prendida, ev.tipo === 'salud' ? 'salud' : 'toque');
         if (ev.tipo === 'salud') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
           setAviso({ texto: t.t('cielo.desdeSalud', { habito: nombre }), clave: Date.now() });
@@ -211,7 +225,7 @@ export default function Cielo() {
                   return e;
                 }, true);
               });
-              setEncendidos((antes) => antes.map((v, i) => (i === indice ? !prendida : v)));
+              elAlmacen().marcar(h.id, !prendida, 'deshacer');
               setAviso(null);
             },
           });
@@ -449,17 +463,16 @@ export default function Cielo() {
       repetir: () => enLaEscena((e) => { 'worklet'; repetirAnimacion(e); }),
       universo: () => enLaEscena((e) => { 'worklet'; e.cam.objetivo = e.cam.objetivo > 0 ? 0 : ZONA_UNIVERSO; e.cam.v = 0; }),
       fugaz: () => enLaEscena((e) => { 'worklet'; lanzarFugaz(e); }),
+      // Apaga todo lo de hoy en el almacén y rearma la escena con eso.
       reiniciar: () => {
-        const inicio = dia.habitos.map((h) => h.encendido);
-        setEncendidos(inicio);
-        setCompleto(inicio.every(Boolean));
+        elAlmacen().reiniciarHoy();
         setAviso(null);
         setVuelta((v) => v + 1);
       },
       calidad: setCalidad,
-      riqueza: setRiqueza,
+      riqueza: setRiquezaForzada,
     }),
-    [enLaEscena, dia],
+    [enLaEscena],
   );
 
   // Los gestos van solo sobre el lienzo: si envolvieran también a la interfaz, un toque en un

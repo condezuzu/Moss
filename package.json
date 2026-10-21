@@ -23,6 +23,7 @@
     "expo-localization": "~58.0.5",
     "expo-router": "~58.0.25",
     "expo-splash-screen": "~58.0.11",
+    "expo-sqlite": "~58.0.13",
     "expo-status-bar": "~58.0.4",
     "expo-symbols": "~58.0.4",
     "expo-system-ui": "~58.0.6",
@@ -41,6 +42,10 @@
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~58.0.4",
+    "jest": "~30.5.2",
+    "jest-expo": "~58.0.12",
     "playwright": "^1.62.1",
     "typescript": "~6.0.3"
   },
@@ -59,7 +64,20 @@
     "web:preparar": "setup-skia-web public",
     "web:exportar": "setup-skia-web public && expo export --platform web --output-dir dist/web",
     "web:ver": "node herramientas/servir-web.mjs",
-    "app:capturas": "node herramientas/capturar-app.mjs capturas/app"
+    "app:capturas": "node herramientas/capturar-app.mjs capturas/app",
+    "test": "jest"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "preset": "jest-expo",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/galeria/",
+      "/dist/",
+      "/capturas/"
+    ]
+  }
 }

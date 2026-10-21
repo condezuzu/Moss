@@ -12,8 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { lista, t } from '@/textos';
 import { colores } from '@/tema';
 import type { Escena } from './escena';
-import type { DiaDeMentira } from './mentira';
-import { luzDelDia, PARALAJE, type Calidad } from './mundo';
+import { luzDelDia } from '@/dominio/luz';
+import type { DiaDelCielo } from './dia';
+import { PARALAJE, type Calidad } from './mundo';
 import type { Plano } from './plano';
 import { nombreEn, valorAutomatico } from './textosDelCielo';
 
@@ -32,7 +33,7 @@ type Acciones = {
 
 type Props = {
   plano: Plano;
-  dia: DiaDeMentira;
+  dia: DiaDelCielo;
   escena: SharedValue<Escena>;
   encendidos: boolean[];
   completo: boolean;
@@ -110,6 +111,8 @@ export function Interfaz(p: Props) {
         {p.plano.etiquetas.map((e, i) => {
           const h = p.dia.habitos[i];
           const encendida = p.encendidos[i];
+          // Un automático encendido muestra al menos su meta; sin datos todavía, nada.
+          const textoAuto = !h.auto ? '' : encendida && h.meta ? valorAutomatico({ ...h, valor: Math.max(h.valor ?? 0, h.meta) }) : valorAutomatico(h);
           const posicion =
             e.lado === 'abajo' ? { left: e.x - 90, top: e.y + 14, width: 180, alignItems: 'center' as const }
               : e.lado === 'der' ? { left: e.x + 22, top: e.y - 9, width: 180, alignItems: 'flex-start' as const }
@@ -118,9 +121,9 @@ export function Interfaz(p: Props) {
             <View key={i} style={[estilos.etiqueta, posicion]}>
               <View style={estilos.etiquetaFila}>
                 <SymbolView name={h.icono as SFSymbol} size={11} tintColor={encendida ? colores.oroClaro : colores.pergaminoTenue} />
-                <Text style={[estilos.etiquetaNombre, encendida && estilos.etiquetaEncendida]}>{nombreEn(h.nombre)}</Text>
+                <Text style={[estilos.etiquetaNombre, encendida && estilos.etiquetaEncendida]}>{h.nombre}</Text>
               </View>
-              {h.auto && <Text style={[estilos.etiquetaAuto, encendida && { opacity: 0.7 }]}>{encendida && h.meta ? valorAutomatico({ ...h, valor: Math.max(h.valor ?? 0, h.meta) }) : valorAutomatico(h)}</Text>}
+              {textoAuto ? <Text style={[estilos.etiquetaAuto, encendida && { opacity: 0.7 }]}>{textoAuto}</Text> : null}
             </View>
           );
         })}
@@ -130,7 +133,7 @@ export function Interfaz(p: Props) {
         <View style={estilos.cabeceraFila}>
           <View>
             <Text style={estilos.fecha}>{fecha}</Text>
-            <Text style={estilos.nombre}>{nombreEn(c.nombres)}</Text>
+            {c && <Text style={estilos.nombre}>{nombreEn(c.nombres)}</Text>}
           </View>
           <View style={estilos.luz}>
             <Text style={estilos.luzNumero}>{luzDelDia(hechos)}</Text>
