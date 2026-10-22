@@ -31,7 +31,7 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { elAlmacen } from '@/almacen';
 import { riquezaDe } from '@/dominio/luz';
 import { calidadDeFabrica, unEscalonMenos } from './calidad';
-import { useCieloDeHoy, useEncendidos } from './dia';
+import { useCalidadElegida, useCieloDeHoy, useEncendidos } from './dia';
 import { efectos } from './efectos';
 import {
   CAPACIDAD_CIELO,
@@ -102,7 +102,12 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   const camaraDeLaEntrada = entrada?.camara;
   const { width: ancho, height: alto } = useWindowDimensions();
   const dpr = PixelRatio.get();
-  const [calidad, setCalidad] = useState<Calidad>(calidadDeFabrica);
+  // La elegida en Perfil manda; si no, la automática, que arranca según el modelo y baja un
+  // escalón si el teléfono no llega. El panel de prueba la puede forzar.
+  const elegida = useCalidadElegida();
+  const [automatica, setAutomatica] = useState<Calidad>(calidadDeFabrica);
+  const [delPanel, setDelPanel] = useState<Calidad | null>(null);
+  const calidad = delPanel ?? elegida ?? automatica;
   const ajustes = CALIDADES[calidad];
   const [movimientoReducido, setMovimientoReducido] = useState(false);
   // El día viene del almacén. Lo que React sabe alcanza para el texto; lo que se anima vive en la
@@ -240,7 +245,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     (eventos: Evento[]) => {
       for (const ev of eventos) {
         if (ev.tipo === 'cuadros') { setCuadros(ev.valor); continue; }
-        if (ev.tipo === 'lento') { setCalidad((c) => unEscalonMenos(c)); continue; }
+        if (ev.tipo === 'lento') { setAutomatica((c) => unEscalonMenos(c)); continue; }
         if (ev.tipo === 'listo') { setFondoListo(true); continue; }
         if (ev.tipo === 'completo') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -581,7 +586,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         setAviso(null);
         setVuelta((v) => v + 1);
       },
-      calidad: setCalidad,
+      calidad: setDelPanel,
       riqueza: setRiquezaForzada,
     }),
     [enLaEscena],

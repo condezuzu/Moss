@@ -3,6 +3,7 @@
 // pendiente a la cuenta y mezcla acá lo que baja. Tiene los hábitos y el cielo, el perfil, las
 // metas y el peso, y lo que se come (src/dominio/registros.ts).
 
+import type { Calidad } from '@/cielo/mundo';
 import type { Constelacion } from '@/datos/catalogo';
 import type { Sistema } from '@/dominio/cantidades';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
@@ -51,6 +52,8 @@ export type Estado = MapasDeComida & {
   inicio: { orden: string[]; visibles: string[] } | null;
   /** Las comidas que avisan si no se anotaron; apagados, null. Queda en el teléfono. */
   recordatorios: Comida[] | null;
+  /** La calidad de las animaciones, si se eligió en Perfil; sin elegir, la automática. Queda en el teléfono. */
+  calidad: Calidad | null;
   /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
   salud: LoDeSalud | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
@@ -79,11 +82,13 @@ export const DIAS_DE_MARCAS = 14;
 /** Cuántos días de lo comido se tienen a mano: alcanzan para el control (tres semanas), el mes y lo que solés comer. */
 export const DIAS_DE_COMIDA = 120;
 
-/** La canasta y el sistema de unidades van en los ajustes del teléfono: no se sincronizan. */
+/** Lo que va en los ajustes del teléfono no se sincroniza: la canasta, las unidades, Inicio, los recordatorios y la calidad. */
 const CANASTA = 'canasta';
 const SISTEMA = 'sistema';
 const INICIO = 'inicio';
 const RECORDATORIOS = 'recordatorios';
+const CALIDAD = 'calidad';
+const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 
 /** Un id para lo que se crea en el teléfono: la hora y un azar, así dos teléfonos de la misma cuenta no se pisan. */
 const idNuevo = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -150,7 +155,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, salud: null, semilla: '',
+    recordatorios: null, calidad: null, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -241,7 +246,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, listo: true }, true);
     revisarControl();
   }
 
@@ -519,6 +524,11 @@ export function crearAlmacen(op: Opciones) {
     ponerSistema(sistema: Sistema) {
       guardar((r) => r.guardarAjuste(SISTEMA, sistema));
       cambiar({ sistema }, false);
+    },
+    /** La calidad de las animaciones; null vuelve a la automática. */
+    ponerCalidad(calidad: Calidad | null) {
+      guardar((r) => r.guardarAjuste(CALIDAD, calidad ?? ''));
+      cambiar({ calidad }, false);
     },
     ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
     cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),

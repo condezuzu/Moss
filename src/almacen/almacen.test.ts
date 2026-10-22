@@ -67,6 +67,17 @@ describe('local primero', () => {
     expect(almacen.estado().logros.map((l) => l.id)).toEqual(['primeraLuz', 'constelacion']);
   });
 
+  it('la calidad elegida en Perfil se recuerda, y null vuelve a la automática', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().calidad).toBeNull();
+    almacen.ponerCalidad('baja');
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().calidad).toBe('baja');
+    almacen.ponerCalidad(null);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().calidad).toBeNull();
+  });
+
   it('marcar no cambia la forma del cielo; cambiar hábitos sí', async () => {
     const { almacen } = await armar();
     const forma = almacen.estado().forma;

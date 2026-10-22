@@ -777,7 +777,14 @@
     "recordatoriosLlave": "Remind me to log meals",
     "recordatoriosTexto": "A little after your usual time, and only if you haven’t logged that meal yet. If you don’t open Moss for a week, they stop on their own.",
     "recordatoriosSinPermiso": "To remind you, Moss needs permission for notifications: turn it on in the iPhone’s Settings.",
-    "recordatoriosComidas": "Which meals"
+    "recordatoriosComidas": "Which meals",
+    "calidades": {
+      "automatica": "Automatic",
+      "alta": "High",
+      "media": "Medium",
+      "baja": "Low"
+    },
+    "calidadTexto": "Automatic chooses for your iPhone and steps down by itself if the sky stutters. Low uses less battery."
   },
   "fecha": {
     "dias": [

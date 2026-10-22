@@ -96,6 +96,12 @@ export function useCieloDeHoy(): DiaDelCielo {
   });
 }
 
+/** La calidad elegida en Perfil, o null si es la automática. */
+export function useCalidadElegida() {
+  const a = elAlmacen();
+  return useSyncExternalStore(a.suscribir, () => a.estado().calidad);
+}
+
 /** Qué hábito de hoy está encendido, en el orden de las estrellas. */
 export function useEncendidos(): boolean[] {
   const a = elAlmacen();

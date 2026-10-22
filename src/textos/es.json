@@ -777,7 +777,14 @@
     "recordatoriosLlave": "Recordarme anotar las comidas",
     "recordatoriosTexto": "Un rato después de tu hora de siempre, y solo si todavía no anotaste esa comida. Si no abres Moss en una semana, paran solos.",
     "recordatoriosSinPermiso": "Para avisarte, Moss necesita permiso para las notificaciones: actívalo en los Ajustes del iPhone.",
-    "recordatoriosComidas": "De qué comidas"
+    "recordatoriosComidas": "De qué comidas",
+    "calidades": {
+      "automatica": "Automática",
+      "alta": "Alta",
+      "media": "Media",
+      "baja": "Baja"
+    },
+    "calidadTexto": "La automática elige según tu iPhone y baja sola si el cielo se traba. La baja gasta menos batería."
   },
   "fecha": {
     "dias": [
