@@ -534,10 +534,21 @@ for (const a of alimentos.values()) {
   if (d.ml || d.densidad) {
     let densidad = d.densidad && d.densidad !== true ? Number(d.densidad) : null;
     if (!densidad) {
-      const lista = [...(porAlimento.get(a.id) ?? []), ...(a.propias ?? []).map((p) => ({ en: p.en ?? '', gramos: p.gramos }))];
-      const taza = lista.find((p) => /^1 cup\b/i.test(p.en));
-      const onza = lista.find((p) => /^1 fl oz\b/i.test(p.en));
-      densidad = taza ? taza.gramos / TAZA_ML : onza ? onza.gramos / ONZA_ML : null;
+      // Primero lo medido por USDA: la taza o la onza líquida. Si no hay, una porción que dice sus ml
+      // («1 vaso (200 ml)»), y al final una taza propia. Antes una taza propia de «(240 ml)» se tomaba
+      // como una de USDA, de 236,6 ml.
+      const deUsda = porAlimento.get(a.id) ?? [];
+      const propias = (a.propias ?? []).map((p) => ({ en: p.en ?? '', es: p.es, gramos: p.gramos }));
+      const mlDe = (p) => `${p.en} ${p.es ?? ''}`.match(/\((\d+(?:[.,]\d+)?)\s*ml\)/i);
+      const taza = (lista) => lista.find((p) => /^1 cup\b/i.test(p.en) && !mlDe(p));
+      const onza = deUsda.find((p) => /^1 fl oz\b/i.test(p.en));
+      const conMl = [...deUsda, ...propias].find((p) => mlDe(p));
+      const tazaDeUsda = taza(deUsda);
+      const tazaPropia = taza(propias);
+      densidad = tazaDeUsda ? tazaDeUsda.gramos / TAZA_ML
+        : onza ? onza.gramos / ONZA_ML
+          : conMl ? conMl.gramos / Number(mlDe(conMl)[1].replace(',', '.'))
+            : tazaPropia ? tazaPropia.gramos / TAZA_ML : null;
     }
     if (!(densidad >= 0.3 && densidad <= 2)) errores.push(`${donde}: ${densidad ? `la densidad (${densidad}) no es posible` : 'no hay una taza ni una onza líquida para sacar la densidad: «densidad=…»'}`);
     else a.densidad = Math.round(densidad * 1000) / 1000;
