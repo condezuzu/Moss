@@ -207,6 +207,21 @@ export function cambiarHabito(e: Escena, i: number, encender: boolean, desdeSalu
   }
 }
 
+/**
+ * Lo que se encendió o se apagó fuera del cielo (la comida, Salud u otro teléfono) llega a la escena
+ * que está, con su brillo. Ya está guardado: no se avisa ni se vuelve a marcar. El día completo sí
+ * se celebra.
+ */
+export function ponerEncendidos(e: Escena, encendidos: boolean[]) {
+  'worklet';
+  const antes = e.eventos.length;
+  for (let i = 0; i < e.habitos.length && i < encendidos.length; i++) {
+    if (e.habitos[i].encendido !== encendidos[i]) cambiarHabito(e, i, encendidos[i], false);
+  }
+  const nuevos = e.eventos.splice(antes);
+  for (const x of nuevos) if (x.tipo === 'completo' || x.tipo === 'incompleto') e.eventos.push(x);
+}
+
 /** La estrella de un hábito que queda bajo (px, py), en puntos, o -1. */
 export function estrellaEn(e: Escena, px: number, py: number): number {
   'worklet';

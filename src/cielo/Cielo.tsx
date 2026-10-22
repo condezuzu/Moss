@@ -43,6 +43,7 @@ import {
   estrellaEn,
   lanzarFugaz,
   paso,
+  ponerEncendidos,
   repetirAnimacion,
   simularSalud,
   tocar,
@@ -173,6 +174,19 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       });
     });
   }, [ajustes.particulas, musgo, riqueza, escena]);
+  // Lo que se enciende fuera del cielo (la comida, Salud, otro teléfono) llega a la escena que está.
+  // Lo que se tocó acá ya está igual y no cambia nada.
+  useEffect(() => {
+    const lista = encendidos;
+    scheduleOnUI(() => {
+      'worklet';
+      escena.modify((e) => {
+        'worklet';
+        ponerEncendidos(e, lista);
+        return e;
+      });
+    });
+  }, [encendidos, escena]);
 
   const t = useTextos();
 
