@@ -45,7 +45,18 @@
       "crear": "Crear cuenta",
       "olvide": "Olvidé mi contraseña",
       "ascent": "¿Ya usas Ascent? Entra con la misma cuenta.",
-      "legal": "Al continuar aceptas los Términos y la Política de privacidad."
+      "legal": "Al continuar aceptas los Términos y la Política de privacidad.",
+      "errores": {
+        "credenciales": "El correo o la contraseña no coinciden.",
+        "conexion": "No hay conexión. Inténtalo de nuevo.",
+        "confirmar": "Te enviamos un correo: confírmalo y vuelve a entrar.",
+        "existe": "Ya hay una cuenta con ese correo: entra con tu contraseña.",
+        "clave": "La contraseña tiene que tener al menos 8 caracteres.",
+        "correo": "Escribe tu correo.",
+        "otro": "No se pudo entrar. Inténtalo de nuevo."
+      },
+      "enviado": "Te enviamos un correo para cambiar la contraseña.",
+      "sinCuenta": "Esta versión de prueba no tiene cuenta: Moss guarda todo en el teléfono."
     },
     "cuestionario": {
       "paso": "{n} de {total}",
@@ -98,7 +109,8 @@
       "carbohidratos": "Carbohidratos",
       "grasas": "Grasas",
       "gasto": "Gasto estimado: {n} kcal",
-      "empezar": "Empezar"
+      "empezar": "Empezar",
+      "sinSalud": "No se pudo leer Salud. Puedes seguir y contestar a mano."
     }
   },
   "comida": {

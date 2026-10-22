@@ -124,10 +124,10 @@ function estrellasDeFondo(ancho: number, alto: number) {
   return Array.from({ length: 70 }, () => ({ x: azar() * ancho, y: azar() * alto, r: 0.3 + azar() * 0.6, a: 0.08 + azar() * 0.22 }));
 }
 
-export type PropsDeMiniCielo = { constelacion: Constelacion; encendidas: boolean[]; ancho: number; alto: number };
+export type PropsDeMiniCielo = { constelacion: Constelacion; encendidas: boolean[]; ancho: number; alto: number; /** Sin las estrellas de fondo: encima del cielo de verdad (la entrada). */ sinFondo?: boolean };
 
 /** La constelación de hoy en chico, con lo encendido y unas estrellas de fondo, quietas. */
-export function MiniCieloSkia({ constelacion, encendidas, ancho, alto }: PropsDeMiniCielo) {
+export function MiniCieloSkia({ constelacion, encendidas, ancho, alto, sinFondo }: PropsDeMiniCielo) {
   const dibujo = useMemo(() => {
     const aspecto = ancho / alto;
     const plano = encajar(proyectar(constelacion.estrellas), [0, 0], (aspecto - 60 / alto) * 0.9, 0.38);
@@ -141,7 +141,7 @@ export function MiniCieloSkia({ constelacion, encendidas, ancho, alto }: PropsDe
   return (
     <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
       <Rect x={0} y={0} width={ancho} height={alto} color="transparent" />
-      {dibujo.fondo.map((f, i) => (
+      {!sinFondo && dibujo.fondo.map((f, i) => (
         <Circle key={i} cx={f.x} cy={f.y} r={f.r} color={`rgba(239, 230, 207, ${f.a.toFixed(2)})`} />
       ))}
       <Path path={dibujo.lineas} style="stroke" strokeWidth={1} strokeCap="round" color={completa ? 'rgba(232, 196, 106, 0.7)' : 'rgba(232, 196, 106, 0.22)'} />

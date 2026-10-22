@@ -45,7 +45,18 @@
       "crear": "Create account",
       "olvide": "I forgot my password",
       "ascent": "Already on Ascent? Use the same account.",
-      "legal": "By continuing you accept the Terms and the Privacy Policy."
+      "legal": "By continuing you accept the Terms and the Privacy Policy.",
+      "errores": {
+        "credenciales": "That email and password don’t match.",
+        "conexion": "No connection. Try again.",
+        "confirmar": "We sent you an email: confirm it and sign in again.",
+        "existe": "There’s already an account with that email: sign in with your password.",
+        "clave": "Your password needs at least 8 characters.",
+        "correo": "Enter your email.",
+        "otro": "Couldn’t sign in. Try again."
+      },
+      "enviado": "We sent you an email to reset your password.",
+      "sinCuenta": "This test build has no account: Moss keeps everything on the phone."
     },
     "cuestionario": {
       "paso": "{n} of {total}",
@@ -98,7 +109,8 @@
       "carbohidratos": "Carbs",
       "grasas": "Fat",
       "gasto": "Estimated expenditure: {n} kcal",
-      "empezar": "Start"
+      "empezar": "Start",
+      "sinSalud": "Couldn’t read Health. You can go on and answer by hand."
     }
   },
   "comida": {

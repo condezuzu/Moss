@@ -2,12 +2,13 @@
 // arriba de Hábitos (cambio 10), como se aprobaron en la galería. Se pasa de una a otra tocando su
 // nombre o deslizando, con el gesto de Ascent; el cielo queda quieto detrás de todas, oscurecido
 // salvo en Hábitos, y la constelación va con su página. Abre en Inicio: la comida es el centro.
+// Sin perfil, primero la entrada, sobre el mismo cielo: al terminarla aparece Inicio.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -18,8 +19,10 @@ import { Ascent } from './Ascent';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO, type Pestana } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
 import { AvisoAbajo } from './comida/comunes';
+import { useEstado } from './comida/datos';
 import { HojaRegistro } from './comida/HojaRegistro';
 import { quitarAviso, useAviso, useRegistro } from './comida/registro';
+import { Entrada } from './entrada/Entrada';
 import { HojaMas, type VistaDelMas } from './HojaMas';
 import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDeProgreso } from './progreso/Progreso';
@@ -57,8 +60,17 @@ export default function Secciones() {
   }, [actual]);
   const armada = (i: number) => Math.abs(i - actual) <= 1 || Math.abs(i - anterior) <= 1;
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
-  // Con Ascent arriba o una hoja abierta, las pestañas no se deslizan.
-  const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0);
+  // La entrada: el cielo solo, con la cámara donde la pide cada pantalla.
+  const { listo, perfil } = useEstado();
+  const enEntrada = listo && !perfil;
+  const camaraDeLaEntrada = useSharedValue(0);
+  const entrada = useMemo(() => (enEntrada ? { camara: camaraDeLaEntrada } : undefined), [enEntrada, camaraDeLaEntrada]);
+  const conEntrada = useSharedValue(false);
+  useEffect(() => {
+    conEntrada.set(enEntrada);
+  }, [enEntrada, conEntrada]);
+  // Con Ascent arriba, una hoja abierta o en la entrada, las pestañas no se deslizan.
+  const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0 && !conEntrada.get());
 
   const cambiarDePestana = (i: number) => {
     if (i !== actual) Haptics.selectionAsync().catch(() => {});
@@ -136,31 +148,42 @@ export default function Secciones() {
               flecha: { x: ancho / 2, y: alto - abajo - 24 },
               alCambiar: setAscentAbierta,
             }}
+            entrada={entrada}
           />
-          <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
-          <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
-            {PESTANAS.map((n, i) =>
-              i === HABITOS || !armada(i) ? (
-                <View key={n} style={{ width: ancho }} pointerEvents="none" />
-              ) : n === 'comida' ? (
-                <PaginaDeComida key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
-              ) : n === 'inicio' ? (
-                <PaginaDeInicio key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
-              ) : n === 'progreso' ? (
-                <PaginaDeProgreso key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
-              ) : n === 'sueno' ? (
-                <PaginaDeSueno key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
-              ) : (
-                <SeccionPendiente key={n} nombre={n} ancho={ancho} arriba={insets.top} />
-              ),
-            )}
-          </Animated.View>
-          <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />
+          {!enEntrada && (
+            <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+              <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
+              <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
+                {PESTANAS.map((n, i) =>
+                  i === HABITOS || !armada(i) ? (
+                    <View key={n} style={{ width: ancho }} pointerEvents="none" />
+                  ) : n === 'comida' ? (
+                    <PaginaDeComida key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
+                  ) : n === 'inicio' ? (
+                    <PaginaDeInicio key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
+                  ) : n === 'progreso' ? (
+                    <PaginaDeProgreso key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
+                  ) : n === 'sueno' ? (
+                    <PaginaDeSueno key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
+                  ) : (
+                    <SeccionPendiente key={n} nombre={n} ancho={ancho} arriba={insets.top} />
+                  ),
+                )}
+              </Animated.View>
+              <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />
+            </Animated.View>
+          )}
         </Animated.View>
-        <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
-        <AvisoAbajo aviso={aviso} alIrse={quitarAviso} abajo={abajo + 14} />
-        <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
-        <HojaRegistro />
+        {enEntrada ? (
+          <Entrada camara={camaraDeLaEntrada} />
+        ) : (
+          <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+            <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
+            <AvisoAbajo aviso={aviso} alIrse={quitarAviso} abajo={abajo + 14} />
+            <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
+            <HojaRegistro />
+          </Animated.View>
+        )}
       </View>
     </GestureDetector>
   );

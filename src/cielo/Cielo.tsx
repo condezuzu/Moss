@@ -84,9 +84,16 @@ export type PropsDelCielo = {
   subida?: Subida;
   /** Lo que ocupa la barra de pestañas abajo, con el borde del teléfono. */
   abajo?: number;
+  /**
+   * La entrada a la app: el cielo solo, sin la constelación del día, sin gestos ni texto, con la
+   * cámara donde la pida cada pantalla (como el modo «entrada» de la galería).
+   */
+  entrada?: { camara: SharedValue<number> };
 };
 
-export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
+export default function Cielo({ paginaX, subida, abajo = 0, entrada }: PropsDelCielo) {
+  const soloCielo = !!entrada;
+  const camaraDeLaEntrada = entrada?.camara;
   const { width: ancho, height: alto } = useWindowDimensions();
   const dpr = PixelRatio.get();
   const [calidad, setCalidad] = useState<Calidad>(calidadDeFabrica);
@@ -126,16 +133,16 @@ export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
       crearEscena({
         ancho,
         alto,
-        habitos: plano.estrellas.map(([x, y], i) => ({ x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto })),
-        lineas: plano.lineas,
+        habitos: soloCielo ? [] : plano.estrellas.map(([x, y], i) => ({ x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto })),
+        lineas: soloCielo ? [] : plano.lineas,
         centro: plano.centro,
         brotes: a.brotes,
-        universo: plano.universo.estrellas,
+        universo: soloCielo ? [] : plano.universo.estrellas,
         factorParticulas: a.particulas,
         riqueza: a.riqueza,
         movimientoReducido,
       }),
-    [ancho, alto, plano, dia, movimientoReducido],
+    [ancho, alto, plano, dia, movimientoReducido, soloCielo],
   );
 
   // Lo que la escena toma del momento en que se arma. Lo encendido, la calidad y la riqueza no la
@@ -276,6 +283,7 @@ export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
     escena.modify((e) => {
       'worklet';
       e.paginaX = corrida;
+      if (camaraDeLaEntrada) e.cam.objetivo = camaraDeLaEntrada.value;
       // El cielo aparece cuando hay textura. Si ya estaba (una escena rehecha), aparece enseguida.
       if (hayFondo && !e.fondoListo) {
         e.fondoListo = true;
@@ -453,7 +461,7 @@ export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
     const p = Skia.PathBuilder.Make();
     for (const a of plano.autos) {
       const h = e.habitos[a.indice];
-      if (h.luz > 0.5 || a.avance <= 0) continue;
+      if (!h || h.luz > 0.5 || a.avance <= 0) continue;
       const sx = ancho / 2 + h.x * alto, sy = alto / 2 - h.y * alto;
       const r = 17.2;
       p.addArc(Skia.XYWHRect(sx - r, sy - r, 2 * r, 2 * r), -90, 360 * a.avance);
@@ -551,7 +559,7 @@ export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
   return (
     <View style={estilos.lleno}>
       <GestureDetector gesture={gestos}>
-        <View style={StyleSheet.absoluteFill} collapsable={false}>
+        <View style={StyleSheet.absoluteFill} collapsable={false} pointerEvents={soloCielo ? 'none' : 'auto'}>
           <Canvas style={estilos.lleno}>
             {fondoListo && (
               <Fill>
@@ -560,7 +568,7 @@ export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
                 </Shader>
               </Fill>
             )}
-            <Group transform={camaraCielo}>
+            <Group transform={camaraCielo} opacity={soloCielo ? 0 : 1}>
               <Path path={plano.universo.pendientes} style="stroke" strokeWidth={0.7} color={PERGAMINO} opacity={0.15} blendMode="plus">
                 <DashPathEffect intervals={[2.5, 3.5]} />
               </Path>
@@ -589,7 +597,7 @@ export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
           </Canvas>
         </View>
       </GestureDetector>
-      <Interfaz
+      {!soloCielo && <Interfaz
         plano={plano}
         dia={dia}
         escena={escena}
@@ -603,7 +611,7 @@ export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
         acciones={acciones}
         abajo={abajo}
         subida={subida?.progreso}
-      />
+      />}
     </View>
   );
 }

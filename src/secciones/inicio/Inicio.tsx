@@ -235,9 +235,9 @@ function Peso({ anchoGrafico }: { anchoGrafico: number }) {
               {p.balance.promedio === null ? '—' : conSigno(Math.round(p.balance.promedio))}
               <Text style={estilos.datoUnidad}>{` ${t('inicio.kcalPorDia')}`}</Text>
             </Text>
-            <Text style={estilos.datoTexto}>{t('inicio.balanceTexto', { gasto: numero(p.gasto) })}</Text>
+            <Text style={estilos.datoTexto}>{p.balance.dias.length ? t('inicio.balanceTexto', { gasto: numero(p.gasto) }) : t('progreso.sinBalance')}</Text>
           </View>
-          <Balance dias={p.balance.dias} gasto={p.gasto} ancho={anchoGrafico} alto={44} />
+          {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} gasto={p.gasto} ancho={anchoGrafico} alto={44} />}
         </View>
       )}
     </>
