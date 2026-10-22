@@ -76,9 +76,17 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes. Las fotos no salen del teléfono.",
+          "cameraPermission": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono.",
           "microphonePermission": false,
           "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": false,
+          "cameraPermission": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono.",
+          "microphonePermission": false
         }
       ]
     ],

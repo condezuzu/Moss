@@ -342,7 +342,13 @@
     "sinMeta": "Tu meta aparece cuando completas el cuestionario de la entrada.",
     "borrado": "{alimento}: borrado",
     "guardado": "Guardado",
-    "agregadoA": "{que}: agregado {donde}"
+    "agregadoA": "{que}: agregado {donde}",
+    "fotos": {
+      "ver": "La foto de esta comida",
+      "cambiar": "Sacar otra",
+      "borrar": "Borrar la foto",
+      "nota": "La foto queda solo en este teléfono y en su copia de iCloud: no se sube a tu cuenta."
+    }
   },
   "inicio": {
     "titulo": "Hoy",

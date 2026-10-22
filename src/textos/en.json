@@ -342,7 +342,13 @@
     "sinMeta": "Your goal shows up once you finish the welcome questionnaire.",
     "borrado": "{alimento}: deleted",
     "guardado": "Saved",
-    "agregadoA": "{que}: added {donde}"
+    "agregadoA": "{que}: added {donde}",
+    "fotos": {
+      "ver": "This meal’s photo",
+      "cambiar": "Take another",
+      "borrar": "Delete photo",
+      "nota": "The photo stays only on this phone and in its iCloud backup: it isn’t uploaded to your account."
+    }
   },
   "inicio": {
     "titulo": "Today",

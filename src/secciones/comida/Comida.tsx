@@ -4,6 +4,7 @@
 // Lo que queda, con la luna grande, está en Inicio; el peso y el gasto, en Progreso.
 
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -19,8 +20,10 @@ import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import { delDia, type Registro, type Valores } from '@/dominio/registros';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { HojaModal } from '../HojaModal';
 import { entre, viaje } from '../movimiento';
-import { AvisoAbajo, Boton, COLOR_DE_MACRO, Etiqueta, MACROS, Punto, type Aviso, type Macro } from './comunes';
+import { AvisoAbajo, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
+import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
   cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, letraDelDia, metaDelDia, minutosDe, numero, sistemaDe, tituloDelDia, totalDe,
   useEstado, type ComidaDelDia,
@@ -403,7 +406,7 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
           <View key={clave} style={{ marginTop: separacion }}>
             <Text style={estilos.hora}>{x.tipo === 'vacia' && x.ahora ? '' : hora(Math.round(x.minutos))}</Text>
             <View style={[estilos.nodo, x.tipo === 'vacia' && estilos.nodoVacio, planificada && estilos.nodoPlan]} />
-            {x.tipo === 'comida' ? <Tarjeta c={x.comida} sistema={sistema} /> : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} />}
+            {x.tipo === 'comida' ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} /> : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} />}
           </View>
         );
       })}
@@ -411,7 +414,13 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   );
 }
 
-function Tarjeta({ c, sistema }: { c: ComidaDelDia; sistema: ReturnType<typeof sistemaDe> }) {
+function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe> }) {
+  // La foto, opcional y solo en el teléfono (D10): un toque en la comida ya registrada.
+  const [foto, setFoto] = useState(() => fotoDe(dia, c.comida));
+  const [viendo, setViendo] = useState(false);
+  const sacar = () => {
+    sacarFoto(dia, c.comida).then((uri) => uri && setFoto(uri)).catch(() => {});
+  };
   return (
     <View style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan]}>
       <View style={estilos.tarjetaCabeza}>
@@ -423,6 +432,11 @@ function Tarjeta({ c, sistema }: { c: ComidaDelDia; sistema: ReturnType<typeof s
         </Text>
       </View>
       {c.registros.map((r) => <FilaDeRegistro key={r.id} r={r} sistema={sistema} />)}
+      {foto && (
+        <Pressable onPress={() => setViendo(true)} accessibilityRole="imagebutton" accessibilityLabel={t('comida.fotos.ver')}>
+          <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />
+        </Pressable>
+      )}
       <View style={estilos.tarjetaPie}>
         {MACROS.map((m) => (
           <View key={m} style={estilos.mini}>
@@ -430,7 +444,28 @@ function Tarjeta({ c, sistema }: { c: ComidaDelDia; sistema: ReturnType<typeof s
             <Text style={estilos.miniTexto}>{`${gramosDeMacro(c.total[m])} g`}</Text>
           </View>
         ))}
+        {hayFotos && !c.planificada && !foto && (
+          <Pressable onPress={sacar} style={estilos.botonFoto} accessibilityRole="button" accessibilityLabel={t('comida.foto')} hitSlop={8}>
+            <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
+          </Pressable>
+        )}
       </View>
+      {viendo && foto && (
+        <HojaModal
+          abierta
+          titulo={t('comida.fotos.ver')}
+          alCerrar={() => setViendo(false)}
+          pie={(
+            <>
+              <Boton tipo="contorno" texto={t('comida.fotos.cambiar')} alTocar={() => { setViendo(false); sacar(); }} />
+              <Boton tipo="quitar" texto={t('comida.fotos.borrar')} alTocar={() => { borrarFoto(dia, c.comida); setFoto(null); setViendo(false); }} />
+            </>
+          )}
+        >
+          <Image source={{ uri: foto }} style={estilos.fotoGrande} contentFit="cover" />
+          <Text style={estilos.fotoNota}>{t('comida.fotos.nota')}</Text>
+        </HojaModal>
+      )}
     </View>
   );
 }
@@ -594,6 +629,10 @@ const estilos = StyleSheet.create({
   itemCantidad: { color: 'rgba(239, 230, 207, 0.5)' },
   itemKcal: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.58)', fontVariant: ['tabular-nums'] },
   tarjetaPie: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 7, paddingTop: 8, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
+  botonFoto: { marginLeft: 'auto', width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.06)' },
+  foto: { marginTop: 8, height: 140, borderRadius: 12, backgroundColor: 'rgba(239, 230, 207, 0.05)' },
+  fotoGrande: { width: '100%', aspectRatio: 3 / 4, borderRadius: 16, backgroundColor: 'rgba(239, 230, 207, 0.05)' },
+  fotoNota: { marginTop: 12, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)' },
   mini: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   miniTexto: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.62)', fontVariant: ['tabular-nums'] },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
