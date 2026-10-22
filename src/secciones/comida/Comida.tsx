@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
@@ -22,6 +22,7 @@ import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { HojaModal } from '../HojaModal';
 import { entre, viaje } from '../movimiento';
+import { ACOMODA, Aparece } from '../tarjetas';
 import { AvisoAbajo, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
@@ -393,21 +394,22 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
         const separacion = i === 0 ? 0 : 10 + Math.min(34, (x.minutos - entradas[i - 1].minutos) * 0.12);
         if (x.tipo === 'ahora') {
           return (
-            <View key="ahora" style={[estilos.entradaAhora, { marginTop: separacion }]}>
+            <Animated.View key="ahora" layout={ACOMODA} style={[estilos.entradaAhora, { marginTop: separacion }]}>
               <Text style={[estilos.hora, estilos.horaAhora]}>{hora(Math.round(x.minutos))}</Text>
               <View style={[estilos.nodo, estilos.nodoAhora]} />
               <Text style={estilos.ahoraTexto}>{t('comida.ahora')}</Text>
-            </View>
+            </Animated.View>
           );
         }
         const clave = x.tipo === 'comida' ? `c-${x.comida.comida}` : `v-${x.comida}`;
         const planificada = x.tipo === 'comida' && x.comida.planificada;
+        // Lo que se registra, se borra o se planifica entra, sale y se acomoda: nada salta.
         return (
-          <View key={clave} style={{ marginTop: separacion }}>
+          <Animated.View key={clave} entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)} layout={ACOMODA} style={{ marginTop: separacion }}>
             <Text style={estilos.hora}>{x.tipo === 'vacia' && x.ahora ? '' : hora(Math.round(x.minutos))}</Text>
             <View style={[estilos.nodo, x.tipo === 'vacia' && estilos.nodoVacio, planificada && estilos.nodoPlan]} />
             {x.tipo === 'comida' ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} /> : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} />}
-          </View>
+          </Animated.View>
         );
       })}
     </View>
@@ -422,7 +424,7 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
     sacarFoto(dia, c.comida).then((uri) => uri && setFoto(uri)).catch(() => {});
   };
   return (
-    <View style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan]}>
+    <Animated.View layout={ACOMODA} style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan]}>
       <View style={estilos.tarjetaCabeza}>
         <Text style={estilos.tarjetaTitulo}>{t(`comida.comidas.${c.comida}`)}</Text>
         {c.planificada && <Text style={estilos.etiquetaPlan}>{t('comida.planificado')}</Text>}
@@ -431,11 +433,17 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
           <Text style={estilos.tarjetaKcalUnidad}> kcal</Text>
         </Text>
       </View>
-      {c.registros.map((r) => <FilaDeRegistro key={r.id} r={r} sistema={sistema} />)}
+      {c.registros.map((r) => (
+        <Animated.View key={r.id} entering={FadeIn.duration(280)} exiting={FadeOut.duration(180)} layout={ACOMODA}>
+          <FilaDeRegistro r={r} sistema={sistema} />
+        </Animated.View>
+      ))}
       {foto && (
-        <Pressable onPress={() => setViendo(true)} accessibilityRole="imagebutton" accessibilityLabel={t('comida.fotos.ver')}>
-          <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />
-        </Pressable>
+        <Aparece>
+          <Pressable onPress={() => setViendo(true)} accessibilityRole="imagebutton" accessibilityLabel={t('comida.fotos.ver')}>
+            <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />
+          </Pressable>
+        </Aparece>
       )}
       <View style={estilos.tarjetaPie}>
         {MACROS.map((m) => (
@@ -466,7 +474,7 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
           <Text style={estilos.fotoNota}>{t('comida.fotos.nota')}</Text>
         </HojaModal>
       )}
-    </View>
+    </Animated.View>
   );
 }
 

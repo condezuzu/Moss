@@ -1,9 +1,11 @@
 // Las piezas de las tarjetas de Progreso y Sueño, las de la galería (galeria/src/pagina.html:
 // pg-carta, pg-cifra, in-estado, aj-segmento, aj-dias…): la tarjeta con su título, la cifra grande,
-// las notas, el «Cómo se calcula» que se despliega, los segmentos y los días de la semana.
+// las notas, el «Cómo se calcula» que se despliega, los segmentos y los días de la semana. Nada
+// aparece ni desaparece de golpe: lo que cambia entra con un fundido y la tarjeta se acomoda.
 
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import type { DiaSemana } from '@/dominio/fechas';
 import { lista, t } from '@/textos';
@@ -35,9 +37,21 @@ export const Chip = ({ texto, tipo }: { texto: string; tipo?: TipoDeChip }) => (
   <Text style={[e.chip, tipo === 'bien' && e.chipBien, tipo === 'atencion' && e.chipAtencion]}>{texto}</Text>
 );
 
+/** Lo que aparece o desaparece con un toque: entra con un fundido, sale igual y lo de alrededor se acomoda. */
+export function Aparece({ children, style, demora = 0 }: { children: ReactNode; style?: StyleProp<ViewStyle>; demora?: number }) {
+  return (
+    <Animated.View entering={FadeIn.duration(280).delay(demora)} exiting={FadeOut.duration(180)} layout={LinearTransition.duration(260)} style={style}>
+      {children}
+    </Animated.View>
+  );
+}
+
+/** El alto que cambia (otra noche, algo que se despliega) se acomoda en vez de saltar. */
+export const ACOMODA = LinearTransition.duration(260);
+
 export function Carta({ titulo, derecha, children, estilo }: { titulo?: string; derecha?: ReactNode; children: ReactNode; estilo?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[e.carta, estilo]}>
+    <Animated.View layout={ACOMODA} style={[e.carta, estilo]}>
       {titulo !== undefined && (
         <View style={e.cab}>
           <Text style={e.titulo}>{titulo}</Text>
@@ -45,7 +59,7 @@ export function Carta({ titulo, derecha, children, estilo }: { titulo?: string; 
         </View>
       )}
       {children}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -71,15 +85,16 @@ export const Eje = ({ izquierda, derecha }: { izquierda: string; derecha: string
 
 /** «Cómo se calcula»: un enlace que despliega la explicación debajo. */
 export function ComoSeCalcula({ abierto, alTocar, children }: { abierto: boolean; alTocar: () => void; children: ReactNode }) {
+  const flecha = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierto ? '90deg' : '0deg', { duration: 220 }) }] }));
   return (
     <>
       <Pressable onPress={alTocar} style={e.enlace} accessibilityRole="button" accessibilityState={{ expanded: abierto }} hitSlop={8}>
         <Text style={e.enlaceTexto}>{t('progreso.comoSeCalcula')}</Text>
-        <View style={{ transform: [{ rotate: abierto ? '90deg' : '0deg' }] }}>
+        <Animated.View style={flecha}>
           <Icono nombre="chevron.right" tam={12} peso="semibold" />
-        </View>
+        </Animated.View>
       </Pressable>
-      {abierto && <View style={e.como}>{children}</View>}
+      {abierto && <Aparece style={e.como}>{children}</Aparece>}
     </>
   );
 }

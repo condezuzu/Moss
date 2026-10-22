@@ -10,7 +10,7 @@ import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, SlideInRight, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -83,9 +83,22 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
             <View style={estilos.asa} />
           </View>
         </GestureDetector>
-        {vista === 'menu' && <Menu alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />}
-        {vista === 'peso' && <VistaDePeso alVolver={() => alCambiarVista('menu')} avisar={avisar} />}
-        {vista === 'medidas' && <VistaDeMedidas alVolver={() => alCambiarVista('menu')} avisar={avisar} />}
+        {/* Cambiar de vista nunca es de golpe: el peso y las medidas entran de costado; el menú, con un fundido. */}
+        {vista === 'menu' && (
+          <Animated.View key="menu" entering={FadeIn.duration(260)}>
+            <Menu alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />
+          </Animated.View>
+        )}
+        {vista === 'peso' && (
+          <Animated.View key="peso" entering={SlideInRight.duration(320)}>
+            <VistaDePeso alVolver={() => alCambiarVista('menu')} avisar={avisar} />
+          </Animated.View>
+        )}
+        {vista === 'medidas' && (
+          <Animated.View key="medidas" entering={SlideInRight.duration(320)}>
+            <VistaDeMedidas alVolver={() => alCambiarVista('menu')} avisar={avisar} />
+          </Animated.View>
+        )}
         {aviso && (
           <Animated.View key={aviso.clave} entering={FadeInDown.duration(200)} exiting={FadeOut.duration(180)} style={[estilos.aviso, { bottom: insets.bottom + 14 }]}>
             <Text style={estilos.avisoTexto} numberOfLines={1}>{aviso.texto}</Text>

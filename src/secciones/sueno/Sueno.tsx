@@ -19,7 +19,7 @@ import { duracion, fechaCorta, fechaDiaMes, horaDelDia, letraDelDia, numero, use
 import { useSueno } from '../ganchos';
 import { Hipnograma } from '../graficos/Graficos';
 import type { Sueno } from '../persona';
-import { AvisoDeEjemplo, Cabecera, Carta, Chip, Cifra, ComoSeCalcula, Eje, Nota, Parrafo, Recuadro, type TipoDeChip } from '../tarjetas';
+import { Aparece, AvisoDeEjemplo, Cabecera, Carta, Chip, Cifra, ComoSeCalcula, Eje, Nota, Parrafo, Recuadro, type TipoDeChip } from '../tarjetas';
 
 const DIAS = 14;
 const AZUL = { claro: '#8fd3e8', medio: '#6f86d6', hondo: '#4b4fa8' };
@@ -44,16 +44,19 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('sueno.titulo')} />
         {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
         <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={setClave} />
-        {noche ? (
-          <LaNoche n={noche} hoy={e.hoy} ancho={interior} anteriores={anterioresA(noche.clave)} />
-        ) : (
-          <SinNoche clave={clave} hoy={e.hoy} cama={s.soloEnCama.get(clave)} />
-        )}
-        {/* La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien. */}
-        <LaDeuda noches={ultimasNoches(s.noches, clave, DIAS)} necesidad={s.necesidad} />
-        {noche && <LaCalidad n={noche} necesidad={s.necesidad} anteriores={anterioresA(noche.clave)} abierto={abierto === 'calidad'} alAbrir={() => setAbierto((a) => (a === 'calidad' ? null : 'calidad'))} />}
-        <ElHorario noches={ultimasNoches(s.noches, clave, DIAS)} clave={clave} />
-        {noche && <LoDelReloj n={noche} s={s} anteriores={anterioresA(noche.clave)} />}
+        {/* Elegir otra noche no cambia todo de golpe: lo de esa noche entra con un fundido. */}
+        <Aparece key={clave}>
+          {noche ? (
+            <LaNoche n={noche} hoy={e.hoy} ancho={interior} anteriores={anterioresA(noche.clave)} />
+          ) : (
+            <SinNoche clave={clave} hoy={e.hoy} cama={s.soloEnCama.get(clave)} />
+          )}
+          {/* La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien. */}
+          <LaDeuda noches={ultimasNoches(s.noches, clave, DIAS)} necesidad={s.necesidad} />
+          {noche && <LaCalidad n={noche} necesidad={s.necesidad} anteriores={anterioresA(noche.clave)} abierto={abierto === 'calidad'} alAbrir={() => setAbierto((a) => (a === 'calidad' ? null : 'calidad'))} />}
+          <ElHorario noches={ultimasNoches(s.noches, clave, DIAS)} clave={clave} />
+          {noche && <LoDelReloj n={noche} s={s} anteriores={anterioresA(noche.clave)} />}
+        </Aparece>
         <LasFuentes n={noche} s={s} clave={clave} />
         <Text style={st.pie}>{t('sueno.noMedico')}</Text>
       </ScrollView>

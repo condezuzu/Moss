@@ -17,7 +17,7 @@ import { Boton, Icono, Pastilla } from '../comida/comunes';
 import { numero, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { HojaModal } from '../HojaModal';
-import { Dias, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
+import { Aparece, Dias, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 
 export const ICONOS: readonly SFSymbol[] = [
   'star', 'figure.walk', 'figure.run', 'dumbbell', 'bicycle', 'figure.mind.and.body', 'moon', 'bed.double', 'book', 'pencil', 'drop', 'cup.and.saucer',
@@ -126,7 +126,7 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
       />
       <Parrafo chico>{t(como === 'manual' ? 'habitos.aManoTexto' : como === 'salud' ? 'habitos.saludTexto' : 'habitos.comidaTexto')}</Parrafo>
       {fuente.tipo === 'salud' && fuente.dato !== 'acostarse' && (
-        <View style={st.opciones}>
+        <Aparece key="salud" style={st.opciones}>
           <View style={st.fila}>
             {(Object.keys(METAS) as (keyof typeof METAS)[]).map((dato) => (
               <Pastilla
@@ -142,14 +142,14 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
               <Pastilla key={meta} texto={textoDeMeta(fuente.dato as keyof typeof METAS, meta)} elegida={fuente.meta === meta} alTocar={() => cambiarFuente({ ...fuente, meta })} />
             ))}
           </View>
-        </View>
+        </Aparece>
       )}
       {fuente.tipo === 'comida' && (
-        <View style={st.opciones}>
+        <Aparece key="comida" style={st.opciones}>
           {(['proteina', 'registrar', 'calorias'] as const).map((meta) => (
             <Pastilla key={meta} texto={t(`habitos.comidas.${meta}`)} elegida={fuente.meta === meta} alTocar={() => cambiarFuente({ tipo: 'comida', meta }, ICONO_DE_COMIDA[meta])} />
           ))}
-        </View>
+        </Aparece>
       )}
 
       <EtiquetaDeGrupo>{t('habitos.dias')}</EtiquetaDeGrupo>

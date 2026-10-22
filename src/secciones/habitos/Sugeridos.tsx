@@ -14,7 +14,7 @@ import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, Icono } from '../comida/comunes';
 import { HojaModal } from '../HojaModal';
-import { Parrafo } from '../tarjetas';
+import { Aparece, Parrafo } from '../tarjetas';
 import { habitoSugerido, nombreDe } from './Editor';
 
 type Sugerido = { clave: string; fuente: Fuente; icono: SFSymbol; nombre?: () => string; dias?: DiaSemana[] };
@@ -73,7 +73,7 @@ export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
                 <Text style={st.nombre}>{nombre}</Text>
                 {s.fuente.tipo !== 'manual' && <Text style={st.detalle}>{t(s.fuente.tipo === 'comida' ? 'habitos.comidaTexto' : 'habitos.saludTexto')}</Text>}
               </View>
-              <View style={[st.marca, si && st.marcaElegida]}>{si && <Icono nombre="checkmark" tam={11} color={colores.tinta} peso="bold" />}</View>
+              <View style={[st.marca, si && st.marcaElegida]}>{si && <Aparece><Icono nombre="checkmark" tam={11} color={colores.tinta} peso="bold" /></Aparece>}</View>
             </Pressable>
           );
         })}

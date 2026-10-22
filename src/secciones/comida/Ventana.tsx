@@ -19,6 +19,7 @@ import {
 import { gramosDe, valoresDeCantidad, type Cantidad, type Fuente, type Item, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { Aparece } from '../tarjetas';
 import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
 import { compartir } from './compartir';
 import { gramosDeMacro, numero, opcionesDeIdioma } from './datos';
@@ -333,10 +334,10 @@ export function Ventana(p: Props) {
         {comoGramos ? <Text style={estilos.comoGramos}>{comoGramos}</Text> : null}
 
         {desecho && medicion.tipo === 'peso' && (
-          <View style={estilos.filaSimple}>
+          <Aparece style={estilos.filaSimple}>
             <Pastilla texto={t('comida.medir.con', { que: desecho.que })} elegida={conDesecho} alTocar={() => setConDesecho(!conDesecho)} />
-            {conDesecho && <Text style={estilos.nota}>{t('comida.medir.sinDesecho', { n: decimal(gramosDe(cantidad) ?? 0, idioma()), que: desecho.que })}</Text>}
-          </View>
+            {conDesecho && <Aparece><Text style={estilos.nota}>{t('comida.medir.sinDesecho', { n: decimal(gramosDe(cantidad) ?? 0, idioma()), que: desecho.que })}</Text></Aparece>}
+          </Aparece>
         )}
 
         {detalle?.aceite === 'preguntar' && (

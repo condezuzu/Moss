@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -25,7 +25,7 @@ import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { usePersona, useSueno } from '../ganchos';
-import { Camino } from '../tarjetas';
+import { ACOMODA, Camino } from '../tarjetas';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
 
 export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'] as const;
@@ -63,18 +63,23 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
         <Text style={estilos.titulo}>{t('inicio.titulo')}</Text>
         {orden.filter((b) => visibles.has(b)).map((b) => {
           const seccion = SECCION[b];
-          // El agua no lleva a ninguna sección: es un bloque quieto, con su botón.
-          if (seccion === undefined) return <View key={b} style={estilos.bloque}>{bloques[b]()}</View>;
+          // Sumar, sacar u ordenar bloques en Personalizar nunca es de golpe: entran, salen y se acomodan.
           return (
-            <Pressable
-              key={b}
-              onPress={() => alIr(seccion)}
-              style={({ pressed }) => [estilos.bloque, b === 'cielo' && estilos.bloqueCielo, pressed && estilos.apretado]}
-              accessibilityRole="button"
-              accessibilityLabel={t(`inicio.bloques.${b}`)}
-            >
-              {bloques[b]()}
-            </Pressable>
+            <Animated.View key={b} entering={FadeIn.duration(320)} exiting={FadeOut.duration(200)} layout={ACOMODA}>
+              {seccion === undefined ? (
+                // El agua no lleva a ninguna sección: es un bloque quieto, con su botón.
+                <View style={estilos.bloque}>{bloques[b]()}</View>
+              ) : (
+                <Pressable
+                  onPress={() => alIr(seccion)}
+                  style={({ pressed }) => [estilos.bloque, b === 'cielo' && estilos.bloqueCielo, pressed && estilos.apretado]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(`inicio.bloques.${b}`)}
+                >
+                  {bloques[b]()}
+                </Pressable>
+              )}
+            </Animated.View>
           );
         })}
         <View style={estilos.pie}>

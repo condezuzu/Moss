@@ -23,7 +23,7 @@ import { Balance, Linea } from '../graficos/Graficos';
 import type { VistaDelMas } from '../HojaMas';
 import type { Persona } from '../persona';
 import {
-  AvisoDeEjemplo, BotonChico, Cabecera, Camino, Carta, Chip, Cifra, ComoSeCalcula, Dias, Eje, EtiquetaDeGrupo, Nota, Parrafo, Recuadro, SEMANA, Segmento, type TipoDeChip,
+  Aparece, AvisoDeEjemplo, BotonChico, Cabecera, Camino, Carta, Chip, Cifra, ComoSeCalcula, Dias, Eje, EtiquetaDeGrupo, Nota, Parrafo, Recuadro, SEMANA, Segmento, type TipoDeChip,
 } from '../tarjetas';
 
 type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
@@ -231,7 +231,7 @@ function Fila({ titulo, valor, abierta, alTocar }: { titulo: string; valor: stri
   );
 }
 
-const Eleccion = ({ children }: { children: ReactNode }) => <View style={s.eleccion}>{children}</View>;
+const Eleccion = ({ children }: { children: ReactNode }) => <Aparece style={s.eleccion}>{children}</Aparece>;
 
 function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: U; abierto: string | null; alternar: (cual: string) => void; alVerMetas: () => void }) {
   const perfil = p.perfil;
@@ -250,7 +250,7 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
             alElegir={(objetivo) => ponerEstrategia({ objetivo })}
           />
           {perfil.objetivo !== 'mantener' && (
-            <>
+            <Aparece>
               <Segmento<Ritmo>
                 opciones={(['suave', 'recomendado', 'rapido'] as const).map((r) => [r, t(`progreso.ritmos.${r}`)] as const)}
                 elegida={perfil.ritmo}
@@ -262,13 +262,13 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
                   kg: numero(u.enUnidad(Math.abs((RITMOS[perfil.objetivo][perfil.ritmo] / 100) * (p.pesoHoy ?? 0))), 2), unidad: u.unidad,
                 })}
               </Parrafo>
-            </>
+            </Aparece>
           )}
           <Parrafo chico>{t('progreso.objetivoNota')}</Parrafo>
         </Eleccion>
       )}
       {perfil.objetivo !== 'mantener' && (
-        <>
+        <Aparece>
           <Fila
             titulo={t('progreso.pesoMeta')}
             valor={metaKg ? `${u.peso(metaKg, metaKg % 1 ? 1 : 0)} ${u.unidad}` : t('progreso.sinPesoMeta')}
@@ -281,7 +281,7 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
               <Parrafo chico>{t('progreso.pesoMetaNota')}</Parrafo>
             </Eleccion>
           )}
-        </>
+        </Aparece>
       )}
       {m && (
         <>
@@ -402,7 +402,7 @@ function Metas({ alVolver }: { alVolver: () => void }) {
       <Parrafo chico>{t(quien === 'moss' ? 'progreso.metas.mossTexto' : 'progreso.metas.aManoTexto')}</Parrafo>
 
       {quien === 'moss' ? (
-        <>
+        <Aparece key="moss">
           <EtiquetaDeGrupo>{t('progreso.metas.reparto')}</EtiquetaDeGrupo>
           <View style={s.estilos}>
             {ESTILOS.map((x, i) => {
@@ -425,14 +425,14 @@ function Metas({ alVolver }: { alVolver: () => void }) {
               );
             })}
           </View>
-        </>
+        </Aparece>
       ) : (
-        <>
+        <Aparece key="aMano">
           <EtiquetaDeGrupo>{t('progreso.metas.tusMacros')}</EtiquetaDeGrupo>
           {MACROS.map((macro) => (
             <CampoDeMacro key={`${macro}-${m[macro]}`} macro={macro} gramos={m[macro]} alCambiar={(g) => almacen.ponerMetasAMano({ proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, [macro]: g })} />
           ))}
-        </>
+        </Aparece>
       )}
 
       <View style={s.semana}>
@@ -448,11 +448,11 @@ function Metas({ alVolver }: { alVolver: () => void }) {
         </View>
         <Parrafo chico>{t('progreso.metas.semanaTexto')}</Parrafo>
         {semana && (
-          <>
+          <Aparece>
             <Dias elegidos={semana.altos} alTocar={cambiarAltos} />
             <Segmento<number> opciones={EXTRAS.map((n) => [n, `+${numero(n)}`] as const)} elegida={semana.extra} alElegir={(extra) => almacen.ponerEstrategia({ semana: { ...semana, extra } })} />
             <Barras reparto={repartirSemana(m, semana.altos, semana.extra, p.perfil.sexo)} altos={semana.altos} />
-          </>
+          </Aparece>
         )}
       </View>
     </>

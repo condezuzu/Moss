@@ -21,7 +21,7 @@ import { numero, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
-import { EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
+import { Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exportarTodo } from './cuenta';
 
 type Fila = { clave: string; titulo: string; valor?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion' };
@@ -141,6 +141,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
           ))}
         </View>
         {correo !== null && (
+          <Aparece>
           <Boton
             tipo="contorno"
             texto={t('perfil.cerrarSesion')}
@@ -150,6 +151,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
             ])}
             estilo={st.salir}
           />
+          </Aparece>
         )}
         <Text style={st.version}>{t('perfil.version', { v: version })}</Text>
       </ScrollView>
@@ -245,17 +247,19 @@ function Recordatorios({ comidas, alCerrar }: { comidas: Comida[] | null; alCerr
       </View>
       <Parrafo chico>{t('perfil.recordatoriosTexto')}</Parrafo>
       {sinPermiso && (
-        <Pressable onPress={() => { Linking.openSettings().catch(() => {}); }} accessibilityRole="button">
-          <Parrafo>{t('perfil.recordatoriosSinPermiso')}</Parrafo>
-        </Pressable>
+        <Aparece>
+          <Pressable onPress={() => { Linking.openSettings().catch(() => {}); }} accessibilityRole="button">
+            <Parrafo>{t('perfil.recordatoriosSinPermiso')}</Parrafo>
+          </Pressable>
+        </Aparece>
       )}
       {!!comidas?.length && (
-        <>
+        <Aparece>
           <EtiquetaDeGrupo>{t('perfil.recordatoriosComidas')}</EtiquetaDeGrupo>
           <View style={st.comidas}>
             {COMIDAS_QUE_AVISAN.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={comidas.includes(c)} alTocar={() => alternar(c)} />)}
           </View>
-        </>
+        </Aparece>
       )}
     </HojaModal>
   );

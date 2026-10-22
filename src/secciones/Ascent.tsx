@@ -5,7 +5,7 @@
 // conexión (después de la v1) se ve sin vincular: cada función vacía, con su candado.
 
 import * as Haptics from 'expo-haptics';
-import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import Animated, { FadeInDown, FadeOut, useAnimatedScrollHandler, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
