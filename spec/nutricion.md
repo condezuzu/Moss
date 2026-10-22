@@ -192,6 +192,7 @@ Inicio y los toques no cambian.
   - validando kcal contra 4/4/9 y por porción contra por 100 g.
 - **iOS entrega el UPC-A como EAN-13** con un 0 adelante; se normaliza.
 - **Si no está en ningún lado**, se ofrece el escáner de etiqueta. El producto nuevo queda guardado con su código: la próxima vez se encuentra solo.
+- **Ya está el cliente** (`src/comida/off.ts`, 22/10/2026), con tests sin red. El correo del `User-Agent` falta decidirlo.
 - **Aportar a Open Food Facts** lo que se crea es D13.
 
 ## Escáner de etiqueta (atajo 2): ¿alcanza el iPhone? Sí
@@ -227,6 +228,8 @@ Inicio y los toques no cambian.
      - porción.
    - **Detecta la columna:** si es por porción (el formato Mercosur de Uruguay, con %VD) o por 100 g, y lo pasa a 100 g con el peso de la porción.
    - **Ignora los octógonos** del frente.
+
+   Hecho el 22/10/2026 en `src/comida/etiqueta.ts`, con tests: lee las etiquetas del Mercosur (por porción, con %VD), de Estados Unidos y europeas (por 100 g, con la sal), en español, inglés y portugués; lee las dos columnas en cualquier orden, pasa la sal a sodio y los kJ a kcal, corrige la «O» por cero y avisa si algo no cierra.
 3. **Controles:**
    - 4/4/9 marca el número que probablemente se leyó mal (un 8 que fue 3);
    - la porción tiene que estar en g o ml.

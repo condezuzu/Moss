@@ -4,7 +4,8 @@
 // - Baja FNDDS 2021–2023 y SR Legacy a .cache/usda la primera vez.
 // - Deja afuera lo que no se registra (comida de bebé, fórmulas) y lo que es de una marca o
 //   cadena de Estados Unidos.
-// - Los valores van por 100 g: kcal, proteína, carbohidratos y grasas.
+// - Los valores van por 100 g: kcal, proteína, carbohidratos y grasas y, cuando USDA los tiene,
+//   fibra, azúcares, grasas saturadas, sodio (en mg) y alcohol.
 // - Arma los dos índices de búsqueda: palabras con prefijos y trigramas.
 // La arma el SQLite de Node, que es la misma versión que trae expo-sqlite (3.53).
 // Uso: npm run alimentos   → después, npm run alimentos:verificar
@@ -17,21 +18,21 @@ import { inflateRawSync } from 'node:zlib';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const salida = join(raiz, 'assets/alimentos.db');
-const ESQUEMA = 1;
+const ESQUEMA = 2;
 
 const BASES = {
   fndds: {
     nombre: 'FNDDS 2021–2023',
     url: 'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_survey_food_csv_2024-10-31.zip',
     // FNDDS usa los números viejos de nutriente; SR Legacy, los ids de FoodData Central.
-    nutrientes: { 208: 'kcal', 203: 'proteina', 205: 'carbohidratos', 204: 'grasas' },
+    nutrientes: { 208: 'kcal', 203: 'proteina', 205: 'carbohidratos', 204: 'grasas', 291: 'fibra', 269: 'azucares', 606: 'saturadas', 307: 'sodio', 221: 'alcohol' },
     // Comida de bebé, fórmulas y leche materna: no se registran en Moss.
     fuera: new Set(['9002', '9004', '9006', '9007', '9008', '9010', '9012', '9202', '9204', '9402', '9404', '9602']),
   },
   sr: {
     nombre: 'SR Legacy 2018-04',
     url: 'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip',
-    nutrientes: { 1008: 'kcal', 1003: 'proteina', 1005: 'carbohidratos', 1004: 'grasas' },
+    nutrientes: { 1008: 'kcal', 1003: 'proteina', 1005: 'carbohidratos', 1004: 'grasas', 1079: 'fibra', 2000: 'azucares', 1258: 'saturadas', 1093: 'sodio', 1018: 'alcohol' },
     // Bebés, comida rápida, indígenas de EE. UU., restaurantes, marcas y controles de calidad.
     fuera: new Set(['3', '21', '24', '25', '26', '27']),
   },
@@ -321,6 +322,7 @@ for (const base of Object.keys(BASES)) {
       id: Number(f.fdc_id), fuente: base, categoriaUsda: categoria,
       descripcion: f.description.replace(/\s*\(Includes foods for USDA's Food Distribution Program\)/, '').trim(),
       kcal: v.kcal, proteina: v.proteina ?? 0, carbohidratos: v.carbohidratos ?? 0, grasas: v.grasas ?? 0,
+      fibra: v.fibra, azucares: v.azucares, saturadas: v.saturadas, sodio: v.sodio, alcohol: v.alcohol,
     });
   }
   const vistas = new Set();
@@ -384,6 +386,12 @@ db.exec(`
     proteina REAL NOT NULL,
     carbohidratos REAL NOT NULL,
     grasas REAL NOT NULL,
+    -- Lo secundario: lo que USDA no tiene queda en null (no es cero). El sodio, en mg.
+    fibra REAL,
+    azucares REAL,
+    saturadas REAL,
+    sodio REAL,
+    alcohol REAL,
     porcion INTEGER
   );
   -- La porción es un peso: «1 pechuga» son 145 g. Sin traducción, 'es' es null.
@@ -399,7 +407,7 @@ db.exec(`
   CREATE TABLE datos (clave TEXT PRIMARY KEY, valor TEXT NOT NULL);
 `);
 db.exec('BEGIN');
-const ponerAlimento = db.prepare('INSERT INTO alimentos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+const ponerAlimento = db.prepare('INSERT INTO alimentos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 const ponerPorcion = db.prepare('INSERT INTO porciones (alimento, en, es, gramos) VALUES (?, ?, ?, ?)');
 const ponerAlias = db.prepare('INSERT INTO alias VALUES (?, ?, ?, ?)');
 const ponerTexto = db.prepare('INSERT INTO textos (alimento, idioma, region, principal, texto) VALUES (?, ?, ?, ?, ?)');
@@ -408,7 +416,11 @@ const porAlimento = Map.groupBy(porciones, (p) => p.alimento);
 let sinTraducir = 0;
 const textosSinTraducir = new Map();
 for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
-  ponerAlimento.run(a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas), null);
+  const tal = (n) => (n === undefined ? null : redondo(n));
+  ponerAlimento.run(
+    a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas),
+    tal(a.fibra), tal(a.azucares), tal(a.saturadas), tal(a.sodio), tal(a.alcohol), null,
+  );
   // De los curados: primero sus porciones (la primera es la de siempre); de USDA, solo las que
   // tienen traducción. Una porción propia sin inglés toma el de la de USDA que pesa lo mismo.
   const deUsda = porAlimento.get(a.id) ?? [];

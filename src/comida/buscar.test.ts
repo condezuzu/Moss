@@ -92,6 +92,11 @@ describe('buscar alimentos', () => {
     expect(await primero('banana')).toMatchObject({ kcal: 89, proteina: 1.09, carbohidratos: 22.84, grasas: 0.33, curado: true, porcion: { nombre: '1 mediana', gramos: 118 } });
   });
 
+  it('y lo secundario, cuando la base lo tiene: fibra, azúcares, saturadas y sodio (en mg)', async () => {
+    expect(await primero('banana')).toMatchObject({ fibra: 2.6, azucares: 12.23, saturadas: 0.11, sodio: 1 });
+    expect('fibra' in (await primero('aceto'))).toBe(false);
+  });
+
   it('lo vacío o raro no rompe nada', async () => {
     expect(await buscar('')).toEqual([]);
     await expect(buscar('100% "jugo" OR *')).resolves.toBeInstanceOf(Array);

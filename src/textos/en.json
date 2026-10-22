@@ -216,6 +216,13 @@
     "gramos": "Grams",
     "teQuedarian": "{n} kcal would be left",
     "tePasarias": "{n} kcal over",
+    "secundarios": {
+      "fibra": "Fiber",
+      "azucares": "Sugars",
+      "saturadas": "Saturated fat",
+      "sodio": "Sodium",
+      "alcohol": "Alcohol"
+    },
     "fuente": {
       "usda": "Generic · USDA FoodData Central",
       "propio": "Generic · Moss values"

@@ -278,10 +278,10 @@ menos de un minuto.
 
 ## Etapa 6 · Escáneres y alimentos propios
 
-- **Código de barras:** `expo-camera` y Open Food Facts, con lo escaneado guardado en el teléfono.
+- **Código de barras:** `expo-camera` y Open Food Facts, con lo escaneado guardado en el teléfono. El cliente ya está (`src/comida/off.ts`, 22/10/2026): la API 2 fija, el UPC-A de las dos formas, el sodio en mg, el alcohol en gramos y los avisos de 4/4/9 y de la porción.
 - **Escáner de etiqueta:**
   - un módulo propio en Swift: Vision con `RecognizeDocumentsRequest` en iOS 26 y líneas de texto antes;
-  - un lector de la tabla en TypeScript, con tests;
+  - un lector de la tabla en TypeScript, con tests: hecho el 22/10/2026 (`src/comida/etiqueta.ts`), con las etiquetas del Mercosur, de Estados Unidos y europeas, en español, inglés y portugués, y los errores típicos del OCR;
   - la pantalla de revisión, primero en la galería.
 
   Se mide con 50 etiquetas uruguayas antes de darlo por bueno.

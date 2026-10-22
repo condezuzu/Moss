@@ -26,6 +26,12 @@ export type Resultado = {
   proteina: number;
   carbohidratos: number;
   grasas: number;
+  /** Por 100 g, lo que la base tiene (el sodio, en mg). */
+  fibra?: number;
+  azucares?: number;
+  saturadas?: number;
+  sodio?: number;
+  alcohol?: number;
   /** La porción de siempre; sin porción, se registra en gramos. */
   porcion: { nombre: string; gramos: number } | null;
 };
@@ -160,11 +166,19 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
 
   const ids = [...new Set(candidatos.map((c) => c.alimento))];
   const lista = ids.join(',');
-  type Fila = { id: number; descripcion: string; nombre_es: string | null; nombre_en: string | null; kcal: number; proteina: number; carbohidratos: number; grasas: number; p_es: string | null; p_en: string | null; gramos: number | null };
+  type Secundario = 'fibra' | 'azucares' | 'saturadas' | 'sodio' | 'alcohol';
+  type Fila = { id: number; descripcion: string; nombre_es: string | null; nombre_en: string | null; kcal: number; proteina: number; carbohidratos: number; grasas: number; p_es: string | null; p_en: string | null; gramos: number | null }
+    & Record<Secundario, number | null>;
   const filas = await base.getAllAsync<Fila>(
-    `SELECT a.id, a.descripcion, a.nombre_es, a.nombre_en, a.kcal, a.proteina, a.carbohidratos, a.grasas, p.es AS p_es, p.en AS p_en, p.gramos
+    `SELECT a.id, a.descripcion, a.nombre_es, a.nombre_en, a.kcal, a.proteina, a.carbohidratos, a.grasas, a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol,
+       p.es AS p_es, p.en AS p_en, p.gramos
      FROM alimentos a LEFT JOIN porciones p ON p.id = a.porcion WHERE a.id IN (${lista})`,
   );
+  const secundarios = (f: Fila) => {
+    const s: Partial<Record<Secundario, number>> = {};
+    for (const k of ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'] as const) if (f[k] !== null) s[k] = f[k]!;
+    return s;
+  };
   const datos = new Map(filas.map((f) => [f.id, f]));
   const principales = op.idioma === 'es' && op.region
     ? new Map((await base.getAllAsync<{ alimento: number; texto: string }>(`SELECT alimento, texto FROM alias WHERE principal = 1 AND region = ? AND alimento IN (${lista})`, op.region)).map((a) => [a.alimento, a.texto]))
@@ -179,7 +193,7 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
       const nombrePorcion = op.idioma === 'es' ? (f.p_es ?? f.p_en) : f.p_en;
       return {
         id: f.id, nombre, coincide: c.texto, curado: f.nombre_es != null,
-        kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas,
+        kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas, ...secundarios(f),
         porcion: nombrePorcion && f.gramos ? { nombre: nombrePorcion, gramos: f.gramos } : null,
       };
     });

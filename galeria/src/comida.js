@@ -107,6 +107,8 @@ const Comida = (() => {
     return `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r} A ${rx.toFixed(2)} ${r} 0 0 ${p < 0.5 ? 0 : 1} 0 ${-r} Z`;
   }
   const salida = (u) => 1 - Math.pow(1 - Math.min(1, Math.max(0, u)), 3);
+  // Lo secundario de cada alimento (ALIMENTOS[].s), en ese orden, con su unidad. El alcohol solo si hay.
+  const SECUNDARIOS = [['fibra', 'g'], ['azucares', 'g'], ['saturadas', 'g'], ['sodio', 'mg'], ['alcohol', 'g']];
 
   function crear(tel, escena, opciones) {
     const ALIMENTOS = opciones.alimentos || [];
@@ -1270,6 +1272,7 @@ const Comida = (() => {
       const macros = el('div', 'vt-macros');
       cifras.append(kcal, macros);
       const queda = el('div', 'fi-queda');
+      const secundarios = el('div', 'vt-secundarios');
       const porciones = el('div', 'vt-porciones');
       const cantidad = el('div', 'fi-cantidad');
       const gramosTxt = el('div', 'fi-gramos');
@@ -1317,7 +1320,7 @@ const Comida = (() => {
         }));
       }
 
-      ventana.append(cab, cifras, queda, el('div', 'fi-etq', tx('comida.porcion')), porciones, el('div', 'fi-etq', tx('comida.cantidad')), cantidad, gramosTxt, pie);
+      ventana.append(cab, cifras, queda, secundarios, el('div', 'fi-etq', tx('comida.porcion')), porciones, el('div', 'fi-etq', tx('comida.cantidad')), cantidad, gramosTxt, pie);
 
       const pintar = () => {
         const it = elegido();
@@ -1333,6 +1336,14 @@ const Comida = (() => {
           const chip = el('span', 'vt-macro fi-macro-' + m);
           chip.append(el('i'), `${numero(g, g < 10 ? 1 : 0)} g`);
           macros.appendChild(chip);
+        });
+        secundarios.innerHTML = '';
+        const factor = gramosDe(it) / 100;
+        SECUNDARIOS.forEach(([clave, unidad], i) => {
+          const x = a.s ? a.s[i] : null;
+          if (x == null || (clave === 'alcohol' && x === 0)) return;
+          const n = x * factor;
+          secundarios.appendChild(el('span', null, `${tx('comida.secundarios.' + clave)} ${numero(n, unidad === 'g' && n < 10 ? 1 : 0)} ${unidad}`));
         });
         porciones.innerHTML = '';
         a.p.forEach((p, i) => {

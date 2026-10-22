@@ -216,6 +216,13 @@
     "gramos": "Gramos",
     "teQuedarian": "Te quedarían {n} kcal",
     "tePasarias": "Te pasarías {n} kcal",
+    "secundarios": {
+      "fibra": "Fibra",
+      "azucares": "Azúcares",
+      "saturadas": "Saturadas",
+      "sodio": "Sodio",
+      "alcohol": "Alcohol"
+    },
     "fuente": {
       "usda": "Genérico · USDA FoodData Central",
       "propio": "Genérico · valores de Moss"

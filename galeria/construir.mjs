@@ -26,15 +26,21 @@ function modulo(nombre, ruta) {
 
 // Los genéricos curados de assets/alimentos.db, compactos: la galería busca sobre ellos en la
 // memoria con el mismo orden que la app (src/comida/buscar.ts). Por alimento: id, nombres, valores
-// por 100 g (kcal, proteína, carbohidratos, grasas), porciones [es, en, gramos], la de siempre y los
-// textos de búsqueda [idioma, región, principal, texto].
+// por 100 g (kcal, proteína, carbohidratos, grasas, y aparte lo secundario), porciones [es, en,
+// gramos], la de siempre y los textos de búsqueda [idioma, región, principal, texto].
 function alimentosCurados() {
   const ruta = join(raiz, 'assets/alimentos.db');
   if (!existsSync(ruta)) return null;
   const db = new DatabaseSync(ruta, { readOnly: true });
   const redondo = (n) => Math.round(n * 100) / 100;
-  const alimentos = new Map(db.prepare(`SELECT id, nombre_es, nombre_en, categoria, kcal, proteina, carbohidratos, grasas, porcion FROM alimentos WHERE nombre_es IS NOT NULL ORDER BY id`).all()
-    .map((a) => [a.id, { id: a.id, es: a.nombre_es, en: a.nombre_en, cat: a.categoria, v: [a.kcal, a.proteina, a.carbohidratos, a.grasas].map(redondo), p: [], d: 0, t: [], porcion: a.porcion }]));
+  const alimentos = new Map(db.prepare(`SELECT id, nombre_es, nombre_en, categoria, kcal, proteina, carbohidratos, grasas, fibra, azucares, saturadas, sodio, alcohol, porcion
+    FROM alimentos WHERE nombre_es IS NOT NULL ORDER BY id`).all()
+    .map((a) => [a.id, {
+      id: a.id, es: a.nombre_es, en: a.nombre_en, cat: a.categoria, v: [a.kcal, a.proteina, a.carbohidratos, a.grasas].map(redondo),
+      // Lo secundario: fibra, azúcares, saturadas, sodio (mg) y alcohol; null si la base no lo tiene.
+      s: [a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol].map((n) => (n === null ? null : redondo(n))),
+      p: [], d: 0, t: [], porcion: a.porcion,
+    }]));
   for (const p of db.prepare(`SELECT p.id, p.alimento, p.es, p.en, p.gramos FROM porciones p JOIN alimentos a ON a.id = p.alimento WHERE a.nombre_es IS NOT NULL ORDER BY p.id`).all()) {
     const a = alimentos.get(p.alimento);
     if (p.id === a.porcion) a.d = a.p.length;
