@@ -21,6 +21,7 @@ import { AvisoAbajo } from './comida/comunes';
 import { HojaRegistro } from './comida/HojaRegistro';
 import { quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { HojaMas } from './HojaMas';
+import { PaginaDeInicio } from './inicio/Inicio';
 import { CEDE_EN_EL_BORDE, entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
 
 const ULTIMA = PESTANAS.length - 1;
@@ -131,6 +132,8 @@ export default function Secciones() {
                 <View key={n} style={{ width: ancho }} pointerEvents="none" />
               ) : n === 'comida' ? (
                 <PaginaDeComida key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
+              ) : n === 'inicio' ? (
+                <PaginaDeInicio key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
               ) : (
                 <SeccionPendiente key={n} nombre={n} ancho={ancho} arriba={insets.top} />
               ),

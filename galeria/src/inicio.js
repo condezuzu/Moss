@@ -79,12 +79,12 @@ const SeccionInicio = (() => {
       c.querySelector('header').appendChild(el('em', 'in-estado ' + p.estado, tx('progreso.estados.' + p.estado)));
       const fila = el('div', 'in-obj-fila');
       const metaKg = d.perfil.pesoMeta;
-      if (p.fecha) fila.append(el('b', null, u.fechaCorta(p.fecha)), el('span', null, tx('inicio.llegarias', { kg: numero(metaKg, metaKg % 1 ? 1 : 0) })));
+      if (p.fecha) fila.append(el('b', null, u.fechaCorta(p.fecha)), el('span', null, tx('inicio.llegarias', { kg: numero(metaKg, metaKg % 1 ? 1 : 0), unidad: 'kg' })));
       else if (p.estado === 'llegaste') fila.append(el('b', null, `${numero(metaKg, metaKg % 1 ? 1 : 0)} kg`), el('span', null, tx('inicio.yaLlegaste')));
       else fila.append(el('b', null, p.peso == null ? '—' : `${numero(p.peso, 1)} kg`), el('span', null, tx('inicio.tendencia')));
       c.appendChild(fila);
       if (p.hecho != null) c.appendChild(barraDelCamino(d.pesoInicial, p.peso, metaKg, p.hecho));
-      if (p.ritmo != null) c.appendChild(el('p', 'in-nota', tx('inicio.ritmo', { ritmo: conSigno(p.ritmo, 2), plan: conSigno(p.ritmoPlan, 2) })));
+      if (p.ritmo != null) c.appendChild(el('p', 'in-nota', tx('inicio.ritmo', { ritmo: conSigno(p.ritmo, 2), plan: conSigno(p.ritmoPlan, 2), unidad: 'kg' })));
       return c;
     }
 
@@ -111,7 +111,7 @@ const SeccionInicio = (() => {
       const izq = el('div', 'in-dato');
       const cifra = el('div', 'in-dato-cifra');
       cifra.append(el('b', null, d.pesoHoy == null ? '—' : numero(d.pesoHoy, 1)), el('small', null, ' kg'));
-      izq.append(cifra, el('span', null, d.cambio7 == null ? tx('inicio.tendencia') : tx('inicio.enSieteDias', { n: conSigno(d.cambio7, 1) })));
+      izq.append(cifra, el('span', null, d.cambio7 == null ? tx('inicio.tendencia') : tx('inicio.enSieteDias', { n: conSigno(d.cambio7, 1), unidad: 'kg' })));
       fila.append(izq, Graficos.linea(d.serie30, { clase: 'in-chispa', ancho: 150, alto: 44 }));
       const fila2 = el('div', 'in-fila');
       const izq2 = el('div', 'in-dato');

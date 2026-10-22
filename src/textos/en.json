@@ -348,11 +348,11 @@
     "gramos": "{n} g",
     "listo": "Done",
     "deMeta": "{comido} of {meta} g",
-    "llegarias": "you’d reach {kg} kg",
+    "llegarias": "you’d reach {kg} {unidad}",
     "yaLlegaste": "you reached your goal",
     "tendencia": "trend",
-    "ritmo": "{ritmo} kg a week · plan {plan}",
-    "enSieteDias": "{n} kg in 7 days",
+    "ritmo": "{ritmo} {unidad} a week · plan {plan}",
+    "enSieteDias": "{n} {unidad} in 7 days",
     "kcalPorDia": "kcal a day",
     "balanceTexto": "7-day balance, against {gasto} burned",
     "encendidas": "{n} of {total}",
@@ -365,7 +365,8 @@
     "personalizarTitulo": "Your Home",
     "personalizarTexto": "Choose which blocks you see and drag them into order.",
     "personalizarNota": "Tap a block on Home to open its section.",
-    "mover": "Move"
+    "mover": "Move",
+    "ejemplo": "Example"
   },
   "mas": {
     "titulo": "Add",
@@ -547,7 +548,8 @@
     },
     "enCurso": "In progress",
     "minimo": "at least {n}",
-    "controlEnCurso": "The check-in needs at least 4 logged days and one weigh-in in the week. There are {n} days left: if you keep logging, that’s enough."
+    "controlEnCurso": "The check-in needs at least 4 logged days and one weigh-in in the week. There are {n} days left: if you keep logging, that’s enough.",
+    "ejemplo": "This is sample data: once you log your weight (or connect Health) and finish the questionnaire, yours shows up."
   },
   "sueno": {
     "titulo": "Sleep",
@@ -650,7 +652,8 @@
       "baja": "estimate"
     },
     "fuentesTexto": "Moss uses a single source per night: the one you choose or, if not, your watch, then another device, and the phone last. It never adds two together. If a night is missing, it stays grey: nothing is made up.",
-    "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor."
+    "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor.",
+    "ejemplo": "These are sample nights: once you connect Health, yours show up."
   },
   "perfil": {
     "titulo": "Profile",

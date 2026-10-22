@@ -130,3 +130,29 @@ export function momentoPara(dia: ClaveDia, comida: Comida, hoy: ClaveDia): strin
   const minutos = comida === 'snack' ? 11 * 60 : HORA_TIPICA[comida];
   return new Date(p.anio, p.mes, p.dia, Math.floor(minutos / 60), minutos % 60).toISOString();
 }
+
+/** Un cambio, con el signo de verdad: «+0,4», «−1,2». */
+export const conSigno = (n: number, decimales = 0) => `${n < 0 ? '−' : n > 0 ? '+' : ''}${numero(Math.abs(n), decimales)}`;
+
+/** «21 oct». */
+export function fechaDiaMes(dia: ClaveDia): string {
+  const p = partesDe(dia);
+  return t('fecha.corta', { num: p.dia, mes: lista('fecha.mesesCortos')[p.mes] });
+}
+
+/** «lunes 26 de octubre». */
+export function fechaLarga(dia: ClaveDia): string {
+  const p = partesDe(dia);
+  return t('fecha.larga', { dia: lista('fecha.dias')[p.diaSemana], num: p.dia, mes: lista('fecha.meses')[p.mes] });
+}
+
+/** «7 h 32 min», «8 h» o «45 min». */
+export function duracion(minutos: number): string {
+  const h = Math.floor(minutos / 60);
+  const m = Math.round(minutos % 60);
+  if (!h) return t('fecha.minutos', { m });
+  return m ? t('fecha.horasMinutos', { h, m: String(m).padStart(2, '0') }) : t('fecha.horas', { h });
+}
+
+/** Una hora del día en minutos, aunque pase de la medianoche: 1500 son las 01:00. */
+export const horaDelDia = (minutos: number) => hora(((Math.round(minutos) % 1440) + 1440) % 1440);

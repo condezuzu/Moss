@@ -348,11 +348,11 @@
     "gramos": "{n} g",
     "listo": "Listo",
     "deMeta": "{comido} de {meta} g",
-    "llegarias": "llegarías a {kg} kg",
+    "llegarias": "llegarías a {kg} {unidad}",
     "yaLlegaste": "llegaste a tu meta",
     "tendencia": "tendencia",
-    "ritmo": "{ritmo} kg por semana · el plan, {plan}",
-    "enSieteDias": "{n} kg en 7 días",
+    "ritmo": "{ritmo} {unidad} por semana · el plan, {plan}",
+    "enSieteDias": "{n} {unidad} en 7 días",
     "kcalPorDia": "kcal por día",
     "balanceTexto": "balance de 7 días, contra un gasto de {gasto}",
     "encendidas": "{n} de {total}",
@@ -365,7 +365,8 @@
     "personalizarTitulo": "Tu Inicio",
     "personalizarTexto": "Elige qué bloques ves y arrástralos para ordenarlos.",
     "personalizarNota": "Al tocar un bloque en Inicio, vas a su sección.",
-    "mover": "Mover"
+    "mover": "Mover",
+    "ejemplo": "Ejemplo"
   },
   "mas": {
     "titulo": "Agregar",
@@ -547,7 +548,8 @@
     },
     "enCurso": "En curso",
     "minimo": "mínimo {n}",
-    "controlEnCurso": "El control necesita al menos 4 días con comida y una pesada en la semana. Quedan {n} días: si sigues registrando, alcanza."
+    "controlEnCurso": "El control necesita al menos 4 días con comida y una pesada en la semana. Quedan {n} días: si sigues registrando, alcanza.",
+    "ejemplo": "Son datos de ejemplo: cuando registres tu peso (o conectes Salud) y completes el cuestionario, aparecen los tuyos."
   },
   "sueno": {
     "titulo": "Sueño",
@@ -650,7 +652,8 @@
       "baja": "estimación"
     },
     "fuentesTexto": "Moss usa una sola fuente por noche: la que elijas o, si no, el reloj, después otro aparato y al final el teléfono. Nunca suma dos. Si falta una noche, queda en gris: no se inventa.",
-    "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo duermes, consulta a un médico."
+    "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo duermes, consulta a un médico.",
+    "ejemplo": "Son noches de ejemplo: cuando conectes Salud, aparecen las tuyas."
   },
   "perfil": {
     "titulo": "Perfil",

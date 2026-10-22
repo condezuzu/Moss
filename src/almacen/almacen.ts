@@ -46,6 +46,8 @@ export type Estado = MapasDeComida & {
   canasta: Item[];
   /** Métrico o imperial, si se eligió en Perfil; sin elegir, el del país del teléfono. Queda en el teléfono. */
   sistema: Sistema | null;
+  /** Los bloques de Inicio: en qué orden y cuáles se ven. Sin elegir, los de fábrica. Queda en el teléfono. */
+  inicio: { orden: string[]; visibles: string[] } | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
   semilla: string;
   /** Sube con cada cambio. */
@@ -75,6 +77,7 @@ export const DIAS_DE_COMIDA = 120;
 /** La canasta y el sistema de unidades van en los ajustes del teléfono: no se sincronizan. */
 const CANASTA = 'canasta';
 const SISTEMA = 'sistema';
+const INICIO = 'inicio';
 
 /** Un id para lo que se crea en el teléfono: la hora y un azar, así dos teléfonos de la misma cuenta no se pisan. */
 const idNuevo = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -91,6 +94,15 @@ const listasDe = (m: MapasDeComida): ListasDeComida => ({
   registros: [...m.registros.values()], recetas: [...m.recetas.values()], propios: [...m.propios.values()],
   favoritos: [...m.favoritos.values()], agua: [...m.agua.values()], medidas: [...m.medidas.values()],
 });
+
+function leerInicio(texto: string | undefined): Estado['inicio'] {
+  try {
+    const x = texto ? (JSON.parse(texto) as Estado['inicio']) : null;
+    return x && Array.isArray(x.orden) && Array.isArray(x.visibles) ? x : null;
+  } catch {
+    return null;
+  }
+}
 
 function leerCanasta(texto: string | undefined): Item[] {
   try {
@@ -122,7 +134,7 @@ export function crearAlmacen(op: Opciones) {
   let repositorio: Repositorio | undefined;
   let estado: Estado = {
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
-    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null,
+    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null, inicio: null,
     semilla: '', version: 0, forma: 0,
   };
   const oyentes = new Set<() => void>();
@@ -213,7 +225,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), listo: true }, true);
     revisarControl();
   }
 
@@ -400,6 +412,11 @@ export function crearAlmacen(op: Opciones) {
       const hechos = confirmar(estado.registros.values(), dia, momento());
       ponerComida('registros', hechos);
       return hechos.length;
+    },
+    /** Los bloques de Inicio, en su orden y cuáles se ven. */
+    ponerInicio(inicio: NonNullable<Estado['inicio']>) {
+      guardar((r) => r.guardarAjuste(INICIO, JSON.stringify(inicio)));
+      cambiar({ inicio }, false);
     },
     ponerSistema(sistema: Sistema) {
       guardar((r) => r.guardarAjuste(SISTEMA, sistema));

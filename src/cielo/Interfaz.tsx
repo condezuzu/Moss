@@ -81,6 +81,8 @@ export function Interfaz(p: Props) {
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) };
   });
   const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }, { translateY: p.escena.value.cam.y * PARALAJE.lomas[2] * alto }] }));
+  // El panel de prueba es de Hábitos: no se ve encima de las otras secciones.
+  const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }] }));
   // La flecha tenue de Ascent va con la frase y respira apenas; mientras Ascent sube, se apaga.
   const reducido = useReducedMotion();
   const respira = useSharedValue(0);
@@ -187,7 +189,9 @@ export function Interfaz(p: Props) {
       )}
 
       {DIAGNOSTICO && (
-        <PanelDePrueba arriba={insets.top + 68} calidad={p.calidad} riqueza={p.riqueza} cuadros={p.cuadros} acciones={p.acciones} />
+        <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
+          <PanelDePrueba arriba={insets.top + 68} calidad={p.calidad} riqueza={p.riqueza} cuadros={p.cuadros} acciones={p.acciones} />
+        </Animated.View>
       )}
     </View>
   );
