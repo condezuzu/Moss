@@ -462,7 +462,8 @@ const Entrada = (() => {
       ir(0);
     }
 
-    // Al terminar el cuestionario: un «flum» hasta Inicio (opciones.llegada), la comida.
+    // Al terminar el cuestionario: un «flum» hasta Inicio (opciones.llegada), la comida. Al llegar,
+    // opciones.alTerminar (en la app, los primeros hábitos).
     function terminar() {
       clearTimeout(temporizador);
       escena.viajar({
@@ -475,7 +476,12 @@ const Entrada = (() => {
           escena.camara(0, true);
           if (opciones.alSalir) opciones.alSalir();
         },
-        alLlegar: () => { raiz.innerHTML = ''; actual = -1; opciones.alCambiar && opciones.alCambiar(null); },
+        alLlegar: () => {
+          raiz.innerHTML = '';
+          actual = -1;
+          opciones.alCambiar && opciones.alCambiar(null);
+          if (opciones.alTerminar) opciones.alTerminar();
+        },
       });
     }
 

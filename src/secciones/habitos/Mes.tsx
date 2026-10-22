@@ -1,12 +1,12 @@
 // «Tu mes», en Hábitos (spec/plan.md, etapa 10: el calendario y las estadísticas): el mes en mini
 // cielos, cada día con su constelación y lo que se encendió, y abajo los días completos y con luz,
-// la racha y cuánto se cumplió cada hábito los últimos 30 días.
+// la luz juntada y cuánto se cumplió cada hábito los últimos 30 días. Sin rachas.
 
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { buscarConstelacion, type Constelacion } from '@/datos/catalogo';
-import { cumplimiento, diasDelMes, racha, resumenDelMes } from '@/dominio/estadisticas';
+import { cumplimiento, diasDelMes, resumenDelMes } from '@/dominio/estadisticas';
 import { diaDeLaSemana, type ClaveDia } from '@/dominio/fechas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -96,7 +96,7 @@ export function Mes({ alCerrar }: { alCerrar: () => void }) {
       <View style={st.cifras}>
         <Cifra valor={resumen.completos} texto={t('habitos.mes.completos')} />
         <Cifra valor={resumen.conLuz} texto={t('habitos.mes.conLuz')} />
-        {esteMes && <Cifra valor={racha(e.dias, e.hoy)} texto={t('habitos.mes.racha')} />}
+        <Cifra valor={resumen.luz} texto={t('habitos.mes.luz')} />
       </View>
 
       {vigentes.length > 0 && (

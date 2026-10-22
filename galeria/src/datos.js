@@ -1,7 +1,8 @@
 // La persona de mentira de la galería: quiere bajar a 71 kg y empezó el lunes 31 de agosto. Acá
-// están lo que la app guardaría (su perfil, sus pesadas, sus medidas y lo que Salud trae de sus
-// noches); lo que se calcula con eso (la tendencia, el control, el progreso, la grasa y el sueño)
-// lo calculan los módulos de la app (Control, Progreso, Cuerpo y Sueno) en cada sección.
+// están lo que la app guardaría (su perfil, sus pesadas, sus medidas, lo que Salud trae de sus
+// noches, sus hábitos y lo que hizo cada día); lo que se calcula con eso (la tendencia, el
+// control, el progreso, la grasa, el sueño y las estadísticas de Hábitos) lo calculan los módulos
+// de la app (Control, Progreso, Cuerpo, Sueno y Estadisticas) en cada sección.
 
 const Datos = (() => {
   const HOY = '2026-10-21';
@@ -105,6 +106,52 @@ const Datos = (() => {
   const NOCHES = Sueno.armarNoches(MUESTRAS, FUENTES);
   const SOLO_EN_CAMA = Sueno.soloEnCama(MUESTRAS, FUENTES, NOCHES);
 
+  // ------------------------------------------------------------ los hábitos y cada día
+  // Empezó el lunes 31 de agosto con seis hábitos (la guitarra, solo los viernes) y el lunes 28 de
+  // septiembre sumó el agua. Desde ahí cada día de la semana tiene la cantidad de la semana de la
+  // galería: el lunes 4, el martes 5, el miércoles 6 (la Lira), el jueves 3, el viernes 7, el sábado
+  // 4 y el domingo 6. La constelación de cada día la pone galeria.js. Los nombres van en los dos
+  // idiomas porque la galería cambia de idioma; en la app los escribe la persona.
+  const TODOS = [0, 1, 2, 3, 4, 5, 6];
+  const CON_AGUA = '2026-09-28';
+  const HABITOS = [
+    { id: 'meditar', nombre: { es: 'Meditar 10 min', en: 'Meditate 10 min' }, icono: 'loto', dias: TODOS, fuente: { tipo: 'manual' }, orden: 0, desde: INICIO },
+    { id: 'dormir', nombre: { es: 'Dormir 7 h', en: 'Sleep 7 h' }, icono: 'luna', dias: TODOS, fuente: { tipo: 'salud', dato: 'sueno', meta: 420 }, orden: 1, desde: INICIO },
+    { id: 'leer', nombre: { es: 'Leer 20 páginas', en: 'Read 20 pages' }, icono: 'libro', dias: [0, 1, 2, 3, 5], fuente: { tipo: 'manual' }, orden: 2, desde: INICIO },
+    { id: 'escribir', nombre: { es: 'Escribir', en: 'Journal' }, icono: 'pluma', dias: [0, 2, 3, 5], fuente: { tipo: 'manual' }, orden: 3, desde: INICIO },
+    { id: 'pasos', nombre: { es: '8.000 pasos', en: '8,000 steps' }, icono: 'huellas', dias: TODOS, fuente: { tipo: 'salud', dato: 'pasos', meta: 8000 }, orden: 4, desde: INICIO },
+    { id: 'agua', nombre: { es: 'Agua 2 L', en: 'Water 2 L' }, icono: 'gota', dias: [0, 3, 5, 6], fuente: { tipo: 'manual' }, orden: 5, desde: CON_AGUA },
+    { id: 'guitarra', nombre: { es: 'Guitarra', en: 'Guitar' }, icono: 'nota', dias: [5], fuente: { tipo: 'manual' }, orden: 6, desde: INICIO },
+  ];
+
+  // Lo hecho cada día, hasta ayer: hoy es el cielo de la galería. Cada hábito con su constancia, y
+  // el sueño según sus noches de Salud (sin noche, no se enciende). El sábado 12 de septiembre y el
+  // sábado 10 de octubre no hizo nada, y eso no le resta nada a lo juntado. El lunes 19 completo y
+  // el martes 20 con tres de cinco, como en el universo de la semana.
+  const CONSTANCIA = { meditar: 0.86, leer: 0.74, escribir: 0.6, pasos: 0.6, agua: 0.8, guitarra: 0.7, dormir: 0.72 };
+  const SIN_HABITOS = new Set(['2026-09-12', SIN_NADA]);
+  const FIJOS = { '2026-10-19': ['meditar', 'dormir', 'leer', 'pasos'], '2026-10-20': ['meditar', 'dormir', 'leer'] };
+  const DIAS = (() => {
+    const r = azar(23);
+    const conSalud = NOCHES.length ? NOCHES[0].clave : HOY;
+    const lista = [];
+    for (let clave = INICIO; clave < HOY; clave = Fechas.sumarDias(clave, 1)) {
+      const dia = Fechas.diaDeLaSemana(clave);
+      const habitos = HABITOS.filter((h) => h.desde <= clave && h.dias.includes(dia)).sort((a, b) => a.orden - b.orden).map((h) => h.id);
+      const noche = NOCHES.find((n) => n.clave === clave);
+      let hechos = habitos.filter((id) => {
+        const suerte = r();
+        if (id === 'dormir' && clave >= conSalud) return !!noche && noche.dormido >= 420;
+        return suerte < CONSTANCIA[id];
+      });
+      if (SIN_HABITOS.has(clave)) hechos = [];
+      if (FIJOS[clave]) hechos = FIJOS[clave];
+      // La luz como en src/dominio/luz.ts: 3 por el primero y 1 por cada uno más.
+      lista.push({ clave, constelacion: null, habitos, hechos, luz: hechos.length ? hechos.length + 2 : 0, completo: habitos.length > 0 && hechos.length === habitos.length });
+    }
+    return lista;
+  })();
+
   // Lo que Ascent tiene de la persona, para la sección de Ascent con el vínculo. Entrena los lunes
   // (empuje), los miércoles (piernas), los viernes (torso) y los domingos (tirón), salvo algún
   // viernes y algún domingo; hoy hizo piernas a las 18:40, una sesión más grande que las de
@@ -150,6 +197,7 @@ const Datos = (() => {
   return {
     HOY, AHORA_MIN, INICIO, PERFIL, GASTO_ANTERIOR, PESADAS, MEDIDAS, azar,
     FUENTES, MUESTRAS, LECTURAS, NOCHES, SOLO_EN_CAMA, NOCHE_SIN_RELOJ: SIN_RELOJ, NOCHE_SIN_NADA: SIN_NADA, NOCHE_CORTADA: CORTADA,
+    HABITOS, DIAS,
     ASCENT,
   };
 })();

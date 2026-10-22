@@ -125,6 +125,8 @@ const Escena = (() => {
       // Dónde está la pestaña Hábitos, en píxeles desde su lugar: la constelación va con ella.
       paginaPx: 0,
       aparicion: 0,
+      // Con Ascent arriba, lo de hoy se apaga y queda el cielo solo (de 0 a 1).
+      velado: 0,
       fondoListo: false,
       constelacion: null,
       habitos: [],
@@ -236,7 +238,7 @@ const Escena = (() => {
         el.querySelector('.etq-nombre span').textContent = nombreDe(h.nombre);
         const auto = el.querySelector('.etq-auto');
         auto.textContent = h.auto ? textoAuto(h) : '';
-        auto.hidden = !h.auto;
+        auto.hidden = !auto.textContent;
         el.classList.toggle('encendida', h.encendido);
         el.classList.toggle('es-auto', !!h.auto);
         el._ancho = 0;
@@ -481,19 +483,27 @@ const Escena = (() => {
       }
     }
 
-    function tocar(px, py) {
+    // La estrella de hoy más cerca del punto (en píxeles del lienzo), o -1. Solo en Hábitos.
+    function estrellaEn(px, py) {
       const c = e.constelacion;
-      if (!c || e.modo !== 'hoy' || e.viaje || e.paginaPx !== 0) return;
+      if (!c || e.modo !== 'hoy' || e.viaje || e.paginaPx !== 0) return -1;
       let mejor = -1, dist = 34;
       c.pos.forEach(([x, y], i) => {
         const [sx, sy] = posPantalla(x, y, PARALAJE.cielo);
         const d = Math.hypot(sx - px, sy - py);
         if (d < dist) { dist = d; mejor = i; }
       });
+      return mejor;
+    }
+
+    function tocar(px, py) {
+      const mejor = estrellaEn(px, py);
       if (mejor < 0) return;
+      const c = e.constelacion;
       const h = e.habitos[mejor];
       if (h.auto) {
-        avisar(tx('cielo.seEnciendeSola') + ' · ' + textoAuto(h), false);
+        const detalle = textoAuto(h);
+        avisar(h.auto === 'comida' ? tx('habitos.comidaTexto') : tx('cielo.seEnciendeSola') + (detalle ? ' · ' + detalle : ''), false);
         e.haptico('suave');
         e.efectos.push({ tipo: 'apagar', x: c.pos[mejor][0], y: c.pos[mejor][1], t0: e.t, dur: 0.4 });
         return;
@@ -502,16 +512,30 @@ const Escena = (() => {
     }
 
     // Arrastrar mueve la cámara; un toque sin arrastre enciende o apaga. Solo en Hábitos: en las
-    // otras pestañas el cielo es el fondo.
+    // otras pestañas el cielo es el fondo. Mantener apretada una estrella 450 ms sin mover el dedo
+    // abre su hábito (opciones.alMantener), como en la app; al soltar ya no enciende.
     let puntero = null;
+    let esperaMantener = 0;
     contenedor.addEventListener('pointerdown', (ev) => {
       if (ev.target.closest('button') || e.paginaPx !== 0) return;
       const r = contenedor.getBoundingClientRect();
-      puntero = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, cam0: e.cam.y, ultimoY: ev.clientY, ultimoT: performance.now(), v: 0, movio: false, rx: r.left, ry: r.top };
+      const p = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, cam0: e.cam.y, ultimoY: ev.clientY, ultimoT: performance.now(), v: 0, movio: false, lejos: false, rx: r.left, ry: r.top };
+      puntero = p;
+      clearTimeout(esperaMantener);
+      if (!opciones.alMantener) return;
+      esperaMantener = setTimeout(() => {
+        if (puntero !== p || p.movio || p.lejos) return;
+        const i = estrellaEn(p.x0 - p.rx, p.y0 - p.ry);
+        if (i < 0) return;
+        puntero = null;
+        e.haptico('toque');
+        opciones.alMantener(i);
+      }, 450);
     });
     contenedor.addEventListener('pointermove', (ev) => {
       if (!puntero || ev.pointerId !== puntero.id) return;
       const dy = ev.clientY - puntero.y0;
+      if (Math.hypot(ev.clientX - puntero.x0, dy) > 8) puntero.lejos = true;
       if (!puntero.movio && Math.abs(dy) > 8 && opciones.permitirArrastre()) {
         puntero.movio = true;
         try { contenedor.setPointerCapture(ev.pointerId); } catch (_) { /* sin captura igual funciona */ }
@@ -531,6 +555,7 @@ const Escena = (() => {
     });
     const soltar = (ev) => {
       if (!puntero || ev.pointerId !== puntero.id) return;
+      clearTimeout(esperaMantener);
       if (!puntero.movio && ev.type === 'pointerup') tocar(ev.clientX - puntero.rx, ev.clientY - puntero.ry);
       if (puntero.movio) {
         const proyectada = e.cam.y + puntero.v * 0.28;
@@ -645,6 +670,7 @@ const Escena = (() => {
 
     // ---------------------------------------------------------------- dibujar
     function sprite(b, x, y, tam, par, col, int, tipo, p1, p2, rot) {
+      int *= 1 - e.velado;
       if (b.n >= b.cap || int <= 0.001) return;
       const o = b.n * 12, d = b.datos;
       d[o] = x; d[o + 1] = y; d[o + 2] = tam; d[o + 3] = par;
@@ -654,6 +680,7 @@ const Escena = (() => {
     }
 
     function linea(b, a, c, col, int, ancho, avance, punteado, chispa) {
+      int *= 1 - e.velado;
       if (b.n >= b.cap || int <= 0.001 || avance <= 0) return;
       const o = b.n * 12, d = b.datos;
       d[o] = a[0]; d[o + 1] = a[1]; d[o + 2] = c[0]; d[o + 3] = c[1];
@@ -986,10 +1013,12 @@ const Escena = (() => {
       // momento es del cielo.
       const dc = e.completo ? e.t - e.tCompleto : -1;
       const momento = e.completo ? suave(0.6, 1.4, dc) * (1 - suave(7.5, 9.0, dc)) : 0;
-      dom.cab.style.opacity = opac;
-      dom.etiquetas.style.opacity = opac * (1 - 0.55 * momento);
-      dom.uEtiquetas.style.opacity = suave(0.5, 1.1, e.cam.y);
-      dom.uTitulo.style.opacity = suave(0.6, 1.15, e.cam.y);
+      const sinVelo = 1 - e.velado;
+      dom.cab.style.opacity = opac * sinVelo;
+      dom.etiquetas.style.opacity = opac * (1 - 0.55 * momento) * sinVelo;
+      dom.uEtiquetas.style.opacity = suave(0.5, 1.1, e.cam.y) * sinVelo;
+      dom.uTitulo.style.opacity = suave(0.6, 1.15, e.cam.y) * sinVelo;
+      dom.pie.style.opacity = sinVelo;
     }
 
     // Safari descarta el contexto gráfico cuando la pestaña pasa mucho tiempo en segundo plano:
@@ -1051,8 +1080,18 @@ const Escena = (() => {
         tocar(sx, sy);
         return true;
       },
+      // Dónde está una estrella en la página, para apretarla con el mouse en las capturas.
+      dondeEsta(texto) {
+        const i = e.habitos.findIndex((h) => nombreDe(h.nombre).includes(texto));
+        if (i < 0) return null;
+        const r = contenedor.getBoundingClientRect();
+        const [sx, sy] = posPantalla(e.constelacion.pos[i][0], e.constelacion.pos[i][1], PARALAJE.cielo);
+        return { x: r.left + sx, y: r.top + sy };
+      },
+      avisar(texto) { avisar(texto, false); },
+      // Los que se encienden solos con la comida no esperan a Salud.
       simularSalud() {
-        const i = e.habitos.findIndex((h) => h.auto && !h.encendido);
+        const i = e.habitos.findIndex((h) => h.auto && h.auto !== 'comida' && !h.encendido);
         if (i < 0 || e.esporasSalud.some((s) => s.indice === i)) return false;
         const h = e.habitos[i];
         h.valor = Math.max(h.valor, h.meta);
@@ -1109,6 +1148,8 @@ const Escena = (() => {
       ponerModo(modo) { e.modo = modo; ui.hidden = modo !== 'hoy'; },
       get modo() { return e.modo; },
       camara(y, deUna) { e.cam.objetivo = y; e.cam.v = 0; if (deUna) e.cam.y = y; },
+      // Ascent arriba: lo de hoy (la constelación, el universo y sus textos) se apaga y queda el cielo.
+      velar(v) { e.velado = Math.min(1, Math.max(0, v)); },
       aparecer() { e.aparicion = 0; },
       ponerDemo,
       quitarDemo() { e.demo = null; },
@@ -1123,7 +1164,7 @@ const Escena = (() => {
       get nombre() { return e.constelacion ? nombreDe(e.constelacion.datos.nombres) : ''; },
       get encendidas() { return e.habitos.filter((h) => h.encendido).length; },
       get total() { return e.habitos.length; },
-      get hayAutoPendiente() { return e.habitos.some((h) => h.auto && !h.encendido); },
+      get hayAutoPendiente() { return e.habitos.some((h) => h.auto && h.auto !== 'comida' && !h.encendido); },
       // Lo de hoy para el bloque de Inicio: la constelación y cada hábito con lo encendido.
       get hoy() { return e.constelacion ? { constelacion: e.constelacion.datos, habitos: e.habitos.map((h) => Object.assign({}, h)) } : null; },
     };
@@ -1135,5 +1176,5 @@ const Escena = (() => {
   const riquezaDe = (luz) => Math.min(1, Math.log1p(Math.max(0, luz) / ESCALA_DE_RIQUEZA) / Math.log1p(LUZ_PLENA / ESCALA_DE_RIQUEZA));
   const luzParaRiqueza = (r) => ESCALA_DE_RIQUEZA * Math.expm1(r * Math.log1p(LUZ_PLENA / ESCALA_DE_RIQUEZA));
 
-  return { crear, proyectar, riquezaDe, luzParaRiqueza };
+  return { crear, proyectar, encajar, riquezaDe, luzParaRiqueza };
 })();

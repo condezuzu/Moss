@@ -45,6 +45,15 @@ const mas = (accion, arg) => pagina.evaluate(([a, x]) => window.__mas(a, x), [ac
 const progreso = (accion, arg) => pagina.evaluate(([a, x]) => window.__progreso(a, x), [accion, arg]);
 const sueno = (accion, arg) => pagina.evaluate(([a, x]) => window.__sueno(a, x), [accion, arg]);
 const ascent = (accion, arg) => pagina.evaluate(([a, x]) => window.__ascent(a, x), [accion, arg]);
+const habitos = (accion, arg) => pagina.evaluate(([a, x]) => window.__habitos(a, x), [accion, arg]);
+// Lo que depende de los cuadros del cielo (el flum, las etiquetas de las estrellas) puede atrasarse
+// varios segundos con el render por software: se espera a que pase en lugar de un tiempo fijo.
+const esperarA = (condicion, arg) => pagina.waitForFunction(condicion, arg, { polling: 200, timeout: 30000 });
+const etiquetasUbicadas = () => esperarA(() => [...document.querySelectorAll('.etiquetas .etq')].every((e) => e.style.transform));
+const hojaAbierta = (clase) => esperarA((c) => {
+  const h = document.querySelector('.' + c);
+  return !!h && !h.hidden && !h.classList.contains('saliendo') && h.getAnimations().every((a) => a.playState !== 'running');
+}, clase);
 // Un arrastre de costado con el mouse, como un dedo: se saca la foto con el dedo todavía abajo.
 async function arrastrar(desde, hasta, y, nombre) {
   await pagina.mouse.move(desde, y);
@@ -149,12 +158,16 @@ const pasos = {
         await foto(`entrada-${paso}-${ms}`);
       }
     }
-    // Empezar: el flum hasta Inicio.
+    // Empezar: el flum hasta Inicio, y ahí suben los primeros hábitos.
     await pagina.click('.ent-resultado .ent-principal');
     for (const ms of [200, 420, 520, 750, 1400]) {
       await pagina.waitForTimeout(ms === 200 ? 200 : ms - [200, 420, 520, 750, 1400][[200, 420, 520, 750, 1400].indexOf(ms) - 1]);
       await foto('entrada-fin-' + ms);
     }
+    await hojaAbierta('hh-hoja-sugeridos');
+    await foto('entrada-fin-primeros');
+    await habitos('cerrar');
+    await pagina.waitForTimeout(500);
   },
   // Las secciones con el dedo: de Sueño a Hábitos con la constelación asomando, un arrastre corto
   // que vuelve a su lugar, el nombre de abajo, y el borde de Perfil que cede.
@@ -246,6 +259,26 @@ const pasos = {
     await pestana(1);
     await pagina.waitForTimeout(1200);
     await foto('macros-comida');
+  },
+  // Las kcal en cada estilo (kcal.js): Inicio, el día y la semana de Comida, y pasada la meta.
+  async kcal() {
+    for (const estilo of ['anillo', 'arco', 'barra', 'luna']) {
+      await pagina.evaluate((e) => window.__kcal(e), estilo);
+      await pestana(0);
+      await pagina.waitForTimeout(1400);
+      await pagina.screenshot({ path: join(salida, `kcal-${estilo}-inicio.png`), clip: { x: 0, y: 80, width: 393, height: 340 } });
+      await pestana(1);
+      await pagina.waitForTimeout(1400);
+      await pagina.screenshot({ path: join(salida, `kcal-${estilo}-comida.png`), clip: { x: 0, y: 40, width: 393, height: 400 } });
+    }
+    await seccion('cena');
+    for (const estilo of ['anillo', 'arco', 'barra']) {
+      await pagina.evaluate((e) => window.__kcal(e), estilo);
+      await pestana(0);
+      await pagina.waitForTimeout(1400);
+      await pagina.screenshot({ path: join(salida, `kcal-${estilo}-pasada.png`), clip: { x: 0, y: 80, width: 393, height: 340 } });
+    }
+    await pagina.evaluate(() => window.__kcal('luna'));
   },
   // Personalizar Inicio: la hoja, sumar el sueño y el agua, y la constelación primero.
   async personalizar() {
@@ -527,6 +560,102 @@ const pasos = {
     await ascent('vincular', false);
     await pestana(0);
     await pagina.waitForTimeout(600);
+  },
+  // Hábitos: los dos botones sobre el cielo, el hábito nuevo con «Con Salud», la grilla de íconos,
+  // mantener apretada una estrella (con el mouse, como un dedo) y el cielo después de guardar uno
+  // nuevo para hoy: el miércoles pasa de seis a siete y cambia de constelación.
+  async editor() {
+    await alCielo();
+    await etiquetasUbicadas();
+    await pagina.waitForTimeout(600);
+    await pagina.screenshot({ path: join(salida, 'editor-botones.png'), clip: { x: 0, y: 40, width: 393, height: 240 } });
+    console.log('· editor-botones');
+    await habitos('nuevo');
+    await habitos('como', 'salud');
+    await hojaAbierta('hh-hoja-editor');
+    await foto('editor');
+    await habitos('bajar');
+    await pagina.waitForTimeout(300);
+    await foto('editor-iconos');
+    await habitos('cerrar');
+    await pagina.waitForTimeout(600);
+    const p = await pagina.evaluate(() => window.__estrella('Escribir'));
+    await pagina.mouse.move(p.x, p.y);
+    await pagina.mouse.down();
+    await pagina.waitForTimeout(700);
+    await pagina.mouse.up();
+    await pagina.mouse.move(1, 1);
+    await hojaAbierta('hh-hoja-editor');
+    await foto('editor-editar');
+    await habitos('cerrar');
+    await pagina.waitForTimeout(600);
+    await habitos('nuevo');
+    await habitos('escribir', 'Estirar 5 min');
+    await habitos('icono', 'figure.run');
+    await habitos('guardar');
+    await etiquetasUbicadas();
+    await pagina.waitForTimeout(1500);
+    await foto('editor-guardado');
+    await pagina.evaluate(() => window.__accion('reiniciar'));
+    await etiquetasUbicadas();
+    await pestana(0);
+  },
+  // Tu mes: los mini cielos con las cifras, cada hábito abajo, el mes anterior (antes de sumar el
+  // agua) y en inglés.
+  async mes() {
+    await alCielo();
+    await habitos('mes');
+    await hojaAbierta('hh-hoja-mes');
+    await foto('mes');
+    await habitos('bajar');
+    await pagina.waitForTimeout(300);
+    await foto('mes-habitos');
+    await habitos('mover', -1);
+    await habitos('bajar', '.hh-navegar');
+    await pagina.waitForTimeout(300);
+    await foto('mes-septiembre');
+    await habitos('mover', 1);
+    await pagina.evaluate(() => window.__idioma('en'));
+    await pagina.waitForTimeout(400);
+    await foto('mes-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await habitos('cerrar');
+    await pagina.waitForTimeout(600);
+    await pestana(0);
+  },
+  // Los primeros hábitos: suben al terminar la entrada, con los cuatro de fábrica; con cinco el
+  // sexto ya no entra; y la constelación que arman en el cielo de hoy.
+  async sugeridos() {
+    await pagina.evaluate(() => window.__entrada('resultado'));
+    await pagina.waitForTimeout(2600);
+    await pagina.click('.ent-resultado .ent-principal');
+    await pagina.mouse.move(1, 1);
+    // El flum hasta Inicio y, al llegar, la hoja.
+    await hojaAbierta('hh-hoja-sugeridos');
+    await foto('sugeridos');
+    await habitos('elegir', 'leer');
+    await habitos('elegir', 'agua');
+    await habitos('bajar');
+    await pagina.waitForTimeout(400);
+    await foto('sugeridos-cinco');
+    await habitos('armar');
+    await pagina.waitForTimeout(600);
+    await alCielo();
+    await etiquetasUbicadas();
+    await pagina.waitForTimeout(1200);
+    await foto('sugeridos-cielo');
+    await pagina.evaluate(() => window.__accion('reiniciar'));
+    await etiquetasUbicadas();
+    await pestana(0);
+  },
+  // Perfil, abajo: borrar los datos o la cuenta, y los créditos de los alimentos.
+  async perfil() {
+    await pestana(5);
+    await pagina.evaluate(() => document.querySelector('.pf-scroll').scrollTo(0, 99999));
+    await pagina.waitForTimeout(400);
+    await foto('perfil-abajo');
+    await pagina.evaluate(() => document.querySelector('.pf-scroll').scrollTo(0, 0));
+    await pestana(0);
   },
   async 'ascent-ingles'() {
     await pagina.evaluate(() => window.__idioma('en'));

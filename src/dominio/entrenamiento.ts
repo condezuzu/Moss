@@ -159,6 +159,19 @@ export function metaConEntrenamiento(dia: DiaConEntrenamiento, extraProteina: nu
 // ------------------------------------------------------------ recuperación
 
 export const MAXIMOS_DE_RECUPERACION = { sueno: 40, carga: 40, comida: 20 } as const;
+
+/** Cómo dormiste según vos, de 1 (muy mal) a 5 (muy bien), llevado a 0–100. */
+export const sentidaSobre100 = (cara: number) => (clamp(Math.round(cara), 1, 5) - 1) * 25;
+
+/**
+ * La calidad de la noche para la recuperación: la del reloj (0–100), la que dijiste a la mañana o,
+ * con las dos, el promedio. Sin ninguna, null.
+ */
+export function calidadParaRecuperar(reloj: number | null, sentida: number | null): number | null {
+  const tuya = sentida === null ? null : sentidaSobre100(sentida);
+  if (reloj === null) return tuya;
+  return tuya === null ? clamp(reloj, 0, 100) : (clamp(reloj, 0, 100) + tuya) / 2;
+}
 export type ParteDeRecuperacion = keyof typeof MAXIMOS_DE_RECUPERACION;
 export type Recuperacion = {
   partes: Record<ParteDeRecuperacion, number>;
@@ -171,7 +184,9 @@ export type Recuperacion = {
 /**
  * La recuperación de cada día, antes de entrenar, de 0 a 100. En la app la calcula
  * moss.recuperacion(fecha) en Supabase, con esta misma cuenta, así las dos apps dan el mismo número.
- * - Sueño, 40: 20 por lo dormido contra lo que se necesita y 20 por la calidad de la noche.
+ * - Sueño, 40: 20 por lo dormido contra lo que se necesita y 20 por la calidad de la noche: la del
+ *   reloj, la que dijiste a la mañana o el promedio de las dos (calidadParaRecuperar). Sin ninguna,
+ *   la duración vale los 40: sin reloj, antes nunca se pasaba de 20.
  * - Carga, 40: el peso movido de los 3 días anteriores contra 3 veces el promedio diario de las 4
  *   semanas anteriores. Hasta la mitad de lo de siempre da 40, lo de siempre 20 y 1,5 veces, 0;
  *   menos 5 por cada día seguido de entrenamiento después del segundo.
@@ -179,11 +194,13 @@ export type Recuperacion = {
  * Desde 70 conviene ir fuerte; de 45 a 69, normal; debajo, suave.
  */
 export function recuperacion(d: {
-  dormido: number; necesidad: number; calidad: number | null;
+  dormido: number; necesidad: number; calidad: number | null; sentida?: number | null;
   kilos3: number; kilosPorDia: number; seguidos: number;
   proteinaAyer: number; metaProteina: number; kcalAyer: number; metaKcal: number;
 }): Recuperacion {
-  const sueno = 20 * Math.min(1, d.dormido / d.necesidad) + (20 * clamp(d.calidad ?? 0, 0, 100)) / 100;
+  const duracion = Math.min(1, d.dormido / d.necesidad);
+  const calidad = calidadParaRecuperar(d.calidad, d.sentida ?? null);
+  const sueno = calidad === null ? 40 * duracion : 20 * duracion + (20 * calidad) / 100;
   const carga = d.kilosPorDia > 0 ? d.kilos3 / (3 * d.kilosPorDia) : 0;
   const deCarga = Math.max(0, 40 * clamp(1.5 - carga, 0, 1) - 5 * Math.max(0, d.seguidos - 2));
   const comida = 10 * Math.min(1, d.proteinaAyer / d.metaProteina) + 10 * Math.min(1, d.kcalAyer / (0.8 * d.metaKcal));

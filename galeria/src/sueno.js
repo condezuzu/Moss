@@ -1,7 +1,8 @@
 // Sueño (spec/sueno.md): lo que Salud trae de cada noche, armado con las reglas de la app (Sueno,
-// src/dominio/sueno.ts). Arriba, las últimas dos semanas para elegir una noche; después, esa noche
-// (cuánto dormiste, cuándo, las etapas como estimación, lo despierto), su calidad con de qué sale,
-// el horario y qué tan regular es, la deuda, lo que mide el reloj de noche, y de dónde sale cada
+// src/dominio/sueno.ts). Arriba, la pregunta de cada mañana (cómo dormiste, con cinco caras) y las
+// últimas dos semanas para elegir una noche; después, esa noche (cuánto dormiste, cuándo, las etapas
+// como estimación, lo despierto), la deuda, que es lo que más gente puede tener bien, su calidad con
+// de qué sale, el horario y qué tan regular es, lo que mide el reloj de noche, y de dónde sale cada
 // dato y qué tan confiable es. Lo que falta se muestra en gris: nunca se inventa.
 
 const SeccionSueno = (() => {
@@ -10,7 +11,20 @@ const SeccionSueno = (() => {
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
     const { tx, numero, el, boton, icono } = u;
-    const s = { clave: Datos.HOY, abierto: null };
+    const s = { clave: Datos.HOY, abierto: null, cambiando: false };
+    // Lo que contestó cada mañana, de 1 a 5, por noche: queda en este navegador, como quedaría en el
+    // teléfono. «Ahora no» la esconde solo por hoy.
+    const GUARDADO_CARAS = 'moss-galeria-caras';
+    let caras = {};
+    try { caras = JSON.parse(localStorage.getItem(GUARDADO_CARAS) || '{}') || {}; } catch (_) { caras = {}; }
+    const ahoraNo = new Set();
+    function ponerCara(clave, cara) {
+      caras[clave] = cara;
+      try { localStorage.setItem(GUARDADO_CARAS, JSON.stringify(caras)); } catch (_) { /* no pasa nada */ }
+      s.cambiando = false;
+      pintar();
+      if (opciones.alCambiarCara) opciones.alCambiarCara();
+    }
     const necesidad = Sueno.necesidad(Number(Datos.HOY.slice(0, 4)) - Datos.PERFIL.nacimiento);
 
     const zona = el('section', 'sueno pagina-app');
@@ -58,23 +72,57 @@ const SeccionSueno = (() => {
       const cab = el('header', 'pg-cab');
       cab.append(el('div', 'pg-fecha', tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) })), el('h2', 'pg-titulo', tx('sueno.titulo')));
       cont.appendChild(cab);
+      const pregunta = manana();
+      if (pregunta) cont.appendChild(pregunta);
       cont.appendChild(tira());
       // Con Ascent, la recuperación de hoy también vive acá: cruza justo el sueño con el entrenamiento.
       const rec = s.clave === Datos.HOY && opciones.recuperacion ? opciones.recuperacion() : null;
       if (rec) cont.appendChild(recuperacion(rec));
       const noche = noches().find((n) => n.clave === s.clave) || null;
-      if (noche) {
-        cont.appendChild(laNoche(noche));
-        cont.appendChild(calidad(noche));
-      } else {
-        cont.appendChild(sinNoche(s.clave));
-      }
-      cont.appendChild(horario());
+      cont.appendChild(noche ? laNoche(noche) : sinNoche(s.clave));
+      // La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien.
       cont.appendChild(deuda());
+      if (noche) cont.appendChild(calidad(noche));
+      cont.appendChild(horario());
       if (noche) cont.appendChild(vitales(noche));
       cont.appendChild(fuentes(noche));
       cont.appendChild(el('p', 'sn-pie', tx('sueno.noMedico')));
       cont.scrollTop = arriba;
+    }
+
+    // ------------------------------------------------------------ la pregunta de la mañana
+    // Arriba, cada día, hasta que contestes o toques «Ahora no»: cómo dormiste anoche, con cinco caras
+    // de línea. Un toque y listo; después queda una línea para cambiarla.
+    const BOCA = [-3.4, -1.8, 0, 1.8, 3.4];
+    function caraSvg(k) {
+      const y = k < 3 ? 5.4 : 4.2;
+      return `<svg class="sn-cara-dibujo" viewBox="-12 -12 24 24" aria-hidden="true"><circle r="10.4"/><circle cx="-3.6" cy="-2.4" r="1.05" class="ojo"/><circle cx="3.6" cy="-2.4" r="1.05" class="ojo"/><path d="M -4.6 ${y} Q 0 ${(y + BOCA[k - 1]).toFixed(1)} 4.6 ${y}"/></svg>`;
+    }
+    function manana() {
+      const clave = Datos.HOY;
+      const cara = caras[clave];
+      if (!cara && ahoraNo.has(clave)) return null;
+      const nombres = tx('sueno.manana.caras');
+      if (cara && !s.cambiando) {
+        const c = el('div', 'sn-manana-hecha');
+        c.innerHTML = caraSvg(cara);
+        c.append(el('span', null, tx('sueno.manana.respondida', { cara: nombres[cara - 1].toLowerCase() })),
+          boton('sn-manana-cambiar', tx('sueno.manana.cambiar'), () => { s.cambiando = true; pintar(); }));
+        return c;
+      }
+      const c = carta('sn-manana', null);
+      c.appendChild(el('p', 'sn-manana-pregunta', tx('sueno.manana.pregunta')));
+      const fila = el('div', 'sn-caras');
+      nombres.forEach((nombre, i) => {
+        fila.appendChild(boton('sn-cara' + (cara === i + 1 ? ' elegida' : ''), caraSvg(i + 1) + `<span>${nombre}</span>`, () => ponerCara(clave, i + 1), nombre));
+      });
+      c.appendChild(fila);
+      c.appendChild(boton('sn-ahora-no', tx('sueno.manana.ahoraNo'), () => {
+        if (cara) s.cambiando = false;
+        else ahoraNo.add(clave);
+        pintar();
+      }));
+      return c;
     }
 
     // ------------------------------------------------------------ las dos semanas, para elegir
@@ -197,8 +245,18 @@ const SeccionSueno = (() => {
         partes.appendChild(x);
       });
       c.appendChild(partes);
+      // Lo que dijiste a la mañana va aparte: no cambia el puntaje de la noche, sí la recuperación.
+      const cara = caras[n.clave];
+      if (cara) {
+        const datos = el('div', 'sn-datos');
+        const d = el('div', 'sn-dato');
+        d.append(el('span', null, tx('sueno.manana.tuRespuesta')), el('b', null, tx('sueno.manana.caras')[cara - 1]));
+        datos.appendChild(d);
+        c.appendChild(datos);
+      }
       const [enlace, caja] = desplegable('calidad', (k) => {
         tx('sueno.comoCalidad').forEach((p) => k.appendChild(el('p', null, p.replace('{necesidad}', u.duracion(necesidad)))));
+        k.appendChild(el('p', null, tx('sueno.manana.nota')));
       });
       c.append(enlace, caja);
       return c;
@@ -321,6 +379,8 @@ const SeccionSueno = (() => {
     return {
       zona,
       pintar,
+      // Lo que contestó a la mañana de una noche (1 a 5), o null: lo usa la recuperación.
+      cara: (clave) => caras[clave] || null,
       // Lo de anoche para el bloque de Inicio.
       anoche() {
         const n = noches().find((x) => x.clave === Datos.HOY);

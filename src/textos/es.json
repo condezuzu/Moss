@@ -141,6 +141,7 @@
     "carbohidratos": "Carbohidratos",
     "grasas": "Grasas",
     "gramosDe": "{n} / {meta} g",
+    "porcentaje": "{n} %",
     "tuDia": "Tu día",
     "promedio": "Promedio por día",
     "diasRegistrados": "{n} de {total} días registrados",
@@ -682,7 +683,22 @@
       "variabilidad": "ms",
       "respiracion": "rpm"
     },
-    "elegirNoche": "Noche del {fecha}"
+    "elegirNoche": "Noche del {fecha}",
+    "manana": {
+      "pregunta": "¿Cómo dormiste anoche?",
+      "caras": [
+        "Muy mal",
+        "Mal",
+        "Regular",
+        "Bien",
+        "Muy bien"
+      ],
+      "ahoraNo": "Ahora no",
+      "respondida": "Anoche: {cara}",
+      "cambiar": "Cambiar",
+      "tuRespuesta": "Cómo dijiste que dormiste",
+      "nota": "Cuenta en la recuperación junto con la calidad del reloj y, sin reloj, es la calidad de la noche."
+    }
   },
   "perfil": {
     "titulo": "Perfil",
@@ -1068,7 +1084,7 @@
       "siguiente": "Mes siguiente",
       "completos": "días completos",
       "conLuz": "días con luz",
-      "racha": "días seguidos con luz",
+      "luz": "de luz juntada",
       "porHabito": "Cada hábito, los últimos 30 días",
       "deVeces": "{hechos} de {total}",
       "sinDatos": "Todavía no hay días en este mes."

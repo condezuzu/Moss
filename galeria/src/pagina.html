@@ -575,6 +575,21 @@ section.item p { margin: 0; max-width: 64ch; }
 .sn-etapa b { grid-column: 1 / -1; font: 400 15px/1 var(--numeros); font-variant-numeric: tabular-nums; }
 .sn-etapa small { grid-column: 1 / -1; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.45); }
 .sn-nota { margin: 6px 0 0; font: 400 12px/1.45 var(--texto); color: rgba(239, 230, 207, 0.5); }
+/* La pregunta de la mañana: cinco caras de línea; la elegida en oro. Contestada, queda una línea. */
+.sn-manana { padding-bottom: 10px; }
+.sn-manana-pregunta { margin: 2px 0 14px; font: 500 19px/1.2 var(--texto); color: var(--tinta); }
+.sn-caras { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.sn-cara { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 7px; padding: 8px 0 6px; border: 0; border-radius: 14px; background: none; color: rgba(239, 230, 207, 0.62); font: 400 11px/1.1 var(--texto); }
+.sn-cara:hover, .sn-cara:focus-visible { background: rgba(239, 230, 207, 0.05); }
+.sn-cara-dibujo { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+.sn-cara-dibujo .ojo { fill: currentColor; stroke: none; }
+.sn-cara.elegida { color: var(--oro-claro); }
+.sn-cara.elegida .sn-cara-dibujo { filter: drop-shadow(0 0 6px rgba(232, 196, 106, 0.55)); }
+.sn-ahora-no { appearance: none; cursor: pointer; display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; background: none; color: rgba(239, 230, 207, 0.45); font: 400 12.5px/1 var(--texto); }
+.sn-manana-hecha { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; color: rgba(239, 230, 207, 0.72); font: 400 14px/1.2 var(--texto); }
+.sn-manana-hecha .sn-cara-dibujo { width: 22px; height: 22px; color: var(--oro-claro); }
+.sn-manana-hecha span { flex: 1; }
+.sn-manana-cambiar { appearance: none; cursor: pointer; padding: 4px 2px; border: 0; background: none; color: var(--oro-claro); font: 400 13px/1 var(--texto); }
 .sn-datos { display: grid; margin-top: 6px; }
 .sn-dato { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 4px; align-items: center; padding: 9px 0; border-top: 1px solid rgba(239, 230, 207, 0.06); font: 400 14px/1.2 var(--texto); }
 .sn-dato b { font: 400 14px/1.2 var(--numeros); text-align: right; font-variant-numeric: tabular-nums; }
@@ -619,8 +634,80 @@ section.item p { margin: 0; max-width: 64ch; }
 .pf-lista li.ok b { color: var(--salvia); }
 .pf-lista li.accion b { color: var(--oro-claro); }
 .pf-lista li.peligro > span { color: #f0a58a; }
+.pf-creditos li { display: block; padding: 12px 16px; font: 400 12.5px/17px var(--texto); color: rgba(239, 230, 207, 0.65); }
 .pf-salir { appearance: none; cursor: pointer; display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(8, 12, 26, 0.6); color: rgba(239, 230, 207, 0.75); font: 400 15px/1 var(--texto); }
 .pf-version { margin: 14px 0 0; text-align: center; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.35); }
+
+/* Hábitos (habitos.js): los dos botones de arriba del cielo y las tres hojas, como las de la app
+   (HojaModal): el título a la izquierda, la cruz, lo de adentro con su scroll y el pie fijo. */
+.hh-botones { position: absolute; top: calc(var(--arriba) + 62px); right: 16px; display: flex; gap: 8px; pointer-events: auto; }
+.hh-boton { appearance: none; cursor: pointer; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1px solid rgba(239, 230, 207, 0.14); background: rgba(6, 10, 22, 0.45); color: rgba(239, 230, 207, 0.75); display: grid; place-items: center; transition: transform 0.15s; }
+.hh-boton svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.hh-boton:active { transform: scale(0.92); }
+.hh-nuevo { color: var(--oro-claro); }
+.hh-nuevo svg { width: 17px; height: 17px; stroke-width: 2; }
+.tel .hh-hoja { padding-bottom: 0; }
+.hh-cab { flex: none; display: flex; align-items: center; gap: 10px; padding: 2px 20px 0; }
+.hh-titulo { flex: 1; min-width: 0; margin: 0; font: 500 19px/1.2 var(--numeros); }
+.hh-cab .hb-cerrar { position: static; flex: none; }
+.hh-cuerpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 6px 20px 18px; touch-action: pan-y; }
+.hh-cuerpo::-webkit-scrollbar { display: none; }
+.hh-hoja.sin-pie .hh-cuerpo { padding-bottom: calc(var(--abajo) + 16px); }
+.hh-pie { flex: none; display: grid; gap: 10px; padding: 12px 20px calc(var(--abajo) + 12px); border-top: 1px solid rgba(239, 230, 207, 0.08); }
+.hh-pie .cm-accion { width: 100%; justify-content: center; padding: 0 13px; }
+.hh-pie .cm-accion:disabled { opacity: 0.4; cursor: default; }
+.hh-cuerpo .aj-etq { margin: 22px 0 9px; }
+.hh-cuerpo .aj-dias { margin: 4px 0; }
+/* El editor: el nombre, cómo se cumple con sus pastillas, los días y el ícono. */
+.hh-campo { display: block; width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.16); background: rgba(6, 10, 22, 0.6); color: var(--tinta); font: 400 16px/1.2 var(--texto); outline: none; caret-color: var(--oro); }
+.hh-campo:focus { border-color: rgba(232, 196, 106, 0.55); }
+.hh-campo::placeholder { color: rgba(239, 230, 207, 0.35); }
+.hh-opciones { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+.hh-fila { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+.hh-pastilla { appearance: none; cursor: pointer; min-height: 32px; padding: 7px 12px; border-radius: 12px; border: 1px solid rgba(239, 230, 207, 0.14); background: transparent; color: var(--tinta); font: 400 13.5px/1.2 var(--texto); white-space: nowrap; }
+.hh-pastilla[aria-pressed='true'] { border-color: rgba(232, 196, 106, 0.72); background: rgba(232, 196, 106, 0.12); color: var(--oro-claro); }
+.hh-iconos { display: flex; flex-wrap: wrap; gap: 8px; }
+.hh-icono { appearance: none; cursor: pointer; width: 46px; height: 46px; padding: 0; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(6, 10, 22, 0.45); color: rgba(239, 230, 207, 0.7); display: grid; place-items: center; }
+.hh-icono svg { width: 19px; height: 19px; }
+.hh-icono[aria-pressed='true'] { border-color: rgba(232, 196, 106, 0.75); background: rgba(232, 196, 106, 0.12); color: var(--oro-claro); }
+.hh-nota { margin: 16px 0 0; font: 400 12px/1.42 var(--texto); color: rgba(239, 230, 207, 0.5); }
+/* Tu mes: el mes en mini cielos, las tres cifras y cada hábito con su barra. */
+.hh-navegar { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
+.hh-flecha { appearance: none; cursor: pointer; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: rgba(239, 230, 207, 0.06); color: var(--tinta); display: grid; place-items: center; }
+.hh-flecha svg { width: 15px; height: 15px; stroke-width: 2; }
+.hh-flecha:disabled { opacity: 0.3; cursor: default; }
+.hh-mes-titulo { font: 500 17px/1 var(--numeros); }
+.hh-semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-bottom: 4px; }
+.hh-semana span { text-align: center; font: 500 10px/1.2 var(--texto); letter-spacing: 0.1em; color: rgba(239, 230, 207, 0.45); }
+.hh-grilla { position: relative; }
+.hh-grilla canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hh-num { position: absolute; font: 400 10px/1 var(--numeros); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; pointer-events: none; }
+.hh-num.hoy { color: var(--oro-claro); }
+.hh-num.futuro { color: rgba(239, 230, 207, 0.22); }
+.hh-vacio { margin: 8px 0 0; text-align: center; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.hh-cifras { margin-top: 16px; display: flex; gap: 8px; }
+.hh-cifra { flex: 1; min-width: 0; display: grid; gap: 4px; align-content: start; padding: 12px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.08); background: rgba(239, 230, 207, 0.04); }
+.hh-cifra b { font: 400 24px/1 var(--numeros); color: #fbf2d9; font-variant-numeric: tabular-nums; }
+.hh-cifra span { font: 400 11px/14px var(--texto); color: rgba(239, 230, 207, 0.55); }
+.hh-habito { display: grid; gap: 6px; padding: 8px 0; }
+.hh-habito-fila { display: flex; align-items: center; gap: 8px; }
+.hh-habito-fila svg { flex: none; width: 14px; height: 14px; color: rgba(239, 230, 207, 0.6); }
+.hh-habito-fila span { flex: 1; min-width: 0; font: 400 14px/1.2 var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hh-habito-fila b { flex: none; font: 400 12.5px/1 var(--numeros); color: rgba(239, 230, 207, 0.6); font-variant-numeric: tabular-nums; }
+.hh-pista { height: 4px; border-radius: 2px; overflow: hidden; background: rgba(239, 230, 207, 0.08); }
+.hh-pista i { display: block; height: 100%; border-radius: 2px; background: var(--oro); }
+/* Los primeros hábitos: la lista con su marca, y cuántos van. */
+.hh-sugeridos { margin-top: 14px; display: grid; gap: 8px; }
+.hh-sugerido { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(6, 10, 22, 0.45); color: rgba(239, 230, 207, 0.6); text-align: left; }
+.hh-sugerido > svg { flex: none; width: 18px; height: 18px; }
+.hh-sugerido.elegido { border-color: rgba(232, 196, 106, 0.6); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); }
+.hh-sugerido-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.hh-sugerido-txt b { font: 500 15px/1.25 var(--texto); color: var(--tinta); }
+.hh-sugerido-txt span { font: 400 11.5px/15px var(--texto); color: rgba(239, 230, 207, 0.5); }
+.hh-marca { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(239, 230, 207, 0.3); display: grid; place-items: center; color: #1a1406; }
+.hh-marca svg { width: 13px; height: 13px; stroke-width: 2.6; }
+.hh-sugerido.elegido .hh-marca { border-color: var(--oro); background: var(--oro); }
+.hh-cuantos { margin: 0; text-align: center; font: 400 12px/1.3 var(--texto); color: rgba(239, 230, 207, 0.55); }
 
 /* Las metas (dentro de Progreso): lo que vale hoy arriba, quién las pone, cómo se reparten y la semana. */
 .aj-cab { display: flex; align-items: center; gap: 6px; margin: -6px 0 16px -12px; }
@@ -1096,10 +1183,9 @@ section.item p { margin: 0; max-width: 64ch; }
 .tel .ascent {
   --as-tinta: #e8ecf6; --as-sub: #8a93a8; --as-apagado: #4a5163; --as-linea: #1d2230; --as-linea-fuerte: #2a3040; --as-principal: #7e8ca8; --as-claro: #c4c2ba;
   visibility: hidden; color: var(--as-tinta); will-change: transform;
-  background: linear-gradient(180deg, #0b0d13 0%, #05060a 36%);
-  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.55);
+  /* Sin caja: el cielo sigue detrás (sube con el dedo, como a «Tu universo»), apenas oscurecido para leer. */
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0) 0, rgba(5, 6, 10, 0.42) 180px, rgba(5, 6, 10, 0.6) 100%);
 }
-.tel .ascent::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; z-index: 1; background: linear-gradient(90deg, rgba(126, 140, 168, 0), rgba(126, 140, 168, 0.6) 50%, rgba(126, 140, 168, 0)); }
 .as-velo { position: absolute; inset: 0; z-index: 2; background: #020308; opacity: 0; pointer-events: none; }
 .as-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) - 16px) 22px calc(var(--pestanas) + 44px); scrollbar-width: none; touch-action: pan-y; }
 .as-scroll::-webkit-scrollbar { display: none; }
@@ -1235,6 +1321,47 @@ section.item p { margin: 0; max-width: 64ch; }
 .sn-rec-fila span { flex: 1; font: 400 14px/1.3 var(--texto); color: rgba(239, 230, 207, 0.78); }
 .sn-rec-fila svg { width: 16px; height: 16px; color: rgba(239, 230, 207, 0.4); }
 
+/* Las kcal del día en otros estilos (kcal.js): el anillo, el arco y la barra, con la luna para comparar. */
+.kc-pista { fill: none; stroke: rgba(239, 230, 207, 0.09); }
+.kc-lleno { fill: none; stroke: #ece4cf; stroke-linecap: round; filter: drop-shadow(0 0 3px rgba(239, 230, 207, 0.35)); transition: stroke 0.6s; }
+.de-mas > .kc-lleno { stroke: var(--oro); filter: drop-shadow(0 0 4px rgba(232, 196, 106, 0.5)); }
+.kc-por { font: 300 16px/1 var(--numeros); fill: rgba(239, 230, 207, 0.62); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kc-chica .kc-por { font-size: 21px; }
+.kc-estrella { fill: #fbf2d9; filter: drop-shadow(0 0 3px rgba(251, 242, 217, 0.95)) drop-shadow(0 0 8px rgba(232, 196, 106, 0.55)); }
+.de-mas > .kc-estrella { fill: var(--oro-claro); }
+.kc-barra { position: relative; height: 8px; }
+.kc-barra.kc-chica { height: 6px; }
+.kc-barra-pista { display: flex; gap: 2px; height: 100%; border-radius: 999px; overflow: hidden; background: rgba(239, 230, 207, 0.09); }
+.kc-barra-pista i { display: block; flex: none; height: 100%; background: #ece4cf; }
+.kc-barra-pista i:nth-child(even) { background: #c9c1ac; }
+.kc-barra.de-mas .kc-barra-pista i { background: var(--oro); }
+.kc-barra.de-mas .kc-barra-pista i:nth-child(even) { background: #c9a75a; }
+.kc-barra-meta { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: #fbf2d9; box-shadow: 0 0 6px rgba(251, 242, 217, 0.7); display: none; }
+.kc-barra.de-mas .kc-barra-meta { display: block; }
+.in-calorias.con-anillo .kc-grande { flex: none; display: block; margin: -2px 2px -2px -2px; }
+.in-calorias.con-arco .in-cal-arriba { position: relative; display: grid; justify-items: center; padding-top: 6px; }
+.in-calorias.con-arco .kc-grande { display: block; width: 100%; max-width: 300px; height: auto; }
+.in-calorias.con-arco .in-cal-cifra { position: absolute; left: 0; right: 0; bottom: 0; justify-items: center; text-align: center; }
+.in-calorias.con-barra .in-cal-arriba { display: grid; gap: 16px; padding-top: 4px; }
+.comida[data-kcal="barra"] .cm-resumen { margin-left: 0; }
+.comida[data-kcal="barra"] .cm-resumen-luna { display: none; }
+.cm-resumen-luna .kc-anillo, .cm-resumen-luna .kc-arco { display: block; flex: none; margin: 0 4px; }
+.cm-resumen-barra:empty { display: none; }
+.cm-resumen-barra { margin: 12px 0 0; }
+.kc-mini { width: 24px; height: 24px; display: block; overflow: visible; }
+.cm-cal-dia .kc-mini { width: 26px; height: 26px; }
+.kc-mini-pista { fill: none; stroke: rgba(236, 230, 214, 0.2); stroke-width: 2.2; }
+.kc-mini-lleno { fill: none; stroke: #e6dfcc; stroke-width: 2.2; stroke-linecap: round; }
+.kc-mini-barra .kc-mini-pista { fill: rgba(236, 230, 214, 0.1); stroke: none; }
+.kc-mini-barra .kc-mini-lleno { fill: #e6dfcc; stroke: none; }
+.kc-mini.de-mas .kc-mini-lleno { stroke: var(--oro); }
+.kc-mini-barra.de-mas .kc-mini-lleno { fill: var(--oro); }
+.kc-mini.plan .kc-mini-lleno { opacity: 0.35; }
+.kc-mini.futuro .kc-mini-pista, .kc-mini.plan .kc-mini-pista { stroke-dasharray: 2 2.2; }
+.kc-mini-barra.futuro .kc-mini-pista { fill: none; stroke: rgba(236, 230, 214, 0.2); stroke-width: 1; }
+.kc-mini.vacio .kc-mini-pista { stroke: rgba(236, 230, 214, 0.1); }
+.kc-mini-barra.vacio .kc-mini-pista { fill: rgba(236, 230, 214, 0.05); }
+
 @media (prefers-reduced-motion: reduce) {
   .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .mas-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .in-macro-barra i, .in-camino-pista i, .in-camino-marca, .velo-pestanas, .pestanas, .in-fila-orden { transition: none; }
   .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
@@ -1298,7 +1425,7 @@ section.item p { margin: 0; max-width: 64ch; }
           </ul></li>
         <li><b>Las medidas</b>: cintura, cuello, cadera, brazo, pecho y muslo, en centímetros. El tutorial es el dibujo: al tocar un campo, la cinta se marca en la figura y abajo dice cómo tomarla. «Cómo medir» despliega los consejos de siempre (la cinta sobre la piel, al final de una exhalación, dos veces).</li>
         <li><b>La grasa corporal</b> se estima con el método de la Marina de EE. UU. y se muestra como un rango chico, con el aviso de que es una estimación (sección 4).</li>
-        <li><b>Perfil</b> (antes Ajustes): tus datos, las preferencias, Salud y Ascent, exportar y borrar. Las metas pasaron a Progreso, con la estrategia.</li>
+        <li><b>Perfil</b> (antes Ajustes): tus datos, las preferencias, Salud y Ascent, exportar y borrar (los datos de Moss o la cuenta, que es la misma de Ascent), y los créditos: de dónde salen los alimentos (USDA FoodData Central, Open Food Facts y TACO) y las estrellas, como en la app. Las metas pasaron a Progreso, con la estrategia.</li>
         <li><b>La entrada</b> sigue igual: la frase, las dos diapositivas, la cuenta y el cuestionario. No hay tutoriales por sección.</li>
       </ul>
     </section>
@@ -1316,11 +1443,23 @@ section.item p { margin: 0; max-width: 64ch; }
           <button class="boton" type="button" data-seccion="agua">Sumar «Agua»</button>
           <button class="boton" type="button" data-seccion="fabrica">Volver a lo de fábrica</button>
         </div>
+        <div class="controles">
+          <div class="grupo"><span>Cómo se ven las kcal: cambian juntas Inicio, el día de Comida y la semana</span>
+            <div class="segmento" id="s-kcal"><button type="button" data-valor="luna" aria-pressed="true">Luna</button><button type="button" data-valor="anillo" aria-pressed="false">Anillo</button><button type="button" data-valor="arco" aria-pressed="false">Arco</button><button type="button" data-valor="barra" aria-pressed="false">Barra</button></div>
+          </div>
+        </div>
       </div>
       <ul class="lista">
         <li><b>Calorías y macros</b>: lo que queda, grande, al lado de la luna. Abajo, lo que queda de cada macro.</li>
         <li><b>Los puntos de los macros</b> ahora están apagados mientras falta. <b>Brillan</b> al cumplir lo pedido (el número redondeado llega a la meta), y si te pasás por mucho (un 20 % y al menos 10 g) <b>tiemblan un poco</b>, cada tanto. Probalo con «Cenar»: la proteína y los carbohidratos brillan, las grasas tiemblan. Pasa lo mismo en Comida.</li>
-        <li><b>La luna</b> es nueva: se dibuja píxel a píxel como una esfera, con los mares de la cara visible, cráteres con su borde claro, Tycho con sus rayos y grano. La luz es la de la Luna de verdad (Lommel-Seeliger): llena se ve pareja, a medias se apaga suave hacia el terminador, y lo oscuro tiene la luz cenicienta.</li>
+        <li><b>Las kcal, en cuatro estilos</b> (la luna no te terminó de cerrar). Elegí arriba y mirá Inicio, el día de Comida y la tira de la semana con los mismos datos:
+          <ul>
+            <li><b>Luna</b>: la de antes, para comparar.</li>
+            <li><b>Anillo</b>: una vuelta fina es la meta, y adentro cuánto llevás. En la semana, un anillo chico por día.</li>
+            <li><b>Arco</b>: medio círculo, como el cielo sobre el horizonte. Lo comido sube de izquierda a derecha con una estrella en la punta, y lo que queda va adentro. En la semana, un arco chico por día.</li>
+            <li><b>Barra</b>: sin figura, la línea de abajo partida por comidas, así se ve cómo se repartió el día. En la semana, una barrita por día.</li>
+          </ul>
+          Pasada la meta, cualquiera queda llena y en oro, como el «de más» del texto; en la barra, una marca dice dónde estaba la meta. Probalo con «Cenar».</li>
         <li><b>Progreso al objetivo</b>: si vas en camino y en qué fecha llegarías, con el camino de dónde empezaste a la meta. Sale de la tendencia de las últimas tres semanas.</li>
         <li><b>Peso y balance</b>: la tendencia con el último mes, y lo comido contra el gasto de los últimos 7 días.</li>
         <li><b>Tu día en el cielo</b>: la constelación de hoy en chico, con lo encendido, y el sueño y los pasos que llegan solos. Se actualiza al encender estrellas en Hábitos.</li>
@@ -1352,8 +1491,8 @@ section.item p { margin: 0; max-width: 64ch; }
         </div>
       </div>
       <ul class="lista">
-        <li><b>El cuadro que se desliza</b> (como pediste): empieza en el día, con lo comido contra la meta, la luna y los macros. Deslizalo a la izquierda y aparece la semana: el promedio de los días que ya terminaron y los siete días con una barra de calorías y una por macro contra la meta. Otra vez, y aparece el mes: el promedio y el calendario con una luna por día. Debajo dice dónde estás (Día, Semana, Mes), y también se toca. Tocar un día de la semana o del mes vuelve al día.</li>
-        <li><b>Arriba</b>, la tira de la semana con una luna chica por día; <b>abajo</b>, la línea del día: cada comida en su hora, y la que falta espera en «ahora», con Agregar y Copiar de ayer. El peso y el gasto pasaron a Progreso.</li>
+        <li><b>El cuadro que se desliza</b> (como pediste): empieza en el día, con lo comido contra la meta, la figura de las kcal (la que elijas en la sección 2) y los macros. Deslizalo a la izquierda y aparece la semana: el promedio de los días que ya terminaron y los siete días con una barra de calorías y una por macro contra la meta. Otra vez, y aparece el mes: el promedio y el calendario con una luna (o la figura elegida) por día. Debajo dice dónde estás (Día, Semana, Mes), y también se toca. Tocar un día de la semana o del mes vuelve al día.</li>
+        <li><b>Arriba</b>, la tira de la semana con una luna chica (o la figura elegida) por día; <b>abajo</b>, la línea del día: cada comida en su hora, y la que falta espera en «ahora», con Agregar y Copiar de ayer. El peso y el gasto pasaron a Progreso.</li>
         <li><b>La hoja de registro</b> no cambió: la búsqueda con lo que sueles comer a esa hora, los recientes y los favoritos; la ventana del alimento con sus porciones; la comida que se arma abajo; la revisión antes de agregar; la etiqueta, y la carga rápida.</li>
       </ul>
     </section>
@@ -1394,9 +1533,15 @@ section.item p { margin: 0; max-width: 64ch; }
         </div>
       </div>
       <ul class="lista">
+        <li><b>¿Cómo dormiste anoche?</b> (lo pediste el 22/10): arriba, cada día, cinco caras de línea, de «Muy mal» a «Muy bien». Un toque y listo: queda una línea con lo que contestaste y «Cambiar». «Ahora no» la esconde por hoy, sin recordatorios ni rachas. Al otro día pregunta por la noche nueva.
+          <ul>
+            <li>Va a la <b>recuperación</b>: la calidad de la noche pasa a ser tu respuesta (de 1 a 5, llevada a 0–100), y con reloj, el promedio de las dos. Sin reloj ni respuesta, la duración vale los 40 puntos del sueño: antes, sin reloj, nunca se pasaba de 20.</li>
+            <li>En <b>La calidad</b> aparece aparte, como «Cómo dijiste que dormiste»: no cambia el puntaje de la noche.</li>
+          </ul></li>
         <li><b>La noche</b>: cuánto dormiste (lo que el reloj mide mejor), a qué hora te dormiste y te despertaste, las etapas con su hipnograma (como estimación), lo despierto y los despertares de 5 minutos o más, y el tiempo en cama solo si alguna fuente lo escribió.</li>
+        <li><b>La deuda</b> de sueño de las dos semanas va <b>segunda</b> (lo pediste): solo necesita cuánto dormiste, así que es lo que más gente puede tener bien.</li>
         <li><b>La calidad</b>, de 0 a 100, en tres partes que se explican: duración contra lo que necesitás (50), horario contra el de siempre (30) y continuidad (20). Las etapas no entran.</li>
-        <li><b>El horario</b> de las dos semanas, qué tan regular es y cuánto más tarde dormís el fin de semana. <b>La deuda</b> de sueño de las dos semanas. <b>De noche, según el reloj</b>: la frecuencia, la variabilidad y la respiración contra lo tuyo.</li>
+        <li><b>El horario</b> de las dos semanas, qué tan regular es y cuánto más tarde dormís el fin de semana. <b>De noche, según el reloj</b>: la frecuencia, la variabilidad y la respiración contra lo tuyo.</li>
         <li><b>De dónde sale cada dato</b> y qué tan confiable es. Lo que falta queda en gris: nunca se inventa.</li>
       </ul>
     </section>
@@ -1415,6 +1560,11 @@ section.item p { margin: 0; max-width: 64ch; }
           <button class="boton" type="button" data-accion="zona" id="b-zona">Subir a tu universo</button>
           <button class="boton" type="button" data-accion="fugaz">Estrella fugaz</button>
           <button class="boton" type="button" id="b-inmersivo">Ver a pantalla completa</button>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-habitos="nuevo">Nuevo hábito</button>
+          <button class="boton" type="button" data-habitos="editar">Editar un hábito</button>
+          <button class="boton" type="button" data-habitos="mes">Tu mes</button>
         </div>
         <div class="controles">
           <div class="grupo"><span>Idioma de la app</span>
@@ -1445,6 +1595,11 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><b>Estrellas apagadas</b> con un aro que late; las automáticas llevan un arco con el avance del día (6.240 de 8.000 pasos).</li>
         <li><b>El toque</b> responde en el mismo cuadro: destello, onda y vibración. En iPhone con iOS 18 o más, la vibración se siente desde Safari.</li>
         <li><b>Cielo continuo</b>: arrastrá el cielo hacia abajo (en el teléfono, a pantalla completa) y la cámara sube a tu universo con las siete constelaciones de la semana. El musgo se mueve más rápido que las estrellas: es lo que da la profundidad.</li>
+        <li><b>Los hábitos se editan sin listas</b>, como quedó en la app. Arriba a la derecha, debajo de la luz de hoy, hay dos botones chicos: el calendario abre «Tu mes» y el «+», un hábito nuevo. Mantener apretada una estrella medio segundo abre su hábito, con Archivar.
+          <ul>
+            <li><b>El editor</b>: el nombre, cómo se cumple (a mano, con Salud o con la comida), qué días y el ícono. Con Salud se elige el dato (pasos, dormir, agua o atención plena) y la meta, y el nombre la sigue mientras no se escriba otro. Guardar lo suma al cielo de hoy: si el día cambia de cantidad, pasa a otra constelación.</li>
+            <li><b>Tu mes</b>: el mes en mini cielos, cada día con su constelación y lo encendido, y los días completos unidos en oro. Abajo, los días completos, los días con luz y la racha, y cada hábito los últimos 30 días. Las cuentas son las de la app (src/dominio/estadisticas.ts) sobre la historia de mentira: empezó el 31 de agosto, sumó el agua el 28 de septiembre (ahí cambian las constelaciones de cuatro días de la semana) y el sábado 10 no hizo nada. Hoy sale del cielo: lo que se enciende acá se ve en el mes.</li>
+          </ul></li>
       </ul>
     </section>
 
@@ -1467,7 +1622,8 @@ section.item p { margin: 0; max-width: 64ch; }
         </div>
       </div>
       <ul class="lista">
-        <li><b>Tiene la cara de Ascent</b>: su fondo casi negro, su azul gris y su crema, esquinas vivas y una línea arriba de cada parte en vez de cajas. Arriba está el planeta de Ascent con su órbita abierta, como en su ícono, y la luna de Moss: sin vincular queda afuera, y al vincular entra a la órbita.</li>
+        <li><b>El mismo cielo, sin caja</b> (lo pediste el 22/10): al subir, el cielo sube con el dedo, más despacio porque está más lejos, y lo de hoy (la constelación, sus nombres y los botones) se apaga en la primera mitad del gesto. Ascent queda sobre el mismo cielo, apenas oscurecido para leer, como «Tu universo».</li>
+        <li><b>Tiene la cara de Ascent</b>: su azul gris y su crema, esquinas vivas y una línea arriba de cada parte en vez de cajas. Arriba está el planeta de Ascent con su órbita abierta, como en su ícono, y la luna de Moss: sin vincular queda afuera, y al vincular entra a la órbita.</li>
         <li><b>Sin vincular</b>: «Vincular con Ascent», la App Store para quien no la tiene y que es la misma cuenta. Abajo, cada función muestra vacío lo que va a mostrar (el anillo punteado, la tabla con rayas), con un candado chico. Así se ve qué te perdés sin que parezca roto.</li>
         <li><b>Vinculada</b>, con lo de hoy de la persona de mentira:
           <ul>
@@ -1489,6 +1645,7 @@ section.item p { margin: 0; max-width: 64ch; }
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-accion="entrada" id="b-entrada">Ver la entrada desde el principio</button>
+          <button class="boton" type="button" data-habitos="sugeridos">Los primeros hábitos</button>
         </div>
         <div class="controles">
           <div class="grupo"><span>La frase y las diapositivas pasan</span>
@@ -1519,7 +1676,7 @@ section.item p { margin: 0; max-width: 64ch; }
             <li>Después nivel de actividad y objetivo. Si el objetivo es bajar o subir, también el ritmo.</li>
             <li>La meta inicial sale de la fórmula de Mifflin-St Jeor por el nivel de actividad, con un piso de calorías. La proteína va por kilo, las grasas son al menos el 27 % y los carbohidratos son el resto.</li>
           </ul></li>
-        <li><b>Empezar</b> te lleva a Inicio con un flum.</li>
+        <li><b>Empezar</b> te lleva a Inicio con un flum, y ahí sube <b>«Elige tus primeros hábitos»</b>: diez para elegir de 3 a 5, con los de comida primero (se encienden solos con lo que se registra), y cuatro elegidos de fábrica. «Armar mi constelación» arma el cielo de hoy con los que tocan hoy.</li>
       </ul>
     </section>
 
@@ -1549,6 +1706,7 @@ section.item p { margin: 0; max-width: 64ch; }
     <section class="item" id="decidir">
       <h2><span class="n">11</span>Para decidir</h2>
       <ol class="decisiones">
+        <li><span><b>Las kcal: luna, anillo, arco o barra</b> (sección 2). Cambian juntas Inicio, el día de Comida y la tira de la semana, con los mismos datos. ¿Cuál? Lo que elijas pasa también a la entrada («Tu comida, a tu medida» y el resultado).</span></li>
         <li><span><b>Las seis secciones</b> (sección 1). ¿Te cierran el orden, los nombres y los íconos? El «+» quedó como un círculo fino del tamaño de los íconos, parte de la barra.</span></li>
         <li><span><b>Un toque más para buscar.</b> Desde el «+», buscar son 6 toques y escribir (antes 5): el «+» abre la hoja y «Agregar comida», la búsqueda. A cambio, lo reciente y las guardadas bajan a 2, porque registran de un toque, con deshacer y sin la revisión. ¿Así?</span></li>
         <li><span><b>El rango de grasa.</b> Lo pediste chico: es de 2 a 4 puntos y sale de lo que puede correrse la cinta; el error del método contra un laboratorio (3 o 4 puntos) va en el aviso. La investigación sugiere no bajar de 4 puntos (±2). ¿Chico, como está, o ±2?</span></li>

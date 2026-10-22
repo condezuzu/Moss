@@ -74,7 +74,7 @@ const SeccionAscent = (() => {
       while (seguidos < anteriores.length && anteriores[seguidos]) seguidos++;
       const historia = Entrenamiento.sesionesAnteriores(A.sesiones, Fechas.sumarDias(Datos.HOY, -3));
       const r = Entrenamiento.recuperacion({
-        dormido: anoche ? anoche.dormido : 0, necesidad, calidad: anoche ? anoche.calidad : null,
+        dormido: anoche ? anoche.dormido : 0, necesidad, calidad: anoche ? anoche.calidad : null, sentida: opciones.cara(Datos.HOY),
         kilos3: anteriores.reduce((s, x) => s + (x ? x.kilos : 0), 0),
         kilosPorDia: historia.reduce((s, x) => s + x.kilos, 0) / (7 * Entrenamiento.SEMANAS_DE_HISTORIA),
         seguidos, proteinaAyer: ayer.p, metaProteina: meta.proteina, kcalAyer: ayer.kcal, metaKcal: meta.kcal,
@@ -351,7 +351,7 @@ const SeccionAscent = (() => {
       zona.style.transform = `translate3d(0, ${((1 - p) * 100).toFixed(3)}%, 0)`;
       zona.style.visibility = p > 0.0005 ? 'visible' : 'hidden';
       zona.inert = p === 0;
-      velo.style.opacity = (0.6 * p).toFixed(3);
+      velo.style.opacity = (0.32 * p).toFixed(3);
       flecha.style.opacity = (1 - Math.min(1, p * 2.5)).toFixed(3);
       if (opciones.alMover) opciones.alMover(p);
     }

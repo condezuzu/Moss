@@ -141,6 +141,7 @@
     "carbohidratos": "Carbs",
     "grasas": "Fat",
     "gramosDe": "{n} / {meta} g",
+    "porcentaje": "{n}%",
     "tuDia": "Your day",
     "promedio": "Daily average",
     "diasRegistrados": "{n} of {total} days logged",
@@ -682,7 +683,22 @@
       "variabilidad": "ms",
       "respiracion": "br/min"
     },
-    "elegirNoche": "Night of {fecha}"
+    "elegirNoche": "Night of {fecha}",
+    "manana": {
+      "pregunta": "How did you sleep last night?",
+      "caras": [
+        "Very badly",
+        "Badly",
+        "Okay",
+        "Well",
+        "Very well"
+      ],
+      "ahoraNo": "Not now",
+      "respondida": "Last night: {cara}",
+      "cambiar": "Change",
+      "tuRespuesta": "How you said you slept",
+      "nota": "It counts in recovery together with the watch's quality and, without a watch, it is the night's quality."
+    }
   },
   "perfil": {
     "titulo": "Profile",
@@ -1068,7 +1084,7 @@
       "siguiente": "Next month",
       "completos": "full days",
       "conLuz": "days with light",
-      "racha": "days in a row with light",
+      "luz": "light gathered",
       "porHabito": "Each habit, the last 30 days",
       "deVeces": "{hechos} of {total}",
       "sinDatos": "No days in this month yet."

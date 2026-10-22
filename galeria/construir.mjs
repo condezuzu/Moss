@@ -1,7 +1,7 @@
 // Arma galeria/dist/index.html: un solo archivo con la página, los shaders del cielo, el
 // catálogo, los textos, los alimentos curados y los módulos de la app que usa (la comida, las
-// metas, el control, el cuerpo, el progreso y el sueño). Todo se lee de src/ y
-// de assets/, que es lo mismo que usa la app: la galería nunca tiene una copia propia.
+// metas, el control, el cuerpo, el progreso, el sueño y las estadísticas de Hábitos). Todo se lee
+// de src/ y de assets/, que es lo mismo que usa la app: la galería nunca tiene una copia propia.
 // Uso: npm run galeria
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -16,7 +16,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', entrenamiento: 'Entrenamiento' };
+const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', entrenamiento: 'Entrenamiento', estadisticas: 'Estadisticas' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -77,7 +77,8 @@ const claves = ['comun.deshacer', 'fecha.dias', 'fecha.diasCortos', 'fecha.meses
   'cielo.completa', 'cielo.encendida', 'cielo.apagada', 'cielo.seEnciendeSola', 'cielo.desdeSalud', 'cielo.horasMinutos',
   'cielo.tuUniverso', 'entrada.frase', 'entrada.fraseAutor', 'entrada.habitosTitulo', 'entrada.comidaTitulo', 'entrada.cuenta.apple',
   'entrada.cuestionario.resultadoTitulo', 'perfil.titulo', 'comida.comidas.cena', 'comida.quedanKcal', 'comida.buscar', 'comida.sueles.cena',
-  'comida.agregarA.cena', 'comida.tuDia', 'progreso.controlTexto', 'inicio.bloques.calorias', 'mas.agregarComida', 'cuerpo.aviso', 'sueno.titulo'];
+  'comida.agregarA.cena', 'comida.tuDia', 'progreso.controlTexto', 'inicio.bloques.calorias', 'mas.agregarComida', 'cuerpo.aviso', 'sueno.titulo',
+  'comida.porcentaje', 'habitos.nuevo', 'habitos.metas.pasos', 'habitos.mes.titulo', 'habitos.sugeridos.titulo', 'perfil.borrarCuenta', 'perfil.creditos', 'perfil.fuentes.estrellas'];
 const faltan = [];
 for (const idioma of ['es', 'en']) {
   if (!textos[idioma]) { faltan.push(`src/textos/${idioma}.json`); continue; }
@@ -112,7 +113,8 @@ const js = [
   modulo('Progreso', 'src/dominio/progreso.ts'),
   modulo('Sueno', 'src/dominio/sueno.ts'),
   modulo('Entrenamiento', 'src/dominio/entrenamiento.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'luna', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

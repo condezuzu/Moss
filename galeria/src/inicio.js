@@ -24,7 +24,17 @@ const SeccionInicio = (() => {
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const bloquesEl = zona.querySelector('.in-bloques');
-    const luna = Luna.crear({ tam: 124, clase: 'in-luna' });
+    // La figura de las kcal, en el estilo elegido (kcal.js). Se rehace solo al cambiar de estilo, así
+    // anima de lo que mostraba a lo nuevo.
+    let figura = null;
+    let estiloDeLaFigura = null;
+    const figuraDeKcal = () => {
+      if (estiloDeLaFigura !== Kcal.estilo) {
+        figura = Kcal.grande((n) => tx('comida.porcentaje', { n: numero(n) }));
+        estiloDeLaFigura = Kcal.estilo;
+      }
+      return figura;
+    };
 
     const carta = (clase, titulo, irA) => {
       const c = el('article', 'in-bloque ' + clase);
@@ -47,12 +57,16 @@ const SeccionInicio = (() => {
       const meta = opciones.comida.meta;
       const t = opciones.comida.totalDe(0);
       const queda = meta.kcal - t.kcal;
+      const f = figuraDeKcal();
+      c.classList.add('con-' + Kcal.estilo);
       const arriba = el('div', 'in-cal-arriba');
       const cifra = el('div', 'in-cal-cifra');
       cifra.append(el('span', 'in-cal-etq', tx(queda >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')), el('b', null, numero(Math.abs(Math.round(queda)))),
         el('small', null, tx('inicio.kcalDe', { comido: numero(Math.round(t.kcal)), meta: numero(meta.kcal) })));
-      arriba.append(luna.el, cifra);
-      luna.ir(t.kcal / meta.kcal, ms);
+      // La barra va debajo de la cifra; las otras, al lado o alrededor.
+      if (Kcal.estilo === 'barra') arriba.append(cifra, f.el);
+      else arriba.append(f.el, cifra);
+      f.ir(t.kcal / meta.kcal, ms, opciones.comida.porComida(0));
       const macros = el('div', 'in-macros');
       [['p', 'proteina'], ['c', 'carbohidratos'], ['g', 'grasas']].forEach(([m, clave]) => {
         const estado = Metas.estadoDeMacro(t[m], meta[m]);
@@ -135,7 +149,7 @@ const SeccionInicio = (() => {
       c.appendChild(lienzo);
       requestAnimationFrame(() => dibujarConstelacion(lienzo, constelacion, habitos));
       const datos = el('div', 'in-cielo-datos');
-      habitos.filter((h) => h.auto).forEach((h) => {
+      habitos.filter((h) => h.auto === 'sueno' || h.auto === 'pasos').forEach((h) => {
         const dato = el('span', 'in-chip' + (h.encendido ? ' hecho' : ''));
         dato.innerHTML = icono(h.auto === 'sueno' ? 'sueno' : 'huellas');
         dato.append(h.auto === 'sueno' ? tx('inicio.dormiste', { h: u.duracion(h.valor) }) : tx('inicio.pasos', { n: numero(h.valor) }));
@@ -318,6 +332,7 @@ const SeccionInicio = (() => {
     }
 
     pintar(0);
+    Kcal.alCambiar(() => pintar(600));
     return {
       zona,
       pintar,

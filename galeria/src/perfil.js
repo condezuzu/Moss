@@ -1,6 +1,7 @@
-// Perfil, la última sección (antes Ajustes): tus datos, las preferencias, Salud y Ascent, y tus
-// datos para llevar o borrar. Las metas pasaron a Progreso, con la estrategia. Es una maqueta: lo
-// que hace cada fila ya está en la especificación.
+// Perfil, la última sección (antes Ajustes): tus datos, las preferencias, Salud y Ascent, tus datos
+// para llevar o borrar (y la cuenta, que es la misma de Ascent) y de dónde salen los alimentos. Las
+// metas pasaron a Progreso, con la estrategia. Es una maqueta: lo que hace cada fila ya está en la
+// especificación.
 
 const SeccionPerfil = (() => {
   function crear(tel, opciones) {
@@ -56,8 +57,15 @@ const SeccionPerfil = (() => {
       grupo('perfil.tusDatosParaLlevar', [
         ['perfil.exportar', 'CSV', true],
         ['perfil.privacidad', '', true],
-        ['perfil.borrarDatos', '', true, 'peligro'],
+        ['perfil.borrarDatos', '', false, 'peligro'],
+        // Avisa que la cuenta es la misma en Ascent (spec/ascent.md, «Borrar la cuenta»).
+        ['perfil.borrarCuenta', '', false, 'peligro'],
       ]);
+      // De dónde salen los alimentos y las estrellas, con su licencia, como en la app (Perfil.tsx).
+      cont.appendChild(el('h3', 'pf-grupo', tx('perfil.creditos')));
+      const creditos = el('ul', 'pf-lista pf-creditos');
+      ['usda', 'off', 'taco', 'estrellas'].forEach((f) => creditos.appendChild(el('li', null, tx('perfil.fuentes.' + f))));
+      cont.appendChild(creditos);
       const salir = boton('pf-salir', tx('perfil.cerrarSesion'), () => {});
       cont.appendChild(salir);
       cont.appendChild(el('p', 'pf-version', 'Moss 1.0 (1)'));

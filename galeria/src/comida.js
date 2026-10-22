@@ -246,6 +246,7 @@ const Comida = (() => {
                 <div class="cm-resumen-luna"></div>
                 <div class="cm-resumen-txt"><div class="cm-resumen-cifra"><b></b><small></small></div><span></span></div>
               </div>
+              <div class="cm-resumen-barra"></div>
               <div class="cm-macros cm-macros-dia"></div>
             </div>
             <div class="cm-pagina cm-pagina-semana">
@@ -267,8 +268,18 @@ const Comida = (() => {
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const $z = (q) => zona.querySelector(q);
-    const lunaChica = Luna.crear({ tam: 64, clase: 'cm-luna-chica' });
-    $z('.cm-resumen-luna').appendChild(lunaChica.el);
+    // La figura de las kcal del día, en el estilo elegido (kcal.js): al lado de lo comido o, si es la
+    // barra, debajo. Se rehace al cambiar de estilo.
+    let lunaChica = null;
+    function ponerFiguraDelDia() {
+      lunaChica = Kcal.chica((n) => tx('comida.porcentaje', { n: numero(n) }));
+      $z('.cm-resumen-luna').innerHTML = '';
+      $z('.cm-resumen-barra').innerHTML = '';
+      $z(Kcal.estilo === 'barra' ? '.cm-resumen-barra' : '.cm-resumen-luna').appendChild(lunaChica.el);
+      zona.dataset.kcal = Kcal.estilo;
+    }
+    ponerFiguraDelDia();
+    Kcal.alCambiar(() => { ponerFiguraDelDia(); pintarZona(600); });
     const scroll = $z('.cm-scroll');
     // Inicio y Progreso se pintan de nuevo cuando cambia lo comido.
     const avisarCambio = () => { if (opciones.alCambiarComida) opciones.alCambiarComida(); };
@@ -303,7 +314,7 @@ const Comida = (() => {
     const rango = (desde, hasta) => Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
 
     // Una luna chica, sin mares: llena según lo comido. Lo planificado se ve tenue y lo que
-    // todavía no llegó es solo el contorno.
+    // todavía no llegó es solo el contorno. Con otro estilo de kcal, su mini (kcal.js).
     function lunita(k) {
       const svg = document.createElementNS(SVG, 'svg');
       svg.setAttribute('viewBox', '-12 -12 24 24');
@@ -311,6 +322,7 @@ const Comida = (() => {
       const comidas = comidasDe(k);
       const plan = comidas.some((c) => c.plan);
       const estado = k > 0 && !plan ? 'futuro' : comidas.length ? (plan ? 'plan' : 'comido') : 'vacio';
+      if (Kcal.estilo !== 'luna') return Kcal.mini(totalDe(k).kcal / META.kcal, estado);
       svg.setAttribute('class', 'cm-lunita ' + estado);
       const fr = Math.min(1, totalDe(k).kcal / META.kcal);
       const luz = estado === 'comido' || estado === 'plan' ? `<path d="${fase(Math.max(0.04, fr), 9.5)}" class="cm-lunita-luz"/>` : '';
@@ -442,7 +454,7 @@ const Comida = (() => {
         ? tx(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) })
         : d > 0 ? tx('comida.planificado') : '';
       linea.classList.toggle('de-mas', d === 0 && queda < 0);
-      lunaChica.ir(t.kcal / META.kcal, ms);
+      lunaChica.ir(t.kcal / META.kcal, ms, comidasDe(d).map((c) => sumar(c.items).kcal));
       zona.classList.toggle('planificado', d > 0);
       pintarMacros($z('.cm-macros-dia'), t, d <= 0);
       $z('.cm-seccion-dia').textContent = tx('comida.tuDia');
@@ -1506,6 +1518,8 @@ const Comida = (() => {
       // Lo comido de un día (0 es hoy), y las kcal de cada día ya vivido con algo registrado: lo que
       // mira el control (Control.controlSemanal).
       totalDe,
+      // Las kcal de cada comida de un día, en orden: la barra de las kcal se reparte entre ellas.
+      porComida: (d) => comidasDe(d).map((c) => sumar(c.items).kcal),
       kcalPorDia: () => Object.keys(s.dias).map(Number).filter((k) => k < 0 && comidasDe(k).length).sort((a, b) => a - b)
         .map((k) => ({ fecha: fechaClave(k), kcal: totalDe(k).kcal })),
       comidaDeAhora,

@@ -1,7 +1,7 @@
 // La página de revisión: datos de mentira, controles, las seis secciones con el «+» en el medio de
-// la barra (Inicio, Comida, Progreso, Sueño, Hábitos con el cielo y Perfil), la entrada a la app y
-// el catálogo. CATALOGO, TEXTOS, SHADERS, ALIMENTOS y los módulos de la app los inyecta
-// galeria/construir.mjs desde src/ y assets/ (una sola fuente).
+// la barra (Inicio, Comida, Progreso, Sueño, Hábitos con el cielo, su editor y «Tu mes», y Perfil),
+// la entrada a la app con los primeros hábitos y el catálogo. CATALOGO, TEXTOS, SHADERS, ALIMENTOS y
+// los módulos de la app los inyecta galeria/construir.mjs desde src/ y assets/ (una sola fuente).
 
 (() => {
   // La Lira de la demo sale del catálogo; esta copia es solo por si el armado viene sin él.
@@ -37,16 +37,27 @@
     sol: '<circle cx="12" cy="12" r="3.6"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M6 18l1.4-1.4M16.6 7.4 18 6"/>',
     balanza: '<rect x="4" y="4.5" width="16" height="15" rx="3.5"/><path d="M9 9.5a4 4 0 0 1 6 0M12 9.5l1.4-1.6"/>',
   };
+  // Los hábitos de la app guardan íconos de SF Symbols (Editor.tsx): los que la galería ya dibujaba
+  // van con su dibujo, y el resto viene de SeccionHabitos.
+  Object.entries(SeccionHabitos.DE_LA_GALERIA).forEach(([nuestro, sf]) => { ICONOS[sf] = ICONOS[nuestro]; });
+  Object.assign(ICONOS, SeccionHabitos.ICONOS);
   const icono = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n] || ICONOS.circulo}</svg>`;
 
+  // Lo dormido anoche y los pasos de hoy salen de lo de mentira, como saldrían de Salud.
+  const DORMIDO_ANOCHE = Math.round((Datos.NOCHES.find((n) => n.clave === Datos.HOY) || { dormido: 452 }).dormido);
+  const PASOS_DE_HOY = 6240;
+  // Hasta dónde sube la cámara del cielo con Ascent arriba: menos que el dedo, porque está más lejos.
+  const CAMARA_DE_ASCENT = 0.75;
+  let subidaDeAscent = 0;
+  // Los seis del miércoles, con los ids de la persona de mentira (Datos.HABITOS): así el editor y
+  // «Tu mes» saben de cuál se trata.
   const habitosLira = () => [
-    { nombre: { es: 'Meditar 10 min', en: 'Meditate 10 min' }, icono: 'loto', encendido: true },
-    // Lo dormido anoche sale de las noches de mentira (Datos.NOCHES), como saldría de Salud.
-    { nombre: { es: 'Dormir 7 h', en: 'Sleep 7 h' }, icono: 'luna', encendido: true, auto: 'sueno', valor: Math.round((Datos.NOCHES.find((n) => n.clave === Datos.HOY) || { dormido: 452 }).dormido), meta: 420 },
-    { nombre: { es: 'Leer 20 páginas', en: 'Read 20 pages' }, icono: 'libro', encendido: true },
-    { nombre: { es: 'Escribir', en: 'Journal' }, icono: 'pluma', encendido: false },
-    { nombre: { es: '8.000 pasos', en: '8,000 steps' }, icono: 'huellas', encendido: false, auto: 'pasos', valor: 6240, meta: 8000 },
-    { nombre: { es: 'Agua 2 L', en: 'Water 2 L' }, icono: 'gota', encendido: false },
+    { id: 'meditar', nombre: { es: 'Meditar 10 min', en: 'Meditate 10 min' }, icono: 'loto', encendido: true },
+    { id: 'dormir', nombre: { es: 'Dormir 7 h', en: 'Sleep 7 h' }, icono: 'luna', encendido: true, auto: 'sueno', valor: DORMIDO_ANOCHE, meta: 420 },
+    { id: 'leer', nombre: { es: 'Leer 20 páginas', en: 'Read 20 pages' }, icono: 'libro', encendido: true },
+    { id: 'escribir', nombre: { es: 'Escribir', en: 'Journal' }, icono: 'pluma', encendido: false },
+    { id: 'pasos', nombre: { es: '8.000 pasos', en: '8,000 steps' }, icono: 'huellas', encendido: false, auto: 'pasos', valor: PASOS_DE_HOY, meta: 8000 },
+    { id: 'agua', nombre: { es: 'Agua 2 L', en: 'Water 2 L' }, icono: 'gota', encendido: false },
   ];
 
   const POZO = [
@@ -93,19 +104,49 @@
     { dia: 0, total: 6, hechos: 0 },
   ];
 
+  // Una constelación de `n` estrellas que no esté en `usadas`, las constelaciones primero.
+  function elegirConstelacion(n, usadas) {
+    const conLineas = (c) => c.estrellas.length === 1 || c.lineas.length > 0;
+    return lista.find((x) => x.estrellas.length === n && !usadas.has(x.id) && x.tipo === 'constelacion' && conLineas(x))
+      || lista.find((x) => x.estrellas.length === n && !usadas.has(x.id) && conLineas(x)) || null;
+  }
+
   function semanaDeMentira() {
     if (!lista.length) return [];
     const usadas = new Set(['lyra']);
-    const conLineas = (c) => c.estrellas.length === 1 || c.lineas.length > 0;
     return SEMANA.map((d) => {
       if (d.hoy) return Object.assign({}, d, { datos: LIRA });
-      const c = lista.find((x) => x.estrellas.length === d.total && !usadas.has(x.id) && x.tipo === 'constelacion' && conLineas(x))
-        || lista.find((x) => x.estrellas.length === d.total && !usadas.has(x.id) && conLineas(x));
+      const c = elegirConstelacion(d.total, usadas);
       if (!c) return null;
       usadas.add(c.id);
       return Object.assign({}, d, { datos: c });
     }).filter(Boolean);
   }
+  const SEMANA_DE_FABRICA = semanaDeMentira();
+  // La de ahora: cambia si el editor le cambia la cantidad de hábitos a hoy.
+  let semana = SEMANA_DE_FABRICA;
+
+  // Los días vividos de la persona de mentira (Datos.DIAS) llevan la constelación de su día de la
+  // semana mientras ese día tuvo la misma cantidad de hábitos; antes, otra de esa cantidad que la
+  // semana no usa: el día que cambia de cantidad pasa a otra constelación, como en la app.
+  (() => {
+    const usadas = new Set(SEMANA_DE_FABRICA.map((d) => d.datos.id));
+    const antes = new Map();
+    Datos.DIAS.forEach((dia) => {
+      const ds = Fechas.diaDeLaSemana(dia.clave);
+      const n = dia.habitos.length;
+      const actual = SEMANA_DE_FABRICA.find((d) => d.dia === ds);
+      if (actual && actual.total === n) { dia.constelacion = actual.datos.id; return; }
+      if (!antes.has(ds + '/' + n)) {
+        const c = elegirConstelacion(n, usadas);
+        if (c) usadas.add(c.id);
+        antes.set(ds + '/' + n, c ? c.id : null);
+      }
+      dia.constelacion = antes.get(ds + '/' + n);
+    });
+  })();
+  // Para «Reiniciar»: los hábitos como estaban antes de pasar por el editor.
+  const HABITOS_DE_FABRICA = JSON.stringify(Datos.HABITOS);
 
   const FRASE = {
     texto: { es: 'Nada grande nace de golpe, ni siquiera un racimo de uvas o un higo.', en: 'No great thing is created suddenly, any more than a bunch of grapes or a fig.' },
@@ -156,6 +197,9 @@
   let sueno = null;
   let perfilSec = null;
   let ascent = null;
+  let habitosSec = null;
+  // Mantener apretada una estrella abre su hábito: el click que llega al soltar no cierra la hoja.
+  let mantenido = false;
   try {
     escena = Escena.crear(tel, SHADERS, {
       calidad: 'alta',
@@ -164,7 +208,7 @@
       textos: TEXTOS,
       icono,
       frase: FRASE,
-      semana: semanaDeMentira(),
+      semana,
       diaSemana: 3,
       diaMes: 21,
       mes: 9,
@@ -172,6 +216,7 @@
       haptico,
       permitirArrastre: () => !esTactil || tel.classList.contains('inmersivo'),
       alCambiar: () => refrescarControles(),
+      alMantener: (i) => { mantenido = true; habitosSec.editar(i); },
     });
   } catch (err) {
     const aviso = document.createElement('div');
@@ -195,10 +240,12 @@
     aspecto: () => tel.clientWidth / Math.max(1, tel.clientHeight),
     avanceSolo: () => avanceSolo,
     alCambiar: () => refrescarControles(),
-    // Durante la entrada no hay pestañas; al final, el flum deja en Inicio.
+    // Durante la entrada no hay pestañas; al final, el flum deja en Inicio y ahí se eligen los
+    // primeros hábitos.
     alEmpezar: () => tel.classList.add('en-entrada'),
     alSalir: () => tel.classList.remove('en-entrada'),
     llegada: () => { pestanas.ir(0, true); comida.verDia(0); inicio.subir(); return inicio.zona; },
+    alTerminar: () => habitosSec.sugeridos(),
   });
 
   // ------------------------------------------------------------ la comida
@@ -407,17 +454,33 @@
     metaDeSueno: 8 * 60,
     recuperacion: () => (ascent ? ascent.recuperacionDeHoy() : null),
     abrirAscent: () => abrirAscent(),
+    // La cara de la mañana cambia la recuperación, que también está en Ascent.
+    alCambiarCara: () => { if (ascent) ascent.pintar(); },
   }));
   perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, { persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent() }));
   ascent = SeccionAscent.crear(tel, Object.assign({}, opcionesDeSeccion, {
     comida,
     persona,
     anoche: () => sueno.anoche(),
+    cara: (clave) => sueno.cara(clave),
     metaBase: () => metaBase,
     conAscent: () => (vinculada ? conAscent() : null),
     pocasSemanas: () => pocasSemanas,
     alVincular: (si) => vincular(si),
-    alMover: () => { if (pestanas) pestanas.repintar(); },
+    // Al subir, el cielo sube con el dedo, más despacio (está más lejos), y lo de hoy se apaga: Ascent
+    // queda sobre el mismo cielo, como «Tu universo».
+    alMover: (p) => {
+      // Solo mientras Ascent se mueve: cerrada, la cámara es del cielo (hoy o el universo).
+      // Lo de hoy se apaga en la primera mitad del gesto, así no se mezcla con lo de Ascent.
+      if (p > 0 || subidaDeAscent > 0) {
+        escena.velar(Math.min(1, p * 2));
+        escena.camara(CAMARA_DE_ASCENT * p, true);
+        const botones = tel.querySelector('.hh-botones');
+        if (botones) botones.style.opacity = String(Math.max(0, 1 - p * 2));
+      }
+      subidaDeAscent = p;
+      if (pestanas) pestanas.repintar();
+    },
     curva: bezier(0.16, 1, 0.3, 1),
     movimientoReducido,
   }));
@@ -438,10 +501,87 @@
     ascent.abrir(deUna);
   }
 
+  // ------------------------------------------------------------ los hábitos: el editor, tu mes y los primeros
+  // Lo que se guarda va al cielo de hoy y a la persona de mentira (lo que lista «Tu mes»).
+  habitosSec = SeccionHabitos.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    icono,
+    catalogo: lista,
+    cielo: () => escena.hoy,
+    habitos: () => Datos.HABITOS,
+    alGuardar: guardarHabito,
+    alArchivar: archivarHabito,
+    alArmar: armarPrimeros,
+    avisar: (texto) => escena.avisar(texto),
+  }));
+
+  // El cielo de hoy con estos hábitos. Con otra cantidad, el día pasa a otra constelación, una que
+  // el resto de la semana no usa, como en la app; con la misma, queda la que tenía.
+  function ponerHoy(habitos) {
+    const hoy = escena.hoy;
+    if (!hoy || !habitos.length) return;
+    let datos = hoy.constelacion;
+    if (habitos.length !== hoy.habitos.length) {
+      datos = elegirConstelacion(habitos.length, new Set(semana.filter((d) => !d.hoy).map((d) => d.datos.id))) || datos;
+      semana = semana.map((d) => (d.hoy ? Object.assign({}, d, { total: habitos.length, datos }) : d));
+      escena.ponerSemana(semana);
+    }
+    escena.ponerConstelacion(datos, habitos);
+  }
+
+  // Un hábito como lo dibuja el cielo: los de Salud y los de comida se encienden solos (los pasos y
+  // el sueño con lo de hoy, contra su meta).
+  function paraElCielo(datos, antes) {
+    const f = datos.fuente;
+    const auto = f.tipo === 'salud' ? f.dato : f.tipo === 'comida' ? 'comida' : undefined;
+    const valor = auto === 'pasos' ? PASOS_DE_HOY : auto === 'sueno' ? DORMIDO_ANOCHE : 0;
+    const meta = f.tipo === 'salud' ? f.meta : 0;
+    const encendido = auto === 'pasos' || auto === 'sueno' ? valor >= meta : auto ? false : !!(antes && antes.encendido);
+    return Object.assign({}, antes, { nombre: datos.nombre, icono: datos.icono, dias: datos.dias, fuente: f, auto, valor, meta, encendido });
+  }
+
+  // `original` es el hábito de la estrella `original.indice` del cielo de hoy; null, uno nuevo.
+  function guardarHabito(original, datos) {
+    const hoyToca = datos.dias.includes(Fechas.diaDeLaSemana(Datos.HOY));
+    const lista = escena.hoy.habitos;
+    if (original) {
+      const guardado = original.id && Datos.HABITOS.find((h) => h.id === original.id);
+      if (guardado) Object.assign(guardado, datos);
+      const i = original.indice;
+      ponerHoy(hoyToca ? lista.map((h, k) => (k === i ? paraElCielo(datos, h) : h)) : lista.filter((_, k) => k !== i));
+      return;
+    }
+    const id = 'nuevo-' + Date.now().toString(36);
+    Datos.HABITOS.push(Object.assign({ id, orden: Math.max(-1, ...Datos.HABITOS.map((h) => h.orden)) + 1, desde: Datos.HOY }, datos));
+    // Un hábito nuevo va al final: la estrella menos brillante.
+    if (hoyToca) ponerHoy([...lista, paraElCielo(datos, { id })]);
+  }
+
+  // Archivar es dejar de tocar desde hoy: lo de antes queda en el cielo.
+  function archivarHabito(original) {
+    const guardado = original.id && Datos.HABITOS.find((h) => h.id === original.id);
+    if (guardado) guardado.hasta = Fechas.sumarDias(Datos.HOY, -1);
+    ponerHoy(escena.hoy.habitos.filter((_, k) => k !== original.indice));
+  }
+
+  // Los primeros hábitos arman el cielo de hoy (en la app, la primera constelación).
+  function armarPrimeros(habitos) {
+    const hoy = Fechas.diaDeLaSemana(Datos.HOY);
+    ponerHoy(habitos.filter((h) => h.dias.includes(hoy)).map((h) => paraElCielo(h, { id: h.id })));
+  }
+
+  // «Reiniciar» también deja los hábitos como estaban.
+  function reiniciarHabitos() {
+    Datos.HABITOS.splice(0, Datos.HABITOS.length, ...JSON.parse(HABITOS_DE_FABRICA));
+    semana = SEMANA_DE_FABRICA;
+    escena.ponerSemana(semana);
+    habitosSec.cerrar();
+  }
+
   const cerrarHojas = () => {
     if (comida.hojaAbierta) comida.cerrarHoja();
     if (mas.abierta) mas.cerrar();
     if (inicio.editando) inicio.cerrar();
+    if (habitosSec.abierta) habitosSec.cerrar();
   };
 
   // ------------------------------------------------------------ las seis secciones, como en Ascent
@@ -581,7 +721,7 @@
 
     // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni las
     // listas ni el cielo se enteran.
-    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || escena.viajando || ascent.ocupada);
+    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta || escena.viajando || ascent.ocupada);
     tel.addEventListener('pointerdown', (ev) => {
       gesto = null;
       if (bloqueado() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
@@ -667,11 +807,11 @@
   let subida = null;
   let ultimaSubida = -1e9;
   const puedeSubir = () => pestanas.actual === HABITOS && !pestanas.deslizando && !ascent.ocupada && !entrada.paso && !comida.hojaAbierta
-    && !mas.abierta && !inicio.editando && !escena.viajando && escena.zona() === 'hoy' && (!esTactil || tel.classList.contains('inmersivo'));
+    && !mas.abierta && !inicio.editando && !habitosSec.abierta && !escena.viajando && escena.zona() === 'hoy' && (!esTactil || tel.classList.contains('inmersivo'));
   tel.addEventListener('pointerdown', (ev) => {
     subida = null;
     if (!puedeSubir() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-    if (ev.target.closest('.pestanas, .barra-inmersiva, .pagina-app')) return;
+    if (ev.target.closest('.pestanas, .barra-inmersiva, .pagina-app, .hh-botones')) return;
     if (ev.clientY > tel.querySelector('.pestanas').getBoundingClientRect().top - 8) return;
     subida = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, v: 0, ultimoY: ev.clientY, ultimoT: performance.now() };
   }, true);
@@ -708,16 +848,22 @@
   tel.addEventListener('click', (ev) => {
     if (performance.now() - ultimaSubida < 400) { ev.stopImmediatePropagation(); ev.preventDefault(); }
   }, true);
+  // Después de mantener apretada una estrella, el click de soltar no cierra la hoja que se abrió.
+  let soltoTrasMantener = -1e9;
+  tel.addEventListener('pointerup', () => { if (mantenido) { mantenido = false; soltoTrasMantener = performance.now(); } }, true);
+  tel.addEventListener('click', (ev) => {
+    if (performance.now() - soltoTrasMantener < 400) { ev.stopImmediatePropagation(); ev.preventDefault(); }
+  }, true);
 
   function refrescarControles() {
-    if (!escena || !comida || !pestanas || !mas || !inicio || !ascent) return;
+    if (!escena || !comida || !pestanas || !mas || !inicio || !ascent || !habitosSec) return;
     const enEntrada = !!entrada.paso;
-    const quieto = enEntrada || comida.hojaAbierta || mas.abierta || inicio.editando;
+    const quieto = enEntrada || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta;
     $('#b-repetir').disabled = !escena.completo || quieto;
     $('#b-salud').disabled = !escena.hayAutoPendiente || quieto;
     $('#b-completar').disabled = escena.completo || quieto;
     $('#b-registrar').textContent = comida.hojaAbierta ? 'Cerrar la hoja' : 'Registrar';
-    $$('#comida [data-comida], [data-seccion], [data-ascent]').forEach((b) => { b.disabled = enEntrada; });
+    $$('#comida [data-comida], [data-seccion], [data-ascent], [data-habitos]').forEach((b) => { b.disabled = enEntrada; });
     const enUniverso = escena.zona() === 'universo';
     $('#b-zona').textContent = enUniverso ? 'Volver a hoy' : 'Subir a tu universo';
     $$('.barra-inmersiva [data-accion="zona"]').forEach((b) => { b.textContent = enUniverso ? 'Hoy' : 'Universo'; });
@@ -752,7 +898,7 @@
     salud: enHabitos(() => escena.simularSalud()),
     completar: enHabitos(() => escena.completarDia()),
     repetir: enHabitos(() => escena.repetirAnimacion()),
-    reiniciar: () => { if (entrada.paso) entrada.salir(); cargarLira(); escena.irA('hoy'); pestanas.ir(HABITOS); },
+    reiniciar: () => { if (entrada.paso) entrada.salir(); reiniciarHabitos(); cargarLira(); escena.irA('hoy'); pestanas.ir(HABITOS); },
     zona: enHabitos(() => escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo')),
     fugaz: enHabitos(() => escena.lanzarFugaz()),
     entrada: () => { if (comida.hojaAbierta || mas.abierta) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
@@ -769,6 +915,20 @@
     sueno: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(0); },
   };
   $$('[data-ascent]').forEach((b) => b.addEventListener('click', () => { accionesAscent[b.dataset.ascent](); refrescarControles(); }));
+  // Los botones de la galería para los hábitos: el editor (como el «+» o mantener apretada una
+  // estrella), «Tu mes» y los primeros hábitos.
+  const enHabitosDeUna = () => { cerrarHojas(); if (ascent.ocupada) ascent.cerrar(true); escena.irA('hoy'); pestanas.ir(HABITOS); };
+  const accionesHabitos = {
+    nuevo: () => { enHabitosDeUna(); habitosSec.nuevo(); },
+    editar: () => {
+      enHabitosDeUna();
+      const i = escena.hoy.habitos.findIndex((h) => !h.auto && !h.encendido);
+      habitosSec.editar(Math.max(0, i));
+    },
+    mes: () => { enHabitosDeUna(); habitosSec.mes(); },
+    sugeridos: () => { if (entrada.paso) return; cerrarHojas(); pestanas.ir(0); habitosSec.sugeridos(); },
+  };
+  $$('[data-habitos]').forEach((b) => b.addEventListener('click', () => { accionesHabitos[b.dataset.habitos](); refrescarControles(); }));
   $$('#saltos-entrada [data-paso]').forEach((b) => b.addEventListener('click', () => {
     if (comida.hojaAbierta) return;
     entrada.irA(b.dataset.paso);
@@ -784,10 +944,15 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); ascent.pintar(); dibujarCatalogo(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); ascent.pintar(); habitosSec.pintar(); dibujarCatalogo(); });
   segmento('s-vinculo', (v) => vincular(v === 'si'));
   segmento('s-estanc', (v) => { pocasSemanas = v === 'pocas'; ascent.pintar(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
+  // Las kcal: lo elegido queda en el navegador (kcal.js), y el segmento arranca mostrándolo.
+  const marcarKcal = () => $$('#s-kcal button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === Kcal.estilo)));
+  segmento('s-kcal', (v) => Kcal.poner(v));
+  marcarKcal();
+  window.__kcal = (v) => { Kcal.poner(v); marcarKcal(); };
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
 
   // La riqueza del cielo, como la luz juntada desde siempre y el tiempo que lleva juntarla con
@@ -907,7 +1072,7 @@
         b.querySelector('.tipo').textContent = tipo + (n >= 16 ? ' · ' + c.estrellas.length : '');
         miniatura(b.querySelector('canvas'), c);
         b.addEventListener('click', () => {
-          if (entrada.paso || comida.hojaAbierta || mas.abierta) return;
+          if (entrada.paso || comida.hojaAbierta || mas.abierta || habitosSec.abierta) return;
           const datos = c.id === 'lyra' ? LIRA : c;
           const habitos = c.id === 'lyra' ? habitosLira() : habitosDeMentira(c.estrellas.length);
           escena.ponerConstelacion(datos, habitos);
@@ -965,6 +1130,28 @@
     pasos[accion]();
     refrescarControles();
   };
+  // Los hábitos: el editor, «Tu mes» y los primeros hábitos. `__estrella` dice dónde apretar.
+  window.__habitos = (accion, arg) => {
+    const aHabitos = () => { cerrarHojas(); pestanas.ir(HABITOS, true); };
+    const pasos = {
+      nuevo: () => { aHabitos(); habitosSec.nuevo(); },
+      editar: () => { aHabitos(); habitosSec.editar(escena.hoy.habitos.findIndex((h) => (h.nombre.es || h.nombre) === arg)); },
+      como: () => habitosSec.como(arg),
+      escribir: () => habitosSec.escribir(arg),
+      icono: () => habitosSec.ponerIcono(arg),
+      guardar: () => habitosSec.guardar(),
+      mes: () => { aHabitos(); habitosSec.mes(); },
+      mover: () => habitosSec.moverMes(arg),
+      sugeridos: () => { cerrarHojas(); habitosSec.sugeridos(); },
+      elegir: () => habitosSec.alternar(arg),
+      armar: () => habitosSec.armar(),
+      bajar: () => habitosSec.bajar(arg),
+      cerrar: () => habitosSec.cerrar(),
+    };
+    pasos[accion]();
+    refrescarControles();
+  };
+  window.__estrella = (texto) => escena.dondeEsta(texto);
   window.__deslizando = () => pestanas.deslizando;
   window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
   window.__metas = () => entrada.metas();

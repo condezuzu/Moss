@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
   caloriasSegunElDia, costoDeSesion, frecuenciaPorDia, MET_DE_LA_SESION, MET_EN_REPOSO, metaConEntrenamiento, porQueNoSube, promedioDeSesiones,
-  proteinaDespuesDeEntrenar, recuperacion, semanaDeMoss, tamanoDeSesion, TECHO_PROTEINA_POR_KG,
+  proteinaDespuesDeEntrenar, calidadParaRecuperar, recuperacion, semanaDeMoss, sentidaSobre100, tamanoDeSesion, TECHO_PROTEINA_POR_KG,
   type DiaConEntrenamiento, type SemanaDeMoss, type Sesion,
 } from './entrenamiento';
 import { sumarDias, type DiaSemana } from './fechas';
@@ -154,6 +154,21 @@ describe('la recuperación', () => {
 
   it('con poco sueño y sin comer, conviene ir suave', () => {
     expect(recuperacion({ ...base, dormido: 240, calidad: 20, kilos3: 3000, proteinaAyer: 40, kcalAyer: 900 }).conviene).toBe('suave');
+  });
+
+  it('la cara de la mañana: sin reloj es la calidad, con reloj se promedia', () => {
+    expect([1, 2, 3, 4, 5].map(sentidaSobre100)).toEqual([0, 25, 50, 75, 100]);
+    expect(calidadParaRecuperar(null, 4)).toBe(75);
+    expect(calidadParaRecuperar(92, null)).toBe(92);
+    expect(calidadParaRecuperar(92, 2)).toBe(58.5);
+    expect(calidadParaRecuperar(null, null)).toBeNull();
+    expect(recuperacion({ ...base, calidad: null, sentida: 4 }).partes.sueno).toBe(33);
+    expect(recuperacion({ ...base, sentida: 2 }).partes.sueno).toBe(30);
+  });
+
+  it('sin reloj ni respuesta, la duración vale los 40 del sueño', () => {
+    expect(recuperacion({ ...base, calidad: null }).partes.sueno).toBe(37);
+    expect(recuperacion({ ...base, dormido: 480, calidad: null }).partes.sueno).toBe(40);
   });
 });
 
