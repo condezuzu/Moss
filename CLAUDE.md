@@ -133,7 +133,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
 - `entrada`;
-- `comida`, `registrar`, `etiqueta`, `comida-ingles`.
+- `comida`, `registrar`, `etiqueta`, `metas`, `comida-ingles`.
 
 La galería abre en Inicio, y los escenarios del cielo pasan antes a Hábitos
 (`window.__pagina(1, true)`). `deslizar` arrastra con el mouse, como un dedo,
@@ -190,5 +190,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `entrada.js`: la entrada a la app.
 - `comida.js`: la comida. Tiene la pestaña Inicio, con el día, la semana y el
   mes, y la hoja de registro con la ventana del alimento, la comida que se arma,
-  la revisión y el teclado.
+  la revisión, la etiqueta y el teclado.
+- `ajustes.js`: Ajustes, con las metas (las cuentas son las de
+  `src/dominio/metas.ts`).
 - `galeria.js`: la página y las pestañas, con el gesto de Ascent.

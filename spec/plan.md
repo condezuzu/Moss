@@ -306,6 +306,7 @@ menos de un minuto.
   - el cálculo ya está (`src/dominio/control.ts`);
   - ya corre solo en el almacén (22/10/2026), con las metas a mano;
   - falta su resumen en pantalla y el «cómo se calcula».
+- **Metas en Ajustes**, primero en la galería (hecha el 22/10/2026, falta tu aprobación): quién las pone, cómo se reparten los macros y repartir la semana, con las cuentas de `src/dominio/metas.ts`.
 - **Lo que se sumó después de mirar las otras apps** (22/10/2026), primero en la galería:
   - cómo se reparten los macros: equilibrada, baja en grasas, baja en carbohidratos y keto;
   - metas a mano;

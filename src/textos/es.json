@@ -100,7 +100,39 @@
     "idioma": "Idioma",
     "salud": "Apple Salud",
     "ascent": "Vincular con Ascent",
-    "cuenta": "Cuenta"
+    "cuenta": "Cuenta",
+    "metas": {
+      "titulo": "Metas",
+      "fila": "{kcal} kcal",
+      "porDia": "kcal por día",
+      "quien": "Quién las pone",
+      "moss": "Moss",
+      "aMano": "A mano",
+      "mossTexto": "Moss las ajusta cada semana con tu peso y lo que comes.",
+      "aManoTexto": "Las pones tú. Moss sigue midiendo tu gasto, pero no las cambia.",
+      "reparto": "Cómo se reparten",
+      "tusMacros": "Tus macros",
+      "estilos": {
+        "equilibrada": [
+          "Equilibrada",
+          "Proteína por kilo, al menos un 27 % de grasas y el resto en carbohidratos."
+        ],
+        "bajaEnGrasas": [
+          "Baja en grasas",
+          "Las grasas al 20 %: más lugar para los carbohidratos."
+        ],
+        "bajaEnCarbohidratos": [
+          "Baja en carbohidratos",
+          "Un cuarto de las kcal en carbohidratos y el resto en grasas."
+        ],
+        "keto": [
+          "Keto",
+          "30 g de carbohidratos por día."
+        ]
+      },
+      "semana": "Repartir la semana",
+      "semanaTexto": "Más los días que elijas y un poco menos el resto. La semana suma lo mismo: se mueven los carbohidratos."
+    }
   },
   "comida": {
     "comidas": {

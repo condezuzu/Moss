@@ -1549,6 +1549,8 @@ const Comida = (() => {
       get enZona() { return s.enZona; },
       get hojaAbierta() { return !!s.hoja; },
       get dia() { return s.dia; },
+      // Las metas de Ajustes (ajustes.js): la zona se pinta con las nuevas.
+      ponerMeta(m) { Object.assign(META, { kcal: m.kcal, p: m.proteina, c: m.carbohidratos, g: m.grasas }); pintarZona(600); },
       ponerIdioma(id) {
         idioma = id;
         armarTeclado();

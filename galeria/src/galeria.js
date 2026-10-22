@@ -240,19 +240,13 @@
   }
 
   // ------------------------------------------------------------ Ajustes
-  // De maqueta: acá importa que es la última pestaña.
+  // La última pestaña: las metas, con las cuentas de la app (ajustes.js), y lo demás de maqueta.
+  // Cambiar cómo se reparten los macros cambia las barras de Inicio.
   const ajustes = document.createElement('section');
   ajustes.className = 'ajustes';
   tel.appendChild(ajustes);
   const tx = (clave) => clave.split('.').reduce((o, k) => (o ? o[k] : undefined), TEXTOS[escena.idioma]) || clave;
-  function armarAjustes() {
-    const filas = [
-      ['ajustes.calidad', 'Alta'], ['ajustes.idioma', escena.idioma === 'es' ? 'Español' : 'English'],
-      ['ajustes.salud', '✓'], ['ajustes.ascent', ''], ['ajustes.cuenta', ''],
-    ];
-    ajustes.innerHTML = `<h2>${tx('ajustes.titulo')}</h2><ul>${filas.map(([k, v]) => `<li><span>${tx(k)}</span><b>${v}</b></li>`).join('')}</ul>`;
-  }
-  armarAjustes();
+  const paginaAjustes = Ajustes.crear(ajustes, { textos: TEXTOS, idioma: () => escena.idioma, alCambiarMeta: (m) => comida.ponerMeta(m) });
 
   // ------------------------------------------------------------ las pestañas, como en Ascent
   // Inicio es la comida, Hábitos el cielo con la constelación y Ajustes va al final. Se pasa de una
@@ -495,7 +489,7 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); armarAjustes(); dibujarCatalogo(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); paginaAjustes.pintar(); dibujarCatalogo(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
   segmento('s-arcos', (v) => comida.arcos(v === 'si'));
@@ -642,6 +636,10 @@
   window.__riqueza = (r) => { rRiqueza.value = Math.round(r * 100); mostrarRiqueza(); escena.ponerRiqueza(r); };
   window.__via = (v) => { rVia.value = Math.round(v * 100); $('#o-via').textContent = rVia.value + '%'; escena.ponerVia(v); };
   window.__pagina = (i, deUna) => pestanas.ir(i, deUna);
+  window.__ajustes = (accion, arg) => {
+    const pasos = { metas: () => paginaAjustes.verMetas(), lista: () => paginaAjustes.verLista(), estilo: () => paginaAjustes.ponerEstilo(arg), quien: () => paginaAjustes.ponerQuien(arg), repartir: () => paginaAjustes.repartir(arg) };
+    pasos[accion]();
+  };
   window.__deslizando = () => pestanas.deslizando;
   window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
   window.__metas = () => entrada.metas();

@@ -166,6 +166,37 @@ const pasos = {
     await pagina.waitForTimeout(700);
     await pestana(0);
   },
+  // Ajustes › Metas: cómo se reparten, keto (y cómo cambia Inicio), a mano y repartir la semana.
+  async metas() {
+    const ajustes = (accion, arg) => pagina.evaluate(([a, x]) => window.__ajustes(a, x), [accion, arg]);
+    await pestana(2);
+    await foto('ajustes-lista');
+    await ajustes('metas');
+    await pagina.waitForTimeout(300);
+    await foto('metas');
+    await ajustes('estilo', 'keto');
+    await pagina.waitForTimeout(300);
+    await foto('metas-keto');
+    await pestana(0);
+    await comida('dia', 0);
+    await pagina.waitForTimeout(1400);
+    await foto('inicio-keto');
+    await pestana(2);
+    await ajustes('estilo', 'equilibrada');
+    await ajustes('repartir', true);
+    await pagina.waitForTimeout(300);
+    await pagina.evaluate(() => document.querySelector('.ajustes').scrollTo(0, 9999));
+    await pagina.waitForTimeout(300);
+    await foto('metas-semana');
+    await ajustes('quien', 'mano');
+    await pagina.evaluate(() => document.querySelector('.ajustes').scrollTo(0, 0));
+    await pagina.waitForTimeout(300);
+    await foto('metas-a-mano');
+    await ajustes('quien', 'moss');
+    await ajustes('repartir', false);
+    await ajustes('lista');
+    await pestana(0);
+  },
   // Inicio: el día con su línea, la semana, el mes, ayer y mañana.
   async comida() {
     await pestana(0);

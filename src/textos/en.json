@@ -100,7 +100,39 @@
     "idioma": "Language",
     "salud": "Apple Health",
     "ascent": "Link with Ascent",
-    "cuenta": "Account"
+    "cuenta": "Account",
+    "metas": {
+      "titulo": "Targets",
+      "fila": "{kcal} kcal",
+      "porDia": "kcal a day",
+      "quien": "Who sets them",
+      "moss": "Moss",
+      "aMano": "Manual",
+      "mossTexto": "Moss adjusts them every week from your weight and what you eat.",
+      "aManoTexto": "You set them. Moss keeps measuring your expenditure, but doesn't change them.",
+      "reparto": "How they split",
+      "tusMacros": "Your macros",
+      "estilos": {
+        "equilibrada": [
+          "Balanced",
+          "Protein by body weight, at least 27% fat and the rest carbs."
+        ],
+        "bajaEnGrasas": [
+          "Low fat",
+          "Fat at 20%: more room for carbs."
+        ],
+        "bajaEnCarbohidratos": [
+          "Low carb",
+          "A quarter of calories from carbs and the rest from fat."
+        ],
+        "keto": [
+          "Keto",
+          "30 g of carbs a day."
+        ]
+      },
+      "semana": "Shift the week",
+      "semanaTexto": "More on the days you pick and a bit less on the rest. The week adds up the same: carbs move."
+    }
   },
   "comida": {
     "comidas": {

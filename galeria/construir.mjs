@@ -95,10 +95,12 @@ const js = [
   modulo('Porciones', 'src/comida/porciones.ts'),
   modulo('Comidas', 'src/dominio/comidas.ts'),
   modulo('Etiqueta', 'src/comida/etiqueta.ts'),
+  modulo('Metas', 'src/dominio/metas.ts'),
   leer('galeria/src/motor.js'),
   leer('galeria/src/escena.js'),
   leer('galeria/src/entrada.js'),
   leer('galeria/src/comida.js'),
+  leer('galeria/src/ajustes.js'),
   leer('galeria/src/galeria.js'),
 ].join('\n');
 
