@@ -44,6 +44,7 @@ const enInicio = (accion, arg) => pagina.evaluate(([a, x]) => window.__inicio(a,
 const mas = (accion, arg) => pagina.evaluate(([a, x]) => window.__mas(a, x), [accion, arg]);
 const progreso = (accion, arg) => pagina.evaluate(([a, x]) => window.__progreso(a, x), [accion, arg]);
 const sueno = (accion, arg) => pagina.evaluate(([a, x]) => window.__sueno(a, x), [accion, arg]);
+const ascent = (accion, arg) => pagina.evaluate(([a, x]) => window.__ascent(a, x), [accion, arg]);
 // Un arrastre de costado con el mouse, como un dedo: se saca la foto con el dedo todavía abajo.
 async function arrastrar(desde, hasta, y, nombre) {
   await pagina.mouse.move(desde, y);
@@ -435,6 +436,88 @@ const pasos = {
     await comida('cerrar');
     await pagina.waitForTimeout(600);
     await pagina.evaluate(() => window.__idioma('es'));
+  },
+  // Ascent, arriba de Hábitos: la flecha, el gesto a mitad de camino (con el dedo todavía abajo),
+  // sin vincular y vinculada, y lo que cambia en Inicio, Sueño y Perfil con el vínculo.
+  async ascent() {
+    await alCielo();
+    await pagina.waitForTimeout(600);
+    await foto('ascent-flecha');
+    await pagina.mouse.move(196, 640);
+    await pagina.mouse.down();
+    await pagina.mouse.move(196, 400, { steps: 12 });
+    await pagina.waitForTimeout(400);
+    await foto('ascent-subiendo');
+    await pagina.mouse.up();
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(900);
+    await foto('ascent');
+    // Para volver: arrastrarla para abajo desde arriba de todo.
+    await pagina.mouse.move(196, 300);
+    await pagina.mouse.down();
+    await pagina.mouse.move(196, 560, { steps: 12 });
+    await pagina.waitForTimeout(400);
+    await foto('ascent-bajando');
+    await pagina.mouse.up();
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(900);
+    await foto('ascent-de-vuelta');
+    // Arrastrar el cielo para abajo sigue subiendo a tu universo.
+    await pagina.mouse.move(196, 300);
+    await pagina.mouse.down();
+    await pagina.mouse.move(196, 560, { steps: 12 });
+    await pagina.waitForTimeout(400);
+    await foto('ascent-universo-sigue');
+    await pagina.mouse.up();
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(1500);
+    if (await pagina.evaluate(() => document.querySelector('#b-zona').textContent === 'Volver a hoy')) {
+      await pagina.evaluate(() => window.__accion('zona'));
+      await pagina.waitForTimeout(1500);
+    }
+    await ascent('abrir');
+    await pagina.waitForTimeout(300);
+    for (const [selector, nombre] of [['.as-grupo', 'ascent-bloqueadas'], ['.as-anio', 'ascent-bloqueadas-2']]) {
+      await ascent('bajar', selector);
+      await pagina.waitForTimeout(300);
+      await foto(nombre);
+    }
+    await ascent('subir');
+    await ascent('vincular', true);
+    await pagina.waitForTimeout(1700);
+    await foto('ascent-vinculada');
+    for (const [selector, nombre] of [['.as-recuperacion', 'ascent-vinculada-2'], ['.as-estanc', 'ascent-vinculada-3'], ['.as-funciones', 'ascent-vinculada-4']]) {
+      await ascent('bajar', selector);
+      await pagina.waitForTimeout(300);
+      await foto(nombre);
+    }
+    await ascent('subir');
+    await ascent('cerrar');
+    await pestana(0);
+    await pagina.waitForTimeout(1200);
+    await foto('ascent-inicio');
+    await pestana(3);
+    await pagina.waitForTimeout(700);
+    await foto('ascent-sueno');
+    await pestana(5);
+    await pagina.waitForTimeout(500);
+    await foto('ascent-perfil');
+    await ascent('vincular', false);
+    await pestana(0);
+    await pagina.waitForTimeout(600);
+  },
+  async 'ascent-ingles'() {
+    await pagina.evaluate(() => window.__idioma('en'));
+    await ascent('abrir');
+    await pagina.waitForTimeout(500);
+    await foto('ascent-ingles');
+    await ascent('vincular', true);
+    await pagina.waitForTimeout(1700);
+    await foto('ascent-vinculada-ingles');
+    await ascent('vincular', false);
+    await ascent('cerrar');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pestana(0);
   },
 };
 

@@ -590,7 +590,8 @@
     "exportar": "Exportar todo",
     "privacidad": "Privacidad",
     "borrarDatos": "Borrar mis datos",
-    "cerrarSesion": "Cerrar sesión"
+    "cerrarSesion": "Cerrar sesión",
+    "vinculada": "Vinculada"
   },
   "fecha": {
     "dias": [
@@ -694,5 +695,125 @@
     },
     "si": "sí",
     "no": "no"
+  },
+  "ascent": {
+    "flecha": "Abrir Ascent",
+    "volver": "Volver al cielo",
+    "etiqueta": "Moss y Ascent",
+    "titulo": "Con Ascent",
+    "sinVincular": "Sin vincular",
+    "vinculadaDesde": "Vinculada desde el {fecha}",
+    "bajada": "Vincula las dos apps y tu sueño y tu comida se cruzan con tu entrenamiento.",
+    "vincular": "Vincular con Ascent",
+    "conseguir": "¿No tienes Ascent? Búscala en la App Store",
+    "mismaCuenta": "Es la misma cuenta. Vincular da permiso para que las dos compartan tus datos, y se quita desde Perfil.",
+    "soloConLasDos": "Solo con las dos",
+    "mejorConectadas": "Andan solas, mejor conectadas",
+    "conAscent": "Con Ascent",
+    "desvincular": "Se desvincula desde Perfil.",
+    "hoy": {
+      "titulo": "Hoy en Ascent",
+      "sesion": "{nombre} · {min} min · {series} series",
+      "aLas": "a las {hora}",
+      "meta": "Tu meta de hoy: {kcal} kcal y {p} g de proteína",
+      "cambio": "+{kcal} kcal y +{p} g de proteína por entrenar"
+    },
+    "recuperacion": {
+      "titulo": "Recuperación",
+      "texto": "Un puntaje de cada día con tu sueño, tu comida y tu entrenamiento. Antes de entrenar, te dice si conviene ir fuerte o suave.",
+      "hoy": "Hoy, antes de entrenar",
+      "conviene": {
+        "fuerte": "Conviene ir fuerte",
+        "normal": "Conviene ir normal",
+        "suave": "Conviene ir suave"
+      },
+      "partes": {
+        "sueno": "Sueño",
+        "carga": "Carga",
+        "comida": "Comida"
+      },
+      "de": "{n} de {max}",
+      "detalle": {
+        "sueno": "{horas} · calidad {calidad}",
+        "carga": "3 días: {n} % de lo de siempre",
+        "comida": "Ayer: {p} de {meta} g de proteína"
+      },
+      "explicacion": "Sueño, 40: lo que dormiste contra lo que necesitas y la calidad de la noche. Carga, 40: lo que entrenaste en los 3 días anteriores contra tu promedio de 4 semanas, menos los días seguidos. Comida, 20: la proteína de ayer y si comiste al menos el 80 % de la meta. Es orientativo."
+    },
+    "estancamiento": {
+      "titulo": "Por qué no subes",
+      "texto": "Cuando Ascent ve que te estancaste en un ejercicio, Moss le suma lo que cambió en tu sueño, tu proteína y tus calorías.",
+      "ejercicio": "{ejercicio}: {semanas} semanas en {marca}",
+      "conMarcas": "Con marcas",
+      "ahora": "Estas {n} semanas",
+      "filas": {
+        "sueno": "Sueño",
+        "proteina": "Proteína por día",
+        "calorias": "Balance por día"
+      },
+      "frases": {
+        "sueno": "Tus mejores marcas llegan las semanas que duermes {horas} o más.",
+        "proteina": "Tus mejores marcas llegan las semanas que llegas a la proteína.",
+        "calorias": "Tus mejores marcas llegan las semanas que comes más cerca de tu gasto."
+      },
+      "nota": "Compara tus semanas: muestra lo que cambió, no una causa segura.",
+      "gramos": "{n} g",
+      "kcal": "{n} kcal"
+    },
+    "anio": {
+      "titulo": "Tu año",
+      "texto": "Entrenamientos, marcas, hábitos, sueño y comida del año, en uno solo.",
+      "cuando": "Se arma el 31 de diciembre",
+      "datos": {
+        "entrenamientos": "entrenamientos",
+        "marcas": "marcas",
+        "habitos": "días con hábitos",
+        "sueno": "de sueño promedio",
+        "comida": "días con la comida"
+      },
+      "desde": "Lo de Moss cuenta desde el {fecha}.",
+      "horas": "{h} h {m}"
+    },
+    "funciones": {
+      "peso": {
+        "titulo": "Un solo peso",
+        "texto": "Te pesas en una y se anota en las dos.",
+        "vivo": "{kg} kg {cuando}, en las dos"
+      },
+      "calorias": {
+        "titulo": "Calorías según el día",
+        "texto": "Los días de gimnasio la meta sube y los de descanso baja: la semana suma lo mismo.",
+        "vivo": "Hoy entrenaste: +{n} kcal"
+      },
+      "objetivo": {
+        "titulo": "El mismo objetivo",
+        "texto": "Definición o volumen en Moss cambia lo que Ascent espera de tu fuerza.",
+        "vivo": {
+          "bajar": "Definición: Ascent no espera marcas nuevas",
+          "mantener": "Mantener: Ascent espera lo de siempre",
+          "subir": "Volumen: Ascent espera que subas"
+        }
+      },
+      "cuenta": {
+        "titulo": "Una cuenta y tus amigos",
+        "texto": "La misma cuenta y la misma lista de amigos en las dos.",
+        "vivo": "{n} amigos de Ascent"
+      },
+      "proteina": {
+        "titulo": "Proteína después de entrenar",
+        "texto": "Una sesión más grande que las de siempre sube la proteína de ese día.",
+        "vivo": "Hoy +{n} g por la sesión"
+      },
+      "gimnasio": {
+        "titulo": "El gimnasio se enciende solo",
+        "texto": "Si registras el día en Ascent, la estrella del gimnasio se enciende sola.",
+        "vivo": "Suma «Gimnasio» a tus hábitos y se enciende sola"
+      }
+    },
+    "cuando": {
+      "hoy": "hoy",
+      "ayer": "ayer",
+      "dia": "el {dia}"
+    }
   }
 }

@@ -155,6 +155,7 @@
   let progreso = null;
   let sueno = null;
   let perfilSec = null;
+  let ascent = null;
   try {
     escena = Escena.crear(tel, SHADERS, {
       calidad: 'alta',
@@ -274,7 +275,27 @@
     edad, sexo: perfil.sexo, pesoKg: controlHecho.datos.pesoDeTendencia || Datos.PESADAS[Datos.PESADAS.length - 1].kg, objetivo: perfil.objetivo, ritmo: perfil.ritmo,
   }, perfil.estilo);
   let metasAMano = false;
-  comida.ponerMeta(controlHecho.metas);
+  // La meta de la comida de hoy: la de Moss y, vinculada con Ascent, lo que suma entrenar
+  // (spec/ascent.md: calorías según el día y proteína después de entrenar).
+  let metaBase = controlHecho.metas;
+  let vinculada = false;
+  function ajusteDeHoy() {
+    const A = Datos.ASCENT;
+    const sesion = A.sesiones.find((x) => x.fecha === Datos.HOY);
+    if (!vinculada || !sesion) return null;
+    // Los días de gimnasio suben y los otros bajan lo mismo entre todos: la semana suma igual.
+    const dia = Metas.repartirSemana(metaBase, A.diasDeGimnasio, 250, perfil.sexo)[Fechas.diaDeLaSemana(Datos.HOY)];
+    // Una sesión más grande que las de siempre suma 0,3 g de proteína por kilo, hasta 40 g, que
+    // salen de los carbohidratos que sumó el día: las calorías quedan como las dejó el reparto.
+    const p = sesion.kg > A.sesionPromedioKg ? Math.min(40, Math.round(0.3 * Datos.PESADAS[Datos.PESADAS.length - 1].kg)) : 0;
+    return { kcal: dia.kcal - metaBase.kcal, p, meta: { kcal: dia.kcal, proteina: metaBase.proteina + p, carbohidratos: Math.max(0, dia.carbohidratos - p), grasas: dia.grasas } };
+  }
+  function ponerMetaDeHoy(m) {
+    metaBase = m;
+    const aj = ajusteDeHoy();
+    comida.ponerMeta(aj ? aj.meta : m);
+  }
+  ponerMetaDeHoy(controlHecho.metas);
 
   // Una serie para los gráficos: los últimos `dias`, con la pesada de cada día y la tendencia.
   function serieDe(tendencia, dias) {
@@ -328,7 +349,7 @@
     // Como en el almacén (ponerEstrategia): cambiar el objetivo, el ritmo o el reparto fija metas
     // nuevas con el gasto medido; con las metas a mano, quedan las que había.
     const cambiaLaMeta = perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || perfil.estilo !== antes.estilo;
-    if (cambiaLaMeta && !metasAMano) comida.ponerMeta(metaDeMoss());
+    if (cambiaLaMeta && !metasAMano) ponerMetaDeHoy(metaDeMoss());
     else repintar();
   }
 
@@ -363,12 +384,44 @@
     persona,
     ponerEstrategia,
     metaDeMoss,
-    ponerMeta: (m) => { metasAMano = !m || m.kcal !== metaDeMoss().kcal || m.proteina !== metaDeMoss().proteina; comida.ponerMeta(m); },
+    ponerMeta: (m) => { metasAMano = !m || m.kcal !== metaDeMoss().kcal || m.proteina !== metaDeMoss().proteina; ponerMetaDeHoy(m); },
     registrarPeso: () => mas.ir('peso'),
     medir: () => mas.ir('medidas'),
   }));
-  sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, { noches: () => Datos.NOCHES, metaDeSueno: 8 * 60 }));
-  perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, { persona }));
+  sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    noches: () => Datos.NOCHES,
+    metaDeSueno: 8 * 60,
+    recuperacion: () => (ascent ? ascent.recuperacionDeHoy() : null),
+    abrirAscent: () => abrirAscent(),
+  }));
+  perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, { persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent() }));
+  ascent = SeccionAscent.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    comida,
+    persona,
+    anoche: () => sueno.anoche(),
+    metaBase: () => metaBase,
+    ajuste: () => ajusteDeHoy(),
+    alVincular: (si) => vincular(si),
+    alMover: () => { if (pestanas) pestanas.repintar(); },
+    curva: bezier(0.16, 1, 0.3, 1),
+    movimientoReducido,
+  }));
+
+  // Vincular cambia la meta de hoy (el día de gimnasio), la recuperación en Sueño y la fila de Perfil.
+  function vincular(si) {
+    vinculada = si;
+    ponerMetaDeHoy(metaBase);
+    ascent.ponerVinculo(si);
+    sueno.pintar();
+    perfilSec.pintar();
+    $$('#s-vinculo button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.valor === 'si') === si)));
+    refrescarControles();
+  }
+  // A Ascent se llega por Hábitos: desde Sueño o Perfil, se pasa por ahí.
+  function abrirAscent(deUna) {
+    if (!ascent.ocupada) { cerrarHojas(); pestanas.ir(HABITOS, true); }
+    ascent.abrir(deUna);
+  }
 
   const cerrarHojas = () => {
     if (comida.hojaAbierta) comida.cerrarHoja();
@@ -481,7 +534,7 @@
       const oscuro = a + (b - a) * (k - Math.floor(k));
       velo.firstChild.style.opacity = oscuro.toFixed(3);
       // Sobre las secciones la barra es pareja, como en Ascent; sobre el cielo deja ver el musgo.
-      barra.style.setProperty('--solida', Math.min(1, oscuro / 0.7).toFixed(3));
+      barra.style.setProperty('--solida', Math.max(Math.min(1, ascent.progreso * 3), Math.min(1, oscuro / 0.7)).toFixed(3));
       botones.forEach((boton, i) => { boton.querySelector('.pt-luz').style.opacity = luz(i).toFixed(3); });
     }
 
@@ -493,6 +546,8 @@
     }
 
     function ir(i, deUna) {
+      // Con Ascent arriba, Hábitos la baja; otra pestaña la saca de una.
+      if (ascent.ocupada) ascent.cerrar(i !== HABITOS || deUna);
       cancelAnimationFrame(animacion);
       animacion = 0;
       actual = Math.max(0, Math.min(PESTANAS.length - 1, i));
@@ -511,7 +566,7 @@
 
     // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni las
     // listas ni el cielo se enteran.
-    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || escena.viajando);
+    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || escena.viajando || ascent.ocupada);
     tel.addEventListener('pointerdown', (ev) => {
       gesto = null;
       if (bloqueado() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
@@ -584,20 +639,69 @@
     return {
       ir,
       ponerTextos,
+      repintar: pintar,
       get actual() { return actual; },
       get deslizando() { return !!animacion || !!(gesto && gesto.decidido); },
     };
   })();
 
+  // ------------------------------------------------------------ Ascent, arriba de Hábitos
+  // En Hábitos, deslizar para arriba sube la sección de Ascent desde el musgo, siguiendo al dedo;
+  // para abajo sigue llevando la cámara a tu universo. Se decide con el mismo umbral que el
+  // arrastre del cielo y antes que él: así el cielo no se mueve cuando el gesto es de Ascent.
+  let subida = null;
+  let ultimaSubida = -1e9;
+  const puedeSubir = () => pestanas.actual === HABITOS && !pestanas.deslizando && !ascent.ocupada && !entrada.paso && !comida.hojaAbierta
+    && !mas.abierta && !inicio.editando && !escena.viajando && escena.zona() === 'hoy' && (!esTactil || tel.classList.contains('inmersivo'));
+  tel.addEventListener('pointerdown', (ev) => {
+    subida = null;
+    if (!puedeSubir() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+    if (ev.target.closest('.pestanas, .barra-inmersiva, .pagina-app')) return;
+    subida = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, v: 0, ultimoY: ev.clientY, ultimoT: performance.now() };
+  }, true);
+  tel.addEventListener('pointermove', (ev) => {
+    const g = subida;
+    if (!g || ev.pointerId !== g.id) return;
+    const dx = ev.clientX - g.x0, dy = ev.clientY - g.y0;
+    if (!g.decidido) {
+      if (dy > 8 || Math.abs(dx) >= DECIDE_PX || escena.arrastrando) { subida = null; return; }
+      if (-dy <= 8 || Math.abs(dx) > -dy) return;
+      g.decidido = true;
+      escena.soltarGesto();
+      try { tel.setPointerCapture(ev.pointerId); } catch (_) { /* sin captura igual funciona */ }
+    }
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+    const ahora = performance.now();
+    g.v = g.v * 0.6 + ((g.ultimoY - ev.clientY) / Math.max(1, ahora - g.ultimoT)) * 0.4;
+    g.ultimoY = ev.clientY;
+    g.ultimoT = ahora;
+    ascent.arrastrar(Math.max(0, -dy - 8) / (tel.clientHeight || 1));
+  }, true);
+  const soltarSubida = (ev) => {
+    const g = subida;
+    if (!g || ev.pointerId !== g.id) return;
+    subida = null;
+    if (!g.decidido) return;
+    ev.stopImmediatePropagation();
+    ultimaSubida = performance.now();
+    ascent.soltar(ev.type === 'pointerup' && (ascent.progreso >= UMBRAL || g.v >= VELOCIDAD_MIN));
+  };
+  tel.addEventListener('pointerup', soltarSubida, true);
+  tel.addEventListener('pointercancel', soltarSubida, true);
+  tel.addEventListener('click', (ev) => {
+    if (performance.now() - ultimaSubida < 400) { ev.stopImmediatePropagation(); ev.preventDefault(); }
+  }, true);
+
   function refrescarControles() {
-    if (!escena || !comida || !pestanas || !mas || !inicio) return;
+    if (!escena || !comida || !pestanas || !mas || !inicio || !ascent) return;
     const enEntrada = !!entrada.paso;
     const quieto = enEntrada || comida.hojaAbierta || mas.abierta || inicio.editando;
     $('#b-repetir').disabled = !escena.completo || quieto;
     $('#b-salud').disabled = !escena.hayAutoPendiente || quieto;
     $('#b-completar').disabled = escena.completo || quieto;
     $('#b-registrar').textContent = comida.hojaAbierta ? 'Cerrar la hoja' : 'Registrar';
-    $$('#comida [data-comida], [data-seccion]').forEach((b) => { b.disabled = enEntrada; });
+    $$('#comida [data-comida], [data-seccion], [data-ascent]').forEach((b) => { b.disabled = enEntrada; });
     const enUniverso = escena.zona() === 'universo';
     $('#b-zona').textContent = enUniverso ? 'Volver a hoy' : 'Subir a tu universo';
     $$('.barra-inmersiva [data-accion="zona"]').forEach((b) => { b.textContent = enUniverso ? 'Hoy' : 'Universo'; });
@@ -643,6 +747,12 @@
   $$('[data-comida]').forEach((b) => b.addEventListener('click', () => { accionesComida[b.dataset.comida](); refrescarControles(); }));
   $$('[data-pestana]').forEach((b) => b.addEventListener('click', () => { cerrarHojas(); pestanas.ir(Number(b.dataset.pestana)); }));
   $$('[data-seccion]').forEach((b) => b.addEventListener('click', () => { accionesSeccion[b.dataset.seccion](); refrescarControles(); }));
+  const accionesAscent = {
+    abrir: () => abrirAscent(),
+    cerrar: () => { if (ascent.ocupada) ascent.cerrar(); else pestanas.ir(HABITOS); },
+    sueno: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(0); },
+  };
+  $$('[data-ascent]').forEach((b) => b.addEventListener('click', () => { accionesAscent[b.dataset.ascent](); refrescarControles(); }));
   $$('#saltos-entrada [data-paso]').forEach((b) => b.addEventListener('click', () => {
     if (comida.hojaAbierta) return;
     entrada.irA(b.dataset.paso);
@@ -658,7 +768,8 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); dibujarCatalogo(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); ascent.pintar(); dibujarCatalogo(); });
+  segmento('s-vinculo', (v) => vincular(v === 'si'));
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
 
@@ -824,6 +935,18 @@
     pasos[accion]();
   };
   window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
+  window.__ascent = (accion, arg) => {
+    const pasos = {
+      abrir: () => abrirAscent(true),
+      cerrar: () => ascent.cerrar(true),
+      arrastrar: () => { if (pestanas.actual !== HABITOS) pestanas.ir(HABITOS, true); ascent.arrastrar(arg); },
+      vincular: () => vincular(arg),
+      bajar: () => ascent.bajarA(arg),
+      subir: () => ascent.subir(),
+    };
+    pasos[accion]();
+    refrescarControles();
+  };
   window.__deslizando = () => pestanas.deslizando;
   window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
   window.__metas = () => entrada.metas();

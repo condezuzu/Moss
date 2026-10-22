@@ -26,10 +26,11 @@ const SeccionPerfil = (() => {
       const grupo = (titulo, filas) => {
         cont.appendChild(el('h3', 'pf-grupo', tx(titulo)));
         const ul = el('ul', 'pf-lista');
-        filas.forEach(([clave, valor, conFlecha, clase]) => {
+        filas.forEach(([clave, valor, conFlecha, clase, alTocar]) => {
           const li = el('li', (conFlecha ? 'pf-tocable ' : '') + (clase || ''));
           li.append(el('span', null, tx(clave)), el('b', null, valor));
           if (conFlecha) li.insertAdjacentHTML('beforeend', icono('adelante'));
+          if (alTocar) li.addEventListener('click', alTocar);
           ul.appendChild(li);
         });
         cont.appendChild(ul);
@@ -49,7 +50,8 @@ const SeccionPerfil = (() => {
       ]);
       grupo('perfil.conexiones', [
         ['perfil.salud', tx('perfil.conectada'), true, 'ok'],
-        ['perfil.ascent', tx('perfil.vincular'), true, 'accion'],
+        // Lleva a la sección de Ascent, arriba de Hábitos: ahí se vincula y se ve lo de las dos.
+        opciones.vinculada() ? ['perfil.ascent', tx('perfil.vinculada'), true, 'ok', opciones.abrirAscent] : ['perfil.ascent', tx('perfil.vincular'), true, 'accion', opciones.abrirAscent],
       ]);
       grupo('perfil.tusDatosParaLlevar', [
         ['perfil.exportar', 'CSV', true],

@@ -111,7 +111,7 @@ const js = [
   modulo('Cuerpo', 'src/dominio/cuerpo.ts'),
   modulo('Progreso', 'src/dominio/progreso.ts'),
   modulo('Sueno', 'src/dominio/sueno.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'luna', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

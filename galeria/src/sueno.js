@@ -59,6 +59,9 @@ const SeccionSueno = (() => {
       cab.append(el('div', 'pg-fecha', tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) })), el('h2', 'pg-titulo', tx('sueno.titulo')));
       cont.appendChild(cab);
       cont.appendChild(tira());
+      // Con Ascent, la recuperación de hoy también vive acá: cruza justo el sueño con el entrenamiento.
+      const rec = s.clave === Datos.HOY && opciones.recuperacion ? opciones.recuperacion() : null;
+      if (rec) cont.appendChild(recuperacion(rec));
       const noche = noches().find((n) => n.clave === s.clave) || null;
       if (noche) {
         cont.appendChild(laNoche(noche));
@@ -98,6 +101,15 @@ const SeccionSueno = (() => {
         caja.appendChild(b);
       });
       return caja;
+    }
+
+    function recuperacion(r) {
+      const c = carta('sn-recuperacion', tx('ascent.recuperacion.titulo'), el('em', 'sn-con-ascent', tx('ascent.conAscent')));
+      const fila = boton('sn-rec-fila', '', () => opciones.abrirAscent());
+      fila.append(el('b', null, String(r.total)), el('span', null, tx('ascent.recuperacion.conviene.' + r.conviene)));
+      fila.insertAdjacentHTML('beforeend', icono('adelante'));
+      c.appendChild(fila);
+      return c;
     }
 
     // ------------------------------------------------------------ la noche

@@ -33,6 +33,13 @@ const Util = (() => {
     telefono: '<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/>',
     termometro: '<path d="M10 14.2V5.5a2 2 0 0 1 4 0v8.7a3.8 3.8 0 1 1-4 0z"/>',
     info: '<circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 8h.01"/>',
+    arriba: '<path d="M6 14.5 12 8.5l6 6"/>',
+    abajo: '<path d="M6 9.5 12 15.5l6-6"/>',
+    candado: '<rect x="6" y="10.5" width="12" height="9" rx="1.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
+    objetivo: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/>',
+    amigos: '<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8"/><path d="M15.5 6.2a3 3 0 0 1 0 5.6M17.6 14.6c1.6.6 2.6 2.1 2.9 4.4"/>',
+    pesa: '<path d="M3.5 9v6M6.5 7v10M17.5 7v10M20.5 9v6M6.5 12h11"/>',
+    estrella: '<path d="m12 4.5 2 5.1 5.4.3-4.2 3.4 1.4 5.2L12 15.6l-4.6 2.9 1.4-5.2-4.2-3.4 5.4-.3z"/>',
   };
   const icono = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n] || ''}</svg>`;
 

@@ -590,7 +590,8 @@
     "exportar": "Export everything",
     "privacidad": "Privacy",
     "borrarDatos": "Delete my data",
-    "cerrarSesion": "Sign out"
+    "cerrarSesion": "Sign out",
+    "vinculada": "Linked"
   },
   "fecha": {
     "dias": [
@@ -694,5 +695,125 @@
     },
     "si": "yes",
     "no": "no"
+  },
+  "ascent": {
+    "flecha": "Open Ascent",
+    "volver": "Back to the sky",
+    "etiqueta": "Moss and Ascent",
+    "titulo": "With Ascent",
+    "sinVincular": "Not linked",
+    "vinculadaDesde": "Linked since {fecha}",
+    "bajada": "Link the two apps and your sleep and food meet your training.",
+    "vincular": "Link with Ascent",
+    "conseguir": "Don’t have Ascent? Find it on the App Store",
+    "mismaCuenta": "It’s the same account. Linking lets the two apps share your data, and you can undo it in Profile.",
+    "soloConLasDos": "Only with both",
+    "mejorConectadas": "Fine alone, better linked",
+    "conAscent": "With Ascent",
+    "desvincular": "Unlink from Profile.",
+    "hoy": {
+      "titulo": "Today in Ascent",
+      "sesion": "{nombre} · {min} min · {series} sets",
+      "aLas": "at {hora}",
+      "meta": "Today’s target: {kcal} kcal and {p} g protein",
+      "cambio": "+{kcal} kcal and +{p} g protein for training"
+    },
+    "recuperacion": {
+      "titulo": "Recovery",
+      "texto": "A daily score from your sleep, your food and your training. Before you train, it tells you whether to go hard or easy.",
+      "hoy": "Today, before training",
+      "conviene": {
+        "fuerte": "Good day to go hard",
+        "normal": "Train as usual",
+        "suave": "Better to go easy"
+      },
+      "partes": {
+        "sueno": "Sleep",
+        "carga": "Load",
+        "comida": "Food"
+      },
+      "de": "{n} of {max}",
+      "detalle": {
+        "sueno": "{horas} · quality {calidad}",
+        "carga": "3 days: {n}% of your usual",
+        "comida": "Yesterday: {p} of {meta} g protein"
+      },
+      "explicacion": "Sleep, 40: how much you slept against what you need, and the night’s quality. Load, 40: what you trained in the previous 3 days against your 4-week average, minus days in a row. Food, 20: yesterday’s protein and whether you ate at least 80% of your target. It’s a guide."
+    },
+    "estancamiento": {
+      "titulo": "Why you’re stuck",
+      "texto": "When Ascent sees you’ve stalled on an exercise, Moss adds what changed in your sleep, protein and calories.",
+      "ejercicio": "{ejercicio}: {semanas} weeks at {marca}",
+      "conMarcas": "With PRs",
+      "ahora": "These {n} weeks",
+      "filas": {
+        "sueno": "Sleep",
+        "proteina": "Protein a day",
+        "calorias": "Balance a day"
+      },
+      "frases": {
+        "sueno": "Your best lifts come in the weeks you sleep {horas} or more.",
+        "proteina": "Your best lifts come in the weeks you hit your protein.",
+        "calorias": "Your best lifts come in the weeks you eat closer to your expenditure."
+      },
+      "nota": "It compares your weeks: it shows what changed, not a sure cause.",
+      "gramos": "{n} g",
+      "kcal": "{n} kcal"
+    },
+    "anio": {
+      "titulo": "Your year",
+      "texto": "Workouts, PRs, habits, sleep and food from the year, all in one.",
+      "cuando": "Ready on December 31",
+      "datos": {
+        "entrenamientos": "workouts",
+        "marcas": "PRs",
+        "habitos": "days with habits",
+        "sueno": "average sleep",
+        "comida": "days with food logged"
+      },
+      "desde": "Moss counts from {fecha}.",
+      "horas": "{h}h {m}m"
+    },
+    "funciones": {
+      "peso": {
+        "titulo": "One weight",
+        "texto": "Weigh in on either app and it’s logged in both.",
+        "vivo": "{kg} kg {cuando}, in both"
+      },
+      "calorias": {
+        "titulo": "Calories by day",
+        "texto": "Gym days raise your target and rest days lower it: the week adds up the same.",
+        "vivo": "You trained today: +{n} kcal"
+      },
+      "objetivo": {
+        "titulo": "One goal",
+        "texto": "Cutting or bulking in Moss changes what Ascent expects from your strength.",
+        "vivo": {
+          "bajar": "Cutting: Ascent doesn’t expect new PRs",
+          "mantener": "Maintaining: Ascent expects the usual",
+          "subir": "Bulking: Ascent expects you to go up"
+        }
+      },
+      "cuenta": {
+        "titulo": "One account, your friends",
+        "texto": "The same account and the same friends list in both.",
+        "vivo": "{n} friends from Ascent"
+      },
+      "proteina": {
+        "titulo": "Protein after training",
+        "texto": "A session bigger than your usual raises that day’s protein.",
+        "vivo": "Today +{n} g for the session"
+      },
+      "gimnasio": {
+        "titulo": "Gym lights up on its own",
+        "texto": "If you log the day in Ascent, the gym star lights up on its own.",
+        "vivo": "Add “Gym” to your habits and it lights up on its own"
+      }
+    },
+    "cuando": {
+      "hoy": "today",
+      "ayer": "yesterday",
+      "dia": "on {dia}"
+    }
   }
 }

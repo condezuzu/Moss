@@ -105,8 +105,33 @@ const Datos = (() => {
   const NOCHES = Sueno.armarNoches(MUESTRAS, FUENTES);
   const SOLO_EN_CAMA = Sueno.soloEnCama(MUESTRAS, FUENTES, NOCHES);
 
+  // Lo que Ascent tiene de la persona, para la sección de Ascent con el vínculo. Entrena cuatro
+  // días por semana: el domingo y el lunes, y hoy piernas, a las 18:40 (el volumen es series por
+  // repeticiones por peso). El press banca no sube desde hace tres semanas; lo de Moss de las
+  // semanas en que llegaban sus marcas (septiembre) está acá, y lo de estas tres semanas sale de
+  // lo comido y dormido de la galería.
+  const ASCENT = {
+    vinculadaDesde: '2026-10-03',
+    amigos: 4,
+    sesiones: [
+      { fecha: '2026-10-18', nombre: { es: 'Tirón', en: 'Pull' }, kg: 6200, series: 12, min: 41, hora: 11 * 60 + 5 },
+      { fecha: '2026-10-19', nombre: { es: 'Empuje', en: 'Push' }, kg: 10000, series: 18, min: 63, hora: 19 * 60 + 10 },
+      { fecha: '2026-10-21', nombre: { es: 'Piernas', en: 'Legs' }, kg: 14300, series: 16, min: 58, hora: 18 * 60 + 40 },
+    ],
+    // Los días que entrena (domingo, lunes, miércoles y viernes): con eso se reparte la semana.
+    diasDeGimnasio: [0, 1, 3, 5],
+    sesionPromedioKg: 10500,
+    sesionesPorSemana: 4,
+    estancado: { ejercicio: { es: 'Press banca', en: 'Bench press' }, marca: '80 kg × 5', semanas: 3 },
+    conMarcas: { sueno: 7 * 60 + 41, proteina: 152, balance: -290 },
+    // Lo de Moss del año también: la galería tiene la comida desde el 28 de septiembre, y antes
+    // también registraba casi todos los días.
+    anio: { entrenamientos: 148, marcas: 21, diasConHabitos: 47, diasConComida: 49 },
+  };
+
   return {
     HOY, AHORA_MIN, INICIO, PERFIL, GASTO_ANTERIOR, PESADAS, MEDIDAS, azar,
     FUENTES, MUESTRAS, LECTURAS, NOCHES, SOLO_EN_CAMA, NOCHE_SIN_RELOJ: SIN_RELOJ, NOCHE_SIN_NADA: SIN_NADA, NOCHE_CORTADA: CORTADA,
+    ASCENT,
   };
 })();
