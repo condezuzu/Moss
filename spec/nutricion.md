@@ -420,8 +420,8 @@ de la tienda.
 | **Cómo se reparten los macros**, con la proteína siempre por kilo: equilibrada (la de ahora), baja en grasas, baja en carbohidratos y keto | MacroFactor ([ayuda](https://help.macrofactorapp.com/en/articles/34-what-are-the-different-program-options-in-coached-mode)), Carbon, Cronometer | 7 |
 | **Metas a mano**: las kcal y los macros los pone el usuario. El control semanal sigue midiendo el gasto, pero no toca la meta | MacroFactor, todas | 7 |
 | **Repartir la semana**: días más altos (el fin de semana, o los de entrenamiento con Ascent) y el resto más bajos, con el mismo total. La proteína no cambia; se mueven los carbohidratos | MacroFactor ([ayuda](https://help.macrofactorapp.com/en/articles/34-what-are-the-different-program-options-in-coached-mode)), Carbon; pago en las demás | 7 |
-| **Exportar todo en CSV**, gratis, desde Ajustes | MacroFactor; pago en MyFitnessPal y Yazio | 10 |
-| **Registrar por lo que falta**: en la ventana del alimento, «cuánto para 30 g de proteína» (o para las kcal que quedan) | MacroFactor | 5, primero en la galería |
+| **Exportar todo en CSV**, gratis, desde Ajustes: lo comido, el peso y las metas, con las columnas en el idioma de la app. La lógica ya está (`src/dominio/exportar.ts`) | MacroFactor; pago en MyFitnessPal y Yazio | 10 |
+| **Registrar por lo que falta**: en la ventana del alimento, «cuánto para 30 g de proteína» (o para las kcal que quedan). La cuenta ya está (`gramosPara`) | MacroFactor | 5, primero en la galería |
 | **El país de los alimentos aparte del idioma**: una uruguaya que usa Moss en inglés sigue viendo «palta» y los productos de acá | Fitia | 10 (Ajustes) |
 | **Recordatorios suaves y opcionales**: si a tu hora de siempre no registraste, un aviso. Nunca de racha | MyFitnessPal, Yazio, MyNetDiary | 12 |
 

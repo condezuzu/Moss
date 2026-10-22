@@ -60,6 +60,9 @@ const aDiez = (n: number) => Math.round(n / 10) * 10;
 
 export const pisoDe = (sexo: Sexo) => PISOS[sexo];
 
+/** La fibra: 14 g cada 1.000 kcal, la recomendación de las guías de Estados Unidos. Es una meta suave: nunca se marca en rojo. */
+export const metaDeFibra = (kcal: number) => Math.round((14 * kcal) / 1000);
+
 /** Mifflin-St Jeor: el gasto en reposo, en kcal por día. */
 export function gastoBasal(c: Pick<Cuestionario, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>): number {
   return 10 * c.pesoKg + 6.25 * c.alturaCm - 5 * c.edad + (c.sexo === 'f' ? -161 : 5);

@@ -346,5 +346,35 @@
     "media": "medium",
     "baja": "low",
     "riqueza": "Sky {n}%"
+  },
+  "exportar": {
+    "columnas": {
+      "dia": "date",
+      "comida": "meal",
+      "momento": "time",
+      "alimento": "food",
+      "fuente": "source",
+      "porcion": "serving",
+      "veces": "servings",
+      "gramos": "grams",
+      "kcal": "kcal",
+      "proteina": "protein (g)",
+      "carbohidratos": "carbs (g)",
+      "grasas": "fat (g)",
+      "fibra": "fiber (g)",
+      "azucares": "sugars (g)",
+      "saturadas": "saturated fat (g)",
+      "sodio": "sodium (mg)",
+      "alcohol": "alcohol (g)",
+      "planificado": "planned",
+      "fecha": "date",
+      "kg": "kg",
+      "origen": "source",
+      "desde": "from",
+      "gasto": "expenditure (kcal)",
+      "motivo": "reason"
+    },
+    "si": "yes",
+    "no": "no"
   }
 }

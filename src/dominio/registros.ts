@@ -109,6 +109,16 @@ export function itemDeAlimento(fuente: Fuente, ref: string, nombre: string, por1
   return { fuente, ref, nombre, cantidad, valores: escalar(por100g, (gramosDe(cantidad) ?? 0) / 100) };
 }
 
+/**
+ * Registrar por lo que falta (como MacroFactor): cuántos gramos de un alimento dan `cantidad` de un
+ * nutriente («cuánto pollo para 30 g de proteína», o para las kcal que quedan). Sin ese nutriente, null.
+ */
+export function gramosPara(por100g: Valores, nutriente: keyof Valores, cantidad: number): number | null {
+  const en100 = por100g[nutriente];
+  if (!en100 || en100 <= 0 || cantidad <= 0) return null;
+  return Math.round((cantidad / en100) * 100);
+}
+
 /** La carga rápida: los valores tal cual, sin alimento. */
 export const itemRapido = (nombre: string, valores: Valores): Item => ({ fuente: 'rapida', ref: null, nombre, cantidad: null, valores });
 

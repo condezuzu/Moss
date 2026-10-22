@@ -346,5 +346,35 @@
     "media": "media",
     "baja": "baja",
     "riqueza": "Cielo {n} %"
+  },
+  "exportar": {
+    "columnas": {
+      "dia": "día",
+      "comida": "comida",
+      "momento": "momento",
+      "alimento": "alimento",
+      "fuente": "fuente",
+      "porcion": "porción",
+      "veces": "veces",
+      "gramos": "gramos",
+      "kcal": "kcal",
+      "proteina": "proteína (g)",
+      "carbohidratos": "carbohidratos (g)",
+      "grasas": "grasas (g)",
+      "fibra": "fibra (g)",
+      "azucares": "azúcares (g)",
+      "saturadas": "grasas saturadas (g)",
+      "sodio": "sodio (mg)",
+      "alcohol": "alcohol (g)",
+      "planificado": "planificado",
+      "fecha": "fecha",
+      "kg": "kg",
+      "origen": "origen",
+      "desde": "desde",
+      "gasto": "gasto (kcal)",
+      "motivo": "motivo"
+    },
+    "si": "sí",
+    "no": "no"
   }
 }

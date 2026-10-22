@@ -390,7 +390,7 @@ enciende estrellas.
 - **Pulido:**
   - ícono y pantalla de arranque;
   - recordatorios suaves y opcionales para registrar, a la hora de siempre;
-  - exportar todo en CSV y el país de los alimentos aparte del idioma, en Ajustes;
+  - exportar todo en CSV (la lógica ya está: `src/dominio/exportar.ts`, 22/10/2026) y el país de los alimentos aparte del idioma, en Ajustes;
   - accesibilidad: VoiceOver en las estrellas y en el registro, Reducir
     movimiento (también en el flum y en la entrada) y tamaño de texto;
   - rendimiento en teléfonos viejos;
