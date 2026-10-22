@@ -4,7 +4,7 @@
 
 import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View, type ViewStyle } from 'react-native';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import type { Calidad } from '@/cielo/mundo';
@@ -20,7 +20,7 @@ import { numero, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
-import { Cabecera, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
+import { EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exportarTodo } from './cuenta';
 
 type Fila = { clave: string; titulo: string; valor?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion' };
@@ -82,12 +82,15 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   return (
     <View style={{ width: ancho }}>
       <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
-        <Cabecera fecha={t('perfil.cuentaTexto')} titulo={t('perfil.titulo')} />
-        <View style={st.cuenta}>
+        {/* Como en la galería: la inicial en oro, la cuenta y de qué es. */}
+        <View style={st.cuenta} accessibilityRole="header">
           <View style={st.inicial}>
             <Text style={st.inicialTexto}>{(correo || 'M').charAt(0).toUpperCase()}</Text>
           </View>
-          <Text style={st.correo} numberOfLines={1}>{correo || t('perfil.sinCuenta')}</Text>
+          <View style={st.nombres}>
+            <Text style={st.correo} numberOfLines={1} ellipsizeMode="middle">{correo || t('perfil.sinCuenta')}</Text>
+            <Text style={st.deQue}>{t('perfil.cuentaTexto')}</Text>
+          </View>
         </View>
         {grupos.filter(([, filas]) => filas.length).map(([titulo, filas]) => (
           <View key={titulo}>
@@ -250,11 +253,18 @@ function Pasos({ valor, alBajar, alSubir }: { valor: string; alBajar: () => void
   );
 }
 
+const ORO_DE_LA_INICIAL = 'linear-gradient(160deg, #fdeebf 0%, #e8c46a 72%)';
+
 const st = StyleSheet.create({
-  cuenta: { marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  inicial: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.45)', backgroundColor: 'rgba(232, 196, 106, 0.1)' },
-  inicialTexto: { fontFamily: letras.numeroMedio, fontSize: 20, color: colores.oroClaro },
-  correo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
+  cuenta: { marginTop: 10, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  inicial: {
+    width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', backgroundColor: colores.oro,
+    ...((Platform.OS === 'web' ? { backgroundImage: ORO_DE_LA_INICIAL } : { experimental_backgroundImage: ORO_DE_LA_INICIAL }) as ViewStyle),
+  },
+  inicialTexto: { fontFamily: letras.numero, fontSize: 24, color: '#1a1406' },
+  nombres: { flex: 1, gap: 3 },
+  correo: { fontFamily: letras.numeroMedio, fontSize: 20, color: colores.pergamino },
+  deQue: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
   grupo: { marginTop: 26, marginBottom: 8, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   lista: { borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(8, 12, 26, 0.72)' },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 16 },
