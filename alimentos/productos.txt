@@ -1,0 +1,389 @@
+// Productos envasados con marca que se venden en Uruguay. Mismo formato que genericos.txt (ver su
+// encabezado); los valores van por 100 g y el sodio en mg.
+// De dónde salen: Open Food Facts (openfoodfacts.org, licencia ODbL; cada línea lleva «off»): los
+// 1.000 productos más escaneados que tienen a Uruguay entre sus países, bajados el 22/10/2026.
+// Cómo se eligieron: lo de todos los días, con variedad de categorías, y solo si los valores son por
+// 100 g y no por porción, las kcal no son kJ, cierran con 4/4/9 (la fibra, los polioles y el alcohol
+// explican las diferencias) y corresponden al producto. Lo raro se buscó en la web del fabricante:
+// lo que se corrigió dice de dónde sale, y lo que no se pudo confirmar quedó afuera. Lo que se toma
+// pasó de 100 ml a 100 g con su densidad. Un producto en varios tamaños va en una línea con todos sus
+// códigos. La marca va en «marca=» y en el nombre solo cuando sin ella el nombre sería de cualquiera.
+
+# frutas
+Duraznos en almíbar La Campagnola | La Campagnola peaches in syrup | producto#1 94 0 23 0 | 140 g / 140 g=140 |  | marca=La Campagnola · ean=7793360002007 · off · fibra=1.3 · azucares=20 · saturadas=0 · sodio=7.6
+Duraznos en almíbar Aída | Aída peaches in syrup | producto#2 92 0.7 22 0 | 140 g / 140 g=140 |  | marca=Aída · ean=7730354002926 · off · fibra=0.8 · saturadas=0 · sodio=0
+
+# verduras
+Maíz en grano Arcor | Arcor canned corn kernels | producto#3 81 2.5 12 2.5 | ½ taza / ½ cup=130 · 1 lata / 1 can=300 | choclo en grano Arcor* (AR UY) | marca=Arcor · ean=7790580980009 · off · fibra=3.6 · azucares=1.3 · saturadas=0.6 · sodio=138
+Maíz en grano Oderich | Oderich canned corn kernels | producto#4 59 3 7.7 1.7 | ½ taza / ½ cup=130 · 1 lata / 1 can=300 | choclo en grano Oderich* (AR UY) | marca=Oderich · ean=7896041156010 · off · fibra=3.4 · saturadas=0.38 · sodio=230
+Tomates perita pelados | Peeled plum tomatoes | producto#5 19 0.7 3.5 0 | ½ taza / ½ cup=130 · 1 lata / 1 can=400 | tomates peritas en lata | marca=Arcor · ean=7790580567903 · off · fibra=0.6 · azucares=2.9 · saturadas=0 · sodio=7
+Tomate triturado Salsati | Salsati crushed tomatoes | producto#6 22 0.9 4.1 0 | ½ taza / ½ cup=130 · 1 lata / 1 can=400 |  | marca=La Campagnola · ean=7793360000287 · off · fibra=0.8 · azucares=3.6 · saturadas=0 · sodio=39
+
+# tuberculos
+Puré de papas instantáneo Río de la Plata | Río de la Plata instant mashed potatoes | producto#7 312 6.4 72 0 | 25 g / 25 g=25 · 1 paquete / 1 package=125 | puré en copos | marca=Río de la Plata · ean=7730205060600 · off · fibra=0 · saturadas=0 · sodio=69
+Puré de papas instantáneo De Mi Tierra | De Mi Tierra instant mashed potatoes | producto#8 340 9.5 75 0 | 20 g / 20 g=20 · 1 paquete / 1 package=120 |  | marca=De Mi Tierra · ean=7730306001779 · off · fibra=6.5 · saturadas=0 · sodio=787
+
+# legumbres
+Lentejas secas | Dried lentils | producto#9 340 25 60 1.2 | 60 g / 60 g=60 · ¼ taza / ¼ cup=48 |  | marca=La Abundancia · ean=7730195003366 · off · fibra=3.8 · sodio=30
+Lentejas grandes secas | Dried large lentils | producto#10 283 25 43.3 1.2 | 60 g / 60 g=60 | lentejones secos* (AR UY) | marca=Emigrante · ean=7730267010780 · off · fibra=14
+Arvejas secas remojadas | Soaked dried peas | producto#11 106 8.3 16 0.8 | ½ taza / ½ cup=130 · 1 lata / 1 can=300 | arvejas en lata La Campagnola | marca=La Campagnola · ean=7793360982309 · off · fibra=7 · azucares=0 · saturadas=0.2 · sodio=187
+
+# cereales
+Arroz blanco Saman | Saman white rice | producto#12 344 8.2 76 0 | 50 g de arroz crudo / 50 g uncooked rice=50 · ¼ taza de arroz crudo / ¼ cup uncooked rice=46 |  | marca=Saman · ean=7730115040105 · off
+Arroz integral Saman | Saman brown rice | producto#13 334 7.6 72 2 | 50 g de arroz crudo / 50 g uncooked rice=50 · ¼ taza de arroz crudo / ¼ cup uncooked rice=46 |  | marca=Saman · ean=7730115050104 · off · fibra=4 · saturadas=0 · sodio=0
+Arroz blanco Green Chef | Green Chef white rice | producto#14 344 6.8 78 0 | ½ taza de arroz crudo / ½ cup uncooked rice=100 · 50 g de arroz crudo / 50 g uncooked rice=50 |  | marca=Green Chef · ean=7730114400016 · off · fibra=0 · saturadas=0 · sodio=0
+Avena en hojuelas | Rolled oats | producto#15 397 12 70 8.3 | 30 g / 30 g=30 · ½ taza / ½ cup=40 | avena laminada* (UY) · avena arrollada | marca=Río de la Plata · ean=7730205108937 · off · fibra=10 · saturadas=0 · sodio=0
+Polenta instantánea Presto Pronta | Presto Pronta instant polenta | producto#16 340 7 78 0.8 | ½ taza / ½ cup=50 | presto pronta | marca=Arcor · ean=7790580660000 · off · fibra=2.2 · azucares=0.5 · saturadas=0.3 · sodio=0
+Cereal Fibra Total con pasas | Fibra Total bran cereal with raisins | producto#17 319 8.7 67 1.8 | 1 taza / 1 cup=30 |  | marca=Granix · ean=7790045001034 · off · fibra=15 · saturadas=0.3 · sodio=125
+Cereal Fibra Total 4 fibras | Fibra Total four-fiber bran cereal | producto#18 297 14 66 1.4 | 30 g / 30 g=30 |  | marca=Granix · ean=7790045823094 · off · fibra=15 · saturadas=0.3 · sodio=100
+Granola de coco y miel | Coconut and honey granola | producto#19 390 7.5 75 6.7 | ½ taza / ½ cup=40 |  | marca=Granix · ean=7790045826637 · off · fibra=4.8 · azucares=18 · saturadas=3 · sodio=45
+Granola crocante de frutos rojos | Crunchy berry granola | producto#20 376 7 72 6.7 | ½ taza / ½ cup=40 |  | marca=Granix · ean=7790045825746 · off · fibra=6 · saturadas=3.5 · sodio=139
+Granola crocante de almendras y pasas | Crunchy almond and raisin granola | producto#21 384 7.6 70 9.3 | ½ taza / ½ cup=40 |  | marca=Granix · ean=7790045825753 · off · fibra=6.1 · saturadas=3.6 · sodio=137
+Granola de manzana y canela | Apple cinnamon granola | producto#22 423 9.4 57.1 17.1 | ¾ taza / ¾ cup=35 |  | marca=Maizena · ean=7794000001978 · off · fibra=8.6 · azucares=27.1 · saturadas=2.3 · sodio=200
+Granola El Naranjo | El Naranjo granola | producto#23 450 12.5 57.5 21 | 40 g / 40 g=40 |  | marca=El Naranjo · ean=7730910340035 · off · fibra=2.5 · saturadas=11.3
+Cereal Nesfit original | Nesfit original cereal | producto#24 350 11 72 2 | ¾ taza / ¾ cup=30 |  | marca=Nestlé · ean=7891000288801 · off · fibra=10 · azucares=0.9 · saturadas=0.4 · sodio=745
+Cereal Nesfit de miel y almendras | Nesfit honey almond cereal | producto#25 344 11 66 5.4 | ¾ taza / ¾ cup=30 |  | marca=Nestlé · ean=7891000333969 · off · fibra=12 · azucares=1.4 · saturadas=0.6 · sodio=228
+Cereal Trix | Trix cereal | producto#26 380 4.7 78 5.3 | ¾ taza / ¾ cup=30 |  | marca=Nestlé · ean=7613034412904,7613034412010 · off · fibra=5.5 · azucares=30 · saturadas=1.8 · sodio=280
+Cereal Cheerios de miel | Honey Cheerios | producto#27 355 7 75 2.9 | ¾ taza / ¾ cup=30 |  | marca=Nestlé · ean=7891000309094 · off · fibra=9 · azucares=30 · saturadas=0.8 · sodio=344
+
+# panes
+Pan integral Cero Cero | Cero Cero whole wheat bread | producto#28 224 14.8 40 1 | 2 rebanadas / 2 slices=50 · 1 rebanada / 1 slice=25 |  | marca=Bimbo · ean=7730117008400 · off · fibra=7.4 · azucares=0.2 · saturadas=0.2 · sodio=384
+Pan integral Los Sorchantes | Los Sorchantes whole wheat bread | producto#29 240 13.2 44 2.2 | 2 rebanadas / 2 slices=50 · 1 rebanada / 1 slice=25 |  | marca=Los Sorchantes · ean=7730117007564 · off · fibra=4.6 · azucares=2 · saturadas=0.4 · sodio=426
+// El sodio sale de la ficha de 7730117002798, que traía todo por 50 g (186 mg).
+Pan integral light | Light whole wheat bread | producto#30 242 13.2 44 1.4 | 2 rebanadas / 2 slices=50 · 1 rebanada / 1 slice=25 |  | marca=Los Sorchantes · ean=7730117002781,7730117002798 · off · fibra=5 · saturadas=0.2 · sodio=372
+Pan de molde con leche Los Sorchantes | Los Sorchantes milk sandwich bread | producto#31 254 8.6 50 2.2 | 2 rebanadas / 2 slices=50 · 1 rebanada / 1 slice=25 | pan lacteado Los Sorchantes* (AR UY) | marca=Los Sorchantes · ean=7730117007557 · off
+Pan de molde con leche El Buen Gusto | El Buen Gusto milk sandwich bread | producto#32 256 9.6 50 3.2 | 2 rebanadas / 2 slices=50 · 1 rebanada / 1 slice=25 | pan lacteado El Buen Gusto* (AR UY) | marca=El Buen Gusto · ean=7730912480524 · off · fibra=3.2 · saturadas=0 · sodio=528
+Pan artesano de masa madre | Artisan sourdough bread | producto#33 258 12.6 46 3 | 1 rebanada / 1 slice=50 |  | marca=Bimbo · ean=7730117008387 · off · sodio=384
+Pan artesano de papa | Artisan potato bread | producto#34 252 9.6 46 3.2 | 1 rebanada / 1 slice=50 |  | marca=Bimbo · ean=7730117007823 · off · azucares=6.8 · saturadas=0.6 · sodio=348
+Pan 100% integral de grano entero | 100% whole grain bread | producto#35 272 12.8 43.6 5.2 | 50 g / 50 g=50 |  | marca=Bimbo · ean=7730117007502 · off · fibra=6.8 · azucares=3 · saturadas=0.8 · sodio=147
+Pan integral Bauducco | Bauducco whole wheat bread | producto#36 254 9.7 45 3.9 | 2 rebanadas / 2 slices=50 · 1 rebanada / 1 slice=25 |  | marca=Bauducco · ean=7891962064055 · off · fibra=5.5 · azucares=13 · saturadas=1.6 · sodio=378
+Pan de molde sin gluten | Gluten-free sandwich bread | producto#37 220 3.2 38 4 | 2 rebanadas / 2 slices=40 · 1 rebanada / 1 slice=20 | pan sin TACC Schär (AR UY) | marca=Schär · ean=7898954933450 · off · fibra=10.4 · azucares=2 · saturadas=0.6 · sodio=596
+Pan de hamburguesa Bimbo | Bimbo hamburger buns | producto#38 264 9.6 48 3.4 | 1 pan / 1 bun=52.5 |  | marca=Bimbo · ean=7796989007699 · off · fibra=4.6 · azucares=5 · saturadas=0.8 · sodio=498
+Tortillas taqueras de trigo y maíz | Wheat and corn taco tortillas | producto#39 324 7.2 52 9.4 | 1 tortilla / 1 tortilla=33 · 3 tortillas / 3 tortillas=100 |  | marca=Tía Rosa · ean=7730117007878 · off · azucares=0.2 · saturadas=4.6 · sodio=610
+Tostadas integrales | Whole wheat toasts | producto#40 389 12 68 7.7 | 4 tostadas / 4 toasts=30 · 1 tostada / 1 toast=7.5 | tostaditas integrales* (AR UY) | marca=Bauducco · ean=7891962060460 · off · fibra=6.2 · azucares=6.8 · saturadas=3.5 · sodio=355
+Galletas de agua Famosa | Famosa water crackers | producto#41 430 11 70 12.3 | 30 g / 30 g=30 | galletitas al agua Famosa* (AR UY) | marca=Famosa · ean=7622300226633 · off · fibra=2.7 · azucares=0.67 · saturadas=5.3 · sodio=637
+Galletas crackers Pannina | Pannina crackers | producto#42 397 10 60 13 | 30 g / 30 g=30 | galletitas Pannina* (AR UY) | marca=El Trigal · ean=7730116242164 · off · fibra=2 · azucares=0 · saturadas=6 · sodio=573
+Galletas Hogareñas de sésamo | Hogareñas sesame crackers | producto#43 444 11 62 17 | 7 galletas / 7 crackers=31 · 1 galleta / 1 cracker=4.4 | galletitas Hogareñas de sésamo* (AR UY) | marca=Arcor · ean=7790040882102 · off · fibra=3.8 · azucares=0.6 · saturadas=1.5 · sodio=706
+Galletas Hogareñas mix de cereales | Hogareñas mixed grain crackers | producto#44 442 11 58 18 | 7 galletas / 7 crackers=31 · 1 galleta / 1 cracker=4.4 | galletitas Hogareñas mix de cereales* (AR UY) | marca=Arcor · ean=7790040136090 · off · fibra=5.2 · azucares=4.9 · saturadas=1.9 · sodio=846
+Galletas Hogareñas 7 semillas | Hogareñas seven-seed crackers | producto#45 425 10 61 16 | 7 galletas / 7 crackers=31 · 1 galleta / 1 cracker=4.4 | galletitas Hogareñas 7 semillas* (AR UY) | marca=Arcor · ean=7790040136069 · off · fibra=6.2 · azucares=5 · saturadas=1.3 · sodio=813
+Galletas Hogareñas de arroz | Hogareñas rice crackers | producto#46 380 3.1 89 1.4 | 5 galletas / 5 crackers=27 | galletitas Hogareñas de arroz* (AR UY) | marca=Arcor · ean=7790040424999 · off · fibra=0.5 · azucares=3.7 · saturadas=0 · sodio=455
+Galletas Serranas sándwich | Serranas sandwich crackers | producto#47 446 11 67 15 | 5 galletas / 5 crackers=28 · 1 paquete / 1 package=112 | galletitas Serranas sándwich* (AR UY) | marca=Arcor · ean=7790040704909,7790040704800 · off · fibra=2.5 · azucares=1 · saturadas=6.8 · sodio=558
+Galletas Serranitas | Serranitas crackers | producto#48 445 11 65 16 | 8 galletas / 8 crackers=30 · 1 paquete / 1 package=105 | galletitas Serranitas* (AR UY) | marca=Arcor · ean=7790040136113 · off · fibra=3.1 · azucares=0.8 · saturadas=5 · sodio=693
+Galletas Mediatarde clásicas | Mediatarde crackers | producto#49 445 11 65 16 | 8 galletas / 8 crackers=30 · 1 paquete / 1 package=105 | galletitas Mediatarde* (AR UY) | marca=Lia · ean=7790040133686,7790040133693 · off · fibra=3.1 · azucares=0.8 · saturadas=5 · sodio=693
+Galletas crackers sin sal | Unsalted crackers | producto#50 411 10.3 68.5 13.7 | 6 galletas / 6 crackers=29 | galletitas sin sal Granix* (AR UY) | marca=Granix · ean=7790045000907 · off · fibra=3.4 · azucares=3.4 · saturadas=0 · sodio=0
+Galletas de sésamo | Sesame crackers | producto#51 412 12 64 12 | 6 galletas / 6 crackers=30 | galletitas de sésamo Granix* (AR UY) | marca=Granix · ean=7790045826224 · off · fibra=6 · azucares=4 · saturadas=1.4 · sodio=260
+Galletas Cerealitas clásicas | Cerealitas classic crackers | producto#52 440 10 63 15 | 30 g / 30 g=30 | galletitas Cerealitas* (AR UY) | marca=Cerealitas · ean=7622300840259 · off · fibra=1.2 · azucares=5 · saturadas=1.5
+Galletas crackers Mazzei de sésamo | Mazzei sesame crackers | producto#53 393 9.3 57 15 | 7 galletas / 7 crackers=30 | galletitas Mazzei de sésamo* (AR UY) | marca=Mazzei · ean=7841503001483 · off · fibra=5 · azucares=7.3 · saturadas=1 · sodio=710
+Galletas crackers Mazzei 8 semillas | Mazzei eight-seed crackers | producto#54 440 10 63 16 | 6 galletas / 6 crackers=30 | galletitas Mazzei 8 semillas* (AR UY) | marca=Mazzei · ean=7841503001803 · off · fibra=5.2 · azucares=3.8 · saturadas=1.1 · sodio=895
+Grisines de tomate y albahaca | Tomato and basil breadsticks | producto#55 400 10 56.7 14.3 | 30 g / 30 g=30 | palitos de pan de tomate y albahaca | marca=Mía · ean=7730988510378 · off · saturadas=2.7
+
+# pastas
+Láminas de lasaña al huevo | Egg lasagna sheets | producto#56 368 14 68 4 | 3 láminas / 3 sheets=54 | lasaña Barilla · lasagne | marca=Barilla · ean=8076800376999 · off · fibra=3 · azucares=3 · saturadas=1 · sodio=32
+// Las fichas de OFF de los macarrones y los fideos Adria traían los valores de la porción de 80 g
+// como si fueran por 100 g; estos son los de la ficha por 100 g de 7730103300242 (también Adria),
+// que cierran con los de las otras dos por 1,25.
+Macarrones Adria | Adria macaroni | producto#57 375 12.5 75 2.7 | 80 g / 80 g=80 |  | marca=Adria · ean=7730103300266 · off · azucares=0 · saturadas=0.54 · sodio=0
+Fideos secos Adria | Adria dry pasta | producto#58 375 12.5 75 2.7 | 80 g / 80 g=80 |  | marca=Adria · ean=7730103300488,7730103300242 · off · azucares=0 · saturadas=0.54 · sodio=0
+Espaguetis Las Acacias | Las Acacias spaghetti | producto#59 351 10.9 74.5 0.91 | 80 g / 80 g=80 · 55 g / 55 g=55 | spaghetti Las Acacias · tallarines Las Acacias | marca=Las Acacias · ean=7730430001973 · off · fibra=1.8 · azucares=0 · saturadas=0.18 · sodio=0
+Fettuccine en nidos Matarazzo | Matarazzo fettuccine nests | producto#60 334 11.3 70 1 | 80 g / 80 g=80 | nidos de fettuccine · tallarines en nidos | marca=Matarazzo · ean=7790070318671 · off · fibra=3.1 · azucares=0 · saturadas=0 · sodio=10
+Tirabuzones Matarazzo | Matarazzo fusilli | producto#61 334 11.3 70 1 | 80 g / 80 g=80 | fusilli Matarazzo · tirabuzón | marca=Matarazzo · ean=7790070318602 · off · fibra=3.1 · saturadas=0 · sodio=10
+Mostacholes Matarazzo | Matarazzo mostaccioli | producto#62 334 11.3 70 1 | 80 g / 80 g=80 | mostachol · penne Matarazzo | marca=Matarazzo · ean=7790070318596 · off · fibra=3.1 · saturadas=0 · sodio=10
+Penne rigate Matarazzo | Matarazzo penne rigate | producto#63 334 11.3 70 1 | 80 g / 80 g=80 |  | marca=Matarazzo · ean=7790070318633 · off · fibra=3.1 · azucares=0 · saturadas=0 · sodio=10
+Ravioles de verdura | Vegetable ravioli | producto#64 207 6.5 41 0.3 | 100 g / 100 g=100 | raviolis de verdura · ravioles Avanti | marca=Avanti · ean=7730927021392 · off · fibra=1.8
+Fideos instantáneos Nissin de verduras | Nissin vegetable instant noodles | producto#65 458 10.6 60 18.8 | 1 paquete / 1 package=85 | ramen Nissin de verduras · Nissin Lámen | marca=Nissin · ean=7891079012444 · off · fibra=2.7 · saturadas=8.6 · sodio=1720
+Fideos instantáneos Nissin de carne | Nissin beef instant noodles | producto#66 452 9.6 63.5 17.6 | 1 paquete / 1 package=85 | ramen Nissin de carne | marca=Nissin · ean=7891079012215 · off · fibra=1.9 · azucares=1.5 · saturadas=8.2 · sodio=1481
+Cup Noodles de carne | Beef Cup Noodles | producto#67 435 10.3 58.8 17.6 | 1 vaso / 1 cup=68 | sopa instantánea Cup Noodles | marca=Nissin · ean=7891079012901 · off · fibra=3.7 · azucares=1.6 · saturadas=7.9 · sodio=1250
+
+# carnes
+Picadillo de carne | Canned minced beef spread | producto#68 220 9 0 20 | 1 cucharadita / 1 tsp=10 · 1 lata / 1 can=90 | picadillo Swift | marca=Swift · ean=7790360720115 · off · fibra=0 · azucares=0 · saturadas=10 · sodio=750
+
+# pescados
+Atún al natural en trozos | Tuna chunks in water | producto#69 91 20 0 1.1 | 1 lata / 1 can=120 · 100 g / 100 g=100 | atún en agua Gomes da Costa | marca=Gomes da Costa · ean=7891167011724 · off · fibra=0 · azucares=0 · saturadas=0.5 · sodio=147
+
+# huevos
+Clara de huevo líquida | Liquid egg whites | producto#70 54 10.1 0.72 0.14 | 1 porción (67 ml) / 1 serving (67 ml)=69 · 100 ml / 100 ml=103 | claras líquidas · claras pasteurizadas | marca=Proudhon · ean=7730239000542 · off · densidad=1.03 · sodio=184
+
+# lacteos
+Leche descremada sin lactosa | Conaprole lactose-free skim milk | producto#71 33 3.4 4.8 0 | 1 vaso (200 ml) / 1 glass (200 ml)=207 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche deslactosada Conaprole | marca=Conaprole · ean=7730105081828 · off · densidad=1.035 · fibra=0 · sodio=44
+Leche chocolatada Colet light | Colet light chocolate milk | producto#72 42 4.2 5.3 0.3 | 1 envase (250 ml) / 1 carton (250 ml)=263 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | colet light · chocolatada Colet light* (AR UY) | marca=Conaprole · ean=7730105014079 · off · densidad=1.05 · fibra=0.61 · saturadas=0.19 · sodio=45
+// Valores de la tabla de conaprole.uy (22/10/2026): OFF traía una receta anterior.
+Yogur Yoprole de durazno | Yoprole peach yogurt | producto#73 75 3.3 11.9 1.5 | 1 envase / 1 cup=185 | yoprole durazno | marca=Conaprole · ean=7730105002373 · off · fibra=0 · saturadas=0.9 · sodio=38
+// Valores de la tabla de conaprole.uy (22/10/2026).
+Yogur entero natural endulzado | Sweetened plain whole-milk yogurt | producto#74 108 4.2 13.5 4.2 | 1 vaso / 1 glass=200 · 1 envase / 1 tub=500 | yogur integral natural Conaprole | marca=Conaprole · ean=7730105022050 · off · fibra=0 · azucares=10 · saturadas=2.5 · sodio=42
+// OFF no tenía los carbohidratos: la tabla entera es de conaprole.uy (22/10/2026), por el envase de
+// 150 g de yogur y 16 g de cereal.
+Yogur Más con cereales | Más yogurt with cereal | producto#75 133 4.3 20.5 3.7 | 1 envase / 1 cup=166 | yogur con copos de maíz · yogur más cereales | marca=Conaprole · ean=7730105002625 · off · saturadas=2.3 · sodio=70
+// Valores de la tabla de conaprole.uy (22/10/2026): el sodio de OFF era de otra versión.
+Yogur bebible Biotop light de durazno | Biotop light peach drinkable yogurt | producto#76 35 3.8 5 0 | 1 vaso / 1 glass=200 | biotop light durazno | marca=Conaprole · ean=7730105032837 · off · fibra=0 · azucares=4.9 · saturadas=0 · sodio=39
+Yogur bebible Biotop de manzana y caramelo | Biotop apple caramel drinkable yogurt | producto#77 76 3.3 12 1.6 | 1 vaso / 1 glass=200 | biotop manzana caramelo | marca=Conaprole · ean=7730105033025 · off · saturadas=1.1 · sodio=39
+// OFF tenía los valores del envase (180 g) como si fueran por 100 g. Valores de la tabla de
+// conaprole.uy (22/10/2026).
+Yogur con fondo de fresa | Yogurt with strawberries on the bottom | producto#78 124 3.4 20 3.4 | 1 envase / 1 cup=180 | yogur con fondo de frutilla* (AR UY) | marca=Conaprole · ean=7730105022753 · off · fibra=0.39 · saturadas=2 · sodio=37
+// Valores de la tabla de conaprole.uy (22/10/2026).
+Yogur Vital+ natural | Vital+ plain yogurt | producto#79 36 3.9 5 0 | 1 vaso / 1 glass=200 | vital plus natural | marca=Conaprole · ean=7730105023415 · off · fibra=0 · azucares=4.9 · saturadas=0 · sodio=40
+Yogur YoLife de vainilla | YoLife vanilla yogurt | producto#80 44 3.9 7 0 | 1 envase / 1 cup=200 |  | marca=Colonial · ean=7730588001009 · off
+Yogur light sin lactosa | Lactose-free light yogurt | producto#81 44 3.9 7 0 | 1 vaso / 1 glass=200 | yogur deslactosado light | marca=Colonial · ean=7730588000620 · off · sodio=56
+Yogur entero de vainilla | Whole-milk vanilla yogurt | producto#82 97 3.5 13 3.5 | 1 envase / 1 cup=200 |  | marca=Claldy · ean=7730336001640 · off · saturadas=2.2
+Yogur natural sin azúcar | Unsweetened plain yogurt | producto#83 76 5 7 3.1 | 1 envase / 1 cup=200 |  | marca=Yogurísimo · ean=7730922255563 · off
+Yogur con arándanos | Blueberry yogurt | producto#84 97 4.3 13.5 2.8 | 1 envase / 1 cup=200 |  | marca=Yogurísimo · ean=7730922255167 · off · saturadas=1.6
+Yogur con fresas | Strawberry yogurt | producto#85 96 4.3 13.5 2.8 | 1 envase / 1 cup=200 | yogur con frutillas* (AR UY) | marca=Yogurísimo · ean=7730922255174 · off · saturadas=1.6
+Yogur Ser natural | Ser plain yogurt | producto#86 54 5 7.2 0.67 | 1 envase / 1 cup=180 |  | marca=Ser · ean=7730922253439 · off
+Bebida de soja Ades natural | Ades plain soy drink | producto#87 39 2.5 3.9 1.5 | 1 vaso (200 ml) / 1 glass (200 ml)=206 | leche de soja Ades | marca=Ades · ean=7790895643859 · off · densidad=1.03 · fibra=0.58 · azucares=2.9 · saturadas=0.29 · sodio=68
+Bebida de soja Ades chocolatada | Ades chocolate soy drink | producto#88 52 3.1 5.3 2.1 | 1 vaso (200 ml) / 1 glass (200 ml)=206 | leche de soja chocolatada Ades | marca=Ades · ean=7790895643521 · off · densidad=1.03 · fibra=0.29 · azucares=3.6 · saturadas=0.39 · sodio=65
+Bebida de soja Ades de vainilla | Ades vanilla soy drink | producto#89 41 2.5 4.6 1.5 | 1 vaso (200 ml) / 1 glass (200 ml)=206 |  | marca=Ades · ean=7790895643873 · off · densidad=1.03 · fibra=0.58 · azucares=4.1 · saturadas=0.19 · sodio=62
+Bebida de almendras Ades | Ades almond drink | producto#90 25 0.4 3.3 1.1 | 1 vaso (200 ml) / 1 glass (200 ml)=202 | leche de almendras Ades | marca=Ades · ean=7790895643538 · off · densidad=1.01 · fibra=0.2 · azucares=2.4 · saturadas=0.1 · sodio=51
+Bebida de avena barista | Barista oat drink | producto#91 48 1.3 4.1 2.9 | 1 vaso (200 ml) / 1 glass (200 ml)=204 | leche de avena Nude | marca=Nude · ean=7898994939719 · off · densidad=1.02 · fibra=0.78 · azucares=2.9 · saturadas=0.54 · sodio=3.5
+
+# quesos
+// Valores de la tabla de conaprole.uy (22/10/2026): OFF traía una versión anterior.
+Queso crema Alpazul | Alpazul cream cheese | producto#92 257 9.7 0 24.3 | 1 cucharada / 1 tbsp=30 | queso untable Alpazul* (AR UY) | marca=Conaprole · ean=7730105124174 · off · fibra=0 · saturadas=14.7 · sodio=650
+// En OFF figura como «Magneto light», con una versión anterior. Valores de la tabla de conaprole.uy
+// (22/10/2026).
+Queso crema light Magretto | Magretto light cream cheese | producto#93 138 10.8 2.2 9.6 | 2 cucharadas / 2 tbsp=50 · 1 cucharada / 1 tbsp=25 | queso untable light Magretto* (AR UY) | marca=Conaprole · ean=7730105124136 · off · fibra=0 · saturadas=5.8 · sodio=850
+Queso crema Casancrem light | Casancrem light cream cheese | producto#94 120 8 9.3 5.7 | 2 cucharadas / 2 tbsp=30 | queso untable Casancrem light* (AR UY) | marca=La Serenísima · ean=7791337060944 · off · fibra=0 · azucares=7.7 · saturadas=3.7 · sodio=97
+Queso crema Finlandia light | Finlandia light cream cheese | producto#95 190 9 3.8 16 | 4 cucharaditas / 4 tsp=30 | queso untable Finlandia light* (AR UY) | marca=La Serenísima · ean=7790742321800 · off · fibra=0 · saturadas=9.3 · sodio=364
+Queso magro en rebanadas | Sliced low-fat cheese | producto#96 242 34 1.2 11.4 | 3 rebanadas / 3 slices=50 · 1 rebanada / 1 slice=17 | queso magro en fetas* (AR UY) · queso magro feteado | marca=Farming · ean=7730939200440 · off · saturadas=6.8 · sodio=230
+Queso sin lactosa | Lactose-free cheese | producto#97 363 27.3 3 26 | 30 g / 30 g=30 | queso deslactosado | marca=Talar · ean=7730972340882 · off · saturadas=18.7
+Queso parmesano rallado | Farming grated parmesan | producto#98 470 33 0 37 | 1 cucharada / 1 tbsp=10 |  | marca=Farming · ean=7730939200600 · off · saturadas=22 · sodio=1270
+Queso reggianito rallado La Serenísima | La Serenísima grated reggianito cheese | producto#99 456 40 2 32 | 1 cucharada / 1 tbsp=10 |  | marca=La Serenísima · ean=7790742127907 · off · fibra=0 · azucares=2 · saturadas=22 · sodio=1317
+Queso reggianito rallado SanCor | SanCor grated reggianito cheese | producto#100 470 45 0 32 | 1 cucharada / 1 tbsp=10 |  | marca=SanCor · ean=7790080014709,7790080014693 · off · saturadas=21 · sodio=1400
+
+# frutos-secos
+Maní pelado salado | Salted peeled peanuts | producto#101 616 28 8.8 52 | 1 puñado / 1 handful=25 · 1 paquete / 1 package=50 | maníx | marca=Manix · ean=7730311000392 · off · fibra=8.8 · azucares=6.8 · saturadas=5.6 · sodio=792
+Mix de castañas de cajú, almendras y maní | Cashew, almond and peanut mix | producto#102 540 19.6 28.4 38.8 | 25 g / 25 g=25 | mix activo | marca=Río de la Plata · ean=7730205097378 · off · fibra=11.6 · sodio=0
+Mix de frutos secos tradicional | Traditional nut mix | producto#103 500 18.3 25.3 36.7 | 3 cucharadas / 3 tbsp=30 |  | marca=De la Tierra · ean=7730999110185 · off · fibra=6.7 · saturadas=4 · sodio=430
+
+# grasas
+// Valores de la tabla de conaprole.uy (22/10/2026). El sodio depende de si es con sal o sin sal, y
+// la ficha no lo dice.
+Mantequilla Conaprole | Conaprole butter | producto#104 756 0 0 84 | 1 cucharada / 1 tbsp=10 · 1 cucharadita / 1 tsp=5 | manteca Conaprole* (UY) | marca=Conaprole · ean=77306197 · off · fibra=0 · saturadas=54
+// OFF trae los aceites por 100 ml (830 kcal y 92 g de grasa): por 100 g son 900 kcal y 100 g de
+// grasa. Al de canola y al de Cocinero les faltaban la proteína y los carbohidratos, que en un
+// aceite son cero.
+Aceite de girasol Natura | Natura sunflower oil | producto#105 900 0 0 100 | 1 cucharada / 1 tbsp=12 · 1 cucharadita / 1 tsp=4.5 |  | marca=Natura · ean=7790272001029 · off · densidad=0.92 · fibra=0 · sodio=0
+Aceite de canola Óptimo | Óptimo canola oil | producto#106 900 0 0 100 | 1 cucharada / 1 tbsp=12 · 1 cucharadita / 1 tsp=4.5 |  | marca=Óptimo · ean=7730132001592 · off · densidad=0.92 · fibra=0 · saturadas=7.5 · sodio=0
+Aceite de oliva extra virgen Carbonell | Carbonell extra virgin olive oil | producto#107 900 0 0 100 | 1 cucharada / 1 tbsp=12 · 1 cucharadita / 1 tsp=4.5 |  | marca=Carbonell · ean=8410010826699 · off · densidad=0.92 · fibra=0 · saturadas=15.1 · sodio=0
+Aceite de oliva extra virgen Cañuelas | Cañuelas extra virgin olive oil | producto#108 900 0 0 100 | 1 cucharada / 1 tbsp=12 · 1 cucharadita / 1 tsp=4.5 |  | marca=Cañuelas · ean=7792180005182 · off · densidad=0.92 · fibra=0 · saturadas=13.4 · sodio=0
+Aceite de oliva extra virgen Cocinero | Cocinero extra virgin olive oil | producto#109 900 0 0 100 | 1 cucharada / 1 tbsp=12 · 1 cucharadita / 1 tsp=4.5 |  | marca=Cocinero · ean=7790070218216 · off · densidad=0.92 · fibra=0 · saturadas=18.4 · sodio=0
+
+# dulces
+Azúcar blanca Bella Unión | Bella Unión white sugar | producto#110 400 0 100 0 | 1 cucharadita / 1 tsp=5 · 1 cucharada / 1 tbsp=12.5 |  | marca=Bella Unión · ean=7730106005113 · off · fibra=0 · azucares=100 · saturadas=0 · sodio=0
+// Valores de la tabla de conaprole.uy (22/10/2026): OFF tenía mal el sodio y los azúcares.
+Dulce de leche Conaprole | Conaprole dulce de leche | producto#111 325 8 55 8 | 1 cucharada / 1 tbsp=20 |  | marca=Conaprole · ean=7730105005121 · off · fibra=0 · saturadas=4.5 · sodio=135
+// OFF no tenía las grasas: la tabla entera es de conaprole.uy (22/10/2026).
+Dulce de leche dietético Conaprole | Conaprole reduced-calorie dulce de leche | producto#112 140 9 22 0 | 1 cucharada / 1 tbsp=20 | dulce de leche light Conaprole | marca=Conaprole · ean=7730105005770 · off · fibra=31.5 · azucares=12.5 · saturadas=0 · sodio=31
+Dulce de leche Suizo | Suizo dulce de leche | producto#113 335 7.5 60 7 | 1 cucharada / 1 tbsp=20 |  | marca=Suizo · ean=7730941940297 · off · fibra=0 · saturadas=3.5 · sodio=137
+Dulce de leche estilo colonial | Colonial-style dulce de leche | producto#114 310 7.5 55 7.5 | 1 cucharada / 1 tbsp=20 |  | marca=La Serenísima · ean=7790742140609 · off · fibra=0 · saturadas=4.5 · sodio=125
+Crema untable Cofler Block | Cofler Block chocolate spread | producto#115 556 12 48 35.2 | 1 cucharada / 1 tbsp=25 |  | marca=Arcor · ean=7790580133344 · off · fibra=2.4 · azucares=48 · saturadas=16 · sodio=56
+Mermelada de durazno Arcor | Arcor peach jam | producto#116 259 0 64 0 | 1 cucharada / 1 tbsp=20 |  | marca=Arcor · ean=7790580509507 · off · fibra=0 · azucares=52 · saturadas=0 · sodio=20
+Mermelada de albaricoque Arcor | Arcor apricot jam | producto#117 259 0 64 0 | 1 cucharada / 1 tbsp=20 | mermelada de damasco Arcor* (AR UY) | marca=Arcor · ean=7790580509408 · off · fibra=0 · azucares=52 · saturadas=0 · sodio=10
+Mermelada de durazno Orieta | Orieta peach jam | producto#118 260 0 65 0 | 1 cucharada / 1 tbsp=20 |  | marca=Orieta · ean=7792260000021 · off · fibra=0 · saturadas=0 · sodio=0
+Mermelada de ciruela | Plum jam | producto#119 260 0 65 0 | 1 cucharada / 1 tbsp=20 |  | marca=Orieta · ean=7792260000052 · off · fibra=0 · saturadas=0 · sodio=0
+Mermelada de durazno y maracuyá | Peach and passion fruit jam | producto#120 278 0 69 0 | 1 cucharada / 1 tbsp=20 |  | marca=La Campagnola · ean=7793360121807 · off · fibra=0 · azucares=58 · saturadas=0 · sodio=8
+Mermelada de arándanos | Blueberry jam | producto#121 276 0 69 0 | 1 cucharada / 1 tbsp=20 |  | marca=La Campagnola · ean=7793360806308 · off · fibra=0 · azucares=58 · saturadas=0 · sodio=15
+Mermelada light de fresa | Light strawberry jam | producto#122 148 0 36 0 | 1 cucharada / 1 tbsp=20 | mermelada light de frutilla* (AR UY) | marca=BC · ean=7793360812101 · off · fibra=2 · azucares=32 · saturadas=0 · sodio=30
+Mermelada light de durazno | Light peach jam | producto#123 148 0 37 0 | 1 cucharada / 1 tbsp=20 |  | marca=BC · ean=7793360811401 · off · fibra=1 · azucares=32 · saturadas=0 · sodio=34
+Mermelada light de arándanos | Light blueberry jam | producto#124 160 0 39.5 0 | 1 cucharada / 1 tbsp=20 |  | marca=BC · ean=7793360816604 · off · fibra=0 · azucares=32 · saturadas=0 · sodio=38
+Mermelada light de frambuesa | Light raspberry jam | producto#125 150 0 37 0 | 1 cucharada / 1 tbsp=20 |  | marca=Los Nietitos · ean=7730124002736 · off
+Galletas Frutigran de avena y pasas | Frutigran oat and raisin cookies | producto#126 436 7.5 70 14 | 2 galletas / 2 cookies=30 · 1 galleta / 1 cookie=15 | galletitas Frutigran de avena y pasas* (AR UY) | marca=Granix · ean=7790045001188 · off · fibra=4.1 · azucares=17 · saturadas=1.5 · sodio=270
+Galletas Frutigran de salvado | Frutigran bran cookies | producto#127 405 8 64 13 | 2 galletas / 2 cookies=30 · 1 galleta / 1 cookie=15 | galletitas Frutigran de salvado* (AR UY) | marca=Granix · ean=7790045001195 · off · fibra=9 · azucares=17 · saturadas=1.2 · sodio=280
+Galletas Frutigran de avena, chía y lino | Frutigran oat, chia and flax cookies | producto#128 447 7.7 68 16 | 2 galletas / 2 cookies=30 · 1 galleta / 1 cookie=15 | galletitas Frutigran de avena, chía y lino* (AR UY) | marca=Granix · ean=7790045825395 · off · fibra=4.7 · azucares=35 · saturadas=1.4 · sodio=265
+Galletas Frutigran con chips de chocolate | Frutigran chocolate chip cookies | producto#129 421 10 66 13 | 2 galletas / 2 cookies=30 · 1 galleta / 1 cookie=15 | galletitas Frutigran con chips* (AR UY) | marca=Granix · ean=7790045824893 · off · fibra=4 · azucares=18 · saturadas=2.3 · sodio=276
+Galletas Frutigran de avena, sésamo, amaranto y girasol | Frutigran oat, sesame, amaranth and sunflower cookies | producto#130 453 8.1 67 17 | 2 galletas / 2 cookies=30 · 1 galleta / 1 cookie=15 | galletitas Frutigran de avena, sésamo, amaranto y girasol* (AR UY) | marca=Granix · ean=7790045825401 · off · fibra=4 · saturadas=1.5 · sodio=274
+Galletas Frutigran tropicales | Frutigran tropical cookies | producto#131 438 7.8 68 15 | 2 galletas / 2 cookies=30 · 1 galleta / 1 cookie=15 | galletitas Frutigran tropical* (AR UY) | marca=Granix · ean=7790045000815 · off · fibra=4 · saturadas=1.2 · sodio=300
+Galletas Frutigran de avena y frutos rojos | Frutigran oat and berry cookies | producto#132 436 7.3 68 15 | 2 galletas / 2 cookies=30 · 1 galleta / 1 cookie=15 | galletitas Frutigran de avena y frutos rojos* (AR UY) | marca=Granix · ean=7790045827054 · off · fibra=4.2 · saturadas=1.3 · sodio=258
+Galletas Fiesta surtidas | Fiesta assorted cookies | producto#133 430 8 68 14 | 6 galletas / 6 cookies=30 | galletitas Fiesta surtidas* (AR UY) | marca=Granix · ean=7790045824886 · off · fibra=3.6 · saturadas=1.4 · sodio=288
+Galletas GranoVita de coco | GranoVita coconut cookies | producto#134 449 7.5 71 15 | 4 galletas / 4 cookies=30 | galletitas GranoVita de coco* (AR UY) | marca=Granix · ean=7790045000860 · off · fibra=3.1 · saturadas=2.3 · sodio=108
+Galletas GranoVita de vainilla | GranoVita vanilla cookies | producto#135 446 7.6 73 14 | 4 galletas / 4 cookies=30 | galletitas GranoVita de vainilla* (AR UY) | marca=Granix · ean=7790045000853 · off · fibra=3 · saturadas=1.1 · sodio=108
+Galletas Granola de almendras, avena y coco | Granola almond, oat and coconut cookies | producto#136 442 7.5 58 20 | 3 galletas / 3 cookies=30 | galletitas Granola de almendras* (AR UY) | marca=Granix · ean=7790045000587 · off · fibra=9 · saturadas=4.6 · sodio=310
+Galletas Granola de avellanas, avena y cacao | Granola hazelnut, oat and cocoa cookies | producto#137 452 7.4 65 18 | 3 galletas / 3 cookies=30 | galletitas Granola de avellanas* (AR UY) | marca=Granix · ean=7790045000570 · off · fibra=8.7 · saturadas=1.7 · sodio=318
+Galletas integrales de granola | Whole grain granola cookies | producto#138 455 12.8 55.2 20.7 | 2 galletas / 2 cookies=29 | galletitas de granola Cachafaz* (AR UY) | marca=Cachafaz · ean=7798128000707 · off · fibra=6.6 · azucares=16.9 · saturadas=2.8 · sodio=114
+Galletas Okebon de avena y cacao | Okebon oat and cocoa cookies | producto#139 456 8.2 64 19 | 2 galletas / 2 cookies=26 | galletitas Okebon de avena y cacao* (AR UY) | marca=Okebon · ean=7790263119634 · off · fibra=4.3 · azucares=19 · saturadas=2.2 · sodio=163
+Galletas Okebon 10 semillas | Okebon ten-seed cookies | producto#140 463 7.5 65 19 | 2 galletas / 2 cookies=26.5 | galletitas Okebon 10 semillas* (AR UY) | marca=Okebon · ean=7790263119658 · off · fibra=3.7 · azucares=18 · saturadas=2 · sodio=160
+Galletas Porteñitas | Porteñitas cookies | producto#141 433 8.1 76 11 | 6 galletas / 6 cookies=30 | galletitas Porteñitas* (AR UY) | marca=Bagley · ean=7790040132689 · off · fibra=1.8 · azucares=27 · saturadas=4.9 · sodio=354
+Galletas Maná de leche | Maná milk cookies | producto#142 435 10 71 12 | 6 galletas / 6 cookies=26 | galletitas Maná de leche* (AR UY) | marca=Arcor · ean=7790040137813 · off · fibra=1.9 · azucares=20 · saturadas=1.5 · sodio=360
+Galletas Maná de vainilla | Maná vanilla cookies | producto#143 420 9.4 73 11 | 6 galletas / 6 cookies=26 | galletitas Maná de vainilla* (AR UY) | marca=Arcor · ean=7790040137837 · off · fibra=2.6 · azucares=15 · saturadas=1.4 · sodio=266
+Galletas Maná livianas de vainilla | Maná light vanilla cookies | producto#144 452 9 74.2 11 | 7 galletas / 7 cookies=31 | galletitas Maná livianas de vainilla* (AR UY) | marca=Arcor · ean=7790040720107 · off · fibra=3.2 · azucares=18.1 · saturadas=1.6 · sodio=377
+Galletas Maná livianas de limón | Maná light lemon cookies | producto#145 447 8.9 74 13 | 6 galletas / 6 cookies=26 | galletitas Maná livianas de limón* (AR UY) | marca=Arcor · ean=7790040720305 · off · fibra=2.5 · azucares=16 · saturadas=1.6 · sodio=392
+Galletas Maná rellenas de chocolate | Maná chocolate sandwich cookies | producto#146 450 6.9 73 14 | 2 galletas / 2 cookies=25 | galletitas Maná rellenas de chocolate* (AR UY) | marca=Arcor · ean=7790040133242 · off · fibra=2.1 · azucares=33 · saturadas=5.5
+Galletas Maná rellenas de vainilla | Maná vanilla sandwich cookies | producto#147 463 6.2 73 16 | 2 galletas / 2 cookies=25 | galletitas Maná rellenas de vainilla* (AR UY) | marca=Arcor · ean=7790040133235 · off · fibra=1.4 · azucares=34 · saturadas=7.7 · sodio=340
+Galletas Cereal Mix con cacao | Cereal Mix cocoa cookies | producto#148 432 8.8 68 14 | 5 galletas / 5 cookies=31 | galletitas Cereal Mix con cacao* (AR UY) | marca=Arcor · ean=7790040140943 · off · fibra=4.3 · azucares=21 · saturadas=1.7 · sodio=224
+Galletas Cereal Mix de fresa y chía | Cereal Mix strawberry and chia cookies | producto#149 444 8.5 70 14 | 2 galletas / 2 cookies=23 | galletitas Cereal Mix de frutilla y chía* (AR UY) | marca=Arcor · ean=7790040135765,7790040126749 · off · fibra=3.3 · azucares=22 · saturadas=1.4 · sodio=232
+Galletas Cereal Mix de avena y chocolate | Cereal Mix oat and chocolate cookies | producto#150 438 8.7 61 18 | 2 galletas / 2 cookies=24 | galletitas Cereal Mix de avena y chocolate* (AR UY) | marca=Arcor · ean=7790040135772 · off · fibra=3.9 · azucares=20 · saturadas=3.6 · sodio=326
+Galletas Cereal Mix de avena y pasas | Cereal Mix oat and raisin cookies | producto#151 444 8.2 66 16 | 2 galletas / 2 cookies=24 | galletitas Cereal Mix de avena y pasas* (AR UY) | marca=Arcor · ean=7790040135789 · off · fibra=3.6 · azucares=20 · saturadas=1.8 · sodio=388
+Galletas Cereal Mix de avena y manzana | Cereal Mix oat and apple cookies | producto#152 446 7.9 68 16 | 2 galletas / 2 cookies=24 | galletitas Cereal Mix de avena y manzana* (AR UY) | marca=Arcor · ean=7790040135796 · off · fibra=3.9 · azucares=22 · saturadas=1.8 · sodio=295
+Galletas Diversión surtidas | Diversión assorted cookies | producto#153 417 6.7 66.7 13.3 | 3 galletas / 3 cookies=30 | galletitas Diversión* (AR UY) | marca=Arcor · ean=7790040711105 · off · fibra=2.5 · azucares=28.3 · saturadas=4.2 · sodio=183
+Galletas Coquitas | Coquitas coconut cookies | producto#154 458 8.3 71 16 | 6 galletas / 6 cookies=34 | galletitas Coquitas* (AR UY) | marca=Bagley · ean=7790040929807,7790040139411 · off · fibra=2 · azucares=21 · saturadas=7.8 · sodio=338
+Galletas Merengadas | Merengadas sandwich cookies | producto#155 415 7.5 70 12 | 2 galletas / 2 cookies=24 | galletitas Merengadas* (AR UY) | marca=Bagley · ean=7790040932708 · off · azucares=32 · saturadas=5.3 · sodio=200
+Galletas Toddy con chips de chocolate | Toddy chocolate chip cookies | producto#156 477 5.3 63.3 20.3 | 30 g / 30 g=30 | galletitas Toddy* (AR UY) | marca=Toddy · ean=7790310982846 · off · fibra=2.7 · azucares=33.3 · saturadas=7.7 · sodio=387
+Galletas Oreo | Oreo cookies | producto#157 490 5.5 65 23 | 3 galletas / 3 cookies=30 | galletitas Oreo* (AR UY) | marca=Oreo · ean=7622300864934,7622300864958 · off · fibra=2.8 · azucares=39 · saturadas=8.8 · sodio=338
+Galletas Variedad surtidas | Variedad assorted cookies | producto#158 444 5.9 70 15 | 5 galletas / 5 cookies=30 | galletitas Variedad* (AR UY) | marca=Terrabusi · ean=7622210649225 · off · fibra=0 · azucares=32 · saturadas=6.8 · sodio=172
+Galletas Cerealitas de granola | Cerealitas granola cookies | producto#159 434 8.1 68.8 14.1 | 32 g / 32 g=32 | galletitas Cerealitas de granola* (AR UY) | marca=Cerealitas · ean=7622202241567 · off · fibra=4.1 · azucares=21.9 · saturadas=1.3 · sodio=238
+Galletas Cerealitas de avena y chocolate | Cerealitas oat and chocolate cookies | producto#160 450 8.1 65 17 | 30 g / 30 g=30 | galletitas Cerealitas de avena y chocolate* (AR UY) | marca=Cerealitas · ean=7622300872816 · off · azucares=26 · saturadas=2.9 · sodio=116
+Galletas Rocklets de vainilla | Rocklets vanilla cookies | producto#161 462 6.2 66 19 | 3 galletas / 3 cookies=32 | galletitas Rocklets* (AR UY) | marca=Arcor · ean=7802225688758 · off · fibra=1.4 · azucares=38 · saturadas=11 · sodio=234
+Galletas Cofler con chips de chocolate | Cofler chocolate chip cookies | producto#162 467 6.3 65 20 | 2 galletas / 2 cookies=23 | galletitas Cofler cookies* (AR UY) | marca=Arcor · ean=7790040127944 · off · fibra=1.5 · azucares=28 · saturadas=6 · sodio=291
+Galletas Bon o Bon | Bon o Bon cookies | producto#163 523 7.7 56.1 29.5 | 3 galletas / 3 cookies=28.5 | galletitas Bon o Bon* (AR UY) | marca=Arcor · ean=7802225640770 · off · fibra=2.1 · azucares=42.1 · saturadas=15.1 · sodio=102
+Galletas Costa Choco Chips | Costa Choco Chips cookies | producto#164 494 5 67.4 22.7 | 3 galletas / 3 cookies=30 | galletitas Choco Chips* (AR UY) | marca=Costa · ean=7802215505140 · off · azucares=30.8 · saturadas=11.3 · sodio=359
+Galletas Frac clásicas | Frac classic sandwich cookies | producto#165 464 4.6 69 21 | 3 galletas / 3 cookies=30 | galletitas Frac* (AR UY) | marca=Costa · ean=7802215512261 · off · fibra=3.1 · azucares=34 · saturadas=11 · sodio=301
+Galletas Gran Cereal clásicas | Gran Cereal classic cookies | producto#166 437 7.8 64.4 17.8 | 3 galletas / 3 cookies=27 | galletitas Gran Cereal* (AR UY) | marca=Costa · ean=7802215302053 · off · fibra=6.3 · azucares=19.6 · saturadas=4.8 · sodio=233
+Galletas Gran Cereal de cacao | Gran Cereal cocoa cookies | producto#167 446 7.4 63.6 18 | 4 galletas / 4 cookies=39 | galletitas Gran Cereal de cacao* (AR UY) | marca=Costa · ean=7802215303241 · off · fibra=5.9 · azucares=22.6 · saturadas=3.9 · sodio=228
+Galletas María Marilan | Marilan Marie biscuits | producto#168 447 9.7 70 14 | 6 galletas / 6 cookies=28 · 1 galleta / 1 cookie=4.6 | galletitas María Marilan* (AR UY) | marca=Marilan · ean=7896003703054 · off · fibra=3 · saturadas=6 · sodio=193
+Obleas Bauducco de chocolate | Bauducco chocolate wafers | producto#169 457 4.7 53 25 | 4 obleas / 4 wafers=30 | wafer Bauducco de chocolate | marca=Bauducco · ean=7891962032290 · off · fibra=3 · azucares=34 · saturadas=13 · sodio=163
+Obleas Bauducco de fresa | Bauducco strawberry wafers | producto#170 473 4.3 60 24 | 5 obleas / 5 wafers=30 | obleas Bauducco de frutilla* (AR UY) · wafer Bauducco de frutilla | marca=Bauducco · ean=7891962032283 · off · fibra=1 · azucares=36 · saturadas=12 · sodio=160
+Obleas Bauducco de chocolate con avellanas | Bauducco chocolate hazelnut wafers | producto#171 497 5.3 65 24 | 4 obleas / 4 wafers=30 | wafer Bauducco de avellanas | marca=Bauducco · ean=7891962036915 · off · fibra=2.9 · azucares=43 · saturadas=12 · sodio=200
+Obleas Opera | Opera wafers | producto#172 509 5.4 69 23 | 6 obleas / 6 wafers=28 · 1 paquete / 1 package=92 |  | marca=Bagley · ean=77903518 · off · fibra=1.1 · azucares=43 · saturadas=11 · sodio=162
+Galletas de avena, sésamo, cacao y nueces | Oat, sesame, cocoa and walnut cookies | producto#173 377 6 66.7 9.7 | 30 g / 30 g=30 | galletitas de avena, sésamo, cacao y nueces* (AR UY) | marca=La Paz · ean=7730970690071 · off · fibra=7 · sodio=83
+Galletas dulces integrales | Whole grain sweet cookies | producto#174 367 4.3 46.7 18 | 30 g / 30 g=30 | galletitas dulces integrales* (AR UY) | marca=Amoras · ean=7730962810029 · off · fibra=21.3 · saturadas=2
+Galletas integrales artesanales | Artisan whole grain cookies | producto#175 363 7.7 51.7 15.3 | 30 g / 30 g=30 | galletitas integrales artesanales* (AR UY) | marca=Mágicas · ean=7730902200033 · off · fibra=6.7 · saturadas=1
+Galletas de miel | Honey cookies | producto#176 457 6.7 73.3 15 | 4 galletas / 4 cookies=30 · 1 galleta / 1 cookie=7.4 | galletitas de miel* (AR UY) | marca=El Trigal · ean=7730116111132 · off · fibra=1.3 · saturadas=6
+Galletas Solar clásicas | Solar classic cookies | producto#177 447 7.3 73.3 14.3 | 5 galletas / 5 cookies=30 | galletitas Solar* (AR UY) | marca=Famosa · ean=7730110221011 · off · fibra=1.3 · azucares=21.7 · saturadas=6 · sodio=220
+Muffins mini marmolados | Mini marble muffins | producto#178 426 5.2 60.9 17.8 | 1 muffin / 1 muffin=23 |  | marca=Punta Ballena · ean=7730303009358 · off · fibra=0 · saturadas=3 · sodio=296
+Panqué Black | Black chocolate pound cake | producto#179 372 5.3 51.7 16.2 | 1 rebanada / 1 slice=60 | budín Black* (AR UY PY) | marca=Águila · ean=7790040127135 · off · fibra=2.3 · azucares=31.7 · saturadas=8.2 · sodio=254
+Panettone Chocottone | Chocottone chocolate chip panettone | producto#180 391 7 48 19 | 1 rebanada / 1 slice=80 | pan dulce Chocottone* (AR UY PY) | marca=Bauducco · ean=7891962027395 · off · fibra=2.2 · azucares=21 · saturadas=7.6 · sodio=137
+Pastelito Ricardito | Ricardito snack cake | producto#181 414 2.7 57 19.5 | 1 unidad / 1 piece=30 | ricardito | marca=Marinela · ean=7730117003269 · off · fibra=2 · azucares=54 · saturadas=11.4
+Alfajor Terrabusi clásico | Terrabusi classic alfajor | producto#182 400 6.7 59 15 | 1 alfajor / 1 alfajor=50 | alfajor Terrabusi de chocolate | marca=Terrabusi · ean=77939234 · off · fibra=1.9 · azucares=40 · saturadas=8.2 · sodio=169
+// Las kcal de OFF estaban mal (376): estas salen de sus kJ (2.138), que cierran con 4/4/9 y con la
+// tabla de Arcor (515).
+Alfajor Bon o Bon | Bon o Bon alfajor | producto#183 511 9 56 27 | 1 alfajor / 1 alfajor=40 |  | marca=Arcor · ean=7790040613706 · off · fibra=1.9 · azucares=34 · saturadas=13 · sodio=80
+Alfajor Bon o Bon blanco | Bon o Bon white alfajor | producto#184 507 7.5 63 25 | 1 alfajor / 1 alfajor=40 |  | marca=Arcor · ean=7790040613607 · off · fibra=1.4 · azucares=32 · saturadas=12 · sodio=130
+Alfajor Bon o Bon triple | Bon o Bon triple alfajor | producto#185 506 8.8 57 29 | 1 alfajor / 1 alfajor=60 |  | marca=Arcor · ean=7790040614000 · off · fibra=1.8 · azucares=24 · saturadas=13 · sodio=73
+Alfajor Tofi negro | Tofi dark chocolate alfajor | producto#186 392 6.1 61 14 | 1 alfajor / 1 alfajor=46 |  | marca=Arcor · ean=7790040116610,7790040117143 · off · fibra=1.6 · azucares=41 · saturadas=6.4 · sodio=110
+Alfajor Tofi negro triple | Tofi dark chocolate triple alfajor | producto#187 397 7 60 14 | 1 alfajor / 1 alfajor=73 |  | marca=Arcor · ean=7790040484801 · off · fibra=1.9 · azucares=42 · saturadas=6.7 · sodio=111
+Alfajor Tofi blanco triple | Tofi white chocolate triple alfajor | producto#188 421 7.5 61 17 | 1 alfajor / 1 alfajor=73 |  | marca=Arcor · ean=7790040953703 · off · fibra=1 · azucares=39 · saturadas=8 · sodio=114
+Alfajor B&N negro | B&N dark chocolate alfajor | producto#189 432 7 57 20 | 1 alfajor / 1 alfajor=73.5 |  | marca=Bagley · ean=7790040375000 · off · fibra=2.6 · azucares=35 · saturadas=11 · sodio=129
+Alfajor B&N blanco | B&N white chocolate alfajor | producto#190 438 7.3 58 19 | 1 alfajor / 1 alfajor=73.5 |  | marca=Bagley · ean=7790040991910 · off · fibra=1 · azucares=36 · saturadas=10 · sodio=163
+Alfajor Minitorta clásica | Minitorta classic alfajor | producto#191 451 7.5 58 21 | 1 alfajor / 1 alfajor=69 |  | marca=Águila · ean=7790040133587 · off · fibra=2.2 · azucares=35 · saturadas=12 · sodio=120
+Alfajor Minitorta brownie | Minitorta brownie alfajor | producto#192 450 6.2 60.1 21 | 1 alfajor / 1 alfajor=71.5 |  | marca=Águila · ean=7790040133594 · off · fibra=2.2 · azucares=35 · saturadas=11.9 · sodio=101
+Alfajor Minitorta de coco | Minitorta coconut alfajor | producto#193 430 9.4 56 19 | 1 alfajor / 1 alfajor=70.5 |  | marca=Águila · ean=7790040133600 · off · fibra=2.6 · azucares=31 · saturadas=12 · sodio=149
+Alfajor mini de chocolate blanco | Mini white chocolate alfajor | producto#194 411 6.8 62 15 | 1 alfajor / 1 alfajor=24 |  | marca=Águila · ean=7790040125728 · off · fibra=0.6 · azucares=42 · saturadas=6.9 · sodio=208
+Alfajor Oreo | Oreo alfajor | producto#195 489 4.6 58.9 25 | 1 alfajor / 1 alfajor=56 |  | marca=Oreo · ean=77976307 · off · fibra=2.9 · azucares=42.9 · saturadas=13.8 · sodio=275
+Alfajor Milka mousse | Milka mousse alfajor | producto#196 524 5.7 59.5 28.6 | 1 alfajor / 1 alfajor=42 |  | marca=Milka · ean=7622201757038 · off · fibra=2.4 · azucares=38.1 · saturadas=15.5 · sodio=62
+Alfajor Cofler Block | Cofler Block alfajor | producto#197 506 8.1 60 26 | 1 alfajor / 1 alfajor=60 |  | marca=Arcor · ean=7790040659605 · off · fibra=2.8 · azucares=32 · saturadas=11 · sodio=83
+Alfajor Tatín blanco | Tatín white chocolate alfajor | producto#198 449 6.4 63 19 | 1 alfajor / 1 alfajor=33 |  | marca=Arcor · ean=7790040331303 · off · fibra=1 · azucares=36 · saturadas=10 · sodio=133
+Alfajor Genio de dulce de leche | Genio dulce de leche alfajor | producto#199 423 5.2 58 19 | 1 alfajor / 1 alfajor=60 |  | marca=Genio · ean=7798094220956 · off · fibra=1.6 · azucares=31 · saturadas=13 · sodio=131
+Alfajor Black extra dulce de leche | Black extra dulce de leche alfajor | producto#200 415 5.7 66.7 14 | 1 alfajor / 1 alfajor=60 |  | marca=Black · ean=77309969 · off · fibra=2 · sodio=142
+Alfajor Juana la Loca blanco | Juana la Loca white alfajor | producto#201 390 5.5 65 12 | 1 alfajor / 1 alfajor=80 · ½ alfajor / ½ alfajor=40 |  | marca=Juana la Loca · ean=7730986170215 · off · fibra=1.5 · saturadas=8.8 · sodio=25
+Bombón Bon o Bon | Bon o Bon bonbon | producto#202 538 8.9 49 34 | 1 bombón / 1 bonbon=16 | bon o bon | marca=Arcor · ean=7790580106959 · off · fibra=4.2 · azucares=45 · saturadas=16 · sodio=86
+Bombón Bon o Bon blanco | Bon o Bon white bonbon | producto#203 573 9.5 49 38 | 1 bombón / 1 bonbon=15 |  | marca=Arcor · ean=7802225511537 · off · fibra=1.3 · azucares=44 · saturadas=19 · sodio=111
+Oblea Bon o Bon XL | Bon o Bon XL wafer | producto#204 540 12 50 33 | 1 oblea / 1 wafer=45 · ½ oblea / ½ wafer=23 |  | marca=Arcor · ean=7790580109646 · off · fibra=2.5 · azucares=36 · saturadas=16 · sodio=121
+Chocolate Cofler Block | Cofler Block chocolate bar | producto#205 541 14 45 34 | 1 barra / 1 bar=38 | cofler block | marca=Arcor · ean=77953124 · off · fibra=3.5 · azucares=44 · saturadas=15 · sodio=103
+Maní con chocolate Cofler Block | Cofler Block chocolate-covered peanuts | producto#206 572 18 31 42 | 1 bolsa / 1 bag=40 · 10 unidades / 10 pieces=20 |  | marca=Arcor · ean=7790580110284 · off · fibra=5.2 · azucares=29 · saturadas=14 · sodio=68
+Chocolate Cofler Blockazo | Cofler Blockazo chocolate bar | producto#207 550 13 44 35 | 25 g / 25 g=25 |  | marca=Arcor · ean=7790580115579 · off · fibra=3.4 · azucares=42 · saturadas=16 · sodio=106
+Chocolate Cofler Block Miti Miti | Cofler Block Miti Miti chocolate bar | producto#208 487 9.9 44 30 | 25 g / 25 g=25 · 1 tableta / 1 bar=170 |  | marca=Arcor · ean=7790580132750 · off · fibra=0 · azucares=43 · saturadas=16 · sodio=129
+Chocolate aireado Cofler Air | Cofler Air aerated milk chocolate | producto#209 548 8.3 55 33 | 1 tableta / 1 bar=27 |  | marca=Arcor · ean=7790580103361 · off · fibra=1.5 · azucares=53 · saturadas=20 · sodio=131
+Chocolate con leche Cofler | Cofler milk chocolate | producto#210 545 8.3 56 32 | 6 cuadraditos / 6 squares=22 · 1 tableta / 1 bar=55 |  | marca=Arcor · ean=7790580103484 · off · fibra=1.3 · azucares=54 · saturadas=19 · sodio=133
+Chocolate Cofler con Rocklets | Cofler chocolate with Rocklets | producto#211 528 7.5 59 29 | 6 cuadraditos / 6 squares=22 · 1 tableta / 1 bar=55 |  | marca=Arcor · ean=7790580103521 · off · fibra=0 · azucares=58 · saturadas=17 · sodio=118
+Chocolate blanco Cofler con Chocolinas | Cofler white chocolate with Chocolinas | producto#212 545 8.2 57 32 | 25 g / 25 g=25 |  | marca=Arcor · ean=7790580127336,7790580103538 · off · fibra=0 · azucares=51 · saturadas=19 · sodio=156
+Oblea Cofler Graffiti | Cofler Graffiti chocolate wafer | producto#213 532 8.8 56 30 | 1 paquete / 1 package=45 |  | marca=Arcor · ean=7790580111755 · off · fibra=2 · azucares=49 · saturadas=18 · sodio=118
+Oblea Cofler Chocolinas XL | Cofler Chocolinas XL wafer | producto#214 513 7.7 62 26 | 1 oblea / 1 wafer=45 |  | marca=Arcor · ean=7790580131586 · off · fibra=1.2 · azucares=48 · saturadas=12 · sodio=167
+Chocolate Cofler 50% cacao | Cofler 50% cocoa chocolate | producto#215 560 4.6 51 37 | 4 cuadraditos / 4 squares=18 · 1 tableta / 1 bar=55 |  | marca=Arcor · ean=7790580131319 · off · fibra=4.7 · azucares=47 · saturadas=22 · sodio=0
+Chocolate amargo 70% Águila | Águila 70% dark chocolate | producto#216 562 8.6 37.6 41.9 | 21 g / 21 g=21 · 1 tableta / 1 bar=150 |  | marca=Águila · ean=7790580124397 · off · fibra=8.6 · azucares=29 · saturadas=24.3 · sodio=0
+Chocolate amargo 60% Águila | Águila 60% dark chocolate | producto#217 522 8.5 37 37 | 21 g / 21 g=21 · 1 tableta / 1 bar=150 | águila extra fino | marca=Águila · ean=7790580109882 · off · fibra=9 · azucares=34 · saturadas=23 · sodio=25
+Chocolate semiamargo para taza Águila | Águila semisweet drinking chocolate | producto#218 483 6.4 61 24 | 1½ barritas / 1½ bars=21 · 1 tableta / 1 bar=100 | chocolate Águila para taza | marca=Águila · ean=7790407031013 · off · fibra=6.5 · azucares=54 · saturadas=13 · sodio=17
+Cobertura de chocolate semiamargo Águila | Águila semisweet chocolate coating | producto#219 567 4.5 50 38 | 25 g / 25 g=25 | baño de repostería semiamargo Águila* (AR UY) | marca=Águila · ean=7790580131487 · off · fibra=3.5 · azucares=48 · saturadas=21 · sodio=42
+Salsa de chocolate Águila | Águila chocolate sauce | producto#220 300 3.7 55 7.3 | 1½ cucharadas / 1½ tbsp=20 |  | marca=Águila · ean=7790580107925 · off · fibra=1.1 · azucares=54 · saturadas=4.3 · sodio=130
+Chocolate D'Or Choco Trifle | D'Or Choco Trifle chocolate | producto#221 553 6.6 57 33 | 20 g / 20 g=20 |  | marca=Águila · ean=7790580131111 · off · fibra=0 · azucares=41 · saturadas=18 · sodio=141
+Chocolate con leche y maní Arcor | Arcor milk chocolate with peanuts | producto#222 540 8.5 55 32 | 1 tableta / 1 bar=25 |  | marca=Arcor · ean=7790580124960 · off · fibra=2.3 · azucares=53 · saturadas=16 · sodio=83
+Chocolate con leche Arcor | Arcor milk chocolate | producto#223 527 5.9 61 29 | 1 tableta / 1 bar=25 |  | marca=Arcor · ean=7790580607210 · off · fibra=0 · azucares=59 · saturadas=17 · sodio=104
+Chocolate con leche Milka | Milka milk chocolate | producto#224 532 6.8 60 30.4 | 25 g / 25 g=25 |  | marca=Milka · ean=7622300990114 · off · azucares=56 · saturadas=17.6 · sodio=45
+Bombones Privilegio | Privilegio chocolates | producto#225 499 4.8 62 26 | 5 bombones / 5 pieces=30 |  | marca=Arcor · ean=7802225510196 · off · fibra=1.4 · azucares=61 · saturadas=16 · sodio=100
+Confites Rocklets de maní | Rocklets peanut candies | producto#226 492 9.1 57 25 | 10 unidades / 10 pieces=20 |  | marca=Arcor · ean=7802225427579 · off · fibra=3.3 · azucares=56 · saturadas=11 · sodio=34
+Confites Chubi | Chubi chocolate candies | producto#227 481 2.7 70 21 | 30 unidades / 30 pieces=24 |  | marca=Arcor · ean=7802225426336 · off · fibra=2.3 · azucares=69 · saturadas=13 · sodio=29
+Chocolate Sapito relleno de leche y cereales | Sapito milk and cereal filled chocolate | producto#228 531 5.8 60 30 | 1 unidad / 1 piece=10 · 2 unidades / 2 pieces=20 | sapito | marca=Arcor · ean=78020757 · off · fibra=1.2 · azucares=52 · saturadas=19 · sodio=87
+Chocolate Talento con avellanas | Talento hazelnut chocolate | producto#229 544 7.6 52 34.4 | 4 cuadraditos / 4 squares=25 · 1 tableta / 1 bar=85 |  | marca=Garoto · ean=7891008121728 · off · fibra=4 · azucares=48 · saturadas=17.2 · sodio=56
+Chocolate Talento con nueces de Brasil | Talento Brazil nut chocolate | producto#230 555 7 51 35 | 1 tableta / 1 bar=25 | chocolate Talento con castañas de Pará* (AR UY) | marca=Garoto · ean=78907478 · off · fibra=4 · azucares=51 · saturadas=18 · sodio=61
+Chocolate Prestigio | Prestigio coconut chocolate bar | producto#231 467 2.1 66.7 20.3 | 1 barra / 1 bar=33 |  | marca=Nestlé · ean=7891000460207 · off · fibra=3.6 · azucares=54.5 · saturadas=15.2 · sodio=48
+Chocolate Crunch | Crunch chocolate | producto#232 532 8.4 60 28.4 | 6 cuadraditos / 6 squares=25 · 1 tableta / 1 bar=90 |  | marca=Nestlé · ean=7891000277072 · off · fibra=0 · azucares=48 · saturadas=17.2 · sodio=140
+Chocolate Charge | Charge chocolate bar | producto#233 488 6.5 57.5 25 | 1 barra / 1 bar=40 |  | marca=Nestlé · ean=7891000464915 · off · fibra=2.3 · azucares=52.5 · saturadas=10.8 · sodio=195
+Chocolate amargo Haas | Haas dark chocolate | producto#234 528 9.2 40 36.8 | 25 g / 25 g=25 |  | marca=Haas · ean=7730903751503 · off · saturadas=21.2
+// Las kcal salen de los kJ de OFF (1.655), que cierran con 4/4/9; las 426 de la ficha no.
+Turrón de maní Arcor | Arcor peanut nougat bar | producto#235 396 8.8 73 7.9 | 1 turrón / 1 bar=25 |  | marca=Arcor · ean=77940131 · off · fibra=1.6 · azucares=40 · saturadas=1.3 · sodio=51
+Turrón de maní Misky | Misky peanut nougat bar | producto#236 390 6.8 73 7.9 | 1 turrón / 1 bar=25 |  | marca=Misky · ean=77940148 · off · fibra=1.6 · azucares=39 · saturadas=1.3 · sodio=49
+Turrón de maní sabor chocolatada | Chocolate milk flavored peanut nougat bar | producto#237 390 7 73 7.9 | 1 turrón / 1 bar=25 |  | marca=Arcor · ean=77975737 · off · fibra=2 · azucares=40 · saturadas=1.3 · sodio=44
+Turrón de maní con frutas | Peanut nougat with fruit | producto#238 430 7.8 68 14 | 20 g / 20 g=20 · 1 turrón / 1 bar=120 |  | marca=Arcor · ean=7790580283155 · off · fibra=2.3 · azucares=43 · saturadas=2.6 · sodio=28
+Turrón de maní Portezuelo | Portezuelo peanut nougat | producto#239 460 9.5 70 15.5 | 1 turrón / 1 bar=20 |  | marca=Portezuelo · ean=7730236000514 · off · fibra=5 · saturadas=1.5 · sodio=75
+Turrón de maní bañado Portezuelo | Portezuelo chocolate-coated peanut nougat | producto#240 475 8.5 70 18 | 1 turrón / 1 bar=20 |  | marca=Portezuelo · ean=7730236000545 · off · fibra=5 · saturadas=2 · sodio=150
+Oblea Nugatón | Nugatón wafer bar | producto#241 504 5.2 59.3 28.1 | 1 barra / 1 bar=27 |  | marca=Bonafide · ean=7792360072447 · off · fibra=2.2 · saturadas=18.5 · sodio=96
+Gomitas Mogul Dinos | Mogul Dinos gummies | producto#242 323 5.4 75 0 | 1 paquete / 1 package=30 |  | marca=Arcor · ean=7790580116958 · off · fibra=0 · azucares=51 · saturadas=0 · sodio=31
+Gomitas Mogul de frutas | Mogul fruit gummies | producto#243 326 4.3 77.1 0 | 1 rollo / 1 roll=35 |  | marca=Arcor · ean=7790580116965 · off · azucares=54.3 · sodio=117
+Gomitas Mogul Monstruitos | Mogul Monstruitos gummies | producto#244 323 5.7 76.7 0 | 1 paquete / 1 package=30 |  | marca=Arcor · ean=7790580117047 · off · fibra=0 · azucares=53.3 · saturadas=0 · sodio=33
+Gomitas Mogul Cerebritos | Mogul Cerebritos filled gummies | producto#245 323 3.8 77 0 | 1 paquete / 1 package=30 |  | marca=Arcor · ean=7790580169312 · off · fibra=0 · azucares=53 · saturadas=0 · sodio=33
+Pastillas Mentitas | Mentitas mints | producto#246 396 0 99 0 | 5 pastillas / 5 mints=6 · 1 paquete / 1 package=25 |  | marca=Ambrosoli · ean=7802200132696 · off · azucares=99 · sodio=17
+Barra de cereal Flow de miel y almendras | Flow honey almond cereal bar | producto#247 497 12.3 50 28 | 1 barra / 1 bar=30 |  | marca=Georgalos · ean=7790380020233 · off · fibra=1.3 · azucares=16 · saturadas=5.3 · sodio=83
+Barra de cereal Cereal Mix light de manzana y avena | Cereal Mix light apple and oat bar | producto#248 269 3.1 70 2.5 | 1 barra / 1 bar=23 |  | marca=Arcor · ean=77915818 · off · fibra=14 · azucares=13 · saturadas=0.3 · sodio=96
+Barra de cereal Cereal Mix de fresa y chocolate | Cereal Mix strawberry and chocolate bar | producto#249 329 3.6 64 9.7 | 1 barra / 1 bar=26 | barra de cereal Cereal Mix de frutilla y chocolate* (AR UY) | marca=Arcor · ean=77981455 · off · fibra=10 · azucares=15 · saturadas=3.6 · sodio=233
+Barra de frutos secos | Nut bar | producto#250 471 14.3 31.4 31.4 | 1 barra / 1 bar=35 |  | marca=Bimbo · ean=7730117005966 · off · fibra=15.4 · azucares=12 · saturadas=3.4
+Flan con caramelo | Flan with caramel | producto#251 152 3.7 23.2 4.9 | 1 envase / 1 cup=95 |  | marca=Danette · ean=7730922255273 · off · fibra=0.95
+// OFF tenía los valores de la unidad (65 g) como si fueran por 100 g. Valores de la tabla de
+// conaprole.uy (22/10/2026).
+Helado Máxima de chocolate | Máxima chocolate ice cream bar | producto#252 348 4.5 33.8 21.5 | 1 helado / 1 bar=65 | máxima chocolate holandés | marca=Conaprole · ean=7730105903373 · off · fibra=0 · saturadas=15.4 · sodio=45
+Helado de vainilla con chispas de chocolate | Chocolate chip vanilla ice cream | producto#253 212 4.5 25 10.3 | 1 bola / 1 scoop=60 | helado de crema americana granizada* (AR UY) | marca=Conaprole · ean=7730105925108 · off · fibra=0.33 · saturadas=6.7 · sodio=53
+Helado Cofler Block | Cofler Block ice cream bar | producto#254 340 6.1 25 24 | 1 helado / 1 bar=63 |  | marca=Arcor · ean=7790580108397 · off · fibra=2 · azucares=23 · saturadas=14 · sodio=71
+Helado Cofler con almendras | Cofler almond ice cream bar | producto#255 332 5.1 26 23 | 1 helado / 1 bar=63 |  | marca=Arcor · ean=7790580395803 · off · fibra=1.2 · azucares=25 · saturadas=13 · sodio=72
+Cono de helado de vainilla y dulce de leche | Vanilla and dulce de leche ice cream cone | producto#256 247 4.2 31 12 | 1 cono / 1 cone=80 | cucurucho de crema americana y dulce de leche* (AR UY) | marca=Arcor · ean=7790580130671 · off · fibra=0.8 · azucares=20 · saturadas=9 · sodio=108
+
+# bebidas
+// Las dos fichas de OFF dan 42 kcal por 100 ml; los carbohidratos son esas kcal (10,5 g, como en la
+// etiqueta de Coca-Cola de México). El sodio no coincide entre ellas y queda afuera.
+Coca-Cola original | Coca-Cola original | producto#257 40 0 10.1 0 | 1 vaso (200 ml) / 1 glass (200 ml)=208 · 1 lata (354 ml) / 1 can (354 ml)=368 · 1 botella (500 ml) / 1 bottle (500 ml)=520 | coca cola · coca | marca=Coca-Cola · ean=7730197232962,7730197301958 · off · densidad=1.04 · fibra=0 · azucares=10.1 · saturadas=0
+// El sodio es el de salus.com.uy (10 mg por litro); el de OFF no coincidía.
+Agua mineral Salus | Salus mineral water | producto#258 0 0 0 0 | 1 vaso (250 ml) / 1 glass (250 ml)=250 · 1 botella (500 ml) / 1 bottle (500 ml)=500 · 1 botella (1,5 litros) / 1 bottle (1.5 liters)=1500 | agua salus sin gas | marca=Salus · ean=7730400001729 · off · densidad=1 · fibra=0 · azucares=0 · saturadas=0 · sodio=1
+// Valores de salus.com.uy (22/10/2026): OFF tenía los de 200 ml como si fueran de 100.
+Agua saborizada Salus Frutté de naranja | Salus Frutté orange flavored water | producto#259 13 0 2.9 0 | 1 vaso (200 ml) / 1 glass (200 ml)=202 · 1 botella (500 ml) / 1 bottle (500 ml)=505 | frutté naranja | marca=Salus · ean=7730400001644 · off · densidad=1.01 · azucares=2.9 · saturadas=0 · sodio=13
+Jugo de naranja light | Light orange juice drink | producto#260 21 0 4.9 0 | 1 vaso (200 ml) / 1 glass (200 ml)=204 |  | marca=BC · ean=7790040110380 · off · densidad=1.02 · fibra=0 · azucares=4.9 · saturadas=0 · sodio=5.9
+Jugo multifruta light | Light multifruit juice drink | producto#261 21 0 4.9 0 | 1 vaso (200 ml) / 1 glass (200 ml)=204 |  | marca=BC · ean=7793360106002 · off · densidad=1.02 · fibra=0 · azucares=4.9 · saturadas=0 · sodio=8.8
+Jugo de manzana Baggio Pronto | Baggio Pronto apple juice drink | producto#262 46 0 11.4 0 | 1 cajita (200 ml) / 1 juice box (200 ml)=210 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | baggio pronto manzana | marca=Baggio · ean=01261615 · off · densidad=1.05 · fibra=0 · azucares=11.4 · saturadas=0 · sodio=14
+Jugo de naranja exprimido Citric | Citric fresh-squeezed orange juice | producto#263 39 0.63 9.1 0 | 1 vaso (200 ml) / 1 glass (200 ml)=208 |  | marca=Citric · ean=7798085680882 · off · densidad=1.04 · fibra=0.53 · azucares=8.2 · saturadas=0 · sodio=0
+Jugo de naranja Dairyco | Dairyco orange juice drink | producto#264 25 0.29 5.9 0 | 1 vaso (200 ml) / 1 glass (200 ml)=204 |  | marca=Dairyco · ean=7730203108946 · off · densidad=1.02 · sodio=18
+Bebida de soja Ades de manzana | Ades apple soy drink | producto#265 21 0.58 3.5 0.45 | 1 vaso (200 ml) / 1 glass (200 ml)=208 | ades manzana | marca=Ades · ean=7790895643835 · off · densidad=1.04 · fibra=0 · azucares=2.4 · saturadas=0 · sodio=9.6
+Bebida de soja Ades de naranja | Ades orange soy drink | producto#266 21 0.58 3.5 0.45 | 1 vaso (200 ml) / 1 glass (200 ml)=208 | ades naranja | marca=Ades · ean=7790895643842 · off · densidad=1.04 · azucares=2.4 · saturadas=0 · sodio=9.6
+Café instantáneo Nescafé Tradición | Nescafé Tradición instant coffee | producto#267 261 16.4 48.5 0.2 | 1 cucharadita / 1 tsp=1.8 | nescafé | marca=Nescafé · ean=7613287290380 · off · fibra=0 · azucares=0.5 · sodio=90
+Chocolate en polvo La Cosechera | La Cosechera cocoa drink mix | producto#268 340 7.5 75 3.5 | 2 cucharadas / 2 tbsp=20 | cocoa La Cosechera* (UY) | marca=La Cosechera · ean=7730993010054 · off · saturadas=2 · sodio=0
+
+# alcohol
+Cerveza Corona Extra | Corona Extra beer | producto#269 42 0.3 4 0 | 1 botella (355 ml) / 1 bottle (355 ml)=359 · 1 vaso (200 ml) / 1 glass (200 ml)=202 | corona | marca=Corona · ean=75032715 · off · densidad=1.01 · azucares=0.2 · saturadas=0 · alcohol=3.5
+Cerveza sin alcohol Stella Artois | Stella Artois non-alcoholic beer | producto#270 15 0.57 3.3 0 | 1 botella (330 ml) / 1 bottle (330 ml)=333 · 1 vaso (200 ml) / 1 glass (200 ml)=202 | stella artois 0,0 | marca=Stella Artois · ean=7792798010059 · off · densidad=1.01 · fibra=0 · saturadas=0 · sodio=4.5
+
+# snacks
+Papas Pringles de crema y cebolla | Pringles sour cream and onion | producto#271 544 4.8 60 32 | 12 papas / 12 crisps=25 · 1 tubo / 1 can=124 | papas chips Pringles crema y cebolla* (AR UY) | marca=Pringles · ean=0038000184949 · off · fibra=3.6 · azucares=1.6 · saturadas=8.8 · sodio=404
+Papas Pringles barbacoa | Pringles barbecue | producto#272 518 5 57 30 | 12 papas / 12 crisps=25 · 1 tubo / 1 can=124 | papas chips Pringles barbacoa* (AR UY) | marca=Pringles · ean=0038000185069 · off · fibra=3.8 · azucares=2.3 · saturadas=8.5 · sodio=416
+Papas Pringles de pizza | Pringles pizza | producto#273 516 4.7 54.3 31.1 | 30 g / 30 g=30 · 1 tubo / 1 can=124 | papas chips Pringles pizza* (AR UY) | marca=Pringles · ean=0038000185083 · off · fibra=2.4 · azucares=3.2 · saturadas=8.8 · sodio=648
+Papas fritas María Bonita | María Bonita potato chips | producto#274 480 6.4 64 23.2 | 25 g / 25 g=25 | papas chips María Bonita* (AR UY) | marca=María Bonita · ean=7730303012334 · off · fibra=4.4
+Galletas Rex | Rex crackers | producto#275 478 8.6 62 22 | 15 galletas / 15 crackers=31 · 1 paquete / 1 package=125 | galletitas Rex* (AR UY) | marca=Bagley · ean=7790040719804 · off · fibra=1.9 · azucares=5.1 · saturadas=5.3 · sodio=1038
+Galletas Kesitas | Kesitas cheese crackers | producto#276 473 10 60 22 | 26 galletas / 26 crackers=25 · 1 paquete / 1 package=125 | galletitas Kesitas* (AR UY) | marca=Bagley · ean=7790040173200 · off · fibra=2.2 · azucares=1.2 · saturadas=5.3 · sodio=1124
+Galletas Saladix de pizza | Saladix pizza crackers | producto#277 439 10 71 13 | 1 paquete / 1 package=30 | galletitas Saladix* (AR UY) | marca=Arcor · ean=7790580387006 · off · fibra=2.1 · azucares=9.4 · saturadas=1.9 · sodio=912
+Galletas de arroz Saman | Saman rice cakes | producto#278 360 8.3 76.7 0 | 3 galletas / 3 cakes=30 |  | marca=Saman · ean=7730115717106 · off · fibra=4 · azucares=0 · saturadas=0 · sodio=267
+Mini galletas de arroz Saman | Saman mini rice cakes | producto#279 360 8.3 76.7 0 | 30 g / 30 g=30 |  | marca=Saman · ean=7730115000116 · off · sodio=300
+Galletas de arroz integral dulces | Sweet brown rice cakes | producto#280 363 8.3 80 0 | 30 g / 30 g=30 |  | marca=Splendid · ean=7730115717403 · off · fibra=0 · saturadas=0 · sodio=0
+Galletas de arroz integral Natural Rice | Natural Rice brown rice cakes | producto#281 363 8.3 80 0 | 30 g / 30 g=30 |  | marca=Natural Rice · ean=7730984010018 · off · fibra=3 · azucares=8.3 · saturadas=0 · sodio=600
+Galletas de arroz integral con chía | Brown rice cakes with chia | producto#282 343 7.7 76.7 0 | 3 galletas / 3 cakes=30 |  | marca=Las Acacias · ean=7730430003991 · off · fibra=8.7 · saturadas=0 · sodio=360
+Galletas de lentejas | Lentil crackers | producto#283 370 13.3 73.3 0 | 4 galletas / 4 cakes=30 |  | marca=La Abundancia · ean=7730195018230 · off · fibra=8 · sodio=363
+
+# salsas
+Mayonesa Natura | Natura mayonnaise | producto#284 317 0 7.5 30.8 | 1 cucharada / 1 tbsp=12 |  | marca=Natura · ean=7791866001364 · off · fibra=0 · azucares=0 · saturadas=3.3 · sodio=833
+Mayonesa con aceite de aguacate | Avocado oil mayonnaise | producto#285 225 0 9.2 20.8 | 1 cucharada / 1 tbsp=12 | mayonesa con aceite de palta* (AR UY) | marca=Hellmann's · ean=7794000002340 · off · fibra=0 · azucares=4.2 · saturadas=2.5 · sodio=742
+Mostaza Menoyo | Menoyo mustard | producto#286 92 0 10.8 5.8 | 1 cucharada / 1 tbsp=12 |  | marca=Menoyo · ean=7790130001635 · off · fibra=0 · saturadas=0
+Salsa filetto | Filetto tomato sauce | producto#287 32 0.67 7 0 | 3 cucharadas / 3 tbsp=60 |  | marca=Arcor · ean=7790580133184 · off · fibra=1.3 · azucares=4.5 · saturadas=0 · sodio=290
+Salsa de tomate Gourmet | Gourmet tomato sauce | producto#288 30 1 5.2 0.33 | 3 cucharadas / 3 tbsp=60 |  | marca=Gourmet · ean=7730306002370 · off
+Puré de tomate Conaprole | Conaprole tomato puree | producto#289 37 1.3 7.7 0 | 3 cucharadas / 3 tbsp=60 | pulpa de tomate Conaprole* (AR UY) | marca=Conaprole · ean=7730105025402 · off · fibra=1.2 · sodio=443
+Puré de tomate tamizado Deambrosi | Deambrosi strained tomato puree | producto#290 20 0.67 3.7 0.17 | 3 cucharadas / 3 tbsp=60 | pulpa de tomate tamizada Deambrosi* (AR UY) | marca=Deambrosi · ean=7730306000604 · off · fibra=0.17 · saturadas=0 · sodio=160
+Puré de tomate Deambrosi | Deambrosi tomato puree | producto#291 30 1 5.3 0.33 | 3 cucharadas / 3 tbsp=60 | pulpa de tomate Deambrosi* (AR UY) | marca=Deambrosi · ean=7730306000017 · off · fibra=0.33 · sodio=237
+Aceitunas verdes Nucete | Nucete green olives | producto#292 217 1 1.5 23 | 4 aceitunas / 4 olives=20 |  | marca=Nucete · ean=7792070004523 · off · fibra=3.4 · azucares=0.3 · saturadas=5.2 · sodio=2407
+Aceitunas verdes sin carozo Nucete | Nucete pitted green olives | producto#293 149 0.6 2.1 15 | 4 aceitunas / 4 olives=20 | aceitunas descarozadas Nucete* (AR UY) | marca=Nucete · ean=7792070000556 · off · fibra=2.4 · azucares=0.5 · saturadas=3.5 · sodio=2515
+Aceitunas negras Nucete | Nucete black olives | producto#294 159 0.9 6.4 14 | 4 aceitunas / 4 olives=20 |  | marca=Nucete · ean=7792070000532 · off · fibra=5.5 · azucares=0.6 · saturadas=2.9 · sodio=2043
+Aceitunas verdes Vanoli | Vanoli green olives | producto#295 210 0 6 20 | 6 aceitunas / 6 olives=20 |  | marca=Vanoli · ean=7790127000269 · off · fibra=5 · saturadas=4 · sodio=1800
+
+# platos
+Empanada de queso y aceitunas | Cheese and olive empanada | producto#296 291 16 26 14 | 1 empanada / 1 empanada=70 |  | marca=Pangiorno · ean=7730908700353 · off · fibra=1.6 · saturadas=7 · sodio=804
+Pizza a la piedra Conaprole | Conaprole stone-baked pizza | producto#297 262 12 35 8.2 | 100 g / 100 g=100 |  | marca=Conaprole · ean=7730105201028 · off · fibra=1.7 · saturadas=4
+Lehmeyun | Lahmajoun | producto#298 219 13.1 25 7.5 | 160 g / 160 g=160 | lahmacun · pizza armenia | marca=Sarkis · ean=7730988240015 · off · fibra=1.2 · saturadas=2.9
+Milanesa de soja con mozzarella | Soy cutlet with mozzarella | producto#299 351 11.5 31 20 | 100 g / 100 g=100 | milanesa de soja con muzzarella* (AR UY) | marca=Soy Good · ean=7730991790057 · off · fibra=3
+Hamburguesa de lentejas | Lentil burger | producto#300 210 10 36 1.2 | 1 hamburguesa / 1 patty=125 | medallón de lentejas* (AR UY) | marca=Oro Verde · ean=7730991100047 · off · fibra=4.9
+Hamburguesa sabor falafel | Falafel burger | producto#301 146 8.4 22.5 2.2 | 160 g / 160 g=160 |  | marca=JuicyLucy · ean=7730993320030 · off · fibra=2.5
+Hamburguesa de lentejas y perejil | Lentil and parsley burger | producto#302 151 7.5 19.4 5.9 | 160 g / 160 g=160 | medallón de lentejas y perejil* (AR UY) | marca=JuicyLucy · ean=7730993320023 · off · fibra=8.1 · saturadas=0.75
+Hamburguesa de soja | Soy burger | producto#303 173 13.8 27.5 0.88 | 1 hamburguesa / 1 patty=80 | medallón de soja* (AR UY) | marca=Trisoja · ean=7730172639120 · off · fibra=0.88
+Croquetas de brócoli | Broccoli croquettes | producto#304 136 4.1 20 4.9 | 80 g / 80 g=80 |  | marca=Cooking Life · ean=7730953100306 · off · fibra=2.2 · saturadas=0.75
+Sopa de verduras Gourmet | Gourmet vegetable soup | producto#305 44 0.9 9.1 0.1 | 1 plato / 1 bowl=250 |  | marca=Gourmet · ean=7730306001960 · off · fibra=0.4
+
+# suplementos
+Proteína de suero de chocolate | Chocolate whey protein | producto#306 413 80.6 6.1 7.4 | 1 medida / 1 scoop=31 | whey ENA · proteína ENA · whey protein isolado | marca=ENA · ean=7792981062032 · off · fibra=0 · azucares=4.5 · saturadas=4.8 · sodio=177
