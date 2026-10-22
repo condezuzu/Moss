@@ -4,8 +4,12 @@
   },
   "pestanas": {
     "inicio": "Inicio",
+    "comida": "Comida",
+    "progreso": "Progreso",
+    "sueno": "Sueño",
     "habitos": "Hábitos",
-    "ajustes": "Ajustes"
+    "perfil": "Perfil",
+    "mas": "Agregar"
   },
   "cielo": {
     "armandose": "El cielo se está armando.",
@@ -94,46 +98,6 @@
       "empezar": "Empezar"
     }
   },
-  "ajustes": {
-    "titulo": "Ajustes",
-    "calidad": "Calidad de las animaciones",
-    "idioma": "Idioma",
-    "salud": "Apple Salud",
-    "ascent": "Vincular con Ascent",
-    "cuenta": "Cuenta",
-    "metas": {
-      "titulo": "Metas",
-      "fila": "{kcal} kcal",
-      "porDia": "kcal por día",
-      "quien": "Quién las pone",
-      "moss": "Moss",
-      "aMano": "A mano",
-      "mossTexto": "Moss las ajusta cada semana con tu peso y lo que comes.",
-      "aManoTexto": "Las pones tú. Moss sigue midiendo tu gasto, pero no las cambia.",
-      "reparto": "Cómo se reparten",
-      "tusMacros": "Tus macros",
-      "estilos": {
-        "equilibrada": [
-          "Equilibrada",
-          "Proteína por kilo, al menos un 27 % de grasas y el resto en carbohidratos."
-        ],
-        "bajaEnGrasas": [
-          "Baja en grasas",
-          "Las grasas al 20 %: más lugar para los carbohidratos."
-        ],
-        "bajaEnCarbohidratos": [
-          "Baja en carbohidratos",
-          "Un cuarto de las kcal en carbohidratos y el resto en grasas."
-        ],
-        "keto": [
-          "Keto",
-          "30 g de carbohidratos por día."
-        ]
-      },
-      "semana": "Repartir la semana",
-      "semanaTexto": "Más los días que elijas y un poco menos el resto. La semana suma lo mismo: se mueven los carbohidratos."
-    }
-  },
   "comida": {
     "comidas": {
       "desayuno": "Desayuno",
@@ -157,24 +121,15 @@
     "semanaDel": "Semana del {num}",
     "rangoSemana": "{desde} – {hasta} {mes}",
     "registrar": "Registrar comida",
-    "teQuedan": "kcal te quedan",
-    "deMas": "kcal de más",
-    "enElDia": "kcal en el día",
-    "planificadas": "kcal planificadas",
-    "deMeta": "{comido} de {meta} kcal",
     "metaDe": "Meta: {n} kcal",
     "proteina": "Proteína",
     "carbohidratos": "Carbohidratos",
     "grasas": "Grasas",
     "gramosDe": "{n} / {meta} g",
-    "agua": "Agua",
-    "aguaDe": "{n} de {meta} L",
-    "sumarVaso": "Sumar un vaso de 250 ml",
     "tuDia": "Tu día",
     "promedio": "Promedio por día",
     "diasRegistrados": "{n} de {total} días registrados",
     "sinRegistros": "Sin registros.",
-    "pesoYGasto": "Peso y gasto",
     "ahora": "Ahora",
     "agregar": "Agregar",
     "sumar": "Sumar",
@@ -185,17 +140,6 @@
     "planificadoTexto": "Se confirma con un toque cuando llega el día.",
     "foto": "Foto",
     "masAlimentos": "y {n} más",
-    "peso": "Peso",
-    "tendencia": "tendencia",
-    "porSemana": "{n} kg por semana",
-    "anotarPeso": "Anotar",
-    "gasto": "Gasto estimado",
-    "porDia": "kcal por día",
-    "fechaControl": "{dia} {num} {mes}",
-    "control": "Último control · {fecha}",
-    "controlTexto": "Tu gasto real es de unas {gasto} kcal por día. La meta pasa de {antes} a {ahora} kcal.",
-    "comoSeCalcula": "Cómo se calcula",
-    "comoSeCalculaTexto": "En las últimas 3 semanas comiste en promedio {promedio} kcal por día y tu tendencia cambió {cambio} kg. Moss toma un cuarto de la diferencia con lo que medía antes, para que la meta cambie de a poco.",
     "buscar": "¿Qué comiste?",
     "escanear": "Escanear el código de barras",
     "etiqueta": "Foto de la etiqueta",
@@ -278,7 +222,375 @@
     "nombre": "Nombre",
     "opcional": "opcional",
     "kcal": "kcal",
-    "cargaRapidaTexto": "Si dejas las calorías vacías, salen de los macros."
+    "cargaRapidaTexto": "Si dejas las calorías vacías, salen de los macros.",
+    "deMetaCorto": "de {meta} kcal",
+    "quedanKcal": "Te quedan {n} kcal",
+    "deMasKcal": "{n} kcal de más",
+    "cenaDeMentira": "Cena de prueba",
+    "aLa": {
+      "desayuno": "al desayuno",
+      "almuerzo": "al almuerzo",
+      "merienda": "a la merienda",
+      "cena": "a la cena",
+      "snack": "al snack"
+    }
+  },
+  "inicio": {
+    "titulo": "Hoy",
+    "bloques": {
+      "calorias": "Calorías y macros",
+      "objetivo": "Progreso al objetivo",
+      "peso": "Peso y balance",
+      "cielo": "Tu día en el cielo",
+      "sueno": "Sueño de anoche",
+      "agua": "Agua"
+    },
+    "teQuedan": "Te quedan",
+    "deMas": "De más",
+    "kcalDe": "kcal · {comido} de {meta}",
+    "gramos": "{n} g",
+    "listo": "Listo",
+    "deMeta": "{comido} de {meta} g",
+    "llegarias": "llegarías a {kg} kg",
+    "yaLlegaste": "llegaste a tu meta",
+    "tendencia": "tendencia",
+    "ritmo": "{ritmo} kg por semana · el plan, {plan}",
+    "enSieteDias": "{n} kg en 7 días",
+    "kcalPorDia": "kcal por día",
+    "balanceTexto": "balance de 7 días, contra un gasto de {gasto}",
+    "encendidas": "{n} de {total}",
+    "dormiste": "Dormiste {h}",
+    "pasos": "{n} pasos",
+    "calidad": "Calidad {n}",
+    "horario": "de {desde} a {hasta}",
+    "deLitros": "de {meta} L",
+    "personalizar": "Personalizar Inicio",
+    "personalizarTitulo": "Tu Inicio",
+    "personalizarTexto": "Elige qué bloques ves y arrástralos para ordenarlos.",
+    "personalizarNota": "Al tocar un bloque en Inicio, vas a su sección.",
+    "mover": "Mover"
+  },
+  "mas": {
+    "titulo": "Agregar",
+    "agregarComida": "Agregar comida",
+    "registrarPeso": "Registrar peso",
+    "ultimoPeso": "{cuando}: {kg} kg",
+    "hoy": "Hoy",
+    "cargaRapida": "Carga rápida",
+    "caloriasYMacros": "Calorías y macros",
+    "agua": "Agua",
+    "sumarVaso": "Sumar un vaso de 250 ml",
+    "vasoSumado": "Un vaso de agua más",
+    "recientes": "Recientes",
+    "guardadas": "Comidas guardadas",
+    "registrado": "{que}: agregado {donde}",
+    "medidas": "Medidas del cuerpo",
+    "medidasTexto": "Cintura, cuello, cadera, brazos…",
+    "medidasGuardadas": "Medidas guardadas",
+    "pesoHoy": "Hoy. Mejor en ayunas y después de ir al baño.",
+    "tendencia": "Tendencia: {kg} kg",
+    "pesoNota": "Con una balanza conectada a Salud, el peso llega solo. Moss usa la tendencia, no el número de un día.",
+    "pesoGuardado": "Peso guardado: {kg} kg"
+  },
+  "cuerpo": {
+    "sitios": {
+      "cintura": "Cintura",
+      "cuello": "Cuello",
+      "cadera": "Cadera",
+      "brazo": "Brazo",
+      "pecho": "Pecho",
+      "muslo": "Muslo"
+    },
+    "como": {
+      "cinturaHombre": "A la altura del ombligo, de pie y con la panza relajada. Mide al final de una exhalación normal, sin meter la panza.",
+      "cinturaMujer": "En la parte más angosta, entre el ombligo y el esternón. Si no se nota, mide un par de veces y quédate con la menor.",
+      "cuello": "Justo debajo de la nuez, con la cinta derecha alrededor del cuello, el mentón al frente y los hombros bajos. Firme: medido por uno mismo suele dar de más.",
+      "cadera": "En la parte más ancha de la cola, mirándote de costado, con los pies juntos.",
+      "brazo": "A mitad de camino entre la punta del hombro y el codo, con el brazo relajado al costado.",
+      "pecho": "A la mitad del esternón, con la cinta por debajo de las axilas, después de exhalar.",
+      "muslo": "A mitad de camino entre el pliegue de la ingle y el borde de arriba de la rodilla."
+    },
+    "comoMedir": "Cómo medir",
+    "consejos": [
+      "Una cinta que no se estire, sobre la piel.",
+      "De pie, con los pies juntos y los brazos al costado, relajado.",
+      "La cinta derecha, paralela al piso: un espejo ayuda.",
+      "Firme, sin hundir la piel.",
+      "Al final de una exhalación normal: sin meter la panza.",
+      "Siempre a la misma hora, antes de comer y después de ir al baño.",
+      "Mide dos veces; si difieren más de 1 cm, una tercera, y anota el promedio."
+    ],
+    "ultima": "última: {fecha}",
+    "usaHombre": "La estimación usa la cintura y el cuello, con tu altura. Las demás medidas sirven para seguir tu progreso.",
+    "usaMujer": "La estimación usa la cintura, la cadera y el cuello, con tu altura. Las demás medidas sirven para seguir tu progreso.",
+    "grasaEstimada": "Grasa corporal estimada",
+    "rango": "{desde} a {hasta} %",
+    "rangoCorto": "{desde} a {hasta} %",
+    "estimacion": "estimación con cinta",
+    "aviso": "Es una estimación a partir de tus medidas, no una medición: un estudio de laboratorio (DEXA) podría dar 3 o 4 puntos más o menos. Es menos precisa con muy poca grasa, mucho músculo o mucha grasa, y no sirve en el embarazo ni antes de los 18. Mide siempre igual y mira la tendencia.",
+    "comoSeEstimaHombre": "Con el método de la Marina de EE. UU. (Hodgdon y Beckett, 1984): la densidad del cuerpo sale de la cintura menos el cuello y de tu altura, y la grasa, de la fórmula de Siri. El rango es la estimación más y menos lo que cambia si la cinta se corre 1 cm en la cintura y medio en el cuello, redondeado a puntos enteros. Con muy poca grasa o con mucha, se abre un punto más para cada lado.",
+    "comoSeEstimaMujer": "Con el método de la Marina de EE. UU. (Hodgdon y Beckett, 1984): la densidad del cuerpo sale de la cintura más la cadera menos el cuello y de tu altura, y la grasa, de la fórmula de Siri. El rango es la estimación más y menos lo que cambia si la cinta se corre 1 cm en la cintura y en la cadera y medio en el cuello, redondeado a puntos enteros. Con muy poca grasa o con mucha, se abre un punto más para cada lado."
+  },
+  "progreso": {
+    "titulo": "Progreso",
+    "objetivo": "Objetivo",
+    "estados": {
+      "llegaste": "Llegaste",
+      "enCamino": "En camino",
+      "despacio": "Más despacio",
+      "quieto": "Sin cambios",
+      "alReves": "Al revés",
+      "estable": "Estable",
+      "seMueve": "Cambiando",
+      "sinMeta": "Sin peso meta",
+      "faltanDatos": "Faltan datos"
+    },
+    "objetivoA": {
+      "bajar": "Bajar a {kg} kg",
+      "subir": "Subir a {kg} kg"
+    },
+    "objetivos": {
+      "bajar": "Bajar",
+      "mantener": "Mantener",
+      "subir": "Subir"
+    },
+    "mantenerEn": "Mantener {kg} kg",
+    "llegarias": "llegarías, a este ritmo",
+    "empezaste": "empezaste en {kg}",
+    "meta": "meta: {kg}",
+    "textos": {
+      "llegaste": "Llegaste a tu peso meta. Si quieres quedarte ahí, cambia el objetivo a mantener.",
+      "enCamino": "Vas a {ritmo} kg por semana; el plan es {plan}. Te faltan {faltan} kg: unas {semanas} semanas.",
+      "despacio": "Vas a {ritmo} kg por semana, menos de la mitad del plan ({plan}). Te faltan {faltan} kg.",
+      "quieto": "Tu tendencia casi no se movió en las últimas tres semanas. El control de la semana ajusta las metas con eso.",
+      "alReves": "Tu tendencia va para el otro lado ({ritmo} kg por semana). El control de la semana ajusta las metas con eso.",
+      "estable": "Tu tendencia se mueve menos de 150 g por semana: estás manteniendo.",
+      "seMueve": "Tu tendencia se mueve {ritmo} kg por semana.",
+      "sinMeta": "Vas a {ritmo} kg por semana; el plan es {plan}. Elige un peso meta para ver cuándo llegarías.",
+      "faltanDatos": "Hacen falta dos semanas de pesadas para medir el ritmo."
+    },
+    "peso": "Peso",
+    "registrar": "Registrar",
+    "tendencia": "tendencia",
+    "cambios": "{semana} kg en 7 días · {mes} kg en 30 días",
+    "hoy": "hoy",
+    "pesoLeyenda": "Los puntos son tus pesadas; la línea es la tendencia, que es la que cuenta. La línea punteada es tu meta.",
+    "medidas": "Medidas",
+    "medir": "Medir",
+    "cinturaAltura": "Cintura sobre altura: {n}. La guía NICE (Reino Unido) recomienda menos de 0,5.",
+    "medidasDel": "Medidas del {fecha}; el cambio es contra un mes antes.",
+    "grasa": "Grasa corporal",
+    "gasto": "Gasto estimado",
+    "kcalPorDia": "kcal por día",
+    "controlDel": "Del control del {fecha}",
+    "balanceTexto": "balance de {n} días: lo comido menos el gasto",
+    "comoSeCalculaTexto": "En las últimas {dias} días comiste en promedio {promedio} kcal por día y tu tendencia cambió {cambio} kg. Moss toma un cuarto de la diferencia con lo que medía antes, para que la meta cambie de a poco.",
+    "estrategia": "Estrategia",
+    "pesoMeta": "Peso meta",
+    "sinPesoMeta": "Sin elegir",
+    "metasActuales": "Metas de hoy",
+    "ritmos": {
+      "suave": "Suave",
+      "recomendado": "Recomendado",
+      "rapido": "Rápido"
+    },
+    "ritmoTexto": "El {pct} % de tu peso por semana: unos {kg} kg.",
+    "objetivoNota": "Al cambiar el objetivo, las metas cambian desde hoy con el gasto que Moss viene midiendo.",
+    "pesoMetaNota": "Sirve para ver si vas en camino y cuándo llegarías. Las metas salen del objetivo y del ritmo.",
+    "proximoControl": "Próximo control",
+    "alcanza": "Con datos",
+    "faltanDatos": "Faltan datos",
+    "manana": "mañana",
+    "enDias": "en {n} días",
+    "diasConComida": {
+      "uno": "día con comida",
+      "otros": "días con comida"
+    },
+    "pesadas": {
+      "uno": "pesada",
+      "otros": "pesadas"
+    },
+    "controlListo": "La semana ya tiene lo que necesita: el control va a medir tu gasto y ajustar las metas.",
+    "controlFalta": "El control necesita al menos 4 días con comida y una pesada en la semana. Si faltan, las metas quedan como están.",
+    "diaDelControl": "Día del control",
+    "diaDelControlNota": "Ese día, al abrir Moss, el control mide la semana anterior. Si ese día no abres la app, corre la próxima vez.",
+    "controlTexto": "El control midió un gasto de unas {gasto} kcal por día. Moss lo toma de a poco: el estimado pasó de {antes} a {ahora} kcal.",
+    "comoSeCalcula": "Cómo se calcula",
+    "metas": {
+      "titulo": "Metas",
+      "porDia": "kcal por día",
+      "quien": "Quién las pone",
+      "moss": "Moss",
+      "aMano": "A mano",
+      "mossTexto": "Moss las ajusta cada semana con tu peso y lo que comes.",
+      "aManoTexto": "Las pones tú. Moss sigue midiendo tu gasto, pero no las cambia.",
+      "reparto": "Cómo se reparten",
+      "tusMacros": "Tus macros",
+      "estilos": {
+        "equilibrada": [
+          "Equilibrada",
+          "Proteína por kilo, al menos un 27 % de grasas y el resto en carbohidratos."
+        ],
+        "bajaEnGrasas": [
+          "Baja en grasas",
+          "Las grasas al 20 %: más lugar para los carbohidratos."
+        ],
+        "bajaEnCarbohidratos": [
+          "Baja en carbohidratos",
+          "Un cuarto de las kcal en carbohidratos y el resto en grasas."
+        ],
+        "keto": [
+          "Keto",
+          "30 g de carbohidratos por día."
+        ]
+      },
+      "semana": "Repartir la semana",
+      "semanaTexto": "Más los días que elijas y un poco menos el resto. La semana suma lo mismo: se mueven los carbohidratos."
+    },
+    "enCurso": "En curso",
+    "minimo": "mínimo {n}",
+    "controlEnCurso": "El control necesita al menos 4 días con comida y una pesada en la semana. Quedan {n} días: si sigues registrando, alcanza."
+  },
+  "sueno": {
+    "titulo": "Sueño",
+    "anoche": "Anoche",
+    "nocheDel": "Noche del {desde} al {hasta}",
+    "dormido": "dormido",
+    "horas": "Te dormiste a las {desde} y te despertaste a las {hasta}",
+    "incompleta": "Parece incompleta: dormiste mucho menos que siempre y te despertaste temprano. ¿El reloj se quedó sin batería? Puedes dejarla fuera.",
+    "etapas": {
+      "despierto": "Despierto",
+      "rem": "REM",
+      "nucleo": "Núcleo",
+      "profundo": "Profundo"
+    },
+    "etapasEstimadas": "Las etapas son una estimación del reloj: acierta mucho menos que con cuánto dormiste.",
+    "sinEtapas": "Esta fuente no separa etapas.",
+    "despierto": "Despierto",
+    "despertares": {
+      "uno": "{n} despertar",
+      "otros": "{n} despertares"
+    },
+    "enCama": "En cama",
+    "siesta": "Siesta",
+    "sinDatos": "Sin datos",
+    "sinNoche": "Sin datos de anoche.",
+    "sinRelojTexto": "El reloj no registró esta noche (¿sin batería, o no lo tenías puesto?). Solo está el tiempo en cama del iPhone, que mide el uso del teléfono y no el sueño: no cuenta para nada.",
+    "sinNadaTexto": "No hay datos de esta noche. No se rellena: queda fuera de los promedios y de la deuda.",
+    "habitosPendientes": "Los hábitos de sueño de ese día quedan pendientes: puedes marcarlos a mano.",
+    "calidad": "Calidad",
+    "sinCalidad": "Sin el reloj no hay calidad: hace falta saber cuánto dormiste.",
+    "palabras": {
+      "excelente": "Excelente",
+      "buena": "Buena",
+      "regular": "Regular",
+      "baja": "Baja"
+    },
+    "parcial": "parcial",
+    "partes": {
+      "duracion": "Duración",
+      "horario": "Horario",
+      "continuidad": "Continuidad"
+    },
+    "todaviaNo": "desde la 5.ª noche",
+    "comoCalidad": [
+      "Es un número de Moss, de 0 a 100, en tres partes. No es el puntaje de sueño de Apple: Apple no lo comparte con otras apps, así que pueden no coincidir.",
+      "Duración (50): lo que dormiste contra lo que necesitas ({necesidad}). Con 4 horas suma 0, y al llegar, 50.",
+      "Horario (30): cuánto se corrieron tu hora de dormirte y la de despertarte de las de siempre (la mediana de tus últimas dos semanas). Hasta media hora suma todo; desde hora y media, nada. Con menos de 5 noches no entra y el total se reescala.",
+      "Continuidad (20): los minutos despierto entre que te dormiste y te despertaste (todo hasta 20, nada desde 60) y los despertares de 5 minutos o más (todo con uno, nada con cuatro).",
+      "Las etapas, el tiempo en cama y el corazón no entran: el reloj los mide con menos acierto."
+    ],
+    "horario": "Horario",
+    "regularidad": {
+      "muyRegular": "Muy regular",
+      "regular": "Regular",
+      "irregular": "Irregular",
+      "muyIrregular": "Muy irregular"
+    },
+    "dormirte": "Te duermes",
+    "despertarte": "Te despiertas",
+    "horaYDesvio": "{hora} ± {desvio} min",
+    "finDeSemana": "Fin de semana",
+    "masTarde": "{t} más tarde",
+    "masTemprano": "{t} más temprano",
+    "regularidadTexto": "Con {n} noches de las últimas 14. El ± es cuánto se corre tu hora de una noche a otra: hasta media hora es muy regular. El fin de semana compara la mitad de tu sueño del viernes y el sábado con la del resto, y supone que esos días no trabajas.",
+    "faltanNoches": "Hay {n} noches medidas; hacen falta {minimo}.",
+    "deuda": "Deuda de sueño",
+    "sinDeuda": "Sin deuda",
+    "deudaDe": "menos de lo que necesitas ({necesidad} por noche)",
+    "deudaNoches": "Con {n} de las últimas {de} noches",
+    "deudaTexto": "Lo que te faltó para lo que necesitas cada noche de las últimas dos semanas, pesando más las más recientes, menos lo que dormiste de más (hasta 2 horas por noche). Las siestas cuentan; las noches sin datos no suman ni restan.",
+    "vitales": "De noche, según el reloj",
+    "vital": {
+      "frecuencia": "Frecuencia cardíaca",
+      "variabilidad": "Variabilidad cardíaca",
+      "respiracion": "Respiración",
+      "reposo": "En reposo"
+    },
+    "comparado": {
+      "usual": "lo usual",
+      "mas": "más que lo usual",
+      "menos": "menos que lo usual"
+    },
+    "aprendiendo": "aprendiendo lo tuyo",
+    "pocasLecturas": "pocas lecturas",
+    "lecturas": "{n} lecturas",
+    "delDia": "del día",
+    "vitalesTexto": "El promedio mientras dormías, contra la mediana de tus noches anteriores (hacen falta 7). La variabilidad, el reloj la mide pocas veces por noche: es la menos precisa. La frecuencia en reposo es del día entero.",
+    "fuentes": "De dónde sale cada dato",
+    "datos": {
+      "duracion": "Duración y horario",
+      "etapas": "Etapas",
+      "despertares": "Despertares",
+      "enCama": "Tiempo en cama",
+      "corazon": "Frecuencia y respiración",
+      "variabilidad": "Variabilidad"
+    },
+    "confianza": {
+      "alta": "confiable",
+      "media": "aproximada",
+      "baja": "estimación"
+    },
+    "fuentesTexto": "Moss usa una sola fuente por noche: la que elijas o, si no, el reloj, después otro aparato y al final el teléfono. Nunca suma dos. Si falta una noche, queda en gris: no se inventa.",
+    "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo duermes, consulta a un médico."
+  },
+  "perfil": {
+    "titulo": "Perfil",
+    "cuentaTexto": "Tu cuenta de Moss y Ascent",
+    "tusDatos": "Tus datos",
+    "sexo": "Sexo",
+    "edad": "Edad",
+    "altura": "Altura",
+    "actividad": "Actividad",
+    "sexos": {
+      "m": "Hombre",
+      "f": "Mujer"
+    },
+    "anios": "{n} años",
+    "actividades": {
+      "poco": "Poca",
+      "algo": "Algo",
+      "activo": "Activa",
+      "muy": "Muy activa"
+    },
+    "preferencias": "Preferencias",
+    "unidades": "Unidades",
+    "metrico": "kg y cm",
+    "idioma": "Idioma",
+    "calidad": "Calidad de las animaciones",
+    "alta": "Alta",
+    "recordatorios": "Recordatorios",
+    "apagados": "Apagados",
+    "conexiones": "Conexiones",
+    "salud": "Apple Salud",
+    "conectada": "Conectada",
+    "ascent": "Ascent",
+    "vincular": "Vincular",
+    "tusDatosParaLlevar": "Privacidad y datos",
+    "exportar": "Exportar todo",
+    "privacidad": "Privacidad",
+    "borrarDatos": "Borrar mis datos",
+    "cerrarSesion": "Cerrar sesión"
   },
   "fecha": {
     "dias": [
@@ -326,13 +638,19 @@
       "oct",
       "nov",
       "dic"
-    ]
+    ],
+    "larga": "{dia} {num} de {mes}",
+    "corta": "{num} {mes}",
+    "horasMinutos": "{h} h {m} min",
+    "horas": "{h} h",
+    "minutos": "{m} min"
   },
   "comun": {
     "deshacer": "Deshacer",
     "cancelar": "Cancelar",
     "guardar": "Guardar",
-    "listo": "Listo"
+    "listo": "Listo",
+    "atras": "Atrás"
   },
   "diagnostico": {
     "salud": "Simular Salud",

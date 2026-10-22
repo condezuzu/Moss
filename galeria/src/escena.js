@@ -1124,6 +1124,8 @@ const Escena = (() => {
       get encendidas() { return e.habitos.filter((h) => h.encendido).length; },
       get total() { return e.habitos.length; },
       get hayAutoPendiente() { return e.habitos.some((h) => h.auto && !h.encendido); },
+      // Lo de hoy para el bloque de Inicio: la constelación y cada hábito con lo encendido.
+      get hoy() { return e.constelacion ? { constelacion: e.constelacion.datos, habitos: e.habitos.map((h) => Object.assign({}, h)) } : null; },
     };
   }
 

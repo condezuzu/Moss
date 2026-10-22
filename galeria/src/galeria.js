@@ -1,5 +1,6 @@
-// La página de revisión: datos de mentira, controles, las pestañas (Inicio con la comida, Hábitos
-// con el cielo y Ajustes), la entrada a la app y el catálogo. CATALOGO, TEXTOS, SHADERS, ALIMENTOS y los módulos de la comida los inyecta
+// La página de revisión: datos de mentira, controles, las seis secciones con el «+» en el medio de
+// la barra (Inicio, Comida, Progreso, Sueño, Hábitos con el cielo y Perfil), la entrada a la app y
+// el catálogo. CATALOGO, TEXTOS, SHADERS, ALIMENTOS y los módulos de la app los inyecta
 // galeria/construir.mjs desde src/ y assets/ (una sola fuente).
 
 (() => {
@@ -40,7 +41,8 @@
 
   const habitosLira = () => [
     { nombre: { es: 'Meditar 10 min', en: 'Meditate 10 min' }, icono: 'loto', encendido: true },
-    { nombre: { es: 'Dormir 7 h', en: 'Sleep 7 h' }, icono: 'luna', encendido: true, auto: 'sueno', valor: 452, meta: 420 },
+    // Lo dormido anoche sale de las noches de mentira (Datos.NOCHES), como saldría de Salud.
+    { nombre: { es: 'Dormir 7 h', en: 'Sleep 7 h' }, icono: 'luna', encendido: true, auto: 'sueno', valor: Math.round((Datos.NOCHES.find((n) => n.clave === Datos.HOY) || { dormido: 452 }).dormido), meta: 420 },
     { nombre: { es: 'Leer 20 páginas', en: 'Read 20 pages' }, icono: 'libro', encendido: true },
     { nombre: { es: 'Escribir', en: 'Journal' }, icono: 'pluma', encendido: false },
     { nombre: { es: '8.000 pasos', en: '8,000 steps' }, icono: 'huellas', encendido: false, auto: 'pasos', valor: 6240, meta: 8000 },
@@ -145,9 +147,14 @@
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
   let escena;
-  // La comida y las pestañas se arman después de la escena; hasta entonces, los controles no las miran.
+  // Las secciones y las pestañas se arman después de la escena; hasta entonces, los controles no las miran.
   let comida = null;
   let pestanas = null;
+  let inicio = null;
+  let mas = null;
+  let progreso = null;
+  let sueno = null;
+  let perfilSec = null;
   try {
     escena = Escena.crear(tel, SHADERS, {
       calidad: 'alta',
@@ -190,16 +197,20 @@
     // Durante la entrada no hay pestañas; al final, el flum deja en Inicio.
     alEmpezar: () => tel.classList.add('en-entrada'),
     alSalir: () => tel.classList.remove('en-entrada'),
-    llegada: () => { pestanas.ir(0, true); comida.verDia(0); return comida.zona; },
+    llegada: () => { pestanas.ir(0, true); comida.verDia(0); inicio.subir(); return inicio.zona; },
   });
 
   // ------------------------------------------------------------ la comida
   const toques = [];
+  // Lo calculado de la persona (se rehace cuando algo cambia) y lo encendido en el cielo la última vez.
+  let calculada = null;
+  let firmaDelCielo = '';
   comida = Comida.crear(tel, escena, {
     textos: TEXTOS,
     alimentos: (typeof ALIMENTOS !== 'undefined' && ALIMENTOS) || [],
     alCambiar: () => refrescarControles(),
-    // Cada registro, con los toques que llevó desde Inicio: para compararlos con la especificación.
+    alCambiarComida: () => repintar(900),
+    // Cada registro, con los toques que llevó desde el «+» o desde Comida: para compararlos con la especificación.
     alRegistrar: (r) => {
       toques.unshift(r);
       toques.length = Math.min(toques.length, 6);
@@ -217,11 +228,12 @@
       $('#toques .vacio').hidden = true;
     },
   });
-  // Lo de la comida pasa en Inicio: los botones de la galería llevan ahí primero.
-  const enLaZona = (fn) => { if (comida.hojaAbierta) comida.cerrarHoja(); pestanas.ir(0); fn(); };
-  const conHoja = (fn) => { pestanas.ir(0); if (!comida.hojaAbierta && !comida.abrirHoja()) return; fn(); };
+  // Lo de la comida pasa en la pestaña Comida: los botones de la galería llevan ahí primero.
+  const COMIDA = 1;
+  const enLaZona = (fn) => { cerrarHojas(); pestanas.ir(COMIDA); fn(); };
+  const conHoja = (fn) => { if (mas.abierta) mas.cerrar(true); pestanas.ir(COMIDA); if (!comida.hojaAbierta && !comida.abrirHoja()) return; fn(); };
   const accionesComida = {
-    registrar: () => { if (comida.hojaAbierta) comida.cerrarHoja(); else { pestanas.ir(0); comida.abrirHoja(); } },
+    registrar: () => { if (comida.hojaAbierta) comida.cerrarHoja(); else { cerrarHojas(); pestanas.ir(COMIDA); comida.abrirHoja(); } },
     linea: () => enLaZona(() => { comida.vista('dia'); comida.bajarA('dia'); }),
     semana: () => enLaZona(() => comida.vista('semana')),
     mes: () => enLaZona(() => comida.vista('mes')),
@@ -239,31 +251,148 @@
     escribiendo = setInterval(() => { i++; comida.escribir(texto.slice(0, i)); if (i >= texto.length) clearInterval(escribiendo); }, 90);
   }
 
-  // ------------------------------------------------------------ Ajustes
-  // La última pestaña: las metas, con las cuentas de la app (ajustes.js), y lo demás de maqueta.
-  // Cambiar cómo se reparten los macros cambia las barras de Inicio.
-  const ajustes = document.createElement('section');
-  ajustes.className = 'ajustes';
-  tel.appendChild(ajustes);
-  const tx = (clave) => clave.split('.').reduce((o, k) => (o ? o[k] : undefined), TEXTOS[escena.idioma]) || clave;
-  const paginaAjustes = Ajustes.crear(ajustes, { textos: TEXTOS, idioma: () => escena.idioma, alCambiarMeta: (m) => comida.ponerMeta(m) });
+  // ------------------------------------------------------------ la persona: peso, medidas, control y progreso
+  // Lo que la app calcularía con lo guardado, con sus mismos módulos: la tendencia y el control
+  // (Control), el progreso al objetivo y el balance (Progreso) y la grasa (Cuerpo). El último
+  // control, el del lunes 19, sale de lo comido y de las pesadas de las tres semanas anteriores, y
+  // fija la meta de la comida.
+  const perfil = Object.assign({}, Datos.PERFIL);
+  const edad = Number(Datos.HOY.slice(0, 4)) - perfil.nacimiento;
+  const diaDelControl = () => (perfil.diaDelControl != null ? perfil.diaDelControl : Fechas.diaDeLaSemana(Datos.INICIO));
+  const controlHecho = (() => {
+    const fecha = Control.ultimoDiaDeControl(Datos.HOY, diaDelControl());
+    const pesadas = Datos.PESADAS.filter((p) => p.fecha < fecha);
+    const c = { edad, sexo: perfil.sexo, pesoKg: pesadas[pesadas.length - 1].kg, objetivo: perfil.objetivo, ritmo: perfil.ritmo };
+    const hecho = Control.controlSemanal({
+      hoy: fecha, pesadas, comidas: comida.kcalPorDia().filter((x) => x.fecha < fecha), gastoAnterior: Datos.GASTO_ANTERIOR,
+      metasAnteriores: Metas.metaPara(Datos.GASTO_ANTERIOR, c, perfil.estilo), perfil: c, estilo: perfil.estilo,
+    });
+    return Object.assign(hecho, { fecha });
+  })();
+  // La meta de Moss para la estrategia de ahora, con el gasto del último control.
+  const metaDeMoss = () => Metas.metaPara(controlHecho.gasto, {
+    edad, sexo: perfil.sexo, pesoKg: controlHecho.datos.pesoDeTendencia || Datos.PESADAS[Datos.PESADAS.length - 1].kg, objetivo: perfil.objetivo, ritmo: perfil.ritmo,
+  }, perfil.estilo);
+  let metasAMano = false;
+  comida.ponerMeta(controlHecho.metas);
 
-  // ------------------------------------------------------------ las pestañas, como en Ascent
-  // Inicio es la comida, Hábitos el cielo con la constelación y Ajustes va al final. Se pasa de una
-  // a otra tocando su nombre o deslizando, con la de al lado asomando mientras se arrastra. Las
+  // Una serie para los gráficos: los últimos `dias`, con la pesada de cada día y la tendencia.
+  function serieDe(tendencia, dias) {
+    const porFecha = new Map(Datos.PESADAS.map((p) => [p.fecha, p.kg]));
+    return Array.from({ length: dias }, (_, i) => {
+      const f = Fechas.sumarDias(Datos.HOY, i - dias + 1);
+      return { x: i / (dias - 1), punto: porFecha.has(f) ? porFecha.get(f) : null, linea: tendencia.has(f) ? tendencia.get(f) : null };
+    });
+  }
+
+  function calcularPersona() {
+    const hoy = Datos.HOY;
+    const t = Control.tendencia(Datos.PESADAS, hoy);
+    const pesoHoy = t.get(hoy);
+    const atras = (dias) => t.get(Fechas.sumarDias(hoy, -dias));
+    const comidas = comida.kcalPorDia();
+    const ultimasMedidas = Cuerpo.ultimasMedidas(Datos.MEDIDAS, hoy);
+    return {
+      perfil,
+      pesadas: Datos.PESADAS,
+      pesoHoy,
+      cambio7: pesoHoy - atras(7),
+      cambio30: pesoHoy - atras(30),
+      pesoInicial: t.get([...t.keys()][0]),
+      serie: serieDe(t, 56),
+      serieDesde: Fechas.sumarDias(hoy, -55),
+      serie30: serieDe(t, 30),
+      progreso: Progreso.progresoAlObjetivo({ hoy, tendencia: t, objetivo: perfil.objetivo, ritmo: perfil.ritmo, pesoMeta: perfil.pesoMeta, pesoInicial: t.get([...t.keys()][0]) }),
+      gasto: controlHecho.gasto,
+      control: controlHecho,
+      balance: Progreso.balance(comidas, controlHecho.gasto, Fechas.sumarDias(hoy, -1), 7),
+      diaDelControl: diaDelControl(),
+      estadoControl: Control.estadoDelControl({ hoy, dia: diaDelControl(), ultimaMeta: controlHecho.fecha, pesadas: Datos.PESADAS, comidas }),
+      ultimasMedidas,
+      grasa: Cuerpo.rangoDeGrasa(perfil.sexo, perfil.alturaCm, ultimasMedidas),
+    };
+  }
+  const persona = () => calculada || (calculada = calcularPersona());
+
+  // Algo cambió (lo comido, el peso, las medidas o la estrategia): las secciones se pintan de nuevo.
+  function repintar(ms) {
+    calculada = null;
+    if (inicio) inicio.pintar(ms || 0);
+    if (progreso) progreso.pintar();
+    refrescarControles();
+  }
+
+  function ponerEstrategia(cambios) {
+    const antes = { objetivo: perfil.objetivo, ritmo: perfil.ritmo, estilo: perfil.estilo };
+    Object.assign(perfil, cambios);
+    // Como en el almacén (ponerEstrategia): cambiar el objetivo, el ritmo o el reparto fija metas
+    // nuevas con el gasto medido; con las metas a mano, quedan las que había.
+    const cambiaLaMeta = perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || perfil.estilo !== antes.estilo;
+    if (cambiaLaMeta && !metasAMano) comida.ponerMeta(metaDeMoss());
+    else repintar();
+  }
+
+  const opcionesDeSeccion = { textos: TEXTOS, idioma: () => escena.idioma, alCambiar: () => refrescarControles() };
+
+  // ------------------------------------------------------------ las secciones nuevas
+  inicio = SeccionInicio.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    comida,
+    persona,
+    cielo: () => escena.hoy || { constelacion: LIRA, habitos: habitosLira() },
+    sueno: () => (sueno ? sueno.anoche() : null),
+    ir: (i) => pestanas.ir(i),
+  }));
+  mas = Mas.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    comida,
+    persona,
+    alPeso: (kg) => {
+      const i = Datos.PESADAS.findIndex((p) => p.fecha === Datos.HOY);
+      const pesada = { fecha: Datos.HOY, kg, origen: 'manual', momento: new Date().toISOString() };
+      if (i >= 0) Datos.PESADAS[i] = pesada; else Datos.PESADAS.push(pesada);
+      repintar();
+    },
+    alMedidas: (m) => {
+      const hoy = Datos.MEDIDAS.find((x) => x.fecha === Datos.HOY);
+      if (hoy) Object.assign(hoy, m, { actualizado: new Date().toISOString() });
+      else Datos.MEDIDAS.push(Object.assign({ fecha: Datos.HOY, actualizado: new Date().toISOString() }, m));
+      repintar();
+    },
+  }));
+  progreso = SeccionProgreso.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    comida,
+    persona,
+    ponerEstrategia,
+    metaDeMoss,
+    ponerMeta: (m) => { metasAMano = !m || m.kcal !== metaDeMoss().kcal || m.proteina !== metaDeMoss().proteina; comida.ponerMeta(m); },
+    registrarPeso: () => mas.ir('peso'),
+    medir: () => mas.ir('medidas'),
+  }));
+  sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, { noches: () => Datos.NOCHES, metaDeSueno: 8 * 60 }));
+  perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, { persona }));
+
+  const cerrarHojas = () => {
+    if (comida.hojaAbierta) comida.cerrarHoja();
+    if (mas.abierta) mas.cerrar();
+    if (inicio.editando) inicio.cerrar();
+  };
+
+  // ------------------------------------------------------------ las seis secciones, como en Ascent
+  // Abajo van Inicio, Comida y Progreso, el «+» en el medio, y Sueño, Hábitos y Perfil. Se pasa de
+  // una a otra tocando su nombre o deslizando, con la de al lado asomando mientras se arrastra. Las
   // reglas del gesto son las de Ascent (nucleo/deslizar.ts): cambia con un quinto de la pantalla o
-  // con un tirón rápido, y el viaje dura 340 ms. El cielo no se desliza: queda quieto detrás de las
-  // tres, como el planeta de Ascent, y se oscurece en Inicio y en Ajustes.
-  const PESTANAS = ['inicio', 'habitos', 'ajustes'];
+  // con un tirón rápido, y el viaje dura 340 ms. El cielo no se desliza: queda quieto detrás de
+  // todas, como el planeta de Ascent, oscurecido salvo en Hábitos; la constelación va con su página.
+  const PESTANAS = ['inicio', 'comida', 'progreso', 'sueno', 'habitos', 'perfil'];
+  const HABITOS = 4;
   const UMBRAL = 0.22;
   const VELOCIDAD_MIN = 0.35;
   const VIAJE_MS = 340;
   const CEDE_EN_EL_BORDE = 0.25;
   // Cuánto tiene que moverse el dedo, y más de costado que para abajo, para que el gesto sea de las
-  // pestañas y no la lista de la comida o la cámara del cielo.
+  // pestañas y no de una lista o de la cámara del cielo.
   const DECIDE_PX = 14;
-  // Cuánto se oscurece el cielo detrás de cada pestaña, de 0 a 1.
-  const VELO = [0.8, 0, 0.72];
+  // Cuánto se oscurece el cielo detrás de cada sección, de 0 a 1. En Sueño deja ver un poco la noche.
+  const VELO = [0.8, 0.8, 0.8, 0.7, 0, 0.8];
 
   // cubic-bezier(0.16, 1, 0.3, 1), la curva de Ascent: sale rápido y frena largo.
   function bezier(x1, y1, x2, y2) {
@@ -282,8 +411,10 @@
     };
   }
 
+  const tx = (clave) => clave.split('.').reduce((o, k) => (o ? o[k] : undefined), TEXTOS[escena.idioma]) || clave;
+
   pestanas = (() => {
-    const paginas = [comida.zona, tel.querySelector('.ui'), ajustes];
+    const paginas = [inicio.zona, comida.zona, progreso.zona, sueno.zona, tel.querySelector('.ui'), perfilSec.zona];
     const velo = document.createElement('div');
     velo.className = 'velo-pestanas';
     velo.innerHTML = '<i></i>';
@@ -292,16 +423,31 @@
     barra.className = 'pestanas';
     barra.setAttribute('role', 'tablist');
     tel.appendChild(barra);
-    // El nombre apagado y, encima, el mismo encendido: lo que cambia es la opacidad del de arriba.
-    const botones = PESTANAS.map((_, i) => {
+    // Cada una con su ícono y su nombre, apagados, y encima los mismos encendidos: lo que cambia es
+    // la opacidad de los de arriba, que siguen a la tira.
+    const capa = (n, luz) => `<span class="pt-capa${luz ? ' pt-luz' : ''}"${luz ? ' aria-hidden="true"' : ''}>${Util.icono(n)}<span class="pt-nombre"></span></span>`;
+    const botones = PESTANAS.map((n, i) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.setAttribute('role', 'tab');
-      b.innerHTML = '<span></span><span class="pt-luz" aria-hidden="true"></span>';
+      b.className = 'pt-' + n;
+      b.innerHTML = capa(n, false) + capa(n, true);
       b.addEventListener('click', () => ir(i));
-      barra.appendChild(b);
       return b;
     });
+    // El «+», en el medio, del mismo tamaño que las demás: un círculo fino, sin brillo.
+    const botonMas = document.createElement('button');
+    botonMas.type = 'button';
+    botonMas.className = 'pt-mas';
+    botonMas.innerHTML = `<span>${Util.icono('mas')}</span>`;
+    botonMas.addEventListener('click', () => {
+      if (entrada.paso) return;
+      comida.empezarCuenta();
+      comida.contarToque();
+      mas.abrir();
+    });
+    botones.forEach((b, i) => { if (i === 3) barra.appendChild(botonMas); barra.appendChild(b); });
+
     const curva = bezier(0.16, 1, 0.3, 1);
     // La que está a la vista o a la que se va (el «rumbo» de Ascent), y cuánto está corrida la
     // tira, en píxeles.
@@ -328,21 +474,21 @@
         p.style.translate = `${corrida.toFixed(1)}px 0`;
         p.style.visibility = Math.abs(corrida) >= w ? 'hidden' : '';
       });
-      escena.desplazarPagina(w + x);
+      escena.desplazarPagina(HABITOS * w + x);
       // El cielo se aclara mientras arrastrás hacia Hábitos, no de golpe al llegar.
       const k = Math.min(PESTANAS.length - 1, Math.max(0, -x / w));
       const a = VELO[Math.floor(k)], b = VELO[Math.ceil(k)];
       const oscuro = a + (b - a) * (k - Math.floor(k));
       velo.firstChild.style.opacity = oscuro.toFixed(3);
-      // Sobre la comida y Ajustes la barra es pareja, como en Ascent; sobre el cielo deja ver el musgo.
-      barra.style.setProperty('--solida', Math.min(1, oscuro / VELO[0]).toFixed(3));
-      botones.forEach((boton, i) => { boton.lastChild.style.opacity = luz(i).toFixed(3); });
+      // Sobre las secciones la barra es pareja, como en Ascent; sobre el cielo deja ver el musgo.
+      barra.style.setProperty('--solida', Math.min(1, oscuro / 0.7).toFixed(3));
+      botones.forEach((boton, i) => { boton.querySelector('.pt-luz').style.opacity = luz(i).toFixed(3); });
     }
 
     function marcar() {
       botones.forEach((b, i) => b.setAttribute('aria-selected', String(i === actual)));
       paginas.forEach((p, i) => { p.inert = i !== actual; });
-      comida.ponerEnZona(actual === 0);
+      comida.ponerEnZona(actual === COMIDA);
       refrescarControles();
     }
 
@@ -363,13 +509,13 @@
       animacion = requestAnimationFrame(paso);
     }
 
-    // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni la
-    // lista de la comida ni el cielo se enteran.
-    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || escena.viajando);
+    // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni las
+    // listas ni el cielo se enteran.
+    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || escena.viajando);
     tel.addEventListener('pointerdown', (ev) => {
       gesto = null;
       if (bloqueado() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-      if (ev.target.closest('.pestanas, .barra-inmersiva')) return;
+      if (ev.target.closest('.pestanas, .barra-inmersiva, .sn-noches, .vt-porciones, .mas-chips, .cm-cuadro')) return;
       gesto = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, desde: 0 };
     }, true);
     tel.addEventListener('pointermove', (ev) => {
@@ -425,9 +571,10 @@
     function ponerTextos() {
       botones.forEach((b, i) => {
         const nombre = tx('pestanas.' + PESTANAS[i]);
-        b.firstChild.textContent = nombre;
-        b.lastChild.textContent = nombre;
+        b.querySelectorAll('.pt-nombre').forEach((n) => { n.textContent = nombre; });
+        b.setAttribute('aria-label', nombre);
       });
+      botonMas.setAttribute('aria-label', tx('pestanas.mas'));
     }
     ponerTextos();
     // Moss abre en Inicio.
@@ -443,37 +590,59 @@
   })();
 
   function refrescarControles() {
-    if (!escena || !comida || !pestanas) return;
+    if (!escena || !comida || !pestanas || !mas || !inicio) return;
     const enEntrada = !!entrada.paso;
-    const quieto = enEntrada || comida.hojaAbierta;
+    const quieto = enEntrada || comida.hojaAbierta || mas.abierta || inicio.editando;
     $('#b-repetir').disabled = !escena.completo || quieto;
     $('#b-salud').disabled = !escena.hayAutoPendiente || quieto;
     $('#b-completar').disabled = escena.completo || quieto;
     $('#b-registrar').textContent = comida.hojaAbierta ? 'Cerrar la hoja' : 'Registrar';
-    $$('#comida [data-comida]').forEach((b) => { b.disabled = enEntrada; });
+    $$('#comida [data-comida], [data-seccion]').forEach((b) => { b.disabled = enEntrada; });
     const enUniverso = escena.zona() === 'universo';
     $('#b-zona').textContent = enUniverso ? 'Volver a hoy' : 'Subir a tu universo';
     $$('.barra-inmersiva [data-accion="zona"]').forEach((b) => { b.textContent = enUniverso ? 'Hoy' : 'Universo'; });
     $('#b-entrada').textContent = enEntrada ? 'Salir de la entrada' : 'Ver la entrada desde el principio';
     $$('[data-pestana]').forEach((b) => { b.setAttribute('aria-pressed', String(Number(b.dataset.pestana) === pestanas.actual)); b.disabled = quieto; });
+    // Lo encendido en el cielo cambia el bloque de Inicio.
+    const firma = escena.encendidas + '/' + escena.total + escena.nombre;
+    if (firma !== firmaDelCielo) { firmaDelCielo = firma; inicio.pintar(0); }
   }
 
+  // Los botones de la galería para las secciones nuevas.
+  const accionesSeccion = {
+    mas: () => { cerrarHojas(); comida.empezarCuenta(); comida.contarToque(); mas.abrir(); },
+    peso: () => { cerrarHojas(); mas.ir('peso'); },
+    medidas: () => { cerrarHojas(); mas.ir('medidas'); },
+    rapida: () => { cerrarHojas(); mas.ir('rapida'); },
+    personalizar: () => { cerrarHojas(); pestanas.ir(0); inicio.personalizar(); },
+    agua: () => { cerrarHojas(); pestanas.ir(0); inicio.poner('agua', true); inicio.bajar(); },
+    sueno: () => { cerrarHojas(); pestanas.ir(0); inicio.poner('sueno', true); inicio.bajar(); },
+    fabrica: () => { cerrarHojas(); pestanas.ir(0); inicio.deFabrica(); inicio.subir(); },
+    cena: () => { cerrarHojas(); pestanas.ir(0); inicio.subir(); comida.simularCena(); },
+    metas: () => { cerrarHojas(); pestanas.ir(2); progreso.verMetas(); },
+    estrategia: () => { cerrarHojas(); pestanas.ir(2); progreso.verPrincipal(); progreso.bajarA('.pg-seccion'); },
+    mantener: () => { ponerEstrategia({ objetivo: perfil.objetivo === 'mantener' ? 'bajar' : 'mantener' }); pestanas.ir(0); },
+    noche: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(-3); },
+    sinReloj: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(Datos.NOCHE_SIN_RELOJ); },
+  };
+
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
-  const enHabitos = (fn) => () => { if (comida.hojaAbierta) comida.cerrarHoja(); pestanas.ir(1); fn(); };
+  const enHabitos = (fn) => () => { cerrarHojas(); pestanas.ir(HABITOS); fn(); };
   const acciones = {
     salud: enHabitos(() => escena.simularSalud()),
     completar: enHabitos(() => escena.completarDia()),
     repetir: enHabitos(() => escena.repetirAnimacion()),
-    reiniciar: () => { if (entrada.paso) entrada.salir(); cargarLira(); escena.irA('hoy'); pestanas.ir(1); },
+    reiniciar: () => { if (entrada.paso) entrada.salir(); cargarLira(); escena.irA('hoy'); pestanas.ir(HABITOS); },
     zona: enHabitos(() => escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo')),
     fugaz: enHabitos(() => escena.lanzarFugaz()),
-    entrada: () => { if (comida.hojaAbierta) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
+    entrada: () => { if (comida.hojaAbierta || mas.abierta) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
   };
   // Va después de todo lo que usa refrescarControles (la escena lo llama al poner la constelación).
   cargarLira();
   $$('[data-accion]').forEach((b) => b.addEventListener('click', () => { acciones[b.dataset.accion](); refrescarControles(); }));
   $$('[data-comida]').forEach((b) => b.addEventListener('click', () => { accionesComida[b.dataset.comida](); refrescarControles(); }));
-  $$('[data-pestana]').forEach((b) => b.addEventListener('click', () => pestanas.ir(Number(b.dataset.pestana))));
+  $$('[data-pestana]').forEach((b) => b.addEventListener('click', () => { cerrarHojas(); pestanas.ir(Number(b.dataset.pestana)); }));
+  $$('[data-seccion]').forEach((b) => b.addEventListener('click', () => { accionesSeccion[b.dataset.seccion](); refrescarControles(); }));
   $$('#saltos-entrada [data-paso]').forEach((b) => b.addEventListener('click', () => {
     if (comida.hojaAbierta) return;
     entrada.irA(b.dataset.paso);
@@ -489,10 +658,9 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); paginaAjustes.pintar(); dibujarCatalogo(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); dibujarCatalogo(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
-  segmento('s-arcos', (v) => comida.arcos(v === 'si'));
 
   // La riqueza del cielo, como la luz juntada desde siempre y el tiempo que lleva juntarla con
   // unos 7 de luz por día (seis hábitos casi todos los días).
@@ -611,12 +779,12 @@
         b.querySelector('.tipo').textContent = tipo + (n >= 16 ? ' · ' + c.estrellas.length : '');
         miniatura(b.querySelector('canvas'), c);
         b.addEventListener('click', () => {
-          if (entrada.paso || comida.hojaAbierta) return;
+          if (entrada.paso || comida.hojaAbierta || mas.abierta) return;
           const datos = c.id === 'lyra' ? LIRA : c;
           const habitos = c.id === 'lyra' ? habitosLira() : habitosDeMentira(c.estrellas.length);
           escena.ponerConstelacion(datos, habitos);
           escena.irA('hoy');
-          pestanas.ir(1);
+          pestanas.ir(HABITOS);
           refrescarControles();
           if (!tel.classList.contains('inmersivo')) tel.scrollIntoView({ behavior: movimientoReducido ? 'auto' : 'smooth', block: 'center' });
         });
@@ -636,10 +804,26 @@
   window.__riqueza = (r) => { rRiqueza.value = Math.round(r * 100); mostrarRiqueza(); escena.ponerRiqueza(r); };
   window.__via = (v) => { rVia.value = Math.round(v * 100); $('#o-via').textContent = rVia.value + '%'; escena.ponerVia(v); };
   window.__pagina = (i, deUna) => pestanas.ir(i, deUna);
-  window.__ajustes = (accion, arg) => {
-    const pasos = { metas: () => paginaAjustes.verMetas(), lista: () => paginaAjustes.verLista(), estilo: () => paginaAjustes.ponerEstilo(arg), quien: () => paginaAjustes.ponerQuien(arg), repartir: () => paginaAjustes.repartir(arg) };
+  window.__inicio = (accion, arg) => {
+    const pasos = { personalizar: () => inicio.personalizar(), cerrar: () => inicio.cerrar(), poner: () => inicio.poner(arg[0], arg[1]), mover: () => inicio.mover(arg[0], arg[1]), fabrica: () => inicio.deFabrica(), bajar: () => inicio.bajar(), subir: () => inicio.subir() };
+    pasos[accion]();
+    refrescarControles();
+  };
+  window.__mas = (accion, arg) => {
+    const pasos = { abrir: () => accionesSeccion.mas(), cerrar: () => mas.cerrar(), ir: () => mas.ir(arg), medir: () => mas.medir(arg[0], arg[1]), bajar: () => mas.bajar(), reciente: () => mas.tocarReciente() };
+    pasos[accion]();
+    refrescarControles();
+  };
+  window.__progreso = (accion, arg) => {
+    const pasos = { metas: () => progreso.verMetas(), principal: () => progreso.verPrincipal(), quien: () => progreso.ponerQuien(arg), repartir: () => progreso.repartir(arg), abrir: () => progreso.abrir(arg), bajar: () => progreso.bajarA(arg), subir: () => progreso.subir() };
     pasos[accion]();
   };
+  window.__estrategia = (cambios) => ponerEstrategia(cambios);
+  window.__sueno = (accion, arg) => {
+    const pasos = { noche: () => sueno.verNoche(arg), bajar: () => sueno.bajarA(arg), subir: () => sueno.subir(), abrir: () => sueno.abrir(arg) };
+    pasos[accion]();
+  };
+  window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
   window.__deslizando = () => pestanas.deslizando;
   window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
   window.__metas = () => entrada.metas();
@@ -648,7 +832,7 @@
     const pasos = {
       registrar: () => comida.abrirHoja(), cerrar: () => comida.cerrarHoja(),
       escribir: () => comida.escribir(arg), ficha: () => comida.ficha(arg), agregar: () => comida.agregarPrimero(),
-      sumar: () => comida.sumar(), listo: () => comida.listo(), confirmar: () => comida.confirmar(), arcos: () => comida.arcos(arg),
+      sumar: () => comida.sumar(), listo: () => comida.listo(), confirmar: () => comida.confirmar(), cena: () => comida.simularCena(),
       vista: () => comida.vista(arg),
       rapida: () => comida.cargaRapida(), guardadas: () => comida.guardadas(), copiar: () => comida.copiarDeAyer(arg), etiqueta: () => comida.etiqueta(arg),
       dia: () => comida.verDia(arg), bajar: () => comida.bajarA(arg), teclado: () => comida.teclado(arg), dictar: () => comida.dictar(),

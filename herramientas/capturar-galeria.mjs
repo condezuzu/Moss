@@ -2,7 +2,8 @@
 // es como se revisa el detalle fino sin depender del panel de vista previa.
 // Uso: npm run galeria:capturas            (necesita npm run galeria:ver prendido)
 //      node herramientas/capturar-galeria.mjs <carpeta> inicio deslizar comida registrar tocar…
-// La galería abre en Inicio, la comida; los escenarios del cielo pasan primero a Hábitos.
+// La galería abre en Inicio; los escenarios del cielo pasan primero a Hábitos y los de la comida,
+// a Comida.
 // La aurora y el cielo se dibujan por software (SwiftShader): los tiempos de la animación van
 // más lentos que en un teléfono, pero cada cuadro es el mismo.
 
@@ -32,12 +33,17 @@ const foto = async (nombre) => {
   console.log('·', nombre);
 };
 const comida = (accion, arg) => pagina.evaluate(([a, x]) => window.__comida(a, x), [accion, arg]);
-// Una pestaña de una (0 Inicio, 1 Hábitos, 2 Ajustes).
+// Una sección de una: 0 Inicio, 1 Comida, 2 Progreso, 3 Sueño, 4 Hábitos y 5 Perfil.
 const pestana = async (i) => {
   await pagina.evaluate((n) => window.__pagina(n, true), i);
   await pagina.waitForTimeout(300);
 };
-const alCielo = () => pestana(1);
+const alCielo = () => pestana(4);
+const seccion = (nombre) => pagina.evaluate((n) => window.__seccion(n), nombre);
+const enInicio = (accion, arg) => pagina.evaluate(([a, x]) => window.__inicio(a, x), [accion, arg]);
+const mas = (accion, arg) => pagina.evaluate(([a, x]) => window.__mas(a, x), [accion, arg]);
+const progreso = (accion, arg) => pagina.evaluate(([a, x]) => window.__progreso(a, x), [accion, arg]);
+const sueno = (accion, arg) => pagina.evaluate(([a, x]) => window.__sueno(a, x), [accion, arg]);
 // Un arrastre de costado con el mouse, como un dedo: se saca la foto con el dedo todavía abajo.
 async function arrastrar(desde, hasta, y, nombre) {
   await pagina.mouse.move(desde, y);
@@ -50,15 +56,18 @@ async function arrastrar(desde, hasta, y, nombre) {
 }
 
 const pasos = {
-  // Lo primero que se ve: Inicio. Después, las otras dos pestañas.
+  // Lo primero que se ve: Inicio, entero. Después, las otras cinco secciones.
   async inicio() {
     await foto('inicio');
-    await alCielo();
-    await pagina.waitForTimeout(900);
-    await foto('habitos');
-    await pestana(2);
-    await pagina.waitForTimeout(600);
-    await foto('ajustes');
+    await enInicio('bajar');
+    await pagina.waitForTimeout(400);
+    await foto('inicio-abajo');
+    await enInicio('subir');
+    for (const [i, nombre, espera] of [[1, 'comida', 900], [2, 'progreso', 700], [3, 'sueno', 700], [4, 'habitos', 900], [5, 'perfil', 600]]) {
+      await pestana(i);
+      await pagina.waitForTimeout(espera);
+      await foto(nombre);
+    }
     await pestana(0);
   },
   async tocar() {
@@ -146,74 +155,187 @@ const pasos = {
       await foto('entrada-fin-' + ms);
     }
   },
-  // Las pestañas con el dedo: de Inicio a Hábitos con la constelación asomando, un arrastre corto
-  // que vuelve a su lugar, el nombre de abajo y el borde que cede.
+  // Las secciones con el dedo: de Sueño a Hábitos con la constelación asomando, un arrastre corto
+  // que vuelve a su lugar, el nombre de abajo, y el borde de Perfil que cede.
   async deslizar() {
-    await pestana(0);
+    await pestana(3);
     await arrastrar(330, 250, 430, 'deslizar-asoma');
     await pagina.waitForTimeout(700);
     await foto('deslizar-vuelve');
     await arrastrar(330, 110, 430, 'deslizar-mitad');
     await pagina.waitForTimeout(900);
     await foto('deslizar-habitos');
-    await pagina.click('.pestanas button:nth-child(3)');
+    await pagina.click('.pestanas .pt-perfil');
     await pagina.mouse.move(1, 1);
     await pagina.waitForTimeout(900);
-    await foto('deslizar-ajustes');
+    await foto('deslizar-perfil');
     await arrastrar(330, 120, 430, 'deslizar-borde');
     await pagina.waitForTimeout(700);
-    await arrastrar(120, 330, 430, 'deslizar-desde-ajustes');
+    await pestana(0);
+    await arrastrar(330, 160, 430, 'deslizar-inicio-comida');
     await pagina.waitForTimeout(700);
     await pestana(0);
   },
-  // Ajustes › Metas: cómo se reparten, keto (y cómo cambia Inicio), a mano y repartir la semana.
+  // Progreso › Metas: cómo se reparten, keto (y cómo cambia Inicio), a mano y repartir la semana.
   async metas() {
-    const ajustes = (accion, arg) => pagina.evaluate(([a, x]) => window.__ajustes(a, x), [accion, arg]);
     await pestana(2);
-    await foto('ajustes-lista');
-    await ajustes('metas');
+    await progreso('metas');
     await pagina.waitForTimeout(300);
     await foto('metas');
-    await ajustes('estilo', 'keto');
+    await pagina.evaluate(() => window.__estrategia({ estilo: 'keto' }));
     await pagina.waitForTimeout(300);
     await foto('metas-keto');
     await pestana(0);
-    await comida('dia', 0);
     await pagina.waitForTimeout(1400);
     await foto('inicio-keto');
     await pestana(2);
-    await ajustes('estilo', 'equilibrada');
-    await ajustes('repartir', true);
+    await pagina.evaluate(() => window.__estrategia({ estilo: 'equilibrada' }));
+    await progreso('repartir', true);
     await pagina.waitForTimeout(300);
-    await pagina.evaluate(() => document.querySelector('.ajustes').scrollTo(0, 9999));
+    await pagina.evaluate(() => document.querySelector('.pg-scroll').scrollTo(0, 9999));
     await pagina.waitForTimeout(300);
     await foto('metas-semana');
-    await ajustes('quien', 'mano');
-    await pagina.evaluate(() => document.querySelector('.ajustes').scrollTo(0, 0));
+    await progreso('quien', 'mano');
+    await pagina.evaluate(() => document.querySelector('.pg-scroll').scrollTo(0, 0));
     await pagina.waitForTimeout(300);
     await foto('metas-a-mano');
-    await ajustes('quien', 'moss');
-    await ajustes('repartir', false);
-    await ajustes('lista');
+    await progreso('quien', 'moss');
+    await progreso('repartir', false);
+    await progreso('principal');
     await pestana(0);
   },
-  // Inicio: el día con su línea, la semana, el mes, ayer y mañana.
-  async comida() {
+  // El «+»: la hoja, un reciente de un toque, el peso, las medidas con su tutorial y la grasa, y la carga rápida.
+  async mas() {
     await pestana(0);
+    await mas('abrir');
+    await pagina.waitForTimeout(900);
+    await foto('mas');
+    await mas('reciente');
+    await pagina.waitForTimeout(500);
+    await foto('mas-reciente');
+    await mas('ir', 'peso');
+    await pagina.waitForTimeout(500);
+    await foto('mas-peso');
+    await mas('ir', 'medidas');
+    await pagina.waitForTimeout(500);
+    await foto('mas-medidas');
+    await mas('medir', ['cuello', 38]);
+    await pagina.waitForTimeout(400);
+    await foto('mas-medidas-cuello');
+    await mas('medir', ['cintura', 84.5]);
+    await mas('bajar');
+    await pagina.waitForTimeout(400);
+    await foto('mas-medidas-grasa');
+    await mas('ir', 'rapida');
+    await pagina.waitForTimeout(500);
+    await foto('mas-rapida');
+    await mas('cerrar');
+    await pagina.waitForTimeout(700);
+    await foto('mas-despues');
+  },
+  // Los macros: apagados mientras falta; la cena llega a la proteína y a los carbohidratos (brillan) y se pasa de grasas (tiembla).
+  async macros() {
+    await pestana(0);
+    await pagina.waitForTimeout(400);
+    await pagina.screenshot({ path: join(salida, 'macros-antes.png'), clip: { x: 0, y: 80, width: 393, height: 300 } });
+    await seccion('cena');
+    await pagina.waitForTimeout(1500);
+    await foto('macros-cena');
+    await pagina.screenshot({ path: join(salida, 'macros-cena-cerca.png'), clip: { x: 0, y: 80, width: 393, height: 300 } });
+    await pestana(1);
+    await pagina.waitForTimeout(1200);
+    await foto('macros-comida');
+  },
+  // Personalizar Inicio: la hoja, sumar el sueño y el agua, y la constelación primero.
+  async personalizar() {
+    await pestana(0);
+    await enInicio('personalizar');
+    await pagina.waitForTimeout(800);
+    await foto('personalizar');
+    await enInicio('poner', ['sueno', true]);
+    await enInicio('poner', ['agua', true]);
+    await enInicio('mover', ['cielo', 0]);
+    await pagina.waitForTimeout(400);
+    await foto('personalizar-cambiado');
+    await enInicio('cerrar');
+    await pagina.waitForTimeout(700);
+    await foto('inicio-personalizado');
+    await enInicio('bajar');
+    await pagina.waitForTimeout(400);
+    await foto('inicio-personalizado-abajo');
+    await enInicio('fabrica');
+    await enInicio('subir');
+  },
+  // Progreso de arriba abajo, cómo se estima la grasa, la estrategia y el día del control.
+  async progreso() {
+    await pestana(2);
+    await progreso('subir');
+    await pagina.waitForTimeout(800);
+    await foto('progreso');
+    for (const [selector, nombre] of [['.pg-medidas', 'progreso-medidas'], ['.pg-gasto', 'progreso-gasto'], ['.pg-seccion', 'progreso-estrategia'], ['.pg-control', 'progreso-control']]) {
+      await progreso('bajar', selector);
+      await pagina.waitForTimeout(400);
+      await foto(nombre);
+    }
+    await progreso('abrir', 'grasa');
+    await progreso('bajar', '.pg-grasa');
+    await pagina.waitForTimeout(400);
+    await foto('progreso-grasa-como');
+    await progreso('abrir', 'objetivo');
+    await progreso('bajar', '.pg-seccion');
+    await pagina.waitForTimeout(400);
+    await foto('progreso-objetivo');
+    await pagina.evaluate(() => window.__estrategia({ diaDelControl: 4 }));
+    await progreso('abrir', null);
+    await progreso('bajar', '.pg-control');
+    await pagina.waitForTimeout(400);
+    await foto('progreso-jueves');
+    await pagina.evaluate(() => window.__estrategia({ diaDelControl: 1 }));
+    await progreso('subir');
+  },
+  // Sueño: anoche de arriba abajo, cómo sale la calidad, y las noches que faltan o se cortaron.
+  async sueno() {
+    await pestana(3);
+    await sueno('noche', 0);
+    await pagina.waitForTimeout(800);
+    await foto('sueno');
+    for (const [selector, nombre] of [['.sn-calidad', 'sueno-calidad'], ['.sn-horario', 'sueno-horario'], ['.sn-deuda', 'sueno-deuda'], ['.sn-fuentes', 'sueno-fuentes']]) {
+      await sueno('bajar', selector);
+      await pagina.waitForTimeout(400);
+      await foto(nombre);
+    }
+    await sueno('abrir', 'calidad');
+    await sueno('bajar', '.sn-calidad');
+    await pagina.waitForTimeout(400);
+    await foto('sueno-calidad-como');
+    await sueno('abrir', null);
+    for (const [clave, nombre] of [['2026-10-17', 'sueno-sin-reloj'], ['2026-10-10', 'sueno-sin-nada'], ['2026-10-04', 'sueno-cortada'], ['2026-10-18', 'sueno-siesta']]) {
+      await sueno('noche', clave);
+      await pagina.waitForTimeout(500);
+      await foto(nombre);
+    }
+    await sueno('noche', 0);
+  },
+  // Comida: el día con su línea, la semana, el mes, ayer y mañana.
+  async comida() {
+    await pestana(1);
     await pagina.waitForTimeout(1200);
     await foto('comida-zona');
     await comida('bajar', 'dia');
     await pagina.waitForTimeout(900);
     await foto('comida-linea');
-    await comida('vista', 'semana');
-    await pagina.waitForTimeout(1100);
-    await foto('comida-semana');
-    await comida('bajar', 'semana');
+    // El cuadro con el dedo: a la izquierda, la semana (la foto con el dedo abajo), y otra vez, el mes.
+    await pagina.evaluate(() => document.querySelector('.cm-scroll').scrollTo(0, 0));
+    await pagina.waitForTimeout(400);
+    await arrastrar(330, 150, 330, 'comida-cuadro-desliza');
     await pagina.waitForTimeout(900);
-    await foto('comida-semana-peso');
-    await comida('vista', 'mes');
-    await pagina.waitForTimeout(1100);
+    await foto('comida-semana');
+    await arrastrar(330, 150, 330);
+    await pagina.waitForTimeout(900);
     await foto('comida-mes');
+    await arrastrar(60, 360, 330);
+    await pagina.waitForTimeout(900);
+    await foto('comida-mes-vuelve');
     await comida('dia', -1);
     await pagina.waitForTimeout(1600);
     await foto('comida-ayer');
@@ -236,7 +358,7 @@ const pasos = {
   },
   // La hoja de registro: lo de siempre, la búsqueda, la ventana, la revisión y la carga rápida.
   async registrar() {
-    await pestana(0);
+    await pestana(1);
     await comida('registrar');
     await pagina.waitForTimeout(1000);
     await foto('registrar');
@@ -276,7 +398,7 @@ const pasos = {
   },
   // La etiqueta: lo leído para revisar, guardado y sumado, encontrable después, y el aviso de 4/4/9.
   async etiqueta() {
-    await pestana(0);
+    await pestana(1);
     await comida('registrar');
     await pagina.waitForTimeout(600);
     await comida('etiqueta');
@@ -299,6 +421,9 @@ const pasos = {
   async 'comida-ingles'() {
     await pagina.evaluate(() => window.__idioma('en'));
     await pestana(0);
+    await pagina.waitForTimeout(900);
+    await foto('inicio-ingles');
+    await pestana(1);
     await comida('dia', 0);
     await pagina.waitForTimeout(1200);
     await foto('comida-ingles');

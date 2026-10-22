@@ -91,7 +91,7 @@ section.item p { margin: 0; max-width: 64ch; }
   --arriba: 58px;
   --abajo: 28px;
   /* Lo que ocupa la barra de las pestañas, con el margen de abajo del iPhone. */
-  --pestanas: calc(var(--abajo) + 50px);
+  --pestanas: calc(var(--abajo) + 58px);
   position: relative;
   height: min(852px, calc(100svh - 48px));
   aspect-ratio: 393 / 852;
@@ -105,7 +105,7 @@ section.item p { margin: 0; max-width: 64ch; }
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.tel canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
+.tel > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
 .tel .ui { position: absolute; inset: 0; pointer-events: none; color: var(--tinta); }
 .tel .isla { position: absolute; top: 11px; left: 50%; width: 124px; height: 35px; translate: -50% 0; background: #000; border-radius: 22px; z-index: 3; pointer-events: none; }
 .tel .hora { position: absolute; top: 19px; left: 38px; font: 500 15px/1 var(--texto); color: #fff; z-index: 3; pointer-events: none; font-variant-numeric: tabular-nums; }
@@ -119,7 +119,7 @@ section.item p { margin: 0; max-width: 64ch; }
   --abajo: calc(env(safe-area-inset-bottom, 0px) + 14px);
   position: fixed; inset: 0; z-index: 100; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; box-shadow: none;
 }
-.tel.inmersivo canvas { touch-action: none; }
+.tel.inmersivo > canvas { touch-action: none; }
 .tel.inmersivo .isla, .tel.inmersivo .hora { display: none; }
 .tel.inmersivo .barra-inmersiva {
   display: flex; position: absolute; z-index: 4; left: 0; right: 0; top: 0; gap: 8px; align-items: center; justify-content: space-between;
@@ -159,7 +159,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .uetq.hoy b { color: var(--oro-claro); }
 
 .cab-cuenta { transition: opacity 0.6s; }
-.ui, .entrada, .ajustes, .comida { transform-origin: 50% 44%; will-change: transform, opacity; }
+.ui, .entrada, .pagina-app { transform-origin: 50% 44%; will-change: transform, opacity; }
 
 /* ---------------- la entrada a la app ---------------- */
 .tel .entrada { position: absolute; inset: 0; z-index: 2; color: var(--tinta); }
@@ -269,18 +269,351 @@ section.item p { margin: 0; max-width: 64ch; }
 .ent-macro-g i { background: #a9c4f5; box-shadow: 0 0 8px #a9c4f5; }
 .ent-macro b { font-weight: 500; color: #fbf2d9; font-variant-numeric: tabular-nums; }
 
-/* Ajustes de maqueta: la última pestaña. */
-.tel .ajustes { position: absolute; inset: 0; z-index: 2; padding: calc(var(--arriba) + 30px) 24px calc(var(--pestanas) + 20px); display: flex; flex-direction: column; touch-action: pan-y; }
-.ajustes h2 { margin: 0 0 18px; font: 500 34px/1 var(--titulos); text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
-.ajustes ul { margin: 0; padding: 0; list-style: none; border-radius: 18px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.1); }
-.ajustes li { display: flex; justify-content: space-between; gap: 12px; padding: 16px 18px; font: 400 15px/1.2 var(--texto); }
-.ajustes li + li { border-top: 1px solid rgba(239, 230, 207, 0.08); }
-.ajustes li b { font-weight: 400; color: rgba(239, 230, 207, 0.55); }
-.tel .ajustes { overflow-y: auto; scrollbar-width: none; }
-.ajustes::-webkit-scrollbar { display: none; }
-.ajustes li.aj-tocable { cursor: pointer; }
-.ajustes li.aj-tocable b::after { content: '›'; margin-left: 10px; color: rgba(239, 230, 207, 0.4); }
-/* Las metas: lo que vale hoy arriba, quién las pone, cómo se reparten y la semana. */
+/* ---------------- las secciones: Inicio, Comida, Progreso, Sueño y Perfil ---------------- */
+/* Todas igual: a pantalla completa sobre el cielo oscurecido, con su lista que corre. */
+.tel .pagina-app { position: absolute; inset: 0; z-index: 2; color: var(--tinta); }
+.pagina-app svg { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.pagina-app::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--pestanas) + 40px); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.85) 75%); pointer-events: none; z-index: 1; }
+.in-scroll, .pg-scroll, .sn-scroll, .pf-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 2px) 18px calc(var(--pestanas) + 40px); scrollbar-width: none; touch-action: pan-y; }
+.in-scroll::-webkit-scrollbar, .pg-scroll::-webkit-scrollbar, .sn-scroll::-webkit-scrollbar, .pf-scroll::-webkit-scrollbar { display: none; }
+.in-cab, .pg-cab { display: grid; gap: 2px; margin-bottom: 16px; }
+.in-fecha, .pg-fecha { font: 400 11px/1.2 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
+.in-titulo, .pg-titulo { margin: 6px 0 0; font: 500 28px/1 var(--numeros); letter-spacing: -0.01em; }
+
+/* Inicio: los bloques. */
+.in-bloques { display: grid; gap: 12px; }
+.in-bloque { position: relative; border-radius: 20px; padding: 14px 16px 15px; background: rgba(8, 12, 26, 0.72); border: 1px solid rgba(239, 230, 207, 0.09); cursor: pointer; transition: border-color 0.2s, transform 0.15s; }
+.in-bloque:active { transform: scale(0.985); }
+@media (hover: hover) { .in-bloque:hover { border-color: rgba(239, 230, 207, 0.18); } }
+.in-bloque-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; min-height: 22px; }
+.in-bloque-titulo { font: 400 9.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.6); }
+.in-estado { flex: none; font: 500 10px/1 var(--texto); font-style: normal; letter-spacing: 0.08em; padding: 5px 8px; border-radius: 999px; color: rgba(239, 230, 207, 0.7); background: rgba(239, 230, 207, 0.07); }
+.in-estado.enCamino, .in-estado.llegaste, .in-estado.estable { color: var(--musgo); background: rgba(185, 227, 107, 0.1); }
+.in-estado.despacio, .in-estado.quieto, .in-estado.alReves, .in-estado.seMueve { color: var(--oro-claro); background: rgba(232, 196, 106, 0.1); }
+.in-cuenta { font: 500 11px/1 var(--numeros); font-style: normal; color: rgba(239, 230, 207, 0.6); font-variant-numeric: tabular-nums; }
+/* Calorías y macros: la luna, lo que queda grande, y los tres macros con su punto. */
+.in-calorias { padding: 12px 16px 16px; }
+.in-cal-arriba { display: flex; align-items: center; gap: 14px; }
+.in-luna { flex: none; display: block; margin: -6px -4px -6px -10px; }
+.in-cal-cifra { display: grid; gap: 4px; min-width: 0; }
+.in-cal-etq { font: 400 10px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); }
+.in-cal-cifra b { font: 300 54px/0.95 var(--numeros); letter-spacing: -0.025em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
+.in-cal-cifra small { font: 400 12.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; }
+.in-macros { margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding-top: 13px; border-top: 1px solid rgba(239, 230, 207, 0.07); }
+.in-macro { display: grid; gap: 5px; min-width: 0; }
+.in-macro-p { --c: var(--oro-claro); --c-rgb: 246, 227, 166; }
+.in-macro-c { --c: var(--musgo); --c-rgb: 185, 227, 107; }
+.in-macro-g { --c: #a9c4f5; --c-rgb: 169, 196, 245; }
+.in-macro-nombre, .cm-macro-nombre { display: inline-flex; align-items: center; gap: 6px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.13em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); white-space: nowrap; }
+.in-macro b { font: 400 20px/1 var(--numeros); color: var(--tinta); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.in-macro small { font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.5); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.in-macro-barra { position: relative; display: block; height: 3px; margin-top: 3px; border-radius: 3px; background: rgba(239, 230, 207, 0.08); overflow: hidden; }
+.in-macro-barra i { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--c); opacity: 0.75; transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1); }
+/* El punto de cada macro: apagado mientras falta; brilla al cumplir lo pedido; si te pasás por mucho, tiembla un poco. */
+.in-macro-nombre::before, .cm-macro-nombre::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--c); opacity: 0.55; transition: opacity 0.6s, box-shadow 0.6s; }
+.cumplido .in-macro-nombre::before, .cumplido .cm-macro-nombre::before, .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { opacity: 1; box-shadow: 0 0 0 2px rgba(var(--c-rgb), 0.16), 0 0 10px 1px var(--c); animation: brilla 3.2s ease-in-out infinite; }
+.pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: tiembla 2.6s linear infinite; }
+.cumplido .in-macro-barra i, .pasado .in-macro-barra i { opacity: 1; box-shadow: 0 0 8px var(--c); }
+@keyframes brilla { 50% { box-shadow: 0 0 0 3px rgba(var(--c-rgb), 0.1), 0 0 14px 2px var(--c); } }
+/* Un temblor corto y quieto el resto del tiempo: que se note sin molestar. */
+@keyframes tiembla {
+  0%, 22%, 100% { translate: 0 0; }
+  2% { translate: 0.8px -0.5px; } 4% { translate: -0.9px 0.4px; } 6% { translate: 0.6px 0.7px; } 8% { translate: -0.7px -0.6px; }
+  10% { translate: 0.9px 0.2px; } 12% { translate: -0.5px 0.6px; } 14% { translate: 0.6px -0.7px; } 16% { translate: -0.8px 0.1px; } 18% { translate: 0.4px 0.5px; } 20% { translate: -0.3px -0.3px; }
+}
+/* El progreso al objetivo: la fecha, y el camino de dónde empezaste a la meta. */
+.in-obj-fila { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.in-obj-fila b { font: 400 26px/1 var(--numeros); color: #fbf2d9; letter-spacing: -0.01em; }
+.in-obj-fila span { font: 400 13px/1.2 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.in-camino { margin-top: 13px; }
+.in-camino-pista { position: relative; height: 4px; border-radius: 4px; background: rgba(239, 230, 207, 0.08); }
+.in-camino-pista i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 4px; background: linear-gradient(90deg, rgba(185, 227, 107, 0.35), var(--musgo)); transition: width 1.2s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.in-camino-marca { position: absolute; top: 50%; left: 0; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; background: #fbf2d9; box-shadow: 0 0 0 3px rgba(251, 242, 217, 0.14), 0 0 10px rgba(251, 242, 217, 0.6); transition: left 1.2s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.in-camino-etq { margin-top: 8px; display: flex; justify-content: space-between; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.5); font-variant-numeric: tabular-nums; }
+.in-camino-etq .ahora { color: var(--tinta); }
+.in-nota { margin: 11px 0 0; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.58); font-variant-numeric: tabular-nums; }
+/* Peso y balance (y el sueño, y el agua): un dato a la izquierda y su gráfico chico. */
+.in-fila { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.in-fila + .in-fila { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(239, 230, 207, 0.07); }
+.in-dato { display: grid; gap: 5px; min-width: 0; }
+.in-dato-cifra b { font: 400 26px/1 var(--numeros); color: #fbf2d9; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.in-dato-cifra small { font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.in-dato > span { font: 400 11.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; }
+.in-fila .gr { flex: none; width: 150px; height: 44px; overflow: visible; }
+/* El día en el cielo: la constelación de hoy en chico. */
+.in-cielo { background: radial-gradient(120% 100% at 50% 0%, rgba(20, 30, 62, 0.85), rgba(6, 9, 20, 0.85)); }
+.in-mini-cielo { display: block; width: 100%; height: 118px; }
+.in-cielo-datos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.in-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 8px; border-radius: 999px; background: rgba(239, 230, 207, 0.06); font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.72); font-variant-numeric: tabular-nums; }
+.in-chip svg { width: 14px; height: 14px; color: rgba(239, 230, 207, 0.5); }
+.in-chip.hecho { color: var(--musgo); }
+.in-chip.hecho svg { color: var(--musgo); }
+.in-vasos { flex: 1; display: flex; gap: 3px; justify-content: flex-end; flex-wrap: wrap; }
+.in-vasos i { width: 7px; height: 16px; border-radius: 2px 2px 3px 3px; border: 1px solid rgba(188, 216, 242, 0.35); }
+.in-vasos i.lleno { background: #bcd8f2; border-color: #bcd8f2; box-shadow: 0 0 6px rgba(188, 216, 242, 0.5); }
+.in-agua-mas { appearance: none; cursor: pointer; flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(232, 196, 106, 0.42); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); display: grid; place-items: center; }
+.in-agua-mas svg { width: 16px; height: 16px; stroke-width: 2; }
+.in-pie { display: flex; justify-content: center; margin-top: 18px; }
+.in-personalizar { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.12); background: rgba(8, 12, 26, 0.6); color: rgba(239, 230, 207, 0.72); font: 400 13px/1 var(--texto); }
+.in-personalizar svg { width: 15px; height: 15px; }
+
+/* Los gráficos chicos. */
+.gr-punto { fill: rgba(239, 230, 207, 0.3); stroke: none; }
+.gr-linea { fill: none; stroke: var(--oro-claro); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.gr-fin { fill: #fbf2d9; stroke: none; filter: drop-shadow(0 0 4px rgba(246, 227, 166, 0.9)); }
+.gr-meta { stroke: rgba(185, 227, 107, 0.55); stroke-width: 1; stroke-dasharray: 3 4; }
+.gr-barra { fill: rgba(239, 230, 207, 0.32); stroke: none; }
+.gr-barra.arriba { fill: rgba(232, 196, 106, 0.6); }
+.gr-gasto { stroke: rgba(185, 227, 107, 0.75); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.gr-etapa { stroke: none; }
+.gr-despierto { fill: #e7a07a; }
+.gr-rem { fill: #8fd3e8; }
+.gr-nucleo, .gr-dormido { fill: #6f86d6; }
+.gr-profundo { fill: #4b4fa8; }
+.gr-guia { stroke: rgba(239, 230, 207, 0.06); stroke-width: 1; }
+
+/* La hoja de abajo de las secciones nuevas (el «+» y personalizar Inicio). */
+.hb-fondo { position: absolute; inset: 0; z-index: 5; background: rgba(1, 2, 6, 0.6); animation: hj-aparece 0.35s ease both; }
+.hb-fondo[hidden], .hb[hidden] { display: none; }
+.tel .hb {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; max-height: calc(100% - var(--arriba) + 6px); display: flex; flex-direction: column; overflow: hidden;
+  padding: 0 0 calc(var(--abajo) + 6px); border-radius: 28px 28px 0 0; background: linear-gradient(180deg, #0f1733 0%, #0a1026 55%, #080c1d 100%);
+  border-top: 1px solid rgba(232, 196, 106, 0.2); box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.55); color: var(--tinta); animation: hj-sube 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hb.saliendo { animation: hj-baja 0.38s cubic-bezier(0.5, 0, 0.9, 0.6) both; pointer-events: none; }
+.hb svg { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.hb-asa { flex: none; width: 38px; height: 5px; border-radius: 3px; background: rgba(239, 230, 207, 0.22); margin: 8px auto 6px; }
+.hb-cab { flex: none; position: relative; display: grid; justify-items: center; padding-bottom: 4px; }
+.hb-titulo { margin: 6px 0 0; font: 500 17px/1 var(--numeros); }
+.hb-cerrar { position: absolute; right: 12px; top: 8px; appearance: none; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(239, 230, 207, 0.08); color: rgba(239, 230, 207, 0.75); display: grid; place-items: center; }
+.hb-cerrar svg { width: 14px; height: 14px; stroke-width: 2; }
+.hb-texto { margin: 8px 24px 10px; text-align: center; font: 400 13px/1.4 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.hb-nota { margin: 12px 24px 4px; text-align: center; font: 400 12px/1.4 var(--texto); color: rgba(239, 230, 207, 0.45); }
+/* Personalizar Inicio: cada bloque con su manija y su llave. */
+.in-lista { list-style: none; margin: 4px 16px 0; padding: 0; border-radius: 16px; background: rgba(239, 230, 207, 0.04); border: 1px solid rgba(239, 230, 207, 0.08); }
+.in-fila-orden { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 14px 12px 8px; background: transparent; transition: translate 0.18s; }
+.in-fila-orden + .in-fila-orden { border-top: 1px solid rgba(239, 230, 207, 0.07); }
+.in-fila-orden.moviendo { z-index: 2; transition: none; background: #16203f; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+.in-asa { flex: none; width: 34px; height: 34px; display: grid; place-items: center; color: rgba(239, 230, 207, 0.45); cursor: grab; touch-action: none; }
+.in-asa svg { width: 18px; height: 18px; }
+.in-fila-nombre { flex: 1; font: 400 15px/1.2 var(--texto); }
+.in-llave { appearance: none; cursor: pointer; flex: none; padding: 0; border: 0; background: none; }
+.in-llave i { position: relative; display: block; width: 44px; height: 26px; border-radius: 999px; background: rgba(239, 230, 207, 0.15); transition: background 0.2s; }
+.in-llave i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #f1ece0; transition: transform 0.2s; }
+.in-llave[aria-pressed='true'] i { background: var(--musgo); }
+.in-llave[aria-pressed='true'] i::after { transform: translateX(18px); }
+
+/* El «+»: lo principal arriba, la carga rápida, los recientes y las guardadas, y las medidas. */
+.mas { max-height: 86%; }
+.mas > :not(.hb-asa):not(.mas-aviso):not(.mas-pie):not(.mas-cab) { flex: none; }
+.mas[data-vista='menu'] { overflow-y: auto; scrollbar-width: none; }
+.mas-principales { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 16px 0; }
+.mas-principal { appearance: none; cursor: pointer; display: grid; justify-items: start; gap: 4px; padding: 14px 14px 13px; border-radius: 18px; border: 1px solid rgba(232, 196, 106, 0.28); background: rgba(232, 196, 106, 0.07); color: var(--tinta); text-align: left; }
+.mas-principal svg { width: 24px; height: 24px; color: var(--oro-claro); margin-bottom: 6px; stroke-width: 1.6; }
+.mas-principal b { font: 500 15px/1.15 var(--texto); }
+.mas-principal span { font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; }
+.mas-principal:active, .mas-chip:active, .mas-rapido:active { transform: scale(0.97); }
+.mas-etq { margin: 18px 20px 8px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
+.mas-rapidos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; }
+.mas-rapido { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 0 8px 0 13px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(239, 230, 207, 0.04); color: var(--tinta); font: 400 13.5px/1.15 var(--texto); text-align: left; }
+.mas-rapido > svg { flex: none; width: 18px; height: 18px; color: var(--oro-claro); }
+.mas-agua > svg { color: #bcd8f2; }
+.mas-agua-txt { flex: 1; display: grid; gap: 3px; }
+.mas-agua-txt b { font: 500 13px/1 var(--numeros); color: rgba(239, 230, 207, 0.7); font-variant-numeric: tabular-nums; }
+.mas-agua-mas { appearance: none; cursor: pointer; flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(188, 216, 242, 0.4); background: rgba(188, 216, 242, 0.08); color: #d6e7f7; display: grid; place-items: center; }
+.mas-agua-mas svg { width: 15px; height: 15px; stroke-width: 2; }
+.mas-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 16px 2px; touch-action: pan-x; }
+.mas-chips::-webkit-scrollbar { display: none; }
+.mas-chip { appearance: none; cursor: pointer; flex: none; display: grid; gap: 3px; max-width: 190px; padding: 9px 13px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.12); background: rgba(239, 230, 207, 0.04); color: var(--tinta); text-align: left; transition: border-color 0.2s, background 0.2s; }
+.mas-chip b { font: 400 14px/1.15 var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mas-chip span { font: 400 11.5px/1.15 var(--texto); color: rgba(239, 230, 207, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.mas-chip.hecho { border-color: rgba(185, 227, 107, 0.6); background: rgba(185, 227, 107, 0.08); }
+.mas-chip.hecho b::before { content: '✓ '; color: var(--musgo); }
+.mas-medidas { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 12px; margin: 18px 16px 4px; padding: 13px 12px 13px 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(239, 230, 207, 0.04); color: var(--tinta); text-align: left; }
+.mas-medidas > svg:first-child { flex: none; width: 22px; height: 22px; color: var(--oro-claro); }
+.mas-medidas > svg:last-child { flex: none; width: 16px; height: 16px; color: rgba(239, 230, 207, 0.4); }
+.mas-medidas div { flex: 1; display: grid; gap: 3px; min-width: 0; }
+.mas-medidas b { font: 500 14.5px/1.15 var(--texto); }
+.mas-medidas span { font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.mas-medidas em { flex: none; font: 500 13px/1 var(--numeros); font-style: normal; color: var(--oro-claro); white-space: nowrap; }
+.mas-cab { flex: none; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; padding: 0 12px 6px; }
+.mas-cab h3 { margin: 0; text-align: center; font: 500 16px/1 var(--numeros); }
+.mas-atras { appearance: none; cursor: pointer; width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(239, 230, 207, 0.07); color: var(--oro-claro); display: grid; place-items: center; }
+.mas-atras svg { width: 20px; height: 20px; stroke-width: 1.8; }
+.mas-cuerpo { flex: 1 1 auto !important; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 4px 20px 16px; }
+.mas-cuerpo::-webkit-scrollbar { display: none; }
+.mas-pie { flex: none; padding: 10px 20px 0; border-top: 1px solid rgba(239, 230, 207, 0.08); }
+.mas-pie .fi-agregar { width: 100%; }
+.mas-aviso { position: absolute; left: 50%; bottom: calc(var(--abajo) + 14px); translate: -50% 12px; opacity: 0; z-index: 3; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 10px; padding: 7px 7px 7px 16px; min-height: 42px; border-radius: 999px; background: rgba(15, 22, 46, 0.97); border: 1px solid rgba(232, 196, 106, 0.24); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 28px); pointer-events: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+.mas-aviso.visible { opacity: 1; translate: -50% 0; pointer-events: auto; }
+.mas-aviso:not(:has(button)) { padding-right: 16px; }
+.mas-aviso > span { overflow: hidden; text-overflow: ellipsis; }
+.mas-aviso-btn { appearance: none; cursor: pointer; flex: none; font: 500 11px/1 var(--texto); letter-spacing: 0.1em; text-transform: uppercase; color: var(--oro); background: rgba(232, 196, 106, 0.12); border: 0; border-radius: 999px; padding: 9px 11px; }
+/* El peso: un número grande que se escribe o se corre de a 100 g. */
+.mas-peso { display: grid; justify-items: center; padding-top: 18px; }
+.mas-peso-cifra { display: flex; align-items: center; gap: 10px; }
+.mas-peso-cifra input { width: 132px; border: 0; border-bottom: 1px solid rgba(232, 196, 106, 0.4); background: none; color: #fbf2d9; text-align: center; font: 300 50px/1.1 var(--numeros); letter-spacing: -0.02em; outline: none; font-variant-numeric: tabular-nums; }
+.mas-peso-cifra input:focus { border-color: var(--oro); }
+.mas-peso-cifra span { font: 400 15px/1 var(--texto); color: rgba(239, 230, 207, 0.6); margin-left: -4px; }
+.mas-peso-dia { margin: 14px 0 0; font: 400 13px/1.3 var(--texto); color: var(--musgo); }
+.mas-peso-datos { margin-top: 18px; display: flex; gap: 14px; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.58); font-variant-numeric: tabular-nums; }
+.mas-nota { margin: 18px 0 0; max-width: 32ch; text-align: center; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.48); }
+/* Las medidas: la figura con la cinta donde va, cómo tomarla, los campos y lo que estiman. */
+.mas-tutorial { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; padding: 6px 0 4px; }
+.mas-figura svg { display: block; width: 96px; height: 192px; overflow: visible; }
+.mas-cuerpo-fig > * { fill: rgba(239, 230, 207, 0.09); stroke: rgba(239, 230, 207, 0.22); stroke-width: 0.8; }
+.mas-ombligo { fill: rgba(239, 230, 207, 0.4); stroke: none; }
+.mas-cinta { fill: none; stroke: rgba(239, 230, 207, 0.2); stroke-width: 1; stroke-dasharray: 2 2.5; transition: stroke 0.3s, stroke-width 0.3s; }
+.mas-cinta.activa { stroke: var(--oro); stroke-width: 2.2; stroke-dasharray: none; filter: drop-shadow(0 0 3px rgba(232, 196, 106, 0.9)); }
+.mas-como b { display: block; font: 500 17px/1.1 var(--numeros); color: var(--oro-claro); }
+.mas-como p { margin: 7px 0 0; font: 400 13px/1.42 var(--texto); color: rgba(239, 230, 207, 0.78); }
+.mas-consejos { margin: 10px 0 4px; border-radius: 14px; background: rgba(239, 230, 207, 0.04); border: 1px solid rgba(239, 230, 207, 0.08); }
+.mas-consejos summary { cursor: pointer; padding: 11px 14px; font: 400 13px/1 var(--texto); color: var(--oro-claro); list-style: none; }
+.mas-consejos summary::-webkit-details-marker { display: none; }
+.mas-consejos summary::after { content: ' ›'; }
+.mas-consejos[open] summary::after { content: ' ‹'; }
+.mas-consejos ul { margin: 0; padding: 0 14px 12px 30px; display: grid; gap: 5px; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.7); }
+.mas-campos { margin-top: 6px; }
+.mas-campo { cursor: pointer; }
+.mas-campo span { display: grid; gap: 2px; }
+.mas-campo span small { font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.42); }
+.mas-campo.usada > span::before { content: ''; display: none; }
+.mas-campo.usada > span { color: var(--tinta); }
+.mas-campo.elegida input { border-color: rgba(232, 196, 106, 0.6); box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.1); }
+.mas-campo.mal input { border-color: rgba(231, 140, 110, 0.8); color: #f0b39c; }
+.mas-grasa { margin-top: 16px; padding: 14px 16px 15px; border-radius: 16px; background: rgba(232, 196, 106, 0.06); border: 1px solid rgba(232, 196, 106, 0.22); display: grid; gap: 6px; }
+.mas-grasa-etq { font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.6); }
+.mas-grasa-rango { font: 300 34px/1 var(--numeros); color: #fbf2d9; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.mas-grasa-aviso { margin: 4px 0 0; font: 400 12px/1.45 var(--texto); color: rgba(239, 230, 207, 0.62); }
+
+/* Progreso: cartas como las de la comida. */
+.pg-carta { margin-top: 12px; border-radius: 20px; padding: 14px 16px 15px; background: rgba(8, 12, 26, 0.72); border: 1px solid rgba(239, 230, 207, 0.09); display: grid; gap: 6px; }
+.pg-carta-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 26px; }
+.pg-carta-titulo { font: 400 9.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.6); }
+.pg-objetivo-titulo { font: 500 19px/1.15 var(--numeros); }
+.pg-cifra { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pg-cifra b { font: 400 32px/1 var(--numeros); letter-spacing: -0.015em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
+.pg-cifra span { font: 400 13px/1.2 var(--texto); color: rgba(239, 230, 207, 0.58); }
+.pg-nota { font: 400 12.5px/1.3 var(--texto); color: var(--musgo); font-variant-numeric: tabular-nums; }
+.pg-nota.tenue { color: rgba(239, 230, 207, 0.45); }
+.pg-texto { margin: 4px 0 0; font: 300 13.5px/1.48 var(--texto); color: rgba(239, 230, 207, 0.8); }
+.pg-texto p { margin: 0 0 8px; }
+.pg-como { color: rgba(239, 230, 207, 0.66); }
+.pg-leyenda { font-size: 12px; color: rgba(239, 230, 207, 0.48); }
+.pg-aviso { margin: 4px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(239, 230, 207, 0.04); border: 1px solid rgba(239, 230, 207, 0.08); font: 400 12.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.66); }
+.pg-grafico { width: 100%; height: auto; margin-top: 8px; }
+.pg-eje { display: flex; justify-content: space-between; font: 400 10.5px/1 var(--texto); color: rgba(239, 230, 207, 0.42); font-variant-numeric: tabular-nums; }
+.pg-lista { list-style: none; margin: 2px 0 0; padding: 0; }
+.pg-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto 64px; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid rgba(239, 230, 207, 0.06); font: 400 14px/1.2 var(--texto); }
+.pg-lista li:last-child { border-bottom: 0; }
+.pg-lista b { font: 400 15px/1 var(--numeros); font-variant-numeric: tabular-nums; }
+.pg-lista em { justify-self: end; font: 400 12px/1 var(--numeros); font-style: normal; color: rgba(239, 230, 207, 0.45); font-variant-numeric: tabular-nums; }
+.pg-lista em.baja { color: var(--musgo); }
+.pg-lista em.sube { color: var(--oro-claro); }
+.pg-historia { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.pg-historia span { display: grid; gap: 3px; padding: 7px 10px; border-radius: 10px; background: rgba(239, 230, 207, 0.05); font: 500 13px/1 var(--numeros); font-variant-numeric: tabular-nums; }
+.pg-historia small { font: 400 10.5px/1 var(--texto); color: rgba(239, 230, 207, 0.48); }
+.pg-balance { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(239, 230, 207, 0.07); }
+.pg-balance .gr { flex: none; width: 160px; height: 52px; }
+.pg-seccion { margin: 28px 2px 2px; font: 500 19px/1 var(--numeros); }
+.pg-filas { display: grid; }
+.pg-fila { appearance: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 10px; padding: 12px 0; border: 0; border-bottom: 1px solid rgba(239, 230, 207, 0.07); background: none; color: var(--tinta); text-align: left; font: 400 15px/1.2 var(--texto); }
+.pg-fila b { font: 400 14px/1.2 var(--texto); color: rgba(239, 230, 207, 0.6); text-align: right; }
+.pg-fila svg { width: 15px; height: 15px; color: rgba(239, 230, 207, 0.4); transition: transform 0.2s; }
+.pg-fila.abierta svg { transform: rotate(90deg); }
+.pg-eleccion { padding: 12px 0 14px; border-bottom: 1px solid rgba(239, 230, 207, 0.07); display: grid; gap: 10px; }
+.pg-eleccion .aj-nota { margin: 0; }
+.pg-peso-meta { justify-items: start; }
+.pg-macros { padding-top: 12px; }
+.pg-requisitos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.pg-req { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 12px; background: rgba(239, 230, 207, 0.04); border: 1px solid rgba(239, 230, 207, 0.08); font: 400 12px/1.25 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.pg-req b { font: 400 22px/1 var(--numeros); color: var(--oro-claro); }
+.pg-req span { display: grid; gap: 3px; }
+.pg-req small { font: 400 10.5px/1 var(--texto); color: rgba(239, 230, 207, 0.42); }
+.pg-req.ok b { color: var(--musgo); }
+.pg-control .aj-etq { margin-top: 14px; }
+.pg-control .aj-dias { margin: 4px 0 0; }
+.progreso.en-metas .pg-scroll { padding-top: calc(var(--arriba) + 22px); }
+
+/* Sueño: las dos semanas para elegir, la noche, la calidad, el horario, la deuda, el reloj y las fuentes. */
+.sn-noches { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; padding: 10px 6px 8px; border-radius: 18px; background: rgba(8, 12, 26, 0.6); border: 1px solid rgba(239, 230, 207, 0.08); touch-action: pan-y; }
+.sn-noche { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 4px; padding: 3px 0 4px; border: 0; border-radius: 9px; background: none; color: rgba(239, 230, 207, 0.6); }
+.sn-noche.elegida { background: rgba(239, 230, 207, 0.08); color: var(--tinta); }
+.sn-noche b { font: 500 10.5px/1 var(--numeros); font-variant-numeric: tabular-nums; }
+.sn-noche .cm-tira-letra { font-size: 9px; letter-spacing: 0.04em; }
+.sn-noche-barra { position: relative; width: 9px; height: 54px; border-radius: 5px; background: rgba(239, 230, 207, 0.05); display: flex; align-items: flex-end; overflow: hidden; }
+.sn-noche-barra > i { display: block; width: 100%; border-radius: 5px; background: linear-gradient(180deg, #8fd3e8, #6f86d6 50%, #4b4fa8); }
+.sn-noche.vacia .sn-noche-barra > i { background: repeating-linear-gradient(135deg, rgba(239, 230, 207, 0.1) 0 3px, transparent 3px 6px); }
+.sn-noche.cama .sn-noche-barra > i { background: none; border: 1px dashed rgba(239, 230, 207, 0.35); }
+.sn-noche-meta { position: absolute; left: -2px; right: -2px; height: 1px; background: rgba(185, 227, 107, 0.6); }
+.sn-carta .pg-cifra b { font-size: 34px; }
+.sn-confianza { flex: none; font: 500 10px/1 var(--texto); font-style: normal; letter-spacing: 0.06em; padding: 5px 8px; border-radius: 999px; }
+.sn-confianza.alta { color: var(--musgo); background: rgba(185, 227, 107, 0.1); }
+.sn-confianza.media { color: var(--oro-claro); background: rgba(232, 196, 106, 0.1); }
+.sn-confianza.baja { color: rgba(239, 230, 207, 0.6); background: rgba(239, 230, 207, 0.07); }
+.sn-hipno { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; margin-top: 10px; }
+.sn-hipno-etq { display: grid; grid-template-rows: repeat(4, 1fr); font: 400 10.5px/1 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.sn-hipno-etq span { align-self: center; }
+.sn-hipno .gr { width: 100%; height: 96px; }
+.sn-eje { padding-left: 70px; }
+.sn-etapas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.sn-etapa { display: grid; grid-template-columns: 8px 1fr; column-gap: 6px; row-gap: 3px; align-items: center; padding: 9px 10px; border-radius: 12px; background: rgba(239, 230, 207, 0.04); }
+.sn-etapa i { width: 8px; height: 8px; border-radius: 50%; }
+.sn-rem i { background: #8fd3e8; }
+.sn-nucleo i { background: #6f86d6; }
+.sn-profundo i { background: #4b4fa8; }
+.sn-etapa span { font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.sn-etapa b { grid-column: 1 / -1; font: 400 15px/1 var(--numeros); font-variant-numeric: tabular-nums; }
+.sn-etapa small { grid-column: 1 / -1; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.45); }
+.sn-nota { margin: 6px 0 0; font: 400 12px/1.45 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.sn-datos { display: grid; margin-top: 6px; }
+.sn-dato { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 4px; align-items: center; padding: 9px 0; border-top: 1px solid rgba(239, 230, 207, 0.06); font: 400 14px/1.2 var(--texto); }
+.sn-dato b { font: 400 14px/1.2 var(--numeros); text-align: right; font-variant-numeric: tabular-nums; }
+.sn-dato .sn-confianza { grid-column: 2; justify-self: end; }
+.sn-sin .pg-cifra b { color: rgba(239, 230, 207, 0.45); }
+.sn-partes { display: grid; gap: 10px; margin-top: 8px; }
+.sn-parte { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; font: 400 13.5px/1.2 var(--texto); }
+.sn-parte b { font: 400 13px/1 var(--numeros); color: rgba(239, 230, 207, 0.7); font-variant-numeric: tabular-nums; }
+.sn-parte-barra { grid-column: 1 / -1; display: block; height: 4px; border-radius: 4px; background: rgba(239, 230, 207, 0.08); overflow: hidden; }
+.sn-parte-barra i { display: block; height: 100%; width: 0; border-radius: 4px; background: linear-gradient(90deg, #6f86d6, #8fd3e8); transition: width 1s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.sn-rangos { display: grid; gap: 4px; margin-top: 8px; }
+.sn-rango { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 8px; align-items: center; font: 400 10px/1 var(--texto); color: rgba(239, 230, 207, 0.45); }
+.sn-rango-pista { position: relative; height: 8px; border-radius: 4px; background: rgba(239, 230, 207, 0.03); }
+.sn-rango-pista i { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: rgba(111, 134, 214, 0.75); }
+.sn-rango.elegida .sn-rango-pista i { background: #8fd3e8; box-shadow: 0 0 8px rgba(143, 211, 232, 0.6); }
+.sn-rango.vacia .sn-rango-pista { background: repeating-linear-gradient(135deg, rgba(239, 230, 207, 0.07) 0 3px, transparent 3px 6px); }
+.sn-vital { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 3px; column-gap: 10px; padding: 10px 0; border-top: 1px solid rgba(239, 230, 207, 0.06); }
+.sn-vital-nombre { display: inline-flex; align-items: center; gap: 8px; font: 400 14px/1.2 var(--texto); }
+.sn-vital-nombre svg { width: 16px; height: 16px; color: rgba(239, 230, 207, 0.5); }
+.sn-vital b { font: 400 16px/1 var(--numeros); text-align: right; font-variant-numeric: tabular-nums; }
+.sn-comparado { grid-column: 2; justify-self: end; font: 400 11.5px/1 var(--texto); font-style: normal; color: rgba(239, 230, 207, 0.5); }
+.sn-comparado.usual { color: var(--musgo); }
+.sn-comparado.mas, .sn-comparado.menos { color: var(--oro-claro); }
+.sn-vital small { grid-column: 1; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.4); }
+.sn-fuentes-lista { list-style: none; margin: 0; padding: 0; }
+.sn-fuentes-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 9px 0; border-top: 1px solid rgba(239, 230, 207, 0.06); font: 400 13px/1.2 var(--texto); }
+.sn-fuente { display: inline-flex; align-items: center; gap: 5px; font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.6); white-space: nowrap; }
+.sn-fuente svg { width: 13px; height: 13px; }
+.sn-pie { margin: 18px 4px 0; font: 400 11.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.42); text-align: center; }
+
+/* Perfil: la cuenta arriba y las listas, como Ajustes de iOS. */
+.pf-cab { display: flex; align-items: center; gap: 14px; margin: 10px 0 18px; }
+.pf-inicial { flex: none; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font: 400 24px/1 var(--numeros); color: #1a1406; background: radial-gradient(circle at 35% 30%, #fdeebf, var(--oro) 70%); }
+.pf-nombres h2 { margin: 0; font: 500 24px/1.1 var(--numeros); }
+.pf-nombres span { font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.pf-grupo { margin: 20px 4px 8px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
+.pf-lista { list-style: none; margin: 0; padding: 0; border-radius: 16px; background: rgba(8, 12, 26, 0.72); border: 1px solid rgba(239, 230, 207, 0.09); }
+.pf-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; gap: 10px; align-items: center; padding: 13px 14px 13px 16px; font: 400 15px/1.2 var(--texto); }
+.pf-lista li + li { border-top: 1px solid rgba(239, 230, 207, 0.07); }
+.pf-lista b { font: 400 14px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.pf-lista svg { width: 14px; height: 14px; color: rgba(239, 230, 207, 0.35); }
+.pf-lista li.ok b { color: var(--musgo); }
+.pf-lista li.accion b { color: var(--oro-claro); }
+.pf-lista li.peligro > span { color: #f0a58a; }
+.pf-salir { appearance: none; cursor: pointer; display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(8, 12, 26, 0.6); color: rgba(239, 230, 207, 0.75); font: 400 15px/1 var(--texto); }
+.pf-version { margin: 14px 0 0; text-align: center; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.35); }
+
+/* Las metas (dentro de Progreso): lo que vale hoy arriba, quién las pone, cómo se reparten y la semana. */
 .aj-cab { display: flex; align-items: center; gap: 6px; margin: -6px 0 16px -12px; }
 .aj-cab h2 { margin: 0; }
 .aj-atras { appearance: none; flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; color: var(--tinta); display: grid; place-items: center; cursor: pointer; }
@@ -336,19 +669,27 @@ section.item p { margin: 0; max-width: 64ch; }
 .error-cielo { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; text-align: center; color: var(--tenue); font-size: 14px; }
 
 /* ---------------- las pestañas, como en Ascent ---------------- */
-/* El cielo se oscurece detrás de Inicio y de Ajustes: la opacidad del velo la pone la tira. */
+/* El cielo se oscurece detrás de las secciones, salvo Hábitos: la opacidad del velo la pone la tira. */
 .velo-pestanas { position: absolute; inset: 0; pointer-events: none; transition: opacity 0.6s; }
 .velo-pestanas i { position: absolute; inset: 0; background: #03050c; }
-/* Solo texto, como Ascent: el nombre apagado y encima el encendido, que se cruza con la tira. */
-.pestanas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; padding: 6px 12px var(--abajo); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.8) 40%, rgba(3, 5, 12, 0.94)); transition: opacity 0.5s, visibility 0.5s; }
+/* Seis secciones con su ícono de línea y su nombre, y el «+» en el medio: el apagado abajo y el
+   encendido encima, que se cruza con la tira, como el texto de Ascent. */
+.pestanas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: center; padding: 5px 6px var(--abajo); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.8) 40%, rgba(3, 5, 12, 0.94)); transition: opacity 0.5s, visibility 0.5s; }
 .pestanas::before { content: ''; position: absolute; inset: 0; background: #04060d; border-top: 1px solid rgba(239, 230, 207, 0.08); opacity: var(--solida, 1); }
-.pestanas button { position: relative; appearance: none; flex: 1; min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
-.pestanas span { grid-area: 1 / 1; font: 400 12.5px/1 var(--texto); letter-spacing: 0.04em; color: rgba(239, 230, 207, 0.34); }
-.pestanas .pt-luz { color: var(--tinta); text-shadow: 0 0 12px rgba(246, 227, 166, 0.3); }
-/* En la entrada no hay pestañas, y la hoja de registro las tapa. */
+.pestanas > button[role='tab'] { position: relative; appearance: none; flex: 1 1 0; min-width: 0; min-height: 50px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.pt-capa { grid-area: 1 / 1; display: grid; justify-items: center; gap: 4px; color: rgba(239, 230, 207, 0.36); }
+.pt-capa svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
+.pt-nombre { font: 400 10px/1 var(--texto); letter-spacing: 0.02em; white-space: nowrap; }
+.pestanas .pt-luz { color: var(--tinta); }
+.pt-luz svg { filter: drop-shadow(0 0 5px rgba(246, 227, 166, 0.4)); }
+.pt-mas { position: relative; appearance: none; cursor: pointer; flex: 0 0 auto; width: 50px; min-height: 50px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--oro-claro); }
+.pt-mas span { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(232, 196, 106, 0.5); display: grid; place-items: center; transition: background 0.2s, transform 0.15s; }
+.pt-mas svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; }
+.pt-mas:active span { transform: scale(0.9); background: rgba(232, 196, 106, 0.14); }
+/* En la entrada no hay pestañas, y las hojas las tapan. */
 .tel.en-entrada .velo-pestanas { opacity: 0; }
 .tel.en-entrada .pestanas, .tel.con-hoja .pestanas { opacity: 0; visibility: hidden; }
-.tel.en-entrada .comida, .tel.en-entrada .ajustes { visibility: hidden; }
+.tel.en-entrada .pagina-app { visibility: hidden; }
 
 /* ---------------- catálogo ---------------- */
 .catalogo { display: grid; gap: 22px; }
@@ -369,41 +710,29 @@ section.item p { margin: 0; max-width: 64ch; }
 
 /* ---------------- la comida ---------------- */
 /* Iconos de línea, como los de los hábitos. */
-.comida svg:not(.cm-luna):not(.cm-grafico), .hoja svg { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.comida svg:not(.cm-grafico), .hoja svg { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.hj-mas:active, .fi-paso:active { transform: scale(0.92); }
 
-/* El «+» de Inicio, abajo a la derecha y sobre las pestañas: siempre en el mismo lugar. */
-.cm-barra { position: absolute; right: 18px; bottom: calc(var(--pestanas) + 10px); }
-.bh-mas { appearance: none; cursor: pointer; flex: none; width: 60px; height: 60px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #1a1406; background: radial-gradient(circle at 35% 30%, #fdeebf 0%, var(--oro) 58%, #c49b45 100%); box-shadow: inset 0 0 0 1px rgba(255, 244, 214, 0.45), 0 10px 30px rgba(232, 196, 106, 0.32), 0 0 44px rgba(232, 196, 106, 0.2); transition: transform 0.15s; }
-.bh-mas svg { width: 26px; height: 26px; stroke-width: 2.3; }
-.bh-mas:active, .hj-mas:active, .fi-paso:active { transform: scale(0.92); }
 
-/* La luna de la comida: se llena con lo comido; los arcos son los macros contra su meta. */
-.cm-luna-halo { fill: rgba(236, 230, 214, 0.07); filter: blur(9px); }
-.cm-luna-noche { fill: #12172a; }
-.cm-luna-contorno { fill: none; stroke: rgba(236, 230, 214, 0.16); stroke-width: 0.6; }
-.cm-mares { fill: #8c8574; opacity: 0.5; }
-.cm-crater { fill: #f8f4ea; opacity: 0.7; }
-.comida.sin-arcos .cm-arco, .comida.sin-arcos .cm-pista { display: none; }
-.cm-pista { fill: none; stroke: rgba(239, 230, 207, 0.07); stroke-width: 2.6; }
-.cm-arco { fill: none; stroke-width: 2.8; stroke-linecap: round; }
-.cm-arco-p { stroke: var(--oro-claro); filter: drop-shadow(0 0 3px rgba(246, 227, 166, 0.7)); }
-.cm-arco-c { stroke: var(--musgo); filter: drop-shadow(0 0 3px rgba(185, 227, 107, 0.6)); }
-.cm-arco-g { stroke: #a9c4f5; filter: drop-shadow(0 0 3px rgba(169, 196, 245, 0.6)); }
 
-/* Inicio: la comida, con el cielo quieto y oscurecido atrás. */
-.tel .comida { position: absolute; inset: 0; z-index: 2; color: var(--tinta); }
-.comida::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--pestanas) + 70px); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.88) 70%); pointer-events: none; z-index: 1; }
-.cm-barra { z-index: 2; }
-.cm-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 2px) 20px calc(var(--pestanas) + 86px); scrollbar-width: none; touch-action: pan-y; }
+/* Comida: lo de cada día, con el cielo quieto y oscurecido atrás. */
+.cm-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 2px) 20px calc(var(--pestanas) + 40px); scrollbar-width: none; touch-action: pan-y; }
 .cm-scroll::-webkit-scrollbar { display: none; }
 .cm-cab { display: grid; gap: 2px; }
 .cm-fecha { font: 400 11px/1.2 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
 .cm-titulo { margin: 6px 0 0; font: 500 28px/1 var(--numeros); letter-spacing: -0.01em; text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
-/* Día, semana o mes: un selector sobrio, como los de MacroFactor. */
-.cm-vistas { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); padding: 3px; border-radius: 999px; background: rgba(239, 230, 207, 0.06); border: 1px solid rgba(239, 230, 207, 0.1); }
-.cm-vista-btn { appearance: none; cursor: pointer; height: 32px; border: 0; border-radius: 999px; background: transparent; color: rgba(239, 230, 207, 0.62); font: 500 13px/1 var(--texto); }
-.cm-vista-btn[aria-pressed='true'] { background: rgba(239, 230, 207, 0.14); color: var(--tinta); }
-.cm-vista[hidden] { display: none; }
+/* Día, semana y mes en un cuadro que se desliza; debajo, dónde está. */
+.cm-cuadro { position: relative; margin-top: 14px; overflow: hidden; border-radius: 20px; background: rgba(8, 12, 26, 0.66); border: 1px solid rgba(239, 230, 207, 0.09); touch-action: pan-y; transition: height 0.34s cubic-bezier(0.16, 1, 0.3, 1); }
+.cm-cuadro-tira { display: flex; align-items: flex-start; transition: translate 0.34s cubic-bezier(0.16, 1, 0.3, 1); will-change: translate; }
+.cm-pagina { flex: 0 0 100%; min-width: 0; padding: 12px 16px 16px; }
+.cm-pagina-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cm-pagina-cab b { font: 500 17px/1.1 var(--numeros); }
+.cm-pagina-cab span { font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.5); font-variant-numeric: tabular-nums; }
+.cm-puntos { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
+.cm-punto { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 0; border-radius: 999px; background: none; color: rgba(239, 230, 207, 0.42); font: 400 11.5px/1 var(--texto); letter-spacing: 0.04em; }
+.cm-punto i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+.cm-punto[aria-pressed='true'] { color: var(--tinta); }
+.cm-punto[aria-pressed='true'] i { opacity: 1; background: var(--oro-claro); box-shadow: 0 0 6px rgba(246, 227, 166, 0.7); }
 
 /* La tira de la semana: una luna chica por día, que se llena con lo comido. */
 .cm-tira { margin-top: 16px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
@@ -422,12 +751,12 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-lunita.vacio .cm-lunita-borde { stroke: rgba(236, 230, 214, 0.16); }
 
 /* La semana: el promedio y los siete días, con una barra de calorías y una por macro. */
-.cm-promedio { margin-top: 18px; }
+.cm-promedio { display: grid; gap: 6px; }
 .cm-promedio .cm-macros { margin-top: 12px; gap: 12px; }
 .cm-promedio .cm-macro-nombre { letter-spacing: 0.06em; }
-.cm-grafica { position: relative; margin-top: 12px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 14px 10px 12px; border-radius: 18px; background: rgba(6, 10, 22, 0.66); border: 1px solid rgba(239, 230, 207, 0.1); }
+.cm-grafica { position: relative; margin-top: 14px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 14px 0 0; border-top: 1px solid rgba(239, 230, 207, 0.07); }
 /* La meta: a 100 de los 120 que mide cada barra. */
-.cm-grafica-meta { position: absolute; left: 10px; right: 10px; top: 34px; border-top: 1px dashed rgba(239, 230, 207, 0.32); pointer-events: none; }
+.cm-grafica-meta { position: absolute; left: 0; right: 0; top: 34px; border-top: 1px dashed rgba(239, 230, 207, 0.32); pointer-events: none; }
 .cm-grafica-dia { appearance: none; cursor: pointer; border: 0; background: transparent; display: grid; justify-items: center; gap: 6px; padding: 0; color: rgba(239, 230, 207, 0.72); }
 .cm-grafica-barras { height: 120px; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
 .cm-grafica-barras i { width: 5px; border-radius: 3px 3px 1px 1px; }
@@ -438,47 +767,31 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-grafica-dia.plan .cm-grafica-barras { opacity: 0.35; }
 
 /* El mes: una luna por día, de lunes a domingo. */
-.cm-calendario { margin-top: 18px; padding: 12px 8px 10px; border-radius: 18px; background: rgba(6, 10, 22, 0.66); border: 1px solid rgba(239, 230, 207, 0.1); }
+.cm-calendario { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(239, 230, 207, 0.07); }
 .cm-cal-letras, .cm-cal-grilla { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .cm-cal-letras span { text-align: center; font: 500 10px/1 var(--texto); letter-spacing: 0.12em; color: rgba(239, 230, 207, 0.45); padding-bottom: 8px; }
 .cm-cal-grilla { row-gap: 2px; }
 .cm-cal-dia { appearance: none; cursor: pointer; border: 0; background: transparent; display: grid; justify-items: center; gap: 4px; padding: 6px 0; border-radius: 12px; color: rgba(239, 230, 207, 0.75); }
 .cm-cal-dia.hoy { background: rgba(239, 230, 207, 0.08); }
 .cm-cal-dia .cm-lunita { width: 26px; height: 26px; }
-.cm-heroe { display: grid; justify-items: center; margin-top: 10px; }
-.cm-escenario { width: 190px; height: 190px; }
-.cm-luna { width: 100%; height: 100%; overflow: visible; }
-.cm-cifra { margin-top: -4px; text-align: center; display: grid; gap: 7px; }
-.cm-cifra b { font: 300 58px/0.9 var(--numeros); letter-spacing: -0.02em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
-.cm-cifra span { font: 400 10.5px/1 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.64); }
-.cm-de { margin-top: 9px; font: 400 12.5px/1 var(--texto); color: rgba(239, 230, 207, 0.52); font-variant-numeric: tabular-nums; }
-.cm-macros { margin-top: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+/* Lo comido contra la meta, con la luna chica: la grande, con lo que queda, está en Inicio. */
+.cm-resumen { display: flex; align-items: center; gap: 12px; margin-left: -8px; }
+.cm-luna-chica { display: block; flex: none; margin: -4px; }
+.cm-resumen-txt { display: grid; gap: 6px; }
+.cm-resumen-cifra b { font: 400 30px/1 var(--numeros); letter-spacing: -0.015em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
+.cm-resumen-cifra small { margin-left: 6px; font: 400 13px/1 var(--texto); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; }
+.cm-resumen-txt > span { font: 400 13px/1.2 var(--texto); color: var(--musgo); font-variant-numeric: tabular-nums; }
+.cm-resumen-txt > span.de-mas { color: var(--oro-claro); }
+.cm-resumen-txt > span:empty { display: none; }
+.cm-macros { margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .cm-macro { display: grid; gap: 7px; min-width: 0; }
-.cm-macro-p { --c: var(--oro-claro); }
-.cm-macro-c { --c: var(--musgo); }
-.cm-macro-g { --c: #a9c4f5; }
-.cm-macro-nombre { display: inline-flex; align-items: center; gap: 6px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.13em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); white-space: nowrap; }
-.cm-macro-nombre::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+.cm-macro-p { --c: var(--oro-claro); --c-rgb: 246, 227, 166; }
+.cm-macro-c { --c: var(--musgo); --c-rgb: 185, 227, 107; }
+.cm-macro-g { --c: #a9c4f5; --c-rgb: 169, 196, 245; }
 .cm-macro b { font: 500 14px/1 var(--numeros); color: var(--tinta); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cm-barra-macro { height: 4px; border-radius: 4px; background: rgba(239, 230, 207, 0.08); overflow: hidden; }
-.cm-barra-macro i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--c); box-shadow: 0 0 10px var(--c); transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1); }
-.cm-agua { margin-top: 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 11px 11px 16px; border-radius: 18px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.09); }
-.cm-agua[hidden] { display: none; }
-.cm-agua-txt { display: grid; gap: 5px; }
-.cm-agua-txt span { font: 400 9.5px/1 var(--texto); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); }
-.cm-agua-txt b { font: 500 14.5px/1 var(--numeros); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.cm-vasos { display: flex; gap: 2px; justify-content: flex-end; flex-wrap: wrap; }
-.cm-vaso { display: block; color: rgba(239, 230, 207, 0.28); }
-.cm-vaso svg { width: 16px; height: 20px; display: block; stroke-width: 1.5; }
-.cm-vaso .cm-nivel { stroke: none; fill: none; }
-.cm-vaso.lleno { color: rgba(214, 231, 247, 0.85); }
-.cm-vaso.lleno .cm-nivel { fill: #bcd8f2; }
-.cm-vaso.lleno svg { filter: drop-shadow(0 0 4px rgba(188, 216, 242, 0.5)); }
-.cm-vaso.recien { animation: cm-llena 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
-@keyframes cm-llena { from { transform: translateY(-6px) scale(1.3); opacity: 0; } }
-.cm-agua-mas { appearance: none; cursor: pointer; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(232, 196, 106, 0.42); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); display: grid; place-items: center; }
-.cm-agua-mas svg { width: 17px; height: 17px; stroke-width: 2; }
-.cm-agua-mas:disabled { opacity: 0.3; cursor: default; }
+.cm-barra-macro i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--c); opacity: 0.75; transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.cumplido .cm-barra-macro i, .pasado .cm-barra-macro i { opacity: 1; box-shadow: 0 0 10px var(--c); }
 .cm-seccion { margin: 32px 0 14px; font: 500 19px/1 var(--numeros); text-shadow: 0 0 16px rgba(3, 5, 12, 0.9); }
 .cm-nota { margin: -6px 0 14px; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); }
 
@@ -546,7 +859,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-enlace svg { width: 15px; height: 15px; transition: transform 0.25s; }
 .cm-enlace.abierto svg { transform: rotate(90deg); }
 .cm-aviso, .hj-aviso { position: absolute; left: 50%; translate: -50% 12px; opacity: 0; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 10px; padding: 7px 7px 7px 16px; min-height: 42px; border-radius: 999px; background: rgba(9, 14, 30, 0.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(232, 196, 106, 0.24); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 28px); pointer-events: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
-.cm-aviso { bottom: calc(var(--pestanas) + 84px); z-index: 3; }
+.cm-aviso { bottom: calc(var(--pestanas) + 16px); z-index: 3; }
 .cm-aviso.visible, .hj-aviso.visible { opacity: 1; translate: -50% 0; pointer-events: auto; }
 .cm-aviso:not(:has(button)), .hj-aviso:not(:has(button)) { padding-right: 16px; }
 .cm-aviso > span, .hj-aviso > span { overflow: hidden; text-overflow: ellipsis; }
@@ -555,8 +868,8 @@ section.item p { margin: 0; max-width: 64ch; }
 
 /* La hoja de registro: sube sobre lo que haya (el cielo o la zona), que se achica atrás. */
 .tel > canvas { transform-origin: 50% 44%; }
-.tel.hoja-anim > canvas, .tel.hoja-anim > .velo-pestanas, .tel.hoja-anim > .ui, .tel.hoja-anim > .comida, .tel.hoja-anim > .ajustes { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.45s; }
-.tel.con-hoja > canvas, .tel.con-hoja > .velo-pestanas, .tel.con-hoja > .ui, .tel.con-hoja > .comida, .tel.con-hoja > .ajustes { transform: scale(0.93); }
+.tel.hoja-anim > canvas, .tel.hoja-anim > .velo-pestanas, .tel.hoja-anim > .ui, .tel.hoja-anim > .pagina-app { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.45s; }
+.tel.con-hoja > canvas, .tel.con-hoja > .velo-pestanas, .tel.con-hoja > .ui, .tel.con-hoja > .pagina-app { transform: scale(0.93); }
 .tel.con-hoja > canvas, .tel.con-hoja > .velo-pestanas { border-radius: 30px; overflow: hidden; }
 .hj-fondo { position: absolute; inset: 0; z-index: 5; background: rgba(1, 2, 6, 0.6); opacity: 0; transition: opacity 0.35s; }
 .tel.con-hoja .hj-fondo { opacity: 1; animation: hj-aparece 0.35s ease both; }
@@ -769,8 +1082,10 @@ section.item p { margin: 0; max-width: 64ch; }
 .pie { margin-top: 48px; color: var(--tenue); font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .velo-pestanas, .pestanas { transition: none; }
-  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hj-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .cm-vaso.recien { animation-duration: 0.01s; animation-delay: 0s; }
+  .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .mas-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .in-macro-barra i, .in-camino-pista i, .in-camino-marca, .velo-pestanas, .pestanas, .in-fila-orden { transition: none; }
+  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo { animation-duration: 0.01s; animation-delay: 0s; }
+  /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
+  .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: none; box-shadow: 0 0 0 2px var(--c); }
 }
 </style>
 
@@ -794,14 +1109,72 @@ section.item p { margin: 0; max-width: 64ch; }
   <div class="columna-texto">
     <header>
       <div class="etiqueta">Moss · galería privada · <span id="fecha-galeria">21 de octubre de 2026</span></div>
-      <h1>La comida y el cielo, <em>para aprobar</em></h1>
+      <h1>Las seis secciones, <em>para aprobar</em></h1>
       <p class="bajada">Prototipo interactivo con datos de mentira. Es la referencia visual que después se pasa a la app: los shaders del cielo, los textos, los alimentos y el buscador son los mismos archivos, y los tiempos y proporciones también.</p>
       <p class="lema">“Do so much volume that it will be unreasonable to fail.”<span>El lema de Moss</span></p>
     </header>
 
+    <section class="item" id="secciones">
+      <h2><span class="n">1</span>Las seis secciones y el «+»</h2>
+      <p>Abajo van <b>Inicio</b>, <b>Comida</b> y <b>Progreso</b>, el <b>«+»</b> en el medio, y <b>Sueño</b>, <b>Hábitos</b> y <b>Perfil</b>. Cada una con su ícono de línea y su nombre. Se pasa tocando o deslizando, con el gesto de Ascent; el cielo queda quieto detrás de todas y se ve entero en Hábitos.</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton" type="button" data-pestana="0">Inicio</button>
+          <button class="boton" type="button" data-pestana="1">Comida</button>
+          <button class="boton" type="button" data-pestana="2">Progreso</button>
+          <button class="boton" type="button" data-pestana="3">Sueño</button>
+          <button class="boton" type="button" data-pestana="4">Hábitos</button>
+          <button class="boton" type="button" data-pestana="5">Perfil</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="mas">Tocar el «+»</button>
+          <button class="boton" type="button" data-seccion="peso">Registrar peso</button>
+          <button class="boton" type="button" data-seccion="medidas">Medidas del cuerpo</button>
+          <button class="boton" type="button" data-seccion="rapida">Calorías y macros</button>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>El «+»</b> es un círculo fino, del mismo tamaño que los íconos: es parte de la barra, sin brillo ni sombra. Abre una hoja:
+          <ul>
+            <li>Arriba, lo principal: <b>Agregar comida</b> (abre la búsqueda de siempre, para la comida de esa hora) y <b>Registrar peso</b>.</li>
+            <li>Abajo, la <b>carga rápida</b>: calorías y macros a mano, el agua (un toque suma 250 ml), y los <b>recientes</b> y las <b>comidas guardadas</b>. Un toque los registra en la comida de esa hora, con su última cantidad y con deshacer.</li>
+            <li>Al final, las <b>medidas del cuerpo</b>, con lo último que estimaron.</li>
+          </ul></li>
+        <li><b>Las medidas</b>: cintura, cuello, cadera, brazo, pecho y muslo, en centímetros. El tutorial es el dibujo: al tocar un campo, la cinta se marca en la figura y abajo dice cómo tomarla. «Cómo medir» despliega los consejos de siempre (la cinta sobre la piel, al final de una exhalación, dos veces).</li>
+        <li><b>La grasa corporal</b> se estima con el método de la Marina de EE. UU. y se muestra como un rango chico, con el aviso de que es una estimación (sección 4).</li>
+        <li><b>Perfil</b> (antes Ajustes): tus datos, las preferencias, Salud y Ascent, exportar y borrar. Las metas pasaron a Progreso, con la estrategia.</li>
+        <li><b>La entrada</b> sigue igual: la frase, las dos diapositivas, la cuenta y el cuestionario. No hay tutoriales por sección.</li>
+      </ul>
+    </section>
+
+    <section class="item" id="inicio">
+      <h2><span class="n">2</span>Inicio, a tu medida</h2>
+      <p>Lo primero que se ve: bloques que elegís y ordenás. De fábrica, las calorías y los macros que quedan, el progreso al objetivo, el peso con el balance y tu día en el cielo. Tocar un bloque lleva a su sección.</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="personalizar">Personalizar Inicio</button>
+          <button class="boton" type="button" data-seccion="cena">Cenar: llegar a la proteína y pasarse de grasas</button>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-seccion="sueno">Sumar «Sueño de anoche»</button>
+          <button class="boton" type="button" data-seccion="agua">Sumar «Agua»</button>
+          <button class="boton" type="button" data-seccion="fabrica">Volver a lo de fábrica</button>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>Calorías y macros</b>: lo que queda, grande, al lado de la luna. Abajo, lo que queda de cada macro.</li>
+        <li><b>Los puntos de los macros</b> ahora están apagados mientras falta. <b>Brillan</b> al cumplir lo pedido (el número redondeado llega a la meta), y si te pasás por mucho (un 20 % y al menos 10 g) <b>tiemblan un poco</b>, cada tanto. Probalo con «Cenar»: la proteína y los carbohidratos brillan, las grasas tiemblan. Pasa lo mismo en Comida.</li>
+        <li><b>La luna</b> es nueva: se dibuja píxel a píxel como una esfera, con los mares de la cara visible, cráteres con su borde claro, Tycho con sus rayos y grano. La luz es la de la Luna de verdad (Lommel-Seeliger): llena se ve pareja, a medias se apaga suave hacia el terminador, y lo oscuro tiene la luz cenicienta.</li>
+        <li><b>Progreso al objetivo</b>: si vas en camino y en qué fecha llegarías, con el camino de dónde empezaste a la meta. Sale de la tendencia de las últimas tres semanas.</li>
+        <li><b>Peso y balance</b>: la tendencia con el último mes, y lo comido contra el gasto de los últimos 7 días.</li>
+        <li><b>Tu día en el cielo</b>: la constelación de hoy en chico, con lo encendido, y el sueño y los pasos que llegan solos. Se actualiza al encender estrellas en Hábitos.</li>
+        <li><b>El agua</b> ya no está de fábrica: se suma desde el «+», y quien la quiera ver la agrega como bloque.</li>
+      </ul>
+    </section>
+
     <section class="item" id="comida">
-      <h2><span class="n">1</span>La comida</h2>
-      <p>La comida es el centro de Moss. Todo lo que hay en este teléfono anda con la base de verdad: los 557 genéricos curados, con sus valores, sus porciones y sus nombres en Uruguay, y el mismo buscador que la app, con errores de tipeo y lo más usado primero (probá «frutila», «palta» o «manzaan»). El día es de mentira: miércoles a las 21:47, con la cena por registrar.</p>
+      <h2><span class="n">3</span>Comida</h2>
+      <p>Lo que se come, por día, por semana y por mes, como MacroFactor. Todo anda con la base de verdad: los genéricos curados, sus valores, sus porciones y sus nombres en Uruguay, y el mismo buscador que la app (probá «frutila», «palta» o «manzaan»). El día es de mentira: miércoles a las 21:47, con la cena por registrar.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-comida="registrar" id="b-registrar">Registrar</button>
@@ -816,49 +1189,64 @@ section.item p { margin: 0; max-width: 64ch; }
           <button class="boton" type="button" data-comida="copiar">Copiar la cena de ayer</button>
           <button class="boton" type="button" data-comida="etiqueta">La etiqueta</button>
         </div>
-        <div class="controles">
-          <div class="grupo"><span>La luna</span>
-            <div class="segmento" id="s-arcos"><button type="button" data-valor="no" aria-pressed="true">Sin arcos</button><button type="button" data-valor="si" aria-pressed="false">Con los arcos de los macros</button></div>
-          </div>
-        </div>
         <div class="toques" id="toques">
-          <div class="grupo"><span>Toques para registrar, contados desde Inicio</span></div>
+          <div class="grupo"><span>Toques para registrar, contados desde el «+» o desde Comida</span></div>
           <ol></ol>
-          <p class="vacio">Registrá algo en el teléfono y acá aparece cuántos toques llevó. Con la revisión antes de agregar son 5 para lo de siempre (registrar, «+», sumar, listo y agregar), 5 y escribir para buscar, y 6 y escribir para elegir otra cantidad.</p>
+          <p class="vacio">Registrá algo en el teléfono y acá aparece cuántos toques llevó. Desde el «+»: un reciente son 2 toques; buscar son 6 y escribir («+», Agregar comida, el «+» de la fila, Sumar, Listo y Agregar). Desde Comida, el Agregar de la comida que falta son 5 y escribir.</p>
         </div>
       </div>
       <ul class="lista">
-        <li><b>Inicio es la comida</b>: Moss abre acá, como MacroFactor y como Ascent. El «+» de abajo a la derecha registra. Los hábitos y el cielo están en la pestaña de al lado (sección 4).</li>
-        <li><b>Inicio</b>:
+        <li><b>El cuadro que se desliza</b> (como pediste): empieza en el día, con lo comido contra la meta, la luna y los macros. Deslizalo a la izquierda y aparece la semana: el promedio de los días que ya terminaron y los siete días con una barra de calorías y una por macro contra la meta. Otra vez, y aparece el mes: el promedio y el calendario con una luna por día. Debajo dice dónde estás (Día, Semana, Mes), y también se toca. Tocar un día de la semana o del mes vuelve al día.</li>
+        <li><b>Arriba</b>, la tira de la semana con una luna chica por día; <b>abajo</b>, la línea del día: cada comida en su hora, y la que falta espera en «ahora», con Agregar y Copiar de ayer. El peso y el gasto pasaron a Progreso.</li>
+        <li><b>La hoja de registro</b> no cambió: la búsqueda con lo que sueles comer a esa hora, los recientes y los favoritos; la ventana del alimento con sus porciones; la comida que se arma abajo; la revisión antes de agregar; la etiqueta, y la carga rápida.</li>
+      </ul>
+    </section>
+
+    <section class="item" id="progreso">
+      <h2><span class="n">4</span>Progreso</h2>
+      <p>El peso con su tendencia, las medidas, el rango de grasa corporal, el gasto estimado con el balance y el progreso al objetivo. Abajo, la estrategia. Todo sale de las cuentas de la app: la tendencia y el control (src/dominio/control.ts), el progreso (progreso.ts) y el cuerpo (cuerpo.ts). La persona de mentira empezó el lunes 31 de agosto en 77 kg y quiere llegar a 71.</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-pestana="2">Ver Progreso</button>
+          <button class="boton" type="button" data-seccion="estrategia">La estrategia</button>
+          <button class="boton" type="button" data-seccion="metas">Las metas</button>
+          <button class="boton" type="button" data-seccion="mantener">Cambiar entre bajar y mantener</button>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>El rango de grasa corporal</b>, cómo se calcula:
           <ul>
-            <li>La luna se llena con lo que comiste: la parte iluminada es lo que llevás del día. Ahora es una luna de verdad, con sus mares, grano y la sombra con el borde suave, sin halo dorado. Los arcos de los macros quedan como opción (arriba): los macros ya están en las barras.</li>
-            <li>Lo que te queda va grande, en números sobrios (Outfit, como el número de Ascent). Debajo, las barras de los macros y el agua: un toque suma un vaso de 250 ml.</li>
-            <li>Como MacroFactor, se ve por día, por semana y por mes:
-              <ul>
-                <li><b>Día:</b> arriba, la tira de la semana de lunes a domingo, con una luna chica por día que se llena con lo comido. Tocás un día para verlo; los que vienen están en blanco y mañana se ve planificado. Debajo, la línea del día.</li>
-                <li><b>Semana:</b> el promedio de los días que ya terminaron y los siete días con una barra de calorías y una por macro contra la meta (la línea punteada). Abajo, la tendencia del peso, el gasto estimado y el último control, con «cómo se calcula».</li>
-                <li><b>Mes:</b> el calendario con una luna por día y el promedio del mes. Tocás un día para verlo.</li>
-              </ul></li>
-          </ul>
-          Atrás queda el cielo, quieto y oscurecido: la comida va primero.</li>
-        <li><b>La línea del día</b> pone cada comida en su hora, con lo que tiene y sus totales, y el espacio entre comidas sigue al reloj. La que falta espera en «ahora», con Agregar y Copiar de ayer, que abre la revisión con lo de ayer para agregarlo de un toque. Tocar un alimento abre su ventana para corregirlo o quitarlo.</li>
-        <li><b>La hoja de registro</b>:
-          <ul>
-            <li>Abre con el teclado arriba y con la comida que toca a esa hora.</li>
-            <li>Debajo del buscador están lo que sueles comer en esa comida, los recientes y los favoritos.</li>
-            <li>El «+» de cada fila (o la fila) abre la ventana del alimento: las porciones de la base, la cantidad en medios o los gramos, y cuánto te quedaría en el día, con la última porción ya elegida.</li>
-            <li>«Sumar» lo pone en tu comida, que se arma abajo con su total. La hoja no se cierra: se suman varios seguidos.</li>
-            <li>«Listo» abre la revisión: tocás un alimento para cambiarlo, la cruz lo quita, y «Agregar a la cena» registra todo junto. Antes no se registra nada, y si cerrás la hoja lo juntado queda guardado.</li>
-            <li>Arriba están los atajos: la misma comida de ayer, las comidas guardadas y la carga rápida. Todo suma a la comida que se arma.</li>
+            <li>La estimación es la del método de la Marina de EE. UU. (Hodgdon y Beckett, 1984): la densidad del cuerpo sale de log₁₀(cintura − cuello) y log₁₀(altura) en hombres, y de log₁₀(cintura + cadera − cuello) en mujeres; la grasa, de la fórmula de Siri (495 / densidad − 450).</li>
+            <li>El rango es esa estimación más y menos lo que cambia si la cinta se corre 1 cm en la cintura (y en la cadera) y medio en el cuello, sumado en cuadratura, con un mínimo de un punto para cada lado, redondeado hacia afuera. Queda de 2 a 4 puntos: «15 a 18 %».</li>
+            <li>Con muy poca grasa o con mucha (menos de 10 o más de 30 % en hombres; 18 y 40 en mujeres) el método erra más, y el rango se abre un punto más.</li>
+            <li>El aviso dice lo que el rango no: contra un estudio de laboratorio (DEXA), el método erra 3 o 4 puntos.</li>
           </ul></li>
-        <li><b>El teclado</b> dibujado es el del iPhone, para ver cuánto lugar deja. Su micrófono es el dictado del teclado: probalo.</li>
-        <li><b>La etiqueta</b> (el ícono al lado del código de barras): la foto es de mentira, pero lo que se lee pasa por el lector de verdad, que entiende las etiquetas del Mercosur, de Estados Unidos y europeas. Se revisa todo antes de guardar: si las kcal no cierran con los macros, avisa y marca el número. «Guardar y sumar» lo deja en tu comida y desde ahí se encuentra buscándolo.</li>
-        <li><b>Lo secundario</b>: la ventana de cada alimento muestra abajo, chico, la fibra, los azúcares, las grasas saturadas y el sodio, de USDA.</li>
+        <li><b>Las medidas</b> con su cambio en un mes, y la cintura sobre la altura (la guía NICE pide menos de 0,5).</li>
+        <li><b>El progreso al objetivo</b>: el ritmo es lo que se movió la tendencia en las últimas tres semanas. «En camino» es ir al menos a la mitad del ritmo del plan; la fecha es lo que falta a ese ritmo. A medio kilo de la meta, llegaste.</li>
+        <li><b>La estrategia</b>: el objetivo con su ritmo, el peso meta, las metas de hoy (quién las pone, cómo se reparten los macros y repartir la semana, que estaban en Ajustes), cómo viene el próximo control (cuándo y si la semana ya tiene 4 días con comida y una pesada) y <b>el día de la semana del control</b>, que ahora se elige.</li>
+      </ul>
+    </section>
+
+    <section class="item" id="sueno">
+      <h2><span class="n">5</span>Sueño</h2>
+      <p>Lo que Salud trae de cada noche, armado con las reglas de la app (src/dominio/sueno.ts) sobre cuatro semanas de mentira de un Apple Watch y del iPhone. Para ver cómo se muestra lo que falta: el sábado 10 no hay nada, el sábado 17 el reloj se quedó sin batería (solo está el iPhone), y el domingo 4 se cortó a las 2:30.</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-pestana="3">Ver anoche</button>
+          <button class="boton" type="button" data-seccion="noche">Otra noche</button>
+          <button class="boton" type="button" data-seccion="sinReloj">La noche sin reloj</button>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>La noche</b>: cuánto dormiste (lo que el reloj mide mejor), a qué hora te dormiste y te despertaste, las etapas con su hipnograma (como estimación), lo despierto y los despertares de 5 minutos o más, y el tiempo en cama solo si alguna fuente lo escribió.</li>
+        <li><b>La calidad</b>, de 0 a 100, en tres partes que se explican: duración contra lo que necesitás (50), horario contra el de siempre (30) y continuidad (20). Las etapas no entran.</li>
+        <li><b>El horario</b> de las dos semanas, qué tan regular es y cuánto más tarde dormís el fin de semana. <b>La deuda</b> de sueño de las dos semanas. <b>De noche, según el reloj</b>: la frecuencia, la variabilidad y la respiración contra lo tuyo.</li>
+        <li><b>De dónde sale cada dato</b> y qué tan confiable es. Lo que falta queda en gris: nunca se inventa.</li>
       </ul>
     </section>
 
     <section class="item" id="hoy">
-      <h2><span class="n">2</span>Hábitos: el cielo de hoy</h2>
+      <h2><span class="n">6</span>Hábitos: el cielo de hoy</h2>
       <p>La pestaña Hábitos. Miércoles con seis hábitos: le toca la Lira, seis estrellas principales. Tres ya están encendidas. Tocá <b>Escribir</b> y <b>Agua 2 L</b> para encenderlas (tocalas de nuevo, o usá Deshacer, para apagarlas). Los <b>8.000 pasos</b> se encienden solos desde Salud: simulalo con el botón. Con las seis se completa el día.</p>
       <div class="panel">
         <div class="controles">
@@ -905,8 +1293,8 @@ section.item p { margin: 0; max-width: 64ch; }
     </section>
 
     <section class="item" id="entrada">
-      <h2><span class="n">3</span>La entrada a la app</h2>
-      <p>Lo primero que ve alguien que instala Moss. Es obligatoria, como en Ascent. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida que avanzás, el musgo queda abajo y al final un <b>flum</b> te deja en Inicio. Vincular con Ascent no aparece acá: queda para después, en Ajustes y en las funciones bloqueadas.</p>
+      <h2><span class="n">7</span>La entrada a la app</h2>
+      <p>Lo primero que ve alguien que instala Moss. Es obligatoria, como en Ascent. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida que avanzás, el musgo queda abajo y al final un <b>flum</b> te deja en Inicio. Vincular con Ascent no aparece acá: queda para después, en Perfil y en las funciones bloqueadas.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-accion="entrada" id="b-entrada">Ver la entrada desde el principio</button>
@@ -944,44 +1332,14 @@ section.item p { margin: 0; max-width: 64ch; }
       </ul>
     </section>
 
-    <section class="item" id="pestanas">
-      <h2><span class="n">4</span>Las pestañas, como Ascent</h2>
-      <p>Abajo hay tres pestañas, solo con texto: <b>Inicio</b> (la comida), <b>Hábitos</b> (el cielo con la constelación) y <b>Ajustes</b>. Deslizá con el dedo, o arrastrá con el mouse, y la de al lado asoma mientras arrastrás: desde Inicio, con el dedo hacia la izquierda, entra la constelación.</p>
-      <div class="panel">
-        <div class="controles">
-          <button class="boton" type="button" data-pestana="0">Inicio</button>
-          <button class="boton" type="button" data-pestana="1">Hábitos</button>
-          <button class="boton" type="button" data-pestana="2">Ajustes</button>
-        </div>
-      </div>
-      <ul class="lista">
-        <li>Las reglas del gesto son las de Ascent: cambia de pestaña si arrastrás más de un quinto de la pantalla o si el tirón es rápido, y el viaje dura 340 ms y frena largo. En los bordes, la pantalla cede un cuarto de lo que movés.</li>
-        <li>El cielo queda quieto detrás de las tres, como el planeta en Ascent. Lo que se desliza es la constelación, con su pantalla. En Inicio y en Ajustes el cielo se oscurece, y se aclara mientras deslizás hacia Hábitos.</li>
-        <li>El nombre de abajo se enciende con el deslizamiento, no al soltar.</li>
-        <li>Un gesto de costado es de las pestañas. Para arriba y para abajo, es de la lista de la comida o del cielo: en Hábitos, arrastrar hacia abajo sube a tu universo.</li>
-      </ul>
-      <ul class="lista">
-        <li><b>Ajustes › Metas</b>, con las cuentas de la app:
-          <ul>
-            <li>Quién las pone: Moss, que las ajusta cada semana, o vos, a mano. A mano, Moss sigue midiendo tu gasto pero no las toca.</li>
-            <li>Cómo se reparten los macros: equilibrada (la de siempre), baja en grasas, baja en carbohidratos o keto. La proteína va siempre por kilo. Probá keto y mirá cómo cambian las barras de Inicio.</li>
-            <li>Repartir la semana: más los días que elijas y un poco menos el resto, con el mismo total. Se mueven los carbohidratos.</li>
-          </ul></li>
-      </ul>
-      <ul class="lista tenue">
-        <li>El flum queda solo para el final de la entrada, que ahora te deja en Inicio.</li>
-        <li>Lo demás de Ajustes es una maqueta.</li>
-      </ul>
-    </section>
-
     <section class="item" id="catalogo">
-      <h2><span class="n">5</span>Una constelación por cantidad de hábitos</h2>
+      <h2><span class="n">8</span>Una constelación por cantidad de hábitos</h2>
       <p>El catálogo de constelaciones reales, agrupado por cantidad de estrellas principales. Debajo del nombre va la estrella más brillante: es la del primer hábito del día. Tocá cualquiera para verla como el cielo de hoy, con hábitos de mentira.</p>
       <div class="catalogo" id="lista-catalogo"><p class="vacio">Cargando catálogo…</p></div>
     </section>
 
     <section class="item" id="calidad">
-      <h2><span class="n">6</span>Calidad gráfica</h2>
+      <h2><span class="n">9</span>Calidad gráfica</h2>
       <p>Lo caro (las estrellas débiles y las nebulosas) se dibuja una sola vez a una imagen y después solo se desplaza. Por cuadro se calculan la aurora y las estrellas que titilan, en el mismo shader que va a usar la app, y unas pocas cientos de luces. Así el toque no espera a nada.</p>
       <div class="panel">
         <div class="controles">
@@ -998,20 +1356,21 @@ section.item p { margin: 0; max-width: 64ch; }
     </section>
 
     <section class="item" id="decidir">
-      <h2><span class="n">7</span>Para decidir</h2>
+      <h2><span class="n">10</span>Para decidir</h2>
       <ol class="decisiones">
-        <li><span><b>Las pestañas (D14).</b> Ya están, en la sección 4: Inicio con la comida, Hábitos con el cielo y Ajustes, con el gesto de Ascent. ¿Te cierran el orden y los nombres? El «+» de registrar quedó solo en Inicio, y en Hábitos el cielo va solo, sin la barra de la comida. Detrás de Inicio el cielo queda al 20 %.</span></li>
-        <li><span><b>Metas en Ajustes.</b> ¿Así? Con «repartir la semana» encendido, propongo que la semana de Inicio compare cada día con su propia meta (el sábado, con la del sábado).</span></li>
-        <li><span><b>Lo secundario.</b> La fibra, los azúcares, las grasas saturadas y el sodio están en la ventana de cada alimento, chicos y apagados. ¿Los querés también en el día, en una línea debajo de los macros (la fibra contra una meta suave), o solo en la ventana?</span></li>
-        <li><span><b>La revisión de la etiqueta</b> (sección 1, «La etiqueta»). La foto en chico arriba, lo leído para corregir, y un aviso que marca el número si las kcal no cierran con los macros. ¿Así?</span></li>
-        <li><span><b>Los arcos de la luna.</b> Propongo la luna sola, porque los macros ya están en las barras de abajo. Con el selector de la sección 1 la ves con los arcos.</span></li>
-        <li><span><b>La riqueza del cielo, de noche o al instante.</b> Propongo que la luz del día se sume al cielo al día siguiente: abrís Moss y el cielo crece frente a vos, con estrellas nuevas que aparecen y musgo que sube, sin texto. La otra opción es que crezca apenas termina la animación del día completo.</span></li>
-        <li><span><b>El cielo de la entrada.</b> Ahora es el de 60 % de riqueza, el más lindo que ya aprobaste. Después de la entrada, el cielo propio empieza en 0 % y crece con vos. ¿Lo dejamos así, o la entrada usa el cielo del primer día?</span></li>
-        <li><span><b>La luna de la comida.</b> Ahora es una luna de verdad, con sus mares y la sombra suave: la parte iluminada es lo que llevás del día. También está en cada día de la semana y del mes. ¿Así?</span></li>
-        <li><span><b>La frase y las diapositivas.</b> Pasan tocando, como en Ascent, o solas después de 2,5 s.</span></li>
-        <li><span><b>Tipografías.</b> Cormorant Garamond para nombres y frases y Jost para la interfaz. Las dos son libres (OFL) y van dentro de la app. GFS Didot se fue con los nombres griegos.</span></li>
-        <li><span><b>Color de la aurora.</b> Verde musgo con borde dorado, como ahora, o el verde azulado de una aurora real, más frío.</span></li>
-        <li><span><b>Orientación.</b> Norte arriba siempre, como en los atlas. Desde Uruguay casi todas se ven al revés en el cielo real; propongo no imitarlo.</span></li>
+        <li><span><b>Las seis secciones</b> (sección 1). ¿Te cierran el orden, los nombres y los íconos? El «+» quedó como un círculo fino del tamaño de los íconos, parte de la barra.</span></li>
+        <li><span><b>Un toque más para buscar.</b> Desde el «+», buscar son 6 toques y escribir (antes 5): el «+» abre la hoja y «Agregar comida», la búsqueda. A cambio, lo reciente y las guardadas bajan a 2, porque registran de un toque, con deshacer y sin la revisión. ¿Así?</span></li>
+        <li><span><b>El rango de grasa.</b> Lo pediste chico: es de 2 a 4 puntos y sale de lo que puede correrse la cinta; el error del método contra un laboratorio (3 o 4 puntos) va en el aviso. La investigación sugiere no bajar de 4 puntos (±2). ¿Chico, como está, o ±2?</span></li>
+        <li><span><b>La calidad del sueño</b> sale de la duración, el horario y la continuidad, como el puntaje de Apple (que no se puede leer desde otra app). La especificación decía que salía también de las etapas y del tiempo en cama: lo saqué porque el reloj las mide mal. ¿Así?</span></li>
+        <li><span><b>«Acostarse antes de las X».</b> El reloj sabe cuándo te dormiste, no cuándo te acostaste: propongo que el hábito sea «dormirte antes de las X».</span></li>
+        <li><span><b>Lo que necesitás dormir</b>: 8 horas de fábrica (7 y media desde los 65), cambiable de 7 a 9. Es la vara de la duración y de la deuda.</span></li>
+        <li><span><b>Fuera de la v1</b>: la oxigenación en sangre, las alteraciones de la respiración y la temperatura de la muñeca. Son casi médicas y solo están en algunos relojes.</span></li>
+        <li><span><b>Los macros que tiemblan.</b> Tiembla lo que pasa un 20 % y al menos 10 g. ¿También la proteína? Pasarse de proteína no es malo: propongo que solo brille.</span></li>
+        <li><span><b>El agua</b> ya no está en Inicio ni en Comida: se suma desde el «+», y es un bloque que se puede agregar a Inicio. ¿Así?</span></li>
+        <li><span><b>La luna nueva</b> (sección 2): una esfera de verdad, con sus mares y la luz de la Luna. ¿Así?</span></li>
+        <li><span><b>Lo secundario.</b> La fibra, los azúcares, las grasas saturadas y el sodio están en la ventana de cada alimento. ¿Los querés también en el día, debajo de los macros, o solo ahí?</span></li>
+        <li><span><b>La riqueza del cielo, de noche o al instante.</b> Propongo que la luz del día se sume al cielo al día siguiente: abrís Moss y el cielo crece frente a vos, sin texto.</span></li>
+        <li><span><b>Tipografías, color de la aurora y orientación</b>: siguen como estaban (Cormorant Garamond y Jost; verde musgo con borde dorado; norte arriba).</span></li>
       </ol>
     </section>
 

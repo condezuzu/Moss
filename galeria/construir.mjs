@@ -1,5 +1,6 @@
 // Arma galeria/dist/index.html: un solo archivo con la página, los shaders del cielo, el
-// catálogo, los textos, los alimentos curados y los módulos de la comida. Todo se lee de src/ y
+// catálogo, los textos, los alimentos curados y los módulos de la app que usa (la comida, las
+// metas, el control, el cuerpo, el progreso y el sueño). Todo se lee de src/ y
 // de assets/, que es lo mismo que usa la app: la galería nunca tiene una copia propia.
 // Uso: npm run galeria
 
@@ -13,10 +14,19 @@ const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const leer = (p) => readFileSync(join(raiz, p), 'utf8');
 const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null);
 
-// Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Tiene que ser
-// autosuficiente: sin imports (los de solo tipos se borran al pasarlo).
+// Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
+// constante. Van antes en el armado que los que los usan.
+const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno' };
+
+// Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
+// importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
+// solo tipos se borran al pasarlo.
 function modulo(nombre, ruta) {
-  const { outputText } = ts.transpileModule(leer(ruta), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
+  const { outputText: js } = ts.transpileModule(leer(ruta), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
+  const outputText = js.replace(/^import \{([^}]*)\} from '\.\/(\w+)';$/gm, (_, nombres, archivo) => {
+    if (!DEL_DOMINIO[archivo]) throw new Error(`${ruta} importa ./${archivo}, que la galería no tiene`);
+    return `const {${nombres}} = ${DEL_DOMINIO[archivo]};`;
+  });
   if (/^import\s/m.test(outputText)) throw new Error(`${ruta} importa otros módulos: la galería no puede usarlo`);
   const exportado = /^export (?:async )?(?:function|const|let|class) (\w+)/gm;
   const nombres = [...outputText.matchAll(exportado)].map((m) => m[1]);
@@ -66,8 +76,8 @@ const textos = { es: leerJson('src/textos/es.json'), en: leerJson('src/textos/en
 const claves = ['comun.deshacer', 'fecha.dias', 'fecha.diasCortos', 'fecha.mesesCortos', 'cielo.fecha', 'cielo.luzDeHoy', 'cielo.encendidas',
   'cielo.completa', 'cielo.encendida', 'cielo.apagada', 'cielo.seEnciendeSola', 'cielo.desdeSalud', 'cielo.horasMinutos',
   'cielo.tuUniverso', 'entrada.frase', 'entrada.fraseAutor', 'entrada.habitosTitulo', 'entrada.comidaTitulo', 'entrada.cuenta.apple',
-  'entrada.cuestionario.resultadoTitulo', 'ajustes.titulo', 'comida.comidas.cena', 'comida.teQuedan', 'comida.buscar', 'comida.sueles.cena',
-  'comida.agregarA.cena', 'comida.tuDia', 'comida.controlTexto'];
+  'entrada.cuestionario.resultadoTitulo', 'perfil.titulo', 'comida.comidas.cena', 'comida.quedanKcal', 'comida.buscar', 'comida.sueles.cena',
+  'comida.agregarA.cena', 'comida.tuDia', 'progreso.controlTexto', 'inicio.bloques.calorias', 'mas.agregarComida', 'cuerpo.aviso', 'sueno.titulo'];
 const faltan = [];
 for (const idioma of ['es', 'en']) {
   if (!textos[idioma]) { faltan.push(`src/textos/${idioma}.json`); continue; }
@@ -95,13 +105,13 @@ const js = [
   modulo('Porciones', 'src/comida/porciones.ts'),
   modulo('Comidas', 'src/dominio/comidas.ts'),
   modulo('Etiqueta', 'src/comida/etiqueta.ts'),
+  modulo('Fechas', 'src/dominio/fechas.ts'),
   modulo('Metas', 'src/dominio/metas.ts'),
-  leer('galeria/src/motor.js'),
-  leer('galeria/src/escena.js'),
-  leer('galeria/src/entrada.js'),
-  leer('galeria/src/comida.js'),
-  leer('galeria/src/ajustes.js'),
-  leer('galeria/src/galeria.js'),
+  modulo('Control', 'src/dominio/control.ts'),
+  modulo('Cuerpo', 'src/dominio/cuerpo.ts'),
+  modulo('Progreso', 'src/dominio/progreso.ts'),
+  modulo('Sueno', 'src/dominio/sueno.ts'),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

@@ -1,7 +1,9 @@
 // La comida en la galería, para aprobar antes de programarla (etapas 5 y 7 del plan):
-// - la pestaña Inicio: la luna, los macros, el agua, la línea del día, la semana y el mes;
+// - la pestaña Comida: lo comido contra la meta, la línea del día, la semana y el mes;
 // - la hoja de registro: la búsqueda, la ventana del alimento, la comida que se arma y el teclado;
-// - la revisión de la etiqueta (etapa 6), con el lector de verdad (Etiqueta, src/comida/etiqueta.ts).
+// - la revisión de la etiqueta (etapa 6), con el lector de verdad (Etiqueta, src/comida/etiqueta.ts);
+// - lo que usan Inicio y la hoja del «+»: los totales, los recientes, las guardadas, el agua y
+//   registrar de un toque.
 // El día es de mentira, pero los alimentos, sus valores y sus porciones salen de
 // assets/alimentos.db (ALIMENTOS), y la búsqueda, las cantidades y la comida de cada hora usan los
 // mismos módulos que la app (Buscar, Porciones y Comidas: los arma construir.mjs desde src/).
@@ -15,14 +17,10 @@ const Comida = (() => {
   // Los días de mentira: del lunes 28 de septiembre al domingo 1 de noviembre (el mes entero, de lunes a domingo).
   const PRIMER_DIA = -23;
   const ULTIMO_DIA = 11;
-  // La meta después del control del domingo: macrosPara(2740, 74,3 kg, mantener) de src/dominio/metas.ts.
-  const META = { kcal: 2740, p: 119, c: 382, g: 82 };
-  const CONTROL = { dia: 0, num: 19, mes: 9, medido: 2650, antes: 2770, ahora: 2740, promedio: 2610, cambio: -0.1 };
+  // La meta la pone el control del lunes (galeria.js, con Control.controlSemanal); esta es solo la de arranque.
+  const META = { kcal: 2610, p: 150, c: 327, g: 78 };
   const VASO_L = 0.25;
   const VASOS_META = 8;
-  // Tres semanas de pesadas y la tendencia de antes: la misma media móvil que src/dominio/control.ts.
-  const PESADAS = [74.6, 74.4, 74.7, 74.3, 74.6, 74.5, 74.2, 74.6, 74.4, 74.3, 74.6, 74.3, 74.1, 74.5, 74.3, 74.2, 74.5, 74.2, 74.1, 74.4, 74.2];
-  const TENDENCIA_ANTES = 74.5;
   // A qué hora suele caer cada comida, para el hueco de la que falta.
   const HORA_TIPICA = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
 
@@ -213,84 +211,6 @@ const Comida = (() => {
     const diaDe = (c) => Number(Object.keys(s.dias).find((d) => s.dias[d].includes(c)) || 0);
     const totalDe = (d) => sumar(comidasDe(d).flatMap((c) => c.items));
 
-    // ------------------------------------------------------------ la luna
-    // Se llena con lo comido: la parte iluminada es lo que llevás del día. Es una luna de verdad, con
-    // sus mares y su grano, y la sombra con el borde suave. Los tres arcos (proteína, carbohidratos y
-    // grasas contra su meta) son opcionales: los macros ya están en las barras.
-    let lunas = 0;
-    const CAJA_CON_ARCOS = '-80 -80 160 160';
-    const CAJA_SIN_ARCOS = '-50 -50 100 100';
-    function crearLuna(clase) {
-      const id = `cmLuna${++lunas}`;
-      const svg = document.createElementNS(SVG, 'svg');
-      svg.setAttribute('viewBox', CAJA_CON_ARCOS);
-      svg.setAttribute('class', clase);
-      svg.setAttribute('aria-hidden', 'true');
-      const arcos = [['p', 54], ['c', 62], ['g', 70]].map(([m, r]) => `<circle r="${r}" class="cm-pista"/><circle r="${r}" class="cm-arco cm-arco-${m}" transform="rotate(-90)"/>`).join('');
-      svg.innerHTML = `
-        <defs>
-          <radialGradient id="${id}-cara" cx="40%" cy="36%" r="72%">
-            <stop offset="0" stop-color="#f7f3e8"/><stop offset="0.6" stop-color="#e4ddcc"/><stop offset="1" stop-color="#b9b09b"/>
-          </radialGradient>
-          <filter id="${id}-grano" x="-5%" y="-5%" width="110%" height="110%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.16" numOctaves="3" seed="4"/>
-            <feColorMatrix values="0 0 0 0 0.32  0 0 0 0 0.3  0 0 0 0 0.26  0 0 0 1.5 -0.72"/>
-            <feComposite in2="SourceAlpha" operator="in"/>
-          </filter>
-          <filter id="${id}-suave" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter>
-          <filter id="${id}-borde" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.4"/></filter>
-          <mask id="${id}-luz" maskUnits="userSpaceOnUse" x="-50" y="-50" width="100" height="100"><path class="cm-luna-fase" fill="#fff" filter="url(#${id}-borde)"/></mask>
-          <clipPath id="${id}-disco"><circle r="40"/></clipPath>
-        </defs>
-        <circle r="46" class="cm-luna-halo"/>
-        <g clip-path="url(#${id}-disco)">
-          <circle r="40" class="cm-luna-noche"/>
-          <g mask="url(#${id}-luz)">
-            <circle r="40" fill="url(#${id}-cara)"/>
-            <g class="cm-mares" filter="url(#${id}-suave)">
-              <ellipse cx="-13" cy="-15" rx="11" ry="8.5"/><ellipse cx="5" cy="-11" rx="7" ry="6"/><ellipse cx="13" cy="-1" rx="8" ry="7"/>
-              <ellipse cx="-21" cy="5" rx="8" ry="15"/><ellipse cx="-3" cy="14" rx="7" ry="4.5"/><ellipse cx="22" cy="-14" rx="4" ry="3.2"/>
-              <ellipse cx="19" cy="13" rx="5" ry="4"/>
-            </g>
-            <circle r="40" fill="#000" filter="url(#${id}-grano)" opacity="0.55"/>
-            <circle cx="-7" cy="27" r="1.5" class="cm-crater"/><circle cx="9" cy="22" r="1" class="cm-crater"/>
-          </g>
-        </g>
-        <circle r="40" class="cm-luna-contorno"/>${arcos}`;
-      const faseEl = svg.querySelector('.cm-luna-fase');
-      const arcosEl = [...svg.querySelectorAll('.cm-arco')];
-      arcosEl.forEach((a) => {
-        const largo = 2 * Math.PI * Number(a.getAttribute('r'));
-        a.style.strokeDasharray = `${largo} ${largo}`;
-        a.dataset.largo = largo;
-      });
-      let ahora = { luna: 0, p: 0, c: 0, g: 0 };
-      let cuadro = 0;
-      const dibujar = (v) => {
-        faseEl.setAttribute('d', fase(0.04 + 0.96 * Math.min(1, v.luna), 40));
-        arcosEl.forEach((a, i) => { a.style.strokeDashoffset = String(Number(a.dataset.largo) * (1 - Math.min(1, [v.p, v.c, v.g][i]))); });
-      };
-      return {
-        svg,
-        // Sin los arcos, la luna ocupa todo el lugar.
-        arcos(si) { svg.setAttribute('viewBox', si ? CAJA_CON_ARCOS : CAJA_SIN_ARCOS); },
-        // De lo que muestra ahora a `hasta`, en `ms`.
-        ir(hasta, ms) {
-          cancelAnimationFrame(cuadro);
-          const desde = ahora;
-          if (!ms) { ahora = hasta; dibujar(hasta); return; }
-          const t0 = performance.now();
-          const paso = (t) => {
-            const k = salida((t - t0) / ms);
-            ahora = { luna: desde.luna + (hasta.luna - desde.luna) * k, p: desde.p + (hasta.p - desde.p) * k, c: desde.c + (hasta.c - desde.c) * k, g: desde.g + (hasta.g - desde.g) * k };
-            dibujar(ahora);
-            if (k < 1) cuadro = requestAnimationFrame(paso);
-          };
-          cuadro = requestAnimationFrame(paso);
-        },
-      };
-    }
-
     // Una cifra que cuenta de lo que mostraba hasta la nueva.
     function contar(nodo, hasta, ms) {
       const desde = Number(nodo.dataset.valor || 0);
@@ -306,54 +226,52 @@ const Comida = (() => {
       nodo.dataset.cuadro = requestAnimationFrame(paso);
     }
 
-    const fraccionesDe = (t) => ({ luna: t.kcal / META.kcal, p: t.p / META.p, c: t.c / META.c, g: t.g / META.g });
-
-    // ------------------------------------------------------------ la pestaña Inicio: la comida
-    // Como MacroFactor: por día, por semana y por mes. El día tiene arriba la tira de la semana, con
-    // una luna chica por día que se llena con lo comido (se toca para ver ese día); la semana, el
-    // promedio, los siete días con sus barras y el peso y el gasto; el mes, el calendario de lunas.
-    const zona = el('section', 'comida');
+    // ------------------------------------------------------------ la pestaña Comida
+    // Como MacroFactor: por día, por semana y por mes, en un cuadro que se desliza (lo pediste el
+    // 22/10/2026): primero el día, lo comido contra la meta con los macros; deslizando a la izquierda,
+    // la semana, con el promedio y los siete días con sus barras; y otra vez, el mes, con el
+    // calendario de lunas. Arriba, la tira de la semana, con una luna chica por día (se toca para ver
+    // ese día); abajo, la línea del día. Lo que queda, con la luna grande, está en Inicio; el peso y
+    // el gasto, en Progreso.
+    const VISTAS = ['dia', 'semana', 'mes'];
+    const zona = el('section', 'comida pagina-app');
     zona.innerHTML = `
       <div class="cm-scroll">
         <header class="cm-cab"><div class="cm-fecha"></div><h2 class="cm-titulo"></h2></header>
-        <div class="cm-vistas"></div>
-        <div class="cm-vista cm-vista-dia">
-          <div class="cm-tira"></div>
-          <div class="cm-heroe"><div class="cm-escenario"></div><div class="cm-cifra"><b></b><span></span></div><div class="cm-de"></div></div>
-          <div class="cm-macros cm-macros-dia"></div>
-          <div class="cm-agua"></div>
-          <h3 class="cm-seccion cm-seccion-dia"></h3>
-          <p class="cm-nota" hidden></p>
-          <div class="cm-linea"></div>
-        </div>
-        <div class="cm-vista cm-vista-semana" hidden>
-          <article class="cm-carta cm-promedio cm-promedio-semana"></article>
-          <div class="cm-grafica"></div>
-          <h3 class="cm-seccion cm-seccion-cuerpo"></h3>
-          <div class="cm-semana"></div>
-        </div>
-        <div class="cm-vista cm-vista-mes" hidden>
-          <div class="cm-calendario"></div>
-          <article class="cm-carta cm-promedio cm-promedio-mes"></article>
-        </div>
+        <div class="cm-tira"></div>
+        <section class="cm-cuadro">
+          <div class="cm-cuadro-tira">
+            <div class="cm-pagina cm-pagina-dia">
+              <div class="cm-resumen">
+                <div class="cm-resumen-luna"></div>
+                <div class="cm-resumen-txt"><div class="cm-resumen-cifra"><b></b><small></small></div><span></span></div>
+              </div>
+              <div class="cm-macros cm-macros-dia"></div>
+            </div>
+            <div class="cm-pagina cm-pagina-semana">
+              <div class="cm-promedio cm-promedio-semana"></div>
+              <div class="cm-grafica"></div>
+            </div>
+            <div class="cm-pagina cm-pagina-mes">
+              <div class="cm-promedio cm-promedio-mes"></div>
+              <div class="cm-calendario"></div>
+            </div>
+          </div>
+        </section>
+        <nav class="cm-puntos"></nav>
+        <h3 class="cm-seccion cm-seccion-dia"></h3>
+        <p class="cm-nota" hidden></p>
+        <div class="cm-linea"></div>
       </div>
-      <nav class="cm-barra"></nav>
       <div class="cm-aviso" role="status"><span></span></div>`;
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const $z = (q) => zona.querySelector(q);
-    const lunaGrande = crearLuna('cm-luna');
-    $z('.cm-escenario').appendChild(lunaGrande.svg);
-    function ponerArcos(si) {
-      zona.classList.toggle('sin-arcos', !si);
-      lunaGrande.arcos(si);
-    }
-    ponerArcos(false);
+    const lunaChica = Luna.crear({ tam: 64, clase: 'cm-luna-chica' });
+    $z('.cm-resumen-luna').appendChild(lunaChica.el);
     const scroll = $z('.cm-scroll');
-
-    // Registrar: el «+» de abajo a la derecha, siempre en el mismo lugar.
-    const masZona = boton('bh-mas', icono('mas'), () => abrirHoja({}), tx('comida.registrar'));
-    $z('.cm-barra').append(masZona);
+    // Inicio y Progreso se pintan de nuevo cuando cambia lo comido.
+    const avisarCambio = () => { if (opciones.alCambiarComida) opciones.alCambiarComida(); };
 
     let avisoZona = 0;
     let deshacerZona = null;
@@ -400,50 +318,96 @@ const Comida = (() => {
       return svg;
     }
 
-    function pintarVistas() {
-      const cont = $z('.cm-vistas');
+    // Debajo del cuadro, dónde está: Día, Semana y Mes, con el de la vista encendido. Se tocan también.
+    function pintarPuntos() {
+      const cont = $z('.cm-puntos');
       cont.innerHTML = '';
-      ['dia', 'semana', 'mes'].forEach((v) => {
-        const b = boton('cm-vista-btn', tx('comida.vistas.' + v), () => verVista(v));
+      VISTAS.forEach((v) => {
+        const b = boton('cm-punto', `<i></i><span>${tx('comida.vistas.' + v)}</span>`, () => verVista(v));
         b.setAttribute('aria-pressed', String(s.vista === v));
         cont.appendChild(b);
       });
-      zona.querySelectorAll('.cm-vista').forEach((n) => { n.hidden = !n.classList.contains('cm-vista-' + s.vista); });
     }
 
+    // Arriba va siempre el día: la línea de abajo es la de ese día, aunque el cuadro muestre la semana o el mes.
     function pintarCabecera() {
       const d = s.dia;
       const f = fechaDe(d);
-      if (s.vista === 'dia') {
-        $z('.cm-fecha').textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + f.dia), num: f.num, mes: tx('fecha.mesesCortos.' + f.mes) });
-        const cerca = { '-1': 'ayer', 0: 'hoy', 1: 'manana' }[d];
-        $z('.cm-titulo').textContent = cerca ? tx('comida.dias.' + cerca) : Buscar.conMayuscula(tx('comida.tituloDia', { dia: tx('fecha.dias.' + f.dia), num: f.num }));
-      } else if (s.vista === 'semana') {
-        const lunes = fechaDe(lunesDe(d));
-        const domingo = fechaDe(lunesDe(d) + 6);
-        $z('.cm-fecha').textContent = tx('comida.rangoSemana', { desde: lunes.num, hasta: domingo.num, mes: tx('fecha.mesesCortos.' + domingo.mes) });
-        $z('.cm-titulo').textContent = lunesDe(d) === lunesDe(0) ? tx('comida.estaSemana') : tx('comida.semanaDel', { num: lunes.num, mes: tx('fecha.mesesCortos.' + lunes.mes) });
-      } else {
-        $z('.cm-fecha').textContent = String(f.anio);
-        $z('.cm-titulo').textContent = Buscar.conMayuscula(tx('fecha.meses.' + f.mes));
-      }
+      $z('.cm-fecha').textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + f.dia), num: f.num, mes: tx('fecha.mesesCortos.' + f.mes) });
+      const cerca = { '-1': 'ayer', 0: 'hoy', 1: 'manana' }[d];
+      $z('.cm-titulo').textContent = cerca ? tx('comida.dias.' + cerca) : Buscar.conMayuscula(tx('comida.tituloDia', { dia: tx('fecha.dias.' + f.dia), num: f.num }));
     }
 
     function pintarZona(ms) {
-      pintarVistas();
       pintarCabecera();
-      if (s.vista === 'dia') pintarDia(ms);
-      else if (s.vista === 'semana') pintarVistaSemana();
-      else pintarMes();
-
-      masZona.setAttribute('aria-label', tx('comida.registrar'));
+      pintarDia(ms);
+      pintarVistaSemana();
+      pintarMes();
+      pintarPuntos();
+      ubicarCuadro(false);
     }
 
-    // Las barras de proteína, carbohidratos y grasas contra su meta.
-    function pintarMacros(cont, t) {
+    // ------------------------------------------------------------ el cuadro que se desliza
+    // Con el dedo de costado se pasa del día a la semana y al mes; en los bordes cede un cuarto,
+    // como las pestañas. El alto sigue a la página que se ve. Las pestañas no se enteran: el gesto
+    // que empieza en el cuadro es del cuadro.
+    const cuadro = $z('.cm-cuadro');
+    const tiraCuadro = $z('.cm-cuadro-tira');
+    let arrastreCuadro = null;
+    let soltoCuadro = -1e9;
+    function ubicarCuadro(animar) {
+      const i = VISTAS.indexOf(s.vista);
+      tiraCuadro.style.transition = animar ? '' : 'none';
+      tiraCuadro.style.translate = `${-i * 100}% 0`;
+      const alto = tiraCuadro.children[i].offsetHeight;
+      cuadro.style.transition = animar ? '' : 'none';
+      if (alto) cuadro.style.height = alto + 'px';
+    }
+    cuadro.addEventListener('pointerdown', (ev) => {
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      arrastreCuadro = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, t0: 0 };
+    });
+    cuadro.addEventListener('pointermove', (ev) => {
+      const a = arrastreCuadro;
+      if (!a || ev.pointerId !== a.id) return;
+      const dx = ev.clientX - a.x0, dy = ev.clientY - a.y0;
+      if (!a.decidido) {
+        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { arrastreCuadro = null; return; }
+        if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+        a.decidido = true;
+        a.t0 = performance.now();
+        try { cuadro.setPointerCapture(ev.pointerId); } catch (_) { /* igual anda */ }
+        tiraCuadro.style.transition = 'none';
+      }
+      ev.preventDefault();
+      const i = VISTAS.indexOf(s.vista);
+      const borde = (i === 0 && dx > 0) || (i === VISTAS.length - 1 && dx < 0);
+      tiraCuadro.style.translate = `calc(${-i * 100}% + ${(borde ? dx * 0.25 : dx).toFixed(1)}px) 0`;
+    });
+    const soltarCuadro = (ev) => {
+      const a = arrastreCuadro;
+      if (!a || ev.pointerId !== a.id) return;
+      arrastreCuadro = null;
+      if (!a.decidido) return;
+      soltoCuadro = performance.now();
+      const dx = ev.clientX - a.x0;
+      const v = dx / Math.max(1, performance.now() - a.t0);
+      const i = VISTAS.indexOf(s.vista);
+      const pasa = ev.type !== 'pointercancel' && (Math.abs(dx) > cuadro.clientWidth * 0.2 || Math.abs(v) > 0.35);
+      verVista(VISTAS[Math.max(0, Math.min(VISTAS.length - 1, pasa ? i + (dx < 0 ? 1 : -1) : i))]);
+    };
+    cuadro.addEventListener('pointerup', soltarCuadro);
+    cuadro.addEventListener('pointercancel', soltarCuadro);
+    // El click que llega después de deslizar no abre un día.
+    cuadro.addEventListener('click', (ev) => { if (performance.now() - soltoCuadro < 400) { ev.stopPropagation(); ev.preventDefault(); } }, true);
+
+    // Las barras de proteína, carbohidratos y grasas contra su meta. En un día, el punto de cada
+    // una brilla cuando se cumple lo pedido y tiembla si se pasa por mucho (Metas.estadoDeMacro);
+    // en los promedios, no.
+    function pintarMacros(cont, t, conEstado) {
       cont.innerHTML = '';
       [['p', 'proteina'], ['c', 'carbohidratos'], ['g', 'grasas']].forEach(([m, clave]) => {
-        const col = el('div', 'cm-macro cm-macro-' + m);
+        const col = el('div', `cm-macro cm-macro-${m} ${conEstado ? Metas.estadoDeMacro(t[m], META[m]) : ''}`);
         const barra = el('div', 'cm-barra-macro');
         const relleno = el('i');
         barra.appendChild(relleno);
@@ -468,48 +432,24 @@ const Comida = (() => {
     function pintarDia(ms) {
       const d = s.dia;
       pintarTira();
-      // La luna y la cifra grande: hoy, lo que queda; otro día, lo comido o lo planificado.
+      // Lo comido (o lo planificado) contra la meta, con la luna chica; hoy, también lo que queda.
       const t = totalDe(d);
       const queda = META.kcal - t.kcal;
-      const cifra = $z('.cm-cifra b');
-      contar(cifra, d === 0 ? Math.abs(queda) : t.kcal, ms);
-      $z('.cm-cifra span').textContent = tx(d < 0 ? 'comida.enElDia' : d > 0 ? 'comida.planificadas' : queda >= 0 ? 'comida.teQuedan' : 'comida.deMas');
-      $z('.cm-de').textContent = tx('comida.deMeta', { comido: numero(Math.round(t.kcal)), meta: numero(META.kcal) });
-      lunaGrande.ir(fraccionesDe(t), ms);
+      contar($z('.cm-resumen-cifra b'), t.kcal, ms);
+      $z('.cm-resumen-cifra small').textContent = tx('comida.deMetaCorto', { meta: numero(META.kcal) });
+      const linea = $z('.cm-resumen-txt > span');
+      linea.textContent = d === 0
+        ? tx(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) })
+        : d > 0 ? tx('comida.planificado') : '';
+      linea.classList.toggle('de-mas', d === 0 && queda < 0);
+      lunaChica.ir(t.kcal / META.kcal, ms);
       zona.classList.toggle('planificado', d > 0);
-      pintarMacros($z('.cm-macros-dia'), t);
-      pintarAgua();
+      pintarMacros($z('.cm-macros-dia'), t, d <= 0);
       $z('.cm-seccion-dia').textContent = tx('comida.tuDia');
       const nota = $z('.cm-nota');
       nota.hidden = d <= 0;
       nota.textContent = tx(comidasDe(d).length ? 'comida.planificadoTexto' : 'comida.sinRegistros');
       pintarLinea();
-    }
-
-    function pintarAgua() {
-      const caja = $z('.cm-agua');
-      const d = s.dia;
-      caja.hidden = d > 0;
-      if (d > 0) return;
-      const vasos = s.agua[d] || 0;
-      caja.innerHTML = '';
-      const textos = el('div', 'cm-agua-txt');
-      textos.append(el('span', null, tx('comida.agua')), el('b', null, tx('comida.aguaDe', { n: Porciones.decimal(vasos * VASO_L, idioma), meta: Porciones.decimal(VASOS_META * VASO_L, idioma) })));
-      const fila = el('div', 'cm-vasos');
-      for (let i = 0; i < Math.max(VASOS_META, vasos); i++) {
-        const v = el('i', 'cm-vaso' + (i < vasos ? ' lleno' : ''));
-        v.innerHTML = icono('vaso');
-        fila.appendChild(v);
-      }
-      const mas = boton('cm-agua-mas', icono('mas'), () => {
-        s.agua[d] = Math.min(12, (s.agua[d] || 0) + 1);
-        escena.haptico('suave');
-        pintarAgua();
-        const nuevo = $z('.cm-vasos').children[s.agua[d] - 1];
-        if (nuevo) nuevo.classList.add('recien');
-      }, tx('comida.sumarVaso'));
-      mas.disabled = d !== 0;
-      caja.append(textos, fila, mas);
     }
 
     // La línea del día: las comidas sobre una línea de horas, con el espacio entre una y otra según
@@ -602,22 +542,27 @@ const Comida = (() => {
     // ------------------------------------------------------------ la semana
     // El promedio de los días que ya terminaron y la semana entera de lunes a domingo: por día, una
     // barra de calorías y una por macro contra su meta (la línea punteada), como en MacroFactor.
-    function pintarPromedio(carta, prom, diasDelTramo) {
+    function pintarPromedio(carta, prom, diasDelTramo, titulo, fechas) {
       carta.innerHTML = '';
-      carta.appendChild(el('span', 'cm-carta-titulo', tx('comida.promedio')));
+      const cab = el('header', 'cm-pagina-cab');
+      cab.append(el('b', null, titulo), el('span', null, fechas));
+      carta.append(cab, el('span', 'cm-carta-titulo', tx('comida.promedio')));
       if (!prom.n) { carta.appendChild(el('p', 'cm-carta-texto', tx('comida.sinRegistros'))); return; }
       const cifra = el('div', 'cm-carta-cifra');
       cifra.append(el('b', null, numero(Math.round(prom.kcal))), el('span', null, ` ${tx('comida.kcal')}`));
       const nota = el('div', 'cm-carta-nota', `${tx('comida.metaDe', { n: numero(META.kcal) })} · ${tx('comida.diasRegistrados', { n: prom.n, total: diasDelTramo })}`);
       const macros = el('div', 'cm-macros cm-macros-promedio');
       carta.append(cifra, nota, macros);
-      pintarMacros(macros, prom);
+      pintarMacros(macros, prom, false);
     }
 
     function pintarVistaSemana() {
       const lunes = lunesDe(s.dia);
       const dias = rango(lunes, lunes + 6);
-      pintarPromedio($z('.cm-promedio-semana'), promedio(dias), dias.filter((k) => k < 0).length);
+      const desde = fechaDe(lunes), hasta = fechaDe(lunes + 6);
+      const titulo = lunes === lunesDe(0) ? tx('comida.estaSemana') : tx('comida.semanaDel', { num: desde.num, mes: tx('fecha.mesesCortos.' + desde.mes) });
+      pintarPromedio($z('.cm-promedio-semana'), promedio(dias), dias.filter((k) => k < 0).length, titulo,
+        tx('comida.rangoSemana', { desde: desde.num, hasta: hasta.num, mes: tx('fecha.mesesCortos.' + hasta.mes) }));
       const grafica = $z('.cm-grafica');
       grafica.innerHTML = '';
       grafica.appendChild(el('i', 'cm-grafica-meta'));
@@ -635,58 +580,6 @@ const Comida = (() => {
         col.append(barras, el('span', 'cm-tira-letra', letraDe(k)), el('b', null, String(fechaDe(k).num)));
         grafica.appendChild(col);
       });
-      $z('.cm-seccion-cuerpo').textContent = tx('comida.pesoYGasto');
-      pintarSemana();
-    }
-
-    function pintarSemana() {
-      const cont = $z('.cm-semana');
-      cont.innerHTML = '';
-      // El peso: la tendencia (la línea) y las pesadas de cada día (los puntos).
-      const tendencia = [];
-      let actual = TENDENCIA_ANTES;
-      PESADAS.forEach((kg) => { actual += 0.1 * (kg - actual); tendencia.push(actual); });
-      const ultima = tendencia[tendencia.length - 1];
-      const semana = ultima - tendencia[tendencia.length - 8];
-      const peso = el('article', 'cm-carta cm-peso');
-      const cab = el('header');
-      cab.append(el('span', 'cm-carta-titulo', tx('comida.peso')), boton('cm-anotar', `${icono('mas')}<span>${tx('comida.anotarPeso')}</span>`, () => avisarZona('Galería: anotar el peso son 2 toques y el número, o llega solo desde Salud.')));
-      const cifra = el('div', 'cm-carta-cifra');
-      cifra.append(el('b', null, numero(ultima, 1)), el('span', null, ` kg · ${tx('comida.tendencia')}`));
-      const signo = semana < 0 ? '−' : '+';
-      peso.append(cab, cifra, el('div', 'cm-carta-nota', tx('comida.porSemana', { n: signo + numero(Math.abs(semana), 1) })), grafico(PESADAS, tendencia));
-      cont.appendChild(peso);
-
-      const control = el('article', 'cm-carta cm-control');
-      const cabC = el('header');
-      const fechaControl = tx('comida.fechaControl', { dia: tx('fecha.dias.' + CONTROL.dia), num: CONTROL.num, mes: tx('fecha.mesesCortos.' + CONTROL.mes) });
-      cabC.append(el('span', 'cm-carta-titulo', tx('comida.gasto')));
-      const cifraC = el('div', 'cm-carta-cifra');
-      cifraC.append(el('b', null, numero(CONTROL.ahora)), el('span', null, ` ${tx('comida.porDia')}`));
-      const detalle = el('p', 'cm-carta-texto', tx('comida.controlTexto', { gasto: numero(CONTROL.medido), antes: numero(CONTROL.antes), ahora: numero(CONTROL.ahora) }));
-      const como = el('p', 'cm-carta-texto cm-como', tx('comida.comoSeCalculaTexto', { promedio: numero(CONTROL.promedio), cambio: (CONTROL.cambio < 0 ? '−' : '+') + numero(Math.abs(CONTROL.cambio), 1) }));
-      como.hidden = true;
-      const abrir = boton('cm-enlace', `<span>${tx('comida.comoSeCalcula')}</span>${icono('adelante')}`, () => { como.hidden = !como.hidden; abrir.classList.toggle('abierto', !como.hidden); });
-      control.append(cabC, cifraC, el('div', 'cm-carta-nota', tx('comida.control', { fecha: fechaControl })), detalle, abrir, como);
-      cont.appendChild(control);
-    }
-
-    // Una línea chica: las pesadas como puntos y la tendencia como una línea suave.
-    function grafico(pesadas, tendencia) {
-      const W = 300, H = 64, m = 6;
-      const todos = pesadas.concat(tendencia);
-      const min = Math.min(...todos) - 0.05, max = Math.max(...todos) + 0.05;
-      const x = (i) => m + (i / (pesadas.length - 1)) * (W - 2 * m);
-      const y = (kg) => m + (1 - (kg - min) / (max - min)) * (H - 2 * m);
-      const linea = tendencia.map((kg, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(kg).toFixed(1)}`).join(' ');
-      const puntos = pesadas.map((kg, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(kg).toFixed(1)}" r="1.9" class="cm-pesada"/>`).join('');
-      const ultimo = tendencia.length - 1;
-      const svg = document.createElementNS(SVG, 'svg');
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      svg.setAttribute('class', 'cm-grafico');
-      svg.setAttribute('aria-hidden', 'true');
-      svg.innerHTML = `${puntos}<path d="${linea}" class="cm-tendencia"/><circle cx="${x(ultimo).toFixed(1)}" cy="${y(tendencia[ultimo]).toFixed(1)}" r="3.2" class="cm-tendencia-fin"/>`;
-      return svg;
     }
 
     // ------------------------------------------------------------ el mes
@@ -709,28 +602,30 @@ const Comida = (() => {
       }
       cal.appendChild(grilla);
       const dias = rango(primero, ultimo);
-      pintarPromedio($z('.cm-promedio-mes'), promedio(dias), dias.filter((k) => k < 0).length);
+      pintarPromedio($z('.cm-promedio-mes'), promedio(dias), dias.filter((k) => k < 0).length, Buscar.conMayuscula(tx('fecha.meses.' + f.mes)), String(f.anio));
     }
 
+    // Tocar un día de la semana o del mes vuelve el cuadro al día, con ese día.
     function verDia(d) {
       if (d < PRIMER_DIA || d > ULTIMO_DIA) return;
       s.dia = d;
       s.vista = 'dia';
       pintarZona(700);
+      ubicarCuadro(true);
       scroll.scrollTo({ top: 0, behavior: 'smooth' });
       opciones.alCambiar();
     }
 
     function verVista(v) {
       s.vista = v;
-      pintarZona(0);
-      scroll.scrollTo({ top: 0, behavior: 'smooth' });
+      pintarPuntos();
+      ubicarCuadro(true);
       opciones.alCambiar();
     }
 
     // ------------------------------------------------------------ la pestaña a la vista
-    // Las pestañas avisan cuándo Inicio queda a la vista: los toques para registrar se cuentan
-    // desde ahí.
+    // Las pestañas avisan cuándo Comida queda a la vista: los toques para registrar se cuentan
+    // desde ahí, o desde el «+» de la barra.
     function ponerEnZona(si) {
       if (si === s.enZona) return;
       s.enZona = si;
@@ -830,7 +725,7 @@ const Comida = (() => {
       hoja.classList.add('saliendo');
       setTimeout(() => { if (!s.hoja) { hoja.hidden = true; fondo.hidden = true; cerrarVentana(true); } tel.classList.remove('hoja-anim'); }, 420);
       // Lo nuevo se ve llegar: la luna se llena y la cifra baja.
-      if (agregado) { s.dia = 0; s.vista = 'dia'; pintarZona(1100); }
+      if (agregado) { s.dia = 0; s.vista = 'dia'; pintarZona(1100); avisarCambio(); }
       // Sin registrar nada, la cuenta de toques empieza de nuevo.
       s.toques = 0;
       s.escribio = false;
@@ -1379,6 +1274,7 @@ const Comida = (() => {
           cerrarVentana(true);
           cerrarHoja();
           pintarZona(900);
+          avisarCambio();
         } else {
           cerrarVentana();
           sumarACanasta([it], [nombreDe(a), cantidadDe(it)].join(' · '), botonMas);
@@ -1401,6 +1297,7 @@ const Comida = (() => {
           cerrarVentana(true);
           cerrarHoja();
           pintarZona(900);
+          avisarCambio();
           avisarZona(tx('comida.quitado', { alimento: nombre }));
         }));
       }
@@ -1537,6 +1434,59 @@ const Comida = (() => {
     }
     armarTeclado();
 
+    // ------------------------------------------------------------ lo que usan Inicio y el «+»
+    const fechaClave = (k) => { const f = fechaDe(k); return `${f.anio}-${String(f.mes + 1).padStart(2, '0')}-${String(f.num).padStart(2, '0')}`; };
+    const comidaDeAhora = () => Comidas.comidaDeLaHora(AHORA);
+
+    // Registrar de un toque, sin la revisión: lo que sale de la hoja del «+» (los recientes, las
+    // guardadas, la carga rápida). Queda en la comida de esta hora y se puede deshacer.
+    function registrarDirecto(items, texto) {
+      const tipo = comidaDeAhora();
+      const c = comidaDeHoy(tipo);
+      const nuevos = items.map((it) => Object.assign({}, it, { nuevo: true }));
+      c.items.push(...nuevos);
+      nuevos.forEach((it) => {
+        if (it.rapida) return;
+        s.ultima.set(it.alimento, { porcion: it.porcion, veces: it.veces, gramos: it.gramos });
+        s.usos.set(it.alimento, (s.usos.get(it.alimento) || 0) + 1);
+      });
+      escena.haptico('toque');
+      registrado(texto);
+      if (s.dia === 0 && s.vista === 'dia') pintarZona(900);
+      avisarCambio();
+      return {
+        tipo,
+        deshacer() {
+          nuevos.forEach((it) => { const i = c.items.indexOf(it); if (i >= 0) c.items.splice(i, 1); });
+          if (!c.items.length) comidasDe(0).splice(comidasDe(0).indexOf(c), 1);
+          if (s.dia === 0 && s.vista === 'dia') pintarZona(600);
+          avisarCambio();
+        },
+      };
+    }
+
+    // Lo último que se registró, sin repetir y del más nuevo al más viejo, con la última cantidad.
+    function recientes(n) {
+      const vistos = new Set();
+      const lista = [];
+      [0, -1, -2].forEach((d) => comidasDe(d).slice().sort((x, y) => y.hora - x.hora).forEach((c) => c.items.slice().reverse().forEach((it) => {
+        if (it.rapida || vistos.has(it.alimento)) return;
+        vistos.add(it.alimento);
+        const a = porId.get(it.alimento);
+        const [porcion, veces] = conUltima(a);
+        const item = { alimento: a.id, porcion, veces };
+        lista.push({ id: a.id, nombre: nombreDe(a), cantidad: cantidadDe(item), kcal: valoresDe(item).kcal, item });
+      })));
+      return lista.slice(0, n);
+    }
+
+    function listaGuardadas() {
+      return GUARDADAS.map((g, i) => {
+        const items = g.items.map(([n, v, p]) => item(n, v, p)).filter(Boolean);
+        return { i, nombre: g.nombre[idioma], kcal: sumar(items).kcal, items };
+      });
+    }
+
     // ------------------------------------------------------------ arranque
     pintarZona(0);
 
@@ -1550,8 +1500,41 @@ const Comida = (() => {
       get enZona() { return s.enZona; },
       get hojaAbierta() { return !!s.hoja; },
       get dia() { return s.dia; },
-      // Las metas de Ajustes (ajustes.js): la zona se pinta con las nuevas.
-      ponerMeta(m) { Object.assign(META, { kcal: m.kcal, p: m.proteina, c: m.carbohidratos, g: m.grasas }); pintarZona(600); },
+      get vistaActual() { return s.vista; },
+      get meta() { return Object.assign({}, META); },
+      // Lo comido de un día (0 es hoy), y las kcal de cada día ya vivido con algo registrado: lo que
+      // mira el control (Control.controlSemanal).
+      totalDe,
+      kcalPorDia: () => Object.keys(s.dias).map(Number).filter((k) => k < 0 && comidasDe(k).length).sort((a, b) => a - b)
+        .map((k) => ({ fecha: fechaClave(k), kcal: totalDe(k).kcal })),
+      comidaDeAhora,
+      recientes,
+      listaGuardadas,
+      registrarReciente(id) {
+        const r = recientes(20).find((x) => x.id === id);
+        return r ? registrarDirecto([r.item], [r.nombre, r.cantidad].filter(Boolean).join(' · ')) : null;
+      },
+      registrarGuardada(i) {
+        const g = listaGuardadas()[i];
+        return g ? registrarDirecto(g.items.map((it) => Object.assign({}, it)), g.nombre) : null;
+      },
+      registrarRapida(v, nombre) { return registrarDirecto([{ rapida: true, nombre, kcal: v.kcal, p: v.p, c: v.c, g: v.g }], nombre || tx('comida.cargaRapida')); },
+      // El agua de hoy, en vasos de 250 ml: ya no está en la pantalla, se suma desde el «+».
+      agua: () => ({ litros: (s.agua[0] || 0) * VASO_L, meta: VASOS_META * VASO_L, vasos: s.agua[0] || 0, vasosMeta: VASOS_META }),
+      sumarAgua() { s.agua[0] = Math.min(16, (s.agua[0] || 0) + 1); escena.haptico('suave'); avisarCambio(); },
+      quitarAgua() { s.agua[0] = Math.max(0, (s.agua[0] || 0) - 1); avisarCambio(); },
+      // Para ver los macros que brillan y tiemblan: una cena que llega a la proteína y a los
+      // carbohidratos y se pasa de grasas.
+      simularCena() {
+        const t = totalDe(0);
+        const p = Math.max(0, META.p + 3 - t.p), c = Math.max(0, META.c * 1.03 - t.c), g = Math.max(0, META.g * 1.32 - t.g);
+        return registrarDirecto([{ rapida: true, nombre: tx('comida.cenaDeMentira'), kcal: p * 4 + c * 4 + g * 9, p, c, g }], tx('comida.cenaDeMentira'));
+      },
+      // La cuenta de toques: el «+» de la barra la empieza, y cada toque de su hoja suma.
+      empezarCuenta() { s.toques = 0; s.escribio = false; },
+      contarToque() { s.toques++; },
+      // Las metas del control o de la estrategia (Progreso): la zona se pinta con las nuevas.
+      ponerMeta(m) { Object.assign(META, { kcal: m.kcal, p: m.proteina, c: m.carbohidratos, g: m.grasas }); pintarZona(600); avisarCambio(); },
       ponerIdioma(id) {
         idioma = id;
         armarTeclado();
@@ -1570,14 +1553,13 @@ const Comida = (() => {
       etiqueta(conError) { if (s.hoja) abrirEtiqueta(conError); },
       copiarDeAyer: (tipo) => (s.hoja ? sumarDeAyer(tipo || s.hoja.comida) : copiarDeAyer(tipo || 'cena')),
       bajarA(destino) {
-        const n = (destino === 'semana' && $z('.cm-seccion-cuerpo')) || (destino === 'ahora' && ($z('.cm-ahora') || $z('.cm-linea .cm-entrada:last-child'))) || $z('.cm-seccion-dia');
+        const n = (destino === 'semana' && $z('.cm-grafica')) || (destino === 'ahora' && ($z('.cm-ahora') || $z('.cm-linea .cm-entrada:last-child'))) || $z('.cm-seccion-dia');
         const arriba = destino === 'ahora' ? 260 : 70;
         scroll.scrollTo({ top: Math.max(0, scroll.scrollTop + n.getBoundingClientRect().top - scroll.getBoundingClientRect().top - arriba), behavior: 'auto' });
         scroll.dispatchEvent(new Event('scroll'));
       },
       teclado,
       dictar,
-      arcos: ponerArcos,
     };
   }
 

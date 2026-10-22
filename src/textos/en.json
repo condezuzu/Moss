@@ -4,8 +4,12 @@
   },
   "pestanas": {
     "inicio": "Home",
+    "comida": "Food",
+    "progreso": "Progress",
+    "sueno": "Sleep",
     "habitos": "Habits",
-    "ajustes": "Settings"
+    "perfil": "Profile",
+    "mas": "Add"
   },
   "cielo": {
     "armandose": "The sky is coming together.",
@@ -94,46 +98,6 @@
       "empezar": "Start"
     }
   },
-  "ajustes": {
-    "titulo": "Settings",
-    "calidad": "Animation quality",
-    "idioma": "Language",
-    "salud": "Apple Health",
-    "ascent": "Link with Ascent",
-    "cuenta": "Account",
-    "metas": {
-      "titulo": "Targets",
-      "fila": "{kcal} kcal",
-      "porDia": "kcal a day",
-      "quien": "Who sets them",
-      "moss": "Moss",
-      "aMano": "Manual",
-      "mossTexto": "Moss adjusts them every week from your weight and what you eat.",
-      "aManoTexto": "You set them. Moss keeps measuring your expenditure, but doesn't change them.",
-      "reparto": "How they split",
-      "tusMacros": "Your macros",
-      "estilos": {
-        "equilibrada": [
-          "Balanced",
-          "Protein by body weight, at least 27% fat and the rest carbs."
-        ],
-        "bajaEnGrasas": [
-          "Low fat",
-          "Fat at 20%: more room for carbs."
-        ],
-        "bajaEnCarbohidratos": [
-          "Low carb",
-          "A quarter of calories from carbs and the rest from fat."
-        ],
-        "keto": [
-          "Keto",
-          "30 g of carbs a day."
-        ]
-      },
-      "semana": "Shift the week",
-      "semanaTexto": "More on the days you pick and a bit less on the rest. The week adds up the same: carbs move."
-    }
-  },
   "comida": {
     "comidas": {
       "desayuno": "Breakfast",
@@ -157,24 +121,15 @@
     "semanaDel": "Week of {mes} {num}",
     "rangoSemana": "{mes} {desde} – {hasta}",
     "registrar": "Log food",
-    "teQuedan": "kcal left",
-    "deMas": "kcal over",
-    "enElDia": "kcal eaten",
-    "planificadas": "kcal planned",
-    "deMeta": "{comido} of {meta} kcal",
     "metaDe": "Target: {n} kcal",
     "proteina": "Protein",
     "carbohidratos": "Carbs",
     "grasas": "Fat",
     "gramosDe": "{n} / {meta} g",
-    "agua": "Water",
-    "aguaDe": "{n} of {meta} L",
-    "sumarVaso": "Add a 250 ml glass",
     "tuDia": "Your day",
     "promedio": "Daily average",
     "diasRegistrados": "{n} of {total} days logged",
     "sinRegistros": "Nothing logged.",
-    "pesoYGasto": "Weight and expenditure",
     "ahora": "Now",
     "agregar": "Add",
     "sumar": "Add",
@@ -185,17 +140,6 @@
     "planificadoTexto": "Confirm it with one tap when the day comes.",
     "foto": "Photo",
     "masAlimentos": "and {n} more",
-    "peso": "Weight",
-    "tendencia": "trend",
-    "porSemana": "{n} kg per week",
-    "anotarPeso": "Log",
-    "gasto": "Estimated expenditure",
-    "porDia": "kcal per day",
-    "fechaControl": "{dia}, {mes} {num}",
-    "control": "Last check-in · {fecha}",
-    "controlTexto": "Your real expenditure is about {gasto} kcal a day. Your target goes from {antes} to {ahora} kcal.",
-    "comoSeCalcula": "How it’s calculated",
-    "comoSeCalculaTexto": "Over the last 3 weeks you ate {promedio} kcal a day on average and your trend changed {cambio} kg. Moss takes a quarter of the difference from its previous estimate, so your target changes gradually.",
     "buscar": "What did you eat?",
     "escanear": "Scan the barcode",
     "etiqueta": "Photo of the label",
@@ -278,7 +222,375 @@
     "nombre": "Name",
     "opcional": "optional",
     "kcal": "kcal",
-    "cargaRapidaTexto": "Leave calories empty and they come from the macros."
+    "cargaRapidaTexto": "Leave calories empty and they come from the macros.",
+    "deMetaCorto": "of {meta} kcal",
+    "quedanKcal": "{n} kcal left",
+    "deMasKcal": "{n} kcal over",
+    "cenaDeMentira": "Sample dinner",
+    "aLa": {
+      "desayuno": "to breakfast",
+      "almuerzo": "to lunch",
+      "merienda": "to afternoon snack",
+      "cena": "to dinner",
+      "snack": "to snack"
+    }
+  },
+  "inicio": {
+    "titulo": "Today",
+    "bloques": {
+      "calorias": "Calories and macros",
+      "objetivo": "Goal progress",
+      "peso": "Weight and balance",
+      "cielo": "Your day in the sky",
+      "sueno": "Last night’s sleep",
+      "agua": "Water"
+    },
+    "teQuedan": "Left",
+    "deMas": "Over",
+    "kcalDe": "kcal · {comido} of {meta}",
+    "gramos": "{n} g",
+    "listo": "Done",
+    "deMeta": "{comido} of {meta} g",
+    "llegarias": "you’d reach {kg} kg",
+    "yaLlegaste": "you reached your goal",
+    "tendencia": "trend",
+    "ritmo": "{ritmo} kg a week · plan {plan}",
+    "enSieteDias": "{n} kg in 7 days",
+    "kcalPorDia": "kcal a day",
+    "balanceTexto": "7-day balance, against {gasto} burned",
+    "encendidas": "{n} of {total}",
+    "dormiste": "Slept {h}",
+    "pasos": "{n} steps",
+    "calidad": "Quality {n}",
+    "horario": "{desde} to {hasta}",
+    "deLitros": "of {meta} L",
+    "personalizar": "Customize Home",
+    "personalizarTitulo": "Your Home",
+    "personalizarTexto": "Choose which blocks you see and drag them into order.",
+    "personalizarNota": "Tap a block on Home to open its section.",
+    "mover": "Move"
+  },
+  "mas": {
+    "titulo": "Add",
+    "agregarComida": "Add food",
+    "registrarPeso": "Log weight",
+    "ultimoPeso": "{cuando}: {kg} kg",
+    "hoy": "Today",
+    "cargaRapida": "Quick add",
+    "caloriasYMacros": "Calories and macros",
+    "agua": "Water",
+    "sumarVaso": "Add a 250 ml glass",
+    "vasoSumado": "One more glass of water",
+    "recientes": "Recent",
+    "guardadas": "Saved meals",
+    "registrado": "{que}: added {donde}",
+    "medidas": "Body measurements",
+    "medidasTexto": "Waist, neck, hips, arms…",
+    "medidasGuardadas": "Measurements saved",
+    "pesoHoy": "Today. Best before eating and after the bathroom.",
+    "tendencia": "Trend: {kg} kg",
+    "pesoNota": "With a scale connected to Health, your weight comes in on its own. Moss uses the trend, not one day’s number.",
+    "pesoGuardado": "Weight saved: {kg} kg"
+  },
+  "cuerpo": {
+    "sitios": {
+      "cintura": "Waist",
+      "cuello": "Neck",
+      "cadera": "Hips",
+      "brazo": "Arm",
+      "pecho": "Chest",
+      "muslo": "Thigh"
+    },
+    "como": {
+      "cinturaHombre": "Level with your navel, standing, belly relaxed. Measure at the end of a normal breath out, without sucking in.",
+      "cinturaMujer": "At the narrowest point, between your navel and breastbone. If it isn’t clear, measure a few times and keep the smallest.",
+      "cuello": "Just below the Adam’s apple, tape straight around the neck, chin forward, shoulders down. Snug: self-measured necks tend to read large.",
+      "cadera": "At the widest part of your buttocks, seen from the side, feet together.",
+      "brazo": "Halfway between the tip of your shoulder and your elbow, arm relaxed at your side.",
+      "pecho": "At the middle of your breastbone, tape under your arms, after breathing out.",
+      "muslo": "Halfway between the crease of your groin and the top of your kneecap."
+    },
+    "comoMedir": "How to measure",
+    "consejos": [
+      "A tape that doesn’t stretch, on bare skin.",
+      "Standing, feet together, arms at your sides, relaxed.",
+      "Keep the tape level with the floor: a mirror helps.",
+      "Snug, without denting the skin.",
+      "At the end of a normal breath out: don’t suck in.",
+      "Always at the same time of day, before eating and after the bathroom.",
+      "Measure twice; if they differ by more than 1 cm, a third time, and write down the average."
+    ],
+    "ultima": "last: {fecha}",
+    "usaHombre": "The estimate uses your waist and neck, with your height. The other measurements help you follow your progress.",
+    "usaMujer": "The estimate uses your waist, hips and neck, with your height. The other measurements help you follow your progress.",
+    "grasaEstimada": "Estimated body fat",
+    "rango": "{desde} to {hasta}%",
+    "rangoCorto": "{desde}–{hasta}%",
+    "estimacion": "tape estimate",
+    "aviso": "This is an estimate from your measurements, not a measurement: a lab scan (DEXA) could read 3 or 4 points higher or lower. It’s less precise with very little fat, a lot of muscle or a lot of fat, and it doesn’t apply during pregnancy or under 18. Measure the same way every time and watch the trend.",
+    "comoSeEstimaHombre": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and half a centimetre at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side.",
+    "comoSeEstimaMujer": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist plus your hips minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and hips and half a centimetre at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side."
+  },
+  "progreso": {
+    "titulo": "Progress",
+    "objetivo": "Goal",
+    "estados": {
+      "llegaste": "Reached",
+      "enCamino": "On track",
+      "despacio": "Slower",
+      "quieto": "No change",
+      "alReves": "Wrong way",
+      "estable": "Stable",
+      "seMueve": "Changing",
+      "sinMeta": "No goal weight",
+      "faltanDatos": "Needs data"
+    },
+    "objetivoA": {
+      "bajar": "Lose down to {kg} kg",
+      "subir": "Gain up to {kg} kg"
+    },
+    "objetivos": {
+      "bajar": "Lose",
+      "mantener": "Maintain",
+      "subir": "Gain"
+    },
+    "mantenerEn": "Maintain {kg} kg",
+    "llegarias": "you’d get there at this pace",
+    "empezaste": "started at {kg}",
+    "meta": "goal: {kg}",
+    "textos": {
+      "llegaste": "You reached your goal weight. To stay there, switch your goal to maintain.",
+      "enCamino": "You’re going {ritmo} kg a week; the plan is {plan}. {faltan} kg to go: about {semanas} weeks.",
+      "despacio": "You’re going {ritmo} kg a week, less than half the plan ({plan}). {faltan} kg to go.",
+      "quieto": "Your trend has barely moved in the last three weeks. The weekly check-in adjusts your targets for that.",
+      "alReves": "Your trend is going the other way ({ritmo} kg a week). The weekly check-in adjusts your targets for that.",
+      "estable": "Your trend moves less than 150 g a week: you’re maintaining.",
+      "seMueve": "Your trend is moving {ritmo} kg a week.",
+      "sinMeta": "You’re going {ritmo} kg a week; the plan is {plan}. Pick a goal weight to see when you’d get there.",
+      "faltanDatos": "Two weeks of weigh-ins are needed to measure your pace."
+    },
+    "peso": "Weight",
+    "registrar": "Log",
+    "tendencia": "trend",
+    "cambios": "{semana} kg in 7 days · {mes} kg in 30 days",
+    "hoy": "today",
+    "pesoLeyenda": "The dots are your weigh-ins; the line is the trend, which is what counts. The dashed line is your goal.",
+    "medidas": "Measurements",
+    "medir": "Measure",
+    "cinturaAltura": "Waist-to-height: {n}. The UK NICE guideline recommends under 0.5.",
+    "medidasDel": "Measured on {fecha}; the change is against a month earlier.",
+    "grasa": "Body fat",
+    "gasto": "Estimated expenditure",
+    "kcalPorDia": "kcal a day",
+    "controlDel": "From the check-in on {fecha}",
+    "balanceTexto": "{n}-day balance: eaten minus burned",
+    "comoSeCalculaTexto": "Over the last {dias} days you ate {promedio} kcal a day on average and your trend changed {cambio} kg. Moss takes a quarter of the difference from its previous estimate, so your target changes gradually.",
+    "estrategia": "Strategy",
+    "pesoMeta": "Goal weight",
+    "sinPesoMeta": "Not set",
+    "metasActuales": "Today’s targets",
+    "ritmos": {
+      "suave": "Gentle",
+      "recomendado": "Recommended",
+      "rapido": "Fast"
+    },
+    "ritmoTexto": "{pct}% of your weight a week: about {kg} kg.",
+    "objetivoNota": "When you change your goal, your targets change from today, using the expenditure Moss has been measuring.",
+    "pesoMetaNota": "It shows whether you’re on track and when you’d get there. Targets come from your goal and pace.",
+    "proximoControl": "Next check-in",
+    "alcanza": "Enough data",
+    "faltanDatos": "Needs data",
+    "manana": "tomorrow",
+    "enDias": "in {n} days",
+    "diasConComida": {
+      "uno": "day logged",
+      "otros": "days logged"
+    },
+    "pesadas": {
+      "uno": "weigh-in",
+      "otros": "weigh-ins"
+    },
+    "controlListo": "The week already has what it needs: the check-in will measure your expenditure and adjust your targets.",
+    "controlFalta": "The check-in needs at least 4 logged days and one weigh-in in the week. Without them, your targets stay as they are.",
+    "diaDelControl": "Check-in day",
+    "diaDelControlNota": "That day, when you open Moss, the check-in measures the week before. If you don’t open the app that day, it runs next time.",
+    "controlTexto": "The check-in measured an expenditure of about {gasto} kcal a day. Moss takes it in gradually: the estimate went from {antes} to {ahora} kcal.",
+    "comoSeCalcula": "How it’s calculated",
+    "metas": {
+      "titulo": "Targets",
+      "porDia": "kcal a day",
+      "quien": "Who sets them",
+      "moss": "Moss",
+      "aMano": "Manual",
+      "mossTexto": "Moss adjusts them every week from your weight and what you eat.",
+      "aManoTexto": "You set them. Moss keeps measuring your expenditure, but doesn't change them.",
+      "reparto": "How they split",
+      "tusMacros": "Your macros",
+      "estilos": {
+        "equilibrada": [
+          "Balanced",
+          "Protein by body weight, at least 27% fat and the rest carbs."
+        ],
+        "bajaEnGrasas": [
+          "Low fat",
+          "Fat at 20%: more room for carbs."
+        ],
+        "bajaEnCarbohidratos": [
+          "Low carb",
+          "A quarter of calories from carbs and the rest from fat."
+        ],
+        "keto": [
+          "Keto",
+          "30 g of carbs a day."
+        ]
+      },
+      "semana": "Shift the week",
+      "semanaTexto": "More on the days you pick and a bit less on the rest. The week adds up the same: carbs move."
+    },
+    "enCurso": "In progress",
+    "minimo": "at least {n}",
+    "controlEnCurso": "The check-in needs at least 4 logged days and one weigh-in in the week. There are {n} days left: if you keep logging, that’s enough."
+  },
+  "sueno": {
+    "titulo": "Sleep",
+    "anoche": "Last night",
+    "nocheDel": "Night of {desde} to {hasta}",
+    "dormido": "asleep",
+    "horas": "Fell asleep at {desde}, woke up at {hasta}",
+    "incompleta": "This night looks incomplete: you slept much less than usual and woke up early. Did your watch run out of battery? You can leave it out.",
+    "etapas": {
+      "despierto": "Awake",
+      "rem": "REM",
+      "nucleo": "Core",
+      "profundo": "Deep"
+    },
+    "etapasEstimadas": "Stages are the watch’s estimate: it gets them right much less often than how long you slept.",
+    "sinEtapas": "This source doesn’t separate stages.",
+    "despierto": "Awake",
+    "despertares": {
+      "uno": "{n} awakening",
+      "otros": "{n} awakenings"
+    },
+    "enCama": "In bed",
+    "siesta": "Nap",
+    "sinDatos": "No data",
+    "sinNoche": "No data from last night.",
+    "sinRelojTexto": "Your watch didn’t record this night (out of battery, or not wearing it?). There’s only the iPhone’s time in bed, which measures phone use, not sleep: it doesn’t count for anything.",
+    "sinNadaTexto": "There’s no data for this night. It isn’t filled in: it stays out of averages and debt.",
+    "habitosPendientes": "That day’s sleep habits stay pending: you can mark them yourself.",
+    "calidad": "Quality",
+    "sinCalidad": "Without the watch there’s no quality: it needs to know how long you slept.",
+    "palabras": {
+      "excelente": "Excellent",
+      "buena": "Good",
+      "regular": "Fair",
+      "baja": "Low"
+    },
+    "parcial": "partial",
+    "partes": {
+      "duracion": "Duration",
+      "horario": "Timing",
+      "continuidad": "Continuity"
+    },
+    "todaviaNo": "from night 5",
+    "comoCalidad": [
+      "It’s a Moss number, from 0 to 100, in three parts. It isn’t Apple’s Sleep Score: Apple doesn’t share it with other apps, so they may not match.",
+      "Duration (50): how long you slept against what you need ({necesidad}). 4 hours scores 0, and reaching it scores 50.",
+      "Timing (30): how far your sleep and wake times moved from your usual ones (the median of your last two weeks). Up to half an hour scores everything; an hour and a half or more, nothing. With fewer than 5 nights it’s left out and the total is rescaled.",
+      "Continuity (20): minutes awake between falling asleep and waking up (full up to 20, none from 60) and awakenings of 5 minutes or more (full with one, none with four).",
+      "Stages, time in bed and heart rate aren’t included: the watch measures them less accurately."
+    ],
+    "horario": "Timing",
+    "regularidad": {
+      "muyRegular": "Very regular",
+      "regular": "Regular",
+      "irregular": "Irregular",
+      "muyIrregular": "Very irregular"
+    },
+    "dormirte": "You fall asleep",
+    "despertarte": "You wake up",
+    "horaYDesvio": "{hora} ± {desvio} min",
+    "finDeSemana": "Weekend",
+    "masTarde": "{t} later",
+    "masTemprano": "{t} earlier",
+    "regularidadTexto": "From {n} of the last 14 nights. The ± is how much your time moves from night to night: up to half an hour is very regular. The weekend compares the middle of your Friday and Saturday nights with the rest, assuming you don’t work those days.",
+    "faltanNoches": "{n} nights measured; {minimo} are needed.",
+    "deuda": "Sleep debt",
+    "sinDeuda": "No debt",
+    "deudaDe": "short of what you need ({necesidad} a night)",
+    "deudaNoches": "From {n} of the last {de} nights",
+    "deudaTexto": "What you were short of what you need each night over the last two weeks, counting recent nights more, minus what you slept extra (up to 2 hours a night). Naps count; nights without data neither add nor subtract.",
+    "vitales": "Overnight, from the watch",
+    "vital": {
+      "frecuencia": "Heart rate",
+      "variabilidad": "Heart rate variability",
+      "respiracion": "Breathing rate",
+      "reposo": "Resting"
+    },
+    "comparado": {
+      "usual": "usual",
+      "mas": "higher than usual",
+      "menos": "lower than usual"
+    },
+    "aprendiendo": "learning your usual",
+    "pocasLecturas": "few readings",
+    "lecturas": "{n} readings",
+    "delDia": "for the day",
+    "vitalesTexto": "The average while you slept, against the median of your previous nights (7 are needed). The watch measures variability only a few times a night: it’s the least precise. Resting heart rate is for the whole day.",
+    "fuentes": "Where each number comes from",
+    "datos": {
+      "duracion": "Duration and timing",
+      "etapas": "Stages",
+      "despertares": "Awakenings",
+      "enCama": "Time in bed",
+      "corazon": "Heart and breathing rate",
+      "variabilidad": "Variability"
+    },
+    "confianza": {
+      "alta": "reliable",
+      "media": "approximate",
+      "baja": "estimate"
+    },
+    "fuentesTexto": "Moss uses a single source per night: the one you choose or, if not, your watch, then another device, and the phone last. It never adds two together. If a night is missing, it stays grey: nothing is made up.",
+    "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor."
+  },
+  "perfil": {
+    "titulo": "Profile",
+    "cuentaTexto": "Your Moss and Ascent account",
+    "tusDatos": "About you",
+    "sexo": "Sex",
+    "edad": "Age",
+    "altura": "Height",
+    "actividad": "Activity",
+    "sexos": {
+      "m": "Male",
+      "f": "Female"
+    },
+    "anios": "{n} years",
+    "actividades": {
+      "poco": "Low",
+      "algo": "Some",
+      "activo": "Active",
+      "muy": "Very active"
+    },
+    "preferencias": "Preferences",
+    "unidades": "Units",
+    "metrico": "kg and cm",
+    "idioma": "Language",
+    "calidad": "Animation quality",
+    "alta": "High",
+    "recordatorios": "Reminders",
+    "apagados": "Off",
+    "conexiones": "Connections",
+    "salud": "Apple Health",
+    "conectada": "Connected",
+    "ascent": "Ascent",
+    "vincular": "Link",
+    "tusDatosParaLlevar": "Privacy and data",
+    "exportar": "Export everything",
+    "privacidad": "Privacy",
+    "borrarDatos": "Delete my data",
+    "cerrarSesion": "Sign out"
   },
   "fecha": {
     "dias": [
@@ -326,13 +638,19 @@
       "Oct",
       "Nov",
       "Dec"
-    ]
+    ],
+    "larga": "{dia}, {mes} {num}",
+    "corta": "{mes} {num}",
+    "horasMinutos": "{h} h {m} min",
+    "horas": "{h} h",
+    "minutos": "{m} min"
   },
   "comun": {
     "deshacer": "Undo",
     "cancelar": "Cancel",
     "guardar": "Save",
-    "listo": "Done"
+    "listo": "Done",
+    "atras": "Back"
   },
   "diagnostico": {
     "salud": "Simulate Health",
