@@ -11,6 +11,7 @@
 // - que lo comido guarda si fue a ojo y que el catálogo lo lee cualquier usuario y no lo escribe
 //   nadie desde la app (0004_medir.sql);
 // - que borrar la cuenta borra todo en cascada;
+// - que el teléfono baja el catálogo del servidor;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
 //   ellos con el repositorio SQLite del iPhone.
 // Uso: npm run supabase:verificar   → sale con código 1 si algo falla.
@@ -236,6 +237,7 @@ comprobar(Number(quedan) === 0, 'borrar la cuenta borra todo en cascada');
 registerHooks({
   resolve(especificador, contexto, siguiente) {
     if (especificador === 'expo-sqlite') especificador = pathToFileURL(join(raiz, 'herramientas/expo-sqlite-node.mjs')).href;
+    if (especificador === '@react-native-async-storage/async-storage') especificador = pathToFileURL(join(raiz, 'herramientas/async-storage-node.mjs')).href;
     if (especificador.startsWith('@/')) especificador = pathToFileURL(join(raiz, 'src', especificador.slice(2))).href;
     if (/^(\.|file:)/.test(especificador) && !/\.[a-z]+$/i.test(especificador)) {
       for (const final of ['.ts', '/index.ts']) {
@@ -500,6 +502,13 @@ comprobar(
 const intruso = crearSincronizador({ almacen: a.almacen, remoto: remotoSupabase(clienteDe(B)), usuario: B });
 const sincronizo = await intruso.vuelta();
 comprobar(!sincronizo && intruso.deOtraCuenta() && (await db.query(`select count(*) as n from moss.habitos where usuario = '${B}'`)).rows[0].n === 0, 'app: los datos de un teléfono nunca se mezclan con otra cuenta');
+
+// El catálogo del servidor (0004_medir.sql), como lo baja el teléfono: con su porción y su densidad.
+const { actualizarCatalogo, filasDelCatalogo } = await import('../src/comida/catalogoLocal.ts');
+await actualizarCatalogo(clienteDe(B));
+const delCatalogo = (await filasDelCatalogo()).find((f) => f.id === -200001);
+comprobar(delCatalogo?.nombre_es === 'Leche entera' && delCatalogo.densidad === 1.03 && delCatalogo.porciones[0]?.gramos === 206 && delCatalogo.codigos[0] === '7730000000001',
+  'app: el teléfono baja el catálogo del servidor, con sus porciones, su densidad y sus códigos');
 
 await db.close();
 console.log(fallas ? `\n${fallas} comprobaciones fallaron.` : '\nTodo bien.');

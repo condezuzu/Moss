@@ -4,6 +4,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
+import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
 import { msHastaMedianoche } from '@/dominio/fechas';
 import { haySupabase, supabase } from '@/lib/supabase';
@@ -37,10 +38,15 @@ function sincronizarConLaCuenta(a: Almacen) {
       actual?.sincronizador.parar();
       actual = usuario ? { usuario, sincronizador: crearSincronizador({ almacen: a, remoto: remotoSupabase(cliente), usuario }) } : undefined;
       actual?.sincronizador.arrancar();
+      // Con sesión, también baja lo nuevo del catálogo de alimentos del servidor.
+      if (usuario) actualizarCatalogo(cliente).catch(() => {});
     }, 0);
   });
   return {
-    alVolver: () => actual?.sincronizador.alVolver(),
+    alVolver: () => {
+      actual?.sincronizador.alVolver();
+      if (actual) actualizarCatalogo(cliente).catch(() => {});
+    },
     parar: () => {
       data.subscription.unsubscribe();
       actual?.sincronizador.parar();
