@@ -8,6 +8,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+import { enRango, RANGOS_DEL_CUESTIONARIO } from '@/dominio/metas';
+
 /** Todo lo que Moss va a leer: lo del cuestionario, lo de los hábitos que se encienden solos y lo del sueño. */
 const LO_QUE_SE_LEE: readonly ObjectTypeIdentifier[] = [
   'HKCharacteristicTypeIdentifierDateOfBirth',
@@ -73,7 +75,7 @@ export async function datosDelCuestionario(hoy: Date = new Date()): Promise<DelC
   try {
     const nacimiento = getDateOfBirth();
     const edad = nacimiento ? edadA(nacimiento, hoy) : null;
-    if (edad !== null && edad >= 14 && edad <= 100) r.edad = edad;
+    if (edad !== null && enRango(RANGOS_DEL_CUESTIONARIO.edad, edad)) r.edad = edad;
   } catch {}
   try {
     const sexo = getBiologicalSex();
@@ -82,11 +84,11 @@ export async function datosDelCuestionario(hoy: Date = new Date()): Promise<DelC
   } catch {}
   try {
     const altura = await getMostRecentQuantitySample('HKQuantityTypeIdentifierHeight', 'cm');
-    if (altura && altura.quantity >= 100 && altura.quantity <= 250) r.alturaCm = Math.round(altura.quantity);
+    if (altura && enRango(RANGOS_DEL_CUESTIONARIO.alturaCm, Math.round(altura.quantity))) r.alturaCm = Math.round(altura.quantity);
   } catch {}
   try {
     const peso = await getMostRecentQuantitySample('HKQuantityTypeIdentifierBodyMass', 'kg');
-    if (peso && peso.quantity >= 30 && peso.quantity <= 300) r.pesoKg = Math.round(peso.quantity * 10) / 10;
+    if (peso && enRango(RANGOS_DEL_CUESTIONARIO.pesoKg, Math.round(peso.quantity * 10) / 10)) r.pesoKg = Math.round(peso.quantity * 10) / 10;
   } catch {}
   return r;
 }

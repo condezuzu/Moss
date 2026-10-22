@@ -42,6 +42,13 @@ export type MetaGuardada = Macros & { desde: ClaveDia; gasto: number; motivo: 'i
 
 export const edadDe = (perfil: Pick<Perfil, 'nacimiento'>, hoy: ClaveDia) => Number(hoy.slice(0, 4)) - perfil.nacimiento;
 
+/**
+ * Lo que se puede contestar en el cuestionario y cambiar en Perfil, dentro de lo que acepta la base
+ * (supabase/moss). Lo que llega de Salud fuera de esto se contesta a mano.
+ */
+export const RANGOS_DEL_CUESTIONARIO = { edad: [14, 100], alturaCm: [120, 230], pesoKg: [30, 250] } as const;
+export const enRango = (rango: readonly [number, number], valor: number) => Number.isFinite(valor) && valor >= rango[0] && valor <= rango[1];
+
 /** El factor de cada nivel de actividad sobre el gasto basal. */
 export const NIVELES: Record<Actividad, number> = { poco: 1.35, algo: 1.5, activo: 1.65, muy: 1.85 };
 

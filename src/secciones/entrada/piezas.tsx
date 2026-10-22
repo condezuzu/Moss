@@ -51,10 +51,11 @@ type PropsDeDeslizador = { valor: number; min: number; max: number; paso: number
 /** Una pista con su perilla: se arrastra o se toca donde se quiere ir. */
 export function Deslizador({ valor, min, max, paso, alCambiar, etiqueta }: PropsDeDeslizador) {
   const ancho = useSharedValue(1);
-  const x = useSharedValue((valor - min) / (max - min));
+  const fraccion = Math.min(1, Math.max(0, (valor - min) / (max - min)));
+  const x = useSharedValue(fraccion);
   useEffect(() => {
-    x.set((valor - min) / (max - min));
-  }, [x, valor, min, max]);
+    x.set(fraccion);
+  }, [x, fraccion]);
   const aValor = (px: number) => {
     'worklet';
     const k = Math.min(1, Math.max(0, px / ancho.get()));

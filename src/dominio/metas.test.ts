@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
 import { sumarDias, type DiaSemana } from './fechas';
 import {
-  ajusteDiario, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaRepartida, metasIniciales, pisoDe, repartirSemana, ritmoPermitido,
+  ajusteDiario, enRango, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaRepartida, metasIniciales, pisoDe, RANGOS_DEL_CUESTIONARIO, repartirSemana, ritmoPermitido,
   type Cuestionario, type Macros,
 } from './metas';
 
@@ -221,3 +221,16 @@ describe('el control semanal', () => {
 });
 
 const KCAL = 7700;
+
+describe('lo que se puede contestar', () => {
+  it('cabe en lo que acepta la base, y lo de afuera no entra', () => {
+    // supabase/moss: la altura de 50 a 260 cm y el peso de 20 a 400 kg.
+    expect(RANGOS_DEL_CUESTIONARIO.alturaCm[0]).toBeGreaterThanOrEqual(50);
+    expect(RANGOS_DEL_CUESTIONARIO.alturaCm[1]).toBeLessThanOrEqual(260);
+    expect(RANGOS_DEL_CUESTIONARIO.pesoKg[0]).toBeGreaterThanOrEqual(20);
+    expect(RANGOS_DEL_CUESTIONARIO.pesoKg[1]).toBeLessThanOrEqual(400);
+    expect(enRango(RANGOS_DEL_CUESTIONARIO.edad, 95)).toBe(true);
+    expect(enRango(RANGOS_DEL_CUESTIONARIO.pesoKg, 260)).toBe(false);
+    expect(enRango(RANGOS_DEL_CUESTIONARIO.alturaCm, Number.NaN)).toBe(false);
+  });
+});

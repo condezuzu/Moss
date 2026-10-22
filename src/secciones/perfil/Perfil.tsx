@@ -9,7 +9,7 @@ import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View }
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
-import { edadDe, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
+import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
 import { lista, t } from '@/textos';
@@ -154,9 +154,9 @@ function TusDatos({ perfil, hoy, imperial, alCerrar }: { perfil: DatosDelPerfil;
       <EtiquetaDeGrupo>{t('perfil.sexo')}</EtiquetaDeGrupo>
       <Segmento<Sexo> opciones={[['f', t('perfil.sexos.f')], ['m', t('perfil.sexos.m')]]} elegida={sexo} alElegir={setSexo} />
       <EtiquetaDeGrupo>{t('perfil.edad')}</EtiquetaDeGrupo>
-      <Pasos valor={t('perfil.anios', { n: edad })} alBajar={() => setEdad((x) => Math.max(14, x - 1))} alSubir={() => setEdad((x) => Math.min(100, x + 1))} />
+      <Pasos valor={t('perfil.anios', { n: edad })} alBajar={() => setEdad((x) => Math.max(RANGOS_DEL_CUESTIONARIO.edad[0], x - 1))} alSubir={() => setEdad((x) => Math.min(RANGOS_DEL_CUESTIONARIO.edad[1], x + 1))} />
       <EtiquetaDeGrupo>{t('perfil.altura')}</EtiquetaDeGrupo>
-      <Pasos valor={altura} alBajar={() => setAlturaCm((x) => Math.max(100, Math.round((x - paso) * 10) / 10))} alSubir={() => setAlturaCm((x) => Math.min(250, Math.round((x + paso) * 10) / 10))} />
+      <Pasos valor={altura} alBajar={() => setAlturaCm((x) => Math.max(RANGOS_DEL_CUESTIONARIO.alturaCm[0], Math.round((x - paso) * 10) / 10))} alSubir={() => setAlturaCm((x) => Math.min(RANGOS_DEL_CUESTIONARIO.alturaCm[1], Math.round((x + paso) * 10) / 10))} />
       <EtiquetaDeGrupo>{t('perfil.actividad')}</EtiquetaDeGrupo>
       <View style={{ gap: 8 }}>
         {(['poco', 'algo', 'activo', 'muy'] as const).map((a) => {
