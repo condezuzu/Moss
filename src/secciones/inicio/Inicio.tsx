@@ -25,6 +25,7 @@ import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { usePersona, useSueno } from '../ganchos';
+import { Camino } from '../tarjetas';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
 
 export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'] as const;
@@ -199,27 +200,11 @@ function Objetivo() {
           </>
         )}
       </View>
-      {g.hecho !== null && p.pesoInicial !== null && g.peso !== null && metaKg ? <Camino desde={p.pesoInicial} ahora={g.peso} hasta={metaKg} hecho={g.hecho} sistema={sistema} /> : null}
+      {g.hecho !== null && p.pesoInicial !== null && g.peso !== null && metaKg ? (
+        <Camino hecho={g.hecho} etiquetas={[numero(pesoCorporalEn(p.pesoInicial, sistema).valor, 1), numero(pesoCorporalEn(g.peso, sistema).valor, 1), numero(pesoCorporalEn(metaKg, sistema).valor, metaKg % 1 ? 1 : 0)]} />
+      ) : null}
       {g.ritmo !== null && <Text style={estilos.nota}>{t('inicio.ritmo', { ritmo: ritmo(g.ritmo), plan: ritmo(g.ritmoPlan), unidad })}</Text>}
     </>
-  );
-}
-
-/** El camino: de dónde se empezó a la meta, con el peso de hoy marcado. */
-export function Camino({ desde, ahora, hasta, hecho, sistema, etiquetas }: { desde: number; ahora: number; hasta: number; hecho: number; sistema: ReturnType<typeof sistemaDe>; etiquetas?: [string, string] }) {
-  const v = (x: number, dec = 1) => numero(pesoCorporalEn(x, sistema).valor, dec);
-  return (
-    <View style={estilos.camino}>
-      <View style={estilos.caminoPista}>
-        <View style={[estilos.caminoLleno, { width: `${hecho * 100}%` }]} />
-        <View style={[estilos.caminoMarca, { left: `${hecho * 100}%` }]} />
-      </View>
-      <View style={estilos.caminoEtiquetas}>
-        <Text style={estilos.caminoEtiqueta}>{etiquetas ? etiquetas[0] : v(desde)}</Text>
-        <Text style={[estilos.caminoEtiqueta, estilos.caminoAhora]}>{v(ahora)}</Text>
-        <Text style={estilos.caminoEtiqueta}>{etiquetas ? etiquetas[1] : v(hasta, hasta % 1 ? 1 : 0)}</Text>
-      </View>
-    </View>
   );
 }
 
@@ -476,13 +461,6 @@ const estilos = StyleSheet.create({
   objFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 9 },
   objCifra: { fontFamily: letras.numero, fontSize: 26, letterSpacing: -0.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
   objTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.62)' },
-  camino: { marginTop: 13 },
-  caminoPista: { height: 4, borderRadius: 4, backgroundColor: 'rgba(239, 230, 207, 0.08)' },
-  caminoLleno: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 4, backgroundColor: colores.salvia },
-  caminoMarca: { position: 'absolute', top: -3.5, width: 11, height: 11, marginLeft: -5.5, borderRadius: 5.5, backgroundColor: colores.cifra, shadowColor: colores.cifra, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
-  caminoEtiquetas: { marginTop: 8, flexDirection: 'row', justifyContent: 'space-between' },
-  caminoEtiqueta: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
-  caminoAhora: { color: colores.pergamino },
   nota: { marginTop: 5, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.58)', fontVariant: ['tabular-nums'] },
   fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14 },
   filaSegunda: { marginTop: 6, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },

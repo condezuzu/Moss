@@ -445,33 +445,33 @@
       "faltanDatos": "Faltan datos"
     },
     "objetivoA": {
-      "bajar": "Bajar a {kg} kg",
-      "subir": "Subir a {kg} kg"
+      "bajar": "Bajar a {kg} {unidad}",
+      "subir": "Subir a {kg} {unidad}"
     },
     "objetivos": {
       "bajar": "Bajar",
       "mantener": "Mantener",
       "subir": "Subir"
     },
-    "mantenerEn": "Mantener {kg} kg",
+    "mantenerEn": "Mantener {kg} {unidad}",
     "llegarias": "llegarías, a este ritmo",
     "empezaste": "empezaste en {kg}",
     "meta": "meta: {kg}",
     "textos": {
       "llegaste": "Llegaste a tu peso meta. Si quieres quedarte ahí, cambia el objetivo a mantener.",
-      "enCamino": "Vas a {ritmo} kg por semana; el plan es {plan}. Te faltan {faltan} kg: unas {semanas} semanas.",
-      "despacio": "Vas a {ritmo} kg por semana, menos de la mitad del plan ({plan}). Te faltan {faltan} kg.",
+      "enCamino": "Vas a {ritmo} {unidad} por semana; el plan es {plan}. Te faltan {faltan} {unidad}: unas {semanas} semanas.",
+      "despacio": "Vas a {ritmo} {unidad} por semana, menos de la mitad del plan ({plan}). Te faltan {faltan} {unidad}.",
       "quieto": "Tu tendencia casi no se movió en las últimas tres semanas. El control de la semana ajusta las metas con eso.",
-      "alReves": "Tu tendencia va para el otro lado ({ritmo} kg por semana). El control de la semana ajusta las metas con eso.",
+      "alReves": "Tu tendencia va para el otro lado ({ritmo} {unidad} por semana). El control de la semana ajusta las metas con eso.",
       "estable": "Tu tendencia se mueve menos de 150 g por semana: estás manteniendo.",
-      "seMueve": "Tu tendencia se mueve {ritmo} kg por semana.",
-      "sinMeta": "Vas a {ritmo} kg por semana; el plan es {plan}. Elige un peso meta para ver cuándo llegarías.",
+      "seMueve": "Tu tendencia se mueve {ritmo} {unidad} por semana.",
+      "sinMeta": "Vas a {ritmo} {unidad} por semana; el plan es {plan}. Elige un peso meta para ver cuándo llegarías.",
       "faltanDatos": "Hacen falta dos semanas de pesadas para medir el ritmo."
     },
     "peso": "Peso",
     "registrar": "Registrar",
     "tendencia": "tendencia",
-    "cambios": "{semana} kg en 7 días · {mes} kg en 30 días",
+    "cambios": "{semana} {unidad} en 7 días · {mes} {unidad} en 30 días",
     "hoy": "hoy",
     "pesoLeyenda": "Los puntos son tus pesadas; la línea es la tendencia, que es la que cuenta. La línea punteada es tu meta.",
     "medidas": "Medidas",
@@ -483,7 +483,7 @@
     "kcalPorDia": "kcal por día",
     "controlDel": "Del control del {fecha}",
     "balanceTexto": "balance de {n} días: lo comido menos el gasto",
-    "comoSeCalculaTexto": "En las últimas {dias} días comiste en promedio {promedio} kcal por día y tu tendencia cambió {cambio} kg. Moss toma un cuarto de la diferencia con lo que medía antes, para que la meta cambie de a poco.",
+    "comoSeCalculaTexto": "En los últimos {dias} días comiste en promedio {promedio} kcal por día y tu tendencia cambió {cambio} {unidad}. Moss toma un cuarto de la diferencia con lo que medía antes, para que la meta cambie de a poco.",
     "estrategia": "Estrategia",
     "pesoMeta": "Peso meta",
     "sinPesoMeta": "Sin elegir",
@@ -493,7 +493,7 @@
       "recomendado": "Recomendado",
       "rapido": "Rápido"
     },
-    "ritmoTexto": "El {pct} % de tu peso por semana: unos {kg} kg.",
+    "ritmoTexto": "El {pct} % de tu peso por semana: unos {kg} {unidad}.",
     "objetivoNota": "Al cambiar el objetivo, las metas cambian desde hoy con el gasto que Moss viene midiendo.",
     "pesoMetaNota": "Sirve para ver si vas en camino y cuándo llegarías. Las metas salen del objetivo y del ritmo.",
     "proximoControl": "Próximo control",
@@ -549,7 +549,12 @@
     "enCurso": "En curso",
     "minimo": "mínimo {n}",
     "controlEnCurso": "El control necesita al menos 4 días con comida y una pesada en la semana. Quedan {n} días: si sigues registrando, alcanza.",
-    "ejemplo": "Son datos de ejemplo: cuando registres tu peso (o conectes Salud) y completes el cuestionario, aparecen los tuyos."
+    "ejemplo": "Son datos de ejemplo: cuando registres tu peso (o conectes Salud) y completes el cuestionario, aparecen los tuyos.",
+    "sinMedidas": "Todavía no hay medidas. Con la cintura y el cuello (y la cadera, en las mujeres), Moss estima tu grasa corporal.",
+    "gastoInicial": "Lo estimado con tus respuestas. El control de cada semana lo mide con tu peso y lo que comes.",
+    "bajarMeta": "Bajar el peso meta",
+    "subirMeta": "Subir el peso meta",
+    "sinBalance": "Registra lo que comes unos días para ver el balance."
   },
   "sueno": {
     "titulo": "Sueño",

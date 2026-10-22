@@ -445,33 +445,33 @@
       "faltanDatos": "Needs data"
     },
     "objetivoA": {
-      "bajar": "Lose down to {kg} kg",
-      "subir": "Gain up to {kg} kg"
+      "bajar": "Lose down to {kg} {unidad}",
+      "subir": "Gain up to {kg} {unidad}"
     },
     "objetivos": {
       "bajar": "Lose",
       "mantener": "Maintain",
       "subir": "Gain"
     },
-    "mantenerEn": "Maintain {kg} kg",
+    "mantenerEn": "Maintain {kg} {unidad}",
     "llegarias": "you’d get there at this pace",
     "empezaste": "started at {kg}",
     "meta": "goal: {kg}",
     "textos": {
       "llegaste": "You reached your goal weight. To stay there, switch your goal to maintain.",
-      "enCamino": "You’re going {ritmo} kg a week; the plan is {plan}. {faltan} kg to go: about {semanas} weeks.",
-      "despacio": "You’re going {ritmo} kg a week, less than half the plan ({plan}). {faltan} kg to go.",
+      "enCamino": "You’re going {ritmo} {unidad} a week; the plan is {plan}. {faltan} {unidad} to go: about {semanas} weeks.",
+      "despacio": "You’re going {ritmo} {unidad} a week, less than half the plan ({plan}). {faltan} {unidad} to go.",
       "quieto": "Your trend has barely moved in the last three weeks. The weekly check-in adjusts your targets for that.",
-      "alReves": "Your trend is going the other way ({ritmo} kg a week). The weekly check-in adjusts your targets for that.",
+      "alReves": "Your trend is going the other way ({ritmo} {unidad} a week). The weekly check-in adjusts your targets for that.",
       "estable": "Your trend moves less than 150 g a week: you’re maintaining.",
-      "seMueve": "Your trend is moving {ritmo} kg a week.",
-      "sinMeta": "You’re going {ritmo} kg a week; the plan is {plan}. Pick a goal weight to see when you’d get there.",
+      "seMueve": "Your trend is moving {ritmo} {unidad} a week.",
+      "sinMeta": "You’re going {ritmo} {unidad} a week; the plan is {plan}. Pick a goal weight to see when you’d get there.",
       "faltanDatos": "Two weeks of weigh-ins are needed to measure your pace."
     },
     "peso": "Weight",
     "registrar": "Log",
     "tendencia": "trend",
-    "cambios": "{semana} kg in 7 days · {mes} kg in 30 days",
+    "cambios": "{semana} {unidad} in 7 days · {mes} {unidad} in 30 days",
     "hoy": "today",
     "pesoLeyenda": "The dots are your weigh-ins; the line is the trend, which is what counts. The dashed line is your goal.",
     "medidas": "Measurements",
@@ -483,7 +483,7 @@
     "kcalPorDia": "kcal a day",
     "controlDel": "From the check-in on {fecha}",
     "balanceTexto": "{n}-day balance: eaten minus burned",
-    "comoSeCalculaTexto": "Over the last {dias} days you ate {promedio} kcal a day on average and your trend changed {cambio} kg. Moss takes a quarter of the difference from its previous estimate, so your target changes gradually.",
+    "comoSeCalculaTexto": "Over the last {dias} days you ate {promedio} kcal a day on average and your trend changed {cambio} {unidad}. Moss takes a quarter of the difference from its previous estimate, so your target changes gradually.",
     "estrategia": "Strategy",
     "pesoMeta": "Goal weight",
     "sinPesoMeta": "Not set",
@@ -493,7 +493,7 @@
       "recomendado": "Recommended",
       "rapido": "Fast"
     },
-    "ritmoTexto": "{pct}% of your weight a week: about {kg} kg.",
+    "ritmoTexto": "{pct}% of your weight a week: about {kg} {unidad}.",
     "objetivoNota": "When you change your goal, your targets change from today, using the expenditure Moss has been measuring.",
     "pesoMetaNota": "It shows whether you’re on track and when you’d get there. Targets come from your goal and pace.",
     "proximoControl": "Next check-in",
@@ -549,7 +549,12 @@
     "enCurso": "In progress",
     "minimo": "at least {n}",
     "controlEnCurso": "The check-in needs at least 4 logged days and one weigh-in in the week. There are {n} days left: if you keep logging, that’s enough.",
-    "ejemplo": "This is sample data: once you log your weight (or connect Health) and finish the questionnaire, yours shows up."
+    "ejemplo": "This is sample data: once you log your weight (or connect Health) and finish the questionnaire, yours shows up.",
+    "sinMedidas": "No measurements yet. With your waist and neck (and hips, for women), Moss estimates your body fat.",
+    "gastoInicial": "Estimated from your answers. Each weekly check-in measures it from your weight and what you eat.",
+    "bajarMeta": "Lower goal weight",
+    "subirMeta": "Raise goal weight",
+    "sinBalance": "Log what you eat for a few days to see your balance."
   },
   "sueno": {
     "titulo": "Sleep",

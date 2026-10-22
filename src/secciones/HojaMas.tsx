@@ -27,14 +27,15 @@ import { abrirRegistro } from './comida/registro';
 import { Figura } from './Figura';
 import { entre, subirOBajar } from './movimiento';
 
-type Vista = 'menu' | 'peso' | 'medidas';
-type Props = { hoja: SharedValue<number>; abierta: boolean; alCerrar: () => void };
+export type VistaDelMas = 'menu' | 'peso' | 'medidas';
+type Vista = VistaDelMas;
+/** La vista la lleva quien abre la hoja: Progreso la abre directo en el peso o en las medidas. */
+type Props = { hoja: SharedValue<number>; abierta: boolean; alCerrar: () => void; vista: Vista; alCambiarVista: (v: Vista) => void };
 
-export function HojaMas({ hoja, abierta, alCerrar }: Props) {
+export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Props) {
   const insets = useSafeAreaInsets();
   const { height: alto } = useWindowDimensions();
   const altoHoja = useSharedValue(520);
-  const [vista, setVista] = useState<Vista>('menu');
   const [aviso, setAviso] = useState<{ texto: string; deshacer?: () => void; clave: number } | null>(null);
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export function HojaMas({ hoja, abierta, alCerrar }: Props) {
   // Al cerrarla vuelve al menú, después de bajar: así no salta mientras se va.
   const cerrar = () => {
     alCerrar();
-    setTimeout(() => setVista('menu'), 420);
+    setTimeout(() => alCambiarVista('menu'), 420);
   };
 
   const estiloFondo = useAnimatedStyle(() => ({ opacity: hoja.get() }));
@@ -81,9 +82,9 @@ export function HojaMas({ hoja, abierta, alCerrar }: Props) {
             <View style={estilos.asa} />
           </View>
         </GestureDetector>
-        {vista === 'menu' && <Menu alCerrar={cerrar} alIr={setVista} avisar={avisar} />}
-        {vista === 'peso' && <VistaDePeso alVolver={() => setVista('menu')} avisar={avisar} />}
-        {vista === 'medidas' && <VistaDeMedidas alVolver={() => setVista('menu')} avisar={avisar} />}
+        {vista === 'menu' && <Menu alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />}
+        {vista === 'peso' && <VistaDePeso alVolver={() => alCambiarVista('menu')} avisar={avisar} />}
+        {vista === 'medidas' && <VistaDeMedidas alVolver={() => alCambiarVista('menu')} avisar={avisar} />}
         {aviso && (
           <Animated.View key={aviso.clave} entering={FadeInDown.duration(200)} exiting={FadeOut.duration(180)} style={[estilos.aviso, { bottom: insets.bottom + 14 }]}>
             <Text style={estilos.avisoTexto} numberOfLines={1}>{aviso.texto}</Text>

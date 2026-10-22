@@ -20,8 +20,9 @@ import { PaginaDeComida } from './comida/Comida';
 import { AvisoAbajo } from './comida/comunes';
 import { HojaRegistro } from './comida/HojaRegistro';
 import { quitarAviso, useAviso, useRegistro } from './comida/registro';
-import { HojaMas } from './HojaMas';
+import { HojaMas, type VistaDelMas } from './HojaMas';
 import { PaginaDeInicio } from './inicio/Inicio';
+import { PaginaDeProgreso } from './progreso/Progreso';
 import { CEDE_EN_EL_BORDE, entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
 
 const ULTIMA = PESTANAS.length - 1;
@@ -33,6 +34,7 @@ export default function Secciones() {
   const [actual, setActual] = useState(0);
   const [ascentAbierta, setAscentAbierta] = useState(false);
   const [hojaAbierta, setHojaAbierta] = useState(false);
+  const [vistaDelMas, setVistaDelMas] = useState<VistaDelMas>('menu');
   // La pestaña, con decimales mientras se desliza; Ascent y la hoja del «+», de 0 (abajo) a 1.
   const posicion = useSharedValue(0);
   const desde = useSharedValue(0);
@@ -45,6 +47,14 @@ export default function Secciones() {
     conRegistro.set(withTiming(registro ? 1 : 0, { duration: registro ? 450 : 380 }));
   }, [registro, conRegistro]);
   const aviso = useAviso();
+  // Solo se arman la sección de ahora y sus vecinas (menos memoria y menos lienzos de Skia en un
+  // iPhone viejo); mientras se pasa de una a otra, también las de donde se viene.
+  const [anterior, setAnterior] = useState(0);
+  useEffect(() => {
+    const espera = setTimeout(() => setAnterior(actual), 600);
+    return () => clearTimeout(espera);
+  }, [actual]);
+  const armada = (i: number) => Math.abs(i - actual) <= 1 || Math.abs(i - anterior) <= 1;
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
   // Con Ascent arriba o una hoja abierta, las pestañas no se deslizan.
   const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0);
@@ -68,8 +78,9 @@ export default function Secciones() {
     subida.set(subirOBajar(subida.get(), 0));
     setAscentAbierta(false);
   };
-  const abrirHoja = () => {
+  const abrirHoja = (vista: VistaDelMas = 'menu') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setVistaDelMas(vista);
     hoja.set(subirOBajar(hoja.get(), 1));
     setHojaAbierta(true);
   };
@@ -128,12 +139,14 @@ export default function Secciones() {
           <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
           <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
             {PESTANAS.map((n, i) =>
-              i === HABITOS ? (
+              i === HABITOS || !armada(i) ? (
                 <View key={n} style={{ width: ancho }} pointerEvents="none" />
               ) : n === 'comida' ? (
                 <PaginaDeComida key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
               ) : n === 'inicio' ? (
                 <PaginaDeInicio key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
+              ) : n === 'progreso' ? (
+                <PaginaDeProgreso key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
               ) : (
                 <SeccionPendiente key={n} nombre={n} ancho={ancho} arriba={insets.top} />
               ),
@@ -141,9 +154,9 @@ export default function Secciones() {
           </Animated.View>
           <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />
         </Animated.View>
-        <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={abrirHoja} />
+        <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
         <AvisoAbajo aviso={aviso} alIrse={quitarAviso} abajo={abajo + 14} />
-        <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} />
+        <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
         <HojaRegistro />
       </View>
     </GestureDetector>

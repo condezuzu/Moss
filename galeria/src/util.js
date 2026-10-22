@@ -49,7 +49,11 @@ const Util = (() => {
     const tx = (clave, vars) => {
       let s = crudo(clave);
       if (s == null) return clave;
-      if (typeof s === 'string' && vars) s = s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] == null ? '' : vars[k]));
+      // La galería es en kilos: los textos del peso llevan la unidad.
+      if (typeof s === 'string' && (vars || s.includes('{unidad}'))) {
+        const v = { unidad: 'kg', ...vars };
+        s = s.replace(/\{(\w+)\}/g, (_, k) => (v[k] == null ? '' : v[k]));
+      }
       return s;
     };
     const plural = (clave, n, vars) => {
