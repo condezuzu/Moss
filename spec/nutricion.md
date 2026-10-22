@@ -123,7 +123,7 @@ la gente encuentre lo que come:
   - **trigramas:** para los errores de tipeo («frutila» → frutillas, «polo frito» → pollo frito). Solo entran si lo que empieza igual es poco, y solo en el idioma de la app.
 - **El orden:**
   1. el idioma de la app;
-  2. qué tan parecido es a lo escrito: igual, la palabra entera, el principio, o con errores;
+  2. qué tan parecido es a lo escrito: igual, la palabra entera, el principio, o con errores. Con errores, lo que se parece al principio del nombre va antes que una palabra del medio («frutila» encuentra antes «Frutillas» que «yogurt de frutilla»);
   3. lo curado;
   4. el nombre de la región;
   5. bm25.
@@ -137,11 +137,17 @@ La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
 - **Un solo botón para registrar**, siempre a mano: en la zona de comida y en el cielo de hoy.
 - **La hoja de registro abre lista para escribir:**
   - con el teclado arriba;
-  - con la comida elegida por la hora (desayuno, almuerzo, merienda, cena o snack; se cambia con un toque);
+  - con la comida elegida por la hora, que se cambia con un toque (`src/dominio/comidas.ts`):
+    - de 4 a 10:30, desayuno;
+    - de 12 a 15:30, almuerzo;
+    - de 15:30 a 19:30, merienda;
+    - de 19:30 a medianoche, cena;
+    - entre medio y de madrugada, snack;
   - debajo, lo que solés comer a esa hora, tus recientes y tus favoritos.
 - **Cada fila tiene un «+»** que agrega con la última porción que usaste de ese alimento o, la primera vez, con la típica.
 - **Agregar no cierra la hoja:** se pueden sumar varios seguidos. Un aviso ofrece deshacer y cambiar la porción.
 - **Todo se corrige después** tocando el registro en la línea del día.
+- **Las cantidades se escriben como se dicen:** «2 rebanadas», «1½ tazas», «½ unidad», «2 medium» (`src/comida/porciones.ts`).
 
 Toques desde el cielo con Moss abierto, sin contar lo que se escribe:
 
@@ -170,11 +176,7 @@ Toques desde el cielo con Moss abierto, sin contar lo que se escribe:
   - copiar.
 - **La foto de la comida** es opcional y no se analiza: un toque en la comida ya registrada. Dónde se guarda es D10.
 - **El día:** las comidas con nombre van sobre una línea de horas, cada una con lo que tiene y sus totales. Lo planificado se ve atenuado hasta confirmarlo.
-- **Lo visual va primero a la galería:**
-  - la línea del día;
-  - la hoja de registro;
-  - la ficha del alimento;
-  - la revisión de la etiqueta.
+- **Lo visual va primero a la galería.** Desde el 21/10/2026 están la línea del día, la hoja de registro y la ficha del alimento, con la base y el buscador de verdad y los toques contados; falta aprobarlas. La revisión de la etiqueta llega con la etapa 6.
 
 ## Código de barras (atajo 1)
 
@@ -303,7 +305,7 @@ Es la zona propia del cielo, con el mismo nivel visual que el resto.
 
 **Cómo se ve:**
 - La propuesta de la galería es una luna que se llena con lo comido, con tres arcos: proteína en dorado, carbohidratos en verde y grasas en azul estrella.
-- Se aprueba en la galería antes de programarla.
+- Está en la galería desde el 21/10/2026, esperando aprobación. Va al lado del cielo: la barra de abajo del cielo de hoy lleva la luna chica con lo que queda y el «+» para registrar.
 
 **Widgets en la pantalla de bloqueo** con calorías y macros:
 - van con `expo-widgets`, en los tamaños de la pantalla de bloqueo (circular y rectangular);

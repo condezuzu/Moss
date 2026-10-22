@@ -58,7 +58,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "galeria": "node galeria/construir.mjs",
+    "galeria": "node --disable-warning=ExperimentalWarning galeria/construir.mjs",
     "galeria:ver": "node galeria/servir.mjs",
     "galeria:capturas": "node herramientas/capturar-galeria.mjs capturas/galeria",
     "catalogo:verificar": "node herramientas/verificar-catalogo.mjs",

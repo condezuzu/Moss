@@ -1,9 +1,9 @@
 // La escena del cielo: estado de mentira, animaciones, toques y el día completo.
 // Cada cuadro arma listas de sprites y líneas y se las pasa al motor. Nada de esto toca el
 // navegador más allá del contenedor que recibe: es la misma lógica que va a correr en Skia.
-// Tiene tres modos: «hoy» (la pantalla principal), «entrada» (el cielo solo, sin la constelación
-// del día, para la entrada a la app) y «ajustes» (el cielo de fondo, lejos, detrás de Ajustes).
-// Entre uno y otro se viaja con el «flum» (viajar).
+// Tiene cuatro modos: «hoy» (la pantalla principal), «entrada» (el cielo solo, sin la constelación
+// del día, para la entrada a la app), «comida» y «ajustes» (el cielo de fondo, más cerca, detrás
+// de esas zonas). Entre uno y otro se viaja con el «flum» (viajar).
 
 const Escena = (() => {
   const TAU = Math.PI * 2;
@@ -176,13 +176,14 @@ const Escena = (() => {
       <div class="universo-etiquetas"></div>
       <div class="aviso" role="status"><span class="aviso-txt"></span><button type="button" class="aviso-btn"></button></div>
       <footer class="frase"><q></q><cite></cite></footer>
+      <nav class="barra-hoy"></nav>
       <div class="fps" hidden></div>`;
     const $ = (s) => ui.querySelector(s);
     const dom = {
       dia: $('.cab-dia'), nombre: $('.cab-nombre'), luz: $('.cab-luz b'), luzTxt: $('.cab-luz span'),
       cuenta: $('.cab-cuenta'), etiquetas: $('.etiquetas'), aviso: $('.aviso'), avisoTxt: $('.aviso-txt'),
       avisoBtn: $('.aviso-btn'), frase: $('.frase q'), cita: $('.frase cite'), fps: $('.fps'), cab: $('.cab'),
-      uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'),
+      uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'), pie: $('.frase'), barra: $('.barra-hoy'),
     };
     let etiquetas = [];
     let etiquetasUniverso = [];
@@ -965,11 +966,15 @@ const Escena = (() => {
         const [tx0, ty0] = posPantalla(0, ZONA_UNIVERSO + 0.42, 1);
         dom.uTitulo.style.transform = `translate3d(${tx0.toFixed(1)}px, ${ty0.toFixed(1)}px, 0)`;
       }
-      // La cabecera, la frase y el aviso son de la zona de hoy: se van con ella.
+      // La cabecera, la frase, la barra de abajo y el aviso son de la zona de hoy: se van con ella.
       const desplazamiento = e.cam.y * e.escalaCss;
       dom.cab.style.transform = `translate3d(0, ${desplazamiento.toFixed(1)}px, 0)`;
-      ui.querySelector('.frase').style.transform = `translate3d(0, ${(desplazamiento * PARALAJE.lomas[2]).toFixed(1)}px, 0)`;
+      const abajo = `translate3d(0, ${(desplazamiento * PARALAJE.lomas[2]).toFixed(1)}px, 0)`;
+      dom.pie.style.transform = abajo;
+      dom.barra.style.transform = abajo;
       const opac = 1 - suave(0.15, 0.6, e.cam.y);
+      dom.barra.style.opacity = opac;
+      dom.barra.style.visibility = opac < 0.05 ? 'hidden' : '';
       // Mientras la constelación se conecta y sube la aurora, las etiquetas se apagan un poco: el
       // momento es del cielo.
       const dc = e.completo ? e.t - e.tCompleto : -1;
@@ -1097,6 +1102,7 @@ const Escena = (() => {
       pausar(si) { const antes = e.pausado; e.pausado = si; if (antes && !si) requestAnimationFrame(cuadro); },
       redimensionar,
       get completo() { return e.completo; },
+      get nombre() { return e.constelacion ? nombreDe(e.constelacion.datos.nombres) : ''; },
       get encendidas() { return e.habitos.filter((h) => h.encendido).length; },
       get total() { return e.habitos.length; },
       get hayAutoPendiente() { return e.habitos.some((h) => h.auto && !h.encendido); },

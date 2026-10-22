@@ -5,6 +5,7 @@
 // El orden: primero el idioma de la app; después, qué tan parecido es a lo escrito, lo curado y el
 // nombre de la región; al final, bm25. Lo más usado sube con el premio que pasa quien llama, porque
 // el historial es de cada usuario y no está en esta base.
+// La galería usa este mismo archivo para ordenar (galeria/construir.mjs): no puede importar nada.
 
 /** Lo justo de expo-sqlite (o de cualquier SQLite) que necesita el buscador. */
 export interface BaseDeAlimentos {
@@ -38,7 +39,8 @@ export type Opciones = {
   premio?: (id: number) => number;
 };
 
-type Candidato = { alimento: number; idioma: Idioma; region: string | null; principal: number; texto: string; rango: number; aproximado: boolean };
+/** Un nombre o alias que coincidió con lo escrito, con su rango de bm25 (más negativo, mejor). */
+export type Candidato = { alimento: number; idioma: Idioma; region: string | null; principal: number; texto: string; rango: number; aproximado: boolean };
 
 /** Sin tildes, en minúsculas y con un solo espacio: así se compara lo escrito con los nombres. */
 export const normalizar = (texto: string) =>
@@ -58,17 +60,23 @@ export function consultaDeTrigramas(texto: string): string | null {
   return trigramas.size ? [...trigramas].map((t) => `"${t}"`).join(' OR ') : null;
 }
 
-/** Cuánto se parece lo escrito al principio de alguna palabra del nombre, de 0 a 1. */
-export function parecido(escrito: string, nombre: string): number {
+/** El tramo del nombre que más se parece a lo escrito: cuánto, de 0 a 1, y en qué palabra empieza. */
+function tramoMasParecido(escrito: string, nombre: string): { parecido: number; palabra: number } {
   const q = normalizar(escrito);
   const palabras = normalizar(nombre).split(' ');
-  let mejor = 0;
+  let mejor = { parecido: 0, palabra: 0 };
   for (let i = 0; i < palabras.length; i++) {
     // Se compara contra el tramo del nombre que empieza en esta palabra, del largo de lo escrito.
     const tramo = palabras.slice(i).join(' ').slice(0, q.length + 1);
-    mejor = Math.max(mejor, 1 - distancia(q, tramo) / Math.max(q.length, tramo.length));
+    const p = 1 - distancia(q, tramo) / Math.max(q.length, tramo.length);
+    if (p > mejor.parecido) mejor = { parecido: p, palabra: i };
   }
   return mejor;
+}
+
+/** Cuánto se parece lo escrito al principio de alguna palabra del nombre, de 0 a 1. */
+export function parecido(escrito: string, nombre: string): number {
+  return tramoMasParecido(escrito, nombre).parecido;
 }
 
 /** Cuántos cambios de una letra hay entre dos textos. Dos letras dadas vuelta («manzaan») cuentan como uno. */
@@ -84,7 +92,7 @@ function distancia(a: string, b: string): number {
 }
 
 /** Menos es mejor. Cada parte está pensada para que pese más que la siguiente. */
-function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boolean): number {
+export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boolean): number {
   const q = normalizar(escrito);
   const t = normalizar(c.texto);
   let p: number;
@@ -94,8 +102,12 @@ function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boolean): 
   else if (t.startsWith(q)) p = 10;
   else if (` ${t} `.includes(` ${q} `)) p = 15;
   else if (!c.aproximado) p = 20;
-  // Con errores: entre 30 y 50 según el parecido.
-  else p = 30 + (1 - parecido(escrito, c.texto)) * 40;
+  // Con errores: entre 30 y 50 según el parecido. Como sin errores, una palabra del medio suma 5:
+  // «frutila» es antes «Frutillas» que «yogurt de frutilla».
+  else {
+    const tramo = tramoMasParecido(escrito, c.texto);
+    p = 30 + (1 - tramo.parecido) * 40 + (tramo.palabra > 0 ? 5 : 0);
+  }
   if (c.idioma !== op.idioma) p += 100;
   if (!curado) p += 8;
   // El nombre de la región gana un poco; uno de otra región pierde (plátano es banana en España y otra cosa en Colombia).
@@ -106,10 +118,21 @@ function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boolean): 
 }
 
 /** Con menos que esto de lo que empieza igual, se buscan también los parecidos. */
-const POCOS = 10;
-const PARECIDO_MINIMO = 0.75;
+export const POCOS = 10;
+export const PARECIDO_MINIMO = 0.75;
 
-const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+export const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+
+/** De cada alimento, su mejor coincidencia; y los alimentos, del mejor al peor. */
+export function mejoresPorAlimento(candidatos: Candidato[], texto: string, op: Opciones, esCurado: (id: number) => boolean): Candidato[] {
+  const mejores = new Map<number, { c: Candidato; puntos: number }>();
+  for (const c of candidatos) {
+    const puntos = puntaje(c, texto, op, esCurado(c.alimento));
+    const antes = mejores.get(c.alimento);
+    if (!antes || puntos < antes.puntos) mejores.set(c.alimento, { c, puntos });
+  }
+  return [...mejores.values()].sort((a, b) => a.puntos - b.puntos).map(({ c }) => c);
+}
 
 export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: Opciones): Promise<Resultado[]> {
   const limite = op.limite ?? 25;
@@ -147,18 +170,9 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
     ? new Map((await base.getAllAsync<{ alimento: number; texto: string }>(`SELECT alimento, texto FROM alias WHERE principal = 1 AND region = ? AND alimento IN (${lista})`, op.region)).map((a) => [a.alimento, a.texto]))
     : new Map<number, string>();
 
-  // De cada alimento queda su mejor coincidencia.
-  const mejores = new Map<number, { c: Candidato; puntos: number }>();
-  for (const c of candidatos) {
-    const curado = datos.get(c.alimento)?.nombre_es != null;
-    const puntos = puntaje(c, texto, op, curado);
-    const antes = mejores.get(c.alimento);
-    if (!antes || puntos < antes.puntos) mejores.set(c.alimento, { c, puntos });
-  }
-  return [...mejores.values()]
-    .sort((a, b) => a.puntos - b.puntos)
+  return mejoresPorAlimento(candidatos, texto, op, (id) => datos.get(id)?.nombre_es != null)
     .slice(0, limite)
-    .map(({ c }) => {
+    .map((c) => {
       const f = datos.get(c.alimento)!;
       const regional = principales.get(f.id);
       const nombre = op.idioma === 'es' ? (regional ? conMayuscula(regional) : (f.nombre_es ?? f.descripcion)) : (f.nombre_en ?? f.descripcion);

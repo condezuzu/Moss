@@ -1,7 +1,7 @@
 // Capturas de la galería a resolución de iPhone (393×852 a 2×), en momentos fijos:
 // es como se revisa el detalle fino sin depender del panel de vista previa.
 // Uso: npm run galeria:capturas            (necesita npm run galeria:ver prendido)
-//      node herramientas/capturar-galeria.mjs <carpeta> inicio tocar completo universo ingles baja
+//      node herramientas/capturar-galeria.mjs <carpeta> inicio comida registrar comida-ingles tocar…
 // La aurora y el cielo se dibujan por software (SwiftShader): los tiempos de la animación van
 // más lentos que en un teléfono, pero cada cuadro es el mismo.
 
@@ -21,6 +21,8 @@ pagina.on('pageerror', (e) => errores.push(String(e)));
 await pagina.goto(process.env.GALERIA_URL || 'http://localhost:4173/');
 // A pantalla completa, con los márgenes de un iPhone con isla: lo más parecido a la app.
 await pagina.click('#b-inmersivo');
+// El mouse, afuera: si no, lo que quede abajo de él se ve como si se estuviera por tocar.
+await pagina.mouse.move(1, 1);
 await pagina.addStyleTag({ content: '.barra-inmersiva{display:none!important} .tel.inmersivo{--arriba:58px!important;--abajo:28px!important}' });
 await pagina.waitForTimeout(3500);
 
@@ -28,6 +30,9 @@ const foto = async (nombre) => {
   await pagina.screenshot({ path: join(salida, nombre + '.png') });
   console.log('·', nombre);
 };
+const comida = (accion, arg) => pagina.evaluate(([a, x]) => window.__comida(a, x), [accion, arg]);
+// El flum avanza con los cuadros del cielo: por software tarda más que en un teléfono.
+const esperarViaje = () => pagina.waitForFunction(() => !window.__viajando(), null, { timeout: 30000 });
 
 const pasos = {
   inicio: () => foto('inicio'),
@@ -115,6 +120,94 @@ const pasos = {
       }
     }
     await pagina.evaluate(() => window.__velocidad(1));
+  },
+  // La zona de comida: llegar con el flum, la línea del día, la semana, ayer y mañana.
+  async comida() {
+    await comida('ir');
+    await esperarViaje();
+    await pagina.waitForTimeout(1800);
+    await foto('comida-zona');
+    await comida('bajar', 'dia');
+    await pagina.waitForTimeout(900);
+    await foto('comida-linea');
+    await comida('bajar', 'semana');
+    await pagina.waitForTimeout(900);
+    await foto('comida-semana');
+    await comida('dia', -1);
+    await pagina.waitForTimeout(1600);
+    await foto('comida-ayer');
+    await comida('dia', 1);
+    await pagina.waitForTimeout(400);
+    await comida('bajar', 'dia');
+    await pagina.waitForTimeout(1400);
+    await foto('comida-manana');
+    await comida('dia', 0);
+    await pagina.waitForTimeout(500);
+    await comida('copiar', 'cena');
+    await comida('bajar', 'ahora');
+    await pagina.waitForTimeout(1300);
+    await foto('comida-copiada');
+    await comida('volver');
+    await esperarViaje();
+    await pagina.waitForTimeout(600);
+  },
+  // El flum del cielo a la comida y de vuelta, en cámara lenta (como el de Ajustes).
+  async 'flum-comida'() {
+    await pagina.evaluate(() => window.__velocidad(0.3));
+    for (const [sentido, accion] of [['ida', 'ir'], ['vuelta', 'volver']]) {
+      await comida(accion);
+      for (let i = 1; i <= 8; i++) {
+        await pagina.waitForTimeout(600);
+        await foto(`flum-comida-${sentido}-${String(i).padStart(2, '0')}`);
+      }
+      await esperarViaje();
+    }
+    await pagina.evaluate(() => window.__velocidad(1));
+  },
+  // La hoja de registro sobre el cielo: lo de siempre, la búsqueda, agregar, la ficha y la carga rápida.
+  async registrar() {
+    await comida('registrar');
+    await pagina.waitForTimeout(1000);
+    await foto('registrar');
+    for (const [texto, nombre] of [['frutila', 'frutila'], ['palta', 'palta'], ['manzaan', 'manzaan']]) {
+      await comida('escribir', texto);
+      await pagina.waitForTimeout(250);
+      await foto('registrar-' + nombre);
+    }
+    await comida('escribir', '');
+    await comida('agregar');
+    await pagina.waitForTimeout(450);
+    await foto('registrar-agregado');
+    await comida('ficha', 'Banana');
+    await pagina.waitForTimeout(700);
+    await foto('registrar-ficha');
+    await comida('cerrar');
+    await pagina.waitForTimeout(700);
+    await comida('registrar');
+    await pagina.waitForTimeout(600);
+    await comida('rapida');
+    await pagina.waitForTimeout(700);
+    await foto('registrar-rapida');
+    await comida('cerrar');
+    await pagina.waitForTimeout(1600);
+    await foto('registrar-despues');
+  },
+  async 'comida-ingles'() {
+    await pagina.evaluate(() => window.__idioma('en'));
+    await comida('ir');
+    await esperarViaje();
+    await pagina.waitForTimeout(1600);
+    await foto('comida-ingles');
+    await comida('registrar');
+    await pagina.waitForTimeout(900);
+    await comida('escribir', 'chick');
+    await pagina.waitForTimeout(250);
+    await foto('registrar-ingles');
+    await comida('cerrar');
+    await pagina.waitForTimeout(600);
+    await comida('volver');
+    await esperarViaje();
+    await pagina.evaluate(() => window.__idioma('es'));
   },
 };
 

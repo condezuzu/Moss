@@ -30,6 +30,10 @@ SDK y la memoria no alcanza.
     bucles con tope constante, sin uniforms adentro de las funciones.
   - Nunca `pow()` con base negativa: da NaN en SkSL y en Metal. Para eso está
     `gauss()`.
+- **La galería usa la lógica de la comida tal cual**: `construir.mjs` pasa a
+  JavaScript `src/comida/buscar.ts`, `src/comida/porciones.ts` y
+  `src/dominio/comidas.ts`, con los alimentos curados de `assets/alimentos.db`.
+  Por eso esos tres no importan nada.
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
   usa una función tiene que estar definido antes que ella. Por eso `paso()` va
   última en `escena.ts`.
@@ -112,7 +116,7 @@ SDK y la memoria no alcanza.
 | `npm run alimentos:verificar` | revisa la base: valores posibles, porciones en español, nombres regionales sin ambigüedad, índices y tamaño; avisa de lo que no cierra con 4/4/9 |
 | `npm run typecheck` | tipos (incluye que `en.json` tenga las claves de `es.json`) |
 | `npx expo lint` | ESLint con la configuración de Expo, que incluye las reglas de React |
-| `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo y los textos de `src/` |
+| `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo, los textos, los alimentos curados y los módulos de la comida |
 | `npm run galeria:ver` | sirve la galería en http://localhost:4173 |
 | `npm run galeria:capturas` | capturas a 393×852 @2× en `capturas/galeria` (ver los escenarios abajo) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
@@ -127,10 +131,12 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `inicio`, `tocar`, `completo`, `universo`;
 - `ingles`, `baja`;
 - `riqueza`, `fugaz`;
-- `entrada`, `flum`.
+- `entrada`, `flum`;
+- `comida`, `registrar`, `comida-ingles`, `flum-comida`.
 
 El render por software es lento. Por eso la galería tiene cámara lenta
-(`window.__velocidad(0.3)`), y `flum` la usa.
+(`window.__velocidad(0.3)`), que usan `flum` y `flum-comida`. Los escenarios
+de la comida esperan a que termine cada flum (`window.__viajando()`).
 
 ## La spec
 
@@ -149,17 +155,17 @@ El render por software es lento. Por eso la galería tiene cámara lenta
 | Carpeta | Qué hay |
 |---|---|
 | `src/app/` | rutas de Expo Router (hoy, un solo cielo) |
-| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida y control semanal |
+| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida, control semanal y la comida de cada hora |
 | `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
-| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad |
+| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, y cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas») |
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |
 | `src/datos/` | catálogo de constelaciones |
-| `src/textos/` | el diccionario y `t()`: cielo, entrada, ajustes, diagnóstico |
+| `src/textos/` | el diccionario y `t()`: cielo, entrada, ajustes, comida, diagnóstico |
 | `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
 | `herramientas/` | capturas y verificaciones |
@@ -176,6 +182,9 @@ El render por software es lento. Por eso la galería tiene cámara lenta
 `galeria/src/` tiene estas piezas:
 
 - `motor.js`: el motor WebGL, con la pasada del flum.
-- `escena.js`: la escena, con los modos hoy, entrada y ajustes.
+- `escena.js`: la escena, con los modos hoy, entrada, comida y ajustes.
 - `entrada.js`: la entrada a la app.
+- `comida.js`: la comida. Tiene la barra del cielo de hoy, la zona de comida
+  con la línea del día y la semana, y la hoja de registro con la ficha, los
+  atajos y el teclado.
 - `galeria.js`: la página.

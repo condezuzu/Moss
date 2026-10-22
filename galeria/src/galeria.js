@@ -1,6 +1,6 @@
-// La página de revisión: datos de mentira, controles, la entrada a la app, el viaje a Ajustes y
-// el catálogo. CATALOGO, TEXTOS y SHADERS los inyecta galeria/construir.mjs desde src/ (una sola
-// fuente).
+// La página de revisión: datos de mentira, controles, la comida, la entrada a la app, el viaje a
+// Ajustes y el catálogo. CATALOGO, TEXTOS, SHADERS, ALIMENTOS y los módulos de la comida los inyecta
+// galeria/construir.mjs desde src/ y assets/ (una sola fuente).
 
 (() => {
   // La Lira de la demo sale del catálogo; esta copia es solo por si el armado viene sin él.
@@ -145,6 +145,8 @@
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
   let escena;
+  // La comida se arma después de la escena; hasta entonces, los controles no la miran.
+  let comida = null;
   try {
     escena = Escena.crear(tel, SHADERS, {
       calidad: 'alta',
@@ -186,6 +188,52 @@
     alCambiar: () => refrescarControles(),
   });
 
+  // ------------------------------------------------------------ la comida
+  const toques = [];
+  comida = Comida.crear(tel, escena, {
+    textos: TEXTOS,
+    alimentos: (typeof ALIMENTOS !== 'undefined' && ALIMENTOS) || [],
+    alCambiar: () => refrescarControles(),
+    // Cada registro, con los toques que llevó desde el cielo: para compararlos con la especificación.
+    alRegistrar: (r) => {
+      toques.unshift(r);
+      toques.length = Math.min(toques.length, 6);
+      const lista = $('#toques ol');
+      lista.innerHTML = '';
+      toques.forEach((t) => {
+        const li = document.createElement('li');
+        const texto = document.createElement('span');
+        texto.textContent = t.texto;
+        const n = document.createElement('b');
+        n.textContent = (t.toques === 1 ? '1 toque' : t.toques + ' toques') + (t.escribio ? ' y escribir' : '');
+        li.append(texto, n);
+        lista.appendChild(li);
+      });
+      $('#toques .vacio').hidden = true;
+    },
+  });
+  // Espera a que termine el flum (en las capturas por software tarda más que en un teléfono).
+  const cuandoLlegue = (fn) => { const t = setInterval(() => { if (!escena.viajando) { clearInterval(t); fn(); } }, 50); };
+  const enLaZona = (fn) => { if (comida.hojaAbierta) comida.cerrarHoja(); if (comida.enZona) { fn(); return; } if (comida.ir()) cuandoLlegue(() => setTimeout(fn, 250)); };
+  const conHoja = (fn) => { if (!comida.hojaAbierta && !comida.abrirHoja()) return; fn(); };
+  const accionesComida = {
+    ir: () => (comida.enZona ? comida.volver() : comida.ir()),
+    registrar: () => (comida.hojaAbierta ? comida.cerrarHoja() : comida.abrirHoja()),
+    linea: () => enLaZona(() => comida.bajarA('dia')),
+    semana: () => enLaZona(() => comida.bajarA('semana')),
+    frutila: () => conHoja(() => escribirDespacio('frutila')),
+    ficha: () => conHoja(() => comida.ficha('Banana')),
+    rapida: () => conHoja(() => comida.cargaRapida()),
+    copiar: () => enLaZona(() => comida.copiarDeAyer('cena')),
+  };
+  // Como si se escribiera: letra por letra, con la búsqueda en cada una.
+  let escribiendo = 0;
+  function escribirDespacio(texto) {
+    clearInterval(escribiendo);
+    let i = 0;
+    escribiendo = setInterval(() => { i++; comida.escribir(texto.slice(0, i)); if (i >= texto.length) clearInterval(escribiendo); }, 90);
+  }
+
   // ------------------------------------------------------------ Ajustes, para ver el «flum»
   // Una pantalla de Ajustes de maqueta: lo que importa acá es el viaje de ida y vuelta.
   const ajustes = document.createElement('section');
@@ -204,7 +252,7 @@
   }
   let enAjustes = false;
   function viajar(destino) {
-    if (escena.viajando || entrada.paso) return;
+    if (escena.viajando || entrada.paso || comida.enZona || comida.hojaAbierta) return;
     const ui = tel.querySelector('.ui');
     if (destino === 'ajustes' && !enAjustes) {
       armarAjustes();
@@ -224,17 +272,23 @@
   }
 
   function refrescarControles() {
-    if (!escena) return;
+    if (!escena || !comida) return;
     const enEntrada = !!entrada.paso;
-    $('#b-repetir').disabled = !escena.completo || enEntrada || enAjustes;
-    $('#b-salud').disabled = !escena.hayAutoPendiente || enEntrada || enAjustes;
-    $('#b-completar').disabled = escena.completo || enEntrada || enAjustes;
+    const enComida = comida.enZona || comida.hojaAbierta;
+    const fuera = enEntrada || enAjustes || enComida;
+    $('#b-repetir').disabled = !escena.completo || fuera;
+    $('#b-salud').disabled = !escena.hayAutoPendiente || fuera;
+    $('#b-completar').disabled = escena.completo || fuera;
+    $$('[data-comida="ir"]').forEach((b) => { b.textContent = comida.enZona ? 'Volver al cielo' : (b.closest('.barra-inmersiva') ? 'Comida' : 'Ir a la comida'); b.disabled = enEntrada || enAjustes || comida.hojaAbierta; });
+    $('#b-registrar').textContent = comida.hojaAbierta ? 'Cerrar la hoja' : 'Registrar';
+    $$('#comida [data-comida]').forEach((b) => { if (!['ir', 'registrar'].includes(b.dataset.comida)) b.disabled = enEntrada || enAjustes; });
+    $('#b-registrar').disabled = enEntrada || enAjustes;
     const enUniverso = escena.zona() === 'universo';
     $('#b-zona').textContent = enUniverso ? 'Volver a hoy' : 'Subir a tu universo';
     $$('.barra-inmersiva [data-accion="zona"]').forEach((b) => { b.textContent = enUniverso ? 'Hoy' : 'Universo'; });
     $('#b-entrada').textContent = enEntrada ? 'Salir de la entrada' : 'Ver la entrada desde el principio';
     $('#b-ajustes').textContent = enAjustes ? 'Volver al cielo' : 'Ir a Ajustes';
-    $('#b-ajustes').disabled = enEntrada;
+    $('#b-ajustes').disabled = enEntrada || enComida;
   }
 
   const acciones = {
@@ -244,14 +298,15 @@
     reiniciar: () => { if (entrada.paso) entrada.salir(); cargarLira(); escena.irA('hoy'); },
     zona: () => { escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo'); },
     fugaz: () => escena.lanzarFugaz(),
-    entrada: () => { if (enAjustes) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
+    entrada: () => { if (enAjustes || comida.enZona || comida.hojaAbierta) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
     ajustes: () => viajar(enAjustes ? 'hoy' : 'ajustes'),
   };
   // Va después de todo lo que usa refrescarControles (la escena lo llama al poner la constelación).
   cargarLira();
   $$('[data-accion]').forEach((b) => b.addEventListener('click', () => { acciones[b.dataset.accion](); refrescarControles(); }));
+  $$('[data-comida]').forEach((b) => b.addEventListener('click', () => { accionesComida[b.dataset.comida](); refrescarControles(); }));
   $$('#saltos-entrada [data-paso]').forEach((b) => b.addEventListener('click', () => {
-    if (enAjustes) return;
+    if (enAjustes || comida.enZona || comida.hojaAbierta) return;
     entrada.irA(b.dataset.paso);
     refrescarControles();
   }));
@@ -265,7 +320,7 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); dibujarCatalogo(); if (enAjustes) armarAjustes(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); dibujarCatalogo(); if (enAjustes) armarAjustes(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
 
@@ -376,7 +431,7 @@
         b.querySelector('.tipo').textContent = tipo + (n >= 16 ? ' · ' + c.estrellas.length : '');
         miniatura(b.querySelector('canvas'), c);
         b.addEventListener('click', () => {
-          if (entrada.paso || enAjustes) return;
+          if (entrada.paso || enAjustes || comida.enZona || comida.hojaAbierta) return;
           const datos = c.id === 'lyra' ? LIRA : c;
           const habitos = c.id === 'lyra' ? habitosLira() : habitosDeMentira(c.estrellas.length);
           escena.ponerConstelacion(datos, habitos);
@@ -401,4 +456,16 @@
   window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
   window.__metas = () => entrada.metas();
   window.__velocidad = (v) => escena.velocidad(v);
+  window.__comida = (accion, arg) => {
+    const pasos = {
+      ir: () => comida.ir(), volver: () => comida.volver(), registrar: () => comida.abrirHoja(), cerrar: () => comida.cerrarHoja(),
+      escribir: () => comida.escribir(arg), ficha: () => comida.ficha(arg), agregar: () => comida.agregarPrimero(),
+      rapida: () => comida.cargaRapida(), guardadas: () => comida.guardadas(), copiar: () => comida.copiarDeAyer(arg),
+      dia: () => comida.verDia(arg), bajar: () => comida.bajarA(arg), teclado: () => comida.teclado(arg), dictar: () => comida.dictar(),
+    };
+    const r = pasos[accion]();
+    refrescarControles();
+    return r;
+  };
+  window.__viajando = () => escena.viajando;
 })();

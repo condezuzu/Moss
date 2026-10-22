@@ -70,6 +70,11 @@ describe('buscar alimentos', () => {
     expect((await primero('polo frito')).id).toBe(idDe('Pollo frito'));
   });
 
+  it('con errores, el principio del nombre va antes que una palabra del medio, aunque se use más', async () => {
+    const yogur = idDe('Yogur con frutas');
+    expect((await primero('frutila', { premio: (id) => (id === yogur ? 6 : 0) })).id).toBe(idDe('Fresas'));
+  });
+
   it('en inglés: los nombres curados y, si no, los de USDA', async () => {
     expect((await primero('chicken breast', { idioma: 'en', region: 'US' })).nombre).toBe('Grilled chicken breast');
     expect((await primero('banana', { idioma: 'en', region: 'US' })).nombre).toBe('Banana');

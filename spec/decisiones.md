@@ -136,7 +136,7 @@ Detalle en [`widgets.md`](widgets.md).
 
 ### D9 · La entrada
 
-Está en la galería, sección 2.
+Está en la galería, sección 3.
 
 - **Cuenta:** Sign in with Apple y correo con contraseña.
   - Correo y contraseña es lo que usa Ascent, así que la misma cuenta entra en
@@ -183,8 +183,12 @@ conviene confirmar el origen o escribir uno propio.
 
 ### Las de la galería
 
-Están en la galería, sección 6, «Para decidir»:
+Están en la galería, sección 7, «Para decidir»:
 
+- la comida en el cielo de hoy: la barra de abajo, con la luna chica y el «+», o
+  que Moss abra directo en la comida;
+- una sola pantalla de comida que se desliza (el día arriba y la semana abajo) o
+  dos pestañas;
 - cuándo crece el cielo (D5);
 - el cielo de la entrada;
 - la luna de la comida;

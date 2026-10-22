@@ -15,9 +15,10 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - **Hechas en código y probadas en la web:** las etapas 1 y 2, el cielo nativo y la app que guarda y recuerda.
 - **De la etapa 3** está lo que no depende de la galería: el esquema de Supabase, la sincronización y la fórmula de las metas.
 - **De la etapa 4** está la base de alimentos con USDA, 557 genéricos curados en español e inglés, y el buscador.
+- **De las etapas 5 y 7** está la galería de la comida: la zona de comida, la línea del día y la hoja de registro, con la base y el buscador de verdad.
 - **Falta:**
   - la primera build en tu iPhone, que necesita dos pasos tuyos;
-  - aprobar en la galería la entrada a la app, el flum, el cielo que crece y la estrella fugaz nueva.
+  - aprobar en la galería la comida, la entrada a la app, el flum, el cielo que crece y la estrella fugaz nueva.
 
 Las etapas van en orden, con estas excepciones:
 
@@ -233,16 +234,21 @@ Falta:
 **Sale:** cualquier cosa que se coma en Uruguay, y lo común del mundo, se
 encuentra en dos o tres letras.
 
-## Etapa 5 · Registrar la comida
+## Etapa 5 · Registrar la comida — en la galería (21/10/2026)
 
 El corazón de la app. Los flujos y sus toques están en
 [`nutricion.md`](nutricion.md), «Registrar».
 
-- **Primero en la galería:**
+- **Primero en la galería** (hecho, falta tu aprobación):
   - la línea del día con las comidas;
   - la hoja de registro (buscador, sugerencias de la hora, recientes, favoritos);
   - la ficha del alimento con sus porciones;
   - el aviso de deshacer.
+
+  La galería usa la base y el buscador de verdad, y cuenta los toques de cada
+  registro. Lo que ya quedó programado y con tests:
+  - `src/comida/porciones.ts`, que escribe las cantidades;
+  - `src/dominio/comidas.ts`, que elige la comida por la hora.
 - **En el almacén:**
   - registros, favoritos, recetas y comidas guardadas, y lo planificado;
   - con la misma sincronización de la etapa 3 y sus tests.
@@ -279,7 +285,7 @@ menos de un minuto.
 
 ## Etapa 7 · La pantalla de comida y las metas
 
-- **Primero en la galería:** la zona de comida.
+- **Primero en la galería:** la zona de comida (hecha el 21/10/2026, falta tu aprobación).
   - Las calorías que quedan, grande.
   - Las barras de los macros.
   - La tendencia del peso y el gasto estimado.
