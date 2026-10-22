@@ -68,7 +68,7 @@ function ChipsDeMacros({ v }: { v: Valores }) {
         <View key={m} style={estilos.chip}>
           <Punto macro={m} />
           <Text style={estilos.chipCifra}>{`${gramosDeMacro(v[m])} g`}</Text>
-          <Text style={estilos.chipNombre} numberOfLines={1}>{t(`comida.${m}`)}</Text>
+          <Text style={estilos.chipNombre} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
         </View>
       ))}
     </View>

@@ -9,6 +9,7 @@ import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react
 
 import { t } from '@/textos';
 import { colores } from '@/tema';
+import { Icono } from './comida/comunes';
 
 export const PESTANAS = ['inicio', 'comida', 'progreso', 'sueno', 'habitos', 'perfil'] as const;
 export type Pestana = (typeof PESTANAS)[number];
@@ -51,7 +52,7 @@ export function Barra({ posicion, subida, actual, abajo, alTocar, alMas }: Props
       {botones.slice(0, 3)}
       <Pressable onPress={alMas} style={estilos.mas} accessibilityRole="button" accessibilityLabel={t('pestanas.mas')} hitSlop={6}>
         <View style={estilos.masCirculo}>
-          <SymbolView name="plus" size={17} weight="regular" tintColor={colores.oroClaro} />
+          <Icono nombre="plus" tam={17} />
         </View>
       </Pressable>
       {botones.slice(3)}

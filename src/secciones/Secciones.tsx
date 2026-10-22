@@ -68,20 +68,23 @@ export default function Secciones() {
   }, [actual]);
   const armada = (i: number) => Math.abs(i - actual) <= 1 || Math.abs(i - anterior) <= 1;
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
-  // La entrada: el cielo solo, con la cámara donde la pide cada pantalla.
-  // Solo este dato: con todo el estado, las secciones se volverían a dibujar con cada toque.
-  const enEntrada = useSyncExternalStore(elAlmacen().suscribir, () => {
+  // La entrada: el cielo solo, con la cámara donde la pide cada pantalla. Hasta saber si hay perfil,
+  // solo el cielo: así Inicio no asoma antes de la entrada. Solo este dato: con todo el estado, las
+  // secciones se volverían a dibujar con cada toque.
+  const fase = useSyncExternalStore(elAlmacen().suscribir, () => {
     const e = elAlmacen().estado();
-    return e.listo && !e.perfil;
+    return !e.listo ? 'cargando' : e.perfil ? 'secciones' : 'entrada';
   });
+  const enEntrada = fase === 'entrada';
+  const conSecciones = fase === 'secciones';
   const camaraDeLaEntrada = useSharedValue(0);
   const entrada = useMemo(() => (enEntrada ? { camara: camaraDeLaEntrada } : undefined), [enEntrada, camaraDeLaEntrada]);
-  const conEntrada = useSharedValue(false);
+  const sinSecciones = useSharedValue(true);
   useEffect(() => {
-    conEntrada.set(enEntrada);
-  }, [enEntrada, conEntrada]);
-  // Con Ascent arriba, una hoja abierta o en la entrada, las pestañas no se deslizan.
-  const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0 && !conEntrada.get());
+    sinSecciones.set(!conSecciones);
+  }, [conSecciones, sinSecciones]);
+  // Con Ascent arriba, una hoja abierta o sin las secciones (en la entrada), las pestañas no se deslizan.
+  const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0 && !sinSecciones.get());
 
   const cambiarDePestana = (i: number) => {
     if (i !== actual) Haptics.selectionAsync().catch(() => {});
@@ -162,7 +165,7 @@ export default function Secciones() {
             entrada={entrada}
             alEditarHabito={setEditando}
           />
-          {!enEntrada && (
+          {conSecciones && (
             <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
               <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
               <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
@@ -188,9 +191,8 @@ export default function Secciones() {
             </Animated.View>
           )}
         </Animated.View>
-        {enEntrada ? (
-          <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(true)} />
-        ) : (
+        {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(true)} />}
+        {conSecciones && (
           <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
             <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
             <AvisoAbajo aviso={aviso} alIrse={quitarAviso} abajo={abajo + 14} />

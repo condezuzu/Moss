@@ -1,10 +1,12 @@
 // Capturas de la app de verdad (Skia en la web, con CanvasKit) a 393×852 @2×:
-// - inicio, calidad baja y dos riquezas;
+// - el cielo de Hábitos, calidad baja y dos riquezas;
 // - un toque sobre una estrella, y otra vez el cielo después de recargar (tiene que acordarse);
 // - el día completo y tu universo;
-// - las secciones: Ascent desde el cielo (y no desde la barra), la flecha, las pestañas y el «+».
+// - las secciones: Ascent desde el cielo (y no desde la barra), la flecha, las pestañas, Inicio y el «+»;
+// - las primeras pantallas de la entrada, en un navegador sin perfil.
 // Es lo más cerca del iPhone que se puede llegar desde Windows; el rendimiento real se mide en el
-// teléfono. Cada corrida arranca de cero: el navegador es nuevo y los hábitos de ejemplo también.
+// teléfono. Cada corrida arranca de cero: el navegador es nuevo y los hábitos de ejemplo también,
+// con una persona que ya pasó la entrada.
 // Uso: npm run web:exportar && npm run web:ver   (en otra terminal)
 //      npm run app:capturas
 
@@ -14,24 +16,45 @@ import { chromium } from 'playwright';
 
 const salida = process.argv[2] || 'capturas/app';
 mkdirSync(salida, { recursive: true });
+const URL = process.env.APP_URL || 'http://localhost:4174/';
 
 const navegador = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const pagina = await navegador.newPage({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, locale: 'es-UY' });
+const PANTALLA = { viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, locale: 'es-UY' };
+const pagina = await navegador.newPage(PANTALLA);
 const errores = [];
-pagina.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()); });
-pagina.on('pageerror', (e) => errores.push(String(e)));
+const anotarErrores = (p) => {
+  p.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()); });
+  p.on('pageerror', (e) => errores.push(String(e)));
+};
+anotarErrores(pagina);
 
-// CanvasKit pesa 8 MB y el cielo fijo se dibuja por software: hay que esperar.
+// Sin perfil aparece la entrada: se guarda uno antes de la primera carga (en src/almacen/abrir.web.ts,
+// el mismo formato). Solo si no hay nada, así recargar no borra lo que se tocó.
+await pagina.addInitScript(() => {
+  if (localStorage.getItem('moss:datos')) return;
+  const d = new Date();
+  const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const momento = d.toISOString();
+  localStorage.setItem('moss:datos', JSON.stringify({
+    perfil: { sexo: 'm', alturaCm: 178, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', nacimiento: d.getFullYear() - 34, actualizado: momento },
+    pesos: [{ fecha: hoy, kg: 82, origen: 'manual', momento }],
+    metas: [{ desde: hoy, kcal: 2150, proteina: 165, carbohidratos: 215, grasas: 70, gasto: 2650, motivo: 'inicial', momento }],
+  }));
+});
+
+// La app abre en Inicio; el cielo se toca en Hábitos. CanvasKit pesa 8 MB y el cielo fijo se
+// dibuja por software: hay que esperar.
 async function abrir() {
-  await pagina.goto(process.env.APP_URL || 'http://localhost:4174/');
+  await pagina.goto(URL);
+  await pagina.getByRole('tab', { name: 'Hábitos' }).click({ timeout: 60000 });
   await pagina.getByText(/cps ·/).waitFor({ timeout: 60000 });
   await pagina.waitForTimeout(6000);
   // Dónde quedó cada estrella del día (Cielo.tsx lo deja a mano en la web).
   return pagina.evaluate(() => globalThis.__cielo);
 }
 
-const foto = async (nombre) => {
-  await pagina.screenshot({ path: join(salida, nombre + '.png') });
+const foto = async (nombre, p = pagina) => {
+  await p.screenshot({ path: join(salida, nombre + '.png') });
   console.log('·', nombre);
 };
 const panel = async (texto) => {
@@ -106,14 +129,35 @@ await pagina.waitForTimeout(1200);
 await arrastrar([an - 40, 420], [an - 200, 430], 'pestanas-deslizando');
 await foto('perfil');
 await pagina.getByRole('tab', { name: 'Inicio' }).click();
-await pagina.waitForTimeout(900);
-await foto('inicio-pendiente');
-await pagina.getByLabel('Agregar', { exact: true }).click();
+await pagina.waitForTimeout(1500);
+await foto('seccion-inicio');
+// Las tarjetas de Comida, al lado, también tienen su «Agregar», e Inicio su vaso: los de la barra y
+// de la hoja van después en la página.
+await pagina.getByLabel('Agregar', { exact: true }).last().click();
 await pagina.waitForTimeout(900);
 await foto('mas');
-await pagina.getByLabel('Sumar un vaso de 250 ml').click();
+await pagina.getByLabel('Sumar un vaso de 250 ml').last().click();
 await pagina.waitForTimeout(500);
 await foto('mas-agua');
+
+// La entrada, en un navegador sin nada guardado: la frase, los hábitos y la comida. El círculo de
+// abajo se llama «Seguir», se habilita cuando se llena el aro y late sin parar: se toca forzado.
+const nueva = await navegador.newPage(PANTALLA);
+anotarErrores(nueva);
+await nueva.goto(URL);
+const seguir = nueva.getByRole('button', { name: 'Seguir', exact: true });
+const tocarSeguir = async () => {
+  await nueva.waitForFunction(() => document.querySelector('[aria-label="Seguir"]')?.getAttribute('aria-disabled') !== 'true', null, { timeout: 30000 });
+  await seguir.click({ force: true });
+};
+await seguir.waitFor({ timeout: 60000 });
+await nueva.waitForTimeout(8000);
+await foto('entrada-frase', nueva);
+for (const nombre of ['entrada-habitos', 'entrada-comida']) {
+  await tocarSeguir();
+  await nueva.waitForTimeout(4000);
+  await foto(nombre, nueva);
+}
 
 await navegador.close();
 if (errores.length) {

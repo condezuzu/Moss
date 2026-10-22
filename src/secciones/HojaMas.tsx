@@ -22,6 +22,7 @@ import { medidaValida, rangoDeGrasa, SITIOS, ultimasMedidas, type Centimetros, t
 import { claveDeAlimento, itemsParaRegistrar, recientes, sumarValores, vigentes, type Item } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { Icono } from './comida/comunes';
 import { cantidadDeTexto, comidaDeAhora, fechaCorta, numero, sistemaDe, useEstado } from './comida/datos';
 import { abrirRegistro } from './comida/registro';
 import { Figura } from './Figura';
@@ -171,17 +172,17 @@ function Menu({ alCerrar, alIr, avisar }: { alCerrar: () => void; alIr: (v: Vist
           style={({ pressed }) => [estilos.rapido, estilos.mitad, pressed && estilos.apretado]}
           accessibilityRole="button"
         >
-          <SymbolView name="bolt" size={17} weight="light" tintColor={colores.oroClaro} />
+          <Icono nombre="bolt" tam={17} peso="light" />
           <Text style={estilos.rapidoTitulo}>{t('mas.caloriasYMacros')}</Text>
         </Pressable>
         <View style={[estilos.rapido, estilos.mitad]}>
-          <SymbolView name="drop" size={17} weight="light" tintColor="#bcd8f2" />
+          <Icono nombre="drop" tam={17} peso="light" color="#bcd8f2" />
           <View style={estilos.crece}>
             <Text style={estilos.rapidoTitulo}>{t('mas.agua')}</Text>
             <Text style={estilos.detalleNumero}>{`${decimal(agua / 1000, idioma())} L`}</Text>
           </View>
           <Pressable onPress={sumarAgua} style={estilos.aguaMas} accessibilityRole="button" accessibilityLabel={t('mas.sumarVaso')} hitSlop={6}>
-            <SymbolView name="plus" size={14} weight="semibold" tintColor="#d6e7f7" />
+            <Icono nombre="plus" tam={14} peso="semibold" color="#d6e7f7" />
           </Pressable>
         </View>
       </View>
@@ -225,13 +226,13 @@ function Menu({ alCerrar, alIr, avisar }: { alCerrar: () => void; alIr: (v: Vist
         </>
       )}
       <Pressable onPress={() => alIr('medidas')} style={({ pressed }) => [estilos.medidas, pressed && estilos.apretado]} accessibilityRole="button">
-        <SymbolView name="ruler" size={20} weight="light" tintColor={colores.oroClaro} />
+        <Icono nombre="ruler" tam={20} peso="light" />
         <View style={estilos.crece}>
           <Text style={estilos.medidasTitulo}>{t('mas.medidas')}</Text>
           <Text style={estilos.detalle}>{t('mas.medidasTexto')}</Text>
         </View>
         {grasa && <Text style={estilos.medidasRango}>{t('cuerpo.rango', { desde: grasa.desde, hasta: grasa.hasta })}</Text>}
-        <SymbolView name="chevron.right" size={13} weight="regular" tintColor={colores.pergaminoApagado} />
+        <Icono nombre="chevron.right" tam={13} color={colores.pergaminoApagado} />
       </Pressable>
     </ScrollView>
   );
@@ -245,7 +246,7 @@ const textoDePeso = (kg: number, sistema: ReturnType<typeof sistemaDe>) => {
 function Principal({ icono, titulo, detalle, alTocar }: { icono: SFSymbol; titulo: string; detalle: string; alTocar: () => void }) {
   return (
     <Pressable onPress={alTocar} style={({ pressed }) => [estilos.principal, pressed && estilos.apretado]} accessibilityRole="button">
-      <SymbolView name={icono} size={22} weight="light" tintColor={colores.oroClaro} />
+      <Icono nombre={icono} tam={22} peso="light" />
       <Text style={estilos.principalTitulo}>{titulo}</Text>
       <Text style={estilos.detalle} numberOfLines={1}>{detalle}</Text>
     </Pressable>

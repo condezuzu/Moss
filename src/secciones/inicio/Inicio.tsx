@@ -141,7 +141,7 @@ function Calorias() {
                 <View style={{ opacity: estado === 'falta' ? 0.55 : 1 }}>
                   <Punto macro={m} />
                 </View>
-                <Text style={estilos.macroNombreTexto} numberOfLines={1}>{t(`comida.${m}`)}</Text>
+                <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
               </View>
               <Text style={estilos.macroValor}>{valor}</Text>
               <Text style={estilos.macroDe}>{t('inicio.deMeta', { comido: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>

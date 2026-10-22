@@ -206,7 +206,7 @@ export function BarrasDeMacros({ comido, meta, conEstado }: { comido: Pick<Valor
               <View style={{ opacity: estado === 'falta' ? 0.55 : 1 }}>
                 <Punto macro={m} />
               </View>
-              <Text style={estilos.macroNombreTexto} numberOfLines={1}>{t(`comida.${m}`)}</Text>
+              <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
             </View>
             <Text style={estilos.macroCifra}>{meta ? t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) }) : `${numero(Math.round(comido[m]))} g`}</Text>
             <View style={estilos.barra}>

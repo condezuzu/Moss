@@ -49,6 +49,8 @@ const CUESTIONARIO: readonly Paso[] = ['salud', 'edad', 'sexo', 'altura', 'peso'
 type Respuestas = { edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo };
 const DE_FABRICA: Respuestas = { edad: 29, sexo: null, alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado' };
 type DeSalud = ReadonlySet<'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>;
+/** Lo que deja cada pantalla arriba, debajo del borde del teléfono. */
+const ARRIBA = 28;
 
 export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; alTerminar?: () => void }) {
   const insets = useSafeAreaInsets();
@@ -101,7 +103,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View key={paso.id} entering={FadeInDown.delay(i === 0 ? 120 : 280).duration(620)} exiting={FadeOut.duration(320)} style={{ flex: 1 }}>
           <ScrollView
-            contentContainerStyle={[s.pantalla, { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 24 }]}
+            contentContainerStyle={[s.pantalla, { paddingTop: insets.top + ARRIBA, paddingBottom: insets.bottom + 24 }]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             bounces={false}
@@ -136,8 +138,9 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   );
 }
 
-const Titulo = ({ children }: { children: ReactNode }) => <Text style={s.titulo} accessibilityRole="header">{children}</Text>;
-const Texto = ({ children }: { children: ReactNode }) => <Text style={s.texto}>{children}</Text>;
+// Como en la galería, la frase, las diapositivas, la cuenta y el resultado van centrados; el cuestionario, a la izquierda.
+const Titulo = ({ children, centrado }: { children: ReactNode; centrado?: boolean }) => <Text style={[s.titulo, centrado && s.centrado]} accessibilityRole="header">{children}</Text>;
+const Texto = ({ children, centrado }: { children: ReactNode; centrado?: boolean }) => <Text style={[s.texto, centrado && s.centrado]}>{children}</Text>;
 const Pie = ({ children }: { children: ReactNode }) => <View style={s.pie}>{children}</View>;
 const Espacio = () => <View style={{ flex: 1, minHeight: 24 }} />;
 
@@ -161,9 +164,12 @@ function Avance({ n, total }: { n: number; total: number }) {
 // ------------------------------------------------------------------ la frase y las diapositivas
 function Frase({ alSeguir, reducido }: { alSeguir: () => void; reducido: boolean }) {
   const palabras = t('entrada.frase').split(' ');
+  const { height: alto } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   return (
     <>
-      <View style={s.frase}>
+      {/* Como en la galería: la frase empieza cerca de la mitad del cielo. */}
+      <View style={[s.frase, { marginTop: Math.max(40, alto * 0.45 - insets.top - ARRIBA) }]}>
         <View style={s.fraseTexto} accessible accessibilityLabel={t('entrada.frase')}>
           {palabras.map((p, k) => (
             <Animated.Text key={k} entering={reducido ? undefined : FadeIn.delay(350 + k * 75).duration(900)} style={s.palabra}>{p}</Animated.Text>
@@ -180,8 +186,8 @@ function Frase({ alSeguir, reducido }: { alSeguir: () => void; reducido: boolean
 function Diapositiva({ titulo, texto, alSeguir, reducido, children }: { titulo: string; texto: string; alSeguir: () => void; reducido: boolean; children: ReactNode }) {
   return (
     <>
-      <Titulo>{titulo}</Titulo>
-      <Texto>{texto}</Texto>
+      <Titulo centrado>{titulo}</Titulo>
+      <Texto centrado>{texto}</Texto>
       <View style={s.escenario}>{children}</View>
       <Circulo alTocar={alSeguir} reducido={reducido} />
     </>
@@ -500,7 +506,7 @@ function ElResultado({ r, alEmpezar, reducido }: { r: Respuestas; alEmpezar: () 
   }, [metas.kcal, reducido]);
   return (
     <>
-      <Titulo>{t('entrada.cuestionario.resultadoTitulo')}</Titulo>
+      <Titulo centrado>{t('entrada.cuestionario.resultadoTitulo')}</Titulo>
       <View style={[s.lunaGrande, s.lunaResultado]}>
         <Luna tam={100} fraccion={llena ? 1 : 0.06} ms={reducido ? 0 : 1600} />
         <Anillos tam={196} reparto={[kcal[0] / total, kcal[1] / total, kcal[2] / total]} ms={reducido ? 0 : 1600} demora={200} />
@@ -519,7 +525,7 @@ function ElResultado({ r, alEmpezar, reducido }: { r: Respuestas; alEmpezar: () 
         ))}
       </View>
       <Text style={[s.chico, { textAlign: 'center' }]}>{t('entrada.cuestionario.gasto', { n: numero(gasto) })}</Text>
-      <Text style={[s.texto, { textAlign: 'center', alignSelf: 'center' }]}>{t('entrada.cuestionario.resultadoTexto')}</Text>
+      <Texto centrado>{t('entrada.cuestionario.resultadoTexto')}</Texto>
       <Espacio />
       <Pie>
         <Boton texto={t('entrada.cuestionario.empezar')} alTocar={alEmpezar} />
@@ -541,10 +547,11 @@ const s = StyleSheet.create({
   avance: { height: 2, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(239, 230, 207, 0.12)' },
   avanceLleno: { height: '100%', backgroundColor: colores.oro, shadowColor: colores.oro, shadowOpacity: 0.7, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
   paso: { marginTop: 16, marginBottom: 10, fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.5)' },
-  frase: { marginTop: 110 },
-  fraseTexto: { flexDirection: 'row', flexWrap: 'wrap', maxWidth: 300 },
-  palabra: { marginRight: 7, fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 29, lineHeight: 36, color: colores.cifra, textShadowColor: 'rgba(232, 196, 106, 0.35)', textShadowRadius: 18, textShadowOffset: { width: 0, height: 0 } },
-  autor: { marginTop: 18, fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2.3, textTransform: 'uppercase', color: 'rgba(185, 227, 107, 0.75)' },
+  centrado: { textAlign: 'center', alignSelf: 'center' },
+  frase: { alignSelf: 'center', alignItems: 'center' },
+  fraseTexto: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 7, maxWidth: 230 },
+  palabra: { fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 29, lineHeight: 36, color: colores.cifra, textShadowColor: 'rgba(232, 196, 106, 0.35)', textShadowRadius: 18, textShadowOffset: { width: 0, height: 0 } },
+  autor: { marginTop: 18, textAlign: 'center', fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2.3, textTransform: 'uppercase', color: 'rgba(185, 227, 107, 0.75)' },
   escenario: { flex: 1, minHeight: 250, alignItems: 'center', justifyContent: 'center' },
   lunaGrande: { width: 230, height: 230, alignItems: 'center', justifyContent: 'center' },
   lunaResultado: { width: 196, height: 196, alignSelf: 'center', marginTop: 14 },
