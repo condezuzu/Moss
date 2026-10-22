@@ -277,7 +277,10 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
    Los días sin peso se rellenan en línea recta entre los vecinos.
 4. **Control semanal**
    - **Automático:** corre solo en el teléfono el día de la semana del control;
-     no hay que tocar nada.
+     no hay que tocar nada. Ese día es el de la semana en que se fijó la primera
+     meta, como en MacroFactor; si ese día no se abre Moss, corre la próxima vez.
+     Corre en el almacén desde el 22/10/2026 (`revisarControl`).
+   - **Con las metas a mano:** mide el gasto igual, pero deja los macros.
    - **Qué mira:** días enteros, hasta ayer. Las últimas 3 semanas, o desde la
      primera pesada si hay menos; con menos de 7 días no mide.
    - **Gasto real:** comida promedio − (cambio de la tendencia × 7.700 kcal/kg)
@@ -350,6 +353,13 @@ Son hábitos automáticos, como los de Salud, que se encienden solos en el cielo
 - «Registrar todas las comidas»: se cumple con desayuno, almuerzo y cena, o con
   las comidas que elija el usuario.
 - «Quedar dentro de la meta de calorías ± 10 %».
+
+Ya andan en el almacén (22/10/2026, `cumpleLaComida` en `src/dominio/registros.ts`):
+- se miran cada vez que cambia lo registrado o la meta, sin contar lo
+  planificado;
+- la estrella se enciende al cumplirse y se apaga si se deja de cumplir (por
+  ejemplo, al pasarse de calorías);
+- la marca queda con el origen «comida», como las de Salud.
 
 ## Salud
 

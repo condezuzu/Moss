@@ -6,14 +6,14 @@
 import type { Constelacion } from '@/datos/catalogo';
 import type { Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
-import type { Peso } from '@/dominio/control';
+import { controlSemanal, type Peso } from '@/dominio/control';
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
-import { claveDelDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { claveDelDia, diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
-import { metasIniciales, type Cuestionario, type MetaGuardada, type Perfil } from '@/dominio/metas';
+import { edadDe, metaManual, metasIniciales, type Cuestionario, type Macros, type MetaGuardada, type Perfil } from '@/dominio/metas';
 import {
-  borrado, claveDeFavorito, confirmar, copiar, restaurado,
+  borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, restaurado,
   type AlimentoPropio, type Favorito, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
@@ -105,6 +105,7 @@ export function metaVigente(e: Pick<Estado, 'metas'>, clave: ClaveDia): MetaGuar
 }
 
 const porFecha = <T>(clave: (x: T) => string) => (a: T, b: T) => (clave(a) < clave(b) ? -1 : 1);
+const soloMacros = (m: Macros): Macros => ({ kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas });
 
 export type Almacen = ReturnType<typeof crearAlmacen>;
 
@@ -141,11 +142,24 @@ export function crearAlmacen(op: Opciones) {
   };
 
   /**
-   * Pone el día al día: las constelaciones según la cantidad de hábitos de cada día, el resumen
-   * de hoy y los logros que se ganen. Guarda lo que cambió y devuelve el estado nuevo.
+   * Pone el día al día: los hábitos de comida según lo registrado hoy, las constelaciones según la
+   * cantidad de hábitos de cada día, el resumen de hoy y los logros que se ganen. Guarda lo que
+   * cambió y devuelve el estado nuevo.
    */
-  function alDia(base: Pick<Estado, 'hoy' | 'habitos' | 'periodos' | 'dias' | 'marcas' | 'logros' | 'semilla'>) {
-    const { hoy, habitos, marcas } = base;
+  function alDia(base: Pick<Estado, 'hoy' | 'habitos' | 'periodos' | 'dias' | 'marcas' | 'logros' | 'semilla' | 'registros' | 'metas'>) {
+    const { hoy, habitos } = base;
+    // Los hábitos de comida se encienden, y se apagan, solos con lo registrado.
+    let marcas = base.marcas;
+    const meta = metaVigente(base, hoy);
+    for (const h of habitosDelDia(habitos, hoy)) {
+      if (h.fuente.tipo !== 'comida') continue;
+      const cumple = cumpleLaComida(h.fuente.meta, base.registros.values(), hoy, meta, h.fuente.comidas);
+      const clave = claveDeMarca(h.id, hoy);
+      if ((marcas.get(clave)?.hecho ?? false) === cumple) continue;
+      const marca: Marca = { habito: h.id, dia: hoy, hecho: cumple, momento: momento(), origen: 'comida' };
+      marcas = new Map(marcas).set(clave, marca);
+      guardar((r) => r.guardarMarca(marca));
+    }
     const periodos = asignar(base.periodos, cantidadesPorDia(habitos, hoy), hoy, op.catalogo, base.semilla);
     if (!mismosPeriodos(periodos, base.periodos)) guardar((r) => r.guardarPeriodos(periodos));
 
@@ -180,6 +194,7 @@ export function crearAlmacen(op: Opciones) {
       const h = habitos;
       guardar((r) => r.guardarHabitos(h));
     }
+    const comida = mapasDe(g);
     const { estado: nuevo } = alDia({
       hoy,
       habitos,
@@ -188,8 +203,38 @@ export function crearAlmacen(op: Opciones) {
       dias: new Map(g.dias.map((d) => [d.clave, d])),
       marcas: new Map(g.marcas.map((m) => [claveDeMarca(m.habito, m.dia), m])),
       logros: g.logros,
+      registros: comida.registros,
+      metas: g.metas,
     });
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...mapasDe(g), canasta: leerCanasta(g.ajustes[CANASTA]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), listo: true }, true);
+    revisarControl();
+  }
+
+  /** Cambiar las metas, y con eso los hábitos de comida de hoy. */
+  function ponerMetas(metas: MetaGuardada[]) {
+    cambiar({ metas, ...alDia({ ...estado, metas }).estado }, false);
+  }
+
+  /**
+   * El control de la semana (src/dominio/control.ts): corre solo, una vez por semana, el día de la
+   * semana en que se fijó la primera meta (como MacroFactor). Si ese día no se abrió Moss, corre la
+   * próxima vez. Con las metas a mano, mide el gasto pero deja los macros.
+   */
+  function revisarControl() {
+    const { hoy, perfil, metas, pesos } = estado;
+    const ultima = metas[metas.length - 1];
+    if (!perfil || !ultima) return;
+    const diaDelControl = sumarDias(hoy, -((diaDeLaSemana(hoy) - diaDeLaSemana(metas[0].desde) + 7) % 7));
+    const pesoKg = pesos[pesos.length - 1]?.kg;
+    if (diaDelControl <= ultima.desde || pesoKg === undefined) return;
+    const c = controlSemanal({
+      hoy, pesadas: pesos, comidas: comidasParaElControl(estado.registros.values()), gastoAnterior: ultima.gasto, metasAnteriores: soloMacros(ultima),
+      perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo },
+    });
+    const aMano = ultima.motivo === 'manual';
+    const meta: MetaGuardada = { ...(aMano ? soloMacros(ultima) : c.metas), desde: hoy, gasto: c.gasto, motivo: aMano ? 'manual' : c.motivo, momento: momento() };
+    guardar((r) => r.guardarMeta(meta));
+    ponerMetas([...metas, meta]);
   }
 
   /** Encender o apagar un hábito hoy. Devuelve los logros que se ganaron con eso. */
@@ -214,7 +259,9 @@ export function crearAlmacen(op: Opciones) {
     const mapa = new Map(estado[coleccion] as Map<string, DeComida[C]>);
     for (const x of lista) mapa.set(clave(x), x);
     guardar((r) => r.guardarComida(coleccion, lista));
-    cambiar({ [coleccion]: mapa } as Partial<Estado>, false);
+    // Lo registrado puede encender o apagar los hábitos de comida de hoy.
+    const alDiaConComida = coleccion === 'registros' ? alDia({ ...estado, registros: mapa as Estado['registros'] }).estado : {};
+    cambiar({ [coleccion]: mapa, ...alDiaConComida } as Partial<Estado>, false);
   }
 
   /** Borrar deja la marca, con su hora: así el borrado llega a los otros teléfonos. */
@@ -280,11 +327,17 @@ export function crearAlmacen(op: Opciones) {
       guardar((r) => r.guardarPerfil(perfil));
       guardar((r) => r.guardarPeso(peso));
       guardar((r) => r.guardarMeta(meta));
-      cambiar({
-        perfil,
-        pesos: [...estado.pesos.filter((p) => p.fecha !== peso.fecha), peso].sort(porFecha((p) => p.fecha)),
-        metas: [...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)),
-      }, false);
+      cambiar({ perfil, pesos: [...estado.pesos.filter((p) => p.fecha !== peso.fecha), peso].sort(porFecha((p) => p.fecha)) }, false);
+      ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+      return meta;
+    },
+    /** Las metas a mano, desde hoy: los gramos de cada macro (y las kcal, si se dan), con el gasto que se venía midiendo. */
+    ponerMetasAMano(macros: Omit<Macros, 'kcal'> & { kcal?: number }): MetaGuardada | null {
+      const ultima = estado.metas[estado.metas.length - 1];
+      if (!ultima) return null;
+      const meta: MetaGuardada = { ...metaManual(macros), desde: estado.hoy, gasto: ultima.gasto, motivo: 'manual', momento: momento() };
+      guardar((r) => r.guardarMeta(meta));
+      ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
       return meta;
     },
     // ---------------------------------------------------------------- lo que se come
@@ -382,6 +435,7 @@ export function crearAlmacen(op: Opciones) {
         dias.set(clave, arreglado);
         guardar((r) => r.guardarDia(arreglado));
       }
+      const comida = mapasDe(d);
       const { estado: nuevo } = alDia({
         hoy: estado.hoy,
         habitos: d.habitos,
@@ -390,8 +444,10 @@ export function crearAlmacen(op: Opciones) {
         dias,
         marcas: new Map(marcas.map((m) => [claveDeMarca(m.habito, m.dia), m])),
         logros: d.logros,
+        registros: comida.registros,
+        metas: d.metas,
       });
-      cambiar({ ...nuevo, semilla, perfil: d.perfil, metas: d.metas, pesos: d.pesos, ...mapasDe(d) }, true);
+      cambiar({ ...nuevo, semilla, perfil: d.perfil, metas: d.metas, pesos: d.pesos, ...comida }, true);
       return true;
     },
     /** Si ya es otro día (medianoche, o la app vuelve del fondo), arma el nuevo. */
@@ -399,6 +455,7 @@ export function crearAlmacen(op: Opciones) {
       const hoy = claveDelDia(ahora(), zona());
       if (!estado.listo || hoy === estado.hoy) return false;
       cambiar(alDia({ ...estado, hoy }).estado, true);
+      revisarControl();
       return true;
     },
     /** Para el panel de prueba: apaga todo lo de hoy. */

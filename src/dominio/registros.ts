@@ -114,6 +114,11 @@ export const itemRapido = (nombre: string, valores: Valores): Item => ({ fuente:
 
 const itemDe = (r: Item): Item => ({ fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad, valores: r.valores });
 
+/** Lo que pide «registrar todas las comidas» si el hábito no elige otras. */
+export const COMIDAS_DEL_DIA: readonly Comida[] = ['desayuno', 'almuerzo', 'cena'];
+/** «Quedar dentro de las calorías» es quedar a menos de un 10 % de la meta, de más o de menos. */
+const MARGEN_DE_CALORIAS = 0.1;
+
 export const vigentes = <T extends { borrado?: true }>(lista: Iterable<T>): T[] => [...lista].filter((x) => !x.borrado);
 
 const porMomento = (a: Registro, b: Registro) => (a.momento < b.momento ? -1 : a.momento > b.momento ? 1 : 0);
@@ -132,6 +137,26 @@ export function comidasParaElControl(registros: Iterable<Registro>): ComidaDelDi
   const porDia = new Map<ClaveDia, number>();
   for (const r of vigentes(registros)) if (!r.planificado) porDia.set(r.dia, (porDia.get(r.dia) ?? 0) + r.valores.kcal);
   return [...porDia].sort(([a], [b]) => (a < b ? -1 : 1)).map(([fecha, kcal]) => ({ fecha, kcal }));
+}
+
+/**
+ * Los hábitos de comida (spec/nutricion.md, «Hábitos de comida»): si se cumplen en un día con lo
+ * registrado, sin lo planificado, y la meta de ese día. Se miran a cada rato: la estrella se
+ * enciende cuando se llega y se apaga si se deja de cumplir (por ejemplo, al pasarse de calorías).
+ */
+export function cumpleLaComida(
+  meta: 'proteina' | 'registrar' | 'calorias',
+  registros: Iterable<Registro>,
+  dia: ClaveDia,
+  metaDelDia: Macros | null,
+  comidas: readonly Comida[] = COMIDAS_DEL_DIA,
+): boolean {
+  const comido = delDia(registros, dia).filter((r) => !r.planificado);
+  if (meta === 'registrar') return comidas.every((c) => comido.some((r) => r.comida === c));
+  if (!metaDelDia || !comido.length) return false;
+  const total = sumarValores(comido.map((r) => r.valores));
+  if (meta === 'proteina') return total.proteina >= metaDelDia.proteina;
+  return Math.abs(total.kcal - metaDelDia.kcal) <= MARGEN_DE_CALORIAS * metaDelDia.kcal;
 }
 
 export function aguaDelDia(tomas: Iterable<TomaDeAgua>, dia: ClaveDia): number {

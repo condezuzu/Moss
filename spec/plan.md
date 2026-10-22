@@ -304,7 +304,8 @@ menos de un minuto.
 - **Agua:** desde Salud y con un toque.
 - **El control semanal automático:**
   - el cálculo ya está (`src/dominio/control.ts`);
-  - falta que corra solo, su resumen y el «cómo se calcula».
+  - ya corre solo en el almacén (22/10/2026), con las metas a mano;
+  - falta su resumen en pantalla y el «cómo se calcula».
 - **Lo que se sumó después de mirar las otras apps** (22/10/2026), primero en la galería:
   - cómo se reparten los macros: equilibrada, baja en grasas, baja en carbohidratos y keto;
   - metas a mano;
@@ -335,7 +336,7 @@ teléfono.
   - Al cambiar la cantidad de un día, la constelación vieja se apaga y sube a tu cielo, y la nueva se arma.
 - **El primer día**, apenas termina la entrada: elegir de 3 a 5 hábitos sugeridos, entre ellos los de comida, que arman la primera constelación.
 - **Hábitos que se encienden solos** con la luz que sube del musgo (ya está en la galería):
-  - **los de comida:** llegar a la proteína, registrar todas las comidas, quedar dentro de las calorías;
+  - **los de comida:** llegar a la proteína, registrar todas las comidas, quedar dentro de las calorías (ya se encienden solos en el almacén, desde el 22/10/2026);
   - **los de Salud.**
 
 **Sale:** alguien nuevo arma su semana en menos de un minuto, y la comida

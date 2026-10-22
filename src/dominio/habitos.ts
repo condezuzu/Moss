@@ -1,5 +1,6 @@
 // Los hábitos: los crea el usuario, eligen qué días de la semana tocan y se cumplen a mano o solos.
 
+import type { Comida } from './comidas';
 import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 
 export type DatoDeSalud = 'pasos' | 'agua' | 'mindfulness' | 'sueno' | 'acostarse';
@@ -9,7 +10,8 @@ export type Fuente =
   | { tipo: 'manual' }
   | { tipo: 'salud'; dato: DatoDeSalud; meta: number }
   | { tipo: 'ascent' }
-  | { tipo: 'comida'; meta: 'proteina' | 'registrar' | 'calorias' };
+  /** Con la comida registrada (registros.ts, cumpleLaComida). «Registrar» pide desayuno, almuerzo y cena, o las comidas que se elijan. */
+  | { tipo: 'comida'; meta: 'proteina' | 'registrar' | 'calorias'; comidas?: Comida[] };
 
 export type Habito = {
   id: string;

@@ -260,6 +260,95 @@ describe('lo que se come', () => {
   });
 });
 
+describe('la comida enciende estrellas', () => {
+  const pollo = (gramos: number) => itemDeAlimento('base', '1', 'Pechuga', { kcal: 165, proteina: 31, carbohidratos: 0, grasas: 3.6 }, { gramos });
+  const conComida = () => [
+    habito('meditar', 0),
+    { ...habito('proteina', 1), fuente: { tipo: 'comida' as const, meta: 'proteina' as const } },
+    { ...habito('registrar', 2), fuente: { tipo: 'comida' as const, meta: 'registrar' as const } },
+  ];
+
+  it('llegar a la proteína la enciende sola, y borrar lo que la hizo llegar la apaga', async () => {
+    const { almacen } = await armar(repositorioEnMemoria(), conComida);
+    almacen.responderCuestionario({ edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' });
+    const meta = almacen.estado().metas[0].proteina;
+    almacen.registrar([pollo(250)], { comida: 'almuerzo' });
+    expect(hoy(almacen).hechos).toEqual([]);
+    const [cena] = almacen.registrar([pollo(Math.ceil(((meta - 77.5) / 31) * 100) + 10)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual(['proteina']);
+    expect(almacen.estado().marcas.get('proteina|2026-10-21')).toMatchObject({ hecho: true, origen: 'comida' });
+    almacen.borrarRegistro(cena.id);
+    expect(hoy(almacen).hechos).toEqual([]);
+  });
+
+  it('registrar las tres comidas la enciende; lo planificado no cuenta', async () => {
+    const { almacen } = await armar(repositorioEnMemoria(), conComida);
+    almacen.registrar([banana()], { comida: 'desayuno' });
+    almacen.registrar([alfajor()], { comida: 'almuerzo' });
+    almacen.copiar({ dia: '2026-10-21', comida: 'almuerzo' }, { dia: '2026-10-22', comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual([]);
+    almacen.registrar([banana()], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toEqual(['registrar']);
+  });
+});
+
+describe('el control de cada semana corre solo', () => {
+  const respuestas: Cuestionario = { edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
+
+  /**
+   * Empieza el miércoles 14, con los pesos de Salud desde el 1, y cada día hasta el martes 20 se
+   * pesa y registra 2.500 kcal.
+   */
+  async function unaSemana() {
+    const t = await armar();
+    t.ir('2026-10-14T15:00:00Z');
+    t.almacen.revisarDia();
+    const inicial = t.almacen.responderCuestionario(respuestas);
+    for (let d = 1; d < 14; d++) t.almacen.anotarPeso(80, 'salud', `2026-10-${String(d).padStart(2, '0')}`);
+    for (let d = 14; d <= 20; d++) {
+      t.ir(`2026-10-${d}T15:00:00Z`);
+      t.almacen.revisarDia();
+      t.almacen.anotarPeso(80, 'salud');
+      t.almacen.registrar([itemRapido('Todo el día', { kcal: 2500, proteina: 150, carbohidratos: 300, grasas: 75 })], { comida: 'cena' });
+    }
+    return { ...t, inicial };
+  }
+
+  it('el miércoles siguiente mide el gasto con lo comido y el peso, y mueve la meta de a poco', async () => {
+    const { almacen, ir, inicial } = await unaSemana();
+    ir('2026-10-21T15:00:00Z');
+    almacen.revisarDia();
+    const metas = almacen.estado().metas;
+    expect(metas.map((m) => [m.desde, m.motivo])).toEqual([['2026-10-14', 'inicial'], ['2026-10-21', 'control']]);
+    // Con el peso quieto, el gasto medido es lo comido: la meta va un cuarto del camino hacia ahí.
+    expect(metas[1].gasto).toBe(Math.round(inicial.gasto + 0.25 * (2500 - inicial.gasto)));
+  });
+
+  it('una sola vez por semana; si ese día no se abrió Moss, corre la próxima vez', async () => {
+    const { almacen, ir } = await unaSemana();
+    ir('2026-10-21T15:00:00Z');
+    almacen.revisarDia();
+    ir('2026-10-22T15:00:00Z');
+    almacen.revisarDia();
+    expect(almacen.estado().metas).toHaveLength(2);
+    // El miércoles 28 no se abrió: corre el viernes 30.
+    ir('2026-10-30T15:00:00Z');
+    almacen.revisarDia();
+    expect(almacen.estado().metas.map((m) => m.desde)).toEqual(['2026-10-14', '2026-10-21', '2026-10-30']);
+  });
+
+  it('con las metas a mano, mide el gasto pero deja los macros', async () => {
+    const { almacen, ir } = await unaSemana();
+    const aMano = almacen.ponerMetasAMano({ proteina: 160, carbohidratos: 250, grasas: 70 })!;
+    expect(aMano).toMatchObject({ kcal: 2270, motivo: 'manual', desde: '2026-10-20' });
+    ir('2026-10-21T15:00:00Z');
+    almacen.revisarDia();
+    const control = almacen.estado().metas[2];
+    expect(control).toMatchObject({ desde: '2026-10-21', motivo: 'manual', kcal: 2270, proteina: 160, carbohidratos: 250, grasas: 70 });
+    expect(control.gasto).not.toBe(aMano.gasto);
+  });
+});
+
 describe('lo que baja de la cuenta', () => {
   const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
 

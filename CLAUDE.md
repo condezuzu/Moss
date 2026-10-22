@@ -133,7 +133,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
 - `entrada`;
-- `comida`, `registrar`, `comida-ingles`.
+- `comida`, `registrar`, `etiqueta`, `comida-ingles`.
 
 La galería abre en Inicio, y los escenarios del cielo pasan antes a Hábitos
 (`window.__pagina(1, true)`). `deslizar` arrastra con el mouse, como un dedo,

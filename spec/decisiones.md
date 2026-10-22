@@ -276,6 +276,9 @@ hacen falta las cuentas anónimas.
 
 ## Tomadas por mi cuenta
 
+- **El día del control semanal** (22/10/2026): el de la semana en que se fijó la
+  primera meta, como en MacroFactor. Si ese día no se abre Moss, corre la
+  próxima vez. Se podrá cambiar en Ajustes.
 - **Expo SDK 58** (la última, React Native 0.88). Reanimated 4 exige la Nueva
   Arquitectura, que ya viene prendida.
 - **Identidad y builds:**

@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 import {
-  aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, delDia, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemRapido,
+  aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemRapido,
   itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
   type Item, type Receta, type Registro, type Valores,
 } from './registros';
@@ -111,6 +111,35 @@ describe('copiar, planificar, confirmar y borrar', () => {
     const vuelve = restaurado(b, '2026-10-21T22:00:05.000Z');
     expect('borrado' in vuelve).toBe(false);
     expect(vuelve).toEqual({ ...r, actualizado: '2026-10-21T22:00:05.000Z' });
+  });
+});
+
+describe('los hábitos de comida', () => {
+  const meta = { kcal: 2000, proteina: 120, carbohidratos: 230, grasas: 66 };
+  const pollo = (gramos: number) => itemDeAlimento('base', '1', 'Pechuga', { kcal: 165, proteina: 31, carbohidratos: 0, grasas: 3.6 }, { gramos });
+
+  it('la proteína: se enciende al llegar a la meta, sin contar lo planificado', () => {
+    const almuerzo = reg(pollo(200), HOY, 'almuerzo', 13);
+    expect(cumpleLaComida('proteina', [almuerzo], HOY, meta)).toBe(false);
+    const cena = reg(pollo(200), HOY, 'cena', 21);
+    expect(cumpleLaComida('proteina', [almuerzo, cena], HOY, meta)).toBe(true);
+    expect(cumpleLaComida('proteina', [almuerzo, { ...cena, planificado: true }], HOY, meta)).toBe(false);
+    expect(cumpleLaComida('proteina', [almuerzo, cena], HOY, null)).toBe(false);
+  });
+
+  it('registrar todas las comidas: desayuno, almuerzo y cena, o las que elija el hábito', () => {
+    const tres = [reg(banana(), HOY, 'desayuno', 8), reg(arroz(), HOY, 'almuerzo', 13)];
+    expect(cumpleLaComida('registrar', tres, HOY, meta)).toBe(false);
+    expect(cumpleLaComida('registrar', [...tres, reg(arroz(), HOY, 'cena', 21)], HOY, meta)).toBe(true);
+    expect(cumpleLaComida('registrar', tres, HOY, meta, ['desayuno', 'almuerzo'])).toBe(true);
+  });
+
+  it('las calorías: a menos de un 10 % de la meta, de más o de menos; pasarse la apaga', () => {
+    const cerca = [reg(itemRapido('Todo', { kcal: 1850, proteina: 0, carbohidratos: 0, grasas: 0 }), HOY, 'cena', 21)];
+    expect(cumpleLaComida('calorias', cerca, HOY, meta)).toBe(true);
+    const mucho = [...cerca, reg(itemRapido('Postre', { kcal: 400, proteina: 0, carbohidratos: 0, grasas: 0 }), HOY, 'cena', 22)];
+    expect(cumpleLaComida('calorias', mucho, HOY, meta)).toBe(false);
+    expect(cumpleLaComida('calorias', [], HOY, meta)).toBe(false);
   });
 });
 
