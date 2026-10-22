@@ -4,6 +4,8 @@
 // especificación.
 
 const SeccionPerfil = (() => {
+  // Lo que anda solo con las dos apps vinculadas, con su ícono (antes en la sección de Ascent).
+  const CON_ASCENT = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['cuenta', 'amigos'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
     const { tx, numero, el, boton, icono } = u;
@@ -20,7 +22,7 @@ const SeccionPerfil = (() => {
       const cab = el('header', 'pf-cab');
       const inicial = el('div', 'pf-inicial', p.nombre.charAt(0));
       const nombres = el('div', 'pf-nombres');
-      nombres.append(el('h2', null, p.nombre), el('span', null, tx('perfil.cuentaTexto')));
+      nombres.append(el('h2', null, p.nombre));
       cab.append(inicial, nombres);
       cont.appendChild(cab);
 
@@ -66,6 +68,19 @@ const SeccionPerfil = (() => {
       const creditos = el('ul', 'pf-lista pf-creditos');
       ['usda', 'off', 'taco', 'estrellas'].forEach((f) => creditos.appendChild(el('li', null, tx('perfil.fuentes.' + f))));
       cont.appendChild(creditos);
+      // Al final, lo que anda solo si vinculas Ascent (lo pediste el 22/10): información, no una función de Perfil.
+      cont.appendChild(el('h3', 'pf-grupo', tx('perfil.informacion')));
+      cont.appendChild(el('p', 'pf-nota', tx('perfil.informacionAscent')));
+      const conAscent = el('ul', 'pf-lista pf-con-ascent');
+      CON_ASCENT.forEach(([k, ic]) => {
+        const li = el('li');
+        li.innerHTML = icono(ic);
+        const txt = el('div');
+        txt.append(el('b', null, tx(`ascent.funciones.${k}.titulo`)), el('span', null, tx(`ascent.funciones.${k}.texto`)));
+        li.appendChild(txt);
+        conAscent.appendChild(li);
+      });
+      cont.appendChild(conAscent);
       const salir = boton('pf-salir', tx('perfil.cerrarSesion'), () => {});
       cont.appendChild(salir);
       cont.appendChild(el('p', 'pf-version', 'Moss 1.0 (1)'));

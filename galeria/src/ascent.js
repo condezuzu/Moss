@@ -8,7 +8,6 @@
 const SeccionAscent = (() => {
   const PARTES = ['sueno', 'carga', 'comida'];
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
-  const FUNCIONES = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['cuenta', 'amigos'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
 
   // El planeta de Ascent con su órbita abierta, como en su ícono, y la luna de Moss: sin vincular
   // queda afuera de la órbita; al vincular, entra.
@@ -126,7 +125,7 @@ const SeccionAscent = (() => {
         cab.appendChild(el('p', 'as-bajada', tx('ascent.bajada')));
         cab.appendChild(boton('as-vincular', tx('ascent.vincular'), () => opciones.alVincular(true)));
         cab.appendChild(boton('as-conseguir', tx('ascent.conseguir'), () => {}));
-        cab.appendChild(el('p', 'as-misma', tx('ascent.mismaCuenta')));
+        cab.appendChild(el('p', 'as-misma', tx('ascent.permiso')));
       }
       return cab;
     }
@@ -296,39 +295,6 @@ const SeccionAscent = (() => {
       return c;
     }
 
-    function vivo(k) {
-      const c = opciones.conAscent() || { entreno: 0, descanso: 0, extra: 0 };
-      if (k === 'peso') {
-        const ult = Datos.PESADAS[Datos.PESADAS.length - 1];
-        const ayer = Fechas.sumarDias(Datos.HOY, -1);
-        const cuando = ult.fecha === Datos.HOY ? tx('ascent.cuando.hoy') : ult.fecha === ayer ? tx('ascent.cuando.ayer') : tx('ascent.cuando.dia', { dia: tx('fecha.dias.' + Fechas.diaDeLaSemana(ult.fecha)) });
-        return tx('ascent.funciones.peso.vivo', { kg: numero(ult.kg, 1), cuando });
-      }
-      if (k === 'calorias') return tx('ascent.funciones.calorias.vivo', { entreno: numero(c.entreno), descanso: numero(c.descanso) });
-      if (k === 'objetivo') return tx('ascent.funciones.objetivo.vivo.' + opciones.persona().perfil.objetivo);
-      if (k === 'cuenta') return tx('ascent.funciones.cuenta.vivo', { n: A.amigos });
-      if (k === 'proteina') return tx('ascent.funciones.proteina.vivo', { n: c.extra });
-      return tx('ascent.funciones.gimnasio.vivo');
-    }
-
-    function funciones() {
-      const ul = el('ul', 'as-funciones');
-      FUNCIONES.forEach(([k, ic]) => {
-        const li = el('li', 'as-funcion');
-        li.insertAdjacentHTML('beforeend', icono(ic));
-        const txt = el('div', 'as-funcion-txt');
-        txt.append(el('b', null, tx(`ascent.funciones.${k}.titulo`)), el('span', vinculada ? 'vivo' : null, vinculada ? vivo(k) : tx(`ascent.funciones.${k}.texto`)));
-        li.appendChild(txt);
-        if (!vinculada) {
-          const c = el('i', 'as-funcion-candado');
-          c.innerHTML = icono('candado');
-          li.appendChild(c);
-        }
-        ul.appendChild(li);
-      });
-      return ul;
-    }
-
     function pintar() {
       const scroll = cont.scrollTop;
       contenido.innerHTML = '';
@@ -337,10 +303,10 @@ const SeccionAscent = (() => {
       flecha.setAttribute('aria-label', tx('ascent.flecha'));
       contenido.appendChild(cabecera());
       if (vinculada) {
-        contenido.append(...[hoyEnAscent(), grupo('soloConLasDos'), cartaRecuperacion(), cartaEstancamiento(), cartaAnio(), grupo('mejorConectadas'), funciones()].filter(Boolean));
+        contenido.append(...[hoyEnAscent(), grupo('soloConLasDos'), cartaRecuperacion(), cartaEstancamiento(), cartaAnio()].filter(Boolean));
         contenido.appendChild(el('p', 'as-pie', tx('ascent.desvincular')));
       } else {
-        contenido.append(grupo('soloConLasDos'), cartaRecuperacion(), cartaEstancamiento(), cartaAnio(), grupo('mejorConectadas'), funciones());
+        contenido.append(grupo('soloConLasDos'), cartaRecuperacion(), cartaEstancamiento(), cartaAnio());
       }
       cont.scrollTop = scroll;
     }

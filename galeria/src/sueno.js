@@ -21,9 +21,24 @@ const SeccionSueno = (() => {
     function ponerCara(clave, cara) {
       caras[clave] = cara;
       try { localStorage.setItem(GUARDADO_CARAS, JSON.stringify(caras)); } catch (_) { /* no pasa nada */ }
-      s.cambiando = false;
-      pintar();
-      if (opciones.alCambiarCara) opciones.alCambiarCara();
+      // Nada desaparece de golpe: la cara elegida brilla, la tarjeta se cierra y entra la línea.
+      cerrarPregunta(() => {
+        s.cambiando = false;
+        pintar();
+        if (opciones.alCambiarCara) opciones.alCambiarCara();
+      }, cara);
+    }
+    /** La tarjeta de la mañana se cierra (alto, opacidad y márgenes) y después se rearma Sueño. */
+    function cerrarPregunta(despues, cara) {
+      const carta = cont.querySelector('.sn-manana');
+      const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!carta || quieto) { despues(); return; }
+      if (cara) carta.querySelectorAll('.sn-cara').forEach((b, i) => b.classList.toggle('elegida', i + 1 === cara));
+      carta.style.height = `${carta.offsetHeight}px`;
+      // Leer el alto otra vez fija el de partida: así la transición corre aunque no haya cuadros.
+      void carta.offsetHeight;
+      carta.classList.add('cerrando');
+      setTimeout(despues, cara ? 760 : 480);
     }
     const necesidad = Sueno.necesidad(Number(Datos.HOY.slice(0, 4)) - Datos.PERFIL.nacimiento);
 
@@ -107,7 +122,11 @@ const SeccionSueno = (() => {
         const c = el('div', 'sn-manana-hecha');
         c.innerHTML = caraSvg(cara);
         c.append(el('span', null, tx('sueno.manana.respondida', { cara: nombres[cara - 1].toLowerCase() })),
-          boton('sn-manana-cambiar', tx('sueno.manana.cambiar'), () => { s.cambiando = true; pintar(); }));
+          boton('sn-manana-cambiar', tx('sueno.manana.cambiar'), () => {
+            // La línea se apaga y la tarjeta entra creciendo (ver .sn-manana en la página).
+            c.classList.add('saliendo');
+            setTimeout(() => { s.cambiando = true; pintar(); }, 200);
+          }));
         return c;
       }
       const c = carta('sn-manana', null);
@@ -118,9 +137,11 @@ const SeccionSueno = (() => {
       });
       c.appendChild(fila);
       c.appendChild(boton('sn-ahora-no', tx('sueno.manana.ahoraNo'), () => {
-        if (cara) s.cambiando = false;
-        else ahoraNo.add(clave);
-        pintar();
+        cerrarPregunta(() => {
+          if (cara) s.cambiando = false;
+          else ahoraNo.add(clave);
+          pintar();
+        });
       }));
       return c;
     }

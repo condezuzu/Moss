@@ -16,6 +16,13 @@ SDK y la memoria no alcanza.
 
 - **Lo visual nuevo se aprueba primero en la galería**, con datos de mentira, y
   recién después se programa en la app.
+- **Nada aparece ni desaparece de golpe** (lo pediste el 22/10/2026): lo que
+  cambia en pantalla entra, sale o se acomoda con una animación (en la app,
+  `entering`, `exiting` y `layout` de Reanimated; en la galería, CSS), y respeta
+  Reducir movimiento.
+- **Moss es Moss**: no se presenta como «tu cuenta de Moss y Ascent». Ascent se
+  nombra solo donde se vincula (su sección, y lo que anda con las dos al final de
+  Perfil), y ni ahí hace falta.
 - **Sin mitos**:
   - nada de capítulos, historias, héroes ni figuras;
   - el nombre de la constelación va chico;

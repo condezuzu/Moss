@@ -310,7 +310,6 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
         {error && <Text style={s.error} accessibilityLiveRegion="polite">{t(`entrada.cuenta.errores.${error}`)}</Text>}
         {aviso && <Text style={s.aviso} accessibilityLiveRegion="polite">{aviso}</Text>}
       </Animated.View>
-      <Text style={s.chico}>{t('entrada.cuenta.ascent')}</Text>
       <Text style={[s.chico, s.legal]}>{t('entrada.cuenta.legal')}</Text>
       {sinCuenta && <Text style={[s.chico, s.legal]}>{t('entrada.cuenta.sinCuenta')}</Text>}
     </View>

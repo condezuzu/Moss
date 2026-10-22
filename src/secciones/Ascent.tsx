@@ -23,15 +23,6 @@ const C = {
   principal: '#7e8ca8', claro: '#c4c2ba',
 };
 
-const FUNCIONES: { clave: 'peso' | 'calorias' | 'objetivo' | 'cuenta' | 'proteina' | 'gimnasio'; icono: SFSymbol }[] = [
-  { clave: 'peso', icono: 'scalemass' },
-  { clave: 'calorias', icono: 'bolt' },
-  { clave: 'objetivo', icono: 'target' },
-  { clave: 'cuenta', icono: 'person.2' },
-  { clave: 'proteina', icono: 'dumbbell' },
-  { clave: 'gimnasio', icono: 'star' },
-];
-
 type Props = { subida: SharedValue<number>; abierta: boolean; abajo: number; alCerrar: () => void };
 
 export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
@@ -82,7 +73,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
             <Pressable onPress={pronto} hitSlop={8} accessibilityRole="link">
               <Text style={estilos.conseguir}>{t('ascent.conseguir')}</Text>
             </Pressable>
-            <Text style={estilos.misma}>{t('ascent.mismaCuenta')}</Text>
+            <Text style={estilos.misma}>{t('ascent.permiso')}</Text>
           </View>
 
           <Text style={estilos.grupo}>{t('ascent.soloConLasDos')}</Text>
@@ -124,20 +115,6 @@ export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
               ))}
             </View>
           </Carta>
-
-          <Text style={estilos.grupo}>{t('ascent.mejorConectadas')}</Text>
-          <View style={estilos.funciones}>
-            {FUNCIONES.map((f) => (
-              <View key={f.clave} style={estilos.funcion}>
-                <SymbolView name={f.icono} size={19} weight="light" tintColor={C.principal} />
-                <View style={estilos.crece}>
-                  <Text style={estilos.funcionTitulo}>{t(`ascent.funciones.${f.clave}.titulo`)}</Text>
-                  <Text style={estilos.funcionTexto}>{t(`ascent.funciones.${f.clave}.texto`)}</Text>
-                </View>
-                <SymbolView name="lock" size={14} weight="regular" tintColor={C.apagado} />
-              </View>
-            ))}
-          </View>
         </Animated.ScrollView>
         {aviso && (
           <Animated.View key={aviso.clave} entering={FadeInDown.duration(200)} exiting={FadeOut.duration(180)} style={[estilos.aviso, { bottom: abajo + 18 }]} pointerEvents="none">
@@ -200,10 +177,6 @@ const estilos = StyleSheet.create({
   dato: { width: '33.3%', gap: 5 },
   datoRaya: { fontFamily: 'Jost_400Regular', fontSize: 22, color: C.apagado },
   datoNombre: { fontFamily: 'Jost_400Regular', fontSize: 11, color: C.sub },
-  funciones: { borderTopWidth: 1, borderTopColor: C.lineaFuerte },
-  funcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.linea },
-  funcionTitulo: { fontFamily: 'Jost_400Regular', fontSize: 14.5, color: C.tinta },
-  funcionTexto: { marginTop: 3, fontFamily: 'Jost_400Regular', fontSize: 12.5, lineHeight: 17.5, color: 'rgba(232, 236, 246, 0.55)' },
   aviso: {
     position: 'absolute', alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999,
     backgroundColor: '#11141d', borderWidth: 1, borderColor: 'rgba(126, 140, 168, 0.35)',

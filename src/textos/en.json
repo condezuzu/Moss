@@ -44,7 +44,6 @@
       "entrar": "Sign in",
       "crear": "Create account",
       "olvide": "I forgot my password",
-      "ascent": "Already on Ascent? Use the same account.",
       "legal": "By continuing you accept the Terms and the Privacy Policy.",
       "errores": {
         "credenciales": "That email and password don’t match.",
@@ -702,7 +701,6 @@
   },
   "perfil": {
     "titulo": "Profile",
-    "cuentaTexto": "Your Moss and Ascent account",
     "tusDatos": "About you",
     "sexo": "Sex",
     "edad": "Age",
@@ -746,9 +744,9 @@
     "borrarCuenta": "Delete account",
     "borrar": "Delete",
     "borrarDatosTitulo": "Delete your Moss data?",
-    "borrarDatosTexto": "Your habits, food log, weight, measurements and targets are deleted, on this phone and in your account. The account stays, and Ascent isn’t touched.",
+    "borrarDatosTexto": "Your habits, food log, weight, measurements and targets are deleted, on this phone and in your account. The account stays.",
     "borrarCuentaTitulo": "Delete your account?",
-    "borrarCuentaTexto": "Your account is the same in Moss and Ascent: deleting it deletes the data of both, and it can’t be undone.",
+    "borrarCuentaTexto": "Your account and everything saved with it are deleted, in any app where you sign in with this account. It can’t be undone.",
     "cerrarSesionTitulo": "Sign out?",
     "cerrarSesionTexto": "What’s on this phone is deleted; your data stays in your account.",
     "errorBorrar": "That didn’t work. Check your connection and try again.",
@@ -760,6 +758,8 @@
     },
     "tusDatosNota": "Changing your details doesn’t change your targets: each weekly check-in measures what you really burn.",
     "creditos": "Credits",
+    "informacion": "More information",
+    "informacionAscent": "If you use Ascent and link both apps, this works on its own:",
     "fuentes": {
       "usda": "Foods: USDA FoodData Central (public domain)",
       "off": "Products: Open Food Facts, under the ODbL",
@@ -892,14 +892,14 @@
   "ascent": {
     "flecha": "Open Ascent",
     "volver": "Back to the sky",
-    "etiqueta": "Moss and Ascent",
+    "etiqueta": "If you use Ascent",
     "titulo": "With Ascent",
     "sinVincular": "Not linked",
     "vinculadaDesde": "Linked since {fecha}",
     "bajada": "Link the two apps and your sleep and food meet your training.",
     "vincular": "Link with Ascent",
     "conseguir": "Don’t have Ascent? Find it on the App Store",
-    "mismaCuenta": "It’s the same account. Linking lets the two apps share your data, and you can undo it in Profile.",
+    "permiso": "Linking lets the two apps share your data, and you can undo it in Profile.",
     "soloConLasDos": "Only with both",
     "mejorConectadas": "Fine alone, better linked",
     "conAscent": "With Ascent",
@@ -1013,8 +1013,8 @@
         }
       },
       "cuenta": {
-        "titulo": "One account, your friends",
-        "texto": "The same account and the same friends list in both.",
+        "titulo": "Your friends",
+        "texto": "The same friends list in both apps.",
         "vivo": "{n} friends from Ascent"
       },
       "proteina": {

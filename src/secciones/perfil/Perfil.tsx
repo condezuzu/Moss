@@ -3,6 +3,7 @@
 // Moss. Las metas están en Progreso, con la estrategia.
 
 import Constants from 'expo-constants';
+import type { SFSymbol } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View, type ViewStyle } from 'react-native';
 
@@ -24,6 +25,16 @@ import { EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exportarTodo } from './cuenta';
 
 type Fila = { clave: string; titulo: string; valor?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion' };
+
+/** Lo que anda solo con las dos apps vinculadas (antes en la sección de Ascent). */
+const CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'cuenta' | 'proteina' | 'gimnasio'; icono: SFSymbol }[] = [
+  { clave: 'peso', icono: 'scalemass' },
+  { clave: 'calorias', icono: 'bolt' },
+  { clave: 'objetivo', icono: 'target' },
+  { clave: 'cuenta', icono: 'person.2' },
+  { clave: 'proteina', icono: 'dumbbell' },
+  { clave: 'gimnasio', icono: 'star' },
+];
 
 export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
   const e = useEstado();
@@ -82,15 +93,12 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   return (
     <View style={{ width: ancho }}>
       <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
-        {/* Como en la galería: la inicial en oro, la cuenta y de qué es. */}
+        {/* Como en la galería: la inicial en oro y la cuenta. */}
         <View style={st.cuenta} accessibilityRole="header">
           <View style={st.inicial}>
             <Text style={st.inicialTexto}>{(correo || 'M').charAt(0).toUpperCase()}</Text>
           </View>
-          <View style={st.nombres}>
-            <Text style={st.correo} numberOfLines={1} ellipsizeMode="middle">{correo || t('perfil.sinCuenta')}</Text>
-            <Text style={st.deQue}>{t('perfil.cuentaTexto')}</Text>
-          </View>
+          <Text style={st.correo} numberOfLines={1} ellipsizeMode="middle">{correo || t('perfil.sinCuenta')}</Text>
         </View>
         {grupos.filter(([, filas]) => filas.length).map(([titulo, filas]) => (
           <View key={titulo}>
@@ -116,6 +124,20 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         <View style={st.lista}>
           {(['usda', 'off', 'taco', 'estrellas'] as const).map((f, i) => (
             <Text key={f} style={[st.credito, i > 0 && st.filaSeparada]}>{t(`perfil.fuentes.${f}`)}</Text>
+          ))}
+        </View>
+        {/* Al final, lo que anda solo si vinculas Ascent: información, no una función de Perfil. */}
+        <Text style={st.grupo}>{t('perfil.informacion')}</Text>
+        <Text style={st.informacion}>{t('perfil.informacionAscent')}</Text>
+        <View style={st.lista}>
+          {CON_ASCENT.map((f, i) => (
+            <View key={f.clave} style={[st.funcion, i > 0 && st.filaSeparada]}>
+              <Icono nombre={f.icono} tam={18} color="rgba(239, 230, 207, 0.6)" peso="light" />
+              <View style={{ flex: 1 }}>
+                <Text style={st.funcionTitulo}>{t(`ascent.funciones.${f.clave}.titulo`)}</Text>
+                <Text style={st.funcionTexto}>{t(`ascent.funciones.${f.clave}.texto`)}</Text>
+              </View>
+            </View>
           ))}
         </View>
         {correo !== null && (
@@ -262,9 +284,7 @@ const st = StyleSheet.create({
     ...((Platform.OS === 'web' ? { backgroundImage: ORO_DE_LA_INICIAL } : { experimental_backgroundImage: ORO_DE_LA_INICIAL }) as ViewStyle),
   },
   inicialTexto: { fontFamily: letras.numero, fontSize: 24, color: '#1a1406' },
-  nombres: { flex: 1, gap: 3 },
-  correo: { fontFamily: letras.numeroMedio, fontSize: 20, color: colores.pergamino },
-  deQue: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
+  correo: { flex: 1, fontFamily: letras.numeroMedio, fontSize: 20, color: colores.pergamino },
   grupo: { marginTop: 26, marginBottom: 8, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   lista: { borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(8, 12, 26, 0.72)' },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 16 },
@@ -272,6 +292,10 @@ const st = StyleSheet.create({
   filaTitulo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaValor: { fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)' },
   peligro: { color: '#f0a58a' },
+  informacion: { marginBottom: 10, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
+  funcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
+  funcionTitulo: { fontFamily: letras.texto, fontSize: 14.5, color: colores.pergamino },
+  funcionTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.55)' },
   credito: { paddingVertical: 12, paddingHorizontal: 16, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.65)' },
   salir: { marginTop: 26 },
   version: { marginTop: 18, textAlign: 'center', fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.4)' },

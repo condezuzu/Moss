@@ -576,17 +576,25 @@ section.item p { margin: 0; max-width: 64ch; }
 .sn-etapa small { grid-column: 1 / -1; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.45); }
 .sn-nota { margin: 6px 0 0; font: 400 12px/1.45 var(--texto); color: rgba(239, 230, 207, 0.5); }
 /* La pregunta de la mañana: cinco caras de línea; la elegida en oro. Contestada, queda una línea. */
-.sn-manana { padding-bottom: 10px; }
+.sn-manana { padding-bottom: 10px; overflow: hidden; animation: sn-crece 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: height 0.42s cubic-bezier(0.4, 0, 0.2, 1) 0.3s, opacity 0.32s ease 0.3s, margin 0.42s ease 0.3s, padding 0.42s ease 0.3s, border-color 0.42s ease 0.3s; }
+/* Al contestar: la cara elegida brilla un momento y la tarjeta se cierra; lo de abajo sube con ella. */
+.sn-manana.cerrando { height: 0 !important; opacity: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-color: transparent; }
+.sn-manana.cerrando .sn-cara:not(.elegida) { opacity: 0.25; transition: opacity 0.25s ease; }
+@keyframes sn-crece { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 280px; } }
+@keyframes sn-aparece { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .sn-manana-pregunta { margin: 2px 0 14px; font: 500 19px/1.2 var(--texto); color: var(--tinta); }
 .sn-caras { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
 .sn-cara { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 7px; padding: 8px 0 6px; border: 0; border-radius: 14px; background: none; color: rgba(239, 230, 207, 0.62); font: 400 11px/1.1 var(--texto); }
 .sn-cara:hover, .sn-cara:focus-visible { background: rgba(239, 230, 207, 0.05); }
 .sn-cara-dibujo { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
 .sn-cara-dibujo .ojo { fill: currentColor; stroke: none; }
+.sn-cara { transition: color 0.25s ease, background 0.25s ease, opacity 0.25s ease; }
 .sn-cara.elegida { color: var(--oro-claro); }
 .sn-cara.elegida .sn-cara-dibujo { filter: drop-shadow(0 0 6px rgba(232, 196, 106, 0.55)); }
 .sn-ahora-no { appearance: none; cursor: pointer; display: block; margin: 10px auto 0; padding: 6px 12px; border: 0; background: none; color: rgba(239, 230, 207, 0.45); font: 400 12.5px/1 var(--texto); }
-.sn-manana-hecha { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; color: rgba(239, 230, 207, 0.72); font: 400 14px/1.2 var(--texto); }
+.sn-manana-hecha { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; color: rgba(239, 230, 207, 0.72); font: 400 14px/1.2 var(--texto); animation: sn-aparece 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; transition: opacity 0.2s ease, transform 0.2s ease; }
+.sn-manana-hecha.saliendo { opacity: 0; transform: translateY(-4px); }
 .sn-manana-hecha .sn-cara-dibujo { width: 22px; height: 22px; color: var(--oro-claro); }
 .sn-manana-hecha span { flex: 1; }
 .sn-manana-cambiar { appearance: none; cursor: pointer; padding: 4px 2px; border: 0; background: none; color: var(--oro-claro); font: 400 13px/1 var(--texto); }
@@ -634,6 +642,11 @@ section.item p { margin: 0; max-width: 64ch; }
 .pf-lista li.ok b { color: var(--salvia); }
 .pf-lista li.accion b { color: var(--oro-claro); }
 .pf-lista li.peligro > span { color: #f0a58a; }
+.pf-nota { margin: 0 4px 10px; font: 400 13px/18px var(--texto); color: rgba(239, 230, 207, 0.6); }
+.pf-con-ascent li { grid-template-columns: 18px minmax(0, 1fr); gap: 14px; padding: 12px 16px; }
+.pf-con-ascent li svg { width: 18px; height: 18px; color: rgba(239, 230, 207, 0.6); }
+.pf-con-ascent b { display: block; font: 400 14.5px/1.2 var(--texto); color: var(--tinta); }
+.pf-con-ascent span { display: block; margin-top: 3px; font: 400 12.5px/17px var(--texto); color: rgba(239, 230, 207, 0.55); }
 .pf-creditos li { display: block; padding: 12px 16px; font: 400 12.5px/17px var(--texto); color: rgba(239, 230, 207, 0.65); }
 .pf-salir { appearance: none; cursor: pointer; display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(8, 12, 26, 0.6); color: rgba(239, 230, 207, 0.75); font: 400 15px/1 var(--texto); }
 .pf-version { margin: 14px 0 0; text-align: center; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.35); }
@@ -1366,6 +1379,7 @@ section.item p { margin: 0; max-width: 64ch; }
   .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .mas-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .in-macro-barra i, .in-camino-pista i, .in-camino-marca, .velo-pestanas, .pestanas, .in-fila-orden { transition: none; }
   .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
   .as-flecha svg { animation: none; }
+  .sn-manana, .sn-manana-hecha, .sn-cara { animation: none; transition: none; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
   .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: none; box-shadow: 0 0 0 2px var(--c); }
@@ -1425,7 +1439,7 @@ section.item p { margin: 0; max-width: 64ch; }
           </ul></li>
         <li><b>Las medidas</b>: cintura, cuello, cadera, brazo, pecho y muslo, en centímetros. El tutorial es el dibujo: al tocar un campo, la cinta se marca en la figura y abajo dice cómo tomarla. «Cómo medir» despliega los consejos de siempre (la cinta sobre la piel, al final de una exhalación, dos veces).</li>
         <li><b>La grasa corporal</b> se estima con el método de la Marina de EE. UU. y se muestra como un rango chico, con el aviso de que es una estimación (sección 4).</li>
-        <li><b>Perfil</b> (antes Ajustes): tus datos, las preferencias, Salud y Ascent, exportar y borrar (los datos de Moss o la cuenta, que es la misma de Ascent), y los créditos: de dónde salen los alimentos (USDA FoodData Central, Open Food Facts y TACO) y las estrellas, como en la app. Las metas pasaron a Progreso, con la estrategia.</li>
+        <li><b>Perfil</b> (antes Ajustes): tus datos, las preferencias, Salud y Ascent, exportar y borrar (los datos de Moss o la cuenta), los créditos y, al final, «Información adicional»: lo que anda solo si vinculás Ascent: de dónde salen los alimentos (USDA FoodData Central, Open Food Facts y TACO) y las estrellas, como en la app. Las metas pasaron a Progreso, con la estrategia.</li>
         <li><b>La entrada</b> sigue igual: la frase, las dos diapositivas, la cuenta y el cuestionario. No hay tutoriales por sección.</li>
       </ul>
     </section>
@@ -1624,7 +1638,7 @@ section.item p { margin: 0; max-width: 64ch; }
       <ul class="lista">
         <li><b>El mismo cielo, sin caja</b> (lo pediste el 22/10): al subir, el cielo sube con el dedo, más despacio porque está más lejos, y lo de hoy (la constelación, sus nombres y los botones) se apaga en la primera mitad del gesto. Ascent queda sobre el mismo cielo, apenas oscurecido para leer, como «Tu universo».</li>
         <li><b>Tiene la cara de Ascent</b>: su azul gris y su crema, esquinas vivas y una línea arriba de cada parte en vez de cajas. Arriba está el planeta de Ascent con su órbita abierta, como en su ícono, y la luna de Moss: sin vincular queda afuera, y al vincular entra a la órbita.</li>
-        <li><b>Sin vincular</b>: «Vincular con Ascent», la App Store para quien no la tiene y que es la misma cuenta. Abajo, cada función muestra vacío lo que va a mostrar (el anillo punteado, la tabla con rayas), con un candado chico. Así se ve qué te perdés sin que parezca roto.</li>
+        <li><b>Sin vincular</b>: «Vincular con Ascent», la App Store para quien no la tiene y que vincular es dar permiso, y se quita desde Perfil. Abajo, cada función muestra vacío lo que va a mostrar (el anillo punteado, la tabla con rayas), con un candado chico. Así se ve qué te perdés sin que parezca roto.</li>
         <li><b>Vinculada</b>, con lo de hoy de la persona de mentira:
           <ul>
             <li><b>Hoy en Ascent</b>: entrenó piernas a las 18:40.</li>
@@ -1669,7 +1683,7 @@ section.item p { margin: 0; max-width: 64ch; }
             <li>En «Tu comida, a tu medida», lo que se come vuela hasta una luna que se llena. Los arcos de alrededor son proteína, carbohidratos y grasas.</li>
           </ul>
           La frase y las diapositivas no se pueden saltear durante 2,5 s: el aro del botón se llena y recién ahí se puede tocar, como el circulito de Ascent. Con «Solas» pasan sin tocar.</li>
-        <li><b>La cuenta</b> se abre con Apple o con correo y contraseña. Con correo y contraseña entra cualquiera que ya use Ascent, porque es la misma cuenta. Los campos son una maqueta: no se escribe nada.</li>
+        <li><b>La cuenta</b> se abre con Apple o con correo y contraseña. Moss no la presenta como la cuenta de Ascent: es la tuya. Los campos son una maqueta: no se escribe nada.</li>
         <li><b>El cuestionario</b> va justo después:
           <ul>
             <li>Primero Salud: si la conectás, la edad, el sexo, la altura y el peso vienen completos y marcados «de Salud».</li>
