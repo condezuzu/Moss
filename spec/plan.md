@@ -367,6 +367,30 @@ Desde el cambio 9 (22/10/2026) la pantalla de comida se repartió en secciones
     - lo del reloj de noche (la frecuencia, la variabilidad SDNN y la respiración);
     - los hábitos «dormir X horas» y «dormirte antes de las X» (D19).
 - **Qué sale del teléfono:** si el hábito se cumplió y el número que se muestra. Con Ascent vinculada, también el resumen del sueño y el peso.
+- **Lo que pediste el 22/10/2026:**
+  - **La deuda segunda** y **la pregunta de la mañana** con cinco caras: hechas en
+    la galería y en la app (la pregunta, en la app, llega con las noches propias
+    de abajo).
+  - **Medir el sueño solo con el iPhone**, muy confiable y sin anillos ni
+    relojes: investigar cómo lo hacen las apps que andan sin reloj, qué permite
+    iOS y qué validan los estudios; proponer la combinación más confiable,
+    calibrarla por persona, mostrar de dónde sale y qué tan seguro es cada dato,
+    con una confirmación de un toque a la mañana («¿Dormiste de 00:30 a
+    08:10?»), y probarla contra un reloj. Todo en [`sueno.md`](sueno.md), con
+    fuentes.
+  - **Las noches propias de Moss** (la cara, la hora confirmada o corregida y la
+    estimación del iPhone), guardadas y sincronizadas: con el teléfono no se
+    pierden al cambiarlo.
+  - **Relojes y anillos como beneficio:** la app anda bien solo con el teléfono
+    y mejor con un aparato.
+    - Niveles de precisión: solo el teléfono, el Apple Watch y los demás relojes y
+      anillos (Oura, Whoop, Garmin, Fitbit, Samsung y otros).
+    - Qué escribe cada marca en Apple Health y qué conexiones propias valen la
+      pena; Apple Health primero, y las conexiones directas solo donde den algo
+      que Salud no tiene.
+    - Una sola fuente por noche, la más precisa, sin contar dos veces.
+    - En Sueño, la fuente y la precisión de cada dato; en Perfil, «Aparatos», con
+      lo que mejora cada uno.
 
 **Sale:** hábitos que se cumplen solos, probados con los datos reales de tu
 teléfono.
@@ -452,6 +476,28 @@ app abre en Inicio. En Hábitos, el calendario y las estadísticas son «Tu mes�
   - cuenta para la revisión;
   - lo que pide Apple para salud y comida (ver `nutricion.md`).
 - TestFlight y envío.
+
+## Rendimiento y PRs (con las dos apps vinculadas; pedido el 22/10/2026)
+
+Con el sueño y la comida de Moss y la carga, las series por músculo y las marcas
+de Ascent:
+
+1. **Rendimiento esperado hoy**, junto a la Recuperación: el sueño de anoche y
+   de los últimos días, lo comido ayer y hoy (sobre todo los carbohidratos y las
+   calorías) y la carga reciente.
+2. **Días para buscar un PR:** Moss aprende en qué condiciones lograste tus marcas
+   (sueño, comida, días de descanso de ese músculo, carga de la semana) y avisa
+   cuando hoy se parece: «Buen día para intentar marca en sentadilla».
+3. **Por músculo:** qué grupos están descansados y cuáles no, con las series por
+   músculo de Ascent.
+
+Reglas: es una predicción, nunca una garantía; empieza con reglas generales
+basadas en estudios y se vuelve personal con las semanas, mostrando cuánta
+historia tiene y qué tan segura es. La fórmula y sus fuentes van en
+[`ascent.md`](ascent.md). Se ve en Ascent antes de entrenar, junto a la
+Recuperación, y en Moss en Sueño y en la sección de Ascent; sin vincular,
+bloqueado con el botón para vincular. Las cuentas van en el dominio, con tests, y
+la galería las muestra; los datos llegan con la conexión con Ascent.
 
 ## Después de la v1
 
