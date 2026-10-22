@@ -10,6 +10,8 @@
 // - que las medidas del cuerpo y la estrategia del perfil (0003_progreso.sql) también;
 // - que lo comido guarda si fue a ojo y que el catálogo lo lee cualquier usuario y no lo escribe
 //   nadie desde la app (0004_medir.sql);
+// - que las noches propias (la cara de la mañana y la hora sin reloj) siguen las mismas reglas
+//   (0005_noches.sql);
 // - que borrar la cuenta borra todo en cascada;
 // - que el teléfono baja el catálogo del servidor;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
@@ -160,6 +162,25 @@ comprobar(
 comprobar(!(await falla(A, `insert into moss.metas (desde, kcal, proteina, carbohidratos, grasas, gasto, motivo, momento) values ('2026-10-22', 2600, 150, 320, 78, 3000, 'objetivo', now())`)),
   'las metas aceptan el motivo «objetivo» (un cambio de la estrategia)');
 
+// Las noches propias (0005_noches.sql): la cara de la mañana y la hora del sueño sin reloj.
+await como(A, `insert into moss.noches (fecha, cara, actualizado) values ('2026-10-21', 4, '2026-10-21T08:00:00Z')`);
+comprobar((await como(B, 'select * from moss.noches')).rows.length === 0, 'las noches: nadie ve las de otro');
+comprobar(
+  await falla(A, `insert into moss.noches (fecha, cara) values ('2026-10-20', 6)`)
+    && await falla(A, `insert into moss.noches (fecha, dormirse) values ('2026-10-19', '2026-10-19T03:00:00Z')`)
+    && await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza) values ('2026-10-18', '2026-10-18T03:00:00Z', '2026-10-18T03:20:00Z', 'confirmada', 'media')`)
+    && await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza) values ('2026-10-17', '2026-10-17T03:00:00Z', '2026-10-17T11:00:00Z', 'adivinada', 'media')`),
+  'las noches: la cara va de 1 a 5, las dos horas van juntas con su origen, y una noche dura de 1 a 18 horas',
+);
+const subirNoche = (cara, dormirse, despertar, origen, actualizado) => como(A, `
+  insert into moss.noches (fecha, cara, dormirse, despertar, origen, confianza, actualizado) values ('2026-10-21', $1, $2, $3, $4, case when $4::text is null then null else 'media' end, $5)
+  on conflict (usuario, fecha) do update set cara = excluded.cara, dormirse = excluded.dormirse, despertar = excluded.despertar,
+    origen = excluded.origen, confianza = excluded.confianza, actualizado = excluded.actualizado`, [cara, dormirse, despertar, origen, actualizado]);
+await subirNoche(2, null, null, null, '2026-10-21T07:00:00Z');
+comprobar(Number((await como(A, 'select cara from moss.noches')).rows[0].cara) === 4, 'las noches: una más vieja no pisa');
+await subirNoche(4, '2026-10-21T03:30:00Z', '2026-10-21T11:10:00Z', 'confirmada', '2026-10-21T09:00:00Z');
+comprobar((await como(A, 'select origen from moss.noches')).rows[0].origen === 'confirmada', 'las noches: la hora confirmada, más nueva, gana');
+
 // Pesado o a ojo, y el catálogo del servidor (0004_medir.sql).
 await como(A, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas, estimado) values ('r3', '2026-10-22', 'almuerzo', now(), 'base', 'Arroz', 260, 5, 57, 0.6, true)`);
 comprobar(
@@ -225,8 +246,10 @@ comprobar((await como(A, 'select * from moss.habitos')).rows.length === 1, '«bo
 comprobar((await como(B, 'select * from moss.habitos')).rows.length === 0, '«borrar mis datos» borra lo propio');
 comprobar((await como(B, 'select * from moss.registros')).rows.length === 0 && (await como(A, 'select * from moss.registros')).rows.length === 1, '«borrar mis datos» también borra lo comido, y solo lo propio');
 await como(B, `insert into moss.medidas (fecha, cuello) values ('2026-10-21', 34)`);
+await como(B, `insert into moss.noches (fecha, cara) values ('2026-10-21', 3)`);
 await como(B, 'select moss.borrar_mis_datos()');
 comprobar((await como(B, 'select * from moss.medidas')).rows.length === 0 && (await como(A, 'select * from moss.medidas')).rows.length === 1, '«borrar mis datos» también borra las medidas, y solo las propias');
+comprobar((await como(B, 'select * from moss.noches')).rows.length === 0 && (await como(A, 'select * from moss.noches')).rows.length === 1, '«borrar mis datos» también borra las noches, y solo las propias');
 comprobar(await falla('anon', 'select moss.borrar_mis_datos()'), 'sin sesión no se puede borrar nada');
 
 // ------------------------------------------------------------ 6. Borrar la cuenta
@@ -241,7 +264,7 @@ await db.exec(`delete from auth.users where id = '${A}'`);
 const quedan = (await db.query(`select (select count(*) from moss.habitos) + (select count(*) from moss.marcas) + (select count(*) from moss.dias)
   + (select count(*) from moss.periodos) + (select count(*) from moss.metas) + (select count(*) from moss.pesos)
   + (select count(*) from moss.registros) + (select count(*) from moss.recetas) + (select count(*) from moss.propios)
-  + (select count(*) from moss.favoritos) + (select count(*) from moss.agua) + (select count(*) from moss.medidas) as n`)).rows[0].n;
+  + (select count(*) from moss.favoritos) + (select count(*) from moss.agua) + (select count(*) from moss.medidas) + (select count(*) from moss.noches) as n`)).rows[0].n;
 comprobar(Number(quedan) === 0, 'borrar la cuenta borra todo en cascada');
 
 // ------------------------------------------------------------ 7. La app contra esta base
@@ -427,6 +450,18 @@ comprobar(
   'app: las medidas (sin lo imposible), el peso meta, el día del control, la semana repartida y las metas del reparto nuevo llegan al otro teléfono',
 );
 
+// Sueño: la cara de la mañana y la hora confirmada de una noche sin reloj llegan al otro teléfono.
+pasa();
+a.almacen.ponerCara(hoyA, 4);
+a.almacen.ponerHoraDeLaNoche(hoyA, { dormirse: new Date(Date.parse(`${hoyA}T03:30:00Z`)).toISOString(), despertar: new Date(Date.parse(`${hoyA}T11:10:00Z`)).toISOString(), origen: 'confirmada', confianza: 'media' });
+await a.sinc.vuelta();
+await b.sinc.vuelta();
+const nocheDeB = b.almacen.estado().noches.get(hoyA);
+comprobar(
+  nocheDeB?.cara === 4 && nocheDeB?.hora?.origen === 'confirmada' && nocheDeB?.hora?.confianza === 'media' && !(await pendiente(b)),
+  'app: la cara de la mañana y la hora confirmada de la noche llegan al otro teléfono, sin volver a subir',
+);
+
 // Los dos sin conexión el resto del día, cada uno marca algo distinto; se sincronizan al otro día.
 pasa();
 a.almacen.marcar('agua', true, 'toque');
@@ -483,7 +518,7 @@ comprobar(
 // Lo ya bajado no vuelve a bajar: con los dos teléfonos al día, se hace viejo todo lo de la cuenta y se pide lo nuevo.
 await b.sinc.vuelta();
 await db.exec(`set session_replication_role = replica;
-  ${['perfiles', 'habitos', 'marcas', 'dias', 'metas', 'pesos', 'registros', 'recetas', 'propios', 'favoritos', 'agua', 'medidas'].map((t) => `update moss.${t} set recibido = now() - interval '1 hour';`).join(' ')}
+  ${['perfiles', 'habitos', 'marcas', 'dias', 'metas', 'pesos', 'registros', 'recetas', 'propios', 'favoritos', 'agua', 'medidas', 'noches'].map((t) => `update moss.${t} set recibido = now() - interval '1 hour';`).join(' ')}
   set session_replication_role = origin;`);
 await a.sinc.vuelta();
 const vacia = a.espia.bajada.datos;
@@ -494,7 +529,7 @@ await a.sinc.vuelta();
 const nueva = a.espia.bajada.datos;
 comprobar(
   !vacia.habitos.length && !vacia.marcas.length && !vacia.dias.length && !vacia.perfil && !vacia.semilla && !vacia.metas.length && !vacia.pesos.length
-    && !vacia.registros.length && !vacia.agua.length && !vacia.recetas.length && !vacia.favoritos.length && !vacia.medidas.length
+    && !vacia.registros.length && !vacia.agua.length && !vacia.recetas.length && !vacia.favoritos.length && !vacia.medidas.length && !vacia.noches.length
     && !nueva.habitos.length && nueva.marcas.length === 1 && nueva.dias.length === 1 && hechosDeHoy(a) === 'meditar,agua' && hechosDeHoy(b) === 'meditar,agua',
   'app: al volver, baja solo lo que cambió desde la última vez',
 );

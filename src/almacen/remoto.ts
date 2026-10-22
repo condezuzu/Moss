@@ -1,5 +1,5 @@
 // Supabase tal como lo usa la sincronización: subir lo pendiente y bajar lo que cambió. Las filas
-// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0004_medir.sql). El usuario no viaja:
+// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0005_noches.sql). El usuario no viaja:
 // lo pone la base con la sesión, y RLS no deja ver ni tocar lo de nadie más.
 
 import type { Periodo } from '@/dominio/constelaciones';
@@ -9,6 +9,7 @@ import type { Dia, Marca } from '@/dominio/dias';
 import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
+import { esCara, type Confianza, type NochePropia, type OrigenDeNoche } from '@/dominio/sueno';
 import { SECUNDARIOS, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua, type Valores } from '@/dominio/registros';
 import type { supabase } from '@/lib/supabase';
 import type { Remoto } from './sincronizar';
@@ -64,6 +65,10 @@ const filaDe = {
   medidas: (m: Medidas) => ({
     fecha: m.fecha, cintura: m.cintura ?? null, cuello: m.cuello ?? null, cadera: m.cadera ?? null, brazo: m.brazo ?? null, pecho: m.pecho ?? null,
     muslo: m.muslo ?? null, borrado: !!m.borrado, actualizado: m.actualizado,
+  }),
+  noches: (n: NochePropia) => ({
+    fecha: n.fecha, cara: n.cara ?? null, dormirse: n.hora?.dormirse ?? null, despertar: n.hora?.despertar ?? null,
+    origen: (n.hora?.origen ?? null) as OrigenDeNoche | null, confianza: (n.hora?.confianza ?? null) as Confianza | null, borrado: !!n.borrado, actualizado: n.actualizado,
   }),
 };
 
@@ -122,6 +127,11 @@ const deFila = {
   medidas: (f: Filas['medidas']): Medidas => conBorrado({
     fecha: f.fecha, ...Object.fromEntries(SITIOS.flatMap((s) => (f[s] === null ? [] : [[s, Number(f[s])]]))), actualizado: hora(f.actualizado),
   }, f.borrado),
+  noches: (f: Filas['noches']): NochePropia => conBorrado({
+    fecha: f.fecha, ...(esCara(f.cara) ? { cara: f.cara } : {}),
+    ...(f.dormirse && f.despertar && f.origen && f.confianza ? { hora: { dormirse: hora(f.dormirse), despertar: hora(f.despertar), origen: f.origen, confianza: f.confianza } } : {}),
+    actualizado: hora(f.actualizado),
+  }, f.borrado),
 };
 
 export function remotoSupabase(cliente: Cliente): Remoto {
@@ -161,6 +171,7 @@ export function remotoSupabase(cliente: Cliente): Remoto {
       poner('favoritos', c.favoritos.map(filaDe.favorito), 'usuario,fuente,ref');
       poner('agua', c.agua.map(filaDe.agua), 'usuario,id');
       poner('medidas', c.medidas.map(filaDe.medidas), 'usuario,fecha');
+      poner('noches', c.noches.map(filaDe.noches), 'usuario,fecha');
       const errores = (await Promise.all(pedidos)).flatMap((r) => (r.error ? [r.error.message] : []));
       if (errores.length) throw new Error(errores.join('; '));
     },
@@ -170,13 +181,14 @@ export function remotoSupabase(cliente: Cliente): Remoto {
       const nuevas = (q: Consulta) => (corte ? q.gt('recibido', corte) : q);
       // La primera vez, de lo que tiene día solo baja lo reciente: lo viejo queda en la cuenta.
       const recientes = (q: Consulta) => (corte ? nuevas(q) : q.gte('dia', comidaDesde));
-      const [registros, recetas, propios, favoritos, agua, medidas] = await Promise.all([
+      const [registros, recetas, propios, favoritos, agua, medidas, noches] = await Promise.all([
         todas<Recibida<Filas['registro']>>('registros', ['dia', 'id'], recientes),
         todas<Recibida<Filas['receta']>>('recetas', ['id'], nuevas),
         todas<Recibida<Filas['propio']>>('propios', ['id'], nuevas),
         todas<Recibida<Filas['favorito']>>('favoritos', ['fuente', 'ref'], nuevas),
         todas<Recibida<Filas['agua']>>('agua', ['dia', 'id'], recientes),
         todas<Recibida<Filas['medidas']>>('medidas', ['fecha'], nuevas),
+        todas<Recibida<Filas['noches']>>('noches', ['fecha'], nuevas),
       ]);
       const [perfiles, habitos, periodos, marcas, dias, logros, metas, pesos] = await Promise.all([
         todas<FilaPerfil>('perfiles', ['usuario'], nuevas),
@@ -190,7 +202,7 @@ export function remotoSupabase(cliente: Cliente): Remoto {
         todas<Recibida<Filas['peso']>>('pesos', ['fecha'], nuevas),
       ]);
       const perfil = perfiles[0];
-      const recibidas = [...perfiles, ...habitos, ...marcas, ...dias, ...metas, ...pesos, ...registros, ...recetas, ...propios, ...favoritos, ...agua, ...medidas].map((f) => hora(f.recibido));
+      const recibidas = [...perfiles, ...habitos, ...marcas, ...dias, ...metas, ...pesos, ...registros, ...recetas, ...propios, ...favoritos, ...agua, ...medidas, ...noches].map((f) => hora(f.recibido));
       const hasta = recibidas.reduce<string | null>((ultima, r) => (!ultima || r > ultima ? r : ultima), desde);
       return {
         hasta,
@@ -210,6 +222,7 @@ export function remotoSupabase(cliente: Cliente): Remoto {
           favoritos: favoritos.map(deFila.favorito),
           agua: agua.map(deFila.agua),
           medidas: medidas.map(deFila.medidas),
+          noches: noches.map(deFila.noches),
         },
       };
     },

@@ -47,6 +47,11 @@ async function migrar(db: SQLite.SQLiteDatabase) {
     await db.execAsync('CREATE TABLE medidas (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
     version = 3;
   }
+  if (version < 4) {
+    // Las noches propias (la cara de la mañana y la hora sin reloj), igual: una por noche.
+    await db.execAsync('CREATE TABLE noches (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
+    version = 4;
+  }
   await db.execAsync(`PRAGMA user_version = ${version}`);
 }
 
@@ -73,10 +78,11 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
     return (await db.getAllAsync<{ datos: string }>(`SELECT datos FROM ${coleccion}${donde}`, ...parametros)).map((f) => JSON.parse(f.datos) as DeComida[C]);
   }
   async function leerTodas(filtro: { desde?: ClaveDia; cambio?: number }): Promise<ListasDeComida> {
-    const [registros, recetas, propios, favoritos, agua, medidas] = await Promise.all([
+    const [registros, recetas, propios, favoritos, agua, medidas, noches] = await Promise.all([
       leer('registros', filtro), leer('recetas', filtro), leer('propios', filtro), leer('favoritos', filtro), leer('agua', filtro), leer('medidas', filtro),
+      leer('noches', filtro),
     ]);
-    return { registros, recetas, propios, favoritos, agua, medidas };
+    return { registros, recetas, propios, favoritos, agua, medidas, noches };
   }
   /** Con el número de cambio que se le pase: 0 es lo que bajó de la cuenta. */
   async function poner<C extends Coleccion>(coleccion: C, lista: DeComida[C][], cambio: () => number) {

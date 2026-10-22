@@ -24,6 +24,25 @@ export type Muestra = { etapa: Etapa; desde: number; hasta: number; fuente: stri
 export type Tramo = { etapa: Exclude<Etapa, 'enCama'>; desde: number; hasta: number };
 export type Confianza = 'alta' | 'media' | 'baja';
 
+/** Cómo dijiste que dormiste a la mañana: de 1 (muy mal) a 5 (muy bien). */
+export type Cara = 1 | 2 | 3 | 4 | 5;
+export const esCara = (x: unknown): x is Cara => x === 1 || x === 2 || x === 3 || x === 4 || x === 5;
+/** De dónde sale la hora de una noche sin reloj: la estimó el iPhone, la confirmaste, la corregiste o la escribiste. */
+export type OrigenDeNoche = 'estimada' | 'confirmada' | 'corregida' | 'manual';
+/**
+ * Lo que Moss sabe de una noche y Salud no: la cara de la mañana y, sin reloj, la hora del sueño
+ * (en ISO). Salud ya está en cada iPhone de la cuenta; esto sincroniza, así cambiar de teléfono no
+ * lo pierde (supabase/moss/0005_noches.sql).
+ */
+export type NochePropia = {
+  /** El día en que te despertás, como las noches de Salud. */
+  fecha: ClaveDia;
+  cara?: Cara;
+  hora?: { dormirse: string; despertar: string; origen: OrigenDeNoche; confianza: Confianza };
+  actualizado: string;
+  borrado?: true;
+};
+
 export type Noche = {
   /** El día en que te despertás: la noche del martes al miércoles es del miércoles. */
   clave: ClaveDia;

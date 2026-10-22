@@ -52,14 +52,14 @@ import {
 } from './escena';
 import { Interfaz, type Aviso } from './Interfaz';
 import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad } from './mundo';
-
-/** Hasta dónde sube la cámara del cielo con Ascent arriba: menos que el dedo, porque está más lejos. */
-const CAMARA_DE_ASCENT = 0.75;
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
 import { useTextos } from './textosDelCielo';
 import { entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from '@/secciones/movimiento';
 import { colores } from '@/tema';
+
+/** Hasta dónde sube la cámara del cielo con Ascent arriba: menos que el dedo, porque está más lejos. */
+const CAMARA_DE_ASCENT = 0.75;
 
 const CELDA = 128;
 const MUESTREO = { filter: FilterMode.Linear, mipmap: MipmapMode.None };

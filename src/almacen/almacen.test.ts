@@ -67,6 +67,15 @@ describe('local primero', () => {
     expect(almacen.estado().logros.map((l) => l.id)).toEqual(['primeraLuz', 'constelacion']);
   });
 
+  it('las noches propias: la cara y la hora de una noche sin reloj se guardan juntas y se recuerdan', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerCara('2026-10-21', 4);
+    almacen.ponerHoraDeLaNoche('2026-10-21', { dormirse: '2026-10-21T03:30:00.000Z', despertar: '2026-10-21T11:10:00.000Z', origen: 'confirmada', confianza: 'media' });
+    almacen.ponerCara('2026-10-21', 5);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().noches.get('2026-10-21')).toMatchObject({ cara: 5, hora: { origen: 'confirmada', confianza: 'media' } });
+  });
+
   it('la calidad elegida en Perfil se recuerda, y null vuelve a la automática', async () => {
     const { almacen, repositorio } = await armar();
     expect(almacen.estado().calidad).toBeNull();

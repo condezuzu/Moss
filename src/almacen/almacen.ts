@@ -21,6 +21,7 @@ import {
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
 import type { LoDeSalud } from '@/salud/convertir';
+import type { Cara, NochePropia } from '@/dominio/sueno';
 import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
 
 /**
@@ -100,10 +101,11 @@ const mapasDe = (l: ListasDeComida): MapasDeComida => ({
   favoritos: new Map(l.favoritos.map((x) => [claveDeFavorito(x), x])),
   agua: new Map(l.agua.map((x) => [x.id, x])),
   medidas: new Map(l.medidas.map((x) => [x.fecha, x])),
+  noches: new Map(l.noches.map((x) => [x.fecha, x])),
 });
 const listasDe = (m: MapasDeComida): ListasDeComida => ({
   registros: [...m.registros.values()], recetas: [...m.recetas.values()], propios: [...m.propios.values()],
-  favoritos: [...m.favoritos.values()], agua: [...m.agua.values()], medidas: [...m.medidas.values()],
+  favoritos: [...m.favoritos.values()], agua: [...m.agua.values()], medidas: [...m.medidas.values()], noches: [...m.noches.values()],
 });
 
 function leerRecordatorios(texto: string | undefined): Comida[] | null {
@@ -154,7 +156,7 @@ export function crearAlmacen(op: Opciones) {
   let repositorio: Repositorio | undefined;
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
-    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null, inicio: null,
+    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
     recordatorios: null, calidad: null, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
@@ -576,6 +578,16 @@ export function crearAlmacen(op: Opciones) {
       const dia: Medidas = { ...previas, ...validas, fecha, actualizado: momento() };
       ponerComida('medidas', [dia]);
       return dia;
+    },
+    /** Cómo dijiste que dormiste la noche que terminó `fecha` (de 1 a 5). */
+    ponerCara(fecha: ClaveDia, cara: Cara) {
+      const antes = estado.noches.get(fecha);
+      ponerComida('noches', [{ ...(antes && !antes.borrado ? antes : {}), fecha, cara, actualizado: momento() }]);
+    },
+    /** La hora del sueño de una noche sin reloj: la estimada, o la que confirmaste o corregiste. */
+    ponerHoraDeLaNoche(fecha: ClaveDia, hora: NonNullable<NochePropia['hora']>) {
+      const antes = estado.noches.get(fecha);
+      ponerComida('noches', [{ ...(antes && !antes.borrado ? antes : {}), fecha, hora, actualizado: momento() }]);
     },
     borrarMedidas(fecha: ClaveDia) {
       const x = estado.medidas.get(fecha);
