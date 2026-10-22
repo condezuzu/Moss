@@ -7,6 +7,9 @@ export type Comida = 'desayuno' | 'almuerzo' | 'merienda' | 'cena' | 'snack';
 /** En el orden del día. El snack va a cualquier hora. */
 export const COMIDAS: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena', 'snack'];
 
+/** A qué hora suele caer cada comida, en minutos: para el hueco de la que falta, lo que se anota otro día y los recordatorios. */
+export const HORA_TIPICA: Record<Exclude<Comida, 'snack'>, number> = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
+
 /** Desde qué minuto del día toca cada una, en la hora local. Entre las comidas y de madrugada, snack. */
 const FRANJAS: readonly (readonly [number, Comida])[] = [
   [0, 'snack'],

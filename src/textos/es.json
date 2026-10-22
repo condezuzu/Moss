@@ -756,7 +756,12 @@
       "Las fotos de la comida quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
       "Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
     ],
-    "version": "Moss {v}"
+    "version": "Moss {v}",
+    "encendidos": "Encendidos",
+    "recordatoriosLlave": "Recordarme anotar las comidas",
+    "recordatoriosTexto": "Un rato después de tu hora de siempre, y solo si todavía no anotaste esa comida. Si no abres Moss en una semana, paran solos.",
+    "recordatoriosSinPermiso": "Para avisarte, Moss necesita permiso para las notificaciones: actívalo en los Ajustes del iPhone.",
+    "recordatoriosComidas": "De qué comidas"
   },
   "fecha": {
     "dias": [
@@ -1086,5 +1091,8 @@
       "comida": "Comida guardada",
       "propio": "Alimento"
     }
+  },
+  "recordatorios": {
+    "cuerpo": "Cuando puedas, anota tu {comida}."
   }
 }

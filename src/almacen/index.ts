@@ -8,6 +8,7 @@ import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
 import { msHastaMedianoche } from '@/dominio/fechas';
 import { haySupabase, supabase } from '@/lib/supabase';
+import { programarRecordatorios } from '@/recordatorios/programar';
 import { leerSalud } from '@/salud/leer';
 import { idioma } from '@/textos';
 import { abrirRepositorio } from './abrir';
@@ -79,14 +80,32 @@ export function useAlmacenListo(): boolean {
       }, msHastaMedianoche(new Date()) + 500);
     };
     esperarMedianoche();
+    // Los recordatorios se vuelven a programar al anotar algo o al cambiarlos, un rato después.
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    const reprogramar = () => {
+      clearTimeout(espera);
+      espera = setTimeout(() => {
+        if (a.estado().listo) programarRecordatorios(a.estado()).catch(() => {});
+      }, 1500);
+    };
+    let antes = { registros: a.estado().registros, recordatorios: a.estado().recordatorios, listo: a.estado().listo };
+    const sinOir = a.suscribir(() => {
+      const e = a.estado();
+      if (e.registros === antes.registros && e.recordatorios === antes.recordatorios && e.listo === antes.listo) return;
+      antes = { registros: e.registros, recordatorios: e.recordatorios, listo: e.listo };
+      reprogramar();
+    });
     const suscripcion = AppState.addEventListener('change', (estado) => {
       if (estado !== 'active') return;
       a.revisarDia();
       cuenta.alVolver();
       actualizarSalud().catch(() => {});
+      reprogramar();
     });
     return () => {
       clearTimeout(reloj);
+      clearTimeout(espera);
+      sinOir();
       suscripcion.remove();
       cuenta.parar();
     };

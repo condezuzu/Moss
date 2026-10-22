@@ -5,7 +5,7 @@
 
 import type { Constelacion } from '@/datos/catalogo';
 import type { Sistema } from '@/dominio/cantidades';
-import type { Comida } from '@/dominio/comidas';
+import { COMIDAS, type Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
@@ -49,6 +49,8 @@ export type Estado = MapasDeComida & {
   sistema: Sistema | null;
   /** Los bloques de Inicio: en qué orden y cuáles se ven. Sin elegir, los de fábrica. Queda en el teléfono. */
   inicio: { orden: string[]; visibles: string[] } | null;
+  /** Las comidas que avisan si no se anotaron; apagados, null. Queda en el teléfono. */
+  recordatorios: Comida[] | null;
   /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
   salud: LoDeSalud | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
@@ -81,6 +83,7 @@ export const DIAS_DE_COMIDA = 120;
 const CANASTA = 'canasta';
 const SISTEMA = 'sistema';
 const INICIO = 'inicio';
+const RECORDATORIOS = 'recordatorios';
 
 /** Un id para lo que se crea en el teléfono: la hora y un azar, así dos teléfonos de la misma cuenta no se pisan. */
 const idNuevo = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -97,6 +100,15 @@ const listasDe = (m: MapasDeComida): ListasDeComida => ({
   registros: [...m.registros.values()], recetas: [...m.recetas.values()], propios: [...m.propios.values()],
   favoritos: [...m.favoritos.values()], agua: [...m.agua.values()], medidas: [...m.medidas.values()],
 });
+
+function leerRecordatorios(texto: string | undefined): Comida[] | null {
+  try {
+    const lista = texto ? JSON.parse(texto) : null;
+    return Array.isArray(lista) ? lista.filter((c): c is Comida => COMIDAS.includes(c)) : null;
+  } catch {
+    return null;
+  }
+}
 
 function leerInicio(texto: string | undefined): Estado['inicio'] {
   try {
@@ -138,7 +150,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null, inicio: null,
-    salud: null, semilla: '',
+    recordatorios: null, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -229,7 +241,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), listo: true }, true);
     revisarControl();
   }
 
@@ -498,6 +510,11 @@ export function crearAlmacen(op: Opciones) {
     ponerInicio(inicio: NonNullable<Estado['inicio']>) {
       guardar((r) => r.guardarAjuste(INICIO, JSON.stringify(inicio)));
       cambiar({ inicio }, false);
+    },
+    /** Las comidas que avisan; null los apaga. */
+    ponerRecordatorios(comidas: Comida[] | null) {
+      guardar((r) => r.guardarAjuste(RECORDATORIOS, JSON.stringify(comidas)));
+      cambiar({ recordatorios: comidas }, false);
     },
     ponerSistema(sistema: Sistema) {
       guardar((r) => r.guardarAjuste(SISTEMA, sistema));

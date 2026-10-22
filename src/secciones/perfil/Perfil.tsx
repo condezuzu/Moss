@@ -4,15 +4,17 @@
 
 import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
+import type { Comida } from '@/dominio/comidas';
 import { edadDe, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
+import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { Boton, Icono } from '../comida/comunes';
+import { Boton, Icono, Pastilla } from '../comida/comunes';
 import { numero, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
@@ -27,7 +29,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const sistema = sistemaDe(e);
   const [correo, setCorreo] = useState<string | null>(null);
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'datos' | 'privacidad' | null>(null);
+  const [hoja, setHoja] = useState<'datos' | 'privacidad' | 'recordatorios' | null>(null);
   useEffect(() => {
     correoDeLaCuenta().then(setCorreo).catch(() => {});
     saludPedida().then(setSalud).catch(() => {});
@@ -52,6 +54,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       { clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial') },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
       { clave: 'idioma', titulo: t('perfil.idioma'), valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
+      { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: e.recordatorios?.length ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
     ]],
     ['perfil.conexiones', [
       ...(haySalud() ? [{
@@ -124,6 +127,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         <Text style={st.version}>{t('perfil.version', { v: version })}</Text>
       </ScrollView>
       {hoja === 'datos' && p && <TusDatos perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} alCerrar={() => setHoja(null)} />}
+      {hoja === 'recordatorios' && <Recordatorios comidas={e.recordatorios} alCerrar={() => setHoja(null)} />}
       {hoja === 'privacidad' && (
         <HojaModal abierta titulo={t('perfil.privacidad')} alCerrar={() => setHoja(null)}>
           {lista('perfil.privacidadTexto').map((parrafo) => <Parrafo key={parrafo}>{parrafo}</Parrafo>)}
@@ -165,6 +169,56 @@ function TusDatos({ perfil, hoy, imperial, alCerrar }: { perfil: DatosDelPerfil;
   );
 }
 
+const COMIDAS_QUE_AVISAN: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
+
+/** Los recordatorios para anotar: encendidos o no, y de qué comidas. */
+function Recordatorios({ comidas, alCerrar }: { comidas: Comida[] | null; alCerrar: () => void }) {
+  const [sinPermiso, setSinPermiso] = useState(false);
+  const encender = (si: boolean) => {
+    if (!si) {
+      elAlmacen().ponerRecordatorios(null);
+      return;
+    }
+    pedirPermisoDeAvisos().then((ok) => {
+      setSinPermiso(!ok);
+      if (ok) elAlmacen().ponerRecordatorios(['desayuno', 'almuerzo', 'cena']);
+    }).catch(() => setSinPermiso(true));
+  };
+  const alternar = (c: Comida) => {
+    const lista = comidas ?? [];
+    const nueva = lista.includes(c) ? lista.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || lista.includes(x));
+    elAlmacen().ponerRecordatorios(nueva.length ? nueva : null);
+  };
+  return (
+    <HojaModal abierta titulo={t('perfil.recordatorios')} alCerrar={alCerrar}>
+      <View style={st.llave}>
+        <Text style={st.llaveTexto}>{t('perfil.recordatoriosLlave')}</Text>
+        <Switch
+          value={!!comidas?.length}
+          onValueChange={encender}
+          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+          thumbColor={colores.pergamino}
+          accessibilityLabel={t('perfil.recordatoriosLlave')}
+        />
+      </View>
+      <Parrafo chico>{t('perfil.recordatoriosTexto')}</Parrafo>
+      {sinPermiso && (
+        <Pressable onPress={() => { Linking.openSettings().catch(() => {}); }} accessibilityRole="button">
+          <Parrafo>{t('perfil.recordatoriosSinPermiso')}</Parrafo>
+        </Pressable>
+      )}
+      {!!comidas?.length && (
+        <>
+          <EtiquetaDeGrupo>{t('perfil.recordatoriosComidas')}</EtiquetaDeGrupo>
+          <View style={st.comidas}>
+            {COMIDAS_QUE_AVISAN.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={comidas.includes(c)} alTocar={() => alternar(c)} />)}
+          </View>
+        </>
+      )}
+    </HojaModal>
+  );
+}
+
 function Pasos({ valor, alBajar, alSubir }: { valor: string; alBajar: () => void; alSubir: () => void }) {
   return (
     <View style={st.pasos}>
@@ -194,6 +248,9 @@ const st = StyleSheet.create({
   credito: { paddingVertical: 12, paddingHorizontal: 16, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.65)' },
   salir: { marginTop: 26 },
   version: { marginTop: 18, textAlign: 'center', fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.4)' },
+  llave: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 6 },
+  llaveTexto: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
+  comidas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pasos: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)' },
   paso: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   pasoValor: { minWidth: 96, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino, fontVariant: ['tabular-nums'] },

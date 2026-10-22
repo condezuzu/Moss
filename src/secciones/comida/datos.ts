@@ -9,7 +9,7 @@ import { metaVigente, type Estado } from '@/almacen/almacen';
 import { conMayuscula } from '@/comida/buscar';
 import { cantidadDePorcion, decimal } from '@/comida/porciones';
 import { ACEITE, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
-import { comidaDeLaHora, COMIDAS, type Comida } from '@/dominio/comidas';
+import { comidaDeLaHora, COMIDAS, HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { metaRepartida, type Macros } from '@/dominio/metas';
 import { delDia, sumarValores, totalDelDia, type Cantidad, type Registro, type Valores } from '@/dominio/registros';
@@ -120,8 +120,7 @@ export function cantidadDeTexto(c: Cantidad, sistema: Sistema): string {
   return c.aceite ? `${base} · ${t('comida.medir.conAceite', { que: aceiteDeTexto(c.aceite) })}` : base;
 }
 
-/** A qué hora suele caer cada comida: para el hueco de la que falta y para lo que se anota otro día. */
-export const HORA_TIPICA: Record<Exclude<Comida, 'snack'>, number> = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
+export { HORA_TIPICA } from '@/dominio/comidas';
 
 /** El momento de lo que se registra: hoy, ahora; otro día, a la hora típica de esa comida en ese día. */
 export function momentoPara(dia: ClaveDia, comida: Comida, hoy: ClaveDia): string | undefined {
