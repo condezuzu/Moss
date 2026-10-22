@@ -1,0 +1,329 @@
+// Carnes, aves, pescados y mariscos, y platos del mundo (22/10/2026). Mismo formato que
+// genericos.txt: ver su encabezado. Lo que se cocina está dos veces, crudo y cocido, con el estado
+// en el nombre; lo cocido apunta a su versión cruda. Los platos llevan su nombre propio, nunca el
+// de un país, y los que USDA no tiene son recetas con ingredientes curados.
+// Lo que no se come sale de SR28. Si la descripción de FoodData Central ya no es la de SR28 (el
+// cordero perdió «domestic»), o si SR28 lo nombra de forma que la herramienta lee mal («skin» no es
+// cáscara), el porcentaje de SR28 va escrito: «desecho=22 hueso/bone».
+
+# carnes
+// Carne molida según la grasa: cruda y dorada en sartén (USDA: «crumbles, cooked, pan-browned»).
+Carne molida 95% magra cruda | Raw 95% lean ground beef | sr:Beef, ground, 95% lean meat / 5% fat, raw | 100 g / 100 g=100 | carne picada 95% magra cruda* (AR UY ES PY) · carne molida 95/5 cruda · carne molida extra magra cruda
+Carne molida 95% magra cocida | Cooked 95% lean ground beef | sr:Beef, ground, 95% lean meat / 5% fat, crumbles, cooked, pan-browned | 100 g / 100 g=100 | carne picada 95% magra cocida* (AR UY ES PY) · carne molida 95/5 · carne molida extra magra | crudo=Carne molida 95% magra cruda · aceite
+Carne molida 90% magra cruda | Raw 90% lean ground beef | sr:Beef, ground, 90% lean meat / 10% fat, raw | 100 g / 100 g=100 | carne picada 90% magra cruda* (AR UY ES PY) · carne molida 90/10 cruda
+Carne molida 90% magra cocida | Cooked 90% lean ground beef | sr:Beef, ground, 90% lean meat / 10% fat, crumbles, cooked, pan-browned | 100 g / 100 g=100 | carne picada 90% magra cocida* (AR UY ES PY) · carne molida 90/10 | crudo=Carne molida 90% magra cruda · aceite
+Carne molida 85% magra cruda | Raw 85% lean ground beef | sr:Beef, ground, 85% lean meat / 15% fat, raw | 100 g / 100 g=100 | carne picada 85% magra cruda* (AR UY ES PY) · carne molida 85/15 cruda
+Carne molida 85% magra cocida | Cooked 85% lean ground beef | sr:Beef, ground, 85% lean meat / 15% fat, crumbles, cooked, pan-browned | 100 g / 100 g=100 | carne picada 85% magra cocida* (AR UY ES PY) · carne molida 85/15 | crudo=Carne molida 85% magra cruda · aceite
+Carne molida 80% magra cruda | Raw 80% lean ground beef | sr:Beef, ground, 80% lean meat / 20% fat, raw | 100 g / 100 g=100 | carne picada 80% magra cruda* (AR UY ES PY) · carne molida 80/20 cruda
+Carne molida 80% magra cocida | Cooked 80% lean ground beef | sr:Beef, ground, 80% lean meat / 20% fat, crumbles, cooked, pan-browned | 100 g / 100 g=100 | carne picada 80% magra cocida* (AR UY ES PY) · carne molida 80/20 | crudo=Carne molida 80% magra cruda · aceite
+// Cortes de vaca: la porción de USDA es lo que se come (sin el hueso). La del chuletón es un
+// corte de una libra (454 g) con hueso: 381 g crudos y 267 g asados que se comen (SR28).
+T-bone crudo | Raw T-bone steak | sr:Beef, short loin, t-bone steak, separable lean and fat, trimmed to 1/8" fat, all grades, raw | 1 T-bone / 1 T-bone steak=460 · 100 g / 100 g=100 | chuleta T-bone cruda · bife T-bone crudo | desecho
+T-bone a la parrilla | Grilled T-bone steak | sr:Beef, short loin, t-bone steak, separable lean and fat, trimmed to 1/8" fat, all grades, cooked, grilled | 1 T-bone / 1 T-bone steak=363 · 100 g / 100 g=100 | T-bone asado · T-bone a la plancha · chuleta T-bone | crudo=T-bone crudo · desecho
+Chuletón crudo | Raw bone-in rib steak | sr:Beef, rib, large end (ribs 6-9), separable lean and fat, trimmed to 1/8" fat, all grades, raw | 1 porción / 1 serving=381 · 100 g / 100 g=100 | chuletón de vaca crudo · tomahawk crudo · bife de costilla crudo | desecho
+Chuletón a la parrilla | Grilled bone-in rib steak | sr:Beef, rib, large end (ribs 6-9), separable lean and fat, trimmed to 1/8" fat, all grades, cooked, broiled | 1 porción / 1 serving=267 · 100 g / 100 g=100 | chuletón asado · tomahawk · bife de costilla | crudo=Chuletón crudo · desecho
+Sirloin crudo | Raw top sirloin steak | sr:Beef, top sirloin, steak, separable lean and fat, trimmed to 1/8" fat, all grades, raw | 1 bistec mediano / 1 medium steak=180 · 100 g / 100 g=100 | cadera de res cruda* (ES PE) · cuadril crudo* (AR UY) · aguayón crudo* (MX) · top sirloin crudo
+Sirloin a la plancha | Grilled top sirloin steak | sr:Beef, top sirloin, steak, separable lean and fat, trimmed to 1/8" fat, all grades, cooked, broiled | 1 bistec mediano / 1 medium steak=135 · 100 g / 100 g=100 | cadera de res a la plancha* (ES PE) · cuadril a la plancha* (AR UY) · aguayón asado* (MX) · sirloin asado · top sirloin | crudo=Sirloin crudo · aceite
+Redondo de res crudo | Raw eye of round | sr:Beef, round, eye of round roast, boneless, separable lean only, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | peceto crudo* (AR UY) · cuete crudo* (MX) · muchacho crudo* (CO VE) · pollo ganso crudo* (CL) · redondo de ternera crudo* (ES)
+Redondo de res al horno | Roast eye of round | sr:Beef, round, eye of round roast, boneless, separable lean only, trimmed to 0" fat, all grades, cooked, roasted | 100 g / 100 g=100 | peceto al horno* (AR UY) · cuete al horno* (MX) · muchacho al horno* (CO VE) · pollo ganso al horno* (CL) · redondo de ternera asado* (ES) · redondo | crudo=Redondo de res crudo
+// Osobuco: una rodaja de una libra (454 g) con hueso deja 272 g crudos y 170 g cocidos que se comen (SR28).
+Osobuco crudo | Raw beef shank | sr:Beef, shank crosscuts, separable lean only, trimmed to 1/4" fat, choice, raw | 1 rodaja / 1 crosscut slice=272 · 100 g / 100 g=100 | chambarete crudo* (MX) · morcillo crudo* (ES) · jarrete de res crudo · ossobuco crudo · lagarto con hueso crudo (VE) | desecho
+Osobuco hervido | Simmered beef shank | sr:Beef, shank crosscuts, separable lean only, trimmed to 1/4" fat, choice, cooked, simmered | 1 rodaja / 1 crosscut slice=170 · 100 g / 100 g=100 | chambarete cocido* (MX) · morcillo cocido* (ES) · osobuco · ossobuco · lagarto con hueso (VE) | crudo=Osobuco crudo · desecho
+Paleta de res cruda | Raw beef chuck roast | sr:Beef, chuck, arm pot roast, separable lean and fat, trimmed to 1/8" fat, all grades, raw | 100 g / 100 g=100 | paleta de vaca cruda · espaldilla de res cruda · aguja de ternera cruda (ES) | desecho
+Paleta de res guisada | Braised beef chuck roast | sr:Beef, chuck, arm pot roast, separable lean and fat, trimmed to 1/8" fat, all grades, cooked, braised | 100 g / 100 g=100 | paleta de vaca guisada · paleta al horno · espaldilla de res guisada · aguja de ternera guisada (ES) | crudo=Paleta de res cruda · desecho
+Filete de ternera crudo | Raw veal cutlet | sr:Veal, leg, top round, cap off, cutlet, boneless, raw | 100 g / 100 g=100 · 1 filete fino / 1 thin cutlet=55 | escalope de ternera crudo · ternera cruda
+Filete de ternera a la plancha | Grilled veal cutlet | sr:Veal, leg, top round, cap off, cutlet, boneless, cooked, grilled | 100 g / 100 g=100 · 1 filete fino / 1 thin cutlet=44 | escalope de ternera a la plancha · ternera a la plancha | crudo=Filete de ternera crudo · aceite
+Sesos de res crudos | Raw beef brain | sr:Beef, variety meats and by-products, brain, raw | 100 g / 100 g=100 | seso de res crudo · sesos crudos
+Sesos de res hervidos | Simmered beef brain | sr:Beef, variety meats and by-products, brain, cooked, simmered | 100 g / 100 g=100 | sesos · sesos cocidos | crudo=Sesos de res crudos
+Sesos de res fritos | Pan-fried beef brain | sr:Beef, variety meats and by-products, brain, cooked, pan-fried | 100 g / 100 g=100 | sesos fritos · sesos a la plancha | crudo=Sesos de res crudos · aceite=incluido
+// Corned beef: la lata más común es la de 340 g; la porción, la de la etiqueta (2 onzas).
+Corned beef | Canned corned beef | sr:Beef, cured, corned beef, canned | 1 porción / 1 serving=56 · 1 lata / 1 can=340 | carne en conserva · carne enlatada · carne de lata
+Pastrami | Pastrami | sr:Beef, cured, pastrami | 2 rebanadas / 2 slices=56 | pastrami de res
+Carne seca | Beef jerky | fndds:Beef jerky | 1 porción / 1 serving=28 | beef jerky · jerky · charqui · carne deshidratada
+// Cerdo. La paleta trae hueso y cuero: «Bone and skin», que la herramienta leería como cáscara.
+Paleta de cerdo cruda | Raw pork shoulder | sr:Pork, fresh, shoulder, whole, separable lean and fat, raw | 100 g / 100 g=100 | paleta de chancho cruda* (CL PE BO EC) · espaldilla de cerdo cruda · paleta de puerco cruda | desecho=25 hueso y cuero/bone and skin
+Paleta de cerdo al horno | Roast pork shoulder | sr:Pork, fresh, shoulder, whole, separable lean and fat, cooked, roasted | 100 g / 100 g=100 · 1 taza en cubos / 1 cup diced=135 | paleta de chancho al horno* (CL PE BO EC) · paleta de puerco al horno · cerdo deshebrado · pulled pork | crudo=Paleta de cerdo cruda · desecho=25 hueso y cuero/bone and skin
+Patitas de cerdo crudas | Raw pork feet | sr:Pork, fresh, variety meats and by-products, feet, raw | 100 g / 100 g=100 | manitas de cerdo crudas* (ES) · manitas de puerco crudas* (MX) · patitas de chancho crudas* (CL PE) · patas de cerdo crudas | desecho
+Patitas de cerdo hervidas | Simmered pork feet | sr:Pork, fresh, variety meats and by-products, feet, cooked, simmered | 100 g / 100 g=100 | manitas de cerdo* (ES) · manitas de puerco* (MX) · patitas de chancho* (CL PE) · patas de cerdo · patitas de cerdo | crudo=Patitas de cerdo crudas · desecho
+Hígado de cerdo crudo | Raw pork liver | sr:Pork, fresh, variety meats and by-products, liver, raw | 100 g / 100 g=100 | hígado de puerco crudo* (MX) · hígado de chancho crudo* (CL PE BO EC)
+Hígado de cerdo guisado | Braised pork liver | sr:Pork, fresh, variety meats and by-products, liver, cooked, braised | 100 g / 100 g=100 | hígado de puerco* (MX) · hígado de chancho* (CL PE BO EC) · hígado de cerdo encebollado | crudo=Hígado de cerdo crudo
+Lomo ahumado | Canadian bacon | sr:Canadian bacon, unprepared | 2 rebanadas / 2 slices=57 | tocino canadiense* (MX) · bacon canadiense · lomo canadiense · lomito ahumado
+Salchicha italiana cruda | Raw Italian sausage | sr:Sausage, Italian, pork, mild, raw | 1 unidad / 1 link=101 | salchicha italiana fresca
+Salchicha italiana a la plancha | Pan-fried Italian sausage | sr:Sausage, Italian, pork, mild, cooked, pan-fried | 1 unidad / 1 link=87 | salchicha italiana · salchicha italiana frita | crudo=Salchicha italiana cruda · aceite
+Salchichas en lata | Canned Vienna sausages | sr:Sausage, Vienna, canned, chicken, beef, pork | 1 lata / 1 can=113 · 1 unidad / 1 sausage=16 | salchichas de Viena en lata · salchichitas en lata · salchichas enlatadas
+// Fiambres de ave.
+Fiambre de pollo | Deli chicken | fndds:Chicken, prepackaged or deli, luncheon meat | 2 rebanadas / 2 slices=56 | pechuga de pollo en fetas* (AR UY) · pechuga de pollo en lonchas* (ES) · jamón de pollo · pechuga de pollo rebanada
+Tocino de pavo crudo | Raw turkey bacon | sr:Bacon, turkey, unprepared | 2 rebanadas / 2 slices=32 | panceta de pavo cruda* (AR UY) · beicon de pavo crudo* (ES) · tocineta de pavo cruda* (CO VE) · bacon de pavo crudo
+Tocino de pavo frito | Cooked turkey bacon | fndds:Turkey bacon, cooked | 2 rebanadas / 2 slices=22 | panceta de pavo* (AR UY) · beicon de pavo* (ES) · tocineta de pavo* (CO VE) · bacon de pavo · tocino de pavo | crudo=Tocino de pavo crudo
+// Cordero: el hueso es el de SR28 («Lamb, domestic, …»).
+Pierna de cordero cruda | Raw leg of lamb | sr:Lamb, leg, whole (shank and sirloin), separable lean and fat, trimmed to 1/8" fat, choice, raw | 100 g / 100 g=100 | pierna de borrego cruda* (MX) · pierna de carnero cruda | desecho=22 hueso/bone
+Pierna de cordero al horno | Roast leg of lamb | sr:Lamb, leg, whole (shank and sirloin), separable lean and fat, trimmed to 1/8" fat, choice, cooked, roasted | 100 g / 100 g=100 | pierna de borrego al horno* (MX) · cordero al horno · pierna de cordero asada | crudo=Pierna de cordero cruda · desecho=23 hueso/bone
+Paleta de cordero cruda | Raw lamb shoulder | sr:Lamb, shoulder, whole (arm and blade), separable lean and fat, trimmed to 1/8" fat, choice, raw | 100 g / 100 g=100 | paletilla de cordero cruda* (ES) · paleta de borrego cruda* (MX) | desecho=22 hueso/bone
+Paleta de cordero al horno | Roast lamb shoulder | sr:Lamb, shoulder, whole (arm and blade), separable lean and fat, trimmed to 1/8" fat, choice, cooked, roasted | 100 g / 100 g=100 | paletilla de cordero asada* (ES) · paleta de borrego al horno* (MX) · paleta de cordero asada | crudo=Paleta de cordero cruda · desecho=24 hueso/bone
+Costillar de cordero crudo | Raw rack of lamb | sr:Lamb, rib, separable lean and fat, trimmed to 1/8" fat, choice, raw | 100 g / 100 g=100 | carré de cordero crudo · rack de cordero crudo · costillar de borrego crudo (MX) | desecho=29 hueso/bone
+Costillar de cordero al horno | Roast rack of lamb | sr:Lamb, rib, separable lean and fat, trimmed to 1/8" fat, choice, cooked, roasted | 100 g / 100 g=100 | carré de cordero · rack de cordero · costillar de borrego al horno (MX) · costillar de cordero asado | crudo=Costillar de cordero crudo · desecho=30 hueso/bone
+Cordero molido crudo | Raw ground lamb | sr:Lamb, ground, raw | 100 g / 100 g=100 | carne picada de cordero cruda* (AR UY ES PY) · borrego molido crudo* (MX) · carne molida de cordero cruda
+Cordero molido cocido | Cooked ground lamb | sr:Lamb, ground, cooked, broiled | 100 g / 100 g=100 | carne picada de cordero* (AR UY ES PY) · borrego molido* (MX) · carne molida de cordero · cordero molido | crudo=Cordero molido crudo
+
+# aves
+Pechuga de pollo con piel cruda | Raw chicken breast with skin | sr:Chicken, broilers or fryers, breast, meat and skin, raw | 1 pechuga mediana / 1 medium breast half=145 · 100 g / 100 g=100 | pechuga de pollo con hueso y piel cruda · pechuga entera cruda | desecho
+Pechuga de pollo con piel al horno | Roast chicken breast with skin | sr:Chicken, broilers or fryers, breast, meat and skin, cooked, roasted | 1 pechuga mediana / 1 medium breast half=98 · 100 g / 100 g=100 | pechuga de pollo con piel asada · pechuga asada con piel | crudo=Pechuga de pollo con piel cruda · desecho
+Pechuga de pollo hervida | Boiled chicken breast | sr:Chicken, broiler or fryers, breast, skinless, boneless, meat only, cooked, braised | 100 g / 100 g=100 · 1 pechuga / 1 breast=181 | pollo deshebrado* (MX) · pollo desmechado* (CO VE) · pollo desmenuzado · pechuga cocida · pollo hervido | crudo=Pechuga de pollo cruda
+Gallina cruda | Raw stewing hen | sr:Chicken, stewing, meat and skin, raw | 100 g / 100 g=100 · ½ gallina / ½ hen=398 | gallina de campo cruda · gallina criolla cruda | desecho
+Gallina hervida | Stewed hen | sr:Chicken, stewing, meat and skin, cooked, stewed | 100 g / 100 g=100 · ½ gallina / ½ hen=261 | gallina cocida · gallina guisada · carne de gallina | crudo=Gallina cruda · desecho
+Corazones de pollo crudos | Raw chicken hearts | sr:Chicken, heart, all classes, raw | 100 g / 100 g=100 · 10 unidades / 10 hearts=61 | corazoncitos de pollo crudos
+Corazones de pollo hervidos | Simmered chicken hearts | sr:Chicken, heart, all classes, cooked, simmered | 100 g / 100 g=100 | corazoncitos de pollo · corazones de pollo | crudo=Corazones de pollo crudos
+Menudencias de pollo crudas | Raw chicken giblets | sr:Chicken, broilers or fryers, giblets, raw | 100 g / 100 g=100 | menudillos de pollo crudos* (ES)
+Menudencias de pollo hervidas | Simmered chicken giblets | sr:Chicken, broilers or fryers, giblets, cooked, simmered | 100 g / 100 g=100 | menudillos de pollo* (ES) · menudencias de pollo | crudo=Menudencias de pollo crudas
+Pavo entero crudo | Raw whole turkey | sr:Turkey, whole, meat and skin, raw | 100 g / 100 g=100 | pavo con piel crudo · guajolote entero crudo (MX) | desecho
+Pavo al horno | Roast turkey | sr:Turkey, whole, meat and skin, cooked, roasted | 100 g / 100 g=100 | pavo asado · pavo de Navidad · pavo entero al horno · guajolote al horno (MX) | crudo=Pavo entero crudo · desecho
+
+# pescados
+// Filetes: lo que se come. SR28 no trae lo que no se come de los pescados enteros (salvo la
+// trucha de arroyo), por eso son filetes y no pescados enteros.
+Filete de abadejo crudo | Raw pollock fillet | sr:Fish, pollock, Atlantic, raw | 100 g / 100 g=100 | abadejo crudo · carbonero crudo (ES)
+Filete de abadejo a la plancha | Grilled pollock fillet | sr:Fish, pollock, Atlantic, cooked, dry heat | 100 g / 100 g=100 | abadejo a la plancha · abadejo al horno · carbonero a la plancha (ES) | crudo=Filete de abadejo crudo · aceite
+// Pescadilla: la de red (Cynoscion), que USDA llama «seatrout»; no la merluza chica que en España
+// también se llama pescadilla.
+Filete de pescadilla crudo | Raw seatrout fillet | sr:Fish, seatrout, mixed species, raw | 100 g / 100 g=100 | pescadilla cruda · pescadilla de red cruda
+Filete de pescadilla a la plancha | Grilled seatrout fillet | sr:Fish, seatrout, mixed species, cooked, dry heat | 100 g / 100 g=100 | pescadilla a la plancha · pescadilla al horno · pescadilla de red | crudo=Filete de pescadilla crudo · aceite
+Filete de bagre crudo | Raw catfish fillet | sr:Fish, catfish, channel, farmed, raw | 1 filete / 1 fillet=159 · 100 g / 100 g=100 | bagre crudo · pez gato crudo* (ES) · catfish crudo
+Filete de bagre al horno | Baked catfish fillet | sr:Fish, catfish, channel, farmed, cooked, dry heat | 1 filete / 1 fillet=143 · 100 g / 100 g=100 | bagre al horno · bagre a la plancha · pez gato al horno* (ES) · catfish | crudo=Filete de bagre crudo
+Filete de bagre frito | Fried catfish fillet | sr:Fish, catfish, channel, cooked, breaded and fried | 1 filete / 1 fillet=87 · 100 g / 100 g=100 | bagre frito · bagre empanizado* (MX) · bagre apanado* (CO PE EC) · pez gato frito* (ES) | crudo=Filete de bagre crudo · aceite=incluido
+Filete de mero crudo | Raw grouper fillet | sr:Fish, grouper, mixed species, raw | 100 g / 100 g=100 | mero crudo · cherna cruda (VE CU)
+Filete de mero a la plancha | Grilled grouper fillet | sr:Fish, grouper, mixed species, cooked, dry heat | 100 g / 100 g=100 | mero a la plancha · mero al horno · cherna (VE CU) | crudo=Filete de mero crudo · aceite
+Filete de dorado crudo | Raw mahi-mahi fillet | sr:Fish, mahimahi, raw | 100 g / 100 g=100 | dorado crudo · mahi mahi crudo · perico crudo* (PE) · lampuga cruda* (ES)
+Filete de dorado a la plancha | Grilled mahi-mahi fillet | sr:Fish, mahimahi, cooked, dry heat | 100 g / 100 g=100 | dorado a la plancha · dorado al horno · mahi mahi · perico a la plancha* (PE) · lampuga a la plancha* (ES) | crudo=Filete de dorado crudo · aceite
+Filete de lubina crudo | Raw sea bass fillet | sr:Fish, sea bass, mixed species, raw | 1 filete / 1 fillet=129 · 100 g / 100 g=100 | lubina cruda · róbalo crudo · robalo crudo
+Filete de lubina a la plancha | Grilled sea bass fillet | sr:Fish, sea bass, mixed species, cooked, dry heat | 1 filete / 1 fillet=101 · 100 g / 100 g=100 | lubina a la plancha · lubina al horno · róbalo a la plancha · robalo | crudo=Filete de lubina crudo · aceite
+Filete de lisa crudo | Raw mullet fillet | sr:Fish, mullet, striped, raw | 1 filete / 1 fillet=119 · 100 g / 100 g=100 | lisa cruda · mújol crudo* (ES)
+Filete de lisa a la plancha | Grilled mullet fillet | sr:Fish, mullet, striped, cooked, dry heat | 1 filete / 1 fillet=93 · 100 g / 100 g=100 | lisa a la plancha · lisa al horno · mújol a la plancha* (ES) | crudo=Filete de lisa crudo · aceite
+Filete de fletán crudo | Raw halibut fillet | sr:Fish, halibut, Atlantic and Pacific, raw | 100 g / 100 g=100 | fletán crudo · halibut crudo
+Filete de fletán a la plancha | Grilled halibut fillet | sr:Fish, halibut, Atlantic and Pacific, cooked, dry heat | 100 g / 100 g=100 | fletán a la plancha · fletán al horno · halibut | crudo=Filete de fletán crudo · aceite
+Rape crudo | Raw monkfish | sr:Fish, monkfish, raw | 100 g / 100 g=100 | cola de rape cruda · pejesapo crudo
+Rape a la plancha | Grilled monkfish | sr:Fish, monkfish, cooked, dry heat | 100 g / 100 g=100 | rape al horno · cola de rape · pejesapo | crudo=Rape crudo · aceite
+Filete de rodaballo crudo | Raw turbot fillet | sr:Fish, turbot, european, raw | 100 g / 100 g=100 | rodaballo crudo
+Filete de rodaballo a la plancha | Grilled turbot fillet | sr:Fish, turbot, european, cooked, dry heat | 100 g / 100 g=100 | rodaballo a la plancha · rodaballo al horno | crudo=Filete de rodaballo crudo · aceite
+Filete de sierra crudo | Raw sierra mackerel fillet | sr:Fish, mackerel, spanish, raw | 100 g / 100 g=100 | sierra cruda · carite crudo (VE)
+Filete de sierra a la plancha | Grilled sierra mackerel fillet | sr:Fish, mackerel, spanish, cooked, dry heat | 100 g / 100 g=100 | sierra a la plancha · sierra al horno · carite (VE) | crudo=Filete de sierra crudo · aceite
+Cazón crudo | Raw shark | sr:Fish, shark, mixed species, raw | 100 g / 100 g=100 | tiburón crudo · tollo crudo (CL)
+Cazón frito | Fried shark | sr:Fish, shark, mixed species, cooked, batter-dipped and fried | 100 g / 100 g=100 | cazón en adobo* (ES) · tiburón frito · cazón rebozado | crudo=Cazón crudo · aceite=incluido
+// Otras formas de cocinar lo que está crudo en genericos.txt. El pescado entero frito de FNDDS es
+// lo que se come de uno: 270 g.
+Tilapia frita | Fried tilapia | fndds:Fish, tilapia, fried | 1 filete / 1 fillet=90 · 1 pescado entero / 1 whole fish=270 | mojarra frita* (MX CO) · tilapia empanizada · pescado frito entero | crudo=Tilapia cruda · aceite=incluido
+Trucha frita | Fried trout | fndds:Fish, trout, fried | 1 filete / 1 fillet=90 · 1 pescado entero / 1 whole fish=270 | trucha frita entera · trucha apanada | crudo=Trucha cruda · aceite=incluido
+Bacalao frito | Fried cod | fndds:Fish, cod, fried | 1 filete / 1 fillet=140 | bacalao rebozado* (ES) · bacalao empanizado | crudo=Bacalao crudo · aceite=incluido
+Camarones a la plancha | Grilled shrimp | fndds:Shrimp, grilled | 10 camarones medianos / 10 medium shrimp=100 | gambas a la plancha* (ES) · langostinos a la plancha · camarones asados | crudo=Camarones crudos · aceite=incluido
+// Conservas y salazones.
+Atún blanco en agua | White tuna in water | sr:Fish, tuna, white, canned in water, drained solids | 100 g / 100 g=100 | atún albacora en agua · bonito en agua (ES)
+Atún blanco en aceite | White tuna in oil | sr:Fish, tuna, white, canned in oil, drained solids | 100 g / 100 g=100 | bonito del norte en aceite* (ES) · atún albacora en aceite
+Salmón en lata | Canned salmon | sr:Fish, salmon, pink, canned, drained solids | 100 g / 100 g=100 | salmón enlatado · salmón rosado en lata
+Caballa en lata | Canned mackerel | sr:Fish, mackerel, jack, canned, drained solids | 100 g / 100 g=100 · ½ taza / ½ cup=95 | jurel en lata* (CL PE) · conserva de jurel · caballa en conserva
+Sardinas en salsa de tomate | Sardines in tomato sauce | sr:Fish, sardine, Pacific, canned in tomato sauce, drained solids with bone | 1 sardina / 1 sardine=38 · 1 lata / 1 can=370 | sardinas con tomate · sardinas en tomate
+Arenque en vinagre | Pickled herring | sr:Fish, herring, Atlantic, pickled | 3 trozos / 3 pieces=45 | arenque en escabeche · rollmops
+Arenque ahumado | Kippered herring | sr:Fish, herring, Atlantic, kippered | 1 filete mediano / 1 medium fillet=40 | arenque · kipper
+Bacalao salado | Dried salted cod | sr:Fish, cod, Atlantic, dried and salted | 1 trozo / 1 piece=80 · 100 g / 100 g=100 | bacalao seco · bacalao en salazón · bacalao sin desalar
+Almejas en lata | Canned clams | sr:Mollusks, clam, mixed species, canned, drained solids | ½ taza / ½ cup=80 | almejas en conserva · almejas al natural
+// Mariscos.
+Vieiras crudas | Raw scallops | sr:Mollusks, scallop, mixed species, raw | 2 vieiras grandes / 2 large scallops=30 · 100 g / 100 g=100 | conchas de abanico crudas (PE) · ostiones crudos (CL) · zamburiñas crudas (ES)
+Vieiras al vapor | Steamed scallops | sr:Mollusks, scallop, (bay and sea), cooked, steamed | 100 g / 100 g=100 | conchas de abanico* (PE) · ostiones* (CL) · vieiras cocidas · zamburiñas (ES) · callo de hacha (MX) | crudo=Vieiras crudas
+Sepia cruda | Raw cuttlefish | sr:Mollusks, cuttlefish, mixed species, raw | 100 g / 100 g=100 | jibia cruda (ES)
+Sepia hervida | Boiled cuttlefish | sr:Mollusks, cuttlefish, mixed species, cooked, moist heat | 100 g / 100 g=100 | sepia cocida · sepia | crudo=Sepia cruda
+
+# platos
+// Comida rápida.
+Hamburguesa doble con queso | Double cheeseburger | fndds:Double cheeseburger, on white bun, 2 medium patties | 1 unidad / 1 double cheeseburger=270 | hamburguesa doble · doble con queso · cheeseburger doble
+Hamburguesa de pollo | Fried chicken sandwich | fndds:Chicken fillet sandwich, fried, from fast food | 1 unidad / 1 sandwich=140 | sándwich de pollo frito · hamburguesa de pollo crispy · sánguche de pollo frito | aceite=incluido
+// Lo que en USDA es «1 sandwich (1 slice bread)» va como sándwich abierto: si no, se lee «1 sándwich».
+Sándwich de pollo a la plancha | Grilled chicken sandwich | fndds:Chicken fillet sandwich, grilled, on white bun | 1 unidad / 1 sandwich=140 · 1 sándwich abierto / 1 open-faced sandwich=70 | hamburguesa de pollo a la plancha · sánguche de pollo
+Wrap de pollo | Grilled chicken wrap | fndds:Chicken fillet wrap sandwich, grilled, from fast food | 1 unidad / 1 wrap=161 | wrap de pollo a la plancha · rollo de pollo
+Sándwich de atún | Tuna salad sandwich | fndds:Tuna salad sandwich on white | 1 unidad / 1 sandwich=180 | emparedado de atún · sánguche de atún
+Sándwich de pollo con mayonesa | Chicken salad sandwich | fndds:Chicken salad sandwich on white | 1 unidad / 1 sandwich=180 | sándwich de ensalada de pollo · sándwich ave mayo (CL)
+Sándwich de tocino, lechuga y tomate | Bacon, lettuce and tomato sandwich | fndds:Bacon, lettuce, tomato sandwich on white | 1 unidad / 1 sandwich=105 | BLT · sándwich BLT · sándwich de panceta, lechuga y tomate (AR UY) · sándwich de beicon, lechuga y tomate (ES)
+Sándwich de mantequilla de maní y mermelada | Peanut butter and jelly sandwich | fndds:Peanut butter and jelly sandwich, NFS | 1 unidad / 1 sandwich=112 · 1 sándwich abierto / 1 open-faced sandwich=56 | sándwich de crema de cacahuete y mermelada* (ES) · sándwich de crema de cacahuate y mermelada* (MX) · PB&J
+Pizza de carne | Meat pizza | fndds:Pizza with meat other than pepperoni, from restaurant or fast food, medium crust | 1 porción / 1 slice=98 | pizza de jamón · pizza de salchicha · pizza con carne
+Pizza de carne y verduras | Meat and vegetable pizza | fndds:Pizza with meat and vegetables, from restaurant or fast food, medium crust | 1 porción / 1 slice=102 | pizza suprema · pizza especial · pizza completa
+Calzone | Calzone | fndds:Calzone, with meat and cheese | 1 unidad / 1 calzone=424 | calzone de jamón y queso
+Alitas de pollo fritas | Fried chicken wings | fndds:Chicken wing, fried, coated, from raw | 6 alitas / 6 wings=330 · 1 alita / 1 wing=55 | alitas empanizadas* (MX) · alitas apanadas* (CO PE CL EC) · alas de pollo fritas | aceite=incluido
+Alitas de pollo en salsa | Chicken wings with sauce | fndds:Chicken wing, grilled with sauce | 6 alitas / 6 wings=330 · 1 alita / 1 wing=55 | alitas BBQ · alitas búfalo · alitas picantes · alitas a la barbacoa
+Tiras de pollo empanizadas | Breaded chicken tenders | fndds:Chicken tenders or strips, breaded, from fast food | 3 tiras / 3 strips=150 · 1 tira / 1 strip=50 | chicken tenders · dedos de pollo · tiritas de pollo · pollo crispy | aceite=incluido
+Aros de cebolla | Onion rings | fndds:Fried onion rings | 1 porción / 1 order=120 · 1 aro / 1 ring=10 | aros de cebolla fritos · onion rings | aceite=incluido
+Corn dog | Corn dog | fndds:Corn dog | 1 unidad / 1 corn dog=88 | banderilla* (MX) · salchicha empanizada · perro de maíz | aceite=incluido
+Burrito de pollo | Chicken burrito | fndds:Burrito, chicken, cheese | 1 unidad / 1 burrito=220 | burrito de pollo con queso
+Shawarma | Gyro | fndds:Gyro sandwich | 1 unidad / 1 sandwich=200 | kebab* (ES) · döner kebab · gyro · gyros · shawarma de carne · dürüm
+Falafel | Falafel | sr:Falafel, home-prepared | 4 unidades / 4 falafels=68 · 1 unidad / 1 falafel=17 | faláfel · croquetas de garbanzo | aceite=incluido
+Sándwich de falafel | Falafel pita sandwich | fndds:Falafel sandwich | 1 unidad / 1 sandwich=215 | falafel en pan pita · pita de falafel
+
+# platos
+// Recetas (USDA no tiene estos platos): las cantidades son las de una receta típica, por plato
+// servido; casi todos los ingredientes ya van cocidos, así que el peso final es la suma.
+// Arepa: con 2 tazas de harina de maíz blanca precocida (260 g), 500 ml de agua y sal salen 5
+// arepas. El peso final da 169 kcal por 100 g, como la arepa asada de Álvarez (1981, Ecology of
+// Food and Nutrition 11:201): 54,8 % de humedad y 168,5 kcal.
+Arepa | Arepa | receta#1012 Harina de maíz blanca 260 · Agua 500 · Sal 5 → 570 | 1 unidad / 1 arepa=110 · 1 pequeña / 1 small arepa=60 | arepas · arepa asada · arepa blanca
+Arepa reina pepiada | Arepa with chicken and avocado | receta#1013 Arepa 110 · Pechuga de pollo hervida 60 · Aguacate 40 · Mayonesa 15 | 1 unidad / 1 arepa=225 | reina pepiada · arepa de pollo con aguacate
+Salchipapas | Fries with sliced hot dogs | receta#1000 Papas fritas 150 · Salchicha 90 · Kétchup 15 · Mayonesa 15 | 1 porción / 1 serving=270 | salchipapa
+Espaguetis con albóndigas | Spaghetti and meatballs | receta#1001 Pasta cocida 200 · Albóndigas en salsa 150 | 1 plato / 1 plate=350 | spaghetti con albóndigas · pasta con albóndigas · fideos con albóndigas
+Ensalada caprese | Caprese salad | receta#1002 Tomate 150 · Queso mozzarella 80 · Aceite de oliva 10 | 1 porción / 1 serving=240 | caprese · tomate con mozzarella
+Pulpo a la gallega | Octopus with paprika and olive oil | receta#1003 Pulpo 200 · Aceite de oliva 15 · Paprika 2 · Sal 2 | 1 porción / 1 serving=219 | pulpo á feira · pulpo con pimentón
+Pan con tomate | Bread with tomato and olive oil | receta#1004 Pan francés 60 · Tomate 40 · Aceite de oliva 7 · Sal 1 | 1 unidad / 1 slice=108 | pa amb tomàquet · pan tumaca · tostada con tomate
+Fabada | White bean stew with chorizo and blood sausage | receta#1005 Frijoles blancos 250 · Chorizo 40 · Morcilla 40 · Panceta 40 | 1 plato / 1 bowl=370 | fabada asturiana · fabes · alubias con chorizo y morcilla
+Huevos rotos | Fried eggs over fries with ham | receta#1006 Papas fritas 150 · Huevo frito 92 · Jamón crudo 30 | 1 plato / 1 plate=272 | huevos estrellados (ES) · huevos rotos con jamón
+Lomo saltado | Beef stir-fry with fries and rice | receta#1007 Lomo 150 · Cebolla 80 · Tomate 80 · Papas fritas 100 · Arroz blanco cocido 150 · Salsa de soja 10 · Vinagre 5 · Aceite vegetal 10 | 1 plato / 1 plate=585 | lomo salteado · saltado de carne
+Papa a la huancaína | Potatoes in spicy cheese sauce | receta#1008 Papa hervida 200 · Queso fresco 40 · Leche evaporada 30 · Galletas de soda 8 · Aceite vegetal 15 · Chile picante 15 · Huevo duro 25 · Aceitunas negras 10 | 1 porción / 1 serving=343 | papas a la huancaína · huancaína
+Bandeja paisa | Bandeja paisa | receta#1009 Frijoles rojos 200 · Arroz blanco cocido 150 · Carne molida 100 · Panceta 60 · Chorizo 75 · Huevo frito 46 · Maduros fritos 80 · Aguacate 50 · Arepa 60 | 1 plato / 1 plate=821 | plato paisa · bandeja montañera
+Ajiaco | Chicken and potato soup | receta#1010 Caldo de pollo 250 · Papa hervida 150 · Pechuga de pollo hervida 80 · Maíz dulce 50 · Crema de leche 15 | 1 plato / 1 bowl=545 | ajiaco santafereño · ajiaco de pollo
+Sancocho | Sancocho | receta#1011 Caldo de pollo 250 · Gallina hervida 100 · Yuca cocida 80 · Plátano verde hervido 70 · Papa hervida 60 · Maíz dulce 40 | 1 plato / 1 bowl=600 | sancocho de gallina · sancocho de pollo
+Pabellón criollo | Shredded beef with rice, beans and plantain | receta#1014 Arroz blanco cocido 150 · Frijoles negros 150 · Carne desmechada 120 · Maduros fritos 80 | 1 plato / 1 plate=500 | pabellón
+Feijoada | Black bean and pork stew | receta#1015 Frijoles negros 250 · Carne para guiso 40 · Costillas de cerdo 30 · Chorizo 40 · Panceta 20 | 1 plato / 1 bowl=380 | feijoada completa · frijoles negros con cerdo
+Baleada | Baleada | receta#1016 Tortilla de harina 70 · Frijoles refritos 60 · Queso fresco 20 · Crema agria 15 | 1 unidad / 1 baleada=165 | baleada sencilla
+Mangú | Mashed green plantain | receta#1017 Plátano verde hervido 250 · Mantequilla 10 · Cebolla 30 · Aceite de oliva 5 · Vinagre 5 | 1 porción / 1 serving=300 | puré de plátano verde · mangú de plátano
+Pan con aguacate | Avocado toast | receta#1018 Pan tostado 30 · Aguacate 50 · Sal 0.5 | 1 rebanada / 1 slice=80.5 | tostada con aguacate* (MX CO VE ES) · tostada con palta* (AR UY CL PE) · avocado toast
+
+# platos
+// México y Centroamérica.
+Tacos de pollo | Chicken tacos | fndds:Taco, corn tortilla, chicken, cheese | 1 unidad / 1 taco=105 | taco de pollo · tacos de pollo con queso
+Tacos de pescado | Fish tacos | fndds:Taco, fish | 1 unidad / 1 taco=100 | taco de pescado
+Tacos de carne sin queso | Meat tacos without cheese | fndds:Taco, meat, no cheese | 1 unidad / 1 taco=100 | tacos al pastor · tacos de asada · tacos de bistec · tacos de carnitas · tacos de suadero · tacos callejeros
+Quesadilla de pollo | Chicken quesadilla | fndds:Quesadilla, chicken | 1 unidad / 1 quesadilla=140 | quesadilla con pollo
+Fajitas de res | Beef fajitas | fndds:Fajita, beef or pork | 1 unidad / 1 fajita=95 | fajitas de carne · fajita de res · fajitas de cerdo
+Nachos con carne | Nachos with meat | fndds:Nachos, beef or pork | 1 porción / 1 order=250 | nachos con carne molida · nachos supremos
+Chilaquiles | Chilaquiles | fndds:Chilaquiles | 1 plato / 1 plate=340 · 1 taza / 1 cup=170 | chilaquiles rojos · chilaquiles verdes
+Huevos rancheros | Huevos rancheros | fndds:Huevos rancheros | 1 porción / 1 serving=236 · 1 huevo / 1 egg=118 | huevos a la ranchera
+Gordita de carne | Meat gordita | fndds:Gordita, meat | 1 unidad / 1 gordita=175 | gorditas · gordita rellena
+Flautas de pollo | Chicken flautas | fndds:Taquito, chicken | 3 unidades / 3 flautas=210 · 1 unidad / 1 flauta=70 | taquitos dorados · tacos dorados de pollo · flautas · taquitos de pollo | aceite=incluido
+Chiles rellenos | Stuffed peppers with cheese | fndds:Chiles rellenos, cheese-filled | 1 unidad / 1 pepper=143 | chile relleno · chile relleno de queso · chiles poblanos rellenos | aceite=incluido
+Sopa de tortilla | Tortilla soup | fndds:Soup, tortilla | 1 plato / 1 bowl=300 | sopa azteca* (MX) · caldo de tortilla | ml
+Arroz rojo | Tomato rice | fndds:Spanish rice, NS as to fat | 1 taza / 1 cup=243 | arroz con tomate · arroz rojo con verduras
+Picadillo | Picadillo | fndds:Stewed seasoned ground beef, Mexican style | 1 taza / 1 cup=222 | picadillo de res · carne molida guisada · carne picada guisada · carne molida en salsa
+Pollo con mole | Chicken in mole sauce | fndds:Chicken with mole sauce | 1 porción / 1 serving=244 | mole con pollo · mole poblano con pollo · pollo en mole
+Pollo guisado con tomate | Chicken stewed with tomatoes | fndds:Stewed chicken with tomato-based sauce, Mexican style | 1 porción / 1 serving=244 | pollo entomatado* (MX) · pollo en salsa de tomate · pollo en salsa roja · tinga de pollo
+Cóctel de camarones | Shrimp cocktail | fndds:Shrimp cocktail | 1 copa / 1 glass=250 | coctel de camarón* (MX) · cóctel de gambas* (ES) · coctel de camarones
+Mofongo | Mofongo | fndds:Green plantain with cracklings, Puerto Rican style | 1 porción / 1 serving=200 | mofongo de chicharrón · mofongo de plátano | aceite=incluido
+Pastelón | Sweet plantain and beef casserole | fndds:Ripe plantain meat pie, Puerto Rican style | 1 porción / 1 piece=190 | pastelón de plátano maduro · pastelón de amarillos · lasaña de plátano
+Fricasé de pollo | Chicken fricassee | fndds:Chicken fricassee, Puerto Rican style | 1 porción / 1 serving=223 | pollo guisado* (DO PR) · pollo en fricasé
+Arroz caldoso con pollo | Soupy chicken and rice | fndds:Soupy rice with chicken, Puerto Rican style | 1 plato / 1 bowl=263 | asopao de pollo* (PR DO) · aguadito de pollo (PE) · arroz caldoso
+Chivo guisado | Stewed goat | fndds:Stewed goat, Puerto Rican style | 1 porción / 1 serving=177 | cabrito guisado · seco de chivo (PE EC) · seco de cabrito (PE) · chivo en salsa
+Bistec encebollado | Steak with onions | fndds:Beef steak with onions, Puerto Rican style | 1 porción / 1 serving=134 | bistec con cebolla · filete encebollado | aceite=incluido
+Lengua guisada | Braised beef tongue | fndds:Tongue pot roast, Puerto Rican style | 1 rebanada / 1 slice=110 | lengua en salsa · lengua estofada
+Mondongo guisado | Tripe stew with potatoes | fndds:Stewed tripe, with potatoes, Puerto Rican style | 1 plato / 1 bowl=280 | sopa de mondongo* (CO VE PR DO PA) · callos guisados · guatitas guisadas (CL)
+Papa rellena | Stuffed potato fritter | fndds:Fried stuffed potatoes, Puerto Rican style | 1 unidad / 1 piece=95 | papas rellenas · patata rellena | aceite=incluido
+Kibbeh | Kibbeh | fndds:Kibby, Puerto Rican style | 1 unidad / 1 piece=55 | quipe* (DO) · kipe* (PR) · quibe · kibbe | aceite=incluido
+Carne desmechada | Shredded beef in tomato sauce | fndds:Beef with tomato-based sauce | 1 porción / 1 serving=187 | carne mechada* (VE) · ropa vieja* (CU PR) · carne deshebrada* (MX) · carne en salsa de tomate
+Arroz con coco | Coconut rice | fndds:Rice, cooked with coconut milk | 1 taza / 1 cup=200 | arroz con leche de coco · arroz de coco
+
+# platos
+// Italia y España.
+Pasta a la boloñesa | Pasta with meat sauce | fndds:Pasta with tomato-based sauce and meat, home recipe | 1 plato / 1 plate=375 | espaguetis a la boloñesa · espagueti boloñesa · fideos a la boloñesa · tallarines a la boloñesa · spaghetti bolognese
+Fettuccine Alfredo | Fettuccine Alfredo | fndds:Pasta with cream sauce, home recipe | 1 plato / 1 plate=375 | pasta Alfredo · fettuccini alfredo · pasta con crema · fideos con crema
+Pasta con mariscos | Seafood pasta | fndds:Pasta with tomato-based sauce and seafood, home recipe | 1 plato / 1 plate=375 | espaguetis con mariscos · espaguetis a la marinera · tallarines con mariscos
+Macarrones con queso | Macaroni and cheese | fndds:Macaroni or noodles with cheese | 1 taza / 1 cup=230 | mac and cheese · coditos con queso (MX) · fideos con queso
+Pollo a la parmesana | Chicken parmesan | fndds:Chicken or turkey parmigiana | 1 porción / 1 serving=182 | pollo parmigiana · pechuga a la parmesana · chicken parmesan
+Berenjenas a la parmesana | Eggplant parmesan | fndds:Eggplant parmesan casserole, regular | 1 porción / 1 serving=198 | berenjena a la parmesana · parmigiana de berenjenas · berenjenas gratinadas
+Bruschetta | Bruschetta | fndds:Bruschetta | 2 unidades / 2 slices=86 · 1 unidad / 1 slice=43 | brusqueta · bruschettas
+Minestrone | Minestrone | fndds:Soup, minestrone | 1 plato / 1 bowl=300 | sopa minestrone · minestrón | ml
+Paella de mariscos | Seafood paella | fndds:Paella with seafood | 1 plato / 1 plate=300 | arroz con mariscos* (PE CO EC CL) · paella marinera · arroz a la marinera
+Camarones al ajillo | Garlic shrimp | fndds:Shrimp in garlic sauce, Puerto Rican style | 1 porción / 1 serving=106 | gambas al ajillo* (ES) · camarones al mojo de ajo* (MX) · langostinos al ajillo · camarones en salsa de ajo | aceite=incluido
+Bacalao a la vizcaína | Salt cod in tomato and pepper sauce | fndds:Biscayne codfish, Puerto Rican style | 1 porción / 1 serving=175 | bacalao guisado · bacalao en salsa
+Pisto | Ratatouille | fndds:Ratatouille | 1 taza / 1 cup=215 | ratatouille · pisto manchego · verduras guisadas
+Albóndigas en salsa | Meatballs in sauce | fndds:Meatballs, Puerto Rican style | 3 unidades / 3 meatballs=150 · 1 unidad / 1 meatball=50 | albóndigas · albóndigas guisadas · albóndigas en salsa de tomate
+
+# platos
+// Asia.
+Pollo agridulce | Sweet and sour chicken | fndds:Sweet and sour chicken or turkey | 1 taza / 1 cup=252 | pollo en salsa agridulce | aceite=incluido
+Cerdo agridulce | Sweet and sour pork | fndds:Sweet and sour pork | 1 taza / 1 cup=226 | cerdo en salsa agridulce · chancho agridulce (CL PE) · puerco agridulce (MX) | aceite=incluido
+Pollo kung pao | Kung pao chicken | fndds:Kung pao chicken | 1 taza / 1 cup=162 | pollo gong bao · kung pao
+Carne con brócoli | Beef and broccoli | fndds:Beef and broccoli | 1 taza / 1 cup=217 | res con brócoli · ternera con brócoli (ES)
+Pollo a la naranja | Orange chicken | fndds:Orange chicken | 1 taza / 1 cup=252 | pollo naranja | aceite=incluido
+Pollo General Tso | General Tso's chicken | fndds:General Tso chicken | 1 taza / 1 cup=146 | pollo del general Tso | aceite=incluido
+Lo mein de pollo | Chicken lo mein | fndds:Lo mein, with chicken | 1 plato / 1 plate=300 · 1 taza / 1 cup=200 | chow mein de pollo · tallarines salteados con pollo · tallarín saltado de pollo (PE)
+Rollito primavera | Egg roll | fndds:Egg roll, with beef and/or pork | 1 unidad / 1 egg roll=64 | rollito de primavera* (ES) · rollo primavera* (MX) · arrollado primavera* (AR UY) · egg roll · lumpia | aceite=incluido
+Dumplings fritos | Fried dumplings | fndds:Wonton, dumpling or pot sticker, fried | 6 unidades / 6 pieces=150 · 1 unidad / 1 piece=25 | gyozas · wantán frito* (PE) · wonton frito · potstickers | aceite=incluido
+Dumplings al vapor | Steamed dumplings | fndds:Wonton, dumpling or pot sticker, steamed | 6 unidades / 6 pieces=150 · 1 unidad / 1 piece=25 | dim sum · jiaozi · gyozas al vapor
+Sopa wantán | Wonton soup | fndds:Soup, wonton | 1 plato / 1 bowl=300 | sopa de wantán · sopa de wonton | ml
+Sopa agripicante | Hot and sour soup | fndds:Soup, hot and sour | 1 plato / 1 bowl=300 | sopa picante y agria | ml
+Arroz frito con pollo | Chicken fried rice | fndds:Rice, fried, with chicken | 1 plato / 1 plate=297 · 1 taza / 1 cup=198 | arroz chaufa de pollo* (PE) · chaulafán de pollo* (EC) · arroz frito de pollo | aceite=incluido
+Arroz frito con camarones | Shrimp fried rice | fndds:Rice, fried, with shrimp | 1 plato / 1 plate=297 · 1 taza / 1 cup=198 | arroz chaufa de camarones* (PE) · chaulafán de camarón* (EC) · arroz frito de camarones | aceite=incluido
+Sushi de salmón | Salmon sushi roll | fndds:Sushi roll, salmon | 6 piezas / 6 pieces=180 · 1 pieza / 1 piece=30 | maki de salmón · roll de salmón · rolls de salmón
+Nigiri de salmón | Salmon nigiri | fndds:Sushi, topped with salmon | 2 piezas / 2 pieces=70 · 1 pieza / 1 piece=35 | nigiri · sushi nigiri de salmón
+Ramen | Ramen | fndds:Ramen bowl with meat and egg | 1 plato / 1 bowl=490 · 1 taza / 1 cup=245 | sopa ramen · ramen con huevo · ramen de cerdo | ml
+Pollo teriyaki | Teriyaki chicken | fndds:Chicken or turkey with teriyaki | 1 porción / 1 serving=244 | pollo en salsa teriyaki
+Sopa miso | Miso soup | fndds:Soup, miso or tofu | 1 tazón / 1 bowl=245 | sopa de miso · miso | ml
+Bibimbap | Bibimbap | fndds:Bibimbap, Korean | 1 plato / 1 bowl=486 · 1 taza / 1 cup=162 | bibimbab
+Tteokbokki | Tteokbokki | fndds:Dukboki or Tteokbokki, Korean | 1 taza / 1 cup=250 | topokki · ddeokbokki
+Carne con salsa de soja | Beef with soy sauce | fndds:Beef with soy-based sauce | 1 porción / 1 serving=183 | bulgogi · carne con salsa de soya* (MX CO VE) · carne salteada con soja
+Pollo al curry | Chicken curry | fndds:Chicken curry | 1 taza / 1 cup=240 | curry de pollo · pollo en curry
+Curry de res | Beef curry | fndds:Beef curry | 1 taza / 1 cup=240 | carne al curry · curry de ternera* (ES)
+Curry de verduras | Vegetable curry | fndds:Vegetable curry | 1 taza / 1 cup=240 | verduras al curry · curry vegetariano
+Dal | Dal | fndds:Dal | 1 taza / 1 cup=240 | dhal · dal de lentejas · lentejas al curry
+Samosa | Samosa | fndds:Samosa | 1 unidad / 1 samosa=100 · 1 pequeña / 1 small samosa=25 | samosas | aceite=incluido
+Biryani de pollo | Chicken biryani | fndds:Biryani with chicken | 1 plato / 1 plate=245 | biryani · arroz biryani con pollo
+Palak paneer | Palak paneer | fndds:Palak Paneer | 1 taza / 1 cup=200 | espinacas con queso paneer · saag paneer
+Pad thai con pollo | Chicken pad thai | fndds:Pad Thai with chicken | 1 plato / 1 plate=400 · 1 taza / 1 cup=200 | pad thai · fideos pad thai
+Pad thai con camarones | Shrimp pad thai | fndds:Pad Thai with seafood | 1 plato / 1 plate=400 · 1 taza / 1 cup=200 | pad thai de mariscos · pad thai de langostinos
+Pho | Pho | fndds:Soup, pho, with meat | 1 plato / 1 bowl=490 · 1 taza / 1 cup=245 | phở · sopa pho · pho de res | ml
+Rollitos de papel de arroz | Fresh spring rolls | fndds:Roll with meat and/or shrimp, vegetables and rice paper, not fried | 2 unidades / 2 rolls=142 · 1 unidad / 1 roll=71 | rollitos frescos · rollos de primavera frescos · summer rolls
+
+# platos
+// Medio Oriente y Grecia.
+Tabulé | Tabbouleh | fndds:Tabbouleh | 1 taza / 1 cup=160 | tabule · tabbouleh · taboulé · ensalada de trigo burgol
+Baba ganoush | Baba ganoush | fndds:Eggplant dip | 2 cucharadas / 2 tbsp=30 | baba ghanoush · mutabal · puré de berenjena · dip de berenjena
+Hojas de parra rellenas | Stuffed grape leaves | fndds:Stuffed grape leaves with beef and rice | 5 unidades / 5 rolls=105 · 1 unidad / 1 roll=21 | dolmas · dolmades · sarma
+Brocheta de pollo | Chicken kebab with vegetables | fndds:Chicken or turkey shish kabob with vegetables, excluding potatoes | 1 unidad / 1 skewer=202 | pincho de pollo* (ES) · chuzo de pollo* (CO) · brocheta de pollo con verduras · kebab de pollo · souvlaki de pollo
+Brocheta de cordero | Lamb kebab with vegetables | fndds:Lamb shish kabob with vegetables, excluding potatoes | 1 unidad / 1 skewer=202 | pincho de cordero (ES) · shish kebab · kebab de cordero
+Ensalada griega | Greek salad | fndds:Greek Salad, no dressing | 1 plato / 1 bowl=315 · 1 taza / 1 cup=105 | ensalada de tomate, pepino y feta · horiatiki
+Musaca | Moussaka | fndds:Eggplant and meat casserole | 1 porción / 1 serving=203 | moussaka · musaka · musaká · berenjenas con carne al horno
+Spanakopita | Spinach and feta pie | fndds:Spanakopita | 1 porción / 1 piece=120 · 1 pequeña / 1 small piece=30 | pastel de espinaca y feta · hojaldre de espinaca
+Tzatziki | Tzatziki | fndds:Tzatziki dip | 2 cucharadas / 2 tbsp=30 | salsa de yogur y pepino · dip de yogur y pepino
+
+# platos
+// Sopas y guisos.
+Caldo de res | Beef soup | fndds:Soup, sopa or caldo de res | 1 plato / 1 bowl=300 | sopa de res · sopa de carne · caldo de costilla (CO) | ml
+Sopa de pollo con verduras | Chicken vegetable soup | fndds:Soup, sopa or caldo de pollo | 1 plato / 1 bowl=300 | caldo de pollo con verduras · sopa de pollo y verduras | ml
+Sopa de fideo | Noodle soup | fndds:Soup, sopa de fideo aguada | 1 plato / 1 bowl=300 | sopa de fideos · sopa aguada de fideo | ml
+Sopa de albóndigas | Meatball soup | fndds:Soup, meatball | 1 plato / 1 bowl=300 | caldo de albóndigas* (MX) | ml
+Crema de tomate | Cream of tomato soup | fndds:Soup, cream of tomato | 1 plato / 1 bowl=300 | sopa de tomate · crema de jitomate* (MX) | ml
+Crema de champiñones | Cream of mushroom soup | fndds:Soup, cream of mushroom | 1 plato / 1 bowl=300 | crema de hongos* (AR UY) · crema de setas (ES) · crema de champiñón | ml
+Crema de verduras | Cream of vegetable soup | fndds:Soup, cream of vegetable | 1 plato / 1 bowl=300 | sopa crema de verduras · crema de vegetales | ml
+Crema de calabaza | Pumpkin soup | fndds:Soup, pumpkin | 1 plato / 1 bowl=300 | crema de zapallo* (AR UY CL PE BO PY) · crema de ahuyama* (CO VE) · crema de auyama* (DO) · sopa de calabaza | ml
+Crema de brócoli con queso | Broccoli cheese soup | fndds:Soup, broccoli cheese | 1 plato / 1 bowl=300 | crema de brócoli · sopa de brócoli con queso | ml
+Sopa de papa | Potato soup | fndds:Soup, potato | 1 plato / 1 bowl=300 | crema de papa · sopa de patata* (ES) · crema de patata (ES) | ml
+Sopa de cebolla | Onion soup | fndds:Soup, French onion | 1 plato / 1 bowl=300 | sopa de cebolla gratinada | ml
+Sopa de arvejas | Split pea soup | fndds:Soup, split pea | 1 plato / 1 bowl=300 | sopa de guisantes* (ES) · sopa de chícharos* (MX) · sopa de alverjas* (CO) · crema de arvejas | ml
+Sopa de frijoles | Bean soup | fndds:Soup, bean | 1 plato / 1 bowl=300 | sopa de porotos* (AR UY CL) · sopa de caraotas* (VE) · sopa de habichuelas* (PR DO) · sopa de alubias (ES) · sopa de frijol | ml
+Sopa de maní | Peanut soup | fndds:Soup, peanut | 1 plato / 1 bowl=300 | sopa de cacahuate* (MX) · sopa de cacahuete (ES) | ml
+Sopa de mariscos | Seafood soup | fndds:Soup, bouillabaisse | 1 plato / 1 bowl=300 | caldo de mariscos · sopa marinera · bullabesa · sopa de pescado y mariscos | ml
+Crema de almejas | Clam chowder | fndds:Soup, New England clam chowder | 1 plato / 1 bowl=300 | clam chowder · sopa de almejas | ml
+Guiso de pollo | Chicken stew | fndds:Stew, chicken | 1 plato / 1 bowl=300 | estofado de pollo* (ES CL PE) · pollo estofado
+Guiso de cerdo | Pork stew | fndds:Stew, pork | 1 plato / 1 bowl=300 | estofado de cerdo* (ES CL PE) · cerdo guisado · puerco guisado (MX) · chancho guisado (CL PE)
+Strogonoff de carne | Beef stroganoff | fndds:Beef stroganoff | 1 porción / 1 serving=192 · 1 taza / 1 cup=256 | stroganoff · estrogonof · strogonoff · carne a la strogonoff
+Pan de carne | Meatloaf | fndds:Meat loaf made with beef | 1 rebanada / 1 slice=108 | albondigón* (MX) · rollo de carne · meatloaf
+Pimientos rellenos | Stuffed peppers | fndds:Stuffed pepper, with rice and meat | 1 unidad / 1 pepper=298 · ½ unidad / ½ pepper=149 | morrones rellenos* (AR UY) · pimentones rellenos* (CO VE CL)
+Repollo relleno | Stuffed cabbage rolls | fndds:Stuffed cabbage, with meat, Puerto Rican style | 2 unidades / 2 rolls=150 · 1 unidad / 1 roll=75 | niños envueltos · hojas de repollo rellenas · rollos de col · charutos
+
+# platos
+// Ensaladas armadas (sin aderezo, salvo las que llevan mayonesa).
+Ensalada César con pollo | Chicken Caesar salad | fndds:Chicken or turkey caesar garden salad, chicken and/or turkey, lettuce, tomato, cheese, no dressing | 1 plato / 1 salad=286 | ensalada césar de pollo · césar con pollo
+Ensalada de atún | Tuna salad | fndds:Tuna salad, made with mayonnaise | ½ taza / ½ cup=119 | atún con mayonesa
+Ensalada de pollo | Chicken salad | fndds:Chicken or turkey salad, made with mayonnaise | ½ taza / ½ cup=113 | ave mayo* (CL) · pollo con mayonesa · ensalada de pollo con mayonesa
+Ensalada de huevo | Egg salad | fndds:Egg salad, made with mayonnaise | ½ taza / ½ cup=111 | huevo con mayonesa
+Ensalada de col | Coleslaw | fndds:Coleslaw | ½ taza / ½ cup=110 | coleslaw · ensalada de repollo* (AR UY CL PE CO VE)
+Ensalada de pasta | Pasta salad | fndds:Macaroni or pasta salad, made with mayonnaise | 1 taza / 1 cup=204 | ensalada de fideos* (AR UY) · ensalada de coditos* (MX) · ensalada de macarrones (ES)
+Ensalada Cobb | Cobb salad | fndds:Cobb salad, no dressing | 1 plato / 1 bowl=315 · 1 taza / 1 cup=105 | cobb
+Ensalada de espinaca | Spinach salad | fndds:Spinach salad, no dressing | 1 plato / 1 bowl=222 · 1 taza / 1 cup=74 | ensalada de espinacas
+Ensalada de frijoles negros | Black bean salad | fndds:Black bean salad | ½ taza / ½ cup=116 | ensalada de porotos negros* (AR UY CL) · ensalada de caraotas negras (VE)
+Ensalada de pulpo | Octopus salad | fndds:Octopus salad, Puerto Rican style | ½ taza / ½ cup=90 | salpicón de pulpo · pulpo en ensalada
+Ensalada de camarones | Shrimp salad | fndds:Shrimp salad | ½ taza / ½ cup=91 | camarones con mayonesa · ensalada de gambas (ES)
+
+# platos
+// Desayunos.
+Huevos revueltos con jamón | Scrambled eggs with ham | fndds:Egg omelet or scrambled egg, with meat, made with oil | 2 huevos / 2 eggs=150 | huevos con jamón · huevos con tocino · huevos con salchicha · huevos con chorizo | aceite=incluido
+Huevos revueltos con tomate | Scrambled eggs with tomato | fndds:Egg omelet or scrambled egg, with tomatoes, fat added | 2 huevos / 2 eggs=150 | huevos pericos (CO VE) · huevos con jitomate (MX) · huevos con tomate y cebolla · huevos con tomate | aceite=incluido
+Huevos revueltos con verduras | Scrambled eggs with vegetables | fndds:Egg omelet or scrambled egg, with vegetables other than dark green and/or tomatoes, fat added | 2 huevos / 2 eggs=150 | omelet de verduras · tortilla de verduras (ES) · revuelto de verduras (ES) | aceite=incluido
+Omelet de jamón y queso | Ham and cheese omelet | fndds:Egg omelet or scrambled egg, with cheese and meat, made with oil | 2 huevos / 2 eggs=170 | tortilla de jamón y queso (ES) · omelette de jamón y queso | aceite=incluido
+Huevos benedictinos | Eggs Benedict | fndds:Egg, Benedict | 2 huevos / 2 eggs=310 · 1 huevo / 1 egg=155 | huevos Benedict · eggs benedict
+Tostadas francesas | French toast | fndds:French toast, plain | 2 rebanadas / 2 slices=130 · 1 rebanada / 1 slice=65 | french toast · torrijas (ES) · torrejas | aceite=incluido
+Avena con leche | Oatmeal made with milk | fndds:Oatmeal, regular or quick, made with milk, no added fat | 1 taza / 1 cup=240 | avena cocida con leche · porridge con leche · gachas de avena con leche (ES)
+Burrito de desayuno | Breakfast burrito | fndds:Egg burrito, with sausage | 1 unidad / 1 burrito=190 | burrito de huevo con salchicha · burrito de huevo
+Sándwich de desayuno | Egg and bacon breakfast sandwich | fndds:Egg sandwich on English muffin, with bacon | 1 unidad / 1 sandwich=150 | sándwich de huevo y tocino · muffin de huevo y tocino · sándwich de huevo
+Parfait de yogur | Yogurt parfait | fndds:Yogurt parfait, with fruit | 1 vaso / 1 cup=150 | yogur con granola y frutas · parfait

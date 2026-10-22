@@ -1,0 +1,217 @@
+// Comidas y alimentos de todos los días en Uruguay, sin marca. Mismo formato que genericos.txt (ver su
+// encabezado). Ningún nombre dice de qué país es: el nombre más neutro va primero y el de Uruguay va
+// como alias con asterisco y (UY), que es el que se muestra ahí. Lo que ya está en genericos.txt no se
+// repite: se usa como ingrediente.
+//
+// Valores: de USDA, directo o como receta con ingredientes curados. Las recetas son caseras típicas, y
+// su peso final sale de lo que pierde (o absorbe) cada cosa al cocinarse, con los rendimientos de:
+// - Bognár A. (2002), «Tables on weight yield of food and retention factors of food constituents for
+//   the calculation of nutrient composition of cooked foods (dishes)», BFE-R-02-03, Karlsruhe;
+// - o la humedad de un producto parecido de USDA o de ARGENFOODS (Universidad Nacional de Luján),
+//   para lo horneado: peso final = materia seca de los ingredientes ÷ (1 − humedad del producto).
+// Los platos que se arman con cosas ya cocidas (un chivito, una milanesa con puré) pesan lo que suman.
+
+# ingredientes
+// Lo básico que piden las recetas de abajo y no estaba curado.
+Levadura fresca | Fresh yeast | sr:Leavening agents, yeast, baker's, compressed | 10 g / 10 g=10 | levadura de panadería · levadura prensada
+Polvo de hornear | Baking powder | sr:Leavening agents, baking powder, double-acting, sodium aluminum sulfate | 1 cucharadita / 1 tsp=4.6 | polvo para hornear* (MX) · levadura química* (ES) · levadura en polvo
+Grasa de res | Beef tallow | sr:Fat, beef tallow | 1 cucharada / 1 tbsp=12.8 | grasa vacuna* (UY AR) · grasa de pella (UY AR) · sebo · grasa de vaca
+Maíz blanco partido | Dried white corn | sr:Corn grain, white | ½ taza / ½ cup=83 | maíz pisado* (UY) · maíz blanco pisado (AR) · maíz para mazamorra · maíz blanco seco
+Maíz cremoso | Cream-style corn | sr:Corn, sweet, yellow, canned, cream style, regular pack | ½ taza / ½ cup=128 | choclo cremoso* (UY AR) · elote cremoso (MX) · crema de choclo
+Masa de hojaldre | Puff pastry dough | sr:Puff pastry, frozen, ready-to-bake | 100 g / 100 g=100 | hojaldre crudo · masa hojaldrada
+Hojaldre horneado | Baked puff pastry | sr:Puff pastry, frozen, ready-to-bake, baked | 30 g / 30 g=30 | hojaldre | crudo=Masa de hojaldre
+Extracto de malta | Malt syrup | sr:Syrups, malt | 1 cucharada / 1 tbsp=21 | jarabe de malta · extracto de malta líquido
+Pimienta de cayena | Cayenne pepper | sr:Spices, pepper, red or cayenne | 1 cucharadita / 1 tsp=1.8 | ají molido* (UY AR PY) · cayena · ají picante molido
+// Las masas crudas, para armar los platos: pesan lo que suman.
+Tapas de empanada | Empanada dough discs | receta#3001 Harina de trigo 500 · Grasa de res 100 · Agua 230 · Sal 10 | 1 tapa / 1 disc=40 · 12 tapas / 12 discs=480 | masa de empanadas · discos de empanada
+Masa de tarta | Savory pie dough | receta#3002 Harina de trigo 400 · Aceite de girasol 80 · Agua 180 · Sal 6 | 1 tapa / 1 crust=330 | tapas de tarta · tapas de pascualina (UY AR) · masa para tartas
+Masa de pizza | Pizza dough | receta#3003 Harina de trigo 500 · Agua 300 · Levadura fresca 25 · Aceite de girasol 30 · Sal 10 · Azúcar 5 | 100 g / 100 g=100 | masa para pizza · bollo de pizza
+
+# carnes
+// La parrilla. Cada corte crudo y asado; los gramos son de lo que se come. Los cortes de USDA más
+// parecidos: la entraña es la falda de afuera (outside skirt), la colita de cuadril el tri-tip, la picaña
+// (la tapa de cuadril) el top sirloin cap y la bondiola el Boston butt. El vacío, el asado de tira, el
+// chorizo, la morcilla, las mollejas y el riñón ya están en genericos.txt.
+Entraña cruda | Raw skirt steak | sr:Beef, plate steak, boneless, outside skirt, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | arrachera cruda* (MX) · entraña fina cruda
+Entraña asada | Grilled skirt steak | sr:Beef, plate steak, boneless, outside skirt, separable lean and fat, trimmed to 0" fat, all grades, cooked, grilled | 1 porción / 1 serving=200 | arrachera asada* (MX) · entraña a la parrilla | crudo=Entraña cruda
+Colita de cuadril cruda | Raw tri-tip | sr:Beef, bottom sirloin, tri-tip roast, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | tri tip crudo · colita cruda
+Colita de cuadril asada | Roasted tri-tip | sr:Beef, bottom sirloin, tri-tip roast, separable lean and fat, trimmed to 0" fat, all grades, cooked, roasted | 1 porción / 1 serving=200 | colita de cuadril a la parrilla · colita de cuadril al horno · tri tip asado | crudo=Colita de cuadril cruda
+Picaña cruda | Raw picanha (top sirloin cap) | sr:Beef, loin, top sirloin cap steak, boneless, separable lean and fat, trimmed to 1/8" fat, all grades, raw | 100 g / 100 g=100 | tapa de cuadril cruda* (AR) · tapa de cuadril cruda (UY) · punta de anca cruda (CO) · punta trasera cruda (VE) · picanha cruda
+Picaña asada | Grilled picanha (top sirloin cap) | sr:Beef, loin, top sirloin cap steak, boneless, separable lean and fat, trimmed to 1/8" fat, all grades, cooked, grilled | 1 porción / 1 serving=200 | tapa de cuadril asada* (AR) · tapa de cuadril asada (UY) · picaña a la parrilla · punta de anca asada (CO) · punta trasera asada (VE) · picanha | crudo=Picaña cruda
+Bondiola cruda | Raw pork collar (Boston butt) | sr:Pork, fresh, shoulder, (Boston butt), blade (steaks), separable lean and fat, raw | 100 g / 100 g=100 | bondiola de cerdo cruda · cuello de cerdo crudo
+Bondiola asada | Grilled pork collar (Boston butt) | sr:Pork, fresh, shoulder, blade, boston (steaks), separable lean and fat, cooked, broiled | 1 porción / 1 serving=200 | bondiola a la parrilla · bondiola de cerdo asada | crudo=Bondiola cruda
+// La pamplona: el pollo (o el cerdo) abierto, relleno de jamón, queso, morrón y aceitunas, y enrollado.
+// Asada a la parrilla: 0,75 la de pollo (pollo asado con piel) y 0,72 la de cerdo (cerdo al horno, 80–90
+// °C), Bognár 2002, tablas 9 y 6.
+Pamplona de pollo cruda | Raw stuffed chicken roll (pamplona) | receta#3004 Pechuga de pollo cruda 250 · Jamón cocido 40 · Queso mozzarella 40 · Pimiento rojo 30 · Aceitunas verdes 15 · Sal 2 | 1 pamplona / 1 roll=377 | pamplona de pollo · arrollado de pollo crudo
+Pamplona de pollo asada | Grilled stuffed chicken roll (pamplona) | receta#3005 Pamplona de pollo cruda 100 → 75 | 1 pamplona / 1 roll=283 | pamplona de pollo a la parrilla · arrollado de pollo asado | crudo=Pamplona de pollo cruda
+Pamplona de cerdo cruda | Raw stuffed pork roll (pamplona) | receta#3006 Carne de cerdo cruda 250 · Jamón cocido 40 · Queso mozzarella 40 · Pimiento rojo 30 · Aceitunas verdes 15 · Sal 2 | 1 pamplona / 1 roll=377 | pamplona de cerdo · arrollado de cerdo crudo
+Pamplona de cerdo asada | Grilled stuffed pork roll (pamplona) | receta#3007 Pamplona de cerdo cruda 100 → 72 | 1 pamplona / 1 roll=271 | pamplona de cerdo a la parrilla · arrollado de cerdo asado | crudo=Pamplona de cerdo cruda
+// La provoleta: el provolone a la parrilla con orégano y un hilo de aceite. No hay un rendimiento
+// publicado para el queso a la parrilla: pesa lo que suma.
+Provoleta asada | Grilled provolone (provoleta) | receta#3008 Queso provolone 150 · Aceite de oliva 4 · Orégano 1 | 1 provoleta / 1 provoleta=155 · ½ provoleta / ½ provoleta=78 | provoleta a la parrilla · provolone asado | crudo=Queso provolone
+
+# salsas
+Chimichurri | Chimichurri sauce | receta#3009 Aceite de girasol 100 · Vinagre 50 · Agua 30 · Ajo 10 · Perejil 15 · Orégano 3 · Pimienta de cayena 3 · Sal 6 | 1 cucharada / 1 tbsp=15 | chimi
+
+# platos
+// Las milanesas: la carne empanada (huevo y pan rallado) cruda, frita o al horno. Cocidas pierden lo de
+// Bognár 2002 (tablas 3, 6 y 9: escalope empanado frito de ternera 0,74, de cerdo 0,74 y de pollo 0,86,
+// con 6, 6 y 5 g de grasa absorbida cada 100 g crudos, tablas de retención 5, 7 y 13). Frita, el aceite
+// que absorbe es esa grasa (USDA da lo mismo: 9 g de aceite cada 100 g de «Beef, steak, country fried»);
+// al horno, la placa lleva 2 cucharadas de aceite por kilo. La berenjena: la que se guisa pierde 0,80
+// (tabla 19) y el empanado de verdura absorbe 5 g (tabla de retención 29). La merluza: el filete de
+// pescado empanado frito queda en 0,78 (tabla 13) y absorbe 6 g (tabla de retención 21).
+Milanesa de carne cruda | Raw breaded beef cutlet | receta#3010 Nalga cruda 1000 · Huevo 100 · Pan rallado 200 · Ajo 5 · Perejil 5 · Sal 8 | 1 milanesa mediana / 1 medium cutlet=200 | milanesa cruda · milanesa de nalga cruda
+Milanesa de carne frita | Fried breaded beef cutlet | receta#3011 Milanesa de carne cruda 100 · Aceite de girasol 6 → 74 | 1 milanesa mediana / 1 medium cutlet=150 | milanesa frita · milanesa de nalga frita | crudo=Milanesa de carne cruda · aceite=incluido
+Milanesa de carne al horno | Baked breaded beef cutlet | receta#3012 Milanesa de carne cruda 100 · Aceite de girasol 3 → 71 | 1 milanesa mediana / 1 medium cutlet=150 | milanesa al horno · milanesa de nalga al horno | crudo=Milanesa de carne cruda · aceite=incluido
+Milanesa de pollo cruda | Raw breaded chicken cutlet | receta#3013 Pechuga de pollo cruda 1000 · Huevo 100 · Pan rallado 200 · Ajo 5 · Perejil 5 · Sal 8 | 1 milanesa mediana / 1 medium cutlet=170 | suprema cruda (UY AR) · milanesa de pechuga cruda
+Milanesa de pollo frita | Fried breaded chicken cutlet | receta#3014 Milanesa de pollo cruda 100 · Aceite de girasol 5 → 86 | 1 milanesa mediana / 1 medium cutlet=150 | suprema frita (UY AR) · suprema · milanesa de pechuga frita | crudo=Milanesa de pollo cruda · aceite=incluido
+Milanesa de pollo al horno | Baked breaded chicken cutlet | receta#3015 Milanesa de pollo cruda 100 · Aceite de girasol 3 → 84 | 1 milanesa mediana / 1 medium cutlet=150 | suprema al horno (UY AR) · milanesa de pechuga al horno | crudo=Milanesa de pollo cruda · aceite=incluido
+Milanesa de cerdo cruda | Raw breaded pork cutlet | receta#3016 Lomo de cerdo crudo 1000 · Huevo 100 · Pan rallado 200 · Ajo 5 · Perejil 5 · Sal 8 | 1 milanesa mediana / 1 medium cutlet=200 | milanesa de lomo de cerdo cruda · milanesa de puerco cruda (MX)
+Milanesa de cerdo frita | Fried breaded pork cutlet | receta#3017 Milanesa de cerdo cruda 100 · Aceite de girasol 6 → 74 | 1 milanesa mediana / 1 medium cutlet=150 | milanesa de cerdo · milanesa de puerco frita (MX) | crudo=Milanesa de cerdo cruda · aceite=incluido
+Milanesa de cerdo al horno | Baked breaded pork cutlet | receta#3018 Milanesa de cerdo cruda 100 · Aceite de girasol 3 → 71 | 1 milanesa mediana / 1 medium cutlet=150 | milanesa de cerdo horneada | crudo=Milanesa de cerdo cruda · aceite=incluido
+Milanesa de berenjena cruda | Raw breaded eggplant | receta#3019 Berenjena 1000 · Huevo 150 · Pan rallado 250 · Ajo 5 · Perejil 5 · Sal 8 | 1 milanesa / 1 slice=90 | berenjena empanada cruda · berenjena apanada cruda (CO PE CL)
+Milanesa de berenjena frita | Fried breaded eggplant | receta#3020 Milanesa de berenjena cruda 100 · Aceite de girasol 5 → 85 | 1 milanesa / 1 slice=75 | berenjena empanada frita · berenjena apanada frita (CO PE CL) | crudo=Milanesa de berenjena cruda · aceite=incluido
+Milanesa de berenjena al horno | Baked breaded eggplant | receta#3021 Milanesa de berenjena cruda 100 · Aceite de girasol 3 → 83 | 1 milanesa / 1 slice=75 | berenjena empanada al horno | crudo=Milanesa de berenjena cruda · aceite=incluido
+Milanesa de merluza cruda | Raw breaded hake fillet | receta#3022 Merluza cruda 1000 · Huevo 100 · Pan rallado 200 · Ajo 5 · Perejil 5 · Sal 8 | 1 milanesa / 1 fillet=130 | milanesa de pescado cruda · filet de merluza empanado crudo
+Milanesa de merluza frita | Fried breaded hake fillet | receta#3023 Milanesa de merluza cruda 100 · Aceite de girasol 6 → 78 | 1 milanesa / 1 fillet=100 | milanesa de pescado frita · filet de merluza empanado · pescado empanizado (MX) | crudo=Milanesa de merluza cruda · aceite=incluido
+Milanesa de merluza al horno | Baked breaded hake fillet | receta#3024 Milanesa de merluza cruda 100 · Aceite de girasol 3 → 75 | 1 milanesa / 1 fillet=100 | milanesa de pescado al horno · filet de merluza empanado al horno | crudo=Milanesa de merluza cruda · aceite=incluido
+Milanesa con puré | Breaded beef cutlet with mashed potatoes | receta#3025 Milanesa de carne frita 150 · Puré de papas 200 | 1 plato / 1 plate=350 | milanesa con puré de papas
+Milanesa con papas fritas | Breaded beef cutlet with fries | receta#3026 Milanesa de carne frita 150 · Papas fritas 150 | 1 plato / 1 plate=300 | milanesa con fritas · milanesa con papas
+Sándwich de milanesa | Breaded beef cutlet sandwich | receta#3027 Pan francés 100 · Milanesa de carne frita 120 · Lechuga 15 · Tomate 40 · Mayonesa 15 | 1 sándwich / 1 sandwich=290 | milanesa al pan* (UY) · sánguche de milanesa (AR PE) · torta de milanesa* (MX)
+Milanesa a caballo | Breaded beef cutlet with a fried egg | receta#3028 Milanesa de carne frita 150 · Huevo frito 46 | 1 plato / 1 plate=196 | milanesa con huevo frito · milanesa con huevo
+Salchichas con puré | Hot dogs with mashed potatoes | receta#3029 Salchicha 90 · Puré de papas 200 | 1 plato / 1 plate=290 | panchos con puré (UY AR) · salchichas con puré de papas
+// Los guisos. Pesan lo que queda de cada cosa cocida (Bognár 2002): las lentejas secas absorben hasta
+// ×2,73 (tabla 20), la carne guisada queda en 0,65 (tabla 4, bien cocida), el chorizo en 0,80 (tabla 12),
+// el morrón en 0,74 (tabla 19); la papa, la zanahoria, el zapallo y la cebolla quedan como estaban. El
+// agua que no absorben se evapora: son guisos espesos. El guiso de arroz es un «rice with pork, stew»
+// (×1,46 sin contar el agua, tabla 29), el estofado un goulash con su salsa (×0,73, tabla 5) y la
+// carbonada un guiso de verduras con carne (×0,87, tabla 16). Los fideos secos absorben ×2,10 (tabla 30).
+Guiso de lentejas | Lentil stew with beef and chorizo | receta#3030 Lentejas crudas 500 · Carne de res cruda 400 · Chorizo crudo 200 · Panceta 100 · Cebolla 200 · Pimiento rojo 100 · Zanahoria 150 · Papa 400 · Calabaza 300 · Tomate triturado 400 · Ajo 10 · Aceite de girasol 30 · Paprika 5 · Sal 10 · Agua 1500 → 3464 | 1 plato / 1 bowl=350 | lentejas guisadas · guiso de lentejas con chorizo · lentejas con chorizo
+Guiso de arroz | Rice and beef stew | receta#3031 Arroz blanco crudo 400 · Carne de res cruda 500 · Chorizo crudo 150 · Cebolla 150 · Pimiento rojo 100 · Zanahoria 100 · Tomate triturado 300 · Ajo 5 · Aceite de girasol 30 · Paprika 3 · Sal 10 · Agua 1200 → 2552 | 1 plato / 1 bowl=350 | arroz con carne · guiso de arroz con carne · arroz guisado
+Estofado de carne | Beef stew in tomato sauce | receta#3032 Carne de res cruda 1000 · Cebolla 300 · Pimiento rojo 150 · Zanahoria 200 · Ajo 10 · Tomate triturado 500 · Aceite de girasol 40 · Orégano 2 · Sal 10 · Agua 300 → 1615 | 1 plato / 1 plate=250 | estofado (UY AR) · carne en salsa · carne guisada con tomate
+Carbonada | Beef, pumpkin and peach stew (carbonada) | receta#3033 Carne de res cruda 600 · Cebolla 200 · Pimiento rojo 100 · Tomate triturado 300 · Calabaza 600 · Papa 400 · Batata 400 · Maíz dulce 300 · Duraznos en almíbar 250 · Aceite de girasol 30 · Sal 10 · Agua 800 → 2775 | 1 plato / 1 bowl=350 | carbonada de zapallo · guiso de zapallo con duraznos
+Guiso de fideos | Beef and pasta stew | receta#3034 Carne de res cruda 500 · Cebolla 150 · Pimiento rojo 100 · Zanahoria 150 · Papa 300 · Tomate triturado 400 · Pasta seca 400 · Aceite de girasol 30 · Sal 10 · Agua 1500 → 2279 | 1 plato / 1 bowl=350 | fideos guisados · guiso de fideos con carne
+// El puchero y los platos al horno se arman con lo ya cocido (el caldo del puchero va aparte).
+Puchero | Boiled beef and vegetables (puchero) | receta#3035 Pecho de res 150 · Chorizo 40 · Papa hervida 100 · Batata hervida 70 · Calabaza cocida 70 · Zanahoria cocida 50 · Maíz dulce cocido 60 · Repollo cocido 40 · Cebolla cocida 20 | 1 plato / 1 plate=600 | puchero de carne · puchero con verduras
+Carne al horno con papas | Roast beef with roasted potatoes | receta#3036 Carne al horno 200 · Papa al horno 200 · Aceite de girasol 10 | 1 plato / 1 plate=410 | carne asada con papas · carne con papas al horno
+Pollo al horno con papas | Roast chicken with roasted potatoes | receta#3037 Pollo asado 250 · Papa al horno 200 · Aceite de girasol 10 | 1 plato / 1 plate=460 | pollo asado con papas · pollo con papas al horno
+Puré de calabaza | Mashed pumpkin | receta#3038 Calabaza 1000 · Mantequilla 30 · Leche entera 50 · Sal 5 → 1005 | 1 porción / 1 serving=200 | puré de zapallo* (UY AR PY) · puré de ahuyama (CO VE)
+// Pastas con su salsa, servidas.
+Ravioles con salsa de tomate | Ravioli with tomato sauce | receta#3039 Ravioles 250 · Salsa de tomate 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ravioles con tuco* (UY AR) · raviolis con salsa de tomate* (ES MX)
+Ravioles con salsa blanca | Ravioli with white sauce | receta#3040 Ravioles 250 · Salsa blanca 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ravioles con bechamel
+Ñoquis con salsa de tomate | Gnocchi with tomato sauce | receta#3041 Ñoquis 250 · Salsa de tomate 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ñoquis con tuco* (UY AR) · gnocchi con salsa de tomate
+Ñoquis con salsa blanca | Gnocchi with white sauce | receta#3042 Ñoquis 250 · Salsa blanca 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ñoquis con bechamel
+Tallarines con salsa blanca | Egg noodles with white sauce | receta#3043 Fideos de huevo 250 · Salsa blanca 125 · Queso rallado 10 | 1 plato / 1 plate=385 | tallarines con bechamel · fideos con salsa blanca
+Pasta con mantequilla | Buttered pasta with cheese | receta#3044 Pasta cocida 250 · Mantequilla 15 · Queso rallado 15 | 1 plato / 1 plate=280 | fideos con manteca* (UY AR PY) · fideos con manteca y queso · pasta con mantequilla y queso
+Polenta con queso | Polenta with cheese | receta#3045 Polenta cocida 300 · Queso mozzarella 50 · Mantequilla 10 | 1 plato / 1 plate=360 | polenta con muzzarella (UY AR)
+// Los canelones: panqueques rellenos (de carne, o de acelga y ricota) con salsa blanca y tuco. Se arman
+// con lo ya cocido y se gratinan unos minutos: pesan lo que suman.
+Canelones de carne | Beef cannelloni | receta#3046 Crepes 400 · Carne molida 400 · Cebolla cocida 100 · Queso rallado 60 · Huevo 50 · Salsa blanca 400 · Salsa de tomate 300 | 2 canelones / 2 cannelloni=340 | canelones de carne picada · canelones de carne con salsa blanca
+Canelones de verdura | Vegetable cannelloni | receta#3047 Crepes 400 · Acelga cocida 500 · Ricota 250 · Cebolla cocida 100 · Queso rallado 60 · Huevo 50 · Salsa blanca 400 · Salsa de tomate 300 | 2 canelones / 2 cannelloni=410 | canelones de acelga · canelones de ricota y verdura
+// Lo horneado con masa (empanadas, tartas, pizzas): 0,86, como la pizza margarita y la tarta (Bognár 2002,
+// tabla 31). Lo que se rellena con verdura va con la verdura ya cocida.
+Empanada de jamón y queso | Ham and cheese empanada | receta#3048 Tapas de empanada 480 · Jamón cocido 240 · Queso mozzarella 360 · Huevo 30 → 955 | 1 empanada / 1 empanada=80 | empanadas de jamón y queso
+Empanada de humita | Creamed corn empanada | receta#3049 Tapas de empanada 480 · Maíz cremoso 350 · Cebolla 120 · Pimiento rojo 60 · Aceite de girasol 15 · Queso mozzarella 120 · Salsa blanca 100 · Huevo 30 → 1097 | 1 empanada / 1 empanada=90 | empanadas de humita · empanada de choclo (UY AR) · empanada de elote (MX)
+Empanada de verdura | Chard empanada | receta#3050 Tapas de empanada 480 · Acelga cocida 300 · Cebolla 100 · Salsa blanca 150 · Queso rallado 40 · Huevo duro 100 · Aceite de girasol 15 · Huevo 30 → 1045 | 1 empanada / 1 empanada=85 | empanadas de verdura · empanada de acelga
+Empanada de queso y cebolla | Cheese and onion empanada | receta#3051 Tapas de empanada 480 · Queso mozzarella 360 · Cebolla 240 · Aceite de girasol 15 · Orégano 2 · Huevo 30 → 969 | 1 empanada / 1 empanada=85 | empanadas de queso y cebolla · empanada de muzzarella y cebolla (UY AR)
+Empanada caprese | Tomato, mozzarella and basil empanada | receta#3052 Tapas de empanada 480 · Queso mozzarella 300 · Tomate 240 · Albahaca 10 · Huevo 30 → 912 | 1 empanada / 1 empanada=85 | empanadas caprese · empanada de tomate y queso
+Tarta de jamón y queso | Ham and cheese quiche | receta#3053 Masa de tarta 330 · Jamón cocido 200 · Queso mozzarella 200 · Huevo 150 · Leche entera 200 → 929 | 1 porción / 1 slice=115 | quiche de jamón y queso · tarta de jamón
+Tarta de calabacín | Zucchini pie | receta#3054 Masa de tarta 330 · Calabacín cocido 600 · Cebolla cocida 150 · Huevo 200 · Queso rallado 50 · Queso mozzarella 100 → 1230 | 1 porción / 1 slice=150 | tarta de zapallitos* (UY AR) · tarta de zucchini · tarta de calabacitas (MX)
+Tarta de puerro | Leek pie | receta#3055 Masa de tarta 330 · Puerro cocido 500 · Huevo 200 · Salsa blanca 150 · Queso rallado 50 · Queso mozzarella 100 → 1144 | 1 porción / 1 slice=140 | tarta de puerros · quiche de puerro
+Tarta de fiambre | Double-crust ham and cheese pie | receta#3056 Masa de tarta 660 · Jamón cocido 300 · Queso gouda 250 · Huevo duro 150 · Pimiento rojo 60 · Aceitunas verdes 40 · Huevo 50 → 1299 | 1 porción / 1 slice=160 | torta de fiambre* (UY) · tarta de jamón y queso doble
+Tarta de atún | Tuna pie | receta#3057 Masa de tarta 330 · Atún en agua 340 · Cebolla cocida 150 · Pimiento rojo 60 · Huevo 150 · Salsa blanca 150 · Queso rallado 40 → 1049 | 1 porción / 1 slice=130 | tarta de atún y huevo · quiche de atún
+Pizza sin queso | Cheeseless pizza (tomato sauce) | receta#3058 Masa de pizza 870 · Salsa de tomate 300 · Orégano 2 · Aceite de oliva 10 → 1017 | 1 porción / 1 slice=130 | pizza (UY) · pizza de molde (UY AR) · pizza marinara
+Pizza a la parrilla | Grilled pizza | receta#3059 Masa de pizza 300 · Salsa de tomate 100 · Queso mozzarella 200 · Orégano 1 · Aceite de oliva 5 → 521 | 1 pizza / 1 pizza=520 · 1 porción / 1 slice=65 | pizza parrillera · pizza a la brasa
+Fainá con mozzarella | Farinata with mozzarella | receta#3060 Fainá 75 · Queso mozzarella 40 | 1 porción / 1 slice=115 | fainá con muzzarella* (UY AR) · fainá con queso
+// La hamburguesa casera: carne picada con huevo, pan rallado y cebolla (la carne picada de USDA ya trae la
+// sal). A la plancha queda en 0,81 (Bognár 2002, tabla 7); el aceite se pregunta.
+Hamburguesa casera cruda | Raw homemade burger patty | receta#3061 Carne molida cruda 1000 · Huevo 50 · Pan rallado 50 · Cebolla 100 · Ajo 5 · Perejil 5 | 1 hamburguesa / 1 patty=150 | medallón casero crudo (UY AR) · hamburguesa casera sin cocinar
+Hamburguesa casera a la plancha | Pan-fried homemade burger patty | receta#3062 Hamburguesa casera cruda 100 → 81 | 1 hamburguesa / 1 patty=120 | medallón casero (UY AR) · hamburguesa casera | crudo=Hamburguesa casera cruda · aceite
+// Los sándwiches se arman con lo ya cocido.
+Olímpico | Triple-decker ham and cheese sandwich | receta#3063 Pan blanco 75 · Jamón cocido 40 · Queso gouda 40 · Lechuga 15 · Tomate 40 · Huevo duro 50 · Mayonesa 20 | 1 sándwich / 1 sandwich=280 | sándwich olímpico · sándwich triple
+Sándwich de miga | Crustless ham and cheese finger sandwich | receta#3064 Pan blanco 40 · Mantequilla 5 · Jamón cocido 15 · Queso gouda 15 | 1 sándwich / 1 sandwich=75 | sándwich de miga de jamón y queso · sándwich de pan de miga
+Chivito común | Basic chivito sandwich | receta#3065 Pan de hamburguesa 100 · Lomo 120 · Queso mozzarella 40 · Lechuga 15 · Tomate 40 · Mayonesa 20 | 1 sándwich / 1 sandwich=335 | chivito simple · chivito sin huevo
+Chivito de pollo | Chicken chivito sandwich | receta#3066 Pan de hamburguesa 100 · Pechuga de pollo a la plancha 120 · Jamón cocido 30 · Queso mozzarella 40 · Huevo frito 46 · Panceta 20 · Lechuga 15 · Tomate 40 · Mayonesa 20 · Aceitunas verdes 10 | 1 sándwich / 1 sandwich=441 | chivito canadiense de pollo
+Croissant de jamón y queso | Ham and cheese croissant | receta#3067 Croissant 57 · Jamón cocido 15 · Queso gouda 15 | 1 unidad / 1 croissant=87 | medialuna de jamón y queso* (UY AR PY) · medialuna rellena · cuerno de jamón y queso (MX)
+Morcipán | Blood sausage sandwich | receta#3068 Pan francés 80 · Morcilla 80 | 1 sándwich / 1 sandwich=160 | morcilla al pan · morci
+Bondiola al pan | Grilled pork collar sandwich | receta#3069 Pan francés 100 · Bondiola asada 120 · Lechuga 15 · Tomate 30 · Chimichurri 10 | 1 sándwich / 1 sandwich=275 | sándwich de bondiola · bondiola en pan
+// Otros platos de casa. Bognár 2002: el revuelto queda como los huevos revueltos con jamón (0,90) y las
+// tortillas como los huevos revueltos (0,91), tabla 2; las papas de la tortilla, salteadas, en 0,77 con 4
+// g de aceite cada 100 g (tablas 21 y de retención 31); las albóndigas hervidas en la salsa, 0,87 (tabla
+// 7); los calabacines rellenos como los pimientos rellenos, 0,79 (tabla 22); el zapallo hervido, 0,92
+// (tabla 19); las croquetas de papa fritas, 0,73 con 6 g de aceite (tablas 21 y de retención 32).
+Revuelto gramajo | Scrambled eggs with ham and shoestring fries | receta#3070 Papas fritas 200 · Huevo 200 · Jamón cocido 100 · Cebolla 100 · Arvejas 50 · Aceite de girasol 15 → 619 | 1 plato / 1 plate=310 | gramajo · revuelto de papas y huevo | aceite=incluido
+Tortilla de papas | Spanish potato omelet (tortilla) | receta#3071 Papa 1000 · Cebolla 200 · Huevo 300 · Aceite de girasol 48 · Sal 8 → 1205 | 1 porción / 1 slice=150 | tortilla de patatas* (ES) · tortilla española · tortilla de papa · tortilla de papas casera | aceite=incluido
+Tortilla de acelga | Swiss chard omelet | receta#3072 Acelga cocida 400 · Huevo 200 · Cebolla 100 · Queso rallado 30 · Aceite de girasol 20 · Sal 4 → 686 | 1 porción / 1 slice=150 | tortilla de verdura · tortilla de espinaca | aceite=incluido
+Huevos rellenos | Deviled eggs with tuna | receta#3073 Huevo duro 200 · Atún en agua 60 · Mayonesa 40 | 2 mitades / 2 halves=75 | huevos duros rellenos · huevos rellenos con atún
+Albóndigas con salsa de tomate | Meatballs in tomato sauce | receta#3074 Carne molida cruda 500 · Huevo 50 · Pan rallado 50 · Cebolla 100 · Ajo 5 · Perejil 5 · Salsa de tomate 500 · Aceite de girasol 20 → 1138 | 1 plato / 1 plate=300 | albóndigas con tuco* (UY AR) · albóndigas en tuco
+Calabacines rellenos | Stuffed zucchini | receta#3075 Calabacín 1000 · Carne molida cruda 300 · Cebolla 150 · Huevo 50 · Queso rallado 50 · Pan rallado 30 · Aceite de girasol 20 · Sal 5 → 1268 | 1 porción / 1 serving=250 | zapallitos rellenos* (UY AR) · calabacitas rellenas* (MX) · zucchinis rellenos
+Croquetas de papa | Potato croquettes | receta#3076 Puré de papas 500 · Huevo 50 · Queso rallado 30 · Pan rallado 60 · Aceite de girasol 38 → 467 | 3 croquetas / 3 croquettes=90 | croquetas de puré · croquetas de patata* (ES) | aceite=incluido
+Lengua a la vinagreta | Beef tongue in vinaigrette | receta#3077 Lengua 500 · Cebolla 100 · Pimiento rojo 80 · Pimiento verde 80 · Perejil 15 · Ajo 5 · Aceite de girasol 80 · Vinagre 50 · Sal 5 | 1 porción / 1 serving=180 | lengua en vinagreta · lengua a la vinagreta fría
+// Los buñuelos: se fríen como una dona (0,74 y 7 g de aceite cada 100 g, Bognár 2002, tablas 31 y 38).
+Buñuelos de acelga | Chard fritters | receta#3078 Acelga cocida 300 · Harina de trigo 150 · Huevo 100 · Leche entera 80 · Polvo de hornear 5 · Sal 4 · Aceite de girasol 45 → 473 | 3 buñuelos / 3 fritters=90 | buñuelos de verdura · tortitas de acelga | aceite=incluido
+Ensalada de zanahoria y huevo | Grated carrot and egg salad | receta#3079 Zanahoria 300 · Huevo duro 100 · Aceite de girasol 15 · Jugo de limón 10 · Sal 2 | 1 plato / 1 plate=200 | ensalada de zanahoria rallada y huevo
+Ensalada de tomate y cebolla | Tomato and onion salad | receta#3080 Tomate 300 · Cebolla 50 · Aceite de girasol 15 · Vinagre 5 · Sal 2 | 1 plato / 1 plate=150 | ensalada de tomate · tomate con cebolla
+
+# panes
+// El pan: 0,90 (Bognár 2002, tabla 31). Los bizcochos de grasa: la humedad del croissant de USDA (23,2 %).
+// Las galletas de campaña: la de la galleta de campo de ARGENFOODS (24,8 %). Los scones: la del biscuit de
+// USDA hecho en casa (28,9 %).
+Bizcochos de grasa | Flaky beef-fat pastries | receta#3081 Harina de trigo 1000 · Grasa de res 400 · Agua 500 · Levadura fresca 25 · Sal 20 → 1704 | 1 bizcocho / 1 pastry=30 · 1 cuernito / 1 crescent=35 | bizcocho de grasa · bizcochos salados · cuernitos (UY) · cuernito de grasa
+Pan con grasa | Bread roll made with beef fat | receta#3082 Harina de trigo 1000 · Grasa de res 100 · Agua 550 · Levadura fresca 30 · Sal 20 → 1530 | 1 pancito / 1 roll=50 | pan de grasa · pancitos con grasa
+Pan felipe | Soft white roll (pan felipe) | receta#3083 Harina de trigo 1000 · Agua 550 · Mantequilla 50 · Levadura fresca 30 · Azúcar 20 · Sal 20 → 1503 | 1 unidad / 1 roll=60 | felipe (UY) · felipes · pancito felipe
+Pan de molde casero | Homemade sandwich bread | receta#3084 Harina de trigo 1000 · Leche entera 300 · Agua 250 · Aceite de girasol 50 · Azúcar 30 · Levadura fresca 30 · Sal 20 → 1512 | 1 rebanada / 1 slice=30 | pan casero · pan lactal casero (AR) · pan de caja casero (MX)
+Galleta de campaña | Hard country bread (galleta de campaña) | receta#3085 Harina de trigo 1000 · Grasa de res 100 · Agua 500 · Levadura fresca 20 · Sal 20 → 1339 | 1 galleta / 1 piece=60 | galleta de campo (AR) · galletas de campaña · galleta dura
+Galleta malteada | Malted hard country bread | receta#3086 Harina de trigo 1000 · Grasa de res 100 · Extracto de malta 50 · Agua 480 · Levadura fresca 20 · Sal 20 → 1392 | 1 galleta / 1 piece=60 | galletas malteadas · galleta de malta
+Scones | Scones | receta#3087 Harina de trigo 500 · Mantequilla 100 · Leche entera 250 · Azúcar 60 · Huevo 50 · Polvo de hornear 20 · Sal 4 → 913 | 1 scon / 1 scone=45 | escones (UY AR) · scon
+// Lo de hojaldre se arma con el hojaldre horneado de USDA.
+Hojaldre con membrillo | Puff pastry with quince paste | receta#3088 Hojaldre horneado 80 · Dulce de membrillo 20 | 1 unidad / 1 pastry=35 | margaritas* (UY) · margarita de membrillo · bizcocho de membrillo
+Palmeritas | Palmiers | receta#3089 Hojaldre horneado 80 · Azúcar 20 | 1 palmerita / 1 palmier=15 | palmeras* (ES) · orejas* (MX) · palmerita
+
+# dulces
+// Los alfajores y los postres que se arman con lo ya hecho pesan lo que suman.
+Alfajor de chocolate | Chocolate-coated dulce de leche alfajor | receta#3090 Galletas dulces 22 · Dulce de leche 18 · Chocolate amargo 15 | 1 alfajor / 1 alfajor=55 | alfajor bañado · alfajor negro
+Alfajor de dulce de leche | Dulce de leche alfajor | receta#3091 Galletas dulces 24 · Dulce de leche 18 · Azúcar en polvo 2 | 1 alfajor / 1 alfajor=44 | alfajor de galletita · alfajor simple
+Alfajor de nieve | Meringue-glazed alfajor | receta#3092 Galletas dulces 22 · Dulce de leche 18 · Merengue 12 | 1 alfajor / 1 alfajor=52 | alfajor blanco · alfajor glaseado
+Bombón de dulce de leche | Chocolate-covered dulce de leche bonbon | receta#3093 Dulce de leche 300 · Chocolate amargo 200 | 1 bombón / 1 bonbon=15 | bombones de dulce de leche · bocadito de dulce de leche
+Flan con dulce de leche | Flan with dulce de leche | receta#3094 Flan 100 · Dulce de leche 30 | 1 porción / 1 serving=130 | flan con cajeta (MX) · flan con arequipe (CO VE) · flan con manjar (CL PE)
+Fresas con crema | Strawberries and cream | receta#3095 Fresas 150 · Crema batida 40 · Azúcar 10 | 1 porción / 1 serving=200 | frutillas con crema* (UY AR CL PY) · fresas con nata (ES)
+Crepe con dulce de leche | Crepe with dulce de leche | receta#3096 Crepes 50 · Dulce de leche 30 | 1 unidad / 1 crepe=80 | panqueque de dulce de leche* (UY AR) · crepa de cajeta (MX) · crepe de arequipe (CO)
+Churro relleno de dulce de leche | Dulce de leche filled churro | receta#3097 Churros 45 · Dulce de leche 15 | 1 churro / 1 churro=60 | churros rellenos · churro con dulce de leche
+Dona rellena de dulce de leche | Dulce de leche filled doughnut | receta#3098 Donas 60 · Dulce de leche 25 | 1 unidad / 1 doughnut=85 | bola de fraile* (UY AR) · berlinesa de dulce de leche (AR CL) · dona rellena de cajeta (MX)
+Cañoncitos de dulce de leche | Puff pastry tubes with dulce de leche | receta#3099 Hojaldre horneado 60 · Dulce de leche 40 | 1 cañoncito / 1 pastry=40 | cañoncito · canutillos de dulce de leche (ES)
+Massini | Massini cake (sponge, cream and burnt yolk) | receta#3100 Bizcocho 400 · Crema de leche 400 · Azúcar 150 · Yema de huevo 100 | 1 porción / 1 slice=105 | postre massini · torta massini
+Helado de dulce de leche | Dulce de leche ice cream | receta#3101 Crema de leche 500 · Dulce de leche 400 · Leche entera 200 | 1 bola / 1 scoop=70 | helado de cajeta (MX) · helado de arequipe (CO VE) · helado de manjar (CL PE)
+// Lo que se cocina: la crema pastelera como un budín de vainilla (0,95), el arroz con leche y la mazamorra
+// como el arroz con leche (0,91), la tarta de ricota como la tarta de queso (0,87), la pastafrola como una
+// tarta seca (0,90) y el pastel de manzana como la tarta de manzana (0,86): Bognár 2002, tablas 1, 29 y
+// 31. Las galletas de mantequilla, la humedad de la galleta de manteca de USDA (4,6 %); las hojas del
+// rogel, la de la galleta de agua (5,1 %); el bizcochuelo de chocolate, la del de USDA hecho en casa (24,4
+// %); la del bizcochuelo del arrollado, la del de USDA hecho en casa (29,4 %). La garrapiñada: el agua se
+// evapora toda.
+Crema pastelera | Pastry cream | receta#3102 Leche entera 1000 · Yema de huevo 120 · Azúcar 200 · Maicena 80 → 1330 | 2 cucharadas / 2 tbsp=40 | crema de pastelería · crema pastelera casera
+Arroz con leche casero | Homemade rice pudding | receta#3103 Arroz blanco crudo 150 · Leche entera 1000 · Azúcar 150 · Canela 2 → 1185 | 1 porción / 1 serving=150 | arroz con leche hecho en casa
+Mazamorra de maíz blanco | Sweet white corn pudding (mazamorra) | receta#3104 Maíz blanco partido 250 · Leche entera 1500 · Azúcar 200 · Canela 2 → 1776 | 1 porción / 1 serving=200 | mazamorra* (UY AR PY) · mazamorra con leche · maíz blanco con leche
+Pastafrola | Quince paste lattice tart | receta#3105 Harina de trigo 300 · Mantequilla 150 · Azúcar 120 · Huevo 100 · Polvo de hornear 6 · Dulce de membrillo 500 · Agua 50 → 1103 | 1 porción / 1 slice=90 | pasta frola · pastafrola de membrillo
+Tarta de coco y dulce de leche | Coconut and dulce de leche tart | receta#3106 Harina de trigo 250 · Mantequilla 100 · Azúcar 180 · Huevo 150 · Polvo de hornear 5 · Dulce de leche 400 · Coco rallado 150 → 1112 | 1 porción / 1 slice=90 | torta de coco y dulce de leche · tarta de coco
+Galletas de mantequilla caseras | Homemade butter cookies | receta#3107 Harina de trigo 500 · Mantequilla 250 · Azúcar 200 · Huevo 100 · Polvo de hornear 5 → 922 | 3 unidades / 3 cookies=30 | masitas secas* (UY AR) · masitas de manteca · galletitas de manteca caseras
+Rogel | Rogel (layered dulce de leche cake) | receta#3108 Harina de trigo 500 · Yema de huevo 160 · Mantequilla 50 · Agua 100 · Dulce de leche 1000 · Clara de huevo 120 · Azúcar 240 → 1949 | 1 porción / 1 slice=100 | torta rogel · postre rogel
+Arrollado de dulce de leche | Dulce de leche sponge roll | receta#3109 Huevo 300 · Azúcar 150 · Harina de trigo 100 · Dulce de leche 400 → 840 | 1 porción / 1 slice=80 | pionono con dulce de leche · brazo de gitano con dulce de leche (ES) · niño envuelto (CO)
+Pastel de chocolate con dulce de leche | Chocolate cake with dulce de leche | receta#3110 Harina de trigo 200 · Cacao en polvo 50 · Azúcar 250 · Huevo 200 · Mantequilla 100 · Leche entera 200 · Polvo de hornear 10 · Dulce de leche 400 · Chocolate amargo 150 → 1397 | 1 porción / 1 slice=100 | torta de chocolate y dulce de leche* (UY AR PY) · torta de chocolate rellena
+Tarta de ricota | Ricotta tart | receta#3111 Harina de trigo 250 · Mantequilla 100 · Azúcar 80 · Huevo 50 · Polvo de hornear 5 · Ricota 750 · Azúcar 150 · Huevo 150 → 1335 | 1 porción / 1 slice=110 | torta de ricota* (UY AR) · pastel de ricota
+Pastel de manzana | Apple cake | receta#3112 Harina de trigo 250 · Azúcar 200 · Huevo 150 · Mantequilla 100 · Leche entera 100 · Polvo de hornear 10 · Manzana 500 → 1127 | 1 porción / 1 slice=100 | torta de manzana* (UY AR CL PY) · bizcochuelo de manzana · queque de manzana (PE CL)
+// Los buñuelos de manzana: la manzana con el rebozado frita (0,74 y 7 g de aceite) y el azúcar por arriba.
+Buñuelos de manzana | Apple fritters | receta#3113 Manzana 400 · Harina de trigo 150 · Huevo 100 · Leche entera 120 · Azúcar 30 · Polvo de hornear 5 · Aceite de girasol 56 · Azúcar en polvo 30 → 626 | 3 buñuelos / 3 fritters=90 | buñuelos dulces · manzanas rebozadas | aceite=incluido
+Garrapiñada | Sugar-coated peanuts | receta#3114 Maní 300 · Azúcar 300 · Agua 150 → 600 | 1 bolsita / 1 small bag=50 | maní garrapiñado · garapiñados (ES) · cacahuates garapiñados (MX)
+
+# bebidas
+// El mate dulce: una cucharadita de azúcar cada 50 ml de agua (la yerba casi no aporta).
+Mate dulce | Sweetened mate | receta#3115 Mate 1000 · Azúcar 80 | 1 mate / 1 gourd refill=54 | mate con azúcar · mate endulzado | densidad=1.03
+Mate cocido con leche | Mate tea with milk | receta#3116 Mate 150 · Leche entera 100 · Azúcar 8 | 1 taza / 1 cup=258 | mate con leche · mate cocido con azúcar y leche | densidad=1.03
+
+# alcohol
+Medio y medio | Half sparkling, half white wine | receta#3117 Vino espumoso 500 · Vino blanco 500 | 1 copa / 1 glass=150 | medio y medio de vino | densidad=0.99
+Clericó | White wine fruit punch (clericó) | receta#3118 Vino blanco 750 · Jugo de naranja 250 · Azúcar 50 · Manzana 150 · Banana 120 · Naranja 150 · Fresas 100 | 1 vaso / 1 glass=200 | clericot · sangría blanca | densidad=1.01
+Grappamiel | Grappa with honey | receta#3119 Destilado 950 · Miel 300 · Agua 100 | 1 medida / 1 shot=40 | grapamiel · grappa con miel | densidad=1.03

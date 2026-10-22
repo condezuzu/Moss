@@ -22,175 +22,311 @@
 // «# categoría» abre una categoría. Ningún nombre dice de qué país es: el catálogo es para todos.
 
 # frutas
-Manzana | Apple | sr:Apples, raw, with skin | 1 mediana / 1 medium=182 |
-Banana | Banana | sr:Bananas, raw | 1 mediana / 1 medium=118 | plátano* (ES MX PE CL) · banano* (CO CR GT HN NI PA SV) · guineo* (PR DO EC) · cambur* (VE)
-Naranja | Orange | sr:Oranges, raw, all commercial varieties | 1 mediana / 1 medium=131 | china* (PR)
-Mandarina | Tangerine | sr:Tangerines, (mandarin oranges), raw | 1 mediana / 1 medium=88 | tangerina* (CO)
-Clementina | Clementine | sr:Clementines, raw | 1 unidad / 1 fruit=74 |
-Limón | Lemon | sr:Lemons, raw, without peel | 1 unidad / 1 lemon=58 | limón amarillo* (MX PE CO VE CR GT EC)
-Lima | Lime | sr:Limes, raw | 1 unidad / 1 lime=67 | limón* (MX PE CO VE CR GT EC) · limón verde · limón sutil
-Toronja | Grapefruit | fndds:Grapefruit, raw | ½ unidad / ½ grapefruit=154 | pomelo* (AR UY PY CL ES BO)
-Uvas | Grapes | fndds:Grapes, raw | 1 taza / 1 cup=150 | uva
-Fresas | Strawberries | sr:Strawberries, raw | 1 taza / 1 cup=144 | frutillas* (AR UY CL PY BO EC) · frutilla · fresa
+Manzana | Apple | sr:Apples, raw, with skin | 1 mediana / 1 medium=182 · 1 pequeña / 1 small=149 · 1 grande / 1 large=223 · 1 taza en trozos / 1 cup chopped=125 |  | desecho
+Banana | Banana | sr:Bananas, raw | 1 mediana / 1 medium=118 · 1 pequeña / 1 small=101 · 1 grande / 1 large=136 | plátano* (ES MX PE CL) · banano* (CO CR GT HN NI PA SV) · guineo* (PR DO EC) · cambur* (VE) | desecho
+Naranja | Orange | sr:Oranges, raw, all commercial varieties | 1 mediana / 1 medium=131 · 1 pequeña / 1 small=96 · 1 grande / 1 large=184 · 1 taza en gajos / 1 cup sections=180 | china* (PR) | desecho
+Mandarina | Tangerine | sr:Tangerines, (mandarin oranges), raw | 1 mediana / 1 medium=88 · 1 pequeña / 1 small=76 · 1 grande / 1 large=120 | tangerina* (CO) | desecho
+Clementina | Clementine | sr:Clementines, raw | 1 unidad / 1 fruit=74 |  | desecho
+Limón | Lemon | sr:Lemons, raw, without peel | 1 unidad / 1 lemon=58 · 1 grande / 1 large=84 | limón amarillo* (MX PE CO VE CR GT EC) | desecho
+Lima | Lime | sr:Limes, raw | 1 unidad / 1 lime=67 | limón* (MX PE CO VE CR GT EC) · limón verde · limón sutil | desecho
+// Toronja: el desecho es el de «Grapefruit, raw, pink and red, all areas» en SR28, su único ingrediente en FNDDS.
+Toronja | Grapefruit | fndds:Grapefruit, raw | ½ unidad / ½ grapefruit=154 · 1 unidad / 1 grapefruit=308 | pomelo* (AR UY PY CL ES BO) | desecho=49 cáscara y semillas
+Uvas | Grapes | fndds:Grapes, raw | 1 taza / 1 cup=150 · 10 uvas / 10 grapes=49 | uva
+Fresas | Strawberries | sr:Strawberries, raw | 1 taza / 1 cup=144 · 1 fresa mediana / 1 medium strawberry=12 | frutillas* (AR UY CL PY BO EC) · frutilla · fresa | desecho
 Arándanos | Blueberries | sr:Blueberries, raw | 1 taza / 1 cup=148 | mora azul* (MX) · blueberries
 Frambuesas | Raspberries | sr:Raspberries, raw | 1 taza / 1 cup=123 | frambuesa
 Moras | Blackberries | sr:Blackberries, raw | 1 taza / 1 cup=144 | zarzamoras* (MX) · mora
-Cerezas | Cherries | sr:Cherries, sweet, raw | 1 taza / 1 cup=154 | cereza
-Durazno | Peach | sr:Peaches, yellow, raw | 1 mediano / 1 medium=150 | melocotón* (ES)
-Nectarina | Nectarine | sr:Nectarines, raw | 1 mediana / 1 medium=142 | pelón* (AR)
-Ciruela | Plum | sr:Plums, raw | 1 unidad / 1 plum=66 |
-Albaricoque | Apricot | sr:Apricots, raw | 1 unidad / 1 apricot=35 | damasco* (AR UY CL PY BO PE) · chabacano* (MX)
-Pera | Pear | sr:Pears, raw | 1 mediana / 1 medium=178 |
-Kiwi | Kiwi | sr:Kiwifruit, green, raw | 1 unidad / 1 kiwi=69 |
-Mango | Mango | sr:Mangos, raw | 1 taza en trozos / 1 cup pieces=165 · 1 unidad / 1 mango=336 |
-Papaya | Papaya | sr:Papayas, raw | 1 taza en trozos / 1 cup pieces=145 | lechosa* (VE DO) · fruta bomba* (CU) · mamón* (PY)
-Piña | Pineapple | sr:Pineapple, raw, all varieties | 1 taza en trozos / 1 cup chunks=165 · 1 rodaja / 1 slice=84 | ananá* (AR UY PY) · ananás
-Sandía | Watermelon | sr:Watermelon, raw | 1 taza en cubos / 1 cup diced=152 · 1 tajada / 1 wedge=286 | patilla* (VE)
-Melón | Cantaloupe | sr:Melons, cantaloupe, raw | 1 taza en cubos / 1 cup cubes=160 |
-Melón verde | Honeydew melon | sr:Melons, honeydew, raw | 1 taza en cubos / 1 cup diced=170 | melón blanco
-Maracuyá | Passion fruit | sr:Passion-fruit, (granadilla), purple, raw | 1 unidad / 1 fruit=18 | parchita* (VE) · chinola* (DO) · parcha* (PR) · fruta de la pasión* (ES)
-Guayaba | Guava | sr:Guavas, common, raw | 1 unidad / 1 guava=55 |
-Higo | Fig | sr:Figs, raw | 1 mediano / 1 medium=50 | breva
-Granada | Pomegranate | sr:Pomegranates, raw | ½ taza de granos / ½ cup arils=87 · 1 unidad / 1 pomegranate=282 |
+Cerezas | Cherries | sr:Cherries, sweet, raw | 1 taza / 1 cup=154 · 10 cerezas / 10 cherries=82 | cereza | desecho
+Durazno | Peach | sr:Peaches, yellow, raw | 1 mediano / 1 medium=150 · 1 pequeño / 1 small=130 · 1 grande / 1 large=175 | melocotón* (ES) | desecho
+Nectarina | Nectarine | sr:Nectarines, raw | 1 mediana / 1 medium=142 · 1 pequeña / 1 small=129 · 1 grande / 1 large=156 | pelón* (AR) | desecho
+Ciruela | Plum | sr:Plums, raw | 1 unidad / 1 plum=66 |  | desecho
+Albaricoque | Apricot | sr:Apricots, raw | 1 unidad / 1 apricot=35 | damasco* (AR UY CL PY BO PE) · chabacano* (MX) | desecho
+Pera | Pear | sr:Pears, raw | 1 mediana / 1 medium=178 · 1 pequeña / 1 small=148 · 1 grande / 1 large=230 |  | desecho
+Pera asiática | Asian pear | sr:Pears, asian, raw | 1 unidad / 1 pear=122 · 1 grande / 1 large=275 | nashi · pera nashi | desecho
+Kiwi | Kiwi | sr:Kiwifruit, green, raw | 1 unidad / 1 kiwi=69 |  | desecho
+Mango | Mango | sr:Mangos, raw | 1 taza en trozos / 1 cup pieces=165 · 1 unidad / 1 mango=336 |  | desecho
+Papaya | Papaya | sr:Papayas, raw | 1 taza en trozos / 1 cup pieces=145 · 1 pequeña / 1 small=157 | lechosa* (VE DO) · fruta bomba* (CU) · mamón* (PY) | desecho
+Piña | Pineapple | sr:Pineapple, raw, all varieties | 1 taza en trozos / 1 cup chunks=165 · 1 rodaja / 1 slice=84 | ananá* (AR UY PY) · ananás | desecho
+Sandía | Watermelon | sr:Watermelon, raw | 1 taza en cubos / 1 cup diced=152 · 1 tajada / 1 wedge=286 | patilla* (VE) | desecho
+Melón | Cantaloupe | sr:Melons, cantaloupe, raw | 1 taza en cubos / 1 cup cubes=160 · 1 tajada / 1 wedge=69 |  | desecho
+Melón verde | Honeydew melon | sr:Melons, honeydew, raw | 1 taza en cubos / 1 cup diced=170 · 1 tajada / 1 wedge=125 | melón blanco | desecho
+Maracuyá | Passion fruit | sr:Passion-fruit, (granadilla), purple, raw | 1 unidad / 1 fruit=18 | parchita* (VE) · chinola* (DO) · parcha* (PR) · fruta de la pasión* (ES) | desecho
+Guayaba | Guava | sr:Guavas, common, raw | 1 unidad / 1 guava=55 |  | desecho
+Feijoa | Feijoa | sr:Feijoa, raw | 1 unidad / 1 fruit=42 | guayabo del país* (UY) · guayaba del país (AR) · guayaba brasileña | desecho
+Higo | Fig | sr:Figs, raw | 1 mediano / 1 medium=50 · 1 pequeño / 1 small=40 · 1 grande / 1 large=64 | breva
+Granada | Pomegranate | sr:Pomegranates, raw | ½ taza de granos / ½ cup arils=87 · 1 unidad / 1 pomegranate=282 |  | desecho
 Coco | Coconut | sr:Nuts, coconut meat, raw | 1 trozo / 1 piece=45 · 1 taza rallado / 1 cup shredded=80 |
-Aguacate | Avocado | sr:Avocados, raw, all commercial varieties | ½ unidad / ½ avocado=100 · 1 unidad / 1 avocado=201 | palta* (AR UY CL PE BO PY)
-Dátiles | Dates | sr:Dates, medjool | 1 dátil / 1 date=24 | dátil
-Pasas de uva | Raisins | fndds:Raisins | 1 puñado / 1 handful=40 | pasas* (ES) · uvas pasas · pasitas (MX)
-Ciruelas pasas | Prunes | sr:Plums, dried (prunes), uncooked | 5 unidades / 5 prunes=48 | ciruela pasa · ciruelas secas
+Aguacate | Avocado | sr:Avocados, raw, all commercial varieties | ½ unidad / ½ avocado=100 · 1 unidad / 1 avocado=201 | palta* (AR UY CL PE BO PY) | desecho
+Dátiles | Dates | sr:Dates, medjool | 1 dátil / 1 date=24 | dátil | desecho
+Pasas de uva | Raisins | fndds:Raisins | 1 puñado / 1 handful=40 · 1 cajita / 1 small box=43 | pasas* (ES) · uvas pasas · pasitas (MX)
+Ciruelas pasas | Prunes | sr:Plums, dried (prunes), uncooked | 5 unidades / 5 prunes=48 | ciruela pasa · ciruelas secas | desecho
 Orejones | Dried apricots | sr:Apricots, dried, sulfured, uncooked | 5 unidades / 5 halves=18 | damascos secos (AR UY CL) · chabacanos secos (MX) · albaricoques secos
+Higos secos | Dried figs | sr:Figs, dried, uncooked | 1 unidad / 1 fig=8.4 · ¼ taza / ¼ cup=37 | higo seco · higos pasos
 Arándanos secos | Dried cranberries | fndds:Cranberries, dried | ¼ taza / ¼ cup=40 | arándanos rojos · cranberries
-Membrillo | Quince | sr:Quinces, raw | 1 unidad / 1 quince=92 |
-Caqui | Persimmon | sr:Persimmons, japanese, raw | 1 unidad / 1 persimmon=168 | kaki
-Lichi | Lychee | sr:Litchis, raw | 10 unidades / 10 lychees=96 | lychee · litchi
-Tuna | Prickly pear | sr:Prickly pears, raw | 1 unidad / 1 fruit=103 | higo chumbo* (ES)
-Chirimoya | Cherimoya | sr:Cherimoya, raw | 1 taza en trozos / 1 cup pieces=160 |
-Guanábana | Soursop | sr:Soursop, raw | 1 taza / 1 cup=225 |
+Mango deshidratado | Dried mango | fndds:Mango, dried | 1 puñado / 1 handful=40 · 1 trozo / 1 piece=8 | mango seco
+Manzana deshidratada | Dried apple | sr:Apples, dried, sulfured, uncooked | 1 puñado / 1 handful=30 · 1 aro / 1 ring=6.4 | manzana seca · aros de manzana
+Membrillo | Quince | sr:Quinces, raw | 1 unidad / 1 quince=92 |  | desecho
+Caqui | Persimmon | sr:Persimmons, japanese, raw | 1 unidad / 1 persimmon=168 | kaki | desecho
+Lichi | Lychee | sr:Litchis, raw | 10 unidades / 10 lychees=96 | lychee · litchi | desecho
+Tuna | Prickly pear | sr:Prickly pears, raw | 1 unidad / 1 fruit=103 | higo chumbo* (ES) | desecho
+Chirimoya | Cherimoya | sr:Cherimoya, raw | 1 taza en trozos / 1 cup pieces=160 |  | desecho
+Guanábana | Soursop | sr:Soursop, raw | 1 taza / 1 cup=225 |  | desecho
 Carambola | Star fruit | sr:Carambola, (starfruit), raw | 1 mediana / 1 medium=91 | fruta estrella
 Pitahaya | Dragon fruit | fndds:Dragon fruit | 1 unidad / 1 fruit=75 | pitaya · fruta del dragón
-Mamey | Mamey sapote | sr:Sapote, mamey, raw | 1 taza en trozos / 1 cup pieces=175 | zapote
+Mamey | Mamey sapote | sr:Sapote, mamey, raw | 1 taza en trozos / 1 cup pieces=175 | zapote | desecho
+Chicozapote | Sapodilla | sr:Sapodilla, raw | 1 unidad / 1 sapodilla=170 | níspero* (VE CO PA) · zapote chico · sapotilla | desecho
+Níspero | Loquat | sr:Loquats, raw | 1 unidad / 1 loquat=16 · 1 taza en cubos / 1 cup cubed=149 | nísperos · níspero japonés* (VE CO PA) | desecho
+Uchuva | Goldenberry | sr:Groundcherries, (cape-gooseberries or poha), raw | 1 taza / 1 cup=140 | aguaymanto* (PE BO) · uvilla* (EC) · physalis* (ES AR UY CL) · alquequenje
+Acerola | Acerola | sr:Acerola, (west indian cherry), raw | 1 taza / 1 cup=98 | cereza de Barbados · semeruco (VE)
+Pitanga | Surinam cherry | sr:Pitanga, (surinam-cherry), raw | 1 taza / 1 cup=173 · 1 unidad / 1 fruit=7 | ñangapirí (PY) · cereza de Cayena
+Jaca | Jackfruit | sr:Jackfruit, raw | 1 taza / 1 cup=165 | yaca · jackfruit
+// fuente: TACO, 4.ª edición (NEPA-UNICAMP, 2011), fila 168 «Açaí, polpa, congelada»: 58 kcal, 0,8 g de proteína, 6,2 de carbohidratos, 3,9 de lípidos y 2,6 de fibra.
+Pulpa de açaí | Açaí pulp | propio#101 58 0.8 6.2 3.9 | 1 paquete (100 g) / 1 pack (100 g)=100 | açaí · asaí · acaí · pulpa de asaí | fibra=2.6
 Lulo | Naranjilla | sr:Naranjilla (lulo) pulp, frozen, unsweetened | 1 taza / 1 cup=120 | naranjilla* (EC)
-Tamarindo | Tamarind | sr:Tamarinds, raw | ¼ taza de pulpa / ¼ cup pulp=30 |
+Tamarindo | Tamarind | sr:Tamarinds, raw | ¼ taza de pulpa / ¼ cup pulp=30 |  | desecho
+Ensalada de frutas | Fruit salad | fndds:Fruit salad, fresh or raw, including citrus fruits, no dressing | 1 taza / 1 cup=150 | macedonia* (ES) · salpicón de frutas (CO) · ensalada de fruta
+Frutos rojos congelados | Frozen mixed berries | fndds:Berries, frozen | 1 taza / 1 cup=150 | frutos del bosque* (ES AR UY CL PY) · berries congelados · frutos rojos
 Compota de manzana | Applesauce | fndds:Applesauce, regular | ½ taza / ½ cup=125 | puré de manzana
 Duraznos en almíbar | Canned peaches in syrup | sr:Peaches, canned, heavy syrup, drained | 1 mitad / 1 half=73 | melocotón en almíbar* (ES)
+Piña en almíbar | Canned pineapple in syrup | sr:Pineapple, canned, heavy syrup pack, solids and liquids | 1 rodaja / 1 slice=49 · 1 taza / 1 cup=254 | ananá en almíbar* (AR UY PY) · piña en conserva
+Peras en almíbar | Canned pears in syrup | sr:Pears, canned, heavy syrup, drained | 1 mitad / 1 half=48 · 1 taza / 1 cup=201 | peras en conserva
+Mandarinas en almíbar | Canned mandarin oranges | sr:Tangerines, (mandarin oranges), canned, light syrup pack | ½ taza / ½ cup=126 | gajos de mandarina en almíbar
 Cóctel de frutas | Fruit cocktail | fndds:Fruit cocktail, canned, in syrup | ½ taza / ½ cup=125 | ensalada de frutas en almíbar
 
 # verduras
-Lechuga | Lettuce | fndds:Lettuce, raw | 1 taza / 1 cup=35 |
-Lechuga romana | Romaine lettuce | fndds:Romaine lettuce, raw | 1 taza / 1 cup=35 | lechuga orejona (MX)
+Lechuga | Lettuce | fndds:Lettuce, raw | 1 taza / 1 cup=35 · 1 hoja / 1 leaf=8 |
+Lechuga romana | Romaine lettuce | fndds:Romaine lettuce, raw | 1 taza / 1 cup=35 · 1 hoja / 1 leaf=13 | lechuga orejona (MX)
+Lechuga iceberg | Iceberg lettuce | sr:Lettuce, iceberg (includes crisphead types), raw | 1 taza en tiras / 1 cup shredded=72 · 1 hoja / 1 leaf=8 | lechuga americana · iceberg
+Mezcla de hojas verdes | Mixed salad greens | fndds:Mixed salad greens, raw | 1 taza / 1 cup=35 | mix de hojas verdes · mezclum · hojas verdes
 Rúcula | Arugula | sr:Arugula, raw | 1 taza / 1 cup=20 | arúgula* (MX CO VE) · rúgula
-Tomate | Tomato | sr:Tomatoes, red, ripe, raw, year round average | 1 mediano / 1 medium=123 · 10 tomates cherry / 10 cherry tomatoes=170 | jitomate* (MX) · tomates cherry · tomate perita
-Cebolla | Onion | sr:Onions, raw | 1 mediana / 1 medium=110 |
+Achicoria | Chicory greens | sr:Chicory greens, raw | 1 taza / 1 cup=29 | radicheta* (AR UY) · achicoria de hoja
+Escarola | Escarole | sr:Endive, raw | ½ taza / ½ cup=25 | endivia · endibia rizada
+Berro | Watercress | sr:Watercress, raw | 1 taza / 1 cup=34 | berros
+Tomate | Tomato | sr:Tomatoes, red, ripe, raw, year round average | 1 mediano / 1 medium=123 · 10 tomates cherry / 10 cherry tomatoes=170 · 1 pequeño / 1 small=91 · 1 grande / 1 large=182 · 1 taza picado / 1 cup chopped=180 | jitomate* (MX) · tomates cherry · tomate perita | desecho
+Tomatillo | Tomatillo | sr:Tomatillos, raw | 1 mediano / 1 medium=34 | tomate verde* (MX) · miltomate (GT) · tomate de cáscara
+Cebolla | Onion | sr:Onions, raw | 1 mediana / 1 medium=110 · 1 pequeña / 1 small=70 · 1 grande / 1 large=150 · 1 taza picada / 1 cup chopped=160 |  | desecho=10 cáscara/skin
+Cebolla cocida | Boiled onion | sr:Onions, cooked, boiled, drained, without salt | 1 mediana / 1 medium=94 · 1 taza / 1 cup=210 | cebolla hervida | crudo=Cebolla
+Chalota | Shallot | sr:Shallots, raw | 1 cucharada picada / 1 tbsp chopped=10 | echalote* (AR UY) · chalote · escalonia | desecho
 Cebollín | Green onion | sr:Onions, spring or scallions (includes tops and bulb), raw | 1 unidad / 1 green onion=15 | cebolla de verdeo* (AR UY PY) · verdeo · cebolleta* (ES) · cebolla larga* (CO) · cebolla china* (PE) · cebollino
 Ajo | Garlic | sr:Garlic, raw | 1 diente / 1 clove=3 |
-Zanahoria | Carrot | sr:Carrots, raw | 1 mediana / 1 medium=61 |
-Zanahoria cocida | Boiled carrots | sr:Carrots, cooked, boiled, drained, without salt | ½ taza / ½ cup=78 |
-Calabaza | Pumpkin | sr:Pumpkin, raw | 1 taza en cubos / 1 cup cubes=116 | zapallo* (AR UY CL PE BO PY) · ahuyama* (CO VE) · auyama* (DO) · ayote* (CR NI HN GT SV)
-Calabaza moscada | Butternut squash | sr:Squash, winter, butternut, raw | 1 taza en cubos / 1 cup cubes=140 | zapallo anco* (AR UY) · butternut
-Calabacín | Zucchini | sr:Squash, summer, zucchini, includes skin, raw | 1 mediano / 1 medium=196 | zapallito* (AR UY) · calabacita* (MX) · zapallo italiano* (CL) · zucchini* (PE CO VE) · zuquini
-Berenjena | Eggplant | sr:Eggplant, raw | 1 taza en cubos / 1 cup cubes=82 |
-Pimiento rojo | Red bell pepper | sr:Peppers, sweet, red, raw | 1 mediano / 1 medium=119 | morrón rojo* (AR UY PY) · pimentón rojo* (CO VE CL) · chile morrón rojo (MX)
-Pimiento verde | Green bell pepper | sr:Peppers, sweet, green, raw | 1 mediano / 1 medium=119 | morrón verde* (AR UY PY) · pimentón verde* (CO VE CL) · chile morrón verde (MX)
+Zanahoria | Carrot | sr:Carrots, raw | 1 mediana / 1 medium=61 · 1 pequeña / 1 small=50 · 1 grande / 1 large=72 · 1 taza rallada / 1 cup grated=110 |  | desecho=11 cáscara y puntas/peel and ends
+Zanahoria cocida | Boiled carrots | sr:Carrots, cooked, boiled, drained, without salt | ½ taza / ½ cup=78 · 1 unidad / 1 carrot=46 | zanahoria hervida | crudo=Zanahoria
+Calabaza | Pumpkin | sr:Pumpkin, raw | 1 taza en cubos / 1 cup cubes=116 | zapallo* (AR UY CL PE BO PY) · ahuyama* (CO VE) · auyama* (DO) · ayote* (CR NI HN GT SV) | desecho
+Calabaza cocida | Boiled pumpkin | sr:Pumpkin, cooked, boiled, drained, without salt | ½ taza en puré / ½ cup mashed=123 · 1 taza en puré / 1 cup mashed=245 | zapallo cocido* (AR UY CL PE BO PY) · ahuyama cocida* (CO VE) · auyama cocida* (DO) · ayote cocido* (CR NI HN GT SV) · puré de zapallo | crudo=Calabaza
+Calabaza moscada | Butternut squash | sr:Squash, winter, butternut, raw | 1 taza en cubos / 1 cup cubes=140 | zapallo anco* (AR UY) · butternut | desecho
+Calabaza moscada al horno | Baked butternut squash | sr:Squash, winter, butternut, cooked, baked, without salt | 1 taza en cubos / 1 cup cubes=205 | zapallo anco al horno* (AR UY) · butternut al horno | crudo=Calabaza moscada
+Calabacín | Zucchini | sr:Squash, summer, zucchini, includes skin, raw | 1 mediano / 1 medium=196 · 1 pequeño / 1 small=118 · 1 grande / 1 large=323 | zapallito* (AR UY) · calabacita* (MX) · zapallo italiano* (CL) · zucchini* (PE CO VE) · zuquini
+Calabacín cocido | Boiled zucchini | sr:Squash, summer, zucchini, includes skin, cooked, boiled, drained, without salt | 1 taza en rodajas / 1 cup sliced=180 | zapallito cocido* (AR UY) · calabacita cocida* (MX) · zapallo italiano cocido* (CL) | crudo=Calabacín
+Chayote | Chayote | sr:Chayote, fruit, raw | 1 unidad / 1 chayote=203 · 1 taza en trozos / 1 cup pieces=132 | güisquil* (GT SV) · guatila* (CO) · tayota* (DO) · papa del aire (AR) · cayota
+Chayote cocido | Boiled chayote | sr:Chayote, fruit, cooked, boiled, drained, without salt | 1 taza en trozos / 1 cup pieces=160 | güisquil cocido* (GT SV) · guatila cocida* (CO) · tayota cocida* (DO) | crudo=Chayote
+Berenjena | Eggplant | sr:Eggplant, raw | 1 taza en cubos / 1 cup cubes=82 · 1 unidad / 1 eggplant=458 |  | desecho
+Berenjena cocida | Boiled eggplant | sr:Eggplant, cooked, boiled, drained, without salt | 1 taza en cubos / 1 cup cubes=99 |  | crudo=Berenjena
+Pimiento rojo | Red bell pepper | sr:Peppers, sweet, red, raw | 1 mediano / 1 medium=119 · 1 pequeño / 1 small=74 · 1 grande / 1 large=164 · 1 taza picado / 1 cup chopped=149 | morrón rojo* (AR UY PY) · pimentón rojo* (CO VE CL) · chile morrón rojo (MX) | desecho
+Pimiento verde | Green bell pepper | sr:Peppers, sweet, green, raw | 1 mediano / 1 medium=119 · 1 pequeño / 1 small=74 · 1 grande / 1 large=164 | morrón verde* (AR UY PY) · pimentón verde* (CO VE CL) · chile morrón verde (MX) | desecho
+Pimiento amarillo | Yellow bell pepper | sr:Peppers, sweet, yellow, raw | 1 grande / 1 large=186 | morrón amarillo* (AR UY PY) · pimentón amarillo* (CO VE CL) · chile morrón amarillo (MX) | desecho
 Jalapeño | Jalapeño pepper | sr:Peppers, jalapeno, raw | 1 unidad / 1 pepper=14 | chile jalapeño · ají jalapeño
+Chile serrano | Serrano pepper | sr:Peppers, serrano, raw | 1 unidad / 1 pepper=6.1 | serrano · ají serrano
 Chile picante | Hot chili pepper | sr:Peppers, hot chili, red, raw | 1 unidad / 1 pepper=45 | ají picante* (AR UY CL PE BO CO VE EC PY) · ají · guindilla* (ES) · chile
 Pepino | Cucumber | sr:Cucumber, with peel, raw | ½ taza en rodajas / ½ cup slices=52 · 1 unidad / 1 cucumber=301 |
-Apio | Celery | sr:Celery, raw | 1 tallo / 1 stalk=40 |
-Brócoli | Broccoli | sr:Broccoli, raw | 1 taza / 1 cup=91 | brécol (ES)
-Brócoli cocido | Boiled broccoli | sr:Broccoli, cooked, boiled, drained, without salt | ½ taza / ½ cup=78 |
-Coliflor | Cauliflower | sr:Cauliflower, raw | 1 taza / 1 cup=107 |
-Repollo | Cabbage | sr:Cabbage, raw | 1 taza en tiras / 1 cup shredded=70 | col* (ES MX CU) · repollo blanco
-Repollo morado | Red cabbage | sr:Cabbage, red, raw | 1 taza en tiras / 1 cup shredded=70 | col morada* (MX) · lombarda* (ES)
-Espinaca | Spinach | sr:Spinach, raw | 1 taza / 1 cup=30 | espinacas
-Espinaca cocida | Boiled spinach | sr:Spinach, cooked, boiled, drained, without salt | ½ taza / ½ cup=90 |
-Acelga | Swiss chard | sr:Chard, swiss, raw | 1 taza / 1 cup=36 |
-Kale | Kale | sr:Kale, raw | 1 taza / 1 cup=21 | col rizada* (ES) · berza
-Espárragos | Asparagus | sr:Asparagus, raw | 5 espárragos / 5 spears=80 | espárrago
-Maíz dulce | Sweet corn | sr:Corn, sweet, yellow, raw | 1 mazorca mediana / 1 medium ear=102 · 1 taza de granos / 1 cup kernels=145 | choclo* (AR UY CL PE BO EC PY) · elote* (MX GT HN SV NI CR) · mazorca* (CO ES) · jojoto* (VE) · maíz
-Maíz en lata | Canned corn | sr:Corn, sweet, yellow, canned, vacuum pack, regular pack | ½ taza / ½ cup=105 | choclo en lata* (AR UY CL PE) · elote en lata* (MX) · maíz en conserva
-Arvejas | Green peas | fndds:Green peas, frozen, cooked, no added fat | ½ taza / ½ cup=80 | guisantes* (ES) · chícharos* (MX) · alverjas* (CO) · petit pois
-Judías verdes | Green beans | sr:Beans, snap, green, cooked, boiled, drained, without salt | 1 taza / 1 cup=125 | ejotes* (MX GT HN SV) · chauchas* (AR UY PY) · vainitas* (PE VE EC) · habichuelas* (CO) · porotos verdes* (CL) · vainicas* (CR)
-Remolacha | Beet | sr:Beets, raw | 1 unidad / 1 beet=82 | betabel* (MX) · betarraga* (CL PE BO)
-Remolacha cocida | Boiled beets | sr:Beets, cooked, boiled, drained | ½ taza / ½ cup=85 | betabel cocido* (MX) · betarraga cocida* (CL PE BO)
+Apio | Celery | sr:Celery, raw | 1 tallo / 1 stalk=40 · 1 tallo grande / 1 large stalk=64 · 1 taza picado / 1 cup chopped=101 |
+Brócoli | Broccoli | sr:Broccoli, raw | 1 taza / 1 cup=91 · 1 tallo / 1 stalk=151 | brécol (ES) | desecho
+Brócoli cocido | Boiled broccoli | sr:Broccoli, cooked, boiled, drained, without salt | ½ taza / ½ cup=78 | brócoli hervido · brócoli al vapor | crudo=Brócoli
+Coliflor | Cauliflower | sr:Cauliflower, raw | 1 taza / 1 cup=107 · 1 cabeza mediana / 1 medium head=588 |  | desecho
+Coliflor cocida | Boiled cauliflower | sr:Cauliflower, cooked, boiled, drained, without salt | ½ taza / ½ cup=62 | coliflor hervida | crudo=Coliflor
+Coles de Bruselas | Brussels sprouts | sr:Brussels sprouts, raw | 1 taza / 1 cup=88 · 1 unidad / 1 sprout=19 | repollitos de Bruselas* (AR UY CL) · col de Bruselas
+Coles de Bruselas cocidas | Boiled Brussels sprouts | sr:Brussels sprouts, cooked, boiled, drained, without salt | ½ taza / ½ cup=78 | repollitos de Bruselas cocidos* (AR UY CL) | crudo=Coles de Bruselas
+Repollo | Cabbage | sr:Cabbage, raw | 1 taza en tiras / 1 cup shredded=70 · 1 hoja / 1 leaf=23 | col* (ES MX CU) · repollo blanco | desecho=20 hojas y corazón/outer leaves and core
+Repollo cocido | Boiled cabbage | sr:Cabbage, cooked, boiled, drained, without salt | ½ taza / ½ cup=75 | col cocida* (ES MX CU) | crudo=Repollo
+Repollo morado | Red cabbage | sr:Cabbage, red, raw | 1 taza en tiras / 1 cup shredded=70 | col morada* (MX) · lombarda* (ES) | desecho=20 hojas y corazón/outer leaves and core
+Bok choy | Bok choy | sr:Cabbage, chinese (pak-choi), raw | 1 taza en tiras / 1 cup shredded=70 | pak choi · col china
+Espinaca | Spinach | sr:Spinach, raw | 1 taza / 1 cup=30 | espinacas | desecho
+Espinaca cocida | Boiled spinach | sr:Spinach, cooked, boiled, drained, without salt | ½ taza / ½ cup=90 | espinacas cocidas | crudo=Espinaca
+Acelga | Swiss chard | sr:Chard, swiss, raw | 1 taza / 1 cup=36 · 1 hoja / 1 leaf=48 |
+Acelga cocida | Boiled Swiss chard | sr:Chard, swiss, cooked, boiled, drained, without salt | 1 taza / 1 cup=175 | acelga hervida | crudo=Acelga
+Kale | Kale | sr:Kale, raw | 1 taza / 1 cup=21 | col rizada* (ES) · berza | desecho
+Kale cocido | Boiled kale | sr:Kale, cooked, boiled, drained, without salt | 1 taza / 1 cup=118 | col rizada cocida* (ES) | crudo=Kale
+Espárragos | Asparagus | sr:Asparagus, raw | 5 espárragos / 5 spears=80 · 1 taza / 1 cup=134 | espárrago | desecho
+Espárragos cocidos | Boiled asparagus | sr:Asparagus, cooked, boiled, drained | 4 espárragos / 4 spears=60 · ½ taza / ½ cup=90 |  | crudo=Espárragos
+Espárragos en lata | Canned asparagus | sr:Asparagus, canned, drained solids | 1 unidad / 1 spear=18 · 1 taza / 1 cup=242 | espárragos en conserva
+// Maíz dulce: el 45 % es el marlo de la mazorca sin hojas (SR28, «Corn, sweet, yellow, cooked, boiled»); el 64 % de la cruda cuenta también las hojas.
+Maíz dulce | Sweet corn | sr:Corn, sweet, yellow, raw | 1 mazorca mediana / 1 medium ear=102 · 1 taza de granos / 1 cup kernels=145 · 1 mazorca pequeña / 1 small ear=73 · 1 mazorca grande / 1 large ear=143 | choclo* (AR UY CL PE BO EC PY) · elote* (MX GT HN SV NI CR) · mazorca* (CO ES) · jojoto* (VE) · maíz | desecho=45 marlo
+Maíz dulce cocido | Boiled sweet corn | sr:Corn, sweet, yellow, cooked, boiled, drained, without salt | 1 mazorca mediana / 1 medium ear=103 · 1 taza de granos / 1 cup kernels=149 | choclo cocido* (AR UY CL PE BO EC PY) · elote cocido* (MX GT HN SV NI CR) · mazorca cocida* (CO ES) · jojoto cocido* (VE) | crudo=Maíz dulce · desecho
+Maíz en lata | Canned corn | sr:Corn, sweet, yellow, canned, vacuum pack, regular pack | ½ taza / ½ cup=105 · 1 lata / 1 can=340 | choclo en lata* (AR UY CL PE) · elote en lata* (MX) · maíz en conserva
+Arvejas crudas | Raw green peas | sr:Peas, green, raw | 1 taza / 1 cup=145 | guisantes crudos* (ES) · chícharos crudos* (MX) · alverjas crudas* (CO) · arvejas frescas | desecho=62 vainas/pods
+Arvejas | Green peas | fndds:Green peas, frozen, cooked, no added fat | ½ taza / ½ cup=80 | guisantes* (ES) · chícharos* (MX) · alverjas* (CO) · petit pois · arvejas cocidas | crudo=Arvejas crudas
+Arvejas en lata | Canned green peas | fndds:Green peas, canned, cooked, no added fat | ½ taza / ½ cup=80 | guisantes en lata* (ES) · chícharos de lata* (MX) · alverjas en lata* (CO) · arvejas en conserva
+Judías verdes crudas | Raw green beans | sr:Beans, snap, green, raw | 1 taza / 1 cup=100 · 10 unidades / 10 beans=55 | ejotes crudos* (MX GT HN SV) · chauchas crudas* (AR UY PY) · vainitas crudas* (PE VE EC) · habichuelas crudas* (CO) · porotos verdes crudos* (CL) · vainicas crudas* (CR) | desecho
+Judías verdes | Green beans | sr:Beans, snap, green, cooked, boiled, drained, without salt | 1 taza / 1 cup=125 | ejotes* (MX GT HN SV) · chauchas* (AR UY PY) · vainitas* (PE VE EC) · habichuelas* (CO) · porotos verdes* (CL) · vainicas* (CR) · judías verdes cocidas | crudo=Judías verdes crudas
+Remolacha | Beet | sr:Beets, raw | 1 unidad / 1 beet=82 | betabel* (MX) · betarraga* (CL PE BO) | desecho
+Remolacha cocida | Boiled beets | sr:Beets, cooked, boiled, drained | ½ taza / ½ cup=85 · 1 unidad / 1 beet=50 | betabel cocido* (MX) · betarraga cocida* (CL PE BO) | crudo=Remolacha
 Rabanito | Radish | sr:Radishes, raw | 5 unidades / 5 radishes=23 | rábano* (ES MX CO VE)
-Champiñones | Mushrooms | sr:Mushrooms, white, raw | 1 taza / 1 cup=70 | hongos (AR UY) · setas (ES) · champiñón
-Puerro | Leek | sr:Leeks, (bulb and lower leaf-portion), raw | 1 unidad / 1 leek=89 | poro* (MX) · ajo porro* (CL) · ajoporro (VE)
+Rábano daikon | Daikon radish | sr:Radishes, oriental, raw | 1 taza en rodajas / 1 cup slices=116 | daikon · rábano blanco | desecho
+Champiñones | Mushrooms | sr:Mushrooms, white, raw | 1 taza / 1 cup=70 · 1 mediano / 1 medium=18 | hongos (AR UY) · setas (ES) · champiñón
+Champiñones salteados | Sautéed mushrooms | sr:Mushrooms, white, stir-fried | 1 taza / 1 cup=108 | hongos salteados (AR UY) · setas salteadas (ES) | crudo=Champiñones · aceite
+Champiñones en lata | Canned mushrooms | sr:Mushrooms, canned, drained solids | ½ taza / ½ cup=78 · 1 lata / 1 can=132 | champiñones en conserva · hongos en lata
+Hongos portobello | Portobello mushroom | sr:Mushrooms, portabella, raw | 1 unidad / 1 mushroom=84 | portobello · portobelo
+Portobello a la plancha | Grilled portobello | sr:Mushrooms, portabella, grilled | 1 taza en láminas / 1 cup sliced=121 | portobello grillado | crudo=Hongos portobello · aceite
+Shiitake | Shiitake mushrooms | sr:Mushrooms, shiitake, raw | 1 unidad / 1 mushroom=19 | hongos shiitake · setas shiitake
+Shiitake salteado | Sautéed shiitake | sr:Mushrooms, shiitake, stir-fried | 1 taza / 1 cup=89 | hongos shiitake salteados | crudo=Shiitake · aceite
+Hongos ostra | Oyster mushrooms | sr:Mushrooms, oyster, raw | 1 taza en láminas / 1 cup sliced=86 | gírgolas* (AR UY) · setas de ostra* (ES) · hongos seta* (MX) · orellanas* (CO) · setas
+Puerro | Leek | sr:Leeks, (bulb and lower leaf-portion), raw | 1 unidad / 1 leek=89 | poro* (MX) · ajo porro* (CL) · ajoporro (VE) | desecho=56 hojas y raíz/tops and root
+Puerro cocido | Boiled leek | sr:Leeks, (bulb and lower leaf-portion), cooked, boiled, drained, without salt | 1 unidad / 1 leek=124 | poro cocido* (MX) | crudo=Puerro
 Palmitos | Hearts of palm | sr:Hearts of palm, canned | 2 unidades / 2 pieces=66 | palmito
-Alcachofa | Artichoke | sr:Artichokes, (globe or french), raw | 1 mediana / 1 medium=128 | alcaucil* (AR UY)
-Hinojo | Fennel | sr:Fennel, bulb, raw | 1 taza / 1 cup=87 |
-Nabo | Turnip | sr:Turnips, raw | 1 mediano / 1 medium=122 |
+Alcachofa | Artichoke | sr:Artichokes, (globe or french), raw | 1 mediana / 1 medium=128 · 1 grande / 1 large=162 | alcaucil* (AR UY) | desecho=60 hojas y tallo/leaves and stem
+Alcachofa cocida | Boiled artichoke | sr:Artichokes, (globe or french), cooked, boiled, drained, without salt | 1 mediana / 1 medium=120 · ½ taza de corazones / ½ cup hearts=84 | alcaucil cocido* (AR UY) | crudo=Alcachofa · desecho=60 hojas y tallo/leaves and stem
+Hinojo | Fennel | sr:Fennel, bulb, raw | 1 taza / 1 cup=87 · 1 bulbo / 1 bulb=234 |  | desecho
+Nabo | Turnip | sr:Turnips, raw | 1 mediano / 1 medium=122 · 1 pequeño / 1 small=61 · 1 grande / 1 large=183 |  | desecho
+Nabo cocido | Boiled turnip | sr:Turnips, cooked, boiled, drained, without salt | 1 taza en cubos / 1 cup cubes=156 |  | crudo=Nabo
 Brotes de soja | Bean sprouts | sr:Mung beans, mature seeds, sprouted, raw | 1 taza / 1 cup=104 | germinado de soja · brotes de frijol* (MX) · germinados
-Nopal | Nopal | sr:Nopales, cooked, without salt | 1 penca / 1 pad=29 | nopales · nopalitos
-Jícama | Jicama | sr:Yambean (jicama), raw | 1 taza / 1 cup=130 |
+Brotes de alfalfa | Alfalfa sprouts | sr:Alfalfa seeds, sprouted, raw | 1 taza / 1 cup=33 | germinado de alfalfa · alfalfa
+Nopal crudo | Raw nopal | sr:Nopales, raw | 1 taza en tiras / 1 cup sliced=86 | nopales crudos · nopalitos crudos
+Nopal | Nopal | sr:Nopales, cooked, without salt | 1 penca / 1 pad=29 · 1 taza / 1 cup=149 | nopales · nopalitos · nopales cocidos | crudo=Nopal crudo
+Jícama | Jicama | sr:Yambean (jicama), raw | 1 taza / 1 cup=130 |  | desecho=8 cáscara
+Verduras mixtas congeladas | Frozen mixed vegetables | sr:Vegetables, mixed, frozen, unprepared | 100 g / 100 g=100 | macedonia de verduras* (ES) · mix de verduras · vegetales mixtos
+Verduras mixtas cocidas | Cooked mixed vegetables | fndds:Classic mixed vegetables, frozen, cooked, no added fat | 1 taza / 1 cup=180 | vegetales mixtos cocidos · macedonia de verduras cocida | crudo=Verduras mixtas congeladas
+Perejil | Parsley | sr:Parsley, fresh | 1 cucharada / 1 tbsp=3.8 · 1 taza picado / 1 cup chopped=60 | perejil fresco
+Cilantro | Cilantro | sr:Coriander (cilantro) leaves, raw | ¼ taza / ¼ cup=4 | culantro* (PE) · coriandro · cilantro fresco
+Albahaca | Basil | sr:Basil, fresh | 5 hojas / 5 leaves=2.5 · 2 cucharadas picada / 2 tbsp chopped=5.3 | albahaca fresca
+Menta | Mint | sr:Spearmint, fresh | 2 cucharadas / 2 tbsp=11.4 | hierbabuena · yerbabuena · menta fresca
 Tomate triturado | Crushed tomatoes | sr:Tomatoes, crushed, canned | ½ taza / ½ cup=121 | tomate en lata · tomate en conserva
 Puré de tomate | Tomato puree | sr:Tomato products, canned, puree, without salt added | ½ taza / ½ cup=125 | pulpa de tomate* (AR UY) · passata
+Pasta de tomate | Tomato paste | sr:Tomato products, canned, paste, without salt added | 1 cucharada / 1 tbsp=16 · 1 lata / 1 can=170 | extracto de tomate (AR UY) · concentrado de tomate* (ES) · pasta de jitomate (MX)
+Tomates secos | Sun-dried tomatoes | sr:Tomatoes, sun-dried | ¼ taza / ¼ cup=14 · 1 unidad / 1 piece=2 | tomate seco · tomates deshidratados
 
 # tuberculos
-Papa | Potato | sr:Potatoes, flesh and skin, raw | 1 mediana / 1 medium=213 | patata* (ES)
-Papa hervida | Boiled potato | sr:Potatoes, boiled, cooked in skin, flesh, without salt | 1 mediana / 1 medium=136 | patata cocida* (ES) · papa cocida · papa sancochada (PE)
-Papa al horno | Baked potato | sr:Potatoes, white, flesh and skin, baked | 1 mediana / 1 medium=173 | patata asada* (ES) · papa asada
+Papa | Potato | sr:Potatoes, flesh and skin, raw | 1 mediana / 1 medium=213 · 1 pequeña / 1 small=170 · 1 grande / 1 large=369 | patata* (ES) · papa cruda | desecho=25 cáscara
+Papa hervida | Boiled potato | sr:Potatoes, boiled, cooked in skin, flesh, without salt | 1 mediana / 1 medium=136 | patata cocida* (ES) · papa cocida · papa sancochada (PE) | crudo=Papa · desecho
+Papa al horno | Baked potato | sr:Potatoes, white, flesh and skin, baked | 1 mediana / 1 medium=173 · 1 pequeña / 1 small=138 · 1 grande / 1 large=299 | patata asada* (ES) · papa asada | crudo=Papa
 Puré de papas | Mashed potatoes | fndds:Potato, mashed, NFS | 1 taza / 1 cup=250 | puré de patatas* (ES) · puré
-Batata | Sweet potato | sr:Sweet potato, raw, unprepared | 1 mediana / 1 medium=130 | camote* (MX PE CL EC GT HN SV NI CR) · boniato* (UY CU)
-Batata al horno | Baked sweet potato | fndds:Sweet potato, baked, NS as to fat | 1 mediana / 1 medium=150 | camote asado* (MX PE CL) · boniato al horno* (UY)
-Yuca | Cassava | sr:Cassava, raw | 1 taza / 1 cup=206 | mandioca* (AR UY PY BO) · casava
-Yuca cocida | Cooked cassava | fndds:Cassava, cooked | 1 taza / 1 cup=160 | mandioca hervida* (AR UY PY BO)
-Plátano verde | Green plantain | sr:Plantains, green, raw | 1 unidad / 1 plantain=267 | plátano* (CO VE CU PR DO CR PA EC NI HN GT SV) · plátano macho* (MX ES) · banano verde
-Plátano verde hervido | Boiled green plantain | sr:Plantains, green, boiled | 1 taza / 1 cup=137 | plátano macho cocido (MX) · plátano sancochado (PE)
-Plátano maduro | Ripe plantain | sr:Plantains, yellow, raw | 1 unidad / 1 plantain=270 | plátano macho maduro (MX) · maduro
-Ñame | Yam | sr:Yam, raw | 1 taza en cubos / 1 cup cubes=150 |
-Malanga | Taro | sr:Taro, raw | 1 taza / 1 cup=104 | taro · yautía* (PR DO) · ocumo* (VE)
+Batata | Sweet potato | sr:Sweet potato, raw, unprepared | 1 mediana / 1 medium=130 | camote* (MX PE CL EC GT HN SV NI CR) · boniato* (UY CU) | desecho=28 cáscara
+Batata hervida | Boiled sweet potato | sr:Sweet potato, cooked, boiled, without skin | 1 mediana / 1 medium=151 · 1 taza en puré / 1 cup mashed=328 | camote hervido* (MX PE CL EC GT HN SV NI CR) · boniato hervido* (UY CU) · batata cocida | crudo=Batata
+// Batata al horno: USDA la cuenta con un poco de grasa (NS as to fat).
+Batata al horno | Baked sweet potato | fndds:Sweet potato, baked, NS as to fat | 1 mediana / 1 medium=150 · 1 pequeña / 1 small=80 · 1 grande / 1 large=235 | camote asado* (MX PE CL) · boniato al horno* (UY) | crudo=Batata · aceite=incluido
+Yuca | Cassava | sr:Cassava, raw | 1 taza / 1 cup=206 · 1 raíz / 1 root=408 | mandioca* (AR UY PY BO) · casava | desecho
+// Yuca cocida: USDA la cuenta con un poco de grasa.
+Yuca cocida | Cooked cassava | fndds:Cassava, cooked | 1 taza / 1 cup=160 | mandioca hervida* (AR UY PY BO) · yuca hervida · yuca sancochada | crudo=Yuca · aceite=incluido
+// Plátanos: el desecho es el de «Plantains, raw» en SR28 (cáscara y tallos).
+Plátano verde | Green plantain | sr:Plantains, green, raw | 1 unidad / 1 plantain=267 | plátano* (CO VE CU PR DO CR PA EC NI HN GT SV) · plátano macho* (MX ES) · banano verde | desecho=35 cáscara
+Plátano verde hervido | Boiled green plantain | sr:Plantains, green, boiled | 1 taza / 1 cup=137 | plátano macho cocido (MX) · plátano sancochado (PE) | crudo=Plátano verde
+Plátano maduro | Ripe plantain | sr:Plantains, yellow, raw | 1 unidad / 1 plantain=270 · 1 taza en rodajas / 1 cup sliced=148 | plátano macho maduro (MX) · maduro | desecho=35 cáscara
+Plátano maduro hervido | Boiled ripe plantain | fndds:Plantain, cooked, no added fat | 1 unidad / 1 plantain=235 · 1 taza / 1 cup=200 | plátano maduro cocido · maduro sancochado (PE) | crudo=Plátano maduro
+Ñame | Yam | sr:Yam, raw | 1 taza en cubos / 1 cup cubes=150 |  | desecho
+Ñame cocido | Boiled yam | sr:Yam, cooked, boiled, drained, or baked, without salt | 1 taza en cubos / 1 cup cubes=136 | ñame hervido | crudo=Ñame
+Malanga | Taro | sr:Taro, raw | 1 taza / 1 cup=104 | taro · yautía* (PR DO) · ocumo* (VE) | desecho=14 cáscara
+Malanga cocida | Cooked taro | sr:Taro, cooked, without salt | 1 taza / 1 cup=132 | taro cocido · yautía cocida* (PR DO) · ocumo cocido* (VE) | crudo=Malanga
 
 # legumbres
-Frijoles negros | Black beans | sr:Beans, black, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=172 | porotos negros* (AR UY CL PY BO) · caraotas negras* (VE) · habichuelas negras* (PR DO) · judías negras* (ES) · frijol negro
-Frijoles rojos | Red kidney beans | sr:Beans, kidney, red, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=177 | porotos rojos* (AR UY CL PY BO) · caraotas rojas* (VE) · habichuelas rojas* (PR DO) · alubias rojas* (ES) · frijol rojo
-Frijoles pintos | Pinto beans | sr:Beans, pinto, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=171 | porotos pintos* (AR UY CL) · frijol pinto
-Frijoles blancos | White beans | sr:Beans, white, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=179 | porotos blancos* (AR UY CL PY BO) · caraotas blancas* (VE) · alubias* (ES) · judías blancas
-Garbanzos | Chickpeas | sr:Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=164 | garbanzo
-Lentejas | Lentils | sr:Lentils, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=198 | lenteja
-Arvejas partidas | Split peas | sr:Peas, split, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=196 | guisantes partidos* (ES) · chícharos secos* (MX) · arvejas secas
+Frijoles negros crudos | Dry black beans | sr:Beans, black, mature seeds, raw | ¼ taza / ¼ cup=49 · 1 taza / 1 cup=194 | porotos negros crudos* (AR UY CL PY BO) · caraotas negras crudas* (VE) · habichuelas negras crudas* (PR DO) · judías negras crudas* (ES) · frijoles negros secos
+Frijoles negros | Black beans | sr:Beans, black, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=172 | porotos negros* (AR UY CL PY BO) · caraotas negras* (VE) · habichuelas negras* (PR DO) · judías negras* (ES) · frijol negro · frijoles negros cocidos · porotos negros cocidos | crudo=Frijoles negros crudos
+Frijoles negros en lata | Canned black beans | fndds:Black beans, from canned, no added fat | 1 taza / 1 cup=180 | porotos negros en lata* (AR UY CL) · caraotas negras de lata* (VE) · frijoles negros de lata
+Frijoles rojos crudos | Dry red kidney beans | sr:Beans, kidney, red, mature seeds, raw | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=184 | porotos rojos crudos* (AR UY CL PY BO) · caraotas rojas crudas* (VE) · habichuelas rojas crudas* (PR DO) · alubias rojas crudas* (ES) · frijoles rojos secos
+Frijoles rojos | Red kidney beans | sr:Beans, kidney, red, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=177 | porotos rojos* (AR UY CL PY BO) · caraotas rojas* (VE) · habichuelas rojas* (PR DO) · alubias rojas* (ES) · frijol rojo · frijoles rojos cocidos | crudo=Frijoles rojos crudos
+Frijoles pintos crudos | Dry pinto beans | sr:Beans, pinto, mature seeds, raw | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=193 | porotos pintos crudos* (AR UY CL) · frijoles pintos secos
+Frijoles pintos | Pinto beans | sr:Beans, pinto, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=171 | porotos pintos* (AR UY CL) · frijol pinto · frijoles pintos cocidos | crudo=Frijoles pintos crudos
+Frijoles blancos crudos | Dry white beans | sr:Beans, white, mature seeds, raw | ¼ taza / ¼ cup=51 · 1 taza / 1 cup=202 | porotos blancos crudos* (AR UY CL PY BO) · caraotas blancas crudas* (VE) · alubias crudas* (ES) · frijoles blancos secos
+Frijoles blancos | White beans | sr:Beans, white, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=179 | porotos blancos* (AR UY CL PY BO) · caraotas blancas* (VE) · alubias* (ES) · judías blancas · frijoles blancos cocidos | crudo=Frijoles blancos crudos
+Frijoles lima crudos | Dry lima beans | sr:Lima beans, large, mature seeds, raw | ¼ taza / ¼ cup=45 · 1 taza / 1 cup=178 | porotos de manteca crudos* (AR UY PY) · pallares crudos* (PE CL) · judiones crudos (ES)
+Frijoles lima | Lima beans | sr:Lima beans, large, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=188 | porotos de manteca* (AR UY PY) · pallares* (PE CL) · judiones (ES) · habas blancas | crudo=Frijoles lima crudos
+Frijoles carita crudos | Dry black-eyed peas | sr:Cowpeas, common (blackeyes, crowder, southern), mature seeds, raw | ¼ taza / ¼ cup=42 · 1 taza / 1 cup=167 | judías carillas crudas* (ES) · frijol de ojo negro crudo
+Frijoles carita | Black-eyed peas | sr:Cowpeas, common (blackeyes, crowder, southern), mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=171 | judías carillas* (ES) · frijol de ojo negro · caupí | crudo=Frijoles carita crudos
+Frijoles horneados | Baked beans | sr:Beans, baked, canned, plain or vegetarian | ½ taza / ½ cup=127 | baked beans · alubias con tomate (ES) · porotos en salsa de tomate
+Garbanzos crudos | Dry chickpeas | sr:Chickpeas (garbanzo beans, bengal gram), mature seeds, raw | ¼ taza / ¼ cup=50 · 1 taza / 1 cup=200 | garbanzos secos
+Garbanzos | Chickpeas | sr:Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=164 | garbanzo · garbanzos cocidos | crudo=Garbanzos crudos
+Garbanzos en lata | Canned chickpeas | sr:Chickpeas (garbanzo beans, bengal gram), mature seeds, canned, drained, rinsed in tap water | 1 taza / 1 cup=152 · 1 lata escurrida / 1 can, drained=254 | garbanzos en conserva · garbanzos de lata
+Lentejas crudas | Dry lentils | sr:Lentils, raw | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=192 | lentejas secas
+Lentejas | Lentils | sr:Lentils, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=198 | lenteja · lentejas cocidas | crudo=Lentejas crudas
+Arvejas partidas crudas | Dry split peas | sr:Peas, green, split, mature seeds, raw | ¼ taza / ¼ cup=49 · 1 taza / 1 cup=196 | guisantes partidos crudos* (ES) · chícharos secos crudos* (MX) · arvejas secas crudas
+Arvejas partidas | Split peas | sr:Peas, split, mature seeds, cooked, boiled, without salt | 1 taza / 1 cup=196 | guisantes partidos* (ES) · chícharos secos* (MX) · arvejas secas · arvejas partidas cocidas | crudo=Arvejas partidas crudas
 Habas | Fava beans | sr:Broadbeans, immature seeds, raw | 1 taza / 1 cup=109 |
-Soja | Soybeans | sr:Soybeans, mature cooked, boiled, without salt | 1 taza / 1 cup=172 | soya* (MX CO VE) · porotos de soja (AR UY)
-Edamame | Edamame | fndds:Edamame, cooked | ½ taza / ½ cup=80 |
+Habas cocidas | Boiled fava beans | sr:Broadbeans, immature seeds, cooked, boiled, drained, without salt | 100 g / 100 g=100 | habas hervidas | crudo=Habas
+Altramuces | Lupini beans | sr:Lupins, mature seeds, cooked, boiled, without salt | ½ taza / ½ cup=83 · 1 taza / 1 cup=166 | chochos* (EC PE BO) · lupines (AR CL UY) · lupinos
+Soja cruda | Dry soybeans | sr:Soybeans, mature seeds, raw | ¼ taza / ¼ cup=47 · 1 taza / 1 cup=186 | soya cruda* (MX CO VE) · porotos de soja crudos (AR UY) · soja seca
+Soja | Soybeans | sr:Soybeans, mature cooked, boiled, without salt | 1 taza / 1 cup=172 | soya* (MX CO VE) · porotos de soja (AR UY) · soja cocida | crudo=Soja cruda
+Edamame crudo | Frozen edamame | sr:Edamame, frozen, unprepared | 1 taza / 1 cup=118 | edamame congelado
+// Edamame: USDA lo cocina con un poco de grasa.
+Edamame | Edamame | fndds:Edamame, cooked | ½ taza / ½ cup=80 | edamame cocido | crudo=Edamame crudo · aceite=incluido
 Hummus | Hummus | fndds:Hummus, plain | 2 cucharadas / 2 tbsp=30 | humus
-Tofu firme | Firm tofu | sr:Tofu, raw, firm, prepared with calcium sulfate | 100 g / 100 g=100 | tofu
-Tofu blando | Soft tofu | sr:Tofu, raw, regular, prepared with calcium sulfate | 100 g / 100 g=100 | tofu sedoso
+Tofu firme | Firm tofu | sr:Tofu, raw, firm, prepared with calcium sulfate | 100 g / 100 g=100 · ¼ bloque / ¼ block=81 | tofu
+Tofu blando | Soft tofu | sr:Tofu, raw, regular, prepared with calcium sulfate | 100 g / 100 g=100 · ¼ bloque / ¼ block=116 | tofu sedoso
+Tempeh | Tempeh | sr:Tempeh | 100 g / 100 g=100 · 1 taza / 1 cup=166 |
 Frijoles refritos | Refried beans | fndds:Refried beans | ½ taza / ½ cup=130 | porotos refritos
 Soja texturizada | Textured soy protein | fndds:Textured vegetable protein, dry | 30 g / 30 g=30 | proteína de soja texturizada · carne de soja
 Hamburguesa vegetal | Veggie burger | fndds:Veggie burger patty, no bun | 1 unidad / 1 patty=70 | medallón vegetal* (AR UY) · hamburguesa de soja
 
 # cereales
-Arroz blanco cocido | Cooked white rice | fndds:Rice, white, cooked, no added fat | 1 taza / 1 cup=158 | arroz · arroz blanco
-Arroz integral cocido | Cooked brown rice | sr:Rice, brown, long-grain, cooked | 1 taza / 1 cup=202 | arroz integral
-Arroz blanco crudo | Uncooked white rice | sr:Rice, white, long-grain, regular, raw, enriched | ¼ taza / ¼ cup=46 | arroz crudo
-Avena | Oats | sr:Oats | ½ taza / ½ cup=40 | avena arrollada* (AR UY) · copos de avena* (ES) · hojuelas de avena* (MX CO) · avena en hojuelas
-Avena cocida | Oatmeal | fndds:Oatmeal, NFS | 1 taza / 1 cup=240 | gachas de avena* (ES) · porridge
-Quinoa cocida | Cooked quinoa | sr:Quinoa, cooked | 1 taza / 1 cup=185 | quinua* (PE BO EC CO)
-Quinoa cruda | Uncooked quinoa | sr:Quinoa, uncooked | ¼ taza / ¼ cup=43 | quinua cruda* (PE BO EC CO)
-Cuscús | Couscous | sr:Couscous, cooked | 1 taza / 1 cup=157 | cous cous · couscous
-Trigo burgol | Bulgur | sr:Bulgur, cooked | 1 taza / 1 cup=182 | bulgur
-Polenta | Cornmeal | sr:Cornmeal, degermed, enriched, yellow | ¼ taza / ¼ cup=35 | harina de maíz · sémola de maíz
-Polenta cocida | Cooked polenta | fndds:Cornmeal mush, no added fat | 1 taza / 1 cup=240 |
-Harina de trigo | Wheat flour | sr:Wheat flour, white, all-purpose, enriched, bleached | 1 taza / 1 cup=125 | harina 0000* (AR UY) · harina
-Harina de garbanzo | Chickpea flour | sr:Chickpea flour (besan) | ½ taza / ½ cup=46 | harina de garbanzos · besan
+Arroz blanco crudo | Uncooked white rice | sr:Rice, white, long-grain, regular, raw, enriched | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=185 | arroz crudo · arroz blanco seco
+Arroz blanco cocido | Cooked white rice | fndds:Rice, white, cooked, no added fat | 1 taza / 1 cup=158 | arroz · arroz blanco · arroz hervido | crudo=Arroz blanco crudo
+Arroz integral crudo | Uncooked brown rice | sr:Rice, brown, long-grain, raw | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=185 | arroz integral seco
+Arroz integral cocido | Cooked brown rice | sr:Rice, brown, long-grain, cooked | 1 taza / 1 cup=202 | arroz integral | crudo=Arroz integral crudo
+Arroz parbolizado crudo | Uncooked parboiled rice | sr:Rice, white, long-grain, parboiled, enriched, dry | ¼ taza / ¼ cup=46 · 1 taza / 1 cup=185 | arroz parboil crudo (AR UY) · arroz vaporizado crudo (ES)
+Arroz parbolizado cocido | Cooked parboiled rice | sr:Rice, white, long-grain, parboiled, enriched, cooked | 1 taza / 1 cup=158 | arroz parboil (AR UY) · arroz vaporizado (ES) · arroz parbolizado | crudo=Arroz parbolizado crudo
+Avena | Oats | sr:Oats | ½ taza / ½ cup=40 | avena arrollada* (AR UY) · copos de avena* (ES) · hojuelas de avena* (MX CO) · avena en hojuelas · avena cruda
+Avena cocida | Oatmeal | fndds:Oatmeal, NFS | 1 taza / 1 cup=240 | gachas de avena* (ES) · porridge · avena con agua | crudo=Avena
+Quinoa cruda | Uncooked quinoa | sr:Quinoa, uncooked | ¼ taza / ¼ cup=43 · 1 taza / 1 cup=170 | quinua cruda* (PE BO EC CO)
+Quinoa cocida | Cooked quinoa | sr:Quinoa, cooked | 1 taza / 1 cup=185 | quinua* (PE BO EC CO) · quinoa | crudo=Quinoa cruda
+Cuscús crudo | Uncooked couscous | sr:Couscous, dry | ¼ taza / ¼ cup=43 · 1 taza / 1 cup=173 | cuscús seco
+Cuscús | Couscous | sr:Couscous, cooked | 1 taza / 1 cup=157 | cous cous · couscous · cuscús cocido | crudo=Cuscús crudo
+Trigo burgol crudo | Uncooked bulgur | sr:Bulgur, dry | ¼ taza / ¼ cup=35 · 1 taza / 1 cup=140 | bulgur crudo · burgol seco
+Trigo burgol | Bulgur | sr:Bulgur, cooked | 1 taza / 1 cup=182 | bulgur · burgol cocido | crudo=Trigo burgol crudo
+Mijo crudo | Uncooked millet | sr:Millet, raw | ¼ taza / ¼ cup=50 · 1 taza / 1 cup=200 | mijo seco
+Mijo cocido | Cooked millet | sr:Millet, cooked | 1 taza / 1 cup=174 | mijo | crudo=Mijo crudo
+Trigo sarraceno crudo | Uncooked buckwheat | sr:Buckwheat groats, roasted, dry | ¼ taza / ¼ cup=41 · 1 taza / 1 cup=164 | alforfón crudo · kasha
+Trigo sarraceno cocido | Cooked buckwheat | sr:Buckwheat groats, roasted, cooked | 1 taza / 1 cup=168 | alforfón · trigo sarraceno | crudo=Trigo sarraceno crudo
+Cebada perlada cruda | Uncooked pearl barley | sr:Barley, pearled, raw | ¼ taza / ¼ cup=50 · 1 taza / 1 cup=200 | cebada cruda
+Cebada perlada cocida | Cooked pearl barley | sr:Barley, pearled, cooked | 1 taza / 1 cup=157 | cebada | crudo=Cebada perlada cruda
+Amaranto crudo | Uncooked amaranth | sr:Amaranth grain, uncooked | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=193 | kiwicha cruda* (PE BO)
+Amaranto | Amaranth | sr:Amaranth grain, cooked | 1 taza / 1 cup=246 | kiwicha* (PE BO) · amaranto cocido | crudo=Amaranto crudo
+Polenta | Cornmeal | sr:Cornmeal, degermed, enriched, yellow | ¼ taza / ¼ cup=35 · 1 taza / 1 cup=157 | harina de maíz · sémola de maíz · polenta cruda · harina de maíz amarilla
+Polenta cocida | Cooked polenta | fndds:Cornmeal mush, no added fat | 1 taza / 1 cup=240 |  | crudo=Polenta
+Harina de maíz blanca | White cornmeal | sr:Cornmeal, degermed, enriched, white | ¼ taza / ¼ cup=39 · 1 taza / 1 cup=157 | harina de maíz precocida · harina para arepas* (VE CO) · harina de maíz blanco
+Harina de maíz nixtamalizado | Masa harina | sr:Corn flour, masa, enriched, white | ¼ taza / ¼ cup=29 · 1 taza / 1 cup=114 | masa harina · harina para tortillas* (MX) · harina de maíz para tamales
+Harina de trigo | Wheat flour | sr:Wheat flour, white, all-purpose, enriched, bleached | 1 taza / 1 cup=125 · 1 cucharada / 1 tbsp=8 | harina 0000* (AR UY) · harina · harina común
+Harina leudante | Self-rising flour | sr:Wheat flour, white, all-purpose, self-rising, enriched | 1 taza / 1 cup=125 · 1 cucharada / 1 tbsp=8 | harina con polvo de hornear · harina preparada (MX) · harina bizcocho (ES)
 Harina integral | Whole wheat flour | sr:Wheat flour, whole-grain | 1 taza / 1 cup=120 |
-Maicena | Cornstarch | sr:Cornstarch | 1 cucharada / 1 tbsp=8 | almidón de maíz · fécula de maíz
+Harina de garbanzo | Chickpea flour | sr:Chickpea flour (besan) | ½ taza / ½ cup=46 | harina de garbanzos · besan
+Harina de arroz | Rice flour | sr:Rice flour, white, unenriched | ¼ taza / ¼ cup=40 · 1 taza / 1 cup=158 |
+Harina de avena | Oat flour | sr:Oat flour, partially debranned | ¼ taza / ¼ cup=26 · 1 taza / 1 cup=104 |
+Maicena | Cornstarch | sr:Cornstarch | 1 cucharada / 1 tbsp=8 · 1 taza / 1 cup=128 | almidón de maíz · fécula de maíz
+Almidón de yuca | Tapioca starch | sr:Tapioca, pearl, dry | ¼ taza / ¼ cup=38 · 1 taza / 1 cup=152 | fécula de mandioca* (AR UY PY) · almidón de mandioca · tapioca · polvilho
 Copos de maíz | Corn flakes | fndds:Cereal, corn flakes, plain | 1 taza / 1 cup=30 | cereal de maíz · hojuelas de maíz* (MX) · corn flakes
+Copos de maíz azucarados | Frosted corn flakes | fndds:Cereal, corn flakes, flavored | 1 taza / 1 cup=40 · 1 porción / 1 serving=30 | hojuelas de maíz azucaradas* (MX) · cereal azucarado
+Arroz inflado | Crispy rice cereal | fndds:Cereal, rice crispy, plain | 1 taza / 1 cup=25 · 1 porción / 1 serving=30 | cereal de arroz inflado · arroz crocante
+Cereal de chocolate | Chocolate cereal | fndds:Cereal, chocolate puffs | 1 taza / 1 cup=35 · 1 porción / 1 serving=30 | bolitas de chocolate · cereal de cacao
+Cereal de salvado | Bran flakes | fndds:Cereal, bran flakes, plain | 1 taza / 1 cup=50 · 1 porción / 1 serving=30 | copos de salvado · cereal de fibra
 Granola | Granola | fndds:Cereal, granola | ½ taza / ½ cup=55 |
 Salvado de avena | Oat bran | sr:Oat bran, raw | ¼ taza / ¼ cup=24 |
-Cebada perlada cocida | Cooked pearl barley | sr:Barley, pearled, cooked | 1 taza / 1 cup=157 | cebada
-Amaranto | Amaranth | sr:Amaranth grain, cooked | 1 taza / 1 cup=246 |
+Salvado de trigo | Wheat bran | sr:Wheat bran, crude | 2 cucharadas / 2 tbsp=7 · 1 taza / 1 cup=58 | afrecho · salvado
+Germen de trigo | Wheat germ | sr:Wheat germ, crude | 2 cucharadas / 2 tbsp=14 · 1 taza / 1 cup=115 |
 Sémola | Semolina | sr:Semolina, enriched | ¼ taza / ¼ cup=42 |
+Sémola cocida | Cooked semolina | fndds:Cream of wheat, regular or quick, made with water, no added fat | 1 taza / 1 cup=240 | crema de trigo · cream of wheat | crudo=Sémola
 
 # panes
 Pan blanco | White bread | sr:Bread, white, commercially prepared (includes soft bread crumbs) | 1 rebanada / 1 slice=25 | pan de molde* (ES UY) · pan lactal* (AR) · pan de caja* (MX) · pan tajado* (CO) · pan de sándwich
 Pan integral | Whole wheat bread | sr:Bread, whole-wheat, commercially prepared | 1 rebanada / 1 slice=32 | pan de molde integral · pan lactal integral
 Pan multicereal | Multigrain bread | sr:Bread, multi-grain (includes whole-grain) | 1 rebanada / 1 slice=26 | pan multigrano · pan de cereales
 Pan de centeno | Rye bread | sr:Bread, rye | 1 rebanada / 1 slice=32 |
+Pan de avena | Oat bread | fndds:Bread, oatmeal | 1 rebanada / 1 slice=28 |
+Pan de pasas | Raisin bread | fndds:Bread, raisin | 1 rebanada / 1 slice=28 | pan con pasas
+Pan sin gluten | Gluten-free bread | sr:Bread, gluten-free, white, made with rice flour, corn starch, and/or tapioca | 1 rebanada / 1 slice=35 | pan sin TACC (AR UY) · pan para celíacos
 Pan francés | French bread | fndds:Bread, French or Vienna | 1 rebanada / 1 slice=32 | baguette · pan de barra* (ES) · flauta (AR UY) · bolillo* (MX) · marraqueta* (CL)
+Pan de masa madre | Sourdough bread | fndds:Bread, sour dough | 1 rebanada / 1 slice=31 · 1 rebanada gruesa / 1 thick slice=43 | masa madre · sourdough
+Panecillo | Dinner roll | sr:Rolls, dinner, plain, commercially prepared (includes brown-and-serve) | 1 unidad / 1 roll=28 · 1 grande / 1 large roll=43 | pancito* (AR UY PY CL) · bollo* (ES) · pan de mesa
 Pan tostado | Toast | fndds:Bread, white, toasted | 1 rebanada / 1 slice=25 | tostada* (AR UY ES)
+Pan tostado envasado | Melba toast | fndds:Melba toast | 1 unidad / 1 toast=5 · 5 unidades / 5 toasts=25 | biscotes* (ES) · tostaditas (AR UY) · tostadas de paquete
 Pan pita | Pita bread | sr:Bread, pita, white, enriched | 1 unidad / 1 pita=60 | pan árabe* (AR UY CL MX CO)
+Pan pita integral | Whole wheat pita | fndds:Bread, pita, whole wheat | 1 unidad / 1 pita=57 · 1 pequeño / 1 small pita=28 | pan árabe integral* (AR UY CL MX CO)
+Pan naan | Naan | sr:Bread, naan, plain, commercially prepared, refrigerated | 1 unidad / 1 piece=90 | naan
+Chapati | Chapati | fndds:Bread, chappatti or roti | 1 mediano / 1 medium=40 | roti · chapatti
+Focaccia | Focaccia | fndds:Focaccia, Italian, plain | 1 porción / 1 slice=57 | focacha
+// fuente: TACO, 4.ª edición (NEPA-UNICAMP, 2011), fila 140 «Pão, de queijo, assado»: 363 kcal, 5,1 g de proteína, 34,2 de carbohidratos, 24,6 de lípidos y 0,6 de fibra.
+Pan de queso | Cheese bread | propio#102 363 5.1 34.2 24.6 | 30 g / 30 g=30 | chipá* (PY AR UY) · cuñapé* (BO) · pandebono (CO) · pan de yuca (EC) · pão de queijo | fibra=0.6
+Pan de ajo | Garlic bread | fndds:Garlic bread, NFS | 1 rebanada / 1 slice=39 | pan con ajo
+Pan de maíz | Cornbread | fndds:Cornbread, made from home recipe | 1 porción / 1 piece=65 | cornbread
 Pan de hamburguesa | Hamburger bun | sr:Rolls, hamburger or hotdog, plain | 1 unidad / 1 bun=44 | pan de pancho (AR UY) · pan de hot dog
 Bagel | Bagel | sr:Bagels, plain, enriched, with calcium propionate (includes onion, poppy, sesame) | 1 unidad / 1 bagel=99 |
 Muffin inglés | English muffin | sr:Muffins, English, plain, enriched, with ca prop (includes sourdough) | 1 unidad / 1 muffin=57 |
 Croissant | Croissant | fndds:Croissant | 1 unidad / 1 croissant=57 | medialuna* (AR UY PY CL) · cuerno* (MX) · cruasán* (ES)
+Brioche | Brioche | fndds:Brioche | 1 unidad / 1 piece=77 | pan brioche · bollo brioche
 Galletas de agua | Water crackers | fndds:Crackers, water | 30 g / 30 g=30 | galletas saladas · crackers
 Galletas de soda | Saltine crackers | sr:Crackers, saltines (includes oyster, soda, soup) | 5 unidades / 5 crackers=15 | galletas de sal · saltinas · galletas saladas* (MX)
 Galletas integrales | Whole wheat crackers | sr:Crackers, whole-wheat | 30 g / 30 g=28 |
@@ -200,196 +336,309 @@ Pancakes | Pancakes | fndds:Pancakes, plain | 1 unidad / 1 pancake=50 | hot cake
 Crepes | Crepes | fndds:Crepe, plain | 1 unidad / 1 crepe=65 | panqueques* (AR UY) · crepas* (MX) · crêpes
 Waffles | Waffles | fndds:Waffle, plain | 1 unidad pequeña / 1 small waffle=40 | wafles · gofres* (ES)
 Tortilla de maíz | Corn tortilla | fndds:Tortilla, corn | 1 mediana / 1 medium=28 |
-Tortilla de harina | Flour tortilla | fndds:Tortilla, flour | 1 mediana / 1 medium=45 | tortilla de trigo
+Tortilla de harina | Flour tortilla | fndds:Tortilla, flour | 1 mediana / 1 medium=45 · 1 pequeña / 1 small=33 · 1 grande / 1 large=71 | tortilla de trigo
 Tortilla integral | Whole wheat tortilla | fndds:Tortilla, whole wheat | 1 unidad / 1 tortilla=56 |
+Tostadas de maíz | Corn tostadas | sr:Tostada shells, corn | 1 unidad / 1 tostada=12.3 · 3 unidades / 3 tostadas=37 | tostadas* (MX) · tostadas de tortilla
 Pan dulce | Mexican sweet bread | fndds:Pan dulce, NFS | 1 mediano / 1 medium=93 | concha (MX)
 Panettone | Panettone | fndds:Pannetone | 1 porción / 1 slice=80 | pan dulce* (AR UY PY) · panetón* (PE CL CO)
 
 # pastas
-Pasta cocida | Cooked pasta | sr:Pasta, cooked, enriched, without added salt | 1 taza / 1 cup=124 | fideos* (AR UY CL PE BO PY VE) · espaguetis · spaghetti · macarrones · tallarines
-Pasta seca | Dry pasta | sr:Pasta, dry, enriched | 80 g / 80 g=80 | fideos secos* (AR UY CL) · pasta cruda
-Pasta integral cocida | Cooked whole wheat pasta | sr:Pasta, whole-wheat, cooked | 1 taza / 1 cup=140 | fideos integrales* (AR UY)
-Fideos de huevo | Cooked egg noodles | sr:Noodles, egg, enriched, cooked | 1 taza / 1 cup=160 | tallarines al huevo
+Pasta seca | Dry pasta | sr:Pasta, dry, enriched | 80 g / 80 g=80 · 1 taza de espaguetis / 1 cup spaghetti=91 | fideos secos* (AR UY CL) · pasta cruda
+Pasta cocida | Cooked pasta | sr:Pasta, cooked, enriched, without added salt | 1 taza / 1 cup=124 | fideos* (AR UY CL PE BO PY VE) · espaguetis · spaghetti · macarrones · tallarines · fideos cocidos | crudo=Pasta seca
+Pasta integral cruda | Dry whole wheat pasta | sr:Pasta, whole-wheat, dry | 80 g / 80 g=80 | fideos integrales secos* (AR UY) · pasta integral seca
+Pasta integral cocida | Cooked whole wheat pasta | sr:Pasta, whole-wheat, cooked | 1 taza / 1 cup=140 | fideos integrales* (AR UY) · pasta integral | crudo=Pasta integral cruda
+Pasta fresca cruda | Fresh pasta | sr:Pasta, fresh-refrigerated, plain, as purchased | 100 g / 100 g=100 | pasta fresca · fideos frescos* (AR UY) · tallarines frescos
+Pasta fresca cocida | Cooked fresh pasta | sr:Pasta, fresh-refrigerated, plain, cooked | 100 g / 100 g=100 | fideos frescos cocidos* (AR UY) · tallarines frescos cocidos | crudo=Pasta fresca cruda
+Pasta sin gluten cruda | Dry gluten-free pasta | sr:Pasta, gluten-free, corn, dry | 80 g / 80 g=80 | fideos sin gluten secos · pasta de maíz
+Pasta sin gluten cocida | Cooked gluten-free pasta | sr:Pasta, gluten-free, corn, cooked | 1 taza / 1 cup=140 | fideos sin gluten · pasta sin TACC (AR UY) | crudo=Pasta sin gluten cruda
+Fideos de huevo crudos | Dry egg noodles | sr:Noodles, egg, dry, enriched | 80 g / 80 g=80 · 1 taza / 1 cup=38 | fideos al huevo secos · tallarines al huevo crudos
+Fideos de huevo | Cooked egg noodles | sr:Noodles, egg, enriched, cooked | 1 taza / 1 cup=160 | tallarines al huevo · fideos al huevo | crudo=Fideos de huevo crudos
+Fideos de arroz crudos | Dry rice noodles | sr:Rice noodles, dry | 60 g / 60 g=60 | fideos de arroz secos
+Fideos de arroz | Rice noodles | sr:Rice noodles, cooked | 1 taza / 1 cup=176 | fideos de arroz cocidos | crudo=Fideos de arroz crudos
+Fideos soba crudos | Dry soba noodles | sr:Noodles, japanese, soba, dry | 60 g / 60 g=60 | soba seco
+Fideos soba | Soba noodles | sr:Noodles, japanese, soba, cooked | 1 taza / 1 cup=114 | soba | crudo=Fideos soba crudos
+// Fideos instantáneos: el paquete de USDA son 81 g de fideos y 5,8 g de condimento.
+Fideos instantáneos | Instant ramen noodles | sr:Soup, ramen noodle, any flavor, dry | 1 paquete / 1 package=87 | ramen instantáneo · sopa instantánea · fideos ramen
 Ñoquis | Gnocchi | fndds:Gnocchi, potato | 1 taza / 1 cup=188 | gnocchi · ñoqui
 Ravioles | Cheese ravioli | fndds:Ravioli, cheese-filled, no sauce | 1 taza / 1 cup=160 | raviolis* (ES MX) · ravioli
+Tortellini | Cheese tortellini | fndds:Tortellini, cheese-filled, no sauce | 1 taza / 1 cup=150 | tortelinis · capeletis (AR UY) · cappelletti
 Lasaña | Lasagna | fndds:Lasagna with meat | 1 porción / 1 piece=250 | lasagna
 Canelones | Cannelloni | fndds:Manicotti, cheese-filled, with meat sauce | 1 unidad / 1 piece=143 | canelón · manicotti
-Fideos de arroz | Rice noodles | sr:Rice noodles, cooked | 1 taza / 1 cup=176 |
 Pasta con salsa de tomate | Pasta with tomato sauce | fndds:Pasta with tomato-based sauce, home recipe | 1 taza / 1 cup=250 | fideos con tuco* (AR UY) · tallarines rojos* (PE) · espaguetis con salsa
 
 # carnes
-Bistec | Beef steak | fndds:Beef, steak, NFS | 100 g / 100 g=100 · 1 unidad / 1 steak=200 | bife* (AR UY PY BO) · filete* (ES) · steak · carne de res · carne de vaca
-Lomo | Beef tenderloin | fndds:Beef, steak, tenderloin | 100 g / 100 g=100 | solomillo* (ES) · filete* (MX) · solomito (CO) · lomo fino (PE) · filet mignon
-Rib eye | Ribeye steak | fndds:Beef, steak, ribeye, lean only eaten | 100 g / 100 g=100 | ojo de bife* (AR UY) · bife ancho (AR) · entrecot* (ES) · lomo vetado* (CL)
-Lomo bajo | Strip steak | fndds:Beef, steak, strip, lean only eaten | 100 g / 100 g=100 | bife de chorizo* (AR UY) · lomo liso* (CL) · new york
-Falda | Flank steak | fndds:Beef, steak, flank | 100 g / 100 g=100 | vacío* (AR UY PY) · sobrebarriga* (CO) · arrachera (MX)
-Nalga | Round steak | fndds:Beef, steak, round | 100 g / 100 g=100 | peceto (AR UY) · bola* (MX CO) · posta* (CL)
-Asado de tira | Beef short ribs | fndds:Beef, shortribs | 100 g / 100 g=100 | costilla de res* (MX CO VE PE) · costillas de ternera* (ES) · tira de asado (UY) · asado
-Carne al horno | Roast beef | fndds:Beef, roast | 100 g / 100 g=100 | rosbif* (ES) · roast beef
-Carne para guiso | Beef stew meat | fndds:Beef, stew meat | 100 g / 100 g=100 | carne guisada · carne para guisar
-Pecho de res | Beef brisket | fndds:Beef, brisket | 100 g / 100 g=100 | pecho* (AR UY) · brisket
-Carne molida | Ground beef | fndds:Beef, ground | 100 g / 100 g=100 | carne picada* (AR UY ES PY)
+Bistec crudo | Raw beef steak | sr:Beef, composite of trimmed retail cuts, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | bife crudo* (AR UY PY BO) · filete crudo* (ES) · steak crudo
+Bistec | Beef steak | fndds:Beef, steak, NFS | 100 g / 100 g=100 · 1 unidad / 1 steak=200 | bife* (AR UY PY BO) · filete* (ES) · steak · carne de res · carne de vaca | crudo=Bistec crudo · aceite
+Lomo crudo | Raw beef tenderloin | sr:Beef, loin, tenderloin steak, boneless, separable lean only, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 · 1 bife / 1 steak=170 | solomillo crudo* (ES) · filete crudo* (MX) · lomo fino crudo (PE)
+Lomo | Beef tenderloin | fndds:Beef, steak, tenderloin | 100 g / 100 g=100 | solomillo* (ES) · filete* (MX) · solomito (CO) · lomo fino (PE) · filet mignon | crudo=Lomo crudo · aceite
+Rib eye crudo | Raw ribeye steak | sr:Beef, rib eye steak/roast, boneless, lip-on, separable lean only, trimmed to 1/8" fat, all grades, raw | 100 g / 100 g=100 · 1 bife / 1 steak=361 | ojo de bife crudo* (AR UY) · entrecot crudo* (ES) · lomo vetado crudo* (CL)
+Rib eye | Ribeye steak | fndds:Beef, steak, ribeye, lean only eaten | 100 g / 100 g=100 | ojo de bife* (AR UY) · bife ancho (AR) · entrecot* (ES) · lomo vetado* (CL) | crudo=Rib eye crudo
+Lomo bajo crudo | Raw strip steak | sr:Beef, loin, top loin steak, boneless, lip-on, separable lean only, trimmed to 1/8" fat, all grades, raw | 100 g / 100 g=100 · 1 bife / 1 steak=302 | bife de chorizo crudo* (AR UY) · lomo liso crudo* (CL)
+Lomo bajo | Strip steak | fndds:Beef, steak, strip, lean only eaten | 100 g / 100 g=100 | bife de chorizo* (AR UY) · lomo liso* (CL) · new york | crudo=Lomo bajo crudo
+Falda cruda | Raw flank steak | sr:Beef, flank, steak, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 · 1 bife / 1 steak=188 | vacío crudo* (AR UY PY) · sobrebarriga cruda* (CO) · falda de res cruda (MX)
+// Falda: el flank de SR Legacy, crudo y a la parrilla (el de FNDDS, «Beef, steak, flank», sale de la entraña).
+Falda | Flank steak | sr:Beef, flank, steak, separable lean and fat, trimmed to 0" fat, all grades, cooked, broiled | 100 g / 100 g=100 | vacío* (AR UY PY) · sobrebarriga* (CO) · falda de res (MX) · vacío asado | crudo=Falda cruda
+Nalga cruda | Raw round steak | sr:Beef, round, top round steak, boneless, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | peceto crudo (AR UY) · bola cruda* (MX CO) · posta cruda* (CL)
+Nalga | Round steak | fndds:Beef, steak, round | 100 g / 100 g=100 | peceto (AR UY) · bola* (MX CO) · posta* (CL) | crudo=Nalga cruda · aceite
+Asado de tira crudo | Raw beef short ribs | sr:Beef, rib, shortribs, separable lean and fat, choice, raw | 100 g / 100 g=100 | costilla de res cruda* (MX CO VE PE) · costillas de ternera crudas* (ES) · tira de asado cruda (UY) | desecho
+// Asado de tira: la costilla de SR Legacy, sin salsa (el de FNDDS, «Beef, shortribs», trae un 30 % de salsa barbacoa); cocida, es la braseada, la única que tiene USDA.
+Asado de tira | Beef short ribs | sr:Beef, rib, shortribs, separable lean and fat, choice, cooked, braised | 100 g / 100 g=100 | costilla de res* (MX CO VE PE) · costillas de ternera* (ES) · tira de asado (UY) · asado | crudo=Asado de tira crudo · desecho
+Carne de res cruda | Raw beef chuck | sr:Beef, chuck, under blade pot roast or steak, boneless, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | carne de vaca cruda (ES AR UY) · carne para guiso cruda · carne para horno cruda · aguja cruda
+Carne al horno | Roast beef | fndds:Beef, roast | 100 g / 100 g=100 | rosbif* (ES) · roast beef | crudo=Carne de res cruda
+Carne para guiso | Beef stew meat | fndds:Beef, stew meat | 100 g / 100 g=100 | carne guisada · carne para guisar | crudo=Carne de res cruda
+Pecho de res crudo | Raw beef brisket | sr:Beef, brisket, flat half, boneless, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | pecho crudo (AR UY) · brisket crudo
+Pecho de res | Beef brisket | fndds:Beef, brisket | 100 g / 100 g=100 | pecho* (AR UY) · brisket | crudo=Pecho de res crudo
 Carne molida cruda | Raw ground beef | fndds:Beef, ground, raw | 100 g / 100 g=100 | carne picada cruda* (AR UY ES PY)
-Hamburguesa de carne | Beef patty | fndds:Beef, ground, patty | 1 unidad / 1 patty=90 | medallón de carne* (AR UY) · carne de hamburguesa
-Hígado de res | Beef liver | fndds:Liver, beef | 100 g / 100 g=100 | hígado
-Lengua | Beef tongue | fndds:Tongue | 100 g / 100 g=100 | lengua de res
+Carne molida | Ground beef | fndds:Beef, ground | 100 g / 100 g=100 | carne picada* (AR UY ES PY) · carne molida cocida | crudo=Carne molida cruda · aceite
+Hamburguesa de carne | Beef patty | fndds:Beef, ground, patty | 1 unidad / 1 patty=90 · 1 grande / 1 large patty=120 | medallón de carne* (AR UY) · carne de hamburguesa | crudo=Carne molida cruda · aceite
+Hígado de res crudo | Raw beef liver | sr:Beef, variety meats and by-products, liver, raw | 100 g / 100 g=100 | hígado crudo
+Hígado de res | Beef liver | fndds:Liver, beef | 100 g / 100 g=100 · 1 filete / 1 slice=85 | hígado · hígado encebollado | crudo=Hígado de res crudo · aceite
+Lengua cruda | Raw beef tongue | sr:Beef, variety meats and by-products, tongue, raw | 100 g / 100 g=100 | lengua de res cruda
+Lengua | Beef tongue | fndds:Tongue | 100 g / 100 g=100 | lengua de res | crudo=Lengua cruda
 Mondongo | Tripe | fndds:Tripe | 100 g / 100 g=100 | callos* (ES) · guatita* (CL) · pancita (MX) · menudo (MX)
-Mollejas | Sweetbreads | fndds:Sweetbreads | 100 g / 100 g=100 | molleja
-Corazón | Beef heart | fndds:Heart | 100 g / 100 g=100 | corazón de res
-Riñón | Kidney | fndds:Kidney | 100 g / 100 g=100 | riñones
-Chuleta de cerdo | Pork chop | fndds:Pork, chop, lean only eaten | 100 g / 100 g=100 | costilla de cerdo* (AR UY) · chuleta de puerco (MX) · chuleta de chancho* (CL PE BO EC)
-Lomo de cerdo | Pork tenderloin | fndds:Pork, tenderloin | 100 g / 100 g=100 | solomillo de cerdo* (ES) · lomo de chancho* (CL PE BO) · lomo de puerco (MX) · filete de cerdo
-Cerdo al horno | Roast pork | fndds:Pork, roast | 100 g / 100 g=100 | pernil* (VE PR DO CO CL) · cerdo asado
-Costillas de cerdo | Pork ribs | fndds:Pork, ribs | 100 g / 100 g=100 | costillar de cerdo · costillas de puerco (MX) · ribs
+Mollejas crudas | Raw sweetbreads | sr:Veal, variety meats and by-products, thymus, raw | 100 g / 100 g=100 | molleja cruda
+Mollejas | Sweetbreads | fndds:Sweetbreads | 100 g / 100 g=100 | molleja | crudo=Mollejas crudas
+Corazón crudo | Raw beef heart | sr:Beef, variety meats and by-products, heart, raw | 100 g / 100 g=100 | corazón de res crudo
+Corazón | Beef heart | fndds:Heart | 100 g / 100 g=100 | corazón de res | crudo=Corazón crudo
+Riñón crudo | Raw beef kidney | sr:Beef, variety meats and by-products, kidneys, raw | 100 g / 100 g=100 | riñones crudos
+Riñón | Kidney | fndds:Kidney | 100 g / 100 g=100 | riñones | crudo=Riñón crudo
+Chuleta de cerdo cruda | Raw pork chop | sr:Pork, fresh, loin, top loin (chops), boneless, separable lean only, raw | 100 g / 100 g=100 · 1 chuleta / 1 chop=185 | costilla de cerdo cruda* (AR UY) · chuleta de puerco cruda (MX) · chuleta de chancho cruda* (CL PE BO EC)
+Chuleta de cerdo | Pork chop | fndds:Pork, chop, lean only eaten | 100 g / 100 g=100 · 1 chuleta / 1 chop=120 | costilla de cerdo* (AR UY) · chuleta de puerco (MX) · chuleta de chancho* (CL PE BO EC) | crudo=Chuleta de cerdo cruda · aceite
+Lomo de cerdo crudo | Raw pork tenderloin | sr:Pork, fresh, loin, tenderloin, separable lean only, raw | 100 g / 100 g=100 | solomillo de cerdo crudo* (ES) · lomo de chancho crudo* (CL PE BO) · lomo de puerco crudo (MX) · filete de cerdo crudo
+Lomo de cerdo | Pork tenderloin | fndds:Pork, tenderloin | 100 g / 100 g=100 | solomillo de cerdo* (ES) · lomo de chancho* (CL PE BO) · lomo de puerco (MX) · filete de cerdo | crudo=Lomo de cerdo crudo
+Carne de cerdo cruda | Raw pork | sr:Pork, fresh, loin, top loin (roasts), boneless, separable lean and fat, raw | 100 g / 100 g=100 | cerdo crudo · carne de chancho cruda* (CL PE BO EC) · carne de puerco cruda* (MX) · pernil crudo
+Cerdo al horno | Roast pork | fndds:Pork, roast | 100 g / 100 g=100 | pernil* (VE PR DO CO CL) · cerdo asado | crudo=Carne de cerdo cruda
+Costillas de cerdo crudas | Raw pork ribs | sr:Pork, fresh, backribs, separable lean and fat, raw | 100 g / 100 g=100 | costillar de cerdo crudo · costillas de puerco crudas (MX) | desecho
+// Costillas de cerdo: sin salsa (las de FNDDS, «Pork, ribs», traen un 30 % de salsa barbacoa).
+Costillas de cerdo | Pork ribs | sr:Pork, fresh, backribs, separable lean and fat, cooked, roasted | 100 g / 100 g=100 | costillar de cerdo · costillas de puerco (MX) · ribs · costillitas de cerdo | crudo=Costillas de cerdo crudas · desecho
 Panceta | Pork belly | fndds:Pork, belly | 100 g / 100 g=100 | pork belly
 Carnitas | Carnitas | fndds:Pork, carnitas | 100 g / 100 g=100 |
-Chicharrón | Pork rinds | fndds:Pork skin rinds | 30 g / 30 g=30 | chicharrones
-Cerdo molido | Ground pork | fndds:Pork, ground | 100 g / 100 g=100 | carne picada de cerdo* (AR UY ES) · carne molida de cerdo
-Cordero | Lamb | fndds:Lamb, NS as to cut | 100 g / 100 g=100 | borrego* (MX) · carnero
-Chuleta de cordero | Lamb chop | fndds:Lamb, chop | 100 g / 100 g=100 |
-Cabrito | Goat | fndds:Goat | 100 g / 100 g=100 | chivo
-Conejo | Rabbit | fndds:Rabbit | 100 g / 100 g=100 |
+Chicharrón | Pork rinds | fndds:Pork skin rinds | 30 g / 30 g=30 | chicharrones | aceite=incluido
+Cerdo molido crudo | Raw ground pork | sr:Pork, ground, 84% lean / 16% fat, raw | 100 g / 100 g=100 | carne picada de cerdo cruda* (AR UY ES) · carne molida de cerdo cruda
+Cerdo molido | Ground pork | fndds:Pork, ground | 100 g / 100 g=100 | carne picada de cerdo* (AR UY ES) · carne molida de cerdo | crudo=Cerdo molido crudo · aceite
+Cordero crudo | Raw lamb | sr:Lamb, composite of trimmed retail cuts, separable lean and fat, trimmed to 1/4" fat, choice, raw | 100 g / 100 g=100 | borrego crudo* (MX) · carnero crudo
+Cordero | Lamb | fndds:Lamb, NS as to cut | 100 g / 100 g=100 | borrego* (MX) · carnero | crudo=Cordero crudo
+// Chuleta de cordero cruda: el desecho sale de la porción de USDA: una chuleta cruda de 120 g da 95 g sin hueso.
+Chuleta de cordero cruda | Raw lamb chop | sr:Lamb, loin, separable lean and fat, trimmed to 1/4" fat, choice, raw | 100 g / 100 g=100 · 1 chuleta / 1 chop=95 |  | desecho=21 hueso/bone
+Chuleta de cordero | Lamb chop | fndds:Lamb, chop | 100 g / 100 g=100 · 1 chuleta / 1 chop=90 |  | crudo=Chuleta de cordero cruda
+Cabrito crudo | Raw goat | sr:Game meat, goat, raw | 100 g / 100 g=100 | chivo crudo
+Cabrito | Goat | fndds:Goat | 100 g / 100 g=100 | chivo | crudo=Cabrito crudo
+Conejo crudo | Raw rabbit | sr:Game meat, rabbit, domesticated, composite of cuts, raw | 100 g / 100 g=100 |
+Conejo | Rabbit | fndds:Rabbit | 100 g / 100 g=100 |  | crudo=Conejo crudo
 Jamón cocido | Deli ham | fndds:Ham, prepackaged or deli, luncheon meat | 1 rebanada / 1 slice=28 | jamón york* (ES) · jamón · jamón de sándwich · fiambre
-Jamón crudo | Prosciutto | fndds:Ham, prosciutto | 30 g / 30 g=30 | jamón serrano* (ES) · prosciutto
+Jamón crudo | Prosciutto | fndds:Ham, prosciutto | 30 g / 30 g=30 · 1 rebanada fina / 1 thin slice=9.2 | jamón serrano* (ES) · prosciutto
 Salame | Salami | fndds:Salami, NFS | 30 g / 30 g=30 | salami · salamín (AR UY)
 Mortadela | Mortadella | fndds:Mortadella | 30 g / 30 g=30 | mortadella
 Pepperoni | Pepperoni | fndds:Pepperoni, NFS | 30 g / 30 g=30 |
 Fiambre de pavo | Deli turkey | fndds:Turkey, prepackaged or deli, luncheon meat | 2 rebanadas / 2 slices=56 | jamón de pavo* (MX CO) · pechuga de pavo en fetas (AR UY)
 Paté | Liver pâté | fndds:Liver, paste or pate | 1 cucharada / 1 tbsp=13 | paté de hígado
-Tocino | Bacon | fndds:Pork bacon, smoked or cured, cooked | 2 tiras / 2 slices=16 | panceta ahumada* (AR UY) · beicon* (ES) · bacon · tocineta* (CO VE)
-Chorizo | Chorizo | fndds:Chorizo | 1 unidad / 1 piece=75 | chorizo parrillero (AR UY)
+Tocino crudo | Raw bacon | sr:Pork, cured, bacon, unprepared | 1 tira / 1 slice=28 · 100 g / 100 g=100 | panceta ahumada cruda* (AR UY) · beicon crudo* (ES) · bacon crudo · tocineta cruda* (CO VE)
+Tocino | Bacon | fndds:Pork bacon, smoked or cured, cooked | 2 tiras / 2 slices=16 | panceta ahumada* (AR UY) · beicon* (ES) · bacon · tocineta* (CO VE) | crudo=Tocino crudo
+Chorizo crudo | Raw chorizo | sr:Sausage, pork, chorizo, link or ground, raw | 1 unidad / 1 link=60 · 100 g / 100 g=100 | chorizo fresco · chorizo parrillero crudo (AR UY)
+Chorizo | Chorizo | fndds:Chorizo | 1 unidad / 1 piece=75 | chorizo parrillero (AR UY) · chorizo cocido | crudo=Chorizo crudo
 Morcilla | Blood sausage | fndds:Blood sausage | 100 g / 100 g=100 | moronga* (MX) · rellena* (CO) · prieta (CL)
 Salchicha | Hot dog sausage | fndds:Hot dog, NFS | 1 unidad / 1 frank=45 | frankfurt · vienesa* (UY CL) · salchicha de viena
-Salchicha de cerdo | Pork sausage | fndds:Pork sausage | 100 g / 100 g=100 | longaniza* (MX CL) · salchicha parrillera (AR UY)
+Salchicha de cerdo cruda | Raw pork sausage | sr:Pork sausage, link/patty, unprepared | 100 g / 100 g=100 · 1 unidad / 1 link=25 | longaniza cruda* (MX CL) · salchicha parrillera cruda (AR UY)
+Salchicha de cerdo | Pork sausage | fndds:Pork sausage | 100 g / 100 g=100 | longaniza* (MX CL) · salchicha parrillera (AR UY) | crudo=Salchicha de cerdo cruda
 Salchicha de pavo | Turkey sausage | fndds:Turkey or chicken sausage | 100 g / 100 g=100 | salchicha de pollo
 
 # aves
-Pechuga de pollo a la plancha | Grilled chicken breast | fndds:Chicken breast, grilled without sauce, skin not eaten | 100 g / 100 g=100 | pechuga de pollo · pollo a la plancha · pechuga asada · filete de pollo
-Pechuga de pollo al horno | Baked chicken breast | fndds:Chicken breast, baked, broiled, or roasted, skin not eaten, from raw | 100 g / 100 g=100 | pechuga al horno
-Pechuga de pollo cruda | Raw chicken breast | sr:Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw | 100 g / 100 g=100 |
-Muslo de pollo | Chicken thigh | fndds:Chicken thigh, baked, broiled, or roasted, skin not eaten, from raw | 100 g / 100 g=100 | contramuslo* (ES) · muslo sin piel
-Muslo de pollo con piel | Chicken thigh with skin | fndds:Chicken thigh, baked, broiled, or roasted, skin eaten, from raw | 100 g / 100 g=100 | contramuslo con piel* (ES)
-Pata de pollo | Chicken drumstick | fndds:Chicken drumstick, baked, broiled, or roasted, skin not eaten, from raw | 100 g / 100 g=100 | pierna de pollo* (MX CO VE) · muslo* (ES) · trutro corto* (CL) · pata* (AR UY PE)
-Alitas de pollo | Chicken wings | fndds:Chicken wing, baked, broiled, or roasted, from raw | 100 g / 100 g=100 | alas de pollo · alitas
-Pollo asado | Roast chicken | fndds:Chicken, NS as to part, rotisserie, skin eaten | 100 g / 100 g=100 | pollo rostizado* (MX) · pollo a la brasa* (PE CO) · pollo al spiedo* (AR UY) · pollo al horno
-Pollo frito | Fried chicken | fndds:Chicken, NS as to part, fried, coated, skin / coating eaten | 100 g / 100 g=100 | pollo apanado* (CL PE CO EC) · pollo empanizado (MX) · pollo broaster (PE)
-Milanesa de pollo | Breaded chicken fillet | fndds:Chicken fillet, breaded | 100 g / 100 g=100 | pechuga empanizada* (MX) · pechuga apanada* (CO CL PE EC) · pollo empanado (ES)
-Nuggets de pollo | Chicken nuggets | fndds:Chicken nuggets, NFS | 6 unidades / 6 nuggets=96 | nuggets · patitas de pollo (AR UY) · trocitos de pollo
-Pollo molido | Ground chicken | fndds:Chicken, ground | 100 g / 100 g=100 | carne picada de pollo* (AR UY ES)
-Pechuga de pavo | Turkey breast | fndds:Turkey, light meat, roasted, skin not eaten | 100 g / 100 g=100 | pavo · guajolote (MX)
-Pavo molido | Ground turkey | fndds:Turkey, ground | 100 g / 100 g=100 | carne picada de pavo* (AR UY ES)
-Pato | Duck | fndds:Duck, roasted, skin not eaten | 100 g / 100 g=100 |
-Hígado de pollo | Chicken liver | fndds:Liver, chicken | 100 g / 100 g=100 | higaditos de pollo
-Mollejas de pollo | Chicken gizzards | fndds:Gizzard | 100 g / 100 g=100 | molleja de pollo
+Pechuga de pollo cruda | Raw chicken breast | sr:Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw | 100 g / 100 g=100 · 1 pechuga / 1 breast=272 | pechuga cruda · filete de pollo crudo
+// Pechuga de pollo a la plancha: la de FNDDS ya trae un 2 % de aceite; la app pregunta igual por el que se usó.
+Pechuga de pollo a la plancha | Grilled chicken breast | fndds:Chicken breast, grilled without sauce, skin not eaten | 100 g / 100 g=100 · 1 pechuga mediana / 1 medium breast=120 | pechuga de pollo · pollo a la plancha · pechuga asada · filete de pollo | crudo=Pechuga de pollo cruda · aceite
+Pechuga de pollo al horno | Baked chicken breast | fndds:Chicken breast, baked, broiled, or roasted, skin not eaten, from raw | 100 g / 100 g=100 | pechuga al horno | crudo=Pechuga de pollo cruda
+Pollo crudo | Raw chicken | sr:Chicken, broilers or fryers, meat and skin, raw | 100 g / 100 g=100 · ½ pollo sin hueso / ½ chicken, boneless=460 | pollo entero crudo · pollo con piel crudo | desecho
+// Pollo asado: el hueso es el de las presas de pollo al spiedo de SR28, en las proporciones de FNDDS (pechuga, pata y muslo).
+Pollo asado | Roast chicken | fndds:Chicken, NS as to part, rotisserie, skin eaten | 100 g / 100 g=100 | pollo rostizado* (MX) · pollo a la brasa* (PE CO) · pollo al spiedo* (AR UY) · pollo al horno | crudo=Pollo crudo · desecho=16 hueso/bone
+Muslo de pollo crudo | Raw chicken thigh | sr:Chicken, broilers or fryers, dark meat, thigh, meat only, raw | 100 g / 100 g=100 · 1 muslo sin piel / 1 thigh without skin=149 | contramuslo crudo* (ES) · muslo sin piel crudo
+Muslo de pollo | Chicken thigh | fndds:Chicken thigh, baked, broiled, or roasted, skin not eaten, from raw | 100 g / 100 g=100 | contramuslo* (ES) · muslo sin piel | crudo=Muslo de pollo crudo
+Muslo de pollo con piel crudo | Raw chicken thigh with skin | sr:Chicken, broilers or fryers, thigh, meat and skin, raw | 100 g / 100 g=100 · 1 muslo / 1 thigh=193 | contramuslo con piel crudo* (ES)
+// Muslo de pollo con piel: el hueso es el de «Chicken, broilers or fryers, thigh, meat and skin, cooked, roasted» en SR28, su ingrediente en FNDDS.
+Muslo de pollo con piel | Chicken thigh with skin | fndds:Chicken thigh, baked, broiled, or roasted, skin eaten, from raw | 100 g / 100 g=100 | contramuslo con piel* (ES) | crudo=Muslo de pollo con piel crudo · desecho=33 hueso/bone
+Pata de pollo cruda | Raw chicken drumstick | sr:Chicken, broilers or fryers, dark meat, drumstick, meat only, raw | 100 g / 100 g=100 · 1 pata / 1 drumstick=122 | pierna de pollo cruda* (MX CO VE) · muslo crudo* (ES) · trutro corto crudo* (CL) · pata cruda* (AR UY PE) | desecho=42 hueso y piel/bone and skin
+// Pata de pollo: el desecho es el de «Chicken, broilers or fryers, dark meat, drumstick, meat only, cooked, roasted» en SR28, su ingrediente en FNDDS.
+Pata de pollo | Chicken drumstick | fndds:Chicken drumstick, baked, broiled, or roasted, skin not eaten, from raw | 100 g / 100 g=100 | pierna de pollo* (MX CO VE) · muslo* (ES) · trutro corto* (CL) · pata* (AR UY PE) | crudo=Pata de pollo cruda · desecho=40 hueso y piel/bone and skin
+Alitas de pollo crudas | Raw chicken wings | sr:Chicken, broilers or fryers, wing, meat and skin, raw | 100 g / 100 g=100 | alas de pollo crudas | desecho
+// Alitas de pollo: el hueso es el de «Chicken, broilers or fryers, wing, meat and skin, cooked, roasted» en SR28, su ingrediente en FNDDS.
+Alitas de pollo | Chicken wings | fndds:Chicken wing, baked, broiled, or roasted, from raw | 100 g / 100 g=100 | alas de pollo · alitas | crudo=Alitas de pollo crudas · desecho=40 hueso/bone
+Pollo frito | Fried chicken | fndds:Chicken, NS as to part, fried, coated, skin / coating eaten | 100 g / 100 g=100 | pollo apanado* (CL PE CO EC) · pollo empanizado (MX) · pollo broaster (PE) | crudo=Pollo crudo · aceite=incluido
+Milanesa de pollo | Breaded chicken fillet | fndds:Chicken fillet, breaded | 100 g / 100 g=100 | pechuga empanizada* (MX) · pechuga apanada* (CO CL PE EC) · pollo empanado (ES) | crudo=Pechuga de pollo cruda · aceite=incluido
+Nuggets de pollo | Chicken nuggets | fndds:Chicken nuggets, NFS | 6 unidades / 6 nuggets=96 | nuggets · patitas de pollo (AR UY) · trocitos de pollo | crudo=Pollo molido crudo · aceite=incluido
+Pollo molido crudo | Raw ground chicken | sr:Chicken, ground, raw | 100 g / 100 g=100 | carne picada de pollo cruda* (AR UY ES)
+Pollo molido | Ground chicken | fndds:Chicken, ground | 100 g / 100 g=100 | carne picada de pollo* (AR UY ES) | crudo=Pollo molido crudo · aceite
+Pechuga de pavo cruda | Raw turkey breast | sr:Turkey, whole, breast, meat only, raw | 100 g / 100 g=100 | pavo crudo · pechuga de guajolote cruda (MX)
+Pechuga de pavo | Turkey breast | fndds:Turkey, light meat, roasted, skin not eaten | 100 g / 100 g=100 | pavo · guajolote (MX) | crudo=Pechuga de pavo cruda
+Pavo molido crudo | Raw ground turkey | sr:Turkey, ground, 93% lean, 7% fat, raw | 100 g / 100 g=100 | carne picada de pavo cruda* (AR UY ES)
+Pavo molido | Ground turkey | fndds:Turkey, ground | 100 g / 100 g=100 | carne picada de pavo* (AR UY ES) | crudo=Pavo molido crudo · aceite
+Pato crudo | Raw duck | sr:Duck, domesticated, meat only, raw | 100 g / 100 g=100 |  | desecho=66 hueso y piel/bone and skin
+Pato | Duck | fndds:Duck, roasted, skin not eaten | 100 g / 100 g=100 |  | crudo=Pato crudo
+Hígado de pollo crudo | Raw chicken liver | sr:Chicken, liver, all classes, raw | 100 g / 100 g=100 · 1 hígado / 1 liver=44 | higaditos de pollo crudos
+// Hígado de pollo: el de USDA va frito, con un poco de harina y grasa.
+Hígado de pollo | Chicken liver | fndds:Liver, chicken | 100 g / 100 g=100 | higaditos de pollo | crudo=Hígado de pollo crudo · aceite=incluido
+Mollejas de pollo crudas | Raw chicken gizzards | sr:Chicken, gizzard, all classes, raw | 100 g / 100 g=100 | molleja de pollo cruda
+Mollejas de pollo | Chicken gizzards | fndds:Gizzard | 100 g / 100 g=100 | molleja de pollo | crudo=Mollejas de pollo crudas
 
 # pescados
-Atún en agua | Tuna in water | sr:Fish, tuna, light, canned in water, drained solids | 100 g / 100 g=100 | atún en lata · atún al natural* (ES)
-Atún en aceite | Tuna in oil | sr:Fish, tuna, light, canned in oil, drained solids | 100 g / 100 g=100 | atún en lata con aceite
-Atún fresco | Fresh tuna | fndds:Fish, tuna, cooked | 100 g / 100 g=100 | atún a la plancha
-Salmón | Salmon | fndds:Fish, salmon, baked or broiled | 100 g / 100 g=100 | salmón al horno · salmón a la plancha
+Atún en agua | Tuna in water | sr:Fish, tuna, light, canned in water, drained solids | 100 g / 100 g=100 · 1 lata / 1 can=165 | atún en lata · atún al natural* (ES)
+Atún en aceite | Tuna in oil | sr:Fish, tuna, light, canned in oil, drained solids | 100 g / 100 g=100 · 1 lata / 1 can=171 | atún en lata con aceite
+Atún crudo | Raw tuna | sr:Fish, tuna, fresh, yellowfin, raw | 100 g / 100 g=100 | atún fresco crudo · atún para sushi
+// Los pescados cocidos de FNDDS van con un 4 % de grasa: el aceite ya está.
+Atún fresco | Fresh tuna | fndds:Fish, tuna, cooked | 100 g / 100 g=100 | atún a la plancha · atún cocido | crudo=Atún crudo · aceite=incluido
 Salmón crudo | Raw salmon | fndds:Fish, salmon, raw | 100 g / 100 g=100 | salmón fresco
+Salmón | Salmon | fndds:Fish, salmon, baked or broiled | 100 g / 100 g=100 · 1 filete / 1 fillet=140 | salmón al horno · salmón a la plancha | crudo=Salmón crudo · aceite=incluido
 Salmón ahumado | Smoked salmon | fndds:Fish, salmon, smoked | 50 g / 50 g=50 |
-Merluza | Hake | fndds:Fish, whiting, baked or broiled | 100 g / 100 g=100 | merluza al horno · pescado blanco · pescadilla (ES)
-Merluza frita | Fried hake | fndds:Fish, whiting, fried | 100 g / 100 g=100 | pescado frito · filet de merluza (AR UY)
-Tilapia | Tilapia | fndds:Fish, tilapia, baked or broiled | 100 g / 100 g=100 | mojarra* (MX CO)
-Bacalao | Cod | fndds:Fish, cod, baked or broiled | 100 g / 100 g=100 |
-Trucha | Trout | fndds:Fish, trout, baked or broiled | 100 g / 100 g=100 |
-Corvina | Croaker | fndds:Fish, croaker | 100 g / 100 g=100 |
-Lenguado | Flounder | fndds:Fish, flounder, baked or broiled | 100 g / 100 g=100 |
-Pargo | Snapper | fndds:Fish, snapper | 100 g / 100 g=100 | huachinango* (MX) · pargo rojo
-Caballa | Mackerel | fndds:Fish, mackerel, baked or broiled | 100 g / 100 g=100 | macarela (MX)
+Merluza cruda | Raw hake | sr:Fish, whiting, mixed species, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=92 | pescadilla cruda (ES) · filet de merluza crudo (AR UY)
+Merluza | Hake | fndds:Fish, whiting, baked or broiled | 100 g / 100 g=100 | merluza al horno · pescado blanco · pescadilla (ES) | crudo=Merluza cruda · aceite=incluido
+Merluza frita | Fried hake | fndds:Fish, whiting, fried | 100 g / 100 g=100 | pescado frito · filet de merluza (AR UY) | crudo=Merluza cruda · aceite=incluido
+Tilapia cruda | Raw tilapia | sr:Fish, tilapia, raw | 1 filete / 1 fillet=116 · 100 g / 100 g=100 | mojarra cruda* (MX CO)
+Tilapia | Tilapia | fndds:Fish, tilapia, baked or broiled | 100 g / 100 g=100 | mojarra* (MX CO) | crudo=Tilapia cruda · aceite=incluido
+Bacalao crudo | Raw cod | sr:Fish, cod, Pacific, raw (may have been previously frozen) | 1 filete / 1 fillet=116 · 100 g / 100 g=100 | bacalao fresco crudo
+Bacalao | Cod | fndds:Fish, cod, baked or broiled | 100 g / 100 g=100 | bacalao fresco | crudo=Bacalao crudo · aceite=incluido
+Trucha cruda | Raw trout | sr:Fish, trout, rainbow, farmed, raw | 1 filete / 1 fillet=79 · 100 g / 100 g=100 |
+Trucha | Trout | fndds:Fish, trout, baked or broiled | 100 g / 100 g=100 |  | crudo=Trucha cruda · aceite=incluido
+Corvina cruda | Raw croaker | sr:Fish, croaker, Atlantic, raw | 100 g / 100 g=100 · 1 filete / 1 fillet=79 | corvina fresca
+// Corvina: la de FNDDS, sin forma de cocinarla, va empanizada y frita; USDA no tiene corvina cocida sin rebozar.
+Corvina | Croaker | fndds:Fish, croaker | 100 g / 100 g=100 | corvina frita | crudo=Corvina cruda · aceite=incluido
+Lenguado crudo | Raw flounder | sr:Fish, flatfish (flounder and sole species), raw | 1 filete / 1 fillet=163 · 100 g / 100 g=100 |
+Lenguado | Flounder | fndds:Fish, flounder, baked or broiled | 100 g / 100 g=100 |  | crudo=Lenguado crudo · aceite=incluido
+Pargo crudo | Raw snapper | sr:Fish, snapper, mixed species, raw | 100 g / 100 g=100 | huachinango crudo* (MX) · pargo rojo crudo
+// Pargo y pez espada: cocidos sin rebozar (los de FNDDS, sin forma de cocinarlos, vienen empanizados).
+Pargo | Snapper | sr:Fish, snapper, mixed species, cooked, dry heat | 100 g / 100 g=100 · 1 filete / 1 fillet=170 | huachinango* (MX) · pargo rojo | crudo=Pargo crudo
+Caballa cruda | Raw mackerel | sr:Fish, mackerel, Pacific and jack, mixed species, raw | 100 g / 100 g=100 | macarela cruda (MX) · jurel
+Caballa | Mackerel | fndds:Fish, mackerel, baked or broiled | 100 g / 100 g=100 | macarela (MX) | crudo=Caballa cruda · aceite=incluido
 Sardinas en lata | Canned sardines | fndds:Fish, sardines, canned | 100 g / 100 g=100 | sardinas
 Anchoas | Anchovies | sr:Fish, anchovy, european, canned in oil, drained solids | 5 unidades / 5 anchovies=20 | anchoa
-Pez espada | Swordfish | fndds:Fish, swordfish | 100 g / 100 g=100 | albacora* (CL)
+Pez espada crudo | Raw swordfish | sr:Fish, swordfish, raw | 100 g / 100 g=100 | albacora cruda* (CL)
+Pez espada | Swordfish | sr:Fish, swordfish, cooked, dry heat | 100 g / 100 g=100 · 1 porción / 1 piece=106 | albacora* (CL) | crudo=Pez espada crudo
 Pescado crudo | Raw fish | fndds:Fish, raw | 100 g / 100 g=100 | pescado blanco crudo
-Bastones de pescado | Fish sticks | fndds:Fish, stick | 4 unidades / 4 sticks=80 | palitos de pescado* (ES MX) · dedos de pescado
-Camarones | Shrimp | fndds:Shrimp, steamed or boiled | 100 g / 100 g=100 | gambas* (ES) · langostinos · camarón
-Camarones fritos | Fried shrimp | fndds:Shrimp, fried | 100 g / 100 g=100 | gambas rebozadas* (ES) · camarones apanados (CL PE CO) · camarones empanizados (MX)
-Calamar | Squid | fndds:Calamari, cooked | 100 g / 100 g=100 | calamares
-Calamares fritos | Fried calamari | fndds:Calamari, fried | 100 g / 100 g=100 | rabas* (AR UY) · calamares a la romana* (ES)
-Pulpo | Octopus | sr:Mollusks, octopus, common, cooked, moist heat | 100 g / 100 g=100 |
-Mejillones | Mussels | fndds:Mussels | 100 g / 100 g=100 | choros* (PE) · choritos* (CL)
-Almejas | Clams | fndds:Clams, steamed or boiled | 100 g / 100 g=100 |
+Pescado al horno | Baked fish | fndds:Fish, NS as to type, baked or broiled | 100 g / 100 g=100 · 1 filete / 1 fillet=90 | pescado cocido · pescado asado | crudo=Pescado crudo · aceite=incluido
+Bastones de pescado | Fish sticks | fndds:Fish, stick | 4 unidades / 4 sticks=80 | palitos de pescado* (ES MX) · dedos de pescado | crudo=Pescado crudo · aceite=incluido
+// Camarones crudos: el desecho es el de «Crustaceans, shrimp, raw (not previously frozen)» en SR28 (cola y cáscara).
+Camarones crudos | Raw shrimp | sr:Crustaceans, shrimp, mixed species, raw (may contain additives to retain moisture) | 100 g / 100 g=100 · 4 grandes / 4 large=28 | gambas crudas* (ES) · langostinos crudos · camarón crudo | desecho=13 cáscara/shell
+Camarones | Shrimp | fndds:Shrimp, steamed or boiled | 100 g / 100 g=100 | gambas* (ES) · langostinos · camarón · camarones cocidos | crudo=Camarones crudos
+Camarones fritos | Fried shrimp | fndds:Shrimp, fried | 100 g / 100 g=100 | gambas rebozadas* (ES) · camarones apanados (CL PE CO) · camarones empanizados (MX) | crudo=Camarones crudos · aceite=incluido
+Calamar crudo | Raw squid | sr:Mollusks, squid, mixed species, raw | 100 g / 100 g=100 | calamares crudos · tubo de calamar
+Calamar | Squid | fndds:Calamari, cooked | 100 g / 100 g=100 | calamares · calamar a la plancha | crudo=Calamar crudo · aceite=incluido
+Calamares fritos | Fried calamari | fndds:Calamari, fried | 100 g / 100 g=100 | rabas* (AR UY) · calamares a la romana* (ES) | crudo=Calamar crudo · aceite=incluido
+Pulpo crudo | Raw octopus | sr:Mollusks, octopus, common, raw | 100 g / 100 g=100 |
+Pulpo | Octopus | sr:Mollusks, octopus, common, cooked, moist heat | 100 g / 100 g=100 | pulpo cocido | crudo=Pulpo crudo
+Mejillones crudos | Raw mussels | sr:Mollusks, mussel, blue, raw | 100 g / 100 g=100 · 1 taza / 1 cup=150 | choros crudos* (PE) · choritos crudos* (CL)
+Mejillones | Mussels | fndds:Mussels | 100 g / 100 g=100 | choros* (PE) · choritos* (CL) | crudo=Mejillones crudos
+// Almejas crudas: el desecho sale de la porción de USDA: una libra con cáscara da 68 g.
+Almejas crudas | Raw clams | sr:Mollusks, clam, mixed species, raw | 100 g / 100 g=100 · 1 mediana / 1 medium=14.5 |  | desecho=85 cáscara/shell
+Almejas | Clams | fndds:Clams, steamed or boiled | 100 g / 100 g=100 |  | crudo=Almejas crudas
 Ostras | Oysters | fndds:Oysters, raw | 100 g / 100 g=100 | ostiones* (MX)
-Cangrejo | Crab | fndds:Crab | 100 g / 100 g=100 | jaiba (MX CL PE)
+Cangrejo crudo | Raw crab | sr:Crustaceans, crab, blue, raw | 100 g / 100 g=100 | jaiba cruda (MX CL PE)
+Cangrejo | Crab | fndds:Crab | 100 g / 100 g=100 | jaiba (MX CL PE) | crudo=Cangrejo crudo
 Palitos de cangrejo | Imitation crab | fndds:Imitation crab meat | 100 g / 100 g=100 | surimi* (ES) · kanikama* (AR UY CL PE)
-Langosta | Lobster | fndds:Lobster | 100 g / 100 g=100 |
+Langosta cruda | Raw lobster | sr:Crustaceans, lobster, northern, raw | 100 g / 100 g=100 |
+Langosta | Lobster | fndds:Lobster | 100 g / 100 g=100 |  | crudo=Langosta cruda
 
 # huevos
-Huevo | Egg | fndds:Egg, whole, raw | 1 unidad / 1 large egg=50 | huevos · huevo crudo
-Huevo duro | Hard-boiled egg | fndds:Egg, whole, boiled or poached | 1 unidad / 1 egg=50 | huevo cocido* (ES MX) · huevo sancochado* (PE) · huevo hervido · huevo pochado · huevo poché
-Huevo frito | Fried egg | fndds:Egg, whole, fried with oil | 1 unidad / 1 egg=46 | huevo estrellado* (MX) · huevo a la plancha
-Huevos revueltos | Scrambled eggs | fndds:Egg omelet or scrambled egg, made with oil | 1 huevo / 1 egg=61 | huevos pericos* (CO VE) · omelet · omelette · tortilla francesa* (ES) · tortilla de huevo
-Omelet de queso | Cheese omelet | fndds:Egg omelet or scrambled egg, with cheese, made with oil | 1 huevo / 1 egg=70 | tortilla de queso (ES)
-Clara de huevo | Egg white | fndds:Egg, white only, raw | 1 clara / 1 egg white=33 | claras
+// Huevo y huevo duro: la cáscara es la de «Egg, whole, raw, fresh» en SR28.
+Huevo | Egg | fndds:Egg, whole, raw | 1 unidad / 1 large egg=50 · 1 mediano / 1 medium egg=44 · 1 extra grande / 1 extra large egg=56 | huevos · huevo crudo | desecho=12 cáscara/shell
+Huevo duro | Hard-boiled egg | fndds:Egg, whole, boiled or poached | 1 unidad / 1 egg=50 | huevo cocido* (ES MX) · huevo sancochado* (PE) · huevo hervido · huevo pochado · huevo poché | crudo=Huevo · desecho=12 cáscara/shell
+Huevo frito | Fried egg | fndds:Egg, whole, fried with oil | 1 unidad / 1 egg=46 | huevo estrellado* (MX) · huevo frito con aceite | crudo=Huevo · aceite=incluido
+Huevo a la plancha | Griddled egg | fndds:Egg, whole, fried no added fat | 1 unidad / 1 egg=46 | huevo frito sin aceite · huevo a la sartén | crudo=Huevo · aceite
+Huevos revueltos | Scrambled eggs | fndds:Egg omelet or scrambled egg, made with oil | 1 huevo / 1 egg=61 | omelet · omelette · tortilla francesa* (ES) · tortilla de huevo | crudo=Huevo · aceite=incluido
+Omelet de queso | Cheese omelet | fndds:Egg omelet or scrambled egg, with cheese, made with oil | 1 huevo / 1 egg=70 | tortilla de queso (ES) | crudo=Huevo · aceite=incluido
+Clara de huevo | Egg white | fndds:Egg, white only, raw | 1 clara / 1 egg white=33 | claras · clara cruda
+Claras cocidas | Cooked egg whites | fndds:Egg, white, cooked, no added fat | 1 clara / 1 egg white=33 · 1 taza / 1 cup=135 | claras revueltas · claras duras · omelet de claras | crudo=Clara de huevo · aceite
 Yema de huevo | Egg yolk | fndds:Egg, yolk only, raw | 1 yema / 1 yolk=17 | yemas
+Huevo de codorniz | Quail egg | sr:Egg, quail, whole, fresh, raw | 1 unidad / 1 egg=9 · 5 unidades / 5 eggs=45 | huevos de codorniz | desecho
+Huevo de pato | Duck egg | sr:Egg, duck, whole, fresh, raw | 1 unidad / 1 egg=70 | huevos de pato | desecho
 
 # lacteos
-Leche entera | Whole milk | fndds:Milk, whole | 1 vaso / 1 glass=250 | leche
-Leche semidescremada | Reduced fat milk | fndds:Milk, reduced fat (2%) | 1 vaso / 1 glass=250 | leche semidesnatada* (ES) · leche parcialmente descremada (AR) · leche 2%
-Leche descremada | Skim milk | fndds:Milk, fat free (skim) | 1 vaso / 1 glass=250 | leche desnatada* (ES) · leche light
-Leche en polvo | Powdered milk | sr:Milk, dry, whole, with added vitamin D | 2 cucharadas / 2 tbsp=16 |
-Leche condensada | Condensed milk | sr:Milk, canned, condensed, sweetened | 1 cucharada / 1 tbsp=19 |
-Leche evaporada | Evaporated milk | fndds:Milk, evaporated, whole | ¼ taza / ¼ cup=63 |
-Leche chocolatada | Chocolate milk | fndds:Chocolate milk, reduced fat (2%) | 1 vaso / 1 glass=250 | chocolatada* (AR UY) · leche con chocolate
-Chocolate caliente | Hot chocolate | fndds:Hot chocolate / cocoa, made with whole or reduced fat (2%) milk | 1 taza / 1 cup=250 | submarino (AR UY) · cocoa caliente
-Kéfir | Kefir | fndds:Kefir | 1 vaso / 1 glass=250 |
-Yogur natural | Plain yogurt | fndds:Yogurt, whole milk, plain | 1 envase / 1 container=170 | yogurt natural · yoghurt
+// Lo que se toma lleva «ml»: la densidad sale de la taza de USDA (la leche, 244 g). El vaso es de 200 ml.
+Leche entera | Whole milk | fndds:Milk, whole | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche | ml
+Leche semidescremada | Reduced fat milk | fndds:Milk, reduced fat (2%) | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche semidesnatada* (ES) · leche parcialmente descremada (AR) · leche 2% | ml
+Leche descremada | Skim milk | fndds:Milk, fat free (skim) | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche desnatada* (ES) · leche light | ml
+Leche deslactosada | Lactose-free milk | fndds:Milk, lactose free, reduced fat (2%) | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche sin lactosa · leche deslactosada semidescremada | ml
+Leche deslactosada descremada | Lactose-free skim milk | fndds:Milk, lactose free, fat free (skim) | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche sin lactosa descremada · leche deslactosada light | ml
+Leche de cabra | Goat milk | fndds:Goat milk | 1 vaso (200 ml) / 1 glass (200 ml)=206 |  | ml
+Leche en polvo | Powdered milk | sr:Milk, dry, whole, with added vitamin D | 2 cucharadas / 2 tbsp=16 · ¼ taza / ¼ cup=32 | leche en polvo entera
+Leche en polvo descremada | Nonfat dry milk | sr:Milk, dry, nonfat, regular, with added vitamin A and vitamin D | ¼ taza / ¼ cup=30 | leche en polvo desnatada* (ES)
+Leche condensada | Condensed milk | sr:Milk, canned, condensed, sweetened | 1 cucharada / 1 tbsp=19 | leche condensada azucarada
+Leche evaporada | Evaporated milk | fndds:Milk, evaporated, whole | ¼ taza / ¼ cup=63 |  | ml
+Leche chocolatada | Chocolate milk | fndds:Chocolate milk, reduced fat (2%) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | chocolatada* (AR UY) · leche con chocolate | ml
+Chocolate caliente | Hot chocolate | fndds:Hot chocolate / cocoa, made with whole or reduced fat (2%) milk | 1 taza (240 ml) / 1 cup (240 ml)=252 | cocoa* (UY) · submarino (AR UY) · cocoa caliente | ml
+Kéfir | Kefir | fndds:Kefir | 1 vaso (200 ml) / 1 glass (200 ml)=206 |  | ml
+Yogur natural | Plain yogurt | fndds:Yogurt, whole milk, plain | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 · 1 taza / 1 cup=245 | yogurt natural · yoghurt
 Yogur descremado | Nonfat plain yogurt | fndds:Yogurt, nonfat milk, plain | 1 envase / 1 container=170 | yogur desnatado* (ES) · yogurt light
+Yogur saborizado | Flavored yogurt | fndds:Yogurt, low fat milk, flavors other than fruit | 1 envase / 1 container=170 | yogur de vainilla · yogurt saborizado
 Yogur con frutas | Fruit yogurt | fndds:Yogurt, low fat milk, fruit | 1 envase / 1 container=170 | yogurt de frutilla (AR UY) · yogur de fresa
-Yogur bebible | Drinkable yogurt | fndds:Yogurt, liquid | 1 vaso / 1 glass=200 | yogur líquido* (ES) · yogurt bebible
+Yogur bebible | Drinkable yogurt | fndds:Yogurt, liquid | 1 vaso (200 ml) / 1 glass (200 ml)=207 · 1 botellita / 1 small bottle=150 | yogur líquido* (ES) · yogurt bebible | ml
 Yogur griego | Greek yogurt | fndds:Yogurt, Greek, whole milk, plain | 1 envase / 1 container=170 | yogurt griego
 Yogur griego descremado | Nonfat Greek yogurt | fndds:Yogurt, Greek, nonfat milk, plain | 1 envase / 1 container=170 | yogur griego desnatado* (ES) · yogurt griego light
-Crema de leche | Heavy cream | fndds:Cream, heavy | 1 cucharada / 1 tbsp=15 | nata* (ES) · crema* (MX CO VE) · crema para batir
+Crema de leche | Heavy cream | fndds:Cream, heavy | 1 cucharada / 1 tbsp=15 | nata* (ES) · crema* (MX CO VE) · crema para batir | ml
+Crema para café | Half and half | fndds:Cream, half and half | 1 cucharada / 1 tbsp=15 · 1 porción individual / 1 individual container=15 | media crema* (MX) · half and half · crema ligera | ml
 Crema agria | Sour cream | fndds:Sour cream, regular | 1 cucharada / 1 tbsp=12 | crema ácida* (MX) · nata agria (ES)
 Crema batida | Whipped cream | fndds:Cream, whipped | 2 cucharadas / 2 tbsp=8 | chantilly · nata montada* (ES)
-Leche de almendras | Almond milk | fndds:Almond milk, unsweetened | 1 vaso / 1 glass=250 | bebida de almendras
-Leche de soja | Soy milk | fndds:Soy milk, unsweetened | 1 vaso / 1 glass=250 | leche de soya* (MX CO VE) · bebida de soja
-Leche de avena | Oat milk | fndds:Oat milk | 1 vaso / 1 glass=250 | bebida de avena
-Leche de coco | Coconut milk drink | fndds:Coconut milk | 1 vaso / 1 glass=250 |
-Leche de coco para cocinar | Canned coconut milk | fndds:Coconut milk, used in cooking | ¼ taza / ¼ cup=60 |
+Sustituto de crema en polvo | Powdered coffee creamer | fndds:Coffee creamer, powder | 1 sobre / 1 packet=3 | crema en polvo para café · sustituto de crema
+Leche de almendras | Almond milk | fndds:Almond milk, unsweetened | 1 vaso (200 ml) / 1 glass (200 ml)=206 | bebida de almendras · leche de almendras sin azúcar | ml
+Leche de almendras endulzada | Sweetened almond milk | fndds:Almond milk, sweetened | 1 vaso (200 ml) / 1 glass (200 ml)=206 | bebida de almendras endulzada | ml
+Leche de soja | Soy milk | fndds:Soy milk, unsweetened | 1 vaso (200 ml) / 1 glass (200 ml)=206 | leche de soya* (MX CO VE) · bebida de soja · leche de soja sin azúcar | ml
+Leche de soja endulzada | Sweetened soy milk | fndds:Soy milk, sweetened | 1 vaso (200 ml) / 1 glass (200 ml)=206 | leche de soya endulzada* (MX CO VE) · bebida de soja endulzada | ml
+Leche de avena | Oat milk | fndds:Oat milk | 1 vaso (200 ml) / 1 glass (200 ml)=206 | bebida de avena | ml
+Leche de arroz | Rice milk | fndds:Rice milk | 1 vaso (200 ml) / 1 glass (200 ml)=206 | bebida de arroz | ml
+Leche de coco | Coconut milk drink | fndds:Coconut milk | 1 vaso (200 ml) / 1 glass (200 ml)=206 | bebida de coco | ml
+Leche de coco para cocinar | Canned coconut milk | fndds:Coconut milk, used in cooking | ¼ taza / ¼ cup=60 · 1 lata (400 ml) / 1 can (400 ml)=406 | crema de coco · leche de coco en lata | ml
 
 # quesos
-Queso fresco | Fresh cheese | fndds:Queso Fresco | 30 g / 30 g=30 | queso de vaca
-Queso mozzarella | Mozzarella | fndds:Cheese, Mozzarella, NFS | 30 g / 30 g=30 | muzzarella* (AR UY) · mozarela · mozzarella
-Queso cheddar | Cheddar | fndds:Cheese, Cheddar | 30 g / 30 g=30 | cheddar
+Queso fresco | Fresh cheese | fndds:Queso Fresco | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso de vaca
+Queso mozzarella | Mozzarella | fndds:Cheese, Mozzarella, NFS | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | muzzarella* (AR UY) · mozarela · mozzarella
+Queso mozzarella light | Part-skim mozzarella | sr:Cheese, mozzarella, part skim milk | 30 g / 30 g=30 | muzzarella light* (AR UY) · mozzarella semidescremada · mozzarella baja en grasa
+Queso cheddar | Cheddar | fndds:Cheese, Cheddar | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | cheddar
 Queso parmesano | Parmesan | fndds:Cheese, Parmesan, hard | 30 g / 30 g=30 | parmesano · reggianito (AR UY)
 Queso rallado | Grated parmesan | fndds:Cheese, Parmesan, dry grated | 1 cucharada / 1 tbsp=5 | parmesano rallado
+Queso romano | Romano cheese | sr:Cheese, romano | 30 g / 30 g=30 | pecorino · pecorino romano
 Queso crema | Cream cheese | fndds:Cream cheese, regular, plain | 1 cucharada / 1 tbsp=15 | queso untable* (AR UY) · queso philadelphia · queso para untar
 Queso crema light | Light cream cheese | fndds:Cream cheese, light | 1 cucharada / 1 tbsp=15 | queso untable light
 Ricota | Ricotta | fndds:Cheese, Ricotta | ¼ taza / ¼ cup=62 | requesón* (MX) · ricotta
 Queso cottage | Cottage cheese | fndds:Cheese, cottage, NFS | ½ taza / ½ cup=113 | cottage
-Queso provolone | Provolone | fndds:Cheese, Provolone | 30 g / 30 g=30 | provoleta* (AR UY) · provolone
-Queso suizo | Swiss cheese | fndds:Cheese, Swiss | 30 g / 30 g=30 | emmental
+Queso provolone | Provolone | fndds:Cheese, Provolone | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | provoleta* (AR UY) · provolone
+Queso suizo | Swiss cheese | fndds:Cheese, Swiss | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | emmental
 Queso gruyère | Gruyère | fndds:Cheese, Gruyere | 30 g / 30 g=30 | gruyer
-Queso gouda | Gouda | fndds:Cheese, Gouda or Edam | 30 g / 30 g=30 | queso edam · danbo (AR UY) · queso de máquina (UY)
-Queso azul | Blue cheese | fndds:Cheese, Blue or Roquefort | 30 g / 30 g=30 | roquefort
+Queso gouda | Gouda | fndds:Cheese, Gouda or Edam | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso edam · danbo (AR UY) · queso de máquina (UY)
+Queso fontina | Fontina | fndds:Cheese, Fontina | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | fontina
+Queso Monterey | Monterey Jack | fndds:Cheese, Monterey | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | monterey jack
+Queso muenster | Muenster | fndds:Cheese, Muenster | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | muenster
+Queso azul | Blue cheese | fndds:Cheese, Blue or Roquefort | 30 g / 30 g=30 | roquefort · gorgonzola
 Queso de cabra | Goat cheese | fndds:Cheese, goat | 30 g / 30 g=30 |
 Queso feta | Feta | fndds:Cheese, Feta | 30 g / 30 g=30 | feta
 Queso brie | Brie | fndds:Cheese, Brie | 30 g / 30 g=30 |
+Queso camembert | Camembert | fndds:Cheese, Camembert | 30 g / 30 g=30 · 1 porción / 1 wedge=38 | camembert
 Queso americano | American cheese | fndds:Cheese, American | 1 rebanada / 1 slice=20 | queso amarillo* (MX CO VE PR DO) · queso de sándwich
 Queso Oaxaca | Oaxaca cheese | fndds:Queso Asadero | 30 g / 30 g=30 | quesillo (MX) · queso asadero
+Queso Chihuahua | Chihuahua cheese | sr:Cheese, mexican, queso chihuahua | 30 g / 30 g=30 · 1 rebanada / 1 slice=28 | queso menonita (MX)
 Queso cotija | Cotija cheese | fndds:Queso cotija | 30 g / 30 g=30 |
+Queso añejo | Aged Mexican cheese | fndds:Queso Anejo, aged Mexican cheese | 30 g / 30 g=30 |
 Queso blanco | White cheese | fndds:Puerto Rican white cheese | 30 g / 30 g=30 | queso del país (PR)
 
 # frutos-secos
-Almendras | Almonds | fndds:Almonds, unsalted | 1 puñado / 1 handful=28 | almendra
-Nueces | Walnuts | fndds:Walnuts, excluding honey roasted | 1 puñado / 1 handful=28 | nuez de Castilla* (MX) · nuez
-Maní | Peanuts | fndds:Peanuts, roasted, unsalted | 1 puñado / 1 handful=28 | cacahuate* (MX GT HN SV) · cacahuete* (ES) · maníes · maní tostado
-Maní salado | Salted peanuts | fndds:Peanuts, roasted, salted | 1 puñado / 1 handful=28 | cacahuates salados* (MX) · cacahuetes salados* (ES)
+// Lo que se vende con cáscara: el desecho es el de SR28 para el mismo fruto seco (almendras 60 %,
+// nueces 55 %, avellanas 59 %, pistachos 47 %, pecanas 47 %, castañas tostadas 37 %, semillas de
+// girasol 46 %, de calabaza 26 %). El maní, de la porción de FNDDS: 1 onza con cáscara da 21 g.
+Almendras | Almonds | fndds:Almonds, unsalted | 1 puñado / 1 handful=28 · 1 unidad / 1 almond=1.2 | almendra | desecho=60 cáscara/shell
+Almendras saladas | Salted almonds | fndds:Almonds, salted | 1 puñado / 1 handful=28 | almendras tostadas saladas
+Nueces | Walnuts | fndds:Walnuts, excluding honey roasted | 1 puñado / 1 handful=28 · 1 unidad / 1 walnut=2 | nuez de Castilla* (MX) · nuez | desecho=55 cáscara/shell
+Maní | Peanuts | fndds:Peanuts, roasted, unsalted | 1 puñado / 1 handful=28 | cacahuate* (MX GT HN SV) · cacahuete* (ES) · maníes · maní tostado · maní con cáscara | desecho=26 cáscara/shell
+Maní salado | Salted peanuts | fndds:Peanuts, roasted, salted | 1 puñado / 1 handful=28 | cacahuates salados* (MX) · cacahuetes salados* (ES) | desecho=26 cáscara/shell
 Mantequilla de maní | Peanut butter | fndds:Peanut butter | 1 cucharada / 1 tbsp=16 | crema de cacahuate* (MX) · crema de cacahuete* (ES) · pasta de maní* (AR UY) · mantequilla de cacahuate · peanut butter
 Castañas de cajú | Cashews | fndds:Cashews, unsalted | 1 puñado / 1 handful=28 | nuez de la India* (MX) · anacardos* (ES) · marañón* (CO PA CR) · merey* (VE) · cajú
-Avellanas | Hazelnuts | fndds:Hazelnuts | 1 puñado / 1 handful=28 | avellana
-Pistachos | Pistachios | fndds:Pistachio nuts, NFS | 1 puñado / 1 handful=28 | pistacho · pistaches* (MX)
-Nueces pecanas | Pecans | fndds:Pecans, NFS | 1 puñado / 1 handful=28 | pecanas* (AR UY) · nuez* (MX) · pacanas (ES)
+Castañas de cajú saladas | Salted cashews | fndds:Cashews, salted | 1 puñado / 1 handful=28 | nuez de la India salada* (MX) · anacardos salados* (ES)
+Avellanas | Hazelnuts | fndds:Hazelnuts | 1 puñado / 1 handful=28 | avellana | desecho=59 cáscara/shell
+Pistachos | Pistachios | fndds:Pistachio nuts, NFS | 1 puñado / 1 handful=28 | pistacho · pistaches* (MX) | desecho=47 cáscara/shell
+Nueces pecanas | Pecans | fndds:Pecans, NFS | 1 puñado / 1 handful=28 | pecanas* (AR UY) · nuez* (MX) · pacanas (ES) | desecho=47 cáscara/shell
 Nueces de Brasil | Brazil nuts | fndds:Brazil nuts | 3 unidades / 3 nuts=15 | castañas de Pará* (AR UY) · nuez de Brasil
 Macadamia | Macadamia nuts | fndds:Macadamia nuts | 1 puñado / 1 handful=28 | nueces de macadamia
 Piñones | Pine nuts | fndds:Pine nuts | 1 cucharada / 1 tbsp=9 | piñón
-Castañas | Chestnuts | fndds:Chestnuts | 50 g / 50 g=50 |
+Castañas | Chestnuts | fndds:Chestnuts | 50 g / 50 g=50 · 1 unidad / 1 chestnut=8 | castañas asadas | desecho=37 cáscara/shell
 Mix de frutos secos | Mixed nuts | fndds:Mixed nuts, NFS | 1 puñado / 1 handful=28 | frutos secos · nueces mixtas
 Mix con pasas | Trail mix | fndds:Trail mix with nuts and fruit | 1 puñado / 1 handful=30 | mezcla de frutos secos y pasas
-Semillas de girasol | Sunflower seeds | fndds:Sunflower seeds, plain, unsalted | 2 cucharadas / 2 tbsp=18 | pipas* (ES)
-Semillas de calabaza | Pumpkin seeds | fndds:Pumpkin seeds, NFS | 2 cucharadas / 2 tbsp=15 | pepitas* (MX) · semillas de zapallo* (AR UY)
+Semillas de girasol | Sunflower seeds | fndds:Sunflower seeds, plain, unsalted | 2 cucharadas / 2 tbsp=18 | pipas* (ES) · semillas de girasol con cáscara | desecho=46 cáscara/shell
+Semillas de calabaza | Pumpkin seeds | fndds:Pumpkin seeds, NFS | 2 cucharadas / 2 tbsp=15 | pepitas* (MX) · semillas de zapallo* (AR UY) | desecho=26 cáscara/shell
+Semillas de cáñamo | Hemp seeds | sr:Seeds, hemp seed, hulled | 3 cucharadas / 3 tbsp=30 | cáñamo pelado
 Chía | Chia seeds | fndds:Chia seeds | 1 cucharada / 1 tbsp=12 | semillas de chía
 Linaza | Flaxseed | fndds:Flax seeds | 1 cucharada / 1 tbsp=10 | semillas de lino* (AR UY ES) · lino
 Sésamo | Sesame seeds | fndds:Sesame seeds | 1 cucharada / 1 tbsp=9 | ajonjolí* (MX CO VE) · semillas de sésamo
@@ -398,206 +647,343 @@ Coco rallado | Shredded coconut | fndds:Coconut, packaged | 2 cucharadas / 2 tbs
 Crema de almendras | Almond butter | fndds:Almond butter | 1 cucharada / 1 tbsp=16 | mantequilla de almendras
 
 # grasas
-Aceite de oliva | Olive oil | fndds:Olive oil | 1 cucharada / 1 tbsp=13.5 |
-Aceite de girasol | Sunflower oil | fndds:Sunflower oil | 1 cucharada / 1 tbsp=13.6 | aceite de maravilla* (CL)
-Aceite de canola | Canola oil | fndds:Canola oil | 1 cucharada / 1 tbsp=14 |
-Aceite de maíz | Corn oil | fndds:Corn oil | 1 cucharada / 1 tbsp=13.6 |
-Aceite vegetal | Vegetable oil | fndds:Vegetable oil, NFS | 1 cucharada / 1 tbsp=13.6 | aceite
-Aceite de coco | Coconut oil | fndds:Coconut oil | 1 cucharada / 1 tbsp=13.6 |
-Aceite de sésamo | Sesame oil | fndds:Sesame oil | 1 cucharadita / 1 tsp=4.5 | aceite de ajonjolí* (MX CO)
+// Los aceites se miden en ml con la densidad de la taza de SR Legacy (216 a 218 g): 0,92.
+Aceite de oliva | Olive oil | fndds:Olive oil | 1 cucharada / 1 tbsp=13.5 · 1 cucharadita / 1 tsp=4.5 |  | densidad=0.92
+Aceite de girasol | Sunflower oil | fndds:Sunflower oil | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de maravilla* (CL) | densidad=0.92
+Aceite de canola | Canola oil | fndds:Canola oil | 1 cucharada / 1 tbsp=14 · 1 cucharadita / 1 tsp=4.5 |  | densidad=0.92
+Aceite de maíz | Corn oil | fndds:Corn oil | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 |  | densidad=0.92
+Aceite de soja | Soybean oil | sr:Oil, soybean, salad or cooking | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de soya* (MX CO VE) | densidad=0.92
+Aceite de maní | Peanut oil | sr:Oil, peanut, salad or cooking | 1 cucharada / 1 tbsp=13.5 · 1 cucharadita / 1 tsp=4.5 | aceite de cacahuate* (MX) · aceite de cacahuete* (ES) | densidad=0.92
+Aceite de aguacate | Avocado oil | sr:Oil, avocado | 1 cucharada / 1 tbsp=14 · 1 cucharadita / 1 tsp=4.5 | aceite de palta* (AR UY CL PE BO PY) | densidad=0.92
+Aceite vegetal | Vegetable oil | fndds:Vegetable oil, NFS | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite | densidad=0.92
+Aceite de coco | Coconut oil | fndds:Coconut oil | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 |
+Aceite de sésamo | Sesame oil | fndds:Sesame oil | 1 cucharadita / 1 tsp=4.5 · 1 cucharada / 1 tbsp=13.6 | aceite de ajonjolí* (MX CO) | densidad=0.92
 Mantequilla | Butter | fndds:Butter, stick | 1 cucharada / 1 tbsp=14.2 · 1 cucharadita / 1 tsp=4.7 | manteca* (AR UY PY)
+Mantequilla light | Light butter | fndds:Butter, light | 1 cucharada / 1 tbsp=14 · 1 porción individual / 1 pat=7 | manteca light* (AR UY PY) · mantequilla baja en grasa
 Margarina | Margarine | fndds:Margarine, NFS | 1 cucharada / 1 tbsp=14 |
+Margarina light | Light margarine | fndds:Margarine, light | 1 cucharada / 1 tbsp=14 · 1 porción individual / 1 pat=7 | margarina baja en grasa
 Manteca de cerdo | Lard | fndds:Lard | 1 cucharada / 1 tbsp=13 | manteca* (ES MX CL) · grasa de cerdo
+Manteca vegetal | Vegetable shortening | sr:Shortening, vegetable, household, composite | 1 cucharada / 1 tbsp=12.8 | grasa vegetal · margarina para hornear
 Ghee | Ghee | fndds:Ghee, clarified butter | 1 cucharada / 1 tbsp=13 | mantequilla clarificada · manteca clarificada (AR UY)
 
 # dulces
 Azúcar | Sugar | fndds:Sugar, white, granulated or lump | 1 cucharadita / 1 tsp=4.2 · 1 cucharada / 1 tbsp=12.5 | azúcar blanca · azúcar refinada
 Azúcar morena | Brown sugar | fndds:Sugar, brown | 1 cucharadita / 1 tsp=4.6 | azúcar rubia* (AR UY) · azúcar moreno
 Azúcar en polvo | Powdered sugar | fndds:Sugar, white, confectioner's, powdered | 1 cucharada / 1 tbsp=8 | azúcar impalpable* (AR UY) · azúcar glas* (ES) · azúcar glass (MX) · azúcar flor* (CL)
-Miel | Honey | fndds:Honey | 1 cucharada / 1 tbsp=21 | miel de abeja · miel de abejas
+// Miel: la densidad es la de la taza de «Honey» en SR Legacy (339 g); la de FNDDS (320 g) da menos de lo que pesa.
+Miel | Honey | fndds:Honey | 1 cucharada / 1 tbsp=21 · 1 cucharadita / 1 tsp=7 | miel de abeja · miel de abejas | densidad=1.43
 Edulcorante | Sweetener | fndds:Sugar substitute, sucralose, powder | 1 sobre / 1 packet=1 | sucralosa · splenda · endulzante
 Stevia | Stevia | fndds:Sugar substitute, stevia, powder | 1 sobre / 1 packet=1 | estevia
-Jarabe de arce | Maple syrup | sr:Syrups, maple | 1 cucharada / 1 tbsp=20 | miel de maple* (MX) · sirope de arce* (ES) · maple
+Sacarina | Saccharin | fndds:Sugar substitute, saccharin, powder | 1 sobre / 1 packet=1 | sacarina en polvo
+Jarabe de arce | Maple syrup | sr:Syrups, maple | 1 cucharada / 1 tbsp=20 | miel de maple* (MX) · sirope de arce* (ES) · maple | ml
+Jarabe de agave | Agave syrup | fndds:Agave liquid sweetener | 1 cucharada / 1 tbsp=20 | miel de agave · sirope de agave* (ES) · néctar de agave
+Melaza | Molasses | sr:Molasses | 1 cucharada / 1 tbsp=20 | miel de caña (AR UY PY) · melaza de caña | ml
+Jarabe de maíz | Corn syrup | sr:Syrups, corn, light | 1 cucharada / 1 tbsp=22 | glucosa (AR UY) · jarabe de glucosa · miel de maíz | ml
+Sirope de chocolate | Chocolate syrup | fndds:Chocolate syrup | 1 cucharada / 1 tbsp=20 | salsa de chocolate · chocolate líquido | ml
+Caramelo líquido | Caramel topping | sr:Toppings, butterscotch or caramel | 2 cucharadas / 2 tbsp=41 | salsa de caramelo · caramelo para postres
+// fuente: TACO, 4.ª edición (NEPA-UNICAMP, 2011), fila 510 «Rapadura»: 352 kcal, 1,0 g de proteína, 90,8 de carbohidratos y 0,1 de lípidos.
+Panela | Panela (unrefined cane sugar) | propio#100 352 1 90.8 0.1 | 30 g / 30 g=30 | piloncillo* (MX) · chancaca* (PE CL BO) · papelón* (VE) · tapa de dulce* (CR) · raspadura* (PA CU) · rapadura · azúcar de caña integral
 Mermelada | Jam | fndds:Jam | 1 cucharada / 1 tbsp=20 | confitura · dulce de fruta
+Mermelada light | Reduced-sugar jam | fndds:Jam or jelly, reduced sugar | 1 cucharada / 1 tbsp=20 | mermelada baja en azúcar · mermelada dietética
+Jalea | Jelly | fndds:Jelly | 1 cucharada / 1 tbsp=20 | jalea de frutas
 Dulce de leche | Dulce de leche | fndds:Dulce de leche | 1 cucharada / 1 tbsp=19 | cajeta* (MX) · manjar* (CL PE EC) · arequipe* (CO VE)
 // Dulce de membrillo: USDA no lo tiene; valores típicos de las etiquetas uruguayas y argentinas.
 Dulce de membrillo | Quince paste | propio#2 268 0.3 66 0.1 | 1 porción / 1 piece=40 | membrillo (UY AR) · dulce de membrillo · ate de membrillo* (MX) · carne de membrillo* (ES)
 Dulce de guayaba | Guava paste | fndds:Guava paste | 30 g / 30 g=30 | bocadillo* (CO) · guayabate (MX) · pasta de guayaba (PR)
 Dulce de batata | Sweet potato paste | fndds:Sweet potato paste | 30 g / 30 g=30 | dulce de boniato* (UY) · dulce de camote (MX PE)
+Fruta confitada | Candied fruit | sr:Candied fruit | 30 g / 30 g=30 | fruta abrillantada (AR UY) · fruta escarchada · fruta glaseada
 Crema de avellanas | Chocolate hazelnut spread | fndds:Chocolate hazelnut spread | 1 cucharada / 1 tbsp=19 | nutella
 Cacao en polvo | Cocoa powder | sr:Cocoa, dry powder, unsweetened | 1 cucharada / 1 tbsp=5.4 | cocoa* (MX CO VE) · cacao amargo
 Chocolate amargo | Dark chocolate | fndds:Dark chocolate candy | 20 g / 20 g=20 | chocolate negro* (ES) · chocolate oscuro
 Chocolate con leche | Milk chocolate | fndds:Chocolate candy | 20 g / 20 g=20 | chocolate
 Chocolate blanco | White chocolate | fndds:White chocolate candy | 20 g / 20 g=20 |
+Chispas de chocolate | Chocolate chips | sr:Candies, semisweet chocolate | ¼ taza / ¼ cup=42 · 1 porción / 1 serving=14.5 | chips de chocolate · gotas de chocolate · chocolate semiamargo
+Maní con chocolate | Chocolate-covered peanuts | fndds:Peanuts, chocolate covered candy | 1 paquete / 1 pouch=55 · 10 unidades / 10 pieces=40 | cacahuates con chocolate* (MX) · cacahuetes con chocolate* (ES) · confites de maní
 Caramelos | Hard candy | fndds:Candy, hard | 1 unidad / 1 piece=5 | caramelos duros · golosinas
 Gomitas | Gummy candy | fndds:Candy, gummy | 10 unidades / 10 pieces=20 | gominolas* (ES) · ositos de goma · caramelos de goma
 Malvaviscos | Marshmallows | fndds:Candy, marshmallow | 1 unidad / 1 marshmallow=7 | masmelos* (CO) · nubes* (ES) · bombones
+Algodón de azúcar | Cotton candy | fndds:Candy, cotton | 1 paquete / 1 package=30 | algodón dulce
+Chicle | Chewing gum | sr:Chewing gum | 1 unidad / 1 stick=3 | goma de mascar
+Chicle sin azúcar | Sugar-free gum | sr:Chewing gum, sugarless | 1 unidad / 1 piece=2 | goma de mascar sin azúcar
 Helado de vainilla | Vanilla ice cream | fndds:Ice cream, vanilla | 1 bola / 1 scoop=66 | helado de crema · helado
 Helado de chocolate | Chocolate ice cream | fndds:Ice cream, chocolate | 1 bola / 1 scoop=66 |
+Helado de fresa | Strawberry ice cream | sr:Ice creams, strawberry | 1 bola / 1 scoop=66 | helado de frutilla* (AR UY CL PY BO EC)
+Helado light | Light ice cream | sr:Ice creams, vanilla, light | ½ taza / ½ cup=76 | helado bajo en grasa · helado dietético
+Bombón helado | Chocolate-covered ice cream bar | sr:Ice cream, bar or stick, chocolate covered | 1 unidad / 1 bar=50 | helado bañado en chocolate · paleta de helado con chocolate
+Cono de helado | Ice cream cone | sr:Ice cream cones, cake or wafer-type | 1 unidad / 1 cone=4 · 1 cono de waffle / 1 waffle cone=29 | cucurucho* (ES AR UY) · barquillo de helado
 Paleta helada | Popsicle | fndds:Popsicle | 1 unidad / 1 popsicle=60 | helado de agua* (AR UY) · polo* (ES) · paleta* (MX CO)
 Sorbete | Sorbet | fndds:Sorbet | ½ taza / ½ cup=90 | nieve (MX)
 Yogur helado | Frozen yogurt | fndds:Frozen yogurt, vanilla | ½ taza / ½ cup=72 | frozen yogurt
 Flan | Flan | fndds:Flan | 1 porción / 1 serving=100 | quesillo* (VE)
+Natillas | Custard | fndds:Custard | ½ taza / ½ cup=130 | natilla
 Arroz con leche | Rice pudding | fndds:Pudding, rice | ½ taza / ½ cup=125 |
 Gelatina | Gelatin dessert | fndds:Gelatin dessert | ½ taza / ½ cup=120 | jello
 Gelatina light | Sugar-free gelatin | fndds:Gelatin dessert, sugar free | ½ taza / ½ cup=120 | gelatina diet · gelatina sin azúcar
 Pudín de chocolate | Chocolate pudding | fndds:Pudding, chocolate, ready-to-eat | ½ taza / ½ cup=113 | postre de chocolate (AR UY) · natillas de chocolate (ES)
 Mousse de chocolate | Chocolate mousse | fndds:Mousse | ½ taza / ½ cup=100 | mousse
+Tiramisú | Tiramisu | fndds:Tiramisu | 1 porción / 1 piece=175 | tiramisu
 Merengue | Meringue | fndds:Meringues | 1 unidad / 1 meringue=10 |
 Torta tres leches | Tres leches cake | fndds:Cake, tres leche | 1 porción / 1 piece=100 | pastel de tres leches* (MX) · tres leches
 Bizcocho | Sponge cake | fndds:Cake, sponge | 1 porción / 1 piece=60 | bizcochuelo* (AR UY PY)
+Pastel de vainilla | Vanilla cake with frosting | sr:Cake, yellow, commercially prepared, with vanilla frosting | 1 porción / 1 serving=67 | torta de vainilla* (AR UY CL VE PY) · pastel de cumpleaños · tarta de vainilla (ES)
 Pastel de chocolate | Chocolate cake | fndds:Cake or cupcake, chocolate with chocolate icing, bakery | 1 porción / 1 piece=100 | torta de chocolate* (AR UY CL VE PY) · queque de chocolate (PE)
 Cheesecake | Cheesecake | fndds:Cheesecake, plain | 1 porción / 1 piece=100 | tarta de queso* (ES) · pay de queso* (MX) · torta de queso
 Panqué | Pound cake | fndds:Cake, pound | 1 rebanada / 1 slice=50 | budín* (AR UY PY) · ponqué* (CO VE) · queque* (CL PE)
 Pastel de zanahoria | Carrot cake | fndds:Cake or cupcake, carrot | 1 porción / 1 piece=100 | torta de zanahoria* (AR UY CL) · carrot cake
+Muffin | Muffin | fndds:Muffin, NFS | 1 mediano / 1 medium=130 · 1 pequeño / 1 small=70 · 1 mini / 1 miniature=25 | magdalena* (ES) · panquecito* (MX) · mantecada (MX)
 Brownie | Brownie | fndds:Cookie, brownie, without icing | 1 unidad / 1 brownie=50 |
 Galletas con chispas de chocolate | Chocolate chip cookies | fndds:Cookie, chocolate chip | 1 unidad / 1 cookie=15 | galletitas con chips* (AR UY) · cookies
 Galletas dulces | Butter cookies | fndds:Cookie, butter or sugar | 2 unidades / 2 cookies=20 | galletitas dulces* (AR UY) · galletas de mantequilla · galletas
+Galletas María | Marie biscuits | fndds:Marie biscuit | 4 unidades / 4 cookies=28 · 1 unidad / 1 cookie=7 | galletitas María* (AR UY) · galletas tipo María
+Galletas Graham | Graham crackers | fndds:Graham crackers | 1 rectángulo / 1 large rectangle=15 | galletas graham
 Galletas rellenas | Sandwich cookies | fndds:Cookie, chocolate sandwich | 2 unidades / 2 cookies=23 | galletitas rellenas* (AR UY) · oreo
 Galletas de avena | Oatmeal cookies | fndds:Cookie, oatmeal | 1 unidad / 1 cookie=30 | galletitas de avena* (AR UY)
-Donas | Doughnut | fndds:Doughnut, NFS | 1 unidad / 1 doughnut=60 | dónuts* (ES) · rosquilla · donuts
-Churros | Churros | fndds:Churros | 1 unidad / 1 churro=45 | churro
+Donas | Doughnut | fndds:Doughnut, NFS | 1 unidad / 1 doughnut=60 | dónuts* (ES) · rosquilla · donuts | aceite=incluido
+Churros | Churros | fndds:Churros | 1 unidad / 1 churro=45 | churro | aceite=incluido
 Danesa | Danish pastry | fndds:Danish pastry, plain or spice | 1 unidad / 1 pastry=70 | factura* (AR PY) · bizcocho* (UY) · pastelito danés
 Tarta de manzana | Apple pie | fndds:Pie, apple | 1 porción / 1 slice=125 | pay de manzana* (MX) · pie de manzana* (CO PE CL VE)
+Pie de limón | Lemon meringue pie | fndds:Pie, lemon meringue | 1 porción / 1 slice=150 | lemon pie* (AR UY) · pay de limón* (MX) · tarta de limón* (ES)
 Barra de cereal | Cereal bar | fndds:Cereal or Granola bar, NFS | 1 barra / 1 bar=25 | barrita de cereal · barra de granola
 
 # bebidas
-Agua | Water | fndds:Water, tap | 1 vaso / 1 glass=250 | agua mineral · agua sin gas
-Agua con gas | Sparkling water | fndds:Water, carbonated, plain | 1 vaso / 1 glass=250 | soda* (AR UY) · agua mineral con gas · agua gasificada
-Agua tónica | Tonic water | fndds:Water, tonic | 1 vaso / 1 glass=250 | tónica
-Café | Coffee | fndds:Coffee, brewed | 1 taza / 1 cup=240 | café negro · café americano · café de filtro · tinto* (CO)
-Café espresso | Espresso | fndds:Coffee, espresso | 1 taza pequeña / 1 shot=30 | expreso · café solo* (ES) · cafecito
-Café con leche | Coffee with milk | fndds:Coffee, cafe con leche | 1 taza / 1 cup=240 |
-Cortado | Macchiato | fndds:Coffee, macchiato | 1 taza pequeña / 1 small cup=90 | macchiato · café cortado
-Capuchino | Cappuccino | fndds:Coffee, Cappuccino | 1 taza / 1 cup=240 | cappuccino
-Café latte | Latte | fndds:Coffee, Latte | 1 taza / 1 cup=240 | latte
-Té negro | Black tea | fndds:Tea, hot, leaf, black | 1 taza / 1 cup=240 | té
-Té verde | Green tea | fndds:Tea, hot, leaf, green | 1 taza / 1 cup=240 |
-Té de hierbas | Herbal tea | fndds:Tea, hot, herbal | 1 taza / 1 cup=240 | infusión · tisana · aromática* (CO)
-Manzanilla | Chamomile tea | fndds:Tea, hot, chamomile | 1 taza / 1 cup=240 | té de manzanilla · camomila
+// Todo se toma: «ml», con la densidad de la taza o la onza líquida de USDA. El agua, 1. El vaso de agua
+// es de 250 ml, como el de la app; el de lo demás, de 200 ml.
+Agua | Water | fndds:Water, tap | 1 vaso (250 ml) / 1 glass (250 ml)=250 · 1 botella (500 ml) / 1 bottle (500 ml)=500 · 1 litro / 1 liter=1000 | agua mineral · agua sin gas | densidad=1
+Agua con gas | Sparkling water | fndds:Water, carbonated, plain | 1 vaso (250 ml) / 1 glass (250 ml)=250 · 1 botella (500 ml) / 1 bottle (500 ml)=500 | soda* (AR UY) · agua mineral con gas · agua gasificada | densidad=1
+Agua tónica | Tonic water | fndds:Water, tonic | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 lata (355 ml) / 1 can (355 ml)=360 | tónica | ml
+Café | Coffee | fndds:Coffee, brewed | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 taza pequeña (150 ml) / 1 small cup (150 ml)=152 · 1 tazón (350 ml) / 1 mug (350 ml)=355 | café negro · café americano · café de filtro · tinto* (CO) | ml
+Café descafeinado | Decaf coffee | fndds:Coffee, brewed, decaffeinated | 1 taza (240 ml) / 1 cup (240 ml)=243 | descafeinado · café sin cafeína | ml
+Café instantáneo | Instant coffee | fndds:Coffee, instant, reconstituted | 1 taza (240 ml) / 1 cup (240 ml)=243 | café soluble* (ES) · café de sobre | ml
+Café espresso | Espresso | fndds:Coffee, espresso | 1 espresso (30 ml) / 1 shot (30 ml)=30 · 1 doble (60 ml) / 1 double (60 ml)=61 | expreso · café solo* (ES) · cafecito | ml
+Café con leche | Coffee with milk | fndds:Coffee, cafe con leche | 1 taza (240 ml) / 1 cup (240 ml)=252 | café cortado con leche | ml
+Cortado | Macchiato | fndds:Coffee, macchiato | 1 taza pequeña (90 ml) / 1 small cup (90 ml)=91 | macchiato · café cortado | ml
+Capuchino | Cappuccino | fndds:Coffee, Cappuccino | 1 taza (240 ml) / 1 cup (240 ml)=243 | cappuccino | ml
+Café latte | Latte | fndds:Coffee, Latte | 1 taza (240 ml) / 1 cup (240 ml)=243 · 1 vaso grande (350 ml) / 1 large (350 ml)=355 | latte | ml
+Café moca | Mocha | fndds:Coffee, Cafe Mocha | 1 taza (240 ml) / 1 cup (240 ml)=252 | mocha · mocaccino | ml
+Café helado | Iced coffee | fndds:Iced Coffee, brewed | 1 vaso (200 ml) / 1 glass (200 ml)=203 | café frío · cold brew | ml
+Latte helado | Iced latte | fndds:Coffee, Iced Latte | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 vaso grande (350 ml) / 1 large (350 ml)=355 | café con leche helado · iced latte | ml
+Té negro | Black tea | fndds:Tea, hot, leaf, black | 1 taza (240 ml) / 1 cup (240 ml)=243 | té | ml
+Té verde | Green tea | fndds:Tea, hot, leaf, green | 1 taza (240 ml) / 1 cup (240 ml)=243 |  | ml
+Té de hierbas | Herbal tea | fndds:Tea, hot, herbal | 1 taza (240 ml) / 1 cup (240 ml)=243 | infusión · tisana · aromática* (CO) | ml
+Manzanilla | Chamomile tea | fndds:Tea, hot, chamomile | 1 taza (240 ml) / 1 cup (240 ml)=243 | té de manzanilla · camomila | ml
+Té de jamaica | Hibiscus tea | fndds:Tea, hot, hibiscus | 1 taza (240 ml) / 1 cup (240 ml)=243 | infusión de jamaica · agua de jamaica sin azúcar · té de hibisco | ml
+Té helado | Iced tea | fndds:Tea, iced, bottled, black | 1 botella (500 ml) / 1 bottle (500 ml)=524 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | ice tea · té frío | ml
+Té helado sin azúcar | Unsweetened iced tea | fndds:Tea, iced, brewed, black, unsweetened | 1 vaso (200 ml) / 1 glass (200 ml)=203 | té frío sin azúcar | ml
 // Mate: USDA no lo tiene; lleva los valores del té de hierbas.
-Mate | Mate | propio#1 1 0 0.2 0 | 1 taza / 1 cup=240 | yerba mate · tereré (PY AR UY)
-Jugo de naranja | Orange juice | fndds:Orange juice, 100%,  freshly squeezed | 1 vaso / 1 glass=250 | zumo de naranja* (ES) · jugo de naranja natural · jugo exprimido
-Jugo de naranja envasado | Bottled orange juice | fndds:Orange juice, 100%, canned, bottled or in a carton | 1 vaso / 1 glass=250 | zumo de naranja envasado (ES) · jugo de caja
-Jugo de manzana | Apple juice | fndds:Apple juice, 100% | 1 vaso / 1 glass=250 | zumo de manzana* (ES)
-Jugo de uva | Grape juice | fndds:Grape juice, 100% | 1 vaso / 1 glass=250 | zumo de uva* (ES)
-Jugo de piña | Pineapple juice | fndds:Pineapple juice, 100% | 1 vaso / 1 glass=250 | jugo de ananá* (AR UY PY) · zumo de piña* (ES)
-Jugo de maracuyá | Passion fruit juice | fndds:Passion fruit juice, 100% | 1 vaso / 1 glass=250 | jugo de parchita* (VE) · jugo de chinola* (DO)
-Jugo de tomate | Tomato juice | fndds:Tomato juice, 100% | 1 vaso / 1 glass=250 | zumo de tomate* (ES)
-Néctar de durazno | Peach nectar | fndds:Peach nectar | 1 vaso / 1 glass=250 | néctar de melocotón* (ES) · jugo de durazno
-Néctar de mango | Mango nectar | fndds:Mango nectar | 1 vaso / 1 glass=250 | jugo de mango
-Limonada | Lemonade | fndds:Lemonade, fruit juice drink | 1 vaso / 1 glass=250 | agua de limón (MX)
-Refresco | Soft drink | fndds:Soft drink, NFS | 1 lata / 1 can=355 · 1 vaso / 1 glass=250 | gaseosa* (AR UY CO PE BO PY EC) · bebida* (CL) · soda
-Refresco de cola | Cola | fndds:Soft drink, cola | 1 lata / 1 can=355 | coca cola · coca · cola · gaseosa cola* (AR UY CO PE)
-Refresco de cola light | Diet cola | fndds:Soft drink, cola, diet | 1 lata / 1 can=355 | coca light · coca zero · cola zero · gaseosa light* (AR UY CO PE) · refresco light
-Agua saborizada | Flavored water | fndds:Water beverage, fruit flavored | 1 vaso / 1 glass=250 | agua con sabor
-Bebida deportiva | Sports drink | fndds:Sports drink, NFS | 1 botella / 1 bottle=500 | gatorade · powerade · bebida isotónica* (ES)
-Bebida energética | Energy drink | fndds:Energy Drink | 1 lata / 1 can=250 | red bull · monster · bebida energizante* (CO)
-Agua de coco | Coconut water | fndds:Coconut water, unsweetened | 1 vaso / 1 glass=250 |
-Horchata | Horchata | fndds:Horchata, made with water | 1 vaso / 1 glass=250 | agua de horchata* (MX)
-Licuado | Fruit and milk smoothie | fndds:Licuado or Batido | 1 vaso / 1 glass=250 | batido* (ES CU VE) · licuado* (AR UY MX) · jugo con leche (CO)
-Smoothie de frutas | Fruit smoothie | fndds:Fruit smoothie, with whole fruit, no dairy | 1 vaso / 1 glass=250 | smoothie
-Malteada | Milkshake | fndds:Milk shake, home recipe, flavors other than chocolate | 1 vaso / 1 glass=250 | batido de helado · milkshake · merengada* (VE)
-Atole | Atole | fndds:Atole | 1 taza / 1 cup=240 |
-Kombucha | Kombucha | fndds:Tea, kombucha | 1 vaso / 1 glass=250 |
-Té helado | Iced tea | fndds:Tea, iced, bottled, black | 1 botella / 1 bottle=500 | ice tea · té frío
+Mate | Mate | propio#1 1 0 0.2 0 | 1 taza / 1 cup=240 | yerba mate · mate amargo · tereré (PY AR UY) · mate cocido | ml
+Jugo de naranja | Orange juice | fndds:Orange juice, 100%,  freshly squeezed | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 naranja exprimida / juice of 1 orange=86 | zumo de naranja* (ES) · jugo de naranja natural · jugo exprimido | ml
+Jugo de naranja envasado | Bottled orange juice | fndds:Orange juice, 100%, canned, bottled or in a carton | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 juice box (200 ml)=210 | zumo de naranja envasado (ES) · jugo de caja | ml
+Jugo de toronja | Grapefruit juice | fndds:Grapefruit juice, 100%, freshly squeezed | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de pomelo* (AR UY PY CL BO) · zumo de pomelo* (ES) | ml
+Jugo de mandarina | Tangerine juice | fndds:Tangerine juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de mandarina* (ES) | ml
+Jugo de manzana | Apple juice | fndds:Apple juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de manzana* (ES) | ml
+Jugo de uva | Grape juice | fndds:Grape juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de uva* (ES) | ml
+Jugo de piña | Pineapple juice | fndds:Pineapple juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de ananá* (AR UY PY) · zumo de piña* (ES) | ml
+Jugo de maracuyá | Passion fruit juice | fndds:Passion fruit juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de parchita* (VE) · jugo de chinola* (DO) | ml
+Jugo de mora | Blackberry juice | fndds:Blackberry juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de mora (ES) | ml
+Jugo de granada | Pomegranate juice | fndds:Pomegranate juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de granada* (ES) | ml
+Jugo de arándano | Cranberry juice cocktail | sr:Cranberry juice cocktail, bottled | 1 vaso (200 ml) / 1 glass (200 ml)=214 | jugo de arándano rojo · zumo de arándanos (ES) | ml
+Jugo de zanahoria | Carrot juice | fndds:Carrot juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=203 | zumo de zanahoria* (ES) | ml
+Jugo de tomate | Tomato juice | fndds:Tomato juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | zumo de tomate* (ES) | ml
+Jugo de verduras | Vegetable juice | fndds:Tomato and vegetable juice, 100% | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de vegetales · zumo de verduras (ES) | ml
+Néctar de durazno | Peach nectar | fndds:Peach nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | néctar de melocotón* (ES) · jugo de durazno | ml
+Néctar de mango | Mango nectar | fndds:Mango nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de mango | ml
+Néctar de guayaba | Guava nectar | fndds:Guava nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de guayaba | ml
+Néctar de pera | Pear nectar | fndds:Pear nectar | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de pera | ml
+Limonada | Lemonade | fndds:Lemonade, fruit juice drink | 1 vaso (200 ml) / 1 glass (200 ml)=210 | agua de limón (MX) | ml
+Jugo en polvo preparado | Powdered drink mix, prepared | fndds:Fruit flavored drink, powdered, reconstituted | 1 vaso (200 ml) / 1 glass (200 ml)=210 | jugo de sobre · refresco en polvo (MX) · bebida en polvo | ml
+Jugo en polvo sin azúcar | Sugar-free powdered drink mix, prepared | fndds:Fruit flavored drink, powdered, reconstituted, diet | 1 vaso (200 ml) / 1 glass (200 ml)=203 | jugo de sobre light · refresco en polvo light | ml
+Refresco | Soft drink | fndds:Soft drink, NFS | 1 lata (355 ml) / 1 can (355 ml)=372 · 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | gaseosa* (AR UY CO PE BO PY EC) · bebida* (CL) · soda | ml
+Refresco de cola | Cola | fndds:Soft drink, cola | 1 lata (355 ml) / 1 can (355 ml)=372 · 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | coca cola · coca · cola · gaseosa cola* (AR UY CO PE) | ml
+Refresco de cola light | Diet cola | fndds:Soft drink, cola, diet | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella (500 ml) / 1 bottle (500 ml)=507 | coca light · coca zero · cola zero · gaseosa light* (AR UY CO PE) · refresco light | ml
+Refresco sin azúcar | Diet soft drink | fndds:Soft drink, NFS, diet | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 vaso (200 ml) / 1 glass (200 ml)=203 | gaseosa sin azúcar* (AR UY CO PE BO PY EC) · bebida sin azúcar* (CL) · refresco zero | ml
+Ginger ale | Ginger ale | fndds:Soft drink, ginger ale | 1 lata (355 ml) / 1 can (355 ml)=372 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | refresco de jengibre · gaseosa de jengibre | ml
+Agua saborizada | Flavored water | fndds:Water beverage, fruit flavored | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella (500 ml) / 1 bottle (500 ml)=507 | agua con sabor | ml
+Bebida deportiva | Sports drink | fndds:Sports drink, NFS | 1 botella (500 ml) / 1 bottle (500 ml)=524 · 1 vaso (200 ml) / 1 glass (200 ml)=210 | gatorade · powerade · bebida isotónica* (ES) · bebida hidratante | ml
+Bebida deportiva sin azúcar | Low-calorie sports drink | fndds:Sports drink, low calorie | 1 botella (500 ml) / 1 bottle (500 ml)=507 | bebida isotónica sin azúcar* (ES) · bebida hidratante sin azúcar | ml
+Bebida energética | Energy drink | fndds:Energy Drink | 1 lata (250 ml) / 1 can (250 ml)=262 · 1 lata grande (473 ml) / 1 large can (473 ml)=496 | red bull · monster · bebida energizante* (CO) | ml
+Bebida energética sin azúcar | Sugar-free energy drink | fndds:Energy drink, sugar free | 1 lata (250 ml) / 1 can (250 ml)=254 · 1 lata grande (473 ml) / 1 large can (473 ml)=480 | bebida energizante sin azúcar* (CO) | ml
+Agua de coco | Coconut water | fndds:Coconut water, unsweetened | 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 coco / 1 coconut=206 |  | ml
+Horchata | Horchata | fndds:Horchata, made with water | 1 vaso (200 ml) / 1 glass (200 ml)=210 | agua de horchata* (MX) | ml
+Licuado | Fruit and milk smoothie | fndds:Licuado or Batido | 1 vaso (200 ml) / 1 glass (200 ml)=183 | batido* (ES CU VE) · licuado* (AR UY MX) · jugo con leche (CO) | ml
+Smoothie de frutas | Fruit smoothie | fndds:Fruit smoothie, with whole fruit, no dairy | 1 vaso (200 ml) / 1 glass (200 ml)=183 | smoothie | ml
+Malteada | Milkshake | fndds:Milk shake, home recipe, flavors other than chocolate | 1 vaso (200 ml) / 1 glass (200 ml)=189 · 1 malteada / 1 milkshake=280 | batido de helado · milkshake · merengada* (VE) | ml
+Atole | Atole | fndds:Atole | 1 taza (240 ml) / 1 cup (240 ml)=252 |  | ml
+Chocolate en polvo | Sweetened cocoa mix | sr:Beverages, Cocoa mix, powder | 1 porción / 1 serving=28 | cacao en polvo azucarado · cocoa en polvo endulzada · chocolate para leche
+Kombucha | Kombucha | fndds:Tea, kombucha | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (355 ml) / 1 bottle (355 ml)=372 |  | ml
 
 # alcohol
-Cerveza | Beer | fndds:Beer | 1 lata / 1 can=355 · 1 vaso / 1 glass=250 | birra · chela
-Cerveza light | Light beer | fndds:Beer, light | 1 lata / 1 can=355 |
-Vino tinto | Red wine | fndds:Wine, red | 1 copa / 1 glass=150 | vino
-Vino blanco | White wine | fndds:Wine, white | 1 copa / 1 glass=150 |
-Vino rosado | Rosé wine | fndds:Wine, rose | 1 copa / 1 glass=150 | rosé
-Vino espumoso | Sparkling wine | fndds:Wine, sparkling | 1 copa / 1 glass=120 | espumante* (AR UY CL) · champán* (ES) · champaña* (MX CO) · cava · champagne
-Sidra | Hard cider | fndds:Hard cider | 1 copa / 1 glass=150 |
-Sangría | Sangria | fndds:Sangria, red | 1 copa / 1 glass=150 |
-Whisky | Whiskey | sr:Alcoholic beverage, distilled, whiskey, 86 proof | 1 medida / 1 shot=42 | whiskey · güisqui
-Vodka | Vodka | sr:Alcoholic beverage, distilled, vodka, 80 proof | 1 medida / 1 shot=42 |
-Ron | Rum | sr:Alcoholic beverage, distilled, rum, 80 proof | 1 medida / 1 shot=42 |
-Destilado | Distilled spirits | sr:Alcoholic beverage, distilled, all (gin, rum, vodka, whiskey) 80 proof | 1 medida / 1 shot=42 | gin · ginebra · tequila · pisco* (PE CL) · aguardiente* (CO) · caña (UY) · mezcal
-Licor | Liqueur | fndds:Liqueur | 1 medida / 1 shot=42 | licor dulce
-Margarita | Margarita | fndds:Margarita | 1 copa / 1 glass=150 |
-Mojito | Mojito | fndds:Mojito | 1 vaso / 1 glass=250 |
-Piña colada | Piña colada | fndds:Pina Colada | 1 vaso / 1 glass=250 |
-Michelada | Michelada | fndds:Michelada | 1 vaso / 1 glass=355 |
-Gin tonic | Gin and tonic | fndds:Gin and tonic | 1 vaso / 1 glass=250 | gin con tónica
-Cuba libre | Rum and cola | fndds:Rum and cola | 1 vaso / 1 glass=250 | ron con cola · cubalibre
+Cerveza | Beer | fndds:Beer | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 · 1 botella (1 litro) / 1 bottle (1 liter)=1014 | birra · chela | ml
+Cerveza light | Light beer | fndds:Beer, light | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 |  | ml
+Cerveza sin alcohol | Non-alcoholic beer | fndds:Beer, nonalcoholic | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 | cerveza 0,0 · cerveza cero | ml
+Cerveza artesanal | Craft beer | fndds:Beer, higher alcohol | 1 pinta (473 ml) / 1 pint (473 ml)=480 · 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 | cerveza IPA · cerveza fuerte | ml
+Vino tinto | Red wine | fndds:Wine, red | 1 copa (150 ml) / 1 glass (150 ml)=152 · 1 botella (750 ml) / 1 bottle (750 ml)=761 | vino | ml
+Vino blanco | White wine | fndds:Wine, white | 1 copa (150 ml) / 1 glass (150 ml)=152 · 1 botella (750 ml) / 1 bottle (750 ml)=761 |  | ml
+Vino rosado | Rosé wine | fndds:Wine, rose | 1 copa (150 ml) / 1 glass (150 ml)=152 | rosé | ml
+Vino espumoso | Sparkling wine | fndds:Wine, sparkling | 1 copa (120 ml) / 1 glass (120 ml)=122 | espumante* (AR UY CL) · champán* (ES) · champaña* (MX CO) · cava · champagne | ml
+Vino dulce | Dessert wine | fndds:Wine, dessert, sweet | 1 copa pequeña (100 ml) / 1 small glass (100 ml)=101 | oporto · moscatel · vino de postre · jerez dulce | ml
+Jerez seco | Dry sherry | sr:Alcoholic beverage, wine, dessert, dry | 1 copa pequeña (100 ml) / 1 small glass (100 ml)=100 | jerez · fino · vino generoso seco | ml
+Vino con soda | Wine spritzer | fndds:Wine spritzer | 1 vaso (200 ml) / 1 glass (200 ml)=203 | spritzer · vino con gaseosa | ml
+Sidra | Hard cider | fndds:Hard cider | 1 copa (150 ml) / 1 glass (150 ml)=152 |  | ml
+Sangría | Sangria | fndds:Sangria, red | 1 copa (150 ml) / 1 glass (150 ml)=152 |  | ml
+Sangría blanca | White sangria | fndds:Sangria, white | 1 copa (150 ml) / 1 glass (150 ml)=152 | clericó* (AR UY PY) | ml
+Whisky | Whiskey | sr:Alcoholic beverage, distilled, whiskey, 86 proof | 1 medida (45 ml) / 1 shot (45 ml)=42 | whiskey · güisqui | ml
+Vodka | Vodka | sr:Alcoholic beverage, distilled, vodka, 80 proof | 1 medida (45 ml) / 1 shot (45 ml)=42 |  | ml
+Ron | Rum | sr:Alcoholic beverage, distilled, rum, 80 proof | 1 medida (45 ml) / 1 shot (45 ml)=42 |  | ml
+Tequila | Tequila | fndds:Tequila | 1 medida (45 ml) / 1 shot (45 ml)=43 |  | ml
+Gin | Gin | fndds:Gin | 1 medida (45 ml) / 1 shot (45 ml)=43 | ginebra | ml
+Brandy | Brandy | fndds:Brandy | 1 medida (45 ml) / 1 shot (45 ml)=43 | coñac · cognac | ml
+Destilado | Distilled spirits | sr:Alcoholic beverage, distilled, all (gin, rum, vodka, whiskey) 80 proof | 1 medida (45 ml) / 1 shot (45 ml)=42 | pisco* (PE CL) · aguardiente* (CO) · caña (UY) · mezcal | ml
+Licor | Liqueur | fndds:Liqueur | 1 medida (45 ml) / 1 shot (45 ml)=46 | licor dulce | ml
+Licor de café | Coffee liqueur | fndds:Liqueur, coffee flavored | 1 medida (45 ml) / 1 shot (45 ml)=46 |  | ml
+Licor de crema | Cream liqueur | fndds:Liqueur, cream | 1 medida (45 ml) / 1 shot (45 ml)=46 | crema de whisky · licor de whisky con crema | ml
+Margarita | Margarita | fndds:Margarita | 1 copa (150 ml) / 1 glass (150 ml)=152 · 1 trago / 1 drink=225 |  | ml
+Mojito | Mojito | fndds:Mojito | 1 vaso (250 ml) / 1 glass (250 ml)=254 |  | ml
+Piña colada | Piña colada | fndds:Pina Colada | 1 vaso (250 ml) / 1 glass (250 ml)=254 |  | ml
+Michelada | Michelada | fndds:Michelada | 1 vaso (355 ml) / 1 glass (355 ml)=360 |  | ml
+Gin tonic | Gin and tonic | fndds:Gin and tonic | 1 vaso (250 ml) / 1 glass (250 ml)=254 | gin con tónica | ml
+Cuba libre | Rum and cola | fndds:Rum and cola | 1 vaso (250 ml) / 1 glass (250 ml)=254 | ron con cola · cubalibre | ml
+Destornillador | Screwdriver | fndds:Screwdriver | 1 trago / 1 drink=225 | vodka con naranja · vodka con jugo de naranja | ml
+Whisky con soda | Whiskey and soda | fndds:Whiskey and soda | 1 trago / 1 drink=225 | highball | ml
+Daiquiri | Daiquiri | fndds:Daiquiri | 1 trago / 1 drink=225 |  | ml
+Martini | Martini | fndds:Martini | 1 trago / 1 drink=120 |  | ml
+Bloody Mary | Bloody Mary | fndds:Bloody Mary | 1 trago / 1 drink=225 |  | ml
+Mimosa | Mimosa | fndds:Mimosa | 1 copa / 1 drink=180 |  | ml
+Tequila sunrise | Tequila sunrise | fndds:Tequila Sunrise | 1 trago / 1 drink=225 |  | ml
+Ponche de huevo | Eggnog with alcohol | fndds:Eggnog, alcoholic | 1 vaso / 1 drink=240 | rompope (MX) · eggnog | ml
+Hard seltzer | Hard seltzer | fndds:Hard seltzer | 1 lata (355 ml) / 1 can (355 ml)=360 | seltzer con alcohol · agua con gas con alcohol | ml
 
 # snacks
-Papas fritas de bolsa | Potato chips | fndds:Potato chips, plain | 1 bolsa pequeña / 1 small bag=28 | papas chips* (AR UY) · patatas fritas de bolsa* (ES) · papitas* (CO MX) · chips
-Totopos | Tortilla chips | fndds:Tortilla chips, plain | 1 puñado / 1 handful=28 | nachos* (AR UY CL ES PE CO) · chips de maíz
+Papas fritas de bolsa | Potato chips | fndds:Potato chips, plain | 1 bolsa pequeña / 1 small bag=28 · 1 bolsa mediana / 1 medium bag=57 | papas chips* (AR UY) · patatas fritas de bolsa* (ES) · papitas* (CO MX) · chips | crudo=Papa · aceite=incluido
+Papas fritas horneadas | Baked potato chips | fndds:Potato chips, baked, plain | 1 bolsa pequeña / 1 small bag=28 | papas chips horneadas (AR UY) · patatas fritas al horno (ES) · chips horneados | crudo=Papa
+Totopos | Tortilla chips | fndds:Tortilla chips, plain | 1 puñado / 1 handful=28 | nachos* (AR UY CL ES PE CO) · chips de maíz | aceite=incluido
 Palomitas de maíz | Popcorn | fndds:Popcorn, popped in oil, no butter added | 2 tazas / 2 cups=22 | pochoclo* (AR) · pororó* (UY PY) · cabritas* (CL) · canchita* (PE) · crispetas* (CO) · cotufas* (VE) · rositas de maíz* (CU) · palomitas · pop corn
 Palomitas sin aceite | Air-popped popcorn | fndds:Popcorn, air-popped, no butter added | 2 tazas / 2 cups=16 | pochoclo sin aceite (AR) · pororó sin aceite (UY)
+Palomitas dulces | Caramel popcorn | fndds:Popcorn, caramel coated | 1 taza / 1 cup=35 | pochoclo dulce* (AR) · pororó dulce* (UY PY) · cabritas dulces* (CL) · canchita dulce* (PE) · crispetas dulces* (CO) · cotufas dulces* (VE) · palomitas acarameladas
 Pretzels | Pretzels | fndds:Pretzels, hard, plain, salted | 30 g / 30 g=30 |
 Galletas de arroz | Rice cakes | fndds:Rice cake | 1 unidad / 1 cake=9 | tortitas de arroz* (ES) · rice cakes
+Tortitas de maíz | Corn cakes | sr:Snacks, corn cakes | 1 unidad / 1 cake=9 | galletas de maíz inflado · tortitas de maíz inflado
+Galletas de queso | Cheese crackers | fndds:Crackers, cheese | 30 g / 30 g=30 | galletitas de queso* (AR UY) · crackers de queso
+Chips de pita | Pita chips | fndds:Pita chips | 1 bolsa pequeña / 1 small bag=28 |
 Snack de maíz con queso | Cheese puffs | fndds:Cheese flavored corn snacks | 30 g / 30 g=30 | chizitos* (AR) · cheetos · gusanitos (ES)
-Chips de plátano | Plantain chips | fndds:Plantain chips | 30 g / 30 g=30 | chifles* (PE EC) · platanitos* (CO) · mariquitas* (CU)
-Chips de yuca | Cassava chips | sr:Snacks, yucca (cassava) chips, salted | 30 g / 30 g=30 | chips de mandioca* (AR UY PY)
+Maíz tostado | Corn nuts | fndds:Corn nuts | 1 bolsa pequeña / 1 small bag=28 | cancha* (PE) · tostado* (EC) · maíz cancha · corn nuts | aceite=incluido
+Chips de plátano | Plantain chips | fndds:Plantain chips | 30 g / 30 g=30 | chifles* (PE EC) · platanitos* (CO) · mariquitas* (CU) | crudo=Plátano verde · aceite=incluido
+Chips de banana | Banana chips | fndds:Banana chips | 30 g / 30 g=30 · 1 taza / 1 cup=72 | banana chips · chips de banano | crudo=Banana · aceite=incluido
+Chips de yuca | Cassava chips | sr:Snacks, yucca (cassava) chips, salted | 30 g / 30 g=30 | chips de mandioca* (AR UY PY) | crudo=Yuca · aceite=incluido
+Chips de batata | Sweet potato chips | fndds:Sweet potato chips | 1 bolsa pequeña / 1 small bag=28 | chips de camote* (MX PE CL) · chips de boniato (UY) | crudo=Batata · aceite=incluido
 Mix de snacks | Snack mix | fndds:Snack mix | 30 g / 30 g=30 |
 
 # salsas
-Kétchup | Ketchup | fndds:Ketchup | 1 cucharada / 1 tbsp=17 | catsup* (MX) · cátsup · salsa de tomate (CO VE CL)
-Mostaza | Mustard | fndds:Mustard | 1 cucharadita / 1 tsp=5 |
-Mayonesa | Mayonnaise | fndds:Mayonnaise, regular | 1 cucharada / 1 tbsp=14 | mayo · mahonesa (ES)
+// Las salsas líquidas van en ml. Las que USDA solo pesa por cucharada llevan la densidad de esa
+// cucharada (14,8 ml): la de soja, la inglesa, la picante y la teriyaki, 16 g; la de pescado, 18 g.
+Kétchup | Ketchup | fndds:Ketchup | 1 cucharada / 1 tbsp=17 · 1 sobre / 1 packet=10 | catsup* (MX) · cátsup · salsa de tomate (CO VE CL)
+Mostaza | Mustard | fndds:Mustard | 1 cucharadita / 1 tsp=5 · 1 cucharada / 1 tbsp=15 |
+Mayonesa | Mayonnaise | fndds:Mayonnaise, regular | 1 cucharada / 1 tbsp=14 · 1 sobre / 1 packet=12 | mayo · mahonesa (ES)
 Mayonesa light | Light mayonnaise | fndds:Mayonnaise, light | 1 cucharada / 1 tbsp=15 | mayonesa liviana (AR UY)
-Salsa de soja | Soy sauce | fndds:Soy sauce | 1 cucharada / 1 tbsp=16 | salsa de soya* (MX CO VE) · sillao* (PE) · shoyu
+Salsa rosada | Thousand Island dressing | fndds:Thousand Island dressing | 1 cucharada / 1 tbsp=15.6 | salsa golf* (AR UY PY) · salsa rosa* (ES) · aderezo mil islas* (MX) · mil islas
+Salsa tártara | Tartar sauce | fndds:Tartar sauce | 1 cucharada / 1 tbsp=14 | salsa tartara
+Salsa de soja | Soy sauce | fndds:Soy sauce | 1 cucharada / 1 tbsp=16 | salsa de soya* (MX CO VE) · sillao* (PE) · shoyu | densidad=1.08
+Salsa teriyaki | Teriyaki sauce | fndds:Teriyaki sauce | 1 cucharada / 1 tbsp=18 |  | densidad=1.08
+Salsa de ostras | Oyster sauce | fndds:Oyster sauce | 1 cucharada / 1 tbsp=16 | salsa de ostión* (MX)
+Salsa de pescado | Fish sauce | sr:Sauce, fish, ready-to-serve | 1 cucharada / 1 tbsp=18 | nam pla | densidad=1.22
+Salsa hoisin | Hoisin sauce | fndds:Hoisin sauce | 1 cucharada / 1 tbsp=16 |
+Salsa agridulce | Sweet and sour sauce | fndds:Sweet and sour sauce | 1 cucharada / 1 tbsp=16 | salsa agridulce china
+Salsa de maní | Peanut sauce | fndds:Peanut sauce | 1 cucharada / 1 tbsp=16 | salsa de cacahuate* (MX) · salsa satay
 Salsa de tomate | Tomato pasta sauce | fndds:Spaghetti sauce | ½ taza / ½ cup=125 | tuco* (AR UY) · salsa para pasta · salsa pomodoro
 Salsa boloñesa | Meat sauce | fndds:Spaghetti sauce with meat | ½ taza / ½ cup=125 | salsa bolognesa · tuco con carne (AR UY) · ragú
-Salsa picante | Hot sauce | fndds:Hot pepper sauce | 1 cucharadita / 1 tsp=5 | tabasco · picante
+Salsa picante | Hot sauce | fndds:Hot pepper sauce | 1 cucharadita / 1 tsp=5 | tabasco · picante | densidad=1.08
+Salsa sriracha | Sriracha | sr:Sauce, hot chile, sriracha | 1 cucharadita / 1 tsp=6.5 | sriracha
 Salsa barbacoa | BBQ sauce | fndds:Barbecue sauce | 1 cucharada / 1 tbsp=17 | salsa bbq
-Salsa inglesa | Worcestershire sauce | fndds:Worcestershire sauce | 1 cucharadita / 1 tsp=6 | salsa worcestershire
-Vinagre | Vinegar | fndds:Vinegar | 1 cucharada / 1 tbsp=15 |
-Aceto balsámico | Balsamic vinegar | sr:Vinegar, balsamic | 1 cucharada / 1 tbsp=16 | vinagre balsámico
-Jugo de limón | Lemon juice | fndds:Lemon juice, 100%, freshly squeezed | 1 cucharada / 1 tbsp=15 | zumo de limón* (ES)
+Salsa inglesa | Worcestershire sauce | fndds:Worcestershire sauce | 1 cucharadita / 1 tsp=6 | salsa worcestershire | densidad=1.08
+Vinagre | Vinegar | fndds:Vinegar | 1 cucharada / 1 tbsp=15 |  | densidad=1.01
+Vinagre de manzana | Apple cider vinegar | sr:Vinegar, cider | 1 cucharada / 1 tbsp=14.9 |  | ml
+Vinagre de vino | Red wine vinegar | sr:Vinegar, red wine | 1 cucharada / 1 tbsp=14.9 | vinagre de vino tinto | ml
+Aceto balsámico | Balsamic vinegar | sr:Vinegar, balsamic | 1 cucharada / 1 tbsp=16 | vinagre balsámico | ml
+Jugo de limón | Lemon juice | fndds:Lemon juice, 100%, freshly squeezed | 1 cucharada / 1 tbsp=15 · 1 limón exprimido / juice of 1 lemon=47 | zumo de limón* (ES) | ml
 Pico de gallo | Pico de gallo | fndds:Salsa, pico de gallo | ¼ taza / ¼ cup=60 | salsa mexicana · pebre* (CL) · salsa criolla (AR UY)
 Salsa roja | Red salsa | fndds:Salsa, red | 2 cucharadas / 2 tbsp=30 | salsa picante roja
 Salsa verde | Green salsa | fndds:Salsa verde or salsa, green | 2 cucharadas / 2 tbsp=30 |
+Salsa para enchiladas | Enchilada sauce | sr:Sauce, enchilada, red, mild, ready to serve | ¼ taza / ¼ cup=56 | salsa roja para enchiladas | ml
 Guacamole | Guacamole | fndds:Guacamole, NFS | 2 cucharadas / 2 tbsp=30 |
 Pesto | Pesto | fndds:Pesto sauce | 1 cucharada / 1 tbsp=16 | salsa pesto
 Salsa blanca | White sauce | fndds:White sauce or gravy | ¼ taza / ¼ cup=60 | bechamel · salsa bechamel
 Salsa alfredo | Alfredo sauce | fndds:Alfredo sauce | ¼ taza / ¼ cup=60 |
 Salsa de queso | Cheese sauce | fndds:Cheese sauce | ¼ taza / ¼ cup=60 |
+Salsa holandesa | Hollandaise sauce | fndds:Hollandaise sauce | 1 cucharada / 1 tbsp=16 |
+Salsa de carne | Beef gravy | fndds:Gravy, beef | ¼ taza / ¼ cup=60 | jugo de carne · gravy | ml
 Aderezo César | Caesar dressing | fndds:Caesar dressing | 1 cucharada / 1 tbsp=15 | salsa césar
-Vinagreta | Vinaigrette | fndds:Italian dressing, made with vinegar and oil | 1 cucharada / 1 tbsp=15 | aderezo italiano
+Vinagreta | Vinaigrette | fndds:Italian dressing, made with vinegar and oil | 1 cucharada / 1 tbsp=15 | aderezo italiano | ml
 Aderezo ranch | Ranch dressing | fndds:Ranch dressing | 1 cucharada / 1 tbsp=15 | ranch
+Aderezo de mostaza y miel | Honey mustard dressing | fndds:Honey mustard dressing | 1 cucharada / 1 tbsp=15.6 | salsa de miel y mostaza · honey mustard
 Mole | Mole sauce | fndds:Mole sauce | ¼ taza / ¼ cup=60 | mole poblano
-Salsa teriyaki | Teriyaki sauce | fndds:Teriyaki sauce | 1 cucharada / 1 tbsp=18 |
-Caldo de pollo | Chicken broth | sr:Soup, chicken broth, ready-to-serve | 1 taza / 1 cup=249 | consomé de pollo (MX) · caldo
+Miso | Miso | sr:Miso | 1 cucharada / 1 tbsp=17 | pasta de miso
+Wasabi | Wasabi | sr:Wasabi | 1 cucharadita / 1 tsp=6.5 | pasta de wasabi
+Caldo de pollo | Chicken broth | sr:Soup, chicken broth, ready-to-serve | 1 taza (240 ml) / 1 cup (240 ml)=252 | consomé de pollo (MX) · caldo | ml
+Caldo de carne | Beef broth | sr:Soup, beef broth, cubed, prepared with water | 1 taza (240 ml) / 1 cup (240 ml)=243 | caldo de res · consomé de res (MX) | densidad=1.01
 Cubito de caldo | Bouillon cube | sr:Soup, chicken broth or bouillon, dry | 1 cubito / 1 cube=4 | caldo en cubo · consomé en polvo (MX)
+Cubito de caldo de carne | Beef bouillon cube | sr:Soup, beef broth or bouillon, powder, dry | 1 cubito / 1 cube=3.6 | caldo de res en cubo · consomé de res en polvo (MX)
 Aceitunas verdes | Green olives | fndds:Olives, green | 5 unidades / 5 olives=20 | olivas (ES) · aceitunas
 Aceitunas negras | Black olives | fndds:Olives, black | 5 unidades / 5 olives=25 | olivas negras (ES)
+Alcaparras | Capers | sr:Capers, canned | 1 cucharada / 1 tbsp=8.6 | alcaparra
 Pepinillos | Pickles | sr:Pickles, cucumber, dill or kosher dill | 1 unidad / 1 spear=35 | pepinillos en vinagre · encurtidos
+Jalapeños en vinagre | Pickled jalapeños | sr:Peppers, jalapeno, canned, solids and liquids | 1 unidad / 1 pepper=22 · ¼ taza / ¼ cup=26 | chiles en vinagre* (MX) · jalapeños en escabeche · ají en vinagre
+Pimientos en conserva | Jarred red peppers | sr:Peppers, sweet, red, canned, solids and liquids | ½ taza / ½ cup=70 | morrones en lata (AR UY) · pimientos rojos en lata · pimiento morrón en conserva
 Chucrut | Sauerkraut | fndds:Sauerkraut | ½ taza / ½ cup=70 | col fermentada
 Kimchi | Kimchi | fndds:Kimchi | ½ taza / ½ cup=75 |
 
 # especias
-Sal | Salt | sr:Salt, table | 1 pizca / 1 pinch=0.4 · 1 cucharadita / 1 tsp=6 | sal fina · sal de mesa
+Sal | Salt | sr:Salt, table | 1 pizca / 1 pinch=0.4 · 1 cucharadita / 1 tsp=6 · 1 cucharada / 1 tbsp=18 | sal fina · sal de mesa · sal marina
 Pimienta negra | Black pepper | sr:Spices, pepper, black | 1 cucharadita / 1 tsp=2.3 | pimienta
-Orégano | Oregano | sr:Spices, oregano, dried | 1 cucharadita / 1 tsp=1 |
-Canela | Cinnamon | sr:Spices, cinnamon, ground | 1 cucharadita / 1 tsp=2.6 |
-Comino | Cumin | sr:Spices, cumin seed | 1 cucharadita / 1 tsp=2.1 |
+Pimienta blanca | White pepper | sr:Spices, pepper, white | 1 cucharadita / 1 tsp=2.4 |
+Pimienta de Jamaica | Allspice | sr:Spices, allspice, ground | 1 cucharadita / 1 tsp=1.9 | pimienta gorda* (MX) · malagueta
+Chile en polvo | Chili powder | sr:Spices, chili powder | 1 cucharadita / 1 tsp=2.7 | chile molido* (MX) · ají en polvo
 Paprika | Paprika | sr:Spices, paprika | 1 cucharadita / 1 tsp=2.3 | pimentón* (AR UY ES PY) · páprika · pimentón dulce
+Orégano | Oregano | sr:Spices, oregano, dried | 1 cucharadita / 1 tsp=1 |
+Comino | Cumin | sr:Spices, cumin seed | 1 cucharadita / 1 tsp=2.1 |
+Cúrcuma | Turmeric | sr:Spices, turmeric, ground | 1 cucharadita / 1 tsp=3 | palillo (PE) · azafrán de la India
+Curry en polvo | Curry powder | sr:Spices, curry powder | 1 cucharadita / 1 tsp=2 | curry
+Canela | Cinnamon | sr:Spices, cinnamon, ground | 1 cucharadita / 1 tsp=2.6 |
+Nuez moscada | Nutmeg | sr:Spices, nutmeg, ground | 1 cucharadita / 1 tsp=2.2 |
+Clavo de olor | Cloves | sr:Spices, cloves, ground | 1 cucharadita / 1 tsp=2.1 | clavo · clavos de olor
+Anís | Anise seed | sr:Spices, anise seed | 1 cucharadita / 1 tsp=2.1 | anís en grano · semillas de anís
+Cardamomo | Cardamom | sr:Spices, cardamom | 1 cucharadita / 1 tsp=2 |
+Azafrán | Saffron | sr:Spices, saffron | 1 cucharadita / 1 tsp=0.7 |
+Laurel | Bay leaf | sr:Spices, bay leaf | 1 cucharadita / 1 tsp=0.6 | hoja de laurel · hojas de laurel
+Tomillo | Thyme | sr:Spices, thyme, dried | 1 cucharadita / 1 tsp=1 | tomillo seco
+Romero | Rosemary | sr:Spices, rosemary, dried | 1 cucharadita / 1 tsp=1.2 | romero seco
+Albahaca seca | Dried basil | sr:Spices, basil, dried | 1 cucharadita / 1 tsp=0.7 |
+Perejil seco | Dried parsley | sr:Spices, parsley, dried | 1 cucharadita / 1 tsp=0.5 | perejil deshidratado
+Eneldo seco | Dried dill | sr:Spices, dill weed, dried | 1 cucharadita / 1 tsp=1 | eneldo
+Salvia | Sage | sr:Spices, sage, ground | 1 cucharadita / 1 tsp=0.7 |
+Semillas de cilantro | Coriander seeds | sr:Spices, coriander seed | 1 cucharadita / 1 tsp=1.8 | coriandro en grano · cilantro en semillas
+Semillas de amapola | Poppy seeds | sr:Spices, poppy seed | 1 cucharadita / 1 tsp=2.8 | amapola
+Mostaza en polvo | Mustard powder | sr:Spices, mustard seed, ground | 1 cucharadita / 1 tsp=2 | mostaza en grano molida
 Ajo en polvo | Garlic powder | sr:Spices, garlic powder | 1 cucharadita / 1 tsp=3.1 |
-Jengibre | Ginger | sr:Ginger root, raw | 1 cucharadita / 1 tsp=2 | kion* (PE)
+Cebolla en polvo | Onion powder | sr:Spices, onion powder | 1 cucharadita / 1 tsp=2.4 |
+Jengibre | Ginger | sr:Ginger root, raw | 1 cucharadita / 1 tsp=2 · 5 rodajas / 5 slices=11 | kion* (PE)
+Jengibre en polvo | Ground ginger | sr:Spices, ginger, ground | 1 cucharadita / 1 tsp=1.8 |
+Extracto de vainilla | Vanilla extract | sr:Vanilla extract | 1 cucharadita / 1 tsp=4.2 | esencia de vainilla · vainilla | ml
+Bicarbonato de sodio | Baking soda | sr:Leavening agents, baking soda | 1 cucharadita / 1 tsp=4.6 | bicarbonato
+Levadura seca | Active dry yeast | sr:Leavening agents, yeast, baker's, active dry | 1 sobre / 1 packet=7.2 · 1 cucharadita / 1 tsp=4 | levadura seca activa · levadura instantánea
+Gelatina sin sabor | Unflavored gelatin | sr:Gelatins, dry powder, unsweetened | 1 sobre / 1 envelope=7 | grenetina* (MX) · colapez
 
 # platos
-Pizza de queso | Cheese pizza | fndds:Pizza, cheese, from restaurant or fast food, medium crust | 1 porción / 1 slice=86 | pizza de muzzarella* (AR UY) · pizza margarita · pizza
+Pizza de queso | Cheese pizza | fndds:Pizza, cheese, from restaurant or fast food, medium crust | 1 porción / 1 slice=86 · 1 trozo / 1 piece=119 | pizza de muzzarella* (AR UY) · pizza margarita · pizza
 Pizza de pepperoni | Pepperoni pizza | fndds:Pizza with pepperoni, from restaurant or fast food,  medium crust | 1 porción / 1 slice=95 |
 Hamburguesa | Hamburger | fndds:Hamburger, NFS | 1 unidad / 1 hamburger=145 | hamburguesa con pan
 Hamburguesa con queso | Cheeseburger | fndds:Cheeseburger, NFS | 1 unidad / 1 cheeseburger=165 | cheeseburger
 Hot dog | Hot dog | fndds:Hot dog sandwich, NFS, on white bun | 1 unidad / 1 hot dog=102 | perro caliente* (CO VE) · completo* (CL) · pancho* (AR UY PY) · perrito caliente (ES)
 Sándwich de jamón y queso | Ham and cheese sandwich | fndds:Ham sandwich on white, with cheese | 1 unidad / 1 sandwich=135 | sándwich mixto* (ES) · sánguche de jamón y queso (PE AR) · emparedado de jamón y queso
-Sándwich de queso a la plancha | Grilled cheese sandwich | fndds:Grilled cheese sandwich, NFS | 1 unidad / 1 sandwich=116 | tostado de queso* (AR UY) · grilled cheese
-Papas fritas | French fries | fndds:Potato, french fries, NFS | 1 porción / 1 serving=110 | patatas fritas* (ES) · papas a la francesa* (MX) · french fries
+Sándwich de queso a la plancha | Grilled cheese sandwich | fndds:Grilled cheese sandwich, NFS | 1 unidad / 1 sandwich=116 | tostado de queso* (AR UY) · grilled cheese | aceite=incluido
+Papas fritas | French fries | fndds:Potato, french fries, NFS | 1 porción / 1 serving=110 | patatas fritas* (ES) · papas a la francesa* (MX) · french fries | crudo=Papa · aceite=incluido
 Ensalada de papas | Potato salad | sr:Potato salad with egg | ½ taza / ½ cup=125 | ensalada rusa* (AR UY CL PY) · ensaladilla rusa* (ES)
 Ensalada mixta | Mixed salad | fndds:Lettuce, salad with assorted vegetables including tomatoes and/or carrots, no dressing | 1 taza / 1 cup=73 | ensalada verde · ensalada de lechuga y tomate
 Ensalada César | Caesar salad | fndds:Caesar salad, with romaine, no dressing | 1 taza / 1 cup=79 |
-Sopa de verduras | Vegetable soup | fndds:Soup, vegetable | 1 plato / 1 bowl=300 | sopa de vegetales · caldo de verduras
-Sopa de pollo con fideos | Chicken noodle soup | fndds:Soup, chicken noodle | 1 plato / 1 bowl=300 | sopa de pollo
-Sopa de lentejas | Lentil soup | fndds:Soup, lentil | 1 plato / 1 bowl=300 | guiso de lentejas · lentejas guisadas
+Sopa de verduras | Vegetable soup | fndds:Soup, vegetable | 1 plato / 1 bowl=300 | sopa de vegetales · caldo de verduras | ml
+Sopa de pollo con fideos | Chicken noodle soup | fndds:Soup, chicken noodle | 1 plato / 1 bowl=300 | sopa de pollo | ml
+Sopa de lentejas | Lentil soup | fndds:Soup, lentil | 1 plato / 1 bowl=300 | guiso de lentejas · lentejas guisadas | ml
 Arroz con frijoles | Rice and beans | fndds:Beans and white rice | 1 taza / 1 cup=170 | gallo pinto* (CR NI) · moros y cristianos* (CU) · arroz con habichuelas* (PR DO) · casamiento* (SV) · arroz con porotos (AR UY CL)
 Arroz con pollo | Chicken with rice | fndds:Chicken or turkey and rice, no sauce | 1 taza / 1 cup=196 |
-Arroz frito | Fried rice | fndds:Rice, fried, NFS | 1 taza / 1 cup=198 | arroz chaufa* (PE) · chaulafán* (EC) · arroz chino* (CO VE)
+Arroz frito | Fried rice | fndds:Rice, fried, NFS | 1 taza / 1 cup=198 | arroz chaufa* (PE) · chaulafán* (EC) · arroz chino* (CO VE) | aceite=incluido
 Paella | Paella | fndds:Paella, NFS | 1 plato / 1 serving=300 |
 Tacos | Beef taco | fndds:Taco, corn tortilla, beef, cheese | 1 unidad / 1 taco=105 | taco · tacos de carne
 Burrito | Burrito | fndds:Burrito, beef, cheese | 1 unidad / 1 burrito=190 |
@@ -607,12 +993,12 @@ Tamal | Tamale | fndds:Tamale, NFS | 1 unidad / 1 tamale=140 | tamales
 Fajitas | Fajita | fndds:Fajita, chicken | 1 unidad / 1 fajita=95 |
 Nachos con queso | Nachos with cheese | fndds:Nachos, NFS | 1 porción / 1 order=250 |
 Pupusa | Pupusa | fndds:Pupusa, cheese only | 1 unidad / 1 pupusa=100 |
-Pozole | Pozole | fndds:Soup, pozole | 1 plato / 1 bowl=300 |
+Pozole | Pozole | fndds:Soup, pozole | 1 plato / 1 bowl=300 |  | ml
 Ceviche | Ceviche | fndds:Ceviche | 1 plato / 1 serving=250 | cebiche · seviche
-Tostones | Fried green plantains | sr:Plantains, green, fried | 10 unidades / 10 slices=53 | patacones* (CO EC PA CR VE) · tostones* (PR DO CU)
-Maduros fritos | Fried ripe plantains | sr:Plantains, yellow, fried, Latino restaurant | 1 taza / 1 cup=169 | plátanos fritos · tajadas* (CO VE) · plátano frito
-Milanesa | Breaded steak | fndds:Beef, steak, country fried | 1 unidad / 1 regular=160 | milanesa de carne · bistec empanizado* (MX) · bistec apanado* (CO PE) · filete empanado* (ES)
-Tortilla de papas | Spanish omelet | fndds:Egg omelet or scrambled egg, with potatoes and/or onions, fat added | 1 porción / 1 serving=150 | tortilla de patatas* (ES) · tortilla española
+Tostones | Fried green plantains | sr:Plantains, green, fried | 10 unidades / 10 slices=53 | patacones* (CO EC PA CR VE) · tostones* (PR DO CU) | crudo=Plátano verde · aceite=incluido
+Maduros fritos | Fried ripe plantains | sr:Plantains, yellow, fried, Latino restaurant | 1 taza / 1 cup=169 | plátanos fritos · tajadas* (CO VE) · plátano frito | crudo=Plátano maduro · aceite=incluido
+Milanesa | Breaded steak | fndds:Beef, steak, country fried | 1 unidad / 1 regular=160 | milanesa de carne · bistec empanizado* (MX) · bistec apanado* (CO PE) · filete empanado* (ES) | crudo=Nalga cruda · aceite=incluido
+Omelet con papa | Potato omelet | fndds:Egg omelet or scrambled egg, with potatoes and/or onions, fat added | 1 porción / 1 serving=150 | huevos revueltos con papa · omelet de papa | aceite=incluido
 Empanada de carne | Beef empanada | fndds:Empanada, beef | 1 unidad / 1 regular=130 | empanada
 Empanada de pollo | Chicken empanada | fndds:Empanada, chicken | 1 unidad / 1 regular=130 |
 Empanada de queso | Cheese empanada | fndds:Empanada, no meat | 1 unidad / 1 regular=130 |
@@ -620,7 +1006,7 @@ Guiso de carne | Beef stew | fndds:Stew, beef | 1 plato / 1 bowl=300 | estofado*
 Pastel de papas | Shepherd's pie | fndds:Shepherd's pie | 1 porción / 1 slice=210 | pastel de papa* (AR UY CL) · pastel de carne
 Chili con carne | Chili con carne | sr:Chili con carne with beans, canned entree | 1 taza / 1 cup=242 | chili
 Sushi | Sushi | fndds:Sushi, NFS | 6 piezas / 6 pieces=180 | rolls
-Gazpacho | Gazpacho | fndds:Soup, gazpacho | 1 taza / 1 cup=245 |
+Gazpacho | Gazpacho | fndds:Soup, gazpacho | 1 taza / 1 cup=245 |  | ml
 
 # platos
 // Los platos uruguayos de todos los días, como recetas caseras (primera tanda, 22/10/2026: para
@@ -643,5 +1029,8 @@ Alfajor de maicena | Cornstarch alfajor | receta#14 Maicena 300 · Harina de tri
 # suplementos
 Proteína de suero | Whey protein | fndds:Nutritional powder mix, whey based, NFS | 1 medida / 1 scoop=30 | whey · proteína whey · proteína en polvo
 Proteína vegetal | Plant protein powder | fndds:Nutritional powder mix, protein, soy based, NFS | 1 medida / 1 scoop=30 | proteína de soja · proteína vegana
-Batido de proteínas | Protein shake | fndds:Nutritional drink or shake, high protein, ready-to-drink, NFS | 1 botella / 1 bottle=330 | shake de proteína · bebida proteica
+Batido de proteínas | Protein shake | fndds:Nutritional drink or shake, high protein, ready-to-drink, NFS | 1 botella / 1 bottle=330 | shake de proteína · bebida proteica | ml
+Suplemento nutricional líquido | Nutritional shake | fndds:Nutritional drink or shake, ready-to-drink, NFS | 1 botella (237 ml) / 1 bottle (8 fl oz)=248 | bebida nutricional · batido nutricional · complemento alimenticio | ml
+Suplemento nutricional en polvo | Nutritional powder mix | fndds:Nutritional powder mix, NFS | 1 medida / 1 scoop=34 | polvo nutricional · complemento alimenticio en polvo
 Barra de proteínas | Protein bar | fndds:Nutrition bar or meal replacement bar, NFS | 1 barra / 1 bar=60 | barra proteica · protein bar
+Aceite de pescado | Fish oil | sr:Fish oil, salmon | 1 cápsula (1 g) / 1 capsule (1 g)=1 · 1 cucharadita / 1 tsp=4.5 | omega 3 · cápsulas de omega 3 · aceite de salmón | densidad=0.92
