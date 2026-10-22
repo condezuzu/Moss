@@ -149,10 +149,11 @@ Ascent (la recuperación) hacen la misma cuenta.
      suma nada, se reparte. La semana del control (de su día a los 6
      siguientes) suma lo mismo que da el control: 7 veces su meta.
    - Un día de gimnasio tiene lo que cuesta una sesión más que uno de
-     descanso. El costo es de 4 kcal por kilo y por hora (el Compendio de
-     Actividades Físicas de 2024 le da a la fuerza de 3,5 a 6 MET; se toman 5,
-     menos el del reposo), con la duración promedio de sus sesiones, de a 10
-     kcal, entre 100 y 500.
+     descanso. Es el costo **neto**: el gasto total de esa hora menos lo que se
+     gasta igual en reposo, que el día de descanso ya incluye. El Compendio de
+     Actividades Físicas de 2024 le da a la fuerza de 3,5 a 6 MET: se toman 5 en
+     total, menos el 1 del reposo, y quedan 4 kcal por kilo y por hora, con la
+     duración promedio de sus sesiones, de a 10 kcal, entre 100 y 500.
    - Los días se resuelven en orden, y cada uno se lleva su parte de lo que
      queda de la semana:
      - lo que ya pasó se sabe (entrenó o no);
@@ -317,13 +318,19 @@ Necesita una build nativa nueva: va en una rama, como siempre que cambia
     - `LSApplicationQueriesSchemes: ["moss"]` en `app.json`.
     - La ruta `ascent://vincular`.
 12. **Texto de borrar la cuenta**: decir que es la misma cuenta que Moss.
+13. **El peso movido, con las repeticiones** (pedido el 22/10/2026): hoy
+    `kilosDelBloque` (`nucleo/volumen.ts`) suma el peso de cada serie, sin las
+    repeticiones. Debería contar peso × repeticiones cuando las repeticiones
+    están anotadas (migración 94), y el peso solo cuando no. Mientras tanto, Moss
+    compara cada sesión contra el promedio de las del mismo usuario, así que la
+    forma de contar no cambia el resultado.
 
 ### Infraestructura (las hacés vos en el panel)
 
-13. **Correo:** SMTP propio (Resend), el correo de contraseña con el nombre de
+14. **Correo:** SMTP propio (Resend), el correo de contraseña con el nombre de
     las dos apps y `moss://**` en las redirecciones.
-14. **Claves:** pasar a las claves nuevas de Supabase, que ya estaba pendiente.
-15. **Plan:** pasar a Pro para tener copias diarias. Lo recomiendo.
+15. **Claves:** pasar a las claves nuevas de Supabase, que ya estaba pendiente.
+16. **Plan:** pasar a Pro para tener copias diarias. Lo recomiendo.
 
 ## Lo que tenés que hacer vos
 

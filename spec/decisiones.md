@@ -61,17 +61,6 @@ Lo dijiste: «lo de agua lo sacaría». Quedó así:
 
 Si un hábito de agua existe, es una estrella más. ¿Así?
 
-### D24 · La proteína después de entrenar (la fórmula que propongo)
-
-Pediste que dependa del volumen de la sesión en Ascent. Ver
-[`ascent.md`](ascent.md), función 8:
-- el tamaño de la sesión: las series y el peso movido contra su promedio;
-- la proteína sube hacia 2,2 g por kilo: una sesión de las de siempre suma la
-  mitad de lo que falta, una un 50 % más grande, todo, hasta 40 g;
-- sale de los carbohidratos: las calorías no cambian.
-
-¿Así?
-
 ### D23 · El verde
 
 El verde vivo era el mismo de la luz del musgo: por eso Inicio y Comida se
@@ -148,57 +137,6 @@ Otras opciones que descarté:
 
 - **Nombres que describen** («30 noches completas»): claros pero planos.
 - **Nombres de estrellas** (Vega, Sirio): astronómicos pero arbitrarios.
-
-### D10 · Dónde se guardan las fotos de la comida
-
-**Propongo guardarlas solo en el teléfono:**
-- van en la carpeta de la app y entran en la copia de iCloud del teléfono;
-- no se suben a Supabase.
-
-Por qué:
-- **Son un recuerdo, no un dato:** los registros se sincronizan igual.
-- **Subirlas cuesta por usuario,** y la app es gratis: unas 4 fotos por día de ~100 KB son ~150 MB por persona por año.
-- **Una foto de comida es privada.**
-
-**Lo que se pierde:** al cambiar de teléfono sin copia, las fotos no vienen, pero los registros sí.
-
-**La alternativa** es Supabase Storage, que con miles de usuarios pide un plan pago.
-
-### D11 · El catálogo uruguayo, en el servidor
-
-**Propongo una tabla de Supabase (`moss.catalogo`)** que el usuario lee y no puede tocar:
-- el teléfono la baja y la guarda;
-- se corrige y crece sin sacar una versión de la app.
-
-La carga la hacemos con el propio escáner de etiquetas de Moss, en un modo de
-carga que solo usamos nosotros.
-
-**La alternativa** es meterlo dentro de la app, como los genéricos. Es más
-simple, pero cada corrección espera una versión nueva.
-
-### D12 · Compartir con amigos en la v1: con un enlace
-
-La lista de amigos de Moss llega con lo social, después de la v1. Para que
-compartir recetas y alimentos propios esté en la v1, propongo hacerlo con un
-enlace:
-- se manda por WhatsApp o por mensajes;
-- quien lo abre con Moss lo suma a lo suyo;
-- cuando llegue lo social, también se va a poder mandar directo a un amigo.
-
-**Hace falta un dominio** (por ejemplo, el de la web de Moss), para que el enlace
-abra la app: Apple lo pide para los Universal Links. ¿Tenés uno o lo compramos?
-
-### D13 · Aportar a Open Food Facts lo que se crea
-
-**Propongo hacerlo después de la v1,** con permiso del usuario en cada producto:
-lo creado con la etiqueta (nombre, código, valores y la foto de la etiqueta) se
-sube a Open Food Facts, y la cobertura de Uruguay crece para todos.
-
-Para eso hace falta:
-- una cuenta de Moss en Open Food Facts;
-- aceptar sus licencias: ODbL para los datos y CC BY-SA para las fotos.
-
-**En la v1,** lo creado queda solo en Moss, privado de cada usuario.
 
 ### D8 · Widgets
 
@@ -290,6 +228,22 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
+### D10, D11, D13 y D24 (aceptadas el 22/10/2026)
+
+- **D10 · Las fotos de la comida, solo en el teléfono:** en la carpeta de la app y en la copia de iCloud del teléfono; no se suben a Supabase.
+- **D11 · El catálogo uruguayo, en el servidor:** la tabla `moss.catalogo`, que el usuario lee y no puede tocar. Los productos van también dentro de la app, así andan sin conexión desde el primer día; lo del servidor corrige y suma sin sacar una versión nueva.
+- **D13 · Aportar a Open Food Facts:** después de la v1, con permiso del usuario en cada producto.
+- **D24 · La proteína después de entrenar:** la fórmula propuesta (ver [`ascent.md`](ascent.md), función 8).
+
+### D12 · Compartir sin dominio (22/10/2026)
+
+No hay dominio todavía, y los Universal Links lo necesitan. Mientras tanto, compartir recetas y alimentos propios usa lo que da iOS sin dominio:
+- la hoja de compartir del iPhone, con un texto legible (el nombre, los ingredientes y los valores) y un enlace `moss://compartido?d=…` que lleva todo adentro, comprimido;
+- quien tiene Moss toca el enlace y lo suma a lo suyo; quien no, igual lee el texto;
+- en Mensajes y WhatsApp los enlaces `moss://` se pueden tocar.
+
+**Para cuando haya un dominio:** pasar el enlace a `https://dominio/c/…` con Universal Links (el archivo `apple-app-site-association` en el dominio y `associatedDomains` en `app.json`). El contenido del enlace no cambia, así que los dos van a andar.
+
 ### D22 · Ascent, arriba de Hábitos (aceptada el 22/10/2026)
 
 La flecha queda abajo, sobre el musgo y debajo de la frase. El gesto arranca solo
@@ -372,8 +326,9 @@ hacen falta las cuentas anónimas.
 
 ### Calorías según el día y «Por qué no subís» (22/10/2026)
 
-- **El costo de una sesión**, para repartir las calorías: 4 kcal por kilo y por
-  hora, con la duración promedio de sus sesiones. Un día de gimnasio tiene eso
+- **El costo de una sesión**, para repartir las calorías: el neto (el total de
+  esa hora menos el reposo, que el día de descanso ya tiene), 4 kcal por kilo y
+  por hora, con la duración promedio de sus sesiones. Un día de gimnasio tiene eso
   más que uno de descanso, y la semana suma lo que da el control.
 - **El mínimo de «Por qué no subís»**: 3 semanas con marcas y 3 sin, cada una
   con al menos 4 días de comida y 4 noches de sueño. Con menos, dice que todavía

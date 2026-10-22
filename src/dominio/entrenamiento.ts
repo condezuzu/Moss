@@ -37,12 +37,15 @@ export function promedioDeSesiones(sesiones: readonly Sesion[]): Omit<Sesion, 'f
 // ------------------------------------------------------------ calorías según el día
 
 /**
- * Lo que cuesta una sesión de pesas además de lo que se gasta igual en reposo: 4 kcal por kilo de
- * peso y por hora. El Compendio de Actividades Físicas (2024) le da al entrenamiento de fuerza de
- * 3,5 a 6 MET según el esfuerzo; se toman 5, menos el 1 del reposo. Con la duración promedio, de a
- * 10 kcal, entre 100 y 500.
+ * Lo que cuesta una sesión de pesas, NETO: el gasto total de esa hora menos lo que se gasta igual
+ * en reposo, que el día de descanso ya incluye. Un MET es 1 kcal por kilo y por hora. El Compendio
+ * de Actividades Físicas (2024) le da al entrenamiento de fuerza de 3,5 a 6 MET según el esfuerzo:
+ * se toman 5 en total, menos el 1 del reposo, y quedan 4 kcal por kilo y por hora. Con la duración
+ * promedio, de a 10 kcal, entre 100 y 500.
  */
-export const KCAL_POR_KILO_Y_HORA = 4;
+export const MET_DE_LA_SESION = 5;
+export const MET_EN_REPOSO = 1;
+export const KCAL_POR_KILO_Y_HORA = MET_DE_LA_SESION - MET_EN_REPOSO;
 export function costoDeSesion(pesoKg: number, minutosPromedio: number): number {
   return aDiez(clamp((KCAL_POR_KILO_Y_HORA * pesoKg * minutosPromedio) / 60, 100, 500));
 }

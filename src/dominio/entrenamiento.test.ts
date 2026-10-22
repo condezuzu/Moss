@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  caloriasSegunElDia, costoDeSesion, frecuenciaPorDia, metaConEntrenamiento, porQueNoSube, promedioDeSesiones,
+  caloriasSegunElDia, costoDeSesion, frecuenciaPorDia, MET_DE_LA_SESION, MET_EN_REPOSO, metaConEntrenamiento, porQueNoSube, promedioDeSesiones,
   proteinaDespuesDeEntrenar, recuperacion, semanaDeMoss, tamanoDeSesion, TECHO_PROTEINA_POR_KG,
   type DiaConEntrenamiento, type SemanaDeMoss, type Sesion,
 } from './entrenamiento';
@@ -73,6 +73,13 @@ describe('las calorías según el día', () => {
     const chica: Macros = { kcal: 1500, proteina: 110, carbohidratos: 150, grasas: 50 };
     const dias = semana(6, enLaSemana(0, 1, 2, 3, 4, 5), { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }, chica, 500);
     expect(Math.min(...dias.map((d) => d.meta.kcal))).toBeGreaterThanOrEqual(pisoDe('m'));
+  });
+
+  it('el costo es neto: el total de la hora (5 MET) menos el reposo (1 MET), que el día de descanso ya tiene', () => {
+    const total = MET_DE_LA_SESION * 75 * 1;
+    const reposo = MET_EN_REPOSO * 75 * 1;
+    expect(costoDeSesion(75, 60)).toBe(total - reposo);
+    expect(costoDeSesion(75, 60)).toBe(300);
   });
 
   it('lo que cuesta una sesión: 4 kcal por kilo y por hora, de a 10, entre 100 y 500', () => {

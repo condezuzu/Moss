@@ -1,8 +1,7 @@
 // Las seis secciones con el «+» en el medio de la barra (cambio 9 de la especificación) y Ascent
 // arriba de Hábitos (cambio 10), como se aprobaron en la galería. Se pasa de una a otra tocando su
 // nombre o deslizando, con el gesto de Ascent; el cielo queda quieto detrás de todas, oscurecido
-// salvo en Hábitos, y la constelación va con su página. Por ahora la app tiene el cielo: las otras
-// secciones llegan en las etapas 7 y 8, y mientras tanto muestran su nombre, así que abre en Hábitos.
+// salvo en Hábitos, y la constelación va con su página. Abre en Inicio: la comida es el centro.
 
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
@@ -26,12 +25,12 @@ export default function Secciones() {
   const { width: ancho, height: alto } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const abajo = ALTO_BARRA + insets.bottom;
-  const [actual, setActual] = useState(HABITOS);
+  const [actual, setActual] = useState(0);
   const [ascentAbierta, setAscentAbierta] = useState(false);
   const [hojaAbierta, setHojaAbierta] = useState(false);
   // La pestaña, con decimales mientras se desliza; Ascent y la hoja del «+», de 0 (abajo) a 1.
-  const posicion = useSharedValue(HABITOS);
-  const desde = useSharedValue(HABITOS);
+  const posicion = useSharedValue(0);
+  const desde = useSharedValue(0);
   const subida = useSharedValue(0);
   const hoja = useSharedValue(0);
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
