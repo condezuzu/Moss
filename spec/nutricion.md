@@ -130,8 +130,10 @@ suma toques si no se usa.
    - En la ventana del alimento, «Crudo · Cocido» pasa de una versión a la otra
      sin perder los gramos: si pesaste el arroz ya cocido y elegiste el crudo, es
      un toque.
-   - Debajo dice cuánto rinde: «100 g crudo dan unos 280 g cocido». Sale de las
-     calorías de las dos versiones en USDA.
+   - Debajo dice cuánto rinde: «100 g crudo dan unos 260 g cocido». Sale de la
+     proteína de las dos versiones en USDA, que no se pierde al cocinar (con las
+     calorías, una carne grasa parecería no achicarse, porque pierde grasa); sin
+     proteína, de las calorías. Lo frito no tiene rinde: el rebozado y el aceite suman.
 2. **Parte comestible.**
    - Lo que tiene hueso, cáscara o carozo tiene «Con cáscara» (o «con hueso»,
      «con carozo») al lado de los gramos. Prendido, los gramos son lo que pesó

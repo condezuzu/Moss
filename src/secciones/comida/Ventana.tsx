@@ -365,19 +365,19 @@ export function Ventana(p: Props) {
 
 /** Cuánto rinde lo crudo al cocinarlo, para quien pesa antes de cocinar: «100 g crudo dan unos 280 g cocido». */
 function Rinde({ detalle }: { detalle: Detalle | null }) {
-  const [kcalCrudo, setKcalCrudo] = useState<number | null>(null);
+  const [delCrudo, setDelCrudo] = useState<Detalle['por100g'] | null>(null);
   const crudo = detalle?.crudo;
   useEffect(() => {
     if (!crudo) return;
     let vigente = true;
     baseDeAlimentos.detalle(crudo.id, opcionesDeIdioma()).then((d) => {
-      if (vigente && d) setKcalCrudo(d.por100g.kcal);
+      if (vigente && d) setDelCrudo(d.por100g);
     }).catch(() => {});
     return () => {
       vigente = false;
     };
   }, [crudo]);
-  const rinde = crudo && kcalCrudo !== null && detalle ? rindeAlCocinar(kcalCrudo, detalle.por100g.kcal) : null;
+  const rinde = crudo && delCrudo && detalle ? rindeAlCocinar(delCrudo, detalle.por100g, detalle.aceite) : null;
   if (!rinde) return null;
   return <Text style={[estilos.nota, estilos.notaSuelta]}>{t('comida.medir.rinde', { n: numero(Math.round(rinde * 10) * 10) })}</Text>;
 }

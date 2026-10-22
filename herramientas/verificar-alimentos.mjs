@@ -54,7 +54,9 @@ const ambiguos = todas(`SELECT lower(x.texto) AS texto, x.region, group_concat(a
 comprobar(!ambiguos.length, 'ningún nombre principal es de dos alimentos en la misma región', ambiguos.map((d) => `«${d.texto}» en ${d.region}: ${d.cuales}`));
 
 // Cómo se miden los alimentos (spec/nutricion.md).
-const pares = todas(`SELECT a.nombre_es AS cocido, c.nombre_es AS crudo, c.kcal / a.kcal AS rinde, c.crudo AS doble FROM alimentos a JOIN alimentos c ON c.id = a.crudo`);
+// El rinde, por la proteína (que no se pierde al cocinar); sin proteína, por las calorías. Lo frito no cuenta: el rebozado suma.
+const pares = todas(`SELECT a.nombre_es AS cocido, c.nombre_es AS crudo, c.crudo AS doble, a.aceite,
+  CASE WHEN c.proteina >= 1 AND a.proteina >= 1 THEN c.proteina / a.proteina ELSE c.kcal / a.kcal END AS rinde FROM alimentos a JOIN alimentos c ON c.id = a.crudo`);
 comprobar(pares.every((p) => p.crudo && !p.doble), `los ${pares.length} cocidos tienen su versión cruda curada`, pares.filter((p) => !p.crudo || p.doble).map((p) => p.cocido));
 const sinCodigo = todas(`SELECT nombre_es FROM alimentos WHERE fuente = 'producto' AND (marca IS NULL OR porcion IS NULL)`);
 const productos = uno(`SELECT count(*) AS n FROM alimentos WHERE fuente = 'producto'`).n;
@@ -84,7 +86,7 @@ const lejos = todas(`SELECT nombre_es, kcal, round(4 * proteina + 4 * carbohidra
   WHERE nombre_es IS NOT NULL AND abs(kcal - (4 * proteina + 4 * carbohidratos + 9 * grasas + 7 * coalesce(alcohol, 0))) > max(20, 0.2 * kcal)`);
 if (lejos.length) console.log(`! para mirar: ${lejos.length} curados no cierran con 4/4/9 y 7 (fibra, edulcorantes):\n  ${lejos.map((a) => `${a.nombre_es}: ${a.kcal} kcal, y 4/4/9 da ${a.calculadas}`).join('\n  ')}`);
 if (sinSecundarios.length) console.log(`! para mirar: ${sinSecundarios.length} curados de USDA sin fibra o sin sodio (en la app no se muestran): ${sinSecundarios.map((a) => a.nombre_es).join(', ')}`);
-const rindeRaro = pares.filter((p) => p.rinde < 0.25 || p.rinde > 4);
+const rindeRaro = pares.filter((p) => p.aceite !== 'incluido' && (p.rinde < 0.25 || p.rinde > 4));
 if (rindeRaro.length) console.log(`! para mirar: ${rindeRaro.length} pares crudo y cocido con un rendimiento raro:\n  ${rindeRaro.map((p) => `${p.cocido}: ${p.rinde.toFixed(2)}`).join('\n  ')}`);
 // Lo cocido sin su versión cruda, y lo crudo sin cocido: para completar los pares.
 const cocinado = /(?:^|\s)(cocid[oa]s?|hervid[oa]s?|a la plancha|al horno|asad[oa]s?|frit[oa]s?|salteado|guisad[oa]s?|al vapor|grillad[oa])(?:$|\s|,)/i;

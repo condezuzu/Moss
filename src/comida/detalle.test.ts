@@ -93,9 +93,15 @@ describe('el código de barras', () => {
 });
 
 describe('cuánto rinde al cocinar', () => {
-  it('por las calorías de las dos versiones: 100 g de arroz crudo dan unos 280 g cocido', () => {
-    expect(rindeAlCocinar(365, 130)).toBeCloseTo(2.81, 2);
-    expect(rindeAlCocinar(0, 130)).toBeNull();
-    expect(rindeAlCocinar(900, 10)).toBeNull();
+  it('por la proteína, que no se pierde al cocinar: 100 g de arroz crudo dan unos 260 g cocido', () => {
+    expect(rindeAlCocinar({ kcal: 365, proteina: 7.1 }, { kcal: 130, proteina: 2.7 })).toBeCloseTo(2.63, 2);
+    // Con las calorías, la carne molida grasa parecería no achicarse; con la proteína, sí.
+    expect(rindeAlCocinar({ kcal: 254, proteina: 17.2 }, { kcal: 273, proteina: 26.8 })).toBeCloseTo(0.64, 2);
+  });
+
+  it('sin proteína, por las calorías; lo frito no tiene rinde, y lo imposible tampoco', () => {
+    expect(rindeAlCocinar({ kcal: 100, proteina: 0.5 }, { kcal: 50, proteina: 0.3 })).toBe(2);
+    expect(rindeAlCocinar({ kcal: 82, proteina: 17.8 }, { kcal: 200, proteina: 13 }, 'incluido')).toBeNull();
+    expect(rindeAlCocinar({ kcal: 900, proteina: 0 }, { kcal: 10, proteina: 0 })).toBeNull();
   });
 });

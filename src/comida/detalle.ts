@@ -125,11 +125,16 @@ export async function alimentoPorCodigo(base: BaseDeAlimentos, codigo: string): 
 }
 
 /**
- * Cuánto rinde lo crudo al cocinarlo, por las calorías de las dos versiones: 100 g de arroz crudo
- * (365 kcal) dan unos 280 g cocido (130 kcal por 100 g). Sirve de guía, no de cuenta exacta.
+ * Cuánto rinde lo crudo al cocinarlo: cuántos gramos cocidos dan 100 g crudos. Sale de la proteína
+ * de las dos versiones, que no se pierde al cocinar (la grasa sí: con las calorías, una carne grasa
+ * parecería no achicarse); sin proteína, de las calorías. 100 g de arroz crudo dan unos 260 g
+ * cocido. Lo frito no tiene rinde: el rebozado y el aceite suman. Sirve de guía, no de cuenta exacta.
  */
-export function rindeAlCocinar(kcalCrudo: number, kcalCocido: number): number | null {
-  if (!(kcalCrudo > 0) || !(kcalCocido > 0)) return null;
-  const rinde = kcalCrudo / kcalCocido;
+export function rindeAlCocinar(crudo: Pick<Valores100, 'kcal' | 'proteina'>, cocido: Pick<Valores100, 'kcal' | 'proteina'>, aceite?: Detalle['aceite']): number | null {
+  if (aceite === 'incluido') return null;
+  const conProteina = crudo.proteina >= 1 && cocido.proteina >= 1;
+  const [a, b] = conProteina ? [crudo.proteina, cocido.proteina] : [crudo.kcal, cocido.kcal];
+  if (!(a > 0) || !(b > 0)) return null;
+  const rinde = a / b;
   return rinde >= 0.25 && rinde <= 4 ? rinde : null;
 }

@@ -234,7 +234,11 @@ export function porcionEnEspanol(ingles) {
   let parentesis = '';
   const p = resto.match(/\s*(\([^)]*\))$/);
   if (p) {
-    parentesis = medidas(p[1]) ?? '';
+    // Un paréntesis que no se entiende puede cambiar lo que es la porción («1 oz, raw (yield after
+    // cooking)» son 16 g cocidos): mejor no traducirla que traducirla a medias.
+    const traducido = medidas(p[1]);
+    if (traducido === null) return null;
+    parentesis = traducido;
     resto = resto.slice(0, -p[0].length);
   }
   const bajo = resto.toLowerCase();
@@ -276,7 +280,12 @@ const QUE_SE_DESECHA = [
   [/\bcobs?\b/i, 'marlo', 'cob'],
   [/stem|leaves|ends|trimming|crown|roots?\b|base/i, 'tallos', 'stems'],
 ];
-const EN_INGLES = Object.fromEntries(QUE_SE_DESECHA.map(([, es, en]) => [es, en]));
+/** Lo que no se come, en inglés: el hueso de una fruta es «pit» y el de una carne, «bone»; la cáscara de un huevo o de un fruto seco es «shell». */
+function enIngles(es, categoria) {
+  if (es === 'hueso') return categoria === 'frutas' ? 'pit' : 'bone';
+  if (es === 'cáscara') return /huevo|frutos-secos|semillas|mariscos|pescados/.test(categoria ?? '') ? 'shell' : 'peel';
+  return Object.fromEntries(QUE_SE_DESECHA.map(([, e, en]) => [e, en]))[es];
+}
 function queSeDesecha(descripcion) {
   const partes = QUE_SE_DESECHA.filter(([re]) => re.test(descripcion));
   const unicos = (i) => [...new Set(partes.map((p) => p[i]))].slice(0, 2).join(i === 1 ? ' y ' : ' and ');
@@ -515,7 +524,7 @@ for (const a of alimentos.values()) {
     let que = null;
     if (m?.[2]) {
       const [es, en] = m[2].split('/').map((x) => x.trim());
-      que = { es, en: en ?? es.split(' y ').map((x) => EN_INGLES[x]).join(' and ') };
+      que = { es, en: en ?? es.split(' y ').map((x) => enIngles(x, a.categoria)).join(' and ') };
       if (/undefined/.test(que.en)) errores.push(`${donde}: «${es}» no lo sé decir en inglés: «desecho=${m[1]} ${es}/…»`);
     } else if (sr) que = queSeDesecha(sr.que);
     if (!(fraccion > 0 && fraccion < 0.9)) errores.push(`${donde}: ${sr || m ? `el desecho (${fraccion}) no es posible` : 'USDA no dice qué parte no se come: «desecho=N qué»'}`);
