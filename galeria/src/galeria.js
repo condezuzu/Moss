@@ -1,5 +1,5 @@
-// La página de revisión: datos de mentira, controles, la comida, la entrada a la app, el viaje a
-// Ajustes y el catálogo. CATALOGO, TEXTOS, SHADERS, ALIMENTOS y los módulos de la comida los inyecta
+// La página de revisión: datos de mentira, controles, las pestañas (Inicio con la comida, Hábitos
+// con el cielo y Ajustes), la entrada a la app y el catálogo. CATALOGO, TEXTOS, SHADERS, ALIMENTOS y los módulos de la comida los inyecta
 // galeria/construir.mjs desde src/ y assets/ (una sola fuente).
 
 (() => {
@@ -145,8 +145,9 @@
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
   let escena;
-  // La comida se arma después de la escena; hasta entonces, los controles no la miran.
+  // La comida y las pestañas se arman después de la escena; hasta entonces, los controles no las miran.
   let comida = null;
+  let pestanas = null;
   try {
     escena = Escena.crear(tel, SHADERS, {
       calidad: 'alta',
@@ -186,6 +187,10 @@
     aspecto: () => tel.clientWidth / Math.max(1, tel.clientHeight),
     avanceSolo: () => avanceSolo,
     alCambiar: () => refrescarControles(),
+    // Durante la entrada no hay pestañas; al final, el flum deja en Inicio.
+    alEmpezar: () => tel.classList.add('en-entrada'),
+    alSalir: () => tel.classList.remove('en-entrada'),
+    llegada: () => { pestanas.ir(0, true); comida.verDia(0); return comida.zona; },
   });
 
   // ------------------------------------------------------------ la comida
@@ -194,7 +199,7 @@
     textos: TEXTOS,
     alimentos: (typeof ALIMENTOS !== 'undefined' && ALIMENTOS) || [],
     alCambiar: () => refrescarControles(),
-    // Cada registro, con los toques que llevó desde el cielo: para compararlos con la especificación.
+    // Cada registro, con los toques que llevó desde Inicio: para compararlos con la especificación.
     alRegistrar: (r) => {
       toques.unshift(r);
       toques.length = Math.min(toques.length, 6);
@@ -212,13 +217,11 @@
       $('#toques .vacio').hidden = true;
     },
   });
-  // Espera a que termine el flum (en las capturas por software tarda más que en un teléfono).
-  const cuandoLlegue = (fn) => { const t = setInterval(() => { if (!escena.viajando) { clearInterval(t); fn(); } }, 50); };
-  const enLaZona = (fn) => { if (comida.hojaAbierta) comida.cerrarHoja(); if (comida.enZona) { fn(); return; } if (comida.ir()) cuandoLlegue(() => setTimeout(fn, 250)); };
-  const conHoja = (fn) => { if (!comida.hojaAbierta && !comida.abrirHoja()) return; fn(); };
+  // Lo de la comida pasa en Inicio: los botones de la galería llevan ahí primero.
+  const enLaZona = (fn) => { if (comida.hojaAbierta) comida.cerrarHoja(); pestanas.ir(0); fn(); };
+  const conHoja = (fn) => { pestanas.ir(0); if (!comida.hojaAbierta && !comida.abrirHoja()) return; fn(); };
   const accionesComida = {
-    ir: () => (comida.enZona ? comida.volver() : comida.ir()),
-    registrar: () => (comida.hojaAbierta ? comida.cerrarHoja() : comida.abrirHoja()),
+    registrar: () => { if (comida.hojaAbierta) comida.cerrarHoja(); else { pestanas.ir(0); comida.abrirHoja(); } },
     linea: () => enLaZona(() => { comida.vista('dia'); comida.bajarA('dia'); }),
     semana: () => enLaZona(() => comida.vista('semana')),
     mes: () => enLaZona(() => comida.vista('mes')),
@@ -235,79 +238,249 @@
     escribiendo = setInterval(() => { i++; comida.escribir(texto.slice(0, i)); if (i >= texto.length) clearInterval(escribiendo); }, 90);
   }
 
-  // ------------------------------------------------------------ Ajustes, para ver el «flum»
-  // Una pantalla de Ajustes de maqueta: lo que importa acá es el viaje de ida y vuelta.
+  // ------------------------------------------------------------ Ajustes
+  // De maqueta: acá importa que es la última pestaña.
   const ajustes = document.createElement('section');
   ajustes.className = 'ajustes';
-  ajustes.hidden = true;
   tel.appendChild(ajustes);
-  const tx = (clave) => clave.split('.').reduce((o, k) => (o ? o[k] : undefined), TEXTOS[idiomaActual()]) || clave;
+  const tx = (clave) => clave.split('.').reduce((o, k) => (o ? o[k] : undefined), TEXTOS[escena.idioma]) || clave;
   function armarAjustes() {
     const filas = [
-      ['ajustes.calidad', 'Alta'], ['ajustes.idioma', idiomaActual() === 'es' ? 'Español' : 'English'],
+      ['ajustes.calidad', 'Alta'], ['ajustes.idioma', escena.idioma === 'es' ? 'Español' : 'English'],
       ['ajustes.salud', '✓'], ['ajustes.ascent', ''], ['ajustes.cuenta', ''],
     ];
-    ajustes.innerHTML = `<h2>${tx('ajustes.titulo')}</h2><ul>${filas.map(([k, v]) => `<li><span>${tx(k)}</span><b>${v}</b></li>`).join('')}</ul>`
-      + `<button type="button" class="ajustes-volver">${tx('ajustes.volver')}</button>`;
-    ajustes.querySelector('.ajustes-volver').addEventListener('click', () => viajar('hoy'));
+    ajustes.innerHTML = `<h2>${tx('ajustes.titulo')}</h2><ul>${filas.map(([k, v]) => `<li><span>${tx(k)}</span><b>${v}</b></li>`).join('')}</ul>`;
   }
-  let enAjustes = false;
-  function viajar(destino) {
-    if (escena.viajando || entrada.paso || comida.enZona || comida.hojaAbierta) return;
-    const ui = tel.querySelector('.ui');
-    if (destino === 'ajustes' && !enAjustes) {
-      armarAjustes();
-      escena.viajar({
-        hasta: { zoom: 2.2, velo: 0.62 }, sale: ui, llega: ajustes,
-        alCambiar: () => { enAjustes = true; escena.ponerModo('ajustes'); },
-        alLlegar: refrescarControles,
-      });
-    } else if (destino === 'hoy' && enAjustes) {
-      escena.viajar({
-        hasta: { zoom: 1, velo: 0 }, sale: ajustes, llega: ui,
-        alCambiar: () => { enAjustes = false; escena.ponerModo('hoy'); },
-        alLlegar: refrescarControles,
-      });
-    }
-    refrescarControles();
+  armarAjustes();
+
+  // ------------------------------------------------------------ las pestañas, como en Ascent
+  // Inicio es la comida, Hábitos el cielo con la constelación y Ajustes va al final. Se pasa de una
+  // a otra tocando su nombre o deslizando, con la de al lado asomando mientras se arrastra. Las
+  // reglas del gesto son las de Ascent (nucleo/deslizar.ts): cambia con un quinto de la pantalla o
+  // con un tirón rápido, y el viaje dura 340 ms. El cielo no se desliza: queda quieto detrás de las
+  // tres, como el planeta de Ascent, y se oscurece en Inicio y en Ajustes.
+  const PESTANAS = ['inicio', 'habitos', 'ajustes'];
+  const UMBRAL = 0.22;
+  const VELOCIDAD_MIN = 0.35;
+  const VIAJE_MS = 340;
+  const CEDE_EN_EL_BORDE = 0.25;
+  // Cuánto tiene que moverse el dedo, y más de costado que para abajo, para que el gesto sea de las
+  // pestañas y no la lista de la comida o la cámara del cielo.
+  const DECIDE_PX = 14;
+  // Cuánto se oscurece el cielo detrás de cada pestaña, de 0 a 1.
+  const VELO = [0.8, 0, 0.72];
+
+  // cubic-bezier(0.16, 1, 0.3, 1), la curva de Ascent: sale rápido y frena largo.
+  function bezier(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const enX = (t) => ((ax * t + bx) * t + cx) * t;
+    const derivada = (t) => (3 * ax * t + 2 * bx) * t + cx;
+    return (u) => {
+      let t = u;
+      for (let i = 0; i < 8; i++) {
+        const d = derivada(t);
+        if (Math.abs(d) < 1e-6) break;
+        t = Math.min(1, Math.max(0, t - (enX(t) - u) / d));
+      }
+      return ((ay * t + by) * t + cy) * t;
+    };
   }
 
+  pestanas = (() => {
+    const paginas = [comida.zona, tel.querySelector('.ui'), ajustes];
+    const velo = document.createElement('div');
+    velo.className = 'velo-pestanas';
+    velo.innerHTML = '<i></i>';
+    tel.querySelector('canvas').after(velo);
+    const barra = document.createElement('nav');
+    barra.className = 'pestanas';
+    barra.setAttribute('role', 'tablist');
+    tel.appendChild(barra);
+    // El nombre apagado y, encima, el mismo encendido: lo que cambia es la opacidad del de arriba.
+    const botones = PESTANAS.map((_, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.innerHTML = '<span></span><span class="pt-luz" aria-hidden="true"></span>';
+      b.addEventListener('click', () => ir(i));
+      barra.appendChild(b);
+      return b;
+    });
+    const curva = bezier(0.16, 1, 0.3, 1);
+    // La que está a la vista o a la que se va (el «rumbo» de Ascent), y cuánto está corrida la
+    // tira, en píxeles.
+    let actual = 0;
+    let x = 0;
+    let animacion = 0;
+    let gesto = null;
+    let ultimoArrastre = -1e9;
+    const ancho = () => tel.clientWidth || 1;
+    const reposo = (i) => -i * ancho();
+    const vecina = (i, dx) => { const d = dx < 0 ? i + 1 : i - 1; return d < 0 || d >= PESTANAS.length ? null : d; };
+
+    // Se enciende con la tira, no al soltar: mientras arrastrás, el nombre de destino se va prendiendo.
+    function luz(i) {
+      const d = (x - reposo(i)) / ancho();
+      if ((i === 0 && d > 0) || (i === PESTANAS.length - 1 && d < 0)) return 1;
+      return Math.max(0, 1 - Math.abs(d));
+    }
+
+    function pintar() {
+      const w = ancho();
+      paginas.forEach((p, i) => {
+        const corrida = i * w + x;
+        p.style.translate = `${corrida.toFixed(1)}px 0`;
+        p.style.visibility = Math.abs(corrida) >= w ? 'hidden' : '';
+      });
+      escena.desplazarPagina(w + x);
+      // El cielo se aclara mientras arrastrás hacia Hábitos, no de golpe al llegar.
+      const k = Math.min(PESTANAS.length - 1, Math.max(0, -x / w));
+      const a = VELO[Math.floor(k)], b = VELO[Math.ceil(k)];
+      const oscuro = a + (b - a) * (k - Math.floor(k));
+      velo.firstChild.style.opacity = oscuro.toFixed(3);
+      // Sobre la comida y Ajustes la barra es pareja, como en Ascent; sobre el cielo deja ver el musgo.
+      barra.style.setProperty('--solida', Math.min(1, oscuro / VELO[0]).toFixed(3));
+      botones.forEach((boton, i) => { boton.lastChild.style.opacity = luz(i).toFixed(3); });
+    }
+
+    function marcar() {
+      botones.forEach((b, i) => b.setAttribute('aria-selected', String(i === actual)));
+      paginas.forEach((p, i) => { p.inert = i !== actual; });
+      comida.ponerEnZona(actual === 0);
+      refrescarControles();
+    }
+
+    function ir(i, deUna) {
+      cancelAnimationFrame(animacion);
+      animacion = 0;
+      actual = Math.max(0, Math.min(PESTANAS.length - 1, i));
+      marcar();
+      const desde = x, hasta = reposo(actual);
+      if (deUna || movimientoReducido || desde === hasta) { x = hasta; pintar(); return; }
+      const t0 = performance.now();
+      const paso = (t) => {
+        const u = Math.min(1, (t - t0) / VIAJE_MS);
+        x = desde + (hasta - desde) * curva(u);
+        pintar();
+        animacion = u < 1 ? requestAnimationFrame(paso) : 0;
+      };
+      animacion = requestAnimationFrame(paso);
+    }
+
+    // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni la
+    // lista de la comida ni el cielo se enteran.
+    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || escena.viajando);
+    tel.addEventListener('pointerdown', (ev) => {
+      gesto = null;
+      if (bloqueado() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+      if (ev.target.closest('.pestanas, .barra-inmersiva')) return;
+      gesto = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, desde: 0 };
+    }, true);
+    tel.addEventListener('pointermove', (ev) => {
+      const g = gesto;
+      if (!g || ev.pointerId !== g.id) return;
+      const dx = ev.clientX - g.x0, dy = ev.clientY - g.y0;
+      if (!g.decidido) {
+        if (escena.arrastrando) { gesto = null; return; }
+        if (Math.abs(dx) < DECIDE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        g.decidido = true;
+        g.desde = performance.now();
+        cancelAnimationFrame(animacion);
+        animacion = 0;
+        escena.soltarGesto();
+        try { tel.setPointerCapture(ev.pointerId); } catch (_) { /* sin captura igual funciona */ }
+      }
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      // En los bordes no hay pestaña: la tira cede un cuarto de lo que se mueve el dedo.
+      x = reposo(actual) + (vecina(actual, dx) === null ? dx * CEDE_EN_EL_BORDE : dx);
+      pintar();
+    }, true);
+    const soltar = (ev) => {
+      const g = gesto;
+      if (!g || ev.pointerId !== g.id) return;
+      gesto = null;
+      if (!g.decidido) return;
+      ev.stopImmediatePropagation();
+      ultimoArrastre = performance.now();
+      if (ev.type === 'pointercancel') { ir(actual); return; }
+      const dx = ev.clientX - g.x0;
+      const v = dx / Math.max(1, performance.now() - g.desde);
+      const destino = vecina(actual, dx);
+      const lejos = Math.abs(dx) >= ancho() * UMBRAL;
+      const rapido = dx < 0 ? v <= -VELOCIDAD_MIN : v >= VELOCIDAD_MIN;
+      ir(destino !== null && (lejos || rapido) ? destino : actual);
+    };
+    tel.addEventListener('pointerup', soltar, true);
+    tel.addEventListener('pointercancel', soltar, true);
+    // El click que llega después de arrastrar no es un toque: no enciende ni abre nada.
+    tel.addEventListener('click', (ev) => {
+      if (performance.now() - ultimoArrastre < 400) { ev.stopImmediatePropagation(); ev.preventDefault(); }
+    }, true);
+
+    new ResizeObserver(() => {
+      if (gesto && gesto.decidido) return;
+      cancelAnimationFrame(animacion);
+      animacion = 0;
+      x = reposo(actual);
+      pintar();
+    }).observe(tel);
+
+    function ponerTextos() {
+      botones.forEach((b, i) => {
+        const nombre = tx('pestanas.' + PESTANAS[i]);
+        b.firstChild.textContent = nombre;
+        b.lastChild.textContent = nombre;
+      });
+    }
+    ponerTextos();
+    // Moss abre en Inicio.
+    marcar();
+    pintar();
+
+    return {
+      ir,
+      ponerTextos,
+      get actual() { return actual; },
+      get deslizando() { return !!animacion || !!(gesto && gesto.decidido); },
+    };
+  })();
+
   function refrescarControles() {
-    if (!escena || !comida) return;
+    if (!escena || !comida || !pestanas) return;
     const enEntrada = !!entrada.paso;
-    const enComida = comida.enZona || comida.hojaAbierta;
-    const fuera = enEntrada || enAjustes || enComida;
-    $('#b-repetir').disabled = !escena.completo || fuera;
-    $('#b-salud').disabled = !escena.hayAutoPendiente || fuera;
-    $('#b-completar').disabled = escena.completo || fuera;
-    $$('[data-comida="ir"]').forEach((b) => { b.textContent = comida.enZona ? 'Volver al cielo' : (b.closest('.barra-inmersiva') ? 'Comida' : 'Ir a la comida'); b.disabled = enEntrada || enAjustes || comida.hojaAbierta; });
+    const quieto = enEntrada || comida.hojaAbierta;
+    $('#b-repetir').disabled = !escena.completo || quieto;
+    $('#b-salud').disabled = !escena.hayAutoPendiente || quieto;
+    $('#b-completar').disabled = escena.completo || quieto;
     $('#b-registrar').textContent = comida.hojaAbierta ? 'Cerrar la hoja' : 'Registrar';
-    $$('#comida [data-comida]').forEach((b) => { if (!['ir', 'registrar'].includes(b.dataset.comida)) b.disabled = enEntrada || enAjustes; });
-    $('#b-registrar').disabled = enEntrada || enAjustes;
+    $$('#comida [data-comida]').forEach((b) => { b.disabled = enEntrada; });
     const enUniverso = escena.zona() === 'universo';
     $('#b-zona').textContent = enUniverso ? 'Volver a hoy' : 'Subir a tu universo';
     $$('.barra-inmersiva [data-accion="zona"]').forEach((b) => { b.textContent = enUniverso ? 'Hoy' : 'Universo'; });
     $('#b-entrada').textContent = enEntrada ? 'Salir de la entrada' : 'Ver la entrada desde el principio';
-    $('#b-ajustes').textContent = enAjustes ? 'Volver al cielo' : 'Ir a Ajustes';
-    $('#b-ajustes').disabled = enEntrada || enComida;
+    $$('[data-pestana]').forEach((b) => { b.setAttribute('aria-pressed', String(Number(b.dataset.pestana) === pestanas.actual)); b.disabled = quieto; });
   }
 
+  // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
+  const enHabitos = (fn) => () => { if (comida.hojaAbierta) comida.cerrarHoja(); pestanas.ir(1); fn(); };
   const acciones = {
-    salud: () => escena.simularSalud(),
-    completar: () => escena.completarDia(),
-    repetir: () => escena.repetirAnimacion(),
-    reiniciar: () => { if (entrada.paso) entrada.salir(); cargarLira(); escena.irA('hoy'); },
-    zona: () => { escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo'); },
-    fugaz: () => escena.lanzarFugaz(),
-    entrada: () => { if (enAjustes || comida.enZona || comida.hojaAbierta) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
-    ajustes: () => viajar(enAjustes ? 'hoy' : 'ajustes'),
+    salud: enHabitos(() => escena.simularSalud()),
+    completar: enHabitos(() => escena.completarDia()),
+    repetir: enHabitos(() => escena.repetirAnimacion()),
+    reiniciar: () => { if (entrada.paso) entrada.salir(); cargarLira(); escena.irA('hoy'); pestanas.ir(1); },
+    zona: enHabitos(() => escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo')),
+    fugaz: enHabitos(() => escena.lanzarFugaz()),
+    entrada: () => { if (comida.hojaAbierta) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
   };
   // Va después de todo lo que usa refrescarControles (la escena lo llama al poner la constelación).
   cargarLira();
   $$('[data-accion]').forEach((b) => b.addEventListener('click', () => { acciones[b.dataset.accion](); refrescarControles(); }));
   $$('[data-comida]').forEach((b) => b.addEventListener('click', () => { accionesComida[b.dataset.comida](); refrescarControles(); }));
+  $$('[data-pestana]').forEach((b) => b.addEventListener('click', () => pestanas.ir(Number(b.dataset.pestana))));
   $$('#saltos-entrada [data-paso]').forEach((b) => b.addEventListener('click', () => {
-    if (enAjustes || comida.enZona || comida.hojaAbierta) return;
+    if (comida.hojaAbierta) return;
     entrada.irA(b.dataset.paso);
     refrescarControles();
   }));
@@ -321,7 +494,7 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); dibujarCatalogo(); if (enAjustes) armarAjustes(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); armarAjustes(); dibujarCatalogo(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
   segmento('s-arcos', (v) => comida.arcos(v === 'si'));
@@ -343,6 +516,16 @@
     esperaRiqueza = setTimeout(() => escena.ponerRiqueza(rRiqueza.value / 100), 80);
   });
   mostrarRiqueza();
+
+  // Cuánto se ve la vía láctea: su polvo blanco va al 30 % desde el 21/10/2026 (VIA_LACTEA en
+  // src/cielo/mundo.ts).
+  const rVia = $('#r-via');
+  let esperaVia = 0;
+  rVia.addEventListener('input', () => {
+    $('#o-via').textContent = rVia.value + '%';
+    clearTimeout(esperaVia);
+    esperaVia = setTimeout(() => escena.ponerVia(rVia.value / 100), 80);
+  });
 
   const bFps = $('#b-fps');
   bFps.addEventListener('click', () => {
@@ -433,11 +616,12 @@
         b.querySelector('.tipo').textContent = tipo + (n >= 16 ? ' · ' + c.estrellas.length : '');
         miniatura(b.querySelector('canvas'), c);
         b.addEventListener('click', () => {
-          if (entrada.paso || enAjustes || comida.enZona || comida.hojaAbierta) return;
+          if (entrada.paso || comida.hojaAbierta) return;
           const datos = c.id === 'lyra' ? LIRA : c;
           const habitos = c.id === 'lyra' ? habitosLira() : habitosDeMentira(c.estrellas.length);
           escena.ponerConstelacion(datos, habitos);
           escena.irA('hoy');
+          pestanas.ir(1);
           refrescarControles();
           if (!tel.classList.contains('inmersivo')) tel.scrollIntoView({ behavior: movimientoReducido ? 'auto' : 'smooth', block: 'center' });
         });
@@ -455,12 +639,15 @@
   window.__idioma = (v) => document.querySelector(`#s-idioma [data-valor="${v}"]`).click();
   window.__calidad = (v) => document.querySelector(`#s-calidad [data-valor="${v}"]`).click();
   window.__riqueza = (r) => { rRiqueza.value = Math.round(r * 100); mostrarRiqueza(); escena.ponerRiqueza(r); };
+  window.__via = (v) => { rVia.value = Math.round(v * 100); $('#o-via').textContent = rVia.value + '%'; escena.ponerVia(v); };
+  window.__pagina = (i, deUna) => pestanas.ir(i, deUna);
+  window.__deslizando = () => pestanas.deslizando;
   window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
   window.__metas = () => entrada.metas();
   window.__velocidad = (v) => escena.velocidad(v);
   window.__comida = (accion, arg) => {
     const pasos = {
-      ir: () => comida.ir(), volver: () => comida.volver(), registrar: () => comida.abrirHoja(), cerrar: () => comida.cerrarHoja(),
+      registrar: () => comida.abrirHoja(), cerrar: () => comida.cerrarHoja(),
       escribir: () => comida.escribir(arg), ficha: () => comida.ficha(arg), agregar: () => comida.agregarPrimero(),
       sumar: () => comida.sumar(), listo: () => comida.listo(), confirmar: () => comida.confirmar(), arcos: () => comida.arcos(arg),
       vista: () => comida.vista(arg),

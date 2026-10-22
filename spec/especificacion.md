@@ -29,16 +29,23 @@ En el orden en que llegaron:
    «Después».
 7. **Más sobria, como Ascent.** Calcular los macros es lo principal, y todo
    estaba «superestimulante». Antes de cambios grandes, primero se prueba:
-   - el cielo sin la vía láctea (el polvo estelar blanco), el musgo más apagado y
-     las esporas de vez en cuando;
+   - la vía láctea (el polvo estelar blanco) mucho más tenue, al 30 %, el musgo
+     más apagado y las esporas de vez en cuando;
    - los números y los títulos de la comida en una sans sobria (Outfit), y una
      luna de verdad en lugar de la bola dorada;
    - registrar es armar la comida en una ventana y revisarla antes de agregarla;
    - la comida se ve por día, por semana y por mes, como en MacroFactor, sin las
      flechas de ayer y mañana.
 
-   Tu propuesta, pendiente de armar: el inicio con los macros, como MacroFactor y
-   como Ascent, y los hábitos con el cielo en otra pestaña (D14).
+8. **Pestañas, como Ascent** (tu propuesta, armada en la galería el 22/10/2026,
+   D14). Abajo van tres pestañas de texto:
+   - **Inicio:** la comida, con lo que queda y los macros, como MacroFactor;
+   - **Hábitos:** el cielo de hoy con la constelación, y el universo arriba;
+   - **Ajustes.**
+
+   Se pasa deslizando, con la de al lado asomando y las reglas del gesto de
+   Ascent. El cielo queda quieto detrás de las tres, y el flum queda solo para
+   el final de la entrada. Cambió «Visual».
 
 ---
 
@@ -153,9 +160,10 @@ Se mantiene lo ya definido:
 
 ## Visual (lo más importante)
 
-- Un solo cielo continuo: deslizar mueve la cámara por el espacio en vez de saltar entre pantallas. Zonas del cielo: hoy, constelaciones, comida, calendario, estadísticas, amigos y ajustes.
-- Moverse entre secciones (por ejemplo, de inicio al menú o a ajustes) tiene un movimiento como si se estuviera yendo muy lejos, muy rápido: una animación de un segundo, tipo «flum».
-- Cielo nocturno sin contaminación lumínica: muchísimas estrellas y auroras. Desde el 21/10/2026, sin la vía láctea: Moss es más sobrio.
+- Tres pestañas, como Ascent: Inicio (la comida), Hábitos (el cielo) y Ajustes. Se pasa deslizando, con la de al lado asomando, y el cielo queda quieto detrás de las tres, oscurecido en Inicio y en Ajustes (22/10/2026, D14).
+- En Hábitos el cielo es continuo: arrastrar hacia abajo mueve la cámara por el espacio hasta tu universo, con la semana, en vez de saltar a otra pantalla.
+- El final de la entrada tiene un movimiento como si se estuviera yendo muy lejos, muy rápido: una animación de un segundo, tipo «flum». Antes era para moverse entre secciones; con las pestañas quedó solo ahí.
+- Cielo nocturno sin contaminación lumínica: muchísimas estrellas y auroras. Desde el 21/10/2026, la vía láctea va mucho más tenue, al 30 %: Moss es más sobrio.
 - Las constelaciones son parte del fondo: cuantos más hábitos hechos, más cielo encendido, así cada cielo es distinto.
 - Paleta: azul noche profundo, dorado y toques de verde musgo. Distinta de Ascent, que es astronomía y física. La estética de Moss va hacia menos mitología, más cielo nocturno y naturaleza (musgo), y es cálida.
 - Musgo y estrellas: el musgo aparece en algunas zonas, las estrellas en otras, y en lugares puntuales los dos juntos.

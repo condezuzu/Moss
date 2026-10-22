@@ -1,7 +1,8 @@
 // Capturas de la galería a resolución de iPhone (393×852 a 2×), en momentos fijos:
 // es como se revisa el detalle fino sin depender del panel de vista previa.
 // Uso: npm run galeria:capturas            (necesita npm run galeria:ver prendido)
-//      node herramientas/capturar-galeria.mjs <carpeta> inicio comida registrar comida-ingles tocar…
+//      node herramientas/capturar-galeria.mjs <carpeta> inicio deslizar comida registrar tocar…
+// La galería abre en Inicio, la comida; los escenarios del cielo pasan primero a Hábitos.
 // La aurora y el cielo se dibujan por software (SwiftShader): los tiempos de la animación van
 // más lentos que en un teléfono, pero cada cuadro es el mismo.
 
@@ -31,12 +32,37 @@ const foto = async (nombre) => {
   console.log('·', nombre);
 };
 const comida = (accion, arg) => pagina.evaluate(([a, x]) => window.__comida(a, x), [accion, arg]);
-// El flum avanza con los cuadros del cielo: por software tarda más que en un teléfono.
-const esperarViaje = () => pagina.waitForFunction(() => !window.__viajando(), null, { timeout: 30000 });
+// Una pestaña de una (0 Inicio, 1 Hábitos, 2 Ajustes).
+const pestana = async (i) => {
+  await pagina.evaluate((n) => window.__pagina(n, true), i);
+  await pagina.waitForTimeout(300);
+};
+const alCielo = () => pestana(1);
+// Un arrastre de costado con el mouse, como un dedo: se saca la foto con el dedo todavía abajo.
+async function arrastrar(desde, hasta, y, nombre) {
+  await pagina.mouse.move(desde, y);
+  await pagina.mouse.down();
+  await pagina.mouse.move(hasta, y, { steps: 10 });
+  await pagina.waitForTimeout(500);
+  if (nombre) await foto(nombre);
+  await pagina.mouse.up();
+  await pagina.mouse.move(1, 1);
+}
 
 const pasos = {
-  inicio: () => foto('inicio'),
+  // Lo primero que se ve: Inicio. Después, las otras dos pestañas.
+  async inicio() {
+    await foto('inicio');
+    await alCielo();
+    await pagina.waitForTimeout(900);
+    await foto('habitos');
+    await pestana(2);
+    await pagina.waitForTimeout(600);
+    await foto('ajustes');
+    await pestana(0);
+  },
   async tocar() {
+    await alCielo();
     await pagina.evaluate(() => window.__tocar('Escribir'));
     await pagina.waitForTimeout(90);
     await foto('toque-90ms');
@@ -44,6 +70,7 @@ const pasos = {
     await foto('toque-700ms');
   },
   async completo() {
+    await alCielo();
     await pagina.evaluate(() => window.__accion('completar'));
     let t = 0;
     for (const ms of [400, 1100, 1800, 2600, 3600, 5000]) {
@@ -53,6 +80,7 @@ const pasos = {
     }
   },
   async universo() {
+    await alCielo();
     await pagina.evaluate(() => window.__accion('zona'));
     await pagina.waitForTimeout(1800);
     await foto('universo');
@@ -60,12 +88,14 @@ const pasos = {
     await pagina.waitForTimeout(1500);
   },
   async ingles() {
+    await alCielo();
     await pagina.evaluate(() => window.__idioma('en'));
     await pagina.waitForTimeout(400);
     await foto('ingles');
     await pagina.evaluate(() => window.__idioma('es'));
   },
   async baja() {
+    await alCielo();
     await pagina.evaluate(() => window.__calidad('baja'));
     await pagina.waitForTimeout(2500);
     await foto('calidad-baja');
@@ -73,13 +103,21 @@ const pasos = {
     await pagina.waitForTimeout(2500);
   },
   async riqueza() {
+    await alCielo();
     for (const r of [0, 1, 0.6]) {
       await pagina.evaluate((v) => window.__riqueza(v), r);
       await pagina.waitForTimeout(3500);
       if (r !== 0.6) await foto('riqueza-' + Math.round(r * 100));
     }
+    // La vía láctea: apagada y entera, para comparar con el 30 % de siempre.
+    for (const v of [0, 1, 0.3]) {
+      await pagina.evaluate((x) => window.__via(x), v);
+      await pagina.waitForTimeout(3500);
+      if (v !== 0.3) await foto('via-' + Math.round(v * 100));
+    }
   },
   async fugaz() {
+    await alCielo();
     await pagina.evaluate(() => window.__accion('fugaz'));
     for (const ms of [150, 350, 600, 900]) {
       await pagina.waitForTimeout(ms === 150 ? 150 : 200);
@@ -101,31 +139,37 @@ const pasos = {
         await foto(`entrada-${paso}-${ms}`);
       }
     }
-    // Empezar: el flum hasta el cielo de hoy.
+    // Empezar: el flum hasta Inicio.
     await pagina.click('.ent-resultado .ent-principal');
     for (const ms of [200, 420, 520, 750, 1400]) {
       await pagina.waitForTimeout(ms === 200 ? 200 : ms - [200, 420, 520, 750, 1400][[200, 420, 520, 750, 1400].indexOf(ms) - 1]);
       await foto('entrada-fin-' + ms);
     }
   },
-  async flum() {
-    // En cámara lenta: por software cada cuadro tarda, y a velocidad real el salto ya terminó
-    // antes de la primera foto. Se saca una cada 600 ms hasta que llega.
-    await pagina.evaluate(() => window.__velocidad(0.3));
-    for (const [sentido, accion] of [['ida', 'ajustes'], ['vuelta', 'ajustes']]) {
-      await pagina.evaluate((a) => window.__accion(a), accion);
-      for (let i = 1; i <= 10; i++) {
-        await pagina.waitForTimeout(600);
-        await foto(`flum-${sentido}-${String(i).padStart(2, '0')}`);
-      }
-    }
-    await pagina.evaluate(() => window.__velocidad(1));
+  // Las pestañas con el dedo: de Inicio a Hábitos con la constelación asomando, un arrastre corto
+  // que vuelve a su lugar, el nombre de abajo y el borde que cede.
+  async deslizar() {
+    await pestana(0);
+    await arrastrar(330, 250, 430, 'deslizar-asoma');
+    await pagina.waitForTimeout(700);
+    await foto('deslizar-vuelve');
+    await arrastrar(330, 110, 430, 'deslizar-mitad');
+    await pagina.waitForTimeout(900);
+    await foto('deslizar-habitos');
+    await pagina.click('.pestanas button:nth-child(3)');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(900);
+    await foto('deslizar-ajustes');
+    await arrastrar(330, 120, 430, 'deslizar-borde');
+    await pagina.waitForTimeout(700);
+    await arrastrar(120, 330, 430, 'deslizar-desde-ajustes');
+    await pagina.waitForTimeout(700);
+    await pestana(0);
   },
-  // La zona de comida: llegar con el flum, el día con su línea, la semana, el mes, ayer y mañana.
+  // Inicio: el día con su línea, la semana, el mes, ayer y mañana.
   async comida() {
-    await comida('ir');
-    await esperarViaje();
-    await pagina.waitForTimeout(1800);
+    await pestana(0);
+    await pagina.waitForTimeout(1200);
     await foto('comida-zona');
     await comida('bajar', 'dia');
     await pagina.waitForTimeout(900);
@@ -158,25 +202,10 @@ const pasos = {
     await comida('bajar', 'ahora');
     await pagina.waitForTimeout(1300);
     await foto('comida-copiada');
-    await comida('volver');
-    await esperarViaje();
-    await pagina.waitForTimeout(600);
   },
-  // El flum del cielo a la comida y de vuelta, en cámara lenta (como el de Ajustes).
-  async 'flum-comida'() {
-    await pagina.evaluate(() => window.__velocidad(0.3));
-    for (const [sentido, accion] of [['ida', 'ir'], ['vuelta', 'volver']]) {
-      await comida(accion);
-      for (let i = 1; i <= 8; i++) {
-        await pagina.waitForTimeout(600);
-        await foto(`flum-comida-${sentido}-${String(i).padStart(2, '0')}`);
-      }
-      await esperarViaje();
-    }
-    await pagina.evaluate(() => window.__velocidad(1));
-  },
-  // La hoja de registro sobre el cielo: lo de siempre, la búsqueda, agregar, la ficha y la carga rápida.
+  // La hoja de registro: lo de siempre, la búsqueda, la ventana, la revisión y la carga rápida.
   async registrar() {
+    await pestana(0);
     await comida('registrar');
     await pagina.waitForTimeout(1000);
     await foto('registrar');
@@ -216,9 +245,8 @@ const pasos = {
   },
   async 'comida-ingles'() {
     await pagina.evaluate(() => window.__idioma('en'));
-    await comida('ir');
-    await esperarViaje();
-    await pagina.waitForTimeout(1600);
+    await pestana(0);
+    await pagina.waitForTimeout(1200);
     await foto('comida-ingles');
     await comida('registrar');
     await pagina.waitForTimeout(900);
@@ -227,8 +255,6 @@ const pasos = {
     await foto('registrar-ingles');
     await comida('cerrar');
     await pagina.waitForTimeout(600);
-    await comida('volver');
-    await esperarViaje();
     await pagina.evaluate(() => window.__idioma('es'));
   },
 };

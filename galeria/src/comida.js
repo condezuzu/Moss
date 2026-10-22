@@ -1,7 +1,6 @@
 // La comida en la galería, para aprobar antes de programarla (etapas 5 y 7 del plan):
-// - la barra de abajo del cielo de hoy, con la luna chica y el botón de registrar;
-// - la zona de comida: la luna, los macros, el agua, la línea del día y la semana;
-// - la hoja de registro: la búsqueda, la ficha del alimento, los atajos y el teclado.
+// - la pestaña Inicio: la luna, los macros, el agua, la línea del día, la semana y el mes;
+// - la hoja de registro: la búsqueda, la ventana del alimento, la comida que se arma y el teclado.
 // El día es de mentira, pero los alimentos, sus valores y sus porciones salen de
 // assets/alimentos.db (ALIMENTOS), y la búsqueda, las cantidades y la comida de cada hora usan los
 // mismos módulos que la app (Buscar, Porciones y Comidas: los arma construir.mjs desde src/).
@@ -95,7 +94,6 @@ const Comida = (() => {
     menos: '<path d="M5 12h14"/>',
     listo: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     vaso: '<path class="cm-nivel" d="M7.7 9.5h8.6l-.95 9.1a1 1 0 0 1-1 .9H9.65a1 1 0 0 1-1-.9z"/><path d="M6.5 4.5h11l-1.4 14.2a1.5 1.5 0 0 1-1.5 1.3H9.4a1.5 1.5 0 0 1-1.5-1.3z"/>',
-    constelacion: '<circle cx="5" cy="17.5" r="1.7"/><circle cx="10" cy="8.5" r="1.7"/><circle cx="16" cy="12.5" r="1.7"/><circle cx="19.5" cy="4.5" r="1.7"/><path d="M5.9 15.8 9.1 10.2M11.6 9.6l2.8 1.9M16.8 10.7l1.9-4.4"/>',
     microfono: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5v3"/>',
     globo: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.4 2.5 13.6 0 16M12 4c-2.5 2.4-2.5 13.6 0 16"/>',
     borrar: '<path d="M9 5.5h10a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H9L3.5 12z"/><path d="m11.5 9.5 5 5M16.5 9.5l-5 5"/>',
@@ -190,7 +188,7 @@ const Comida = (() => {
       hoja: null,
       // La comida que se arma en la hoja: queda hasta agregarla, aunque se cierre la hoja.
       canasta: [],
-      // Los toques desde el cielo hasta registrar algo (se cuentan para comparar con la especificación).
+      // Los toques desde Inicio hasta registrar algo (se cuentan para comparar con la especificación).
       toques: 0,
       escribio: false,
     };
@@ -219,15 +217,13 @@ const Comida = (() => {
     let lunas = 0;
     const CAJA_CON_ARCOS = '-80 -80 160 160';
     const CAJA_SIN_ARCOS = '-50 -50 100 100';
-    function crearLuna(clase, conArcos) {
+    function crearLuna(clase) {
       const id = `cmLuna${++lunas}`;
       const svg = document.createElementNS(SVG, 'svg');
-      svg.setAttribute('viewBox', conArcos ? CAJA_CON_ARCOS : '-48 -48 96 96');
+      svg.setAttribute('viewBox', CAJA_CON_ARCOS);
       svg.setAttribute('class', clase);
       svg.setAttribute('aria-hidden', 'true');
-      const arcos = conArcos
-        ? [['p', 54], ['c', 62], ['g', 70]].map(([m, r]) => `<circle r="${r}" class="cm-pista"/><circle r="${r}" class="cm-arco cm-arco-${m}" transform="rotate(-90)"/>`).join('')
-        : '';
+      const arcos = [['p', 54], ['c', 62], ['g', 70]].map(([m, r]) => `<circle r="${r}" class="cm-pista"/><circle r="${r}" class="cm-arco cm-arco-${m}" transform="rotate(-90)"/>`).join('');
       svg.innerHTML = `
         <defs>
           <radialGradient id="${id}-cara" cx="40%" cy="36%" r="72%">
@@ -309,38 +305,11 @@ const Comida = (() => {
 
     const fraccionesDe = (t) => ({ luna: t.kcal / META.kcal, p: t.p / META.p, c: t.c / META.c, g: t.g / META.g });
 
-    // ------------------------------------------------------------ la barra del cielo de hoy
-    // A la izquierda, la comida de hoy en chico (lleva a la zona de comida); a la derecha, registrar.
-    const ui = tel.querySelector('.ui');
-    const barraCielo = ui.querySelector('.barra-hoy');
-    const lunaChica = crearLuna('bh-luna', false);
-    const pildoraCielo = boton('bh-pildora', '', () => ir(), tx('comida.irAComida'));
-    const cifraCielo = el('b');
-    const textoCielo = el('small');
-    const caja = el('span', 'bh-textos');
-    caja.append(cifraCielo, textoCielo);
-    pildoraCielo.append(lunaChica.svg, caja);
-    const masCielo = boton('bh-mas', icono('mas'), () => abrirHoja({}), tx('comida.registrar'));
-    barraCielo.append(pildoraCielo, masCielo);
-    // Los gestos del cielo van solo sobre el lienzo: la barra no los deja pasar.
-    barraCielo.addEventListener('pointerdown', (ev) => ev.stopPropagation());
-
-    function pintarBarraCielo(ms) {
-      const t = totalDe(0);
-      const queda = META.kcal - t.kcal;
-      contar(cifraCielo, Math.abs(queda), ms);
-      textoCielo.textContent = tx(queda >= 0 ? 'comida.teQuedan' : 'comida.deMas');
-      lunaChica.ir(fraccionesDe(t), ms);
-      pildoraCielo.setAttribute('aria-label', tx('comida.irAComida'));
-      masCielo.setAttribute('aria-label', tx('comida.registrar'));
-    }
-
-    // ------------------------------------------------------------ la zona de comida
+    // ------------------------------------------------------------ la pestaña Inicio: la comida
     // Como MacroFactor: por día, por semana y por mes. El día tiene arriba la tira de la semana, con
     // una luna chica por día que se llena con lo comido (se toca para ver ese día); la semana, el
     // promedio, los siete días con sus barras y el peso y el gasto; el mes, el calendario de lunas.
     const zona = el('section', 'comida');
-    zona.hidden = true;
     zona.innerHTML = `
       <div class="cm-scroll">
         <header class="cm-cab"><div class="cm-fecha"></div><h2 class="cm-titulo"></h2></header>
@@ -370,7 +339,7 @@ const Comida = (() => {
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const $z = (q) => zona.querySelector(q);
-    const lunaGrande = crearLuna('cm-luna', true);
+    const lunaGrande = crearLuna('cm-luna');
     $z('.cm-escenario').appendChild(lunaGrande.svg);
     function ponerArcos(si) {
       zona.classList.toggle('sin-arcos', !si);
@@ -378,12 +347,10 @@ const Comida = (() => {
     }
     ponerArcos(false);
     const scroll = $z('.cm-scroll');
-    // El cielo de atrás se mueve un poco con lo que se desliza: la zona es una parte del cielo.
-    scroll.addEventListener('scroll', () => { if (s.enZona && !escena.viajando) escena.camara(Math.min(0.32, scroll.scrollTop / 1600)); }, { passive: true });
 
-    const pildoraZona = boton('bh-pildora bh-cielo', '', () => volver(), tx('comida.alCielo'));
+    // Registrar: el «+» de abajo a la derecha, siempre en el mismo lugar.
     const masZona = boton('bh-mas', icono('mas'), () => abrirHoja({}), tx('comida.registrar'));
-    $z('.cm-barra').append(pildoraZona, masZona);
+    $z('.cm-barra').append(masZona);
 
     let avisoZona = 0;
     let deshacerZona = null;
@@ -466,10 +433,6 @@ const Comida = (() => {
       else if (s.vista === 'semana') pintarVistaSemana();
       else pintarMes();
 
-      pildoraZona.innerHTML = `${icono('constelacion')}<span class="bh-textos"><b></b><small></small></span>`;
-      pildoraZona.querySelector('b').textContent = escena.nombre;
-      pildoraZona.querySelector('small').textContent = tx('cielo.encendidas', { n: escena.encendidas, total: escena.total });
-      pildoraZona.setAttribute('aria-label', tx('comida.alCielo'));
       masZona.setAttribute('aria-label', tx('comida.registrar'));
     }
 
@@ -762,34 +725,13 @@ const Comida = (() => {
       opciones.alCambiar();
     }
 
-    // ------------------------------------------------------------ moverse entre el cielo y la zona
-    function ir() {
-      if (s.enZona || escena.viajando || escena.modo !== 'hoy' || s.hoja) return false;
-      s.dia = 0;
-      s.vista = 'dia';
-      pintarZona(0);
-      lunaGrande.ir({ luna: 0, p: 0, c: 0, g: 0 }, 0);
-      contar($z('.cm-cifra b'), 0, 0);
-      escena.viajar({
-        hasta: { zoom: 1.45, velo: 0.52 }, sale: ui, llega: zona,
-        alCambiar: () => { s.enZona = true; escena.ponerModo('comida'); pintarZona(1300); },
-        alLlegar: () => opciones.alCambiar(),
-      });
-      // Recién ahora se ve (el viaje la muestra): escondida, no se puede llevar arriba.
-      scroll.scrollTop = 0;
-      opciones.alCambiar();
-      return true;
-    }
-
-    function volver() {
-      if (!s.enZona || escena.viajando || s.hoja) return false;
-      escena.viajar({
-        hasta: { zoom: 1, velo: 0 }, sale: zona, llega: ui,
-        alCambiar: () => { s.enZona = false; escena.ponerModo('hoy'); escena.camara(0); pintarBarraCielo(900); },
-        alLlegar: () => { s.toques = 0; s.escribio = false; opciones.alCambiar(); },
-      });
-      opciones.alCambiar();
-      return true;
+    // ------------------------------------------------------------ la pestaña a la vista
+    // Las pestañas avisan cuándo Inicio queda a la vista: los toques para registrar se cuentan
+    // desde ahí.
+    function ponerEnZona(si) {
+      if (si === s.enZona) return;
+      s.enZona = si;
+      if (si && !s.hoja) { s.toques = 0; s.escribio = false; }
     }
 
     // ------------------------------------------------------------ la hoja de registro
@@ -844,11 +786,10 @@ const Comida = (() => {
     // Cada toque adentro cuenta, antes de que lo atienda su botón.
     hoja.addEventListener('click', (ev) => { if (ev.target.closest('[data-toque]')) s.toques++; }, true);
     zona.addEventListener('click', (ev) => { if (ev.target.closest('[data-toque]')) s.toques++; }, true);
-    barraCielo.addEventListener('click', (ev) => { if (ev.target.closest('[data-toque]')) s.toques++; }, true);
 
     // `revisar` abre directo la revisión (copiar de ayer); `soloEditar`, la ventana de un registro.
     function abrirHoja({ comida, revisar, soloEditar }) {
-      if (s.hoja || escena.viajando || (escena.modo !== 'hoy' && !s.enZona)) return false;
+      if (s.hoja || escena.viajando || escena.modo === 'entrada') return false;
       s.hoja = { comida: comida || Comidas.comidaDeLaHora(AHORA), sub: null, ventana: null, agregado: false, soloEditar: !!soloEditar };
       entrada.value = '';
       entrada.placeholder = tx('comida.buscar');
@@ -886,12 +827,10 @@ const Comida = (() => {
       hoja.classList.add('saliendo');
       setTimeout(() => { if (!s.hoja) { hoja.hidden = true; fondo.hidden = true; cerrarVentana(true); } tel.classList.remove('hoja-anim'); }, 420);
       // Lo nuevo se ve llegar: la luna se llena y la cifra baja.
-      if (agregado) {
-        pintarBarraCielo(s.enZona ? 0 : 1100);
-        if (s.enZona) { s.dia = 0; s.vista = 'dia'; pintarZona(1100); }
-      }
-      // De vuelta en el cielo sin registrar nada, la cuenta de toques empieza de nuevo.
-      if (!s.enZona) { s.toques = 0; s.escribio = false; }
+      if (agregado) { s.dia = 0; s.vista = 'dia'; pintarZona(1100); }
+      // Sin registrar nada, la cuenta de toques empieza de nuevo.
+      s.toques = 0;
+      s.escribio = false;
       opciones.alCambiar();
     }
 
@@ -1352,7 +1291,6 @@ const Comida = (() => {
           cerrarVentana(true);
           cerrarHoja();
           pintarZona(900);
-          pintarBarraCielo(0);
         } else {
           cerrarVentana();
           sumarACanasta([it], [nombreDe(a), cantidadDe(it)].join(' · '), botonMas);
@@ -1374,8 +1312,8 @@ const Comida = (() => {
           if (!c.items.length) lista.splice(lista.indexOf(c), 1);
           cerrarVentana(true);
           cerrarHoja();
-          pintarBarraCielo(s.enZona ? 0 : 900);
-          if (s.enZona) { pintarZona(900); avisarZona(tx('comida.quitado', { alimento: nombre })); }
+          pintarZona(900);
+          avisarZona(tx('comida.quitado', { alimento: nombre }));
         }));
       }
 
@@ -1504,12 +1442,11 @@ const Comida = (() => {
     armarTeclado();
 
     // ------------------------------------------------------------ arranque
-    pintarBarraCielo(0);
     pintarZona(0);
 
     return {
-      ir,
-      volver,
+      zona,
+      ponerEnZona,
       abrirHoja: (op) => abrirHoja(op || {}),
       cerrarHoja,
       verDia,
@@ -1520,7 +1457,6 @@ const Comida = (() => {
       ponerIdioma(id) {
         idioma = id;
         armarTeclado();
-        pintarBarraCielo(0);
         pintarZona(0);
         if (s.hoja) { pintarChips(); pintarAtajos(); pintarCuerpo(); pintarBandeja(); entrada.placeholder = tx('comida.buscar'); }
       },

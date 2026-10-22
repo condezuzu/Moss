@@ -90,6 +90,8 @@ section.item p { margin: 0; max-width: 64ch; }
 .tel {
   --arriba: 58px;
   --abajo: 28px;
+  /* Lo que ocupa la barra de las pestañas, con el margen de abajo del iPhone. */
+  --pestanas: calc(var(--abajo) + 50px);
   position: relative;
   height: min(852px, calc(100svh - 48px));
   aspect-ratio: 393 / 852;
@@ -267,27 +269,41 @@ section.item p { margin: 0; max-width: 64ch; }
 .ent-macro-g i { background: #a9c4f5; box-shadow: 0 0 8px #a9c4f5; }
 .ent-macro b { font-weight: 500; color: #fbf2d9; font-variant-numeric: tabular-nums; }
 
-/* Ajustes de maqueta, para ver el viaje de ida y vuelta. */
-.tel .ajustes { position: absolute; inset: 0; z-index: 2; padding: calc(var(--arriba) + 30px) 24px calc(var(--abajo) + 20px); display: flex; flex-direction: column; }
+/* Ajustes de maqueta: la última pestaña. */
+.tel .ajustes { position: absolute; inset: 0; z-index: 2; padding: calc(var(--arriba) + 30px) 24px calc(var(--pestanas) + 20px); display: flex; flex-direction: column; touch-action: pan-y; }
 .ajustes h2 { margin: 0 0 18px; font: 500 34px/1 var(--titulos); text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
 .ajustes ul { margin: 0; padding: 0; list-style: none; border-radius: 18px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.1); }
 .ajustes li { display: flex; justify-content: space-between; gap: 12px; padding: 16px 18px; font: 400 15px/1.2 var(--texto); }
 .ajustes li + li { border-top: 1px solid rgba(239, 230, 207, 0.08); }
 .ajustes li b { font-weight: 400; color: rgba(239, 230, 207, 0.55); }
-.ajustes-volver { margin-top: auto; appearance: none; cursor: pointer; min-height: 50px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.45); background: rgba(6, 10, 22, 0.45); color: var(--oro-claro); font: 500 15px/1 var(--texto); }
 
-.aviso { position: absolute; left: 50%; bottom: calc(var(--abajo) + 150px); translate: -50% 12px; opacity: 0; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: rgba(8, 13, 28, 0.8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(232, 196, 106, 0.22); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 32px); }
+.aviso { position: absolute; left: 50%; bottom: calc(var(--pestanas) + 100px); translate: -50% 12px; opacity: 0; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: rgba(8, 13, 28, 0.8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(232, 196, 106, 0.22); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 32px); }
 .aviso.visible { opacity: 1; translate: -50% 0; pointer-events: auto; }
 .aviso-txt { overflow: hidden; text-overflow: ellipsis; }
 .aviso-btn { appearance: none; cursor: pointer; font: 500 11px/1 var(--texto); letter-spacing: 0.12em; text-transform: uppercase; color: var(--oro); background: rgba(232, 196, 106, 0.12); border: 0; border-radius: 999px; padding: 8px 12px; }
 .aviso-btn[hidden] { display: none; }
 
-/* La frase del día queda sobre la barra de la comida. */
-.frase { position: absolute; left: 26px; right: 26px; bottom: calc(var(--abajo) + 76px); text-align: center; transition: opacity 0.6s; will-change: transform; }
+/* La frase del día queda sobre las pestañas. */
+.frase { position: absolute; left: 26px; right: 26px; bottom: calc(var(--pestanas) + 26px); text-align: center; transition: opacity 0.6s; will-change: transform; }
 .frase q { display: block; font: italic 400 14px/1.32 var(--titulos); color: rgba(239, 230, 207, 0.74); quotes: '“' '”'; text-wrap: balance; }
 .frase cite { display: block; margin-top: 5px; font: 400 9px/1 var(--texto); font-style: normal; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(185, 227, 107, 0.6); }
 .fps { position: absolute; right: 12px; top: calc(var(--arriba) - 30px); font: 500 10px/1 var(--mono); color: var(--musgo); background: rgba(3, 5, 12, 0.6); padding: 4px 7px; border-radius: 6px; z-index: 5; }
 .error-cielo { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; text-align: center; color: var(--tenue); font-size: 14px; }
+
+/* ---------------- las pestañas, como en Ascent ---------------- */
+/* El cielo se oscurece detrás de Inicio y de Ajustes: la opacidad del velo la pone la tira. */
+.velo-pestanas { position: absolute; inset: 0; pointer-events: none; transition: opacity 0.6s; }
+.velo-pestanas i { position: absolute; inset: 0; background: #03050c; }
+/* Solo texto, como Ascent: el nombre apagado y encima el encendido, que se cruza con la tira. */
+.pestanas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; padding: 6px 12px var(--abajo); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.8) 40%, rgba(3, 5, 12, 0.94)); transition: opacity 0.5s, visibility 0.5s; }
+.pestanas::before { content: ''; position: absolute; inset: 0; background: #04060d; border-top: 1px solid rgba(239, 230, 207, 0.08); opacity: var(--solida, 1); }
+.pestanas button { position: relative; appearance: none; flex: 1; min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.pestanas span { grid-area: 1 / 1; font: 400 12.5px/1 var(--texto); letter-spacing: 0.04em; color: rgba(239, 230, 207, 0.34); }
+.pestanas .pt-luz { color: var(--tinta); text-shadow: 0 0 12px rgba(246, 227, 166, 0.3); }
+/* En la entrada no hay pestañas, y la hoja de registro las tapa. */
+.tel.en-entrada .velo-pestanas { opacity: 0; }
+.tel.en-entrada .pestanas, .tel.con-hoja .pestanas { opacity: 0; visibility: hidden; }
+.tel.en-entrada .comida, .tel.en-entrada .ajustes { visibility: hidden; }
 
 /* ---------------- catálogo ---------------- */
 .catalogo { display: grid; gap: 22px; }
@@ -308,20 +324,10 @@ section.item p { margin: 0; max-width: 64ch; }
 
 /* ---------------- la comida ---------------- */
 /* Iconos de línea, como los de los hábitos. */
-.barra-hoy svg, .comida svg:not(.cm-luna):not(.cm-grafico), .hoja svg { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.comida svg:not(.cm-luna):not(.cm-grafico), .hoja svg { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
-/* La barra de abajo del cielo de hoy (y de la zona de comida): lo otro en chico, y registrar. El
-   «+» está en el mismo lugar en las dos. */
-.barra-hoy, .cm-barra { position: absolute; left: 18px; right: 18px; bottom: calc(var(--abajo) + 4px); display: flex; align-items: center; justify-content: space-between; gap: 12px; pointer-events: none; will-change: transform; }
-.barra-hoy > *, .cm-barra > * { pointer-events: auto; }
-.bh-pildora { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 54px; padding: 0 18px 0 7px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.24); background: rgba(7, 11, 24, 0.66); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--tinta); text-align: left; }
-.bh-luna { width: 42px; height: 42px; flex: none; overflow: visible; }
-.bh-textos { display: grid; gap: 4px; min-width: 0; }
-.bh-textos b { font: 500 20px/0.95 var(--numeros); color: var(--oro-claro); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bh-textos small { font: 400 9.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); white-space: nowrap; }
-.bh-cielo { padding-left: 14px; }
-.bh-cielo > svg { width: 24px; height: 24px; flex: none; color: var(--oro-claro); stroke-width: 1.5; filter: drop-shadow(0 0 5px rgba(246, 227, 166, 0.6)); }
-.bh-cielo .bh-textos b { font: italic 400 19px/0.95 var(--titulos); color: var(--tinta); }
+/* El «+» de Inicio, abajo a la derecha y sobre las pestañas: siempre en el mismo lugar. */
+.cm-barra { position: absolute; right: 18px; bottom: calc(var(--pestanas) + 10px); }
 .bh-mas { appearance: none; cursor: pointer; flex: none; width: 60px; height: 60px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #1a1406; background: radial-gradient(circle at 35% 30%, #fdeebf 0%, var(--oro) 58%, #c49b45 100%); box-shadow: inset 0 0 0 1px rgba(255, 244, 214, 0.45), 0 10px 30px rgba(232, 196, 106, 0.32), 0 0 44px rgba(232, 196, 106, 0.2); transition: transform 0.15s; }
 .bh-mas svg { width: 26px; height: 26px; stroke-width: 2.3; }
 .bh-mas:active, .hj-mas:active, .fi-paso:active { transform: scale(0.92); }
@@ -339,11 +345,11 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-arco-c { stroke: var(--musgo); filter: drop-shadow(0 0 3px rgba(185, 227, 107, 0.6)); }
 .cm-arco-g { stroke: #a9c4f5; filter: drop-shadow(0 0 3px rgba(169, 196, 245, 0.6)); }
 
-/* La zona de comida: una parte del cielo, más cerca y más oscura. */
+/* Inicio: la comida, con el cielo quieto y oscurecido atrás. */
 .tel .comida { position: absolute; inset: 0; z-index: 2; color: var(--tinta); }
-.comida::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--abajo) + 110px); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.88) 70%); pointer-events: none; z-index: 1; }
+.comida::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--pestanas) + 70px); background: linear-gradient(180deg, rgba(3, 5, 12, 0), rgba(3, 5, 12, 0.88) 70%); pointer-events: none; z-index: 1; }
 .cm-barra { z-index: 2; }
-.cm-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 2px) 20px calc(var(--abajo) + 104px); scrollbar-width: none; }
+.cm-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 2px) 20px calc(var(--pestanas) + 86px); scrollbar-width: none; touch-action: pan-y; }
 .cm-scroll::-webkit-scrollbar { display: none; }
 .cm-cab { display: grid; gap: 2px; }
 .cm-fecha { font: 400 11px/1.2 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
@@ -495,7 +501,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-enlace svg { width: 15px; height: 15px; transition: transform 0.25s; }
 .cm-enlace.abierto svg { transform: rotate(90deg); }
 .cm-aviso, .hj-aviso { position: absolute; left: 50%; translate: -50% 12px; opacity: 0; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 10px; padding: 7px 7px 7px 16px; min-height: 42px; border-radius: 999px; background: rgba(9, 14, 30, 0.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(232, 196, 106, 0.24); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 28px); pointer-events: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
-.cm-aviso { bottom: calc(var(--abajo) + 76px); z-index: 3; }
+.cm-aviso { bottom: calc(var(--pestanas) + 84px); z-index: 3; }
 .cm-aviso.visible, .hj-aviso.visible { opacity: 1; translate: -50% 0; pointer-events: auto; }
 .cm-aviso:not(:has(button)), .hj-aviso:not(:has(button)) { padding-right: 16px; }
 .cm-aviso > span, .hj-aviso > span { overflow: hidden; text-overflow: ellipsis; }
@@ -504,9 +510,9 @@ section.item p { margin: 0; max-width: 64ch; }
 
 /* La hoja de registro: sube sobre lo que haya (el cielo o la zona), que se achica atrás. */
 .tel > canvas { transform-origin: 50% 44%; }
-.tel.hoja-anim > canvas, .tel.hoja-anim > .ui, .tel.hoja-anim > .comida { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.45s; }
-.tel.con-hoja > canvas, .tel.con-hoja > .ui, .tel.con-hoja > .comida { transform: scale(0.93); }
-.tel.con-hoja > canvas { border-radius: 30px; }
+.tel.hoja-anim > canvas, .tel.hoja-anim > .velo-pestanas, .tel.hoja-anim > .ui, .tel.hoja-anim > .comida, .tel.hoja-anim > .ajustes { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.45s; }
+.tel.con-hoja > canvas, .tel.con-hoja > .velo-pestanas, .tel.con-hoja > .ui, .tel.con-hoja > .comida, .tel.con-hoja > .ajustes { transform: scale(0.93); }
+.tel.con-hoja > canvas, .tel.con-hoja > .velo-pestanas { border-radius: 30px; overflow: hidden; }
 .hj-fondo { position: absolute; inset: 0; z-index: 5; background: rgba(1, 2, 6, 0.6); opacity: 0; transition: opacity 0.35s; }
 .tel.con-hoja .hj-fondo { opacity: 1; animation: hj-aparece 0.35s ease both; }
 @keyframes hj-aparece { from { opacity: 0; } }
@@ -707,7 +713,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .pie { margin-top: 48px; color: var(--tenue); font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i { transition: none; }
+  .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .velo-pestanas, .pestanas { transition: none; }
   .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hj-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .cm-vaso.recien { animation-duration: 0.01s; animation-delay: 0s; }
 }
 </style>
@@ -721,9 +727,7 @@ section.item p { margin: 0; max-width: 64ch; }
       <div class="barra-inmersiva">
         <button type="button" id="salir-inmersivo">Salir</button>
         <div>
-          <button type="button" data-comida="ir">Comida</button>
           <button type="button" data-accion="entrada">Entrada</button>
-          <button type="button" data-accion="ajustes">Ajustes</button>
           <button type="button" data-accion="zona">Universo</button>
         </div>
       </div>
@@ -744,8 +748,7 @@ section.item p { margin: 0; max-width: 64ch; }
       <p>La comida es el centro de Moss. Todo lo que hay en este teléfono anda con la base de verdad: los 557 genéricos curados, con sus valores, sus porciones y sus nombres en Uruguay, y el mismo buscador que la app, con errores de tipeo y lo más usado primero (probá «frutila», «palta» o «manzaan»). El día es de mentira: miércoles a las 21:47, con la cena por registrar.</p>
       <div class="panel">
         <div class="controles">
-          <button class="boton principal" type="button" data-comida="ir" id="b-comida">Ir a la comida</button>
-          <button class="boton" type="button" data-comida="registrar" id="b-registrar">Registrar</button>
+          <button class="boton principal" type="button" data-comida="registrar" id="b-registrar">Registrar</button>
           <button class="boton" type="button" data-comida="linea">Ver la línea del día</button>
           <button class="boton" type="button" data-comida="semana">Ver la semana</button>
           <button class="boton" type="button" data-comida="mes">Ver el mes</button>
@@ -762,14 +765,14 @@ section.item p { margin: 0; max-width: 64ch; }
           </div>
         </div>
         <div class="toques" id="toques">
-          <div class="grupo"><span>Toques para registrar, contados desde el cielo</span></div>
+          <div class="grupo"><span>Toques para registrar, contados desde Inicio</span></div>
           <ol></ol>
           <p class="vacio">Registrá algo en el teléfono y acá aparece cuántos toques llevó. Con la revisión antes de agregar son 5 para lo de siempre (registrar, «+», sumar, listo y agregar), 5 y escribir para buscar, y 6 y escribir para elegir otra cantidad.</p>
         </div>
       </div>
       <ul class="lista">
-        <li><b>En el cielo de hoy</b>, abajo, va la comida en chico: la luna con lo que te queda, que te lleva a la zona de comida con un flum, y el «+» para registrar. El «+» está en el mismo lugar en el cielo y en la comida.</li>
-        <li><b>La zona de comida</b>:
+        <li><b>Inicio es la comida</b>: Moss abre acá, como MacroFactor y como Ascent. El «+» de abajo a la derecha registra. Los hábitos y el cielo están en la pestaña de al lado (sección 4).</li>
+        <li><b>Inicio</b>:
           <ul>
             <li>La luna se llena con lo que comiste: la parte iluminada es lo que llevás del día. Ahora es una luna de verdad, con sus mares, grano y la sombra con el borde suave, sin halo dorado. Los arcos de los macros quedan como opción (arriba): los macros ya están en las barras.</li>
             <li>Lo que te queda va grande, en números sobrios (Outfit, como el número de Ascent). Debajo, las barras de los macros y el agua: un toque suma un vaso de 250 ml.</li>
@@ -780,7 +783,7 @@ section.item p { margin: 0; max-width: 64ch; }
                 <li><b>Mes:</b> el calendario con una luna por día y el promedio del mes. Tocás un día para verlo.</li>
               </ul></li>
           </ul>
-          Atrás queda el cielo, más cerca y más oscuro, y se mueve un poco cuando deslizás.</li>
+          Atrás queda el cielo, quieto y oscurecido: la comida va primero.</li>
         <li><b>La línea del día</b> pone cada comida en su hora, con lo que tiene y sus totales, y el espacio entre comidas sigue al reloj. La que falta espera en «ahora», con Agregar y Copiar de ayer, que abre la revisión con lo de ayer para agregarlo de un toque. Tocar un alimento abre su ventana para corregirlo o quitarlo.</li>
         <li><b>La hoja de registro</b>:
           <ul>
@@ -796,8 +799,8 @@ section.item p { margin: 0; max-width: 64ch; }
     </section>
 
     <section class="item" id="hoy">
-      <h2><span class="n">2</span>El cielo de hoy</h2>
-      <p>Miércoles con seis hábitos: le toca la Lira, seis estrellas principales. Tres ya están encendidas. Tocá <b>Escribir</b> y <b>Agua 2 L</b> para encenderlas (tocalas de nuevo, o usá Deshacer, para apagarlas). Los <b>8.000 pasos</b> se encienden solos desde Salud: simulalo con el botón. Con las seis se completa el día.</p>
+      <h2><span class="n">2</span>Hábitos: el cielo de hoy</h2>
+      <p>La pestaña Hábitos. Miércoles con seis hábitos: le toca la Lira, seis estrellas principales. Tres ya están encendidas. Tocá <b>Escribir</b> y <b>Agua 2 L</b> para encenderlas (tocalas de nuevo, o usá Deshacer, para apagarlas). Los <b>8.000 pasos</b> se encienden solos desde Salud: simulalo con el botón. Con las seis se completa el día.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-accion="salud" id="b-salud">Simular Salud: llegar a 8.000 pasos</button>
@@ -817,6 +820,9 @@ section.item p { margin: 0; max-width: 64ch; }
           <div class="grupo"><span>Riqueza del cielo: la luz juntada desde siempre</span>
             <div class="deslizador"><input type="range" id="r-riqueza" min="0" max="100" value="60" aria-label="Riqueza del cielo"><output id="o-riqueza">60%</output></div>
           </div>
+          <div class="grupo"><span>Vía láctea: el polvo estelar blanco</span>
+            <div class="deslizador"><input type="range" id="r-via" min="0" max="100" value="30" aria-label="Vía láctea"><output id="o-via">30%</output></div>
+          </div>
         </div>
       </div>
       <ul class="lista">
@@ -830,7 +836,7 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><b>La constelación</b> sigue siendo real, una por día, pero su nombre va chico, debajo de la fecha.</li>
         <li><b>Día completo</b>: las líneas se encienden desde la estrella más brillante, una onda recorre el cielo y la aurora sube y se dora. Sin texto ni historia: el momento es del cielo.</li>
         <li><b>Estrella fugaz</b> nueva: nace con la estela corta, que se estira mientras cae, se afina y pasa del blanco cálido a un verde tenue. Va dejando chispas y, cuando se apaga, la estela queda un instante. Una de cada cinco es una bola de fuego que estalla antes de apagarse. Probala con el botón.</li>
-        <li><b>Un cielo más sobrio</b> (prueba del 21/10): sin la vía láctea, que era el polvo estelar blanco. Quedan miles de estrellas sueltas en tres capas, las que titilan y la aurora.</li>
+        <li><b>Un cielo más sobrio</b> (21/10): la vía láctea volvió, pero al 30 %, como pediste: el polvo estelar blanco y sus estelas apenas se ven. Probá otros valores con el deslizador de arriba.</li>
         <li><b>Auroras</b> en verde musgo con el borde dorado. Al completar el día suben, se aceleran y el borde se dora: la subtormenta de una aurora real.</li>
         <li><b>Musgo</b> en primer plano, más apagado que antes: el borde apenas encendido y unos pocos manchones de puntitos de luz, como reluce en la oscuridad un musgo real, <i>Schistostega</i>. De vez en cuando sube una espora que se vuelve estrella: el punto donde musgo y cielo se juntan.</li>
         <li><b>Estrellas apagadas</b> con un aro que late; las automáticas llevan un arco con el avance del día (6.240 de 8.000 pasos).</li>
@@ -841,7 +847,7 @@ section.item p { margin: 0; max-width: 64ch; }
 
     <section class="item" id="entrada">
       <h2><span class="n">3</span>La entrada a la app</h2>
-      <p>Lo primero que ve alguien que instala Moss. Es obligatoria, como en Ascent. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida que avanzás, el musgo queda abajo y al final un <b>flum</b> te deja en el cielo de hoy. Vincular con Ascent no aparece acá: queda para después, en Ajustes y en las funciones bloqueadas.</p>
+      <p>Lo primero que ve alguien que instala Moss. Es obligatoria, como en Ascent. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida que avanzás, el musgo queda abajo y al final un <b>flum</b> te deja en Inicio. Vincular con Ascent no aparece acá: queda para después, en Ajustes y en las funciones bloqueadas.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-accion="entrada" id="b-entrada">Ver la entrada desde el principio</button>
@@ -875,29 +881,29 @@ section.item p { margin: 0; max-width: 64ch; }
             <li>Después nivel de actividad y objetivo. Si el objetivo es bajar o subir, también el ritmo.</li>
             <li>La meta inicial sale de la fórmula de Mifflin-St Jeor por el nivel de actividad, con un piso de calorías. La proteína va por kilo, las grasas son al menos el 27 % y los carbohidratos son el resto.</li>
           </ul></li>
-        <li><b>Empezar</b> te lleva al cielo de hoy con un flum.</li>
+        <li><b>Empezar</b> te lleva a Inicio con un flum.</li>
       </ul>
     </section>
 
-    <section class="item" id="viajes">
-      <h2><span class="n">4</span>Moverse entre secciones: el flum</h2>
-      <p>Pasar de inicio a Ajustes, al menú o a cualquier otra sección es un salto de un segundo, como moverse muy lejos y muy rápido:</p>
-      <ul class="lista">
-        <li>La cámara acelera hacia un punto de fuga y las estrellas se estiran en estelas.</li>
-        <li>La pantalla que se va crece y se desvanece contra la cámara.</li>
-        <li>En la mitad hay un destello y la sección nueva llega de lejos, chica y borrosa, y frena hasta quedar quieta.</li>
-        <li>Detrás de Ajustes queda el mismo cielo, más cerca y más oscuro, como si estuvieras en otra parte de él.</li>
-      </ul>
+    <section class="item" id="pestanas">
+      <h2><span class="n">4</span>Las pestañas, como Ascent</h2>
+      <p>Abajo hay tres pestañas, solo con texto: <b>Inicio</b> (la comida), <b>Hábitos</b> (el cielo con la constelación) y <b>Ajustes</b>. Deslizá con el dedo, o arrastrá con el mouse, y la de al lado asoma mientras arrastrás: desde Inicio, con el dedo hacia la izquierda, entra la constelación.</p>
       <div class="panel">
         <div class="controles">
-          <button class="boton principal" type="button" data-accion="ajustes" id="b-ajustes">Ir a Ajustes</button>
+          <button class="boton" type="button" data-pestana="0">Inicio</button>
+          <button class="boton" type="button" data-pestana="1">Hábitos</button>
+          <button class="boton" type="button" data-pestana="2">Ajustes</button>
         </div>
       </div>
+      <ul class="lista">
+        <li>Las reglas del gesto son las de Ascent: cambia de pestaña si arrastrás más de un quinto de la pantalla o si el tirón es rápido, y el viaje dura 340 ms y frena largo. En los bordes, la pantalla cede un cuarto de lo que movés.</li>
+        <li>El cielo queda quieto detrás de las tres, como el planeta en Ascent. Lo que se desliza es la constelación, con su pantalla. En Inicio y en Ajustes el cielo se oscurece, y se aclara mientras deslizás hacia Hábitos.</li>
+        <li>El nombre de abajo se enciende con el deslizamiento, no al soltar.</li>
+        <li>Un gesto de costado es de las pestañas. Para arriba y para abajo, es de la lista de la comida o del cielo: en Hábitos, arrastrar hacia abajo sube a tu universo.</li>
+      </ul>
       <ul class="lista tenue">
-        <li>La zona de comida usa el mismo viaje: se llega desde la luna chica de la barra del cielo y se vuelve desde la constelación de su barra.</li>
-        <li>Dentro de la entrada el cielo se desliza más suave. El flum queda para cambiar de sección y para el final de la entrada.</li>
-        <li>En el teléfono, el flum lleva una vibración al salir y otra al llegar. Si se agrega sonido, sería un soplido corto.</li>
-        <li>La pantalla de Ajustes es una maqueta: acá solo importa el viaje.</li>
+        <li>El flum queda solo para el final de la entrada, que ahora te deja en Inicio.</li>
+        <li>Ajustes es una maqueta.</li>
       </ul>
     </section>
 
@@ -927,7 +933,7 @@ section.item p { margin: 0; max-width: 64ch; }
     <section class="item" id="decidir">
       <h2><span class="n">7</span>Para decidir</h2>
       <ol class="decisiones">
-        <li><span><b>Las pestañas (tu propuesta, D14).</b> El inicio con la comida, como MacroFactor y como Ascent, y los hábitos con el cielo en otra pestaña. Se arma acá después de que apruebes el cielo más sobrio.</span></li>
+        <li><span><b>Las pestañas (D14).</b> Ya están, en la sección 4: Inicio con la comida, Hábitos con el cielo y Ajustes, con el gesto de Ascent. ¿Te cierran el orden y los nombres? El «+» de registrar quedó solo en Inicio, y en Hábitos el cielo va solo, sin la barra de la comida. Detrás de Inicio el cielo queda al 20 %.</span></li>
         <li><span><b>Los arcos de la luna.</b> Propongo la luna sola, porque los macros ya están en las barras de abajo. Con el selector de la sección 1 la ves con los arcos.</span></li>
         <li><span><b>La riqueza del cielo, de noche o al instante.</b> Propongo que la luz del día se sume al cielo al día siguiente: abrís Moss y el cielo crece frente a vos, con estrellas nuevas que aparecen y musgo que sube, sin texto. La otra opción es que crezca apenas termina la animación del día completo.</span></li>
         <li><span><b>El cielo de la entrada.</b> Ahora es el de 60 % de riqueza, el más lindo que ya aprobaste. Después de la entrada, el cielo propio empieza en 0 % y crece con vos. ¿Lo dejamos así, o la entrada usa el cielo del primer día?</span></li>

@@ -128,15 +128,18 @@ SDK y la memoria no alcanza.
 Los escenarios de `herramientas/capturar-galeria.mjs` (`node
 herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 
-- `inicio`, `tocar`, `completo`, `universo`;
+- `inicio` (las tres pestañas), `deslizar`;
+- `tocar`, `completo`, `universo`;
 - `ingles`, `baja`;
-- `riqueza`, `fugaz`;
-- `entrada`, `flum`;
-- `comida`, `registrar`, `comida-ingles`, `flum-comida`.
+- `riqueza` (con la vía láctea), `fugaz`;
+- `entrada`;
+- `comida`, `registrar`, `comida-ingles`.
 
-El render por software es lento. Por eso la galería tiene cámara lenta
-(`window.__velocidad(0.3)`), que usan `flum` y `flum-comida`. Los escenarios
-de la comida esperan a que termine cada flum (`window.__viajando()`).
+La galería abre en Inicio, y los escenarios del cielo pasan antes a Hábitos
+(`window.__pagina(1, true)`). `deslizar` arrastra con el mouse, como un dedo,
+y saca la foto con el dedo todavía abajo. El render por software es lento: para
+mirar una animación cuadro a cuadro está la cámara lenta
+(`window.__velocidad(0.3)`).
 
 ## La spec
 
@@ -182,9 +185,10 @@ de la comida esperan a que termine cada flum (`window.__viajando()`).
 `galeria/src/` tiene estas piezas:
 
 - `motor.js`: el motor WebGL, con la pasada del flum.
-- `escena.js`: la escena, con los modos hoy, entrada, comida y ajustes.
+- `escena.js`: la escena, con los modos hoy y entrada, y la constelación que
+  se corre con su pestaña.
 - `entrada.js`: la entrada a la app.
-- `comida.js`: la comida. Tiene la barra del cielo de hoy, la zona de comida
-  con la línea del día y la semana, y la hoja de registro con la ficha, los
-  atajos y el teclado.
-- `galeria.js`: la página.
+- `comida.js`: la comida. Tiene la pestaña Inicio, con el día, la semana y el
+  mes, y la hoja de registro con la ventana del alimento, la comida que se arma,
+  la revisión y el teclado.
+- `galeria.js`: la página y las pestañas, con el gesto de Ascent.

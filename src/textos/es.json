@@ -2,6 +2,11 @@
   "app": {
     "nombre": "Moss"
   },
+  "pestanas": {
+    "inicio": "Inicio",
+    "habitos": "Hábitos",
+    "ajustes": "Ajustes"
+  },
   "cielo": {
     "armandose": "El cielo se está armando.",
     "fecha": "{dia} · {num} {mes}",
@@ -95,8 +100,7 @@
     "idioma": "Idioma",
     "salud": "Apple Salud",
     "ascent": "Vincular con Ascent",
-    "cuenta": "Cuenta",
-    "volver": "Volver al cielo"
+    "cuenta": "Cuenta"
   },
   "comida": {
     "comidas": {
@@ -120,8 +124,6 @@
     "estaSemana": "Esta semana",
     "semanaDel": "Semana del {num}",
     "rangoSemana": "{desde} – {hasta} {mes}",
-    "irAComida": "Ver tu comida",
-    "alCielo": "Volver al cielo",
     "registrar": "Registrar comida",
     "teQuedan": "kcal te quedan",
     "deMas": "kcal de más",

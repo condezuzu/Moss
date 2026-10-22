@@ -18,7 +18,7 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - **De las etapas 5 y 7** está la galería de la comida: la zona de comida, la línea del día y la hoja de registro, con la base y el buscador de verdad.
 - **Falta:**
   - la primera build en tu iPhone, que necesita dos pasos tuyos;
-  - aprobar en la galería la comida, la entrada a la app, el flum, el cielo que crece y la estrella fugaz nueva.
+  - aprobar en la galería la comida, las pestañas, la entrada a la app, el cielo que crece y la estrella fugaz nueva.
 
 Las etapas van en orden, con estas excepciones:
 
@@ -183,7 +183,7 @@ Lo pedido para esta etapa:
 
   Va en Reanimated y Skia, con el mismo cielo de fondo y la cámara que sube.
   - La frase y las diapositivas no se saltean durante 2,5 s.
-  - La entrada termina con un flum al cielo de hoy.
+  - La entrada termina con un flum a Inicio.
 - **La meta inicial**: la fórmula de [`nutricion.md`](nutricion.md), con tests.
 - **Supabase**: el proyecto de Ascent, esquema `moss` y RLS en todas las tablas
   (D1 y [`ascent.md`](ascent.md)).
@@ -328,19 +328,28 @@ teléfono.
 **Sale:** alguien nuevo arma su semana en menos de un minuto, y la comida
 enciende estrellas.
 
-## Etapa 10 · Las zonas del cielo y el flum
+## Etapa 10 · Las pestañas y las zonas del cielo
 
-- **Las zonas:**
+- **Las pestañas**, como se aprueben en la galería (D14): Inicio (la comida, de
+  la etapa 7), Hábitos (el cielo) y Ajustes, con el gesto de Ascent
+  (`nucleo/deslizar.ts`):
+  - una tira con las tres pantallas, montadas una vez, que se corre entera, como
+    Ascent después del titileo del 24/9;
+  - el cielo de Skia quieto detrás, con la constelación corrida con su pestaña y
+    el velo de cada pestaña;
+  - la barra de texto, con el nombre encendido según dónde está la tira;
+  - el universo un poco más arriba y más junto, para que el domingo no quede
+    debajo de la barra (`HUECOS_DEL_UNIVERSO` en `plano.ts`, como en la galería).
+- **Las zonas del cielo**, en Hábitos:
   - hoy;
-  - comida (de la etapa 7);
   - constelaciones (tu cielo y el universo);
   - calendario (el mes en mini cielos);
-  - estadísticas, con las tarjetas de Ascent bloqueadas y su botón «Vincular»;
-  - ajustes (calidad, idioma, unidades, Salud, cuenta y Ascent).
+  - estadísticas, con las tarjetas de Ascent bloqueadas y su botón «Vincular».
+- **Ajustes:** calidad, idioma, unidades, Salud, cuenta y Ascent.
 
-  La zona de amigos queda reservada para después de la v1. Cada zona pasa
+  La zona de amigos queda reservada para después de la v1. Cada pantalla pasa
   primero por la galería.
-- **El flum** para ir de una sección a otra, como se apruebe en la galería:
+- **El flum** del final de la entrada:
   - un pase de Skia sobre todo el cielo (acercamiento con estelas radiales);
   - la interfaz con Reanimated;
   - dos vibraciones.

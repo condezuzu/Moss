@@ -457,19 +457,24 @@ const Entrada = (() => {
       raiz.style.transform = ''; raiz.style.opacity = ''; raiz.style.filter = '';
       escena.ponerModo('entrada');
       escena.aparecer();
+      if (opciones.alEmpezar) opciones.alEmpezar();
       actual = -1;
       ir(0);
     }
 
-    // Al terminar el cuestionario: un «flum» hasta el cielo de hoy.
+    // Al terminar el cuestionario: un «flum» hasta Inicio (opciones.llegada), la comida.
     function terminar() {
       clearTimeout(temporizador);
-      const ui = tel.querySelector('.ui');
       escena.viajar({
         hasta: { zoom: 1, velo: 0 },
         sale: raiz,
-        llega: ui,
-        alCambiar: () => { escena.quitarDemo(); escena.ponerModo('hoy'); escena.camara(0, true); },
+        llega: opciones.llegada ? opciones.llegada() : tel.querySelector('.ui'),
+        alCambiar: () => {
+          escena.quitarDemo();
+          escena.ponerModo('hoy');
+          escena.camara(0, true);
+          if (opciones.alSalir) opciones.alSalir();
+        },
         alLlegar: () => { raiz.innerHTML = ''; actual = -1; opciones.alCambiar && opciones.alCambiar(null); },
       });
     }
@@ -482,6 +487,7 @@ const Entrada = (() => {
       actual = -1;
       escena.ponerModo('hoy');
       escena.camara(0, true);
+      if (opciones.alSalir) opciones.alSalir();
     }
 
     return {

@@ -1,9 +1,10 @@
 // La escena del cielo: estado de mentira, animaciones, toques y el día completo.
 // Cada cuadro arma listas de sprites y líneas y se las pasa al motor. Nada de esto toca el
 // navegador más allá del contenedor que recibe: es la misma lógica que va a correr en Skia.
-// Tiene cuatro modos: «hoy» (la pantalla principal), «entrada» (el cielo solo, sin la constelación
-// del día, para la entrada a la app), «comida» y «ajustes» (el cielo de fondo, más cerca, detrás
-// de esas zonas). Entre uno y otro se viaja con el «flum» (viajar).
+// Tiene dos modos: «hoy» (la pestaña Hábitos) y «entrada» (el cielo solo, sin la constelación del
+// día, para la entrada a la app); de la entrada a la app se viaja con el «flum» (viajar). El cielo
+// queda quieto detrás de las tres pestañas, como el planeta de Ascent: lo que se desliza con su
+// pestaña es la constelación (desplazarPagina).
 
 const Escena = (() => {
   const TAU = Math.PI * 2;
@@ -121,6 +122,8 @@ const Escena = (() => {
       textos: opciones.textos,
       cssAncho: 1, cssAlto: 1, aspecto: 0.46, escala: 1, escalaCss: 1,
       cam: { y: 0, v: 0, objetivo: 0, arrastre: null },
+      // Dónde está la pestaña Hábitos, en píxeles desde su lugar: la constelación va con ella.
+      paginaPx: 0,
       aparicion: 0,
       fondoListo: false,
       constelacion: null,
@@ -178,14 +181,13 @@ const Escena = (() => {
       <div class="universo-etiquetas"></div>
       <div class="aviso" role="status"><span class="aviso-txt"></span><button type="button" class="aviso-btn"></button></div>
       <footer class="frase"><q></q><cite></cite></footer>
-      <nav class="barra-hoy"></nav>
       <div class="fps" hidden></div>`;
     const $ = (s) => ui.querySelector(s);
     const dom = {
       dia: $('.cab-dia'), nombre: $('.cab-nombre'), luz: $('.cab-luz b'), luzTxt: $('.cab-luz span'),
       cuenta: $('.cab-cuenta'), etiquetas: $('.etiquetas'), aviso: $('.aviso'), avisoTxt: $('.aviso-txt'),
       avisoBtn: $('.aviso-btn'), frase: $('.frase q'), cita: $('.frase cite'), fps: $('.fps'), cab: $('.cab'),
-      uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'), pie: $('.frase'), barra: $('.barra-hoy'),
+      uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'), pie: $('.frase'),
     };
     let etiquetas = [];
     let etiquetasUniverso = [];
@@ -407,8 +409,9 @@ const Escena = (() => {
       const A = e.aspecto / 2;
       e.universo = sem.map((d, k) => {
         const plano = proyectar(d.datos.estrellas);
-        const centro = [huecos[k][0] * A * 0.92, ZONA_UNIVERSO + huecos[k][1]];
-        const pos = encajar(plano, centro, A * 0.62, 0.15);
+        // Un poco más arriba y más juntas que en plano.ts: abajo están las pestañas (etapa 10).
+        const centro = [huecos[k][0] * A * 0.92, ZONA_UNIVERSO + huecos[k][1] * 0.88 + 0.03];
+        const pos = encajar(plano, centro, A * 0.62, 0.14);
         const el = document.createElement('div');
         el.className = 'uetq' + (d.hoy ? ' hoy' : '');
         el.innerHTML = '<b></b><span></span>';
@@ -480,7 +483,7 @@ const Escena = (() => {
 
     function tocar(px, py) {
       const c = e.constelacion;
-      if (!c || e.modo !== 'hoy' || e.viaje) return;
+      if (!c || e.modo !== 'hoy' || e.viaje || e.paginaPx !== 0) return;
       let mejor = -1, dist = 34;
       c.pos.forEach(([x, y], i) => {
         const [sx, sy] = posPantalla(x, y, PARALAJE.cielo);
@@ -498,10 +501,11 @@ const Escena = (() => {
       cambiarHabito(mejor, !h.encendido);
     }
 
-    // Arrastrar mueve la cámara; un toque sin arrastre enciende o apaga.
+    // Arrastrar mueve la cámara; un toque sin arrastre enciende o apaga. Solo en Hábitos: en las
+    // otras pestañas el cielo es el fondo.
     let puntero = null;
     contenedor.addEventListener('pointerdown', (ev) => {
-      if (ev.target.closest('button')) return;
+      if (ev.target.closest('button') || e.paginaPx !== 0) return;
       const r = contenedor.getBoundingClientRect();
       puntero = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, cam0: e.cam.y, ultimoY: ev.clientY, ultimoT: performance.now(), v: 0, movio: false, rx: r.left, ry: r.top };
     });
@@ -866,9 +870,12 @@ const Escena = (() => {
         tiempo: e.t, densidad: CALIDADES[e.calidad].densidad, riqueza: e.riqueza, fugaz, fugazEstela,
       });
       const cam = [0, e.cam.y];
-      motor.dibujarLineas(lnUniverso.datos, lnUniverso.n, cam, e.escala, 1);
-      motor.dibujarLineas(ln.datos, ln.n, cam, e.escala, 1);
-      motor.dibujarSprites(sp.datos, sp.n, cam, e.escala);
+      // La constelación (y lo que sale de sus toques) se corre con su pestaña; el cielo, la aurora
+      // y el musgo no. En la entrada no hay pestañas.
+      const camPagina = [e.modo === 'entrada' ? 0 : -e.paginaPx / e.escalaCss, e.cam.y];
+      motor.dibujarLineas(lnUniverso.datos, lnUniverso.n, camPagina, e.escala, 1);
+      motor.dibujarLineas(ln.datos, ln.n, camPagina, e.escala, 1);
+      motor.dibujarSprites(sp.datos, sp.n, camPagina, e.escala);
       e.musgo.lomas.forEach((l) => {
         const luzBorde = l.capa.luz * (0.65 + 0.35 * e.aurora.intensidad);
         motor.dibujarLoma(l.malla, { cam, escala: e.escala, paralaje: l.par, franja: l.franja, cuerpo: l.capa.cuerpo, borde: l.capa.borde, luz: luzBorde });
@@ -878,7 +885,7 @@ const Escena = (() => {
     }
 
     // ---------------------------------------------------------------- viajes («flum»)
-    // Pasar de una sección a otra es un salto de un segundo: la cámara acelera hacia un punto de
+    // De la entrada a la app se pasa con un salto de un segundo: la cámara acelera hacia un punto de
     // fuga, las estrellas se estiran en estelas, en la mitad cambia lo que se ve (alCambiar) y
     // después todo frena hasta quedar quieto. La pantalla que se va crece y se desvanece hacia
     // la cámara; la que llega viene de lejos, chica y borrosa, y se asienta.
@@ -970,15 +977,11 @@ const Escena = (() => {
         const [tx0, ty0] = posPantalla(0, ZONA_UNIVERSO + 0.42, 1);
         dom.uTitulo.style.transform = `translate3d(${tx0.toFixed(1)}px, ${ty0.toFixed(1)}px, 0)`;
       }
-      // La cabecera, la frase, la barra de abajo y el aviso son de la zona de hoy: se van con ella.
+      // La cabecera, la frase y el aviso son de la zona de hoy: se van con ella.
       const desplazamiento = e.cam.y * e.escalaCss;
       dom.cab.style.transform = `translate3d(0, ${desplazamiento.toFixed(1)}px, 0)`;
-      const abajo = `translate3d(0, ${(desplazamiento * PARALAJE.lomas[2]).toFixed(1)}px, 0)`;
-      dom.pie.style.transform = abajo;
-      dom.barra.style.transform = abajo;
+      dom.pie.style.transform = `translate3d(0, ${(desplazamiento * PARALAJE.lomas[2]).toFixed(1)}px, 0)`;
       const opac = 1 - suave(0.15, 0.6, e.cam.y);
-      dom.barra.style.opacity = opac;
-      dom.barra.style.visibility = opac < 0.05 ? 'hidden' : '';
       // Mientras la constelación se conecta y sube la aurora, las etiquetas se apagan un poco: el
       // momento es del cielo.
       const dc = e.completo ? e.t - e.tCompleto : -1;
@@ -1094,6 +1097,12 @@ const Escena = (() => {
         redimensionarFondo();
       },
       velocidad(v) { velocidad = v; },
+      // Las pestañas: `px` es dónde está Hábitos respecto de la pantalla (positivo, a la derecha).
+      desplazarPagina(px) { e.paginaPx = px; },
+      // Si el dedo arrastra la cámara, el gesto es del cielo y no de las pestañas.
+      get arrastrando() { return !!(puntero && puntero.movio); },
+      // Las pestañas se quedaron con el gesto: lo que empezó acá ya no es un toque.
+      soltarGesto() { puntero = null; },
       viajar,
       get viajando() { return !!e.viaje; },
       // La entrada: el cielo solo, con la cámara donde la pida cada pantalla.
