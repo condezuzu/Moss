@@ -140,6 +140,39 @@ export function mejoresPorAlimento(candidatos: Candidato[], texto: string, op: O
   return [...mejores.values()].sort((a, b) => a.puntos - b.puntos).map(({ c }) => c);
 }
 
+/** Un texto de búsqueda en la memoria, con sus palabras y trigramas ya armados: hace las veces de los dos índices. */
+export type TextoEnMemoria = Omit<Candidato, 'rango' | 'aproximado'> & { palabras: string[]; trigramas: Set<string> };
+
+export function textoEnMemoria(alimento: number, idioma: Idioma, region: string | null, principal: number, texto: string): TextoEnMemoria {
+  const normal = normalizar(texto);
+  const trigramas = new Set<string>();
+  for (const p of normal.split(' ')) for (let k = 0; k + 3 <= p.length; k++) trigramas.add(p.slice(k, k + 3));
+  return { alimento, idioma, region, principal, texto, palabras: normal.split(' '), trigramas };
+}
+
+/**
+ * Los candidatos de buscarAlimentos, sin SQLite: para la web de prueba y la galería, que tienen los
+ * alimentos en la memoria. Lo mismo que los dos índices, menos bm25, que acá vale lo mismo para todos.
+ */
+export function candidatosEnMemoria(corpus: TextoEnMemoria[], texto: string, idioma: Idioma): Candidato[] {
+  const normal = normalizar(texto);
+  const palabras = normal.split(' ').filter(Boolean);
+  if (!palabras.length) return [];
+  const comoCandidato = (t: TextoEnMemoria, aproximado: boolean): Candidato => ({
+    alimento: t.alimento, idioma: t.idioma, region: t.region, principal: t.principal, texto: t.texto, rango: 0, aproximado,
+  });
+  const candidatos = corpus.filter((t) => palabras.every((p) => t.palabras.some((w) => w.startsWith(p)))).map((t) => comoCandidato(t, false));
+  if (normal.length >= 3 && new Set(candidatos.map((c) => c.alimento)).size < POCOS) {
+    const buscados = new Set<string>();
+    for (const p of palabras) for (let k = 0; k + 3 <= p.length; k++) buscados.add(p.slice(k, k + 3));
+    for (const t of corpus) {
+      if (t.idioma !== idioma || ![...buscados].some((g) => t.trigramas.has(g))) continue;
+      if (parecido(texto, t.texto) >= PARECIDO_MINIMO) candidatos.push(comoCandidato(t, true));
+    }
+  }
+  return candidatos;
+}
+
 export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: Opciones): Promise<Resultado[]> {
   const limite = op.limite ?? 25;
   const palabras = consultaDePalabras(texto);

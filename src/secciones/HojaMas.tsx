@@ -16,6 +16,7 @@ import { elAlmacen } from '@/almacen';
 import { comidaDeLaHora } from '@/dominio/comidas';
 import { idioma, lista, t } from '@/textos';
 import { colores } from '@/tema';
+import { abrirRegistro } from './comida/registro';
 import { entre, subirOBajar } from './movimiento';
 
 /** El agua de hoy, en mililitros. */
@@ -110,12 +111,12 @@ export function HojaMas({ hoja, abierta, alCerrar }: Props) {
         >
           <View style={estilos.asa} />
           <View style={estilos.fila}>
-            <Principal icono="fork.knife" titulo={t('mas.agregarComida')} detalle={t(`comida.comidas.${comida}`)} alTocar={pronto} />
+            <Principal icono="fork.knife" titulo={t('mas.agregarComida')} detalle={t(`comida.comidas.${comida}`)} alTocar={() => { alCerrar(); abrirRegistro({ comida }); }} />
             <Principal icono="scalemass" titulo={t('mas.registrarPeso')} detalle={detallePeso} alTocar={pronto} />
           </View>
           <Text style={estilos.grupo}>{t('mas.cargaRapida')}</Text>
           <View style={estilos.fila}>
-            <Pressable onPress={pronto} style={[estilos.rapido, estilos.mitad]} accessibilityRole="button">
+            <Pressable onPress={() => { alCerrar(); abrirRegistro({ comida, panel: 'rapida', directo: true }); }} style={[estilos.rapido, estilos.mitad]} accessibilityRole="button">
               <SymbolView name="bolt" size={17} weight="light" tintColor={colores.oroClaro} />
               <Text style={estilos.rapidoTitulo}>{t('mas.caloriasYMacros')}</Text>
             </Pressable>

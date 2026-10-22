@@ -166,6 +166,12 @@ comprobar(
     && (await como(A, `select estimado from moss.registros where id = 'r1'`)).rows[0].estimado === false,
   'lo comido guarda si fue a ojo, y de fábrica es pesado',
 );
+comprobar(
+  !(await falla(A, `insert into moss.propios (id, nombre, por_100g, origen) values ('p-off', 'Leche', '{"kcal":61}', 'off')`))
+    && await falla(A, `insert into moss.propios (id, nombre, por_100g, origen) values ('p-x', 'Leche', '{"kcal":61}', 'internet')`),
+  'lo propio dice de dónde salen sus valores: Open Food Facts, la etiqueta o a mano',
+);
+await como(A, `delete from moss.propios where id = 'p-off'`);
 await como(A, `delete from moss.registros where id = 'r3'`);
 /** Lo que hace Moss con la clave de servicio, que no pasa por RLS. */
 const comoServicio = (sql) => db.transaction(async (tx) => {

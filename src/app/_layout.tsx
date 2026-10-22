@@ -1,5 +1,6 @@
 import { CormorantGaramond_400Regular_Italic, CormorantGaramond_500Medium } from '@expo-google-fonts/cormorant-garamond';
-import { Jost_400Regular, Jost_500Medium } from '@expo-google-fonts/jost';
+import { Jost_300Light, Jost_400Regular, Jost_500Medium } from '@expo-google-fonts/jost';
+import { Outfit_300Light, Outfit_400Regular, Outfit_500Medium } from '@expo-google-fonts/outfit';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -14,12 +15,16 @@ import { colores } from '@/tema';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function Raiz() {
-  // Las tipografías aprobadas en la galería: Cormorant Garamond y Jost.
+  // Las tipografías aprobadas en la galería: Cormorant Garamond y Jost, y Outfit para los números.
   const [cargadas, error] = useFonts({
     CormorantGaramond_500Medium,
     CormorantGaramond_400Regular_Italic,
+    Jost_300Light,
     Jost_400Regular,
     Jost_500Medium,
+    Outfit_300Light,
+    Outfit_400Regular,
+    Outfit_500Medium,
   });
 
   useEffect(() => {

@@ -4,6 +4,8 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 config.resolver.sourceExts.push('glsl');
+// La base de alimentos va en la app como un archivo más (src/comida/base.ts).
+config.resolver.assetExts.push('db');
 config.transformer.babelTransformerPath = require.resolve('./herramientas/transformador-glsl.js');
 
 module.exports = config;

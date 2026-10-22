@@ -238,7 +238,99 @@
       "merienda": "a la merienda",
       "cena": "a la cena",
       "snack": "al snack"
-    }
+    },
+    "medir": {
+      "crudo": "Crudo",
+      "cocido": "Cocido",
+      "rinde": "100 g crudo dan unos {n} g cocido",
+      "con": "Con {que}",
+      "sinDesecho": "{n} g sin {que}",
+      "aceite": "¿Llevó aceite?",
+      "aceites": [
+        "No",
+        "1 cdta",
+        "1 cda",
+        "2 cdas"
+      ],
+      "conAceite": "con {que} de aceite",
+      "aceiteIncluido": "El aceite de la fritura ya está contado.",
+      "pesado": "Pesado",
+      "aOjo": "A ojo",
+      "mililitros": "Mililitros",
+      "onzas": "Onzas",
+      "onzasLiquidas": "Onzas líquidas",
+      "ingredientes": "Ingredientes · {peso} g terminado",
+      "escribir": "Escribe la cantidad",
+      "enGramos": "En gramos"
+    },
+    "escaner": {
+      "codigoTitulo": "Código de barras",
+      "codigoTexto": "Apunta al código: se lee solo.",
+      "buscando": "Buscando {codigo}…",
+      "noEsta": "No lo encontramos. Saca una foto de la etiqueta y queda guardado para la próxima.",
+      "incompleto": "Le faltan datos: saca una foto de la etiqueta para completarlo.",
+      "sinConexion": "Sin conexión no se puede buscar un código nuevo: saca una foto de la etiqueta.",
+      "etiquetaTitulo": "Foto de la etiqueta",
+      "etiquetaTexto": "Encuadra la tabla nutricional, con buena luz, y toca el botón.",
+      "leyendo": "Leyendo la etiqueta…",
+      "noSeLeyo": "No se pudo leer. Prueba con más luz, más cerca y de frente.",
+      "soloIphone": "Leer la etiqueta anda en el iPhone. Puedes cargar los valores a mano.",
+      "aMano": "Cargar a mano",
+      "sinPermiso": "Moss necesita la cámara para leer el código y la etiqueta.",
+      "darPermiso": "Permitir la cámara",
+      "sacarFoto": "Sacar la foto",
+      "deOff": "Datos de Open Food Facts (ODbL)",
+      "otraVez": "Escanear otro"
+    },
+    "crear": {
+      "titulo": "Crear alimento",
+      "texto": "Escribe lo que dice la etiqueta, por porción.",
+      "porcionNombre": "La porción",
+      "porcionEjemplo": "1 paquete",
+      "codigo": "Código de barras",
+      "guardar": "Guardar y sumar",
+      "guardado": "Guardado: {nombre}"
+    },
+    "receta": {
+      "titulo": "Receta",
+      "nueva": "Nueva receta",
+      "texto": "Carga los ingredientes y, si quieres, pesa la olla cocida una vez: después registras cada plato en gramos.",
+      "nombreEjemplo": "Guiso de lentejas",
+      "porciones": "Rinde",
+      "porcionesUnidad": "porciones",
+      "pesoFinal": "Peso final",
+      "ingredientes": "Ingredientes",
+      "agregarIngrediente": "Agregar ingrediente",
+      "eligeIngrediente": "Elige un ingrediente para {receta}",
+      "guardar": "Guardar receta",
+      "guardada": "Receta guardada: {nombre}",
+      "plato": "1 plato",
+      "porPlato": "{kcal} kcal por plato",
+      "sinIngredientes": "Todavía no tiene ingredientes."
+    },
+    "recetas": "Recetas",
+    "tuyo": "Tuyo",
+    "guardarComo": {
+      "titulo": "Guardar comida",
+      "ejemplo": "Desayuno de siempre",
+      "guardada": "Guardada: {nombre}"
+    },
+    "copiarDia": "Copiar el día",
+    "copiarA": "Copiar a…",
+    "copiado": {
+      "uno": "{n} alimento copiado a {dia}",
+      "otros": "{n} alimentos copiados a {dia}"
+    },
+    "nadaParaCopiar": "No hay nada para copiar.",
+    "confirmar": "Confirmar lo planificado",
+    "confirmados": {
+      "uno": "{n} alimento confirmado",
+      "otros": "{n} alimentos confirmados"
+    },
+    "sinMeta": "Tu meta aparece cuando completas el cuestionario de la entrada.",
+    "borrado": "{alimento}: borrado",
+    "guardado": "Guardado",
+    "agregadoA": "{que}: agregado {donde}"
   },
   "inicio": {
     "titulo": "Hoy",

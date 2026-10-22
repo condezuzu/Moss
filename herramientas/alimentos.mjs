@@ -11,6 +11,7 @@
 // La arma el SQLite de Node, que es la misma versión que trae expo-sqlite (3.53).
 // Uso: npm run alimentos   → después, npm run alimentos:verificar
 
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -671,6 +672,12 @@ db.exec('COMMIT');
 db.exec(`INSERT INTO palabras (palabras) VALUES ('rebuild'); INSERT INTO trigramas (trigramas) VALUES ('rebuild');`);
 db.exec(`INSERT INTO palabras (palabras) VALUES ('optimize'); INSERT INTO trigramas (trigramas) VALUES ('optimize'); VACUUM;`);
 db.close();
+// La versión que ve el teléfono: con una base nueva, la copia otra vez (src/comida/base.ts).
+if (!process.env.SALIDA) {
+  const version = createHash('sha1').update(readFileSync(salida)).digest('hex').slice(0, 10);
+  const aviso = '// La escribe `npm run alimentos`: cambia con cada base nueva, así el teléfono la copia otra vez.';
+  writeFileSync(join(raiz, 'src/comida/version-de-la-base.ts'), `${aviso}\nexport const VERSION_DE_LA_BASE = '${version}';\n`);
+}
 
 const cuantos = (f) => [...alimentos.values()].filter(f).length;
 console.log(`FNDDS: ${resumen.fndds.alimentos} alimentos (${resumen.fndds.afuera} afuera)`);

@@ -75,6 +75,8 @@ export type AlimentoPropio = {
   codigo: string | null;
   por100g: Valores;
   porciones: { nombre: string; gramos: number }[];
+  /** De dónde salen los valores: Open Food Facts (que pide nombrarlo, ODbL), la etiqueta o a mano. */
+  origen?: 'off' | 'etiqueta' | 'mano';
   actualizado: string;
   borrado?: true;
 };

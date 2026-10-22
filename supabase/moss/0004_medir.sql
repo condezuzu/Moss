@@ -9,6 +9,9 @@
 -- Pesado o a ojo: lo calculado a ojo, el control semanal lo mueve más despacio (src/dominio/control.ts).
 alter table moss.registros add column estimado boolean not null default false;
 
+-- De dónde salen los valores de un alimento propio: Open Food Facts pide nombrarlo donde se muestra (ODbL).
+alter table moss.propios add column origen text check (origen in ('off', 'etiqueta', 'mano'));
+
 -- Los productos y los platos ya van dentro de la app (assets/alimentos.db), así andan sin conexión
 -- desde el primer día. Esta tabla corrige y suma sin sacar una versión nueva: una fila con el id de
 -- un alimento de la base lo reemplaza, una con un id nuevo lo agrega y `retirado` lo saca. El

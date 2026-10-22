@@ -4,10 +4,10 @@
 // salvo en Hábitos, y la constelación va con su página. Abre en Inicio: la comida es el centro.
 
 import * as Haptics from 'expo-haptics';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { interpolate, useAnimatedStyle, useDerivedValue, useSharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -16,6 +16,10 @@ import { lista, t } from '@/textos';
 import { colores } from '@/tema';
 import { Ascent } from './Ascent';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO, type Pestana } from './Barra';
+import { PaginaDeComida } from './comida/Comida';
+import { AvisoAbajo } from './comida/comunes';
+import { HojaRegistro } from './comida/HojaRegistro';
+import { quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { HojaMas } from './HojaMas';
 import { CEDE_EN_EL_BORDE, entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
 
@@ -33,9 +37,16 @@ export default function Secciones() {
   const desde = useSharedValue(0);
   const subida = useSharedValue(0);
   const hoja = useSharedValue(0);
+  // La hoja de registro de la comida: se abre desde Comida, Inicio o el «+».
+  const registro = useRegistro();
+  const conRegistro = useSharedValue(0);
+  useEffect(() => {
+    conRegistro.set(withTiming(registro ? 1 : 0, { duration: registro ? 450 : 380 }));
+  }, [registro, conRegistro]);
+  const aviso = useAviso();
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
-  // Con Ascent arriba o la hoja abierta, las pestañas no se deslizan.
-  const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0);
+  // Con Ascent arriba o una hoja abierta, las pestañas no se deslizan.
+  const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0);
 
   const cambiarDePestana = (i: number) => {
     if (i !== actual) Haptics.selectionAsync().catch(() => {});
@@ -93,8 +104,11 @@ export default function Secciones() {
 
   const estiloVelo = useAnimatedStyle(() => ({ opacity: interpolate(posicion.get(), [0, 1, 2, 3, 4, 5], VELO, 'clamp') }));
   const estiloTira = useAnimatedStyle(() => ({ transform: [{ translateX: -posicion.get() * ancho }] }));
-  // Con la hoja del «+» abierta, lo de atrás se achica un poco, como en iOS.
-  const estiloAtras = useAnimatedStyle(() => ({ transform: [{ scale: 1 - 0.07 * hoja.get() }], borderRadius: 30 * hoja.get() }));
+  // Con una hoja abierta, lo de atrás se achica un poco, como en iOS.
+  const estiloAtras = useAnimatedStyle(() => {
+    const abierta = Math.max(hoja.get(), conRegistro.get());
+    return { transform: [{ scale: 1 - 0.07 * abierta }], borderRadius: 30 * abierta };
+  });
 
   return (
     <GestureDetector gesture={tira}>
@@ -115,6 +129,8 @@ export default function Secciones() {
             {PESTANAS.map((n, i) =>
               i === HABITOS ? (
                 <View key={n} style={{ width: ancho }} pointerEvents="none" />
+              ) : n === 'comida' ? (
+                <PaginaDeComida key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
               ) : (
                 <SeccionPendiente key={n} nombre={n} ancho={ancho} arriba={insets.top} />
               ),
@@ -123,7 +139,9 @@ export default function Secciones() {
           <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />
         </Animated.View>
         <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={abrirHoja} />
+        <AvisoAbajo aviso={aviso} alIrse={quitarAviso} abajo={abajo + 14} />
         <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} />
+        <HojaRegistro />
       </View>
     </GestureDetector>
   );

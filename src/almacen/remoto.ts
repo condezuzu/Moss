@@ -56,7 +56,7 @@ const filaDe = {
   }),
   receta: (r: Receta) => ({ id: r.id, tipo: r.tipo, nombre: r.nombre, items: r.items, porciones: r.porciones, peso_final: r.pesoFinal, borrado: !!r.borrado, actualizado: r.actualizado }),
   propio: (a: AlimentoPropio) => ({
-    id: a.id, nombre: a.nombre, marca: a.marca, codigo: a.codigo, por_100g: a.por100g, porciones: a.porciones, borrado: !!a.borrado, actualizado: a.actualizado,
+    id: a.id, nombre: a.nombre, marca: a.marca, codigo: a.codigo, por_100g: a.por100g, porciones: a.porciones, origen: a.origen ?? null, borrado: !!a.borrado, actualizado: a.actualizado,
   }),
   favorito: (f: Favorito) => ({ fuente: f.fuente, ref: f.ref, favorito: f.favorito, actualizado: f.actualizado }),
   agua: (t: TomaDeAgua) => ({ id: t.id, dia: t.dia, ml: t.ml, momento: t.momento, borrado: !!t.borrado, actualizado: t.actualizado }),
@@ -112,7 +112,7 @@ const deFila = {
     actualizado: hora(f.actualizado),
   }, f.borrado),
   propio: (f: Filas['propio']): AlimentoPropio => conBorrado({
-    id: f.id, nombre: f.nombre, marca: f.marca, codigo: f.codigo, por100g: f.por_100g, porciones: f.porciones, actualizado: hora(f.actualizado),
+    id: f.id, nombre: f.nombre, marca: f.marca, codigo: f.codigo, por100g: f.por_100g, porciones: f.porciones, ...(f.origen ? { origen: f.origen } : {}), actualizado: hora(f.actualizado),
   }, f.borrado),
   favorito: (f: Filas['favorito']): Favorito => ({ fuente: f.fuente, ref: f.ref, favorito: f.favorito, actualizado: hora(f.actualizado) }),
   agua: (f: Filas['agua']): TomaDeAgua => conBorrado({ id: f.id, dia: f.dia, ml: f.ml, momento: hora(f.momento), actualizado: hora(f.actualizado) }, f.borrado),

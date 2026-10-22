@@ -2,6 +2,7 @@
   "ios": {
     "CFBundleDisplayName": "Moss",
     "NSHealthShareUsageDescription": "Moss lee tus pasos, agua, minutos de mindfulness y sueño para encender solas las estrellas de esos hábitos.",
-    "NSHealthUpdateUsageDescription": "Moss no escribe nada en Salud: solo lee los datos que eliges."
+    "NSHealthUpdateUsageDescription": "Moss no escribe nada en Salud: solo lee los datos que eliges.",
+    "NSCameraUsageDescription": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes. Las fotos no salen del teléfono."
   }
 }

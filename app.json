@@ -72,7 +72,15 @@
       ],
       "expo-apple-authentication",
       "expo-status-bar",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes. Las fotos no salen del teléfono.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

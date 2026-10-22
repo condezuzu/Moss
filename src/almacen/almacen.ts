@@ -4,6 +4,7 @@
 // metas y el peso, y lo que se come (src/dominio/registros.ts).
 
 import type { Constelacion } from '@/datos/catalogo';
+import type { Sistema } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
@@ -43,6 +44,8 @@ export type Estado = MapasDeComida & {
   pesos: Peso[];
   /** La comida que se arma en la hoja de registro: queda en el teléfono hasta agregarla, aunque se cierre la hoja. */
   canasta: Item[];
+  /** Métrico o imperial, si se eligió en Perfil; sin elegir, el del país del teléfono. Queda en el teléfono. */
+  sistema: Sistema | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
   semilla: string;
   /** Sube con cada cambio. */
@@ -69,8 +72,9 @@ export const DIAS_DE_MARCAS = 14;
 /** Cuántos días de lo comido se tienen a mano: alcanzan para el control (tres semanas), el mes y lo que solés comer. */
 export const DIAS_DE_COMIDA = 120;
 
-/** La canasta va en los ajustes del teléfono: no se sincroniza. */
+/** La canasta y el sistema de unidades van en los ajustes del teléfono: no se sincronizan. */
 const CANASTA = 'canasta';
+const SISTEMA = 'sistema';
 
 /** Un id para lo que se crea en el teléfono: la hora y un azar, así dos teléfonos de la misma cuenta no se pisan. */
 const idNuevo = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -118,7 +122,7 @@ export function crearAlmacen(op: Opciones) {
   let repositorio: Repositorio | undefined;
   let estado: Estado = {
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
-    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [],
+    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null,
     semilla: '', version: 0, forma: 0,
   };
   const oyentes = new Set<() => void>();
@@ -208,7 +212,8 @@ export function crearAlmacen(op: Opciones) {
       registros: comida.registros,
       metas: g.metas,
     });
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), listo: true }, true);
+    const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, listo: true }, true);
     revisarControl();
   }
 
@@ -366,8 +371,11 @@ export function crearAlmacen(op: Opciones) {
     // ---------------------------------------------------------------- lo que se come
     /** Anotar lo comido (o lo planificado, en un día que no llegó). Devuelve los registros nuevos. */
     registrar,
-    /** Corregir un registro desde su ventana: la cantidad y sus valores, si fue a ojo, la comida o la hora. */
-    cambiarRegistro(id: string, cambios: Partial<Pick<Registro, 'cantidad' | 'valores' | 'comida' | 'momento'>> & { estimado?: boolean }) {
+    /**
+     * Corregir un registro desde su ventana: la cantidad y sus valores, si fue a ojo, la comida o la
+     * hora; o pasarlo a la otra versión del mismo alimento (de crudo a cocido).
+     */
+    cambiarRegistro(id: string, cambios: Partial<Pick<Registro, 'fuente' | 'ref' | 'nombre' | 'cantidad' | 'valores' | 'comida' | 'momento'>> & { estimado?: boolean }) {
       const r = estado.registros.get(id);
       if (!r || r.borrado) return;
       const { estimado, ...resto } = cambios;
@@ -392,6 +400,10 @@ export function crearAlmacen(op: Opciones) {
       const hechos = confirmar(estado.registros.values(), dia, momento());
       ponerComida('registros', hechos);
       return hechos.length;
+    },
+    ponerSistema(sistema: Sistema) {
+      guardar((r) => r.guardarAjuste(SISTEMA, sistema));
+      cambiar({ sistema }, false);
     },
     ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
     cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),

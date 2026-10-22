@@ -238,7 +238,99 @@
       "merienda": "to afternoon snack",
       "cena": "to dinner",
       "snack": "to snack"
-    }
+    },
+    "medir": {
+      "crudo": "Raw",
+      "cocido": "Cooked",
+      "rinde": "100 g raw make about {n} g cooked",
+      "con": "With {que}",
+      "sinDesecho": "{n} g without {que}",
+      "aceite": "Any oil?",
+      "aceites": [
+        "No",
+        "1 tsp",
+        "1 tbsp",
+        "2 tbsp"
+      ],
+      "conAceite": "with {que} of oil",
+      "aceiteIncluido": "The frying oil is already counted.",
+      "pesado": "Weighed",
+      "aOjo": "Estimated",
+      "mililitros": "Milliliters",
+      "onzas": "Ounces",
+      "onzasLiquidas": "Fluid ounces",
+      "ingredientes": "Ingredients · {peso} g cooked",
+      "escribir": "Type the amount",
+      "enGramos": "In grams"
+    },
+    "escaner": {
+      "codigoTitulo": "Barcode",
+      "codigoTexto": "Point at the code: it reads by itself.",
+      "buscando": "Looking up {codigo}…",
+      "noEsta": "We couldn't find it. Take a photo of the label and it's saved for next time.",
+      "incompleto": "Some values are missing: take a photo of the label to complete it.",
+      "sinConexion": "Offline, a new code can't be looked up: take a photo of the label.",
+      "etiquetaTitulo": "Label photo",
+      "etiquetaTexto": "Frame the nutrition table, in good light, and tap the button.",
+      "leyendo": "Reading the label…",
+      "noSeLeyo": "Couldn't read it. Try more light, closer and straight on.",
+      "soloIphone": "Reading the label works on the iPhone. You can type the values.",
+      "aMano": "Type it in",
+      "sinPermiso": "Moss needs the camera to read the barcode and the label.",
+      "darPermiso": "Allow the camera",
+      "sacarFoto": "Take the photo",
+      "deOff": "Data from Open Food Facts (ODbL)",
+      "otraVez": "Scan another"
+    },
+    "crear": {
+      "titulo": "Create food",
+      "texto": "Type what the label says, per serving.",
+      "porcionNombre": "The serving",
+      "porcionEjemplo": "1 pack",
+      "codigo": "Barcode",
+      "guardar": "Save and add",
+      "guardado": "Saved: {nombre}"
+    },
+    "receta": {
+      "titulo": "Recipe",
+      "nueva": "New recipe",
+      "texto": "Add the ingredients and, if you like, weigh the cooked pot once: then you log each plate in grams.",
+      "nombreEjemplo": "Lentil stew",
+      "porciones": "Makes",
+      "porcionesUnidad": "servings",
+      "pesoFinal": "Final weight",
+      "ingredientes": "Ingredients",
+      "agregarIngrediente": "Add ingredient",
+      "eligeIngrediente": "Pick an ingredient for {receta}",
+      "guardar": "Save recipe",
+      "guardada": "Recipe saved: {nombre}",
+      "plato": "1 plate",
+      "porPlato": "{kcal} kcal per plate",
+      "sinIngredientes": "No ingredients yet."
+    },
+    "recetas": "Recipes",
+    "tuyo": "Yours",
+    "guardarComo": {
+      "titulo": "Save meal",
+      "ejemplo": "Usual breakfast",
+      "guardada": "Saved: {nombre}"
+    },
+    "copiarDia": "Copy the day",
+    "copiarA": "Copy to…",
+    "copiado": {
+      "uno": "{n} food copied to {dia}",
+      "otros": "{n} foods copied to {dia}"
+    },
+    "nadaParaCopiar": "Nothing to copy.",
+    "confirmar": "Confirm what was planned",
+    "confirmados": {
+      "uno": "{n} food confirmed",
+      "otros": "{n} foods confirmed"
+    },
+    "sinMeta": "Your goal shows up once you finish the welcome questionnaire.",
+    "borrado": "{alimento}: deleted",
+    "guardado": "Saved",
+    "agregadoA": "{que}: added {donde}"
   },
   "inicio": {
     "titulo": "Today",
