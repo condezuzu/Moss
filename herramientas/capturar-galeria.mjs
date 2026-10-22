@@ -240,7 +240,7 @@ const pasos = {
     await comida('registrar');
     await pagina.waitForTimeout(1000);
     await foto('registrar');
-    for (const [texto, nombre] of [['frutila', 'frutila'], ['palta', 'palta'], ['manzaan', 'manzaan']]) {
+    for (const [texto, nombre] of [['frutila', 'frutila'], ['palta', 'palta'], ['manzaan', 'manzaan'], ['chivito', 'chivito']]) {
       await comida('escribir', texto);
       await pagina.waitForTimeout(250);
       await foto('registrar-' + nombre);

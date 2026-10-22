@@ -32,6 +32,10 @@ console.log(`${total} alimentos, ${curados} curados en español. ${uno('SELECT v
 const imposibles = todas(`SELECT descripcion FROM alimentos WHERE kcal < 0 OR proteina < 0 OR carbohidratos < 0 OR grasas < 0 OR kcal > 902 OR proteina + carbohidratos + grasas > 102
   OR fibra < 0 OR azucares < 0 OR saturadas < 0 OR sodio < 0 OR alcohol < 0 OR sodio > 40000 OR alcohol > 100`);
 comprobar(!imposibles.length, 'los valores por 100 g son posibles', imposibles.map((a) => a.descripcion));
+// Cocinar le saca agua a un plato, y nunca le suma más que un poco: lo terminado pesa entre el 40 % y el 105 % de sus ingredientes.
+const platos = todas(`SELECT a.nombre_es, r.peso_final, (SELECT sum(gramos) FROM ingredientes i WHERE i.plato = r.plato) AS crudo FROM recetas r JOIN alimentos a ON a.id = r.plato`);
+const pesosRaros = platos.filter((p) => p.peso_final < 0.4 * p.crudo || p.peso_final > 1.05 * p.crudo);
+comprobar(!pesosRaros.length, `los ${platos.length} platos como recetas pesan algo posible al terminarlos`, pesosRaros.map((p) => `${p.nombre_es}: ${p.peso_final} g de ${p.crudo} g`));
 const sinSecundarios = todas(`SELECT nombre_es FROM alimentos WHERE nombre_es IS NOT NULL AND fuente <> 'propio' AND (fibra IS NULL OR sodio IS NULL)`);
 
 const sinPorcion = todas(`SELECT a.nombre_es FROM alimentos a LEFT JOIN porciones p ON p.id = a.porcion WHERE a.nombre_es IS NOT NULL AND (p.id IS NULL OR p.es IS NULL)`);

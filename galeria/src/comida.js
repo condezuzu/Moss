@@ -1341,7 +1341,8 @@ const Comida = (() => {
 
       const cab = el('header', 'vt-cab');
       const titulos = el('div', 'vt-titulos');
-      titulos.append(el('h3', 'vt-nombre', nombreDe(a)), el('div', 'vt-fuente', tx(a.cat === 'etiqueta' ? 'comida.fuente.etiqueta' : a.id < 0 ? 'comida.fuente.propio' : 'comida.fuente.usda')));
+      const fuente = a.cat === 'etiqueta' ? 'etiqueta' : a.cat === 'platos-uy' ? 'receta' : a.id < 0 ? 'propio' : 'usda';
+      titulos.append(el('h3', 'vt-nombre', nombreDe(a)), el('div', 'vt-fuente', tx('comida.fuente.' + fuente)));
       const estrella = boton('hj-estrella' + (s.favoritos.has(a.id) ? ' activa' : ''), icono('estrella'), () => {
         if (s.favoritos.has(a.id)) s.favoritos.delete(a.id); else s.favoritos.add(a.id);
         estrella.classList.toggle('activa', s.favoritos.has(a.id));

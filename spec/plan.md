@@ -224,7 +224,7 @@ Falta:
 
 - **Llegar a ~1.000 genéricos:** las formas cocidas, los platos del mundo que faltan y lo que se busque sin encontrar.
 - **Fibra, azúcares, grasas saturadas, sodio y alcohol** en la base, de USDA (se sumó el 22/10/2026, después de mirar las otras apps: [`nutricion.md`](nutricion.md), «Lo que tienen las otras apps»).
-- **Las ~200 comidas uruguayas**, como recetas con ingredientes de la lista curada. El armado de la base calcula sus valores.
+- **Las ~200 comidas uruguayas**, como recetas con ingredientes de la lista curada. El armado de la base calcula sus valores. La primera tanda, de 14, está desde el 22/10/2026: milanesa a la napolitana, chivito, pascualina, fainá, torta frita, capeletis a la caruso, buseca, postre chajá, Martín Fierro, choripán, polenta con tuco y alfajor de maicena, entre otros.
 - **Los ~300 productos uruguayos:**
   - de Open Food Facts, los que están;
   - el resto, con fotos de etiquetas en un supermercado.

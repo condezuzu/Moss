@@ -3,7 +3,10 @@
 //
 // Una línea por alimento:  español | inglés | de dónde sale | porciones | alias
 // - De dónde sale: «sr:» (SR Legacy) o «fndds:» (FNDDS) y la descripción exacta de USDA; o, para lo
-//   que USDA no tiene, «propio#N kcal proteína carbohidratos grasas» por 100 g (N no cambia nunca).
+//   que USDA no tiene, «propio#N kcal proteína carbohidratos grasas» por 100 g (N no cambia nunca);
+//   o, para un plato, «receta#N ingrediente gramos · ingrediente gramos → peso final»: los
+//   ingredientes son curados de esta lista, y el peso final es lo que pesa terminado (cocinar
+//   cambia el peso; sin él, la suma). Los valores por 100 g los calcula el armado.
 // - Porciones: «1 mediana / 1 medium=118», separadas con « · ». La primera es la de siempre.
 // - Alias: «palta* (AR UY)». Las regiones son códigos de país; con asterisco, es el nombre que se
 //   muestra en esas regiones.
@@ -157,6 +160,7 @@ Trigo burgol | Bulgur | sr:Bulgur, cooked | 1 taza / 1 cup=182 | bulgur
 Polenta | Cornmeal | sr:Cornmeal, degermed, enriched, yellow | ¼ taza / ¼ cup=35 | harina de maíz · sémola de maíz
 Polenta cocida | Cooked polenta | fndds:Cornmeal mush, no added fat | 1 taza / 1 cup=240 |
 Harina de trigo | Wheat flour | sr:Wheat flour, white, all-purpose, enriched, bleached | 1 taza / 1 cup=125 | harina 0000* (AR UY) · harina
+Harina de garbanzo | Chickpea flour | sr:Chickpea flour (besan) | ½ taza / ½ cup=46 | harina de garbanzos · besan
 Harina integral | Whole wheat flour | sr:Wheat flour, whole-grain | 1 taza / 1 cup=120 |
 Maicena | Cornstarch | sr:Cornstarch | 1 cucharada / 1 tbsp=8 | almidón de maíz · fécula de maíz
 Copos de maíz | Corn flakes | fndds:Cereal, corn flakes, plain | 1 taza / 1 cup=30 | cereal de maíz · hojuelas de maíz* (MX) · corn flakes
@@ -407,6 +411,8 @@ Stevia | Stevia | fndds:Sugar substitute, stevia, powder | 1 sobre / 1 packet=1 
 Jarabe de arce | Maple syrup | sr:Syrups, maple | 1 cucharada / 1 tbsp=20 | miel de maple* (MX) · sirope de arce* (ES) · maple
 Mermelada | Jam | fndds:Jam | 1 cucharada / 1 tbsp=20 | confitura · dulce de fruta
 Dulce de leche | Dulce de leche | fndds:Dulce de leche | 1 cucharada / 1 tbsp=19 | cajeta* (MX) · manjar* (CL PE EC) · arequipe* (CO VE)
+// Dulce de membrillo: USDA no lo tiene; valores típicos de las etiquetas uruguayas y argentinas.
+Dulce de membrillo | Quince paste | propio#2 268 0.3 66 0.1 | 1 porción / 1 piece=40 | membrillo (UY AR) · dulce de membrillo · ate de membrillo* (MX) · carne de membrillo* (ES)
 Dulce de guayaba | Guava paste | fndds:Guava paste | 30 g / 30 g=30 | bocadillo* (CO) · guayabate (MX) · pasta de guayaba (PR)
 Dulce de batata | Sweet potato paste | fndds:Sweet potato paste | 30 g / 30 g=30 | dulce de boniato* (UY) · dulce de camote (MX PE)
 Crema de avellanas | Chocolate hazelnut spread | fndds:Chocolate hazelnut spread | 1 cucharada / 1 tbsp=19 | nutella
@@ -606,6 +612,24 @@ Pastel de papas | Shepherd's pie | fndds:Shepherd's pie | 1 porción / 1 slice=2
 Chili con carne | Chili con carne | sr:Chili con carne with beans, canned entree | 1 taza / 1 cup=242 | chili
 Sushi | Sushi | fndds:Sushi, NFS | 6 piezas / 6 pieces=180 | rolls
 Gazpacho | Gazpacho | fndds:Soup, gazpacho | 1 taza / 1 cup=245 |
+
+# platos-uy
+// Los platos uruguayos de todos los días, como recetas caseras (primera tanda, 22/10/2026: para
+// revisar). Las cantidades son de una receta típica; el peso final, de la cocción.
+Milanesa a la napolitana | Neapolitan breaded steak | receta#1 Milanesa 160 · Salsa de tomate 40 · Jamón cocido 30 · Queso mozzarella 40 → 265 | 1 unidad / 1 piece=265 | napolitana · milanesa napolitana
+Milanesa de pollo a la napolitana | Neapolitan breaded chicken | receta#2 Milanesa de pollo 150 · Salsa de tomate 40 · Jamón cocido 30 · Queso mozzarella 40 → 255 | 1 unidad / 1 piece=255 | napolitana de pollo
+Chivito | Chivito sandwich | receta#3 Pan de hamburguesa 100 · Lomo 120 · Jamón cocido 30 · Queso mozzarella 40 · Huevo frito 46 · Panceta 20 · Lechuga 15 · Tomate 40 · Mayonesa 20 · Aceitunas verdes 10 | 1 unidad / 1 sandwich=441 | chivito canadiense · chivito al pan
+Chivito al plato | Chivito plate | receta#4 Lomo 150 · Jamón cocido 30 · Queso mozzarella 40 · Huevo frito 46 · Panceta 20 · Ensalada de papas 150 · Papas fritas 150 · Lechuga 20 · Tomate 50 | 1 plato / 1 plate=656 | chivito completo al plato
+Pascualina | Chard and egg pie | receta#5 Harina de trigo 400 · Aceite de girasol 80 · Agua 180 · Sal 6 · Acelga 1200 · Cebolla 200 · Aceite de oliva 20 · Huevo 200 · Huevo duro 150 · Queso rallado 60 → 1600 | 1 porción / 1 slice=200 | tarta pascualina · torta pascualina
+Fainá | Farinata | receta#6 Harina de garbanzo 250 · Agua 600 · Aceite de oliva 50 · Sal 7 → 600 | 1 porción / 1 slice=75 | faina · fainá de orilla
+Torta frita | Fried dough cake | receta#7 Harina de trigo 500 · Agua 270 · Manteca de cerdo 50 · Sal 8 · Aceite de girasol 80 → 820 | 1 unidad / 1 piece=82 | tortas fritas · torta frita con azúcar
+Capeletis a la caruso | Cappelletti alla Caruso | receta#8 Ravioles 400 · Crema de leche 150 · Jamón cocido 60 · Champiñones 80 · Queso rallado 30 · Mantequilla 10 → 680 | 1 plato / 1 plate=340 | capelettis a la caruso · capeletis caruso · salsa caruso
+Buseca | Tripe and bean stew | receta#9 Mondongo 500 · Frijoles blancos 400 · Garbanzos 200 · Chorizo 150 · Panceta 80 · Tomate triturado 400 · Cebolla 200 · Pimiento rojo 150 · Zanahoria 150 · Papa 400 · Aceite de girasol 30 · Agua 600 → 2400 | 1 plato / 1 bowl=400 | busecca · mondongo a la española
+Postre chajá | Chajá cake | receta#10 Bizcocho 400 · Crema batida 400 · Duraznos en almíbar 400 · Merengue 100 · Dulce de leche 150 | 1 porción / 1 slice=180 | chajá · torta chajá
+Martín Fierro | Cheese with quince paste | receta#11 Queso fresco 60 · Dulce de membrillo 40 | 1 porción / 1 serving=100 | queso y dulce · postre vigilante (AR)
+Choripán | Chorizo sandwich | receta#12 Pan francés 80 · Chorizo 75 | 1 unidad / 1 sandwich=155 | chori · choripan
+Polenta con tuco | Polenta with meat sauce | receta#13 Polenta cocida 300 · Salsa boloñesa 150 · Queso rallado 10 | 1 plato / 1 plate=460 | polenta con salsa
+Alfajor de maicena | Cornstarch alfajor | receta#14 Maicena 300 · Harina de trigo 200 · Mantequilla 200 · Azúcar 150 · Yema de huevo 54 · Dulce de leche 400 · Coco rallado 30 → 1250 | 1 unidad / 1 alfajor=42 | alfajores de maicena · alfajor
 
 # suplementos
 Proteína de suero | Whey protein | fndds:Nutritional powder mix, whey based, NFS | 1 medida / 1 scoop=30 | whey · proteína whey · proteína en polvo

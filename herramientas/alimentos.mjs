@@ -6,6 +6,7 @@
 //   cadena de Estados Unidos.
 // - Los valores van por 100 g: kcal, proteína, carbohidratos y grasas y, cuando USDA los tiene,
 //   fibra, azúcares, grasas saturadas, sodio (en mg) y alcohol.
+// - Calcula los platos que son recetas (`receta#` en genericos.txt) con sus ingredientes curados.
 // - Arma los dos índices de búsqueda: palabras con prefijos y trigramas.
 // La arma el SQLite de Node, que es la misma versión que trae expo-sqlite (3.53).
 // Uso: npm run alimentos   → después, npm run alimentos:verificar
@@ -344,7 +345,13 @@ const porDescripcion = new Map();
 for (const a of alimentos.values()) porDescripcion.set(`${a.fuente}:${a.descripcion}`, a);
 const errores = [];
 const alias = [];
+const recetas = [];
 for (const g of genericos) {
+  // Los platos van después: sus ingredientes tienen que estar curados.
+  if (g.origen.startsWith('receta#')) {
+    recetas.push(g);
+    continue;
+  }
   let alimento;
   const propio = g.origen.match(/^propio#(\d+) ([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)$/);
   if (propio) {
@@ -362,6 +369,41 @@ for (const g of genericos) {
   }
   Object.assign(alimento, { es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones });
   for (const a of g.alias) for (const region of a.regiones) alias.push({ alimento: alimento.id, texto: a.texto, region, principal: a.principal && region !== null });
+}
+
+// Los platos: los valores por 100 g de lo terminado salen de los ingredientes. De lo secundario, lo
+// que un ingrediente no dice cuenta como cero; lo que no dice ninguno, no está.
+const SECUNDARIOS = ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'];
+const porEspanol = new Map([...alimentos.values()].filter((a) => a.es).map((a) => [a.es, a]));
+const ingredientes = [];
+const pesosFinales = [];
+for (const g of recetas) {
+  const m = g.origen.match(/^receta#(\d+) (.+?)(?: → ([\d.]+))?$/);
+  if (!m) {
+    errores.push(`${g.donde}: la receta no se entiende`);
+    continue;
+  }
+  const lista = m[2].split(' · ').map((x) => {
+    const corte = x.lastIndexOf(' ');
+    return { nombre: x.slice(0, corte).trim(), gramos: Number(x.slice(corte + 1)) };
+  });
+  const malos = lista.filter((i) => !porEspanol.has(i.nombre) || !(i.gramos > 0));
+  if (malos.length) {
+    errores.push(`${g.donde}: no conozco ${malos.map((i) => `«${i.nombre}»`).join(', ')}`);
+    continue;
+  }
+  const peso = m[3] ? Number(m[3]) : lista.reduce((s, i) => s + i.gramos, 0);
+  const valores = {};
+  for (const clave of ['kcal', 'proteina', 'carbohidratos', 'grasas', ...SECUNDARIOS]) {
+    const conDato = lista.filter((i) => porEspanol.get(i.nombre)[clave] != null);
+    if (!conDato.length && SECUNDARIOS.includes(clave)) continue;
+    valores[clave] = conDato.reduce((s, i) => s + porEspanol.get(i.nombre)[clave] * i.gramos, 0) / peso;
+  }
+  const id = -(5000 + Number(m[1]));
+  alimentos.set(id, { id, fuente: 'receta', descripcion: g.en, ...valores, es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones });
+  for (const i of lista) ingredientes.push([id, porEspanol.get(i.nombre).id, i.gramos]);
+  pesosFinales.push([id, peso]);
+  for (const a of g.alias) for (const region of a.regiones) alias.push({ alimento: id, texto: a.texto, region, principal: a.principal && region !== null });
 }
 if (errores.length) {
   console.error(errores.join('\n'));
@@ -405,6 +447,9 @@ db.exec(`
   CREATE VIRTUAL TABLE palabras USING fts5(texto, content = 'textos', content_rowid = 'id', tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3');
   CREATE VIRTUAL TABLE trigramas USING fts5(texto, content = 'textos', content_rowid = 'id', tokenize = 'trigram remove_diacritics 1');
   CREATE TABLE datos (clave TEXT PRIMARY KEY, valor TEXT NOT NULL);
+  -- Los platos que son recetas: lo que pesan terminados y sus ingredientes, para mostrar de dónde salen sus valores.
+  CREATE TABLE recetas (plato INTEGER PRIMARY KEY, peso_final REAL NOT NULL);
+  CREATE TABLE ingredientes (plato INTEGER NOT NULL, ingrediente INTEGER NOT NULL, gramos REAL NOT NULL);
 `);
 db.exec('BEGIN');
 const ponerAlimento = db.prepare('INSERT INTO alimentos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -451,6 +496,8 @@ for (const a of alias) {
   ponerAlias.run(a.alimento, a.texto, a.region, a.principal ? 1 : 0);
   ponerTexto.run(a.alimento, 'es', a.region, a.principal ? 1 : 0, a.texto);
 }
+for (const [plato, peso] of pesosFinales) db.prepare('INSERT INTO recetas VALUES (?, ?)').run(plato, peso);
+for (const [plato, ingrediente, gramos] of ingredientes) db.prepare('INSERT INTO ingredientes VALUES (?, ?, ?)').run(plato, ingrediente, gramos);
 db.prepare('INSERT INTO datos VALUES (?, ?)').run('fuentes', `USDA FoodData Central: ${BASES.fndds.nombre} y ${BASES.sr.nombre} (dominio público)`);
 db.prepare('INSERT INTO datos VALUES (?, ?)').run('armada', new Date().toISOString().slice(0, 10));
 db.exec('COMMIT');
@@ -461,7 +508,7 @@ db.close();
 const curados = genericos.length;
 console.log(`FNDDS: ${resumen.fndds.alimentos} alimentos (${resumen.fndds.afuera} afuera)`);
 console.log(`SR Legacy: ${resumen.sr.alimentos} alimentos (${resumen.sr.afuera} afuera y ${resumen.sr.marcas} de marcas)`);
-console.log(`Curados en español: ${curados}, con ${alias.length} alias. Porciones de USDA sin traducir en los curados: ${sinTraducir}.`);
+console.log(`Curados en español: ${curados}, con ${alias.length} alias, y ${recetas.length} platos como recetas. Porciones de USDA sin traducir en los curados: ${sinTraducir}.`);
 console.log(`${salida.replace(raiz, '').slice(1)}: ${(statSync(salida).size / 1048576).toFixed(1)} MB`);
 // Para ampliar la tabla de traducción: VER_PORCIONES=1 npm run alimentos
 if (process.env.VER_PORCIONES) {

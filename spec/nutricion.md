@@ -102,7 +102,7 @@ la gente encuentre lo que come:
   - lo que la gente busca y no encuentra: se anota sin datos personales.
 
   Cada línea la revisan el armado (que la descripción de USDA exista) y el verificador.
-- **Comidas uruguayas (~200):** recetas con ingredientes de la lista curada, en gramos y con el rendimiento al cocinar. La base calcula sus valores por 100 g. Por ejemplo:
+- **Comidas uruguayas (~200):** recetas con ingredientes de la lista curada, en gramos y con el rendimiento al cocinar. La base calcula sus valores por 100 g y guarda los ingredientes (tablas `recetas` e `ingredientes`), para mostrar de dónde salen. La primera tanda, de 14, está desde el 22/10/2026 en `alimentos/genericos.txt` (`receta#`), para que la revises. Por ejemplo:
   - milanesa a la napolitana, chivito al plato, pascualina y fainá;
   - torta frita, capeletis a la caruso, buseca y ensalada rusa;
   - postre chajá y Martín Fierro.

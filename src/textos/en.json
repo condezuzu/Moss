@@ -271,7 +271,8 @@
     "fuente": {
       "usda": "Generic · USDA FoodData Central",
       "propio": "Generic · Moss values",
-      "etiqueta": "Yours · from the label"
+      "etiqueta": "Yours · from the label",
+      "receta": "Moss recipe · USDA ingredients"
     },
     "favorito": "Favorite",
     "nombre": "Name",

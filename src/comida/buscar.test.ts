@@ -92,6 +92,17 @@ describe('buscar alimentos', () => {
     expect(await primero('banana')).toMatchObject({ kcal: 89, proteina: 1.09, carbohidratos: 22.84, grasas: 0.33, curado: true, porcion: { nombre: '1 mediana', gramos: 118 } });
   });
 
+  it('los platos uruguayos, que la base calcula como recetas con sus ingredientes', async () => {
+    expect(await primero('faina')).toMatchObject({ nombre: 'Fainá', curado: true, porcion: { nombre: '1 porción', gramos: 75 } });
+    expect((await primero('chivito')).nombre).toBe('Chivito');
+    expect((await primero('napolitana')).nombre).toBe('Milanesa a la napolitana');
+    const torta = await primero('torta frita');
+    expect(torta.nombre).toBe('Torta frita');
+    // Una torta frita, entre 250 y 350 kcal.
+    expect((torta.kcal * torta.porcion!.gramos) / 100).toBeGreaterThan(250);
+    expect((torta.kcal * torta.porcion!.gramos) / 100).toBeLessThan(350);
+  });
+
   it('y lo secundario, cuando la base lo tiene: fibra, azúcares, saturadas y sodio (en mg)', async () => {
     expect(await primero('banana')).toMatchObject({ fibra: 2.6, azucares: 12.23, saturadas: 0.11, sodio: 1 });
     expect('fibra' in (await primero('aceto'))).toBe(false);
