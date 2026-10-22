@@ -101,21 +101,45 @@ const Entrada = (() => {
     }
 
     // ------------------------------------------------------------ la luna de la comida
-    // La comida tiene su zona del cielo: una luna que se llena con lo que comés, y tres arcos
-    // alrededor, uno por macro. La meta es la luna llena.
+    // La comida tiene su luna: se llena con lo que comés, y tres arcos alrededor, uno por macro. La
+    // meta es la luna llena. Es la misma luna de verdad de la zona de comida (comida.js): mares,
+    // grano y la sombra con el borde suave.
+    let lunas = 0;
     function luna(clase) {
+      const id = `entLuna${++lunas}`;
       const svg = document.createElementNS(SVG, 'svg');
       svg.setAttribute('viewBox', '-100 -100 200 200');
       svg.setAttribute('class', 'ent-luna ' + (clase || ''));
       svg.innerHTML = `
         <defs>
-          <radialGradient id="lunaCara" cx="35%" cy="35%" r="75%">
-            <stop offset="0" stop-color="#fff6dc"/><stop offset="0.6" stop-color="#f3dc9b"/><stop offset="1" stop-color="#c8a75c"/>
+          <radialGradient id="${id}-cara" cx="40%" cy="36%" r="72%">
+            <stop offset="0" stop-color="#f7f3e8"/><stop offset="0.6" stop-color="#e4ddcc"/><stop offset="1" stop-color="#b9b09b"/>
           </radialGradient>
+          <filter id="${id}-grano" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.16" numOctaves="3" seed="4"/>
+            <feColorMatrix values="0 0 0 0 0.32  0 0 0 0 0.3  0 0 0 0 0.26  0 0 0 1.5 -0.72"/>
+            <feComposite in2="SourceAlpha" operator="in"/>
+          </filter>
+          <filter id="${id}-suave" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter>
+          <filter id="${id}-borde" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.4"/></filter>
+          <mask id="${id}-luz" maskUnits="userSpaceOnUse" x="-50" y="-50" width="100" height="100"><path class="ent-luna-fase" fill="#fff" filter="url(#${id}-borde)"/></mask>
+          <clipPath id="${id}-disco"><circle r="40"/></clipPath>
         </defs>
-        <circle r="44" class="ent-luna-halo"/>
-        <circle r="40" class="ent-luna-sombra"/>
-        <path class="ent-luna-fase" fill="url(#lunaCara)"/>
+        <circle r="46" class="ent-luna-halo"/>
+        <g clip-path="url(#${id}-disco)">
+          <circle r="40" class="ent-luna-noche"/>
+          <g mask="url(#${id}-luz)">
+            <circle r="40" fill="url(#${id}-cara)"/>
+            <g class="ent-mares" filter="url(#${id}-suave)">
+              <ellipse cx="-13" cy="-15" rx="11" ry="8.5"/><ellipse cx="5" cy="-11" rx="7" ry="6"/><ellipse cx="13" cy="-1" rx="8" ry="7"/>
+              <ellipse cx="-21" cy="5" rx="8" ry="15"/><ellipse cx="-3" cy="14" rx="7" ry="4.5"/><ellipse cx="22" cy="-14" rx="4" ry="3.2"/>
+              <ellipse cx="19" cy="13" rx="5" ry="4"/>
+            </g>
+            <circle r="40" fill="#000" filter="url(#${id}-grano)" opacity="0.55"/>
+            <circle cx="-7" cy="27" r="1.5" class="ent-crater"/><circle cx="9" cy="22" r="1" class="ent-crater"/>
+          </g>
+        </g>
+        <circle r="40" class="ent-luna-contorno"/>
         <circle r="54" class="ent-arco ent-arco-p"/>
         <circle r="62" class="ent-arco ent-arco-c"/>
         <circle r="70" class="ent-arco ent-arco-g"/>`;

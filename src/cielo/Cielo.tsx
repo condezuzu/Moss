@@ -49,7 +49,7 @@ import {
   type Evento,
 } from './escena';
 import { Interfaz, type Aviso } from './Interfaz';
-import { CALIDADES, HORIZONTE, PARALAJE, ZONA_UNIVERSO, type Calidad } from './mundo';
+import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad } from './mundo';
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
 import { useTextos } from './textosDelCielo';
@@ -165,6 +165,7 @@ export default function Cielo() {
           uCapas: ajustes.capas,
           uSemilla: 7,
           uRiqueza: riqueza,
+          uVia: VIA_LACTEA,
         }}
       />
     </Fill>,

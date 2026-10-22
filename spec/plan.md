@@ -263,10 +263,10 @@ El corazón de la app. Los flujos y sus toques están en
   - el dictado del teclado;
   - planificar días futuros.
 - **La foto como recuerdo**, guardada en el teléfono (D10).
-- **Medir en el iPhone** los toques y el tiempo de cada flujo. Lo de siempre tiene que entrar en dos toques.
+- **Medir en el iPhone** los toques y el tiempo de cada flujo. Lo de siempre entra en cinco toques, revisando antes de agregar.
 
-**Sale:** registrar algo de siempre en dos toques, y un día entero en menos de un
-minuto.
+**Sale:** registrar algo de siempre en cinco toques, revisado, y un día entero en
+menos de un minuto.
 
 ## Etapa 6 · Escáneres y alimentos propios
 
@@ -285,7 +285,7 @@ menos de un minuto.
 
 ## Etapa 7 · La pantalla de comida y las metas
 
-- **Primero en la galería:** la zona de comida (hecha el 21/10/2026, falta tu aprobación).
+- **Primero en la galería:** la zona de comida, por día, por semana y por mes (hecha el 21/10/2026, falta tu aprobación).
   - Las calorías que quedan, grande.
   - Las barras de los macros.
   - La tendencia del peso y el gasto estimado.

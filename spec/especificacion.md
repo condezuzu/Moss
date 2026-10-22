@@ -27,6 +27,18 @@ En el orden en que llegaron:
    cielo siguen, pero acompañan. Reemplaza lo que había sobre nutrición: ver «La
    comida». Cambiaron también «Concepto», «Widgets», «Técnico», «Versión 1» y
    «Después».
+7. **Más sobria, como Ascent.** Calcular los macros es lo principal, y todo
+   estaba «superestimulante». Antes de cambios grandes, primero se prueba:
+   - el cielo sin la vía láctea (el polvo estelar blanco), el musgo más apagado y
+     las esporas de vez en cuando;
+   - los números y los títulos de la comida en una sans sobria (Outfit), y una
+     luna de verdad en lugar de la bola dorada;
+   - registrar es armar la comida en una ventana y revisarla antes de agregarla;
+   - la comida se ve por día, por semana y por mes, como en MacroFactor, sin las
+     flechas de ayer y mañana.
+
+   Tu propuesta, pendiente de armar: el inicio con los macros, como MacroFactor y
+   como Ascent, y los hábitos con el cielo en otra pestaña (D14).
 
 ---
 
@@ -59,7 +71,7 @@ Las constelaciones y los mitos pasan a segundo plano: siguen siendo parte de la 
 
 ## Progresión
 
-- El progreso pasa a ser el cielo mismo: a medida que se acumulan puntos, el cielo del usuario se vuelve más rico. Aparecen más estrellas, la vía láctea se hace más intensa, las auroras crecen y el musgo se expande. El progreso se ve, no se lee.
+- El progreso pasa a ser el cielo mismo: a medida que se acumulan puntos, el cielo del usuario se vuelve más rico. Aparecen más estrellas, las auroras crecen y el musgo se expande. El progreso se ve, no se lee.
 - Las constelaciones siguen existiendo como parte visual del cielo (una por día de la semana, con su forma real), pero su nombre aparece chico y discreto, no como protagonista.
 - Nada de capítulos, historias ni el dios o héroe que aparece al completar.
 - Las 7 constelaciones juntas forman el universo del usuario.
@@ -143,7 +155,7 @@ Se mantiene lo ya definido:
 
 - Un solo cielo continuo: deslizar mueve la cámara por el espacio en vez de saltar entre pantallas. Zonas del cielo: hoy, constelaciones, comida, calendario, estadísticas, amigos y ajustes.
 - Moverse entre secciones (por ejemplo, de inicio al menú o a ajustes) tiene un movimiento como si se estuviera yendo muy lejos, muy rápido: una animación de un segundo, tipo «flum».
-- Cielo exagerado, como el que se ve sin contaminación lumínica: muchísimas estrellas, vía láctea y auroras.
+- Cielo nocturno sin contaminación lumínica: muchísimas estrellas y auroras. Desde el 21/10/2026, sin la vía láctea: Moss es más sobrio.
 - Las constelaciones son parte del fondo: cuantos más hábitos hechos, más cielo encendido, así cada cielo es distinto.
 - Paleta: azul noche profundo, dorado y toques de verde musgo. Distinta de Ascent, que es astronomía y física. La estética de Moss va hacia menos mitología, más cielo nocturno y naturaleza (musgo), y es cálida.
 - Musgo y estrellas: el musgo aparece en algunas zonas, las estrellas en otras, y en lugares puntuales los dos juntos.

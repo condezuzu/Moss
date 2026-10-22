@@ -35,9 +35,9 @@ function fbm1(x: number, semilla: number, octavas: number) {
 // De atrás hacia adelante: la de atrás más azulada y clara (aire de por medio), la de adelante
 // casi negra con el borde encendido por la aurora.
 const DEFINICIONES = [
-  { base: HORIZONTE + 0.03, amp: 0.024, frec: 3.0, semilla: 3, cojines: 8, pelusa: 0.0008, cuerpo: [0.032, 0.052, 0.078] as Color, colorBorde: [0.24, 0.4, 0.42] as Color, luz: 0.22 },
-  { base: HORIZONTE + 0.008, amp: 0.026, frec: 4.2, semilla: 7, cojines: 14, pelusa: 0.0012, cuerpo: [0.016, 0.03, 0.03] as Color, colorBorde: [0.32, 0.55, 0.36] as Color, luz: 0.32 },
-  { base: HORIZONTE - 0.036, amp: 0.018, frec: 5.4, semilla: 11, cojines: 24, pelusa: 0.0018, cuerpo: [0.007, 0.014, 0.012] as Color, colorBorde: [0.46, 0.68, 0.32] as Color, luz: 0.46 },
+  { base: HORIZONTE + 0.03, amp: 0.024, frec: 3.0, semilla: 3, cojines: 8, pelusa: 0.0008, cuerpo: [0.032, 0.052, 0.078] as Color, colorBorde: [0.24, 0.4, 0.42] as Color, luz: 0.12 },
+  { base: HORIZONTE + 0.008, amp: 0.026, frec: 4.2, semilla: 7, cojines: 14, pelusa: 0.0012, cuerpo: [0.016, 0.03, 0.03] as Color, colorBorde: [0.32, 0.55, 0.36] as Color, luz: 0.16 },
+  { base: HORIZONTE - 0.036, amp: 0.018, frec: 5.4, semilla: 11, cojines: 24, pelusa: 0.0018, cuerpo: [0.007, 0.014, 0.012] as Color, colorBorde: [0.46, 0.68, 0.32] as Color, luz: 0.22 },
 ];
 
 type Cojin = { x: number; r: number; h: number };
@@ -83,10 +83,10 @@ export function armarMusgo(aspecto: number, crecimiento: number, pasoMundo: numb
   // tallos que brillan, refleja la poca luz que hay desde adentro, en manchones de puntitos.
   const r = azar(7777);
   const brotes: Brote[] = [];
-  const manchones = Math.round(4 + 8 * crecimiento);
+  const manchones = Math.round(2 + 4 * crecimiento);
   for (let m = 0; m < manchones; m++) {
     const cx = (r() * 2 - 1) * (aspecto / 2 + 0.02);
-    const n = 4 + Math.floor(r() * 6);
+    const n = 3 + Math.floor(r() * 4);
     for (let i = 0; i < n; i++) {
       const x = cx + (r() - 0.5) * 0.04;
       brotes.push({ x, y: altura(DEFINICIONES[2], listas[2], x) - 0.002 - r() * 0.013, tam: 0.6 + r() * 0.8, fase: r() * Math.PI * 2, brillo: 0.4 + r() * 0.6 });

@@ -121,7 +121,7 @@ const pasos = {
     }
     await pagina.evaluate(() => window.__velocidad(1));
   },
-  // La zona de comida: llegar con el flum, la línea del día, la semana, ayer y mañana.
+  // La zona de comida: llegar con el flum, el día con su línea, la semana, el mes, ayer y mañana.
   async comida() {
     await comida('ir');
     await esperarViaje();
@@ -130,9 +130,15 @@ const pasos = {
     await comida('bajar', 'dia');
     await pagina.waitForTimeout(900);
     await foto('comida-linea');
+    await comida('vista', 'semana');
+    await pagina.waitForTimeout(1100);
+    await foto('comida-semana');
     await comida('bajar', 'semana');
     await pagina.waitForTimeout(900);
-    await foto('comida-semana');
+    await foto('comida-semana-peso');
+    await comida('vista', 'mes');
+    await pagina.waitForTimeout(1100);
+    await foto('comida-mes');
     await comida('dia', -1);
     await pagina.waitForTimeout(1600);
     await foto('comida-ayer');
@@ -143,7 +149,12 @@ const pasos = {
     await foto('comida-manana');
     await comida('dia', 0);
     await pagina.waitForTimeout(500);
+    // Copiar de ayer abre la revisión con la cena de ayer; «Agregar a la cena» la registra.
     await comida('copiar', 'cena');
+    await pagina.waitForTimeout(900);
+    await foto('comida-copiar-revision');
+    await comida('confirmar');
+    await pagina.waitForTimeout(600);
     await comida('bajar', 'ahora');
     await pagina.waitForTimeout(1300);
     await foto('comida-copiada');
@@ -175,14 +186,25 @@ const pasos = {
       await foto('registrar-' + nombre);
     }
     await comida('escribir', '');
+    // Lo de siempre: el «+» abre la ventana, «Sumar» lo pone en la cena que se arma.
     await comida('agregar');
-    await pagina.waitForTimeout(450);
-    await foto('registrar-agregado');
+    await pagina.waitForTimeout(700);
+    await foto('registrar-ventana');
+    await comida('sumar');
+    await pagina.waitForTimeout(500);
+    await foto('registrar-sumado');
     await comida('ficha', 'Banana');
     await pagina.waitForTimeout(700);
-    await foto('registrar-ficha');
-    await comida('cerrar');
+    await foto('registrar-banana');
+    await comida('sumar');
+    await pagina.waitForTimeout(400);
+    // «Listo» abre la revisión, y «Agregar a la cena» registra todo junto.
+    await comida('listo');
     await pagina.waitForTimeout(700);
+    await foto('registrar-revision');
+    await comida('confirmar');
+    await pagina.waitForTimeout(1600);
+    await foto('registrar-agregado');
     await comida('registrar');
     await pagina.waitForTimeout(600);
     await comida('rapida');

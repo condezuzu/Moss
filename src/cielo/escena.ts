@@ -362,8 +362,8 @@ function armarSprites(e: Escena) {
   for (const k of e.brotes) {
     const [sx, sy] = aPantalla(e, k.x, k.y, PARALAJE.lomas[2]);
     const titila = 0.7 + 0.3 * Math.sin(e.t * 0.9 + k.fase * 3);
-    m = sprite(f, m, capF, sx, sy, 5.5 * k.tam, 0, SPRITE.brillo, BROTE, 0.3 * k.brillo * titila * luzAurora);
-    m = sprite(f, m, capF, sx, sy, 1.8 * k.tam, 0, SPRITE.disco, BROTE_NUCLEO, 0.7 * k.brillo * titila);
+    m = sprite(f, m, capF, sx, sy, 5.5 * k.tam, 0, SPRITE.brillo, BROTE, 0.15 * k.brillo * titila * luzAurora);
+    m = sprite(f, m, capF, sx, sy, 1.8 * k.tam, 0, SPRITE.disco, BROTE_NUCLEO, 0.4 * k.brillo * titila);
   }
   for (const p of e.particulas) {
     if (!p.espora) continue;
@@ -449,8 +449,9 @@ export function paso(e: Escena, dt: number) {
   });
   e.efectos = e.efectos.filter((f) => e.t - f.t0 < f.dur);
 
-  // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas.
-  if (e.brotes.length && Math.random() < (0.3 + 1.4 * e.riqueza) * e.factorParticulas * dt) {
+  // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas. Son
+  // de vez en cuando: una cada siete segundos, más o menos.
+  if (e.brotes.length && Math.random() < (0.05 + 0.15 * e.riqueza) * e.factorParticulas * dt) {
     const k = e.brotes[Math.floor(Math.random() * e.brotes.length)];
     e.particulas.push({
       x: k.x, y: k.y, vx: 0, vy: 0.018 + Math.random() * 0.03, vida: 0, max: 5 + Math.random() * 5,

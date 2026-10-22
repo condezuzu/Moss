@@ -8,6 +8,8 @@ export type Punto = [number, number];
 export const HORIZONTE = -0.36;
 /** Dónde queda "tu universo", arriba de hoy. */
 export const ZONA_UNIVERSO = 1.3;
+/** Cuánto se ve la vía láctea, de 0 a 1: su polvo blanco era demasiado (21/10/2026). */
+export const VIA_LACTEA = 0.3;
 /** Cuánto sigue cada capa a la cámara: lo que está más cerca se mueve más. */
 export const PARALAJE = { cielo: 1, aurora: 1.12, lomas: [1.16, 1.3, 1.48] } as const;
 

@@ -5,6 +5,18 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D14 · El inicio con la comida y los hábitos en otra pestaña (tu propuesta)
+
+Lo dijiste el 21/10/2026: «un inicio con los macros restantes y todo eso, como
+MacroFactor, y después en otra pestaña los hábitos». Como en Ascent:
+
+- **Inicio:** la comida (lo que queda, los macros, el día y la semana).
+- **Hábitos:** el cielo con la constelación de hoy, en su pestaña.
+
+Va a la galería después de probar el cielo más sobrio. Por decidir ahí:
+- qué otras pestañas hay (Ajustes, el progreso);
+- si el flum queda para entrar al cielo de los hábitos o se va.
+
 ### D5 · La riqueza del cielo: cuándo crece
 
 El progreso es el cielo: la riqueza va de 0 a 1 y sale de la luz juntada desde
@@ -27,8 +39,7 @@ acumular. Propongo:
 
 - **A (recomendada): de noche.** La luz de hoy se suma al cielo de mañana. Al
   abrir Moss el día siguiente, el cielo crece frente a vos en dos segundos, sin
-  texto: aparecen las estrellas nuevas, sube el musgo y la vía láctea gana un
-  poco de brillo. Es un ritual diario y no le quita lugar al momento del día
+  texto: aparecen las estrellas nuevas y sube el musgo. Es un ritual diario y no le quita lugar al momento del día
   completo.
 - **B: al instante**, apenas termina la animación del día completo.
 
@@ -185,10 +196,8 @@ conviene confirmar el origen o escribir uno propio.
 
 Están en la galería, sección 7, «Para decidir»:
 
-- la comida en el cielo de hoy: la barra de abajo, con la luna chica y el «+», o
-  que Moss abra directo en la comida;
-- una sola pantalla de comida que se desliza (el día arriba y la semana abajo) o
-  dos pestañas;
+- las pestañas: el inicio con la comida y los hábitos aparte (D14);
+- los arcos de la luna: la luna sola (la propuesta) o con los arcos de los macros;
 - cuándo crece el cielo (D5);
 - el cielo de la entrada;
 - la luna de la comida;
@@ -198,6 +207,17 @@ Están en la galería, sección 7, «Para decidir»:
 - la orientación.
 
 ## Resueltas
+
+### D15 · Registrar: armar la comida y revisarla antes de agregar (lo pediste el 21/10)
+
+- El «+» abre la ventana del alimento con sus porciones o los gramos.
+- «Sumar» lo pone en la comida que se arma, y se suman varios.
+- «Listo» abre la revisión, y «Agregar» registra todo junto.
+
+Cuesta tres toques más por registro: lo de siempre pasó de 2 a 5 (la tabla está
+en [`nutricion.md`](nutricion.md)). Si en el teléfono se siente lento, lo que
+propongo es un atajo: que el «+» de lo de siempre sume directo con la última
+porción, sin abrir la ventana.
 
 ### D1 · Supabase: el proyecto de Ascent, con un esquema `moss` (cambió)
 
@@ -271,7 +291,6 @@ hacen falta las cuentas anónimas.
 - **El cielo que crece**: además de la curva de D5, lo que cambia con la
   riqueza (de 0 a 1):
   - **Estrellas:** la densidad de cada capa va de la mitad a 1,3 veces.
-  - **Vía láctea:** el brillo va de 0,45 a 1,2.
   - **Aurora:** el brillo va de 0,55 a 1,35 y la altura de los rayos de 0,7 a 1,4.
   - **Musgo:** crece con la riqueza.
 

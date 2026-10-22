@@ -219,8 +219,9 @@
   const accionesComida = {
     ir: () => (comida.enZona ? comida.volver() : comida.ir()),
     registrar: () => (comida.hojaAbierta ? comida.cerrarHoja() : comida.abrirHoja()),
-    linea: () => enLaZona(() => comida.bajarA('dia')),
-    semana: () => enLaZona(() => comida.bajarA('semana')),
+    linea: () => enLaZona(() => { comida.vista('dia'); comida.bajarA('dia'); }),
+    semana: () => enLaZona(() => comida.vista('semana')),
+    mes: () => enLaZona(() => comida.vista('mes')),
     frutila: () => conHoja(() => escribirDespacio('frutila')),
     ficha: () => conHoja(() => comida.ficha('Banana')),
     rapida: () => conHoja(() => comida.cargaRapida()),
@@ -323,6 +324,7 @@
   segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); dibujarCatalogo(); if (enAjustes) armarAjustes(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
+  segmento('s-arcos', (v) => comida.arcos(v === 'si'));
 
   // La riqueza del cielo, como la luz juntada desde siempre y el tiempo que lleva juntarla con
   // unos 7 de luz por día (seis hábitos casi todos los días).
@@ -460,6 +462,8 @@
     const pasos = {
       ir: () => comida.ir(), volver: () => comida.volver(), registrar: () => comida.abrirHoja(), cerrar: () => comida.cerrarHoja(),
       escribir: () => comida.escribir(arg), ficha: () => comida.ficha(arg), agregar: () => comida.agregarPrimero(),
+      sumar: () => comida.sumar(), listo: () => comida.listo(), confirmar: () => comida.confirmar(), arcos: () => comida.arcos(arg),
+      vista: () => comida.vista(arg),
       rapida: () => comida.cargaRapida(), guardadas: () => comida.guardadas(), copiar: () => comida.copiarDeAyer(arg),
       dia: () => comida.verDia(arg), bajar: () => comida.bajarA(arg), teclado: () => comida.teclado(arg), dictar: () => comida.dictar(),
     };

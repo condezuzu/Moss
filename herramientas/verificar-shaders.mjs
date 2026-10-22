@@ -63,7 +63,7 @@ for (const riqueza of [0, 0.6, 1]) {
   const pintura = new ck.Paint();
   pintura.setShader(efectos.fondo.makeShader(uniformes(efectos.fondo, {
     uRes: tex, uMundoMin: mundoMin, uMundoTam: mundoTam, uPxPorUnidad: escala,
-    uHorizonte: -0.36, uOctavas: 6, uCapas: 3, uSemilla: 7, uRiqueza: riqueza,
+    uHorizonte: -0.36, uOctavas: 6, uCapas: 3, uSemilla: 7, uRiqueza: riqueza, uVia: 0.3,
   })));
   superficieFondo.getCanvas().drawRect(ck.XYWHRect(0, 0, tex[0], tex[1]), pintura);
   const imagenFondo = superficieFondo.makeImageSnapshot();

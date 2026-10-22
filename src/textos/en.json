@@ -111,8 +111,15 @@
       "hoy": "Today",
       "manana": "Tomorrow"
     },
-    "diaAnterior": "Previous day",
-    "diaSiguiente": "Next day",
+    "vistas": {
+      "dia": "Day",
+      "semana": "Week",
+      "mes": "Month"
+    },
+    "tituloDia": "{dia} {num}",
+    "estaSemana": "This week",
+    "semanaDel": "Week of {mes} {num}",
+    "rangoSemana": "{mes} {desde} – {hasta}",
     "irAComida": "See your food",
     "alCielo": "Back to the sky",
     "registrar": "Log food",
@@ -121,6 +128,7 @@
     "enElDia": "kcal eaten",
     "planificadas": "kcal planned",
     "deMeta": "{comido} of {meta} kcal",
+    "metaDe": "Target: {n} kcal",
     "proteina": "Protein",
     "carbohidratos": "Carbs",
     "grasas": "Fat",
@@ -129,10 +137,15 @@
     "aguaDe": "{n} of {meta} L",
     "sumarVaso": "Add a 250 ml glass",
     "tuDia": "Your day",
-    "tuSemana": "Your week",
+    "promedio": "Daily average",
+    "diasRegistrados": "{n} of {total} days logged",
+    "sinRegistros": "Nothing logged.",
+    "pesoYGasto": "Weight and expenditure",
     "ahora": "Now",
     "agregar": "Add",
-    "agregarAlimento": "Add {alimento}",
+    "sumar": "Add",
+    "sumarAlimento": "Add {alimento}",
+    "sumado": "Added: {alimento}",
     "copiarDeAyer": "Copy from yesterday",
     "planificado": "Planned",
     "planificadoTexto": "Confirm it with one tap when the day comes.",
@@ -174,18 +187,26 @@
     "cargaRapida": "Quick add",
     "sinResultados": "We couldn’t find “{texto}”.",
     "crearAlimento": "Create food",
-    "cambiar": "Change",
     "agregados": {
       "uno": "{n} food · {kcal} kcal",
       "otros": "{n} foods · {kcal} kcal"
     },
     "agregarA": {
-      "desayuno": "Add to breakfast",
-      "almuerzo": "Add to lunch",
-      "merienda": "Add to afternoon snack",
-      "cena": "Add to dinner",
-      "snack": "Add to snack"
+      "desayuno": "Log breakfast",
+      "almuerzo": "Log lunch",
+      "merienda": "Log afternoon snack",
+      "cena": "Log dinner",
+      "snack": "Log snack"
     },
+    "tuComida": {
+      "desayuno": "Your breakfast",
+      "almuerzo": "Your lunch",
+      "merienda": "Your afternoon snack",
+      "cena": "Your dinner",
+      "snack": "Your snack"
+    },
+    "revisarTexto": "Check that everything is right before logging.",
+    "guardarComida": "Save as a meal",
     "quitar": "Remove",
     "quitado": "{alimento} · removed",
     "porcion": "Serving",
@@ -201,11 +222,7 @@
     "nombre": "Name",
     "opcional": "optional",
     "kcal": "kcal",
-    "cargaRapidaTexto": "Leave calories empty and they come from the macros.",
-    "copiado": {
-      "uno": "Copied from yesterday: {n} food",
-      "otros": "Copied from yesterday: {n} foods"
-    }
+    "cargaRapidaTexto": "Leave calories empty and they come from the macros."
   },
   "fecha": {
     "dias": [
@@ -225,6 +242,20 @@
       "Thu",
       "Fri",
       "Sat"
+    ],
+    "meses": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
     ],
     "mesesCortos": [
       "Jan",

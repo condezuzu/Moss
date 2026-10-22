@@ -111,8 +111,15 @@
       "hoy": "Hoy",
       "manana": "Mañana"
     },
-    "diaAnterior": "Día anterior",
-    "diaSiguiente": "Día siguiente",
+    "vistas": {
+      "dia": "Día",
+      "semana": "Semana",
+      "mes": "Mes"
+    },
+    "tituloDia": "{dia} {num}",
+    "estaSemana": "Esta semana",
+    "semanaDel": "Semana del {num}",
+    "rangoSemana": "{desde} – {hasta} {mes}",
     "irAComida": "Ver tu comida",
     "alCielo": "Volver al cielo",
     "registrar": "Registrar comida",
@@ -121,6 +128,7 @@
     "enElDia": "kcal en el día",
     "planificadas": "kcal planificadas",
     "deMeta": "{comido} de {meta} kcal",
+    "metaDe": "Meta: {n} kcal",
     "proteina": "Proteína",
     "carbohidratos": "Carbohidratos",
     "grasas": "Grasas",
@@ -129,10 +137,15 @@
     "aguaDe": "{n} de {meta} L",
     "sumarVaso": "Sumar un vaso de 250 ml",
     "tuDia": "Tu día",
-    "tuSemana": "Tu semana",
+    "promedio": "Promedio por día",
+    "diasRegistrados": "{n} de {total} días registrados",
+    "sinRegistros": "Sin registros.",
+    "pesoYGasto": "Peso y gasto",
     "ahora": "Ahora",
     "agregar": "Agregar",
-    "agregarAlimento": "Agregar {alimento}",
+    "sumar": "Sumar",
+    "sumarAlimento": "Sumar {alimento}",
+    "sumado": "Sumado: {alimento}",
     "copiarDeAyer": "Copiar de ayer",
     "planificado": "Planificado",
     "planificadoTexto": "Se confirma con un toque cuando llega el día.",
@@ -174,7 +187,6 @@
     "cargaRapida": "Carga rápida",
     "sinResultados": "No encontramos «{texto}».",
     "crearAlimento": "Crear alimento",
-    "cambiar": "Cambiar",
     "agregados": {
       "uno": "{n} alimento · {kcal} kcal",
       "otros": "{n} alimentos · {kcal} kcal"
@@ -186,6 +198,15 @@
       "cena": "Agregar a la cena",
       "snack": "Agregar al snack"
     },
+    "tuComida": {
+      "desayuno": "Tu desayuno",
+      "almuerzo": "Tu almuerzo",
+      "merienda": "Tu merienda",
+      "cena": "Tu cena",
+      "snack": "Tu snack"
+    },
+    "revisarTexto": "Revisa que esté todo bien antes de agregar.",
+    "guardarComida": "Guardar como comida",
     "quitar": "Quitar",
     "quitado": "{alimento} · quitado",
     "porcion": "Porción",
@@ -201,11 +222,7 @@
     "nombre": "Nombre",
     "opcional": "opcional",
     "kcal": "kcal",
-    "cargaRapidaTexto": "Si dejas las calorías vacías, salen de los macros.",
-    "copiado": {
-      "uno": "Copiado de ayer: {n} alimento",
-      "otros": "Copiado de ayer: {n} alimentos"
-    }
+    "cargaRapidaTexto": "Si dejas las calorías vacías, salen de los macros."
   },
   "fecha": {
     "dias": [
@@ -225,6 +242,20 @@
       "Jue",
       "Vie",
       "Sáb"
+    ],
+    "meses": [
+      "enero",
+      "febrero",
+      "marzo",
+      "abril",
+      "mayo",
+      "junio",
+      "julio",
+      "agosto",
+      "septiembre",
+      "octubre",
+      "noviembre",
+      "diciembre"
     ],
     "mesesCortos": [
       "ene",

@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap">
 <style>
 /* Galería de revisión: a la izquierda el teléfono vivo, a la derecha lo que hay que mirar y decidir.
    Un solo mundo visual, de noche: la galería no tiene modo claro a propósito. */
@@ -18,6 +18,8 @@
   --titulos: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
   --texto: 'Jost', 'Futura', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* Los números y los títulos de la comida: geométrica y sobria, como el número grande de Ascent. */
+  --numeros: 'Outfit', 'Jost', 'Segoe UI', system-ui, sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -194,9 +196,11 @@ section.item p { margin: 0; max-width: 64ch; }
 /* La luna de la comida: se llena con lo que se come; los arcos son los macros. */
 .ent-escenario-luna { position: relative; width: 230px; height: 230px; margin: 26px auto 0; }
 .ent-luna { width: 100%; height: 100%; overflow: visible; }
-.ent-luna-halo { fill: rgba(246, 227, 166, 0.10); filter: blur(10px); }
-.ent-luna-sombra { fill: rgba(239, 230, 207, 0.05); stroke: rgba(246, 227, 166, 0.18); stroke-width: 0.8; }
-.ent-luna-fase { filter: drop-shadow(0 0 14px rgba(246, 227, 166, 0.45)); }
+.ent-luna-halo { fill: rgba(236, 230, 214, 0.07); filter: blur(9px); }
+.ent-luna-noche { fill: #12172a; }
+.ent-luna-contorno { fill: none; stroke: rgba(236, 230, 214, 0.16); stroke-width: 0.6; }
+.ent-mares { fill: #8c8574; opacity: 0.5; }
+.ent-crater { fill: #f8f4ea; opacity: 0.7; }
 .ent-arco { fill: none; stroke-width: 2.4; stroke-linecap: round; transform: rotate(-90deg); }
 .ent-arco-p { stroke: var(--oro-claro); }
 .ent-arco-c { stroke: var(--musgo); }
@@ -227,7 +231,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .ent-paso { display: block; margin: 16px 0 10px; font: 400 10.5px/1 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.5); }
 .ent-pie { margin-top: auto; padding-top: 18px; display: grid; gap: 10px; width: 100%; max-width: 340px; align-self: center; }
 .ent-numero { margin-top: 38px; display: flex; align-items: baseline; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.ent-numero b { font: 500 78px/1 var(--titulos); color: #fbf2d9; font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 0 30px rgba(232, 196, 106, 0.35); }
+.ent-numero b { font: 300 72px/1 var(--numeros); letter-spacing: -0.02em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
 .ent-numero span { font: 400 16px/1 var(--texto); color: rgba(239, 230, 207, 0.6); }
 .ent-de-salud { display: inline-block; margin-left: 4px; padding: 5px 9px; border-radius: 999px; font: normal 400 11px/1 var(--texto); color: var(--musgo); border: 1px solid rgba(185, 227, 107, 0.4); }
 .ent-sexo .ent-de-salud, .ent-cuestionario > .ent-de-salud { align-self: flex-start; margin: 14px 0 0; }
@@ -253,7 +257,7 @@ section.item p { margin: 0; max-width: 64ch; }
 /* El resultado: la luna llena con los tres macros y la meta del día. */
 .ent-resultado .ent-escenario-luna { width: 196px; height: 196px; margin-top: 14px; }
 .ent-kcal { margin-top: 2px; text-align: center; }
-.ent-kcal b { display: block; font: 500 44px/1 var(--titulos); color: #fbf2d9; text-shadow: 0 0 20px rgba(3, 5, 12, 0.95); font-variant-numeric: lining-nums tabular-nums; }
+.ent-kcal b { display: block; font: 300 44px/1 var(--numeros); letter-spacing: -0.02em; color: #fbf2d9; text-shadow: 0 0 20px rgba(3, 5, 12, 0.95); font-variant-numeric: tabular-nums; }
 .ent-kcal span { font: 400 10.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.6); }
 .ent-macros { text-align: left; margin: 22px auto 0; width: 100%; max-width: 300px; display: grid; gap: 8px; }
 .ent-macro { display: grid; grid-template-columns: 10px 1fr auto; gap: 10px; align-items: center; font: 400 14px/1 var(--texto); color: rgba(239, 230, 207, 0.8); }
@@ -313,7 +317,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .bh-pildora { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 54px; padding: 0 18px 0 7px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.24); background: rgba(7, 11, 24, 0.66); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--tinta); text-align: left; }
 .bh-luna { width: 42px; height: 42px; flex: none; overflow: visible; }
 .bh-textos { display: grid; gap: 4px; min-width: 0; }
-.bh-textos b { font: 500 22px/0.95 var(--titulos); color: var(--oro-claro); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bh-textos b { font: 500 20px/0.95 var(--numeros); color: var(--oro-claro); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bh-textos small { font: 400 9.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); white-space: nowrap; }
 .bh-cielo { padding-left: 14px; }
 .bh-cielo > svg { width: 24px; height: 24px; flex: none; color: var(--oro-claro); stroke-width: 1.5; filter: drop-shadow(0 0 5px rgba(246, 227, 166, 0.6)); }
@@ -323,9 +327,12 @@ section.item p { margin: 0; max-width: 64ch; }
 .bh-mas:active, .hj-mas:active, .fi-paso:active { transform: scale(0.92); }
 
 /* La luna de la comida: se llena con lo comido; los arcos son los macros contra su meta. */
-.cm-luna-halo { fill: rgba(246, 227, 166, 0.1); filter: blur(8px); }
-.cm-luna-sombra { fill: rgba(239, 230, 207, 0.05); stroke: rgba(246, 227, 166, 0.22); stroke-width: 0.8; }
-.cm-luna-fase { filter: drop-shadow(0 0 9px rgba(246, 227, 166, 0.5)); }
+.cm-luna-halo { fill: rgba(236, 230, 214, 0.07); filter: blur(9px); }
+.cm-luna-noche { fill: #12172a; }
+.cm-luna-contorno { fill: none; stroke: rgba(236, 230, 214, 0.16); stroke-width: 0.6; }
+.cm-mares { fill: #8c8574; opacity: 0.5; }
+.cm-crater { fill: #f8f4ea; opacity: 0.7; }
+.comida.sin-arcos .cm-arco, .comida.sin-arcos .cm-pista { display: none; }
 .cm-pista { fill: none; stroke: rgba(239, 230, 207, 0.07); stroke-width: 2.6; }
 .cm-arco { fill: none; stroke-width: 2.8; stroke-linecap: round; }
 .cm-arco-p { stroke: var(--oro-claro); filter: drop-shadow(0 0 3px rgba(246, 227, 166, 0.7)); }
@@ -338,18 +345,60 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-barra { z-index: 2; }
 .cm-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 2px) 20px calc(var(--abajo) + 104px); scrollbar-width: none; }
 .cm-scroll::-webkit-scrollbar { display: none; }
-.cm-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cm-cab { display: grid; gap: 2px; }
 .cm-fecha { font: 400 11px/1.2 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
-.cm-titulo { margin: 5px 0 0; font: 500 34px/1 var(--titulos); text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
-.cm-dias { display: flex; gap: 8px; }
-.cm-flecha { appearance: none; cursor: pointer; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(239, 230, 207, 0.14); background: rgba(6, 10, 22, 0.5); color: var(--oro-claro); display: grid; place-items: center; }
-.cm-flecha:disabled { opacity: 0.28; cursor: default; }
-.cm-flecha svg { width: 18px; height: 18px; stroke-width: 1.9; }
-.cm-heroe { display: grid; justify-items: center; margin-top: 2px; }
-.cm-escenario { width: 210px; height: 210px; }
+.cm-titulo { margin: 6px 0 0; font: 500 28px/1 var(--numeros); letter-spacing: -0.01em; text-shadow: 0 0 18px rgba(3, 5, 12, 0.9); }
+/* Día, semana o mes: un selector sobrio, como los de MacroFactor. */
+.cm-vistas { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); padding: 3px; border-radius: 999px; background: rgba(239, 230, 207, 0.06); border: 1px solid rgba(239, 230, 207, 0.1); }
+.cm-vista-btn { appearance: none; cursor: pointer; height: 32px; border: 0; border-radius: 999px; background: transparent; color: rgba(239, 230, 207, 0.62); font: 500 13px/1 var(--texto); }
+.cm-vista-btn[aria-pressed='true'] { background: rgba(239, 230, 207, 0.14); color: var(--tinta); }
+.cm-vista[hidden] { display: none; }
+
+/* La tira de la semana: una luna chica por día, que se llena con lo comido. */
+.cm-tira { margin-top: 16px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cm-tira-dia { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 6px; padding: 8px 0 9px; border-radius: 14px; border: 1px solid transparent; background: transparent; color: rgba(239, 230, 207, 0.72); }
+.cm-tira-dia[aria-pressed='true'] { background: rgba(239, 230, 207, 0.07); border-color: rgba(239, 230, 207, 0.16); color: var(--tinta); }
+.cm-tira-letra { font: 500 10px/1 var(--texto); letter-spacing: 0.12em; color: rgba(239, 230, 207, 0.5); }
+.cm-tira-dia b, .cm-grafica-dia b, .cm-cal-dia b { font: 500 12.5px/1 var(--numeros); font-variant-numeric: tabular-nums; }
+.cm-tira-dia.hoy b, .cm-grafica-dia.hoy b, .cm-cal-dia.hoy b { color: var(--oro-claro); }
+.cm-lunita { width: 24px; height: 24px; display: block; }
+.cm-lunita-noche { fill: #141a2e; }
+.cm-lunita-luz { fill: #e6dfcc; }
+.cm-lunita-borde { fill: none; stroke: rgba(236, 230, 214, 0.28); stroke-width: 0.9; }
+.cm-lunita.plan .cm-lunita-luz { opacity: 0.35; }
+.cm-lunita.plan .cm-lunita-borde, .cm-lunita.futuro .cm-lunita-borde { stroke-dasharray: 2 2.2; }
+.cm-lunita.futuro .cm-lunita-noche { fill: transparent; }
+.cm-lunita.vacio .cm-lunita-borde { stroke: rgba(236, 230, 214, 0.16); }
+
+/* La semana: el promedio y los siete días, con una barra de calorías y una por macro. */
+.cm-promedio { margin-top: 18px; }
+.cm-promedio .cm-macros { margin-top: 12px; gap: 12px; }
+.cm-promedio .cm-macro-nombre { letter-spacing: 0.06em; }
+.cm-grafica { position: relative; margin-top: 12px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 14px 10px 12px; border-radius: 18px; background: rgba(6, 10, 22, 0.66); border: 1px solid rgba(239, 230, 207, 0.1); }
+/* La meta: a 100 de los 120 que mide cada barra. */
+.cm-grafica-meta { position: absolute; left: 10px; right: 10px; top: 34px; border-top: 1px dashed rgba(239, 230, 207, 0.32); pointer-events: none; }
+.cm-grafica-dia { appearance: none; cursor: pointer; border: 0; background: transparent; display: grid; justify-items: center; gap: 6px; padding: 0; color: rgba(239, 230, 207, 0.72); }
+.cm-grafica-barras { height: 120px; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+.cm-grafica-barras i { width: 5px; border-radius: 3px 3px 1px 1px; }
+.cm-grafica-k { background: #e6dfcc; }
+.cm-grafica-p { background: var(--oro-claro); }
+.cm-grafica-c { background: var(--musgo); }
+.cm-grafica-g { background: #a9c4f5; }
+.cm-grafica-dia.plan .cm-grafica-barras { opacity: 0.35; }
+
+/* El mes: una luna por día, de lunes a domingo. */
+.cm-calendario { margin-top: 18px; padding: 12px 8px 10px; border-radius: 18px; background: rgba(6, 10, 22, 0.66); border: 1px solid rgba(239, 230, 207, 0.1); }
+.cm-cal-letras, .cm-cal-grilla { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cm-cal-letras span { text-align: center; font: 500 10px/1 var(--texto); letter-spacing: 0.12em; color: rgba(239, 230, 207, 0.45); padding-bottom: 8px; }
+.cm-cal-grilla { row-gap: 2px; }
+.cm-cal-dia { appearance: none; cursor: pointer; border: 0; background: transparent; display: grid; justify-items: center; gap: 4px; padding: 6px 0; border-radius: 12px; color: rgba(239, 230, 207, 0.75); }
+.cm-cal-dia.hoy { background: rgba(239, 230, 207, 0.08); }
+.cm-cal-dia .cm-lunita { width: 26px; height: 26px; }
+.cm-heroe { display: grid; justify-items: center; margin-top: 10px; }
+.cm-escenario { width: 190px; height: 190px; }
 .cm-luna { width: 100%; height: 100%; overflow: visible; }
 .cm-cifra { margin-top: -4px; text-align: center; display: grid; gap: 7px; }
-.cm-cifra b { font: 500 62px/0.86 var(--titulos); color: #fbf2d9; text-shadow: 0 0 26px rgba(232, 196, 106, 0.32); font-variant-numeric: lining-nums tabular-nums; }
+.cm-cifra b { font: 300 58px/0.9 var(--numeros); letter-spacing: -0.02em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
 .cm-cifra span { font: 400 10.5px/1 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.64); }
 .cm-de { margin-top: 9px; font: 400 12.5px/1 var(--texto); color: rgba(239, 230, 207, 0.52); font-variant-numeric: tabular-nums; }
 .cm-macros { margin-top: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -359,14 +408,14 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-macro-g { --c: #a9c4f5; }
 .cm-macro-nombre { display: inline-flex; align-items: center; gap: 6px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.13em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); white-space: nowrap; }
 .cm-macro-nombre::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
-.cm-macro b { font: 500 13.5px/1 var(--texto); color: var(--tinta); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cm-macro b { font: 500 14px/1 var(--numeros); color: var(--tinta); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cm-barra-macro { height: 4px; border-radius: 4px; background: rgba(239, 230, 207, 0.08); overflow: hidden; }
 .cm-barra-macro i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--c); box-shadow: 0 0 10px var(--c); transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1); }
 .cm-agua { margin-top: 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 11px 11px 16px; border-radius: 18px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.09); }
 .cm-agua[hidden] { display: none; }
 .cm-agua-txt { display: grid; gap: 5px; }
 .cm-agua-txt span { font: 400 9.5px/1 var(--texto); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); }
-.cm-agua-txt b { font: 500 14px/1 var(--texto); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cm-agua-txt b { font: 500 14.5px/1 var(--numeros); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cm-vasos { display: flex; gap: 2px; justify-content: flex-end; flex-wrap: wrap; }
 .cm-vaso { display: block; color: rgba(239, 230, 207, 0.28); }
 .cm-vaso svg { width: 16px; height: 20px; display: block; stroke-width: 1.5; }
@@ -379,7 +428,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-agua-mas { appearance: none; cursor: pointer; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(232, 196, 106, 0.42); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); display: grid; place-items: center; }
 .cm-agua-mas svg { width: 17px; height: 17px; stroke-width: 2; }
 .cm-agua-mas:disabled { opacity: 0.3; cursor: default; }
-.cm-seccion { margin: 32px 0 14px; font: 500 25px/1 var(--titulos); text-shadow: 0 0 16px rgba(3, 5, 12, 0.9); }
+.cm-seccion { margin: 32px 0 14px; font: 500 19px/1 var(--numeros); text-shadow: 0 0 16px rgba(3, 5, 12, 0.9); }
 .cm-nota { margin: -6px 0 14px; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); }
 
 /* La línea del día: la hora, el punto sobre la línea y la comida. */
@@ -401,7 +450,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-tarjeta header { display: flex; align-items: baseline; gap: 8px; }
 .cm-tarjeta header b { font: 500 15px/1.2 var(--texto); }
 .cm-etiqueta { align-self: center; font: 400 9px/1 var(--texto); font-style: normal; letter-spacing: 0.14em; text-transform: uppercase; color: var(--oro); padding: 4px 7px; border: 1px solid rgba(232, 196, 106, 0.4); border-radius: 999px; }
-.cm-tk { margin-left: auto; font: 500 20px/1 var(--titulos); color: var(--oro-claro); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.cm-tk { margin-left: auto; font: 500 16px/1 var(--numeros); color: var(--oro-claro); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cm-tk small { font: 400 10px var(--texto); color: rgba(239, 230, 207, 0.5); letter-spacing: 0.06em; }
 .cm-tarjeta ul { list-style: none; margin: 7px 0 0; padding: 0; display: grid; }
 .cm-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 4px 6px; margin: 0 -6px; border-radius: 8px; cursor: pointer; }
@@ -431,7 +480,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-carta { border-radius: 18px; padding: 14px 16px; background: rgba(6, 10, 22, 0.66); border: 1px solid rgba(239, 230, 207, 0.1); display: grid; gap: 6px; }
 .cm-carta header { display: flex; justify-content: space-between; align-items: center; min-height: 28px; }
 .cm-carta-titulo { font: 400 9.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); }
-.cm-carta-cifra b { font: 500 36px/1 var(--titulos); color: #fbf2d9; font-variant-numeric: lining-nums tabular-nums; }
+.cm-carta-cifra b { font: 400 32px/1 var(--numeros); letter-spacing: -0.01em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
 .cm-carta-cifra span { font: 400 13px var(--texto); color: rgba(239, 230, 207, 0.58); }
 .cm-carta-nota { font: 400 12.5px/1.3 var(--texto); color: var(--musgo); }
 .cm-carta-texto { margin: 4px 0 0; font: 300 13.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.82); }
@@ -560,10 +609,10 @@ section.item p { margin: 0; max-width: 64ch; }
 .hj-estrella.activa svg { fill: var(--oro); stroke: var(--oro); filter: drop-shadow(0 0 6px rgba(232, 196, 106, 0.6)); }
 .fi-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 20px 18px; scrollbar-width: none; }
 .fi-cuerpo::-webkit-scrollbar { display: none; }
-.fi-nombre { margin: 4px 0 0; font: 500 32px/1.04 var(--titulos); text-wrap: balance; }
+.fi-nombre { margin: 4px 0 0; font: 500 26px/1.1 var(--numeros); text-wrap: balance; }
 .fi-fuente { margin-top: 7px; font: 400 11px/1.3 var(--texto); color: rgba(239, 230, 207, 0.48); }
 .fi-kcal { margin-top: 16px; display: flex; align-items: baseline; gap: 8px; }
-.fi-kcal b { font: 500 56px/0.86 var(--titulos); color: #fbf2d9; font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 0 24px rgba(232, 196, 106, 0.3); }
+.fi-kcal b { font: 300 48px/0.9 var(--numeros); letter-spacing: -0.02em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
 .fi-kcal span { font: 400 11px var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.6); }
 .fi-queda { margin-top: 8px; font: 400 13px/1.3 var(--texto); color: var(--musgo); }
 .fi-macros { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -572,7 +621,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .fi-macro-c { --c: var(--musgo); }
 .fi-macro-g { --c: #a9c4f5; }
 .fi-macro i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
-.fi-macro b { font: 500 17px/1.1 var(--texto); font-variant-numeric: tabular-nums; }
+.fi-macro b { font: 500 16px/1.1 var(--numeros); font-variant-numeric: tabular-nums; }
 .fi-macro small { font: 400 10.5px/1.1 var(--texto); color: rgba(239, 230, 207, 0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fi-etq { margin: 22px 0 9px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
 .fi-porciones { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -584,7 +633,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .fi-stepper { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.14); }
 .fi-paso { appearance: none; cursor: pointer; width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(239, 230, 207, 0.07); color: var(--oro-claro); display: grid; place-items: center; transition: transform 0.15s; }
 .fi-paso svg { width: 17px; height: 17px; stroke-width: 2; }
-.fi-valor { min-width: 58px; text-align: center; font: 500 23px/1 var(--titulos); font-variant-numeric: lining-nums tabular-nums; }
+.fi-valor { min-width: 58px; text-align: center; font: 500 19px/1 var(--numeros); font-variant-numeric: lining-nums tabular-nums; }
 .fi-rapidas { display: flex; gap: 6px; }
 .fi-rapida { appearance: none; cursor: pointer; min-width: 42px; height: 36px; padding: 0 10px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.14); background: transparent; color: rgba(239, 230, 207, 0.8); font: 400 15px/1 var(--texto); }
 .fi-rapida[aria-pressed='true'] { border-color: rgba(232, 196, 106, 0.72); color: var(--oro-claro); background: rgba(232, 196, 106, 0.12); }
@@ -609,6 +658,47 @@ section.item p { margin: 0; max-width: 64ch; }
 .toques li { display: flex; justify-content: space-between; gap: 12px; font: 400 13.5px/1.3 var(--texto); color: var(--tinta); border-bottom: 1px solid rgba(232, 196, 106, 0.1); padding-bottom: 6px; }
 .toques li b { font: 500 13px/1.3 var(--mono); color: var(--musgo); white-space: nowrap; }
 .toques .vacio { font-size: 13.5px; }
+
+/* La ventana del alimento: sube desde abajo, sobre la lista, que queda apagada atrás. */
+.hj-velo { position: absolute; inset: 0; z-index: 7; background: rgba(2, 4, 10, 0.58); opacity: 0; transition: opacity 0.3s; }
+.hoja.con-ventana .hj-velo { opacity: 1; }
+.hj-velo[hidden], .hj-ventana[hidden] { display: none; }
+.hj-ventana { position: absolute; left: 0; right: 0; bottom: 0; z-index: 8; max-height: 90%; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; padding: 16px 18px calc(var(--abajo) + 10px); border-radius: 24px 24px 0 0; background: linear-gradient(180deg, #121a37 0%, #0b1127 100%); border-top: 1px solid rgba(232, 196, 106, 0.24); box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.5); transform: translateY(100%); transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.hoja.con-ventana .hj-ventana { transform: none; }
+.vt-cab { display: flex; align-items: flex-start; gap: 8px; }
+.vt-titulos { flex: 1; min-width: 0; }
+.vt-nombre { margin: 2px 0 0; font: 500 24px/1.1 var(--numeros); text-wrap: balance; }
+.vt-fuente { margin-top: 5px; font: 400 11px/1.3 var(--texto); color: rgba(239, 230, 207, 0.48); }
+.vt-cab .hj-estrella { width: 36px; height: 36px; flex: none; }
+.vt-cerrar { flex: none; appearance: none; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(239, 230, 207, 0.08); color: rgba(239, 230, 207, 0.75); display: grid; place-items: center; }
+.vt-cerrar svg { width: 15px; height: 15px; stroke-width: 2; }
+.vt-cifras { margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.vt-cifras .fi-kcal { margin-top: 0; }
+.vt-macros { display: flex; gap: 12px; }
+.vt-macro { display: inline-flex; align-items: center; gap: 5px; font: 500 13px/1 var(--numeros); color: rgba(239, 230, 207, 0.82); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vt-macro i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 6px var(--c); }
+.hj-ventana .fi-queda { margin-top: 6px; }
+.hj-ventana .fi-etq { margin: 18px 0 8px; }
+.vt-porciones { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 0 18px 2px; }
+.vt-porciones::-webkit-scrollbar { display: none; }
+.vt-porciones .fi-porcion { flex: none; }
+/* Adentro de una fila que se desliza, el brillo del elegido se cortaría en el borde. */
+.vt-porciones .fi-porcion[aria-pressed='true'] { box-shadow: none; }
+.vt-pie { display: grid; gap: 8px; margin-top: 18px; }
+
+/* La revisión de la comida que se arma, antes de agregarla. */
+.rv-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: 0 20px 16px; scrollbar-width: none; }
+.rv-cuerpo::-webkit-scrollbar { display: none; }
+.rv-texto { margin: 2px 0 4px; font: 400 13px/1.4 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.rv-quitar { appearance: none; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(239, 230, 207, 0.16); background: transparent; color: rgba(239, 230, 207, 0.62); display: grid; place-items: center; }
+.rv-quitar svg { width: 13px; height: 13px; stroke-width: 2; }
+.rv-total { margin-top: 16px; padding: 14px 16px 16px; border-radius: 16px; background: rgba(239, 230, 207, 0.05); border: 1px solid rgba(239, 230, 207, 0.08); }
+.rv-total .fi-kcal { margin-top: 0; }
+.hj-revision .hj-sub-titulo { font: 500 17px/1 var(--numeros); }
+
+/* Al sumar, la bandeja late una vez: ahí está lo que se junta. */
+.hj-bandeja.late .hj-bandeja-txt b { animation: hj-late 0.7s ease-out; }
+@keyframes hj-late { 30% { color: var(--oro-claro); text-shadow: 0 0 12px rgba(232, 196, 106, 0.8); } }
 
 .decisiones { counter-reset: d; display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; max-width: 68ch; }
 .decisiones li { counter-increment: d; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; }
@@ -658,38 +748,49 @@ section.item p { margin: 0; max-width: 64ch; }
           <button class="boton" type="button" data-comida="registrar" id="b-registrar">Registrar</button>
           <button class="boton" type="button" data-comida="linea">Ver la línea del día</button>
           <button class="boton" type="button" data-comida="semana">Ver la semana</button>
+          <button class="boton" type="button" data-comida="mes">Ver el mes</button>
         </div>
         <div class="controles">
           <button class="boton" type="button" data-comida="frutila">Buscar «frutila»</button>
-          <button class="boton" type="button" data-comida="ficha">La ficha de la banana</button>
+          <button class="boton" type="button" data-comida="ficha">La ventana de la banana</button>
           <button class="boton" type="button" data-comida="rapida">Carga rápida</button>
           <button class="boton" type="button" data-comida="copiar">Copiar la cena de ayer</button>
+        </div>
+        <div class="controles">
+          <div class="grupo"><span>La luna</span>
+            <div class="segmento" id="s-arcos"><button type="button" data-valor="no" aria-pressed="true">Sin arcos</button><button type="button" data-valor="si" aria-pressed="false">Con los arcos de los macros</button></div>
+          </div>
         </div>
         <div class="toques" id="toques">
           <div class="grupo"><span>Toques para registrar, contados desde el cielo</span></div>
           <ol></ol>
-          <p class="vacio">Registrá algo en el teléfono y acá aparece cuántos toques llevó. La especificación pide 2 para lo de siempre, 2 y escribir para buscar, y 4 y escribir para elegir otra cantidad.</p>
+          <p class="vacio">Registrá algo en el teléfono y acá aparece cuántos toques llevó. Con la revisión antes de agregar son 5 para lo de siempre (registrar, «+», sumar, listo y agregar), 5 y escribir para buscar, y 6 y escribir para elegir otra cantidad.</p>
         </div>
       </div>
       <ul class="lista">
         <li><b>En el cielo de hoy</b>, abajo, va la comida en chico: la luna con lo que te queda, que te lleva a la zona de comida con un flum, y el «+» para registrar. El «+» está en el mismo lugar en el cielo y en la comida.</li>
         <li><b>La zona de comida</b>:
           <ul>
-            <li>La luna se llena con lo que comiste, y los tres arcos son los macros contra su meta: proteína en dorado, carbohidratos en verde y grasas en azul estrella.</li>
-            <li>Lo que te queda va grande. Debajo, las barras de los macros y el agua: un toque suma un vaso de 250 ml.</li>
-            <li>Más abajo, la línea del día y la semana: la tendencia del peso, el gasto estimado y el último control, con «cómo se calcula».</li>
-            <li>Las flechas van a ayer y a mañana, que está planificado y se ve atenuado.</li>
+            <li>La luna se llena con lo que comiste: la parte iluminada es lo que llevás del día. Ahora es una luna de verdad, con sus mares, grano y la sombra con el borde suave, sin halo dorado. Los arcos de los macros quedan como opción (arriba): los macros ya están en las barras.</li>
+            <li>Lo que te queda va grande, en números sobrios (Outfit, como el número de Ascent). Debajo, las barras de los macros y el agua: un toque suma un vaso de 250 ml.</li>
+            <li>Como MacroFactor, se ve por día, por semana y por mes:
+              <ul>
+                <li><b>Día:</b> arriba, la tira de la semana de lunes a domingo, con una luna chica por día que se llena con lo comido. Tocás un día para verlo; los que vienen están en blanco y mañana se ve planificado. Debajo, la línea del día.</li>
+                <li><b>Semana:</b> el promedio de los días que ya terminaron y los siete días con una barra de calorías y una por macro contra la meta (la línea punteada). Abajo, la tendencia del peso, el gasto estimado y el último control, con «cómo se calcula».</li>
+                <li><b>Mes:</b> el calendario con una luna por día y el promedio del mes. Tocás un día para verlo.</li>
+              </ul></li>
           </ul>
           Atrás queda el cielo, más cerca y más oscuro, y se mueve un poco cuando deslizás.</li>
-        <li><b>La línea del día</b> pone cada comida en su hora, con lo que tiene y sus totales, y el espacio entre comidas sigue al reloj. La que falta espera en «ahora», con Agregar y Copiar de ayer. Tocar un alimento abre su ficha para corregirlo o quitarlo.</li>
+        <li><b>La línea del día</b> pone cada comida en su hora, con lo que tiene y sus totales, y el espacio entre comidas sigue al reloj. La que falta espera en «ahora», con Agregar y Copiar de ayer, que abre la revisión con lo de ayer para agregarlo de un toque. Tocar un alimento abre su ventana para corregirlo o quitarlo.</li>
         <li><b>La hoja de registro</b>:
           <ul>
             <li>Abre con el teclado arriba y con la comida que toca a esa hora.</li>
             <li>Debajo del buscador están lo que sueles comer en esa comida, los recientes y los favoritos.</li>
-            <li>El «+» de cada fila agrega con la última porción y no cierra la hoja. El aviso ofrece Cambiar y Deshacer, y abajo se juntan los agregados hasta «Listo».</li>
-            <li>Arriba están los atajos: la misma comida de ayer, las comidas guardadas y la carga rápida.</li>
+            <li>El «+» de cada fila (o la fila) abre la ventana del alimento: las porciones de la base, la cantidad en medios o los gramos, y cuánto te quedaría en el día, con la última porción ya elegida.</li>
+            <li>«Sumar» lo pone en tu comida, que se arma abajo con su total. La hoja no se cierra: se suman varios seguidos.</li>
+            <li>«Listo» abre la revisión: tocás un alimento para cambiarlo, la cruz lo quita, y «Agregar a la cena» registra todo junto. Antes no se registra nada, y si cerrás la hoja lo juntado queda guardado.</li>
+            <li>Arriba están los atajos: la misma comida de ayer, las comidas guardadas y la carga rápida. Todo suma a la comida que se arma.</li>
           </ul></li>
-        <li><b>La ficha</b> tiene las porciones de la base, la cantidad en medios o en gramos, y cuánto te quedaría en el día.</li>
         <li><b>El teclado</b> dibujado es el del iPhone, para ver cuánto lugar deja. Su micrófono es el dictado del teclado: probalo.</li>
       </ul>
     </section>
@@ -719,7 +820,7 @@ section.item p { margin: 0; max-width: 64ch; }
         </div>
       </div>
       <ul class="lista">
-        <li><b>El progreso es el cielo.</b> No hay capítulos ni historias: la luz que juntás desde el primer día hace el cielo más rico. Aparecen más estrellas, la vía láctea se hace más intensa, las auroras crecen y el musgo se expande. Movelo con el deslizador:
+        <li><b>El progreso es el cielo.</b> No hay capítulos ni historias: la luz que juntás desde el primer día hace el cielo más rico. Aparecen más estrellas, las auroras crecen y el musgo se expande. Movelo con el deslizador:
           <ul>
             <li>0 % es el primer día.</li>
             <li>60 % son unos tres meses, y es el cielo que ya aprobaste.</li>
@@ -729,9 +830,9 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><b>La constelación</b> sigue siendo real, una por día, pero su nombre va chico, debajo de la fecha.</li>
         <li><b>Día completo</b>: las líneas se encienden desde la estrella más brillante, una onda recorre el cielo y la aurora sube y se dora. Sin texto ni historia: el momento es del cielo.</li>
         <li><b>Estrella fugaz</b> nueva: nace con la estela corta, que se estira mientras cae, se afina y pasa del blanco cálido a un verde tenue. Va dejando chispas y, cuando se apaga, la estela queda un instante. Una de cada cinco es una bola de fuego que estalla antes de apagarse. Probala con el botón.</li>
-        <li><b>Vía láctea</b> con el núcleo cálido sobre el horizonte, la Gran Grieta de polvo y miles de estrellas en tres capas, más densas dentro de la banda.</li>
+        <li><b>Un cielo más sobrio</b> (prueba del 21/10): sin la vía láctea, que era el polvo estelar blanco. Quedan miles de estrellas sueltas en tres capas, las que titilan y la aurora.</li>
         <li><b>Auroras</b> en verde musgo con el borde dorado. Al completar el día suben, se aceleran y el borde se dora: la subtormenta de una aurora real.</li>
-        <li><b>Musgo</b> en primer plano, con luz atrapada adentro, en manchones de puntitos. Así reluce en la oscuridad un musgo real, <i>Schistostega</i>, sin tallos. De ahí suben esporas que se vuelven estrellas: el punto donde musgo y cielo se juntan.</li>
+        <li><b>Musgo</b> en primer plano, más apagado que antes: el borde apenas encendido y unos pocos manchones de puntitos de luz, como reluce en la oscuridad un musgo real, <i>Schistostega</i>. De vez en cuando sube una espora que se vuelve estrella: el punto donde musgo y cielo se juntan.</li>
         <li><b>Estrellas apagadas</b> con un aro que late; las automáticas llevan un arco con el avance del día (6.240 de 8.000 pasos).</li>
         <li><b>El toque</b> responde en el mismo cuadro: destello, onda y vibración. En iPhone con iOS 18 o más, la vibración se siente desde Safari.</li>
         <li><b>Cielo continuo</b>: arrastrá el cielo hacia abajo (en el teléfono, a pantalla completa) y la cámara sube a tu universo con las siete constelaciones de la semana. El musgo se mueve más rápido que las estrellas: es lo que da la profundidad.</li>
@@ -808,7 +909,7 @@ section.item p { margin: 0; max-width: 64ch; }
 
     <section class="item" id="calidad">
       <h2><span class="n">6</span>Calidad gráfica</h2>
-      <p>Lo caro (la vía láctea y las estrellas débiles) se dibuja una sola vez a una imagen y después solo se desplaza. Por cuadro se calculan la aurora y las estrellas que titilan, en el mismo shader que va a usar la app, y unas pocas cientos de luces. Así el toque no espera a nada.</p>
+      <p>Lo caro (las estrellas débiles y las nebulosas) se dibuja una sola vez a una imagen y después solo se desplaza. Por cuadro se calculan la aurora y las estrellas que titilan, en el mismo shader que va a usar la app, y unas pocas cientos de luces. Así el toque no espera a nada.</p>
       <div class="panel">
         <div class="controles">
           <div class="segmento" id="s-calidad"><button type="button" data-valor="alta" aria-pressed="true">Alta</button><button type="button" data-valor="media" aria-pressed="false">Media</button><button type="button" data-valor="baja" aria-pressed="false">Baja</button></div>
@@ -826,11 +927,11 @@ section.item p { margin: 0; max-width: 64ch; }
     <section class="item" id="decidir">
       <h2><span class="n">7</span>Para decidir</h2>
       <ol class="decisiones">
-        <li><span><b>La comida en el cielo de hoy.</b> Propongo la barra de abajo: la luna chica con lo que te queda y el «+» para registrar. La otra opción es que Moss abra directo en la comida y el cielo quede a un flum.</span></li>
-        <li><span><b>Una sola pantalla de comida.</b> Propongo el día arriba y la semana abajo, en la misma pantalla que se desliza. La otra opción son dos pestañas, Hoy y Semana.</span></li>
+        <li><span><b>Las pestañas (tu propuesta, D14).</b> El inicio con la comida, como MacroFactor y como Ascent, y los hábitos con el cielo en otra pestaña. Se arma acá después de que apruebes el cielo más sobrio.</span></li>
+        <li><span><b>Los arcos de la luna.</b> Propongo la luna sola, porque los macros ya están en las barras de abajo. Con el selector de la sección 1 la ves con los arcos.</span></li>
         <li><span><b>La riqueza del cielo, de noche o al instante.</b> Propongo que la luz del día se sume al cielo al día siguiente: abrís Moss y el cielo crece frente a vos, con estrellas nuevas que aparecen y musgo que sube, sin texto. La otra opción es que crezca apenas termina la animación del día completo.</span></li>
         <li><span><b>El cielo de la entrada.</b> Ahora es el de 60 % de riqueza, el más lindo que ya aprobaste. Después de la entrada, el cielo propio empieza en 0 % y crece con vos. ¿Lo dejamos así, o la entrada usa el cielo del primer día?</span></li>
-        <li><span><b>La luna de la comida.</b> Ya está en su zona (sección 1): se llena con lo que comés, con tres arcos para los macros, dorado para proteína, verde para carbohidratos y azul estrella para grasas. ¿La dejamos?</span></li>
+        <li><span><b>La luna de la comida.</b> Ahora es una luna de verdad, con sus mares y la sombra suave: la parte iluminada es lo que llevás del día. También está en cada día de la semana y del mes. ¿Así?</span></li>
         <li><span><b>La frase y las diapositivas.</b> Pasan tocando, como en Ascent, o solas después de 2,5 s.</span></li>
         <li><span><b>Tipografías.</b> Cormorant Garamond para nombres y frases y Jost para la interfaz. Las dos son libres (OFL) y van dentro de la app. GFS Didot se fue con los nombres griegos.</span></li>
         <li><span><b>Color de la aurora.</b> Verde musgo con borde dorado, como ahora, o el verde azulado de una aurora real, más frío.</span></li>

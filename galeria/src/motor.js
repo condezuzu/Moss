@@ -22,12 +22,13 @@ uniform float uOctavas;
 uniform float uCapas;
 uniform float uSemilla;
 uniform float uRiqueza;
+uniform float uVia;
 out vec4 color;
 ${comun}
 ${fondo}
 void main() {
   vec2 w = uMundoMin + gl_FragCoord.xy / uRes * uMundoTam;
-  vec3 c = colorFondo(w, uPxPorUnidad, uHorizonte, uOctavas, uCapas, uSemilla, uRiqueza);
+  vec3 c = colorFondo(w, uPxPorUnidad, uHorizonte, uOctavas, uCapas, uSemilla, uRiqueza, uVia);
   // Tramado: sin esto el degradé azul se ve en escalones en una pantalla OLED.
   c += (hash12(gl_FragCoord.xy + 0.5) - 0.5) / 255.0;
   color = vec4(c, 1.0);
@@ -426,6 +427,7 @@ void main() {
       gl.uniform1f(p.u.uCapas, cfg.capas);
       gl.uniform1f(p.u.uSemilla, cfg.semilla);
       gl.uniform1f(p.u.uRiqueza, cfg.riqueza);
+      gl.uniform1f(p.u.uVia, cfg.via);
       gl.enable(gl.SCISSOR_TEST);
       gl.disable(gl.BLEND);
       gl.bindVertexArray(vaoPantalla);

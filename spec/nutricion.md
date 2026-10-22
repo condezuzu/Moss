@@ -144,27 +144,32 @@ La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
     - de 19:30 a medianoche, cena;
     - entre medio y de madrugada, snack;
   - debajo, lo que solés comer a esa hora, tus recientes y tus favoritos.
-- **Cada fila tiene un «+»** que agrega con la última porción que usaste de ese alimento o, la primera vez, con la típica.
-- **Agregar no cierra la hoja:** se pueden sumar varios seguidos. Un aviso ofrece deshacer y cambiar la porción.
-- **Todo se corrige después** tocando el registro en la línea del día.
+- **Registrar es armar la comida y revisarla antes de agregarla** (lo pediste el 21/10/2026):
+  - el «+» de cada fila abre la ventana del alimento: sus porciones, la cantidad en medios o los gramos, y cuánto queda en el día; viene con la última porción que usaste o, la primera vez, con la típica;
+  - «Sumar» lo pone en la comida que se arma, que se ve abajo con su total; la hoja no se cierra y se suman varios seguidos, con un aviso para deshacer;
+  - «Listo» abre la revisión: se cambia una porción, se quita algo o se guarda como comida;
+  - «Agregar» registra todo junto. Antes no se registra nada, y si se cierra la hoja, lo juntado queda guardado.
+- **Todo se corrige después** tocando el registro en la línea del día, que abre la misma ventana.
 - **Las cantidades se escriben como se dicen:** «2 rebanadas», «1½ tazas», «½ unidad», «2 medium» (`src/comida/porciones.ts`).
 
-Toques desde el cielo con Moss abierto, sin contar lo que se escribe:
+Toques desde el cielo con Moss abierto, sin contar lo que se escribe. Revisar
+antes de agregar suma tres toques a cada registro («sumar», «listo» y
+«agregar»): lo de siempre pasó de 2 a 5.
 
 | Flujo | Toques |
 |---|---|
-| Algo de siempre (sugerencia de la hora, reciente o favorito) | **2**: registrar y «+» |
-| Buscar y agregar con su porción | **2** y escribir |
-| Buscar y elegir otra cantidad | **4** y escribir: registrar, el alimento, la porción y agregar |
-| Varios alimentos de una vez | **1 + 1 por alimento** y escribir |
+| Algo de siempre (sugerencia de la hora, reciente o favorito) | **5**: registrar, «+», sumar, listo y agregar |
+| Buscar y agregar con su porción | **5** y escribir |
+| Buscar y elegir otra cantidad | **6** y escribir: registrar, «+», la porción, sumar, listo y agregar |
+| Varios alimentos de una vez | **3 + 2 por alimento** y escribir |
 | Armar un plato y guardarlo para la próxima | lo anterior **+ 1** y un nombre |
-| Una comida guardada o una receta | **2** y escribir |
-| Copiar una comida de ayer | **2**: el hueco vacío de la comida y «copiar de ayer» |
+| Una comida guardada o una receta | **5**: registrar, guardadas, «+», listo y agregar |
+| Copiar una comida de ayer | **3**: la zona de comida, «copiar de ayer» en el hueco de la comida (abre la revisión) y agregar |
 | Copiar un día entero | **3**: copiar día, elegir el día y confirmar |
-| Código de barras ya conocido | **3**: registrar, escáner y agregar (lee solo, sin disparar) |
-| Código nuevo con etiqueta | **6** y el nombre, una sola vez; la próxima son 3 |
-| Carga rápida de calorías y macros | **3** y los números |
-| Dictado | **3**: registrar, el micrófono del teclado y «+» |
+| Código de barras ya conocido | **5**: registrar, escáner, sumar, listo y agregar (lee solo, sin disparar) |
+| Código nuevo con etiqueta | **8** y el nombre, una sola vez; la próxima son 5 |
+| Carga rápida de calorías y macros | **5** y los números |
+| Dictado | **6**: registrar, el micrófono del teclado, «+», sumar, listo y agregar |
 | Planificar un día futuro | **1 o 2** para ir al día, y lo mismo que hoy; al llegar el día, **1** para confirmar todo |
 | Compartir una receta | **2 o 3**: compartir y elegir a quién |
 | Agua | **1**: el vaso suma 250 ml (o llega sola desde Salud) |
@@ -176,7 +181,7 @@ Toques desde el cielo con Moss abierto, sin contar lo que se escribe:
   - copiar.
 - **La foto de la comida** es opcional y no se analiza: un toque en la comida ya registrada. Dónde se guarda es D10.
 - **El día:** las comidas con nombre van sobre una línea de horas, cada una con lo que tiene y sus totales. Lo planificado se ve atenuado hasta confirmarlo.
-- **Lo visual va primero a la galería.** Desde el 21/10/2026 están la línea del día, la hoja de registro y la ficha del alimento, con la base y el buscador de verdad y los toques contados; falta aprobarlas. La revisión de la etiqueta llega con la etapa 6.
+- **Lo visual va primero a la galería.** Desde el 21/10/2026 están la línea del día, la hoja de registro, la ventana del alimento y la revisión, con la base y el buscador de verdad y los toques contados; falta aprobarlas. La revisión de la etiqueta llega con la etapa 6.
 
 ## Código de barras (atajo 1)
 
@@ -303,9 +308,30 @@ Es la zona propia del cielo, con el mismo nivel visual que el resto.
 - el agua;
 - el resumen del último control semanal.
 
+**Por día, por semana y por mes, como MacroFactor** (pedido el 21/10/2026).
+
+Lo de MacroFactor, confirmado en su ayuda y en su web:
+- El registro tiene arriba la tira de la semana, de lunes a domingo, y cada día se llena contra la meta de calorías ([ayuda](https://help.macrofactorapp.com/en/articles/100-view-past-days-of-eating), [el registro](https://macrofactor.com/timeline-based-food-logger/)).
+- Debajo van cuatro barras finas («2984 / 3033»).
+- El inicio tiene la nutrición del día, la de la semana (siete días con cuatro barras cada uno) y gráficos de 1 semana a 1 año ([ayuda](https://help.macrofactorapp.com/en/articles/22-get-to-know-your-dashboard), [inicio](https://macrofactor.com/dashboard-customization/)).
+- Se puede planificar comida en días futuros, y el algoritmo no la cuenta hasta que el día pasa ([ayuda](https://help.macrofactorapp.com/en/articles/51-log-food-to-future-days)).
+- Los colores son solo para los datos, y nunca hay rojo de «te pasaste».
+
+En Moss:
+- **Día:**
+  - arriba, la tira de la semana con una luna chica por día, que se llena con lo comido y se toca para ver ese día; los días que vienen van en blanco y lo planificado, tenue;
+  - después, lo que queda grande, las barras de los macros, el agua y la línea del día.
+- **Semana:**
+  - el promedio por día de los días que ya terminaron, con sus macros;
+  - los siete días, con una barra de calorías y una por macro contra la meta;
+  - la tendencia del peso, el gasto estimado y el último control.
+- **Mes:** el calendario con una luna por día y el promedio del mes.
+
 **Cómo se ve:**
-- La propuesta de la galería es una luna que se llena con lo comido, con tres arcos: proteína en dorado, carbohidratos en verde y grasas en azul estrella.
-- Está en la galería desde el 21/10/2026, esperando aprobación. Va al lado del cielo: la barra de abajo del cielo de hoy lleva la luna chica con lo que queda y el «+» para registrar.
+- La luna se llena con lo comido. Es una luna de verdad, con sus mares, grano y la sombra con el borde suave.
+- Los tres arcos de los macros (proteína en dorado, carbohidratos en verde y grasas en azul estrella) quedan como opción: la propuesta es la luna sola, porque los macros ya están en las barras.
+- Los números y los títulos van en una sans sobria (Outfit), no en la serif del cielo.
+- Está en la galería desde el 21/10/2026, esperando aprobación. Va al lado del cielo: la barra de abajo del cielo de hoy lleva la luna chica con lo que queda y el «+» para registrar. Si se aprueba D14, la comida pasa a ser el inicio.
 
 **Widgets en la pantalla de bloqueo** con calorías y macros:
 - van con `expo-widgets`, en los tamaños de la pantalla de bloqueo (circular y rectangular);

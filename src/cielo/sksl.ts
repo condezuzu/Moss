@@ -19,12 +19,13 @@ uniform float uOctavas;
 uniform float uCapas;
 uniform float uSemilla;
 uniform float uRiqueza;
+uniform float uVia;
 ${f.comun}
 ${f.fondo}
 vec4 main(vec2 p) {
   vec2 uv = vec2(p.x / uRes.x, 1.0 - p.y / uRes.y);
   vec2 w = uMundoMin + uv * uMundoTam;
-  vec3 c = colorFondo(w, uPxPorUnidad, uHorizonte, uOctavas, uCapas, uSemilla, uRiqueza);
+  vec3 c = colorFondo(w, uPxPorUnidad, uHorizonte, uOctavas, uCapas, uSemilla, uRiqueza, uVia);
   c += (hash12(p) - 0.5) / 255.0;
   return vec4(c, 1.0);
 }`;

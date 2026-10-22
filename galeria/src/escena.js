@@ -128,8 +128,10 @@ const Escena = (() => {
       completo: false, tCompleto: -1, rafagaHecha: false,
       aurora: { tiempo: 40, intensidad: 1, oleada: 0 },
       efectos: [], particulas: [], esporasSalud: [],
-      // El progreso de toda la vida (0 a 1): más estrellas, vía láctea, aurora y musgo.
+      // El progreso de toda la vida (0 a 1): más estrellas, aurora y musgo.
       riqueza: opciones.riqueza == null ? 0.6 : opciones.riqueza,
+      // Cuánto se ve la vía láctea (0 a 1): su polvo blanco va tenue desde el 21/10/2026.
+      via: opciones.via == null ? 0.3 : opciones.via,
       musgo: { lomas: [], brotes: [] },
       modo: 'hoy',
       // El «flum» en curso y cómo queda el cielo al llegar (detrás de Ajustes: cerca y oscuro).
@@ -285,6 +287,7 @@ const Escena = (() => {
         capas: cfg.capas,
         semilla: 7,
         riqueza: e.riqueza,
+        via: e.via,
       });
       e.fondoListo = false;
     }
@@ -311,9 +314,9 @@ const Escena = (() => {
       // De atrás hacia adelante: la de atrás más azulada y clara (aire de por medio), la de
       // adelante casi negra con el borde encendido por la aurora.
       const defs = [
-        { base: HORIZONTE + 0.03, amp: 0.024, frec: 3.0, semilla: 3, cojines: 8, pelusa: 0.0008, cuerpo: [0.032, 0.052, 0.078], borde: [0.24, 0.4, 0.42], luz: 0.22 },
-        { base: HORIZONTE + 0.008, amp: 0.026, frec: 4.2, semilla: 7, cojines: 14, pelusa: 0.0012, cuerpo: [0.016, 0.03, 0.03], borde: [0.32, 0.55, 0.36], luz: 0.32 },
-        { base: HORIZONTE - 0.036, amp: 0.018, frec: 5.4, semilla: 11, cojines: 24, pelusa: 0.0018, cuerpo: [0.007, 0.014, 0.012], borde: [0.46, 0.68, 0.32], luz: 0.46 },
+        { base: HORIZONTE + 0.03, amp: 0.024, frec: 3.0, semilla: 3, cojines: 8, pelusa: 0.0008, cuerpo: [0.032, 0.052, 0.078], borde: [0.24, 0.4, 0.42], luz: 0.12 },
+        { base: HORIZONTE + 0.008, amp: 0.026, frec: 4.2, semilla: 7, cojines: 14, pelusa: 0.0012, cuerpo: [0.016, 0.03, 0.03], borde: [0.32, 0.55, 0.36], luz: 0.16 },
+        { base: HORIZONTE - 0.036, amp: 0.018, frec: 5.4, semilla: 11, cojines: 24, pelusa: 0.0018, cuerpo: [0.007, 0.014, 0.012], borde: [0.46, 0.68, 0.32], luz: 0.22 },
       ];
       const franja = 1.6 / e.escalaCss;
       e.musgo.lomas = defs.map((d, k) => {
@@ -343,11 +346,11 @@ const Escena = (() => {
       // tallos que brillan, refleja la poca luz que hay desde adentro, en manchones de puntitos.
       const frente = e.musgo.lomas[2].capa;
       const r = azar(7777);
-      const manchones = Math.round(4 + 8 * g);
+      const manchones = Math.round(2 + 4 * g);
       e.musgo.brotes = [];
       for (let m = 0; m < manchones; m++) {
         const cx = (r() * 2 - 1) * (e.aspecto / 2 + 0.02);
-        const n = 4 + Math.floor(r() * 6);
+        const n = 3 + Math.floor(r() * 4);
         for (let i = 0; i < n; i++) {
           const x = cx + (r() - 0.5) * 0.04;
           e.musgo.brotes.push({ x, y: alturaLoma(frente, x) - 0.002 - r() * 0.013, tam: 0.6 + r() * 0.8, fase: r() * TAU, brillo: 0.4 + r() * 0.6 });
@@ -594,8 +597,9 @@ const Escena = (() => {
       });
       e.efectos = e.efectos.filter((f) => e.t - f.t0 < f.dur);
 
-      // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas.
-      const tasa = (0.3 + 1.4 * e.riqueza) * CALIDADES[e.calidad].particulas;
+      // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas. Son
+      // de vez en cuando: una cada siete segundos, más o menos.
+      const tasa = (0.05 + 0.15 * e.riqueza) * CALIDADES[e.calidad].particulas;
       if (Math.random() < tasa * dt && e.musgo.brotes.length) {
         const k = e.musgo.brotes[Math.floor(Math.random() * e.musgo.brotes.length)];
         e.particulas.push({ espora: true, x: k.x, y: k.y, x0: k.x, vx: 0, vy: 0.018 + Math.random() * 0.03, vida: 0, max: 5 + Math.random() * 5, tam: 1.8 + Math.random() * 1.6, color: MUSGO_LUZ, brillo: 0.7, frena: 0, sube: 0, fase: Math.random() * TAU, par: PARALAJE.lomas[2] });
@@ -823,8 +827,8 @@ const Escena = (() => {
       const luzAurora = 0.75 + 0.25 * e.aurora.intensidad;
       e.musgo.brotes.forEach((k) => {
         const tit = 0.7 + 0.3 * Math.sin(e.t * 0.9 + k.fase * 3);
-        sprite(spFrente, k.x, k.y, 5.5 * k.tam, PARALAJE.lomas[2], [0.72, 0.9, 0.42], 0.3 * k.brillo * tit * luzAurora, 0);
-        sprite(spFrente, k.x, k.y, 1.8 * k.tam, PARALAJE.lomas[2], [0.95, 0.96, 0.7], 0.7 * k.brillo * tit, 4);
+        sprite(spFrente, k.x, k.y, 5.5 * k.tam, PARALAJE.lomas[2], [0.72, 0.9, 0.42], 0.15 * k.brillo * tit * luzAurora, 0);
+        sprite(spFrente, k.x, k.y, 1.8 * k.tam, PARALAJE.lomas[2], [0.95, 0.96, 0.7], 0.4 * k.brillo * tit, 4);
       });
       e.particulas.forEach((p) => {
         if (!p.espora) return;
@@ -1084,6 +1088,11 @@ const Escena = (() => {
         redimensionarFondo();
       },
       lanzarFugaz() { if (!e.fugaz) e.proximaFugaz = e.t; },
+      ponerVia(v) {
+        if (Math.abs(v - e.via) < 0.001) return;
+        e.via = v;
+        redimensionarFondo();
+      },
       velocidad(v) { velocidad = v; },
       viajar,
       get viajando() { return !!e.viaje; },
