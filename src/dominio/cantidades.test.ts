@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  ACEITE, aGramos, ajustar, AJUSTES, aMl, aOjoDeFabrica, comestible, GRAMOS_POR_ONZA, gramosDeMl, ML_POR_ONZA_LIQUIDA, mlDeGramos, pesoEn,
+  ACEITE, aCm, aGramos, ajustar, AJUSTES, aKg, aMl, aOjoDeFabrica, comestible, largoEn, pesoCorporalEn, GRAMOS_POR_ONZA, gramosDeMl, ML_POR_ONZA_LIQUIDA, mlDeGramos, pesoEn,
   sistemaDeRegion, volumenEn,
 } from './cantidades';
 
@@ -76,5 +76,16 @@ describe('pesado o a ojo, de fábrica', () => {
     expect(aOjoDeFabrica({ porcion: '1 can' })).toBe(false);
     // «Canela» no es una lata.
     expect(aOjoDeFabrica({ porcion: '1 cucharadita de canela' })).toBe(true);
+  });
+});
+
+describe('el cuerpo en el sistema de cada uno', () => {
+  it('el peso en libras y las medidas en pulgadas, guardados en kg y cm', () => {
+    expect(pesoCorporalEn(80, 'imperial')).toEqual({ valor: 176.4, unidad: 'lb' });
+    expect(pesoCorporalEn(80.04, 'metrico')).toEqual({ valor: 80, unidad: 'kg' });
+    expect(aKg(176.4, 'imperial')).toBeCloseTo(80.01, 2);
+    expect(aKg(80, 'metrico')).toBe(80);
+    expect(largoEn(85.5, 'imperial')).toEqual({ valor: 33.7, unidad: 'in' });
+    expect(aCm(33.7, 'imperial')).toBeCloseTo(85.6, 1);
   });
 });

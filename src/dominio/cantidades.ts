@@ -89,3 +89,20 @@ export function aOjoDeFabrica(cantidad: { porcion: string } | { gramos: number }
 export function ajustar(veces: number, factor: number): number {
   return Math.round(veces * factor * 1000) / 1000;
 }
+
+// El cuerpo, en el sistema de cada uno: el peso en kg o en libras, las medidas en cm o en pulgadas.
+// Se guarda siempre en kg y en cm.
+export const KG_POR_LIBRA = 0.45359237;
+export const CM_POR_PULGADA = 2.54;
+
+export function pesoCorporalEn(kg: number, s: Sistema): { valor: number; unidad: 'kg' | 'lb' } {
+  return s === 'imperial' ? { valor: Math.round((kg / KG_POR_LIBRA) * 10) / 10, unidad: 'lb' } : { valor: Math.round(kg * 10) / 10, unidad: 'kg' };
+}
+
+export const aKg = (valor: number, s: Sistema) => (s === 'imperial' ? valor * KG_POR_LIBRA : valor);
+
+export function largoEn(cm: number, s: Sistema): { valor: number; unidad: 'cm' | 'in' } {
+  return s === 'imperial' ? { valor: Math.round((cm / CM_POR_PULGADA) * 10) / 10, unidad: 'in' } : { valor: Math.round(cm * 10) / 10, unidad: 'cm' };
+}
+
+export const aCm = (valor: number, s: Sistema) => (s === 'imperial' ? valor * CM_POR_PULGADA : valor);

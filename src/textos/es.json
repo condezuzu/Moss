@@ -371,7 +371,7 @@
     "titulo": "Agregar",
     "agregarComida": "Agregar comida",
     "registrarPeso": "Registrar peso",
-    "ultimoPeso": "{cuando}: {kg} kg",
+    "ultimoPeso": "{cuando}: {peso}",
     "hoy": "Hoy",
     "cargaRapida": "Carga rápida",
     "caloriasYMacros": "Calorías y macros",
@@ -385,9 +385,9 @@
     "medidasTexto": "Cintura, cuello, cadera, brazos…",
     "medidasGuardadas": "Medidas guardadas",
     "pesoHoy": "Hoy. Mejor en ayunas y después de ir al baño.",
-    "tendencia": "Tendencia: {kg} kg",
+    "tendencia": "Tendencia: {peso}",
     "pesoNota": "Con una balanza conectada a Salud, el peso llega solo. Moss usa la tendencia, no el número de un día.",
-    "pesoGuardado": "Peso guardado: {kg} kg",
+    "pesoGuardado": "Peso guardado: {peso}",
     "pronto": "Esto llega pronto a la app."
   },
   "cuerpo": {

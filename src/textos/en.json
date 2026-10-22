@@ -371,7 +371,7 @@
     "titulo": "Add",
     "agregarComida": "Add food",
     "registrarPeso": "Log weight",
-    "ultimoPeso": "{cuando}: {kg} kg",
+    "ultimoPeso": "{cuando}: {peso}",
     "hoy": "Today",
     "cargaRapida": "Quick add",
     "caloriasYMacros": "Calories and macros",
@@ -385,9 +385,9 @@
     "medidasTexto": "Waist, neck, hips, arms…",
     "medidasGuardadas": "Measurements saved",
     "pesoHoy": "Today. Best before eating and after the bathroom.",
-    "tendencia": "Trend: {kg} kg",
+    "tendencia": "Trend: {peso}",
     "pesoNota": "With a scale connected to Health, your weight comes in on its own. Moss uses the trend, not one day’s number.",
-    "pesoGuardado": "Weight saved: {kg} kg",
+    "pesoGuardado": "Weight saved: {peso}",
     "pronto": "This is coming soon to the app."
   },
   "cuerpo": {

@@ -70,7 +70,7 @@ const Mas = (() => {
         comida.abrirHoja({});
       });
       const ultima = persona.pesadas[persona.pesadas.length - 1];
-      const peso = boton('mas-principal', `${icono('balanza')}<b>${tx('mas.registrarPeso')}</b><span>${ultima ? tx('mas.ultimoPeso', { cuando: ultima.fecha === Datos.HOY ? tx('mas.hoy') : u.fechaCorta(ultima.fecha), kg: numero(ultima.kg, 1) }) : ''}</span>`, () => ir('peso'));
+      const peso = boton('mas-principal', `${icono('balanza')}<b>${tx('mas.registrarPeso')}</b><span>${ultima ? tx('mas.ultimoPeso', { cuando: ultima.fecha === Datos.HOY ? tx('mas.hoy') : u.fechaCorta(ultima.fecha), peso: `${numero(ultima.kg, 1)} kg` }) : ''}</span>`, () => ir('peso'));
       principales.append(agregar, peso);
       h.appendChild(principales);
 
@@ -141,8 +141,8 @@ const Mas = (() => {
       poner();
       cuerpo.append(cifra, el('p', 'mas-peso-dia', tx('mas.pesoHoy')));
       const datos = el('div', 'mas-peso-datos');
-      if (ultima) datos.append(el('span', null, tx('mas.ultimoPeso', { cuando: u.fechaCorta(ultima.fecha), kg: numero(ultima.kg, 1) })));
-      if (persona.pesoHoy != null) datos.append(el('span', null, tx('mas.tendencia', { kg: numero(persona.pesoHoy, 1) })));
+      if (ultima) datos.append(el('span', null, tx('mas.ultimoPeso', { cuando: u.fechaCorta(ultima.fecha), peso: `${numero(ultima.kg, 1)} kg` })));
+      if (persona.pesoHoy != null) datos.append(el('span', null, tx('mas.tendencia', { peso: `${numero(persona.pesoHoy, 1)} kg` })));
       cuerpo.append(datos, el('p', 'mas-nota', tx('mas.pesoNota')));
       h.appendChild(cuerpo);
       const pie = el('footer', 'mas-pie');
@@ -150,7 +150,7 @@ const Mas = (() => {
         if (!(kg >= 20 && kg <= 400)) { entrada.focus(); return; }
         opciones.alPeso(Math.round(kg * 10) / 10);
         ir('menu');
-        aviso(tx('mas.pesoGuardado', { kg: numero(kg, 1) }));
+        aviso(tx('mas.pesoGuardado', { peso: `${numero(kg, 1)} kg` }));
       }));
       h.appendChild(pie);
     }
