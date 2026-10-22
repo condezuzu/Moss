@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
 import { sumarDias, type DiaSemana } from './fechas';
 import {
-  ajusteDiario, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metasIniciales, pisoDe, repartirSemana, ritmoPermitido,
+  ajusteDiario, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaRepartida, metasIniciales, pisoDe, repartirSemana, ritmoPermitido,
   type Cuestionario, type Macros,
 } from './metas';
 
@@ -96,6 +96,13 @@ describe('repartir la semana', () => {
   const meta: Macros = { kcal: 2500, proteina: 150, carbohidratos: 290, grasas: 80 };
   const finde: DiaSemana[] = [6, 0];
   const total = (r: Record<DiaSemana, Macros>) => Object.values(r).reduce((s, m) => s + m.kcal, 0);
+
+  it('la meta de cada día sale del perfil: sin repartir, la guardada', () => {
+    expect(metaRepartida(meta, { sexo: 'm' }, 6)).toEqual(meta);
+    expect(metaRepartida(meta, null, 6)).toEqual(meta);
+    expect(metaRepartida(meta, { sexo: 'm', semana: { altos: finde, extra: 500 } }, 6).kcal).toBe(3000);
+    expect(metaRepartida(meta, { sexo: 'm', semana: { altos: finde, extra: 500 } }, 3).kcal).toBe(2300);
+  });
 
   it('los días altos suben y los demás bajan, con el mismo total de la semana', () => {
     const r = repartirSemana(meta, finde, 500, 'm');

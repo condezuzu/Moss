@@ -21,12 +21,18 @@ export type Macros = { kcal: number; proteina: number; carbohidratos: number; gr
 export type Estilo = 'equilibrada' | 'bajaEnGrasas' | 'bajaEnCarbohidratos' | 'keto';
 export const ESTILOS: readonly Estilo[] = ['equilibrada', 'bajaEnGrasas', 'bajaEnCarbohidratos', 'keto'];
 
+/** Repartir la semana: los días altos y cuántas kcal suben (repartirSemana). */
+export type Semana = { altos: DiaSemana[]; extra: number };
+export const EXTRAS = [200, 300, 500] as const;
+
 /**
  * Lo que queda guardado del cuestionario: la edad como año de nacimiento, para que no envejezca; el
- * peso va aparte. La estrategia de Progreso suma el peso al que se quiere llegar y el día de la
- * semana del control; sin elegirlo, es el día de la primera meta.
+ * peso va aparte. La estrategia de Progreso suma el peso al que se quiere llegar, el día de la
+ * semana del control (sin elegirlo, es el día de la primera meta) y si se reparte la semana.
  */
-export type Perfil = Omit<Cuestionario, 'edad' | 'pesoKg'> & { nacimiento: number; estilo?: Estilo; pesoMeta?: number; diaDelControl?: DiaSemana; actualizado: string };
+export type Perfil = Omit<Cuestionario, 'edad' | 'pesoKg'> & {
+  nacimiento: number; estilo?: Estilo; pesoMeta?: number; diaDelControl?: DiaSemana; semana?: Semana; actualizado: string;
+};
 
 /**
  * Las metas desde una fecha, con el gasto de donde salieron, por qué y cuándo se fijaron (entre dos
@@ -154,6 +160,10 @@ export function repartirSemana(meta: Macros, altos: readonly DiaSemana[], extra:
   const con = (cambio: number): Macros => ({ ...meta, kcal: Math.round(meta.kcal + cambio), carbohidratos: Math.max(0, Math.round(meta.carbohidratos + cambio / 4)) });
   return Object.fromEntries(dias.map((d) => [d, altos.includes(d) ? con(sube) : con(-baja)])) as Record<DiaSemana, Macros>;
 }
+
+/** La meta de un día de la semana: la guardada o, si se reparte la semana, la que le toca. */
+export const metaRepartida = (meta: Macros, perfil: Pick<Perfil, 'semana' | 'sexo'> | null, dia: DiaSemana): Macros =>
+  perfil?.semana ? repartirSemana(meta, perfil.semana.altos, perfil.semana.extra, perfil.sexo)[dia] : meta;
 
 /** Lo que muestra el final del cuestionario: el gasto estimado y la meta de arranque. */
 export function metasIniciales(c: Cuestionario): { gasto: number; metas: Macros } {

@@ -205,6 +205,12 @@ await como(B, `insert into moss.perfiles (nacimiento, sexo, altura_cm, actividad
   objetivo = excluded.objetivo, ritmo = excluded.ritmo, actualizado = excluded.actualizado`);
 const perfilDeB = (await como(B, 'select nacimiento, semilla from moss.perfiles')).rows[0];
 comprobar(perfilDeB.nacimiento === 1990 && perfilDeB.semilla === 'primera', 'el perfil llega después de la semilla, aunque se haya contestado antes, y la conserva');
+const semana = (altos, extra) => falla(B, `update moss.perfiles set semana_altos = ${altos}, semana_extra = ${extra}, actualizado = now()`);
+comprobar(
+  await semana(`'{6,0}'`, 'null') && await semana(`'{7}'`, 300) && await semana(`'{6}'`, 250) && await semana(`'{0,1,2,3,4,5,6}'`, 200)
+    && !(await semana(`'{6,0}'`, 300)) && !(await semana('null', 'null')),
+  'repartir la semana: los días van de 0 a 6 (no todos), el extra es 200, 300 o 500, y van los dos o ninguno',
+);
 
 const periodos = (lista) => como(A, 'select moss.poner_periodos($1::jsonb)', [JSON.stringify(lista)]);
 await como(B, `select moss.poner_periodos('[{"dia":1,"desde":"2026-10-19","constelacion":"sagitta","cantidad":4}]'::jsonb)`);
@@ -402,15 +408,16 @@ comprobar(
 // Progreso: las medidas y la estrategia (el peso meta y el día del control) llegan al otro teléfono.
 pasa();
 a.almacen.guardarMedidas({ cintura: 85.5, cuello: 38, brazo: 999 });
-a.almacen.ponerEstrategia({ pesoMeta: 71, diaDelControl: 4, estilo: 'bajaEnCarbohidratos' });
+a.almacen.ponerEstrategia({ pesoMeta: 71, diaDelControl: 4, estilo: 'bajaEnCarbohidratos', semana: { altos: [6, 0], extra: 300 } });
 await a.sinc.vuelta();
 await b.sinc.vuelta();
 const medidasDeB = b.almacen.estado().medidas.get(hoyA);
 comprobar(
   medidasDeB?.cintura === 85.5 && medidasDeB?.cuello === 38 && medidasDeB?.brazo === undefined
     && b.almacen.estado().perfil?.pesoMeta === 71 && b.almacen.estado().perfil?.diaDelControl === 4
+    && b.almacen.estado().perfil?.semana?.altos.join() === '6,0' && b.almacen.estado().perfil?.semana?.extra === 300
     && b.almacen.estado().metas.some((m) => m.motivo === 'objetivo') && !(await pendiente(b)),
-  'app: las medidas (sin lo imposible), el peso meta, el día del control y las metas del reparto nuevo llegan al otro teléfono',
+  'app: las medidas (sin lo imposible), el peso meta, el día del control, la semana repartida y las metas del reparto nuevo llegan al otro teléfono',
 );
 
 // Los dos sin conexión el resto del día, cada uno marca algo distinto; se sincronizan al otro día.

@@ -11,7 +11,7 @@ import { cantidadDePorcion, decimal } from '@/comida/porciones';
 import { ACEITE, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
 import { comidaDeLaHora, COMIDAS, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
-import type { Macros } from '@/dominio/metas';
+import { metaRepartida, type Macros } from '@/dominio/metas';
 import { delDia, sumarValores, totalDelDia, type Cantidad, type Registro, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 
@@ -76,10 +76,10 @@ export const hora = (minutos: number) => `${String(Math.floor(minutos / 60)).pad
 /** La comida que toca ahora. */
 export const comidaDeAhora = (): Comida => comidaDeLaHora(minutosDe(new Date()));
 
-/** La meta de un día, sin lo que no son macros. Antes del cuestionario, null. */
-export function metaDelDia(e: Pick<Estado, 'metas'>, dia: ClaveDia): Macros | null {
+/** La meta de un día, sin lo que no son macros, con la semana repartida si se reparte. Antes del cuestionario, null. */
+export function metaDelDia(e: Pick<Estado, 'metas' | 'perfil'>, dia: ClaveDia): Macros | null {
   const m = metaVigente(e, dia);
-  return m ? { kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas } : null;
+  return m ? metaRepartida({ kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas }, e.perfil, diaDeLaSemana(dia)) : null;
 }
 
 export type ComidaDelDia = { comida: Comida; registros: Registro[]; total: Valores; minutos: number; planificada: boolean };

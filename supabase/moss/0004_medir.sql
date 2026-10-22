@@ -12,6 +12,13 @@ alter table moss.registros add column estimado boolean not null default false;
 -- De dónde salen los valores de un alimento propio: Open Food Facts pide nombrarlo donde se muestra (ODbL).
 alter table moss.propios add column origen text check (origen in ('off', 'etiqueta', 'mano'));
 
+-- Repartir la semana (Progreso, Metas): los días altos (0 es domingo) y cuántas kcal suben. Sin
+-- repartir, los dos en null.
+alter table moss.perfiles
+  add column semana_altos smallint[] check (semana_altos <@ array[0, 1, 2, 3, 4, 5, 6]::smallint[] and cardinality(semana_altos) between 1 and 6),
+  add column semana_extra smallint check (semana_extra in (200, 300, 500)),
+  add constraint perfiles_semana_check check ((semana_altos is null) = (semana_extra is null));
+
 -- Los productos y los platos ya van dentro de la app (assets/alimentos.db), así andan sin conexión
 -- desde el primer día. Esta tabla corrige y suma sin sacar una versión nueva: una fila con el id de
 -- un alimento de la base lo reemplaza, una con un id nuevo lo agrega y `retirado` lo saca. El

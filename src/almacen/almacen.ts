@@ -353,10 +353,11 @@ export function crearAlmacen(op: Opciones) {
     },
     /**
      * La estrategia de Progreso: el objetivo y su ritmo, cómo se reparten los macros, el peso al que
-     * se quiere llegar y el día del control. Cambiar el objetivo, el ritmo o el reparto fija metas
-     * nuevas desde hoy con el gasto que se venía midiendo; con las metas a mano, quedan las que había.
+     * se quiere llegar, el día del control y si se reparte la semana (`semana: undefined` deja de
+     * repartirla). Cambiar el objetivo, el ritmo o el reparto fija metas nuevas desde hoy con el gasto
+     * que se venía midiendo; con las metas a mano, quedan las que había.
      */
-    ponerEstrategia(cambios: Partial<Pick<Perfil, 'objetivo' | 'ritmo' | 'estilo' | 'pesoMeta' | 'diaDelControl'>>) {
+    ponerEstrategia(cambios: Partial<Pick<Perfil, 'objetivo' | 'ritmo' | 'estilo' | 'pesoMeta' | 'diaDelControl' | 'semana'>>) {
       const antes = estado.perfil;
       if (!antes) return;
       const perfil: Perfil = { ...antes, ...cambios, actualizado: momento() };
@@ -370,6 +371,18 @@ export function crearAlmacen(op: Opciones) {
       const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
       guardar((r) => r.guardarMeta(meta));
       ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+    },
+    /** Volver de las metas a mano a las de Moss: las del objetivo y el reparto, con el gasto que se venía midiendo. */
+    metasDeMoss(): MetaGuardada | null {
+      const ultima = estado.metas[estado.metas.length - 1];
+      const perfil = estado.perfil;
+      const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
+      if (!ultima || !perfil || pesoKg === undefined) return null;
+      const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo };
+      const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
+      guardar((r) => r.guardarMeta(meta));
+      ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+      return meta;
     },
     /** Las metas a mano, desde hoy: los gramos de cada macro (y las kcal, si se dan), con el gasto que se venía midiendo. */
     ponerMetasAMano(macros: Omit<Macros, 'kcal'> & { kcal?: number }): MetaGuardada | null {

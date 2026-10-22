@@ -1,5 +1,5 @@
 // Supabase tal como lo usa la sincronización: subir lo pendiente y bajar lo que cambió. Las filas
-// llevan los nombres de supabase/moss/ (0001_esquema.sql, 0002_comida.sql y 0003_progreso.sql). El usuario no viaja:
+// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0004_medir.sql). El usuario no viaja:
 // lo pone la base con la sesión, y RLS no deja ver ni tocar lo de nadie más.
 
 import type { Periodo } from '@/dominio/constelaciones';
@@ -41,7 +41,8 @@ const filaDe = {
   logro: (l: Logro) => ({ id: l.id, desde: l.desde }),
   perfil: (p: Perfil) => ({
     nacimiento: p.nacimiento, sexo: p.sexo, altura_cm: p.alturaCm, actividad: p.actividad, objetivo: p.objetivo, ritmo: p.ritmo,
-    estilo: p.estilo ?? null, peso_meta: p.pesoMeta ?? null, dia_del_control: p.diaDelControl ?? null, actualizado: p.actualizado,
+    estilo: p.estilo ?? null, peso_meta: p.pesoMeta ?? null, dia_del_control: p.diaDelControl ?? null,
+    semana_altos: p.semana?.altos ?? null, semana_extra: p.semana?.extra ?? null, actualizado: p.actualizado,
   }),
   meta: (m: MetaGuardada) => ({
     desde: m.desde, kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, gasto: m.gasto, motivo: m.motivo,
@@ -96,7 +97,8 @@ const deFila = {
   perfil: (f: Filas['perfil']): Perfil => ({
     nacimiento: f.nacimiento, sexo: f.sexo, alturaCm: Number(f.altura_cm), actividad: f.actividad, objetivo: f.objetivo, ritmo: f.ritmo,
     ...(f.estilo ? { estilo: f.estilo } : {}), ...(f.peso_meta !== null ? { pesoMeta: Number(f.peso_meta) } : {}),
-    ...(f.dia_del_control !== null ? { diaDelControl: f.dia_del_control } : {}), actualizado: hora(f.actualizado),
+    ...(f.dia_del_control !== null ? { diaDelControl: f.dia_del_control } : {}),
+    ...(f.semana_altos?.length && f.semana_extra ? { semana: { altos: f.semana_altos, extra: f.semana_extra } } : {}), actualizado: hora(f.actualizado),
   }),
   meta: (f: Filas['meta']): MetaGuardada => ({
     kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas, desde: f.desde, gasto: f.gasto, motivo: f.motivo,
