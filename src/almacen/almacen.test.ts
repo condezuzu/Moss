@@ -170,6 +170,22 @@ describe('el cuestionario, el peso y las metas', () => {
     expect(otra.almacen.estado()).toMatchObject({ perfil: almacen.estado().perfil, metas: [meta], pesos: almacen.estado().pesos });
   });
 
+  it('cerrar sesión o borrar los datos deja el teléfono como la primera vez, y otra sesión no ve nada', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.responderCuestionario(respuestas);
+    almacen.marcar('meditar', true, 'toque');
+    await almacen.olvidarTodo();
+    const e = almacen.estado();
+    expect(e.listo).toBe(true);
+    expect(e.perfil).toBeNull();
+    expect(e.metas).toEqual([]);
+    expect(e.pesos).toEqual([]);
+    expect(hoy(almacen)).toMatchObject({ habitos: ['meditar', 'leer', 'agua'], hechos: [] });
+    const otra = await armar(repositorio);
+    expect(otra.almacen.estado().perfil).toBeNull();
+    expect(hoy(otra.almacen).hechos).toEqual([]);
+  });
+
   it('un peso por día: queda el último', async () => {
     const { almacen, ir } = await armar();
     almacen.anotarPeso(80.4, 'manual');

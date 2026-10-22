@@ -715,7 +715,42 @@
     "privacidad": "Privacy",
     "borrarDatos": "Delete my data",
     "cerrarSesion": "Sign out",
-    "vinculada": "Linked"
+    "vinculada": "Linked",
+    "imperial": "lb and inches",
+    "sinCuenta": "No account",
+    "conectar": "Connect",
+    "pronto": "Soon",
+    "idiomaDelTelefono": "Your phone’s",
+    "borrarCuenta": "Delete account",
+    "borrar": "Delete",
+    "borrarDatosTitulo": "Delete your Moss data?",
+    "borrarDatosTexto": "Your habits, food log, weight, measurements and targets are deleted, on this phone and in your account. The account stays, and Ascent isn’t touched.",
+    "borrarCuentaTitulo": "Delete your account?",
+    "borrarCuentaTexto": "Your account is the same in Moss and Ascent: deleting it deletes the data of both, and it can’t be undone.",
+    "cerrarSesionTitulo": "Sign out?",
+    "cerrarSesionTexto": "What’s on this phone is deleted; your data stays in your account.",
+    "errorBorrar": "That didn’t work. Check your connection and try again.",
+    "exportarTexto": "Each file is a CSV that any spreadsheet opens.",
+    "archivos": {
+      "registros": "Food log",
+      "pesos": "Weight",
+      "metas": "Targets"
+    },
+    "tusDatosNota": "Changing your details doesn’t change your targets: each weekly check-in measures what you really burn.",
+    "creditos": "Credits",
+    "fuentes": {
+      "usda": "Foods: USDA FoodData Central (public domain)",
+      "off": "Products: Open Food Facts, under the ODbL",
+      "taco": "Some foods: TACO, NEPA-UNICAMP",
+      "estrellas": "Stars: Yale Bright Star Catalogue (Hoffleit and Warren, 1991; CDS) and IAU star names (WGSN, CC BY 4.0)"
+    },
+    "privacidadTexto": [
+      "Your data is yours. Moss keeps it on your phone and, with your account, on its server to sync it; it doesn’t sell or share it.",
+      "What it reads from Health (steps, sleep, water, mindfulness, weight) stays on your phone and only lights your habits and fills in your details. Moss doesn’t write to Health.",
+      "Food photos stay on your phone. When you scan a code that isn’t in Moss, only that code is looked up on Open Food Facts.",
+      "You can export everything as CSV and delete your data or your account from here."
+    ],
+    "version": "Moss {v}"
   },
   "fecha": {
     "dias": [

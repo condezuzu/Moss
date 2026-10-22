@@ -6,17 +6,17 @@
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import PantallaDelCielo from '@/cielo/PantallaDelCielo';
-import { lista, t } from '@/textos';
+import { t } from '@/textos';
 import { colores } from '@/tema';
 import { Ascent } from './Ascent';
-import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO, type Pestana } from './Barra';
+import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
 import { AvisoAbajo, Icono } from './comida/comunes';
 import { useEstado } from './comida/datos';
@@ -28,6 +28,7 @@ import { Mes } from './habitos/Mes';
 import { Sugeridos } from './habitos/Sugeridos';
 import { HojaMas, type VistaDelMas } from './HojaMas';
 import { PaginaDeInicio } from './inicio/Inicio';
+import { PaginaDePerfil } from './perfil/Perfil';
 import { PaginaDeProgreso } from './progreso/Progreso';
 import { PaginaDeSueno } from './sueno/Sueno';
 import { CEDE_EN_EL_BORDE, entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
@@ -176,7 +177,7 @@ export default function Secciones() {
                   ) : n === 'sueno' ? (
                     <PaginaDeSueno key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
                   ) : (
-                    <SeccionPendiente key={n} nombre={n} ancho={ancho} arriba={insets.top} />
+                    <PaginaDePerfil key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
                   ),
                 )}
               </Animated.View>
@@ -218,28 +219,11 @@ function BotonesDeHabitos({ ancho, arriba, alNuevo, alMes }: { ancho: number; ar
   );
 }
 
-/** Una sección que todavía no está en la app: su nombre, como en la galería, y que llega pronto. */
-function SeccionPendiente({ nombre, ancho, arriba }: { nombre: Pestana; ancho: number; arriba: number }) {
-  const [hoy] = useState(() => new Date());
-  const fecha = t('cielo.fecha', { dia: lista('fecha.dias')[hoy.getDay()], num: hoy.getDate(), mes: lista('fecha.mesesCortos')[hoy.getMonth()] });
-  return (
-    <View style={[estilos.pendiente, { width: ancho, paddingTop: arriba + 18 }]}>
-      <Text style={estilos.fecha}>{fecha}</Text>
-      <Text style={estilos.titulo}>{t(`pestanas.${nombre}`)}</Text>
-      <Text style={estilos.pronto}>{t('secciones.pronto')}</Text>
-    </View>
-  );
-}
-
 const estilos = StyleSheet.create({
   lleno: { flex: 1, backgroundColor: '#000' },
   atras: { overflow: 'hidden', backgroundColor: colores.noche0 },
   velo: { backgroundColor: colores.noche0 },
   tira: { position: 'absolute', top: 0, bottom: 0, left: 0, flexDirection: 'row' },
-  pendiente: { paddingHorizontal: 22 },
   botonesDeHabitos: { position: 'absolute', right: 16, flexDirection: 'row', gap: 8 },
   botonDeHabitos: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.45)' },
-  fecha: { fontFamily: 'Jost_400Regular', fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: colores.pergaminoTenue },
-  titulo: { marginTop: 8, fontFamily: 'Jost_500Medium', fontSize: 28, color: colores.pergamino },
-  pronto: { marginTop: 14, fontFamily: 'Jost_400Regular', fontSize: 14, lineHeight: 20, color: colores.pergaminoTenue },
 });

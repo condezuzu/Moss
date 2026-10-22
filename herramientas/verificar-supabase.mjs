@@ -230,6 +230,13 @@ comprobar((await como(B, 'select * from moss.medidas')).rows.length === 0 && (aw
 comprobar(await falla('anon', 'select moss.borrar_mis_datos()'), 'sin sesión no se puede borrar nada');
 
 // ------------------------------------------------------------ 6. Borrar la cuenta
+comprobar(await falla('anon', 'select moss.borrar_cuenta()'), 'sin sesión no se puede borrar ninguna cuenta');
+// Una cuenta solo para esto: las otras siguen en uso más abajo.
+const D = '00000000-0000-4000-8000-00000000000d';
+await db.exec(`insert into auth.users (id) values ('${D}')`);
+await como(D, 'select moss.borrar_cuenta()');
+const cuentas = (await db.query('select id from auth.users order by id')).rows.map((f) => f.id);
+comprobar(!cuentas.includes(D) && [A, B, C].every((x) => cuentas.includes(x)), 'borrar la cuenta borra solo la de quien la llama');
 await db.exec(`delete from auth.users where id = '${A}'`);
 const quedan = (await db.query(`select (select count(*) from moss.habitos) + (select count(*) from moss.marcas) + (select count(*) from moss.dias)
   + (select count(*) from moss.periodos) + (select count(*) from moss.metas) + (select count(*) from moss.pesos)

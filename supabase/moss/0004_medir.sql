@@ -19,6 +19,20 @@ alter table moss.perfiles
   add column semana_extra smallint check (semana_extra in (200, 300, 500)),
   add constraint perfiles_semana_check check ((semana_altos is null) = (semana_extra is null));
 
+-- Borrar la cuenta (spec/ascent.md, «Borrar la cuenta»): es la misma de Ascent, así que borra los
+-- datos de las dos apps; Moss lo avisa antes. La corre el dueño de la función, el único que puede
+-- borrar en auth.users, y solo borra la cuenta de quien la llama. Revocar el token de Apple va en
+-- una función del servidor con la clave de Apple (pendiente).
+create or replace function moss.borrar_cuenta() returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  delete from auth.users where id = (select auth.uid());
+$$;
+revoke execute on function moss.borrar_cuenta() from public, anon;
+grant execute on function moss.borrar_cuenta() to authenticated;
+
 -- Los productos y los platos ya van dentro de la app (assets/alimentos.db), así andan sin conexión
 -- desde el primer día. Esta tabla corrige y suma sin sacar una versión nueva: una fila con el id de
 -- un alimento de la base lo reemplaza, una con un id nuevo lo agrega y `retirado` lo saca. El

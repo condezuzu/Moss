@@ -93,6 +93,8 @@ export interface Repositorio {
   pendientes(): Promise<Pendientes>;
   /** Ya subió todo lo que tenía un número de cambio hasta ese. */
   subidoHasta(cambio: number): Promise<void>;
+  /** Borra todo lo del teléfono: al cerrar sesión o al borrar los datos. */
+  borrarTodo(): Promise<void>;
 }
 
 export const guardadoVacio = (): Guardado => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], ...sinComida(), ajustes: {} });
@@ -245,6 +247,10 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
     },
     async subidoHasta(cambio) {
       m.subido = Math.max(m.subido, cambio);
+      await listo();
+    },
+    async borrarTodo() {
+      Object.assign(m, memoriaVacia());
       await listo();
     },
   };

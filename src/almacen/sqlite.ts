@@ -221,5 +221,10 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
       const actual = await subido();
       if (cambio > actual) await db.runAsync("INSERT OR REPLACE INTO ajustes (clave, valor, cambio) VALUES ('subido', ?, 0)", String(cambio));
     },
+    async borrarTodo() {
+      await db.withTransactionAsync(async () => {
+        for (const tabla of TABLAS) await db.runAsync(`DELETE FROM ${tabla}`);
+      });
+    },
   };
 }

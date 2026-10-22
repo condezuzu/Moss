@@ -5,6 +5,7 @@
 import {
   BiologicalSex, getBiologicalSex, getDateOfBirth, getMostRecentQuantitySample, isHealthDataAvailable, requestAuthorization, type ObjectTypeIdentifier,
 } from '@kingstinct/react-native-healthkit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 /** Todo lo que Moss va a leer: lo del cuestionario, lo de los hábitos que se encienden solos y lo del sueño. */
@@ -32,11 +33,26 @@ export function haySalud(): boolean {
   }
 }
 
-/** Pide leer todo junto. Salud no dice qué se aceptó: lo que no, después vuelve vacío. */
+// Salud no dice qué se aceptó (por privacidad): se recuerda que se pidió, y lo que no se aceptó vuelve vacío.
+const PEDIDA = 'moss:salud';
+
+/** Pide leer todo junto, y recuerda que se pidió. */
 export async function pedirPermisos(): Promise<boolean> {
   if (!haySalud()) return false;
   try {
-    return await requestAuthorization({ toRead: LO_QUE_SE_LEE });
+    const si = await requestAuthorization({ toRead: LO_QUE_SE_LEE });
+    if (si) await AsyncStorage.setItem(PEDIDA, '1').catch(() => {});
+    return si;
+  } catch {
+    return false;
+  }
+}
+
+/** Si ya se pidió Salud en este teléfono: entonces se puede leer sin volver a preguntar. */
+export async function saludPedida(): Promise<boolean> {
+  if (!haySalud()) return false;
+  try {
+    return (await AsyncStorage.getItem(PEDIDA)) === '1';
   } catch {
     return false;
   }

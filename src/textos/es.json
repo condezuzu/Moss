@@ -715,7 +715,42 @@
     "privacidad": "Privacidad",
     "borrarDatos": "Borrar mis datos",
     "cerrarSesion": "Cerrar sesión",
-    "vinculada": "Vinculada"
+    "vinculada": "Vinculada",
+    "imperial": "lb y pulgadas",
+    "sinCuenta": "Sin cuenta",
+    "conectar": "Conectar",
+    "pronto": "Pronto",
+    "idiomaDelTelefono": "El del teléfono",
+    "borrarCuenta": "Borrar la cuenta",
+    "borrar": "Borrar",
+    "borrarDatosTitulo": "¿Borrar tus datos de Moss?",
+    "borrarDatosTexto": "Se borran tus hábitos, lo que comiste, tu peso, tus medidas y tus metas, en este teléfono y en tu cuenta. La cuenta queda, y lo de Ascent no se toca.",
+    "borrarCuentaTitulo": "¿Borrar la cuenta?",
+    "borrarCuentaTexto": "Tu cuenta es la misma en Moss y en Ascent: borrarla borra los datos de las dos, y no se puede deshacer.",
+    "cerrarSesionTitulo": "¿Cerrar sesión?",
+    "cerrarSesionTexto": "Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
+    "errorBorrar": "No se pudo. Revisa la conexión e inténtalo de nuevo.",
+    "exportarTexto": "Cada archivo es un CSV, que abre cualquier planilla.",
+    "archivos": {
+      "registros": "Lo comido",
+      "pesos": "El peso",
+      "metas": "Las metas"
+    },
+    "tusDatosNota": "Cambiar tus datos no cambia tus metas: el control de cada semana mide tu gasto de verdad.",
+    "creditos": "Créditos",
+    "fuentes": {
+      "usda": "Alimentos: USDA FoodData Central (dominio público)",
+      "off": "Productos: Open Food Facts, con licencia ODbL",
+      "taco": "Algunos alimentos: TACO, NEPA-UNICAMP",
+      "estrellas": "Estrellas: Yale Bright Star Catalogue (Hoffleit y Warren, 1991; CDS) y los nombres de la IAU (WGSN, CC BY 4.0)"
+    },
+    "privacidadTexto": [
+      "Tus datos son tuyos. Moss los guarda en el teléfono y, con tu cuenta, en su servidor, para sincronizarlos; no los vende ni los comparte.",
+      "Lo que lee de Salud (pasos, sueño, agua, atención plena, peso) se queda en el teléfono y solo enciende tus hábitos y completa tus datos. Moss no escribe en Salud.",
+      "Las fotos de la comida quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
+      "Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
+    ],
+    "version": "Moss {v}"
   },
   "fecha": {
     "dias": [

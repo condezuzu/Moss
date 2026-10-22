@@ -19,7 +19,7 @@ import {
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
-import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type ListasDeComida, type Repositorio } from './repositorio';
+import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
 
 /**
  * Lo que se come, por colección y por clave: de los registros y el agua, los de los últimos
@@ -132,11 +132,12 @@ export function crearAlmacen(op: Opciones) {
   const zona = op.zona ?? (() => undefined);
   const nuevoId = op.nuevoId ?? idNuevo;
   let repositorio: Repositorio | undefined;
-  let estado: Estado = {
+  const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null, inicio: null,
-    semilla: '', version: 0, forma: 0,
-  };
+    semilla: '',
+  });
+  let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
   let cola: Promise<unknown> = Promise.resolve();
   let iniciando: Promise<void> | undefined;
@@ -324,6 +325,22 @@ export function crearAlmacen(op: Opciones) {
       iniciando ??= arrancar();
       return iniciando;
     },
+    /** Todo lo guardado, para exportarlo: también lo comido de hace más de cuatro meses, que no está en memoria. */
+    async paraExportar(): Promise<Pick<Guardado, 'registros' | 'pesos' | 'metas'>> {
+      const g = await enCola((r) => r.cargar('0000-01-01', '0000-01-01'));
+      return { registros: g.registros, pesos: g.pesos, metas: g.metas };
+    },
+    /**
+     * Borra todo lo del teléfono (al cerrar sesión o al borrar los datos) y arranca de nuevo como la
+     * primera vez: con los hábitos de ejemplo y sin perfil, así que vuelve la entrada.
+     */
+    async olvidarTodo() {
+      await iniciando;
+      await enCola((r) => r.borrarTodo());
+      cambiar({ ...vacio(), listo: false }, true);
+      iniciando = arrancar();
+      return iniciando;
+    },
     /** Para la sincronización: el repositorio, en la misma cola que las escrituras. */
     enCola,
     marcar,
@@ -388,6 +405,17 @@ export function crearAlmacen(op: Opciones) {
       const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
       guardar((r) => r.guardarMeta(meta));
       ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+    },
+    /**
+     * Tus datos, desde Perfil: el sexo, el año de nacimiento, la altura y la actividad. Las metas no
+     * cambian: el control de cada semana mide el gasto de verdad.
+     */
+    ponerDatos(cambios: Partial<Pick<Perfil, 'sexo' | 'nacimiento' | 'alturaCm' | 'actividad'>>) {
+      const antes = estado.perfil;
+      if (!antes) return;
+      const perfil: Perfil = { ...antes, ...cambios, actualizado: momento() };
+      guardar((r) => r.guardarPerfil(perfil));
+      cambiar({ perfil }, false);
     },
     /** Volver de las metas a mano a las de Moss: las del objetivo y el reparto, con el gasto que se venía midiendo. */
     metasDeMoss(): MetaGuardada | null {
