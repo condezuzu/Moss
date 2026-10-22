@@ -21,11 +21,18 @@ export type Macros = { kcal: number; proteina: number; carbohidratos: number; gr
 export type Estilo = 'equilibrada' | 'bajaEnGrasas' | 'bajaEnCarbohidratos' | 'keto';
 export const ESTILOS: readonly Estilo[] = ['equilibrada', 'bajaEnGrasas', 'bajaEnCarbohidratos', 'keto'];
 
-/** Lo que queda guardado del cuestionario: la edad como año de nacimiento, para que no envejezca; el peso va aparte. */
-export type Perfil = Omit<Cuestionario, 'edad' | 'pesoKg'> & { nacimiento: number; actualizado: string };
+/**
+ * Lo que queda guardado del cuestionario: la edad como año de nacimiento, para que no envejezca; el
+ * peso va aparte. La estrategia de Progreso suma el peso al que se quiere llegar y el día de la
+ * semana del control; sin elegirlo, es el día de la primera meta.
+ */
+export type Perfil = Omit<Cuestionario, 'edad' | 'pesoKg'> & { nacimiento: number; estilo?: Estilo; pesoMeta?: number; diaDelControl?: DiaSemana; actualizado: string };
 
-/** Las metas desde una fecha, con el gasto de donde salieron, por qué y cuándo se fijaron (entre dos teléfonos, gana la más nueva). */
-export type MetaGuardada = Macros & { desde: ClaveDia; gasto: number; motivo: 'inicial' | 'control' | 'faltanDatos' | 'manual'; momento: string };
+/**
+ * Las metas desde una fecha, con el gasto de donde salieron, por qué y cuándo se fijaron (entre dos
+ * teléfonos, gana la más nueva). «objetivo» es un cambio de la estrategia en Progreso.
+ */
+export type MetaGuardada = Macros & { desde: ClaveDia; gasto: number; motivo: 'inicial' | 'control' | 'faltanDatos' | 'manual' | 'objetivo'; momento: string };
 
 export const edadDe = (perfil: Pick<Perfil, 'nacimiento'>, hoy: ClaveDia) => Number(hoy.slice(0, 4)) - perfil.nacimiento;
 
@@ -62,6 +69,18 @@ export const pisoDe = (sexo: Sexo) => PISOS[sexo];
 
 /** La fibra: 14 g cada 1.000 kcal, la recomendación de las guías de Estados Unidos. Es una meta suave: nunca se marca en rojo. */
 export const metaDeFibra = (kcal: number) => Math.round((14 * kcal) / 1000);
+
+/**
+ * Cómo va cada macro contra su meta: brilla cuando se cumple lo pedido (el número redondeado llega
+ * a la meta) y tiembla si se pasa por mucho, un 20 % y al menos 10 g.
+ */
+export type EstadoDeMacro = 'falta' | 'cumplido' | 'pasado';
+const PASADO = 0.2;
+const PASADO_GRAMOS = 10;
+export function estadoDeMacro(comido: number, meta: number): EstadoDeMacro {
+  if (Math.round(comido) < Math.round(meta)) return 'falta';
+  return comido - meta >= Math.max(PASADO_GRAMOS, meta * PASADO) ? 'pasado' : 'cumplido';
+}
 
 /** Mifflin-St Jeor: el gasto en reposo, en kcal por día. */
 export function gastoBasal(c: Pick<Cuestionario, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>): number {

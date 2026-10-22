@@ -7,6 +7,7 @@
 // - que la semilla es la primera que llega, que los períodos se reemplazan enteros y que
 //   «borrar mis datos» no toca a nadie más;
 // - que lo comido (0002_comida.sql) sigue las mismas reglas, y que un borrado llega como una marca;
+// - que las medidas del cuerpo y la estrategia del perfil (0003_progreso.sql) también;
 // - que borrar la cuenta borra todo en cascada;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
 //   ellos con el repositorio SQLite del iPhone.
@@ -137,6 +138,25 @@ comprobar((await como(A, `select kcal from moss.registros where id = 'r1'`)).row
 await subirRegistro(105, true, '2026-10-21T23:00:00Z');
 comprobar((await como(A, `select borrado from moss.registros where id = 'r1'`)).rows[0].borrado === true, 'y un borrado más nuevo gana: queda la marca, la fila no se va');
 
+// Las medidas del cuerpo y la estrategia (0003_progreso.sql): lo mismo que lo demás.
+await como(A, `insert into moss.medidas (fecha, cintura, cuello, actualizado) values ('2026-10-21', 85.5, 38, '2026-10-21T08:00:00Z')`);
+comprobar((await como(B, 'select * from moss.medidas')).rows.length === 0, 'las medidas: nadie ve las de otro');
+comprobar(await falla(A, `insert into moss.medidas (fecha, cintura) values ('2026-10-20', 8.5)`), 'las medidas: fuera de lo posible no entran');
+const subirMedidas = (cintura, borrado, actualizado) => como(A, `
+  insert into moss.medidas (fecha, cintura, borrado, actualizado) values ('2026-10-21', $1, $2, $3)
+  on conflict (usuario, fecha) do update set cintura = excluded.cintura, borrado = excluded.borrado, actualizado = excluded.actualizado`, [cintura, borrado, actualizado]);
+await subirMedidas(90, false, '2026-10-21T07:00:00Z');
+comprobar(Number((await como(A, `select cintura from moss.medidas`)).rows[0].cintura) === 85.5, 'las medidas: una más vieja no pisa');
+await subirMedidas(85.5, true, '2026-10-21T09:00:00Z');
+comprobar((await como(A, `select borrado from moss.medidas`)).rows[0].borrado === true, 'las medidas: un borrado más nuevo gana y queda la marca');
+comprobar(
+  await falla(A, `insert into moss.perfiles (nacimiento, sexo, altura_cm, actividad, objetivo, ritmo, dia_del_control) values (1990, 'm', 178, 'algo', 'bajar', 'suave', 7)`)
+    && await falla(A, `insert into moss.perfiles (nacimiento, sexo, altura_cm, actividad, objetivo, ritmo, estilo) values (1990, 'm', 178, 'algo', 'bajar', 'suave', 'paleo')`),
+  'la estrategia: el día del control va de 0 a 6 y el reparto es uno de los cuatro',
+);
+comprobar(!(await falla(A, `insert into moss.metas (desde, kcal, proteina, carbohidratos, grasas, gasto, motivo, momento) values ('2026-10-22', 2600, 150, 320, 78, 3000, 'objetivo', now())`)),
+  'las metas aceptan el motivo «objetivo» (un cambio de la estrategia)');
+
 // ------------------------------------------------------------ 5. Semilla, períodos y borrar
 const semilla = async (usuario, valor) => (await como(usuario, 'select moss.poner_semilla($1) as s', [valor])).rows[0].s;
 comprobar((await semilla(B, 'primera')) === 'primera', 'la primera semilla queda');
@@ -159,6 +179,9 @@ await como(B, 'select moss.borrar_mis_datos()');
 comprobar((await como(A, 'select * from moss.habitos')).rows.length === 1, '«borrar mis datos» no toca a nadie más');
 comprobar((await como(B, 'select * from moss.habitos')).rows.length === 0, '«borrar mis datos» borra lo propio');
 comprobar((await como(B, 'select * from moss.registros')).rows.length === 0 && (await como(A, 'select * from moss.registros')).rows.length === 1, '«borrar mis datos» también borra lo comido, y solo lo propio');
+await como(B, `insert into moss.medidas (fecha, cuello) values ('2026-10-21', 34)`);
+await como(B, 'select moss.borrar_mis_datos()');
+comprobar((await como(B, 'select * from moss.medidas')).rows.length === 0 && (await como(A, 'select * from moss.medidas')).rows.length === 1, '«borrar mis datos» también borra las medidas, y solo las propias');
 comprobar(await falla('anon', 'select moss.borrar_mis_datos()'), 'sin sesión no se puede borrar nada');
 
 // ------------------------------------------------------------ 6. Borrar la cuenta
@@ -166,7 +189,7 @@ await db.exec(`delete from auth.users where id = '${A}'`);
 const quedan = (await db.query(`select (select count(*) from moss.habitos) + (select count(*) from moss.marcas) + (select count(*) from moss.dias)
   + (select count(*) from moss.periodos) + (select count(*) from moss.metas) + (select count(*) from moss.pesos)
   + (select count(*) from moss.registros) + (select count(*) from moss.recetas) + (select count(*) from moss.propios)
-  + (select count(*) from moss.favoritos) + (select count(*) from moss.agua) as n`)).rows[0].n;
+  + (select count(*) from moss.favoritos) + (select count(*) from moss.agua) + (select count(*) from moss.medidas) as n`)).rows[0].n;
 comprobar(Number(quedan) === 0, 'borrar la cuenta borra todo en cascada');
 
 // ------------------------------------------------------------ 7. La app contra esta base
@@ -336,6 +359,20 @@ comprobar(
   'app: lo que se borra en un teléfono se borra en el otro, y en la cuenta queda la marca',
 );
 
+// Progreso: las medidas y la estrategia (el peso meta y el día del control) llegan al otro teléfono.
+pasa();
+a.almacen.guardarMedidas({ cintura: 85.5, cuello: 38, brazo: 999 });
+a.almacen.ponerEstrategia({ pesoMeta: 71, diaDelControl: 4, estilo: 'bajaEnCarbohidratos' });
+await a.sinc.vuelta();
+await b.sinc.vuelta();
+const medidasDeB = b.almacen.estado().medidas.get(hoyA);
+comprobar(
+  medidasDeB?.cintura === 85.5 && medidasDeB?.cuello === 38 && medidasDeB?.brazo === undefined
+    && b.almacen.estado().perfil?.pesoMeta === 71 && b.almacen.estado().perfil?.diaDelControl === 4
+    && b.almacen.estado().metas.some((m) => m.motivo === 'objetivo') && !(await pendiente(b)),
+  'app: las medidas (sin lo imposible), el peso meta, el día del control y las metas del reparto nuevo llegan al otro teléfono',
+);
+
 // Los dos sin conexión el resto del día, cada uno marca algo distinto; se sincronizan al otro día.
 pasa();
 a.almacen.marcar('agua', true, 'toque');
@@ -392,7 +429,7 @@ comprobar(
 // Lo ya bajado no vuelve a bajar: con los dos teléfonos al día, se hace viejo todo lo de la cuenta y se pide lo nuevo.
 await b.sinc.vuelta();
 await db.exec(`set session_replication_role = replica;
-  ${['perfiles', 'habitos', 'marcas', 'dias', 'metas', 'pesos', 'registros', 'recetas', 'propios', 'favoritos', 'agua'].map((t) => `update moss.${t} set recibido = now() - interval '1 hour';`).join(' ')}
+  ${['perfiles', 'habitos', 'marcas', 'dias', 'metas', 'pesos', 'registros', 'recetas', 'propios', 'favoritos', 'agua', 'medidas'].map((t) => `update moss.${t} set recibido = now() - interval '1 hour';`).join(' ')}
   set session_replication_role = origin;`);
 await a.sinc.vuelta();
 const vacia = a.espia.bajada.datos;
@@ -403,7 +440,7 @@ await a.sinc.vuelta();
 const nueva = a.espia.bajada.datos;
 comprobar(
   !vacia.habitos.length && !vacia.marcas.length && !vacia.dias.length && !vacia.perfil && !vacia.semilla && !vacia.metas.length && !vacia.pesos.length
-    && !vacia.registros.length && !vacia.agua.length && !vacia.recetas.length && !vacia.favoritos.length
+    && !vacia.registros.length && !vacia.agua.length && !vacia.recetas.length && !vacia.favoritos.length && !vacia.medidas.length
     && !nueva.habitos.length && nueva.marcas.length === 1 && nueva.dias.length === 1 && hechosDeHoy(a) === 'meditar,agua' && hechosDeHoy(b) === 'meditar,agua',
   'app: al volver, baja solo lo que cambió desde la última vez',
 );

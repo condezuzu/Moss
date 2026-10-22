@@ -4,6 +4,7 @@
 // de la cuenta se guarda con el número 0: la cuenta ya lo tiene.
 
 import type { Periodo } from '@/dominio/constelaciones';
+import type { Medidas } from '@/dominio/cuerpo';
 import type { Peso } from '@/dominio/control';
 import type { Dia, Marca } from '@/dominio/dias';
 import type { ClaveDia } from '@/dominio/fechas';
@@ -12,8 +13,11 @@ import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
 import { claveDeFavorito, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua } from '@/dominio/registros';
 
-/** Lo que se come, por colección. Cada cosa va entera y la reemplaza la que llega con la misma clave. */
-export type DeComida = { registros: Registro; recetas: Receta; propios: AlimentoPropio; favoritos: Favorito; agua: TomaDeAgua };
+/**
+ * Lo que se come y las medidas del cuerpo, por colección. Cada cosa va entera y la reemplaza la que
+ * llega con la misma clave.
+ */
+export type DeComida = { registros: Registro; recetas: Receta; propios: AlimentoPropio; favoritos: Favorito; agua: TomaDeAgua; medidas: Medidas };
 export type Coleccion = keyof DeComida;
 
 /** La clave de cada cosa y, en lo que tiene día, el día: de eso se carga solo lo reciente. */
@@ -23,11 +27,13 @@ export const DE_COMIDA: { [C in Coleccion]: { clave: (x: DeComida[C]) => string;
   propios: { clave: (a) => a.id },
   favoritos: { clave: claveDeFavorito },
   agua: { clave: (t) => t.id, dia: (t) => t.dia },
+  // Las medidas son pocas: se cargan todas.
+  medidas: { clave: (m) => m.fecha },
 };
-export const COLECCIONES: Coleccion[] = ['registros', 'recetas', 'propios', 'favoritos', 'agua'];
+export const COLECCIONES: Coleccion[] = ['registros', 'recetas', 'propios', 'favoritos', 'agua', 'medidas'];
 
 export type ListasDeComida = { [C in Coleccion]: DeComida[C][] };
-export const sinComida = (): ListasDeComida => ({ registros: [], recetas: [], propios: [], favoritos: [], agua: [] });
+export const sinComida = (): ListasDeComida => ({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] });
 
 export type Guardado = ListasDeComida & {
   habitos: Habito[];
@@ -109,7 +115,7 @@ function encima<T>(lista: T[], nuevos: T[], clave: (x: T) => string): T[] {
 
 function pendientesDeComida(m: Memoria, pendiente: (clave: string) => boolean): ListasDeComida {
   const de = <C extends Coleccion>(c: C) => (m[c] as DeComida[C][]).filter((x) => pendiente(`${c}|${DE_COMIDA[c].clave(x)}`));
-  return { registros: de('registros'), recetas: de('recetas'), propios: de('propios'), favoritos: de('favoritos'), agua: de('agua') };
+  return { registros: de('registros'), recetas: de('recetas'), propios: de('propios'), favoritos: de('favoritos'), agua: de('agua'), medidas: de('medidas') };
 }
 
 /** En memoria. `alCambiar` recibe todo después de cada escritura (la web lo guarda en localStorage). */

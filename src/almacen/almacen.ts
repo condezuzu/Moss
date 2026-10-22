@@ -6,15 +6,16 @@
 import type { Constelacion } from '@/datos/catalogo';
 import type { Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
-import { controlSemanal, type Peso } from '@/dominio/control';
+import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
+import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
 import { claveDelDia, diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
-import { edadDe, metaManual, metasIniciales, type Cuestionario, type Macros, type MetaGuardada, type Perfil } from '@/dominio/metas';
+import { edadDe, metaManual, metaPara, metasIniciales, type Cuestionario, type Macros, type MetaGuardada, type Perfil } from '@/dominio/metas';
 import {
   borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, restaurado,
-  type AlimentoPropio, type Favorito, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
+  type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
 import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type ListasDeComida, type Repositorio } from './repositorio';
@@ -80,10 +81,11 @@ const mapasDe = (l: ListasDeComida): MapasDeComida => ({
   propios: new Map(l.propios.map((x) => [x.id, x])),
   favoritos: new Map(l.favoritos.map((x) => [claveDeFavorito(x), x])),
   agua: new Map(l.agua.map((x) => [x.id, x])),
+  medidas: new Map(l.medidas.map((x) => [x.fecha, x])),
 });
 const listasDe = (m: MapasDeComida): ListasDeComida => ({
   registros: [...m.registros.values()], recetas: [...m.recetas.values()], propios: [...m.propios.values()],
-  favoritos: [...m.favoritos.values()], agua: [...m.agua.values()],
+  favoritos: [...m.favoritos.values()], agua: [...m.agua.values()], medidas: [...m.medidas.values()],
 });
 
 function leerCanasta(texto: string | undefined): Item[] {
@@ -116,7 +118,7 @@ export function crearAlmacen(op: Opciones) {
   let repositorio: Repositorio | undefined;
   let estado: Estado = {
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
-    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [] }), canasta: [],
+    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [],
     semilla: '', version: 0, forma: 0,
   };
   const oyentes = new Set<() => void>();
@@ -216,20 +218,21 @@ export function crearAlmacen(op: Opciones) {
   }
 
   /**
-   * El control de la semana (src/dominio/control.ts): corre solo, una vez por semana, el día de la
-   * semana en que se fijó la primera meta (como MacroFactor). Si ese día no se abrió Moss, corre la
-   * próxima vez. Con las metas a mano, mide el gasto pero deja los macros.
+   * El control de la semana (src/dominio/control.ts): corre solo, una vez por semana, el día que se
+   * eligió en Progreso o, sin elegir, el día de la semana en que se fijó la primera meta (como
+   * MacroFactor). Si ese día no se abrió Moss, corre la próxima vez. Con las metas a mano, mide el
+   * gasto pero deja los macros.
    */
   function revisarControl() {
     const { hoy, perfil, metas, pesos } = estado;
     const ultima = metas[metas.length - 1];
     if (!perfil || !ultima) return;
-    const diaDelControl = sumarDias(hoy, -((diaDeLaSemana(hoy) - diaDeLaSemana(metas[0].desde) + 7) % 7));
+    const diaDelControl = ultimoDiaDeControl(hoy, perfil.diaDelControl ?? diaDeLaSemana(metas[0].desde));
     const pesoKg = pesos[pesos.length - 1]?.kg;
     if (diaDelControl <= ultima.desde || pesoKg === undefined) return;
     const c = controlSemanal({
       hoy, pesadas: pesos, comidas: comidasParaElControl(estado.registros.values()), gastoAnterior: ultima.gasto, metasAnteriores: soloMacros(ultima),
-      perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo },
+      perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo }, estilo: perfil.estilo,
     });
     const aMano = ultima.motivo === 'manual';
     const meta: MetaGuardada = { ...(aMano ? soloMacros(ultima) : c.metas), desde: hoy, gasto: c.gasto, motivo: aMano ? 'manual' : c.motivo, momento: momento() };
@@ -331,6 +334,26 @@ export function crearAlmacen(op: Opciones) {
       ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
       return meta;
     },
+    /**
+     * La estrategia de Progreso: el objetivo y su ritmo, cómo se reparten los macros, el peso al que
+     * se quiere llegar y el día del control. Cambiar el objetivo, el ritmo o el reparto fija metas
+     * nuevas desde hoy con el gasto que se venía midiendo; con las metas a mano, quedan las que había.
+     */
+    ponerEstrategia(cambios: Partial<Pick<Perfil, 'objetivo' | 'ritmo' | 'estilo' | 'pesoMeta' | 'diaDelControl'>>) {
+      const antes = estado.perfil;
+      if (!antes) return;
+      const perfil: Perfil = { ...antes, ...cambios, actualizado: momento() };
+      guardar((r) => r.guardarPerfil(perfil));
+      cambiar({ perfil }, false);
+      const ultima = estado.metas[estado.metas.length - 1];
+      const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
+      const cambiaLaMeta = perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || perfil.estilo !== antes.estilo;
+      if (!ultima || ultima.motivo === 'manual' || pesoKg === undefined || !cambiaLaMeta) return;
+      const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo };
+      const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
+      guardar((r) => r.guardarMeta(meta));
+      ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+    },
     /** Las metas a mano, desde hoy: los gramos de cada macro (y las kcal, si se dan), con el gasto que se venía midiendo. */
     ponerMetasAMano(macros: Omit<Macros, 'kcal'> & { kcal?: number }): MetaGuardada | null {
       const ultima = estado.metas[estado.metas.length - 1];
@@ -400,6 +423,24 @@ export function crearAlmacen(op: Opciones) {
       return toma;
     },
     quitarAgua: (id: string) => borrarDe('agua', id),
+    // ---------------------------------------------------------------- el cuerpo
+    /**
+     * Las medidas de un día: se suman a las que ya había ese día (no hace falta medir todo junto).
+     * Lo que está fuera de lo posible no se guarda. Devuelve cómo quedó el día, o null si no había nada válido.
+     */
+    guardarMedidas(cm: Centimetros, fecha: ClaveDia = estado.hoy): Medidas | null {
+      const validas = Object.fromEntries(SITIOS.flatMap((s) => (cm[s] !== undefined && medidaValida(s, cm[s]!) ? [[s, cm[s]]] : [])));
+      if (!Object.keys(validas).length) return null;
+      const antes = estado.medidas.get(fecha);
+      const { borrado: _b, ...previas } = antes && !antes.borrado ? antes : { fecha };
+      const dia: Medidas = { ...previas, ...validas, fecha, actualizado: momento() };
+      ponerComida('medidas', [dia]);
+      return dia;
+    },
+    borrarMedidas(fecha: ClaveDia) {
+      const x = estado.medidas.get(fecha);
+      if (x && !x.borrado) ponerComida('medidas', [borrado(x, momento())]);
+    },
     /** Un peso por día: si ese día ya tenía uno, queda el último. */
     anotarPeso(kg: number, origen: Peso['origen'], fecha: ClaveDia = estado.hoy) {
       const peso: Peso = { fecha, kg, origen, momento: momento() };

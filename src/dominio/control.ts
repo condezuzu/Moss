@@ -3,7 +3,7 @@
 // cumplimiento: nunca «compensa» lo que se comió de más o de menos, solo mide. Y es suave: un
 // cambio grande en el gasto medido mueve la meta de a poco, en varias semanas.
 
-import { diasEntre, sumarDias, type ClaveDia } from './fechas';
+import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import { KCAL_POR_KG, metaPara, type Cuestionario, type Estilo, type Macros } from './metas';
 
 export type Pesada = { fecha: ClaveDia; kg: number };
@@ -103,5 +103,37 @@ export function controlSemanal(e: EntradaDelControl): Control {
     metas: metaPara(gasto, { ...e.perfil, pesoKg: pesoDeTendencia }, e.estilo),
     motivo: 'control',
     datos: { diasConComida, pesadas, comidaPromedio: Math.round(comidaPromedio), cambioDeTendencia, dias, gastoMedido: Math.round(gastoMedido), pesoDeTendencia },
+  };
+}
+
+/** El último día de control hasta hoy, incluido: el día de la semana elegido. */
+export function ultimoDiaDeControl(hoy: ClaveDia, dia: DiaSemana): ClaveDia {
+  return sumarDias(hoy, -((diaDeLaSemana(hoy) - dia + 7) % 7));
+}
+
+export type EstadoDelControl = {
+  /** Cuándo es el próximo: hoy, si toca hoy y todavía no corrió. */
+  fecha: ClaveDia;
+  faltan: number;
+  /** Lo que ya hay de la semana que va a mirar, y lo mínimo para que mida algo. */
+  diasConComida: number;
+  pesadas: number;
+  minimos: { diasConComida: number; pesadas: number };
+  alcanza: boolean;
+};
+
+/** Cómo viene el próximo control: cuándo es y si la semana que va a mirar ya tiene lo que necesita. */
+export function estadoDelControl(e: { hoy: ClaveDia; dia: DiaSemana; ultimaMeta: ClaveDia; pesadas: Pesada[]; comidas: ComidaDelDia[] }): EstadoDelControl {
+  const ultimo = ultimoDiaDeControl(e.hoy, e.dia);
+  const fecha = ultimo > e.ultimaMeta ? ultimo : sumarDias(ultimo, 7);
+  const desde = sumarDias(fecha, -7);
+  const hasta = sumarDias(fecha, -1) < e.hoy ? sumarDias(fecha, -1) : e.hoy;
+  const enRango = (f: ClaveDia) => f >= desde && f <= hasta;
+  const diasConComida = e.comidas.filter((c) => c.kcal > 0 && enRango(c.fecha)).length;
+  const pesadas = e.pesadas.filter((p) => enRango(p.fecha)).length;
+  return {
+    fecha, faltan: diasEntre(e.hoy, fecha), diasConComida, pesadas,
+    minimos: { diasConComida: DIAS_CON_COMIDA, pesadas: PESADAS },
+    alcanza: diasConComida >= DIAS_CON_COMIDA && pesadas >= PESADAS,
   };
 }

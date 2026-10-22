@@ -36,11 +36,16 @@ async function migrar(db: SQLite.SQLiteDatabase) {
   if (version < 2) {
     // Lo que se come: cada cosa entera, en JSON, con su clave y, en los registros y el agua, su día.
     await db.execAsync(`
-      ${COLECCIONES.map((c) => `CREATE TABLE ${c} (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);`).join('\n      ')}
+      ${['registros', 'recetas', 'propios', 'favoritos', 'agua'].map((c) => `CREATE TABLE ${c} (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);`).join('\n      ')}
       CREATE INDEX registros_por_dia ON registros (dia);
       CREATE INDEX agua_por_dia ON agua (dia);
     `);
     version = 2;
+  }
+  if (version < 3) {
+    // Las medidas del cuerpo, como lo que se come: una por día.
+    await db.execAsync('CREATE TABLE medidas (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
+    version = 3;
   }
   await db.execAsync(`PRAGMA user_version = ${version}`);
 }
@@ -68,10 +73,10 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
     return (await db.getAllAsync<{ datos: string }>(`SELECT datos FROM ${coleccion}${donde}`, ...parametros)).map((f) => JSON.parse(f.datos) as DeComida[C]);
   }
   async function leerTodas(filtro: { desde?: ClaveDia; cambio?: number }): Promise<ListasDeComida> {
-    const [registros, recetas, propios, favoritos, agua] = await Promise.all([
-      leer('registros', filtro), leer('recetas', filtro), leer('propios', filtro), leer('favoritos', filtro), leer('agua', filtro),
+    const [registros, recetas, propios, favoritos, agua, medidas] = await Promise.all([
+      leer('registros', filtro), leer('recetas', filtro), leer('propios', filtro), leer('favoritos', filtro), leer('agua', filtro), leer('medidas', filtro),
     ]);
-    return { registros, recetas, propios, favoritos, agua };
+    return { registros, recetas, propios, favoritos, agua, medidas };
   }
   /** Con el número de cambio que se le pase: 0 es lo que bajó de la cuenta. */
   async function poner<C extends Coleccion>(coleccion: C, lista: DeComida[C][], cambio: () => number) {
