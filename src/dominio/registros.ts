@@ -4,6 +4,7 @@
 // teléfonos (src/almacen/mezclar.ts). Los atajos (la última cantidad, lo que solés comer, los
 // recientes y el premio del buscador) salen del historial: no se guardan.
 
+import { ACEITE_POR_100G } from './cantidades';
 import type { Comida } from './comidas';
 import type { ComidaDelDia } from './control';
 import { diasEntre, type ClaveDia } from './fechas';
@@ -17,8 +18,14 @@ export type Secundarios = { fibra?: number; azucares?: number; saturadas?: numbe
 export type Valores = Macros & Secundarios;
 export const SECUNDARIOS = ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'] as const;
 
-/** Cuánto: una porción con nombre y cuántas veces («2 rebanadas»), o gramos. La carga rápida no tiene cantidad. */
-export type Cantidad = { porcion: string; gramosPorcion: number; veces: number } | { gramos: number } | null;
+/**
+ * Cuánto: una porción con nombre y cuántas veces («2 rebanadas»), o gramos. Los gramos son siempre
+ * lo que se come: un líquido guarda también sus ml, y lo pesado con cáscara o hueso, lo que pesó
+ * entero (`bruto`).
+ */
+export type Medida = { porcion: string; gramosPorcion: number; veces: number } | { gramos: number; ml?: number; bruto?: number };
+/** Lo salteado guarda además los gramos del aceite de cocción, que ya están en sus valores. La carga rápida no tiene cantidad. */
+export type Cantidad = (Medida & { aceite?: number }) | null;
 
 /** Un alimento en una comida o en una receta, con lo que valía al anotarlo: el historial no cambia si cambia la base. */
 export type Item = {
@@ -29,6 +36,8 @@ export type Item = {
   nombre: string;
   cantidad: Cantidad;
   valores: Valores;
+  /** Calculado a ojo, no pesado: el control lo cuenta con más cuidado (control.ts). */
+  estimado?: true;
 };
 
 export type Registro = Item & {
@@ -104,9 +113,15 @@ export function sumarValores(lista: Iterable<Valores>): Valores {
   return r;
 }
 
+/** Los valores de un alimento en una cantidad: lo que se come y, si se salteó, el aceite. */
+export function valoresDeCantidad(por100g: Valores, cantidad: Exclude<Cantidad, null>): Valores {
+  const comido = escalar(por100g, (gramosDe(cantidad) ?? 0) / 100);
+  return cantidad.aceite && cantidad.aceite > 0 ? sumarValores([comido, escalar(ACEITE_POR_100G, cantidad.aceite / 100)]) : comido;
+}
+
 /** Un alimento con sus valores por 100 g, en una cantidad. */
 export function itemDeAlimento(fuente: Fuente, ref: string, nombre: string, por100g: Valores, cantidad: Exclude<Cantidad, null>): Item {
-  return { fuente, ref, nombre, cantidad, valores: escalar(por100g, (gramosDe(cantidad) ?? 0) / 100) };
+  return { fuente, ref, nombre, cantidad, valores: valoresDeCantidad(por100g, cantidad) };
 }
 
 /**
@@ -122,7 +137,7 @@ export function gramosPara(por100g: Valores, nutriente: keyof Valores, cantidad:
 /** La carga rápida: los valores tal cual, sin alimento. */
 export const itemRapido = (nombre: string, valores: Valores): Item => ({ fuente: 'rapida', ref: null, nombre, cantidad: null, valores });
 
-const itemDe = (r: Item): Item => ({ fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad, valores: r.valores });
+const itemDe = (r: Item): Item => ({ fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad, valores: r.valores, ...(r.estimado ? { estimado: true as const } : {}) });
 
 /** Lo que pide «registrar todas las comidas» si el hábito no elige otras. */
 export const COMIDAS_DEL_DIA: readonly Comida[] = ['desayuno', 'almuerzo', 'cena'];
@@ -142,11 +157,20 @@ export function totalDelDia(registros: Iterable<Registro>, dia: ClaveDia, conPla
   return sumarValores(delDia(registros, dia).filter((r) => conPlanificados || !r.planificado).map((r) => r.valores));
 }
 
-/** Para el control semanal: las kcal de cada día con algo registrado. Lo planificado no cuenta hasta confirmarlo. */
+/**
+ * Para el control semanal: las kcal de cada día con algo registrado, y cuántas fueron a ojo. Lo
+ * planificado no cuenta hasta confirmarlo.
+ */
 export function comidasParaElControl(registros: Iterable<Registro>): ComidaDelDia[] {
-  const porDia = new Map<ClaveDia, number>();
-  for (const r of vigentes(registros)) if (!r.planificado) porDia.set(r.dia, (porDia.get(r.dia) ?? 0) + r.valores.kcal);
-  return [...porDia].sort(([a], [b]) => (a < b ? -1 : 1)).map(([fecha, kcal]) => ({ fecha, kcal }));
+  const porDia = new Map<ClaveDia, { kcal: number; estimadas: number }>();
+  for (const r of vigentes(registros)) {
+    if (r.planificado) continue;
+    const d = porDia.get(r.dia) ?? { kcal: 0, estimadas: 0 };
+    d.kcal += r.valores.kcal;
+    if (r.estimado) d.estimadas += r.valores.kcal;
+    porDia.set(r.dia, d);
+  }
+  return [...porDia].sort(([a], [b]) => (a < b ? -1 : 1)).map(([fecha, d]) => (d.estimadas > 0 ? { fecha, kcal: d.kcal, kcalEstimadas: d.estimadas } : { fecha, kcal: d.kcal }));
 }
 
 /**
@@ -222,6 +246,16 @@ export function valoresDeReceta(r: Pick<Receta, 'items' | 'porciones' | 'pesoFin
 }
 
 /** Una receta como un alimento: `veces` porciones, con el nombre de la porción en el idioma de la app. */
+/**
+ * Una receta pesada terminada se registra en gramos: se pesa la olla entera una vez, y cada plato
+ * se pesa al servirlo. Sin el peso final, null.
+ */
+export function itemDeRecetaEnGramos(r: Receta, gramos: number): Item | null {
+  const { por100g } = valoresDeReceta(r);
+  if (!por100g || !(gramos > 0)) return null;
+  return { fuente: 'receta', ref: r.id, nombre: r.nombre, cantidad: { gramos }, valores: escalar(por100g, gramos / 100) };
+}
+
 export function itemDeReceta(r: Receta, veces: number, nombreDePorcion: string): Item {
   const { porcion, gramos } = valoresDeReceta(r);
   return {

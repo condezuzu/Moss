@@ -8,6 +8,8 @@
 //   «borrar mis datos» no toca a nadie más;
 // - que lo comido (0002_comida.sql) sigue las mismas reglas, y que un borrado llega como una marca;
 // - que las medidas del cuerpo y la estrategia del perfil (0003_progreso.sql) también;
+// - que lo comido guarda si fue a ojo y que el catálogo lo lee cualquier usuario y no lo escribe
+//   nadie desde la app (0004_medir.sql);
 // - que borrar la cuenta borra todo en cascada;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
 //   ellos con el repositorio SQLite del iPhone.
@@ -156,6 +158,36 @@ comprobar(
 );
 comprobar(!(await falla(A, `insert into moss.metas (desde, kcal, proteina, carbohidratos, grasas, gasto, motivo, momento) values ('2026-10-22', 2600, 150, 320, 78, 3000, 'objetivo', now())`)),
   'las metas aceptan el motivo «objetivo» (un cambio de la estrategia)');
+
+// Pesado o a ojo, y el catálogo del servidor (0004_medir.sql).
+await como(A, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas, estimado) values ('r3', '2026-10-22', 'almuerzo', now(), 'base', 'Arroz', 260, 5, 57, 0.6, true)`);
+comprobar(
+  (await como(A, `select estimado from moss.registros where id = 'r3'`)).rows[0].estimado === true
+    && (await como(A, `select estimado from moss.registros where id = 'r1'`)).rows[0].estimado === false,
+  'lo comido guarda si fue a ojo, y de fábrica es pesado',
+);
+await como(A, `delete from moss.registros where id = 'r3'`);
+/** Lo que hace Moss con la clave de servicio, que no pasa por RLS. */
+const comoServicio = (sql) => db.transaction(async (tx) => {
+  await tx.exec('set local role service_role');
+  return tx.query(sql);
+});
+await comoServicio(`insert into moss.catalogo (id, nombre_es, nombre_en, kcal, proteina, carbohidratos, grasas, codigos, porciones, densidad, actualizado)
+  values (-200001, 'Leche entera', 'Whole milk', 61, 3.1, 4.8, 3.2, '{7730000000001}', '[{"es":"1 vaso","en":"1 glass","gramos":206}]', 1.03, '2000-01-01')`);
+comprobar(
+  (await como(A, 'select nombre_es from moss.catalogo')).rows.length === 1 && (await como(B, 'select nombre_es from moss.catalogo')).rows.length === 1
+    && await falla('anon', 'select * from moss.catalogo'),
+  'el catálogo lo lee cualquier usuario con sesión; sin sesión, nada',
+);
+comprobar(
+  await falla(A, `insert into moss.catalogo (id, nombre_es, nombre_en, kcal, proteina, carbohidratos, grasas) values (-200002, 'x', 'x', 1, 0, 0, 0)`)
+    && await falla(A, 'update moss.catalogo set kcal = 0') && await falla('anon', 'delete from moss.catalogo'),
+  'el catálogo no lo escribe nadie desde la app',
+);
+comprobar((await como(A, 'select actualizado from moss.catalogo')).rows[0].actualizado.getFullYear() > 2000, 'la hora del cambio del catálogo la pone la base, para bajar lo nuevo');
+let codigoMalo = false;
+try { await comoServicio(`insert into moss.catalogo (id, nombre_es, nombre_en, kcal, proteina, carbohidratos, grasas, codigos) values (-200003, 'x', 'x', 1, 0, 0, 0, '{77a3}')`); } catch { codigoMalo = true; }
+comprobar(codigoMalo, 'los códigos del catálogo son solo dígitos');
 
 // ------------------------------------------------------------ 5. Semilla, períodos y borrar
 const semilla = async (usuario, valor) => (await como(usuario, 'select moss.poner_semilla($1) as s', [valor])).rows[0].s;
@@ -333,7 +365,7 @@ comprobar(b.espia.subidas.every((c) => !c.marcas.length && !c.periodos && !c.sem
 pasa();
 const hoyA = a.almacen.estado().hoy;
 const banana = { fuente: 'base', ref: '1105314', nombre: 'Banana', cantidad: { porcion: '1 mediana', gramosPorcion: 118, veces: 1 }, valores: { kcal: 105.02, proteina: 1.29, carbohidratos: 26.95, grasas: 0.39, fibra: 3.07 } };
-const [cena] = a.almacen.registrar([banana, itemRapido('Alfajor', { kcal: 250, proteina: 3, carbohidratos: 35, grasas: 11 })], { comida: 'cena' });
+const [cena] = a.almacen.registrar([{ ...banana, estimado: true }, itemRapido('Alfajor', { kcal: 250, proteina: 3, carbohidratos: 35, grasas: 11 })], { comida: 'cena' });
 a.almacen.sumarAgua();
 a.almacen.guardarReceta({ tipo: 'comida', nombre: 'Merienda', items: [banana], porciones: 1, pesoFinal: null });
 a.almacen.ponerFavorito('base', '1105314', true);
@@ -343,11 +375,11 @@ await b.sinc.vuelta();
 const comidaDeB = b.almacen.estado();
 comprobar(
   delDia(comidaDeB.registros.values(), hoyA).map((r) => r.nombre).join() === 'Banana,Alfajor'
-    && comidaDeB.registros.get(cena.id)?.valores.fibra === 3.07
+    && comidaDeB.registros.get(cena.id)?.valores.fibra === 3.07 && comidaDeB.registros.get(cena.id)?.estimado === true
     && delDia(comidaDeB.registros.values(), '2026-10-21').every((r) => r.planificado) && delDia(comidaDeB.registros.values(), '2026-10-21').length === 2
     && aguaDelDia(comidaDeB.agua.values(), hoyA) === 250 && [...comidaDeB.recetas.values()][0]?.items[0]?.nombre === 'Banana'
     && [...comidaDeB.favoritos.values()][0]?.favorito === true && !(await pendiente(b)),
-  'app: lo comido, el agua, las comidas guardadas y los favoritos llegan al otro teléfono, con lo planificado',
+  'app: lo comido, el agua, las comidas guardadas y los favoritos llegan al otro teléfono, con lo planificado y lo que fue a ojo',
 );
 pasa();
 b.almacen.borrarRegistro(cena.id);

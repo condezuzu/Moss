@@ -26,7 +26,7 @@ la gente encuentre lo que come:
 |---|---|---|---|
 | **Genéricos curados** | ~1.000 alimentos comunes del mundo, cada uno con nombre neutro, nombres de cada región y su porción típica | dentro de la app (`assets/alimentos.db`) | español e inglés |
 | **USDA FoodData Central** | FNDDS (5.280 alimentos tal como se comen) y SR Legacy (6.270 ingredientes), con valores y porciones | dentro de la app, en la misma base | inglés |
-| **Uruguay** | ~500 productos y comidas uruguayas comunes | en Supabase; el teléfono lo baja y lo guarda | español e inglés |
+| **Productos y platos** | ~500 productos y comidas comunes de Uruguay, que en la app no se presentan como uruguayos | dentro de la app, en la misma base; Supabase corrige y suma (D11) | español e inglés |
 | **Open Food Facts** | envasados, por código de barras | se consulta al escanear y queda guardado en el teléfono | el del producto |
 | **Propios** | lo creado con el escáner de etiqueta o a mano, las recetas y las comidas guardadas | del usuario, sincronizado | el del usuario |
 
@@ -115,6 +115,91 @@ la gente encuentre lo que come:
   - se actualiza sin sacar una versión nueva de la app.
 
   La decisión está en `decisiones.md`, D11.
+
+## Cómo se miden los alimentos (22/10/2026)
+
+Lo pediste el 22/10/2026. Lo que se guarda es siempre lo que se come, en gramos
+(y en ml, los líquidos): todo lo de abajo es cómo se escribe y cómo se calcula.
+Las cuentas están en `src/dominio/cantidades.ts`, con sus tests. Nada de esto
+suma toques si no se usa.
+
+1. **Crudo y cocido.**
+   - Todo lo que se cocina está dos veces, con el estado en el nombre: «Arroz
+     blanco, crudo» y «Arroz blanco, cocido»; «Pechuga de pollo, cruda» y
+     «Pechuga de pollo, a la plancha».
+   - En la ventana del alimento, «Crudo · Cocido» pasa de una versión a la otra
+     sin perder los gramos: si pesaste el arroz ya cocido y elegiste el crudo, es
+     un toque.
+   - Debajo dice cuánto rinde: «100 g crudo dan unos 280 g cocido». Sale de las
+     calorías de las dos versiones en USDA.
+2. **Parte comestible.**
+   - Lo que tiene hueso, cáscara o carozo tiene «Con cáscara» (o «con hueso»,
+     «con carozo») al lado de los gramos. Prendido, los gramos son lo que pesó
+     entero, y Moss descuenta lo que no se come.
+   - El porcentaje sale de USDA (SR28, el «refuse» de cada alimento: la banana
+     tiene un 36 % de cáscara y la palta un 26 % de carozo y cáscara). El
+     registro guarda lo que pesó entero, para mostrarlo igual al editarlo.
+   - Las porciones ya son de lo que se come: «1 banana mediana» son 118 g sin
+     cáscara.
+3. **Aceite de cocción.**
+   - Lo salteado o a la plancha pregunta «¿Llevó aceite?»: No · 1 cdta · 1 cda
+     · 2 cdas. Viene con lo que contestaste la última vez para ese alimento; la
+     primera vez no viene marcado y cuenta como sin aceite.
+   - El aceite va dentro del mismo registro («150 g · con 1 cdta de aceite»):
+     se edita o se borra junto con lo que acompaña.
+   - Es aceite de girasol, el de cocinar más común: 1 cucharadita son 4,5 g y 1
+     cucharada, 13,6 g (USDA).
+   - Lo frito no pregunta: los valores de USDA ya cuentan el aceite que absorbe,
+     y la ventana lo dice.
+4. **Recetas por peso final.**
+   - Se cargan los ingredientes y se pesa la olla cocida una vez («Peso final»).
+     Cada plato se registra en gramos (`itemDeRecetaEnGramos`).
+   - Sin el peso final, la receta se registra por porciones, como hasta ahora.
+5. **Porciones reales.**
+   - Las frutas y verduras tienen la unidad chica, mediana y grande con sus
+     gramos (USDA las trae).
+   - Los productos, lo que dice el envase: el paquete, la lata, la rebanada, el
+     vaso, la unidad.
+6. **Líquidos en ml.**
+   - Lo que se toma se escribe en ml y se guarda en gramos con la densidad de
+     cada uno: 250 ml de leche entera son 257 g.
+   - La densidad sale de lo que pesa una taza en USDA (244 g la de leche, 236,6
+     ml): la leche 1,03, los jugos 1,04, el aceite 0,92, la miel 1,42.
+7. **Ajuste rápido:** ×½, ×1½ y ×2 al lado de la cantidad. Con una porción
+   elegida cambian las veces; con gramos, los gramos.
+8. **Métrico o imperial.**
+   - De fábrica, el del país del teléfono: Estados Unidos, Liberia y Myanmar,
+     imperial; el resto, métrico. Se cambia en Perfil.
+   - En imperial se escribe y se ve en onzas y onzas líquidas; se guarda igual
+     en gramos y ml.
+9. **Pesado o a ojo.**
+   - En la ventana, «Pesado · A ojo». De fábrica: lo escrito en gramos es
+     pesado, y una porción casera (taza, cucharada, unidad mediana) es a ojo; lo
+     que dice un envase (paquete, lata, botella) cuenta como pesado. Se cambia
+     con un toque.
+   - **En el control semanal** (lo pediste: «proponeme cómo usarlo»):
+     - el gasto se mide igual: un error parejo, como calcular siempre un poco
+       menos, se compensa solo, porque el control mide lo que pasa con lo que
+       anotás;
+     - lo que cambia es cuánto se mueve. Con todo a ojo, el gasto se mueve la
+       mitad de rápido (un octavo de la diferencia por semana en lugar de un
+       cuarto); con la mitad a ojo, tres cuartos de rápido;
+     - el resumen del control lo dice: «El 60 % de lo registrado fue a ojo: el
+       ajuste va más despacio».
+
+     Está en `src/dominio/control.ts` (`FRENO_POR_LO_ESTIMADO`), con sus tests.
+
+**En la base** (`alimentos/*.txt`), una sexta columna opcional lleva los
+detalles, separados con « · »:
+
+| Detalle | Qué es | Ejemplo |
+|---|---|---|
+| `crudo=` | en lo cocido, el nombre de su versión cruda | `crudo=Arroz blanco, crudo` |
+| `desecho` | tiene parte que no se come: el porcentaje de USDA, o uno propio con qué es | `desecho` · `desecho=12 cáscara` |
+| `ml` | se toma: se escribe en ml. La densidad sale de la taza de USDA | `ml` · `densidad=1.03` |
+| `aceite` | salteado o a la plancha: pregunta por el aceite. `aceite=incluido`, frito | `aceite` |
+| `marca=` y `ean=` | un producto: su marca y sus códigos de barras | `marca=Conaprole · ean=…` |
+| lo secundario | en lo que no es de USDA: fibra, azúcares, saturadas y sodio por 100 g | `fibra=2.1 · sodio=380` |
 
 ## La búsqueda (hecha)
 
@@ -464,7 +549,7 @@ de la tienda.
 Todo es local primero: el teléfono guarda al instante y Supabase sincroniza,
 con las reglas de la etapa 3. `pesos` y `metas` están en
 `supabase/moss/0001_esquema.sql`; `registros`, `recetas`, `propios`,
-`favoritos` y `agua`, en `0002_comida.sql` (22/10/2026). Lo demás llega con su
+`favoritos` y `agua`, en `0002_comida.sql` (22/10/2026); si fue a ojo y el catálogo, en `0004_medir.sql`. Lo demás llega con su
 etapa. Lo que se borra en el teléfono llega a la cuenta como una marca
 (`borrado`), y gana si es lo más nuevo: así el borrado también llega a los otros
 teléfonos. Un teléfono nuevo baja lo comido de los últimos cuatro meses; lo
@@ -472,7 +557,7 @@ anterior queda en la cuenta.
 
 | Tabla | Qué guarda |
 |---|---|
-| `registros` | lo comido: día local, comida (desayuno, almuerzo…), momento, alimento y de dónde sale (la base, el catálogo, off, propio, receta o carga rápida), la porción elegida y cuántas veces o los gramos, y los valores ya calculados (los cuatro de siempre más fibra, azúcares, saturadas, sodio y alcohol), para que el historial no cambie si cambia la base; si está planificado. Borrar deja una marca, para que el borrado llegue a los otros teléfonos |
+| `registros` | lo comido: día local, comida (desayuno, almuerzo…), momento, alimento y de dónde sale (la base, el catálogo, off, propio, receta o carga rápida), la porción elegida y cuántas veces o los gramos, y los valores ya calculados (los cuatro de siempre más fibra, azúcares, saturadas, sodio y alcohol), para que el historial no cambie si cambia la base; si está planificado y si fue a ojo; en la cantidad, los ml, lo que pesó entero y el aceite de cocción. Borrar deja una marca, para que el borrado llegue a los otros teléfonos |
 | `propios` | lo creado con la etiqueta o a mano: los valores por 100 g, sus porciones, la marca y el código de barras |
 | `recetas` | recetas y comidas guardadas: sus alimentos como en los registros, las porciones que rinde y, en las recetas, lo que pesan terminadas |
 | `favoritos` | los alimentos, recetas y comidas marcados; sacar uno es otro cambio |
@@ -480,7 +565,7 @@ anterior queda en la cuenta.
 | `agua` | cada vaso sumado a mano, con su día (lo de Salud se lee, no se copia) |
 | `pesos` | uno por día: fecha, kg y origen (salud, manual o ascent) |
 | `metas` | desde cada fecha: kcal, macros, el gasto del que salieron y por qué |
-| `catalogo` | el catálogo uruguayo, que solo se lee |
+| `catalogo` | correcciones y altas de la base de la app (los productos y los platos), sin sacar una versión: lo lee cualquier usuario con sesión y lo escribe solo Moss (`0004_medir.sql`, D11) |
 
 **Lo que no se guarda en Supabase:**
 - **La última porción de cada alimento, lo que comés a cada hora, los recientes y el premio del buscador** se calculan con los registros (`src/dominio/registros.ts`).

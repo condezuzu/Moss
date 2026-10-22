@@ -52,7 +52,7 @@ const filaDe = {
     id: r.id, dia: r.dia, comida: r.comida, momento: r.momento, fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad,
     kcal: r.valores.kcal, proteina: r.valores.proteina, carbohidratos: r.valores.carbohidratos, grasas: r.valores.grasas,
     fibra: r.valores.fibra ?? null, azucares: r.valores.azucares ?? null, saturadas: r.valores.saturadas ?? null, sodio: r.valores.sodio ?? null,
-    alcohol: r.valores.alcohol ?? null, planificado: r.planificado, borrado: !!r.borrado, actualizado: r.actualizado,
+    alcohol: r.valores.alcohol ?? null, planificado: r.planificado, estimado: !!r.estimado, borrado: !!r.borrado, actualizado: r.actualizado,
   }),
   receta: (r: Receta) => ({ id: r.id, tipo: r.tipo, nombre: r.nombre, items: r.items, porciones: r.porciones, peso_final: r.pesoFinal, borrado: !!r.borrado, actualizado: r.actualizado }),
   propio: (a: AlimentoPropio) => ({
@@ -105,7 +105,7 @@ const deFila = {
   peso: (f: Filas['peso']): Peso => ({ fecha: f.fecha, kg: Number(f.kg), origen: f.origen, momento: hora(f.momento) }),
   registro: (f: Filas['registro']): Registro => conBorrado({
     id: f.id, dia: f.dia, comida: f.comida, momento: hora(f.momento), fuente: f.fuente, ref: f.ref, nombre: f.nombre, cantidad: f.cantidad,
-    valores: valoresDe(f), planificado: f.planificado, actualizado: hora(f.actualizado),
+    valores: valoresDe(f), planificado: f.planificado, ...(f.estimado ? { estimado: true as const } : {}), actualizado: hora(f.actualizado),
   }, f.borrado),
   receta: (f: Filas['receta']): Receta => conBorrado({
     id: f.id, tipo: f.tipo, nombre: f.nombre, items: f.items, porciones: Number(f.porciones), pesoFinal: f.peso_final === null ? null : Number(f.peso_final),

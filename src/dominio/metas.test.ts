@@ -185,6 +185,19 @@ describe('el control semanal', () => {
     expect(Math.abs(demas.metas.kcal - justa.metas.kcal)).toBeLessThanOrEqual(10);
   });
 
+  it('lo calculado a ojo mueve el gasto más despacio: con todo a ojo, la mitad', () => {
+    const pesado = controlSemanal({ hoy: HOY, pesadas: pesadas(desde, 60, () => 80), comidas: comidas(desde, 60, () => 2500), gastoAnterior: 2700, metasAnteriores: anteriores, perfil });
+    const aOjo = controlSemanal({ hoy: HOY, pesadas: pesadas(desde, 60, () => 80), comidas: comidas(desde, 60, () => 2500).map((c) => ({ ...c, kcalEstimadas: c.kcal })), gastoAnterior: 2700, metasAnteriores: anteriores, perfil });
+    const mitad = controlSemanal({ hoy: HOY, pesadas: pesadas(desde, 60, () => 80), comidas: comidas(desde, 60, () => 2500).map((c) => ({ ...c, kcalEstimadas: c.kcal / 2 })), gastoAnterior: 2700, metasAnteriores: anteriores, perfil });
+    // El gasto medido es el mismo: lo que cambia es cuánto se mueve.
+    expect(aOjo.datos.gastoMedido).toBe(pesado.datos.gastoMedido);
+    expect(pesado.gasto).toBe(2650);
+    expect(aOjo.gasto).toBe(2675);
+    expect(mitad.gasto).toBe(2663); // 2662,5, redondeado
+    expect(aOjo.datos.fraccionEstimada).toBe(1);
+    expect(pesado.datos.fraccionEstimada).toBe(0);
+  });
+
   it('sin 4 días con comida o sin una pesada en la semana, la meta queda como estaba y dice por qué', () => {
     const pocaComida = controlSemanal({ hoy: HOY, pesadas: pesadas(desde, 60, () => 80), comidas: comidas(desde, 60, (i) => (i >= 57 ? 2500 : null)), gastoAnterior: 2700, metasAnteriores: anteriores, perfil });
     expect(pocaComida).toMatchObject({ motivo: 'faltanDatos', gasto: 2700, metas: anteriores });

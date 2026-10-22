@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 import {
-  aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemRapido,
+  aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
   itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
   type Item, type Receta, type Registro, type Valores,
 } from './registros';
@@ -70,6 +70,22 @@ describe('el día', () => {
       { fecha: sumarDias(HOY, -1), kcal: 260 },
       { fecha: HOY, kcal: expect.closeTo(300.02, 6) },
     ]);
+  });
+
+  it('el aceite de cocción va dentro del registro: 150 g de pollo con 1 cucharadita suman 40 kcal de grasa', () => {
+    const por100g = { kcal: 120, proteina: 22.5, carbohidratos: 0, grasas: 2.6 };
+    const solo = itemDeAlimento('base', '1', 'Pechuga', por100g, { gramos: 150 });
+    const conAceite = itemDeAlimento('base', '1', 'Pechuga', por100g, { gramos: 150, aceite: 4.5 });
+    expect(conAceite.valores.kcal - solo.valores.kcal).toBeCloseTo(39.78, 6);
+    expect(conAceite.valores.grasas - solo.valores.grasas).toBeCloseTo(4.5, 6);
+    expect(conAceite.valores.proteina).toBe(solo.valores.proteina);
+    // Los gramos siguen siendo los del pollo.
+    expect(gramosDe(conAceite.cantidad)).toBe(150);
+  });
+
+  it('el control sabe cuánto de cada día fue a ojo', () => {
+    const aOjo = reg(arroz(200), HOY, 'cena', 21, { estimado: true });
+    expect(comidasParaElControl([desayuno, aOjo])).toEqual([{ fecha: HOY, kcal: expect.closeTo(105.02 + 260, 6), kcalEstimadas: 260 }]);
   });
 
   it('el agua del día, sin los vasos sacados', () => {
@@ -155,6 +171,13 @@ describe('las recetas y las comidas guardadas', () => {
     expect(v.porcion.kcal).toBeCloseTo((780 + 210.04) / 6, 6);
     expect(v.por100g!.kcal).toBeCloseTo(((780 + 210.04) / 900) * 100, 6);
     expect(valoresDeReceta({ ...tarta, pesoFinal: null }).gramos).toBe(836);
+  });
+
+  it('una receta pesada terminada se registra en gramos: 250 g son la parte de 900', () => {
+    const plato = itemDeRecetaEnGramos(tarta, 250)!;
+    expect(plato.cantidad).toEqual({ gramos: 250 });
+    expect(plato.valores.kcal).toBeCloseTo(((780 + 210.04) / 900) * 250, 6);
+    expect(itemDeRecetaEnGramos({ ...tarta, pesoFinal: null, items: [] }, 250)).toBeNull();
   });
 
   it('una receta se registra como un alimento, por porciones; una comida guardada, con cada uno de los suyos', () => {

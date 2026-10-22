@@ -284,7 +284,7 @@ export function crearAlmacen(op: Opciones) {
     const cuando = momento();
     const desde = Date.parse(donde.momento ?? cuando);
     const nuevos = items.map((it, i): Registro => ({
-      fuente: it.fuente, ref: it.ref, nombre: it.nombre, cantidad: it.cantidad, valores: it.valores,
+      fuente: it.fuente, ref: it.ref, nombre: it.nombre, cantidad: it.cantidad, valores: it.valores, ...(it.estimado ? { estimado: true as const } : {}),
       id: nuevoId(), dia, comida: donde.comida, momento: new Date(desde + i).toISOString(), planificado: dia > estado.hoy, actualizado: cuando,
     }));
     ponerComida('registros', nuevos);
@@ -366,11 +366,14 @@ export function crearAlmacen(op: Opciones) {
     // ---------------------------------------------------------------- lo que se come
     /** Anotar lo comido (o lo planificado, en un día que no llegó). Devuelve los registros nuevos. */
     registrar,
-    /** Corregir un registro desde su ventana: la cantidad y sus valores, la comida o la hora. */
-    cambiarRegistro(id: string, cambios: Partial<Pick<Registro, 'cantidad' | 'valores' | 'comida' | 'momento'>>) {
+    /** Corregir un registro desde su ventana: la cantidad y sus valores, si fue a ojo, la comida o la hora. */
+    cambiarRegistro(id: string, cambios: Partial<Pick<Registro, 'cantidad' | 'valores' | 'comida' | 'momento'>> & { estimado?: boolean }) {
       const r = estado.registros.get(id);
       if (!r || r.borrado) return;
-      ponerComida('registros', [{ ...r, ...cambios, actualizado: momento() }]);
+      const { estimado, ...resto } = cambios;
+      const { estimado: _antes, ...sinMarca } = r;
+      const marca = (estimado ?? r.estimado) ? { estimado: true as const } : {};
+      ponerComida('registros', [{ ...sinMarca, ...resto, ...marca, actualizado: momento() }]);
     },
     /** Devuelve lo borrado (para el aviso de deshacer). */
     borrarRegistro: (id: string) => borrarDe('registros', id),

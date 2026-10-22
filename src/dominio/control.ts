@@ -9,8 +9,8 @@ import { KCAL_POR_KG, metaPara, type Cuestionario, type Estilo, type Macros } fr
 export type Pesada = { fecha: ClaveDia; kg: number };
 /** Un peso guardado: uno por día, desde Salud, Ascent o a mano. */
 export type Peso = Pesada & { origen: 'manual' | 'salud' | 'ascent'; momento: string };
-/** Las kcal registradas en un día. Un día sin nada registrado no aparece. */
-export type ComidaDelDia = { fecha: ClaveDia; kcal: number };
+/** Las kcal registradas en un día, y cuántas de ellas a ojo. Un día sin nada registrado no aparece. */
+export type ComidaDelDia = { fecha: ClaveDia; kcal: number; kcalEstimadas?: number };
 
 /** La tendencia del peso es una media móvil exponencial: unas tres semanas de memoria. */
 const ALFA = 0.1;
@@ -22,6 +22,12 @@ const DIAS_CON_COMIDA = 4;
 const PESADAS = 1;
 /** Qué parte de la diferencia entre el gasto medido y el anterior se toma cada semana. */
 const SUAVIZADO = 0.25;
+/**
+ * Lo calculado a ojo tiene más ruido que lo pesado. El gasto se mide igual (un error parejo, como
+ * calcular siempre un poco menos, se compensa solo: el control mide lo que pasa con lo que anotás),
+ * pero se mueve más despacio: con todo a ojo, la mitad de rápido.
+ */
+const FRENO_POR_LO_ESTIMADO = 0.5;
 
 /**
  * La tendencia de cada día, desde la primera pesada hasta `hasta`. Los días sin pesada se
@@ -57,6 +63,8 @@ export type Control = {
     dias: number | null;
     gastoMedido: number | null;
     pesoDeTendencia: number | null;
+    /** Qué parte de las kcal del tramo fue calculada a ojo, de 0 a 1. */
+    fraccionEstimada: number;
   };
 };
 
@@ -80,7 +88,7 @@ export function controlSemanal(e: EntradaDelControl): Control {
   const pesadas = e.pesadas.filter((p) => enRango(p.fecha, semana)).length;
   const sinCambios = (datos: Partial<Control['datos']>): Control => ({
     gasto: e.gastoAnterior, metas: e.metasAnteriores, motivo: 'faltanDatos',
-    datos: { diasConComida, pesadas, comidaPromedio: null, cambioDeTendencia: null, dias: null, gastoMedido: null, pesoDeTendencia: null, ...datos },
+    datos: { diasConComida, pesadas, comidaPromedio: null, cambioDeTendencia: null, dias: null, gastoMedido: null, pesoDeTendencia: null, fraccionEstimada: 0, ...datos },
   });
   if (diasConComida < DIAS_CON_COMIDA || pesadas < PESADAS) return sinCambios({});
 
@@ -97,12 +105,14 @@ export function controlSemanal(e: EntradaDelControl): Control {
   const cambioDeTendencia = pesoDeTendencia - t.get(inicio)!;
   // Lo que entró menos lo que quedó guardado (o más lo que se gastó de reserva).
   const gastoMedido = comidaPromedio - (cambioDeTendencia * KCAL_POR_KG) / dias;
-  const gasto = e.gastoAnterior + SUAVIZADO * (gastoMedido - e.gastoAnterior);
+  const total = registradas.reduce((s, c) => s + c.kcal, 0);
+  const fraccionEstimada = total > 0 ? Math.min(1, registradas.reduce((s, c) => s + (c.kcalEstimadas ?? 0), 0) / total) : 0;
+  const gasto = e.gastoAnterior + SUAVIZADO * (1 - FRENO_POR_LO_ESTIMADO * fraccionEstimada) * (gastoMedido - e.gastoAnterior);
   return {
     gasto: Math.round(gasto),
     metas: metaPara(gasto, { ...e.perfil, pesoKg: pesoDeTendencia }, e.estilo),
     motivo: 'control',
-    datos: { diasConComida, pesadas, comidaPromedio: Math.round(comidaPromedio), cambioDeTendencia, dias, gastoMedido: Math.round(gastoMedido), pesoDeTendencia },
+    datos: { diasConComida, pesadas, comidaPromedio: Math.round(comidaPromedio), cambioDeTendencia, dias, gastoMedido: Math.round(gastoMedido), pesoDeTendencia, fraccionEstimada },
   };
 }
 

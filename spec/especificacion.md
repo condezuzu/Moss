@@ -148,7 +148,7 @@ La comida es el centro de Moss. La gente quiere trackear sus macros: si esta par
 
 **Base de datos**
 
-- Una base propia curada antes de lanzar: unos 500 productos y comidas uruguayas comunes, más los 1.000 alimentos más comunes del mundo. Tiene que ser muy amplia y flexible: que la gente encuentre lo que come.
+- Una base propia curada antes de lanzar: unos 500 productos y comidas uruguayas comunes, más los 1.000 alimentos más comunes del mundo. Tiene que ser muy amplia y flexible: que la gente encuentre lo que come. Lo uruguayo está en la base, pero no se presenta como uruguayo.
 - Además, Open Food Facts para los productos envasados y USDA FoodData Central para los alimentos genéricos.
 
 **Metas**
@@ -169,6 +169,20 @@ La comida es el centro de Moss. La gente quiere trackear sus macros: si esta par
 
   Moss calcula los valores a partir de los datos por 100 g.
 - **Registrar tiene que ser lo más rápido posible:** el usuario lo hace 4 a 6 veces por día. Los toques de cada flujo están contados y minimizados en [`nutricion.md`](nutricion.md).
+
+**Cómo se miden los alimentos** (22/10/2026; el detalle, en [`nutricion.md`](nutricion.md))
+
+1. **Crudo y cocido:** todo alimento que se cocina tiene las dos versiones, bien marcadas (arroz crudo y arroz cocido, pollo crudo y pollo a la plancha). En la ventana del alimento se pasa de una a la otra sin perder los gramos.
+2. **Parte comestible:** lo que tiene hueso, cáscara o carozo se puede registrar con el peso entero o con el de lo que se come, y Moss descuenta lo que no se come.
+3. **Aceite de cocción:** al registrar algo salteado o a la plancha, Moss pregunta si llevó aceite y cuánto (1 cucharadita, 1 cucharada). En lo frito, el aceite ya está en los valores, y lo dice.
+4. **Recetas por peso final:** se cargan los ingredientes, se pesa la olla cocida una vez, y cada porción se registra en gramos.
+5. **Porciones reales:** unidad chica, mediana o grande con sus gramos; y paquete, lata, rebanada o vaso según el producto.
+6. **Líquidos en ml,** con la densidad de cada uno.
+7. **Ajuste rápido:** botones ×½, ×1½ y ×2.
+8. **Sistema métrico o imperial,** según el usuario. Se guarda siempre en gramos y ml.
+9. **Pesado o estimado:** el usuario puede marcar si pesó o calculó a ojo. El control semanal mide igual, pero con lo calculado a ojo mueve el gasto más despacio.
+
+**El catálogo es para todo el mundo:** unos 500 productos y comidas comunes de Uruguay, con sus marcas y porciones caseras, están en la base junto a unos 1.000 alimentos comunes del mundo. En la app no se presentan como uruguayos: nada de etiquetas, banderas, secciones ni filtros por país.
 
 **Atajos (versión 1)**
 

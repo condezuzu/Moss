@@ -324,6 +324,32 @@ hacen falta las cuentas anónimas.
 
 ## Tomadas por mi cuenta
 
+Desde el 22/10/2026 a la tarde trabajo solo: lo que decidí va acá, con el
+porqué, para que lo revises al volver.
+
+### Cómo se miden los alimentos (22/10/2026)
+
+- **Pesado o a ojo en el control** (me pediste que lo proponga y lo aplique):
+  el gasto se mide igual, porque un error parejo se compensa solo, y lo que
+  cambia es cuánto se mueve. Con todo a ojo, la mitad de rápido; con la mitad, tres
+  cuartos. El resumen del control dice qué parte fue a ojo. Ver
+  [`nutricion.md`](nutricion.md), «Cómo se miden los alimentos».
+- **Pesado o a ojo, de fábrica:** lo escrito en gramos es pesado; una porción
+  casera, a ojo; lo que dice un envase (paquete, lata, botella), pesado. Así nadie
+  tiene que marcarlo: solo corregirlo con un toque si no es así.
+- **El aceite no obliga a contestar:** la pregunta está en la ventana del
+  alimento, viene con la última respuesta para ese alimento y, sin contestar,
+  cuenta como sin aceite. Así no suma toques al registro de siempre. El aceite
+  va dentro del mismo registro, no como uno aparte, para que se edite y se borre
+  junto con lo que acompaña. Es aceite de girasol.
+- **El porcentaje de cáscara, hueso o carozo sale de USDA** (SR28, que lo trae
+  para unos 1.900 alimentos), no de una tabla propia.
+- **Crudo y cocido conservan los gramos** al pasar de uno al otro: si se eligió
+  mal, el peso que se pesó sigue siendo el mismo.
+- **El catálogo del servidor lo lee solo quien tiene sesión**: la entrada pide
+  la cuenta, así que es cualquier usuario, y no hace falta abrirle el esquema
+  `moss` a `anon`.
+
 ### Calorías según el día y «Por qué no subís» (22/10/2026)
 
 - **El costo de una sesión**, para repartir las calorías: el neto (el total de
