@@ -5,13 +5,14 @@
 // Sin perfil, primero la entrada, sobre el mismo cielo: al terminarla aparece Inicio.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { elAlmacen } from '@/almacen';
 import PantallaDelCielo from '@/cielo/PantallaDelCielo';
 import { t } from '@/textos';
 import { colores } from '@/tema';
@@ -19,7 +20,6 @@ import { Ascent } from './Ascent';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
 import { AvisoAbajo, Icono } from './comida/comunes';
-import { useEstado } from './comida/datos';
 import { HojaRegistro } from './comida/HojaRegistro';
 import { quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { Entrada } from './entrada/Entrada';
@@ -69,8 +69,11 @@ export default function Secciones() {
   const armada = (i: number) => Math.abs(i - actual) <= 1 || Math.abs(i - anterior) <= 1;
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
   // La entrada: el cielo solo, con la cámara donde la pide cada pantalla.
-  const { listo, perfil } = useEstado();
-  const enEntrada = listo && !perfil;
+  // Solo este dato: con todo el estado, las secciones se volverían a dibujar con cada toque.
+  const enEntrada = useSyncExternalStore(elAlmacen().suscribir, () => {
+    const e = elAlmacen().estado();
+    return e.listo && !e.perfil;
+  });
   const camaraDeLaEntrada = useSharedValue(0);
   const entrada = useMemo(() => (enEntrada ? { camara: camaraDeLaEntrada } : undefined), [enEntrada, camaraDeLaEntrada]);
   const conEntrada = useSharedValue(false);
