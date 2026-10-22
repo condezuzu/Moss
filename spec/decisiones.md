@@ -238,7 +238,7 @@ Están en la galería, sección 10, «Para decidir»:
 ### D12 · Compartir sin dominio (22/10/2026)
 
 No hay dominio todavía, y los Universal Links lo necesitan. Mientras tanto, compartir recetas y alimentos propios usa lo que da iOS sin dominio:
-- la hoja de compartir del iPhone, con un texto legible (el nombre, los ingredientes y los valores) y un enlace `moss://compartido?d=…` que lleva todo adentro, comprimido;
+- la hoja de compartir del iPhone, con un texto legible (el nombre, los ingredientes y los valores) y un enlace `moss://compartido?d=…` que lleva todo adentro (sin comprimir: ver «Tomadas por mi cuenta»);
 - quien tiene Moss toca el enlace y lo suma a lo suyo; quien no, igual lee el texto;
 - en Mensajes y WhatsApp los enlaces `moss://` se pueden tocar.
 
@@ -326,6 +326,65 @@ hacen falta las cuentas anónimas.
 
 Desde el 22/10/2026 a la tarde trabajo solo: lo que decidí va acá, con el
 porqué, para que lo revises al volver.
+
+### Lo que faltaba para la v1, en la app (22/10/2026, a la noche)
+
+- **Inicio, Progreso, Sueño, Perfil y la entrada son los de la galería.** Lo
+  que todavía espera tu respuesta (D16 a D23) quedó como está allá: si cambia en
+  la galería, se cambia igual en la app.
+- **El final de la entrada, sin el flum entero.** En la app, al terminar, la
+  cámara baja al cielo, la entrada se va agrandándose apenas y aparece Inicio.
+  Las estelas radiales y el destello son otro shader en Skia: quedan para
+  cuando se vea en el iPhone.
+- **El editor de hábitos, «Tu mes» y los primeros hábitos se hicieron en la app
+  antes que en la galería**, al revés de la regla: Hábitos no se podía usar sin
+  crear ni editar. Siguen el lenguaje de las hojas de Comida y ahora están
+  también en la galería para que los apruebes; lo que cambies allá, lo paso.
+  - Mantener apretada una estrella abre su editor; el «+» de arriba crea uno.
+  - Al terminar la entrada se eligen los primeros hábitos. Los de ejemplo se
+    archivan, no se borran.
+- **Repartir la semana se guarda en el perfil**: los días altos y lo que suman
+  (200, 300 o 500 kcal), con dos columnas nuevas en `moss.perfiles` dentro de
+  `0004_medir.sql`. La meta de cada día sale de ahí y la semana suma lo mismo.
+- **Borrar la cuenta** es `moss.borrar_cuenta()`, una función propia de Moss
+  (no la `eliminar_cuenta()` de Ascent): borra el usuario de `auth.users`, como
+  dice [`ascent.md`](ascent.md), y el texto avisa que es la misma cuenta que en
+  Ascent. Falta revocar el token de Apple, que necesita la clave `.p8`.
+- **Cerrar sesión y borrar dejan el teléfono vacío**: así otra cuenta no hereda
+  nada, y vuelve la entrada.
+- **Salud** se lee al abrir Moss y al volver a ella, y queda en memoria:
+  - enciende los hábitos automáticos que llegaron a su meta, pero nunca apaga
+    uno encendido;
+  - suma el peso solo en los días sin una pesada propia;
+  - lo que llega fuera de los rangos del cuestionario se contesta a mano.
+- **Compartir (D12) va sin comprimir**: el enlace lleva el JSON en base64url.
+  Comprimir pedía sumar una librería, y una receta común entra en un enlace de
+  unos pocos KB. Lo propio que usa otras cosas propias viaja con sus valores.
+- **Las fotos (D10)** se sacan solo con la cámara: sin la fototeca, Moss no
+  pide ese permiso. Es una por comida y por día, en la carpeta de la app.
+- **Los recordatorios para anotar:**
+  - vienen apagados y se prenden en Perfil, comida por comida;
+  - llegan 45 minutos después de tu hora de siempre, que es la mediana de las
+    últimas tres semanas (o la típica, si no hay);
+  - solo llegan si esa comida no está anotada;
+  - se programan para siete días, así que paran solos si no abrís Moss en una
+    semana;
+  - son avisos del teléfono, sin servidor.
+- **Los widgets (D8) todavía no**: piden la prueba de un día con una build
+  `dev`, porque cambian la build nativa. Son lo primero después de que pruebes
+  la build.
+- **Solo se arman la sección de ahora y sus vecinas.** En la web había más
+  lienzos de Skia que los que deja el navegador, y en un iPhone viejo ahorra
+  memoria.
+- **Open Food Facts lleva su crédito en Perfil** (licencia ODbL). Si algún día
+  se publica la base armada, va con esa misma licencia.
+- **Los productos con marca** tienen nombres neutros, con el uruguayo como
+  alias («galletitas», «manteca»). La marca va en el nombre solo cuando sin ella
+  sería de cualquiera.
+- **El idioma es el del iPhone**: Perfil lleva a los Ajustes de Moss, donde iOS
+  deja elegirlo app por app.
+- **Ascent, en Perfil, dice «Pronto»** hasta que se corran las migraciones y el
+  repo de Ascent tenga sus cambios.
 
 ### Cómo se miden los alimentos (22/10/2026)
 

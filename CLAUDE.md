@@ -37,8 +37,8 @@ SDK y la memoria no alcanza.
   `assets/alimentos.db`:
   - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `control.ts`,
-    `cuerpo.ts`, `progreso.ts`, `sueno.ts` y `entrenamiento.ts`, que solo importan entre ellos
-    (`DEL_DOMINIO` en `construir.mjs`).
+    `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `entrenamiento.ts` y `estadisticas.ts`, que solo
+    importan entre ellos (`DEL_DOMINIO` en `construir.mjs`).
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
   usa una función tiene que estar definido antes que ella. Por eso `paso()` va
   última en `escena.ts`.
@@ -127,7 +127,7 @@ SDK y la memoria no alcanza.
 | `npm run galeria:capturas` | capturas a 393×852 @2× en `capturas/galeria` (ver los escenarios abajo) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
 | `npm run web:exportar` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
-| `npm run app:capturas` | capturas de la app en la web: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo y las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas y el «+») |
+| `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas, Inicio y el «+») y, en un navegador limpio, las primeras pantallas de la entrada |
 | `npx eas-cli@latest build --profile dev --platform ios` | la build de desarrollo para el iPhone (la primera vez pide entrar a Apple); su JavaScript llega de `npx expo start` |
 | `npm run catalogo:verificar` | valida el catálogo y las distancias entre estrellas |
 | `npx expo start` | Metro para la build `dev` del teléfono (Expo Go no sirve: Salud necesita build propia) |
@@ -140,9 +140,10 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
 - `entrada`;
-- `comida` (con el cuadro de día, semana y mes), `registrar`, `etiqueta`, `comida-ingles`;
+- `comida` (con el cuadro de día, semana y mes), `registrar`, `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso`, `metas`, `sueno`;
+- `editor` (el «+» y mantener apretada una estrella), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
 - `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`.
 
 La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
@@ -171,14 +172,16 @@ mirar una animación cuadro a cuadro está la cámara lenta
 
 | Carpeta | Qué hay |
 |---|---|
-| `src/app/` | rutas de Expo Router (hoy, las secciones) |
-| `src/secciones/` | las seis secciones (`Secciones.tsx`): la tira con el gesto de Ascent, la barra con el «+» (`Barra.tsx`), la hoja del «+» (`HojaMas.tsx`), Ascent arriba de Hábitos (`Ascent.tsx`, `MarcaDeAscent.tsx`) y los movimientos (`movimiento.ts`). Las que todavía no están muestran su nombre |
-| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`), el sueño (`sueno.ts`) y lo que Moss hace con el entrenamiento de Ascent (`entrenamiento.ts`: calorías según el día, proteína después de entrenar, recuperación y por qué no subís) |
+| `src/app/` | rutas de Expo Router: las secciones y `compartido`, que abre los enlaces `moss://compartido` |
+| `src/secciones/` | las seis secciones (`Secciones.tsx`): la tira con el gesto de Ascent, la barra con el «+» (`Barra.tsx`), la hoja del «+» (`HojaMas.tsx`), Ascent arriba de Hábitos (`Ascent.tsx`, `MarcaDeAscent.tsx`) y los movimientos (`movimiento.ts`). Cada sección en su carpeta: `inicio/`, `comida/` (con la foto de cada comida y compartir), `progreso/`, `sueno/`, `habitos/` (el editor, «Tu mes» y los primeros hábitos), `perfil/` (con exportar y borrar) y `entrada/` (la cuenta y el cuestionario). Lo que comparten: `tarjetas.tsx`, `HojaModal.tsx`, `graficos/` y la persona de ejemplo mientras faltan datos (`persona.ts`, `ejemplo.ts`) |
+| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`), el sueño (`sueno.ts`), lo que Moss hace con el entrenamiento de Ascent (`entrenamiento.ts`: calorías según el día, proteína después de entrenar, recuperación y por qué no subís), «Tu mes» (`estadisticas.ts`, sin rachas), los enlaces para compartir (`compartir.ts`) y cuándo recordar anotar (`recordatorios.ts`) |
 | `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), con los hábitos, las metas, la estrategia, lo que se come (y la canasta, que no sube) y las medidas del cuerpo, sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
 | `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`) y Open Food Facts por código de barras (`off.ts`) |
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
+| `src/salud/` | Salud: los permisos, lo que llena el cuestionario y la lectura de cada día (`leer.ts`, con `convertir.ts` puro y con tests) |
+| `src/recordatorios/` | los avisos para anotar, programados en el teléfono |
 | `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |
@@ -206,6 +209,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `util.js`: lo que comparten las secciones nuevas (textos, números, íconos y
   la hoja de abajo).
 - `luna.js`: la luna de la comida, en SVG.
+- `kcal.js`: las kcal del día en cuatro estilos para elegir (la luna, un anillo, un arco y una
+  barra por comidas), en Inicio, el día de Comida y la semana.
 - `datos.js`: la persona de mentira (perfil, pesadas, medidas, noches de Salud y lo que tiene en Ascent).
 - `comida.js`: Comida, con el cuadro de día, semana y mes, y la hoja de
   registro con la ventana del alimento, la comida que se arma, la revisión, la
@@ -216,5 +221,6 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `sueno.js`: Sueño.
 - `perfil.js`: Perfil.
 - `ascent.js`: Ascent, arriba de Hábitos, sin vincular y vinculada.
+- `habitos.js`: Hábitos: el editor, «Tu mes» y los primeros hábitos.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
   «+» en la barra.

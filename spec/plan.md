@@ -11,29 +11,35 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - el almacén y la sincronización sirven igual para la comida;
 - las metas ya están programadas.
 
-**Dónde estamos (22/10/2026):**
-- **Hechas en código y probadas en la web:** las etapas 1 y 2, el cielo nativo y la app que guarda y recuerda.
-- **De la etapa 3** está lo que no depende de la galería: el esquema de Supabase, la sincronización y la fórmula de las metas.
-- **De la etapa 4** está la base de alimentos con USDA, 573 genéricos curados en español e inglés con fibra, azúcares, saturadas, sodio y alcohol, los primeros 14 platos uruguayos como recetas, y el buscador.
-- **De la etapa 5** está todo lo que no es pantalla: lo que se come en el almacén y en Supabase (`0002_comida.sql`), con su sincronización y los atajos.
-- **De la etapa 6**, el lector de etiquetas y el cliente de Open Food Facts, con tests.
-- **De la etapa 7:**
-  - el control semanal que corre solo, ahora el día que se elige;
-  - las metas a mano, los estilos de macros y repartir la semana;
-  - la estrategia (objetivo, ritmo, reparto y peso meta) en el perfil;
-  - la grasa corporal con cinta (`cuerpo.ts`), el progreso al objetivo y el balance (`progreso.ts`);
-  - las medidas guardadas y sincronizadas (`0003_progreso.sql`).
-- **De la etapa 8,** las reglas del sueño (`sueno.ts`), con sus tests: una fuente por noche, de qué día es cada noche, siestas, la calidad, la deuda, la regularidad y lo del reloj.
-- **De la 9,** los hábitos de comida que se encienden solos.
-- **En la galería, para aprobar:**
-  - las seis secciones con el «+» en el medio (cambio 9, 22/10/2026): Inicio a tu medida, Comida, Progreso, Sueño, Hábitos y Perfil;
-  - la hoja del «+» con las medidas y la grasa;
-  - la luna nueva y los macros que brillan y tiemblan;
-  - la comida con la hoja de registro y la revisión de la etiqueta;
-  - la entrada, el cielo más sobrio y la estrella fugaz.
-- **Falta:**
-  - la primera build en tu iPhone, que necesita dos pasos tuyos;
-  - tus aprobaciones en la galería: con eso se programan las pantallas de la comida en la app.
+**Dónde estamos (22/10/2026, a la noche):**
+- **La app tiene lo de la v1 menos los widgets**, con tests y probada en la web
+  (`npm run app:capturas`). Falta probarla en tu iPhone.
+  - La entrada: la frase, las dos diapositivas, la cuenta con Apple o correo, el
+    cuestionario con Salud primero, el resultado y los primeros hábitos.
+  - Las seis secciones:
+    - Inicio a tu medida;
+    - Comida, con la hoja de registro, los escáneres y la foto de cada comida;
+    - Progreso, con la estrategia y las metas;
+    - Sueño;
+    - Hábitos, con el editor y «Tu mes»;
+    - Perfil, con exportar, borrar los datos y borrar la cuenta.
+  - La hoja del «+» y Ascent arriba de Hábitos, sin vincular.
+  - Salud: los hábitos que se encienden solos, las noches y el peso.
+  - Compartir recetas y alimentos propios con un enlace, y los recordatorios
+    para anotar.
+- **La base de alimentos**: USDA más 1.636 curados, entre ellos los genéricos,
+  los del mundo, 136 de Uruguay (119 como recetas) y 306 productos con su código
+  de barras.
+- **Lo que decidí solo** está en [`decisiones.md`](decisiones.md), «Tomadas por
+  mi cuenta»; lo que espera tu respuesta, en «Pendientes» y en la galería.
+- **Falta para la v1:**
+  - la build en tu iPhone, que necesita dos pasos tuyos, y probarla ahí;
+  - correr `0004_medir.sql` en Supabase, con lo demás de [`ascent.md`](ascent.md);
+  - los widgets de la pantalla de bloqueo (D8), después de la prueba de un día;
+  - revocar el token de Apple al borrar la cuenta, que necesita la clave `.p8`;
+  - el flum entero al final de la entrada (hoy, un fundido);
+  - llegar a las ~200 comidas uruguayas y a los ~300 productos;
+  - el contenido (logros, textos legales) y lo de la tienda (etapas 11 y 12).
 
 Las etapas van en orden, con estas excepciones:
 
@@ -381,10 +387,10 @@ enciende estrellas.
 ## Etapa 10 · Las seis secciones y las zonas del cielo
 
 **En la app desde el 22/10/2026**, para probarla en el iPhone: la tira con el gesto de Ascent (la
-constelación se va con su página), la barra con el «+», la hoja del «+» (por ahora suma el
-agua) y Ascent arriba de Hábitos, sin vincular, con su gesto y su flecha. Las otras secciones
-muestran su nombre hasta las etapas 7 y 8, y la app abre en Hábitos mientras tanto. Probado en
-la web (`npm run app:capturas`); falta el iPhone.
+constelación se va con su página), la barra con el «+», la hoja del «+» y Ascent arriba de
+Hábitos, sin vincular, con su gesto y su flecha. Desde esa noche están las seis secciones, y la
+app abre en Inicio. En Hábitos, el calendario y las estadísticas son «Tu mes». Probado en la web
+(`npm run app:capturas`); falta el iPhone.
 
 - **Las secciones**, como se aprueben en la galería (cambio 9): Inicio, Comida y
   Progreso (etapa 7), el «+», Sueño (etapa 8), Hábitos (el cielo) y Perfil, con
