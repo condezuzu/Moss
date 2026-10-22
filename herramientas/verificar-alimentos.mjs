@@ -4,6 +4,8 @@
 // - cada curado con su porción de siempre en español, y todas sus porciones traducidas;
 // - los nombres de cada región: uno principal por alimento y región, y ningún nombre principal
 //   que en la misma región sea de dos alimentos;
+// - cómo se mide: lo cocido con su versión cruda, los códigos de barras, las marcas de los
+//   productos, y que nada se presente como de un país (el catálogo es para todo el mundo);
 // - los dos índices de búsqueda, y el tamaño;
 // - y avisa (sin fallar) de los curados cuyas calorías no cierran con 4/4/9 (y 7 para el alcohol),
 //   o con más fibra o azúcares que carbohidratos o más saturadas que grasas, para mirarlos.
@@ -15,7 +17,7 @@ import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 
-const ruta = join(dirname(fileURLToPath(import.meta.url)), '../assets/alimentos.db');
+const ruta = process.env.BASE ? join(dirname(fileURLToPath(import.meta.url)), '..', process.env.BASE) : join(dirname(fileURLToPath(import.meta.url)), '../assets/alimentos.db');
 const db = new DatabaseSync(ruta, { readOnly: true });
 const todas = (sql, ...p) => db.prepare(sql).all(...p);
 const uno = (sql, ...p) => db.prepare(sql).get(...p);
@@ -51,6 +53,19 @@ const ambiguos = todas(`SELECT lower(x.texto) AS texto, x.region, group_concat(a
   WHERE x.principal = 1 GROUP BY lower(x.texto), x.region HAVING count(DISTINCT x.alimento) > 1`);
 comprobar(!ambiguos.length, 'ningún nombre principal es de dos alimentos en la misma región', ambiguos.map((d) => `«${d.texto}» en ${d.region}: ${d.cuales}`));
 
+// Cómo se miden los alimentos (spec/nutricion.md).
+const pares = todas(`SELECT a.nombre_es AS cocido, c.nombre_es AS crudo, c.kcal / a.kcal AS rinde, c.crudo AS doble FROM alimentos a JOIN alimentos c ON c.id = a.crudo`);
+comprobar(pares.every((p) => p.crudo && !p.doble), `los ${pares.length} cocidos tienen su versión cruda curada`, pares.filter((p) => !p.crudo || p.doble).map((p) => p.cocido));
+const sinCodigo = todas(`SELECT nombre_es FROM alimentos WHERE fuente = 'producto' AND (marca IS NULL OR porcion IS NULL)`);
+const productos = uno(`SELECT count(*) AS n FROM alimentos WHERE fuente = 'producto'`).n;
+comprobar(!sinCodigo.length, `los ${productos} productos tienen marca y porción`, sinCodigo.map((a) => a.nombre_es));
+const huerfanos = uno('SELECT count(*) AS n FROM codigos c LEFT JOIN alimentos a ON a.id = c.alimento WHERE a.id IS NULL').n;
+comprobar(!huerfanos, `los ${uno('SELECT count(*) AS n FROM codigos').n} códigos de barras son de un alimento`);
+// Moss es para todo el mundo: lo de un país está en la base, pero no se presenta como de ese país.
+const deUnPais = todas(`SELECT texto FROM (SELECT nombre_es AS texto FROM alimentos UNION ALL SELECT nombre_en FROM alimentos UNION ALL SELECT marca FROM alimentos UNION ALL SELECT texto FROM alias)
+  WHERE texto LIKE '%urugua%' OR texto LIKE '%oriental%' OR texto LIKE '%charrúa%' OR texto LIKE '%criollo uy%'`);
+comprobar(!deUnPais.length, 'ningún nombre presenta un alimento como de un país', deUnPais.map((a) => a.texto));
+
 let indices = true;
 for (const tabla of ['palabras', 'trigramas']) {
   try {
@@ -69,6 +84,15 @@ const lejos = todas(`SELECT nombre_es, kcal, round(4 * proteina + 4 * carbohidra
   WHERE nombre_es IS NOT NULL AND abs(kcal - (4 * proteina + 4 * carbohidratos + 9 * grasas + 7 * coalesce(alcohol, 0))) > max(20, 0.2 * kcal)`);
 if (lejos.length) console.log(`! para mirar: ${lejos.length} curados no cierran con 4/4/9 y 7 (fibra, edulcorantes):\n  ${lejos.map((a) => `${a.nombre_es}: ${a.kcal} kcal, y 4/4/9 da ${a.calculadas}`).join('\n  ')}`);
 if (sinSecundarios.length) console.log(`! para mirar: ${sinSecundarios.length} curados de USDA sin fibra o sin sodio (en la app no se muestran): ${sinSecundarios.map((a) => a.nombre_es).join(', ')}`);
+const rindeRaro = pares.filter((p) => p.rinde < 0.25 || p.rinde > 4);
+if (rindeRaro.length) console.log(`! para mirar: ${rindeRaro.length} pares crudo y cocido con un rendimiento raro:\n  ${rindeRaro.map((p) => `${p.cocido}: ${p.rinde.toFixed(2)}`).join('\n  ')}`);
+// Lo cocido sin su versión cruda, y lo crudo sin cocido: para completar los pares.
+const cocinado = /(?:^|\s)(cocid[oa]s?|hervid[oa]s?|a la plancha|al horno|asad[oa]s?|frit[oa]s?|salteado|guisad[oa]s?|al vapor|grillad[oa])(?:$|\s|,)/i;
+const sinCrudo = todas(`SELECT nombre_es FROM alimentos WHERE nombre_es IS NOT NULL AND crudo IS NULL AND fuente IN ('sr', 'fndds') AND categoria <> 'platos'`).filter((a) => cocinado.test(a.nombre_es));
+if (sinCrudo.length) console.log(`! para mirar: ${sinCrudo.length} curados cocidos sin su versión cruda: ${sinCrudo.map((a) => a.nombre_es).join(', ')}`);
+const crudos = new Set(todas('SELECT crudo FROM alimentos WHERE crudo IS NOT NULL').map((a) => a.crudo));
+const sinCocido = todas(`SELECT id, nombre_es FROM alimentos WHERE nombre_es LIKE '% crud%'`).filter((a) => !crudos.has(a.id));
+if (sinCocido.length) console.log(`! para mirar: ${sinCocido.length} crudos sin versión cocida: ${sinCocido.map((a) => a.nombre_es).join(', ')}`);
 const raros = todas(`SELECT nombre_es FROM alimentos WHERE nombre_es IS NOT NULL AND (fibra > carbohidratos + 1 OR azucares > carbohidratos + 1 OR saturadas > grasas + 1)`);
 if (raros.length) console.log(`! para mirar: ${raros.length} curados con más fibra o azúcares que carbohidratos, o más saturadas que grasas:\n  ${raros.map((a) => a.nombre_es).join(', ')}`);
 

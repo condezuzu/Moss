@@ -11,15 +11,14 @@
 // La arma el SQLite de Node, que es la misma versión que trae expo-sqlite (3.53).
 // Uso: npm run alimentos   → después, npm run alimentos:verificar
 
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const salida = join(raiz, 'assets/alimentos.db');
-const ESQUEMA = 2;
+const ESQUEMA = 3;
 
 const BASES = {
   fndds: {
@@ -40,14 +39,14 @@ const BASES = {
 };
 
 // ------------------------------------------------------------ Bajar y leer
-async function bajar(base) {
+async function bajar(base, url, nombre) {
   const carpeta = join(raiz, '.cache/usda', base);
-  const zip = join(carpeta, `${base}.zip`);
+  const zip = join(carpeta, base === 'sr28' ? 'sr28asc.zip' : `${base}.zip`);
   if (!existsSync(zip)) {
     mkdirSync(carpeta, { recursive: true });
-    console.log(`Bajando ${BASES[base].nombre}…`);
-    const respuesta = await fetch(BASES[base].url, { headers: { 'User-Agent': 'Moss (herramientas/alimentos.mjs)' } });
-    if (!respuesta.ok) throw new Error(`${BASES[base].url}: ${respuesta.status}`);
+    console.log(`Bajando ${nombre}…`);
+    const respuesta = await fetch(url, { headers: { 'User-Agent': 'Moss (herramientas/alimentos.mjs)' } });
+    if (!respuesta.ok) throw new Error(`${url}: ${respuesta.status}`);
     writeFileSync(zip, Buffer.from(await respuesta.arrayBuffer()));
   }
   return zip;
@@ -249,43 +248,108 @@ export function porcionEnEspanol(ingles) {
   return null;
 }
 
-// ------------------------------------------------------------ Los genéricos curados
+// ------------------------------------------------------------ Lo que no se come (SR28)
+// SR Legacy en FoodData Central no trae el «refuse»: la parte de lo que se compra que no se come
+// (la cáscara de la banana, el hueso de la costilla). Lo trae SR28, la misma base en su formato de
+// antes, también de dominio público. Va por la descripción, que es la misma.
+async function desechosDeSr28() {
+  const zip = await bajar('sr28', 'https://www.ars.usda.gov/ARSUserFiles/80400535/DATA/SR/sr28/dnload/sr28asc.zip', 'SR28');
+  const desechos = new Map();
+  for (const linea of leerZip(zip).get('FOOD_DES.txt').toString('latin1').split(/\r?\n/)) {
+    const f = linea.split('^').map((c) => c.replace(/^~|~$/g, ''));
+    if (Number(f[8]) > 0) desechos.set(f[2], { fraccion: Number(f[8]) / 100, que: f[7] });
+  }
+  return desechos;
+}
+
+// El nombre corto de lo que no se come, para «Con cáscara»: lo que nombra la descripción de USDA,
+// en este orden. «Hueso» es también el de la fruta, como dice la RAE.
+const QUE_SE_DESECHA = [
+  [/bone|cartilage/i, 'hueso', 'bone'],
+  [/\bpits?\b|\bstones?\b/i, 'hueso', 'pit'],
+  [/shell|hull|husk|\bpods?\b/i, 'cáscara', 'shell'],
+  [/peel|skin|rind|paring/i, 'cáscara', 'peel'],
+  [/\bseeds\b/i, 'semillas', 'seeds'],
+  [/\bseed\b/i, 'semilla', 'seed'],
+  [/\bcores?\b/i, 'corazón', 'core'],
+  [/\bcobs?\b/i, 'marlo', 'cob'],
+  [/stem|leaves|ends|trimming|crown|roots?\b|base/i, 'tallos', 'stems'],
+];
+const EN_INGLES = Object.fromEntries(QUE_SE_DESECHA.map(([, es, en]) => [es, en]));
+function queSeDesecha(descripcion) {
+  const partes = QUE_SE_DESECHA.filter(([re]) => re.test(descripcion));
+  const unicos = (i) => [...new Set(partes.map((p) => p[i]))].slice(0, 2).join(i === 1 ? ' y ' : ' and ');
+  return partes.length ? { es: unicos(1), en: unicos(2) } : null;
+}
+
+// ------------------------------------------------------------ Los curados
 /**
- * alimentos/genericos.txt: una línea por alimento, con los campos separados por « | »:
- * nombre en español | nombre en inglés | de dónde sale | porciones | alias.
- * Las líneas «# Categoría» abren una categoría; las que empiezan con «//» son comentarios.
+ * alimentos/*.txt (genericos.txt primero): una línea por alimento, con los campos separados por
+ * « | »: nombre en español | nombre en inglés | de dónde sale | porciones | alias | detalles.
+ * Las líneas «# categoría» abren una categoría; las que empiezan con «//» son comentarios.
+ * Con SOLO=archivo.txt se arma con genericos.txt y ese archivo nada más (para revisar uno).
  */
-function leerGenericos() {
-  const archivo = join(raiz, 'alimentos/genericos.txt');
-  if (!existsSync(archivo)) return [];
-  const genericos = [];
-  let categoria = null;
-  readFileSync(archivo, 'utf8').split(/\r?\n/).forEach((linea, i) => {
-    const donde = `genericos.txt:${i + 1}`;
-    if (!linea.trim() || linea.startsWith('//')) return;
-    if (linea.startsWith('# ')) {
-      categoria = linea.slice(2).trim();
-      return;
-    }
-    const campos = linea.replace(/\s+\|\s*$/, '').split(' | ').map((c) => c.trim());
-    if (campos.length < 4) throw new Error(`${donde}: faltan campos`);
-    const [es, en, origen, porciones, alias = ''] = campos;
-    genericos.push({
-      donde, categoria, es, en, origen,
-      // «1 mediana=118», o con el inglés: «1 mediana / 1 medium=118».
-      porciones: porciones.split(' · ').filter(Boolean).map((x) => {
-        const [nombre, gramos] = x.split('=');
-        if (!(Number(gramos) > 0)) throw new Error(`${donde}: porción sin gramos: ${x}`);
-        const [es, en] = nombre.split(' / ').map((s) => s.trim());
-        return { es, en, gramos: Number(gramos) };
-      }),
-      alias: alias.split(' · ').filter(Boolean).map((x) => {
-        const m = x.match(/^(.+?)(\*)?(?: \(([A-Z ]+)\))?$/);
-        return { texto: m[1].trim(), principal: Boolean(m[2]), regiones: m[3] ? m[3].split(' ') : [null] };
-      }),
+function leerCurados() {
+  const carpeta = join(raiz, 'alimentos');
+  const solo = process.env.SOLO ? process.env.SOLO.split(',') : null;
+  const archivos = readdirSync(carpeta).filter((a) => a.endsWith('.txt') && (!solo || a === 'genericos.txt' || solo.includes(a)))
+    .sort((a, b) => (a === 'genericos.txt' ? -1 : b === 'genericos.txt' ? 1 : a.localeCompare(b)));
+  const curados = [];
+  for (const archivo of archivos) {
+    let categoria = null;
+    readFileSync(join(carpeta, archivo), 'utf8').split(/\r?\n/).forEach((linea, i) => {
+      const donde = `${archivo}:${i + 1}`;
+      if (!linea.trim() || linea.startsWith('//')) return;
+      if (linea.startsWith('# ')) {
+        categoria = linea.slice(2).trim();
+        return;
+      }
+      const campos = linea.split('|').map((c) => c.trim());
+      while (campos.length > 4 && !campos[campos.length - 1]) campos.pop();
+      if (campos.length < 4) throw new Error(`${donde}: faltan campos`);
+      const [es, en, origen, porciones, alias = '', detalles = ''] = campos;
+      if (!es || !en) throw new Error(`${donde}: falta el nombre`);
+      curados.push({
+        donde, categoria, es, en, origen,
+        // «1 mediana=118», o con el inglés: «1 mediana / 1 medium=118».
+        porciones: porciones.split(' · ').filter(Boolean).map((x) => {
+          const corte = x.lastIndexOf('=');
+          const [nombre, gramos] = [x.slice(0, corte), x.slice(corte + 1)];
+          if (!(Number(gramos) > 0)) throw new Error(`${donde}: porción sin gramos: ${x}`);
+          const [es, en] = nombre.split(' / ').map((s) => s.trim());
+          return { es, en, gramos: Number(gramos) };
+        }),
+        alias: alias.split(' · ').filter(Boolean).map((x) => {
+          const m = x.match(/^(.+?)(\*)?(?: \(([A-Z ]+)\))?$/);
+          return { texto: m[1].trim(), principal: Boolean(m[2]), regiones: m[3] ? m[3].split(' ') : [null] };
+        }),
+        detalles: leerDetalles(detalles, donde),
+      });
     });
-  });
-  return genericos;
+  }
+  return curados;
+}
+
+const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'ean', 'off', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol']);
+/** «crudo=Arroz blanco crudo · ml · marca=Conaprole»: cada detalle, con su valor o en true. */
+function leerDetalles(texto, donde) {
+  const d = {};
+  for (const x of texto.split(' · ').map((s) => s.trim()).filter(Boolean)) {
+    const corte = x.indexOf('=');
+    const [clave, valor] = corte < 0 ? [x, true] : [x.slice(0, corte).trim(), x.slice(corte + 1).trim()];
+    if (!DETALLES.has(clave)) throw new Error(`${donde}: no conozco el detalle «${clave}»`);
+    d[clave] = valor;
+  }
+  return d;
+}
+
+/** El dígito de control de un EAN-13, EAN-8, UPC-A o GTIN-14. */
+function codigoValido(codigo) {
+  if (!/^(\d{8}|\d{12}|\d{13}|\d{14})$/.test(codigo)) return false;
+  const digitos = [...codigo].map(Number);
+  const control = digitos.pop();
+  const suma = digitos.reverse().reduce((s, n, i) => s + n * (i % 2 === 0 ? 3 : 1), 0);
+  return (10 - (suma % 10)) % 10 === control;
 }
 
 // ------------------------------------------------------------ Armar
@@ -294,7 +358,7 @@ const porciones = [];
 const resumen = {};
 for (const base of Object.keys(BASES)) {
   const { nutrientes, fuera } = BASES[base];
-  const archivos = leerZip(await bajar(base));
+  const archivos = leerZip(await bajar(base, BASES[base].url, BASES[base].nombre));
   const categoriaDe = base === 'fndds' ? new Map(csv(archivos.get('survey_fndds_food.csv')).map((s) => [s.fdc_id, s.wweia_category_number])) : null;
   const valores = new Map();
   for (const n of csv(archivos.get('food_nutrient.csv'))) {
@@ -338,49 +402,65 @@ for (const base of Object.keys(BASES)) {
   }
   resumen[base] = { alimentos: [...alimentos.values()].filter((a) => a.fuente === base).length, afuera, marcas };
 }
+const porAlimento = Map.groupBy(porciones, (p) => p.alimento);
+const desechos = await desechosDeSr28();
 
-// Los curados: su nombre, su categoría, sus alias y sus porciones en español.
-const genericos = leerGenericos();
+// Los ids de lo que no es de USDA son negativos y no cambian nunca: propio#N es -N, receta#N es
+// -(5000 + N) y producto#N es -(10000 + N).
+const ID = { propio: (n) => (n >= 1 && n < 5000 ? -n : null), receta: (n) => (n >= 1 && n < 5000 ? -(5000 + n) : null), producto: (n) => (n >= 1 ? -(10000 + n) : null) };
+const SECUNDARIOS = ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'];
+const curados = leerCurados();
 const porDescripcion = new Map();
 for (const a of alimentos.values()) porDescripcion.set(`${a.fuente}:${a.descripcion}`, a);
 const errores = [];
 const alias = [];
 const recetas = [];
-for (const g of genericos) {
+const codigos = new Map();
+const usados = new Map();
+let deOff = 0;
+for (const g of curados) {
   // Los platos van después: sus ingredientes tienen que estar curados.
   if (g.origen.startsWith('receta#')) {
     recetas.push(g);
     continue;
   }
   let alimento;
-  const propio = g.origen.match(/^propio#(\d+) ([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)$/);
+  const propio = g.origen.match(/^(propio|producto)#(\d+) ([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)$/);
   if (propio) {
-    const [, n, kcal, proteina, carbohidratos, grasas] = propio;
-    alimento = { id: -Number(n), fuente: 'propio', descripcion: g.en, kcal: +kcal, proteina: +proteina, carbohidratos: +carbohidratos, grasas: +grasas };
-    alimentos.set(alimento.id, alimento);
+    const [, tipo, n, kcal, proteina, carbohidratos, grasas] = propio;
+    const id = ID[tipo](Number(n));
+    if (id === null || alimentos.has(id)) {
+      errores.push(`${g.donde}: ${tipo}#${n} ${id === null ? 'está fuera de rango' : `ya lo usa ${usados.get(id)}`}`);
+      continue;
+    }
+    alimento = { id, fuente: tipo, descripcion: g.en, kcal: +kcal, proteina: +proteina, carbohidratos: +carbohidratos, grasas: +grasas };
+    for (const k of SECUNDARIOS) if (g.detalles[k] !== undefined) alimento[k] = Number(g.detalles[k]);
+    alimentos.set(id, alimento);
   } else alimento = porDescripcion.get(g.origen);
   if (!alimento) {
     errores.push(`${g.donde}: no existe «${g.origen}»`);
     continue;
   }
   if (alimento.es) {
-    errores.push(`${g.donde}: «${g.origen}» ya está curado como «${alimento.es}»`);
+    errores.push(`${g.donde}: «${g.origen}» ya está curado como «${alimento.es}» (${usados.get(alimento.id)})`);
     continue;
   }
-  Object.assign(alimento, { es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones });
+  usados.set(alimento.id, g.donde);
+  Object.assign(alimento, { es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde });
   for (const a of g.alias) for (const region of a.regiones) alias.push({ alimento: alimento.id, texto: a.texto, region, principal: a.principal && region !== null });
 }
 
 // Los platos: los valores por 100 g de lo terminado salen de los ingredientes. De lo secundario, lo
-// que un ingrediente no dice cuenta como cero; lo que no dice ninguno, no está.
-const SECUNDARIOS = ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'];
+// que un ingrediente no dice cuenta como cero; lo que no dice ninguno, no está. Un plato puede ser
+// ingrediente de otro que venga después.
 const porEspanol = new Map([...alimentos.values()].filter((a) => a.es).map((a) => [a.es, a]));
 const ingredientes = [];
 const pesosFinales = [];
 for (const g of recetas) {
   const m = g.origen.match(/^receta#(\d+) (.+?)(?: → ([\d.]+))?$/);
-  if (!m) {
-    errores.push(`${g.donde}: la receta no se entiende`);
+  const id = m ? ID.receta(Number(m[1])) : null;
+  if (!m || id === null || alimentos.has(id)) {
+    errores.push(`${g.donde}: ${!m ? 'la receta no se entiende' : id === null ? 'el número está fuera de rango' : `receta#${m[1]} ya la usa ${usados.get(id)}`}`);
     continue;
   }
   const lista = m[2].split(' · ').map((x) => {
@@ -399,24 +479,89 @@ for (const g of recetas) {
     if (!conDato.length && SECUNDARIOS.includes(clave)) continue;
     valores[clave] = conDato.reduce((s, i) => s + porEspanol.get(i.nombre)[clave] * i.gramos, 0) / peso;
   }
-  const id = -(5000 + Number(m[1]));
-  alimentos.set(id, { id, fuente: 'receta', descripcion: g.en, ...valores, es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones });
+  if (porEspanol.has(g.es)) {
+    errores.push(`${g.donde}: «${g.es}» ya es otro alimento (${usados.get(porEspanol.get(g.es).id)})`);
+    continue;
+  }
+  const plato = { id, fuente: 'receta', descripcion: g.en, ...valores, es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde };
+  alimentos.set(id, plato);
+  porEspanol.set(g.es, plato);
+  usados.set(id, g.donde);
   for (const i of lista) ingredientes.push([id, porEspanol.get(i.nombre).id, i.gramos]);
   pesosFinales.push([id, peso]);
   for (const a of g.alias) for (const region of a.regiones) alias.push({ alimento: id, texto: a.texto, region, principal: a.principal && region !== null });
+}
+
+// Los detalles de cómo se mide (spec/nutricion.md, «Cómo se miden los alimentos»).
+const TAZA_ML = 236.588;
+const ONZA_ML = 29.5735;
+for (const a of alimentos.values()) {
+  const d = a.detalles;
+  if (!d) continue;
+  const donde = a.donde;
+  if (d.crudo) {
+    const crudo = porEspanol.get(d.crudo);
+    if (!crudo) errores.push(`${donde}: no conozco la versión cruda «${d.crudo}»`);
+    else if (crudo.detalles?.crudo) errores.push(`${donde}: «${d.crudo}» es cocido: la versión cruda no puede tener a su vez una cruda`);
+    else if (crudo.id === a.id) errores.push(`${donde}: un alimento no es su propia versión cruda`);
+    else a.crudo = crudo.id;
+  }
+  if (d.desecho) {
+    const sr = a.fuente === 'sr' ? desechos.get(a.descripcion) : null;
+    const m = d.desecho === true ? null : String(d.desecho).match(/^([\d.]+)(?:\s+(.+?))?$/);
+    if (d.desecho !== true && !m) errores.push(`${donde}: el desecho se escribe «desecho», «desecho=36» o «desecho=36 cáscara»`);
+    const fraccion = m ? Number(m[1]) / 100 : sr?.fraccion;
+    let que = null;
+    if (m?.[2]) {
+      const [es, en] = m[2].split('/').map((x) => x.trim());
+      que = { es, en: en ?? es.split(' y ').map((x) => EN_INGLES[x]).join(' and ') };
+      if (/undefined/.test(que.en)) errores.push(`${donde}: «${es}» no lo sé decir en inglés: «desecho=${m[1]} ${es}/…»`);
+    } else if (sr) que = queSeDesecha(sr.que);
+    if (!(fraccion > 0 && fraccion < 0.9)) errores.push(`${donde}: ${sr || m ? `el desecho (${fraccion}) no es posible` : 'USDA no dice qué parte no se come: «desecho=N qué»'}`);
+    else if (!que) errores.push(`${donde}: no sé qué es lo que no se come («${sr?.que}»): «desecho=${Math.round(fraccion * 100)} qué»`);
+    else Object.assign(a, { desecho: fraccion, queDesecho: que });
+  }
+  if (d.ml || d.densidad) {
+    let densidad = d.densidad && d.densidad !== true ? Number(d.densidad) : null;
+    if (!densidad) {
+      const lista = [...(porAlimento.get(a.id) ?? []), ...(a.propias ?? []).map((p) => ({ en: p.en ?? '', gramos: p.gramos }))];
+      const taza = lista.find((p) => /^1 cup\b/i.test(p.en));
+      const onza = lista.find((p) => /^1 fl oz\b/i.test(p.en));
+      densidad = taza ? taza.gramos / TAZA_ML : onza ? onza.gramos / ONZA_ML : null;
+    }
+    if (!(densidad >= 0.3 && densidad <= 2)) errores.push(`${donde}: ${densidad ? `la densidad (${densidad}) no es posible` : 'no hay una taza ni una onza líquida para sacar la densidad: «densidad=…»'}`);
+    else a.densidad = Math.round(densidad * 1000) / 1000;
+  }
+  if (d.aceite) {
+    if (d.aceite !== true && d.aceite !== 'incluido') errores.push(`${donde}: el aceite es «aceite» (se pregunta) o «aceite=incluido» (frito)`);
+    a.aceite = d.aceite === true ? 'preguntar' : 'incluido';
+  }
+  if (d.marca) a.marca = String(d.marca);
+  if (d.ean) {
+    for (const codigo of String(d.ean).split(',').map((c) => c.trim())) {
+      if (!codigoValido(codigo)) errores.push(`${donde}: el código ${codigo} no es un EAN o UPC válido`);
+      else if (codigos.has(codigo)) errores.push(`${donde}: el código ${codigo} ya es de ${usados.get(codigos.get(codigo))}`);
+      else codigos.set(codigo, a.id);
+    }
+  }
+  if (d.off) {
+    a.atribucion = 'off';
+    deOff++;
+  }
 }
 if (errores.length) {
   console.error(errores.join('\n'));
   process.exit(1);
 }
 
+const salida = process.env.SALIDA ? join(raiz, process.env.SALIDA) : join(raiz, 'assets/alimentos.db');
 rmSync(salida, { force: true });
 mkdirSync(dirname(salida), { recursive: true });
 const db = new DatabaseSync(salida);
 db.exec(`
   PRAGMA page_size = 4096;
   PRAGMA user_version = ${ESQUEMA};
-  -- Un alimento por fila, con los valores por 100 g. Los de USDA llevan su fdc_id; los propios, ids negativos.
+  -- Un alimento por fila, con los valores por 100 g de lo que se come. Los de USDA llevan su fdc_id; los demás, ids negativos.
   CREATE TABLE alimentos (
     id INTEGER PRIMARY KEY,
     fuente TEXT NOT NULL,
@@ -428,20 +573,34 @@ db.exec(`
     proteina REAL NOT NULL,
     carbohidratos REAL NOT NULL,
     grasas REAL NOT NULL,
-    -- Lo secundario: lo que USDA no tiene queda en null (no es cero). El sodio, en mg.
+    -- Lo secundario: lo que no se sabe queda en null (no es cero). El sodio, en mg.
     fibra REAL,
     azucares REAL,
     saturadas REAL,
     sodio REAL,
     alcohol REAL,
-    porcion INTEGER
+    porcion INTEGER,
+    -- Cómo se mide: la marca de un producto; lo que se toma, en g por ml; la parte que no se come y
+    -- qué es; si se pregunta por el aceite ('preguntar') o ya lo tiene ('incluido'); en lo cocido,
+    -- su versión cruda; y de dónde salen los datos, si hay que nombrarlo ('off': Open Food Facts).
+    marca TEXT,
+    densidad REAL,
+    desecho REAL,
+    desecho_es TEXT,
+    desecho_en TEXT,
+    aceite TEXT,
+    crudo INTEGER,
+    atribucion TEXT
   );
+  CREATE INDEX alimentos_por_crudo ON alimentos (crudo) WHERE crudo IS NOT NULL;
   -- La porción es un peso: «1 pechuga» son 145 g. Sin traducción, 'es' es null.
   CREATE TABLE porciones (id INTEGER PRIMARY KEY, alimento INTEGER NOT NULL, en TEXT NOT NULL, es TEXT, gramos REAL NOT NULL);
   CREATE INDEX porciones_por_alimento ON porciones (alimento);
   -- Los nombres de cada región. 'principal' es el que se muestra ahí (palta en Uruguay, aguacate en México).
   CREATE TABLE alias (alimento INTEGER NOT NULL, texto TEXT NOT NULL, region TEXT, principal INTEGER NOT NULL);
   CREATE INDEX alias_por_alimento ON alias (alimento);
+  -- Los códigos de barras de los productos.
+  CREATE TABLE codigos (codigo TEXT PRIMARY KEY, alimento INTEGER NOT NULL) WITHOUT ROWID;
   -- Todo lo que se busca, un texto por fila, y sus dos índices: palabras con prefijos y trigramas.
   CREATE TABLE textos (id INTEGER PRIMARY KEY, alimento INTEGER NOT NULL, idioma TEXT NOT NULL, region TEXT, principal INTEGER NOT NULL, texto TEXT NOT NULL);
   CREATE VIRTUAL TABLE palabras USING fts5(texto, content = 'textos', content_rowid = 'id', tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3');
@@ -452,12 +611,11 @@ db.exec(`
   CREATE TABLE ingredientes (plato INTEGER NOT NULL, ingrediente INTEGER NOT NULL, gramos REAL NOT NULL);
 `);
 db.exec('BEGIN');
-const ponerAlimento = db.prepare('INSERT INTO alimentos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+const ponerAlimento = db.prepare('INSERT INTO alimentos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 const ponerPorcion = db.prepare('INSERT INTO porciones (alimento, en, es, gramos) VALUES (?, ?, ?, ?)');
 const ponerAlias = db.prepare('INSERT INTO alias VALUES (?, ?, ?, ?)');
 const ponerTexto = db.prepare('INSERT INTO textos (alimento, idioma, region, principal, texto) VALUES (?, ?, ?, ?, ?)');
 const redondo = (n) => Math.round(n * 100) / 100;
-const porAlimento = Map.groupBy(porciones, (p) => p.alimento);
 let sinTraducir = 0;
 const textosSinTraducir = new Map();
 for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
@@ -465,6 +623,7 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
   ponerAlimento.run(
     a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas),
     tal(a.fibra), tal(a.azucares), tal(a.saturadas), tal(a.sodio), tal(a.alcohol), null,
+    a.marca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null,
   );
   // De los curados: primero sus porciones (la primera es la de siempre); de USDA, solo las que
   // tienen traducción. Una porción propia sin inglés toma el de la de USDA que pesa lo mismo.
@@ -491,24 +650,34 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
   ponerTexto.run(a.id, 'en', null, 0, a.descripcion);
   if (a.en && a.en !== a.descripcion) ponerTexto.run(a.id, 'en', null, 0, a.en);
   if (a.es) ponerTexto.run(a.id, 'es', null, 0, a.es);
+  // Un producto se encuentra también por su marca: «leche conaprole».
+  if (a.marca) {
+    ponerTexto.run(a.id, 'es', null, 0, `${a.es} ${a.marca}`);
+    ponerTexto.run(a.id, 'en', null, 0, `${a.en} ${a.marca}`);
+  }
 }
 for (const a of alias) {
   ponerAlias.run(a.alimento, a.texto, a.region, a.principal ? 1 : 0);
   ponerTexto.run(a.alimento, 'es', a.region, a.principal ? 1 : 0, a.texto);
 }
+for (const [codigo, alimento] of codigos) db.prepare('INSERT INTO codigos VALUES (?, ?)').run(codigo, alimento);
 for (const [plato, peso] of pesosFinales) db.prepare('INSERT INTO recetas VALUES (?, ?)').run(plato, peso);
 for (const [plato, ingrediente, gramos] of ingredientes) db.prepare('INSERT INTO ingredientes VALUES (?, ?, ?)').run(plato, ingrediente, gramos);
-db.prepare('INSERT INTO datos VALUES (?, ?)').run('fuentes', `USDA FoodData Central: ${BASES.fndds.nombre} y ${BASES.sr.nombre} (dominio público)`);
+const fuentes = [`USDA FoodData Central: ${BASES.fndds.nombre} y ${BASES.sr.nombre} (dominio público)`];
+if (deOff) fuentes.push('Open Food Facts (ODbL, openfoodfacts.org)');
+db.prepare('INSERT INTO datos VALUES (?, ?)').run('fuentes', fuentes.join('; '));
 db.prepare('INSERT INTO datos VALUES (?, ?)').run('armada', new Date().toISOString().slice(0, 10));
 db.exec('COMMIT');
 db.exec(`INSERT INTO palabras (palabras) VALUES ('rebuild'); INSERT INTO trigramas (trigramas) VALUES ('rebuild');`);
 db.exec(`INSERT INTO palabras (palabras) VALUES ('optimize'); INSERT INTO trigramas (trigramas) VALUES ('optimize'); VACUUM;`);
 db.close();
 
-const curados = genericos.length;
+const cuantos = (f) => [...alimentos.values()].filter(f).length;
 console.log(`FNDDS: ${resumen.fndds.alimentos} alimentos (${resumen.fndds.afuera} afuera)`);
 console.log(`SR Legacy: ${resumen.sr.alimentos} alimentos (${resumen.sr.afuera} afuera y ${resumen.sr.marcas} de marcas)`);
-console.log(`Curados en español: ${curados}, con ${alias.length} alias, y ${recetas.length} platos como recetas. Porciones de USDA sin traducir en los curados: ${sinTraducir}.`);
+console.log(`Curados: ${curados.length}, con ${alias.length} alias: ${recetas.length} platos como recetas, ${cuantos((a) => a.fuente === 'producto')} productos (${deOff} de Open Food Facts) y ${codigos.size} códigos de barras.`);
+console.log(`Cómo se miden: ${cuantos((a) => a.crudo)} cocidos con su versión cruda, ${cuantos((a) => a.desecho)} con parte que no se come, ${cuantos((a) => a.densidad)} líquidos y ${cuantos((a) => a.aceite === 'preguntar')} que preguntan por el aceite.`);
+console.log(`Porciones de USDA sin traducir en los curados: ${sinTraducir}.`);
 console.log(`${salida.replace(raiz, '').slice(1)}: ${(statSync(salida).size / 1048576).toFixed(1)} MB`);
 // Para ampliar la tabla de traducción: VER_PORCIONES=1 npm run alimentos
 if (process.env.VER_PORCIONES) {

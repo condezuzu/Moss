@@ -1,16 +1,25 @@
 // Los genéricos en español: lo de todos los días, con un nombre neutro, el nombre de cada región y
-// la porción más común. `npm run alimentos` los junta con USDA en assets/alimentos.db.
+// la porción más común. `npm run alimentos` junta este archivo y los demás alimentos/*.txt con USDA
+// en assets/alimentos.db. Este es el formato de todos.
 //
-// Una línea por alimento:  español | inglés | de dónde sale | porciones | alias
+// Una línea por alimento:  español | inglés | de dónde sale | porciones | alias | detalles
 // - De dónde sale: «sr:» (SR Legacy) o «fndds:» (FNDDS) y la descripción exacta de USDA; o, para lo
-//   que USDA no tiene, «propio#N kcal proteína carbohidratos grasas» por 100 g (N no cambia nunca);
-//   o, para un plato, «receta#N ingrediente gramos · ingrediente gramos → peso final»: los
-//   ingredientes son curados de esta lista, y el peso final es lo que pesa terminado (cocinar
-//   cambia el peso; sin él, la suma). Los valores por 100 g los calcula el armado.
+//   que USDA no tiene, «propio#N kcal proteína carbohidratos grasas» por 100 g (N de 1 a 4999, no
+//   cambia nunca); o, para un producto con marca, «producto#N kcal proteína carbohidratos grasas»;
+//   o, para un plato, «receta#N ingrediente gramos · ingrediente gramos → peso final» (N de 1 a
+//   4999): los ingredientes son curados de cualquier archivo, y el peso final es lo que pesa
+//   terminado (cocinar cambia el peso; sin él, la suma). Los valores por 100 g los calcula el armado.
 // - Porciones: «1 mediana / 1 medium=118», separadas con « · ». La primera es la de siempre.
 // - Alias: «palta* (AR UY)». Las regiones son códigos de país; con asterisco, es el nombre que se
-//   muestra en esas regiones.
-// «# categoría» abre una categoría.
+//   muestra en esas regiones. Sin alias y con detalles, el campo va vacío: «… | 1 vaso=206 |  | ml».
+// - Detalles (spec/nutricion.md, «Cómo se miden los alimentos»), separados con « · »:
+//   «crudo=Arroz blanco crudo» en lo cocido, su versión cruda (el nombre en español, tal cual);
+//   «desecho» si tiene parte que no se come (el porcentaje sale de USDA SR28) o «desecho=12 cáscara»
+//   cuando USDA no lo dice; «ml» si se toma (la densidad sale de la taza de USDA) o «densidad=1.03»;
+//   «aceite» en lo salteado o a la plancha (se pregunta) y «aceite=incluido» en lo frito;
+//   «marca=…», «ean=7790000000000,…» y «off» (los datos son de Open Food Facts) en los productos;
+//   y en lo propio, lo secundario por 100 g: «fibra=2.1 · azucares=5 · saturadas=1.2 · sodio=380».
+// «# categoría» abre una categoría. Ningún nombre dice de qué país es: el catálogo es para todos.
 
 # frutas
 Manzana | Apple | sr:Apples, raw, with skin | 1 mediana / 1 medium=182 |
@@ -613,7 +622,7 @@ Chili con carne | Chili con carne | sr:Chili con carne with beans, canned entree
 Sushi | Sushi | fndds:Sushi, NFS | 6 piezas / 6 pieces=180 | rolls
 Gazpacho | Gazpacho | fndds:Soup, gazpacho | 1 taza / 1 cup=245 |
 
-# platos-uy
+# platos
 // Los platos uruguayos de todos los días, como recetas caseras (primera tanda, 22/10/2026: para
 // revisar). Las cantidades son de una receta típica; el peso final, de la cocción.
 Milanesa a la napolitana | Neapolitan breaded steak | receta#1 Milanesa 160 · Salsa de tomate 40 · Jamón cocido 30 · Queso mozzarella 40 → 265 | 1 unidad / 1 piece=265 | napolitana · milanesa napolitana

@@ -1236,7 +1236,8 @@ const Comida = (() => {
 
       const cab = el('header', 'vt-cab');
       const titulos = el('div', 'vt-titulos');
-      const fuente = a.cat === 'etiqueta' ? 'etiqueta' : a.cat === 'platos-uy' ? 'receta' : a.id < 0 ? 'propio' : 'usda';
+      // Los ids dicen de dónde sale: receta#N es -(5000 + N) y producto#N, -(10000 + N) (herramientas/alimentos.mjs).
+      const fuente = a.cat === 'etiqueta' ? 'etiqueta' : a.id <= -10000 ? 'producto' : a.id <= -5000 ? 'receta' : a.id < 0 ? 'propio' : 'usda';
       titulos.append(el('h3', 'vt-nombre', nombreDe(a)), el('div', 'vt-fuente', tx('comida.fuente.' + fuente)));
       const estrella = boton('hj-estrella' + (s.favoritos.has(a.id) ? ' activa' : ''), icono('estrella'), () => {
         if (s.favoritos.has(a.id)) s.favoritos.delete(a.id); else s.favoritos.add(a.id);
