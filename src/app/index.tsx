@@ -1,5 +1,5 @@
-import PantallaDelCielo from '@/cielo/PantallaDelCielo';
+import Secciones from '@/secciones/Secciones';
 
 export default function Inicio() {
-  return <PantallaDelCielo />;
+  return <Secciones />;
 }

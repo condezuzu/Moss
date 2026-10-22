@@ -3,8 +3,8 @@
 // tarda unos milisegundos: mientras, sigue la pantalla de arranque.
 
 import { useAlmacenListo } from '@/almacen';
-import Cielo from './Cielo';
+import Cielo, { type PropsDelCielo } from './Cielo';
 
-export default function PantallaDelCielo() {
-  return useAlmacenListo() ? <Cielo /> : null;
+export default function PantallaDelCielo(props: PropsDelCielo) {
+  return useAlmacenListo() ? <Cielo {...props} /> : null;
 }

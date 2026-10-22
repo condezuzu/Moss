@@ -49,6 +49,8 @@ export type Escena = {
   ancho: number;
   alto: number;
   cam: { y: number; v: number; objetivo: number; arrastrando: boolean; desde: number };
+  /** Cuánto está corrida la pestaña Hábitos, en puntos: la constelación va con su página. */
+  paginaX: number;
   habitos: HabitoEnEscena[];
   lineas: LineaEnEscena[];
   centro: Punto;
@@ -104,6 +106,7 @@ export function crearEscena(d: EntradaDeEscena): Escena {
     ancho: d.ancho,
     alto: d.alto,
     cam: { y: 0, v: 0, objetivo: 0, arrastrando: false, desde: 0 },
+    paginaX: 0,
     habitos: d.habitos.map((h) => ({ ...h, luz: h.encendido ? 1 : 0, pop: 0 })),
     lineas: d.lineas.map((l) => ({ ...l, avance: completo ? 1 : 0 })),
     centro: d.centro,
@@ -155,7 +158,9 @@ function salida(t: number) {
 /** De mundo a puntos de pantalla, para una capa con su paralaje. */
 export function aPantalla(e: Escena, x: number, y: number, par: number): Punto {
   'worklet';
-  return [e.ancho / 2 + x * e.alto, e.alto / 2 - (y - e.cam.y * par) * e.alto];
+  // Lo que va con el cielo (la constelación y tu universo) se corre con su pestaña; el musgo queda.
+  const corrida = par === PARALAJE.cielo ? e.paginaX : 0;
+  return [e.ancho / 2 + x * e.alto + corrida, e.alto / 2 - (y - e.cam.y * par) * e.alto];
 }
 
 function sprite(b: Float32Array, n: number, cap: number, sx: number, sy: number, radio: number, rot: number, celda: number, color: number[], intensidad: number) {
@@ -205,6 +210,7 @@ export function cambiarHabito(e: Escena, i: number, encender: boolean, desdeSalu
 /** Un toque en (px, py), en puntos. Devuelve el hábito tocado, o -1. */
 export function tocar(e: Escena, px: number, py: number): number {
   'worklet';
+  if (e.paginaX !== 0) return -1;
   let mejor = -1;
   let distancia = 34;
   for (let i = 0; i < e.habitos.length; i++) {

@@ -6,7 +6,7 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { lista, t } from '@/textos';
@@ -43,6 +43,10 @@ type Props = {
   riqueza: number;
   cuadros: number;
   acciones: Acciones;
+  /** Lo que ocupa la barra de pestañas abajo; sin barra, 0. */
+  abajo: number;
+  /** Cuánto subió Ascent: la flecha se apaga mientras sube. */
+  subida?: SharedValue<number>;
 };
 
 // Las riquezas del panel de prueba: el primer día, tres meses (la de la galería) y la plena.
@@ -63,9 +67,10 @@ export function Interfaz(p: Props) {
   const hechos = p.encendidos.filter(Boolean).length;
   const c = p.dia.constelacion;
 
+  // Todo lo de Hábitos se corre con su pestaña, como la constelación.
   const estiloCabecera = useAnimatedStyle(() => {
-    const y = p.escena.value.cam.y;
-    return { transform: [{ translateY: y * alto }], opacity: 1 - suave(0.15, 0.6, y) };
+    const e = p.escena.value;
+    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: 1 - suave(0.15, 0.6, e.cam.y) };
   });
   // Mientras la constelación se conecta y sube la aurora, las etiquetas se apagan un poco: el
   // momento es del cielo.
@@ -73,12 +78,26 @@ export function Interfaz(p: Props) {
     const e = p.escena.value;
     const dc = e.completo ? e.t - e.tCompleto : -1;
     const momento = e.completo ? suave(0.6, 1.4, dc) * (1 - suave(7.5, 9.0, dc)) : 0;
-    return { transform: [{ translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) };
+    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) };
   });
-  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateY: p.escena.value.cam.y * PARALAJE.lomas[2] * alto }] }));
+  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }, { translateY: p.escena.value.cam.y * PARALAJE.lomas[2] * alto }] }));
+  // La flecha tenue de Ascent va con la frase y respira apenas; mientras Ascent sube, se apaga.
+  const reducido = useReducedMotion();
+  const respira = useSharedValue(0);
+  useEffect(() => {
+    if (!reducido) respira.value = withRepeat(withTiming(1, { duration: 1900 }), -1, true);
+  }, [reducido, respira]);
+  const estiloFlecha = useAnimatedStyle(() => {
+    const e = p.escena.value;
+    const subio = p.subida ? p.subida.get() : 0;
+    return {
+      opacity: (1 - Math.min(1, subio * 2.5)) * (1 - 0.45 * respira.value),
+      transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * PARALAJE.lomas[2] * alto - 3 * respira.value }],
+    };
+  });
   const estiloUniverso = useAnimatedStyle(() => {
-    const y = p.escena.value.cam.y;
-    return { transform: [{ translateY: y * alto }], opacity: suave(0.5, 1.1, y) };
+    const e = p.escena.value;
+    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: suave(0.5, 1.1, e.cam.y) };
   });
 
   useEffect(() => {
@@ -145,13 +164,19 @@ export function Interfaz(p: Props) {
         </Text>
       </Animated.View>
 
-      <Animated.View style={[estilos.frase, { bottom: insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
+      <Animated.View style={[estilos.frase, { bottom: p.abajo ? p.abajo + 38 : insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
         <Text style={estilos.fraseTexto}>{`“${nombreEn(p.dia.frase.texto)}”`}</Text>
         <Text style={estilos.fraseAutor}>{nombreEn(p.dia.frase.autor)}</Text>
       </Animated.View>
 
+      {p.subida && (
+        <Animated.View style={[estilos.flecha, { bottom: p.abajo + 2 }, estiloFlecha]} pointerEvents="none" accessibilityElementsHidden>
+          <SymbolView name="chevron.up" size={20} weight="light" tintColor="rgba(239, 230, 207, 0.32)" />
+        </Animated.View>
+      )}
+
       {p.aviso && (
-        <Animated.View key={p.aviso.clave} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(200)} style={[estilos.aviso, { bottom: insets.bottom + 96 }]}>
+        <Animated.View key={p.aviso.clave} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(200)} style={[estilos.aviso, { bottom: p.abajo ? p.abajo + 24 : insets.bottom + 96 }]}>
           <Text style={estilos.avisoTexto} numberOfLines={1}>{p.aviso.texto}</Text>
           {p.aviso.deshacer && (
             <Pressable onPress={p.aviso.deshacer} style={estilos.avisoBoton} accessibilityRole="button" hitSlop={8}>
@@ -247,6 +272,7 @@ const estilos = StyleSheet.create({
   universoNombreHoy: { color: colores.pergamino },
 
   frase: { position: 'absolute', left: 26, right: 26, alignItems: 'center' },
+  flecha: { position: 'absolute', alignSelf: 'center', width: 64, height: 44, alignItems: 'center', justifyContent: 'center' },
   fraseTexto: { fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 14.5, lineHeight: 19, textAlign: 'center', color: 'rgba(239, 230, 207, 0.74)' },
   fraseAutor: { marginTop: 5, fontFamily: 'Jost_400Regular', fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(185, 227, 107, 0.6)' },
 

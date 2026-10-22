@@ -1,7 +1,8 @@
 // Capturas de la app de verdad (Skia en la web, con CanvasKit) a 393×852 @2×:
 // - inicio, calidad baja y dos riquezas;
 // - un toque sobre una estrella, y otra vez el cielo después de recargar (tiene que acordarse);
-// - el día completo y tu universo.
+// - el día completo y tu universo;
+// - las secciones: Ascent desde el cielo (y no desde la barra), la flecha, las pestañas y el «+».
 // Es lo más cerca del iPhone que se puede llegar desde Windows; el rendimiento real se mide en el
 // teléfono. Cada corrida arranca de cero: el navegador es nuevo y los hábitos de ejemplo también.
 // Uso: npm run web:exportar && npm run web:ver   (en otra terminal)
@@ -76,6 +77,43 @@ for (const ms of [1500, 3500, 6000]) {
 await panel('Hoy / Universo');
 await pagina.waitForTimeout(2500);
 await foto('universo');
+
+// Las secciones (cambios 9 y 10): Ascent sube con el dedo desde el cielo, pero no desde la barra;
+// la flecha de arriba la baja y la tenue de abajo la sube; la tira de pestañas y el «+».
+await abrir();
+const { width: an, height: al } = pagina.viewportSize();
+const arrastrar = async (desde, hasta, nombre) => {
+  await pagina.mouse.move(desde[0], desde[1]);
+  await pagina.mouse.down();
+  await pagina.mouse.move(hasta[0], hasta[1], { steps: 14 });
+  await pagina.waitForTimeout(400);
+  if (nombre) await foto(nombre);
+  await pagina.mouse.up();
+  await pagina.waitForTimeout(1200);
+};
+// En el borde de la barra, donde no hay botón: soltar sobre un botón lo tocaría.
+await arrastrar([3, al - 30], [3, al - 330], 'ascent-desde-la-barra');
+await arrastrar([an / 2, al - 220], [an / 2, al - 520], 'ascent-subiendo');
+await foto('ascent');
+await pagina.getByLabel('Volver al cielo').click();
+await pagina.waitForTimeout(1200);
+await foto('ascent-bajada');
+await pagina.mouse.click(an / 2, al - 58 - 24);
+await pagina.waitForTimeout(1200);
+await foto('ascent-por-la-flecha');
+await pagina.getByLabel('Volver al cielo').click();
+await pagina.waitForTimeout(1200);
+await arrastrar([an - 40, 420], [an - 200, 430], 'pestanas-deslizando');
+await foto('perfil');
+await pagina.getByRole('tab', { name: 'Inicio' }).click();
+await pagina.waitForTimeout(900);
+await foto('inicio-pendiente');
+await pagina.getByLabel('Agregar', { exact: true }).click();
+await pagina.waitForTimeout(900);
+await foto('mas');
+await pagina.getByLabel('Sumar un vaso de 250 ml').click();
+await pagina.waitForTimeout(500);
+await foto('mas-agua');
 
 await navegador.close();
 if (errores.length) {

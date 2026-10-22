@@ -11,6 +11,7 @@ export const colores = {
   musgoProfundo: '#2f4a2a',
   pergamino: '#efe6cf',
   pergaminoTenue: 'rgba(239,230,207,0.62)',
+  pergaminoApagado: 'rgba(239,230,207,0.42)',
 } as const;
 
 export type Color = keyof typeof colores;

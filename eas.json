@@ -8,7 +8,6 @@
     "dev": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "dev",
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium"
@@ -17,7 +16,6 @@
     },
     "telefono": {
       "distribution": "internal",
-      "channel": "telefono",
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium"
@@ -26,7 +24,6 @@
     },
     "simulador": {
       "distribution": "internal",
-      "channel": "dev",
       "ios": {
         "simulator": true,
         "resourceClass": "m-medium"
@@ -35,7 +32,6 @@
     },
     "store": {
       "distribution": "store",
-      "channel": "store",
       "autoIncrement": true,
       "ios": {
         "simulator": false,

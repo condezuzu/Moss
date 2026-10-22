@@ -25,7 +25,7 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { AccessibilityInfo, PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
-import { useDerivedValue, useFrameCallback, useSharedValue, type DerivedValue } from 'react-native-reanimated';
+import { useDerivedValue, useFrameCallback, useSharedValue, type DerivedValue, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
@@ -53,6 +53,7 @@ import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
 import { useTextos } from './textosDelCielo';
+import { entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from '@/secciones/movimiento';
 import { colores } from '@/tema';
 
 const CELDA = 128;
@@ -62,7 +63,30 @@ const PERGAMINO = 'rgb(240, 230, 207)';
 const MUSGO_LUZ = 'rgb(189, 237, 115)';
 const aRgb = ([r, g, b]: number[]) => `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
 
-export default function Cielo() {
+/**
+ * Ascent, arriba de Hábitos: deslizar para arriba desde el cielo la sube siguiendo al dedo, y tocar
+ * la flecha tenue también. Lo maneja este gesto, así un deslizamiento que empieza en la flecha
+ * también sube.
+ */
+export type Subida = {
+  /** Cuánto subió: 0 abajo, 1 arriba. */
+  progreso: SharedValue<number>;
+  /** Más abajo no arranca: ahí está la barra, y debajo, el gesto de inicio del iPhone. */
+  limiteY: number;
+  /** El centro de la flecha con la cámara en hoy. */
+  flecha: { x: number; y: number };
+  alCambiar: (abierta: boolean) => void;
+};
+
+export type PropsDelCielo = {
+  /** Cuánto está corrida la pestaña Hábitos, en puntos. */
+  paginaX?: SharedValue<number>;
+  subida?: Subida;
+  /** Lo que ocupa la barra de pestañas abajo, con el borde del teléfono. */
+  abajo?: number;
+};
+
+export default function Cielo({ paginaX, subida, abajo = 0 }: PropsDelCielo) {
   const { width: ancho, height: alto } = useWindowDimensions();
   const dpr = PixelRatio.get();
   const [calidad, setCalidad] = useState<Calidad>(calidadDeFabrica);
@@ -248,8 +272,10 @@ export default function Cielo() {
     'worklet';
     const dt = Math.min(0.05, (info.timeSincePreviousFrame ?? 16.7) / 1000);
     const hayFondo = fondo.value !== null;
+    const corrida = paginaX ? paginaX.value : 0;
     escena.modify((e) => {
       'worklet';
+      e.paginaX = corrida;
       // El cielo aparece cuando hay textura. Si ya estaba (una escena rehecha), aparece enseguida.
       if (hayFondo && !e.fondoListo) {
         e.fondoListo = true;
@@ -266,6 +292,15 @@ export default function Cielo() {
     maxDistance: 12,
     onActivate: (ev) => {
       'worklet';
+      if (subida) {
+        const e = escena.value;
+        const fy = subida.flecha.y + e.cam.y * PARALAJE.lomas[2] * alto;
+        if (e.paginaX === 0 && subida.progreso.get() === 0 && Math.abs(ev.x - subida.flecha.x) < 32 && Math.abs(ev.y - fy) < 22) {
+          subida.progreso.set(subirOBajar(0, 1));
+          scheduleOnRN(subida.alCambiar, true);
+          return;
+        }
+      }
       escena.modify((e) => {
         'worklet';
         tocar(e, ev.x, ev.y);
@@ -274,20 +309,43 @@ export default function Cielo() {
       drenar();
     },
   });
-  // Arrastrar mueve la cámara: hacia abajo, el cielo baja y aparece tu universo.
+  // Arrastrar mueve la cámara: hacia abajo, el cielo baja y aparece tu universo. Hacia arriba, desde
+  // hoy y arriba de la barra, sube Ascent. De costado es de las pestañas.
+  // Se decide con el primer movimiento, desde donde se apoyó el dedo: arriba de la barra, en hoy
+  // y para arriba, es Ascent; si no, la cámara.
+  const modo = useSharedValue<'nada' | 'camara' | 'ascent'>('nada');
+  const inicioY = useSharedValue(0);
   const arrastre = usePanGesture({
     activeOffsetY: [-10, 10],
-    onActivate: () => {
+    failOffsetX: [-14, 14],
+    onBegin: (ev) => {
       'worklet';
-      escena.modify((e) => {
-        'worklet';
-        e.cam.arrastrando = true;
-        e.cam.desde = e.cam.y;
-        return e;
-      });
+      inicioY.set(ev.absoluteY);
+      modo.set('nada');
     },
     onUpdate: (ev) => {
       'worklet';
+      if (modo.get() === 'nada') {
+        // El primer evento puede llegar sin movimiento todavía: se espera a que el dedo se mueva.
+        if (Math.abs(ev.translationY) < 3) return;
+        const actual = escena.value;
+        const enHoy = actual.cam.objetivo === 0 && Math.abs(actual.cam.y) < 0.02 && actual.paginaX === 0;
+        if (subida && ev.translationY < 0 && enHoy && inicioY.get() < subida.limiteY && subida.progreso.get() === 0) {
+          modo.set('ascent');
+        } else {
+          modo.set('camara');
+          escena.modify((e) => {
+            'worklet';
+            e.cam.arrastrando = true;
+            e.cam.desde = e.cam.y - ev.translationY / e.alto;
+            return e;
+          });
+        }
+      }
+      if (modo.get() === 'ascent' && subida) {
+        subida.progreso.set(entre((-ev.translationY - 10) / alto, 0, 1));
+        return;
+      }
       escena.modify((e) => {
         'worklet';
         let y = e.cam.desde + ev.translationY / e.alto;
@@ -300,6 +358,14 @@ export default function Cielo() {
     },
     onDeactivate: (ev) => {
       'worklet';
+      if (modo.get() === 'ascent' && subida) {
+        const p = subida.progreso.get();
+        const abrir = p >= UMBRAL || -ev.velocityY >= VELOCIDAD_MINIMA;
+        subida.progreso.set(subirOBajar(p, abrir ? 1 : 0));
+        scheduleOnRN(subida.alCambiar, abrir);
+        return;
+      }
+      if (modo.get() !== 'camara') return;
       escena.modify((e) => {
         'worklet';
         const v = ev.velocityY / e.alto;
@@ -311,6 +377,9 @@ export default function Cielo() {
     },
     onFinalize: () => {
       'worklet';
+      const era = modo.get();
+      modo.set('nada');
+      if (era !== 'camara') return;
       escena.modify((e) => {
         'worklet';
         e.cam.arrastrando = false;
@@ -347,7 +416,7 @@ export default function Cielo() {
     };
   });
 
-  const camaraCielo = useDerivedValue(() => [{ translateY: escena.value.cam.y * PARALAJE.cielo * alto }]);
+  const camaraCielo = useDerivedValue(() => [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.cielo * alto }]);
   const camaraLoma0 = useDerivedValue(() => [{ translateY: escena.value.cam.y * PARALAJE.lomas[0] * alto }]);
   const camaraLoma1 = useDerivedValue(() => [{ translateY: escena.value.cam.y * PARALAJE.lomas[1] * alto }]);
   const camaraLoma2 = useDerivedValue(() => [{ translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }]);
@@ -532,6 +601,8 @@ export default function Cielo() {
         riqueza={riqueza}
         cuadros={cuadros}
         acciones={acciones}
+        abajo={abajo}
+        subida={subida?.progreso}
       />
     </View>
   );

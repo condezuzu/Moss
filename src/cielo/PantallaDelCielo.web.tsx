@@ -8,8 +8,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useAlmacenListo } from '@/almacen';
 import { t } from '@/textos';
 import { colores } from '@/tema';
+import type { PropsDelCielo } from './Cielo';
 
-export default function PantallaDelCielo() {
+export default function PantallaDelCielo(props: PropsDelCielo) {
   const listo = useAlmacenListo();
   const espera = (
     <View style={estilos.espera}>
@@ -17,7 +18,7 @@ export default function PantallaDelCielo() {
     </View>
   );
   if (!listo) return espera;
-  return <WithSkiaWeb opts={{ locateFile: (archivo: string) => `/${archivo}` }} getComponent={() => import('./Cielo')} fallback={espera} />;
+  return <WithSkiaWeb opts={{ locateFile: (archivo: string) => `/${archivo}` }} getComponent={() => import('./Cielo')} fallback={espera} componentProps={props} />;
 }
 
 const estilos = StyleSheet.create({
