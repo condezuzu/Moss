@@ -393,7 +393,11 @@ enciende estrellas.
   - hoy;
   - constelaciones (tu cielo y el universo);
   - calendario (el mes en mini cielos);
-  - estadísticas, con las tarjetas de Ascent bloqueadas y su botón «Vincular».
+  - estadísticas.
+- **Ascent, arriba de Hábitos** (cambio 10): la sección, su gesto y su
+  flecha. Sin vincular, las funciones vacías con «Vincular»; vinculada, lo de
+  hoy, cuando entre la conexión (después de la v1). Armada en la galería el
+  22/10/2026.
 - **Perfil** (antes Ajustes): tus datos, calidad, idioma, unidades, Salud, cuenta, Ascent, exportar y borrar.
 
   La zona de amigos queda reservada para después de la v1. Cada pantalla pasa
@@ -449,7 +453,7 @@ enciende estrellas.
 - **Escribir la comida en Salud.**
 - **La conexión con Ascent** ([`ascent.md`](ascent.md)):
   - Lo que toca a la comida ya está definido: peso único, calorías según el día de entrenamiento y proteína post-entreno.
-  - El lado de Moss va en este repo: el vínculo, las funciones cruzadas, las tarjetas bloqueadas y las funciones conectadas.
+  - El lado de Moss va en este repo: el vínculo, las funciones cruzadas y la sección de Ascent arriba de Hábitos, con lo de hoy.
   - **Los cambios del repo de Ascent** se hacen en una sesión aparte sobre Ascent. La lista está en `ascent.md`, «Cambios en el repo de Ascent»:
     - base: altas, vistas públicas, peso y borrar;
     - app: Sign in with Apple, Stats, Ajustes, recuperación, estancamiento, resumen anual y enlaces;

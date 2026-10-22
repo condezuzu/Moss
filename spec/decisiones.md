@@ -61,6 +61,31 @@ Lo dijiste: «lo de agua lo sacaría». Quedó así:
 
 Si un hábito de agua existe, es una estrella más. ¿Así?
 
+### D22 · Ascent, arriba de Hábitos (armada el 22/10/2026)
+
+En la galería, sección 7, sin vincular y vinculada.
+
+- La flecha quedó abajo, sobre el musgo y debajo de la frase: es donde empieza
+  el dedo para deslizar para arriba, como en la pantalla bloqueada del iPhone.
+  La sección sube desde ahí y queda encima del cielo.
+- Arrastrar para abajo sigue llevando a tu universo.
+- Vinculada, la meta de hoy cambia en toda la app. En la galería, el día de
+  piernas pasa a 2.840 kcal y 172 g de proteína.
+
+¿Así, o querés la flecha arriba de todo?
+
+### D23 · El verde
+
+El verde vivo era el mismo de la luz del musgo: por eso Inicio y Comida se
+confundían con Hábitos.
+
+- Quedó para el cielo.
+- La interfaz usa crema, y un verde salvia apagado solo para los carbohidratos y
+  lo que va bien.
+- «Te quedan» va en crema.
+
+¿Así?
+
 ### D5 · La riqueza del cielo: cuándo crece
 
 El progreso es el cielo: la riqueza va de 0 a 1 y sale de la luz juntada desde
@@ -266,6 +291,11 @@ Están en la galería, sección 10, «Para decidir»:
   (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
 
 ## Resueltas
+
+### La luna (lo pediste el 22/10/2026)
+
+La luna de píxeles no te gustó, así que volvió la de antes en Inicio y en
+Comida: la de SVG, con su cara, sus mares y la sombra suave.
 
 ### D14 · Las pestañas (reemplazada por el cambio 9, 22/10/2026)
 

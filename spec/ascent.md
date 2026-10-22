@@ -90,7 +90,7 @@ y 5.1.3).
 | `moss.ascent_dia(fecha)` | `public.logs` y `public.sesiones`: entrenó o descansó, volumen (`bloques`), series, duración, días seguidos | Moss: gimnasio automático, calorías y proteína del día, recuperación |
 | `moss.pesos_compartidos(desde)` | `moss.pesos` y `public.weights` juntos | Moss (tendencia) y Ascent (DOTS, Stats › Peso) |
 | `moss.recuperacion(fecha)` | sueño y comida de Moss, más entrenamiento de Ascent | las dos |
-| `moss.semanas_para_ascent(desde)` | por semana: sueño promedio, días que llegó a la proteína, balance de calorías | Ascent: «Por qué no subís» |
+| `moss.semanas_para_ascent(desde)` | por semana: sueño promedio, proteína promedio por día y balance por día | las dos: «Por qué no subís» |
 | `moss.objetivo()` | objetivo y ritmo de Moss | Ascent: qué espera de la fuerza |
 | `moss.anio(anio)` y `moss.ascent_anio(anio)` | totales del año de cada app | el resumen anual, en las dos |
 | `moss.amigos()` | `public.friendships`, respetando `son_amigos()` y `bloqueos` | Moss, cuando tenga social |
@@ -99,14 +99,17 @@ y 5.1.3).
 
 1. **Recuperación**
    - Un puntaje de 0 a 100, con una fórmula escrita y a la vista:
-     - **Sueño, 40 %:** horas de anoche contra 8 y la calidad de sueño de Moss.
-     - **Carga, 40 %:** volumen de los últimos 3 días contra el promedio diario
-       de las últimas 4 semanas, y días seguidos entrenando.
-     - **Comida, 20 %:** si ayer llegó a la proteína y si comió al menos el 80 %
-       de la meta.
+     - **Sueño, 40:** 20 × lo dormido anoche contra lo que necesitás (hasta
+       1), más 20 × la calidad de la noche de Moss sobre 100.
+     - **Carga, 40:** r es el volumen de los 3 días anteriores sobre 3 veces el
+       promedio diario de las 4 semanas anteriores. Da 40 × (1,5 − r), entre 0
+       y 40, menos 5 por cada día seguido entrenando después del segundo.
+     - **Comida, 20:** 10 × la proteína de ayer contra la meta (hasta 1), más
+       10 × las calorías de ayer contra el 80 % de la meta (hasta 1).
    - **Qué conviene:** «fuerte» de 70 para arriba, «normal» de 45 a 69 y
      «suave» debajo de 45.
-   - Va en Ascent antes de entrenar y en la zona de estadísticas de Moss.
+   - Va en Ascent antes de entrenar, y en Moss en su sección (arriba de
+     Hábitos) y arriba en Sueño.
    - Es orientativo y lo dice: Apple pide mostrar el método detrás de cualquier
      número de salud (regla 1.4.1).
 2. **Por qué no subís**
@@ -117,6 +120,11 @@ y 5.1.3).
    - Elige la diferencia más grande y la escribe en una oración. Por ejemplo:
      «tus mejores marcas llegan las semanas que dormís 7 h o más y llegás a la
      proteína».
+   - Compara el sueño promedio, la proteína promedio por día y el balance por
+     día. Cada diferencia se mide en su escala: 45 minutos de sueño, 15 g de
+     proteína o 250 kcal de balance cuentan lo mismo.
+   - Muestra la tabla y la oración, y aclara que compara semanas: no es una
+     causa segura. Como el aviso de Ascent, describe y no receta.
 3. **Resumen anual:** una pantalla «Tu año» en cada app, con lo de las dos.
 4. **Peso único**
    - Cada app escribe en su tabla: Ascent en `public.weights` (con sus funciones
@@ -137,21 +145,47 @@ y 5.1.3).
    - La lista de amigos es `public.friendships` de Ascent: Moss la lee y no
      tiene otra.
 8. **Proteína post-entreno:** si el volumen de la sesión supera el promedio de
-   las del usuario, ese día suben 0,3 g por kilo, hasta 40 g más.
+   las del usuario, ese día suben 0,3 g por kilo, hasta 40 g más. Salen de los
+   carbohidratos que sumó el día de gimnasio: las calorías quedan como las dejó
+   «Calorías según el día».
 9. **Gimnasio automático**
    - Un hábito automático más, como los de Salud, con fuente «Ascent»: se
      enciende cuando `moss.ascent_dia(hoy)` dice que entrenó.
    - Se revisa al abrir la app. Sube del musgo con la misma luz que los de Salud.
 
-### Sin vincular
+### La sección de Ascent en Moss
 
-En la zona de estadísticas de Moss van las tarjetas bloqueadas, con «Vincular» o
-«Conseguir Ascent»:
+Está arriba de Hábitos (cambio 10 de la especificación) y es lo único de Moss que
+es de las dos apps. En la galería, sección 7.
 
-- Recuperación.
-- Calorías según el día.
-- Gimnasio automático.
-- Tu año con Ascent.
+- **Cómo se llega:**
+  - En Hábitos, una flecha muy tenue abajo, sobre el musgo y debajo de la frase,
+    apunta para arriba.
+  - Deslizar para arriba sube la sección desde el musgo, siguiendo al dedo.
+    Cambia con un quinto de la pantalla o con un tirón, como las pestañas.
+  - Se vuelve deslizando para abajo desde arriba de todo, con la flecha de
+    arriba o tocando Hábitos.
+  - Arrastrar el cielo para abajo sigue llevando a tu universo.
+  - También se llega desde Perfil y desde la recuperación en Sueño.
+- **Cómo se ve:**
+  - Con los colores de Ascent (su fondo casi negro, su azul gris y su crema),
+    esquinas vivas y una línea arriba de cada parte en vez de cajas.
+  - Arriba, el planeta de Ascent con su órbita abierta, como en su ícono, y la
+    luna de Moss: sin vincular queda afuera de la órbita, y al vincular entra.
+- **Sin vincular:**
+  - «Vincular con Ascent», «¿No tienes Ascent?» (la App Store) y que es la misma
+    cuenta.
+  - Después, «Solo con las dos» (recuperación, por qué no subís y tu año) y
+    «Andan solas, mejor conectadas» (las otras seis).
+  - Cada una muestra vacío lo que va a mostrar, con un candado chico.
+- **Vinculada:**
+  - la sesión de hoy en Ascent y lo que le suma a la meta de la comida;
+  - la recuperación, con sus tres partes y cómo se calcula;
+  - por qué no subís, con la tabla y la oración;
+  - tu año;
+  - las seis que andan solas, con lo de hoy.
+- **La recuperación también vive en Sueño**, arriba, con el vínculo: cruza justo
+  el sueño con el entrenamiento.
 
 En Ascent van en Stats (ver la lista de cambios).
 

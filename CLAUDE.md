@@ -140,7 +140,8 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `entrada`;
 - `comida` (con el cuadro de día, semana y mes), `registrar`, `etiqueta`, `comida-ingles`;
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
-- `progreso`, `metas`, `sueno`.
+- `progreso`, `metas`, `sueno`;
+- `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`.
 
 La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
 3 Sueño, 4 Hábitos y 5 Perfil: los escenarios del cielo pasan antes a Hábitos
@@ -201,8 +202,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `entrada.js`: la entrada a la app.
 - `util.js`: lo que comparten las secciones nuevas (textos, números, íconos y
   la hoja de abajo).
-- `luna.js`: la luna, dibujada píxel a píxel como una esfera.
-- `datos.js`: la persona de mentira (perfil, pesadas, medidas y noches de Salud).
+- `luna.js`: la luna de la comida, en SVG.
+- `datos.js`: la persona de mentira (perfil, pesadas, medidas, noches de Salud y lo que tiene en Ascent).
 - `comida.js`: Comida, con el cuadro de día, semana y mes, y la hoja de
   registro con la ventana del alimento, la comida que se arma, la revisión, la
   etiqueta y el teclado.
@@ -211,5 +212,6 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `progreso.js`: Progreso, con la estrategia y las metas.
 - `sueno.js`: Sueño.
 - `perfil.js`: Perfil.
+- `ascent.js`: Ascent, arriba de Hábitos, sin vincular y vinculada.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
   «+» en la barra.

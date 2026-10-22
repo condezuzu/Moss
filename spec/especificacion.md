@@ -73,6 +73,21 @@ En el orden en que llegaron:
    Cambiaron «Registro», «La comida», «Visual», «Las secciones» (nueva) y
    «Versión 1».
 
+10. **Ascent, arriba de Hábitos** (lo pediste el 22/10/2026). La parte que solo
+    se usa con Ascent vinculada es una sección propia, arriba de Hábitos:
+    - en el cielo, abajo, sobre el musgo, una flecha muy tenue apunta para
+      arriba; deslizar para arriba sube la sección siguiendo al dedo, y se
+      vuelve deslizando para abajo o tocando Hábitos;
+    - sin vincular, cada función muestra vacío lo que va a mostrar, con
+      «Vincular» arriba; vinculada, lo de hoy. Las dos formas tienen que verse
+      bien;
+    - la recuperación también se ve en Sueño.
+
+    En el mismo pedido, la luna volvió a ser la de antes, «Te quedan» cambió de
+    color y la interfaz bajó el verde: el vivo quedó para el cielo.
+
+    Cambiaron «Las secciones», «Visual» y «Conexión con Ascent».
+
 ---
 
 Vamos a crear Moss, una app de hábitos para iPhone, desde cero. Es mi segunda app: la primera es Ascent (app de racha de gimnasio, Expo + Supabase, repo github.com/condezuzu/ascent, ya publicada en la App Store). El objetivo es mandar la versión 1 a revisión de Apple lo antes posible, pero lo visual es el producto: tiene que verse espectacular, muy por encima de una app de hábitos normal.
@@ -210,7 +225,8 @@ Perfil (cambio 9, 22/10/2026).
 
   Ver [`progreso.md`](progreso.md).
 - **Sueño:** ver [`sueno.md`](sueno.md).
-- **Hábitos:** el cielo de hoy y el universo.
+- **Hábitos:** el cielo de hoy y, arrastrando para abajo, el universo.
+- **Ascent:** arriba de Hábitos, deslizando para arriba (cambio 10). Es la sección que solo se usa con Ascent vinculada: ver «Conexión con Ascent» y [`ascent.md`](ascent.md).
 - **Perfil:** tus datos, las preferencias, Salud y Ascent, exportar y borrar.
 - **El «+»:**
   - agregar comida y registrar el peso, arriba;
@@ -225,10 +241,12 @@ Perfil (cambio 9, 22/10/2026).
   - Se pasa tocando o deslizando, con la de al lado asomando, como en Ascent.
   - El cielo queda quieto detrás de todas, oscurecido salvo en Hábitos.
 - En Hábitos el cielo es continuo: arrastrar hacia abajo mueve la cámara por el espacio hasta tu universo, con la semana, en vez de saltar a otra pantalla.
+- Arriba de Hábitos está Ascent: una flecha muy tenue, abajo, sobre el musgo, apunta para arriba, y deslizar para arriba sube la sección siguiendo al dedo. Tiene los colores y la forma de Ascent: es la única parte de Moss que es de las dos apps.
 - El final de la entrada tiene un movimiento como si se estuviera yendo muy lejos, muy rápido: una animación de un segundo, tipo «flum». Antes era para moverse entre secciones; con las pestañas quedó solo ahí.
 - Cielo nocturno sin contaminación lumínica: muchísimas estrellas y auroras. Desde el 21/10/2026, la vía láctea va mucho más tenue, al 30 %: Moss es más sobrio.
 - Las constelaciones son parte del fondo: cuantos más hábitos hechos, más cielo encendido, así cada cielo es distinto.
 - Paleta: azul noche profundo, dorado y toques de verde musgo. Distinta de Ascent, que es astronomía y física. La estética de Moss va hacia menos mitología, más cielo nocturno y naturaleza (musgo), y es cálida.
+  - El verde vivo es del cielo: la luz del musgo y la aurora. La interfaz usa crema, y un verde salvia apagado solo para los carbohidratos y lo que va bien (cambio 10).
 - Musgo y estrellas: el musgo aparece en algunas zonas, las estrellas en otras, y en lugares puntuales los dos juntos.
 - Animaciones fluidas en toda la app. A Ascent le quedó lag al cambiar de pantalla en teléfonos peores; acá las animaciones van nativas desde el inicio (Reanimated o Skia).
 - Ajuste de calidad gráfica alta / media / baja en Ajustes, con valor por defecto según el teléfono.
@@ -290,7 +308,9 @@ Andan solas, pero mejor conectadas:
 
 Sin vincular:
 
-- No hay una ventana aparte. Las funciones conectadas aparecen bloqueadas dentro de Stats en Ascent y dentro de la sección equivalente de Moss, con un botón para vincular. Si el usuario no tiene la otra app, el botón lleva a la App Store.
+- En Ascent, las funciones conectadas aparecen bloqueadas dentro de Stats, con un botón para vincular.
+- En Moss viven en su propia sección, arriba de Hábitos (cambio 10). Sin vincular, cada función muestra vacío lo que va a mostrar, con «Vincular» arriba; vinculada, muestra lo de hoy. Las dos formas tienen que verse bien. La recuperación también se ve en Sueño.
+- Si el usuario no tiene la otra app, el botón lleva a la App Store.
 - Vincular también está disponible desde Ajustes en las dos apps.
 
 Resolvé vos cómo se sincronizan técnicamente (mismo Supabase o proyectos separados, y cómo se vinculan las cuentas). Hacé todo lo que puedas solo; si necesitás que yo haga algo (permisos en Supabase, en Apple Developer o lo que sea), avisame qué exactamente y dónde. Incluí en el plan qué cambios hacen falta en el repo de Ascent; esos se hacen después, en una sesión aparte sobre Ascent.
