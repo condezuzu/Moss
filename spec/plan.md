@@ -46,7 +46,8 @@ Las etapas van en orden, con estas excepciones:
 
 - Proyecto Expo SDK 58 (React Native 0.88, Nueva Arquitectura), solo iPhone,
   `uy.moss.app`, equipo `XF9N8X9KJG`, dueño de EAS `condeag`.
-- Perfiles de EAS `dev`, `telefono`, `simulador` y `store`, como en Ascent.
+- Perfiles de EAS `dev`, `telefono`, `simulador` y `store`, como en Ascent. El proyecto de EAS es `@condeag/moss` (22/10/2026); los perfiles no llevan canal hasta que entren las actualizaciones por aire.
+- Repo propio y privado: github.com/condezuzu/moss (22/10/2026).
 - Diccionario es/en tipado ([`src/textos`](../src/textos)), tema
   ([`src/tema.ts`](../src/tema.ts)), cliente de Supabase con esquema `moss`
   ([`src/lib/supabase.ts`](../src/lib/supabase.ts)), permisos de Salud en los
@@ -378,6 +379,12 @@ teléfono.
 enciende estrellas.
 
 ## Etapa 10 · Las seis secciones y las zonas del cielo
+
+**En la app desde el 22/10/2026**, para probarla en el iPhone: la tira con el gesto de Ascent (la
+constelación se va con su página), la barra con el «+», la hoja del «+» (por ahora suma el
+agua) y Ascent arriba de Hábitos, sin vincular, con su gesto y su flecha. Las otras secciones
+muestran su nombre hasta las etapas 7 y 8, y la app abre en Hábitos mientras tanto. Probado en
+la web (`npm run app:capturas`); falta el iPhone.
 
 - **Las secciones**, como se aprueben en la galería (cambio 9): Inicio, Comida y
   Progreso (etapa 7), el «+», Sueño (etapa 8), Hábitos (el cielo) y Perfil, con

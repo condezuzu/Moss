@@ -87,7 +87,7 @@ y 5.1.3).
 
 | Función | De dónde sale | La usa |
 |---|---|---|
-| `moss.ascent_dia(fecha)` | `public.logs` y `public.sesiones`: entrenó o descansó, volumen (`bloques`), series, duración, días seguidos | Moss: gimnasio automático, calorías y proteína del día, recuperación |
+| `moss.ascent_dia(fecha)` | `public.logs` y `public.sesiones`: entrenó o descansó, las series, el peso movido (la suma del peso de cada serie de `bloques`, como lo cuenta Ascent), los minutos y los días seguidos | Moss: gimnasio automático, calorías y proteína del día, recuperación |
 | `moss.pesos_compartidos(desde)` | `moss.pesos` y `public.weights` juntos | Moss (tendencia) y Ascent (DOTS, Stats › Peso) |
 | `moss.recuperacion(fecha)` | sueño y comida de Moss, más entrenamiento de Ascent | las dos |
 | `moss.semanas_para_ascent(desde)` | por semana: sueño promedio, proteína promedio por día y balance por día | las dos: «Por qué no subís» |
@@ -97,13 +97,18 @@ y 5.1.3).
 
 ### Cada función conectada
 
+Las cuentas de Moss están en `src/dominio/entrenamiento.ts`, con sus tests; la
+galería las usa tal cual. Las funciones de Supabase que comparten un número con
+Ascent (la recuperación) hacen la misma cuenta.
+
 1. **Recuperación**
    - Un puntaje de 0 a 100, con una fórmula escrita y a la vista:
      - **Sueño, 40:** 20 × lo dormido anoche contra lo que necesitás (hasta
        1), más 20 × la calidad de la noche de Moss sobre 100.
-     - **Carga, 40:** r es el volumen de los 3 días anteriores sobre 3 veces el
-       promedio diario de las 4 semanas anteriores. Da 40 × (1,5 − r), entre 0
-       y 40, menos 5 por cada día seguido entrenando después del segundo.
+     - **Carga, 40:** r es el peso movido de los 3 días anteriores sobre 3
+       veces el promedio diario de las 4 semanas anteriores. Da 40 × (1,5 − r),
+       entre 0 y 40, menos 5 por cada día seguido entrenando después del
+       segundo.
      - **Comida, 20:** 10 × la proteína de ayer contra la meta (hasta 1), más
        10 × las calorías de ayer contra el 80 % de la meta (hasta 1).
    - **Qué conviene:** «fuerte» de 70 para arriba, «normal» de 45 a 69 y
@@ -123,8 +128,16 @@ y 5.1.3).
    - Compara el sueño promedio, la proteína promedio por día y el balance por
      día. Cada diferencia se mide en su escala: 45 minutos de sueño, 15 g de
      proteína o 250 kcal de balance cuentan lo mismo.
-   - Muestra la tabla y la oración, y aclara que compara semanas: no es una
-     causa segura. Como el aviso de Ascent, describe y no receta.
+   - **Solo habla con datos suficientes:** 3 semanas con marcas y 3 sin, cada
+     una con al menos 4 días de comida y 4 noches de sueño registrados. Si
+     faltan, dice que todavía está juntando información y cuántas van de cada
+     lado.
+   - Solo cuenta la diferencia que va para el lado malo: dormir menos, menos
+     proteína o más déficit. Si la más grande llega a una escala entera, es la
+     **causa probable**; si no, dice que no hay una diferencia clara y que la
+     causa probable está en otro lado.
+   - Muestra la tabla y la oración, y aclara que es una causa probable, no
+     segura: compara semanas. Como el aviso de Ascent, describe y no receta.
 3. **Resumen anual:** una pantalla «Tu año» en cada app, con lo de las dos.
 4. **Peso único**
    - Cada app escribe en su tabla: Ascent en `public.weights` (con sus funciones
@@ -132,22 +145,46 @@ y 5.1.3).
    - Vinculadas, las dos leen la unión: por día gana el último registro.
    - No hay copias ni sincronización, y desvincular separa todo solo.
 5. **Calorías según el día**
-   - El total de la semana lo fija el control semanal y no cambia: los días de
-     entrenamiento suben y los de descanso bajan lo mismo, repartido.
-   - El reparto sale de cuántos días entrenó en las últimas 4 semanas.
-   - Si a la mañana Ascent todavía no anotó el día, Moss muestra la meta de
-     descanso. Cuando llega el registro, la sube y avisa: «Hoy entrenaste: +250
-     kcal».
+   - El control semanal ya cuenta el entrenamiento de siempre en el gasto: no se
+     suma nada, se reparte. La semana del control (de su día a los 6
+     siguientes) suma lo mismo que da el control: 7 veces su meta.
+   - Un día de gimnasio tiene lo que cuesta una sesión más que uno de
+     descanso. El costo es de 4 kcal por kilo y por hora (el Compendio de
+     Actividades Físicas de 2024 le da a la fuerza de 3,5 a 6 MET; se toman 5,
+     menos el del reposo), con la duración promedio de sus sesiones, de a 10
+     kcal, entre 100 y 500.
+   - Los días se resuelven en orden, y cada uno se lleva su parte de lo que
+     queda de la semana:
+     - lo que ya pasó se sabe (entrenó o no);
+     - hoy cuenta como entrenado cuando Ascent anota la sesión: a la mañana es de
+       descanso y, cuando llega el registro, sube;
+     - lo que viene se espera según qué tan seguido entrena ese día de la
+       semana (las 4 semanas anteriores).
+   - Si entrena más o menos que de costumbre, los días que quedan se acomodan y
+     el último cierra la cuenta exacta.
+   - Se mueven los carbohidratos; la proteína y las grasas quedan. Ningún día
+     baja del piso de calorías ni de lo que piden la proteína y las grasas: solo
+     ahí la semana puede pasarse.
 6. **Objetivo compartido:** en definición, Ascent relaja el umbral de
    estancamiento y no espera marcas; en volumen, espera progreso.
 7. **Login y amigos**
    - Es la misma cuenta.
    - La lista de amigos es `public.friendships` de Ascent: Moss la lee y no
      tiene otra.
-8. **Proteína post-entreno:** si el volumen de la sesión supera el promedio de
-   las del usuario, ese día suben 0,3 g por kilo, hasta 40 g más. Salen de los
-   carbohidratos que sumó el día de gimnasio: las calorías quedan como las dejó
-   «Calorías según el día».
+8. **Proteína post-entreno** (la fórmula que propuse el 22/10, D24)
+   - Depende del tamaño de la sesión en Ascent: las series y el peso movido,
+     cada uno contra el promedio de sus sesiones de las 4 semanas anteriores, y
+     la media de los dos. 1 es una sesión de las de siempre.
+   - La proteína del día sube hacia 2,2 g por kilo, el techo útil: el punto de
+     quiebre de Morton y otros (2018) está en 1,62 g por kilo, y 2,2 es el
+     límite de arriba de su estimación.
+   - Una sesión de la mitad de lo de siempre o menos no suma; una de las de
+     siempre suma la mitad de lo que falta hasta el techo; una un 50 % más
+     grande, todo. De a 5 g y hasta 40 g. Después de entrenar todo el cuerpo, más
+     proteína da más síntesis muscular (Macnaughton y otros, 2016; Trommelen y
+     otros, 2023).
+   - Sale de los carbohidratos del día: las calorías quedan como las dejó
+     «Calorías según el día».
 9. **Gimnasio automático**
    - Un hábito automático más, como los de Salud, con fuente «Ascent»: se
      enciende cuando `moss.ascent_dia(hoy)` dice que entrenó.
@@ -163,6 +200,9 @@ es de las dos apps. En la galería, sección 7.
     apunta para arriba.
   - Deslizar para arriba sube la sección desde el musgo, siguiendo al dedo.
     Cambia con un quinto de la pantalla o con un tirón, como las pestañas.
+  - El gesto solo arranca arriba de la barra de pestañas: nunca en el borde de
+    abajo, que es del gesto de inicio del iPhone. Tocar la flecha también abre
+    la sección.
   - Se vuelve deslizando para abajo desde arriba de todo, con la flecha de
     arriba o tocando Hábitos.
   - Arrastrar el cielo para abajo sigue llevando a tu universo.

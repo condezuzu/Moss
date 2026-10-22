@@ -61,18 +61,16 @@ Lo dijiste: «lo de agua lo sacaría». Quedó así:
 
 Si un hábito de agua existe, es una estrella más. ¿Así?
 
-### D22 · Ascent, arriba de Hábitos (armada el 22/10/2026)
+### D24 · La proteína después de entrenar (la fórmula que propongo)
 
-En la galería, sección 7, sin vincular y vinculada.
+Pediste que dependa del volumen de la sesión en Ascent. Ver
+[`ascent.md`](ascent.md), función 8:
+- el tamaño de la sesión: las series y el peso movido contra su promedio;
+- la proteína sube hacia 2,2 g por kilo: una sesión de las de siempre suma la
+  mitad de lo que falta, una un 50 % más grande, todo, hasta 40 g;
+- sale de los carbohidratos: las calorías no cambian.
 
-- La flecha quedó abajo, sobre el musgo y debajo de la frase: es donde empieza
-  el dedo para deslizar para arriba, como en la pantalla bloqueada del iPhone.
-  La sección sube desde ahí y queda encima del cielo.
-- Arrastrar para abajo sigue llevando a tu universo.
-- Vinculada, la meta de hoy cambia en toda la app. En la galería, el día de
-  piernas pasa a 2.840 kcal y 172 g de proteína.
-
-¿Así, o querés la flecha arriba de todo?
+¿Así?
 
 ### D23 · El verde
 
@@ -292,6 +290,12 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
+### D22 · Ascent, arriba de Hábitos (aceptada el 22/10/2026)
+
+La flecha queda abajo, sobre el musgo y debajo de la frase. El gesto arranca solo
+arriba de la barra de pestañas (el borde de abajo es del gesto de inicio del
+iPhone), y tocar la flecha también abre la sección.
+
 ### La luna (lo pediste el 22/10/2026)
 
 La luna de píxeles no te gustó, así que volvió la de antes en Inicio y en
@@ -365,6 +369,15 @@ La entrada nueva es obligatoria y pide la cuenta antes del cuestionario. Ya no
 hacen falta las cuentas anónimas.
 
 ## Tomadas por mi cuenta
+
+### Calorías según el día y «Por qué no subís» (22/10/2026)
+
+- **El costo de una sesión**, para repartir las calorías: 4 kcal por kilo y por
+  hora, con la duración promedio de sus sesiones. Un día de gimnasio tiene eso
+  más que uno de descanso, y la semana suma lo que da el control.
+- **El mínimo de «Por qué no subís»**: 3 semanas con marcas y 3 sin, cada una
+  con al menos 4 días de comida y 4 noches de sueño. Con menos, dice que todavía
+  está juntando información.
 
 - **El día del control semanal** (22/10/2026): sin elegir, el de la semana en
   que se fijó la primera meta, como en MacroFactor. Si ese día no se abre Moss,

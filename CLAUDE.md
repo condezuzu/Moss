@@ -37,7 +37,7 @@ SDK y la memoria no alcanza.
   `assets/alimentos.db`:
   - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `control.ts`,
-    `cuerpo.ts`, `progreso.ts` y `sueno.ts`, que solo importan entre ellos
+    `cuerpo.ts`, `progreso.ts`, `sueno.ts` y `entrenamiento.ts`, que solo importan entre ellos
     (`DEL_DOMINIO` en `construir.mjs`).
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
   usa una función tiene que estar definido antes que ella. Por eso `paso()` va
@@ -107,6 +107,7 @@ SDK y la memoria no alcanza.
 |---|---|
 | Galería privada | https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr. Se republica con la herramienta Artifact desde `galeria/dist/index.html` (después de `npm run galeria`), pasando ese enlace como `url`: así queda en el mismo lugar. |
 | Rama | `cimientos` (sale de `master`) |
+| Repo | github.com/condezuzu/moss, privado (el remoto `origin`); Moss tiene su propio repo, aparte del de Ascent |
 | App | `uy.moss.app` · equipo `XF9N8X9KJG` · EAS `condeag` |
 | Supabase | el proyecto de Ascent (`okeanaihymbvbdmrdqph`), esquema `moss`. Cómo y por qué: `spec/ascent.md` |
 | La otra app | Ascent: `C:\Users\agusc\ascent`, github.com/condezuzu/ascent |
@@ -126,7 +127,8 @@ SDK y la memoria no alcanza.
 | `npm run galeria:capturas` | capturas a 393×852 @2× en `capturas/galeria` (ver los escenarios abajo) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
 | `npm run web:exportar` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
-| `npm run app:capturas` | capturas de la app en la web: calidad, riqueza, toque, que se acuerde al recargar, día completo y universo |
+| `npm run app:capturas` | capturas de la app en la web: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo y las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas y el «+») |
+| `npx eas-cli@latest build --profile dev --platform ios` | la build de desarrollo para el iPhone (la primera vez pide entrar a Apple); su JavaScript llega de `npx expo start` |
 | `npm run catalogo:verificar` | valida el catálogo y las distancias entre estrellas |
 | `npx expo start` | Metro para la build `dev` del teléfono (Expo Go no sirve: Salud necesita build propia) |
 
@@ -169,8 +171,9 @@ mirar una animación cuadro a cuadro está la cámara lenta
 
 | Carpeta | Qué hay |
 |---|---|
-| `src/app/` | rutas de Expo Router (hoy, un solo cielo) |
-| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`) y el sueño (`sueno.ts`) |
+| `src/app/` | rutas de Expo Router (hoy, las secciones) |
+| `src/secciones/` | las seis secciones (`Secciones.tsx`): la tira con el gesto de Ascent, la barra con el «+» (`Barra.tsx`), la hoja del «+» (`HojaMas.tsx`), Ascent arriba de Hábitos (`Ascent.tsx`, `MarcaDeAscent.tsx`) y los movimientos (`movimiento.ts`). Las que todavía no están muestran su nombre |
+| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`), el sueño (`sueno.ts`) y lo que Moss hace con el entrenamiento de Ascent (`entrenamiento.ts`: calorías según el día, proteína después de entrenar, recuperación y por qué no subís) |
 | `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), con los hábitos, las metas, la estrategia, lo que se come (y la canasta, que no sube) y las medidas del cuerpo, sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
 | `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`) y Open Food Facts por código de barras (`off.ts`) |

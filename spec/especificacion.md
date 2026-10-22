@@ -300,10 +300,10 @@ Solo con las dos conectadas:
 Andan solas, pero mejor conectadas:
 
 4. Peso único: pesarse en cualquiera de las dos actualiza las dos (Ascent lo usa para el DOTS, Moss para ajustar las metas de comida).
-5. Calorías según el día: los días de entrenamiento en Ascent suben la meta de calorías de Moss, y los días de descanso la bajan.
+5. Calorías según el día: los días de entrenamiento en Ascent suben la meta de calorías de Moss, y los días de descanso la bajan lo mismo. El control ya cuenta el entrenamiento de siempre en el gasto, así que no se suma nada: se reparte, y la semana suma lo que da el control.
 6. Objetivo compartido: si en Moss el usuario está en volumen o en definición, Ascent ajusta lo que espera de su fuerza.
 7. Login y amigos compartidos: una sola cuenta y una sola lista de amigos para las dos apps.
-8. Proteína post-entreno: según el volumen de la sesión en Ascent, Moss sube la meta de proteína de ese día.
+8. Proteína post-entreno: según el volumen de la sesión en Ascent (las series y el peso movido), Moss sube la meta de proteína de ese día, hacia el techo útil de 2,2 g por kilo.
 9. Gimnasio automático: si el día quedó registrado en Ascent, el hábito de gimnasio se enciende solo en Moss.
 
 Sin vincular:
