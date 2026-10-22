@@ -371,6 +371,62 @@ Son hábitos automáticos, como los de Salud, que se encienden solos en el cielo
 
   Lo único que crece con los usuarios es Supabase.
 
+## Lo que tienen las otras apps (22/10/2026)
+
+Lo pediste el 21/10: «pensá en todo lo que tiene una app de registro de macros y
+añadilo si creés que valga la pena». Se miraron MacroFactor, MyFitnessPal,
+Cronometer, Lose It!, Carbon, Yazio, FatSecret y MyNetDiary, más Fitia (la que
+más se usa en Latinoamérica), en sus páginas de ayuda, sus precios y sus fichas
+de la tienda.
+
+**Lo que ya es de todas y Moss ya tiene en el plan:**
+- buscador, código de barras, carga rápida, favoritos, recientes, comidas
+  guardadas, recetas, copiar comidas y días;
+- porciones caseras, agua, peso con Salud, widgets.
+
+**Lo que en las otras se paga y en Moss es gratis:**
+- el código de barras (pago en MyFitnessPal y en Lose It!);
+- la línea del día con la hora de cada comida (paga en MyFitnessPal y Cronometer);
+- metas distintas por día de la semana (pagas en casi todas);
+- el gasto que se ajusta solo (solo en las pagas: MacroFactor y Carbon);
+- exportar los datos (pago en MyFitnessPal y Yazio).
+
+**Lo que casi nadie tiene y Moss sí:**
+- **Deshacer:** solo Carbon recupera lo borrado.
+- **Andar sin conexión:** ninguna. MacroFactor muestra lo guardado, pero no
+  registra ([ayuda](https://help.macrofactorapp.com/en/articles/28-does-macrofactor-have-an-offline-mode)).
+- **Español con metas que se ajustan:** MacroFactor está en inglés y japonés, y
+  Carbon y Cronometer solo en inglés.
+
+**Lo que se suma a Moss:**
+
+| Qué | Quién lo tiene | Etapa |
+|---|---|---|
+| **Fibra, azúcares, grasas saturadas y sodio** (y el alcohol, si lo tiene): en la ventana del alimento y en el detalle del día. La fibra tiene meta suave (14 g cada 1.000 kcal), sin rojo. USDA, Open Food Facts y las etiquetas uruguayas ya los traen | todas; MacroFactor y Cronometer, completos | 4 (la base) y 7 (la pantalla) |
+| **Cómo se reparten los macros**, con la proteína siempre por kilo: equilibrada (la de ahora), baja en grasas, baja en carbohidratos y keto | MacroFactor ([ayuda](https://help.macrofactorapp.com/en/articles/34-what-are-the-different-program-options-in-coached-mode)), Carbon, Cronometer | 7 |
+| **Metas a mano**: las kcal y los macros los pone el usuario. El control semanal sigue midiendo el gasto, pero no toca la meta | MacroFactor, todas | 7 |
+| **Repartir la semana**: días más altos (el fin de semana, o los de entrenamiento con Ascent) y el resto más bajos, con el mismo total. La proteína no cambia; se mueven los carbohidratos | MacroFactor ([ayuda](https://help.macrofactorapp.com/en/articles/34-what-are-the-different-program-options-in-coached-mode)), Carbon; pago en las demás | 7 |
+| **Exportar todo en CSV**, gratis, desde Ajustes | MacroFactor; pago en MyFitnessPal y Yazio | 10 |
+| **Registrar por lo que falta**: en la ventana del alimento, «cuánto para 30 g de proteína» (o para las kcal que quedan) | MacroFactor | 5, primero en la galería |
+| **El país de los alimentos aparte del idioma**: una uruguaya que usa Moss en inglés sigue viendo «palta» y los productos de acá | Fitia | 10 (Ajustes) |
+| **Recordatorios suaves y opcionales**: si a tu hora de siempre no registraste, un aviso. Nunca de racha | MyFitnessPal, Yazio, MyNetDiary | 12 |
+
+**Para después de la v1:**
+- una Live Activity para registrar desde la isla (solo la tiene Yazio);
+- Atajos y Siri: «registrá un vaso de agua», «anotá mi peso»;
+- Apple Watch;
+- importar una receta desde un enlace;
+- escribir la comida en Salud;
+- todos los micronutrientes (vitaminas y minerales) y qué alimento aporta cada uno;
+- fotos de progreso y medidas del cuerpo;
+- usar los pasos de Salud para que el gasto se ajuste antes (MacroFactor lo hace).
+
+**Lo que no:**
+- **IA de fotos:** decidido desde el principio.
+- **Ayuno intermitente, planes de comida y lista del súper:** son otra app.
+- **Coach de IA, comunidad y desafíos:** no son la idea de Moss.
+- **Rachas:** Moss no tiene rachas; cuenta días acumulados.
+
 ## Lo que mira Apple
 
 - **1.4.1:** cualquier número de salud tiene que mostrar de dónde sale. Va un
@@ -388,23 +444,29 @@ Son hábitos automáticos, como los de Salud, que se encienden solos en el cielo
 ## Datos (esquema `moss`)
 
 Todo es local primero: el teléfono guarda al instante y Supabase sincroniza,
-con las reglas de la etapa 3. `pesos` y `metas` ya están en
-`supabase/moss/0001_esquema.sql`; el resto llega con su etapa.
+con las reglas de la etapa 3. `pesos` y `metas` están en
+`supabase/moss/0001_esquema.sql`; `registros`, `recetas`, `propios`,
+`favoritos` y `agua`, en `0002_comida.sql` (22/10/2026). Lo demás llega con su
+etapa. Lo que se borra en el teléfono llega a la cuenta como una marca
+(`borrado`), y gana si es lo más nuevo: así el borrado también llega a los otros
+teléfonos. Un teléfono nuevo baja lo comido de los últimos cuatro meses; lo
+anterior queda en la cuenta.
 
 | Tabla | Qué guarda |
 |---|---|
-| `registros` | lo comido: día local, comida (desayuno, almuerzo…), momento, alimento y de dónde sale (usda, catálogo, off, propio, receta), gramos, la porción elegida y los cuatro valores ya calculados, para que el historial no cambie si cambia la base; si está planificado o confirmado |
-| `alimentos_propios` | lo creado con la etiqueta o a mano: los cuatro valores por 100 g, sus porciones y el código de barras |
-| `recetas` | recetas y comidas guardadas: ingredientes en gramos, porciones que rinde y, en las recetas, el rendimiento al cocinar |
-| `favoritos` | los alimentos, recetas y comidas marcados |
-| `productos_off` | lo escaneado de Open Food Facts, con la fecha |
-| `agua` | por día, lo sumado a mano (lo de Salud se lee, no se copia) |
+| `registros` | lo comido: día local, comida (desayuno, almuerzo…), momento, alimento y de dónde sale (la base, el catálogo, off, propio, receta o carga rápida), la porción elegida y cuántas veces o los gramos, y los valores ya calculados (los cuatro de siempre más fibra, azúcares, saturadas, sodio y alcohol), para que el historial no cambie si cambia la base; si está planificado. Borrar deja una marca, para que el borrado llegue a los otros teléfonos |
+| `propios` | lo creado con la etiqueta o a mano: los valores por 100 g, sus porciones, la marca y el código de barras |
+| `recetas` | recetas y comidas guardadas: sus alimentos como en los registros, las porciones que rinde y, en las recetas, lo que pesan terminadas |
+| `favoritos` | los alimentos, recetas y comidas marcados; sacar uno es otro cambio |
+| `productos_off` | lo escaneado de Open Food Facts, con la fecha (etapa 6) |
+| `agua` | cada vaso sumado a mano, con su día (lo de Salud se lee, no se copia) |
 | `pesos` | uno por día: fecha, kg y origen (salud, manual o ascent) |
 | `metas` | desde cada fecha: kcal, macros, el gasto del que salieron y por qué |
 | `catalogo` | el catálogo uruguayo, que solo se lee |
 
 **Lo que no se guarda en Supabase:**
-- **La última porción de cada alimento y lo que comés a cada hora** se calculan con los registros.
+- **La última porción de cada alimento, lo que comés a cada hora, los recientes y el premio del buscador** se calculan con los registros (`src/dominio/registros.ts`).
+- **La comida que se arma en la hoja** (la canasta) queda en el teléfono hasta agregarla.
 - **Las fotos de la comida** quedan en el teléfono (D10).
 
 ## Riesgos

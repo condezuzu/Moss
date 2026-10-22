@@ -223,6 +223,7 @@ Hecho:
 Falta:
 
 - **Llegar a ~1.000 genéricos:** las formas cocidas, los platos del mundo que faltan y lo que se busque sin encontrar.
+- **Fibra, azúcares, grasas saturadas, sodio y alcohol** en la base, de USDA (se sumó el 22/10/2026, después de mirar las otras apps: [`nutricion.md`](nutricion.md), «Lo que tienen las otras apps»).
 - **Las ~200 comidas uruguayas**, como recetas con ingredientes de la lista curada. El armado de la base calcula sus valores.
 - **Los ~300 productos uruguayos:**
   - de Open Food Facts, los que están;
@@ -249,9 +250,16 @@ El corazón de la app. Los flujos y sus toques están en
   registro. Lo que ya quedó programado y con tests:
   - `src/comida/porciones.ts`, que escribe las cantidades;
   - `src/dominio/comidas.ts`, que elige la comida por la hora.
-- **En el almacén:**
-  - registros, favoritos, recetas y comidas guardadas, y lo planificado;
-  - con la misma sincronización de la etapa 3 y sus tests.
+- **En el almacén** (hecho el 22/10/2026, sin pantallas todavía):
+  - `src/dominio/registros.ts`: registros, recetas y comidas guardadas,
+    alimentos propios, favoritos y agua, con lo planificado, copiar, confirmar,
+    borrar con deshacer y los atajos (la última cantidad, lo que solés comer, los
+    recientes y el premio del buscador);
+  - el almacén, con la canasta que queda guardada en el teléfono;
+  - `supabase/moss/0002_comida.sql`, con la misma sincronización de la etapa 3:
+    gana lo más nuevo y un borrado llega como una marca;
+  - los tests, y `npm run supabase:verificar` con dos teléfonos registrando,
+    borrando y planificando.
 - **Los atajos** 3 a 12:
   - recetas y comidas guardadas;
   - copiar una comida o un día;
@@ -297,6 +305,11 @@ menos de un minuto.
 - **El control semanal automático:**
   - el cálculo ya está (`src/dominio/control.ts`);
   - falta que corra solo, su resumen y el «cómo se calcula».
+- **Lo que se sumó después de mirar las otras apps** (22/10/2026), primero en la galería:
+  - cómo se reparten los macros: equilibrada, baja en grasas, baja en carbohidratos y keto;
+  - metas a mano;
+  - repartir la semana, con los días altos que elijas;
+  - fibra, azúcares, saturadas y sodio en el detalle del día, con la fibra contra una meta suave.
 - **Widgets de la pantalla de bloqueo** con calorías y macros (`expo-widgets`). Primero una prueba en una build `dev`.
 
 **Sale:** una semana entera: registrar, pesarse y ver cómo se ajusta la meta.
@@ -374,6 +387,8 @@ enciende estrellas.
 
 - **Pulido:**
   - ícono y pantalla de arranque;
+  - recordatorios suaves y opcionales para registrar, a la hora de siempre;
+  - exportar todo en CSV y el país de los alimentos aparte del idioma, en Ajustes;
   - accesibilidad: VoiceOver en las estrellas y en el registro, Reducir
     movimiento (también en el flum y en la entrada) y tamaño de texto;
   - rendimiento en teléfonos viejos;
@@ -389,6 +404,10 @@ enciende estrellas.
 
 - **Importar recetas desde un link.**
 - **La app para Apple Watch.**
+- **Una Live Activity para registrar desde la isla, y Atajos y Siri.**
+- **Todos los micronutrientes**, con qué alimento aporta cada uno.
+- **Fotos de progreso y medidas del cuerpo.**
+- **Los pasos de Salud en el gasto**, para que se ajuste antes.
 - **Los widgets de hábitos** (D8, [`widgets.md`](widgets.md)).
 - **Escribir la comida en Salud.**
 - **La conexión con Ascent** ([`ascent.md`](ascent.md)):

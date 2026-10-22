@@ -1,6 +1,6 @@
 // Supabase tal como lo usa la sincronización: subir lo pendiente y bajar lo que cambió. Las filas
-// llevan los nombres de supabase/moss/0001_esquema.sql. El usuario no viaja: lo pone la base con
-// la sesión, y RLS no deja ver ni tocar lo de nadie más.
+// llevan los nombres de supabase/moss/ (0001_esquema.sql y 0002_comida.sql). El usuario no viaja:
+// lo pone la base con la sesión, y RLS no deja ver ni tocar lo de nadie más.
 
 import type { Periodo } from '@/dominio/constelaciones';
 import type { Peso } from '@/dominio/control';
@@ -8,6 +8,7 @@ import type { Dia, Marca } from '@/dominio/dias';
 import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
+import { SECUNDARIOS, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua, type Valores } from '@/dominio/registros';
 import type { supabase } from '@/lib/supabase';
 import type { Remoto } from './sincronizar';
 
@@ -46,7 +47,29 @@ const filaDe = {
     momento: m.momento,
   }),
   peso: (p: Peso) => ({ fecha: p.fecha, kg: p.kg, origen: p.origen, momento: p.momento }),
+  registro: (r: Registro) => ({
+    id: r.id, dia: r.dia, comida: r.comida, momento: r.momento, fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad,
+    kcal: r.valores.kcal, proteina: r.valores.proteina, carbohidratos: r.valores.carbohidratos, grasas: r.valores.grasas,
+    fibra: r.valores.fibra ?? null, azucares: r.valores.azucares ?? null, saturadas: r.valores.saturadas ?? null, sodio: r.valores.sodio ?? null,
+    alcohol: r.valores.alcohol ?? null, planificado: r.planificado, borrado: !!r.borrado, actualizado: r.actualizado,
+  }),
+  receta: (r: Receta) => ({ id: r.id, tipo: r.tipo, nombre: r.nombre, items: r.items, porciones: r.porciones, peso_final: r.pesoFinal, borrado: !!r.borrado, actualizado: r.actualizado }),
+  propio: (a: AlimentoPropio) => ({
+    id: a.id, nombre: a.nombre, marca: a.marca, codigo: a.codigo, por_100g: a.por100g, porciones: a.porciones, borrado: !!a.borrado, actualizado: a.actualizado,
+  }),
+  favorito: (f: Favorito) => ({ fuente: f.fuente, ref: f.ref, favorito: f.favorito, actualizado: f.actualizado }),
+  agua: (t: TomaDeAgua) => ({ id: t.id, dia: t.dia, ml: t.ml, momento: t.momento, borrado: !!t.borrado, actualizado: t.actualizado }),
 };
+
+/** Lo borrado lleva la marca; lo que no, ni la menciona (como en el teléfono). */
+const conBorrado = <T extends object>(x: T, borrado: boolean): T => (borrado ? { ...x, borrado: true } : x);
+
+/** Los valores de una fila: los cuatro de siempre y, de lo secundario, lo que no es null. */
+function valoresDe(f: Record<(typeof SECUNDARIOS)[number] | 'kcal' | 'proteina' | 'carbohidratos' | 'grasas', number | string | null>): Valores {
+  const v: Valores = { kcal: Number(f.kcal), proteina: Number(f.proteina), carbohidratos: Number(f.carbohidratos), grasas: Number(f.grasas) };
+  for (const k of SECUNDARIOS) if (f[k] !== null) v[k] = Number(f[k]);
+  return v;
+}
 
 type Filas = { [K in keyof typeof filaDe]: ReturnType<(typeof filaDe)[K]> };
 type Recibida<F> = F & { recibido: string };
@@ -74,6 +97,19 @@ const deFila = {
     momento: hora(f.momento),
   }),
   peso: (f: Filas['peso']): Peso => ({ fecha: f.fecha, kg: Number(f.kg), origen: f.origen, momento: hora(f.momento) }),
+  registro: (f: Filas['registro']): Registro => conBorrado({
+    id: f.id, dia: f.dia, comida: f.comida, momento: hora(f.momento), fuente: f.fuente, ref: f.ref, nombre: f.nombre, cantidad: f.cantidad,
+    valores: valoresDe(f), planificado: f.planificado, actualizado: hora(f.actualizado),
+  }, f.borrado),
+  receta: (f: Filas['receta']): Receta => conBorrado({
+    id: f.id, tipo: f.tipo, nombre: f.nombre, items: f.items, porciones: Number(f.porciones), pesoFinal: f.peso_final === null ? null : Number(f.peso_final),
+    actualizado: hora(f.actualizado),
+  }, f.borrado),
+  propio: (f: Filas['propio']): AlimentoPropio => conBorrado({
+    id: f.id, nombre: f.nombre, marca: f.marca, codigo: f.codigo, por100g: f.por_100g, porciones: f.porciones, actualizado: hora(f.actualizado),
+  }, f.borrado),
+  favorito: (f: Filas['favorito']): Favorito => ({ fuente: f.fuente, ref: f.ref, favorito: f.favorito, actualizado: hora(f.actualizado) }),
+  agua: (f: Filas['agua']): TomaDeAgua => conBorrado({ id: f.id, dia: f.dia, ml: f.ml, momento: hora(f.momento), actualizado: hora(f.actualizado) }, f.borrado),
 };
 
 export function remotoSupabase(cliente: Cliente): Remoto {
@@ -107,13 +143,27 @@ export function remotoSupabase(cliente: Cliente): Remoto {
       poner('logros', c.logros.map(filaDe.logro), 'usuario,id', true);
       poner('metas', c.metas.map(filaDe.meta), 'usuario,desde');
       poner('pesos', c.pesos.map(filaDe.peso), 'usuario,fecha');
+      poner('registros', c.registros.map(filaDe.registro), 'usuario,id');
+      poner('recetas', c.recetas.map(filaDe.receta), 'usuario,id');
+      poner('propios', c.propios.map(filaDe.propio), 'usuario,id');
+      poner('favoritos', c.favoritos.map(filaDe.favorito), 'usuario,fuente,ref');
+      poner('agua', c.agua.map(filaDe.agua), 'usuario,id');
       const errores = (await Promise.all(pedidos)).flatMap((r) => (r.error ? [r.error.message] : []));
       if (errores.length) throw new Error(errores.join('; '));
     },
 
-    async bajar(desde, marcasDesde) {
+    async bajar(desde, marcasDesde, comidaDesde) {
       const corte = desde ? new Date(new Date(desde).getTime() - MARGEN_MS).toISOString() : null;
       const nuevas = (q: Consulta) => (corte ? q.gt('recibido', corte) : q);
+      // La primera vez, de lo que tiene día solo baja lo reciente: lo viejo queda en la cuenta.
+      const recientes = (q: Consulta) => (corte ? nuevas(q) : q.gte('dia', comidaDesde));
+      const [registros, recetas, propios, favoritos, agua] = await Promise.all([
+        todas<Recibida<Filas['registro']>>('registros', ['dia', 'id'], recientes),
+        todas<Recibida<Filas['receta']>>('recetas', ['id'], nuevas),
+        todas<Recibida<Filas['propio']>>('propios', ['id'], nuevas),
+        todas<Recibida<Filas['favorito']>>('favoritos', ['fuente', 'ref'], nuevas),
+        todas<Recibida<Filas['agua']>>('agua', ['dia', 'id'], recientes),
+      ]);
       const [perfiles, habitos, periodos, marcas, dias, logros, metas, pesos] = await Promise.all([
         todas<FilaPerfil>('perfiles', ['usuario'], nuevas),
         todas<Recibida<Filas['habito']>>('habitos', ['id'], nuevas),
@@ -126,7 +176,7 @@ export function remotoSupabase(cliente: Cliente): Remoto {
         todas<Recibida<Filas['peso']>>('pesos', ['fecha'], nuevas),
       ]);
       const perfil = perfiles[0];
-      const recibidas = [...perfiles, ...habitos, ...marcas, ...dias, ...metas, ...pesos].map((f) => hora(f.recibido));
+      const recibidas = [...perfiles, ...habitos, ...marcas, ...dias, ...metas, ...pesos, ...registros, ...recetas, ...propios, ...favoritos, ...agua].map((f) => hora(f.recibido));
       const hasta = recibidas.reduce<string | null>((ultima, r) => (!ultima || r > ultima ? r : ultima), desde);
       return {
         hasta,
@@ -140,6 +190,11 @@ export function remotoSupabase(cliente: Cliente): Remoto {
           logros: logros.map(deFila.logro),
           metas: metas.map(deFila.meta),
           pesos: pesos.map(deFila.peso),
+          registros: registros.map(deFila.registro),
+          recetas: recetas.map(deFila.receta),
+          propios: propios.map(deFila.propio),
+          favoritos: favoritos.map(deFila.favorito),
+          agua: agua.map(deFila.agua),
         },
       };
     },

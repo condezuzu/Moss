@@ -4,7 +4,7 @@
 // cambio grande en el gasto medido mueve la meta de a poco, en varias semanas.
 
 import { diasEntre, sumarDias, type ClaveDia } from './fechas';
-import { KCAL_POR_KG, metaPara, type Cuestionario, type Macros } from './metas';
+import { KCAL_POR_KG, metaPara, type Cuestionario, type Estilo, type Macros } from './metas';
 
 export type Pesada = { fecha: ClaveDia; kg: number };
 /** Un peso guardado: uno por día, desde Salud, Ascent o a mano. */
@@ -67,6 +67,8 @@ export type EntradaDelControl = {
   gastoAnterior: number;
   metasAnteriores: Macros;
   perfil: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo'>;
+  /** Cómo se reparten los macros; sin decir, la equilibrada. */
+  estilo?: Estilo;
 };
 
 export function controlSemanal(e: EntradaDelControl): Control {
@@ -98,7 +100,7 @@ export function controlSemanal(e: EntradaDelControl): Control {
   const gasto = e.gastoAnterior + SUAVIZADO * (gastoMedido - e.gastoAnterior);
   return {
     gasto: Math.round(gasto),
-    metas: metaPara(gasto, { ...e.perfil, pesoKg: pesoDeTendencia }),
+    metas: metaPara(gasto, { ...e.perfil, pesoKg: pesoDeTendencia }, e.estilo),
     motivo: 'control',
     datos: { diasConComida, pesadas, comidaPromedio: Math.round(comidaPromedio), cambioDeTendencia, dias, gastoMedido: Math.round(gastoMedido), pesoDeTendencia },
   };

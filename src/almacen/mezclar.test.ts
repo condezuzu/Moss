@@ -5,13 +5,18 @@ import type { Peso } from '../dominio/control';
 import type { Marca } from '../dominio/dias';
 import type { Habito } from '../dominio/habitos';
 import type { MetaGuardada, Perfil } from '../dominio/metas';
+import { borrado, type Registro } from '../dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
-import { sinCambios } from './repositorio';
+import { sinCambios, sinComida } from './repositorio';
 
 /** Una hora de ese día, en minutos desde las 15:00 UTC. */
 const a = (minutos: number) => new Date(Date.UTC(2026, 9, 21, 15, minutos)).toISOString();
 
-const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null });
+const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
+const registro = (id: string, kcal: number, actualizado: string): Registro => ({
+  id, dia: '2026-10-21', comida: 'cena', momento: a(0), fuente: 'rapida', ref: null, nombre: id, cantidad: null,
+  valores: { kcal, proteina: 0, carbohidratos: 0, grasas: 0 }, planificado: false, actualizado,
+});
 const habito = (id: string, actualizado: string): Habito => ({ id, nombre: id, icono: 'star', dias: [1, 3], fuente: { tipo: 'manual' }, orden: 0, desde: '2026-10-19', actualizado });
 const marca = (habito: string, hecho: boolean, momento: string): Marca => ({ habito, dia: '2026-10-21', hecho, momento, origen: 'toque' });
 const peso = (kg: number, momento: string): Peso => ({ fecha: '2026-10-21', kg, origen: 'manual', momento });
@@ -71,11 +76,26 @@ describe('mezclar lo que baja de la cuenta', () => {
     expect(aplicar(local, ganadores(local, nada())).perfil?.alturaCm).toBe(165);
   });
 
+  it('de lo que se come gana lo más nuevo, y un borrado más nuevo también gana', () => {
+    const local: Datos = { ...nada(), registros: [registro('cena', 500, a(5)), registro('postre', 200, a(5)), registro('mate', 2, a(5))] };
+    const remoto: Datos = { ...nada(), registros: [registro('cena', 600, a(6)), borrado(registro('postre', 200, a(5)), a(7)), registro('mate', 9, a(4)), registro('fruta', 80, a(1))] };
+    const g = ganadores(local, remoto);
+    expect(g.registros.map((r) => [r.id, r.valores.kcal, !!r.borrado])).toEqual([['cena', 600, false], ['postre', 200, true], ['fruta', 80, false]]);
+    expect(aplicar(local, g).registros.map((r) => r.id)).toEqual(['cena', 'postre', 'mate', 'fruta']);
+  });
+
+  it('los favoritos van por alimento: gana el cambio más nuevo', () => {
+    const fav = (favorito: boolean, actualizado: string) => ({ fuente: 'base' as const, ref: '1105314', favorito, actualizado });
+    expect(ganadores({ ...nada(), favoritos: [fav(true, a(2))] }, { ...nada(), favoritos: [fav(false, a(3))] }).favoritos).toEqual([fav(false, a(3))]);
+    expect(ganadores({ ...nada(), favoritos: [fav(true, a(2))] }, { ...nada(), favoritos: [fav(false, a(1))] }).favoritos).toEqual([]);
+  });
+
   it('si la cuenta no trae nada nuevo, no hay nada que guardar', () => {
     const datos: Datos = {
       habitos: [habito('leer', a(1))], periodos: [periodo(1, 'lyra')], marcas: [marca('leer', true, a(2))], logros: [{ id: 'primeraLuz', desde: '2026-10-21' }],
       dias: [{ clave: '2026-10-21', constelacion: 'lyra', habitos: ['leer'], hechos: ['leer'], luz: 3, completo: true, actualizado: a(2) }],
       perfil: perfil(170, a(0)), metas: [meta(2400, a(0))], pesos: [peso(80, a(0))], semilla: 'semilla',
+      ...sinComida(), registros: [registro('cena', 500, a(1))],
     };
     expect(sinCambios(ganadores(datos, structuredClone(datos)))).toBe(true);
   });

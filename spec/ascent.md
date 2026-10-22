@@ -258,10 +258,12 @@ cosa va cuando llegue su etapa del [plan](plan.md).
 
 **En Supabase**, proyecto `okeanaihymbvbdmrdqph`, para la etapa de cuentas:
 
-1. SQL Editor: correr `supabase/moss/0001_esquema.sql`, entero y una sola vez.
-   - Ya está escrito y probado con `npm run supabase:verificar`.
-   - Solo crea el esquema `moss`: no toca nada de Ascent.
-   - Conviene correrlo cuando estén las pantallas de la cuenta. Así, si cambia
+1. SQL Editor: correr `supabase/moss/0001_esquema.sql` y después
+   `supabase/moss/0002_comida.sql` (lo que se come, desde el 22/10/2026), cada
+   uno entero y una sola vez.
+   - Ya están escritos y probados con `npm run supabase:verificar`.
+   - Solo crean cosas en el esquema `moss`: no tocan nada de Ascent.
+   - Conviene correrlos cuando estén las pantallas de la cuenta. Así, si cambia
      algo antes, no hace falta una migración.
 2. Settings › Data API › *Exposed schemas*: sumar `moss`. Va después del paso 1,
    porque el esquema tiene que existir.

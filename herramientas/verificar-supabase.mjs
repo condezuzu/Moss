@@ -6,6 +6,7 @@
 // - que en un conflicto gana el cambio más nuevo y que la hora de llegada la pone la base;
 // - que la semilla es la primera que llega, que los períodos se reemplazan enteros y que
 //   «borrar mis datos» no toca a nadie más;
+// - que lo comido (0002_comida.sql) sigue las mismas reglas, y que un borrado llega como una marca;
 // - que borrar la cuenta borra todo en cascada;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
 //   ellos con el repositorio SQLite del iPhone.
@@ -98,6 +99,14 @@ comprobar(await falla(B, `insert into moss.habitos (usuario, id, nombre, icono, 
 comprobar(await falla('anon', 'select * from moss.habitos'), 'sin sesión no se ve nada');
 comprobar((await como(A, 'select usuario from moss.marcas')).rows[0]?.usuario === A, 'el usuario lo pone la base, no la app');
 
+await como(A, `insert into moss.registros (id, dia, comida, momento, fuente, ref, nombre, cantidad, kcal, proteina, carbohidratos, grasas, fibra, actualizado)
+  values ('r1', '2026-10-21', 'cena', '2026-10-21T22:00:00Z', 'base', '1105314', 'Banana', '{"porcion":"1 mediana","gramosPorcion":118,"veces":1}', 105, 1.3, 27, 0.4, 3.1, '2026-10-21T22:00:00Z')`);
+await como(B, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas) values ('r1', '2026-10-21', 'snack', '2026-10-21T10:00:00Z', 'rapida', 'Alfajor', 250, 3, 35, 11)`);
+comprobar((await como(B, 'select nombre from moss.registros')).rows.map((f) => f.nombre).join() === 'Alfajor', 'lo comido: cada uno ve solo lo suyo, aunque los ids coincidan');
+comprobar(await falla(A, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas) values ('r2', '2026-10-21', 'cena', now(), 'rapida', 'x', -5, 0, 0, 0)`), 'lo comido no acepta valores negativos');
+comprobar(await falla(A, `insert into moss.propios (id, nombre, codigo, por_100g) values ('p1', 'Galletas', 'abc', '{}')`), 'un código de barras son solo dígitos');
+comprobar(await falla('anon', 'select * from moss.registros'), 'sin sesión no se ve nada de lo comido');
+
 // ------------------------------------------------------------ 4. Gana el cambio más nuevo
 const subirMarca = (hecho, momento, recibido = null) => como(A, `
   insert into moss.marcas (habito, dia, hecho, momento, origen, recibido) values ('meditar', '2026-10-21', $1, $2, 'toque', coalesce($3, now()))
@@ -118,6 +127,15 @@ const subirMeta = (kcal, momento) => como(A, `
 await subirMeta(2770, '2026-10-21T10:00:00Z');
 await subirMeta(2500, '2026-10-21T09:00:00Z');
 comprobar((await como(A, 'select kcal from moss.metas')).rows[0].kcal === 2770, 'con las metas, igual: gana la más nueva');
+
+const subirRegistro = (kcal, borrado, actualizado) => como(A, `
+  insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas, borrado, actualizado)
+  values ('r1', '2026-10-21', 'cena', '2026-10-21T22:00:00Z', 'base', 'Banana', $1, 1, 27, 0.4, $2, $3)
+  on conflict (usuario, id) do update set kcal = excluded.kcal, borrado = excluded.borrado, actualizado = excluded.actualizado`, [kcal, borrado, actualizado]);
+await subirRegistro(210, false, '2026-10-21T21:00:00Z');
+comprobar((await como(A, `select kcal from moss.registros where id = 'r1'`)).rows[0].kcal === 105, 'con lo comido, una corrección más vieja no pisa');
+await subirRegistro(105, true, '2026-10-21T23:00:00Z');
+comprobar((await como(A, `select borrado from moss.registros where id = 'r1'`)).rows[0].borrado === true, 'y un borrado más nuevo gana: queda la marca, la fila no se va');
 
 // ------------------------------------------------------------ 5. Semilla, períodos y borrar
 const semilla = async (usuario, valor) => (await como(usuario, 'select moss.poner_semilla($1) as s', [valor])).rows[0].s;
@@ -140,12 +158,15 @@ await como(A, `insert into moss.pesos (fecha, kg, origen, momento) values ('2026
 await como(B, 'select moss.borrar_mis_datos()');
 comprobar((await como(A, 'select * from moss.habitos')).rows.length === 1, '«borrar mis datos» no toca a nadie más');
 comprobar((await como(B, 'select * from moss.habitos')).rows.length === 0, '«borrar mis datos» borra lo propio');
+comprobar((await como(B, 'select * from moss.registros')).rows.length === 0 && (await como(A, 'select * from moss.registros')).rows.length === 1, '«borrar mis datos» también borra lo comido, y solo lo propio');
 comprobar(await falla('anon', 'select moss.borrar_mis_datos()'), 'sin sesión no se puede borrar nada');
 
 // ------------------------------------------------------------ 6. Borrar la cuenta
 await db.exec(`delete from auth.users where id = '${A}'`);
 const quedan = (await db.query(`select (select count(*) from moss.habitos) + (select count(*) from moss.marcas) + (select count(*) from moss.dias)
-  + (select count(*) from moss.periodos) + (select count(*) from moss.metas) + (select count(*) from moss.pesos) as n`)).rows[0].n;
+  + (select count(*) from moss.periodos) + (select count(*) from moss.metas) + (select count(*) from moss.pesos)
+  + (select count(*) from moss.registros) + (select count(*) from moss.recetas) + (select count(*) from moss.propios)
+  + (select count(*) from moss.favoritos) + (select count(*) from moss.agua) as n`)).rows[0].n;
 comprobar(Number(quedan) === 0, 'borrar la cuenta borra todo en cascada');
 
 // ------------------------------------------------------------ 7. La app contra esta base
@@ -173,6 +194,7 @@ const { repositorioSQLite } = await import('../src/almacen/sqlite.ts');
 const { crearSincronizador } = await import('../src/almacen/sincronizar.ts');
 const { remotoSupabase } = await import('../src/almacen/remoto.ts');
 const { mismosPeriodos } = await import('../src/dominio/constelaciones.ts');
+const { aguaDelDia, delDia, itemRapido } = await import('../src/dominio/registros.ts');
 const catalogo = JSON.parse(readFileSync(join(raiz, 'src/datos/constelaciones.json'), 'utf8')).constelaciones;
 
 // Un Supabase de mentira sobre esta base: lo justo de supabase-js que usa src/almacen/remoto.ts,
@@ -283,6 +305,37 @@ comprobar(
 );
 comprobar(b.espia.subidas.every((c) => !c.marcas.length && !c.periodos && !c.semilla && !c.perfil && !c.metas.length), 'app: lo que bajó no vuelve a subir');
 
+// Lo que se come, entre los dos teléfonos: lo comido, el agua, una comida guardada, un favorito y
+// la cena copiada a mañana, que queda planificada.
+pasa();
+const hoyA = a.almacen.estado().hoy;
+const banana = { fuente: 'base', ref: '1105314', nombre: 'Banana', cantidad: { porcion: '1 mediana', gramosPorcion: 118, veces: 1 }, valores: { kcal: 105.02, proteina: 1.29, carbohidratos: 26.95, grasas: 0.39, fibra: 3.07 } };
+const [cena] = a.almacen.registrar([banana, itemRapido('Alfajor', { kcal: 250, proteina: 3, carbohidratos: 35, grasas: 11 })], { comida: 'cena' });
+a.almacen.sumarAgua();
+a.almacen.guardarReceta({ tipo: 'comida', nombre: 'Merienda', items: [banana], porciones: 1, pesoFinal: null });
+a.almacen.ponerFavorito('base', '1105314', true);
+a.almacen.copiar({ dia: hoyA, comida: 'cena' }, { dia: '2026-10-21' });
+await a.sinc.vuelta();
+await b.sinc.vuelta();
+const comidaDeB = b.almacen.estado();
+comprobar(
+  delDia(comidaDeB.registros.values(), hoyA).map((r) => r.nombre).join() === 'Banana,Alfajor'
+    && comidaDeB.registros.get(cena.id)?.valores.fibra === 3.07
+    && delDia(comidaDeB.registros.values(), '2026-10-21').every((r) => r.planificado) && delDia(comidaDeB.registros.values(), '2026-10-21').length === 2
+    && aguaDelDia(comidaDeB.agua.values(), hoyA) === 250 && [...comidaDeB.recetas.values()][0]?.items[0]?.nombre === 'Banana'
+    && [...comidaDeB.favoritos.values()][0]?.favorito === true && !(await pendiente(b)),
+  'app: lo comido, el agua, las comidas guardadas y los favoritos llegan al otro teléfono, con lo planificado',
+);
+pasa();
+b.almacen.borrarRegistro(cena.id);
+await b.sinc.vuelta();
+await a.sinc.vuelta();
+comprobar(
+  delDia(a.almacen.estado().registros.values(), hoyA).map((r) => r.nombre).join() === 'Alfajor'
+    && (await enLaCuenta(`select count(*) as n from moss.registros where usuario = $U and id = '${cena.id}' and borrado`)) === 1,
+  'app: lo que se borra en un teléfono se borra en el otro, y en la cuenta queda la marca',
+);
+
 // Los dos sin conexión el resto del día, cada uno marca algo distinto; se sincronizan al otro día.
 pasa();
 a.almacen.marcar('agua', true, 'toque');
@@ -339,7 +392,7 @@ comprobar(
 // Lo ya bajado no vuelve a bajar: con los dos teléfonos al día, se hace viejo todo lo de la cuenta y se pide lo nuevo.
 await b.sinc.vuelta();
 await db.exec(`set session_replication_role = replica;
-  ${['perfiles', 'habitos', 'marcas', 'dias', 'metas', 'pesos'].map((t) => `update moss.${t} set recibido = now() - interval '1 hour';`).join(' ')}
+  ${['perfiles', 'habitos', 'marcas', 'dias', 'metas', 'pesos', 'registros', 'recetas', 'propios', 'favoritos', 'agua'].map((t) => `update moss.${t} set recibido = now() - interval '1 hour';`).join(' ')}
   set session_replication_role = origin;`);
 await a.sinc.vuelta();
 const vacia = a.espia.bajada.datos;
@@ -350,6 +403,7 @@ await a.sinc.vuelta();
 const nueva = a.espia.bajada.datos;
 comprobar(
   !vacia.habitos.length && !vacia.marcas.length && !vacia.dias.length && !vacia.perfil && !vacia.semilla && !vacia.metas.length && !vacia.pesos.length
+    && !vacia.registros.length && !vacia.agua.length && !vacia.recetas.length && !vacia.favoritos.length
     && !nueva.habitos.length && nueva.marcas.length === 1 && nueva.dias.length === 1 && hechosDeHoy(a) === 'meditar,agua' && hechosDeHoy(b) === 'meditar,agua',
   'app: al volver, baja solo lo que cambió desde la última vez',
 );
@@ -357,10 +411,16 @@ comprobar(
 // Un teléfono nuevo con años de historia: Supabase devuelve de a mil filas.
 await db.query(`insert into moss.dias (usuario, clave, constelacion, habitos, hechos, luz, completo)
   select $1, d::date, null, '{meditar}', '{meditar}', 3, true from generate_series('2022-01-01'::date, '2026-01-31'::date, interval '1 day') as d`, [C]);
+await db.query(`insert into moss.registros (usuario, id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas)
+  select $1, 'viejo-' || d::date, d::date, 'cena', d, 'rapida', 'Pizza', 800, 30, 90, 35 from generate_series('2025-01-01'::date, '2025-12-31'::date, interval '1 day') as d`, [C]);
 const historia = await enLaCuenta('select count(*) as n from moss.dias where usuario = $U');
 const c = await telefono(C, 'semilla-c');
 await c.sinc.vuelta();
 comprobar(historia > 1000 && c.almacen.estado().dias.size === historia, `app: un teléfono nuevo baja todos los días aunque sean miles (${historia})`);
+comprobar(
+  c.almacen.estado().registros.has(cena.id) && ![...c.almacen.estado().registros.keys()].some((id) => id.startsWith('viejo-')),
+  'app: de lo comido, un teléfono nuevo baja solo los últimos cuatro meses; lo viejo queda en la cuenta',
+);
 
 const intruso = crearSincronizador({ almacen: a.almacen, remoto: remotoSupabase(clienteDe(B)), usuario: B });
 const sincronizo = await intruso.vuelta();

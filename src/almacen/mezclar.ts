@@ -8,10 +8,10 @@ import { claveDeMarca, type Dia, type Marca } from '@/dominio/dias';
 import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
-import type { Cambios } from './repositorio';
+import { DE_COMIDA, type Cambios, type Coleccion, type DeComida, type ListasDeComida } from './repositorio';
 
 /** Lo que se mezcla: los datos guardados, más la semilla (que en el teléfono va con los ajustes). */
-export type Datos = {
+export type Datos = ListasDeComida & {
   habitos: Habito[];
   periodos: Periodo[];
   dias: Dia[];
@@ -35,8 +35,19 @@ function porClave<T>(locales: T[], remotos: T[], clave: (x: T) => string, gana: 
   });
 }
 
+/** De lo que se come también gana lo más nuevo, y un borrado es un cambio más: si es lo último, gana. */
+function deComida<C extends Coleccion>(c: C, local: Datos, remoto: Datos): DeComida[C][] {
+  const clave = DE_COMIDA[c].clave as (x: DeComida[C]) => string;
+  return porClave(local[c] as DeComida[C][], remoto[c] as DeComida[C][], clave, (r, l) => masNueva(r.actualizado, l.actualizado));
+}
+
 export function ganadores(local: Datos, remoto: Datos): Cambios {
   return {
+    registros: deComida('registros', local, remoto),
+    recetas: deComida('recetas', local, remoto),
+    propios: deComida('propios', local, remoto),
+    favoritos: deComida('favoritos', local, remoto),
+    agua: deComida('agua', local, remoto),
     habitos: porClave(local.habitos, remoto.habitos, (h) => h.id, (r, l) => masNueva(r.actualizado, l.actualizado)),
     marcas: porClave(local.marcas, remoto.marcas, (m) => claveDeMarca(m.habito, m.dia), (r, l) => masNueva(r.momento, l.momento)),
     dias: porClave(local.dias, remoto.dias, (d) => d.clave, (r, l) => masNueva(r.actualizado, l.actualizado)),
@@ -59,6 +70,11 @@ export function aplicar(local: Datos, g: Cambios): Datos {
     return [...mapa.values()];
   };
   return {
+    registros: encima(local.registros, g.registros, DE_COMIDA.registros.clave),
+    recetas: encima(local.recetas, g.recetas, DE_COMIDA.recetas.clave),
+    propios: encima(local.propios, g.propios, DE_COMIDA.propios.clave),
+    favoritos: encima(local.favoritos, g.favoritos, DE_COMIDA.favoritos.clave),
+    agua: encima(local.agua, g.agua, DE_COMIDA.agua.clave),
     habitos: encima(local.habitos, g.habitos, (h) => h.id),
     marcas: encima(local.marcas, g.marcas, (m) => claveDeMarca(m.habito, m.dia)),
     dias: encima(local.dias, g.dias, (d) => d.clave),

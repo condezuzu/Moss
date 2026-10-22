@@ -9,16 +9,17 @@ import datos from '../datos/constelaciones.json';
 import type { Habito } from '../dominio/habitos';
 import { crearAlmacen } from './almacen';
 import type { Datos } from './mezclar';
-import { repositorioEnMemoria, sinCambios, type Cambios, type Repositorio } from './repositorio';
+import { repositorioEnMemoria, sinCambios, sinComida, type Cambios, type Repositorio } from './repositorio';
 import { crearSincronizador, type Remoto } from './sincronizar';
 
 const catalogo = datos.constelaciones as unknown as Constelacion[];
 const habito = (id: string, orden: number): Habito => ({ id, nombre: id, icono: 'star', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'manual' }, orden, desde: '2026-10-19' });
-const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null });
+const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
 
 /** Una cuenta de mentira: anota cada pedido, guarda lo que sube y, al bajar, devuelve `enLaCuenta`. */
 function cuenta(enLaCuenta: Partial<Datos> = {}) {
   const pedidos: string[] = [];
+  const desdes: string[][] = [];
   const subido: Cambios[] = [];
   let fallas = 0;
   const remoto: Remoto = {
@@ -30,12 +31,13 @@ function cuenta(enLaCuenta: Partial<Datos> = {}) {
       }
       subido.push(cambios);
     },
-    async bajar(desde) {
+    async bajar(desde, marcasDesde, comidaDesde) {
       pedidos.push(desde ? 'bajar lo nuevo' : 'bajar todo');
+      desdes.push([marcasDesde, comidaDesde]);
       return { datos: { ...nada(), ...enLaCuenta }, hasta: '2026-10-21T15:00:00.000Z' };
     },
   };
-  return { remoto, pedidos, subido, fallar: (n: number) => (fallas = n) };
+  return { remoto, pedidos, subido, desdes, fallar: (n: number) => (fallas = n) };
 }
 
 async function telefono(repositorio: Repositorio = repositorioEnMemoria()) {
@@ -67,6 +69,25 @@ describe('sincronizar', () => {
     await s.vuelta();
     expect(c.pedidos.slice(2)).toEqual(['subir', 'bajar lo nuevo']);
     expect(c.subido[1].marcas.map((m) => m.habito)).toEqual(['leer']);
+    expect(await t.pendiente()).toBe(false);
+  });
+
+  it('de las marcas pide las de dos semanas, y de lo comido, lo de cuatro meses', async () => {
+    const t = await telefono();
+    const c = cuenta();
+    await crearSincronizador({ almacen: t.almacen, remoto: c.remoto, usuario: 'u1' }).vuelta();
+    expect(c.desdes[0]).toEqual(['2026-10-07', '2026-06-23']);
+  });
+
+  it('lo comido sube como todo lo demás', async () => {
+    const t = await telefono();
+    const c = cuenta();
+    const s = crearSincronizador({ almacen: t.almacen, remoto: c.remoto, usuario: 'u1' });
+    await s.vuelta();
+    t.almacen.registrar([{ fuente: 'rapida', ref: null, nombre: 'Alfajor', cantidad: null, valores: { kcal: 250, proteina: 3, carbohidratos: 35, grasas: 11 } }], { comida: 'snack' });
+    t.almacen.sumarAgua();
+    await s.vuelta();
+    expect([c.subido[1].registros.map((r) => r.nombre), c.subido[1].agua.map((a) => a.ml)]).toEqual([['Alfajor'], [250]]);
     expect(await t.pendiente()).toBe(false);
   });
 

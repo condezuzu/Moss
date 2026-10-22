@@ -10,18 +10,19 @@
 //   espaciado.
 
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
-import { DIAS_DE_MARCAS, type Almacen } from './almacen';
+import { DIAS_DE_COMIDA, DIAS_DE_MARCAS, type Almacen } from './almacen';
 import type { Datos } from './mezclar';
 import { sinCambios, type Cambios } from './repositorio';
 
 export interface Remoto {
   subir(cambios: Cambios): Promise<void>;
   /**
-   * Lo que cambió en la cuenta desde `desde` (una hora del servidor) o, sin `desde`, todo; de las
-   * marcas, en ese caso, solo las de `marcasDesde` en adelante. `hasta` es la hora del servidor de
-   * lo último que bajó: la próxima vez se pide desde ahí.
+   * Lo que cambió en la cuenta desde `desde` (una hora del servidor) o, sin `desde`, todo; en ese
+   * caso, de las marcas, solo las de `marcasDesde` en adelante, y de los registros y el agua, los
+   * de `comidaDesde`. `hasta` es la hora del servidor de lo último que bajó: la próxima vez se
+   * pide desde ahí.
    */
-  bajar(desde: string | null, marcasDesde: ClaveDia): Promise<{ datos: Datos; hasta: string | null }>;
+  bajar(desde: string | null, marcasDesde: ClaveDia, comidaDesde: ClaveDia): Promise<{ datos: Datos; hasta: string | null }>;
 }
 
 export type Opciones = {
@@ -69,7 +70,8 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
 
   async function bajar() {
     const desde = await almacen.enCola((r) => r.leerAjuste(BAJADO));
-    const { datos, hasta } = await remoto.bajar(desde, sumarDias(almacen.estado().hoy, -DIAS_DE_MARCAS));
+    const hoy = almacen.estado().hoy;
+    const { datos, hasta } = await remoto.bajar(desde, sumarDias(hoy, -DIAS_DE_MARCAS), sumarDias(hoy, -DIAS_DE_COMIDA));
     almacen.mezclar(datos);
     // En la cola, después de lo mezclado: si la app se cierra antes de guardarlo, la próxima vez se vuelve a bajar.
     if (hasta && hasta !== desde) await almacen.enCola((r) => r.guardarAjuste(BAJADO, hasta));

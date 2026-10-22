@@ -10,8 +10,26 @@ import type { ClaveDia } from '@/dominio/fechas';
 import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
+import { claveDeFavorito, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua } from '@/dominio/registros';
 
-export type Guardado = {
+/** Lo que se come, por colección. Cada cosa va entera y la reemplaza la que llega con la misma clave. */
+export type DeComida = { registros: Registro; recetas: Receta; propios: AlimentoPropio; favoritos: Favorito; agua: TomaDeAgua };
+export type Coleccion = keyof DeComida;
+
+/** La clave de cada cosa y, en lo que tiene día, el día: de eso se carga solo lo reciente. */
+export const DE_COMIDA: { [C in Coleccion]: { clave: (x: DeComida[C]) => string; dia?: (x: DeComida[C]) => ClaveDia } } = {
+  registros: { clave: (r) => r.id, dia: (r) => r.dia },
+  recetas: { clave: (r) => r.id },
+  propios: { clave: (a) => a.id },
+  favoritos: { clave: claveDeFavorito },
+  agua: { clave: (t) => t.id, dia: (t) => t.dia },
+};
+export const COLECCIONES: Coleccion[] = ['registros', 'recetas', 'propios', 'favoritos', 'agua'];
+
+export type ListasDeComida = { [C in Coleccion]: DeComida[C][] };
+export const sinComida = (): ListasDeComida => ({ registros: [], recetas: [], propios: [], favoritos: [], agua: [] });
+
+export type Guardado = ListasDeComida & {
   habitos: Habito[];
   periodos: Periodo[];
   dias: Dia[];
@@ -24,7 +42,7 @@ export type Guardado = {
 };
 
 /** Un paquete de cambios: lo que falta subir, o lo que bajó de la cuenta y ganó. Los períodos van enteros o no van: se reemplazan juntos. */
-export type Cambios = {
+export type Cambios = ListasDeComida & {
   habitos: Habito[];
   periodos: Periodo[] | null;
   marcas: Marca[];
@@ -40,11 +58,15 @@ export type Cambios = {
 export type Pendientes = Cambios & { hasta: number };
 
 export const sinCambios = (c: Cambios) =>
-  !c.habitos.length && !c.periodos && !c.marcas.length && !c.dias.length && !c.logros.length && !c.perfil && !c.metas.length && !c.pesos.length && !c.semilla;
+  !c.habitos.length && !c.periodos && !c.marcas.length && !c.dias.length && !c.logros.length && !c.perfil && !c.metas.length && !c.pesos.length && !c.semilla
+  && COLECCIONES.every((k) => !c[k].length);
 
 export interface Repositorio {
-  /** Todo, salvo las marcas: de esas, solo las de `desde` en adelante (los días ya vividos están en `dias`). */
-  cargar(desde: ClaveDia): Promise<Guardado>;
+  /**
+   * Todo, salvo las marcas y lo de cada día de la comida: de las marcas, las de `desde` en adelante
+   * (los días ya vividos están en `dias`); de los registros y el agua, los de `comidaDesde` en adelante.
+   */
+  cargar(desde: ClaveDia, comidaDesde: ClaveDia): Promise<Guardado>;
   /** La lista entera: son pocos. Solo queda pendiente lo que cambió. */
   guardarHabitos(habitos: Habito[]): Promise<void>;
   guardarPeriodos(periodos: Periodo[]): Promise<void>;
@@ -55,6 +77,8 @@ export interface Repositorio {
   guardarPerfil(perfil: Perfil): Promise<void>;
   guardarMeta(meta: MetaGuardada): Promise<void>;
   guardarPeso(peso: Peso): Promise<void>;
+  /** Lo que se come: registros, recetas, propios, favoritos o agua. Cada cosa reemplaza la de su misma clave. */
+  guardarComida<C extends Coleccion>(coleccion: C, lista: DeComida[C][]): Promise<void>;
   /** De los ajustes, solo la semilla sube a la cuenta. */
   guardarAjuste(clave: string, valor: string): Promise<void>;
   leerAjuste(clave: string): Promise<string | null>;
@@ -65,7 +89,7 @@ export interface Repositorio {
   subidoHasta(cambio: number): Promise<void>;
 }
 
-export const guardadoVacio = (): Guardado => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], ajustes: {} });
+export const guardadoVacio = (): Guardado => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], ...sinComida(), ajustes: {} });
 
 /** Lo que guarda la versión en memoria: los datos, el número de cambio de cada cosa y hasta dónde subió. */
 export type Memoria = Guardado & { cambios: Record<string, number>; secuencia: number; subido: number };
@@ -83,6 +107,11 @@ function encima<T>(lista: T[], nuevos: T[], clave: (x: T) => string): T[] {
   return [...mapa.values()];
 }
 
+function pendientesDeComida(m: Memoria, pendiente: (clave: string) => boolean): ListasDeComida {
+  const de = <C extends Coleccion>(c: C) => (m[c] as DeComida[C][]).filter((x) => pendiente(`${c}|${DE_COMIDA[c].clave(x)}`));
+  return { registros: de('registros'), recetas: de('recetas'), propios: de('propios'), favoritos: de('favoritos'), agua: de('agua') };
+}
+
 /** En memoria. `alCambiar` recibe todo después de cada escritura (la web lo guarda en localStorage). */
 export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?: (m: Memoria) => void): Repositorio {
   const m: Memoria = copia({ ...memoriaVacia(), ...inicial });
@@ -94,9 +123,12 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
   const listo = async () => alCambiar?.(copia(m));
 
   return {
-    async cargar(desde) {
+    async cargar(desde, comidaDesde) {
       const { cambios: _c, secuencia: _s, subido: _u, ...datos } = m;
-      return copia({ ...datos, marcas: m.marcas.filter((x) => x.dia >= desde) });
+      return copia({
+        ...datos, marcas: m.marcas.filter((x) => x.dia >= desde),
+        registros: m.registros.filter((x) => x.dia >= comidaDesde), agua: m.agua.filter((x) => x.dia >= comidaDesde),
+      });
     },
     async guardarHabitos(habitos) {
       for (const h of habitos) if (!igual(m.habitos.find((x) => x.id === h.id), h)) tocar(`habitos|${h.id}`);
@@ -141,6 +173,12 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
       tocar(`pesos|${peso.fecha}`);
       await listo();
     },
+    async guardarComida(coleccion, lista) {
+      const clave = DE_COMIDA[coleccion].clave as (x: (typeof lista)[number]) => string;
+      (m[coleccion] as (typeof lista)[number][]) = encima(m[coleccion] as (typeof lista)[number][], lista, clave);
+      lista.forEach((x) => tocar(`${coleccion}|${clave(x)}`));
+      await listo();
+    },
     async guardarAjuste(clave, valor) {
       m.ajustes = { ...m.ajustes, [clave]: valor };
       if (clave === 'semilla') tocar('semilla');
@@ -177,6 +215,11 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
         m.ajustes = { ...m.ajustes, semilla: c.semilla };
         llego('semilla');
       }
+      for (const coleccion of COLECCIONES) {
+        const clave = DE_COMIDA[coleccion].clave as (x: unknown) => string;
+        (m[coleccion] as unknown[]) = encima(m[coleccion] as unknown[], c[coleccion], clave);
+        c[coleccion].forEach((x: unknown) => llego(`${coleccion}|${clave(x)}`));
+      }
       await listo();
     },
     async pendientes() {
@@ -191,6 +234,7 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
         metas: m.metas.filter((x) => pendiente(`metas|${x.desde}`)),
         pesos: m.pesos.filter((x) => pendiente(`pesos|${x.fecha}`)),
         semilla: pendiente('semilla') ? (m.ajustes.semilla ?? null) : null,
+        ...pendientesDeComida(m, pendiente),
       });
     },
     async subidoHasta(cambio) {

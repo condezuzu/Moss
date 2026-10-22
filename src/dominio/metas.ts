@@ -2,7 +2,7 @@
 // método de MacroFactor con fórmulas públicas: para empezar, Mifflin-St Jeor por el nivel de
 // actividad; después, el control de cada semana (control.ts) mide el gasto de verdad.
 
-import type { ClaveDia } from './fechas';
+import type { ClaveDia, DiaSemana } from './fechas';
 
 export type Sexo = 'f' | 'm';
 export type Actividad = 'poco' | 'algo' | 'activo' | 'muy';
@@ -13,6 +13,13 @@ export type Ritmo = 'suave' | 'recomendado' | 'rapido';
 export type Cuestionario = { edad: number; sexo: Sexo; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo };
 
 export type Macros = { kcal: number; proteina: number; carbohidratos: number; grasas: number };
+
+/**
+ * Cómo se reparten las kcal entre los macros, como los programas de MacroFactor. La proteína va
+ * siempre por kilo; cambia qué se lleva el resto (spec/nutricion.md, «Lo que tienen las otras apps»).
+ */
+export type Estilo = 'equilibrada' | 'bajaEnGrasas' | 'bajaEnCarbohidratos' | 'keto';
+export const ESTILOS: readonly Estilo[] = ['equilibrada', 'bajaEnGrasas', 'bajaEnCarbohidratos', 'keto'];
 
 /** Lo que queda guardado del cuestionario: la edad como año de nacimiento, para que no envejezca; el peso va aparte. */
 export type Perfil = Omit<Cuestionario, 'edad' | 'pesoKg'> & { nacimiento: number; actualizado: string };
@@ -42,8 +49,16 @@ const PROTEINA_MAXIMA = 0.4;
 /** Las grasas: al menos el 27 % de las kcal y nunca menos de 0,6 g por kilo. */
 const GRASAS_MINIMAS = 0.27;
 const GRASAS_POR_KG = 0.6;
+/** Bajas en grasas es la punta de abajo del rango recomendado (20 a 35 %). */
+const GRASAS_BAJAS = 0.2;
+/** Menos del 26 % de las kcal en carbohidratos ya es «bajo en carbohidratos». */
+const CARBOHIDRATOS_BAJOS = 0.25;
+/** Keto: los carbohidratos fijos, en gramos por día. */
+const CARBOHIDRATOS_KETO = 30;
 
 const aDiez = (n: number) => Math.round(n / 10) * 10;
+
+export const pisoDe = (sexo: Sexo) => PISOS[sexo];
 
 /** Mifflin-St Jeor: el gasto en reposo, en kcal por día. */
 export function gastoBasal(c: Pick<Cuestionario, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>): number {
@@ -61,18 +76,61 @@ export function ajusteDiario(objetivo: Objetivo, ritmo: Ritmo, pesoKg: number): 
   return ((RITMOS[objetivo][ritmo] / 100) * pesoKg * KCAL_POR_KG) / 7;
 }
 
-/** Proteína primero, después las grasas y los carbohidratos con lo que queda. */
-export function macrosPara(kcal: number, pesoKg: number, objetivo: Objetivo): Macros {
+/**
+ * Proteína primero. En la equilibrada y en la baja en grasas, después las grasas con su mínimo y
+ * los carbohidratos con lo que queda; en las bajas en carbohidratos, al revés.
+ */
+export function macrosPara(kcal: number, pesoKg: number, objetivo: Objetivo, estilo: Estilo = 'equilibrada'): Macros {
   const proteina = Math.round(Math.min(pesoKg * PROTEINA_POR_KG[objetivo], (kcal * PROTEINA_MAXIMA) / 4));
-  const grasas = Math.round(Math.max(pesoKg * GRASAS_POR_KG, (kcal * GRASAS_MINIMAS) / 9));
-  const carbohidratos = Math.max(0, Math.round((kcal - proteina * 4 - grasas * 9) / 4));
+  if (estilo === 'equilibrada' || estilo === 'bajaEnGrasas') {
+    const minimas = estilo === 'equilibrada' ? GRASAS_MINIMAS : GRASAS_BAJAS;
+    const grasas = Math.round(Math.max(pesoKg * GRASAS_POR_KG, (kcal * minimas) / 9));
+    const carbohidratos = Math.max(0, Math.round((kcal - proteina * 4 - grasas * 9) / 4));
+    return { kcal, proteina, carbohidratos, grasas };
+  }
+  const carbohidratos = estilo === 'keto' ? CARBOHIDRATOS_KETO : Math.round((kcal * CARBOHIDRATOS_BAJOS) / 4);
+  const grasas = Math.max(0, Math.round((kcal - proteina * 4 - carbohidratos * 4) / 9));
   return { kcal, proteina, carbohidratos, grasas };
 }
 
 /** La meta para un gasto: el gasto más o menos el ritmo, nunca por debajo del piso. */
-export function metaPara(gasto: number, c: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo'>): Macros {
+export function metaPara(gasto: number, c: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo'>, estilo: Estilo = 'equilibrada'): Macros {
   const kcal = Math.max(PISOS[c.sexo], aDiez(gasto + ajusteDiario(c.objetivo, ritmoPermitido(c), c.pesoKg)));
-  return macrosPara(kcal, c.pesoKg, c.objetivo);
+  return macrosPara(kcal, c.pesoKg, c.objetivo, estilo);
+}
+
+/** Las metas a mano: los gramos de cada macro y, si no se dan, las kcal que suman (4, 4 y 9 por gramo). */
+export function metaManual(m: Omit<Macros, 'kcal'> & { kcal?: number }): Macros {
+  const proteina = Math.max(0, Math.round(m.proteina));
+  const carbohidratos = Math.max(0, Math.round(m.carbohidratos));
+  const grasas = Math.max(0, Math.round(m.grasas));
+  return { kcal: Math.round(m.kcal ?? proteina * 4 + carbohidratos * 4 + grasas * 9), proteina, carbohidratos, grasas };
+}
+
+/** Con porcentajes de las kcal. Si no suman 100, se toman en proporción. */
+export function macrosDePorcentajes(kcal: number, p: Omit<Macros, 'kcal'>): Macros {
+  const suma = p.proteina + p.carbohidratos + p.grasas;
+  if (suma <= 0) return { kcal, proteina: 0, carbohidratos: 0, grasas: 0 };
+  const parte = (porcentaje: number, kcalPorGramo: number) => Math.round((kcal * porcentaje) / suma / kcalPorGramo);
+  return { kcal, proteina: parte(p.proteina, 4), carbohidratos: parte(p.carbohidratos, 4), grasas: parte(p.grasas, 9) };
+}
+
+/**
+ * Repartir la semana, como el «calorie shifting» de MacroFactor: los días altos suben `extra` kcal
+ * y los otros bajan lo mismo entre todos, así la semana suma igual. La proteína y las grasas no se
+ * mueven: se mueven los carbohidratos. Si un día bajo quedara por debajo del piso o sin
+ * carbohidratos, se reparte menos.
+ */
+export function repartirSemana(meta: Macros, altos: readonly DiaSemana[], extra: number, sexo: Sexo): Record<DiaSemana, Macros> {
+  const dias: DiaSemana[] = [0, 1, 2, 3, 4, 5, 6];
+  const cuantos = new Set(altos).size;
+  const igual = Object.fromEntries(dias.map((d) => [d, { ...meta }])) as Record<DiaSemana, Macros>;
+  if (cuantos === 0 || cuantos === 7 || extra <= 0) return igual;
+  const maximoQueBaja = Math.max(0, Math.min(meta.kcal - PISOS[sexo], meta.carbohidratos * 4));
+  const baja = Math.min((extra * cuantos) / (7 - cuantos), maximoQueBaja);
+  const sube = (baja * (7 - cuantos)) / cuantos;
+  const con = (cambio: number): Macros => ({ ...meta, kcal: Math.round(meta.kcal + cambio), carbohidratos: Math.max(0, Math.round(meta.carbohidratos + cambio / 4)) });
+  return Object.fromEntries(dias.map((d) => [d, altos.includes(d) ? con(sube) : con(-baja)])) as Record<DiaSemana, Macros>;
 }
 
 /** Lo que muestra el final del cuestionario: el gasto estimado y la meta de arranque. */

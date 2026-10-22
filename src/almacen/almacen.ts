@@ -1,8 +1,10 @@
 // El almacén: el estado de Moss en el teléfono. Local primero: cada cambio se ve al instante y se
 // guarda atrás, en orden, sin que la pantalla espere. La sincronización (sincronizar.ts) sube lo
-// pendiente a la cuenta y mezcla acá lo que baja.
+// pendiente a la cuenta y mezcla acá lo que baja. Tiene los hábitos y el cielo, el perfil, las
+// metas y el peso, y lo que se come (src/dominio/registros.ts).
 
 import type { Constelacion } from '@/datos/catalogo';
+import type { Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import type { Peso } from '@/dominio/control';
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
@@ -10,10 +12,21 @@ import { claveDelDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
 import { metasIniciales, type Cuestionario, type MetaGuardada, type Perfil } from '@/dominio/metas';
+import {
+  borrado, claveDeFavorito, confirmar, copiar, restaurado,
+  type AlimentoPropio, type Favorito, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
+} from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
-import { sinCambios, type Repositorio } from './repositorio';
+import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type ListasDeComida, type Repositorio } from './repositorio';
 
-export type Estado = {
+/**
+ * Lo que se come, por colección y por clave: de los registros y el agua, los de los últimos
+ * DIAS_DE_COMIDA días. Lo borrado sigue acá con su marca (la marca también sube): las pantallas
+ * muestran `vigentes`.
+ */
+export type MapasDeComida = { [C in Coleccion]: Map<string, DeComida[C]> };
+
+export type Estado = MapasDeComida & {
   listo: boolean;
   hoy: ClaveDia;
   habitos: Habito[];
@@ -27,6 +40,8 @@ export type Estado = {
   /** Las metas de comida desde cada fecha, de la más vieja a la más nueva. */
   metas: MetaGuardada[];
   pesos: Peso[];
+  /** La comida que se arma en la hoja de registro: queda en el teléfono hasta agregarla, aunque se cierre la hoja. */
+  canasta: Item[];
   /** Para que cada usuario reciba su propio orden del catálogo. */
   semilla: string;
   /** Sube con cada cambio. */
@@ -44,10 +59,40 @@ export type Opciones = {
   /** Los hábitos de la primera vez, hasta que exista el editor (etapa 9). */
   sembrar?: (hoy: ClaveDia) => Habito[];
   nuevaSemilla?: () => string;
+  /** El id de lo que se crea (registros, recetas…). Los tests ponen el suyo. */
+  nuevoId?: () => string;
 };
 
 /** Cuántos días de marcas se tienen a mano: alcanzan para deshacer y para los días recién vividos. */
 export const DIAS_DE_MARCAS = 14;
+/** Cuántos días de lo comido se tienen a mano: alcanzan para el control (tres semanas), el mes y lo que solés comer. */
+export const DIAS_DE_COMIDA = 120;
+
+/** La canasta va en los ajustes del teléfono: no se sincroniza. */
+const CANASTA = 'canasta';
+
+/** Un id para lo que se crea en el teléfono: la hora y un azar, así dos teléfonos de la misma cuenta no se pisan. */
+const idNuevo = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+const mapasDe = (l: ListasDeComida): MapasDeComida => ({
+  registros: new Map(l.registros.map((x) => [x.id, x])),
+  recetas: new Map(l.recetas.map((x) => [x.id, x])),
+  propios: new Map(l.propios.map((x) => [x.id, x])),
+  favoritos: new Map(l.favoritos.map((x) => [claveDeFavorito(x), x])),
+  agua: new Map(l.agua.map((x) => [x.id, x])),
+});
+const listasDe = (m: MapasDeComida): ListasDeComida => ({
+  registros: [...m.registros.values()], recetas: [...m.recetas.values()], propios: [...m.propios.values()],
+  favoritos: [...m.favoritos.values()], agua: [...m.agua.values()],
+});
+
+function leerCanasta(texto: string | undefined): Item[] {
+  try {
+    return texto ? (JSON.parse(texto) as Item[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 /** La hora de los hábitos de ejemplo: así nunca le ganan a un cambio de verdad que llegue de la cuenta. */
 const DESDE_SIEMPRE = new Date(0).toISOString();
@@ -66,10 +111,12 @@ export type Almacen = ReturnType<typeof crearAlmacen>;
 export function crearAlmacen(op: Opciones) {
   const ahora = op.ahora ?? (() => new Date());
   const zona = op.zona ?? (() => undefined);
+  const nuevoId = op.nuevoId ?? idNuevo;
   let repositorio: Repositorio | undefined;
   let estado: Estado = {
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
-    perfil: null, metas: [], pesos: [], semilla: '', version: 0, forma: 0,
+    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [] }), canasta: [],
+    semilla: '', version: 0, forma: 0,
   };
   const oyentes = new Set<() => void>();
   let cola: Promise<unknown> = Promise.resolve();
@@ -120,7 +167,7 @@ export function crearAlmacen(op: Opciones) {
   async function arrancar() {
     repositorio = await op.abrir();
     const hoy = claveDelDia(ahora(), zona());
-    const g = await repositorio.cargar(sumarDias(hoy, -DIAS_DE_MARCAS));
+    const g = await repositorio.cargar(sumarDias(hoy, -DIAS_DE_MARCAS), sumarDias(hoy, -DIAS_DE_COMIDA));
     let semilla = g.ajustes.semilla;
     if (!semilla) {
       semilla = (op.nuevaSemilla ?? (() => Math.random().toString(36).slice(2)))();
@@ -142,7 +189,7 @@ export function crearAlmacen(op: Opciones) {
       marcas: new Map(g.marcas.map((m) => [claveDeMarca(m.habito, m.dia), m])),
       logros: g.logros,
     });
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...mapasDe(g), canasta: leerCanasta(g.ajustes[CANASTA]), listo: true }, true);
   }
 
   /** Encender o apagar un hábito hoy. Devuelve los logros que se ganaron con eso. */
@@ -158,6 +205,45 @@ export function crearAlmacen(op: Opciones) {
   function cambiarHabitos(habitos: Habito[]) {
     guardar((r) => r.guardarHabitos(habitos));
     cambiar(alDia({ ...estado, habitos }).estado, true);
+  }
+
+  /** Guarda cosas de una colección de la comida y las pone en el estado: cada una reemplaza la de su clave. */
+  function ponerComida<C extends Coleccion>(coleccion: C, lista: DeComida[C][]) {
+    if (!lista.length) return;
+    const clave = DE_COMIDA[coleccion].clave as (x: DeComida[C]) => string;
+    const mapa = new Map(estado[coleccion] as Map<string, DeComida[C]>);
+    for (const x of lista) mapa.set(clave(x), x);
+    guardar((r) => r.guardarComida(coleccion, lista));
+    cambiar({ [coleccion]: mapa } as Partial<Estado>, false);
+  }
+
+  /** Borrar deja la marca, con su hora: así el borrado llega a los otros teléfonos. */
+  function borrarDe<C extends 'registros' | 'recetas' | 'propios' | 'agua'>(coleccion: C, id: string): DeComida[C] | undefined {
+    const x = (estado[coleccion] as Map<string, DeComida[C]>).get(id);
+    if (!x || x.borrado) return undefined;
+    ponerComida(coleccion, [borrado(x, momento())]);
+    return x;
+  }
+
+  /**
+   * Cada alimento es un registro; en un día que no llegó, planificado. Los de una misma vez van con
+   * un milisegundo de diferencia: así, en cualquier teléfono, la línea los muestra en el orden en que se sumaron.
+   */
+  function registrar(items: Item[], donde: { comida: Comida; dia?: ClaveDia; momento?: string }): Registro[] {
+    const dia = donde.dia ?? estado.hoy;
+    const cuando = momento();
+    const desde = Date.parse(donde.momento ?? cuando);
+    const nuevos = items.map((it, i): Registro => ({
+      fuente: it.fuente, ref: it.ref, nombre: it.nombre, cantidad: it.cantidad, valores: it.valores,
+      id: nuevoId(), dia, comida: donde.comida, momento: new Date(desde + i).toISOString(), planificado: dia > estado.hoy, actualizado: cuando,
+    }));
+    ponerComida('registros', nuevos);
+    return nuevos;
+  }
+
+  function ponerCanasta(canasta: Item[]) {
+    guardar((r) => r.guardarAjuste(CANASTA, JSON.stringify(canasta)));
+    cambiar({ canasta }, false);
   }
 
   return {
@@ -201,6 +287,66 @@ export function crearAlmacen(op: Opciones) {
       }, false);
       return meta;
     },
+    // ---------------------------------------------------------------- lo que se come
+    /** Anotar lo comido (o lo planificado, en un día que no llegó). Devuelve los registros nuevos. */
+    registrar,
+    /** Corregir un registro desde su ventana: la cantidad y sus valores, la comida o la hora. */
+    cambiarRegistro(id: string, cambios: Partial<Pick<Registro, 'cantidad' | 'valores' | 'comida' | 'momento'>>) {
+      const r = estado.registros.get(id);
+      if (!r || r.borrado) return;
+      ponerComida('registros', [{ ...r, ...cambios, actualizado: momento() }]);
+    },
+    /** Devuelve lo borrado (para el aviso de deshacer). */
+    borrarRegistro: (id: string) => borrarDe('registros', id),
+    deshacerBorrado(id: string) {
+      const r = estado.registros.get(id);
+      if (r?.borrado) ponerComida('registros', [restaurado(r, momento())]);
+    },
+    /** Una comida (o el día entero, sin `comida`) a otro día: a la misma hora y, si el día no llegó, planificada. */
+    copiar(desde: { dia: ClaveDia; comida?: Comida }, hacia: { dia: ClaveDia; comida?: Comida }): Registro[] {
+      const copia = copiar(estado.registros.values(), desde, hacia, { hoy: estado.hoy, ahora: momento(), nuevoId });
+      ponerComida('registros', copia);
+      return copia;
+    },
+    /** Llegó el día: lo planificado pasa a registrado. Devuelve cuántos. */
+    confirmarPlanificados(dia: ClaveDia = estado.hoy): number {
+      const hechos = confirmar(estado.registros.values(), dia, momento());
+      ponerComida('registros', hechos);
+      return hechos.length;
+    },
+    ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
+    cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),
+    quitarDeCanasta: (i: number) => ponerCanasta(estado.canasta.filter((_, k) => k !== i)),
+    /** «Agregar»: lo de la canasta pasa de una vez a registros, y la canasta queda vacía. */
+    agregarCanasta(donde: { comida: Comida; dia?: ClaveDia; momento?: string }): Registro[] {
+      const nuevos = registrar(estado.canasta, donde);
+      if (nuevos.length) ponerCanasta([]);
+      return nuevos;
+    },
+    /** Una receta o una comida guardada, nueva o editada. */
+    guardarReceta(receta: Omit<Receta, 'id' | 'actualizado' | 'borrado'> & { id?: string }): Receta {
+      const r: Receta = { ...receta, id: receta.id ?? nuevoId(), actualizado: momento() };
+      ponerComida('recetas', [r]);
+      return r;
+    },
+    borrarReceta: (id: string) => borrarDe('recetas', id),
+    guardarPropio(alimento: Omit<AlimentoPropio, 'id' | 'actualizado' | 'borrado'> & { id?: string }): AlimentoPropio {
+      const a: AlimentoPropio = { ...alimento, id: alimento.id ?? nuevoId(), actualizado: momento() };
+      ponerComida('propios', [a]);
+      return a;
+    },
+    borrarPropio: (id: string) => borrarDe('propios', id),
+    ponerFavorito(fuente: Fuente, ref: string, favorito: boolean) {
+      ponerComida('favoritos', [{ fuente, ref, favorito, actualizado: momento() }]);
+    },
+    /** Un vaso de 250 ml, o lo que se diga, hoy. */
+    sumarAgua(ml = 250): TomaDeAgua {
+      const cuando = momento();
+      const toma: TomaDeAgua = { id: nuevoId(), dia: estado.hoy, ml, momento: cuando, actualizado: cuando };
+      ponerComida('agua', [toma]);
+      return toma;
+    },
+    quitarAgua: (id: string) => borrarDe('agua', id),
     /** Un peso por día: si ese día ya tenía uno, queda el último. */
     anotarPeso(kg: number, origen: Peso['origen'], fecha: ClaveDia = estado.hoy) {
       const peso: Peso = { fecha, kg, origen, momento: momento() };
@@ -214,7 +360,7 @@ export function crearAlmacen(op: Opciones) {
     mezclar(remoto: Datos): boolean {
       const local: Datos = {
         habitos: estado.habitos, periodos: estado.periodos, dias: [...estado.dias.values()], marcas: [...estado.marcas.values()],
-        logros: estado.logros, perfil: estado.perfil, metas: estado.metas, pesos: estado.pesos, semilla: estado.semilla,
+        logros: estado.logros, perfil: estado.perfil, metas: estado.metas, pesos: estado.pesos, semilla: estado.semilla, ...listasDe(estado),
       };
       const g = ganadores(local, remoto);
       if (sinCambios(g)) return false;
@@ -245,7 +391,7 @@ export function crearAlmacen(op: Opciones) {
         marcas: new Map(marcas.map((m) => [claveDeMarca(m.habito, m.dia), m])),
         logros: d.logros,
       });
-      cambiar({ ...nuevo, semilla, perfil: d.perfil, metas: d.metas, pesos: d.pesos }, true);
+      cambiar({ ...nuevo, semilla, perfil: d.perfil, metas: d.metas, pesos: d.pesos, ...mapasDe(d) }, true);
       return true;
     },
     /** Si ya es otro día (medianoche, o la app vuelve del fondo), arma el nuevo. */

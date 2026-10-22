@@ -1,8 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
-import { sumarDias } from './fechas';
-import { ajusteDiario, gastoBasal, macrosPara, metasIniciales, ritmoPermitido, type Cuestionario } from './metas';
+import { sumarDias, type DiaSemana } from './fechas';
+import {
+  ajusteDiario, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metasIniciales, pisoDe, repartirSemana, ritmoPermitido,
+  type Cuestionario, type Macros,
+} from './metas';
 
 const BASE: Cuestionario = { edad: 29, sexo: 'm', alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado' };
 
@@ -41,6 +44,87 @@ describe('la meta inicial', () => {
     const m = macrosPara(1400, 160, 'bajar');
     expect(m.proteina * 4).toBeLessThanOrEqual(1400 * 0.4);
     expect(m.carbohidratos).toBeGreaterThanOrEqual(0);
+  });
+});
+
+const kcalDe = (m: Macros) => m.proteina * 4 + m.carbohidratos * 4 + m.grasas * 9;
+
+describe('cómo se reparten los macros', () => {
+  const kcal = 2770;
+  const de = Object.fromEntries(ESTILOS.map((e) => [e, macrosPara(kcal, 74.5, 'mantener', e)]));
+
+  it('sin decir nada es la equilibrada, la de siempre', () => {
+    expect(macrosPara(kcal, 74.5, 'mantener')).toEqual(de.equilibrada);
+  });
+
+  it('en todos, la proteína es la misma y los gramos suman las kcal', () => {
+    for (const e of ESTILOS) {
+      expect(de[e].proteina).toBe(de.equilibrada.proteina);
+      expect(Math.abs(kcalDe(de[e]) - kcal)).toBeLessThanOrEqual(9);
+    }
+  });
+
+  it('baja en grasas: el 20 % en grasas y lo demás en carbohidratos', () => {
+    expect(de.bajaEnGrasas.grasas).toBe(Math.round((kcal * 0.2) / 9));
+    expect(de.bajaEnGrasas.carbohidratos).toBeGreaterThan(de.equilibrada.carbohidratos);
+  });
+
+  it('baja en carbohidratos: un cuarto de las kcal, y keto: 30 g; las grasas se llevan el resto', () => {
+    expect(de.bajaEnCarbohidratos.carbohidratos * 4).toBeLessThanOrEqual(kcal * 0.25 + 2);
+    expect(de.keto.carbohidratos).toBe(30);
+    expect(de.keto.grasas).toBeGreaterThan(de.bajaEnCarbohidratos.grasas);
+    expect(de.bajaEnCarbohidratos.grasas).toBeGreaterThan(de.equilibrada.grasas);
+  });
+});
+
+describe('las metas a mano', () => {
+  it('con los gramos, las kcal salen de los macros', () => {
+    expect(metaManual({ proteina: 150, carbohidratos: 200, grasas: 70 })).toEqual({ kcal: 2030, proteina: 150, carbohidratos: 200, grasas: 70 });
+  });
+
+  it('si se dan las kcal, quedan las que se dieron', () => {
+    expect(metaManual({ kcal: 2100, proteina: 150.4, carbohidratos: 200, grasas: 70 })).toEqual({ kcal: 2100, proteina: 150, carbohidratos: 200, grasas: 70 });
+  });
+
+  it('con porcentajes de las kcal, y en proporción si no suman 100', () => {
+    expect(macrosDePorcentajes(2000, { proteina: 30, carbohidratos: 40, grasas: 30 })).toEqual({ kcal: 2000, proteina: 150, carbohidratos: 200, grasas: 67 });
+    expect(macrosDePorcentajes(2000, { proteina: 3, carbohidratos: 4, grasas: 3 })).toEqual(macrosDePorcentajes(2000, { proteina: 30, carbohidratos: 40, grasas: 30 }));
+  });
+});
+
+describe('repartir la semana', () => {
+  const meta: Macros = { kcal: 2500, proteina: 150, carbohidratos: 290, grasas: 80 };
+  const finde: DiaSemana[] = [6, 0];
+  const total = (r: Record<DiaSemana, Macros>) => Object.values(r).reduce((s, m) => s + m.kcal, 0);
+
+  it('los días altos suben y los demás bajan, con el mismo total de la semana', () => {
+    const r = repartirSemana(meta, finde, 500, 'm');
+    expect(r[6].kcal).toBe(3000);
+    expect(r[0].kcal).toBe(3000);
+    expect(r[1].kcal).toBe(2300);
+    expect(Math.abs(total(r) - 7 * meta.kcal)).toBeLessThanOrEqual(7);
+  });
+
+  it('la proteína y las grasas no cambian: se mueven los carbohidratos', () => {
+    const r = repartirSemana(meta, finde, 500, 'm');
+    for (const d of [0, 1, 2, 3, 4, 5, 6] as DiaSemana[]) {
+      expect(r[d].proteina).toBe(150);
+      expect(r[d].grasas).toBe(80);
+    }
+    expect(r[6].carbohidratos).toBe(290 + 125);
+    expect(r[1].carbohidratos).toBe(290 - 50);
+  });
+
+  it('ningún día bajo queda por debajo del piso: si no alcanza, se reparte menos', () => {
+    const chica: Macros = { kcal: 1400, proteina: 110, carbohidratos: 140, grasas: 45 };
+    const r = repartirSemana(chica, [5, 6, 0], 800, 'f');
+    expect(r[1].kcal).toBeGreaterThanOrEqual(pisoDe('f'));
+    expect(Math.abs(total(r) - 7 * chica.kcal)).toBeLessThanOrEqual(7);
+  });
+
+  it('sin días altos, o con todos, la semana queda pareja', () => {
+    expect(repartirSemana(meta, [], 500, 'm')[3]).toEqual(meta);
+    expect(repartirSemana(meta, [0, 1, 2, 3, 4, 5, 6], 500, 'm')[3]).toEqual(meta);
   });
 });
 

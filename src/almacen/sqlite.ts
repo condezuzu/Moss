@@ -11,9 +11,9 @@ import type { ClaveDia, DiaSemana } from '@/dominio/fechas';
 import type { Habito } from '@/dominio/habitos';
 import type { IdDeLogro, Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
-import type { Guardado, Pendientes, Repositorio } from './repositorio';
+import { COLECCIONES, DE_COMIDA, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Pendientes, type Repositorio } from './repositorio';
 
-const TABLAS = ['habitos', 'periodos', 'marcas', 'dias', 'logros', 'perfil', 'metas', 'pesos', 'ajustes'];
+const TABLAS = ['habitos', 'periodos', 'marcas', 'dias', 'logros', 'perfil', 'metas', 'pesos', 'ajustes', ...COLECCIONES];
 
 async function migrar(db: SQLite.SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
@@ -32,6 +32,15 @@ async function migrar(db: SQLite.SQLiteDatabase) {
       CREATE INDEX marcas_por_dia ON marcas (dia);
     `);
     version = 1;
+  }
+  if (version < 2) {
+    // Lo que se come: cada cosa entera, en JSON, con su clave y, en los registros y el agua, su día.
+    await db.execAsync(`
+      ${COLECCIONES.map((c) => `CREATE TABLE ${c} (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);`).join('\n      ')}
+      CREATE INDEX registros_por_dia ON registros (dia);
+      CREATE INDEX agua_por_dia ON agua (dia);
+    `);
+    version = 2;
   }
   await db.execAsync(`PRAGMA user_version = ${version}`);
 }
@@ -52,8 +61,29 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
   const siguiente = () => ++secuencia;
   const subido = async () => Number((await db.getFirstAsync<{ valor: string }>("SELECT valor FROM ajustes WHERE clave = 'subido'"))?.valor ?? 0);
 
+  /** Lo de una colección de la comida: lo de `desde` en adelante, o lo que cambió después de `cambio`. */
+  async function leer<C extends Coleccion>(coleccion: C, filtro: { desde?: ClaveDia; cambio?: number } = {}): Promise<DeComida[C][]> {
+    const donde = filtro.cambio !== undefined ? ' WHERE cambio > ?' : filtro.desde && DE_COMIDA[coleccion].dia ? ' WHERE dia >= ?' : '';
+    const parametros = filtro.cambio !== undefined ? [filtro.cambio] : donde ? [filtro.desde!] : [];
+    return (await db.getAllAsync<{ datos: string }>(`SELECT datos FROM ${coleccion}${donde}`, ...parametros)).map((f) => JSON.parse(f.datos) as DeComida[C]);
+  }
+  async function leerTodas(filtro: { desde?: ClaveDia; cambio?: number }): Promise<ListasDeComida> {
+    const [registros, recetas, propios, favoritos, agua] = await Promise.all([
+      leer('registros', filtro), leer('recetas', filtro), leer('propios', filtro), leer('favoritos', filtro), leer('agua', filtro),
+    ]);
+    return { registros, recetas, propios, favoritos, agua };
+  }
+  /** Con el número de cambio que se le pase: 0 es lo que bajó de la cuenta. */
+  async function poner<C extends Coleccion>(coleccion: C, lista: DeComida[C][], cambio: () => number) {
+    const clave = DE_COMIDA[coleccion].clave as (x: DeComida[C]) => string;
+    const dia = DE_COMIDA[coleccion].dia as ((x: DeComida[C]) => ClaveDia) | undefined;
+    for (const x of lista) {
+      await db.runAsync(`INSERT OR REPLACE INTO ${coleccion} (clave, dia, datos, cambio) VALUES (?, ?, ?, ?)`, clave(x), dia ? dia(x) : null, JSON.stringify(x), cambio());
+    }
+  }
+
   return {
-    async cargar(desde: ClaveDia): Promise<Guardado> {
+    async cargar(desde: ClaveDia, comidaDesde: ClaveDia): Promise<Guardado> {
       const [habitos, periodos, marcas, dias, logros, perfil, metas, pesos, ajustes] = await Promise.all([
         db.getAllAsync<{ datos: string }>('SELECT datos FROM habitos'),
         db.getAllAsync<FilaPeriodo>('SELECT * FROM periodos'),
@@ -74,6 +104,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
         perfil: perfil ? (JSON.parse(perfil.datos) as Perfil) : null,
         metas: metas.map((f) => JSON.parse(f.datos) as MetaGuardada),
         pesos: pesos.map(peso),
+        ...(await leerTodas({ desde: comidaDesde })),
         ajustes: Object.fromEntries(ajustes.map((f) => [f.clave, f.valor])),
       };
     },
@@ -117,6 +148,9 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
     async guardarPeso(p) {
       await db.runAsync('INSERT OR REPLACE INTO pesos (fecha, kg, origen, momento, cambio) VALUES (?, ?, ?, ?, ?)', p.fecha, p.kg, p.origen, p.momento, siguiente());
     },
+    async guardarComida(coleccion, lista) {
+      await db.withTransactionAsync(() => poner(coleccion, lista, siguiente));
+    },
     async guardarAjuste(clave, valor) {
       await db.runAsync('INSERT OR REPLACE INTO ajustes (clave, valor, cambio) VALUES (?, ?, ?)', clave, valor, clave === 'semilla' ? siguiente() : 0);
     },
@@ -144,6 +178,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
           await db.runAsync('INSERT OR REPLACE INTO pesos (fecha, kg, origen, momento, cambio) VALUES (?, ?, ?, ?, 0)', p.fecha, p.kg, p.origen, p.momento);
         }
         if (c.semilla) await db.runAsync("INSERT OR REPLACE INTO ajustes (clave, valor, cambio) VALUES ('semilla', ?, 0)", c.semilla);
+        for (const coleccion of COLECCIONES) await poner(coleccion, c[coleccion] as DeComida[typeof coleccion][], () => 0);
       });
     },
     async pendientes(): Promise<Pendientes> {
@@ -162,6 +197,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
       ]);
       // Si cambió algún período, se suben todos: en Supabase se reemplazan juntos.
       const periodos = periodosPendientes?.n ? (await db.getAllAsync<FilaPeriodo>('SELECT * FROM periodos')).map(periodo) : null;
+      const comida = await leerTodas({ cambio: desde });
       return {
         hasta,
         habitos: habitos.map((f) => JSON.parse(f.datos) as Habito),
@@ -173,6 +209,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
         metas: metas.map((f) => JSON.parse(f.datos) as MetaGuardada),
         pesos: pesos.map(peso),
         semilla: semilla?.valor ?? null,
+        ...comida,
       };
     },
     async subidoHasta(cambio) {

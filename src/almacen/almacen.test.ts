@@ -5,9 +5,10 @@ import datos from '../datos/constelaciones.json';
 import { progresoPorConstelacion } from '../dominio/dias';
 import type { Habito } from '../dominio/habitos';
 import { metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
+import { aguaDelDia, borrado, delDia, itemDeAlimento, itemRapido, totalDelDia, vigentes, type Registro, type Valores } from '../dominio/registros';
 import { crearAlmacen, metaVigente } from './almacen';
 import type { Datos } from './mezclar';
-import { repositorioEnMemoria, type Repositorio } from './repositorio';
+import { repositorioEnMemoria, sinComida, type Repositorio } from './repositorio';
 
 const catalogo = datos.constelaciones as unknown as Constelacion[];
 
@@ -20,7 +21,10 @@ const TRES = () => [habito('meditar', 0), habito('leer', 1), habito('agua', 2)];
 async function armar(repositorio: Repositorio = repositorioEnMemoria(), sembrar = TRES) {
   let instante = new Date('2026-10-21T15:00:00Z');
   let zona = 'America/Montevideo';
-  const almacen = crearAlmacen({ abrir: async () => repositorio, catalogo, ahora: () => instante, zona: () => zona, sembrar, nuevaSemilla: () => 'semilla' });
+  let ids = 0;
+  const almacen = crearAlmacen({
+    abrir: async () => repositorio, catalogo, ahora: () => instante, zona: () => zona, sembrar, nuevaSemilla: () => 'semilla', nuevoId: () => `id${++ids}`,
+  });
   await almacen.iniciar();
   return {
     almacen,
@@ -161,8 +165,103 @@ describe('el cuestionario, el peso y las metas', () => {
   });
 });
 
+const BANANA: Valores = { kcal: 89, proteina: 1.09, carbohidratos: 22.84, grasas: 0.33, fibra: 2.6 };
+const banana = (veces = 1) => itemDeAlimento('base', '1105314', 'Banana', BANANA, { porcion: '1 mediana', gramosPorcion: 118, veces });
+const alfajor = () => itemRapido('Alfajor', { kcal: 250, proteina: 3, carbohidratos: 35, grasas: 11 });
+
+describe('lo que se come', () => {
+  it('registrar se ve al instante, queda pendiente y otra sesión lo recuerda', async () => {
+    const { almacen, repositorio } = await armar();
+    const [r] = almacen.registrar([banana(2)], { comida: 'merienda' });
+    expect(r).toMatchObject({ dia: '2026-10-21', comida: 'merienda', planificado: false, momento: '2026-10-21T15:00:00.000Z' });
+    expect(totalDelDia(almacen.estado().registros.values(), '2026-10-21').kcal).toBeCloseTo(210.04, 6);
+    await almacen.esperar();
+    expect((await repositorio.pendientes()).registros.map((x) => x.id)).toEqual([r.id]);
+    const otra = await armar(repositorio);
+    expect(otra.almacen.estado().registros.get(r.id)).toEqual(r);
+  });
+
+  it('la canasta queda guardada aunque se cierre la app, y agregar la registra toda junta y la vacía', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerEnCanasta(banana());
+    almacen.ponerEnCanasta(alfajor());
+    almacen.cambiarEnCanasta(0, banana(2));
+    await almacen.esperar();
+    const otra = (await armar(repositorio)).almacen;
+    expect(otra.estado().canasta.map((i) => i.nombre)).toEqual(['Banana', 'Alfajor']);
+    otra.quitarDeCanasta(1);
+    const nuevos = otra.agregarCanasta({ comida: 'cena' });
+    expect(nuevos.map((r) => [r.nombre, r.comida])).toEqual([['Banana', 'cena']]);
+    expect(nuevos[0].valores.kcal).toBeCloseTo(210.04, 6);
+    expect(otra.estado().canasta).toEqual([]);
+    // Con la canasta vacía, agregar no hace nada.
+    expect(otra.agregarCanasta({ comida: 'cena' })).toEqual([]);
+  });
+
+  it('borrar deja la marca, que también sube; deshacer la saca', async () => {
+    const { almacen, repositorio } = await armar();
+    const [r] = almacen.registrar([alfajor()], { comida: 'snack' });
+    await almacen.esperar();
+    await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
+    expect(almacen.borrarRegistro(r.id)?.nombre).toBe('Alfajor');
+    expect(delDia(almacen.estado().registros.values(), '2026-10-21')).toEqual([]);
+    await almacen.esperar();
+    expect((await repositorio.pendientes()).registros).toEqual([expect.objectContaining({ id: r.id, borrado: true })]);
+    almacen.deshacerBorrado(r.id);
+    expect(delDia(almacen.estado().registros.values(), '2026-10-21').map((x) => x.id)).toEqual([r.id]);
+  });
+
+  it('corregir la cantidad cambia el registro y su hora de cambio', async () => {
+    const { almacen, ir } = await armar();
+    const [r] = almacen.registrar([banana()], { comida: 'desayuno' });
+    ir('2026-10-21T15:05:00Z');
+    almacen.cambiarRegistro(r.id, { cantidad: banana(2).cantidad, valores: banana(2).valores });
+    expect(almacen.estado().registros.get(r.id)).toMatchObject({ cantidad: { veces: 2 }, actualizado: '2026-10-21T15:05:00.000Z' });
+  });
+
+  it('copiar la cena a mañana la planifica, y al llegar el día se confirma', async () => {
+    const { almacen, ir } = await armar();
+    almacen.registrar([banana(), alfajor()], { comida: 'cena' });
+    const copia = almacen.copiar({ dia: '2026-10-21', comida: 'cena' }, { dia: '2026-10-22' });
+    expect(copia.every((r) => r.planificado && r.dia === '2026-10-22')).toBe(true);
+    ir('2026-10-22T15:00:00Z');
+    almacen.revisarDia();
+    expect(almacen.confirmarPlanificados()).toBe(2);
+    expect(vigentes(almacen.estado().registros.values()).filter((r) => r.planificado)).toEqual([]);
+  });
+
+  it('se cargan solo los últimos cuatro meses de lo comido', async () => {
+    const viejo: Registro = { ...alfajor(), id: 'viejo', dia: '2026-05-01', comida: 'snack', momento: '2026-05-01T15:00:00.000Z', planificado: false, actualizado: '2026-05-01T15:00:00.000Z' };
+    const reciente: Registro = { ...viejo, id: 'reciente', dia: '2026-09-01' };
+    const { almacen } = await armar(repositorioEnMemoria({ registros: [viejo, reciente] }));
+    expect([...almacen.estado().registros.keys()]).toEqual(['reciente']);
+  });
+
+  it('el agua: cada vaso suma, y sacar uno lo marca', async () => {
+    const { almacen } = await armar();
+    almacen.sumarAgua();
+    const vaso = almacen.sumarAgua();
+    almacen.sumarAgua(500);
+    almacen.quitarAgua(vaso.id);
+    expect(aguaDelDia(almacen.estado().agua.values(), '2026-10-21')).toBe(750);
+  });
+
+  it('recetas, propios y favoritos', async () => {
+    const { almacen } = await armar();
+    const receta = almacen.guardarReceta({ tipo: 'comida', nombre: 'Mi merienda', items: [banana(), alfajor()], porciones: 1, pesoFinal: null });
+    expect(almacen.estado().recetas.get(receta.id)?.items).toHaveLength(2);
+    almacen.borrarReceta(receta.id);
+    expect(almacen.estado().recetas.get(receta.id)?.borrado).toBe(true);
+    const propio = almacen.guardarPropio({ nombre: 'Granola de la feria', marca: null, codigo: '7730000000017', por100g: BANANA, porciones: [{ nombre: '1 taza', gramos: 60 }] });
+    expect(almacen.estado().propios.get(propio.id)?.codigo).toBe('7730000000017');
+    almacen.ponerFavorito('base', '1105314', true);
+    almacen.ponerFavorito('base', '1105314', false);
+    expect([...almacen.estado().favoritos.values()]).toEqual([expect.objectContaining({ ref: '1105314', favorito: false })]);
+  });
+});
+
 describe('lo que baja de la cuenta', () => {
-  const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null });
+  const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
 
   it('se guarda sin quedar pendiente y rearma el día de hoy', async () => {
     const { almacen, repositorio } = await armar();
@@ -175,6 +274,18 @@ describe('lo que baja de la cuenta', () => {
     // La marca ya está en la cuenta; el resumen de hoy se rehízo acá.
     expect(pendientes.marcas).toEqual([]);
     expect(pendientes.dias.map((d) => d.hechos)).toEqual([['leer']]);
+  });
+
+  it('lo comido en otro teléfono llega, y un borrado de allá borra acá', async () => {
+    const { almacen, repositorio } = await armar();
+    const [r] = almacen.registrar([alfajor()], { comida: 'snack' });
+    await almacen.esperar();
+    await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
+    const deAlla: Registro = { ...r, id: 'otro', nombre: 'Mate', actualizado: '2026-10-21T16:00:00.000Z' };
+    expect(almacen.mezclar({ ...nada(), registros: [borrado(r, '2026-10-21T16:00:00.000Z'), deAlla] })).toBe(true);
+    expect(delDia(almacen.estado().registros.values(), '2026-10-21').map((x) => x.nombre)).toEqual(['Mate']);
+    await almacen.esperar();
+    expect((await repositorio.pendientes()).registros).toEqual([]);
   });
 
   it('lo que ya estaba no cambia nada', async () => {
