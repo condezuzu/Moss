@@ -4,23 +4,27 @@ Cada etapa termina en algo que se puede mirar o probar: la galería o el teléfo
 Lo visual nuevo se aprueba primero en la galería y recién después se programa
 (ver [`especificacion.md`](especificacion.md), «Cómo trabajamos»).
 
-**Dónde estamos (21/10/2026):** las etapas 1 y 2 están hechas en código y probadas
-en la web: el cielo nativo, y la app que guarda y recuerda. De la etapa 3 está lo
-que no depende de la galería: el esquema de Supabase, la sincronización y la
-fórmula de las metas. Falta la primera build en tu iPhone, que necesita dos pasos
-tuyos. En la galería, para aprobar:
+**Desde el 21/10/2026, la comida es el centro.** El plan se reordenó: después
+de la entrada y las cuentas (etapa 3) vienen cuatro etapas de comida (4 a 7) y
+recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
+- el cielo es el fondo de toda la app;
+- el almacén y la sincronización sirven igual para la comida;
+- las metas ya están programadas.
 
-- la entrada a la app;
-- el flum;
-- el cielo que crece;
-- la estrella fugaz nueva.
+**Dónde estamos (21/10/2026):**
+- **Hechas en código y probadas en la web:** las etapas 1 y 2, el cielo nativo y la app que guarda y recuerda.
+- **De la etapa 3** está lo que no depende de la galería: el esquema de Supabase, la sincronización y la fórmula de las metas.
+- **De la etapa 4** está la base de alimentos con USDA, 557 genéricos curados en español e inglés, y el buscador.
+- **Falta:**
+  - la primera build en tu iPhone, que necesita dos pasos tuyos;
+  - aprobar en la galería la entrada a la app, el flum, el cielo que crece y la estrella fugaz nueva.
 
 Las etapas van en orden, con estas excepciones:
 
-- El **contenido** (etapa 8) se puede escribir desde ya.
-- **Salud** (etapa 5) empieza apenas esté el dominio (etapa 2).
-- **Preparar la base de alimentos** (primera parte de la etapa 6) se puede hacer
-  en cualquier momento: es trabajo de datos, sin pantallas.
+- La **galería de la comida** (etapas 5 y 7) puede empezar ya, mientras termina
+  la etapa 3: es lo que más importa aprobar.
+- La **carga del catálogo uruguayo** (etapa 4) y el **contenido** (etapa 11) se
+  pueden hacer en paralelo con todo: son datos y textos, sin pantallas.
 
 ## Etapa 0 · Cimientos — hecha (21/10/2026)
 
@@ -86,13 +90,13 @@ Hecho:
 
   Cambia de día a la medianoche y al volver a la app.
 - **Hábitos de ejemplo**: la primera vez se arman los de la galería, repartidos
-  en la semana, hasta que exista el editor (etapa 4).
+  en la semana, hasta que exista el editor (etapa 9).
 - **Probado en la web:** se toca una estrella, se recarga y sigue encendida.
 
 Quedan para otras etapas:
 
-- los valores de los hábitos automáticos (Salud, etapa 5);
-- crear y editar hábitos desde la pantalla (etapa 4);
+- los valores de los hábitos automáticos (Salud, etapa 8);
+- crear y editar hábitos desde la pantalla (etapa 9);
 - dos etiquetas pueden pisarse cuando dos estrellas quedan muy juntas: es un
   arreglo visual, primero en la galería.
 
@@ -197,63 +201,136 @@ Lo pedido para esta etapa:
 **Sale:** alguien nuevo instala Moss, entra, contesta y llega a su cielo; cambiar
 de teléfono no pierde nada.
 
-## Etapa 4 · Crear y editar hábitos desde el cielo
+## Etapa 4 · La base de alimentos — empezada (21/10/2026)
 
-- Sin listas: el editor se abre desde la estrella o desde un «+» en el cielo.
-- Al cambiar la cantidad de un día, la constelación vieja se apaga y sube a tu
-  cielo, y la nueva se arma.
-- Primer día, apenas termina la entrada: elegir de 3 a 5 hábitos sugeridos, que
-  arman la primera constelación.
+El cómo, en [`nutricion.md`](nutricion.md), «La base de datos».
 
-**Sale:** alguien nuevo arma su semana en menos de un minuto.
+Hecho:
 
-## Etapa 5 · Apple Health
+- **`npm run alimentos`** arma `assets/alimentos.db` (5,9 MB):
+  - USDA, FNDDS y SR Legacy, con los valores por 100 g y las porciones;
+  - los genéricos curados de `alimentos/genericos.txt`;
+  - los dos índices de búsqueda.
+- **557 genéricos curados**, con nombre en español y en inglés, nombres de cada región con su país, y porciones en español.
+- **El buscador** (`src/comida/buscar.ts`):
+  - tolera errores;
+  - pone primero el idioma de la app y el nombre de tu región;
+  - tiene lugar para el premio por uso;
+  - tiene 12 tests contra la base de verdad.
+- **`npm run alimentos:verificar`**.
 
-- Los permisos se piden juntos en la entrada (leer un tipo no pedido cierra la
-  app). Cada hábito automático se activa recién cuando se crea.
-- Pasos, agua y mindfulness: la suma del día local.
+Falta:
+
+- **Llegar a ~1.000 genéricos:** las formas cocidas, los platos del mundo que faltan y lo que se busque sin encontrar.
+- **Las ~200 comidas uruguayas**, como recetas con ingredientes de la lista curada. El armado de la base calcula sus valores.
+- **Los ~300 productos uruguayos:**
+  - de Open Food Facts, los que están;
+  - el resto, con fotos de etiquetas en un supermercado.
+- **El catálogo uruguayo en Supabase** (`moss.catalogo`, solo lectura), que el teléfono baja y guarda. Ver D11.
+- **El cliente de Open Food Facts:** buscar por código, validar y guardar.
+- **El premio por uso**, con los registros de la etapa 5.
+
+**Sale:** cualquier cosa que se coma en Uruguay, y lo común del mundo, se
+encuentra en dos o tres letras.
+
+## Etapa 5 · Registrar la comida
+
+El corazón de la app. Los flujos y sus toques están en
+[`nutricion.md`](nutricion.md), «Registrar».
+
+- **Primero en la galería:**
+  - la línea del día con las comidas;
+  - la hoja de registro (buscador, sugerencias de la hora, recientes, favoritos);
+  - la ficha del alimento con sus porciones;
+  - el aviso de deshacer.
+- **En el almacén:**
+  - registros, favoritos, recetas y comidas guardadas, y lo planificado;
+  - con la misma sincronización de la etapa 3 y sus tests.
+- **Los atajos** 3 a 12:
+  - recetas y comidas guardadas;
+  - copiar una comida o un día;
+  - favoritos y recientes;
+  - varios alimentos de una vez y armar un plato;
+  - la última porción;
+  - lo que solés comer a esa hora;
+  - la carga rápida;
+  - el dictado del teclado;
+  - planificar días futuros.
+- **La foto como recuerdo**, guardada en el teléfono (D10).
+- **Medir en el iPhone** los toques y el tiempo de cada flujo. Lo de siempre tiene que entrar en dos toques.
+
+**Sale:** registrar algo de siempre en dos toques, y un día entero en menos de un
+minuto.
+
+## Etapa 6 · Escáneres y alimentos propios
+
+- **Código de barras:** `expo-camera` y Open Food Facts, con lo escaneado guardado en el teléfono.
+- **Escáner de etiqueta:**
+  - un módulo propio en Swift: Vision con `RecognizeDocumentsRequest` en iOS 26 y líneas de texto antes;
+  - un lector de la tabla en TypeScript, con tests;
+  - la pantalla de revisión, primero en la galería.
+
+  Se mide con 50 etiquetas uruguayas antes de darlo por bueno.
+- **Alimentos propios:** a mano o desde la etiqueta, con su código de barras.
+- **Compartir** recetas y alimentos propios con un enlace (D12).
+
+**Sale:** escanear cualquier envase y, si no existe, crearlo desde la etiqueta en
+menos de un minuto.
+
+## Etapa 7 · La pantalla de comida y las metas
+
+- **Primero en la galería:** la zona de comida.
+  - Las calorías que quedan, grande.
+  - Las barras de los macros.
+  - La tendencia del peso y el gasto estimado.
+  - El agua.
+  - El resumen del último control.
+  - La propuesta es la luna.
+- **Peso:** desde Salud y a mano. Siempre la tendencia.
+- **Agua:** desde Salud y con un toque.
+- **El control semanal automático:**
+  - el cálculo ya está (`src/dominio/control.ts`);
+  - falta que corra solo, su resumen y el «cómo se calcula».
+- **Widgets de la pantalla de bloqueo** con calorías y macros (`expo-widgets`). Primero una prueba en una build `dev`.
+
+**Sale:** una semana entera: registrar, pesarse y ver cómo se ajusta la meta.
+
+## Etapa 8 · Apple Health
+
+- **Permisos:** se piden juntos en la entrada, porque leer un tipo no pedido cierra la app. Cada hábito automático se activa recién cuando se crea.
+- **Peso y agua:** ya entran en la etapa 7.
+- **Pasos y mindfulness:** la suma del día local.
 - **Sueño:**
   - duración, etapas (REM, núcleo, profundo), despierto y en cama;
   - una calidad de sueño con una fórmula propia y escrita en la spec;
   - hábitos automáticos «dormir X horas» y «acostarse antes de X hora».
-- **Peso** (`BodyMass`) para la comida.
-- **Qué sale del teléfono:** si el hábito se cumplió y el número que se muestra.
-  Con Ascent vinculada, también el resumen del sueño y el peso.
-- El encendido automático usa la luz que sube del musgo (ya está en la galería).
+- **Qué sale del teléfono:** si el hábito se cumplió y el número que se muestra. Con Ascent vinculada, también el resumen del sueño y el peso.
 
 **Sale:** hábitos que se cumplen solos, probados con los datos reales de tu
 teléfono.
 
-## Etapa 6 · La comida
+## Etapa 9 · Los hábitos
 
-Lo que entra en la v1 está en D7 y el cómo en [`nutricion.md`](nutricion.md).
+- **El editor:**
+  - Sin listas: se abre desde la estrella o desde un «+» en el cielo.
+  - Al cambiar la cantidad de un día, la constelación vieja se apaga y sube a tu cielo, y la nueva se arma.
+- **El primer día**, apenas termina la entrada: elegir de 3 a 5 hábitos sugeridos, entre ellos los de comida, que arman la primera constelación.
+- **Hábitos que se encienden solos** con la luz que sube del musgo (ya está en la galería):
+  - **los de comida:** llegar a la proteína, registrar todas las comidas, quedar dentro de las calorías;
+  - **los de Salud.**
 
-1. **La base de alimentos** (se puede adelantar):
-   - un script que baja FNDDS y SR Legacy de USDA y arma una SQLite con
-     porciones y los dos índices de búsqueda;
-   - los 500 a 1.000 genéricos en español, con alias regionales revisados.
-2. **El registro:**
-   - buscador con sugerencias, porciones y gramos;
-   - escáner (Open Food Facts) y crear producto desde la etiqueta;
-   - historial, frecuentes y copiar una comida o un día;
-   - carga manual.
-3. **Las metas:** tendencia del peso, control semanal neutral al cumplimiento,
-   con «cómo se calcula» a la vista.
-4. **Los hábitos de comida**, que se encienden solos.
-5. **La zona de la comida (la luna)**, primero en la galería.
+**Sale:** alguien nuevo arma su semana en menos de un minuto, y la comida
+enciende estrellas.
 
-**Sale:** registrar una comida en segundos y ver cómo se ajusta la meta en la
-primera semana.
-
-## Etapa 7 · Las zonas del cielo y el flum
+## Etapa 10 · Las zonas del cielo y el flum
 
 - **Las zonas:**
   - hoy;
+  - comida (de la etapa 7);
   - constelaciones (tu cielo y el universo);
-  - comida;
   - calendario (el mes en mini cielos);
   - estadísticas, con las tarjetas de Ascent bloqueadas y su botón «Vincular»;
-  - ajustes (calidad, idioma, Salud, cuenta y Ascent).
+  - ajustes (calidad, idioma, unidades, Salud, cuenta y Ascent).
 
   La zona de amigos queda reservada para después de la v1. Cada zona pasa
   primero por la galería.
@@ -264,7 +341,7 @@ primera semana.
 
 **Sale:** la app completa, navegable de punta a punta.
 
-## Etapa 8 · Contenido (en paralelo desde ya)
+## Etapa 11 · Contenido (en paralelo desde ya)
 
 - **Frases del día:**
   - estoicos, en traducciones propias o de dominio público;
@@ -273,16 +350,17 @@ primera semana.
 
   Sin fragmentos de mitos.
 - **Logros:** la lista final y sus condiciones (D6).
-- **Los nombres de los alimentos en español** (etapa 6).
-- **Textos legales:** términos, privacidad (con Salud y Ascent explicados) y la
-  ficha de la tienda.
+- **Textos legales:**
+  - términos;
+  - privacidad, con Salud, Ascent y Open Food Facts explicados;
+  - la ficha de la tienda.
 
-## Etapa 9 · Pulido y revisión de Apple
+## Etapa 12 · Pulido y revisión de Apple
 
 - **Pulido:**
   - ícono y pantalla de arranque;
-  - accesibilidad: VoiceOver en las estrellas, Reducir movimiento (también en el
-    flum y en la entrada) y tamaño de texto;
+  - accesibilidad: VoiceOver en las estrellas y en el registro, Reducir
+    movimiento (también en el flum y en la entrada) y tamaño de texto;
   - rendimiento en teléfonos viejos;
   - uso sin conexión.
 - **Para la tienda:**
@@ -294,18 +372,16 @@ primera semana.
 
 ## Después de la v1
 
-- **v1.1:**
-  - los widgets (D8, [`widgets.md`](widgets.md));
-  - recetas y foto de la comida;
-  - escribir la comida en Salud (D7).
+- **Importar recetas desde un link.**
+- **La app para Apple Watch.**
+- **Los widgets de hábitos** (D8, [`widgets.md`](widgets.md)).
+- **Escribir la comida en Salud.**
 - **La conexión con Ascent** ([`ascent.md`](ascent.md)):
-  - El lado de Moss va en este repo: el vínculo, las funciones cruzadas, las
-    tarjetas bloqueadas y las cuatro funciones conectadas de Moss.
-  - **Los cambios del repo de Ascent** se hacen en una sesión aparte sobre
-    Ascent. La lista está en `ascent.md`, «Cambios en el repo de Ascent»:
+  - Lo que toca a la comida ya está definido: peso único, calorías según el día de entrenamiento y proteína post-entreno.
+  - El lado de Moss va en este repo: el vínculo, las funciones cruzadas, las tarjetas bloqueadas y las funciones conectadas.
+  - **Los cambios del repo de Ascent** se hacen en una sesión aparte sobre Ascent. La lista está en `ascent.md`, «Cambios en el repo de Ascent»:
     - base: altas, vistas públicas, peso y borrar;
-    - app: Sign in with Apple, Stats, Ajustes, recuperación, estancamiento,
-      resumen anual y enlaces;
+    - app: Sign in with Apple, Stats, Ajustes, recuperación, estancamiento, resumen anual y enlaces;
     - infraestructura: SMTP, claves y plan.
-- **Amigos y todo lo social**, con la lista de amigos de Ascent.
+- **Amigos y todo lo social**, con la lista de amigos de Ascent. Compartir pasa a mandarse también a un amigo, no solo con un enlace.
 - **La estimación del sueño sin reloj.**

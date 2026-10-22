@@ -1,8 +1,9 @@
 # Moss
 
-App de hábitos y comida para iPhone. Cada hábito es una estrella y los hábitos de
-cada día forman una constelación real. El progreso es el cielo mismo, que se vuelve
-más rico con la luz juntada. Expo SDK 58 + Supabase + Skia.
+App de comida para iPhone: trackear calorías y macros como MacroFactor, sin IA de
+fotos, global y gratis. La comida es el centro; los hábitos y el cielo acompañan:
+cada hábito es una estrella, los hábitos de cada día forman una constelación real
+y el progreso es el cielo mismo. Expo SDK 58 + Supabase + Skia.
 
 **Este archivo es lo único que se lee siempre.** Lo que está en `spec/` ya está
 decidido y no se rediscute; lo marcado PENDIENTE se pregunta antes de asumir.
@@ -38,6 +39,16 @@ SDK y la memoria no alcanza.
   `npm run catalogo:verificar`; fuentes y simplificaciones en `spec/catalogo.md`.
 - **Marcar un hábito es instantáneo**: nada caro en el camino del toque. Lo
   espectacular va en el cielo y en las animaciones.
+- **Registrar comida es lo más usado** (4 a 6 veces por día): cada toque cuenta.
+  Los flujos y sus toques están en `spec/nutricion.md`; un cambio que sume un
+  toque se discute antes.
+- **La base de alimentos es una**:
+  - `alimentos/genericos.txt` (los curados) más USDA, armados con `npm run
+    alimentos` en `assets/alimentos.db`, que va en el repo.
+  - Cada curado apunta a la descripción exacta de USDA.
+  - Los nombres regionales llevan su país, y el asterisco marca el que se muestra
+    ahí.
+  - Se revisa con `npm run alimentos:verificar`.
 - **El dominio es puro**: `src/dominio/` no importa nada del teléfono ni de
   React, y cada regla tiene su test. Las fechas son claves `AAAA-MM-DD` en la
   hora local del momento en que pasa cada cosa.
@@ -71,6 +82,9 @@ SDK y la memoria no alcanza.
     `npx expo export --platform ios --output-dir <carpeta temporal>`.
   - Si tocaste `supabase/`, `src/almacen/` o `src/dominio/`:
     `npm run supabase:verificar`.
+  - Si tocaste `alimentos/` o `herramientas/alimentos.mjs`: `npm run alimentos`
+    y `npm run alimentos:verificar` (los tests del buscador corren contra la
+    base armada).
   - Si tocaste los shaders: `npm run shaders:verificar`.
   - Si tocaste el cielo de la app: `npm run web:exportar` y
     `npm run app:capturas` (con `npm run web:ver` prendido).
@@ -94,6 +108,8 @@ SDK y la memoria no alcanza.
 |---|---|
 | `npm test` | los tests del dominio, del almacén y de la sincronización (Jest con `jest-expo`) |
 | `npm run supabase:verificar` | el esquema de `supabase/moss/` en un Postgres local (PGlite): RLS, conflictos, semilla, borrar, y la app de verdad sincronizando varios teléfonos contra él |
+| `npm run alimentos` | arma `assets/alimentos.db`: baja USDA (FNDDS y SR Legacy) a `.cache/usda` la primera vez, suma `alimentos/genericos.txt` y arma los índices de búsqueda. Con `VER_PORCIONES=1` lista las porciones que faltan traducir |
+| `npm run alimentos:verificar` | revisa la base: valores posibles, porciones en español, nombres regionales sin ambigüedad, índices y tamaño; avisa de lo que no cierra con 4/4/9 |
 | `npm run typecheck` | tipos (incluye que `en.json` tenga las claves de `es.json`) |
 | `npx expo lint` | ESLint con la configuración de Expo, que incluye las reglas de React |
 | `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo y los textos de `src/` |
@@ -123,7 +139,7 @@ El render por software es lento. Por eso la galería tiene cámara lenta
 | [spec/especificacion.md](spec/especificacion.md) | el documento del producto, con los cambios del 21/10/2026 |
 | [spec/plan.md](spec/plan.md) | las etapas hasta la v1 y en qué etapa estamos |
 | [spec/decisiones.md](spec/decisiones.md) | decisiones: primero las pendientes |
-| [spec/nutricion.md](spec/nutricion.md) | la comida: bases de datos, nombres en español, búsqueda, metas |
+| [spec/nutricion.md](spec/nutricion.md) | la comida, el centro de la app: la base de datos y los nombres, la búsqueda, los flujos de registro con sus toques, los escáneres, las metas |
 | [spec/ascent.md](spec/ascent.md) | la conexión con Ascent, los cambios de su repo y lo que hace el usuario |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
@@ -136,6 +152,9 @@ El render por software es lento. Por eso la galería tiene cámara lenta
 | `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida y control semanal |
 | `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
+| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad |
+| `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
+| `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |

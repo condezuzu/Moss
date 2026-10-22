@@ -41,7 +41,7 @@ export type Opciones = {
   /** El reloj y la zona del teléfono. Los tests ponen los suyos. */
   ahora?: () => Date;
   zona?: () => string | undefined;
-  /** Los hábitos de la primera vez, hasta que exista el editor (etapa 4). */
+  /** Los hábitos de la primera vez, hasta que exista el editor (etapa 9). */
   sembrar?: (hoy: ClaveDia) => Habito[];
   nuevaSemilla?: () => string;
 };

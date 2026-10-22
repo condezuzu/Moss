@@ -1,5 +1,5 @@
 // Las frases del día (especificación, «Contenido»): estoicos, frases modernas cortas y atribuidas,
-// y propias, sin fragmentos de mitos. La lista completa es de la etapa 8; por ahora, la de la galería.
+// y propias, sin fragmentos de mitos. La lista completa es de la etapa 11; por ahora, la de la galería.
 
 import type { Texto } from '@/datos/catalogo';
 import type { ClaveDia } from '@/dominio/fechas';

@@ -1,4 +1,4 @@
-// Hasta que exista el editor (etapa 4), la primera vez se arman estos hábitos de ejemplo: los de
+// Hasta que exista el editor (etapa 9), la primera vez se arman estos hábitos de ejemplo: los de
 // la galería, repartidos en la semana para que cada día tenga su cantidad y su constelación
 // (4 el sábado y el domingo, 5 de lunes a viernes salvo el miércoles, que tiene 6).
 

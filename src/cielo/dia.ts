@@ -27,7 +27,7 @@ export type HabitoDelCielo = {
   /** Nombre de SF Symbol. */
   icono: string;
   auto?: Automatico;
-  /** Lo que lleva hoy un hábito automático (llega con Salud, etapa 5) y su meta. */
+  /** Lo que lleva hoy un hábito automático (llega con Salud, etapa 8) y su meta. */
   valor?: number;
   meta?: number;
 };

@@ -1,108 +1,240 @@
-# Nutrición: cómo se hace
+# La comida: cómo se hace
 
-Lo que tiene que hacer está en [`especificacion.md`](especificacion.md), «Nutrición».
-Acá está cómo: las bases de datos, los nombres en español, la búsqueda, el
-algoritmo de las metas, Salud y lo que mira Apple. Investigado el 21/10/2026.
+Desde el 21/10/2026 la comida es el centro de Moss: trackear macros como
+MacroFactor, sin IA de fotos, global desde el inicio y gratis. Los hábitos y el
+cielo siguen, pero acompañan.
 
-## Las bases de datos
+Lo que tiene que hacer está en [`especificacion.md`](especificacion.md), «La
+comida». Acá está cómo:
+- la base de datos y los nombres;
+- la búsqueda;
+- cada flujo de registro con sus toques;
+- los escáneres;
+- las metas, la pantalla de comida, Salud;
+- lo que mira Apple y los riesgos.
 
-Tu idea es la correcta, con un ajuste en cómo se usa cada una:
+Este documento reemplaza al anterior sobre nutrición.
 
-- **Genéricos (pollo, arroz, banana): USDA FoodData Central**
-  - Es de dominio público (CC0); se pide citarla.
-  - **Va adentro de la app**, procesada una vez y guardada como una tabla SQLite.
-    No se llama a la API de USDA desde el teléfono: su clave tiene que quedar
-    privada.
-  - **Qué se toma:**
-    - **FNDDS 2021–2023:** 5.432 alimentos tal como se comen, con 22.046 pesos
-      de porciones caseras («1 taza», «1 pechuga»), y kcal en todos.
-    - **SR Legacy:** 7.793 ingredientes crudos con buenas medidas caseras (por
-      ejemplo, una banana mediana son 118 g). Está congelada desde 2018.
-    - **Foundation:** solo para actualizar valores. Tiene pocas porciones, las
-      kcal vienen en otros campos y hay carbohidratos «por diferencia» que dan
-      negativos (hay que recortarlos a cero).
-- **Envasados: Open Food Facts, solo por código de barras**
-  - Se consulta desde el teléfono al escanear y se guarda en el teléfono.
-  - **Nunca se usa para sugerencias mientras se escribe.** Sus reglas lo prohíben
-    y los límites son bajos: 15 lecturas por minuto y 10 búsquedas por minuto,
-    por IP.
-  - Cada pedido lleva un `User-Agent` con el formato `Moss/versión (correo)`.
-  - **La versión de la API va fija**: la 3.5 cambió la forma de los nutrientes y
-    la 3.6 cambió los campos de etiquetas.
-  - Se validan los datos (kcal contra 4/4/9 por gramo, por porción contra por
-    100 g), porque OFF no garantiza nada.
-- **Licencia de OFF (ODbL):**
-  - Mostrar lo consultado está permitido con un crédito visible y un enlace a
-    Open Food Facts.
-  - Si algún día Moss comparte correcciones entre usuarios o publica una copia
-    limpia de sus datos, eso pasa a ser una base derivada y tiene que ser ODbL
-    también. Antes de hacerlo, conviene confirmarlo con reuse@openfoodfacts.org.
-  - Las filas de OFF van en su propia tabla, separadas de las nuestras.
-- **Cobertura de OFF hoy:**
+## La base de datos
 
-  | País | Productos |
-  |---|---|
-  | Uruguay | unos 2.000 |
-  | Argentina | unos 16.500 |
-  | México | unos 18.000 |
-  | España | unos 360.000 |
+### La combinación: USDA y Open Food Facts, más una base propia
 
-  En Uruguay va a fallar seguido, así que hace falta **crear el producto desde la
-  etiqueta** en pocos toques: nombre, porción y los cuatro números. Queda en «Mis
-  comidas».
+Tu combinación es la correcta, con una capa propia arriba que es la que hace que
+la gente encuentre lo que come:
 
-## Los nombres en español
+| Capa | Qué tiene | Dónde vive | Idiomas |
+|---|---|---|---|
+| **Genéricos curados** | ~1.000 alimentos comunes del mundo, cada uno con nombre neutro, nombres de cada región y su porción típica | dentro de la app (`assets/alimentos.db`) | español e inglés |
+| **USDA FoodData Central** | FNDDS (5.280 alimentos tal como se comen) y SR Legacy (6.270 ingredientes), con valores y porciones | dentro de la app, en la misma base | inglés |
+| **Uruguay** | ~500 productos y comidas uruguayas comunes | en Supabase; el teléfono lo baja y lo guarda | español e inglés |
+| **Open Food Facts** | envasados, por código de barras | se consulta al escanear y queda guardado en el teléfono | el del producto |
+| **Propios** | lo creado con el escáner de etiqueta o a mano, las recetas y las comidas guardadas | del usuario, sincronizado | el del usuario |
 
-USDA está solo en inglés, y las tablas nacionales no sirven como base:
+**Por qué esta combinación:**
+- **USDA:**
+  - es de dominio público;
+  - trae los valores por 100 g y las porciones caseras;
+  - va entera dentro de la app.
+- **Open Food Facts:**
+  - es la única base abierta de códigos de barras con cobertura mundial (licencia ODbL);
+  - en Uruguay tiene unos 2.000 productos, que es poco;
+  - el escáner de etiquetas y la capa uruguaya cubren lo que falta.
+- **Lo que descarté:**
+  - **FatSecret, Nutritionix y Edamam:** son pagas o no dejan guardar los datos, y exigen un servidor.
+  - **Las tablas nacionales:** no tienen licencia clara.
+  - **Copiar de los supermercados:** lo prohíben sus términos.
+- **Gratis de verdad:** casi todo corre en el teléfono. Solo salen a internet la consulta a Open Food Facts y la descarga del catálogo uruguayo. Cada usuario nuevo no cuesta nada.
 
-- **BEDCA (España)** pide autorización expresa para reusar los datos.
-- **ARGENFOODS** no dice su licencia.
-- **La tabla de Uruguay** es un PDF de 2002, y hay una nueva en preparación.
-- **La de México (2019)** tampoco declara licencia.
+### Lo que ya está (21/10/2026)
 
-Se usan solo como referencia. La propuesta:
+- **`npm run alimentos`** arma `assets/alimentos.db` con el SQLite de Node, que es la misma versión que trae `expo-sqlite` (3.53, con FTS5):
+  - baja USDA la primera vez;
+  - deja afuera la comida de bebé, las fórmulas, las cadenas de comida rápida y los productos de marca;
+  - suma los genéricos curados.
 
-1. **Curar a mano entre 500 y 1.000 alimentos genéricos**, cada uno con un
-   nombre neutro y la porción más común. Un estudio de frecuencia de consumo en
-   Brasil llegó al 90 % de lo que se come con unos 60 ítems; con las variantes
-   (crudo, cocido, en trozos) da ese orden.
-2. **Una tabla de alias** (`alias_de_alimento`: alimento, alias, región).
-   - Se siembra desde Wikidata, que es CC0 y ya tiene variantes regionales
-     (plátano / banana / banano / guineo / cambur; palta / aguacate; maíz /
-     choclo / elote; fresa / frutilla; guisante / arveja / chícharo).
-   - Se revisa a mano: Wikidata trae ruido, como nombres científicos y un texto
-     en húngaro entre los alias en español.
-3. **Cuidado con los falsos amigos**:
-   - *plátano* es banana o banana de cocinar según el país.
-   - *manteca* es mantequilla en el Río de la Plata y grasa de cerdo en España.
-     Esto no está verificado: el sitio de la RAE bloqueó la consulta.
-4. **Los platos locales** (milanesa, fainá, chivito) se arman como recetas con
-   ingredientes de USDA.
-5. **Las búsquedas que no encuentran nada se anotan** (sin datos personales) y
-   de ahí sale qué sumar.
+  Resultado: 11.551 alimentos y 5,9 MB.
+- **`alimentos/genericos.txt`** tiene 557 genéricos curados:
+  - en 23 categorías;
+  - con 878 nombres regionales en 20 países y 1.314 alias en total;
+  - con porciones en español.
 
-## La búsqueda
+  Es una línea por alimento, legible y revisable:
 
-- **Motor:** SQLite en el teléfono con FTS5. Viene prendido en `expo-sqlite`
-  (versión 58, SQLite 3.53).
-  - Una tabla con el tokenizador `unicode61` (sin tildes, con prefijos de 2 y 3
-    letras) para lo que se está escribiendo.
-  - Otra con `trigram` para los errores de tipeo. Trigram no encuentra nada con
-    menos de 3 letras: para eso está la primera.
-- **Orden:** `bm25` (menor es mejor) menos un premio por uso. El premio sale del
-  logaritmo de cuántas veces lo usaste y de qué tan reciente fue. Lo más usado
-  sube primero.
-- **Si hace falta:** reordenar los 50 primeros por distancia de edición en JS.
-- **Historial, frecuentes y recetas**, que son cientos, pueden ir en memoria con
-  MiniSearch (6 KB).
-- Fuse.js no sirve con miles de alimentos: recorre todos.
-- No hay mediciones en React Native: se mide en el teléfono.
+  ```
+  Aguacate | Avocado | sr:Avocados, raw, all commercial varieties | ½ unidad / ½ avocado=100 · 1 unidad / 1 avocado=201 | palta* (AR UY CL PE BO PY)
+  ```
 
-## Cuánto: gramos y porciones
+- **`npm run alimentos:verificar`** revisa:
+  - que los valores sean posibles;
+  - las porciones en español;
+  - que ningún nombre principal sea ambiguo en su región;
+  - los índices y el tamaño.
 
-- Todo se guarda por 100 g, y la porción es un peso: «1 pechuga» son 145 g.
-- El valor registrado es valor por 100 g × gramos / 100.
-- Las porciones salen de FNDDS y SR Legacy. Las nuestras se suman en la curación.
+  También avisa de lo que no cierra con 4/4/9.
+- **El buscador** (`src/comida/buscar.ts`) tiene 12 tests contra la base de verdad.
+
+### Los nombres en español y en inglés
+
+- **Los curados:**
+  - Tienen nombre neutro en español y nombre en inglés.
+  - Sus nombres regionales llevan el país. El marcado con asterisco es el que se muestra ahí: «palta» en Uruguay, «aguacate» en México.
+  - Así se resuelven los falsos amigos:
+    - **plátano:** es la banana en España y en México, y el de cocinar en Colombia;
+    - **manteca:** es la mantequilla en el Río de la Plata y la de cerdo en España;
+    - **panqueque:** es el crepe en Uruguay;
+    - **pan dulce:** es el panettone en Uruguay;
+    - **torta:** es un sándwich en México;
+    - **nuez:** es la pecana en México;
+    - **limón:** es la lima en México.
+- **USDA sin curar:**
+  - Está solo en inglés.
+  - En español se encuentra igual, pero sale después de todo lo que coincide en español.
+  - Cuanto más crece la lista curada, menos se llega a esto.
+- **Open Food Facts:** el nombre en el idioma de la app (`product_name_es`, `product_name_en`) y, si no está, el que tenga.
+- **Uruguay y propios:** en español, y las comidas también en inglés.
+- **Wikidata:** la idea era sembrar los alias desde ahí, pero sus alias no dicen de qué país son y traen ruido. Los nombres regionales se escribieron a mano, con su país. Wikidata sirve para revisarlos.
+
+### Cómo se llega a 1.000 más 500 antes de lanzar
+
+- **Genéricos, de 557 a ~1.000:**
+  - las formas del mismo alimento: crudo, cocido, frito;
+  - platos del mundo que todavía faltan: India, Asia, Medio Oriente;
+  - lo que la gente busca y no encuentra: se anota sin datos personales.
+
+  Cada línea la revisan el armado (que la descripción de USDA exista) y el verificador.
+- **Comidas uruguayas (~200):** recetas con ingredientes de la lista curada, en gramos y con el rendimiento al cocinar. La base calcula sus valores por 100 g. Por ejemplo:
+  - milanesa a la napolitana, chivito al plato, pascualina y fainá;
+  - torta frita, capeletis a la caruso, buseca y ensalada rusa;
+  - postre chajá y Martín Fierro.
+- **Productos uruguayos (~300):**
+  - Los que están en Open Food Facts se toman de ahí, con su atribución.
+  - El resto se carga fotografiando etiquetas en un supermercado con el escáner de etiquetas de Moss. Así, la carga sirve además como prueba del escáner.
+- **El catálogo uruguayo** va en una tabla de Supabase (`moss.catalogo`):
+  - el usuario la lee y no la puede tocar;
+  - el teléfono la guarda;
+  - se actualiza sin sacar una versión nueva de la app.
+
+  La decisión está en `decisiones.md`, D11.
+
+## La búsqueda (hecha)
+
+- **Dos índices FTS5 en el teléfono:**
+  - **palabras:** con prefijos de 2 y 3 letras, para lo que se está escribiendo («pech» → pechuga);
+  - **trigramas:** para los errores de tipeo («frutila» → frutillas, «polo frito» → pollo frito). Solo entran si lo que empieza igual es poco, y solo en el idioma de la app.
+- **El orden:**
+  1. el idioma de la app;
+  2. qué tan parecido es a lo escrito: igual, la palabra entera, el principio, o con errores;
+  3. lo curado;
+  4. el nombre de la región;
+  5. bm25.
+- **Lo más usado primero:** quien llama pasa un premio por alimento, que sale del historial. Va con el logaritmo de las veces y lo reciente.
+- **Medido en la base de verdad:** de 1 a 17 ms por búsqueda en una PC; en el teléfono hay que medirlo.
+
+## Registrar: los flujos y sus toques
+
+La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
+
+- **Un solo botón para registrar**, siempre a mano: en la zona de comida y en el cielo de hoy.
+- **La hoja de registro abre lista para escribir:**
+  - con el teclado arriba;
+  - con la comida elegida por la hora (desayuno, almuerzo, merienda, cena o snack; se cambia con un toque);
+  - debajo, lo que solés comer a esa hora, tus recientes y tus favoritos.
+- **Cada fila tiene un «+»** que agrega con la última porción que usaste de ese alimento o, la primera vez, con la típica.
+- **Agregar no cierra la hoja:** se pueden sumar varios seguidos. Un aviso ofrece deshacer y cambiar la porción.
+- **Todo se corrige después** tocando el registro en la línea del día.
+
+Toques desde el cielo con Moss abierto, sin contar lo que se escribe:
+
+| Flujo | Toques |
+|---|---|
+| Algo de siempre (sugerencia de la hora, reciente o favorito) | **2**: registrar y «+» |
+| Buscar y agregar con su porción | **2** y escribir |
+| Buscar y elegir otra cantidad | **4** y escribir: registrar, el alimento, la porción y agregar |
+| Varios alimentos de una vez | **1 + 1 por alimento** y escribir |
+| Armar un plato y guardarlo para la próxima | lo anterior **+ 1** y un nombre |
+| Una comida guardada o una receta | **2** y escribir |
+| Copiar una comida de ayer | **2**: el hueco vacío de la comida y «copiar de ayer» |
+| Copiar un día entero | **3**: copiar día, elegir el día y confirmar |
+| Código de barras ya conocido | **3**: registrar, escáner y agregar (lee solo, sin disparar) |
+| Código nuevo con etiqueta | **6** y el nombre, una sola vez; la próxima son 3 |
+| Carga rápida de calorías y macros | **3** y los números |
+| Dictado | **3**: registrar, el micrófono del teclado y «+» |
+| Planificar un día futuro | **1 o 2** para ir al día, y lo mismo que hoy; al llegar el día, **1** para confirmar todo |
+| Compartir una receta | **2 o 3**: compartir y elegir a quién |
+| Agua | **1**: el vaso suma 250 ml (o llega sola desde Salud) |
+| Peso a mano | **2** y el número (o llega solo desde Salud) |
+
+- **Lo que se repite en todos los flujos:**
+  - la última porción de cada alimento;
+  - lo que solés comer a cada hora: por frecuencia y por lo reciente, en la misma franja horaria;
+  - copiar.
+- **La foto de la comida** es opcional y no se analiza: un toque en la comida ya registrada. Dónde se guarda es D10.
+- **El día:** las comidas con nombre van sobre una línea de horas, cada una con lo que tiene y sus totales. Lo planificado se ve atenuado hasta confirmarlo.
+- **Lo visual va primero a la galería:**
+  - la línea del día;
+  - la hoja de registro;
+  - la ficha del alimento;
+  - la revisión de la etiqueta.
+
+## Código de barras (atajo 1)
+
+- **`expo-camera`** (`CameraView`) lee `ean13`, `ean8`, `upc_a` y `upc_e`, en el teléfono y gratis. Lee solo, sin disparar.
+- **El dato sale primero de lo guardado** (lo ya escaneado y los propios). Si no está, se consulta Open Food Facts:
+  - con la versión de la API fija y un `User-Agent` `Moss/versión (correo)`;
+  - validando kcal contra 4/4/9 y por porción contra por 100 g.
+- **iOS entrega el UPC-A como EAN-13** con un 0 adelante; se normaliza.
+- **Si no está en ningún lado**, se ofrece el escáner de etiqueta. El producto nuevo queda guardado con su código: la próxima vez se encuentra solo.
+- **Aportar a Open Food Facts** lo que se crea es D13.
+
+## Escáner de etiqueta (atajo 2): ¿alcanza el iPhone? Sí
+
+**Lo que encontré:**
+
+- **iOS 26 lee tablas.** [`RecognizeDocumentsRequest`](https://developer.apple.com/documentation/vision/recognize-tables-within-a-document), del framework Vision, se presentó en la [WWDC25](https://developer.apple.com/videos/play/wwdc2025/272/):
+  - devuelve el documento con sus tablas, y cada tabla con sus filas y celdas ya agrupadas (`document.tables`, `table.rows`, `cell.content.text.transcript`);
+  - una tabla nutricional es exactamente eso;
+  - corre en el teléfono, sin costo y sin conexión.
+- **Antes de iOS 26**, `VNRecognizeTextRequest` lee líneas de texto en español, inglés y portugués, y las filas se arman por altura. Moss va desde iOS 16.4, que es lo mínimo de los módulos de Expo 58.
+- **No hay mediciones públicas** de Vision sobre etiquetas nutricionales:
+  - Lo más cercano es un [estudio de 2025 sobre envases](https://arxiv.org/html/2510.03570v1). No probó Vision, y señala como lo difícil el brillo, las superficies curvas, las letras densas y los idiomas mezclados.
+  - Otro [trabajo de 2022](https://www.scitepress.org/Papers/2022/108276/108276.pdf) señala que el OCR suele estar entrenado con texto corrido, no con tablas llenas de números.
+  - Hay que medirlo con etiquetas uruguayas de verdad.
+- **Los módulos que ya existen no alcanzan:**
+  - [`expo-text-extractor`](https://cdn.jsdelivr.net/npm/@zhanziyang/expo-text-extractor@1.0.2/README.md) usa Vision en iOS, pero devuelve líneas sueltas, no tablas.
+  - Los de ML Kit de Google suman megas y no leen mejor en iPhone.
+
+**Lo que recomiendo:**
+
+1. **Un módulo propio de Expo, en Swift**, de unas 150 líneas. `leerEtiqueta(foto)` devuelve las filas:
+   - en iOS 26, con `RecognizeDocumentsRequest`;
+   - antes, con las líneas de `VNRecognizeTextRequest` agrupadas por altura.
+
+   Va en la build propia, que ya hace falta por Salud.
+2. **Un lector de la tabla en TypeScript**, puro y con tests:
+   - **Reconoce las palabras** de las etiquetas en español, inglés y portugués:
+     - valor energético o calorías (en kcal, no kJ);
+     - carbohidratos o hidratos;
+     - proteínas;
+     - grasas totales o lípidos;
+     - porción.
+   - **Detecta la columna:** si es por porción (el formato Mercosur de Uruguay, con %VD) o por 100 g, y lo pasa a 100 g con el peso de la porción.
+   - **Ignora los octógonos** del frente.
+3. **Controles:**
+   - 4/4/9 marca el número que probablemente se leyó mal (un 8 que fue 3);
+   - la porción tiene que estar en g o ml.
+4. **Siempre una pantalla de revisión** con todo completo: se confirma con un toque o se corrige. El nombre lo trae Open Food Facts si el código se conocía; si no, se escribe.
+5. **Medirlo antes de dar el escáner por bueno:**
+   - con 50 etiquetas uruguayas fotografiadas como las saca la gente: con brillo, curvas y de costado;
+   - contando aciertos por campo (porción, kcal y cada macro), no por letra.
+
+   Son las mismas fotos de la carga del catálogo uruguayo.
+
+## Dictado por voz (atajo 11)
+
+- **El dictado del teclado del iPhone** funciona en el buscador sin programar nada: es el micrófono del teclado.
+- **Después se puede:**
+  - sumar un botón propio con `SFSpeechRecognizer`;
+  - entender cantidades dictadas («dos huevos y una banana»).
 
 ## Las metas
 
@@ -132,6 +264,8 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
 3. **Tendencia del peso:** media móvil exponencial (α = 0,1, unas tres semanas).
    Los días sin peso se rellenan en línea recta entre los vecinos.
 4. **Control semanal**
+   - **Automático:** corre solo en el teléfono el día de la semana del control;
+     no hay que tocar nada.
    - **Qué mira:** días enteros, hasta ayer. Las últimas 3 semanas, o desde la
      primera pesada si hay menos; con menos de 7 días no mide.
    - **Gasto real:** comida promedio − (cambio de la tendencia × 7.700 kcal/kg)
@@ -147,50 +281,66 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
      por qué (`faltanDatos`).
    - **Lo que usó** (días con comida, pesadas, promedio, cambio de la
      tendencia, gasto medido) queda a mano para mostrar «cómo se calcula».
-5. **Ascent** (ver [`ascent.md`](ascent.md)):
+5. **Peso:** uno por día, desde Salud, desde Ascent (con el vínculo) o a mano.
+   Siempre se usa la tendencia, nunca el número de un día.
+6. **Ascent** (ver [`ascent.md`](ascent.md)):
    - El peso de Ascent entra en la tendencia.
    - Los días de entrenamiento redistribuyen la meta de la semana sin cambiar el
      total.
    - La proteína sube después de una sesión grande.
 
+## La pantalla de comida
+
+Es la zona propia del cielo, con el mismo nivel visual que el resto.
+
+**Qué tiene:**
+- las calorías que quedan del día, grande y claro;
+- las barras de proteína, carbohidratos y grasas contra la meta;
+- la tendencia del peso, suavizada;
+- el gasto que estima el algoritmo;
+- el agua;
+- el resumen del último control semanal.
+
+**Cómo se ve:**
+- La propuesta de la galería es una luna que se llena con lo comido, con tres arcos: proteína en dorado, carbohidratos en verde y grasas en azul estrella.
+- Se aprueba en la galería antes de programarla.
+
+**Widgets en la pantalla de bloqueo** con calorías y macros:
+- van con `expo-widgets`, en los tamaños de la pantalla de bloqueo (circular y rectangular);
+- antes hay que probarlos en una build `dev` ([`widgets.md`](widgets.md)).
+
 ## Hábitos de comida
 
-Son hábitos automáticos, como los de Salud, con su fuente:
+Son hábitos automáticos, como los de Salud, que se encienden solos en el cielo:
 
 - «Llegar a la meta de proteína».
 - «Registrar todas las comidas»: se cumple con desayuno, almuerzo y cena, o con
   las comidas que elija el usuario.
 - «Quedar dentro de la meta de calorías ± 10 %».
 
-Se encienden solos en el cielo.
+## Salud
 
-## La zona de la comida
-
-Es una luna. Se llena con lo que comés en el día, la meta es la luna llena, y
-alrededor hay tres arcos: proteína (dorado), carbohidratos (verde) y grasas
-(azul estrella).
-
-La propuesta está en la galería, en la entrada: la diapositiva de la comida y el
-resultado del cuestionario. Se aprueba ahí antes de armar la zona completa.
-
-## Salud y código de barras
-
-- **Leer peso de Salud:** `HKQuantityTypeIdentifierBodyMass`, con
+- **Peso:** `HKQuantityTypeIdentifierBodyMass`, con
   `@kingstinct/react-native-healthkit`, la misma que usa Ascent.
   - Leer un tipo que no se pidió hace que la app se cierre, así que se piden
-    todos juntos.
+    todos juntos en la entrada.
   - La app no puede distinguir «no diste permiso» de «no hay datos».
-- **Escribir en Salud** (la comida como `Food` con kcal y macros): después.
-  - Pide un permiso más.
-  - Puede duplicar lo de otras apps.
-  - Obliga a reflejar los borrados.
-  - Agregarlo después necesita una build nueva, porque el texto del permiso es
-    nativo.
-- **Código de barras:**
-  - `expo-camera` (`CameraView`) con `ean13`, `ean8`, `upc_a` y `upc_e`.
-  - Hay un escáner del sistema con VisionKit (`launchScanner`) para iOS 16 o
-    más.
-  - iOS entrega el UPC-A como EAN-13 con un 0 adelante, y OFF lo normaliza.
+- **Agua:** `HKQuantityTypeIdentifierDietaryWater`: se lee de Salud y se suma a
+  mano en Moss.
+- **Escribir la comida en Salud** (`Food` con kcal y macros): después de la v1.
+  Pide un permiso más, puede duplicar lo de otras apps y obliga a reflejar los
+  borrados.
+
+## Global y gratis
+
+- **Español e inglés** desde el día uno, con los nombres regionales de cada país.
+- **Unidades:** métricas o imperiales según el teléfono, y se cambian en Ajustes. Afecta al peso, la altura, las porciones en onzas y el agua.
+- **Sin muro de pago.** Nada de lo que hace Moss tiene un costo por usuario:
+  - la base va dentro de la app;
+  - el reconocimiento de texto es el del iPhone;
+  - Open Food Facts es gratis.
+
+  Lo único que crece con los usuarios es Supabase.
 
 ## Lo que mira Apple
 
@@ -201,31 +351,38 @@ resultado del cuestionario. Se aprueba ahí antes de armar la zona completa.
   en iCloud.
 - **2.5.1:** nombrar Salud en la descripción de la tienda.
 - **5.1.1(v):** borrar la cuenta desde la app (ya está en el plan).
-- **Edad:** el contar calorías clasifica la app como 9+. No hay una regla de Apple
+- **Edad:** contar calorías clasifica la app como 9+. No hay una regla de Apple
   sobre menores en apps de dieta, pero MacroFactor pide 18+ en sus términos.
-  - **Propuesta:** el objetivo «bajar» con ritmo «rápido» queda para mayores de
-    edad (sale de la edad del cuestionario).
-  - **Los pisos de calorías** valen siempre.
+  Por eso, bajar «rápido» queda para mayores de edad, y los pisos de calorías
+  valen siempre.
 
 ## Datos (esquema `moss`)
 
-Todo es local primero: el teléfono guarda al instante y Supabase sincroniza.
-`pesos` y `metas` ya están en `supabase/moss/0001_esquema.sql`; el resto llega
-con la etapa 6.
+Todo es local primero: el teléfono guarda al instante y Supabase sincroniza,
+con las reglas de la etapa 3. `pesos` y `metas` ya están en
+`supabase/moss/0001_esquema.sql`; el resto llega con su etapa.
 
 | Tabla | Qué guarda |
 |---|---|
-| `comidas` | día local, momento, alimento, origen (usda, off, propio, receta), gramos y los cuatro valores ya calculados |
-| `alimentos_propios` | lo creado desde la etiqueta, con los cuatro valores por 100 g y la porción |
-| `recetas` | ingredientes en gramos y porciones que rinde |
-| `productos_off` | caché de lo escaneado, con su fecha |
+| `registros` | lo comido: día local, comida (desayuno, almuerzo…), momento, alimento y de dónde sale (usda, catálogo, off, propio, receta), gramos, la porción elegida y los cuatro valores ya calculados, para que el historial no cambie si cambia la base; si está planificado o confirmado |
+| `alimentos_propios` | lo creado con la etiqueta o a mano: los cuatro valores por 100 g, sus porciones y el código de barras |
+| `recetas` | recetas y comidas guardadas: ingredientes en gramos, porciones que rinde y, en las recetas, el rendimiento al cocinar |
+| `favoritos` | los alimentos, recetas y comidas marcados |
+| `productos_off` | lo escaneado de Open Food Facts, con la fecha |
+| `agua` | por día, lo sumado a mano (lo de Salud se lee, no se copia) |
 | `pesos` | uno por día: fecha, kg y origen (salud, manual o ascent) |
-| `metas` | desde cada fecha: kcal, proteína, carbohidratos, grasas, el gasto del que salieron y por qué (inicial, control, faltan datos o a mano). Cada control semanal deja una fila: no hace falta otra tabla de controles. El reparto por día llega con Ascent. |
+| `metas` | desde cada fecha: kcal, macros, el gasto del que salieron y por qué |
+| `catalogo` | el catálogo uruguayo, que solo se lee |
+
+**Lo que no se guarda en Supabase:**
+- **La última porción de cada alimento y lo que comés a cada hora** se calculan con los registros.
+- **Las fotos de la comida** quedan en el teléfono (D10).
 
 ## Riesgos
 
-- **OFF se cae seguido.** Durante la investigación devolvió 503 y páginas
-  antibots. Todo funciona sin conexión salvo el escaneo nuevo.
-- **El sitio de FDC** no respondió desde acá (la API sí): antes de procesar hay
-  que confirmar tamaños y fechas de las descargas.
-- **El formato de nutrientes de OFF 3.5** no está bien documentado.
+- **Open Food Facts:**
+  - **Se cae seguido:** en la investigación devolvió 503 y páginas antibots. Todo anda sin conexión, salvo el escaneo de un código nuevo.
+  - **El formato de nutrientes de su API 3.5** no está bien documentado.
+- **El escáner de etiquetas** no tiene mediciones públicas: hay que medirlo con las 50 etiquetas antes de darlo por bueno.
+- **Las etiquetas uruguayas suelen dar los valores por porción:** si la porción no se lee bien, todo el resto sale mal. La revisión la muestra primero y grande.
+- **El catálogo uruguayo es trabajo de carga:** las 500 entradas son días de trabajo. Las comidas como recetas se pueden adelantar ya; los productos piden ir al supermercado.

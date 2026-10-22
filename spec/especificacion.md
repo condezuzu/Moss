@@ -22,6 +22,11 @@ En el orden en que llegaron:
    sección «Visual».
 5. **Conexión con Ascent y entrada a la app.** La conexión reemplaza a la de
    antes; la entrada es nueva.
+6. **La comida pasa al centro.** Lo que más le interesa a la gente es trackear
+   sus macros: si esa parte no es excelente, nadie usa la app. Los hábitos y el
+   cielo siguen, pero acompañan. Reemplaza lo que había sobre nutrición: ver «La
+   comida». Cambiaron también «Concepto», «Widgets», «Técnico», «Versión 1» y
+   «Después».
 
 ---
 
@@ -29,10 +34,11 @@ Vamos a crear Moss, una app de hábitos para iPhone, desde cero. Es mi segunda a
 
 ## Concepto
 
-Moss convierte los hábitos en un cielo nocturno. Cada hábito es una estrella; los hábitos de cada día forman una constelación real. Moss tiene dos partes principales con el mismo peso: los hábitos y la comida. El nombre viene de "mos" (costumbre en latín) y "moss" (musgo en inglés, que crece lento pero siempre).
+La comida es el centro de Moss: trackear calorías y macros tan bien como MacroFactor, sin IA de fotos, global desde el inicio y gratis. Los hábitos y el cielo siguen, pero acompañan: cada hábito es una estrella, los hábitos de cada día forman una constelación real, y todo vive en un cielo nocturno. El nombre viene de "mos" (costumbre en latín) y "moss" (musgo en inglés, que crece lento pero siempre).
 
-Competencia directa que ya existe: Sideria y Stellar Habits (hábitos como estrellas). Moss se diferencia por:
+Competencia directa que ya existe: MacroFactor en la comida; Sideria y Stellar Habits en los hábitos como estrellas. Moss se diferencia por:
 
+- registrar la comida en muy pocos toques, con una base que encuentra lo que se come en cada país;
 - el cielo que crece como progresión;
 - un puntaje que premia el esfuerzo sostenido y nunca castiga;
 - el registro automático (Apple Health, sueño, Ascent);
@@ -68,23 +74,70 @@ Las constelaciones y los mitos pasan a segundo plano: siguen siendo parte de la 
 - Calendario donde cada día es un mini cielo; el mes se lee de un vistazo.
 - La zona horaria es la del teléfono (si viajás, el día corta en tu hora local).
 
-## Nutrición
+## La comida (el centro)
 
-Moss pasa a tener dos partes principales con el mismo peso: los hábitos y la comida. El modelo para la comida es MacroFactor, sin IA.
+La comida es el centro de Moss. La gente quiere trackear sus macros: si esta parte no es excelente, nadie va a usar la app. El modelo es MacroFactor, sin IA de fotos. Global desde el inicio y gratis. El cómo está en [`nutricion.md`](nutricion.md).
 
-1. Cuestionario al descargarla: edad, sexo, altura, peso, nivel de actividad y objetivo (bajar, mantener o subir). Con eso se estima el gasto con una fórmula estándar y se calcula la meta inicial de calorías y macros.
-2. Metas automáticas: un check-in semanal recalcula el gasto real con la comida registrada y la tendencia del peso, y ajusta las metas de calorías y macros. El ajuste es igual haya cumplido o no el usuario (encaja con Moss: nada se pierde).
-3. Peso diario: desde Apple Health, desde Ascent o cargado a mano en Moss. Se usa la tendencia, no el número de un solo día.
-4. Qué se registra: calorías, proteína, carbohidratos y grasas.
-5. Registrar una comida:
-   - Foto opcional, solo como recuerdo visual de la comida (no se analiza con IA).
-   - Qué es: buscador sobre la base de datos con sugerencias mientras se escribe, tolerante a errores de tipeo y con lo más usado primero.
-   - Cuánto: gramos o porciones ("1 pechuga", "1 taza"). Moss calcula los valores a partir de los datos por 100 g.
-6. Registro rápido: escáner de código de barras, historial y frecuentes, copiar una comida o un día anterior, recetas y comidas propias, y carga manual de calorías y macros.
-7. Bases de datos: Open Food Facts para productos envasados y USDA FoodData Central para alimentos genéricos (pollo, arroz, banana). La recomendación y los nombres en español están en [`nutricion.md`](nutricion.md).
-8. Conexión con hábitos: metas como "llegar a la meta de proteína" o "registrar todas las comidas" son hábitos que se encienden solos en el cielo.
-9. Conexión con Ascent: el peso corporal de Ascent alimenta el algoritmo, y los días de gimnasio en Ascent pueden subir la meta de calorías de ese día.
-10. Lugar en la app: una zona propia del cielo, dedicada a la comida, con el mismo nivel visual que el resto.
+**Base de datos**
+
+- Una base propia curada antes de lanzar: unos 500 productos y comidas uruguayas comunes, más los 1.000 alimentos más comunes del mundo. Tiene que ser muy amplia y flexible: que la gente encuentre lo que come.
+- Además, Open Food Facts para los productos envasados y USDA FoodData Central para los alimentos genéricos.
+
+**Metas**
+
+- El cuestionario de la entrada (edad, sexo, altura, peso, actividad y objetivo) da la meta inicial de calorías y macros con una fórmula estándar.
+- Un check-in semanal automático recalcula el gasto real con la comida registrada y la tendencia del peso, y ajusta las metas. El ajuste es igual haya cumplido o no.
+- Peso diario desde Apple Health, desde Ascent o a mano en Moss. Se usa la tendencia, no el número de un día.
+- Se registran calorías, proteína, carbohidratos y grasas.
+
+**Cómo se registra**
+
+- **El día:** comidas con nombre (desayuno, almuerzo, merienda, cena y snacks) que se ven sobre una línea de horas.
+- **Cantidad:** gramos y porciones caseras (1 taza, 1 unidad, 1 cucharada); cada alimento con sus porciones típicas.
+- **Una comida:**
+  - foto opcional como recuerdo visual, sin análisis;
+  - buscador con sugerencias mientras se escribe, tolerante a errores y con lo más usado primero;
+  - la cantidad.
+
+  Moss calcula los valores a partir de los datos por 100 g.
+- **Registrar tiene que ser lo más rápido posible:** el usuario lo hace 4 a 6 veces por día. Los toques de cada flujo están contados y minimizados en [`nutricion.md`](nutricion.md).
+
+**Atajos (versión 1)**
+
+1. Escáner de código de barras.
+2. Escáner de etiqueta nutricional: si el producto no está, se le saca una foto a la etiqueta y se crea el alimento. Sin IA paga: con el reconocimiento de texto del propio iPhone.
+3. Recetas y comidas guardadas.
+4. Copiar una comida o un día anterior.
+5. Favoritos y recientes.
+6. Agregar varios alimentos desde la búsqueda con su porción por defecto, sin abrir cada uno.
+7. Armar un plato con varios alimentos y registrarlo de una vez.
+8. Recordar la última porción usada de cada alimento.
+9. Sugerir lo que el usuario suele comer a esa hora.
+10. Carga rápida de calorías y macros a mano.
+11. Dictado por voz en el buscador (el dictado del iPhone).
+12. Planificar comidas en días futuros.
+13. Compartir recetas y alimentos propios con amigos.
+
+**Pantalla de comida**
+
+Zona propia del cielo, con el mismo nivel visual que el resto:
+
+- calorías restantes del día, grande y claro;
+- barras de proteína, carbohidratos y grasas contra la meta;
+- tendencia de peso suavizada;
+- gasto estimado por el algoritmo;
+- agua;
+- resumen del último check-in semanal;
+- widgets en la pantalla de bloqueo con calorías y macros.
+
+**Conexión con hábitos y Ascent**
+
+Se mantiene lo ya definido:
+- **Hábitos:** las metas de comida son hábitos que se encienden solos («llegar a la meta de proteína», «registrar todas las comidas»).
+- **Ascent:**
+  - peso único;
+  - calorías según el día de entrenamiento;
+  - proteína post-entreno.
 
 ## Visual (lo más importante)
 
@@ -104,7 +157,8 @@ Moss pasa a tener dos partes principales con el mismo peso: los hábitos y la co
 
 ## Widgets
 
-Si se puede, poner los hábitos como widgets. Ver [`widgets.md`](widgets.md).
+- En la pantalla de bloqueo, las calorías y los macros del día (versión 1).
+- Si se puede, los hábitos como widgets. Ver [`widgets.md`](widgets.md).
 
 ## Entrada a la app (obligatoria, como en Ascent)
 
@@ -164,13 +218,31 @@ La solución está en [`ascent.md`](ascent.md).
 
 - Solo iPhone. Expo, con build propia (Apple Health no funciona en Expo Go). Ya tengo la cuenta de Apple Developer activa.
 - Supabase con cuentas desde el inicio.
-- Español neutro e inglés, con todos los textos en un diccionario desde el día uno.
+- Global desde el inicio y gratis: español neutro e inglés, con todos los textos en un diccionario desde el día uno, y los nombres de los alimentos de cada país.
 
 ## Versión 1 (para mandar a revisión)
 
-- Entrada a la app, cuentas, creación y edición de hábitos por día de la semana, cielo continuo con constelaciones reales, marcar tocando estrellas, puntos y el cielo que crece con ellos, animación de día completo, calendario, estadísticas básicas.
-- Comida: la entrada (que es obligatoria) ya calcula las metas, así que la comida entra en la v1. Qué partes de la comida entran: D7 en [`decisiones.md`](decisiones.md).
-- Apple Health: pasos, agua, mindfulness, sueño (duración y etapas) y hábitos de sueño automáticos.
+- **La comida, completa:**
+  - la base propia (Uruguay y los 1.000 del mundo), Open Food Facts y USDA;
+  - el registro sobre la línea del día;
+  - los 13 atajos;
+  - las metas con su check-in semanal;
+  - el peso;
+  - la pantalla de comida;
+  - los widgets de la pantalla de bloqueo.
+- **Entrada y cuentas:** la entrada a la app y las cuentas.
+- **Hábitos y cielo:**
+  - creación y edición de hábitos por día de la semana;
+  - el cielo continuo con constelaciones reales;
+  - marcar tocando estrellas;
+  - los puntos y el cielo que crece con ellos;
+  - la animación de día completo;
+  - el calendario;
+  - estadísticas básicas.
+- **Apple Health:**
+  - peso y agua;
+  - pasos y mindfulness;
+  - sueño (duración y etapas) y los hábitos de sueño automáticos.
 - Logros.
 - Frase diaria.
 - Ajuste de calidad gráfica.
@@ -178,6 +250,8 @@ La solución está en [`ascent.md`](ascent.md).
 
 ## Después
 
+- Importar recetas desde un link.
+- App para Apple Watch.
 - Amigos y todo lo social.
 - Conexión con Ascent (todo lo de la sección de arriba).
 - Widgets.

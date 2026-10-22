@@ -1,13 +1,16 @@
 # Moss
 
 *Mos* es costumbre en latín; *moss* es musgo en inglés, que crece lento pero
-siempre. Moss convierte los hábitos en un cielo nocturno:
+siempre. Moss es una app de comida para iPhone, global y gratis:
 
-- Cada hábito es una estrella.
-- Los hábitos de cada día forman una constelación real.
-- El cielo se vuelve más rico a medida que juntás luz.
-- La comida tiene el mismo peso que los hábitos: metas que se ajustan solas cada
-  semana, como MacroFactor.
+- Calorías y macros con metas que se ajustan solas cada semana, como
+  MacroFactor, sin IA de fotos.
+- Registrar en muy pocos toques, con una base que encuentra lo que se come en
+  cada país.
+- Los hábitos acompañan, en un cielo nocturno:
+  - cada hábito es una estrella;
+  - los hábitos de cada día forman una constelación real;
+  - el cielo se vuelve más rico a medida que juntás luz.
 
 Documentos:
 
@@ -23,6 +26,7 @@ npm run galeria && npm run galeria:ver   # la galería en http://localhost:4173
 npm run web:exportar && npm run web:ver  # la app (Skia) en la web, en http://localhost:4174
 npm test                                 # el dominio, el almacén y la sincronización
 npm run supabase:verificar               # el esquema de Supabase y la app sincronizando, en un Postgres local
+npm run alimentos && npm run alimentos:verificar   # la base de alimentos (USDA y los genéricos curados)
 npm run typecheck
 ```
 

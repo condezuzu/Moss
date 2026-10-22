@@ -70,44 +70,69 @@ Otras opciones que descarté:
 - **Nombres que describen** («30 noches completas»): claros pero planos.
 - **Nombres de estrellas** (Vega, Sirio): astronómicos pero arbitrarios.
 
-### D7 · Qué parte de la comida entra en la v1
+### D10 · Dónde se guardan las fotos de la comida
 
-La entrada es obligatoria y ya calcula las metas, así que la comida entra en la
-v1. Para no frenar la revisión de Apple propongo:
+**Propongo guardarlas solo en el teléfono:**
+- van en la carpeta de la app y entran en la copia de iCloud del teléfono;
+- no se suben a Supabase.
 
-- **En la v1:**
-  - cuestionario, metas y control semanal;
-  - peso desde Salud y a mano;
-  - buscador (USDA más nombres en español) con porciones;
-  - código de barras (Open Food Facts) y crear producto desde la etiqueta;
-  - historial y frecuentes, y copiar una comida o un día;
-  - carga manual;
-  - hábitos de comida;
-  - la zona de la comida.
-- **En la v1.1:** recetas y comidas propias armadas, foto de la comida y escribir
-  la comida en Salud.
+Por qué:
+- **Son un recuerdo, no un dato:** los registros se sincronizan igual.
+- **Subirlas cuesta por usuario,** y la app es gratis: unas 4 fotos por día de ~100 KB son ~150 MB por persona por año.
+- **Una foto de comida es privada.**
 
-**Base de datos:** tu idea está bien, con un ajuste en cómo se usa cada una:
+**Lo que se pierde:** al cambiar de teléfono sin copia, las fotos no vienen, pero los registros sí.
 
-- **USDA FoodData Central** (FNDDS más SR Legacy) va **adentro de la app** como
-  base para buscar.
-- **Open Food Facts** se usa **solo para escanear**, desde el teléfono y
-  guardando lo escaneado.
-- **Los nombres en español** son una lista curada a mano de 500 a 1.000
-  alimentos, con alias regionales sacados de Wikidata y revisados.
+**La alternativa** es Supabase Storage, que con miles de usuarios pide un plan pago.
 
-Todo el detalle está en [`nutricion.md`](nutricion.md).
+### D11 · El catálogo uruguayo, en el servidor
 
-### D8 · Widgets en la v1.1
+**Propongo una tabla de Supabase (`moss.catalogo`)** que el usuario lee y no puede tocar:
+- el teléfono la baja y la guarda;
+- se corrige y crece sin sacar una versión de la app.
 
-Se puede, con `expo-widgets` (el de Expo, para el SDK 58):
+La carga la hacemos con el propio escáner de etiquetas de Moss, en un modo de
+carga que solo usamos nosotros.
 
-- **Chico:** el cielo de hoy.
-- **Mediano:** el cielo con hasta 4 botones «hecho».
+**La alternativa** es meterlo dentro de la app, como los genéricos. Es más
+simple, pero cada corrección espera una versión nueva.
 
-Primero una prueba de un día en una build `dev`. Lo propongo para la v1.1, apenas
-después de la revisión, porque cambia la build nativa. Detalle en
-[`widgets.md`](widgets.md).
+### D12 · Compartir con amigos en la v1: con un enlace
+
+La lista de amigos de Moss llega con lo social, después de la v1. Para que
+compartir recetas y alimentos propios esté en la v1, propongo hacerlo con un
+enlace:
+- se manda por WhatsApp o por mensajes;
+- quien lo abre con Moss lo suma a lo suyo;
+- cuando llegue lo social, también se va a poder mandar directo a un amigo.
+
+**Hace falta un dominio** (por ejemplo, el de la web de Moss), para que el enlace
+abra la app: Apple lo pide para los Universal Links. ¿Tenés uno o lo compramos?
+
+### D13 · Aportar a Open Food Facts lo que se crea
+
+**Propongo hacerlo después de la v1,** con permiso del usuario en cada producto:
+lo creado con la etiqueta (nombre, código, valores y la foto de la etiqueta) se
+sube a Open Food Facts, y la cobertura de Uruguay crece para todos.
+
+Para eso hace falta:
+- una cuenta de Moss en Open Food Facts;
+- aceptar sus licencias: ODbL para los datos y CC BY-SA para las fotos.
+
+**En la v1,** lo creado queda solo en Moss, privado de cada usuario.
+
+### D8 · Widgets
+
+- **Los de comida van en la v1:** la pantalla de bloqueo con calorías y macros,
+  como pediste en «Pantalla de comida». Son tamaños de la pantalla de bloqueo
+  (circular y rectangular) de `expo-widgets`.
+- **Los de hábitos, propuestos para después de la v1** (y es lo que queda por
+  decidir):
+  - **Chico:** el cielo de hoy.
+  - **Mediano:** el cielo con hasta 4 botones «hecho».
+
+Primero una prueba de un día en una build `dev`, porque cambia la build nativa.
+Detalle en [`widgets.md`](widgets.md).
 
 ### D9 · La entrada
 
@@ -128,6 +153,8 @@ Está en la galería, sección 2.
   defecto, «recomendado».
 - **La frase y las diapositivas pasan tocando**, cuando se llena el aro (como el
   circulito de Ascent), o solas. En la galería están las dos.
+- **Con la comida al centro, propongo invertir las diapositivas:** primero «Tu
+  comida, a tu medida» y después «Tus hábitos son estrellas».
 
 ### D3 · Varios días con la misma cantidad de hábitos (importante)
 
@@ -189,6 +216,17 @@ Los riesgos que había anotado antes tienen arreglo, uno por uno:
 
 Está todo en [`ascent.md`](ascent.md), con los cambios del repo de Ascent y lo
 que tenés que hacer vos.
+
+### D7 · Qué parte de la comida entra en la v1 (resuelta: toda)
+
+Con la comida al centro (21/10/2026), entra toda en la v1:
+- los 13 atajos;
+- la pantalla de comida;
+- los widgets de la pantalla de bloqueo.
+
+Quedan para después importar recetas desde un link, la app para Apple Watch y
+escribir la comida en Salud. La propuesta de antes dejaba las recetas y la foto
+para la v1.1.
 
 ### D2 · Entrar sin registrarse (reemplazada)
 
@@ -322,6 +360,28 @@ hacen falta las cuentas anónimas.
   cliente que traduce a SQL lo que pide supabase-js (`npm run
   supabase:verificar`). Uno de los teléfonos guarda con el repositorio SQLite
   del iPhone, sobre el SQLite que trae Node (`herramientas/expo-sqlite-node.mjs`).
+- **La base de alimentos** (etapa 4):
+  - **Cómo se arma:** USDA va dentro de la app, armada con el SQLite de Node, que es la misma versión que el de `expo-sqlite` (3.53). Así, lo que se prueba en la PC es lo que lee el teléfono.
+  - **Qué queda afuera:** la comida de bebé, las fórmulas, las cadenas de comida rápida y los productos de marca. Las marcas de SR Legacy van en mayúsculas («QUAKER», «KRAFT»): se sacan por eso.
+  - **Los curados** están en un archivo de texto legible (`alimentos/genericos.txt`):
+    - Cada uno apunta a la descripción exacta de USDA, no a un número. Si USDA la cambia, el armado avisa.
+    - Lo crudo sale de SR Legacy, que tiene porciones por tamaño. Lo que se come preparado sale de FNDDS.
+  - **Los nombres regionales** se escribieron a mano, con su país. Los alias de Wikidata no dicen de qué país son.
+  - **Las porciones de USDA** se traducen con una tabla:
+    - En los curados, las que no se traducen no se muestran.
+    - Las de tamaño dicen «1 unidad mediana», para no errar el género («1 mediana» sirve para la banana, no para el tomate).
+  - **Los valores** son los de USDA aunque no cierren con 4/4/9: USDA usa factores propios y nosotros no guardamos la fibra. El verificador avisa, para mirarlos.
+  - **El tope de la base es 10 MB.** Hoy pesa 5,9.
+- **La búsqueda:**
+  - En español, lo de USDA en inglés aparece igual, pero después de todo lo que coincide en español. Los errores de tipeo se buscan solo en el idioma de la app.
+  - El nombre de tu región gana un poco; uno de otra región pierde un poco.
+  - El premio por lo más usado lo pone quien busca, porque el historial no está en la base.
+- **El escáner de etiquetas:**
+  - Vision de Apple con `RecognizeDocumentsRequest`, en un módulo propio en Swift. Los módulos que existen devuelven líneas sueltas, no tablas.
+  - Sin ML Kit de Google.
+  - Siempre con una pantalla de revisión antes de guardar. El detalle está en `nutricion.md`.
+- **El dictado** es el del teclado del iPhone: anda en el buscador sin programar nada.
+- **Unidades:** métricas o imperiales según el teléfono, y se cambian en Ajustes.
 - **Galería interactiva**, no capturas como la de Ascent: lo que hay que aprobar
   son animaciones y toques.
 - **Rama `cimientos`**, que sale de `master` (el commit inicial de la plantilla).

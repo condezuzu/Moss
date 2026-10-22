@@ -14,7 +14,7 @@ export function nombreEn(texto: Texto) {
   return texto[idioma()];
 }
 
-/** Lo que lleva hoy un hábito automático, o nada si todavía no hay datos (Salud llega en la etapa 5). */
+/** Lo que lleva hoy un hábito automático, o nada si todavía no hay datos (Salud llega en la etapa 8). */
 export function valorAutomatico(h: HabitoDelCielo) {
   if (h.valor === undefined) return '';
   if (h.auto === 'pasos') return `${miles(h.valor)} / ${miles(h.meta ?? 0)}`;
