@@ -11,6 +11,9 @@
     "perfil": "Profile",
     "mas": "Add"
   },
+  "secciones": {
+    "pronto": "This section is still in the gallery: it’s coming soon to the app."
+  },
   "cielo": {
     "armandose": "The sky is coming together.",
     "fecha": "{dia} · {mes} {num}",
@@ -290,7 +293,8 @@
     "pesoHoy": "Today. Best before eating and after the bathroom.",
     "tendencia": "Trend: {kg} kg",
     "pesoNota": "With a scale connected to Health, your weight comes in on its own. Moss uses the trend, not one day’s number.",
-    "pesoGuardado": "Weight saved: {kg} kg"
+    "pesoGuardado": "Weight saved: {kg} kg",
+    "pronto": "This is coming soon to the app."
   },
   "cuerpo": {
     "sitios": {
@@ -716,7 +720,22 @@
       "sesion": "{nombre} · {min} min · {series} sets",
       "aLas": "at {hora}",
       "meta": "Today’s target: {kcal} kcal and {p} g protein",
-      "cambio": "+{kcal} kcal and +{p} g protein for training"
+      "reparto": "Gym days get {entreno} kcal and rest days {descanso}. The week adds up to {semana}, the same as the check-in.",
+      "proteina": {
+        "sube": "+{p} g protein: the session was {comparacion}.",
+        "techo": "Protein stays: it’s already at 2.2 g per kilo, and more doesn’t add muscle.",
+        "chica": "Protein stays: the session was half your usual or less."
+      },
+      "comparacion": {
+        "masGrande": "{n}% bigger than your usual",
+        "comoSiempre": "like your usual ones",
+        "masChica": "{n}% smaller than your usual"
+      },
+      "leyenda": {
+        "gimnasio": "gym",
+        "descanso": "rest",
+        "previsto": "expected"
+      }
     },
     "recuperacion": {
       "titulo": "Recovery",
@@ -756,9 +775,19 @@
         "proteina": "Your best lifts come in the weeks you hit your protein.",
         "calorias": "Your best lifts come in the weeks you eat closer to your expenditure."
       },
-      "nota": "It compares your weeks: it shows what changed, not a sure cause.",
+      "nota": "It’s a probable cause, not a sure one: it compares your weeks.",
       "gramos": "{n} g",
-      "kcal": "{n} kcal"
+      "kcal": "{n} kcal",
+      "juntando": "Moss is still gathering information to find the probable cause.",
+      "juntandoDetalle": "It needs {min} weeks with PRs and {min} without, each with at least {dias} days of food and {dias} nights of sleep. So far, {a} and {b}.",
+      "causa": "Probable cause: {causa}.",
+      "causas": {
+        "sueno": "sleep",
+        "proteina": "protein",
+        "calorias": "calories"
+      },
+      "sinDiferencia": "There’s no clear difference in your sleep, protein or calories: the probable cause lies elsewhere.",
+      "sinMarcas": "Without PRs"
     },
     "anio": {
       "titulo": "Your year",
@@ -783,7 +812,7 @@
       "calorias": {
         "titulo": "Calories by day",
         "texto": "Gym days raise your target and rest days lower it: the week adds up the same.",
-        "vivo": "You trained today: +{n} kcal"
+        "vivo": "Gym {entreno} · rest {descanso} kcal"
       },
       "objetivo": {
         "titulo": "One goal",
@@ -814,6 +843,7 @@
       "hoy": "today",
       "ayer": "yesterday",
       "dia": "on {dia}"
-    }
+    },
+    "pronto": "Linking is coming soon."
   }
 }

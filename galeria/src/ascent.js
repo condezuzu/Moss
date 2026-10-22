@@ -1,29 +1,14 @@
-// La sección de Ascent (spec/ascent.md), arriba de Hábitos. Desde el cielo, la flecha tenue sobre
-// el musgo y deslizar para arriba la suben desde abajo, siguiendo al dedo; se vuelve deslizando
-// para abajo, con la flecha de arriba o tocando Hábitos. Sin vincular, cada función muestra vacío
-// lo que va a mostrar, con «Vincular» arriba; vinculada, lo de hoy. Tiene los colores de Ascent y
-// su regla de líneas en vez de cajas: es la parte de Moss que es de las dos.
+// La sección de Ascent (spec/ascent.md), arriba de Hábitos. Desde el cielo, tocar la flecha tenue
+// sobre el musgo o deslizar para arriba desde arriba de la barra la suben desde abajo, siguiendo al
+// dedo; se vuelve deslizando para abajo, con la flecha de arriba o tocando Hábitos. Sin vincular,
+// cada función muestra vacío lo que va a mostrar, con «Vincular» arriba; vinculada, lo de hoy, con
+// las cuentas de la app (Entrenamiento, src/dominio/entrenamiento.ts). Tiene los colores de Ascent
+// y su regla de líneas en vez de cajas: es la parte de Moss que es de las dos.
 
 const SeccionAscent = (() => {
-  const MAXIMOS = { sueno: 40, carga: 40, comida: 20 };
   const PARTES = ['sueno', 'carga', 'comida'];
-  const FUNCIONES = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['cuenta', 'amigos'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
-  // Cuánto pesa cada diferencia para elegir la más grande en «Por qué no subes»: 45 minutos de
-  // sueño, 15 g de proteína por día o 250 kcal por día de balance cuentan lo mismo.
-  const ESCALAS = { sueno: 45, proteina: 15, calorias: 250 };
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
-
-  // La recuperación de spec/ascent.md. En la app la calcula moss.recuperacion(fecha) en Supabase,
-  // así las dos apps muestran el mismo número.
-  function recuperacion(d) {
-    const sueno = 20 * Math.min(1, d.dormido / d.necesidad) + (20 * clamp(d.calidad, 0, 100)) / 100;
-    const r = d.kg3 / (3 * d.promedioDiario);
-    const carga = Math.max(0, 40 * clamp(1.5 - r, 0, 1) - 5 * Math.max(0, d.seguidos - 2));
-    const comida = 10 * Math.min(1, d.proteina / d.metaProteina) + 10 * Math.min(1, d.kcal / (0.8 * d.metaKcal));
-    const partes = { sueno: Math.round(sueno), carga: Math.round(carga), comida: Math.round(comida) };
-    const total = partes.sueno + partes.carga + partes.comida;
-    return { partes, total, r, conviene: total >= 70 ? 'fuerte' : total >= 45 ? 'normal' : 'suave' };
-  }
+  const FUNCIONES = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['cuenta', 'amigos'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
 
   // El planeta de Ascent con su órbita abierta, como en su ícono, y la luna de Moss: sin vincular
   // queda afuera de la órbita; al vincular, entra.
@@ -46,6 +31,7 @@ const SeccionAscent = (() => {
     const A = Datos.ASCENT;
     const nombreDe = (v) => v[u.idioma()] || v.es;
     const curva = opciones.curva;
+    const MAXIMOS = Entrenamiento.MAXIMOS_DE_RECUPERACION;
     let vinculada = false;
     // Cuánto subió: 0 es abajo, escondida; 1, arriba.
     let p = 0;
@@ -69,6 +55,7 @@ const SeccionAscent = (() => {
     const marca = arriba.querySelector('.as-marca');
 
     // La flecha tenue de Hábitos va con la frase: se va con ella cuando la cámara sube a tu universo.
+    // Tocarla también abre la sección.
     const flecha = boton('as-flecha', icono('arriba'), () => abrir());
     tel.querySelector('.ui .frase').appendChild(flecha);
 
@@ -80,33 +67,36 @@ const SeccionAscent = (() => {
       const anoche = opciones.anoche();
       const meta = opciones.metaBase();
       const ayer = opciones.comida.totalDe(-1);
-      // Lo de antes de entrenar hoy: los tres días anteriores y cuántos seguidos venía entrenando.
+      // Antes de entrenar hoy: el peso movido de los tres días anteriores, cuántos seguidos venía
+      // entrenando y el promedio por día de las 4 semanas anteriores a esos tres días.
       const anteriores = [1, 2, 3].map((k) => sesionDe(Fechas.sumarDias(Datos.HOY, -k)));
       let seguidos = 0;
       while (seguidos < anteriores.length && anteriores[seguidos]) seguidos++;
-      const r = recuperacion({
-        dormido: anoche ? anoche.dormido : 0, necesidad, calidad: anoche && anoche.calidad != null ? anoche.calidad : 0,
-        kg3: anteriores.reduce((s, x) => s + (x ? x.kg : 0), 0), promedioDiario: (A.sesionPromedioKg * A.sesionesPorSemana) / 7, seguidos,
-        proteina: ayer.p, metaProteina: meta.proteina, kcal: ayer.kcal, metaKcal: meta.kcal,
+      const historia = Entrenamiento.sesionesAnteriores(A.sesiones, Fechas.sumarDias(Datos.HOY, -3));
+      const r = Entrenamiento.recuperacion({
+        dormido: anoche ? anoche.dormido : 0, necesidad, calidad: anoche ? anoche.calidad : null,
+        kilos3: anteriores.reduce((s, x) => s + (x ? x.kilos : 0), 0),
+        kilosPorDia: historia.reduce((s, x) => s + x.kilos, 0) / (7 * Entrenamiento.SEMANAS_DE_HISTORIA),
+        seguidos, proteinaAyer: ayer.p, metaProteina: meta.proteina, kcalAyer: ayer.kcal, metaKcal: meta.kcal,
       });
       return Object.assign(r, { anoche, ayer, meta });
     }
 
-    // Lo de Moss de estas semanas, para comparar con las semanas en que llegaban las marcas.
-    function estasSemanas() {
-      const n = A.estancado.semanas * 7;
-      const desde = Fechas.sumarDias(Datos.HOY, -n);
-      const noches = Datos.NOCHES.filter((x) => x.clave > desde && x.clave <= Datos.HOY);
-      const sueno = noches.reduce((s, x) => s + x.dormido, 0) / Math.max(1, noches.length);
-      let proteina = 0, kcal = 0, dias = 0;
-      for (let k = 1; k <= n; k++) {
-        const t = opciones.comida.totalDe(-k);
-        if (!t.kcal) continue;
-        dias++;
-        kcal += t.kcal;
-        proteina += t.p;
-      }
-      return { sueno, proteina: proteina / Math.max(1, dias), balance: kcal / Math.max(1, dias) - opciones.persona().gasto };
+    // Lo de Moss de una semana, de lunes a domingo, con la comida y el sueño de la galería.
+    function semanaDeMoss(desde) {
+      const fechas = Array.from({ length: 7 }, (_, i) => Fechas.sumarDias(desde, i));
+      const noches = Datos.NOCHES.filter((x) => fechas.includes(x.clave)).map((x) => x.dormido);
+      const comidas = fechas.map((f) => opciones.comida.totalDe(Fechas.diasEntre(Datos.HOY, f))).filter((t) => t.kcal > 0).map((t) => ({ kcal: t.kcal, proteina: t.p }));
+      return Entrenamiento.semanaDeMoss(noches, comidas, opciones.persona().gasto);
+    }
+
+    // Las semanas del estancamiento contra las semanas en que el ejercicio subía. Con «pocas
+    // semanas» (un botón de la galería) solo hay dos con marcas: todavía está juntando.
+    function porQueNoSube() {
+      const e = A.estancado;
+      const sin = Array.from({ length: e.semanas }, (_, i) => semanaDeMoss(Fechas.sumarDias(e.desde, 7 * i)));
+      const con = opciones.pocasSemanas() ? A.semanasConMarcas.slice(0, 2) : A.semanasConMarcas;
+      return Entrenamiento.porQueNoSube(con, sin);
     }
 
     // ------------------------------------------------------------ las partes
@@ -141,18 +131,43 @@ const SeccionAscent = (() => {
       return cab;
     }
 
+    // Hoy en Ascent: la sesión, la meta de hoy con el reparto de la semana, y la proteína de la sesión.
     function hoyEnAscent() {
-      const s = sesionDe(Datos.HOY);
-      const aj = opciones.ajuste();
-      if (!s || !aj) return null;
-      const c = carta('as-hoy', tx('ascent.hoy.titulo'), el('span', 'as-derecha', tx('ascent.hoy.aLas', { hora: u.horaMin(s.hora) })));
+      const c = opciones.conAscent();
+      if (!c || !c.sesion) return null;
+      const s = c.sesion;
+      const k = carta('as-hoy', tx('ascent.hoy.titulo'), el('span', 'as-derecha', tx('ascent.hoy.aLas', { hora: u.horaMin(s.hora) })));
       const m = opciones.comida.meta;
-      c.append(
-        el('div', 'as-hoy-sesion', tx('ascent.hoy.sesion', { nombre: nombreDe(s.nombre), min: s.min, series: s.series })),
+      k.append(
+        el('div', 'as-hoy-sesion', tx('ascent.hoy.sesion', { nombre: nombreDe(s.nombre), min: s.minutos, series: s.series })),
         el('p', 'as-hoy-meta', tx('ascent.hoy.meta', { kcal: numero(m.kcal), p: numero(m.p) })),
-        el('p', 'as-nota', tx('ascent.hoy.cambio', { kcal: numero(aj.kcal), p: numero(aj.p) })),
       );
-      return c;
+      // La semana del control: los días de gimnasio más altos, los de descanso más bajos y lo que
+      // viene como previsión. Suma lo mismo que el control.
+      const barras = el('div', 'as-semana');
+      const valores = c.semana.map((d) => d.meta.kcal);
+      const alto = Math.max(...valores), bajo = Math.min(...valores);
+      c.semana.forEach((d) => {
+        const clase = d.entrena === true ? ' gimnasio' : d.entrena === null ? ' previsto' : '';
+        const col = el('div', 'as-semana-dia' + clase + (d.fecha === Datos.HOY ? ' hoy' : ''));
+        const barra = el('i');
+        barra.style.height = `${(35 + (65 * (d.meta.kcal - bajo)) / Math.max(1, alto - bajo)).toFixed(1)}%`;
+        col.append(el('b', null, numero(d.meta.kcal)), barra, el('span', null, tx('fecha.diasCortos.' + Fechas.diaDeLaSemana(d.fecha)).charAt(0)));
+        barras.appendChild(col);
+      });
+      const leyenda = el('div', 'as-leyenda');
+      ['gimnasio', 'descanso', 'previsto'].forEach((n) => leyenda.appendChild(el('span', 'as-leyenda-' + n, tx('ascent.hoy.leyenda.' + n))));
+      k.append(barras, leyenda, el('p', 'as-nota', tx('ascent.hoy.reparto', { entreno: numero(c.entreno), descanso: numero(c.descanso), semana: numero(c.total) })));
+      let proteina;
+      if (c.extra > 0) {
+        const n = Math.round(Math.abs(c.tamano - 1) * 100);
+        const comparacion = n < 5 ? tx('ascent.hoy.comparacion.comoSiempre') : tx('ascent.hoy.comparacion.' + (c.tamano > 1 ? 'masGrande' : 'masChica'), { n });
+        proteina = tx('ascent.hoy.proteina.sube', { p: c.extra, comparacion });
+      } else {
+        proteina = tx('ascent.hoy.proteina.' + (c.tamano <= 0.5 ? 'chica' : 'techo'));
+      }
+      k.appendChild(el('p', 'as-nota', proteina));
+      return k;
     }
 
     function cartaRecuperacion() {
@@ -180,7 +195,7 @@ const SeccionAscent = (() => {
         if (d) {
           const detalle = {
             sueno: () => tx('ascent.recuperacion.detalle.sueno', { horas: d.anoche ? u.duracion(d.anoche.dormido) : '—', calidad: d.anoche && d.anoche.calidad != null ? d.anoche.calidad : '—' }),
-            carga: () => tx('ascent.recuperacion.detalle.carga', { n: Math.round(d.r * 100) }),
+            carga: () => tx('ascent.recuperacion.detalle.carga', { n: Math.round(d.carga * 100) }),
             comida: () => tx('ascent.recuperacion.detalle.comida', { p: numero(Math.round(d.ayer.p)), meta: numero(d.meta.proteina) }),
           }[k]();
           f.appendChild(el('small', null, detalle));
@@ -201,39 +216,59 @@ const SeccionAscent = (() => {
       return c;
     }
 
-    function cartaEstancamiento() {
-      const c = carta('as-estanc', tx('ascent.estancamiento.titulo'), vinculada ? null : candado());
-      const e = A.estancado;
-      const ahora = vinculada ? estasSemanas() : null;
-      const antes = A.conMarcas;
-      if (vinculada) c.appendChild(el('div', 'as-estanc-ej', tx('ascent.estancamiento.ejercicio', { ejercicio: nombreDe(e.ejercicio), semanas: e.semanas, marca: e.marca })));
-      else c.appendChild(el('p', 'as-texto', tx('ascent.estancamiento.texto')));
-      // La diferencia más grande, cada una en su escala: esa es la oración.
-      const difs = ahora ? {
-        sueno: (antes.sueno - ahora.sueno) / ESCALAS.sueno,
-        proteina: (antes.proteina - ahora.proteina) / ESCALAS.proteina,
-        calorias: Math.abs(ahora.balance - antes.balance) / ESCALAS.calorias,
-      } : null;
-      const mayor = difs ? Object.keys(difs).reduce((a, b) => (difs[b] > difs[a] ? b : a)) : null;
+    // Las semanas con marcas contra las del estancamiento: el sueño, la proteína y el balance.
+    function tablaDeSemanas(antes, ahora, causa) {
       const tabla = el('div', 'as-tabla');
-      tabla.append(el('span'), el('span', 'as-col', tx('ascent.estancamiento.conMarcas')), el('span', 'as-col', tx('ascent.estancamiento.ahora', { n: e.semanas })));
+      tabla.append(el('span'), el('span', 'as-col', tx('ascent.estancamiento.conMarcas')), el('span', 'as-col', tx('ascent.estancamiento.ahora', { n: A.estancado.semanas })));
       const valor = {
         sueno: (v) => u.duracion(Math.round(v)),
         proteina: (v) => tx('ascent.estancamiento.gramos', { n: numero(Math.round(v)) }),
         calorias: (v) => tx('ascent.estancamiento.kcal', { n: u.conSigno(Math.round(v / 10) * 10) }),
       };
-      const fila = (k, a, b) => {
-        const clase = 'as-tabla-fila' + (k === mayor ? ' mayor' : '');
-        const n = el('span', clase, tx('ascent.estancamiento.filas.' + k));
-        tabla.append(n, el('b', clase, ahora ? valor[k](a) : '—'), el('b', clase, ahora ? valor[k](b) : '—'));
-      };
-      fila('sueno', antes.sueno, ahora && ahora.sueno);
-      fila('proteina', antes.proteina, ahora && ahora.proteina);
-      fila('calorias', antes.balance, ahora && ahora.balance);
-      c.appendChild(tabla);
-      if (mayor) {
-        const horas = u.duracion(Math.floor(antes.sueno / 15) * 15);
-        c.append(el('p', 'as-frase', tx('ascent.estancamiento.frases.' + mayor, { horas })), el('p', 'as-nota', tx('ascent.estancamiento.nota')));
+      [['sueno', 'sueno'], ['proteina', 'proteina'], ['calorias', 'balance']].forEach(([k, campo]) => {
+        const clase = 'as-tabla-fila' + (k === causa ? ' mayor' : '');
+        tabla.append(el('span', clase, tx('ascent.estancamiento.filas.' + k)), el('b', clase, antes ? valor[k](antes[campo]) : '—'), el('b', clase, ahora ? valor[k](ahora[campo]) : '—'));
+      });
+      return tabla;
+    }
+
+    function cartaEstancamiento() {
+      const c = carta('as-estanc', tx('ascent.estancamiento.titulo'), vinculada ? null : candado());
+      const e = A.estancado;
+      if (!vinculada) {
+        c.append(el('p', 'as-texto', tx('ascent.estancamiento.texto')), tablaDeSemanas(null, null, null));
+        return c;
+      }
+      c.appendChild(el('div', 'as-estanc-ej', tx('ascent.estancamiento.ejercicio', { ejercicio: nombreDe(e.ejercicio), semanas: e.semanas, marca: e.marca })));
+      const r = porQueNoSube();
+      if (r.estado === 'juntando') {
+        // Las semanas que ya hay, de las que hacen falta de cada lado.
+        const juntadas = el('div', 'as-juntando');
+        [['conMarcas', r.conMarcas], ['sinMarcas', r.sinMarcas]].forEach(([clave, n]) => {
+          const fila = el('div', 'as-juntando-fila');
+          fila.appendChild(el('span', null, tx('ascent.estancamiento.' + clave)));
+          const cuadros = el('span', 'as-cuadros');
+          for (let i = 0; i < Entrenamiento.SEMANAS_MINIMAS; i++) cuadros.appendChild(el('i', i < n ? 'lleno' : null));
+          fila.appendChild(cuadros);
+          juntadas.appendChild(fila);
+        });
+        c.append(
+          el('p', 'as-frase', tx('ascent.estancamiento.juntando')),
+          juntadas,
+          el('p', 'as-nota', tx('ascent.estancamiento.juntandoDetalle', { min: Entrenamiento.SEMANAS_MINIMAS, dias: Entrenamiento.DIAS_MINIMOS, a: r.conMarcas, b: r.sinMarcas })),
+        );
+        return c;
+      }
+      c.appendChild(tablaDeSemanas(r.antes, r.ahora, r.estado === 'probable' ? r.causa : null));
+      if (r.estado === 'probable') {
+        const horas = u.duracion(Math.floor(r.antes.sueno / 15) * 15);
+        c.append(
+          el('p', 'as-causa', tx('ascent.estancamiento.causa', { causa: tx('ascent.estancamiento.causas.' + r.causa) })),
+          el('p', 'as-frase', tx('ascent.estancamiento.frases.' + r.causa, { horas })),
+          el('p', 'as-nota', tx('ascent.estancamiento.nota')),
+        );
+      } else {
+        c.appendChild(el('p', 'as-frase', tx('ascent.estancamiento.sinDiferencia')));
       }
       return c;
     }
@@ -262,17 +297,17 @@ const SeccionAscent = (() => {
     }
 
     function vivo(k) {
-      const aj = opciones.ajuste() || { kcal: 0, p: 0 };
+      const c = opciones.conAscent() || { entreno: 0, descanso: 0, extra: 0 };
       if (k === 'peso') {
         const ult = Datos.PESADAS[Datos.PESADAS.length - 1];
         const ayer = Fechas.sumarDias(Datos.HOY, -1);
         const cuando = ult.fecha === Datos.HOY ? tx('ascent.cuando.hoy') : ult.fecha === ayer ? tx('ascent.cuando.ayer') : tx('ascent.cuando.dia', { dia: tx('fecha.dias.' + Fechas.diaDeLaSemana(ult.fecha)) });
         return tx('ascent.funciones.peso.vivo', { kg: numero(ult.kg, 1), cuando });
       }
-      if (k === 'calorias') return tx('ascent.funciones.calorias.vivo', { n: numero(aj.kcal) });
+      if (k === 'calorias') return tx('ascent.funciones.calorias.vivo', { entreno: numero(c.entreno), descanso: numero(c.descanso) });
       if (k === 'objetivo') return tx('ascent.funciones.objetivo.vivo.' + opciones.persona().perfil.objetivo);
       if (k === 'cuenta') return tx('ascent.funciones.cuenta.vivo', { n: A.amigos });
-      if (k === 'proteina') return tx('ascent.funciones.proteina.vivo', { n: aj.p });
+      if (k === 'proteina') return tx('ascent.funciones.proteina.vivo', { n: c.extra });
       return tx('ascent.funciones.gimnasio.vivo');
     }
 
@@ -427,5 +462,5 @@ const SeccionAscent = (() => {
     };
   }
 
-  return { crear, recuperacion };
+  return { crear };
 })();

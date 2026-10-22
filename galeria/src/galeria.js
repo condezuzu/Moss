@@ -275,25 +275,39 @@
     edad, sexo: perfil.sexo, pesoKg: controlHecho.datos.pesoDeTendencia || Datos.PESADAS[Datos.PESADAS.length - 1].kg, objetivo: perfil.objetivo, ritmo: perfil.ritmo,
   }, perfil.estilo);
   let metasAMano = false;
-  // La meta de la comida de hoy: la de Moss y, vinculada con Ascent, lo que suma entrenar
-  // (spec/ascent.md: calorías según el día y proteína después de entrenar).
+  // La meta de la comida de hoy: la de Moss y, vinculada con Ascent, el reparto de la semana del
+  // control (calorías según el día) y la proteína de la sesión, con las cuentas de la app
+  // (Entrenamiento, src/dominio/entrenamiento.ts).
   let metaBase = controlHecho.metas;
   let vinculada = false;
-  function ajusteDeHoy() {
+  // «Por qué no subes» con pocas semanas: un botón de la galería, para ver cuando todavía junta.
+  let pocasSemanas = false;
+  function conAscent() {
     const A = Datos.ASCENT;
-    const sesion = A.sesiones.find((x) => x.fecha === Datos.HOY);
-    if (!vinculada || !sesion) return null;
-    // Los días de gimnasio suben y los otros bajan lo mismo entre todos: la semana suma igual.
-    const dia = Metas.repartirSemana(metaBase, A.diasDeGimnasio, 250, perfil.sexo)[Fechas.diaDeLaSemana(Datos.HOY)];
-    // Una sesión más grande que las de siempre suma 0,3 g de proteína por kilo, hasta 40 g, que
-    // salen de los carbohidratos que sumó el día: las calorías quedan como las dejó el reparto.
-    const p = sesion.kg > A.sesionPromedioKg ? Math.min(40, Math.round(0.3 * Datos.PESADAS[Datos.PESADAS.length - 1].kg)) : 0;
-    return { kcal: dia.kcal - metaBase.kcal, p, meta: { kcal: dia.kcal, proteina: metaBase.proteina + p, carbohidratos: Math.max(0, dia.carbohidratos - p), grasas: dia.grasas } };
+    const inicio = controlHecho.fecha;
+    const promedio = Entrenamiento.promedioDeSesiones(Entrenamiento.sesionesAnteriores(A.sesiones, inicio));
+    const pesoKg = Datos.PESADAS[Datos.PESADAS.length - 1].kg;
+    const costo = Entrenamiento.costoDeSesion(pesoKg, promedio ? promedio.minutos : 60);
+    const semana = Entrenamiento.caloriasSegunElDia({
+      meta: metaBase, inicio, hoy: Datos.HOY, sesiones: A.sesiones, frecuencia: Entrenamiento.frecuenciaPorDia(A.sesiones, inicio), costo, sexo: perfil.sexo,
+    });
+    const hoy = semana.find((d) => d.fecha === Datos.HOY);
+    const sesion = A.sesiones.find((x) => x.fecha === Datos.HOY) || null;
+    const tamano = sesion ? Entrenamiento.tamanoDeSesion(sesion, promedio) : 1;
+    const extra = sesion ? Entrenamiento.proteinaDespuesDeEntrenar({ tamano, pesoKg, proteina: hoy.meta.proteina }) : 0;
+    // Lo de un día de descanso: el último de la semana que ya pasó sin entrenar.
+    const descansos = semana.filter((d) => d.entrena === false);
+    return {
+      semana, hoy, sesion, promedio, costo, tamano, extra,
+      entreno: hoy.meta.kcal,
+      descanso: descansos.length ? descansos[descansos.length - 1].meta.kcal : hoy.meta.kcal - costo,
+      total: semana.reduce((t, d) => t + d.meta.kcal, 0),
+      meta: Entrenamiento.metaConEntrenamiento(hoy, extra),
+    };
   }
   function ponerMetaDeHoy(m) {
     metaBase = m;
-    const aj = ajusteDeHoy();
-    comida.ponerMeta(aj ? aj.meta : m);
+    comida.ponerMeta(vinculada ? conAscent().meta : m);
   }
   ponerMetaDeHoy(controlHecho.metas);
 
@@ -400,7 +414,8 @@
     persona,
     anoche: () => sueno.anoche(),
     metaBase: () => metaBase,
-    ajuste: () => ajusteDeHoy(),
+    conAscent: () => (vinculada ? conAscent() : null),
+    pocasSemanas: () => pocasSemanas,
     alVincular: (si) => vincular(si),
     alMover: () => { if (pestanas) pestanas.repintar(); },
     curva: bezier(0.16, 1, 0.3, 1),
@@ -657,6 +672,7 @@
     subida = null;
     if (!puedeSubir() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
     if (ev.target.closest('.pestanas, .barra-inmersiva, .pagina-app')) return;
+    if (ev.clientY > tel.querySelector('.pestanas').getBoundingClientRect().top - 8) return;
     subida = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, v: 0, ultimoY: ev.clientY, ultimoT: performance.now() };
   }, true);
   tel.addEventListener('pointermove', (ev) => {
@@ -770,6 +786,7 @@
   }
   segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); ascent.pintar(); dibujarCatalogo(); });
   segmento('s-vinculo', (v) => vincular(v === 'si'));
+  segmento('s-estanc', (v) => { pocasSemanas = v === 'pocas'; ascent.pintar(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   segmento('s-avance', (v) => { avanceSolo = v === 'solo'; });
 
@@ -941,6 +958,7 @@
       cerrar: () => ascent.cerrar(true),
       arrastrar: () => { if (pestanas.actual !== HABITOS) pestanas.ir(HABITOS, true); ascent.arrastrar(arg); },
       vincular: () => vincular(arg),
+      pocas: () => { pocasSemanas = arg; ascent.pintar(); },
       bajar: () => ascent.bajarA(arg),
       subir: () => ascent.subir(),
     };

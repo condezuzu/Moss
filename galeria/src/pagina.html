@@ -1202,8 +1202,29 @@ section.item p { margin: 0; max-width: 64ch; }
 .as-funcion-candado svg { width: 15px; height: 15px; stroke-width: 1.7; }
 .as-pie { margin: 24px 0 0; font: 400 12px/1.4 var(--texto); color: var(--as-sub); text-align: center; }
 
-/* La flecha de Hábitos, debajo de la frase: muy tenue, apenas respira. */
-.as-flecha { position: absolute; left: 50%; bottom: -36px; translate: -50% 0; width: 64px; height: 32px; padding: 0; border: 0; background: none; color: rgba(239, 230, 207, 0.3); pointer-events: auto; cursor: pointer; display: grid; place-items: center; }
+
+/* Hoy en Ascent: la semana del control, con los días de gimnasio, los de descanso y lo previsto. */
+.as-semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; height: 104px; margin-top: 18px; }
+.as-semana-dia { height: 100%; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; gap: 6px; min-width: 0; }
+.as-semana-dia b { font: 400 9.5px/1 var(--numeros); color: var(--as-sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.as-semana-dia i { align-self: end; width: 100%; max-width: 24px; background: var(--as-linea-fuerte); }
+.as-semana-dia.gimnasio i { background: var(--as-claro); }
+.as-semana-dia.previsto i { background: none; border: 1px dashed var(--as-apagado); }
+.as-semana-dia span { font: 400 10px/1 var(--texto); color: var(--as-sub); }
+.as-semana-dia.hoy span, .as-semana-dia.hoy b { color: var(--as-tinta); }
+.as-leyenda { display: flex; gap: 16px; margin-top: 12px; font: 400 10.5px/1 var(--texto); color: var(--as-sub); }
+.as-leyenda span::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: -1px; background: var(--as-linea-fuerte); box-sizing: border-box; }
+.as-leyenda .as-leyenda-gimnasio::before { background: var(--as-claro); }
+.as-leyenda .as-leyenda-previsto::before { background: none; border: 1px dashed var(--as-apagado); }
+/* Por qué no subes: la causa probable, o las semanas que faltan juntar. */
+.as-causa { margin: 18px 0 0; font: 500 15px/1.3 var(--texto); color: var(--as-tinta); }
+.as-juntando { display: grid; gap: 10px; margin-top: 16px; }
+.as-juntando-fila { display: flex; align-items: center; justify-content: space-between; font: 400 13px/1 var(--texto); color: var(--as-sub); }
+.as-cuadros { display: inline-flex; gap: 6px; }
+.as-cuadros i { width: 12px; height: 12px; border: 1px solid var(--as-apagado); }
+.as-cuadros i.lleno { background: var(--as-claro); border-color: var(--as-claro); }
+/* La flecha de Hábitos, debajo de la frase: muy tenue, apenas respira. Del tamaño de un dedo. */
+.as-flecha { position: absolute; left: 50%; bottom: -36px; translate: -50% 0; width: 64px; height: 44px; padding: 0; border: 0; background: none; color: rgba(239, 230, 207, 0.3); pointer-events: auto; cursor: pointer; display: grid; place-items: center; }
 .as-flecha svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; animation: as-respira 3.8s ease-in-out infinite; }
 @keyframes as-respira { 50% { transform: translateY(-3px); opacity: 0.55; } }
 
@@ -1429,7 +1450,7 @@ section.item p { margin: 0; max-width: 64ch; }
 
     <section class="item" id="ascent">
       <h2><span class="n">7</span>Ascent, arriba de Hábitos</h2>
-      <p>La sección que solo se usa con Ascent vinculada. Está arriba de Hábitos: en el cielo, abajo, sobre el musgo, hay una flecha muy tenue que apunta para arriba. Deslizá para arriba (con el mouse, arrastrá el cielo; en el teléfono, a pantalla completa) y la sección sube desde el musgo siguiendo al dedo. Para volver, deslizala para abajo, tocá la flecha de arriba o tocá Hábitos. Arrastrar el cielo para abajo sigue llevando a tu universo.</p>
+      <p>La sección que solo se usa con Ascent vinculada. Está arriba de Hábitos: en el cielo, abajo, sobre el musgo, hay una flecha muy tenue que apunta para arriba. Tocá la flecha, o deslizá para arriba desde arriba de la barra (con el mouse, arrastrá el cielo; en el teléfono, a pantalla completa), y la sección sube desde el musgo siguiendo al dedo. El gesto nunca arranca sobre la barra: el borde de abajo es del gesto de inicio del iPhone. Para volver, deslizala para abajo, tocá la flecha de arriba o tocá Hábitos. Arrastrar el cielo para abajo sigue llevando a tu universo.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-ascent="abrir">Abrir Ascent</button>
@@ -1440,6 +1461,9 @@ section.item p { margin: 0; max-width: 64ch; }
           <div class="grupo"><span>Ascent</span>
             <div class="segmento" id="s-vinculo"><button type="button" data-valor="no" aria-pressed="true">Sin vincular</button><button type="button" data-valor="si" aria-pressed="false">Vinculada</button></div>
           </div>
+          <div class="grupo"><span>Por qué no subes</span>
+            <div class="segmento" id="s-estanc"><button type="button" data-valor="con" aria-pressed="true">Con datos</button><button type="button" data-valor="pocas" aria-pressed="false">Juntando información</button></div>
+          </div>
         </div>
       </div>
       <ul class="lista">
@@ -1447,9 +1471,11 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><b>Sin vincular</b>: «Vincular con Ascent», la App Store para quien no la tiene y que es la misma cuenta. Abajo, cada función muestra vacío lo que va a mostrar (el anillo punteado, la tabla con rayas), con un candado chico. Así se ve qué te perdés sin que parezca roto.</li>
         <li><b>Vinculada</b>, con lo de hoy de la persona de mentira:
           <ul>
-            <li><b>Hoy en Ascent</b>: entrenó piernas a las 18:40. La meta de hoy sube 250 kcal, porque los días de gimnasio suben y los otros bajan lo mismo (la semana suma igual), y 22 g de proteína, porque la sesión fue más grande que las de siempre. Mirá Inicio y Comida: dicen 2.840.</li>
+            <li><b>Hoy en Ascent</b>: entrenó piernas a las 18:40.</li>
+            <li><b>Calorías según el día</b>: el control de la semana ya cuenta el entrenamiento de siempre en el gasto, así que no se suma nada: se reparte. Un día de gimnasio tiene lo que cuesta una sesión más que uno de descanso (280 kcal para esta persona: 4 kcal por kilo y por hora), y la semana del control suma 18.130, lo mismo que da el control. Los días que vienen son una previsión, según qué días suele entrenar; si entrena más o menos, los que quedan se acomodan y el último cierra la cuenta. Hoy le tocan 2.730 kcal, y los días de descanso, 2.450: mirá Inicio y Comida.</li>
+            <li><b>La proteína después de entrenar</b> sube hacia 2,2 g por kilo, el techo útil, según el tamaño de la sesión: las series y el peso movido, cada uno contra su promedio. Una sesión de las de siempre suma la mitad de lo que falta hasta el techo; una un 50 % más grande, todo; de a 5 g y hasta 40 g. Sale de los carbohidratos: las calorías no cambian. Hoy la sesión fue un 23 % más grande: +10 g, 160 en total.</li>
             <li><b>Recuperación</b>: de 0 a 100, con el sueño (40), la carga de los tres días anteriores (40) y la comida de ayer (20), y si conviene ir fuerte, normal o suave. También aparece arriba en Sueño, porque cruza justo el sueño con el entrenamiento.</li>
-            <li><b>Por qué no subes</b>: el press banca lleva tres semanas igual. Compara tus semanas con marcas contra estas tres en sueño, proteína y calorías, y dice la diferencia más grande en una oración. Describe, como el aviso de Ascent: no receta.</li>
+            <li><b>Por qué no subes</b>: el press banca lleva tres semanas igual. Solo habla con 3 semanas con marcas y 3 sin, cada una con al menos 4 días de comida y 4 noches de sueño; si no, dice que todavía está juntando información (probalo con «Juntando información»). Con datos, la diferencia más grande es la causa probable, y lo dice así: probable, no segura. Hoy, la proteína: 152 g por día en las semanas con marcas, 112 ahora.</li>
             <li><b>Tu año</b>: lo de las dos apps del año; lo de Moss cuenta desde que la empezaste.</li>
             <li><b>Las seis que andan solas</b>: un solo peso, calorías según el día, el mismo objetivo, la cuenta y los amigos, la proteína después de entrenar y el gimnasio que se enciende solo, cada una con lo de hoy.</li>
           </ul></li>
@@ -1532,7 +1558,7 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><span><b>Fuera de la v1</b>: la oxigenación en sangre, las alteraciones de la respiración y la temperatura de la muñeca. Son casi médicas y solo están en algunos relojes.</span></li>
         <li><span><b>Los macros que tiemblan.</b> Tiembla lo que pasa un 20 % y al menos 10 g. ¿También la proteína? Pasarse de proteína no es malo: propongo que solo brille.</span></li>
         <li><span><b>El agua</b> ya no está en Inicio ni en Comida: se suma desde el «+», y es un bloque que se puede agregar a Inicio. ¿Así?</span></li>
-        <li><span><b>La flecha de Ascent</b> (sección 7) quedó abajo, sobre el musgo, debajo de la frase: es donde empieza el dedo para deslizar para arriba, como en la pantalla bloqueada del iPhone, y la sección sube desde ahí y queda encima del cielo. ¿Así, o la querés arriba de todo?</span></li>
+        <li><span><b>La proteína después de entrenar</b> (sección 7), la fórmula que te propongo: sube hacia 2,2 g por kilo según el tamaño de la sesión (series y peso movido contra tu promedio). Una de las de siempre suma la mitad de lo que falta; una un 50 % más grande, todo; hasta 40 g. ¿Así?</span></li>
         <li><span><b>El verde</b>: el vivo es el de la luz del musgo y quedó para el cielo de Hábitos. La interfaz usa crema, y un verde salvia apagado solo para los carbohidratos y lo que va bien. «Te quedan» va en crema. ¿Así?</span></li>
         <li><span><b>Lo secundario.</b> La fibra, los azúcares, las grasas saturadas y el sodio están en la ventana de cada alimento. ¿Los querés también en el día, debajo de los macros, o solo ahí?</span></li>
         <li><span><b>La riqueza del cielo, de noche o al instante.</b> Propongo que la luz del día se sume al cielo al día siguiente: abrís Moss y el cielo crece frente a vos, sin texto.</span></li>

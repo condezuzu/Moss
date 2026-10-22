@@ -11,6 +11,9 @@
     "perfil": "Perfil",
     "mas": "Agregar"
   },
+  "secciones": {
+    "pronto": "Esta sección todavía está en la galería: llega pronto a la app."
+  },
   "cielo": {
     "armandose": "El cielo se está armando.",
     "fecha": "{dia} · {num} {mes}",
@@ -290,7 +293,8 @@
     "pesoHoy": "Hoy. Mejor en ayunas y después de ir al baño.",
     "tendencia": "Tendencia: {kg} kg",
     "pesoNota": "Con una balanza conectada a Salud, el peso llega solo. Moss usa la tendencia, no el número de un día.",
-    "pesoGuardado": "Peso guardado: {kg} kg"
+    "pesoGuardado": "Peso guardado: {kg} kg",
+    "pronto": "Esto llega pronto a la app."
   },
   "cuerpo": {
     "sitios": {
@@ -716,7 +720,22 @@
       "sesion": "{nombre} · {min} min · {series} series",
       "aLas": "a las {hora}",
       "meta": "Tu meta de hoy: {kcal} kcal y {p} g de proteína",
-      "cambio": "+{kcal} kcal y +{p} g de proteína por entrenar"
+      "reparto": "Los días de gimnasio, {entreno} kcal; los de descanso, {descanso}. La semana suma {semana}, lo mismo que da el control.",
+      "proteina": {
+        "sube": "+{p} g de proteína: la sesión fue {comparacion}.",
+        "techo": "La proteína queda: ya está en 2,2 g por kilo, y más no suma músculo.",
+        "chica": "La proteína queda: la sesión fue de la mitad de lo de siempre o menos."
+      },
+      "comparacion": {
+        "masGrande": "un {n} % más grande que las de siempre",
+        "comoSiempre": "como las de siempre",
+        "masChica": "un {n} % más chica que las de siempre"
+      },
+      "leyenda": {
+        "gimnasio": "gimnasio",
+        "descanso": "descanso",
+        "previsto": "previsto"
+      }
     },
     "recuperacion": {
       "titulo": "Recuperación",
@@ -756,9 +775,19 @@
         "proteina": "Tus mejores marcas llegan las semanas que llegas a la proteína.",
         "calorias": "Tus mejores marcas llegan las semanas que comes más cerca de tu gasto."
       },
-      "nota": "Compara tus semanas: muestra lo que cambió, no una causa segura.",
+      "nota": "Es una causa probable, no segura: compara tus semanas.",
       "gramos": "{n} g",
-      "kcal": "{n} kcal"
+      "kcal": "{n} kcal",
+      "juntando": "Moss todavía está juntando información para saber la causa probable.",
+      "juntandoDetalle": "Hacen falta {min} semanas con marcas y {min} sin, cada una con al menos {dias} días de comida y {dias} noches de sueño. Van {a} y {b}.",
+      "causa": "Causa probable: {causa}.",
+      "causas": {
+        "sueno": "el sueño",
+        "proteina": "la proteína",
+        "calorias": "las calorías"
+      },
+      "sinDiferencia": "No hay una diferencia clara en tu sueño, tu proteína ni tus calorías: la causa probable está en otro lado.",
+      "sinMarcas": "Sin marcas"
     },
     "anio": {
       "titulo": "Tu año",
@@ -783,7 +812,7 @@
       "calorias": {
         "titulo": "Calorías según el día",
         "texto": "Los días de gimnasio la meta sube y los de descanso baja: la semana suma lo mismo.",
-        "vivo": "Hoy entrenaste: +{n} kcal"
+        "vivo": "Gimnasio {entreno} · descanso {descanso} kcal"
       },
       "objetivo": {
         "titulo": "El mismo objetivo",
@@ -814,6 +843,7 @@
       "hoy": "hoy",
       "ayer": "ayer",
       "dia": "el {dia}"
-    }
+    },
+    "pronto": "Vincular llega pronto."
   }
 }

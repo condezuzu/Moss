@@ -16,7 +16,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno' };
+const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', entrenamiento: 'Entrenamiento' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -111,6 +111,7 @@ const js = [
   modulo('Cuerpo', 'src/dominio/cuerpo.ts'),
   modulo('Progreso', 'src/dominio/progreso.ts'),
   modulo('Sueno', 'src/dominio/sueno.ts'),
+  modulo('Entrenamiento', 'src/dominio/entrenamiento.ts'),
   ...['motor', 'escena', 'entrada', 'util', 'luna', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 

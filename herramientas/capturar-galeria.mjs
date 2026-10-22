@@ -443,6 +443,22 @@ const pasos = {
     await alCielo();
     await pagina.waitForTimeout(600);
     await foto('ascent-flecha');
+    // Tocar la flecha también abre la sección.
+    await pagina.click('.as-flecha');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(900);
+    await foto('ascent-flecha-tocada');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(300);
+    // Desde la barra no arranca: el borde de abajo es del gesto de inicio del iPhone.
+    await pagina.mouse.move(196, 815);
+    await pagina.mouse.down();
+    await pagina.mouse.move(196, 560, { steps: 12 });
+    await pagina.waitForTimeout(300);
+    await foto('ascent-desde-la-barra');
+    await pagina.mouse.up();
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(600);
     await pagina.mouse.move(196, 640);
     await pagina.mouse.down();
     await pagina.mouse.move(196, 400, { steps: 12 });
@@ -491,6 +507,12 @@ const pasos = {
       await pagina.waitForTimeout(300);
       await foto(nombre);
     }
+    // Con pocas semanas, «Por qué no subes» todavía junta información.
+    await ascent('pocas', true);
+    await ascent('bajar', '.as-estanc');
+    await pagina.waitForTimeout(300);
+    await foto('ascent-juntando');
+    await ascent('pocas', false);
     await ascent('subir');
     await ascent('cerrar');
     await pestana(0);
