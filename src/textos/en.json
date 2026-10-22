@@ -658,7 +658,13 @@
     },
     "fuentesTexto": "Moss uses a single source per night: the one you choose or, if not, your watch, then another device, and the phone last. It never adds two together. If a night is missing, it stays grey: nothing is made up.",
     "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor.",
-    "ejemplo": "These are sample nights: once you connect Health, yours show up."
+    "ejemplo": "These are sample nights: once you connect Health, yours show up.",
+    "unidad": {
+      "frecuencia": "bpm",
+      "variabilidad": "ms",
+      "respiracion": "br/min"
+    },
+    "elegirNoche": "Night of {fecha}"
   },
   "perfil": {
     "titulo": "Profile",

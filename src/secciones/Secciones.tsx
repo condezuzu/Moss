@@ -23,6 +23,7 @@ import { quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { HojaMas, type VistaDelMas } from './HojaMas';
 import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDeProgreso } from './progreso/Progreso';
+import { PaginaDeSueno } from './sueno/Sueno';
 import { CEDE_EN_EL_BORDE, entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
 
 const ULTIMA = PESTANAS.length - 1;
@@ -147,6 +148,8 @@ export default function Secciones() {
                 <PaginaDeInicio key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
               ) : n === 'progreso' ? (
                 <PaginaDeProgreso key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
+              ) : n === 'sueno' ? (
+                <PaginaDeSueno key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
               ) : (
                 <SeccionPendiente key={n} nombre={n} ancho={ancho} arriba={insets.top} />
               ),

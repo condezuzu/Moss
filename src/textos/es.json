@@ -658,7 +658,13 @@
     },
     "fuentesTexto": "Moss usa una sola fuente por noche: la que elijas o, si no, el reloj, después otro aparato y al final el teléfono. Nunca suma dos. Si falta una noche, queda en gris: no se inventa.",
     "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo duermes, consulta a un médico.",
-    "ejemplo": "Son noches de ejemplo: cuando conectes Salud, aparecen las tuyas."
+    "ejemplo": "Son noches de ejemplo: cuando conectes Salud, aparecen las tuyas.",
+    "unidad": {
+      "frecuencia": "lpm",
+      "variabilidad": "ms",
+      "respiracion": "rpm"
+    },
+    "elegirNoche": "Noche del {fecha}"
   },
   "perfil": {
     "titulo": "Perfil",
