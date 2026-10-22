@@ -11,14 +11,17 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - el almacén y la sincronización sirven igual para la comida;
 - las metas ya están programadas.
 
-**Dónde estamos (21/10/2026):**
+**Dónde estamos (22/10/2026):**
 - **Hechas en código y probadas en la web:** las etapas 1 y 2, el cielo nativo y la app que guarda y recuerda.
 - **De la etapa 3** está lo que no depende de la galería: el esquema de Supabase, la sincronización y la fórmula de las metas.
-- **De la etapa 4** está la base de alimentos con USDA, 557 genéricos curados en español e inglés, y el buscador.
-- **De las etapas 5 y 7** está la galería de la comida: la zona de comida, la línea del día y la hoja de registro, con la base y el buscador de verdad.
+- **De la etapa 4** está la base de alimentos con USDA, 573 genéricos curados en español e inglés con fibra, azúcares, saturadas, sodio y alcohol, los primeros 14 platos uruguayos como recetas, y el buscador.
+- **De la etapa 5** está todo lo que no es pantalla: lo que se come en el almacén y en Supabase (`0002_comida.sql`), con su sincronización y los atajos.
+- **De la etapa 6**, el lector de etiquetas y el cliente de Open Food Facts, con tests.
+- **De la etapa 7**, el control semanal que corre solo, las metas a mano, los estilos de macros y repartir la semana; de la 9, los hábitos de comida que se encienden solos.
+- **En la galería, para aprobar:** las pestañas como Ascent (Inicio, Hábitos y Ajustes), la comida con la hoja de registro, la revisión de la etiqueta, las metas en Ajustes, la entrada, el cielo más sobrio y la estrella fugaz.
 - **Falta:**
   - la primera build en tu iPhone, que necesita dos pasos tuyos;
-  - aprobar en la galería la comida, las pestañas, la entrada a la app, el cielo que crece y la estrella fugaz nueva.
+  - tus aprobaciones en la galería: con eso se programan las pantallas de la comida en la app.
 
 Las etapas van en orden, con estas excepciones:
 
@@ -260,16 +263,16 @@ El corazón de la app. Los flujos y sus toques están en
     gana lo más nuevo y un borrado llega como una marca;
   - los tests, y `npm run supabase:verificar` con dos teléfonos registrando,
     borrando y planificando.
-- **Los atajos** 3 a 12:
-  - recetas y comidas guardadas;
-  - copiar una comida o un día;
-  - favoritos y recientes;
-  - varios alimentos de una vez y armar un plato;
-  - la última porción;
-  - lo que solés comer a esa hora;
-  - la carga rápida;
+- **Los atajos** 3 a 12. La lógica de casi todos ya está, con tests (`src/dominio/registros.ts` y el almacén, 22/10/2026); faltan las pantallas:
+  - recetas y comidas guardadas (lógica hecha);
+  - copiar una comida o un día (hecha);
+  - favoritos y recientes (hecha);
+  - varios alimentos de una vez y armar un plato (la canasta, hecha);
+  - la última porción (hecha);
+  - lo que solés comer a esa hora (hecha);
+  - la carga rápida (hecha);
   - el dictado del teclado;
-  - planificar días futuros.
+  - planificar días futuros (hecha, con confirmar al llegar el día).
 - **La foto como recuerdo**, guardada en el teléfono (D10).
 - **Medir en el iPhone** los toques y el tiempo de cada flujo. Lo de siempre entra en cinco toques, revisando antes de agregar.
 

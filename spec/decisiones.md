@@ -214,6 +214,11 @@ conviene confirmar el origen o escribir uno propio.
 Están en la galería, sección 7, «Para decidir»:
 
 - las pestañas (D14): el orden, los nombres y el «+» solo en Inicio;
+- las metas en Ajustes y, con «repartir la semana», si la semana de Inicio
+  compara cada día con su propia meta;
+- lo secundario (fibra, azúcares, saturadas y sodio): solo en la ventana del
+  alimento o también en el día;
+- la revisión de la etiqueta;
 - los arcos de la luna: la luna sola (la propuesta) o con los arcos de los macros;
 - cuándo crece el cielo (D5);
 - el cielo de la entrada;
@@ -222,6 +227,16 @@ Están en la galería, sección 7, «Para decidir»:
 - las tipografías;
 - el color de la aurora;
 - la orientación.
+
+### Fuera de la galería (22/10/2026)
+
+- **Los primeros 14 platos uruguayos** (`alimentos/genericos.txt`, `receta#`):
+  las cantidades son de una receta casera típica; conviene que las revises,
+  sobre todo la pascualina, la buseca y el postre chajá.
+- **El contacto para Open Food Facts:** piden un correo en el `User-Agent`
+  (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
+- **El día del control semanal:** tomé el día de la semana en que empezaste,
+  como MacroFactor. ¿O preferís un día fijo, como el lunes?
 
 ## Resueltas
 
