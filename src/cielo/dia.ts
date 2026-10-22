@@ -46,8 +46,12 @@ export type DiaDelCielo = {
   fecha: { diaSemana: DiaSemana; diaMes: number; mes: number };
 };
 
-function automatico(h: Habito): Pick<HabitoDelCielo, 'auto' | 'meta'> {
-  if (h.fuente.tipo === 'salud') return { auto: h.fuente.dato, meta: h.fuente.meta };
+function automatico(h: Habito, salud: Estado['salud'], hoy: ClaveDia): Pick<HabitoDelCielo, 'auto' | 'meta' | 'valor'> {
+  if (h.fuente.tipo === 'salud') {
+    // Lo que lleva hoy, si Salud lo dijo.
+    const valor = salud?.dia === hoy && h.fuente.dato !== 'acostarse' ? salud.valores[h.fuente.dato] : undefined;
+    return { auto: h.fuente.dato, meta: h.fuente.meta, ...(valor !== undefined ? { valor } : {}) };
+  }
   if (h.fuente.tipo === 'manual') return {};
   return { auto: h.fuente.tipo };
 }
@@ -71,7 +75,7 @@ export function armarCieloDeHoy(e: Estado): DiaDelCielo {
   return {
     clave: e.hoy,
     constelacion: paraHabitos(e.dias.get(e.hoy)?.constelacion ?? periodoDe(e.periodos, e.hoy)?.constelacion, habitos.length),
-    habitos: habitos.map((h) => ({ id: h.id, nombre: h.nombre, icono: h.icono, ...automatico(h) })),
+    habitos: habitos.map((h) => ({ id: h.id, nombre: h.nombre, icono: h.icono, ...automatico(h, e.salud, e.hoy) })),
     frase: fraseDelDia(e.hoy),
     luzAcumulada: luzAcumulada(e.dias.values(), CRECE_DE_NOCHE ? e.hoy : undefined),
     semana,

@@ -11,7 +11,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { elAlmacen } from '@/almacen';
+import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
 import { metasIniciales, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
@@ -320,7 +320,10 @@ function Salud({ alSeguir, alLeer }: { alSeguir: () => void; alLeer: (d: Partial
   const conectar = async () => {
     setOcupado(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    if (await pedirPermisos()) alLeer(await datosDelCuestionario());
+    if (await pedirPermisos()) {
+      alLeer(await datosDelCuestionario());
+      actualizarSalud().catch(() => {});
+    }
     setOcupado(false);
     alSeguir();
   };

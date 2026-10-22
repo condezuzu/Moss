@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { elAlmacen } from '@/almacen';
+import { actualizarSalud, elAlmacen } from '@/almacen';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import { edadDe, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
@@ -56,7 +56,12 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
     ['perfil.conexiones', [
       ...(haySalud() ? [{
         clave: 'salud', titulo: t('perfil.salud'), valor: salud ? t('perfil.conectada') : t('perfil.conectar'), tipo: salud ? 'ok' as const : 'accion' as const,
-        alTocar: () => { pedirPermisos().then(setSalud).catch(() => {}); },
+        alTocar: () => {
+          pedirPermisos().then((si) => {
+            setSalud(si);
+            if (si) actualizarSalud().catch(() => {});
+          }).catch(() => {});
+        },
       }] : []),
       { clave: 'ascent', titulo: t('perfil.ascent'), valor: t('perfil.pronto') },
     ]],

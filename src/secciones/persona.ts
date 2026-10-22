@@ -11,6 +11,7 @@ import { edadDe, metaPara, type Macros, type Perfil } from '@/dominio/metas';
 import { balance, progresoAlObjetivo, type Balance, type Progreso } from '@/dominio/progreso';
 import { comidasParaElControl, vigentes } from '@/dominio/registros';
 import { necesidad, type Fuente, type Medida, type Noche } from '@/dominio/sueno';
+import type { LoDeSalud } from '@/salud/convertir';
 import { ejemplo } from './ejemplo';
 
 /** Un punto de un gráfico: x de 0 a 1, la pesada del día (si hubo) y la tendencia. */
@@ -155,10 +156,14 @@ export type Sueno = {
 };
 
 /**
- * Las noches de Salud. Hasta conectarla (etapa de Salud, en el teléfono), las de ejemplo: así se ve
- * cómo es la sección, con el aviso de que no son tuyas.
+ * Las noches de Salud. Sin Salud o sin noches (sin reloj, o recién conectada), las de ejemplo: así se
+ * ve cómo es la sección, con el aviso de que no son tuyas.
  */
-export function suenoDe(hoy: ClaveDia, perfil: Perfil | null): Sueno {
+export function suenoDe(hoy: ClaveDia, perfil: Perfil | null, salud: LoDeSalud | null = null): Sueno {
+  if (salud && salud.noches.length) {
+    const { noches, soloEnCama, lecturas, fuentes } = salud;
+    return { deEjemplo: false, noches, soloEnCama, lecturas, fuentes, necesidad: necesidad(edadDe(perfil ?? ejemplo(hoy).perfil, hoy)) };
+  }
   const ej = ejemplo(hoy);
   return {
     deEjemplo: true, noches: ej.noches, soloEnCama: ej.soloEnCama, lecturas: ej.lecturas, fuentes: ej.fuentes,

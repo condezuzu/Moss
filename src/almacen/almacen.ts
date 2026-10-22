@@ -19,6 +19,7 @@ import {
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
+import type { LoDeSalud } from '@/salud/convertir';
 import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
 
 /**
@@ -48,6 +49,8 @@ export type Estado = MapasDeComida & {
   sistema: Sistema | null;
   /** Los bloques de Inicio: en qué orden y cuáles se ven. Sin elegir, los de fábrica. Queda en el teléfono. */
   inicio: { orden: string[]; visibles: string[] } | null;
+  /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
+  salud: LoDeSalud | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
   semilla: string;
   /** Sube con cada cambio. */
@@ -135,7 +138,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [] }), canasta: [], sistema: null, inicio: null,
-    semilla: '',
+    salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -416,6 +419,26 @@ export function crearAlmacen(op: Opciones) {
       const perfil: Perfil = { ...antes, ...cambios, actualizado: momento() };
       guardar((r) => r.guardarPerfil(perfil));
       cambiar({ perfil }, false);
+    },
+    /**
+     * Lo que se leyó de Salud. Los hábitos automáticos de hoy que llegaron a su meta se encienden
+     * solos (Salud nunca los apaga), y los días sin peso toman el de Salud.
+     */
+    ponerSalud(s: LoDeSalud) {
+      const nuevos: Peso[] = [];
+      for (const [fecha, kg] of s.pesos) {
+        if (kg >= 20 && kg <= 400 && !estado.pesos.some((p) => p.fecha === fecha)) nuevos.push({ fecha, kg: Math.round(kg * 10) / 10, origen: 'salud', momento: momento() });
+      }
+      for (const peso of nuevos) guardar((r) => r.guardarPeso(peso));
+      const pesos = nuevos.length ? [...estado.pesos, ...nuevos].sort(porFecha((p) => p.fecha)) : estado.pesos;
+      // Los valores se ven en las etiquetas del cielo: si cambian, se rearma.
+      cambiar({ salud: s, pesos }, JSON.stringify(estado.salud?.valores ?? null) !== JSON.stringify(s.valores));
+      if (s.dia !== estado.hoy) return;
+      for (const h of habitosDelDia(estado.habitos, estado.hoy)) {
+        if (h.fuente.tipo !== 'salud' || h.fuente.dato === 'acostarse') continue;
+        const valor = s.valores[h.fuente.dato];
+        if (valor !== undefined && valor >= h.fuente.meta && !estado.marcas.get(claveDeMarca(h.id, estado.hoy))?.hecho) marcar(h.id, true, 'salud');
+      }
     },
     /** Volver de las metas a mano a las de Moss: las del objetivo y el reparto, con el gasto que se venía midiendo. */
     metasDeMoss(): MetaGuardada | null {

@@ -186,6 +186,25 @@ describe('el cuestionario, el peso y las metas', () => {
     expect(hoy(otra.almacen).hechos).toEqual([]);
   });
 
+  it('lo de Salud enciende solos los hábitos que llegaron a su meta, y completa los días sin peso', async () => {
+    const pasos = { ...habito('pasos', 0), fuente: { tipo: 'salud' as const, dato: 'pasos' as const, meta: 8000 } };
+    const dormir = { ...habito('dormir', 1), fuente: { tipo: 'salud' as const, dato: 'sueno' as const, meta: 420 } };
+    const { almacen } = await armar(undefined, () => [pasos, dormir, habito('leer', 2)]);
+    almacen.anotarPeso(80, 'manual', '2026-10-20');
+    const salud = (valores: Record<string, number>) => ({
+      dia: '2026-10-21', valores, noches: [], soloEnCama: new Map(), fuentes: [],
+      lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() },
+      pesos: new Map([['2026-10-20', 81], ['2026-10-21', 79.84]]),
+    });
+    almacen.ponerSalud(salud({ pasos: 6200, sueno: 450 }));
+    expect(hoy(almacen).hechos).toEqual(['dormir']);
+    expect(almacen.estado().marcas.get('dormir|2026-10-21')?.origen).toBe('salud');
+    // El peso anotado a mano queda; el día sin peso toma el de Salud.
+    expect(almacen.estado().pesos.map((p) => [p.fecha, p.kg, p.origen])).toEqual([['2026-10-20', 80, 'manual'], ['2026-10-21', 79.8, 'salud']]);
+    almacen.ponerSalud(salud({ pasos: 8400, sueno: 450 }));
+    expect(hoy(almacen).hechos).toEqual(['pasos', 'dormir']);
+  });
+
   it('un peso por día: queda el último', async () => {
     const { almacen, ir } = await armar();
     almacen.anotarPeso(80.4, 'manual');

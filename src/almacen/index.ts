@@ -8,6 +8,7 @@ import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
 import { msHastaMedianoche } from '@/dominio/fechas';
 import { haySupabase, supabase } from '@/lib/supabase';
+import { leerSalud } from '@/salud/leer';
 import { idioma } from '@/textos';
 import { abrirRepositorio } from './abrir';
 import { crearAlmacen, type Almacen } from './almacen';
@@ -54,6 +55,12 @@ function sincronizarConLaCuenta(a: Almacen) {
   };
 }
 
+/** Lee Salud (si ya se pidió) y lo pone en el almacén: al abrir, al volver y después de pedir permiso. */
+export async function actualizarSalud(): Promise<void> {
+  const s = await leerSalud().catch(() => null);
+  if (s) elAlmacen().ponerSalud(s);
+}
+
 /**
  * Arranca el almacén y dice cuándo está listo. Con la app abierta, cambia de día a la medianoche y
  * al volver del fondo, y con sesión se sincroniza con la cuenta.
@@ -62,7 +69,7 @@ export function useAlmacenListo(): boolean {
   const a = elAlmacen();
   const listo = useSyncExternalStore(a.suscribir, () => a.estado().listo);
   useEffect(() => {
-    a.iniciar().catch((error) => console.warn('Moss no pudo abrir sus datos', error));
+    a.iniciar().then(actualizarSalud).catch((error) => console.warn('Moss no pudo abrir sus datos', error));
     const cuenta = sincronizarConLaCuenta(a);
     let reloj: ReturnType<typeof setTimeout>;
     const esperarMedianoche = () => {
@@ -76,6 +83,7 @@ export function useAlmacenListo(): boolean {
       if (estado !== 'active') return;
       a.revisarDia();
       cuenta.alVolver();
+      actualizarSalud().catch(() => {});
     });
     return () => {
       clearTimeout(reloj);

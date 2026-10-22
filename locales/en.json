@@ -1,7 +1,7 @@
 {
   "ios": {
     "CFBundleDisplayName": "Moss",
-    "NSHealthShareUsageDescription": "Moss reads your steps, water, mindful minutes and sleep to light up those habits' stars on its own.",
+    "NSHealthShareUsageDescription": "Moss reads your age, sex, height and weight from Health for your targets; your steps, water, mindful minutes and sleep to light up those habits on their own; and what your watch measures at night for the Sleep section.",
     "NSHealthUpdateUsageDescription": "Moss never writes to Health: it only reads the data you choose.",
     "NSCameraUsageDescription": "Moss uses the camera to read the barcode and the nutrition label of what you eat. The photos never leave your phone."
   }
