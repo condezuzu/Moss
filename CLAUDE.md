@@ -1,7 +1,9 @@
 # Moss
 
 App de comida para iPhone: trackear calorías y macros como MacroFactor, sin IA de
-fotos, global y gratis. La comida es el centro; los hábitos y el cielo acompañan:
+fotos, global y gratis. Seis secciones con el «+» en el medio de la barra: Inicio,
+Comida, Progreso, Sueño, Hábitos y Perfil. La comida es el centro; los hábitos y
+el cielo acompañan:
 cada hábito es una estrella, los hábitos de cada día forman una constelación real
 y el progreso es el cielo mismo. Expo SDK 58 + Supabase + Skia.
 
@@ -30,10 +32,13 @@ SDK y la memoria no alcanza.
     bucles con tope constante, sin uniforms adentro de las funciones.
   - Nunca `pow()` con base negativa: da NaN en SkSL y en Metal. Para eso está
     `gauss()`.
-- **La galería usa la lógica de la comida tal cual**: `construir.mjs` pasa a
-  JavaScript `src/comida/buscar.ts`, `src/comida/porciones.ts` y
-  `src/dominio/comidas.ts`, con los alimentos curados de `assets/alimentos.db`.
-  Por eso esos tres no importan nada.
+- **La galería usa la lógica de la app tal cual**: `construir.mjs` pasa a
+  JavaScript los módulos que usa, con los alimentos curados de
+  `assets/alimentos.db`:
+  - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada;
+  - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `control.ts`,
+    `cuerpo.ts`, `progreso.ts` y `sueno.ts`, que solo importan entre ellos
+    (`DEL_DOMINIO` en `construir.mjs`).
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
   usa una función tiene que estar definido antes que ella. Por eso `paso()` va
   última en `escena.ts`.
@@ -128,16 +133,20 @@ SDK y la memoria no alcanza.
 Los escenarios de `herramientas/capturar-galeria.mjs` (`node
 herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 
-- `inicio` (las tres pestañas), `deslizar`;
+- `inicio` (las seis secciones), `deslizar`;
 - `tocar`, `completo`, `universo`;
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
 - `entrada`;
-- `comida`, `registrar`, `etiqueta`, `metas`, `comida-ingles`.
+- `comida` (con el cuadro de día, semana y mes), `registrar`, `etiqueta`, `comida-ingles`;
+- `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
+- `progreso`, `metas`, `sueno`.
 
-La galería abre en Inicio, y los escenarios del cielo pasan antes a Hábitos
-(`window.__pagina(1, true)`). `deslizar` arrastra con el mouse, como un dedo,
-y saca la foto con el dedo todavía abajo. El render por software es lento: para
+La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
+3 Sueño, 4 Hábitos y 5 Perfil: los escenarios del cielo pasan antes a Hábitos
+(`window.__pagina(4, true)`) y los de la comida, a Comida. `deslizar` arrastra
+con el mouse, como un dedo, y saca la foto con el dedo todavía abajo. Las
+capturas se sacan en primer plano: corridas de fondo, el cielo sale negro. El render por software es lento: para
 mirar una animación cuadro a cuadro está la cámara lenta
 (`window.__velocidad(0.3)`).
 
@@ -149,6 +158,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/plan.md](spec/plan.md) | las etapas hasta la v1 y en qué etapa estamos |
 | [spec/decisiones.md](spec/decisiones.md) | decisiones: primero las pendientes |
 | [spec/nutricion.md](spec/nutricion.md) | la comida, el centro de la app: la base de datos y los nombres, la búsqueda, los flujos de registro con sus toques, los escáneres, las metas |
+| [spec/progreso.md](spec/progreso.md) | Progreso: el peso, las medidas y la grasa corporal con cinta, el progreso al objetivo, el balance y la estrategia con el día del control |
+| [spec/sueno.md](spec/sueno.md) | Sueño: lo que trae Salud, las reglas para que sea confiable, la calidad, la deuda, la regularidad y lo del reloj |
 | [spec/ascent.md](spec/ascent.md) | la conexión con Ascent, los cambios de su repo y lo que hace el usuario |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
@@ -158,8 +169,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | Carpeta | Qué hay |
 |---|---|
 | `src/app/` | rutas de Expo Router (hoy, un solo cielo) |
-| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano y repartir la semana), control semanal, la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida) y exportar en CSV |
-| `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), con los hábitos, las metas y lo que se come (y la canasta, que no sube), sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
+| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`) y el sueño (`sueno.ts`) |
+| `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), con los hábitos, las metas, la estrategia, lo que se come (y la canasta, que no sube) y las medidas del cuerpo, sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
 | `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`) y Open Food Facts por código de barras (`off.ts`) |
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
@@ -168,7 +179,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |
 | `src/datos/` | catálogo de constelaciones |
-| `src/textos/` | el diccionario y `t()`: cielo, entrada, ajustes, comida, diagnóstico |
+| `src/textos/` | el diccionario y `t()`: cielo, entrada, comida, Inicio, el «+», el cuerpo, Progreso, Sueño, Perfil, diagnóstico |
 | `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
 | `herramientas/` | capturas y verificaciones |
@@ -188,9 +199,17 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `escena.js`: la escena, con los modos hoy y entrada, y la constelación que
   se corre con su pestaña.
 - `entrada.js`: la entrada a la app.
-- `comida.js`: la comida. Tiene la pestaña Inicio, con el día, la semana y el
-  mes, y la hoja de registro con la ventana del alimento, la comida que se arma,
-  la revisión, la etiqueta y el teclado.
-- `ajustes.js`: Ajustes, con las metas (las cuentas son las de
-  `src/dominio/metas.ts`).
-- `galeria.js`: la página y las pestañas, con el gesto de Ascent.
+- `util.js`: lo que comparten las secciones nuevas (textos, números, íconos y
+  la hoja de abajo).
+- `luna.js`: la luna, dibujada píxel a píxel como una esfera.
+- `datos.js`: la persona de mentira (perfil, pesadas, medidas y noches de Salud).
+- `comida.js`: Comida, con el cuadro de día, semana y mes, y la hoja de
+  registro con la ventana del alimento, la comida que se arma, la revisión, la
+  etiqueta y el teclado.
+- `inicio.js`: Inicio con sus bloques, personalizar, y los gráficos chicos.
+- `mas.js`: la hoja del «+», con el peso y las medidas.
+- `progreso.js`: Progreso, con la estrategia y las metas.
+- `sueno.js`: Sueño.
+- `perfil.js`: Perfil.
+- `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
+  «+» en la barra.

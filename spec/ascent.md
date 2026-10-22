@@ -258,9 +258,10 @@ cosa va cuando llegue su etapa del [plan](plan.md).
 
 **En Supabase**, proyecto `okeanaihymbvbdmrdqph`, para la etapa de cuentas:
 
-1. SQL Editor: correr `supabase/moss/0001_esquema.sql` y después
-   `supabase/moss/0002_comida.sql` (lo que se come, desde el 22/10/2026), cada
-   uno entero y una sola vez.
+1. SQL Editor: correr, en orden, cada uno entero y una sola vez:
+   - `supabase/moss/0001_esquema.sql`;
+   - `supabase/moss/0002_comida.sql` (lo que se come, desde el 22/10/2026);
+   - `supabase/moss/0003_progreso.sql` (la estrategia y las medidas del cuerpo, desde el 22/10/2026).
    - Ya están escritos y probados con `npm run supabase:verificar`.
    - Solo crean cosas en el esquema `moss`: no tocan nada de Ascent.
    - Conviene correrlos cuando estén las pantallas de la cuenta. Así, si cambia

@@ -17,8 +17,20 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - **De la etapa 4** está la base de alimentos con USDA, 573 genéricos curados en español e inglés con fibra, azúcares, saturadas, sodio y alcohol, los primeros 14 platos uruguayos como recetas, y el buscador.
 - **De la etapa 5** está todo lo que no es pantalla: lo que se come en el almacén y en Supabase (`0002_comida.sql`), con su sincronización y los atajos.
 - **De la etapa 6**, el lector de etiquetas y el cliente de Open Food Facts, con tests.
-- **De la etapa 7**, el control semanal que corre solo, las metas a mano, los estilos de macros y repartir la semana; de la 9, los hábitos de comida que se encienden solos.
-- **En la galería, para aprobar:** las pestañas como Ascent (Inicio, Hábitos y Ajustes), la comida con la hoja de registro, la revisión de la etiqueta, las metas en Ajustes, la entrada, el cielo más sobrio y la estrella fugaz.
+- **De la etapa 7:**
+  - el control semanal que corre solo, ahora el día que se elige;
+  - las metas a mano, los estilos de macros y repartir la semana;
+  - la estrategia (objetivo, ritmo, reparto y peso meta) en el perfil;
+  - la grasa corporal con cinta (`cuerpo.ts`), el progreso al objetivo y el balance (`progreso.ts`);
+  - las medidas guardadas y sincronizadas (`0003_progreso.sql`).
+- **De la etapa 8,** las reglas del sueño (`sueno.ts`), con sus tests: una fuente por noche, de qué día es cada noche, siestas, la calidad, la deuda, la regularidad y lo del reloj.
+- **De la 9,** los hábitos de comida que se encienden solos.
+- **En la galería, para aprobar:**
+  - las seis secciones con el «+» en el medio (cambio 9, 22/10/2026): Inicio a tu medida, Comida, Progreso, Sueño, Hábitos y Perfil;
+  - la hoja del «+» con las medidas y la grasa;
+  - la luna nueva y los macros que brillan y tiemblan;
+  - la comida con la hoja de registro y la revisión de la etiqueta;
+  - la entrada, el cielo más sobrio y la estrella fugaz.
 - **Falta:**
   - la primera build en tu iPhone, que necesita dos pasos tuyos;
   - tus aprobaciones en la galería: con eso se programan las pantallas de la comida en la app.
@@ -294,15 +306,30 @@ menos de un minuto.
 **Sale:** escanear cualquier envase y, si no existe, crearlo desde la etiqueta en
 menos de un minuto.
 
-## Etapa 7 · La pantalla de comida y las metas
+## Etapa 7 · Inicio, Comida, Progreso y el «+»
 
-- **Primero en la galería:** la zona de comida, por día, por semana y por mes (hecha el 21/10/2026, falta tu aprobación).
-  - Las calorías que quedan, grande.
-  - Las barras de los macros.
-  - La tendencia del peso y el gasto estimado.
-  - El agua.
-  - El resumen del último control.
-  - La propuesta es la luna.
+Desde el cambio 9 (22/10/2026) la pantalla de comida se repartió en secciones
+([`especificacion.md`](especificacion.md), «Las secciones»;
+[`progreso.md`](progreso.md)).
+
+- **Primero en la galería** (hecho el 22/10/2026; falta tu aprobación):
+  - **Inicio a tu medida:**
+    - los bloques que se eligen y se ordenan;
+    - lo que queda, grande, con la luna nueva;
+    - los macros que brillan al cumplir y tiemblan al pasarse por mucho (`estadoDeMacro`, con tests).
+  - **Comida:** el día, la semana y el mes.
+  - **Progreso:**
+    - el peso con su tendencia, las medidas y la grasa corporal como rango chico;
+    - el gasto con el balance y el progreso al objetivo con su fecha;
+    - la estrategia: el objetivo, las metas, el próximo control y su día.
+  - **El «+»:** agregar comida, el peso, la carga rápida (con los recientes y las guardadas de un toque) y las medidas con su mini tutorial.
+- **Ya programado, sin pantallas** (22/10/2026):
+  - `src/dominio/cuerpo.ts`: la grasa de la Marina con su rango, la cintura sobre la altura y las últimas medidas;
+  - `src/dominio/progreso.ts`: el ritmo, el progreso al objetivo y el balance;
+  - en `control.ts`, el día del control y cómo viene el próximo;
+  - en el almacén, `ponerEstrategia` y el control el día elegido;
+  - las medidas del cuerpo, en el almacén y en Supabase (`0003_progreso.sql`), con su sincronización.
+- **Antes, en la galería (21/10/2026):** la zona de comida por día, por semana y por mes, con lo que queda, los macros, el peso, el gasto, el último control y la luna.
 - **Peso:** desde Salud y a mano. Siempre la tendencia.
 - **Agua:** desde Salud y con un toque.
 - **El control semanal automático:**
@@ -319,15 +346,19 @@ menos de un minuto.
 
 **Sale:** una semana entera: registrar, pesarse y ver cómo se ajusta la meta.
 
-## Etapa 8 · Apple Health
+## Etapa 8 · Apple Health y Sueño
 
 - **Permisos:** se piden juntos en la entrada, porque leer un tipo no pedido cierra la app. Cada hábito automático se activa recién cuando se crea.
 - **Peso y agua:** ya entran en la etapa 7.
 - **Pasos y mindfulness:** la suma del día local.
-- **Sueño:**
-  - duración, etapas (REM, núcleo, profundo), despierto y en cama;
-  - una calidad de sueño con una fórmula propia y escrita en la spec;
-  - hábitos automáticos «dormir X horas» y «acostarse antes de X hora».
+- **La sección de Sueño** ([`sueno.md`](sueno.md)):
+  - en la galería desde el 22/10/2026, con cuatro semanas de mentira que incluyen una noche sin datos, una sin reloj, una cortada y una siesta;
+  - las reglas, ya programadas con sus tests (`src/dominio/sueno.ts`): una sola fuente por noche, la noche del día en que te despertás (el día cambia a las 18), los episodios, el sueño partido y las siestas, lo que necesitás dormir, la calidad en tres partes, la deuda, el horario y la regularidad, y lo del reloj contra lo tuyo.
+  - Falta:
+    - leer Salud con consultas ancladas, con la fuente (`HKSourceRevision`), la zona de cada muestra y lo anotado a mano;
+    - las noches en el teléfono, sin subir (Salud ya está en cada iPhone);
+    - lo del reloj de noche (la frecuencia, la variabilidad SDNN y la respiración);
+    - los hábitos «dormir X horas» y «dormirte antes de las X» (D19).
 - **Qué sale del teléfono:** si el hábito se cumplió y el número que se muestra. Con Ascent vinculada, también el resumen del sueño y el peso.
 
 **Sale:** hábitos que se cumplen solos, probados con los datos reales de tu
@@ -346,16 +377,16 @@ teléfono.
 **Sale:** alguien nuevo arma su semana en menos de un minuto, y la comida
 enciende estrellas.
 
-## Etapa 10 · Las pestañas y las zonas del cielo
+## Etapa 10 · Las seis secciones y las zonas del cielo
 
-- **Las pestañas**, como se aprueben en la galería (D14): Inicio (la comida, de
-  la etapa 7), Hábitos (el cielo) y Ajustes, con el gesto de Ascent
-  (`nucleo/deslizar.ts`):
-  - una tira con las tres pantallas, montadas una vez, que se corre entera, como
+- **Las secciones**, como se aprueben en la galería (cambio 9): Inicio, Comida y
+  Progreso (etapa 7), el «+», Sueño (etapa 8), Hábitos (el cielo) y Perfil, con
+  el gesto de Ascent (`nucleo/deslizar.ts`):
+  - una tira con las seis pantallas, montadas una vez, que se corre entera, como
     Ascent después del titileo del 24/9;
-  - el cielo de Skia quieto detrás, con la constelación corrida con su pestaña y
-    el velo de cada pestaña;
-  - la barra de texto, con el nombre encendido según dónde está la tira;
+  - el cielo de Skia quieto detrás, con la constelación corrida con su página y
+    el velo de cada sección;
+  - la barra con ícono y nombre, encendidos según dónde está la tira, y el «+» en el medio;
   - el universo un poco más arriba y más junto, para que el domingo no quede
     debajo de la barra (`HUECOS_DEL_UNIVERSO` en `plano.ts`, como en la galería).
 - **Las zonas del cielo**, en Hábitos:
@@ -363,7 +394,7 @@ enciende estrellas.
   - constelaciones (tu cielo y el universo);
   - calendario (el mes en mini cielos);
   - estadísticas, con las tarjetas de Ascent bloqueadas y su botón «Vincular».
-- **Ajustes:** calidad, idioma, unidades, Salud, cuenta y Ascent.
+- **Perfil** (antes Ajustes): tus datos, calidad, idioma, unidades, Salud, cuenta, Ascent, exportar y borrar.
 
   La zona de amigos queda reservada para después de la v1. Cada pantalla pasa
   primero por la galería.
@@ -411,7 +442,8 @@ enciende estrellas.
 - **La app para Apple Watch.**
 - **Una Live Activity para registrar desde la isla, y Atajos y Siri.**
 - **Todos los micronutrientes**, con qué alimento aporta cada uno.
-- **Fotos de progreso y medidas del cuerpo.**
+- **Fotos de progreso.** Las medidas del cuerpo entraron en la v1 (cambio 9).
+- **El índice de regularidad del sueño (SRI)**, la oxigenación, las alteraciones de la respiración y la temperatura de la muñeca ([`sueno.md`](sueno.md)).
 - **Los pasos de Salud en el gasto**, para que se ajuste antes.
 - **Los widgets de hábitos** (D8, [`widgets.md`](widgets.md)).
 - **Escribir la comida en Salud.**

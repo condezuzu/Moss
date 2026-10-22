@@ -5,7 +5,8 @@ mismo día ya puestos en cada sección (la lista está abajo). Es la fuente de
 verdad: lo que está acá ya está decidido. Las decisiones que se tomen después van
 en [`decisiones.md`](decisiones.md) y el orden de trabajo en [`plan.md`](plan.md).
 Los detalles técnicos están en [`nutricion.md`](nutricion.md),
-[`ascent.md`](ascent.md) y [`widgets.md`](widgets.md).
+[`progreso.md`](progreso.md), [`sueno.md`](sueno.md), [`ascent.md`](ascent.md) y
+[`widgets.md`](widgets.md).
 
 ## Cambios del 21/10/2026
 
@@ -46,6 +47,31 @@ En el orden en que llegaron:
    Se pasa deslizando, con la de al lado asomando y las reglas del gesto de
    Ascent. El cielo queda quieto detrás de las tres, y el flum queda solo para
    el final de la entrada. Cambió «Visual».
+
+9. **Seis secciones y el «+» en el medio** (lo pediste el 22/10/2026; reemplaza
+   las tres pestañas del cambio 8). La barra tiene Inicio, Comida y Progreso, el
+   «+», y Sueño, Hábitos y Perfil:
+   - **El «+»** es minimalista, parte de la barra. Abre una hoja con:
+     - lo principal: agregar comida y registrar el peso;
+     - la carga rápida: calorías y macros, los recientes, las comidas guardadas y el agua;
+     - las medidas del cuerpo, con un mini tutorial y la grasa corporal estimada como un rango chico, con su aviso.
+   - **Inicio, a tu medida:** bloques que se eligen y se ordenan.
+     - De fábrica van lo que queda de calorías y macros, el progreso al objetivo, el peso con el balance y tu día en el cielo.
+     - El agua sale de Inicio.
+     - Los puntos de los macros brillan solo al cumplir lo pedido y tiemblan un poco si te pasás por mucho.
+     - La luna, de mejor calidad.
+   - **Comida:** el registro de siempre, por día, por semana y por mes.
+   - **Progreso:**
+     - el peso y su tendencia, las medidas y la grasa corporal;
+     - el gasto, el balance y el progreso al objetivo;
+     - la estrategia, con el día del control, que se elige.
+   - **Sueño,** nueva: ver [`sueno.md`](sueno.md).
+   - **Hábitos:** el cielo, como estaba.
+   - **Perfil:** lo que era Ajustes, sin las metas.
+   - **La entrada** sigue como está, sin tutoriales por sección.
+
+   Cambiaron «Registro», «La comida», «Visual», «Las secciones» (nueva) y
+   «Versión 1».
 
 ---
 
@@ -89,7 +115,15 @@ Las constelaciones y los mitos pasan a segundo plano: siguen siendo parte de la 
 
 - Marcar a mano: tocando la estrella directo en el cielo (no hay lista), con vibración y destello. Se puede deshacer.
 - Automático desde Apple Health: pasos, agua, mindfulness y cualquier dato de Salud que el usuario elija como hábito.
-- Sueño desde Apple Health: duración, etapas (REM, núcleo, profundo), despierto y en cama, y una calidad de sueño calculada a partir de eso. Hábitos de sueño que se cumplen solos: "dormir X horas" y "acostarse antes de X hora".
+- Sueño desde Apple Health, en su sección (cambio 9, [`sueno.md`](sueno.md)):
+  - la duración, las etapas (REM, núcleo, profundo), lo despierto y el tiempo en cama;
+  - el horario y qué tan regular es, y la deuda;
+  - una calidad de sueño que dice de qué sale;
+  - lo que mide el reloj de noche;
+  - de dónde sale cada dato y qué tan confiable es: una noche sin datos no se inventa.
+
+  Los hábitos de sueño se cumplen solos: «dormir X horas» y «acostarse antes de
+  las X» (la propuesta es «dormirte antes de las X», D19).
 - Calendario donde cada día es un mini cielo; el mes se lee de un vistazo.
 - La zona horaria es la del teléfono (si viajás, el día corta en tu hora local).
 
@@ -137,17 +171,16 @@ La comida es el centro de Moss. La gente quiere trackear sus macros: si esta par
 12. Planificar comidas en días futuros.
 13. Compartir recetas y alimentos propios con amigos.
 
-**Pantalla de comida**
+**Dónde se ve** (cambio 9)
 
-Zona propia del cielo, con el mismo nivel visual que el resto:
-
-- calorías restantes del día, grande y claro;
-- barras de proteína, carbohidratos y grasas contra la meta;
-- tendencia de peso suavizada;
-- gasto estimado por el algoritmo;
-- agua;
-- resumen del último check-in semanal;
-- widgets en la pantalla de bloqueo con calorías y macros.
+- **Inicio:** las calorías y los macros que quedan, grande y claro, con la luna; el progreso al objetivo; el peso con el balance.
+- **Comida:** el día con su línea de horas, la semana y el mes.
+- **Progreso:**
+  - la tendencia del peso y el gasto estimado por el algoritmo;
+  - el resumen del último check-in semanal y cómo viene el próximo;
+  - las medidas y la grasa corporal.
+- **El «+»:** registrar comida, el peso, el agua y las medidas.
+- Widgets en la pantalla de bloqueo con calorías y macros.
 
 **Conexión con hábitos y Ascent**
 
@@ -158,9 +191,39 @@ Se mantiene lo ya definido:
   - calorías según el día de entrenamiento;
   - proteína post-entreno.
 
+## Las secciones
+
+Abajo van Inicio, Comida y Progreso, el «+» en el medio, y Sueño, Hábitos y
+Perfil (cambio 9, 22/10/2026).
+
+- **Inicio:** bloques que el usuario elige y ordena. Tocar uno lleva a su sección.
+  - De fábrica:
+    1. calorías y macros: lo que queda, grande y claro;
+    2. progreso al objetivo: si va en camino y en qué fecha llegaría;
+    3. peso y balance: la tendencia, y lo comido contra lo gastado;
+    4. tu día en el cielo: la constelación de hoy en chico, con los hábitos, el sueño y los pasos.
+  - Se pueden sumar el sueño de anoche y el agua.
+- **Comida:** el registro del día, con un cuadro que se desliza: el día, y deslizando a la izquierda, la semana y el mes (ver «La comida» y [`nutricion.md`](nutricion.md)).
+- **Progreso:**
+  - el peso y su tendencia, las medidas, el rango de grasa corporal, el gasto estimado, el balance y el progreso al objetivo;
+  - la estrategia: el objetivo, las metas de hoy, cómo viene el próximo control y qué día de la semana se hace.
+
+  Ver [`progreso.md`](progreso.md).
+- **Sueño:** ver [`sueno.md`](sueno.md).
+- **Hábitos:** el cielo de hoy y el universo.
+- **Perfil:** tus datos, las preferencias, Salud y Ascent, exportar y borrar.
+- **El «+»:**
+  - agregar comida y registrar el peso, arriba;
+  - la carga rápida: calorías y macros, los recientes y las comidas guardadas, que se registran de un toque con deshacer, y el agua;
+  - las medidas del cuerpo (cintura, cuello, cadera, brazos, pecho y muslo), con un mini tutorial de cómo medir con cinta. Estiman la grasa corporal con el método de la Marina de EE. UU., como un rango chico («16 a 19 %») y con un aviso claro de que es una estimación y no una medición.
+- **Los macros:** el punto de cada uno brilla solo cuando se cumple lo pedido y
+  tiembla un poco si se pasa por mucho (un 20 % y al menos 10 g).
+
 ## Visual (lo más importante)
 
-- Tres pestañas, como Ascent: Inicio (la comida), Hábitos (el cielo) y Ajustes. Se pasa deslizando, con la de al lado asomando, y el cielo queda quieto detrás de las tres, oscurecido en Inicio y en Ajustes (22/10/2026, D14).
+- Seis secciones con el «+» en el medio de la barra (cambio 9): Inicio, Comida, Progreso, Sueño, Hábitos y Perfil.
+  - Se pasa tocando o deslizando, con la de al lado asomando, como en Ascent.
+  - El cielo queda quieto detrás de todas, oscurecido salvo en Hábitos.
 - En Hábitos el cielo es continuo: arrastrar hacia abajo mueve la cámara por el espacio hasta tu universo, con la semana, en vez de saltar a otra pantalla.
 - El final de la entrada tiene un movimiento como si se estuviera yendo muy lejos, muy rápido: una animación de un segundo, tipo «flum». Antes era para moverse entre secciones; con las pestañas quedó solo ahí.
 - Cielo nocturno sin contaminación lumínica: muchísimas estrellas y auroras. Desde el 21/10/2026, la vía láctea va mucho más tenue, al 30 %: Moss es más sobrio.
@@ -246,10 +309,12 @@ La solución está en [`ascent.md`](ascent.md).
   - la base propia (Uruguay y los 1.000 del mundo), Open Food Facts y USDA;
   - el registro sobre la línea del día;
   - los 13 atajos;
-  - las metas con su check-in semanal;
+  - las metas con su check-in semanal, con el día que se elige;
   - el peso;
-  - la pantalla de comida;
+  - Inicio a tu medida, Comida y el «+»;
   - los widgets de la pantalla de bloqueo.
+- **Progreso:** el peso y su tendencia, las medidas con la grasa corporal estimada, el gasto, el balance, el progreso al objetivo y la estrategia.
+- **Sueño:** la sección entera ([`sueno.md`](sueno.md)).
 - **Entrada y cuentas:** la entrada a la app y las cuentas.
 - **Hábitos y cielo:**
   - creación y edición de hábitos por día de la semana;
@@ -262,7 +327,7 @@ La solución está en [`ascent.md`](ascent.md).
 - **Apple Health:**
   - peso y agua;
   - pasos y mindfulness;
-  - sueño (duración y etapas) y los hábitos de sueño automáticos.
+  - sueño (la sección de Sueño) y los hábitos de sueño automáticos.
 - Logros.
 - Frase diaria.
 - Ajuste de calidad gráfica.

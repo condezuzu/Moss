@@ -135,7 +135,7 @@ la gente encuentre lo que come:
 
 La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
 
-- **Un solo botón para registrar**, siempre a mano: el «+» de Inicio, abajo a la derecha, donde Moss abre (D14).
+- **Un solo botón para registrar,** siempre a mano: el «+» del medio de la barra (cambio 9). Abre una hoja con «Agregar comida» (la búsqueda de siempre), el peso, la carga rápida (calorías y macros, los recientes, las guardadas y el agua) y las medidas. En Comida, la comida que falta tiene su propio «Agregar».
 - **La hoja de registro abre lista para escribir:**
   - con el teclado arriba;
   - con la comida elegida por la hora, que se cambia con un toque (`src/dominio/comidas.ts`):
@@ -153,29 +153,33 @@ La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
 - **Todo se corrige después** tocando el registro en la línea del día, que abre la misma ventana.
 - **Las cantidades se escriben como se dicen:** «2 rebanadas», «1½ tazas», «½ unidad», «2 medium» (`src/comida/porciones.ts`).
 
-Toques desde Inicio con Moss abierto, sin contar lo que se escribe. Revisar
-antes de agregar suma tres toques a cada registro («sumar», «listo» y
-«agregar»): lo de siempre pasó de 2 a 5. Con las pestañas (D14), Moss abre en
-Inicio y los toques no cambian.
+Toques con Moss abierto, sin contar lo que se escribe. Revisar antes de agregar
+suma tres toques a cada registro («sumar», «listo» y «agregar»): lo de siempre
+pasó de 2 a 5. Con el «+» en la barra (cambio 9, D17):
+- **buscar suma un toque**, porque el «+» abre su hoja y «Agregar comida» la búsqueda: 6 en lugar de 5;
+- **lo reciente y las comidas guardadas bajan a 2**: en la hoja del «+» se registran de un toque, en la comida de esa hora, con su última cantidad y con deshacer, sin la revisión;
+- **desde Comida**, el «Agregar» de la comida que falta abre la búsqueda: siguen siendo 5.
 
 | Flujo | Toques |
 |---|---|
-| Algo de siempre (sugerencia de la hora, reciente o favorito) | **5**: registrar, «+», sumar, listo y agregar |
-| Buscar y agregar con su porción | **5** y escribir |
-| Buscar y elegir otra cantidad | **6** y escribir: registrar, «+», la porción, sumar, listo y agregar |
+| Un reciente, desde el «+» | **2**: el «+» y el reciente (registra directo, con deshacer) |
+| Algo de siempre (sugerencia de la hora o favorito) | **6**: el «+», agregar comida, el «+» de la fila, sumar, listo y agregar; **5** desde Comida |
+| Buscar y agregar con su porción | **6** y escribir (**5** desde Comida) |
+| Buscar y elegir otra cantidad | **7** y escribir: el «+», agregar comida, el «+» de la fila, la porción, sumar, listo y agregar |
 | Varios alimentos de una vez | **3 + 2 por alimento** y escribir |
 | Armar un plato y guardarlo para la próxima | lo anterior **+ 1** y un nombre |
-| Una comida guardada o una receta | **5**: registrar, guardadas, «+», listo y agregar |
+| Una comida guardada | **2**: el «+» y la guardada (registra directo, con deshacer) |
 | Copiar una comida de ayer | **2**: «copiar de ayer» en el hueco de la comida (abre la revisión) y agregar |
 | Copiar un día entero | **3**: copiar día, elegir el día y confirmar |
 | Código de barras ya conocido | **5**: registrar, escáner, sumar, listo y agregar (lee solo, sin disparar) |
 | Código nuevo con etiqueta | **8** y el nombre, una sola vez; la próxima son 5 |
-| Carga rápida de calorías y macros | **5** y los números |
+| Carga rápida de calorías y macros | **3** y los números: el «+», calorías y macros, y agregar |
 | Dictado | **6**: registrar, el micrófono del teclado, «+», sumar, listo y agregar |
 | Planificar un día futuro | **1 o 2** para ir al día, y lo mismo que hoy; al llegar el día, **1** para confirmar todo |
 | Compartir una receta | **2 o 3**: compartir y elegir a quién |
-| Agua | **1**: el vaso suma 250 ml (o llega sola desde Salud) |
-| Peso a mano | **2** y el número (o llega solo desde Salud) |
+| Agua | **2**: el «+» y el vaso de 250 ml (o llega sola desde Salud) |
+| Peso a mano | **3** y el número: el «+», registrar peso y guardar (o llega solo desde Salud) |
+| Medidas del cuerpo | **3** y los números: el «+», medidas y guardar |
 
 - **Lo que se repite en todos los flujos:**
   - la última porción de cada alimento;
@@ -306,15 +310,11 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
 
 ## La pantalla de comida
 
-Es la pestaña Inicio (D14): Moss abre acá, con el cielo quieto y oscurecido atrás.
-
-**Qué tiene:**
-- las calorías que quedan del día, grande y claro;
-- las barras de proteína, carbohidratos y grasas contra la meta;
-- la tendencia del peso, suavizada;
-- el gasto que estima el algoritmo;
-- el agua;
-- el resumen del último control semanal.
+Desde el cambio 9 (22/10/2026) está repartida:
+- **Inicio:** las calorías que quedan, grande y claro, al lado de la luna, y lo que queda de cada macro. El punto de cada macro brilla al cumplir lo pedido (`estadoDeMacro` en `src/dominio/metas.ts`: el número redondeado llega a la meta) y tiembla un poco si se pasa por mucho (un 20 % y al menos 10 g).
+- **Comida:** lo de cada día, cada semana y cada mes.
+- **Progreso:** la tendencia del peso, el gasto que estima el algoritmo y el resumen del último control ([`progreso.md`](progreso.md)).
+- **El agua** salió de las pantallas: se suma desde el «+» y es un bloque que se puede agregar a Inicio.
 
 **Por día, por semana y por mes, como MacroFactor** (pedido el 21/10/2026).
 
@@ -325,21 +325,25 @@ Lo de MacroFactor, confirmado en su ayuda y en su web:
 - Se puede planificar comida en días futuros, y el algoritmo no la cuenta hasta que el día pasa ([ayuda](https://help.macrofactorapp.com/en/articles/51-log-food-to-future-days)).
 - Los colores son solo para los datos, y nunca hay rojo de «te pasaste».
 
-En Moss:
-- **Día:**
-  - arriba, la tira de la semana con una luna chica por día, que se llena con lo comido y se toca para ver ese día; los días que vienen van en blanco y lo planificado, tenue;
-  - después, lo que queda grande, las barras de los macros, el agua y la línea del día.
-- **Semana:**
-  - el promedio por día de los días que ya terminaron, con sus macros;
-  - los siete días, con una barra de calorías y una por macro contra la meta;
-  - la tendencia del peso, el gasto estimado y el último control.
-- **Mes:** el calendario con una luna por día y el promedio del mes.
+En Moss, la pestaña Comida:
+- **Arriba, la tira de la semana:** una luna chica por día, que se llena con lo comido y se toca para ver ese día. Los días que vienen van en blanco y lo planificado, tenue.
+- **Un cuadro que se desliza** (lo pediste el 22/10/2026):
+  - empieza en el **día**: lo comido contra la meta con una luna chica, y las barras de los macros;
+  - deslizando a la izquierda, la **semana**: el promedio por día de los días que ya terminaron, con sus macros, y los siete días con una barra de calorías y una por macro contra la meta;
+  - otra vez, el **mes**: el promedio del mes y el calendario con una luna por día.
+
+  Debajo dice dónde estás (Día, Semana, Mes), y también se toca. El alto sigue a lo que se ve. Tocar un día de la semana o del mes vuelve al día, con ese día.
+- **Abajo, la línea del día.**
 
 **Cómo se ve:**
-- La luna se llena con lo comido. Es una luna de verdad, con sus mares, grano y la sombra con el borde suave.
-- Los tres arcos de los macros (proteína en dorado, carbohidratos en verde y grasas en azul estrella) quedan como opción: la propuesta es la luna sola, porque los macros ya están en las barras.
+- La luna se llena con lo comido. Desde el 22/10/2026 se dibuja píxel a píxel como una esfera:
+  - los mares de la cara visible, los cráteres con su borde claro y Tycho con sus rayos;
+  - la luz de la Luna de verdad (Lommel-Seeliger): llena se ve pareja y a medias se apaga suave hacia el terminador;
+  - la luz cenicienta en lo oscuro.
+
+  Los arcos de los macros se fueron: los macros están al lado.
 - Los números y los títulos van en una sans sobria (Outfit), no en la serif del cielo.
-- Está en la galería desde el 21/10/2026, esperando aprobación, y desde el 22/10 es la pestaña Inicio.
+- Está en la galería, esperando aprobación: desde el 22/10 repartida entre Inicio, Comida y Progreso.
 
 **Widgets en la pantalla de bloqueo** con calorías y macros:
 - van con `expo-widgets`, en los tamaños de la pantalla de bloqueo (circular y rectangular);
@@ -377,7 +381,7 @@ Ya andan en el almacén (22/10/2026, `cumpleLaComida` en `src/dominio/registros.
 ## Global y gratis
 
 - **Español e inglés** desde el día uno, con los nombres regionales de cada país.
-- **Unidades:** métricas o imperiales según el teléfono, y se cambian en Ajustes. Afecta al peso, la altura, las porciones en onzas y el agua.
+- **Unidades:** métricas o imperiales según el teléfono, y se cambian en Perfil. Afecta al peso, la altura, las porciones en onzas y el agua.
 - **Sin muro de pago.** Nada de lo que hace Moss tiene un costo por usuario:
   - la base va dentro de la app;
   - el reconocimiento de texto es el del iPhone;

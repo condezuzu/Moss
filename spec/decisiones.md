@@ -5,33 +5,61 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
-### D14 · El inicio con la comida y los hábitos en otra pestaña (tu propuesta)
+### D16 · Las seis secciones, como las pediste (armadas el 22/10/2026)
 
-Lo dijiste el 21/10/2026: «un inicio con los macros restantes y todo eso, como
-MacroFactor, y después en otra pestaña los hábitos». Quedó armado en la galería
-el 22/10/2026, como en Ascent:
+En la galería, sección 1. Abajo van Inicio, Comida y Progreso, el «+» y Sueño,
+Hábitos y Perfil, cada una con su ícono de línea y su nombre.
 
-- **Inicio:** la comida (lo que queda, los macros, el día, la semana y el mes).
-- **Hábitos:** el cielo con la constelación de hoy.
-- **Ajustes.**
+- El «+» es un círculo fino del tamaño de los íconos, parte de la barra.
+- El gesto y el cielo son los de D14: el cielo se ve entero en Hábitos y, en
+  Sueño, se deja ver un poco.
 
-Cómo quedó:
-- **El gesto:** se pasa deslizando, con la de al lado asomando, con las reglas
-  de Ascent (`nucleo/deslizar.ts`): un quinto de la pantalla o un tirón rápido,
-  y 340 ms de viaje. La barra es solo texto, como la de Ascent.
-- **El cielo** queda quieto detrás de las tres, como el planeta de Ascent: lo que
-  se desliza es la constelación. Detrás de Inicio queda al 20 % y detrás de
-  Ajustes al 28 %.
-- **El «+» de registrar** está solo en Inicio. La barra de la comida que tenía
-  el cielo se fue.
-- **El flum** queda solo para el final de la entrada, que ahora termina en
-  Inicio.
+Por decidir: el orden, los nombres y los íconos.
 
-Por decidir:
-- el orden y los nombres;
-- si el «+» va también en Hábitos;
-- si hace falta una cuarta pestaña para el progreso (hoy el peso y el gasto
-  están en la semana de Inicio).
+### D17 · Un toque más para buscar, y los recientes de un toque
+
+El «+» abre una hoja, y desde ahí «Agregar comida» abre la búsqueda: buscar pasa
+de 5 toques a 6 (la tabla está en [`nutricion.md`](nutricion.md)). A cambio, en
+la hoja del «+» los recientes y las comidas guardadas registran de un toque, con
+deshacer y sin la revisión: lo de siempre baja a 2. Desde Comida sigue siendo 5.
+¿Así?
+
+### D18 · El rango de grasa corporal: chico, o de al menos 4 puntos
+
+Lo pediste chico («16 a 19 %»):
+- es de 2 a 4 puntos y sale de lo que se puede correr la cinta;
+- el error del método contra un laboratorio (3 o 4 puntos) va en el aviso.
+
+La investigación sugiere no bajar de ±2 y cruzar con la Masa Grasa Relativa,
+aunque eso lo abre a 6 o 7 puntos en mucha gente. Ver
+[`progreso.md`](progreso.md). ¿Chico, como está, o ±2?
+
+### D19 · El sueño: la calidad, el hábito, las 8 horas y lo que queda fuera
+
+Ver [`sueno.md`](sueno.md):
+- **La calidad** sale de la duración, el horario y la continuidad, como el
+  puntaje de Apple (que no se puede leer desde otra app). La especificación decía
+  «con las etapas»: las saqué porque el reloj las mide mal.
+- **«Acostarse antes de las X»** pasa a «dormirte antes de las X»: el reloj sabe
+  cuándo te dormiste, no cuándo te acostaste.
+- **Lo que necesitás dormir:** 8 horas de fábrica (7 y media desde los 65),
+  cambiable de 7 a 9.
+- **Fuera de la v1:** la oxigenación, las alteraciones de la respiración, la
+  temperatura de la muñeca y el índice de regularidad.
+
+### D20 · Los macros que tiemblan
+
+Tiembla lo que pasa un 20 % y al menos 10 g. ¿También la proteína? Pasarse de
+proteína no es malo: propongo que solo brille.
+
+### D21 · El agua
+
+Lo dijiste: «lo de agua lo sacaría». Quedó así:
+- salió de Inicio y de Comida;
+- se suma desde el «+» (un toque, 250 ml);
+- es un bloque que se puede agregar a Inicio.
+
+Si un hábito de agua existe, es una estrella más. ¿Así?
 
 ### D5 · La riqueza del cielo: cuándo crece
 
@@ -211,22 +239,23 @@ conviene confirmar el origen o escribir uno propio.
 
 ### Las de la galería
 
-Están en la galería, sección 7, «Para decidir»:
+Están en la galería, sección 10, «Para decidir»:
 
-- las pestañas (D14): el orden, los nombres y el «+» solo en Inicio;
-- las metas en Ajustes y, con «repartir la semana», si la semana de Inicio
-  compara cada día con su propia meta;
+- las seis secciones (D16);
+- buscar con un toque más y los recientes de un toque (D17);
+- el rango de grasa (D18);
+- el sueño (D19);
+- los macros que tiemblan (D20);
+- el agua (D21);
+- la luna nueva;
 - lo secundario (fibra, azúcares, saturadas y sodio): solo en la ventana del
   alimento o también en el día;
 - la revisión de la etiqueta;
-- los arcos de la luna: la luna sola (la propuesta) o con los arcos de los macros;
+- las metas, ahora en Progreso y, con «repartir la semana», si la semana de
+  Comida compara cada día con su propia meta;
 - cuándo crece el cielo (D5);
-- el cielo de la entrada;
-- la luna de la comida;
-- cómo pasan las diapositivas;
-- las tipografías;
-- el color de la aurora;
-- la orientación.
+- el cielo de la entrada, cómo pasan las diapositivas, las tipografías, el color
+  de la aurora y la orientación.
 
 ### Fuera de la galería (22/10/2026)
 
@@ -235,10 +264,26 @@ Están en la galería, sección 7, «Para decidir»:
   sobre todo la pascualina, la buseca y el postre chajá.
 - **El contacto para Open Food Facts:** piden un correo en el `User-Agent`
   (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
-- **El día del control semanal:** tomé el día de la semana en que empezaste,
-  como MacroFactor. ¿O preferís un día fijo, como el lunes?
 
 ## Resueltas
+
+### D14 · Las pestañas (reemplazada por el cambio 9, 22/10/2026)
+
+Las tres pestañas de texto (Inicio con la comida, Hábitos y Ajustes) se armaron el
+22/10/2026, y ese mismo día pediste seis secciones con el «+» en el medio (D16).
+Del D14 quedan el gesto de Ascent (un quinto de la pantalla o un tirón rápido,
+340 ms de viaje), el cielo quieto detrás y el flum solo al final de la entrada.
+
+### Día, semana y mes en un cuadro que se desliza (lo pediste el 22/10/2026)
+
+En Comida, el selector de día, semana y mes pasó a ser un cuadro: empieza en el
+día y, deslizando a la izquierda, muestra la semana y después el mes. Está en la
+galería, sección 3.
+
+### El día del control (lo pediste el 22/10/2026)
+
+Se elige en Progreso, en la estrategia. Sin elegir, es el día de la semana de la
+primera meta, como MacroFactor.
 
 ### D15 · Registrar: armar la comida y revisarla antes de agregar (lo pediste el 21/10)
 
@@ -291,9 +336,16 @@ hacen falta las cuentas anónimas.
 
 ## Tomadas por mi cuenta
 
-- **El día del control semanal** (22/10/2026): el de la semana en que se fijó la
-  primera meta, como en MacroFactor. Si ese día no se abre Moss, corre la
-  próxima vez. Se podrá cambiar en Ajustes.
+- **El día del control semanal** (22/10/2026): sin elegir, el de la semana en
+  que se fijó la primera meta, como en MacroFactor. Si ese día no se abre Moss,
+  corre la próxima vez. Se elige en Progreso.
+- **La estrategia en el perfil** (22/10/2026): el objetivo, el ritmo, cómo se
+  reparten los macros, el peso meta y el día del control viajan con el perfil.
+  Cambiar el objetivo, el ritmo o el reparto fija metas nuevas desde hoy con el
+  gasto medido.
+- **Las noches de sueño quedan en el teléfono** (22/10/2026): Salud ya está en
+  cada iPhone de la cuenta de Apple. Con Ascent vinculada, sube el resumen de cada
+  noche (ver arriba).
 - **Expo SDK 58** (la última, React Native 0.88). Reanimated 4 exige la Nueva
   Arquitectura, que ya viene prendida.
 - **Identidad y builds:**
