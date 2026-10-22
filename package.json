@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.11",
+    "@types/node": "^26.6.5",
     "@types/react": "~19.3.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~58.0.4",
@@ -67,7 +68,9 @@
     "web:ver": "node herramientas/servir-web.mjs",
     "app:capturas": "node herramientas/capturar-app.mjs capturas/app",
     "test": "jest",
-    "supabase:verificar": "node --disable-warning=ExperimentalWarning herramientas/verificar-supabase.mjs"
+    "supabase:verificar": "node --disable-warning=ExperimentalWarning herramientas/verificar-supabase.mjs",
+    "alimentos": "node --disable-warning=ExperimentalWarning herramientas/alimentos.mjs",
+    "alimentos:verificar": "node --disable-warning=ExperimentalWarning herramientas/verificar-alimentos.mjs"
   },
   "private": true,
   "jest": {

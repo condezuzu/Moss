@@ -46,3 +46,6 @@ capturas/
 
 # CanvasKit para probar Skia en la web (lo copia npm run web:preparar)
 public/canvaskit.wasm
+
+# Lo que bajan las herramientas (los datos de USDA)
+.cache/
