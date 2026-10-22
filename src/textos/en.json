@@ -223,9 +223,23 @@
       "sodio": "Sodium",
       "alcohol": "Alcohol"
     },
+    "etiquetaRevision": {
+      "titulo": "The label",
+      "leida": "Read from the photo. Check it before saving.",
+      "noCierra": "Calories don't add up with the macros: check them.",
+      "faltan": "A value is missing: fill it in.",
+      "sinPorcion": "The serving wasn't read: type it.",
+      "mililitros": "The serving is in ml: it's taken as grams.",
+      "nombreEjemplo": "Oat cookies",
+      "marca": "Brand",
+      "porcion": "Serving",
+      "porPorcion": "Per serving",
+      "guardarYSumar": "Save and add"
+    },
     "fuente": {
       "usda": "Generic · USDA FoodData Central",
-      "propio": "Generic · Moss values"
+      "propio": "Generic · Moss values",
+      "etiqueta": "Yours · from the label"
     },
     "favorito": "Favorite",
     "nombre": "Name",

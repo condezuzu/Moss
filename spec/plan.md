@@ -282,7 +282,7 @@ menos de un minuto.
 - **Escáner de etiqueta:**
   - un módulo propio en Swift: Vision con `RecognizeDocumentsRequest` en iOS 26 y líneas de texto antes;
   - un lector de la tabla en TypeScript, con tests: hecho el 22/10/2026 (`src/comida/etiqueta.ts`), con las etiquetas del Mercosur, de Estados Unidos y europeas, en español, inglés y portugués, y los errores típicos del OCR;
-  - la pantalla de revisión, primero en la galería.
+  - la pantalla de revisión, primero en la galería (hecha el 22/10/2026, con el lector de verdad; falta tu aprobación).
 
   Se mide con 50 etiquetas uruguayas antes de darlo por bueno.
 - **Alimentos propios:** a mano o desde la etiqueta, con su código de barras.

@@ -243,9 +243,32 @@ const pasos = {
     await pagina.waitForTimeout(1600);
     await foto('registrar-despues');
   },
+  // La etiqueta: lo leído para revisar, guardado y sumado, encontrable después, y el aviso de 4/4/9.
+  async etiqueta() {
+    await pestana(0);
+    await comida('registrar');
+    await pagina.waitForTimeout(600);
+    await comida('etiqueta');
+    await pagina.waitForTimeout(700);
+    await foto('etiqueta');
+    await pagina.fill('.hj-etiqueta input[data-clave="nombre"]', 'Galletitas María');
+    await pagina.click('.hj-etiqueta .fi-agregar');
+    await pagina.waitForTimeout(700);
+    await foto('etiqueta-sumada');
+    await comida('escribir', 'galle');
+    await pagina.waitForTimeout(300);
+    await foto('etiqueta-encontrada');
+    await comida('escribir', '');
+    await comida('etiqueta', true);
+    await pagina.waitForTimeout(700);
+    await foto('etiqueta-no-cierra');
+    await comida('cerrar');
+    await pagina.waitForTimeout(600);
+  },
   async 'comida-ingles'() {
     await pagina.evaluate(() => window.__idioma('en'));
     await pestana(0);
+    await comida('dia', 0);
     await pagina.waitForTimeout(1200);
     await foto('comida-ingles');
     await comida('registrar');

@@ -1,6 +1,7 @@
 // La comida en la galería, para aprobar antes de programarla (etapas 5 y 7 del plan):
 // - la pestaña Inicio: la luna, los macros, el agua, la línea del día, la semana y el mes;
-// - la hoja de registro: la búsqueda, la ventana del alimento, la comida que se arma y el teclado.
+// - la hoja de registro: la búsqueda, la ventana del alimento, la comida que se arma y el teclado;
+// - la revisión de la etiqueta (etapa 6), con el lector de verdad (Etiqueta, src/comida/etiqueta.ts).
 // El día es de mentira, pero los alimentos, sus valores y sus porciones salen de
 // assets/alimentos.db (ALIMENTOS), y la búsqueda, las cantidades y la comida de cada hora usan los
 // mismos módulos que la app (Buscar, Porciones y Comidas: los arma construir.mjs desde src/).
@@ -775,7 +776,7 @@ const Comida = (() => {
     const lupa = el('span', 'hj-lupa');
     lupa.innerHTML = icono('lupa');
     const escanear = boton('hj-icono', icono('codigo'), () => avisarHoja('Galería: el escáner de código de barras llega en la etapa 6.'));
-    const etiqueta = boton('hj-icono', icono('etiqueta'), () => avisarHoja('Galería: la foto de la etiqueta llega en la etapa 6.'));
+    const etiqueta = boton('hj-icono', icono('etiqueta'), () => abrirEtiqueta());
     $h('.hj-busca').append(lupa, entrada, escanear, etiqueta);
     const cerrarB = boton('hj-cerrar', icono('cerrar'), () => cerrarHoja());
     $h('.hj-cerrar-lugar').replaceWith(cerrarB);
@@ -930,12 +931,13 @@ const Comida = (() => {
     // Los textos de búsqueda de cada alimento, con sus palabras y trigramas ya armados: hacen las
     // veces de los dos índices FTS5 del teléfono (palabras con prefijo y trigramas). El orden es
     // el de la app (Buscar.mejoresPorAlimento); falta bm25, que acá vale lo mismo para todos.
-    const corpus = ALIMENTOS.flatMap((a) => a.t.map(([i, region, principal, texto]) => {
+    const textosDe = (a) => a.t.map(([i, region, principal, texto]) => {
       const normal = Buscar.normalizar(texto);
       const trigramas = new Set();
       normal.split(' ').forEach((p) => { for (let k = 0; k + 3 <= p.length; k++) trigramas.add(p.slice(k, k + 3)); });
       return { alimento: a.id, idioma: i, region: region || null, principal, texto, palabras: normal.split(' '), trigramas, rango: 0 };
-    }));
+    });
+    const corpus = ALIMENTOS.flatMap(textosDe);
     function buscar(texto) {
       const normal = Buscar.normalizar(texto);
       const palabras = normal.split(' ').filter(Boolean);
@@ -949,7 +951,8 @@ const Comida = (() => {
           if (Buscar.parecido(texto, t.texto) >= Buscar.PARECIDO_MINIMO) candidatos.push(Object.assign({}, t, { aproximado: true }));
         });
       }
-      const premio = (id) => (s.usos.has(id) ? 2.5 * Math.log1p(s.usos.get(id)) : 0);
+      // Lo usado sube; lo tuyo (creado desde la etiqueta), también: lo buscás porque lo cargaste.
+      const premio = (id) => (s.usos.has(id) ? 2.5 * Math.log1p(s.usos.get(id)) : 0) + (porId.get(id).cat === 'etiqueta' ? 5 : 0);
       return Buscar.mejoresPorAlimento(candidatos, texto, { idioma, region: REGION, premio }, () => true)
         .slice(0, 12)
         .map((c) => ({ a: porId.get(c.alimento), coincide: c.texto }));
@@ -1205,6 +1208,87 @@ const Comida = (() => {
       });
     }
 
+    // La etiqueta (etapa 6): lo que el iPhone lee de la foto pasa por el lector de verdad
+    // (src/comida/etiqueta.ts) y se revisa acá antes de guardar. El alimento queda guardado con su
+    // código: la próxima vez se encuentra solo. La foto es de mentira; los números, de una etiqueta
+    // uruguaya de galletitas.
+    const ETIQUETA = [
+      'INFORMACIÓN NUTRICIONAL', 'Porción 30 g (5 galletitas)', 'Cantidad por porción %VD(*)', 'Valor energético 140 kcal = 588 kJ 7',
+      'Carbohidratos 20 g 7', 'Proteínas 2,4 g 3', 'Grasas totales 5,6 g 10', 'Grasas saturadas 2,5 g 11', 'Grasas trans 0 g -',
+      'Fibra alimentaria 0,9 g 4', 'Sodio 105 mg 4',
+    ];
+    let creados = 0;
+    function abrirEtiqueta(conError) {
+      if (!s.hoja) return;
+      // Con un número mal leído (un 1 que fue 3), para ver el aviso de 4/4/9.
+      const lineas = conError ? ETIQUETA.map((l) => l.replace('140 kcal', '340 kcal')) : ETIQUETA;
+      const leida = Etiqueta.leerEtiqueta(lineas);
+      abrirSub('hj-etiqueta', (sub) => {
+        cabezaDeSub(sub, tx('comida.etiquetaRevision.titulo'));
+        const cuerpo = el('div', 'fi-cuerpo');
+        const foto = el('div', 'et-foto');
+        lineas.forEach((l) => foto.appendChild(el('div', null, l)));
+        cuerpo.append(foto, el('p', 'et-leida', tx('comida.etiquetaRevision.leida')));
+        leida.avisos.forEach((a) => cuerpo.appendChild(el('p', 'et-aviso', tx('comida.etiquetaRevision.' + a))));
+        const campos = {};
+        const campo = (clave, etiquetaTxt, unidad, valor, texto) => {
+          const fila = el('label', 'cr-campo');
+          const input = el('input');
+          input.type = 'text';
+          input.dataset.clave = clave;
+          if (texto) input.placeholder = texto;
+          else { input.inputMode = 'decimal'; input.placeholder = '0'; }
+          if (valor != null) input.value = Porciones.decimal(valor, idioma);
+          fila.append(el('span', null, etiquetaTxt), input);
+          if (unidad) fila.appendChild(el('em', null, unidad));
+          campos[clave] = input;
+          cuerpo.appendChild(fila);
+          return fila;
+        };
+        campo('nombre', tx('comida.nombre'), '', null, tx('comida.etiquetaRevision.nombreEjemplo'));
+        campo('marca', tx('comida.etiquetaRevision.marca'), '', null, tx('comida.opcional'));
+        campo('porcion', tx('comida.etiquetaRevision.porcion'), 'g', leida.porcion ? leida.porcion.gramos : null);
+        cuerpo.appendChild(el('div', 'fi-etq', tx('comida.etiquetaRevision.porPorcion')));
+        const v = leida.porPorcion;
+        const kcal = campo('kcal', tx('comida.kcal'), 'kcal', v.kcal);
+        kcal.classList.toggle('mal', leida.avisos.includes('noCierra'));
+        campo('c', tx('comida.carbohidratos'), 'g', v.carbohidratos);
+        campo('p', tx('comida.proteina'), 'g', v.proteina);
+        campo('g', tx('comida.grasas'), 'g', v.grasas);
+        campo('saturadas', tx('comida.secundarios.saturadas'), 'g', v.saturadas);
+        campo('fibra', tx('comida.secundarios.fibra'), 'g', v.fibra);
+        campo('sodio', tx('comida.secundarios.sodio'), 'mg', v.sodio);
+        sub.appendChild(cuerpo);
+        const leer = (k) => (campos[k].value.trim() === '' ? null : Number(campos[k].value.replace(/\./g, '').replace(',', '.')));
+        const pie = el('footer', 'fi-pie');
+        pie.appendChild(boton('fi-agregar', tx('comida.etiquetaRevision.guardarYSumar'), () => {
+          const nombre = campos.nombre.value.trim();
+          const gramos = leer('porcion');
+          if (!nombre) { campos.nombre.focus(); return; }
+          if (!gramos) { campos.porcion.focus(); return; }
+          const f = 100 / gramos;
+          const por100 = (k) => (leer(k) == null ? null : leer(k) * f);
+          // Como un genérico más, pero tuyo: con su porción y encontrable desde ya.
+          const medida = (leida.porcion && /\(([^)]+)\)/.exec(leida.porcion.texto)) || null;
+          const nombrePorcion = medida ? medida[1] : `${Porciones.decimal(gramos, 'es')} g`;
+          const a = {
+            id: -(100000 + ++creados), es: nombre, en: nombre, cat: 'etiqueta',
+            v: [por100('kcal') || 0, por100('p') || 0, por100('c') || 0, por100('g') || 0],
+            s: [por100('fibra'), null, por100('saturadas'), por100('sodio'), null],
+            p: [[nombrePorcion, nombrePorcion, gramos]], d: 0, t: [['es', '', 1, nombre], ['en', '', 1, nombre]],
+          };
+          ALIMENTOS.push(a);
+          porId.set(a.id, a);
+          porNombre.set(a.es, a);
+          corpus.push(...textosDe(a));
+          cerrarSub();
+          sumarACanasta([{ alimento: a.id, porcion: 0, veces: 1 }], `${nombre} · ${nombrePorcion}`);
+        }));
+        sub.appendChild(pie);
+        setTimeout(() => campos.nombre.focus({ preventScroll: true }), 60);
+      });
+    }
+
     // Las comidas guardadas: un toque suma todo a la comida que se arma.
     function abrirGuardadas() {
       abrirSub('hj-guardadas', (sub) => {
@@ -1257,7 +1341,7 @@ const Comida = (() => {
 
       const cab = el('header', 'vt-cab');
       const titulos = el('div', 'vt-titulos');
-      titulos.append(el('h3', 'vt-nombre', nombreDe(a)), el('div', 'vt-fuente', tx(a.id < 0 ? 'comida.fuente.propio' : 'comida.fuente.usda')));
+      titulos.append(el('h3', 'vt-nombre', nombreDe(a)), el('div', 'vt-fuente', tx(a.cat === 'etiqueta' ? 'comida.fuente.etiqueta' : a.id < 0 ? 'comida.fuente.propio' : 'comida.fuente.usda')));
       const estrella = boton('hj-estrella' + (s.favoritos.has(a.id) ? ' activa' : ''), icono('estrella'), () => {
         if (s.favoritos.has(a.id)) s.favoritos.delete(a.id); else s.favoritos.add(a.id);
         estrella.classList.toggle('activa', s.favoritos.has(a.id));
@@ -1480,6 +1564,7 @@ const Comida = (() => {
       confirmar() { const b = $h('.hj-revision .fi-agregar'); if (b) b.click(); },
       cargaRapida() { if (s.hoja) abrirRapida(); },
       guardadas() { if (s.hoja) abrirGuardadas(); },
+      etiqueta(conError) { if (s.hoja) abrirEtiqueta(conError); },
       copiarDeAyer: (tipo) => (s.hoja ? sumarDeAyer(tipo || s.hoja.comida) : copiarDeAyer(tipo || 'cena')),
       bajarA(destino) {
         const n = (destino === 'semana' && $z('.cm-seccion-cuerpo')) || (destino === 'ahora' && ($z('.cm-ahora') || $z('.cm-linea .cm-entrada:last-child'))) || $z('.cm-seccion-dia');

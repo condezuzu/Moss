@@ -229,6 +229,7 @@
     ficha: () => conHoja(() => comida.ficha('Banana')),
     rapida: () => conHoja(() => comida.cargaRapida()),
     copiar: () => enLaZona(() => comida.copiarDeAyer('cena')),
+    etiqueta: () => conHoja(() => comida.etiqueta()),
   };
   // Como si se escribiera: letra por letra, con la búsqueda en cada una.
   let escribiendo = 0;
@@ -651,7 +652,7 @@
       escribir: () => comida.escribir(arg), ficha: () => comida.ficha(arg), agregar: () => comida.agregarPrimero(),
       sumar: () => comida.sumar(), listo: () => comida.listo(), confirmar: () => comida.confirmar(), arcos: () => comida.arcos(arg),
       vista: () => comida.vista(arg),
-      rapida: () => comida.cargaRapida(), guardadas: () => comida.guardadas(), copiar: () => comida.copiarDeAyer(arg),
+      rapida: () => comida.cargaRapida(), guardadas: () => comida.guardadas(), copiar: () => comida.copiarDeAyer(arg), etiqueta: () => comida.etiqueta(arg),
       dia: () => comida.verDia(arg), bajar: () => comida.bajarA(arg), teclado: () => comida.teclado(arg), dictar: () => comida.dictar(),
     };
     const r = pasos[accion]();

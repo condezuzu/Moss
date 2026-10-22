@@ -223,9 +223,23 @@
       "sodio": "Sodio",
       "alcohol": "Alcohol"
     },
+    "etiquetaRevision": {
+      "titulo": "La etiqueta",
+      "leida": "Leído de la foto. Revisa que esté bien antes de guardar.",
+      "noCierra": "Las kcal no cierran con los macros: revísalas.",
+      "faltan": "Falta un valor: complétalo.",
+      "sinPorcion": "No se leyó la porción: escríbela.",
+      "mililitros": "La porción está en ml: se toma como gramos.",
+      "nombreEjemplo": "Galletitas de avena",
+      "marca": "Marca",
+      "porcion": "Porción",
+      "porPorcion": "Por porción",
+      "guardarYSumar": "Guardar y sumar"
+    },
     "fuente": {
       "usda": "Genérico · USDA FoodData Central",
-      "propio": "Genérico · valores de Moss"
+      "propio": "Genérico · valores de Moss",
+      "etiqueta": "Tuyo · de la etiqueta"
     },
     "favorito": "Favorito",
     "nombre": "Nombre",

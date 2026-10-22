@@ -127,7 +127,8 @@ la gente encuentre lo que come:
   3. lo curado;
   4. el nombre de la región;
   5. bm25.
-- **Lo más usado primero:** quien llama pasa un premio por alimento, que sale del historial. Va con el logaritmo de las veces y lo reciente.
+- **Lo más usado primero:** quien llama pasa un premio por alimento, que sale del historial. Va con el logaritmo de las veces y lo reciente (`premios` en `src/dominio/registros.ts`).
+- **Lo propio arriba:** lo creado desde la etiqueta o a mano sube con un premio propio: si lo buscás, es porque lo cargaste. En la galería, desde el 22/10/2026.
 - **Medido en la base de verdad:** de 1 a 17 ms por búsqueda en una PC; en el teléfono hay que medirlo.
 
 ## Registrar: los flujos y sus toques

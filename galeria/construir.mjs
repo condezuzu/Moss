@@ -94,6 +94,7 @@ const js = [
   modulo('Buscar', 'src/comida/buscar.ts'),
   modulo('Porciones', 'src/comida/porciones.ts'),
   modulo('Comidas', 'src/dominio/comidas.ts'),
+  modulo('Etiqueta', 'src/comida/etiqueta.ts'),
   leer('galeria/src/motor.js'),
   leer('galeria/src/escena.js'),
   leer('galeria/src/entrada.js'),

@@ -657,6 +657,14 @@ section.item p { margin: 0; max-width: 64ch; }
 .cr-campo input::placeholder { color: rgba(239, 230, 207, 0.35); }
 .cr-campo em { font: normal 400 12.5px/1 var(--texto); color: rgba(239, 230, 207, 0.55); }
 .cr-nota { margin: 14px 0 0; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); }
+/* La etiqueta: la foto en chico, lo que se leyó y lo que conviene revisar. */
+.et-foto { width: 74%; margin: 6px auto 0; padding: 9px 12px; border-radius: 5px; background: #f1eee6; color: #1c1c1c; transform: rotate(-1.4deg); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); font: 500 9px/1.5 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; }
+.et-foto div + div { border-top: 1px solid rgba(0, 0, 0, 0.16); }
+.et-foto div:first-child { font-weight: 700; text-align: center; }
+.et-leida { margin: 14px 0 10px; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.6); text-align: center; }
+.et-aviso { margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; background: rgba(232, 196, 106, 0.1); border: 1px solid rgba(232, 196, 106, 0.32); color: var(--oro-claro); font: 400 13px/1.35 var(--texto); }
+.cr-campo.mal input { border-color: rgba(232, 196, 106, 0.7); color: var(--oro-claro); }
+.hj-etiqueta .fi-etq { margin: 18px 0 2px; }
 
 /* En la galería: los toques de cada registro, contados. */
 .toques { display: grid; gap: 8px; }
@@ -761,6 +769,7 @@ section.item p { margin: 0; max-width: 64ch; }
           <button class="boton" type="button" data-comida="ficha">La ventana de la banana</button>
           <button class="boton" type="button" data-comida="rapida">Carga rápida</button>
           <button class="boton" type="button" data-comida="copiar">Copiar la cena de ayer</button>
+          <button class="boton" type="button" data-comida="etiqueta">La etiqueta</button>
         </div>
         <div class="controles">
           <div class="grupo"><span>La luna</span>
@@ -798,6 +807,8 @@ section.item p { margin: 0; max-width: 64ch; }
             <li>Arriba están los atajos: la misma comida de ayer, las comidas guardadas y la carga rápida. Todo suma a la comida que se arma.</li>
           </ul></li>
         <li><b>El teclado</b> dibujado es el del iPhone, para ver cuánto lugar deja. Su micrófono es el dictado del teclado: probalo.</li>
+        <li><b>La etiqueta</b> (el ícono al lado del código de barras): la foto es de mentira, pero lo que se lee pasa por el lector de verdad, que entiende las etiquetas del Mercosur, de Estados Unidos y europeas. Se revisa todo antes de guardar: si las kcal no cierran con los macros, avisa y marca el número. «Guardar y sumar» lo deja en tu comida y desde ahí se encuentra buscándolo.</li>
+        <li><b>Lo secundario</b>: la ventana de cada alimento muestra abajo, chico, la fibra, los azúcares, las grasas saturadas y el sodio, de USDA.</li>
       </ul>
     </section>
 
@@ -937,6 +948,8 @@ section.item p { margin: 0; max-width: 64ch; }
       <h2><span class="n">7</span>Para decidir</h2>
       <ol class="decisiones">
         <li><span><b>Las pestañas (D14).</b> Ya están, en la sección 4: Inicio con la comida, Hábitos con el cielo y Ajustes, con el gesto de Ascent. ¿Te cierran el orden y los nombres? El «+» de registrar quedó solo en Inicio, y en Hábitos el cielo va solo, sin la barra de la comida. Detrás de Inicio el cielo queda al 20 %.</span></li>
+        <li><span><b>Lo secundario.</b> La fibra, los azúcares, las grasas saturadas y el sodio están en la ventana de cada alimento, chicos y apagados. ¿Los querés también en el día, en una línea debajo de los macros (la fibra contra una meta suave), o solo en la ventana?</span></li>
+        <li><span><b>La revisión de la etiqueta</b> (sección 1, «La etiqueta»). La foto en chico arriba, lo leído para corregir, y un aviso que marca el número si las kcal no cierran con los macros. ¿Así?</span></li>
         <li><span><b>Los arcos de la luna.</b> Propongo la luna sola, porque los macros ya están en las barras de abajo. Con el selector de la sección 1 la ves con los arcos.</span></li>
         <li><span><b>La riqueza del cielo, de noche o al instante.</b> Propongo que la luz del día se sume al cielo al día siguiente: abrís Moss y el cielo crece frente a vos, con estrellas nuevas que aparecen y musgo que sube, sin texto. La otra opción es que crezca apenas termina la animación del día completo.</span></li>
         <li><span><b>El cielo de la entrada.</b> Ahora es el de 60 % de riqueza, el más lindo que ya aprobaste. Después de la entrada, el cielo propio empieza en 0 % y crece con vos. ¿Lo dejamos así, o la entrada usa el cielo del primer día?</span></li>
