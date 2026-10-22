@@ -50,7 +50,7 @@ type Respuestas = { edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: n
 const DE_FABRICA: Respuestas = { edad: 29, sexo: null, alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado' };
 type DeSalud = ReadonlySet<'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>;
 
-export function Entrada({ camara }: { camara: SharedValue<number> }) {
+export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; alTerminar?: () => void }) {
   const insets = useSafeAreaInsets();
   const reducido = useReducedMotion();
   const [i, setI] = useState(0);
@@ -86,6 +86,7 @@ export function Entrada({ camara }: { camara: SharedValue<number> }) {
     setTimeout(() => {
       elAlmacen().responderCuestionario({ ...r, sexo }, deSalud.has('pesoKg') ? 'salud' : 'manual');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      alTerminar?.();
     }, reducido ? 200 : 1100);
   };
 

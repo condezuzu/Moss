@@ -965,5 +965,68 @@
       "dia": "el {dia}"
     },
     "pronto": "Vincular llega pronto."
+  },
+  "habitos": {
+    "nuevo": "Nuevo hábito",
+    "editar": "Editar hábito",
+    "nombre": "Nombre",
+    "nombreEjemplo": "Leer 20 páginas",
+    "icono": "Ícono",
+    "dias": "Qué días",
+    "todos": "Todos los días",
+    "como": "Cómo se cumple",
+    "aMano": "A mano",
+    "conSalud": "Con Salud",
+    "conComida": "Con la comida",
+    "aManoTexto": "Tocas la estrella cuando lo haces.",
+    "saludTexto": "Se enciende sola cuando Salud dice que llegaste.",
+    "comidaTexto": "Se enciende sola con lo que registras.",
+    "datos": {
+      "pasos": "Pasos",
+      "sueno": "Dormir",
+      "agua": "Agua",
+      "mindfulness": "Atención plena"
+    },
+    "metas": {
+      "pasos": "{n} pasos",
+      "sueno": "Dormir {n} h",
+      "agua": "Agua {n} L",
+      "mindfulness": "{n} min de atención plena"
+    },
+    "comidas": {
+      "proteina": "Llegar a la proteína",
+      "registrar": "Registrar todas las comidas",
+      "calorias": "Quedar dentro de las calorías"
+    },
+    "guardar": "Guardar",
+    "archivar": "Archivar",
+    "archivarTexto": "Deja de estar desde hoy. Lo que hiciste antes queda en tu cielo.",
+    "archivado": "Archivaste «{habito}»",
+    "guardado": "Guardaste «{habito}»",
+    "cambiaLaConstelacion": "Los días que cambian de cantidad pasan a otra constelación.",
+    "mantener": "Mantén apretada una estrella para editar su hábito.",
+    "sugeridos": {
+      "titulo": "Elige tus primeros hábitos",
+      "texto": "De 3 a 5 para empezar: arman tu primera constelación. Los de comida se encienden solos con lo que registras.",
+      "cuantos": "{n} de 3 a 5",
+      "listo": "Armar mi constelación",
+      "despues": "Después puedes sumar, cambiar o archivar cada uno.",
+      "leer": "Leer 20 páginas",
+      "entrenar": "Entrenar",
+      "escribir": "Escribir"
+    },
+    "mes": {
+      "titulo": "Tu mes",
+      "abrir": "Tu mes y tus estadísticas",
+      "anterior": "Mes anterior",
+      "siguiente": "Mes siguiente",
+      "completos": "días completos",
+      "conLuz": "días con luz",
+      "racha": "días seguidos con luz",
+      "porHabito": "Cada hábito, los últimos 30 días",
+      "deVeces": "{hechos} de {total}",
+      "sinDatos": "Todavía no hay días en este mes."
+    },
+    "mas": "Nuevo hábito"
   }
 }

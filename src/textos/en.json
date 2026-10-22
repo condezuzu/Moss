@@ -965,5 +965,68 @@
       "dia": "on {dia}"
     },
     "pronto": "Linking is coming soon."
+  },
+  "habitos": {
+    "nuevo": "New habit",
+    "editar": "Edit habit",
+    "nombre": "Name",
+    "nombreEjemplo": "Read 20 pages",
+    "icono": "Icon",
+    "dias": "Which days",
+    "todos": "Every day",
+    "como": "How it’s done",
+    "aMano": "By hand",
+    "conSalud": "With Health",
+    "conComida": "With food",
+    "aManoTexto": "You tap the star when you do it.",
+    "saludTexto": "It lights up on its own when Health says you got there.",
+    "comidaTexto": "It lights up on its own with what you log.",
+    "datos": {
+      "pasos": "Steps",
+      "sueno": "Sleep",
+      "agua": "Water",
+      "mindfulness": "Mindfulness"
+    },
+    "metas": {
+      "pasos": "{n} steps",
+      "sueno": "Sleep {n} h",
+      "agua": "Water {n} L",
+      "mindfulness": "{n} min of mindfulness"
+    },
+    "comidas": {
+      "proteina": "Hit your protein",
+      "registrar": "Log all your meals",
+      "calorias": "Stay within your calories"
+    },
+    "guardar": "Save",
+    "archivar": "Archive",
+    "archivarTexto": "It stops from today. What you did before stays in your sky.",
+    "archivado": "You archived “{habito}”",
+    "guardado": "You saved “{habito}”",
+    "cambiaLaConstelacion": "Days that change how many habits they have move to another constellation.",
+    "mantener": "Press and hold a star to edit its habit.",
+    "sugeridos": {
+      "titulo": "Pick your first habits",
+      "texto": "3 to 5 to start: they make your first constellation. The food ones light up on their own with what you log.",
+      "cuantos": "{n} of 3 to 5",
+      "listo": "Make my constellation",
+      "despues": "Later you can add, change or archive each one.",
+      "leer": "Read 20 pages",
+      "entrenar": "Work out",
+      "escribir": "Journal"
+    },
+    "mes": {
+      "titulo": "Your month",
+      "abrir": "Your month and stats",
+      "anterior": "Previous month",
+      "siguiente": "Next month",
+      "completos": "full days",
+      "conLuz": "days with light",
+      "racha": "days in a row with light",
+      "porHabito": "Each habit, the last 30 days",
+      "deVeces": "{hechos} of {total}",
+      "sinDatos": "No days in this month yet."
+    },
+    "mas": "New habit"
   }
 }

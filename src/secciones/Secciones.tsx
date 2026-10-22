@@ -6,7 +6,7 @@
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,11 +18,14 @@ import { colores } from '@/tema';
 import { Ascent } from './Ascent';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO, type Pestana } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
-import { AvisoAbajo } from './comida/comunes';
+import { AvisoAbajo, Icono } from './comida/comunes';
 import { useEstado } from './comida/datos';
 import { HojaRegistro } from './comida/HojaRegistro';
 import { quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { Entrada } from './entrada/Entrada';
+import { EditorDeHabito } from './habitos/Editor';
+import { Mes } from './habitos/Mes';
+import { Sugeridos } from './habitos/Sugeridos';
 import { HojaMas, type VistaDelMas } from './HojaMas';
 import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDeProgreso } from './progreso/Progreso';
@@ -39,6 +42,10 @@ export default function Secciones() {
   const [ascentAbierta, setAscentAbierta] = useState(false);
   const [hojaAbierta, setHojaAbierta] = useState(false);
   const [vistaDelMas, setVistaDelMas] = useState<VistaDelMas>('menu');
+  // Hábitos: el editor (un id, o null para uno nuevo), «Tu mes» y los primeros hábitos al terminar la entrada.
+  const [editando, setEditando] = useState<string | null | undefined>(undefined);
+  const [verMes, setVerMes] = useState(false);
+  const [sugeridos, setSugeridos] = useState(false);
   // La pestaña, con decimales mientras se desliza; Ascent y la hoja del «+», de 0 (abajo) a 1.
   const posicion = useSharedValue(0);
   const desde = useSharedValue(0);
@@ -149,13 +156,16 @@ export default function Secciones() {
               alCambiar: setAscentAbierta,
             }}
             entrada={entrada}
+            alEditarHabito={setEditando}
           />
           {!enEntrada && (
             <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
               <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
               <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
                 {PESTANAS.map((n, i) =>
-                  i === HABITOS || !armada(i) ? (
+                  i === HABITOS ? (
+                    <BotonesDeHabitos key={n} ancho={ancho} arriba={insets.top} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
+                  ) : !armada(i) ? (
                     <View key={n} style={{ width: ancho }} pointerEvents="none" />
                   ) : n === 'comida' ? (
                     <PaginaDeComida key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
@@ -175,7 +185,7 @@ export default function Secciones() {
           )}
         </Animated.View>
         {enEntrada ? (
-          <Entrada camara={camaraDeLaEntrada} />
+          <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(true)} />
         ) : (
           <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
             <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
@@ -184,8 +194,27 @@ export default function Secciones() {
             <HojaRegistro />
           </Animated.View>
         )}
+        {editando !== undefined && <EditorDeHabito key={editando ?? 'nuevo'} id={editando} alCerrar={() => setEditando(undefined)} />}
+        {verMes && <Mes alCerrar={() => setVerMes(false)} />}
+        {sugeridos && <Sugeridos alCerrar={() => setSugeridos(false)} />}
       </View>
     </GestureDetector>
+  );
+}
+
+/** Arriba a la derecha de Hábitos, debajo de la luz de hoy: un hábito nuevo y «Tu mes». El cielo queda limpio. */
+function BotonesDeHabitos({ ancho, arriba, alNuevo, alMes }: { ancho: number; arriba: number; alNuevo: () => void; alMes: () => void }) {
+  return (
+    <View style={{ width: ancho }} pointerEvents="box-none">
+      <View style={[estilos.botonesDeHabitos, { top: arriba + 76 }]}>
+        <Pressable onPress={alMes} style={estilos.botonDeHabitos} accessibilityRole="button" accessibilityLabel={t('habitos.mes.abrir')} hitSlop={6}>
+          <Icono nombre="calendar" tam={15} color="rgba(239, 230, 207, 0.75)" />
+        </Pressable>
+        <Pressable onPress={alNuevo} style={estilos.botonDeHabitos} accessibilityRole="button" accessibilityLabel={t('habitos.mas')} hitSlop={6}>
+          <Icono nombre="plus" tam={16} color={colores.oroClaro} peso="semibold" />
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -208,6 +237,8 @@ const estilos = StyleSheet.create({
   velo: { backgroundColor: colores.noche0 },
   tira: { position: 'absolute', top: 0, bottom: 0, left: 0, flexDirection: 'row' },
   pendiente: { paddingHorizontal: 22 },
+  botonesDeHabitos: { position: 'absolute', right: 16, flexDirection: 'row', gap: 8 },
+  botonDeHabitos: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.45)' },
   fecha: { fontFamily: 'Jost_400Regular', fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: colores.pergaminoTenue },
   titulo: { marginTop: 8, fontFamily: 'Jost_500Medium', fontSize: 28, color: colores.pergamino },
   pronto: { marginTop: 14, fontFamily: 'Jost_400Regular', fontSize: 14, lineHeight: 20, color: colores.pergaminoTenue },

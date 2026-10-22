@@ -334,6 +334,23 @@ export function crearAlmacen(op: Opciones) {
     archivarHabito(id: string) {
       cambiarHabitos(estado.habitos.map((h) => (h.id === id ? { ...archivar(h, estado.hoy), actualizado: momento() } : h)));
     },
+    /** Un hábito nuevo, desde hoy, después de los que hay. */
+    crearHabito(datos: Pick<Habito, 'nombre' | 'icono' | 'dias' | 'fuente'>): Habito {
+      const orden = Math.max(-1, ...estado.habitos.map((h) => h.orden)) + 1;
+      const habito: Habito = { ...datos, id: nuevoId(), orden, desde: estado.hoy, actualizado: momento() };
+      cambiarHabitos([...estado.habitos, habito]);
+      return habito;
+    },
+    /**
+     * Los primeros hábitos, apenas termina la entrada: los que había (los de ejemplo) se archivan y
+     * quedan los elegidos, desde hoy y en ese orden. Arman la primera constelación.
+     */
+    elegirPrimerosHabitos(elegidos: Pick<Habito, 'nombre' | 'icono' | 'dias' | 'fuente'>[]) {
+      const ahora = momento();
+      const viejos = estado.habitos.map((h) => (h.hasta && h.hasta < estado.hoy ? h : { ...archivar(h, estado.hoy), actualizado: ahora }));
+      const nuevos = elegidos.map((d, i): Habito => ({ ...d, id: nuevoId(), orden: i, desde: estado.hoy, actualizado: ahora }));
+      cambiarHabitos([...viejos, ...nuevos]);
+    },
     /**
      * El final de la entrada: guarda las respuestas, el peso de hoy y la meta de arranque.
      * Devuelve esa meta para mostrarla.

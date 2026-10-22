@@ -207,8 +207,8 @@ export function cambiarHabito(e: Escena, i: number, encender: boolean, desdeSalu
   }
 }
 
-/** Un toque en (px, py), en puntos. Devuelve el hábito tocado, o -1. */
-export function tocar(e: Escena, px: number, py: number): number {
+/** La estrella de un hábito que queda bajo (px, py), en puntos, o -1. */
+export function estrellaEn(e: Escena, px: number, py: number): number {
   'worklet';
   if (e.paginaX !== 0) return -1;
   let mejor = -1;
@@ -218,6 +218,13 @@ export function tocar(e: Escena, px: number, py: number): number {
     const d = Math.hypot(sx - px, sy - py);
     if (d < distancia) { distancia = d; mejor = i; }
   }
+  return mejor;
+}
+
+/** Un toque en (px, py), en puntos. Devuelve el hábito tocado, o -1. */
+export function tocar(e: Escena, px: number, py: number): number {
+  'worklet';
+  const mejor = estrellaEn(e, px, py);
   if (mejor < 0) return -1;
   const h = e.habitos[mejor];
   if (h.auto) {

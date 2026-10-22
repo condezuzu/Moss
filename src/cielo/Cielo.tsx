@@ -24,7 +24,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { AccessibilityInfo, PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
+import { GestureDetector, useCompetingGestures, useLongPressGesture, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import { useDerivedValue, useFrameCallback, useSharedValue, type DerivedValue, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
@@ -40,6 +40,7 @@ import {
   completarDia,
   crearEscena,
   DATOS_POR_SPRITE,
+  estrellaEn,
   lanzarFugaz,
   paso,
   repetirAnimacion,
@@ -89,9 +90,11 @@ export type PropsDelCielo = {
    * cámara donde la pida cada pantalla (como el modo «entrada» de la galería).
    */
   entrada?: { camara: SharedValue<number> };
+  /** Mantener apretada una estrella abre el editor de su hábito. */
+  alEditarHabito?: (id: string) => void;
 };
 
-export default function Cielo({ paginaX, subida, abajo = 0, entrada }: PropsDelCielo) {
+export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHabito }: PropsDelCielo) {
   const soloCielo = !!entrada;
   const camaraDeLaEntrada = entrada?.camara;
   const { width: ancho, height: alto } = useWindowDimensions();
@@ -395,7 +398,21 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada }: PropsDelC
       });
     },
   });
-  const gestos = useCompetingGestures(arrastre, toque);
+  const editar = useCallback((i: number) => {
+    const h = dia.habitos[i];
+    if (!h || !alEditarHabito) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    alEditarHabito(h.id);
+  }, [dia, alEditarHabito]);
+  const apretar = useLongPressGesture({
+    minDuration: 450,
+    onActivate: (ev) => {
+      'worklet';
+      const i = estrellaEn(escena.value, ev.x, ev.y);
+      if (i >= 0) scheduleOnRN(editar, i);
+    },
+  });
+  const gestos = useCompetingGestures(arrastre, apretar, toque);
 
   // ------------------------------------------------------------------ valores por cuadro
   const uniformesCielo = useDerivedValue(() => {

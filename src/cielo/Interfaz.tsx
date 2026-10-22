@@ -190,7 +190,7 @@ export function Interfaz(p: Props) {
 
       {DIAGNOSTICO && (
         <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
-          <PanelDePrueba arriba={insets.top + 68} calidad={p.calidad} riqueza={p.riqueza} cuadros={p.cuadros} acciones={p.acciones} />
+          <PanelDePrueba arriba={insets.top + 126} calidad={p.calidad} riqueza={p.riqueza} cuadros={p.cuadros} acciones={p.acciones} />
         </Animated.View>
       )}
     </View>

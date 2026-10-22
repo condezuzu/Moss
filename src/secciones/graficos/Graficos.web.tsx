@@ -4,9 +4,9 @@ import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import type { ComponentType } from 'react';
 import { View } from 'react-native';
 
-import type { PropsDeBalance, PropsDeHipnograma, PropsDeLinea, PropsDeMiniCielo } from './GraficosSkia';
+import type { PropsDeBalance, PropsDeHipnograma, PropsDeLinea, PropsDeMes, PropsDeMiniCielo } from './GraficosSkia';
 
-export type { PuntoDeLinea } from './GraficosSkia';
+export type { CeldaDelMes, PuntoDeLinea } from './GraficosSkia';
 
 const opciones = { locateFile: (archivo: string) => `/${archivo}` };
 
@@ -27,3 +27,4 @@ export const Linea = conSkia<PropsDeLinea>(async () => (await import('./Graficos
 export const Balance = conSkia<PropsDeBalance>(async () => (await import('./GraficosSkia')).BalanceSkia);
 export const Hipnograma = conSkia<PropsDeHipnograma>(async () => (await import('./GraficosSkia')).HipnogramaSkia);
 export const MiniCielo = conSkia<PropsDeMiniCielo>(async () => (await import('./GraficosSkia')).MiniCieloSkia);
+export const MesDeCielos = conSkia<PropsDeMes>(async () => (await import('./GraficosSkia')).MesSkia);

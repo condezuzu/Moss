@@ -162,3 +162,44 @@ export function MiniCieloSkia({ constelacion, encendidas, ancho, alto, sinFondo 
     </Canvas>
   );
 }
+
+export type CeldaDelMes = { x: number; y: number; ancho: number; alto: number; constelacion: Constelacion | null; encendidas: boolean[]; completo: boolean };
+export type PropsDeMes = { celdas: CeldaDelMes[]; ancho: number; alto: number };
+
+/** El mes en mini cielos: la constelación de cada día con lo que se encendió; los días completos, unidos en oro. */
+export function MesSkia({ celdas, ancho, alto }: PropsDeMes) {
+  const dibujo = useMemo(
+    () =>
+      celdas.map((c) => {
+        if (!c.constelacion) return null;
+        const plano = encajar(proyectar(c.constelacion.estrellas), [0, 0], (c.ancho / c.alto) * 0.78, 0.34);
+        const pos = plano.map(([x, y]) => ({ x: c.x + c.ancho / 2 + x * c.alto, y: c.y + c.alto / 2 + 4 - y * c.alto }));
+        const lineas = Skia.PathBuilder.Make();
+        c.constelacion.lineas.forEach(([a, b]) => lineas.moveTo(pos[a].x, pos[a].y).lineTo(pos[b].x, pos[b].y));
+        return { pos, lineas: lineas.detach() };
+      }),
+    [celdas],
+  );
+  return (
+    <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
+      {celdas.map((c, i) => {
+        const d = dibujo[i];
+        if (!d) return null;
+        const cx = c.x + c.ancho / 2, cy = c.y + c.alto / 2 + 4;
+        return (
+          <Group key={i}>
+            {c.completo && (
+              <Circle cx={cx} cy={cy} r={c.alto * 0.48}>
+                <RadialGradient c={vec(cx, cy)} r={c.alto * 0.48} colors={['rgba(232, 196, 106, 0.16)', 'rgba(232, 196, 106, 0)']} />
+              </Circle>
+            )}
+            <Path path={d.lineas} style="stroke" strokeWidth={0.8} strokeCap="round" color={c.completo ? 'rgba(232, 196, 106, 0.8)' : 'rgba(239, 230, 207, 0.13)'} />
+            {d.pos.map((p, k) => (
+              <Circle key={k} cx={p.x} cy={p.y} r={c.encendidas[k] ? 1.7 : 1.1} color={c.encendidas[k] ? '#fbf2d9' : 'rgba(239, 230, 207, 0.32)'} />
+            ))}
+          </Group>
+        );
+      })}
+    </Canvas>
+  );
+}

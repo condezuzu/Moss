@@ -129,6 +129,29 @@ describe('los días', () => {
     almacen.archivarHabito('agua');
     expect(hoy(almacen)).toMatchObject({ habitos: ['meditar', 'leer'], hechos: [] });
   });
+
+  it('un hábito nuevo entra desde hoy, después de los que había, y el día pasa a otra constelación', async () => {
+    const { almacen } = await armar();
+    const antes = hoy(almacen).constelacion;
+    const nuevo = almacen.crearHabito({ nombre: 'Correr', icono: 'figure.run', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'manual' } });
+    expect(nuevo).toMatchObject({ desde: '2026-10-21', orden: 3 });
+    expect(hoy(almacen).habitos).toEqual(['meditar', 'leer', 'agua', nuevo.id]);
+    expect(catalogo.find((c) => c.id === hoy(almacen).constelacion)!.estrellas).toHaveLength(4);
+    expect(hoy(almacen).constelacion).not.toBe(antes);
+  });
+
+  it('los primeros hábitos reemplazan a los de ejemplo, en el orden elegido', async () => {
+    const { almacen } = await armar();
+    almacen.elegirPrimerosHabitos([
+      { nombre: 'Proteína', icono: 'fork.knife', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'comida', meta: 'proteina' } },
+      { nombre: 'Dormir 7 h', icono: 'moon', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'salud', dato: 'sueno', meta: 420 } },
+      { nombre: 'Leer', icono: 'book', dias: [1, 2, 3, 4, 5], fuente: { tipo: 'manual' } },
+    ]);
+    const e = almacen.estado();
+    expect(e.habitos.filter((h) => !h.hasta || h.hasta >= e.hoy).map((h) => h.nombre)).toEqual(['Proteína', 'Dormir 7 h', 'Leer']);
+    expect(e.habitos.filter((h) => ['meditar', 'leer', 'agua'].includes(h.id)).every((h) => h.hasta === '2026-10-20')).toBe(true);
+    expect(hoy(almacen).habitos).toHaveLength(3);
+  });
 });
 
 describe('el cuestionario, el peso y las metas', () => {
