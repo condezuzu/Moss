@@ -20,6 +20,7 @@ import { gramosDe, valoresDeCantidad, type Cantidad, type Fuente, type Item, typ
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
+import { compartir } from './compartir';
 import { gramosDeMacro, numero, opcionesDeIdioma } from './datos';
 
 export type PorcionAbierta = { nombre: string; gramos: number };
@@ -219,6 +220,11 @@ export function Ventana(p: Props) {
             <Text style={estilos.nombre}>{alimento.nombre}</Text>
             <Text style={estilos.origen}>{[detalle ? origenDe(detalle) : alimento.origen, detalle?.marca].filter(Boolean).join(' · ')}</Text>
           </View>
+          {(alimento.fuente === 'receta' || alimento.fuente === 'propio') && (
+            <Pressable onPress={() => { compartir(alimento.fuente, alimento.ref).catch(() => {}); }} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('compartir.boton')}>
+              <Icono nombre="square.and.arrow.up" tam={17} color={colores.oroClaro} />
+            </Pressable>
+          )}
           <Pressable onPress={p.alFavorito} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('comida.favorito')} accessibilityState={{ selected: p.favorito }}>
             <Icono nombre={p.favorito ? 'star.fill' : 'star'} tam={19} color={p.favorito ? colores.oro : colores.oroClaro} />
           </Pressable>

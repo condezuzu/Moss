@@ -1063,5 +1063,22 @@
       "sinDatos": "Todavía no hay días en este mes."
     },
     "mas": "Nuevo hábito"
+  },
+  "compartir": {
+    "boton": "Compartir",
+    "rinde": "Rinde {n} porciones",
+    "porPorcion": "Por porción: {kcal} kcal · {p} g de proteína · {c} g de carbohidratos · {g} g de grasas",
+    "por100": "Cada 100 g: {kcal} kcal · {p} g de proteína · {c} g de carbohidratos · {g} g de grasas",
+    "ingredientes": "Ingredientes:",
+    "enlace": "Para sumarlo a Moss, toca:",
+    "titulo": "Te compartieron",
+    "agregar": "Agregar a lo mío",
+    "agregado": "Agregaste «{nombre}»",
+    "invalido": "Este enlace no se pudo leer: puede haber llegado cortado.",
+    "tipos": {
+      "receta": "Receta",
+      "comida": "Comida guardada",
+      "propio": "Alimento"
+    }
   }
 }

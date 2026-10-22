@@ -1063,5 +1063,22 @@
       "sinDatos": "No days in this month yet."
     },
     "mas": "New habit"
+  },
+  "compartir": {
+    "boton": "Share",
+    "rinde": "Makes {n} servings",
+    "porPorcion": "Per serving: {kcal} kcal · {p} g protein · {c} g carbs · {g} g fat",
+    "por100": "Per 100 g: {kcal} kcal · {p} g protein · {c} g carbs · {g} g fat",
+    "ingredientes": "Ingredients:",
+    "enlace": "To add it to Moss, tap:",
+    "titulo": "Shared with you",
+    "agregar": "Add to mine",
+    "agregado": "You added “{nombre}”",
+    "invalido": "This link couldn’t be read: it may have been cut off.",
+    "tipos": {
+      "receta": "Recipe",
+      "comida": "Saved meal",
+      "propio": "Food"
+    }
   }
 }

@@ -14,6 +14,9 @@ import { colores } from '@/tema';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// Un enlace (moss://compartido) abre encima de las secciones: al volver, están ahí.
+export const unstable_settings = { initialRouteName: 'index' };
+
 export default function Raiz() {
   // Las tipografías aprobadas en la galería: Cormorant Garamond y Jost, y Outfit para los números.
   const [cargadas, error] = useFonts({
