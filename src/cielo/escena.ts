@@ -71,6 +71,8 @@ export type Escena = {
   movimientoReducido: boolean;
   fondoListo: boolean;
   aparicion: number;
+  /** Con Ascent arriba, lo de hoy (la constelación, el universo y sus textos) se apaga: de 0 a 1. */
+  velado: number;
   /**
    * Para el shader: onda (x, y, radio, fuerza); fugaz (x, y de la cabeza y su dirección) y su
    * estela (recorrido, largo máximo, brillo de la cabeza, brillo de la estela), como en vivo.glsl.
@@ -126,6 +128,7 @@ export function crearEscena(d: EntradaDeEscena): Escena {
     movimientoReducido: d.movimientoReducido,
     fondoListo: false,
     aparicion: 0,
+    velado: 0,
     onda: [0, 0, 0, 0],
     fugazU: [0, 0, 1, 0],
     fugazEstela: [0, 0, 0, 0],

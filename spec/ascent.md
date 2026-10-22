@@ -104,7 +104,11 @@ Ascent (la recuperación) hacen la misma cuenta.
 1. **Recuperación**
    - Un puntaje de 0 a 100, con una fórmula escrita y a la vista:
      - **Sueño, 40:** 20 × lo dormido anoche contra lo que necesitás (hasta
-       1), más 20 × la calidad de la noche de Moss sobre 100.
+       1), más 20 × la calidad de la noche sobre 100. La calidad es la del
+       reloj, la que dijiste a la mañana (las cinco caras de Sueño, de 1 a 5
+       llevadas a 0, 25, 50, 75 y 100) o el promedio de las dos. Sin ninguna, la
+       duración vale los 40 (22/10/2026): antes, sin reloj, nunca se pasaba de
+       20.
      - **Carga, 40:** r es el peso movido de los 3 días anteriores sobre 3
        veces el promedio diario de las 4 semanas anteriores. Da 40 × (1,5 − r),
        entre 0 y 40, menos 5 por cada día seguido entrenando después del

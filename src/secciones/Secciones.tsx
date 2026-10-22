@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -171,7 +171,7 @@ export default function Secciones() {
               <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
                 {PESTANAS.map((n, i) =>
                   i === HABITOS ? (
-                    <BotonesDeHabitos key={n} ancho={ancho} arriba={insets.top} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
+                    <BotonesDeHabitos key={n} ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
                   ) : !armada(i) ? (
                     <View key={n} style={{ width: ancho }} pointerEvents="none" />
                   ) : n === 'comida' ? (
@@ -209,17 +209,19 @@ export default function Secciones() {
 }
 
 /** Arriba a la derecha de Hábitos, debajo de la luz de hoy: un hábito nuevo y «Tu mes». El cielo queda limpio. */
-function BotonesDeHabitos({ ancho, arriba, alNuevo, alMes }: { ancho: number; arriba: number; alNuevo: () => void; alMes: () => void }) {
+function BotonesDeHabitos({ ancho, arriba, subida, alNuevo, alMes }: { ancho: number; arriba: number; subida: SharedValue<number>; alNuevo: () => void; alMes: () => void }) {
+  // Con Ascent subiendo se apagan, como lo de hoy en el cielo.
+  const estilo = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - subida.get() * 2) }));
   return (
     <View style={{ width: ancho }} pointerEvents="box-none">
-      <View style={[estilos.botonesDeHabitos, { top: arriba + 76 }]}>
+      <Animated.View style={[estilos.botonesDeHabitos, { top: arriba + 76 }, estilo]}>
         <Pressable onPress={alMes} style={estilos.botonDeHabitos} accessibilityRole="button" accessibilityLabel={t('habitos.mes.abrir')} hitSlop={6}>
           <Icono nombre="calendar" tam={15} color="rgba(239, 230, 207, 0.75)" />
         </Pressable>
         <Pressable onPress={alNuevo} style={estilos.botonDeHabitos} accessibilityRole="button" accessibilityLabel={t('habitos.mas')} hitSlop={6}>
           <Icono nombre="plus" tam={16} color={colores.oroClaro} peso="semibold" />
         </Pressable>
-      </View>
+      </Animated.View>
     </View>
   );
 }

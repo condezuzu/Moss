@@ -5,6 +5,20 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D25 · Cómo se ven las kcal: luna, anillo, arco o barra
+
+La luna no te terminó de cerrar (22/10/2026). En la galería, sección 2, están
+las cuatro con los mismos datos, y cambian juntas Inicio, el día de Comida y la
+tira de la semana:
+- **Luna:** la de antes.
+- **Anillo:** una vuelta fina es la meta, y adentro cuánto llevás.
+- **Arco:** medio círculo, como el cielo sobre el horizonte; lo comido sube con
+  una estrella en la punta y lo que queda va adentro.
+- **Barra:** sin figura, una línea partida por comidas.
+
+Pasada la meta, cualquiera queda llena y en oro. ¿Cuál? Lo que elijas pasa
+también a la entrada.
+
 ### D16 · Las seis secciones, como las pediste (armadas el 22/10/2026)
 
 En la galería, sección 1. Abajo van Inicio, Comida y Progreso, el «+» y Sueño,
@@ -227,6 +241,15 @@ Están en la galería, sección 10, «Para decidir»:
   (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
 
 ## Resueltas
+
+### Sueño y Ascent (lo pediste el 22/10/2026)
+
+- **La deuda va segunda** en Sueño, después de la noche.
+- **La pregunta de la mañana:** cinco caras para decir cómo dormiste. Va a la
+  recuperación: sin reloj es la calidad de la noche y, con reloj, el promedio.
+  Ver [`sueno.md`](sueno.md).
+- **Ascent sobre el mismo cielo:** al subir, el cielo sube con el dedo, más
+  despacio, y lo de hoy se apaga. Sin caja, como «Tu universo».
 
 ### D10, D11, D13 y D24 (aceptadas el 22/10/2026)
 

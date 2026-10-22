@@ -52,6 +52,9 @@ import {
 } from './escena';
 import { Interfaz, type Aviso } from './Interfaz';
 import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad } from './mundo';
+
+/** Hasta dónde sube la cámara del cielo con Ascent arriba: menos que el dedo, porque está más lejos. */
+const CAMARA_DE_ASCENT = 0.75;
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
 import { useTextos } from './textosDelCielo';
@@ -305,10 +308,19 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     const dt = Math.min(0.05, (info.timeSincePreviousFrame ?? 16.7) / 1000);
     const hayFondo = fondo.value !== null;
     const corrida = paginaX ? paginaX.value : 0;
+    const ascent = subida ? subida.progreso.value : 0;
     escena.modify((e) => {
       'worklet';
       e.paginaX = corrida;
       if (camaraDeLaEntrada) e.cam.objetivo = camaraDeLaEntrada.value;
+      // Ascent sube sobre el mismo cielo: la cámara sube con el dedo y lo de hoy se apaga en la
+      // primera mitad del gesto. Cerrada, la cámara vuelve a ser del cielo.
+      if (ascent > 0 || e.velado > 0) {
+        e.cam.y = CAMARA_DE_ASCENT * ascent;
+        e.cam.objetivo = e.cam.y;
+        e.cam.v = 0;
+        e.velado = Math.min(1, ascent * 2);
+      }
       // El cielo aparece cuando hay textura. Si ya estaba (una escena rehecha), aparece enseguida.
       if (hayFondo && !e.fondoListo) {
         e.fondoListo = true;
@@ -464,6 +476,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   });
 
   const camaraCielo = useDerivedValue(() => [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.cielo * alto }]);
+  const opacidadDeHoy = useDerivedValue(() => (soloCielo ? 0 : 1 - escena.value.velado));
   const camaraLoma0 = useDerivedValue(() => [{ translateY: escena.value.cam.y * PARALAJE.lomas[0] * alto }]);
   const camaraLoma1 = useDerivedValue(() => [{ translateY: escena.value.cam.y * PARALAJE.lomas[1] * alto }]);
   const camaraLoma2 = useDerivedValue(() => [{ translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }]);
@@ -607,7 +620,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
                 </Shader>
               </Fill>
             )}
-            <Group transform={camaraCielo} opacity={soloCielo ? 0 : 1}>
+            <Group transform={camaraCielo} opacity={opacidadDeHoy}>
               <Path path={plano.universo.pendientes} style="stroke" strokeWidth={0.7} color={PERGAMINO} opacity={0.15} blendMode="plus">
                 <DashPathEffect intervals={[2.5, 3.5]} />
               </Path>
@@ -619,7 +632,9 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
               <Brillo camino={caminoLineas} ancho={1.7} color={ORO} opacidad={0.95} />
               <Path path={caminoArcos} style="stroke" strokeWidth={1.5} strokeCap="round" color={MUSGO_LUZ} opacity={0.95} blendMode="plus" />
             </Group>
-            <Atlas image={hoja} sprites={rectsCielo} transforms={formasCielo} colors={coloresCielo} colorBlendMode="modulate" blendMode="plus" />
+            <Group opacity={opacidadDeHoy}>
+              <Atlas image={hoja} sprites={rectsCielo} transforms={formasCielo} colors={coloresCielo} colorBlendMode="modulate" blendMode="plus" />
+            </Group>
             {musgo.lomas.map((l, k) => (
               <Group key={k} transform={camarasLomas[k]}>
                 <Path path={l.cuerpo}>

@@ -16,6 +16,18 @@ cual con cuatro semanas de mentira.
 
 ## Qué tiene la sección
 
+0. **La pregunta de la mañana** (lo pediste el 22/10/2026): arriba, cada día,
+   «¿Cómo dormiste anoche?» con cinco caras de línea, de «Muy mal» a «Muy bien».
+   - Un toque y listo; queda una línea con la respuesta y «Cambiar».
+   - «Ahora no» la esconde por hoy, sin recordatorios ni rachas. Al otro día
+     pregunta por la noche nueva.
+   - Es un dato de verdad: la calidad que uno siente es de lo más usado en los
+     estudios de sueño (los diarios de sueño, la pregunta de calidad del PSQI), y
+     sin reloj es la única calidad posible.
+   - Va a la recuperación (ver [`ascent.md`](ascent.md)): sin reloj, es la
+     calidad de la noche; con reloj, el promedio con la del reloj. En «La calidad»
+     aparece aparte («Cómo dijiste que dormiste»): no cambia el puntaje de la
+     noche, que sale de lo medido.
 1. **Las últimas dos semanas:** una barra por noche con lo dormido y la línea de
    lo que necesitás. Las que faltan van en gris. Se toca una para verla.
 2. **La noche:**
@@ -25,13 +37,15 @@ cual con cuatro semanas de mentira.
    - lo despierto y los despertares de 5 minutos o más;
    - el tiempo en cama, solo si alguna fuente lo escribió;
    - las siestas del día.
-3. **La calidad,** de 0 a 100, con sus tres partes y «Cómo se calcula».
-4. **El horario de las dos semanas:**
+3. **La deuda de sueño** de las dos semanas, con cuántas noches tiene. Va
+   segunda (lo pediste el 22/10/2026): solo necesita cuánto dormiste, así que es
+   lo que más gente puede tener bien.
+4. **La calidad,** de 0 a 100, con sus tres partes y «Cómo se calcula».
+5. **El horario de las dos semanas:**
    - cada noche como una barra de cuándo te dormiste a cuándo te despertaste;
    - el promedio de cada hora con su ±;
    - qué tan regular es;
    - cuánto más tarde dormís el fin de semana.
-5. **La deuda de sueño** de las dos semanas, con cuántas noches tiene.
 6. **De noche, según el reloj:**
    - la frecuencia cardíaca, la variabilidad y la respiración mientras dormías, contra lo tuyo;
    - la frecuencia en reposo, marcada «del día».

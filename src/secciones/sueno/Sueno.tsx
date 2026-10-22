@@ -1,7 +1,7 @@
 // Sueño, el de la galería (galeria/src/sueno.js; spec/sueno.md): lo que Salud trae de cada noche,
 // con las reglas de src/dominio/sueno.ts. Arriba, las dos últimas semanas para elegir una noche;
-// después, esa noche (cuánto dormiste, cuándo, las etapas como estimación, lo despierto), su calidad
-// con de qué sale, el horario y qué tan regular es, la deuda, lo que mide el reloj de noche y de
+// después, esa noche (cuánto dormiste, cuándo, las etapas como estimación, lo despierto), la deuda,
+// su calidad con de qué sale, el horario y qué tan regular es, lo que mide el reloj de noche y de
 // dónde sale cada dato. Lo que falta va en gris: nunca se inventa. Hasta conectar Salud, las noches
 // de ejemplo, con su aviso.
 
@@ -45,15 +45,14 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
         <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={setClave} />
         {noche ? (
-          <>
-            <LaNoche n={noche} hoy={e.hoy} ancho={interior} anteriores={anterioresA(noche.clave)} />
-            <LaCalidad n={noche} necesidad={s.necesidad} anteriores={anterioresA(noche.clave)} abierto={abierto === 'calidad'} alAbrir={() => setAbierto((a) => (a === 'calidad' ? null : 'calidad'))} />
-          </>
+          <LaNoche n={noche} hoy={e.hoy} ancho={interior} anteriores={anterioresA(noche.clave)} />
         ) : (
           <SinNoche clave={clave} hoy={e.hoy} cama={s.soloEnCama.get(clave)} />
         )}
-        <ElHorario noches={ultimasNoches(s.noches, clave, DIAS)} clave={clave} />
+        {/* La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien. */}
         <LaDeuda noches={ultimasNoches(s.noches, clave, DIAS)} necesidad={s.necesidad} />
+        {noche && <LaCalidad n={noche} necesidad={s.necesidad} anteriores={anterioresA(noche.clave)} abierto={abierto === 'calidad'} alAbrir={() => setAbierto((a) => (a === 'calidad' ? null : 'calidad'))} />}
+        <ElHorario noches={ultimasNoches(s.noches, clave, DIAS)} clave={clave} />
         {noche && <LoDelReloj n={noche} s={s} anteriores={anterioresA(noche.clave)} />}
         <LasFuentes n={noche} s={s} clave={clave} />
         <Text style={st.pie}>{t('sueno.noMedico')}</Text>

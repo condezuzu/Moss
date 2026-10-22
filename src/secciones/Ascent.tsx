@@ -7,13 +7,15 @@
 import * as Haptics from 'expo-haptics';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import Animated, { FadeInDown, FadeOut, useAnimatedScrollHandler, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { t } from '@/textos';
 import { MarcaDeAscent } from './MarcaDeAscent';
+
+const DEGRADE = 'linear-gradient(180deg, rgba(5, 6, 10, 0) 0%, rgba(5, 6, 10, 0.42) 22%, rgba(5, 6, 10, 0.6) 100%)';
 
 // Los colores de Ascent (movil/src/colores.ts).
 const C = {
@@ -43,7 +45,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
     return () => clearTimeout(espera);
   }, [aviso]);
 
-  const estiloVelo = useAnimatedStyle(() => ({ opacity: 0.6 * subida.get() }));
+  const estiloVelo = useAnimatedStyle(() => ({ opacity: 0.32 * subida.get() }));
   const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - subida.get()) * alto }] }));
   // Tirar para abajo desde arriba de todo la baja, como una hoja.
   const alDesplazar = useAnimatedScrollHandler({
@@ -60,7 +62,6 @@ export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
     <>
       <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
       <Animated.View style={[StyleSheet.absoluteFill, estilos.panel, estiloPanel]} pointerEvents={abierta ? 'auto' : 'none'} accessibilityViewIsModal={abierta}>
-        <View style={estilos.lineaDeArriba} />
         <Animated.ScrollView
           onScroll={alDesplazar}
           scrollEventThrottle={16}
@@ -166,8 +167,8 @@ function Carta({ titulo, children }: { titulo: string; children: ReactNode }) {
 
 const estilos = StyleSheet.create({
   velo: { backgroundColor: '#020308' },
-  panel: { backgroundColor: C.fondo, shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 30, shadowOffset: { width: 0, height: -12 } },
-  lineaDeArriba: { position: 'absolute', left: 0, right: 0, top: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(126, 140, 168, 0.6)', zIndex: 1 },
+  // Sin caja: el cielo sigue detrás (sube con el dedo, como a «Tu universo»), apenas oscurecido para leer.
+  panel: (Platform.OS === 'web' ? { backgroundImage: DEGRADE } : { experimental_backgroundImage: DEGRADE }) as ViewStyle,
   volver: { alignSelf: 'center', width: 64, height: 32, alignItems: 'center', justifyContent: 'center' },
   cabecera: { alignItems: 'center', marginTop: 10 },
   etiqueta: { fontFamily: 'Jost_400Regular', fontSize: 10.5, letterSpacing: 2.3, textTransform: 'uppercase', color: C.sub },

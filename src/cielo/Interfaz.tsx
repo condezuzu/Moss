@@ -70,7 +70,7 @@ export function Interfaz(p: Props) {
   // Todo lo de Hábitos se corre con su pestaña, como la constelación.
   const estiloCabecera = useAnimatedStyle(() => {
     const e = p.escena.value;
-    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: 1 - suave(0.15, 0.6, e.cam.y) };
+    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - e.velado) };
   });
   // Mientras la constelación se conecta y sube la aurora, las etiquetas se apagan un poco: el
   // momento es del cielo.
@@ -78,11 +78,11 @@ export function Interfaz(p: Props) {
     const e = p.escena.value;
     const dc = e.completo ? e.t - e.tCompleto : -1;
     const momento = e.completo ? suave(0.6, 1.4, dc) * (1 - suave(7.5, 9.0, dc)) : 0;
-    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) };
+    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) * (1 - e.velado) };
   });
-  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }, { translateY: p.escena.value.cam.y * PARALAJE.lomas[2] * alto }] }));
+  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }, { translateY: p.escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: 1 - p.escena.value.velado }));
   // El panel de prueba es de Hábitos: no se ve encima de las otras secciones.
-  const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }] }));
+  const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }], opacity: 1 - p.escena.value.velado }));
   // La flecha tenue de Ascent va con la frase y respira apenas; mientras Ascent sube, se apaga.
   const reducido = useReducedMotion();
   const respira = useSharedValue(0);
@@ -99,7 +99,7 @@ export function Interfaz(p: Props) {
   });
   const estiloUniverso = useAnimatedStyle(() => {
     const e = p.escena.value;
-    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: suave(0.5, 1.1, e.cam.y) };
+    return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: suave(0.5, 1.1, e.cam.y) * (1 - e.velado) };
   });
 
   useEffect(() => {
