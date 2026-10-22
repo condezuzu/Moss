@@ -170,8 +170,10 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/decisiones.md](spec/decisiones.md) | decisiones: primero las pendientes |
 | [spec/nutricion.md](spec/nutricion.md) | la comida, el centro de la app: la base de datos y los nombres, la búsqueda, los flujos de registro con sus toques, los escáneres, las metas |
 | [spec/progreso.md](spec/progreso.md) | Progreso: el peso, las medidas y la grasa corporal con cinta, el progreso al objetivo, el balance y la estrategia con el día del control |
-| [spec/sueno.md](spec/sueno.md) | Sueño: lo que trae Salud, las reglas para que sea confiable, la calidad, la deuda, la regularidad y lo del reloj |
+| [spec/sueno.md](spec/sueno.md) | Sueño: lo que trae Salud, las reglas para que sea confiable, la calidad, la deuda, la regularidad, lo del reloj y cómo se estima la noche sin reloj |
+| [spec/aparatos.md](spec/aparatos.md) | relojes y anillos: qué escribe cada marca en Salud, el orden de las fuentes, el mismo sueño desde dos fuentes y las conexiones directas |
 | [spec/ascent.md](spec/ascent.md) | la conexión con Ascent, los cambios de su repo y lo que hace el usuario |
+| [spec/rendimiento.md](spec/rendimiento.md) | con Ascent: el rendimiento esperado, la fatiga por músculo y los días para intentar marca, con sus estudios |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
 

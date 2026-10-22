@@ -5,6 +5,23 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D26 · El Tiempo de uso para estimar la noche sin reloj
+
+Sin reloj, Moss estima la noche con los pasos, el movimiento y cuándo usaste
+Moss (ver «Sin reloj» en [`sueno.md`](sueno.md)). Los errores grandes vienen
+casi siempre de tres cosas: usar el teléfono de noche, dejarlo mucho antes de
+dormirte y agarrarlo mucho después de despertarte (el 74 % de los errores de más
+de 2 horas, según Sahha).
+
+Hay un permiso de Apple, **Family Controls**, que deja saber si se usó el
+teléfono de noche, en bloques de 15 minutos y sin nombres de apps. Pide:
+- un formulario en Apple Developer, que tarda de días a semanas;
+- que la persona lo acepte con Face ID.
+
+**Mi recomendación:** pedirlo después de la v1, cuando haya datos de la prueba
+contra un reloj, y solo si la confianza baja todavía es frecuente. ¿Lo pedimos
+ya, después o nunca?
+
 ### D25 · Cómo se ven las kcal: luna, anillo, arco o barra
 
 La luna no te terminó de cerrar (22/10/2026). En la galería, sección 2, están
@@ -349,6 +366,49 @@ hacen falta las cuentas anónimas.
 
 Desde el 22/10/2026 a la tarde trabajo solo: lo que decidí va acá, con el
 porqué, para que lo revises al volver.
+
+### El sueño sin reloj, los aparatos y el rendimiento (22/10/2026, a la noche)
+
+- **El método sin reloj, sin permisos especiales.** Moss arma la noche al
+  abrirse a la mañana con lo que el teléfono ya guardó:
+  - los pasos;
+  - el movimiento;
+  - cuándo usaste Moss;
+  - y, si querés afinar, un Atajo.
+
+  Nada corre de noche. Ver «Sin reloj» en [`sueno.md`](sueno.md).
+- **Ni micrófono ni el teléfono en el colchón:**
+  - el micrófono (Sleep Cycle) se equivoca en 104 minutos contra
+    polisomnografía y gasta un 30 % de batería por noche;
+  - el colchón no se correlaciona con la polisomnografía, y la app tendría que
+    estar viva toda la noche, que Apple no deja.
+- **La estimación nunca se escribe en Salud** (guía 5.1.3(ii): nada inexacto en
+  Salud), y **no se publica ningún porcentaje de precisión** hasta medirlo
+  (guía 1.4.1).
+- **La hora se pregunta solo si Moss no está segura** (confianza media o baja),
+  junto a las caras, y una mañana por semana sin proponer nada, para medir
+  cuánto se acepta lo propuesto sin mirarlo.
+- **El orden de las fuentes va por cómo distingue el sueño de la vigilia**, no
+  por si tiene etapas: WHOOP gana a Garmin, que cuenta de más. Cambia la regla 1
+  de [`sueno.md`](sueno.md); el orden está en [`aparatos.md`](aparatos.md).
+- **Lo que confirmás o corregís en Moss gana a lo anotado a mano en Salud:** es
+  de esa noche y lo hiciste en Moss.
+- **La variabilidad del Apple Watch con una lectura alcanza,** rotulada: el reloj
+  mide cada ~4 horas y casi nunca llega a dos. Si la noche es de otra fuente que
+  no escribe variabilidad, se usa la del reloj solo si registró ese mismo sueño.
+- **En la v1, solo Salud.** Las conexiones directas, después: WHOOP primero,
+  después Garmin; Oura solo con un sí por escrito sobre su acuerdo (prohíbe
+  productos que compitan con Oura); nunca la API de Fitbit, que se apaga, ni la
+  de Google, que pide una evaluación de seguridad anual.
+- **El rendimiento va aparte de la recuperación, debajo,** con dos números (la
+  fuerza máxima y las repeticiones) en % respecto de lo tuyo. La recuperación no
+  cambia: es un número que comparten las dos apps.
+- **Ejercicios y músculos en el dominio de Moss** (`src/dominio/musculos.ts`):
+  Ascent le da un solo grupo a cada ejercicio, y la fatiga necesita el músculo
+  principal y los que ayudan.
+- **La especificación, en dos archivos nuevos:** [`aparatos.md`](aparatos.md) y
+  [`rendimiento.md`](rendimiento.md). El plan decía que la fórmula iba en
+  [`ascent.md`](ascent.md), que ya era muy largo; desde ahí se enlaza.
 
 ### Lo que faltaba para la v1, en la app (22/10/2026, a la noche)
 

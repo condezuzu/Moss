@@ -378,6 +378,9 @@ Desde el cambio 9 (22/10/2026) la pantalla de comida se repartió en secciones
     con una confirmación de un toque a la mañana («¿Dormiste de 00:30 a
     08:10?»), y probarla contra un reloj. Todo en [`sueno.md`](sueno.md), con
     fuentes.
+    - **Investigado y elegido (22/10/2026):** sin permisos especiales, Moss arma
+      la noche cada mañana con los pasos, el movimiento y cuándo usaste Moss, y
+      pregunta solo si no está segura. Ver «Sin reloj» en [`sueno.md`](sueno.md).
   - **Las noches propias de Moss** (la cara, la hora confirmada o corregida y la
     estimación del iPhone), guardadas y sincronizadas: con el teléfono no se
     pierden al cambiarlo.
@@ -391,6 +394,9 @@ Desde el cambio 9 (22/10/2026) la pantalla de comida se repartió en secciones
     - Una sola fuente por noche, la más precisa, sin contar dos veces.
     - En Sueño, la fuente y la precisión de cada dato; en Perfil, «Aparatos», con
       lo que mejora cada uno.
+    - **Investigado (22/10/2026):** en la v1, todo desde Salud y ninguna conexión
+      directa; el orden de las fuentes, cómo se detecta el mismo sueño y los
+      textos de cada marca están en [`aparatos.md`](aparatos.md).
 
 **Sale:** hábitos que se cumplen solos, probados con los datos reales de tu
 teléfono.
@@ -493,8 +499,8 @@ de Ascent:
 
 Reglas: es una predicción, nunca una garantía; empieza con reglas generales
 basadas en estudios y se vuelve personal con las semanas, mostrando cuánta
-historia tiene y qué tan segura es. La fórmula y sus fuentes van en
-[`ascent.md`](ascent.md). Se ve en Ascent antes de entrenar, junto a la
+historia tiene y qué tan segura es. La fórmula y sus fuentes están en
+[`rendimiento.md`](rendimiento.md) (22/10/2026). Se ve en Ascent antes de entrenar, junto a la
 Recuperación, y en Moss en Sueño y en la sección de Ascent; sin vincular,
 bloqueado con el botón para vincular. Las cuentas van en el dominio, con tests, y
 la galería las muestra; los datos llegan con la conexión con Ascent.
@@ -518,4 +524,6 @@ la galería las muestra; los datos llegan con la conexión con Ascent.
     - app: Sign in with Apple, Stats, Ajustes, recuperación, estancamiento, resumen anual y enlaces;
     - infraestructura: SMTP, claves y plan.
 - **Amigos y todo lo social**, con la lista de amigos de Ascent. Compartir pasa a mandarse también a un amigo, no solo con un enlace.
-- **La estimación del sueño sin reloj.**
+- **Las conexiones directas con los aparatos** ([`aparatos.md`](aparatos.md)):
+  primero WHOOP, después Garmin; Oura, solo con su sí por escrito.
+- **El Tiempo de uso para estimar la noche** (Family Controls, D26).

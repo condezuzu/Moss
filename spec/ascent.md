@@ -47,8 +47,9 @@ que cuidar».
     llama *manual identity linking* (`linkIdentity`), y va en Ajustes › Cuenta.
   - Fusionar dos cuentas que ya tienen datos no es automático: es un caso de
     soporte.
-  - Para que no pase, la pantalla de cuenta de la entrada dice «¿Ya usas Ascent?
-    Entra con la misma cuenta».
+  - Desde el 22/10/2026, la entrada de Moss no nombra a Ascent (Moss es Moss),
+    así que dos cuentas es más probable. Vincular tiene que andar igual y rápido
+    (ver «Vincular en menos de 10 segundos»).
 - **Para más adelante:** «Continuar como… (tu cuenta de Ascent)» en un toque.
   - Usa un grupo de llavero compartido entre las dos apps (`keychain-access-groups`,
     mismo equipo) y una función que emite una sesión nueva para Moss
@@ -121,6 +122,10 @@ Ascent (la recuperación) hacen la misma cuenta.
      Hábitos) y arriba en Sueño.
    - Es orientativo y lo dice: Apple pide mostrar el método detrás de cualquier
      número de salud (regla 1.4.1).
+   - **Debajo, el rendimiento esperado de hoy, los músculos y la marca posible**
+     (lo pediste el 22/10/2026). Es otra cuenta, en % respecto de lo tuyo y por
+     ejercicio: la fórmula, sus estudios y lo que se podría ajustar en la recuperación
+     están en [`rendimiento.md`](rendimiento.md).
 2. **Por qué no subís**
    - Ascent ya detecta el estancamiento (`detectar()` en
      `nucleo/estancamiento.ts`).
@@ -218,17 +223,20 @@ es de las dos apps. En la galería, sección 7.
   - Arriba, el planeta de Ascent con su órbita abierta, como en su ícono, y la
     luna de Moss: sin vincular queda afuera de la órbita, y al vincular entra.
 - **Sin vincular:**
-  - «Vincular con Ascent», «¿No tienes Ascent?» (la App Store) y que es la misma
-    cuenta.
-  - Después, «Solo con las dos» (recuperación, por qué no subís y tu año) y
-    «Andan solas, mejor conectadas» (las otras seis).
+  - Arriba, «Si usas Ascent», «Vincular con Ascent» y «¿No tienes Ascent?» (la
+    App Store). Vincular es dar permiso, y lo dice.
+  - Después, «Solo con las dos»: la recuperación con el rendimiento y los
+    músculos, por qué no subís y tu año.
   - Cada una muestra vacío lo que va a mostrar, con un candado chico.
+  - Lo que anda solo y mejora con las dos apps está al final de Perfil, en
+    «Información adicional» (lo pediste el 22/10/2026).
 - **Vinculada:**
   - la sesión de hoy en Ascent y lo que le suma a la meta de la comida;
   - la recuperación, con sus tres partes y cómo se calcula;
+  - debajo, el rendimiento esperado, los músculos y, si da, la marca posible
+    ([`rendimiento.md`](rendimiento.md));
   - por qué no subís, con la tabla y la oración;
-  - tu año;
-  - las seis que andan solas, con lo de hoy.
+  - tu año.
 - **La recuperación también vive en Sueño**, arriba, con el vínculo: cruza justo
   el sueño con el entrenamiento.
 
@@ -321,20 +329,27 @@ Necesita una build nativa nueva: va en una rama, como siempre que cambia
 11. **Esquemas y enlaces:**
     - `LSApplicationQueriesSchemes: ["moss"]` en `app.json`.
     - La ruta `ascent://vincular`.
-12. **Texto de borrar la cuenta**: decir que es la misma cuenta que Moss.
+12. **Texto de borrar la cuenta:** que avise que la cuenta se borra en
+    cualquier app donde se entre con ella, como en Moss.
 13. **El peso movido, con las repeticiones** (pedido el 22/10/2026): hoy
     `kilosDelBloque` (`nucleo/volumen.ts`) suma el peso de cada serie, sin las
     repeticiones. Debería contar peso × repeticiones cuando las repeticiones
     están anotadas (migración 94), y el peso solo cuando no. Mientras tanto, Moss
     compara cada sesión contra el promedio de las del mismo usuario, así que la
     forma de contar no cambia el resultado.
+14. **El rendimiento antes de entrenar** (pedido el 22/10/2026), junto a la
+    recuperación: el rendimiento esperado, los músculos de lo que vas a entrenar
+    y, si da, «Buen día para intentar marca» ([`rendimiento.md`](rendimiento.md)).
+15. **«Lo intenté y no salió»** junto a «¿Lo guardo como marca?»: sin los
+    intentos fallidos, Moss solo aprende de los días buenos.
+16. **Una marca opcional de «serie al fallo»**, para la fatiga de cada músculo.
 
 ### Infraestructura (las hacés vos en el panel)
 
-14. **Correo:** SMTP propio (Resend), el correo de contraseña con el nombre de
+17. **Correo:** SMTP propio (Resend), el correo de contraseña con el nombre de
     las dos apps y `moss://**` en las redirecciones.
-15. **Claves:** pasar a las claves nuevas de Supabase, que ya estaba pendiente.
-16. **Plan:** pasar a Pro para tener copias diarias. Lo recomiendo.
+18. **Claves:** pasar a las claves nuevas de Supabase, que ya estaba pendiente.
+19. **Plan:** pasar a Pro para tener copias diarias. Lo recomiendo.
 
 ## Lo que tenés que hacer vos
 
@@ -346,7 +361,9 @@ cosa va cuando llegue su etapa del [plan](plan.md).
 1. SQL Editor: correr, en orden, cada uno entero y una sola vez:
    - `supabase/moss/0001_esquema.sql`;
    - `supabase/moss/0002_comida.sql` (lo que se come, desde el 22/10/2026);
-   - `supabase/moss/0003_progreso.sql` (la estrategia y las medidas del cuerpo, desde el 22/10/2026).
+   - `supabase/moss/0003_progreso.sql` (la estrategia y las medidas del cuerpo, desde el 22/10/2026);
+   - `supabase/moss/0004_medir.sql` (cómo se mide lo comido, el catálogo en el servidor y la semana repartida);
+   - `supabase/moss/0005_noches.sql` (las noches propias: la cara y la hora confirmada o corregida).
    - Ya están escritos y probados con `npm run supabase:verificar`.
    - Solo crean cosas en el esquema `moss`: no tocan nada de Ascent.
    - Conviene correrlos cuando estén las pantallas de la cuenta. Así, si cambia
