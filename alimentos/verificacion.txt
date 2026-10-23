@@ -1,0 +1,1651 @@
+// La verificación de los curados contra una segunda fuente oficial (USDA es la primera). La arma
+// `npm run alimentos:comparar` (herramientas/comparar-fuentes.mjs): no se edita a mano. Los pares y las
+// revisiones a mano van en herramientas/fuentes/pares.txt; las fuentes y las reglas, en spec/fuentes.md.
+// Cada línea: nombre en español | fuente:código y descripción en la segunda fuente | sus kcal, proteína,
+// carbohidratos y grasas por 100 g (los carbohidratos, totales: con la fibra, como USDA) | la diferencia
+// más grande con los nuestros, en % del nuestro, y en qué | estado | fecha.
+// Estado: «ok» si nada se aleja más de un 10 % (o de 2 g si son menos de 20 g, o de 10 kcal si son menos
+// de 100); «revisado: motivo» si se aleja pero la diferencia es real; «revisar»; o «sin par».
+Bloody Mary | sin par | - | - | sin par | 2026-10-22
+Brandy | ciqual:1023 Eau de vie de vin type armagnac ou cognac | 222 0 0.8 0 | 4 % kcal | ok | 2026-10-23
+Cerveza | taco:474 Cerveja, pilsen | 41 0.6 3.3 0 | 2 % kcal | ok | 2026-10-23
+Cerveza artesanal | ciqual:5002 Bière forte (>8° alcool) | 63 0.5 4.5 0 | 21 % C | revisado: otra cerveza, con más azúcar sin fermentar (21 % C) | 2026-10-23
+Cerveza light | sin par | - | - | sin par | 2026-10-23
+Cerveza sin alcohol | ciqual:5030 Bière sans alcool (<1,2° alcool) et sans sucres ajoutés, aromatisée ou non | 29 0.2 5 0.1 | 15 % C | revisado: otra marca, con menos azúcar (15 % C) | 2026-10-23
+Clericó | sin par | - | - | sin par | 2026-10-23
+Cuba libre | sin par | - | - | sin par | 2026-10-23
+Daiquiri | sin par | - | - | sin par | 2026-10-22
+Destilado | ciqual:1008 Vodka | 250 0 0 0 | 8 % kcal | ok | 2026-10-23
+Destornillador | sin par | - | - | sin par | 2026-10-22
+Gin | sin par | - | - | sin par | 2026-10-22
+Gin tonic | sin par | - | - | sin par | 2026-10-22
+Grappamiel | sin par | - | - | sin par | 2026-10-22
+Hard seltzer | sin par | - | - | sin par | 2026-10-22
+Jerez seco | sin par | - | - | sin par | 2026-10-22
+Licor | ciqual:1003 Liqueur | 225 0.1 25.5 0.2 | 23 % C | revisado: los licores varían mucho en azúcar y alcohol (23 % C) | 2026-10-23
+Licor de café | sin par | - | - | sin par | 2026-10-23
+Licor de crema | sin par | - | - | sin par | 2026-10-23
+Margarita | sin par | - | - | sin par | 2026-10-22
+Martini | sin par | - | - | sin par | 2026-10-22
+Medio y medio | ciqual:5201 Vin blanc mousseux | 72 0.1 1.9 0 | 6 % kcal | ok | 2026-10-22
+Michelada | sin par | - | - | sin par | 2026-10-22
+Mimosa | sin par | - | - | sin par | 2026-10-22
+Mojito | sin par | - | - | sin par | 2026-10-22
+Piña colada | sin par | - | - | sin par | 2026-10-22
+Ponche de huevo | sin par | - | - | sin par | 2026-10-22
+Ron | ciqual:1004 Rhum | 234 0 0 0 | 1 % kcal | ok | 2026-10-22
+Sangría | ciqual:1017 Sangria, faite maison | 89 0 10.3 0.1 | 15 % C | revisado: otra receta casera, con más azúcar (15 % C) | 2026-10-23
+Sangría blanca | ciqual:1017 Sangria, faite maison | 89 0 10.3 0.1 | 16 % C | revisado: otra receta casera, con más azúcar (16 % C) | 2026-10-23
+Sidra | ciqual:5003 Cidre (aliment moyen) | 37 0.1 3 0.1 | 20 % kcal | revisado: la sidra francesa tiene menos alcohol y azúcar (20 % kcal) | 2026-10-23
+Tequila | sin par | - | - | sin par | 2026-10-22
+Tequila sunrise | sin par | - | - | sin par | 2026-10-22
+Vino blanco | ciqual:5215 Vin blanc sec | 55 0.3 0 0 | 27 % kcal | revisado: el blanco seco francés tiene menos alcohol y nada de azúcar (27 % kcal) | 2026-10-23
+Vino con soda | sin par | - | - | sin par | 2026-10-23
+Vino dulce | ciqual:1006 Vin doux | 148 0.2 13.7 0 | 8 % kcal | ok | 2026-10-22
+Vino espumoso | ciqual:5201 Vin blanc mousseux | 72 0.1 1.9 0 | 3 % kcal | ok | 2026-10-23
+Vino rosado | ciqual:5216 Vin rosé | 69 0.2 2.6 0 | 14 % kcal | revisado: otra graduación y menos azúcar (14 % kcal) | 2026-10-23
+Vino tinto | ciqual:5214 Vin rouge | 76 0.2 0.4 0.3 | 11 % C | revisado: el de USDA tiene más azúcar residual (11 % C) | 2026-10-23
+Vodka | ciqual:1008 Vodka | 250 0 0 0 | 8 % kcal | ok | 2026-10-22
+Whisky | ciqual:1005 Whisky | 252 0 0.1 0 | 1 % kcal | ok | 2026-10-23
+Whisky con soda | sin par | - | - | sin par | 2026-10-22
+Alitas de pollo | cofid:18-339 Chicken, wing quarter, roasted, meat and skin | 226 24.8 0 14.1 | 13 % G | revisado: corte: el cuarto de ala de CoFID incluye parte de la pechuga (13 % G) | 2026-10-23
+Alitas de pollo crudas | taco:391 Frango, asa, com pele, crua | 213 18.1 0 15.1 | 12 % kcal | revisado: más piel y grasa en el ala brasileña (12 % kcal) | 2026-10-23
+Corazones de pollo crudos | taco:394 Frango, coração, cru | 222 12.6 0 18.6 | 46 % G | revisado: TACO deja la grasa que rodea el corazón (46 % G) | 2026-10-23
+Corazones de pollo hervidos | taco:395 Frango, coração, grelhado | 207 22.4 0.6 12.1 | 21 % G | revisado: TACO lo trae a la plancha y con la grasa que lo rodea (21 % G) | 2026-10-23
+Gallina cruda | taco:402 Frango, inteiro, com pele, cru | 226 16.4 0 17.3 | 15 % G | revisado: la gallina es un ave adulta, con más grasa que el pollo (15 % G) | 2026-10-23
+Gallina hervida | taco:392 Frango, caipira, inteiro, com pele, cozido | 243 23.9 0 15.6 | 16 % G | revisado: la gallina adulta tiene más grasa que el pollo de campo (16 % G) | 2026-10-23
+Hígado de pollo | ciqual:40109 Foie, volaille, cuit | 164 25.8 0.6 6.4 | 5 % kcal | ok | 2026-10-23
+Hígado de pollo crudo | taco:400 Frango, fígado, cru | 106 17.6 0 3.5 | 11 % kcal | revisado: variación natural de la grasa (11 % kcal) | 2026-10-23
+Medallón de pollo empanado | cofid:18-502 Burger, chicken/turkey, coated, retail, grilled | 266 14.2 17.9 15.5 | 25 % C | revisado: el británico lleva más empanado (25 % C) | 2026-10-23
+Medallón de pollo empanado crudo | ciqual:36027 Nuggets ou croquette panée de poulet, préemballé | 250 15.6 22.1 11.6 | 43 % C | revisado: formulación distinta: el francés lleva más rebozado y menos grasa (43 % C) | 2026-10-23
+Menudencias de pollo crudas | cofid:18-393 Giblets, chicken, raw | 142 17.1 0 8.2 | 19 % G | revisado: otra mezcla de vísceras, con más grasa (19 % G) | 2026-10-23
+Menudencias de pollo hervidas | cofid:18-394 Giblets, chicken, boiled | 156 22.9 0 7.1 | 16 % P | revisado: otra mezcla de vísceras y otra pérdida de agua (16 % P) | 2026-10-23
+Milanesa de pollo | taco:401 Frango, filé, à milanesa | 221 28.5 7.5 7.8 | 16 % P | revisar | 2026-10-23
+Mollejas de pollo | sin par | - | - | sin par | 2026-10-23
+Mollejas de pollo crudas | ciqual:40700 Gésier, poulet, cru | 99 16.8 0 3.5 | 7 % G | ok | 2026-10-22
+Muslo de pollo | taco:413 Frango, sobrecoxa, sem pele, assada | 233 29.2 0 12 | 31 % kcal | revisado: el de TACO está más asado (menos agua) y con más grasa (31 % kcal) | 2026-10-23
+Muslo de pollo con piel | taco:411 Frango, sobrecoxa, com pele, assada | 260 28.7 0 15.2 | 24 % P | revisado: el de TACO está más asado: menos agua (24 % P) | 2026-10-23
+Muslo de pollo con piel crudo | taco:412 Frango, sobrecoxa, com pele, crua | 255 15.5 0 20.9 | 21 % G | revisado: más piel y grasa en el pollo brasileño (21 % G) | 2026-10-23
+Muslo de pollo crudo | taco:414 Frango, sobrecoxa, sem pele, crua | 162 17.6 0 9.6 | 34 % kcal | revisado: TACO deja la grasa bajo la piel (34 % kcal) | 2026-10-23
+Nuggets de pollo | ciqual:36027 Nuggets ou croquette panée de poulet, préemballé | 250 15.6 22.1 11.6 | 43 % G | revisado: formulación distinta: el de USDA es frito; el francés, para calentar (43 % G) | 2026-10-23
+Pata de pollo | cofid:18-334 Chicken, drumsticks, roasted, meat only | 152 26.6 0 5.1 | 10 % P | ok | 2026-10-22
+Pata de pollo cruda | taco:399 Frango, coxa, sem pele, crua | 120 17.8 0 4.9 | 8 % P | ok | 2026-10-22
+Pata y muslo de pollo al horno | ciqual:36004 Poulet, cuisse, viande et peau rôtie/cuite au four | 205 25.9 0 11.3 | 12 % G | revisado: variación natural de la piel y la grasa (12 % G) | 2026-10-23
+Pata y muslo de pollo crudo | ciqual:36002 Poulet, cuisse, viande et peau crue | 192 17.3 0 13.5 | 12 % G | revisado: variación natural de la piel y la grasa (12 % G) | 2026-10-23
+Pato | cofid:18-372 Duck, roasted, meat only | 195 25.3 0 10.4 | 8 % P | ok | 2026-10-22
+Pato crudo | cofid:18-489 Duck, meat only, raw | 137 19.7 0 6.5 | 7 % P | ok | 2026-10-22
+Pavo al horno | cofid:18-367 Turkey, whole, roasted, meat and skin | 190 30.9 0 7.4 | 8 % P | ok | 2026-10-22
+Pavo entero crudo | cofid:18-352 Turkey, whole, raw | 133 21.6 0 5.2 | 8 % kcal | ok | 2026-10-22
+Pavo molido | cofid:18-354 Turkey, mince, stewed | 176 28.6 0 6.8 | 24 % G | revisado: otro porcentaje de grasa en la carne picada (24 % G) | 2026-10-23
+Pavo molido crudo | sin par | - | - | sin par | 2026-10-23
+Pechuga de pavo | cofid:18-359 Turkey, light meat, roasted | 153 33.7 0 2 | 17 % P | revisado: la de CoFID está más asada: menos agua (17 % P) | 2026-10-23
+Pechuga de pavo cruda | cofid:18-349 Turkey, light meat, raw | 105 24.4 0 0.8 | 8 % kcal | ok | 2026-10-23
+Pechuga de pollo a la plancha | taco:410 Frango, peito, sem pele, grelhado | 159 32 0 2.5 | 15 % G | revisado: el de USDA suma aceite al cocinar (15 % G) | 2026-10-23
+Pechuga de pollo al horno | taco:410 Frango, peito, sem pele, grelhado | 159 32 0 2.5 | 6 % P | ok | 2026-10-22
+Pechuga de pollo con piel al horno | taco:406 Frango, peito, com pele, assado | 212 33.4 0 7.6 | 12 % P | revisado: la de TACO está más asada: menos agua (12 % P) | 2026-10-23
+Pechuga de pollo con piel cruda | taco:407 Frango, peito, com pele, cru | 149 20.8 0 6.7 | 13 % kcal | revisado: menos piel en la pechuga de TACO (13 % kcal) | 2026-10-23
+Pechuga de pollo cruda | taco:409 Frango, peito, sem pele, cru | 119 21.5 0 3 | 4 % P | ok | 2026-10-22
+Pechuga de pollo hervida | taco:408 Frango, peito, sem pele, cozido | 163 31.5 0 3.2 | 4 % kcal | ok | 2026-10-22
+Pollo asado | ciqual:36005 Poulet, viande et peau rôties/cuites au four | 204 28.9 0.1 9.9 | 15 % P | revisado: el de rotisería de USDA retiene más agua (15 % P) | 2026-10-23
+Pollo crudo | taco:402 Frango, inteiro, com pele, cru | 226 16.4 0 17.3 | 11 % P | revisado: más piel y grasa en el pollo entero de TACO (11 % P) | 2026-10-23
+Pollo frito | sin par | - | - | sin par | 2026-10-23
+Pollo molido | sin par | - | - | sin par | 2026-10-23
+Pollo molido crudo | sin par | - | - | sin par | 2026-10-23
+Agua | ciqual:18044 Eau minérale (aliment moyen) | 0 0 0 0 | 0 % kcal | ok | 2026-10-22
+Agua con gas | ciqual:18046 Eau minérale, embouteilée, gazeuse (aliment moyen) | 0 0 0 0 | 0 % kcal | ok | 2026-10-22
+Agua de coco | taco:478 Coco, água de | 22 0 5.3 0 | 5 % C | ok | 2026-10-22
+Agua saborizada | sin par | - | - | sin par | 2026-10-23
+Agua tónica | taco:479 Refrigerante, tipo água tônica | 31 0 8 0 | 4 % C | ok | 2026-10-23
+Atole | sin par | - | - | sin par | 2026-10-22
+Batido de banana con leche | cofid:12-591 Milk shake, powder, made up with whole milk | 86 3.3 10.6 3.5 | 12 % C | revisado: otra receta: el británico es de polvo saborizado, sin fruta (12 % C) | 2026-10-23
+Batido de durazno con leche | cofid:12-591 Milk shake, powder, made up with whole milk | 86 3.3 10.6 3.5 | 25 % kcal | revisado: otra receta: el británico es de polvo saborizado, sin fruta (25 % kcal) | 2026-10-23
+Batido de fresa con leche | cofid:12-591 Milk shake, powder, made up with whole milk | 86 3.3 10.6 3.5 | 23 % kcal | revisado: otra receta: el británico es de polvo saborizado, sin fruta (23 % kcal) | 2026-10-23
+Bebida deportiva | taco:470 Bebida isotônica, sabores variados | 26 0 6.4 0 | 0 % kcal | ok | 2026-10-23
+Bebida deportiva sin azúcar | sin par | - | - | sin par | 2026-10-23
+Bebida energética | ciqual:18352 Boisson énergisante, sucrée | 41 0.1 11.8 0 | 8 % C | ok | 2026-10-22
+Bebida energética sin azúcar | ciqual:18353 Boisson énergisante, sans sucres ajoutés, avec édulcorants, enrichie en vitamines | 9 0.1 2.2 0 | 7 % C | ok | 2026-10-23
+Café | taco:471 Café, infusão 10% | 9 0.7 1.5 0.1 | 8 % kcal | ok | 2026-10-23
+Café con leche | ciqual:18151 Café au lait, café crème ou cappuccino, instantané ou non, sans sucres ajoutés, prêt à boire | 22 1.4 2.1 0.8 | 19 % kcal | revisado: el de USDA lleva más leche y azúcar (19 % kcal) | 2026-10-23
+Café descafeinado | taco:471 Café, infusão 10% | 9 0.7 1.5 0.1 | 9 % kcal | ok | 2026-10-23
+Café espresso | ciqual:18071 Café expresso, non instantané, sans sucres ajoutés, prêt à boire | 7 0.3 1.5 0.2 | 2 % kcal | ok | 2026-10-22
+Café helado | taco:471 Café, infusão 10% | 9 0.7 1.5 0.1 | 8 % kcal | ok | 2026-10-23
+Café instantáneo | cofid:17-159 Coffee, instant, made up with water | 0 0 0 0 | 3 % kcal | ok | 2026-10-22
+Café latte | cofid:17-632 Coffee, cappuccino, latte | 27 2 3 0.8 | 16 % kcal | revisado: el de USDA lleva leche entera (16 % kcal) | 2026-10-23
+Café moca | sin par | - | - | sin par | 2026-10-23
+Capuchino | cofid:17-632 Coffee, cappuccino, latte | 27 2 3 0.8 | 1 % P | ok | 2026-10-22
+Chocolate en polvo | ciqual:18101 Poudre cacaotée ou au chocolat pour boisson, sucrée | 379 6.7 85.7 3.3 | 5 % kcal | ok | 2026-10-23
+Cortado | ciqual:18151 Café au lait, café crème ou cappuccino, instantané ou non, sans sucres ajoutés, prêt à boire | 22 1.4 2.1 0.8 | 3 % C | ok | 2026-10-23
+Ginger ale | ciqual:18026 Boisson gazeuse aromatisée, sans fruit, sucrée | 35 0 8.7 0 | 1 % kcal | ok | 2026-10-23
+Horchata | sin par | - | - | sin par | 2026-10-22
+Jugo de arándano | sin par | - | - | sin par | 2026-10-22
+Jugo de frutas mixtas | ciqual:2072 Jus de fruits, pur jus (aliment moyen) | 47 0.5 11.1 0.1 | 7 % C | ok | 2026-10-23
+Jugo de granada | ciqual:2039 Jus de grenade, frais | 47 0.2 14.2 0 | 7 % kcal | ok | 2026-10-22
+Jugo de mandarina | taco:252 Tangerina, Poncã, suco | 36 0.5 8.8 0 | 7 % kcal | ok | 2026-10-22
+Jugo de manzana | ciqual:2074 Jus de pomme, pur jus | 49 0.2 10.6 0.1 | 4 % C | ok | 2026-10-22
+Jugo de maracuyá | cofid:14-285 Passion fruit juice | 47 0.8 10.2 0.1 | 17 % C | revisado: método: USDA cuenta los ácidos de la fruta como carbohidratos (17 % C) | 2026-10-23
+Jugo de mora | sin par | - | - | sin par | 2026-10-22
+Jugo de naranja | cofid:14-369 Orange juice, freshly squeezed | 33 0.6 7.8 0 | 14 % kcal | revisado: variedad y método: USDA cuenta los ácidos como carbohidratos (14 % kcal) | 2026-10-23
+Jugo de naranja envasado | ciqual:2070 Jus d'orange, pur jus | 45 0.6 10.7 0.1 | 3 % C | ok | 2026-10-23
+Jugo de piña | ciqual:2073 Jus d'ananas, pur jus | 53 0.4 12.8 0.1 | 0 % kcal | ok | 2026-10-22
+Jugo de tomate | ciqual:2053 Jus de tomate, pur jus (aliment moyen) | 22 0.9 4.1 0.1 | 1 % kcal | ok | 2026-10-23
+Jugo de toronja | ciqual:2027 Jus de pamplemousse (pomelo), pur jus | 43 0.5 9.3 0.1 | 4 % kcal | ok | 2026-10-22
+Jugo de uva | ciqual:2016 Jus de raisin, pur jus | 69 0.3 17.1 0.1 | 7 % C | ok | 2026-10-22
+Jugo de verduras | ciqual:2075 Jus de légumes, pur jus (aliment moyen) | 24 0.7 6.1 0.1 | 11 % C | revisado: otra mezcla de verduras (11 % C) | 2026-10-23
+Jugo de zanahoria | ciqual:2006 Jus de carotte, pur jus | 29 0.4 9.8 0.1 | 11 % kcal | revisado: método de energía: Ciqual le da menos kcal a la fibra (11 % kcal) | 2026-10-23
+Jugo en polvo preparado | sin par | - | - | sin par | 2026-10-23
+Jugo en polvo sin azúcar | sin par | - | - | sin par | 2026-10-23
+Kombucha | ciqual:18025 Kombucha, préemballé | 7 0.3 2 0.2 | 10 % C | ok | 2026-10-22
+Latte helado | cofid:17-632 Coffee, cappuccino, latte | 27 2 3 0.8 | 1 % P | ok | 2026-10-22
+Licuado | sin par | - | - | sin par | 2026-10-23
+Limonada | cofid:17-807 Lemonade, homemade | 63 0 16 0 | 20 % C | revisado: la receta británica lleva más azúcar (20 % C) | 2026-10-23
+Malteada | cofid:12-327 Milkshake, thick, takeaway | 88 3.7 14.8 1.8 | 22 % kcal | revisado: la casera de USDA lleva helado y leche entera; la de CoFID es de comida rápida (22 % kcal) | 2026-10-23
+Manzanilla | cofid:17-172 Tea, herbal, infusion | 1 0 0.2 0 | 0 % kcal | ok | 2026-10-23
+Mate | taco:476 Chá, mate, infusão 5% | 3 0 0.6 0.1 | 2 % kcal | ok | 2026-10-22
+Mate cocido con leche | sin par | - | - | sin par | 2026-10-23
+Mate dulce | sin par | - | - | sin par | 2026-10-23
+Néctar de durazno | ciqual:2371 Nectar de pêche | 50 0.2 14 0.1 | 12 % C | revisado: el néctar francés lleva más azúcar (12 % C) | 2026-10-23
+Néctar de guayaba | ciqual:2367 Nectar de goyave | 48 0.1 11.5 0.2 | 9 % C | ok | 2026-10-22
+Néctar de mango | ciqual:2370 Nectar de mangue | 52 0.2 12.6 0.1 | 3 % C | ok | 2026-10-22
+Néctar de pera | ciqual:2054 Nectar de poire | 63 0.2 15.7 0 | 3 % kcal | ok | 2026-10-22
+Refresco | ciqual:18026 Boisson gazeuse aromatisée, sans fruit, sucrée | 35 0 8.7 0 | 8 % kcal | ok | 2026-10-22
+Refresco de cola | taco:480 Refrigerante, tipo cola | 34 0 8.7 0 | 8 % kcal | ok | 2026-10-23
+Refresco de cola light | ciqual:18060 Cola, sans sucres ajoutés, avec édulcorants | 1 0 0.2 0 | 1 % kcal | ok | 2026-10-23
+Refresco de lima-limón | taco:483 Refrigerante, tipo limão | 40 0 10.3 0 | 1 % kcal | ok | 2026-10-23
+Refresco de naranja | taco:482 Refrigerante, tipo laranja | 46 0 11.8 0 | 3 % C | ok | 2026-10-23
+Refresco de toronja | ciqual:18026 Boisson gazeuse aromatisée, sans fruit, sucrée | 35 0 8.7 0 | 7 % C | ok | 2026-10-23
+Refresco sin azúcar | ciqual:18001 Boisson gazeuse aromatisée, sans fruit, sans sucres ajoutés, avec édulcorants | 0 0 0.4 0 | 2 % kcal | ok | 2026-10-23
+Smoothie de frutas | ciqual:2500 Smoothie, sans précision sur la teneur en fruits et les ingrédients autres que fruits | 60 0.6 14.5 0.3 | 9 % C | ok | 2026-10-22
+Té con leche | cofid:17-168 Tea, infusion, average, with whole milk | 8 0.4 0.5 0.4 | 29 % kcal | revisado: la receta lleva azúcar y más leche (29 % kcal) | 2026-10-23
+Té de hierbas | cofid:17-172 Tea, herbal, infusion | 1 0 0.2 0 | 0 % kcal | ok | 2026-10-22
+Té de jamaica | cofid:17-172 Tea, herbal, infusion | 1 0 0.2 0 | 1 % kcal | ok | 2026-10-23
+Té helado | ciqual:18075 Boisson au thé, aromatisée, sucrée | 23 0 6.8 0 | 22 % kcal | revisado: otra marca, con más azúcar (22 % kcal) | 2026-10-23
+Té helado sin azúcar | taco:477 Chá, preto, infusão 5% | 2 0 0.6 0 | 2 % C | ok | 2026-10-23
+Té negro | taco:477 Chá, preto, infusão 5% | 2 0 0.6 0 | 2 % C | ok | 2026-10-23
+Té verde | ciqual:18155 Thé vert, infusé, sans sucres ajoutés | 5 0 1.4 0 | 7 % C | ok | 2026-10-23
+Asado de tira | ciqual:6123 Boeuf, plat de côtes braisé ou bouilli/cuit à l'eau | 269 37.3 0 13.3 | 73 % P | revisar | 2026-10-22
+Asado de tira crudo | taco:348 Carne, bovina, costela, crua | 358 16.7 0 31.8 | 12 % P | revisado: otro recorte de grasa (12 % P) | 2026-10-23
+Bistec | ciqual:6200 Boeuf, steak ou bifteck grillé/poêlé | 128 27.6 0.3 2 | 55 % G | revisado: otro corte: el bife francés es magro (55 % G) | 2026-10-23
+Bistec crudo | sin par | - | - | sin par | 2026-10-23
+Bola de lomo a la plancha | taco:377 Carne, bovina, patinho, sem gordura, grelhado | 219 35.9 0 7.3 | 31 % kcal | revisado: el de TACO está más hecho: menos agua (31 % kcal) | 2026-10-23
+Bola de lomo cruda | taco:376 Carne, bovina, patinho, sem gordura, cru | 133 21.7 0 4.5 | 3 % kcal | ok | 2026-10-23
+Bondiola asada | cofid:18-551 Pork, shoulder steaks (collar), grilled, lean and fat | 292 29.2 0 19.5 | 14 % P | revisado: la de CoFID está más hecha: menos agua (14 % P) | 2026-10-23
+Bondiola cruda | cofid:18-554 Pork, shoulder steaks (collar), raw, lean and fat | 168 18.7 0 10.4 | 10 % kcal | ok | 2026-10-23
+Cabrito | sin par | - | - | sin par | 2026-10-23
+Cabrito crudo | sin par | - | - | sin par | 2026-10-23
+Carne al horno | ciqual:6210 Boeuf, rosbif rôti/cuit au four | 126 24.1 0 3.2 | 39 % kcal | revisado: el rosbif francés es un corte magro y poco cocido (39 % kcal) | 2026-10-23
+Carne de cerdo cruda | taco:433 Porco, lombo, cru | 176 22.6 0 8.8 | 6 % kcal | ok | 2026-10-23
+Carne de res cruda | ciqual:6003 Boeuf, basse-côte crue | 201 19 1.2 13.2 | 6 % C | ok | 2026-10-22
+Carne molida | ciqual:6259 Boeuf, steak haché, cuit (aliment moyen) | 229 23.8 0 14.9 | 12 % kcal | revisado: otro porcentaje de grasa (12 % kcal) | 2026-10-23
+Carne molida 80% magra cocida | ciqual:6257 Boeuf, steak haché 20% MG cuit | 265 23 0.1 19.2 | 15 % P | revisado: otra pérdida de agua: la de USDA va desmenuzada y dorada (15 % P) | 2026-10-23
+Carne molida 80% magra cruda | sin par | - | - | sin par | 2026-10-23
+Carne molida 85% magra cocida | ciqual:6255 Boeuf, steak haché 15% MG cuit | 239 23.6 0 16.1 | 15 % P | revisado: otra pérdida de agua: la de USDA va desmenuzada y dorada (15 % P) | 2026-10-23
+Carne molida 85% magra cruda | ciqual:6254 Boeuf, steak haché 15% MG cru | 215 20.2 0 14.8 | 8 % P | ok | 2026-10-22
+Carne molida 90% magra cocida | sin par | - | - | sin par | 2026-10-23
+Carne molida 90% magra cruda | sin par | - | - | sin par | 2026-10-23
+Carne molida 95% magra cocida | ciqual:6251 Boeuf, steak haché 5% MG cuit | 155 25.5 0 5.9 | 20 % kcal | revisado: otra pérdida de agua: la de USDA va desmenuzada y dorada (20 % kcal) | 2026-10-23
+Carne molida 95% magra cruda | ciqual:6250 Boeuf, steak haché 5% MG cru | 130 21.9 0 4.6 | 5 % kcal | ok | 2026-10-22
+Carne molida cruda | cofid:18-469 Beef, mince, raw | 225 19.7 0 16.2 | 7 % G | ok | 2026-10-22
+Carne para guiso | ciqual:6230 Boeuf, à bourguignon ou pot-au-feu, cuit | 172 34 1.8 4.1 | 57 % G | revisado: otro corte: la de Ciqual es magra (57 % G) | 2026-10-23
+Carne seca | sin par | - | - | sin par | 2026-10-23
+Carnitas | sin par | - | - | sin par | 2026-10-22
+Carré de cerdo al horno | taco:432 Porco, lombo, assado | 210 35.7 0 6.4 | 41 % G | revisado: TACO usa el lomo, sin la grasa de la costilla (41 % G) | 2026-10-23
+Carré de cerdo crudo | taco:433 Porco, lombo, cru | 176 22.6 0 8.8 | 11 % P | revisado: el lomo de TACO es más magro (11 % P) | 2026-10-23
+Cerdo al horno | ciqual:28301 Porc, rôti cuit | 163 30.5 0 4.3 | 16 % G | revisado: otro corte, más magro en Ciqual (16 % G) | 2026-10-23
+Cerdo molido | cofid:18-607 Pork, mince, stewed | 191 24.4 0 10.4 | 51 % G | revisado: otro porcentaje de grasa (51 % G) | 2026-10-23
+Cerdo molido crudo | cofid:18-606 Pork, mince, raw | 164 19.2 0 9.7 | 32 % G | revisado: otro porcentaje de grasa (32 % G) | 2026-10-23
+Chicharrón | cofid:17-132 Pork scratchings | 606 47.9 0.5 46 | 47 % G | revisado: los torreznos británicos llevan más grasa (47 % G) | 2026-10-23
+Chorizo | ciqual:30315 Chorizo | 425 23.5 2.2 36.1 | 28 % G | revisado: el chorizo español es curado: menos agua (28 % G) | 2026-10-23
+Chorizo crudo | taco:421 Lingüiça, porco, crua | 227 16.1 0 17.6 | 30 % G | revisado: la linguiça brasileña es más magra (30 % G) | 2026-10-23
+Chuleta de cerdo | cofid:18-534 Pork, loin chops, grilled, lean | 194 35.1 0 5.9 | 25 % P | revisado: la de CoFID está más hecha: menos agua (25 % P) | 2026-10-23
+Chuleta de cerdo cruda | sin par | - | - | sin par | 2026-10-23
+Chuleta de cordero | ciqual:21522 Agneau, côte ou côtelette, cuite (aliment moyen) | 157 26.3 0 5.8 | 52 % G | revisado: la de Ciqual es sin la grasa (52 % G) | 2026-10-23
+Chuleta de cordero cruda | cofid:18-476 Lamb, loin chops, raw, lean and fat | 277 17.6 0 23 | 14 % G | revisado: otro recorte de grasa (14 % G) | 2026-10-23
+Chuletón a la parrilla | taco:342 Carne, bovina, contra-filé de costela, grelhado | 275 29.9 0 16.3 | 40 % G | revisado: otro recorte de grasa (40 % G) | 2026-10-23
+Chuletón crudo | taco:341 Carne, bovina, contra-filé de costela, cru | 202 19.8 0 13.1 | 52 % G | revisado: otro recorte de grasa (52 % G) | 2026-10-23
+Colita de cuadril asada | taco:368 Carne, bovina, maminha, grelhada | 153 30.7 0 2.4 | 43 % G | revisado: la maminha de TACO va sin la grasa (43 % G) | 2026-10-23
+Colita de cuadril cruda | taco:367 Carne, bovina, maminha, crua | 153 20.9 0 7 | 8 % G | ok | 2026-10-23
+Conejo | cofid:18-388 Rabbit, stewed, meat only | 114 21.2 0 3.2 | 44 % kcal | revisado: otra cocción: el de USDA está asado y más seco (44 % kcal) | 2026-10-23
+Conejo crudo | ciqual:34001 Lapin, viande crue | 188 20.4 0 11.6 | 38 % kcal | revisado: el conejo francés tiene más grasa (38 % kcal) | 2026-10-23
+Corazón | ciqual:40053 Coeur, boeuf, cuit | 133 23 0 4.5 | 19 % kcal | revisado: otra pérdida de agua al cocinar (19 % kcal) | 2026-10-23
+Corazón crudo | ciqual:40052 Coeur, boeuf, cru | 103 18.5 0 3 | 8 % kcal | ok | 2026-10-22
+Cordero | ciqual:21523 Agneau, viande, cuite (aliment moyen) | 193 28.5 0 8.8 | 58 % G | revisado: el de Ciqual es más magro (58 % G) | 2026-10-23
+Cordero crudo | cofid:18-478 Lamb, average, raw, lean and fat | 187 19 0 12.3 | 43 % G | revisado: otro recorte de grasa (43 % G) | 2026-10-23
+Cordero guisado | cofid:18-186 Lamb, stewing, stewed, lean | 240 26.6 0 14.8 | 30 % G | revisado: el de CoFID tiene más grasa entre las fibras (30 % G) | 2026-10-23
+Cordero molido cocido | cofid:18-159 Lamb, mince, stewed | 208 24.4 0 12.3 | 37 % G | revisado: otro porcentaje de grasa (37 % G) | 2026-10-23
+Cordero molido crudo | cofid:18-481 Lamb, mince, raw | 196 19.1 0 13.3 | 43 % G | revisado: otro porcentaje de grasa (43 % G) | 2026-10-23
+Cordero para guiso crudo | cofid:18-182 Lamb, stewing, raw, lean and fat | 203 22.5 0 12.6 | 51 % kcal | revisado: el de CoFID va con la grasa (51 % kcal) | 2026-10-23
+Corned beef | cofid:19-128 Corned beef, canned | 205 25.9 1 10.9 | 20 % G | revisado: otra marca (20 % G) | 2026-10-23
+Costillar de cordero al horno | cofid:18-169 Lamb, rack of, roasted, lean and fat | 363 23 0 30.1 | 9 % G | ok | 2026-10-22
+Costillar de cordero crudo | cofid:18-166 Lamb, rack of, raw, lean and fat | 283 17.3 0 23.8 | 23 % G | revisado: otro recorte de grasa (23 % G) | 2026-10-23
+Costillas de cerdo | taco:430 Porco, costela, assada | 402 30.2 0 30.3 | 41 % G | revisado: otro corte: la costilla de TACO tiene más grasa (41 % G) | 2026-10-23
+Costillas de cerdo crudas | taco:431 Porco, costela, crua | 256 18 0 19.8 | 17 % G | revisado: otro corte: la costilla de TACO tiene más grasa (17 % G) | 2026-10-23
+Embutido de hígado | ciqual:30176 Saucisse de foie | 374 11.7 0 35.9 | 26 % G | revisado: otra receta (26 % G) | 2026-10-23
+Entraña asada | ciqual:6131 Boeuf, hampe grillée/poêlée | 174 21.6 0 9.8 | 52 % G | revisado: otro recorte de grasa (52 % G) | 2026-10-23
+Entraña cruda | ciqual:6130 Boeuf, hampe crue | 154 19 0 8.6 | 45 % G | revisado: otro recorte de grasa (45 % G) | 2026-10-23
+Falda | ciqual:6211 Boeuf, bavette d'aloyau grillée/poêlée | 162 25 0 6.9 | 16 % kcal | revisado: variación natural del corte (16 % kcal) | 2026-10-23
+Falda cruda | ciqual:6212 Boeuf, bavette d'aloyau crue | 133 20.4 0 5.7 | 14 % kcal | revisado: variación natural del corte (14 % kcal) | 2026-10-23
+Fiambre de pavo | ciqual:28964 Jambon de dinde ou blanc de dinde en tranche | 99 20.9 0.4 1.7 | 30 % P | revisado: formulación: el de USDA lleva agua y almidón (30 % P) | 2026-10-23
+Fiambre de pollo | ciqual:28963 Jambon de poulet ou blanc de poulet en tranche | 105 20.7 0.2 1.8 | 17 % P | revisado: formulación: el de USDA lleva agua y almidón (17 % P) | 2026-10-23
+Filete de ternera a la plancha | ciqual:6520 Veau, escalope cuite | 147 31 0.5 2.5 | 3 % kcal | ok | 2026-10-23
+Filete de ternera crudo | ciqual:6521 Veau, escalope crue | 114 20.5 1.4 3.3 | 7 % kcal | ok | 2026-10-23
+Hamburguesa de carne | cofid:18-042 Beef, mince patties, barbecued | 264 29.6 0 16.2 | 16 % P | revisado: otra pérdida de agua al cocinar (16 % P) | 2026-10-23
+Hígado de cerdo crudo | ciqual:40119 Foie, porc, cru | 124 20.6 1.1 4.2 | 7 % kcal | ok | 2026-10-22
+Hígado de cerdo guisado | cofid:18-418 Liver, pig, stewed | 189 25.6 3.3 8.1 | 18 % G | revisado: el de CoFID va guisado con grasa (18 % G) | 2026-10-23
+Hígado de res | taco:356 Carne, bovina, fígado, grelhado | 225 29.9 4.2 9 | 29 % kcal | revisado: el de TACO va a la plancha con aceite (29 % kcal) | 2026-10-23
+Hígado de res crudo | taco:355 Carne, bovina, fígado, cru | 141 20.7 1.1 5.4 | 14 % C | revisado: método: USDA saca los carbohidratos por diferencia (14 % C) | 2026-10-23
+Jamón cocido | taco:439 Presunto, sem capa de gordura | 94 14.3 2.1 2.7 | 12 % P | revisado: otra formulación (12 % P) | 2026-10-23
+Jamón crudo | ciqual:28844 Jambon sec de Parme | 248 27.2 0 15.4 | 35 % G | revisado: el jamón de Parma va con su grasa (35 % G) | 2026-10-23
+Lengua | taco:365 Carne, bovina, língua, cozida | 315 21.4 0 24.8 | 12 % kcal | revisado: otra pérdida de agua al cocinar (12 % kcal) | 2026-10-23
+Lengua cruda | taco:366 Carne, bovina, língua, crua | 215 17.1 0 15.8 | 18 % C | revisado: método: USDA saca los carbohidratos por diferencia (18 % C) | 2026-10-23
+Lomo | taco:358 Carne, bovina, filé mingnon, sem gordura, grelhado | 220 32.8 0 8.8 | 12 % kcal | revisado: el de TACO está más hecho: menos agua (12 % kcal) | 2026-10-23
+Lomo ahumado | ciqual:28727 Filet de bacon | 118 23.1 0 2.6 | 14 % P | revisado: otra formulación (14 % P) | 2026-10-23
+Lomo bajo | taco:346 Carne, bovina, contra-filé, sem gordura, grelhado | 194 35.9 0 4.5 | 34 % G | revisado: otro recorte: el de TACO va sin la grasa (34 % G) | 2026-10-23
+Lomo bajo crudo | taco:345 Carne, bovina, contra-filé, sem gordura, cru | 157 24 0 6 | 10 % kcal | ok | 2026-10-23
+Lomo crudo | taco:357 Carne, bovina, filé mingnon, sem gordura, cru | 143 21.6 0 5.6 | 3 % kcal | ok | 2026-10-23
+Lomo de cerdo | ciqual:28203 Porc, filet mignon cuit | 168 26.1 0 7.1 | 25 % kcal | revisado: el de Ciqual tiene más grasa (25 % kcal) | 2026-10-23
+Lomo de cerdo crudo | ciqual:28204 Porc, filet mignon cru | 123 21.2 0 4.1 | 13 % kcal | revisado: el de Ciqual tiene más grasa (13 % kcal) | 2026-10-23
+Matambre arrollado | sin par | - | - | sin par | 2026-10-23
+Matambre asado | sin par | - | - | sin par | 2026-10-23
+Matambre crudo | sin par | - | - | sin par | 2026-10-23
+Mollejas | ciqual:40305 Ris, veau, braisé ou grillé/poêlé | 174 21 9.5 5.8 | 48 % C | revisado: la de Ciqual va enharinada (48 % C) | 2026-10-23
+Mollejas crudas | sin par | - | - | sin par | 2026-10-23
+Mondongo | taco:332 Carne, bovina, bucho, cozido | 133 21.6 0 4.5 | 45 % P | revisado: el de TACO está más cocido: menos agua (45 % P) | 2026-10-23
+Morcilla | ciqual:8704 Boudin noir, grillé/poêlé | 246 11.9 4.1 20.3 | 41 % G | revisado: otra receta: el boudin francés lleva menos grasa (41 % G) | 2026-10-23
+Morcilla dulce | sin par | - | - | sin par | 2026-10-23
+Mortadela | taco:424 Mortadela | 269 12 5.8 21.6 | 22 % P | revisado: otra formulación: la brasileña lleva más fécula y agua (22 % P) | 2026-10-23
+Nalga | taco:351 Carne, bovina, coxão mole, sem gordura, cozido | 219 32.4 0 8.9 | 32 % kcal | revisado: el de TACO está hervido y tiene más grasa (32 % kcal) | 2026-10-23
+Nalga cruda | taco:352 Carne, bovina, coxão mole, sem gordura, cru | 169 21.2 0 8.7 | 36 % kcal | revisado: el coxão mole de TACO tiene más grasa (36 % kcal) | 2026-10-23
+Osobuco crudo | taco:372 Carne, bovina, músculo, sem gordura, cru | 142 21.6 0 5.5 | 11 % kcal | revisado: otro recorte de grasa (11 % kcal) | 2026-10-23
+Osobuco hervido | taco:371 Carne, bovina, músculo, sem gordura, cozido | 194 31.2 0 6.7 | 7 % P | ok | 2026-10-22
+Paleta de cerdo al horno | ciqual:28010 Porc, épaule cuite | 253 30 0 14.8 | 31 % G | revisado: la de Ciqual es más magra (31 % G) | 2026-10-23
+Paleta de cerdo cruda | ciqual:28001 Porc, épaule crue | 178 18.9 0 11.2 | 34 % G | revisado: la de Ciqual es más magra (34 % G) | 2026-10-23
+Paleta de cordero al horno | cofid:18-180 Lamb, shoulder, whole, roasted, lean and fat | 298 24.7 0 22.1 | 15 % G | revisado: otro recorte de grasa (15 % G) | 2026-10-23
+Paleta de cordero cruda | cofid:18-170 Lamb, shoulder, raw, lean and fat | 235 17.6 0 18.3 | 4 % kcal | ok | 2026-10-22
+Paleta de res cruda | taco:373 Carne, bovina, paleta, com gordura, crua | 159 21.4 0 7.5 | 53 % G | revisado: otro recorte de grasa (53 % G) | 2026-10-23
+Paleta de res guisada | ciqual:6271 Boeuf, paleron, braisé ou bouilli/cuit à l'eau | 251 36.8 0 11.4 | 39 % G | revisado: el paleron de Ciqual es más magro (39 % G) | 2026-10-23
+Pamplona de cerdo asada | sin par | - | - | sin par | 2026-10-23
+Pamplona de cerdo cruda | sin par | - | - | sin par | 2026-10-23
+Pamplona de pollo asada | sin par | - | - | sin par | 2026-10-23
+Pamplona de pollo cruda | sin par | - | - | sin par | 2026-10-23
+Panceta | cofid:18-555 Pork, belly joint, roasted, lean and fat | 293 25.1 0 21.4 | 34 % G | revisado: otro corte: la de CoFID tiene más carne (34 % G) | 2026-10-23
+Pastrami | sin par | - | - | sin par | 2026-10-22
+Paté | cofid:19-317 Pate, liver | 349 12.6 1.7 32.7 | 98 % G | revisado: otra receta: el paté británico lleva mucha más grasa (98 % G) | 2026-10-23
+Patitas de cerdo crudas | sin par | - | - | sin par | 2026-10-22
+Patitas de cerdo hervidas | cofid:18-429 Pork, trotters and tails, boiled with added salt | 280 19.8 0 22.3 | 31 % G | revisado: CoFID mezcla patas y colas (31 % G) | 2026-10-23
+Pechito de cerdo asado | taco:430 Porco, costela, assada | 402 30.2 0 30.3 | 45 % P | revisado: la costilla de TACO está más asada: menos agua (45 % P) | 2026-10-23
+Pechito de cerdo crudo | taco:431 Porco, costela, crua | 256 18 0 19.8 | 15 % G | revisado: otro recorte de grasa (15 % G) | 2026-10-23
+Pecho de res | cofid:18-015 Beef, brisket, boiled, lean and fat | 268 27.8 0 17.4 | 27 % G | revisado: otro recorte de grasa (27 % G) | 2026-10-23
+Pecho de res crudo | cofid:18-013 Beef, brisket, raw, lean and fat | 218 18.4 0 16 | 34 % G | revisado: otro recorte de grasa (34 % G) | 2026-10-23
+Pepperoni | sin par | - | - | sin par | 2026-10-22
+Picaña asada | taco:381 Carne, bovina, picanha, com gordura, grelhada | 289 26.4 0 19.5 | 23 % G | revisado: la de TACO tiene más grasa (23 % G) | 2026-10-23
+Picaña cruda | taco:380 Carne, bovina, picanha, com gordura, crua | 213 18.8 0 14.7 | 11 % kcal | revisado: la de TACO tiene más grasa (11 % kcal) | 2026-10-23
+Pierna de cerdo al horno | taco:435 Porco, pernil, assado | 262 32.1 0 13.9 | 20 % P | revisado: el pernil de TACO es más magro y está más asado (20 % P) | 2026-10-23
+Pierna de cerdo cruda | taco:436 Porco, pernil, cru | 186 20.1 0 11.1 | 39 % G | revisado: el pernil de TACO es más magro (39 % G) | 2026-10-23
+Pierna de cordero al horno | cofid:18-480 Lamb, leg, whole, roasted, lean and fat | 240 28.1 0 14.2 | 7 % P | ok | 2026-10-22
+Pierna de cordero cruda | ciqual:21502 Agneau, gigot cru | 128 20 0 5.1 | 46 % G | revisado: el gigot francés va sin la grasa (46 % G) | 2026-10-23
+Provoleta asada | sin par | - | - | sin par | 2026-10-22
+Queso de cerdo | ciqual:8400 Fromage de tête | 184 13.8 3.1 12.9 | 17 % kcal | revisado: otra receta (17 % kcal) | 2026-10-23
+Redondo de res al horno | taco:363 Carne, bovina, lagarto, cozido | 222 32.9 0 9.1 | 36 % kcal | revisado: TACO lo hierve y tiene más grasa (36 % kcal) | 2026-10-23
+Redondo de res crudo | taco:364 Carne, bovina, lagarto, cru | 135 20.5 0 5.2 | 12 % P | revisado: otro recorte de grasa (12 % P) | 2026-10-23
+Rib eye | ciqual:6100 Boeuf, entrecôte, partie maigre grillée/poêlée | 198 25.5 0.4 10.7 | 16 % G | revisado: otro recorte de grasa (16 % G) | 2026-10-23
+Rib eye crudo | sin par | - | - | sin par | 2026-10-23
+Riñón | ciqual:40401 Rognon, cuit (aliment moyen) | 165 26.3 0 6.7 | 10 % G | ok | 2026-10-22
+Riñón crudo | ciqual:40402 Rognon, boeuf, cru | 96 17.1 0 2.7 | 3 % kcal | ok | 2026-10-22
+Salame | taco:443 Salame | 398 25.8 2.9 30.6 | 22 % P | revisado: el salame brasileño está más curado (22 % P) | 2026-10-23
+Salchicha | ciqual:30134 Saucisse de Francfort | 279 13.7 3.6 23.4 | 16 % G | revisado: otra formulación (16 % G) | 2026-10-23
+Salchicha de cerdo | taco:423 Lingüiça, porco, grelhada | 296 23.2 0 21.9 | 23 % P | revisado: otra formulación (23 % P) | 2026-10-23
+Salchicha de cerdo cruda | taco:421 Lingüiça, porco, crua | 227 16.1 0 17.6 | 29 % G | revisado: la linguiça brasileña es más magra (29 % G) | 2026-10-23
+Salchicha de pavo | taco:420 Lingüiça, frango, grelhada | 244 18.2 0 18.4 | 31 % G | revisado: la linguiça de pollo brasileña tiene más grasa (31 % G) | 2026-10-23
+Salchicha italiana a la plancha | taco:422 Lingüiça, porco, frita | 280 20.5 0 21.3 | 19 % G | revisado: otra formulación (19 % G) | 2026-10-23
+Salchicha italiana cruda | taco:421 Lingüiça, porco, crua | 227 16.1 0 17.6 | 28 % G | revisado: otra formulación (28 % G) | 2026-10-23
+Salchichas en lata | sin par | - | - | sin par | 2026-10-23
+Sesos de res crudos | sin par | - | - | sin par | 2026-10-22
+Sesos de res fritos | sin par | - | - | sin par | 2026-10-23
+Sesos de res hervidos | sin par | - | - | sin par | 2026-10-23
+Sirloin a la plancha | cofid:18-046 Beef, rump steak, barbecued, lean and fat | 203 29.5 0 9.4 | 24 % G | revisado: otro recorte de grasa (24 % G) | 2026-10-23
+Sirloin crudo | cofid:18-471 Beef, rump steak, raw, lean and fat | 174 20.7 0 10.1 | 13 % kcal | revisado: otro recorte de grasa (13 % kcal) | 2026-10-23
+T-bone a la parrilla | sin par | - | - | sin par | 2026-10-23
+T-bone crudo | sin par | - | - | sin par | 2026-10-23
+Tocino | cofid:19-018 Bacon rashers, streaky, grilled | 337 23.8 0 26.9 | 30 % P | revisado: el de USDA está más frito: menos agua (30 % P) | 2026-10-23
+Tocino crudo | cofid:19-016 Bacon rashers, streaky, raw | 276 15.8 0 23.6 | 36 % G | revisado: la panceta británica es más magra (36 % G) | 2026-10-23
+Tocino de pavo crudo | sin par | - | - | sin par | 2026-10-23
+Tocino de pavo frito | sin par | - | - | sin par | 2026-10-23
+Almidón de yuca | taco:146 Polvilho, doce | 351 0.4 86.8 0 | 2 % kcal | ok | 2026-10-23
+Amaranto | sin par | - | - | sin par | 2026-10-23
+Amaranto crudo | sin par | - | - | sin par | 2026-10-23
+Aritos frutales | sin par | - | - | sin par | 2026-10-23
+Arroz blanco cocido | taco:3 Arroz, tipo 1, cozido | 128 2.5 28.1 0.2 | 1 % kcal | ok | 2026-10-23
+Arroz blanco crudo | taco:4 Arroz, tipo 1, cru | 358 7.2 78.8 0.3 | 2 % kcal | ok | 2026-10-23
+Arroz de grano corto cocido | cofid:11-879 Rice, white, Italian "Arborio" risotto, boiled in unsalted water | 138 3.2 29.3 0.5 | 6 % kcal | ok | 2026-10-23
+Arroz de grano corto crudo | cofid:11-878 Rice, white, Italian Arborio risotto, raw | 354 6.4 78.9 1 | 2 % G | ok | 2026-10-23
+Arroz inflado | cofid:11-750 Breakfast cereal, rice, toasted/crisp, fortified | 374 5.7 84.1 1 | 6 % P | ok | 2026-10-23
+Arroz integral cocido | taco:1 Arroz, integral, cozido | 124 2.6 25.8 1 | 1 % P | ok | 2026-10-22
+Arroz integral crudo | taco:2 Arroz, integral, cru | 360 7.3 77.5 1.9 | 7 % G | ok | 2026-10-22
+Arroz integral de grano medio cocido | taco:1 Arroz, integral, cozido | 124 2.6 25.8 1 | 10 % kcal | ok | 2026-10-23
+Arroz integral de grano medio crudo | taco:2 Arroz, integral, cru | 360 7.3 77.5 1.9 | 4 % G | ok | 2026-10-23
+Arroz parbolizado cocido | ciqual:9105 Riz blanc étuvé, cuit, sans sel ajouté | 146 3 32.8 0.6 | 26 % C | revisado: otra cantidad de agua de cocción (26 % C) | 2026-10-23
+Arroz parbolizado crudo | ciqual:9101 Riz blanc étuvé, cru | 361 7.3 81.1 1 | 3 % kcal | ok | 2026-10-22
+Avena | taco:7 Aveia, flocos, crua | 394 13.9 66.6 8.5 | 15 % P | revisado: variedad (15 % P) | 2026-10-23
+Avena cocida | cofid:11-1107 Porridge, made with water | 47 1.4 9 1 | 29 % kcal | revisado: otra proporción de avena y agua (29 % kcal) | 2026-10-23
+Avena instantánea | cofid:11-792 Breakfast cereal, instant hot oat, plain, raw, fortified | 352 11 67.2 7.3 | 5 % P | ok | 2026-10-23
+Cebada perlada cocida | cofid:11-003 Barley, pearl, boiled | 120 2.7 - 0.6 | 2 % kcal | ok | 2026-10-23
+Cebada perlada cruda | cofid:11-002 Barley, pearl, raw | 360 7.9 - 1.7 | 10 % P | ok | 2026-10-23
+Cereal de chocolate | ciqual:32013 Céréales pour petit déjeuner chocolatées, non fourrées, non enrichies en vitamines et minéraux | 387 8.6 83.9 3.2 | 16 % P | revisado: otra formulación (16 % P) | 2026-10-23
+Cereal de salvado | cofid:11-763 Breakfast cereal, bran flakes, fortified | 333 9.6 80.9 2.2 | 8 % kcal | ok | 2026-10-22
+Copos de maíz | taco:25 Cereal matinal, milho | 365 7.2 83.8 1 | 5 % C | ok | 2026-10-23
+Copos de maíz azucarados | taco:26 Cereal matinal, milho, açúcar | 377 4.7 88.8 0.7 | 5 % C | ok | 2026-10-23
+Copos de maíz con leche | sin par | - | - | sin par | 2026-10-23
+Cuscús | cofid:11-902 Couscous, plain, cooked | 178 7.2 36.3 1 | 59 % kcal | revisado: otra cantidad de agua de cocción (59 % kcal) | 2026-10-23
+Cuscús crudo | cofid:11-901 Couscous, plain, raw | 364 12 75.8 2.1 | 7 % G | ok | 2026-10-22
+Germen de trigo | ciqual:9660 Germe de blé | 375 27.2 51.5 9.5 | 17 % P | revisado: variedad (17 % P) | 2026-10-23
+Granola | ciqual:32145 Muesli croustillant aux fruits à coque et/ou graines uniquement, non enrichi en vitamines et minéraux | 450 10 69.1 16.5 | 17 % G | revisado: otra receta (17 % G) | 2026-10-23
+Harina de almendras | cofid:14-870 Almonds, flaked and ground | 612 21.1 13.9 55.8 | 24 % C | revisado: método: USDA saca los carbohidratos por diferencia (24 % C) | 2026-10-23
+Harina de arroz | taco:31 Farinha, de arroz, enriquecida | 363 1.3 85.5 0.3 | 23 % P | revisado: la harina de arroz de TACO es un producto enriquecido, casi almidón (23 % P) | 2026-10-23
+Harina de avena | sin par | - | - | sin par | 2026-10-22
+Harina de centeno | ciqual:9533 Farine de seigle T130 | 344 7.2 80.4 1.1 | 18 % P | revisado: otro grado de extracción (18 % P) | 2026-10-23
+Harina de garbanzo | sin par | - | - | sin par | 2026-10-22
+Harina de maíz blanca | taco:43 Milho, fubá, cru | 353 7.2 78.9 1.9 | 4 % kcal | ok | 2026-10-22
+Harina de maíz nixtamalizado | sin par | - | - | sin par | 2026-10-22
+Harina de trigo | taco:35 Farinha, de trigo | 360 9.8 75.1 1.4 | 3 % P | ok | 2026-10-22
+Harina integral | cofid:11-889 Flour, wheat, wholemeal | 327 11.6 73.7 2 | 8 % P | ok | 2026-10-22
+Harina leudante | ciqual:9437 Farine de blé tendre ou froment avec levure incorporée | 350 9.1 76.5 1 | 4 % P | ok | 2026-10-23
+Harina para pan | cofid:11-887 Flour, wheat, bread/strong, white | 353 11.3 75.3 1.2 | 4 % C | ok | 2026-10-23
+Maicena | taco:42 Milho, amido, cru | 361 0.6 87.1 0 | 5 % kcal | ok | 2026-10-22
+Mijo cocido | sin par | - | - | sin par | 2026-10-23
+Mijo crudo | sin par | - | - | sin par | 2026-10-23
+Polenta | taco:43 Milho, fubá, cru | 353 7.2 78.9 1.9 | 4 % kcal | ok | 2026-10-22
+Polenta cocida | ciqual:9615 Polenta ou semoule de maïs, cuite, sans sel ajouté | 76 1.4 18.4 0.2 | 30 % C | revisado: otra cantidad de agua (30 % C) | 2026-10-23
+Quinoa cocida | ciqual:9341 Quinoa, bouilli/cuit à l'eau, sans sel ajouté | 149 4.7 31.7 1.1 | 49 % C | revisado: otra cantidad de agua de cocción (49 % C) | 2026-10-23
+Quinoa cruda | cofid:14-843 Quinoa, raw | 309 13.8 58 5 | 16 % kcal | revisado: método: USDA saca los carbohidratos por diferencia (16 % kcal) | 2026-10-23
+Salvado de avena | ciqual:9640 Son d'avoine | 361 16.8 67.2 6.5 | 47 % kcal | revisado: método de energía: USDA usa factores bajos para el salvado (47 % kcal) | 2026-10-23
+Salvado de trigo | ciqual:9621 Son de blé | 270 14.8 65.6 3.9 | 25 % kcal | revisado: método de energía: USDA usa factores bajos para el salvado (25 % kcal) | 2026-10-23
+Sémola | ciqual:9610 Semoule de blé dur, crue | 350 11.8 73.5 1.3 | 4 % P | ok | 2026-10-23
+Sémola cocida | sin par | - | - | sin par | 2026-10-23
+Trigo burgol | ciqual:9691 Boulgour de blé, cuit, sans sel ajouté | 131 4.3 27.8 1 | 48 % kcal | revisado: otra cantidad de agua de cocción (48 % kcal) | 2026-10-23
+Trigo burgol crudo | ciqual:9690 Boulgour de blé, cru | 347 11.7 76.4 1.4 | 3 % P | ok | 2026-10-22
+Trigo sarraceno cocido | sin par | - | - | sin par | 2026-10-23
+Trigo sarraceno crudo | cofid:11-006 Buckwheat, groats | 364 8.1 79.3 1.5 | 18 % P | revisado: variedad y tostado (18 % P) | 2026-10-23
+Alfajor de chocolate | sin par | - | - | sin par | 2026-10-22
+Alfajor de chocolate blanco | sin par | - | - | sin par | 2026-10-23
+Alfajor de dulce de leche | sin par | - | - | sin par | 2026-10-22
+Alfajor de nieve | sin par | - | - | sin par | 2026-10-22
+Alfajor triple | sin par | - | - | sin par | 2026-10-23
+Algodón de azúcar | sin par | - | - | sin par | 2026-10-23
+Almendrado | cofid:12-385 Ice cream desserts, frozen | 251 3.5 20 17.6 | 33 % C | revisado: otra receta: el almendrado lleva praliné (33 % C) | 2026-10-23
+Almendras con chocolate | sin par | - | - | sin par | 2026-10-23
+Almendras garrapiñadas | ciqual:31052 Praline | 483 8.7 - 19.7 | 27 % G | revisado: la praline francesa lleva más azúcar (27 % G) | 2026-10-23
+Arrollado de dulce de leche | cofid:11-1125 Cake, Swiss roll, homemade | 286 7.4 55.7 4.2 | 15 % G | revisado: otro relleno: mermelada en vez de dulce de leche (15 % G) | 2026-10-23
+Arroz con leche | ciqual:39212 Riz au lait vanille, cannelle ou nature, rayon frais | 121 3 20.3 3.4 | 12 % kcal | revisado: otra receta (12 % kcal) | 2026-10-23
+Arroz con leche casero | cofid:12-608 Pudding, rice, homemade, with whole milk | 145 4.2 17.7 6.5 | 34 % C | revisado: la receta lleva más arroz y azúcar (34 % C) | 2026-10-23
+Azúcar | taco:492 Açúcar, cristal | 387 0.3 99.6 0 | 4 % kcal | ok | 2026-10-22
+Azúcar en polvo | cofid:17-062 Sugar, icing | 393 0 99.9 0 | 1 % kcal | ok | 2026-10-23
+Azúcar morena | cofid:17-060 Sugar, brown | 380 0.1 96.5 0 | 2 % C | ok | 2026-10-23
+Banana con dulce de leche | sin par | - | - | sin par | 2026-10-23
+Banana split | cofid:12-556 Banana split, homemade | 205 2.3 23.3 11.8 | 28 % C | revisado: otra receta, con más salsa (28 % C) | 2026-10-23
+Barra de cereal | cofid:11-819 Cereal bars, with fruit and/or nuts, no chocolate, unfortified | 354 5.6 65.9 10.7 | 46 % G | revisado: otra formulación: la de USDA lleva más frutos secos (46 % G) | 2026-10-23
+Bizcocho | cofid:11-957 Cake, sponge, fatless, homemade | 292 9.9 51.5 5.6 | 23 % P | revisado: la receta británica lleva más huevo (23 % P) | 2026-10-23
+Bizcocho de chocolate | cofid:11-957 Cake, sponge, fatless, homemade | 292 9.9 51.5 5.6 | 7 % P | ok | 2026-10-23
+Bizcochos de soletilla | ciqual:24430 Biscuit sec aux oeufs à la cuillère (cuiller) ou boudoir | 366 7.8 77.4 3.4 | 30 % C | revisado: otra receta (30 % C) | 2026-10-23
+Bombón de dulce de leche | sin par | - | - | sin par | 2026-10-22
+Bombón helado | ciqual:31035 Barre glacée chocolatée | 354 4.8 38.3 20.5 | 56 % C | revisado: otra formulación (56 % C) | 2026-10-23
+Bombones rellenos | cofid:17-650 Chocolate, dark, with crème or mint fondant centres | 431 3.7 73.5 16.3 | 35 % G | revisado: otra receta (35 % G) | 2026-10-23
+Brownie | ciqual:23032 Brownie au chocolat, préemballé | 458 5.9 54.4 25.4 | 45 % G | revisado: otra receta (45 % G) | 2026-10-23
+Brownie con helado | sin par | - | - | sin par | 2026-10-23
+Buñuelos de manzana | sin par | - | - | sin par | 2026-10-23
+Cacao en polvo | cofid:12-545 Cocoa powder | 312 18.5 22.6 21.7 | 61 % C | revisado: método: USDA saca los carbohidratos por diferencia, y el británico tiene más manteca de cacao (61 % C) | 2026-10-23
+Cañoncitos de dulce de leche | sin par | - | - | sin par | 2026-10-22
+Caramelo de palito | ciqual:31059 Bonbon dur et sucette | 384 0.2 97.9 0.2 | 3 % kcal | ok | 2026-10-23
+Caramelo líquido | ciqual:31046 Caramel liquide ou nappage caramel | 324 0 81 0 | 50 % kcal | revisado: el francés tiene menos agua (50 % kcal) | 2026-10-23
+Caramelos | ciqual:31059 Bonbon dur et sucette | 384 0.2 97.9 0.2 | 3 % kcal | ok | 2026-10-23
+Caramelos de leche | ciqual:31081 Bonbon tendre, au caramel | 415 2.2 85.3 10 | 12 % P | revisado: otra receta, con menos leche (12 % P) | 2026-10-23
+Caramelos masticables | ciqual:31097 Bonbon tendre | 392 0.9 86.6 5.1 | 5 % G | ok | 2026-10-23
+Cheesecake | ciqual:23001 Cheesecake, préemballé | 337 5.4 34.9 19.7 | 26 % G | revisado: otra receta (26 % G) | 2026-10-23
+Cheesecake de frutos rojos | cofid:12-542 Cheesecake, fruit, individual | 264 6.1 34.3 12.3 | 48 % G | revisado: otra receta, más liviana (48 % G) | 2026-10-23
+Chicle | sin par | - | - | sin par | 2026-10-23
+Chicle sin azúcar | ciqual:31054 Chewing-gum, sans sucres | 206 0.2 83.4 0.3 | 23 % kcal | revisado: método de energía: Ciqual les da menos kcal a los polialcoholes (23 % kcal) | 2026-10-23
+Chispas de chocolate | taco:498 Chocolate, meio amargo | 475 4.9 62.4 29.9 | 3 % P | ok | 2026-10-23
+Chocolate amargo | ciqual:31005 Chocolat noir 50 % de cacao environ, tablette | 521 6 62.1 29.6 | 8 % G | ok | 2026-10-23
+Chocolate blanco | ciqual:31010 Chocolat blanc, tablette | 563 6.2 57.1 34.2 | 7 % G | ok | 2026-10-23
+Chocolate con arroz inflado | ciqual:31009 Chocolat au lait aux céréales croustillantes, tablette | 515 7.2 62.9 26.6 | 9 % G | ok | 2026-10-23
+Chocolate con frutos secos | ciqual:31018 Chocolat au lait aux fruits secs (noisettes, amandes, raisins, praline), tablette | 559 8.4 52.6 35.9 | 13 % P | revisado: otra proporción de frutos secos (13 % P) | 2026-10-23
+Chocolate con leche | taco:495 Chocolate, ao leite | 540 7.2 59.6 30.3 | 2 % P | ok | 2026-10-22
+Chocotorta | sin par | - | - | sin par | 2026-10-23
+Churro relleno de dulce de leche | sin par | - | - | sin par | 2026-10-22
+Churros | sin par | - | - | sin par | 2026-10-22
+Confites de chocolate | ciqual:31041 Confiserie au chocolat dragéifiée | 505 5.5 67 24.3 | 15 % G | revisado: otra formulación (15 % G) | 2026-10-23
+Conitos de dulce de leche | sin par | - | - | sin par | 2026-10-23
+Cono de helado | ciqual:24685 Cône ou cornet classique, pour glace | 401 7.5 82.4 5 | 10 % G | ok | 2026-10-22
+Coquitos | ciqual:23033 Rocher coco ou congolais (petit gâteau à la noix de coco), préemballé | 459 4 61.7 23 | 5 % P | ok | 2026-10-23
+Crema de avellanas | ciqual:31032 Pâte à tartiner chocolat et noisette | 549 5 60.7 32.4 | 9 % G | ok | 2026-10-22
+Crema pastelera | ciqual:39710 Crème pâtissière instantanée, reconstituée | 120 3.8 22.3 3.6 | 24 % kcal | revisado: la casera lleva yemas y más azúcar (24 % kcal) | 2026-10-23
+Crepe con dulce de leche | ciqual:23821 Crêpe fourrée au chocolat ou à la pâte à tartiner chocolat et noisettes, faite maison | 388 7.8 57.3 15.1 | 66 % C | revisado: otro relleno, y más relleno en la francesa (66 % C) | 2026-10-23
+Crocante de maní | cofid:17-116 Peanut brittle, homemade | 483 8.6 72.7 19 | 5 % P | ok | 2026-10-23
+Crumble de manzana | cofid:11-1055 Crumble, apple, homemade | 201 1.7 34.2 6.4 | 16 % G | revisado: otra receta (16 % G) | 2026-10-23
+Danesa | cofid:11-841 Pastries, Danish, retail | 446 4.9 42.8 29.2 | 30 % G | revisado: otra receta (30 % G) | 2026-10-23
+Dona rellena de dulce de leche | cofid:11-849 Doughnuts, with jam | 321 5.4 47.5 13.1 | 26 % G | revisado: otro relleno (26 % G) | 2026-10-23
+Donas | ciqual:23880 Beignet ou donut rond moelleux, sans fourrage, saupoudré de sucre | 404 7.3 41.5 23.7 | 16 % C | revisado: otra receta (16 % C) | 2026-10-23
+Dulce de batata | sin par | - | - | sin par | 2026-10-23
+Dulce de batata con chocolate | sin par | - | - | sin par | 2026-10-23
+Dulce de calabaza | taco:500 Doce, de abóbora, cremoso | 199 0.9 54.6 0.2 | 27 % kcal | revisado: el de TACO es cremoso, con más agua (27 % kcal) | 2026-10-23
+Dulce de guayaba | taco:198 Goiaba, doce em pasta | 269 0.6 74.1 0 | 8 % kcal | ok | 2026-10-23
+Dulce de higo | taco:195 Figo, enlatado, em calda | 184 0.6 50.3 0.2 | 32 % kcal | revisado: TACO trae los higos en un almíbar más liviano (32 % kcal) | 2026-10-23
+Dulce de leche | taco:501 Doce, de leite, cremoso | 306 5.5 59.5 6 | 7 % P | ok | 2026-10-23
+Dulce de membrillo | taco:506 Marmelada | 257 0.4 70.8 0.1 | 7 % C | ok | 2026-10-22
+Duraznos con crema | sin par | - | - | sin par | 2026-10-23
+Éclair | ciqual:23477 Éclair | 264 5.8 32.5 11.8 | 34 % G | revisado: otra receta (34 % G) | 2026-10-23
+Edulcorante | sin par | - | - | sin par | 2026-10-22
+Flan | ciqual:39209 Crème caramel, rayon frais | 155 4.8 19.7 5.7 | 30 % C | revisado: otra receta, con más azúcar (30 % C) | 2026-10-23
+Flan con dulce de leche | ciqual:39209 Crème caramel, rayon frais | 155 4.8 19.7 5.7 | 43 % C | revisado: el dulce de leche suma azúcar (43 % C) | 2026-10-23
+Flan de leche condensada | cofid:12-571 Crème caramel, homemade | 157 5.1 27.3 3.3 | 25 % kcal | revisado: la leche condensada suma azúcar (25 % kcal) | 2026-10-23
+Flan de sobre | ciqual:19674 Flan aux oeufs, rayon frais | 113 4.2 18.2 2.7 | 6 % P | ok | 2026-10-23
+Flan mixto | sin par | - | - | sin par | 2026-10-23
+Fresas con crema | sin par | - | - | sin par | 2026-10-23
+Fruta confitada | ciqual:31027 Fruit confit | 297 0.3 75.8 0.1 | 8 % kcal | ok | 2026-10-22
+Galletas con chispas de chocolate | cofid:11-816 Biscuits, cookies, chocolate chip, American style | 440 5.2 59.3 21.3 | 14 % G | revisado: otra receta (14 % G) | 2026-10-23
+Galletas con dulce de membrillo | cofid:11-804 Biscuits, jam filled | 428 5.2 70.3 14.4 | 12 % G | revisado: otra receta (12 % G) | 2026-10-23
+Galletas de avena | ciqual:24655 Biscuit sec ou galette à l'avoine | 491 5.6 67.3 22.9 | 24 % G | revisado: otra receta (24 % G) | 2026-10-23
+Galletas de avena con pasas | ciqual:24655 Biscuit sec ou galette à l'avoine | 491 5.6 67.3 22.9 | 36 % G | revisado: otra receta, sin pasas (36 % G) | 2026-10-23
+Galletas de chocolate | sin par | - | - | sin par | 2026-10-23
+Galletas de mantequilla caseras | ciqual:24015 Biscuit sec petit beurre | 450 7.8 76 13.3 | 45 % G | revisado: las caseras llevan más manteca (45 % G) | 2026-10-23
+Galletas dulces | ciqual:24015 Biscuit sec petit beurre | 450 7.8 76 13.3 | 31 % G | revisado: otra receta (31 % G) | 2026-10-23
+Galletas Graham | sin par | - | - | sin par | 2026-10-23
+Galletas María | cofid:11-797 Biscuits, semi-sweet | 444 6.4 72.2 15.1 | 23 % G | revisado: otra marca (23 % G) | 2026-10-23
+Galletas rellenas | taco:9 Biscoito, doce, recheado com chocolate | 472 6.4 70.5 19.6 | 6 % P | ok | 2026-10-23
+Galletas rellenas de vainilla | ciqual:24225 Goûter sec fourré ("sandwiché") parfum lait ou vanille | 478 5 73.6 19 | 5 % G | ok | 2026-10-23
+Garrapiñada | ciqual:15058 Cacahuète caramélisée ou chouchou | 544 12.9 57.5 29.7 | 12 % G | revisado: otra receta (12 % G) | 2026-10-23
+Gelatina | cofid:12-237 Jelly, made with water | 61 1.2 14.6 0 | 2 % C | ok | 2026-10-23
+Gelatina con frutas | cofid:12-237 Jelly, made with water | 61 1.2 14.6 0 | 6 % C | ok | 2026-10-23
+Gelatina light | cofid:12-516 Jelly, sugar free, made with water | 6 1.6 0 0 | 21 % C | revisado: otra formulación (21 % C) | 2026-10-23
+Gomitas | ciqual:31060 Bonbon gélifié | 339 4.9 79.6 0.5 | 24 % P | revisado: otra formulación: gelatina en vez de almidón (24 % P) | 2026-10-23
+Granas de colores | ciqual:11510 Vermicelles multicolores | 389 1.2 96.1 0.2 | 76 % G | revisado: las de USDA llevan grasa (76 % G) | 2026-10-23
+Helado artesanal de chocolate | cofid:12-511 Ice cream, dairy, luxury, with chocolate/caramel | 262 4.2 32 13.9 | 61 % C | revisado: el británico lleva más azúcar y salsa (61 % C) | 2026-10-23
+Helado artesanal de vainilla | cofid:12-508 Ice cream, dairy, vanilla, soft scoop | 169 3.2 21.4 8.2 | 40 % G | revisado: el de USDA es premium, con más crema (40 % G) | 2026-10-23
+Helado de chocolate | cofid:12-511 Ice cream, dairy, luxury, with chocolate/caramel | 262 4.2 32 13.9 | 21 % kcal | revisado: el británico es premium, con salsa (21 % kcal) | 2026-10-23
+Helado de chocolate con almendras | cofid:12-511 Ice cream, dairy, luxury, with chocolate/caramel | 262 4.2 32 13.9 | 61 % C | revisado: otra receta (61 % C) | 2026-10-23
+Helado de dulce de leche | cofid:12-508 Ice cream, dairy, vanilla, soft scoop | 169 3.2 21.4 8.2 | 56 % G | revisado: la receta lleva más crema (56 % G) | 2026-10-23
+Helado de dulce de leche con chispas de chocolate | cofid:12-511 Ice cream, dairy, luxury, with chocolate/caramel | 262 4.2 32 13.9 | 32 % G | revisado: la receta lleva más crema (32 % G) | 2026-10-23
+Helado de fresa | sin par | - | - | sin par | 2026-10-23
+Helado de menta con chispas de chocolate | cofid:12-511 Ice cream, dairy, luxury, with chocolate/caramel | 262 4.2 32 13.9 | 23 % C | revisado: otra receta (23 % C) | 2026-10-23
+Helado de sabayón | cofid:12-508 Ice cream, dairy, vanilla, soft scoop | 169 3.2 21.4 8.2 | 23 % kcal | revisado: la receta lleva más yema y crema (23 % kcal) | 2026-10-23
+Helado de tramontana | cofid:12-511 Ice cream, dairy, luxury, with chocolate/caramel | 262 4.2 32 13.9 | 13 % kcal | revisado: otra receta (13 % kcal) | 2026-10-23
+Helado de vainilla | cofid:12-508 Ice cream, dairy, vanilla, soft scoop | 169 3.2 21.4 8.2 | 18 % kcal | revisado: el británico es más liviano (18 % kcal) | 2026-10-23
+Helado en cono | ciqual:39509 Glace ou crème glacée, cône (taille standard) | 290 3.5 38.6 13.5 | 49 % C | revisado: el francés es un cono industrial, con más galleta y cobertura (49 % C) | 2026-10-23
+Helado light | sin par | - | - | sin par | 2026-10-23
+Helado soft | cofid:12-508 Ice cream, dairy, vanilla, soft scoop | 169 3.2 21.4 8.2 | 27 % C | revisado: otra formulación (27 % C) | 2026-10-23
+Jalea | ciqual:30886 Gelée, autres fruits ou mélange de fruits (extra ou classique) | 252 0.1 63.2 0.1 | 10 % C | ok | 2026-10-22
+Jarabe de agave | ciqual:31089 Sirop d'agave | - 0.3 77.4 0.5 | 1 % P | ok | 2026-10-22
+Jarabe de arce | sin par | - | - | sin par | 2026-10-22
+Jarabe de maíz | taco:503 Glicose de milho | 292 0 79.4 0 | 3 % kcal | ok | 2026-10-23
+Malvaviscos | ciqual:31050 Guimauve ou marshmallow | 336 3.3 79.9 0.1 | 8 % P | ok | 2026-10-22
+Maní con chocolate | ciqual:31042 Cacahuète enrobée de chocolat dragéifiée | 499 9.5 62.1 25 | 41 % C | revisado: el francés lleva una capa de azúcar (41 % C) | 2026-10-23
+Manzana acaramelada | sin par | - | - | sin par | 2026-10-23
+Manzana asada | ciqual:13175 Pomme, chair sans peau, rôtie/cuite au four | 53 0.2 12.8 0.3 | 53 % kcal | revisado: la de USDA lleva azúcar y manteca (53 % kcal) | 2026-10-23
+Massini | cofid:11-532 Cake, sponge, with dairy cream and jam, frozen | 280 4.3 43.9 10.9 | 32 % G | revisado: otra receta (32 % G) | 2026-10-23
+Mazamorra de maíz blanco | sin par | - | - | sin par | 2026-10-23
+Mazapán | cofid:14-893 Marzipan, homemade | 460 10.4 51 25.7 | 13 % C | revisado: otra receta, con más azúcar (13 % C) | 2026-10-23
+Melaza | cofid:17-059 Molasses | 266 0 66.8 0.1 | 11 % C | revisado: otra concentración (11 % C) | 2026-10-23
+Merengue | ciqual:24520 Meringue | 396 4.8 92.9 0.5 | 23 % C | revisado: el francés es seco (23 % C) | 2026-10-23
+Mermelada | ciqual:31006 Confiture ou marmelade ou gelée, tout type de fruits, non allégée en sucres (aliment moyen) | 244 0.3 60.5 0.3 | 12 % kcal | revisado: con más azúcar (12 % kcal) | 2026-10-23
+Mermelada de albaricoque | ciqual:31037 Confiture d'abricot (extra ou classique) | 246 0.3 60 0.3 | 7 % C | ok | 2026-10-23
+Mermelada de durazno | ciqual:30993 Confiture de pêche (extra ou classique) | 242 0.3 60.7 0.1 | 12 % kcal | revisado: la receta lleva más azúcar (12 % kcal) | 2026-10-23
+Mermelada de fresa | ciqual:31024 Confiture de fraise (extra ou classique) | 248 0.3 60.7 0.5 | 11 % C | revisado: la receta lleva más azúcar (11 % C) | 2026-10-23
+Mermelada de frutos rojos | ciqual:31083 Confiture, autres fruits ou mélange de fruits (extra ou classique) | 244 0.4 60.9 0.2 | 11 % kcal | revisado: la receta lleva más azúcar (11 % kcal) | 2026-10-23
+Mermelada de naranja | ciqual:31039 Marmelade d'orange ou confiture d'orange (extra ou classique) | 245 0.3 61.1 0.4 | 8 % C | ok | 2026-10-23
+Mermelada light | ciqual:30887 Confiture, autres fruits ou mélange de fruits, allégée en sucres (extra ou classique) | 162 0.8 40.5 0.2 | 8 % C | ok | 2026-10-22
+Miel | taco:507 Mel, de abelha | 309 0 84 0 | 2 % kcal | ok | 2026-10-22
+Milhojas de dulce de leche | ciqual:24666 Mille-feuille | 292 3.9 43.9 11.3 | 55 % G | revisado: otro relleno y más hojaldre (55 % G) | 2026-10-23
+Mousse de chocolate | ciqual:39210 Mousse au chocolat traditionnelle, rayon frais | 319 7.4 26.5 21.1 | 52 % C | revisado: otra receta (52 % C) | 2026-10-23
+Mousse de dulce de leche | ciqual:39235 Mousse liégeoise (chocolat, café, caramel ou vanille), rayon frais | 177 3.8 19.8 9.4 | 53 % G | revisado: la receta lleva más crema (53 % G) | 2026-10-23
+Mousse de limón | cofid:12-402 Mousse, fruit | 143 4.5 - 6.4 | 59 % G | revisado: la receta lleva más crema (59 % G) | 2026-10-23
+Muffin | cofid:11-738 Muffins, American, not chocolate, retail | 375 5 46.6 19.5 | 17 % G | revisado: otra receta (17 % G) | 2026-10-23
+Natillas | cofid:12-573 Custard, egg | 95 5.9 10.4 3.4 | 4 % P | ok | 2026-10-23
+Obleas bañadas en chocolate | ciqual:24311 Gaufrette fourrée et/ou enrobée de chocolat | 534 6.6 60.1 30.5 | 16 % P | revisado: otra formulación (16 % P) | 2026-10-23
+Obleas rellenas | ciqual:24313 Gaufrette, fourrée vanille | 538 5.8 61.9 30.1 | 30 % G | revisado: otra formulación (30 % G) | 2026-10-23
+Paleta helada | ciqual:39526 Glace à l'eau | 84 0.2 17.7 0.2 | 8 % C | ok | 2026-10-23
+Pan de banana | cofid:11-1029 Banana bread, homemade | 331 4.4 52 12.4 | 10 % G | ok | 2026-10-23
+Panela | sin par | - | - | sin par | 2026-10-23
+Panqué | ciqual:23082 Barre pâtissière, préemballée | 378 5.4 56.2 14.9 | 7 % kcal | ok | 2026-10-22
+Panqué de limón | ciqual:23082 Barre pâtissière, préemballée | 378 5.4 56.2 14.9 | 17 % G | revisado: otra receta (17 % G) | 2026-10-23
+Panqué marmoleado | ciqual:23925 Gâteau marbré au chocolat, préemballé | 438 5.7 52.4 23.2 | 17 % G | revisado: otra receta (17 % G) | 2026-10-23
+Pasas con chocolate | sin par | - | - | sin par | 2026-10-23
+Pastafrola | cofid:11-1085 Tarts, jam, homemade | 382 3.4 - 16.8 | 22 % G | revisado: otra masa (22 % G) | 2026-10-23
+Pastafrola de batata | cofid:11-846 Jam tarts, retail | 353 3.2 56.5 13.5 | 14 % C | revisado: otra receta (14 % C) | 2026-10-23
+Pastel de chocolate | cofid:11-830 Cake, chocolate, with filling and icing, retail | 413 4.5 48.7 23.7 | 43 % G | revisado: otra receta (43 % G) | 2026-10-23
+Pastel de chocolate con dulce de leche | cofid:11-830 Cake, chocolate, with filling and icing, retail | 413 4.5 48.7 23.7 | 48 % G | revisado: otra receta (48 % G) | 2026-10-23
+Pastel de fresas | ciqual:23009 Fraisier ou framboisier | 221 2.6 26.5 12 | 7 % C | ok | 2026-10-23
+Pastel de frutas | cofid:11-829 Cake, fruit, retail | 334 4.5 56 12.1 | 15 % G | revisado: otra receta (15 % G) | 2026-10-23
+Pastel de manzana | sin par | - | - | sin par | 2026-10-23
+Pastel de merengue y dulce de leche | sin par | - | - | sin par | 2026-10-23
+Pastel de vainilla | cofid:11-832 Cake, sponge, soft iced, retail | 368 4.8 53 15.8 | 11 % G | revisado: otra receta (11 % G) | 2026-10-23
+Pastel de vainilla casero | ciqual:23935 Gâteau moelleux nature, préemballé | 438 5.4 54.3 22.4 | 39 % G | revisado: otra receta, con más manteca (39 % G) | 2026-10-23
+Pastel de zanahoria | cofid:11-836 Cake, carrot, iced, retail | 374 4.2 46 20.2 | 13 % G | revisado: otra receta (13 % G) | 2026-10-23
+Pastel helado | ciqual:39533 Bûche glacée | 219 2.8 30.8 9.6 | 23 % kcal | revisado: otra receta (23 % kcal) | 2026-10-23
+Pastillas de menta | ciqual:31126 Pastille rafraîchissante, sucrée | 390 0.1 97 0.4 | 1 % kcal | ok | 2026-10-23
+Pie de limón | cofid:11-548 Pie, lemon meringue, retail | 251 2.9 41.9 8.5 | 15 % kcal | revisado: otra receta (15 % kcal) | 2026-10-23
+Profiterol | ciqual:23455 Chou à la crème, sans précision (chantilly ou pâtissière) | 325 4.5 25.5 22.9 | 63 % C | revisado: el francés lleva crema pastelera, con más azúcar (63 % C) | 2026-10-23
+Pudín de chocolate | ciqual:39200 Crème dessert au chocolat, rayon frais | 121 3.5 19.7 3.6 | 15 % kcal | revisado: otra formulación (15 % kcal) | 2026-10-23
+Pudín de chocolate de sobre | cofid:12-584 Instant dessert powder, made up with whole milk | 121 3.2 - 6 | 14 % G | revisado: otra formulación (14 % G) | 2026-10-23
+Pudín de pan | cofid:11-1037 Pudding, bread and butter, homemade | 137 6.3 16.3 5.3 | 31 % C | revisado: otra receta (31 % C) | 2026-10-23
+Pudín de vainilla | ciqual:39229 Crème dessert à la vanille, rayon frais | 103 3 16.5 2.9 | 27 % C | revisado: otra formulación (27 % C) | 2026-10-23
+Pudín de vainilla de sobre | cofid:12-584 Instant dessert powder, made up with whole milk | 121 3.2 - 6 | 16 % G | revisado: otra formulación (16 % G) | 2026-10-23
+Queso con dulce de batata | sin par | - | - | sin par | 2026-10-23
+Rogel | sin par | - | - | sin par | 2026-10-23
+Sacarina | sin par | - | - | sin par | 2026-10-23
+Selva negra | ciqual:23006 Forêt noire, pâtisserie type génoise au chocolat et crème multi-couches, avec ou sans cerises | 317 3.7 41.2 14.8 | 17 % C | revisado: otra receta (17 % C) | 2026-10-23
+Sémola con leche | ciqual:39218 Semoule au lait, rayon frais | 132 3.4 24.1 4.7 | 28 % C | revisado: el francés lleva más azúcar (28 % C) | 2026-10-23
+Sirope de chocolate | sin par | - | - | sin par | 2026-10-22
+Sorbete | ciqual:39524 Sorbet, en bac | 122 0.4 31.5 0.6 | 16 % C | revisado: otra receta (16 % C) | 2026-10-23
+Stevia | ciqual:31087 Édulcorant à base d'extrait de stévia | 1 0.2 97.3 0.3 | 3 % C | ok | 2026-10-22
+Strudel de manzana | cofid:11-919 Strudel, fruit filled, retail, frozen | 241 2.7 32.7 13.5 | 14 % kcal | revisado: otra receta (14 % kcal) | 2026-10-23
+Sundae de chocolate | ciqual:39512 Dessert glacé type sundae | 211 2.4 33.8 8.7 | 13 % kcal | revisado: otra receta (13 % kcal) | 2026-10-23
+Tarta de coco y dulce de leche | sin par | - | - | sin par | 2026-10-23
+Tarta de manzana | cofid:11-921 Pie, apple, pastry, double crust, retail | 245 3.8 30.6 12.9 | 19 % C | revisado: otra receta (19 % C) | 2026-10-23
+Tarta de ricota | sin par | - | - | sin par | 2026-10-23
+Tiramisú | ciqual:19698 Tiramisu au café, rayon frais | 242 4.3 31.7 9.8 | 59 % G | revisado: el industrial francés es más liviano (59 % G) | 2026-10-23
+Torta tres leches | sin par | - | - | sin par | 2026-10-23
+Trufas de chocolate | cofid:17-837 Truffles, rum, homemade | 529 6 53.7 32.9 | 20 % C | revisado: otra receta (20 % C) | 2026-10-23
+Turrón de almendras | ciqual:31127 Nougat tendre | 437 7 72.6 13.9 | 59 % G | revisado: el turrón lleva más almendras que el nougat (59 % G) | 2026-10-23
+Turrón de maní | ciqual:31127 Nougat tendre | 437 7 72.6 13.9 | 7 % P | ok | 2026-10-23
+Yogur helado | ciqual:39517 Glace au yaourt | 126 3.5 24.8 2.2 | 15 % C | revisado: otra formulación (15 % C) | 2026-10-23
+Ajo en polvo | sin par | - | - | sin par | 2026-10-22
+Albahaca seca | sin par | - | - | sin par | 2026-10-23
+Anís | sin par | - | - | sin par | 2026-10-22
+Azafrán | sin par | - | - | sin par | 2026-10-23
+Bicarbonato de sodio | cofid:17-356 Bicarbonate of soda | 0 0 0 0 | 0 % kcal | ok | 2026-10-22
+Canela | sin par | - | - | sin par | 2026-10-22
+Cardamomo | sin par | - | - | sin par | 2026-10-23
+Cebolla en polvo | sin par | - | - | sin par | 2026-10-22
+Chile en polvo | sin par | - | - | sin par | 2026-10-22
+Clavo de olor | sin par | - | - | sin par | 2026-10-22
+Comino | sin par | - | - | sin par | 2026-10-23
+Cúrcuma | sin par | - | - | sin par | 2026-10-23
+Curry en polvo | cofid:13-876 Curry powder | 233 9.5 47.9 10.8 | 28 % kcal | revisado: otra mezcla, y CoFID no cuenta la fibra como energía (28 % kcal) | 2026-10-23
+Eneldo seco | sin par | - | - | sin par | 2026-10-23
+Extracto de vainilla | sin par | - | - | sin par | 2026-10-23
+Gelatina sin sabor | ciqual:11007 Gélatine, sèche | 348 86.9 0.4 0.1 | 4 % kcal | ok | 2026-10-23
+Jengibre | ciqual:11074 Gingembre, racine fraîche | 33 1.1 6.1 1.1 | 58 % C | revisado: la raíz de Ciqual tiene más agua (58 % C) | 2026-10-23
+Jengibre en polvo | cofid:13-832 Ginger, ground | 284 7.4 70.4 3.3 | 15 % kcal | revisado: método de energía (15 % kcal) | 2026-10-23
+Laurel | sin par | - | - | sin par | 2026-10-23
+Levadura seca | ciqual:11045 Levure de boulanger déshydratée | 341 42.7 40 6.6 | 6 % P | ok | 2026-10-23
+Mostaza en polvo | cofid:17-362 Mustard powder | 452 28.9 - 28.7 | 21 % G | revisado: otra mostaza, en parte desgrasada (21 % G) | 2026-10-23
+Nuez moscada | sin par | - | - | sin par | 2026-10-22
+Orégano | sin par | - | - | sin par | 2026-10-22
+Paprika | sin par | - | - | sin par | 2026-10-23
+Perejil seco | sin par | - | - | sin par | 2026-10-22
+Pimienta blanca | sin par | - | - | sin par | 2026-10-23
+Pimienta de Jamaica | sin par | - | - | sin par | 2026-10-22
+Pimienta negra | ciqual:11015 Poivre noir, poudre | 331 13.3 65.2 7.5 | 32 % kcal | revisado: método de energía: USDA usa factores bajos para las especias (32 % kcal) | 2026-10-23
+Romero | sin par | - | - | sin par | 2026-10-23
+Sal | cofid:17-367 Salt | 0 0 0 0 | 0 % kcal | ok | 2026-10-22
+Salvia | sin par | - | - | sin par | 2026-10-23
+Semillas de amapola | sin par | - | - | sin par | 2026-10-23
+Semillas de cilantro | sin par | - | - | sin par | 2026-10-22
+Tomillo | sin par | - | - | sin par | 2026-10-23
+Acerola | taco:169 Acerola, crua | 33 0.9 8 0.2 | 3 % P | ok | 2026-10-22
+Aguacate | taco:163 Abacate, cru | 96 1.2 6 8.4 | 40 % kcal | revisado: variedad: la palta brasileña tiene mucha menos grasa que la Hass (40 % kcal) | 2026-10-23
+Albaricoque | ciqual:13000 Abricot, dénoyauté, cru | 44 0.8 11.2 0.3 | 4 % kcal | ok | 2026-10-23
+Arándanos | cofid:14-325 Blueberries | 40 0.9 10.6 0.2 | 19 % C | revisado: variedad, y USDA cuenta los ácidos como carbohidratos (19 % C) | 2026-10-23
+Arándanos secos | ciqual:13178 Canneberge ou cranberry, séchée, sucrée | 332 0.3 84 1 | 8 % kcal | ok | 2026-10-22
+Banana | ciqual:13005 Banane, chair sans peau, crue | 88 1.1 22.1 0.3 | 3 % C | ok | 2026-10-23
+Caqui | ciqual:13066 Kaki, chair et peau, cru | 66 0.9 16.8 0.2 | 9 % C | ok | 2026-10-23
+Carambola | taco:190 Carambola, crua | 46 0.9 11.5 0.2 | 24 % C | revisado: variedad y madurez (24 % C) | 2026-10-23
+Cerezas | ciqual:13008 Ceriser, chair et peau, sans noyau, crue | 54 0.8 13 0.2 | 15 % C | revisado: variedad (15 % C) | 2026-10-23
+Cerezas al marrasquino | sin par | - | - | sin par | 2026-10-23
+Chicozapote | cofid:14-256 Sapodilla, flesh only | 69 0.6 - 0.9 | 14 % kcal | revisado: variedad (14 % kcal) | 2026-10-23
+Chirimoya | sin par | - | - | sin par | 2026-10-22
+Ciruela | taco:172 Ameixa, crua | 53 0.8 13.9 0 | 12 % C | revisado: variedad (12 % C) | 2026-10-23
+Ciruelas pasas | ciqual:13042 Pruneau, sans noyau, sec | 229 1.6 61.4 0.4 | 5 % kcal | ok | 2026-10-23
+Clementina | ciqual:13024 Clémentine ou mandarine, chair sans peau, sans pépins, crue | 46 0.8 11.6 0.3 | 2 % kcal | ok | 2026-10-22
+Coco | taco:590 Coco, cru | 406 3.7 10.4 42 | 25 % G | revisado: el coco de TACO está más maduro y seco (25 % G) | 2026-10-23
+Cóctel de frutas | ciqual:13707 Macédoine ou cocktail ou salade de fruits, au sirop, appertisé, non égoutté | 75 0.3 19.4 0.3 | 18 % C | revisado: otro almíbar (18 % C) | 2026-10-23
+Compota de manzana | ciqual:13038 Compote de pomme, préemballée | 107 0.3 26.4 0.2 | 42 % C | revisado: la francesa lleva más azúcar (42 % C) | 2026-10-23
+Dátiles | ciqual:13011 Datte, chair et peau, sans noyau, sèche | 287 1.8 73.3 0.3 | 4 % kcal | ok | 2026-10-23
+Durazno | ciqual:13398 Pêche, chair sans peau, sans noyau, crue (aliment moyen) | 44 0.7 11 0.3 | 7 % C | ok | 2026-10-23
+Duraznos en almíbar | taco:245 Pêssego, enlatado, em calda | 63 0.7 16.9 0 | 9 % kcal | ok | 2026-10-23
+Ensalada de frutas | ciqual:13134 Salade de fruits, crue | 79 0.6 20.4 0.2 | 35 % C | revisado: otra mezcla de frutas (35 % C) | 2026-10-23
+Feijoa | cofid:14-090 Feijoa, flesh only | 47 0.9 - 0.5 | 14 % kcal | revisado: variedad, y CoFID no cuenta la fibra como energía (14 % kcal) | 2026-10-23
+Frambuesas | ciqual:13015 Framboise, crue | 48 1.2 10.9 0.8 | 5 % C | ok | 2026-10-22
+Fresas | taco:239 Morango, cru | 30 0.9 6.8 0.3 | 4 % C | ok | 2026-10-22
+Frutos rojos congelados | ciqual:13997 Fruits rouges, crus (framboises, fraises, groseilles, cassis) | - 1 12.9 0.5 | 2 % C | ok | 2026-10-22
+Granada | taco:249 Romã, crua | 56 0.4 15.1 0 | 27 % kcal | revisado: TACO la mide sin las semillas (27 % kcal) | 2026-10-23
+Guanábana | taco:201 Graviola, crua | 62 0.8 15.8 0.2 | 5 % C | ok | 2026-10-22
+Guayaba | cofid:14-118 Guava, flesh only, raw | 26 0.8 8.5 0.5 | 42 % kcal | revisado: variedad, y CoFID no cuenta la fibra como energía (42 % kcal) | 2026-10-23
+Higo | taco:194 Figo, cru | 41 1 10.2 0.2 | 45 % C | revisado: variedad y madurez: el de TACO tiene más agua (45 % C) | 2026-10-23
+Higos secos | ciqual:13013 Figue, sèche | 261 2.9 63.9 1.2 | 5 % kcal | ok | 2026-10-22
+Jaca | taco:204 Jaca, crua | 88 1.4 22.5 0.3 | 7 % kcal | ok | 2026-10-22
+Kiwi | taco:207 Kiwi, cru | 51 1.3 11.5 0.6 | 16 % C | revisado: variedad y madurez (16 % C) | 2026-10-23
+Lichi | cofid:14-142 Lychees, raw, flesh only | 58 0.9 14.3 0.1 | 11 % C | revisado: variedad (11 % C) | 2026-10-23
+Lima | taco:220 Limão, tahiti, cru | 32 0.9 11.1 0.1 | 3 % C | ok | 2026-10-23
+Limón | ciqual:13009 Citron, chair sans peau, sans pépins, cru | 24 0.3 7.8 0.3 | 7 % C | ok | 2026-10-23
+Lulo | sin par | - | - | sin par | 2026-10-22
+Mamey | sin par | - | - | sin par | 2026-10-22
+Mandarina | ciqual:13024 Clémentine ou mandarine, chair sans peau, sans pépins, crue | 46 0.8 11.6 0.3 | 9 % C | ok | 2026-10-23
+Mandarinas en almíbar | sin par | - | - | sin par | 2026-10-22
+Mango | ciqual:13025 Mangue, chair sans peau, sans noyau, crue | 71 0.6 17.7 0.3 | 14 % C | revisado: variedad (14 % C) | 2026-10-23
+Mango deshidratado | sin par | - | - | sin par | 2026-10-22
+Manzana | ciqual:13039 Pomme, chair et peau, crue | 54 0.3 13.5 0.3 | 2 % kcal | ok | 2026-10-22
+Manzana deshidratada | cofid:14-016 Apples, eating, dried | 238 2 66.9 0.5 | 5 % P | ok | 2026-10-22
+Maracuyá | taco:232 Maracujá, cru | 68 2 12.3 2.1 | 48 % C | revisado: otra especie (el amarillo) y menos semillas en TACO (48 % C) | 2026-10-23
+Melón | ciqual:13026 Melon cantaloup (par ex.: Charentais), chair sans peau, sans pépins, cru | 60 1.1 13 0.3 | 26 % kcal | revisado: el charentais francés es más dulce (26 % kcal) | 2026-10-23
+Melón verde | taco:236 Melão, cru | 29 0.7 7.5 0 | 8 % C | ok | 2026-10-23
+Membrillo | cofid:14-241 Quinces, flesh only | 26 0.3 - 0.1 | 31 % kcal | revisado: variedad, y CoFID no cuenta la fibra como energía (31 % kcal) | 2026-10-23
+Moras | ciqual:13029 Mûre (de ronce), crue | 46 1.1 11.6 0.7 | 10 % C | ok | 2026-10-22
+Naranja | ciqual:13034 Orange, chair sans peau, sans pépins, crue | 42 0.8 11.3 0.3 | 5 % kcal | ok | 2026-10-23
+Nectarina | ciqual:13399 Nectarine ou brugnon, chair et peau, sans noyau, crue (aliment moyen) | 50 0.7 11.9 0.3 | 7 % C | ok | 2026-10-23
+Níspero | taco:240 Nêspera, crua | 43 0.3 11.5 0 | 4 % kcal | ok | 2026-10-22
+Orejones | ciqual:13001 Abricot, dénoyauté, sec | 239 2.9 69.4 0.5 | 11 % C | revisado: otro grado de secado (11 % C) | 2026-10-23
+Papaya | ciqual:13035 Papaye, chair sans peau, crue | 40 0.8 9.9 0.2 | 4 % C | ok | 2026-10-23
+Pasas de uva | ciqual:13046 Raisin sec | 322 3 77.6 0.9 | 8 % kcal | ok | 2026-10-22
+Pera | ciqual:13037 Poire, chair et peau, crue | 57 0.4 15.5 0.3 | 1 % C | ok | 2026-10-22
+Pera asiática | sin par | - | - | sin par | 2026-10-23
+Peras en almíbar | ciqual:13734 Poire au sirop léger, appertisée, égouttée | 64 0.3 16.9 0.4 | 11 % C | revisado: el francés va en almíbar liviano (11 % C) | 2026-10-23
+Piña | taco:164 Abacaxi, cru | 48 0.9 12.3 0.1 | 4 % C | ok | 2026-10-22
+Piña en almíbar | cofid:14-212 Pineapple, canned in syrup, whole contents | 64 0.5 16.4 0 | 19 % C | revisado: el británico va en un almíbar más liviano (19 % C) | 2026-10-23
+Pitahaya | sin par | - | - | sin par | 2026-10-23
+Pitanga | taco:247 Pitanga, crua | 41 0.9 10.2 0.2 | 14 % C | revisado: variedad y madurez (14 % C) | 2026-10-23
+Pulpa de açaí | sin par | - | - | sin par | 2026-10-23
+Sandía | taco:235 Melancia, crua | 33 0.9 8.1 0 | 3 % kcal | ok | 2026-10-22
+Tamarindo | taco:250 Tamarindo, cru | 276 3.2 72.5 0.5 | 16 % C | revisado: variedad (16 % C) | 2026-10-23
+Toronja | ciqual:13040 Pomelo (dit Pamplemousse), chair sans peau, sans pépins, cru | 34 0.8 7.7 0.3 | 15 % C | revisado: variedad (15 % C) | 2026-10-23
+Tuna | ciqual:13063 Figue de Barbarie, chair et peau, avec pépins, crue | 52 0.1 15.2 0.1 | 28 % C | revisado: variedad (28 % C) | 2026-10-23
+Uchuva | cofid:14-207 Physalis, fruit only | 53 1.8 - 0.2 | 3 % G | ok | 2026-10-23
+Uvas | ciqual:13395 Raisin cru (aliment moyen) | 71 0.7 17.4 0.3 | 12 % kcal | revisado: variedad (12 % kcal) | 2026-10-23
+Almendras | ciqual:15000 Amande, avec peau, sans sel ajouté | 615 18.8 22 51.3 | 8 % P | ok | 2026-10-22
+Almendras saladas | taco:587 Amêndoa, torrada, salgada | 581 18.6 29.5 47.3 | 46 % C | revisado: variedad, y TACO las tuesta (46 % C) | 2026-10-23
+Avellanas | ciqual:15004 Noisette, sans sel ajouté | 632 14.4 18.8 56.9 | 10 % C | ok | 2026-10-22
+Castañas | ciqual:15021 Châtaigne, grillée | 211 3.3 48.8 1.7 | 14 % kcal | revisado: otra cocción (14 % kcal) | 2026-10-23
+Castañas de cajú | ciqual:15054 Noix de cajou, grillée, sans sel ajouté | 618 17.4 30.2 48.1 | 13 % P | revisado: variedad (13 % P) | 2026-10-23
+Castañas de cajú saladas | taco:588 Castanha-de-caju, torrada, salgada | 570 18.5 29.1 46.3 | 19 % P | revisado: variedad (19 % P) | 2026-10-23
+Chía | sin par | - | - | sin par | 2026-10-23
+Coco rallado | sin par | - | - | sin par | 2026-10-23
+Crema de almendras | sin par | - | - | sin par | 2026-10-23
+Linaza | taco:594 Linhaça, semente | 495 14.1 43.3 32.3 | 26 % C | revisado: variedad (26 % C) | 2026-10-23
+Macadamia | cofid:14-891 Macadamia nuts, salted | 748 7.9 9.8 77.6 | 15 % C | revisado: método: USDA saca los carbohidratos por diferencia (15 % C) | 2026-10-23
+Maní | ciqual:15053 Cacahuète, grillée, sans sel ajouté | 644 23.5 20.2 51.9 | 25 % C | revisado: variedad (25 % C) | 2026-10-23
+Maní salado | taco:558 Amendoim, torrado, salgado | 606 22.5 18.7 54 | 20 % P | revisado: variedad (20 % P) | 2026-10-23
+Mantequilla de maní | cofid:14-892 Peanut butter, smooth | 607 22.8 18.8 51.8 | 16 % C | revisado: método: USDA saca los carbohidratos por diferencia (16 % C) | 2026-10-23
+Mix con pasas | cofid:14-849 Trail mix | 432 9.1 40.5 28.5 | 21 % C | revisado: otra mezcla (21 % C) | 2026-10-23
+Mix de frutos secos | cofid:14-880 Nuts, mixed | 581 23.8 17 49.1 | 21 % P | revisado: otra mezcla (21 % P) | 2026-10-23
+Nueces | taco:597 Noz, crua | 620 14 18.4 59.4 | 37 % C | revisado: variedad, y la nuez de TACO tiene más agua (37 % C) | 2026-10-23
+Nueces de Brasil | taco:589 Castanha-do-Brasil, crua | 643 14.5 15.1 63.5 | 17 % C | revisado: variedad (17 % C) | 2026-10-23
+Nueces pecanas | cofid:14-837 Pecan nuts, kernel only | 689 9.2 10.2 70.1 | 13 % C | revisado: método: USDA saca los carbohidratos por diferencia (13 % C) | 2026-10-23
+Piñones | cofid:14-839 Pine nuts, kernel only | 688 14 5.7 68.6 | 37 % C | revisado: método: USDA saca los carbohidratos por diferencia (37 % C) | 2026-10-23
+Pistachos | ciqual:15044 Pistache, grillée, sans sel ajouté | 631 18.4 25.2 51.6 | 13 % P | revisado: variedad y tostado (13 % P) | 2026-10-23
+Semillas de calabaza | cofid:14-842 Pumpkin seeds | 565 24.4 19.2 45.6 | 22 % C | revisado: variedad (22 % C) | 2026-10-23
+Semillas de cáñamo | sin par | - | - | sin par | 2026-10-23
+Semillas de girasol | ciqual:15011 Tournesol, graine | 653 21.3 16.4 55.5 | 32 % C | revisado: variedad (32 % C) | 2026-10-23
+Sésamo | taco:593 Gergelim, semente | 584 21.2 21.6 50.4 | 49 % C | revisado: variedad, y USDA saca los carbohidratos por diferencia (49 % C) | 2026-10-23
+Tahini | sin par | - | - | sin par | 2026-10-22
+Aceite de aguacate | sin par | - | - | sin par | 2026-10-22
+Aceite de arroz | sin par | - | - | sin par | 2026-10-23
+Aceite de canola | taco:268 Óleo, de canola | 884 0 0 100 | 2 % kcal | ok | 2026-10-22
+Aceite de coco | ciqual:16060 Huile ou graisse de coco (coprah), raffinée | 900 0 0 100 | 4 % C | ok | 2026-10-23
+Aceite de girasol | taco:269 Óleo, de girassol | 884 0 0 100 | 2 % kcal | ok | 2026-10-22
+Aceite de maíz | taco:270 Óleo, de milho | 884 0 0 100 | 2 % kcal | ok | 2026-10-22
+Aceite de maní | ciqual:17040 Huile d'arachide | 899 0.3 0 99.9 | 2 % kcal | ok | 2026-10-22
+Aceite de oliva | taco:260 Azeite, de oliva, extra virgem | 884 0 0 100 | 2 % kcal | ok | 2026-10-22
+Aceite de sésamo | cofid:17-043 Oil, sesame | 898 0.2 0 99.7 | 2 % kcal | ok | 2026-10-22
+Aceite de soja | taco:272 Óleo, de soja | 884 0 0 100 | 0 % kcal | ok | 2026-10-22
+Aceite vegetal | ciqual:17001 Huile végétale (aliment moyen) | 899 0.2 0 99.9 | 1 % P | ok | 2026-10-22
+Ghee | cofid:17-640 Ghee, butter | 878 0.1 0 97.6 | 2 % G | ok | 2026-10-22
+Manteca de cerdo | cofid:17-010 Lard | 891 0 0 99 | 1 % kcal | ok | 2026-10-22
+Manteca vegetal | ciqual:16080 Matière grasse ou graisse végétale solide (type margarine) pour friture ou graisse à frire | 898 0.3 0 99.8 | 2 % kcal | ok | 2026-10-23
+Mantequilla | taco:261 Manteiga, com sal | 726 0.4 0.1 82.4 | 2 % kcal | ok | 2026-10-23
+Mantequilla light | ciqual:16410 Beurre à 60-62% MG, à teneur réduite en matière grasse, doux | 550 0.6 1 60.6 | 14 % P | revisado: otra formulación (14 % P) | 2026-10-23
+Mantequilla sin sal | taco:262 Manteiga, sem sal | 758 0.4 0 86 | 6 % kcal | ok | 2026-10-23
+Margarina | taco:263 Margarina, com óleo hidrogenado, com sal (65% de lipídeos) | 596 0 0 67.4 | 4 % C | ok | 2026-10-23
+Margarina light | cofid:12-497 Fat spread, low fat (26-39%), not polyunsaturated, including dairy type | 354 0.2 0.7 39 | 3 % C | ok | 2026-10-23
+Clara de huevo | cofid:12-938 Eggs, chicken, white, raw | 43 10.8 0 0 | 12 % C | revisado: método: USDA saca los carbohidratos por diferencia (12 % C) | 2026-10-23
+Claras cocidas | taco:486 Ovo, de galinha, clara, cozida/10minutos | 59 13.4 0 0.1 | 14 % P | revisado: la de TACO está más cocida: menos agua (14 % P) | 2026-10-23
+Huevo | taco:489 Ovo, de galinha, inteiro, cru | 143 13 1.6 8.9 | 5 % G | ok | 2026-10-22
+Huevo a la plancha | ciqual:22505 Oeuf au plat, sans matière grasse | 157 14.6 1.4 10.4 | 11 % P | revisado: otra pérdida de agua (11 % P) | 2026-10-23
+Huevo de codorniz | taco:485 Ovo, de codorna, inteiro, cru | 177 13.7 0.8 12.7 | 12 % kcal | revisado: variación natural (12 % kcal) | 2026-10-23
+Huevo de pato | cofid:12-920 Eggs, duck, whole, raw | 163 14.3 0 11.8 | 12 % kcal | revisado: variación natural (12 % kcal) | 2026-10-23
+Huevo duro | taco:488 Ovo, de galinha, inteiro, cozido/10minutos | 146 13.3 0.6 9.5 | 4 % P | ok | 2026-10-23
+Huevo frito | taco:490 Ovo, de galinha, inteiro, frito | 240 15.6 1.2 18.6 | 25 % kcal | revisado: el de TACO absorbe más aceite (25 % kcal) | 2026-10-23
+Huevos revueltos | ciqual:22502 Oeuf brouillé, avec matière grasse | 167 11.9 0 13 | 14 % G | revisado: menos aceite en el francés (14 % G) | 2026-10-23
+Omelet de queso | taco:484 Omelete, de queijo | 268 15.6 0.4 22 | 26 % kcal | revisado: la de TACO lleva más queso y aceite (26 % kcal) | 2026-10-23
+Yema de huevo | ciqual:22002 Oeuf, jaune (jaune d'oeuf), cru | 307 15.5 1.1 26.7 | 7 % G | ok | 2026-10-22
+Extracto de malta | sin par | - | - | sin par | 2026-10-22
+Grasa de res | cofid:17-487 Dripping, beef | 891 0 0 99 | 1 % kcal | ok | 2026-10-23
+Hojaldre horneado | cofid:11-854 Pastry, flaky/puff, retail, cooked | 486 6.7 42.5 33.2 | 14 % G | revisado: otra marca (14 % G) | 2026-10-23
+Levadura fresca | taco:514 Fermento, biológico, levedura, tablete | 90 17 7.7 1.5 | 52 % C | revisado: otra levadura, más concentrada, y USDA saca los carbohidratos por diferencia (52 % C) | 2026-10-23
+Maíz blanco partido | taco:19 Canjica, branca, crua | 358 7.2 78.1 1 | 19 % G | revisado: la canjica va sin el germen (19 % G) | 2026-10-23
+Maíz cremoso | sin par | - | - | sin par | 2026-10-22
+Masa de hojaldre | cofid:11-852 Pastry, flaky/puff, retail, uncooked | 384 5.3 33.5 26.2 | 31 % G | revisado: otra marca, con menos grasa (31 % G) | 2026-10-23
+Masa de pizza | ciqual:37001 Pâte à pizza, préemballée, crue | 240 7.1 46.4 3.5 | 4 % P | ok | 2026-10-22
+Masa de tarta | ciqual:23410 Pâte brisée, matière grasse végétale, préemballée, crue | 392 5.2 43.2 21.7 | 45 % G | revisado: la casera lleva menos grasa (45 % G) | 2026-10-23
+Pimienta de cayena | sin par | - | - | sin par | 2026-10-23
+Polvo de hornear | taco:513 Fermento em pó, químico | 90 0.5 43.9 0.1 | 59 % C | revisado: otra formulación, con más almidón (59 % C) | 2026-10-23
+Tapas de empanada | sin par | - | - | sin par | 2026-10-22
+Chocolate caliente | ciqual:18104 Chocolat chaud, boisson instantanée, sucrée, prête à boire (reconstituée avec du lait demi-écrémé) | 66 3.8 9.3 1.4 | 36 % C | revisado: el de USDA lleva más cacao y azúcar (36 % C) | 2026-10-23
+Crema agria | sin par | - | - | sin par | 2026-10-23
+Crema batida | ciqual:19420 Crème chantilly, sous pression, UHT | 305 2.1 12.2 28.2 | 16 % G | revisado: otra crema (16 % G) | 2026-10-23
+Crema de leche | cofid:12-333 Cream, fresh, whipping | 381 2 2.6 40.3 | 13 % G | revisado: la británica es crema para batir, con más grasa (13 % G) | 2026-10-23
+Crema liviana | ciqual:19436 Crème 12 à 20% MG, légère, fluide, rayon frais | 173 3 8.2 16 | 23 % C | revisado: otra formulación (23 % C) | 2026-10-23
+Crema para café | cofid:12-112 Cream, half, fresh | 148 3 4.1 13.3 | 13 % kcal | revisado: otro contenido de grasa (13 % kcal) | 2026-10-23
+Kéfir | ciqual:19865 Kéfir de lait | 61 3.2 5 3.4 | 12 % C | revisado: otro contenido de grasa y azúcar (12 % C) | 2026-10-23
+Leche chocolatada | taco:455 Leite, de vaca, achocolatado | 83 2.1 14.2 2.2 | 10 % C | ok | 2026-10-23
+Leche condensada | taco:453 Leite, condensado | 313 7.7 57 6.7 | 10 % G | ok | 2026-10-22
+Leche de almendras | ciqual:18107 Boisson à l'amande, nature, sans sucres ajoutés, non enrichie, préemballée | 36 1.1 1 3.2 | 21 % kcal | revisado: otra marca, con más almendra (21 % kcal) | 2026-10-23
+Leche de almendras endulzada | ciqual:18110 Boisson à l'amande, sucrée, enrichie en calcium, préemballée | 44 0.7 4.2 2.8 | 14 % kcal | revisado: otra marca, con más almendra (14 % kcal) | 2026-10-23
+Leche de arroz | ciqual:18904 Boisson au riz, nature, préemballée | 52 0.2 11 1 | 9 % C | ok | 2026-10-23
+Leche de avena | ciqual:18899 Boisson à l'avoine, nature, sans sucres ajoutés, non enrichie, préemballée | 41 0.3 8 1.1 | 13 % C | revisado: otra marca (13 % C) | 2026-10-23
+Leche de cabra | taco:454 Leite, de cabra | 66 3.1 5.2 3.8 | 4 % C | ok | 2026-10-22
+Leche de coco | ciqual:18907 Boisson à la noix de coco, nature, préemballée | 30 0.2 3 2.1 | 1 % kcal | ok | 2026-10-23
+Leche de coco para cocinar | taco:523 Leite, de coco | 166 1 2.2 18.4 | 28 % kcal | revisado: otra concentración (28 % kcal) | 2026-10-23
+Leche de fresa | ciqual:19127 Boisson lactée aromatisée à la fraise, sucrée, au lait partiellement écrémé, enrichie en vitamine D | 59 2.5 9.2 0.7 | 12 % kcal | revisado: otra formulación (12 % kcal) | 2026-10-23
+Leche de soja | taco:582 Soja, extrato solúvel, natural, fluido | 39 2.4 4.3 1.6 | 15 % C | revisado: otra marca (15 % C) | 2026-10-23
+Leche de soja endulzada | ciqual:18902 Boisson au soja, aromatisée, sucrée, non enrichie, préemballée | 62 3.1 8.5 1.8 | 16 % C | revisado: otra marca, con más azúcar (16 % C) | 2026-10-23
+Leche descremada | ciqual:19050 Lait écrémé, UHT | 34 3.6 5 0 | 1 % P | ok | 2026-10-22
+Leche deslactosada | ciqual:19060 Lait demi-écrémé (ou à teneur en matière grasse légèrement inférieure), UHT,  à teneur réduite en lactose | 44 3.5 4.9 1.3 | 6 % kcal | ok | 2026-10-22
+Leche deslactosada descremada | ciqual:19050 Lait écrémé, UHT | 34 3.6 5 0 | 1 % P | ok | 2026-10-22
+Leche en polvo | taco:459 Leite, de vaca, integral, pó | 497 25.4 39.2 26.9 | 3 % P | ok | 2026-10-23
+Leche en polvo descremada | taco:456 Leite, de vaca, desnatado, pó | 362 34.7 53 0.9 | 4 % P | ok | 2026-10-23
+Leche entera | ciqual:19016 Lait entier (aliment moyen) | 64 3.4 4.4 3.5 | 3 % kcal | ok | 2026-10-22
+Leche entera deslactosada | ciqual:19016 Lait entier (aliment moyen) | 64 3.4 4.4 3.5 | 3 % kcal | ok | 2026-10-23
+Leche evaporada | cofid:12-522 Milk, evaporated, whole | 166 8.4 12.1 9.4 | 24 % kcal | revisado: otra concentración (24 % kcal) | 2026-10-23
+Leche semidescremada | ciqual:19033 Lait demi-écrémé (aliment moyen) | 48 3.5 5 1.6 | 3 % kcal | ok | 2026-10-23
+Sustituto de crema en polvo | cofid:12-546 Coffeemate, whitener powder | 534 2.1 54.8 34.5 | 8 % C | ok | 2026-10-23
+Yogur bebible | ciqual:19508 Lait fermenté ou yaourt à boire, aromatisé, sucré | 66 3.2 11.7 0.9 | 8 % kcal | ok | 2026-10-23
+Yogur con frutas | cofid:12-380 Yogurt, low fat, fruit | 78 4.2 13.4 1.1 | 15 % kcal | revisado: otra marca (15 % kcal) | 2026-10-23
+Yogur descremado | taco:449 Iogurte, natural, desnatado | 41 3.8 5.8 0.3 | 12 % C | revisado: otra marca (12 % C) | 2026-10-23
+Yogur descremado con frutas | ciqual:19581 Yaourt ou lait fermenté, aux fruits, 0% MG, avec édulcorants | 45 4.4 7.6 0.1 | 4 % P | ok | 2026-10-23
+Yogur entero con frutas | cofid:12-375 Yogurt, whole milk, fruit | 109 4 - 3 | 4 % G | ok | 2026-10-23
+Yogur entero saborizado | ciqual:19575 Yaourt ou lait fermenté, aromatisé, sucré | 86 3.2 13.6 2.3 | 9 % kcal | ok | 2026-10-23
+Yogur griego | sin par | - | - | sin par | 2026-10-23
+Yogur griego con frutas | ciqual:19552 Yaourt à la grecque sur lit de fruits, sucré | 126 2.3 15.4 6.5 | 28 % P | revisado: el francés no es colado, solo cremoso (28 % P) | 2026-10-23
+Yogur griego descremado | sin par | - | - | sin par | 2026-10-23
+Yogur natural | taco:448 Iogurte, natural | 51 4.1 1.9 3 | 27 % kcal | revisado: otra marca (27 % kcal) | 2026-10-23
+Yogur saborizado | ciqual:19682 Yaourt ou lait fermenté, aromatisé ou aux fruits (aliment moyen) | 88 3.3 13.2 2.7 | 6 % kcal | ok | 2026-10-23
+Altramuces | taco:586 Tremoço, em conserva | 121 11.1 12.4 3.8 | 22 % P | revisado: los de TACO son en conserva, con más agua (22 % P) | 2026-10-23
+Arvejas partidas | sin par | - | - | sin par | 2026-10-23
+Arvejas partidas crudas | sin par | - | - | sin par | 2026-10-23
+Edamame | cofid:13-667 Beans, edamame, frozen, boiled in unsalted water | 142 12.2 11.9 7.6 | 16 % C | revisado: método: USDA saca los carbohidratos por diferencia (16 % C) | 2026-10-23
+Edamame crudo | sin par | - | - | sin par | 2026-10-22
+Frijoles blancos | ciqual:20502 Haricot blanc, bouilli/cuit à l'eau | 112 6.8 24.2 1.1 | 19 % kcal | revisado: otra cantidad de agua de cocción (19 % kcal) | 2026-10-23
+Frijoles blancos crudos | cofid:13-086 Beans, haricot, whole, dried, raw | 286 21.4 62.5 1.6 | 14 % kcal | revisado: método de energía: CoFID no cuenta la fibra (14 % kcal) | 2026-10-23
+Frijoles blancos en lata | ciqual:20511 Haricot blanc, appertisé, égoutté | 86 5.9 19.5 0.5 | 25 % kcal | revisado: otra marca (25 % kcal) | 2026-10-23
+Frijoles carita | taco:563 Feijão, fradinho, cozido | 78 5.1 13.5 0.6 | 35 % C | revisado: otra cantidad de agua de cocción (35 % C) | 2026-10-23
+Frijoles carita crudos | taco:564 Feijão, fradinho, cru | 339 20.2 61.2 2.4 | 14 % P | revisado: variedad (14 % P) | 2026-10-23
+Frijoles horneados | cofid:13-532 Baked beans, canned in tomato sauce | 81 5 18.8 0.5 | 13 % kcal | revisado: otra receta (13 % kcal) | 2026-10-23
+Frijoles lima | cofid:13-663 Beans, butter, dried, boiled in unsalted water | 105 8.1 26.5 1.1 | 27 % C | revisado: otra cantidad de agua de cocción (27 % C) | 2026-10-23
+Frijoles lima crudos | cofid:13-070 Beans, butter, dried, raw | 290 19.1 64.4 1.7 | 14 % kcal | revisado: método de energía: CoFID no cuenta la fibra (14 % kcal) | 2026-10-23
+Frijoles negros | taco:567 Feijão, preto, cozido | 77 4.5 14 0.5 | 42 % kcal | revisado: TACO los cocina con más agua (42 % kcal) | 2026-10-23
+Frijoles negros crudos | taco:568 Feijão, preto, cru | 324 21.3 58.8 1.2 | 6 % C | ok | 2026-10-23
+Frijoles negros en lata | sin par | - | - | sin par | 2026-10-23
+Frijoles pintos | cofid:13-107 Beans, pinto, dried, boiled in unsalted water | 137 8.9 - 0.7 | 4 % kcal | ok | 2026-10-23
+Frijoles pintos crudos | cofid:13-106 Beans, pinto, dried, raw | 327 21.1 - 1.6 | 6 % kcal | ok | 2026-10-23
+Frijoles refritos | cofid:13-108 Beans, pinto, re-fried beans | 107 6.2 - 1.1 | 17 % kcal | revisado: otra receta (17 % kcal) | 2026-10-23
+Frijoles rojos | ciqual:20503 Haricot rouge, bouilli/cuit à l'eau | 116 9.6 23.8 0.6 | 9 % kcal | ok | 2026-10-22
+Frijoles rojos crudos | cofid:13-109 Beans, red kidney, dried, raw | 266 22.1 56.1 1.4 | 21 % kcal | revisado: método de energía: CoFID no cuenta la fibra (21 % kcal) | 2026-10-23
+Frijoles rojos en lata | ciqual:20524 Haricot rouge, appertisé, égoutté | 108 8.3 20.5 1 | 13 % kcal | revisado: otra marca (13 % kcal) | 2026-10-23
+Garbanzos | ciqual:20507 Pois chiche, bouilli/cuit à l'eau | 148 8.3 26 3 | 10 % kcal | ok | 2026-10-22
+Garbanzos crudos | taco:575 Grão-de-bico, cru | 355 21.2 57.9 5.4 | 8 % C | ok | 2026-10-23
+Garbanzos en lata | ciqual:20532 Pois chiche, appertisé, égoutté | 122 6.7 17.5 2.7 | 24 % C | revisado: otra marca (24 % C) | 2026-10-23
+Habas | cofid:13-064 Beans, broad, whole, raw | 59 5.7 12.7 1 | 13 % kcal | revisado: variedad (13 % kcal) | 2026-10-23
+Habas cocidas | ciqual:20500 Fève, bouillie/cuite à l'eau | 83 8.1 12.5 0.8 | 21 % kcal | revisado: otra cantidad de agua (21 % kcal) | 2026-10-23
+Hamburguesa vegetal | ciqual:20914 Galette ou pavé au soja | 252 15.5 14.3 14.7 | 42 % kcal | revisado: otra receta (42 % kcal) | 2026-10-23
+Hummus | ciqual:25621 Houmous, préemballé | 258 8.1 14.2 19.9 | 14 % G | revisado: otra receta (14 % G) | 2026-10-23
+Lentejas | taco:577 Lentilha, cozida | 93 6.3 16.3 0.5 | 20 % kcal | revisado: TACO las cocina con más agua (20 % kcal) | 2026-10-23
+Lentejas crudas | taco:578 Lentilha, crua | 339 23.2 62 0.8 | 6 % P | ok | 2026-10-22
+Soja | cofid:13-116 Beans, soya, dried, boiled in unsalted water | 141 14 11 7.3 | 21 % P | revisado: otra cantidad de agua (21 % P) | 2026-10-23
+Soja cruda | cofid:13-115 Beans, soya, dried, raw | 370 35.9 30.6 18.6 | 17 % kcal | revisado: método de energía: CoFID no cuenta la fibra (17 % kcal) | 2026-10-23
+Soja texturizada | sin par | - | - | sin par | 2026-10-23
+Tempeh | ciqual:20917 Tempeh | 157 16.1 14.3 4.7 | 33 % C | revisado: otra receta (33 % C) | 2026-10-23
+Tofu blando | taco:584 Soja, queijo (tofu) | 64 6.6 2.1 4 | 12 % kcal | revisado: otra marca (12 % kcal) | 2026-10-23
+Tofu firme | ciqual:20904 Tofu nature, préemballé | 147 13.4 3.3 8.5 | 19 % P | revisado: otra marca (19 % P) | 2026-10-23
+Bagel | ciqual:7258 Pain bagel | 301 9.8 52.7 4.6 | 16 % G | revisado: otra receta (16 % G) | 2026-10-23
+Bizcochos de chicharrón | sin par | - | - | sin par | 2026-10-23
+Bizcochos de grasa | cofid:11-1139 Pastry, flaky, cooked, homemade | 540 5.7 46.3 37.4 | 55 % G | revisado: otra receta (55 % G) | 2026-10-23
+Brioche | ciqual:7746 Brioche, sans précision (aliment moyen) | 363 8.4 53.7 13 | 53 % G | revisado: otra receta (53 % G) | 2026-10-23
+Chapati | cofid:11-987 Chapatis, made with fat, retail | 328 8.1 - 12.8 | 18 % G | revisado: otra receta (18 % G) | 2026-10-23
+Crepes | ciqual:23799 Crêpe, nature, préemballée, rayon frais | 257 6.3 43.8 6.8 | 99 % C | revisado: la francesa es dulce y más seca (99 % C) | 2026-10-23
+Croissant | ciqual:7603 Croissant, sans précision (aliment moyen) | 417 6.6 48.7 22.1 | 8 % P | ok | 2026-10-22
+Croissant con dulce de leche | ciqual:7603 Croissant, sans précision (aliment moyen) | 417 6.6 48.7 22.1 | 23 % G | revisado: otra receta (23 % G) | 2026-10-23
+Croissant de chocolate | ciqual:7730 Pain au chocolat, artisanal | 423 7.5 48.6 22.5 | 2 % C | ok | 2026-10-23
+Croissant glaseado | ciqual:7603 Croissant, sans précision (aliment moyen) | 417 6.6 48.7 22.1 | 11 % G | revisado: otra receta (11 % G) | 2026-10-23
+Danesa de crema | cofid:11-841 Pastries, Danish, retail | 446 4.9 42.8 29.2 | 57 % G | revisado: otra receta (57 % G) | 2026-10-23
+Danesa de dulce de leche | cofid:11-841 Pastries, Danish, retail | 446 4.9 42.8 29.2 | 53 % G | revisado: otra receta (53 % G) | 2026-10-23
+Dona bañada en chocolate | ciqual:23885 Beignet ou donut fourré ou nappé goût chocolat ou chocolat noisette, préemballé | 407 5.3 52 21 | 17 % G | revisado: otra receta (17 % G) | 2026-10-23
+Dona rellena de crema | cofid:11-849 Doughnuts, with jam | 321 5.4 47.5 13.1 | 29 % G | revisado: otro relleno (29 % G) | 2026-10-23
+Ensaimada | ciqual:7746 Brioche, sans précision (aliment moyen) | 363 8.4 53.7 13 | 17 % G | revisado: otra receta (17 % G) | 2026-10-23
+Focaccia | sin par | - | - | sin par | 2026-10-23
+Galleta de campaña | sin par | - | - | sin par | 2026-10-23
+Galleta malteada | sin par | - | - | sin par | 2026-10-23
+Galleta marina | ciqual:7351 Cracker de table au froment | 442 10.4 73.7 12.3 | 18 % G | revisado: otra receta (18 % G) | 2026-10-23
+Galletas de agua | taco:13 Biscoito, salgado, cream cracker | 432 10.1 68.7 14.4 | 36 % G | revisado: otra formulación (36 % G) | 2026-10-23
+Galletas de soda | taco:13 Biscoito, salgado, cream cracker | 432 10.1 68.7 14.4 | 29 % G | revisado: otra formulación (29 % G) | 2026-10-23
+Galletas de soda sin sal | taco:13 Biscoito, salgado, cream cracker | 432 10.1 68.7 14.4 | 28 % G | revisado: otra formulación (28 % G) | 2026-10-23
+Galletas integrales | ciqual:7349 Cracker de table au blé complet | 436 12.6 65.7 15.4 | 10 % P | ok | 2026-10-23
+Galletas multicereal | ciqual:38402 Biscuit ou cracker apéritif, à base de blé, nature ou aromatisé | 499 10.4 62.3 23.8 | 17 % P | revisado: otra formulación (17 % P) | 2026-10-23
+Galletas saladas de mantequilla | ciqual:38402 Biscuit ou cracker apéritif, à base de blé, nature ou aromatisé | 499 10.4 62.3 23.8 | 19 % P | revisado: otra formulación (19 % P) | 2026-10-23
+Grisines | ciqual:7525 Gressin, nature (sans sésame) | 428 11.4 73 10.5 | 7 % C | ok | 2026-10-23
+Hojaldre con membrillo | sin par | - | - | sin par | 2026-10-23
+Medialuna de grasa | ciqual:7603 Croissant, sans précision (aliment moyen) | 417 6.6 48.7 22.1 | 27 % G | revisado: otra receta (27 % G) | 2026-10-23
+Muffin inglés | ciqual:7257 Muffin anglais, petit pain spécial, préemballé | 228 9.1 46.6 1.1 | 5 % C | ok | 2026-10-22
+Palmeritas | ciqual:24660 Biscuit sec feuilleté, type palmier ou autres, artisanal | 499 5.9 56.2 30.4 | 5 % kcal | ok | 2026-10-22
+Pan blanco | ciqual:7200 Pain de mie blanc, préemballé | 279 7.1 53.4 4.4 | 9 % P | ok | 2026-10-23
+Pan blanco light | sin par | - | - | sin par | 2026-10-23
+Pan blanco sin sal | ciqual:7160 Pain blanc, sans sel ajouté | 282 8.7 59.7 1.2 | 20 % C | revisado: otra receta (20 % C) | 2026-10-23
+Pan con chicharrones | sin par | - | - | sin par | 2026-10-23
+Pan con grasa | sin par | - | - | sin par | 2026-10-23
+Pan con mantequilla | sin par | - | - | sin par | 2026-10-23
+Pan de ajo | cofid:11-937 Bread, garlic and herb, retail | 348 7 43.7 16.7 | 7 % P | ok | 2026-10-22
+Pan de avena | taco:48 Pão, aveia, forma | 343 12.4 59.6 5.7 | 28 % kcal | revisado: otra receta (28 % kcal) | 2026-10-23
+Pan de centeno | ciqual:7125 Pain de seigle et froment | 260 8.3 57.2 1 | 18 % C | revisado: otra receta (18 % C) | 2026-10-23
+Pan de hamburguesa | ciqual:7259 Pain pour burger ou hot dog (bun), préemballé | 283 8.2 51.1 4.9 | 8 % P | ok | 2026-10-22
+Pan de leche | ciqual:7711 Pain au lait, préemballé | 357 8.7 54.3 12.3 | 25 % G | revisado: otra receta (25 % G) | 2026-10-23
+Pan de maíz | sin par | - | - | sin par | 2026-10-22
+Pan de masa madre | ciqual:7002 Pain au levain | 261 7.4 59.7 1.3 | 17 % P | revisado: otra harina (17 % P) | 2026-10-23
+Pan de molde casero | ciqual:7200 Pain de mie blanc, préemballé | 279 7.1 53.4 4.4 | 5 % kcal | ok | 2026-10-23
+Pan de papa | sin par | - | - | sin par | 2026-10-23
+Pan de pasas | sin par | - | - | sin par | 2026-10-23
+Pan de queso | sin par | - | - | sin par | 2026-10-23
+Pan dulce | sin par | - | - | sin par | 2026-10-23
+Pan felipe | cofid:11-1006 Bread rolls, white, soft | 254 9.3 49.5 2.6 | 11 % P | revisado: otra receta (11 % P) | 2026-10-23
+Pan francés | taco:53 Pão, trigo, francês | 300 8 58.6 3.1 | 14 % P | revisado: otra harina (14 % P) | 2026-10-23
+Pan francés integral | ciqual:7110 Pain complet ou intégral (à la farine T150) | 234 8.7 51.6 1.7 | 5 % C | ok | 2026-10-23
+Pan integral | taco:52 Pão, trigo, forma, integral | 253 9.4 49.9 3.7 | 17 % C | revisado: otra receta (17 % C) | 2026-10-23
+Pan integral tostado | cofid:11-982 Bread, wholemeal, toasted | 255 11.2 53.1 2.9 | 12 % P | revisado: otra receta (12 % P) | 2026-10-23
+Pan multicereal | ciqual:7255 Pain aux céréales et/ou graines | 269 9.6 53.7 3.2 | 24 % C | revisado: otra receta (24 % C) | 2026-10-23
+Pan naan | cofid:11-973 Bread, naan, retail | 285 7.8 48.7 7.3 | 9 % P | ok | 2026-10-22
+Pan pita | ciqual:7180 Pain pita | 249 7.5 55.1 1.5 | 9 % kcal | ok | 2026-10-22
+Pan pita integral | sin par | - | - | sin par | 2026-10-23
+Pan rallado | taco:34 Farinha, de rosca | 371 11.4 75.8 1.5 | 19 % G | revisado: otra receta (19 % G) | 2026-10-23
+Pan rallado sazonado | taco:34 Farinha, de rosca | 371 11.4 75.8 1.5 | 20 % G | revisado: otra receta (20 % G) | 2026-10-23
+Pan sin gluten | sin par | - | - | sin par | 2026-10-23
+Pan tostado | cofid:11-1001 Bread, white, toasted | 267 9.7 54.3 2 | 10 % G | ok | 2026-10-23
+Pan tostado envasado | taco:63 Torrada, pão francês | 377 10.5 74.6 3.3 | 8 % P | ok | 2026-10-22
+Pancakes | ciqual:23827 Pancake (petite crêpe épaisse), sucrée, préemballée | 358 5.5 47.8 16.6 | 35 % C | revisado: el francés es industrial y más dulce (35 % C) | 2026-10-23
+Panecillo | cofid:11-1006 Bread rolls, white, soft | 254 9.3 49.5 2.6 | 19 % G | revisado: otra receta (19 % G) | 2026-10-23
+Panettone | ciqual:7719 Panettone (brioche italienne aux raisins secs et écorces d'orange confite), préemballée | 352 6.9 54.5 12.7 | 22 % G | revisado: otra receta (22 % G) | 2026-10-23
+Polvorón | ciqual:24049 Biscuit sec, sablé, galette ou palet, au beurre | 481 6.8 70 20 | 11 % G | revisado: otra receta (11 % G) | 2026-10-23
+Rollo de canela | cofid:11-1043 Chelsea buns, homemade | 361 7.8 55.1 12.5 | 53 % G | revisado: otra receta, sin glaseado (53 % G) | 2026-10-23
+Scones | cofid:11-958 Scones, plain, homemade | 352 7.2 53.5 12.7 | 9 % G | ok | 2026-10-23
+Scones de queso | cofid:11-1112 Scones, cheese, homemade | 358 10.1 43.5 16.4 | 13 % G | revisado: otra receta (13 % G) | 2026-10-23
+Tortilla de harina | ciqual:7815 Tortilla souple (à garnir), à base de blé | 320 8 56.5 7.5 | 14 % C | revisado: otra receta (14 % C) | 2026-10-23
+Tortilla de maíz | ciqual:7813 Tortilla souple (à garnir), à base de maïs | 316 6.1 60.5 5.6 | 45 % kcal | revisado: la francesa es una tortilla industrial, más seca (45 % kcal) | 2026-10-23
+Tortilla integral | sin par | - | - | sin par | 2026-10-23
+Tostada con mantequilla y dulce de leche | sin par | - | - | sin par | 2026-10-23
+Tostada con mantequilla y mermelada | sin par | - | - | sin par | 2026-10-23
+Tostadas de maíz | ciqual:38417 Chips de maïs ou tortilla chips, nature | 488 6.1 67 22.5 | 4 % C | ok | 2026-10-23
+Waffles | ciqual:23850 Gaufre bruxelloise ou liégeoise nature, artisanale | 301 8 38.2 13.4 | 27 % G | revisado: otra receta (27 % G) | 2026-10-23
+Canelones | ciqual:25081 Lasagnes ou canellonis à la viande (bolognaise), préemballés | 134 6.3 12.3 5.7 | 16 % kcal | revisado: otra receta (16 % kcal) | 2026-10-23
+Fideos de arroz | ciqual:9901 Vermicelle de riz, cuite, sans sel ajouté | 87 1.4 20.4 0.3 | 20 % kcal | revisado: otra cantidad de agua de cocción (20 % kcal) | 2026-10-23
+Fideos de arroz crudos | ciqual:9900 Vermicelles de riz sèches, crues | 365 7.4 81.7 1 | 7 % P | ok | 2026-10-23
+Fideos de huevo | cofid:11-941 Noodles, egg, fine, dried, boiled in unsalted water | 129 4.7 27.3 0.8 | 9 % C | ok | 2026-10-23
+Fideos de huevo crudos | cofid:11-719 Noodles, egg, dried, raw | 338 12 70 2 | 12 % kcal | revisado: método de energía (12 % kcal) | 2026-10-23
+Fideos instantáneos | sin par | - | - | sin par | 2026-10-23
+Fideos soba | sin par | - | - | sin par | 2026-10-23
+Fideos soba crudos | sin par | - | - | sin par | 2026-10-23
+Lasaña | ciqual:25081 Lasagnes ou canellonis à la viande (bolognaise), préemballés | 134 6.3 12.3 5.7 | 19 % C | revisado: otra receta (19 % C) | 2026-10-23
+Ñoquis | taco:136 Nhoque, batata, cozido | 181 5.9 36.8 1.9 | 98 % C | revisar | 2026-10-22
+Pasta cocida | ciqual:9811 Pâtes sèches, standard, cuites, sans sel ajouté | 167 6.1 33.6 1.1 | 9 % C | ok | 2026-10-22
+Pasta con salsa de tomate | cofid:11-735 Pasta, spaghetti, canned, in tomato sauce | 72 2.1 15.9 0.3 | 32 % kcal | revisado: la de lata tiene más salsa y agua (32 % kcal) | 2026-10-23
+Pasta fresca cocida | cofid:11-450 Pasta, plain, fresh, boiled | 159 6.6 30.9 1.5 | 24 % C | revisado: otra cantidad de agua de cocción (24 % C) | 2026-10-23
+Pasta fresca cruda | ciqual:9815 Pâtes fraîches, aux oeufs, crues | 283 10.1 57 1.9 | 6 % P | ok | 2026-10-23
+Pasta fresca de espinaca cocida | ciqual:9816 Pâtes fraîches, aux oeufs, cuites, sans sel ajouté | 168 5.8 33.5 1.3 | 34 % C | revisado: otra cantidad de agua de cocción (34 % C) | 2026-10-23
+Pasta fresca de espinaca cruda | ciqual:9815 Pâtes fraîches, aux oeufs, crues | 283 10.1 57 1.9 | 6 % P | ok | 2026-10-23
+Pasta integral cocida | ciqual:9871 Pâtes sèches, au blé complet, cuites, sans sel ajouté | 179 7.4 36.4 1.4 | 21 % C | revisado: otra cantidad de agua de cocción (21 % C) | 2026-10-23
+Pasta integral cruda | ciqual:9870 Pâtes sèches, au blé complet, crues | 353 11.8 73.7 2.2 | 10 % P | ok | 2026-10-22
+Pasta seca | taco:40 Macarrão, trigo, cru | 371 10 77.9 1.3 | 15 % P | revisado: otro trigo: el de TACO tiene menos proteína (15 % P) | 2026-10-23
+Pasta sin gluten cocida | ciqual:9875 Pâtes sèches, sans gluten (à base de riz et maïs), cuites, sans sel ajouté | 170 3.2 37.9 0.8 | 36 % C | revisado: otra cantidad de agua de cocción (36 % C) | 2026-10-23
+Pasta sin gluten cruda | ciqual:9874 Pâtes sèches, sans gluten, crues | 358 6.1 80 1.5 | 7 % P | ok | 2026-10-22
+Ravioles | ciqual:25149 Pâtes fraîches farcies (ex : raviolis, tortellinis, ravioles du Dauphiné), au fromage, préemballées, cuites | 226 10 28.9 8.3 | 33 % C | revisado: otra receta (33 % C) | 2026-10-23
+Tortellini | cofid:11-728 Pasta, egg, fresh, filled with cheese only, boiled in unsalted water | 216 10.5 29.7 6.7 | 18 % C | revisado: otra receta (18 % C) | 2026-10-23
+Almejas | ciqual:10027 Clam, praire ou palourde, bouilli/cuit à l'eau | 99 16.2 5.3 1.5 | 12 % P | revisado: otra pérdida de agua (12 % P) | 2026-10-23
+Almejas crudas | ciqual:10017 Clam, praire ou palourde, cru | 81 11.5 2.7 2.7 | 16 % P | revisado: otra especie (16 % P) | 2026-10-23
+Almejas en lata | sin par | - | - | sin par | 2026-10-22
+Anchoas | cofid:16-448 Anchovies, canned in oil, drained | 191 25.2 0 10 | 13 % P | revisado: otra marca (13 % P) | 2026-10-23
+Arenque ahumado | cofid:16-397 Kippers, flesh only, grilled | 245 21.7 0 17.6 | 26 % G | revisado: variación natural de la grasa del arenque (26 % G) | 2026-10-23
+Arenque en vinagre | cofid:16-183 Herring, pickled | 209 16.7 9.5 11.1 | 35 % G | revisado: otra receta (35 % G) | 2026-10-23
+Atún blanco en aceite | ciqual:26179 Thon germon ou thon blanc, à l'huile d'olive, appertisé, égoutté | 192 31.3 1 7 | 18 % P | revisado: otra marca (18 % P) | 2026-10-23
+Atún blanco en agua | sin par | - | - | sin par | 2026-10-23
+Atún crudo | ciqual:26064 Thon albacore, cru | 112 25 1 0.9 | 5 % C | ok | 2026-10-22
+Atún en aceite | taco:277 Atum, conserva em óleo | 166 26.2 0 6 | 16 % kcal | revisado: otra marca (16 % kcal) | 2026-10-23
+Atún en agua | ciqual:26039 Thon, au naturel, appertisé, égoutté | 143 26.8 0 3.9 | 57 % kcal | revisado: otra especie y otra marca: el francés tiene más grasa (57 % kcal) | 2026-10-23
+Atún fresco | ciqual:26041 Thon, rôti/cuit au four | 136 29.9 0 1.8 | 23 % kcal | revisado: el de USDA lleva grasa agregada (23 % kcal) | 2026-10-23
+Bacalao | ciqual:26023 Cabillaud, rôti/cuit au four | 95 22.3 0 0.6 | 25 % kcal | revisado: el de USDA lleva grasa agregada (25 % kcal) | 2026-10-23
+Bacalao crudo | ciqual:26043 Cabillaud, cru | 77 18.1 0.4 0.6 | 14 % P | revisado: el de USDA tiene más agua (14 % P) | 2026-10-23
+Bacalao frito | cofid:16-368 Cod, in batter, fried, takeaway | 240 16.8 10.2 14.7 | 16 % P | revisado: otro rebozado (16 % P) | 2026-10-23
+Bacalao salado | ciqual:26098 Morue, salée, sèche | 210 47.6 0 1.7 | 28 % kcal | revisado: otro grado de secado (28 % kcal) | 2026-10-23
+Bastones de pescado | cofid:16-405 Fish fingers, cod, grilled/baked | 223 14.3 22.2 9.2 | 35 % G | revisado: los de USDA son fritos (35 % G) | 2026-10-23
+Caballa | ciqual:26019 Maquereau, rôti/cuit au four | 228 21.5 0.1 15.8 | 14 % P | revisado: otra especie y otra cocción (14 % P) | 2026-10-23
+Caballa cruda | ciqual:26113 Chinchard, cru | 116 19 0 4.4 | 27 % kcal | revisado: variación natural de la grasa (27 % kcal) | 2026-10-23
+Caballa en lata | ciqual:26123 Maquereau, filet (grillé ou non), au naturel, appertisé, égoutté | 221 18.8 3.5 16.2 | 49 % G | revisado: otra especie: la caballa europea es más grasa (49 % G) | 2026-10-23
+Calamar | sin par | - | - | sin par | 2026-10-23
+Calamar crudo | ciqual:10001 Calmar ou calamar ou encornet, cru | 77 14.4 2.2 1.2 | 15 % kcal | revisado: variación natural, y USDA saca los carbohidratos por diferencia (15 % kcal) | 2026-10-23
+Calamares fritos | ciqual:10002 Calmar ou calamar ou encornet, à la romaine (beignet), préemballé | 229 8.7 27.7 9.5 | 68 % C | revisado: el francés, a la romana, lleva más rebozado (68 % C) | 2026-10-23
+Camarones | taco:284 Camarão, Rio Grande, grande, cozido | 90 19 0 1 | 9 % P | ok | 2026-10-23
+Camarones a la plancha | cofid:16-388 Prawns, king, grilled from raw | 102 23.5 0 0.9 | 31 % P | revisado: otra pérdida de agua (31 % P) | 2026-10-23
+Camarones crudos | taco:285 Camarão, Rio Grande, grande, cru | 47 10 0 0.5 | 24 % kcal | revisado: el de TACO tiene más agua; el de USDA lleva aditivos que retienen agua (24 % kcal) | 2026-10-23
+Camarones fritos | taco:286 Camarão, Sete Barbas, sem cabeça, com casca, frito | 231 18.4 2.9 15.6 | 48 % C | revisado: el de USDA va empanado; el de TACO, frito sin empanar y con cáscara (48 % C) | 2026-10-23
+Cangrejo | taco:287 Caranguejo, cozido | 83 18.5 0 0.4 | 3 % P | ok | 2026-10-23
+Cangrejo crudo | ciqual:10039 Crabe, cru | 104 19.5 0 2.9 | 17 % kcal | revisado: otra especie (17 % kcal) | 2026-10-23
+Cazón crudo | taco:283 Cação, posta, crua | 83 17.9 0 0.8 | 36 % kcal | revisado: otra especie (36 % kcal) | 2026-10-23
+Cazón frito | taco:281 Cação, posta, com farinha de trigo, frita | 208 25 3.1 10 | 32 % P | revisado: el de TACO va enharinado, no rebozado: más carne (32 % P) | 2026-10-23
+Corvina | taco:293 Corvina grande, assada | 147 26.8 0 3.6 | 39 % C | revisar | 2026-10-23
+Corvina a la plancha | taco:293 Corvina grande, assada | 147 26.8 0 3.6 | 17 % P | revisado: la de TACO está más asada: menos agua (17 % P) | 2026-10-23
+Corvina cruda | taco:292 Corvina do mar, crua | 94 18.6 0 1.6 | 10 % kcal | ok | 2026-10-23
+Filete de abadejo a la plancha | taco:276 Abadejo, filé, congelado, grelhado | 130 27.6 0 1.3 | 11 % P | revisado: el de TACO está más hecho (11 % P) | 2026-10-23
+Filete de abadejo crudo | ciqual:26134 Lieu noir, cru | 83 18.8 0 0.8 | 10 % kcal | ok | 2026-10-23
+Filete de bagre al horno | ciqual:27018 Pangas, poisson-chat, machoiron, cuit | 79 17.5 0 1 | 45 % kcal | revisado: otra especie: el pangasius es mucho más magro (45 % kcal) | 2026-10-23
+Filete de bagre crudo | ciqual:27017 Pangas, poisson-chat, machoiron, cru | 65 13.5 0.2 1.3 | 45 % kcal | revisado: otra especie: el pangasius es mucho más magro (45 % kcal) | 2026-10-23
+Filete de bagre frito | sin par | - | - | sin par | 2026-10-23
+Filete de dorado a la plancha | sin par | - | - | sin par | 2026-10-23
+Filete de dorado crudo | sin par | - | - | sin par | 2026-10-23
+Filete de fletán a la plancha | cofid:16-074 Halibut, flesh only, grilled | 121 25.3 0 2.2 | 12 % P | revisado: otra pérdida de agua (12 % P) | 2026-10-23
+Filete de fletán crudo | ciqual:26009 Flétan de l'Atlantique ou flétan, cru | 97 21.2 0 1.3 | 13 % P | revisado: variación natural (13 % P) | 2026-10-23
+Filete de lisa a la plancha | cofid:16-096 Mullet, Grey, flesh only, grilled | 150 25.7 0 5.2 | 4 % P | ok | 2026-10-23
+Filete de lisa crudo | ciqual:26091 Mulet, cru | 118 20.1 0 3.6 | 4 % P | ok | 2026-10-23
+Filete de lubina a la plancha | ciqual:27030 Bar commun ou loup, rôti/cuit au four | 151 22.2 0.9 6.5 | 22 % kcal | revisado: la lubina francesa es de criadero, con más grasa (22 % kcal) | 2026-10-23
+Filete de lubina crudo | ciqual:26072 Bar commun ou loup, cru | 86 19.1 0.8 0.7 | 11 % kcal | revisado: variación natural (11 % kcal) | 2026-10-23
+Filete de mero a la plancha | sin par | - | - | sin par | 2026-10-22
+Filete de mero crudo | ciqual:26178 Mérou, cru | 85 18.6 0.8 0.9 | 7 % kcal | ok | 2026-10-23
+Filete de pescadilla a la plancha | taco:308 Pescada, filé, frito | 154 28.6 0 3.6 | 33 % P | revisado: TACO la fríe: menos agua (33 % P) | 2026-10-23
+Filete de pescadilla crudo | taco:307 Pescada, filé, cru | 107 16.7 0 4 | 3 % kcal | ok | 2026-10-22
+Filete de rodaballo a la plancha | cofid:16-156 Turbot, flesh only, grilled | 122 22.7 0 3.5 | 10 % P | ok | 2026-10-23
+Filete de rodaballo crudo | ciqual:26174 Turbot, cru | 86 17.9 0 1.6 | 10 % kcal | ok | 2026-10-23
+Filete de sierra a la plancha | sin par | - | - | sin par | 2026-10-23
+Filete de sierra crudo | sin par | - | - | sin par | 2026-10-22
+Langosta | ciqual:10009 Homard, bouilli/cuit à l'eau | 91 19.6 0.2 1.3 | 6 % kcal | ok | 2026-10-23
+Langosta cruda | ciqual:10010 Homard, cru | 86 17.9 0.9 1.2 | 9 % kcal | ok | 2026-10-22
+Lenguado | ciqual:26060 Sole, rôtie/cuite au four | 78 15.7 0 1.7 | 39 % kcal | revisado: el de USDA lleva grasa agregada (39 % kcal) | 2026-10-23
+Lenguado crudo | ciqual:26058 Sole, crue | 77 18 0 0.6 | 28 % P | revisado: el de USDA tiene más agua (28 % P) | 2026-10-23
+Mejillones | ciqual:10013 Moule, bouillie/cuite à l'eau | 108 17.2 5.1 2.1 | 11 % P | revisado: otra pérdida de agua (11 % P) | 2026-10-23
+Mejillones crudos | ciqual:10014 Moule commune, crue | 72 11.2 2.6 1.8 | 14 % kcal | revisado: variación natural (14 % kcal) | 2026-10-23
+Merluza | taco:301 Merluza, filé, assado | 122 26.6 0 0.9 | 26 % G | revisado: el de USDA lleva grasa agregada (26 % G) | 2026-10-23
+Merluza cruda | taco:302 Merluza, filé, cru | 89 16.6 0 2 | 9 % P | ok | 2026-10-23
+Merluza frita | taco:303 Merluza, filé, frito | 192 26.9 0 8.5 | 59 % C | revisado: el de USDA va empanado; el de TACO, frito sin empanar (59 % C) | 2026-10-23
+Ostras | ciqual:10011 Huître, sans précision, crue | 67 8.6 3.9 1.9 | 16 % kcal | revisado: otra especie (16 % kcal) | 2026-10-23
+Palitos de cangrejo | ciqual:26046 Surimi, bâtonnets, tranche ou râpé saveur crabe | 117 7.5 13.5 4.3 | 22 % kcal | revisado: otra formulación (22 % kcal) | 2026-10-23
+Pargo | cofid:16-129 Red snapper, flesh only, fried in sunflower oil | 126 24.5 0 3.1 | 7 % P | ok | 2026-10-23
+Pargo crudo | cofid:16-126 Red snapper, flesh only, raw | 90 19.6 0 1.3 | 10 % kcal | ok | 2026-10-23
+Pescado al horno | ciqual:26140 Poisson cuit (aliment moyen) | 142 22.5 0.3 5.6 | 34 % G | revisado: el de USDA lleva grasa agregada y más pescado graso (34 % G) | 2026-10-23
+Pescado crudo | sin par | - | - | sin par | 2026-10-23
+Pez espada | ciqual:26093 Espadon, rôti/cuit au four | 266 28.7 0 16.9 | 55 % kcal | revisado: la grasa del pez espada varía mucho según la pieza (55 % kcal) | 2026-10-23
+Pez espada crudo | ciqual:26082 Espadon, cru | 134 18.9 1 6 | 7 % kcal | ok | 2026-10-22
+Pulpo | sin par | - | - | sin par | 2026-10-22
+Pulpo crudo | ciqual:10018 Poulpe, cru | 60 12.9 0 0.5 | 22 % kcal | revisado: variación natural, y USDA saca los carbohidratos por diferencia (22 % kcal) | 2026-10-23
+Rape a la plancha | ciqual:26081 Lotte ou baudroie, grillée/poêlée | 98 23 0.1 0.7 | 22 % P | revisado: otra pérdida de agua (22 % P) | 2026-10-23
+Rape crudo | ciqual:26018 Lotte ou baudroie, crue | 67 15.1 0.5 0.7 | 9 % kcal | ok | 2026-10-23
+Salmón | taco:317 Salmão, sem pele, fresco, grelhado | 243 26.1 0 14.5 | 19 % G | revisado: el de USDA lleva grasa agregada (19 % G) | 2026-10-23
+Salmón ahumado | ciqual:26037 Saumon fumé | 184 22.2 0 10.5 | 57 % kcal | revisado: el francés es salmón de criadero, más graso (57 % kcal) | 2026-10-23
+Salmón crudo | taco:316 Salmão, sem pele, fresco, cru | 170 19.3 0 9.7 | 10 % kcal | ok | 2026-10-22
+Salmón en lata | cofid:16-420 Salmon, pink, canned in brine, drained | 138 23.6 0 4.8 | 2 % P | ok | 2026-10-22
+Sardinas en lata | ciqual:26040 Sardine, à l'huile d'olive, appertisée, égouttée | 224 23.3 0 14.5 | 15 % G | revisado: otra marca y otro aceite (15 % G) | 2026-10-23
+Sardinas en salsa de tomate | ciqual:26035 Sardine, sauce tomate, appertisée, égouttée | 194 20.2 0.8 11.6 | 6 % G | ok | 2026-10-23
+Sepia cruda | ciqual:10016 Seiche, crue | 76 16.2 0.6 1.1 | 3 % kcal | ok | 2026-10-22
+Sepia hervida | sin par | - | - | sin par | 2026-10-22
+Tilapia | sin par | - | - | sin par | 2026-10-22
+Tilapia cruda | ciqual:27019 Tilapia, cru | 92 18.1 0.4 2.1 | 10 % P | ok | 2026-10-22
+Tilapia frita | sin par | - | - | sin par | 2026-10-22
+Trucha | ciqual:27014 Truite arc en ciel, élevage, rôtie/cuite au four | 143 21.5 0 6.3 | 34 % kcal | revisado: el de USDA lleva grasa agregada (34 % kcal) | 2026-10-23
+Trucha cruda | ciqual:27009 Truite arc en ciel, élevage, crue | 132 19 0 6.2 | 6 % kcal | ok | 2026-10-22
+Trucha frita | sin par | - | - | sin par | 2026-10-23
+Vieiras al vapor | cofid:16-262 Scallops, steamed | 118 23.2 3.2 1.4 | 13 % P | revisado: otra pérdida de agua (13 % P) | 2026-10-23
+Vieiras crudas | ciqual:10045 Coquille Saint-Jacques, noix, crue | 84 17.9 1.1 0.8 | 29 % P | revisado: las de USDA tienen más agua (29 % P) | 2026-10-23
+Acelga con salsa blanca | ciqual:25588 Gratin de légumes en sauce blanche type béchamel, préemballé, cuit | 105 3.6 8.7 6.5 | 30 % kcal | revisado: otra receta (30 % kcal) | 2026-10-23
+Aguacate relleno de atún | sin par | - | - | sin par | 2026-10-23
+Ajiaco | sin par | - | - | sin par | 2026-10-23
+Albóndigas con salsa de tomate | cofid:19-613 Meatballs, pork and beef, in tomato sauce, homemade | 123 10 5.2 7.2 | 23 % kcal | revisado: otra receta (23 % kcal) | 2026-10-23
+Albóndigas en salsa | cofid:19-613 Meatballs, pork and beef, in tomato sauce, homemade | 123 10 5.2 7.2 | 45 % kcal | revisado: otra receta, con más carne (45 % kcal) | 2026-10-23
+Alfajor de maicena | sin par | - | - | sin par | 2026-10-22
+Alitas de pollo en salsa | cofid:19-541 Chicken wings, marinated, meat and skin, barbecued | 274 27.4 4.4 16.6 | 42 % P | revisado: otra receta (42 % P) | 2026-10-23
+Alitas de pollo fritas | sin par | - | - | sin par | 2026-10-23
+Arepa | sin par | - | - | sin par | 2026-10-22
+Arepa reina pepiada | sin par | - | - | sin par | 2026-10-22
+Aros de cebolla | sin par | - | - | sin par | 2026-10-23
+Arroz caldoso con pollo | cofid:19-566 Risotto, chicken, homemade | 173 8.9 24.9 3.3 | 42 % C | revisado: otra receta: el risotto tiene más arroz (42 % C) | 2026-10-23
+Arroz con coco | sin par | - | - | sin par | 2026-10-23
+Arroz con frijoles | taco:527 Baião de dois, arroz e feijão-de-corda | 136 6.2 20.4 3.2 | 19 % C | revisado: otra receta (19 % C) | 2026-10-23
+Arroz con mantequilla y queso | sin par | - | - | sin par | 2026-10-23
+Arroz con pollo | cofid:19-566 Risotto, chicken, homemade | 173 8.9 24.9 3.3 | 40 % C | revisado: otra receta (40 % C) | 2026-10-23
+Arroz con verduras | ciqual:25187 Risotto, aux légumes, préemballé | 120 2.7 18.7 3.8 | 17 % C | revisado: otra receta (17 % C) | 2026-10-23
+Arroz frito | cofid:11-444 Rice, egg fried, takeaway | 186 4.3 31.4 4.9 | 9 % G | ok | 2026-10-22
+Arroz frito con camarones | cofid:11-444 Rice, egg fried, takeaway | 186 4.3 31.4 4.9 | 13 % C | revisado: otra receta (13 % C) | 2026-10-23
+Arroz frito con pollo | cofid:11-444 Rice, egg fried, takeaway | 186 4.3 31.4 4.9 | 15 % P | revisado: otra receta (15 % P) | 2026-10-23
+Arroz rojo | cofid:15-843 Pilaf, rice with tomato, homemade | 147 2.9 26.1 2.6 | 32 % C | revisado: otra receta (32 % C) | 2026-10-23
+Avena con leche | cofid:11-1108 Porridge, made with whole milk | 112 4.9 13.2 4.7 | 15 % C | revisado: otra receta (15 % C) | 2026-10-23
+Baba ganoush | ciqual:25624 Caviar d'aubergine, préemballé | 154 1.3 8 13.8 | 18 % P | revisado: otra receta: el francés no lleva tahini (18 % P) | 2026-10-23
+Bacalao a la vizcaína | sin par | - | - | sin par | 2026-10-22
+Baleada | sin par | - | - | sin par | 2026-10-22
+Bandeja paisa | sin par | - | - | sin par | 2026-10-22
+Berenjenas a la parmesana | sin par | - | - | sin par | 2026-10-23
+Berenjenas rellenas | ciqual:25511 Légumes farcis (sauf tomate) | 92 4.7 6.8 6.2 | 24 % kcal | revisado: otra receta (24 % kcal) | 2026-10-23
+Bibimbap | sin par | - | - | sin par | 2026-10-22
+Biryani de pollo | cofid:19-454 Biryani, chicken, takeaway | 163 8.5 16.5 7.4 | 57 % kcal | revisado: el de comida para llevar lleva más aceite (57 % kcal) | 2026-10-23
+Bistec a caballo | taco:529 Bife à cavalo, com contra filé | 291 23.7 0 21.1 | 37 % G | revisado: otro corte, con más grasa (37 % G) | 2026-10-23
+Bistec con ensalada | sin par | - | - | sin par | 2026-10-23
+Bistec con papas fritas | sin par | - | - | sin par | 2026-10-23
+Bistec encebollado | sin par | - | - | sin par | 2026-10-23
+Bondiola al pan | sin par | - | - | sin par | 2026-10-23
+Brocheta de cordero | ciqual:25541 Brochette d'agneau | 137 13.2 5.1 7.9 | 15 % kcal | revisado: otra receta (15 % kcal) | 2026-10-23
+Brocheta de pollo | ciqual:25586 Brochette de volaille, cuite | 134 23.1 2.8 4 | 50 % P | revisado: la francesa es casi solo carne (50 % P) | 2026-10-23
+Bruschetta | sin par | - | - | sin par | 2026-10-22
+Buñuelos de acelga | ciqual:25556 Beignet de légumes | 140 4 16.9 8 | 45 % kcal | revisado: otra receta (45 % kcal) | 2026-10-23
+Burrito | ciqual:25459 Burritos au boeuf | 170 8 19.5 8.5 | 36 % kcal | revisado: otra receta (36 % kcal) | 2026-10-23
+Burrito de desayuno | sin par | - | - | sin par | 2026-10-23
+Burrito de pollo | ciqual:25459 Burritos au boeuf | 170 8 19.5 8.5 | 31 % C | revisado: otra receta (31 % C) | 2026-10-23
+Buseca | taco:536 Dobradinha | 125 19.8 0 4.4 | 63 % C | revisado: la dobradinha de TACO no lleva porotos (63 % C) | 2026-10-23
+Calabacines rellenos | ciqual:25511 Légumes farcis (sauf tomate) | 92 4.7 6.8 6.2 | 19 % kcal | revisado: otra receta (19 % kcal) | 2026-10-23
+Caldo de res | sin par | - | - | sin par | 2026-10-22
+Calzone | sin par | - | - | sin par | 2026-10-22
+Camarones al ajillo | sin par | - | - | sin par | 2026-10-22
+Canelones de carne | ciqual:25081 Lasagnes ou canellonis à la viande (bolognaise), préemballés | 134 6.3 12.3 5.7 | 24 % kcal | revisado: otra receta (24 % kcal) | 2026-10-23
+Canelones de jamón y queso | ciqual:25081 Lasagnes ou canellonis à la viande (bolognaise), préemballés | 134 6.3 12.3 5.7 | 21 % P | revisado: otra receta (21 % P) | 2026-10-23
+Canelones de pollo | ciqual:25081 Lasagnes ou canellonis à la viande (bolognaise), préemballés | 134 6.3 12.3 5.7 | 30 % P | revisado: otra receta (30 % P) | 2026-10-23
+Canelones de ricota | ciqual:25635 Lasagnes ou cannellonis au fromage et aux épinards, préemballés | 133 6.1 17.7 6.6 | 13 % kcal | revisado: otra receta (13 % kcal) | 2026-10-23
+Canelones de verdura | ciqual:25131 Lasagnes ou cannellonis aux légumes, préemballées, cuits | 120 4.4 13.8 5.9 | 20 % C | revisado: otra receta (20 % C) | 2026-10-23
+Capeletis a la caruso | sin par | - | - | sin par | 2026-10-22
+Carbonada | taco:553 Vaca atolada | 145 5.1 10.1 9.3 | 39 % kcal | revisado: otra receta: la vaca atolada lleva costilla (39 % kcal) | 2026-10-23
+Carne al horno con papas | sin par | - | - | sin par | 2026-10-23
+Carne con brócoli | cofid:19-530 Beef, stir-fried with green peppers, homemade | 145 11.8 6.6 8 | 13 % G | revisado: otra receta (13 % G) | 2026-10-23
+Carne con salsa de soja | cofid:19-460 Stir-fry beef with green peppers and blackbean sauce, takeaway | 103 10.5 - 5.6 | 45 % kcal | revisado: otra receta (45 % kcal) | 2026-10-23
+Carne desmechada | sin par | - | - | sin par | 2026-10-22
+Cerdo agridulce | cofid:19-304 Sweet and sour pork, battered, takeaway | 240 7.8 22.1 13.9 | 13 % C | revisado: otra receta (13 % C) | 2026-10-23
+Ceviche | sin par | - | - | sin par | 2026-10-22
+Chilaquiles | sin par | - | - | sin par | 2026-10-22
+Chiles rellenos | sin par | - | - | sin par | 2026-10-23
+Chili con carne | ciqual:25111 Chili con carne, préemballé | 118 7.1 13.5 3.4 | 10 % kcal | ok | 2026-10-22
+Chivito | sin par | - | - | sin par | 2026-10-23
+Chivito al plato | sin par | - | - | sin par | 2026-10-22
+Chivito común | sin par | - | - | sin par | 2026-10-23
+Chivito de pollo | sin par | - | - | sin par | 2026-10-23
+Chivo guisado | sin par | - | - | sin par | 2026-10-23
+Choripán | sin par | - | - | sin par | 2026-10-23
+Cóctel de camarones | sin par | - | - | sin par | 2026-10-23
+Coliflor con salsa blanca | ciqual:25101 Gratin de chou-fleur, préemballé | 86 3 7.1 6.5 | 10 % kcal | ok | 2026-10-23
+Corn dog | sin par | - | - | sin par | 2026-10-22
+Crema de almejas | sin par | - | - | sin par | 2026-10-22
+Crema de brócoli con queso | cofid:17-637 Soup, broccoli and stilton, carton, chilled | 51 2.3 - 3.1 | 31 % kcal | revisado: otra receta (31 % kcal) | 2026-10-23
+Crema de calabaza | ciqual:25945 Soupe au potiron, préemballée à réchauffer | 36 0.7 5.1 1.5 | 36 % kcal | revisado: la francesa lleva menos crema (36 % kcal) | 2026-10-23
+Crema de champiñones | ciqual:25912 Soupe aux champignons, préemballée à réchauffer | 40 0.9 3.9 2.1 | 34 % kcal | revisado: la francesa lleva menos crema (34 % kcal) | 2026-10-23
+Crema de espárragos | ciqual:25968 Soupe aux asperges, préemballée à réchauffer | 58 1.5 4.9 3.8 | 9 % C | ok | 2026-10-23
+Crema de maíz | sin par | - | - | sin par | 2026-10-23
+Crema de pollo | cofid:17-695 Soup, chicken, cream of, canned | 58 1.7 4.1 3.8 | 33 % kcal | revisado: la británica es más diluida (33 % kcal) | 2026-10-23
+Crema de puerros | cofid:17-831 Soup, potato and leek, homemade | 56 1.5 6.5 2.2 | 5 % G | ok | 2026-10-23
+Crema de tomate | cofid:17-652 Soup, cream of tomato, canned | 51 0.9 8.2 2 | 19 % kcal | revisado: otra receta (19 % kcal) | 2026-10-23
+Crema de verduras | ciqual:25903 Soupe aux légumes variés, préemballée à réchauffer | 37 0.8 6.5 1.5 | 41 % kcal | revisado: la francesa no lleva crema (41 % kcal) | 2026-10-23
+Croissant de jamón y queso | ciqual:25418 Croissant au jambon fromage, fait maison | 264 7.9 25.8 14.6 | 23 % kcal | revisado: otra receta (23 % kcal) | 2026-10-23
+Croquetas de papa | cofid:13-038 Potato croquettes, fried in blended oil | 214 3.7 21.1 13.1 | 27 % C | revisado: otra receta (27 % C) | 2026-10-23
+Curry de res | cofid:19-549 Curry, beef, homemade | 209 17.7 1.2 15.4 | 85 % kcal | revisado: otra receta: el casero británico es más seco y con más carne (85 % kcal) | 2026-10-23
+Curry de verduras | cofid:15-619 Curry, vegetable, ready meal, without rice, cooked | 94 2.1 9.8 6 | 8 % kcal | ok | 2026-10-23
+Dal | cofid:13-484 Dahl, mixed, homemade | 60 4.9 11.4 0.7 | 59 % kcal | revisado: el británico es más aguado (59 % kcal) | 2026-10-23
+Dumplings al vapor | ciqual:25110 Ravioli chinois à la vapeur à la crevette, cuit | 172 5.5 25.5 5.5 | 72 % C | revisado: otra masa y otro relleno (72 % C) | 2026-10-23
+Dumplings fritos | sin par | - | - | sin par | 2026-10-23
+Empanada caprese | ciqual:25401 Feuilleté ou friand au fromage, préemballé, cuit | 302 8.3 26.6 17.1 | 17 % P | revisado: otra masa (hojaldre) y otro relleno (17 % P) | 2026-10-23
+Empanada de atún | sin par | - | - | sin par | 2026-10-23
+Empanada de calabaza | ciqual:25401 Feuilleté ou friand au fromage, préemballé, cuit | 302 8.3 26.6 17.1 | 31 % G | revisado: otra masa y otro relleno (31 % G) | 2026-10-23
+Empanada de carne | ciqual:25402 Feuilleté ou friand à la viande, préemballé | 354 9.6 28.9 22.6 | 17 % G | revisado: otra masa (hojaldre) (17 % G) | 2026-10-23
+Empanada de carne al horno | ciqual:25402 Feuilleté ou friand à la viande, préemballé | 354 9.6 28.9 22.6 | 46 % G | revisado: el hojaldre francés lleva más grasa (46 % G) | 2026-10-23
+Empanada de humita | sin par | - | - | sin par | 2026-10-22
+Empanada de jamón y queso | ciqual:25508 Feuilleté ou friand jambon fromage, fait maison | 338 8.8 30.7 20.3 | 39 % P | revisado: otra receta (39 % P) | 2026-10-23
+Empanada de pollo | cofid:19-469 Chicken/turkey pasties/slices, puff pastry | 289 8.1 24.8 18.5 | 22 % P | revisado: otra masa (hojaldre) y menos relleno (22 % P) | 2026-10-23
+Empanada de pollo al horno | cofid:19-469 Chicken/turkey pasties/slices, puff pastry | 289 8.1 24.8 18.5 | 45 % G | revisado: el hojaldre británico lleva más grasa (45 % G) | 2026-10-23
+Empanada de queso | ciqual:25401 Feuilleté ou friand au fromage, préemballé, cuit | 302 8.3 26.6 17.1 | 20 % G | revisado: otra masa (hojaldre) (20 % G) | 2026-10-23
+Empanada de queso y cebolla | cofid:11-997 Cheese and onion rolls, pastry, retail | 327 8.2 30.8 20 | 22 % P | revisado: otra masa (hojaldre) y menos queso (22 % P) | 2026-10-23
+Empanada de verdura | cofid:15-646 Pasty, vegetable, homemade | 301 4.2 30.2 19.1 | 40 % G | revisado: otra receta: la masa británica lleva más grasa (40 % G) | 2026-10-23
+Enchiladas | cofid:19-586 Enchiladas, beef, homemade | 153 9.6 10.7 8.2 | 20 % C | revisado: otra receta, de carne de res (20 % C) | 2026-10-23
+Ensalada caprese | sin par | - | - | sin par | 2026-10-23
+Ensalada César | sin par | - | - | sin par | 2026-10-23
+Ensalada César con pollo | sin par | - | - | sin par | 2026-10-23
+Ensalada Cobb | sin par | - | - | sin par | 2026-10-23
+Ensalada de arroz con atún | ciqual:26263 Salade de riz au thon et légumes, avec sauce, préemballée | 145 5.1 15.5 6 | 7 % G | ok | 2026-10-23
+Ensalada de atún | sin par | - | - | sin par | 2026-10-23
+Ensalada de camarones | sin par | - | - | sin par | 2026-10-23
+Ensalada de col | ciqual:26259 Salade de chou et carotte ou coleslaw, avec sauce, préemballée | 105 0.9 9.1 8.1 | 10 % kcal | ok | 2026-10-23
+Ensalada de espinaca | sin par | - | - | sin par | 2026-10-23
+Ensalada de frijoles negros | sin par | - | - | sin par | 2026-10-23
+Ensalada de garbanzos | sin par | - | - | sin par | 2026-10-23
+Ensalada de huevo | sin par | - | - | sin par | 2026-10-23
+Ensalada de judías verdes y huevo | sin par | - | - | sin par | 2026-10-23
+Ensalada de lentejas | ciqual:26261 Salade de lentilles et saucisse fumée, préemballée | 177 7 12.5 11.8 | 75 % kcal | revisado: la francesa lleva salchicha ahumada (75 % kcal) | 2026-10-23
+Ensalada de papa y huevo | ciqual:25609 Salade de pomme de terre à la piémontaise, préemballée | 130 4.5 9.7 8.3 | 26 % C | revisado: otra receta, con mayonesa (26 % C) | 2026-10-23
+Ensalada de papas | ciqual:25609 Salade de pomme de terre à la piémontaise, préemballée | 130 4.5 9.7 8.3 | 33 % C | revisado: otra receta, con menos papa (33 % C) | 2026-10-23
+Ensalada de pasta | cofid:15-872 Salad, pasta, vegetables and mayonnaise | 150 3.7 17.4 7.9 | 32 % kcal | revisado: la británica lleva más verdura (32 % kcal) | 2026-10-23
+Ensalada de pollo | taco:547 Salpicão, de frango | 148 13.9 4.6 7.8 | 55 % G | revisado: el salpicão lleva menos mayonesa (55 % G) | 2026-10-23
+Ensalada de pulpo | sin par | - | - | sin par | 2026-10-23
+Ensalada de remolacha y huevo | ciqual:26258 Salade de betterave, avec sauce, préemballée | 59 1.4 8.1 3 | 37 % kcal | revisado: la francesa no lleva huevo (37 % kcal) | 2026-10-23
+Ensalada de repollo y zanahoria | ciqual:26259 Salade de chou et carotte ou coleslaw, avec sauce, préemballée | 105 0.9 9.1 8.1 | 35 % kcal | revisado: el coleslaw lleva mayonesa (35 % kcal) | 2026-10-23
+Ensalada de tomate y cebolla | cofid:15-876 Salad, tomato and onion | 45 0.6 5.9 2.7 | 11 % kcal | revisado: otra cantidad de aceite (11 % kcal) | 2026-10-23
+Ensalada de tomate y huevo | cofid:15-876 Salad, tomato and onion | 45 0.6 5.9 2.7 | 35 % kcal | revisado: la británica no lleva huevo (35 % kcal) | 2026-10-23
+Ensalada de zanahoria y huevo | ciqual:26257 Salade de carottes râpées, avec sauce, préemballée | 74 0.8 8.4 4.8 | 20 % kcal | revisado: la francesa no lleva huevo (20 % kcal) | 2026-10-23
+Ensalada griega | sin par | - | - | sin par | 2026-10-23
+Ensalada mixta | ciqual:25604 Salade verte, crue, sans assaisonnement | 14 1 2.3 0.1 | 12 % C | revisado: la francesa es solo lechuga (12 % C) | 2026-10-23
+Ensalada Waldorf | cofid:15-878 Salad, Waldorf | 196 1.5 8.6 17.8 | 8 % kcal | ok | 2026-10-23
+Espaguetis con albóndigas | ciqual:25085 Pâtes à la bolognaise (spaghetti, tagliatelles…), préemballées | 116 5.3 15.4 4.1 | 38 % kcal | revisado: otra receta: la pasta envasada es más aguada (38 % kcal) | 2026-10-23
+Estofado de carne | cofid:19-473 Stew, beef, homemade | 105 11.9 5.6 4.6 | 38 % kcal | revisado: otra receta, con carne más magra (38 % kcal) | 2026-10-23
+Fabada | ciqual:25098 Cassoulet au porc, appertisé | 132 8.3 12.6 6.3 | 39 % kcal | revisado: otra receta: el cassoulet de lata es más aguado (39 % kcal) | 2026-10-23
+Fainá | sin par | - | - | sin par | 2026-10-22
+Fainá con mozzarella | sin par | - | - | sin par | 2026-10-23
+Fajitas | ciqual:25460 Fajita au poulet, préparé maison avec un kit | 158 12.7 17.3 4.5 | 27 % G | revisado: otra receta, con menos aceite (27 % G) | 2026-10-23
+Fajitas de res | ciqual:25460 Fajita au poulet, préparé maison avec un kit | 158 12.7 17.3 4.5 | 39 % G | revisado: la francesa es de pollo (39 % G) | 2026-10-23
+Falafel | cofid:15-795 Falafel, fried in rapeseed oil, homemade | 183 6.4 18.1 11.2 | 45 % kcal | revisado: el agua del falafel varía mucho; el de USDA es más seco (45 % kcal) | 2026-10-23
+Feijoada | taco:540 Feijoada | 117 8.7 11.6 6.5 | 40 % kcal | revisado: la de TACO es más aguada (40 % kcal) | 2026-10-23
+Fettuccine Alfredo | ciqual:25198 Pâtes en sauce aux fromages (spaghetti, tagliatelles…), préemballées | 163 7.2 17.8 7.4 | 16 % P | revisado: la francesa lleva más queso (16 % P) | 2026-10-23
+Flautas de pollo | sin par | - | - | sin par | 2026-10-22
+Fricasé de pollo | cofid:19-561 Chicken fricassee, homemade | 115 10 3.1 6.1 | 33 % kcal | revisado: otra receta: la portorriqueña lleva papa y más grasa (33 % kcal) | 2026-10-23
+Fugazza | ciqual:25528 Pissaladière, préemballée | 265 4.8 28.8 15.1 | 50 % G | revisado: la pissaladière lleva más aceite y anchoas (50 % G) | 2026-10-23
+Fugazzeta | ciqual:25570 Pizza aux lardons, oignons et fromage, préemballée | 236 8.2 30.2 9.6 | 12 % P | revisado: otra receta, con menos queso (12 % P) | 2026-10-23
+Gazpacho | ciqual:25967 Soupe froide type gaspacho ou gazpacho, préemballée | 40 0.8 4.6 2.3 | 14 % kcal | revisado: el español lleva aceite de oliva (14 % kcal) | 2026-10-23
+Gordita de carne | sin par | - | - | sin par | 2026-10-22
+Guiso de arroz | taco:526 Arroz carreteiro | 154 10.8 11.6 7.1 | 24 % P | revisado: el carreteiro lleva más carne (24 % P) | 2026-10-23
+Guiso de carne | cofid:19-473 Stew, beef, homemade | 105 11.9 5.6 4.6 | 16 % P | revisado: otra receta, con más carne (16 % P) | 2026-10-23
+Guiso de cerdo | ciqual:25071 Potée auvergnate (chou et porc) | 115 7.3 7 6.9 | 7 % G | ok | 2026-10-23
+Guiso de cordero | ciqual:25124 Navarin d'agneau aux légumes | 135 9.7 7 8.6 | 15 % kcal | revisado: otra receta (15 % kcal) | 2026-10-23
+Guiso de fideos | cofid:19-483 Pasta with meat and tomato sauce, homemade | 140 6.6 20.7 4.1 | 13 % C | revisado: otra receta (13 % C) | 2026-10-23
+Guiso de lentejas | ciqual:25010 Petit salé ou saucisse aux lentilles, préemballé | 118 8.2 11.7 4.9 | 12 % C | revisado: otra receta (12 % C) | 2026-10-23
+Guiso de pollo | ciqual:25190 Poulet basquaise, préemballé | 107 9.3 3.8 6.4 | 23 % kcal | revisado: otra receta, con más aceite (23 % kcal) | 2026-10-23
+Guiso de porotos | ciqual:25098 Cassoulet au porc, appertisé | 132 8.3 12.6 6.3 | 4 % C | ok | 2026-10-23
+Hamburguesa | ciqual:25413 Hamburger, de restauration rapide | 251 13.3 30 8.4 | 45 % C | revisado: la francesa es de comida rápida, con menos carne y más pan (45 % C) | 2026-10-23
+Hamburguesa al plato | sin par | - | - | sin par | 2026-10-23
+Hamburguesa casera a la plancha | cofid:19-553 Burger, beef, fried in rapeseed oil, homemade | 297 23.9 1.3 21.9 | 30 % G | revisado: otra carne picada, más grasa (30 % G) | 2026-10-23
+Hamburguesa casera con pan | cofid:19-556 Burger, beef, with bun, grilled, homemade | 283 21.9 9.8 17.4 | 43 % P | revisado: la británica lleva más carne y menos pan (43 % P) | 2026-10-23
+Hamburguesa casera cruda | taco:415 Hambúrguer, bovino, cru | 215 13.2 4.2 16.2 | 16 % P | revisado: la industrial de TACO lleva más grasa (16 % P) | 2026-10-23
+Hamburguesa completa | cofid:19-556 Burger, beef, with bun, grilled, homemade | 283 21.9 9.8 17.4 | 33 % P | revisado: la británica no lleva jamón ni huevo, y lleva más carne (33 % P) | 2026-10-23
+Hamburguesa con queso | ciqual:25414 Cheeseburger, de restauration rapide | 290 13.7 23.7 15.8 | 25 % C | revisado: la francesa lleva más pan (25 % C) | 2026-10-23
+Hamburguesa de pollo | cofid:19-315 Burger, chicken, takeaway | 235 12.5 23.6 10.8 | 16 % kcal | revisado: otra receta (16 % kcal) | 2026-10-23
+Hamburguesa doble con queso | ciqual:25415 Double cheeseburger, de restauration rapide | 290 15.5 21.9 16.7 | 51 % C | revisado: la francesa es de comida rápida, con medallones finos y más pan (51 % C) | 2026-10-23
+Hojas de parra rellenas | ciqual:25217 Feuille de vigne farcie au riz ou dolmas, égouttée, préemballée | 150 2.5 21.6 6.5 | 53 % G | revisado: las francesas no llevan carne (53 % G) | 2026-10-23
+Hot dog | ciqual:25403 Hot-dog, préemballé | 278 10.9 28.4 13.8 | 20 % C | revisado: el francés lleva más pan (20 % C) | 2026-10-23
+Hot dog con aderezos | cofid:19-582 Frankfurter with bun, ketchup, fried onions and mustard | 194 6.8 26.4 7.4 | 60 % G | revisado: el británico va sin mayonesa (60 % G) | 2026-10-23
+Hot dog con tocino y queso | ciqual:25403 Hot-dog, préemballé | 278 10.9 28.4 13.8 | 39 % C | revisado: el francés no lleva tocino ni queso (39 % C) | 2026-10-23
+Huevo frito con papas fritas | sin par | - | - | sin par | 2026-10-23
+Huevos benedictinos | sin par | - | - | sin par | 2026-10-22
+Huevos rancheros | sin par | - | - | sin par | 2026-10-22
+Huevos rellenos | sin par | - | - | sin par | 2026-10-23
+Huevos revueltos con jamón | ciqual:22507 Omelette aux lardons, faite maison | 267 12.5 1.4 23.5 | 37 % G | revisado: la omelette francesa lleva panceta, más grasa que el jamón (37 % G) | 2026-10-23
+Huevos revueltos con tomate | ciqual:22502 Oeuf brouillé, avec matière grasse | 167 11.9 0 13 | 8 % P | ok | 2026-10-22
+Huevos revueltos con verduras | ciqual:22508 Omelette aux champignons, faite maison | 125 8.1 2.7 9.2 | 25 % kcal | revisado: otra receta, con más verdura (25 % kcal) | 2026-10-23
+Huevos rotos | sin par | - | - | sin par | 2026-10-22
+Kibbeh | taco:442 Quibe, frito | 254 14.9 12.3 15.8 | 51 % kcal | revisado: el de TACO es frito y más seco (51 % kcal) | 2026-10-23
+Lasaña de jamón y queso | ciqual:25081 Lasagnes ou canellonis à la viande (bolognaise), préemballés | 134 6.3 12.3 5.7 | 17 % P | revisado: otro relleno (17 % P) | 2026-10-23
+Lasaña de pollo | ciqual:25081 Lasagnes ou canellonis à la viande (bolognaise), préemballés | 134 6.3 12.3 5.7 | 37 % P | revisado: otro relleno; la envasada es más aguada (37 % P) | 2026-10-23
+Lasaña de verduras | ciqual:25131 Lasagnes ou cannellonis aux légumes, préemballées, cuits | 120 4.4 13.8 5.9 | 36 % kcal | revisado: la de USDA lleva más queso (36 % kcal) | 2026-10-23
+Lengua a la vinagreta | sin par | - | - | sin par | 2026-10-23
+Lengua guisada | taco:365 Carne, bovina, língua, cozida | 315 21.4 0 24.8 | 2 % P | ok | 2026-10-23
+Lo mein de pollo | cofid:19-321 Chow mein, chicken, takeaway | 147 8.5 13.3 7.2 | 20 % G | revisado: el chow mein va salteado con más aceite (20 % G) | 2026-10-23
+Lomo con salsa de champiñones | sin par | - | - | sin par | 2026-10-23
+Lomo saltado | sin par | - | - | sin par | 2026-10-23
+Macarrones con queso | cofid:11-954 Macaroni cheese, homemade | 183 7.8 19.2 8.6 | 18 % kcal | revisado: otra receta (18 % kcal) | 2026-10-23
+Maduros fritos | cofid:13-569 Plantain, ripe, fried in rapeseed oil | 267 1.5 46.2 9.2 | 13 % kcal | revisado: otro tiempo de fritura (13 % kcal) | 2026-10-23
+Mangú | cofid:13-324 Plantain, boiled in unsalted water, flesh only | 112 0.8 27.5 0.2 | 23 % kcal | revisado: el mangú lleva manteca (23 % kcal) | 2026-10-23
+Martín Fierro | sin par | - | - | sin par | 2026-10-23
+Matambre a la pizza | sin par | - | - | sin par | 2026-10-23
+Merluza frita con puré | sin par | - | - | sin par | 2026-10-23
+Milanesa | taco:340 Carne, bovina, contra-filé, à milanesa | 352 20.6 12.2 24 | 21 % C | revisado: otro empanado (21 % C) | 2026-10-23
+Milanesa a caballo | taco:340 Carne, bovina, contra-filé, à milanesa | 352 20.6 12.2 24 | 49 % G | revisado: la de TACO es frita y sin huevo (49 % G) | 2026-10-23
+Milanesa a la napolitana | taco:340 Carne, bovina, contra-filé, à milanesa | 352 20.6 12.2 24 | 41 % kcal | revisado: la de TACO es frita, sin salsa ni queso (41 % kcal) | 2026-10-23
+Milanesa a la napolitana con papas fritas | sin par | - | - | sin par | 2026-10-23
+Milanesa con ensalada | sin par | - | - | sin par | 2026-10-23
+Milanesa con papas fritas | sin par | - | - | sin par | 2026-10-23
+Milanesa con puré | sin par | - | - | sin par | 2026-10-23
+Milanesa de berenjena a la napolitana | sin par | - | - | sin par | 2026-10-23
+Milanesa de berenjena al horno | sin par | - | - | sin par | 2026-10-23
+Milanesa de berenjena cruda | sin par | - | - | sin par | 2026-10-23
+Milanesa de berenjena frita | sin par | - | - | sin par | 2026-10-23
+Milanesa de carne al horno | ciqual:25173 Escalope panée, viennoise ou milanaise, veau, cuite | 271 22.9 13.6 14.1 | 22 % P | revisado: la francesa es de ternera y frita (22 % P) | 2026-10-23
+Milanesa de carne cruda | sin par | - | - | sin par | 2026-10-23
+Milanesa de carne frita | taco:340 Carne, bovina, contra-filé, à milanesa | 352 20.6 12.2 24 | 52 % G | revisado: la de TACO absorbe más aceite (52 % G) | 2026-10-23
+Milanesa de cerdo al horno | ciqual:25173 Escalope panée, viennoise ou milanaise, veau, cuite | 271 22.9 13.6 14.1 | 27 % G | revisado: la francesa es de ternera y frita (27 % G) | 2026-10-23
+Milanesa de cerdo cruda | sin par | - | - | sin par | 2026-10-23
+Milanesa de cerdo frita | cofid:19-641 Wiener schnitzel, homemade | 213 21.2 12.7 8.5 | 24 % kcal | revisado: el schnitzel británico absorbe menos aceite (24 % kcal) | 2026-10-23
+Milanesa de merluza al horno | cofid:16-405 Fish fingers, cod, grilled/baked | 223 14.3 22.2 9.2 | 37 % P | revisado: los bastones industriales llevan más empanado (37 % P) | 2026-10-23
+Milanesa de merluza cruda | ciqual:26029 Poisson pané, surgelé, cru | 163 11 16.5 6.1 | 29 % P | revisado: el industrial lleva más empanado (29 % P) | 2026-10-23
+Milanesa de merluza frita | ciqual:26030 Poisson pané, frit | 194 11.9 14.4 10 | 45 % P | revisado: el industrial lleva menos pescado (45 % P) | 2026-10-23
+Milanesa de pollo a la napolitana | taco:401 Frango, filé, à milanesa | 221 28.5 7.5 7.8 | 40 % P | revisar | 2026-10-23
+Milanesa de pollo a la napolitana con papas fritas | sin par | - | - | sin par | 2026-10-23
+Milanesa de pollo al horno | cofid:18-504 Chicken breast/steak, coated, baked | 234 17.7 15.3 11.6 | 26 % P | revisado: la industrial lleva menos pollo (26 % P) | 2026-10-23
+Milanesa de pollo con ensalada | sin par | - | - | sin par | 2026-10-23
+Milanesa de pollo con papas fritas | sin par | - | - | sin par | 2026-10-23
+Milanesa de pollo con puré | sin par | - | - | sin par | 2026-10-23
+Milanesa de pollo cruda | sin par | - | - | sin par | 2026-10-23
+Milanesa de pollo frita | taco:401 Frango, filé, à milanesa | 221 28.5 7.5 7.8 | 27 % C | revisado: la de TACO lleva menos empanado (27 % C) | 2026-10-23
+Minestrone | ciqual:25916 Soupe minestrone, préemballée à réchauffer | 47 1.5 6.2 1.9 | 7 % kcal | ok | 2026-10-23
+Mofongo | sin par | - | - | sin par | 2026-10-22
+Mondongo guisado | taco:536 Dobradinha | 125 19.8 0 4.4 | 56 % P | revisado: la dobradinha no lleva papa (56 % P) | 2026-10-23
+Morcipán | sin par | - | - | sin par | 2026-10-23
+Musaca | ciqual:25123 Moussaka, préemballée | 147 5.8 5.7 10.8 | 51 % kcal | revisado: la francesa lleva bechamel y más aceite (51 % kcal) | 2026-10-23
+Nachos con carne | sin par | - | - | sin par | 2026-10-22
+Nachos con queso | sin par | - | - | sin par | 2026-10-23
+Nigiri de salmón | cofid:16-361 Sushi, salmon nigiri | 152 8.7 24.3 2.5 | 55 % C | revisar | 2026-10-22
+Ñoquis con pesto | sin par | - | - | sin par | 2026-10-23
+Ñoquis con salsa blanca | sin par | - | - | sin par | 2026-10-22
+Ñoquis con salsa boloñesa | sin par | - | - | sin par | 2026-10-23
+Ñoquis con salsa de tomate | sin par | - | - | sin par | 2026-10-23
+Ñoquis con salsa de tomate y crema | sin par | - | - | sin par | 2026-10-23
+Ñoquis con salsa mixta | sin par | - | - | sin par | 2026-10-23
+Olímpico | ciqual:25576 Sandwich pain de mie complet, jambon fromage, préemballé | 240 11.2 26.6 10.5 | 60 % C | revisado: otra receta, con menos relleno (60 % C) | 2026-10-23
+Omelet con papa | ciqual:22510 Tortilla espagnole aux oignons (omelette aux pommes de terre et oignons), préemballée | 165 5.6 14.8 9.9 | 59 % C | revisado: la tortilla española lleva mucha más papa (59 % C) | 2026-10-23
+Omelet de jamón y queso | ciqual:22506 Omelette au fromage, faite maison | 255 17.7 2.5 19.3 | 22 % P | revisado: la francesa lleva más queso (22 % P) | 2026-10-23
+Pabellón criollo | sin par | - | - | sin par | 2026-10-22
+Pad thai con camarones | sin par | - | - | sin par | 2026-10-23
+Pad thai con pollo | sin par | - | - | sin par | 2026-10-23
+Paella | ciqual:25242 Paëlla (poulet fruit de mer, chorizo, colin), fait maison | 135 6.4 22.6 2.2 | 34 % C | revisado: otra receta, con más arroz y menos aceite (34 % C) | 2026-10-23
+Paella de mariscos | ciqual:25242 Paëlla (poulet fruit de mer, chorizo, colin), fait maison | 135 6.4 22.6 2.2 | 31 % C | revisado: otra receta, con más arroz (31 % C) | 2026-10-23
+Palak paneer | cofid:15-629 Saag, homemade | 111 3.3 7 8.8 | 13 % C | revisado: el saag británico no lleva queso (13 % C) | 2026-10-23
+Palmitos con salsa rosada | sin par | - | - | sin par | 2026-10-23
+Pan con aguacate | sin par | - | - | sin par | 2026-10-23
+Pan con tomate | sin par | - | - | sin par | 2026-10-23
+Pan de carne | cofid:19-605 Meat loaf, homemade | 213 16.6 12 10.9 | 24 % C | revisado: otra receta, con más pan (24 % C) | 2026-10-23
+Papa a la huancaína | sin par | - | - | sin par | 2026-10-22
+Papa rellena | sin par | - | - | sin par | 2026-10-23
+Papas fritas | taco:93 Batata, inglesa, frita | 267 5 35.6 13.1 | 8 % kcal | ok | 2026-10-23
+Parfait de yogur | ciqual:19628 Yaourt ou lait fermenté, aux fruits (aliment moyen) | 91 3.3 13 3.1 | 16 % C | revisado: el parfait lleva granola (16 % C) | 2026-10-23
+Parrillada | ciqual:25506 Brochette mixte de viande | 208 19.7 1.6 13.8 | 43 % G | revisado: la parrillada lleva chorizo y morcilla (43 % G) | 2026-10-23
+Pascualina | ciqual:25417 Tarte aux légumes, préemballée | 216 5 23.9 11.7 | 15 % P | revisado: la francesa no lleva huevo (15 % P) | 2026-10-23
+Pasta a la boloñesa | taco:542 Macarrão, molho bolognesa | 120 4.9 22.5 0.9 | 17 % C | revisado: otra receta (17 % C) | 2026-10-23
+Pasta con mantequilla | sin par | - | - | sin par | 2026-10-23
+Pasta con mariscos | sin par | - | - | sin par | 2026-10-23
+Pastel de papas | ciqual:25009 Hachis parmentier à la viande, préemballé | 138 6 10.8 8.2 | 12 % kcal | revisado: otra receta (12 % kcal) | 2026-10-23
+Pastelón | sin par | - | - | sin par | 2026-10-23
+Pechuga de pollo con ensalada | sin par | - | - | sin par | 2026-10-23
+Pechuga de pollo con puré | sin par | - | - | sin par | 2026-10-23
+Pho | sin par | - | - | sin par | 2026-10-22
+Picadillo | cofid:19-607 Beef, mince, stewed | 139 10.9 2.6 9.9 | 18 % kcal | revisado: otra receta (18 % kcal) | 2026-10-23
+Pimientos rellenos | cofid:19-632 Peppers, stuffed with beef, rice and vegetables, homemade | 99 6.2 9.5 4.3 | 44 % kcal | revisado: el británico lleva menos grasa (44 % kcal) | 2026-10-23
+Pisto | ciqual:25018 Ratatouille cuisinée, préemballée | 57 1.2 6.3 3.2 | 10 % kcal | ok | 2026-10-23
+Pizza a la parrilla | ciqual:25516 Pizza (aliment moyen) | 234 10 31.4 8.9 | 15 % kcal | revisado: otra receta (15 % kcal) | 2026-10-23
+Pizza casera con mozzarella | ciqual:25404 Pizza au fromage ou pizza margherita, préemballée | 224 8.6 32.6 7.4 | 18 % P | revisado: la casera lleva más queso (18 % P) | 2026-10-23
+Pizza con fainá | sin par | - | - | sin par | 2026-10-23
+Pizza de carne | cofid:11-1015 Pizza, meat topped, retail and takeaway | 255 13.2 28.5 10.3 | 10 % G | ok | 2026-10-23
+Pizza de carne y verduras | cofid:11-1015 Pizza, meat topped, retail and takeaway | 255 13.2 28.5 10.3 | 8 % P | ok | 2026-10-23
+Pizza de pepperoni | ciqual:25462 Pizza au chorizo ou salami, préemballée | 236 9.9 34 10.4 | 16 % kcal | revisado: otra receta (16 % kcal) | 2026-10-23
+Pizza de queso | ciqual:25404 Pizza au fromage ou pizza margherita, préemballée | 224 8.6 32.6 7.4 | 16 % kcal | revisado: la de restaurante lleva más queso (16 % kcal) | 2026-10-23
+Pizza napolitana | ciqual:25404 Pizza au fromage ou pizza margherita, préemballée | 224 8.6 32.6 7.4 | 16 % C | revisado: otra receta, con rodajas de tomate (16 % C) | 2026-10-23
+Pizza sin queso | cofid:15-255 Pizza, tomato, homemade | 193 3.3 22.1 10.6 | 46 % C | revisado: la británica lleva más aceite y menos masa (46 % C) | 2026-10-23
+Polenta con queso | sin par | - | - | sin par | 2026-10-23
+Polenta con tuco | sin par | - | - | sin par | 2026-10-22
+Pollo a la naranja | cofid:19-324 Sweet and sour chicken, takeaway | 194 7.6 - 10 | 34 % P | revisado: otra receta: el agridulce británico lleva menos pollo (34 % P) | 2026-10-23
+Pollo a la parmesana | sin par | - | - | sin par | 2026-10-23
+Pollo agridulce | cofid:19-324 Sweet and sour chicken, takeaway | 194 7.6 - 10 | 22 % kcal | revisado: otra receta (22 % kcal) | 2026-10-23
+Pollo al curry | cofid:19-322 Curry, chicken, average, takeaway | 145 11.7 4.5 9.8 | 36 % kcal | revisado: el de comida para llevar lleva más pollo y aceite (36 % kcal) | 2026-10-23
+Pollo al horno con papas | sin par | - | - | sin par | 2026-10-23
+Pollo con mole | sin par | - | - | sin par | 2026-10-23
+Pollo con salsa de champiñones | sin par | - | - | sin par | 2026-10-23
+Pollo General Tso | cofid:19-324 Sweet and sour chicken, takeaway | 194 7.6 - 10 | 34 % kcal | revisado: otra receta: el General Tso va rebozado y frito (34 % kcal) | 2026-10-23
+Pollo guisado con tomate | ciqual:25190 Poulet basquaise, préemballé | 107 9.3 3.8 6.4 | 13 % P | revisado: otra receta (13 % P) | 2026-10-23
+Pollo kung pao | cofid:19-569 Chicken, stir-fried with mushrooms and cashew nuts, homemade | 160 18.4 5.4 7 | 43 % P | revisado: otra receta, con más pollo (43 % P) | 2026-10-23
+Pollo teriyaki | ciqual:25565 Yakitori (brochettes japonaises grillées en sauce) | 172 26 9.9 3.3 | 41 % C | revisado: el yakitori lleva más salsa (41 % C) | 2026-10-23
+Postre chajá | sin par | - | - | sin par | 2026-10-23
+Pozole | sin par | - | - | sin par | 2026-10-23
+Puchero | ciqual:25013 Pot-au-feu, préemballé | 78 10.9 3.4 2 | 36 % kcal | revisado: el pot-au-feu va sin papa ni choclo y con carne magra (36 % kcal) | 2026-10-23
+Puchero de gallina | ciqual:25013 Pot-au-feu, préemballé | 78 10.9 3.4 2 | 36 % kcal | revisado: el pot-au-feu es de vaca, sin papa ni choclo (36 % kcal) | 2026-10-23
+Pulpo a la gallega | sin par | - | - | sin par | 2026-10-23
+Pupusa | sin par | - | - | sin par | 2026-10-23
+Puré de calabaza | ciqual:20096 Potiron, cuit | 26 0.8 6.6 0.1 | 25 % kcal | revisado: el puré lleva manteca y leche (25 % kcal) | 2026-10-23
+Quesadilla | sin par | - | - | sin par | 2026-10-23
+Quesadilla de pollo | sin par | - | - | sin par | 2026-10-22
+Ramen | sin par | - | - | sin par | 2026-10-22
+Ravioles con salsa blanca | sin par | - | - | sin par | 2026-10-22
+Ravioles con salsa boloñesa | ciqual:25019 Ravioli au boeuf, sauce tomate, appertisé | 95 4.2 12.5 2.8 | 37 % kcal | revisado: los de lata son más aguados (37 % kcal) | 2026-10-23
+Ravioles con salsa de tomate | ciqual:25019 Ravioli au boeuf, sauce tomate, appertisé | 95 4.2 12.5 2.8 | 32 % kcal | revisado: los de lata son más aguados (32 % kcal) | 2026-10-23
+Ravioles con salsa de tomate y crema | ciqual:25019 Ravioli au boeuf, sauce tomate, appertisé | 95 4.2 12.5 2.8 | 42 % kcal | revisado: los de lata son más aguados y sin crema (42 % kcal) | 2026-10-23
+Ravioles con salsa mixta | ciqual:25019 Ravioli au boeuf, sauce tomate, appertisé | 95 4.2 12.5 2.8 | 38 % kcal | revisado: los de lata son más aguados y sin salsa blanca (38 % kcal) | 2026-10-23
+Ravioles de carne | ciqual:25158 Pâtes fraîches farcies (ex : raviolis, tortellinis), au boeuf (ex : bolognaise), préemballées, cuites | 174 6.9 27.2 4.7 | 48 % C | revisado: los de USDA llevan más relleno (48 % C) | 2026-10-23
+Ravioles de espinaca y ricota | ciqual:25155 Pâtes fraîches farcies (ex : raviolis, tortellinis), au fromage et aux légumes, préemballées, cuites | 219 7.9 31.6 7.5 | 52 % C | revisado: otra receta, con más masa (52 % C) | 2026-10-23
+Refuerzo de jamón y queso | ciqual:25485 Sandwich baguette, jambon emmental, préemballé | 284 12.7 30.7 12.9 | 5 % G | ok | 2026-10-23
+Repollo relleno | taco:532 Charuto, de repolho | 78 6.8 10.1 1.1 | 70 % G | revisado: el charuto de TACO es magro, con arroz (70 % G) | 2026-10-23
+Revuelto gramajo | sin par | - | - | sin par | 2026-10-23
+Rollito primavera | ciqual:25583 Nem ou pâté impérial, au porc, préemballé, cuit | 237 6.9 25 12.7 | 13 % kcal | revisado: otra receta (13 % kcal) | 2026-10-23
+Rollitos de papel de arroz | ciqual:25419 Rouleau de printemps | 103 4.6 19.2 1.8 | 10 % C | ok | 2026-10-22
+Salchichas con puré | sin par | - | - | sin par | 2026-10-23
+Salchipapas | sin par | - | - | sin par | 2026-10-22
+Samosa | cofid:15-305 Samosas, vegetable, retail | 217 5.1 30.9 9.3 | 41 % G | revisado: las industriales británicas absorben menos aceite (41 % G) | 2026-10-23
+Sancocho | sin par | - | - | sin par | 2026-10-22
+Sándwich caliente de jamón y queso | ciqual:25400 Croque-monsieur, jambon, fromage et beurre, fait maison | - 14.3 19.8 18.4 | 26 % G | revisado: el croque-monsieur lleva manteca (26 % G) | 2026-10-23
+Sándwich de atún | cofid:11-967 Sandwich, white bread, tuna mayonnaise | 237 12.5 24.3 10.2 | 30 % C | revisado: otra receta, con más pan (30 % C) | 2026-10-23
+Sándwich de desayuno | sin par | - | - | sin par | 2026-10-23
+Sándwich de falafel | sin par | - | - | sin par | 2026-10-23
+Sándwich de jamón curado y queso | ciqual:25434 Sandwich panini, jambon cru mozzarella, tomates | 237 14.2 28.6 8.4 | 18 % P | revisado: otra receta, con tomate (18 % P) | 2026-10-23
+Sándwich de jamón y queso | ciqual:25485 Sandwich baguette, jambon emmental, préemballé | 284 12.7 30.7 12.9 | 37 % C | revisado: el francés es de baguette, con manteca (37 % C) | 2026-10-23
+Sándwich de mantequilla de maní y mermelada | sin par | - | - | sin par | 2026-10-23
+Sándwich de miga | ciqual:25576 Sandwich pain de mie complet, jambon fromage, préemballé | 240 11.2 26.6 10.5 | 15 % kcal | revisado: otra receta (15 % kcal) | 2026-10-23
+Sándwich de milanesa | sin par | - | - | sin par | 2026-10-23
+Sándwich de milanesa completo | sin par | - | - | sin par | 2026-10-23
+Sándwich de milanesa de pollo | sin par | - | - | sin par | 2026-10-23
+Sándwich de pernil | sin par | - | - | sin par | 2026-10-23
+Sándwich de pollo a la plancha | sin par | - | - | sin par | 2026-10-23
+Sándwich de pollo con mayonesa | cofid:11-964 Sandwich, white bread, chicken salad | 172 10.7 21.9 4.9 | 44 % G | revisado: el británico lleva lechuga y tomate en vez de mayonesa (44 % G) | 2026-10-23
+Sándwich de queso a la plancha | cofid:11-963 Sandwich, white bread, cheddar cheese and pickle | 282 12 27 14.4 | 31 % G | revisado: el británico no se dora con manteca (31 % G) | 2026-10-23
+Sándwich de tocino, lechuga y tomate | cofid:11-955 Sandwich, white bread, bacon, lettuce and tomato | 230 8.2 23.4 11.9 | 22 % G | revisado: otra receta, con mayonesa (22 % G) | 2026-10-23
+Shawarma | ciqual:25428 Sandwich grec ou kebab, pita, crudités | 232 15.2 19.7 10.9 | 26 % kcal | revisado: otra receta, con más carne (26 % kcal) | 2026-10-23
+Sopa agripicante | sin par | - | - | sin par | 2026-10-22
+Sopa de albóndigas | sin par | - | - | sin par | 2026-10-22
+Sopa de arroz | sin par | - | - | sin par | 2026-10-23
+Sopa de arvejas | ciqual:25965 Soupe aux pois cassés, préemballée à réchauffer | 49 2.5 7.2 1.5 | 17 % C | revisado: la francesa es más aguada (17 % C) | 2026-10-23
+Sopa de capeletis | sin par | - | - | sin par | 2026-10-23
+Sopa de cebolla | ciqual:25910 Soupe à l'oignon, préemballée à réchauffer | 61 1.6 2.7 3.8 | 46 % C | revisado: la de USDA lleva pan y queso gratinado (46 % C) | 2026-10-23
+Sopa de fideo | ciqual:25955 Soupe asiatique, avec pâtes, préemballée à réchauffer | 34 1.3 4.6 1.2 | 62 % kcal | revisado: la sopa asiática es más aguada (62 % kcal) | 2026-10-23
+Sopa de frijoles | sin par | - | - | sin par | 2026-10-22
+Sopa de lentejas | ciqual:25900 Soupe aux lentilles, préemballée à réchauffer | 63 3.2 7.9 1.9 | 11 % C | revisado: otra receta (11 % C) | 2026-10-23
+Sopa de lentejas con carne | ciqual:25900 Soupe aux lentilles, préemballée à réchauffer | 63 3.2 7.9 1.9 | 15 % kcal | revisado: la francesa no lleva carne (15 % kcal) | 2026-10-23
+Sopa de maní | sin par | - | - | sin par | 2026-10-22
+Sopa de mariscos | ciqual:25904 Soupe de poissons et/ou crustacés, préemballée à réchauffer | 50 4.1 2.5 2.4 | 21 % P | revisado: la bouillabaisse lleva trozos de pescado; la envasada es más aguada (21 % P) | 2026-10-23
+Sopa de papa | ciqual:25907 Soupe aux poireaux et pommes de terre, préemballée à réchauffer | 37 0.9 6.1 1.3 | 53 % kcal | revisado: la de USDA lleva leche o crema; la francesa es más aguada (53 % kcal) | 2026-10-23
+Sopa de pollo con fideos | ciqual:25976 Soupe asiatique, avec poulet et pâtes, préemballée à réchauffer | 68 4 7.2 2.8 | 15 % kcal | revisado: otra receta (15 % kcal) | 2026-10-23
+Sopa de pollo con verduras | ciqual:25901 Soupe à la volaille et aux légumes, préemballée à réchauffer | 31 3.1 3 0.8 | 24 % kcal | revisado: la francesa es más aguada (24 % kcal) | 2026-10-23
+Sopa de sémola | sin par | - | - | sin par | 2026-10-23
+Sopa de tortilla | sin par | - | - | sin par | 2026-10-22
+Sopa de verduras | ciqual:25903 Soupe aux légumes variés, préemballée à réchauffer | 37 0.8 6.5 1.5 | 10 % kcal | ok | 2026-10-23
+Sopa de verduras con carne | cofid:17-835 Scotch broth, homemade | 74 6.8 4.6 3.5 | 30 % kcal | revisado: el Scotch broth lleva más carne y cebada (30 % kcal) | 2026-10-23
+Sopa de verduras con fideos | ciqual:25903 Soupe aux légumes variés, préemballée à réchauffer | 37 0.8 6.5 1.5 | 11 % C | revisado: la francesa no lleva fideos (11 % C) | 2026-10-23
+Sopa miso | ciqual:25972 Soupe miso, déshydratée reconstituée | 17 1.2 2.5 0.3 | 8 % kcal | ok | 2026-10-22
+Sopa wantán | sin par | - | - | sin par | 2026-10-23
+Sorrentinos con salsa de tomate | ciqual:25019 Ravioli au boeuf, sauce tomate, appertisé | 95 4.2 12.5 2.8 | 27 % kcal | revisado: los de lata son más aguados (27 % kcal) | 2026-10-23
+Sorrentinos con salsa de tomate y crema | ciqual:25019 Ravioli au boeuf, sauce tomate, appertisé | 95 4.2 12.5 2.8 | 37 % kcal | revisado: los de lata son más aguados y sin crema (37 % kcal) | 2026-10-23
+Sorrentinos de jamón y queso | ciqual:25149 Pâtes fraîches farcies (ex : raviolis, tortellinis, ravioles du Dauphiné), au fromage, préemballées, cuites | 226 10 28.9 8.3 | 67 % C | revisado: los sorrentinos llevan más relleno que los raviolis (67 % C) | 2026-10-23
+Spanakopita | cofid:15-840 Pie, spinach, homemade | 177 6.2 9.9 13.3 | 17 % kcal | revisado: otra receta (17 % kcal) | 2026-10-23
+Strogonoff de carne | taco:537 Estrogonofe de carne | 173 15 3 10.8 | 25 % P | revisado: otra receta, con menos carne (25 % P) | 2026-10-23
+Sushi | ciqual:25456 Sushi ou maki aux produits de la mer | 171 6.7 28.3 3.7 | 77 % kcal | revisar | 2026-10-23
+Sushi de salmón | cofid:16-361 Sushi, salmon nigiri | 152 8.7 24.3 2.5 | 48 % kcal | revisar | 2026-10-23
+Tabulé | taco:549 Tabule | 57 2 10.6 1.2 | 55 % kcal | revisado: el de TACO casi no lleva aceite (55 % kcal) | 2026-10-23
+Tacos | sin par | - | - | sin par | 2026-10-22
+Tacos de carne sin queso | sin par | - | - | sin par | 2026-10-22
+Tacos de pescado | sin par | - | - | sin par | 2026-10-22
+Tacos de pollo | sin par | - | - | sin par | 2026-10-22
+Tallarines con estofado | sin par | - | - | sin par | 2026-10-23
+Tallarines con pesto | sin par | - | - | sin par | 2026-10-23
+Tallarines con salsa blanca | sin par | - | - | sin par | 2026-10-22
+Tallarines con salsa de queso azul | ciqual:25198 Pâtes en sauce aux fromages (spaghetti, tagliatelles…), préemballées | 163 7.2 17.8 7.4 | 10 % C | ok | 2026-10-23
+Tallarines con salsa de tomate y crema | sin par | - | - | sin par | 2026-10-23
+Tamal | sin par | - | - | sin par | 2026-10-22
+Tarta caprese | ciqual:25561 Tarte à la tomate, préemballée | 225 6 22.4 11.6 | 26 % C | revisado: otra receta, con menos queso (26 % C) | 2026-10-23
+Tarta de atún | sin par | - | - | sin par | 2026-10-23
+Tarta de brócoli | ciqual:25417 Tarte aux légumes, préemballée | 216 5 23.9 11.7 | 26 % C | revisado: otra receta (26 % C) | 2026-10-23
+Tarta de calabacín | ciqual:25417 Tarte aux légumes, préemballée | 216 5 23.9 11.7 | 41 % C | revisado: otra receta, con más masa (41 % C) | 2026-10-23
+Tarta de calabaza | ciqual:25417 Tarte aux légumes, préemballée | 216 5 23.9 11.7 | 22 % kcal | revisado: otra receta (22 % kcal) | 2026-10-23
+Tarta de cebolla | ciqual:25529 Tarte à l'oignon, préemballée | 280 7 25.4 17.2 | 41 % kcal | revisado: la francesa lleva más crema y manteca (41 % kcal) | 2026-10-23
+Tarta de choclo | ciqual:25417 Tarte aux légumes, préemballée | 216 5 23.9 11.7 | 21 % G | revisado: otra receta (21 % G) | 2026-10-23
+Tarta de espinaca | cofid:15-840 Pie, spinach, homemade | 177 6.2 9.9 13.3 | 33 % C | revisado: otra receta, con menos masa y más grasa (33 % C) | 2026-10-23
+Tarta de fiambre | ciqual:25508 Feuilleté ou friand jambon fromage, fait maison | 338 8.8 30.7 20.3 | 29 % G | revisado: otra masa (hojaldre) (29 % G) | 2026-10-23
+Tarta de jamón y queso | ciqual:25405 Quiche lorraine, préemballée | 269 8.4 19.8 16.4 | 26 % P | revisado: la quiche lorraine lleva panceta y crema (26 % P) | 2026-10-23
+Tarta de pollo | cofid:19-515 Pie, chicken, individual, baked | 288 9 24.1 17.7 | 43 % G | revisado: la británica lleva más masa (43 % G) | 2026-10-23
+Tarta de puerro | ciqual:25553 Tarte ou tourte aux poireaux, préemballée | 229 5.3 25.4 13.3 | 33 % C | revisado: otra receta, con más masa (33 % C) | 2026-10-23
+Tiras de pollo empanizadas | cofid:18-501 Chicken pieces, coated, takeaway | 267 18.5 17.3 14.1 | 4 % P | ok | 2026-10-23
+Tomates rellenos | ciqual:25103 Tomate farcie, préemballée | 127 6 4.5 9.7 | 26 % kcal | revisado: los franceses van rellenos de carne (26 % kcal) | 2026-10-23
+Torta frita | sin par | - | - | sin par | 2026-10-23
+Tortellini de carne | ciqual:25158 Pâtes fraîches farcies (ex : raviolis, tortellinis), au boeuf (ex : bolognaise), préemballées, cuites | 174 6.9 27.2 4.7 | 46 % C | revisado: los de USDA llevan más relleno (46 % C) | 2026-10-23
+Tortellini de espinaca | ciqual:25193 Pâtes fraîches farcies (ex : raviolis, tortellinis), aux légumes, préemballées, cuites | 156 5.2 24.5 4.9 | 19 % P | revisado: otro relleno, sin queso (19 % P) | 2026-10-23
+Tortilla de acelga | ciqual:22508 Omelette aux champignons, faite maison | 125 8.1 2.7 9.2 | 21 % kcal | revisado: otra receta, con más huevo (21 % kcal) | 2026-10-23
+Tortilla de calabacín | cofid:15-726 Courgettes with eggs, homemade | 112 3.9 3 9.7 | 12 % G | revisado: otra receta (12 % G) | 2026-10-23
+Tortilla de papas | ciqual:22510 Tortilla espagnole aux oignons (omelette aux pommes de terre et oignons), préemballée | 165 5.6 14.8 9.9 | 17 % G | revisado: otra receta, con más aceite (17 % G) | 2026-10-23
+Tortilla de papas con jamón y queso | ciqual:22510 Tortilla espagnole aux oignons (omelette aux pommes de terre et oignons), préemballée | 165 5.6 14.8 9.9 | 15 % P | revisado: la española no lleva jamón ni queso (15 % P) | 2026-10-23
+Tostadas francesas | sin par | - | - | sin par | 2026-10-23
+Tostones | cofid:13-569 Plantain, ripe, fried in rapeseed oil | 267 1.5 46.2 9.2 | 14 % kcal | revisado: el británico es maduro y absorbe menos aceite (14 % kcal) | 2026-10-23
+Tteokbokki | sin par | - | - | sin par | 2026-10-22
+Tzatziki | ciqual:19863 Tzatziki à base de yaourt, préemballé | 138 6.2 3.7 10.9 | 47 % kcal | revisado: el francés lleva yogur entero y aceite (47 % kcal) | 2026-10-23
+Vitel toné | sin par | - | - | sin par | 2026-10-23
+Wrap de pollo | sin par | - | - | sin par | 2026-10-23
+Queso americano | ciqual:12300 Fromage fondu en tranchettes | 246 14.1 6.2 18.5 | 32 % G | revisado: las fetas francesas de queso fundido tienen menos grasa (32 % G) | 2026-10-23
+Queso añejo | sin par | - | - | sin par | 2026-10-23
+Queso azul | ciqual:12520 Fromage bleu au lait de vache, non allégé en matière grasse | 361 16.8 0 32.5 | 21 % P | revisado: variación entre quesos azules (21 % P) | 2026-10-23
+Queso blanco | taco:461 Queijo, minas, frescal | 264 17.4 3.2 20.2 | 14 % G | revisado: el minas frescal tiene más agua (14 % G) | 2026-10-23
+Queso brie | ciqual:12020 Brie, sans précision | 345 17.6 0 30.4 | 15 % P | revisado: variación entre bries (15 % P) | 2026-10-23
+Queso camembert | ciqual:12001 Camembert, sans précision sur le type de lait (pasteurisé ou cru) | 280 19.5 0.2 22.5 | 7 % kcal | ok | 2026-10-23
+Queso cheddar | ciqual:12726 Cheddar | 399 24.7 2.5 32.6 | 6 % P | ok | 2026-10-22
+Queso Chihuahua | sin par | - | - | sin par | 2026-10-23
+Queso colonia | ciqual:12115 Emmental ou emmenthal | 373 27.9 0.8 28.8 | 7 % G | ok | 2026-10-23
+Queso cotija | sin par | - | - | sin par | 2026-10-23
+Queso cottage | cofid:12-539 Cheese, cottage, plain | 103 9.4 3 6 | 21 % kcal | revisado: el británico tiene más grasa (21 % kcal) | 2026-10-23
+Queso crema | ciqual:12068 Fromage frais ou spécialité fromagère non affinée, nature, à tartiner, en barquette, non allégée en matière grasse | 225 6.3 3.7 20.7 | 38 % G | revisar | 2026-10-23
+Queso crema light | ciqual:12069 Fromage frais ou spécialité fromagère non affinée, nature, à tartiner, en barquette, allégée en matière grasse | 133 10.8 6 7.5 | 67 % G | revisar | 2026-10-23
+Queso de cabra | ciqual:12850 Fromage de chèvre à pâte pressée non cuite, type tomme ou tome ou gouda de chèvre | 344 22.1 0.9 28.2 | 5 % kcal | ok | 2026-10-23
+Queso feta | cofid:12-525 Cheese, Feta | 250 15.6 1.4 20.2 | 21 % P | revisado: variación entre fetas: el de USDA tiene más proteína (21 % P) | 2026-10-23
+Queso fontina | sin par | - | - | sin par | 2026-10-23
+Queso fresco | taco:461 Queijo, minas, frescal | 264 17.4 3.2 20.2 | 14 % G | revisado: el minas frescal tiene más agua (14 % G) | 2026-10-23
+Queso gouda | ciqual:12736 Gouda | 369 24.7 2.8 30.2 | 10 % G | ok | 2026-10-23
+Queso gruyère | ciqual:12114 Gruyère, sans précision (origine France ou Suisse) | 408 26.3 3.4 33.5 | 15 % C | revisado: en un queso, los carbohidratos por diferencia son resto de la cuenta (15 % C) | 2026-10-23
+Queso magro | cofid:12-348 Cheese, Cheddar type, half fat | 273 32.7 0 15.8 | 58 % kcal | revisado: el británico es mitad de grasa; el de USDA, bajo en grasa (58 % kcal) | 2026-10-23
+Queso Monterey | sin par | - | - | sin par | 2026-10-22
+Queso mozzarella | taco:463 Queijo, mozarela | 330 22.6 3 25.2 | 23 % G | revisado: la de TACO es entera; la de USDA (sin especificar), en parte semidescremada (23 % G) | 2026-10-23
+Queso mozzarella light | sin par | - | - | sin par | 2026-10-23
+Queso muenster | sin par | - | - | sin par | 2026-10-23
+Queso Oaxaca | sin par | - | - | sin par | 2026-10-23
+Queso parmesano | taco:464 Queijo, parmesão | 453 35.6 1.7 33.5 | 34 % G | revisar | 2026-10-23
+Queso provolone | sin par | - | - | sin par | 2026-10-23
+Queso rallado | taco:464 Queijo, parmesão | 453 35.6 1.7 33.5 | 33 % C | revisado: el rallado seco de USDA lleva antiaglomerante; el de TACO es de horma (33 % C) | 2026-10-23
+Queso romano | ciqual:12122 Pecorino (fromage de brebis) | 383 25.5 4.1 31 | 20 % P | revisado: el romano de USDA suele ser de leche de vaca (20 % P) | 2026-10-23
+Queso suizo | ciqual:12115 Emmental ou emmenthal | 373 27.9 0.8 28.8 | 7 % G | ok | 2026-10-23
+Ricota | taco:469 Queijo, ricota | 140 12.6 3.8 8.1 | 15 % P | revisado: variación entre ricotas (15 % P) | 2026-10-23
+Ricota semidescremada | taco:469 Queijo, ricota | 140 12.6 3.8 8.1 | 7 % C | ok | 2026-10-23
+Aceitunas negras | taco:520 Azeitona, preta, conserva | 194 1.2 5.5 20.3 | 67 % kcal | revisado: las de USDA son negras de California, con más agua (67 % kcal) | 2026-10-23
+Aceitunas verdes | taco:521 Azeitona, verde, conserva | 137 0.9 4.1 14.2 | 6 % kcal | ok | 2026-10-23
+Aceto balsámico | ciqual:11091 Vinaigre balsamique | 92 0.7 21.5 0.3 | 22 % C | revisado: otra concentración (22 % C) | 2026-10-23
+Aderezo César | ciqual:11248 Sauce Caesar, préemballée | 448 1.8 8 45.7 | 24 % C | revisado: otra receta, con menos aceite (24 % C) | 2026-10-23
+Aderezo de mostaza y miel | sin par | - | - | sin par | 2026-10-23
+Aderezo ranch | sin par | - | - | sin par | 2026-10-23
+Alcaparras | sin par | - | - | sin par | 2026-10-22
+Caldo de carne | ciqual:25930 Bouillon de boeuf, déshydraté reconstitué | 6 0.9 0.4 0.2 | 3 % kcal | ok | 2026-10-23
+Caldo de pollo | ciqual:25947 Bouillon de volaille, déshydraté reconstitué | 7 1.2 0 0.1 | 3 % P | ok | 2026-10-23
+Chimichurri | sin par | - | - | sin par | 2026-10-23
+Chucrut | cofid:13-336 Sauerkraut | 9 1.1 3.3 0 | 10 % kcal | ok | 2026-10-23
+Cubito de caldo | taco:325 Caldo de galinha, tablete | 251 6.3 10.6 20.4 | 52 % P | revisado: otra formulación: el de TACO lleva más grasa (52 % P) | 2026-10-23
+Cubito de caldo de carne | taco:324 Caldo de carne, tablete | 241 7.8 15.1 16.6 | 41 % P | revisado: otra formulación (41 % P) | 2026-10-23
+Guacamole | ciqual:25620 Guacamole, préemballé | 191 1.8 6.8 17.2 | 23 % kcal | revisado: otra receta, con más aceite (23 % kcal) | 2026-10-23
+Jalapeños en vinagre | sin par | - | - | sin par | 2026-10-22
+Jugo de limón | cofid:14-277 Lemon juice, fresh | 7 0.3 1.6 0 | 26 % C | revisado: USDA cuenta el ácido cítrico en los carbohidratos por diferencia (26 % C) | 2026-10-23
+Kétchup | ciqual:11008 Ketchup, préemballé | 108 1.2 26.9 0.2 | 1 % kcal | ok | 2026-10-22
+Kimchi | sin par | - | - | sin par | 2026-10-22
+Mayonesa | ciqual:11054 Mayonnaise (70% MG min.), préemballée | 692 1.3 4.5 74.5 | 20 % C | revisado: otra receta (20 % C) | 2026-10-23
+Mayonesa light | ciqual:11079 Mayonnaise à teneur réduite en matière grasse ou mayonnaise allégée, préemballée | 297 1.1 9.4 28.5 | 28 % G | revisado: otra formulación (28 % G) | 2026-10-23
+Miso | sin par | - | - | sin par | 2026-10-22
+Mole | sin par | - | - | sin par | 2026-10-23
+Mostaza | ciqual:11013 Moutarde | 151 6.9 6.6 11.2 | 82 % kcal | revisado: la francesa es de Dijon, con más semilla y aceite (82 % kcal) | 2026-10-23
+Pepinillos | ciqual:11004 Cornichon, au vinaigre | 16 1.1 2.6 0.3 | 4 % kcal | ok | 2026-10-23
+Pesto | ciqual:11179 Sauce pesto, préemballée | 370 3.9 10.5 35.4 | 40 % G | revisado: el envasado lleva menos aceite y queso (40 % G) | 2026-10-23
+Pico de gallo | sin par | - | - | sin par | 2026-10-23
+Pimientos en conserva | sin par | - | - | sin par | 2026-10-22
+Salsa agridulce | ciqual:11163 Sauce aigre douce, préemballée | 153 0.3 38 0.2 | 1 % kcal | ok | 2026-10-22
+Salsa alfredo | ciqual:11189 Sauce au fromage pour risotto ou pâtes, préemballée | 118 3.1 2.9 9.5 | 27 % G | revisado: otra receta, con menos crema (27 % G) | 2026-10-23
+Salsa barbacoa | ciqual:11100 Sauce barbecue, préemballée | 136 0.6 33.2 0.6 | 21 % kcal | revisado: otra marca, con menos azúcar (21 % kcal) | 2026-10-23
+Salsa blanca | cofid:17-779 White sauce, savoury, made with whole milk, homemade | 158 4.4 11.1 10.8 | 10 % kcal | ok | 2026-10-23
+Salsa boloñesa | ciqual:11114 Sauce tomate à la viande ou sauce bolognaise, préemballée | 94 4.2 6.5 4.8 | 9 % P | ok | 2026-10-23
+Salsa caruso | cofid:17-827 Sauce, pasta, white, with ham and mushrooms, homemade | 129 7.3 1.5 10.6 | 53 % G | revisado: la británica es de leche, sin crema (53 % G) | 2026-10-23
+Salsa criolla | sin par | - | - | sin par | 2026-10-23
+Salsa cuatro quesos | ciqual:11189 Sauce au fromage pour risotto ou pâtes, préemballée | 118 3.1 2.9 9.5 | 62 % G | revisado: la envasada es más aguada (62 % G) | 2026-10-23
+Salsa de carne | cofid:17-725 Gravy instant granules, made up with water | 30 0.3 4.6 1.2 | 23 % kcal | revisado: la instantánea es más aguada (23 % kcal) | 2026-10-23
+Salsa de champiñones | ciqual:11192 Sauce aux champignons et à la crème, préemballée | 76 1.4 6.3 5 | 77 % G | revisado: la envasada es más aguada y con menos crema (77 % G) | 2026-10-23
+Salsa de maní | sin par | - | - | sin par | 2026-10-22
+Salsa de ostras | sin par | - | - | sin par | 2026-10-23
+Salsa de pescado | ciqual:11194 Sauce nuoc mâm ou sauce au poisson, préemballée | 81 9.3 11.1 0 | 46 % kcal | revisado: otra concentración (46 % kcal) | 2026-10-23
+Salsa de queso | ciqual:11189 Sauce au fromage pour risotto ou pâtes, préemballée | 118 3.1 2.9 9.5 | 28 % kcal | revisado: otra receta (28 % kcal) | 2026-10-23
+Salsa de queso azul | ciqual:11191 Sauce au roquefort, préemballée | 128 2.9 4.1 10.9 | 60 % G | revisado: la envasada es más aguada (60 % G) | 2026-10-23
+Salsa de soja | taco:518 Shoyu | 61 3.3 11.6 0.3 | 34 % C | revisado: el shoyu brasileño lleva más azúcar y menos soja (34 % C) | 2026-10-23
+Salsa de tomate | taco:159 Tomate, molho industrializado | 38 1.4 7.7 0.9 | 13 % kcal | revisado: otra receta, con aceite (13 % kcal) | 2026-10-23
+Salsa de tomate con crema | sin par | - | - | sin par | 2026-10-23
+Salsa hoisin | sin par | - | - | sin par | 2026-10-23
+Salsa holandesa | cofid:17-800 Hollandaise sauce, homemade | 717 5.1 1 77.9 | 34 % G | revisado: la casera británica lleva más manteca (34 % G) | 2026-10-23
+Salsa inglesa | cofid:17-723 Worcestershire sauce | 113 1.4 27 0.1 | 39 % C | revisado: otra marca (39 % C) | 2026-10-23
+Salsa mixta | sin par | - | - | sin par | 2026-10-23
+Salsa para enchiladas | sin par | - | - | sin par | 2026-10-23
+Salsa picante | cofid:17-719 Chilli sauce | 40 1.3 9.5 0.8 | 43 % C | revisado: la británica es dulce, con azúcar (43 % C) | 2026-10-23
+Salsa provenzal | sin par | - | - | sin par | 2026-10-23
+Salsa roja | sin par | - | - | sin par | 2026-10-23
+Salsa rosada | cofid:17-717 Dressing, thousand island | 210 0.7 15.4 16.4 | 53 % G | revisado: la británica lleva menos aceite (53 % G) | 2026-10-23
+Salsa rosada casera | ciqual:11244 Sauce cocktail, préemballée | 572 1.3 10 58.7 | 14 % C | revisado: otra proporción de mayonesa y kétchup (14 % C) | 2026-10-23
+Salsa sriracha | cofid:17-719 Chilli sauce | 40 1.3 9.5 0.8 | 53 % kcal | revisado: la británica es otra salsa de ají, con menos azúcar (53 % kcal) | 2026-10-23
+Salsa tártara | ciqual:11051 Sauce tartare, préemballée | 500 0.9 7 52.7 | 180 % G | revisar | 2026-10-23
+Salsa teriyaki | sin par | - | - | sin par | 2026-10-23
+Salsa verde | sin par | - | - | sin par | 2026-10-23
+Vinagre | ciqual:11018 Vinaigre | 23 0 6.9 0.1 | 30 % C | revisado: Ciqual cuenta el ácido acético en los carbohidratos por diferencia (30 % C) | 2026-10-23
+Vinagre de manzana | ciqual:11090 Vinaigre de cidre | - 0 6 0 | 26 % C | revisado: Ciqual cuenta el ácido acético en los carbohidratos por diferencia (26 % C) | 2026-10-23
+Vinagre de vino | ciqual:11220 Vinaigre de vin rouge | 21 0.3 8 0 | 39 % C | revisado: Ciqual cuenta el ácido acético en los carbohidratos por diferencia (39 % C) | 2026-10-23
+Vinagreta | ciqual:11110 Sauce vinaigrette (50 à 75% d'huile), préemballée | 475 0.6 5.2 51 | 14 % C | revisar | 2026-10-23
+Wasabi | sin par | - | - | sin par | 2026-10-22
+Chips de banana | sin par | - | - | sin par | 2026-10-23
+Chips de batata | sin par | - | - | sin par | 2026-10-23
+Chips de pita | sin par | - | - | sin par | 2026-10-23
+Chips de plátano | sin par | - | - | sin par | 2026-10-23
+Chips de yuca | sin par | - | - | sin par | 2026-10-23
+Galletas de arroz | ciqual:7352 Galette de riz complet soufflé | 381 8.4 81.4 3 | 6 % P | ok | 2026-10-23
+Galletas de queso | ciqual:38401 Biscuit ou cracker apéritif, à base de blé, au fromage | 519 14.8 50.8 29.4 | 29 % G | revisado: otra receta, con más queso y grasa (29 % G) | 2026-10-23
+Maíz tostado | sin par | - | - | sin par | 2026-10-23
+Mix de snacks | ciqual:38411 Biscuit ou cracker apéritif, à base de blé, assortiment | 501 8.9 61 25.3 | 10 % P | ok | 2026-10-23
+Palomitas de maíz | taco:61 Pipoca, com óleo de soja, sem sal | 448 9.9 70.3 15.9 | 43 % G | revisado: las de TACO llevan menos aceite (43 % G) | 2026-10-23
+Palomitas dulces | ciqual:9232 Pop-corn ou maïs éclaté, au caramel | 421 6.5 81.6 9.8 | 14 % P | revisado: otra receta (14 % P) | 2026-10-23
+Palomitas sin aceite | ciqual:9231 Pop-corn ou maïs éclaté, sans huile, non salé | 419 11 72.4 12.3 | 39 % G | revisado: las francesas, de bolsa, tienen más grasa (39 % G) | 2026-10-23
+Papas fritas de bolsa | taco:90 Batata, frita, tipo chips, industrializada | 543 5.6 51.2 36.6 | 8 % G | ok | 2026-10-23
+Papas fritas horneadas | cofid:17-693 Potato crisps, low fat | 458 6.6 63.7 21.5 | 17 % G | revisado: otra marca (17 % G) | 2026-10-23
+Papas paja | taco:90 Batata, frita, tipo chips, industrializada | 543 5.6 51.2 36.6 | 6 % P | ok | 2026-10-23
+Pretzels | ciqual:38107 Biscuit ou cracker apéritif, mini bretzel ou sticks | 376 11.2 78 3.1 | 6 % P | ok | 2026-10-22
+Snack de maíz con queso | ciqual:38421 Biscuit ou cracker apéritif, soufflé, goût fromage | 510 7.3 60.2 27.3 | 25 % G | revisado: el francés es inflado, con menos grasa (25 % G) | 2026-10-23
+Tortitas de maíz | ciqual:7354 Galette de maïs soufflé | 387 7 86.6 1.9 | 5 % P | ok | 2026-10-23
+Totopos | ciqual:38417 Chips de maïs ou tortilla chips, nature | 488 6.1 67 22.5 | 9 % G | ok | 2026-10-22
+Aceite de pescado | cofid:17-488 Oil, cod liver | 899 0 0 99.9 | 0 % kcal | ok | 2026-10-23
+Barra de proteínas | sin par | - | - | sin par | 2026-10-23
+Batido de proteínas | sin par | - | - | sin par | 2026-10-22
+Proteína de suero | sin par | - | - | sin par | 2026-10-22
+Proteína vegetal | sin par | - | - | sin par | 2026-10-22
+Suplemento nutricional en polvo | sin par | - | - | sin par | 2026-10-23
+Suplemento nutricional líquido | sin par | - | - | sin par | 2026-10-22
+Batata | taco:89 Batata, doce, crua | 118 1.3 28.2 0.1 | 40 % C | revisado: otra variedad: la brasileña tiene menos agua (40 % C) | 2026-10-23
+Batata al horno | cofid:13-672 Sweet potato, baked | 115 1.6 31.3 0.4 | 51 % C | revisar | 2026-10-23
+Batata frita | sin par | - | - | sin par | 2026-10-23
+Batata hervida | taco:88 Batata, doce, cozida | 77 0.6 18.4 0.1 | 4 % P | ok | 2026-10-22
+Malanga | taco:126 Inhame, cru | 97 2.1 23.2 0.2 | 14 % kcal | revisado: otra variedad (14 % kcal) | 2026-10-23
+Malanga cocida | cofid:13-378 Taro, boiled in unsalted water | 91 1.2 22.6 0.2 | 36 % kcal | revisado: el de USDA pierde agua al cocinarse; el británico es hervido (36 % kcal) | 2026-10-23
+Ñame | taco:103 Cará, cru | 96 2.3 23 0.1 | 19 % kcal | revisado: otra especie de ñame (19 % kcal) | 2026-10-23
+Ñame cocido | taco:102 Cará, cozido | 78 1.5 18.9 0.1 | 33 % kcal | revisado: otra especie, y el de TACO absorbe agua al hervir (33 % kcal) | 2026-10-23
+Papa | taco:92 Batata, inglesa, crua | 64 1.8 14.7 0 | 14 % C | revisado: la papa brasileña tiene más agua (14 % C) | 2026-10-23
+Papa al horno | cofid:13-491 Potatoes, old, baked, flesh and skin | 97 2.5 23.3 0.2 | 10 % C | ok | 2026-10-22
+Papa hervida | taco:91 Batata, inglesa, cozida | 52 1.2 11.9 0 | 41 % C | revisado: la de TACO absorbe mucha agua al hervir (41 % C) | 2026-10-23
+Papas al horno con aceite | cofid:13-599 Potatoes, old, roasted in corn oil | 161 2.6 26.8 5.7 | 31 % C | revisado: las británicas pierden más agua al asarse (31 % C) | 2026-10-23
+Papas fritas a la provenzal | taco:93 Batata, inglesa, frita | 267 5 35.6 13.1 | 14 % G | revisar | 2026-10-23
+Papas gratinadas | ciqual:25056 Gratin dauphinois, préemballé | 113 3.4 16.3 4.2 | 25 % C | revisado: otra receta: el gratin dauphinois va con crema y sin queso (25 % C) | 2026-10-23
+Papas hervidas con mantequilla | taco:91 Batata, inglesa, cozida | 52 1.2 11.9 0 | 58 % kcal | revisado: la de TACO no lleva manteca y absorbe mucha agua al hervir (58 % kcal) | 2026-10-23
+Plátano maduro | taco:175 Banana, da terra, crua | 128 1.4 33.7 0.2 | 6 % C | ok | 2026-10-23
+Plátano maduro hervido | cofid:13-324 Plantain, boiled in unsalted water, flesh only | 112 0.8 27.5 0.2 | 13 % C | revisado: variación natural (13 % C) | 2026-10-23
+Plátano verde | cofid:13-323 Plantain, green flesh, raw | 117 1.1 28.4 0.3 | 23 % kcal | revisado: el británico tiene más agua (23 % kcal) | 2026-10-23
+Plátano verde hervido | cofid:13-324 Plantain, boiled in unsalted water, flesh only | 112 0.8 27.5 0.2 | 7 % kcal | ok | 2026-10-22
+Puré de batata | ciqual:4103 Patate douce, purée, cuisinée à la crème | 80 1.1 16.6 2 | 14 % kcal | revisado: otra receta (14 % kcal) | 2026-10-23
+Puré de papas | ciqual:4047 Purée de pomme de terre (aliment moyen) | 97 2.1 14.4 3.7 | 16 % C | revisado: otra receta, con más leche (16 % C) | 2026-10-23
+Puré de papas instantáneo | ciqual:4016 Flocons de pomme de terre, au lait ou à la crème, déshydratés | 376 10.1 76 4 | 18 % G | revisado: los copos franceses llevan leche (18 % G) | 2026-10-23
+Puré mixto | ciqual:4047 Purée de pomme de terre (aliment moyen) | 97 2.1 14.4 3.7 | 14 % kcal | revisado: el puré francés es solo de papa (14 % kcal) | 2026-10-23
+Yuca | taco:130 Mandioca, crua | 151 1.1 36.2 0.3 | 5 % kcal | ok | 2026-10-22
+Yuca cocida | taco:129 Mandioca, cozida | 125 0.6 30.1 0.3 | 34 % kcal | revisar | 2026-10-22
+Acelga | taco:74 Acelga, crua | 21 1.4 4.6 0.1 | 4 % C | ok | 2026-10-23
+Acelga cocida | ciqual:20301 Bette ou blette, côte et feuille, bouillie/cuite à l'eau | 16 0.9 2.9 0.3 | 6 % C | ok | 2026-10-23
+Acelga salteada | ciqual:20301 Bette ou blette, côte et feuille, bouillie/cuite à l'eau | 16 0.9 2.9 0.3 | 28 % kcal | revisado: la francesa es hervida, sin aceite (28 % kcal) | 2026-10-23
+Achicoria | taco:84 Almeirão, cru | 18 1.8 3.3 0.2 | 7 % C | ok | 2026-10-23
+Ajo | taco:82 Alho, cru | 113 7 23.9 0.2 | 28 % C | revisado: el ajo brasileño tiene más agua (28 % C) | 2026-10-23
+Albahaca | taco:133 Manjericão, cru | 21 2 3.6 0.4 | 6 % P | ok | 2026-10-23
+Alcachofa | cofid:13-153 Artichoke, globe, raw | 18 2.8 - 0.2 | 29 % kcal | revisado: CoFID no le da energía a la inulina (29 % kcal) | 2026-10-23
+Alcachofa cocida | ciqual:20000 Artichaut, cuit | 33 2.5 10.2 0.3 | 20 % kcal | revisado: Ciqual le da menos energía a la fibra (20 % kcal) | 2026-10-23
+Apio | taco:76 Aipo, cru | 19 0.8 4.3 0.1 | 7 % C | ok | 2026-10-22
+Arvejas | cofid:13-536 Peas, frozen, boiled in unsalted water | 70 5.5 15.9 0.7 | 9 % C | ok | 2026-10-23
+Arvejas crudas | cofid:13-438 Peas, raw | 83 6.9 15.8 1.5 | 7 % P | ok | 2026-10-22
+Arvejas en lata | taco:560 Ervilha, enlatada, drenada | 74 4.6 13.4 0.4 | 10 % C | ok | 2026-10-23
+Arvejas salteadas | ciqual:20326 Petits pois, bouillis/cuits à l'eau | 81 6.4 14.9 0.6 | 24 % kcal | revisado: las francesas son hervidas, sin grasa (24 % kcal) | 2026-10-23
+Berenjena | taco:96 Berinjela, crua | 20 1.2 4.4 0.1 | 7 % C | ok | 2026-10-22
+Berenjena cocida | taco:95 Berinjela, cozida | 19 0.7 4.5 0.1 | 21 % C | revisado: la de TACO absorbe más agua (21 % C) | 2026-10-23
+Berenjena salteada | ciqual:20300 Aubergine, chair et peau, rôtie/cuite au four | 31 1.3 6.9 0.2 | 20 % kcal | revisado: la francesa es al horno, sin aceite (20 % kcal) | 2026-10-23
+Berenjenas en escabeche | sin par | - | - | sin par | 2026-10-23
+Berro | taco:75 Agrião, cru | 17 2.7 2.3 0.2 | 6 % kcal | ok | 2026-10-22
+Bok choy | sin par | - | - | sin par | 2026-10-22
+Brócoli | taco:101 Brócolis, cru | 25 3.6 4 0.3 | 13 % C | revisado: variación natural (13 % C) | 2026-10-23
+Brócoli cocido | taco:100 Brócolis, cozido | 25 2.1 4.4 0.5 | 14 % C | revisado: variación natural (14 % C) | 2026-10-23
+Brócoli salteado | ciqual:20351 Brocoli, cuit (aliment moyen) | 30 3.2 4 0.6 | 33 % kcal | revisado: el francés es hervido, sin grasa (33 % kcal) | 2026-10-23
+Brotes de alfalfa | sin par | - | - | sin par | 2026-10-23
+Brotes de soja | taco:125 Feijão, broto, cru | 39 4.2 7.8 0.1 | 9 % kcal | ok | 2026-10-22
+Calabacín | taco:71 Abobrinha, italiana, crua | 19 1.1 4.3 0.1 | 6 % C | ok | 2026-10-23
+Calabacín cocido | taco:70 Abobrinha, italiana, cozida | 15 1.1 3 0.2 | 1 % C | ok | 2026-10-23
+Calabacín redondo | taco:71 Abobrinha, italiana, crua | 19 1.1 4.3 0.1 | 2 % C | ok | 2026-10-23
+Calabacín redondo cocido | taco:70 Abobrinha, italiana, cozida | 15 1.1 3 0.2 | 2 % C | ok | 2026-10-23
+Calabacín salteado | taco:72 Abobrinha, italiana, refogada | 24 1.1 4.2 0.8 | 23 % kcal | revisado: el refogado de TACO lleva menos aceite (23 % kcal) | 2026-10-23
+Calabaza | ciqual:20044 Potiron, cru | 20 1.1 4.3 0.1 | 11 % C | revisado: variación natural (11 % C) | 2026-10-23
+Calabaza cocida | ciqual:20096 Potiron, cuit | 26 0.8 6.6 0.1 | 8 % C | ok | 2026-10-22
+Calabaza japonesa | taco:65 Abóbora, cabotian, crua | 39 1.7 8.4 0.5 | 59 % C | revisado: la cabotiá brasileña tiene mucha más agua que la kabocha japonesa (59 % C) | 2026-10-23
+Calabaza japonesa al horno | sin par | - | - | sin par | 2026-10-23
+Calabaza japonesa hervida | taco:64 Abóbora, cabotian, cozida | 48 1.4 10.8 0.7 | 49 % C | revisado: la cabotiá brasileña tiene mucha más agua que la kabocha japonesa (49 % C) | 2026-10-23
+Calabaza moscada | cofid:13-355 Squash, butternut, raw | 36 1.1 9.5 0.1 | 11 % C | revisado: variación natural (11 % C) | 2026-10-23
+Calabaza moscada al horno | cofid:13-644 Squash, butternut, baked | 39 1.4 10.2 0.2 | 2 % P | ok | 2026-10-22
+Cebolla | taco:107 Cebola, crua | 39 1.7 8.9 0.1 | 3 % P | ok | 2026-10-22
+Cebolla cocida | ciqual:20035 Oignon, cuit | 35 1.3 7.6 0.2 | 13 % C | revisado: variación natural (13 % C) | 2026-10-23
+Cebolla salteada | cofid:13-611 Onions, fried in butter | 95 1.2 13.9 5.3 | 22 % kcal | revisado: la británica, frita en manteca, absorbe más grasa (22 % kcal) | 2026-10-23
+Cebollín | taco:108 Cebolinha, crua | 20 1.9 3.4 0.4 | 20 % C | revisado: la cebolinha de TACO es solo la hoja (20 % C) | 2026-10-23
+Chalota | ciqual:20097 Échalote, crue | 62 1.8 15 0.3 | 10 % kcal | ok | 2026-10-22
+Champiñones | ciqual:20056 Champignon de Paris ou champignon de couche, cru | 21 2.1 2.9 0.4 | 5 % P | ok | 2026-10-23
+Champiñones en lata | ciqual:20079 Champignon de Paris ou champignon de couche, appertisé, égoutté | 18 2 3.9 0.4 | 7 % kcal | ok | 2026-10-22
+Champiñones salteados | ciqual:20125 Champignon de Paris ou champignon de couche, sauté/poêlé, sans matière grasse | 38 4.4 5.5 0.6 | 12 % kcal | revisado: el francés pierde más agua (12 % kcal) | 2026-10-23
+Chayote | taco:113 Chuchu, cru | 17 0.7 4.1 0.1 | 2 % kcal | ok | 2026-10-22
+Chayote cocido | taco:112 Chuchu, cozido | 19 0.4 4.8 0 | 5 % kcal | ok | 2026-10-22
+Chile picante | cofid:13-317 Peppers, capsicum, chilli, red, raw | 26 1.8 - 0.3 | 14 % kcal | revisado: variación natural (14 % kcal) | 2026-10-23
+Chile serrano | cofid:13-316 Peppers, capsicum, chilli, green, raw | 20 2.9 0.7 0.6 | 30 % C | revisado: CoFID no trae la fibra del ají verde (30 % C) | 2026-10-23
+Cilantro | sin par | - | - | sin par | 2026-10-23
+Coles de Bruselas | cofid:13-177 Brussels sprouts, raw | 42 3.5 8.1 1.4 | 5 % G | ok | 2026-10-22
+Coles de Bruselas cocidas | ciqual:20309 Chou de Bruxelles, bouilli/cuit à l'eau | 44 3.2 10.4 0.2 | 16 % C | revisado: variación natural (16 % C) | 2026-10-23
+Coliflor | taco:117 Couve-flor, crua | 23 1.9 4.5 0.2 | 2 % kcal | ok | 2026-10-22
+Coliflor cocida | taco:118 Couve-flor, cozida | 19 1.2 3.9 0.3 | 4 % kcal | ok | 2026-10-22
+Coliflor salteada | taco:118 Couve-flor, cozida | 19 1.2 3.9 0.3 | 30 % kcal | revisado: la de TACO es hervida, sin aceite (30 % kcal) | 2026-10-23
+Escarola | ciqual:20090 Scarole, crue | 21 1.4 4 0.2 | 4 % kcal | ok | 2026-10-22
+Espárragos | ciqual:20279 Asperge, verte, crue | 25 2.5 4.3 0.3 | 5 % kcal | ok | 2026-10-23
+Espárragos cocidos | ciqual:20299 Asperge verte, bouillie/cuite à l'eau | 25 2.7 3.7 0.3 | 3 % kcal | ok | 2026-10-23
+Espárragos en lata | sin par | - | - | sin par | 2026-10-22
+Espinaca | ciqual:20059 Épinard, cru | 33 2.7 5.2 0.4 | 10 % kcal | ok | 2026-10-22
+Espinaca a la crema | ciqual:25026 Épinard à la crème, préemballé | 57 2.5 6.3 2.9 | 33 % kcal | revisado: la envasada francesa lleva menos crema (33 % kcal) | 2026-10-23
+Espinaca cocida | ciqual:20336 Épinard, bouilli/cuit à l'eau | 27 3.4 3 0.7 | 4 % kcal | ok | 2026-10-22
+Espinaca salteada | ciqual:20027 Épinard, cuit | 20 3.2 2.7 0.1 | 39 % kcal | revisado: la francesa es hervida, sin aceite (39 % kcal) | 2026-10-23
+Hinojo | ciqual:20028 Fenouil, cru | 18 1 4.9 0.3 | 13 % kcal | revisado: variación natural (13 % kcal) | 2026-10-23
+Hongos ostra | cofid:13-293 Mushrooms, oyster, raw | 8 1.6 0 0.2 | 30 % C | revisado: CoFID no trae la fibra y el británico tiene más agua (30 % C) | 2026-10-23
+Hongos portobello | ciqual:20056 Champignon de Paris ou champignon de couche, cru | 21 2.1 2.9 0.4 | 5 % C | ok | 2026-10-23
+Jalapeño | cofid:13-316 Peppers, capsicum, chilli, green, raw | 20 2.9 0.7 0.6 | 29 % C | revisado: CoFID no trae la fibra del ají verde (29 % C) | 2026-10-23
+Jícama | sin par | - | - | sin par | 2026-10-22
+Judías verdes | ciqual:20320 Haricot vert, bouilli/cuit à l'eau | 27 1.8 6.6 0.2 | 8 % kcal | ok | 2026-10-22
+Judías verdes crudas | taco:162 Vagem, crua | 25 1.8 5.3 0.2 | 8 % C | ok | 2026-10-22
+Judías verdes salteadas | ciqual:20030 Haricot vert, cuit | 29 2 7.8 0.2 | 35 % kcal | revisado: las francesas son hervidas, sin aceite (35 % kcal) | 2026-10-23
+Kale | cofid:13-234 Curly kale, raw | 33 3.4 4.5 1.6 | 2 % kcal | ok | 2026-10-23
+Kale cocido | cofid:13-649 Curly kale, boiled in unsalted water | 26 2.7 4.5 1.3 | 10 % kcal | ok | 2026-10-22
+Lechuga | cofid:13-520 Lettuce, average, raw | 11 1.2 2.9 0.1 | 9 % kcal | ok | 2026-10-22
+Lechuga crespa | taco:78 Alface, crespa, crua | 11 1.3 1.7 0.2 | 6 % C | ok | 2026-10-23
+Lechuga iceberg | taco:77 Alface, americana, crua | 9 0.6 1.7 0.1 | 6 % C | ok | 2026-10-22
+Lechuga mantecosa | taco:79 Alface, lisa, crua | 14 1.7 2.4 0.1 | 2 % P | ok | 2026-10-23
+Lechuga morada | taco:80 Alface, roxa, crua | 13 0.9 2.5 0.2 | 2 % P | ok | 2026-10-23
+Lechuga romana | cofid:13-520 Lettuce, average, raw | 11 1.2 2.9 0.1 | 10 % kcal | ok | 2026-10-22
+Maíz dulce | taco:44 Milho, verde, cru | 138 6.6 28.6 0.6 | 52 % kcal | revisado: el milho verde brasileño es maíz común tierno, con menos agua que el dulce (52 % kcal) | 2026-10-23
+Maíz dulce cocido | cofid:13-508 Sweetcorn, kernels, boiled 'on the cob' in unsalted water | 67 3.6 14 1.9 | 33 % C | revisado: otra variedad, con más agua (33 % C) | 2026-10-23
+Maíz dulce con mantequilla | cofid:13-508 Sweetcorn, kernels, boiled 'on the cob' in unsalted water | 67 3.6 14 1.9 | 37 % kcal | revisado: el británico va sin manteca (37 % kcal) | 2026-10-23
+Maíz en lata | taco:45 Milho, verde, enlatado, drenado | 98 3.2 17.1 2.4 | 19 % kcal | revisado: otra marca (19 % kcal) | 2026-10-23
+Menta | cofid:13-836 Mint, fresh | 43 3.8 - 0.7 | 3 % P | ok | 2026-10-23
+Mezcla de hojas verdes | ciqual:25604 Salade verte, crue, sans assaisonnement | 14 1 2.3 0.1 | 8 % kcal | ok | 2026-10-23
+Nabo | taco:137 Nabo, cru | 18 1.2 4.1 0.1 | 11 % C | revisado: variación natural (11 % C) | 2026-10-23
+Nabo cocido | ciqual:20321 Navet, bouilli/cuit à l'eau | 18 0.8 4.6 0.2 | 4 % kcal | ok | 2026-10-22
+Nopal | sin par | - | - | sin par | 2026-10-22
+Nopal crudo | sin par | - | - | sin par | 2026-10-22
+Palmitos | taco:139 Palmito, pupunha, em conserva | 29 2.5 5.5 0.5 | 4 % C | ok | 2026-10-22
+Pasta de tomate | taco:158 Tomate, extrato | 61 2.4 15 0.2 | 21 % kcal | revisado: el extrato de TACO es menos concentrado (21 % kcal) | 2026-10-23
+Pepino | taco:142 Pepino, cru | 10 0.9 2 0 | 8 % C | ok | 2026-10-22
+Perejil | taco:153 Salsa, crua | 33 3.3 5.7 0.6 | 3 % kcal | ok | 2026-10-22
+Pimiento amarillo | taco:143 Pimentão, amarelo, cru | 28 1.2 6 0.4 | 2 % C | ok | 2026-10-22
+Pimiento rojo | taco:145 Pimentão, vermelho, cru | 23 1 5.5 0.1 | 3 % kcal | ok | 2026-10-22
+Pimiento rojo salteado | ciqual:20329 Poivron rouge, sauté/poêlé | 33 0.9 8.4 0.2 | 75 % kcal | revisado: el francés se saltea sin aceite (75 % kcal) | 2026-10-23
+Pimiento verde | taco:144 Pimentão, verde, cru | 21 1.1 4.9 0.2 | 1 % kcal | ok | 2026-10-22
+Pimiento y cebolla salteados | ciqual:20240 Piperade basquaise, préemballée | 68 1.1 9.1 3.8 | 9 % kcal | ok | 2026-10-23
+Portobello a la plancha | ciqual:20125 Champignon de Paris ou champignon de couche, sauté/poêlé, sans matière grasse | 38 4.4 5.5 0.6 | 9 % kcal | ok | 2026-10-23
+Puerro | taco:83 Alho-poró, cru | 32 1.4 6.9 0.1 | 36 % C | revisar | 2026-10-22
+Puerro cocido | ciqual:20327 Poireau, bouilli/cuit à l'eau | 25 2.6 5.3 0.2 | 12 % C | revisado: variación natural (12 % C) | 2026-10-23
+Puré de calabaza japonesa | ciqual:20096 Potiron, cuit | 26 0.8 6.6 0.1 | 71 % kcal | revisado: el potiron francés tiene mucha más agua que la kabocha, y el puré lleva manteca (71 % kcal) | 2026-10-23
+Puré de tomate | taco:160 Tomate, purê | 28 1.4 6.9 0 | 10 % kcal | ok | 2026-10-23
+Rabanito | taco:148 Rabanete, cru | 14 1.4 2.7 0.1 | 4 % P | ok | 2026-10-22
+Rábano daikon | cofid:13-331 Radish, white/mooli, raw | 15 0.8 - 0.1 | 3 % kcal | ok | 2026-10-23
+Remolacha | taco:98 Beterraba, crua | 49 1.9 11.1 0.1 | 8 % C | ok | 2026-10-22
+Remolacha cocida | taco:97 Beterraba, cozida | 32 1.3 7.2 0.1 | 14 % C | revisado: variación natural (14 % C) | 2026-10-23
+Repollo | cofid:13-582 Cabbage, average, raw | 26 1.8 7.9 0.2 | 10 % C | ok | 2026-10-22
+Repollo cocido | cofid:13-581 Cabbage, average, boiled in unsalted water | 17 1.1 4.9 0.2 | 6 % kcal | ok | 2026-10-22
+Repollo morado | taco:150 Repolho, roxo, cru | 31 1.9 7.2 0.1 | 2 % P | ok | 2026-10-22
+Repollo salteado | ciqual:20015 Chou vert, cuit | 24 1 4.2 0.5 | 31 % kcal | revisado: el francés es hervido, sin aceite (31 % kcal) | 2026-10-23
+Rúcula | taco:152 Rúcula, crua | 13 1.8 2.2 0.1 | 12 % kcal | revisado: variación natural (12 % kcal) | 2026-10-23
+Shiitake | sin par | - | - | sin par | 2026-10-23
+Shiitake salteado | sin par | - | - | sin par | 2026-10-22
+Tomate | taco:157 Tomate, com semente, cru | 15 1.1 3.1 0.2 | 4 % C | ok | 2026-10-23
+Tomate triturado | ciqual:20169 Tomate, chair, appertisée | 23 1.2 4.9 0.3 | 12 % C | revisado: otra concentración (12 % C) | 2026-10-23
+Tomates secos | sin par | - | - | sin par | 2026-10-23
+Tomatillo | sin par | - | - | sin par | 2026-10-22
+Verduras mixtas cocidas | cofid:13-543 Vegetables, mixed, frozen, boiled in unsalted water | 42 3.3 - 0.5 | 23 % kcal | revisado: otra mezcla, con menos choclo (23 % kcal) | 2026-10-23
+Verduras mixtas congeladas | ciqual:20101 Légumes, mélange surgelé, crus | 65 2.3 8.7 2.7 | 24 % C | revisado: otra mezcla (24 % C) | 2026-10-23
+Verduras mixtas en lata | taco:154 Seleta de legumes, enlatada | 57 3.4 12.7 0.4 | 17 % C | revisado: otra mezcla (17 % C) | 2026-10-23
+Zanahoria | taco:110 Cenoura, crua | 34 1.3 7.7 0.2 | 10 % C | ok | 2026-10-22
+Zanahoria cocida | taco:109 Cenoura, cozida | 30 0.8 6.7 0.2 | 8 % C | ok | 2026-10-22
+Zanahoria salteada | taco:109 Cenoura, cozida | 30 0.8 6.7 0.2 | 42 % kcal | revisado: la de TACO es hervida, sin aceite (42 % kcal) | 2026-10-23

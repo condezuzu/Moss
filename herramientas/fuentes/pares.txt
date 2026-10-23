@@ -1,0 +1,1649 @@
+// Los pares a mano de `npm run alimentos:comparar` (herramientas/comparar-fuentes.mjs): lo que la
+// búsqueda automática empareja mal, lo que no tiene par en ninguna tabla y las diferencias revisadas.
+// Una línea por curado:  nombre en español | fuente:código (taco:N, ciqual:N o cofid:N) o «sin par» | nota
+// - La nota de un par que no coincide y se revisó: «revisado: motivo (la diferencia, como la escribe
+//   verificacion.txt)». Si después la diferencia cambia, la revisión deja de valer y vuelve a «revisar».
+// - La nota de «sin par» es libre: por qué no lo tiene.
+Bloody Mary | sin par | ninguna tabla tiene el cóctel
+Brandy | ciqual:1023
+Cerveza | taco:474
+Cerveza artesanal | ciqual:5002 | revisado: otra cerveza, con más azúcar sin fermentar (21 % C)
+Cerveza light | sin par | no hay cerveza light (Ciqual tiene de 3°, que es otra cosa)
+Cerveza sin alcohol | ciqual:5030 | revisado: otra marca, con menos azúcar (15 % C)
+Clericó | sin par | ninguna tabla tiene un ponche de vino blanco con fruta
+Cuba libre | sin par | ninguna tabla tiene ron con cola
+Daiquiri | sin par | ninguna tabla tiene el cóctel
+Destilado | ciqual:1008
+Destornillador | sin par | ninguna tabla tiene el cóctel
+Gin | sin par | el gin de Ciqual es copia de USDA
+Gin tonic | sin par | ninguna tabla tiene el cóctel
+Grappamiel | sin par | ninguna tabla tiene grappa con miel
+Hard seltzer | sin par | ninguna tabla lo tiene
+Jerez seco | sin par | ninguna tabla tiene jerez
+Licor | ciqual:1003 | revisado: los licores varían mucho en azúcar y alcohol (23 % C)
+Licor de café | sin par | Ciqual tiene licor en general, con menos azúcar que uno de café
+Licor de crema | sin par | ninguna tabla tiene licor de crema
+Margarita | sin par | ninguna tabla tiene el cóctel
+Martini | sin par | ninguna tabla tiene el cóctel
+Medio y medio | ciqual:5201
+Michelada | sin par | ninguna tabla tiene el cóctel
+Mimosa | sin par | ninguna tabla tiene el cóctel
+Mojito | sin par | ninguna tabla tiene el cóctel
+Piña colada | sin par | ninguna tabla tiene el cóctel
+Ponche de huevo | sin par | ninguna tabla tiene ponche de huevo con alcohol
+Ron | ciqual:1004
+Sangría | ciqual:1017 | revisado: otra receta casera, con más azúcar (15 % C)
+Sangría blanca | ciqual:1017 | revisado: otra receta casera, con más azúcar (16 % C)
+Sidra | ciqual:5003 | revisado: la sidra francesa tiene menos alcohol y azúcar (20 % kcal)
+Tequila | sin par | ninguna tabla tiene tequila
+Tequila sunrise | sin par | ninguna tabla tiene el cóctel
+Vino blanco | ciqual:5215 | revisado: el blanco seco francés tiene menos alcohol y nada de azúcar (27 % kcal)
+Vino con soda | sin par | ninguna tabla tiene vino con soda
+Vino dulce | ciqual:1006
+Vino espumoso | ciqual:5201
+Vino rosado | ciqual:5216 | revisado: otra graduación y menos azúcar (14 % kcal)
+Vino tinto | ciqual:5214 | revisado: el de USDA tiene más azúcar residual (11 % C)
+Vodka | ciqual:1008
+Whisky | ciqual:1005
+Whisky con soda | sin par | ninguna tabla tiene whisky con soda
+Alitas de pollo | cofid:18-339 | revisado: corte: el cuarto de ala de CoFID incluye parte de la pechuga (13 % G)
+Alitas de pollo crudas | taco:391 | revisado: más piel y grasa en el ala brasileña (12 % kcal)
+Corazones de pollo crudos | taco:394 | revisado: TACO deja la grasa que rodea el corazón (46 % G)
+Corazones de pollo hervidos | taco:395 | revisado: TACO lo trae a la plancha y con la grasa que lo rodea (21 % G)
+Gallina cruda | taco:402 | revisado: la gallina es un ave adulta, con más grasa que el pollo (15 % G)
+Gallina hervida | taco:392 | revisado: la gallina adulta tiene más grasa que el pollo de campo (16 % G)
+Hígado de pollo | ciqual:40109
+Hígado de pollo crudo | taco:400 | revisado: variación natural de la grasa (11 % kcal)
+Medallón de pollo empanado | cofid:18-502 | revisado: el británico lleva más empanado (25 % C)
+Medallón de pollo empanado crudo | ciqual:36027 | revisado: formulación distinta: el francés lleva más rebozado y menos grasa (43 % C)
+Menudencias de pollo crudas | cofid:18-393 | revisado: otra mezcla de vísceras, con más grasa (19 % G)
+Menudencias de pollo hervidas | cofid:18-394 | revisado: otra mezcla de vísceras y otra pérdida de agua (16 % P)
+Milanesa de pollo | taco:401
+Mollejas de pollo | sin par | las tablas tienen la molleja cruda, no cocida
+Mollejas de pollo crudas | ciqual:40700
+Muslo de pollo | taco:413 | revisado: el de TACO está más asado (menos agua) y con más grasa (31 % kcal)
+Muslo de pollo con piel | taco:411 | revisado: el de TACO está más asado: menos agua (24 % P)
+Muslo de pollo con piel crudo | taco:412 | revisado: más piel y grasa en el pollo brasileño (21 % G)
+Muslo de pollo crudo | taco:414 | revisado: TACO deja la grasa bajo la piel (34 % kcal)
+Nuggets de pollo | ciqual:36027 | revisado: formulación distinta: el de USDA es frito; el francés, para calentar (43 % G)
+Pata de pollo | cofid:18-334
+Pata de pollo cruda | taco:399
+Pata y muslo de pollo al horno | ciqual:36004 | revisado: variación natural de la piel y la grasa (12 % G)
+Pata y muslo de pollo crudo | ciqual:36002 | revisado: variación natural de la piel y la grasa (12 % G)
+Pato | cofid:18-372
+Pato crudo | cofid:18-489
+Pavo al horno | cofid:18-367
+Pavo entero crudo | cofid:18-352
+Pavo molido | cofid:18-354 | revisado: otro porcentaje de grasa en la carne picada (24 % G)
+Pavo molido crudo | sin par | ninguna tabla tiene la carne de pavo molida cruda
+Pechuga de pavo | cofid:18-359 | revisado: la de CoFID está más asada: menos agua (17 % P)
+Pechuga de pavo cruda | cofid:18-349
+Pechuga de pollo a la plancha | taco:410 | revisado: el de USDA suma aceite al cocinar (15 % G)
+Pechuga de pollo al horno | taco:410
+Pechuga de pollo con piel al horno | taco:406 | revisado: la de TACO está más asada: menos agua (12 % P)
+Pechuga de pollo con piel cruda | taco:407 | revisado: menos piel en la pechuga de TACO (13 % kcal)
+Pechuga de pollo cruda | taco:409
+Pechuga de pollo hervida | taco:408
+Pollo asado | ciqual:36005 | revisado: el de rotisería de USDA retiene más agua (15 % P)
+Pollo crudo | taco:402 | revisado: más piel y grasa en el pollo entero de TACO (11 % P)
+Pollo frito | sin par | las tablas tienen el pollo frito sin rebozar, o la milanesa
+Pollo molido | sin par | ninguna tabla tiene la carne de pollo molida
+Pollo molido crudo | sin par | ninguna tabla tiene la carne de pollo molida
+Agua | ciqual:18044
+Agua con gas | ciqual:18046
+Agua de coco | taco:478
+Agua saborizada | sin par | ninguna tabla tiene agua saborizada
+Agua tónica | taco:479
+Atole | sin par | ninguna tabla tiene atole
+Batido de banana con leche | cofid:12-591 | revisado: otra receta: el británico es de polvo saborizado, sin fruta (12 % C)
+Batido de durazno con leche | cofid:12-591 | revisado: otra receta: el británico es de polvo saborizado, sin fruta (25 % kcal)
+Batido de fresa con leche | cofid:12-591 | revisado: otra receta: el británico es de polvo saborizado, sin fruta (23 % kcal)
+Bebida deportiva | taco:470
+Bebida deportiva sin azúcar | sin par | las tablas tienen la bebida deportiva con azúcar
+Bebida energética | ciqual:18352
+Bebida energética sin azúcar | ciqual:18353
+Café | taco:471
+Café con leche | ciqual:18151 | revisado: el de USDA lleva más leche y azúcar (19 % kcal)
+Café descafeinado | taco:471
+Café espresso | ciqual:18071
+Café helado | taco:471
+Café instantáneo | cofid:17-159
+Café latte | cofid:17-632 | revisado: el de USDA lleva leche entera (16 % kcal)
+Café moca | sin par | ninguna tabla tiene café moca
+Capuchino | cofid:17-632
+Chocolate en polvo | ciqual:18101
+Cortado | ciqual:18151
+Ginger ale | ciqual:18026
+Horchata | sin par | ninguna tabla tiene horchata
+Jugo de arándano | sin par | el de Ciqual y el de CoFID son copia de USDA
+Jugo de frutas mixtas | ciqual:2072
+Jugo de granada | ciqual:2039
+Jugo de mandarina | taco:252
+Jugo de manzana | ciqual:2074
+Jugo de maracuyá | cofid:14-285 | revisado: método: USDA cuenta los ácidos de la fruta como carbohidratos (17 % C)
+Jugo de mora | sin par | ninguna tabla tiene jugo de mora
+Jugo de naranja | cofid:14-369 | revisado: variedad y método: USDA cuenta los ácidos como carbohidratos (14 % kcal)
+Jugo de naranja envasado | ciqual:2070
+Jugo de piña | ciqual:2073
+Jugo de tomate | ciqual:2053
+Jugo de toronja | ciqual:2027
+Jugo de uva | ciqual:2016
+Jugo de verduras | ciqual:2075 | revisado: otra mezcla de verduras (11 % C)
+Jugo de zanahoria | ciqual:2006 | revisado: método de energía: Ciqual le da menos kcal a la fibra (11 % kcal)
+Jugo en polvo preparado | sin par | ninguna tabla tiene jugo en polvo preparado
+Jugo en polvo sin azúcar | sin par | ninguna tabla tiene jugo en polvo preparado
+Kombucha | ciqual:18025
+Latte helado | cofid:17-632
+Licuado | sin par | las tablas tienen smoothies sin leche
+Limonada | cofid:17-807 | revisado: la receta británica lleva más azúcar (20 % C)
+Malteada | cofid:12-327 | revisado: la casera de USDA lleva helado y leche entera; la de CoFID es de comida rápida (22 % kcal)
+Manzanilla | cofid:17-172
+Mate | taco:476
+Mate cocido con leche | sin par | el té con leche de CoFID lleva un chorro de leche, no mitad y mitad
+Mate dulce | sin par | ninguna tabla tiene mate con azúcar
+Néctar de durazno | ciqual:2371 | revisado: el néctar francés lleva más azúcar (12 % C)
+Néctar de guayaba | ciqual:2367
+Néctar de mango | ciqual:2370
+Néctar de pera | ciqual:2054
+Refresco | ciqual:18026
+Refresco de cola | taco:480
+Refresco de cola light | ciqual:18060
+Refresco de lima-limón | taco:483
+Refresco de naranja | taco:482
+Refresco de toronja | ciqual:18026
+Refresco sin azúcar | ciqual:18001
+Smoothie de frutas | ciqual:2500
+Té con leche | cofid:17-168 | revisado: la receta lleva azúcar y más leche (29 % kcal)
+Té de hierbas | cofid:17-172
+Té de jamaica | cofid:17-172
+Té helado | ciqual:18075 | revisado: otra marca, con más azúcar (22 % kcal)
+Té helado sin azúcar | taco:477
+Té negro | taco:477
+Té verde | ciqual:18155
+Asado de tira | ciqual:6123
+Asado de tira crudo | taco:348 | revisado: otro recorte de grasa (12 % P)
+Bistec | ciqual:6200 | revisado: otro corte: el bife francés es magro (55 % G)
+Bistec crudo | sin par | las tablas tienen la carne magra o cortes, no el promedio de cortes con su grasa (el de Ciqual es copia de USDA)
+Bola de lomo a la plancha | taco:377 | revisado: el de TACO está más hecho: menos agua (31 % kcal)
+Bola de lomo cruda | taco:376
+Bondiola asada | cofid:18-551 | revisado: la de CoFID está más hecha: menos agua (14 % P)
+Bondiola cruda | cofid:18-554
+Cabrito | sin par | ninguna tabla tiene carne de cabra
+Cabrito crudo | sin par | ninguna tabla tiene carne de cabra
+Carne al horno | ciqual:6210 | revisado: el rosbif francés es un corte magro y poco cocido (39 % kcal)
+Carne de cerdo cruda | taco:433
+Carne de res cruda | ciqual:6003
+Carne molida | ciqual:6259 | revisado: otro porcentaje de grasa (12 % kcal)
+Carne molida 80% magra cocida | ciqual:6257 | revisado: otra pérdida de agua: la de USDA va desmenuzada y dorada (15 % P)
+Carne molida 80% magra cruda | sin par | la de 20 % de grasa cruda de Ciqual es copia de USDA
+Carne molida 85% magra cocida | ciqual:6255 | revisado: otra pérdida de agua: la de USDA va desmenuzada y dorada (15 % P)
+Carne molida 85% magra cruda | ciqual:6254
+Carne molida 90% magra cocida | sin par | la de 10 % de grasa de Ciqual es copia de USDA
+Carne molida 90% magra cruda | sin par | la de 10 % de grasa de Ciqual es copia de USDA
+Carne molida 95% magra cocida | ciqual:6251 | revisado: otra pérdida de agua: la de USDA va desmenuzada y dorada (20 % kcal)
+Carne molida 95% magra cruda | ciqual:6250
+Carne molida cruda | cofid:18-469
+Carne para guiso | ciqual:6230 | revisado: otro corte: la de Ciqual es magra (57 % G)
+Carne seca | sin par | ninguna tabla tiene beef jerky (el charque de TACO es otra cosa)
+Carnitas | sin par | ninguna tabla tiene carnitas
+Carré de cerdo al horno | taco:432 | revisado: TACO usa el lomo, sin la grasa de la costilla (41 % G)
+Carré de cerdo crudo | taco:433 | revisado: el lomo de TACO es más magro (11 % P)
+Cerdo al horno | ciqual:28301 | revisado: otro corte, más magro en Ciqual (16 % G)
+Cerdo molido | cofid:18-607 | revisado: otro porcentaje de grasa (51 % G)
+Cerdo molido crudo | cofid:18-606 | revisado: otro porcentaje de grasa (32 % G)
+Chicharrón | cofid:17-132 | revisado: los torreznos británicos llevan más grasa (47 % G)
+Chorizo | ciqual:30315 | revisado: el chorizo español es curado: menos agua (28 % G)
+Chorizo crudo | taco:421 | revisado: la linguiça brasileña es más magra (30 % G)
+Chuleta de cerdo | cofid:18-534 | revisado: la de CoFID está más hecha: menos agua (25 % P)
+Chuleta de cerdo cruda | sin par | las tablas tienen la chuleta cruda con su grasa, no solo la carne magra
+Chuleta de cordero | ciqual:21522 | revisado: la de Ciqual es sin la grasa (52 % G)
+Chuleta de cordero cruda | cofid:18-476 | revisado: otro recorte de grasa (14 % G)
+Chuletón a la parrilla | taco:342 | revisado: otro recorte de grasa (40 % G)
+Chuletón crudo | taco:341 | revisado: otro recorte de grasa (52 % G)
+Colita de cuadril asada | taco:368 | revisado: la maminha de TACO va sin la grasa (43 % G)
+Colita de cuadril cruda | taco:367
+Conejo | cofid:18-388 | revisado: otra cocción: el de USDA está asado y más seco (44 % kcal)
+Conejo crudo | ciqual:34001 | revisado: el conejo francés tiene más grasa (38 % kcal)
+Corazón | ciqual:40053 | revisado: otra pérdida de agua al cocinar (19 % kcal)
+Corazón crudo | ciqual:40052
+Cordero | ciqual:21523 | revisado: el de Ciqual es más magro (58 % G)
+Cordero crudo | cofid:18-478 | revisado: otro recorte de grasa (43 % G)
+Cordero guisado | cofid:18-186 | revisado: el de CoFID tiene más grasa entre las fibras (30 % G)
+Cordero molido cocido | cofid:18-159 | revisado: otro porcentaje de grasa (37 % G)
+Cordero molido crudo | cofid:18-481 | revisado: otro porcentaje de grasa (43 % G)
+Cordero para guiso crudo | cofid:18-182 | revisado: el de CoFID va con la grasa (51 % kcal)
+Corned beef | cofid:19-128 | revisado: otra marca (20 % G)
+Costillar de cordero al horno | cofid:18-169
+Costillar de cordero crudo | cofid:18-166 | revisado: otro recorte de grasa (23 % G)
+Costillas de cerdo | taco:430 | revisado: otro corte: la costilla de TACO tiene más grasa (41 % G)
+Costillas de cerdo crudas | taco:431 | revisado: otro corte: la costilla de TACO tiene más grasa (17 % G)
+Embutido de hígado | ciqual:30176 | revisado: otra receta (26 % G)
+Entraña asada | ciqual:6131 | revisado: otro recorte de grasa (52 % G)
+Entraña cruda | ciqual:6130 | revisado: otro recorte de grasa (45 % G)
+Falda | ciqual:6211 | revisado: variación natural del corte (16 % kcal)
+Falda cruda | ciqual:6212 | revisado: variación natural del corte (14 % kcal)
+Fiambre de pavo | ciqual:28964 | revisado: formulación: el de USDA lleva agua y almidón (30 % P)
+Fiambre de pollo | ciqual:28963 | revisado: formulación: el de USDA lleva agua y almidón (17 % P)
+Filete de ternera a la plancha | ciqual:6520
+Filete de ternera crudo | ciqual:6521
+Hamburguesa de carne | cofid:18-042 | revisado: otra pérdida de agua al cocinar (16 % P)
+Hígado de cerdo crudo | ciqual:40119
+Hígado de cerdo guisado | cofid:18-418 | revisado: el de CoFID va guisado con grasa (18 % G)
+Hígado de res | taco:356 | revisado: el de TACO va a la plancha con aceite (29 % kcal)
+Hígado de res crudo | taco:355 | revisado: método: USDA saca los carbohidratos por diferencia (14 % C)
+Jamón cocido | taco:439 | revisado: otra formulación (12 % P)
+Jamón crudo | ciqual:28844 | revisado: el jamón de Parma va con su grasa (35 % G)
+Lengua | taco:365 | revisado: otra pérdida de agua al cocinar (12 % kcal)
+Lengua cruda | taco:366 | revisado: método: USDA saca los carbohidratos por diferencia (18 % C)
+Lomo | taco:358 | revisado: el de TACO está más hecho: menos agua (12 % kcal)
+Lomo ahumado | ciqual:28727 | revisado: otra formulación (14 % P)
+Lomo bajo | taco:346 | revisado: otro recorte: el de TACO va sin la grasa (34 % G)
+Lomo bajo crudo | taco:345
+Lomo crudo | taco:357
+Lomo de cerdo | ciqual:28203 | revisado: el de Ciqual tiene más grasa (25 % kcal)
+Lomo de cerdo crudo | ciqual:28204 | revisado: el de Ciqual tiene más grasa (13 % kcal)
+Matambre arrollado | sin par | ninguna tabla tiene matambre arrollado
+Matambre asado | sin par | ninguna tabla tiene el matambre (la hampe de Ciqual es la entraña)
+Matambre crudo | sin par | ninguna tabla tiene el matambre (la hampe de Ciqual es la entraña)
+Mollejas | ciqual:40305 | revisado: la de Ciqual va enharinada (48 % C)
+Mollejas crudas | sin par | las tablas tienen la molleja de ternera cocida, o la de cordero cruda
+Mondongo | taco:332 | revisado: el de TACO está más cocido: menos agua (45 % P)
+Morcilla | ciqual:8704 | revisado: otra receta: el boudin francés lleva menos grasa (41 % G)
+Morcilla dulce | sin par | ninguna tabla tiene morcilla dulce
+Mortadela | taco:424 | revisado: otra formulación: la brasileña lleva más fécula y agua (22 % P)
+Nalga | taco:351 | revisado: el de TACO está hervido y tiene más grasa (32 % kcal)
+Nalga cruda | taco:352 | revisado: el coxão mole de TACO tiene más grasa (36 % kcal)
+Osobuco crudo | taco:372 | revisado: otro recorte de grasa (11 % kcal)
+Osobuco hervido | taco:371
+Paleta de cerdo al horno | ciqual:28010 | revisado: la de Ciqual es más magra (31 % G)
+Paleta de cerdo cruda | ciqual:28001 | revisado: la de Ciqual es más magra (34 % G)
+Paleta de cordero al horno | cofid:18-180 | revisado: otro recorte de grasa (15 % G)
+Paleta de cordero cruda | cofid:18-170
+Paleta de res cruda | taco:373 | revisado: otro recorte de grasa (53 % G)
+Paleta de res guisada | ciqual:6271 | revisado: el paleron de Ciqual es más magro (39 % G)
+Pamplona de cerdo asada | sin par | ninguna tabla tiene un arrollado de cerdo relleno
+Pamplona de cerdo cruda | sin par | ninguna tabla tiene un arrollado de cerdo relleno
+Pamplona de pollo asada | sin par | ninguna tabla tiene un arrollado de pollo relleno
+Pamplona de pollo cruda | sin par | ninguna tabla tiene un arrollado de pollo relleno
+Panceta | cofid:18-555 | revisado: otro corte: la de CoFID tiene más carne (34 % G)
+Pastrami | sin par | ninguna tabla tiene pastrami
+Paté | cofid:19-317 | revisado: otra receta: el paté británico lleva mucha más grasa (98 % G)
+Patitas de cerdo crudas | sin par | las tablas tienen la pata de ternera o de cordero cruda, no la de cerdo
+Patitas de cerdo hervidas | cofid:18-429 | revisado: CoFID mezcla patas y colas (31 % G)
+Pechito de cerdo asado | taco:430 | revisado: la costilla de TACO está más asada: menos agua (45 % P)
+Pechito de cerdo crudo | taco:431 | revisado: otro recorte de grasa (15 % G)
+Pecho de res | cofid:18-015 | revisado: otro recorte de grasa (27 % G)
+Pecho de res crudo | cofid:18-013 | revisado: otro recorte de grasa (34 % G)
+Pepperoni | sin par | ninguna tabla tiene pepperoni
+Picaña asada | taco:381 | revisado: la de TACO tiene más grasa (23 % G)
+Picaña cruda | taco:380 | revisado: la de TACO tiene más grasa (11 % kcal)
+Pierna de cerdo al horno | taco:435 | revisado: el pernil de TACO es más magro y está más asado (20 % P)
+Pierna de cerdo cruda | taco:436 | revisado: el pernil de TACO es más magro (39 % G)
+Pierna de cordero al horno | cofid:18-480
+Pierna de cordero cruda | ciqual:21502 | revisado: el gigot francés va sin la grasa (46 % G)
+Provoleta asada | sin par | ninguna tabla tiene provolone a la parrilla (el provolone de Ciqual es copia de USDA)
+Queso de cerdo | ciqual:8400 | revisado: otra receta (17 % kcal)
+Redondo de res al horno | taco:363 | revisado: TACO lo hierve y tiene más grasa (36 % kcal)
+Redondo de res crudo | taco:364 | revisado: otro recorte de grasa (12 % P)
+Rib eye | ciqual:6100 | revisado: otro recorte de grasa (16 % G)
+Rib eye crudo | sin par | las tablas tienen el ojo de bife crudo con su grasa, no solo la carne magra
+Riñón | ciqual:40401
+Riñón crudo | ciqual:40402
+Salame | taco:443 | revisado: el salame brasileño está más curado (22 % P)
+Salchicha | ciqual:30134 | revisado: otra formulación (16 % G)
+Salchicha de cerdo | taco:423 | revisado: otra formulación (23 % P)
+Salchicha de cerdo cruda | taco:421 | revisado: la linguiça brasileña es más magra (29 % G)
+Salchicha de pavo | taco:420 | revisado: la linguiça de pollo brasileña tiene más grasa (31 % G)
+Salchicha italiana a la plancha | taco:422 | revisado: otra formulación (19 % G)
+Salchicha italiana cruda | taco:421 | revisado: otra formulación (28 % G)
+Salchichas en lata | sin par | ninguna tabla tiene salchichas Viena en lata
+Sesos de res crudos | sin par | las tablas tienen sesos de cerdo o de cordero, no de vaca
+Sesos de res fritos | sin par | las tablas tienen sesos de cerdo o de cordero, no de vaca
+Sesos de res hervidos | sin par | las tablas tienen sesos de cerdo o de cordero, no de vaca
+Sirloin a la plancha | cofid:18-046 | revisado: otro recorte de grasa (24 % G)
+Sirloin crudo | cofid:18-471 | revisado: otro recorte de grasa (13 % kcal)
+T-bone a la parrilla | sin par | ninguna tabla tiene T-bone
+T-bone crudo | sin par | ninguna tabla tiene T-bone
+Tocino | cofid:19-018 | revisado: el de USDA está más frito: menos agua (30 % P)
+Tocino crudo | cofid:19-016 | revisado: la panceta británica es más magra (36 % G)
+Tocino de pavo crudo | sin par | ninguna tabla tiene tocino de pavo
+Tocino de pavo frito | sin par | ninguna tabla tiene tocino de pavo
+Almidón de yuca | taco:146
+Amaranto | sin par | las tablas tienen las hojas de amaranto, no el grano cocido
+Amaranto crudo | sin par | el amaranto de Ciqual es copia de USDA
+Aritos frutales | sin par | ninguna tabla tiene aritos de cereal frutales
+Arroz blanco cocido | taco:3
+Arroz blanco crudo | taco:4
+Arroz de grano corto cocido | cofid:11-879
+Arroz de grano corto crudo | cofid:11-878
+Arroz inflado | cofid:11-750
+Arroz integral cocido | taco:1
+Arroz integral crudo | taco:2
+Arroz integral de grano medio cocido | taco:1
+Arroz integral de grano medio crudo | taco:2
+Arroz parbolizado cocido | ciqual:9105 | revisado: otra cantidad de agua de cocción (26 % C)
+Arroz parbolizado crudo | ciqual:9101
+Avena | taco:7 | revisado: variedad (15 % P)
+Avena cocida | cofid:11-1107 | revisado: otra proporción de avena y agua (29 % kcal)
+Avena instantánea | cofid:11-792
+Cebada perlada cocida | cofid:11-003
+Cebada perlada cruda | cofid:11-002
+Cereal de chocolate | ciqual:32013 | revisado: otra formulación (16 % P)
+Cereal de salvado | cofid:11-763
+Copos de maíz | taco:25
+Copos de maíz azucarados | taco:26
+Copos de maíz con leche | sin par | ninguna tabla tiene copos de maíz con leche
+Cuscús | cofid:11-902 | revisado: otra cantidad de agua de cocción (59 % kcal)
+Cuscús crudo | cofid:11-901
+Germen de trigo | ciqual:9660 | revisado: variedad (17 % P)
+Granola | ciqual:32145 | revisado: otra receta (17 % G)
+Harina de almendras | cofid:14-870 | revisado: método: USDA saca los carbohidratos por diferencia (24 % C)
+Harina de arroz | taco:31 | revisado: la harina de arroz de TACO es un producto enriquecido, casi almidón (23 % P)
+Harina de avena | sin par | ninguna tabla tiene harina de avena
+Harina de centeno | ciqual:9533 | revisado: otro grado de extracción (18 % P)
+Harina de garbanzo | sin par | la harina de garbanzo de Ciqual es copia de USDA
+Harina de maíz blanca | taco:43
+Harina de maíz nixtamalizado | sin par | ninguna tabla tiene harina de maíz nixtamalizado
+Harina de trigo | taco:35
+Harina integral | cofid:11-889
+Harina leudante | ciqual:9437
+Harina para pan | cofid:11-887
+Maicena | taco:42
+Mijo cocido | sin par | ninguna tabla tiene el mijo cocido
+Mijo crudo | sin par | el mijo de Ciqual es copia de USDA (la harina de mijo es otra cosa)
+Polenta | taco:43
+Polenta cocida | ciqual:9615 | revisado: otra cantidad de agua (30 % C)
+Quinoa cocida | ciqual:9341 | revisado: otra cantidad de agua de cocción (49 % C)
+Quinoa cruda | cofid:14-843 | revisado: método: USDA saca los carbohidratos por diferencia (16 % kcal)
+Salvado de avena | ciqual:9640 | revisado: método de energía: USDA usa factores bajos para el salvado (47 % kcal)
+Salvado de trigo | ciqual:9621 | revisado: método de energía: USDA usa factores bajos para el salvado (25 % kcal)
+Sémola | ciqual:9610
+Sémola cocida | sin par | ninguna tabla tiene la sémola cocida con agua
+Trigo burgol | ciqual:9691 | revisado: otra cantidad de agua de cocción (48 % kcal)
+Trigo burgol crudo | ciqual:9690
+Trigo sarraceno cocido | sin par | ninguna tabla tiene el trigo sarraceno cocido
+Trigo sarraceno crudo | cofid:11-006 | revisado: variedad y tostado (18 % P)
+Alfajor de chocolate | sin par | ninguna tabla tiene alfajores
+Alfajor de chocolate blanco | sin par | ninguna tabla tiene alfajores
+Alfajor de dulce de leche | sin par | ninguna tabla tiene alfajores
+Alfajor de nieve | sin par | ninguna tabla tiene alfajores
+Alfajor triple | sin par | ninguna tabla tiene alfajores
+Algodón de azúcar | sin par | ninguna tabla tiene algodón de azúcar
+Almendrado | cofid:12-385 | revisado: otra receta: el almendrado lleva praliné (33 % C)
+Almendras con chocolate | sin par | ninguna tabla tiene almendras bañadas en chocolate
+Almendras garrapiñadas | ciqual:31052 | revisado: la praline francesa lleva más azúcar (27 % G)
+Arrollado de dulce de leche | cofid:11-1125 | revisado: otro relleno: mermelada en vez de dulce de leche (15 % G)
+Arroz con leche | ciqual:39212 | revisado: otra receta (12 % kcal)
+Arroz con leche casero | cofid:12-608 | revisado: la receta lleva más arroz y azúcar (34 % C)
+Azúcar | taco:492
+Azúcar en polvo | cofid:17-062
+Azúcar morena | cofid:17-060
+Banana con dulce de leche | sin par | ninguna tabla tiene banana con dulce de leche
+Banana split | cofid:12-556 | revisado: otra receta, con más salsa (28 % C)
+Barra de cereal | cofid:11-819 | revisado: otra formulación: la de USDA lleva más frutos secos (46 % G)
+Bizcocho | cofid:11-957 | revisado: la receta británica lleva más huevo (23 % P)
+Bizcocho de chocolate | cofid:11-957
+Bizcochos de soletilla | ciqual:24430 | revisado: otra receta (30 % C)
+Bombón de dulce de leche | sin par | ninguna tabla tiene bombones de dulce de leche
+Bombón helado | ciqual:31035 | revisado: otra formulación (56 % C)
+Bombones rellenos | cofid:17-650 | revisado: otra receta (35 % G)
+Brownie | ciqual:23032 | revisado: otra receta (45 % G)
+Brownie con helado | sin par | ninguna tabla tiene brownie con helado
+Buñuelos de manzana | sin par | ninguna tabla tiene buñuelos de manzana
+Cacao en polvo | cofid:12-545 | revisado: método: USDA saca los carbohidratos por diferencia, y el británico tiene más manteca de cacao (61 % C)
+Cañoncitos de dulce de leche | sin par | ninguna tabla tiene cañoncitos
+Caramelo de palito | ciqual:31059
+Caramelo líquido | ciqual:31046 | revisado: el francés tiene menos agua (50 % kcal)
+Caramelos | ciqual:31059
+Caramelos de leche | ciqual:31081 | revisado: otra receta, con menos leche (12 % P)
+Caramelos masticables | ciqual:31097
+Cheesecake | ciqual:23001 | revisado: otra receta (26 % G)
+Cheesecake de frutos rojos | cofid:12-542 | revisado: otra receta, más liviana (48 % G)
+Chicle | sin par | Ciqual tiene el chicle sin precisar el azúcar, no el chicle con azúcar
+Chicle sin azúcar | ciqual:31054 | revisado: método de energía: Ciqual les da menos kcal a los polialcoholes (23 % kcal)
+Chispas de chocolate | taco:498
+Chocolate amargo | ciqual:31005
+Chocolate blanco | ciqual:31010
+Chocolate con arroz inflado | ciqual:31009
+Chocolate con frutos secos | ciqual:31018 | revisado: otra proporción de frutos secos (13 % P)
+Chocolate con leche | taco:495
+Chocotorta | sin par | ninguna tabla tiene chocotorta
+Churro relleno de dulce de leche | sin par | ninguna tabla tiene churros
+Churros | sin par | ninguna tabla tiene churros
+Confites de chocolate | ciqual:31041 | revisado: otra formulación (15 % G)
+Conitos de dulce de leche | sin par | ninguna tabla tiene conitos de dulce de leche
+Cono de helado | ciqual:24685
+Coquitos | ciqual:23033
+Crema de avellanas | ciqual:31032
+Crema pastelera | ciqual:39710 | revisado: la casera lleva yemas y más azúcar (24 % kcal)
+Crepe con dulce de leche | ciqual:23821 | revisado: otro relleno, y más relleno en la francesa (66 % C)
+Crocante de maní | cofid:17-116
+Crumble de manzana | cofid:11-1055 | revisado: otra receta (16 % G)
+Danesa | cofid:11-841 | revisado: otra receta (30 % G)
+Dona rellena de dulce de leche | cofid:11-849 | revisado: otro relleno (26 % G)
+Donas | ciqual:23880 | revisado: otra receta (16 % C)
+Dulce de batata | sin par | ninguna tabla tiene dulce de batata
+Dulce de batata con chocolate | sin par | ninguna tabla tiene dulce de batata
+Dulce de calabaza | taco:500 | revisado: el de TACO es cremoso, con más agua (27 % kcal)
+Dulce de guayaba | taco:198
+Dulce de higo | taco:195 | revisado: TACO trae los higos en un almíbar más liviano (32 % kcal)
+Dulce de leche | taco:501
+Dulce de membrillo | taco:506
+Duraznos con crema | sin par | ninguna tabla tiene duraznos con crema
+Éclair | ciqual:23477 | revisado: otra receta (34 % G)
+Edulcorante | sin par | ninguna tabla tiene edulcorante de mesa
+Flan | ciqual:39209 | revisado: otra receta, con más azúcar (30 % C)
+Flan con dulce de leche | ciqual:39209 | revisado: el dulce de leche suma azúcar (43 % C)
+Flan de leche condensada | cofid:12-571 | revisado: la leche condensada suma azúcar (25 % kcal)
+Flan de sobre | ciqual:19674
+Flan mixto | sin par | ninguna tabla tiene flan con dulce de leche y crema
+Fresas con crema | sin par | ninguna tabla tiene frutillas con crema
+Fruta confitada | ciqual:31027
+Galletas con chispas de chocolate | cofid:11-816 | revisado: otra receta (14 % G)
+Galletas con dulce de membrillo | cofid:11-804 | revisado: otra receta (12 % G)
+Galletas de avena | ciqual:24655 | revisado: otra receta (24 % G)
+Galletas de avena con pasas | ciqual:24655 | revisado: otra receta, sin pasas (36 % G)
+Galletas de chocolate | sin par | ninguna tabla tiene galletitas finas de chocolate
+Galletas de mantequilla caseras | ciqual:24015 | revisado: las caseras llevan más manteca (45 % G)
+Galletas dulces | ciqual:24015 | revisado: otra receta (31 % G)
+Galletas Graham | sin par | ninguna tabla tiene galletas Graham
+Galletas María | cofid:11-797 | revisado: otra marca (23 % G)
+Galletas rellenas | taco:9
+Galletas rellenas de vainilla | ciqual:24225
+Garrapiñada | ciqual:15058 | revisado: otra receta (12 % G)
+Gelatina | cofid:12-237
+Gelatina con frutas | cofid:12-237
+Gelatina light | cofid:12-516 | revisado: otra formulación (21 % C)
+Gomitas | ciqual:31060 | revisado: otra formulación: gelatina en vez de almidón (24 % P)
+Granas de colores | ciqual:11510 | revisado: las de USDA llevan grasa (76 % G)
+Helado artesanal de chocolate | cofid:12-511 | revisado: el británico lleva más azúcar y salsa (61 % C)
+Helado artesanal de vainilla | cofid:12-508 | revisado: el de USDA es premium, con más crema (40 % G)
+Helado de chocolate | cofid:12-511 | revisado: el británico es premium, con salsa (21 % kcal)
+Helado de chocolate con almendras | cofid:12-511 | revisado: otra receta (61 % C)
+Helado de dulce de leche | cofid:12-508 | revisado: la receta lleva más crema (56 % G)
+Helado de dulce de leche con chispas de chocolate | cofid:12-511 | revisado: la receta lleva más crema (32 % G)
+Helado de fresa | sin par | las tablas no tienen helado de frutilla
+Helado de menta con chispas de chocolate | cofid:12-511 | revisado: otra receta (23 % C)
+Helado de sabayón | cofid:12-508 | revisado: la receta lleva más yema y crema (23 % kcal)
+Helado de tramontana | cofid:12-511 | revisado: otra receta (13 % kcal)
+Helado de vainilla | cofid:12-508 | revisado: el británico es más liviano (18 % kcal)
+Helado en cono | ciqual:39509 | revisado: el francés es un cono industrial, con más galleta y cobertura (49 % C)
+Helado light | sin par | ninguna tabla tiene helado de vainilla light
+Helado soft | cofid:12-508 | revisado: otra formulación (27 % C)
+Jalea | ciqual:30886
+Jarabe de agave | ciqual:31089
+Jarabe de arce | sin par | ninguna tabla tiene jarabe de arce
+Jarabe de maíz | taco:503
+Malvaviscos | ciqual:31050
+Maní con chocolate | ciqual:31042 | revisado: el francés lleva una capa de azúcar (41 % C)
+Manzana acaramelada | sin par | ninguna tabla tiene manzana acaramelada
+Manzana asada | ciqual:13175 | revisado: la de USDA lleva azúcar y manteca (53 % kcal)
+Massini | cofid:11-532 | revisado: otra receta (32 % G)
+Mazamorra de maíz blanco | sin par | ninguna tabla tiene mazamorra
+Mazapán | cofid:14-893 | revisado: otra receta, con más azúcar (13 % C)
+Melaza | cofid:17-059 | revisado: otra concentración (11 % C)
+Merengue | ciqual:24520 | revisado: el francés es seco (23 % C)
+Mermelada | ciqual:31006 | revisado: con más azúcar (12 % kcal)
+Mermelada de albaricoque | ciqual:31037
+Mermelada de durazno | ciqual:30993 | revisado: la receta lleva más azúcar (12 % kcal)
+Mermelada de fresa | ciqual:31024 | revisado: la receta lleva más azúcar (11 % C)
+Mermelada de frutos rojos | ciqual:31083 | revisado: la receta lleva más azúcar (11 % kcal)
+Mermelada de naranja | ciqual:31039
+Mermelada light | ciqual:30887
+Miel | taco:507
+Milhojas de dulce de leche | ciqual:24666 | revisado: otro relleno y más hojaldre (55 % G)
+Mousse de chocolate | ciqual:39210 | revisado: otra receta (52 % C)
+Mousse de dulce de leche | ciqual:39235 | revisado: la receta lleva más crema (53 % G)
+Mousse de limón | cofid:12-402 | revisado: la receta lleva más crema (59 % G)
+Muffin | cofid:11-738 | revisado: otra receta (17 % G)
+Natillas | cofid:12-573
+Obleas bañadas en chocolate | ciqual:24311 | revisado: otra formulación (16 % P)
+Obleas rellenas | ciqual:24313 | revisado: otra formulación (30 % G)
+Paleta helada | ciqual:39526
+Pan de banana | cofid:11-1029
+Panela | sin par | los valores de la panela ya son los de TACO (rapadura); ninguna otra tabla la tiene
+Panqué | ciqual:23082
+Panqué de limón | ciqual:23082 | revisado: otra receta (17 % G)
+Panqué marmoleado | ciqual:23925 | revisado: otra receta (17 % G)
+Pasas con chocolate | sin par | ninguna tabla tiene pasas bañadas en chocolate
+Pastafrola | cofid:11-1085 | revisado: otra masa (22 % G)
+Pastafrola de batata | cofid:11-846 | revisado: otra receta (14 % C)
+Pastel de chocolate | cofid:11-830 | revisado: otra receta (43 % G)
+Pastel de chocolate con dulce de leche | cofid:11-830 | revisado: otra receta (48 % G)
+Pastel de fresas | ciqual:23009
+Pastel de frutas | cofid:11-829 | revisado: otra receta (15 % G)
+Pastel de manzana | sin par | ninguna tabla tiene una torta de manzana (Ciqual tiene tartas)
+Pastel de merengue y dulce de leche | sin par | ninguna tabla tiene una torta de merengue y dulce de leche
+Pastel de vainilla | cofid:11-832 | revisado: otra receta (11 % G)
+Pastel de vainilla casero | ciqual:23935 | revisado: otra receta, con más manteca (39 % G)
+Pastel de zanahoria | cofid:11-836 | revisado: otra receta (13 % G)
+Pastel helado | ciqual:39533 | revisado: otra receta (23 % kcal)
+Pastillas de menta | ciqual:31126
+Pie de limón | cofid:11-548 | revisado: otra receta (15 % kcal)
+Profiterol | ciqual:23455 | revisado: el francés lleva crema pastelera, con más azúcar (63 % C)
+Pudín de chocolate | ciqual:39200 | revisado: otra formulación (15 % kcal)
+Pudín de chocolate de sobre | cofid:12-584 | revisado: otra formulación (14 % G)
+Pudín de pan | cofid:11-1037 | revisado: otra receta (31 % C)
+Pudín de vainilla | ciqual:39229 | revisado: otra formulación (27 % C)
+Pudín de vainilla de sobre | cofid:12-584 | revisado: otra formulación (16 % G)
+Queso con dulce de batata | sin par | ninguna tabla tiene queso con dulce de batata
+Rogel | sin par | ninguna tabla tiene rogel
+Sacarina | sin par | Ciqual tiene la sacarina en pastillas, no en polvo con dextrosa
+Selva negra | ciqual:23006 | revisado: otra receta (17 % C)
+Sémola con leche | ciqual:39218 | revisado: el francés lleva más azúcar (28 % C)
+Sirope de chocolate | sin par | ninguna tabla tiene salsa de chocolate
+Sorbete | ciqual:39524 | revisado: otra receta (16 % C)
+Stevia | ciqual:31087
+Strudel de manzana | cofid:11-919 | revisado: otra receta (14 % kcal)
+Sundae de chocolate | ciqual:39512 | revisado: otra receta (13 % kcal)
+Tarta de coco y dulce de leche | sin par | ninguna tabla tiene una tarta de coco y dulce de leche
+Tarta de manzana | cofid:11-921 | revisado: otra receta (19 % C)
+Tarta de ricota | sin par | ninguna tabla tiene una tarta dulce de ricota
+Tiramisú | ciqual:19698 | revisado: el industrial francés es más liviano (59 % G)
+Torta tres leches | sin par | ninguna tabla tiene torta tres leches
+Trufas de chocolate | cofid:17-837 | revisado: otra receta (20 % C)
+Turrón de almendras | ciqual:31127 | revisado: el turrón lleva más almendras que el nougat (59 % G)
+Turrón de maní | ciqual:31127
+Yogur helado | ciqual:39517 | revisado: otra formulación (15 % C)
+Ajo en polvo | sin par | el ajo en polvo de Ciqual y el de CoFID son copia de USDA
+Albahaca seca | sin par | la albahaca seca de Ciqual y la de CoFID son copia de USDA
+Anís | sin par | el anís de CoFID es copia de USDA
+Azafrán | sin par | el azafrán de Ciqual y el de CoFID son copia de USDA
+Bicarbonato de sodio | cofid:17-356
+Canela | sin par | la canela de Ciqual y la de CoFID son copia de USDA
+Cardamomo | sin par | el cardamomo de Ciqual es copia de USDA
+Cebolla en polvo | sin par | ninguna tabla tiene cebolla en polvo
+Chile en polvo | sin par | el chile en polvo de CoFID es copia de USDA
+Clavo de olor | sin par | el clavo de Ciqual es copia de USDA
+Comino | sin par | el comino de Ciqual y el de CoFID son copia de USDA
+Cúrcuma | sin par | la cúrcuma de Ciqual es copia de USDA
+Curry en polvo | cofid:13-876 | revisado: otra mezcla, y CoFID no cuenta la fibra como energía (28 % kcal)
+Eneldo seco | sin par | el eneldo seco de CoFID tiene los mismos valores que USDA (sale de la misma fuente)
+Extracto de vainilla | sin par | el extracto de vainilla de Ciqual es copia de USDA
+Gelatina sin sabor | ciqual:11007
+Jengibre | ciqual:11074 | revisado: la raíz de Ciqual tiene más agua (58 % C)
+Jengibre en polvo | cofid:13-832 | revisado: método de energía (15 % kcal)
+Laurel | sin par | el laurel de Ciqual y el de CoFID son copia de USDA
+Levadura seca | ciqual:11045
+Mostaza en polvo | cofid:17-362 | revisado: otra mostaza, en parte desgrasada (21 % G)
+Nuez moscada | sin par | la nuez moscada de Ciqual y la de CoFID son copia de USDA
+Orégano | sin par | el orégano de Ciqual y el de CoFID son copia de USDA
+Paprika | sin par | el pimentón de Ciqual y el de CoFID son copia de USDA
+Perejil seco | sin par | el perejil seco de Ciqual y el de CoFID son copia de USDA
+Pimienta blanca | sin par | la pimienta blanca de Ciqual y la de CoFID son copia de USDA
+Pimienta de Jamaica | sin par | la pimienta de Jamaica de CoFID es copia de USDA
+Pimienta negra | ciqual:11015 | revisado: método de energía: USDA usa factores bajos para las especias (32 % kcal)
+Romero | sin par | el romero seco de Ciqual y el de CoFID son copia de USDA
+Sal | cofid:17-367
+Salvia | sin par | la salvia seca de Ciqual y la de CoFID son copia de USDA
+Semillas de amapola | sin par | la amapola de Ciqual es copia de USDA
+Semillas de cilantro | sin par | el cilantro en grano de Ciqual y el de CoFID son copia de USDA
+Tomillo | sin par | el tomillo seco de Ciqual y el de CoFID son copia de USDA
+Acerola | taco:169
+Aguacate | taco:163 | revisado: variedad: la palta brasileña tiene mucha menos grasa que la Hass (40 % kcal)
+Albaricoque | ciqual:13000
+Arándanos | cofid:14-325 | revisado: variedad, y USDA cuenta los ácidos como carbohidratos (19 % C)
+Arándanos secos | ciqual:13178
+Banana | ciqual:13005
+Caqui | ciqual:13066
+Carambola | taco:190 | revisado: variedad y madurez (24 % C)
+Cerezas | ciqual:13008 | revisado: variedad (15 % C)
+Cerezas al marrasquino | sin par | ninguna tabla tiene cerezas al marrasquino
+Chicozapote | cofid:14-256 | revisado: variedad (14 % kcal)
+Chirimoya | sin par | la chirimoya de Ciqual es copia de USDA (CoFID y TACO tienen otras anonas)
+Ciruela | taco:172 | revisado: variedad (12 % C)
+Ciruelas pasas | ciqual:13042
+Clementina | ciqual:13024
+Coco | taco:590 | revisado: el coco de TACO está más maduro y seco (25 % G)
+Cóctel de frutas | ciqual:13707 | revisado: otro almíbar (18 % C)
+Compota de manzana | ciqual:13038 | revisado: la francesa lleva más azúcar (42 % C)
+Dátiles | ciqual:13011
+Durazno | ciqual:13398
+Duraznos en almíbar | taco:245
+Ensalada de frutas | ciqual:13134 | revisado: otra mezcla de frutas (35 % C)
+Feijoa | cofid:14-090 | revisado: variedad, y CoFID no cuenta la fibra como energía (14 % kcal)
+Frambuesas | ciqual:13015
+Fresas | taco:239
+Frutos rojos congelados | ciqual:13997
+Granada | taco:249 | revisado: TACO la mide sin las semillas (27 % kcal)
+Guanábana | taco:201
+Guayaba | cofid:14-118 | revisado: variedad, y CoFID no cuenta la fibra como energía (42 % kcal)
+Higo | taco:194 | revisado: variedad y madurez: el de TACO tiene más agua (45 % C)
+Higos secos | ciqual:13013
+Jaca | taco:204
+Kiwi | taco:207 | revisado: variedad y madurez (16 % C)
+Lichi | cofid:14-142 | revisado: variedad (11 % C)
+Lima | taco:220
+Limón | ciqual:13009
+Lulo | sin par | ninguna tabla tiene lulo
+Mamey | sin par | ninguna tabla tiene mamey
+Mandarina | ciqual:13024
+Mandarinas en almíbar | sin par | la de Ciqual no trae proteína ni grasa y la de CoFID es en jugo, no en almíbar
+Mango | ciqual:13025 | revisado: variedad (14 % C)
+Mango deshidratado | sin par | ninguna tabla tiene mango deshidratado
+Manzana | ciqual:13039
+Manzana deshidratada | cofid:14-016
+Maracuyá | taco:232 | revisado: otra especie (el amarillo) y menos semillas en TACO (48 % C)
+Melón | ciqual:13026 | revisado: el charentais francés es más dulce (26 % kcal)
+Melón verde | taco:236
+Membrillo | cofid:14-241 | revisado: variedad, y CoFID no cuenta la fibra como energía (31 % kcal)
+Moras | ciqual:13029
+Naranja | ciqual:13034
+Nectarina | ciqual:13399
+Níspero | taco:240
+Orejones | ciqual:13001 | revisado: otro grado de secado (11 % C)
+Papaya | ciqual:13035
+Pasas de uva | ciqual:13046
+Pera | ciqual:13037
+Pera asiática | sin par | ninguna tabla tiene pera asiática
+Peras en almíbar | ciqual:13734 | revisado: el francés va en almíbar liviano (11 % C)
+Piña | taco:164
+Piña en almíbar | cofid:14-212 | revisado: el británico va en un almíbar más liviano (19 % C)
+Pitahaya | sin par | ninguna tabla tiene pitahaya
+Pitanga | taco:247 | revisado: variedad y madurez (14 % C)
+Pulpa de açaí | sin par | los valores ya son los de TACO (fila 168); ninguna otra tabla tiene açaí
+Sandía | taco:235
+Tamarindo | taco:250 | revisado: variedad (16 % C)
+Toronja | ciqual:13040 | revisado: variedad (15 % C)
+Tuna | ciqual:13063 | revisado: variedad (28 % C)
+Uchuva | cofid:14-207
+Uvas | ciqual:13395 | revisado: variedad (12 % kcal)
+Almendras | ciqual:15000
+Almendras saladas | taco:587 | revisado: variedad, y TACO las tuesta (46 % C)
+Avellanas | ciqual:15004
+Castañas | ciqual:15021 | revisado: otra cocción (14 % kcal)
+Castañas de cajú | ciqual:15054 | revisado: variedad (13 % P)
+Castañas de cajú saladas | taco:588 | revisado: variedad (19 % P)
+Chía | sin par | la chía de Ciqual es copia de USDA
+Coco rallado | sin par | las tablas tienen el coco rallado sin azúcar, no el endulzado
+Crema de almendras | sin par | ninguna tabla tiene pasta de almendras
+Linaza | taco:594 | revisado: variedad (26 % C)
+Macadamia | cofid:14-891 | revisado: método: USDA saca los carbohidratos por diferencia (15 % C)
+Maní | ciqual:15053 | revisado: variedad (25 % C)
+Maní salado | taco:558 | revisado: variedad (20 % P)
+Mantequilla de maní | cofid:14-892 | revisado: método: USDA saca los carbohidratos por diferencia (16 % C)
+Mix con pasas | cofid:14-849 | revisado: otra mezcla (21 % C)
+Mix de frutos secos | cofid:14-880 | revisado: otra mezcla (21 % P)
+Nueces | taco:597 | revisado: variedad, y la nuez de TACO tiene más agua (37 % C)
+Nueces de Brasil | taco:589 | revisado: variedad (17 % C)
+Nueces pecanas | cofid:14-837 | revisado: método: USDA saca los carbohidratos por diferencia (13 % C)
+Piñones | cofid:14-839 | revisado: método: USDA saca los carbohidratos por diferencia (37 % C)
+Pistachos | ciqual:15044 | revisado: variedad y tostado (13 % P)
+Semillas de calabaza | cofid:14-842 | revisado: variedad (22 % C)
+Semillas de cáñamo | sin par | el cáñamo de Ciqual es copia de USDA
+Semillas de girasol | ciqual:15011 | revisado: variedad (32 % C)
+Sésamo | taco:593 | revisado: variedad, y USDA saca los carbohidratos por diferencia (49 % C)
+Tahini | sin par | el tahini de Ciqual y el de CoFID son copia de USDA
+Aceite de aguacate | sin par | el aceite de palta de Ciqual es copia de USDA
+Aceite de arroz | sin par | ninguna tabla independiente tiene aceite de salvado de arroz (el de Ciqual es copia de USDA)
+Aceite de canola | taco:268
+Aceite de coco | ciqual:16060
+Aceite de girasol | taco:269
+Aceite de maíz | taco:270
+Aceite de maní | ciqual:17040
+Aceite de oliva | taco:260
+Aceite de sésamo | cofid:17-043
+Aceite de soja | taco:272
+Aceite vegetal | ciqual:17001
+Ghee | cofid:17-640
+Manteca de cerdo | cofid:17-010
+Manteca vegetal | ciqual:16080
+Mantequilla | taco:261
+Mantequilla light | ciqual:16410 | revisado: otra formulación (14 % P)
+Mantequilla sin sal | taco:262
+Margarina | taco:263
+Margarina light | cofid:12-497
+Clara de huevo | cofid:12-938 | revisado: método: USDA saca los carbohidratos por diferencia (12 % C)
+Claras cocidas | taco:486 | revisado: la de TACO está más cocida: menos agua (14 % P)
+Huevo | taco:489
+Huevo a la plancha | ciqual:22505 | revisado: otra pérdida de agua (11 % P)
+Huevo de codorniz | taco:485 | revisado: variación natural (12 % kcal)
+Huevo de pato | cofid:12-920 | revisado: variación natural (12 % kcal)
+Huevo duro | taco:488
+Huevo frito | taco:490 | revisado: el de TACO absorbe más aceite (25 % kcal)
+Huevos revueltos | ciqual:22502 | revisado: menos aceite en el francés (14 % G)
+Omelet de queso | taco:484 | revisado: la de TACO lleva más queso y aceite (26 % kcal)
+Yema de huevo | ciqual:22002
+Extracto de malta | sin par | ninguna tabla tiene extracto de malta
+Grasa de res | cofid:17-487
+Hojaldre horneado | cofid:11-854 | revisado: otra marca (14 % G)
+Levadura fresca | taco:514 | revisado: otra levadura, más concentrada, y USDA saca los carbohidratos por diferencia (52 % C)
+Maíz blanco partido | taco:19 | revisado: la canjica va sin el germen (19 % G)
+Maíz cremoso | sin par | ninguna tabla tiene choclo cremoso
+Masa de hojaldre | cofid:11-852 | revisado: otra marca, con menos grasa (31 % G)
+Masa de pizza | ciqual:37001
+Masa de tarta | ciqual:23410 | revisado: la casera lleva menos grasa (45 % G)
+Pimienta de cayena | sin par | la pimienta de cayena de CoFID tiene la proteína y la grasa de USDA (sale de la misma fuente)
+Polvo de hornear | taco:513 | revisado: otra formulación, con más almidón (59 % C)
+Tapas de empanada | sin par | ninguna tabla tiene masa de empanadas
+Chocolate caliente | ciqual:18104 | revisado: el de USDA lleva más cacao y azúcar (36 % C)
+Crema agria | sin par | ninguna tabla tiene crema agria
+Crema batida | ciqual:19420 | revisado: otra crema (16 % G)
+Crema de leche | cofid:12-333 | revisado: la británica es crema para batir, con más grasa (13 % G)
+Crema liviana | ciqual:19436 | revisado: otra formulación (23 % C)
+Crema para café | cofid:12-112 | revisado: otro contenido de grasa (13 % kcal)
+Kéfir | ciqual:19865 | revisado: otro contenido de grasa y azúcar (12 % C)
+Leche chocolatada | taco:455
+Leche condensada | taco:453
+Leche de almendras | ciqual:18107 | revisado: otra marca, con más almendra (21 % kcal)
+Leche de almendras endulzada | ciqual:18110 | revisado: otra marca, con más almendra (14 % kcal)
+Leche de arroz | ciqual:18904
+Leche de avena | ciqual:18899 | revisado: otra marca (13 % C)
+Leche de cabra | taco:454
+Leche de coco | ciqual:18907
+Leche de coco para cocinar | taco:523 | revisado: otra concentración (28 % kcal)
+Leche de fresa | ciqual:19127 | revisado: otra formulación (12 % kcal)
+Leche de soja | taco:582 | revisado: otra marca (15 % C)
+Leche de soja endulzada | ciqual:18902 | revisado: otra marca, con más azúcar (16 % C)
+Leche descremada | ciqual:19050
+Leche deslactosada | ciqual:19060
+Leche deslactosada descremada | ciqual:19050
+Leche en polvo | taco:459
+Leche en polvo descremada | taco:456
+Leche entera | ciqual:19016
+Leche entera deslactosada | ciqual:19016
+Leche evaporada | cofid:12-522 | revisado: otra concentración (24 % kcal)
+Leche semidescremada | ciqual:19033
+Sustituto de crema en polvo | cofid:12-546
+Yogur bebible | ciqual:19508
+Yogur con frutas | cofid:12-380 | revisado: otra marca (15 % kcal)
+Yogur descremado | taco:449 | revisado: otra marca (12 % C)
+Yogur descremado con frutas | ciqual:19581
+Yogur entero con frutas | cofid:12-375
+Yogur entero saborizado | ciqual:19575
+Yogur griego | sin par | el «a la griega» de Ciqual y el «Greek style» de CoFID no son colados (tienen la mitad de proteína)
+Yogur griego con frutas | ciqual:19552 | revisado: el francés no es colado, solo cremoso (28 % P)
+Yogur griego descremado | sin par | ninguna tabla tiene yogur griego colado descremado
+Yogur natural | taco:448 | revisado: otra marca (27 % kcal)
+Yogur saborizado | ciqual:19682
+Altramuces | taco:586 | revisado: los de TACO son en conserva, con más agua (22 % P)
+Arvejas partidas | sin par | las arvejas partidas de Ciqual son copia de USDA
+Arvejas partidas crudas | sin par | las arvejas partidas de Ciqual son copia de USDA
+Edamame | cofid:13-667 | revisado: método: USDA saca los carbohidratos por diferencia (16 % C)
+Edamame crudo | sin par | ninguna tabla tiene edamame congelado crudo
+Frijoles blancos | ciqual:20502 | revisado: otra cantidad de agua de cocción (19 % kcal)
+Frijoles blancos crudos | cofid:13-086 | revisado: método de energía: CoFID no cuenta la fibra (14 % kcal)
+Frijoles blancos en lata | ciqual:20511 | revisado: otra marca (25 % kcal)
+Frijoles carita | taco:563 | revisado: otra cantidad de agua de cocción (35 % C)
+Frijoles carita crudos | taco:564 | revisado: variedad (14 % P)
+Frijoles horneados | cofid:13-532 | revisado: otra receta (13 % kcal)
+Frijoles lima | cofid:13-663 | revisado: otra cantidad de agua de cocción (27 % C)
+Frijoles lima crudos | cofid:13-070 | revisado: método de energía: CoFID no cuenta la fibra (14 % kcal)
+Frijoles negros | taco:567 | revisado: TACO los cocina con más agua (42 % kcal)
+Frijoles negros crudos | taco:568
+Frijoles negros en lata | sin par | ninguna tabla tiene porotos negros en lata
+Frijoles pintos | cofid:13-107
+Frijoles pintos crudos | cofid:13-106
+Frijoles refritos | cofid:13-108 | revisado: otra receta (17 % kcal)
+Frijoles rojos | ciqual:20503
+Frijoles rojos crudos | cofid:13-109 | revisado: método de energía: CoFID no cuenta la fibra (21 % kcal)
+Frijoles rojos en lata | ciqual:20524 | revisado: otra marca (13 % kcal)
+Garbanzos | ciqual:20507
+Garbanzos crudos | taco:575
+Garbanzos en lata | ciqual:20532 | revisado: otra marca (24 % C)
+Habas | cofid:13-064 | revisado: variedad (13 % kcal)
+Habas cocidas | ciqual:20500 | revisado: otra cantidad de agua (21 % kcal)
+Hamburguesa vegetal | ciqual:20914 | revisado: otra receta (42 % kcal)
+Hummus | ciqual:25621 | revisado: otra receta (14 % G)
+Lentejas | taco:577 | revisado: TACO las cocina con más agua (20 % kcal)
+Lentejas crudas | taco:578
+Soja | cofid:13-116 | revisado: otra cantidad de agua (21 % P)
+Soja cruda | cofid:13-115 | revisado: método de energía: CoFID no cuenta la fibra (17 % kcal)
+Soja texturizada | sin par | Ciqual tiene la soja texturizada hidratada, no seca
+Tempeh | ciqual:20917 | revisado: otra receta (33 % C)
+Tofu blando | taco:584 | revisado: otra marca (12 % kcal)
+Tofu firme | ciqual:20904 | revisado: otra marca (19 % P)
+Bagel | ciqual:7258 | revisado: otra receta (16 % G)
+Bizcochos de chicharrón | sin par | ninguna tabla tiene bizcochos de chicharrón
+Bizcochos de grasa | cofid:11-1139 | revisado: otra receta (55 % G)
+Brioche | ciqual:7746 | revisado: otra receta (53 % G)
+Chapati | cofid:11-987 | revisado: otra receta (18 % G)
+Crepes | ciqual:23799 | revisado: la francesa es dulce y más seca (99 % C)
+Croissant | ciqual:7603
+Croissant con dulce de leche | ciqual:7603 | revisado: otra receta (23 % G)
+Croissant de chocolate | ciqual:7730
+Croissant glaseado | ciqual:7603 | revisado: otra receta (11 % G)
+Danesa de crema | cofid:11-841 | revisado: otra receta (57 % G)
+Danesa de dulce de leche | cofid:11-841 | revisado: otra receta (53 % G)
+Dona bañada en chocolate | ciqual:23885 | revisado: otra receta (17 % G)
+Dona rellena de crema | cofid:11-849 | revisado: otro relleno (29 % G)
+Ensaimada | ciqual:7746 | revisado: otra receta (17 % G)
+Focaccia | sin par | Ciqual tiene la focaccia rellena, no la simple
+Galleta de campaña | sin par | ninguna tabla tiene galleta de campaña
+Galleta malteada | sin par | ninguna tabla tiene galleta malteada
+Galleta marina | ciqual:7351 | revisado: otra receta (18 % G)
+Galletas de agua | taco:13 | revisado: otra formulación (36 % G)
+Galletas de soda | taco:13 | revisado: otra formulación (29 % G)
+Galletas de soda sin sal | taco:13 | revisado: otra formulación (28 % G)
+Galletas integrales | ciqual:7349
+Galletas multicereal | ciqual:38402 | revisado: otra formulación (17 % P)
+Galletas saladas de mantequilla | ciqual:38402 | revisado: otra formulación (19 % P)
+Grisines | ciqual:7525
+Hojaldre con membrillo | sin par | ninguna tabla tiene hojaldre con membrillo
+Medialuna de grasa | ciqual:7603 | revisado: otra receta (27 % G)
+Muffin inglés | ciqual:7257
+Palmeritas | ciqual:24660
+Pan blanco | ciqual:7200
+Pan blanco light | sin par | ninguna tabla tiene pan blanco reducido en calorías
+Pan blanco sin sal | ciqual:7160 | revisado: otra receta (20 % C)
+Pan con chicharrones | sin par | ninguna tabla tiene pan con chicharrones
+Pan con grasa | sin par | ninguna tabla tiene pan con grasa
+Pan con mantequilla | sin par | ninguna tabla tiene pan con manteca
+Pan de ajo | cofid:11-937
+Pan de avena | taco:48 | revisado: otra receta (28 % kcal)
+Pan de centeno | ciqual:7125 | revisado: otra receta (18 % C)
+Pan de hamburguesa | ciqual:7259
+Pan de leche | ciqual:7711 | revisado: otra receta (25 % G)
+Pan de maíz | sin par | ninguna tabla tiene pan de maíz casero (el de TACO es pan de molde)
+Pan de masa madre | ciqual:7002 | revisado: otra harina (17 % P)
+Pan de molde casero | ciqual:7200
+Pan de papa | sin par | ninguna tabla tiene pan de papa
+Pan de pasas | sin par | ninguna tabla tiene pan con pasas (el de Ciqual es una masa de hojaldre)
+Pan de queso | sin par | los valores ya son los de TACO (pão de queijo assado); ninguna otra tabla lo tiene
+Pan dulce | sin par | ninguna tabla tiene pan dulce mexicano
+Pan felipe | cofid:11-1006 | revisado: otra receta (11 % P)
+Pan francés | taco:53 | revisado: otra harina (14 % P)
+Pan francés integral | ciqual:7110
+Pan integral | taco:52 | revisado: otra receta (17 % C)
+Pan integral tostado | cofid:11-982 | revisado: otra receta (12 % P)
+Pan multicereal | ciqual:7255 | revisado: otra receta (24 % C)
+Pan naan | cofid:11-973
+Pan pita | ciqual:7180
+Pan pita integral | sin par | las tablas tienen el pan pita blanco
+Pan rallado | taco:34 | revisado: otra receta (19 % G)
+Pan rallado sazonado | taco:34 | revisado: otra receta (20 % G)
+Pan sin gluten | sin par | ninguna tabla tiene pan sin gluten de harina de arroz
+Pan tostado | cofid:11-1001
+Pan tostado envasado | taco:63
+Pancakes | ciqual:23827 | revisado: el francés es industrial y más dulce (35 % C)
+Panecillo | cofid:11-1006 | revisado: otra receta (19 % G)
+Panettone | ciqual:7719 | revisado: otra receta (22 % G)
+Polvorón | ciqual:24049 | revisado: otra receta (11 % G)
+Rollo de canela | cofid:11-1043 | revisado: otra receta, sin glaseado (53 % G)
+Scones | cofid:11-958
+Scones de queso | cofid:11-1112 | revisado: otra receta (13 % G)
+Tortilla de harina | ciqual:7815 | revisado: otra receta (14 % C)
+Tortilla de maíz | ciqual:7813 | revisado: la francesa es una tortilla industrial, más seca (45 % kcal)
+Tortilla integral | sin par | ninguna tabla tiene tortilla de harina integral
+Tostada con mantequilla y dulce de leche | sin par | ninguna tabla tiene tostadas con manteca y dulce de leche
+Tostada con mantequilla y mermelada | sin par | ninguna tabla tiene tostadas con manteca y mermelada
+Tostadas de maíz | ciqual:38417
+Waffles | ciqual:23850 | revisado: otra receta (27 % G)
+Canelones | ciqual:25081 | revisado: otra receta (16 % kcal)
+Fideos de arroz | ciqual:9901 | revisado: otra cantidad de agua de cocción (20 % kcal)
+Fideos de arroz crudos | ciqual:9900
+Fideos de huevo | cofid:11-941
+Fideos de huevo crudos | cofid:11-719 | revisado: método de energía (12 % kcal)
+Fideos instantáneos | sin par | las tablas tienen los fideos instantáneos ya cocidos, no secos
+Fideos soba | sin par | ninguna tabla tiene soba
+Fideos soba crudos | sin par | ninguna tabla tiene soba
+Lasaña | ciqual:25081 | revisado: otra receta (19 % C)
+Ñoquis | taco:136
+Pasta cocida | ciqual:9811
+Pasta con salsa de tomate | cofid:11-735 | revisado: la de lata tiene más salsa y agua (32 % kcal)
+Pasta fresca cocida | cofid:11-450 | revisado: otra cantidad de agua de cocción (24 % C)
+Pasta fresca cruda | ciqual:9815
+Pasta fresca de espinaca cocida | ciqual:9816 | revisado: otra cantidad de agua de cocción (34 % C)
+Pasta fresca de espinaca cruda | ciqual:9815
+Pasta integral cocida | ciqual:9871 | revisado: otra cantidad de agua de cocción (21 % C)
+Pasta integral cruda | ciqual:9870
+Pasta seca | taco:40 | revisado: otro trigo: el de TACO tiene menos proteína (15 % P)
+Pasta sin gluten cocida | ciqual:9875 | revisado: otra cantidad de agua de cocción (36 % C)
+Pasta sin gluten cruda | ciqual:9874
+Ravioles | ciqual:25149 | revisado: otra receta (33 % C)
+Tortellini | cofid:11-728 | revisado: otra receta (18 % C)
+Almejas | ciqual:10027 | revisado: otra pérdida de agua (12 % P)
+Almejas crudas | ciqual:10017 | revisado: otra especie (16 % P)
+Almejas en lata | sin par | ninguna tabla tiene almejas en lata
+Anchoas | cofid:16-448 | revisado: otra marca (13 % P)
+Arenque ahumado | cofid:16-397 | revisado: variación natural de la grasa del arenque (26 % G)
+Arenque en vinagre | cofid:16-183 | revisado: otra receta (35 % G)
+Atún blanco en aceite | ciqual:26179 | revisado: otra marca (18 % P)
+Atún blanco en agua | sin par | ninguna tabla tiene atún blanco al natural
+Atún crudo | ciqual:26064
+Atún en aceite | taco:277 | revisado: otra marca (16 % kcal)
+Atún en agua | ciqual:26039 | revisado: otra especie y otra marca: el francés tiene más grasa (57 % kcal)
+Atún fresco | ciqual:26041 | revisado: el de USDA lleva grasa agregada (23 % kcal)
+Bacalao | ciqual:26023 | revisado: el de USDA lleva grasa agregada (25 % kcal)
+Bacalao crudo | ciqual:26043 | revisado: el de USDA tiene más agua (14 % P)
+Bacalao frito | cofid:16-368 | revisado: otro rebozado (16 % P)
+Bacalao salado | ciqual:26098 | revisado: otro grado de secado (28 % kcal)
+Bastones de pescado | cofid:16-405 | revisado: los de USDA son fritos (35 % G)
+Caballa | ciqual:26019 | revisado: otra especie y otra cocción (14 % P)
+Caballa cruda | ciqual:26113 | revisado: variación natural de la grasa (27 % kcal)
+Caballa en lata | ciqual:26123 | revisado: otra especie: la caballa europea es más grasa (49 % G)
+Calamar | sin par | ninguna tabla independiente tiene calamar cocido (los de Ciqual son copia de USDA)
+Calamar crudo | ciqual:10001 | revisado: variación natural, y USDA saca los carbohidratos por diferencia (15 % kcal)
+Calamares fritos | ciqual:10002 | revisado: el francés, a la romana, lleva más rebozado (68 % C)
+Camarones | taco:284
+Camarones a la plancha | cofid:16-388 | revisado: otra pérdida de agua (31 % P)
+Camarones crudos | taco:285 | revisado: el de TACO tiene más agua; el de USDA lleva aditivos que retienen agua (24 % kcal)
+Camarones fritos | taco:286 | revisado: el de USDA va empanado; el de TACO, frito sin empanar y con cáscara (48 % C)
+Cangrejo | taco:287
+Cangrejo crudo | ciqual:10039 | revisado: otra especie (17 % kcal)
+Cazón crudo | taco:283 | revisado: otra especie (36 % kcal)
+Cazón frito | taco:281 | revisado: el de TACO va enharinado, no rebozado: más carne (32 % P)
+Corvina | taco:293
+Corvina a la plancha | taco:293 | revisado: la de TACO está más asada: menos agua (17 % P)
+Corvina cruda | taco:292
+Filete de abadejo a la plancha | taco:276 | revisado: el de TACO está más hecho (11 % P)
+Filete de abadejo crudo | ciqual:26134
+Filete de bagre al horno | ciqual:27018 | revisado: otra especie: el pangasius es mucho más magro (45 % kcal)
+Filete de bagre crudo | ciqual:27017 | revisado: otra especie: el pangasius es mucho más magro (45 % kcal)
+Filete de bagre frito | sin par | ninguna tabla tiene bagre frito
+Filete de dorado a la plancha | sin par | ninguna tabla independiente tiene mahi-mahi (el de Ciqual es copia de USDA)
+Filete de dorado crudo | sin par | ninguna tabla independiente tiene mahi-mahi (el de Ciqual es copia de USDA)
+Filete de fletán a la plancha | cofid:16-074 | revisado: otra pérdida de agua (12 % P)
+Filete de fletán crudo | ciqual:26009 | revisado: variación natural (13 % P)
+Filete de lisa a la plancha | cofid:16-096
+Filete de lisa crudo | ciqual:26091
+Filete de lubina a la plancha | ciqual:27030 | revisado: la lubina francesa es de criadero, con más grasa (22 % kcal)
+Filete de lubina crudo | ciqual:26072 | revisado: variación natural (11 % kcal)
+Filete de mero a la plancha | sin par | ninguna tabla tiene mero cocido
+Filete de mero crudo | ciqual:26178
+Filete de pescadilla a la plancha | taco:308 | revisado: TACO la fríe: menos agua (33 % P)
+Filete de pescadilla crudo | taco:307
+Filete de rodaballo a la plancha | cofid:16-156
+Filete de rodaballo crudo | ciqual:26174
+Filete de sierra a la plancha | sin par | ninguna tabla tiene sierra (Scomberomorus); la caballa es otro pescado
+Filete de sierra crudo | sin par | ninguna tabla tiene sierra (Scomberomorus); la caballa es otro pescado
+Langosta | ciqual:10009
+Langosta cruda | ciqual:10010
+Lenguado | ciqual:26060 | revisado: el de USDA lleva grasa agregada (39 % kcal)
+Lenguado crudo | ciqual:26058 | revisado: el de USDA tiene más agua (28 % P)
+Mejillones | ciqual:10013 | revisado: otra pérdida de agua (11 % P)
+Mejillones crudos | ciqual:10014 | revisado: variación natural (14 % kcal)
+Merluza | taco:301 | revisado: el de USDA lleva grasa agregada (26 % G)
+Merluza cruda | taco:302
+Merluza frita | taco:303 | revisado: el de USDA va empanado; el de TACO, frito sin empanar (59 % C)
+Ostras | ciqual:10011 | revisado: otra especie (16 % kcal)
+Palitos de cangrejo | ciqual:26046 | revisado: otra formulación (22 % kcal)
+Pargo | cofid:16-129
+Pargo crudo | cofid:16-126
+Pescado al horno | ciqual:26140 | revisado: el de USDA lleva grasa agregada y más pescado graso (34 % G)
+Pescado crudo | sin par | ninguna tabla tiene un promedio de pescado crudo
+Pez espada | ciqual:26093 | revisado: la grasa del pez espada varía mucho según la pieza (55 % kcal)
+Pez espada crudo | ciqual:26082
+Pulpo | sin par | ninguna tabla independiente tiene pulpo cocido (el de Ciqual es copia de USDA)
+Pulpo crudo | ciqual:10018 | revisado: variación natural, y USDA saca los carbohidratos por diferencia (22 % kcal)
+Rape a la plancha | ciqual:26081 | revisado: otra pérdida de agua (22 % P)
+Rape crudo | ciqual:26018
+Salmón | taco:317 | revisado: el de USDA lleva grasa agregada (19 % G)
+Salmón ahumado | ciqual:26037 | revisado: el francés es salmón de criadero, más graso (57 % kcal)
+Salmón crudo | taco:316
+Salmón en lata | cofid:16-420
+Sardinas en lata | ciqual:26040 | revisado: otra marca y otro aceite (15 % G)
+Sardinas en salsa de tomate | ciqual:26035
+Sepia cruda | ciqual:10016
+Sepia hervida | sin par | ninguna tabla tiene sepia cocida
+Tilapia | sin par | ninguna tabla tiene tilapia cocida
+Tilapia cruda | ciqual:27019
+Tilapia frita | sin par | ninguna tabla tiene tilapia frita
+Trucha | ciqual:27014 | revisado: el de USDA lleva grasa agregada (34 % kcal)
+Trucha cruda | ciqual:27009
+Trucha frita | sin par | ninguna tabla tiene trucha frita
+Vieiras al vapor | cofid:16-262 | revisado: otra pérdida de agua (13 % P)
+Vieiras crudas | ciqual:10045 | revisado: las de USDA tienen más agua (29 % P)
+Acelga con salsa blanca | ciqual:25588 | revisado: otra receta (30 % kcal)
+Aguacate relleno de atún | sin par | ninguna tabla tiene palta rellena
+Ajiaco | sin par | ninguna tabla tiene un guiso de pollo y papa como el ajiaco
+Albóndigas con salsa de tomate | cofid:19-613 | revisado: otra receta (23 % kcal)
+Albóndigas en salsa | cofid:19-613 | revisado: otra receta, con más carne (45 % kcal)
+Alfajor de maicena | sin par | ninguna tabla tiene alfajores
+Alitas de pollo en salsa | cofid:19-541 | revisado: otra receta (42 % P)
+Alitas de pollo fritas | sin par | ninguna tabla tiene alitas fritas
+Arepa | sin par | ninguna tabla tiene arepas
+Arepa reina pepiada | sin par | ninguna tabla tiene arepas
+Aros de cebolla | sin par | ninguna tabla tiene aros de cebolla
+Arroz caldoso con pollo | cofid:19-566 | revisado: otra receta: el risotto tiene más arroz (42 % C)
+Arroz con coco | sin par | ninguna tabla tiene arroz con coco
+Arroz con frijoles | taco:527 | revisado: otra receta (19 % C)
+Arroz con mantequilla y queso | sin par | ninguna tabla tiene arroz con manteca y queso
+Arroz con pollo | cofid:19-566 | revisado: otra receta (40 % C)
+Arroz con verduras | ciqual:25187 | revisado: otra receta (17 % C)
+Arroz frito | cofid:11-444
+Arroz frito con camarones | cofid:11-444 | revisado: otra receta (13 % C)
+Arroz frito con pollo | cofid:11-444 | revisado: otra receta (15 % P)
+Arroz rojo | cofid:15-843 | revisado: otra receta (32 % C)
+Avena con leche | cofid:11-1108 | revisado: otra receta (15 % C)
+Baba ganoush | ciqual:25624 | revisado: otra receta: el francés no lleva tahini (18 % P)
+Bacalao a la vizcaína | sin par | ninguna tabla tiene bacalao a la vizcaína
+Baleada | sin par | ninguna tabla tiene baleadas
+Bandeja paisa | sin par | ninguna tabla tiene bandeja paisa
+Berenjenas a la parmesana | sin par | ninguna tabla tiene berenjenas a la parmesana
+Berenjenas rellenas | ciqual:25511 | revisado: otra receta (24 % kcal)
+Bibimbap | sin par | ninguna tabla tiene bibimbap
+Biryani de pollo | cofid:19-454 | revisado: el de comida para llevar lleva más aceite (57 % kcal)
+Bistec a caballo | taco:529 | revisado: otro corte, con más grasa (37 % G)
+Bistec con ensalada | sin par | ninguna tabla tiene el plato de bife con ensalada
+Bistec con papas fritas | sin par | ninguna tabla tiene el plato de bife con papas fritas
+Bistec encebollado | sin par | ninguna tabla tiene bistec encebollado
+Bondiola al pan | sin par | ninguna tabla tiene un sándwich de bondiola
+Brocheta de cordero | ciqual:25541 | revisado: otra receta (15 % kcal)
+Brocheta de pollo | ciqual:25586 | revisado: la francesa es casi solo carne (50 % P)
+Bruschetta | sin par | ninguna tabla tiene bruschetta
+Buñuelos de acelga | ciqual:25556 | revisado: otra receta (45 % kcal)
+Burrito | ciqual:25459 | revisado: otra receta (36 % kcal)
+Burrito de desayuno | sin par | ninguna tabla tiene burritos de huevo
+Burrito de pollo | ciqual:25459 | revisado: otra receta (31 % C)
+Buseca | taco:536 | revisado: la dobradinha de TACO no lleva porotos (63 % C)
+Calabacines rellenos | ciqual:25511 | revisado: otra receta (19 % kcal)
+Caldo de res | sin par | ninguna tabla tiene un caldo de carne con verduras
+Calzone | sin par | ninguna tabla tiene calzone
+Camarones al ajillo | sin par | ninguna tabla tiene camarones al ajillo
+Canelones de carne | ciqual:25081 | revisado: otra receta (24 % kcal)
+Canelones de jamón y queso | ciqual:25081 | revisado: otra receta (21 % P)
+Canelones de pollo | ciqual:25081 | revisado: otra receta (30 % P)
+Canelones de ricota | ciqual:25635 | revisado: otra receta (13 % kcal)
+Canelones de verdura | ciqual:25131 | revisado: otra receta (20 % C)
+Capeletis a la caruso | sin par | ninguna tabla tiene capeletis a la caruso
+Carbonada | taco:553 | revisado: otra receta: la vaca atolada lleva costilla (39 % kcal)
+Carne al horno con papas | sin par | ninguna tabla tiene carne al horno con papas
+Carne con brócoli | cofid:19-530 | revisado: otra receta (13 % G)
+Carne con salsa de soja | cofid:19-460 | revisado: otra receta (45 % kcal)
+Carne desmechada | sin par | ninguna tabla tiene carne desmechada en salsa de tomate
+Cerdo agridulce | cofid:19-304 | revisado: otra receta (13 % C)
+Ceviche | sin par | ninguna tabla tiene ceviche
+Chilaquiles | sin par | ninguna tabla tiene chilaquiles
+Chiles rellenos | sin par | ninguna tabla tiene chiles rellenos de queso
+Chili con carne | ciqual:25111
+Chivito | sin par | ninguna tabla tiene chivito
+Chivito al plato | sin par | ninguna tabla tiene chivito
+Chivito común | sin par | ninguna tabla tiene chivito
+Chivito de pollo | sin par | ninguna tabla tiene chivito
+Chivo guisado | sin par | ninguna tabla tiene carne de chivo
+Choripán | sin par | ninguna tabla tiene choripán
+Cóctel de camarones | sin par | ninguna tabla tiene cóctel de camarones
+Coliflor con salsa blanca | ciqual:25101
+Corn dog | sin par | ninguna tabla tiene corn dog
+Crema de almejas | sin par | ninguna tabla tiene sopa de almejas
+Crema de brócoli con queso | cofid:17-637 | revisado: otra receta (31 % kcal)
+Crema de calabaza | ciqual:25945 | revisado: la francesa lleva menos crema (36 % kcal)
+Crema de champiñones | ciqual:25912 | revisado: la francesa lleva menos crema (34 % kcal)
+Crema de espárragos | ciqual:25968
+Crema de maíz | sin par | ninguna tabla tiene crema de choclo
+Crema de pollo | cofid:17-695 | revisado: la británica es más diluida (33 % kcal)
+Crema de puerros | cofid:17-831
+Crema de tomate | cofid:17-652 | revisado: otra receta (19 % kcal)
+Crema de verduras | ciqual:25903 | revisado: la francesa no lleva crema (41 % kcal)
+Croissant de jamón y queso | ciqual:25418 | revisado: otra receta (23 % kcal)
+Croquetas de papa | cofid:13-038 | revisado: otra receta (27 % C)
+Curry de res | cofid:19-549 | revisado: otra receta: el casero británico es más seco y con más carne (85 % kcal)
+Curry de verduras | cofid:15-619
+Dal | cofid:13-484 | revisado: el británico es más aguado (59 % kcal)
+Dumplings al vapor | ciqual:25110 | revisado: otra masa y otro relleno (72 % C)
+Dumplings fritos | sin par | ninguna tabla tiene dumplings fritos
+Empanada caprese | ciqual:25401 | revisado: otra masa (hojaldre) y otro relleno (17 % P)
+Empanada de atún | sin par | ninguna tabla tiene empanadas de atún
+Empanada de calabaza | ciqual:25401 | revisado: otra masa y otro relleno (31 % G)
+Empanada de carne | ciqual:25402 | revisado: otra masa (hojaldre) (17 % G)
+Empanada de carne al horno | ciqual:25402 | revisado: el hojaldre francés lleva más grasa (46 % G)
+Empanada de humita | sin par | ninguna tabla tiene empanadas de choclo
+Empanada de jamón y queso | ciqual:25508 | revisado: otra receta (39 % P)
+Empanada de pollo | cofid:19-469 | revisado: otra masa (hojaldre) y menos relleno (22 % P)
+Empanada de pollo al horno | cofid:19-469 | revisado: el hojaldre británico lleva más grasa (45 % G)
+Empanada de queso | ciqual:25401 | revisado: otra masa (hojaldre) (20 % G)
+Empanada de queso y cebolla | cofid:11-997 | revisado: otra masa (hojaldre) y menos queso (22 % P)
+Empanada de verdura | cofid:15-646 | revisado: otra receta: la masa británica lleva más grasa (40 % G)
+Enchiladas | cofid:19-586 | revisado: otra receta, de carne de res (20 % C)
+Ensalada caprese | sin par | ninguna tabla tiene ensalada caprese
+Ensalada César | sin par | las tablas tienen la ensalada César con el aderezo
+Ensalada César con pollo | sin par | las tablas tienen la ensalada César con el aderezo
+Ensalada Cobb | sin par | ninguna tabla tiene ensalada Cobb
+Ensalada de arroz con atún | ciqual:26263
+Ensalada de atún | sin par | ninguna tabla tiene ensalada de atún con mayonesa
+Ensalada de camarones | sin par | ninguna tabla tiene ensalada de camarones
+Ensalada de col | ciqual:26259
+Ensalada de espinaca | sin par | ninguna tabla tiene ensalada de espinaca
+Ensalada de frijoles negros | sin par | ninguna tabla tiene ensalada de porotos negros
+Ensalada de garbanzos | sin par | ninguna tabla tiene ensalada de garbanzos
+Ensalada de huevo | sin par | ninguna tabla tiene ensalada de huevo con mayonesa sola
+Ensalada de judías verdes y huevo | sin par | ninguna tabla tiene ensalada de chauchas y huevo
+Ensalada de lentejas | ciqual:26261 | revisado: la francesa lleva salchicha ahumada (75 % kcal)
+Ensalada de papa y huevo | ciqual:25609 | revisado: otra receta, con mayonesa (26 % C)
+Ensalada de papas | ciqual:25609 | revisado: otra receta, con menos papa (33 % C)
+Ensalada de pasta | cofid:15-872 | revisado: la británica lleva más verdura (32 % kcal)
+Ensalada de pollo | taco:547 | revisado: el salpicão lleva menos mayonesa (55 % G)
+Ensalada de pulpo | sin par | ninguna tabla tiene ensalada de pulpo
+Ensalada de remolacha y huevo | ciqual:26258 | revisado: la francesa no lleva huevo (37 % kcal)
+Ensalada de repollo y zanahoria | ciqual:26259 | revisado: el coleslaw lleva mayonesa (35 % kcal)
+Ensalada de tomate y cebolla | cofid:15-876 | revisado: otra cantidad de aceite (11 % kcal)
+Ensalada de tomate y huevo | cofid:15-876 | revisado: la británica no lleva huevo (35 % kcal)
+Ensalada de zanahoria y huevo | ciqual:26257 | revisado: la francesa no lleva huevo (20 % kcal)
+Ensalada griega | sin par | las tablas tienen la ensalada griega con el aderezo
+Ensalada mixta | ciqual:25604 | revisado: la francesa es solo lechuga (12 % C)
+Ensalada Waldorf | cofid:15-878
+Espaguetis con albóndigas | ciqual:25085 | revisado: otra receta: la pasta envasada es más aguada (38 % kcal)
+Estofado de carne | cofid:19-473 | revisado: otra receta, con carne más magra (38 % kcal)
+Fabada | ciqual:25098 | revisado: otra receta: el cassoulet de lata es más aguado (39 % kcal)
+Fainá | sin par | ninguna tabla tiene fainá
+Fainá con mozzarella | sin par | ninguna tabla tiene fainá
+Fajitas | ciqual:25460 | revisado: otra receta, con menos aceite (27 % G)
+Fajitas de res | ciqual:25460 | revisado: la francesa es de pollo (39 % G)
+Falafel | cofid:15-795 | revisado: el agua del falafel varía mucho; el de USDA es más seco (45 % kcal)
+Feijoada | taco:540 | revisado: la de TACO es más aguada (40 % kcal)
+Fettuccine Alfredo | ciqual:25198 | revisado: la francesa lleva más queso (16 % P)
+Flautas de pollo | sin par | ninguna tabla tiene flautas
+Fricasé de pollo | cofid:19-561 | revisado: otra receta: la portorriqueña lleva papa y más grasa (33 % kcal)
+Fugazza | ciqual:25528 | revisado: la pissaladière lleva más aceite y anchoas (50 % G)
+Fugazzeta | ciqual:25570 | revisado: otra receta, con menos queso (12 % P)
+Gazpacho | ciqual:25967 | revisado: el español lleva aceite de oliva (14 % kcal)
+Gordita de carne | sin par | ninguna tabla tiene gorditas
+Guiso de arroz | taco:526 | revisado: el carreteiro lleva más carne (24 % P)
+Guiso de carne | cofid:19-473 | revisado: otra receta, con más carne (16 % P)
+Guiso de cerdo | ciqual:25071
+Guiso de cordero | ciqual:25124 | revisado: otra receta (15 % kcal)
+Guiso de fideos | cofid:19-483 | revisado: otra receta (13 % C)
+Guiso de lentejas | ciqual:25010 | revisado: otra receta (12 % C)
+Guiso de pollo | ciqual:25190 | revisado: otra receta, con más aceite (23 % kcal)
+Guiso de porotos | ciqual:25098
+Hamburguesa | ciqual:25413 | revisado: la francesa es de comida rápida, con menos carne y más pan (45 % C)
+Hamburguesa al plato | sin par | ninguna tabla tiene el plato de hamburguesa con huevo y papas fritas
+Hamburguesa casera a la plancha | cofid:19-553 | revisado: otra carne picada, más grasa (30 % G)
+Hamburguesa casera con pan | cofid:19-556 | revisado: la británica lleva más carne y menos pan (43 % P)
+Hamburguesa casera cruda | taco:415 | revisado: la industrial de TACO lleva más grasa (16 % P)
+Hamburguesa completa | cofid:19-556 | revisado: la británica no lleva jamón ni huevo, y lleva más carne (33 % P)
+Hamburguesa con queso | ciqual:25414 | revisado: la francesa lleva más pan (25 % C)
+Hamburguesa de pollo | cofid:19-315 | revisado: otra receta (16 % kcal)
+Hamburguesa doble con queso | ciqual:25415 | revisado: la francesa es de comida rápida, con medallones finos y más pan (51 % C)
+Hojas de parra rellenas | ciqual:25217 | revisado: las francesas no llevan carne (53 % G)
+Hot dog | ciqual:25403 | revisado: el francés lleva más pan (20 % C)
+Hot dog con aderezos | cofid:19-582 | revisado: el británico va sin mayonesa (60 % G)
+Hot dog con tocino y queso | ciqual:25403 | revisado: el francés no lleva tocino ni queso (39 % C)
+Huevo frito con papas fritas | sin par | ninguna tabla tiene el plato de huevo frito con papas fritas
+Huevos benedictinos | sin par | ninguna tabla tiene huevos benedictinos
+Huevos rancheros | sin par | ninguna tabla tiene huevos rancheros
+Huevos rellenos | sin par | ninguna tabla tiene huevos rellenos
+Huevos revueltos con jamón | ciqual:22507 | revisado: la omelette francesa lleva panceta, más grasa que el jamón (37 % G)
+Huevos revueltos con tomate | ciqual:22502
+Huevos revueltos con verduras | ciqual:22508 | revisado: otra receta, con más verdura (25 % kcal)
+Huevos rotos | sin par | ninguna tabla tiene huevos rotos
+Kibbeh | taco:442 | revisado: el de TACO es frito y más seco (51 % kcal)
+Lasaña de jamón y queso | ciqual:25081 | revisado: otro relleno (17 % P)
+Lasaña de pollo | ciqual:25081 | revisado: otro relleno; la envasada es más aguada (37 % P)
+Lasaña de verduras | ciqual:25131 | revisado: la de USDA lleva más queso (36 % kcal)
+Lengua a la vinagreta | sin par | ninguna tabla tiene lengua a la vinagreta
+Lengua guisada | taco:365
+Lo mein de pollo | cofid:19-321 | revisado: el chow mein va salteado con más aceite (20 % G)
+Lomo con salsa de champiñones | sin par | ninguna tabla tiene lomo con salsa de champiñones
+Lomo saltado | sin par | ninguna tabla tiene lomo saltado
+Macarrones con queso | cofid:11-954 | revisado: otra receta (18 % kcal)
+Maduros fritos | cofid:13-569 | revisado: otro tiempo de fritura (13 % kcal)
+Mangú | cofid:13-324 | revisado: el mangú lleva manteca (23 % kcal)
+Martín Fierro | sin par | ninguna tabla tiene queso con dulce de membrillo
+Matambre a la pizza | sin par | ninguna tabla tiene matambre a la pizza
+Merluza frita con puré | sin par | ninguna tabla tiene el plato de merluza frita con puré
+Milanesa | taco:340 | revisado: otro empanado (21 % C)
+Milanesa a caballo | taco:340 | revisado: la de TACO es frita y sin huevo (49 % G)
+Milanesa a la napolitana | taco:340 | revisado: la de TACO es frita, sin salsa ni queso (41 % kcal)
+Milanesa a la napolitana con papas fritas | sin par | ninguna tabla tiene el plato de milanesa con papas fritas
+Milanesa con ensalada | sin par | ninguna tabla tiene el plato de milanesa con ensalada
+Milanesa con papas fritas | sin par | ninguna tabla tiene el plato de milanesa con papas fritas
+Milanesa con puré | sin par | ninguna tabla tiene el plato de milanesa con puré
+Milanesa de berenjena a la napolitana | sin par | ninguna tabla tiene milanesas de berenjena
+Milanesa de berenjena al horno | sin par | ninguna tabla tiene milanesas de berenjena
+Milanesa de berenjena cruda | sin par | ninguna tabla tiene milanesas de berenjena
+Milanesa de berenjena frita | sin par | ninguna tabla tiene milanesas de berenjena
+Milanesa de carne al horno | ciqual:25173 | revisado: la francesa es de ternera y frita (22 % P)
+Milanesa de carne cruda | sin par | ninguna tabla tiene milanesas crudas
+Milanesa de carne frita | taco:340 | revisado: la de TACO absorbe más aceite (52 % G)
+Milanesa de cerdo al horno | ciqual:25173 | revisado: la francesa es de ternera y frita (27 % G)
+Milanesa de cerdo cruda | sin par | ninguna tabla tiene milanesas crudas
+Milanesa de cerdo frita | cofid:19-641 | revisado: el schnitzel británico absorbe menos aceite (24 % kcal)
+Milanesa de merluza al horno | cofid:16-405 | revisado: los bastones industriales llevan más empanado (37 % P)
+Milanesa de merluza cruda | ciqual:26029 | revisado: el industrial lleva más empanado (29 % P)
+Milanesa de merluza frita | ciqual:26030 | revisado: el industrial lleva menos pescado (45 % P)
+Milanesa de pollo a la napolitana | taco:401 | revisado: la de TACO no lleva salsa ni queso (70 % P)
+Milanesa de pollo a la napolitana con papas fritas | sin par | ninguna tabla tiene el plato de milanesa con papas fritas
+Milanesa de pollo al horno | cofid:18-504 | revisado: la industrial lleva menos pollo (26 % P)
+Milanesa de pollo con ensalada | sin par | ninguna tabla tiene el plato de milanesa con ensalada
+Milanesa de pollo con papas fritas | sin par | ninguna tabla tiene el plato de milanesa con papas fritas
+Milanesa de pollo con puré | sin par | ninguna tabla tiene el plato de milanesa con puré
+Milanesa de pollo cruda | sin par | ninguna tabla tiene milanesas crudas
+Milanesa de pollo frita | taco:401 | revisado: la de TACO lleva menos empanado (27 % C)
+Minestrone | ciqual:25916
+Mofongo | sin par | ninguna tabla tiene mofongo
+Mondongo guisado | taco:536 | revisado: la dobradinha no lleva papa (56 % P)
+Morcipán | sin par | ninguna tabla tiene morcipán
+Musaca | ciqual:25123 | revisado: la francesa lleva bechamel y más aceite (51 % kcal)
+Nachos con carne | sin par | ninguna tabla tiene nachos
+Nachos con queso | sin par | ninguna tabla tiene nachos
+Nigiri de salmón | cofid:16-361
+Ñoquis con pesto | sin par | ninguna tabla tiene ñoquis con salsa
+Ñoquis con salsa blanca | sin par | ninguna tabla tiene ñoquis con salsa
+Ñoquis con salsa boloñesa | sin par | ninguna tabla tiene ñoquis con salsa
+Ñoquis con salsa de tomate | sin par | ninguna tabla tiene ñoquis con salsa
+Ñoquis con salsa de tomate y crema | sin par | ninguna tabla tiene ñoquis con salsa
+Ñoquis con salsa mixta | sin par | ninguna tabla tiene ñoquis con salsa
+Olímpico | ciqual:25576 | revisado: otra receta, con menos relleno (60 % C)
+Omelet con papa | ciqual:22510 | revisado: la tortilla española lleva mucha más papa (59 % C)
+Omelet de jamón y queso | ciqual:22506 | revisado: la francesa lleva más queso (22 % P)
+Pabellón criollo | sin par | ninguna tabla tiene pabellón criollo
+Pad thai con camarones | sin par | ninguna tabla tiene pad thai
+Pad thai con pollo | sin par | ninguna tabla tiene pad thai
+Paella | ciqual:25242 | revisado: otra receta, con más arroz y menos aceite (34 % C)
+Paella de mariscos | ciqual:25242 | revisado: otra receta, con más arroz (31 % C)
+Palak paneer | cofid:15-629 | revisado: el saag británico no lleva queso (13 % C)
+Palmitos con salsa rosada | sin par | ninguna tabla tiene palmitos con salsa golf
+Pan con aguacate | sin par | ninguna tabla tiene tostadas con palta
+Pan con tomate | sin par | ninguna tabla tiene pan con tomate
+Pan de carne | cofid:19-605 | revisado: otra receta, con más pan (24 % C)
+Papa a la huancaína | sin par | ninguna tabla tiene papa a la huancaína
+Papa rellena | sin par | ninguna tabla tiene papas rellenas
+Papas fritas | taco:93
+Parfait de yogur | ciqual:19628 | revisado: el parfait lleva granola (16 % C)
+Parrillada | ciqual:25506 | revisado: la parrillada lleva chorizo y morcilla (43 % G)
+Pascualina | ciqual:25417 | revisado: la francesa no lleva huevo (15 % P)
+Pasta a la boloñesa | taco:542 | revisado: otra receta (17 % C)
+Pasta con mantequilla | sin par | ninguna tabla tiene pasta con manteca y queso
+Pasta con mariscos | sin par | ninguna tabla tiene pasta con mariscos
+Pastel de papas | ciqual:25009 | revisado: otra receta (12 % kcal)
+Pastelón | sin par | ninguna tabla tiene pastelón
+Pechuga de pollo con ensalada | sin par | ninguna tabla tiene el plato de pechuga con ensalada
+Pechuga de pollo con puré | sin par | ninguna tabla tiene el plato de pechuga con puré
+Pho | sin par | ninguna tabla tiene pho
+Picadillo | cofid:19-607 | revisado: otra receta (18 % kcal)
+Pimientos rellenos | cofid:19-632 | revisado: el británico lleva menos grasa (44 % kcal)
+Pisto | ciqual:25018
+Pizza a la parrilla | ciqual:25516 | revisado: otra receta (15 % kcal)
+Pizza casera con mozzarella | ciqual:25404 | revisado: la casera lleva más queso (18 % P)
+Pizza con fainá | sin par | ninguna tabla tiene pizza con fainá
+Pizza de carne | cofid:11-1015
+Pizza de carne y verduras | cofid:11-1015
+Pizza de pepperoni | ciqual:25462 | revisado: otra receta (16 % kcal)
+Pizza de queso | ciqual:25404 | revisado: la de restaurante lleva más queso (16 % kcal)
+Pizza napolitana | ciqual:25404 | revisado: otra receta, con rodajas de tomate (16 % C)
+Pizza sin queso | cofid:15-255 | revisado: la británica lleva más aceite y menos masa (46 % C)
+Polenta con queso | sin par | ninguna tabla tiene polenta con queso
+Polenta con tuco | sin par | ninguna tabla tiene polenta con salsa
+Pollo a la naranja | cofid:19-324 | revisado: otra receta: el agridulce británico lleva menos pollo (34 % P)
+Pollo a la parmesana | sin par | ninguna tabla tiene pollo a la parmesana
+Pollo agridulce | cofid:19-324 | revisado: otra receta (22 % kcal)
+Pollo al curry | cofid:19-322 | revisado: el de comida para llevar lleva más pollo y aceite (36 % kcal)
+Pollo al horno con papas | sin par | ninguna tabla tiene el plato de pollo al horno con papas
+Pollo con mole | sin par | ninguna tabla tiene pollo con mole
+Pollo con salsa de champiñones | sin par | ninguna tabla tiene pollo con salsa de champiñones
+Pollo General Tso | cofid:19-324 | revisado: otra receta: el General Tso va rebozado y frito (34 % kcal)
+Pollo guisado con tomate | ciqual:25190 | revisado: otra receta (13 % P)
+Pollo kung pao | cofid:19-569 | revisado: otra receta, con más pollo (43 % P)
+Pollo teriyaki | ciqual:25565 | revisado: el yakitori lleva más salsa (41 % C)
+Postre chajá | sin par | ninguna tabla tiene chajá
+Pozole | sin par | ninguna tabla tiene pozole
+Puchero | ciqual:25013 | revisado: el pot-au-feu va sin papa ni choclo y con carne magra (36 % kcal)
+Puchero de gallina | ciqual:25013 | revisado: el pot-au-feu es de vaca, sin papa ni choclo (36 % kcal)
+Pulpo a la gallega | sin par | ninguna tabla independiente tiene pulpo cocido
+Pupusa | sin par | ninguna tabla tiene pupusas
+Puré de calabaza | ciqual:20096 | revisado: el puré lleva manteca y leche (25 % kcal)
+Quesadilla | sin par | ninguna tabla tiene quesadillas
+Quesadilla de pollo | sin par | ninguna tabla tiene quesadillas
+Ramen | sin par | ninguna tabla tiene ramen
+Ravioles con salsa blanca | sin par | ninguna tabla tiene ravioles con salsa blanca
+Ravioles con salsa boloñesa | ciqual:25019 | revisado: los de lata son más aguados (37 % kcal)
+Ravioles con salsa de tomate | ciqual:25019 | revisado: los de lata son más aguados (32 % kcal)
+Ravioles con salsa de tomate y crema | ciqual:25019 | revisado: los de lata son más aguados y sin crema (42 % kcal)
+Ravioles con salsa mixta | ciqual:25019 | revisado: los de lata son más aguados y sin salsa blanca (38 % kcal)
+Ravioles de carne | ciqual:25158 | revisado: los de USDA llevan más relleno (48 % C)
+Ravioles de espinaca y ricota | ciqual:25155 | revisado: otra receta, con más masa (52 % C)
+Refuerzo de jamón y queso | ciqual:25485
+Repollo relleno | taco:532 | revisado: el charuto de TACO es magro, con arroz (70 % G)
+Revuelto gramajo | sin par | ninguna tabla tiene revuelto gramajo
+Rollito primavera | ciqual:25583 | revisado: otra receta (13 % kcal)
+Rollitos de papel de arroz | ciqual:25419
+Salchichas con puré | sin par | ninguna tabla tiene el plato de salchichas con puré
+Salchipapas | sin par | ninguna tabla tiene salchipapas
+Samosa | cofid:15-305 | revisado: las industriales británicas absorben menos aceite (41 % G)
+Sancocho | sin par | ninguna tabla tiene sancocho
+Sándwich caliente de jamón y queso | ciqual:25400 | revisado: el croque-monsieur lleva manteca (26 % G)
+Sándwich de atún | cofid:11-967 | revisado: otra receta, con más pan (30 % C)
+Sándwich de desayuno | sin par | ninguna tabla tiene un sándwich de huevo y panceta
+Sándwich de falafel | sin par | ninguna tabla tiene sándwich de falafel
+Sándwich de jamón curado y queso | ciqual:25434 | revisado: otra receta, con tomate (18 % P)
+Sándwich de jamón y queso | ciqual:25485 | revisado: el francés es de baguette, con manteca (37 % C)
+Sándwich de mantequilla de maní y mermelada | sin par | ninguna tabla tiene sándwich de mantequilla de maní
+Sándwich de miga | ciqual:25576 | revisado: otra receta (15 % kcal)
+Sándwich de milanesa | sin par | ninguna tabla tiene sándwich de milanesa
+Sándwich de milanesa completo | sin par | ninguna tabla tiene sándwich de milanesa
+Sándwich de milanesa de pollo | sin par | ninguna tabla tiene sándwich de milanesa
+Sándwich de pernil | sin par | ninguna tabla tiene sándwich de pernil
+Sándwich de pollo a la plancha | sin par | ninguna tabla tiene un sándwich de pechuga a la plancha
+Sándwich de pollo con mayonesa | cofid:11-964 | revisado: el británico lleva lechuga y tomate en vez de mayonesa (44 % G)
+Sándwich de queso a la plancha | cofid:11-963 | revisado: el británico no se dora con manteca (31 % G)
+Sándwich de tocino, lechuga y tomate | cofid:11-955 | revisado: otra receta, con mayonesa (22 % G)
+Shawarma | ciqual:25428 | revisado: otra receta, con más carne (26 % kcal)
+Sopa agripicante | sin par | ninguna tabla tiene sopa agripicante
+Sopa de albóndigas | sin par | ninguna tabla tiene sopa de albóndigas
+Sopa de arroz | sin par | ninguna tabla tiene sopa de arroz
+Sopa de arvejas | ciqual:25965 | revisado: la francesa es más aguada (17 % C)
+Sopa de capeletis | sin par | ninguna tabla tiene sopa de capeletis
+Sopa de cebolla | ciqual:25910 | revisado: la de USDA lleva pan y queso gratinado (46 % C)
+Sopa de fideo | ciqual:25955 | revisado: la sopa asiática es más aguada (62 % kcal)
+Sopa de frijoles | sin par | ninguna tabla tiene sopa de porotos
+Sopa de lentejas | ciqual:25900 | revisado: otra receta (11 % C)
+Sopa de lentejas con carne | ciqual:25900 | revisado: la francesa no lleva carne (15 % kcal)
+Sopa de maní | sin par | ninguna tabla tiene sopa de maní
+Sopa de mariscos | ciqual:25904 | revisado: la bouillabaisse lleva trozos de pescado; la envasada es más aguada (21 % P)
+Sopa de papa | ciqual:25907 | revisado: la de USDA lleva leche o crema; la francesa es más aguada (53 % kcal)
+Sopa de pollo con fideos | ciqual:25976 | revisado: otra receta (15 % kcal)
+Sopa de pollo con verduras | ciqual:25901 | revisado: la francesa es más aguada (24 % kcal)
+Sopa de sémola | sin par | ninguna tabla tiene sopa de sémola
+Sopa de tortilla | sin par | ninguna tabla tiene sopa de tortilla
+Sopa de verduras | ciqual:25903
+Sopa de verduras con carne | cofid:17-835 | revisado: el Scotch broth lleva más carne y cebada (30 % kcal)
+Sopa de verduras con fideos | ciqual:25903 | revisado: la francesa no lleva fideos (11 % C)
+Sopa miso | ciqual:25972
+Sopa wantán | sin par | ninguna tabla tiene sopa wantán
+Sorrentinos con salsa de tomate | ciqual:25019 | revisado: los de lata son más aguados (27 % kcal)
+Sorrentinos con salsa de tomate y crema | ciqual:25019 | revisado: los de lata son más aguados y sin crema (37 % kcal)
+Sorrentinos de jamón y queso | ciqual:25149 | revisado: los sorrentinos llevan más relleno que los raviolis (67 % C)
+Spanakopita | cofid:15-840 | revisado: otra receta (17 % kcal)
+Strogonoff de carne | taco:537 | revisado: otra receta, con menos carne (25 % P)
+Sushi | ciqual:25456
+Sushi de salmón | cofid:16-361
+Tabulé | taco:549 | revisado: el de TACO casi no lleva aceite (55 % kcal)
+Tacos | sin par | ninguna tabla tiene tacos
+Tacos de carne sin queso | sin par | ninguna tabla tiene tacos
+Tacos de pescado | sin par | ninguna tabla tiene tacos
+Tacos de pollo | sin par | ninguna tabla tiene tacos
+Tallarines con estofado | sin par | ninguna tabla tiene tallarines con estofado
+Tallarines con pesto | sin par | ninguna tabla tiene tallarines con pesto
+Tallarines con salsa blanca | sin par | ninguna tabla tiene tallarines con salsa blanca
+Tallarines con salsa de queso azul | ciqual:25198
+Tallarines con salsa de tomate y crema | sin par | ninguna tabla tiene tallarines con salsa de tomate y crema
+Tamal | sin par | ninguna tabla tiene tamales
+Tarta caprese | ciqual:25561 | revisado: otra receta, con menos queso (26 % C)
+Tarta de atún | sin par | ninguna tabla tiene tarta de atún
+Tarta de brócoli | ciqual:25417 | revisado: otra receta (26 % C)
+Tarta de calabacín | ciqual:25417 | revisado: otra receta, con más masa (41 % C)
+Tarta de calabaza | ciqual:25417 | revisado: otra receta (22 % kcal)
+Tarta de cebolla | ciqual:25529 | revisado: la francesa lleva más crema y manteca (41 % kcal)
+Tarta de choclo | ciqual:25417 | revisado: otra receta (21 % G)
+Tarta de espinaca | cofid:15-840 | revisado: otra receta, con menos masa y más grasa (33 % C)
+Tarta de fiambre | ciqual:25508 | revisado: otra masa (hojaldre) (29 % G)
+Tarta de jamón y queso | ciqual:25405 | revisado: la quiche lorraine lleva panceta y crema (26 % P)
+Tarta de pollo | cofid:19-515 | revisado: la británica lleva más masa (43 % G)
+Tarta de puerro | ciqual:25553 | revisado: otra receta, con más masa (33 % C)
+Tiras de pollo empanizadas | cofid:18-501
+Tomates rellenos | ciqual:25103 | revisado: los franceses van rellenos de carne (26 % kcal)
+Torta frita | sin par | ninguna tabla tiene tortas fritas
+Tortellini de carne | ciqual:25158 | revisado: los de USDA llevan más relleno (46 % C)
+Tortellini de espinaca | ciqual:25193 | revisado: otro relleno, sin queso (19 % P)
+Tortilla de acelga | ciqual:22508 | revisado: otra receta, con más huevo (21 % kcal)
+Tortilla de calabacín | cofid:15-726 | revisado: otra receta (12 % G)
+Tortilla de papas | ciqual:22510 | revisado: otra receta, con más aceite (17 % G)
+Tortilla de papas con jamón y queso | ciqual:22510 | revisado: la española no lleva jamón ni queso (15 % P)
+Tostadas francesas | sin par | ninguna tabla independiente tiene tostadas francesas (la de Ciqual es copia de USDA)
+Tostones | cofid:13-569 | revisado: el británico es maduro y absorbe menos aceite (14 % kcal)
+Tteokbokki | sin par | ninguna tabla tiene tteokbokki
+Tzatziki | ciqual:19863 | revisado: el francés lleva yogur entero y aceite (47 % kcal)
+Vitel toné | sin par | ninguna tabla tiene vitel toné
+Wrap de pollo | sin par | ninguna tabla tiene un wrap de pollo
+Queso americano | ciqual:12300 | revisado: las fetas francesas de queso fundido tienen menos grasa (32 % G)
+Queso añejo | sin par | ninguna tabla tiene queso añejo mexicano
+Queso azul | ciqual:12520 | revisado: variación entre quesos azules (21 % P)
+Queso blanco | taco:461 | revisado: el minas frescal tiene más agua (14 % G)
+Queso brie | ciqual:12020 | revisado: variación entre bries (15 % P)
+Queso camembert | ciqual:12001
+Queso cheddar | ciqual:12726
+Queso Chihuahua | sin par | ninguna tabla tiene queso Chihuahua
+Queso colonia | ciqual:12115
+Queso cotija | sin par | ninguna tabla tiene queso cotija
+Queso cottage | cofid:12-539 | revisado: el británico tiene más grasa (21 % kcal)
+Queso crema | ciqual:12068
+Queso crema light | ciqual:12069
+Queso de cabra | ciqual:12850
+Queso feta | cofid:12-525 | revisado: variación entre fetas: el de USDA tiene más proteína (21 % P)
+Queso fontina | sin par | ninguna tabla tiene queso fontina
+Queso fresco | taco:461 | revisado: el minas frescal tiene más agua (14 % G)
+Queso gouda | ciqual:12736
+Queso gruyère | ciqual:12114 | revisado: en un queso, los carbohidratos por diferencia son resto de la cuenta (15 % C)
+Queso magro | cofid:12-348 | revisado: el británico es mitad de grasa; el de USDA, bajo en grasa (58 % kcal)
+Queso Monterey | sin par | ninguna tabla tiene queso Monterey
+Queso mozzarella | taco:463 | revisado: la de TACO es entera; la de USDA (sin especificar), en parte semidescremada (23 % G)
+Queso mozzarella light | sin par | ninguna tabla tiene mozzarella semidescremada
+Queso muenster | sin par | ninguna tabla tiene queso muenster (el munster francés es otro queso)
+Queso Oaxaca | sin par | ninguna tabla tiene queso Oaxaca
+Queso parmesano | taco:464
+Queso provolone | sin par | ninguna tabla independiente tiene provolone (el de Ciqual es copia de USDA)
+Queso rallado | taco:464 | revisado: el rallado seco de USDA lleva antiaglomerante; el de TACO es de horma (33 % C)
+Queso romano | ciqual:12122 | revisado: el romano de USDA suele ser de leche de vaca (20 % P)
+Queso suizo | ciqual:12115
+Ricota | taco:469 | revisado: variación entre ricotas (15 % P)
+Ricota semidescremada | taco:469
+Aceitunas negras | taco:520 | revisado: las de USDA son negras de California, con más agua (67 % kcal)
+Aceitunas verdes | taco:521
+Aceto balsámico | ciqual:11091 | revisado: otra concentración (22 % C)
+Aderezo César | ciqual:11248 | revisado: otra receta, con menos aceite (24 % C)
+Aderezo de mostaza y miel | sin par | ninguna tabla tiene aderezo de mostaza y miel
+Aderezo ranch | sin par | ninguna tabla tiene aderezo ranch
+Alcaparras | sin par | ninguna tabla independiente tiene alcaparras (la de Ciqual es copia de USDA)
+Caldo de carne | ciqual:25930
+Caldo de pollo | ciqual:25947
+Chimichurri | sin par | ninguna tabla tiene chimichurri
+Chucrut | cofid:13-336
+Cubito de caldo | taco:325 | revisado: otra formulación: el de TACO lleva más grasa (52 % P)
+Cubito de caldo de carne | taco:324 | revisado: otra formulación (41 % P)
+Guacamole | ciqual:25620 | revisado: otra receta, con más aceite (23 % kcal)
+Jalapeños en vinagre | sin par | ninguna tabla tiene jalapeños en vinagre
+Jugo de limón | cofid:14-277 | revisado: USDA cuenta el ácido cítrico en los carbohidratos por diferencia (26 % C)
+Kétchup | ciqual:11008
+Kimchi | sin par | ninguna tabla tiene kimchi
+Mayonesa | ciqual:11054 | revisado: otra receta (20 % C)
+Mayonesa light | ciqual:11079 | revisado: otra formulación (28 % G)
+Miso | sin par | ninguna tabla independiente tiene miso (el de Ciqual es copia de USDA)
+Mole | sin par | ninguna tabla tiene mole
+Mostaza | ciqual:11013 | revisado: la francesa es de Dijon, con más semilla y aceite (82 % kcal)
+Pepinillos | ciqual:11004
+Pesto | ciqual:11179 | revisado: el envasado lleva menos aceite y queso (40 % G)
+Pico de gallo | sin par | ninguna tabla tiene pico de gallo
+Pimientos en conserva | sin par | ninguna tabla independiente tiene morrones en conserva (el de Ciqual es copia de USDA)
+Salsa agridulce | ciqual:11163
+Salsa alfredo | ciqual:11189 | revisado: otra receta, con menos crema (27 % G)
+Salsa barbacoa | ciqual:11100 | revisado: otra marca, con menos azúcar (21 % kcal)
+Salsa blanca | cofid:17-779
+Salsa boloñesa | ciqual:11114
+Salsa caruso | cofid:17-827 | revisado: la británica es de leche, sin crema (53 % G)
+Salsa criolla | sin par | ninguna tabla tiene salsa criolla
+Salsa cuatro quesos | ciqual:11189 | revisado: la envasada es más aguada (62 % G)
+Salsa de carne | cofid:17-725 | revisado: la instantánea es más aguada (23 % kcal)
+Salsa de champiñones | ciqual:11192 | revisado: la envasada es más aguada y con menos crema (77 % G)
+Salsa de maní | sin par | ninguna tabla tiene salsa de maní
+Salsa de ostras | sin par | ninguna tabla tiene salsa de ostras
+Salsa de pescado | ciqual:11194 | revisado: otra concentración (46 % kcal)
+Salsa de queso | ciqual:11189 | revisado: otra receta (28 % kcal)
+Salsa de queso azul | ciqual:11191 | revisado: la envasada es más aguada (60 % G)
+Salsa de soja | taco:518 | revisado: el shoyu brasileño lleva más azúcar y menos soja (34 % C)
+Salsa de tomate | taco:159 | revisado: otra receta, con aceite (13 % kcal)
+Salsa de tomate con crema | sin par | ninguna tabla tiene salsa de tomate con crema
+Salsa hoisin | sin par | ninguna tabla tiene salsa hoisin
+Salsa holandesa | cofid:17-800 | revisado: la casera británica lleva más manteca (34 % G)
+Salsa inglesa | cofid:17-723 | revisado: otra marca (39 % C)
+Salsa mixta | sin par | ninguna tabla tiene salsa mixta
+Salsa para enchiladas | sin par | ninguna tabla tiene salsa para enchiladas
+Salsa picante | cofid:17-719 | revisado: la británica es dulce, con azúcar (43 % C)
+Salsa provenzal | sin par | ninguna tabla tiene ajo y perejil en aceite
+Salsa roja | sin par | ninguna tabla tiene salsa mexicana
+Salsa rosada | cofid:17-717 | revisado: la británica lleva menos aceite (53 % G)
+Salsa rosada casera | ciqual:11244 | revisado: otra proporción de mayonesa y kétchup (14 % C)
+Salsa sriracha | cofid:17-719 | revisado: la británica es otra salsa de ají, con menos azúcar (53 % kcal)
+Salsa tártara | ciqual:11051
+Salsa teriyaki | sin par | ninguna tabla tiene salsa teriyaki
+Salsa verde | sin par | ninguna tabla tiene salsa verde mexicana
+Vinagre | ciqual:11018 | revisado: Ciqual cuenta el ácido acético en los carbohidratos por diferencia (30 % C)
+Vinagre de manzana | ciqual:11090 | revisado: Ciqual cuenta el ácido acético en los carbohidratos por diferencia (26 % C)
+Vinagre de vino | ciqual:11220 | revisado: Ciqual cuenta el ácido acético en los carbohidratos por diferencia (39 % C)
+Vinagreta | ciqual:11110
+Wasabi | sin par | ninguna tabla tiene wasabi
+Chips de banana | sin par | ninguna tabla tiene chips de banana
+Chips de batata | sin par | ninguna tabla tiene chips de batata
+Chips de pita | sin par | ninguna tabla tiene chips de pita
+Chips de plátano | sin par | ninguna tabla tiene chips de plátano
+Chips de yuca | sin par | ninguna tabla tiene chips de mandioca
+Galletas de arroz | ciqual:7352
+Galletas de queso | ciqual:38401 | revisado: otra receta, con más queso y grasa (29 % G)
+Maíz tostado | sin par | ninguna tabla tiene maíz tostado
+Mix de snacks | ciqual:38411
+Palomitas de maíz | taco:61 | revisado: las de TACO llevan menos aceite (43 % G)
+Palomitas dulces | ciqual:9232 | revisado: otra receta (14 % P)
+Palomitas sin aceite | ciqual:9231 | revisado: las francesas, de bolsa, tienen más grasa (39 % G)
+Papas fritas de bolsa | taco:90
+Papas fritas horneadas | cofid:17-693 | revisado: otra marca (17 % G)
+Papas paja | taco:90
+Pretzels | ciqual:38107
+Snack de maíz con queso | ciqual:38421 | revisado: el francés es inflado, con menos grasa (25 % G)
+Tortitas de maíz | ciqual:7354
+Totopos | ciqual:38417
+Aceite de pescado | cofid:17-488
+Barra de proteínas | sin par | ninguna tabla tiene barras de proteína
+Batido de proteínas | sin par | ninguna tabla tiene batidos de proteína
+Proteína de suero | sin par | ninguna tabla tiene proteína de suero en polvo
+Proteína vegetal | sin par | ninguna tabla independiente tiene proteína de soja en polvo (la de Ciqual es copia de USDA)
+Suplemento nutricional en polvo | sin par | ninguna tabla tiene suplementos nutricionales
+Suplemento nutricional líquido | sin par | ninguna tabla tiene suplementos nutricionales
+Batata | taco:89 | revisado: otra variedad: la brasileña tiene menos agua (40 % C)
+Batata al horno | cofid:13-672
+Batata frita | sin par | las tablas tienen la batata al horno, no frita
+Batata hervida | taco:88
+Malanga | taco:126 | revisado: otra variedad (14 % kcal)
+Malanga cocida | cofid:13-378 | revisado: el de USDA pierde agua al cocinarse; el británico es hervido (36 % kcal)
+Ñame | taco:103 | revisado: otra especie de ñame (19 % kcal)
+Ñame cocido | taco:102 | revisado: otra especie, y el de TACO absorbe agua al hervir (33 % kcal)
+Papa | taco:92 | revisado: la papa brasileña tiene más agua (14 % C)
+Papa al horno | cofid:13-491
+Papa hervida | taco:91 | revisado: la de TACO absorbe mucha agua al hervir (41 % C)
+Papas al horno con aceite | cofid:13-599 | revisado: las británicas pierden más agua al asarse (31 % C)
+Papas fritas a la provenzal | taco:93
+Papas gratinadas | ciqual:25056 | revisado: otra receta: el gratin dauphinois va con crema y sin queso (25 % C)
+Papas hervidas con mantequilla | taco:91 | revisado: la de TACO no lleva manteca y absorbe mucha agua al hervir (58 % kcal)
+Plátano maduro | taco:175
+Plátano maduro hervido | cofid:13-324 | revisado: variación natural (13 % C)
+Plátano verde | cofid:13-323 | revisado: el británico tiene más agua (23 % kcal)
+Plátano verde hervido | cofid:13-324
+Puré de batata | ciqual:4103 | revisado: otra receta (14 % kcal)
+Puré de papas | ciqual:4047 | revisado: otra receta, con más leche (16 % C)
+Puré de papas instantáneo | ciqual:4016 | revisado: los copos franceses llevan leche (18 % G)
+Puré mixto | ciqual:4047 | revisado: el puré francés es solo de papa (14 % kcal)
+Yuca | taco:130
+Yuca cocida | taco:129
+Acelga | taco:74
+Acelga cocida | ciqual:20301
+Acelga salteada | ciqual:20301 | revisado: la francesa es hervida, sin aceite (28 % kcal)
+Achicoria | taco:84
+Ajo | taco:82 | revisado: el ajo brasileño tiene más agua (28 % C)
+Albahaca | taco:133
+Alcachofa | cofid:13-153 | revisado: CoFID no le da energía a la inulina (29 % kcal)
+Alcachofa cocida | ciqual:20000 | revisado: Ciqual le da menos energía a la fibra (20 % kcal)
+Apio | taco:76
+Arvejas | cofid:13-536
+Arvejas crudas | cofid:13-438
+Arvejas en lata | taco:560
+Arvejas salteadas | ciqual:20326 | revisado: las francesas son hervidas, sin grasa (24 % kcal)
+Berenjena | taco:96
+Berenjena cocida | taco:95 | revisado: la de TACO absorbe más agua (21 % C)
+Berenjena salteada | ciqual:20300 | revisado: la francesa es al horno, sin aceite (20 % kcal)
+Berenjenas en escabeche | sin par | ninguna tabla tiene berenjenas en escabeche
+Berro | taco:75
+Bok choy | sin par | ninguna tabla independiente tiene pak choi crudo (el de Ciqual es copia de USDA)
+Brócoli | taco:101 | revisado: variación natural (13 % C)
+Brócoli cocido | taco:100 | revisado: variación natural (14 % C)
+Brócoli salteado | ciqual:20351 | revisado: el francés es hervido, sin grasa (33 % kcal)
+Brotes de alfalfa | sin par | el de CoFID (suplemento de 1991) tiene los mismos valores que USDA
+Brotes de soja | taco:125
+Calabacín | taco:71
+Calabacín cocido | taco:70
+Calabacín redondo | taco:71
+Calabacín redondo cocido | taco:70
+Calabacín salteado | taco:72 | revisado: el refogado de TACO lleva menos aceite (23 % kcal)
+Calabaza | ciqual:20044 | revisado: variación natural (11 % C)
+Calabaza cocida | ciqual:20096
+Calabaza japonesa | taco:65 | revisado: la cabotiá brasileña tiene mucha más agua que la kabocha japonesa (59 % C)
+Calabaza japonesa al horno | sin par | ninguna tabla tiene kabutiá al horno
+Calabaza japonesa hervida | taco:64 | revisado: la cabotiá brasileña tiene mucha más agua que la kabocha japonesa (49 % C)
+Calabaza moscada | cofid:13-355 | revisado: variación natural (11 % C)
+Calabaza moscada al horno | cofid:13-644
+Cebolla | taco:107
+Cebolla cocida | ciqual:20035 | revisado: variación natural (13 % C)
+Cebolla salteada | cofid:13-611 | revisado: la británica, frita en manteca, absorbe más grasa (22 % kcal)
+Cebollín | taco:108 | revisado: la cebolinha de TACO es solo la hoja (20 % C)
+Chalota | ciqual:20097
+Champiñones | ciqual:20056
+Champiñones en lata | ciqual:20079
+Champiñones salteados | ciqual:20125 | revisado: el francés pierde más agua (12 % kcal)
+Chayote | taco:113
+Chayote cocido | taco:112
+Chile picante | cofid:13-317 | revisado: variación natural (14 % kcal)
+Chile serrano | cofid:13-316 | revisado: CoFID no trae la fibra del ají verde (30 % C)
+Cilantro | sin par | ninguna tabla independiente tiene cilantro fresco (los de Ciqual y CoFID son copia de USDA)
+Coles de Bruselas | cofid:13-177
+Coles de Bruselas cocidas | ciqual:20309 | revisado: variación natural (16 % C)
+Coliflor | taco:117
+Coliflor cocida | taco:118
+Coliflor salteada | taco:118 | revisado: la de TACO es hervida, sin aceite (30 % kcal)
+Escarola | ciqual:20090
+Espárragos | ciqual:20279
+Espárragos cocidos | ciqual:20299
+Espárragos en lata | sin par | ninguna tabla independiente tiene espárragos en lata (el de Ciqual es copia de USDA)
+Espinaca | ciqual:20059
+Espinaca a la crema | ciqual:25026 | revisado: la envasada francesa lleva menos crema (33 % kcal)
+Espinaca cocida | ciqual:20336
+Espinaca salteada | ciqual:20027 | revisado: la francesa es hervida, sin aceite (39 % kcal)
+Hinojo | ciqual:20028 | revisado: variación natural (13 % kcal)
+Hongos ostra | cofid:13-293 | revisado: CoFID no trae la fibra y el británico tiene más agua (30 % C)
+Hongos portobello | ciqual:20056
+Jalapeño | cofid:13-316 | revisado: CoFID no trae la fibra del ají verde (29 % C)
+Jícama | sin par | ninguna tabla tiene jícama
+Judías verdes | ciqual:20320
+Judías verdes crudas | taco:162
+Judías verdes salteadas | ciqual:20030 | revisado: las francesas son hervidas, sin aceite (35 % kcal)
+Kale | cofid:13-234
+Kale cocido | cofid:13-649
+Lechuga | cofid:13-520
+Lechuga crespa | taco:78
+Lechuga iceberg | taco:77
+Lechuga mantecosa | taco:79
+Lechuga morada | taco:80
+Lechuga romana | cofid:13-520
+Maíz dulce | taco:44 | revisado: el milho verde brasileño es maíz común tierno, con menos agua que el dulce (52 % kcal)
+Maíz dulce cocido | cofid:13-508 | revisado: otra variedad, con más agua (33 % C)
+Maíz dulce con mantequilla | cofid:13-508 | revisado: el británico va sin manteca (37 % kcal)
+Maíz en lata | taco:45 | revisado: otra marca (19 % kcal)
+Menta | cofid:13-836
+Mezcla de hojas verdes | ciqual:25604
+Nabo | taco:137 | revisado: variación natural (11 % C)
+Nabo cocido | ciqual:20321
+Nopal | sin par | ninguna tabla tiene nopal
+Nopal crudo | sin par | ninguna tabla tiene nopal
+Palmitos | taco:139
+Pasta de tomate | taco:158 | revisado: el extrato de TACO es menos concentrado (21 % kcal)
+Pepino | taco:142
+Perejil | taco:153
+Pimiento amarillo | taco:143
+Pimiento rojo | taco:145
+Pimiento rojo salteado | ciqual:20329 | revisado: el francés se saltea sin aceite (75 % kcal)
+Pimiento verde | taco:144
+Pimiento y cebolla salteados | ciqual:20240
+Portobello a la plancha | ciqual:20125
+Puerro | taco:83
+Puerro cocido | ciqual:20327 | revisado: variación natural (12 % C)
+Puré de calabaza japonesa | ciqual:20096 | revisado: el potiron francés tiene mucha más agua que la kabocha, y el puré lleva manteca (71 % kcal)
+Puré de tomate | taco:160
+Rabanito | taco:148
+Rábano daikon | cofid:13-331
+Remolacha | taco:98
+Remolacha cocida | taco:97 | revisado: variación natural (14 % C)
+Repollo | cofid:13-582
+Repollo cocido | cofid:13-581
+Repollo morado | taco:150
+Repollo salteado | ciqual:20015 | revisado: el francés es hervido, sin aceite (31 % kcal)
+Rúcula | taco:152 | revisado: variación natural (12 % kcal)
+Shiitake | sin par | ninguna tabla independiente tiene shiitake fresco
+Shiitake salteado | sin par | ninguna tabla independiente tiene shiitake cocido (el de Ciqual es copia de USDA)
+Tomate | taco:157
+Tomate triturado | ciqual:20169 | revisado: otra concentración (12 % C)
+Tomates secos | sin par | las tablas solo tienen el tomate seco en aceite
+Tomatillo | sin par | ninguna tabla tiene tomatillo
+Verduras mixtas cocidas | cofid:13-543 | revisado: otra mezcla, con menos choclo (23 % kcal)
+Verduras mixtas congeladas | ciqual:20101 | revisado: otra mezcla (24 % C)
+Verduras mixtas en lata | taco:154 | revisado: otra mezcla (17 % C)
+Zanahoria | taco:110
+Zanahoria cocida | taco:109
+Zanahoria salteada | taco:109 | revisado: la de TACO es hervida, sin aceite (42 % kcal)

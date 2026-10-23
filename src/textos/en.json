@@ -989,7 +989,9 @@
     "fuentes": {
       "usda": "Foods: USDA FoodData Central (public domain)",
       "off": "Products: Open Food Facts, under the ODbL",
-      "taco": "Some foods: TACO, NEPA-UNICAMP",
+      "taco": "Verification: TACO, Tabela Brasileira de Composição de Alimentos, 4th ed. (NEPA-UNICAMP, 2011)",
+      "ciqual": "Verification: Anses, Ciqual food composition table 2025 (19/11/2025), Licence Ouverte 2.0",
+      "cofid": "Verification: McCance and Widdowson's The Composition of Foods Integrated Dataset 2021, Public Health England. Contains public sector information licensed under the Open Government Licence v3.0",
       "estrellas": "Stars: Yale Bright Star Catalogue (Hoffleit and Warren, 1991; CDS) and IAU star names (WGSN, CC BY 4.0)"
     },
     "privacidadTexto": [

@@ -201,7 +201,7 @@ Puré de papas | Mashed potatoes | fndds:Potato, mashed, NFS | 1 taza / 1 cup=25
 Batata | Sweet potato | sr:Sweet potato, raw, unprepared | 1 mediana / 1 medium=130 | camote* (MX PE CL EC GT HN SV NI CR) · boniato* (UY CU) | desecho=28 cáscara
 Batata hervida | Boiled sweet potato | sr:Sweet potato, cooked, boiled, without skin | 1 mediana / 1 medium=151 · 1 taza en puré / 1 cup mashed=328 | camote hervido* (MX PE CL EC GT HN SV NI CR) · boniato hervido* (UY CU) · batata cocida | crudo=Batata
 // Batata al horno: USDA la cuenta con un poco de grasa (NS as to fat).
-Batata al horno | Baked sweet potato | fndds:Sweet potato, baked, NS as to fat | 1 mediana / 1 medium=150 · 1 pequeña / 1 small=80 · 1 grande / 1 large=235 | camote asado* (MX PE CL) · boniato al horno* (UY) | crudo=Batata · aceite=incluido
+Batata al horno | Baked sweet potato | sr:Sweet potato, cooked, baked in skin, flesh, without salt | 1 mediana / 1 medium=150 · 1 pequeña / 1 small=80 · 1 grande / 1 large=235 | camote asado* (MX PE CL) · boniato al horno* (UY) | crudo=Batata
 Yuca | Cassava | sr:Cassava, raw | 1 taza / 1 cup=206 · 1 raíz / 1 root=408 | mandioca* (AR UY PY BO) · casava | desecho
 // Yuca cocida: USDA la cuenta con un poco de grasa.
 Yuca cocida | Cooked cassava | fndds:Cassava, cooked | 1 taza / 1 cup=160 | mandioca hervida* (AR UY PY BO) · yuca hervida · yuca sancochada | crudo=Yuca · aceite=incluido
@@ -462,7 +462,7 @@ Alitas de pollo crudas | Raw chicken wings | sr:Chicken, broilers or fryers, win
 // Alitas de pollo: el hueso es el de «Chicken, broilers or fryers, wing, meat and skin, cooked, roasted» en SR28, su ingrediente en FNDDS.
 Alitas de pollo | Chicken wings | fndds:Chicken wing, baked, broiled, or roasted, from raw | 100 g / 100 g=100 | alas de pollo · alitas | crudo=Alitas de pollo crudas · desecho=40 hueso/bone
 Pollo frito | Fried chicken | fndds:Chicken, NS as to part, fried, coated, skin / coating eaten | 100 g / 100 g=100 | pollo apanado* (CL PE CO EC) · pollo empanizado (MX) · pollo broaster (PE) | crudo=Pollo crudo · aceite=incluido
-Milanesa de pollo | Breaded chicken fillet | fndds:Chicken fillet, breaded | 100 g / 100 g=100 | pechuga empanizada* (MX) · pechuga apanada* (CO CL PE EC) · pollo empanado (ES) | crudo=Pechuga de pollo cruda · aceite=incluido
+Milanesa de pollo | Breaded chicken fillet | fndds:Chicken breast, fried, coated, prepared skinless, coating eaten, from raw | 100 g / 100 g=100 | pechuga empanizada* (MX) · pechuga apanada* (CO CL PE EC) · pollo empanado (ES) | crudo=Pechuga de pollo cruda · aceite=incluido
 Nuggets de pollo | Chicken nuggets | fndds:Chicken nuggets, NFS | 6 unidades / 6 nuggets=96 | nuggets · patitas de pollo (AR UY) · trocitos de pollo | crudo=Pollo molido crudo · aceite=incluido
 Pollo molido crudo | Raw ground chicken | sr:Chicken, ground, raw | 100 g / 100 g=100 | carne picada de pollo cruda* (AR UY ES)
 Pollo molido | Ground chicken | fndds:Chicken, ground | 100 g / 100 g=100 | carne picada de pollo* (AR UY ES) | crudo=Pollo molido crudo · aceite
@@ -474,7 +474,7 @@ Pato crudo | Raw duck | sr:Duck, domesticated, meat only, raw | 100 g / 100 g=10
 Pato | Duck | fndds:Duck, roasted, skin not eaten | 100 g / 100 g=100 |  | crudo=Pato crudo
 Hígado de pollo crudo | Raw chicken liver | sr:Chicken, liver, all classes, raw | 100 g / 100 g=100 · 1 hígado / 1 liver=44 | higaditos de pollo crudos
 // Hígado de pollo: el de USDA va frito, con un poco de harina y grasa.
-Hígado de pollo | Chicken liver | fndds:Liver, chicken | 100 g / 100 g=100 | higaditos de pollo | crudo=Hígado de pollo crudo · aceite=incluido
+Hígado de pollo | Chicken liver | sr:Chicken, liver, all classes, cooked, pan-fried | 100 g / 100 g=100 | higaditos de pollo | crudo=Hígado de pollo crudo · aceite=incluido
 Mollejas de pollo crudas | Raw chicken gizzards | sr:Chicken, gizzard, all classes, raw | 100 g / 100 g=100 | molleja de pollo cruda
 Mollejas de pollo | Chicken gizzards | fndds:Gizzard | 100 g / 100 g=100 | molleja de pollo | crudo=Mollejas de pollo crudas
 
@@ -589,7 +589,7 @@ Queso fresco | Fresh cheese | fndds:Queso Fresco | 30 g / 30 g=30 · 1 rebanada 
 Queso mozzarella | Mozzarella | fndds:Cheese, Mozzarella, NFS | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 · 1 taza rallado / 1 cup shredded=113 | muzzarella* (AR UY) · mozarela · mozzarella
 Queso mozzarella light | Part-skim mozzarella | sr:Cheese, mozzarella, part skim milk | 30 g / 30 g=30 | muzzarella light* (AR UY) · mozzarella semidescremada · mozzarella baja en grasa
 Queso cheddar | Cheddar | fndds:Cheese, Cheddar | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | cheddar
-Queso parmesano | Parmesan | fndds:Cheese, Parmesan, hard | 30 g / 30 g=30 | parmesano · reggianito (AR UY)
+Queso parmesano | Parmesan | sr:Cheese, parmesan, hard | 30 g / 30 g=30 | parmesano · reggianito (AR UY)
 Queso rallado | Grated parmesan | fndds:Cheese, Parmesan, dry grated | 1 cucharada / 1 tbsp=5 | parmesano rallado
 Queso romano | Romano cheese | sr:Cheese, romano | 30 g / 30 g=30 | pecorino · pecorino romano
 Queso crema | Cream cheese | fndds:Cream cheese, regular, plain | 1 cucharada / 1 tbsp=15 | queso untable* (AR UY) · queso philadelphia · queso para untar
@@ -911,7 +911,7 @@ Salsa de queso | Cheese sauce | fndds:Cheese sauce | ¼ taza / ¼ cup=60 |
 Salsa holandesa | Hollandaise sauce | fndds:Hollandaise sauce | 1 cucharada / 1 tbsp=16 |
 Salsa de carne | Beef gravy | fndds:Gravy, beef | ¼ taza / ¼ cup=60 | jugo de carne · gravy | ml
 Aderezo César | Caesar dressing | fndds:Caesar dressing | 1 cucharada / 1 tbsp=15 | salsa césar
-Vinagreta | Vinaigrette | fndds:Italian dressing, made with vinegar and oil | 1 cucharada / 1 tbsp=15 | aderezo italiano | ml
+Vinagreta | Vinaigrette | sr:Salad dressing, home recipe, vinegar and oil | 1 cucharada / 1 tbsp=15 | aderezo italiano | ml
 Aderezo ranch | Ranch dressing | fndds:Ranch dressing | 1 cucharada / 1 tbsp=15 | ranch
 Aderezo de mostaza y miel | Honey mustard dressing | fndds:Honey mustard dressing | 1 cucharada / 1 tbsp=15.6 | salsa de miel y mostaza · honey mustard
 Mole | Mole sauce | fndds:Mole sauce | ¼ taza / ¼ cup=60 | mole poblano
@@ -927,7 +927,7 @@ Alcaparras | Capers | sr:Capers, canned | 1 cucharada / 1 tbsp=8.6 | alcaparra
 Pepinillos | Pickles | sr:Pickles, cucumber, dill or kosher dill | 1 unidad / 1 spear=35 | pepinillos en vinagre · encurtidos
 Jalapeños en vinagre | Pickled jalapeños | sr:Peppers, jalapeno, canned, solids and liquids | 1 unidad / 1 pepper=22 · ¼ taza / ¼ cup=26 | chiles en vinagre* (MX) · jalapeños en escabeche · ají en vinagre
 Pimientos en conserva | Jarred red peppers | sr:Peppers, sweet, red, canned, solids and liquids | ½ taza / ½ cup=70 | morrones en lata (AR UY) · pimientos rojos en lata · pimiento morrón en conserva
-Chucrut | Sauerkraut | fndds:Sauerkraut | ½ taza / ½ cup=70 | col fermentada
+Chucrut | Sauerkraut | sr:Sauerkraut, canned, solids and liquids | ½ taza / ½ cup=70 | col fermentada
 Kimchi | Kimchi | fndds:Kimchi | ½ taza / ½ cup=75 |
 
 # especias
@@ -974,7 +974,7 @@ Hamburguesa con queso | Cheeseburger | fndds:Cheeseburger, NFS | 1 unidad / 1 ch
 Hot dog | Hot dog | fndds:Hot dog sandwich, NFS, on white bun | 1 unidad / 1 hot dog=102 | perro caliente* (CO VE) · completo* (CL) · pancho* (AR UY PY) · perrito caliente (ES)
 Sándwich de jamón y queso | Ham and cheese sandwich | fndds:Ham sandwich on white, with cheese | 1 unidad / 1 sandwich=135 | sándwich mixto* (ES) · sánguche de jamón y queso (PE AR) · emparedado de jamón y queso
 Sándwich de queso a la plancha | Grilled cheese sandwich | fndds:Grilled cheese sandwich, NFS | 1 unidad / 1 sandwich=116 | tostado de queso* (AR UY) · grilled cheese | aceite=incluido
-Papas fritas | French fries | fndds:Potato, french fries, NFS | 1 porción / 1 serving=110 | patatas fritas* (ES) · papas a la francesa* (MX) · french fries | crudo=Papa · aceite=incluido
+Papas fritas | French fries | fndds:Potato, french fries, restaurant | 1 porción / 1 serving=110 | patatas fritas* (ES) · papas a la francesa* (MX) · french fries | crudo=Papa · aceite=incluido
 Ensalada de papas | Potato salad | sr:Potato salad with egg | ½ taza / ½ cup=125 | ensalada rusa* (AR UY CL PY) · ensaladilla rusa* (ES)
 Ensalada mixta | Mixed salad | fndds:Lettuce, salad with assorted vegetables including tomatoes and/or carrots, no dressing | 1 taza / 1 cup=73 | ensalada verde · ensalada de lechuga y tomate
 Ensalada César | Caesar salad | fndds:Caesar salad, with romaine, no dressing | 1 taza / 1 cup=79 |

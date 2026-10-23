@@ -153,7 +153,7 @@ const SeccionPerfil = (() => {
       // De dónde salen los alimentos y las estrellas, con su licencia, como en la app (Perfil.tsx).
       cont.appendChild(el('h3', 'pf-grupo', tx('perfil.creditos')));
       const creditos = el('ul', 'pf-lista pf-creditos');
-      ['usda', 'off', 'taco', 'estrellas'].forEach((f) => creditos.appendChild(el('li', null, tx('perfil.fuentes.' + f))));
+      ['usda', 'off', 'taco', 'ciqual', 'cofid', 'estrellas'].forEach((f) => creditos.appendChild(el('li', null, tx('perfil.fuentes.' + f))));
       cont.appendChild(creditos);
       // Al final, lo que anda solo si vinculas Ascent (lo pediste el 22/10): información, no una función de Perfil.
       cont.appendChild(el('h3', 'pf-grupo', tx('perfil.informacion')));

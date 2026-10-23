@@ -75,7 +75,8 @@
     "test": "jest",
     "supabase:verificar": "node --disable-warning=ExperimentalWarning herramientas/verificar-supabase.mjs",
     "alimentos": "node --disable-warning=ExperimentalWarning herramientas/alimentos.mjs",
-    "alimentos:verificar": "node --disable-warning=ExperimentalWarning herramientas/verificar-alimentos.mjs"
+    "alimentos:verificar": "node --disable-warning=ExperimentalWarning herramientas/verificar-alimentos.mjs",
+    "alimentos:comparar": "node --disable-warning=ExperimentalWarning herramientas/comparar-fuentes.mjs"
   },
   "private": true,
   "jest": {

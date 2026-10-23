@@ -147,7 +147,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         ))}
         <Text style={st.grupo}>{t('perfil.creditos')}</Text>
         <View style={st.lista}>
-          {(['usda', 'off', 'taco', 'estrellas'] as const).map((f, i) => (
+          {(['usda', 'off', 'taco', 'ciqual', 'cofid', 'estrellas'] as const).map((f, i) => (
             <Text key={f} style={[st.credito, i > 0 && st.filaSeparada]}>{t(`perfil.fuentes.${f}`)}</Text>
           ))}
         </View>

@@ -128,6 +128,7 @@ SDK y la memoria no alcanza.
 | `npm run supabase:verificar` | el esquema de `supabase/moss/` en un Postgres local (PGlite): RLS, conflictos, semilla, borrar, y la app de verdad sincronizando varios teléfonos contra él |
 | `npm run alimentos` | arma `assets/alimentos.db`: baja USDA (FNDDS y SR Legacy) a `.cache/usda` la primera vez, suma `alimentos/genericos.txt` y arma los índices de búsqueda. Con `VER_PORCIONES=1` lista las porciones que faltan traducir |
 | `npm run alimentos:verificar` | revisa la base: valores posibles, porciones en español, nombres regionales sin ambigüedad, índices y tamaño; avisa de lo que no cierra con 4/4/9. Los controles de toda la base (macros, micronutrientes, porciones, platos, lo verificado) son tests: `src/comida/controles.test.ts` (con `BASE=otra.db`, contra otra base) |
+| `npm run alimentos:comparar` | compara cada curado con una segunda tabla oficial (TACO, Ciqual o CoFID) según `herramientas/fuentes/pares.txt` y deja `alimentos/verificacion.txt`, que `npm run alimentos` lee. Cuáles, por qué y cómo, en `spec/fuentes.md` |
 | `npm run typecheck` | tipos (incluye que `en.json` tenga las claves de `es.json`) |
 | `npx expo lint` | ESLint con la configuración de Expo, que incluye las reglas de React |
 | `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo, los textos, los alimentos curados y los módulos de la comida |
@@ -178,6 +179,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/sueno-sin-esfuerzo.md](spec/sueno-sin-esfuerzo.md) | el sueño con menos esfuerzo: los Atajos (App Intents), el despertador (AlarmKit), el filtro de Concentración y el widget, con sus fuentes |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
 | [spec/revision.md](spec/revision.md) | la revisión de Apple: las respuestas de privacidad, los permisos, cada guía, la ficha en es y en, las capturas, las notas para quien revisa y lo que hay que hacer en App Store Connect |
+| [spec/fuentes.md](spec/fuentes.md) | las segundas tablas oficiales de los curados: cuáles y por qué, cómo se comparan, lo que hay que mostrar en Créditos y lo que queda por revisar |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
 
 ## Dónde está cada cosa
