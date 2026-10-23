@@ -30,8 +30,9 @@ En orden de gravedad. Las guías y los detalles están en «c».
 - **1. Revocar Apple:** listo, en `supabase/functions/moss-borrar-cuenta`. Falta
   que crees la clave `.p8` y despliegues la función: los pasos están en su
   README. Hasta entonces la app borra como antes (`moss.borrar_cuenta()`).
-- **8.** Los archivos van con la protección de datos del iPhone
-  (`NSFileProtectionCompleteUnlessOpen`) y la carpeta de SQLite queda fuera de la
+- **8.** Los archivos van con la protección de datos de fábrica del iPhone
+  (`NSFileProtectionCompleteUntilFirstUserAuthentication`, cifrados con el
+  teléfono apagado) y la carpeta de SQLite queda fuera de la
   copia de seguridad (`modules/respaldo`).
 - **10. El correo:** falta, y es tuyo: configurar un SMTP propio en Supabase.
 - La clasificación de edad 18+ se elige en App Store Connect.
@@ -398,10 +399,14 @@ dice; la app no, o lo dice mal. Nuevo `perfil.privacidadTexto`:
 - **`moss.db`** (en Documentos, con el peso, las medidas, lo comido y las
   noches) entra en la copia de iCloud del iPhone. Apple dice «may not store
   personal health information in iCloud». Arreglo:
-  - **Cifrado (lo decidido):** el entitlement
-    `com.apple.developer.default-data-protection` con
-    `NSFileProtectionCompleteUnlessOpen`, en `ios.entitlements` de `app.json`.
-    Es el cifrado del iPhone: no cambia el control de exportación
+  - **Cifrado (lo decidido, 23/10/2026):** la protección de datos de fábrica de
+    iOS, `NSFileProtectionCompleteUntilFirstUserAuthentication`: cifrado con el
+    teléfono apagado y legible con el teléfono bloqueado después del primer
+    desbloqueo, que es lo que necesitan los widgets, los avisos y la noche sin
+    reloj. Por eso no se pide el entitlement
+    `com.apple.developer.default-data-protection` (con `CompleteUnlessOpen` la
+    build fallaba, porque el perfil no tenía la capacidad, y además trababa lo
+    que corre con el teléfono bloqueado). Es el cifrado del iPhone: no cambia el control de exportación
     (`ITSAppUsesNonExemptEncryption` sigue `false`). SQLCipher sí lo cambiaría.
   - **Fuera de la copia:** marcar `moss.db`, `-wal` y `-shm` con
     `isExcludedFromBackup` desde uno de los módulos de Swift (expo no lo trae).

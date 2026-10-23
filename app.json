@@ -27,9 +27,6 @@
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleAllowMixedLocalizations": true,
         "NSMotionUsageDescription": "Sin reloj, Moss usa el movimiento del teléfono para estimar cuándo dormiste. El movimiento no sale del teléfono: solo se guarda la hora estimada."
-      },
-      "entitlements": {
-        "com.apple.developer.default-data-protection": "NSFileProtectionCompleteUnlessOpen"
       }
     },
     "android": {
