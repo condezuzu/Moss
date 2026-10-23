@@ -84,6 +84,49 @@ y 5.1.3).
   esquema `moss`. Cada función revisa `auth.uid()` y el vínculo. Ninguna app lee
   las tablas de la otra directo.
 
+## Vincular en menos de 10 segundos (propuesta del 22/10/2026, D27)
+
+Lo pediste así: que vincular se haga en menos de 10 segundos. Con la entrada de
+Moss sin nombrar a Ascent (Moss es Moss), mucha gente va a tener dos cuentas:
+una de Ascent con su correo y otra de Moss con Apple. El flujo de arriba, en ese
+caso, no llega: pide entrar a Ascent con la cuenta de Moss.
+
+**La propuesta: vincular junta tu Moss con tu Ascent, sea la misma cuenta o no.**
+Las dos apps son del mismo equipo de Apple (`XF9N8X9KJG`), así que pueden
+compartir un lugar del llavero que ninguna otra app puede leer
+(`keychain-access-groups`).
+
+1. **Ascent deja en el llavero compartido quién sos:** su sesión (un token que
+   vence en una hora) y tu nombre de usuario, cada vez que entra o renueva la
+   sesión. Al cerrar sesión, lo borra.
+2. **En Moss, «Vincular con Ascent»** (un toque):
+   - si Ascent dejó la sesión, Moss muestra una hoja: «@usuario · Ascent en este
+     iPhone», qué comparte cada app y «Vincular»;
+   - si Ascent no está instalada, «Conseguir Ascent» (la App Store);
+   - si está pero sin sesión, «Abre Ascent y vuelve»: Ascent, al entrar, deja la
+     sesión, y Moss la ve al volver.
+3. **«Vincular»** (el segundo toque): una función propia de Moss en el servidor
+   (`moss-vincular`, una Edge Function) recibe las dos sesiones, revisa las dos
+   con Supabase y guarda el vínculo entre las dos cuentas. La luna entra en la
+   órbita y se desbloquea todo, en las dos apps.
+
+**Cuánto tarda:** dos toques y nada que escribir, de 3 a 5 segundos. Si Ascent
+estaba sin sesión, abrirla suma unos 5 más: sigue debajo de 10. Desde Ascent es lo
+mismo al revés, con la sesión de Moss en el llavero.
+
+**Lo que cambia:**
+- `moss.vinculo` guarda las dos cuentas (la de Moss y la de Ascent; pueden ser
+  la misma) y las funciones que leen lo de Ascent usan la de Ascent del vínculo,
+  no `auth.uid()`.
+- Nadie puede vincular algo ajeno: hacen falta las dos sesiones vivas, y solo las
+  apps del equipo leen el llavero compartido. No se usan enlaces `ascent://`
+  con un código: otra app podría registrar el mismo esquema y quedarse con él.
+- Desvincular sigue en Ajustes de cada app y borra el vínculo de las dos.
+- **En Ascent:** dejar la sesión en el llavero compartido al entrar y al renovar,
+  borrarla al salir, y su lado de la hoja (ver «Cambios en el repo de Ascent»).
+- **En Moss:** `expo-secure-store` con el grupo de llavero, el entitlement en
+  `app.json` y la Edge Function. Va cuando esté la conexión (después de la v1).
+
 ## Qué lee cada app de la otra (con el vínculo)
 
 | Función | De dónde sale | La usa |
@@ -343,13 +386,17 @@ Necesita una build nativa nueva: va en una rama, como siempre que cambia
 15. **«Lo intenté y no salió»** junto a «¿Lo guardo como marca?»: sin los
     intentos fallidos, Moss solo aprende de los días buenos.
 16. **Una marca opcional de «serie al fallo»**, para la fatiga de cada músculo.
+17. **Vincular en menos de 10 segundos** (D27): dejar la sesión y el nombre de
+    usuario en el llavero compartido del equipo (`keychain-access-groups`) al
+    entrar y al renovar, y borrarla al salir; leer la de Moss para vincular desde
+    Ascent con dos toques.
 
 ### Infraestructura (las hacés vos en el panel)
 
-17. **Correo:** SMTP propio (Resend), el correo de contraseña con el nombre de
+18. **Correo:** SMTP propio (Resend), el correo de contraseña con el nombre de
     las dos apps y `moss://**` en las redirecciones.
-18. **Claves:** pasar a las claves nuevas de Supabase, que ya estaba pendiente.
-19. **Plan:** pasar a Pro para tener copias diarias. Lo recomiendo.
+19. **Claves:** pasar a las claves nuevas de Supabase, que ya estaba pendiente.
+20. **Plan:** pasar a Pro para tener copias diarias. Lo recomiendo.
 
 ## Lo que tenés que hacer vos
 

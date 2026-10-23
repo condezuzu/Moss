@@ -1315,6 +1315,21 @@ section.item p { margin: 0; max-width: 64ch; }
 .as-parte b { min-width: 50px; font: 400 12.5px/1 var(--numeros); color: var(--as-tinta); font-variant-numeric: tabular-nums; text-align: right; }
 .ascent:not(.vinculada) .as-parte b { color: var(--as-apagado); }
 .as-parte small { grid-column: 2 / 4; font: 400 11.5px/1.3 var(--texto); color: var(--as-sub); font-variant-numeric: tabular-nums; }
+/* Vincular en dos toques: la hoja, con los colores de Ascent. */
+.tel .hb.as-hoja { --as-tinta: #e8ecf6; --as-sub: #8a93a8; --as-linea: #1d2230; --as-principal: #7e8ca8; --as-claro: #c4c2ba;
+  background: linear-gradient(180deg, #0d1018 0%, #07080d 100%); border-top-color: #2a3040; color: var(--as-tinta); }
+.as-hoja-cuerpo { padding: 4px 22px 8px; overflow-y: auto; }
+.as-hoja-cuenta { display: flex; align-items: center; gap: 14px; padding: 12px 0 16px; border-bottom: 1px solid var(--as-linea); }
+.as-hoja-cuenta .as-marca { width: 52px; height: 52px; flex: none; }
+.as-hoja-cuenta b { display: block; font: 400 18px/1.2 var(--texto); color: var(--as-tinta); }
+.as-hoja-cuenta span { display: block; margin-top: 3px; font: 400 12.5px/1.3 var(--texto); color: var(--as-sub); }
+.as-hoja-grupo { margin: 16px 0 6px; font: 400 10px/1 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: var(--as-sub); }
+.as-hoja-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.as-hoja-lista li { position: relative; padding-left: 14px; font: 400 14px/1.35 var(--texto); color: var(--as-tinta); }
+.as-hoja-lista li::before { content: ''; position: absolute; left: 2px; top: 0.6em; width: 4px; height: 4px; border-radius: 50%; background: var(--as-claro); }
+.as-hoja-nota { margin: 16px 0 0; font: 400 12.5px/1.4 var(--texto); color: var(--as-sub); }
+.as-hoja-vincular { width: 100%; margin-top: 18px; }
+.as-hoja-ahora-no { display: block; margin: 10px auto 0; }
 /* El rendimiento esperado, los músculos y la marca posible (spec/rendimiento.md). */
 .as-rend { display: grid; gap: 10px; margin-top: 12px; }
 .as-rend-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; column-gap: 10px; }
@@ -1738,6 +1753,7 @@ section.item p { margin: 0; max-width: 64ch; }
             <li><b>Calorías según el día</b>: el control de la semana ya cuenta el entrenamiento de siempre en el gasto, así que no se suma nada: se reparte. Un día de gimnasio tiene lo que cuesta una sesión más que uno de descanso (280 kcal para esta persona: el costo neto, 4 kcal por kilo y por hora, que es el total de la hora menos el reposo que el día de descanso ya tiene), y la semana del control suma 18.130, lo mismo que da el control. Los días que vienen son una previsión, según qué días suele entrenar; si entrena más o menos, los que quedan se acomodan y el último cierra la cuenta. Hoy le tocan 2.730 kcal, y los días de descanso, 2.450: mirá Inicio y Comida.</li>
             <li><b>La proteína después de entrenar</b> sube hacia 2,2 g por kilo, el techo útil, según el tamaño de la sesión: las series y el peso movido, cada uno contra su promedio. Una sesión de las de siempre suma la mitad de lo que falta hasta el techo; una un 50 % más grande, todo; de a 5 g y hasta 40 g. Sale de los carbohidratos: las calorías no cambian. Hoy la sesión fue un 23 % más grande: +10 g, 160 en total.</li>
             <li><b>Recuperación</b>: de 0 a 100, con el sueño (40), la carga de los tres días anteriores (40) y la comida de ayer (20), y si conviene ir fuerte, normal o suave. También aparece arriba en Sueño, porque cruza justo el sueño con el entrenamiento.</li>
+            <li><b>Vincular en dos toques</b> (lo pediste el 22/10; D27): «Vincular con Ascent» abre una hoja con la cuenta de Ascent de este iPhone (Ascent la deja en el llavero que comparten las apps del equipo) y qué pasa cada app; «Vincular» y la luna entra en la órbita. De 3 a 5 segundos, sea la misma cuenta o no.</li>
             <li><b>Rendimiento esperado</b> (lo pediste el 22/10; spec/rendimiento.md): la fuerza máxima y las repeticiones de la sesión de hoy, en % respecto de lo tuyo, con sus motivos y su margen. Hoy, piernas después de una semana de descarga: la fuerza máxima, como siempre o un poco más.</li>
             <li><b>Tus músculos</b>, antes de entrenar: recuperado, recuperándose (y en cuánto está listo) o cargado, con las series de cada ejercicio y una tabla de qué músculos trabaja cada uno.</li>
             <li><b>«Buen día para intentar marca en sentadilla»</b>: con las cinco condiciones (cerca de la marca, descansado, dormiste bien, sin pico de carga, sin ayuno) y la probabilidad, con cuántas veces acertó y qué tan segura está. Si no da, lo dice.</li>

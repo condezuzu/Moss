@@ -1236,6 +1236,25 @@
       "aciertos": "I flagged it {veces} times; you hit a PR in {marcas}.",
       "nota": "It’s an estimate, not a promise. If your warm-up feels heavy, save it for another day.",
       "hoyNo": "No PR to try today: it lets you know when your conditions look like the ones of your PRs."
+    },
+    "vincularHoja": {
+      "titulo": "Link with Ascent",
+      "enEsteIphone": "Ascent on this iPhone",
+      "deMoss": "Moss shares with Ascent",
+      "mossComparte": [
+        "How long you slept and how you said you slept",
+        "What you eat: calories and protein",
+        "Your weight"
+      ],
+      "deAscent": "Ascent shares with Moss",
+      "ascentComparte": [
+        "Your workouts, with their sets and your PRs",
+        "Your weight",
+        "Your friends"
+      ],
+      "nota": "Each app keeps its own data. You can unlink them anytime from Profile.",
+      "vincular": "Link",
+      "ahoraNo": "Not now"
     }
   },
   "habitos": {

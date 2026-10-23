@@ -422,6 +422,21 @@ const pasos = {
     await pagina.evaluate(() => window.__aparato('reloj'));
     await pestana(0);
   },
+  // Vincular en dos toques (spec/ascent.md, D27): la hoja y la luna en la órbita.
+  async vincular() {
+    await ascent('vincular', false);
+    await ascent('abrir');
+    await pagina.waitForTimeout(900);
+    await pagina.click('.as-cab .as-vincular');
+    await hojaAbierta('as-hoja');
+    await pagina.waitForTimeout(300);
+    await foto('vincular-hoja');
+    await pagina.click('.as-hoja-vincular');
+    await pagina.waitForTimeout(1800);
+    await foto('vincular-hecho');
+    await ascent('vincular', false);
+    await ascent('cerrar');
+  },
   // Con Ascent (spec/rendimiento.md): el rendimiento esperado, los músculos y la marca posible,
   // vinculada y sin vincular, y la línea del rendimiento en Sueño.
   async rendimiento() {

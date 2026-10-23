@@ -1236,6 +1236,25 @@
       "aciertos": "Te lo marqué {veces} veces; hiciste marca en {marcas}.",
       "nota": "Es una estimación, no una promesa. Si la entrada en calor se siente pesada, guárdala para otro día.",
       "hoyNo": "Hoy no hay una marca para intentar: te avisa cuando tus condiciones se parecen a las de tus marcas."
+    },
+    "vincularHoja": {
+      "titulo": "Vincular con Ascent",
+      "enEsteIphone": "Ascent en este iPhone",
+      "deMoss": "Moss le pasa a Ascent",
+      "mossComparte": [
+        "Cuánto dormiste y cómo dijiste que dormiste",
+        "Lo que comes: las calorías y la proteína",
+        "Tu peso"
+      ],
+      "deAscent": "Ascent le pasa a Moss",
+      "ascentComparte": [
+        "Tus entrenamientos, con sus series y tus marcas",
+        "Tu peso",
+        "Tus amigos"
+      ],
+      "nota": "Lo de cada app queda en cada app. Puedes desvincularlas cuando quieras, desde Perfil.",
+      "vincular": "Vincular",
+      "ahoraNo": "Ahora no"
     }
   },
   "habitos": {

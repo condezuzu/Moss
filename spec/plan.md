@@ -23,8 +23,15 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
     - Sueño;
     - Hábitos, con el editor y «Tu mes»;
     - Perfil, con exportar, borrar los datos y borrar la cuenta.
-  - La hoja del «+» y Ascent arriba de Hábitos, sin vincular.
+  - La hoja del «+» y Ascent arriba de Hábitos, sin vincular, con el rendimiento,
+    los músculos y la marca posible bloqueados hasta la conexión.
   - Salud: los hábitos que se encienden solos, las noches y el peso.
+  - **El sueño sin reloj** (22/10/2026, a la noche): cada mañana Moss estima la
+    noche con los pasos, el movimiento y cuándo la usaste, y pregunta la hora si
+    no está segura, junto a las caras. Falta probarlo en tu iPhone (el permiso
+    del movimiento y el módulo nativo, `modules/movimiento`).
+  - **Perfil › Aparatos**: los que escriben tu sueño, de cuál sale la noche y qué
+    llega de cada marca; en Sueño, la precisión de cada noche.
   - Compartir recetas y alimentos propios con un enlace, y los recordatorios
     para anotar.
 - **La base de alimentos**: USDA más 1.636 curados, entre ellos los genéricos,
@@ -384,6 +391,12 @@ Desde el cambio 9 (22/10/2026) la pantalla de comida se repartió en secciones
   - **Las noches propias de Moss** (la cara, la hora confirmada o corregida y la
     estimación del iPhone), guardadas y sincronizadas: con el teléfono no se
     pierden al cambiarlo.
+  - **Hecho el 22/10/2026 a la noche, en la galería y en la app:** la estimación
+    (`src/dominio/sinReloj.ts`, con tests), la pregunta de la hora y las caras,
+    la noche estimada con su rango, la precisión de cada noche, el orden de las
+    fuentes por marca, el mismo sueño desde dos fuentes y Perfil › Aparatos.
+    Falta: probarlo en el iPhone, la prueba contra un reloj (ver «Cómo probarlo»
+    en [`sueno.md`](sueno.md)) y correr `0005_noches.sql` en Supabase.
   - **Relojes y anillos como beneficio:** la app anda bien solo con el teléfono
     y mejor con un aparato.
     - Niveles de precisión: solo el teléfono, el Apple Watch y los demás relojes y
@@ -496,6 +509,12 @@ de Ascent:
    cuando hoy se parece: «Buen día para intentar marca en sentadilla».
 3. **Por músculo:** qué grupos están descansados y cuáles no, con las series por
    músculo de Ascent.
+
+**Hecho el 22/10/2026 a la noche:** las cuentas (`src/dominio/rendimiento.ts` y
+`musculos.ts`, con tests) y la galería, con Ascent vinculada (sección 7). En la
+app, las tarjetas bloqueadas; se llenan con la conexión, que necesita leer las
+series y las marcas de Ascent (ver [`rendimiento.md`](rendimiento.md), «Lo que
+necesita de Ascent»).
 
 Reglas: es una predicción, nunca una garantía; empieza con reglas generales
 basadas en estudios y se vuelve personal con las semanas, mostrando cuánta

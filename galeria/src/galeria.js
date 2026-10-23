@@ -597,6 +597,7 @@
     if (inicio.editando) inicio.cerrar();
     if (habitosSec.abierta) habitosSec.cerrar();
     if (perfilSec && perfilSec.hojaAbierta) perfilSec.cerrarHoja();
+    if (ascent && ascent.hojaVincularAbierta) ascent.cerrarVincular();
   };
 
   // ------------------------------------------------------------ las seis secciones, como en Ascent
@@ -1146,6 +1147,7 @@
       cerrar: () => ascent.cerrar(true),
       arrastrar: () => { if (pestanas.actual !== HABITOS) pestanas.ir(HABITOS, true); ascent.arrastrar(arg); },
       vincular: () => vincular(arg),
+      hojaVincular: () => ascent.abrirVincular(),
       pocas: () => { pocasSemanas = arg; ascent.pintar(); },
       bajar: () => ascent.bajarA(arg),
       subir: () => ascent.subir(),

@@ -84,6 +84,43 @@ const SeccionAscent = (() => {
       return Object.assign(r, { anoche, ayer, meta });
     }
 
+    // ------------------------------------------------------------ vincular en dos toques
+    // (spec/ascent.md, «Vincular en menos de 10 segundos»): Ascent dejó su sesión en el llavero que
+    // comparten las apps del equipo, así que Moss ya sabe qué cuenta es. La hoja dice cuál, qué pasa
+    // cada app y «Vincular»: al tocarlo, la luna entra en la órbita.
+    const hojaVincular = Util.hoja(tel, 'as-hoja', () => opciones.alCambiar());
+    function abrirVincular() {
+      const h = hojaVincular.el;
+      h.innerHTML = '';
+      const cab = el('header', 'hb-cab');
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('ascent.vincularHoja.titulo')), boton('hb-cerrar', icono('cerrar'), () => hojaVincular.cerrar(), tx('comida.cerrar')));
+      const cuerpo = el('div', 'as-hoja-cuerpo');
+      const cuenta = el('div', 'as-hoja-cuenta');
+      cuenta.innerHTML = MARCA;
+      const quien = el('div');
+      quien.append(el('b', null, '@' + Datos.PERFIL.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')), el('span', null, tx('ascent.vincularHoja.enEsteIphone')));
+      cuenta.appendChild(quien);
+      cuerpo.appendChild(cuenta);
+      const lista = (titulo, cosas) => {
+        cuerpo.appendChild(el('h4', 'as-hoja-grupo', titulo));
+        const ul = el('ul', 'as-hoja-lista');
+        cosas.forEach((c) => ul.appendChild(el('li', null, c)));
+        cuerpo.appendChild(ul);
+      };
+      lista(tx('ascent.vincularHoja.deMoss'), tx('ascent.vincularHoja.mossComparte'));
+      lista(tx('ascent.vincularHoja.deAscent'), tx('ascent.vincularHoja.ascentComparte'));
+      cuerpo.appendChild(el('p', 'as-hoja-nota', tx('ascent.vincularHoja.nota')));
+      cuerpo.appendChild(boton('as-vincular as-hoja-vincular', tx('ascent.vincularHoja.vincular'), () => {
+        hojaVincular.cerrar();
+        // Cuando la hoja termina de bajar, la luna entra en la órbita.
+        setTimeout(() => opciones.alVincular(true), 380);
+      }));
+      cuerpo.appendChild(boton('as-conseguir as-hoja-ahora-no', tx('ascent.vincularHoja.ahoraNo'), () => hojaVincular.cerrar()));
+      h.append(cab, cuerpo);
+      hojaVincular.abrir();
+      opciones.alCambiar();
+    }
+
     // ------------------------------------------------------------ rendimiento, músculos y marca
     // Como antes de entrenar hoy: 10 minutos antes de la sesión de piernas de las 18:40.
     const DIA = 86_400_000;
@@ -218,7 +255,7 @@ const SeccionAscent = (() => {
       );
       if (!vinculada) {
         cab.appendChild(el('p', 'as-bajada', tx('ascent.bajada')));
-        cab.appendChild(boton('as-vincular', tx('ascent.vincular'), () => opciones.alVincular(true)));
+        cab.appendChild(boton('as-vincular', tx('ascent.vincular'), () => abrirVincular()));
         cab.appendChild(boton('as-conseguir', tx('ascent.conseguir'), () => {}));
         cab.appendChild(el('p', 'as-misma', tx('ascent.permiso')));
       }
@@ -603,6 +640,10 @@ const SeccionAscent = (() => {
       },
       // La recuperación de hoy, para Sueño.
       recuperacionDeHoy: () => (vinculada ? calcularRecuperacion() : null),
+      // Para las capturas: la hoja de vincular.
+      abrirVincular,
+      get hojaVincularAbierta() { return hojaVincular.abierta; },
+      cerrarVincular() { hojaVincular.cerrar(true); },
       // La línea del rendimiento en Sueño.
       rendimientoDeHoy: () => (vinculada ? calcularRendimiento().r : null),
       bajarA(selector) {

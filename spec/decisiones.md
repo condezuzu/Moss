@@ -5,6 +5,23 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D27 · Vincular en menos de 10 segundos, aunque sean dos cuentas
+
+Lo pediste el 22/10/2026. Con la entrada de Moss sin nombrar a Ascent, mucha gente
+va a tener dos cuentas, y el vínculo de [`ascent.md`](ascent.md) suponía una
+sola. La propuesta (en [`ascent.md`](ascent.md), «Vincular en menos de 10
+segundos»):
+- Ascent deja su sesión en un lugar del llavero que solo leen las apps del mismo
+  equipo de Apple.
+- En Moss, «Vincular con Ascent» muestra «@usuario · Ascent en este iPhone» y qué
+  se comparte; «Vincular» lo guarda con una función propia de Moss en el servidor.
+- **Dos toques, de 3 a 5 segundos**, sea la misma cuenta o no. Sin sesión en
+  Ascent, abrirla suma unos 5: sigue debajo de 10.
+
+Cambia «una cuenta» por «una o dos cuentas» en el vínculo, y suma un cambio en el
+repo de Ascent (el 17 de la lista). La galería ya lo muestra (sección 7,
+«Vincular»). ¿Va así?
+
 ### D26 · El Tiempo de uso para estimar la noche sin reloj
 
 Sin reloj, Moss estima la noche con los pasos, el movimiento y cuándo usaste
