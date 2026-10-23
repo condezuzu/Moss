@@ -260,15 +260,20 @@ export function aprenderAjuste(propias: NochePropia[], clave: ClaveDia): Ajuste 
   return { dormirse: limitar(dormirse / (PREVIO + pesos), -90, 90), despertar: limitar(despertar / (PREVIO + pesos), -90, 90), correcciones };
 }
 
+/** Las dos primeras semanas con Moss se pregunta cada mañana (lo pediste el 22/10/2026): así aprende rápido cómo se corre en tu caso. */
+export const DIAS_DE_APRENDER = 14;
+
 /**
  * Qué se pregunta a la mañana: con confianza media o baja, la hora estimada («¿Dormiste de 00:30 a
- * 08:10?»); con alta, nada. Una mañana por semana se pregunta sin proponer, para medir cuánto se
- * acepta lo propuesto sin mirarlo: el día cambia cada semana.
+ * 08:10?»); con alta, nada, salvo las dos primeras semanas desde `desde` (el día en que empezaste
+ * Moss), que se pregunta siempre. Una mañana por semana se pregunta sin proponer, para medir cuánto
+ * se acepta lo propuesto sin mirarlo: el día cambia cada semana.
  */
-export function quePreguntar(clave: ClaveDia, confianza: Confianza): 'proponer' | 'sinProponer' | null {
+export function quePreguntar(clave: ClaveDia, confianza: Confianza, desde?: ClaveDia | null): 'proponer' | 'sinProponer' | null {
   const semana = Math.floor(diasEntre('2026-01-05', lunesDe(clave)) / 7);
   const dia = (((semana * 5 + 3) % 7) + 7) % 7;
   if (diasEntre(lunesDe(clave), clave) === dia) return 'sinProponer';
+  if (desde && diasEntre(desde, clave) < DIAS_DE_APRENDER) return 'proponer';
   return confianza === 'alta' ? null : 'proponer';
 }
 

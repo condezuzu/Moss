@@ -130,6 +130,14 @@ describe('la noche sin reloj', () => {
     expect(quePreguntar(otro, 'alta')).toBeNull();
     expect(quePreguntar(otro, 'media')).toBe('proponer');
   });
+
+  it('las dos primeras semanas con Moss pregunta cada mañana, aunque esté segura', () => {
+    const semana = ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'];
+    const otro = semana.find((c) => quePreguntar(c, 'alta') !== 'sinProponer')!;
+    expect(quePreguntar(otro, 'alta', '2026-10-12')).toBe('proponer');
+    expect(quePreguntar(otro, 'alta', '2026-10-01')).toBeNull();
+    expect(quePreguntar(otro, 'alta', null)).toBeNull();
+  });
 });
 
 describe('las noches de Moss junto a las de Salud', () => {

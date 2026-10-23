@@ -68,7 +68,11 @@ export function EditorDeHora({ desde, hasta, alGuardar }: { desde: number; hasta
 }
 
 /** `ancho` es el de adentro de la tarjeta. */
-export function LaManana({ hoy, noche, propia, noches, ancho }: { hoy: ClaveDia; noche: Noche | null; propia: NochePropia | undefined; noches: Noche[]; ancho: number }) {
+export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
+  hoy: ClaveDia; noche: Noche | null; propia: NochePropia | undefined; noches: Noche[]; ancho: number;
+  /** El día en que empezaste Moss: las dos primeras semanas se pregunta la hora cada mañana. */
+  desde: ClaveDia | null;
+}) {
   const [cambiando, setCambiando] = useState(false);
   const [editando, setEditando] = useState(false);
   const [, setOculta] = useState(0);
@@ -76,7 +80,7 @@ export function LaManana({ hoy, noche, propia, noches, ancho }: { hoy: ClaveDia;
   const [tocada, setTocada] = useState<Cara | null>(null);
   const oculta = ocultas.has(hoy);
   const cara = propia?.cara ?? null;
-  const modo = !oculta && noche?.moss?.origen === 'estimada' ? quePreguntar(hoy, noche.moss.confianza) : null;
+  const modo = !oculta && noche?.moss?.origen === 'estimada' ? quePreguntar(hoy, noche.moss.confianza, desde) : null;
   const conCaras = (!cara && !oculta) || cambiando;
   const nombres = lista('sueno.manana.caras');
 

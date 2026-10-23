@@ -52,7 +52,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
       <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
         <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('sueno.titulo')} />
         {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
-        <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} />
+        <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} desde={e.metas[0]?.desde ?? null} />
         <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={setClave} />
         {/* Poco sueño por semanas: la sugerencia de un médico, arriba. Una estimación, no un diagnóstico. */}
         {pocoSuenoSostenido(ultimasNoches(s.noches, e.hoy, DIAS)) && (
