@@ -5,40 +5,6 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
-### D27 · Vincular en menos de 10 segundos, aunque sean dos cuentas
-
-Lo pediste el 22/10/2026. Con la entrada de Moss sin nombrar a Ascent, mucha gente
-va a tener dos cuentas, y el vínculo de [`ascent.md`](ascent.md) suponía una
-sola. La propuesta (en [`ascent.md`](ascent.md), «Vincular en menos de 10
-segundos»):
-- Ascent deja su sesión en un lugar del llavero que solo leen las apps del mismo
-  equipo de Apple.
-- En Moss, «Vincular con Ascent» muestra «@usuario · Ascent en este iPhone» y qué
-  se comparte; «Vincular» lo guarda con una función propia de Moss en el servidor.
-- **Dos toques, de 3 a 5 segundos**, sea la misma cuenta o no. Sin sesión en
-  Ascent, abrirla suma unos 5: sigue debajo de 10.
-
-Cambia «una cuenta» por «una o dos cuentas» en el vínculo, y suma un cambio en el
-repo de Ascent (el 17 de la lista). La galería ya lo muestra (sección 7,
-«Vincular»). ¿Va así?
-
-### D26 · El Tiempo de uso para estimar la noche sin reloj
-
-Sin reloj, Moss estima la noche con los pasos, el movimiento y cuándo usaste
-Moss (ver «Sin reloj» en [`sueno.md`](sueno.md)). Los errores grandes vienen
-casi siempre de tres cosas: usar el teléfono de noche, dejarlo mucho antes de
-dormirte y agarrarlo mucho después de despertarte (el 74 % de los errores de más
-de 2 horas, según Sahha).
-
-Hay un permiso de Apple, **Family Controls**, que deja saber si se usó el
-teléfono de noche, en bloques de 15 minutos y sin nombres de apps. Pide:
-- un formulario en Apple Developer, que tarda de días a semanas;
-- que la persona lo acepte con Face ID.
-
-**Mi recomendación:** pedirlo después de la v1, cuando haya datos de la prueba
-contra un reloj, y solo si la confianza baja todavía es frecuente. ¿Lo pedimos
-ya, después o nunca?
-
 ### D25 · Cómo se ven las kcal: luna, anillo, arco o barra
 
 La luna no te terminó de cerrar (22/10/2026). En la galería, sección 2, están
@@ -275,6 +241,17 @@ Están en la galería, sección 10, «Para decidir»:
   (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
 
 ## Resueltas
+
+### D26 y D27 (las respondiste el 22/10/2026, a la noche)
+
+- **D26 · El Tiempo de uso (Family Controls):** después de la v1, cuando haya
+  datos de la prueba contra un reloj.
+- **D27 · Vincular en dos toques con el llavero compartido:** de acuerdo (ver
+  [`ascent.md`](ascent.md), «Vincular en menos de 10 segundos»). **En la v1 no
+  se muestra nada de Ascent** hasta que la conexión funcione de verdad: queda
+  detrás de un interruptor (`src/lib/ascent.ts`, `EXPO_PUBLIC_CON_ASCENT=1`),
+  que esconde la sección arriba de Hábitos, su gesto y su flecha, y lo de Ascent
+  en Perfil. La galería lo sigue mostrando.
 
 ### Sueño y Ascent (lo pediste el 22/10/2026)
 

@@ -198,6 +198,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `src/datos/` | catálogo de constelaciones |
 | `src/textos/` | el diccionario y `t()`: cielo, entrada, comida, Inicio, el «+», el cuerpo, Progreso, Sueño, Perfil, diagnóstico |
 | `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
+| `src/lib/ascent.ts` | el interruptor de la conexión con Ascent: apagado en la v1 (`EXPO_PUBLIC_CON_ASCENT=1` la prende) |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
 | `herramientas/` | capturas y verificaciones |
 

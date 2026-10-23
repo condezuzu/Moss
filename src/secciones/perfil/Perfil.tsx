@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View, type ViewStyle } from 'react-native';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
+import { CONEXION_CON_ASCENT } from '@/lib/ascent';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
@@ -28,7 +29,7 @@ import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exporta
 type Fila = { clave: string; titulo: string; valor?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion' };
 
 /** Lo que anda solo con las dos apps vinculadas (antes en la sección de Ascent). */
-const CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'cuenta' | 'proteina' | 'gimnasio'; icono: SFSymbol }[] = [
+const FUNCIONES_CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'cuenta' | 'proteina' | 'gimnasio'; icono: SFSymbol }[] = [
   { clave: 'peso', icono: 'scalemass' },
   { clave: 'calorias', icono: 'bolt' },
   { clave: 'objetivo', icono: 'target' },
@@ -81,7 +82,8 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         },
       }] : []),
       { clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos') },
-      { clave: 'ascent', titulo: t('perfil.ascent'), valor: t('perfil.pronto') },
+      // Ascent no se nombra hasta que la conexión funcione (src/lib/ascent.ts).
+      ...(CONEXION_CON_ASCENT ? [{ clave: 'ascent', titulo: t('perfil.ascent'), valor: t('perfil.pronto') }] : []),
     ]],
     ['perfil.tusDatosParaLlevar', [
       { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', alTocar: () => { exportarTodo(e.hoy).catch(() => avisar(t('perfil.errorBorrar'))); } },
@@ -129,10 +131,11 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
           ))}
         </View>
         {/* Al final, lo que anda solo si vinculas Ascent: información, no una función de Perfil. */}
+        {CONEXION_CON_ASCENT && <>
         <Text style={st.grupo}>{t('perfil.informacion')}</Text>
         <Text style={st.informacion}>{t('perfil.informacionAscent')}</Text>
         <View style={st.lista}>
-          {CON_ASCENT.map((f, i) => (
+          {FUNCIONES_CON_ASCENT.map((f, i) => (
             <View key={f.clave} style={[st.funcion, i > 0 && st.filaSeparada]}>
               <Icono nombre={f.icono} tam={18} color="rgba(239, 230, 207, 0.6)" peso="light" />
               <View style={{ flex: 1 }}>
@@ -142,6 +145,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
             </View>
           ))}
         </View>
+        </>}
         {correo !== null && (
           <Aparece>
           <Boton

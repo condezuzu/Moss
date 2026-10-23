@@ -111,7 +111,8 @@ await pagina.waitForTimeout(2500);
 await foto('universo');
 
 // Las secciones (cambios 9 y 10): Ascent sube con el dedo desde el cielo, pero no desde la barra;
-// la flecha de arriba la baja y la tenue de abajo la sube; la tira de pestañas y el «+».
+// la flecha de arriba la baja y la tenue de abajo la sube; la tira de pestañas y el «+». Con la
+// conexión con Ascent apagada (la v1, src/lib/ascent.ts) el gesto no sube nada.
 await abrir();
 const { width: an, height: al } = pagina.viewportSize();
 const arrastrar = async (desde, hasta, nombre) => {
@@ -126,15 +127,19 @@ const arrastrar = async (desde, hasta, nombre) => {
 // En el borde de la barra, donde no hay botón: soltar sobre un botón lo tocaría.
 await arrastrar([3, al - 30], [3, al - 330], 'ascent-desde-la-barra');
 await arrastrar([an / 2, al - 220], [an / 2, al - 520], 'ascent-subiendo');
-await foto('ascent');
-await pagina.getByLabel('Volver al cielo').click();
-await pagina.waitForTimeout(1200);
-await foto('ascent-bajada');
-await pagina.mouse.click(an / 2, al - 58 - 24);
-await pagina.waitForTimeout(1200);
-await foto('ascent-por-la-flecha');
-await pagina.getByLabel('Volver al cielo').click();
-await pagina.waitForTimeout(1200);
+if (await pagina.getByLabel('Volver al cielo').count()) {
+  await foto('ascent');
+  await pagina.getByLabel('Volver al cielo').click();
+  await pagina.waitForTimeout(1200);
+  await foto('ascent-bajada');
+  await pagina.mouse.click(an / 2, al - 58 - 24);
+  await pagina.waitForTimeout(1200);
+  await foto('ascent-por-la-flecha');
+  await pagina.getByLabel('Volver al cielo').click();
+  await pagina.waitForTimeout(1200);
+} else {
+  console.log('  Ascent: apagada (EXPO_PUBLIC_CON_ASCENT), el gesto no sube nada');
+}
 await arrastrar([an - 40, 420], [an - 200, 430], 'pestanas-deslizando');
 await foto('perfil');
 // Sueño sin reloj: la pregunta de la hora (o las horas, la mañana que pregunta sin proponer), la

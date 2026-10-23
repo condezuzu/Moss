@@ -16,6 +16,7 @@ import { elAlmacen } from '@/almacen';
 import PantallaDelCielo from '@/cielo/PantallaDelCielo';
 import { t } from '@/textos';
 import { colores } from '@/tema';
+import { CONEXION_CON_ASCENT } from '@/lib/ascent';
 import { Ascent } from './Ascent';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
@@ -156,12 +157,13 @@ export default function Secciones() {
           <PantallaDelCielo
             paginaX={paginaX}
             abajo={abajo}
-            subida={{
+            // Sin la conexión con Ascent (la v1), ni el gesto para subirla ni su flecha.
+            subida={CONEXION_CON_ASCENT ? {
               progreso: subida,
               limiteY: alto - abajo - 8,
               flecha: { x: ancho / 2, y: alto - abajo - 24 },
               alCambiar: setAscentAbierta,
-            }}
+            } : undefined}
             entrada={entrada}
             alEditarHabito={setEditando}
           />
@@ -187,7 +189,7 @@ export default function Secciones() {
                   ),
                 )}
               </Animated.View>
-              <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />
+              {CONEXION_CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
             </Animated.View>
           )}
         </Animated.View>

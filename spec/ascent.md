@@ -84,7 +84,7 @@ y 5.1.3).
   esquema `moss`. Cada función revisa `auth.uid()` y el vínculo. Ninguna app lee
   las tablas de la otra directo.
 
-## Vincular en menos de 10 segundos (propuesta del 22/10/2026, D27)
+## Vincular en menos de 10 segundos (D27, aceptada el 22/10/2026)
 
 Lo pediste así: que vincular se haga en menos de 10 segundos. Con la entrada de
 Moss sin nombrar a Ascent (Moss es Moss), mucha gente va a tener dos cuentas:
@@ -126,6 +126,9 @@ mismo al revés, con la sesión de Moss en el llavero.
   borrarla al salir, y su lado de la hoja (ver «Cambios en el repo de Ascent»).
 - **En Moss:** `expo-secure-store` con el grupo de llavero, el entitlement en
   `app.json` y la Edge Function. Va cuando esté la conexión (después de la v1).
+- **Hasta entonces, la v1 no muestra nada de Ascent:** el interruptor
+  `EXPO_PUBLIC_CON_ASCENT` (`src/lib/ascent.ts`) esconde la sección, su gesto,
+  su flecha y lo de Ascent en Perfil. Se prende sin tocar el código.
 
 ## Qué lee cada app de la otra (con el vínculo)
 
