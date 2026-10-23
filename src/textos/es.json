@@ -1114,7 +1114,7 @@
     "mejorarBaseTexto": "Sin tu nombre: así Moss suma a la base lo que falta.",
     "politica": "Política de privacidad",
     "terminos": "Términos",
-    "contacto": "Contacto",
+    "contacto": "Ayuda y contacto",
     "avisos": {
       "titulo": "Avisos",
       "dormir": "Hora de dormir",
@@ -1123,7 +1123,9 @@
       "antes": "{n} min antes",
       "maximo": "Como mucho por día",
       "maximoTexto": "Lo que cae cerca suena junto, y nunca más que esto por día. Si sobran, quedan primero el de dormir y los de tus hábitos. Los de cada hábito se eligen en el hábito."
-    }
+    },
+    "cambiarCuenta": "Cambiar de cuenta",
+    "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta."
   },
   "fecha": {
     "dias": [

@@ -1114,7 +1114,7 @@
     "mejorarBaseTexto": "Without your name: this helps Moss add what is missing.",
     "politica": "Privacy policy",
     "terminos": "Terms",
-    "contacto": "Contact",
+    "contacto": "Help and contact",
     "avisos": {
       "titulo": "Reminders",
       "dormir": "Bedtime",
@@ -1123,7 +1123,9 @@
       "antes": "{n} min before",
       "maximo": "At most per day",
       "maximoTexto": "Reminders that fall close together ring together, and never more than this a day. If there are too many, bedtime and your habits come first. Each habit's reminder is set in the habit."
-    }
+    },
+    "cambiarCuenta": "Switch account",
+    "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account."
   },
   "fecha": {
     "dias": [

@@ -173,6 +173,15 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
           <Aparece>
           <Boton
             tipo="contorno"
+            texto={t('perfil.cambiarCuenta')}
+            alTocar={() => Alert.alert(t('perfil.cambiarCuenta'), t('perfil.cambiarCuentaTexto'), [
+              { text: t('comun.cancelar'), style: 'cancel' },
+              { text: t('perfil.cambiarCuenta'), onPress: () => { cerrarSesion().catch(() => {}); } },
+            ])}
+            estilo={st.salir}
+          />
+          <Boton
+            tipo="contorno"
             texto={t('perfil.cerrarSesion')}
             alTocar={() => Alert.alert(t('perfil.cerrarSesionTitulo'), t('perfil.cerrarSesionTexto'), [
               { text: t('comun.cancelar'), style: 'cancel' },
