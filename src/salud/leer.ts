@@ -40,8 +40,11 @@ async function categoria(id: CategoryTypeIdentifier, desde: Date, hasta: Date): 
   }
 }
 
-/** Todo lo de Salud que usa Moss, o null si Salud no se pidió en este teléfono. */
-export async function leerSalud(ahora: Date = new Date()): Promise<LoDeSalud | null> {
+/**
+ * Todo lo de Salud que usa Moss, o null si Salud no se pidió en este teléfono. `elegida` es el
+ * aparato del que sale la noche, si se eligió en Perfil › Aparatos.
+ */
+export async function leerSalud(ahora: Date = new Date(), elegida: string | null = null): Promise<LoDeSalud | null> {
   if (!(await saludPedida())) return null;
   const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
   const hace = (dias: number) => new Date(hoy.getTime() - dias * DIA_MS);
@@ -62,7 +65,12 @@ export async function leerSalud(ahora: Date = new Date()): Promise<LoDeSalud | n
   ]);
   const muestras = sueno.flatMap((m) => muestraDeSueno(m) ?? []);
   const fuentes = fuentesDe(sueno);
-  const noches = armarNoches(muestras, fuentes);
+  const noches = armarNoches(muestras, fuentes, elegida ?? undefined);
+  // Cada aparato por separado: cuántas noches escribió y si con etapas.
+  const aparatos = fuentes.map((fuente) => {
+    const propias = armarNoches(muestras.filter((m) => m.fuente === fuente.id), [fuente]);
+    return { fuente, noches: propias.length, conEtapas: propias.some((n) => n.conEtapas) };
+  });
   const clave = claveDelDia(ahora);
   const anoche = noches.find((n) => n.clave === clave);
   return {
@@ -76,6 +84,7 @@ export async function leerSalud(ahora: Date = new Date()): Promise<LoDeSalud | n
     noches,
     soloEnCama: soloEnCama(muestras, fuentes, noches),
     fuentes,
+    aparatos,
     lecturas: { frecuencia: lecturasDe(frecuencia), variabilidad: lecturasDe(variabilidad), respiracion: lecturasDe(respiracion), reposo: ultimaPorDia(reposo) },
     pesos: ultimaPorDia(pesos),
     pasosRecientes: pasosDe(recientes),

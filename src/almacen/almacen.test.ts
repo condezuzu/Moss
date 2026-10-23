@@ -87,6 +87,17 @@ describe('local primero', () => {
     expect((await armar(repositorio)).almacen.estado().calidad).toBeNull();
   });
 
+  it('el aparato del que sale la noche se recuerda en el teléfono, y null vuelve a la automática', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().fuenteDelSueno).toBeNull();
+    almacen.ponerFuenteDelSueno('com.ouraring.oura');
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().fuenteDelSueno).toBe('com.ouraring.oura');
+    almacen.ponerFuenteDelSueno(null);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().fuenteDelSueno).toBeNull();
+  });
+
   it('cuándo se usó Moss: al abrir un momento, al cerrar un rato; queda en el teléfono tres días', async () => {
     const { almacen, repositorio } = await armar();
     const t = (iso: string) => Date.parse(iso);
@@ -230,7 +241,7 @@ describe('el cuestionario, el peso y las metas', () => {
     const { almacen } = await armar(undefined, () => [pasos, dormir, habito('leer', 2)]);
     almacen.anotarPeso(80, 'manual', '2026-10-20');
     const salud = (valores: Record<string, number>) => ({
-      dia: '2026-10-21', valores, noches: [], soloEnCama: new Map(), fuentes: [], pasosRecientes: [],
+      dia: '2026-10-21', valores, noches: [], soloEnCama: new Map(), fuentes: [], aparatos: [], pasosRecientes: [],
       lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() },
       pesos: new Map([['2026-10-20', 81], ['2026-10-21', 79.84]]),
     });

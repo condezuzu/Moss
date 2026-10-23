@@ -60,6 +60,8 @@ export type Estado = MapasDeComida & {
    * más exacto para saber que estabas despierto (spec/sueno.md, «Sin reloj»). Queda en el teléfono.
    */
   uso: [number, number][];
+  /** De cuál aparato sale la noche (su id en Salud), si se eligió en Perfil › Aparatos; sin elegir, la automática. Queda en el teléfono. */
+  fuenteDelSueno: string | null;
   /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
   salud: LoDeSalud | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
@@ -96,6 +98,7 @@ const RECORDATORIOS = 'recordatorios';
 const CALIDAD = 'calidad';
 const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
+const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 /** Tres días de uso alcanzan para la noche de anoche. */
 const DIAS_DE_USO = 3;
 
@@ -174,7 +177,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, calidad: null, uso: [], salud: null, semilla: '',
+    recordatorios: null, calidad: null, uso: [], fuenteDelSueno: null, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -265,7 +268,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, listo: true }, true);
     revisarControl();
   }
 
@@ -548,6 +551,11 @@ export function crearAlmacen(op: Opciones) {
     ponerCalidad(calidad: Calidad | null) {
       guardar((r) => r.guardarAjuste(CALIDAD, calidad ?? ''));
       cambiar({ calidad }, false);
+    },
+    /** De cuál aparato sale la noche; null vuelve a la automática (la más precisa de cada noche). */
+    ponerFuenteDelSueno(id: string | null) {
+      guardar((r) => r.guardarAjuste(FUENTE_DEL_SUENO, id ?? ''));
+      cambiar({ fuenteDelSueno: id }, false);
     },
     /**
      * Moss se abrió o se cerró. Al abrir queda un momento; al cerrar, ese momento se vuelve un rato.

@@ -39,6 +39,15 @@ await pagina.addInitScript(() => {
     perfil: { sexo: 'm', alturaCm: 178, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', nacimiento: d.getFullYear() - 34, actualizado: momento },
     pesos: [{ fecha: hoy, kg: 82, origen: 'manual', momento }],
     metas: [{ desde: hoy, kcal: 2150, proteina: 165, carbohidratos: 215, grasas: 70, gasto: 2650, motivo: 'inicial', momento }],
+    // Sin reloj: nueve noches que estimó Moss, algunas confirmadas; la de anoche, sin estar segura.
+    noches: Array.from({ length: 9 }, (_, i) => {
+      const dia = new Date(d.getFullYear(), d.getMonth(), d.getDate() - i);
+      const clave = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
+      const dormirse = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() - 1, 23, 25 + (i % 3) * 10);
+      const despertar = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate(), 7, 5 + (i % 4) * 6);
+      const origen = i > 0 && i % 3 === 0 ? 'confirmada' : 'estimada';
+      return { fecha: clave, hora: { dormirse: dormirse.toISOString(), despertar: despertar.toISOString(), origen, confianza: i === 0 ? 'media' : 'alta' }, actualizado: momento };
+    }),
   }));
 });
 
@@ -128,6 +137,24 @@ await pagina.getByLabel('Volver al cielo').click();
 await pagina.waitForTimeout(1200);
 await arrastrar([an - 40, 420], [an - 200, 430], 'pestanas-deslizando');
 await foto('perfil');
+// Sueño sin reloj: la pregunta de la hora (o las horas, la mañana que pregunta sin proponer), la
+// noche corregida y de dónde sale cada dato.
+await pagina.getByRole('tab', { name: 'Sueño' }).click();
+await pagina.waitForTimeout(2000);
+await foto('seccion-sueno');
+const cambiarLaHora = pagina.getByRole('button', { name: 'Cambiar', exact: true });
+if (await cambiarLaHora.count()) {
+  await cambiarLaHora.first().click();
+  await pagina.waitForTimeout(900);
+}
+await foto('sueno-hora');
+await pagina.getByRole('button', { name: 'Guardar', exact: true }).first().click();
+await pagina.waitForTimeout(1500);
+await foto('sueno-corregida');
+await pagina.mouse.move(an / 2, al / 2);
+await pagina.mouse.wheel(0, 2600);
+await pagina.waitForTimeout(1000);
+await foto('sueno-fuentes');
 await pagina.getByRole('tab', { name: 'Inicio' }).click();
 await pagina.waitForTimeout(1500);
 await foto('seccion-inicio');

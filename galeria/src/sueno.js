@@ -83,21 +83,25 @@ const SeccionSueno = (() => {
       if (!p || !p.hora || p.hora.origen !== 'estimada') return null;
       return s.forzarHora || SinReloj.quePreguntar(clave, p.hora.confianza);
     }
-    /** Las dos horas, de a 5 minutos, con «Guardar». `alGuardar(dormirse, despertar)`, en minutos desde las 18. */
+    /**
+     * Las dos horas, de a 5 minutos, con «Guardar». `alGuardar(dormirse, despertar, cambiadas)`, en
+     * minutos desde las 18: guardar sin mover nada es confirmar lo que había, con sus horas exactas.
+     */
     function editorDeHora(desde, hasta, alGuardar) {
       const caja = el('div', 'sn-editor');
       let a = Math.round(desde / 5) * 5, b = Math.round(hasta / 5) * 5;
+      let cambiadas = false;
       const fila = (texto, leer, mover) => {
         const f = el('div', 'sn-editor-fila');
         const valor = el('b', null, reloj(leer()));
-        const paso = (d) => { mover(d); valor.textContent = reloj(leer()); };
+        const paso = (d) => { cambiadas = true; mover(d); valor.textContent = reloj(leer()); };
         f.append(el('span', null, texto), boton('sn-paso', '−', () => paso(-5), tx('sueno.manana.antes')), valor, boton('sn-paso', '+', () => paso(5), tx('sueno.manana.despues')));
         return f;
       };
       caja.append(
         fila(tx('sueno.manana.teDormiste'), () => a, (d) => { a = Math.min(b - 60, a + d); }),
         fila(tx('sueno.manana.teDespertaste'), () => b, (d) => { b = Math.max(a + 60, b + d); }),
-        boton('sn-guardar', tx('sueno.manana.guardar'), () => alGuardar(a, b)),
+        boton('sn-guardar', tx('sueno.manana.guardar'), () => (cambiadas ? alGuardar(a, b, true) : alGuardar(desde, hasta, false))),
       );
       return caja;
     }
@@ -126,8 +130,9 @@ const SeccionSueno = (() => {
       const h = modo === 'sinProponer' ? SinReloj.habitualDe(noches(), clave) : null;
       b.classList.add('editando');
       b.appendChild(el('p', 'sn-manana-pregunta', tx('sueno.manana.sinProponer')));
-      b.appendChild(editorDeHora(h ? h.dormirse : n.dormirse, h ? h.despertar : n.despertar, (x, y) => {
-        ponerHora(clave, x, y, modo === 'sinProponer' ? 'manual' : 'corregida');
+      b.appendChild(editorDeHora(h ? h.dormirse : n.dormirse, h ? h.despertar : n.despertar, (x, y, cambiadas) => {
+        // Sin proponer, lo escrito siempre es tuyo; si no, sin mover nada es un «Sí».
+        ponerHora(clave, x, y, modo === 'sinProponer' ? 'manual' : cambiadas ? 'corregida' : 'confirmada');
         listo();
       }));
       return b;
@@ -362,8 +367,8 @@ const SeccionSueno = (() => {
       c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojEtapas')));
       // Cambiar la hora de cualquier noche de Moss, ahí mismo.
       if (s.editando === n.clave) {
-        const ed = editorDeHora(n.dormirse, n.despertar, (x, y) => {
-          ponerHora(n.clave, x, y, 'corregida');
+        const ed = editorDeHora(n.dormirse, n.despertar, (x, y, cambiadas) => {
+          if (cambiadas || m.origen === 'estimada') ponerHora(n.clave, x, y, cambiadas ? 'corregida' : 'confirmada');
           s.editando = null;
           colapsar(ed, pintar, 380);
         });

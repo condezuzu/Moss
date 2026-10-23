@@ -85,6 +85,8 @@ export type LoDeSalud = {
   soloEnCama: Map<ClaveDia, { minutos: number; fuente: Fuente }>;
   lecturas: { frecuencia: Medida[]; variabilidad: Medida[]; respiracion: Medida[]; reposo: Map<ClaveDia, number> };
   fuentes: Fuente[];
+  /** Los aparatos que escribieron sueño las últimas cuatro semanas: cuántas noches y si con etapas (Perfil › Aparatos). */
+  aparatos: { fuente: Fuente; noches: number; conEtapas: boolean }[];
   /** Los pasos de las últimas 30 horas, muestra por muestra: sin reloj, con eso se estima la noche. */
   pasosRecientes: { desde: number; hasta: number; pasos: number }[];
   /** El último peso de cada día, en kg. */

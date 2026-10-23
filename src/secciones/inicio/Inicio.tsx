@@ -284,6 +284,8 @@ function SuenoDeAnoche({ anchoGrafico }: { anchoGrafico: number }) {
         derecha={(
           <View style={estilos.chips}>
             {s.deEjemplo && <Chip texto={t('inicio.ejemplo')} tipo="tenue" />}
+            {/* Sin reloj, si todavía es lo que estimó el teléfono, lo dice. */}
+            {noche?.moss?.origen === 'estimada' && <Chip texto={t('sueno.origen.estimada')} tipo="tenue" />}
             {calidad && <Chip texto={t('inicio.calidad', { n: calidad.puntos })} />}
           </View>
         )}

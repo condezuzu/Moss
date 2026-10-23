@@ -62,7 +62,7 @@ function sincronizarConLaCuenta(a: Almacen) {
  * Después, sin reloj, estima la noche de anoche con lo que guardó el teléfono.
  */
 export async function actualizarSalud(): Promise<void> {
-  const s = await leerSalud().catch(() => null);
+  const s = await leerSalud(new Date(), elAlmacen().estado().fuenteDelSueno).catch(() => null);
   if (s) elAlmacen().ponerSalud(s);
   await estimarAnoche(elAlmacen()).catch(() => {});
 }

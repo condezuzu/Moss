@@ -1,6 +1,6 @@
 // Perfil, la última sección (antes Ajustes), la de la galería (galeria/src/perfil.js): tus datos,
-// las preferencias, Salud y Ascent, y tus datos para llevar o borrar, con los créditos de lo que usa
-// Moss. Las metas están en Progreso, con la estrategia.
+// las preferencias, Salud, los aparatos y Ascent, y tus datos para llevar o borrar, con los créditos
+// de lo que usa Moss. Las metas están en Progreso, con la estrategia.
 
 import Constants from 'expo-constants';
 import type { SFSymbol } from 'expo-symbols';
@@ -21,6 +21,7 @@ import { numero, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
+import { aparatoPrincipal, Aparatos } from './Aparatos';
 import { Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exportarTodo } from './cuenta';
 
@@ -41,7 +42,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const sistema = sistemaDe(e);
   const [correo, setCorreo] = useState<string | null>(null);
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'datos' | 'privacidad' | 'recordatorios' | 'calidad' | null>(null);
+  const [hoja, setHoja] = useState<'datos' | 'privacidad' | 'recordatorios' | 'calidad' | 'aparatos' | null>(null);
   useEffect(() => {
     correoDeLaCuenta().then(setCorreo).catch(() => {});
     saludPedida().then(setSalud).catch(() => {});
@@ -79,6 +80,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
           }).catch(() => {});
         },
       }] : []),
+      { clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos') },
       { clave: 'ascent', titulo: t('perfil.ascent'), valor: t('perfil.pronto') },
     ]],
     ['perfil.tusDatosParaLlevar', [
@@ -158,6 +160,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       {hoja === 'datos' && p && <TusDatos perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} alCerrar={() => setHoja(null)} />}
       {hoja === 'recordatorios' && <Recordatorios comidas={e.recordatorios} alCerrar={() => setHoja(null)} />}
       {hoja === 'calidad' && <CalidadDelCielo elegida={e.calidad} alCerrar={() => setHoja(null)} />}
+      {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
       {hoja === 'privacidad' && (
         <HojaModal abierta titulo={t('perfil.privacidad')} alCerrar={() => setHoja(null)}>
           {lista('perfil.privacidadTexto').map((parrafo) => <Parrafo key={parrafo}>{parrafo}</Parrafo>)}
