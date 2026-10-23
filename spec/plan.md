@@ -11,7 +11,7 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - el almacén y la sincronización sirven igual para la comida;
 - las metas ya están programadas.
 
-**Dónde estamos (22/10/2026, a la noche):**
+**Dónde estamos (23/10/2026, a la mañana):**
 - **La app tiene lo de la v1 menos los widgets**, con tests y probada en la web
   (`npm run app:capturas`). Falta probarla en tu iPhone.
   - La entrada: la frase, las dos diapositivas, la cuenta con Apple o correo, el
@@ -34,19 +34,36 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
     llega de cada marca; en Sueño, la precisión de cada noche.
   - Compartir recetas y alimentos propios con un enlace, y los recordatorios
     para anotar.
-- **La base de alimentos**: USDA más 1.636 curados, entre ellos los genéricos,
-  los del mundo, 136 de Uruguay (119 como recetas) y 306 productos con su código
-  de barras.
+- **La noche del 22 al 23/10/2026** sumó, en la galería y en la app:
+  - el plan de comidas: armar el día y la semana, «Comí esto», «Otra», me
+    gusta y no me gusta, tus comidas y la lista de compras ([`nutricion.md`](nutricion.md));
+  - pegar una receta como texto;
+  - la ventana del alimento con los micronutrientes, cómo deja el día, de dónde
+    sale el dato y reportar un error;
+  - la seguridad: mayores de 18, sin déficit cuando corresponde, los límites con
+    su porqué y los números ocultos;
+  - los avisos: la hora de dormir, el de cada hábito y un máximo por día
+    ([`avisos.md`](avisos.md));
+  - la revisión de Apple: el sitio con la privacidad y los términos, borrar la
+    cuenta revocando Sign in with Apple, los datos cifrados y fuera de iCloud, y
+    la ficha ([`revision.md`](revision.md)).
+- **La base de alimentos**: USDA más 1.949 curados (313 platos como recetas y
+  306 productos con su código de barras). 1.194 genéricos verificados con una
+  segunda tabla oficial (TACO, Ciqual o CoFID), 112 platos por sus ingredientes
+  y los productos por su etiqueta ([`fuentes.md`](fuentes.md)).
 - **Lo que decidí solo** está en [`decisiones.md`](decisiones.md), «Tomadas por
   mi cuenta»; lo que espera tu respuesta, en «Pendientes» y en la galería.
 - **Falta para la v1:**
-  - la build en tu iPhone, que necesita dos pasos tuyos, y probarla ahí;
-  - correr `0004_medir.sql` en Supabase, con lo demás de [`ascent.md`](ascent.md);
+  - la build en tu iPhone (espera que entres a Apple) y probarla ahí;
+  - correr `0004` a `0007` en Supabase y desplegar `moss-borrar-cuenta`, con lo
+    demás de [`ascent.md`](ascent.md) y [`revision.md`](revision.md);
   - los widgets de la pantalla de bloqueo (D8), después de la prueba de un día;
-  - revocar el token de Apple al borrar la cuenta, que necesita la clave `.p8`;
-  - el flum entero al final de la entrada (hoy, un fundido);
-  - llegar a las ~200 comidas uruguayas y a los ~300 productos;
-  - el contenido (logros, textos legales) y lo de la tienda (etapas 11 y 12).
+  - que las constelaciones vuelvan a importar (la comida que enciende, el año
+    como cielo, compartir);
+  - las capturas para la tienda, la cuenta de prueba para quien revisa y lo de
+    App Store Connect;
+  - repasar accesibilidad y rendimiento en el iPhone;
+  - el flum entero al final de la entrada (hoy, un fundido).
 
 Las etapas van en orden, con estas excepciones:
 
