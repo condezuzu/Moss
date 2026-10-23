@@ -1,7 +1,8 @@
 // Los alimentos curados de assets/alimentos.db en un JSON, para la web de prueba de la app
 // (src/comida/base.web.ts): en la web no hay SQLite. Lo corre `npm run web:exportar`.
 // Por alimento: id, fuente, nombres, valores por 100 g y lo secundario, porciones [es, en, gramos],
-// textos de búsqueda [idioma, región, principal, texto] y cómo se mide.
+// textos de búsqueda [idioma, región, principal, texto], cómo se mide, los micronutrientes y si
+// está verificado.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -11,12 +12,22 @@ import { fileURLToPath } from 'node:url';
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const db = new DatabaseSync(join(raiz, 'assets/alimentos.db'), { readOnly: true });
 const redondo = (n) => (n === null ? null : Math.round(n * 100) / 100);
+// El orden de src/dominio/micronutrientes.ts (MICROS), el mismo de las columnas de la base.
+const MICROS = ['colesterol', 'trans', 'monoinsaturadas', 'poliinsaturadas', 'potasio', 'calcio', 'hierro', 'magnesio', 'fosforo', 'zinc', 'selenio',
+  'vitaminaA', 'vitaminaC', 'vitaminaD', 'vitaminaE', 'vitaminaK', 'tiamina', 'riboflavina', 'niacina', 'vitaminaB6', 'folato', 'vitaminaB12', 'cafeina'];
+/** Los micronutrientes de una fila, sin los null del final; sin ninguno, nada. */
+const microsDe = (a) => {
+  const u = MICROS.map((k) => (a[k] === null || a[k] === undefined ? null : a[k]));
+  while (u.length && u[u.length - 1] === null) u.pop();
+  return u.length ? u : undefined;
+};
 
 const alimentos = new Map(db.prepare(`SELECT * FROM alimentos WHERE nombre_es IS NOT NULL ORDER BY id`).all().map((a) => [a.id, {
   id: a.id, f: a.fuente, es: a.nombre_es, en: a.nombre_en ?? a.descripcion,
   v: [a.kcal, a.proteina, a.carbohidratos, a.grasas].map(redondo),
   s: [a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol].map(redondo),
   p: [], t: [], m: a.marca, d: a.densidad, x: a.desecho ? [a.desecho, a.desecho_es, a.desecho_en] : null, a: a.aceite, c: a.crudo, o: a.atribucion,
+  u: microsDe(a), w: a.verificado && a.segunda ? [a.verificado, a.segunda] : null,
 }]));
 for (const p of db.prepare('SELECT alimento, es, en, gramos FROM porciones ORDER BY id').all()) alimentos.get(p.alimento)?.p.push([p.es, p.en, redondo(p.gramos)]);
 for (const t of db.prepare('SELECT alimento, idioma, region, principal, texto FROM textos ORDER BY id').all()) alimentos.get(t.alimento)?.t.push([t.idioma, t.region ?? '', t.principal, t.texto]);

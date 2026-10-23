@@ -5,8 +5,13 @@
 // - Deja afuera lo que no se registra (comida de bebé, fórmulas) y lo que es de una marca o
 //   cadena de Estados Unidos.
 // - Los valores van por 100 g: kcal, proteína, carbohidratos y grasas y, cuando USDA los tiene,
-//   fibra, azúcares, grasas saturadas, sodio (en mg) y alcohol.
+//   fibra, azúcares, grasas saturadas, sodio (en mg), alcohol y los micronutrientes (MICROS).
+// - Lo secundario que contradice a los macros (más azúcares que carbohidratos) no se guarda: USDA
+//   tiene unos pocos errores así, y es mejor no mostrar un dato que mostrarlo mal.
 // - Calcula los platos que son recetas (`receta#` en genericos.txt) con sus ingredientes curados.
+// - Marca lo verificado (spec/fuentes.md): los curados que coinciden con una segunda fuente
+//   oficial (alimentos/verificacion.txt, de `npm run alimentos:comparar`), los platos con todos sus
+//   ingredientes verificados y los productos cuya etiqueta pasa los controles.
 // - Arma los dos índices de búsqueda: palabras con prefijos y trigramas.
 // La arma el SQLite de Node, que es la misma versión que trae expo-sqlite (3.53).
 // Uso: npm run alimentos   → después, npm run alimentos:verificar
@@ -19,21 +24,39 @@ import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ESQUEMA = 3;
+const ESQUEMA = 4;
+
+// Los micronutrientes, con su número de nutriente en FNDDS (el viejo) y su id en SR Legacy. Las
+// unidades son las de USDA: mg, salvo el selenio, la vitamina A (RAE), la D, la K, el folato (DFE)
+// y la B12, en µg; las grasas, en g. El mismo orden que src/dominio/micronutrientes.ts.
+const MICROS = [
+  ['colesterol', 601, 1253], ['trans', 605, 1257], ['monoinsaturadas', 645, 1292], ['poliinsaturadas', 646, 1293],
+  ['potasio', 306, 1092], ['calcio', 301, 1087], ['hierro', 303, 1089], ['magnesio', 304, 1090], ['fosforo', 305, 1091],
+  ['zinc', 309, 1095], ['selenio', 317, 1103], ['vitaminaA', 320, 1106], ['vitaminaC', 401, 1162], ['vitaminaD', 328, 1114],
+  ['vitaminaE', 323, 1109], ['vitaminaK', 430, 1185], ['tiamina', 404, 1165], ['riboflavina', 405, 1166], ['niacina', 406, 1167],
+  ['vitaminaB6', 415, 1175], ['folato', 435, 1190], ['vitaminaB12', 418, 1178], ['cafeina', 262, 1057],
+];
+const CLAVES_MICROS = MICROS.map(([clave]) => clave);
 
 const BASES = {
   fndds: {
     nombre: 'FNDDS 2021–2023',
     url: 'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_survey_food_csv_2024-10-31.zip',
     // FNDDS usa los números viejos de nutriente; SR Legacy, los ids de FoodData Central.
-    nutrientes: { 208: 'kcal', 203: 'proteina', 205: 'carbohidratos', 204: 'grasas', 291: 'fibra', 269: 'azucares', 606: 'saturadas', 307: 'sodio', 221: 'alcohol' },
+    nutrientes: {
+      208: 'kcal', 203: 'proteina', 205: 'carbohidratos', 204: 'grasas', 291: 'fibra', 269: 'azucares', 606: 'saturadas', 307: 'sodio', 221: 'alcohol',
+      ...Object.fromEntries(MICROS.map(([clave, n]) => [n, clave])),
+    },
     // Comida de bebé, fórmulas y leche materna: no se registran en Moss.
     fuera: new Set(['9002', '9004', '9006', '9007', '9008', '9010', '9012', '9202', '9204', '9402', '9404', '9602']),
   },
   sr: {
     nombre: 'SR Legacy 2018-04',
     url: 'https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip',
-    nutrientes: { 1008: 'kcal', 1003: 'proteina', 1005: 'carbohidratos', 1004: 'grasas', 1079: 'fibra', 2000: 'azucares', 1258: 'saturadas', 1093: 'sodio', 1018: 'alcohol' },
+    nutrientes: {
+      1008: 'kcal', 1003: 'proteina', 1005: 'carbohidratos', 1004: 'grasas', 1079: 'fibra', 2000: 'azucares', 1258: 'saturadas', 1093: 'sodio', 1018: 'alcohol',
+      ...Object.fromEntries(MICROS.map(([clave, , id]) => [id, clave])),
+    },
     // Bebés, comida rápida, indígenas de EE. UU., restaurantes, marcas y controles de calidad.
     fuera: new Set(['3', '21', '24', '25', '26', '27']),
   },
@@ -297,12 +320,16 @@ function queSeDesecha(descripcion) {
  * alimentos/*.txt (genericos.txt primero): una línea por alimento, con los campos separados por
  * « | »: nombre en español | nombre en inglés | de dónde sale | porciones | alias | detalles.
  * Las líneas «# categoría» abren una categoría; las que empiezan con «//» son comentarios.
- * Con SOLO=archivo.txt se arma con genericos.txt y ese archivo nada más (para revisar uno).
+ * Con SOLO=archivo.txt se arma con genericos.txt y ese archivo nada más (para revisar uno), y con
+ * CARPETA=otra/carpeta, con los archivos de otra carpeta (los de un commit, por ejemplo).
+ * verificacion.txt no es de alimentos: lo lee leerVerificacion().
  */
+const CARPETA = join(raiz, process.env.CARPETA ?? 'alimentos');
+
 function leerCurados() {
-  const carpeta = join(raiz, 'alimentos');
+  const carpeta = CARPETA;
   const solo = process.env.SOLO ? process.env.SOLO.split(',') : null;
-  const archivos = readdirSync(carpeta).filter((a) => a.endsWith('.txt') && (!solo || a === 'genericos.txt' || solo.includes(a)))
+  const archivos = readdirSync(carpeta).filter((a) => a.endsWith('.txt') && a !== 'verificacion.txt' && (!solo || a === 'genericos.txt' || solo.includes(a)))
     .sort((a, b) => (a === 'genericos.txt' ? -1 : b === 'genericos.txt' ? 1 : a.localeCompare(b)));
   const curados = [];
   for (const archivo of archivos) {
@@ -340,7 +367,7 @@ function leerCurados() {
   return curados;
 }
 
-const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'ean', 'off', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol']);
+const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'ean', 'off', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]);
 /** «crudo=Arroz blanco crudo · ml · marca=Conaprole»: cada detalle, con su valor o en true. */
 function leerDetalles(texto, donde) {
   const d = {};
@@ -353,6 +380,32 @@ function leerDetalles(texto, donde) {
   return d;
 }
 
+/**
+ * alimentos/verificacion.txt (lo arma `npm run alimentos:comparar`, spec/fuentes.md): por curado,
+ * nombre | segunda fuente | sus valores | diferencia | estado | fecha. Cuenta como verificado lo
+ * que coincide («ok») y lo que no coincidía pero se revisó («revisado: motivo»).
+ */
+function leerVerificacion() {
+  const ruta = join(CARPETA, 'verificacion.txt');
+  const verificados = new Map();
+  if (!existsSync(ruta)) return verificados;
+  for (const linea of readFileSync(ruta, 'utf8').split(/\r?\n/)) {
+    if (!linea.trim() || linea.startsWith('//') || linea.startsWith('#')) continue;
+    const [nombre, fuente = '', , , estado = '', fecha = ''] = linea.split('|').map((c) => c.trim());
+    const dia = fecha.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+    if (dia && /^(ok|revisado)\b/i.test(estado)) verificados.set(nombre, { fecha: dia, segunda: fuente.split(/\s+/)[0] });
+  }
+  return verificados;
+}
+
+/** Las kcal de una etiqueta cierran con sus macros: con 4/4/9 y 7, o con la fibra a 2 kcal (como cuentan en Europa y en Estados Unidos). */
+function cierraLaEtiqueta(a) {
+  const base = 4 * a.proteina + 9 * a.grasas + 7 * (a.alcohol ?? 0);
+  const fibra = a.fibra ?? 0;
+  const formas = [base + 4 * a.carbohidratos, base + 4 * a.carbohidratos + 2 * fibra, base + 4 * Math.max(0, a.carbohidratos - fibra) + 2 * fibra];
+  return formas.some((k) => Math.abs(a.kcal - k) <= Math.max(15, 0.2 * a.kcal)) && a.proteina + a.carbohidratos + a.grasas <= 100.5;
+}
+
 /** El dígito de control de un EAN-13, EAN-8, UPC-A o GTIN-14. */
 function codigoValido(codigo) {
   if (!/^(\d{8}|\d{12}|\d{13}|\d{14})$/.test(codigo)) return false;
@@ -362,10 +415,38 @@ function codigoValido(codigo) {
   return (10 - (suma % 10)) % 10 === control;
 }
 
+// ------------------------------------------------------------ Lo que no cierra
+// Lo máximo posible en 100 g de algo que se come, con margen: el colesterol de los sesos, el
+// potasio del crémor tártaro, la vitamina A y la D del aceite de hígado de bacalao, el selenio de
+// la nuez de Brasil, la cafeína del café instantáneo. Es el mismo tope de
+// src/dominio/micronutrientes.ts (TOPE_POR_100G), que prueba src/comida/controles.test.ts.
+const TOPES = {
+  colesterol: 4000, potasio: 20000, calcio: 10000, hierro: 200, magnesio: 1500, fosforo: 15000, zinc: 200, selenio: 3000,
+  vitaminaA: 35000, vitaminaC: 5000, vitaminaD: 400, vitaminaE: 300, vitaminaK: 3000, tiamina: 50, riboflavina: 50, niacina: 200,
+  vitaminaB6: 50, folato: 6000, vitaminaB12: 150, cafeina: 8000,
+};
+const GRASAS = ['saturadas', 'trans', 'monoinsaturadas', 'poliinsaturadas'];
+
+/**
+ * Lo secundario que contradice a lo principal: más azúcares (o más fibra, en lo de USDA, que los
+ * cuenta adentro) que carbohidratos, una grasa que es más que todas las grasas, o un micronutriente
+ * imposible. Devuelve las claves que no cierran.
+ */
+function contradicciones(a, conFibra) {
+  const malas = [];
+  if (a.azucares > a.carbohidratos + 1) malas.push('azucares');
+  if (conFibra && a.fibra > a.carbohidratos + 1) malas.push('fibra');
+  for (const k of GRASAS) if (a[k] > a.grasas + 1) malas.push(k);
+  for (const [k, tope] of Object.entries(TOPES)) if (a[k] > tope) malas.push(k);
+  for (const k of ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]) if (a[k] < 0) malas.push(k);
+  return malas;
+}
+
 // ------------------------------------------------------------ Armar
 const alimentos = new Map();
 const porciones = [];
 const resumen = {};
+let quitados = 0;
 for (const base of Object.keys(BASES)) {
   const { nutrientes, fuera } = BASES[base];
   const archivos = leerZip(await bajar(base, BASES[base].url, BASES[base].nombre));
@@ -393,12 +474,16 @@ for (const base of Object.keys(BASES)) {
       marcas++;
       continue;
     }
-    alimentos.set(Number(f.fdc_id), {
-      id: Number(f.fdc_id), fuente: base, categoriaUsda: categoria,
+    const alimento = {
+      ...v, id: Number(f.fdc_id), fuente: base, categoriaUsda: categoria,
       descripcion: f.description.replace(/\s*\(Includes foods for USDA's Food Distribution Program\)/, '').trim(),
       kcal: v.kcal, proteina: v.proteina ?? 0, carbohidratos: v.carbohidratos ?? 0, grasas: v.grasas ?? 0,
-      fibra: v.fibra, azucares: v.azucares, saturadas: v.saturadas, sodio: v.sodio, alcohol: v.alcohol,
-    });
+    };
+    for (const k of contradicciones(alimento, true)) {
+      delete alimento[k];
+      quitados++;
+    }
+    alimentos.set(alimento.id, alimento);
   }
   const vistas = new Set();
   for (const p of csv(archivos.get('food_portion.csv')).sort((a, b) => Number(a.seq_num) - Number(b.seq_num))) {
@@ -418,7 +503,7 @@ const desechos = await desechosDeSr28();
 // Los ids de lo que no es de USDA son negativos y no cambian nunca: propio#N es -N, receta#N es
 // -(5000 + N) y producto#N es -(10000 + N).
 const ID = { propio: (n) => (n >= 1 && n < 5000 ? -n : null), receta: (n) => (n >= 1 && n < 5000 ? -(5000 + n) : null), producto: (n) => (n >= 1 ? -(10000 + n) : null) };
-const SECUNDARIOS = ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'];
+const SECUNDARIOS = ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS];
 const curados = leerCurados();
 const porDescripcion = new Map();
 for (const a of alimentos.values()) porDescripcion.set(`${a.fuente}:${a.descripcion}`, a);
@@ -445,6 +530,10 @@ for (const g of curados) {
     }
     alimento = { id, fuente: tipo, descripcion: g.en, kcal: +kcal, proteina: +proteina, carbohidratos: +carbohidratos, grasas: +grasas };
     for (const k of SECUNDARIOS) if (g.detalles[k] !== undefined) alimento[k] = Number(g.detalles[k]);
+    // Lo escrito a mano no se arregla solo: se corrige en el archivo. En una etiqueta, la fibra
+    // puede ser más que los carbohidratos (en Europa, los carbohidratos no la cuentan).
+    const malas = contradicciones(alimento, tipo === 'propio');
+    if (malas.length) errores.push(`${g.donde}: ${malas.join(', ')} no cierra con los macros o no es posible`);
     alimentos.set(id, alimento);
   } else alimento = porDescripcion.get(g.origen);
   if (!alimento) {
@@ -570,6 +659,23 @@ for (const a of alimentos.values()) {
     deOff++;
   }
 }
+
+// Lo verificado: primero lo comparado con una segunda fuente; después los platos con todos sus
+// ingredientes verificados (en el orden en que se armaron: un plato puede ser ingrediente de otro);
+// y los productos cuya etiqueta cierra.
+const hoy = new Date().toISOString().slice(0, 10);
+const verificados = leerVerificacion();
+for (const a of alimentos.values()) {
+  const v = a.es && verificados.get(a.es);
+  if (v) Object.assign(a, { verificado: v.fecha, segunda: v.segunda });
+}
+for (const [plato] of pesosFinales) {
+  const a = alimentos.get(plato);
+  const suyos = ingredientes.filter(([p]) => p === plato).map(([, i]) => alimentos.get(i));
+  if (!a.verificado && suyos.every((i) => i.verificado)) Object.assign(a, { verificado: suyos.map((i) => i.verificado).sort().at(-1), segunda: 'ingredientes' });
+}
+for (const a of alimentos.values()) if (a.fuente === 'producto' && !a.verificado && cierraLaEtiqueta(a)) Object.assign(a, { verificado: hoy, segunda: 'etiqueta' });
+
 if (errores.length) {
   console.error(errores.join('\n'));
   process.exit(1);
@@ -611,7 +717,14 @@ db.exec(`
     desecho_en TEXT,
     aceite TEXT,
     crudo INTEGER,
-    atribucion TEXT
+    atribucion TEXT,
+    -- Verificado: el día y con qué. Una segunda fuente oficial ('cnf:…', 'taco:…', spec/fuentes.md),
+    -- 'ingredientes' (un plato con todos sus ingredientes verificados) o 'etiqueta' (un producto
+    -- cuya etiqueta cierra). Sin verificar, null.
+    verificado TEXT,
+    segunda TEXT,
+    -- Los micronutrientes, en las unidades de USDA (herramientas/alimentos.mjs, MICROS); lo que no se sabe, null.
+    ${CLAVES_MICROS.map((k) => `${k} REAL`).join(', ')}
   );
   CREATE INDEX alimentos_por_crudo ON alimentos (crudo) WHERE crudo IS NOT NULL;
   -- La porción es un peso: «1 pechuga» son 145 g. Sin traducción, 'es' es null.
@@ -632,11 +745,15 @@ db.exec(`
   CREATE TABLE ingredientes (plato INTEGER NOT NULL, ingrediente INTEGER NOT NULL, gramos REAL NOT NULL);
 `);
 db.exec('BEGIN');
-const ponerAlimento = db.prepare('INSERT INTO alimentos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+const COLUMNAS = ['id', 'fuente', 'descripcion', 'nombre_es', 'nombre_en', 'categoria', 'kcal', 'proteina', 'carbohidratos', 'grasas', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol',
+  'porcion', 'marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'verificado', 'segunda', ...CLAVES_MICROS];
+const ponerAlimento = db.prepare(`INSERT INTO alimentos (${COLUMNAS.join(', ')}) VALUES (${COLUMNAS.map(() => '?').join(', ')})`);
 const ponerPorcion = db.prepare('INSERT INTO porciones (alimento, en, es, gramos) VALUES (?, ?, ?, ?)');
 const ponerAlias = db.prepare('INSERT INTO alias VALUES (?, ?, ?, ?)');
 const ponerTexto = db.prepare('INSERT INTO textos (alimento, idioma, region, principal, texto) VALUES (?, ?, ?, ?, ?)');
 const redondo = (n) => Math.round(n * 100) / 100;
+// Lo chico con tres cifras: 0,004 mg de B12 no es cero.
+const fino = (n) => (n === undefined || n === null ? null : n < 1 ? Math.round(n * 1000) / 1000 : n < 100 ? redondo(n) : Math.round(n * 10) / 10);
 let sinTraducir = 0;
 const textosSinTraducir = new Map();
 for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
@@ -645,6 +762,7 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
     a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas),
     tal(a.fibra), tal(a.azucares), tal(a.saturadas), tal(a.sodio), tal(a.alcohol), null,
     a.marca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null,
+    a.verificado ?? null, a.segunda ?? null, ...CLAVES_MICROS.map((k) => fino(a[k])),
   );
   // De los curados: primero sus porciones (la primera es la de siempre); de USDA, solo las que
   // tienen traducción. Una porción propia sin inglés toma el de la de USDA que pesa lo mismo.
@@ -705,6 +823,9 @@ console.log(`SR Legacy: ${resumen.sr.alimentos} alimentos (${resumen.sr.afuera} 
 console.log(`Curados: ${curados.length}, con ${alias.length} alias: ${recetas.length} platos como recetas, ${cuantos((a) => a.fuente === 'producto')} productos (${deOff} de Open Food Facts) y ${codigos.size} códigos de barras.`);
 console.log(`Cómo se miden: ${cuantos((a) => a.crudo)} cocidos con su versión cruda, ${cuantos((a) => a.desecho)} con parte que no se come, ${cuantos((a) => a.densidad)} líquidos y ${cuantos((a) => a.aceite === 'preguntar')} que preguntan por el aceite.`);
 console.log(`Porciones de USDA sin traducir en los curados: ${sinTraducir}.`);
+const verificadosPor = (segunda) => cuantos((a) => a.verificado && (segunda ? a.segunda === segunda : !['ingredientes', 'etiqueta'].includes(a.segunda)));
+console.log(`Verificados: ${verificadosPor()} con una segunda fuente, ${verificadosPor('ingredientes')} platos por sus ingredientes y ${verificadosPor('etiqueta')} productos por su etiqueta, de ${cuantos((a) => a.es)} curados.`);
+console.log(`Con micronutrientes: ${cuantos((a) => a.calcio != null)} con calcio, ${cuantos((a) => a.vitaminaC != null)} con vitamina C; ${quitados} valores de USDA que no cierran, quitados.`);
 console.log(`${salida.replace(raiz, '').slice(1)}: ${(statSync(salida).size / 1048576).toFixed(1)} MB`);
 // Para ampliar la tabla de traducción: VER_PORCIONES=1 npm run alimentos
 if (process.env.VER_PORCIONES) {

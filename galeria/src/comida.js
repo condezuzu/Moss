@@ -108,6 +108,7 @@ const Comida = (() => {
   const salida = (u) => 1 - Math.pow(1 - Math.min(1, Math.max(0, u)), 3);
   // Lo secundario de cada alimento (ALIMENTOS[].s), en ese orden, con su unidad. El alcohol solo si hay.
   const SECUNDARIOS = [['fibra', 'g'], ['azucares', 'g'], ['saturadas', 'g'], ['sodio', 'mg'], ['alcohol', 'g']];
+  const LETRA = { proteina: 'p', carbohidratos: 'c', grasas: 'g' };
 
   function crear(tel, escena, opciones) {
     const ALIMENTOS = opciones.alimentos || [];
@@ -1231,6 +1232,8 @@ const Comida = (() => {
       if (s.hoja) s.hoja.ventana = null;
       hoja.classList.remove('con-ventana');
       const esconder = () => { if (!s.hoja || !s.hoja.ventana) { ventana.hidden = true; velo.hidden = true; ventana.innerHTML = ''; } };
+      // Un reporte a medio escribir se va con la ventana.
+      hoja.querySelectorAll('.vt-reporte').forEach((p) => { p.classList.remove('abierto'); setTimeout(() => p.remove(), 320); });
       if (deUna) esconder(); else setTimeout(esconder, 340);
       // Si la hoja se abrió solo para corregir un registro, se va con la ventana.
       if (soloEditar) cerrarHoja();
@@ -1250,7 +1253,25 @@ const Comida = (() => {
       const titulos = el('div', 'vt-titulos');
       // Los ids dicen de dónde sale: receta#N es -(5000 + N) y producto#N, -(10000 + N) (herramientas/alimentos.mjs).
       const fuente = a.cat === 'etiqueta' ? 'etiqueta' : a.id <= -10000 ? 'producto' : a.id <= -5000 ? 'receta' : a.id < 0 ? 'propio' : 'usda';
-      titulos.append(el('h3', 'vt-nombre', nombreDe(a)), el('div', 'vt-fuente', tx('comida.fuente.' + fuente)));
+      // La fuente y si está verificado; al tocarla se abre «¿De dónde sale esto?» (spec/fuentes.md).
+      const verificado = !!a.w;
+      const lineaFuente = boton('vt-fuente', `<span>${tx('comida.fuente.' + (fuente === 'producto' && a.o === 'off' ? 'productoOff' : fuente))}</span><span class="vt-sello${verificado ? ' si' : ''}">${verificado ? icono('listo') : ''}${tx(verificado ? 'comida.verificado' : 'comida.sinVerificar')}</span>`, () => {
+        lineaFuente.setAttribute('aria-expanded', String(deDonde.classList.toggle('abierto')));
+      }, tx('comida.deDonde.titulo'));
+      lineaFuente.setAttribute('aria-expanded', 'false');
+      titulos.append(el('h3', 'vt-nombre', nombreDe(a)), lineaFuente);
+      const deDonde = el('div', 'vt-plegable vt-dedonde');
+      const deDondeTexto = el('div');
+      deDondeTexto.appendChild(el('b', null, tx('comida.deDonde.titulo')));
+      const origen = fuente === 'receta' && a.r ? tx('comida.deDonde.receta', { n: a.r[1], g: numero(a.r[0]) })
+        : fuente === 'producto' ? tx(a.o === 'off' ? 'comida.deDonde.off' : 'comida.deDonde.producto')
+          : fuente === 'propio' ? tx('comida.deDonde.propio') : tx('comida.deDonde.usda');
+      deDondeTexto.appendChild(el('p', null, origen));
+      const conQue = !a.w ? tx('comida.deDonde.sin') : a.w[1] === 'ingredientes' ? tx('comida.deDonde.ingredientes') : a.w[1] === 'etiqueta' ? tx('comida.deDonde.etiqueta')
+        : tx('comida.deDonde.con', { tabla: tx('comida.tablas.' + a.w[1].split(':')[0]) === 'comida.tablas.' + a.w[1].split(':')[0] ? tx('comida.tablas.otra') : tx('comida.tablas.' + a.w[1].split(':')[0]),
+          fecha: new Date(a.w[0] + 'T12:00:00').toLocaleDateString(idioma === 'es' ? 'es-UY' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) });
+      deDondeTexto.appendChild(el('p', null, conQue));
+      deDonde.appendChild(deDondeTexto);
       const estrella = boton('hj-estrella' + (s.favoritos.has(a.id) ? ' activa' : ''), icono('estrella'), () => {
         if (s.favoritos.has(a.id)) s.favoritos.delete(a.id); else s.favoritos.add(a.id);
         estrella.classList.toggle('activa', s.favoritos.has(a.id));
@@ -1265,7 +1286,34 @@ const Comida = (() => {
       const macros = el('div', 'vt-macros');
       cifras.append(kcal, macros);
       const queda = el('div', 'fi-queda');
+      // Cómo deja el día (DejaElDia, el mismo módulo que la app): cada macro antes y con esto, y una frase.
+      const deja = el('div', 'vt-deja');
+      const barras = {};
+      DejaElDia.MACROS.forEach((m) => {
+        const fila = el('div', 'vt-barra fi-macro-' + LETRA[m]);
+        const pista = el('div', 'vt-pista');
+        pista.append(el('i', 'vt-antes'), el('i', 'vt-suma'));
+        fila.append(el('span', null, tx('comida.' + m)), pista, el('b'));
+        barras[m] = fila;
+        deja.appendChild(fila);
+      });
+      const frase = el('p', 'vt-frase');
+      deja.appendChild(frase);
       const secundarios = el('div', 'vt-secundarios');
+      // Las vitaminas y los minerales: lo que más aporta, y todo al tocar «Ver todo».
+      const persona = { sexo: Datos.PERFIL.sexo, edad: HOY[0] - Datos.PERFIL.nacimiento };
+      const tieneMicros = !!(a.u && a.u.some((x) => x != null));
+      const microsEtq = el('div', 'fi-etq', tx('comida.micros.titulo'));
+      const microsChips = el('div', 'vt-micros');
+      const microsTodo = el('div', 'vt-plegable');
+      const microsLista = el('div', 'vt-micros-lista');
+      microsTodo.appendChild(microsLista);
+      const verTodo = boton('vt-ver', tx('comida.micros.verTodo'), () => {
+        const abierto = microsTodo.classList.toggle('abierto');
+        verTodo.textContent = tx(abierto ? 'comida.micros.verMenos' : 'comida.micros.verTodo');
+        verTodo.setAttribute('aria-expanded', String(abierto));
+      });
+      verTodo.setAttribute('aria-expanded', 'false');
       const porciones = el('div', 'vt-porciones');
       const cantidad = el('div', 'fi-cantidad');
       const gramosTxt = el('div', 'fi-gramos');
@@ -1315,17 +1363,39 @@ const Comida = (() => {
         }));
       }
 
-      ventana.append(cab, cifras, queda, secundarios, el('div', 'fi-etq', tx('comida.porcion')), porciones, el('div', 'fi-etq', tx('comida.cantidad')), cantidad, gramosTxt, pie);
+      // «Reportar un error»: sin usuario, va al servidor de Moss (supabase/moss/0006_alimentos.sql).
+      const reportar = boton('vt-reportar', tx('comida.reportar.boton'), () => abrirReporte(a));
+      ventana.append(cab, deDonde, cifras, queda, deja, secundarios, ...(tieneMicros ? [microsEtq, microsChips, microsTodo] : []),
+        el('div', 'fi-etq', tx('comida.porcion')), porciones, el('div', 'fi-etq', tx('comida.cantidad')), cantidad, gramosTxt, pie, reportar);
 
       const pintar = () => {
         const it = elegido();
         const v = valoresDe(it);
         contar(kcalB, v.kcal, kcalB.dataset.valor ? 300 : 0);
         // Lo que quedaría en el día: lo registrado, lo que ya se juntó y esto, sin contar lo que se cambia.
-        const juntado = sumar(s.canasta).kcal - (enCanasta ? valoresDe(enCanasta).kcal : 0);
-        const antes = editando ? totalDe(diaDe(editando.comida)).kcal - valoresDe(editando.item).kcal : totalDe(0).kcal + juntado;
-        const restante = META.kcal - antes - v.kcal;
+        const restarV = (x, y) => ({ kcal: x.kcal - y.kcal, p: x.p - y.p, c: x.c - y.c, g: x.g - y.g });
+        const sumarV = (x, y) => ({ kcal: x.kcal + y.kcal, p: x.p + y.p, c: x.c + y.c, g: x.g + y.g });
+        const juntado = restarV(sumar(s.canasta), enCanasta ? valoresDe(enCanasta) : { kcal: 0, p: 0, c: 0, g: 0 });
+        const antesDia = editando ? restarV(totalDe(diaDe(editando.comida)), valoresDe(editando.item)) : sumarV(totalDe(0), juntado);
+        const restante = META.kcal - antesDia.kcal - v.kcal;
         queda.textContent = tx(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) });
+        const aMacros = (x) => ({ kcal: x.kcal, proteina: x.p, carbohidratos: x.c, grasas: x.g });
+        const dejaria = DejaElDia.comoDejaElDia(aMacros(antesDia), aMacros(v), aMacros(META));
+        DejaElDia.MACROS.forEach((m) => {
+          const b = dejaria.barras[m];
+          const desde = Math.min(1, b.antes);
+          const hasta = Math.min(1, b.despues);
+          const [antesI, sumaI] = barras[m].querySelectorAll('i');
+          antesI.style.width = `${desde * 100}%`;
+          sumaI.style.left = `${desde * 100}%`;
+          sumaI.style.width = `${Math.max(0, hasta - desde) * 100}%`;
+          barras[m].classList.toggle('lleno', b.despues >= 1);
+          barras[m].querySelector('b').textContent = tx('comida.porcentaje', { n: numero(Math.round(b.despues * 100)) });
+        });
+        const f0 = dejaria.frase;
+        frase.textContent = !f0 ? '' : f0.tipo === 'llegas' ? tx('comida.deja.llegas.' + f0.macro, { n: f0.porcentaje })
+          : f0.tipo === 'completas' ? tx('comida.deja.completas.' + f0.macro) : tx('comida.deja.pasas.' + f0.macro, { n: numero(f0.gramos) });
+        frase.classList.toggle('vacia', !f0);
         macros.innerHTML = '';
         [['p', v.p], ['c', v.c], ['g', v.g]].forEach(([m, g]) => {
           const chip = el('span', 'vt-macro fi-macro-' + m);
@@ -1340,6 +1410,7 @@ const Comida = (() => {
           const n = x * factor;
           secundarios.appendChild(el('span', null, `${tx('comida.secundarios.' + clave)} ${numero(n, unidad === 'g' && n < 10 ? 1 : 0)} ${unidad}`));
         });
+        if (tieneMicros) pintarMicros(factor);
         porciones.innerHTML = '';
         a.p.forEach((p, i) => {
           const b = boton('fi-porcion', `<span>${porcionDe(a, i)}</span><small>${Porciones.decimal(p[2], idioma)} g</small>`, () => { f.porcion = i; f.gramos = null; f.veces = 1; pintar(); });
@@ -1369,6 +1440,40 @@ const Comida = (() => {
         }
         gramosTxt.textContent = f.gramos != null ? '' : `${cantidadDe(it)} = ${Porciones.decimal(gramosDe(it), idioma)} g`;
       };
+      function pintarMicros(factor) {
+        const m = {};
+        Micronutrientes.MICROS.forEach((k, i) => { if (a.u[i] != null) m[k] = a.u[i] * factor; });
+        const cifra = (n) => (n === 0 ? '0' : numero(n, n < 1 ? 2 : n < 10 ? 1 : 0));
+        const parte = (k, n) => {
+          const r = Micronutrientes.referenciaDe(k, persona);
+          if (!r) return '';
+          const p = Math.round((n / (r.meta ?? r.tope)) * 100);
+          return tx(r.meta != null ? 'comida.micros.delDia' : 'comida.micros.delMaximo', { n: numero(p) });
+        };
+        microsChips.innerHTML = '';
+        const destacados = Micronutrientes.destacados(m, persona).slice(0, 4);
+        destacados.forEach((d) => {
+          const chip = el('span', 'vt-micro');
+          chip.append(el('span', null, tx('comida.micros.nombres.' + d.micro)), el('b', null, numero(Math.round(d.parte * 100)) + ' %'));
+          microsChips.appendChild(chip);
+        });
+        if (!destacados.length) microsChips.appendChild(el('span', 'vt-micro poco', tx('comida.micros.poco')));
+        microsChips.appendChild(verTodo);
+        microsLista.innerHTML = '';
+        const dentro = el('div');
+        Object.entries(Micronutrientes.GRUPOS).forEach(([grupo, claves]) => {
+          const filas = claves.filter((k) => m[k] != null);
+          if (!filas.length) return;
+          dentro.appendChild(el('h4', null, tx('comida.micros.grupos.' + grupo)));
+          filas.forEach((k) => {
+            const fila = el('div', 'vt-micro-fila');
+            fila.append(el('span', null, tx('comida.micros.nombres.' + k)), el('b', null, `${cifra(m[k])} ${Micronutrientes.UNIDAD[k]}`), el('small', null, parte(k, m[k])));
+            dentro.appendChild(fila);
+          });
+        });
+        dentro.appendChild(el('p', 'vt-micros-nota', tx('comida.micros.referencia')));
+        microsLista.appendChild(dentro);
+      }
       pintar();
       // La porción elegida, a la vista en su fila.
       requestAnimationFrame(() => {
@@ -1380,6 +1485,51 @@ const Comida = (() => {
       velo.hidden = false;
       void ventana.offsetWidth;
       hoja.classList.add('con-ventana');
+    }
+
+    // ------------------------------------------------------------ reportar un error
+    // Sobre la ventana: qué está mal, una nota si quiere, y listo. Sin usuario: en la app va a
+    // moss.reportar_alimento, y sin conexión espera (src/almacen/buzon.ts).
+    function abrirReporte(a) {
+      const panel = el('div', 'vt-reporte');
+      const caja = el('div', 'vt-reporte-caja');
+      let motivo = null;
+      const cab = el('header', 'vt-cab');
+      const titulos = el('div', 'vt-titulos');
+      titulos.append(el('h3', 'vt-nombre', tx('comida.reportar.titulo')), el('div', 'vt-fuente-texto', nombreDe(a)));
+      const cerrar = () => {
+        panel.classList.remove('abierto');
+        setTimeout(() => panel.remove(), 320);
+      };
+      cab.append(titulos, boton('vt-cerrar', icono('cerrar'), cerrar, tx('comida.cerrar')));
+      const motivos = el('div', 'vt-motivos');
+      const enviar = boton('fi-agregar', tx('comida.reportar.enviar'), () => {
+        if (!motivo) return;
+        escena.haptico('suave');
+        caja.classList.add('enviado');
+        setTimeout(cerrar, 1700);
+      });
+      enviar.disabled = true;
+      ['valores', 'porcion', 'nombre', 'otro'].forEach((m) => {
+        const b = boton('fi-porcion', `<span>${tx('comida.reportar.motivos.' + m)}</span>`, () => {
+          motivo = m;
+          motivos.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          enviar.disabled = false;
+        });
+        b.setAttribute('aria-pressed', 'false');
+        motivos.appendChild(b);
+      });
+      const nota = el('textarea', 'vt-nota');
+      nota.rows = 3;
+      nota.maxLength = 500;
+      nota.placeholder = tx('comida.reportar.nota');
+      const gracias = el('p', 'vt-gracias', tx('comida.reportar.gracias'));
+      caja.append(cab, motivos, nota, enviar, gracias);
+      panel.appendChild(caja);
+      // Sobre la hoja y no adentro de la ventana, que se desliza: así se ve aunque esté abajo de todo.
+      ventana.parentElement.appendChild(panel);
+      void panel.offsetWidth;
+      panel.classList.add('abierto');
     }
 
     // ------------------------------------------------------------ el teclado

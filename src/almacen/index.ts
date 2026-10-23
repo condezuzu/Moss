@@ -14,6 +14,7 @@ import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { idioma } from '@/textos';
 import { abrirRepositorio } from './abrir';
 import { crearAlmacen, type Almacen } from './almacen';
+import { avisarSesion, buzon } from './buzonDeMoss';
 import { remotoSupabase } from './remoto';
 import { habitosDeEjemplo } from './semilla';
 import { crearSincronizador, type Sincronizador } from './sincronizar';
@@ -41,14 +42,16 @@ function sincronizarConLaCuenta(a: Almacen) {
       actual?.sincronizador.parar();
       actual = usuario ? { usuario, sincronizador: crearSincronizador({ almacen: a, remoto: remotoSupabase(cliente), usuario }) } : undefined;
       actual?.sincronizador.arrancar();
-      // Con sesión, también baja lo nuevo del catálogo de alimentos del servidor.
+      // Con sesión, también baja lo nuevo del catálogo de alimentos del servidor y sale lo que esperaba en el buzón.
       if (usuario) actualizarCatalogo(cliente).catch(() => {});
+      avisarSesion(Boolean(usuario));
     }, 0);
   });
   return {
     alVolver: () => {
       actual?.sincronizador.alVolver();
       if (actual) actualizarCatalogo(cliente).catch(() => {});
+      if (actual) buzon().enviar().catch(() => {});
     },
     parar: () => {
       data.subscription.unsubscribe();

@@ -43,7 +43,7 @@ SDK y la memoria no alcanza.
   JavaScript los módulos que usa, con los alimentos curados de
   `assets/alimentos.db`:
   - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada;
-  - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `control.ts`,
+  - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `micronutrientes.ts`, `dejaElDia.ts`, `control.ts`,
     `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts`,
     `musculos.ts`, `rendimiento.ts` y `estadisticas.ts`, que solo importan entre ellos
     (`DEL_DOMINIO` en `construir.mjs`).
@@ -127,7 +127,7 @@ SDK y la memoria no alcanza.
 | `npm test` | los tests del dominio, del almacén y de la sincronización (Jest con `jest-expo`) |
 | `npm run supabase:verificar` | el esquema de `supabase/moss/` en un Postgres local (PGlite): RLS, conflictos, semilla, borrar, y la app de verdad sincronizando varios teléfonos contra él |
 | `npm run alimentos` | arma `assets/alimentos.db`: baja USDA (FNDDS y SR Legacy) a `.cache/usda` la primera vez, suma `alimentos/genericos.txt` y arma los índices de búsqueda. Con `VER_PORCIONES=1` lista las porciones que faltan traducir |
-| `npm run alimentos:verificar` | revisa la base: valores posibles, porciones en español, nombres regionales sin ambigüedad, índices y tamaño; avisa de lo que no cierra con 4/4/9 |
+| `npm run alimentos:verificar` | revisa la base: valores posibles, porciones en español, nombres regionales sin ambigüedad, índices y tamaño; avisa de lo que no cierra con 4/4/9. Los controles de toda la base (macros, micronutrientes, porciones, platos, lo verificado) son tests: `src/comida/controles.test.ts` (con `BASE=otra.db`, contra otra base) |
 | `npm run typecheck` | tipos (incluye que `en.json` tenga las claves de `es.json`) |
 | `npx expo lint` | ESLint con la configuración de Expo, que incluye las reglas de React |
 | `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo, los textos, los alimentos curados y los módulos de la comida |
@@ -148,7 +148,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
 - `entrada`;
-- `comida` (con el cuadro de día, semana y mes), `registrar`, `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
+- `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso`, `metas`, `sueno`;
 - `editor` (el «+» y mantener apretada una estrella), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;

@@ -17,7 +17,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas' };
+const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -40,16 +40,26 @@ function modulo(nombre, ruta) {
 // por 100 g (kcal, proteína, carbohidratos, grasas, y aparte lo secundario), porciones [es, en,
 // gramos], la de siempre y los textos de búsqueda [idioma, región, principal, texto].
 function alimentosCurados() {
-  const ruta = join(raiz, 'assets/alimentos.db');
+  // Con BASE=otra.db, la galería usa otra base (la de un archivo de alimentos en revisión).
+  const ruta = join(raiz, process.env.BASE ?? 'assets/alimentos.db');
   if (!existsSync(ruta)) return null;
   const db = new DatabaseSync(ruta, { readOnly: true });
   const redondo = (n) => Math.round(n * 100) / 100;
-  const alimentos = new Map(db.prepare(`SELECT id, nombre_es, nombre_en, categoria, kcal, proteina, carbohidratos, grasas, fibra, azucares, saturadas, sodio, alcohol, porcion
-    FROM alimentos WHERE nombre_es IS NOT NULL ORDER BY id`).all()
+  // Los micronutrientes, en el orden de src/dominio/micronutrientes.ts (MICROS).
+  const MICROS = ['colesterol', 'trans', 'monoinsaturadas', 'poliinsaturadas', 'potasio', 'calcio', 'hierro', 'magnesio', 'fosforo', 'zinc', 'selenio',
+    'vitaminaA', 'vitaminaC', 'vitaminaD', 'vitaminaE', 'vitaminaK', 'tiamina', 'riboflavina', 'niacina', 'vitaminaB6', 'folato', 'vitaminaB12', 'cafeina'];
+  const microsDe = (a) => {
+    const u = MICROS.map((k) => (a[k] === null || a[k] === undefined ? null : Math.round(a[k] * 1000) / 1000));
+    while (u.length && u[u.length - 1] === null) u.pop();
+    return u;
+  };
+  const alimentos = new Map(db.prepare(`SELECT * FROM alimentos WHERE nombre_es IS NOT NULL ORDER BY id`).all()
     .map((a) => [a.id, {
       id: a.id, es: a.nombre_es, en: a.nombre_en, cat: a.categoria, v: [a.kcal, a.proteina, a.carbohidratos, a.grasas].map(redondo),
       // Lo secundario: fibra, azúcares, saturadas, sodio (mg) y alcohol; null si la base no lo tiene.
       s: [a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol].map((n) => (n === null ? null : redondo(n))),
+      // Los micronutrientes (MICROS) y lo verificado: [día, con qué], o null.
+      u: microsDe(a), w: a.verificado && a.segunda ? [a.verificado, a.segunda] : null, f: a.fuente, o: a.atribucion,
       p: [], d: 0, t: [], porcion: a.porcion,
     }]));
   for (const p of db.prepare(`SELECT p.id, p.alimento, p.es, p.en, p.gramos FROM porciones p JOIN alimentos a ON a.id = p.alimento WHERE a.nombre_es IS NOT NULL ORDER BY p.id`).all()) {
@@ -59,6 +69,11 @@ function alimentosCurados() {
   }
   for (const t of db.prepare(`SELECT t.alimento, t.idioma, t.region, t.principal, t.texto FROM textos t JOIN alimentos a ON a.id = t.alimento WHERE a.nombre_es IS NOT NULL ORDER BY t.id`).all()) {
     alimentos.get(t.alimento).t.push([t.idioma, t.region || '', t.principal, t.texto]);
+  }
+  // Los platos: lo que pesan terminados y cuántos ingredientes tienen, para «¿De dónde sale esto?».
+  for (const r of db.prepare('SELECT plato, peso_final, (SELECT count(*) FROM ingredientes i WHERE i.plato = r.plato) AS n FROM recetas r').all()) {
+    const a = alimentos.get(r.plato);
+    if (a) a.r = [r.peso_final, r.n];
   }
   db.close();
   return [...alimentos.values()].map(({ porcion, ...a }) => a);
@@ -109,6 +124,8 @@ const js = [
   modulo('Etiqueta', 'src/comida/etiqueta.ts'),
   modulo('Fechas', 'src/dominio/fechas.ts'),
   modulo('Metas', 'src/dominio/metas.ts'),
+  modulo('Micronutrientes', 'src/dominio/micronutrientes.ts'),
+  modulo('DejaElDia', 'src/dominio/dejaElDia.ts'),
   modulo('Control', 'src/dominio/control.ts'),
   modulo('Cuerpo', 'src/dominio/cuerpo.ts'),
   modulo('Progreso', 'src/dominio/progreso.ts'),

@@ -9,13 +9,17 @@ import type { Comida } from './comidas';
 import type { ComidaDelDia } from './control';
 import { diasEntre, type ClaveDia } from './fechas';
 import type { Macros } from './metas';
+import { escalarMicros, sumarMicros, type Micros } from './micronutrientes';
 
 /** De dónde sale un alimento: la base del teléfono, el catálogo uruguayo, Open Food Facts, los propios o una receta. */
 export type Fuente = 'base' | 'catalogo' | 'off' | 'propio' | 'receta' | 'rapida';
 
 /** Lo que se ve además de los macros, en gramos (el sodio, en mg). Lo que la fuente no dice, no está. */
 export type Secundarios = { fibra?: number; azucares?: number; saturadas?: number; sodio?: number; alcohol?: number };
-export type Valores = Macros & Secundarios;
+/** Los micronutrientes van aparte (micronutrientes.ts): lo que no dice la fuente, no está. */
+export type Valores = Macros & Secundarios & { micros?: Micros };
+/** Lo que es un número en los valores: los macros y lo secundario. */
+export type Nutriente = Exclude<keyof Valores, 'micros'>;
 export const SECUNDARIOS = ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'] as const;
 
 /**
@@ -99,19 +103,23 @@ export function gramosDe(c: Cantidad): number | null {
 export function escalar(v: Valores, factor: number): Valores {
   const r: Valores = { kcal: v.kcal * factor, proteina: v.proteina * factor, carbohidratos: v.carbohidratos * factor, grasas: v.grasas * factor };
   for (const k of SECUNDARIOS) if (v[k] != null) r[k] = v[k]! * factor;
+  if (v.micros) r.micros = escalarMicros(v.micros, factor);
   return r;
 }
 
 /** La suma. De lo secundario, lo que no dice un alimento cuenta como cero, y lo que no dice ninguno no está. */
 export function sumarValores(lista: Iterable<Valores>): Valores {
   const r: Valores = { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 };
+  const micros: Micros[] = [];
   for (const v of lista) {
     r.kcal += v.kcal;
     r.proteina += v.proteina;
     r.carbohidratos += v.carbohidratos;
     r.grasas += v.grasas;
     for (const k of SECUNDARIOS) if (v[k] != null) r[k] = (r[k] ?? 0) + v[k]!;
+    if (v.micros) micros.push(v.micros);
   }
+  if (micros.length) r.micros = sumarMicros(micros);
   return r;
 }
 
@@ -130,7 +138,7 @@ export function itemDeAlimento(fuente: Fuente, ref: string, nombre: string, por1
  * Registrar por lo que falta (como MacroFactor): cuántos gramos de un alimento dan `cantidad` de un
  * nutriente («cuánto pollo para 30 g de proteína», o para las kcal que quedan). Sin ese nutriente, null.
  */
-export function gramosPara(por100g: Valores, nutriente: keyof Valores, cantidad: number): number | null {
+export function gramosPara(por100g: Valores, nutriente: Nutriente, cantidad: number): number | null {
   const en100 = por100g[nutriente];
   if (!en100 || en100 <= 0 || cantidad <= 0) return null;
   return Math.round((cantidad / en100) * 100);

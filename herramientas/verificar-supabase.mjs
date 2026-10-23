@@ -12,6 +12,8 @@
 //   nadie desde la app (0004_medir.sql);
 // - que las noches propias (la cara de la mañana y la hora sin reloj) siguen las mismas reglas
 //   (0005_noches.sql);
+// - que lo comido y el catálogo guardan los micronutrientes, y que las búsquedas sin resultado y
+//   los reportes de errores se anotan sin usuario y no se leen desde la app (0006_alimentos.sql);
 // - que borrar la cuenta borra todo en cascada;
 // - que el teléfono baja el catálogo del servidor;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
@@ -218,6 +220,52 @@ comprobar((await como(A, 'select actualizado from moss.catalogo')).rows[0].actua
 let codigoMalo = false;
 try { await comoServicio(`insert into moss.catalogo (id, nombre_es, nombre_en, kcal, proteina, carbohidratos, grasas, codigos) values (-200003, 'x', 'x', 1, 0, 0, 0, '{77a3}')`); } catch { codigoMalo = true; }
 comprobar(codigoMalo, 'los códigos del catálogo son solo dígitos');
+
+// Los micronutrientes, las búsquedas sin resultado y los reportes (0006_alimentos.sql).
+await como(A, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas, micros) values ('r4', '2026-10-22', 'desayuno', now(), 'base', 'Leche', 122, 6.4, 9.6, 6.6, '{"calcio": 246}')`);
+comprobar((await como(A, `select micros from moss.registros where id = 'r4'`)).rows[0].micros.calcio === 246, 'lo comido guarda sus micronutrientes');
+comprobar(
+  await falla(A, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas, micros) values ('r5', '2026-10-22', 'cena', now(), 'base', 'x', 1, 0, 0, 0, '[1, 2]')`),
+  'los micronutrientes de lo comido son un objeto',
+);
+await como(A, `delete from moss.registros where id = 'r4'`);
+await comoServicio(`update moss.catalogo set micros = '{"calcio": 123}', verificado = '2026-10-22', segunda = 'cnf:61' where id = -200001`);
+const leche = (await como(B, 'select micros, verificado, segunda from moss.catalogo')).rows[0];
+comprobar(leche.micros.calcio === 123 && leche.segunda === 'cnf:61' && leche.verificado !== null, 'el catálogo trae los micronutrientes y si está verificado');
+let verificadoSolo = false;
+try { await comoServicio(`update moss.catalogo set segunda = null where id = -200001`); } catch { verificadoSolo = true; }
+comprobar(verificadoSolo, 'lo verificado del catálogo dice siempre con qué');
+await como(A, `select moss.anotar_busqueda_vacia('  Chivito AL pan ', 'es', 'uy')`);
+await como(B, `select moss.anotar_busqueda_vacia('chivito al pan', 'es', 'UY')`);
+const vacias = (await comoServicio('select * from moss.busquedas_vacias')).rows;
+comprobar(
+  vacias.length === 1 && vacias[0].veces === 2 && vacias[0].texto === 'chivito al pan' && vacias[0].region === 'UY' && !('usuario' in vacias[0]),
+  'las búsquedas sin resultado: en minúsculas, sin usuario, y la misma del mismo día suma una vez',
+);
+comprobar(
+  await falla(A, `select moss.anotar_busqueda_vacia('x', 'es')`) && await falla(A, `select moss.anotar_busqueda_vacia('pan', 'fr')`),
+  'una búsqueda sin resultado tiene al menos dos letras y el idioma de la app',
+);
+comprobar(
+  await falla('anon', `select moss.anotar_busqueda_vacia('pan', 'es')`) && await falla(A, 'select * from moss.busquedas_vacias')
+    && await falla(A, `insert into moss.busquedas_vacias (texto, idioma) values ('pan', 'es')`),
+  'sin sesión no se anota ninguna búsqueda, y desde la app no se leen ni se escriben directo',
+);
+await como(A, `select moss.reportar_alimento(-5001, null, 'Arroz con leche', 'valores', '  Tiene más azúcar  ', 'abc123')`);
+const reportes = (await comoServicio('select * from moss.reportes')).rows;
+comprobar(
+  reportes.length === 1 && reportes[0].nota === 'Tiene más azúcar' && String(reportes[0].alimento) === '-5001' && reportes[0].motivo === 'valores' && !('usuario' in reportes[0]),
+  'un reporte guarda qué alimento, qué está mal y la nota, sin usuario',
+);
+comprobar(
+  await falla(A, `select moss.reportar_alimento(null, null, 'x', 'valores')`) && await falla(A, `select moss.reportar_alimento(1, null, 'x', 'me cae mal')`)
+    && await falla(A, `select moss.reportar_alimento(null, '12ab', 'x', 'otro')`),
+  'un reporte dice de qué alimento es (su número o su código) y qué está mal, con un motivo conocido',
+);
+comprobar(
+  await falla('anon', `select moss.reportar_alimento(1, null, 'x', 'otro')`) && await falla(A, 'select * from moss.reportes'),
+  'sin sesión no se reporta, y nadie lee los reportes desde la app',
+);
 
 // ------------------------------------------------------------ 5. Semilla, períodos y borrar
 const semilla = async (usuario, valor) => (await como(usuario, 'select moss.poner_semilla($1) as s', [valor])).rows[0].s;

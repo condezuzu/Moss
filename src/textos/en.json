@@ -292,7 +292,8 @@
       "darPermiso": "Allow the camera",
       "sacarFoto": "Take the photo",
       "deOff": "Data from Open Food Facts (ODbL)",
-      "otraVez": "Scan another"
+      "otraVez": "Scan another",
+      "noCierra": "This product's data doesn't add up. Better read the label."
     },
     "crear": {
       "titulo": "Create food",
@@ -348,6 +349,101 @@
       "cambiar": "Take another",
       "borrar": "Delete photo",
       "nota": "The photo stays only on this phone and in its iCloud backup: it isn’t uploaded to your account."
+    },
+    "verificado": "Verified",
+    "sinVerificar": "Not verified",
+    "deDonde": {
+      "titulo": "Where does this come from?",
+      "usda": "The values come from USDA FoodData Central, the US public database.",
+      "propio": "Moss wrote these values from official sources.",
+      "receta": "Calculated from its {n} ingredients, which weigh {g} g when done.",
+      "producto": "The values come from the product label.",
+      "off": "The data comes from Open Food Facts, built by people (ODbL).",
+      "con": "Checked against {tabla} on {fecha}: they match.",
+      "ingredientes": "All its ingredients are verified.",
+      "etiqueta": "The calories add up with the label macros.",
+      "sin": "Not yet checked against a second source."
+    },
+    "tablas": {
+      "cnf": "the Canadian table (CNF)",
+      "taco": "the Brazilian table (TACO)",
+      "tbca": "the Brazilian table (TBCA)",
+      "ciqual": "the French table (Ciqual)",
+      "cofid": "the UK table (CoFID)",
+      "afcd": "the Australian table (AFCD)",
+      "argenfoods": "the Argentine table (ARGENFOODS)",
+      "uruguay": "the Uruguayan table",
+      "otra": "another official table"
+    },
+    "deja": {
+      "llegas": {
+        "proteina": "This gets you to {n}% of your protein",
+        "carbohidratos": "This gets you to {n}% of your carbs",
+        "grasas": "This gets you to {n}% of your fat"
+      },
+      "completas": {
+        "proteina": "This completes your protein for the day",
+        "carbohidratos": "This completes your carbs for the day",
+        "grasas": "This completes your fat for the day"
+      },
+      "pasas": {
+        "proteina": "This puts you {n} g over your protein",
+        "carbohidratos": "This puts you {n} g over your carbs",
+        "grasas": "This puts you {n} g over your fat"
+      }
+    },
+    "micros": {
+      "titulo": "Vitamins and minerals",
+      "verTodo": "See all",
+      "verMenos": "See less",
+      "delDia": "{n}% of the day",
+      "delMaximo": "{n}% of the maximum",
+      "poco": "A little of each",
+      "grupos": {
+        "vitaminas": "Vitamins",
+        "minerales": "Minerals",
+        "grasas": "Fats",
+        "otros": "Other"
+      },
+      "nombres": {
+        "colesterol": "Cholesterol",
+        "trans": "Trans fat",
+        "monoinsaturadas": "Monounsaturated",
+        "poliinsaturadas": "Polyunsaturated",
+        "potasio": "Potassium",
+        "calcio": "Calcium",
+        "hierro": "Iron",
+        "magnesio": "Magnesium",
+        "fosforo": "Phosphorus",
+        "zinc": "Zinc",
+        "selenio": "Selenium",
+        "vitaminaA": "Vitamin A",
+        "vitaminaC": "Vitamin C",
+        "vitaminaD": "Vitamin D",
+        "vitaminaE": "Vitamin E",
+        "vitaminaK": "Vitamin K",
+        "tiamina": "Thiamin (B1)",
+        "riboflavina": "Riboflavin (B2)",
+        "niacina": "Niacin (B3)",
+        "vitaminaB6": "Vitamin B6",
+        "folato": "Folate",
+        "vitaminaB12": "Vitamin B12",
+        "cafeina": "Caffeine"
+      },
+      "referencia": "The % is of the daily recommendation for your age and sex (the US National Academies). It is a guide, not a goal."
+    },
+    "reportar": {
+      "boton": "Report a problem",
+      "titulo": "What's wrong?",
+      "motivos": {
+        "valores": "The values",
+        "porcion": "A serving",
+        "nombre": "The name",
+        "otro": "Something else"
+      },
+      "nota": "Tell us more (optional)",
+      "enviar": "Send",
+      "gracias": "Thanks. We'll take a look."
     }
   },
   "inicio": {

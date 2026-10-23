@@ -27,7 +27,7 @@ describe('el producto', () => {
   it('el nombre en el idioma de la app, la marca, los valores por 100 g con el sodio en mg, y la porción', () => {
     const p = productoDe(GALLETITAS, 'es')!;
     expect(p).toEqual({
-      codigo: '7730205000011', nombre: 'Galletitas María', marca: 'Marca de Ejemplo', completo: true, avisos: [],
+      codigo: '7730205000011', nombre: 'Galletitas María', marca: 'Marca de Ejemplo', completo: true, avisos: [], verificado: true,
       por100g: { kcal: 440, proteina: 7.5, carbohidratos: 72, grasas: 13.5, fibra: 2.4, azucares: 20, saturadas: 6.1, sodio: 350 },
       porcion: { texto: '30 g (5 galletitas)', gramos: 30 },
     });
@@ -52,6 +52,35 @@ describe('el producto', () => {
   it('avisa si las kcal no cierran con los macros o si la porción no cierra con lo de 100 g', () => {
     const malo = { ...GALLETITAS.product.nutriments, 'energy-kcal_100g': 250, 'energy-kcal_serving': 200 };
     expect(productoDe({ ...GALLETITAS, product: { ...GALLETITAS.product, nutriments: malo } }, 'es')!.avisos).toEqual(['noCierra', 'porcionNoCierra']);
+  });
+
+  it('lo imposible no pasa los controles: queda sin verificar', () => {
+    const imposible = { ...GALLETITAS.product.nutriments, carbohidratos_100g: 72, sugars_100g: 80 };
+    const p = productoDe({ ...GALLETITAS, product: { ...GALLETITAS.product, nutriments: imposible } }, 'es')!;
+    expect(p.avisos).toEqual(['imposible']);
+    expect(p.verificado).toBe(false);
+    const sinGrasas = { ...GALLETITAS.product.nutriments } as Record<string, number>;
+    delete sinGrasas.fat_100g;
+    expect(productoDe({ ...GALLETITAS, product: { ...GALLETITAS.product, nutriments: sinGrasas } }, 'es')!.verificado).toBe(false);
+  });
+
+  it('una etiqueta europea, con la fibra aparte a 2 kcal, cierra', () => {
+    // Pan integral: 6 g de fibra que los carbohidratos (41 g) no cuentan.
+    const pan = { status: 1, product: { code: '2', product_name: 'Pan integral', nutriments: { 'energy-kcal_100g': 250, proteins_100g: 9, carbohydrates_100g: 41, fat_100g: 3.5, fiber_100g: 6 } } };
+    expect(productoDe(pan, 'es')!.avisos).toEqual([]);
+  });
+
+  it('las vitaminas y los minerales vienen en gramos y se pasan a mg o µg; lo imposible no se guarda', () => {
+    const leche = { status: 1, product: { code: '3', product_name: 'Leche', nutriments: {
+      'energy-kcal_100g': 61, proteins_100g: 3.2, carbohydrates_100g: 4.8, fat_100g: 3.3, calcium_100g: 0.12, 'vitamin-d_100g': 0.0000011, 'vitamin-a_100g': 0.00005,
+      'vitamin-c_100g': 90, cholesterol_100g: 0.012,
+    } } };
+    const m = productoDe(leche, 'es')!.por100g.micros!;
+    expect(m.calcio).toBeCloseTo(120, 6);
+    expect(m.vitaminaD).toBeCloseTo(1.1, 6);
+    expect(m.vitaminaA).toBeCloseTo(50, 6);
+    expect(m.colesterol).toBeCloseTo(12, 6);
+    expect('vitaminaC' in m).toBe(false);
   });
 
   it('el alcohol viene en % de volumen y se pasa a gramos', () => {

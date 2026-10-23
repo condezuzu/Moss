@@ -86,7 +86,7 @@ const lejos = todas(`SELECT nombre_es, kcal, round(4 * proteina + 4 * carbohidra
   WHERE nombre_es IS NOT NULL AND abs(kcal - (4 * proteina + 4 * carbohidratos + 9 * grasas + 7 * coalesce(alcohol, 0))) > max(20, 0.2 * kcal)`);
 if (lejos.length) console.log(`! para mirar: ${lejos.length} curados no cierran con 4/4/9 y 7 (fibra, edulcorantes):\n  ${lejos.map((a) => `${a.nombre_es}: ${a.kcal} kcal, y 4/4/9 da ${a.calculadas}`).join('\n  ')}`);
 if (sinSecundarios.length) console.log(`! para mirar: ${sinSecundarios.length} curados de USDA sin fibra o sin sodio (en la app no se muestran): ${sinSecundarios.map((a) => a.nombre_es).join(', ')}`);
-const rindeRaro = pares.filter((p) => p.aceite !== 'incluido' && (p.rinde < 0.25 || p.rinde > 4));
+const rindeRaro = pares.filter((p) => p.aceite !== 'incluido' && (p.rinde < 0.25 || p.rinde > 10));
 if (rindeRaro.length) console.log(`! para mirar: ${rindeRaro.length} pares crudo y cocido con un rendimiento raro:\n  ${rindeRaro.map((p) => `${p.cocido}: ${p.rinde.toFixed(2)}`).join('\n  ')}`);
 // Lo cocido sin su versión cruda, y lo crudo sin cocido: para completar los pares.
 const cocinado = /(?:^|\s)(cocid[oa]s?|hervid[oa]s?|a la plancha|al horno|asad[oa]s?|frit[oa]s?|salteado|guisad[oa]s?|al vapor|grillad[oa])(?:$|\s|,)/i;

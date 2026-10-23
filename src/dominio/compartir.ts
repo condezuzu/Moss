@@ -3,7 +3,8 @@
 // a un texto que se lee aunque no se tenga Moss. Quien lo recibe lo suma a lo suyo. Lo que llega se
 // revisa entero: de un enlace puede venir cualquier cosa.
 
-import { SECUNDARIOS, type AlimentoPropio, type Item, type Receta, type Valores } from './registros';
+import { microsValidos } from './micronutrientes';
+import { SECUNDARIOS, type AlimentoPropio, type Item, type Nutriente, type Receta, type Valores } from './registros';
 
 export type RecetaCompartida = Pick<Receta, 'tipo' | 'nombre' | 'items' | 'porciones' | 'pesoFinal'>;
 export type PropioCompartido = Pick<AlimentoPropio, 'nombre' | 'marca' | 'codigo' | 'por100g' | 'porciones' | 'origen'>;
@@ -42,6 +43,13 @@ const itemLimpio = (i: Item): Item => ({
 const numero = (x: unknown, min: number, max: number): x is number => typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
 const texto = (x: unknown, max: number): x is string => typeof x === 'string' && x.trim().length > 0 && x.length <= max;
 
+/** Los micronutrientes de otro teléfono: solo los conocidos y posibles; si no queda ninguno, no van. */
+function conMicrosLimpios(v: Valores): Valores {
+  const { micros, ...resto } = v;
+  const limpios = microsValidos(micros);
+  return limpios ? { ...resto, micros: limpios } : resto;
+}
+
 function valoresValidos(v: unknown, porCien: boolean): v is Valores {
   if (!v || typeof v !== 'object') return false;
   const x = v as Record<string, unknown>;
@@ -68,7 +76,7 @@ export function leerCompartido(enlaceOD: string): Compartido | null {
       if (!r || (r.tipo !== 'receta' && r.tipo !== 'comida') || !texto(r.nombre, 80) || !numero(r.porciones, 0.5, 100)) return null;
       if (!(r.pesoFinal === null || numero(r.pesoFinal, 1, 20000))) return null;
       if (!Array.isArray(r.items) || !r.items.length || r.items.length > MAXIMO_DE_ITEMS || !r.items.every(itemValido)) return null;
-      return { tipo: 'receta', receta: { tipo: r.tipo, nombre: r.nombre.trim(), porciones: r.porciones, pesoFinal: r.pesoFinal as number | null, items: r.items as Item[] } };
+      return { tipo: 'receta', receta: { tipo: r.tipo, nombre: r.nombre.trim(), porciones: r.porciones, pesoFinal: r.pesoFinal as number | null, items: (r.items as Item[]).map((i) => ({ ...i, valores: conMicrosLimpios(i.valores) })) } };
     }
     if (datos.tipo === 'propio') {
       const p = datos.propio as Record<string, unknown>;
@@ -77,7 +85,7 @@ export function leerCompartido(enlaceOD: string): Compartido | null {
       const porciones = p.porciones;
       if (!Array.isArray(porciones) || porciones.length > 20 || !porciones.every((x) => x && texto((x as { nombre: unknown }).nombre, 60) && numero((x as { gramos: unknown }).gramos, 0.1, 5000))) return null;
       const origen = p.origen === 'off' || p.origen === 'etiqueta' ? p.origen : 'mano';
-      return { tipo: 'propio', propio: { nombre: p.nombre.trim(), marca: p.marca as string | null, codigo: p.codigo as string | null, por100g: p.por100g as Valores, porciones: porciones as AlimentoPropio['porciones'], origen } };
+      return { tipo: 'propio', propio: { nombre: p.nombre.trim(), marca: p.marca as string | null, codigo: p.codigo as string | null, por100g: conMicrosLimpios(p.por100g as Valores), porciones: porciones as AlimentoPropio['porciones'], origen } };
     }
     return null;
   } catch {
@@ -87,6 +95,6 @@ export function leerCompartido(enlaceOD: string): Compartido | null {
 
 /** Lo que trae una porción de una receta: la suma de sus alimentos, dividida por las porciones. */
 export function porPorcion(r: RecetaCompartida): Valores {
-  const suma = (k: keyof Valores) => r.items.reduce((s, i) => s + (i.valores[k] ?? 0), 0) / r.porciones;
+  const suma = (k: Nutriente) => r.items.reduce((s, i) => s + (i.valores[k] ?? 0), 0) / r.porciones;
   return { kcal: suma('kcal'), proteina: suma('proteina'), carbohidratos: suma('carbohidratos'), grasas: suma('grasas') };
 }

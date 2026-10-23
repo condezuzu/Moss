@@ -4,6 +4,8 @@
 // cambió y lo mezcla al buscar, en el detalle y con el código de barras. Lo de acá es puro: no
 // sabe de dónde vienen las filas.
 
+import { microsValidos, type Micros } from '@/dominio/micronutrientes';
+
 import { candidatosEnMemoria, conMayuscula, mejoresPorAlimento, textoEnMemoria, type Opciones, type Resultado } from './buscar';
 import { formasDelCodigo, type Detalle, type Valores100 } from './detalle';
 
@@ -25,6 +27,10 @@ export type FilaDelCatalogo = {
   saturadas: number | null;
   sodio: number | null;
   alcohol: number | null;
+  /** Desde 0006: los micronutrientes y lo verificado, como en la base de la app. */
+  micros?: Micros | null;
+  verificado?: string | null;
+  segunda?: string | null;
   porciones: { es: string; en: string; gramos: number }[];
   densidad: number | null;
   desecho: number | null;
@@ -51,6 +57,8 @@ export function mezclarCatalogo(antes: FilaDelCatalogo[], llegadas: FilaDelCatal
 const valoresDe = (f: FilaDelCatalogo): Valores100 => {
   const v: Valores100 = { kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas };
   for (const k of ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'] as const) if (f[k] !== null) v[k] = f[k]!;
+  const micros = microsValidos(f.micros);
+  if (micros) v.micros = micros;
   return v;
 };
 
@@ -66,7 +74,7 @@ export function conElCatalogo(resultados: Resultado[], filas: FilaDelCatalogo[],
   const comoResultado = (f: FilaDelCatalogo, coincide: string): Resultado => {
     const porcion = f.porciones[0];
     return {
-      id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), coincide, curado: true, ...valoresDe(f),
+      id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), coincide, curado: true, verificado: !!f.verificado, ...valoresDe(f),
       porcion: porcion ? { nombre: op.idioma === 'es' ? porcion.es : porcion.en, gramos: porcion.gramos } : null,
     };
   };
@@ -102,6 +110,7 @@ export function detalleDelCatalogo(filas: FilaDelCatalogo[], id: number, op: { i
     crudo: crudo ? { id: crudo.id, nombre: nombreDe(crudo, op.idioma) } : null,
     cocidos: filas.filter((x) => x.crudo === f.id && !x.retirado).map((x) => ({ id: x.id, nombre: nombreDe(x, op.idioma) })),
     receta: null,
+    verificado: f.verificado && f.segunda ? { fecha: f.verificado, con: f.segunda } : null,
   };
 }
 

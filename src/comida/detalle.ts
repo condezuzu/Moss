@@ -3,6 +3,8 @@
 // los alimentos»): la versión cruda o las cocidas, la parte que no se come, la densidad de lo que
 // se toma y el aceite. También, un alimento por su código de barras.
 
+import { MICROS, type Micro, type Micros } from '@/dominio/micronutrientes';
+
 import type { BaseDeAlimentos, Idioma } from './buscar';
 
 export type Valores100 = {
@@ -15,6 +17,8 @@ export type Valores100 = {
   saturadas?: number;
   sodio?: number;
   alcohol?: number;
+  /** Las vitaminas, los minerales, las otras grasas y la cafeína (src/dominio/micronutrientes.ts). */
+  micros?: Micros;
 };
 
 export type PorcionDeAlimento = { nombre: string; gramos: number };
@@ -41,15 +45,27 @@ export type Detalle = {
   cocidos: Pariente[];
   /** Un plato hecho receta: lo que pesa terminado y sus ingredientes. */
   receta: { pesoFinal: number; ingredientes: { nombre: string; gramos: number }[] } | null;
+  /**
+   * Verificado (spec/fuentes.md): el día y con qué. Una segunda fuente oficial ('cnf:…'), sus
+   * ingredientes ('ingredientes') o su etiqueta ('etiqueta'). Sin verificar, null.
+   */
+  verificado: { fecha: string; con: string } | null;
 };
+
+/** Los micronutrientes de una fila: lo que no es null. Sin ninguno, undefined. */
+export function microsDeFila(fila: Partial<Record<Micro, number | null>>): Micros | undefined {
+  const m: Micros = {};
+  for (const k of MICROS) if (fila[k] != null) m[k] = fila[k]!;
+  return Object.keys(m).length ? m : undefined;
+}
 
 type FilaAlimento = {
   id: number; fuente: string; descripcion: string; nombre_es: string | null; nombre_en: string | null;
   kcal: number; proteina: number; carbohidratos: number; grasas: number;
   fibra: number | null; azucares: number | null; saturadas: number | null; sodio: number | null; alcohol: number | null;
   marca: string | null; densidad: number | null; desecho: number | null; desecho_es: string | null; desecho_en: string | null;
-  aceite: string | null; crudo: number | null; atribucion: string | null;
-};
+  aceite: string | null; crudo: number | null; atribucion: string | null; verificado?: string | null; segunda?: string | null;
+} & Partial<Record<Micro, number | null>>;
 
 const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
 
@@ -87,6 +103,8 @@ export async function detalleDeAlimento(base: BaseDeAlimentos, id: number, op: {
   const nombresDeIngredientes = await nombres(base, ingredientes.map((i) => i.ingrediente), op);
   const por100g: Valores100 = { kcal: a.kcal, proteina: a.proteina, carbohidratos: a.carbohidratos, grasas: a.grasas };
   for (const k of ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'] as const) if (a[k] !== null) por100g[k] = a[k]!;
+  const micros = microsDeFila(a);
+  if (micros) por100g.micros = micros;
   const que = op.idioma === 'es' ? a.desecho_es : a.desecho_en;
   return {
     id: a.id,
@@ -102,6 +120,7 @@ export async function detalleDeAlimento(base: BaseDeAlimentos, id: number, op: {
     crudo: a.crudo ? { id: a.crudo, nombre: nombresDe.get(a.crudo) ?? '' } : null,
     cocidos: cocidos.map((c) => ({ id: c, nombre: nombresDe.get(c) ?? '' })),
     receta: plato ? { pesoFinal: plato.peso_final, ingredientes: ingredientes.map((i) => ({ nombre: nombresDeIngredientes.get(i.ingrediente) ?? '', gramos: i.gramos })) } : null,
+    verificado: a.verificado && a.segunda ? { fecha: a.verificado, con: a.segunda } : null,
   };
 }
 
@@ -128,7 +147,8 @@ export async function alimentoPorCodigo(base: BaseDeAlimentos, codigo: string): 
  * Cuánto rinde lo crudo al cocinarlo: cuántos gramos cocidos dan 100 g crudos. Sale de la proteína
  * de las dos versiones, que no se pierde al cocinar (la grasa sí: con las calorías, una carne grasa
  * parecería no achicarse); sin proteína, de las calorías. 100 g de arroz crudo dan unos 260 g
- * cocido. Lo frito no tiene rinde: el rebozado y el aceite suman. Sirve de guía, no de cuenta exacta.
+ * cocido, y las papillas mucho más: la polenta, unas 6 veces, y la sémola con agua, casi 9. Lo frito no tiene rinde:
+ * el rebozado y el aceite suman. Sirve de guía, no de cuenta exacta.
  */
 export function rindeAlCocinar(crudo: Pick<Valores100, 'kcal' | 'proteina'>, cocido: Pick<Valores100, 'kcal' | 'proteina'>, aceite?: Detalle['aceite']): number | null {
   if (aceite === 'incluido') return null;
@@ -136,5 +156,5 @@ export function rindeAlCocinar(crudo: Pick<Valores100, 'kcal' | 'proteina'>, coc
   const [a, b] = conProteina ? [crudo.proteina, cocido.proteina] : [crudo.kcal, cocido.kcal];
   if (!(a > 0) || !(b > 0)) return null;
   const rinde = a / b;
-  return rinde >= 0.25 && rinde <= 4 ? rinde : null;
+  return rinde >= 0.25 && rinde <= 10 ? rinde : null;
 }

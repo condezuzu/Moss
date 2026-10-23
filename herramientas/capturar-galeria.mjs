@@ -548,6 +548,31 @@ const pasos = {
     await pagina.waitForTimeout(1600);
     await foto('registrar-despues');
   },
+  // La ventana del alimento (lo pediste el 22/10): verificado y de dónde sale, cómo deja el día, las
+  // vitaminas y los minerales, y reportar un error.
+  async ventana() {
+    await pestana(1);
+    await comida('registrar');
+    await pagina.waitForTimeout(1000);
+    await comida('ficha', 'Leche entera');
+    await pagina.waitForTimeout(900);
+    await foto('ventana');
+    await pagina.click('.vt-fuente');
+    await pagina.click('.vt-ver');
+    await pagina.waitForTimeout(700);
+    await foto('ventana-abierta');
+    await pagina.click('.vt-reportar');
+    await pagina.waitForTimeout(600);
+    await pagina.click('.vt-motivos button');
+    await pagina.waitForTimeout(300);
+    await foto('ventana-reportar');
+    await pagina.click('.vt-reporte .fi-agregar');
+    await pagina.waitForTimeout(500);
+    await foto('ventana-gracias');
+    await pagina.waitForTimeout(1800);
+    await comida('cerrar');
+    await pagina.waitForTimeout(800);
+  },
   // La etiqueta: lo leído para revisar, guardado y sumado, encontrable después, y el aviso de 4/4/9.
   async etiqueta() {
     await pestana(1);

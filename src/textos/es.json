@@ -292,7 +292,8 @@
       "darPermiso": "Permitir la cámara",
       "sacarFoto": "Sacar la foto",
       "deOff": "Datos de Open Food Facts (ODbL)",
-      "otraVez": "Escanear otro"
+      "otraVez": "Escanear otro",
+      "noCierra": "Los datos de este producto no cierran. Mejor lee la etiqueta."
     },
     "crear": {
       "titulo": "Crear alimento",
@@ -348,6 +349,101 @@
       "cambiar": "Sacar otra",
       "borrar": "Borrar la foto",
       "nota": "La foto queda solo en este teléfono y en su copia de iCloud: no se sube a tu cuenta."
+    },
+    "verificado": "Verificado",
+    "sinVerificar": "Sin verificar",
+    "deDonde": {
+      "titulo": "¿De dónde sale esto?",
+      "usda": "Los valores son de USDA FoodData Central, la base pública de Estados Unidos.",
+      "propio": "Los valores los escribió Moss, de fuentes oficiales.",
+      "receta": "Calculado con sus {n} ingredientes, que pesan {g} g terminados.",
+      "producto": "Los valores son de la etiqueta del producto.",
+      "off": "Los datos son de Open Food Facts, que arma la gente (ODbL).",
+      "con": "Comparado con {tabla} el {fecha}: coinciden.",
+      "ingredientes": "Todos sus ingredientes están verificados.",
+      "etiqueta": "Las calorías cierran con los macros de la etiqueta.",
+      "sin": "Todavía no está comparado con una segunda fuente."
+    },
+    "tablas": {
+      "cnf": "la tabla de Canadá (CNF)",
+      "taco": "la tabla de Brasil (TACO)",
+      "tbca": "la tabla de Brasil (TBCA)",
+      "ciqual": "la tabla de Francia (Ciqual)",
+      "cofid": "la tabla del Reino Unido (CoFID)",
+      "afcd": "la tabla de Australia (AFCD)",
+      "argenfoods": "la tabla de Argentina (ARGENFOODS)",
+      "uruguay": "la tabla de Uruguay",
+      "otra": "otra tabla oficial"
+    },
+    "deja": {
+      "llegas": {
+        "proteina": "Con esto llegas al {n} % de tu proteína",
+        "carbohidratos": "Con esto llegas al {n} % de tus carbohidratos",
+        "grasas": "Con esto llegas al {n} % de tus grasas"
+      },
+      "completas": {
+        "proteina": "Con esto completas tu proteína del día",
+        "carbohidratos": "Con esto completas tus carbohidratos del día",
+        "grasas": "Con esto completas tus grasas del día"
+      },
+      "pasas": {
+        "proteina": "Con esto pasas tu proteína por {n} g",
+        "carbohidratos": "Con esto pasas tus carbohidratos por {n} g",
+        "grasas": "Con esto pasas tus grasas por {n} g"
+      }
+    },
+    "micros": {
+      "titulo": "Vitaminas y minerales",
+      "verTodo": "Ver todo",
+      "verMenos": "Ver menos",
+      "delDia": "{n} % del día",
+      "delMaximo": "{n} % del máximo",
+      "poco": "Poco de cada uno",
+      "grupos": {
+        "vitaminas": "Vitaminas",
+        "minerales": "Minerales",
+        "grasas": "Grasas",
+        "otros": "Otros"
+      },
+      "nombres": {
+        "colesterol": "Colesterol",
+        "trans": "Grasas trans",
+        "monoinsaturadas": "Monoinsaturadas",
+        "poliinsaturadas": "Poliinsaturadas",
+        "potasio": "Potasio",
+        "calcio": "Calcio",
+        "hierro": "Hierro",
+        "magnesio": "Magnesio",
+        "fosforo": "Fósforo",
+        "zinc": "Zinc",
+        "selenio": "Selenio",
+        "vitaminaA": "Vitamina A",
+        "vitaminaC": "Vitamina C",
+        "vitaminaD": "Vitamina D",
+        "vitaminaE": "Vitamina E",
+        "vitaminaK": "Vitamina K",
+        "tiamina": "Tiamina (B1)",
+        "riboflavina": "Riboflavina (B2)",
+        "niacina": "Niacina (B3)",
+        "vitaminaB6": "Vitamina B6",
+        "folato": "Folato",
+        "vitaminaB12": "Vitamina B12",
+        "cafeina": "Cafeína"
+      },
+      "referencia": "El % es de lo recomendado por día para tu edad y sexo (las Academias Nacionales de Estados Unidos). Es una guía, no una meta."
+    },
+    "reportar": {
+      "boton": "Reportar un error",
+      "titulo": "¿Qué está mal?",
+      "motivos": {
+        "valores": "Los valores",
+        "porcion": "Una porción",
+        "nombre": "El nombre",
+        "otro": "Otra cosa"
+      },
+      "nota": "Cuéntanos más (opcional)",
+      "enviar": "Enviar",
+      "gracias": "Gracias. Lo vamos a revisar."
     }
   },
   "inicio": {

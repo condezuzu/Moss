@@ -116,6 +116,55 @@ la gente encuentre lo que come:
 
   La decisión está en `decisiones.md`, D11.
 
+### Completa y confiable (22/10/2026, a la noche)
+
+Lo pediste así: un catálogo completo y confiable, con micronutrientes, verificado
+con una segunda fuente y con controles automáticos sobre toda la base.
+
+- **Micronutrientes:** la base trae 23, de USDA, por 100 g:
+  - vitaminas A (RAE), C, D, E, K, B1, B2, B3, B6, folato (DFE) y B12;
+  - calcio, hierro, magnesio, fósforo, potasio, zinc y selenio;
+  - grasas trans, monoinsaturadas y poliinsaturadas, colesterol y cafeína.
+
+  Los platos los suman de sus ingredientes, sin las pérdidas de la cocción: en las
+  vitaminas es un máximo. La lista, las unidades y las referencias del día están en
+  `src/dominio/micronutrientes.ts`. Las referencias son las de las Academias
+  Nacionales de Estados Unidos (RDA o AI), por sexo, edad, embarazo y lactancia; de
+  la cafeína, un tope de 400 mg (200 en el embarazo y la lactancia). Son una guía:
+  Moss no pide llegar a cada una.
+- **Verificado:** cada curado se compara con una segunda tabla oficial
+  (`spec/fuentes.md`, `npm run alimentos:comparar`, `alimentos/verificacion.txt`).
+  - Coincide si nada se aleja más de un 10 %. Si se aleja, se revisa: o la
+    diferencia es real (otra variedad, otro corte, más agua) y queda «revisado» con
+    el motivo, o el par de USDA estaba mal y se corrige.
+  - Un plato está verificado si todos sus ingredientes lo están, y un producto si su
+    etiqueta cierra: las kcal con los macros (con 4/4/9 y 7, o con la fibra a 2).
+  - La base guarda el día y con qué (`verificado`, `segunda`). La ventana del
+    alimento muestra un sello, y al tocar la fuente, «¿De dónde sale esto?».
+- **Los controles son tests** (`src/comida/controles.test.ts`), sobre toda la base:
+  - nada negativo, los macros no pasan de 100 g ni las kcal de 902;
+  - los azúcares y las grasas no pasan de su total, el sodio no pasa el de la sal y
+    los micronutrientes no pasan lo posible (el mismo tope que el armado);
+  - las kcal cierran con los macros: en cada curado con un margen de 35 % o 40 kcal
+    (lo que no cierra tiene su porqué escrito: polioles, fibra, minerales); en lo
+    escrito a mano, más ajustado; en USDA sin curar, casi siempre;
+  - las porciones, las densidades, la parte que no se come y lo que rinde lo cocido
+    son posibles (las papillas rinden hasta 10 veces lo crudo);
+  - los platos valen lo que suman sus ingredientes;
+  - lo verificado dice el día y con qué.
+- **El armado limpia lo que no cierra:** USDA tiene unos pocos valores que
+  contradicen a los macros (más azúcares que carbohidratos). No se guardan: es mejor
+  no mostrar un dato que mostrarlo mal. En lo escrito a mano, eso es un error.
+- **Open Food Facts:** lo escaneado pasa los mismos controles (`src/comida/off.ts`):
+  si no cierra, queda sin verificar y se ofrece revisarlo con la etiqueta.
+- **La base se mejora sola** (`supabase/moss/0006_alimentos.sql`):
+  - lo que se busca y no encuentra nada se anota, con el idioma, la región y el día;
+  - cada alimento tiene «Reportar un error»: qué está mal y una nota.
+
+  Las dos cosas van sin el usuario, sin la hora y sin nada del teléfono. Esperan en
+  el teléfono (`src/almacen/buzon.ts`) y salen con sesión por dos funciones de Moss;
+  nadie las lee desde la app.
+
 ## Cómo se miden los alimentos (22/10/2026)
 
 Lo pediste el 22/10/2026. Lo que se guarda es siempre lo que se come, en gramos

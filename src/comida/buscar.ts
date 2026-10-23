@@ -21,6 +21,8 @@ export type Resultado = {
   /** El texto que coincidió: un alias, la descripción de USDA… Sirve para mostrar «Aguacate (palta)». */
   coincide: string;
   curado: boolean;
+  /** Comparado con una segunda fuente oficial, calculado con ingredientes verificados o con una etiqueta que cierra. */
+  verificado?: boolean;
   /** Por 100 g. */
   kcal: number;
   proteina: number;
@@ -200,11 +202,11 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
   const ids = [...new Set(candidatos.map((c) => c.alimento))];
   const lista = ids.join(',');
   type Secundario = 'fibra' | 'azucares' | 'saturadas' | 'sodio' | 'alcohol';
-  type Fila = { id: number; descripcion: string; nombre_es: string | null; nombre_en: string | null; kcal: number; proteina: number; carbohidratos: number; grasas: number; p_es: string | null; p_en: string | null; gramos: number | null }
+  type Fila = { id: number; descripcion: string; nombre_es: string | null; nombre_en: string | null; kcal: number; proteina: number; carbohidratos: number; grasas: number; p_es: string | null; p_en: string | null; gramos: number | null; verificado: string | null }
     & Record<Secundario, number | null>;
   const filas = await base.getAllAsync<Fila>(
     `SELECT a.id, a.descripcion, a.nombre_es, a.nombre_en, a.kcal, a.proteina, a.carbohidratos, a.grasas, a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol,
-       p.es AS p_es, p.en AS p_en, p.gramos
+       a.verificado, p.es AS p_es, p.en AS p_en, p.gramos
      FROM alimentos a LEFT JOIN porciones p ON p.id = a.porcion WHERE a.id IN (${lista})`,
   );
   const secundarios = (f: Fila) => {
@@ -225,7 +227,7 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
       const nombre = op.idioma === 'es' ? (regional ? conMayuscula(regional) : (f.nombre_es ?? f.descripcion)) : (f.nombre_en ?? f.descripcion);
       const nombrePorcion = op.idioma === 'es' ? (f.p_es ?? f.p_en) : f.p_en;
       return {
-        id: f.id, nombre, coincide: c.texto, curado: f.nombre_es != null,
+        id: f.id, nombre, coincide: c.texto, curado: f.nombre_es != null, verificado: f.verificado != null,
         kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas, ...secundarios(f),
         porcion: nombrePorcion && f.gramos ? { nombre: nombrePorcion, gramos: f.gramos } : null,
       };

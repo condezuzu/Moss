@@ -9,6 +9,7 @@ import type { Dia, Marca } from '@/dominio/dias';
 import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
+import { microsValidos } from '@/dominio/micronutrientes';
 import { esCara, type Confianza, type NochePropia, type OrigenDeNoche } from '@/dominio/sueno';
 import { SECUNDARIOS, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua, type Valores } from '@/dominio/registros';
 import type { supabase } from '@/lib/supabase';
@@ -54,7 +55,8 @@ const filaDe = {
     id: r.id, dia: r.dia, comida: r.comida, momento: r.momento, fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad,
     kcal: r.valores.kcal, proteina: r.valores.proteina, carbohidratos: r.valores.carbohidratos, grasas: r.valores.grasas,
     fibra: r.valores.fibra ?? null, azucares: r.valores.azucares ?? null, saturadas: r.valores.saturadas ?? null, sodio: r.valores.sodio ?? null,
-    alcohol: r.valores.alcohol ?? null, planificado: r.planificado, estimado: !!r.estimado, borrado: !!r.borrado, actualizado: r.actualizado,
+    alcohol: r.valores.alcohol ?? null, micros: r.valores.micros ?? null, planificado: r.planificado, estimado: !!r.estimado, borrado: !!r.borrado,
+    actualizado: r.actualizado,
   }),
   receta: (r: Receta) => ({ id: r.id, tipo: r.tipo, nombre: r.nombre, items: r.items, porciones: r.porciones, peso_final: r.pesoFinal, borrado: !!r.borrado, actualizado: r.actualizado }),
   propio: (a: AlimentoPropio) => ({
@@ -81,6 +83,12 @@ function valoresDe(f: Record<(typeof SECUNDARIOS)[number] | 'kcal' | 'proteina' 
   const v: Valores = { kcal: Number(f.kcal), proteina: Number(f.proteina), carbohidratos: Number(f.carbohidratos), grasas: Number(f.grasas) };
   for (const k of SECUNDARIOS) if (f[k] !== null) v[k] = Number(f[k]);
   return v;
+}
+
+/** Los micronutrientes que bajan: solo los conocidos y posibles. */
+function conMicros(v: Valores, micros: unknown): Valores {
+  const limpios = microsValidos(micros);
+  return limpios ? { ...v, micros: limpios } : v;
 }
 
 type Filas = { [K in keyof typeof filaDe]: ReturnType<(typeof filaDe)[K]> };
@@ -113,7 +121,7 @@ const deFila = {
   peso: (f: Filas['peso']): Peso => ({ fecha: f.fecha, kg: Number(f.kg), origen: f.origen, momento: hora(f.momento) }),
   registro: (f: Filas['registro']): Registro => conBorrado({
     id: f.id, dia: f.dia, comida: f.comida, momento: hora(f.momento), fuente: f.fuente, ref: f.ref, nombre: f.nombre, cantidad: f.cantidad,
-    valores: valoresDe(f), planificado: f.planificado, ...(f.estimado ? { estimado: true as const } : {}), actualizado: hora(f.actualizado),
+    valores: conMicros(valoresDe(f), f.micros), planificado: f.planificado, ...(f.estimado ? { estimado: true as const } : {}), actualizado: hora(f.actualizado),
   }, f.borrado),
   receta: (f: Filas['receta']): Receta => conBorrado({
     id: f.id, tipo: f.tipo, nombre: f.nombre, items: f.items, porciones: Number(f.porciones), pesoFinal: f.peso_final === null ? null : Number(f.peso_final),

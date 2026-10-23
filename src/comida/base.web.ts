@@ -4,6 +4,8 @@
 // que en el teléfono (candidatosEnMemoria y mejoresPorAlimento).
 
 import { candidatosEnMemoria, conMayuscula, mejoresPorAlimento, textoEnMemoria, type Opciones, type Resultado, type TextoEnMemoria } from './buscar';
+import { MICROS, type Micros } from '@/dominio/micronutrientes';
+
 import { formasDelCodigo, type Detalle, type Valores100 } from './detalle';
 
 /** Lo que trae public/alimentos.json, compacto: ver herramientas/alimentos-web.mjs. */
@@ -11,6 +13,8 @@ type AlimentoWeb = {
   id: number; f: string; es: string; en: string; v: [number, number, number, number]; s: (number | null)[];
   p: [string | null, string, number][]; t: [string, string, number, string][];
   m: string | null; d: number | null; x: [number, string, string] | null; a: string | null; c: number | null; o: string | null;
+  /** Los micronutrientes en el orden de MICROS, sin los null del final; y verificado: [día, con qué]. */
+  u?: (number | null)[]; w?: [string, string] | null;
 };
 type DatosWeb = { alimentos: AlimentoWeb[]; recetas: Record<string, [number, [number, number][]]>; codigos: Record<string, number> };
 
@@ -38,6 +42,11 @@ const valoresDe = (a: AlimentoWeb): Valores100 => {
   SECUNDARIOS.forEach((k, i) => {
     if (a.s[i] != null) v[k] = a.s[i]!;
   });
+  const micros: Micros = {};
+  MICROS.forEach((k, i) => {
+    if (a.u?.[i] != null) micros[k] = a.u[i]!;
+  });
+  if (Object.keys(micros).length) v.micros = micros;
   return v;
 };
 
@@ -61,7 +70,7 @@ export const baseDeAlimentos = {
         const v = valoresDe(a);
         const porcion = a.p[0];
         return {
-          id: a.id, nombre: nombreDe(a, op), coincide: c.texto, curado: true, ...v,
+          id: a.id, nombre: nombreDe(a, op), coincide: c.texto, curado: true, verificado: !!a.w, ...v,
           porcion: porcion ? { nombre: op.idioma === 'es' ? (porcion[0] ?? porcion[1]) : porcion[1], gramos: porcion[2] } : null,
         };
       });
@@ -91,6 +100,7 @@ export const baseDeAlimentos = {
       receta: receta
         ? { pesoFinal: receta[0], ingredientes: receta[1].map(([ingrediente, gramos]) => ({ nombre: porId.has(ingrediente) ? nombreDe(porId.get(ingrediente)!, op) : '', gramos })) }
         : null,
+      verificado: a.w ? { fecha: a.w[0], con: a.w[1] } : null,
     };
   },
   async porCodigo(codigo: string): Promise<number | null> {

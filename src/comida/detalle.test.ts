@@ -103,5 +103,7 @@ describe('cuánto rinde al cocinar', () => {
     expect(rindeAlCocinar({ kcal: 100, proteina: 0.5 }, { kcal: 50, proteina: 0.3 })).toBe(2);
     expect(rindeAlCocinar({ kcal: 82, proteina: 17.8 }, { kcal: 200, proteina: 13 }, 'incluido')).toBeNull();
     expect(rindeAlCocinar({ kcal: 900, proteina: 0 }, { kcal: 10, proteina: 0 })).toBeNull();
+    // La avena cocida con agua: unas 5 veces lo crudo.
+    expect(rindeAlCocinar({ kcal: 379, proteina: 13.15 }, { kcal: 71, proteina: 2.54 })).toBeCloseTo(5.18, 2);
   });
 });

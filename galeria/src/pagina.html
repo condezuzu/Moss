@@ -1203,7 +1203,19 @@ section.item p { margin: 0; max-width: 64ch; }
 .vt-cab { display: flex; align-items: flex-start; gap: 8px; }
 .vt-titulos { flex: 1; min-width: 0; }
 .vt-nombre { margin: 2px 0 0; font: 500 24px/1.1 var(--numeros); text-wrap: balance; }
-.vt-fuente { margin-top: 5px; font: 400 11px/1.3 var(--texto); color: rgba(239, 230, 207, 0.48); }
+.vt-fuente { appearance: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 5px; padding: 0; border: 0; background: none; text-align: left; font: 400 11px/1.3 var(--texto); color: rgba(239, 230, 207, 0.48); }
+.vt-fuente-texto { margin-top: 5px; font: 400 12px/1.3 var(--texto); color: rgba(239, 230, 207, 0.55); }
+/* Verificado: un sello chico; sin verificar, apagado. Al tocar la línea se abre de dónde sale. */
+.vt-sello { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 6px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.14); color: rgba(239, 230, 207, 0.5); font: 400 10px/1.2 var(--texto); letter-spacing: 0.02em; }
+.vt-sello.si { border-color: rgba(166, 191, 148, 0.45); color: var(--salvia); }
+.vt-sello svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2.4; }
+/* Lo que se abre y se cierra crece y se encoge: nunca aparece de golpe. */
+.vt-plegable { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s; }
+.vt-plegable > div { overflow: hidden; min-height: 0; }
+.vt-plegable.abierto { grid-template-rows: 1fr; opacity: 1; }
+.vt-dedonde > div { margin-top: 10px; }
+.vt-dedonde b { display: block; margin: 0 0 4px; font: 500 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.85); }
+.vt-dedonde p { margin: 0 0 3px; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.62); }
 .vt-cab .hj-estrella { width: 36px; height: 36px; flex: none; }
 .vt-cerrar { flex: none; appearance: none; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(239, 230, 207, 0.08); color: rgba(239, 230, 207, 0.75); display: grid; place-items: center; }
 .vt-cerrar svg { width: 15px; height: 15px; stroke-width: 2; }
@@ -1223,6 +1235,40 @@ section.item p { margin: 0; max-width: 64ch; }
 /* Adentro de una fila que se desliza, el brillo del elegido se cortaría en el borde. */
 .vt-porciones .fi-porcion[aria-pressed='true'] { box-shadow: none; }
 .vt-pie { display: grid; gap: 8px; margin-top: 18px; }
+/* Cómo deja el día: lo que había, apagado, y lo que suma esto, con el color del macro. */
+.vt-deja { margin-top: 12px; display: grid; gap: 7px; }
+.vt-barra { display: grid; grid-template-columns: 92px minmax(0, 1fr) 40px; align-items: center; gap: 10px; font: 400 11.5px/1 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.vt-barra b { font: 500 11.5px/1 var(--numeros); text-align: right; color: rgba(239, 230, 207, 0.78); font-variant-numeric: tabular-nums; }
+.vt-pista { position: relative; height: 5px; border-radius: 3px; background: rgba(239, 230, 207, 0.07); overflow: hidden; }
+.vt-pista i { position: absolute; top: 0; bottom: 0; left: 0; transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.vt-antes { background: color-mix(in srgb, var(--c) 34%, transparent); }
+.vt-suma { background: var(--c); box-shadow: 0 0 8px var(--c); }
+.vt-barra.lleno b { color: var(--c); }
+.vt-frase { margin: 3px 0 0; min-height: 1.35em; font: 400 13px/1.35 var(--texto); color: rgba(239, 230, 207, 0.85); transition: opacity 0.25s; }
+.vt-frase.vacia { opacity: 0; }
+/* Las vitaminas y los minerales: lo que más aporta, y todo al tocar «Ver todo». */
+.vt-micros { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.vt-micro { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 10px; border-radius: 10px; background: rgba(239, 230, 207, 0.05); border: 1px solid rgba(239, 230, 207, 0.08); font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.78); }
+.vt-micro b { font: 500 12px/1 var(--numeros); color: var(--oro-claro); font-variant-numeric: tabular-nums; }
+.vt-micro.poco { color: rgba(239, 230, 207, 0.5); }
+.vt-ver { appearance: none; cursor: pointer; padding: 6px 4px; border: 0; background: none; font: 400 12px/1.2 var(--texto); color: var(--oro-claro); }
+.vt-micros-lista > div { padding-top: 6px; }
+.vt-micros-lista h4 { margin: 12px 0 4px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.45); }
+.vt-micro-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto 92px; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px solid rgba(239, 230, 207, 0.05); font: 400 12.5px/1.25 var(--texto); color: rgba(239, 230, 207, 0.75); }
+.vt-micro-fila b { font: 500 12.5px/1 var(--numeros); font-variant-numeric: tabular-nums; color: rgba(239, 230, 207, 0.85); }
+.vt-micro-fila small { text-align: right; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.vt-micros-nota { margin: 10px 0 0; font: 400 11px/1.4 var(--texto); color: rgba(239, 230, 207, 0.45); }
+/* Reportar un error: un enlace chico al pie, y un panel que sube sobre la ventana. */
+.vt-reportar { appearance: none; cursor: pointer; align-self: center; margin-top: 14px; padding: 6px 10px; border: 0; background: none; font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.45); }
+.vt-reporte { position: absolute; inset: 0; z-index: 9; display: flex; align-items: flex-end; background: rgba(5, 8, 18, 0.55); opacity: 0; transition: opacity 0.3s; }
+.vt-reporte.abierto { opacity: 1; }
+.vt-reporte-caja { width: 100%; padding: 16px 18px calc(var(--abajo) + 10px); border-radius: 24px 24px 0 0; background: linear-gradient(180deg, #151e3e 0%, #0d132b 100%); border-top: 1px solid rgba(232, 196, 106, 0.24); display: grid; gap: 14px; transform: translateY(40px); transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; }
+.vt-reporte.abierto .vt-reporte-caja { transform: none; }
+.vt-motivos { display: flex; flex-wrap: wrap; gap: 8px; }
+.vt-nota { width: 100%; resize: none; padding: 11px 13px; border-radius: 12px; border: 1px solid rgba(239, 230, 207, 0.14); background: rgba(6, 10, 22, 0.55); color: var(--tinta); font: 400 14px/1.4 var(--texto); outline: none; caret-color: var(--oro); }
+.vt-reporte .fi-agregar:disabled { opacity: 0.4; }
+.vt-gracias { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; border-radius: 24px 24px 0 0; background: #111936; font: 400 16px/1.3 var(--texto); color: var(--tinta); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.vt-reporte-caja.enviado .vt-gracias { opacity: 1; }
 
 /* La revisión de la comida que se arma, antes de agregarla. */
 .rv-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: 0 20px 16px; scrollbar-width: none; }
@@ -1470,6 +1516,7 @@ section.item p { margin: 0; max-width: 64ch; }
   .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
   .as-flecha svg { animation: none; }
   .sn-manana, .sn-manana-hecha, .sn-cara { animation: none; transition: none; }
+  .vt-plegable, .vt-pista i, .vt-frase, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
   .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: none; box-shadow: 0 0 0 2px var(--c); }
@@ -1598,6 +1645,14 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><b>El cuadro que se desliza</b> (como pediste): empieza en el día, con lo comido contra la meta, la figura de las kcal (la que elijas en la sección 2) y los macros. Deslizalo a la izquierda y aparece la semana: el promedio de los días que ya terminaron y los siete días con una barra de calorías y una por macro contra la meta. Otra vez, y aparece el mes: el promedio y el calendario con una luna (o la figura elegida) por día. Debajo dice dónde estás (Día, Semana, Mes), y también se toca. Tocar un día de la semana o del mes vuelve al día.</li>
         <li><b>Arriba</b>, la tira de la semana con una luna chica (o la figura elegida) por día; <b>abajo</b>, la línea del día: cada comida en su hora, y la que falta espera en «ahora», con Agregar y Copiar de ayer. El peso y el gasto pasaron a Progreso.</li>
         <li><b>La hoja de registro</b> no cambió: la búsqueda con lo que sueles comer a esa hora, los recientes y los favoritos; la ventana del alimento con sus porciones; la comida que se arma abajo; la revisión antes de agregar; la etiqueta, y la carga rápida.</li>
+        <li><b>La ventana del alimento, antes de sumar</b> (lo pediste el 22/10, a la noche):
+          <ul>
+            <li>Debajo del nombre, la fuente y un sello: <b>Verificado</b> si coincide con una segunda tabla oficial (o, en un plato, si todos sus ingredientes lo están; en un producto, si su etiqueta cierra). Al tocarla se abre <b>«¿De dónde sale esto?»</b>.</li>
+            <li><b>Cómo deja el día</b>: cada macro con lo que ya tenías (apagado) y lo que suma esto (con su color), y una frase: «Con esto llegas al 80 % de tu proteína». Pasarse se dice como un dato, y la proteína no se «pasa».</li>
+            <li><b>Vitaminas y minerales</b>: lo que más aporta para tu edad y sexo, y todo al tocar «Ver todo».</li>
+            <li>Al pie, <b>Reportar un error</b>: qué está mal y una nota, sin tu cuenta.</li>
+          </ul>
+        </li>
       </ul>
     </section>
 

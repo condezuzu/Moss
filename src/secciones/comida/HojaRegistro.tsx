@@ -14,6 +14,8 @@ import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
+import { textoDeBusqueda } from '@/almacen/buzon';
+import { buzon } from '@/almacen/buzonDeMoss';
 import { baseDeAlimentos } from '@/comida/base';
 import { normalizar, type Resultado } from '@/comida/buscar';
 import { formasDelCodigo, type Detalle } from '@/comida/detalle';
@@ -22,6 +24,8 @@ import { buscarEnOff, type Producto } from '@/comida/off';
 import { ACEITE_POR_100G } from '@/dominio/cantidades';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
 import { sumarDias } from '@/dominio/fechas';
+import { edadDe, type Macros } from '@/dominio/metas';
+import type { ParaQuien } from '@/dominio/micronutrientes';
 import {
   claveDeAlimento, delDia, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
   valoresDeCantidad, valoresDeReceta, vigentes, type AlimentoPropio, type Cantidad, type Item, type Receta, type Valores,
@@ -165,12 +169,39 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     cerrarRegistro();
   };
 
+  // Lo que no encontró nada, sin decir de quién (src/almacen/buzon.ts): así se sabe qué le falta a la
+  // base. Cuenta cuando se dejó de escribir, no letra por letra.
+  useEffect(() => {
+    if (!hallado || hallado.lista.length || hallado.texto !== texto.trim()) return;
+    const buscado = textoDeBusqueda(hallado.texto);
+    if (!buscado) return;
+    const espera = setTimeout(() => {
+      buzon().echar({ tipo: 'busqueda', texto: buscado, idioma: idioma(), region: region() ?? '', dia: e.hoy }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(espera);
+  }, [hallado, texto, e.hoy]);
+
   // ------------------------------------------------------------ lo que queda en el día
   const meta = metaDelDia(e, dia);
+  // Las referencias de las vitaminas y los minerales: para la edad y el sexo del perfil.
+  const persona: ParaQuien = { sexo: e.perfil?.sexo ?? 'f', edad: e.perfil ? edadDe(e.perfil, e.hoy) : 30 };
+  const restar = (x: Macros, y: Macros): Macros => ({ kcal: x.kcal - y.kcal, proteina: x.proteina - y.proteina, carbohidratos: x.carbohidratos - y.carbohidratos, grasas: x.grasas - y.grasas });
   const restante = (kcal: number, sin = 0) => {
     if (!meta) return null;
     const antes = totalDe(e.registros, dia, e.hoy).kcal + sumarValores(e.canasta.map((i) => i.valores)).kcal - sin;
     return meta.kcal - antes - kcal;
+  };
+  // Cómo deja el día: lo que ya había (con lo que se arma, sin lo que se cambia) y la meta.
+  const diaDe = (modo: ModoDeVentana): { antes: Macros; meta: Macros } | null => {
+    if (!meta || modo.tipo === 'ingrediente') return null;
+    if (modo.tipo === 'registro') {
+      const r = e.registros.get(modo.id);
+      if (!r) return null;
+      const delDia = totalDe(e.registros, r.dia, e.hoy);
+      return { antes: restar(delDia, r.valores), meta: metaDelDia(e, r.dia) ?? meta };
+    }
+    const conLoQueSeArma = sumarValores([totalDe(e.registros, dia, e.hoy), ...e.canasta.map((i) => i.valores)]);
+    return { antes: modo.tipo === 'canasta' && e.canasta[modo.indice] ? restar(conLoQueSeArma, e.canasta[modo.indice].valores) : conLoQueSeArma, meta };
   };
   const restanteDe = (modo: ModoDeVentana) => (kcal: number) => {
     if (modo.tipo === 'canasta') return restante(kcal, e.canasta[modo.indice]?.valores.kcal ?? 0);
@@ -201,7 +232,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   };
   const abrirResultado = (r: Resultado) => {
     Keyboard.dismiss();
-    const { id, nombre, porcion, coincide: _c, curado: _cu, ...valores } = r;
+    const { id, nombre, porcion, coincide: _c, curado: _cu, verificado: _v, ...valores } = r;
     setVentana({
       alimento: { fuente: 'base', ref: String(id), nombre, por100g: valores, porciones: porcion ? [porcion] : [], origen: t('comida.fuente.usda') },
       inicial: ultimaCantidad(e.registros.values(), 'base', String(id)),
@@ -271,7 +302,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     try {
       const version = Constants.expoConfig?.version ?? '1.0.0';
       const producto = await buscarEnOff(codigo, { idioma: idioma(), version, contacto: 'github.com/condezuzu/moss' });
-      if (producto?.completo) {
+      if (producto?.verificado) {
         const p = producto.por100g;
         const nuevo = a.guardarPropio({
           nombre: producto.nombre, marca: producto.marca, codigo: formas[0], origen: 'off',
@@ -282,7 +313,9 @@ function Hoja({ pedido }: { pedido: Pedido }) {
         setVentana({ alimento: alimentoDePropio(nuevo), modo: modoNuevo });
         return;
       }
-      setEscaner({ modo: 'etiqueta', ocupado: false, mensaje: t(producto ? 'comida.escaner.incompleto' : 'comida.escaner.noEsta'), codigo, parcial: producto });
+      // Lo que falta o no cierra se lee de la etiqueta: así no se guarda un dato malo.
+      const mensaje = !producto ? 'comida.escaner.noEsta' : producto.completo ? 'comida.escaner.noCierra' : 'comida.escaner.incompleto';
+      setEscaner({ modo: 'etiqueta', ocupado: false, mensaje: t(mensaje), codigo, parcial: producto });
     } catch {
       setEscaner({ modo: 'etiqueta', ocupado: false, mensaje: t('comida.escaner.sinConexion'), codigo });
     }
@@ -626,6 +659,8 @@ function Hoja({ pedido }: { pedido: Pedido }) {
               modo={ventana.modo}
               sistema={sistema}
               restante={restanteDe(ventana.modo)}
+              dia={diaDe(ventana.modo)}
+              persona={persona}
               favorito={!!e.favoritos.get(claveDeAlimento(ventana.alimento.fuente, ventana.alimento.ref))?.favorito}
               alFavorito={() => {
                 const clave = claveDeAlimento(ventana.alimento.fuente, ventana.alimento.ref);

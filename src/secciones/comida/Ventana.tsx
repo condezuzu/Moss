@@ -2,8 +2,9 @@
 // los macros de lo elegido, cuánto deja para el resto del día, la porción y la cantidad. Y cómo se
 // mide (spec/nutricion.md, «Cómo se miden los alimentos»): crudo o cocido sin perder los gramos, con
 // cáscara o sin, el aceite de cocción, los ml de lo que se toma, los ajustes ×½ ×1½ ×2, métrico o
-// imperial, y si se pesó o fue a ojo. Sirve para sumar, para cambiar algo de la comida que se arma y
-// para corregir un registro de la línea del día.
+// imperial, y si se pesó o fue a ojo. Antes de sumar, si está verificado y de dónde sale, cómo deja
+// el día, las vitaminas y los minerales, y «Reportar un error» (AntesDeSumar.tsx). Sirve para sumar,
+// para cambiar algo de la comida que se arma y para corregir un registro de la línea del día.
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,10 +17,13 @@ import { cantidadDePorcion, decimal, numeroDePorcion } from '@/comida/porciones'
 import {
   ACEITE, AJUSTES, aGramos, ajustar, aMl, aOjoDeFabrica, comestible, gramosDeMl, GRAMOS_POR_ONZA, ML_POR_ONZA_LIQUIDA, unidadDePeso, unidadDeVolumen, type Sistema,
 } from '@/dominio/cantidades';
+import type { Macros } from '@/dominio/metas';
+import type { ParaQuien } from '@/dominio/micronutrientes';
 import { gramosDe, valoresDeCantidad, type Cantidad, type Fuente, type Item, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Aparece } from '../tarjetas';
+import { ComoDeja, DeDonde, EnlaceReportar, Micronutrientes, Reporte, Sello } from './AntesDeSumar';
 import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
 import { compartir } from './compartir';
 import { gramosDeMacro, numero, opcionesDeIdioma } from './datos';
@@ -96,6 +100,10 @@ type Props = {
   sistema: Sistema;
   /** Lo que quedaría en el día con estas kcal; sin meta, null. */
   restante: (kcal: number) => number | null;
+  /** El día sin esto y su meta, para «cómo deja el día»; sin meta (o para un ingrediente), null. */
+  dia: { antes: Macros; meta: Macros } | null;
+  /** Para quién son las referencias de las vitaminas y los minerales. */
+  persona: ParaQuien;
   favorito: boolean;
   alFavorito: () => void;
   alListo: (item: Item) => void;
@@ -114,6 +122,8 @@ export function Ventana(p: Props) {
   const [aceite, setAceite] = useState(p.inicial?.aceite ?? 0);
   const [estimado, setEstimado] = useState<boolean | null>(p.estimadoInicial ?? null);
   const [escrito, setEscrito] = useState<string | null>(null);
+  const [deDonde, setDeDonde] = useState(false);
+  const [reportando, setReportando] = useState(false);
   const modo = p.modo.tipo;
 
   // Lo de la base trae además cómo se mide: las porciones, crudo o cocido, la cáscara, la densidad y el aceite.
@@ -219,7 +229,16 @@ export function Ventana(p: Props) {
         <View style={estilos.cabeza}>
           <View style={estilos.titulos}>
             <Text style={estilos.nombre}>{alimento.nombre}</Text>
-            <Text style={estilos.origen}>{[detalle ? origenDe(detalle) : alimento.origen, detalle?.marca].filter(Boolean).join(' · ')}</Text>
+            <Pressable
+              onPress={() => setDeDonde(!deDonde)}
+              style={estilos.origenFila}
+              accessibilityRole="button"
+              accessibilityLabel={t('comida.deDonde.titulo')}
+              accessibilityState={{ expanded: deDonde }}
+            >
+              <Text style={estilos.origen}>{[detalle ? origenDe(detalle) : alimento.origen, detalle?.marca].filter(Boolean).join(' · ')}</Text>
+              {detalle && <Sello verificado={!!detalle.verificado} />}
+            </Pressable>
           </View>
           {(alimento.fuente === 'receta' || alimento.fuente === 'propio') && (
             <Pressable onPress={() => { compartir(alimento.fuente, alimento.ref).catch(() => {}); }} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('compartir.boton')}>
@@ -233,6 +252,8 @@ export function Ventana(p: Props) {
             <Icono nombre="xmark" tam={14} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
           </Pressable>
         </View>
+
+        {deDonde && <DeDonde detalle={detalle} origen={alimento.origen} />}
 
         <View style={estilos.cifras}>
           <Text style={estilos.kcal}>
@@ -249,11 +270,13 @@ export function Ventana(p: Props) {
           </View>
         </View>
         {restante !== null && <Text style={estilos.queda}>{t(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })}</Text>}
+        {p.dia && <ComoDeja antes={p.dia.antes} esto={valores} meta={p.dia.meta} />}
         <Text style={estilos.secundarios}>
           {SECUNDARIOS.filter(([k]) => valores[k] != null && !(k === 'alcohol' && valores[k] === 0))
             .map(([k, unidad]) => `${t(`comida.secundarios.${k}`)} ${numero(valores[k]!, unidad === 'g' && valores[k]! < 10 ? 1 : 0)} ${unidad}`)
             .join('   ')}
         </Text>
+        {valores.micros && <Micronutrientes micros={valores.micros} persona={p.persona} />}
 
         {versiones.length > 1 && (
           <>
@@ -365,7 +388,17 @@ export function Ventana(p: Props) {
           <Boton tipo="grande" texto={p.modo.tipo === 'sumar' || p.modo.tipo === 'ingrediente' ? t('comida.sumar') : t('comun.guardar')} alTocar={listo} />
           {p.alQuitar && <Boton tipo="quitar" texto={t('comida.quitar')} alTocar={p.alQuitar} />}
         </View>
+        {(alimento.fuente === 'base' || alimento.fuente === 'catalogo' || alimento.fuente === 'off') && <EnlaceReportar alTocar={() => setReportando(true)} />}
       </ScrollView>
+      {reportando && (
+        <Reporte
+          alimento={alimento.fuente === 'off' ? null : Number(alimento.ref)}
+          codigo={alimento.fuente === 'off' ? alimento.ref : null}
+          nombre={alimento.nombre}
+          alCerrar={() => setReportando(false)}
+          abajo={p.abajo}
+        />
+      )}
     </Animated.View>
   );
 }
@@ -398,7 +431,8 @@ const estilos = StyleSheet.create({
   cabeza: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   titulos: { flex: 1, minWidth: 0 },
   nombre: { marginTop: 2, fontFamily: letras.numeroMedio, fontSize: 24, lineHeight: 27, color: colores.pergamino },
-  origen: { marginTop: 5, fontFamily: letras.texto, fontSize: 11, lineHeight: 14, color: 'rgba(239, 230, 207, 0.48)' },
+  origenFila: { marginTop: 5, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  origen: { fontFamily: letras.texto, fontSize: 11, lineHeight: 14, color: 'rgba(239, 230, 207, 0.48)' },
   redondo: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   cifras: { marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
   kcal: { fontFamily: letras.numeroLiviano, fontSize: 48, lineHeight: 50, letterSpacing: -1, color: colores.cifra, fontVariant: ['tabular-nums'] },
