@@ -1,0 +1,215 @@
+// La panadería, la confitería y el almacén de todos los días en Uruguay, sin marca: panes, bizcochos y
+// galletas, masas y tortas, postres, helados, dulces y golosinas, lácteos y quesos, bebidas sin alcohol
+// y lo seco del almacén. Mismo formato que genericos.txt (ver su encabezado). Ningún nombre dice de qué
+// país es: el nombre más neutro va primero y el de Uruguay va como alias con asterisco y (UY). Lo que ya
+// está curado en otro archivo no se repite: se usa como ingrediente. Las recetas de uruguay.txt no
+// sirven de ingrediente acá: este archivo se arma antes que aquel.
+//
+// Valores: de USDA, directo o como receta con ingredientes curados. Lo horneado pesa su materia seca con
+// la humedad de un producto parecido de USDA: peso final = materia seca ÷ (1 − humedad). Lo que se
+// cocina en olla o a baño María pierde lo que dice Bognár A. (2002), «Tables on weight yield of food and
+// retention factors of food constituents for the calculation of nutrient composition of cooked foods
+// (dishes)», BFE-R-02-03, Karlsruhe. Lo que se arma con cosas ya hechas (un alfajor, una torta armada,
+// un helado con agregados, un licuado) pesa lo que suma.
+
+# panes
+Pan de leche | Sweet milk roll | sr:Rolls, dinner, sweet | 1 pancito / 1 roll=40 · 1 rebanada / 1 slice=39 | pancito de leche · bollo de leche* (ES)
+Pan de papa | Potato bread | sr:Bread, potato | 1 pan de hamburguesa / 1 bun=70 · 1 rebanada / 1 slice=32 | pan de patata* (ES)
+Pan blanco sin sal | Salt-free white bread | sr:Bread, white, commercially prepared, low sodium, no salt | 1 rebanada / 1 slice=25 | pan de molde sin sal* (UY ES) · pan lactal sin sal* (AR) · pan sin sal
+Pan blanco light | Reduced-calorie white bread | sr:Bread, reduced-calorie, white | 1 rebanada / 1 slice=23 | pan de molde light* (UY ES) · pan lactal light* (AR) · pan light
+Pan francés integral | Whole wheat French bread | fndds:Bread, French or Vienna, whole wheat | 1 rebanada / 1 slice=32 | flauta integral (UY AR) · baguette integral · pan de barra integral* (ES) · bolillo integral* (MX)
+Pan integral tostado | Whole wheat toast | fndds:Bread, whole wheat, toasted | 1 rebanada / 1 slice=33 | tostada integral* (UY AR ES)
+// El pan con chicharrones queda en 0,90, como el pan (Bognár 2002, tabla 31). Los bizcochos y las
+// medialunas de grasa, con la humedad del croissant de USDA (23,2 %); la galleta marina, dura y seca,
+// con la de la matzá de USDA (4,3 %), la galleta de harina y agua más parecida.
+Pan con chicharrones | Bread with pork cracklings | receta#3600 Harina de trigo 1000 · Chicharrón 200 · Grasa de res 80 · Agua 550 · Levadura fresca 30 · Sal 15 → 1688 | 1 pancito / 1 roll=60 | pan de chicharrón (UY AR) · pan con chicharrón
+Galleta marina | Hard sea biscuit (galleta marina) | receta#3601 Harina de trigo 1000 · Grasa de res 80 · Agua 450 · Levadura fresca 10 · Sal 18 → 1027 | 1 galleta / 1 biscuit=25 | galletas marinas · galleta dura de marinero
+Bizcochos de chicharrón | Beef-fat pastries with pork cracklings | receta#3602 Harina de trigo 1000 · Grasa de res 300 · Chicharrón 200 · Agua 500 · Levadura fresca 25 · Sal 15 → 1824 | 1 bizcocho / 1 pastry=35 | bizcochos con chicharrón · bizcocho de chicharrones
+Medialuna de grasa | Beef-fat crescent roll | receta#3603 Harina de trigo 1000 · Grasa de res 250 · Agua 450 · Azúcar 30 · Levadura fresca 40 · Sal 18 → 1552 | 1 medialuna / 1 crescent=45 | medialuna salada · medialunas de grasa
+// La medialuna dulce es un croissant pincelado con almíbar: queda el azúcar y el agua se seca.
+Croissant glaseado | Glazed croissant (sweet medialuna) | receta#3604 Croissant 100 · Azúcar 6 | 1 unidad / 1 croissant=45 | medialuna dulce* (UY AR) · medialuna de manteca (UY AR) · medialuna con almíbar
+Croissant con dulce de leche | Croissant filled with dulce de leche | receta#3605 Croissant 57 · Dulce de leche 20 | 1 unidad / 1 croissant=77 | medialuna con dulce de leche* (UY AR) · medialuna rellena de dulce de leche
+// La crema pastelera de las facturas, como la de FNDDS en la dona rellena: un pudín de vainilla.
+Danesa de dulce de leche | Dulce de leche danish | receta#3652 Danesa 60 · Dulce de leche 20 | 1 unidad / 1 pastry=80 | bizcocho de dulce de leche* (UY) · factura de dulce de leche* (AR PY)
+Danesa de crema | Custard danish | receta#3653 Danesa 60 · Pudín de vainilla 20 | 1 unidad / 1 pastry=80 | bizcocho de crema* (UY) · factura de crema pastelera* (AR PY)
+Croissant de chocolate | Chocolate croissant | fndds:Croissant, chocolate | 1 unidad / 1 croissant=57 | napolitana de chocolate* (ES) · pain au chocolat · medialuna de chocolate (UY AR)
+Dona rellena de crema | Custard-filled doughnut | fndds:Doughnut, custard-filled | 1 unidad / 1 doughnut=80 | bola de fraile de crema* (UY AR) · berlín de crema* (CL) · berlinesa de crema · dona de crema | aceite=incluido
+Dona bañada en chocolate | Chocolate-frosted doughnut | sr:Doughnuts, cake-type, plain, chocolate-coated or frosted | 1 unidad / 1 doughnut=43 · 1 grande / 1 large doughnut=67 | dónut de chocolate* (ES) · dona de chocolate · rosquilla de chocolate | aceite=incluido
+Rollo de canela | Cinnamon roll | fndds:Roll, sweet, cinnamon bun, frosted | 1 unidad / 1 roll=90 · 1 pequeño / 1 small roll=54 | rol de canela* (MX) · roll de canela (UY AR) · cinnamon roll
+// El polvorón, con la humedad de la galleta de azúcar de USDA (6,3 %); la ensaimada, con la de la danesa
+// de canela de USDA (24,3 %); los scones de queso, con la del biscuit de USDA hecho en casa (28,9 %).
+Polvorón | Sugar-topped shortbread biscuit (polvorón) | receta#3606 Harina de trigo 500 · Azúcar 230 · Grasa de res 200 · Huevo 100 · Polvo de hornear 5 → 960 | 1 unidad / 1 biscuit=40 | polvorones
+Ensaimada | Ensaimada (spiral sweet roll) | receta#3607 Harina de trigo 500 · Agua 150 · Huevo 100 · Azúcar 120 · Manteca de cerdo 150 · Levadura fresca 25 · Sal 5 · Azúcar en polvo 20 → 1014 | 1 unidad / 1 piece=70 | ensaimadas
+Scones de queso | Cheese scones | receta#3608 Harina de trigo 500 · Mantequilla 100 · Queso rallado 100 · Leche entera 250 · Huevo 50 · Polvo de hornear 20 · Sal 4 → 932 | 1 scon / 1 scone=45 | escones de queso (UY AR) · scon de queso
+Pan rallado sazonado | Seasoned breadcrumbs | sr:Bread, crumbs, dry, grated, seasoned | ¼ taza / ¼ cup=30 | rebozador* (UY AR) · pan molido sazonado (MX)
+Galletas multicereal | Multigrain crackers | fndds:Crackers, multigrain | 30 g / 30 g=30 | galletitas con semillas* (UY AR) · galletas con semillas · crackers multicereal
+Galletas saladas de mantequilla | Butter crackers | fndds:Crackers, butter, plain | 30 g / 30 g=30 · 5 unidades / 5 crackers=15 | galletitas crackers* (UY AR) · crackers de mantequilla · galletas tipo cracker
+Galletas de soda sin sal | Low-salt saltine crackers | sr:Crackers, saltines, low salt (includes oyster, soda, soup) | 30 g / 30 g=30 · 5 unidades / 5 crackers=15 | galletitas sin sal* (UY AR) · galletas de agua sin sal · galletas sin sal
+// La merienda de siempre, armada.
+Tostada con mantequilla y mermelada | Toast with butter and jam | receta#3609 Pan tostado 25 · Mantequilla 7 · Mermelada 15 | 1 tostada / 1 slice=47 | tostada con manteca y mermelada* (UY AR PY) · pan tostado con mantequilla y mermelada
+Tostada con mantequilla y dulce de leche | Toast with butter and dulce de leche | receta#3610 Pan tostado 25 · Mantequilla 7 · Dulce de leche 15 | 1 tostada / 1 slice=47 | tostada con manteca y dulce de leche* (UY AR PY) · tostada con dulce de leche
+Pan con mantequilla | Bread and butter | receta#3611 Pan francés 50 · Mantequilla 10 | 1 porción / 1 serving=60 | pan con manteca* (UY AR PY) · pan francés con mantequilla
+
+# dulces
+// Las galletas y las galletitas. En las de membrillo, la masa queda con la humedad de la galleta de
+// manteca de USDA (4,6 %) y el dulce de membrillo, como está.
+Bizcochos de soletilla | Ladyfingers | sr:Cookies, ladyfingers, without lemon juice and rind | 3 unidades / 3 ladyfingers=33 · 1 unidad / 1 ladyfinger=11 | vainillas* (UY AR PY) · soletas* (MX) · plantillas* (CL) · soletillas
+Galletas de chocolate | Chocolate wafer cookies | sr:Cookies, chocolate wafers | 5 unidades / 5 cookies=30 · 1 unidad / 1 cookie=6 | galletitas de chocolate* (UY AR) · galletas de cacao
+Galletas rellenas de vainilla | Vanilla sandwich cookies | sr:Cookies, vanilla sandwich with creme filling | 2 unidades / 2 cookies=20 | galletitas rellenas de vainilla* (UY AR)
+Galletas de avena con pasas | Oatmeal raisin cookies | sr:Cookies, oatmeal, with raisins | 1 unidad / 1 cookie=24 | galletitas de avena y pasas* (UY AR)
+Obleas rellenas | Cream-filled wafers | sr:Cookies, sugar wafers with creme filling, regular | 3 unidades / 3 wafers=30 · 1 unidad / 1 wafer=10 | obleas* (UY AR) · barquillos rellenos · wafers
+Obleas bañadas en chocolate | Chocolate-coated wafers | sr:Cookies, sugar wafer, chocolate-covered | 1 barrita / 1 bar=30 | oblea bañada · wafer bañado en chocolate
+Coquitos | Coconut macaroons | sr:Cookies, coconut macaroon | 1 unidad / 1 macaroon=18 | macarrones de coco · coquitos de coco
+Galletas con dulce de membrillo | Quince jam thumbprint cookies | receta#3612 Harina de trigo 500 · Mantequilla 200 · Azúcar 150 · Huevo 100 · Polvo de hornear 5 · Dulce de membrillo 250 → 1076 | 1 unidad / 1 cookie=15 | pepitas* (UY AR) · pepas · pepas de membrillo
+// Las masas y las tortas. El bizcocho de chocolate, con la humedad del bizcochuelo de USDA hecho en
+// casa (29,4 %); los panqués marmoleado y de limón, con la del panqué de USDA (25,9 %), porque los de
+// FNDDS son cupcakes con casi la mitad de cobertura; la pastafrola de batata, como la de membrillo: una
+// tarta seca (0,90, Bognár 2002, tabla 31).
+Bizcocho de chocolate | Chocolate sponge cake | receta#3613 Huevo 300 · Azúcar 250 · Harina de trigo 180 · Cacao en polvo 40 · Polvo de hornear 8 → 747 | 1 porción / 1 piece=60 | bizcochuelo de chocolate* (UY AR PY)
+Pastel de vainilla casero | Homemade yellow cake | sr:Cake, yellow, prepared from recipe without frosting | 1 porción / 1 piece=68 | torta de vainilla casera* (UY AR) · bizcocho de mantequilla (ES) · queque de vainilla (CL PE)
+Profiterol | Cream puff | fndds:Cream puff, eclair, custard or cream filled, not iced | 1 unidad / 1 cream puff=100 · 1 pequeño / 1 miniature=23 | bomba de crema* (UY AR) · profiteroles · lionesa (AR)
+Éclair | Eclair | fndds:Cream puff, eclair, custard or cream filled, iced | 1 unidad / 1 eclair=102 | eclair · éclair de chocolate
+Milhojas de dulce de leche | Dulce de leche mille-feuille | receta#3614 Hojaldre horneado 60 · Dulce de leche 40 · Azúcar en polvo 3 | 1 porción / 1 slice=100 | torta milhojas* (UY AR) · milhojas · mil hojas
+Strudel de manzana | Apple strudel | fndds:Strudel, apple | 1 porción / 1 piece=125 | strudel · estrúdel de manzana
+Pan de banana | Banana bread | sr:Bread, banana, prepared from recipe, made with margarine | 1 rebanada / 1 slice=60 | budín de banana* (UY AR PY) · pan de plátano* (ES MX) · queque de plátano* (CL PE)
+Pastel de frutas | Fruitcake | sr:Cake, fruitcake, commercially prepared | 1 rebanada / 1 slice=43 | budín inglés* (UY AR PY) · pan de Pascua* (CL) · queque de frutas (PE)
+Panqué marmoleado | Marble pound cake | receta#3650 Harina de trigo 250 · Azúcar 250 · Mantequilla 200 · Huevo 200 · Leche entera 100 · Cacao en polvo 20 · Polvo de hornear 10 → 982 | 1 rebanada / 1 slice=50 | budín marmolado* (UY AR PY) · bizcocho marmolado* (ES) · ponqué marmoleado* (CO VE) · queque marmoleado* (CL PE)
+Panqué de limón | Glazed lemon pound cake | receta#3651 Harina de trigo 250 · Azúcar 250 · Mantequilla 200 · Huevo 200 · Leche entera 50 · Jugo de limón 50 · Polvo de hornear 10 · Azúcar en polvo 60 → 1034 | 1 rebanada / 1 slice=50 | budín de limón* (UY AR PY) · bizcocho de limón* (ES) · ponqué de limón* (CO VE) · queque de limón* (CL PE)
+Cheesecake de frutos rojos | Berry cheesecake | fndds:Cheesecake, fruit | 1 porción / 1 piece=100 | tarta de queso con frutos rojos* (ES) · pay de queso con frutos rojos* (MX) · torta de queso con frutos rojos
+Crumble de manzana | Apple crisp | fndds:Crisp, apple | 1 porción / 1 serving=125 | crumble · crujiente de manzana
+Pastel de fresas | Strawberry cream cake | receta#3615 Bizcocho 400 · Crema batida 400 · Fresas 400 · Azúcar 40 | 1 porción / 1 slice=120 | torta de frutillas* (UY AR PY) · tarta de fresas y nata* (ES) · torta de frutillas con crema
+Selva negra | Black Forest cake | receta#3616 Bizcocho de chocolate 400 · Crema batida 400 · Cerezas al marrasquino 150 · Chocolate amargo 50 | 1 porción / 1 slice=110 | torta selva negra* (UY AR) · tarta Selva Negra* (ES) · pastel selva negra* (MX)
+Chocotorta | Chocolate cookie and dulce de leche cake (chocotorta) | receta#3617 Galletas de chocolate 400 · Dulce de leche 400 · Queso crema 300 · Café 100 | 1 porción / 1 slice=110 | torta de galletitas de chocolate
+Pastel de merengue y dulce de leche | Dulce de leche and meringue layer cake | receta#3618 Bizcocho 500 · Dulce de leche 500 · Merengue 150 | 1 porción / 1 slice=110 | torta de merengue y dulce de leche* (UY AR) · torta de dulce de leche y merengue
+Pastafrola de batata | Sweet potato paste lattice tart | receta#3619 Harina de trigo 300 · Mantequilla 150 · Azúcar 120 · Huevo 100 · Polvo de hornear 6 · Dulce de batata 500 · Agua 50 → 1103 | 1 porción / 1 slice=90 | pastafrola de boniato* (UY) · pasta frola de batata
+Alfajor triple | Triple-layer chocolate alfajor | receta#3620 Galletas dulces 33 · Dulce de leche 27 · Chocolate amargo 20 | 1 alfajor / 1 alfajor=80 | alfajor triple de chocolate
+Alfajor de chocolate blanco | White chocolate alfajor | receta#3621 Galletas dulces 22 · Dulce de leche 18 · Chocolate blanco 15 | 1 alfajor / 1 alfajor=55 | alfajor bañado en chocolate blanco
+Conitos de dulce de leche | Chocolate-coated dulce de leche cones | receta#3622 Galletas dulces 8 · Dulce de leche 20 · Chocolate amargo 12 | 1 unidad / 1 cone=40 | conitos* (UY AR)
+// Los postres. El flan de leche condensada, al horno a baño María, queda como un budín de vainilla
+// (0,95) y la sémola con leche, como el arroz con leche (0,91): Bognár 2002, tablas 1 y 29.
+Pudín de vainilla | Vanilla pudding | sr:Puddings, vanilla, ready-to-eat | 1 envase / 1 container=110 | postre de vainilla (UY AR) · natillas de vainilla (ES)
+Pudín de vainilla de sobre | Vanilla pudding from mix | sr:Puddings, vanilla, dry mix, regular, prepared with whole milk | ½ taza / ½ cup=140 | postre de vainilla de sobre (UY AR) · pudín de caja
+Pudín de chocolate de sobre | Chocolate pudding from mix | sr:Puddings, chocolate, dry mix, regular, prepared with whole milk | ½ taza / ½ cup=142 | postre de chocolate de sobre (UY AR) · pudín de chocolate de caja
+Flan de sobre | Flan from mix | sr:Flan, caramel custard, dry mix, prepared with whole milk | ½ taza / ½ cup=141 | flan de caja · flan en polvo preparado
+Pudín de pan | Bread pudding | fndds:Pudding, bread | 1 porción / 1 serving=100 · 1 taza / 1 cup=200 | budín de pan* (UY AR PY)
+Flan de leche condensada | Condensed milk flan | receta#3623 Leche condensada 395 · Leche entera 400 · Huevo 250 · Azúcar 100 → 1088 | 1 porción / 1 serving=100 | crema volteada* (UY AR) · flan napolitano (MX)
+Sémola con leche | Semolina milk pudding | receta#3624 Leche entera 1000 · Sémola 70 · Azúcar 100 → 1065 | 1 porción / 1 serving=150 | postre de sémola · sémola dulce
+Mousse de dulce de leche | Dulce de leche mousse | receta#3625 Dulce de leche 400 · Crema de leche 400 · Gelatina sin sabor 7 · Agua 50 | 1 porción / 1 serving=80 | mousse de cajeta (MX) · mousse de arequipe (CO VE) · mousse de manjar (CL PE)
+Mousse de limón | Lemon mousse | receta#3626 Leche condensada 395 · Crema de leche 400 · Jugo de limón 120 · Gelatina sin sabor 7 · Agua 50 | 1 porción / 1 serving=80 | mousse de limón casera
+Manzana asada | Baked apple | fndds:Apple, baked | 1 unidad / 1 apple=210 | manzana al horno* (UY AR)
+Gelatina con frutas | Gelatin dessert with fruit | fndds:Gelatin dessert with fruit | ½ taza / ½ cup=120 | gelatina con fruta · gelatina con cóctel de frutas
+Banana con dulce de leche | Banana with dulce de leche | receta#3654 Banana 120 · Dulce de leche 30 | 1 porción / 1 serving=150 | plátano con cajeta (MX) · banana con manjar (CL)
+Queso con dulce de batata | Cheese with sweet potato paste | receta#3655 Queso fresco 60 · Dulce de batata 40 | 1 porción / 1 serving=100 | queso y dulce de boniato* (UY) · queso y dulce de batata (AR)
+Flan mixto | Flan with dulce de leche and whipped cream | receta#3627 Flan 100 · Dulce de leche 30 · Crema batida 30 | 1 porción / 1 serving=160 | flan con dulce de leche y crema
+Duraznos con crema | Canned peaches with whipped cream | receta#3628 Duraznos en almíbar 150 · Crema batida 40 | 1 porción / 1 serving=190 | duraznos en almíbar con crema · melocotón en almíbar con nata* (ES)
+Brownie con helado | Brownie with ice cream | receta#3629 Brownie 80 · Helado de vainilla 70 | 1 porción / 1 serving=150 | brownie con helado de crema
+// Los helados. Los de heladería tienen menos aire y más crema: son los «rich» de USDA.
+Helado artesanal de vainilla | Premium vanilla ice cream | sr:Ice creams, vanilla, rich | 1 bola / 1 scoop=70 · ¼ kilo / ¼ kg tub=250 | helado de crema americana* (UY AR) · helado de heladería
+Helado artesanal de chocolate | Premium chocolate ice cream | sr:Ice creams, chocolate, rich | 1 bola / 1 scoop=70 · ¼ kilo / ¼ kg tub=250 | helado de chocolate de heladería
+Helado de sabayón | Zabaglione ice cream | receta#3630 Leche entera 500 · Crema de leche 250 · Yema de huevo 160 · Azúcar 200 · Vino dulce 80 | 1 bola / 1 scoop=70 | helado de sambayón* (UY AR) · sambayón · helado de zabaione
+Helado de dulce de leche con chispas de chocolate | Dulce de leche chocolate chip ice cream | receta#3631 Crema de leche 500 · Dulce de leche 400 · Leche entera 200 · Chocolate amargo 100 | 1 bola / 1 scoop=70 | dulce de leche granizado* (UY AR) · helado de dulce de leche granizado
+Helado de tramontana | Tramontana ice cream (vanilla, dulce de leche and chocolate-coated cookies) | receta#3632 Helado artesanal de vainilla 700 · Dulce de leche 150 · Obleas bañadas en chocolate 150 | 1 bola / 1 scoop=70 | tramontana
+Helado de menta con chispas de chocolate | Mint chocolate chip ice cream | receta#3633 Helado artesanal de vainilla 900 · Chocolate amargo 100 | 1 bola / 1 scoop=70 | menta granizada* (UY AR) · helado de menta granizada
+Helado de chocolate con almendras | Chocolate almond ice cream | receta#3634 Helado artesanal de chocolate 900 · Almendras 100 | 1 bola / 1 scoop=70 | chocolate con almendras de heladería
+Helado soft | Soft-serve ice cream | fndds:Ice cream, soft serve, vanilla | 1 vasito / 1 small cup=100 · 1 taza / 1 cup=175 | helado de máquina* (UY AR) · helado suave
+Helado en cono | Ice cream cone | fndds:Ice cream cone, scooped, vanilla | 1 cono / 1 cone=125 | cucurucho de helado* (UY AR) · barquillo con helado
+Pastel helado | Ice cream cake | fndds:Ice cream cake | 1 porción / 1 slice=100 | torta helada* (UY AR CL)
+// El almendrado: helado de crema con almendras caramelizadas (el azúcar se carameliza sin agua).
+Almendrado | Almond praline ice cream cake (almendrado) | receta#3635 Helado artesanal de vainilla 800 · Almendras 100 · Azúcar 100 | 1 porción / 1 slice=100 | postre almendrado · almendrado helado
+Banana split | Banana split | fndds:Banana split | 1 unidad / 1 banana split=490 | banana split con helado
+Sundae de chocolate | Hot fudge sundae | fndds:Ice cream sundae, hot fudge topping | 1 unidad / 1 sundae=180 | sundae · copa de helado con chocolate
+// Los dulces caseros quedan con la humedad de la mermelada de USDA (30,5 %).
+Dulce de higo | Fig preserve in syrup | receta#3636 Higo 1000 · Azúcar 800 · Agua 200 · Jugo de limón 20 → 1453 | 1 cucharada / 1 tbsp=20 · 1 higo / 1 fig=30 | higos en almíbar · dulce de higos
+Dulce de calabaza | Candied pumpkin in syrup | receta#3637 Calabaza 1000 · Azúcar 800 · Agua 500 → 1272 | 1 porción / 1 serving=40 | dulce de zapallo* (UY AR PY) · dulce de ahuyama* (CO VE) · zapallo en almíbar
+Dulce de batata con chocolate | Sweet potato paste with chocolate | receta#3638 Dulce de batata 900 · Chocolate amargo 100 | 30 g / 30 g=30 | dulce de boniato con chocolate* (UY) · dulce de camote con chocolate (PE)
+Mermelada de durazno | Peach jam | receta#3639 Durazno 1000 · Azúcar 700 · Jugo de limón 20 → 1169 | 1 cucharada / 1 tbsp=20 | mermelada de melocotón* (ES)
+Mermelada de fresa | Strawberry jam | receta#3640 Fresas 1000 · Azúcar 700 · Jugo de limón 20 → 1139 | 1 cucharada / 1 tbsp=20 | mermelada de frutilla* (UY AR CL PY BO EC)
+Mermelada de frutos rojos | Mixed berry jam | receta#3641 Frutos rojos congelados 1000 · Azúcar 700 · Jugo de limón 20 → 1209 | 1 cucharada / 1 tbsp=20 | mermelada de frutos del bosque* (UY AR ES)
+Mermelada de albaricoque | Apricot jam | sr:Jams and preserves, apricot | 1 cucharada / 1 tbsp=20 | mermelada de damasco* (UY AR CL PY BO PE) · mermelada de chabacano* (MX)
+Mermelada de naranja | Orange marmalade | sr:Marmalade, orange | 1 cucharada / 1 tbsp=20 | dulce de naranja · confitura de naranja
+// Las golosinas. El turrón de almendras queda con la humedad del turrón con almendras de USDA (2,2 %);
+// en las almendras garrapiñadas, el agua se evapora toda.
+Turrón de maní | Peanut nougat | fndds:Candy, nougat with nuts | 1 barrita / 1 bar=25 | turrón de cacahuate (MX) · turrón de cacahuete (ES)
+Turrón de almendras | Almond nougat (turrón) | receta#3642 Almendras 600 · Miel 250 · Azúcar 150 · Clara de huevo 30 → 968 | 1 porción / 1 piece=25 | turrón duro · turrón de Alicante (ES)
+Mazapán | Marzipan | receta#3643 Almendras 500 · Azúcar en polvo 500 · Clara de huevo 30 | 1 unidad / 1 piece=15 | mazapanes
+Almendras garrapiñadas | Sugar-coated almonds | receta#3644 Almendras 300 · Azúcar 300 · Agua 150 → 600 | 1 bolsita / 1 small bag=50 | garrapiñada de almendras* (UY AR) · almendras garapiñadas* (ES) · almendras confitadas
+Crocante de maní | Peanut brittle | fndds:Candy, peanut brittle | 1 trozo / 1 piece=10 · 1 porción / 1 serving=30 | palanqueta de cacahuate* (MX) · crocante
+Caramelos de leche | Milk caramels | sr:Candies, caramels | 1 unidad / 1 piece=6 | caramelos masticables de leche · toffee
+Caramelos masticables | Chewy candy | fndds:Candy, taffy | 1 unidad / 1 piece=5 | masticables
+Caramelo de palito | Lollipop | fndds:Candy, lollipop | 1 unidad / 1 lollipop=10 | chupetín* (UY AR PY) · piruleta* (ES) · chupeta* (VE) · chupete* (CL) · colombina* (CO) · paleta de dulce (MX)
+Pastillas de menta | Mints | fndds:Candy, mint | 1 unidad / 1 piece=2 | caramelos de menta
+Confites de chocolate | Candy-coated chocolates | fndds:Chocolate candy, candy shell | 1 paquete / 1 pouch=45 · 10 unidades / 10 pieces=20 | confites* (UY AR) · chocolates confitados
+Chocolate con frutos secos | Chocolate with nuts | fndds:Chocolate candy with nuts | 20 g / 20 g=20 · 1 barrita / 1 bar=45 | chocolate con almendras · chocolate con maní · chocolate con avellanas
+Almendras con chocolate | Chocolate-covered almonds | fndds:Almonds, chocolate covered candy | 10 unidades / 10 pieces=40 · 1 paquete / 1 package=55 | almendras bañadas en chocolate · almendras cubiertas de chocolate
+Chocolate con arroz inflado | Chocolate with crisped rice | fndds:Chocolate candy with cereal | 20 g / 20 g=20 · 1 barrita / 1 bar=45 | chocolate crocante · chocolate con cereal
+Pasas con chocolate | Chocolate-covered raisins | fndds:Chocolate candy with dried fruit | 1 paquete / 1 pouch=45 · 1 puñado / 1 handful=30 | pasas de uva bañadas en chocolate (UY AR) · pasas cubiertas de chocolate
+Bombones rellenos | Cream-filled chocolates | fndds:Chocolate candy, cream filled | 1 bombón / 1 piece=15 | bombones · bombones de chocolate
+Trufas de chocolate | Chocolate truffles | sr:Candies, truffles, prepared-from-recipe | 1 trufa / 1 truffle=12 | trufas
+Manzana acaramelada | Candy apple | fndds:Apple, candied | 1 unidad / 1 apple=220 | manzana caramelizada · manzana cubierta de caramelo
+Granas de colores | Sprinkles | fndds:Candy, sprinkles | 1 cucharadita / 1 tsp=4 | granas* (UY AR) · chispitas de colores
+
+# lacteos
+Leche entera deslactosada | Lactose-free whole milk | fndds:Milk, lactose free, whole | 1 vaso (200 ml) / 1 glass (200 ml)=206 · 1 taza (240 ml) / 1 cup (240 ml)=248 | leche entera sin lactosa | ml
+Leche de fresa | Strawberry milk | fndds:Strawberry milk, reduced fat (2%) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | leche frutillada* (UY AR) · leche sabor frutilla · leche con fresa | ml
+Crema liviana | Light cream | fndds:Cream, light | 1 cucharada / 1 tbsp=15 | crema de leche liviana (UY AR) · nata ligera (ES) | ml
+Yogur entero con frutas | Whole milk fruit yogurt | fndds:Yogurt, whole milk, fruit | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 | yogur entero de frutilla (UY AR) · yogurt entero con frutas
+Yogur entero saborizado | Whole milk flavored yogurt | fndds:Yogurt, whole milk, flavors other than fruit | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 | yogurt entero saborizado · yogur entero de sabores
+Yogur descremado con frutas | Nonfat fruit yogurt | fndds:Yogurt, nonfat milk, fruit | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 | yogur desnatado con frutas* (ES) · yogurt light con frutas · yogur descremado de frutilla (UY AR)
+Yogur griego con frutas | Greek fruit yogurt | fndds:Yogurt, Greek, whole milk, fruit | 1 envase / 1 container=150 | yogurt griego con frutas · yogur griego de frutos rojos
+
+# quesos
+// El queso colonia es de tipo suizo (lo hacían los queseros suizos de Nueva Helvecia): sus valores son
+// los del suizo de SR Legacy. El magro (en el MERCOSUR, de 10 a 25 % de grasa en el extracto seco) es el
+// bajo en grasa de USDA, que cae en ese rango.
+Queso colonia | Colonia cheese (Swiss-type) | sr:Cheese, swiss | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso tipo colonia · queso suizo semiduro
+Queso magro | Low-fat semi-hard cheese | sr:Cheese, low fat, cheddar or colby | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso light · queso bajo en grasa · queso descremado
+Ricota semidescremada | Part-skim ricotta | sr:Cheese, ricotta, part skim milk | ¼ taza / ¼ cup=62 | ricota descremada · ricota light · ricota magra · requesón bajo en grasa
+
+# bebidas
+// El té con leche de FNDDS es mitad leche, con canela y nuez moscada: este es como el mate cocido con leche.
+// USDA no tiene refresco de toronja: es el de frutas sin cafeína de FNDDS (por 100 g, el mismo azúcar).
+Té con leche | Tea with milk | receta#3645 Té negro 150 · Leche entera 100 · Azúcar 8 | 1 taza / 1 cup=258 | té con leche y azúcar | densidad=1.02
+Batido de banana con leche | Banana milkshake (licuado) | receta#3646 Banana 120 · Leche entera 250 · Azúcar 10 | 1 vaso (300 ml) / 1 glass (300 ml)=312 | licuado de banana* (UY AR PY) · licuado de plátano* (MX) · batido de plátano* (ES) | densidad=1.04
+Batido de fresa con leche | Strawberry milkshake (licuado) | receta#3647 Fresas 150 · Leche entera 250 · Azúcar 15 | 1 vaso (300 ml) / 1 glass (300 ml)=312 | licuado de frutilla* (UY AR PY) · licuado de fresa* (MX) · batido de fresa* (ES) | densidad=1.04
+Batido de durazno con leche | Peach milkshake (licuado) | receta#3648 Durazno 150 · Leche entera 250 · Azúcar 10 | 1 vaso (300 ml) / 1 glass (300 ml)=312 | licuado de durazno* (UY AR PY MX) · batido de melocotón* (ES) | densidad=1.04
+Refresco de naranja | Orange soda | sr:Beverages, carbonated, orange | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 lata (355 ml) / 1 can (355 ml)=372 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | gaseosa de naranja* (UY AR CO PE BO PY EC) · naranjada | ml
+Refresco de lima-limón | Lemon-lime soda | sr:Beverages, carbonated, lemon-lime soda, no caffeine | 1 vaso (200 ml) / 1 glass (200 ml)=208 · 1 lata (355 ml) / 1 can (355 ml)=370 · 1 botella (500 ml) / 1 bottle (500 ml)=521 | gaseosa lima-limón* (UY AR CO PE BO PY EC) · refresco de limón | ml
+Refresco de toronja | Grapefruit soda | fndds:Soft drink, fruit flavored, caffeine free | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 lata (355 ml) / 1 can (355 ml)=372 · 1 botella (500 ml) / 1 bottle (500 ml)=524 | gaseosa de pomelo* (UY AR PY BO) · refresco de pomelo* (ES) · refresco de frutas | ml
+Jugo de frutas mixtas | Mixed fruit juice | fndds:Fruit juice blend, 100% juice | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 juice box (200 ml)=209 | jugo multifruta* (UY AR) · zumo multifrutas* (ES) | ml
+
+# cereales
+Harina para pan | Bread flour | sr:Wheat flour, white, bread, enriched | 1 taza / 1 cup=137 · 1 cucharada / 1 tbsp=8 | harina 000* (UY AR) · harina de fuerza* (ES) · harina panadera
+Harina de centeno | Rye flour | sr:Rye flour, medium | 1 taza / 1 cup=102 |
+// La harina de almendras es la almendra pelada y molida.
+Harina de almendras | Almond flour | sr:Nuts, almonds, blanched | ¼ taza / ¼ cup=28 · 1 taza / 1 cup=112 | almendra molida* (ES) · harina de almendra
+Avena instantánea | Instant oats | sr:Cereals, oats, instant, fortified, plain, dry | ½ taza / ½ cup=40 · 1 sobre / 1 packet=28 | avena rápida · avena instantánea en hojuelas
+Arroz de grano corto crudo | Uncooked short-grain rice | sr:Rice, white, short-grain, enriched, uncooked | ¼ taza / ¼ cup=50 · 1 taza / 1 cup=200 | arroz redondo* (ES) · arroz para risotto · arroz carnaroli · arroz arborio · arroz para sushi
+Arroz de grano corto cocido | Cooked short-grain rice | sr:Rice, white, short-grain, enriched, cooked | 1 taza / 1 cup=186 | arroz redondo cocido* (ES) · arroz de grano corto | crudo=Arroz de grano corto crudo
+Arroz integral de grano medio crudo | Uncooked medium-grain brown rice | sr:Rice, brown, medium-grain, raw | ¼ taza / ¼ cup=48 · 1 taza / 1 cup=190 | arroz yamaní crudo* (UY AR) · arroz integral yamaní crudo
+Arroz integral de grano medio cocido | Cooked medium-grain brown rice | sr:Rice, brown, medium-grain, cooked | 1 taza / 1 cup=195 | arroz yamaní* (UY AR) · arroz integral yamaní | crudo=Arroz integral de grano medio crudo
+Aritos frutales | Fruit-flavored cereal rings | fndds:Cereal, fruit rings | 1 taza / 1 cup=30 | aritos de colores · cereal de aritos
+Copos de maíz con leche | Corn flakes with milk | receta#3649 Copos de maíz 30 · Leche entera 200 | 1 tazón / 1 bowl=230 | cereal con leche · copos con leche
+
+# legumbres
+Frijoles rojos en lata | Canned red kidney beans | sr:Beans, kidney, red, mature seeds, canned, drained solids | ½ taza / ½ cup=128 | porotos rojos en lata* (UY AR CL) · alubias rojas en lata* (ES)
+Frijoles blancos en lata | Canned white beans | sr:Beans, white, mature seeds, canned | ½ taza / ½ cup=131 | porotos blancos en lata* (UY AR CL) · alubias en lata* (ES)
+
+# pastas
+Pasta fresca de espinaca cruda | Raw fresh spinach pasta | sr:Pasta, fresh-refrigerated, spinach, as purchased | 1 porción / 1 serving=125 | tallarines de espinaca crudos (UY AR) · fideos frescos de espinaca crudos
+Pasta fresca de espinaca cocida | Cooked fresh spinach pasta | sr:Pasta, fresh-refrigerated, spinach, cooked | 1 plato / 1 plate=250 | tallarines de espinaca* (UY AR) · fideos frescos de espinaca · fideos verdes | crudo=Pasta fresca de espinaca cruda
+
+# grasas
+Mantequilla sin sal | Unsalted butter | sr:Butter, without salt | 1 cucharada / 1 tbsp=14.2 · 1 cucharadita / 1 tsp=4.7 | manteca sin sal* (UY AR PY)
+Aceite de arroz | Rice bran oil | sr:Oil, rice bran | 1 cucharada / 1 tbsp=13.6 · 1 cucharadita / 1 tsp=4.5 | aceite de salvado de arroz | densidad=0.92
+
+# verduras
+Verduras mixtas en lata | Canned mixed vegetables | sr:Vegetables, mixed, canned, drained solids | ½ taza / ½ cup=82 | jardinera* (UY AR) · macedonia de verduras en lata
+
+# tuberculos
+Puré de papas instantáneo | Instant mashed potato flakes | sr:Potatoes, mashed, dehydrated, flakes without milk, dry form | 1 porción / 1 serving=25 · ½ taza / ½ cup=30 | puré de patatas instantáneo* (ES) · puré de papas en copos · puré deshidratado
+
+# frutas
+Cerezas al marrasquino | Maraschino cherries | sr:Maraschino cherries, canned, drained | 1 unidad / 1 cherry=5 · 5 unidades / 5 cherries=25 | cerezas en almíbar · guindas en almíbar
+
+# snacks
+Papas paja | Potato sticks | sr:Snacks, potato sticks | ½ taza / ½ cup=18 · 1 bolsa pequeña / 1 small bag=28 | papas pay* (UY AR) · patatas paja* (ES) · papitas hilo | crudo=Papa · aceite=incluido

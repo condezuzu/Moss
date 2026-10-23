@@ -599,7 +599,7 @@ Queso cottage | Cottage cheese | fndds:Cheese, cottage, NFS | ½ taza / ½ cup=1
 Queso provolone | Provolone | fndds:Cheese, Provolone | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | provoleta* (AR UY) · provolone
 Queso suizo | Swiss cheese | fndds:Cheese, Swiss | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | emmental
 Queso gruyère | Gruyère | fndds:Cheese, Gruyere | 30 g / 30 g=30 | gruyer
-Queso gouda | Gouda | fndds:Cheese, Gouda or Edam | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso edam · danbo (AR UY) · queso de máquina (UY)
+Queso gouda | Gouda | fndds:Cheese, Gouda or Edam | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | queso edam · danbo (AR UY) · dambo (UY) · queso de máquina (UY)
 Queso fontina | Fontina | fndds:Cheese, Fontina | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | fontina
 Queso Monterey | Monterey Jack | fndds:Cheese, Monterey | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | monterey jack
 Queso muenster | Muenster | fndds:Cheese, Muenster | 30 g / 30 g=30 · 1 rebanada / 1 slice=21 | muenster

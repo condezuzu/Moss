@@ -76,7 +76,9 @@ describe('buscar alimentos', () => {
   });
 
   it('en inglés: los nombres curados y, si no, los de USDA', async () => {
-    expect((await primero('chicken breast', { idioma: 'en', region: 'US' })).nombre).toBe('Grilled chicken breast');
+    // En inglés el sustantivo va al final: primero la pechuga sola (cruda o cocida), no un plato con pechuga.
+    expect((await primero('chicken breast', { idioma: 'en', region: 'US' })).nombre).toMatch(/^(Raw|Grilled|Baked|Boiled) chicken breast$/);
+    expect((await buscar('pechuga de pollo')).slice(0, 3).map((r) => r.nombre)).not.toContainEqual(expect.stringMatching(/ con /));
     expect((await primero('banana', { idioma: 'en', region: 'US' })).nombre).toBe('Banana');
     // Lo que no está curado se encuentra igual, con su nombre de USDA.
     expect((await primero('kohlrabi', { idioma: 'en' })).nombre).toMatch(/^Kohlrabi/);

@@ -3,8 +3,10 @@
 // como alias con asterisco y (UY), que es el que se muestra ahí. Lo que ya está en genericos.txt no se
 // repite: se usa como ingrediente.
 //
-// Valores: de USDA, directo o como receta con ingredientes curados. Las recetas son caseras típicas, y
-// su peso final sale de lo que pierde (o absorbe) cada cosa al cocinarse, con los rendimientos de:
+// Valores: de USDA, directo o como receta con ingredientes curados; lo poco que USDA no tiene ni se
+// puede armar, de la tabla oficial de otro país, que se nombra al lado. Las recetas son caseras
+// típicas, y su peso final sale de lo que pierde (o absorbe) cada cosa al cocinarse, con los
+// rendimientos de:
 // - Bognár A. (2002), «Tables on weight yield of food and retention factors of food constituents for
 //   the calculation of nutrient composition of cooked foods (dishes)», BFE-R-02-03, Karlsruhe;
 // - o la humedad de un producto parecido de USDA o de ARGENFOODS (Universidad Nacional de Luján),
@@ -50,9 +52,61 @@ Pamplona de cerdo asada | Grilled stuffed pork roll (pamplona) | receta#3007 Pam
 // La provoleta: el provolone a la parrilla con orégano y un hilo de aceite. No hay un rendimiento
 // publicado para el queso a la parrilla: pesa lo que suma.
 Provoleta asada | Grilled provolone (provoleta) | receta#3008 Queso provolone 150 · Aceite de oliva 4 · Orégano 1 | 1 provoleta / 1 provoleta=155 · ½ provoleta / ½ provoleta=78 | provoleta a la parrilla · provolone asado | crudo=Queso provolone
+// Más cortes, crudos y cocidos. El matambre (el músculo fino entre el cuero y las costillas) no está
+// en USDA: el corte más parecido, plano y fino, es la falda de adentro (inside skirt). La bola de lomo
+// es la punta de la nalga (knuckle), el carré de cerdo el lomo con hueso (center rib) y el pechito, la
+// costilla de abajo (spareribs). Lo que no se come del carré y de la pierna, de SR28, va escrito: la
+// herramienta leería «skin» como cáscara y no conoce el tejido conectivo.
+Matambre crudo | Raw matambre (thin flank steak) | sr:Beef, plate steak, boneless, inside skirt, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 | matambre vacuno crudo · matambre de vaca crudo
+Matambre asado | Grilled matambre (thin flank steak) | sr:Beef, plate steak, boneless, inside skirt, separable lean and fat, trimmed to 0" fat, all grades, cooked, grilled | 1 porción / 1 serving=200 | matambre a la parrilla · matambre al horno · matambre de vaca asado | crudo=Matambre crudo
+Bola de lomo cruda | Raw beef knuckle (sirloin tip) | sr:Beef, round, knuckle, tip side, steak, separable lean and fat, trimmed to 0" fat, all grades, raw | 100 g / 100 g=100 · 1 bife / 1 steak=200 | babilla cruda* (ES) · posta rosada cruda* (CL) · pulpa bola cruda (MX)
+Bola de lomo a la plancha | Grilled beef knuckle steak | sr:Beef, round, knuckle, tip side, steak, separable lean and fat, trimmed to 0" fat, all grades, cooked, grilled | 1 bife / 1 steak=150 | bife de bola de lomo · bola de lomo a la parrilla · babilla a la plancha* (ES) · posta rosada a la plancha* (CL) | crudo=Bola de lomo cruda · aceite
+Carré de cerdo crudo | Raw bone-in pork loin | sr:Pork, fresh, loin, center rib (chops or roasts), bone-in, separable lean and fat, raw | 100 g / 100 g=100 · 1 costilla / 1 chop=133 | carré de cerdo con hueso crudo · lomo de cerdo con hueso crudo | desecho=34 hueso y nervios/bone and connective tissue
+Carré de cerdo al horno | Roast bone-in pork loin | sr:Pork, fresh, loin, center rib (roasts), bone-in, separable lean and fat, cooked, roasted | 1 porción / 1 serving=150 · 1 costilla / 1 chop=100 | carré de cerdo asado · carré de cerdo a la parrilla · lomo de cerdo con hueso al horno | crudo=Carré de cerdo crudo · desecho=23 hueso y nervios/bone and connective tissue
+Pechito de cerdo crudo | Raw pork spareribs | sr:Pork, fresh, spareribs, separable lean and fat, raw | 100 g / 100 g=100 | costillas de cerdo de pecho crudas · spare ribs de cerdo crudas | desecho
+Pechito de cerdo asado | Roasted pork spareribs | sr:Pork, fresh, spareribs, separable lean and fat, cooked, roasted | 1 porción / 1 serving=200 | pechito de cerdo a la parrilla · pechito a la parrilla · costillas de cerdo de pecho asadas · spare ribs de cerdo | crudo=Pechito de cerdo crudo · desecho
+Pierna de cerdo cruda | Raw fresh ham (pork leg) | sr:Pork, fresh, leg (ham), whole, separable lean and fat, raw | 100 g / 100 g=100 | pernil de cerdo crudo* (UY AR) · pierna de puerco cruda* (MX) · jamón fresco crudo | desecho=17 hueso y cuero/bone and skin
+Pierna de cerdo al horno | Roast fresh ham (pork leg) | sr:Pork, fresh, leg (ham), whole, separable lean and fat, cooked, roasted | 1 porción / 1 serving=150 · 1 taza en cubos / 1 cup diced=135 | pernil de cerdo* (UY AR) · pernil de cerdo al horno · pierna de puerco horneada* (MX) · pierna de cerdo asada | crudo=Pierna de cerdo cruda · desecho=20 hueso y cuero/bone and skin
+Cordero para guiso crudo | Raw lamb stew meat | sr:Lamb, cubed for stew or kabob (leg and shoulder), separable lean only, trimmed to 1/4" fat, raw | 100 g / 100 g=100 | cordero en cubos crudo · carne de cordero para guisar cruda · borrego para guisar crudo (MX)
+Cordero guisado | Braised lamb stew meat | sr:Lamb, cubed for stew or kabob (leg and shoulder), separable lean only, trimmed to 1/4" fat, cooked, braised | 100 g / 100 g=100 | carne de cordero guisada · cordero en cubos guisado · borrego guisado (MX) | crudo=Cordero para guiso crudo
+// Fiambres. El embutido de hígado se unta: la cucharada sale de la taza de USDA (213 g).
+Queso de cerdo | Head cheese | sr:Headcheese, pork | 1 rebanada / 1 slice=28 | queso de cabeza* (CL) · queso de puerco* (MX) · queso de chancho (AR PE) · head cheese
+Embutido de hígado | Liverwurst | fndds:Liverwurst | 1 cucharada / 1 tbsp=13 · 1 rebanada / 1 slice=28 | leberwurst* (UY AR CL) · liverwurst · braunschweiger
+// La morcilla dulce: la morcilla con azúcar, pasas y nueces, en las proporciones de una casera.
+Morcilla dulce | Sweet blood sausage with raisins and walnuts | receta#3304 Morcilla 650 · Azúcar 130 · Pasas de uva 120 · Nueces 100 | 100 g / 100 g=100 | morcilla dulce con pasas y nueces · morcilla dulce con nueces
+// El matambre arrollado: el matambre crudo relleno, atado y hervido; se come frío, en rodajas. La
+// carne queda en 0,65, como la carne guisada, y el morrón en 0,74 (Bognár 2002, tablas 4 y 19); lo
+// demás va cocido o queda como estaba.
+Matambre arrollado | Rolled stuffed matambre | receta#3200 Matambre crudo 1500 · Huevo duro 200 · Zanahoria 200 · Pimiento rojo 150 · Acelga cocida 150 · Perejil 15 · Ajo 10 · Sal 15 → 1676 | 2 rodajas / 2 slices=120 | matambre relleno · matambre enrollado
+
+# aves
+// La pata y muslo pesa lo que la pata y el muslo de USDA juntos, sin el hueso: 296 g crudos y 224 g
+// asados.
+Pata y muslo de pollo crudo | Raw chicken leg quarter | sr:Chicken, broilers or fryers, leg, meat and skin, raw | 1 pata y muslo / 1 leg quarter=296 · 100 g / 100 g=100 | pata muslo crudo* (UY AR) · muslo entero de pollo crudo* (ES) · pierna y muslo de pollo crudo* (MX) · trutro entero crudo* (CL) · pernil de pollo crudo* (CO) | desecho
+Pata y muslo de pollo al horno | Roast chicken leg quarter | sr:Chicken, broilers or fryers, leg, meat and skin, cooked, roasted | 1 pata y muslo / 1 leg quarter=224 · 100 g / 100 g=100 | pata muslo al horno* (UY AR) · pata y muslo a la parrilla · muslo entero de pollo asado* (ES) · pierna y muslo de pollo al horno* (MX) · trutro entero asado* (CL) · pernil de pollo asado* (CO) | crudo=Pata y muslo de pollo crudo · desecho
+Medallón de pollo empanado crudo | Raw breaded chicken patty | sr:Chicken patty, frozen, uncooked | 1 medallón / 1 patty=75 | medallón de pollo congelado* (UY AR) · hamburguesa de pollo empanizada congelada (MX)
+Medallón de pollo empanado | Breaded chicken patty | fndds:Chicken patty, breaded | 1 medallón / 1 patty=75 | medallón de pollo* (UY AR) · hamburguesa de pollo empanizada* (MX) · medallón de pollo al horno | crudo=Medallón de pollo empanado crudo
+
+# pescados
+// La corvina a la plancha: USDA no la tiene sin rebozar. Pierde lo que la merluza de USDA (whiting)
+// cruda y cocida, por la proteína: queda en 0,78.
+Corvina a la plancha | Pan-seared croaker | receta#3201 Corvina cruda 100 → 78 | 1 porción / 1 serving=150 · 1 filete / 1 fillet=62 | corvina a la parrilla · corvina al horno · filet de corvina a la plancha | crudo=Corvina cruda · aceite
 
 # salsas
 Chimichurri | Chimichurri sauce | receta#3009 Aceite de girasol 100 · Vinagre 50 · Agua 30 · Ajo 10 · Perejil 15 · Orégano 3 · Pimienta de cayena 3 · Sal 6 | 1 cucharada / 1 tbsp=15 | chimi
+// Las salsas de las pastas: se calientan juntas y pesan lo que suman, salvo los champiñones, que
+// salteados quedan en 0,86 (la proteína de los crudos y los salteados de USDA).
+Salsa caruso | Caruso sauce (cream, ham and mushrooms) | receta#3202 Crema de leche 300 · Jamón cocido 120 · Champiñones 160 · Queso rallado 60 · Mantequilla 20 → 638 | ½ taza / ½ cup=120 | salsa a la caruso
+Salsa de champiñones | Mushroom cream sauce | receta#3203 Crema de leche 300 · Champiñones 300 · Mantequilla 20 · Sal 3 → 581 | ½ taza / ½ cup=120 | salsa de hongos* (UY AR) · salsa de setas* (ES) · salsa al champiñón
+Salsa de queso azul | Blue cheese cream sauce | receta#3204 Crema de leche 200 · Leche entera 100 · Queso azul 120 · Mantequilla 10 | ¼ taza / ¼ cup=60 · ½ taza / ½ cup=120 | salsa de roquefort* (UY AR) · salsa roquefort · salsa de gorgonzola
+Salsa cuatro quesos | Four-cheese cream sauce | receta#3205 Crema de leche 200 · Leche entera 100 · Queso azul 40 · Queso mozzarella 40 · Queso parmesano 40 · Queso gouda 40 | ¼ taza / ¼ cup=60 · ½ taza / ½ cup=120 | salsa 4 quesos · salsa de cuatro quesos
+Salsa de tomate con crema | Tomato cream sauce | receta#3206 Salsa de tomate 300 · Crema de leche 100 | ½ taza / ½ cup=125 | salsa rosa (UY AR) · salsa rosada para pastas · salsa de tomate y crema
+Salsa mixta | Tomato sauce with white sauce | receta#3207 Salsa de tomate 200 · Salsa blanca 200 | ½ taza / ½ cup=125 | tuco con salsa blanca · salsa de tomate y bechamel
+// La salsa rosada casera es mayonesa con kétchup: la de USDA es el aderezo, con pepinillos y menos
+// grasa. La provenzal y la salsa criolla van crudas.
+Salsa rosada casera | Homemade pink sauce (mayonnaise and ketchup) | receta#3208 Mayonesa 150 · Kétchup 50 | 1 cucharada / 1 tbsp=15 | salsa golf casera* (UY AR PY) · salsa rosa casera* (ES) · mayonesa con kétchup
+Salsa provenzal | Garlic and parsley in olive oil | receta#3209 Perejil 60 · Ajo 30 · Aceite de oliva 100 · Sal 3 | 1 cucharada / 1 tbsp=12 | provenzal* (UY AR) · ajo y perejil · persillade
+Salsa criolla | Tomato, onion and pepper relish with oil and vinegar | receta#3210 Tomate 200 · Cebolla 150 · Pimiento rojo 100 · Pimiento verde 50 · Aceite de girasol 60 · Vinagre 40 · Orégano 1 · Sal 5 | 2 cucharadas / 2 tbsp=30 | salsa criolla para asado · criolla
 
 # platos
 // Las milanesas: la carne empanada (huevo y pan rallado) cruda, frita o al horno. Cocidas pierden lo de
@@ -82,6 +136,26 @@ Milanesa con papas fritas | Breaded beef cutlet with fries | receta#3026 Milanes
 Sándwich de milanesa | Breaded beef cutlet sandwich | receta#3027 Pan francés 100 · Milanesa de carne frita 120 · Lechuga 15 · Tomate 40 · Mayonesa 15 | 1 sándwich / 1 sandwich=290 | milanesa al pan* (UY) · sánguche de milanesa (AR PE) · torta de milanesa* (MX)
 Milanesa a caballo | Breaded beef cutlet with a fried egg | receta#3028 Milanesa de carne frita 150 · Huevo frito 46 | 1 plato / 1 plate=196 | milanesa con huevo frito · milanesa con huevo
 Salchichas con puré | Hot dogs with mashed potatoes | receta#3029 Salchicha 90 · Puré de papas 200 | 1 plato / 1 plate=290 | panchos con puré (UY AR) · salchichas con puré de papas
+// Más minutas, armadas con lo ya cocido: pesan lo que suman.
+Milanesa de pollo con puré | Breaded chicken cutlet with mashed potatoes | receta#3211 Milanesa de pollo frita 150 · Puré de papas 200 | 1 plato / 1 plate=350 | suprema con puré* (UY AR) · milanesa de pollo con puré de papas
+Milanesa de pollo con papas fritas | Breaded chicken cutlet with fries | receta#3212 Milanesa de pollo frita 150 · Papas fritas 150 | 1 plato / 1 plate=300 | suprema con papas fritas* (UY AR) · suprema con fritas · milanesa de pollo con fritas
+Milanesa de pollo con ensalada | Breaded chicken cutlet with mixed salad | receta#3213 Milanesa de pollo frita 150 · Ensalada mixta 150 · Aceite de girasol 10 | 1 plato / 1 plate=310 | suprema con ensalada* (UY AR) · milanesa de pollo con lechuga y tomate
+Milanesa con ensalada | Breaded beef cutlet with mixed salad | receta#3214 Milanesa de carne frita 150 · Ensalada mixta 150 · Aceite de girasol 10 | 1 plato / 1 plate=310 | milanesa con ensalada mixta · milanesa con lechuga y tomate
+Sándwich de milanesa de pollo | Breaded chicken cutlet sandwich | receta#3215 Pan francés 100 · Milanesa de pollo frita 120 · Lechuga 15 · Tomate 40 · Mayonesa 15 | 1 sándwich / 1 sandwich=290 | milanesa de pollo al pan* (UY) · sándwich de suprema · sánguche de milanesa de pollo (AR PE) · torta de milanesa de pollo* (MX)
+Sándwich de milanesa completo | Breaded steak sandwich with ham, cheese and egg | receta#3216 Pan francés 100 · Milanesa de carne frita 120 · Jamón cocido 30 · Queso mozzarella 40 · Huevo frito 46 · Lechuga 15 · Tomate 40 · Mayonesa 15 | 1 sándwich / 1 sandwich=406 | milanesa al pan completa* (UY) · sándwich de milanesa con todo · sánguche de milanesa completo (AR)
+Milanesa a la napolitana con papas fritas | Neapolitan breaded steak with fries | receta#3217 Milanesa a la napolitana 265 · Papas fritas 150 | 1 plato / 1 plate=415 | napolitana con papas fritas · napolitana con fritas · milanesa napolitana con fritas
+Milanesa de pollo a la napolitana con papas fritas | Neapolitan breaded chicken with fries | receta#3218 Milanesa de pollo a la napolitana 255 · Papas fritas 150 | 1 plato / 1 plate=405 | suprema napolitana con papas fritas* (UY AR) · suprema napolitana con fritas
+Milanesa de berenjena a la napolitana | Neapolitan breaded eggplant | receta#3219 Milanesa de berenjena frita 150 · Salsa de tomate 40 · Jamón cocido 30 · Queso mozzarella 40 | 1 unidad / 1 piece=260 | berenjena a la napolitana · napolitana de berenjena
+Merluza frita con puré | Fried hake with mashed potatoes | receta#3220 Merluza frita 150 · Puré de papas 200 | 1 plato / 1 plate=350 | pescado frito con puré · filet de merluza con puré (UY AR)
+Bistec a caballo | Steak topped with fried eggs | receta#3221 Bistec 200 · Huevo frito 92 | 1 plato / 1 plate=292 | bife a caballo* (UY AR PY) · churrasco a caballo (UY) · bistec con huevos fritos · bife con huevo frito
+Bistec con papas fritas | Steak with fries | receta#3222 Bistec 200 · Papas fritas 150 | 1 plato / 1 plate=350 | bife con papas fritas* (UY AR PY) · churrasco con papas fritas (UY) · bife con fritas
+Bistec con ensalada | Steak with mixed salad | receta#3223 Bistec 200 · Ensalada mixta 150 · Aceite de girasol 10 | 1 plato / 1 plate=360 | bife con ensalada* (UY AR PY) · churrasco con ensalada (UY)
+Pechuga de pollo con ensalada | Grilled chicken breast with mixed salad | receta#3224 Pechuga de pollo a la plancha 150 · Ensalada mixta 150 · Aceite de oliva 10 | 1 plato / 1 plate=310 | pollo a la plancha con ensalada · suprema a la plancha con ensalada (UY AR)
+Pechuga de pollo con puré | Grilled chicken breast with mashed potatoes | receta#3225 Pechuga de pollo a la plancha 150 · Puré de papas 200 | 1 plato / 1 plate=350 | pollo a la plancha con puré · suprema a la plancha con puré (UY AR)
+Pollo con salsa de champiñones | Chicken breast with mushroom sauce | receta#3226 Pechuga de pollo a la plancha 150 · Salsa de champiñones 100 | 1 plato / 1 plate=250 | pollo al champiñón · suprema al champiñón (UY AR)
+Lomo con salsa de champiñones | Beef tenderloin with mushroom sauce | receta#3227 Lomo 200 · Salsa de champiñones 100 | 1 plato / 1 plate=300 | lomo al champiñón (UY AR) · solomillo con champiñones* (ES) · filete con champiñones (MX)
+Hamburguesa al plato | Burger patty with fried egg and fries | receta#3228 Hamburguesa de carne 120 · Huevo frito 46 · Papas fritas 150 | 1 plato / 1 plate=316 | hamburguesa con papas fritas y huevo · hamburguesa sin pan con fritas
+Huevo frito con papas fritas | Fried eggs with fries | receta#3229 Huevo frito 92 · Papas fritas 150 | 1 plato / 1 plate=242 | huevos fritos con papas fritas · huevo frito con fritas (UY)
 // Los guisos. Pesan lo que queda de cada cosa cocida (Bognár 2002): las lentejas secas absorben hasta
 // ×2,73 (tabla 20), la carne guisada queda en 0,65 (tabla 4, bien cocida), el chorizo en 0,80 (tabla 12),
 // el morrón en 0,74 (tabla 19); la papa, la zanahoria, el zapallo y la cebolla quedan como estaban. El
@@ -93,8 +167,12 @@ Guiso de arroz | Rice and beef stew | receta#3031 Arroz blanco crudo 400 · Carn
 Estofado de carne | Beef stew in tomato sauce | receta#3032 Carne de res cruda 1000 · Cebolla 300 · Pimiento rojo 150 · Zanahoria 200 · Ajo 10 · Tomate triturado 500 · Aceite de girasol 40 · Orégano 2 · Sal 10 · Agua 300 → 1615 | 1 plato / 1 plate=250 | estofado (UY AR) · carne en salsa · carne guisada con tomate
 Carbonada | Beef, pumpkin and peach stew (carbonada) | receta#3033 Carne de res cruda 600 · Cebolla 200 · Pimiento rojo 100 · Tomate triturado 300 · Calabaza 600 · Papa 400 · Batata 400 · Maíz dulce 300 · Duraznos en almíbar 250 · Aceite de girasol 30 · Sal 10 · Agua 800 → 2775 | 1 plato / 1 bowl=350 | carbonada de zapallo · guiso de zapallo con duraznos
 Guiso de fideos | Beef and pasta stew | receta#3034 Carne de res cruda 500 · Cebolla 150 · Pimiento rojo 100 · Zanahoria 150 · Papa 300 · Tomate triturado 400 · Pasta seca 400 · Aceite de girasol 30 · Sal 10 · Agua 1500 → 2279 | 1 plato / 1 bowl=350 | fideos guisados · guiso de fideos con carne
+// El guiso de porotos lleva los porotos ya cocidos (los de USDA); lo demás, como en los de arriba.
+Guiso de porotos | Bean stew with beef and chorizo | receta#3230 Frijoles blancos 1000 · Carne de res cruda 400 · Chorizo crudo 200 · Panceta 100 · Cebolla 200 · Pimiento rojo 100 · Zanahoria 150 · Papa 300 · Calabaza 300 · Tomate triturado 400 · Ajo 10 · Aceite de girasol 30 · Paprika 5 · Sal 10 → 2999 | 1 plato / 1 bowl=350 | porotos guisados · porotos con chorizo · guiso de porotos con chorizo · alubias guisadas (ES)
+Guiso de cordero | Lamb stew | fndds:Stew, lamb | 1 plato / 1 bowl=300 | estofado de cordero* (ES CL PE) · cordero guisado con verduras · cazuela de cordero
 // El puchero y los platos al horno se arman con lo ya cocido (el caldo del puchero va aparte).
 Puchero | Boiled beef and vegetables (puchero) | receta#3035 Pecho de res 150 · Chorizo 40 · Papa hervida 100 · Batata hervida 70 · Calabaza cocida 70 · Zanahoria cocida 50 · Maíz dulce cocido 60 · Repollo cocido 40 · Cebolla cocida 20 | 1 plato / 1 plate=600 | puchero de carne · puchero con verduras
+Puchero de gallina | Boiled hen and vegetables | receta#3231 Gallina hervida 150 · Papa hervida 100 · Batata hervida 70 · Calabaza cocida 70 · Zanahoria cocida 50 · Maíz dulce cocido 60 · Repollo cocido 40 · Cebolla cocida 20 | 1 plato / 1 plate=560 | puchero de pollo · puchero de gallina con verduras
 Carne al horno con papas | Roast beef with roasted potatoes | receta#3036 Carne al horno 200 · Papa al horno 200 · Aceite de girasol 10 | 1 plato / 1 plate=410 | carne asada con papas · carne con papas al horno
 Pollo al horno con papas | Roast chicken with roasted potatoes | receta#3037 Pollo asado 250 · Papa al horno 200 · Aceite de girasol 10 | 1 plato / 1 plate=460 | pollo asado con papas · pollo con papas al horno
 Puré de calabaza | Mashed pumpkin | receta#3038 Calabaza 1000 · Mantequilla 30 · Leche entera 50 · Sal 5 → 1005 | 1 porción / 1 serving=200 | puré de zapallo* (UY AR PY) · puré de ahuyama (CO VE)
@@ -106,10 +184,36 @@ Ravioles con salsa blanca | Ravioli with white sauce | receta#3040 Ravioles 250 
 Tallarines con salsa blanca | Egg noodles with white sauce | receta#3043 Fideos de huevo 250 · Salsa blanca 125 · Queso rallado 10 | 1 plato / 1 plate=385 | tallarines con bechamel · fideos con salsa blanca
 Pasta con mantequilla | Buttered pasta with cheese | receta#3044 Pasta cocida 250 · Mantequilla 15 · Queso rallado 15 | 1 plato / 1 plate=280 | fideos con manteca* (UY AR PY) · fideos con manteca y queso · pasta con mantequilla y queso
 Polenta con queso | Polenta with cheese | receta#3045 Polenta cocida 300 · Queso mozzarella 50 · Mantequilla 10 | 1 plato / 1 plate=360 | polenta con muzzarella (UY AR)
+Ravioles con salsa boloñesa | Ravioli with meat sauce | receta#3232 Ravioles 250 · Salsa boloñesa 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ravioles con tuco y carne · ravioles a la boloñesa
+Ravioles con salsa mixta | Ravioli with tomato and white sauce | receta#3233 Ravioles 250 · Salsa mixta 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ravioles con mixta
+Ñoquis con salsa boloñesa | Gnocchi with meat sauce | receta#3234 Ñoquis 250 · Salsa boloñesa 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ñoquis con tuco y carne · ñoquis a la boloñesa
+Ñoquis con salsa mixta | Gnocchi with tomato and white sauce | receta#3235 Ñoquis 250 · Salsa mixta 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ñoquis con mixta
+Ravioles con salsa de tomate y crema | Ravioli with tomato cream sauce | receta#3301 Ravioles 250 · Salsa de tomate con crema 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ravioles con salsa rosa (UY AR)
+Ñoquis con salsa de tomate y crema | Gnocchi with tomato cream sauce | receta#3302 Ñoquis 250 · Salsa de tomate con crema 125 · Queso rallado 10 | 1 plato / 1 plate=385 | ñoquis con salsa rosa (UY AR)
+Ñoquis con pesto | Gnocchi with pesto | receta#3303 Ñoquis 250 · Pesto 40 · Queso rallado 10 | 1 plato / 1 plate=300 | ñoquis al pesto
+Tallarines con estofado | Fresh noodles with beef stew | receta#3236 Pasta fresca cocida 250 · Estofado de carne 200 · Queso rallado 10 | 1 plato / 1 plate=460 | fideos con estofado · tallarines con tuco y carne
+Tallarines con pesto | Fresh noodles with pesto | receta#3237 Pasta fresca cocida 250 · Pesto 40 · Queso rallado 10 | 1 plato / 1 plate=300 | fideos con pesto · tallarines al pesto · pasta al pesto
+Tallarines con salsa de tomate y crema | Fresh noodles with tomato cream sauce | receta#3238 Pasta fresca cocida 250 · Salsa de tomate con crema 125 · Queso rallado 10 | 1 plato / 1 plate=385 | tallarines con salsa rosa (UY AR) · fideos con salsa rosa
+Tallarines con salsa de queso azul | Fresh noodles with blue cheese sauce | receta#3239 Pasta fresca cocida 250 · Salsa de queso azul 80 | 1 plato / 1 plate=330 | tallarines al roquefort* (UY AR) · fideos con salsa de roquefort · pasta al gorgonzola
+// Los sorrentinos: la masa ya cocida (la pasta fresca de USDA) y el relleno de ricota, jamón y queso.
+Sorrentinos de jamón y queso | Ham and cheese sorrentinos | receta#3240 Pasta fresca cocida 600 · Ricota 250 · Jamón cocido 120 · Queso mozzarella 120 · Queso rallado 20 | 1 plato / 1 plate=300 | sorrentinos · sorrentinos de jamón, queso y ricota
+Sorrentinos con salsa de tomate | Ham and cheese sorrentinos with tomato sauce | receta#3241 Sorrentinos de jamón y queso 300 · Salsa de tomate 125 · Queso rallado 10 | 1 plato / 1 plate=435 | sorrentinos con tuco* (UY AR) · sorrentinos con salsa
+Sorrentinos con salsa de tomate y crema | Ham and cheese sorrentinos with tomato cream sauce | receta#3242 Sorrentinos de jamón y queso 300 · Salsa de tomate con crema 125 · Queso rallado 10 | 1 plato / 1 plate=435 | sorrentinos con salsa rosa (UY AR)
+Ravioles de carne | Meat ravioli | fndds:Ravioli, meat-filled, no sauce | 1 taza / 1 cup=160 · 1 raviol / 1 piece=15 | raviolis de carne* (ES MX) · ravioles de carne y verdura
+Ravioles de espinaca y ricota | Spinach and ricotta ravioli | fndds:Ravioli, cheese and spinach-filled, no sauce | 1 taza / 1 cup=160 · 1 raviol / 1 piece=15 | raviolis de espinacas y ricota* (ES MX) · ravioles de verdura y ricota · ravioles de verdura
+Tortellini de carne | Meat tortellini | fndds:Tortellini, meat-filled, no sauce | 1 taza / 1 cup=190 | capeletis de carne* (UY AR) · cappelletti de carne · tortelinis de carne
+Tortellini de espinaca | Spinach tortellini | fndds:Tortellini, spinach-filled, no sauce | 1 taza / 1 cup=122 | capeletis de verdura* (UY AR) · tortelinis de espinaca
 // Los canelones: panqueques rellenos (de carne, o de acelga y ricota) con salsa blanca y tuco. Se arman
 // con lo ya cocido y se gratinan unos minutos: pesan lo que suman.
 Canelones de carne | Beef cannelloni | receta#3046 Crepes 400 · Carne molida 400 · Cebolla cocida 100 · Queso rallado 60 · Huevo 50 · Salsa blanca 400 · Salsa de tomate 300 | 2 canelones / 2 cannelloni=340 | canelones de carne picada · canelones de carne con salsa blanca
 Canelones de verdura | Vegetable cannelloni | receta#3047 Crepes 400 · Acelga cocida 500 · Ricota 250 · Cebolla cocida 100 · Queso rallado 60 · Huevo 50 · Salsa blanca 400 · Salsa de tomate 300 | 2 canelones / 2 cannelloni=410 | canelones de acelga · canelones de ricota y verdura
+Canelones de pollo | Chicken cannelloni | receta#3243 Crepes 400 · Pechuga de pollo hervida 400 · Cebolla cocida 100 · Queso rallado 60 · Huevo 50 · Salsa blanca 400 · Salsa de tomate 300 | 2 canelones / 2 cannelloni=340 | canelones de pollo con salsa blanca · canelones de ave
+Canelones de jamón y queso | Ham and cheese cannelloni | receta#3244 Crepes 400 · Jamón cocido 300 · Queso mozzarella 250 · Salsa blanca 400 · Salsa de tomate 300 · Queso rallado 40 | 2 canelones / 2 cannelloni=340 | canelones de jamón y muzzarella (UY AR)
+Canelones de ricota | Ricotta cannelloni with tomato sauce | fndds:Manicotti, cheese-filled, with tomato sauce, meatless | 1 canelón / 1 cannelloni=143 | canelones de ricota con tuco · manicotti de queso
+// La lasaña de jamón y queso se arma como los canelones, con la pasta fresca ya cocida.
+Lasaña de jamón y queso | Ham and cheese lasagna | receta#3245 Pasta fresca cocida 400 · Jamón cocido 300 · Queso mozzarella 300 · Salsa blanca 500 · Salsa de tomate 300 · Queso rallado 50 | 1 porción / 1 piece=300 | lasagna de jamón y queso
+Lasaña de verduras | Vegetable lasagna | fndds:Lasagna, meatless, with vegetables | 1 porción / 1 piece=227 | lasaña de verdura · lasagna de verduras · lasaña vegetariana
+Lasaña de pollo | Chicken lasagna | fndds:Lasagna with chicken or turkey | 1 porción / 1 piece=206 | lasagna de pollo · lasaña de pavo
 // Lo horneado con masa (empanadas, tartas, pizzas): 0,86, como la pizza margarita y la tarta (Bognár 2002,
 // tabla 31). Lo que se rellena con verdura va con la verdura ya cocida.
 Empanada de jamón y queso | Ham and cheese empanada | receta#3048 Tapas de empanada 480 · Jamón cocido 240 · Queso mozzarella 360 · Huevo 30 → 955 | 1 empanada / 1 empanada=80 | empanadas de jamón y queso
@@ -117,14 +221,33 @@ Empanada de humita | Creamed corn empanada | receta#3049 Tapas de empanada 480 �
 Empanada de verdura | Chard empanada | receta#3050 Tapas de empanada 480 · Acelga cocida 300 · Cebolla 100 · Salsa blanca 150 · Queso rallado 40 · Huevo duro 100 · Aceite de girasol 15 · Huevo 30 → 1045 | 1 empanada / 1 empanada=85 | empanadas de verdura · empanada de acelga
 Empanada de queso y cebolla | Cheese and onion empanada | receta#3051 Tapas de empanada 480 · Queso mozzarella 360 · Cebolla 240 · Aceite de girasol 15 · Orégano 2 · Huevo 30 → 969 | 1 empanada / 1 empanada=85 | empanadas de queso y cebolla · empanada de muzzarella y cebolla (UY AR)
 Empanada caprese | Tomato, mozzarella and basil empanada | receta#3052 Tapas de empanada 480 · Queso mozzarella 300 · Tomate 240 · Albahaca 10 · Huevo 30 → 912 | 1 empanada / 1 empanada=85 | empanadas caprese · empanada de tomate y queso
+// Más empanadas, con el relleno rehogado y al horno como las de arriba (0,86).
+Empanada de carne al horno | Baked beef empanada | receta#3246 Tapas de empanada 480 · Carne molida 280 · Cebolla salteada 150 · Pimiento rojo 50 · Huevo duro 50 · Aceitunas verdes 25 · Paprika 2 · Comino 1 · Sal 2 · Huevo 30 → 920 | 1 empanada / 1 empanada=77 | empanada de carne casera · empanadas de carne al horno
+Empanada de pollo al horno | Baked chicken empanada | receta#3247 Tapas de empanada 480 · Pechuga de pollo hervida 250 · Cebolla salteada 150 · Pimiento rojo 60 · Huevo duro 50 · Aceitunas verdes 25 · Paprika 2 · Sal 3 · Huevo 30 → 903 | 1 empanada / 1 empanada=75 | empanada de pollo casera · empanadas de pollo al horno
+Empanada de atún | Tuna empanada | receta#3248 Tapas de empanada 480 · Atún en agua 300 · Cebolla salteada 150 · Pimiento rojo 60 · Huevo duro 50 · Aceitunas verdes 25 · Huevo 30 → 942 | 1 empanada / 1 empanada=79 | empanadas de atún
+Empanada de calabaza | Butternut squash and cheese empanada | receta#3249 Tapas de empanada 480 · Calabaza moscada al horno 350 · Queso mozzarella 200 · Cebolla salteada 80 · Huevo 30 → 980 | 1 empanada / 1 empanada=82 | empanada de zapallo* (UY AR) · empanada de zapallo y queso · empanada de calabaza y queso
 Tarta de jamón y queso | Ham and cheese quiche | receta#3053 Masa de tarta 330 · Jamón cocido 200 · Queso mozzarella 200 · Huevo 150 · Leche entera 200 → 929 | 1 porción / 1 slice=115 | quiche de jamón y queso · tarta de jamón
 Tarta de calabacín | Zucchini pie | receta#3054 Masa de tarta 330 · Calabacín cocido 600 · Cebolla cocida 150 · Huevo 200 · Queso rallado 50 · Queso mozzarella 100 → 1230 | 1 porción / 1 slice=150 | tarta de zapallitos* (UY AR) · tarta de zucchini · tarta de calabacitas (MX)
 Tarta de puerro | Leek pie | receta#3055 Masa de tarta 330 · Puerro cocido 500 · Huevo 200 · Salsa blanca 150 · Queso rallado 50 · Queso mozzarella 100 → 1144 | 1 porción / 1 slice=140 | tarta de puerros · quiche de puerro
 Tarta de fiambre | Double-crust ham and cheese pie | receta#3056 Masa de tarta 660 · Jamón cocido 300 · Queso gouda 250 · Huevo duro 150 · Pimiento rojo 60 · Aceitunas verdes 40 · Huevo 50 → 1299 | 1 porción / 1 slice=160 | torta de fiambre* (UY) · tarta de jamón y queso doble
 Tarta de atún | Tuna pie | receta#3057 Masa de tarta 330 · Atún en agua 340 · Cebolla cocida 150 · Pimiento rojo 60 · Huevo 150 · Salsa blanca 150 · Queso rallado 40 → 1049 | 1 porción / 1 slice=130 | tarta de atún y huevo · quiche de atún
+// Más tartas, de una tapa y al horno como las de arriba (0,86).
+Tarta de espinaca | Spinach pie | receta#3250 Masa de tarta 330 · Espinaca cocida 500 · Cebolla cocida 150 · Huevo 200 · Salsa blanca 150 · Queso rallado 50 · Queso mozzarella 100 → 1273 | 1 porción / 1 slice=160 | tarta de verdura · quiche de espinaca · pay de espinaca (MX)
+Tarta de choclo | Corn pie | receta#3251 Masa de tarta 330 · Maíz cremoso 400 · Maíz en lata 150 · Cebolla cocida 120 · Pimiento rojo 60 · Huevo 150 · Salsa blanca 150 · Queso mozzarella 100 → 1256 | 1 porción / 1 slice=157 | tarta de humita · tarta de maíz · pay de elote (MX)
+Tarta de calabaza | Butternut squash pie | receta#3252 Masa de tarta 330 · Calabaza moscada al horno 600 · Cebolla cocida 150 · Huevo 150 · Queso rallado 50 · Queso mozzarella 100 → 1187 | 1 porción / 1 slice=148 | tarta de zapallo* (UY AR) · tarta de zapallo y queso · tarta de calabaza y queso
+Tarta de cebolla | Onion and cheese pie | receta#3253 Masa de tarta 330 · Cebolla salteada 600 · Huevo 150 · Leche entera 150 · Queso mozzarella 150 · Queso rallado 40 → 1221 | 1 porción / 1 slice=153 | tarta de cebolla y queso · quiche de cebolla
+Tarta de pollo | Chicken pie | receta#3254 Masa de tarta 330 · Pechuga de pollo hervida 400 · Cebolla salteada 150 · Pimiento rojo 60 · Huevo 150 · Salsa blanca 150 · Queso rallado 40 → 1101 | 1 porción / 1 slice=138 | tarta de pollo y verduras · quiche de pollo
+Tarta de brócoli | Broccoli pie | receta#3255 Masa de tarta 330 · Brócoli cocido 500 · Cebolla cocida 100 · Huevo 150 · Salsa blanca 150 · Queso mozzarella 100 · Queso rallado 40 → 1178 | 1 porción / 1 slice=147 | quiche de brócoli · tarta de brócoli y queso
+Tarta caprese | Tomato, mozzarella and basil pie | receta#3256 Masa de tarta 330 · Tomate 400 · Queso mozzarella 250 · Huevo 150 · Leche entera 100 · Albahaca 10 → 1066 | 1 porción / 1 slice=133 | tarta de tomate y queso · quiche caprese
 Pizza sin queso | Cheeseless pizza (tomato sauce) | receta#3058 Masa de pizza 870 · Salsa de tomate 300 · Orégano 2 · Aceite de oliva 10 → 1017 | 1 porción / 1 slice=130 | pizza (UY) · pizza de molde (UY AR) · pizza marinara
 Pizza a la parrilla | Grilled pizza | receta#3059 Masa de pizza 300 · Salsa de tomate 100 · Queso mozzarella 200 · Orégano 1 · Aceite de oliva 5 → 521 | 1 pizza / 1 pizza=520 · 1 porción / 1 slice=65 | pizza parrillera · pizza a la brasa
 Fainá con mozzarella | Farinata with mozzarella | receta#3060 Fainá 75 · Queso mozzarella 40 | 1 porción / 1 slice=115 | fainá con muzzarella* (UY AR) · fainá con queso
+// Más pizzas, al horno como las de arriba (0,86); la de fainá es una porción de cada una.
+Pizza casera con mozzarella | Homemade pan pizza with mozzarella | receta#3257 Masa de pizza 870 · Salsa de tomate 300 · Queso mozzarella 500 · Orégano 2 · Aceite de oliva 10 → 1447 | 1 porción / 1 slice=181 | pizza de molde con muzzarella* (UY AR) · muzzarella de molde · pizza con muzzarella casera
+Fugazza | Onion pizza (fugazza) | receta#3258 Masa de pizza 870 · Cebolla 600 · Aceite de oliva 30 · Orégano 2 · Sal 3 → 1294 | 1 porción / 1 slice=162 | fugaza · pizza de cebolla
+Fugazzeta | Onion and mozzarella pizza (fugazzeta) | receta#3259 Masa de pizza 870 · Queso mozzarella 400 · Cebolla 400 · Aceite de oliva 20 · Orégano 2 → 1455 | 1 porción / 1 slice=182 | fugazeta · pizza de cebolla y queso · fugazza con queso
+Pizza napolitana | Neapolitan-style pizza (tomato slices, garlic and mozzarella) | receta#3260 Masa de pizza 870 · Salsa de tomate 250 · Queso mozzarella 400 · Tomate 300 · Ajo 10 · Aceite de oliva 15 · Orégano 2 → 1588 | 1 porción / 1 slice=199 | pizza con tomate y ajo · pizza de tomate y muzzarella
+Pizza con fainá | Pizza slice topped with farinata | receta#3261 Pizza de queso 140 · Fainá 75 | 1 porción / 1 slice=215 | muzzarella con fainá* (UY AR) · pizza a caballo · muzza con fainá
 // La hamburguesa casera: carne picada con huevo, pan rallado y cebolla (la carne picada de USDA ya trae la
 // sal). A la plancha queda en 0,81 (Bognár 2002, tabla 7); el aceite se pregunta.
 Hamburguesa casera cruda | Raw homemade burger patty | receta#3061 Carne molida cruda 1000 · Huevo 50 · Pan rallado 50 · Cebolla 100 · Ajo 5 · Perejil 5 | 1 hamburguesa / 1 patty=150 | medallón casero crudo (UY AR) · hamburguesa casera sin cocinar
@@ -137,6 +260,13 @@ Chivito de pollo | Chicken chivito sandwich | receta#3066 Pan de hamburguesa 100
 Croissant de jamón y queso | Ham and cheese croissant | receta#3067 Croissant 57 · Jamón cocido 15 · Queso gouda 15 | 1 unidad / 1 croissant=87 | medialuna de jamón y queso* (UY AR PY) · medialuna rellena · cuerno de jamón y queso (MX)
 Morcipán | Blood sausage sandwich | receta#3068 Pan francés 80 · Morcilla 80 | 1 sándwich / 1 sandwich=160 | morcilla al pan · morci
 Bondiola al pan | Grilled pork collar sandwich | receta#3069 Pan francés 100 · Bondiola asada 120 · Lechuga 15 · Tomate 30 · Chimichurri 10 | 1 sándwich / 1 sandwich=275 | sándwich de bondiola · bondiola en pan
+Hot dog con tocino y queso | Hot dog with bacon and melted cheese | receta#3262 Pan de hamburguesa 44 · Salchicha 45 · Tocino 10 · Queso mozzarella 20 | 1 unidad / 1 hot dog=119 | pancho con panceta y muzzarella* (UY AR) · pancho con panceta y queso · perro caliente con tocineta y queso* (CO VE)
+Hot dog con aderezos | Hot dog with mayonnaise, ketchup and mustard | receta#3263 Pan de hamburguesa 44 · Salchicha 45 · Mayonesa 10 · Kétchup 10 · Mostaza 5 | 1 unidad / 1 hot dog=114 | pancho con aderezos* (UY AR) · pancho con salsas · perro caliente con salsas* (CO VE)
+Hamburguesa completa | Burger with ham, cheese, egg and bacon | receta#3264 Pan de hamburguesa 60 · Hamburguesa de carne 90 · Jamón cocido 20 · Queso mozzarella 20 · Huevo frito 46 · Tocino 10 · Lechuga 10 · Tomate 30 · Mayonesa 15 | 1 unidad / 1 hamburger=301 | hamburguesa canadiense (UY) · hamburguesa con todo · hamburguesa especial
+Hamburguesa casera con pan | Homemade burger in a bun | receta#3265 Pan de hamburguesa 60 · Hamburguesa casera a la plancha 120 · Lechuga 10 · Tomate 30 · Mayonesa 10 | 1 unidad / 1 hamburger=230 | hamburguesa casera al pan · medallón casero al pan (UY AR)
+Sándwich caliente de jamón y queso | Toasted ham and cheese sandwich | receta#3266 Pan blanco 50 · Jamón cocido 30 · Queso gouda 30 · Mantequilla 5 | 1 sándwich / 1 sandwich=115 | sándwich caliente* (UY) · tostado de jamón y queso* (AR) · tostado de jamón y queso (UY)
+Sándwich de pernil | Roast pork leg sandwich | receta#3267 Pan francés 100 · Pierna de cerdo al horno 120 · Lechuga 10 · Tomate 30 · Mayonesa 10 | 1 sándwich / 1 sandwich=270 | pernil al pan · sándwich de pernil de cerdo · sánguche de pernil (AR PE) · torta de pierna* (MX)
+Sándwich de jamón curado y queso | Prosciutto and cheese sandwich | receta#3268 Pan francés 80 · Jamón crudo 40 · Queso mozzarella 40 · Aceite de oliva 5 | 1 sándwich / 1 sandwich=165 | sándwich de jamón crudo y queso* (UY AR) · sándwich de jamón serrano y queso* (ES) · sándwich de prosciutto y queso
 // Otros platos de casa. Bognár 2002: el revuelto queda como los huevos revueltos con jamón (0,90) y las
 // tortillas como los huevos revueltos (0,91), tabla 2; las papas de la tortilla, salteadas, en 0,77 con 4
 // g de aceite cada 100 g (tablas 21 y de retención 31); las albóndigas hervidas en la salsa, 0,87 (tabla
@@ -154,6 +284,90 @@ Lengua a la vinagreta | Beef tongue in vinaigrette | receta#3077 Lengua 500 · C
 Buñuelos de acelga | Chard fritters | receta#3078 Acelga cocida 300 · Harina de trigo 150 · Huevo 100 · Leche entera 80 · Polvo de hornear 5 · Sal 4 · Aceite de girasol 45 → 473 | 3 buñuelos / 3 fritters=90 | buñuelos de verdura · tortitas de acelga | aceite=incluido
 Ensalada de zanahoria y huevo | Grated carrot and egg salad | receta#3079 Zanahoria 300 · Huevo duro 100 · Aceite de girasol 15 · Jugo de limón 10 · Sal 2 | 1 plato / 1 plate=200 | ensalada de zanahoria rallada y huevo
 Ensalada de tomate y cebolla | Tomato and onion salad | receta#3080 Tomate 300 · Cebolla 50 · Aceite de girasol 15 · Vinagre 5 · Sal 2 | 1 plato / 1 plate=150 | ensalada de tomate · tomate con cebolla
+// Más platos de casa, con los rendimientos de los de arriba: la tortilla de zapallitos como la de
+// acelga (0,91) y las berenjenas rellenas como los calabacines (0,79). Lo que se arma con lo ya
+// cocido pesa lo que suma.
+Tortilla de calabacín | Zucchini omelet | receta#3269 Calabacín cocido 400 · Huevo 200 · Cebolla 100 · Queso rallado 30 · Aceite de girasol 20 · Sal 4 → 686 | 1 porción / 1 slice=150 | tortilla de zapallitos* (UY AR) · tortilla de calabacitas* (MX) · tortilla de zucchini | aceite=incluido
+Tortilla de papas con jamón y queso | Potato omelet filled with ham and cheese | receta#3270 Tortilla de papas 1000 · Jamón cocido 150 · Queso mozzarella 150 | 1 porción / 1 slice=180 | tortilla de papas rellena* (UY AR) · tortilla rellena · tortilla de papa con jamón y queso | aceite=incluido
+Berenjenas rellenas | Stuffed eggplant | receta#3271 Berenjena 1000 · Carne molida cruda 300 · Cebolla 150 · Huevo 50 · Queso rallado 50 · Pan rallado 30 · Aceite de girasol 20 · Sal 5 → 1268 | 1 porción / 1 serving=250 | berenjena rellena · berenjenas rellenas de carne
+Tomates rellenos | Tuna-stuffed tomatoes | receta#3272 Tomate 300 · Atún en agua 120 · Arroz blanco cocido 60 · Mayonesa 40 · Huevo duro 50 · Perejil 4 | 1 unidad / 1 stuffed tomato=287 | tomate relleno · tomates rellenos con atún · jitomates rellenos* (MX)
+Arroz con mantequilla y queso | Buttered rice with grated cheese | receta#3273 Arroz blanco cocido 250 · Mantequilla 10 · Queso rallado 10 | 1 plato / 1 plate=270 | arroz con manteca y queso* (UY AR PY) · arroz con manteca · arroz blanco con queso
+Arroz con verduras | Rice with vegetables | fndds:Rice, white, with other vegetables, fat added | 1 taza / 1 cup=172 | arroz primavera · arroz con vegetales | aceite=incluido
+Parrillada | Mixed grill for one | receta#3274 Asado de tira 150 · Falda 100 · Chorizo 75 · Morcilla 60 · Mollejas 50 · Riñón 50 | 1 porción / 1 serving=485 | parrillada para uno · parrilla mixta · asado mixto
+Matambre a la pizza | Matambre topped with tomato sauce and mozzarella | receta#3275 Matambre asado 200 · Salsa de tomate 50 · Queso mozzarella 60 · Orégano 1 | 1 porción / 1 serving=311 | matambre pizza · matambre a la pizzaiola
+Vitel toné | Beef in tuna sauce (vitel toné) | receta#3276 Redondo de res al horno 500 · Mayonesa 150 · Atún en aceite 100 · Crema de leche 100 · Alcaparras 15 · Anchoas 10 | 1 porción / 1 serving=150 | vitel tonné · vitello tonnato · peceto con salsa de atún
+Acelga con salsa blanca | Swiss chard with white sauce and cheese | receta#3277 Acelga cocida 500 · Salsa blanca 250 · Queso rallado 30 | 1 porción / 1 serving=200 | acelga gratinada · acelga a la crema · acelga con bechamel
+Coliflor con salsa blanca | Cauliflower with white sauce and cheese | receta#3278 Coliflor cocida 500 · Salsa blanca 250 · Queso rallado 30 | 1 porción / 1 serving=200 | coliflor gratinada · coliflor con bechamel · coliflor a la bechamel
+// Las sopas. Las que son recetas se arman con lo ya cocido y pesan lo que suman; su densidad es la de
+// una parecida de FNDDS: 245 g la taza las de caldo y 255 g las cremas.
+Crema de pollo | Cream of chicken soup | fndds:Soup, cream of chicken | 1 plato / 1 bowl=300 | sopa crema de pollo · crema de ave | ml
+Crema de espárragos | Cream of asparagus soup | sr:Soup, cream of asparagus, canned, prepared with equal volume milk | 1 plato / 1 bowl=300 | sopa crema de espárragos | ml
+Sopa de arroz | Rice soup | fndds:Soup, rice | 1 plato / 1 bowl=300 | caldo con arroz · sopa de pollo con arroz | ml
+Sopa de verduras con carne | Vegetable beef soup | fndds:Soup, vegetable, with meat | 1 plato / 1 bowl=300 | sopa de carne y verduras · sopa de verdura con carne | ml
+Sopa de lentejas con carne | Lentil soup with meat | fndds:Soup, lentil, with meat | 1 plato / 1 bowl=300 | sopa de lentejas con chorizo · sopa de lentejas con panceta | ml
+Sopa de capeletis | Cappelletti in broth | receta#3279 Caldo de pollo 300 · Tortellini de carne 80 · Queso rallado 5 | 1 plato / 1 bowl=385 | capeletis en caldo* (UY AR) · sopa de tortellini · cappelletti in brodo | densidad=1.04
+Sopa de sémola | Semolina soup | receta#3280 Caldo de pollo 300 · Sémola 20 · Queso rallado 5 | 1 plato / 1 bowl=325 | sopa de semolín · caldo con sémola | densidad=1.04
+Sopa de verduras con fideos | Vegetable soup with noodles | receta#3281 Sopa de verduras 300 · Pasta cocida 50 | 1 plato / 1 bowl=350 | sopa de verdura con fideos · sopa de verduras con fideítos | densidad=1.04
+Crema de puerros | Cream of leek soup | receta#3282 Puerro cocido 300 · Papa hervida 200 · Caldo de pollo 400 · Crema de leche 50 · Mantequilla 15 | 1 plato / 1 bowl=300 | crema de puerro · sopa de puerros · vichyssoise | densidad=1.08
+Crema de maíz | Cream of corn soup | receta#3283 Maíz cremoso 300 · Caldo de pollo 300 · Leche entera 100 · Cebolla cocida 50 · Mantequilla 10 | 1 plato / 1 bowl=300 | crema de choclo* (UY AR CL PE) · crema de elote* (MX) · sopa crema de choclo · sopa de choclo | densidad=1.08
+// Más ensaladas, con su aliño: pesan lo que suman.
+Ensalada de remolacha y huevo | Beet and egg salad | receta#3284 Remolacha cocida 300 · Huevo duro 100 · Aceite de girasol 15 · Vinagre 10 · Sal 2 | 1 plato / 1 plate=200 | remolacha con huevo · ensalada de betabel con huevo* (MX) · ensalada de betarraga y huevo* (CL PE)
+Ensalada de judías verdes y huevo | Green bean and egg salad | receta#3285 Judías verdes 300 · Huevo duro 100 · Aceite de girasol 15 · Vinagre 10 · Sal 2 | 1 plato / 1 plate=200 | ensalada de chauchas y huevo* (UY AR PY) · ensalada de ejotes con huevo* (MX) · ensalada de vainitas y huevo* (PE VE)
+Ensalada de papa y huevo | Potato and egg salad with oil and vinegar | receta#3286 Papa hervida 400 · Huevo duro 100 · Cebollín 20 · Perejil 5 · Aceite de girasol 20 · Vinagre 10 · Sal 3 | 1 plato / 1 plate=250 | ensalada de papas y huevo · papas con huevo · ensalada de patata y huevo* (ES)
+Ensalada de tomate y huevo | Tomato and egg salad | receta#3287 Tomate 300 · Huevo duro 100 · Aceite de girasol 15 · Sal 2 | 1 plato / 1 plate=200 | tomate con huevo · ensalada de jitomate y huevo* (MX)
+Ensalada de repollo y zanahoria | Cabbage and carrot salad with oil and vinegar | receta#3288 Repollo 200 · Zanahoria 100 · Aceite de girasol 15 · Vinagre 10 · Sal 2 | 1 plato / 1 plate=150 | repollo con zanahoria · ensalada de col y zanahoria* (MX ES)
+Ensalada de lentejas | Lentil salad | receta#3289 Lentejas 300 · Tomate 100 · Cebolla 50 · Pimiento rojo 50 · Perejil 5 · Aceite de girasol 15 · Vinagre 10 · Sal 2 | 1 plato / 1 plate=250 | lentejas en ensalada
+Ensalada de garbanzos | Chickpea salad | receta#3290 Garbanzos 300 · Tomate 100 · Cebolla 50 · Pimiento rojo 50 · Perejil 5 · Aceite de oliva 15 · Jugo de limón 10 · Sal 2 | 1 plato / 1 plate=250 | garbanzos en ensalada
+Ensalada de arroz con atún | Rice salad with tuna | receta#3291 Arroz blanco cocido 300 · Atún en agua 120 · Maíz en lata 80 · Arvejas en lata 60 · Pimiento rojo 50 · Huevo duro 50 · Mayonesa 60 | 1 plato / 1 plate=250 | ensalada de arroz · ensalada fría de arroz
+Palmitos con salsa rosada | Hearts of palm with pink sauce | receta#3292 Palmitos 130 · Salsa rosada 30 | 1 porción / 1 serving=160 | palmitos con salsa golf* (UY AR PY) · palmitos con salsa rosa* (ES)
+Aguacate relleno de atún | Avocado stuffed with tuna | receta#3298 Aguacate 200 · Atún en agua 80 · Mayonesa 20 · Salsa rosada 20 | ½ aguacate relleno / ½ stuffed avocado=160 | palta rellena* (UY AR) · palta rellena con atún · aguacate relleno
+Ensalada Waldorf | Waldorf salad | receta#3299 Manzana 300 · Apio 150 · Nueces 60 · Mayonesa 100 | 1 porción / 1 serving=150 | waldorf · ensalada de manzana, apio y nueces
+
+# verduras
+// La calabaza japonesa (el zapallo kabutiá) no está en USDA, y la calabaza de USDA tiene la mitad de su
+// materia seca. fuente: Tabla Estándar de Composición de Alimentos de Japón, 8.ª edición, ampliación
+// 2023 (MEXT), «西洋かぼちゃ 果実»: cruda (06048), hervida (06049) y al horno (06332); lo que no se
+// come de la cruda son las semillas, la pulpa del centro y las puntas (10 %). La hervida va sin su
+// versión cruda: tiene menos proteína que la cruda, y el rinde por la proteína diría que gana peso.
+Calabaza japonesa | Kabocha squash | propio#200 78 1.9 20.6 0.3 | 100 g / 100 g=100 | zapallo kabutiá* (UY AR) · kabutiá · cabutiá · kabocha · zapallo japonés | fibra=3.5 · sodio=1 · desecho=10 semillas y puntas/seeds and ends
+Calabaza japonesa al horno | Baked kabocha squash | propio#201 105 2.5 27.7 0.4 | 1 porción / 1 serving=150 · 100 g / 100 g=100 | zapallo kabutiá al horno* (UY AR) · zapallo al horno · kabocha al horno | crudo=Calabaza japonesa · fibra=5.3 · sodio=0
+Calabaza japonesa hervida | Boiled kabocha squash | propio#202 80 1.6 21.3 0.3 | 1 porción / 1 serving=150 · 100 g / 100 g=100 | zapallo kabutiá hervido* (UY AR) · zapallo hervido · kabocha hervida | fibra=4.1 · sodio=1
+Puré de calabaza japonesa | Mashed kabocha squash | receta#3300 Calabaza japonesa hervida 1000 · Mantequilla 30 · Leche entera 50 · Sal 5 | 1 porción / 1 serving=200 | puré de zapallo kabutiá* (UY AR) · puré de kabutiá · puré de kabocha
+Calabacín redondo | Round zucchini | sr:Squash, summer, scallop, raw | 1 taza en rodajas / 1 cup sliced=130 · 100 g / 100 g=100 | zapallito de tronco* (UY AR) · zapallito redondo · calabacita redonda | desecho
+Calabacín redondo cocido | Boiled round zucchini | sr:Squash, summer, scallop, cooked, boiled, drained, without salt | 1 taza en rodajas / 1 cup sliced=180 · 1 taza en puré / 1 cup mashed=240 | zapallito de tronco hervido* (UY AR) · zapallito redondo cocido | crudo=Calabacín redondo
+// Las lechugas que se compran enteras: lo que no se come son las hojas de afuera y el corazón (SR28).
+Lechuga mantecosa | Butterhead lettuce | sr:Lettuce, butterhead (includes boston and bibb types), raw | 1 taza / 1 cup=55 · 1 hoja / 1 leaf=7.5 · 1 unidad / 1 head=163 | lechuga mantequilla* (MX) · lechuga trocadero* (ES) · lechuga francesa · lechuga Boston | desecho=26 hojas de afuera y corazón/outer leaves and core
+Lechuga crespa | Green leaf lettuce | sr:Lettuce, green leaf, raw | 1 taza / 1 cup=36 · 1 hoja / 1 leaf=24 · 1 unidad / 1 head=360 | lechuga de hoja verde · lechuga crespa verde | desecho=36 hojas de afuera y corazón/outer leaves and core
+Lechuga morada | Red leaf lettuce | sr:Lettuce, red leaf, raw | 1 taza / 1 cup=28 · 1 hoja / 1 leaf=17 · 1 unidad / 1 head=309 | lechuga colorada · lechuga roja | desecho=20 hojas de afuera y corazón/outer leaves and core
+// Lo salteado o rehogado ya trae el aceite (y lo de FNDDS, algo de sal).
+Espinaca salteada | Sautéed spinach | fndds:Spinach, fresh, cooked, fat added, NS as to fat type | ½ taza / ½ cup=93 · 1 taza / 1 cup=185 | espinacas salteadas · espinaca rehogada | crudo=Espinaca · aceite=incluido
+Acelga salteada | Sautéed Swiss chard | fndds:Chard, cooked | ½ taza / ½ cup=75 · 1 taza / 1 cup=150 | acelga rehogada | crudo=Acelga · aceite=incluido
+Judías verdes salteadas | Sautéed green beans | fndds:Green beans, fresh, cooked, fat added, NS as to fat type | ½ taza / ½ cup=73 · 1 taza / 1 cup=145 | chauchas salteadas* (UY AR PY) · ejotes salteados* (MX GT HN SV) · vainitas salteadas* (PE VE EC) · habichuelas salteadas* (CO) · porotos verdes salteados* (CL) | crudo=Judías verdes crudas · aceite=incluido
+Brócoli salteado | Sautéed broccoli | fndds:Broccoli, fresh, cooked, fat added, NS as to fat type | ½ taza / ½ cup=80 · 1 taza / 1 cup=160 | brócoli rehogado | crudo=Brócoli · aceite=incluido
+Coliflor salteada | Sautéed cauliflower | fndds:Cauliflower, fresh, cooked, fat added, NS as to fat type | ½ taza / ½ cup=80 · 1 taza / 1 cup=160 | coliflor rehogada | crudo=Coliflor · aceite=incluido
+Calabacín salteado | Sautéed zucchini | fndds:Summer squash, yellow or green, fresh, cooked, fat added, NS as to fat type | ½ taza / ½ cup=93 · 1 taza / 1 cup=185 | zapallitos salteados* (UY AR) · calabacitas salteadas* (MX) · zucchini salteado · zapallitos a la plancha | crudo=Calabacín · aceite=incluido
+Zanahoria salteada | Sautéed carrots | fndds:Carrots, fresh, cooked, fat added, NS as to fat type | ½ taza / ½ cup=80 · 1 taza / 1 cup=160 | zanahorias salteadas · zanahoria rehogada | crudo=Zanahoria · aceite=incluido
+Cebolla salteada | Sautéed onions | fndds:Onions, cooked, fat added | ½ taza / ½ cup=108 · 1 taza / 1 cup=215 | cebolla rehogada · cebolla dorada | crudo=Cebolla · aceite=incluido
+Berenjena salteada | Sautéed eggplant | fndds:Eggplant, cooked, fat added | ½ taza / ½ cup=50 · 1 taza / 1 cup=100 · 1 rodaja / 1 slice=55 | berenjenas salteadas · berenjena a la plancha | crudo=Berenjena · aceite=incluido
+Repollo salteado | Sautéed cabbage | fndds:Cabbage, green, cooked, fat added, NS as to fat type | ½ taza / ½ cup=78 · 1 taza / 1 cup=155 | col salteada* (ES MX CU) · repollo rehogado | crudo=Repollo · aceite=incluido
+Arvejas salteadas | Sautéed green peas | fndds:Green peas, fresh, cooked, fat added, NS as to fat type | ½ taza / ½ cup=83 · 1 taza / 1 cup=165 | guisantes salteados* (ES) · chícharos salteados* (MX) · alverjas salteadas* (CO) | crudo=Arvejas crudas · aceite=incluido
+Pimiento rojo salteado | Sautéed red bell pepper | sr:Peppers, sweet, red, sauteed | ½ taza / ½ cup=53 · 1 taza picado / 1 cup chopped=106 | morrón rojo salteado* (UY AR PY) · pimentón rojo salteado* (CO VE CL) | crudo=Pimiento rojo · aceite=incluido
+Pimiento y cebolla salteados | Sautéed peppers and onions | fndds:Peppers and onions, cooked, fat added | ½ taza / ½ cup=73 · 1 taza / 1 cup=145 | morrón y cebolla salteados* (UY AR PY) · pimentón y cebolla salteados* (CO VE CL) | aceite=incluido
+Maíz dulce con mantequilla | Corn on the cob with butter | fndds:Corn, fresh, cooked, fat added, NS as to fat type | 1 mazorca mediana / 1 medium ear=108 · 1 taza de granos / 1 cup kernels=170 | choclo con manteca* (UY AR PY) · elote con mantequilla* (MX) · mazorca con mantequilla* (CO) · jojoto con mantequilla (VE) | crudo=Maíz dulce · aceite=incluido · desecho=45 marlo
+Espinaca a la crema | Creamed spinach | fndds:Spinach, creamed | ½ taza / ½ cup=100 · 1 taza / 1 cup=200 | espinacas a la crema · espinaca con crema
+// Las berenjenas en escabeche: hervidas en agua con vinagre y guardadas en aceite con ajo y orégano.
+// Lo que se come lleva parte del aceite del frasco: unos 12 g cada 100 g de berenjena.
+Berenjenas en escabeche | Pickled eggplant in oil | receta#3293 Berenjena cocida 800 · Aceite de girasol 100 · Vinagre 50 · Ajo 15 · Orégano 3 · Pimienta de cayena 2 · Sal 8 | 2 cucharadas / 2 tbsp=30 · ½ taza / ½ cup=100 | berenjenas al escabeche · escabeche de berenjenas · berenjenas en conserva
+
+# tuberculos
+Batata frita | Sweet potato fries | fndds:Sweet potato fries, from fresh | 1 porción / 1 serving=90 · 1 taza / 1 cup=60 | boniato frito* (UY CU) · camote frito* (MX PE CL EC GT HN SV NI CR) · batatas fritas · boniatos fritos | crudo=Batata · aceite=incluido
+Papas al horno con aceite | Roasted potatoes with oil | fndds:Potato, roasted, from fresh, peel not eaten, made with oil | 1 taza / 1 cup=160 · 1 papa mediana / 1 medium potato=170 | papas al horno en trozos · papas asadas · papas rústicas · papas al romero · patatas asadas* (ES) | crudo=Papa · aceite=incluido
+Papas hervidas con mantequilla | Boiled potatoes with butter | fndds:Potato, boiled, from fresh, peel not eaten, made with butter | 1 porción / 1 serving=170 · 1 taza / 1 cup=160 | papas hervidas con manteca* (UY AR PY) · papas con manteca y perejil · patatas cocidas con mantequilla* (ES) | crudo=Papa · aceite=incluido
+Papas gratinadas | Potatoes au gratin | sr:Potatoes, au gratin, home-prepared from recipe using butter | 1 porción / 1 serving=200 · 1 taza / 1 cup=245 | papas a la crema · gratín de papas · patatas gratinadas* (ES)
+// Lo que se arma con lo ya cocido pesa lo que suma.
+Papas fritas a la provenzal | French fries with garlic and parsley | receta#3294 Papas fritas 200 · Salsa provenzal 10 | 1 porción / 1 serving=210 | papas a la provenzal · papas fritas con ajo y perejil
+Puré de batata | Mashed sweet potato | receta#3295 Batata hervida 1000 · Mantequilla 30 · Leche entera 50 · Sal 5 | 1 porción / 1 serving=200 | puré de boniato* (UY CU) · puré de camote* (MX PE CL EC GT HN SV NI CR)
+Puré mixto | Mashed potatoes and pumpkin | receta#3296 Puré de papas 500 · Puré de calabaza 500 | 1 porción / 1 serving=200 | puré de papa y zapallo · puré de papa y calabaza
 
 # panes
 // El pan: 0,90 (Bognár 2002, tabla 31). Los bizcochos de grasa: la humedad del croissant de USDA (23,2 %).
@@ -169,6 +383,10 @@ Scones | Scones | receta#3087 Harina de trigo 500 · Mantequilla 100 · Leche en
 // Lo de hojaldre se arma con el hojaldre horneado de USDA.
 Hojaldre con membrillo | Puff pastry with quince paste | receta#3088 Hojaldre horneado 80 · Dulce de membrillo 20 | 1 unidad / 1 pastry=35 | margaritas* (UY) · margarita de membrillo · bizcocho de membrillo
 Palmeritas | Palmiers | receta#3089 Hojaldre horneado 80 · Azúcar 20 | 1 palmerita / 1 palmier=15 | palmeras* (ES) · orejas* (MX) · palmerita
+
+# platos
+// Los sándwiches con los panes de arriba.
+Refuerzo de jamón y queso | Ham and cheese soft roll sandwich | receta#3297 Pan felipe 60 · Jamón cocido 20 · Queso gouda 20 · Mantequilla 5 | 1 refuerzo / 1 sandwich=105 | refuerzos de jamón y queso · pan felipe con jamón y queso
 
 # dulces
 // Los alfajores y los postres que se arman con lo ya hecho pesan lo que suman.

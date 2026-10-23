@@ -107,6 +107,9 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
   if (t === q) p = 0;
   // «pan» encuentra antes «Pan blanco» (la palabra entera) que «Pancho» (el principio de otra).
   else if (t.startsWith(`${q} `)) p = 5;
+  // En inglés el sustantivo va al final: «Grilled chicken breast» es tan «chicken breast» como
+  // «Chicken breast with mushroom sauce», y el largo desempata a favor del más simple.
+  else if (c.idioma === 'en' && t.endsWith(` ${q}`)) p = 5;
   else if (t.startsWith(q)) p = 10;
   else if (` ${t} `.includes(` ${q} `)) p = 15;
   else if (!c.aproximado) p = 20;
@@ -116,6 +119,9 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
     const tramo = tramoMasParecido(escrito, c.texto);
     p = 30 + (1 - tramo.parecido) * 40 + (tramo.palabra > 0 ? 5 : 0);
   }
+  // Lo que sigue con «con …» es otro plato: «pechuga de pollo» da antes la pechuga que la pechuga
+  // con salsa, y «arroz», el arroz antes que el arroz con leche.
+  if (p <= 10 && /^,?\s*(con|with|in|en salsa)\b/.test(t.slice(q.length))) p += 6;
   if (c.idioma !== op.idioma) p += 100;
   if (!curado) p += 8;
   // El nombre de la región gana un poco; uno de otra región pierde (plátano es banana en España y otra cosa en Colombia).
