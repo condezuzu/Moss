@@ -152,7 +152,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso`, `metas`, `sueno`;
-- `editor` (el «+» y mantener apretada una estrella), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
+- `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
 - `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`.
 
 La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
@@ -177,6 +177,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/ascent.md](spec/ascent.md) | la conexión con Ascent, los cambios de su repo y lo que hace el usuario |
 | [spec/rendimiento.md](spec/rendimiento.md) | con Ascent: el rendimiento esperado, la fatiga por músculo y los días para intentar marca, con sus estudios |
 | [spec/sueno-sin-esfuerzo.md](spec/sueno-sin-esfuerzo.md) | el sueño con menos esfuerzo: los Atajos (App Intents), el despertador (AlarmKit), el filtro de Concentración y el widget, con sus fuentes |
+| [spec/avisos.md](spec/avisos.md) | los avisos: la hora de dormir, los de cada hábito, las comidas sin anotar, juntos y con un máximo por día |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
 | [spec/revision.md](spec/revision.md) | la revisión de Apple: las respuestas de privacidad, los permisos, cada guía, la ficha en es y en, las capturas, las notas para quien revisa y lo que hay que hacer en App Store Connect |
 | [spec/fuentes.md](spec/fuentes.md) | las segundas tablas oficiales de los curados: cuáles y por qué, cómo se comparan, lo que hay que mostrar en Créditos y lo que queda por revisar |
@@ -197,7 +198,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/salud/` | Salud: los permisos, lo que llena el cuestionario y la lectura de cada día (`leer.ts`, con `convertir.ts` puro y con tests) |
-| `src/recordatorios/` | los avisos para anotar, programados en el teléfono |
+| `src/recordatorios/` | los avisos (la hora de dormir, los hábitos y las comidas), programados en el teléfono con la regla de `src/dominio/avisos.ts` |
 | `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |

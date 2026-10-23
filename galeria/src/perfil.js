@@ -19,7 +19,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false };
+    const s = { abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, avisos: { dormir: false, antes: 30, comidas: [], maximo: 4 } };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -90,6 +90,52 @@ const SeccionPerfil = (() => {
       opciones.alCambiar();
     }
 
+    // Los avisos (lo pediste el 22/10): la hora de dormir, las comidas sin anotar y cuántos por día,
+    // como en la app (Perfil.tsx). Los de cada hábito se eligen en el hábito.
+    function pintarAvisos() {
+      const h = hoja.el;
+      const arriba = h.querySelector('.pf-avisos') ? h.querySelector('.pf-avisos').scrollTop : 0;
+      h.innerHTML = '';
+      const cab = el('header', 'hb-cab');
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('perfil.avisos.titulo')), boton('hb-cerrar', icono('cerrar'), () => hoja.cerrar(), tx('comida.cerrar')));
+      const cuerpo = el('div', 'pf-avisos');
+      const a = s.avisos;
+      const chips = (valores, nombre, elegido, alElegir) => {
+        const fila = el('div', 'fi-porciones pf-aviso-chips');
+        valores.forEach((v) => {
+          const b = boton('fi-porcion', `<span>${nombre(v)}</span>`, () => { alElegir(v); pintarAvisos(); pintar(); });
+          b.setAttribute('aria-pressed', String(elegido(v)));
+          fila.appendChild(b);
+        });
+        return fila;
+      };
+      const bloque = (titulo, texto, encendido, alCambiar, debajo) => {
+        const caja = el('section', 'pf-aviso');
+        const fila = el('div', 'pf-aviso-fila');
+        const llave = boton('in-llave', '<i></i>', () => { alCambiar(!encendido); pintarAvisos(); pintar(); }, titulo);
+        llave.setAttribute('aria-pressed', String(encendido));
+        fila.append(el('b', null, titulo), llave);
+        caja.append(fila, el('p', 'pf-nota', texto));
+        if (encendido && debajo) caja.appendChild(debajo);
+        cuerpo.appendChild(caja);
+      };
+      bloque(tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: '23:20' }), a.dormir, (v) => { a.dormir = v; },
+        chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
+      bloque(tx('perfil.recordatoriosLlave'), tx('perfil.recordatoriosTexto'), a.comidas.length > 0, (v) => { a.comidas = v ? ['desayuno', 'almuerzo', 'cena'] : []; },
+        chips(['desayuno', 'almuerzo', 'merienda', 'cena'], (c) => tx('comida.comidas.' + c), (c) => a.comidas.includes(c),
+          (c) => { a.comidas = a.comidas.includes(c) ? a.comidas.filter((x) => x !== c) : [...a.comidas, c]; }));
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.maximo')));
+      cuerpo.appendChild(chips([2, 3, 4, 6], String, (n) => a.maximo === n, (n) => { a.maximo = n; }));
+      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoTexto')));
+      h.append(cab, cuerpo);
+      cuerpo.scrollTop = arriba;
+    }
+    function abrirAvisos() {
+      pintarAvisos();
+      hoja.abrir();
+      opciones.alCambiar();
+    }
+
     function pintar() {
       cont.innerHTML = '';
       const p = opciones.persona().perfil;
@@ -128,7 +174,7 @@ const SeccionPerfil = (() => {
         ['perfil.unidades', tx('perfil.metrico'), true],
         ['perfil.idioma', u.idioma() === 'es' ? 'Español' : 'English', true],
         ['perfil.calidad', tx('perfil.alta'), true],
-        ['perfil.recordatorios', tx('perfil.apagados'), true],
+        ['perfil.recordatorios', tx(s.avisos.dormir || s.avisos.comidas.length ? 'perfil.encendidos' : 'perfil.apagados'), true, null, abrirAvisos],
         // Ocultar los números: sin calorías ni gramos, solo las figuras y las barras.
         ['perfil.numeros', tx(s.numeros ? 'perfil.visibles' : 'perfil.ocultos'), true, null, () => { s.numeros = !s.numeros; opciones.alNumeros(s.numeros); pintar(); }, 'perfil.numerosTexto'],
       ]);
@@ -178,6 +224,9 @@ const SeccionPerfil = (() => {
       zona,
       pintar,
       abrirAparatos,
+      abrirAvisos,
+      // Para las capturas: los avisos encendidos.
+      ponerAvisos(cambios) { Object.assign(s.avisos, cambios); if (hoja.abierta) pintarAvisos(); pintar(); },
       // Para las capturas: los números ocultos y sin déficit.
       poner(cambios) { Object.assign(s, cambios); if ('numeros' in cambios) opciones.alNumeros(s.numeros); pintar(); },
       // Para las capturas: una marca desplegada.

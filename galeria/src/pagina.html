@@ -415,6 +415,16 @@ section.item p { margin: 0; max-width: 64ch; }
 .hb-cerrar svg { width: 14px; height: 14px; stroke-width: 2; }
 .hb-texto { margin: 8px 24px 10px; text-align: center; font: 400 13px/1.4 var(--texto); color: rgba(239, 230, 207, 0.6); }
 .hb-nota { margin: 12px 24px 4px; text-align: center; font: 400 12px/1.4 var(--texto); color: rgba(239, 230, 207, 0.45); }
+/* Perfil › Avisos: cada aviso con su llave, y lo que se elige debajo. */
+.pf-avisos { min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 0 20px 12px; }
+.pf-aviso { padding: 14px 0 6px; border-bottom: 1px solid rgba(239, 230, 207, 0.07); }
+.pf-aviso-fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pf-aviso-fila b { font: 400 15.5px/1.2 var(--texto); color: var(--tinta); }
+.pf-aviso .pf-nota { margin: 8px 0 0; }
+.pf-aviso-chips { margin: 12px 0 8px; animation: cm-entra 0.35s ease both; }
+.hh-aviso { animation: cm-entra 0.35s ease both; }
+.hh-aviso-dias { margin-top: 10px; }
+.hh-aviso-mensaje { margin-top: 10px; }
 /* Personalizar Inicio: cada bloque con su manija y su llave. */
 .in-lista { list-style: none; margin: 4px 16px 0; padding: 0; border-radius: 16px; background: rgba(239, 230, 207, 0.04); border: 1px solid rgba(239, 230, 207, 0.08); }
 .in-fila-orden { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 14px 12px 8px; background: transparent; transition: translate 0.18s; }
@@ -1598,6 +1608,7 @@ section.item p { margin: 0; max-width: 64ch; }
   .vt-plegable, .vt-pista i, .vt-frase, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
   .ent-aviso, .ent-llave i, .ent-llave i::after { transition: none; }
   .cm-armar-dia { transition: opacity 0.2s; }
+  .pf-aviso-chips, .hh-aviso { animation: none; }
   .pf-sub, .pg-limite, .ent-lista-datos li { animation: none; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
@@ -1817,6 +1828,7 @@ section.item p { margin: 0; max-width: 64ch; }
             <li>Lo que corregís le enseña cuánto se corre en tu caso. La calidad va sin la continuidad, y la deuda y el horario cuentan las noches que no son «poco seguras».</li>
             <li>Una vez, <b>el movimiento del teléfono</b>: el permiso, con por qué.</li>
           </ul></li>
+        <li><b>Perfil › Avisos</b> (lo pediste el 22/10): la hora de dormir, como Rise: un rato antes de la hora de ir a la cama, que sale de lo que necesitas dormir, un tercio de la deuda (hasta 30 minutos) y nunca más de una hora antes de la de siempre. Las comidas que avisan solo si no se anotaron, y cuántos avisos como mucho por día: lo que cae a menos de 20 minutos suena junto. El aviso de cada hábito se elige en el hábito (sección 6).</li>
         <li><b>Perfil › Aparatos</b> (spec/aparatos.md): los que escriben tu sueño, con su precisión; de cuál sale la noche (la automática toma la más precisa); y qué llega de cada marca, que se despliega. Todo llega desde Salud: en la v1 no hay conexiones directas.</li>
       </ul>
     </section>
@@ -1870,6 +1882,7 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><b>Estrellas apagadas</b> con un aro que late; las automáticas llevan un arco con el avance del día (6.240 de 8.000 pasos).</li>
         <li><b>El toque</b> responde en el mismo cuadro: destello, onda y vibración. En iPhone con iOS 18 o más, la vibración se siente desde Safari.</li>
         <li><b>Cielo continuo</b>: arrastrá el cielo hacia abajo (en el teléfono, a pantalla completa) y la cámara sube a tu universo con las siete constelaciones de la semana. El musgo se mueve más rápido que las estrellas: es lo que da la profundidad.</li>
+        <li><b>El aviso de cada hábito</b> (lo pediste el 22/10): en el editor, a una hora, al despertar, antes de dormir o después de comer, con los minutos, los días del hábito que elijas y tu mensaje. No suena si ya está hecho, y cuenta para el máximo de Perfil › Avisos.</li>
         <li><b>Los hábitos se editan sin listas</b>, como quedó en la app. Arriba a la derecha, debajo de la luz de hoy, hay dos botones chicos: el calendario abre «Tu mes» y el «+», un hábito nuevo. Mantener apretada una estrella medio segundo abre su hábito, con Archivar.
           <ul>
             <li><b>El editor</b>: el nombre, cómo se cumple (a mano, con Salud o con la comida), qué días y el ícono. Con Salud se elige el dato (pasos, dormir, agua o atención plena) y la meta, y el nombre la sigue mientras no se escriba otro. Guardar lo suma al cielo de hoy: si el día cambia de cantidad, pasa a otra constelación.</li>

@@ -25,7 +25,11 @@ import {
 import { aplicar, ganadores, type Datos } from './mezclar';
 import type { LoDeSalud } from '@/salud/convertir';
 import type { Cara, NochePropia } from '@/dominio/sueno';
+import type { AvisoDeHabito, Avisos } from '@/dominio/avisos';
 import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
+
+/** Los avisos que se eligen; los de comida van aparte, en `recordatorios`. */
+export type AjustesDeAvisos = Omit<Avisos, 'comidas'>;
 
 /**
  * Lo que se come, por colección y por clave: de los registros y el agua, los de los últimos
@@ -56,6 +60,8 @@ export type Estado = MapasDeComida & {
   inicio: { orden: string[]; visibles: string[] } | null;
   /** Las comidas que avisan si no se anotaron; apagados, null. Queda en el teléfono. */
   recordatorios: Comida[] | null;
+  /** La hora de dormir, el aviso de cada hábito y cuántos por día (src/dominio/avisos.ts). Queda en el teléfono. */
+  avisos: AjustesDeAvisos;
   /** La calidad de las animaciones, si se eligió en Perfil; sin elegir, la automática. Queda en el teléfono. */
   calidad: Calidad | null;
   /**
@@ -105,6 +111,7 @@ const CANASTA = 'canasta';
 const SISTEMA = 'sistema';
 const INICIO = 'inicio';
 const RECORDATORIOS = 'recordatorios';
+const AVISOS = 'avisos';
 const CALIDAD = 'calidad';
 const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
@@ -137,6 +144,22 @@ function leerRecordatorios(texto: string | undefined): Comida[] | null {
     return Array.isArray(lista) ? lista.filter((c): c is Comida => COMIDAS.includes(c)) : null;
   } catch {
     return null;
+  }
+}
+
+/** Los avisos guardados, si tienen forma: lo que no se entiende no está. */
+function leerAvisos(texto: string | undefined): AjustesDeAvisos {
+  try {
+    const x = texto ? (JSON.parse(texto) as Record<string, unknown>) : null;
+    if (!x || typeof x !== 'object') return {};
+    const avisos: AjustesDeAvisos = {};
+    const dormir = x.dormir as AjustesDeAvisos['dormir'];
+    if (dormir && typeof dormir.encendido === 'boolean') avisos.dormir = { encendido: dormir.encendido, ...(Number.isFinite(dormir.antes) ? { antes: dormir.antes } : {}) };
+    if (Array.isArray(x.habitos)) avisos.habitos = (x.habitos as AvisoDeHabito[]).filter((a) => a && typeof a.habito === 'string' && a.cuando && typeof a.cuando.tipo === 'string' && Array.isArray(a.dias));
+    if (typeof x.maximoPorDia === 'number' && x.maximoPorDia >= 0) avisos.maximoPorDia = x.maximoPorDia;
+    return avisos;
+  } catch {
+    return {};
   }
 }
 
@@ -190,7 +213,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, mandarBusquedas: false, salud: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, mandarBusquedas: false, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -281,7 +304,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', listo: true }, true);
     revisarControl();
   }
 
@@ -410,6 +433,13 @@ export function crearAlmacen(op: Opciones) {
     }));
     ponerComida('registros', nuevos);
     return nuevos;
+  }
+
+  /** La hora de dormir y cuántos avisos por día: lo que cambia se suma a lo que había. */
+  function ponerAvisos(cambios: Partial<AjustesDeAvisos>) {
+    const avisos = { ...estado.avisos, ...cambios };
+    guardar((r) => r.guardarAjuste(AVISOS, JSON.stringify(avisos)));
+    cambiar({ avisos }, false);
   }
 
   function ponerCanasta(canasta: Item[]) {
@@ -646,6 +676,12 @@ export function crearAlmacen(op: Opciones) {
       cambiar({ inicio }, false);
     },
     /** Las comidas que avisan; null los apaga. */
+    ponerAvisos,
+    /** El aviso de un hábito; null lo saca. */
+    ponerAvisoDeHabito(habito: string, aviso: Omit<AvisoDeHabito, 'habito'> | null) {
+      const otros = (estado.avisos.habitos ?? []).filter((x) => x.habito !== habito);
+      ponerAvisos({ habitos: aviso ? [...otros, { ...aviso, habito }] : otros });
+    },
     ponerRecordatorios(comidas: Comida[] | null) {
       guardar((r) => r.guardarAjuste(RECORDATORIOS, JSON.stringify(comidas)));
       cambiar({ recordatorios: comidas }, false);

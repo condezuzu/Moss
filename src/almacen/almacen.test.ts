@@ -87,6 +87,25 @@ describe('local primero', () => {
     expect((await armar(repositorio)).almacen.estado().calidad).toBeNull();
   });
 
+  it('los avisos se recuerdan en el teléfono: la hora de dormir, el máximo y el de cada hábito', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().avisos).toEqual({});
+    const [habito] = almacen.estado().habitos;
+    almacen.ponerAvisos({ dormir: { encendido: true, antes: 45 }, maximoPorDia: 3 });
+    almacen.ponerAvisoDeHabito(habito.id, { cuando: { tipo: 'despertar', despues: 15 }, dias: [1, 3, 5], mensaje: 'Estirar' });
+    await almacen.esperar();
+    const otra = (await armar(repositorio)).almacen;
+    expect(otra.estado().avisos).toEqual({
+      dormir: { encendido: true, antes: 45 }, maximoPorDia: 3,
+      habitos: [{ habito: habito.id, cuando: { tipo: 'despertar', despues: 15 }, dias: [1, 3, 5], mensaje: 'Estirar' }],
+    });
+    // Cambiar el aviso de un hábito reemplaza el que tenía; null lo saca.
+    otra.ponerAvisoDeHabito(habito.id, { cuando: { tipo: 'hora', minutos: 540 }, dias: [] });
+    expect(otra.estado().avisos.habitos).toEqual([{ habito: habito.id, cuando: { tipo: 'hora', minutos: 540 }, dias: [] }]);
+    otra.ponerAvisoDeHabito(habito.id, null);
+    expect(otra.estado().avisos.habitos).toEqual([]);
+  });
+
   it('el aparato del que sale la noche se recuerda en el teléfono, y null vuelve a la automática', async () => {
     const { almacen, repositorio } = await armar();
     expect(almacen.estado().fuenteDelSueno).toBeNull();

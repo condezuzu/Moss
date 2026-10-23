@@ -8,7 +8,7 @@ import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
 import { msHastaMedianoche } from '@/dominio/fechas';
 import { haySupabase, supabase } from '@/lib/supabase';
-import { programarRecordatorios } from '@/recordatorios/programar';
+import { programarAvisos } from '@/recordatorios/programar';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { idioma } from '@/textos';
@@ -89,19 +89,21 @@ export function useAlmacenListo(): boolean {
       }, msHastaMedianoche(new Date()) + 500);
     };
     esperarMedianoche();
-    // Los recordatorios se vuelven a programar al anotar algo o al cambiarlos, un rato después.
+    // Los avisos se vuelven a programar cuando cambia algo que los mueve, un rato después.
     let espera: ReturnType<typeof setTimeout> | undefined;
     const reprogramar = () => {
       clearTimeout(espera);
       espera = setTimeout(() => {
-        if (a.estado().listo) programarRecordatorios(a.estado()).catch(() => {});
+        if (a.estado().listo) programarAvisos(a.estado()).catch(() => {});
       }, 1500);
     };
-    let antes = { registros: a.estado().registros, recordatorios: a.estado().recordatorios, listo: a.estado().listo };
+    // Lo anotado, lo hecho, los hábitos, las noches, Salud y los avisos mismos.
+    const queMueve = (e: ReturnType<Almacen['estado']>) => [e.registros, e.recordatorios, e.avisos, e.marcas, e.habitos, e.noches, e.salud, e.listo] as const;
+    let antes = queMueve(a.estado());
     const sinOir = a.suscribir(() => {
-      const e = a.estado();
-      if (e.registros === antes.registros && e.recordatorios === antes.recordatorios && e.listo === antes.listo) return;
-      antes = { registros: e.registros, recordatorios: e.recordatorios, listo: e.listo };
+      const ahora = queMueve(a.estado());
+      if (ahora.every((x, i) => x === antes[i])) return;
+      antes = ahora;
       reprogramar();
     });
     const suscripcion = AppState.addEventListener('change', (estado) => {

@@ -148,6 +148,16 @@ const SeccionHabitos = (() => {
       return { dias: TODOS, fuente: salud ? { tipo: 'salud', dato: h.auto, meta: h.meta } : { tipo: 'manual' } };
     }
 
+    // El aviso de cada hábito, por su id (o su nombre): en la galería quedan en la memoria.
+    const avisosGuardados = new Map();
+    const claveDeAviso = (original, nombre) => (original && original.id) || nombre;
+    const CUANDO_DE_FABRICA = {
+      hora: () => ({ tipo: 'hora', minutos: 9 * 60 }),
+      despertar: () => ({ tipo: 'despertar', despues: 15 }),
+      dormir: () => ({ tipo: 'dormir', antes: 30 }),
+      evento: () => ({ tipo: 'evento', evento: 'almuerzo', despues: 0 }),
+    };
+
     function abrirEditor(original) {
       const de = original ? deDondeSale(original) : null;
       s.editor = {
@@ -157,6 +167,8 @@ const SeccionHabitos = (() => {
         dias: de ? [...de.dias] : [...TODOS],
         fuente: de ? Object.assign({}, de.fuente) : { tipo: 'manual' },
       };
+      const guardado = original ? avisosGuardados.get(claveDeAviso(original, s.editor.nombre)) : null;
+      s.editor.aviso = guardado ? JSON.parse(JSON.stringify(guardado)) : null;
       // Mientras el nombre sea el propuesto, sigue a la meta que se elige.
       s.editor.nombrePropio = !!original && s.editor.nombre !== nombreDe(s.editor.fuente);
       pintarEditor();
@@ -233,6 +245,59 @@ const SeccionHabitos = (() => {
       });
       cuerpo.append(dias, el('p', 'aj-nota', tx('habitos.cambiaLaConstelacion')));
 
+      // El aviso (lo pediste el 22/10): a una hora, al despertar, antes de dormir o después de
+      // comer, los días que elijas y con tu mensaje. Como en la app (src/dominio/avisos.ts).
+      cuerpo.appendChild(el('div', 'aj-etq', tx('habitos.aviso.titulo')));
+      const tipos = el('div', 'hh-opciones hh-aviso-tipos');
+      const tipoActual = ed.aviso ? ed.aviso.cuando.tipo : 'no';
+      ['no', 'hora', 'despertar', 'dormir', 'evento'].forEach((tipo) => tipos.appendChild(pastilla(tx('habitos.aviso.' + tipo), tipoActual === tipo, () => {
+        ed.aviso = tipo === 'no' ? null : { cuando: CUANDO_DE_FABRICA[tipo](), dias: [], mensaje: ed.aviso ? ed.aviso.mensaje : '' };
+        pintarEditor(true);
+      })));
+      cuerpo.appendChild(tipos);
+      if (ed.aviso) {
+        const c = ed.aviso.cuando;
+        const caja = el('div', 'hh-opciones hh-aviso');
+        if (c.tipo === 'hora') {
+          const horas = el('div', 'hh-fila');
+          [7, 8, 9, 12, 13, 18, 20, 21, 22].forEach((h) => horas.appendChild(pastilla(`${String(h).padStart(2, '0')}:00`, c.minutos === h * 60, () => { c.minutos = h * 60; pintarEditor(true); })));
+          caja.appendChild(horas);
+        } else {
+          if (c.tipo === 'evento') {
+            const eventos = el('div', 'hh-fila');
+            ['desayuno', 'almuerzo', 'merienda', 'cena'].forEach((ev) => eventos.appendChild(pastilla(tx('comida.comidas.' + ev), c.evento === ev, () => { c.evento = ev; pintarEditor(true); })));
+            caja.appendChild(eventos);
+          }
+          const clave = c.tipo === 'dormir' ? 'antes' : 'despues';
+          const minutos = el('div', 'hh-fila');
+          (c.tipo === 'dormir' ? [15, 30, 60] : [0, 15, 30, 60]).forEach((n) => minutos.appendChild(pastilla(n ? tx('habitos.aviso.' + clave, { n }) : tx('habitos.aviso.enElMomento'), c[clave] === n, () => { c[clave] = n; pintarEditor(true); })));
+          caja.appendChild(minutos);
+        }
+        // Los días: de fábrica, todos los del hábito; se puede sacar alguno, pero no todos.
+        const diasDelAviso = el('div', 'aj-dias hh-aviso-dias');
+        SEMANA.filter((d) => ed.dias.includes(d)).forEach((d) => {
+          const b = boton('aj-dia', tx('fecha.diasCortos.' + d).charAt(0), () => {
+            const actuales = ed.aviso.dias.length ? ed.aviso.dias : [...ed.dias];
+            const nuevos = actuales.includes(d) ? actuales.filter((x) => x !== d) : [...actuales, d];
+            if (!nuevos.length) return;
+            ed.aviso.dias = nuevos.length === ed.dias.length ? [] : nuevos;
+            pintarEditor(true);
+          }, tx('fecha.dias.' + d));
+          b.setAttribute('aria-pressed', String(!ed.aviso.dias.length || ed.aviso.dias.includes(d)));
+          diasDelAviso.appendChild(b);
+        });
+        caja.appendChild(diasDelAviso);
+        const mensaje = el('input', 'hh-campo hh-aviso-mensaje');
+        mensaje.type = 'text';
+        mensaje.maxLength = 120;
+        mensaje.value = ed.aviso.mensaje || '';
+        mensaje.placeholder = tx('habitos.aviso.mensajeEjemplo', { habito: nombreFinal() || tx('habitos.nombreEjemplo') });
+        mensaje.setAttribute('aria-label', tx('habitos.aviso.mensaje'));
+        mensaje.addEventListener('input', () => { ed.aviso.mensaje = mensaje.value; });
+        caja.appendChild(mensaje);
+        cuerpo.append(caja, el('p', 'aj-nota', tx('habitos.aviso.texto')));
+      }
+
       cuerpo.appendChild(el('div', 'aj-etq', tx('habitos.icono')));
       const iconos = el('div', 'hh-iconos');
       iconos.setAttribute('role', 'radiogroup');
@@ -261,6 +326,7 @@ const SeccionHabitos = (() => {
       const ed = s.editor;
       const nombre = nombreFinal();
       opciones.alGuardar(ed.original, { nombre, icono: ed.icono, dias: [...ed.dias].sort((a, b) => a - b), fuente: ed.fuente });
+      avisosGuardados.set(claveDeAviso(ed.original, nombre), ed.aviso ? JSON.parse(JSON.stringify(ed.aviso)) : null);
       hojas.editor.cerrar();
       opciones.avisar(tx('habitos.guardado', { habito: nombre }));
     }
@@ -485,6 +551,8 @@ const SeccionHabitos = (() => {
         if (hojas.sugeridos.abierta) pintarSugeridos(true);
       },
       nuevo: () => abrirEditor(null),
+      // Para las capturas: el aviso del hábito que se edita.
+      ponerAviso(tipo) { if (!s.editor) return; s.editor.aviso = tipo ? { cuando: CUANDO_DE_FABRICA[tipo](), dias: [], mensaje: '' } : null; pintarEditor(true); },
       // El hábito de la estrella `i` del cielo de hoy (mantenerla apretada).
       editar(i) { const hoy = opciones.cielo(); if (hoy && hoy.habitos[i]) abrirEditor(Object.assign({}, hoy.habitos[i], { indice: i })); },
       mes: abrirMes,

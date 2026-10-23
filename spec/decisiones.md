@@ -361,6 +361,21 @@ hacen falta las cuentas anónimas.
 Desde el 22/10/2026 a la tarde trabajo solo: lo que decidí va acá, con el
 porqué, para que lo revises al volver.
 
+### Los avisos (23/10/2026, a la madrugada)
+
+Cómo andan, en [`avisos.md`](avisos.md).
+
+- **Todo apagado de fábrica,** y encender cualquiera pide permiso: Moss no avisa
+  si no lo pediste.
+- **Lo elegido queda en el teléfono,** como los recordatorios de comida: los
+  avisos son de cada teléfono (en un iPad no querés el de dormir).
+- **Como mucho 4 por día de fábrica,** y lo que cae a 20 minutos suena junto. Si
+  sobran, gana el de dormir, después los hábitos y al final las comidas.
+- **El de dormir necesita noches de verdad:** con las de ejemplo no avisa, y la
+  hoja dice que hace falta saber a qué hora te despertás.
+- **El aviso de un hábito vive en el hábito,** no en una lista aparte: se elige
+  en el mismo editor, debajo de los días.
+
 ### El plan de comidas (23/10/2026, a la madrugada)
 
 Cómo anda, en [`nutricion.md`](nutricion.md), «El plan de comidas».

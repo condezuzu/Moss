@@ -1114,7 +1114,16 @@
     "mejorarBaseTexto": "Without your name: this helps Moss add what is missing.",
     "politica": "Privacy policy",
     "terminos": "Terms",
-    "contacto": "Contact"
+    "contacto": "Contact",
+    "avisos": {
+      "titulo": "Reminders",
+      "dormir": "Bedtime",
+      "dormirTexto": "A little before the time to go to bed: the one that lets you sleep what you need, with some of your sleep debt and never more than an hour earlier than usual. Tonight, {hora}.",
+      "dormirSinDatos": "A little before the time to go to bed: the one that lets you sleep what you need. Moss needs to know when you wake up: a few nights is enough.",
+      "antes": "{n} min before",
+      "maximo": "At most per day",
+      "maximoTexto": "Reminders that fall close together ring together, and never more than this a day. If there are too many, bedtime and your habits come first. Each habit's reminder is set in the habit."
+    }
   },
   "fecha": {
     "dias": [
@@ -1521,7 +1530,21 @@
       "deVeces": "{hechos} of {total}",
       "sinDatos": "No days in this month yet."
     },
-    "mas": "New habit"
+    "mas": "New habit",
+    "aviso": {
+      "titulo": "Reminder",
+      "no": "No reminder",
+      "hora": "At a time",
+      "despertar": "When I wake up",
+      "dormir": "Before bed",
+      "evento": "After eating",
+      "enElMomento": "Right then",
+      "despues": "{n} min after",
+      "antes": "{n} min before",
+      "mensaje": "Message",
+      "mensajeEjemplo": "{habito}, when you can.",
+      "texto": "It rings on the days you choose, and not if it's already done. Moss groups the ones that fall close together and never goes over the daily maximum (Profile › Reminders)."
+    }
   },
   "compartir": {
     "boton": "Share",
@@ -1541,6 +1564,8 @@
     }
   },
   "recordatorios": {
-    "cuerpo": "When you can, log your {comida}."
+    "cuerpo": "When you can, log your {comida}.",
+    "dormir": "Bed at {hora}: that way you sleep what you need.",
+    "habito": "{habito}, when you can."
   }
 }

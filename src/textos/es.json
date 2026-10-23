@@ -959,7 +959,7 @@
     "idioma": "Idioma",
     "calidad": "Calidad de las animaciones",
     "alta": "Alta",
-    "recordatorios": "Recordatorios",
+    "recordatorios": "Avisos",
     "apagados": "Apagados",
     "conexiones": "Conexiones",
     "salud": "Apple Salud",
@@ -1114,7 +1114,16 @@
     "mejorarBaseTexto": "Sin tu nombre: así Moss suma a la base lo que falta.",
     "politica": "Política de privacidad",
     "terminos": "Términos",
-    "contacto": "Contacto"
+    "contacto": "Contacto",
+    "avisos": {
+      "titulo": "Avisos",
+      "dormir": "Hora de dormir",
+      "dormirTexto": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitas, con algo de la deuda y sin adelantarse más de una hora a la de siempre. Esta noche, {hora}.",
+      "dormirSinDatos": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitas. Hace falta saber a qué hora te despiertas: con unas noches alcanza.",
+      "antes": "{n} min antes",
+      "maximo": "Como mucho por día",
+      "maximoTexto": "Lo que cae cerca suena junto, y nunca más que esto por día. Si sobran, quedan primero el de dormir y los de tus hábitos. Los de cada hábito se eligen en el hábito."
+    }
   },
   "fecha": {
     "dias": [
@@ -1521,7 +1530,21 @@
       "deVeces": "{hechos} de {total}",
       "sinDatos": "Todavía no hay días en este mes."
     },
-    "mas": "Nuevo hábito"
+    "mas": "Nuevo hábito",
+    "aviso": {
+      "titulo": "Aviso",
+      "no": "Sin aviso",
+      "hora": "A una hora",
+      "despertar": "Al despertar",
+      "dormir": "Antes de dormir",
+      "evento": "Después de comer",
+      "enElMomento": "En el momento",
+      "despues": "{n} min después",
+      "antes": "{n} min antes",
+      "mensaje": "Mensaje",
+      "mensajeEjemplo": "{habito}, cuando puedas.",
+      "texto": "Suena los días que elijas del hábito, y no si ya está hecho. Moss junta los que caen cerca y no pasa del máximo por día (Perfil › Avisos)."
+    }
   },
   "compartir": {
     "boton": "Compartir",
@@ -1541,6 +1564,8 @@
     }
   },
   "recordatorios": {
-    "cuerpo": "Cuando puedas, anota tu {comida}."
+    "cuerpo": "Cuando puedas, anota tu {comida}.",
+    "dormir": "A la cama a las {hora}: así duermes lo que necesitas.",
+    "habito": "{habito}, cuando puedas."
   }
 }

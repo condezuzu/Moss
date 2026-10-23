@@ -919,6 +919,7 @@
     hora: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('proponer'); sueno.verNoche(0); },
     horaSinProponer: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('sinProponer'); sueno.verNoche(0); },
     aparatos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirAparatos(); },
+    avisos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.ponerAvisos({ dormir: true, comidas: ['almuerzo', 'cena'] }); perfilSec.abrirAvisos(); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -1190,6 +1191,7 @@
       armar: () => habitosSec.armar(),
       bajar: () => habitosSec.bajar(arg),
       cerrar: () => habitosSec.cerrar(),
+      aviso: () => habitosSec.ponerAviso(arg),
     };
     pasos[accion]();
     refrescarControles();

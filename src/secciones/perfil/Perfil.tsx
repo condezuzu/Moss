@@ -9,13 +9,15 @@ import { useEffect, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View, type ViewStyle } from 'react-native';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
+import type { Estado } from '@/almacen/almacen';
 import { CONEXION_CON_ASCENT } from '@/lib/ascent';
 import { urlDe } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
-import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
+import { horaDeReloj, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
+import { horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -78,7 +80,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
       { clave: 'idioma', titulo: t('perfil.idioma'), valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
       { clave: 'calidad', titulo: t('perfil.calidad'), valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
-      { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: e.recordatorios?.length ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
+      { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: e.recordatorios?.length || e.avisos.dormir?.encendido ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
       { clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), alTocar: () => elAlmacen().ponerNumeros(!e.numeros) },
     ]],
     ['perfil.conexiones', [
@@ -183,7 +185,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         <Text style={st.version}>{t('perfil.version', { v: version })}</Text>
       </ScrollView>
       {hoja === 'datos' && p && <TusDatos perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} alCerrar={() => setHoja(null)} />}
-      {hoja === 'recordatorios' && <Recordatorios comidas={e.recordatorios} alCerrar={() => setHoja(null)} />}
+      {hoja === 'recordatorios' && <Avisos e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'calidad' && <CalidadDelCielo elegida={e.calidad} alCerrar={() => setHoja(null)} />}
       {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
       {hoja === 'privacidad' && (
@@ -243,26 +245,65 @@ function CalidadDelCielo({ elegida, alCerrar }: { elegida: Calidad | null; alCer
 
 const COMIDAS_QUE_AVISAN: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 
-/** Los recordatorios para anotar: encendidos o no, y de qué comidas. */
-function Recordatorios({ comidas, alCerrar }: { comidas: Comida[] | null; alCerrar: () => void }) {
+const MINUTOS_ANTES_DE_DORMIR = [15, 30, 45, 60] as const;
+const MAXIMOS_POR_DIA = [2, 3, 4, 6] as const;
+
+/**
+ * Los avisos (lo pediste el 22/10): la hora de dormir, como Rise; las comidas que avisan si no se
+ * anotaron; y cuántos como mucho por día. Los de cada hábito se eligen en el hábito.
+ */
+function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
+  const comidas = e.recordatorios;
   const [sinPermiso, setSinPermiso] = useState(false);
+  // Encender cualquiera pide permiso primero; sin permiso, queda apagado y se dice cómo darlo.
+  const conPermiso = (hacer: () => void) => {
+    pedirPermisoDeAvisos().then((ok) => {
+      setSinPermiso(!ok);
+      if (ok) hacer();
+    }).catch(() => setSinPermiso(true));
+  };
   const encender = (si: boolean) => {
     if (!si) {
       elAlmacen().ponerRecordatorios(null);
       return;
     }
-    pedirPermisoDeAvisos().then((ok) => {
-      setSinPermiso(!ok);
-      if (ok) elAlmacen().ponerRecordatorios(['desayuno', 'almuerzo', 'cena']);
-    }).catch(() => setSinPermiso(true));
+    conPermiso(() => elAlmacen().ponerRecordatorios(['desayuno', 'almuerzo', 'cena']));
   };
+  const dormir = e.avisos.dormir;
+  const encenderDormir = (si: boolean) => {
+    if (!si) elAlmacen().ponerAvisos({ dormir: { encendido: false, antes: dormir?.antes } });
+    else conPermiso(() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
+  };
+  const sueno = suenoParaAvisos(e);
+  const estaNoche = sueno ? horasDeSueno(e.hoy, sueno).dormir : null;
+  const maximo = e.avisos.maximoPorDia ?? MAXIMO_POR_DIA;
   const alternar = (c: Comida) => {
     const lista = comidas ?? [];
     const nueva = lista.includes(c) ? lista.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || lista.includes(x));
     elAlmacen().ponerRecordatorios(nueva.length ? nueva : null);
   };
   return (
-    <HojaModal abierta titulo={t('perfil.recordatorios')} alCerrar={alCerrar}>
+    <HojaModal abierta titulo={t('perfil.avisos.titulo')} alCerrar={alCerrar}>
+      <View style={st.llave}>
+        <Text style={st.llaveTexto}>{t('perfil.avisos.dormir')}</Text>
+        <Switch
+          value={!!dormir?.encendido}
+          onValueChange={encenderDormir}
+          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+          thumbColor={colores.pergamino}
+          accessibilityLabel={t('perfil.avisos.dormir')}
+        />
+      </View>
+      <Parrafo chico>{estaNoche !== null ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche) }) : t('perfil.avisos.dormirSinDatos')}</Parrafo>
+      {!!dormir?.encendido && (
+        <Aparece>
+          <View style={st.comidas}>
+            {MINUTOS_ANTES_DE_DORMIR.map((n) => (
+              <Pastilla key={n} texto={t('perfil.avisos.antes', { n })} elegida={(dormir.antes ?? 30) === n} alTocar={() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: n } })} />
+            ))}
+          </View>
+        </Aparece>
+      )}
       <View style={st.llave}>
         <Text style={st.llaveTexto}>{t('perfil.recordatoriosLlave')}</Text>
         <Switch
@@ -289,6 +330,11 @@ function Recordatorios({ comidas, alCerrar }: { comidas: Comida[] | null; alCerr
           </View>
         </Aparece>
       )}
+      <EtiquetaDeGrupo>{t('perfil.avisos.maximo')}</EtiquetaDeGrupo>
+      <View style={st.comidas}>
+        {MAXIMOS_POR_DIA.map((n) => <Pastilla key={n} texto={String(n)} elegida={maximo === n} alTocar={() => elAlmacen().ponerAvisos({ maximoPorDia: n })} />)}
+      </View>
+      <Parrafo chico>{t('perfil.avisos.maximoTexto')}</Parrafo>
     </HojaModal>
   );
 }

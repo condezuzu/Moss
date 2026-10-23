@@ -901,6 +901,22 @@ const pasos = {
     await pestana(0);
   },
   // Perfil, abajo: borrar los datos o la cuenta, y los créditos de los alimentos.
+  // Los avisos (lo pediste el 22/10): Perfil › Avisos y el aviso de un hábito.
+  async avisos() {
+    await pagina.evaluate(() => window.__seccion('avisos'));
+    await pagina.waitForTimeout(900);
+    await foto('avisos-perfil');
+    await habitos('nuevo');
+    await habitos('como', 'manual');
+    await habitos('escribir', 'Estirar');
+    await habitos('aviso', 'despertar');
+    await pagina.waitForTimeout(400);
+    await pagina.evaluate(() => { const c = document.querySelector('.hh-hoja-editor .aj-cuerpo, .hh-hoja-editor .hh-cuerpo'); const a = document.querySelector('.hh-aviso'); if (c && a) c.scrollTop = a.offsetTop - 160; });
+    await pagina.waitForTimeout(400);
+    await foto('avisos-habito');
+    await habitos('cerrar');
+    await pagina.waitForTimeout(600);
+  },
   async perfil() {
     await pestana(5);
     await pagina.evaluate(() => document.querySelector('.pf-scroll').scrollTo(0, 99999));
