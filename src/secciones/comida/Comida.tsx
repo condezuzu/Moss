@@ -544,7 +544,8 @@ function TarjetaVacia({ comida, dia, hoy, e }: { comida: Comida; dia: ClaveDia; 
 function AccionesDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (texto: string, deshacer?: () => void) => void }) {
   const [copiando, setCopiando] = useState(false);
   const registros = delDia(e.registros.values(), dia);
-  const planificados = dia === e.hoy ? registros.filter((r) => r.planificado).length : 0;
+  // Lo que armó el plan se anota de a una comida, con «Comí esto»: confirmar todo junto anotaría también la cena que falta.
+  const planificados = dia === e.hoy ? registros.filter((r) => r.planificado && !r.plan).length : 0;
   const destinos = [e.hoy, sumarDias(e.hoy, 1)].filter((d) => d !== dia);
   if (!registros.length) return null;
   const copiar = (hacia: ClaveDia) => {

@@ -626,9 +626,12 @@ export function crearAlmacen(op: Opciones) {
       ponerComida('registros', copia);
       return copia;
     },
-    /** Llegó el día: lo planificado pasa a registrado. Devuelve cuántos. */
+    /**
+     * Llegó el día: lo planificado a mano pasa a registrado. Devuelve cuántos. Lo que armó el plan se
+     * anota de a una comida («Comí esto»): si no, se anotaría también la cena que todavía no se comió.
+     */
     confirmarPlanificados(dia: ClaveDia = estado.hoy): number {
-      const hechos = confirmar(estado.registros.values(), dia, momento());
+      const hechos = confirmar(estado.registros.values(), dia, momento()).filter((r) => !r.plan);
       ponerComida('registros', hechos);
       return hechos.length;
     },

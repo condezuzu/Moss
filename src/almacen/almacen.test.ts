@@ -356,6 +356,22 @@ describe('lo que se come', () => {
     expect(vigentes(almacen.estado().registros.values()).filter((r) => r.planificado)).toEqual([]);
   });
 
+  it('lo que armó el plan queda planificado aunque sea hoy, se anota de a una comida, y confirmar el día no lo toca', async () => {
+    // El bug: «Confirmar lo planificado» anotaba también la cena armada que todavía no se comió.
+    const { almacen } = await armar();
+    const cena = { comida: 'cena' as const, opcion: 'pollo-arroz', items: [banana()], valores: banana().valores };
+    const almuerzo = { comida: 'almuerzo' as const, opcion: 'lentejas', items: [alfajor()], valores: alfajor().valores };
+    const armados = almacen.planificar('2026-10-21', [almuerzo, cena], () => 13 * 60);
+    expect(armados.every((r) => r.planificado && r.plan)).toBe(true);
+    almacen.copiar({ dia: '2026-10-21' }, { dia: '2026-10-21', comida: 'snack' });
+    expect(almacen.confirmarPlanificados()).toBe(0);
+    const ids = almacen.confirmarComida('2026-10-21', 'almuerzo');
+    expect(ids).toEqual([armados[0].id]);
+    expect(almacen.estado().registros.get(armados[1].id)?.planificado).toBe(true);
+    almacen.volverAPlanificar(ids);
+    expect(almacen.estado().registros.get(armados[0].id)?.planificado).toBe(true);
+  });
+
   it('se cargan solo los últimos cuatro meses de lo comido', async () => {
     const viejo: Registro = { ...alfajor(), id: 'viejo', dia: '2026-05-01', comida: 'snack', momento: '2026-05-01T15:00:00.000Z', planificado: false, actualizado: '2026-05-01T15:00:00.000Z' };
     const reciente: Registro = { ...viejo, id: 'reciente', dia: '2026-09-01' };
