@@ -422,6 +422,37 @@ const pasos = {
     await pagina.evaluate(() => window.__aparato('reloj'));
     await pestana(0);
   },
+  // Con Ascent (spec/rendimiento.md): el rendimiento esperado, los músculos y la marca posible,
+  // vinculada y sin vincular, y la línea del rendimiento en Sueño.
+  async rendimiento() {
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await ascent('vincular', true);
+    await ascent('abrir');
+    await pagina.waitForTimeout(900);
+    for (const [selector, nombre] of [['.as-rendimiento', 'rendimiento'], ['.as-musculos', 'rendimiento-musculos'], ['.as-pr', 'rendimiento-marca']]) {
+      await ascent('bajar', selector);
+      await pagina.waitForTimeout(500);
+      await foto(nombre);
+    }
+    await pagina.click('.as-rendimiento .as-enlace');
+    await ascent('bajar', '.as-rendimiento');
+    await pagina.waitForTimeout(500);
+    await foto('rendimiento-como');
+    await pagina.click('.as-rendimiento .as-enlace');
+    await ascent('cerrar');
+    await pestana(3);
+    await sueno('noche', 0);
+    await sueno('subir');
+    await pagina.waitForTimeout(700);
+    await foto('rendimiento-en-sueno');
+    await ascent('vincular', false);
+    await ascent('abrir');
+    await pagina.waitForTimeout(900);
+    await ascent('bajar', '.as-rendimiento');
+    await pagina.waitForTimeout(500);
+    await foto('rendimiento-sin-vincular');
+    await ascent('cerrar');
+  },
   // Comida: el día con su línea, la semana, el mes, ayer y mañana.
   async comida() {
     await pestana(1);

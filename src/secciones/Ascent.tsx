@@ -2,7 +2,8 @@
 // musgo con el gesto del cielo o tocando la flecha (Cielo.tsx), y se baja tirando para abajo desde
 // arriba de todo, con la flecha de arriba o tocando Hábitos. Tiene los colores de Ascent y su regla:
 // esquina viva o píldora, y una línea arriba de cada parte en vez de cajas. Hasta que exista la
-// conexión (después de la v1) se ve sin vincular: cada función vacía, con su candado.
+// conexión (después de la v1) se ve sin vincular: cada función vacía, con su candado. Debajo de la
+// recuperación, el rendimiento esperado, los músculos y la marca posible (spec/rendimiento.md).
 
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
@@ -91,6 +92,21 @@ export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
                 <Text style={estilos.raya}>—</Text>
               </View>
             ))}
+          </Carta>
+          <Carta titulo={t('ascent.rendimiento.titulo')}>
+            <Text style={estilos.texto}>{t('ascent.rendimiento.texto')}</Text>
+            {(['fuerza', 'repeticiones'] as const).map((k) => (
+              <View key={k} style={estilos.parte}>
+                <Text style={[estilos.parteNombre, estilos.crece]}>{t(`ascent.rendimiento.${k}`)}</Text>
+                <Text style={estilos.raya}>—</Text>
+              </View>
+            ))}
+          </Carta>
+          <Carta titulo={t('ascent.musculos.titulo')}>
+            <Text style={estilos.texto}>{t('ascent.musculos.texto')}</Text>
+          </Carta>
+          <Carta titulo={t('ascent.marca.titulo')}>
+            <Text style={estilos.texto}>{t('ascent.marca.texto')}</Text>
           </Carta>
           <Carta titulo={t('ascent.estancamiento.titulo')}>
             <Text style={estilos.texto}>{t('ascent.estancamiento.texto')}</Text>

@@ -1160,7 +1160,83 @@
       "ayer": "ayer",
       "dia": "el {dia}"
     },
-    "pronto": "Vincular llega pronto."
+    "pronto": "Vincular llega pronto.",
+    "rendimiento": {
+      "titulo": "Rendimiento esperado",
+      "texto": "Lo que puedes esperar hoy, en fuerza máxima y en repeticiones, con el sueño, la comida y lo que entrenaste.",
+      "hoy": "Hoy · {sesion}",
+      "fuerza": "Fuerza máxima",
+      "repeticiones": "Repeticiones",
+      "categorias": {
+        "mejor": "más que lo de siempre",
+        "normal": "como siempre",
+        "algoMenos": "algo menos",
+        "menos": "menos que lo de siempre"
+      },
+      "margen": "Más o menos {n} %: es lo que cambia de un día a otro.",
+      "motivos": {
+        "durmioPoco": "Dormiste {horas}",
+        "despertoAntes": "Te despertaste antes de lo de siempre",
+        "nochesCortas": "Dos de tus últimas tres noches fueron cortas",
+        "deuda": "Vienes con deuda de sueño",
+        "caraMala": "Dijiste que dormiste mal",
+        "ayuno": "Llegas con 8 horas sin comer",
+        "pocosCarbos": "Ayer comiste pocos carbohidratos",
+        "bajandoRapido": "Estás bajando más de un 1 % por semana",
+        "comioPoco": "Ayer comiste menos del 80 % de tus calorías",
+        "musculoCargado": "{musculo}: todavía recuperándose",
+        "descarga": "Vienes de una semana de descarga, con la misma carga",
+        "sinEntrenarlo": "Hace {dias} días que no lo entrenas"
+      },
+      "sinMotivos": "Nada fuera de lo común.",
+      "seguridad": "Seguridad {nivel} · {semanas} semanas de datos",
+      "niveles": {
+        "aprendiendo": "aprendiendo",
+        "baja": "baja",
+        "media": "media",
+        "alta": "alta"
+      },
+      "enSueno": "Rendimiento esperado: {categoria}",
+      "sinReloj": "Con lo que estimó el teléfono: con un reloj sería más preciso.",
+      "conReloj": "Con lo que midió tu {aparato}.",
+      "como": [
+        "Son dos números en % respecto de lo tuyo: la fuerza máxima (1 a 3 repeticiones) y las repeticiones. Dormir poco toca poco la fuerza máxima y mucho más las repeticiones.",
+        "Suma el sueño de anoche (o las noches seguidas cortas), cómo dijiste que dormiste, la comida (llegar en ayunas, pocos carbohidratos, bajar rápido), la fatiga del músculo y la descarga. Entre −15 y +4 %.",
+        "Un día a otro, tu fuerza cambia más o menos un 3 %: por eso dice «como siempre» la mayoría de los días. No es una garantía."
+      ]
+    },
+    "musculos": {
+      "titulo": "Tus músculos",
+      "texto": "Qué músculos están descansados y cuáles no, con las series que anotas en Ascent.",
+      "antes": "Antes de entrenar hoy, según lo que anotaste en Ascent",
+      "estados": {
+        "recuperado": "Recuperado",
+        "recuperandose": "Recuperándose",
+        "cargado": "Cargado"
+      },
+      "listoEn": "listo en ~{h} h",
+      "grupos": {
+        "piernas": "Piernas",
+        "espaldaBaja": "Espalda baja",
+        "espalda": "Espalda",
+        "pecho": "Pecho",
+        "hombros": "Hombros",
+        "brazos": "Brazos",
+        "abdomen": "Abdomen"
+      },
+      "nota": "El dolor no cuenta: la fuerza vuelve antes que el dolor."
+    },
+    "marca": {
+      "titulo": "Marca",
+      "texto": "Cuando tus condiciones se parecen a las de tus marcas, te avisa: dormiste bien, los músculos descansaron y estás cerca.",
+      "en": "Buen día para intentar marca en {ejercicio}",
+      "porque": "Dormiste {horas}; {musculos}: {dias} días de descanso. Tu mejor serie reciente está a {g} % de tu marca.",
+      "probabilidad": "{p} % de probabilidad",
+      "seguridad": "Seguridad {nivel} · {marcas} marcas en {semanas} semanas",
+      "aciertos": "Te lo marqué {veces} veces; hiciste marca en {marcas}.",
+      "nota": "Es una estimación, no una promesa. Si la entrada en calor se siente pesada, guárdala para otro día.",
+      "hoyNo": "Hoy no hay una marca para intentar: te avisa cuando tus condiciones se parecen a las de tus marcas."
+    }
   },
   "habitos": {
     "nuevo": "Nuevo hábito",

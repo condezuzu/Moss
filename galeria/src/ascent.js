@@ -3,7 +3,9 @@
 // dedo; se vuelve deslizando para abajo, con la flecha de arriba o tocando Hábitos. Sin vincular,
 // cada función muestra vacío lo que va a mostrar, con «Vincular» arriba; vinculada, lo de hoy, con
 // las cuentas de la app (Entrenamiento, src/dominio/entrenamiento.ts). Tiene los colores de Ascent
-// y su regla de líneas en vez de cajas: es la parte de Moss que es de las dos.
+// y su regla de líneas en vez de cajas: es la parte de Moss que es de las dos. Debajo de la
+// recuperación, el rendimiento esperado, los músculos y la marca posible (Rendimiento y Musculos,
+// src/dominio/rendimiento.ts y musculos.ts), como antes de entrenar hoy.
 
 const SeccionAscent = (() => {
   const PARTES = ['sueno', 'carga', 'comida'];
@@ -37,6 +39,7 @@ const SeccionAscent = (() => {
     let abierta = false;
     let animacion = 0;
     let comoSeCalcula = false;
+    let comoRendimiento = false;
 
     const velo = el('div', 'as-velo');
     const zona = el('section', 'ascent pagina-app');
@@ -79,6 +82,98 @@ const SeccionAscent = (() => {
         seguidos, proteinaAyer: ayer.p, metaProteina: meta.proteina, kcalAyer: ayer.kcal, metaKcal: meta.kcal,
       });
       return Object.assign(r, { anoche, ayer, meta });
+    }
+
+    // ------------------------------------------------------------ rendimiento, músculos y marca
+    // Como antes de entrenar hoy: 10 minutos antes de la sesión de piernas de las 18:40.
+    const DIA = 86_400_000;
+    const ANTES = sesionDe(Datos.HOY).inicio - 10 * 60e3;
+    const previas = () => A.sesiones.filter((x) => x.inicio < ANTES);
+    const unoRM = (ejercicio) => Musculos.mejorE1rm(previas(), ejercicio);
+    const GRUPOS = {
+      piernas: ['cuadriceps', 'gluteos', 'isquios', 'aductores', 'pantorrillas'], espaldaBaja: ['espaldaBaja'], espalda: ['espaldaAlta'],
+      pecho: ['pecho'], hombros: ['hombros'], brazos: ['biceps', 'triceps', 'antebrazos'], abdomen: ['abdomen'],
+    };
+    const grupoDe = (musculo) => Object.keys(GRUPOS).find((g) => GRUPOS[g].includes(musculo));
+    const residualDe = (musculo) => Musculos.residual(musculo, previas(), ANTES, { unoRM });
+
+    /** Cada grupo, con el músculo que más le falta, su estado y en cuánto está listo. */
+    function estadoDeGrupos() {
+      return Object.entries(GRUPOS).map(([grupo, musculos]) => {
+        const peor = musculos.reduce((a, m) => (residualDe(m) > residualDe(a) ? m : a));
+        const r = residualDe(peor);
+        return { grupo, residual: r, estado: Musculos.estadoDe(r), listo: Musculos.listoEn(peor, previas(), ANTES, { unoRM }) };
+      });
+    }
+
+    /** Las series de unos músculos (como principales) entre dos momentos. */
+    function seriesDe(musculos, desde, hasta) {
+      return A.sesiones.filter((x) => x.inicio >= desde && x.inicio < hasta).reduce((t, x) => {
+        const d = Musculos.dosisDeLaSesion(x, unoRM);
+        return t + musculos.reduce((u2, m) => u2 + ((d.get(m) && d.get(m).series) || 0), 0);
+      }, 0);
+    }
+
+    function calcularRendimiento() {
+      const sesion = sesionDe(Datos.HOY);
+      const bloque = sesion.bloques[0];
+      const musc = Musculos.musculosDe(bloque.ejercicio);
+      const noches = opciones.noches();
+      const anoche = noches.find((n) => n.clave === Datos.HOY) || null;
+      const habitual = SinReloj.habitualDe(noches, Datos.HOY);
+      const ultimas3 = [0, 1, 2].map((k) => noches.find((n) => n.clave === Fechas.sumarDias(Datos.HOY, -k))).filter(Boolean).map((n) => n.dormido);
+      const deuda = Sueno.deudaDeSueno(Sueno.ultimasNoches(noches, Datos.HOY, 14), necesidad);
+      const residual = Math.max(...musc.principal.map(residualDe));
+      // La semana contra el promedio de las cuatro anteriores, en series de los músculos principales.
+      const semana = seriesDe(musc.principal, ANTES - 7 * DIA, ANTES);
+      const mes = seriesDe(musc.principal, ANTES - 35 * DIA, ANTES - 7 * DIA) / 4;
+      const conEllos = previas().filter((x) => musc.principal.some((m) => (Musculos.dosisDeLaSesion(x, unoRM).get(m) || {}).series > 0));
+      const ultima = conEllos[conEllos.length - 1];
+      const conElEjercicio = previas().filter((x) => x.bloques.some((b) => b.ejercicio === bloque.ejercicio));
+      const ultimoDelEjercicio = conElEjercicio[conElEjercicio.length - 1];
+      const ultimoBloque = ultimoDelEjercicio.bloques.find((b) => b.ejercicio === bloque.ejercicio);
+      const ayer = opciones.comida.totalDe(-1);
+      const meta = opciones.metaBase();
+      const pesoKg = opciones.persona().pesoHoy || 75;
+      const cambio = opciones.persona().cambio7;
+      const entradas = {
+        sueno: anoche ? {
+          dormido: anoche.dormido, necesidad,
+          despertoAntes: !!habitual && anoche.despertar < habitual.despertar - 60,
+          seAcostoTarde: !!habitual && anoche.dormirse > habitual.dormirse + 60,
+          siesta: anoche.siestas >= 20, sinReloj: !!anoche.moss,
+        } : null,
+        ultimas3, deuda: deuda ? deuda.minutos : null, cara: opciones.cara(Datos.HOY),
+        multiarticular: musc.multiarticular, tren: musc.principal.some((m) => Musculos.DE_PIERNAS.includes(m)) ? 'inferior' : 'superior', horaHabitual: sesion.hora,
+        comida: {
+          ayuno8h: false, sesionLarga: sesion.minutos > 45, carbosAyerPorKilo: ayer.c ? ayer.c / pesoKg : null, mismosMusculosAyer: false,
+          bajaSemanal: cambio !== null && cambio !== undefined ? (-cambio / pesoKg) * 100 : null, semanasBajando: 6, kcalAyer: ayer.kcal ? ayer.kcal / meta.kcal : null,
+        },
+        residual,
+        descarga: {
+          diasSinSeriesDuras: Math.floor((ANTES - ultima.inicio) / DIA), seriesSemanaSobreMes: mes ? semana / mes : null,
+          intensidadMantenida: ultimoBloque.series.some((x) => x.peso >= 0.85 * (unoRM(bloque.ejercicio) || Infinity)),
+          diasSinElEjercicio: Math.floor((ANTES - ultimoDelEjercicio.inicio) / DIA),
+        },
+        entrenado: true,
+      };
+      return { r: Rendimiento.rendimientoEsperado(entradas), entradas, bloque, musc, anoche, ultima };
+    }
+
+    function calcularMarca(rend) {
+      const { r, entradas, bloque, musc, ultima } = rend;
+      const pr = A.marcas.find((m) => m.ejercicio === bloque.ejercicio);
+      if (!pr) return null;
+      const recientes = previas().filter((x) => x.inicio > ANTES - 21 * DIA);
+      const dia = Rendimiento.buenDiaParaMarca({
+        marca: Musculos.e1rm(pr.peso, pr.reps), mejorReciente: Musculos.mejorE1rm(recientes, bloque.ejercicio), marcaEn8Semanas: pr.fecha > Fechas.sumarDias(Datos.HOY, -56),
+        recuperado: entradas.residual < 3, dormido: entradas.sueno ? entradas.sueno.dormido : null, despertoAntes: !!(entradas.sueno && entradas.sueno.despertoAntes),
+        ultimas3: entradas.ultimas3, seriesSemanaSobreMes: entradas.descarga.seriesSemanaSobreMes, ayunoSesionLarga: entradas.comida.ayuno8h && entradas.comida.sesionLarga,
+        bajandoRapido: entradas.comida.bajaSemanal !== null && entradas.comida.bajaSemanal > 1, deltaMax: r.max, sigma: r.sigma,
+      });
+      const av = A.avisos[bloque.ejercicio] || { veces: 0, marcas: 0, marcasEnTotal: 0, semanas: 0 };
+      const seguridad = Rendimiento.seguridadDeMarcas({ marcas: av.marcasEnTotal, sesiones: previas().length, semanas: av.semanas, leGanaALaGeneral: false });
+      return Object.assign(dia, { bloque, av, seguridad, grupo: grupoDe(musc.principal[0]), dias: Math.floor((ANTES - ultima.inicio) / DIA) });
     }
 
     // Lo de Moss de una semana, de lunes a domingo, con la comida y el sueño de la galería.
@@ -215,6 +310,94 @@ const SeccionAscent = (() => {
       return c;
     }
 
+    const motivoTexto = (m, musc) => {
+      if (m.que === 'durmioPoco') return tx('ascent.rendimiento.motivos.durmioPoco', { horas: u.duracion(m.minutos) });
+      if (m.que === 'musculoCargado') return tx('ascent.rendimiento.motivos.musculoCargado', { musculo: tx('ascent.musculos.grupos.' + grupoDe(musc.principal[0])) });
+      if (m.que === 'sinEntrenarlo') return tx('ascent.rendimiento.motivos.sinEntrenarlo', { dias: m.dias });
+      return tx('ascent.rendimiento.motivos.' + m.que);
+    };
+
+    // El rendimiento esperado de la sesión de hoy: la fuerza máxima y las repeticiones, con sus motivos.
+    function cartaRendimiento() {
+      const d = vinculada ? calcularRendimiento() : null;
+      const c = carta('as-rendimiento', tx('ascent.rendimiento.titulo'), d ? el('span', 'as-derecha', tx('ascent.rendimiento.hoy', { sesion: nombreDe(sesionDe(Datos.HOY).nombre) })) : candado());
+      if (!d) {
+        c.appendChild(el('p', 'as-texto', tx('ascent.rendimiento.texto')));
+        return c;
+      }
+      const filas = el('div', 'as-rend');
+      [['fuerza', d.r.max, d.r.categoria.max], ['repeticiones', d.r.vol, d.r.categoria.vol]].forEach(([k, v, cat]) => {
+        const f = el('div', 'as-rend-fila ' + cat);
+        f.append(el('span', null, tx('ascent.rendimiento.' + k)), el('b', null, tx('ascent.rendimiento.categorias.' + cat)), el('small', null, `${u.conSigno(Math.round(v))} %`));
+        filas.appendChild(f);
+      });
+      c.appendChild(filas);
+      const motivos = el('ul', 'as-motivos');
+      (d.r.motivos.length ? d.r.motivos.slice(0, 3).map((m) => motivoTexto(m, d.musc)) : [tx('ascent.rendimiento.sinMotivos')]).forEach((texto) => motivos.appendChild(el('li', null, texto)));
+      c.appendChild(motivos);
+      c.appendChild(el('p', 'as-nota', tx('ascent.rendimiento.margen', { n: numero(d.r.sigma, 1) })));
+      c.appendChild(el('p', 'as-nota', d.anoche && d.anoche.moss ? tx('ascent.rendimiento.sinReloj') : tx('ascent.rendimiento.conReloj', { aparato: 'Apple Watch' })));
+      c.appendChild(el('p', 'as-nota', tx('ascent.rendimiento.seguridad', { nivel: tx('ascent.rendimiento.niveles.media'), semanas: 5 })));
+      const caja = el('div', 'as-explicacion');
+      tx('ascent.rendimiento.como').forEach((p) => caja.appendChild(el('p', null, p)));
+      caja.hidden = !comoRendimiento;
+      const b = boton('as-enlace' + (comoRendimiento ? ' abierto' : ''), `<span>${tx('progreso.comoSeCalcula')}</span>${icono('adelante')}`, () => {
+        comoRendimiento = !comoRendimiento;
+        caja.hidden = !comoRendimiento;
+        b.classList.toggle('abierto', comoRendimiento);
+      });
+      c.append(b, caja);
+      return c;
+    }
+
+    // Los músculos antes de entrenar: recuperado, recuperándose (y en cuánto está listo) o cargado.
+    function cartaMusculos() {
+      const c = carta('as-musculos', tx('ascent.musculos.titulo'), vinculada ? null : candado());
+      if (!vinculada) {
+        c.appendChild(el('p', 'as-texto', tx('ascent.musculos.texto')));
+        return c;
+      }
+      c.appendChild(el('p', 'as-nota as-musculos-antes', tx('ascent.musculos.antes')));
+      const lista = el('ul', 'as-musculos-lista');
+      estadoDeGrupos().forEach((g) => {
+        const li = el('li', g.estado);
+        const estado = el('span', 'as-estado ' + g.estado, tx('ascent.musculos.estados.' + g.estado));
+        li.append(el('span', null, tx('ascent.musculos.grupos.' + g.grupo)), estado);
+        if (g.listo) li.appendChild(el('small', null, tx('ascent.musculos.listoEn', { h: g.listo })));
+        lista.appendChild(li);
+      });
+      c.appendChild(lista);
+      c.appendChild(el('p', 'as-nota', tx('ascent.musculos.nota')));
+      return c;
+    }
+
+    // «Buen día para intentar marca», si se cumplen las cinco condiciones y la probabilidad llega.
+    function cartaMarca() {
+      const c = carta('as-pr', tx('ascent.marca.titulo'), vinculada ? null : candado());
+      if (!vinculada) {
+        c.appendChild(el('p', 'as-texto', tx('ascent.marca.texto')));
+        return c;
+      }
+      const rend = calcularRendimiento();
+      const m = calcularMarca(rend);
+      if (!m || !m.aplica) {
+        c.appendChild(el('p', 'as-texto', tx('ascent.marca.hoyNo')));
+        return c;
+      }
+      c.classList.add('con-marca');
+      c.append(
+        el('p', 'as-pr-titulo', tx('ascent.marca.en', { ejercicio: m.bloque.ejercicio.toLowerCase() })),
+        el('p', 'as-texto', tx('ascent.marca.porque', {
+          horas: rend.anoche ? u.duracion(rend.anoche.dormido) : '—', musculos: tx('ascent.musculos.grupos.' + m.grupo).toLowerCase(), dias: m.dias, g: numero(m.distancia, 1),
+        })),
+        el('b', 'as-pr-p', tx('ascent.marca.probabilidad', { p: Math.round(m.probabilidad * 100) })),
+        el('p', 'as-nota', tx('ascent.marca.aciertos', { veces: m.av.veces, marcas: m.av.marcas })),
+        el('p', 'as-nota', tx('ascent.marca.seguridad', { nivel: tx('ascent.rendimiento.niveles.' + m.seguridad), marcas: m.av.marcasEnTotal, semanas: m.av.semanas })),
+        el('p', 'as-nota', tx('ascent.marca.nota')),
+      );
+      return c;
+    }
+
     // Las semanas con marcas contra las del estancamiento: el sueño, la proteína y el balance.
     function tablaDeSemanas(antes, ahora, causa) {
       const tabla = el('div', 'as-tabla');
@@ -303,10 +486,10 @@ const SeccionAscent = (() => {
       flecha.setAttribute('aria-label', tx('ascent.flecha'));
       contenido.appendChild(cabecera());
       if (vinculada) {
-        contenido.append(...[hoyEnAscent(), grupo('soloConLasDos'), cartaRecuperacion(), cartaEstancamiento(), cartaAnio()].filter(Boolean));
+        contenido.append(...[hoyEnAscent(), grupo('soloConLasDos'), cartaRecuperacion(), cartaRendimiento(), cartaMusculos(), cartaMarca(), cartaEstancamiento(), cartaAnio()].filter(Boolean));
         contenido.appendChild(el('p', 'as-pie', tx('ascent.desvincular')));
       } else {
-        contenido.append(grupo('soloConLasDos'), cartaRecuperacion(), cartaEstancamiento(), cartaAnio());
+        contenido.append(grupo('soloConLasDos'), cartaRecuperacion(), cartaRendimiento(), cartaMusculos(), cartaMarca(), cartaEstancamiento(), cartaAnio());
       }
       cont.scrollTop = scroll;
     }
@@ -420,6 +603,8 @@ const SeccionAscent = (() => {
       },
       // La recuperación de hoy, para Sueño.
       recuperacionDeHoy: () => (vinculada ? calcularRecuperacion() : null),
+      // La línea del rendimiento en Sueño.
+      rendimientoDeHoy: () => (vinculada ? calcularRendimiento().r : null),
       bajarA(selector) {
         const n = cont.querySelector(selector);
         if (n) cont.scrollTop = Math.max(0, cont.scrollTop + n.getBoundingClientRect().top - cont.getBoundingClientRect().top - 60);

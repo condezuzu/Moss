@@ -1315,6 +1315,27 @@ section.item p { margin: 0; max-width: 64ch; }
 .as-parte b { min-width: 50px; font: 400 12.5px/1 var(--numeros); color: var(--as-tinta); font-variant-numeric: tabular-nums; text-align: right; }
 .ascent:not(.vinculada) .as-parte b { color: var(--as-apagado); }
 .as-parte small { grid-column: 2 / 4; font: 400 11.5px/1.3 var(--texto); color: var(--as-sub); font-variant-numeric: tabular-nums; }
+/* El rendimiento esperado, los músculos y la marca posible (spec/rendimiento.md). */
+.as-rend { display: grid; gap: 10px; margin-top: 12px; }
+.as-rend-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; column-gap: 10px; }
+.as-rend-fila span { font: 400 13px/1.2 var(--texto); color: var(--as-sub); }
+.as-rend-fila b { font: 400 15px/1.2 var(--texto); color: var(--as-tinta); }
+.as-rend-fila small { min-width: 44px; text-align: right; font: 400 12.5px/1 var(--numeros); color: var(--as-sub); font-variant-numeric: tabular-nums; }
+.as-rend-fila.mejor b { color: #a6bf94; }
+.as-rend-fila.algoMenos b, .as-rend-fila.menos b { color: #f0c48a; }
+.as-motivos { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.as-motivos li { position: relative; padding-left: 14px; font: 400 13px/1.4 var(--texto); color: rgba(232, 236, 246, 0.72); }
+.as-motivos li::before { content: ''; position: absolute; left: 2px; top: 0.6em; width: 4px; height: 4px; border-radius: 50%; background: var(--as-claro); }
+.as-musculos-antes { margin-top: 4px; }
+.as-musculos-lista { margin: 10px 0 0; padding: 0; list-style: none; }
+.as-musculos-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 3px; align-items: center; padding: 9px 0; border-top: 1px solid var(--as-linea); font: 400 14px/1.2 var(--texto); color: var(--as-tinta); }
+.as-musculos-lista small { grid-column: 2; justify-self: end; font: 400 11.5px/1 var(--texto); color: var(--as-sub); }
+.as-estado { font: 400 11px/1 var(--texto); letter-spacing: 0.06em; padding: 5px 8px; border: 1px solid var(--as-linea-fuerte); color: var(--as-sub); }
+.as-estado.recuperado { color: #a6bf94; border-color: rgba(166, 191, 148, 0.4); }
+.as-estado.cargado { color: #f0c48a; border-color: rgba(240, 196, 138, 0.4); }
+.as-pr.con-marca .as-carta-titulo { color: var(--as-claro); }
+.as-pr-titulo { margin: 10px 0 0; font: 400 19px/1.25 var(--texto); color: var(--as-tinta); }
+.as-pr-p { display: block; margin-top: 10px; font: 400 15px/1 var(--numeros); color: var(--as-claro); }
 .as-enlace { appearance: none; cursor: pointer; margin-top: 16px; padding: 0; border: 0; background: none; display: inline-flex; align-items: center; gap: 4px; color: var(--as-claro); font: 400 12.5px/1 var(--texto); }
 .as-enlace svg { width: 14px; height: 14px; transition: transform 0.25s; }
 .as-enlace.abierto svg { transform: rotate(90deg); }
@@ -1717,6 +1738,9 @@ section.item p { margin: 0; max-width: 64ch; }
             <li><b>Calorías según el día</b>: el control de la semana ya cuenta el entrenamiento de siempre en el gasto, así que no se suma nada: se reparte. Un día de gimnasio tiene lo que cuesta una sesión más que uno de descanso (280 kcal para esta persona: el costo neto, 4 kcal por kilo y por hora, que es el total de la hora menos el reposo que el día de descanso ya tiene), y la semana del control suma 18.130, lo mismo que da el control. Los días que vienen son una previsión, según qué días suele entrenar; si entrena más o menos, los que quedan se acomodan y el último cierra la cuenta. Hoy le tocan 2.730 kcal, y los días de descanso, 2.450: mirá Inicio y Comida.</li>
             <li><b>La proteína después de entrenar</b> sube hacia 2,2 g por kilo, el techo útil, según el tamaño de la sesión: las series y el peso movido, cada uno contra su promedio. Una sesión de las de siempre suma la mitad de lo que falta hasta el techo; una un 50 % más grande, todo; de a 5 g y hasta 40 g. Sale de los carbohidratos: las calorías no cambian. Hoy la sesión fue un 23 % más grande: +10 g, 160 en total.</li>
             <li><b>Recuperación</b>: de 0 a 100, con el sueño (40), la carga de los tres días anteriores (40) y la comida de ayer (20), y si conviene ir fuerte, normal o suave. También aparece arriba en Sueño, porque cruza justo el sueño con el entrenamiento.</li>
+            <li><b>Rendimiento esperado</b> (lo pediste el 22/10; spec/rendimiento.md): la fuerza máxima y las repeticiones de la sesión de hoy, en % respecto de lo tuyo, con sus motivos y su margen. Hoy, piernas después de una semana de descarga: la fuerza máxima, como siempre o un poco más.</li>
+            <li><b>Tus músculos</b>, antes de entrenar: recuperado, recuperándose (y en cuánto está listo) o cargado, con las series de cada ejercicio y una tabla de qué músculos trabaja cada uno.</li>
+            <li><b>«Buen día para intentar marca en sentadilla»</b>: con las cinco condiciones (cerca de la marca, descansado, dormiste bien, sin pico de carga, sin ayuno) y la probabilidad, con cuántas veces acertó y qué tan segura está. Si no da, lo dice.</li>
             <li><b>Por qué no subes</b>: el press banca lleva tres semanas igual. Solo habla con 3 semanas con marcas y 3 sin, cada una con al menos 4 días de comida y 4 noches de sueño; si no, dice que todavía está juntando información (probalo con «Juntando información»). Con datos, la diferencia más grande es la causa probable, y lo dice así: probable, no segura. Hoy, la proteína: 152 g por día en las semanas con marcas, 112 ahora.</li>
             <li><b>Tu año</b>: lo de las dos apps del año; lo de Moss cuenta desde que la empezaste.</li>
             <li><b>Las seis que andan solas</b>: un solo peso, calorías según el día, el mismo objetivo, la cuenta y los amigos, la proteína después de entrenar y el gimnasio que se enciende solo, cada una con lo de hoy.</li>

@@ -1160,7 +1160,83 @@
       "ayer": "yesterday",
       "dia": "on {dia}"
     },
-    "pronto": "Linking is coming soon."
+    "pronto": "Linking is coming soon.",
+    "rendimiento": {
+      "titulo": "Expected performance",
+      "texto": "What you can expect today, in max strength and in reps, from your sleep, your food and what you trained.",
+      "hoy": "Today · {sesion}",
+      "fuerza": "Max strength",
+      "repeticiones": "Reps",
+      "categorias": {
+        "mejor": "better than usual",
+        "normal": "as usual",
+        "algoMenos": "a little less",
+        "menos": "less than usual"
+      },
+      "margen": "Give or take {n} %: that’s how much it changes from one day to the next.",
+      "motivos": {
+        "durmioPoco": "You slept {horas}",
+        "despertoAntes": "You woke up earlier than usual",
+        "nochesCortas": "Two of your last three nights were short",
+        "deuda": "You’re carrying sleep debt",
+        "caraMala": "You said you slept badly",
+        "ayuno": "You’re coming in after 8 hours without food",
+        "pocosCarbos": "You ate few carbs yesterday",
+        "bajandoRapido": "You’re losing more than 1 % a week",
+        "comioPoco": "You ate less than 80 % of your calories yesterday",
+        "musculoCargado": "{musculo}: still recovering",
+        "descarga": "You’re coming off a deload week, with the same load",
+        "sinEntrenarlo": "You haven’t trained it in {dias} days"
+      },
+      "sinMotivos": "Nothing out of the ordinary.",
+      "seguridad": "{nivel} confidence · {semanas} weeks of data",
+      "niveles": {
+        "aprendiendo": "Learning",
+        "baja": "Low",
+        "media": "Medium",
+        "alta": "High"
+      },
+      "enSueno": "Expected performance: {categoria}",
+      "sinReloj": "From what your phone estimated: a watch would be more precise.",
+      "conReloj": "From what your {aparato} measured.",
+      "como": [
+        "Two numbers, in % of your usual: max strength (1 to 3 reps) and reps. Short sleep barely touches max strength and hits reps much harder.",
+        "It adds up last night’s sleep (or several short nights in a row), how you said you slept, food (coming in fasted, few carbs, losing fast), muscle fatigue and deloads. Between −15 and +4 %.",
+        "Your strength moves about 3 % from one day to the next: that’s why it says “as usual” most days. It isn’t a guarantee."
+      ]
+    },
+    "musculos": {
+      "titulo": "Your muscles",
+      "texto": "Which muscles are rested and which aren’t, from the sets you log in Ascent.",
+      "antes": "Before training today, from what you logged in Ascent",
+      "estados": {
+        "recuperado": "Recovered",
+        "recuperandose": "Recovering",
+        "cargado": "Loaded"
+      },
+      "listoEn": "ready in ~{h} h",
+      "grupos": {
+        "piernas": "Legs",
+        "espaldaBaja": "Lower back",
+        "espalda": "Back",
+        "pecho": "Chest",
+        "hombros": "Shoulders",
+        "brazos": "Arms",
+        "abdomen": "Abs"
+      },
+      "nota": "Soreness doesn’t count: strength comes back before soreness goes away."
+    },
+    "marca": {
+      "titulo": "Personal record",
+      "texto": "When your conditions look like the ones of your PRs, it lets you know: you slept well, your muscles rested and you’re close.",
+      "en": "Good day to try a PR in {ejercicio}",
+      "porque": "You slept {horas}; {musculos}: {dias} days of rest. Your best recent set is {g} % from your PR.",
+      "probabilidad": "{p} % chance",
+      "seguridad": "{nivel} confidence · {marcas} PRs in {semanas} weeks",
+      "aciertos": "I flagged it {veces} times; you hit a PR in {marcas}.",
+      "nota": "It’s an estimate, not a promise. If your warm-up feels heavy, save it for another day.",
+      "hoyNo": "No PR to try today: it lets you know when your conditions look like the ones of your PRs."
+    }
   },
   "habitos": {
     "nuevo": "New habit",

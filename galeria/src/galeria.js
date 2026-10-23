@@ -456,6 +456,7 @@
     sinReloj: () => soloIphone,
     metaDeSueno: 8 * 60,
     recuperacion: () => (ascent ? ascent.recuperacionDeHoy() : null),
+    rendimiento: () => (ascent ? ascent.rendimientoDeHoy() : null),
     abrirAscent: () => abrirAscent(),
     // La cara de la mañana cambia la recuperación, que también está en Ascent.
     alCambiarCara: () => { if (ascent) ascent.pintar(); },
@@ -465,6 +466,7 @@
     comida,
     persona,
     anoche: () => sueno.anoche(),
+    noches: () => sueno.noches(),
     cara: (clave) => sueno.cara(clave),
     metaBase: () => metaBase,
     conAscent: () => (vinculada ? conAscent() : null),

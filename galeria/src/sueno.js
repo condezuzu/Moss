@@ -288,6 +288,9 @@ const SeccionSueno = (() => {
       fila.append(el('b', null, String(r.total)), el('span', null, tx('ascent.recuperacion.conviene.' + r.conviene)));
       fila.insertAdjacentHTML('beforeend', icono('adelante'));
       c.appendChild(fila);
+      // Debajo, el rendimiento esperado de hoy (spec/rendimiento.md).
+      const rend = opciones.rendimiento ? opciones.rendimiento() : null;
+      if (rend) c.appendChild(el('p', 'sn-nota', tx('ascent.rendimiento.enSueno', { categoria: tx('ascent.rendimiento.categorias.' + rend.categoria.max) })));
       return c;
     }
 
@@ -570,6 +573,8 @@ const SeccionSueno = (() => {
     return {
       zona,
       pintar,
+      // Las noches de la sección (de Salud y, sin reloj, las de Moss): las usa Ascent.
+      noches,
       // Lo que contestó a la mañana de una noche (1 a 5), o null: lo usa la recuperación.
       cara: (clave) => caras[clave] || null,
       // Lo de anoche para el bloque de Inicio.
