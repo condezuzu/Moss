@@ -350,6 +350,78 @@ const pasos = {
     }
     await sueno('noche', 0);
   },
+  // Solo con el iPhone (spec/sueno.md, «Sin reloj»): la pregunta de la hora, cambiarla, sin proponer,
+  // la noche estimada con su franja y la precisión.
+  async 'sin-reloj'() {
+    await pagina.evaluate(() => { localStorage.removeItem('moss-galeria-caras'); window.__aparato('iphone'); });
+    await pestana(3);
+    await sueno('olvidar');
+    await sueno('hora', 'proponer');
+    await sueno('subir');
+    await pagina.waitForTimeout(900);
+    await foto('sin-reloj');
+    await pagina.click('.sn-hora .sn-otra');
+    await pagina.waitForTimeout(700);
+    await foto('sin-reloj-cambiar');
+    await sueno('hora', 'sinProponer');
+    await pagina.waitForTimeout(700);
+    await foto('sin-reloj-sin-proponer');
+    // «Sí»: la pregunta se cierra suave y la noche pasa a confirmada.
+    await sueno('hora', 'proponer');
+    await pagina.waitForTimeout(600);
+    await pagina.click('.sn-hora .sn-si');
+    await pagina.waitForTimeout(250);
+    await foto('sin-reloj-cerrando');
+    await pagina.waitForTimeout(1200);
+    await foto('sin-reloj-confirmada');
+    await sueno('bajar', '.sn-moss');
+    await pagina.waitForTimeout(500);
+    await foto('sin-reloj-noche');
+    await sueno('noche', -2);
+    await pagina.waitForTimeout(500);
+    await sueno('bajar', '.sn-moss');
+    await pagina.waitForTimeout(400);
+    await foto('sin-reloj-estimada');
+    await sueno('editarNoche', -2);
+    await sueno('bajar', '.sn-moss');
+    await pagina.waitForTimeout(500);
+    await foto('sin-reloj-editar');
+    for (const [selector, nombre] of [['.sn-calidad', 'sin-reloj-calidad'], ['.sn-fuentes', 'sin-reloj-fuentes']]) {
+      await sueno('bajar', selector);
+      await pagina.waitForTimeout(400);
+      await foto(nombre);
+    }
+    // Con el reloj, la precisión de la noche.
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await sueno('noche', 0);
+    await sueno('bajar', '.sn-fuentes');
+    await pagina.waitForTimeout(400);
+    await foto('con-reloj-fuentes');
+    await sueno('olvidar');
+    await sueno('hora', null);
+    await sueno('subir');
+  },
+  // Perfil › Aparatos (spec/aparatos.md): con el reloj, una marca desplegada y el final; solo con el iPhone.
+  async aparatos() {
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await seccion('aparatos');
+    await hojaAbierta('pf-hoja');
+    await pagina.waitForTimeout(300);
+    await foto('aparatos');
+    await pagina.click('.pf-marcas li:nth-child(2) .pf-marca');
+    await pagina.waitForTimeout(600);
+    await foto('aparatos-oura');
+    await pagina.evaluate(() => { const c = document.querySelector('.pf-aparatos'); c.scrollTop = c.scrollHeight; });
+    await pagina.waitForTimeout(400);
+    await foto('aparatos-final');
+    await pagina.evaluate(() => window.__aparato('iphone'));
+    await seccion('aparatos');
+    await hojaAbierta('pf-hoja');
+    await pagina.waitForTimeout(300);
+    await foto('aparatos-solo-iphone');
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await pestana(0);
+  },
   // Comida: el día con su línea, la semana, el mes, ayer y mañana.
   async comida() {
     await pestana(1);

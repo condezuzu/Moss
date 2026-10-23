@@ -576,12 +576,12 @@ section.item p { margin: 0; max-width: 64ch; }
 .sn-etapa small { grid-column: 1 / -1; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.45); }
 .sn-nota { margin: 6px 0 0; font: 400 12px/1.45 var(--texto); color: rgba(239, 230, 207, 0.5); }
 /* La pregunta de la mañana: cinco caras de línea; la elegida en oro. Contestada, queda una línea. */
-.sn-manana { padding-bottom: 10px; overflow: hidden; animation: sn-crece 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+.sn-manana { padding-bottom: 10px; overflow: hidden; animation: sn-crece 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
   transition: height 0.42s cubic-bezier(0.4, 0, 0.2, 1) 0.3s, opacity 0.32s ease 0.3s, margin 0.42s ease 0.3s, padding 0.42s ease 0.3s, border-color 0.42s ease 0.3s; }
 /* Al contestar: la cara elegida brilla un momento y la tarjeta se cierra; lo de abajo sube con ella. */
 .sn-manana.cerrando { height: 0 !important; opacity: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-color: transparent; }
 .sn-manana.cerrando .sn-cara:not(.elegida) { opacity: 0.25; transition: opacity 0.25s ease; }
-@keyframes sn-crece { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 280px; } }
+@keyframes sn-crece { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 640px; } }
 @keyframes sn-aparece { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .sn-manana-pregunta { margin: 2px 0 14px; font: 500 19px/1.2 var(--texto); color: var(--tinta); }
 .sn-caras { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
@@ -598,6 +598,40 @@ section.item p { margin: 0; max-width: 64ch; }
 .sn-manana-hecha .sn-cara-dibujo { width: 22px; height: 22px; color: var(--oro-claro); }
 .sn-manana-hecha span { flex: 1; }
 .sn-manana-cambiar { appearance: none; cursor: pointer; padding: 4px 2px; border: 0; background: none; color: var(--oro-claro); font: 400 13px/1 var(--texto); }
+/* Sin reloj: la pregunta de la hora, las horas de a 5 minutos, la noche de Moss con su franja difusa y la precisión. */
+.sn-hora, .sn-caras-bloque, .sn-movimiento, .sn-editor { overflow: hidden;
+  transition: height 0.42s cubic-bezier(0.4, 0, 0.2, 1) 0.3s, opacity 0.32s ease 0.3s, margin 0.42s ease 0.3s, padding 0.42s ease 0.3s, border-color 0.42s ease 0.3s; }
+.sn-hora { animation: sn-aparece 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.sn-hora.cerrando, .sn-caras-bloque.cerrando, .sn-movimiento.cerrando, .sn-editor.cerrando { height: 0 !important; opacity: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-color: transparent; }
+.sn-hora + .sn-caras-bloque { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(239, 230, 207, 0.08); }
+.sn-hora-nota { margin: -8px 0 14px; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.sn-hora-acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sn-si, .sn-otra, .sn-guardar, .sn-permitir { appearance: none; cursor: pointer; min-height: 44px; border-radius: 14px; font: 500 14.5px/1 var(--texto); transition: transform 0.15s ease, background 0.2s ease; }
+.sn-si:active, .sn-otra:active, .sn-guardar:active, .sn-permitir:active { transform: scale(0.97); }
+.sn-si, .sn-guardar, .sn-permitir { border: 0; background: var(--tinta); color: #0b0f1d; }
+.sn-otra { border: 1px solid rgba(239, 230, 207, 0.2); background: none; color: var(--tinta); }
+.sn-editor { display: grid; gap: 8px; }
+.sn-editor-fila { display: grid; grid-template-columns: minmax(0, 1fr) 40px 64px 40px; align-items: center; gap: 6px; font: 400 14px/1.2 var(--texto); }
+.sn-editor-fila b { text-align: center; font: 400 18px/1 var(--numeros); font-variant-numeric: tabular-nums; }
+.sn-paso { appearance: none; cursor: pointer; height: 40px; border-radius: 12px; border: 1px solid rgba(239, 230, 207, 0.14); background: rgba(239, 230, 207, 0.04); color: var(--tinta); font: 400 18px/1 var(--texto); }
+.sn-guardar { margin-top: 6px; }
+.sn-editor-noche { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(239, 230, 207, 0.06); animation: sn-aparece 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.sn-origen { flex: none; font: 500 10px/1 var(--texto); font-style: normal; letter-spacing: 0.06em; padding: 5px 8px; border-radius: 999px; color: rgba(239, 230, 207, 0.7); background: rgba(239, 230, 207, 0.07); }
+.sn-origen.confirmada, .sn-origen.corregida, .sn-origen.manual { color: var(--salvia); background: rgba(166, 191, 148, 0.1); }
+.sn-franja { position: relative; height: 22px; margin: 14px 0 6px; border-radius: 11px; background: rgba(239, 230, 207, 0.04); }
+.sn-franja i { position: absolute; top: 3px; bottom: 3px; border-radius: 8px; background: linear-gradient(90deg, #6f86d6, #8fd3e8); }
+.sn-rango-texto { margin-top: 8px; }
+.sn-cambiar-hora { appearance: none; cursor: pointer; display: block; margin-top: 8px; padding: 6px 0; border: 0; background: none; color: var(--oro-claro); font: 400 13.5px/1 var(--texto); }
+.sn-noche.moss.estimada .sn-noche-barra > i { opacity: 0.55; }
+.sn-movimiento { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.sn-movimiento b { display: block; font: 500 14.5px/1.2 var(--texto); }
+.sn-movimiento p { margin: 4px 0 0; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.sn-permitir { padding: 0 16px; min-height: 38px; }
+.sn-precision { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; align-items: center; margin: 2px 0 10px; font: 400 13.5px/1.2 var(--texto); }
+.sn-precision b { grid-column: 1 / -1; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.sn-puntos { display: inline-flex; gap: 5px; }
+.sn-puntos i { width: 8px; height: 8px; border-radius: 50%; background: rgba(239, 230, 207, 0.12); }
+.sn-puntos i.lleno { background: #8fd3e8; box-shadow: 0 0 6px rgba(143, 211, 232, 0.5); }
 .sn-datos { display: grid; margin-top: 6px; }
 .sn-dato { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 4px; align-items: center; padding: 9px 0; border-top: 1px solid rgba(239, 230, 207, 0.06); font: 400 14px/1.2 var(--texto); }
 .sn-dato b { font: 400 14px/1.2 var(--numeros); text-align: right; font-variant-numeric: tabular-nums; }
@@ -650,6 +684,26 @@ section.item p { margin: 0; max-width: 64ch; }
 .pf-creditos li { display: block; padding: 12px 16px; font: 400 12.5px/17px var(--texto); color: rgba(239, 230, 207, 0.65); }
 .pf-salir { appearance: none; cursor: pointer; display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(8, 12, 26, 0.6); color: rgba(239, 230, 207, 0.75); font: 400 15px/1 var(--texto); }
 .pf-version { margin: 14px 0 0; text-align: center; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.35); }
+/* Perfil › Aparatos: los tuyos con su precisión, de cuál sale la noche y qué llega de cada marca. */
+.pf-hoja .pf-aparatos { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 18px 18px; scrollbar-width: none; }
+.pf-hoja .pf-aparatos::-webkit-scrollbar { display: none; }
+.pf-aparatos > .pf-nota:first-child { margin-top: 6px; text-align: center; }
+.pf-tuyos li, .pf-opciones li { grid-template-columns: minmax(0, 1fr) auto; }
+.pf-tuyos div > b, .pf-opciones div > b { display: block; font: 400 15px/1.2 var(--texto); color: var(--tinta); }
+.pf-tuyos div > span, .pf-opciones div > span { display: block; margin-top: 3px; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.pf-opciones li { cursor: pointer; }
+.pf-marca-punto { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(239, 230, 207, 0.3); transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; }
+.pf-opciones li.elegida .pf-marca-punto { border-color: var(--oro-claro); background: radial-gradient(circle, var(--oro-claro) 0 4px, transparent 5px); box-shadow: 0 0 8px rgba(246, 227, 166, 0.35); }
+.pf-marcas li { display: block; padding: 0; }
+.pf-marca { appearance: none; cursor: pointer; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 14px; align-items: center; gap: 10px; padding: 13px 14px 13px 16px; border: 0; background: none; color: var(--tinta); text-align: left; font: 400 15px/1.2 var(--texto); }
+.pf-marca svg { transition: transform 0.3s ease; }
+.pf-marcas li.abierta .pf-marca svg { transform: rotate(90deg); }
+/* El texto se despliega con su alto (filas de 0 a 1): nada aparece de golpe. */
+.pf-marca-texto { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.pf-marca-texto > p { overflow: hidden; margin: 0; padding: 0 16px; font: 400 13px/1.45 var(--texto); color: rgba(239, 230, 207, 0.62); opacity: 0; transition: opacity 0.25s ease, padding 0.35s ease; }
+.pf-marcas li.abierta .pf-marca-texto { grid-template-rows: 1fr; }
+.pf-marcas li.abierta .pf-marca-texto > p { opacity: 1; padding-bottom: 14px; }
+.pf-varios { margin-top: 12px; }
 
 /* Hábitos (habitos.js): los dos botones de arriba del cielo y las tres hojas, como las de la app
    (HojaModal): el título a la izquierda, la cruz, lo de adentro con su scroll y el pie fijo. */
@@ -1543,7 +1597,17 @@ section.item p { margin: 0; max-width: 64ch; }
         <div class="controles">
           <button class="boton principal" type="button" data-pestana="3">Ver anoche</button>
           <button class="boton" type="button" data-seccion="noche">Otra noche</button>
-          <button class="boton" type="button" data-seccion="sinReloj">La noche sin reloj</button>
+          <button class="boton" type="button" data-seccion="sinReloj">Una noche sin el reloj</button>
+        </div>
+        <div class="controles">
+          <div class="grupo"><span>Con qué duerme: con el reloj, o solo con el iPhone y lo que estima Moss</span>
+            <div class="segmento" id="s-aparato"><button type="button" data-valor="reloj" aria-pressed="true">Apple Watch</button><button type="button" data-valor="iphone" aria-pressed="false">Solo el iPhone</button></div>
+          </div>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-seccion="hora">La pregunta de la hora</button>
+          <button class="boton" type="button" data-seccion="horaSinProponer">Sin proponer</button>
+          <button class="boton" type="button" data-seccion="aparatos">Perfil › Aparatos</button>
         </div>
       </div>
       <ul class="lista">
@@ -1556,7 +1620,15 @@ section.item p { margin: 0; max-width: 64ch; }
         <li><b>La deuda</b> de sueño de las dos semanas va <b>segunda</b> (lo pediste): solo necesita cuánto dormiste, así que es lo que más gente puede tener bien.</li>
         <li><b>La calidad</b>, de 0 a 100, en tres partes que se explican: duración contra lo que necesitás (50), horario contra el de siempre (30) y continuidad (20). Las etapas no entran.</li>
         <li><b>El horario</b> de las dos semanas, qué tan regular es y cuánto más tarde dormís el fin de semana. <b>De noche, según el reloj</b>: la frecuencia, la variabilidad y la respiración contra lo tuyo.</li>
-        <li><b>De dónde sale cada dato</b> y qué tan confiable es. Lo que falta queda en gris: nunca se inventa.</li>
+        <li><b>De dónde sale cada dato</b> y qué tan confiable es, con la <b>precisión de la noche</b> en cinco puntos: estimada con el teléfono, medida sin etapas, con etapas, con lo de la noche y (después de la v1) una conexión directa. Lo que falta queda en gris: nunca se inventa.</li>
+        <li><b>Solo con el iPhone</b> (lo pediste el 22/10; spec/sueno.md, «Sin reloj»): desde iOS 18 Salud no tiene nada sin reloj, así que Moss arma la noche cada mañana con los pasos, el movimiento del teléfono y cuándo la usaste (src/dominio/sinReloj.ts), con cuatro semanas de mentira que confirmó y corrigió.
+          <ul>
+            <li><b>«¿Dormiste de 23:50 a 07:20?»</b>: arriba, junto a las caras, solo si Moss no está segura. «Sí» la confirma; «Cambiar» abre las dos horas, de a 5 minutos. Una mañana por semana pregunta sin proponer, para medir cuánto se acepta lo propuesto sin mirarlo.</li>
+            <li><b>La noche estimada</b>: sin hipnograma (el teléfono no sabe de etapas), una franja con los bordes difusos del ancho del rango y «Entre … y … al dormirte». Cada noche dice si es estimada, confirmada o corregida, y se puede cambiar.</li>
+            <li>Lo que corregís le enseña cuánto se corre en tu caso. La calidad va sin la continuidad, y la deuda y el horario cuentan las noches que no son «poco seguras».</li>
+            <li>Una vez, <b>el movimiento del teléfono</b>: el permiso, con por qué.</li>
+          </ul></li>
+        <li><b>Perfil › Aparatos</b> (spec/aparatos.md): los que escriben tu sueño, con su precisión; de cuál sale la noche (la automática toma la más precisa); y qué llega de cada marca, que se despliega. Todo llega desde Salud: en la v1 no hay conexiones directas.</li>
       </ul>
     </section>
 

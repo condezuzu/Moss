@@ -1,5 +1,7 @@
 // Sueño (spec/sueno.md): lo que Salud trae de cada noche, armado con las reglas de la app (Sueno,
-// src/dominio/sueno.ts). Arriba, la pregunta de cada mañana (cómo dormiste, con cinco caras) y las
+// src/dominio/sueno.ts) y, sin reloj, las noches que Moss estima con el teléfono (SinReloj,
+// src/dominio/sinReloj.ts). Arriba, la pregunta de cada mañana (sin reloj, primero la hora si Moss
+// no está segura; después cómo dormiste, con cinco caras) y las
 // últimas dos semanas para elegir una noche; después, esa noche (cuánto dormiste, cuándo, las etapas
 // como estimación, lo despierto), la deuda, que es lo que más gente puede tener bien, su calidad con
 // de qué sale, el horario y qué tan regular es, lo que mide el reloj de noche, y de dónde sale cada
@@ -11,7 +13,7 @@ const SeccionSueno = (() => {
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
     const { tx, numero, el, boton, icono } = u;
-    const s = { clave: Datos.HOY, abierto: null, cambiando: false };
+    const s = { clave: Datos.HOY, abierto: null, cambiando: false, editandoHora: false, editando: null, forzarHora: null };
     // Lo que contestó cada mañana, de 1 a 5, por noche: queda en este navegador, como quedaría en el
     // teléfono. «Ahora no» la esconde solo por hoy.
     const GUARDADO_CARAS = 'moss-galeria-caras';
@@ -28,17 +30,22 @@ const SeccionSueno = (() => {
         if (opciones.alCambiarCara) opciones.alCambiarCara();
       }, cara);
     }
-    /** La tarjeta de la mañana se cierra (alto, opacidad y márgenes) y después se rearma Sueño. */
+    /** Cierra una parte (alto, opacidad y márgenes) y después rearma Sueño: nada desaparece de golpe. */
+    function colapsar(nodo, despues, demora) {
+      const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!nodo || quieto) { despues(); return; }
+      nodo.style.height = `${nodo.offsetHeight}px`;
+      // Leer el alto otra vez fija el de partida: así la transición corre aunque no haya cuadros.
+      void nodo.offsetHeight;
+      nodo.classList.add('cerrando');
+      setTimeout(despues, demora || 480);
+    }
+    /** La tarjeta de la mañana se cierra y después se rearma Sueño; con la hora todavía por contestar, solo las caras. */
     function cerrarPregunta(despues, cara) {
       const carta = cont.querySelector('.sn-manana');
-      const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!carta || quieto) { despues(); return; }
-      if (cara) carta.querySelectorAll('.sn-cara').forEach((b, i) => b.classList.toggle('elegida', i + 1 === cara));
-      carta.style.height = `${carta.offsetHeight}px`;
-      // Leer el alto otra vez fija el de partida: así la transición corre aunque no haya cuadros.
-      void carta.offsetHeight;
-      carta.classList.add('cerrando');
-      setTimeout(despues, cara ? 760 : 480);
+      if (carta && cara) carta.querySelectorAll('.sn-cara').forEach((b, i) => b.classList.toggle('elegida', i + 1 === cara));
+      const soloCaras = carta && carta.querySelector('.sn-hora') ? carta.querySelector('.sn-caras-bloque') : null;
+      colapsar(soloCaras || carta, despues, cara ? 760 : 480);
     }
     const necesidad = Sueno.necesidad(Number(Datos.HOY.slice(0, 4)) - Datos.PERFIL.nacimiento);
 
@@ -48,7 +55,95 @@ const SeccionSueno = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.sn-scroll');
 
-    const noches = () => opciones.noches();
+    // ------------------------------------------------------------ sin reloj (spec/sueno.md, «Sin reloj»)
+    // Lo que contestó cada mañana sobre la hora (confirmada, corregida o escrita) queda en este
+    // navegador, como quedaría en el teléfono, y pisa lo que había estimado Moss.
+    const GUARDADO_HORAS = 'moss-galeria-horas';
+    let horas = {};
+    try { horas = JSON.parse(localStorage.getItem(GUARDADO_HORAS) || '{}') || {}; } catch (_) { horas = {}; }
+    const GUARDADO_MOVIMIENTO = 'moss-galeria-movimiento';
+    let conMovimiento = false;
+    try { conMovimiento = localStorage.getItem(GUARDADO_MOVIMIENTO) === 'si'; } catch (_) { conMovimiento = false; }
+    const sinReloj = () => !!(opciones.sinReloj && opciones.sinReloj());
+    const propias = () => (sinReloj() ? Datos.PROPIAS_SIN_RELOJ.map((p) => (horas[p.fecha] ? Object.assign({}, p, { hora: horas[p.fecha] }) : p)) : []);
+    // Las de Salud y, donde Salud no tiene nada, las de Moss: como en la app (src/secciones/persona.ts).
+    const noches = () => SinReloj.conNochesDeMoss(opciones.noches(), propias(), Datos.ZONA);
+    /** Lo que contestaste de la hora de una noche, en minutos desde las 18. */
+    function ponerHora(clave, dormirse, despertar, origen) {
+      const antes = propias().find((p) => p.fecha === clave);
+      const h = antes && antes.hora;
+      const iso = (min) => new Date(SinReloj.instanteDe(clave, Datos.ZONA, min)).toISOString();
+      horas[clave] = Object.assign({ dormirse: iso(dormirse), despertar: iso(despertar), origen, confianza: h ? h.confianza : 'media' }, h && h.estimada ? { estimada: h.estimada } : {});
+      try { localStorage.setItem(GUARDADO_HORAS, JSON.stringify(horas)); } catch (_) { /* no pasa nada */ }
+    }
+    /** Qué preguntar de la hora a la mañana: solo sin reloj, si Moss no está segura, y una mañana por semana sin proponer. */
+    function queHora(clave) {
+      if (!sinReloj()) return null;
+      const p = propias().find((x) => x.fecha === clave);
+      if (!p || !p.hora || p.hora.origen !== 'estimada') return null;
+      return s.forzarHora || SinReloj.quePreguntar(clave, p.hora.confianza);
+    }
+    /** Las dos horas, de a 5 minutos, con «Guardar». `alGuardar(dormirse, despertar)`, en minutos desde las 18. */
+    function editorDeHora(desde, hasta, alGuardar) {
+      const caja = el('div', 'sn-editor');
+      let a = Math.round(desde / 5) * 5, b = Math.round(hasta / 5) * 5;
+      const fila = (texto, leer, mover) => {
+        const f = el('div', 'sn-editor-fila');
+        const valor = el('b', null, reloj(leer()));
+        const paso = (d) => { mover(d); valor.textContent = reloj(leer()); };
+        f.append(el('span', null, texto), boton('sn-paso', '−', () => paso(-5), tx('sueno.manana.antes')), valor, boton('sn-paso', '+', () => paso(5), tx('sueno.manana.despues')));
+        return f;
+      };
+      caja.append(
+        fila(tx('sueno.manana.teDormiste'), () => a, (d) => { a = Math.min(b - 60, a + d); }),
+        fila(tx('sueno.manana.teDespertaste'), () => b, (d) => { b = Math.max(a + 60, b + d); }),
+        boton('sn-guardar', tx('sueno.manana.guardar'), () => alGuardar(a, b)),
+      );
+      return caja;
+    }
+    /** La pregunta de la hora: «¿Dormiste de 00:30 a 08:10?» con «Sí» y «Cambiar», o las horas sin proponer nada. */
+    function bloqueDeHora(clave, modo) {
+      const n = noches().find((x) => x.clave === clave);
+      const b = el('div', 'sn-hora');
+      // Cerrar la pregunta: si las caras ya están contestadas, se va la tarjeta entera.
+      const listo = () => {
+        s.editandoHora = false;
+        const carta = cont.querySelector('.sn-manana');
+        colapsar(carta && carta.querySelector('.sn-caras-bloque') ? b : carta, pintar, 480);
+      };
+      if (modo === 'proponer' && !s.editandoHora) {
+        b.appendChild(el('p', 'sn-manana-pregunta', tx('sueno.manana.hora', { desde: reloj(n.dormirse), hasta: reloj(n.despertar) })));
+        b.appendChild(el('p', 'sn-hora-nota', tx('sueno.manana.horaNota', { seguridad: tx('sueno.seguridad.' + n.moss.confianza) })));
+        const acciones = el('div', 'sn-hora-acciones');
+        acciones.append(
+          boton('sn-si', tx('sueno.manana.si'), () => { ponerHora(clave, n.dormirse, n.despertar, 'confirmada'); listo(); }),
+          boton('sn-otra', tx('sueno.manana.otraHora'), () => { s.editandoHora = true; pintar(); }),
+        );
+        b.appendChild(acciones);
+        return b;
+      }
+      // Sin proponer, arranca en lo de siempre y no en lo estimado: así se mide cuánto se acepta lo propuesto.
+      const h = modo === 'sinProponer' ? SinReloj.habitualDe(noches(), clave) : null;
+      b.classList.add('editando');
+      b.appendChild(el('p', 'sn-manana-pregunta', tx('sueno.manana.sinProponer')));
+      b.appendChild(editorDeHora(h ? h.dormirse : n.dormirse, h ? h.despertar : n.despertar, (x, y) => {
+        ponerHora(clave, x, y, modo === 'sinProponer' ? 'manual' : 'corregida');
+        listo();
+      }));
+      return b;
+    }
+    /** Sin reloj y sin permiso, una vez: el movimiento del teléfono mejora la estimación. */
+    function cartaDeMovimiento() {
+      const c = carta('sn-movimiento', null);
+      const txt = el('div');
+      txt.append(el('b', null, tx('sueno.movimiento.titulo')), el('p', null, tx('sueno.movimiento.texto')));
+      c.append(txt, boton('sn-permitir', tx('sueno.movimiento.permitir'), () => {
+        conMovimiento = true;
+        try { localStorage.setItem(GUARDADO_MOVIMIENTO, 'si'); } catch (_) { /* no pasa nada */ }
+        colapsar(c, pintar, 480);
+      }));
+      return c;
+    }
     const ultimas = (hasta) => Sueno.ultimasNoches(noches(), hasta, DIAS);
     // Las dos semanas antes de una noche: con eso se miden el horario de siempre y lo tuyo.
     const anterioresA = (clave) => Sueno.ultimasNoches(noches(), Fechas.sumarDias(clave, -1), DIAS);
@@ -87,19 +182,19 @@ const SeccionSueno = (() => {
       const cab = el('header', 'pg-cab');
       cab.append(el('div', 'pg-fecha', tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) })), el('h2', 'pg-titulo', tx('sueno.titulo')));
       cont.appendChild(cab);
-      const pregunta = manana();
-      if (pregunta) cont.appendChild(pregunta);
+      manana().forEach((nodo) => cont.appendChild(nodo));
       cont.appendChild(tira());
       // Con Ascent, la recuperación de hoy también vive acá: cruza justo el sueño con el entrenamiento.
       const rec = s.clave === Datos.HOY && opciones.recuperacion ? opciones.recuperacion() : null;
       if (rec) cont.appendChild(recuperacion(rec));
       const noche = noches().find((n) => n.clave === s.clave) || null;
-      cont.appendChild(noche ? laNoche(noche) : sinNoche(s.clave));
+      cont.appendChild(noche ? (noche.moss ? laNocheDeMoss(noche) : laNoche(noche)) : sinNoche(s.clave));
+      if (noche && noche.moss && !conMovimiento) cont.appendChild(cartaDeMovimiento());
       // La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien.
       cont.appendChild(deuda());
       if (noche) cont.appendChild(calidad(noche));
       cont.appendChild(horario());
-      if (noche) cont.appendChild(vitales(noche));
+      if (noche && !noche.moss) cont.appendChild(vitales(noche));
       cont.appendChild(fuentes(noche));
       cont.appendChild(el('p', 'sn-pie', tx('sueno.noMedico')));
       cont.scrollTop = arriba;
@@ -116,8 +211,32 @@ const SeccionSueno = (() => {
     function manana() {
       const clave = Datos.HOY;
       const cara = caras[clave];
-      if (!cara && ahoraNo.has(clave)) return null;
       const nombres = tx('sueno.manana.caras');
+      const hora = ahoraNo.has(clave) ? null : queHora(clave);
+      const conCaras = (!cara && !ahoraNo.has(clave)) || s.cambiando;
+      const nodos = [];
+      if (hora || conCaras) {
+        const c = carta('sn-manana', null);
+        if (hora) c.appendChild(bloqueDeHora(clave, hora));
+        if (conCaras) {
+          const bloque = el('div', 'sn-caras-bloque');
+          bloque.appendChild(el('p', 'sn-manana-pregunta', tx('sueno.manana.pregunta')));
+          const fila = el('div', 'sn-caras');
+          nombres.forEach((nombre, i) => {
+            fila.appendChild(boton('sn-cara' + (cara === i + 1 ? ' elegida' : ''), caraSvg(i + 1) + `<span>${nombre}</span>`, () => ponerCara(clave, i + 1), nombre));
+          });
+          bloque.appendChild(fila);
+          c.appendChild(bloque);
+        }
+        c.appendChild(boton('sn-ahora-no', tx('sueno.manana.ahoraNo'), () => {
+          colapsar(c, () => {
+            if (cara) s.cambiando = false;
+            ahoraNo.add(clave);
+            pintar();
+          });
+        }));
+        nodos.push(c);
+      }
       if (cara && !s.cambiando) {
         const c = el('div', 'sn-manana-hecha');
         c.innerHTML = caraSvg(cara);
@@ -125,25 +244,11 @@ const SeccionSueno = (() => {
           boton('sn-manana-cambiar', tx('sueno.manana.cambiar'), () => {
             // La línea se apaga y la tarjeta entra creciendo (ver .sn-manana en la página).
             c.classList.add('saliendo');
-            setTimeout(() => { s.cambiando = true; pintar(); }, 200);
+            setTimeout(() => { s.cambiando = true; ahoraNo.delete(clave); pintar(); }, 200);
           }));
-        return c;
+        nodos.push(c);
       }
-      const c = carta('sn-manana', null);
-      c.appendChild(el('p', 'sn-manana-pregunta', tx('sueno.manana.pregunta')));
-      const fila = el('div', 'sn-caras');
-      nombres.forEach((nombre, i) => {
-        fila.appendChild(boton('sn-cara' + (cara === i + 1 ? ' elegida' : ''), caraSvg(i + 1) + `<span>${nombre}</span>`, () => ponerCara(clave, i + 1), nombre));
-      });
-      c.appendChild(fila);
-      c.appendChild(boton('sn-ahora-no', tx('sueno.manana.ahoraNo'), () => {
-        cerrarPregunta(() => {
-          if (cara) s.cambiando = false;
-          else ahoraNo.add(clave);
-          pintar();
-        });
-      }));
-      return c;
+      return nodos;
     }
 
     // ------------------------------------------------------------ las dos semanas, para elegir
@@ -157,7 +262,7 @@ const SeccionSueno = (() => {
         const clave = Fechas.sumarDias(fin, i - DIAS + 1);
         const p = u.partes(clave);
         const soloCama = !n && Datos.SOLO_EN_CAMA.get(clave);
-        const b = boton('sn-noche' + (clave === s.clave ? ' elegida' : '') + (n ? '' : soloCama ? ' cama' : ' vacia'), '', () => { s.clave = clave; pintar(); });
+        const b = boton('sn-noche' + (clave === s.clave ? ' elegida' : '') + (n ? (n.moss ? ' moss ' + n.moss.origen : '') : soloCama ? ' cama' : ' vacia'), '', () => { s.clave = clave; s.editando = null; pintar(); });
         const barra = el('div', 'sn-noche-barra');
         const relleno = el('i');
         relleno.style.height = n ? `${Math.max(6, (n.dormido / maximo) * 100).toFixed(1)}%` : soloCama ? `${Math.max(6, (soloCama.minutos / maximo) * 100).toFixed(1)}%` : '100%';
@@ -228,6 +333,48 @@ const SeccionSueno = (() => {
       return c;
     }
 
+    // Sin reloj: cuánto y cuándo, de dónde sale la hora y, si es estimada, el rango con los bordes difusos.
+    function laNocheDeMoss(n) {
+      const m = n.moss;
+      const c = carta('sn-heroe sn-moss', titulo(n.clave), el('em', 'sn-origen ' + m.origen, tx('sueno.origen.' + m.origen)));
+      const cifra = el('div', 'pg-cifra');
+      cifra.append(el('b', null, u.duracion(n.dormido)), el('span', null, tx('sueno.dormido')));
+      c.appendChild(cifra);
+      c.appendChild(el('div', 'pg-nota', tx('sueno.horas', { desde: reloj(n.dormirse), hasta: reloj(n.despertar) })));
+      const r = m.rango;
+      const a = r ? r.dormirse[0] : n.dormirse, b = r ? r.despertar[1] : n.despertar;
+      const desde = a - 30, hasta = b + 30;
+      const pista = el('div', 'sn-franja');
+      const barra = el('i');
+      barra.style.left = `${(((a - desde) / (hasta - desde)) * 100).toFixed(1)}%`;
+      barra.style.width = `${(((b - a) / (hasta - desde)) * 100).toFixed(1)}%`;
+      if (r) {
+        const x = ((r.dormirse[1] - r.dormirse[0]) / (b - a)) * 100, y = 100 - ((r.despertar[1] - r.despertar[0]) / (b - a)) * 100;
+        barra.style.background = `linear-gradient(90deg, rgba(111, 134, 214, 0) 0%, rgba(111, 134, 214, 0.85) ${x.toFixed(1)}%, rgba(143, 211, 232, 0.85) ${y.toFixed(1)}%, rgba(143, 211, 232, 0) 100%)`;
+      }
+      pista.appendChild(barra);
+      c.appendChild(pista);
+      const eje = el('div', 'pg-eje');
+      eje.append(el('span', null, reloj(desde)), el('span', null, reloj(hasta)));
+      c.appendChild(eje);
+      if (r) c.appendChild(el('p', 'pg-texto sn-rango-texto', `${tx('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${tx('sueno.seguridad.' + m.confianza)}.`));
+      if (m.origen === 'estimada') c.appendChild(el('p', 'sn-nota', tx('sueno.estimadaTexto')));
+      c.appendChild(el('p', 'sn-nota', tx('sueno.sinRelojEtapas')));
+      // Cambiar la hora de cualquier noche de Moss, ahí mismo.
+      if (s.editando === n.clave) {
+        const ed = editorDeHora(n.dormirse, n.despertar, (x, y) => {
+          ponerHora(n.clave, x, y, 'corregida');
+          s.editando = null;
+          colapsar(ed, pintar, 380);
+        });
+        ed.classList.add('sn-editor-noche');
+        c.appendChild(ed);
+      } else {
+        c.appendChild(boton('sn-cambiar-hora', tx('sueno.cambiarHora'), () => { s.editando = n.clave; pintar(); }));
+      }
+      return c;
+    }
+
     function sinNoche(clave) {
       const c = carta('sn-heroe sn-sin', titulo(clave));
       const cama = Datos.SOLO_EN_CAMA.get(clave);
@@ -250,7 +397,7 @@ const SeccionSueno = (() => {
     function calidad(n) {
       const q = Sueno.calidadDeNoche(n, necesidad, anterioresA(n.clave));
       const c = carta('sn-calidad', tx('sueno.calidad'));
-      if (!q) { c.appendChild(el('p', 'pg-texto', tx('sueno.sinCalidad'))); return c; }
+      if (!q) { c.appendChild(el('p', 'pg-texto', tx(n.moss ? 'sueno.sinCalidadEstimada' : 'sueno.sinCalidad'))); return c; }
       const cifra = el('div', 'pg-cifra');
       cifra.append(el('b', null, String(q.puntos)), el('span', null, tx('sueno.palabras.' + q.palabra) + (q.parcial ? ' · ' + tx('sueno.parcial') : '')));
       c.appendChild(cifra);
@@ -262,7 +409,8 @@ const SeccionSueno = (() => {
         const relleno = el('i');
         barra.appendChild(relleno);
         if (puntos != null) requestAnimationFrame(() => { relleno.style.width = `${((puntos / max) * 100).toFixed(1)}%`; });
-        x.append(el('span', null, tx('sueno.partes.' + parte)), el('b', null, puntos == null ? tx('sueno.todaviaNo') : `${puntos} / ${max}`), barra);
+        const falta = parte === 'continuidad' && n.moss ? tx('sueno.sinRelojParte') : tx('sueno.todaviaNo');
+        x.append(el('span', null, tx('sueno.partes.' + parte)), el('b', null, puntos == null ? falta : `${puntos} / ${max}`), barra);
         partes.appendChild(x);
       });
       c.appendChild(partes);
@@ -352,7 +500,7 @@ const SeccionSueno = (() => {
         const valor = el('b', null, v ? `${numero(v.valor, dec)} ${unidad}` : '—');
         const comp = el('em', 'sn-comparado ' + (v && v.comparado ? v.comparado : ''), v ? (v.comparado ? tx('sueno.comparado.' + v.comparado) : tx('sueno.aprendiendo')) : tx('sueno.pocasLecturas'));
         d.append(nombre, valor, comp);
-        if (v && tipo === 'variabilidad') d.appendChild(el('small', null, tx('sueno.lecturas', { n: v.lecturas })));
+        if (v && tipo === 'variabilidad') d.appendChild(el('small', null, u.plural('sueno.lecturas', v.lecturas)));
         c.appendChild(d);
       };
       fila('frecuencia', 'lpm', 0);
@@ -375,6 +523,14 @@ const SeccionSueno = (() => {
     // ------------------------------------------------------------ de dónde sale cada dato
     function fuentes(n) {
       const c = carta('sn-fuentes', tx('sueno.fuentes'));
+      // La precisión de la noche, de 0 a 5 (spec/aparatos.md): con un reloj, 4; sin reloj, 1.
+      const conLoDeLaNoche = !!(n && !n.moss && Sueno.vitalDeNoche('frecuencia', Datos.LECTURAS.frecuencia, n, []));
+      const nivel = Sueno.nivelDeLaNoche(n, conLoDeLaNoche);
+      const precision = el('div', 'sn-precision');
+      const puntos = el('span', 'sn-puntos');
+      for (let i = 1; i <= 5; i++) puntos.appendChild(el('i', i <= nivel ? 'lleno' : null));
+      precision.append(el('span', null, tx('sueno.precision.titulo')), puntos, el('b', null, tx('sueno.precision.niveles')[nivel]));
+      c.appendChild(precision);
       const lista = el('ul', 'sn-fuentes-lista');
       const fila = (que, fuente, nivel) => {
         const li = el('li');
@@ -384,6 +540,15 @@ const SeccionSueno = (() => {
         li.append(el('span', null, tx('sueno.datos.' + que)), f, nivel ? confianza(nivel) : el('em'));
         lista.appendChild(li);
       };
+      if (n && n.moss) {
+        // Sin reloj: la hora sale de Moss o de lo que contestaste; lo demás no lo sabe el teléfono.
+        const quien = n.moss.origen === 'estimada' ? 'sueno.porMoss' : n.moss.origen === 'corregida' ? 'sueno.corregidaPorTi' : 'sueno.porTi';
+        fila('duracion', { nombre: tx(quien), tipo: 'telefono' }, n.moss.origen === 'estimada' && n.moss.confianza !== 'alta' ? 'baja' : 'media');
+        ['etapas', 'despertares', 'corazon', 'variabilidad'].forEach((k) => fila(k, null, null));
+        c.appendChild(lista);
+        c.appendChild(el('p', 'sn-nota', tx('sueno.fuentesSinReloj')));
+        return c;
+      }
       const reloj = Datos.FUENTES[0], iphone = Datos.FUENTES[1];
       fila('duracion', n ? n.fuente : null, n ? n.confianza.duracion : null);
       fila('etapas', n && n.conEtapas ? n.fuente : null, n ? n.confianza.etapas : null);
@@ -410,7 +575,23 @@ const SeccionSueno = (() => {
         return { dormido: n.dormido, dormirse: n.dormirse + 18 * 60, despertar: n.despertar + 18 * 60, calidad: q ? q.puntos : null, enCamaDesde: n.dormirse, enCamaHasta: n.despertar, tramos: n.tramos };
       },
       // Para las capturas y los botones de la galería: `k` días antes de hoy, o una clave.
-      verNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; pintar(); cont.scrollTop = 0; },
+      verNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; s.editando = null; pintar(); cont.scrollTop = 0; },
+      // Para las capturas: la pregunta de la hora (`proponer`, `sinProponer` o null), sin lo contestado antes.
+      preguntarHora(modo) {
+        s.forzarHora = modo;
+        s.editandoHora = false;
+        delete horas[Datos.HOY];
+        ahoraNo.delete(Datos.HOY);
+        pintar();
+      },
+      editarHora() { s.editandoHora = true; pintar(); },
+      editarNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; s.editando = s.clave; pintar(); },
+      olvidarHoras() {
+        horas = {};
+        conMovimiento = false;
+        try { localStorage.removeItem(GUARDADO_HORAS); localStorage.removeItem(GUARDADO_MOVIMIENTO); } catch (_) { /* no pasa nada */ }
+        pintar();
+      },
       abrir(cual) { s.abierto = cual; pintar(); },
       bajarA(selector) {
         const n = cont.querySelector(selector);

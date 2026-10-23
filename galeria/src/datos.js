@@ -2,7 +2,7 @@
 // están lo que la app guardaría (su perfil, sus pesadas, sus medidas, lo que Salud trae de sus
 // noches, sus hábitos y lo que hizo cada día); lo que se calcula con eso (la tendencia, el
 // control, el progreso, la grasa, el sueño y las estadísticas de Hábitos) lo calculan los módulos
-// de la app (Control, Progreso, Cuerpo, Sueno y Estadisticas) en cada sección.
+// de la app (Control, Progreso, Cuerpo, Sueno, SinReloj y Estadisticas) en cada sección.
 
 const Datos = (() => {
   const HOY = '2026-10-21';
@@ -106,6 +106,45 @@ const Datos = (() => {
   const NOCHES = Sueno.armarNoches(MUESTRAS, FUENTES);
   const SOLO_EN_CAMA = Sueno.soloEnCama(MUESTRAS, FUENTES, NOCHES);
 
+  // ------------------------------------------------------------ la misma persona, sin reloj
+  // Lo que guardó el teléfono cada día (los pasos, el movimiento y cuándo usó Moss) y lo que Moss
+  // estimó con eso cada mañana (SinReloj, src/dominio/sinReloj.ts): algunas mañanas lo confirmó y dos
+  // lo corrigió, y con eso aprendió. Anoche usó el teléfono a las 2 y a las 4: Moss no está segura y
+  // pregunta. Las noches de verdad son las mismas que las del reloj.
+  const PROPIAS_SIN_RELOJ = (() => {
+    const r = azar(47);
+    const propias = [];
+    const iso = (clave, min) => new Date(instante(clave, Math.round(min))).toISOString();
+    for (let i = 27; i >= 0; i--) {
+      const clave = Fechas.sumarDias(HOY, -i);
+      const dia = Fechas.diaDeLaSemana(clave);
+      const finde = dia === 6 || dia === 0;
+      const anoche = i === 0;
+      const dormirse = anoche ? 341 : 330 + (finde ? 70 : 0) + Math.round((r() - 0.5) * 40);
+      const despertar = anoche ? 793 : 785 + (finde ? 85 : 0) + Math.round((r() - 0.5) * 30);
+      if (clave === SIN_NADA) continue;
+      const ultimo = dormirse - 12 - r() * 25, primero = despertar + 4 + r() * 22;
+      const actividad = [
+        { desde: instante(clave, -300), hasta: instante(clave, -255), tipo: 'pasos' },
+        { desde: instante(clave, 40), hasta: instante(clave, 75), tipo: 'pasos' },
+        { desde: instante(clave, ultimo - 25), hasta: instante(clave, ultimo), tipo: 'movimiento' },
+        { desde: instante(clave, primero), hasta: instante(clave, primero + 20), tipo: 'pasos' },
+        { desde: instante(clave, primero + 30), hasta: instante(clave, primero + 33), tipo: 'moss' },
+      ];
+      if (anoche) actividad.push({ desde: instante(clave, 490), hasta: instante(clave, 494), tipo: 'moss' }, { desde: instante(clave, 620), hasta: instante(clave, 626), tipo: 'movimiento' });
+      const noches = SinReloj.conNochesDeMoss([], propias, ZONA);
+      const e = SinReloj.estimarNoche({ clave, zona: ZONA, actividad, habitual: SinReloj.habitualDe(noches, clave), ajuste: SinReloj.aprenderAjuste(propias, clave) });
+      if (!e) continue;
+      const estimada = { dormirse: iso(clave, e.cruda.dormirse), despertar: iso(clave, e.cruda.despertar) };
+      let hora = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), origen: 'estimada', confianza: e.confianza, estimada };
+      // Dos mañanas corrigió la hora (a la de verdad, de a 5 minutos) y varias la confirmó.
+      if (i === 20 || i === 9) hora = Object.assign({}, hora, { dormirse: iso(clave, Math.round(dormirse / 5) * 5), despertar: iso(clave, Math.round(despertar / 5) * 5), origen: 'corregida' });
+      else if (!anoche && e.confianza !== 'alta' && r() < 0.7) hora = Object.assign({}, hora, { origen: 'confirmada' });
+      propias.push({ fecha: clave, hora, actualizado: iso(clave, primero + 32) });
+    }
+    return propias;
+  })();
+
   // ------------------------------------------------------------ los hábitos y cada día
   // Empezó el lunes 31 de agosto con seis hábitos (la guitarra, solo los viernes) y el lunes 28 de
   // septiembre sumó el agua. Desde ahí cada día de la semana tiene la cantidad de la semana de la
@@ -196,7 +235,8 @@ const Datos = (() => {
 
   return {
     HOY, AHORA_MIN, INICIO, PERFIL, GASTO_ANTERIOR, PESADAS, MEDIDAS, azar,
-    FUENTES, MUESTRAS, LECTURAS, NOCHES, SOLO_EN_CAMA, NOCHE_SIN_RELOJ: SIN_RELOJ, NOCHE_SIN_NADA: SIN_NADA, NOCHE_CORTADA: CORTADA,
+    ZONA, FUENTES, MUESTRAS, LECTURAS, NOCHES, SOLO_EN_CAMA, NOCHE_SIN_RELOJ: SIN_RELOJ, NOCHE_SIN_NADA: SIN_NADA, NOCHE_CORTADA: CORTADA,
+    PROPIAS_SIN_RELOJ,
     HABITOS, DIAS,
     ASCENT,
   };

@@ -327,6 +327,8 @@
   // (Entrenamiento, src/dominio/entrenamiento.ts).
   let metaBase = controlHecho.metas;
   let vinculada = false;
+  // Sin reloj: la misma persona, solo con el iPhone (spec/sueno.md, «Sin reloj»).
+  let soloIphone = false;
   // «Por qué no subes» con pocas semanas: un botón de la galería, para ver cuando todavía junta.
   let pocasSemanas = false;
   function conAscent() {
@@ -450,14 +452,15 @@
     medir: () => mas.ir('medidas'),
   }));
   sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, {
-    noches: () => Datos.NOCHES,
+    noches: () => (soloIphone ? [] : Datos.NOCHES),
+    sinReloj: () => soloIphone,
     metaDeSueno: 8 * 60,
     recuperacion: () => (ascent ? ascent.recuperacionDeHoy() : null),
     abrirAscent: () => abrirAscent(),
     // La cara de la mañana cambia la recuperación, que también está en Ascent.
     alCambiarCara: () => { if (ascent) ascent.pintar(); },
   }));
-  perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, { persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent() }));
+  perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, { persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length }));
   ascent = SeccionAscent.crear(tel, Object.assign({}, opcionesDeSeccion, {
     comida,
     persona,
@@ -494,6 +497,15 @@
     perfilSec.pintar();
     $$('#s-vinculo button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.valor === 'si') === si)));
     refrescarControles();
+  }
+  // Con reloj o solo con el iPhone: cambia Sueño, el bloque de Inicio, Perfil y la recuperación.
+  function ponerAparato(soloElIphone) {
+    soloIphone = soloElIphone;
+    sueno.pintar();
+    inicio.pintar(0);
+    perfilSec.pintar();
+    if (ascent) ascent.pintar();
+    $$('#s-aparato button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.valor === 'iphone') === soloElIphone)));
   }
   // A Ascent se llega por Hábitos: desde Sueño o Perfil, se pasa por ahí.
   function abrirAscent(deUna) {
@@ -582,6 +594,7 @@
     if (mas.abierta) mas.cerrar();
     if (inicio.editando) inicio.cerrar();
     if (habitosSec.abierta) habitosSec.cerrar();
+    if (perfilSec && perfilSec.hojaAbierta) perfilSec.cerrarHoja();
   };
 
   // ------------------------------------------------------------ las seis secciones, como en Ascent
@@ -889,7 +902,10 @@
     estrategia: () => { cerrarHojas(); pestanas.ir(2); progreso.verPrincipal(); progreso.bajarA('.pg-seccion'); },
     mantener: () => { ponerEstrategia({ objetivo: perfil.objetivo === 'mantener' ? 'bajar' : 'mantener' }); pestanas.ir(0); },
     noche: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(-3); },
-    sinReloj: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(Datos.NOCHE_SIN_RELOJ); },
+    sinReloj: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.verNoche(Datos.NOCHE_SIN_RELOJ); },
+    hora: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('proponer'); sueno.verNoche(0); },
+    horaSinProponer: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('sinProponer'); sueno.verNoche(0); },
+    aparatos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirAparatos(); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -946,6 +962,8 @@
   }
   segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); ascent.pintar(); habitosSec.pintar(); dibujarCatalogo(); });
   segmento('s-vinculo', (v) => vincular(v === 'si'));
+  segmento('s-aparato', (v) => ponerAparato(v === 'iphone'));
+  window.__aparato = (v) => ponerAparato(v === 'iphone');
   segmento('s-estanc', (v) => { pocasSemanas = v === 'pocas'; ascent.pintar(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   // Las kcal: lo elegido queda en el navegador (kcal.js), y el segmento arranca mostrándolo.
@@ -1113,7 +1131,10 @@
   };
   window.__estrategia = (cambios) => ponerEstrategia(cambios);
   window.__sueno = (accion, arg) => {
-    const pasos = { noche: () => sueno.verNoche(arg), bajar: () => sueno.bajarA(arg), subir: () => sueno.subir(), abrir: () => sueno.abrir(arg) };
+    const pasos = {
+      noche: () => sueno.verNoche(arg), bajar: () => sueno.bajarA(arg), subir: () => sueno.subir(), abrir: () => sueno.abrir(arg),
+      hora: () => sueno.preguntarHora(arg), editarHora: () => sueno.editarHora(), editarNoche: () => sueno.editarNoche(arg), olvidar: () => sueno.olvidarHoras(),
+    };
     pasos[accion]();
   };
   window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
