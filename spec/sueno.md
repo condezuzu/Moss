@@ -252,10 +252,14 @@ teléfono guardó:
 
 **Las cuentas** (las reglas publicadas de Sahha como punto de partida [73]):
 
-- **La ventana tranquila:** el primer hueco de 5 a 12 horas sin actividad que
-  empieza entre las 18 y las 4. La actividad suelta, con más de 90 minutos de
-  silencio de cada lado, no lo corta. Sin hueco, de la última actividad antes de
-  las 2 a la primera después de las 4, con confianza baja.
+- **La ventana tranquila:** el hueco de 5 a 12 horas sin actividad que empieza
+  entre las 18 y las 4; si hay dos (el teléfono quedó en la mesa toda la tarde),
+  el que más se parece a lo de siempre.
+  - La actividad suelta de la madrugada no lo corta: hasta 20 minutos, con más de
+    90 de silencio de cada lado y después de tu hora de siempre (sin historia,
+    de las 0:30). Antes de esa hora, mirar el teléfono es lo último del día.
+  - Sin hueco, de la última actividad antes de las 2 a la primera después de las
+    4, con confianza baja.
 - **Cuándo te dormiste:** la última actividad más lo que tardás en dormirte, que
   depende de cuánto antes de lo de siempre dejaste el teléfono: 31 minutos a la
   hora de siempre, 76 si fue 1 a 1,5 horas antes, 153 si fue 2 a 3 horas antes y
@@ -264,6 +268,13 @@ teléfono guardó:
   primera caminata, la alarma parada o el Focus apagado [73].
 - **Los despertares de la noche** quedan marcados como interrupciones, sin decir
   cuánto: el teléfono lo mide mal (48,8 minutos de error) [72].
+- **La confianza** (una propuesta, para calibrar con la prueba de abajo): parte de
+  0,85 y baja sin historia (−0,15), sin pasos ni movimiento (−0,2), si dejaste el
+  teléfono más de una hora antes de lo de siempre (hasta −0,3), si lo agarraste
+  más de una hora después de tu hora de despertarte (hasta −0,3), por cada uso de
+  noche (−0,08, hasta tres) y si la noche dura dos horas más o menos que la de
+  siempre (−0,1). La alarma de un Atajo suma 0,05. Sin hueco, como mucho 0,4. Las
+  cuentas están en `src/dominio/sinReloj.ts`, con sus tests.
 - **Las siestas** no se estiman.
 
 **Qué tan bien anda, esperable:** entre el 46 % (solo los pasos) y el 66 % de

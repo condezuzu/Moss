@@ -44,8 +44,8 @@ SDK y la memoria no alcanza.
   `assets/alimentos.db`:
   - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `control.ts`,
-    `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `entrenamiento.ts` y `estadisticas.ts`, que solo
-    importan entre ellos (`DEL_DOMINIO` en `construir.mjs`).
+    `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts` y
+    `estadisticas.ts`, que solo importan entre ellos (`DEL_DOMINIO` en `construir.mjs`).
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
   usa una función tiene que estar definido antes que ella. Por eso `paso()` va
   última en `escena.ts`.

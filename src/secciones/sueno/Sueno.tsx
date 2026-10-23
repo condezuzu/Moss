@@ -294,7 +294,7 @@ function LoDelReloj({ n, s, anteriores }: { n: Noche; s: Sueno; anteriores: (Noc
               <Text style={st.vitalValor}>{v ? `${numero(v.valor, decimales)} ${t(`sueno.unidad.${tipo}`)}` : '—'}</Text>
               <Text style={[st.vitalComparado, v?.comparado === 'usual' && { color: colores.salvia }, (v?.comparado === 'mas' || v?.comparado === 'menos') && { color: colores.oroClaro }]}>{comparado}</Text>
             </View>
-            {v && tipo === 'variabilidad' ? <Text style={st.vitalLecturas}>{t('sueno.lecturas', { n: v.lecturas })}</Text> : null}
+            {v && tipo === 'variabilidad' ? <Text style={st.vitalLecturas}>{plural('sueno.lecturas', v.lecturas, { n: v.lecturas })}</Text> : null}
           </View>
         );
       })}

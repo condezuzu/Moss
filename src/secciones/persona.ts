@@ -10,7 +10,8 @@ import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from '@/domin
 import { edadDe, metaPara, type Macros, type Perfil } from '@/dominio/metas';
 import { balance, progresoAlObjetivo, type Balance, type Progreso } from '@/dominio/progreso';
 import { comidasParaElControl, vigentes } from '@/dominio/registros';
-import { necesidad, type Fuente, type Medida, type Noche } from '@/dominio/sueno';
+import { conNochesDeMoss } from '@/dominio/sinReloj';
+import { necesidad, type Fuente, type Medida, type Noche, type NochePropia } from '@/dominio/sueno';
 import type { LoDeSalud } from '@/salud/convertir';
 import { ejemplo } from './ejemplo';
 
@@ -156,13 +157,15 @@ export type Sueno = {
 };
 
 /**
- * Las noches de Salud. Sin Salud o sin noches (sin reloj, o recién conectada), las de ejemplo: así se
- * ve cómo es la sección, con el aviso de que no son tuyas.
+ * Las noches de Salud y, donde Salud no tiene nada, las de Moss sin reloj (estimadas, confirmadas o
+ * corregidas a la mañana). Sin ninguna (recién instalada), las de ejemplo: así se ve cómo es la
+ * sección, con el aviso de que no son tuyas.
  */
-export function suenoDe(hoy: ClaveDia, perfil: Perfil | null, salud: LoDeSalud | null = null): Sueno {
-  if (salud && salud.noches.length) {
-    const { noches, soloEnCama, lecturas, fuentes } = salud;
-    return { deEjemplo: false, noches, soloEnCama, lecturas, fuentes, necesidad: necesidad(edadDe(perfil ?? ejemplo(hoy).perfil, hoy)) };
+export function suenoDe(hoy: ClaveDia, perfil: Perfil | null, salud: LoDeSalud | null = null, propias: Map<ClaveDia, NochePropia> = new Map()): Sueno {
+  const noches = conNochesDeMoss(salud?.noches ?? [], [...propias.values()], -new Date().getTimezoneOffset());
+  if (noches.length) {
+    const lecturas = salud?.lecturas ?? { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() };
+    return { deEjemplo: false, noches, soloEnCama: salud?.soloEnCama ?? new Map(), lecturas, fuentes: salud?.fuentes ?? [], necesidad: necesidad(edadDe(perfil ?? ejemplo(hoy).perfil, hoy)) };
   }
   const ej = ejemplo(hoy);
   return {

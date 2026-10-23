@@ -9,7 +9,7 @@ import {
 
 import { claveDelDia } from '@/dominio/fechas';
 import { armarNoches, soloEnCama } from '@/dominio/sueno';
-import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, ultimaPorDia, type DeSalud, type LoDeSalud } from './convertir';
+import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, ultimaPorDia, type DeSalud, type LoDeSalud } from './convertir';
 import { saludPedida } from './salud';
 
 const DIA_MS = 86_400_000;
@@ -47,7 +47,7 @@ export async function leerSalud(ahora: Date = new Date()): Promise<LoDeSalud | n
   const hace = (dias: number) => new Date(hoy.getTime() - dias * DIA_MS);
   // Las noches empiezan a las 18 del día anterior.
   const desdeLasNoches = new Date(hace(28).getTime() - 6 * 3_600_000);
-  const [pasos, agua, mindful, sueno, frecuencia, variabilidad, respiracion, reposo, pesos] = await Promise.all([
+  const [pasos, agua, mindful, sueno, frecuencia, variabilidad, respiracion, reposo, pesos, recientes] = await Promise.all([
     suma('HKQuantityTypeIdentifierStepCount', 'count', hoy, ahora),
     suma('HKQuantityTypeIdentifierDietaryWater', 'mL', hoy, ahora),
     categoria('HKCategoryTypeIdentifierMindfulSession', hoy, ahora),
@@ -57,6 +57,8 @@ export async function leerSalud(ahora: Date = new Date()): Promise<LoDeSalud | n
     cantidades('HKQuantityTypeIdentifierRespiratoryRate', 'count/min', hace(21), ahora),
     cantidades('HKQuantityTypeIdentifierRestingHeartRate', 'count/min', hace(28), ahora),
     cantidades('HKQuantityTypeIdentifierBodyMass', 'kg', hace(60), ahora),
+    // Sin reloj, los pasos de la noche y la mañana dicen cuándo estabas despierto (src/dominio/sinReloj.ts).
+    cantidades('HKQuantityTypeIdentifierStepCount', 'count', new Date(ahora.getTime() - 30 * 3_600_000), ahora),
   ]);
   const muestras = sueno.flatMap((m) => muestraDeSueno(m) ?? []);
   const fuentes = fuentesDe(sueno);
@@ -76,5 +78,6 @@ export async function leerSalud(ahora: Date = new Date()): Promise<LoDeSalud | n
     fuentes,
     lecturas: { frecuencia: lecturasDe(frecuencia), variabilidad: lecturasDe(variabilidad), respiracion: lecturasDe(respiracion), reposo: ultimaPorDia(reposo) },
     pesos: ultimaPorDia(pesos),
+    pasosRecientes: pasosDe(recientes),
   };
 }

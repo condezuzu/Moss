@@ -21,12 +21,17 @@ create table moss.noches (
   despertar timestamptz,
   origen text check (origen in ('estimada', 'confirmada', 'corregida', 'manual')),
   confianza text check (confianza in ('alta', 'media', 'baja')),
+  -- Lo que estimó el teléfono antes de corregirlo con lo aprendido: con eso se aprende cuánto se
+  -- corre en tu caso (src/dominio/sinReloj.ts).
+  estimada_dormirse timestamptz,
+  estimada_despertar timestamptz,
   borrado boolean not null default false,
   actualizado timestamptz not null default now(),
   recibido timestamptz not null default now(),
   primary key (usuario, fecha),
   -- Las dos horas van juntas, con su origen, y una noche dura entre 1 y 18 horas.
   check ((dormirse is null) = (despertar is null) and (dormirse is null) = (origen is null)),
+  check ((estimada_dormirse is null) = (estimada_despertar is null) and (dormirse is not null or estimada_dormirse is null)),
   check (despertar is null or despertar - dormirse between interval '1 hour' and interval '18 hours')
 );
 create index noches_por_llegada on moss.noches (usuario, recibido);

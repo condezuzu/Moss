@@ -1,8 +1,9 @@
 {
   "ios": {
     "CFBundleDisplayName": "Moss",
-    "NSHealthShareUsageDescription": "Moss lee de Salud tu edad, sexo, altura y peso para tus metas; tus pasos, agua, minutos de atención plena y sueño para encender solos esos hábitos; y lo que mide el reloj de noche para la sección Sueño.",
+    "NSHealthShareUsageDescription": "Moss lee de Salud tu edad, sexo, altura y peso para tus metas; tus pasos, agua, minutos de atención plena y sueño para encender solos esos hábitos (los pasos también estiman tu noche si no tienes reloj); y lo que mide el reloj de noche para la sección Sueño.",
     "NSHealthUpdateUsageDescription": "Moss no escribe nada en Salud: solo lee los datos que eliges.",
-    "NSCameraUsageDescription": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono."
+    "NSCameraUsageDescription": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono.",
+    "NSMotionUsageDescription": "Sin reloj, Moss usa el movimiento del teléfono para estimar cuándo dormiste. El movimiento no sale del teléfono: solo se guarda la hora estimada."
   }
 }

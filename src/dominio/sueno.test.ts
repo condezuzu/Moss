@@ -1,13 +1,16 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  armarNoches, calidadDeNoche, deudaDeSueno, horario, necesidad, pareceIncompleta, soloEnCama, ultimasNoches, vitalDeNoche,
+  armarNoches, calidadDeNoche, deudaDeSueno, horario, marcaDe, necesidad, nivelDeLaNoche, pareceIncompleta, soloEnCama, ultimasNoches, vitalDeNoche,
   type Etapa, type Fuente, type Muestra, type Noche,
 } from './sueno';
 
 const RELOJ: Fuente = { id: 'reloj', nombre: 'Apple Watch', tipo: 'reloj' };
 const ANILLO: Fuente = { id: 'anillo', nombre: 'Oura', tipo: 'otra' };
 const IPHONE: Fuente = { id: 'iphone', nombre: 'iPhone', tipo: 'telefono' };
+const GARMIN: Fuente = { id: 'com.garmin.connect.mobile', nombre: 'Connect', tipo: 'otra' };
+const WHOOP: Fuente = { id: 'com.whoop.iphone', nombre: 'WHOOP', tipo: 'otra' };
+const SLEEP_CYCLE: Fuente = { id: 'com.northcube.sleepcycle', nombre: 'Sleep Cycle', tipo: 'telefono' };
 const UY = -180;
 
 /** Un instante en hora de Uruguay: «2026-10-21 07:13». */
@@ -52,6 +55,43 @@ describe('armar las noches', () => {
     expect(n.fuente.id).toBe('reloj');
     expect(n.dormido).toBe(435);
     expect(armarNoches(muestras, [RELOJ, ANILLO], 'anillo')[0].fuente.id).toBe('anillo');
+  });
+
+  it('el orden va por cómo distingue cada marca el sueño de la vigilia: WHOOP, sin etapas, gana a Garmin', () => {
+    expect([RELOJ, ANILLO, GARMIN, WHOOP, SLEEP_CYCLE, IPHONE].map(marcaDe)).toEqual(['appleWatch', 'oura', 'garmin', 'whoop', 'telefono', 'telefono']);
+    const conGarmin = nocheDelReloj('2026-10-20', '2026-10-21', '23:30', '07:20', GARMIN.id);
+    const conWhoop = [m('dormido', '2026-10-20 23:45', '2026-10-21 07:05', WHOOP.id)];
+    expect(armarNoches([...conGarmin, ...conWhoop], [GARMIN, WHOOP])[0].fuente.id).toBe(WHOOP.id);
+    // Una app del teléfono va después de cualquier aparato, y lo anotado a mano en Salud, después de todo.
+    const deLaApp = [m('dormido', '2026-10-20 23:00', '2026-10-21 07:30', SLEEP_CYCLE.id)];
+    expect(armarNoches([...deLaApp, ...conGarmin], [SLEEP_CYCLE, GARMIN])[0].fuente.id).toBe(GARMIN.id);
+    const aMano = [{ ...m('dormido', '2026-10-20 23:00', '2026-10-21 07:00', RELOJ.id), aMano: true as const }];
+    const [n] = armarNoches([...aMano, ...deLaApp], [RELOJ, SLEEP_CYCLE]);
+    expect(n.fuente.id).toBe(SLEEP_CYCLE.id);
+    // Lo de la app del teléfono es poco confiable; lo anotado a mano, como un diario.
+    expect(n.confianza.duracion).toBe('baja');
+    expect(armarNoches(aMano, [RELOJ])[0]).toMatchObject({ aMano: true, confianza: { duracion: 'media', despertares: 'baja' } });
+  });
+
+  it('el mismo sueño desde dos fuentes es uno; la siesta de otra fuente cuenta si no se encima con la noche', () => {
+    // El reloj solo registró una siesta; el anillo, la noche: la noche es del anillo y la siesta, del reloj.
+    const siestaDelReloj = [m('nucleo', '2026-10-21 15:00', '2026-10-21 15:40')];
+    const nocheDelAnillo = nocheDelReloj('2026-10-20', '2026-10-21', '23:40', '07:10', ANILLO.id);
+    const [n] = armarNoches([...siestaDelReloj, ...nocheDelAnillo], [RELOJ, ANILLO]);
+    expect(n.fuente.id).toBe(ANILLO.id);
+    expect(n.dormido).toBe(435);
+    expect(n.siestas).toBe(40);
+    // Si los dos registraron la misma siesta, cuenta una vez.
+    const siestaDelAnillo = [m('nucleo', '2026-10-21 15:05', '2026-10-21 15:35', ANILLO.id)];
+    expect(armarNoches([...siestaDelReloj, ...siestaDelAnillo, ...nocheDelAnillo], [RELOJ, ANILLO])[0].siestas).toBe(40);
+  });
+
+  it('qué tan precisa es la noche: de 0 (sin datos) a 4 (con etapas y lo de la noche)', () => {
+    const [conEtapas] = armarNoches(nocheDelReloj('2026-10-20', '2026-10-21'), [RELOJ]);
+    const [sinEtapas] = armarNoches([m('dormido', '2026-10-20 23:45', '2026-10-21 07:05', WHOOP.id)], [WHOOP]);
+    const [aMano] = armarNoches([{ ...m('dormido', '2026-10-20 23:00', '2026-10-21 07:00'), aMano: true as const }], [RELOJ]);
+    expect([nivelDeLaNoche(null), nivelDeLaNoche(aMano), nivelDeLaNoche(sinEtapas), nivelDeLaNoche(conEtapas), nivelDeLaNoche(conEtapas, true)]).toEqual([0, 1, 2, 3, 4]);
+    expect(nivelDeLaNoche({ ...conEtapas, moss: { origen: 'estimada', confianza: 'alta', rango: null } })).toBe(1);
   });
 
   it('lo dormido sin etapa que se encima con etapas de la misma fuente no cuenta doble', () => {
@@ -161,6 +201,12 @@ describe('la calidad', () => {
     expect(c).toMatchObject({ parcial: true, partes: { horario: null }, puntos: 100 });
   });
 
+  it('sin reloj (las noches de Moss), la continuidad no entra: el teléfono no sabe cuánto estuviste despierto', () => {
+    const deMoss: Noche = { ...noche, dormido: 480, despierto: 0, despertares: 0, moss: { origen: 'confirmada', confianza: 'media', rango: null } };
+    const c = calidadDeNoche(deMoss, 480, anteriores)!;
+    expect(c).toMatchObject({ partes: { duracion: 50, horario: 30, continuidad: null }, parcial: true, puntos: 100 });
+  });
+
   it('del teléfono solo no hay calidad, y una noche cortada se marca para preguntar', () => {
     expect(calidadDeNoche({ ...noche, confianza: { ...noche.confianza, duracion: 'baja' } }, 480, anteriores)).toBeNull();
     expect(pareceIncompleta({ ...noche, dormido: 150, despertar: 600 }, anteriores)).toBe(true);
@@ -179,7 +225,10 @@ describe('lo que mide el reloj de noche', () => {
   });
 
   it('sin lecturas suficientes no se muestra, y sin 7 noches no se compara', () => {
-    expect(vitalDeNoche('variabilidad', [{ en: intervalos[0][0] + 60_000, valor: 48 }], { intervalos }, [])).toBeNull();
+    expect(vitalDeNoche('frecuencia', [{ en: intervalos[0][0] + 60_000, valor: 52 }], { intervalos }, [])).toBeNull();
+    // El Apple Watch mide la variabilidad cada ~4 horas: una lectura alcanza, y se dice cuántas son.
+    expect(vitalDeNoche('variabilidad', [{ en: intervalos[0][0] + 60_000, valor: 48 }], { intervalos }, [])).toMatchObject({ valor: 48, lecturas: 1 });
+    expect(vitalDeNoche('variabilidad', [], { intervalos }, [])).toBeNull();
     expect(vitalDeNoche('variabilidad', cada(120, () => 48), { intervalos }, [40, 50])).toMatchObject({ valor: 48, comparado: null });
     // Lo medido fuera del sueño no cuenta.
     expect(vitalDeNoche('respiracion', [{ en: hora('2026-10-21 12:00'), valor: 18 }, { en: hora('2026-10-21 13:00'), valor: 18 }], { intervalos }, [])).toBeNull();

@@ -169,8 +169,10 @@ comprobar(
   await falla(A, `insert into moss.noches (fecha, cara) values ('2026-10-20', 6)`)
     && await falla(A, `insert into moss.noches (fecha, dormirse) values ('2026-10-19', '2026-10-19T03:00:00Z')`)
     && await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza) values ('2026-10-18', '2026-10-18T03:00:00Z', '2026-10-18T03:20:00Z', 'confirmada', 'media')`)
-    && await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza) values ('2026-10-17', '2026-10-17T03:00:00Z', '2026-10-17T11:00:00Z', 'adivinada', 'media')`),
-  'las noches: la cara va de 1 a 5, las dos horas van juntas con su origen, y una noche dura de 1 a 18 horas',
+    && await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza) values ('2026-10-17', '2026-10-17T03:00:00Z', '2026-10-17T11:00:00Z', 'adivinada', 'media')`)
+    && await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza, estimada_dormirse) values ('2026-10-16', '2026-10-16T03:00:00Z', '2026-10-16T11:00:00Z', 'estimada', 'media', '2026-10-16T03:00:00Z')`)
+    && await falla(A, `insert into moss.noches (fecha, cara, estimada_dormirse, estimada_despertar) values ('2026-10-15', 3, '2026-10-15T03:00:00Z', '2026-10-15T11:00:00Z')`),
+  'las noches: la cara va de 1 a 5, las dos horas van juntas con su origen, una noche dura de 1 a 18 horas, y lo estimado va con sus dos horas y con la hora de la noche',
 );
 const subirNoche = (cara, dormirse, despertar, origen, actualizado) => como(A, `
   insert into moss.noches (fecha, cara, dormirse, despertar, origen, confianza, actualizado) values ('2026-10-21', $1, $2, $3, $4, case when $4::text is null then null else 'media' end, $5)
@@ -453,13 +455,17 @@ comprobar(
 // Sueño: la cara de la mañana y la hora confirmada de una noche sin reloj llegan al otro teléfono.
 pasa();
 a.almacen.ponerCara(hoyA, 4);
-a.almacen.ponerHoraDeLaNoche(hoyA, { dormirse: new Date(Date.parse(`${hoyA}T03:30:00Z`)).toISOString(), despertar: new Date(Date.parse(`${hoyA}T11:10:00Z`)).toISOString(), origen: 'confirmada', confianza: 'media' });
+a.almacen.ponerHoraDeLaNoche(hoyA, {
+  dormirse: new Date(Date.parse(`${hoyA}T03:30:00Z`)).toISOString(), despertar: new Date(Date.parse(`${hoyA}T11:10:00Z`)).toISOString(), origen: 'corregida', confianza: 'media',
+  estimada: { dormirse: new Date(Date.parse(`${hoyA}T03:00:00Z`)).toISOString(), despertar: new Date(Date.parse(`${hoyA}T11:10:00Z`)).toISOString() },
+});
 await a.sinc.vuelta();
 await b.sinc.vuelta();
 const nocheDeB = b.almacen.estado().noches.get(hoyA);
 comprobar(
-  nocheDeB?.cara === 4 && nocheDeB?.hora?.origen === 'confirmada' && nocheDeB?.hora?.confianza === 'media' && !(await pendiente(b)),
-  'app: la cara de la mañana y la hora confirmada de la noche llegan al otro teléfono, sin volver a subir',
+  nocheDeB?.cara === 4 && nocheDeB?.hora?.origen === 'corregida' && nocheDeB?.hora?.confianza === 'media'
+    && nocheDeB?.hora?.estimada && Date.parse(nocheDeB.hora.estimada.dormirse) === Date.parse(`${hoyA}T03:00:00Z`) && !(await pendiente(b)),
+  'app: la cara de la mañana y la hora corregida de la noche (con lo que había estimado el teléfono) llegan al otro teléfono, sin volver a subir',
 );
 
 // Los dos sin conexión el resto del día, cada uno marca algo distinto; se sincronizan al otro día.

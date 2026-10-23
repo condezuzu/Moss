@@ -3,7 +3,7 @@
 // del teléfono, para probarlo.
 
 import { claveDelDia, type ClaveDia } from '@/dominio/fechas';
-import type { Etapa, Fuente, Medida, Muestra, Noche, TipoDeFuente } from '@/dominio/sueno';
+import { marcaDe, type Etapa, type Fuente, type Medida, type Muestra, type Noche, type TipoDeFuente } from '@/dominio/sueno';
 
 /** Lo que importa de una muestra de HealthKit. */
 export type DeSalud = {
@@ -18,9 +18,14 @@ export type DeSalud = {
 /** HKCategoryValueSleepAnalysis: en cama, dormido sin etapa, despierto, núcleo, profundo y REM. */
 const ETAPAS: Record<number, Etapa> = { 0: 'enCama', 1: 'dormido', 2: 'despierto', 3: 'nucleo', 4: 'profundo', 5: 'rem' };
 
-/** El reloj, otro aparato o app (un anillo, Garmin) o el teléfono, por el modelo del aparato que la escribió. */
-export function tipoDeFuente(productType: string | undefined): TipoDeFuente {
+/**
+ * El reloj, otro aparato (un anillo, Garmin) o el teléfono. El modelo dice dónde corría la app que
+ * escribió: los aparatos escriben desde su app del iPhone, así que se reconocen por la app (su
+ * identificador o su nombre; spec/aparatos.md).
+ */
+export function tipoDeFuente(productType: string | undefined, id = '', nombre = ''): TipoDeFuente {
   if (productType?.startsWith('Watch')) return 'reloj';
+  if (marcaDe({ id, nombre, tipo: 'otra' }) !== 'otra') return 'otra';
   if (productType?.startsWith('iPhone')) return 'telefono';
   return 'otra';
 }
@@ -32,7 +37,7 @@ export function fuentesDe(muestras: DeSalud[]): Fuente[] {
   const fuentes = new Map<string, Fuente>();
   for (const s of muestras) {
     const id = idDeFuente(s);
-    if (!fuentes.has(id)) fuentes.set(id, { id, nombre: s.sourceRevision.source.name, tipo: tipoDeFuente(s.sourceRevision.productType) });
+    if (!fuentes.has(id)) fuentes.set(id, { id, nombre: s.sourceRevision.source.name, tipo: tipoDeFuente(s.sourceRevision.productType, id, s.sourceRevision.source.name) });
   }
   return [...fuentes.values()];
 }
@@ -63,6 +68,10 @@ export function ultimaPorDia(muestras: DeSalud[]): Map<ClaveDia, number> {
   return new Map([...porDia].map(([d, x]) => [d, x.valor]));
 }
 
+/** Las muestras de pasos, con cuándo y cuántos: sin reloj, dicen cuándo estabas despierto. */
+export const pasosDe = (muestras: DeSalud[]) =>
+  muestras.flatMap((s) => (typeof s.quantity === 'number' && s.quantity > 0 ? [{ desde: s.startDate.getTime(), hasta: s.endDate.getTime(), pasos: s.quantity }] : []));
+
 /** Los minutos de unas sesiones (la atención plena). */
 export const minutosDe = (muestras: DeSalud[]) => Math.round(muestras.reduce((s, m) => s + Math.max(0, m.endDate.getTime() - m.startDate.getTime()), 0) / 60_000);
 
@@ -76,6 +85,8 @@ export type LoDeSalud = {
   soloEnCama: Map<ClaveDia, { minutos: number; fuente: Fuente }>;
   lecturas: { frecuencia: Medida[]; variabilidad: Medida[]; respiracion: Medida[]; reposo: Map<ClaveDia, number> };
   fuentes: Fuente[];
+  /** Los pasos de las últimas 30 horas, muestra por muestra: sin reloj, con eso se estima la noche. */
+  pasosRecientes: { desde: number; hasta: number; pasos: number }[];
   /** El último peso de cada día, en kg. */
   pesos: Map<ClaveDia, number>;
 };

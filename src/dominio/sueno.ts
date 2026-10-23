@@ -1,6 +1,7 @@
 // El sueño (spec/sueno.md): las muestras de Salud de cada noche, armadas sin inventar nada.
-// - Una sola fuente por noche: la que elegiste, o el reloj, o otro aparato con etapas, o sin ellas, o
-//   una app del teléfono. Nunca se suman dos: contaría doble.
+// - Una sola fuente por noche: la que elegiste o, si no, la que mejor distingue el sueño de la
+//   vigilia (spec/aparatos.md, «El orden»). Nunca se suman dos: contaría doble. Lo que dos fuentes
+//   registraron del mismo sueño se reconoce y se cuenta una vez.
 // - La noche es del día en que te despertás, y el día cambia a las 18: una siesta de la tarde es de
 //   ese día y lo que termina a la noche ya es del siguiente.
 // - El «en cama» del teléfono nunca cuenta como sueño: el teléfono mide su uso, no el sueño.
@@ -12,8 +13,11 @@ import type { ClaveDia } from './fechas';
 
 /** Lo que guarda Salud (HKCategoryValueSleepAnalysis): en cama, dormido sin etapa, despierto y las tres etapas. */
 export type Etapa = 'enCama' | 'dormido' | 'despierto' | 'nucleo' | 'profundo' | 'rem';
-/** De dónde viene: el reloj, otro aparato o app que escribe en Salud (un anillo, Garmin), o el teléfono. */
-export type TipoDeFuente = 'reloj' | 'otra' | 'telefono';
+/**
+ * De dónde viene: el reloj, otro aparato que escribe en Salud con su app (un anillo, Garmin), el
+ * teléfono (el iPhone o una app que mide con él) o Moss, que estima la noche sin reloj.
+ */
+export type TipoDeFuente = 'reloj' | 'otra' | 'telefono' | 'moss';
 export type Fuente = { id: string; nombre: string; tipo: TipoDeFuente };
 /**
  * Una muestra: instantes en milisegundos, la diferencia de la zona horaria de ese momento en
@@ -38,7 +42,11 @@ export type NochePropia = {
   /** El día en que te despertás, como las noches de Salud. */
   fecha: ClaveDia;
   cara?: Cara;
-  hora?: { dormirse: string; despertar: string; origen: OrigenDeNoche; confianza: Confianza };
+  /**
+   * `estimada` es lo que estimó el teléfono antes de corregirlo con lo aprendido: con eso se aprende
+   * cuánto se corre en tu caso (src/dominio/sinReloj.ts).
+   */
+  hora?: { dormirse: string; despertar: string; origen: OrigenDeNoche; confianza: Confianza; estimada?: { dormirse: string; despertar: string } };
   actualizado: string;
   borrado?: true;
 };
@@ -67,6 +75,13 @@ export type Noche = {
   /** Los intervalos dormidos, en milisegundos: ahí se miran la frecuencia, la variabilidad y la respiración. */
   intervalos: [number, number][];
   confianza: { duracion: Confianza; horario: Confianza; despertares: Confianza; etapas: Confianza | null; enCama: Confianza | null };
+  /** Si todo lo de esa fuente se anotó a mano en Salud. */
+  aMano?: true;
+  /**
+   * Las noches de Moss, sin reloj: de dónde sale la hora, qué tan segura estaba la estimación y, si
+   * es una estimación, el rango (en minutos desde las 18, como `dormirse` y `despertar`).
+   */
+  moss?: { origen: OrigenDeNoche; confianza: Confianza; rango: { dormirse: [number, number]; despertar: [number, number] } | null };
 };
 
 const MIN = 60_000;
@@ -86,7 +101,7 @@ const ETAPAS: readonly Etapa[] = ['nucleo', 'profundo', 'rem'];
 
 const claveDelSueno = (fin: number, zona: number): ClaveDia => new Date(fin + (zona + 24 * 60 - CAMBIO_DE_DIA) * MIN).toISOString().slice(0, 10);
 /** Las 18 del día anterior a la clave, en milisegundos: el cero de los minutos de esa noche. */
-const ceroDe = (clave: ClaveDia, zona: number) => Date.parse(clave + 'T00:00:00.000Z') - (24 * 60 - CAMBIO_DE_DIA) * MIN - zona * MIN;
+export const ceroDe = (clave: ClaveDia, zona: number) => Date.parse(clave + 'T00:00:00.000Z') - (24 * 60 - CAMBIO_DE_DIA) * MIN - zona * MIN;
 
 /** La unión de intervalos, ordenada y sin encimarse. */
 function unir(intervalos: [number, number][]): [number, number][] {
@@ -145,15 +160,69 @@ function episodios(muestras: Muestra[]): Episodio[] {
   });
 }
 
+/** Las marcas que escriben sueño en Salud (spec/aparatos.md). */
+export type Marca =
+  | 'appleWatch' | 'oura' | 'google' | 'whoop' | 'polar' | 'garmin' | 'withings' | 'ringconn' | 'ultrahuman' | 'amazfit' | 'xiaomi'
+  | 'huawei' | 'coros' | 'suunto' | 'eightSleep' | 'otra' | 'telefono' | 'moss';
+/** Por la app que escribe en Salud (su identificador o su nombre): los aparatos escriben desde su app del iPhone. */
+const MARCAS: [Marca, RegExp][] = [
+  ['oura', /oura/i], ['google', /fitbit|google/i], ['whoop', /whoop/i], ['polar', /polar/i], ['garmin', /garmin/i],
+  ['withings', /withings|health ?mate/i], ['ringconn', /ringconn/i], ['ultrahuman', /ultrahuman/i], ['amazfit', /amazfit|zepp|huami/i],
+  ['xiaomi', /xiaomi|mi ?fit/i], ['huawei', /huawei/i], ['coros', /coros/i], ['suunto', /suunto/i], ['eightSleep', /eight ?sleep/i],
+];
+/** La marca de un aparato o una app, por su identificador y su nombre; sin reconocerla, `otra` o `telefono`. */
+export function marcaDe(f: Pick<Fuente, 'id' | 'nombre' | 'tipo'>): Marca {
+  if (f.tipo === 'reloj') return 'appleWatch';
+  if (f.tipo === 'moss') return 'moss';
+  return MARCAS.find(([, r]) => r.test(`${f.id} ${f.nombre}`))?.[0] ?? (f.tipo === 'telefono' ? 'telefono' : 'otra');
+}
+
 /**
- * El orden de las fuentes para una noche: la que elegiste, el reloj, otro aparato con etapas, sin
- * etapas, y al final las apps del teléfono. Lo anotado a mano cuenta solo si no hay otra cosa.
+ * Qué tan bien distingue cada marca el sueño de la vigilia (la especificidad contra polisomnografía y
+ * cuánto se equivoca en el total; spec/aparatos.md, «El orden»). El Apple Watch y Oura empatan: de
+ * fábrica gana el reloj, que escribe sin abrir ninguna app. Las que no se validaron van juntas, y
+ * después las apps del teléfono.
+ */
+export const NIVEL_DE_LA_MARCA: Record<Marca, number> = {
+  appleWatch: 91, oura: 90, google: 80, whoop: 70, polar: 60, garmin: 50, withings: 50,
+  ringconn: 40, ultrahuman: 40, amazfit: 40, xiaomi: 40, huawei: 40, coros: 40, suunto: 40, eightSleep: 40, otra: 40,
+  telefono: 30, moss: 10,
+};
+
+/**
+ * El orden de las fuentes para una noche: la que elegiste, después por marca (con etapas antes que
+ * sin etapas, si empatan). Lo anotado a mano en Salud va después de las apps del teléfono.
  */
 function prioridad(fuente: Fuente, muestras: Muestra[], elegida?: string): number {
   if (fuente.id === elegida) return 100;
-  const aMano = muestras.every((m) => m.aMano);
-  const base = fuente.tipo === 'reloj' ? 40 : fuente.tipo === 'otra' ? (muestras.some((m) => ETAPAS.includes(m.etapa)) ? 30 : 20) : 10;
-  return aMano ? 1 : base;
+  if (muestras.every((m) => m.aMano)) return 20;
+  return NIVEL_DE_LA_MARCA[marcaDe(fuente)] + (muestras.some((m) => ETAPAS.includes(m.etapa)) ? 0.5 : 0);
+}
+
+/**
+ * Dos episodios de fuentes distintas son el mismo sueño si se encima al menos la mitad del más corto,
+ * o si empiezan y terminan a 90 minutos o menos: contra la polisomnografía, los aparatos se
+ * equivocan en más que eso en el total.
+ */
+const MISMO_SUENO = 90;
+function mismoSueno(a: Episodio, b: Episodio): boolean {
+  const encima = Math.min(a.hasta, b.hasta) - Math.max(a.desde, b.desde);
+  if (encima >= 0.5 * Math.min(a.hasta - a.desde, b.hasta - b.desde)) return true;
+  return Math.abs(a.desde - b.desde) <= MISMO_SUENO * MIN && Math.abs(a.hasta - b.hasta) <= MISMO_SUENO * MIN;
+}
+
+/** Los episodios de un día, de todas las fuentes, juntados por sueño. */
+function porSueno(delDia: Map<string, Episodio[]>): { id: string; e: Episodio }[][] {
+  const grupos: { id: string; e: Episodio }[][] = [];
+  for (const [id, lista] of delDia) {
+    for (const e of lista) {
+      const juntos = grupos.filter((g) => g.some((x) => x.id !== id && mismoSueno(x.e, e)));
+      const nuevo = [...juntos.flat(), { id, e }];
+      for (const g of juntos) grupos.splice(grupos.indexOf(g), 1);
+      grupos.push(nuevo);
+    }
+  }
+  return grupos;
 }
 
 /** Las noches desde las muestras de todas las fuentes, una por día, de la más vieja a la más nueva. */
@@ -172,18 +241,37 @@ export function armarNoches(muestras: Muestra[], fuentes: Fuente[], elegida?: st
   const enCamaTodas = muestras.filter((m) => m.etapa === 'enCama');
   const noches: Noche[] = [];
   for (const [clave, delDia] of porDia) {
-    const [id, lista] = [...delDia.entries()].sort(([a, ea], [b, eb]) => {
-      const fa = fuentes.find((f) => f.id === a)!, fb = fuentes.find((f) => f.id === b)!;
-      return prioridad(fb, eb.flatMap((e) => e.muestras), elegida) - prioridad(fa, ea.flatMap((e) => e.muestras), elegida);
-    })[0];
+    const nivel = (id: string) => prioridad(fuentes.find((f) => f.id === id)!, delDia.get(id)!.flatMap((e) => e.muestras), elegida);
+    const elegir = (g: { id: string; e: Episodio }[]) => [...g].sort((a, b) => nivel(b.id) - nivel(a.id) || b.e.dormido - a.e.dormido)[0];
+    // El sueño más largo del día es la noche; de las fuentes que lo registraron se usa una sola.
+    const suenos = porSueno(delDia);
+    const masDormido = (g: { e: Episodio }[]) => Math.max(...g.map((x) => x.e.dormido));
+    const elDeLaNoche = [...suenos].sort((a, b) => masDormido(b) - masDormido(a))[0];
+    const { id, e: principal } = elegir(elDeLaNoche);
     const fuente = fuentes.find((f) => f.id === id)!;
-    const principal = [...lista].sort((a, b) => b.dormido - a.dormido)[0];
+    const lista = delDia.get(id)!;
     const deLaNoche = lista.filter((e) => e === principal || e.dormido >= EPISODIO_LARGO
       || Math.abs(e.desde - principal.hasta) <= CERCA_DEL_PRINCIPAL * MIN || Math.abs(principal.desde - e.hasta) <= CERCA_DEL_PRINCIPAL * MIN);
-    const siestas = lista.filter((e) => !deLaNoche.includes(e) && e.dormido >= SIESTA_MINIMA).reduce((s, e) => s + e.dormido, 0);
+    // Las siestas, de cualquier fuente, cada una una vez: las que no son parte de la noche ni se le enciman.
+    const desde = Math.min(...deLaNoche.map((e) => e.desde)), hasta = Math.max(...deLaNoche.map((e) => e.hasta));
+    const siestas = suenos
+      .filter((g) => !g.some((x) => x.id === id && deLaNoche.includes(x.e)) && g.every((x) => x.e.hasta <= desde || x.e.desde >= hasta))
+      .map((g) => elegir(g).e.dormido)
+      .filter((d) => d >= SIESTA_MINIMA)
+      .reduce((s, d) => s + d, 0);
     noches.push(resumir(clave, fuente, deLaNoche, siestas, enCamaTodas, fuentes));
   }
   return noches.sort((a, b) => (a.clave < b.clave ? -1 : 1));
+}
+
+/**
+ * Qué tan confiable es cada cosa según la marca: la duración y el horario, bien en las que distinguen
+ * mejor la vigilia; los despertares, a medias en las tres mejores. Lo anotado a mano, como un diario.
+ */
+function confianzaDe(fuente: Fuente, aMano: boolean): { duracion: Confianza; despertares: Confianza } {
+  if (aMano) return { duracion: 'media', despertares: 'baja' };
+  const nivel = NIVEL_DE_LA_MARCA[marcaDe(fuente)];
+  return { duracion: nivel >= 60 ? 'alta' : nivel >= 40 ? 'media' : 'baja', despertares: nivel >= 80 ? 'media' : 'baja' };
 }
 
 function resumir(clave: ClaveDia, fuente: Fuente, deLaNoche: Episodio[], siestas: number, enCamaTodas: Muestra[], fuentes: Fuente[]): Noche {
@@ -214,20 +302,35 @@ function resumir(clave: ClaveDia, fuente: Fuente, deLaNoche: Episodio[], siestas
     ...dormidas.map((m) => ({ etapa: m.etapa as Tramo['etapa'], desde: aMin(m.desde), hasta: aMin(m.hasta) })),
     ...unir(huecos.length ? intervalos.slice(1).map((x, i): [number, number] => [intervalos[i][1], x[0]]) : []).map(([a, b]) => ({ etapa: 'despierto' as const, desde: aMin(a), hasta: aMin(b) })),
   ].sort((a, b) => a.desde - b.desde);
-  const desdeElTelefono = fuente.tipo === 'telefono';
+  const aMano = muestras.every((m) => m.aMano);
+  const { duracion, despertares } = confianzaDe(fuente, aMano);
   return {
     clave, fuente, conEtapas,
     dormirse: aMin(inicio), despertar: aMin(fin), enCama,
     dormido, despierto: Math.max(0, (fin - inicio) / MIN - dormido), despertares: huecos.filter((h) => h >= DESPERTAR_MINIMO).length,
     etapas, siestas, tramos, intervalos,
     confianza: {
-      duracion: desdeElTelefono ? 'baja' : 'alta',
-      horario: desdeElTelefono ? 'baja' : 'alta',
-      despertares: desdeElTelefono ? 'baja' : 'media',
+      duracion,
+      horario: duracion,
+      despertares,
       etapas: conEtapas ? 'baja' : null,
       enCama: enCama ? (enCama.fuente.tipo === 'telefono' ? 'baja' : 'media') : null,
     },
+    ...(aMano ? { aMano: true as const } : {}),
   };
+}
+
+/**
+ * Qué tan precisa es una noche (spec/aparatos.md, «Los niveles de precisión»): 0 sin datos; 1
+ * estimada con el teléfono o anotada a mano; 2 medida sin etapas (o por una app del teléfono); 3 con
+ * etapas; 4 con etapas y lo que el aparato mide de noche. El 5, las conexiones directas, es para
+ * después de la v1.
+ */
+export function nivelDeLaNoche(n: Noche | null, conLoDeLaNoche = false): 0 | 1 | 2 | 3 | 4 {
+  if (!n) return 0;
+  if (n.moss || n.aMano) return 1;
+  if (!n.conEtapas || n.fuente.tipo === 'telefono') return 2;
+  return conLoDeLaNoche ? 4 : 3;
 }
 
 /**
@@ -343,9 +446,12 @@ export function deudaDeSueno(noches: (Noche | null)[], necesidadMin: number): De
 
 export type Calidad = {
   puntos: number;
-  /** Cada parte con lo que suma; `horario` es null mientras no hay 5 noches para comparar. */
-  partes: { duracion: number; horario: number | null; continuidad: number };
-  /** Sin el horario, el total se reescala a 100 y es parcial. */
+  /**
+   * Cada parte con lo que suma; `horario` es null mientras no hay 5 noches para comparar, y
+   * `continuidad`, en las noches sin reloj: el teléfono no sabe cuánto estuviste despierto.
+   */
+  partes: { duracion: number; horario: number | null; continuidad: number | null };
+  /** Sin el horario o sin la continuidad, el total se reescala a 100 y es parcial. */
   parcial: boolean;
   palabra: 'excelente' | 'buena' | 'regular' | 'baja';
 };
@@ -369,14 +475,14 @@ export function calidadDeNoche(noche: Noche, necesidadMin: number, anteriores: (
     const d = (Math.abs(noche.dormirse - mediana(previas.map((n) => n.dormirse))) + Math.abs(noche.despertar - mediana(previas.map((n) => n.despertar)))) / 2;
     horarioP = MAXIMOS.horario * limitar((90 - d) / 60);
   }
-  const continuidad = 10 * limitar((60 - noche.despierto) / 40) + 10 * limitar((4 - noche.despertares) / 3);
-  const suma = duracion + (horarioP ?? 0) + continuidad;
-  const maximo = MAXIMOS.duracion + (horarioP === null ? 0 : MAXIMOS.horario) + MAXIMOS.continuidad;
+  const continuidad = noche.moss ? null : 10 * limitar((60 - noche.despierto) / 40) + 10 * limitar((4 - noche.despertares) / 3);
+  const suma = duracion + (horarioP ?? 0) + (continuidad ?? 0);
+  const maximo = MAXIMOS.duracion + (horarioP === null ? 0 : MAXIMOS.horario) + (continuidad === null ? 0 : MAXIMOS.continuidad);
   const puntos = Math.round((suma / maximo) * 100);
   return {
     puntos,
-    partes: { duracion: Math.round(duracion), horario: horarioP === null ? null : Math.round(horarioP), continuidad: Math.round(continuidad) },
-    parcial: horarioP === null,
+    partes: { duracion: Math.round(duracion), horario: horarioP === null ? null : Math.round(horarioP), continuidad: continuidad === null ? null : Math.round(continuidad) },
+    parcial: horarioP === null || continuidad === null,
     palabra: puntos >= 85 ? 'excelente' : puntos >= 70 ? 'buena' : puntos >= 50 ? 'regular' : 'baja',
   };
 }
@@ -398,8 +504,11 @@ export type Medida = { en: number; valor: number };
 export type Vital = { valor: number; lecturas: number; comparado: 'usual' | 'mas' | 'menos' | null; usual: number | null };
 export type TipoDeVital = 'frecuencia' | 'variabilidad' | 'respiracion';
 
-/** Cuántas lecturas hacen falta: una cada media hora de frecuencia, dos de variabilidad y de respiración. */
-const LECTURAS: Record<TipoDeVital, (horas: number) => number> = { frecuencia: (h) => Math.max(1, Math.floor(h * 2)), variabilidad: () => 2, respiracion: () => 2 };
+/**
+ * Cuántas lecturas hacen falta: una cada media hora de frecuencia, dos de respiración y una de
+ * variabilidad, que el Apple Watch mide cada ~4 horas (spec/aparatos.md): se muestra cuántas son.
+ */
+const LECTURAS: Record<TipoDeVital, (horas: number) => number> = { frecuencia: (h) => Math.max(1, Math.floor(h * 2)), variabilidad: () => 1, respiracion: () => 2 };
 /** Desde cuánto de diferencia con lo tuyo se dice «más» o «menos»: en lpm, en %, en respiraciones. */
 const DIFERENCIA: Record<TipoDeVital, (usual: number) => number> = { frecuencia: () => 3, variabilidad: (u) => u * 0.15, respiracion: () => 1 };
 

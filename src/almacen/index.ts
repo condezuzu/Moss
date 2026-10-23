@@ -10,6 +10,7 @@ import { msHastaMedianoche } from '@/dominio/fechas';
 import { haySupabase, supabase } from '@/lib/supabase';
 import { programarRecordatorios } from '@/recordatorios/programar';
 import { leerSalud } from '@/salud/leer';
+import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { idioma } from '@/textos';
 import { abrirRepositorio } from './abrir';
 import { crearAlmacen, type Almacen } from './almacen';
@@ -56,10 +57,14 @@ function sincronizarConLaCuenta(a: Almacen) {
   };
 }
 
-/** Lee Salud (si ya se pidió) y lo pone en el almacén: al abrir, al volver y después de pedir permiso. */
+/**
+ * Lee Salud (si ya se pidió) y lo pone en el almacén: al abrir, al volver y después de pedir permiso.
+ * Después, sin reloj, estima la noche de anoche con lo que guardó el teléfono.
+ */
 export async function actualizarSalud(): Promise<void> {
   const s = await leerSalud().catch(() => null);
   if (s) elAlmacen().ponerSalud(s);
+  await estimarAnoche(elAlmacen()).catch(() => {});
 }
 
 /**
@@ -70,7 +75,8 @@ export function useAlmacenListo(): boolean {
   const a = elAlmacen();
   const listo = useSyncExternalStore(a.suscribir, () => a.estado().listo);
   useEffect(() => {
-    a.iniciar().then(actualizarSalud).catch((error) => console.warn('Moss no pudo abrir sus datos', error));
+    // Abrir Moss dice que estás despierto: sin reloj, es lo más exacto para la noche (spec/sueno.md).
+    a.iniciar().then(() => a.anotarUso('abrir')).then(actualizarSalud).catch((error) => console.warn('Moss no pudo abrir sus datos', error));
     const cuenta = sincronizarConLaCuenta(a);
     let reloj: ReturnType<typeof setTimeout>;
     const esperarMedianoche = () => {
@@ -96,7 +102,9 @@ export function useAlmacenListo(): boolean {
       reprogramar();
     });
     const suscripcion = AppState.addEventListener('change', (estado) => {
+      if (estado === 'background' && a.estado().listo) a.anotarUso('cerrar');
       if (estado !== 'active') return;
+      if (a.estado().listo) a.anotarUso('abrir');
       a.revisarDia();
       cuenta.alVolver();
       actualizarSalud().catch(() => {});

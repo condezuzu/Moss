@@ -43,4 +43,16 @@ describe('el sueño', () => {
     expect(s.noches.some((n) => n.clave === HOY)).toBe(true);
     expect(s.necesidad).toBeGreaterThanOrEqual(7 * 60);
   });
+
+  it('sin reloj, las noches de Moss: con una sola ya no son las de ejemplo', () => {
+    const z = -new Date().getTimezoneOffset() * 60_000;
+    const propias = new Map([[HOY, {
+      fecha: HOY, actualizado: '2026-10-22T09:00:00.000Z',
+      hora: { dormirse: new Date(Date.parse(`${HOY}T00:10:00.000Z`) - z).toISOString(), despertar: new Date(Date.parse(`${HOY}T07:40:00.000Z`) - z).toISOString(), origen: 'confirmada' as const, confianza: 'media' as const },
+    }]]);
+    const s = suenoDe(HOY, null, null, propias);
+    expect(s.deEjemplo).toBe(false);
+    expect(s.noches).toHaveLength(1);
+    expect(s.noches[0]).toMatchObject({ clave: HOY, dormido: 450, fuente: { id: 'moss' }, moss: { origen: 'confirmada' } });
+  });
 });

@@ -25,7 +25,8 @@
       "icon": "./assets/expo.icon",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "NSMotionUsageDescription": "Sin reloj, Moss usa el movimiento del teléfono para estimar cuándo dormiste. El movimiento no sale del teléfono: solo se guarda la hora estimada."
       }
     },
     "android": {
@@ -65,7 +66,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Moss lee de Salud tu edad, sexo, altura y peso para tus metas; tus pasos, agua, minutos de atención plena y sueño para encender solos esos hábitos; y lo que mide el reloj de noche para la sección Sueño.",
+          "NSHealthShareUsageDescription": "Moss lee de Salud tu edad, sexo, altura y peso para tus metas; tus pasos, agua, minutos de atención plena y sueño para encender solos esos hábitos (los pasos también estiman tu noche si no tienes reloj); y lo que mide el reloj de noche para la sección Sueño.",
           "NSHealthUpdateUsageDescription": "Moss no escribe nada en Salud: solo lee los datos que eliges.",
           "background": false
         }

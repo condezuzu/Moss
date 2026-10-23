@@ -55,6 +55,11 @@ export type Estado = MapasDeComida & {
   recordatorios: Comida[] | null;
   /** La calidad de las animaciones, si se eligió en Perfil; sin elegir, la automática. Queda en el teléfono. */
   calidad: Calidad | null;
+  /**
+   * Cuándo estuvo Moss abierta los últimos tres días (desde y hasta, en milisegundos): sin reloj, es lo
+   * más exacto para saber que estabas despierto (spec/sueno.md, «Sin reloj»). Queda en el teléfono.
+   */
+  uso: [number, number][];
   /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
   salud: LoDeSalud | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
@@ -83,13 +88,16 @@ export const DIAS_DE_MARCAS = 14;
 /** Cuántos días de lo comido se tienen a mano: alcanzan para el control (tres semanas), el mes y lo que solés comer. */
 export const DIAS_DE_COMIDA = 120;
 
-/** Lo que va en los ajustes del teléfono no se sincroniza: la canasta, las unidades, Inicio, los recordatorios y la calidad. */
+/** Lo que va en los ajustes del teléfono no se sincroniza: la canasta, las unidades, Inicio, los recordatorios, la calidad y cuándo se usó Moss. */
 const CANASTA = 'canasta';
 const SISTEMA = 'sistema';
 const INICIO = 'inicio';
 const RECORDATORIOS = 'recordatorios';
 const CALIDAD = 'calidad';
 const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
+const USO = 'uso';
+/** Tres días de uso alcanzan para la noche de anoche. */
+const DIAS_DE_USO = 3;
 
 /** Un id para lo que se crea en el teléfono: la hora y un azar, así dos teléfonos de la misma cuenta no se pisan. */
 const idNuevo = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -126,6 +134,15 @@ function leerInicio(texto: string | undefined): Estado['inicio'] {
   }
 }
 
+function leerUso(texto: string | undefined): [number, number][] {
+  try {
+    const lista: unknown = texto ? JSON.parse(texto) : [];
+    return Array.isArray(lista) ? lista.filter((x): x is [number, number] => Array.isArray(x) && x.length === 2 && x.every(Number.isFinite)) : [];
+  } catch {
+    return [];
+  }
+}
+
 function leerCanasta(texto: string | undefined): Item[] {
   try {
     return texto ? (JSON.parse(texto) as Item[]) : [];
@@ -157,7 +174,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, calidad: null, salud: null, semilla: '',
+    recordatorios: null, calidad: null, uso: [], salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -248,7 +265,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), listo: true }, true);
     revisarControl();
   }
 
@@ -531,6 +548,20 @@ export function crearAlmacen(op: Opciones) {
     ponerCalidad(calidad: Calidad | null) {
       guardar((r) => r.guardarAjuste(CALIDAD, calidad ?? ''));
       cambiar({ calidad }, false);
+    },
+    /**
+     * Moss se abrió o se cerró. Al abrir queda un momento; al cerrar, ese momento se vuelve un rato.
+     * Si se cerró sin avisar (el sistema la cerró), queda el momento. Lo de hace más de tres días se va.
+     */
+    anotarUso(que: 'abrir' | 'cerrar', en = ahora().getTime()) {
+      const lista = estado.uso.filter(([, hasta]) => hasta >= en - DIAS_DE_USO * 86_400_000);
+      const ultimo = lista[lista.length - 1];
+      let uso: [number, number][];
+      if (que === 'abrir') uso = [...lista, [en, en]];
+      else if (ultimo && ultimo[0] === ultimo[1] && en >= ultimo[0]) uso = [...lista.slice(0, -1), [ultimo[0], en]];
+      else return;
+      guardar((r) => r.guardarAjuste(USO, JSON.stringify(uso)));
+      cambiar({ uso }, false);
     },
     ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
     cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),

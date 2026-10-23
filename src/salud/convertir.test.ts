@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { armarNoches } from '@/dominio/sueno';
-import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, tipoDeFuente, ultimaPorDia, type DeSalud } from './convertir';
+import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, tipoDeFuente, ultimaPorDia, type DeSalud } from './convertir';
 
 const reloj = { source: { name: 'Apple Watch de Ana', bundleIdentifier: 'com.apple.health.A1' }, productType: 'Watch7,3' };
 const iphone = { source: { name: 'iPhone de Ana', bundleIdentifier: 'com.apple.health.B2' }, productType: 'iPhone15,2' };
@@ -13,6 +13,10 @@ describe('de Salud al dominio', () => {
     expect(tipoDeFuente('Watch7,3')).toBe('reloj');
     expect(tipoDeFuente('iPhone15,2')).toBe('telefono');
     expect(tipoDeFuente(undefined)).toBe('otra');
+    // Oura, Garmin o WHOOP escriben desde su app del iPhone: se reconocen por la app, no por el modelo.
+    expect(tipoDeFuente('iPhone15,2', 'com.ouraring.oura', 'Oura')).toBe('otra');
+    expect(tipoDeFuente('iPhone15,2', 'com.garmin.connect.mobile', 'Connect')).toBe('otra');
+    expect(tipoDeFuente('iPhone15,2', 'com.northcube.sleepcycle', 'Sleep Cycle')).toBe('telefono');
     expect(fuentesDe([sueno(3, local('2026-10-21', '23:40'), local('2026-10-22', '00:20')), sueno(0, local('2026-10-21', '23:20'), local('2026-10-22', '07:30'), iphone)])).toEqual([
       { id: 'com.apple.health.A1', nombre: 'Apple Watch de Ana', tipo: 'reloj' },
       { id: 'com.apple.health.B2', nombre: 'iPhone de Ana', tipo: 'telefono' },
@@ -48,5 +52,9 @@ describe('de Salud al dominio', () => {
     expect(lecturasDe([q(52, local('2026-10-22', '02:00')), q(Number.NaN, local('2026-10-22', '03:00'))])).toEqual([{ en: local('2026-10-22', '02:00').getTime(), valor: 52 }]);
     expect(ultimaPorDia([q(74.9, local('2026-10-21', '07:00')), q(74.5, local('2026-10-22', '07:10')), q(74.3, local('2026-10-22', '21:00'))])).toEqual(new Map([['2026-10-21', 74.9], ['2026-10-22', 74.3]]));
     expect(minutosDe([{ startDate: local('2026-10-22', '08:00'), endDate: local('2026-10-22', '08:10'), sourceRevision: iphone }, { startDate: local('2026-10-22', '21:00'), endDate: local('2026-10-22', '21:05'), sourceRevision: iphone }])).toBe(15);
+    // Los pasos con cuándo y cuántos; las muestras en cero no dicen nada.
+    const p = (quantity: number, desde: Date, hasta: Date): DeSalud => ({ quantity, startDate: desde, endDate: hasta, sourceRevision: iphone });
+    expect(pasosDe([p(84, local('2026-10-22', '07:02'), local('2026-10-22', '07:04')), p(0, local('2026-10-22', '03:00'), local('2026-10-22', '03:01'))]))
+      .toEqual([{ desde: local('2026-10-22', '07:02').getTime(), hasta: local('2026-10-22', '07:04').getTime(), pasos: 84 }]);
   });
 });

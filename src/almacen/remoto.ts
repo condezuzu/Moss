@@ -68,7 +68,8 @@ const filaDe = {
   }),
   noches: (n: NochePropia) => ({
     fecha: n.fecha, cara: n.cara ?? null, dormirse: n.hora?.dormirse ?? null, despertar: n.hora?.despertar ?? null,
-    origen: (n.hora?.origen ?? null) as OrigenDeNoche | null, confianza: (n.hora?.confianza ?? null) as Confianza | null, borrado: !!n.borrado, actualizado: n.actualizado,
+    origen: (n.hora?.origen ?? null) as OrigenDeNoche | null, confianza: (n.hora?.confianza ?? null) as Confianza | null,
+    estimada_dormirse: n.hora?.estimada?.dormirse ?? null, estimada_despertar: n.hora?.estimada?.despertar ?? null, borrado: !!n.borrado, actualizado: n.actualizado,
   }),
 };
 
@@ -129,7 +130,12 @@ const deFila = {
   }, f.borrado),
   noches: (f: Filas['noches']): NochePropia => conBorrado({
     fecha: f.fecha, ...(esCara(f.cara) ? { cara: f.cara } : {}),
-    ...(f.dormirse && f.despertar && f.origen && f.confianza ? { hora: { dormirse: hora(f.dormirse), despertar: hora(f.despertar), origen: f.origen, confianza: f.confianza } } : {}),
+    ...(f.dormirse && f.despertar && f.origen && f.confianza ? {
+      hora: {
+        dormirse: hora(f.dormirse), despertar: hora(f.despertar), origen: f.origen, confianza: f.confianza,
+        ...(f.estimada_dormirse && f.estimada_despertar ? { estimada: { dormirse: hora(f.estimada_dormirse), despertar: hora(f.estimada_despertar) } } : {}),
+      },
+    } : {}),
     actualizado: hora(f.actualizado),
   }, f.borrado),
 };

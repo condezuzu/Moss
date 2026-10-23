@@ -657,7 +657,10 @@
     },
     "aprendiendo": "learning your usual",
     "pocasLecturas": "few readings",
-    "lecturas": "{n} readings",
+    "lecturas": {
+      "uno": "{n} reading",
+      "otros": "{n} readings"
+    },
     "delDia": "for the day",
     "vitalesTexto": "The average while you slept, against the median of your previous nights (7 are needed). The watch measures variability only a few times a night: it’s the least precise. Resting heart rate is for the whole day.",
     "fuentes": "Where each number comes from",
@@ -674,9 +677,9 @@
       "media": "approximate",
       "baja": "estimate"
     },
-    "fuentesTexto": "Moss uses a single source per night: the one you choose or, if not, your watch, then another device, and the phone last. It never adds two together. If a night is missing, it stays grey: nothing is made up.",
+    "fuentesTexto": "Moss uses a single source per night: the one you choose in Profile › Devices or, if not, the one that best tells sleep from wake. It never adds two together. Without a watch or a ring, it estimates the night with your phone. If a night is missing, it stays grey: nothing is made up.",
     "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor.",
-    "ejemplo": "These are sample nights: once you connect Health, yours show up.",
+    "ejemplo": "These are sample nights: yours show up once you connect Health or after your first night with Moss.",
     "unidad": {
       "frecuencia": "bpm",
       "variabilidad": "ms",
@@ -696,8 +699,55 @@
       "respondida": "Last night: {cara}",
       "cambiar": "Change",
       "tuRespuesta": "How you said you slept",
-      "nota": "It counts in recovery together with the watch's quality and, without a watch, it is the night's quality."
-    }
+      "nota": "It counts in recovery together with the watch's quality and, without a watch, it is the night's quality.",
+      "hora": "Did you sleep from {desde} to {hasta}?",
+      "horaNota": "Your phone estimated it. {seguridad}.",
+      "si": "Yes",
+      "otraHora": "Change",
+      "sinProponer": "What time did you fall asleep and wake up?",
+      "teDormiste": "Fell asleep",
+      "teDespertaste": "Woke up",
+      "guardar": "Save",
+      "antes": "5 minutes earlier",
+      "despues": "5 minutes later"
+    },
+    "sinCalidadEstimada": "Moss isn’t sure about this night: confirm it or change it and the quality shows up.",
+    "origen": {
+      "estimada": "Estimated",
+      "confirmada": "Confirmed",
+      "corregida": "Corrected",
+      "manual": "Written"
+    },
+    "estimadaTexto": "Without a watch, Moss estimates it from your steps, your phone’s motion and when you use the app.",
+    "rango": "Between {a} and {b} falling asleep, and between {c} and {d} waking up.",
+    "seguridad": {
+      "alta": "Fairly sure",
+      "media": "Somewhat sure",
+      "baja": "Not very sure"
+    },
+    "sinRelojEtapas": "Without a watch there are no stages or awakenings: with a watch or a ring, Moss measures them.",
+    "cambiarHora": "Change the time",
+    "sinRelojParte": "no watch",
+    "movimiento": {
+      "titulo": "Your phone’s motion",
+      "texto": "Without a watch, it helps tell when you fell asleep and woke up. It never leaves your phone.",
+      "permitir": "Allow"
+    },
+    "precision": {
+      "titulo": "How precise the night is",
+      "niveles": [
+        "No data",
+        "Estimated with your phone",
+        "Measured, no stages",
+        "Measured, with stages",
+        "Stages and the night’s vitals",
+        "Direct connection"
+      ]
+    },
+    "porMoss": "Estimated by Moss",
+    "porTi": "Confirmed by you",
+    "corregidaPorTi": "Corrected by you",
+    "fuentesSinReloj": "With a watch or a ring, Moss measures instead of estimating. What each one sends is in Profile › Devices."
   },
   "perfil": {
     "titulo": "Profile",
@@ -784,7 +834,84 @@
       "media": "Medium",
       "baja": "Low"
     },
-    "calidadTexto": "Automatic chooses for your iPhone and steps down by itself if the sky stutters. Low uses less battery."
+    "calidadTexto": "Automatic chooses for your iPhone and steps down by itself if the sky stutters. Low uses less battery.",
+    "aparatos": {
+      "titulo": "Devices",
+      "soloIphone": "Just the iPhone",
+      "arriba": "Moss works with just the iPhone and gets better with a watch or a ring. Everything comes through Health.",
+      "tuyos": "The ones that write your sleep",
+      "noches": {
+        "uno": "{n} night in the last month",
+        "otros": "{n} nights in the last month"
+      },
+      "laNoche": "The night comes from",
+      "automatica": "Automatic",
+      "automaticaTexto": "The most precise one each night.",
+      "cadaUno": "What each one sends",
+      "varios": "If you use more than one, Moss takes one per night, the one you choose, and never adds them together.",
+      "marcas": {
+        "iphone": {
+          "nombre": "Just the iPhone",
+          "texto": "With just the iPhone, Moss estimates when you slept from your steps, your phone’s motion and when you use the app, and asks you in the morning to confirm it. With a watch or a ring, it’s measured."
+        },
+        "appleWatch": {
+          "nombre": "Apple Watch",
+          "texto": "How long and when you slept, with stages and naps; at night, your heart rate, heart rate variability and breathing; wrist temperature from Series 8 on, and blood oxygen on the models that measure it."
+        },
+        "oura": {
+          "nombre": "Oura",
+          "texto": "How long and when you slept, with stages, and the night’s heart rate and breathing. Variability and temperature stay in the Oura app. Open it every day so the data comes through."
+        },
+        "whoop": {
+          "nombre": "WHOOP",
+          "texto": "How long and when you slept, without stages, and the night’s resting heart rate, breathing and blood oxygen. Stages and variability stay in the WHOOP app."
+        },
+        "garmin": {
+          "nombre": "Garmin",
+          "texto": "How long and when you slept, with stages, your heart rate and steps. Open Garmin Connect so it sends the data. Variability and Body Battery stay in Garmin."
+        },
+        "google": {
+          "nombre": "Fitbit",
+          "texto": "With a Fitbit or a Fitbit Air: how long and when you slept, with stages, heart rate, resting heart rate, breathing and blood oxygen. Connect the Google Health app to Health. Variability doesn’t come through."
+        },
+        "polar": {
+          "nombre": "Polar",
+          "texto": "How long you slept, without stages, your steps and workouts."
+        },
+        "withings": {
+          "nombre": "Withings",
+          "texto": "Your weight and body composition; with the Sleep Analyzer or a ScanWatch, your sleep too. If you created your account after October 12, 2026, you need Withings+ to send data to Health."
+        },
+        "ringconn": {
+          "nombre": "RingConn",
+          "texto": "How long and when you slept, with stages, and the night’s heart rate and blood oxygen."
+        },
+        "ultrahuman": {
+          "nombre": "Ultrahuman",
+          "texto": "The variability and temperature its app sends to Health."
+        },
+        "amazfit": {
+          "nombre": "Amazfit, Xiaomi or Huawei",
+          "texto": "Your steps, heart rate and sleep; the detail depends on the model."
+        },
+        "coros": {
+          "nombre": "COROS",
+          "texto": "Your heart rate, sleep and steps."
+        },
+        "suunto": {
+          "nombre": "Suunto",
+          "texto": "Your workouts, steps and heart rate; sleep doesn’t reach Health."
+        },
+        "eightSleep": {
+          "nombre": "Eight Sleep",
+          "texto": "The sleep the cover measures."
+        },
+        "samsung": {
+          "nombre": "Samsung or Pixel Watch",
+          "texto": "The Pixel Watch, the Galaxy Watch and the Galaxy Ring don’t work with iPhone."
+        }
+      }
+    }
   },
   "fecha": {
     "dias": [

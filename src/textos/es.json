@@ -657,7 +657,10 @@
     },
     "aprendiendo": "aprendiendo lo tuyo",
     "pocasLecturas": "pocas lecturas",
-    "lecturas": "{n} lecturas",
+    "lecturas": {
+      "uno": "{n} lectura",
+      "otros": "{n} lecturas"
+    },
     "delDia": "del día",
     "vitalesTexto": "El promedio mientras dormías, contra la mediana de tus noches anteriores (hacen falta 7). La variabilidad, el reloj la mide pocas veces por noche: es la menos precisa. La frecuencia en reposo es del día entero.",
     "fuentes": "De dónde sale cada dato",
@@ -674,9 +677,9 @@
       "media": "aproximada",
       "baja": "estimación"
     },
-    "fuentesTexto": "Moss usa una sola fuente por noche: la que elijas o, si no, el reloj, después otro aparato y al final el teléfono. Nunca suma dos. Si falta una noche, queda en gris: no se inventa.",
+    "fuentesTexto": "Moss usa una sola fuente por noche: la que elijas en Perfil › Aparatos o, si no, la que mejor distingue el sueño de la vigilia. Nunca suma dos. Sin reloj ni anillo, la estima con el teléfono. Si falta una noche, queda en gris: no se inventa.",
     "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo duermes, consulta a un médico.",
-    "ejemplo": "Son noches de ejemplo: cuando conectes Salud, aparecen las tuyas.",
+    "ejemplo": "Son noches de ejemplo: aparecen las tuyas cuando conectes Salud o después de tu primera noche con Moss.",
     "unidad": {
       "frecuencia": "lpm",
       "variabilidad": "ms",
@@ -696,8 +699,55 @@
       "respondida": "Anoche: {cara}",
       "cambiar": "Cambiar",
       "tuRespuesta": "Cómo dijiste que dormiste",
-      "nota": "Cuenta en la recuperación junto con la calidad del reloj y, sin reloj, es la calidad de la noche."
-    }
+      "nota": "Cuenta en la recuperación junto con la calidad del reloj y, sin reloj, es la calidad de la noche.",
+      "hora": "¿Dormiste de {desde} a {hasta}?",
+      "horaNota": "Lo estimó el teléfono. {seguridad}.",
+      "si": "Sí",
+      "otraHora": "Cambiar",
+      "sinProponer": "¿A qué hora te dormiste y te despertaste?",
+      "teDormiste": "Te dormiste",
+      "teDespertaste": "Te despertaste",
+      "guardar": "Guardar",
+      "antes": "5 minutos antes",
+      "despues": "5 minutos después"
+    },
+    "sinCalidadEstimada": "Moss no está segura de esta noche: confírmala o cámbiala y aparece la calidad.",
+    "origen": {
+      "estimada": "Estimada",
+      "confirmada": "Confirmada",
+      "corregida": "Corregida",
+      "manual": "Escrita"
+    },
+    "estimadaTexto": "Sin reloj, Moss la estima con tus pasos, el movimiento del teléfono y cuándo usas la app.",
+    "rango": "Entre {a} y {b} al dormirte, y entre {c} y {d} al despertarte.",
+    "seguridad": {
+      "alta": "Bastante segura",
+      "media": "Más o menos segura",
+      "baja": "Poco segura"
+    },
+    "sinRelojEtapas": "Sin reloj no hay etapas ni despertares: con un reloj o un anillo, Moss los mide.",
+    "cambiarHora": "Cambiar la hora",
+    "sinRelojParte": "sin reloj",
+    "movimiento": {
+      "titulo": "El movimiento del teléfono",
+      "texto": "Sin reloj, ayuda a saber cuándo te dormiste y te despertaste. No sale del teléfono.",
+      "permitir": "Permitir"
+    },
+    "precision": {
+      "titulo": "Precisión de la noche",
+      "niveles": [
+        "Sin datos",
+        "Estimada con el teléfono",
+        "Medida, sin etapas",
+        "Medida, con etapas",
+        "Con etapas y lo de la noche",
+        "Conexión directa"
+      ]
+    },
+    "porMoss": "Estimada por Moss",
+    "porTi": "Confirmada por ti",
+    "corregidaPorTi": "Corregida por ti",
+    "fuentesSinReloj": "Con un reloj o un anillo, Moss mide en vez de estimar. Qué llega de cada uno está en Perfil › Aparatos."
   },
   "perfil": {
     "titulo": "Perfil",
@@ -784,7 +834,84 @@
       "media": "Media",
       "baja": "Baja"
     },
-    "calidadTexto": "La automática elige según tu iPhone y baja sola si el cielo se traba. La baja gasta menos batería."
+    "calidadTexto": "La automática elige según tu iPhone y baja sola si el cielo se traba. La baja gasta menos batería.",
+    "aparatos": {
+      "titulo": "Aparatos",
+      "soloIphone": "Solo el iPhone",
+      "arriba": "Moss funciona solo con el iPhone y mejora con un reloj o un anillo. Todo llega desde Salud.",
+      "tuyos": "Los que escriben tu sueño",
+      "noches": {
+        "uno": "{n} noche en el último mes",
+        "otros": "{n} noches en el último mes"
+      },
+      "laNoche": "La noche, de",
+      "automatica": "Automática",
+      "automaticaTexto": "La más precisa de cada noche.",
+      "cadaUno": "Qué llega de cada uno",
+      "varios": "Si usas más de uno, Moss toma uno por noche, el que elijas, y nunca los suma.",
+      "marcas": {
+        "iphone": {
+          "nombre": "Solo el iPhone",
+          "texto": "Con el iPhone solo, Moss estima cuándo dormiste con tus pasos, el movimiento y cuándo usas la app, y te pregunta a la mañana para confirmarlo. Con un reloj o un anillo, se mide."
+        },
+        "appleWatch": {
+          "nombre": "Apple Watch",
+          "texto": "Cuánto y cuándo dormiste, con etapas y siestas; de noche, la frecuencia cardíaca, la variabilidad y la respiración; la temperatura de la muñeca desde el Series 8 y el oxígeno en los modelos que lo miden."
+        },
+        "oura": {
+          "nombre": "Oura",
+          "texto": "Cuánto y cuándo dormiste, con etapas, y la frecuencia y la respiración de la noche. La variabilidad y la temperatura se quedan en la app de Oura. Ábrela cada día para que lleguen los datos."
+        },
+        "whoop": {
+          "nombre": "WHOOP",
+          "texto": "Cuánto y cuándo dormiste, sin etapas, y la frecuencia en reposo, la respiración y el oxígeno de la noche. Las etapas y la variabilidad se quedan en la app de WHOOP."
+        },
+        "garmin": {
+          "nombre": "Garmin",
+          "texto": "Cuánto y cuándo dormiste, con etapas, la frecuencia y los pasos. Abre Garmin Connect para que mande los datos. La variabilidad y la Body Battery se quedan en Garmin."
+        },
+        "google": {
+          "nombre": "Fitbit",
+          "texto": "Con un Fitbit o un Fitbit Air: cuánto y cuándo dormiste, con etapas, la frecuencia, la frecuencia en reposo, la respiración y el oxígeno. Conecta la app Google Health con Salud. La variabilidad no llega."
+        },
+        "polar": {
+          "nombre": "Polar",
+          "texto": "Cuánto dormiste, sin etapas, los pasos y los entrenamientos."
+        },
+        "withings": {
+          "nombre": "Withings",
+          "texto": "El peso y la composición corporal; con el Sleep Analyzer o un ScanWatch, también el sueño. Si creaste tu cuenta después del 12 de octubre de 2026, necesitas Withings+ para mandar datos a Salud."
+        },
+        "ringconn": {
+          "nombre": "RingConn",
+          "texto": "Cuánto y cuándo dormiste, con etapas, la frecuencia y el oxígeno de la noche."
+        },
+        "ultrahuman": {
+          "nombre": "Ultrahuman",
+          "texto": "La variabilidad y la temperatura que su app mande a Salud."
+        },
+        "amazfit": {
+          "nombre": "Amazfit, Xiaomi o Huawei",
+          "texto": "Los pasos, la frecuencia y el sueño; el detalle depende del modelo."
+        },
+        "coros": {
+          "nombre": "COROS",
+          "texto": "La frecuencia, el sueño y los pasos."
+        },
+        "suunto": {
+          "nombre": "Suunto",
+          "texto": "Los entrenamientos, los pasos y la frecuencia; el sueño no llega a Salud."
+        },
+        "eightSleep": {
+          "nombre": "Eight Sleep",
+          "texto": "El sueño que mide la funda."
+        },
+        "samsung": {
+          "nombre": "Samsung o Pixel Watch",
+          "texto": "El Pixel Watch, el Galaxy Watch y el Galaxy Ring no funcionan con iPhone."
+        }
+      }
+    }
   },
   "fecha": {
     "dias": [

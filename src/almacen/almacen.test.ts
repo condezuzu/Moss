@@ -87,6 +87,24 @@ describe('local primero', () => {
     expect((await armar(repositorio)).almacen.estado().calidad).toBeNull();
   });
 
+  it('cuándo se usó Moss: al abrir un momento, al cerrar un rato; queda en el teléfono tres días', async () => {
+    const { almacen, repositorio } = await armar();
+    const t = (iso: string) => Date.parse(iso);
+    almacen.anotarUso('abrir', t('2026-10-18T02:00:00Z'));
+    almacen.anotarUso('cerrar', t('2026-10-18T02:05:00Z'));
+    almacen.anotarUso('abrir', t('2026-10-21T02:10:00Z'));
+    almacen.anotarUso('cerrar', t('2026-10-21T02:14:00Z'));
+    // Si el sistema la cerró sin avisar, queda el momento; cerrar dos veces no cambia nada.
+    almacen.anotarUso('abrir', t('2026-10-21T10:30:00Z'));
+    almacen.anotarUso('abrir', t('2026-10-21T11:00:00Z'));
+    almacen.anotarUso('cerrar', t('2026-10-21T11:02:00Z'));
+    almacen.anotarUso('cerrar', t('2026-10-21T11:03:00Z'));
+    const esperado = [[t('2026-10-21T02:10:00Z'), t('2026-10-21T02:14:00Z')], [t('2026-10-21T10:30:00Z'), t('2026-10-21T10:30:00Z')], [t('2026-10-21T11:00:00Z'), t('2026-10-21T11:02:00Z')]];
+    expect(almacen.estado().uso).toEqual(esperado);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().uso).toEqual(esperado);
+  });
+
   it('marcar no cambia la forma del cielo; cambiar hábitos sí', async () => {
     const { almacen } = await armar();
     const forma = almacen.estado().forma;
@@ -212,7 +230,7 @@ describe('el cuestionario, el peso y las metas', () => {
     const { almacen } = await armar(undefined, () => [pasos, dormir, habito('leer', 2)]);
     almacen.anotarPeso(80, 'manual', '2026-10-20');
     const salud = (valores: Record<string, number>) => ({
-      dia: '2026-10-21', valores, noches: [], soloEnCama: new Map(), fuentes: [],
+      dia: '2026-10-21', valores, noches: [], soloEnCama: new Map(), fuentes: [], pasosRecientes: [],
       lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() },
       pesos: new Map([['2026-10-20', 81], ['2026-10-21', 79.84]]),
     });

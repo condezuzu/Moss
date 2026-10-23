@@ -1,6 +1,6 @@
 // Arma galeria/dist/index.html: un solo archivo con la página, los shaders del cielo, el
 // catálogo, los textos, los alimentos curados y los módulos de la app que usa (la comida, las
-// metas, el control, el cuerpo, el progreso, el sueño y las estadísticas de Hábitos). Todo se lee
+// metas, el control, el cuerpo, el progreso, el sueño con y sin reloj y las estadísticas de Hábitos). Todo se lee
 // de src/ y de assets/, que es lo mismo que usa la app: la galería nunca tiene una copia propia.
 // Uso: npm run galeria
 
@@ -16,7 +16,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', entrenamiento: 'Entrenamiento', estadisticas: 'Estadisticas' };
+const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', estadisticas: 'Estadisticas' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -112,6 +112,7 @@ const js = [
   modulo('Cuerpo', 'src/dominio/cuerpo.ts'),
   modulo('Progreso', 'src/dominio/progreso.ts'),
   modulo('Sueno', 'src/dominio/sueno.ts'),
+  modulo('SinReloj', 'src/dominio/sinReloj.ts'),
   modulo('Entrenamiento', 'src/dominio/entrenamiento.ts'),
   modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
   ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
