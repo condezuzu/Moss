@@ -97,6 +97,9 @@ const Comida = (() => {
     globo: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.4 2.5 13.6 0 16M12 4c-2.5 2.4-2.5 13.6 0 16"/>',
     borrar: '<path d="M9 5.5h10a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H9L3.5 12z"/><path d="m11.5 9.5 5 5M16.5 9.5l-5 5"/>',
     mayus: '<path d="M12 4.5 4.5 12H9v7h6v-7h4.5z"/>',
+    chispa: '<path d="M12 3.5c.8 4.2 2.3 5.7 6.5 6.5-4.2.8-5.7 2.3-6.5 6.5-.8-4.2-2.3-5.7-6.5-6.5 4.2-.8 5.7-2.3 6.5-6.5zM18.5 15.5c.3 1.6.9 2.2 2.5 2.5-1.6.3-2.2.9-2.5 2.5-.3-1.6-.9-2.2-2.5-2.5 1.6-.3 2.2-.9 2.5-2.5z"/>',
+    corazon: '<path d="M12 19s-7-4.3-7-9.2A4 4 0 0 1 12 7.5a4 4 0 0 1 7 2.3C19 14.7 12 19 12 19z"/>',
+    compras: '<path d="M5 6.5h14l-1.4 8.2a1.5 1.5 0 0 1-1.5 1.3H8a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M8.5 6.5 9.5 4h5l1 2.5M9 19.5h.01M15 19.5h.01"/>',
   };
   const icono = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n]}</svg>`;
 
@@ -193,6 +196,10 @@ const Comida = (() => {
       // Los toques desde Inicio hasta registrar algo (se cuentan para comparar con la especificación).
       toques: 0,
       escribio: false,
+      // Lo del cuestionario para armar las comidas (Plan.Preferencias) y lo tachado de la lista de compras.
+      pref: { dieta: 'todo', alergias: [], comidas: 4, tiempo: 'normal', noMeGusta: [], meGusta: [] },
+      compradas: new Set(),
+      semilla: 0,
     };
     const armarDia = (comidas) => comidas.map((c) => Object.assign({}, c, { items: c.items.map(([n, v, p]) => item(n, v, p)).filter(Boolean) }));
     for (let k = PRIMER_DIA; k <= ULTIMO_DIA; k++) {
@@ -200,6 +207,7 @@ const Comida = (() => {
       s.dias[k] = plantilla ? armarDia(plantilla) : [];
       s.agua[k] = k === 0 ? 5 : k < 0 && plantilla ? 6 + ((-k * 7) % 4) : 0;
     }
+    Object.values(s.dias).forEach((l) => l.forEach((c) => { if (c.plan) c.opcion = 'galeria:' + c.tipo; }));
     FAVORITOS.forEach(([n]) => { const a = porNombre.get(n); if (a) s.favoritos.add(a.id); });
     Object.entries(USOS).forEach(([n, veces]) => { const a = porNombre.get(n); if (a) s.usos.set(a.id, veces); });
     // La última porción de cada alimento: la de los días de mentira, del más viejo al más nuevo.
@@ -253,6 +261,7 @@ const Comida = (() => {
             <div class="cm-pagina cm-pagina-semana">
               <div class="cm-promedio cm-promedio-semana"></div>
               <div class="cm-grafica"></div>
+              <div class="cm-semana-plan"></div>
             </div>
             <div class="cm-pagina cm-pagina-mes">
               <div class="cm-promedio cm-promedio-mes"></div>
@@ -263,6 +272,7 @@ const Comida = (() => {
         <nav class="cm-puntos"></nav>
         <h3 class="cm-seccion cm-seccion-dia"></h3>
         <p class="cm-nota" hidden></p>
+        <div class="cm-armar"></div>
         <div class="cm-linea"></div>
       </div>
       <div class="cm-aviso" role="status"><span></span></div>`;
@@ -462,6 +472,7 @@ const Comida = (() => {
       const nota = $z('.cm-nota');
       nota.hidden = d <= 0;
       nota.textContent = tx(comidasDe(d).length ? 'comida.planificadoTexto' : 'comida.sinRegistros');
+      pintarArmar();
       pintarLinea();
     }
 
@@ -504,7 +515,8 @@ const Comida = (() => {
 
     function tarjeta(c) {
       const t = sumar(c.items);
-      const art = el('article', 'cm-tarjeta');
+      const art = el('article', 'cm-tarjeta' + (c.entra ? ' entra' : ''));
+      delete c.entra;
       const cab = el('header');
       const titulo = el('b', null, tx('comida.comidas.' + c.tipo));
       cab.appendChild(titulo);
@@ -537,7 +549,247 @@ const Comida = (() => {
       });
       if (!c.plan) pie.appendChild(boton('cm-foto', icono('camara'), () => avisarZona('Galería: la foto queda como recuerdo, sin análisis.'), tx('comida.foto')));
       art.appendChild(pie);
+      // Lo que armó Moss: «Comí esto» (hoy o antes), otra parecida, me gusta y no me gusta.
+      if (c.plan && c.opcion) {
+        const acciones = el('div', 'cm-acciones cm-plan-acciones');
+        if (diaDe(c) <= 0) acciones.appendChild(boton('cm-accion principal', `${icono('listo')}<span>${tx('comida.plan.comiEsto')}</span>`, () => comiEsto(c)));
+        acciones.appendChild(boton('cm-accion', `<span>${tx('comida.plan.otra')}</span>`, () => otra(c)));
+        const gusta = boton('cm-accion cm-redondo cm-gusta', icono('corazon'), () => gusto(c, gusta), tx('comida.plan.meGusta'));
+        gusta.setAttribute('aria-pressed', String(s.pref.meGusta.includes(c.opcion)));
+        acciones.append(gusta, boton('cm-accion cm-redondo', icono('cerrar'), () => noMeGusta(c), tx('comida.plan.noMeGusta')));
+        art.appendChild(acciones);
+      }
       return art;
+    }
+
+    // ------------------------------------------------------------ el plan de comidas
+    // Moss arma las comidas que faltan con Plan (src/dominio/plan.ts, el mismo módulo que la app):
+    // primero lo que comes seguido, después comidas tipo de tu forma de comer, escaladas para llegar
+    // a la meta. Quedan planificadas, tenues: «Comí esto» las anota, «Otra» la cambia por una
+    // parecida y lo que no te gusta no vuelve.
+    const HORA_DEL_PLAN = Object.assign({ snack: 11 * 60 }, HORA_TIPICA);
+    const metaDelPlan = () => ({ kcal: META.kcal, proteina: META.p, carbohidratos: META.c, grasas: META.g });
+    const aMacros = (v) => ({ kcal: v.kcal, proteina: v.p, carbohidratos: v.c, grasas: v.g });
+    const sumaDelPlan = (items) => items.reduce((t, it) => ({ kcal: t.kcal + it.valores.kcal, proteina: t.proteina + it.valores.proteina,
+      carbohidratos: t.carbohidratos + it.valores.carbohidratos, grasas: t.grasas + it.valores.grasas }), { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 });
+    // De lo de la galería a lo del plan, y de vuelta: un alimento con su porción o sus gramos, o la carga rápida.
+    function aItemDelPlan(it) {
+      if (it.rapida) return { fuente: 'rapida', ref: null, nombre: nombreDeItem(it), cantidad: null, valores: aMacros(valoresDe(it)) };
+      const a = porId.get(it.alimento);
+      const cantidad = it.gramos != null ? { gramos: it.gramos } : { porcion: porcionDe(a, it.porcion), gramosPorcion: a.p[it.porcion][2], veces: it.veces };
+      return { fuente: 'base', ref: String(a.id), nombre: nombreDe(a), cantidad, valores: aMacros(valoresDe(it)) };
+    }
+    function deItemDelPlan(item) {
+      if (item.fuente === 'rapida') return { rapida: true, nombre: item.nombre, kcal: item.valores.kcal, p: item.valores.proteina, c: item.valores.carbohidratos, g: item.valores.grasas };
+      const a = porId.get(Number(item.ref));
+      const c = item.cantidad;
+      if (c && 'porcion' in c) {
+        const i = a.p.findIndex((p, j) => porcionDe(a, j) === c.porcion);
+        return i >= 0 ? { alimento: a.id, porcion: i, veces: c.veces } : { alimento: a.id, gramos: Math.round(c.gramosPorcion * c.veces) };
+      }
+      return { alimento: a.id, gramos: c ? c.gramos : 100 };
+    }
+    let opcionesGuardadas = null;
+    function opcionesDelPlan() {
+      if (opcionesGuardadas && opcionesGuardadas.idioma === idioma) return opcionesGuardadas.lista;
+      // Lo tuyo sale de los días de mentira que ya pasaron; las comidas tipo, de los alimentos curados.
+      const registros = [];
+      for (let k = PRIMER_DIA; k < 0; k++) {
+        comidasDe(k).forEach((c) => c.items.forEach((it, j) => {
+          if (c.plan) return;
+          registros.push(Object.assign({ id: `${k}-${c.tipo}-${j}`, dia: fechaClave(k), comida: c.tipo, momento: hora(c.hora), planificado: false, actualizado: '' }, aItemDelPlan(it)));
+        }));
+      }
+      const resolver = (nombre) => {
+        const a = porNombre.get(nombre);
+        if (!a) return null;
+        return { fuente: 'base', ref: String(a.id), nombre: nombreDe(a), por100g: { kcal: a.v[0], proteina: a.v[1], carbohidratos: a.v[2], grasas: a.v[3] },
+          porciones: a.p.map((p, i) => ({ nombre: porcionDe(a, i), gramos: p[2] })) };
+      };
+      const lista = [...Plan.opcionesTuyas(registros, fechaClave(0)), ...Plan.PLANTILLAS.map((p) => Plan.opcionDePlantilla(p, resolver, idioma)).filter(Boolean)];
+      opcionesGuardadas = { idioma, lista };
+      return lista;
+    }
+    const recientesDe = (k) => [k - 1, k - 2].flatMap((x) => comidasDe(x).filter((c) => c.opcion).map((c) => c.opcion));
+    // Las comidas que faltan de un día; hoy, solo las que todavía no pasaron.
+    function faltanDe(k) {
+      const hay = new Set(comidasDe(k).map((c) => c.tipo));
+      return Plan.comidasDelPlan(s.pref.comidas).filter((t) => !hay.has(t) && (k > 0 || HORA_DEL_PLAN[t] + 60 >= AHORA));
+    }
+
+    /** Arma las comidas que faltan de un día con lo que queda de la meta. Devuelve el día armado, o null. */
+    function armarPlan(k) {
+      const faltan = faltanDe(k);
+      if (k < 0 || !faltan.length) return null;
+      s.semilla++;
+      const dia = Plan.planearDia({ dia: fechaClave(k), meta: metaDelPlan(), opciones: opcionesDelPlan(), pref: s.pref, semilla: s.semilla, solo: faltan, yaComido: aMacros(totalDe(k)), recientes: recientesDe(k) });
+      if (!s.dias[String(k)]) s.dias[String(k)] = [];
+      const lista = s.dias[String(k)];
+      dia.comidas.forEach((c) => lista.push({ tipo: c.comida, hora: k === 0 ? Math.max(HORA_DEL_PLAN[c.comida], AHORA) : HORA_DEL_PLAN[c.comida], plan: true, entra: true, opcion: c.opcion,
+        items: c.items.map((it) => Object.assign(deItemDelPlan(it), { nuevo: true })) }));
+      lista.sort((a, b) => a.hora - b.hora);
+      return dia.comidas.length ? dia : null;
+    }
+    function armarElDia() {
+      const dia = armarPlan(s.dia);
+      if (!dia) { avisarZona(tx('comida.plan.nadaQueArmar')); return; }
+      escena.haptico('suave');
+      pintarZona(800);
+      avisarCambio();
+      if (!dia.alcanza) avisarZona(tx('comida.plan.noAlcanza'));
+    }
+    function armarLaSemana() {
+      const lunes = lunesDe(s.dia);
+      let alguno = false;
+      for (let k = Math.max(0, lunes); k <= Math.min(ULTIMO_DIA, lunes + 6); k++) alguno = !!armarPlan(k) || alguno;
+      escena.haptico('suave');
+      pintarZona(800);
+      avisarCambio();
+      avisarZona(tx(alguno ? 'comida.plan.armadaSemana' : 'comida.plan.nadaQueArmar'));
+    }
+    function diaPlaneadoDe(k) {
+      const comidas = comidasDe(k).filter((x) => x.plan && x.opcion).map((x) => {
+        const items = x.items.map(aItemDelPlan);
+        return { comida: x.tipo, opcion: x.opcion, items, valores: sumaDelPlan(items) };
+      });
+      return { dia: fechaClave(k), comidas, valores: sumaDelPlan(comidas.flatMap((c) => c.items)), alcanza: true };
+    }
+    // «Comí esto»: un toque, y la comida armada queda anotada como cualquier otra.
+    function comiEsto(c) {
+      c.plan = false;
+      c.items.forEach((it) => { it.nuevo = true; });
+      escena.haptico('toque');
+      pintarZona(900);
+      avisarCambio();
+      avisarZona(tx('comida.plan.anotado'), () => { c.plan = true; pintarZona(600); avisarCambio(); });
+    }
+    function otra(c, callado) {
+      s.semilla++;
+      const nuevo = Plan.cambiarPorOtra(diaPlaneadoDe(diaDe(c)), c.tipo, { opciones: opcionesDelPlan(), pref: s.pref, meta: metaDelPlan(), semilla: s.semilla });
+      const cambiada = nuevo && nuevo.comidas.find((x) => x.comida === c.tipo);
+      if (!cambiada) {
+        if (!callado) avisarZona(tx('comida.plan.sinOtra'));
+        return false;
+      }
+      c.opcion = cambiada.opcion;
+      c.items = cambiada.items.map((it) => Object.assign(deItemDelPlan(it), { nuevo: true }));
+      pintarZona(700);
+      avisarCambio();
+      return true;
+    }
+    function gusto(c, b) {
+      const ya = s.pref.meGusta.includes(c.opcion);
+      s.pref.meGusta = ya ? s.pref.meGusta.filter((x) => x !== c.opcion) : [...s.pref.meGusta, c.opcion];
+      b.setAttribute('aria-pressed', String(!ya));
+      escena.haptico('suave');
+    }
+    // No me gusta: no se vuelve a proponer (lo anotado no se toca) y se cambia ya por otra.
+    function noMeGusta(c) {
+      const antes = { opcion: c.opcion, items: c.items };
+      s.pref.noMeGusta = [...s.pref.noMeGusta, c.opcion];
+      if (!otra(c, true)) {
+        s.pref.noMeGusta = s.pref.noMeGusta.filter((x) => x !== antes.opcion);
+        avisarZona(tx('comida.plan.sinOtra'));
+        return;
+      }
+      avisarZona(tx('comida.plan.quitada'), () => {
+        s.pref.noMeGusta = s.pref.noMeGusta.filter((x) => x !== antes.opcion);
+        c.opcion = antes.opcion;
+        c.items = antes.items;
+        pintarZona(500);
+        avisarCambio();
+      });
+    }
+    // «Armar el día» se va despacio cuando ya no falta nada (y vuelve si falta); «Tus comidas» queda.
+    function pintarArmar() {
+      const cont = $z('.cm-armar');
+      if (!cont.firstChild) {
+        cont.append(
+          boton('cm-armar-boton cm-armar-dia', `${icono('chispa')}<span></span>`, armarElDia),
+          boton('cm-armar-enlace', '', abrirPreferencias),
+        );
+      }
+      cont.hidden = s.dia < 0;
+      const armar = cont.querySelector('.cm-armar-dia');
+      const falta = s.dia >= 0 && faltanDe(s.dia).length > 0;
+      armar.querySelector('span').textContent = tx('comida.plan.armarDia');
+      armar.classList.toggle('oculto', !falta);
+      armar.disabled = !falta;
+      cont.querySelector('.cm-armar-enlace').textContent = tx('comida.plan.tusComidas');
+    }
+
+    // Tus comidas: cómo comes, qué no, cuántas comidas y cuánto tiempo para cocinar.
+    const hojaPlan = Util.hoja(tel, 'pl-hoja', () => opciones.alCambiar());
+    function cabezaDeHojaPlan(titulo) {
+      const cab = el('header', 'hb-cab');
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', titulo), boton('hb-cerrar', icono('cerrar'), () => hojaPlan.cerrar(), tx('comida.cerrar')));
+      return cab;
+    }
+    function abrirPreferencias() {
+      const h = hojaPlan.el;
+      h.innerHTML = '';
+      const cuerpo = el('div', 'pl-cuerpo');
+      cuerpo.appendChild(el('p', 'hb-texto', tx('comida.plan.preferenciasTexto')));
+      const grupo = (titulo, valores, nombre, elegido, alElegir) => {
+        cuerpo.appendChild(el('div', 'fi-etq', titulo));
+        const fila = el('div', 'fi-porciones pl-opciones');
+        const botones = valores.map((v) => {
+          const b = boton('fi-porcion', `<span>${nombre(v)}</span>`, () => {
+            alElegir(v);
+            botones.forEach((x, i) => x.setAttribute('aria-pressed', String(elegido(valores[i]))));
+            opcionesGuardadas = null;
+            escena.haptico('suave');
+            pintarArmar();
+          });
+          b.setAttribute('aria-pressed', String(elegido(v)));
+          fila.appendChild(b);
+          return b;
+        });
+        cuerpo.appendChild(fila);
+      };
+      grupo(tx('comida.plan.dieta'), Plan.DIETAS, (d) => tx('comida.plan.dietas.' + d), (d) => s.pref.dieta === d, (d) => { s.pref.dieta = d; });
+      grupo(tx('comida.plan.alergias'), Plan.ALERGENOS, (a) => tx('comida.plan.alergenos.' + a), (a) => s.pref.alergias.includes(a),
+        (a) => { s.pref.alergias = s.pref.alergias.includes(a) ? s.pref.alergias.filter((x) => x !== a) : [...s.pref.alergias, a]; });
+      grupo(tx('comida.plan.comidas'), [3, 4, 5], (n) => String(n), (n) => s.pref.comidas === n, (n) => { s.pref.comidas = n; });
+      grupo(tx('comida.plan.tiempo'), ['poco', 'normal', 'mucho'], (t) => tx('comida.plan.tiempos.' + t), (t) => s.pref.tiempo === t, (t) => { s.pref.tiempo = t; });
+      h.append(cabezaDeHojaPlan(tx('comida.plan.tusComidas')), cuerpo);
+      hojaPlan.abrir();
+      opciones.alCambiar();
+    }
+
+    // La lista de compras: lo de las comidas armadas desde hoy, sumado, para tachar en el súper.
+    function abrirCompras() {
+      const h = hojaPlan.el;
+      h.innerHTML = '';
+      const cuerpo = el('div', 'pl-cuerpo');
+      const lista = Plan.listaDeCompras(rango(0, ULTIMO_DIA).map(diaPlaneadoDe));
+      if (!lista.length) cuerpo.appendChild(el('p', 'hb-texto', tx('comida.plan.sinCompras')));
+      else {
+        cuerpo.appendChild(el('p', 'hb-texto', tx('comida.plan.comprasTexto')));
+        const ul = el('ul', 'pl-compras');
+        lista.forEach((x) => {
+          const li = el('li', s.compradas.has(x.clave) ? 'comprada' : null);
+          li.dataset.toque = '';
+          li.setAttribute('role', 'checkbox');
+          li.setAttribute('aria-checked', String(s.compradas.has(x.clave)));
+          li.tabIndex = 0;
+          const cuanto = x.porciones ? Porciones.cantidadDePorcion(x.porciones.veces, x.porciones.nombre, idioma) : `${numero(x.gramos)} g`;
+          const marca = el('i', 'pl-marca');
+          marca.innerHTML = icono('listo');
+          li.append(marca, el('span', null, x.nombre), el('small', null, cuanto));
+          li.addEventListener('click', () => {
+            if (s.compradas.has(x.clave)) s.compradas.delete(x.clave); else s.compradas.add(x.clave);
+            li.classList.toggle('comprada', s.compradas.has(x.clave));
+            li.setAttribute('aria-checked', String(s.compradas.has(x.clave)));
+            escena.haptico('suave');
+          });
+          ul.appendChild(li);
+        });
+        cuerpo.appendChild(ul);
+      }
+      h.append(cabezaDeHojaPlan(tx('comida.plan.compras')), cuerpo);
+      hojaPlan.abrir();
+      opciones.alCambiar();
     }
 
     function tarjetaVacia(tipo) {
@@ -593,6 +845,15 @@ const Comida = (() => {
         col.append(barras, el('span', 'cm-tira-letra', letraDe(k)), el('b', null, String(fechaDe(k).num)));
         grafica.appendChild(col);
       });
+      // Armar la semana y la lista de compras, debajo de las barras, si la semana no pasó.
+      const plan = $z('.cm-semana-plan');
+      plan.innerHTML = '';
+      if (lunes + 6 >= 0) {
+        plan.append(
+          boton('cm-armar-boton', `${icono('chispa')}<span>${tx('comida.plan.armarSemana')}</span>`, armarLaSemana),
+          boton('cm-armar-boton', `${icono('compras')}<span>${tx('comida.plan.compras')}</span>`, abrirCompras),
+        );
+      }
     }
 
     // ------------------------------------------------------------ el mes
@@ -1662,6 +1923,15 @@ const Comida = (() => {
       vista: verVista,
       get enZona() { return s.enZona; },
       get hojaAbierta() { return !!s.hoja; },
+      // El plan de comidas: armar, las hojas de tus comidas y de compras, y lo armado del día que se ve.
+      armarDia: () => armarElDia(),
+      armarSemana: () => armarLaSemana(),
+      compras: () => abrirCompras(),
+      tusComidas: () => abrirPreferencias(),
+      get hojaPlanAbierta() { return hojaPlan.abierta; },
+      cerrarPlan: () => hojaPlan.cerrar(),
+      otraDel(tipo) { const c = comidasDe(s.dia).find((x) => x.tipo === tipo && x.plan); return c ? otra(c) : false; },
+      comiEsto(tipo) { const c = comidasDe(s.dia).find((x) => x.tipo === tipo && x.plan); if (c) comiEsto(c); },
       get dia() { return s.dia; },
       get vistaActual() { return s.vista; },
       get meta() { return Object.assign({}, META); },

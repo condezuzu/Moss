@@ -290,6 +290,10 @@
     rapida: () => conHoja(() => comida.cargaRapida()),
     copiar: () => enLaZona(() => comida.copiarDeAyer('cena')),
     etiqueta: () => conHoja(() => comida.etiqueta()),
+    armar: () => enLaZona(() => { comida.verDia(0); comida.armarDia(); comida.bajarA('ahora'); }),
+    armarSemana: () => enLaZona(() => { comida.vista('semana'); comida.armarSemana(); }),
+    compras: () => enLaZona(() => comida.compras()),
+    tusComidas: () => enLaZona(() => comida.tusComidas()),
   };
   // Como si se escribiera: letra por letra, con la búsqueda en cada una.
   let escribiendo = 0;
@@ -597,6 +601,7 @@
 
   const cerrarHojas = () => {
     if (comida.hojaAbierta) comida.cerrarHoja();
+    if (comida.hojaPlanAbierta) comida.cerrarPlan();
     if (mas.abierta) mas.cerrar();
     if (inicio.editando) inicio.cerrar();
     if (habitosSec.abierta) habitosSec.cerrar();
@@ -1201,6 +1206,8 @@
       vista: () => comida.vista(arg),
       rapida: () => comida.cargaRapida(), guardadas: () => comida.guardadas(), copiar: () => comida.copiarDeAyer(arg), etiqueta: () => comida.etiqueta(arg),
       dia: () => comida.verDia(arg), bajar: () => comida.bajarA(arg), teclado: () => comida.teclado(arg), dictar: () => comida.dictar(),
+      armar: () => comida.armarDia(), armarSemana: () => comida.armarSemana(), compras: () => comida.compras(), tusComidas: () => comida.tusComidas(),
+      cerrarPlan: () => comida.cerrarPlan(), otra: () => comida.otraDel(arg), comiEsto: () => comida.comiEsto(arg),
     };
     const r = pasos[accion]();
     refrescarControles();

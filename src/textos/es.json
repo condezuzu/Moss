@@ -470,6 +470,51 @@
       "nota": "Cuéntanos más (opcional)",
       "enviar": "Enviar",
       "gracias": "Gracias. Lo vamos a revisar."
+    },
+    "plan": {
+      "armarDia": "Armar el día",
+      "armarSemana": "Armar la semana",
+      "tusComidas": "Tus comidas",
+      "comiEsto": "Comí esto",
+      "otra": "Otra",
+      "meGusta": "Me gusta",
+      "noMeGusta": "No me gusta",
+      "anotado": "Anotado.",
+      "sinOtra": "No hay otra parecida.",
+      "quitada": "No vuelve a aparecer.",
+      "nadaQueArmar": "No falta ninguna comida.",
+      "noAlcanza": "Con tus comidas no se llega justo a la meta: queda lo más cerca posible.",
+      "armadaSemana": "La semana, armada.",
+      "compras": "Lista de compras",
+      "comprasTexto": "Lo de las comidas armadas, desde hoy.",
+      "sinCompras": "Arma algún día y aparece aquí.",
+      "preferenciasTexto": "Moss arma primero con lo que comes seguido; si falta, con comidas tipo de tu forma de comer.",
+      "dieta": "Cómo comes",
+      "dietas": {
+        "todo": "De todo",
+        "vegetariana": "Vegetariana",
+        "vegana": "Vegana",
+        "pescetariana": "Pescetariana"
+      },
+      "alergias": "Lo que no comes",
+      "alergenos": {
+        "gluten": "Gluten",
+        "leche": "Lácteos",
+        "huevo": "Huevo",
+        "mani": "Maní",
+        "frutosSecos": "Frutos secos",
+        "soja": "Soja",
+        "pescado": "Pescado",
+        "mariscos": "Mariscos",
+        "sesamo": "Sésamo"
+      },
+      "comidas": "Comidas por día",
+      "tiempo": "Tiempo para cocinar",
+      "tiempos": {
+        "poco": "Poco",
+        "normal": "Normal",
+        "mucho": "Mucho"
+      }
     }
   },
   "inicio": {

@@ -992,7 +992,8 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-nodo { position: absolute; left: -12px; top: 15px; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--oro); box-shadow: 0 0 10px rgba(232, 196, 106, 0.85); }
 .cm-entrada.vacia .cm-nodo { background: #070b18; border: 1px solid rgba(232, 196, 106, 0.7); box-shadow: none; }
 .cm-entrada.plan .cm-nodo { background: rgba(232, 196, 106, 0.35); box-shadow: none; }
-.cm-entrada.plan .cm-tarjeta { opacity: 0.6; border-style: dashed; }
+.cm-entrada.plan .cm-tarjeta { border-style: dashed; }
+.cm-entrada.plan .cm-tarjeta > :not(.cm-plan-acciones) { opacity: 0.6; }
 .cm-ahora { height: 12px; }
 .cm-ahora .cm-hora, .cm-ahora .cm-nodo { top: 6px; }
 .cm-ahora .cm-hora { top: 1px; color: var(--oro-claro); }
@@ -1027,6 +1028,35 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-accion { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px 0 10px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.36); background: rgba(232, 196, 106, 0.06); color: var(--oro-claro); font: 400 13px/1 var(--texto); }
 .cm-accion.principal { background: var(--oro); border-color: var(--oro); color: #1a1406; font-weight: 500; }
 .cm-accion svg { width: 15px; height: 15px; stroke-width: 2; }
+/* El plan de comidas: armar el día, lo que se hace con lo armado, la semana y sus hojas. */
+.cm-armar { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; }
+.cm-armar[hidden] { display: none; }
+.cm-armar-dia { overflow: hidden; white-space: nowrap; max-width: 240px; transition: max-width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s, padding 0.45s, margin 0.45s, border-width 0.45s; }
+.cm-armar-dia.oculto { max-width: 0; opacity: 0; padding-left: 0; padding-right: 0; border-width: 0; margin-right: -10px; pointer-events: none; }
+.cm-armar-boton { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px 0 11px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.36); background: rgba(232, 196, 106, 0.06); color: var(--oro-claro); font: 400 13px/1 var(--texto); }
+.cm-armar-boton svg { width: 15px; height: 15px; stroke-width: 1.8; }
+.cm-armar-enlace { appearance: none; cursor: pointer; border: 0; background: none; padding: 8px 4px; color: rgba(239, 230, 207, 0.6); font: 400 13px/1 var(--texto); text-decoration: underline; text-decoration-color: rgba(239, 230, 207, 0.25); text-underline-offset: 3px; }
+.cm-semana-plan { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.cm-semana-plan:empty { display: none; }
+.cm-plan-acciones { margin-top: 10px; }
+.cm-accion.cm-redondo { width: 34px; padding: 0; justify-content: center; }
+.cm-gusta svg { transition: fill 0.25s; }
+.cm-gusta[aria-pressed='true'] svg { fill: currentColor; }
+.cm-tarjeta.entra { animation: cm-entra 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes cm-entra { from { opacity: 0; translate: 0 12px; } }
+.pl-hoja { max-height: 86%; }
+.pl-cuerpo { min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 0 20px 12px; }
+.pl-cuerpo .fi-etq:first-of-type { margin-top: 10px; }
+.pl-compras { list-style: none; margin: 4px 0 0; padding: 0; border-radius: 16px; background: rgba(239, 230, 207, 0.04); border: 1px solid rgba(239, 230, 207, 0.08); }
+.pl-compras li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; }
+.pl-compras li + li { border-top: 1px solid rgba(239, 230, 207, 0.07); }
+.pl-compras span { flex: 1; font: 400 14.5px/1.25 var(--texto); transition: color 0.25s; }
+.pl-compras small { flex: none; font: 400 12.5px/1 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.pl-marca { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid rgba(239, 230, 207, 0.3); display: grid; place-items: center; transition: background 0.25s, border-color 0.25s; }
+.pl-marca svg { width: 13px; height: 13px; stroke-width: 2.4; color: #1a1406; opacity: 0; transition: opacity 0.2s; }
+.pl-compras li.comprada .pl-marca { background: var(--oro); border-color: var(--oro); }
+.pl-compras li.comprada .pl-marca svg { opacity: 1; }
+.pl-compras li.comprada span { color: rgba(239, 230, 207, 0.4); text-decoration: line-through; }
 
 /* La semana: el peso, el gasto y el último control. */
 .cm-semana { display: grid; gap: 12px; }
@@ -1539,11 +1569,12 @@ section.item p { margin: 0; max-width: 64ch; }
 
 @media (prefers-reduced-motion: reduce) {
   .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .mas-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .in-macro-barra i, .in-camino-pista i, .in-camino-marca, .velo-pestanas, .pestanas, .in-fila-orden { transition: none; }
-  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
+  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .cm-tarjeta.entra, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
   .as-flecha svg { animation: none; }
   .sn-manana, .sn-manana-hecha, .sn-cara { animation: none; transition: none; }
   .vt-plegable, .vt-pista i, .vt-frase, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
   .ent-aviso, .ent-llave i, .ent-llave i::after { transition: none; }
+  .cm-armar-dia { transition: opacity 0.2s; }
   .pf-sub, .pg-limite, .ent-lista-datos li { animation: none; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
@@ -1663,6 +1694,12 @@ section.item p { margin: 0; max-width: 64ch; }
           <button class="boton" type="button" data-comida="copiar">Copiar la cena de ayer</button>
           <button class="boton" type="button" data-comida="etiqueta">La etiqueta</button>
         </div>
+        <div class="controles">
+          <button class="boton" type="button" data-comida="armar">Armar la cena</button>
+          <button class="boton" type="button" data-comida="armarSemana">Armar la semana</button>
+          <button class="boton" type="button" data-comida="compras">Lista de compras</button>
+          <button class="boton" type="button" data-comida="tusComidas">Tus comidas</button>
+        </div>
         <div class="toques" id="toques">
           <div class="grupo"><span>Toques para registrar, contados desde el «+» o desde Comida</span></div>
           <ol></ol>
@@ -1679,6 +1716,14 @@ section.item p { margin: 0; max-width: 64ch; }
             <li><b>Cómo deja el día</b>: cada macro con lo que ya tenías (apagado) y lo que suma esto (con su color), y una frase: «Con esto llegas al 80 % de tu proteína». Pasarse se dice como un dato, y la proteína no se «pasa».</li>
             <li><b>Vitaminas y minerales</b>: lo que más aporta para tu edad y sexo, y todo al tocar «Ver todo».</li>
             <li>Al pie, <b>Reportar un error</b>: qué está mal y una nota, sin tu cuenta.</li>
+          </ul>
+        </li>
+        <li><b>El plan de comidas</b> (lo pediste el 22/10, a la noche): <b>Armar el día</b>, arriba de la línea, arma las comidas que faltan con lo que queda de la meta. Primero usa lo que comes seguido (lo que comiste al menos dos veces en las últimas cuatro semanas, con la cantidad de siempre) y, si no alcanza, comidas tipo de tu forma de comer; después las agranda o achica (de la mitad al doble) hasta quedar a menos de un 5 % de las kcal y con el 90 % de la proteína.
+          <ul>
+            <li>Lo armado queda planificado, tenue, con <b>Comí esto</b> (un toque y queda anotado, con Deshacer), <b>Otra</b> (una parecida: hasta un 15 % de diferencia en kcal y proteína), <b>Me gusta</b> (sale más seguido) y <b>No me gusta</b> (no vuelve, sin borrar nada de lo anotado).</li>
+            <li><b>Tus comidas</b>: cómo comes (de todo, vegetariana, vegana o pescetariana), sin qué (los alérgenos que piden las etiquetas), cuántas comidas por día y cuánto tiempo para cocinar.</li>
+            <li>En la semana, <b>Armar la semana</b> llena lo que falta hasta el domingo, sin repetir el almuerzo ni la cena dos días seguidos, y la <b>Lista de compras</b> suma todo lo armado desde hoy, para tachar en el súper.</li>
+            <li>Cuando el control de la semana cambia la meta, lo armado se ajusta solo, con las mismas comidas.</li>
           </ul>
         </li>
       </ul>

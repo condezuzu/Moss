@@ -573,6 +573,47 @@ const pasos = {
     await comida('cerrar');
     await pagina.waitForTimeout(800);
   },
+  // El plan de comidas (lo pediste el 22/10): armar el viernes y lo que falta de hoy, otra, tus
+  // comidas, armar la semana y la lista de compras.
+  async plan() {
+    await pestana(1);
+    await pagina.waitForTimeout(800);
+    // El viernes, sin nada: Moss arma el día entero.
+    await comida('dia', 2);
+    await pagina.waitForTimeout(900);
+    await comida('bajar', 'dia');
+    await pagina.waitForTimeout(900);
+    await foto('plan-viernes');
+    await comida('armar');
+    await pagina.waitForTimeout(1400);
+    await foto('plan-viernes-armado');
+    await comida('otra', 'cena');
+    await comida('bajar', 'ahora');
+    await pagina.waitForTimeout(1200);
+    await foto('plan-otra');
+    await comida('dia', 0);
+    await pagina.waitForTimeout(900);
+    await comida('armar');
+    await comida('bajar', 'ahora');
+    await pagina.waitForTimeout(1400);
+    await foto('plan-hoy');
+    await comida('tusComidas');
+    await pagina.waitForTimeout(900);
+    await foto('plan-tus-comidas');
+    await comida('cerrarPlan');
+    await pagina.waitForTimeout(600);
+    await comida('vista', 'semana');
+    await pagina.waitForTimeout(800);
+    await comida('armarSemana');
+    await comida('bajar', 'semana');
+    await pagina.waitForTimeout(1400);
+    await foto('plan-semana');
+    await comida('compras');
+    await pagina.waitForTimeout(900);
+    await foto('plan-compras');
+    await comida('cerrarPlan');
+    await pagina.waitForTimeout(600);
+  },
   // Lo que cuida (lo pediste el 22/10): tus datos y el consentimiento, «¿Alguno es tu caso?», bajar
   // apagado sin déficit, menos de 18, los números ocultos, Perfil, poco sueño y los límites de Progreso.
   async seguridad() {

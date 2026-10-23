@@ -470,6 +470,51 @@
       "nota": "Tell us more (optional)",
       "enviar": "Send",
       "gracias": "Thanks. We'll take a look."
+    },
+    "plan": {
+      "armarDia": "Plan the day",
+      "armarSemana": "Plan the week",
+      "tusComidas": "Your meals",
+      "comiEsto": "I ate this",
+      "otra": "Another",
+      "meGusta": "I like it",
+      "noMeGusta": "I don't like it",
+      "anotado": "Logged.",
+      "sinOtra": "There's no similar one.",
+      "quitada": "It won't come back.",
+      "nadaQueArmar": "No meal is missing.",
+      "noAlcanza": "With your meals the goal isn't reached exactly: it stays as close as possible.",
+      "armadaSemana": "The week, planned.",
+      "compras": "Shopping list",
+      "comprasTexto": "What the planned meals need, from today.",
+      "sinCompras": "Plan a day and it shows up here.",
+      "preferenciasTexto": "Moss plans first with what you eat often; if that falls short, with typical meals for the way you eat.",
+      "dieta": "How you eat",
+      "dietas": {
+        "todo": "Everything",
+        "vegetariana": "Vegetarian",
+        "vegana": "Vegan",
+        "pescetariana": "Pescatarian"
+      },
+      "alergias": "What you don't eat",
+      "alergenos": {
+        "gluten": "Gluten",
+        "leche": "Dairy",
+        "huevo": "Egg",
+        "mani": "Peanut",
+        "frutosSecos": "Tree nuts",
+        "soja": "Soy",
+        "pescado": "Fish",
+        "mariscos": "Shellfish",
+        "sesamo": "Sesame"
+      },
+      "comidas": "Meals a day",
+      "tiempo": "Time to cook",
+      "tiempos": {
+        "poco": "Little",
+        "normal": "Some",
+        "mucho": "Plenty"
+      }
     }
   },
   "inicio": {
