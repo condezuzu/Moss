@@ -36,7 +36,6 @@ import { efectos } from './efectos';
 import {
   CAPACIDAD_CIELO,
   CAPACIDAD_FRENTE,
-  cambiarHabito,
   completarDia,
   crearEscena,
   DATOS_POR_SPRITE,
@@ -271,28 +270,12 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         } else {
           if (prendida) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
           else Haptics.selectionAsync().catch(() => {});
-          const indice = ev.indice;
-          setAviso({
-            texto: t.t(prendida ? 'cielo.encendida' : 'cielo.apagada', { habito: nombre }),
-            clave: Date.now(),
-            deshacer: () => {
-              scheduleOnUI(() => {
-                'worklet';
-                escena.modify((e) => {
-                  'worklet';
-                  cambiarHabito(e, indice, !prendida, false);
-                  e.eventos = e.eventos.filter((x) => x.tipo !== 'encendida' && x.tipo !== 'apagada');
-                  return e;
-                }, true);
-              });
-              elAlmacen().marcar(h.id, !prendida, 'deshacer');
-              setAviso(null);
-            },
-          });
+          // Sin «Deshacer»: tocar otra vez la estrella la apaga.
+          setAviso({ texto: t.t(prendida ? 'cielo.encendida' : 'cielo.apagada', { habito: nombre }), clave: Date.now() });
         }
       }
     },
-    [dia, escena, t],
+    [dia, t],
   );
 
   const drenar = useCallback(() => {
