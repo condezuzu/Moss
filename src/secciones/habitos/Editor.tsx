@@ -95,8 +95,14 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
     avisar(t('habitos.guardado', { habito: nombreFinal }));
     alCerrar();
   };
+  const activos = e.habitos.filter((x) => !x.hasta || x.hasta >= e.hoy).length;
   const archivar = () => {
     if (!original) return;
+    // Menos de 3 no arman constelación.
+    if (activos <= 3) {
+      avisar(t('habitos.minimo'));
+      return;
+    }
     elAlmacen().archivarHabito(original.id);
     avisar(t('habitos.archivado', { habito: original.nombre }));
     alCerrar();
@@ -152,6 +158,20 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
               <Pastilla key={meta} texto={textoDeMeta(fuente.dato as keyof typeof METAS, meta)} elegida={fuente.meta === meta} alTocar={() => cambiarFuente({ ...fuente, meta })} />
             ))}
           </View>
+          <TextInput
+            key={fuente.dato}
+            defaultValue={METAS[fuente.dato].includes(fuente.meta) ? '' : String(fuente.meta)}
+            onChangeText={(x) => {
+              const n = Number(x.replace(',', '.'));
+              if (Number.isFinite(n) && n > 0) cambiarFuente({ ...fuente, meta: Math.round(n) });
+            }}
+            placeholder={t('habitos.metaPropia')}
+            placeholderTextColor="rgba(239, 230, 207, 0.35)"
+            keyboardType="number-pad"
+            maxLength={6}
+            style={[st.campo, st.mensaje]}
+            accessibilityLabel={t('habitos.metaPropia')}
+          />
         </Aparece>
       )}
       {fuente.tipo === 'comida' && (

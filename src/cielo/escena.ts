@@ -245,11 +245,6 @@ export function tocar(e: Escena, px: number, py: number): number {
   const mejor = estrellaEn(e, px, py);
   if (mejor < 0) return -1;
   const h = e.habitos[mejor];
-  if (h.auto) {
-    e.efectos.push({ tipo: 2, x: h.x, y: h.y, t0: e.t, dur: 0.4 });
-    e.eventos.push({ tipo: 'automatico', indice: mejor });
-    return mejor;
-  }
   cambiarHabito(e, mejor, !h.encendido, false);
   return mejor;
 }

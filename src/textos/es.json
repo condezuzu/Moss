@@ -25,7 +25,8 @@
     "seEnciendeSola": "Se enciende sola con Salud",
     "desdeSalud": "{habito} · encendida desde Salud",
     "horasMinutos": "{h} h {m} min",
-    "tuUniverso": "Tu universo"
+    "tuUniverso": "Tu universo",
+    "globito": "Toca una estrella para marcar su hábito. Los de Salud se marcan solos, pero también puedes tocarlos."
   },
   "entrada": {
     "frase": "Primero hacemos nuestros hábitos, después nuestros hábitos nos hacen a nosotros.",
@@ -1513,7 +1514,7 @@
     "sugeridos": {
       "titulo": "Elige tus primeros hábitos",
       "texto": "De 3 a 5 para empezar: arman tu primera constelación. Los de comida se encienden solos con lo que registras.",
-      "cuantos": "{n} de 3 a 5",
+      "cuantos": "{n} elegidos · al menos 3",
       "listo": "Armar mi constelación",
       "despues": "Después puedes sumar, cambiar o archivar cada uno.",
       "leer": "Leer 20 páginas",
@@ -1546,7 +1547,9 @@
       "mensaje": "Mensaje",
       "mensajeEjemplo": "{habito}, cuando puedas.",
       "texto": "Suena los días que elijas del hábito, y no si ya está hecho. Moss junta los que caen cerca y no pasa del máximo por día (Perfil › Avisos)."
-    }
+    },
+    "minimo": "Hacen falta al menos 3 hábitos: la constelación cambia según cuántos son.",
+    "metaPropia": "Otra meta"
   },
   "compartir": {
     "boton": "Compartir",

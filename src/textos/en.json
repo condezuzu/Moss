@@ -25,7 +25,8 @@
     "seEnciendeSola": "Lights up on its own from Health",
     "desdeSalud": "{habito} · lit from Health",
     "horasMinutos": "{h} h {m} min",
-    "tuUniverso": "Your universe"
+    "tuUniverso": "Your universe",
+    "globito": "Tap a star to mark its habit. Health ones mark themselves, but you can tap them too."
   },
   "entrada": {
     "frase": "We first make our habits, and then our habits make us.",
@@ -1513,7 +1514,7 @@
     "sugeridos": {
       "titulo": "Pick your first habits",
       "texto": "3 to 5 to start: they make your first constellation. The food ones light up on their own with what you log.",
-      "cuantos": "{n} of 3 to 5",
+      "cuantos": "{n} chosen · at least 3",
       "listo": "Make my constellation",
       "despues": "Later you can add, change or archive each one.",
       "leer": "Read 20 pages",
@@ -1546,7 +1547,9 @@
       "mensaje": "Message",
       "mensajeEjemplo": "{habito}, when you can.",
       "texto": "It rings on the days you choose, and not if it's already done. Moss groups the ones that fall close together and never goes over the daily maximum (Profile › Reminders)."
-    }
+    },
+    "minimo": "You need at least 3 habits: the constellation changes with how many there are.",
+    "metaPropia": "Another goal"
   },
   "compartir": {
     "boton": "Share",

@@ -33,13 +33,12 @@ const SUGERIDOS: readonly Sugerido[] = [
 ];
 const DE_FABRICA = ['proteina', 'registrar', 'dormir', 'pasos'];
 const MINIMO = 3;
-const MAXIMO = 5;
 
 export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
   const [elegidos, setElegidos] = useState<string[]>(DE_FABRICA);
   const alternar = (clave: string) => {
     Haptics.selectionAsync().catch(() => {});
-    setElegidos((antes) => (antes.includes(clave) ? antes.filter((x) => x !== clave) : antes.length < MAXIMO ? [...antes, clave] : antes));
+    setElegidos((antes) => (antes.includes(clave) ? antes.filter((x) => x !== clave) : [...antes, clave]));
   };
   const armar = () => {
     // En el orden de la lista: la comida primero, en las estrellas más brillantes.
@@ -48,7 +47,7 @@ export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     alCerrar();
   };
-  const listos = elegidos.length >= MINIMO && elegidos.length <= MAXIMO;
+  const listos = elegidos.length >= MINIMO;
   return (
     <HojaModal
       abierta

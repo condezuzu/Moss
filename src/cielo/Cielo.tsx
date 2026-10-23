@@ -21,6 +21,7 @@ import {
   useTexture,
   type SkPath,
 } from '@shopify/react-native-skia';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { AccessibilityInfo, PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -202,6 +203,16 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   }, [encendidos, escena]);
 
   const t = useTextos();
+  // Una sola vez: qué hace tocar una estrella.
+  useEffect(() => {
+    if (soloCielo) return;
+    AsyncStorage.getItem('moss:globitoEstrellas').then((visto) => {
+      if (visto) return;
+      setAviso({ texto: t.t('cielo.globito'), clave: Date.now() });
+      AsyncStorage.setItem('moss:globitoEstrellas', '1').catch(() => {});
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soloCielo]);
 
   // ------------------------------------------------------------------ texturas
   // El cielo fijo se dibuja una vez por tamaño, calidad y riqueza. Mientras llega la textura nueva
