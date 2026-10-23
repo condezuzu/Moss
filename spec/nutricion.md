@@ -527,7 +527,7 @@ galería, sección 3.
 ## Pegar una receta (23/10/2026)
 
 Lo pediste el 22/10: en Guardadas (y dentro de una receta nueva), «Pegar una receta» lee el texto
-como venga, en español o en inglés (, con sus tests):
+como venga, en español o en inglés (`src/comida/recetaDeTexto.ts`, con sus tests):
 - el título, las viñetas, «Ingredientes:», «Rinde 4 porciones» o «Serves 4», el peso final si lo
   dice, y salta la preparación;
 - cada ingrediente con su cantidad: «2 tazas», «400 g», «1 cebolla grande», «una taza y media»,
