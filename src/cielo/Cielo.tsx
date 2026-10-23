@@ -98,6 +98,7 @@ export type PropsDelCielo = {
 };
 
 const RIQUEZA_DE_LA_ENTRADA = 0.6;
+const RIQUEZA_INICIAL = 0.6;
 
 export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHabito }: PropsDelCielo) {
   const soloCielo = !!entrada;
@@ -124,7 +125,9 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   // El progreso es el cielo: sale de la luz juntada desde siempre. El panel de prueba la puede forzar.
   // La entrada muestra el de 0,6 como promesa, como la galería (D5); el propio arranca en 0.
   const [riquezaForzada, setRiquezaForzada] = useState<number | null>(null);
-  const riqueza = riquezaForzada ?? (soloCielo ? RIQUEZA_DE_LA_ENTRADA : riquezaDe(dia.luzAcumulada));
+  // El cielo arranca como en la galería (60 %) y la luz juntada lo lleva hasta el 100 %: desde cero
+  // se veía apagado, sin color.
+  const riqueza = riquezaForzada ?? (soloCielo ? RIQUEZA_DE_LA_ENTRADA : RIQUEZA_INICIAL + (1 - RIQUEZA_INICIAL) * riquezaDe(dia.luzAcumulada));
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setMovimientoReducido).catch(() => {});
