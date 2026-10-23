@@ -614,6 +614,28 @@ const pasos = {
     await comida('cerrarPlan');
     await pagina.waitForTimeout(600);
   },
+  // Pegar una receta (lo pediste el 22/10): leerla, revisarla, guardarla y sumar un plato.
+  async receta() {
+    await pestana(1);
+    await comida('registrar');
+    await pagina.waitForTimeout(900);
+    await comida('pegarReceta');
+    await pagina.waitForTimeout(1200);
+    await foto('receta-texto');
+    // Solo baja la lista: scrollIntoView correría la hoja entera.
+    await pagina.evaluate(() => { const c = document.querySelector('.hj-pegar .hj-cuerpo'); c.scrollTop = document.querySelector('.hj-pegar-resultado').offsetTop - 8; });
+    await pagina.waitForTimeout(400);
+    await foto('receta-leida');
+    // Sacar una línea: queda tachada y el total baja.
+    await pagina.evaluate(() => document.querySelectorAll('.hj-pegar-fila:not(.sin)')[4].click());
+    await pagina.waitForTimeout(400);
+    await foto('receta-sin-una');
+    await pagina.evaluate(() => document.querySelector('.hj-pegar .fi-agregar').click());
+    await pagina.waitForTimeout(1200);
+    await foto('receta-guardada');
+    await comida('cerrar');
+    await pagina.waitForTimeout(800);
+  },
   // Lo que cuida (lo pediste el 22/10): tus datos y el consentimiento, «¿Alguno es tu caso?», bajar
   // apagado sin déficit, menos de 18, los números ocultos, Perfil, poco sueño y los límites de Progreso.
   async seguridad() {

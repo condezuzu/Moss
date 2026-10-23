@@ -1224,6 +1224,29 @@ section.item p { margin: 0; max-width: 64ch; }
 .fi-pie { flex: none; display: grid; gap: 8px; padding: 12px 20px calc(var(--abajo) + 6px); border-top: 1px solid rgba(239, 230, 207, 0.08); background: rgba(8, 12, 28, 0.94); }
 .fi-agregar { appearance: none; cursor: pointer; height: 52px; border-radius: 999px; border: 0; background: var(--oro); color: #1a1406; font: 500 16px/1 var(--texto); box-shadow: 0 8px 26px rgba(232, 196, 106, 0.24); }
 .fi-agregar:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.fi-secundario { appearance: none; cursor: pointer; height: 46px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.36); background: rgba(232, 196, 106, 0.06); color: var(--oro-claro); font: 400 15px/1 var(--texto); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.fi-secundario svg { width: 17px; height: 17px; stroke-width: 1.8; }
+/* Pegar una receta: el texto, lo que se encontró de cada línea y el total por plato. */
+.hj-etq-recetas { margin-top: 18px; }
+.hj-pegar-texto { margin: 6px 0 10px; font: 400 13px/1.4 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.hj-pegar-area { display: block; width: 100%; box-sizing: border-box; resize: vertical; min-height: 150px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.14); background: rgba(6, 10, 22, 0.6); color: var(--tinta); font: 400 13.5px/1.45 var(--texto); }
+.hj-pegar-area:focus { outline: none; border-color: rgba(232, 196, 106, 0.55); }
+.hj-pegar-resultado { margin-top: 16px; animation: cm-entra 0.4s ease both; }
+.hj-pegar-resultado:empty { display: none; }
+.hj-pegar-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.hj-pegar-cab b { font: 500 16px/1.2 var(--numeros); color: var(--tinta); }
+.hj-pegar-cab span { flex: none; font: 400 12.5px/1 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.hj-pegar-lista { list-style: none; margin: 0; padding: 0; }
+.hj-pegar-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(239, 230, 207, 0.06); cursor: pointer; transition: opacity 0.25s; }
+.hj-pegar-fila:last-child { border-bottom: 0; }
+.hj-pegar-fila.fuera { opacity: 0.35; }
+.hj-pegar-fila.fuera .hj-fila-txt b { text-decoration: line-through; }
+.hj-pegar-fila.sin { cursor: default; }
+.hj-pegar-fila.sin .hj-fila-txt b { color: rgba(239, 230, 207, 0.5); font-style: italic; }
+.hj-pegar-cuanto { display: grid; justify-items: end; gap: 3px; }
+.hj-pegar-cuanto b { font: 500 13.5px/1 var(--texto); color: var(--tinta); font-variant-numeric: tabular-nums; }
+.hj-pegar-cuanto span { font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.5); font-variant-numeric: tabular-nums; }
+.hj-pegar-total { margin: 12px 0 0; font: 500 14px/1.3 var(--texto); color: var(--oro-claro); text-align: right; }
 .fi-quitar { appearance: none; cursor: pointer; height: 44px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.16); background: transparent; color: rgba(239, 230, 207, 0.75); font: 400 15px/1 var(--texto); }
 .cr-campo { display: grid; grid-template-columns: minmax(0, 1fr) 118px 30px; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid rgba(239, 230, 207, 0.07); }
 .cr-campo:not(:has(em)) { grid-template-columns: auto minmax(0, 1fr); }
@@ -1569,7 +1592,7 @@ section.item p { margin: 0; max-width: 64ch; }
 
 @media (prefers-reduced-motion: reduce) {
   .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .mas-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .in-macro-barra i, .in-camino-pista i, .in-camino-marca, .velo-pestanas, .pestanas, .in-fila-orden { transition: none; }
-  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .cm-tarjeta.entra, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
+  .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-marca span, .ent-chispa, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .cm-tarjeta.entra, .hj-pegar-resultado, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
   .as-flecha svg { animation: none; }
   .sn-manana, .sn-manana-hecha, .sn-cara { animation: none; transition: none; }
   .vt-plegable, .vt-pista i, .vt-frase, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
@@ -1699,6 +1722,7 @@ section.item p { margin: 0; max-width: 64ch; }
           <button class="boton" type="button" data-comida="armarSemana">Armar la semana</button>
           <button class="boton" type="button" data-comida="compras">Lista de compras</button>
           <button class="boton" type="button" data-comida="tusComidas">Tus comidas</button>
+          <button class="boton" type="button" data-comida="pegarReceta">Pegar una receta</button>
         </div>
         <div class="toques" id="toques">
           <div class="grupo"><span>Toques para registrar, contados desde el «+» o desde Comida</span></div>
@@ -1726,6 +1750,7 @@ section.item p { margin: 0; max-width: 64ch; }
             <li>Cuando el control de la semana cambia la meta, lo armado se ajusta solo, con las mismas comidas.</li>
           </ul>
         </li>
+        <li><b>Pegar una receta</b> (lo pediste el 22/10): en <b>Guardadas</b>, «Pegar una receta» lee el texto como venga (con título, viñetas, «Rinde 4 porciones» y la preparación, que se saltea), en español o en inglés: cada ingrediente con su cantidad («2 tazas», «400 g», «1 cebolla grande», «sal a gusto»), buscado en la base con sus gramos. Se revisa (un toque saca una línea) y se guarda: queda en Guardadas, y un toque suma un plato. En la app, además, se puede pegar dentro de una receta nueva.</li>
       </ul>
     </section>
 

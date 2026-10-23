@@ -345,7 +345,17 @@
       "guardada": "Receta guardada: {nombre}",
       "plato": "1 plato",
       "porPlato": "{kcal} kcal por plato",
-      "sinIngredientes": "Todavía no tiene ingredientes."
+      "sinIngredientes": "Todavía no tiene ingredientes.",
+      "pegar": "Pegar una receta",
+      "pegarTexto": "Pégala como la tienes, con el título y lo que rinde: Moss lee cada ingrediente con su cantidad y lo busca. Después revisas lo que encontró.",
+      "leer": "Leer",
+      "ejemplo": "Guiso de lentejas\nIngredientes:\n- 2 tazas de lentejas cocidas\n- 1 cebolla grande picada\n- 2 zanahorias\n- 1 morrón rojo\n- 2 cucharadas de aceite de oliva\n- 400 g de tomate triturado\n- sal a gusto\nRinde 4 porciones",
+      "encontrados": "{n} de {total} ingredientes encontrados. Toca uno para quitarlo.",
+      "sinEncontrar": "No lo encontré",
+      "sinCantidad": "Sin cantidad",
+      "nadaLeido": "No encontré ingredientes en el texto.",
+      "sumarPlato": "Sumar un plato",
+      "usar": "Usar estos ingredientes"
     },
     "recetas": "Recetas",
     "tuyo": "Tuyo",

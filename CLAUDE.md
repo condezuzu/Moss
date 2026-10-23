@@ -42,7 +42,7 @@ SDK y la memoria no alcanza.
 - **La galería usa la lógica de la app tal cual**: `construir.mjs` pasa a
   JavaScript los módulos que usa, con los alimentos curados de
   `assets/alimentos.db`:
-  - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada;
+  - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada, y `recetaDeTexto.ts`, que usa `porciones.ts`;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `micronutrientes.ts`, `dejaElDia.ts`, `control.ts`,
     `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts`,
     `musculos.ts`, `rendimiento.ts`, `estadisticas.ts` y `plan.ts`, que solo importan entre ellos
@@ -149,7 +149,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
 - `entrada`;
-- `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
+- `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso`, `metas`, `sueno`;
 - `editor` (el «+» y mantener apretada una estrella), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
@@ -193,7 +193,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
 | `supabase/functions/` | las funciones de Moss en el servidor: `moss-borrar-cuenta` revoca Sign in with Apple y borra la cuenta (cómo desplegarla, en su README; se prueba con `node herramientas/probar-borrar-cuenta.mjs`) |
 | `modules/` | los módulos nativos propios: `movimiento` (el historial de movimiento, para la noche sin reloj), `leer-etiqueta` (Vision) y `respaldo` (saca la carpeta de SQLite de la copia de seguridad) |
-| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`) y Open Food Facts por código de barras (`off.ts`) |
+| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final) y Open Food Facts por código de barras (`off.ts`) |
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/salud/` | Salud: los permisos, lo que llena el cuestionario y la lectura de cada día (`leer.ts`, con `convertir.ts` puro y con tests) |

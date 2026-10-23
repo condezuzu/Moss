@@ -35,7 +35,9 @@ import { colores, letras } from '@/tema';
 import { AvisoAbajo, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
 import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
 import { Escaner } from './Escaner';
-import { PanelCrear, PanelGuardadas, PanelGuardarComo, PanelRapida, PanelReceta, PanelRevision, recetaDe, resumenDeCanasta, type Borrador, type DatosDeEtiqueta } from './Paneles';
+import {
+  PanelCrear, PanelGuardadas, PanelGuardarComo, PanelPegarReceta, PanelRapida, PanelReceta, PanelRevision, recetaDe, resumenDeCanasta, type Borrador, type DatosDeEtiqueta,
+} from './Paneles';
 import { avisar, cerrarRegistro, useRegistro, type Panel, type Pedido } from './registro';
 import { origenDe, Ventana, type AlimentoAbierto, type ModoDeVentana } from './Ventana';
 
@@ -574,6 +576,30 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                 setBorrador({ nombre: '', porciones: '4', pesoFinal: '', items: [] });
                 setPanel('receta');
               }}
+              alPegarReceta={() => {
+                setBorrador(null);
+                setPanel('pegar');
+              }}
+            />
+          )}
+          {panel === 'pegar' && (
+            <PanelPegarReceta
+              sistema={sistema}
+              abajo={insets.bottom}
+              alAtras={() => setPanel(borrador ? 'receta' : 'guardadas')}
+              alUsar={(r) => {
+                // Lo leído llena la receta (lo que ya tenía, queda): se revisa y se guarda como siempre.
+                const antes = borrador ?? { nombre: '', porciones: '', pesoFinal: '', items: [] };
+                setBorrador({
+                  ...antes,
+                  nombre: antes.nombre || r.nombre,
+                  porciones: antes.porciones || String(r.porciones ?? 1),
+                  pesoFinal: antes.pesoFinal || (r.pesoFinal ? String(Math.round(r.pesoFinal)) : ''),
+                  items: [...antes.items, ...r.items],
+                });
+                Haptics.selectionAsync().catch(() => {});
+                setPanel('receta');
+              }}
             />
           )}
           {panel === 'receta' && borrador && (
@@ -586,6 +612,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                 setEligiendo(true);
                 setPanel(null);
               }}
+              alPegar={() => setPanel('pegar')}
               alGuardar={() => {
                 const receta = recetaDe(borrador);
                 if (!receta) return;

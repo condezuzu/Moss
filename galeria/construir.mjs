@@ -17,7 +17,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas' };
+const DEL_DOMINIO = { porciones: 'Porciones', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -120,6 +120,7 @@ const js = [
   `const ALIMENTOS = ${json(alimentos)};`,
   modulo('Buscar', 'src/comida/buscar.ts'),
   modulo('Porciones', 'src/comida/porciones.ts'),
+  modulo('RecetaDeTexto', 'src/comida/recetaDeTexto.ts'),
   modulo('Comidas', 'src/dominio/comidas.ts'),
   modulo('Etiqueta', 'src/comida/etiqueta.ts'),
   modulo('Fechas', 'src/dominio/fechas.ts'),

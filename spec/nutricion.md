@@ -524,6 +524,21 @@ galería, sección 3.
   mano), lo armado de hoy en adelante se escala a la nueva con las mismas comidas,
   sin tocar lo anotado ni lo planificado a mano.
 
+## Pegar una receta (23/10/2026)
+
+Lo pediste el 22/10: en Guardadas (y dentro de una receta nueva), «Pegar una receta» lee el texto
+como venga, en español o en inglés (, con sus tests):
+- el título, las viñetas, «Ingredientes:», «Rinde 4 porciones» o «Serves 4», el peso final si lo
+  dice, y salta la preparación;
+- cada ingrediente con su cantidad: «2 tazas», «400 g», «1 cebolla grande», «una taza y media»,
+  «2-3», «1 lata (400 g)»; lo que va «a gusto» queda sin cantidad;
+- cada uno se busca en la base (el primero que encuentra) y se pasa a gramos con sus porciones o su
+  densidad.
+
+Después se revisa: un toque saca una línea, y lo que no se encontró queda a la vista para
+agregarlo a mano. Los ingredientes pasan a la receta, que se guarda como siempre (D15). La taza es
+la de cocina (236,6 ml), no la de las etiquetas.
+
 **Widgets en la pantalla de bloqueo** con calorías y macros:
 - van con `expo-widgets`, en los tamaños de la pantalla de bloqueo (circular y rectangular);
 - antes hay que probarlos en una build `dev` ([`widgets.md`](widgets.md)).

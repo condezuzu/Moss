@@ -294,6 +294,7 @@
     armarSemana: () => enLaZona(() => { comida.vista('semana'); comida.armarSemana(); }),
     compras: () => enLaZona(() => comida.compras()),
     tusComidas: () => enLaZona(() => comida.tusComidas()),
+    pegarReceta: () => conHoja(() => comida.pegarReceta()),
   };
   // Como si se escribiera: letra por letra, con la búsqueda en cada una.
   let escribiendo = 0;
@@ -1207,7 +1208,7 @@
       rapida: () => comida.cargaRapida(), guardadas: () => comida.guardadas(), copiar: () => comida.copiarDeAyer(arg), etiqueta: () => comida.etiqueta(arg),
       dia: () => comida.verDia(arg), bajar: () => comida.bajarA(arg), teclado: () => comida.teclado(arg), dictar: () => comida.dictar(),
       armar: () => comida.armarDia(), armarSemana: () => comida.armarSemana(), compras: () => comida.compras(), tusComidas: () => comida.tusComidas(),
-      cerrarPlan: () => comida.cerrarPlan(), otra: () => comida.otraDel(arg), comiEsto: () => comida.comiEsto(arg),
+      cerrarPlan: () => comida.cerrarPlan(), otra: () => comida.otraDel(arg), comiEsto: () => comida.comiEsto(arg), pegarReceta: () => comida.pegarReceta(),
     };
     const r = pasos[accion]();
     refrescarControles();

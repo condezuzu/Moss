@@ -345,7 +345,17 @@
       "guardada": "Recipe saved: {nombre}",
       "plato": "1 plate",
       "porPlato": "{kcal} kcal per plate",
-      "sinIngredientes": "No ingredients yet."
+      "sinIngredientes": "No ingredients yet.",
+      "pegar": "Paste a recipe",
+      "pegarTexto": "Paste it as you have it, with the title and what it makes: Moss reads each ingredient with its amount and looks it up. Then you check what it found.",
+      "leer": "Read",
+      "ejemplo": "Lentil stew\nIngredients:\n- 2 cups cooked lentils\n- 1 large onion, chopped\n- 2 carrots\n- 1 red bell pepper\n- 2 tablespoons olive oil\n- 400 g crushed tomatoes\n- salt to taste\nServes 4",
+      "encontrados": "{n} of {total} ingredients found. Tap one to remove it.",
+      "sinEncontrar": "Couldn't find it",
+      "sinCantidad": "No amount",
+      "nadaLeido": "I didn't find any ingredients in the text.",
+      "sumarPlato": "Add one serving",
+      "usar": "Use these ingredients"
     },
     "recetas": "Recipes",
     "tuyo": "Yours",

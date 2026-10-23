@@ -6,16 +6,19 @@
 
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { SlideInRight, SlideOutRight } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 
+import { baseDeAlimentos } from '@/comida/base';
 import type { Etiqueta as EtiquetaLeida, Leidos } from '@/comida/etiqueta';
+import { gramosDeLinea, leerReceta, type LineaDeReceta } from '@/comida/recetaDeTexto';
 import type { Comida } from '@/dominio/comidas';
 import type { Sistema } from '@/dominio/cantidades';
-import { escalar, itemRapido, sumarValores, valoresDeReceta, type AlimentoPropio, type Item, type Receta, type Valores } from '@/dominio/registros';
+import { escalar, gramosDe, itemDeAlimento, itemRapido, sumarValores, valoresDeReceta, type AlimentoPropio, type Item, type Receta, type Valores } from '@/dominio/registros';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { ACOMODA } from '../tarjetas';
 import { Boton, Etiqueta, Icono, MACROS, Punto } from './comunes';
-import { cantidadDeTexto, gramosDeMacro, numero } from './datos';
+import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma } from './datos';
 
 /** Un número escrito con coma o con punto; vacío es null. */
 const leer = (texto: string): number | null => {
@@ -166,11 +169,23 @@ export function PanelRapida({ directo, comida, alSumar, alAtras, abajo }: { dire
 }
 
 // ------------------------------------------------------------------ las guardadas y las recetas
-export function PanelGuardadas(p: { recetas: Receta[]; alSumarComida: (r: Receta) => void; alAbrirReceta: (r: Receta) => void; alNuevaReceta: () => void; alAtras: () => void; abajo: number }) {
+export function PanelGuardadas(p: {
+  recetas: Receta[]; alSumarComida: (r: Receta) => void; alAbrirReceta: (r: Receta) => void; alNuevaReceta: () => void; alPegarReceta: () => void; alAtras: () => void; abajo: number;
+}) {
   const comidas = p.recetas.filter((r) => r.tipo === 'comida');
   const recetas = p.recetas.filter((r) => r.tipo === 'receta');
   return (
-    <Panel titulo={t('comida.guardadas')} alAtras={p.alAtras} abajo={p.abajo} pie={<Boton tipo="quitar" texto={t('comida.receta.nueva')} alTocar={p.alNuevaReceta} />}>
+    <Panel
+      titulo={t('comida.guardadas')}
+      alAtras={p.alAtras}
+      abajo={p.abajo}
+      pie={(
+        <>
+          <Boton tipo="quitar" texto={t('comida.receta.nueva')} alTocar={p.alNuevaReceta} />
+          <Boton tipo="secundario" icono="doc.on.doc" texto={t('comida.receta.pegar')} alTocar={p.alPegarReceta} />
+        </>
+      )}
+    >
       {comidas.map((r) => {
         const total = sumarValores(r.items.map((i) => i.valores));
         return (
@@ -205,7 +220,9 @@ export function PanelGuardadas(p: { recetas: Receta[]; alSumarComida: (r: Receta
 
 export type Borrador = { id?: string; nombre: string; porciones: string; pesoFinal: string; items: Item[] };
 
-export function PanelReceta(p: { borrador: Borrador; sistema: Sistema; alCambiar: (b: Borrador) => void; alAgregarIngrediente: () => void; alGuardar: () => void; alAtras: () => void; abajo: number }) {
+export function PanelReceta(p: {
+  borrador: Borrador; sistema: Sistema; alCambiar: (b: Borrador) => void; alAgregarIngrediente: () => void; alPegar: () => void; alGuardar: () => void; alAtras: () => void; abajo: number;
+}) {
   const b = p.borrador;
   const total = sumarValores(b.items.map((i) => i.valores));
   const porciones = leer(b.porciones) ?? 0;
@@ -231,6 +248,7 @@ export function PanelReceta(p: { borrador: Borrador; sistema: Sistema; alCambiar
       {!b.items.length && <Text style={estilos.nota}>{t('comida.receta.sinIngredientes')}</Text>}
       <View style={estilos.agregarIngrediente}>
         <Boton texto={t('comida.receta.agregarIngrediente')} icono="plus" tipo="secundario" alTocar={p.alAgregarIngrediente} />
+        {!b.items.length && <Boton texto={t('comida.receta.pegar')} icono="doc.on.doc" tipo="contorno" alTocar={p.alPegar} />}
       </View>
       {b.items.length > 0 && porciones > 0 && (
         <View style={estilos.total}>
@@ -241,6 +259,100 @@ export function PanelReceta(p: { borrador: Borrador; sistema: Sistema; alCambiar
           <Text style={estilos.queda}>{t('comida.receta.porPlato', { kcal: numero(Math.round(total.kcal / porciones)) })}</Text>
           <ChipsDeMacros v={escalar(total, 1 / porciones)} />
         </View>
+      )}
+    </Panel>
+  );
+}
+
+// ------------------------------------------------------------------ pegar una receta
+/** Lo que salió de una receta pegada: el título (si tenía), lo que rinde, lo que pesa terminada y los ingredientes encontrados. */
+export type RecetaPegada = { nombre: string; porciones: number | null; pesoFinal: number | null; items: Item[] };
+type LineaBuscada = { linea: LineaDeReceta; item: Item | null; fuera: boolean };
+
+/** El título: la primera línea, si el lector no la tomó por un ingrediente. */
+function tituloDe(texto: string, lineas: readonly LineaDeReceta[]): string {
+  const primera = texto.split('\n').map((l) => l.trim()).find(Boolean) ?? '';
+  return !primera || lineas.some((l) => l.texto.trim() === primera) || primera.length > 60 ? '' : primera.replace(/^#+\s*/, '');
+}
+
+/**
+ * Pegar una receta: el texto como venga (src/comida/recetaDeTexto.ts), cada ingrediente buscado en
+ * la base con sus gramos, y la revisión (un toque saca una línea) antes de pasarla a la receta.
+ */
+export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema: Sistema; alUsar: (r: RecetaPegada) => void; alAtras: () => void; abajo: number }) {
+  const [texto, setTexto] = useState('');
+  const [leyendo, setLeyendo] = useState(false);
+  const [leida, setLeida] = useState<{ nombre: string; porciones: number | null; pesoFinal: number | null; lineas: LineaBuscada[] } | null>(null);
+  const leer = async () => {
+    setLeyendo(true);
+    const op = opcionesDeIdioma();
+    const receta = leerReceta(texto, op.idioma);
+    const lineas = await Promise.all(receta.lineas.map(async (linea): Promise<LineaBuscada> => {
+      const [hallado] = await baseDeAlimentos.buscar(linea.buscado, { ...op, limite: 1 }).catch(() => []);
+      const d = hallado ? await baseDeAlimentos.detalle(hallado.id, op).catch(() => null) : null;
+      const gramos = d ? gramosDeLinea(linea, d) : null;
+      // Sin cantidad («sal a gusto») queda en 0 g: se ve qué es, pero no suma.
+      return { linea, item: d ? itemDeAlimento('base', String(d.id), d.nombre, d.por100g, { gramos: gramos ? Math.round(gramos) : 0 }) : null, fuera: false };
+    }));
+    setLeida({ nombre: tituloDe(texto, receta.lineas), porciones: receta.porciones, pesoFinal: receta.pesoFinal, lineas });
+    setLeyendo(false);
+  };
+  const usables = leida ? leida.lineas.filter((x) => x.item && (gramosDe(x.item.cantidad) ?? 0) > 0 && !x.fuera) : [];
+  const total = sumarValores(usables.map((x) => x.item!.valores));
+  return (
+    <Panel
+      titulo={t('comida.receta.pegar')}
+      alAtras={alAtras}
+      abajo={abajo}
+      pie={(
+        <>
+          <Boton tipo="secundario" texto={t('comida.receta.leer')} desactivado={!texto.trim() || leyendo} alTocar={() => { leer().catch(() => setLeyendo(false)); }} />
+          {leida && <Boton tipo="grande" texto={t('comida.receta.usar')} desactivado={!usables.length} alTocar={() => alUsar({ nombre: leida.nombre, porciones: leida.porciones, pesoFinal: leida.pesoFinal, items: usables.map((x) => x.item!) })} />}
+        </>
+      )}
+    >
+      <Text style={estilos.texto}>{t('comida.receta.pegarTexto')}</Text>
+      <TextInput
+        value={texto}
+        onChangeText={setTexto}
+        multiline
+        placeholder={t('comida.receta.ejemplo')}
+        placeholderTextColor="rgba(239, 230, 207, 0.32)"
+        style={estilos.pegar}
+        textAlignVertical="top"
+        accessibilityLabel={t('comida.receta.pegar')}
+      />
+      {leida && (
+        <Animated.View entering={FadeIn.duration(300)} layout={ACOMODA}>
+          {leida.lineas.length ? (
+            <>
+              <Text style={estilos.nota}>{t('comida.receta.encontrados', { n: leida.lineas.filter((x) => x.item && (gramosDe(x.item.cantidad) ?? 0) > 0).length, total: leida.lineas.length })}</Text>
+              {leida.lineas.map((x, i) => {
+                const gramos = x.item ? gramosDe(x.item.cantidad) ?? 0 : 0;
+                const sirve = !!x.item && gramos > 0;
+                return (
+                  <Pressable
+                    key={i}
+                    disabled={!sirve}
+                    onPress={() => setLeida({ ...leida, lineas: leida.lineas.map((y, k) => (k === i ? { ...y, fuera: !y.fuera } : y)) })}
+                    style={[estilos.fila, x.fuera && estilos.fuera]}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: sirve && !x.fuera, disabled: !sirve }}
+                  >
+                    <View style={estilos.filaTextos}>
+                      <Text style={[estilos.filaNombre, !sirve && estilos.sinEncontrar, x.fuera && estilos.tachado]} numberOfLines={1}>{x.item ? x.item.nombre : t('comida.receta.sinEncontrar')}</Text>
+                      <Text style={estilos.filaDetalle} numberOfLines={1}>{x.linea.texto}</Text>
+                    </View>
+                    <Text style={estilos.filaDetalle}>{sirve ? `${cantidadDeTexto(x.item!.cantidad, sistema)} · ${numero(Math.round(x.item!.valores.kcal))} kcal` : x.item ? t('comida.receta.sinCantidad') : ''}</Text>
+                  </Pressable>
+                );
+              })}
+              {usables.length > 0 && <Text style={estilos.totalPegado}>{t('comida.receta.porPlato', { kcal: numero(Math.round(total.kcal / (leida.porciones ?? 1))) })}</Text>}
+            </>
+          ) : (
+            <Text style={estilos.nota}>{t('comida.receta.nadaLeido')}</Text>
+          )}
+        </Animated.View>
       )}
     </Panel>
   );
@@ -346,5 +458,10 @@ const estilos = StyleSheet.create({
   campoMal: { borderColor: 'rgba(232, 196, 106, 0.7)', color: colores.oroClaro },
   campoUnidad: { width: 30, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
   separador: { marginTop: 22, marginBottom: 4 },
-  agregarIngrediente: { marginTop: 12, alignItems: 'flex-start' },
+  pegar: { marginTop: 10, minHeight: 150, maxHeight: 260, padding: 12, outlineWidth: 0, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.6)', fontFamily: letras.texto, fontSize: 14, lineHeight: 20, color: colores.pergamino },
+  fuera: { opacity: 0.35 },
+  tachado: { textDecorationLine: 'line-through' },
+  sinEncontrar: { fontStyle: 'italic', color: 'rgba(239, 230, 207, 0.5)' },
+  totalPegado: { marginTop: 12, textAlign: 'right', fontFamily: letras.textoMedio, fontSize: 14, color: colores.oroClaro },
+  agregarIngrediente: { marginTop: 12, alignItems: 'flex-start', gap: 8 },
 });

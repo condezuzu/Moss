@@ -193,6 +193,8 @@ const Comida = (() => {
       hoja: null,
       // La comida que se arma en la hoja: queda hasta agregarla, aunque se cierre la hoja.
       canasta: [],
+      // Las recetas guardadas desde un texto pegado: { nombre, porciones, items }.
+      recetas: [],
       // Los toques desde Inicio hasta registrar algo (se cuentan para comparar con la especificación).
       toques: 0,
       escribio: false,
@@ -1476,7 +1478,98 @@ const Comida = (() => {
           f.append(textos, mas);
           cuerpo.appendChild(f);
         });
+        // Las recetas: un toque suma un plato (lo de la olla dividido por lo que rinde).
+        if (s.recetas.length) cuerpo.appendChild(el('div', 'fi-etq hj-etq-recetas', tx('comida.recetas')));
+        s.recetas.forEach((r) => {
+          const plato = r.items.map((it) => Object.assign({}, it, { gramos: Math.max(1, Math.round(it.gramos / r.porciones)) }));
+          const f = el('div', 'hj-fila');
+          const textos = el('div', 'hj-fila-txt');
+          textos.append(el('b', null, r.nombre), el('span', null, tx('comida.receta.porPlato', { kcal: numero(Math.round(sumar(plato).kcal)) })));
+          const mas = boton('hj-mas', icono('mas'), () => {
+            sumarACanasta(plato, `${r.nombre} · ${tx('comida.receta.plato')}`, mas);
+            setTimeout(() => cerrarSub(), 500);
+          }, tx('comida.receta.sumarPlato'));
+          f.append(textos, mas);
+          cuerpo.appendChild(f);
+        });
         sub.appendChild(cuerpo);
+        const pie = el('footer', 'fi-pie');
+        pie.appendChild(boton('fi-secundario', `${icono('copiar')}<span>${tx('comida.receta.pegar')}</span>`, () => abrirPegarReceta()));
+        sub.appendChild(pie);
+      });
+    }
+
+    // Pegar una receta: el texto como venga (RecetaDeTexto, el mismo lector que la app), cada
+    // ingrediente buscado en la base con sus gramos, y la revisión antes de guardarla.
+    function abrirPegarReceta() {
+      abrirSub('hj-pegar', (sub) => {
+        cabezaDeSub(sub, tx('comida.receta.pegar'));
+        const cuerpo = el('div', 'hj-cuerpo');
+        cuerpo.appendChild(el('p', 'hj-pegar-texto', tx('comida.receta.pegarTexto')));
+        const area = el('textarea', 'hj-pegar-area');
+        area.value = tx('comida.receta.ejemplo');
+        area.rows = 9;
+        area.setAttribute('aria-label', tx('comida.receta.pegar'));
+        const resultado = el('div', 'hj-pegar-resultado');
+        cuerpo.append(area, resultado);
+        sub.appendChild(cuerpo);
+        const pie = el('footer', 'fi-pie');
+        const guardar = boton('fi-agregar', tx('comida.receta.guardar'), () => {});
+        guardar.disabled = true;
+        pie.append(boton('fi-secundario', tx('comida.receta.leer'), () => leer()), guardar);
+        sub.appendChild(pie);
+        let leida = null;
+        const leer = () => {
+          const texto = area.value;
+          const receta = RecetaDeTexto.leerReceta(texto, idioma);
+          const primera = texto.split('\n').map((l) => l.trim()).find(Boolean) || '';
+          const nombre = receta.lineas.some((l) => l.texto.trim() === primera) || !primera ? tx('comida.receta.titulo') : primera.replace(/^#+\s*/, '');
+          const lineas = receta.lineas.map((l) => {
+            const a = (buscar(l.buscado)[0] || {}).a || null;
+            const gramos = a ? RecetaDeTexto.gramosDeLinea(l, { porciones: a.p.map((p, i) => ({ nombre: porcionDe(a, i), gramos: p[2] })), densidad: null }) : null;
+            return { linea: l, a, gramos, fuera: false };
+          });
+          leida = { nombre, porciones: receta.porciones || 1, lineas };
+          pintarLeida();
+        };
+        function pintarLeida() {
+          resultado.innerHTML = '';
+          const usables = leida.lineas.filter((x) => x.a && x.gramos && !x.fuera);
+          guardar.disabled = !usables.length;
+          if (!leida.lineas.length) { resultado.appendChild(el('p', 'hj-pegar-texto', tx('comida.receta.nadaLeido'))); return; }
+          const cab = el('div', 'hj-pegar-cab');
+          cab.append(el('b', null, leida.nombre), el('span', null, `${tx('comida.receta.porciones')} ${leida.porciones} ${tx('comida.receta.porcionesUnidad')}`));
+          resultado.append(cab, el('p', 'hj-pegar-texto', tx('comida.receta.encontrados', { n: leida.lineas.filter((x) => x.a && x.gramos).length, total: leida.lineas.length })));
+          const lista = el('ul', 'hj-pegar-lista');
+          leida.lineas.forEach((x) => {
+            const li = el('li', 'hj-pegar-fila' + (x.fuera ? ' fuera' : '') + (!x.a || !x.gramos ? ' sin' : ''));
+            const textos = el('div', 'hj-fila-txt');
+            textos.append(el('b', null, x.a ? nombreDe(x.a) : tx('comida.receta.sinEncontrar')), el('span', null, x.linea.texto));
+            const kcal = x.a && x.gramos ? Math.round(valoresDe({ alimento: x.a.id, gramos: x.gramos }).kcal) : null;
+            const derecha = el('div', 'hj-pegar-cuanto');
+            derecha.append(el('b', null, x.gramos ? `${numero(Math.round(x.gramos))} g` : x.a ? tx('comida.receta.sinCantidad') : ''), el('span', null, kcal != null ? `${numero(kcal)} kcal` : ''));
+            li.append(textos, derecha);
+            if (x.a && x.gramos) {
+              li.dataset.toque = '';
+              li.addEventListener('click', () => { x.fuera = !x.fuera; escena.haptico('suave'); pintarLeida(); });
+            }
+            lista.appendChild(li);
+          });
+          resultado.appendChild(lista);
+          const total = sumar(usables.map((x) => ({ alimento: x.a.id, gramos: x.gramos })));
+          resultado.appendChild(el('p', 'hj-pegar-total', tx('comida.receta.porPlato', { kcal: numero(Math.round(total.kcal / leida.porciones)) })));
+        }
+        guardar.addEventListener('click', () => {
+          if (!leida) return;
+          const items = leida.lineas.filter((x) => x.a && x.gramos && !x.fuera).map((x) => ({ alimento: x.a.id, gramos: Math.round(x.gramos) }));
+          if (!items.length) return;
+          s.recetas.push({ nombre: leida.nombre, porciones: leida.porciones, items });
+          escena.haptico('toque');
+          avisarHoja(tx('comida.receta.guardada', { nombre: leida.nombre }));
+          abrirGuardadas();
+        });
+        // En la galería se lee solo al abrir, para ver el resultado de una.
+        leer();
       });
     }
 
@@ -1985,6 +2078,7 @@ const Comida = (() => {
       confirmar() { const b = $h('.hj-revision .fi-agregar'); if (b) b.click(); },
       cargaRapida() { if (s.hoja) abrirRapida(); },
       guardadas() { if (s.hoja) abrirGuardadas(); },
+      pegarReceta() { if (s.hoja) abrirPegarReceta(); },
       etiqueta(conError) { if (s.hoja) abrirEtiqueta(conError); },
       copiarDeAyer: (tipo) => (s.hoja ? sumarDeAyer(tipo || s.hoja.comida) : copiarDeAyer(tipo || 'cena')),
       bajarA(destino) {
