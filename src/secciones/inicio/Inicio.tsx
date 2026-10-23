@@ -25,7 +25,7 @@ import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { usePersona, useSueno } from '../ganchos';
-import { ACOMODA, Camino } from '../tarjetas';
+import { ACOMODA, Aparece, Camino } from '../tarjetas';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
 
 export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'] as const;
@@ -110,6 +110,7 @@ const Chip = ({ texto, tipo }: { texto: string; tipo?: 'bien' | 'atencion' | 'te
 // ------------------------------------------------------------------ calorías y macros: lo que queda
 function Calorias() {
   const e = useEstado();
+  const numeros = e.numeros;
   const meta = metaDelDia(e, e.hoy);
   const comido = totalDe(e.registros, e.hoy, e.hoy);
   if (!meta) {
@@ -129,11 +130,13 @@ function Calorias() {
     <>
       <View style={estilos.calArriba}>
         <Luna tam={124} fraccion={comido.kcal / meta.kcal} />
-        <View style={estilos.calCifra}>
-          <Text style={estilos.calEtiqueta}>{t(queda >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')}</Text>
-          <Text style={estilos.calNumero}>{numero(Math.abs(Math.round(queda)))}</Text>
-          <Text style={estilos.calDe}>{t('inicio.kcalDe', { comido: numero(Math.round(comido.kcal)), meta: numero(meta.kcal) })}</Text>
-        </View>
+        {numeros && (
+          <Aparece style={estilos.calCifra}>
+            <Text style={estilos.calEtiqueta}>{t(queda >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')}</Text>
+            <Text style={estilos.calNumero}>{numero(Math.abs(Math.round(queda)))}</Text>
+            <Text style={estilos.calDe}>{t('inicio.kcalDe', { comido: numero(Math.round(comido.kcal)), meta: numero(meta.kcal) })}</Text>
+          </Aparece>
+        )}
       </View>
       <View style={estilos.macros}>
         {MACROS.map((m) => {
@@ -148,8 +151,8 @@ function Calorias() {
                 </View>
                 <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
               </View>
-              <Text style={estilos.macroValor}>{valor}</Text>
-              <Text style={estilos.macroDe}>{t('inicio.deMeta', { comido: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>
+              {numeros && <Text style={estilos.macroValor}>{valor}</Text>}
+              {numeros && <Text style={estilos.macroDe}>{t('inicio.deMeta', { comido: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>}
               <View style={estilos.barra}>
                 <View style={[estilos.barraLlena, { width: `${Math.min(100, (comido[m] / meta[m]) * 100)}%`, backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
               </View>

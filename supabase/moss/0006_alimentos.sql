@@ -1,12 +1,17 @@
--- Moss · esquema 6: los micronutrientes de lo comido y del catálogo, y lo que mejora la base de
--- alimentos sin saber de quién viene: las búsquedas que no encontraron nada y los errores que
--- reporta la gente desde la ventana de un alimento (spec/nutricion.md, «La base se mejora sola»).
+-- Moss · esquema 6: los micronutrientes de lo comido y del catálogo, lo que mejora la base de
+-- alimentos sin saber de quién viene (las búsquedas que no encontraron nada y los errores que
+-- reporta la gente desde la ventana de un alimento; spec/nutricion.md, «La base se mejora sola») y,
+-- en el perfil, si Moss no pone en déficit (embarazo, lactancia o una condición médica).
 --
 -- Lo comido sigue las reglas de siempre. Las búsquedas y los reportes no son de nadie: no guardan
 -- el usuario, ni la hora, ni nada del teléfono. Se escriben solo con dos funciones que revisan lo
 -- que llega, y nadie los lee desde la app.
 --
 -- Se aplica a mano en el SQL Editor, después de 0005_noches.sql.
+
+-- Sin déficit: embarazo, lactancia o una condición médica. No se guarda cuál: solo que Moss no
+-- propone comer menos de lo que se gasta (src/dominio/metas.ts, objetivoPermitido).
+alter table moss.perfiles add column sin_deficit boolean not null default false;
 
 -- Las vitaminas, los minerales, las otras grasas y la cafeína de lo comido, como los guarda la app:
 -- {"calcio": 246, "vitaminaD": 2.2}. Lo que no se sabe, no está.

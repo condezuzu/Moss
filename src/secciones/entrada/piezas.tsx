@@ -107,16 +107,17 @@ export function Deslizador({ valor, min, max, paso, alCambiar, etiqueta }: Props
 }
 
 // ------------------------------------------------------------------ las opciones
-export function Opcion({ titulo, detalle, elegida, alTocar, centrada }: { titulo: string; detalle?: string; elegida: boolean; alTocar: () => void; centrada?: boolean }) {
+export function Opcion({ titulo, detalle, elegida, alTocar, centrada, desactivada }: { titulo: string; detalle?: string; elegida: boolean; alTocar: () => void; centrada?: boolean; desactivada?: boolean }) {
   return (
     <Pressable
       onPress={() => {
         Haptics.selectionAsync().catch(() => {});
         alTocar();
       }}
-      style={[st.opcion, elegida && st.opcionElegida, centrada && st.opcionCentrada]}
+      disabled={desactivada}
+      style={[st.opcion, elegida && st.opcionElegida, centrada && st.opcionCentrada, desactivada && { opacity: 0.45 }]}
       accessibilityRole="radio"
-      accessibilityState={{ selected: elegida }}
+      accessibilityState={{ selected: elegida, disabled: !!desactivada }}
     >
       <Text style={[st.opcionTitulo, centrada && { textAlign: 'center' }]}>{titulo}</Text>
       {detalle ? <Text style={st.opcionDetalle}>{detalle}</Text> : null}

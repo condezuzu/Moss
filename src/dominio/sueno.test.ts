@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  armarNoches, calidadDeNoche, deudaDeSueno, horario, marcaDe, necesidad, nivelDeLaNoche, pareceIncompleta, soloEnCama, ultimasNoches, vitalDeNoche,
+  armarNoches, calidadDeNoche, deudaDeSueno, horario, marcaDe, necesidad, nivelDeLaNoche, pareceIncompleta, pocoSuenoSostenido, soloEnCama, ultimasNoches, vitalDeNoche,
   type Etapa, type Fuente, type Muestra, type Noche,
 } from './sueno';
 
@@ -180,6 +180,14 @@ describe('las dos semanas', () => {
     expect(deuda.noches).toBe(14);
     expect(deudaDeSueno(semanas(14, [], 900), 480)!.minutos).toBe(0);
     expect(deudaDeSueno([null, null, null, ...semanas(4, [], 420)], 480)).toBeNull();
+  });
+
+  it('con menos de 6 horas por semanas, sugiere un médico; con pocas noches o un par de malas, no', () => {
+    expect(pocoSuenoSostenido(semanas(14, [], 330))).toBe(true);
+    expect(pocoSuenoSostenido(semanas(14, [], 380))).toBe(false);
+    expect(pocoSuenoSostenido([null, null, null, null, null, ...semanas(9, [], 300)])).toBe(false);
+    const dosMalas = semanas(14, [], 450).map((n, i) => (i < 2 ? { ...n!, dormido: 240 } : n));
+    expect(pocoSuenoSostenido(dosMalas)).toBe(false);
   });
 });
 

@@ -172,14 +172,14 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   // Lo que no encontró nada, sin decir de quién (src/almacen/buzon.ts): así se sabe qué le falta a la
   // base. Cuenta cuando se dejó de escribir, no letra por letra.
   useEffect(() => {
-    if (!hallado || hallado.lista.length || hallado.texto !== texto.trim()) return;
+    if (!e.mandarBusquedas || !hallado || hallado.lista.length || hallado.texto !== texto.trim()) return;
     const buscado = textoDeBusqueda(hallado.texto);
     if (!buscado) return;
     const espera = setTimeout(() => {
       buzon().echar({ tipo: 'busqueda', texto: buscado, idioma: idioma(), region: region() ?? '', dia: e.hoy }).catch(() => {});
     }, 1500);
     return () => clearTimeout(espera);
-  }, [hallado, texto, e.hoy]);
+  }, [hallado, texto, e.hoy, e.mandarBusquedas]);
 
   // ------------------------------------------------------------ lo que queda en el día
   const meta = metaDelDia(e, dia);

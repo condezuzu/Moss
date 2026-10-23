@@ -19,7 +19,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { abierta: null, fuente: 'auto' };
+    const s = { abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -103,9 +103,12 @@ const SeccionPerfil = (() => {
       const grupo = (titulo, filas) => {
         cont.appendChild(el('h3', 'pf-grupo', tx(titulo)));
         const ul = el('ul', 'pf-lista');
-        filas.forEach(([clave, valor, conFlecha, clase, alTocar]) => {
+        filas.forEach(([clave, valor, conFlecha, clase, alTocar, sub]) => {
           const li = el('li', (conFlecha ? 'pf-tocable ' : '') + (clase || ''));
-          li.append(el('span', null, tx(clave)), el('b', null, valor));
+          const nombre = el('span', null, tx(clave));
+          // Una fila puede decir debajo, chico, qué hace.
+          if (sub) nombre.appendChild(el('small', 'pf-sub', tx(sub)));
+          li.append(nombre, el('b', null, valor));
           if (conFlecha) li.insertAdjacentHTML('beforeend', icono('adelante'));
           if (alTocar) li.addEventListener('click', alTocar);
           ul.appendChild(li);
@@ -118,12 +121,16 @@ const SeccionPerfil = (() => {
         ['perfil.edad', tx('perfil.anios', { n: edad }), true],
         ['perfil.altura', `${numero(p.alturaCm)} cm`, true],
         ['perfil.actividad', tx('perfil.actividades.' + p.actividad), true],
+        // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál).
+        ['perfil.cuidado', tx(s.sinDeficit ? 'perfil.sinDeficit' : 'perfil.ninguno'), true, s.sinDeficit ? 'ok' : null, () => { s.sinDeficit = !s.sinDeficit; pintar(); }, s.sinDeficit ? 'perfil.sinDeficitTexto' : null],
       ]);
       grupo('perfil.preferencias', [
         ['perfil.unidades', tx('perfil.metrico'), true],
         ['perfil.idioma', u.idioma() === 'es' ? 'Español' : 'English', true],
         ['perfil.calidad', tx('perfil.alta'), true],
         ['perfil.recordatorios', tx('perfil.apagados'), true],
+        // Ocultar los números: sin calorías ni gramos, solo las figuras y las barras.
+        ['perfil.numeros', tx(s.numeros ? 'perfil.visibles' : 'perfil.ocultos'), true, null, () => { s.numeros = !s.numeros; opciones.alNumeros(s.numeros); pintar(); }, 'perfil.numerosTexto'],
       ]);
       grupo('perfil.conexiones', [
         ['perfil.salud', tx('perfil.conectada'), true, 'ok'],
@@ -134,6 +141,11 @@ const SeccionPerfil = (() => {
       grupo('perfil.tusDatosParaLlevar', [
         ['perfil.exportar', 'CSV', true],
         ['perfil.privacidad', '', true],
+        // Lo que se busca y no se encuentra sale sin la cuenta, solo si se elige (guía 5.1.1 de Apple).
+        ['perfil.mejorarBase', tx(s.buscar ? 'perfil.si' : 'perfil.no'), true, null, () => { s.buscar = !s.buscar; pintar(); }, 'perfil.mejorarBaseTexto'],
+        ['perfil.politica', '', true],
+        ['perfil.terminos', '', true],
+        ['perfil.contacto', '', true],
         ['perfil.borrarDatos', '', false, 'peligro'],
         // Avisa que la cuenta es la misma en Ascent (spec/ascent.md, «Borrar la cuenta»).
         ['perfil.borrarCuenta', '', false, 'peligro'],
@@ -166,6 +178,8 @@ const SeccionPerfil = (() => {
       zona,
       pintar,
       abrirAparatos,
+      // Para las capturas: los números ocultos y sin déficit.
+      poner(cambios) { Object.assign(s, cambios); if ('numeros' in cambios) opciones.alNumeros(s.numeros); pintar(); },
       // Para las capturas: una marca desplegada.
       desplegar(m) { s.abierta = m; pintarAparatos(); },
       bajarHoja() { const c = hoja.el.querySelector('.pf-aparatos'); if (c) c.scrollTop = c.scrollHeight; },

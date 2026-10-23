@@ -1,5 +1,7 @@
 // La entrada a la app, la de la galería (galeria/src/entrada.js): la frase de apertura, dos
-// diapositivas, la cuenta y el cuestionario que arma la meta inicial de comida. Cada pantalla tiene
+// diapositivas, tus datos (qué se guarda y el consentimiento para los datos de salud), la cuenta y
+// el cuestionario que arma la meta inicial de comida, con lo que cuida: mayores de 18 y sin déficit
+// en el embarazo, la lactancia o con una condición médica. Cada pantalla tiene
 // su lugar en el cielo: la cámara sube a medida que se avanza. La frase y las diapositivas no se
 // saltean: el botón se llena en 2,5 s. Al final la cámara baja hasta hoy, se guardan las respuestas
 // (el perfil, el peso de hoy y la meta) y aparece Inicio.
@@ -7,14 +9,15 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
-import { metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { MAYORIA_DE_EDAD, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { urlDe } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
 import { lista, t } from '@/textos';
@@ -27,13 +30,14 @@ import { crearCuenta, entrarConApple, entrarConCorreo, hayApple, olvideLaClave, 
 import { Anillos } from './Lienzos';
 import { Boton, Chispas, Circulo, Deslizador, Opcion } from './piezas';
 
-type Paso = 'frase' | 'habitos' | 'comida' | 'cuenta' | 'salud' | 'edad' | 'sexo' | 'altura' | 'peso' | 'actividad' | 'objetivo' | 'resultado';
+type Paso = 'frase' | 'habitos' | 'comida' | 'datos' | 'cuenta' | 'salud' | 'edad' | 'sexo' | 'altura' | 'peso' | 'actividad' | 'cuidado' | 'objetivo' | 'resultado';
 
 /** Cada pantalla y dónde queda la cámara: sube a medida que se avanza, como en la galería. */
 const PASOS: readonly { id: Paso; camara: number }[] = [
   { id: 'frase', camara: 0 },
   { id: 'habitos', camara: 0.42 },
   { id: 'comida', camara: 0.8 },
+  { id: 'datos', camara: 0.98 },
   { id: 'cuenta', camara: 1.08 },
   { id: 'salud', camara: 1.16 },
   { id: 'edad', camara: 1.19 },
@@ -41,13 +45,16 @@ const PASOS: readonly { id: Paso; camara: number }[] = [
   { id: 'altura', camara: 1.25 },
   { id: 'peso', camara: 1.28 },
   { id: 'actividad', camara: 1.31 },
+  { id: 'cuidado', camara: 1.325 },
   { id: 'objetivo', camara: 1.34 },
   { id: 'resultado', camara: 1.37 },
 ];
-const CUESTIONARIO: readonly Paso[] = ['salud', 'edad', 'sexo', 'altura', 'peso', 'actividad', 'objetivo'];
+const CUESTIONARIO: readonly Paso[] = ['salud', 'edad', 'sexo', 'altura', 'peso', 'actividad', 'cuidado', 'objetivo'];
 
-type Respuestas = { edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo };
-const DE_FABRICA: Respuestas = { edad: 29, sexo: null, alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado' };
+/** Embarazo o lactancia, una condición médica o nada: de eso solo se guarda si va sin déficit. */
+type Caso = 'nada' | 'embarazo' | 'condicion';
+type Respuestas = { edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo; caso: Caso };
+const DE_FABRICA: Respuestas = { edad: 29, sexo: null, alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado', caso: 'nada' };
 type DeSalud = ReadonlySet<'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>;
 /** Lo que deja cada pantalla arriba, debajo del borde del teléfono. */
 const ARRIBA = 28;
@@ -85,8 +92,9 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     camara.set(0);
     const sexo = r.sexo;
+    const { caso, ...respuestas } = r;
     setTimeout(() => {
-      elAlmacen().responderCuestionario({ ...r, sexo }, deSalud.has('pesoKg') ? 'salud' : 'manual');
+      elAlmacen().responderCuestionario({ ...respuestas, sexo, sinDeficit: caso !== 'nada' }, deSalud.has('pesoKg') ? 'salud' : 'manual');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       alTerminar?.();
     }, reducido ? 200 : 1100);
@@ -112,6 +120,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
             {paso.id === 'frase' && <Frase alSeguir={siguiente} reducido={reducido} />}
             {paso.id === 'habitos' && <Diapositiva titulo={t('entrada.habitosTitulo')} texto={t('entrada.habitosTexto')} alSeguir={siguiente} reducido={reducido}><Casiopea reducido={reducido} /></Diapositiva>}
             {paso.id === 'comida' && <Diapositiva titulo={t('entrada.comidaTitulo')} texto={t('entrada.comidaTexto')} alSeguir={siguiente} reducido={reducido}><LunaQueSeLlena reducido={reducido} /></Diapositiva>}
+            {paso.id === 'datos' && <TusDatos alSeguir={siguiente} />}
             {paso.id === 'cuenta' && <Cuenta alEntrar={siguiente} />}
             {paso.id === 'salud' && (
               <Salud
@@ -122,14 +131,27 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 }}
               />
             )}
-            {paso.id === 'edad' && (
-              <Numero titulo={t('entrada.cuestionario.edadTitulo')} valor={r.edad} min={RANGOS_DEL_CUESTIONARIO.edad[0]} max={RANGOS_DEL_CUESTIONARIO.edad[1]} paso={1} decimales={0} unidad={t('entrada.cuestionario.anos')} deSalud={deSalud.has('edad')} alCambiar={(v) => poner('edad', v)} alSeguir={siguiente} />
-            )}
+            {paso.id === 'edad' && (deSalud.has('edad') && r.edad < MAYORIA_DE_EDAD ? <Menor /> : (
+              <Numero titulo={t('entrada.cuestionario.edadTitulo')} valor={Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])} min={RANGOS_DEL_CUESTIONARIO.edad[0]} max={RANGOS_DEL_CUESTIONARIO.edad[1]} paso={1} decimales={0} unidad={t('entrada.cuestionario.anos')} deSalud={deSalud.has('edad')} alCambiar={(v) => poner('edad', v)} alSeguir={() => { poner('edad', Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])); siguiente(); }} />
+            ))}
             {paso.id === 'sexo' && <ElSexo sexo={r.sexo} deSalud={deSalud.has('sexo')} alElegir={(v) => poner('sexo', v)} alSeguir={siguiente} />}
             {paso.id === 'altura' && <Altura cm={r.alturaCm} deSalud={deSalud.has('alturaCm')} alCambiar={(v) => poner('alturaCm', v)} alSeguir={siguiente} />}
             {paso.id === 'peso' && <Peso kg={r.pesoKg} deSalud={deSalud.has('pesoKg')} alCambiar={(v) => poner('pesoKg', v)} alSeguir={siguiente} />}
             {paso.id === 'actividad' && <LaActividad actividad={r.actividad} alElegir={(v) => poner('actividad', v)} alSeguir={siguiente} />}
-            {paso.id === 'objetivo' && <ElObjetivo objetivo={r.objetivo} ritmo={r.ritmo} alObjetivo={(v) => poner('objetivo', v)} alRitmo={(v) => poner('ritmo', v)} alSeguir={siguiente} />}
+            {paso.id === 'cuidado' && <Cuidado sexo={r.sexo} caso={r.caso} alElegir={(v) => poner('caso', v)} alSeguir={siguiente} />}
+            {paso.id === 'objetivo' && (
+              <ElObjetivo
+                objetivo={r.caso !== 'nada' && r.objetivo === 'bajar' ? 'mantener' : r.objetivo}
+                ritmo={r.ritmo}
+                sinDeficit={r.caso !== 'nada'}
+                alObjetivo={(v) => poner('objetivo', v)}
+                alRitmo={(v) => poner('ritmo', v)}
+                alSeguir={() => {
+                  if (r.caso !== 'nada' && r.objetivo === 'bajar') poner('objetivo', 'mantener');
+                  siguiente();
+                }}
+              />
+            )}
             {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={terminar} reducido={reducido} />}
           </ScrollView>
         </Animated.View>
@@ -316,6 +338,85 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
   );
 }
 
+// ------------------------------------------------------------------ tus datos
+/**
+ * Antes de la cuenta: qué se guarda y dónde, y el consentimiento para los datos de salud (Ley 18.331
+ * y la guía 5.1.1 de Apple). Mandar lo que no se encuentra es opcional y empieza apagado.
+ */
+function TusDatos({ alSeguir }: { alSeguir: () => void }) {
+  const [mandar, setMandar] = useState(false);
+  return (
+    <>
+      <Titulo>{t('entrada.datos.titulo')}</Titulo>
+      <View style={s.datos}>
+        {lista('entrada.datos.lineas').map((linea, k) => (
+          <Animated.View key={linea} entering={FadeInDown.delay(150 + k * 120).duration(600)} style={s.datoFila}>
+            <View style={s.datoPunto} />
+            <Text style={s.datoTexto}>{linea}</Text>
+          </Animated.View>
+        ))}
+      </View>
+      <Texto>{t('entrada.datos.salud')}</Texto>
+      <Pressable onPress={() => Linking.openURL(urlDe('privacidad')).catch(() => {})} accessibilityRole="link" hitSlop={8}>
+        <Text style={[s.chico, s.enlace, s.izquierda]}>{t('entrada.datos.politica')}</Text>
+      </Pressable>
+      <View style={s.llave}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.llaveTitulo}>{t('entrada.datos.busquedas')}</Text>
+          <Text style={s.llaveTexto}>{t('entrada.datos.busquedasTexto')}</Text>
+        </View>
+        <Switch value={mandar} onValueChange={setMandar} trackColor={{ true: colores.salvia, false: 'rgba(239, 230, 207, 0.14)' }} accessibilityLabel={t('entrada.datos.busquedas')} />
+      </View>
+      <Espacio />
+      <Pie>
+        <Boton
+          texto={t('entrada.datos.acepto')}
+          alTocar={() => {
+            elAlmacen().ponerMandarBusquedas(mandar);
+            alSeguir();
+          }}
+        />
+      </Pie>
+    </>
+  );
+}
+
+/** Menos de 18, según Salud: Moss no sigue (lo pediste el 22/10/2026). */
+function Menor() {
+  return (
+    <View style={s.menor}>
+      <Titulo centrado>{t('entrada.menor.titulo')}</Titulo>
+      <Texto centrado>{t('entrada.menor.texto')}</Texto>
+    </View>
+  );
+}
+
+/** Embarazo o lactancia (solo se pregunta a las mujeres), una condición médica o nada. */
+function Cuidado({ sexo, caso, alElegir, alSeguir }: { sexo: Sexo | null; caso: Caso; alElegir: (c: Caso) => void; alSeguir: () => void }) {
+  const casos: { caso: Caso; titulo: string; detalle?: string }[] = [
+    ...(sexo === 'f' ? [{ caso: 'embarazo' as const, titulo: t('entrada.cuidado.embarazo') }] : []),
+    { caso: 'condicion', titulo: t('entrada.cuidado.condicion'), detalle: t('entrada.cuidado.condicionTexto') },
+    { caso: 'nada', titulo: t('entrada.cuidado.nada') },
+  ];
+  return (
+    <>
+      <Titulo>{t('entrada.cuidado.titulo')}</Titulo>
+      <View style={s.opciones} accessibilityRole="radiogroup">
+        {casos.map((c) => <Opcion key={c.caso} titulo={c.titulo} detalle={c.detalle} elegida={c.caso === caso} alTocar={() => alElegir(c.caso)} />)}
+      </View>
+      {caso !== 'nada' && (
+        <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
+          <Texto>{t('entrada.cuidado.aviso')}</Texto>
+        </Animated.View>
+      )}
+      <Espacio />
+      <Pie>
+        <Boton texto={t('entrada.seguir')} alTocar={alSeguir} />
+      </Pie>
+    </>
+  );
+}
+
 // ------------------------------------------------------------------ el cuestionario
 const ICONOS_DE_SALUD = ['figure.walk', 'moon.zzz', 'brain.head.profile', 'drop', 'scalemass'] as const;
 
@@ -457,12 +558,24 @@ function LaActividad({ actividad, alElegir, alSeguir }: { actividad: Actividad; 
   );
 }
 
-function ElObjetivo({ objetivo, ritmo, alObjetivo, alRitmo, alSeguir }: { objetivo: Objetivo; ritmo: Ritmo; alObjetivo: (o: Objetivo) => void; alRitmo: (r: Ritmo) => void; alSeguir: () => void }) {
+function ElObjetivo({ objetivo, ritmo, sinDeficit, alObjetivo, alRitmo, alSeguir }: {
+  objetivo: Objetivo; ritmo: Ritmo; sinDeficit: boolean; alObjetivo: (o: Objetivo) => void; alRitmo: (r: Ritmo) => void; alSeguir: () => void;
+}) {
   return (
     <>
       <Titulo>{t('entrada.cuestionario.objetivoTitulo')}</Titulo>
       <View style={s.opciones} accessibilityRole="radiogroup">
-        {(['bajar', 'mantener', 'subir'] as const).map((o) => <Opcion key={o} titulo={t(`entrada.cuestionario.${o}`)} elegida={o === objetivo} alTocar={() => alObjetivo(o)} />)}
+        {/* Sin déficit, bajar de peso no se elige acá: se dice por qué, corto. */}
+        {(['bajar', 'mantener', 'subir'] as const).map((o) => (
+          <Opcion
+            key={o}
+            titulo={t(`entrada.cuestionario.${o}`)}
+            detalle={o === 'bajar' && sinDeficit ? t('entrada.cuidado.bajarNo') : undefined}
+            desactivada={o === 'bajar' && sinDeficit}
+            elegida={o === objetivo}
+            alTocar={() => alObjetivo(o)}
+          />
+        ))}
       </View>
       {objetivo !== 'mantener' && (
         <Animated.View entering={FadeIn.duration(300)} style={s.ritmo}>
@@ -542,6 +655,18 @@ const s = StyleSheet.create({
   chico: { marginTop: 12, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)', textAlign: 'center' },
   legal: { marginTop: 6, fontSize: 10.5, color: 'rgba(239, 230, 207, 0.4)' },
   enlace: { textDecorationLine: 'underline' },
+  izquierda: { textAlign: 'left' },
+  datos: { marginTop: 16, gap: 10, maxWidth: 340 },
+  datoFila: { flexDirection: 'row', gap: 11 },
+  datoPunto: { width: 5, height: 5, marginTop: 9, borderRadius: 3, backgroundColor: colores.oro },
+  datoTexto: { flex: 1, fontFamily: letras.textoLiviano, fontSize: 15, lineHeight: 22, color: 'rgba(239, 230, 207, 0.86)', ...SOMBRA },
+  llave: {
+    marginTop: 18, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13, paddingHorizontal: 14, borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.55)',
+  },
+  llaveTitulo: { fontFamily: letras.texto, fontSize: 14, lineHeight: 19, color: colores.pergamino },
+  llaveTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.55)' },
+  menor: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   pie: { gap: 10, width: '100%', maxWidth: 340, alignSelf: 'center', paddingTop: 18 },
   avance: { height: 2, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(239, 230, 207, 0.12)' },
   avanceLleno: { height: '100%', backgroundColor: colores.oro, shadowColor: colores.oro, shadowOpacity: 0.7, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },

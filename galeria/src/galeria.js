@@ -461,7 +461,11 @@
     // La cara de la mañana cambia la recuperación, que también está en Ascent.
     alCambiarCara: () => { if (ascent) ascent.pintar(); },
   }));
-  perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, { persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length }));
+  perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length,
+    // Los números ocultos (Perfil): sin calorías ni gramos en Inicio, Comida y la ventana del alimento.
+    alNumeros: (si) => tel.classList.toggle('sin-numeros', !si),
+  }));
   ascent = SeccionAscent.crear(tel, Object.assign({}, opcionesDeSeccion, {
     comida,
     persona,
@@ -1141,6 +1145,14 @@
     pasos[accion]();
   };
   window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
+  // Para las capturas de lo que cuida (lo pediste el 22/10): Salud dice 16 años, es su caso, los números ocultos, poco sueño.
+  window.__seguridad = (accion, arg) => {
+    const pasos = {
+      menor: () => entrada.menor(), caso: () => entrada.caso(arg), numeros: () => perfilSec.poner({ numeros: arg }),
+      sinDeficit: () => perfilSec.poner({ sinDeficit: arg }), poco: () => sueno.poco(arg),
+    };
+    pasos[accion]();
+  };
   window.__ascent = (accion, arg) => {
     const pasos = {
       abrir: () => abrirAscent(true),

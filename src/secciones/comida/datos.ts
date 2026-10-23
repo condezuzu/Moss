@@ -21,6 +21,15 @@ export function useEstado(): Estado {
   return useSyncExternalStore(a.suscribir, a.estado);
 }
 
+/**
+ * Si se ven los números de la comida (Perfil › Los números): sin ellos, solo las figuras y las
+ * barras. Con selector, así una fila de la línea del día no se redibuja con cualquier cambio.
+ */
+export function useNumeros(): boolean {
+  const a = elAlmacen();
+  return useSyncExternalStore(a.suscribir, () => a.estado().numeros);
+}
+
 let laRegion: string | undefined | null = null;
 /** El país del teléfono (UY, MX…), para los nombres de cada región. */
 export function region(): string | undefined {

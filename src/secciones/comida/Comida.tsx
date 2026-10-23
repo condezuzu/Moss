@@ -26,7 +26,7 @@ import { ACOMODA, Aparece } from '../tarjetas';
 import { AvisoAbajo, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
-  cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, letraDelDia, metaDelDia, minutosDe, numero, sistemaDe, tituloDelDia, totalDe,
+  cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, letraDelDia, metaDelDia, minutosDe, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
   useEstado, type ComidaDelDia,
 } from './datos';
 import { Luna, Lunitas, type Lunita } from './Luna';
@@ -195,6 +195,7 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
 
 /** Las barras de proteína, carbohidratos y grasas contra su meta. En un día, cada punto brilla al cumplir y tiembla si se pasa por mucho. */
 export function BarrasDeMacros({ comido, meta, conEstado }: { comido: Pick<Valores, Macro>; meta: Macros | null; conEstado: boolean }) {
+  const numeros = useNumeros();
   return (
     <View style={estilos.macros}>
       {MACROS.map((m) => {
@@ -209,7 +210,7 @@ export function BarrasDeMacros({ comido, meta, conEstado }: { comido: Pick<Valor
               </View>
               <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
             </View>
-            <Text style={estilos.macroCifra}>{meta ? t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) }) : `${numero(Math.round(comido[m]))} g`}</Text>
+            {numeros && <Text style={estilos.macroCifra}>{meta ? t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) }) : `${numero(Math.round(comido[m]))} g`}</Text>}
             <View style={estilos.barra}>
               <View style={[estilos.barraLlena, { width: `${lleno * 100}%`, backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
             </View>
@@ -225,7 +226,7 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   const comido = totalDe(e.registros, dia, e.hoy);
   const queda = meta ? meta.kcal - comido.kcal : 0;
   let linea = '';
-  if (dia === e.hoy && meta) linea = t(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) });
+  if (dia === e.hoy && meta && e.numeros) linea = t(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) });
   else if (dia > e.hoy) linea = t('comida.planificado');
   return (
     <View>
@@ -234,10 +235,12 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
           <Luna tam={64} fraccion={meta ? comido.kcal / meta.kcal : 0} />
         </View>
         <View style={estilos.resumenTextos}>
-          <Text style={estilos.resumenCifra}>
-            {numero(Math.round(comido.kcal))}
-            {meta && <Text style={estilos.resumenDe}>{`  ${t('comida.deMetaCorto', { meta: numero(meta.kcal) })}`}</Text>}
-          </Text>
+          {e.numeros && (
+            <Text style={estilos.resumenCifra}>
+              {numero(Math.round(comido.kcal))}
+              {meta && <Text style={estilos.resumenDe}>{`  ${t('comida.deMetaCorto', { meta: numero(meta.kcal) })}`}</Text>}
+            </Text>
+          )}
           {linea ? <Text style={[estilos.resumenLinea, dia === e.hoy && queda < 0 && estilos.deMas]}>{linea}</Text> : null}
         </View>
       </View>
@@ -260,6 +263,7 @@ function promedioDe(e: Estado, dias: ClaveDia[]): Promedio {
 }
 
 function CabezaDePromedio({ titulo, fechas, promedio, dias, meta }: { titulo: string; fechas: string; promedio: Promedio; dias: number; meta: Macros | null }) {
+  const numeros = useNumeros();
   return (
     <View>
       <View style={estilos.paginaCabeza}>
@@ -269,11 +273,13 @@ function CabezaDePromedio({ titulo, fechas, promedio, dias, meta }: { titulo: st
       <Etiqueta>{t('comida.promedio')}</Etiqueta>
       {promedio.n ? (
         <>
-          <Text style={estilos.promedioCifra}>
-            {numero(Math.round(promedio.kcal))}
-            <Text style={estilos.promedioUnidad}>{` ${t('comida.kcal')}`}</Text>
-          </Text>
-          <Text style={estilos.promedioNota}>{[meta ? t('comida.metaDe', { n: numero(meta.kcal) }) : null, t('comida.diasRegistrados', { n: promedio.n, total: dias })].filter(Boolean).join(' · ')}</Text>
+          {numeros && (
+            <Text style={estilos.promedioCifra}>
+              {numero(Math.round(promedio.kcal))}
+              <Text style={estilos.promedioUnidad}>{` ${t('comida.kcal')}`}</Text>
+            </Text>
+          )}
+          <Text style={estilos.promedioNota}>{[meta && numeros ? t('comida.metaDe', { n: numero(meta.kcal) }) : null, t('comida.diasRegistrados', { n: promedio.n, total: dias })].filter(Boolean).join(' · ')}</Text>
           <BarrasDeMacros comido={promedio} meta={meta} conEstado={false} />
         </>
       ) : (
@@ -417,6 +423,7 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
 }
 
 function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe> }) {
+  const numeros = useNumeros();
   // La foto, opcional y solo en el teléfono (D10): un toque en la comida ya registrada.
   const [foto, setFoto] = useState(() => fotoDe(dia, c.comida));
   const [viendo, setViendo] = useState(false);
@@ -428,10 +435,12 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
       <View style={estilos.tarjetaCabeza}>
         <Text style={estilos.tarjetaTitulo}>{t(`comida.comidas.${c.comida}`)}</Text>
         {c.planificada && <Text style={estilos.etiquetaPlan}>{t('comida.planificado')}</Text>}
-        <Text style={estilos.tarjetaKcal}>
-          {numero(Math.round(c.total.kcal))}
-          <Text style={estilos.tarjetaKcalUnidad}> kcal</Text>
-        </Text>
+        {numeros && (
+          <Text style={estilos.tarjetaKcal}>
+            {numero(Math.round(c.total.kcal))}
+            <Text style={estilos.tarjetaKcalUnidad}> kcal</Text>
+          </Text>
+        )}
       </View>
       {c.registros.map((r) => (
         <Animated.View key={r.id} entering={FadeIn.duration(280)} exiting={FadeOut.duration(180)} layout={ACOMODA}>
@@ -449,7 +458,7 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
         {MACROS.map((m) => (
           <View key={m} style={estilos.mini}>
             <Punto macro={m} tam={5} />
-            <Text style={estilos.miniTexto}>{`${gramosDeMacro(c.total[m])} g`}</Text>
+            {numeros && <Text style={estilos.miniTexto}>{`${gramosDeMacro(c.total[m])} g`}</Text>}
           </View>
         ))}
         {hayFotos && !c.planificada && !foto && (
@@ -480,6 +489,7 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
 
 function FilaDeRegistro({ r, sistema }: { r: Registro; sistema: ReturnType<typeof sistemaDe> }) {
   const cantidad = cantidadDeTexto(r.cantidad, sistema);
+  const numeros = useNumeros();
   return (
     <Pressable
       onPress={() => abrirRegistro({ editar: r.id, comida: r.comida, dia: r.dia })}
@@ -490,7 +500,7 @@ function FilaDeRegistro({ r, sistema }: { r: Registro; sistema: ReturnType<typeo
         {r.nombre}
         {cantidad ? <Text style={estilos.itemCantidad}>{` · ${cantidad}`}</Text> : null}
       </Text>
-      <Text style={estilos.itemKcal}>{numero(Math.round(r.valores.kcal))}</Text>
+      {numeros && <Text style={estilos.itemKcal}>{numero(Math.round(r.valores.kcal))}</Text>}
     </Pressable>
   );
 }

@@ -3,11 +3,45 @@ import { describe, expect, it } from '@jest/globals';
 import { controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
 import { sumarDias, type DiaSemana } from './fechas';
 import {
-  ajusteDiario, enRango, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaRepartida, metasIniciales, pisoDe, RANGOS_DEL_CUESTIONARIO, repartirSemana, ritmoPermitido,
+  ajusteDiario, enRango, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, pisoDe,
+  RANGOS_DEL_CUESTIONARIO, repartirSemana, RITMOS, ritmoPermitido,
   type Cuestionario, type Macros,
 } from './metas';
 
 const BASE: Cuestionario = { edad: 29, sexo: 'm', alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado' };
+
+describe('los límites que cuidan', () => {
+  it('Moss es para mayores de 18', () => {
+    expect(RANGOS_DEL_CUESTIONARIO.edad[0]).toBe(18);
+    expect(enRango(RANGOS_DEL_CUESTIONARIO.edad, 17)).toBe(false);
+    expect(enRango(RANGOS_DEL_CUESTIONARIO.edad, 18)).toBe(true);
+  });
+
+  it('sin déficit (embarazo, lactancia o una condición médica), bajar queda en mantener', () => {
+    const bajar = { ...BASE, objetivo: 'bajar' as const, ritmo: 'rapido' as const };
+    expect(objetivoPermitido({ ...bajar, sinDeficit: true })).toBe('mantener');
+    expect(objetivoPermitido({ ...BASE, objetivo: 'subir', sinDeficit: true })).toBe('subir');
+    const gasto = 2700;
+    expect(metaPara(gasto, { ...bajar, sinDeficit: true }).kcal).toBe(metaPara(gasto, BASE).kcal);
+    expect(metaPara(gasto, bajar).kcal).toBeLessThan(gasto);
+  });
+
+  it('el ritmo más rápido para bajar no pasa del 1 % del peso por semana', () => {
+    expect(Math.max(...Object.values(RITMOS.bajar).map(Math.abs))).toBeLessThanOrEqual(1);
+  });
+
+  it('una meta a mano por debajo del piso no se acepta, y dice por qué', () => {
+    expect(motivoParaNo({ kcal: 1100 }, 'f')).toBe('piso');
+    expect(motivoParaNo({ kcal: 1200 }, 'f')).toBeNull();
+    expect(motivoParaNo({ kcal: 1300 }, 'm')).toBe('piso');
+    expect(pisoDe('m')).toBe(1400);
+  });
+
+  it('el peso meta más bajo es el de un IMC de 18,5', () => {
+    expect(pesoMinimoSano(172)).toBe(54.8);
+    expect(pesoMinimoSano(160)).toBe(47.4);
+  });
+});
 
 describe('la meta inicial', () => {
   it('da lo mismo que el resultado de la galería: 2.770 kcal, 119 g de proteína, 387 de carbohidratos y 83 de grasas', () => {

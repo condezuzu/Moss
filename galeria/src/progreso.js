@@ -230,13 +230,21 @@ const SeccionProgreso = (() => {
       return caja;
     }
 
+    // El peso meta no baja de un IMC de 18,5 (Metas.pesoMinimoSano): al llegar, se dice por qué.
     function eleccionPesoMeta(p) {
       const caja = el('div', 'pg-eleccion pg-peso-meta');
+      const minimo = Metas.pesoMinimoSano(p.alturaCm);
       const valor = el('b', 'fi-valor', `${numero(p.pesoMeta || 70, 1)} kg`);
-      const cambiar = (dx) => opciones.ponerEstrategia({ pesoMeta: Math.round(((p.pesoMeta || 70) + dx) * 2) / 2 });
+      const cambiar = (dx) => {
+        const kg = Math.round(((p.pesoMeta || 70) + dx) * 2) / 2;
+        if (kg < minimo) { s.enElMinimo = true; pintar(); return; }
+        s.enElMinimo = false;
+        opciones.ponerEstrategia({ pesoMeta: kg });
+      };
       const pasos = el('div', 'fi-stepper');
       pasos.append(boton('fi-paso', icono('menos'), () => cambiar(-0.5), '−0,5'), valor, boton('fi-paso', icono('mas'), () => cambiar(0.5), '+0,5'));
       caja.append(pasos, el('p', 'aj-nota', tx('progreso.pesoMetaNota')));
+      if (s.enElMinimo) caja.appendChild(el('p', 'aj-nota pg-limite', tx('progreso.limites.imc', { n: numero(minimo, 1), unidad: 'kg' })));
       return caja;
     }
 
@@ -290,6 +298,8 @@ const SeccionProgreso = (() => {
       cont.appendChild(cuerpo);
 
       const m = metaDe();
+      // A mano, por debajo del piso no se guarda (Metas.motivoParaNo): se dice por qué.
+      const motivo = s.quien === 'mano' ? Metas.motivoParaNo(m, p.sexo) : null;
       const heroe = el('div', 'aj-heroe');
       heroe.append(el('b', null, numero(m.kcal)), el('span', null, tx('progreso.metas.porDia')));
       const macros = el('div', 'aj-macros');
@@ -328,6 +338,7 @@ const SeccionProgreso = (() => {
           f.append(el('span', null, tx(texto)), input, el('em', null, 'g'));
           cuerpo.appendChild(f);
         });
+        if (motivo) cuerpo.appendChild(el('p', 'aj-nota pg-limite', tx('progreso.limites.piso', { n: numero(Metas.pisoDe(p.sexo)) })));
       }
 
       // Repartir la semana: el mismo total, más los días elegidos.

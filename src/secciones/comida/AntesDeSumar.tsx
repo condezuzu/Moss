@@ -66,10 +66,13 @@ function textoDeFrase(f: Frase): string {
   return t(`comida.deja.pasas.${f.macro}`, { n: numero(f.gramos) });
 }
 
-/** Cada macro con lo que ya había (apagado) y lo que suma esto (con su color), y una frase. */
-export function ComoDeja({ antes, esto, meta }: { antes: Macros; esto: Macros; meta: Macros }) {
+/**
+ * Cada macro con lo que ya había (apagado) y lo que suma esto (con su color), y una frase. Sin los
+ * números, quedan las barras y solo la frase que no tiene cifras («completas tu proteína»).
+ */
+export function ComoDeja({ antes, esto, meta, numeros = true }: { antes: Macros; esto: Macros; meta: Macros; numeros?: boolean }) {
   const { barras, frase } = comoDejaElDia(antes, esto, meta);
-  const texto = frase ? textoDeFrase(frase) : null;
+  const texto = frase && (numeros || frase.tipo === 'completas') ? textoDeFrase(frase) : null;
   return (
     <View style={estilos.deja}>
       {MACROS_DEL_DIA.map((m) => {
@@ -83,7 +86,7 @@ export function ComoDeja({ antes, esto, meta }: { antes: Macros; esto: Macros; m
               <Animated.View layout={ACOMODA} style={[estilos.tramo, { width: `${desde * 100}%`, backgroundColor: COLOR_DE_MACRO[m], opacity: 0.34 }]} />
               <Animated.View layout={ACOMODA} style={[estilos.tramo, { left: `${desde * 100}%`, width: `${(hasta - desde) * 100}%`, backgroundColor: COLOR_DE_MACRO[m] }]} />
             </View>
-            <Text style={[estilos.barraPorcentaje, barras[m].despues >= 1 && { color: COLOR_DE_MACRO[m] }]}>{porcentaje}</Text>
+            {numeros && <Text style={[estilos.barraPorcentaje, barras[m].despues >= 1 && { color: COLOR_DE_MACRO[m] }]}>{porcentaje}</Text>}
           </View>
         );
       })}

@@ -26,7 +26,7 @@ import { Aparece } from '../tarjetas';
 import { ComoDeja, DeDonde, EnlaceReportar, Micronutrientes, Reporte, Sello } from './AntesDeSumar';
 import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
 import { compartir } from './compartir';
-import { gramosDeMacro, numero, opcionesDeIdioma } from './datos';
+import { gramosDeMacro, numero, opcionesDeIdioma, useNumeros } from './datos';
 
 export type PorcionAbierta = { nombre: string; gramos: number };
 
@@ -124,6 +124,8 @@ export function Ventana(p: Props) {
   const [escrito, setEscrito] = useState<string | null>(null);
   const [deDonde, setDeDonde] = useState(false);
   const [reportando, setReportando] = useState(false);
+  // Sin los números (Perfil › Los números): las figuras y las barras, sin calorías ni gramos.
+  const numeros = useNumeros();
   const modo = p.modo.tipo;
 
   // Lo de la base trae además cómo se mide: las porciones, crudo o cocido, la cáscara, la densidad y el aceite.
@@ -255,28 +257,32 @@ export function Ventana(p: Props) {
 
         {deDonde && <DeDonde detalle={detalle} origen={alimento.origen} />}
 
-        <View style={estilos.cifras}>
-          <Text style={estilos.kcal}>
-            {numero(Math.round(valores.kcal))}
-            <Text style={estilos.kcalUnidad}>{`  ${t('comida.kcal').toUpperCase()}`}</Text>
-          </Text>
-          <View style={estilos.macros}>
-            {MACROS.map((m) => (
-              <View key={m} style={estilos.macro}>
-                <Punto macro={m} />
-                <Text style={estilos.macroTexto}>{`${gramosDeMacro(valores[m])} g`}</Text>
-              </View>
-            ))}
+        {numeros && (
+          <View style={estilos.cifras}>
+            <Text style={estilos.kcal}>
+              {numero(Math.round(valores.kcal))}
+              <Text style={estilos.kcalUnidad}>{`  ${t('comida.kcal').toUpperCase()}`}</Text>
+            </Text>
+            <View style={estilos.macros}>
+              {MACROS.map((m) => (
+                <View key={m} style={estilos.macro}>
+                  <Punto macro={m} />
+                  <Text style={estilos.macroTexto}>{`${gramosDeMacro(valores[m])} g`}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
-        {restante !== null && <Text style={estilos.queda}>{t(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })}</Text>}
-        {p.dia && <ComoDeja antes={p.dia.antes} esto={valores} meta={p.dia.meta} />}
-        <Text style={estilos.secundarios}>
-          {SECUNDARIOS.filter(([k]) => valores[k] != null && !(k === 'alcohol' && valores[k] === 0))
-            .map(([k, unidad]) => `${t(`comida.secundarios.${k}`)} ${numero(valores[k]!, unidad === 'g' && valores[k]! < 10 ? 1 : 0)} ${unidad}`)
-            .join('   ')}
-        </Text>
-        {valores.micros && <Micronutrientes micros={valores.micros} persona={p.persona} />}
+        )}
+        {numeros && restante !== null && <Text style={estilos.queda}>{t(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })}</Text>}
+        {p.dia && <ComoDeja antes={p.dia.antes} esto={valores} meta={p.dia.meta} numeros={numeros} />}
+        {numeros && (
+          <Text style={estilos.secundarios}>
+            {SECUNDARIOS.filter(([k]) => valores[k] != null && !(k === 'alcohol' && valores[k] === 0))
+              .map(([k, unidad]) => `${t(`comida.secundarios.${k}`)} ${numero(valores[k]!, unidad === 'g' && valores[k]! < 10 ? 1 : 0)} ${unidad}`)
+              .join('   ')}
+          </Text>
+        )}
+        {numeros && valores.micros && <Micronutrientes micros={valores.micros} persona={p.persona} />}
 
         {versiones.length > 1 && (
           <>

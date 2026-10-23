@@ -9,8 +9,11 @@ export type Actividad = 'poco' | 'algo' | 'activo' | 'muy';
 export type Objetivo = 'bajar' | 'mantener' | 'subir';
 export type Ritmo = 'suave' | 'recomendado' | 'rapido';
 
-/** Las respuestas del cuestionario de la entrada. */
-export type Cuestionario = { edad: number; sexo: Sexo; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo };
+/**
+ * Las respuestas del cuestionario de la entrada. `sinDeficit`: embarazo, lactancia o una condición
+ * médica; no se guarda cuál, solo que Moss no pone en déficit (lo pediste el 22/10/2026).
+ */
+export type Cuestionario = { edad: number; sexo: Sexo; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo; sinDeficit?: boolean };
 
 export type Macros = { kcal: number; proteina: number; carbohidratos: number; grasas: number };
 
@@ -46,7 +49,7 @@ export const edadDe = (perfil: Pick<Perfil, 'nacimiento'>, hoy: ClaveDia) => Num
  * Lo que se puede contestar en el cuestionario y cambiar en Perfil, dentro de lo que acepta la base
  * (supabase/moss). Lo que llega de Salud fuera de esto se contesta a mano.
  */
-export const RANGOS_DEL_CUESTIONARIO = { edad: [14, 100], alturaCm: [120, 230], pesoKg: [30, 250] } as const;
+export const RANGOS_DEL_CUESTIONARIO = { edad: [18, 100], alturaCm: [120, 230], pesoKg: [30, 250] } as const;
 export const enRango = (rango: readonly [number, number], valor: number) => Number.isFinite(valor) && valor >= rango[0] && valor <= rango[1];
 
 /** El factor de cada nivel de actividad sobre el gasto basal. */
@@ -59,7 +62,10 @@ export const RITMOS: Record<Exclude<Objetivo, 'mantener'>, Record<Ritmo, number>
 };
 
 export const KCAL_POR_KG = 7700;
+/** Moss es para mayores de 18: el cuestionario no deja contestar menos. */
 export const MAYORIA_DE_EDAD = 18;
+/** El peso meta más bajo: el de un índice de masa corporal de 18,5, el borde de lo sano de la OMS. */
+export const IMC_MINIMO = 18.5;
 
 const PISOS: Record<Sexo, number> = { f: 1200, m: 1400 };
 /** Proteína por kilo según el objetivo; todas dentro del rango de 1,2 a 2,2 g. */
@@ -105,6 +111,22 @@ export function ritmoPermitido(c: Pick<Cuestionario, 'edad' | 'objetivo' | 'ritm
   return c.objetivo === 'bajar' && c.ritmo === 'rapido' && c.edad < MAYORIA_DE_EDAD ? 'recomendado' : c.ritmo;
 }
 
+/** El objetivo que se usa: sin déficit (embarazo, lactancia o una condición médica), bajar de peso queda en mantener. */
+export function objetivoPermitido(c: Pick<Cuestionario, 'objetivo' | 'sinDeficit'>): Objetivo {
+  return c.objetivo === 'bajar' && c.sinDeficit ? 'mantener' : c.objetivo;
+}
+
+/** El peso meta más bajo que se acepta para una altura, en kg con un decimal (hacia arriba). */
+export const pesoMinimoSano = (alturaCm: number) => Math.ceil(IMC_MINIMO * (alturaCm / 100) ** 2 * 10) / 10;
+
+/**
+ * Por qué no se acepta una meta a mano, o null si se acepta: por debajo del piso de calorías el
+ * cuerpo no recibe lo que necesita para funcionar. Moss lo dice corto y no la guarda.
+ */
+export function motivoParaNo(m: Pick<Macros, 'kcal'>, sexo: Sexo): 'piso' | null {
+  return m.kcal < PISOS[sexo] ? 'piso' : null;
+}
+
 /** Las kcal por día de más o de menos que pide el objetivo. */
 export function ajusteDiario(objetivo: Objetivo, ritmo: Ritmo, pesoKg: number): number {
   if (objetivo === 'mantener') return 0;
@@ -128,10 +150,11 @@ export function macrosPara(kcal: number, pesoKg: number, objetivo: Objetivo, est
   return { kcal, proteina, carbohidratos, grasas };
 }
 
-/** La meta para un gasto: el gasto más o menos el ritmo, nunca por debajo del piso. */
-export function metaPara(gasto: number, c: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo'>, estilo: Estilo = 'equilibrada'): Macros {
-  const kcal = Math.max(PISOS[c.sexo], aDiez(gasto + ajusteDiario(c.objetivo, ritmoPermitido(c), c.pesoKg)));
-  return macrosPara(kcal, c.pesoKg, c.objetivo, estilo);
+/** La meta para un gasto: el gasto más o menos el ritmo, nunca por debajo del piso ni en déficit si no se puede. */
+export function metaPara(gasto: number, c: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo' | 'sinDeficit'>, estilo: Estilo = 'equilibrada'): Macros {
+  const objetivo = objetivoPermitido(c);
+  const kcal = Math.max(PISOS[c.sexo], aDiez(gasto + ajusteDiario(objetivo, ritmoPermitido({ ...c, objetivo }), c.pesoKg)));
+  return macrosPara(kcal, c.pesoKg, objetivo, estilo);
 }
 
 /** Las metas a mano: los gramos de cada macro y, si no se dan, las kcal que suman (4, 4 y 9 por gramo). */

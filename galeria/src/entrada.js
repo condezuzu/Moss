@@ -10,15 +10,17 @@ const Entrada = (() => {
   const SVG = 'http://www.w3.org/2000/svg';
 
   // Mifflin-St Jeor por el nivel de actividad, más o menos el ritmo elegido (7.700 kcal por kg),
-  // con un piso. Es la meta inicial: después la ajusta el control de cada semana.
+  // con un piso, y sin déficit si es su caso (embarazo, lactancia o una condición médica). Es la
+  // meta inicial: después la ajusta el control de cada semana.
   const ACTIVIDAD = { poco: 1.35, algo: 1.5, activo: 1.65, muy: 1.85 };
   const RITMO = { bajar: { suave: -0.25, recomendado: -0.5, rapido: -0.75 }, subir: { suave: 0.1, recomendado: 0.25, rapido: 0.4 } };
   function metas(r) {
     const basal = 10 * r.peso + 6.25 * r.altura - 5 * r.edad + (r.sexo === 'f' ? -161 : 5);
     const gasto = basal * ACTIVIDAD[r.actividad];
-    const pct = r.objetivo === 'mantener' ? 0 : RITMO[r.objetivo][r.ritmo];
+    const objetivo = r.sinDeficit && r.objetivo === 'bajar' ? 'mantener' : r.objetivo;
+    const pct = objetivo === 'mantener' ? 0 : RITMO[objetivo][r.ritmo];
     const kcal = Math.max(r.sexo === 'f' ? 1200 : 1400, Math.round((gasto + (pct / 100) * r.peso * 7700 / 7) / 10) * 10);
-    const proteina = Math.round(r.peso * (r.objetivo === 'bajar' ? 2.0 : r.objetivo === 'subir' ? 1.8 : 1.6));
+    const proteina = Math.round(r.peso * (objetivo === 'bajar' ? 2.0 : objetivo === 'subir' ? 1.8 : 1.6));
     const grasas = Math.round(Math.max(0.6 * r.peso, (kcal * 0.27) / 9));
     const carbohidratos = Math.max(0, Math.round((kcal - proteina * 4 - grasas * 9) / 4));
     return { gasto: Math.round(gasto / 10) * 10, kcal, proteina, grasas, carbohidratos };
@@ -52,7 +54,7 @@ const Entrada = (() => {
     };
 
     // Lo que contestó: con Salud conectada, edad, sexo, altura y peso vienen de ahí (de mentira).
-    const r = { salud: false, edad: 29, sexo: null, altura: 172, peso: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado' };
+    const r = { salud: false, edad: 29, sexo: null, altura: 172, peso: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado', sinDeficit: false, caso: 'nada', buscar: false };
     const DE_SALUD = { edad: 31, sexo: 'm', altura: 176, peso: 78.4 };
     let desdeSalud = {};
 
@@ -203,13 +205,15 @@ const Entrada = (() => {
       { id: 'frase', camara: 0, minimo: true, armar: armarFrase },
       { id: 'habitos', camara: 0.42, minimo: true, armar: armarHabitos, alSalir: () => escena.quitarDemo() },
       { id: 'comida', camara: 0.8, minimo: true, armar: armarComida },
+      { id: 'datos', camara: 0.98, armar: armarDatos },
       { id: 'cuenta', camara: 1.08, armar: armarCuenta },
       { id: 'salud', camara: 1.16, cuestionario: true, armar: armarSalud },
-      { id: 'edad', camara: 1.19, cuestionario: true, armar: () => armarNumero('edad', 'entrada.cuestionario.edadTitulo', null, 14, 90, 1, 0, tx('entrada.cuestionario.anos')) },
+      { id: 'edad', camara: 1.19, cuestionario: true, armar: (p) => (r.edad < 18 ? armarMenor(p) : armarNumero('edad', 'entrada.cuestionario.edadTitulo', null, 18, 90, 1, 0, tx('entrada.cuestionario.anos'))) },
       { id: 'sexo', camara: 1.22, cuestionario: true, armar: armarSexo },
       { id: 'altura', camara: 1.25, cuestionario: true, armar: () => armarNumero('altura', 'entrada.cuestionario.alturaTitulo', null, 130, 220, 1, 0, 'cm') },
       { id: 'peso', camara: 1.28, cuestionario: true, armar: () => armarNumero('peso', 'entrada.cuestionario.pesoTitulo', 'entrada.cuestionario.pesoTexto', 35, 200, 0.1, 1, 'kg') },
       { id: 'actividad', camara: 1.31, cuestionario: true, armar: armarActividad },
+      { id: 'cuidado', camara: 1.325, cuestionario: true, armar: armarCuidado },
       { id: 'objetivo', camara: 1.34, cuestionario: true, armar: armarObjetivo },
       { id: 'resultado', camara: 1.37, armar: armarResultado },
     ];
@@ -265,6 +269,48 @@ const Entrada = (() => {
       }
       p.append(el('h2', 'ent-titulo', tx('entrada.comidaTitulo')), el('p', 'ent-texto', tx('entrada.comidaTexto')), escenario, circulo(siguiente));
       l.llenar(2000, 250);
+    }
+
+    // Antes de la cuenta: qué se guarda, dónde, y el consentimiento para los datos de salud (Ley
+    // 18.331 y la guía 5.1.1 de Apple). Mandar lo que no se encuentra es opcional y empieza apagado.
+    function armarDatos(p) {
+      // Como el cuestionario: a la izquierda, que se lee mejor que centrado.
+      p.classList.add('ent-cuestionario');
+      const lista = el('ul', 'ent-lista-datos');
+      tx('entrada.datos.lineas').forEach((linea, i) => {
+        const li = el('li', null, linea);
+        li.style.animationDelay = `${0.15 + i * 0.12}s`;
+        lista.appendChild(li);
+      });
+      const llave = botonSeguir('', () => { r.buscar = !r.buscar; llave.setAttribute('aria-pressed', String(r.buscar)); }, 'ent-llave');
+      llave.innerHTML = `<span><b>${tx('entrada.datos.busquedas')}</b><small>${tx('entrada.datos.busquedasTexto')}</small></span><i></i>`;
+      llave.setAttribute('aria-pressed', String(r.buscar));
+      p.append(el('h2', 'ent-titulo', tx('entrada.datos.titulo')), lista, el('p', 'ent-texto ent-salud-datos', tx('entrada.datos.salud')),
+        el('p', 'ent-chico ent-enlace', tx('entrada.datos.politica')), llave, el('div', 'ent-pie'));
+      p.querySelector('.ent-pie').appendChild(botonSeguir(tx('entrada.datos.acepto'), siguiente, 'ent-principal'));
+    }
+
+    // Menos de 18, según Salud: Moss no sigue (lo pediste el 22/10/2026).
+    function armarMenor(p) {
+      p.classList.add('ent-menor');
+      p.append(el('h2', 'ent-titulo', tx('entrada.menor.titulo')), el('p', 'ent-texto', tx('entrada.menor.texto')));
+      return null;
+    }
+
+    // Embarazo, lactancia o una condición médica: sin déficit, y un profesional que acompañe. No se
+    // guarda cuál: solo que Moss no pone en déficit.
+    function armarCuidado(p, paso) {
+      cabezaDeCuestionario(p, paso);
+      p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuidado.titulo')));
+      const aviso = el('p', 'ent-texto ent-aviso' + (r.caso !== 'nada' ? ' visible' : ''), tx('entrada.cuidado.aviso'));
+      const casos = [
+        ...(r.sexo === 'f' ? [['embarazo', tx('entrada.cuidado.embarazo')]] : []),
+        ['condicion', tx('entrada.cuidado.condicion'), tx('entrada.cuidado.condicionTexto')],
+        ['nada', tx('entrada.cuidado.nada')],
+      ];
+      opcionesDe(p, casos, r.caso, (v) => { r.caso = v; r.sinDeficit = v !== 'nada'; aviso.classList.toggle('visible', r.sinDeficit); });
+      p.append(aviso, el('div', 'ent-pie'));
+      p.querySelector('.ent-pie').appendChild(botonSeguir(tx('entrada.seguir'), siguiente, 'ent-principal'));
     }
 
     function armarCuenta(p) {
@@ -380,7 +426,10 @@ const Entrada = (() => {
         ritmo.hidden = r.objetivo === 'mantener';
         if (r.objetivo !== 'mantener') textoRitmo.textContent = tx('entrada.cuestionario.ritmoTexto', { pct: numero(Math.abs(RITMO[r.objetivo][r.ritmo]), 2) });
       };
-      opcionesDe(p, [['bajar', tx('entrada.cuestionario.bajar')], ['mantener', tx('entrada.cuestionario.mantener')], ['subir', tx('entrada.cuestionario.subir')]], r.objetivo, (v) => { r.objetivo = v; pintarRitmo(); });
+      if (r.sinDeficit && r.objetivo === 'bajar') r.objetivo = 'mantener';
+      const objetivos = opcionesDe(p, [['bajar', tx('entrada.cuestionario.bajar'), r.sinDeficit ? tx('entrada.cuidado.bajarNo') : null], ['mantener', tx('entrada.cuestionario.mantener')], ['subir', tx('entrada.cuestionario.subir')]], r.objetivo, (v) => { r.objetivo = v; pintarRitmo(); });
+      // Sin déficit, bajar de peso no se elige acá: se dice por qué, corto.
+      if (r.sinDeficit) objetivos.firstChild.disabled = true;
       ritmo.appendChild(el('span', 'ent-paso', tx('entrada.cuestionario.ritmo')));
       opcionesDe(ritmo, ['suave', 'recomendado', 'rapido'].map((k) => [k, tx('entrada.cuestionario.' + k)]), r.ritmo, (v) => { r.ritmo = v; pintarRitmo(); }, 'ent-segmento');
       ritmo.appendChild(textoRitmo);
@@ -500,6 +549,9 @@ const Entrada = (() => {
       empezar,
       salir,
       irA(id) { const i = PASOS.findIndex((p) => p.id === id); if (i >= 0) { if (actual < 0) empezar(); ir(i); } },
+      // Para las capturas: Salud dice 16 años, o es su caso (sin déficit).
+      menor() { r.edad = 16; desdeSalud.edad = 16; },
+      caso(v) { r.caso = v; r.sinDeficit = v !== 'nada'; if (v === 'embarazo') r.sexo = 'f'; },
       get paso() { return actual >= 0 ? PASOS[actual].id : null; },
       metas: () => metas(Object.assign({}, r, { sexo: r.sexo || 'm' })),
     };

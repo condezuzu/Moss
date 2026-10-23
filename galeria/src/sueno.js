@@ -189,6 +189,8 @@ const SeccionSueno = (() => {
       cont.appendChild(cab);
       manana().forEach((nodo) => cont.appendChild(nodo));
       cont.appendChild(tira());
+      // Poco sueño por semanas: la sugerencia de un médico, arriba (Sueno.pocoSuenoSostenido).
+      if (s.poco || Sueno.pocoSuenoSostenido(ultimas(Datos.HOY))) cont.appendChild(pocoSueno());
       // Con Ascent, la recuperación de hoy también vive acá: cruza justo el sueño con el entrenamiento.
       const rec = s.clave === Datos.HOY && opciones.recuperacion ? opciones.recuperacion() : null;
       if (rec) cont.appendChild(recuperacion(rec));
@@ -203,6 +205,12 @@ const SeccionSueno = (() => {
       cont.appendChild(fuentes(noche));
       cont.appendChild(el('p', 'sn-pie', tx('sueno.noMedico')));
       cont.scrollTop = arriba;
+    }
+
+    function pocoSueno() {
+      const c = carta('sn-poco', tx('sueno.pocoSueno.titulo'));
+      c.append(el('p', 'pg-texto', tx('sueno.pocoSueno.texto')), el('p', 'sn-poco-nota', tx('sueno.pocoSueno.nota')));
+      return c;
     }
 
     // ------------------------------------------------------------ la pregunta de la mañana
@@ -603,6 +611,8 @@ const SeccionSueno = (() => {
         pintar();
       },
       abrir(cual) { s.abierto = cual; pintar(); },
+      // Para las capturas: la sugerencia de poco sueño por semanas.
+      poco(si) { s.poco = si; pintar(); cont.scrollTop = 0; },
       bajarA(selector) {
         const n = cont.querySelector(selector);
         if (n) cont.scrollTo({ top: Math.max(0, cont.scrollTop + n.getBoundingClientRect().top - cont.getBoundingClientRect().top - 70), behavior: 'auto' });

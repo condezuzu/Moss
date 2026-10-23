@@ -246,6 +246,23 @@ section.item p { margin: 0; max-width: 64ch; }
 .ent-opcion b { font: 500 16px/1.2 var(--texto); }
 .ent-opcion span { font: 300 13px/1.35 var(--texto); color: rgba(239, 230, 207, 0.62); }
 .ent-opcion[aria-pressed='true'] { border-color: rgba(232, 196, 106, 0.75); background: rgba(232, 196, 106, 0.1); box-shadow: 0 0 22px rgba(232, 196, 106, 0.18); }
+.ent-opcion:disabled { opacity: 0.45; cursor: default; }
+/* Tus datos, antes de la cuenta: qué se guarda, dónde, y el consentimiento para los datos de salud. */
+.ent-lista-datos { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; max-width: 34ch; }
+.ent-lista-datos li { position: relative; padding-left: 16px; font: 300 15px/1.45 var(--texto); color: rgba(239, 230, 207, 0.86); animation: ent-entra 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.ent-lista-datos li::before { content: ''; position: absolute; left: 2px; top: 0.62em; width: 5px; height: 5px; border-radius: 50%; background: var(--oro); }
+.ent-salud-datos { margin-top: 16px; max-width: 34ch; }
+.ent-llave { appearance: none; cursor: pointer; width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px; text-align: left; padding: 13px 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.14); background: rgba(6, 10, 22, 0.55); color: var(--tinta); }
+.ent-llave b { display: block; font: 400 14px/1.3 var(--texto); }
+.ent-llave small { display: block; margin-top: 3px; font: 400 11.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.ent-llave i { flex: none; position: relative; width: 42px; height: 26px; border-radius: 13px; background: rgba(239, 230, 207, 0.14); transition: background 0.25s; }
+.ent-llave i::after { content: ''; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #efe6cf; transition: translate 0.25s; }
+.ent-llave[aria-pressed='true'] i { background: var(--salvia); }
+.ent-llave[aria-pressed='true'] i::after { translate: 16px 0; }
+/* Sin déficit: el aviso crece debajo de las opciones. */
+.ent-aviso { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; transition: max-height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s, margin-top 0.3s; }
+.ent-aviso.visible { max-height: 140px; opacity: 1; margin-top: 16px; }
+.ent-menor { justify-content: center; text-align: center; align-items: center; }
 .ent-dos .ent-opcion { text-align: center; }
 .ent-ritmo { margin-top: 20px; }
 .ent-ritmo .ent-paso { margin-top: 0; }
@@ -676,6 +693,15 @@ section.item p { margin: 0; max-width: 64ch; }
 .pf-lista li.ok b { color: var(--salvia); }
 .pf-lista li.accion b { color: var(--oro-claro); }
 .pf-lista li.peligro > span { color: #f0a58a; }
+.pf-sub { display: block; margin-top: 4px; font: 400 11.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.5); animation: sn-aparece 0.3s both; }
+/* Poco sueño por semanas: una carta tranquila, sin alarma. */
+.sn-poco .pg-texto { margin: 6px 0 0; }
+.sn-poco-nota { margin: 8px 0 0; font: 400 11.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.pg-limite { color: var(--oro-claro); animation: sn-aparece 0.3s both; }
+/* Los números ocultos (Perfil): sin calorías ni gramos, quedan las figuras y las barras. */
+.tel.sin-numeros .in-cal-cifra, .tel.sin-numeros .in-macro b, .tel.sin-numeros .in-macro small, .tel.sin-numeros .cm-macro b, .tel.sin-numeros .cm-carta-cifra,
+.tel.sin-numeros .kc-por, .tel.sin-numeros .vt-cifras .fi-kcal, .tel.sin-numeros .vt-macro, .tel.sin-numeros .fi-queda, .tel.sin-numeros .vt-barra b,
+.tel.sin-numeros .vt-secundarios, .tel.sin-numeros .vt-micro b, .tel.sin-numeros .in-fila + .in-fila .in-dato-cifra { display: none; }
 .pf-nota { margin: 0 4px 10px; font: 400 13px/18px var(--texto); color: rgba(239, 230, 207, 0.6); }
 .pf-con-ascent li { grid-template-columns: 18px minmax(0, 1fr); gap: 14px; padding: 12px 16px; }
 .pf-con-ascent li svg { width: 18px; height: 18px; color: rgba(239, 230, 207, 0.6); }
@@ -1517,6 +1543,8 @@ section.item p { margin: 0; max-width: 64ch; }
   .as-flecha svg { animation: none; }
   .sn-manana, .sn-manana-hecha, .sn-cara { animation: none; transition: none; }
   .vt-plegable, .vt-pista i, .vt-frase, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
+  .ent-aviso, .ent-llave i, .ent-llave i::after { transition: none; }
+  .pf-sub, .pg-limite, .ent-lista-datos li { animation: none; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
   .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: none; box-shadow: 0 0 0 2px var(--c); }
@@ -1850,11 +1878,13 @@ section.item p { margin: 0; max-width: 64ch; }
             <li>En «Tu comida, a tu medida», lo que se come vuela hasta una luna que se llena. Los arcos de alrededor son proteína, carbohidratos y grasas.</li>
           </ul>
           La frase y las diapositivas no se pueden saltear durante 2,5 s: el aro del botón se llena y recién ahí se puede tocar, como el circulito de Ascent. Con «Solas» pasan sin tocar.</li>
+        <li><b>Tus datos son tuyos</b> (nuevo, antes de la cuenta; lo pediste el 22/10): qué se guarda y dónde, que Moss no vende ni rastrea, y el consentimiento para los datos de salud que pide la ley uruguaya (18.331). Mandar lo que no encontrás es opcional y empieza apagado, como pide Apple aunque vaya sin nombre.</li>
         <li><b>La cuenta</b> se abre con Apple o con correo y contraseña. Moss no la presenta como la cuenta de Ascent: es la tuya. Los campos son una maqueta: no se escribe nada.</li>
         <li><b>El cuestionario</b> va justo después:
           <ul>
             <li>Primero Salud: si la conectás, la edad, el sexo, la altura y el peso vienen completos y marcados «de Salud».</li>
-            <li>Después nivel de actividad y objetivo. Si el objetivo es bajar o subir, también el ritmo.</li>
+            <li>Moss es para mayores de 18: la edad empieza en 18, y si Salud dice menos, la entrada no sigue.</li>
+            <li>Después nivel de actividad, <b>«¿Alguno es tu caso?»</b> (embarazo o lactancia, que solo se pregunta a las mujeres, o una condición médica) y objetivo. Si es su caso, Moss no pone en déficit: bajar de peso queda apagado, con el porqué, y sugiere un profesional. No se guarda cuál, solo «sin déficit». Si el objetivo es bajar o subir, también el ritmo (como mucho, 0,75 % del peso por semana).</li>
             <li>La meta inicial sale de la fórmula de Mifflin-St Jeor por el nivel de actividad, con un piso de calorías. La proteína va por kilo, las grasas son al menos el 27 % y los carbohidratos son el resto.</li>
           </ul></li>
         <li><b>Empezar</b> te lleva a Inicio con un flum, y ahí sube <b>«Elige tus primeros hábitos»</b>: diez para elegir de 3 a 5, con los de comida primero (se encienden solos con lo que se registra), y cuatro elegidos de fábrica. «Armar mi constelación» arma el cielo de hoy con los que tocan hoy.</li>

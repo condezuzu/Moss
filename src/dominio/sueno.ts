@@ -442,6 +442,18 @@ export function deudaDeSueno(noches: (Noche | null)[], necesidadMin: number): De
   return { minutos: Math.max(0, suma), noches: contadas, de: n };
 }
 
+/**
+ * Poco sueño por semanas (lo pediste el 22/10/2026): con al menos 10 noches medidas de las últimas
+ * 14 y un promedio de menos de 6 horas (con las siestas), Moss sugiere hablarlo con un médico. Es una
+ * sugerencia, no un diagnóstico: Moss estima, no diagnostica.
+ */
+export const POCO_SUENO = { noches: 10, minutos: 6 * 60 };
+export function pocoSuenoSostenido(noches: (Noche | null)[]): boolean {
+  const medidas = noches.filter((n): n is Noche => !!n && n.confianza.duracion !== 'baja');
+  if (medidas.length < POCO_SUENO.noches) return false;
+  return medidas.reduce((s, n) => s + n.dormido + n.siestas, 0) / medidas.length < POCO_SUENO.minutos;
+}
+
 // ------------------------------------------------------------ la calidad
 
 export type Calidad = {

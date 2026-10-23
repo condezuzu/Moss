@@ -573,6 +573,52 @@ const pasos = {
     await comida('cerrar');
     await pagina.waitForTimeout(800);
   },
+  // Lo que cuida (lo pediste el 22/10): tus datos y el consentimiento, «¿Alguno es tu caso?», bajar
+  // apagado sin déficit, menos de 18, los números ocultos, Perfil, poco sueño y los límites de Progreso.
+  async seguridad() {
+    const entrada = (paso) => pagina.evaluate((p) => window.__entrada(p), paso);
+    const seguridad = (accion, arg) => pagina.evaluate(([a, x]) => window.__seguridad(a, x), [accion, arg]);
+    await entrada('datos');
+    await pagina.waitForTimeout(1600);
+    // Con un click de verdad, Playwright corre la pantalla para ver la llave: se toca desde la página.
+    await pagina.evaluate(() => document.querySelector('.ent-llave').click());
+    await pagina.waitForTimeout(400);
+    await foto('seguridad-datos');
+    await seguridad('caso', 'embarazo');
+    await entrada('cuidado');
+    await pagina.waitForTimeout(1400);
+    await foto('seguridad-cuidado');
+    await entrada('objetivo');
+    await pagina.waitForTimeout(1400);
+    await foto('seguridad-objetivo');
+    await seguridad('menor');
+    await entrada('edad');
+    await pagina.waitForTimeout(1400);
+    await foto('seguridad-menor');
+    await pagina.evaluate(() => window.__accion('entrada'));
+    await pagina.waitForTimeout(1200);
+    await seguridad('numeros', false);
+    await pestana(0);
+    await pagina.waitForTimeout(800);
+    await foto('seguridad-sin-numeros-inicio');
+    await pestana(1);
+    await pagina.waitForTimeout(800);
+    await foto('seguridad-sin-numeros-comida');
+    await seguridad('numeros', true);
+    await seguridad('sinDeficit', true);
+    await pestana(5);
+    await pagina.waitForTimeout(800);
+    await foto('seguridad-perfil');
+    await pagina.evaluate(() => { const c = document.querySelector('.pf-scroll'); c.scrollTop = c.scrollHeight; });
+    await pagina.waitForTimeout(500);
+    await foto('seguridad-perfil-abajo');
+    await seguridad('sinDeficit', false);
+    await seguridad('poco', true);
+    await pestana(3);
+    await pagina.waitForTimeout(900);
+    await foto('seguridad-poco-sueno');
+    await seguridad('poco', false);
+  },
   // La etiqueta: lo leído para revisar, guardado y sumado, encontrable después, y el aviso de 4/4/9.
   async etiqueta() {
     await pestana(1);

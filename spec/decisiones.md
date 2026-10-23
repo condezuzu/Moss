@@ -361,6 +361,53 @@ hacen falta las cuentas anónimas.
 Desde el 22/10/2026 a la tarde trabajo solo: lo que decidí va acá, con el
 porqué, para que lo revises al volver.
 
+### El catálogo confiable (la noche del 22 al 23/10/2026)
+
+- **23 micronutrientes, de USDA.** Vitaminas, minerales, las otras grasas y la
+  cafeína, con las referencias del día de las Academias Nacionales de Estados
+  Unidos (las que usa USDA). En los platos se suman los ingredientes sin las
+  pérdidas de la cocción: en las vitaminas es un máximo, y lo dice la spec.
+- **Verificado con una segunda tabla oficial,** que eligió el ayudante de fuentes
+  según la licencia (ver [`fuentes.md`](fuentes.md)). Un plato se verifica por
+  sus ingredientes y un producto por su etiqueta, que es lo que se puede
+  comprobar de cada uno.
+- **El armado quita lo que USDA tiene mal** (más azúcares que carbohidratos, unos
+  pocos casos): mejor no mostrar un dato que mostrarlo mal. En lo escrito a mano
+  es un error, y no se arma.
+- **Las papillas rinden hasta 10 veces lo crudo** (la sémola con agua, casi 9): el
+  tope era 4 y dejaba sin rinde a la avena, la polenta y la sémola.
+- **Lo que no se encuentra se manda solo si se elige**, y empieza apagado: la guía
+  5.1.1 pide permiso aunque vaya sin nombre. «Reportar un error» es una acción de
+  la persona, así que sale sin preguntar más. Las dos funciones del servidor
+  piden sesión, para que un anónimo no pueda llenar las tablas.
+- **Los nombres de Uruguay no se presentan como uruguayos:** van como alias con
+  su país, como pediste para el catálogo global.
+- **Buscar en inglés:** el sustantivo va al final («Grilled chicken breast»), y lo
+  que sigue con «con …» es otro plato. Lo pidió el test de siempre cuando se
+  sumaron los platos nuevos.
+
+### La seguridad (la noche del 22 al 23/10/2026)
+
+- **Mayores de 18:** la edad empieza en 18; si Salud dice menos, la entrada no
+  sigue. Apple tiene que ver la clasificación 18+ en App Store Connect (eso lo
+  hacés vos).
+- **Sin déficit, sin guardar el porqué:** embarazo, lactancia o una condición
+  médica se preguntan juntos y solo se guarda «sin déficit» (lo mínimo, y no es
+  un dato de salud que haya que cuidar). Con eso, bajar de peso queda en
+  mantener, se dice por qué y se sugiere un profesional. El embarazo y la
+  lactancia se preguntan solo a las mujeres.
+- **El piso y el peso meta:** las metas a mano por debajo del piso (1.200 kcal
+  para mujeres, 1.400 para hombres) no se guardan, y el peso meta no baja de un
+  IMC de 18,5; en los dos casos, una frase corta dice por qué. El ritmo más
+  rápido para bajar sigue en 0,75 % del peso por semana, debajo del 1 % pedido.
+- **Ocultar los números** quita las calorías y los gramos de Inicio, Comida y la
+  ventana del alimento; quedan la luna y las barras. El peso no se oculta: la
+  opción dice «sin calorías ni gramos». Si querés, se suma el peso.
+- **Poco sueño:** con 10 noches medidas de las últimas 14 y menos de 6 horas de
+  promedio, una carta tranquila sugiere un médico. Es una estimación y lo dice.
+- **El consentimiento va antes de la cuenta,** en «Tus datos son tuyos»: qué se
+  guarda, dónde, y «Acepto y sigo» para los datos de salud (Ley 18.331, art. 18).
+
 ### El sueño sin reloj, los aparatos y el rendimiento (22/10/2026, a la noche)
 
 - **El método sin reloj, sin permisos especiales.** Moss arma la noche al

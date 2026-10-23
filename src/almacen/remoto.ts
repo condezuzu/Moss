@@ -44,7 +44,7 @@ const filaDe = {
   perfil: (p: Perfil) => ({
     nacimiento: p.nacimiento, sexo: p.sexo, altura_cm: p.alturaCm, actividad: p.actividad, objetivo: p.objetivo, ritmo: p.ritmo,
     estilo: p.estilo ?? null, peso_meta: p.pesoMeta ?? null, dia_del_control: p.diaDelControl ?? null,
-    semana_altos: p.semana?.altos ?? null, semana_extra: p.semana?.extra ?? null, actualizado: p.actualizado,
+    semana_altos: p.semana?.altos ?? null, semana_extra: p.semana?.extra ?? null, sin_deficit: !!p.sinDeficit, actualizado: p.actualizado,
   }),
   meta: (m: MetaGuardada) => ({
     desde: m.desde, kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, gasto: m.gasto, motivo: m.motivo,
@@ -112,7 +112,8 @@ const deFila = {
     nacimiento: f.nacimiento, sexo: f.sexo, alturaCm: Number(f.altura_cm), actividad: f.actividad, objetivo: f.objetivo, ritmo: f.ritmo,
     ...(f.estilo ? { estilo: f.estilo } : {}), ...(f.peso_meta !== null ? { pesoMeta: Number(f.peso_meta) } : {}),
     ...(f.dia_del_control !== null ? { diaDelControl: f.dia_del_control } : {}),
-    ...(f.semana_altos?.length && f.semana_extra ? { semana: { altos: f.semana_altos, extra: f.semana_extra } } : {}), actualizado: hora(f.actualizado),
+    ...(f.semana_altos?.length && f.semana_extra ? { semana: { altos: f.semana_altos, extra: f.semana_extra } } : {}), ...(f.sin_deficit ? { sinDeficit: true } : {}),
+    actualizado: hora(f.actualizado),
   }),
   meta: (f: Filas['meta']): MetaGuardada => ({
     kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas, desde: f.desde, gasto: f.gasto, motivo: f.motivo,

@@ -74,7 +74,7 @@ export type EntradaDelControl = {
   comidas: ComidaDelDia[];
   gastoAnterior: number;
   metasAnteriores: Macros;
-  perfil: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo'>;
+  perfil: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo' | 'sinDeficit'>;
   /** Cómo se reparten los macros; sin decir, la equilibrada. */
   estilo?: Estilo;
 };

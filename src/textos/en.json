@@ -110,6 +110,32 @@
       "gasto": "Estimated expenditure: {n} kcal",
       "empezar": "Start",
       "sinSalud": "Couldn’t read Health. You can go on and answer by hand."
+    },
+    "datos": {
+      "titulo": "Your data is yours",
+      "lineas": [
+        "What you log and what Moss reads from Health stays on your phone and, for your other devices, in your account.",
+        "Moss doesn't sell your data, show ads or track you.",
+        "You can export or delete it anytime, from Profile."
+      ],
+      "salud": "Moss stores health data: what you eat, your weight and how you sleep. It only uses it for you.",
+      "politica": "Read the privacy policy",
+      "busquedas": "Send, without your name, what I search for and don't find",
+      "busquedasTexto": "This helps Moss add what is missing. You can change it in Profile.",
+      "acepto": "I agree, continue"
+    },
+    "cuidado": {
+      "titulo": "Does any of these apply to you?",
+      "embarazo": "Pregnancy or breastfeeding",
+      "condicion": "A medical condition that affects what I eat",
+      "condicionTexto": "Diabetes, kidney problems or an eating disorder, for example.",
+      "nada": "None of these",
+      "aviso": "Moss won't suggest eating less than you burn. To change your weight, it's better with a professional by your side.",
+      "bajarNo": "In your case, losing weight is better with a professional."
+    },
+    "menor": {
+      "titulo": "Moss is for adults",
+      "texto": "According to Health, you're not 18 yet. When you are, we'll be here."
     }
   },
   "comida": {
@@ -206,7 +232,7 @@
     "cantidad": "Amount",
     "gramos": "Grams",
     "teQuedarian": "{n} kcal would be left",
-    "tePasarias": "{n} kcal over",
+    "tePasarias": "You'd be {n} kcal above your goal",
     "secundarios": {
       "fibra": "Fiber",
       "azucares": "Sugars",
@@ -242,7 +268,7 @@
     "cargaRapidaTexto": "Leave calories empty and they come from the macros.",
     "deMetaCorto": "of {meta} kcal",
     "quedanKcal": "{n} kcal left",
-    "deMasKcal": "{n} kcal over",
+    "deMasKcal": "{n} kcal above your goal",
     "cenaDeMentira": "Sample dinner",
     "aLa": {
       "desayuno": "to breakfast",
@@ -457,7 +483,7 @@
       "agua": "Water"
     },
     "teQuedan": "Left",
-    "deMas": "Over",
+    "deMas": "Above your goal",
     "kcalDe": "kcal · {comido} of {meta}",
     "gramos": "{n} g",
     "listo": "Done",
@@ -668,7 +694,11 @@
     "gastoInicial": "Estimated from your answers. Each weekly check-in measures it from your weight and what you eat.",
     "bajarMeta": "Lower goal weight",
     "subirMeta": "Raise goal weight",
-    "sinBalance": "Log what you eat for a few days to see your balance."
+    "sinBalance": "Log what you eat for a few days to see your balance.",
+    "limites": {
+      "piso": "Not below {n} kcal a day: that's less than your body needs to work.",
+      "imc": "The lowest goal weight for your height is {n} {unidad}: a BMI of 18.5."
+    }
   },
   "sueno": {
     "titulo": "Sleep",
@@ -843,7 +873,12 @@
     "porMoss": "Estimated by Moss",
     "porTi": "Confirmed by you",
     "corregidaPorTi": "Corrected by you",
-    "fuentesSinReloj": "With a watch or a ring, Moss measures instead of estimating. What each one sends is in Profile › Devices."
+    "fuentesSinReloj": "With a watch or a ring, Moss measures instead of estimating. What each one sends is in Profile › Devices.",
+    "pocoSueno": {
+      "titulo": "You've slept little for weeks",
+      "texto": "Over the last two weeks you slept less than 6 hours a night. If it continues, it's worth talking to a doctor.",
+      "nota": "It's an estimate from Moss, not a diagnosis."
+    }
   },
   "perfil": {
     "titulo": "Profile",
@@ -913,10 +948,10 @@
       "estrellas": "Stars: Yale Bright Star Catalogue (Hoffleit and Warren, 1991; CDS) and IAU star names (WGSN, CC BY 4.0)"
     },
     "privacidadTexto": [
-      "Your data is yours. Moss keeps it on your phone and, with your account, on its server to sync it; it doesn’t sell or share it.",
-      "What it reads from Health (steps, sleep, water, mindfulness, weight) stays on your phone and only lights your habits and fills in your details. Moss doesn’t write to Health.",
-      "Food photos stay on your phone. When you scan a code that isn’t in Moss, only that code is looked up on Open Food Facts.",
-      "You can export everything as CSV and delete your data or your account from here."
+      "Your data is yours. Moss stores what you log, your answers, your weight and your nights on your phone and, with your account, on its server, for your other devices. It doesn't sell or share them, show ads or track you.",
+      "From Health, Moss reads steps, sleep, water, mindful minutes, weight, age, sex and height. With your account, your weight, birth year, sex, height and which habits you completed are uploaded; Health's steps and sleep stay on your phone. Moss doesn't write to Health.",
+      "Meal photos stay on your phone. When you scan a code that isn't in Moss, Open Food Facts is asked about that code only.",
+      "If you choose to, what you search for and don't find is sent without your name; so is a mistake you report. You can export everything as CSV and delete your data or your account here."
     ],
     "version": "Moss {v}",
     "encendidos": "On",
@@ -1007,7 +1042,22 @@
           "texto": "The Pixel Watch, the Galaxy Watch and the Galaxy Ring don’t work with iPhone."
         }
       }
-    }
+    },
+    "cuidado": "Care",
+    "sinDeficit": "No deficit",
+    "ninguno": "None",
+    "sinDeficitTexto": "Because of pregnancy, breastfeeding or a medical condition: Moss won't suggest eating less than you burn.",
+    "numeros": "Numbers",
+    "visibles": "Shown",
+    "ocultos": "Hidden",
+    "numerosTexto": "No calories or grams: just the shapes and the bars.",
+    "mejorarBase": "Send what I don't find",
+    "si": "Yes",
+    "no": "No",
+    "mejorarBaseTexto": "Without your name: this helps Moss add what is missing.",
+    "politica": "Privacy policy",
+    "terminos": "Terms",
+    "contacto": "Contact"
   },
   "fecha": {
     "dias": [

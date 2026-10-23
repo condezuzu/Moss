@@ -12,7 +12,7 @@ import { conMayuscula } from '@/comida/buscar';
 import { KG_POR_LIBRA, largoEn, pesoCorporalEn, type Sistema } from '@/dominio/cantidades';
 import { cambioDe, cinturaAltura, rangoDeGrasa, SITIOS, ultimasMedidas } from '@/dominio/cuerpo';
 import { diasEntre, sumarDias, type DiaSemana } from '@/dominio/fechas';
-import { ESTILOS, EXTRAS, repartirSemana, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
+import { ESTILOS, EXTRAS, pesoMinimoSano, pisoDe, repartirSemana, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
 import type { EstadoDelObjetivo } from '@/dominio/progreso';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -236,6 +236,9 @@ const Eleccion = ({ children }: { children: ReactNode }) => <Aparece style={s.el
 function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: U; abierto: string | null; alternar: (cual: string) => void; alVerMetas: () => void }) {
   const perfil = p.perfil;
   const ponerEstrategia = elAlmacen().ponerEstrategia;
+  // El peso meta no baja de un IMC de 18,5: al llegar, se dice por qué.
+  const [enElMinimo, setEnElMinimo] = useState(false);
+  const minimo = pesoMinimoSano(perfil.alturaCm);
   const ritmo = perfil.objetivo === 'mantener' ? '' : ` · ${t(`progreso.ritmos.${perfil.ritmo}`)}`;
   const metaKg = perfil.pesoMeta;
   const m = p.meta;
@@ -247,8 +250,12 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
           <Segmento<Objetivo>
             opciones={(['bajar', 'mantener', 'subir'] as const).map((o) => [o, t(`progreso.objetivos.${o}`)] as const)}
             elegida={perfil.objetivo}
-            alElegir={(objetivo) => ponerEstrategia({ objetivo })}
+            alElegir={(objetivo) => {
+              // Sin déficit, bajar de peso no se elige acá (src/dominio/metas.ts, objetivoPermitido).
+              if (!(objetivo === 'bajar' && perfil.sinDeficit)) ponerEstrategia({ objetivo });
+            }}
           />
+          {perfil.sinDeficit && <Parrafo chico>{t('entrada.cuidado.bajarNo')}</Parrafo>}
           {perfil.objetivo !== 'mantener' && (
             <Aparece>
               <Segmento<Ritmo>
@@ -277,8 +284,22 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
           />
           {abierto === 'pesoMeta' && (
             <Eleccion>
-              <PasosDelPesoMeta kg={metaKg ?? Math.round(p.pesoHoy ?? 70)} u={u} alCambiar={(pesoMeta) => ponerEstrategia({ pesoMeta })} />
+              <PasosDelPesoMeta
+                kg={metaKg ?? Math.round(p.pesoHoy ?? 70)}
+                u={u}
+                minimo={minimo}
+                alCambiar={(pesoMeta) => {
+                  setEnElMinimo(false);
+                  ponerEstrategia({ pesoMeta });
+                }}
+                alMinimo={() => setEnElMinimo(true)}
+              />
               <Parrafo chico>{t('progreso.pesoMetaNota')}</Parrafo>
+              {enElMinimo && (
+                <Aparece>
+                  <Parrafo chico>{t('progreso.limites.imc', { n: u.peso(minimo, 1), unidad: u.unidad })}</Parrafo>
+                </Aparece>
+              )}
             </Eleccion>
           )}
         </Aparece>
@@ -293,11 +314,12 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
   );
 }
 
-/** El peso meta de a medio kilo, o de a una libra. */
-function PasosDelPesoMeta({ kg, u, alCambiar }: { kg: number; u: U; alCambiar: (kg: number) => void }) {
+/** El peso meta de a medio kilo, o de a una libra, no por debajo de `minimo` (un IMC de 18,5). */
+function PasosDelPesoMeta({ kg, u, minimo, alCambiar, alMinimo }: { kg: number; u: U; minimo: number; alCambiar: (kg: number) => void; alMinimo: () => void }) {
   const cambiar = (signo: 1 | -1) => {
     const nuevo = u.unidad === 'lb' ? Math.round((u.enUnidad(kg) + signo) * KG_POR_LIBRA * 10) / 10 : Math.round((kg + 0.5 * signo) * 2) / 2;
-    if (nuevo >= 20 && nuevo <= 400) alCambiar(nuevo);
+    if (nuevo < minimo) alMinimo();
+    else if (nuevo <= 400) alCambiar(nuevo);
   };
   return (
     <View style={s.pasos}>
@@ -368,6 +390,9 @@ function Metas({ alVolver }: { alVolver: () => void }) {
   const m = p.meta ?? { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 };
   const semana = p.perfil.semana;
   const estilo = p.perfil.estilo ?? 'equilibrada';
+  // A mano, por debajo del piso no se guarda (motivoParaNo): se dice por qué.
+  const [bajoElPiso, setBajoElPiso] = useState(false);
+  const aMano = (macros: Omit<Macros, 'kcal'>) => setBajoElPiso(almacen.ponerMetasAMano(macros) === null);
   const cambiarAltos = (d: DiaSemana) => {
     if (!semana) return;
     const altos = semana.altos.includes(d) ? semana.altos.filter((x) => x !== d) : [...semana.altos, d];
@@ -430,8 +455,13 @@ function Metas({ alVolver }: { alVolver: () => void }) {
         <Aparece key="aMano">
           <EtiquetaDeGrupo>{t('progreso.metas.tusMacros')}</EtiquetaDeGrupo>
           {MACROS.map((macro) => (
-            <CampoDeMacro key={`${macro}-${m[macro]}`} macro={macro} gramos={m[macro]} alCambiar={(g) => almacen.ponerMetasAMano({ proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, [macro]: g })} />
+            <CampoDeMacro key={`${macro}-${m[macro]}`} macro={macro} gramos={m[macro]} alCambiar={(g) => aMano({ proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, [macro]: g })} />
           ))}
+          {bajoElPiso && (
+            <Aparece>
+              <Parrafo chico>{t('progreso.limites.piso', { n: numero(pisoDe(p.perfil.sexo)) })}</Parrafo>
+            </Aparece>
+          )}
         </Aparece>
       )}
 

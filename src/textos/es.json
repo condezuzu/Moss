@@ -110,6 +110,32 @@
       "gasto": "Gasto estimado: {n} kcal",
       "empezar": "Empezar",
       "sinSalud": "No se pudo leer Salud. Puedes seguir y contestar a mano."
+    },
+    "datos": {
+      "titulo": "Tus datos son tuyos",
+      "lineas": [
+        "Lo que anotas y lo que Moss lee de Salud queda en tu teléfono y, para tus otros dispositivos, en tu cuenta.",
+        "Moss no vende tus datos, no muestra publicidad y no te rastrea.",
+        "Puedes exportarlos o borrarlos cuando quieras, desde Perfil."
+      ],
+      "salud": "Moss guarda datos de salud: lo que comes, tu peso y cómo duermes. Solo los usa para ti.",
+      "politica": "Leer la política de privacidad",
+      "busquedas": "Mandar, sin tu nombre, lo que busco y no encuentro",
+      "busquedasTexto": "Así Moss suma lo que falta. Se cambia en Perfil.",
+      "acepto": "Acepto y sigo"
+    },
+    "cuidado": {
+      "titulo": "¿Alguno es tu caso?",
+      "embarazo": "Embarazo o lactancia",
+      "condicion": "Una condición médica que cuida lo que como",
+      "condicionTexto": "Diabetes, problemas de riñón o un trastorno de la alimentación, por ejemplo.",
+      "nada": "Nada de esto",
+      "aviso": "Moss no te propondrá comer menos de lo que gastas. Para cambiar tu peso, mejor con un profesional que te acompañe.",
+      "bajarNo": "En tu caso, bajar de peso es mejor con un profesional."
+    },
+    "menor": {
+      "titulo": "Moss es para mayores de 18",
+      "texto": "Según Salud, todavía no tienes 18 años. Cuando los cumplas, aquí te esperamos."
     }
   },
   "comida": {
@@ -206,7 +232,7 @@
     "cantidad": "Cantidad",
     "gramos": "Gramos",
     "teQuedarian": "Te quedarían {n} kcal",
-    "tePasarias": "Te pasarías {n} kcal",
+    "tePasarias": "Quedarías {n} kcal arriba de la meta",
     "secundarios": {
       "fibra": "Fibra",
       "azucares": "Azúcares",
@@ -242,7 +268,7 @@
     "cargaRapidaTexto": "Si dejas las calorías vacías, salen de los macros.",
     "deMetaCorto": "de {meta} kcal",
     "quedanKcal": "Te quedan {n} kcal",
-    "deMasKcal": "{n} kcal de más",
+    "deMasKcal": "{n} kcal arriba de la meta",
     "cenaDeMentira": "Cena de prueba",
     "aLa": {
       "desayuno": "al desayuno",
@@ -457,7 +483,7 @@
       "agua": "Agua"
     },
     "teQuedan": "Te quedan",
-    "deMas": "De más",
+    "deMas": "Arriba de la meta",
     "kcalDe": "kcal · {comido} de {meta}",
     "gramos": "{n} g",
     "listo": "Listo",
@@ -668,7 +694,11 @@
     "gastoInicial": "Lo estimado con tus respuestas. El control de cada semana lo mide con tu peso y lo que comes.",
     "bajarMeta": "Bajar el peso meta",
     "subirMeta": "Subir el peso meta",
-    "sinBalance": "Registra lo que comes unos días para ver el balance."
+    "sinBalance": "Registra lo que comes unos días para ver el balance.",
+    "limites": {
+      "piso": "Menos de {n} kcal por día, no: es menos de lo que el cuerpo necesita para funcionar.",
+      "imc": "El peso meta más bajo para tu altura es {n} {unidad}: un IMC de 18,5."
+    }
   },
   "sueno": {
     "titulo": "Sueño",
@@ -843,7 +873,12 @@
     "porMoss": "Estimada por Moss",
     "porTi": "Confirmada por ti",
     "corregidaPorTi": "Corregida por ti",
-    "fuentesSinReloj": "Con un reloj o un anillo, Moss mide en vez de estimar. Qué llega de cada uno está en Perfil › Aparatos."
+    "fuentesSinReloj": "Con un reloj o un anillo, Moss mide en vez de estimar. Qué llega de cada uno está en Perfil › Aparatos.",
+    "pocoSueno": {
+      "titulo": "Hace semanas que duermes poco",
+      "texto": "En las últimas dos semanas dormiste menos de 6 horas por noche. Si sigue así, vale la pena hablarlo con un médico.",
+      "nota": "Es una estimación de Moss, no un diagnóstico."
+    }
   },
   "perfil": {
     "titulo": "Perfil",
@@ -913,10 +948,10 @@
       "estrellas": "Estrellas: Yale Bright Star Catalogue (Hoffleit y Warren, 1991; CDS) y los nombres de la IAU (WGSN, CC BY 4.0)"
     },
     "privacidadTexto": [
-      "Tus datos son tuyos. Moss los guarda en el teléfono y, con tu cuenta, en su servidor, para sincronizarlos; no los vende ni los comparte.",
-      "Lo que lee de Salud (pasos, sueño, agua, atención plena, peso) se queda en el teléfono y solo enciende tus hábitos y completa tus datos. Moss no escribe en Salud.",
+      "Tus datos son tuyos. Moss guarda lo que anotas, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte, no muestra publicidad y no te rastrea.",
+      "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, edad, sexo y altura. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura y qué hábitos cumpliste; los pasos y el sueño de Salud quedan en el teléfono. Moss no escribe en Salud.",
       "Las fotos de la comida quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
-      "Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
+      "Si lo eliges, lo que buscas y no encuentras se manda sin tu nombre; un error que reportas, también. Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
     ],
     "version": "Moss {v}",
     "encendidos": "Encendidos",
@@ -1007,7 +1042,22 @@
           "texto": "El Pixel Watch, el Galaxy Watch y el Galaxy Ring no funcionan con iPhone."
         }
       }
-    }
+    },
+    "cuidado": "Cuidados",
+    "sinDeficit": "Sin déficit",
+    "ninguno": "Ninguno",
+    "sinDeficitTexto": "Por embarazo, lactancia o una condición médica: Moss no te propone comer menos de lo que gastas.",
+    "numeros": "Los números",
+    "visibles": "Visibles",
+    "ocultos": "Ocultos",
+    "numerosTexto": "Sin calorías ni gramos: solo las figuras y las barras.",
+    "mejorarBase": "Mandar lo que no encuentro",
+    "si": "Sí",
+    "no": "No",
+    "mejorarBaseTexto": "Sin tu nombre: así Moss suma a la base lo que falta.",
+    "politica": "Política de privacidad",
+    "terminos": "Términos",
+    "contacto": "Contacto"
   },
   "fecha": {
     "dias": [

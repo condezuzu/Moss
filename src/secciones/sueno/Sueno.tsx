@@ -13,7 +13,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle
 import { actualizarSalud } from '@/almacen';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
-  calidadDeNoche, deudaDeSueno, horario as horarioDe, MAXIMOS, MINIMOS, nivelDeLaNoche, pareceIncompleta, ultimasNoches, vitalDeNoche,
+  calidadDeNoche, deudaDeSueno, horario as horarioDe, MAXIMOS, MINIMOS, nivelDeLaNoche, pareceIncompleta, pocoSuenoSostenido, ultimasNoches, vitalDeNoche,
   type Confianza, type Fuente, type Noche, type NochePropia, type OrigenDeNoche, type TipoDeVital,
 } from '@/dominio/sueno';
 import { pedirMovimiento, permisoDeMovimiento } from '../../../modules/movimiento';
@@ -54,6 +54,15 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
         <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} />
         <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={setClave} />
+        {/* Poco sueño por semanas: la sugerencia de un médico, arriba. Una estimación, no un diagnóstico. */}
+        {pocoSuenoSostenido(ultimasNoches(s.noches, e.hoy, DIAS)) && (
+          <Aparece>
+            <Carta titulo={t('sueno.pocoSueno.titulo')}>
+              <Parrafo>{t('sueno.pocoSueno.texto')}</Parrafo>
+              <Parrafo chico>{t('sueno.pocoSueno.nota')}</Parrafo>
+            </Carta>
+          </Aparece>
+        )}
         {/* Elegir otra noche no cambia todo de golpe: lo de esa noche entra con un fundido. */}
         <Aparece key={clave}>
           {noche?.moss ? (

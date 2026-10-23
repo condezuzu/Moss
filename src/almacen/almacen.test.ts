@@ -456,6 +456,45 @@ describe('el control de cada semana corre solo', () => {
   });
 });
 
+describe('los límites que cuidan', () => {
+  const respuestas: Cuestionario = { edad: 30, sexo: 'f', alturaCm: 165, pesoKg: 70, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado' };
+
+  it('una meta a mano por debajo del piso no se guarda', async () => {
+    const { almacen } = await armar();
+    almacen.responderCuestionario(respuestas);
+    expect(almacen.ponerMetasAMano({ proteina: 80, carbohidratos: 100, grasas: 30 })).toBeNull();
+    expect(almacen.estado().metas.at(-1)!.motivo).toBe('inicial');
+    expect(almacen.ponerMetasAMano({ proteina: 120, carbohidratos: 150, grasas: 50 })).toMatchObject({ kcal: 1530, motivo: 'manual' });
+  });
+
+  it('un peso meta con un IMC de menos de 18,5 no se guarda', async () => {
+    const { almacen } = await armar();
+    almacen.responderCuestionario(respuestas);
+    almacen.ponerEstrategia({ pesoMeta: 48 });
+    expect(almacen.estado().perfil!.pesoMeta).toBeUndefined();
+    almacen.ponerEstrategia({ pesoMeta: 60 });
+    expect(almacen.estado().perfil!.pesoMeta).toBe(60);
+  });
+
+  it('sin déficit (embarazo, lactancia o una condición médica), la meta deja de bajar', async () => {
+    const { almacen } = await armar();
+    const inicial = almacen.responderCuestionario(respuestas);
+    expect(inicial.kcal).toBeLessThan(inicial.gasto);
+    almacen.ponerEstrategia({ sinDeficit: true });
+    const meta = almacen.estado().metas.at(-1)!;
+    expect(meta.motivo).toBe('objetivo');
+    expect(meta.kcal).toBe(Math.round(meta.gasto / 10) * 10);
+    expect(almacen.estado().perfil).toMatchObject({ objetivo: 'bajar', sinDeficit: true });
+  });
+
+  it('desde el cuestionario, también', async () => {
+    const { almacen } = await armar();
+    const inicial = almacen.responderCuestionario({ ...respuestas, sinDeficit: true });
+    expect(inicial.kcal).toBe(inicial.gasto);
+    expect(almacen.estado().perfil!.sinDeficit).toBe(true);
+  });
+});
+
 describe('lo que baja de la cuenta', () => {
   const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
 

@@ -14,7 +14,7 @@ import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marc
 import { claveDelDia, diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
-import { edadDe, metaManual, metaPara, metasIniciales, type Cuestionario, type Macros, type MetaGuardada, type Perfil } from '@/dominio/metas';
+import { edadDe, metaManual, metaPara, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil } from '@/dominio/metas';
 import {
   borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, restaurado,
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
@@ -62,6 +62,13 @@ export type Estado = MapasDeComida & {
   uso: [number, number][];
   /** De cuál aparato sale la noche (su id en Salud), si se eligió en Perfil › Aparatos; sin elegir, la automática. Queda en el teléfono. */
   fuenteDelSueno: string | null;
+  /** Los números de la comida (las calorías y los gramos), o solo las figuras y las barras. Queda en el teléfono. */
+  numeros: boolean;
+  /**
+   * Si se manda, sin la cuenta, lo que se busca y no se encuentra (src/almacen/buzon.ts). Lo elige la
+   * persona en la entrada o en Perfil, y empieza apagado (guía 5.1.1 de Apple). Queda en el teléfono.
+   */
+  mandarBusquedas: boolean;
   /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
   salud: LoDeSalud | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
@@ -99,6 +106,8 @@ const CALIDAD = 'calidad';
 const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
+const NUMEROS = 'numeros';
+const BUSQUEDAS = 'mandarBusquedas';
 /** Tres días de uso alcanzan para la noche de anoche. */
 const DIAS_DE_USO = 3;
 
@@ -177,7 +186,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, calidad: null, uso: [], fuenteDelSueno: null, salud: null, semilla: '',
+    recordatorios: null, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, mandarBusquedas: false, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -268,7 +277,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', listo: true }, true);
     revisarControl();
   }
 
@@ -292,7 +301,7 @@ export function crearAlmacen(op: Opciones) {
     if (diaDelControl <= ultima.desde || pesoKg === undefined) return;
     const c = controlSemanal({
       hoy, pesadas: pesos, comidas: comidasParaElControl(estado.registros.values()), gastoAnterior: ultima.gasto, metasAnteriores: soloMacros(ultima),
-      perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo }, estilo: perfil.estilo,
+      perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit }, estilo: perfil.estilo,
     });
     const aMano = ultima.motivo === 'manual';
     const meta: MetaGuardada = { ...(aMano ? soloMacros(ultima) : c.metas), desde: hoy, gasto: c.gasto, motivo: aMano ? 'manual' : c.motivo, momento: momento() };
@@ -430,20 +439,23 @@ export function crearAlmacen(op: Opciones) {
     /**
      * La estrategia de Progreso: el objetivo y su ritmo, cómo se reparten los macros, el peso al que
      * se quiere llegar, el día del control y si se reparte la semana (`semana: undefined` deja de
-     * repartirla). Cambiar el objetivo, el ritmo o el reparto fija metas nuevas desde hoy con el gasto
-     * que se venía midiendo; con las metas a mano, quedan las que había.
+     * repartirla). Cambiar el objetivo, el ritmo, el reparto o si va sin déficit (embarazo, lactancia o
+     * una condición médica) fija metas nuevas desde hoy con el gasto que se venía midiendo; con las
+     * metas a mano, quedan las que había. Un peso meta con un IMC de menos de 18,5 no se guarda.
      */
-    ponerEstrategia(cambios: Partial<Pick<Perfil, 'objetivo' | 'ritmo' | 'estilo' | 'pesoMeta' | 'diaDelControl' | 'semana'>>) {
+    ponerEstrategia(cambios: Partial<Pick<Perfil, 'objetivo' | 'ritmo' | 'estilo' | 'pesoMeta' | 'diaDelControl' | 'semana' | 'sinDeficit'>>) {
       const antes = estado.perfil;
       if (!antes) return;
-      const perfil: Perfil = { ...antes, ...cambios, actualizado: momento() };
+      const { pesoMeta, ...resto } = cambios;
+      const sano = pesoMeta === undefined || pesoMeta >= pesoMinimoSano(antes.alturaCm);
+      const perfil: Perfil = { ...antes, ...resto, ...(sano && 'pesoMeta' in cambios ? { pesoMeta } : {}), actualizado: momento() };
       guardar((r) => r.guardarPerfil(perfil));
       cambiar({ perfil }, false);
       const ultima = estado.metas[estado.metas.length - 1];
       const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
-      const cambiaLaMeta = perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || perfil.estilo !== antes.estilo;
+      const cambiaLaMeta = perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo || perfil.estilo !== antes.estilo || !!perfil.sinDeficit !== !!antes.sinDeficit;
       if (!ultima || ultima.motivo === 'manual' || pesoKg === undefined || !cambiaLaMeta) return;
-      const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo };
+      const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit };
       const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
       guardar((r) => r.guardarMeta(meta));
       ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
@@ -485,17 +497,22 @@ export function crearAlmacen(op: Opciones) {
       const perfil = estado.perfil;
       const pesoKg = estado.pesos[estado.pesos.length - 1]?.kg;
       if (!ultima || !perfil || pesoKg === undefined) return null;
-      const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo };
+      const c = { edad: edadDe(perfil, estado.hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit };
       const meta: MetaGuardada = { ...metaPara(ultima.gasto, c, perfil.estilo), desde: estado.hoy, gasto: ultima.gasto, motivo: 'objetivo', momento: momento() };
       guardar((r) => r.guardarMeta(meta));
       ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
       return meta;
     },
-    /** Las metas a mano, desde hoy: los gramos de cada macro (y las kcal, si se dan), con el gasto que se venía midiendo. */
+    /**
+     * Las metas a mano, desde hoy: los gramos de cada macro (y las kcal, si se dan), con el gasto que
+     * se venía midiendo. Por debajo del piso de calorías no se guardan (motivoParaNo).
+     */
     ponerMetasAMano(macros: Omit<Macros, 'kcal'> & { kcal?: number }): MetaGuardada | null {
       const ultima = estado.metas[estado.metas.length - 1];
       if (!ultima) return null;
-      const meta: MetaGuardada = { ...metaManual(macros), desde: estado.hoy, gasto: ultima.gasto, motivo: 'manual', momento: momento() };
+      const manual = metaManual(macros);
+      if (estado.perfil && motivoParaNo(manual, estado.perfil.sexo)) return null;
+      const meta: MetaGuardada = { ...manual, desde: estado.hoy, gasto: ultima.gasto, motivo: 'manual', momento: momento() };
       guardar((r) => r.guardarMeta(meta));
       ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
       return meta;
@@ -551,6 +568,16 @@ export function crearAlmacen(op: Opciones) {
     ponerCalidad(calidad: Calidad | null) {
       guardar((r) => r.guardarAjuste(CALIDAD, calidad ?? ''));
       cambiar({ calidad }, false);
+    },
+    /** Los números de la comida: a la vista o no (solo las figuras y las barras). */
+    ponerNumeros(numeros: boolean) {
+      guardar((r) => r.guardarAjuste(NUMEROS, numeros ? '' : 'no'));
+      cambiar({ numeros }, false);
+    },
+    /** Mandar, sin la cuenta, lo que se busca y no se encuentra. */
+    ponerMandarBusquedas(si: boolean) {
+      guardar((r) => r.guardarAjuste(BUSQUEDAS, si ? 'si' : ''));
+      cambiar({ mandarBusquedas: si }, false);
     },
     /** De cuál aparato sale la noche; null vuelve a la automática (la más precisa de cada noche). */
     ponerFuenteDelSueno(id: string | null) {
