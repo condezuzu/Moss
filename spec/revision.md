@@ -26,6 +26,16 @@ FALTA tiene que estar en la build antes de publicarlas.
 
 En orden de gravedad. Las guías y los detalles están en «c».
 
+**Estado (23/10/2026, de madrugada).** Hechos en la app: del 1 al 9.
+- **1. Revocar Apple:** listo, en `supabase/functions/moss-borrar-cuenta`. Falta
+  que crees la clave `.p8` y despliegues la función: los pasos están en su
+  README. Hasta entonces la app borra como antes (`moss.borrar_cuenta()`).
+- **8.** Los archivos van con la protección de datos del iPhone
+  (`NSFileProtectionCompleteUnlessOpen`) y la carpeta de SQLite queda fuera de la
+  copia de seguridad (`modules/respaldo`).
+- **10. El correo:** falta, y es tuyo: configurar un SMTP propio en Supabase.
+- La clasificación de edad 18+ se elige en App Store Connect.
+
 1. **Revocar el token de Apple al borrar la cuenta** (5.1.1(v)). Hoy
    `moss.borrar_cuenta()` borra el usuario y nada más.
 2. **Enlaces a la política y a los términos dentro de la app** (5.1.1(i)). Hoy

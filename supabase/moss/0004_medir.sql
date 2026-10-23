@@ -22,7 +22,8 @@ alter table moss.perfiles
 -- Borrar la cuenta (spec/ascent.md, «Borrar la cuenta»): es la misma de Ascent, así que borra los
 -- datos de las dos apps; Moss lo avisa antes. La corre el dueño de la función, el único que puede
 -- borrar en auth.users, y solo borra la cuenta de quien la llama. Revocar el token de Apple va en
--- una función del servidor con la clave de Apple (pendiente).
+-- la función del servidor moss-borrar-cuenta (supabase/functions/), que la app usa primero; esta queda
+-- mientras la función no esté desplegada.
 create or replace function moss.borrar_cuenta() returns void
 language sql
 security definer

@@ -1,6 +1,7 @@
 // Lo de Perfil que sale del teléfono: exportar todo en CSV, y borrar los datos o la cuenta y cerrar
 // sesión. Borrar y cerrar sesión dejan el teléfono como la primera vez (vuelve la entrada).
 
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { File, Paths } from 'expo-file-system';
 import { Platform, Share } from 'react-native';
 
@@ -8,6 +9,7 @@ import { elAlmacen } from '@/almacen';
 import { csvDeMetas, csvDePesos, csvDeRegistros } from '@/dominio/exportar';
 import { haySupabase, supabase } from '@/lib/supabase';
 import { t } from '@/textos';
+import { borrarEnElServidor } from './cuentaApple';
 
 const columnas = () => ({
   dia: t('exportar.columnas.dia'), comida: t('exportar.columnas.comida'), momento: t('exportar.columnas.momento'), alimento: t('exportar.columnas.alimento'),
@@ -68,15 +70,39 @@ export async function borrarMisDatos(): Promise<boolean> {
   return true;
 }
 
-/** «Borrar la cuenta»: la de Moss y Ascent, con todo lo de las dos. */
-export async function borrarLaCuenta(): Promise<boolean> {
+/**
+ * «Borrar la cuenta», con todo lo guardado en ella, en cualquier app donde se entre con ella. Si la
+ * cuenta usa Apple, primero se confirma con Apple, así el servidor revoca la autorización antes de
+ * borrar (cuentaApple.ts). Cancelar la hoja de Apple no borra nada y devuelve null: no es un error.
+ */
+export async function borrarLaCuenta(): Promise<boolean | null> {
   if (haySupabase()) {
-    const { error } = await supabase().rpc('borrar_cuenta');
-    if (error) return false;
+    const { data } = await supabase().auth.getSession();
+    const borrada = await borrarEnElServidor(data.session?.user, {
+      codigoDeApple: codigoNuevoDeApple,
+      funcion: async (codigoDeApple) => {
+        const { error, response } = await supabase().functions.invoke('moss-borrar-cuenta', { body: { codigoDeApple } });
+        return error ? (response?.status ?? 0) : null;
+      },
+      // moss.borrar_cuenta(): solo mientras la función no esté desplegada (un 404).
+      sinRevocar: async () => !(await supabase().rpc('borrar_cuenta')).error,
+    });
+    if (borrada !== true) return borrada;
     await supabase().auth.signOut().catch(() => {});
   }
   await elAlmacen().olvidarTodo();
   return true;
+}
+
+/** Un código de autorización nuevo de Apple, o null si la persona cierra la hoja o falla. */
+async function codigoNuevoDeApple(): Promise<string | null> {
+  try {
+    // Sin pedir el nombre ni el correo: alcanza con que confirme que es la persona.
+    const credencial = await AppleAuthentication.signInAsync();
+    return credencial.authorizationCode;
+  } catch {
+    return null;
+  }
 }
 
 /** Cerrar sesión borra lo del teléfono: los datos quedan en la cuenta. */

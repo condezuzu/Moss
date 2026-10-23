@@ -54,7 +54,8 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
 
   const p = e.perfil;
   const altura = (cm: number) => (sistema === 'imperial' ? `${Math.floor(cm / CM_POR_PULGADA / 12)}′ ${Math.round(cm / CM_POR_PULGADA) % 12}″` : `${numero(cm)} cm`);
-  const confirmar = (titulo: string, texto: string, accion: () => Promise<boolean | void>) =>
+  // false es un error; null, que se canceló (la hoja de Apple al borrar la cuenta): no se dice nada.
+  const confirmar = (titulo: string, texto: string, accion: () => Promise<boolean | null | void>) =>
     Alert.alert(titulo, texto, [
       { text: t('comun.cancelar'), style: 'cancel' },
       { text: t('perfil.borrar'), style: 'destructive', onPress: () => { accion().then((ok) => ok === false && avisar(t('perfil.errorBorrar'))).catch(() => avisar(t('perfil.errorBorrar'))); } },
