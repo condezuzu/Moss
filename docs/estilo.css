@@ -1,0 +1,318 @@
+/* El sitio de Moss: oscuro y sobrio, como la app. Sin fuentes ni nada de afuera: la página de
+   privacidad no le avisa a nadie que la abriste. */
+
+:root {
+  color-scheme: dark;
+  --fondo: #03050c;
+  --fondo-alto: #070d1f;
+  --cielo: rgba(22, 41, 90, 0.42);
+  --texto: #efe6cf;
+  --tenue: rgba(239, 230, 207, 0.7);
+  --apagado: rgba(239, 230, 207, 0.48);
+  --linea: rgba(239, 230, 207, 0.12);
+  --oro: #e8c46a;
+  --oro-claro: #f6e3a6;
+  --salvia: #a6bf94;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--fondo);
+  background-image: radial-gradient(120% 48rem at 50% -8rem, var(--cielo), transparent 72%);
+  background-repeat: no-repeat;
+  color: var(--texto);
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.62;
+  overflow-wrap: break-word;
+}
+
+.pagina {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0 16px 4rem;
+}
+
+/* Arriba: la marca y el otro idioma. */
+.arriba {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0 0.5rem;
+}
+
+.marca {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  letter-spacing: 0.02em;
+  color: var(--oro-claro);
+  text-decoration: none;
+}
+
+.marca::before {
+  /* Una luna creciente chica, hecha con dos sombras. */
+  content: "";
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  margin-right: 0.42em;
+  border-radius: 50%;
+  box-shadow: inset 0.16em -0.06em 0 0 var(--oro);
+  transform: translateY(0.02em) rotate(-18deg);
+}
+
+.idioma {
+  font-size: 0.9rem;
+  color: var(--tenue);
+}
+
+h1 {
+  margin: 1.6rem 0 0.4rem;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 2.1rem;
+  line-height: 1.15;
+  color: var(--texto);
+}
+
+h2 {
+  margin: 2.6rem 0 0.6rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--linea);
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.45rem;
+  line-height: 1.25;
+  color: var(--oro-claro);
+}
+
+h3 {
+  margin: 1.6rem 0 0.3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+p {
+  margin: 0.6rem 0;
+}
+
+.fecha {
+  margin-top: 0;
+  font-size: 0.9rem;
+  color: var(--apagado);
+}
+
+.entrada {
+  font-size: 1.12rem;
+  color: var(--tenue);
+}
+
+ul,
+ol {
+  margin: 0.6rem 0;
+  padding-left: 1.25rem;
+}
+
+li {
+  margin: 0.35rem 0;
+}
+
+li::marker {
+  color: var(--oro);
+}
+
+strong {
+  font-weight: 600;
+  color: var(--texto);
+}
+
+a {
+  color: var(--oro);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a {
+    transition: none;
+  }
+}
+
+a:hover {
+  color: var(--oro-claro);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--oro-claro);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* El resumen de arriba: lo que importa, en una caja. */
+.resumen {
+  margin: 1.6rem 0 0.4rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  background: var(--fondo-alto);
+}
+
+.resumen ul {
+  margin: 0;
+}
+
+/* Cada dato: qué es, y dónde queda. */
+.datos {
+  margin: 0.8rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.datos li {
+  margin: 0;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--linea);
+}
+
+.datos li:last-child {
+  border-bottom: 0;
+}
+
+.datos .donde {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.92rem;
+  color: var(--salvia);
+}
+
+.nota {
+  font-size: 0.95rem;
+  color: var(--tenue);
+}
+
+/* Un camino dentro de la app (Perfil › …): se corta donde haga falta, en un teléfono chico. */
+.camino {
+  color: var(--texto);
+}
+
+/* La portada: una línea y los enlaces. */
+.portada {
+  padding-top: 18vh;
+}
+
+.portada .linea {
+  max-width: 34rem;
+  margin: 1rem 0 0.2rem;
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  line-height: 1.4;
+  color: var(--texto);
+}
+
+.portada .linea[lang="en"] {
+  margin-top: 0.4rem;
+  font-size: 1.1rem;
+  color: var(--tenue);
+}
+
+.enlaces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  margin: 2.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.enlaces li {
+  margin: 0;
+}
+
+.enlaces a {
+  display: block;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  background: var(--fondo-alto);
+  text-decoration: none;
+  color: var(--texto);
+}
+
+.enlaces a span {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--apagado);
+}
+
+.enlaces a:hover {
+  border-color: rgba(232, 196, 106, 0.45);
+  color: var(--oro-claro);
+}
+
+.pie {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--linea);
+  font-size: 0.88rem;
+  color: var(--apagado);
+}
+
+.pie a {
+  color: var(--tenue);
+}
+
+@media (min-width: 40rem) {
+  body {
+    font-size: 1.075rem;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  h1,
+  h2,
+  h3,
+  strong,
+  .marca,
+  .datos .donde,
+  .entrada,
+  .nota,
+  .fecha {
+    color: #000;
+  }
+
+  a {
+    color: #000;
+  }
+
+  .resumen,
+  .enlaces a {
+    background: none;
+  }
+}

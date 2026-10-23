@@ -175,7 +175,9 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/aparatos.md](spec/aparatos.md) | relojes y anillos: qué escribe cada marca en Salud, el orden de las fuentes, el mismo sueño desde dos fuentes y las conexiones directas |
 | [spec/ascent.md](spec/ascent.md) | la conexión con Ascent, los cambios de su repo y lo que hace el usuario |
 | [spec/rendimiento.md](spec/rendimiento.md) | con Ascent: el rendimiento esperado, la fatiga por músculo y los días para intentar marca, con sus estudios |
+| [spec/sueno-sin-esfuerzo.md](spec/sueno-sin-esfuerzo.md) | el sueño con menos esfuerzo: los Atajos (App Intents), el despertador (AlarmKit), el filtro de Concentración y el widget, con sus fuentes |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
+| [spec/revision.md](spec/revision.md) | la revisión de Apple: las respuestas de privacidad, los permisos, cada guía, la ficha en es y en, las capturas, las notas para quien revisa y lo que hay que hacer en App Store Connect |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
 
 ## Dónde está cada cosa
@@ -201,6 +203,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `src/lib/ascent.ts` | el interruptor de la conexión con Ascent: apagado en la v1 (`EXPO_PUBLIC_CON_ASCENT=1` la prende) |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
 | `herramientas/` | capturas y verificaciones |
+| `docs/` | el sitio de GitHub Pages: la política de privacidad y los términos, en es y en |
 
 `src/cielo/` tiene estas piezas:
 
