@@ -117,6 +117,11 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Chía', 24], ['Leche de almendras', 206], ['Mango', 165], ['Semillas de calabaza', 15]], dietas: VEGANA, contiene: ['frutosSecos'], minutos: 5 },
   { clave: 'omelet-naranja', nombre: { es: 'Omelet de espinaca y tomate, y una naranja', en: 'Spinach and tomato omelet with an orange' }, comida: 'desayuno',
     items: [['Huevo', 100], ['Espinaca', 30], ['Tomate', 123], ['Aceite de oliva', 4.5], ['Naranja', 131]], dietas: VEGETARIANA, contiene: ['huevo'], minutos: 10 },
+  // Con mucha proteína: para que un desayuno así tenga otro con que cambiarse.
+  { clave: 'yogur-avena-arandanos', nombre: { es: 'Yogur griego con avena y arándanos', en: 'Greek yogurt with oats and blueberries' }, comida: 'desayuno',
+    items: [['Yogur griego descremado', 340], ['Avena', 40], ['Arándanos', 74]], dietas: VEGETARIANA, contiene: ['leche', 'gluten'], minutos: 3 },
+  { clave: 'claras-pavo-tostada', nombre: { es: 'Revuelto de claras con pavo y tostadas', en: 'Egg white and turkey scramble on toast' }, comida: 'desayuno',
+    items: [['Clara de huevo', 132], ['Huevo', 50], ['Pechuga de pavo', 60], ['Pan integral', 64], ['Aceite de oliva', 4.5]], dietas: CON_CARNE, contiene: ['huevo', 'gluten'], minutos: 10 },
 
   // meriendas
   { clave: 'tostada-queso-dulce', nombre: { es: 'Café con leche y tostada con queso y dulce de membrillo', en: 'Coffee with milk and toast with cheese and quince paste' }, comida: 'merienda',
@@ -131,7 +136,10 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Pan integral', 64], ['Mantequilla de maní', 16], ['Banana', 118]], dietas: VEGANA, contiene: ['gluten', 'mani'], minutos: 5 },
   { clave: 'sandwich-jamon-queso', nombre: { es: 'Sándwich caliente de jamón y queso', en: 'Toasted ham and cheese sandwich' }, comida: 'merienda',
     items: [['Pan blanco', 50], ['Jamón cocido', 28], ['Queso mozzarella', 21]], dietas: CON_CARNE, contiene: ['gluten', 'leche'], minutos: 5 },
-
+  { clave: 'cottage-arandanos', nombre: { es: 'Queso cottage con arándanos', en: 'Cottage cheese with blueberries' }, comida: 'merienda',
+    items: [['Queso cottage', 210], ['Arándanos', 74]], dietas: VEGETARIANA, contiene: ['leche'], minutos: 2 },
+  { clave: 'atun-galletas', nombre: { es: 'Atún con tomate y galletas de arroz', en: 'Tuna with tomato and rice cakes' }, comida: 'merienda',
+    items: [['Atún en agua', 165], ['Tomate', 61.5], ['Galletas de arroz', 18]], dietas: CON_PESCADO, contiene: ['pescado'], minutos: 5 },
   // snacks
   { clave: 'manzana-almendras', nombre: { es: 'Manzana con almendras', en: 'Apple with almonds' }, comida: 'snack',
     items: [['Manzana', 182], ['Almendras', 14]], dietas: VEGANA, contiene: ['frutosSecos'], minutos: 1 },
@@ -147,6 +155,8 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Edamame', 160]], dietas: VEGANA, contiene: ['soja'], minutos: 8 },
   { clave: 'naranja-semillas', nombre: { es: 'Naranja con semillas de calabaza', en: 'Orange with pumpkin seeds' }, comida: 'snack',
     items: [['Naranja', 131], ['Semillas de calabaza', 15]], dietas: VEGANA, contiene: [], minutos: 1 },
+  { clave: 'pavo-queso', nombre: { es: 'Pavo con queso fresco', en: 'Turkey with fresh cheese' }, comida: 'snack',
+    items: [['Pechuga de pavo', 60], ['Queso fresco', 30]], dietas: CON_CARNE, contiene: ['leche'], minutos: 1 },
 
   // almuerzos
   { clave: 'pollo-arroz', nombre: { es: 'Pollo a la plancha con arroz y ensalada', en: 'Grilled chicken with rice and salad' }, comida: 'almuerzo',

@@ -490,7 +490,7 @@ galería, sección 3.
 
 - **Con qué arma:** primero lo que comes seguido (lo mismo, al menos dos veces en
   las últimas cuatro semanas, con la cantidad del medio de cada alimento), después
-  lo que marcaste con ♡ y, si falta, 49 comidas tipo de todos los días, de acá y de
+  lo que marcaste con ♡ y, si falta, 54 comidas tipo de todos los días, de acá y de
   todas partes, para cuatro dietas, con sus alérgenos y su tiempo. Lo que tiene un
   alimento que no está en la base no se propone.
 - **Cuánto:** escala cada comida (de la mitad al doble de lo de siempre, de a media
