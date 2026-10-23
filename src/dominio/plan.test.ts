@@ -13,8 +13,9 @@ import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 import type { Macros } from './metas';
 import {
-  adaptar, cambiarPorOtra, comidasDelPlan, DIETAS, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas, permitida, planearDia, planearSemana,
-  PLANTILLAS, REPARTO, type DiaPlaneado, type Opcion, type Preferencias, type Resolver,
+  adaptar, adaptarRegistros, cambiarPorOtra, comidasDelPlan, diaPlaneadoDe, DIETAS, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas, permitida,
+  planearDia, planearSemana, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, type DiaPlaneado, type Opcion, type Preferencias,
+  type Resolver,
 } from './plan';
 import { gramosDe, itemDeAlimento, itemRapido, valoresDeCantidad, type Item, type Registro, type Valores } from './registros';
 
@@ -460,6 +461,69 @@ describe('la lista de compras', () => {
     expect(new Set(lista.map((x) => x.clave)).size).toBe(lista.length);
     const items = todasLasComidas(semana).flatMap((c) => c.items);
     expect(lista.reduce((s, x) => s + x.comidas, 0)).toBe(items.length);
+  });
+});
+
+describe('lo que usa la app', () => {
+  /** Un día armado, como lo guarda el almacén: un registro por alimento, planificado y con su opción. */
+  function guardado(dia: DiaPlaneado): Registro[] {
+    return dia.comidas.flatMap((c, i) => c.items.map((it, j) => reg(it, dia.dia, c.comida, 8 + 4 * i + j / 100, { planificado: true, plan: c.opcion })));
+  }
+
+  it('las preferencias de la cuenta: lo que no se entiende queda como de fábrica', () => {
+    expect(preferenciasDe(null)).toBeNull();
+    expect(preferenciasDe([])).toBeNull();
+    expect(preferenciasDe({})).toEqual(PREFERENCIAS_DE_FABRICA);
+    expect(preferenciasDe({ dieta: 'carnivora', alergias: ['mani', 'polvo', 'mani'], comidas: 6, tiempo: 'poco', noMeGusta: ['a', 'a', 7, ''], meGusta: 'b' }))
+      .toEqual({ dieta: 'todo', alergias: ['mani'], comidas: 4, tiempo: 'poco', noMeGusta: ['a'], meGusta: [] });
+    expect(preferenciasDe({ dieta: 'vegana', comidas: 3 })).toMatchObject({ dieta: 'vegana', comidas: 3, tiempo: 'normal' });
+  });
+
+  it('lo planificado de un día, como un día del plan: por comida, con su opción', () => {
+    const dia = planearDia({ dia: HOY, meta: META, opciones: TIPO, pref: TODO, semilla: 4 });
+    const aMano = reg(banana(), HOY, 'snack', 11, { planificado: true });
+    const otroDia = reg(banana(), hace(1), 'cena', 21, { planificado: true });
+    const anotado = reg(arroz(), HOY, 'almuerzo', 13.5);
+    const vuelta = diaPlaneadoDe([...guardado(dia), aMano, otroDia, anotado], HOY);
+    expect(vuelta.comidas.map((c) => [c.comida, c.opcion])).toEqual([...dia.comidas.map((c) => [c.comida, c.opcion]), ['snack', 'planificada:snack']]);
+    expect(vuelta.comidas[0].items).toEqual(dia.comidas[0].items);
+    expect(vuelta.valores.kcal).toBeCloseTo(dia.valores.kcal + aMano.valores.kcal, 6);
+  });
+
+  it('lo que falta armar: nada anotado ni planificado y, hoy, lo que no pasó hace más de una hora', () => {
+    const horaDe = (c: Comida) => ({ desayuno: 8, almuerzo: 13, merienda: 17.5, cena: 21, snack: 11 })[c] * 60;
+    const registros = [reg(avena(), HOY, 'desayuno', 8), reg(banana(), sumarDias(HOY, 1), 'merienda', 17, { planificado: true })];
+    const falta = (dia: string, ahora: number) => queFalta({ registros, dia, hoy: HOY, ahora, pref: TODO, horaDe });
+    expect(falta(HOY, 14 * 60)).toEqual(['almuerzo', 'merienda', 'cena']);
+    expect(falta(HOY, 14 * 60 + 1)).toEqual(['merienda', 'cena']);
+    expect(falta(sumarDias(HOY, 1), 23 * 60)).toEqual(['desayuno', 'almuerzo', 'cena']);
+    expect(falta(hace(1), 9 * 60)).toEqual([]);
+  });
+
+  it('lo reciente es lo que armó el plan los dos días anteriores', () => {
+    const registros = [
+      reg(avena(), hace(1), 'desayuno', 8, { planificado: true, plan: 'avena-banana' }),
+      reg(pollo(), hace(2), 'almuerzo', 13, { plan: 'pollo-arroz' }),
+      reg(arroz(), hace(3), 'cena', 21, { plan: 'viejo' }),
+      reg(banana(), HOY, 'merienda', 17, { plan: 'de-hoy' }),
+    ];
+    expect(recientesDe(registros, HOY).sort()).toEqual(['avena-banana', 'pollo-arroz']);
+  });
+
+  it('con la meta nueva, lo armado se escala: los mismos registros, con lo que deja lo demás del día', () => {
+    const dia = planearDia({ dia: HOY, meta: META, opciones: TIPO, pref: TODO, semilla: 6 });
+    const registros = [...guardado(dia), reg(banana(2), HOY, 'snack', 11)];
+    const nueva = { ...META, kcal: 2500, proteina: 150 };
+    const cambiados = adaptarRegistros(registros, HOY, nueva);
+    expect(cambiados.length).toBeGreaterThan(0);
+    const porId = new Map(registros.map((r) => [r.id, r]));
+    for (const r of cambiados) expect(porId.get(r.id)).toMatchObject({ dia: HOY, comida: r.comida, planificado: true, plan: r.plan, nombre: r.nombre });
+    const despues = registros.map((r) => cambiados.find((x) => x.id === r.id) ?? r);
+    const total = despues.reduce((s, r) => s + r.valores.kcal, 0);
+    expect(cerca(total, nueva.kcal, 0.05)).toBe(true);
+    // Lo anotado no se toca, y sin nada armado no hay nada que adaptar.
+    expect(cambiados.some((r) => r.comida === 'snack')).toBe(false);
+    expect(adaptarRegistros([reg(banana(), HOY, 'snack', 11)], HOY, nueva)).toEqual([]);
   });
 });
 

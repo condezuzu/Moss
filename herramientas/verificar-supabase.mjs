@@ -14,6 +14,7 @@
 //   (0005_noches.sql);
 // - que lo comido y el catálogo guardan los micronutrientes, y que las búsquedas sin resultado y
 //   los reportes de errores se anotan sin usuario y no se leen desde la app (0006_alimentos.sql);
+// - que lo armado por el plan guarda su opción y cómo comes va en el perfil (0007_plan.sql);
 // - que borrar la cuenta borra todo en cascada;
 // - que el teléfono baja el catálogo del servidor;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
@@ -283,6 +284,15 @@ comprobar(
   'repartir la semana: los días van de 0 a 6 (no todos), el extra es 200, 300 o 500, y van los dos o ninguno',
 );
 
+// El plan de comidas (0007_plan.sql): lo armado guarda su opción, y cómo comes va en el perfil.
+await como(B, `update moss.perfiles set comer = '{"dieta": "vegana", "comidas": 3}', actualizado = now()`);
+comprobar((await como(B, 'select comer from moss.perfiles')).rows[0].comer.dieta === 'vegana', 'cómo comes queda en el perfil');
+comprobar(await falla(B, `update moss.perfiles set comer = '["vegana"]', actualizado = now()`), 'cómo comes es un objeto');
+await como(B, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas, planificado, plan) values ('p1', '2026-10-23', 'cena', now(), 'base', 'Pollo', 300, 40, 0, 12, true, 'pollo-arroz')`);
+comprobar((await como(B, `select plan from moss.registros where id = 'p1'`)).rows[0].plan === 'pollo-arroz', 'lo armado guarda la opción de la que sale');
+comprobar(await falla(B, `update moss.registros set plan = '', actualizado = now() where id = 'p1'`), 'la opción de lo armado no va vacía');
+await como(B, `delete from moss.registros where id = 'p1'`);
+
 const periodos = (lista) => como(A, 'select moss.poner_periodos($1::jsonb)', [JSON.stringify(lista)]);
 await como(B, `select moss.poner_periodos('[{"dia":1,"desde":"2026-10-19","constelacion":"sagitta","cantidad":4}]'::jsonb)`);
 await periodos([{ dia: 3, desde: '2026-10-19', hasta: '2026-10-21', constelacion: 'lyra', cantidad: 6 }, { dia: 3, desde: '2026-10-22', constelacion: 'crater', cantidad: 6 }]);
@@ -499,6 +509,25 @@ comprobar(
     && b.almacen.estado().metas.some((m) => m.motivo === 'objetivo') && !(await pendiente(b)),
   'app: las medidas (sin lo imposible), el peso meta, el día del control, la semana repartida y las metas del reparto nuevo llegan al otro teléfono',
 );
+
+// El plan de comidas: cómo comes y lo armado (con su opción) llegan al otro teléfono; «Comí esto» también.
+pasa();
+a.almacen.ponerComer({ dieta: 'vegetariana', alergias: ['mani'], comidas: 3, tiempo: 'poco', noMeGusta: ['pollo-arroz'], meGusta: [] });
+const armada = { comida: 'almuerzo', opcion: 'lentejas', items: [banana], valores: banana.valores };
+const [delAlmuerzo] = a.almacen.planificar(hoyA, [armada], () => 13 * 60);
+await a.sinc.vuelta();
+await b.sinc.vuelta();
+const planDeB = b.almacen.estado();
+comprobar(
+  planDeB.perfil?.comer?.dieta === 'vegetariana' && planDeB.perfil?.comer?.noMeGusta.join() === 'pollo-arroz'
+    && planDeB.registros.get(delAlmuerzo.id)?.plan === 'lentejas' && planDeB.registros.get(delAlmuerzo.id)?.planificado === true && !(await pendiente(b)),
+  'app: cómo comes y lo que armó el plan (planificado aunque sea hoy, con su opción) llegan al otro teléfono',
+);
+pasa();
+b.almacen.confirmarComida(hoyA, 'almuerzo');
+await b.sinc.vuelta();
+await a.sinc.vuelta();
+comprobar(a.almacen.estado().registros.get(delAlmuerzo.id)?.planificado === false, 'app: «Comí esto» en un teléfono queda anotado en el otro');
 
 // Sueño: la cara de la mañana y la hora confirmada de una noche sin reloj llegan al otro teléfono.
 pasa();

@@ -481,6 +481,49 @@ En Moss, la pestaña Comida:
 - Los números y los títulos van en una sans sobria (Outfit), no en la serif del cielo.
 - Está en la galería, esperando aprobación: desde el 22/10 repartida entre Inicio, Comida y Progreso.
 
+## El plan de comidas (23/10/2026)
+
+Lo pediste el 22/10, a la noche: Moss arma las comidas del día o de la semana que
+llegan a la meta, y se adaptan cuando cambia. Las reglas están en
+`src/dominio/plan.ts`; en la app, `src/secciones/comida/Plan.tsx`, y en la
+galería, sección 3.
+
+- **Con qué arma:** primero lo que comes seguido (lo mismo, al menos dos veces en
+  las últimas cuatro semanas, con la cantidad del medio de cada alimento), después
+  lo que marcaste con ♡ y, si falta, 49 comidas tipo de todos los días, de acá y de
+  todas partes, para cuatro dietas, con sus alérgenos y su tiempo. Lo que tiene un
+  alimento que no está en la base no se propone.
+- **Cuánto:** escala cada comida (de la mitad al doble de lo de siempre, de a media
+  porción o de a 5 g) para que el día quede a menos de un 5 % de las kcal y con al
+  menos el 90 % de la proteína. Cada comida queda entre el 70 % y el 140 % de su
+  parte del día (desayuno 20 %, almuerzo 35 %, merienda 15 % y cena 30 %, con
+  cuatro comidas): para llegar a la proteína se cambia una comida antes que armar
+  un almuerzo doble. Si no se llega, queda lo más cerca posible y lo dice. Los
+  carbohidratos y las grasas no se persiguen.
+- **Lo que falta:** «Armar el día» arma solo las comidas sin nada anotado ni
+  planificado y, hoy, las que no pasaron hace más de una hora, con lo que dejó lo
+  ya comido. «Armar la semana» hace lo mismo hasta el domingo, evitando lo de los
+  dos días anteriores.
+- **Lo armado queda planificado,** también hoy: tenue, con su etiqueta, y el
+  control no lo cuenta. Cada comida armada tiene:
+
+  | Acción | Toques | Qué hace |
+  |---|---|---|
+  | Comí esto | 1 | la anota, con Deshacer (solo hoy o antes) |
+  | Otra | 1 | otra opción de esa comida a menos de un 15 % de kcal y proteína |
+  | ♡ | 1 | sale más seguido |
+  | ✕ | 1 | no vuelve a proponerse (lo anotado no se toca) y se cambia ya por otra, con Deshacer |
+
+- **Tus comidas:** cómo comes (de todo, vegetariana, vegana o pescetariana), lo que
+  no comes (los alérgenos que piden las etiquetas), cuántas comidas por día (3, 4 o
+  5) y el tiempo para cocinar (15 minutos, 40, o lo que sea). Sin contestar: de
+  todo, cuatro comidas y tiempo normal. Va en el perfil y sube a la cuenta.
+- **La lista de compras:** lo de las comidas planificadas desde hoy, sumado por
+  alimento, para tachar en el súper; lo tachado queda en el teléfono.
+- **Cuando la meta cambia** (el control de la semana, la estrategia o las metas a
+  mano), lo armado de hoy en adelante se escala a la nueva con las mismas comidas,
+  sin tocar lo anotado ni lo planificado a mano.
+
 **Widgets en la pantalla de bloqueo** con calorías y macros:
 - van con `expo-widgets`, en los tamaños de la pantalla de bloqueo (circular y rectangular);
 - antes hay que probarlos en una build `dev` ([`widgets.md`](widgets.md)).

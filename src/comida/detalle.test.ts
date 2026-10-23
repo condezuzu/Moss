@@ -7,7 +7,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { DatabaseSync } from 'node:sqlite';
 
-import { alimentoPorCodigo, detalleDeAlimento, formasDelCodigo, rindeAlCocinar } from './detalle';
+import { alimentoPorCodigo, curadosPorNombre, detalleDeAlimento, formasDelCodigo, rindeAlCocinar } from './detalle';
 
 const db = new DatabaseSync(':memory:');
 db.exec(`
@@ -38,6 +38,17 @@ db.exec(`
   INSERT INTO ingredientes VALUES (-5001, 2, 100), (-5001, -10001, 800);
 `);
 const base = { getAllAsync: async <T,>(sql: string, ...parametros: (string | number)[]) => db.prepare(sql).all(...parametros) as T[] };
+
+describe('los curados de las comidas tipo del plan', () => {
+  it('por su nombre en español: con el de la región, los valores y las porciones', async () => {
+    const curados = await curadosPorNombre(base, ['Banana', 'Arroz blanco cocido', 'No está'], { idioma: 'es', region: 'MX' });
+    expect([...curados.keys()].sort()).toEqual(['Arroz blanco cocido', 'Banana']);
+    expect(curados.get('Banana')).toMatchObject({ id: 1, nombre: 'Plátano', por100g: { kcal: 89, fibra: 2.6 }, porciones: [{ nombre: '1 mediana', gramos: 118 }, { nombre: '1 grande', gramos: 136 }] });
+    expect(curados.get('Arroz blanco cocido')?.porciones).toEqual([{ nombre: '1 cup', gramos: 158 }]);
+    expect((await curadosPorNombre(base, ['Banana'], { idioma: 'en' })).get('Banana')?.nombre).toBe('Banana');
+    expect(await curadosPorNombre(base, [], { idioma: 'es' })).toEqual(new Map());
+  });
+});
 
 describe('el detalle de un alimento', () => {
   it('trae las porciones en el idioma de la app y lo que no se come', async () => {

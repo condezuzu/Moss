@@ -11,12 +11,15 @@ import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/cons
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
-import { claveDelDia, diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { claveDelDia, diaDeLaSemana, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
-import { edadDe, metaManual, metaPara, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil } from '@/dominio/metas';
 import {
-  borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, restaurado,
+  edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil,
+} from '@/dominio/metas';
+import { adaptarRegistros, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
+import {
+  borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
@@ -175,6 +178,7 @@ export function metaVigente(e: Pick<Estado, 'metas'>, clave: ClaveDia): MetaGuar
 
 const porFecha = <T>(clave: (x: T) => string) => (a: T, b: T) => (clave(a) < clave(b) ? -1 : 1);
 const soloMacros = (m: Macros): Macros => ({ kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas });
+const soloMacrosIguales = (a: Macros, b: Macros) => a.kcal === b.kcal && a.proteina === b.proteina && a.carbohidratos === b.carbohidratos && a.grasas === b.grasas;
 
 export type Almacen = ReturnType<typeof crearAlmacen>;
 
@@ -283,7 +287,55 @@ export function crearAlmacen(op: Opciones) {
 
   /** Cambiar las metas, y con eso los hábitos de comida de hoy. */
   function ponerMetas(metas: MetaGuardada[]) {
+    const antes = estado.metas;
     cambiar({ metas, ...alDia({ ...estado, metas }).estado }, false);
+    adaptarElPlan(antes);
+  }
+
+  /** La meta de un día, con el reparto de la semana: la que usa el plan. */
+  function metaDelDia(metas: MetaGuardada[], dia: ClaveDia): Macros | null {
+    const m = metaVigente({ metas }, dia);
+    return m ? metaRepartida(soloMacros(m), estado.perfil, diaDeLaSemana(dia)) : null;
+  }
+
+  /** Si cambió la meta de un día con comidas armadas (de hoy en adelante), lo armado se escala a la nueva (plan.ts). */
+  function adaptarElPlan(metasAntes: MetaGuardada[]) {
+    const dias = new Set<ClaveDia>();
+    for (const r of estado.registros.values()) if (!r.borrado && r.planificado && r.plan && r.dia >= estado.hoy) dias.add(r.dia);
+    const cuando = momento();
+    const cambiados = [...dias].flatMap((dia) => {
+      const nueva = metaDelDia(estado.metas, dia);
+      const vieja = metaDelDia(metasAntes, dia);
+      if (!nueva || (vieja && soloMacrosIguales(vieja, nueva))) return [];
+      return adaptarRegistros(estado.registros.values(), dia, nueva).map((r) => ({ ...r, actualizado: cuando }));
+    });
+    ponerComida('registros', cambiados);
+  }
+
+  /** Un instante de un día a unos minutos de la hora local, para la línea del día. */
+  const instanteDe = (dia: ClaveDia, minutos: number) => {
+    const p = partesDe(dia);
+    return new Date(p.anio, p.mes, p.dia, Math.floor(minutos / 60), Math.round(minutos % 60)).getTime();
+  };
+
+  /**
+   * Lo que armó el plan: cada comida, planificada aunque sea hoy (se anota con «Comí esto»), con la
+   * clave de su opción y a su hora de siempre o, hoy, no antes de ahora. `desde`, la hora de cada
+   * comida si ya tenía (al cambiarla por otra).
+   */
+  function planificar(dia: ClaveDia, comidas: readonly ComidaPlaneada[], horaDe: (c: Comida) => number, desde: Partial<Record<Comida, number>> = {}): Registro[] {
+    const cuando = momento();
+    const ya = ahora();
+    const minutosAhora = ya.getHours() * 60 + ya.getMinutes();
+    const nuevos = comidas.flatMap((c) => {
+      const inicio = desde[c.comida] ?? instanteDe(dia, dia === estado.hoy ? Math.max(horaDe(c.comida), minutosAhora) : horaDe(c.comida));
+      return c.items.map((it, i): Registro => ({
+        fuente: it.fuente, ref: it.ref, nombre: it.nombre, cantidad: it.cantidad, valores: it.valores, ...(it.estimado ? { estimado: true as const } : {}),
+        id: nuevoId(), dia, comida: c.comida, momento: new Date(inicio + i).toISOString(), planificado: true, plan: c.opcion, actualizado: cuando,
+      }));
+    });
+    ponerComida('registros', nuevos);
+    return nuevos;
   }
 
   /**
@@ -549,6 +601,44 @@ export function crearAlmacen(op: Opciones) {
       const hechos = confirmar(estado.registros.values(), dia, momento());
       ponerComida('registros', hechos);
       return hechos.length;
+    },
+    // ---------------------------------------------------------------- el plan de comidas
+    planificar,
+    /** «Comí esto»: lo planificado de una comida pasa a anotado, con un toque. Devuelve los ids, para deshacer. */
+    confirmarComida(dia: ClaveDia, comida: Comida): string[] {
+      const hechos = confirmar(estado.registros.values(), dia, momento(), comida);
+      ponerComida('registros', hechos);
+      return hechos.map((r) => r.id);
+    },
+    /** Deshacer «Comí esto». */
+    volverAPlanificar(ids: readonly string[]) {
+      const cuando = momento();
+      ponerComida('registros', ids.flatMap((id) => {
+        const r = estado.registros.get(id);
+        return r && !r.borrado ? [{ ...r, planificado: true, actualizado: cuando }] : [];
+      }));
+    },
+    /**
+     * «Otra» y «No me gusta»: la comida planificada pasa a ser otra, a la misma hora. Devuelve cómo
+     * deshacerlo.
+     */
+    cambiarPlanificada(dia: ClaveDia, nueva: ComidaPlaneada, horaDe: (c: Comida) => number): () => void {
+      const viejos = delDia(estado.registros.values(), dia).filter((r) => r.planificado && r.comida === nueva.comida);
+      const cuando = momento();
+      ponerComida('registros', viejos.map((r) => borrado(r, cuando)));
+      const nuevos = planificar(dia, [nueva], horaDe, viejos.length ? { [nueva.comida]: Date.parse(viejos[0].momento) } : {});
+      return () => {
+        const despues = momento();
+        ponerComida('registros', [...nuevos.map((r) => borrado(r, despues)), ...viejos.map((r) => restaurado(r, despues))]);
+      };
+    },
+    /** Cómo comes (dieta, alergias, comidas, tiempo y lo que gusta o no): va en el perfil y sube con él. */
+    ponerComer(comer: Preferencias) {
+      const antes = estado.perfil;
+      if (!antes) return;
+      const perfil: Perfil = { ...antes, comer, actualizado: momento() };
+      guardar((r) => r.guardarPerfil(perfil));
+      cambiar({ perfil }, false);
     },
     /** Los bloques de Inicio, en su orden y cuáles se ven. */
     ponerInicio(inicio: NonNullable<Estado['inicio']>) {

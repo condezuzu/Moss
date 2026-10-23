@@ -3,6 +3,7 @@
 // actividad; después, el control de cada semana (control.ts) mide el gasto de verdad.
 
 import type { ClaveDia, DiaSemana } from './fechas';
+import type { Preferencias } from './plan';
 
 export type Sexo = 'f' | 'm';
 export type Actividad = 'poco' | 'algo' | 'activo' | 'muy';
@@ -34,7 +35,10 @@ export const EXTRAS = [200, 300, 500] as const;
  * semana del control (sin elegirlo, es el día de la primera meta) y si se reparte la semana.
  */
 export type Perfil = Omit<Cuestionario, 'edad' | 'pesoKg'> & {
-  nacimiento: number; estilo?: Estilo; pesoMeta?: number; diaDelControl?: DiaSemana; semana?: Semana; actualizado: string;
+  nacimiento: number; estilo?: Estilo; pesoMeta?: number; diaDelControl?: DiaSemana; semana?: Semana;
+  /** Cómo come, para armar las comidas (plan.ts); sin contestar, PREFERENCIAS_DE_FABRICA. */
+  comer?: Preferencias;
+  actualizado: string;
 };
 
 /**

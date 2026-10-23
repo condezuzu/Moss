@@ -6,7 +6,7 @@
 import { candidatosEnMemoria, conMayuscula, mejoresPorAlimento, textoEnMemoria, type Opciones, type Resultado, type TextoEnMemoria } from './buscar';
 import { MICROS, type Micros } from '@/dominio/micronutrientes';
 
-import { formasDelCodigo, type Detalle, type Valores100 } from './detalle';
+import { formasDelCodigo, type CuradoDelPlan, type Detalle, type Valores100 } from './detalle';
 
 /** Lo que trae public/alimentos.json, compacto: ver herramientas/alimentos-web.mjs. */
 type AlimentoWeb = {
@@ -107,6 +107,16 @@ export const baseDeAlimentos = {
     const { codigos } = await cargar();
     for (const forma of formasDelCodigo(codigo)) if (codigos[forma] != null) return codigos[forma];
     return null;
+  },
+  async curados(nombres: readonly string[], op: OpcionesDeIdioma): Promise<Map<string, CuradoDelPlan>> {
+    const { porId } = await cargar();
+    const buscados = new Set(nombres);
+    const curados = new Map<string, CuradoDelPlan>();
+    for (const a of porId.values()) {
+      if (!buscados.has(a.es) || curados.has(a.es)) continue;
+      curados.set(a.es, { id: a.id, nombre: nombreDe(a, op), por100g: valoresDe(a), porciones: a.p.map(([es, en, gramos]) => ({ nombre: op.idioma === 'es' ? (es ?? en) : en, gramos })) });
+    }
+    return curados;
   },
   preparar() {
     cargar().catch((error) => console.warn('Moss no pudo cargar los alimentos', error));

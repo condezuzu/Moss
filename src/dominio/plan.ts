@@ -864,3 +864,98 @@ export function listaDeCompras(plan: readonly DiaPlaneado[]): Compra[] {
 export function itemsDeComida(c: ComidaPlaneada): Item[] {
   return c.items.map(itemDe);
 }
+
+// ------------------------------------------------------------ lo que usa la app
+
+/** Hasta contestar «Tus comidas»: de todo, cuatro comidas y tiempo normal. */
+export const PREFERENCIAS_DE_FABRICA: Preferencias = { dieta: 'todo', alergias: [], comidas: 4, tiempo: 'normal', noMeGusta: [], meGusta: [] };
+
+// Una lista de claves de opciones, como llega de la cuenta: sin repetir y con un tope.
+const clavesDe = (x: unknown) => [...new Set(Array.isArray(x) ? x.filter((s): s is string => typeof s === 'string' && s.length > 0 && s.length <= 300) : [])].slice(0, 500);
+
+/** Las preferencias que llegan de la cuenta: lo que no se entiende queda como de fábrica. Sin nada, null. */
+export function preferenciasDe(x: unknown): Preferencias | null {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) return null;
+  const o = x as Record<string, unknown>;
+  const alergias = Array.isArray(o.alergias) ? o.alergias : [];
+  return {
+    dieta: DIETAS.find((d) => d === o.dieta) ?? PREFERENCIAS_DE_FABRICA.dieta,
+    alergias: ALERGENOS.filter((a) => alergias.includes(a)),
+    comidas: o.comidas === 3 || o.comidas === 5 ? o.comidas : 4,
+    tiempo: o.tiempo === 'poco' || o.tiempo === 'mucho' ? o.tiempo : 'normal',
+    noMeGusta: clavesDe(o.noMeGusta),
+    meGusta: clavesDe(o.meGusta),
+  };
+}
+
+const enOrden = (a: Registro, b: Registro) => (a.momento < b.momento ? -1 : a.momento > b.momento ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+
+/** Lo planificado de una comida, en orden: así lo armado y sus registros van uno a uno. */
+function planificadosDe(registros: Iterable<Registro>, dia: ClaveDia): Map<Comida, Registro[]> {
+  const porComida = new Map<Comida, Registro[]>();
+  for (const r of registros) if (!r.borrado && r.planificado && r.dia === dia) porComida.set(r.comida, [...(porComida.get(r.comida) ?? []), r]);
+  for (const lista of porComida.values()) lista.sort(enOrden);
+  return porComida;
+}
+
+/**
+ * Lo planificado de un día como un día del plan, para cambiar una comida o armar la lista de
+ * compras. Lo planificado a mano (sin `plan`) va con una clave de su comida.
+ */
+export function diaPlaneadoDe(registros: Iterable<Registro>, dia: ClaveDia): DiaPlaneado {
+  const porComida = planificadosDe(registros, dia);
+  const comidas = ORDEN.flatMap((comida) => {
+    const lista = porComida.get(comida);
+    if (!lista) return [];
+    const items = lista.map(itemDe);
+    return [{ comida, opcion: lista.find((r) => r.plan)?.plan ?? `planificada:${comida}`, items, valores: valoresDe(items) }];
+  });
+  return { dia, comidas, valores: sumar(comidas.map((c) => c.valores)), alcanza: true };
+}
+
+// Una comida que ya pasó hace más de esto no se arma: hoy ya no se come.
+const YA_PASO = 60;
+
+/**
+ * Las comidas del plan que faltan en un día: las que no tienen nada, ni anotado ni planificado.
+ * Hoy, solo las que no pasaron hace más de una hora (`horaDe` y `ahora`, en minutos del día).
+ */
+export function queFalta(o: { registros: Iterable<Registro>; dia: ClaveDia; hoy: ClaveDia; ahora: number; pref: Preferencias; horaDe: (c: Comida) => number }): Comida[] {
+  if (o.dia < o.hoy) return [];
+  const hay = new Set<Comida>();
+  for (const r of o.registros) if (!r.borrado && r.dia === o.dia) hay.add(r.comida);
+  return comidasDelPlan(o.pref.comidas).filter((c) => !hay.has(c) && (o.dia > o.hoy || o.horaDe(c) + YA_PASO >= o.ahora));
+}
+
+/** Lo que el plan evita: las opciones de los días de antes. */
+export function recientesDe(registros: Iterable<Registro>, dia: ClaveDia, dias = 2): string[] {
+  const desde = sumarDias(dia, -dias);
+  const claves = new Set<string>();
+  for (const r of registros) if (!r.borrado && r.plan && r.dia >= desde && r.dia < dia) claves.add(r.plan);
+  return [...claves];
+}
+
+const mismaCantidad = (a: Cantidad, b: Cantidad) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * Lo armado de un día con la meta nueva (después del control de la semana): las mismas comidas,
+ * escaladas a lo que deja lo demás del día (lo anotado y lo planificado a mano). Devuelve los
+ * registros que cambian, con el mismo id y la cantidad y los valores nuevos.
+ */
+export function adaptarRegistros(registros: Iterable<Registro>, dia: ClaveDia, meta: Macros): Registro[] {
+  const lista = [...registros].filter((r) => !r.borrado && r.dia === dia);
+  const delPlan = lista.filter((r) => r.planificado && r.plan);
+  if (!delPlan.length) return [];
+  const fijo = sumar(lista.filter((r) => !(r.planificado && r.plan)).map((r) => r.valores));
+  const resto: Macros = {
+    kcal: Math.max(0, meta.kcal - fijo.kcal), proteina: Math.max(0, meta.proteina - fijo.proteina),
+    carbohidratos: Math.max(0, meta.carbohidratos - fijo.carbohidratos), grasas: Math.max(0, meta.grasas - fijo.grasas),
+  };
+  const antes = diaPlaneadoDe(delPlan, dia);
+  const [despues] = adaptar([antes], () => resto);
+  const porComida = planificadosDe(delPlan, dia);
+  return antes.comidas.flatMap((c, i) => {
+    const regs = porComida.get(c.comida) ?? [];
+    return despues.comidas[i].items.flatMap((it, j) => (regs[j] && !mismaCantidad(regs[j].cantidad, it.cantidad) ? [{ ...regs[j], cantidad: it.cantidad, valores: it.valores }] : []));
+  });
+}

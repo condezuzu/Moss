@@ -120,6 +120,13 @@ describe('copiar, planificar, confirmar y borrar', () => {
     expect(confirmar(plan, HOY, op.ahora)).toEqual([]);
   });
 
+  it('«Comí esto» confirma solo esa comida', () => {
+    const manana = sumarDias(HOY, 1);
+    const plan = copiar([...cena, almuerzo], { dia: ayer }, { dia: manana }, op);
+    expect(confirmar(plan, manana, op.ahora, 'cena').map((r) => [r.nombre, r.comida, r.planificado])).toEqual([['Arroz blanco', 'cena', false], ['Banana', 'cena', false]]);
+    expect(confirmar(plan, manana, op.ahora, 'desayuno')).toEqual([]);
+  });
+
   it('borrar deja la marca con su hora, y deshacer la saca', () => {
     const r = cena[0];
     const b = borrado(r, '2026-10-21T22:00:00.000Z');

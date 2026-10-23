@@ -30,6 +30,7 @@ import {
   useEstado, type ComidaDelDia,
 } from './datos';
 import { Luna, Lunitas, type Lunita } from './Luna';
+import { AccionesDelPlan, ArmarElDia, PlanDeLaSemana } from './Plan';
 import { abrirRegistro } from './registro';
 
 const VISTAS = ['dia', 'semana', 'mes'] as const;
@@ -73,7 +74,7 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
         <TiraDeLaSemana e={e} dia={dia} alElegir={verDia} />
         <Cuadro ancho={anchoCuadro} vista={vista} alCambiar={setVista}>
           <PaginaDelDia e={e} dia={dia} />
-          <PaginaDeLaSemana e={e} dia={dia} alElegir={verDia} />
+          <PaginaDeLaSemana e={e} dia={dia} alElegir={verDia} avisar={avisar} />
           <PaginaDelMes e={e} dia={dia} ancho={anchoCuadro} alElegir={verDia} />
         </Cuadro>
         <View style={estilos.puntos}>
@@ -87,7 +88,8 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
         <Text style={estilos.seccion}>{t('comida.tuDia')}</Text>
         {dia > e.hoy && <Text style={estilos.nota}>{t('comida.planificadoTexto')}</Text>}
         {!metaDelDia(e, dia) && <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>}
-        <LineaDelDia e={e} dia={dia} />
+        <ArmarElDia e={e} dia={dia} avisar={avisar} />
+        <LineaDelDia e={e} dia={dia} avisar={avisar} />
         <AccionesDelDia e={e} dia={dia} avisar={avisar} />
       </ScrollView>
       <AvisoAbajo aviso={aviso} alIrse={() => setAviso(null)} abajo={abajo + 16} />
@@ -289,7 +291,7 @@ function CabezaDePromedio({ titulo, fechas, promedio, dias, meta }: { titulo: st
   );
 }
 
-function PaginaDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alElegir: (d: ClaveDia) => void }) {
+function PaginaDeLaSemana({ e, dia, alElegir, avisar }: { e: Estado; dia: ClaveDia; alElegir: (d: ClaveDia) => void; avisar: (texto: string, deshacer?: () => void) => void }) {
   const lunes = lunesDe(dia);
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
   const desde = partesDe(lunes);
@@ -325,6 +327,7 @@ function PaginaDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alEl
           );
         })}
       </View>
+      <PlanDeLaSemana e={e} dia={dia} avisar={avisar} />
     </View>
   );
 }
@@ -377,7 +380,7 @@ type Entrada = { minutos: number } & ({ tipo: 'comida'; comida: ComidaDelDia } |
  * Las comidas sobre una línea de horas, con el espacio entre una y otra según el tiempo que pasó.
  * Hoy, la comida que falta espera en «ahora»; otro día, las que faltan se pueden agregar.
  */
-function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
+function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (texto: string, deshacer?: () => void) => void }) {
   const sistema = sistemaDe(e);
   const comidas = comidasDelDia(e.registros, dia);
   const entradas: Entrada[] = comidas.map((c) => ({ tipo: 'comida', comida: c, minutos: c.minutos }));
@@ -414,7 +417,9 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
           <Animated.View key={clave} entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)} layout={ACOMODA} style={{ marginTop: separacion }}>
             <Text style={estilos.hora}>{x.tipo === 'vacia' && x.ahora ? '' : hora(Math.round(x.minutos))}</Text>
             <View style={[estilos.nodo, x.tipo === 'vacia' && estilos.nodoVacio, planificada && estilos.nodoPlan]} />
-            {x.tipo === 'comida' ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} /> : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} />}
+            {x.tipo === 'comida'
+              ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} e={e} avisar={avisar} />
+              : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} />}
           </Animated.View>
         );
       })}
@@ -422,7 +427,7 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   );
 }
 
-function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe> }) {
+function Tarjeta({ c, dia, sistema, e, avisar }: { c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe>; e: Estado; avisar: (texto: string, deshacer?: () => void) => void }) {
   const numeros = useNumeros();
   // La foto, opcional y solo en el teléfono (D10): un toque en la comida ya registrada.
   const [foto, setFoto] = useState(() => fotoDe(dia, c.comida));
@@ -430,8 +435,11 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
   const sacar = () => {
     sacarFoto(dia, c.comida).then((uri) => uri && setFoto(uri)).catch(() => {});
   };
+  const delPlan = c.planificada && c.registros.some((r) => r.plan);
   return (
     <Animated.View layout={ACOMODA} style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan]}>
+      {/* Lo planificado se ve tenue; lo que se hace con lo armado, no. */}
+      <View style={c.planificada && estilos.tenueDePlan}>
       <View style={estilos.tarjetaCabeza}>
         <Text style={estilos.tarjetaTitulo}>{t(`comida.comidas.${c.comida}`)}</Text>
         {c.planificada && <Text style={estilos.etiquetaPlan}>{t('comida.planificado')}</Text>}
@@ -467,6 +475,12 @@ function Tarjeta({ c, dia, sistema }: { c: ComidaDelDia; dia: ClaveDia; sistema:
           </Pressable>
         )}
       </View>
+      </View>
+      {delPlan && (
+        <Animated.View entering={FadeIn.duration(260)} exiting={FadeOut.duration(180)}>
+          <AccionesDelPlan e={e} c={c} dia={dia} avisar={avisar} />
+        </Animated.View>
+      )}
       {viendo && foto && (
         <HojaModal
           abierta
@@ -634,7 +648,8 @@ const estilos = StyleSheet.create({
   entradaAhora: { height: 12 },
   ahoraTexto: { position: 'absolute', left: 2, top: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 2, textTransform: 'uppercase', color: colores.oroClaro },
   tarjeta: { borderRadius: 16, paddingTop: 11, paddingHorizontal: 14, paddingBottom: 10, backgroundColor: 'rgba(6, 10, 22, 0.66)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)' },
-  tarjetaPlan: { opacity: 0.6, borderStyle: 'dashed' },
+  tarjetaPlan: { borderStyle: 'dashed' },
+  tenueDePlan: { opacity: 0.6 },
   tarjetaVacia: { gap: 11, paddingBottom: 13, backgroundColor: 'rgba(6, 10, 22, 0.35)', borderStyle: 'dashed', borderColor: 'rgba(232, 196, 106, 0.38)' },
   tarjetaCabeza: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 7 },
   tarjetaTitulo: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.pergamino },

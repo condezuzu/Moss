@@ -1,5 +1,5 @@
 // Supabase tal como lo usa la sincronización: subir lo pendiente y bajar lo que cambió. Las filas
-// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0005_noches.sql). El usuario no viaja:
+// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0007_plan.sql). El usuario no viaja:
 // lo pone la base con la sesión, y RLS no deja ver ni tocar lo de nadie más.
 
 import type { Periodo } from '@/dominio/constelaciones';
@@ -10,6 +10,7 @@ import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
 import { microsValidos } from '@/dominio/micronutrientes';
+import { preferenciasDe, type Preferencias } from '@/dominio/plan';
 import { esCara, type Confianza, type NochePropia, type OrigenDeNoche } from '@/dominio/sueno';
 import { SECUNDARIOS, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua, type Valores } from '@/dominio/registros';
 import type { supabase } from '@/lib/supabase';
@@ -44,7 +45,7 @@ const filaDe = {
   perfil: (p: Perfil) => ({
     nacimiento: p.nacimiento, sexo: p.sexo, altura_cm: p.alturaCm, actividad: p.actividad, objetivo: p.objetivo, ritmo: p.ritmo,
     estilo: p.estilo ?? null, peso_meta: p.pesoMeta ?? null, dia_del_control: p.diaDelControl ?? null,
-    semana_altos: p.semana?.altos ?? null, semana_extra: p.semana?.extra ?? null, sin_deficit: !!p.sinDeficit, actualizado: p.actualizado,
+    semana_altos: p.semana?.altos ?? null, semana_extra: p.semana?.extra ?? null, sin_deficit: !!p.sinDeficit, comer: p.comer ?? null, actualizado: p.actualizado,
   }),
   meta: (m: MetaGuardada) => ({
     desde: m.desde, kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, gasto: m.gasto, motivo: m.motivo,
@@ -55,7 +56,7 @@ const filaDe = {
     id: r.id, dia: r.dia, comida: r.comida, momento: r.momento, fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad,
     kcal: r.valores.kcal, proteina: r.valores.proteina, carbohidratos: r.valores.carbohidratos, grasas: r.valores.grasas,
     fibra: r.valores.fibra ?? null, azucares: r.valores.azucares ?? null, saturadas: r.valores.saturadas ?? null, sodio: r.valores.sodio ?? null,
-    alcohol: r.valores.alcohol ?? null, micros: r.valores.micros ?? null, planificado: r.planificado, estimado: !!r.estimado, borrado: !!r.borrado,
+    alcohol: r.valores.alcohol ?? null, micros: r.valores.micros ?? null, planificado: r.planificado, plan: r.plan ?? null, estimado: !!r.estimado, borrado: !!r.borrado,
     actualizado: r.actualizado,
   }),
   receta: (r: Receta) => ({ id: r.id, tipo: r.tipo, nombre: r.nombre, items: r.items, porciones: r.porciones, peso_final: r.pesoFinal, borrado: !!r.borrado, actualizado: r.actualizado }),
@@ -83,6 +84,12 @@ function valoresDe(f: Record<(typeof SECUNDARIOS)[number] | 'kcal' | 'proteina' 
   const v: Valores = { kcal: Number(f.kcal), proteina: Number(f.proteina), carbohidratos: Number(f.carbohidratos), grasas: Number(f.grasas) };
   for (const k of SECUNDARIOS) if (f[k] !== null) v[k] = Number(f[k]);
   return v;
+}
+
+/** Cómo comes, si llega con forma (plan.ts). */
+function conComer(x: unknown): { comer?: Preferencias } {
+  const comer = preferenciasDe(x);
+  return comer ? { comer } : {};
 }
 
 /** Los micronutrientes que bajan: solo los conocidos y posibles. */
@@ -113,7 +120,7 @@ const deFila = {
     ...(f.estilo ? { estilo: f.estilo } : {}), ...(f.peso_meta !== null ? { pesoMeta: Number(f.peso_meta) } : {}),
     ...(f.dia_del_control !== null ? { diaDelControl: f.dia_del_control } : {}),
     ...(f.semana_altos?.length && f.semana_extra ? { semana: { altos: f.semana_altos, extra: f.semana_extra } } : {}), ...(f.sin_deficit ? { sinDeficit: true } : {}),
-    actualizado: hora(f.actualizado),
+    ...conComer(f.comer), actualizado: hora(f.actualizado),
   }),
   meta: (f: Filas['meta']): MetaGuardada => ({
     kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas, desde: f.desde, gasto: f.gasto, motivo: f.motivo,
@@ -122,7 +129,8 @@ const deFila = {
   peso: (f: Filas['peso']): Peso => ({ fecha: f.fecha, kg: Number(f.kg), origen: f.origen, momento: hora(f.momento) }),
   registro: (f: Filas['registro']): Registro => conBorrado({
     id: f.id, dia: f.dia, comida: f.comida, momento: hora(f.momento), fuente: f.fuente, ref: f.ref, nombre: f.nombre, cantidad: f.cantidad,
-    valores: conMicros(valoresDe(f), f.micros), planificado: f.planificado, ...(f.estimado ? { estimado: true as const } : {}), actualizado: hora(f.actualizado),
+    valores: conMicros(valoresDe(f), f.micros), planificado: f.planificado, ...(f.plan ? { plan: f.plan } : {}), ...(f.estimado ? { estimado: true as const } : {}),
+    actualizado: hora(f.actualizado),
   }, f.borrado),
   receta: (f: Filas['receta']): Receta => conBorrado({
     id: f.id, tipo: f.tipo, nombre: f.nombre, items: f.items, porciones: Number(f.porciones), pesoFinal: f.peso_final === null ? null : Number(f.peso_final),

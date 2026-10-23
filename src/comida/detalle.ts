@@ -124,6 +124,35 @@ export async function detalleDeAlimento(base: BaseDeAlimentos, id: number, op: {
   };
 }
 
+/** Lo que el plan necesita de un curado: su id, su nombre en la app, los valores y las porciones. */
+export type CuradoDelPlan = { id: number; nombre: string; por100g: Valores100; porciones: PorcionDeAlimento[] };
+
+/** Los curados por su nombre en español (el de genericos.txt): los alimentos de las comidas tipo (src/dominio/plan.ts). */
+export async function curadosPorNombre(base: BaseDeAlimentos, buscados: readonly string[], op: { idioma: Idioma; region?: string }): Promise<Map<string, CuradoDelPlan>> {
+  if (!buscados.length) return new Map();
+  const marcas = buscados.map(() => '?').join(',');
+  const filas = await base.getAllAsync<FilaAlimento>(`SELECT * FROM alimentos WHERE nombre_es IN (${marcas})`, ...buscados);
+  if (!filas.length) return new Map();
+  const ids = filas.map((a) => a.id);
+  const porciones = await base.getAllAsync<{ alimento: number; es: string | null; en: string; gramos: number }>(
+    `SELECT alimento, es, en, gramos FROM porciones WHERE alimento IN (${ids.join(',')}) ORDER BY id`,
+  );
+  const nombresDe = await nombres(base, ids, op);
+  const resultado = new Map<string, CuradoDelPlan>();
+  for (const a of filas) {
+    if (!a.nombre_es || resultado.has(a.nombre_es)) continue;
+    const por100g: Valores100 = { kcal: a.kcal, proteina: a.proteina, carbohidratos: a.carbohidratos, grasas: a.grasas };
+    for (const k of ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol'] as const) if (a[k] !== null) por100g[k] = a[k]!;
+    const micros = microsDeFila(a);
+    if (micros) por100g.micros = micros;
+    resultado.set(a.nombre_es, {
+      id: a.id, nombre: nombresDe.get(a.id) ?? a.nombre_es, por100g,
+      porciones: porciones.filter((p) => p.alimento === a.id).map((p) => ({ nombre: op.idioma === 'es' ? (p.es ?? p.en) : p.en, gramos: p.gramos })),
+    });
+  }
+  return resultado;
+}
+
 /**
  * Los códigos a probar: el que llegó, solo con dígitos, y su otra forma. El iPhone entrega el
  * UPC-A como EAN-13 con un 0 adelante.

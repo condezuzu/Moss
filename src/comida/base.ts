@@ -9,7 +9,7 @@ import { deleteDatabaseAsync, importDatabaseFromAssetAsync, openDatabaseAsync, t
 import { buscarAlimentos, type Opciones, type Resultado } from './buscar';
 import { codigoDelCatalogo, conElCatalogo, detalleDelCatalogo } from './catalogo';
 import { filasDelCatalogo } from './catalogoLocal';
-import { alimentoPorCodigo, detalleDeAlimento, type Detalle } from './detalle';
+import { alimentoPorCodigo, curadosPorNombre, detalleDeAlimento, type CuradoDelPlan, type Detalle } from './detalle';
 import { VERSION_DE_LA_BASE } from './version-de-la-base';
 
 const COPIA = 'moss:baseDeAlimentos';
@@ -46,6 +46,10 @@ export const baseDeAlimentos = {
   },
   async porCodigo(codigo: string): Promise<number | null> {
     return codigoDelCatalogo(await filasDelCatalogo(), codigo) ?? alimentoPorCodigo(await abrir(), codigo);
+  },
+  /** Los curados de las comidas tipo del plan, por su nombre en español. */
+  async curados(nombres: readonly string[], op: OpcionesDeIdioma): Promise<Map<string, CuradoDelPlan>> {
+    return curadosPorNombre(await abrir(), nombres, op);
   },
   /** Para abrirla antes de que haga falta: la primera copia tarda un poco. */
   preparar() {

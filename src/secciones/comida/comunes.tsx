@@ -14,7 +14,7 @@ const EN_LA_WEB: Partial<Record<string, string>> = {
   plus: '+', minus: '−', xmark: '×', 'magnifyingglass': '⌕', barcode: '▥', 'barcode.viewfinder': '▥', 'doc.text.viewfinder': '▤', 'doc.on.doc': '⧉',
   'bookmark': '❏', 'bolt': 'ϟ', 'camera': '◉', 'star': '☆', 'star.fill': '★', 'chevron.left': '‹', 'chevron.right': '›',
   checkmark: '✓', 'trash': '⌫', 'fork.knife': '⑂', 'scalemass': '⚖', 'drop': '◖', ruler: '⊢', 'square.and.arrow.up': '⇪',
-  'calendar': '▦', 'arrow.uturn.backward': '↶', 'list.bullet': '≡', 'pencil': '✎', 'sparkles': '✦', 'flame': '♨',
+  'calendar': '▦', 'arrow.uturn.backward': '↶', 'list.bullet': '≡', 'pencil': '✎', 'sparkles': '✦', 'flame': '♨', heart: '♡', 'heart.fill': '♥', cart: '⊔',
 };
 
 type PropsDeIcono = { nombre: SFSymbol; tam?: number; color?: string; peso?: SymbolWeight };

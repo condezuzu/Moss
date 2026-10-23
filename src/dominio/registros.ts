@@ -50,8 +50,10 @@ export type Registro = Item & {
   comida: Comida;
   /** Cuándo se comió: la hora en la línea del día. */
   momento: string;
-  /** Anotado para un día que todavía no llegó: se ve tenue y el control no lo cuenta. */
+  /** Anotado para un día que todavía no llegó (o armado por el plan): se ve tenue y el control no lo cuenta. */
   planificado: boolean;
+  /** Lo armó el plan (plan.ts): la clave de la opción de la que sale. */
+  plan?: string;
   actualizado: string;
   borrado?: true;
 };
@@ -231,9 +233,9 @@ export function copiar(
     }));
 }
 
-/** Lo planificado de un día pasa a registrado: es el toque de «confirmar» cuando el día llega. */
-export function confirmar(registros: Iterable<Registro>, dia: ClaveDia, ahora: string): Registro[] {
-  return delDia(registros, dia).filter((r) => r.planificado).map((r) => ({ ...r, planificado: false, actualizado: ahora }));
+/** Lo planificado de un día (o de una comida) pasa a registrado: «confirmar» cuando el día llega, o «Comí esto». */
+export function confirmar(registros: Iterable<Registro>, dia: ClaveDia, ahora: string, comida?: Comida): Registro[] {
+  return delDia(registros, dia).filter((r) => r.planificado && (!comida || r.comida === comida)).map((r) => ({ ...r, planificado: false, actualizado: ahora }));
 }
 
 /** Borrar deja la marca, con su hora: el borrado también es un cambio que sube. */

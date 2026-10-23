@@ -361,6 +361,28 @@ hacen falta las cuentas anónimas.
 Desde el 22/10/2026 a la tarde trabajo solo: lo que decidí va acá, con el
 porqué, para que lo revises al volver.
 
+### El plan de comidas (23/10/2026, a la madrugada)
+
+Cómo anda, en [`nutricion.md`](nutricion.md), «El plan de comidas».
+
+- **Sin pantalla nueva en la entrada.** «Tus comidas» está en Comida, al lado de
+  «Armar el día», y lo de fábrica (de todo, cuatro comidas, tiempo normal) sirve
+  hasta que lo cambies: la entrada no se alarga para algo que no todos usan.
+- **Cada comida, cerca de su parte del día.** La galería mostró que, para llegar a
+  la proteína, el plan duplicaba el almuerzo (1.700 kcal) y dejaba el desayuno en
+  190. Ahora cada comida va del 70 % al 140 % de su parte y, si así no alcanza, se
+  cambia una comida por otra con más proteína. Tiene su test.
+- **Las kcal y la proteína, no los carbohidratos ni las grasas.** Son lo que mira
+  el control; el viernes de la galería quedó con 102 g de grasas para una meta de
+  77. Si querés que el plan también los persiga, se suma al elegir las comidas.
+- **Lo armado de hoy queda planificado** hasta «Comí esto»: si no, Moss
+  anotaría como comido algo que todavía no comiste.
+- **«Otra», ♡ y ✕ solo en lo que armó Moss:** lo que planificaste a mano (copiar
+  el día a mañana) no se cambia solo.
+- **Cómo comes sube a la cuenta** (en el perfil) y lo armado guarda de qué opción
+  sale: `supabase/moss/0007_plan.sql`, que hay que correr como las otras. Lo
+  tachado de la lista de compras queda en el teléfono.
+
 ### El catálogo confiable (la noche del 22 al 23/10/2026)
 
 - **23 micronutrientes, de USDA.** Vitaminas, minerales, las otras grasas y la
