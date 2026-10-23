@@ -219,6 +219,8 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   // se sigue usando la anterior: el shader de cada cuadro lee su tamaño real (texFondo).
   const ef = efectos();
   const pxFondo = alto * Math.min(dpr, ajustes.dprFondo);
+  // El fondo es caro de dibujar: cambia de a 5 %, no con cada hábito que se marca.
+  const riquezaDelFondo = Math.round(riqueza * 20) / 20;
   const tamFondo = useMemo(
     () => ({ width: Math.ceil(plano.fondo.tam[0] * pxFondo), height: Math.ceil(plano.fondo.tam[1] * pxFondo) }),
     [plano, pxFondo],
@@ -236,13 +238,13 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
           uOctavas: ajustes.octavas,
           uCapas: ajustes.capas,
           uSemilla: 7,
-          uRiqueza: riqueza,
+          uRiqueza: riquezaDelFondo,
           uVia: VIA_LACTEA,
         }}
       />
     </Fill>,
     tamFondo,
-    [tamFondo, ajustes.octavas, ajustes.capas, riqueza],
+    [tamFondo, ajustes.octavas, ajustes.capas, riquezaDelFondo],
   );
   const texFondo = useDerivedValue(() => {
     const f = fondo.value;
