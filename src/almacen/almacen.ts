@@ -78,6 +78,10 @@ export type Estado = MapasDeComida & {
    * persona en la entrada o en Perfil, y empieza apagado (guía 5.1.1 de Apple). Queda en el teléfono.
    */
   mandarBusquedas: boolean;
+  /** La entrada terminada en este teléfono: hasta entonces no se entra a la app, aunque la cuenta traiga un perfil. */
+  entradaHecha: boolean;
+  /** Por dónde iba la entrada, para retomarla si se cerró la app en la mitad (lo guarda Entrada.tsx). */
+  avanceDeEntrada: unknown;
   /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
   salud: LoDeSalud | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
@@ -118,6 +122,8 @@ const USO = 'uso';
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 const NUMEROS = 'numeros';
 const BUSQUEDAS = 'mandarBusquedas';
+const ENTRADA = 'entrada';
+const AVANCE = 'avanceDeEntrada';
 /** Tres días de uso alcanzan para la noche de anoche. */
 const DIAS_DE_USO = 3;
 
@@ -160,6 +166,14 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     return avisos;
   } catch {
     return {};
+  }
+}
+
+function leerAvance(texto: string | undefined): unknown {
+  try {
+    return texto ? JSON.parse(texto) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -213,7 +227,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, mandarBusquedas: false, salud: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -304,7 +318,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), listo: true }, true);
     revisarControl();
   }
 
@@ -511,6 +525,9 @@ export function crearAlmacen(op: Opciones) {
       const peso: Peso = { fecha: estado.hoy, kg: pesoKg, origen: origenDelPeso, momento: momento() };
       const { gasto, metas } = metasIniciales(c);
       const meta: MetaGuardada = { ...metas, desde: estado.hoy, gasto, motivo: 'inicial', momento: momento() };
+      guardar((r) => r.guardarAjuste(ENTRADA, 'hecha'));
+      guardar((r) => r.guardarAjuste(AVANCE, ''));
+      cambiar({ entradaHecha: true, avanceDeEntrada: null }, false);
       guardar((r) => r.guardarPerfil(perfil));
       guardar((r) => r.guardarPeso(peso));
       guardar((r) => r.guardarMeta(meta));
@@ -680,6 +697,11 @@ export function crearAlmacen(op: Opciones) {
     },
     /** Las comidas que avisan; null los apaga. */
     ponerAvisos,
+    /** Por dónde va la entrada: si se cierra la app, se retoma ahí. */
+    ponerAvanceDeEntrada(avance: unknown) {
+      guardar((r) => r.guardarAjuste(AVANCE, JSON.stringify(avance)));
+      cambiar({ avanceDeEntrada: avance }, false);
+    },
     /** El aviso de un hábito; null lo saca. */
     ponerAvisoDeHabito(habito: string, aviso: Omit<AvisoDeHabito, 'habito'> | null) {
       const otros = (estado.avisos.habitos ?? []).filter((x) => x.habito !== habito);

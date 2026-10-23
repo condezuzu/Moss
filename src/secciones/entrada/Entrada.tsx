@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
-import { MAYORIA_DE_EDAD, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { edadDe, MAYORIA_DE_EDAD, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
 import { urlDe } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
@@ -59,14 +59,36 @@ type DeSalud = ReadonlySet<'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>;
 /** Lo que deja cada pantalla arriba, debajo del borde del teléfono. */
 const ARRIBA = 28;
 
+type Retomar = { i: number; r: Respuestas; deSalud: DeSalud };
+
+function avanceInicial(): Retomar {
+  const e = elAlmacen().estado();
+  const a = e.avanceDeEntrada as { i?: unknown; r?: Partial<Respuestas>; deSalud?: unknown } | null;
+  if (a && typeof a.i === 'number' && a.i >= 0 && a.i < PASOS.length && a.r) {
+    return { i: a.i, r: { ...DE_FABRICA, ...a.r }, deSalud: new Set(Array.isArray(a.deSalud) ? a.deSalud : []) as DeSalud };
+  }
+  const p = e.perfil;
+  const peso = e.pesos[e.pesos.length - 1]?.kg;
+  const r: Respuestas = p
+    ? { ...DE_FABRICA, edad: edadDe(p, e.hoy), sexo: p.sexo, alturaCm: p.alturaCm, actividad: p.actividad, objetivo: p.objetivo, ritmo: p.ritmo, caso: p.sinDeficit ? 'condicion' : 'nada', ...(peso ? { pesoKg: peso } : {}) }
+    : DE_FABRICA;
+  return { i: 0, r, deSalud: new Set() };
+}
+
 export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; alTerminar?: () => void }) {
   const insets = useSafeAreaInsets();
   const reducido = useReducedMotion();
-  const [i, setI] = useState(0);
-  const [r, setR] = useState<Respuestas>(DE_FABRICA);
-  const [deSalud, setDeSalud] = useState<DeSalud>(new Set());
+  // Se retoma donde quedó; si la cuenta ya tenía un perfil, sus respuestas vienen llenas.
+  const [inicio] = useState(() => avanceInicial());
+  const [i, setI] = useState(inicio.i);
+  const [r, setR] = useState<Respuestas>(inicio.r);
+  const [deSalud, setDeSalud] = useState<DeSalud>(inicio.deSalud);
   const [saliendo, setSaliendo] = useState(false);
   const paso = PASOS[i];
+
+  useEffect(() => {
+    if (!saliendo) elAlmacen().ponerAvanceDeEntrada({ i, r, deSalud: [...deSalud] });
+  }, [i, r, deSalud, saliendo]);
 
   useEffect(() => {
     camara.set(paso.camara);

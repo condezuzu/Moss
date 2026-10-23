@@ -74,7 +74,7 @@ export default function Secciones() {
   // secciones se volverían a dibujar con cada toque.
   const fase = useSyncExternalStore(elAlmacen().suscribir, () => {
     const e = elAlmacen().estado();
-    return !e.listo ? 'cargando' : e.perfil ? 'secciones' : 'entrada';
+    return !e.listo ? 'cargando' : e.perfil && e.entradaHecha ? 'secciones' : 'entrada';
   });
   const enEntrada = fase === 'entrada';
   const conSecciones = fase === 'secciones';
