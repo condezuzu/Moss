@@ -1,10 +1,10 @@
 {
   "ios": {
     "CFBundleDisplayName": "Moss",
-    "NSHealthShareUsageDescription": "Moss lee de Salud tu edad, sexo, altura y peso para tus metas; tus pasos, agua, minutos de atención plena y sueño para encender solos esos hábitos (los pasos también estiman tu noche si no tienes reloj); y lo que mide el reloj de noche para la sección Sueño.",
-    "NSHealthUpdateUsageDescription": "Moss no escribe nada en Salud: solo lee los datos que eliges.",
-    "NSCameraUsageDescription": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono.",
-    "NSMotionUsageDescription": "Sin reloj, Moss usa el movimiento del teléfono para estimar cuándo dormiste. El movimiento no sale del teléfono: solo se guarda la hora estimada.",
+    "NSHealthShareUsageDescription": "Moss lee de Salud tu fecha de nacimiento, sexo, altura y peso para calcular tus metas; tus pasos, agua, minutos de atención plena y sueño para encender esos hábitos y estimar tu noche si no tienes reloj; y tu frecuencia cardíaca, frecuencia en reposo, variabilidad y respiración de la noche para la sección Sueño. Moss no escribe en Salud.",
+    "NSHealthUpdateUsageDescription": "Moss no escribe en Salud: solo lee los datos de arriba.",
+    "NSCameraUsageDescription": "Moss usa la cámara para escanear el código de barras o la etiqueta nutricional de lo que comes, y para la foto de una comida si quieres sacarla. La etiqueta se lee en el teléfono y Moss no sube tus fotos.",
+    "NSMotionUsageDescription": "Si no usas reloj, Moss mira la actividad del teléfono (quieto, caminando o en auto) para estimar a qué hora te dormiste y te despertaste. Esa actividad no sale del teléfono: solo se guarda la hora estimada.",
     "NSMicrophoneUsageDescription": "Moss usa el micrófono solo mientras dices lo que comiste, para anotarlo. Moss no guarda el audio.",
     "NSSpeechRecognitionUsageDescription": "Moss convierte en texto lo que dices de tu comida para anotarlo, con el reconocimiento de voz de Apple (en el teléfono cuando el idioma lo permite). Moss no guarda el audio."
   }

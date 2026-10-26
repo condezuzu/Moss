@@ -284,29 +284,39 @@ export const instanteDe = (clave: ClaveDia, zona: number, minutos: number) => ce
 export const MOSS: Fuente = { id: 'moss', nombre: 'Moss', tipo: 'moss' };
 
 /**
+ * La zona horaria, en minutos (−180 en Uruguay): una sola o la de cada instante, en milisegundos.
+ * Con la de cada instante, un cambio de hora no corre las noches de antes.
+ */
+export type Zona = number | ((ms: number) => number);
+
+/**
  * Una noche de Moss como las de Salud: sin etapas ni despertares, que el teléfono no sabe. Las
  * estimaciones con confianza baja no cuentan para la deuda ni el horario hasta que las confirmes.
+ * Las horas, en la zona de cada momento (spec/sueno.md), como las de Salud.
  */
-export function nocheDeMoss(np: NochePropia, zona: number): Noche | null {
+export function nocheDeMoss(np: NochePropia, zona: Zona): Noche | null {
   const h = np.hora;
   if (!h || np.borrado) return null;
   const desde = Date.parse(h.dormirse), hasta = Date.parse(h.despertar);
   if (!(hasta > desde)) return null;
-  const cero = ceroDe(np.fecha, zona);
+  const zonaDe = typeof zona === 'number' ? () => zona : zona;
+  const cero = ceroDe(np.fecha, zonaDe(desde));
   const aMin = (ms: number) => (ms - cero) / MIN;
+  // Si en la noche cambió la hora, despertar es la del reloj; el tramo va por el tiempo que pasó.
+  const despertar = aMin(hasta) + zonaDe(hasta) - zonaDe(desde);
   const dormido = (hasta - desde) / MIN;
   const estimada = h.origen === 'estimada';
   const cuenta: Confianza = estimada && h.confianza === 'baja' ? 'baja' : 'media';
   return {
     clave: np.fecha, fuente: MOSS, conEtapas: false,
-    dormirse: aMin(desde), despertar: aMin(hasta), enCama: null,
+    dormirse: aMin(desde), despertar, enCama: null,
     dormido, despierto: 0, despertares: 0,
     etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: dormido },
     siestas: 0,
     tramos: [{ etapa: 'dormido', desde: aMin(desde), hasta: aMin(hasta) }],
     intervalos: [[desde, hasta]],
     confianza: { duracion: cuenta, horario: cuenta, despertares: 'baja', etapas: null, enCama: null },
-    moss: { origen: h.origen, confianza: h.confianza, rango: estimada ? rangoDe(aMin(desde), aMin(hasta), h.confianza) : null },
+    moss: { origen: h.origen, confianza: h.confianza, rango: estimada ? rangoDe(aMin(desde), despertar, h.confianza) : null },
   };
 }
 
@@ -314,7 +324,7 @@ export function nocheDeMoss(np: NochePropia, zona: number): Noche | null {
  * Las noches de Salud con las de Moss donde Salud no tiene nada. La hora que confirmaste o corregiste
  * gana también a lo anotado a mano en Salud: es de esa noche y la diste en Moss (spec/aparatos.md).
  */
-export function conNochesDeMoss(noches: Noche[], propias: NochePropia[], zona: number): Noche[] {
+export function conNochesDeMoss(noches: Noche[], propias: NochePropia[], zona: Zona): Noche[] {
   const porClave = new Map(noches.map((n) => [n.clave, n]));
   for (const np of propias) {
     const n = nocheDeMoss(np, zona);

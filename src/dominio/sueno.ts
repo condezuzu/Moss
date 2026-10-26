@@ -57,7 +57,11 @@ export type Noche = {
   fuente: Fuente;
   /** Si la fuente separa etapas (el reloj desde watchOS 9). */
   conEtapas: boolean;
-  /** Los momentos, en minutos desde las 18 del día anterior a `clave`: las 23:41 son 341 y las 7:13, 793. */
+  /**
+   * Los momentos, en minutos desde las 18 del día anterior a `clave`: las 23:41 son 341 y las 7:13, 793.
+   * Son horas de reloj, cada una en la zona de su momento: si en la noche cambió la hora, `despertar`
+   * se corre y los tramos no (van por el tiempo que pasó).
+   */
   dormirse: number;
   despertar: number;
   /** El tiempo en cama, solo si alguna fuente lo escribió de verdad (si no, null). */
@@ -282,6 +286,9 @@ function resumir(clave: ClaveDia, fuente: Fuente, deLaNoche: Episodio[], siestas
   const dormidas = muestras.filter((m) => DORMIDO.includes(m.etapa));
   const intervalos = unir(dormidas.map((m) => [m.desde, m.hasta]));
   const inicio = intervalos[0][0], fin = intervalos[intervalos.length - 1][1];
+  // La hora de despertarse, en la zona de la última muestra: la noche del cambio de hora no queda una hora corrida.
+  const cambio = dormidas.reduce((a, b) => (b.hasta > a.hasta ? b : a)).zona - zona;
+  const aReloj = (ms: number) => aMin(ms) + cambio;
   const dormido = largo(intervalos);
   const huecos: number[] = [];
   for (let i = 1; i < intervalos.length; i++) huecos.push((intervalos[i][0] - intervalos[i - 1][1]) / MIN);
@@ -295,7 +302,7 @@ function resumir(clave: ClaveDia, fuente: Fuente, deLaNoche: Episodio[], siestas
   const camaI = unir(usadas.map((m) => [m.desde, m.hasta]));
   const fuenteCama = usadas.length ? fuentes.find((f) => f.id === usadas[0].fuente) ?? null : null;
   const enCama = camaI.length && fuenteCama
-    ? { desde: aMin(Math.min(camaI[0][0], inicio)), hasta: aMin(Math.max(camaI[camaI.length - 1][1], fin)), minutos: largo(camaI), fuente: fuenteCama }
+    ? { desde: aMin(Math.min(camaI[0][0], inicio)), hasta: aReloj(Math.max(camaI[camaI.length - 1][1], fin)), minutos: largo(camaI), fuente: fuenteCama }
     : null;
   // El hipnograma: lo despierto de adentro y cada etapa (o lo dormido sin etapa), en orden.
   const tramos: Tramo[] = [
@@ -306,7 +313,7 @@ function resumir(clave: ClaveDia, fuente: Fuente, deLaNoche: Episodio[], siestas
   const { duracion, despertares } = confianzaDe(fuente, aMano);
   return {
     clave, fuente, conEtapas,
-    dormirse: aMin(inicio), despertar: aMin(fin), enCama,
+    dormirse: aMin(inicio), despertar: aReloj(fin), enCama,
     dormido, despierto: Math.max(0, (fin - inicio) / MIN - dormido), despertares: huecos.filter((h) => h >= DESPERTAR_MINIMO).length,
     etapas, siestas, tramos, intervalos,
     confianza: {

@@ -89,4 +89,34 @@ describe('la comida dicha de una vez', () => {
   it('los «X con Y» que hay que mirar en la base', () => {
     expect(conCon('una tostada con manteca y un café con leche', 'es')).toEqual(['tostada con manteca', 'café con leche']);
   });
+
+  it('una palabra que termina en «no» no es una corrección: «vino, dos empanadas» son dos', () => {
+    expect(resumen('una copa de vino, dos empanadas').map(([c, , b]) => [c, b])).toEqual([[1, 'vino'], [2, 'empanada']]);
+    expect(resumen('un plátano, un café').map(([c, , b]) => [c, b])).toEqual([[1, 'plátano'], [1, 'café']]);
+    expect(resumen('dos panes de centeno, una banana').map(([c, , b]) => [c, b])).toEqual([[2, 'pan de centeno'], [1, 'banana']]);
+    expect(resumen('dos huevos, no, tres').map(([c, , b]) => [c, b])).toEqual([[3, 'huevo']]);
+  });
+
+  it('«one and a half» es uno y medio, y solo no deja nada', () => {
+    expect(resumen('two and a half eggs', undefined, 'en').map(([c, , b]) => [c, b])).toEqual([[2.5, 'egg']]);
+    expect(resumen('one and a half cups of rice', undefined, 'en').map(([c, u, b]) => [c, u, b])).toEqual([[1.5, 'taza', 'rice']]);
+    expect(resumen('two eggs and a banana', undefined, 'en').map(([c, , b]) => [c, b])).toEqual([[2, 'egg'], [1, 'banana']]);
+    expect(resumen('one and a half', undefined, 'en')).toEqual([]);
+  });
+
+  it('«ayer» y «anoche» dicen el día, en cualquier lugar; «anoche» sin otra comida es la cena', () => {
+    expect(leerFrase('anoche comí pizza', 'es')).toMatchObject({ ayer: true, comida: 'cena', dichos: [{ buscado: 'pizza' }] });
+    expect(leerFrase('comí dos empanadas anoche', 'es')).toMatchObject({ ayer: true, comida: 'cena', dichos: [{ buscado: 'empanada', cantidad: 2 }] });
+    expect(leerFrase('ayer al mediodía una milanesa', 'es')).toMatchObject({ ayer: true, comida: 'almuerzo', dichos: [{ buscado: 'milanesa' }] });
+    expect(leerFrase('last night I had pizza', 'en')).toMatchObject({ ayer: true, comida: 'cena', dichos: [{ buscado: 'pizza' }] });
+    expect(leerFrase('una tostada de pan de ayer', 'es').ayer).toBe(false);
+    expect(leerFrase('desayuné dos huevos', 'es').ayer).toBe(false);
+  });
+
+  it('«arroz y pollo» se busca entero, con cada uno aparte por si la base no lo tiene', () => {
+    const [dicho] = leerFrase('arroz y pollo', 'es').dichos;
+    expect(dicho.buscado).toBe('arroz y pollo');
+    expect(dicho.partes?.map((x) => x.buscado)).toEqual(['arroz', 'pollo']);
+    expect(leerFrase('un huevo', 'es').dichos[0].partes).toBeUndefined();
+  });
 });

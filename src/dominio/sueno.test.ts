@@ -131,6 +131,17 @@ describe('armar las noches', () => {
     expect(n.clave).toBe('2026-10-21');
     expect(n.dormirse).toBe(300);
   });
+
+  it('con un cambio de hora en la noche, la hora de despertarte es la del reloj de esa mañana', () => {
+    // Nueva York, 1 de noviembre de 2026: a las 2 vuelve a ser la 1. De 23:00 a 7:00 son 9 horas.
+    const atrasa = armarNoches([m('nucleo', '2026-10-31 23:00', '2026-11-01 02:00', RELOJ.id, -240), m('rem', '2026-11-01 01:00', '2026-11-01 07:00', RELOJ.id, -300)], [RELOJ]);
+    expect(atrasa.map((n) => [n.clave, n.dormido, n.dormirse, n.despertar])).toEqual([['2026-11-01', 540, 300, 780]]);
+    // El hipnograma va por el tiempo que pasó: termina una hora después.
+    expect(Math.max(...atrasa[0].tramos.map((t) => t.hasta))).toBe(840);
+    // 8 de marzo: a las 2 son las 3. De 23:00 a 7:00 son 7 horas.
+    const adelanta = armarNoches([m('nucleo', '2026-03-07 23:00', '2026-03-08 02:00', RELOJ.id, -300), m('rem', '2026-03-08 03:00', '2026-03-08 07:00', RELOJ.id, -240)], [RELOJ]);
+    expect(adelanta.map((n) => [n.clave, n.dormido, n.dormirse, n.despertar])).toEqual([['2026-03-08', 420, 300, 780]]);
+  });
 });
 
 /** Noches de mentira para las dos semanas: horario fijo con un corrimiento por noche. */

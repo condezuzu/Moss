@@ -70,6 +70,47 @@ describe('el buzón', () => {
   });
 });
 
+describe('descartar y vaciar', () => {
+  it('al dejar de mandar las búsquedas, las que esperaban no salen; los reportes sí', async () => {
+    const enviadas: Carta[] = [];
+    let sesion = false;
+    const buzon = crearBuzon(enMemoria(), () => (sesion ? { enviar: async (c) => { enviadas.push(c); } } : null));
+    await buzon.echar(busqueda('chivito al pan'));
+    await buzon.echar(reporte);
+    await buzon.descartar('busqueda');
+    sesion = true;
+    await buzon.enviar();
+    expect(enviadas).toEqual([reporte]);
+  });
+
+  it('lo que se descarta mientras sale una carta no hace salir otra por error', async () => {
+    let soltar: () => void = () => {};
+    const enviadas: Carta[] = [];
+    const buzon = crearBuzon(enMemoria(), () => ({ enviar: async (c) => { await new Promise<void>((listo) => (soltar = listo)); enviadas.push(c); } }));
+    await buzon.echar(reporte);
+    await buzon.echar(busqueda('fainá'));
+    await new Promise((listo) => setTimeout(listo, 0));
+    await buzon.descartar('busqueda');
+    await buzon.echar(busqueda('pascualina'));
+    soltar();
+    await new Promise((listo) => setTimeout(listo, 0));
+    soltar();
+    await buzon.enviar();
+    expect(enviadas).toEqual([reporte, busqueda('pascualina')]);
+    expect(await buzon.pendientes()).toBe(0);
+  });
+
+  it('vaciar olvida lo que espera y lo contado', async () => {
+    const guardado = enMemoria();
+    const buzon = crearBuzon(guardado, () => null);
+    await buzon.echar(busqueda('chivito al pan'));
+    await buzon.vaciar();
+    expect(await buzon.pendientes()).toBe(0);
+    await buzon.echar(busqueda('chivito al pan'));
+    expect(await buzon.pendientes()).toBe(1);
+  });
+});
+
 describe('lo que se buscó', () => {
   it('va en minúsculas y sin espacios de más; una letra sola no cuenta', () => {
     expect(textoDeBusqueda('  Chivito   AL Pan ')).toBe('chivito al pan');

@@ -26,6 +26,12 @@ export function elAlmacen(): Almacen {
   return almacen;
 }
 
+/** La sincronización con la cuenta mientras la app está abierta: Perfil la frena antes de borrar el teléfono. */
+let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void } | undefined;
+
+/** Lo más que se espera a la vuelta que esté en camino antes de borrar: después, lo que vuelva ya no se toca igual. */
+const ESPERA_AL_SOLTAR = 15_000;
+
 /**
  * Con sesión, sincroniza con la cuenta; sin sesión, el almacén anda solo. Hasta que exista la
  * pantalla de la cuenta (la entrada), nunca hay sesión.
@@ -34,19 +40,42 @@ function sincronizarConLaCuenta(a: Almacen) {
   if (!haySupabase()) return { alVolver: () => {}, parar: () => {} };
   const cliente = supabase();
   let actual: { usuario: string; sincronizador: Sincronizador } | undefined;
+  let usuarioDeLaSesion: string | null = null;
+  let suelta = false;
+  /** Pone la sincronización de acuerdo con la sesión: una por usuario, y ninguna mientras está suelta. */
+  const seguir = () => {
+    const usuario = suelta ? null : usuarioDeLaSesion;
+    if (actual?.usuario === usuario) return;
+    actual?.sincronizador.parar();
+    actual = usuario ? { usuario, sincronizador: crearSincronizador({ almacen: a, remoto: remotoSupabase(cliente), usuario }) } : undefined;
+    actual?.sincronizador.arrancar();
+    // Con sesión, también baja lo nuevo del catálogo de alimentos del servidor y sale lo que esperaba en el buzón.
+    if (usuario) actualizarCatalogo(cliente).catch(() => {});
+    avisarSesion(Boolean(usuario));
+  };
   const { data } = cliente.auth.onAuthStateChange((_evento, sesion) => {
-    const usuario = sesion?.user.id ?? null;
+    // Se anota ya: cerrar sesión sabe al terminar si la sesión sigue.
+    usuarioDeLaSesion = sesion?.user.id ?? null;
     // Supabase pide no usar su cliente dentro de este aviso: se sigue apenas termine.
-    setTimeout(() => {
-      if (actual?.usuario === usuario) return;
-      actual?.sincronizador.parar();
-      actual = usuario ? { usuario, sincronizador: crearSincronizador({ almacen: a, remoto: remotoSupabase(cliente), usuario }) } : undefined;
-      actual?.sincronizador.arrancar();
-      // Con sesión, también baja lo nuevo del catálogo de alimentos del servidor y sale lo que esperaba en el buzón.
-      if (usuario) actualizarCatalogo(cliente).catch(() => {});
-      avisarSesion(Boolean(usuario));
-    }, 0);
+    setTimeout(seguir, 0);
   });
+  deLaCuenta = {
+    async subirLoQueFalta() {
+      await actual?.sincronizador.vuelta(false);
+    },
+    async soltar() {
+      suelta = true;
+      const enCamino = actual?.sincronizador.terminar();
+      seguir();
+      let reloj: ReturnType<typeof setTimeout> | undefined;
+      await Promise.race([enCamino, new Promise((listo) => (reloj = setTimeout(listo, ESPERA_AL_SOLTAR)))]);
+      clearTimeout(reloj);
+    },
+    retomar() {
+      suelta = false;
+      seguir();
+    },
+  };
   return {
     alVolver: () => {
       actual?.sincronizador.alVolver();
@@ -56,8 +85,29 @@ function sincronizarConLaCuenta(a: Almacen) {
     parar: () => {
       data.subscription.unsubscribe();
       actual?.sincronizador.parar();
+      deLaCuenta = undefined;
     },
   };
+}
+
+/**
+ * Para borrar el teléfono o cerrar sesión: frena la sincronización (espera la vuelta que esté en
+ * camino, así nada de la cuenta vuelve a entrar después de borrar), hace la tarea y la retoma si la
+ * sesión sigue.
+ */
+export async function sinSincronizar<T>(tarea: () => Promise<T>): Promise<T> {
+  const cuenta = deLaCuenta;
+  await cuenta?.soltar();
+  try {
+    return await tarea();
+  } finally {
+    cuenta?.retomar();
+  }
+}
+
+/** Sube ya lo que falta subir. Tira un error si no se pudo (sin conexión). */
+export async function subirLoQueFalta(): Promise<void> {
+  await deLaCuenta?.subirLoQueFalta();
 }
 
 /**
@@ -107,6 +157,14 @@ export function useAlmacenListo(): boolean {
       antes = ahora;
       reprogramar();
     });
+    // Si dejas de elegir que se manden las búsquedas que no encuentran nada, las que esperaban ya no salen.
+    let mandaba = false;
+    const sinOirBusquedas = a.suscribir(() => {
+      const { listo, mandarBusquedas } = a.estado();
+      if (!listo) return;
+      if (mandaba && !mandarBusquedas) buzon().descartar('busqueda').catch(() => {});
+      mandaba = mandarBusquedas;
+    });
     const suscripcion = AppState.addEventListener('change', (estado) => {
       if (estado === 'background' && a.estado().listo) a.anotarUso('cerrar');
       if (estado !== 'active') return;
@@ -120,6 +178,7 @@ export function useAlmacenListo(): boolean {
       clearTimeout(reloj);
       clearTimeout(espera);
       sinOir();
+      sinOirBusquedas();
       suscripcion.remove();
       cuenta.parar();
     };

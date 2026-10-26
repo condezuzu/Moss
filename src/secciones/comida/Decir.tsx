@@ -34,7 +34,8 @@ type Props = {
   textoInicial?: string;
   alAtras: () => void;
   /** Lo entendido, para anotarlo en la comida (la dicha, si se dijo: «en el almuerzo»). */
-  alAgregar: (items: Item[], comida: Comida) => void;
+  /** `ayer`: se dijo «anoche» o «ayer», y va al día anterior. */
+  alAgregar: (items: Item[], comida: Comida, ayer: boolean) => void;
   /** Lo que no se encontró se busca a mano; lo que sí, espera en la canasta. */
   alBuscar: (texto: string, encontrados: Item[], comida: Comida) => void;
   abajo: number;
@@ -61,6 +62,7 @@ export function PanelDecir(p: Props) {
   const [entendidos, setEntendidos] = useState<Entendido[] | null>(null);
   const [entendiendo, setEntendiendo] = useState(false);
   const [comida, setComida] = useState(p.comida);
+  const [ayer, setAyer] = useState(false);
   // El texto que se entendió: si se cambia, hay que volver a entender.
   const [entendido, setEntendido] = useState<string | null>(null);
 
@@ -79,6 +81,8 @@ export function PanelDecir(p: Props) {
     }));
     const leida = leerFrase(frase, op.idioma, (b) => conNombre.has(b));
     if (leida.comida) setComida(leida.comida);
+    // Lo que se suma después no borra el «anoche» de lo de antes.
+    setAyer((antes) => (sumarA ? antes : false) || !!leida.ayer);
     const lista = await entender(leida.dichos, {
       buscar,
       detalle: (id) => baseDeAlimentos.detalle(id, op),
@@ -151,7 +155,7 @@ export function PanelDecir(p: Props) {
     }
     return elegidas.map(({ o }) => ({ ...itemDeAlimento('base', o.alimento.ref, o.alimento.nombre, o.alimento.por100g, o.cantidad), estimado: true as const }));
   };
-  const agregar = () => p.alAgregar(confirmar(), comida);
+  const agregar = () => p.alAgregar(confirmar(), comida, ayer);
 
   return (
     <Panel

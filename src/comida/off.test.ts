@@ -121,4 +121,11 @@ describe('buscar un código', () => {
     const caido: Pedir = async () => ({ ok: false, status: 503, json: async () => ({}) });
     await expect(buscarEnOff('7730205000011', { idioma: 'es', version: '1', contacto: 'x', pedir: caido })).rejects.toThrow('503');
   });
+
+  it('si Open Food Facts no contesta a tiempo, el error sube y se corta el pedido', async () => {
+    let cortado = false;
+    const colgado: Pedir = (_, init) => new Promise(() => { init.signal?.addEventListener('abort', () => { cortado = true; }); });
+    await expect(buscarEnOff('7730205000011', { idioma: 'es', version: '1', contacto: 'x', pedir: colgado, espera: 20 })).rejects.toThrow('a tiempo');
+    expect(cortado).toBe(true);
+  });
 });

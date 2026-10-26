@@ -14,8 +14,8 @@ import { baseDeAlimentos } from '@/comida/base';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { lunesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
-  ALERGENOS, cambiarPorOtra, diaPlaneadoDe, DIETAS, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, PLANTILLAS, PREFERENCIAS_DE_FABRICA, queFalta,
-  recientesDe, type DiaPlaneado, type Opcion, type Preferencias, type Resolver,
+  ALERGENOS, cambiarPorOtra, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra, PLANTILLAS,
+  PREFERENCIAS_DE_FABRICA, queFalta, recientesDe, tachadasDe, tachar as tacharEn, type DiaPlaneado, type Tachadas, type Opcion, type Preferencias, type Resolver,
 } from '@/dominio/plan';
 import { totalDelDia } from '@/dominio/registros';
 import { t } from '@/textos';
@@ -236,16 +236,17 @@ function HojaTusComidas({ e, abierta, alCerrar }: { e: Estado; abierta: boolean;
   );
 }
 
-// Lo tachado de la lista de compras queda en el teléfono, aunque se cierre Moss en el súper.
+// Lo tachado de la lista de compras queda en el teléfono, aunque se cierre Moss en el súper. Con lo
+// planificado que cubría cada alimento (plan.ts): la lista de antes, sin eso, se lee vacía.
 const COMPRADAS = 'moss:compradas';
 
 /** La lista de compras: lo de las comidas armadas desde hoy, sumado, para tachar en el súper. */
 function HojaCompras({ e, abierta, alCerrar }: { e: Estado; abierta: boolean; alCerrar: () => void }) {
-  const [compradas, setCompradas] = useState<Set<string>>(new Set());
+  const [compradas, setCompradas] = useState<Tachadas>({});
   useEffect(() => {
     if (!abierta) return;
     AsyncStorage.getItem(COMPRADAS)
-      .then((x) => setCompradas(new Set(x ? (JSON.parse(x) as string[]) : [])))
+      .then((x) => setCompradas(tachadasDe(x ? JSON.parse(x) : null)))
       .catch(() => {});
   }, [abierta]);
   const { registros, hoy } = e;
@@ -255,13 +256,12 @@ function HojaCompras({ e, abierta, alCerrar }: { e: Estado; abierta: boolean; al
     return [...planificados].sort().map((d) => diaPlaneadoDe(registros.values(), d));
   }, [registros, hoy]);
   const lista = useMemo(() => listaDeCompras(dias), [dias]);
+  const planificado = useMemo(() => planificadoPorCompra(registros.values(), hoy), [registros, hoy]);
   const tachar = (clave: string) => {
     Haptics.selectionAsync().catch(() => {});
-    const nuevas = new Set(compradas);
-    if (nuevas.has(clave)) nuevas.delete(clave);
-    else nuevas.add(clave);
+    const nuevas = tacharEn(compradas, clave, planificado);
     setCompradas(nuevas);
-    AsyncStorage.setItem(COMPRADAS, JSON.stringify([...nuevas])).catch(() => {});
+    AsyncStorage.setItem(COMPRADAS, JSON.stringify(nuevas)).catch(() => {});
   };
   return (
     <HojaModal abierta={abierta} titulo={t('comida.plan.compras')} alCerrar={alCerrar}>
@@ -269,7 +269,7 @@ function HojaCompras({ e, abierta, alCerrar }: { e: Estado; abierta: boolean; al
       {lista.length > 0 && (
         <View style={estilos.lista}>
           {lista.map((x, i) => {
-            const hecha = compradas.has(x.clave);
+            const hecha = estaTachada(compradas, x.clave, planificado);
             return (
               <Pressable
                 key={x.clave}

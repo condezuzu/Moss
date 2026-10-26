@@ -8,7 +8,7 @@
 
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,6 +51,9 @@ const PASOS: readonly { id: Paso; camara: number }[] = [
 ];
 const CUESTIONARIO: readonly Paso[] = ['salud', 'edad', 'sexo', 'altura', 'peso', 'actividad', 'cuidado', 'objetivo'];
 
+/** Una build sin Supabase no tiene cuenta: esa pantalla no se muestra, y Moss guarda todo en el teléfono. */
+const pasosDeEstaVersion = () => (haySupabase() ? PASOS : PASOS.filter((p) => p.id !== 'cuenta'));
+
 /** Embarazo o lactancia, una condición médica o nada: de eso solo se guarda si va sin déficit. */
 type Caso = 'nada' | 'embarazo' | 'condicion';
 type Respuestas = { edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo; caso: Caso };
@@ -61,10 +64,10 @@ const ARRIBA = 28;
 
 type Retomar = { i: number; r: Respuestas; deSalud: DeSalud };
 
-function avanceInicial(): Retomar {
+function avanceInicial(total: number): Retomar {
   const e = elAlmacen().estado();
   const a = e.avanceDeEntrada as { i?: unknown; r?: Partial<Respuestas>; deSalud?: unknown } | null;
-  if (a && typeof a.i === 'number' && a.i >= 0 && a.i < PASOS.length && a.r) {
+  if (a && typeof a.i === 'number' && a.i >= 0 && a.i < total && a.r) {
     return { i: a.i, r: { ...DE_FABRICA, ...a.r }, deSalud: new Set(Array.isArray(a.deSalud) ? a.deSalud : []) as DeSalud };
   }
   const p = e.perfil;
@@ -78,13 +81,19 @@ function avanceInicial(): Retomar {
 export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; alTerminar?: () => void }) {
   const insets = useSafeAreaInsets();
   const reducido = useReducedMotion();
+  const [pasos] = useState(pasosDeEstaVersion);
   // Se retoma donde quedó; si la cuenta ya tenía un perfil, sus respuestas vienen llenas.
-  const [inicio] = useState(() => avanceInicial());
+  const [inicio] = useState(() => avanceInicial(pasos.length));
   const [i, setI] = useState(inicio.i);
   const [r, setR] = useState<Respuestas>(inicio.r);
   const [deSalud, setDeSalud] = useState<DeSalud>(inicio.deSalud);
-  const [saliendo, setSaliendo] = useState(false);
-  const paso = PASOS[i];
+  const [terminando, setTerminando] = useState(false);
+  const paso = pasos[i];
+  // Después de Salud, si la cuenta trajo su perfil (otro teléfono, reinstalar o volver a entrar),
+  // el cuestionario no se pregunta otra vez: se sale como al terminar y quedan sus metas y sus hábitos.
+  const conPerfil = useSyncExternalStore(elAlmacen().suscribir, () => elAlmacen().estado().perfil !== null);
+  const conLaCuenta = conPerfil && i > pasos.findIndex((p) => p.id === 'salud');
+  const saliendo = terminando || conLaCuenta;
 
   useEffect(() => {
     if (!saliendo) elAlmacen().ponerAvanceDeEntrada({ i, r, deSalud: [...deSalud] });
@@ -94,7 +103,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     camara.set(paso.camara);
   }, [camara, paso.camara]);
 
-  const siguiente = () => setI((x) => Math.min(PASOS.length - 1, x + 1));
+  const siguiente = () => setI((x) => Math.min(pasos.length - 1, x + 1));
   const poner = <K extends keyof Respuestas>(clave: K, valor: Respuestas[K]) => {
     setR((antes) => ({ ...antes, [clave]: valor }));
     // Lo que se cambia a mano ya no es de Salud.
@@ -108,19 +117,31 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
 
   // El final: la cámara baja hasta hoy, la entrada se apaga y se guarda todo; con el perfil
   // guardado, Secciones deja la entrada y aparece Inicio.
-  const terminar = () => {
-    if (saliendo || !r.sexo) return;
-    setSaliendo(true);
+  const salir = (guardar: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     camara.set(0);
-    const sexo = r.sexo;
-    const { caso, ...respuestas } = r;
-    setTimeout(() => {
-      elAlmacen().responderCuestionario({ ...respuestas, sexo, sinDeficit: caso !== 'nada' }, deSalud.has('pesoKg') ? 'salud' : 'manual');
+    return setTimeout(() => {
+      guardar();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      alTerminar?.();
     }, reducido ? 200 : 1100);
   };
+  const terminar = () => {
+    if (saliendo || !r.sexo) return;
+    setTerminando(true);
+    const sexo = r.sexo;
+    const { caso, ...respuestas } = r;
+    salir(() => {
+      elAlmacen().responderCuestionario({ ...respuestas, sexo, sinDeficit: caso !== 'nada' }, deSalud.has('pesoKg') ? 'salud' : 'manual');
+      alTerminar?.();
+    });
+  };
+  useEffect(() => {
+    if (!conLaCuenta || terminando) return;
+    const espera = salir(() => elAlmacen().terminarEntrada());
+    return () => clearTimeout(espera);
+    // Solo importa cuándo llega el perfil: salir es otra función en cada dibujo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conLaCuenta]);
 
   const estiloSalida = useAnimatedStyle(() => ({
     opacity: withTiming(saliendo ? 0 : 1, { duration: 700 }),
@@ -298,7 +319,6 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
       alEntrar();
     } else setError(resultado.error);
   };
-  const sinCuenta = !haySupabase();
   return (
     <View style={s.cuenta}>
       <View style={s.marca} accessible accessibilityRole="header" accessibilityLabel="Moss">
@@ -308,7 +328,7 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
       </View>
       <Animated.Text entering={FadeIn.delay(800).duration(1000)} style={s.lema}>{t('entrada.cuenta.lema')}</Animated.Text>
       <Animated.View entering={FadeInDown.delay(1000).duration(800)} style={s.botones}>
-        {apple && !sinCuenta ? (
+        {apple ? (
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
@@ -354,9 +374,26 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
         {error && <Text style={s.error} accessibilityLiveRegion="polite">{t(`entrada.cuenta.errores.${error}`)}</Text>}
         {aviso && <Text style={s.aviso} accessibilityLiveRegion="polite">{aviso}</Text>}
       </Animated.View>
-      <Text style={[s.chico, s.legal]}>{t('entrada.cuenta.legal')}</Text>
-      {sinCuenta && <Text style={[s.chico, s.legal]}>{t('entrada.cuenta.sinCuenta')}</Text>}
+      <Legal />
     </View>
+  );
+}
+
+/** Lo que se acepta al continuar, con los Términos y la Política de privacidad para abrirlos. */
+function Legal() {
+  const enlaces = { terminos: urlDe('terminos'), privacidad: urlDe('privacidad') } as const;
+  return (
+    <Text style={[s.chico, s.legal]}>
+      {t('entrada.cuenta.legalConEnlaces').split(/(\{\w+\})/).map((parte, k) => {
+        const clave = parte.slice(1, -1);
+        if (clave !== 'terminos' && clave !== 'privacidad') return parte;
+        return (
+          <Text key={k} style={s.enlace} onPress={() => Linking.openURL(enlaces[clave]).catch(() => {})} accessibilityRole="link" suppressHighlighting>
+            {t(`entrada.cuenta.${clave}`)}
+          </Text>
+        );
+      })}
+    </Text>
   );
 }
 
@@ -660,6 +697,7 @@ function ElResultado({ r, alEmpezar, reducido }: { r: Respuestas; alEmpezar: () 
       </View>
       <Text style={[s.chico, { textAlign: 'center' }]}>{t('entrada.cuestionario.gasto', { n: numero(gasto) })}</Text>
       <Texto centrado>{t('entrada.cuestionario.resultadoTexto')}</Texto>
+      <Text style={s.chico}>{t('entrada.cuestionario.profesional')}</Text>
       <Espacio />
       <Pie>
         <Boton texto={t('entrada.cuestionario.empezar')} alTocar={alEmpezar} />

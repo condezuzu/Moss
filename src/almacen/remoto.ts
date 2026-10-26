@@ -26,6 +26,12 @@ const MARGEN_MS = 60_000;
 /** La hora de lo que no tiene (lo guardado antes de que existiera): cualquier cambio de verdad le gana. */
 const SIN_HORA = new Date(0).toISOString();
 
+/**
+ * Un dato que la base no acepta (los errores 22 y 23 de Postgres: fuera de lo posible, un CHECK):
+ * reintentarlo no lo arregla. Lo demás (sin conexión, sin sesión) se reintenta.
+ */
+const sinArreglo = (error: { code?: string }) => /^2[23]/.test(error.code ?? '');
+
 /** Supabase devuelve las horas como `2026-10-21T15:00:00.5+00:00`; el teléfono las compara en el formato de JavaScript. */
 const hora = (texto: string) => new Date(texto).toISOString();
 
@@ -173,15 +179,38 @@ export function remotoSupabase(cliente: Cliente): Remoto {
 
   return {
     async subir(c) {
-      const pedidos: PromiseLike<{ error: { message: string } | null }>[] = [];
+      // Cada pedido devuelve sus errores: los que hay que reintentar (sin conexión, sin sesión).
+      const pedidos: Promise<string[]>[] = [];
+      const llamar = (nombre: string, argumentos: object) => {
+        pedidos.push((async () => {
+          const { error } = await cliente.rpc(nombre, argumentos);
+          if (!error) return [];
+          if (!sinArreglo(error)) return [`${nombre}: ${error.message}`];
+          console.warn(`La cuenta no aceptó ${nombre}`, error.message);
+          return [];
+        })());
+      };
       const poner = (tabla: string, filas: object[], onConflict: string, ignoreDuplicates = false) => {
-        if (filas.length) pedidos.push(cliente.from(tabla).upsert(filas, { onConflict, ignoreDuplicates }));
+        // Si la base no acepta alguna fila, se parte la lista hasta dejarla afuera: sube todo lo demás
+        // y esa queda solo en el teléfono, en lugar de trabar para siempre la tabla y la bajada.
+        const subirLista = async (lista: object[]): Promise<string[]> => {
+          const { error } = await cliente.from(tabla).upsert(lista, { onConflict, ignoreDuplicates });
+          if (!error) return [];
+          if (!sinArreglo(error)) return [`${tabla}: ${error.message}`];
+          if (lista.length === 1) {
+            console.warn(`La cuenta no aceptó una fila de ${tabla}`, error.message);
+            return [];
+          }
+          const mitad = Math.ceil(lista.length / 2);
+          return [...(await subirLista(lista.slice(0, mitad))), ...(await subirLista(lista.slice(mitad)))];
+        };
+        if (filas.length) pedidos.push(subirLista(filas));
       };
       // La semilla es de la cuenta: la base se queda con la primera que llega, y al bajar llega a todos.
-      if (c.semilla) pedidos.push(cliente.rpc('poner_semilla', { valor: c.semilla }));
+      if (c.semilla) llamar('poner_semilla', { valor: c.semilla });
       if (c.perfil) poner('perfiles', [filaDe.perfil(c.perfil)], 'usuario');
       poner('habitos', c.habitos.map(filaDe.habito), 'usuario,id');
-      if (c.periodos) pedidos.push(cliente.rpc('poner_periodos', { lista: c.periodos.map(filaDe.periodo) }));
+      if (c.periodos) llamar('poner_periodos', { lista: c.periodos.map(filaDe.periodo) });
       poner('marcas', c.marcas.map(filaDe.marca), 'usuario,habito,dia');
       poner('dias', c.dias.map(filaDe.dia), 'usuario,clave');
       // Un logro ya guardado no se toca: vale la fecha del primero que lo subió.
@@ -195,7 +224,7 @@ export function remotoSupabase(cliente: Cliente): Remoto {
       poner('agua', c.agua.map(filaDe.agua), 'usuario,id');
       poner('medidas', c.medidas.map(filaDe.medidas), 'usuario,fecha');
       poner('noches', c.noches.map(filaDe.noches), 'usuario,fecha');
-      const errores = (await Promise.all(pedidos)).flatMap((r) => (r.error ? [r.error.message] : []));
+      const errores = (await Promise.all(pedidos)).flat();
       if (errores.length) throw new Error(errores.join('; '));
     },
 

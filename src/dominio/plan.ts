@@ -870,6 +870,42 @@ export function listaDeCompras(plan: readonly DiaPlaneado[]): Compra[] {
     });
 }
 
+/**
+ * Lo tachado de la lista de compras: cada alimento tachado guarda lo planificado que cubría (los
+ * ids de sus registros). Sigue tachado mientras no se planifique más de él: lo de la semana que
+ * viene, u otra comida con ese alimento, lo vuelve a la lista.
+ */
+export type Tachadas = Record<string, string[]>;
+
+/** Lo planificado de hoy en adelante, por alimento de la lista de compras: los ids de sus registros. */
+export function planificadoPorCompra(registros: Iterable<Registro>, hoy: ClaveDia): Map<string, string[]> {
+  const porClave = new Map<string, string[]>();
+  for (const r of registros) {
+    if (r.borrado || !r.planificado || r.dia < hoy) continue;
+    const clave = claveDe(r);
+    porClave.set(clave, [...(porClave.get(clave) ?? []), r.id]);
+  }
+  return porClave;
+}
+
+export function estaTachada(tachadas: Tachadas, clave: string, planificado: ReadonlyMap<string, string[]>): boolean {
+  const cubria = tachadas[clave];
+  return !!cubria && (planificado.get(clave) ?? []).every((id) => cubria.includes(id));
+}
+
+/** Tachar o destachar: lo que ya no está en la lista se olvida. */
+export function tachar(tachadas: Tachadas, clave: string, planificado: ReadonlyMap<string, string[]>): Tachadas {
+  const quedan = Object.entries(tachadas).filter(([c]) => c !== clave && planificado.has(c));
+  if (!estaTachada(tachadas, clave, planificado)) quedan.push([clave, planificado.get(clave) ?? []]);
+  return Object.fromEntries(quedan);
+}
+
+/** Lo tachado como quedó guardado; lo que no se entiende (como la lista vieja, sin lo que cubría), nada. */
+export function tachadasDe(x: unknown): Tachadas {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) return {};
+  return Object.fromEntries(Object.entries(x).filter((e): e is [string, string[]] => Array.isArray(e[1]) && e[1].every((id) => typeof id === 'string')));
+}
+
 /** «Comí esto»: lo de una comida del plan, para registrarlo ya, como se registra cualquier alimento. */
 export function itemsDeComida(c: ComidaPlaneada): Item[] {
   return c.items.map(itemDe);

@@ -149,4 +149,39 @@ describe('sincronizar', () => {
     await new Promise((listo) => setTimeout(listo, 60));
     expect(c.pedidos).toHaveLength(antes);
   });
+
+  it('si la subida falla, igual baja lo nuevo, y el error sale para reintentar', async () => {
+    const t = await telefono();
+    const c = cuenta();
+    const s = crearSincronizador({ almacen: t.almacen, remoto: c.remoto, usuario: 'u1' });
+    await s.vuelta();
+    t.almacen.marcar('leer', true, 'toque');
+    c.fallar(1);
+    await expect(s.vuelta()).rejects.toThrow('sin conexión');
+    expect(c.pedidos.slice(2)).toEqual(['subir', 'bajar lo nuevo']);
+    expect(await t.pendiente()).toBe(true);
+  });
+
+  it('parado, lo que vuelve de la cuenta ya no entra al teléfono', async () => {
+    const t = await telefono();
+    let soltar: () => void = () => {};
+    const enCamino = new Promise<void>((listo) => (soltar = listo));
+    const remoto: Remoto = {
+      async subir() {},
+      async bajar() {
+        await enCamino;
+        return { datos: { ...nada(), habitos: [habito('correr', 2)] }, hasta: '2026-10-21T15:00:00.000Z' };
+      },
+    };
+    const s = crearSincronizador({ almacen: t.almacen, remoto, usuario: 'u1' });
+    const vuelta = s.vuelta();
+    await new Promise((listo) => setTimeout(listo, 10));
+    const terminado = s.terminar();
+    soltar();
+    await terminado;
+    expect(await vuelta).toBe(false);
+    expect(t.almacen.estado().habitos.map((h) => h.id)).not.toContain('correr');
+    expect(await t.almacen.enCola((r) => r.leerAjuste('usuario'))).toBeNull();
+    expect(await t.almacen.enCola((r) => r.leerAjuste('bajado'))).toBeNull();
+  });
 });

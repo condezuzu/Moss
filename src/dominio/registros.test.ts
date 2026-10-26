@@ -113,6 +113,20 @@ describe('copiar, planificar, confirmar y borrar', () => {
     expect(copia.every((r) => r.planificado && r.comida === 'snack')).toBe(true);
   });
 
+  it('lo planificado que no se comió sigue planificado, aunque se copie a hoy', () => {
+    const manana = sumarDias(HOY, 1);
+    const plan = [reg(arroz(), manana, 'almuerzo', 13, { planificado: true, plan: 'tipo:x' }), reg(banana(), ayer, 'almuerzo', 13, { planificado: true })];
+    const copia = [...copiar(plan, { dia: manana }, { dia: HOY }, op), ...copiar(plan, { dia: ayer }, { dia: HOY }, op)];
+    expect(copia.map((r) => [r.nombre, r.planificado, 'plan' in r])).toEqual([['Arroz blanco', true, false], ['Banana', true, false]]);
+    expect(totalDelDia(copia, HOY, false).kcal).toBe(0);
+  });
+
+  it('a la misma hora del reloj en el otro día', () => {
+    const [copia] = copiar(cena, { dia: ayer }, { dia: sumarDias(HOY, 30) }, op);
+    const [antes, despues] = [new Date(cena[0].momento), new Date(copia.momento)];
+    expect([despues.getHours(), despues.getMinutes()]).toEqual([antes.getHours(), antes.getMinutes()]);
+  });
+
   it('confirmar pasa lo planificado de ese día a registrado', () => {
     const plan = copiar(cena, { dia: ayer }, { dia: sumarDias(HOY, 1) }, op);
     const hechos = confirmar(plan, sumarDias(HOY, 1), '2026-10-22T12:00:00.000Z');
@@ -148,6 +162,13 @@ describe('los hábitos de comida', () => {
     expect(cumpleLaComida('proteina', [almuerzo, cena], HOY, meta)).toBe(true);
     expect(cumpleLaComida('proteina', [almuerzo, { ...cena, planificado: true }], HOY, meta)).toBe(false);
     expect(cumpleLaComida('proteina', [almuerzo, cena], HOY, null)).toBe(false);
+  });
+
+  it('la proteína se cumple cuando el número redondeado llega, como el punto del macro', () => {
+    const casi = [reg(pollo(386), HOY, 'almuerzo', 13)];
+    expect(sumarValores(casi.map((r) => r.valores)).proteina).toBeCloseTo(119.66, 2);
+    expect(cumpleLaComida('proteina', casi, HOY, meta)).toBe(true);
+    expect(cumpleLaComida('proteina', [reg(pollo(385), HOY, 'almuerzo', 13)], HOY, meta)).toBe(false);
   });
 
   it('registrar todas las comidas: desayuno, almuerzo y cena, o las que elija el hábito', () => {
@@ -206,6 +227,8 @@ describe('los atajos', () => {
     const lista = [reg(banana(1), dias(3), 'merienda', 17), reg(banana(2), dias(1), 'merienda', 17), reg(arroz(), dias(0), 'cena', 21)];
     expect(ultimaCantidad(lista, 'base', '1105314')).toEqual({ porcion: '1 mediana', gramosPorcion: 118, veces: 2 });
     expect(ultimaCantidad(lista, 'base', 'otro')).toBeUndefined();
+    const conPlan = [...lista, reg(banana(3), sumarDias(HOY, 4), 'merienda', 17, { planificado: true, plan: 'tipo:x' })];
+    expect(ultimaCantidad(conPlan, 'base', '1105314')).toEqual({ porcion: '1 mediana', gramosPorcion: 118, veces: 2 });
   });
 
   it('los recientes, sin repetir y sin la carga rápida', () => {

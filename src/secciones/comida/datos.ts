@@ -156,8 +156,10 @@ export function fechaLarga(dia: ClaveDia): string {
 
 /** «7 h 32 min», «8 h» o «45 min». */
 export function duracion(minutos: number): string {
-  const h = Math.floor(minutos / 60);
-  const m = Math.round(minutos % 60);
+  // Primero se redondea: 479,6 minutos son «8 h», no «7 h 60 min».
+  const total = Math.round(minutos);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   if (!h) return t('fecha.minutos', { m });
   return m ? t('fecha.horasMinutos', { h, m: String(m).padStart(2, '0') }) : t('fecha.horas', { h });
 }

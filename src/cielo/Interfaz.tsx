@@ -66,23 +66,27 @@ export function Interfaz(p: Props) {
   const { alto } = p.plano;
   const hechos = p.encendidos.filter(Boolean).length;
   const c = p.dia.constelacion;
+  // Los worklets toman solo lo que usan: con `p.escena` adentro se llevaban todas las props (el plano,
+  // el día) en cada render.
+  const escena = p.escena;
+  const subida = p.subida;
 
   // Todo lo de Hábitos se corre con su pestaña, como la constelación.
   const estiloCabecera = useAnimatedStyle(() => {
-    const e = p.escena.value;
+    const e = escena.value;
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - e.velado) };
   });
   // Mientras la constelación se conecta y sube la aurora, las etiquetas se apagan un poco: el
   // momento es del cielo.
   const estiloEtiquetas = useAnimatedStyle(() => {
-    const e = p.escena.value;
+    const e = escena.value;
     const dc = e.completo ? e.t - e.tCompleto : -1;
     const momento = e.completo ? suave(0.6, 1.4, dc) * (1 - suave(7.5, 9.0, dc)) : 0;
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) * (1 - e.velado) };
   });
-  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }, { translateY: p.escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: 1 - p.escena.value.velado }));
+  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: 1 - escena.value.velado }));
   // El panel de prueba es de Hábitos: no se ve encima de las otras secciones.
-  const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: p.escena.value.paginaX }], opacity: 1 - p.escena.value.velado }));
+  const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }], opacity: 1 - escena.value.velado }));
   // La flecha tenue de Ascent va con la frase y respira apenas; mientras Ascent sube, se apaga.
   const reducido = useReducedMotion();
   const respira = useSharedValue(0);
@@ -91,15 +95,15 @@ export function Interfaz(p: Props) {
     if (!reducido && conFlecha) respira.value = withRepeat(withTiming(1, { duration: 1900 }), -1, true);
   }, [reducido, conFlecha, respira]);
   const estiloFlecha = useAnimatedStyle(() => {
-    const e = p.escena.value;
-    const subio = p.subida ? p.subida.get() : 0;
+    const e = escena.value;
+    const subio = subida ? subida.get() : 0;
     return {
       opacity: (1 - Math.min(1, subio * 2.5)) * (1 - 0.45 * respira.value),
       transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * PARALAJE.lomas[2] * alto - 3 * respira.value }],
     };
   });
   const estiloUniverso = useAnimatedStyle(() => {
-    const e = p.escena.value;
+    const e = escena.value;
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: suave(0.5, 1.1, e.cam.y) * (1 - e.velado) };
   });
 

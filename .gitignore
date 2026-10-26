@@ -52,3 +52,4 @@ public/alimentos.json
 
 # Lo que bajan las herramientas (los datos de USDA)
 .cache/
+.revision/

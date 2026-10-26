@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  ADELANTO_MAXIMO, ANTES_DE_DORMIR, avisoDeFabrica, avisosDeLaSemana, avisosDelDia, cuandoSuena, horaDeDormir, horasDeSueno, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
+  ADELANTO_MAXIMO, ANTES_DE_DORMIR, avisoDeFabrica, DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO, avisosDeLaSemana, avisosDelDia, cuandoSuena, horaDeDormir, horasDeSueno, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
   PAGO_MAXIMO, PESARSE_DESPUES, VENTANA,
   type Avisos, type DelDia, type Notificacion, type Sueno,
 } from './avisos';
@@ -110,8 +110,10 @@ describe('los avisos de un día', () => {
       ],
     };
     expect(resumen(delDia(ajustes))).toEqual([[h('7:30'), ['habito:agua:0']], [h('18:00'), ['habito:estirar:0']], [h('22:30'), ['habito:leer:0']]]);
-    // Sin datos del sueño queda solo el de hora fija.
-    expect(resumen(delDia(ajustes, { sueno: null }))).toEqual([[h('18:00'), ['habito:estirar:0']]]);
+    // Sin datos del sueño, como si se despertara a las 7:30 y se durmiera a las 23: los primeros hábitos avisan desde el primer día.
+    expect([DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO]).toEqual([h('7:30'), h('23:00')]);
+    expect(resumen(delDia(ajustes, { sueno: null }))).toEqual([[h('7:30'), ['habito:agua:0']], [h('18:00'), ['habito:estirar:0']], [h('22:00'), ['habito:leer:0']]]);
+    expect(resumen(delDia(ajustes, { sueno: { ...SUENO, habitual: () => null } }))).toEqual([[h('7:30'), ['habito:agua:0']], [h('18:00'), ['habito:estirar:0']], [h('22:00'), ['habito:leer:0']]]);
   });
 
   it('cada aviso de un hábito tiene su id, con su mensaje propio recortado a 120 letras', () => {
@@ -304,9 +306,12 @@ describe('los avisos de la semana', () => {
     expect(lista.map((x) => [x.dia, x.minutos])).toEqual([[VIERNES, h('14:00')]]);
   });
 
-  it('«en el momento» suena al minuto siguiente del evento, aunque se programe en ese mismo minuto', () => {
+  it('«en el momento» suena dos minutos después del evento, aunque se programe en ese mismo minuto o en el siguiente', () => {
     const lista = semana({ habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'almuerzo', despues: 0 }, dias: [] }] }, { ahora: h('13:00'), eventosHoy: { almuerzo: h('13:00') } });
-    expect(lista.map((x) => [x.dia, x.minutos])).toEqual([[VIERNES, h('13:01')]]);
+    expect(lista.map((x) => [x.dia, x.minutos])).toEqual([[VIERNES, h('13:02')]]);
+    // Anotado a las 13:00:59 y reprogramado a las 13:01:00: no se pierde.
+    const alMinutoSiguiente = semana({ habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'almuerzo', despues: 0 }, dias: [] }] }, { ahora: h('13:01'), eventosHoy: { almuerzo: h('13:00') } });
+    expect(alMinutoSiguiente.map((x) => [x.dia, x.minutos])).toEqual([[VIERNES, h('13:02')]]);
     // Más tarde ya sonó: no se repite.
     const despues = semana({ habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'almuerzo', despues: 0 }, dias: [] }] }, { ahora: h('13:20'), eventosHoy: { almuerzo: h('13:00') } });
     expect(despues).toEqual([]);

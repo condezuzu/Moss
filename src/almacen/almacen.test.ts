@@ -3,10 +3,11 @@ import { describe, expect, it } from '@jest/globals';
 import type { Constelacion } from '../datos/catalogo';
 import datos from '../datos/constelaciones.json';
 import { progresoPorConstelacion } from '../dominio/dias';
+import { diaDeLaSemana } from '../dominio/fechas';
 import type { Habito } from '../dominio/habitos';
 import { metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
 import { aguaDelDia, borrado, delDia, itemDeAlimento, itemRapido, totalDelDia, vigentes, type Registro, type Valores } from '../dominio/registros';
-import { crearAlmacen, metaVigente } from './almacen';
+import { crearAlmacen, metaVigente, soloLosDeEjemplo } from './almacen';
 import type { Datos } from './mezclar';
 import { repositorioEnMemoria, sinComida, type Repositorio } from './repositorio';
 
@@ -208,17 +209,32 @@ describe('los días', () => {
     expect(hoy(almacen).constelacion).not.toBe(antes);
   });
 
+  const PRIMEROS = [
+    { nombre: 'Proteína', icono: 'fork.knife', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'comida', meta: 'proteina' } },
+    { nombre: 'Dormir 7 h', icono: 'moon', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'salud', dato: 'sueno', meta: 420 } },
+    { nombre: 'Leer', icono: 'book', dias: [1, 2, 3, 4, 5], fuente: { tipo: 'manual' } },
+  ] satisfies Parameters<ReturnType<typeof crearAlmacen>['elegirPrimerosHabitos']>[0];
+  const DE_EJEMPLO = () => [habito('ejemplo-meditar', 0), habito('ejemplo-leer', 1), habito('ejemplo-agua', 2)];
+
   it('los primeros hábitos reemplazan a los de ejemplo, en el orden elegido', async () => {
-    const { almacen } = await armar();
-    almacen.elegirPrimerosHabitos([
-      { nombre: 'Proteína', icono: 'fork.knife', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'comida', meta: 'proteina' } },
-      { nombre: 'Dormir 7 h', icono: 'moon', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'salud', dato: 'sueno', meta: 420 } },
-      { nombre: 'Leer', icono: 'book', dias: [1, 2, 3, 4, 5], fuente: { tipo: 'manual' } },
-    ]);
+    const { almacen } = await armar(undefined, DE_EJEMPLO);
+    expect(soloLosDeEjemplo(almacen.estado())).toBe(true);
+    almacen.elegirPrimerosHabitos(PRIMEROS);
     const e = almacen.estado();
     expect(e.habitos.filter((h) => !h.hasta || h.hasta >= e.hoy).map((h) => h.nombre)).toEqual(['Proteína', 'Dormir 7 h', 'Leer']);
-    expect(e.habitos.filter((h) => ['meditar', 'leer', 'agua'].includes(h.id)).every((h) => h.hasta === '2026-10-20')).toBe(true);
+    expect(e.habitos.filter((h) => h.id.startsWith('ejemplo-')).every((h) => h.hasta === '2026-10-20')).toBe(true);
     expect(hoy(almacen).habitos).toHaveLength(3);
+    expect(soloLosDeEjemplo(e)).toBe(false);
+  });
+
+  it('los hábitos que trajo la cuenta no se archivan con los primeros: solo los de ejemplo', async () => {
+    const { almacen } = await armar(undefined, () => [habito('ejemplo-meditar', 0), habito('correr', 1)]);
+    expect(soloLosDeEjemplo(almacen.estado())).toBe(false);
+    almacen.elegirPrimerosHabitos(PRIMEROS);
+    const e = almacen.estado();
+    expect(e.habitos.find((h) => h.id === 'correr')!.hasta).toBeUndefined();
+    expect(e.habitos.find((h) => h.id === 'ejemplo-meditar')!.hasta).toBe('2026-10-20');
+    expect(hoy(almacen).habitos).toContain('correr');
   });
 });
 
@@ -363,8 +379,9 @@ describe('lo que se come', () => {
     const almuerzo = { comida: 'almuerzo' as const, opcion: 'lentejas', items: [alfajor()], valores: alfajor().valores };
     const armados = almacen.planificar('2026-10-21', [almuerzo, cena], () => 13 * 60);
     expect(armados.every((r) => r.planificado && r.plan)).toBe(true);
+    // Lo copiado de lo planificado sigue planificado (sin ser del plan): confirmar el día anota esas dos copias, no lo armado.
     almacen.copiar({ dia: '2026-10-21' }, { dia: '2026-10-21', comida: 'snack' });
-    expect(almacen.confirmarPlanificados()).toBe(0);
+    expect(almacen.confirmarPlanificados()).toBe(2);
     const ids = almacen.confirmarComida('2026-10-21', 'almuerzo');
     expect(ids).toEqual([armados[0].id]);
     expect(almacen.estado().registros.get(armados[1].id)?.planificado).toBe(true);
@@ -565,5 +582,124 @@ describe('lo que baja de la cuenta', () => {
     const version = e.version;
     expect(almacen.mezclar({ ...nada(), habitos: e.habitos, periodos: [...e.periodos].reverse(), marcas: [...e.marcas.values()], dias: [...e.dias.values()], logros: e.logros, semilla: e.semilla })).toBe(false);
     expect(almacen.estado().version).toBe(version);
+  });
+});
+
+describe('volver a entrar a una cuenta que ya tenía todo', () => {
+  const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
+  const respuestas: Cuestionario = { edad: 29, sexo: 'm', alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado', sinDeficit: false };
+  const deLaCuenta = (): Datos => ({
+    ...nada(),
+    habitos: [{ ...habito('correr', 0), actualizado: '2026-10-01T10:00:00.000Z' }],
+    perfil: {
+      sexo: 'm', alturaCm: 180, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado', nacimiento: 1990,
+      estilo: 'keto', pesoMeta: 75, diaDelControl: 1, semana: { altos: [6, 0], extra: 300 }, actualizado: '2026-10-01T10:00:00.000Z',
+    },
+    metas: [{ desde: '2026-10-01', kcal: 1700, proteina: 140, carbohidratos: 120, grasas: 70, gasto: 2300, motivo: 'manual', momento: '2026-10-01T10:00:00.000Z' }],
+  });
+
+  it('el cuestionario no pisa lo que el cuestionario no pregunta, ni las metas de la cuenta', async () => {
+    const { almacen } = await armar();
+    almacen.mezclar(deLaCuenta());
+    const meta = almacen.responderCuestionario(respuestas);
+    const e = almacen.estado();
+    expect(e.perfil).toMatchObject({ estilo: 'keto', pesoMeta: 75, diaDelControl: 1, semana: { altos: [6, 0], extra: 300 }, alturaCm: 172 });
+    expect(e.metas.map((m) => [m.desde, m.kcal, m.motivo])).toEqual([['2026-10-01', 1700, 'manual']]);
+    expect(meta).toMatchObject({ kcal: 1700, motivo: 'manual' });
+    expect(e.entradaHecha).toBe(true);
+  });
+
+  it('con un objetivo distinto, las metas de Moss se mueven como en Progreso', async () => {
+    const { almacen } = await armar();
+    const cuenta = deLaCuenta();
+    almacen.mezclar({ ...cuenta, metas: [{ ...cuenta.metas[0], motivo: 'control' }] });
+    const meta = almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' });
+    expect(meta).toMatchObject({ desde: '2026-10-21', motivo: 'objetivo', gasto: 2300 });
+    expect(almacen.estado().metas).toHaveLength(2);
+  });
+
+  it('sin cuestionario, terminar la entrada solo la da por hecha: el perfil, las metas y los hábitos quedan', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.mezclar(deLaCuenta());
+    const antes = almacen.estado();
+    almacen.terminarEntrada();
+    const e = almacen.estado();
+    expect(e.entradaHecha).toBe(true);
+    expect([e.perfil, e.metas, e.habitos, e.pesos]).toEqual([antes.perfil, antes.metas, antes.habitos, antes.pesos]);
+    expect(soloLosDeEjemplo(e)).toBe(false);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().entradaHecha).toBe(true);
+  });
+});
+
+describe('la comida enciende estrellas, también con la semana repartida y en los días anteriores', () => {
+  const respuestas: Cuestionario = { edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
+  const conComida = () => [
+    habito('meditar', 0),
+    { ...habito('calorias', 1), fuente: { tipo: 'comida' as const, meta: 'calorias' as const } },
+    { ...habito('registrar', 2), fuente: { tipo: 'comida' as const, meta: 'registrar' as const } },
+  ];
+  const kcal = (n: number) => itemRapido('Todo', { kcal: n, proteina: 0, carbohidratos: 0, grasas: 0 });
+
+  it('las calorías se miden contra la meta del día, la que se ve, no la de base', async () => {
+    const { almacen } = await armar(repositorioEnMemoria(), conComida);
+    const base = almacen.responderCuestionario(respuestas).kcal;
+    almacen.ponerEstrategia({ semana: { altos: [diaDeLaSemana('2026-10-21')], extra: 500 } });
+    // Un solo día alto: sube todo lo que se le saca a los otros seis.
+    almacen.registrar([kcal(base + 500)], { comida: 'cena' });
+    expect(hoy(almacen).hechos).toContain('calorias');
+    // Dejar de repartir la semana vuelve a la meta de base: ya no está cerca.
+    almacen.ponerEstrategia({ semana: undefined });
+    expect(hoy(almacen).hechos).not.toContain('calorias');
+  });
+
+  it('la cena de ayer anotada hoy enciende la estrella de ayer, y borrarla la apaga', async () => {
+    const { almacen, ir } = await armar(repositorioEnMemoria(), conComida);
+    almacen.registrar([banana()], { comida: 'desayuno' });
+    almacen.registrar([alfajor()], { comida: 'almuerzo' });
+    ir('2026-10-22T13:00:00Z');
+    almacen.revisarDia();
+    const [cena] = almacen.registrar([banana()], { comida: 'cena', dia: '2026-10-21', momento: '2026-10-22T00:00:00.000Z' });
+    const ayer = () => almacen.estado().dias.get('2026-10-21')!;
+    expect(ayer().hechos).toEqual(['registrar']);
+    expect(almacen.estado().marcas.get('registrar|2026-10-21')).toMatchObject({ hecho: true, origen: 'comida' });
+    expect(hoy(almacen).hechos).toEqual([]);
+    almacen.borrarRegistro(cena.id);
+    expect(ayer().hechos).toEqual([]);
+  });
+});
+
+describe('el control y los pesos de Salud que llegan después', () => {
+  const respuestas: Cuestionario = { edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
+  const salud = (pesos: [string, number][]) => ({
+    dia: '2026-10-21', valores: {}, noches: [], soloEnCama: new Map(), fuentes: [], aparatos: [], pasosRecientes: [],
+    lecturas: { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() },
+    pesos: new Map(pesos),
+  });
+
+  it('si el control corrió sin las pesadas que trae Salud, se vuelve a hacer con ellas, una sola meta por día', async () => {
+    const { almacen, ir } = await armar();
+    ir('2026-10-14T15:00:00Z');
+    almacen.revisarDia();
+    almacen.responderCuestionario(respuestas);
+    for (let d = 14; d <= 20; d++) {
+      ir(`2026-10-${d}T15:00:00Z`);
+      almacen.revisarDia();
+      almacen.registrar([itemRapido('Todo el día', { kcal: 2500, proteina: 150, carbohidratos: 300, grasas: 75 })], { comida: 'cena' });
+    }
+    ir('2026-10-21T15:00:00Z');
+    almacen.revisarDia();
+    const antes = almacen.estado().metas.at(-1)!;
+    expect(antes).toMatchObject({ desde: '2026-10-21' });
+    const pesadas: [string, number][] = [];
+    for (let d = 1; d <= 20; d++) pesadas.push([`2026-10-${String(d).padStart(2, '0')}`, 80 - d * 0.1]);
+    almacen.ponerSalud(salud(pesadas));
+    const metas = almacen.estado().metas;
+    expect(metas.map((m) => m.desde)).toEqual(['2026-10-14', '2026-10-21']);
+    expect(metas[1]).toMatchObject({ motivo: 'control' });
+    expect(metas[1].gasto).not.toBe(antes.gasto);
+    // Lo que ya estaba no lo vuelve a hacer.
+    almacen.ponerSalud(salud(pesadas));
+    expect(almacen.estado().metas[1]).toBe(metas[1]);
   });
 });

@@ -10,15 +10,21 @@ import { sumarDias, type ClaveDia } from './fechas';
 export const DESPUES_MIN = 45;
 export const DIAS = 7;
 
+/** Lo de la madrugada, hasta las 5, en una comida de la noche es de la noche anterior: una cena a las 0:20 es tarde, no temprano. */
+const MADRUGADA = 5 * 60;
+const DIA = 24 * 60;
+
 /**
  * La hora habitual de una comida, en minutos desde la medianoche: la mediana de cuándo se anotó en
- * los días que se dan; sin datos, la típica.
+ * los días que se dan; sin datos, la típica. Con `deNoche` (la cena, la merienda), lo de la
+ * madrugada cuenta como más tarde, y si la mediana pasa de la medianoche queda en las 23:59.
  */
-export function horaHabitual(minutosAnotados: number[], tipica: number): number {
+export function horaHabitual(minutosAnotados: number[], tipica: number, deNoche = false): number {
   if (!minutosAnotados.length) return tipica;
-  const orden = [...minutosAnotados].sort((a, b) => a - b);
+  const orden = minutosAnotados.map((m) => (deNoche && m < MADRUGADA ? m + DIA : m)).sort((a, b) => a - b);
   const medio = Math.floor(orden.length / 2);
-  return orden.length % 2 ? orden[medio] : Math.round((orden[medio - 1] + orden[medio]) / 2);
+  const mediana = orden.length % 2 ? orden[medio] : Math.round((orden[medio - 1] + orden[medio]) / 2);
+  return Math.min(DIA - 1, mediana);
 }
 
 export type Recordatorio = { dia: ClaveDia; comida: Comida; minutos: number };

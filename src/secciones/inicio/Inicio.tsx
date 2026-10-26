@@ -4,7 +4,7 @@
 // están para sumarlos. Tocar un bloque lleva a su sección.
 
 import * as Haptics from 'expo-haptics';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -19,7 +19,7 @@ import { estadoDeMacro } from '@/dominio/metas';
 import { calidadDeNoche, ultimasNoches } from '@/dominio/sueno';
 import { aguaDelDia } from '@/dominio/registros';
 import { sumarDias } from '@/dominio/fechas';
-import { idioma, t } from '@/textos';
+import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
@@ -119,7 +119,7 @@ function Calorias() {
         <Luna tam={124} fraccion={0} />
         <View style={estilos.calCifra}>
           <Text style={estilos.calEtiqueta}>{t('inicio.bloques.calorias')}</Text>
-          <Text style={estilos.calNumero}>{numero(Math.round(comido.kcal))}</Text>
+          {numeros && <Text style={estilos.calNumero}>{numero(Math.round(comido.kcal))}</Text>}
           <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>
         </View>
       </View>
@@ -239,13 +239,22 @@ function Peso({ anchoGrafico }: { anchoGrafico: number }) {
       {p.gasto !== null && (
         <View style={[estilos.fila, estilos.filaSegunda]}>
           <View style={estilos.dato}>
-            <Text style={estilos.datoCifra}>
-              {p.balance.promedio === null ? '—' : conSigno(Math.round(p.balance.promedio))}
-              <Text style={estilos.datoUnidad}>{` ${t('inicio.kcalPorDia')}`}</Text>
+            {e.numeros && (
+              <Text style={estilos.datoCifra}>
+                {p.balance.promedio === null ? '—' : conSigno(Math.round(p.balance.promedio))}
+                <Text style={estilos.datoUnidad}>{` ${t('inicio.kcalPorDia')}`}</Text>
+              </Text>
+            )}
+            <Text style={estilos.datoTexto}>
+              {!p.balance.dias.length
+                ? t('progreso.sinBalance')
+                : e.numeros
+                  ? plural('inicio.balanceDias', p.balance.dias.length, { gasto: numero(p.gasto) })
+                  : plural('inicio.balanceDiasSinNumeros', p.balance.dias.length)}
             </Text>
-            <Text style={estilos.datoTexto}>{p.balance.dias.length ? t('inicio.balanceTexto', { gasto: numero(p.gasto) }) : t('progreso.sinBalance')}</Text>
           </View>
-          {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} gasto={p.gasto} ancho={anchoGrafico} alto={44} />}
+          {/* El balance llega hasta ayer (persona.ts): cada barra va en su día. */}
+          {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} hasta={sumarDias(e.hoy, -1)} gasto={p.gasto} ancho={anchoGrafico} alto={44} />}
         </View>
       )}
     </>
@@ -263,7 +272,8 @@ function Cielo({ ancho }: { ancho: number }) {
       <Cabeza titulo={t('inicio.bloques.cielo')} derecha={dia.habitos.length ? <Chip texto={t('inicio.encendidas', { n: hechos, total: dia.habitos.length })} /> : undefined} />
       {dia.constelacion ? <MiniCielo constelacion={dia.constelacion} encendidas={encendidos} ancho={ancho} alto={118} /> : <View style={{ height: 40 }} />}
       <View style={estilos.chips}>
-        {dia.habitos.filter((h) => (h.auto === 'sueno' || h.auto === 'pasos') && h.valor !== undefined).map((h, i) => (
+        {/* useEncendidos va en el orden de todos los hábitos del día: cada chip lleva el índice de su hábito. */}
+        {dia.habitos.map((h, i) => ({ h, i })).filter(({ h }) => (h.auto === 'sueno' || h.auto === 'pasos') && h.valor !== undefined).map(({ h, i }) => (
           <View key={h.id} style={[estilos.dato2, encendidos[i] && estilos.dato2Hecho]}>
             <Icono nombre={h.auto === 'sueno' ? 'moon' : 'figure.walk'} tam={13} color={encendidos[i] ? colores.oroClaro : 'rgba(239, 230, 207, 0.5)'} />
             <Text style={[estilos.dato2Texto, encendidos[i] && estilos.dato2TextoHecho]}>{h.auto === 'sueno' ? t('inicio.dormiste', { h: duracion(h.valor ?? 0) }) : t('inicio.pasos', { n: numero(h.valor ?? 0) })}</Text>
@@ -349,6 +359,13 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
   const insets = useSafeAreaInsets();
   const arrastrada = useSharedValue(-1);
   const dy = useSharedValue(0);
+  // El orden en que empezó el arrastre: con el orden nuevo ya pintado, lo corrido vuelve a cero en el mismo cuadro.
+  const version = orden.join();
+  const versionDelArrastre = useSharedValue('');
+  useEffect(() => {
+    arrastrada.set(-1);
+    dy.set(0);
+  }, [version, arrastrada, dy]);
   const guardar = (o: Bloque[], v: Set<Bloque>) => elAlmacen().ponerInicio({ orden: o, visibles: o.filter((b) => v.has(b)) });
   const mover = (desde: number, hasta: number) => {
     if (desde === hasta) return;
@@ -381,6 +398,8 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
                 visible={visibles.has(b)}
                 arrastrada={arrastrada}
                 dy={dy}
+                version={version}
+                versionDelArrastre={versionDelArrastre}
                 alMover={mover}
                 alCambiar={(si) => {
                   const v = new Set(visibles);
@@ -400,12 +419,13 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
 
 function FilaDeOrden(p: {
   bloque: Bloque; indice: number; total: number; visible: boolean; arrastrada: SharedValue<number>; dy: SharedValue<number>;
-  alMover: (desde: number, hasta: number) => void; alCambiar: (si: boolean) => void;
+  version: string; versionDelArrastre: SharedValue<string>; alMover: (desde: number, hasta: number) => void; alCambiar: (si: boolean) => void;
 }) {
-  const { indice, total, arrastrada, dy, alMover } = p;
+  const { indice, total, arrastrada, dy, version, versionDelArrastre, alMover } = p;
   const pan = usePanGesture({
     onActivate: () => {
       'worklet';
+      versionDelArrastre.set(version);
       arrastrada.set(indice);
       dy.set(0);
     },
@@ -416,14 +436,17 @@ function FilaDeOrden(p: {
     onDeactivate: (ev) => {
       'worklet';
       const hasta = Math.max(0, Math.min(total - 1, indice + Math.round(ev.translationY / ALTO_FILA)));
-      arrastrada.set(-1);
-      dy.set(0);
-      scheduleOnRN(alMover, indice, hasta);
+      // Se suelta en su lugar nuevo y ahí queda hasta que llega el orden nuevo; sin moverse, vuelve al suyo.
+      dy.set(withTiming((hasta - indice) * ALTO_FILA, { duration: 150 }, (terminado) => {
+        if (hasta !== indice) scheduleOnRN(alMover, indice, hasta);
+        else if (terminado) arrastrada.set(-1);
+      }));
     },
   });
   // La que se arrastra sigue al dedo y las otras le hacen lugar.
   const estilo = useAnimatedStyle(() => {
     const a = arrastrada.get();
+    if (a >= 0 && versionDelArrastre.get() !== version) return { transform: [{ translateY: 0 }], zIndex: 1, opacity: 1 };
     if (a === indice) return { transform: [{ translateY: dy.get() }], zIndex: 2, opacity: 0.95 };
     if (a < 0) return { transform: [{ translateY: withTiming(0, { duration: 150 }) }], zIndex: 1, opacity: 1 };
     const hasta = Math.max(0, Math.min(total - 1, a + Math.round(dy.get() / ALTO_FILA)));

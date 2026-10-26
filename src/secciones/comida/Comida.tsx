@@ -12,13 +12,13 @@ import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue } from 'rea
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
-import type { Estado } from '@/almacen/almacen';
+import { DIAS_DE_COMIDA, type Estado } from '@/almacen/almacen';
 import { conMayuscula } from '@/comida/buscar';
 import { comidaDeLaHora, type Comida } from '@/dominio/comidas';
 import { diasEntre, lunesDe, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import type { Linea } from '@/dominio/alrededorDelEntreno';
-import { delDia, type Registro, type Valores } from '@/dominio/registros';
+import { delDia, sumarValores, totalDelDia, type Registro, type Valores } from '@/dominio/registros';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { HojaModal } from '../HojaModal';
@@ -39,13 +39,38 @@ import { abrirRegistro } from './registro';
 const VISTAS = ['dia', 'semana', 'mes'] as const;
 type Vista = (typeof VISTAS)[number];
 
+// Lo de cada día, armado una vez por cada versión de los registros (el almacén cambia el Map entero
+// en cada cambio): la semana y el mes miran decenas de días cada vez que se pinta la pestaña.
+const indices = new WeakMap<Estado['registros'], Map<ClaveDia, Registro[]>>();
+
+/** Lo de un día, como delDia, sin recorrer todo lo registrado. */
+function registrosDe(e: Pick<Estado, 'registros'>, dia: ClaveDia): Registro[] {
+  let indice = indices.get(e.registros);
+  if (!indice) {
+    indice = new Map();
+    for (const r of e.registros.values()) {
+      const lista = indice.get(r.dia);
+      if (lista) lista.push(r);
+      else indice.set(r.dia, [r]);
+    }
+    indices.set(e.registros, indice);
+  }
+  return delDia(indice.get(dia) ?? [], dia);
+}
+
+/** Como totalDe: hoy y antes, sin lo planificado; en un día que no llegó, con lo planificado. */
+const totalDelIndice = (e: Pick<Estado, 'registros' | 'hoy'>, dia: ClaveDia) => totalDelDia(registrosDe(e, dia), dia, dia > e.hoy);
+
+/** Lo comido está en el teléfono solo de los últimos DIAS_DE_COMIDA días: lo de antes no se abre, porque se vería vacío. */
+const fueraDeLoCargado = (e: Pick<Estado, 'hoy'>, dia: ClaveDia) => dia < sumarDias(e.hoy, -DIAS_DE_COMIDA);
+
 /** El día de un instante de la meta y lo comido, para la luna: llena es la meta. */
 function lunitaDe(e: Estado, dia: ClaveDia): Lunita {
-  const registros = delDia(e.registros.values(), dia);
+  const registros = registrosDe(e, dia);
   const plan = registros.some((r) => r.planificado);
   const estado = dia > e.hoy && !plan ? 'futuro' : registros.length ? (plan ? 'plan' : 'comido') : 'vacio';
   const meta = metaDelDia(e, dia) ?? metaDelDia(e, e.hoy);
-  const kcal = totalDe(e.registros, dia, e.hoy).kcal;
+  const kcal = totalDelIndice(e, dia).kcal;
   return { estado, fraccion: meta ? kcal / meta.kcal : registros.length ? 1 : 0 };
 }
 
@@ -59,6 +84,7 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
   const anchoCuadro = ancho - 40;
 
   const verDia = (d: ClaveDia) => {
+    if (fueraDeLoCargado(e, d)) return;
     Haptics.selectionAsync().catch(() => {});
     setElegido(d === e.hoy ? null : d);
     setVista('dia');
@@ -111,10 +137,11 @@ function TiraDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alEleg
         <Pressable
           key={d}
           onPress={() => alElegir(d)}
+          disabled={fueraDeLoCargado(e, d)}
           style={[estilos.tiraDia, d === dia && estilos.tiraDiaElegido]}
           accessibilityRole="button"
           accessibilityLabel={fechaCorta(d)}
-          accessibilityState={{ selected: d === dia }}
+          accessibilityState={{ selected: d === dia, disabled: fueraDeLoCargado(e, d) }}
         >
           <Text style={estilos.tiraLetra}>{letraDelDia(d)}</Text>
           <View style={estilos.tiraLugar} />
@@ -254,21 +281,30 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   );
 }
 
-type Promedio = { n: number } & Pick<Valores, 'kcal' | Macro>;
-/** El promedio de los días que ya terminaron y tienen algo registrado. */
+type Promedio = { n: number; meta: Macros | null } & Pick<Valores, 'kcal' | Macro>;
+/**
+ * El promedio de los días que ya terminaron y tienen algo registrado, y la meta de esos mismos días
+ * promediada: con la semana repartida, o con la meta de otro mes, cada día tiene la suya.
+ */
 function promedioDe(e: Estado, dias: ClaveDia[]): Promedio {
-  const validos = dias.filter((d) => d < e.hoy && delDia(e.registros.values(), d).some((r) => !r.planificado));
-  const p: Promedio = { n: validos.length, kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 };
+  const validos = dias.filter((d) => d < e.hoy && registrosDe(e, d).some((r) => !r.planificado));
+  const p: Promedio = { n: validos.length, meta: null, kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 };
   for (const d of validos) {
-    const t2 = totalDe(e.registros, d, e.hoy);
+    const t2 = totalDelIndice(e, d);
     p.kcal += t2.kcal / validos.length;
     for (const m of MACROS) p[m] += t2[m] / validos.length;
+  }
+  const metas = validos.flatMap((d) => metaDelDia(e, d) ?? []);
+  if (metas.length) {
+    const media = (k: keyof Macros) => Math.round(metas.reduce((s, m) => s + m[k], 0) / metas.length);
+    p.meta = { kcal: media('kcal'), proteina: media('proteina'), carbohidratos: media('carbohidratos'), grasas: media('grasas') };
   }
   return p;
 }
 
-function CabezaDePromedio({ titulo, fechas, promedio, dias, meta }: { titulo: string; fechas: string; promedio: Promedio; dias: number; meta: Macros | null }) {
+function CabezaDePromedio({ titulo, fechas, promedio, dias, metaSinDias }: { titulo: string; fechas: string; promedio: Promedio; dias: number; metaSinDias: Macros | null }) {
   const numeros = useNumeros();
+  const meta = promedio.meta ?? metaSinDias;
   return (
     <View>
       <View style={estilos.paginaCabeza}>
@@ -308,18 +344,18 @@ function PaginaDeLaSemana({ e, dia, alElegir, avisar }: { e: Estado; dia: ClaveD
         fechas={t('comida.rangoSemana', { desde: desde.dia, hasta: hasta.dia, mes: lista('fecha.mesesCortos')[hasta.mes] })}
         promedio={promedioDe(e, dias)}
         dias={dias.filter((d) => d < e.hoy).length}
-        meta={meta}
+        metaSinDias={meta}
       />
       <View style={estilos.grafica}>
         {/* La meta va a 100 de los 120 que mide cada barra: lo que pasa de ahí no cambia la lectura. */}
         <View style={estilos.graficaMeta} pointerEvents="none" />
         {dias.map((d) => {
-          const total = totalDe(e.registros, d, e.hoy);
+          const total = totalDelIndice(e, d);
           const m = metaDelDia(e, d) ?? meta;
-          const plan = delDia(e.registros.values(), d).some((r) => r.planificado);
+          const plan = registrosDe(e, d).some((r) => r.planificado);
           const alto = (v: number, objetivo: number | undefined) => `${(Math.min(1.2, objetivo ? v / objetivo : 0) / 1.2) * 100}%` as const;
           return (
-            <Pressable key={d} onPress={() => alElegir(d)} style={estilos.graficaDia} accessibilityRole="button" accessibilityLabel={fechaCorta(d)}>
+            <Pressable key={d} onPress={() => alElegir(d)} disabled={fueraDeLoCargado(e, d)} style={estilos.graficaDia} accessibilityRole="button" accessibilityLabel={fechaCorta(d)}>
               <View style={[estilos.graficaBarras, plan && estilos.tenue]}>
                 <View style={[estilos.graficaBarra, { height: alto(total.kcal, m?.kcal), backgroundColor: '#e6dfcc' }]} />
                 {MACROS.map((x) => <View key={x} style={[estilos.graficaBarra, { height: alto(total[x], m?.[x]), backgroundColor: COLOR_DE_MACRO[x] }]} />)}
@@ -348,7 +384,7 @@ function PaginaDelMes({ e, dia, ancho, alElegir }: { e: Estado; dia: ClaveDia; a
   const anchoGrilla = ancho - 32;
   return (
     <View>
-      <CabezaDePromedio titulo={conMayuscula(lista('fecha.meses')[p.mes])} fechas={String(p.anio)} promedio={promedioDe(e, dias)} dias={dias.filter((d) => d < e.hoy).length} meta={metaDelDia(e, e.hoy)} />
+      <CabezaDePromedio titulo={conMayuscula(lista('fecha.meses')[p.mes])} fechas={String(p.anio)} promedio={promedioDe(e, dias)} dias={dias.filter((d) => d < e.hoy).length} metaSinDias={metaDelDia(e, e.hoy)} />
       <View style={estilos.calendario}>
         <View style={estilos.calendarioFila}>
           {semanas[0].map((d) => <Text key={d} style={[estilos.calendarioLetra]}>{letraDelDia(d)}</Text>)}
@@ -359,7 +395,7 @@ function PaginaDelMes({ e, dia, ancho, alElegir }: { e: Estado; dia: ClaveDia; a
               {semana.map((d) => {
                 const fuera = d < primero || d > ultimo;
                 return (
-                  <Pressable key={d} disabled={fuera} onPress={() => alElegir(d)} style={[estilos.calendarioDia, d === e.hoy && estilos.calendarioHoy]} accessibilityRole="button" accessibilityLabel={fechaCorta(d)}>
+                  <Pressable key={d} disabled={fuera || fueraDeLoCargado(e, d)} onPress={() => alElegir(d)} style={[estilos.calendarioDia, d === e.hoy && estilos.calendarioHoy]} accessibilityRole="button" accessibilityLabel={fechaCorta(d)}>
                     <View style={estilos.calendarioLugar} />
                     {!fuera && <Text style={[estilos.tiraNumero, d === e.hoy && estilos.hoy]}>{partesDe(d).dia}</Text>}
                   </Pressable>
@@ -402,7 +438,8 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   // Va aunque haya uno anotado más temprano (la regla ya mira si hubo uno a su hora); si está planificado, la línea va en él.
   const snack = lineas.get('snack');
   if (snack && !comidas.some((c) => c.comida === 'snack' && c.planificada)) {
-    entradas.push({ tipo: 'vacia', comida: 'snack', ahora: false, minutos: Math.max(ahora, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45) });
+    // Después de una cena tarde, el de antes de dormir no pasa de las 23:59: la línea es la de hoy.
+    entradas.push({ tipo: 'vacia', comida: 'snack', ahora: false, minutos: Math.min(1439, Math.max(ahora, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45)) });
   }
   // Una comida registrada ahora ya marca la hora: «ahora» va solo si no la hay.
   if (dia === e.hoy && !comidas.some((c) => Math.abs(c.minutos - ahora) < 1)) entradas.push({ tipo: 'ahora', minutos: ahora - 0.5 });
@@ -448,7 +485,16 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
   const sacar = () => {
     sacarFoto(dia, c.comida).then((uri) => uri && setFoto(uri)).catch(() => {});
   };
-  const delPlan = c.planificada && c.registros.some((r) => r.plan);
+  // La cámara espera a que se vaya la hoja de la foto: iOS no abre una pantalla mientras otra se está cerrando.
+  const cambiarFoto = () => {
+    setViendo(false);
+    setTimeout(sacar, 600);
+  };
+  // Lo planificado que quedó en una comida con algo ya comido (un café a la hora del almuerzo armado)
+  // se ve tenue y no suma hasta confirmarlo, como en el total del día.
+  const mezclada = !c.planificada && c.registros.some((r) => r.planificado);
+  const total = mezclada && dia <= e.hoy ? sumarValores(c.registros.filter((r) => !r.planificado).map((r) => r.valores)) : c.total;
+  const delPlan = c.registros.some((r) => r.planificado && r.plan);
   return (
     <Animated.View layout={ACOMODA} style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan]}>
       {/* Lo planificado se ve tenue; lo que se hace con lo armado, no. */}
@@ -458,7 +504,7 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
         {c.planificada && <Text style={estilos.etiquetaPlan}>{t('comida.planificado')}</Text>}
         {numeros && (
           <Text style={estilos.tarjetaKcal}>
-            {numero(Math.round(c.total.kcal))}
+            {numero(Math.round(total.kcal))}
             <Text style={estilos.tarjetaKcalUnidad}> kcal</Text>
           </Text>
         )}
@@ -466,7 +512,7 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
       {linea && <LineaDeEntreno linea={linea} />}
       {c.registros.map((r) => (
         <Animated.View key={r.id} entering={FadeIn.duration(280)} exiting={FadeOut.duration(180)} layout={ACOMODA}>
-          <FilaDeRegistro r={r} sistema={sistema} />
+          <FilaDeRegistro r={r} sistema={sistema} tenue={mezclada && r.planificado} />
         </Animated.View>
       ))}
       {foto && (
@@ -480,7 +526,7 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
         {MACROS.map((m) => (
           <View key={m} style={estilos.mini}>
             <Punto macro={m} tam={5} />
-            {numeros && <Text style={estilos.miniTexto}>{`${gramosDeMacro(c.total[m])} g`}</Text>}
+            {numeros && <Text style={estilos.miniTexto}>{`${gramosDeMacro(total[m])} g`}</Text>}
           </View>
         ))}
         {hayFotos && !c.planificada && !foto && (
@@ -495,14 +541,14 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
           <AccionesDelPlan e={e} c={c} dia={dia} avisar={avisar} />
         </Animated.View>
       )}
-      {viendo && foto && (
+      {foto && (
         <HojaModal
-          abierta
+          abierta={viendo}
           titulo={t('comida.fotos.ver')}
           alCerrar={() => setViendo(false)}
           pie={(
             <>
-              <Boton tipo="contorno" texto={t('comida.fotos.cambiar')} alTocar={() => { setViendo(false); sacar(); }} />
+              <Boton tipo="contorno" texto={t('comida.fotos.cambiar')} alTocar={cambiarFoto} />
               <Boton tipo="quitar" texto={t('comida.fotos.borrar')} alTocar={() => { borrarFoto(dia, c.comida); setFoto(null); setViendo(false); }} />
             </>
           )}
@@ -515,13 +561,13 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
   );
 }
 
-function FilaDeRegistro({ r, sistema }: { r: Registro; sistema: ReturnType<typeof sistemaDe> }) {
+function FilaDeRegistro({ r, sistema, tenue }: { r: Registro; sistema: ReturnType<typeof sistemaDe>; tenue: boolean }) {
   const cantidad = cantidadDeTexto(r.cantidad, sistema);
   const numeros = useNumeros();
   return (
     <Pressable
       onPress={() => abrirRegistro({ editar: r.id, comida: r.comida, dia: r.dia })}
-      style={({ pressed }) => [estilos.item, pressed && estilos.itemApretado]}
+      style={({ pressed }) => [estilos.item, tenue && estilos.tenueDePlan, pressed && estilos.itemApretado]}
       accessibilityRole="button"
     >
       <Text style={estilos.itemTexto} numberOfLines={1}>
@@ -535,7 +581,8 @@ function FilaDeRegistro({ r, sistema }: { r: Registro; sistema: ReturnType<typeo
 
 function TarjetaVacia({ comida, dia, hoy, e, linea }: { comida: Comida; dia: ClaveDia; hoy: ClaveDia; e: Estado; linea?: Linea }) {
   const ayer = sumarDias(hoy, -1);
-  const deAyer = dia === hoy ? delDia(e.registros.values(), ayer).filter((r) => r.comida === comida) : [];
+  // Lo planificado de ayer que no se confirmó no se comió: no se copia.
+  const deAyer = dia === hoy ? registrosDe(e, ayer).filter((r) => r.comida === comida && !r.planificado) : [];
   return (
     <View style={[estilos.tarjeta, estilos.tarjetaVacia]}>
       <Text style={estilos.tarjetaTitulo}>{t(`comida.comidas.${comida}`)}</Text>
@@ -555,12 +602,12 @@ function TarjetaVacia({ comida, dia, hoy, e, linea }: { comida: Comida; dia: Cla
   );
 }
 
-/** Debajo de la línea: confirmar lo planificado cuando llega el día, y copiar el día a hoy o a mañana. */
+/** Debajo de la línea: confirmar lo planificado cuando llega el día (o después, si quedó sin confirmar), y copiar el día a hoy o a mañana. */
 function AccionesDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (texto: string, deshacer?: () => void) => void }) {
   const [copiando, setCopiando] = useState(false);
-  const registros = delDia(e.registros.values(), dia);
+  const registros = registrosDe(e, dia);
   // Lo que armó el plan se anota de a una comida, con «Comí esto»: confirmar todo junto anotaría también la cena que falta.
-  const planificados = dia === e.hoy ? registros.filter((r) => r.planificado && !r.plan).length : 0;
+  const planificados = dia <= e.hoy ? registros.filter((r) => r.planificado && !r.plan).length : 0;
   const destinos = [e.hoy, sumarDias(e.hoy, 1)].filter((d) => d !== dia);
   if (!registros.length) return null;
   const copiar = (hacia: ClaveDia) => {

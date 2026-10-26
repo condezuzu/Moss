@@ -13,8 +13,8 @@ import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 import type { Macros } from './metas';
 import {
-  adaptar, adaptarRegistros, cambiarPorOtra, comidasDelPlan, diaPlaneadoDe, DIETAS, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas, permitida,
-  planearDia, planearSemana, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, type DiaPlaneado, type Opcion, type Preferencias,
+  adaptar, adaptarRegistros, cambiarPorOtra, comidasDelPlan, diaPlaneadoDe, DIETAS, estaTachada, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas, permitida,
+  planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, tachadasDe, tachar, type DiaPlaneado, type Opcion, type Preferencias,
   type Resolver,
 } from './plan';
 import { gramosDe, itemDeAlimento, itemRapido, valoresDeCantidad, type Item, type Registro, type Valores } from './registros';
@@ -461,6 +461,24 @@ describe('la lista de compras', () => {
     expect(new Set(lista.map((x) => x.clave)).size).toBe(lista.length);
     const items = todasLasComidas(semana).flatMap((c) => c.items);
     expect(lista.reduce((s, x) => s + x.comidas, 0)).toBe(items.length);
+  });
+
+  it('lo tachado sigue tachado hasta que se planifica más de ese alimento, y lo que ya no está se olvida', () => {
+    const manana = sumarDias(HOY, 1);
+    const semana = [reg(arroz(), HOY, 'almuerzo', 13, { planificado: true }), reg(banana(), manana, 'desayuno', 8, { planificado: true }), reg(pollo(), hace(1), 'almuerzo', 13, { planificado: true })];
+    const planificado = planificadoPorCompra(semana, HOY);
+    expect([...planificado.keys()].sort()).toEqual(['base:3', 'base:5']);
+    let tachadas = tachar(tachar({ 'base:9': ['viejo'] }, 'base:5', planificado), 'base:3', planificado);
+    expect(Object.keys(tachadas).sort()).toEqual(['base:3', 'base:5']);
+    tachadas = tachar(tachadas, 'base:3', planificado);
+    expect(estaTachada(tachadas, 'base:3', planificado)).toBe(false);
+    expect(estaTachada(tachadas, 'base:5', planificado)).toBe(true);
+    // Pasa el día del arroz y se arma la semana que viene, con arroz otra vez: vuelve a la lista.
+    const despues = [...semana, reg(arroz(), sumarDias(HOY, 7), 'almuerzo', 13, { planificado: true })];
+    expect(estaTachada(tachadas, 'base:5', planificadoPorCompra(despues, manana))).toBe(false);
+    expect(estaTachada(tachadas, 'base:5', planificadoPorCompra(semana, manana))).toBe(true);
+    expect(tachadasDe(['base:5'])).toEqual({});
+    expect(tachadasDe({ 'base:5': ['r1'], mal: 3 })).toEqual({ 'base:5': ['r1'] });
   });
 });
 

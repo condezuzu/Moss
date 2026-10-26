@@ -25,11 +25,20 @@ function deBase64Url(s: string): string {
   return new TextDecoder().decode(Uint8Array.from(binario, (c) => c.charCodeAt(0)));
 }
 
+/** Lo largo que puede ser cada texto: el enlace se arma recortado, así siempre pasa su propia revisión. */
+const LARGO = { nombre: 200, marca: 120, porcion: 120 };
+const corto = (s: string, n: number) => s.trim().slice(0, n);
+
 /** El enlace, solo con lo que hace falta para armarlo del otro lado. */
 export function enlaceDe(c: Compartido): string {
   const datos = c.tipo === 'receta'
-    ? { v: VERSION, tipo: c.tipo, receta: { tipo: c.receta.tipo, nombre: c.receta.nombre, porciones: c.receta.porciones, pesoFinal: c.receta.pesoFinal, items: c.receta.items.map(itemLimpio) } }
-    : { v: VERSION, tipo: c.tipo, propio: { nombre: c.propio.nombre, marca: c.propio.marca, codigo: c.propio.codigo, por100g: c.propio.por100g, porciones: c.propio.porciones, origen: c.propio.origen ?? 'mano' } };
+    ? { v: VERSION, tipo: c.tipo, receta: { tipo: c.receta.tipo, nombre: corto(c.receta.nombre, LARGO.nombre), porciones: c.receta.porciones, pesoFinal: c.receta.pesoFinal, items: c.receta.items.map(itemLimpio) } }
+    : {
+      v: VERSION, tipo: c.tipo, propio: {
+        nombre: corto(c.propio.nombre, LARGO.nombre), marca: c.propio.marca && corto(c.propio.marca, LARGO.marca), codigo: c.propio.codigo, por100g: c.propio.por100g,
+        porciones: c.propio.porciones.map((p) => ({ nombre: corto(p.nombre, LARGO.porcion), gramos: p.gramos })), origen: c.propio.origen ?? 'mano',
+      },
+    };
   return PREFIJO + aBase64Url(JSON.stringify(datos));
 }
 
@@ -37,7 +46,7 @@ export function enlaceDe(c: Compartido): string {
 const itemLimpio = (i: Item): Item => ({
   fuente: i.fuente === 'propio' || i.fuente === 'receta' ? 'rapida' : i.fuente,
   ref: i.fuente === 'propio' || i.fuente === 'receta' ? null : i.ref,
-  nombre: i.nombre, cantidad: i.cantidad, valores: i.valores, ...(i.estimado ? { estimado: true as const } : {}),
+  nombre: corto(i.nombre, LARGO.nombre), cantidad: cantidadLimpia(i.cantidad, true), valores: i.valores, ...(i.estimado ? { estimado: true as const } : {}),
 });
 
 const numero = (x: unknown, min: number, max: number): x is number => typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
@@ -58,12 +67,36 @@ function valoresValidos(v: unknown, porCien: boolean): v is Valores {
   return SECUNDARIOS.every((k) => x[k] === undefined || numero(x[k], 0, k === 'sodio' ? 100000 : tope));
 }
 
+/** Una cantidad posible (Medida, con el aceite si tiene); la carga rápida no tiene. */
+function cantidadValida(c: unknown): boolean {
+  if (c === null || c === undefined) return true;
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
+  const x = c as Record<string, unknown>;
+  const opcional = (v: unknown, max: number) => v === undefined || numero(v, 0, max);
+  if (!opcional(x.aceite, 5000)) return false;
+  if ('porcion' in x) return texto(x.porcion, LARGO.porcion) && numero(x.gramosPorcion, 0.01, 100000) && numero(x.veces, 0.001, 10000);
+  return numero(x.gramos, 0, 100000) && opcional(x.ml, 100000) && opcional(x.bruto, 100000);
+}
+
+/** La cantidad, con sus campos y nada más. */
+function cantidadLimpia(c: Item['cantidad'] | undefined, recortar = false): Item['cantidad'] {
+  if (!c || typeof c !== 'object') return null;
+  const aceite = c.aceite !== undefined ? { aceite: c.aceite } : {};
+  if ('porcion' in c) return { porcion: recortar ? corto(c.porcion, LARGO.porcion) : c.porcion, gramosPorcion: c.gramosPorcion, veces: c.veces, ...aceite };
+  return { gramos: c.gramos, ...(c.ml !== undefined ? { ml: c.ml } : {}), ...(c.bruto !== undefined ? { bruto: c.bruto } : {}), ...aceite };
+}
+
 function itemValido(i: unknown): i is Item {
   if (!i || typeof i !== 'object') return false;
   const x = i as Record<string, unknown>;
   const fuentes = ['base', 'catalogo', 'off', 'rapida'];
-  return fuentes.includes(x.fuente as string) && (x.ref === null || texto(x.ref, 40)) && texto(x.nombre, 200) && valoresValidos(x.valores, false);
+  return fuentes.includes(x.fuente as string) && (x.ref === null || texto(x.ref, 40)) && texto(x.nombre, LARGO.nombre) && cantidadValida(x.cantidad) && valoresValidos(x.valores, false);
 }
+
+/** Un alimento de otro teléfono, solo con los campos conocidos: lo demás no se guarda ni sube. */
+const itemRecibido = (i: Item): Item => ({
+  fuente: i.fuente, ref: i.ref, nombre: i.nombre.trim(), cantidad: cantidadLimpia(i.cantidad), valores: conMicrosLimpios(i.valores), ...(i.estimado === true ? { estimado: true as const } : {}),
+});
 
 /** Lo que trae un enlace (o solo su `d`), revisado; si algo no cierra, null. */
 export function leerCompartido(enlaceOD: string): Compartido | null {
@@ -73,19 +106,19 @@ export function leerCompartido(enlaceOD: string): Compartido | null {
     if (datos.v !== VERSION) return null;
     if (datos.tipo === 'receta') {
       const r = datos.receta as Record<string, unknown>;
-      if (!r || (r.tipo !== 'receta' && r.tipo !== 'comida') || !texto(r.nombre, 80) || !numero(r.porciones, 0.5, 100)) return null;
+      if (!r || (r.tipo !== 'receta' && r.tipo !== 'comida') || !texto(r.nombre, LARGO.nombre) || !numero(r.porciones, 0.5, 100)) return null;
       if (!(r.pesoFinal === null || numero(r.pesoFinal, 1, 20000))) return null;
       if (!Array.isArray(r.items) || !r.items.length || r.items.length > MAXIMO_DE_ITEMS || !r.items.every(itemValido)) return null;
-      return { tipo: 'receta', receta: { tipo: r.tipo, nombre: r.nombre.trim(), porciones: r.porciones, pesoFinal: r.pesoFinal as number | null, items: (r.items as Item[]).map((i) => ({ ...i, valores: conMicrosLimpios(i.valores) })) } };
+      return { tipo: 'receta', receta: { tipo: r.tipo, nombre: r.nombre.trim(), porciones: r.porciones, pesoFinal: r.pesoFinal as number | null, items: (r.items as Item[]).map(itemRecibido) } };
     }
     if (datos.tipo === 'propio') {
       const p = datos.propio as Record<string, unknown>;
-      if (!p || !texto(p.nombre, 80) || !(p.marca === null || texto(p.marca, 120)) || !(p.codigo === null || (typeof p.codigo === 'string' && /^\d{6,14}$/.test(p.codigo)))) return null;
+      if (!p || !texto(p.nombre, LARGO.nombre) || !(p.marca === null || texto(p.marca, LARGO.marca)) || !(p.codigo === null || (typeof p.codigo === 'string' && /^\d{6,14}$/.test(p.codigo)))) return null;
       if (!valoresValidos(p.por100g, true)) return null;
       const porciones = p.porciones;
-      if (!Array.isArray(porciones) || porciones.length > 20 || !porciones.every((x) => x && texto((x as { nombre: unknown }).nombre, 60) && numero((x as { gramos: unknown }).gramos, 0.1, 5000))) return null;
+      if (!Array.isArray(porciones) || porciones.length > 20 || !porciones.every((x) => x && texto((x as { nombre: unknown }).nombre, LARGO.porcion) && numero((x as { gramos: unknown }).gramos, 0.1, 5000))) return null;
       const origen = p.origen === 'off' || p.origen === 'etiqueta' ? p.origen : 'mano';
-      return { tipo: 'propio', propio: { nombre: p.nombre.trim(), marca: p.marca as string | null, codigo: p.codigo as string | null, por100g: conMicrosLimpios(p.por100g as Valores), porciones: porciones as AlimentoPropio['porciones'], origen } };
+      return { tipo: 'propio', propio: { nombre: p.nombre.trim(), marca: p.marca as string | null, codigo: p.codigo as string | null, por100g: conMicrosLimpios(p.por100g as Valores), porciones: (porciones as AlimentoPropio['porciones']).map((x) => ({ nombre: x.nombre.trim(), gramos: x.gramos })), origen } };
     }
     return null;
   } catch {

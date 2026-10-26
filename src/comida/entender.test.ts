@@ -124,4 +124,42 @@ describe('lo dicho, en alimentos de la base', () => {
     expect(cambiaElNumero(100, 110)).toBe(false);
     expect(cambiaElNumero(2, 5)).toBe(false);
   });
+
+  it('«arroz y pollo» que la base no tiene entero son dos; lo que tiene entero queda uno', async () => {
+    const lista = await decir('arroz y pollo', { conocido: () => true });
+    expect(lista.map(nombre)).toEqual([expect.stringMatching(/^Arroz/), expect.stringMatching(/pollo/i)]);
+    expect((await decir('café y tostadas', { conocido: () => true })).map(nombre)).toEqual([expect.stringMatching(/^Café/), expect.stringMatching(/^Tostada/)]);
+    const empanadas = await decir('dos empanadas de carne y una de jamón y queso', { conocido: () => true });
+    expect(empanadas.map(nombre)).toEqual([expect.stringMatching(/empanada de carne/i), expect.stringMatching(/empanada de jamón y queso/i)]);
+  });
+
+  it('la mitad de algo que no se cuenta entero es supuesta; la de una cosa entera, no', async () => {
+    const [pollo] = await decir('medio pollo al spiedo', { conocido: () => true });
+    expect(pollo.supuesto).toBe(true);
+    const [pizza] = await decir('media pizza', { conocido: () => true });
+    expect(pizza.supuesto).toBe(true);
+    const [milanesa] = await decir('media milanesa', { conocido: () => true });
+    const c = milanesa.opciones[milanesa.elegida].cantidad;
+    expect(['porcion' in c && c.porcion, 'veces' in c && c.veces, milanesa.supuesto]).toEqual(['1 unidad', 0.5, false]);
+  });
+
+  it('muchos y en plural se cuentan si hay una porción de una unidad; con «de» o en singular, son gramos', async () => {
+    const gramos = (e: Entendido) => { const c = e.opciones[e.elegida].cantidad; return 'gramos' in c ? c.gramos : c.gramosPorcion * c.veces; };
+    const [frutillas] = await decir('20 frutillas', { conocido: () => true });
+    expect(gramos(frutillas)).toBeGreaterThan(150);
+    expect(gramos(frutillas)).toBeLessThan(400);
+    const [aceitunas] = await decir('20 aceitunas', { conocido: () => true });
+    expect(gramos(aceitunas)).toBeGreaterThan(50);
+    const [pollo] = await decir('150 de pollo', { conocido: () => true });
+    expect(pollo.opciones[pollo.elegida].cantidad).toEqual({ gramos: 150 });
+    const [arroz] = await decir('200 arroz', { conocido: () => true });
+    expect(arroz.opciones[arroz.elegida].cantidad).toEqual({ gramos: 200 });
+  });
+
+  it('las papas fritas de la milanesa son una porción, y se pregunta cuánto', async () => {
+    const [, papas] = await decir('milanesa con papas fritas', { conocido: () => true });
+    expect(nombre(papas)).toMatch(/papas fritas/i);
+    expect(kcal(papas)).toBeGreaterThan(200);
+    expect(papas.pregunta).toBe('cuanto');
+  });
 });

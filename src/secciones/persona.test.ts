@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { sumarDias } from '@/dominio/fechas';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
 import { calcularPersona, suenoDe } from './persona';
 
@@ -32,6 +33,28 @@ describe('la persona de Inicio y Progreso', () => {
     expect(p.progreso.estado).toBe('faltanDatos');
     expect(p.control).toBeNull();
     expect(p.estadoControl?.fecha).toBe('2026-10-27');
+  });
+
+  const conSalud = () => {
+    // 60 días de Salud bajando de 88 a 85 antes de la entrada (el 22/9), y después quieto en 85.
+    const pesos = Array.from({ length: 91 }, (_, i) => ({ fecha: sumarDias(HOY, i - 90), kg: i < 60 ? 88 - (3 * i) / 60 : 85, origen: 'salud' as const, momento: `${HOY}T08:00:00Z` }));
+    const metas: MetaGuardada[] = [{ desde: sumarDias(HOY, -30), kcal: 2000, proteina: 150, carbohidratos: 190, grasas: 70, gasto: 2500, motivo: 'inicial', momento: '' }];
+    return { pesos, metas };
+  };
+
+  it('empezaste con la tendencia del día de la entrada, no con la pesada más vieja de Salud', () => {
+    const perfil: Perfil = { sexo: 'm', nacimiento: 1990, alturaCm: 180, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 80, actualizado: `${HOY}T08:00:00Z` };
+    const { pesos, metas } = conSalud();
+    const p = calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio });
+    expect(p.pesoInicial!).toBeCloseTo(p.tendencia.get(metas[0].desde)!, 6);
+    expect(p.pesoInicial!).toBeLessThan(86);
+  });
+
+  it('sin déficit, bajar queda en mantener también en el progreso', () => {
+    const perfil: Perfil = { sexo: 'f', nacimiento: 1990, alturaCm: 165, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 70, sinDeficit: true, actualizado: `${HOY}T08:00:00Z` };
+    const { pesos, metas } = conSalud();
+    const p = calcularPersona({ hoy: HOY, perfil, pesos, metas, ...vacio });
+    expect(p.progreso).toMatchObject({ estado: 'estable', ritmoPlan: 0, faltan: null });
   });
 });
 

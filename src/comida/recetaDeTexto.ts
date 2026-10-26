@@ -936,7 +936,9 @@ export function leerReceta(texto: string, idioma: Idioma): RecetaLeida {
       modo = 'pasos';
       return;
     }
-    if (!conCabecera && k === 0 && esTitulo(r, plano, renglones.length, lengua)) return anotar(rindeEnTitulo(plano));
+    // «Milanesas al horno (4 porciones)»: lo que rinde, sin una cantidad adelante, también dice que es el título.
+    const tituloConRinde = () => renglones.length > 1 && !empiezaConCantidad(plano, lengua) && rindeEnTitulo(plano) !== null;
+    if (!conCabecera && k === 0 && (esTitulo(r, plano, renglones.length, lengua) || tituloConRinde())) return anotar(rindeEnTitulo(plano));
     // Un subtítulo: «Para la masa», «Relleno:».
     if (/:\s*$/.test(r.texto) || (/^(?:para|for)\s+(?:el|la|los|las|the)\s/.test(plano) && !plano.includes(':'))) return;
     if (plano.split(/\s+/).length > 18) return;

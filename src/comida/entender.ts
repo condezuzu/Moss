@@ -58,20 +58,38 @@ export function cambiaElNumero(a: number, b: number): boolean {
 
 /** Sin tildes, sin plural y en minúsculas: «Papas fritas» y «papa frita» son lo mismo. */
 const llano = (texto: string) => normalizar(texto).split(' ').map((p) => (p.length > 3 ? p.replace(/(?:es|s)$/, '') : p)).join(' ');
-/** Lo que se cuenta como una cosa: «1 unidad», «1 mediana», «1 rebanada». */
-const DE_A_UNA = /^1\s+(?:unidad|mediana?o?|grande|chica?o?|peque[nñ][ao]|pieza|rebanada|feta|porci[oó]n t[ií]pica|medium|large|small|piece|slice)(?![\p{L}])/iu;
+const TAMANOS = 'mediana?o?|grande|chica?o?|peque[nñ][ao]|medium|large|small';
+/** El nombre de la cosa y su tamaño: «1 fresa mediana», «1 milanesa grande»; no una medida («1 taza grande»). */
+const COSA_Y_TAMANO = String.raw`(?!(?:taza|cup|vaso|glass|cuchar|tbsp|tsp|tablespoon|teaspoon|lata|can|botella|bottle|paquete|package|sobre|packet|porci|serving|onza|oz|fl|copa|envase|bolsa|bag|frasco|jar|bol|bowl|plato|plate|container|extra|cabeza|head|tallo|stalk)\p{L}*\s)\p{L}+\s+(?:${TAMANOS})`;
+/** Una cosa entera: «1 unidad», «1 mediana», «1 fresa mediana». */
+const UNA_ENTERA = new RegExp(String.raw`^1\s+(?:unidad|${TAMANOS}|${COSA_Y_TAMANO})(?![\p{L}])`, 'iu');
+/** Lo que se cuenta como una cosa: una entera, «1 rebanada», «1 feta». */
+const DE_A_UNA = new RegExp(String.raw`^1\s+(?:unidad|pieza|rebanada|feta|porci[oó]n t[ií]pica|piece|slice|${TAMANOS}|${COSA_Y_TAMANO})(?![\p{L}])`, 'iu');
 /** Lo que se toma, de a uno: «un café» es una taza, «una coca», una lata. */
 const RECIPIENTE = /^1\s+(?:taza|cup|vaso|glass|pocillo|lata|can|botella|bottle|copa|tazón)(?![\p{L}])/iu;
+/** Una porción en gramos u onzas («100 g»): no es una cosa que se cuente. */
+const METRICA = /^\d+(?:[.,]\d+)?\s*(?:g|gr|gramos?|kg|ml|oz|onzas?|ounces?|lb)(?![\p{L}])/iu;
+/** Lo que acompaña de a poco: se unta, se pone en fetas o se echa. Lo demás («papas fritas») va en su porción de siempre. */
+const DE_A_POCO = /^(?:1\s+)?(?:cucharad|cdta|cda|tablespoon|teaspoon|tbsp|tsp|pat|porci[oó]n individual|individual|sobre|packet|feta|slice|rebanada|pizca|dash|chorr|splash)/iu;
+/** Hasta cuántos se cuentan sin una porción con su nombre («20 frutillas»); más, son gramos. */
+const CONTABLES = 60;
 /** Un pocillo de café: unos 80 ml (recetaDeTexto no le da volumen, para que la receta lo pregunte). */
 const ML_DEL_POCILLO = 80;
 /** Cómo se cocinó, dicho: entonces no se pregunta crudo o cocido. */
 const COMO_SE_COCINA = /(?:plancha|horno|hervid|frit|asad|cocid|crud|revuelt|guisad|saltead|grill|baked|boiled|fried|roast|cooked|raw|scrambled)/;
 
+type Porcion = Detalle['porciones'][number];
+
 /** La porción de siempre: la primera de la base, no la de una unidad que se sumó para contar. */
 const deSiempre = (d: Pick<Detalle, 'porciones'>) => d.porciones.find((p) => !p.deUna) ?? d.porciones[0];
+/** Una medida de la casa: «1 taza» de «2 tazas» no es una unidad de lo que se cuenta. */
+const MEDIDA = /^1\s+(?:cuchar|taza|cup|tbsp|tsp|tablespoon|teaspoon|vaso|glass|pocillo)/iu;
+/** La de una unidad: la que sumó conUnaUnidad («1 galleta» de «15 galletas») o la que ya lo dice. */
+const deUnaUnidad = (d: Pick<Detalle, 'porciones'>) =>
+  d.porciones.find((p) => (p.deUna && !METRICA.test(p.nombre) && !MEDIDA.test(p.nombre)) || DE_A_UNA.test(p.nombre));
 
 /** La porción que se llama como lo dicho: «1 huevo» para «2 huevos», «1 uva» para «20 uvas». */
-function porcionNombrada(dicho: Dicho, d: Pick<Detalle, 'porciones'>): { nombre: string; gramos: number } | undefined {
+function porcionNombrada(dicho: Dicho, d: Pick<Detalle, 'porciones'>): Porcion | undefined {
   const palabra = llano(dicho.buscado).split(' ')[0];
   return d.porciones.find((p) => /^1\s/.test(p.nombre) && llano(p.nombre).split(' ')[1] === palabra);
 }
@@ -80,15 +98,14 @@ function porcionNombrada(dicho: Dicho, d: Pick<Detalle, 'porciones'>): { nombre:
  * La porción para contar lo dicho («2 huevos»): la que se llama como lo dicho («1 huevo»), la de una
  * unidad, en lo que se toma la taza o el vaso, o la de siempre. Nunca «2 tazas» de huevos.
  */
-function porcionParaContar(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densidad'>): { nombre: string; gramos: number } | undefined {
-  const unidad = d.porciones.find((p) => DE_A_UNA.test(p.nombre));
+function porcionParaContar(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densidad'>): Porcion | undefined {
   const recipiente = d.densidad ? d.porciones.find((p) => RECIPIENTE.test(p.nombre)) : undefined;
-  return porcionNombrada(dicho, d) ?? unidad ?? recipiente ?? deSiempre(d);
+  return porcionNombrada(dicho, d) ?? deUnaUnidad(d) ?? recipiente ?? deSiempre(d);
 }
 
 /**
  * La cantidad de lo dicho para un alimento: lo dicho (gramos, una medida de cocina o cuántos), la
- * última vez o, si no, la porción de siempre; el acompañante, la más chica (la cucharadita de manteca).
+ * última vez o, si no, la porción de siempre; el acompañante que se unta, la más chica (la cucharadita de manteca).
  */
 export function cantidadPara(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densidad'>, ultima: Cantidad | undefined): { cantidad: Exclude<Cantidad, null>; supuesto: boolean } {
   const { cantidad, unidad } = dicho;
@@ -105,13 +122,22 @@ export function cantidadPara(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densi
     if (unidad === 'pocillo') return { cantidad: { porcion: '1 pocillo', gramosPorcion: Math.round(ML_DEL_POCILLO * (d.densidad ?? 1)), veces: cantidad }, supuesto: false };
   }
   if (cantidad !== null) {
-    // Mucho y sin unidad («150 de pollo»): son gramos, salvo que se cuente («20 uvas»: hay «1 uva»).
-    if (cantidad >= 20 && !porcionNombrada(dicho, d)) return { cantidad: { gramos: cantidad }, supuesto: false };
+    const nombrada = porcionNombrada(dicho, d);
+    // Mucho y sin unidad («150 de pollo», «200 arroz»): son gramos, salvo que se cuente: «20 uvas» (hay
+    // «1 uva») o «20 frutillas», en plural y con una porción de una unidad.
+    const dijo = normalizar(dicho.texto);
+    const enPlural = !/^\S+\s+(?:de|of)\s/.test(dijo) && /^\S+\s+\p{L}+s(?![\p{L}])/u.test(dijo);
+    if (cantidad >= 20 && !nombrada && !(enPlural && cantidad <= CONTABLES && deUnaUnidad(d))) return { cantidad: { gramos: cantidad }, supuesto: false };
     const una = porcionParaContar(dicho, d);
-    return una ? { cantidad: { porcion: una.nombre, gramosPorcion: una.gramos, veces: cantidad }, supuesto: false } : { cantidad: { gramos: 100 * cantidad }, supuesto: true };
+    if (!una) return { cantidad: { gramos: 100 * cantidad }, supuesto: true };
+    // «Medio pollo» con «100 g» o «media pizza» con «1 porción»: no es la mitad de una cosa entera, se supone.
+    const entera = una === nombrada || UNA_ENTERA.test(una.nombre) || RECIPIENTE.test(una.nombre) || (!!una.deUna && !MEDIDA.test(una.nombre));
+    const supuesto = METRICA.test(una.nombre) || (!Number.isInteger(cantidad) && !entera);
+    return { cantidad: { porcion: una.nombre, gramosPorcion: una.gramos, veces: cantidad }, supuesto };
   }
   if (ultima) return { cantidad: ultima, supuesto: false };
-  const p = dicho.acompanante ? [...d.porciones].sort((a, b) => a.gramos - b.gramos)[0] : deSiempre(d);
+  const chica = [...d.porciones].sort((a, b) => a.gramos - b.gramos)[0];
+  const p = dicho.acompanante && chica && DE_A_POCO.test(chica.nombre) ? chica : deSiempre(d);
   return { cantidad: p ? { porcion: p.nombre, gramosPorcion: p.gramos, veces: 1 } : { gramos: 100 }, supuesto: true };
 }
 
@@ -159,7 +185,7 @@ async function entenderUno(dicho: Dicho, p: ParaEntender): Promise<Entendido> {
   }
   // Cuánto: no se dijo, no hay una vez anterior y cambia mucho. El acompañante, sus porciones chicas
   // (la cucharadita o la cucharada de manteca, nunca una taza); lo demás, media, una o una y media.
-  if (supuesto && 'porcion' in cantidad) {
+  if (supuesto && dicho.cantidad === null && 'porcion' in cantidad) {
     const chicas = [...primero.porciones].sort((a, b) => a.gramos - b.gramos).filter((x) => x.gramos <= 3.5 * cantidad.gramosPorcion).slice(0, 3);
     const cantidades = dicho.acompanante
       ? chicas.map((x) => ({ porcion: x.nombre, gramosPorcion: x.gramos, veces: 1 }))
@@ -179,7 +205,12 @@ const cuantoMueve = (e: Entendido) => {
 
 /** Lo dicho, entendido: como mucho tres preguntas por comida, las que más mueven el número. */
 export async function entender(dichos: readonly Dicho[], p: ParaEntender): Promise<Entendido[]> {
-  const lista = await Promise.all(dichos.map((d) => entenderUno(d, p)));
+  // «Arroz y pollo»: si la base no tiene el nombre entero, cada uno por su lado.
+  const lista = (await Promise.all(dichos.map(async (d) => {
+    const e = await entenderUno(d, p);
+    if (e.opciones.length || !d.partes) return [e];
+    return Promise.all(d.partes.map((x) => entenderUno(d.acompanante && x.cantidad === null ? { ...x, acompanante: true } : x, p)));
+  }))).flat();
   const conPregunta = lista.filter((e) => e.pregunta).sort((a, b) => cuantoMueve(b) - cuantoMueve(a));
   for (const e of conPregunta.slice(PREGUNTAS_POR_COMIDA)) {
     e.opciones = [e.opciones[e.elegida]];

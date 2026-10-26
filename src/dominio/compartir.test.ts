@@ -38,4 +38,26 @@ describe('compartir sin dominio', () => {
     if (receta.tipo !== 'receta') throw new Error('no');
     expect(porPorcion(receta.receta)).toEqual({ kcal: 120, proteina: 5, carbohidratos: 10, grasas: 2.5 });
   });
+
+  it('una cantidad que no es posible no entra, y lo que sobra no se guarda', () => {
+    // Armado a mano, como podría venir de cualquier lado.
+    const conCantidad = (cantidad: unknown) => PREFIJO + btoa(JSON.stringify({ v: 1, tipo: 'receta', receta: { tipo: 'receta', nombre: 'Torta', porciones: 4, pesoFinal: null, items: [{ ...item('Harina', 100), cantidad }] } })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    expect(leerCompartido(conCantidad(5))).toBeNull();
+    expect(leerCompartido(conCantidad({}))).toBeNull();
+    expect(leerCompartido(conCantidad({ gramos: 'x' }))).toBeNull();
+    expect(leerCompartido(conCantidad({ porcion: 1 }))).toBeNull();
+    expect(leerCompartido(conCantidad('hola'))).toBeNull();
+    const bien = leerCompartido(conCantidad({ porcion: '1 taza', gramosPorcion: 120, veces: 2, raro: 1 }));
+    if (bien?.tipo !== 'receta') throw new Error('no');
+    expect(bien.receta.items[0].cantidad).toEqual({ porcion: '1 taza', gramosPorcion: 120, veces: 2 });
+    expect(leerCompartido(conCantidad(null))).not.toBeNull();
+  });
+
+  it('un nombre largo (los de Open Food Facts) se comparte igual, recortado si hace falta', () => {
+    const largo = 'Galletitas dulces rellenas sabor vainilla con chips de chocolate, paquete familiar edición especial';
+    const propio: Compartido = { tipo: 'propio', propio: { nombre: largo, marca: 'Marca', codigo: null, por100g: { kcal: 450, proteina: 6, carbohidratos: 70, grasas: 16 }, porciones: [{ nombre: '3 galletitas', gramos: 30 }], origen: 'off' } };
+    expect(leerCompartido(enlaceDe(propio))).toMatchObject({ propio: { nombre: largo } });
+    const enorme = { ...propio, propio: { ...propio.propio, nombre: 'x'.repeat(500) } } as Compartido;
+    expect(leerCompartido(enlaceDe(enorme))).toMatchObject({ propio: { nombre: 'x'.repeat(200) } });
+  });
 });

@@ -8,7 +8,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-import { enRango, RANGOS_DEL_CUESTIONARIO } from '@/dominio/metas';
+import { enRango, MAYORIA_DE_EDAD, RANGOS_DEL_CUESTIONARIO } from '@/dominio/metas';
 
 /** Todo lo que Moss va a leer: lo del cuestionario, lo de los hábitos que se encienden solos y lo del sueño. */
 const LO_QUE_SE_LEE: readonly ObjectTypeIdentifier[] = [
@@ -67,7 +67,8 @@ const edadA = (nacimiento: Date, hoy: Date) =>
 
 /**
  * Lo que Salud ya sabe para el cuestionario: la edad, el sexo, la altura y el último peso. Lo que no
- * está o queda fuera de lo posible no vuelve, y se contesta a mano.
+ * está o queda fuera de lo posible no vuelve, y se contesta a mano. Menos de 18 sí vuelve: con eso
+ * la entrada no sigue (Menor, en Entrada.tsx).
  */
 export async function datosDelCuestionario(hoy: Date = new Date()): Promise<DelCuestionario> {
   if (!haySalud()) return {};
@@ -75,7 +76,7 @@ export async function datosDelCuestionario(hoy: Date = new Date()): Promise<DelC
   try {
     const nacimiento = getDateOfBirth();
     const edad = nacimiento ? edadA(nacimiento, hoy) : null;
-    if (edad !== null && enRango(RANGOS_DEL_CUESTIONARIO.edad, edad)) r.edad = edad;
+    if (edad !== null && (enRango(RANGOS_DEL_CUESTIONARIO.edad, edad) || (edad >= 0 && edad < MAYORIA_DE_EDAD))) r.edad = edad;
   } catch {}
   try {
     const sexo = getBiologicalSex();

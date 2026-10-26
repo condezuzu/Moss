@@ -34,23 +34,26 @@ export type Etiqueta = {
 function limpiar(linea: string): string {
   return linea
     .normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-    .replace(/(?<=\d)o|o(?=\d)/g, '0')
+    // No la del final de una palabra: «Sodio120mg» es sodio.
+    .replace(/(?<=\d)o|(?<![a-z])o(?=\d)/g, '0')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 /** Qué nutriente nombra una línea. El orden importa: «grasas saturadas» antes que «grasas». */
-const NOMBRES: readonly (readonly [Nutriente | 'trans' | 'sal' | 'agregados' | 'colesterol', RegExp])[] = [
+const NOMBRES: readonly (readonly [Nutriente | 'trans' | 'sal' | 'agregados' | 'colesterol' | 'insaturadas', RegExp])[] = [
   ['trans', /\btrans\b/],
   ['colesterol', /colesterol|cholesterol/],
-  ['saturadas', /saturad|saturated/],
+  // Las mono y poliinsaturadas no son saturadas ni el total de grasas.
+  ['insaturadas', /insaturad|unsaturated/],
+  ['saturadas', /saturad|saturate[ds]/],
   ['agregados', /anadid|agregad|adicionad|added/],
   ['azucares', /azucar|acucar|sugar/],
   ['fibra', /fibra|fiber|fibre/],
   ['sodio', /sodio|sodium/],
   ['sal', /\bsal\b|\bsalt\b/],
   ['alcohol', /alcohol/],
-  ['kcal', /valor energetico|energia|energy|calorias|calories/],
+  ['kcal', /energetico|energia|energy|calorias|calories/],
   ['carbohidratos', /carbohidrato|carboidrato|hidratos de carbono|carbohydrate/],
   ['proteina', /protein/],
   ['grasas', /grasa|gordura|lipido|\bfat\b/],
@@ -63,7 +66,9 @@ function numeros(linea: string): Numero[] {
   const lista: Numero[] = [];
   for (const m of linea.matchAll(/(\d+(?:[.,]\d+)?)\s*(kcal|kj|mg|g|%)?/g)) {
     if (m[2] === '%') continue;
-    lista.push({ valor: Number(m[1].replace(',', '.')), unidad: m[2] ?? '' });
+    // «Sodio 1.200 mg», «1,674 kJ»: con tres cifras después del punto, son miles.
+    const miles = /^[1-9]\d{0,2}[.,]\d{3}$/.test(m[1]) && (m[2] === 'mg' || m[2] === 'kj' || m[2] === 'kcal');
+    lista.push({ valor: Number(miles ? m[1].replace(/[.,]/, '') : m[1].replace(',', '.')), unidad: m[2] ?? '' });
   }
   return lista;
 }
@@ -100,23 +105,42 @@ function porcionDe(lineas: string[]): { gramos: number; texto: string; ml: boole
     if (!m) continue;
     return { gramos: Number(m[1].replace(',', '.')), texto: original.replace(/^.*?(porci[oó]n|porç[aã]o|serving size|portion)\s*:?\s*/i, '').trim(), ml: m[2] === 'ml' };
   }
+  // Sin un renglón de la porción, la del encabezado de dos columnas: «Por 100 g | Por porción (30 g)».
+  for (const original of lineas) {
+    const l = limpiar(original);
+    const cien = l.search(/\b100 ?(g|ml)\b/);
+    const k = l.search(/porcion|porcao|serving|portion/);
+    if (cien < 0 || k < 0 || NOMBRES.some(([, patron]) => patron.test(l))) continue;
+    const m = /(\d+(?:[.,]\d+)?)\s*(g|ml)\b/.exec(l.slice(k));
+    if (!m || (cien > k && k + m.index >= cien)) continue;
+    return { gramos: Number(m[1].replace(',', '.')), texto: `${m[1]} ${m[2]}`, ml: m[2] === 'ml' };
+  }
   return null;
 }
 
 /**
  * El orden de las columnas, si la tabla tiene dos: «100 g | Porción» o al revés. El encabezado no
- * tiene más números que el 100 ni nombra un nutriente: así no se confunde con «Porción 100 g (1
- * pote)» ni con «Azúcares 100 g».
+ * nombra un nutriente ni tiene más números que el 100, salvo el tamaño de la porción después de
+ * nombrarla («Por 100 g | Por porción (30 g)»): así no se confunde con «Porción 100 g (1 pote)» ni
+ * con «Azúcares 100 g».
  */
 function columnas(lineas: string[]): ('100g' | 'porcion')[] {
   for (const original of lineas) {
     const l = limpiar(original);
     const cien = l.search(/\b100 ?(g|ml)\b/);
     if (cien < 0 || NOMBRES.some(([, patron]) => patron.test(l))) continue;
-    if (numeros(l).some((n) => n.valor !== 100) || l.replace(/%vd\s*\(\*\)/, '').includes('(')) continue;
     const porcion = l.search(/porcion|porcao|serving|portion/);
-    if (porcion < 0) return ['100g'];
-    return cien < porcion ? ['100g', 'porcion'] : ['porcion', '100g'];
+    const solo100 = !numeros(l).some((n) => n.valor !== 100) && !l.replace(/%vd\s*\(\*\)/, '').includes('(');
+    if (porcion < 0) {
+      if (solo100) return ['100g'];
+      continue;
+    }
+    if (cien < porcion) {
+      if (solo100 || !numeros(l.slice(0, porcion)).some((n) => n.valor !== 100)) return ['100g', 'porcion'];
+      continue;
+    }
+    // La porción primero: el 100 es otra columna solo si se dice «por 100 g» («Porción 100 g» es la porción).
+    if (solo100 || (!numeros(l.slice(0, porcion)).length && /(?:por|per|\/)\s*$/.test(l.slice(0, cien)))) return ['porcion', '100g'];
   }
   return ['porcion'];
 }
@@ -131,7 +155,7 @@ export function leerEtiqueta(lineas: string[]): Etiqueta {
   for (const original of lineas) {
     const l = limpiar(original);
     const nombre = NOMBRES.find(([, patron]) => patron.test(l))?.[0];
-    if (!nombre || nombre === 'trans' || nombre === 'agregados' || nombre === 'colesterol') continue;
+    if (!nombre || nombre === 'trans' || nombre === 'agregados' || nombre === 'colesterol' || nombre === 'insaturadas') continue;
     const valores = valoresDe(nombre, l);
     if (!valores.length) continue;
     // La sal de la etiqueta europea es sodio por 2,5.

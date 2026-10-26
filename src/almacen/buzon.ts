@@ -73,18 +73,33 @@ export function crearBuzon(guardado: Guardado, correo: () => Correo | null) {
         if (!salida) return;
         const c = await cargar();
         while (c.cartas.length) {
+          const carta = c.cartas[0];
           try {
-            await salida.enviar(c.cartas[0]);
+            await salida.enviar(carta);
           } catch {
             break;
           }
-          c.cartas.shift();
+          // Mientras salía, la lista pudo cambiar (descartar, vaciar): se saca esa carta, no la primera.
+          c.cartas = c.cartas.filter((x) => x !== carta);
           await guardar();
         }
       })().finally(() => {
         enviando = null;
       });
       return enviando;
+    },
+    /** Saca lo que espera de ese tipo sin mandarlo: al dejar de elegir que se manden las búsquedas. */
+    async descartar(tipo: Carta['tipo']): Promise<void> {
+      const c = await cargar();
+      c.cartas = c.cartas.filter((x) => x.tipo !== tipo);
+      await guardar();
+    },
+    /** Olvida todo: lo que espera y las búsquedas contadas (al borrar los datos o cerrar sesión). */
+    async vaciar(): Promise<void> {
+      const c = await cargar();
+      c.cartas = [];
+      c.contadas = [];
+      await guardar();
     },
     async pendientes(): Promise<number> {
       return (await cargar()).cartas.length;

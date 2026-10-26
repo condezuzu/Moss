@@ -47,6 +47,9 @@
       "crear": "Crear cuenta",
       "olvide": "Olvidé mi contraseña",
       "legal": "Al continuar aceptas los Términos y la Política de privacidad.",
+      "legalConEnlaces": "Al continuar aceptas los {terminos} y la {privacidad}.",
+      "terminos": "Términos",
+      "privacidad": "Política de privacidad",
       "errores": {
         "credenciales": "El correo o la contraseña no coinciden.",
         "conexion": "No hay conexión. Inténtalo de nuevo.",
@@ -56,8 +59,7 @@
         "correo": "Escribe tu correo.",
         "otro": "No se pudo entrar. Inténtalo de nuevo."
       },
-      "enviado": "Te enviamos un correo para cambiar la contraseña.",
-      "sinCuenta": "Esta versión de prueba no tiene cuenta: Moss guarda todo en el teléfono."
+      "enviado": "Te enviamos un correo para cambiar la contraseña."
     },
     "cuestionario": {
       "paso": "{n} de {total}",
@@ -105,6 +107,7 @@
       "ritmoTexto": "{pct} % de tu peso por semana",
       "resultadoTitulo": "Tu punto de partida",
       "resultadoTexto": "Moss ajusta tus metas cada semana con tu peso y lo que comes.",
+      "profesional": "Son estimaciones: no reemplazan a un profesional de la salud.",
       "kcal": "kcal por día",
       "proteina": "Proteína",
       "carbohidratos": "Carbohidratos",
@@ -317,7 +320,8 @@
       "soloIphone": "Leer la etiqueta anda en el iPhone. Puedes cargar los valores a mano.",
       "aMano": "Cargar a mano",
       "sinPermiso": "Moss necesita la cámara para leer el código y la etiqueta.",
-      "darPermiso": "Permitir la cámara",
+      "darPermiso": "Continuar",
+      "abrirAjustes": "Abrir Ajustes",
       "sacarFoto": "Sacar la foto",
       "deOff": "Datos de Open Food Facts (ODbL)",
       "otraVez": "Escanear otro",
@@ -571,6 +575,14 @@
     "enSieteDias": "{n} {unidad} en 7 días",
     "kcalPorDia": "kcal por día",
     "balanceTexto": "balance de 7 días, contra un gasto de {gasto}",
+    "balanceDias": {
+      "uno": "balance de {n} día, contra un gasto de {gasto}",
+      "otros": "balance de {n} días, contra un gasto de {gasto}"
+    },
+    "balanceDiasSinNumeros": {
+      "uno": "balance de {n} día: lo comido contra el gasto",
+      "otros": "balance de {n} días: lo comido contra el gasto"
+    },
     "encendidas": "{n} de {total}",
     "dormiste": "Dormiste {h}",
     "pasos": "{n} pasos",
@@ -660,6 +672,7 @@
       "estable": "Estable",
       "seMueve": "Cambiando",
       "sinMeta": "Sin peso meta",
+      "otroLado": "Revisa la meta",
       "faltanDatos": "Faltan datos"
     },
     "objetivoA": {
@@ -684,6 +697,7 @@
       "estable": "Tu tendencia se mueve menos de 150 g por semana: estás manteniendo.",
       "seMueve": "Tu tendencia se mueve {ritmo} {unidad} por semana.",
       "sinMeta": "Vas a {ritmo} {unidad} por semana; el plan es {plan}. Elige un peso meta para ver cuándo llegarías.",
+      "otroLado": "Tu peso meta quedó del otro lado de donde empezaste. Elige uno nuevo en la estrategia.",
       "faltanDatos": "Hacen falta dos semanas de pesadas para medir el ritmo."
     },
     "peso": "Peso",
@@ -729,9 +743,11 @@
     },
     "controlListo": "La semana ya tiene lo que necesita: el control va a medir tu gasto y ajustar las metas.",
     "controlFalta": "El control necesita al menos 4 días con comida y una pesada en la semana. Si faltan, las metas quedan como están.",
+    "controlPrimero": "El control mide con al menos 7 días de pesadas y comida registrada, y este todavía no los tiene: las metas quedan como están. El siguiente ya puede medir.",
     "diaDelControl": "Día del control",
     "diaDelControlNota": "Ese día, al abrir Moss, el control mide la semana anterior. Si ese día no abres la app, corre la próxima vez.",
     "controlTexto": "El control midió un gasto de unas {gasto} kcal por día. Moss lo toma de a poco: el estimado pasó de {antes} a {ahora} kcal.",
+    "controlSinMedir": "Ese control no midió: faltaban días con comida, pesadas o una semana entera de datos. El gasto y las metas quedaron como estaban.",
     "comoSeCalcula": "Cómo se calcula",
     "metas": {
       "titulo": "Metas",
@@ -842,6 +858,7 @@
     "masTemprano": "{t} más temprano",
     "regularidadTexto": "Con {n} noches de las últimas 14. El ± es cuánto se corre tu hora de una noche a otra: hasta media hora es muy regular. El fin de semana compara la mitad de tu sueño del viernes y el sábado con la del resto, y supone que esos días no trabajas.",
     "faltanNoches": "Hay {n} noches medidas; hacen falta {minimo}.",
+    "pocoSegurasNoCuentan": "Las noches poco seguras no cuentan.",
     "deuda": "Deuda de sueño",
     "sinDeuda": "Sin deuda",
     "deudaDe": "menos de lo que necesitas ({necesidad} por noche)",
@@ -1009,6 +1026,9 @@
     "cerrarSesionTitulo": "¿Cerrar sesión?",
     "cerrarSesionTexto": "Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
     "errorBorrar": "No se pudo. Revisa la conexión e inténtalo de nuevo.",
+    "sinSubirTitulo": "Lo último no llegó a tu cuenta",
+    "sinSubirTexto": "Sin conexión no se pudo subir lo que anotaste hace poco. Si cierras sesión ahora, se pierde.",
+    "cerrarIgual": "Cerrar igual",
     "exportarTexto": "Cada archivo es un CSV, que abre cualquier planilla.",
     "archivos": {
       "registros": "Lo comido",
@@ -1029,7 +1049,7 @@
     },
     "privacidadTexto": [
       "Tus datos son tuyos. Moss guarda lo que anotas, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte, no muestra publicidad y no te rastrea.",
-      "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, edad, sexo y altura. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura y qué hábitos cumpliste; los pasos y el sueño de Salud quedan en el teléfono. Moss no escribe en Salud.",
+      "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, fecha de nacimiento, sexo y altura y, de la noche, frecuencia cardíaca, frecuencia en reposo, variabilidad y respiración. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura, qué hábitos cumpliste y la hora estimada de tu noche; lo demás queda en el teléfono. Moss no escribe en Salud.",
       "Las fotos de la comida quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
       "Si lo eliges, lo que buscas y no encuentras se manda sin tu nombre; un error que reportas, también. Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
     ],
@@ -1584,7 +1604,13 @@
       "texto": "Suena los días que elijas del hábito, y no si ya está hecho. Moss junta los que caen cerca y no pasa del máximo por día (Perfil › Avisos)."
     },
     "minimo": "Hacen falta al menos 3 hábitos: la constelación cambia según cuántos son.",
-    "metaPropia": "Otra meta"
+    "metaPropia": {
+      "pasos": "Otra meta, en pasos",
+      "sueno": "Otra meta, en horas",
+      "agua": "Otra meta, en litros",
+      "mindfulness": "Otra meta, en minutos"
+    },
+    "demasiados": "Un día tiene hasta {n} hábitos: es lo que tiene la constelación más grande."
   },
   "compartir": {
     "boton": "Compartir",
@@ -1616,7 +1642,7 @@
     },
     "conPlan": "{hora}: {plan}.",
     "pesarse": "Buen momento para pesarte, antes de desayunar.",
-    "pesarseControl": "Hoy es el control: pésate antes de desayunar y Moss ajusta tu meta."
+    "pesarseControl": "Hoy es el día del control: buen momento para pesarte, antes de desayunar."
   },
   "entreno": {
     "previa": "Entrenas a las {hora}: esta comida es tu previa.",

@@ -134,6 +134,10 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
 /** Con menos que esto de lo que empieza igual, se buscan también los parecidos. */
 export const POCOS = 10;
 export const PARECIDO_MINIMO = 0.75;
+/** Lo corto con un error se parece a demasiado («coke» a «Cooked taro»): hasta 4 letras, solo sin errores. */
+const LARGO_PARA_ERRORES = 5;
+const parecidoSuficiente = (escrito: string, nombre: string) =>
+  normalizar(escrito).length >= LARGO_PARA_ERRORES && parecido(escrito, nombre) >= PARECIDO_MINIMO;
 
 export const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
 
@@ -175,7 +179,7 @@ export function candidatosEnMemoria(corpus: TextoEnMemoria[], texto: string, idi
     for (const p of palabras) for (let k = 0; k + 3 <= p.length; k++) buscados.add(p.slice(k, k + 3));
     for (const t of corpus) {
       if (t.idioma !== idioma || ![...buscados].some((g) => t.trigramas.has(g))) continue;
-      if (parecido(texto, t.texto) >= PARECIDO_MINIMO) candidatos.push(comoCandidato(t, true));
+      if (parecidoSuficiente(texto, t.texto)) candidatos.push(comoCandidato(t, true));
     }
   }
   return candidatos;
@@ -201,7 +205,7 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
       trigramas,
       op.idioma,
     );
-    for (const c of porTrigramas) if (parecido(texto, c.texto) >= PARECIDO_MINIMO) candidatos.push({ ...c, aproximado: true });
+    for (const c of porTrigramas) if (parecidoSuficiente(texto, c.texto)) candidatos.push({ ...c, aproximado: true });
   }
   if (!candidatos.length) return [];
 

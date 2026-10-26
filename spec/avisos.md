@@ -35,8 +35,10 @@ elegido queda en el teléfono (no sube a la cuenta).
 - **Qué días:** los del hábito, o algunos de ellos.
 - **Qué dice:** tu mensaje (hasta 120 letras) o «{hábito}, cuando puedas».
 - **No suena** si el hábito ya está hecho ese día. Lo de «después de comer»
-  espera a que anotes esa comida; «en el momento» suena al minuto siguiente
-  (el minuto en que se anotó ya pasó cuando se reprograma).
+  espera a que anotes esa comida; «en el momento» suena dos minutos después
+  (el minuto en que se anotó ya pasó cuando se reprograma). Los que van con la
+  hora de despertarse o de dormirse usan las 7:30 y las 23:00 mientras no haya
+  noches medidas.
 
 ## Los primeros hábitos
 
@@ -62,7 +64,8 @@ de las 23:30), no suena: alcanza con el del horario.
 Al rato de despertarse (10 minutos; sin noches, a las 8), antes de desayunar: el
 día del control o todos los días. Si ya te pesaste, no suena: pesarse vuelve a
 programar los avisos, igual que cambiar el perfil o la meta. El día del control
-dice que Moss ajusta la meta.
+lo dice, sin prometer que pesarse en ese momento cambia la meta (el control ya
+corrió al abrir Moss).
 
 ## Las comidas sin anotar
 

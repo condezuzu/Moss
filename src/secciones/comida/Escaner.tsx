@@ -87,7 +87,7 @@ export function Escaner(p: Props) {
               <Text style={estilos.texto}>{t('comida.escaner.sinPermiso')}</Text>
               <Boton
                 tipo="principal"
-                texto={t('comida.escaner.darPermiso')}
+                texto={t(permiso.canAskAgain ? 'comida.escaner.darPermiso' : 'comida.escaner.abrirAjustes')}
                 alTocar={() => (permiso.canAskAgain ? pedirPermiso().catch(() => {}) : Linking.openSettings().catch(() => {}))}
               />
             </>
@@ -102,7 +102,17 @@ export function Escaner(p: Props) {
         </Pressable>
         <View style={estilos.modos}>
           {(['codigo', 'etiqueta'] as const).map((m) => (
-            <Pressable key={m} onPress={() => p.alCambiarModo(m)} style={[estilos.modo, p.modo === m && estilos.modoElegido]} accessibilityRole="button" accessibilityState={{ selected: p.modo === m }}>
+            <Pressable
+              key={m}
+              onPress={() => {
+                // Volver al código deja leer de nuevo el mismo (después de «sin conexión», por ejemplo).
+                visto.current = null;
+                p.alCambiarModo(m);
+              }}
+              style={[estilos.modo, p.modo === m && estilos.modoElegido]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: p.modo === m }}
+            >
               <Text style={[estilos.modoTexto, p.modo === m && estilos.modoTextoElegido]}>{t(m === 'codigo' ? 'comida.escaner.codigoTitulo' : 'comida.escaner.etiquetaTitulo')}</Text>
             </Pressable>
           ))}

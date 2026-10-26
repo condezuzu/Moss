@@ -8,6 +8,12 @@ import { borrado, gramosPara, itemDeAlimento, itemRapido, type Registro } from '
 const reg = (id: string, dia: string, momento: string, item: ReturnType<typeof itemRapido>, extra: Partial<Registro> = {}): Registro => ({
   ...item, id, dia, comida: 'cena', momento, planificado: false, actualizado: momento, ...extra,
 });
+/** La hora local de un instante, como la escribe el CSV. */
+const local = (iso: string) => {
+  const d = new Date(iso);
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())} ${dos(d.getHours())}:${dos(d.getMinutes())}`;
+};
 const op = { columnas: es.exportar.columnas, comida: (c: string) => es.comida.comidas[c as keyof typeof es.comida.comidas], si: es.exportar.si, no: es.exportar.no };
 
 describe('exportar en CSV', () => {
@@ -24,8 +30,10 @@ describe('exportar en CSV', () => {
     expect(lineas[0]).toBe('día,comida,momento,alimento,fuente,porción,veces,gramos,kcal,proteína (g),carbohidratos (g),grasas (g),fibra (g),azúcares (g),grasas saturadas (g),sodio (mg),alcohol (g),planificado');
     expect(lineas).toHaveLength(4);
     // Lo que tiene una coma va entre comillas; la carga rápida no tiene porción ni gramos.
-    expect(lineas[1]).toBe('2026-10-21,Desayuno,2026-10-21T11:00:00.000Z,"Pan, con manteca",rapida,,,,250,6,30,11,,,,,,no');
-    expect(lineas[2]).toBe('2026-10-21,Cena,2026-10-21T23:00:00.000Z,Banana,base,1 mediana,1.5,177,157.53,1.93,40.43,0.58,4.6,,,1.77,,no');
+    expect(lineas[1]).toBe(`2026-10-21,Desayuno,${local('2026-10-21T11:00:00.000Z')},"Pan, con manteca",rapida,,,,250,6,30,11,,,,,,no`);
+    expect(lineas[2]).toBe(`2026-10-21,Cena,${local('2026-10-21T23:00:00.000Z')},Banana,base,1 mediana,1.5,177,157.53,1.93,40.43,0.58,4.6,,,1.77,,no`);
+    // La hora es la del teléfono, no la de UTC.
+    expect(lineas[2]).not.toContain('Z');
     expect(lineas[3].endsWith(',sí')).toBe(true);
   });
 

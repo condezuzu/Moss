@@ -6,6 +6,7 @@ import { BlurMask, Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, 
 import { useMemo } from 'react';
 
 import type { Constelacion } from '@/datos/catalogo';
+import { diasEntre, type ClaveDia } from '@/dominio/fechas';
 import type { Tramo } from '@/dominio/sueno';
 import { encajar, proyectar } from '@/cielo/mundo';
 
@@ -72,10 +73,13 @@ export function LineaSkia({ serie, ancho, alto, meta }: PropsDeLinea) {
   );
 }
 
-export type PropsDeBalance = { dias: { kcal: number }[]; gasto: number; ancho: number; alto: number };
+export type PropsDeBalance = { dias: { kcal: number; fecha?: ClaveDia }[]; hasta?: ClaveDia; gasto: number; ancho: number; alto: number };
 
-/** Lo comido de cada día contra el gasto (la línea punteada): debajo es déficit; arriba, de más. */
-export function BalanceSkia({ dias, gasto, ancho, alto }: PropsDeBalance) {
+/**
+ * Lo comido de cada día contra el gasto (la línea punteada): debajo es déficit; arriba, de más. Con
+ * `hasta`, cada barra va en su día y los días sin registrar quedan vacíos; sin él, juntas al final.
+ */
+export function BalanceSkia({ dias, hasta, gasto, ancho, alto }: PropsDeBalance) {
   const m = 3;
   const max = Math.max(gasto * 1.15, ...dias.map((d) => d.kcal));
   const Y = (v: number) => alto - m - (v / max) * (alto - 2 * m);
@@ -83,7 +87,8 @@ export function BalanceSkia({ dias, gasto, ancho, alto }: PropsDeBalance) {
   return (
     <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
       {dias.map((d, i) => {
-        const x = m + (7 - dias.length + i) * paso + paso * 0.28;
+        const atras = hasta && d.fecha ? diasEntre(d.fecha, hasta) : dias.length - 1 - i;
+        const x = m + (6 - atras) * paso + paso * 0.28;
         return (
           <RoundedRect key={i} x={x} y={Y(d.kcal)} width={paso * 0.44} height={alto - m - Y(d.kcal)} r={1.6} color={d.kcal > gasto ? 'rgba(232, 196, 106, 0.6)' : 'rgba(239, 230, 207, 0.32)'} />
         );

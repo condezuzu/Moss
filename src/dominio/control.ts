@@ -14,7 +14,9 @@ export type ComidaDelDia = { fecha: ClaveDia; kcal: number; kcalEstimadas?: numb
 
 /** La tendencia del peso es una media móvil exponencial: unas tres semanas de memoria. */
 const ALFA = 0.1;
-/** El control mira las últimas tres semanas, y la tendencia necesita al menos una. */
+/** Lo que tarda la tendencia en alcanzar a un peso que se mueve: a las tres semanas va al 89 %. */
+const ARRANQUE = 21;
+/** El control mira las últimas tres semanas, y necesita al menos una con datos. */
 const VENTANA = 21;
 const TRAMO_MINIMO = 7;
 /** Lo mínimo en la última semana para medir algo. */
@@ -30,24 +32,69 @@ const SUAVIZADO = 0.25;
 const FRENO_POR_LO_ESTIMADO = 0.5;
 
 /**
- * La tendencia de cada día, desde la primera pesada hasta `hasta`. Los días sin pesada se
- * rellenan en línea recta entre las vecinas, y con la última después de ella.
+ * El peso de cada día, desde la primera pesada hasta `hasta`. Los días sin pesada se rellenan en
+ * línea recta entre las vecinas, y con la última después de ella.
  */
-export function tendencia(pesadas: Pesada[], hasta: ClaveDia): Map<ClaveDia, number> {
+function pesosDiarios(pesadas: Pesada[], hasta: ClaveDia): Map<ClaveDia, number> {
   const lista = pesadas.filter((p) => p.fecha <= hasta).sort((a, b) => (a.fecha < b.fecha ? -1 : 1));
   const resultado = new Map<ClaveDia, number>();
   if (!lista.length) return resultado;
-  let actual = lista[0].kg;
   let i = 0;
   for (let dia = lista[0].fecha; dia <= hasta; dia = sumarDias(dia, 1)) {
     while (i + 1 < lista.length && lista[i + 1].fecha <= dia) i++;
     const a = lista[i];
     const b = lista[i + 1];
-    const kg = b ? a.kg + ((b.kg - a.kg) * diasEntre(a.fecha, dia)) / diasEntre(a.fecha, b.fecha) : a.kg;
-    actual += ALFA * (kg - actual);
+    resultado.set(dia, b ? a.kg + ((b.kg - a.kg) * diasEntre(a.fecha, dia)) / diasEntre(a.fecha, b.fecha) : a.kg);
+  }
+  return resultado;
+}
+
+/** La tendencia de cada día, desde la primera pesada hasta `hasta`: la media móvil del peso de cada día. */
+export function tendencia(pesadas: Pesada[], hasta: ClaveDia): Map<ClaveDia, number> {
+  const resultado = new Map<ClaveDia, number>();
+  let actual: number | null = null;
+  for (const [dia, kg] of pesosDiarios(pesadas, hasta)) {
+    actual = actual === null ? kg : actual + ALFA * (kg - actual);
     resultado.set(dia, actual);
   }
   return resultado;
+}
+
+/**
+ * Cuántos kilos por día cambió el peso de `desde` a `hasta`. La tendencia arranca en la primera
+ * pesada (o en `datosDesde`, si es después) y tarda unas tres semanas en alcanzar a un peso que se
+ * mueve: medido con ella, las primeras semanas darían la mitad. Hasta entonces se mide con la recta
+ * de mínimos cuadrados por el peso de cada día, que no se atrasa.
+ */
+export function cambioPorDia(pesadas: Pesada[], desde: ClaveDia, hasta: ClaveDia, datosDesde?: ClaveDia): number | null {
+  const diarios = pesosDiarios(pesadas, hasta);
+  const primero = [...diarios.keys()][0];
+  if (primero === undefined || desde < primero || desde >= hasta) return null;
+  const arranque = datosDesde && datosDesde > primero ? datosDesde : primero;
+  if (diasEntre(arranque, desde) >= ARRANQUE) {
+    const t = tendencia(pesadas, hasta);
+    return (t.get(hasta)! - t.get(desde)!) / diasEntre(desde, hasta);
+  }
+  const puntos = [...diarios].filter(([dia]) => dia >= desde).map(([dia, kg]) => [diasEntre(desde, dia), kg] as const);
+  const mx = puntos.reduce((s, [x]) => s + x, 0) / puntos.length;
+  const my = puntos.reduce((s, [, y]) => s + y, 0) / puntos.length;
+  return puntos.reduce((s, [x, y]) => s + (x - mx) * (y - my), 0) / puntos.reduce((s, [x]) => s + (x - mx) ** 2, 0);
+}
+
+/**
+ * Lo que mira el control que termina en `fin`: las últimas tres semanas o, si hay menos, desde que
+ * hay pesadas y comida registrada; las pesadas de antes (las de Salud, de antes de Moss) no tienen
+ * comida con qué compararse. `dias` cuenta los días con datos, el primero y el último incluidos.
+ */
+function tramoDelControl(pesadas: Pesada[], comidas: ComidaDelDia[], fin: ClaveDia) {
+  const primera = (fechas: ClaveDia[]) => fechas.reduce<ClaveDia | null>((m, f) => (f <= fin && (m === null || f < m) ? f : m), null);
+  const primeraPesada = primera(pesadas.map((p) => p.fecha));
+  const primeraComida = primera(comidas.filter((c) => c.kcal > 0).map((c) => c.fecha));
+  if (primeraPesada === null || primeraComida === null) return null;
+  const datosDesde = primeraPesada > primeraComida ? primeraPesada : primeraComida;
+  const ventana = sumarDias(fin, -(VENTANA - 1));
+  const inicio = datosDesde > ventana ? datosDesde : ventana;
+  return { inicio, datosDesde, dias: diasEntre(inicio, fin) + 1 };
 }
 
 export type Control = {
@@ -92,17 +139,15 @@ export function controlSemanal(e: EntradaDelControl): Control {
   });
   if (diasConComida < DIAS_CON_COMIDA || pesadas < PESADAS) return sinCambios({});
 
-  // El tramo: las últimas tres semanas, o desde que hay tendencia si es más corto.
-  const t = tendencia(e.pesadas, fin);
-  const primero = [...t.keys()][0];
-  const inicio = primero > sumarDias(fin, -(VENTANA - 1)) ? primero : sumarDias(fin, -(VENTANA - 1));
+  const pesoDeTendencia = tendencia(e.pesadas, fin).get(fin)!;
+  const tramo = tramoDelControl(e.pesadas, e.comidas, fin);
+  if (!tramo || tramo.dias < TRAMO_MINIMO) return sinCambios({ pesoDeTendencia });
+  const { inicio } = tramo;
   const dias = diasEntre(inicio, fin);
-  const pesoDeTendencia = t.get(fin)!;
-  if (dias < TRAMO_MINIMO) return sinCambios({ pesoDeTendencia });
 
   const registradas = e.comidas.filter((c) => c.kcal > 0 && enRango(c.fecha, inicio));
   const comidaPromedio = registradas.reduce((s, c) => s + c.kcal, 0) / registradas.length;
-  const cambioDeTendencia = pesoDeTendencia - t.get(inicio)!;
+  const cambioDeTendencia = cambioPorDia(e.pesadas, inicio, fin, tramo.datosDesde)! * dias;
   // Lo que entró menos lo que quedó guardado (o más lo que se gastó de reserva).
   const gastoMedido = comidaPromedio - (cambioDeTendencia * KCAL_POR_KG) / dias;
   const total = registradas.reduce((s, c) => s + c.kcal, 0);
@@ -129,21 +174,29 @@ export type EstadoDelControl = {
   diasConComida: number;
   pesadas: number;
   minimos: { diasConComida: number; pesadas: number };
+  /** Para ese día todavía no hay una semana con pesadas y comida registrada: ese control no mide. */
+  tramoCorto: boolean;
   alcanza: boolean;
 };
 
 /** Cómo viene el próximo control: cuándo es y si la semana que va a mirar ya tiene lo que necesita. */
 export function estadoDelControl(e: { hoy: ClaveDia; dia: DiaSemana; ultimaMeta: ClaveDia; pesadas: Pesada[]; comidas: ComidaDelDia[] }): EstadoDelControl {
   const ultimo = ultimoDiaDeControl(e.hoy, e.dia);
-  const fecha = ultimo > e.ultimaMeta ? ultimo : sumarDias(ultimo, 7);
+  // Uno que ya tocó y no corrió (al cambiar el día del control, por ejemplo) corre al abrir Moss: hoy.
+  const fecha = ultimo > e.ultimaMeta ? (ultimo < e.hoy ? e.hoy : ultimo) : sumarDias(ultimo, 7);
+  const fin = sumarDias(fecha, -1);
   const desde = sumarDias(fecha, -7);
-  const hasta = sumarDias(fecha, -1) < e.hoy ? sumarDias(fecha, -1) : e.hoy;
+  const hasta = fin < e.hoy ? fin : e.hoy;
   const enRango = (f: ClaveDia) => f >= desde && f <= hasta;
   const diasConComida = e.comidas.filter((c) => c.kcal > 0 && enRango(c.fecha)).length;
   const pesadas = e.pesadas.filter((p) => enRango(p.fecha)).length;
+  // Sin pesadas o sin comida todavía, lo más pronto que puede empezar el tramo es hoy.
+  const inicio = tramoDelControl(e.pesadas, e.comidas, fin)?.inicio ?? e.hoy;
+  const tramoCorto = diasEntre(inicio, fin) + 1 < TRAMO_MINIMO;
   return {
     fecha, faltan: diasEntre(e.hoy, fecha), diasConComida, pesadas,
     minimos: { diasConComida: DIAS_CON_COMIDA, pesadas: PESADAS },
-    alcanza: diasConComida >= DIAS_CON_COMIDA && pesadas >= PESADAS,
+    tramoCorto,
+    alcanza: diasConComida >= DIAS_CON_COMIDA && pesadas >= PESADAS && !tramoCorto,
   };
 }

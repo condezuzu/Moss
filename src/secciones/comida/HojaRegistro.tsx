@@ -29,7 +29,7 @@ import { edadDe, type Macros } from '@/dominio/metas';
 import type { ParaQuien } from '@/dominio/micronutrientes';
 import {
   claveDeAlimento, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
-  valoresDeCantidad, valoresDeReceta, vigentes, type AlimentoPropio, type Cantidad, type Item, type Receta, type Valores,
+  valoresDeCantidad, valoresDeReceta, vigentes, type AlimentoPropio, type Cantidad, type Item, type Receta, type Registro, type Valores,
 } from '@/dominio/registros';
 import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -153,12 +153,22 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   const avisarAca = (textoDelAviso: string, deshacer?: () => void) => setAviso({ texto: textoDelAviso, deshacer, vez: otraVez() });
 
   // Copiar de ayer: lo de ayer, a la comida que se arma, y directo a la revisión. Una sola vez.
+  // Dónde quedó en la comida que se arma: si se cierra sin agregar, se saca.
   const puestos = useRef(false);
+  const copia = useRef<{ desde: number; cuantos: number } | null>(null);
   useEffect(() => {
     if (puestos.current || !pedido.items?.length) return;
     puestos.current = true;
+    copia.current = { desde: a.estado().canasta.length, cuantos: pedido.items.length };
     for (const item of pedido.items) a.ponerEnCanasta(item);
   }, [a, pedido.items]);
+  const quitarDeLaCanasta = (i: number) => {
+    a.quitarDeCanasta(i);
+    const c = copia.current;
+    if (c && i < c.desde) c.desde--;
+    else if (c && i < c.desde + c.cuantos) c.cuantos--;
+    if (a.estado().canasta.length === 0) setPanel(null);
+  };
 
   // La búsqueda: mientras se escribe, con un respiro para no buscar letra por letra.
   const premio = useMemo(() => premios(e.registros.values(), e.hoy), [e.registros, e.hoy]);
@@ -179,6 +189,9 @@ function Hoja({ pedido }: { pedido: Pedido }) {
 
   const cerrar = () => {
     Keyboard.dismiss();
+    const c = copia.current;
+    copia.current = null;
+    if (c) for (let k = 0; k < c.cuantos; k++) a.quitarDeCanasta(c.desde);
     cerrarRegistro();
   };
 
@@ -205,13 +218,15 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     return meta.kcal - antes - kcal;
   };
   // Cómo deja el día: lo que ya había (con lo que se arma, sin lo que se cambia) y la meta.
+  // Lo planificado de hoy o de antes no está en el total del día: no se le resta.
+  const enElTotal = (r: Registro) => !r.planificado || r.dia > e.hoy;
   const diaDe = (modo: ModoDeVentana): { antes: Macros; meta: Macros } | null => {
     if (!meta || modo.tipo === 'ingrediente') return null;
     if (modo.tipo === 'registro') {
       const r = e.registros.get(modo.id);
       if (!r) return null;
       const delDia = totalDe(e.registros, r.dia, e.hoy);
-      return { antes: restar(delDia, r.valores), meta: metaDelDia(e, r.dia) ?? meta };
+      return { antes: enElTotal(r) ? restar(delDia, r.valores) : delDia, meta: metaDelDia(e, r.dia) ?? meta };
     }
     const conLoQueSeArma = sumarValores([totalDe(e.registros, dia, e.hoy), ...e.canasta.map((i) => i.valores)]);
     return { antes: modo.tipo === 'canasta' && e.canasta[modo.indice] ? restar(conLoQueSeArma, e.canasta[modo.indice].valores) : conLoQueSeArma, meta };
@@ -221,7 +236,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     if (modo.tipo === 'registro') {
       const r = e.registros.get(modo.id);
       // Lo de otro día se cuenta contra ese día, sin lo que se arma ahora.
-      return r && meta ? meta.kcal - (totalDe(e.registros, r.dia, e.hoy).kcal - r.valores.kcal) - kcal : null;
+      return r && meta ? meta.kcal - (totalDe(e.registros, r.dia, e.hoy).kcal - (enElTotal(r) ? r.valores.kcal : 0)) - kcal : null;
     }
     if (modo.tipo === 'ingrediente') return null;
     return restante(kcal);
@@ -229,6 +244,11 @@ function Hoja({ pedido }: { pedido: Pedido }) {
 
   // ------------------------------------------------------------ abrir la ventana
   const modoNuevo: ModoDeVentana = eligiendo ? { tipo: 'ingrediente' } : { tipo: 'sumar' };
+  // La ventana sube desde abajo: con el teclado arriba, quedaría tapada.
+  const abrirVentana = (v: VentanaAbierta) => {
+    Keyboard.dismiss();
+    setVentana(v);
+  };
   const abrirItem = (item: Item) => {
     Keyboard.dismiss();
     if (item.fuente === 'propio' && item.ref) {
@@ -269,6 +289,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   const agregar = () => {
     const nuevos = a.agregarCanasta({ comida, dia, momento: momentoPara(dia, comida, e.hoy) });
     if (!nuevos.length) return;
+    copia.current = null;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     const que = nuevos.length === 1 ? [nuevos[0].nombre, cantidadDeTexto(nuevos[0].cantidad, sistema)].filter(Boolean).join(' · ') : `${t(`comida.comidas.${comida}`)} · ${resumenDeCanasta(nuevos)}`;
     avisar(que, () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
@@ -294,7 +315,14 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   };
 
   // ------------------------------------------------------------ el código de barras y la etiqueta
+  // Cada búsqueda de un código lleva su número: cerrar el escáner o cambiar de modo deja sin efecto la que estaba en camino.
+  const escaneo = useRef(0);
+  const dejarElEscaneo = () => {
+    escaneo.current++;
+  };
   const alCodigo = async (codigo: string) => {
+    const este = ++escaneo.current;
+    const sigue = () => escaneo.current === este;
     setEscaner((s) => s && { ...s, ocupado: true, mensaje: t('comida.escaner.buscando', { codigo }) });
     const formas = formasDelCodigo(codigo);
     const propio = vigentes(e.propios.values()).find((x) => x.codigo && formas.includes(x.codigo));
@@ -305,6 +333,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     }
     const id = await baseDeAlimentos.porCodigo(codigo).catch(() => null);
     const detalle = id !== null ? await baseDeAlimentos.detalle(id, opcionesDeIdioma()).catch(() => null) : null;
+    if (!sigue()) return;
     if (detalle) {
       setEscaner(null);
       abrirDetalle(detalle);
@@ -313,6 +342,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     try {
       const version = Constants.expoConfig?.version ?? '1.0.0';
       const producto = await buscarEnOff(codigo, { idioma: idioma(), version, contacto: 'github.com/condezuzu/moss' });
+      if (!sigue()) return;
       if (producto?.verificado) {
         const p = producto.por100g;
         const nuevo = a.guardarPropio({
@@ -328,7 +358,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
       const mensaje = !producto ? 'comida.escaner.noEsta' : producto.completo ? 'comida.escaner.noCierra' : 'comida.escaner.incompleto';
       setEscaner({ modo: 'etiqueta', ocupado: false, mensaje: t(mensaje), codigo, parcial: producto });
     } catch {
-      setEscaner({ modo: 'etiqueta', ocupado: false, mensaje: t('comida.escaner.sinConexion'), codigo });
+      if (sigue()) setEscaner({ modo: 'etiqueta', ocupado: false, mensaje: t('comida.escaner.sinConexion'), codigo });
     }
   };
   const alEtiqueta = (lineas: string[]) => {
@@ -346,39 +376,77 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   // ------------------------------------------------------------ lo que se ve sin escribir
   const q = texto.trim();
   const ayer = sumarDias(dia, -1);
-  const deAyer = delDia(e.registros.values(), ayer).filter((r) => r.comida === comida);
+  const deAyer = useMemo(() => delDia(e.registros.values(), ayer).filter((r) => r.comida === comida), [e.registros, ayer, comida]);
+  // Lo último anotado de cada alimento, en una sola pasada: lo usan las filas del buscador (letra por letra) y los favoritos.
+  const ultimos = useMemo(() => {
+    const m = new Map<string, Registro>();
+    for (const r of vigentes(e.registros.values())) {
+      const clave = claveDeAlimento(r.fuente, r.ref);
+      const antes = m.get(clave);
+      if (!antes || r.momento > antes.momento) m.set(clave, r);
+    }
+    return m;
+  }, [e.registros]);
+  // Los favoritos de la base que todavía no se anotaron: sus datos se leen de la base para mostrarlos con su porción.
+  const favoritosSinAnotar = useMemo(
+    () => [...e.favoritos.values()].filter((f) => f.favorito && f.fuente === 'base' && !ultimos.has(claveDeAlimento(f.fuente, f.ref))).map((f) => f.ref),
+    [e.favoritos, ultimos],
+  );
+  const [deLaBase, setDeLaBase] = useState<ReadonlyMap<string, Detalle | null>>(() => new Map());
+  useEffect(() => {
+    const faltan = favoritosSinAnotar.filter((ref) => !deLaBase.has(ref));
+    if (!faltan.length) return;
+    let vigente = true;
+    Promise.all(faltan.map((ref) => baseDeAlimentos.detalle(Number(ref), opcionesDeIdioma()).catch(() => null))).then((detalles) => {
+      if (!vigente) return;
+      // Lo que no está en la base queda como null: así no se vuelve a pedir.
+      setDeLaBase((antes) => new Map([...antes, ...faltan.map((ref, i) => [ref, detalles[i]] as const)]));
+    }).catch(() => {});
+    return () => {
+      vigente = false;
+    };
+  }, [favoritosSinAnotar, deLaBase]);
   // Qué comer antes o después de entrenar, si esta comida es la que toca hoy.
   const lineaDeEntreno = dia === e.hoy && !soloEditar ? lineasDeHoy(e).get(comida) : undefined;
   // Tu comida de siempre, entera de un toque: la misma combinación dos veces en dos semanas.
   const siempre = useMemo(() => deSiempre(e.registros.values(), comida, dia), [e.registros, comida, dia]);
   const secciones = useMemo(() => {
     const vistos = new Set<string>();
+    // Solo lo que se muestra cuenta como visto: un favorito entre los recientes que no entraron sigue apareciendo.
     const seccion = (titulo: string, lista: Item[]) => {
-      const filas = lista.filter((i) => {
+      const filas: Item[] = [];
+      for (const i of lista) {
+        if (filas.length === 4) break;
         const clave = claveDeAlimento(i.fuente, i.ref);
-        if (vistos.has(clave)) return false;
+        if (vistos.has(clave)) continue;
         vistos.add(clave);
-        return true;
-      }).slice(0, 4);
+        filas.push(i);
+      }
       return filas.length ? [{ titulo, filas }] : [];
     };
     const favoritos: Item[] = [];
     for (const f of e.favoritos.values()) {
       if (!f.favorito) continue;
-      const ultimo = vigentes(e.registros.values()).filter((r) => claveDeAlimento(r.fuente, r.ref) === claveDeAlimento(f.fuente, f.ref)).sort((x, y) => (x.momento < y.momento ? 1 : -1))[0];
-      if (ultimo) favoritos.push(ultimo);
-      else if (f.fuente === 'propio') {
-        const propio = e.propios.get(f.ref);
-        const porcion = propio?.porciones[0];
-        if (propio && porcion) favoritos.push(itemDeAlimento('propio', propio.id, propio.nombre, propio.por100g, { porcion: porcion.nombre, gramosPorcion: porcion.gramos, veces: 1 }));
+      const ultimo = ultimos.get(claveDeAlimento(f.fuente, f.ref));
+      if (ultimo) {
+        favoritos.push(ultimo);
+        continue;
       }
+      // Sin anotarlo nunca: con su primera porción, o 100 g.
+      const propio = f.fuente === 'propio' ? e.propios.get(f.ref) : undefined;
+      const receta = f.fuente === 'receta' ? e.recetas.get(f.ref) : undefined;
+      const detalle = f.fuente === 'base' ? deLaBase.get(f.ref) : undefined;
+      const alimento = propio && !propio.borrado ? alimentoDePropio(propio) : receta && !receta.borrado ? alimentoDeReceta(receta) : detalle ? { nombre: detalle.nombre, por100g: detalle.por100g, porciones: detalle.porciones } : null;
+      if (!alimento) continue;
+      const porcion = alimento.porciones[0];
+      favoritos.push(itemDeAlimento(f.fuente, f.ref, alimento.nombre, alimento.por100g, porcion ? { porcion: porcion.nombre, gramosPorcion: porcion.gramos, veces: 1 } : { gramos: 100 }));
     }
     return [
       ...seccion(t(`comida.sueles.${comida}`), sueles(e.registros.values(), comida, e.hoy)),
       ...seccion(t('comida.recientes'), recientes(e.registros.values())),
       ...seccion(t('comida.favoritos'), favoritos),
     ];
-  }, [e.registros, e.favoritos, e.propios, e.hoy, comida]);
+  }, [e.registros, e.favoritos, e.propios, e.recetas, e.hoy, comida, ultimos, deLaBase]);
 
   // Lo propio y las recetas propias también se encuentran, arriba: si lo buscas, es porque lo cargaste.
   const propiosHallados = useMemo(() => {
@@ -395,6 +463,9 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   }, [q, e.propios, e.recetas]);
 
   const lista = hallado && q ? hallado.lista : [];
+  // Corregir una carga rápida: su panel abre con lo que tenía, y se puede quitar.
+  const registroEditado = pedido.editar ? e.registros.get(pedido.editar) : undefined;
+  const rapidaEditada = registroEditado?.fuente === 'rapida' ? registroEditado : undefined;
   const enCanasta = e.canasta.length > 0 && !soloEditar && !eligiendo;
   // El lugar del teclado (o del borde de abajo) sube con el teclado, con su misma curva.
   const sinTeclado = enCanasta ? 0 : insets.bottom;
@@ -455,10 +526,10 @@ function Hoja({ pedido }: { pedido: Pedido }) {
             <Pressable onPress={() => decir({ escuchar: true })} style={estilos.icono} accessibilityRole="button" accessibilityLabel={t('comida.decir.titulo')}>
               <Icono nombre="mic" tam={20} />
             </Pressable>
-            <Pressable onPress={() => setEscaner({ modo: 'codigo', mensaje: null, ocupado: false })} style={estilos.icono} accessibilityRole="button" accessibilityLabel={t('comida.escanear')}>
+            <Pressable onPress={() => { Keyboard.dismiss(); setEscaner({ modo: 'codigo', mensaje: null, ocupado: false }); }} style={estilos.icono} accessibilityRole="button" accessibilityLabel={t('comida.escanear')}>
               <Icono nombre="barcode.viewfinder" tam={21} />
             </Pressable>
-            <Pressable onPress={() => setEscaner({ modo: 'etiqueta', mensaje: null, ocupado: false })} style={estilos.icono} accessibilityRole="button" accessibilityLabel={t('comida.etiqueta')}>
+            <Pressable onPress={() => { Keyboard.dismiss(); setEscaner({ modo: 'etiqueta', mensaje: null, ocupado: false }); }} style={estilos.icono} accessibilityRole="button" accessibilityLabel={t('comida.etiqueta')}>
               <Icono nombre="doc.text.viewfinder" tam={21} />
             </Pressable>
           </View>
@@ -541,12 +612,12 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                   nombre={alimento.nombre}
                   extra={tipo === 'propio' ? t('comida.tuyo') : t('comida.receta.titulo')}
                   detalle={`${cantidadDeTexto(cantidad, sistema)} · ${numero(Math.round(kcal))} kcal`}
-                  alAbrir={() => setVentana({ alimento, inicial: ultimaCantidad(e.registros.values(), alimento.fuente, alimento.ref), modo: modoNuevo })}
+                  alAbrir={() => abrirVentana({ alimento, inicial: ultimaCantidad(e.registros.values(), alimento.fuente, alimento.ref), modo: modoNuevo })}
                 />
               );
             })}
             {q && lista.map((r) => {
-              const ultima = ultimaCantidad(e.registros.values(), 'base', String(r.id));
+              const ultima = ultimos.get(claveDeAlimento('base', String(r.id)))?.cantidad;
               const una = r.porcion ? conUnaUnidad([r.porcion], idioma())[0] : null;
               const cantidad: Cantidad = ultima ?? (una ? { porcion: una.nombre, gramosPorcion: una.gramos, veces: 1 } : { gramos: 100 });
               const kcal = valoresDeCantidad(r, cantidad!).kcal;
@@ -585,10 +656,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                   inicial: item.cantidad ?? undefined, estimado: !!item.estimado, modo: { tipo: 'canasta', indice: i },
                 });
               }}
-              alQuitar={(i) => {
-                a.quitarDeCanasta(i);
-                if (a.estado().canasta.length === 0) setPanel(null);
-              }}
+              alQuitar={quitarDeLaCanasta}
               alAgregar={agregar}
               alGuardarComo={() => setPanel('guardarComo')}
               alAtras={() => (pedido.panel === 'revision' && pedido.items ? cerrar() : setPanel(null))}
@@ -609,12 +677,17 @@ function Hoja({ pedido }: { pedido: Pedido }) {
             <PanelRapida
               directo={!!pedido.directo}
               comida={comida}
+              inicial={rapidaEditada}
+              alQuitar={rapidaEditada ? () => {
+                const quitado = a.borrarRegistro(rapidaEditada.id);
+                if (quitado) avisar(t('comida.quitado', { alimento: quitado.nombre }), () => a.deshacerBorrado(rapidaEditada.id));
+                cerrar();
+              } : undefined}
               abajo={insets.bottom}
               alAtras={() => (pedido.panel === 'rapida' || soloEditar ? cerrar() : setPanel(null))}
               alSumar={(item) => {
-                const editado = pedido.editar ? e.registros.get(pedido.editar) : undefined;
-                if (editado) {
-                  a.cambiarRegistro(editado.id, { nombre: item.nombre, valores: item.valores });
+                if (rapidaEditada) {
+                  a.cambiarRegistro(rapidaEditada.id, { nombre: item.nombre, valores: item.valores });
                   avisar(t('comida.guardado'));
                   cerrar();
                 } else if (pedido.directo) {
@@ -639,7 +712,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                 avisarAca(t('comida.sumado', { alimento: r.nombre }));
                 setPanel(null);
               }}
-              alAbrirReceta={(r) => setVentana({ alimento: alimentoDeReceta(r), inicial: ultimaCantidad(e.registros.values(), 'receta', r.id), modo: { tipo: 'sumar' } })}
+              alAbrirReceta={(r) => abrirVentana({ alimento: alimentoDeReceta(r), inicial: ultimaCantidad(e.registros.values(), 'receta', r.id), modo: { tipo: 'sumar' } })}
               alNuevaReceta={() => {
                 setBorrador({ nombre: '', porciones: '4', pesoFinal: '', items: [] });
                 setPanel('receta');
@@ -658,8 +731,9 @@ function Hoja({ pedido }: { pedido: Pedido }) {
               textoInicial={decirCon.texto}
               abajo={insets.bottom}
               alAtras={() => (pedido.panel === 'decir' ? cerrar() : setPanel(null))}
-              alAgregar={(items, comidaDicha) => {
-                const nuevos = a.registrar(items, { comida: comidaDicha, dia, momento: momentoPara(dia, comidaDicha, e.hoy) });
+              alAgregar={(items, comidaDicha, ayer) => {
+                const elDia = ayer ? sumarDias(e.hoy, -1) : dia;
+                const nuevos = a.registrar(items, { comida: comidaDicha, dia: elDia, momento: momentoPara(elDia, comidaDicha, e.hoy) });
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
                 avisar(plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${comidaDicha}`) }), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
                 cerrar();
@@ -733,7 +807,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                 setCrear(null);
                 setPanel(null);
                 if (eligiendo) {
-                  setVentana({ alimento: alimentoDePropio(nuevo), modo: { tipo: 'ingrediente' } });
+                  abrirVentana({ alimento: alimentoDePropio(nuevo), modo: { tipo: 'ingrediente' } });
                   return;
                 }
                 sumar(itemDeAlimento('propio', nuevo.id, nuevo.nombre, nuevo.por100g, porcion ? { porcion: porcion.nombre, gramosPorcion: porcion.gramos, veces: 1 } : { gramos: 100 }));
@@ -796,7 +870,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                 ventana.modo.tipo === 'canasta'
                   ? () => {
                       const modo = ventana.modo as { indice: number };
-                      a.quitarDeCanasta(modo.indice);
+                      quitarDeLaCanasta(modo.indice);
                       setVentana(null);
                     }
                   : ventana.modo.tipo === 'registro'
@@ -826,8 +900,15 @@ function Hoja({ pedido }: { pedido: Pedido }) {
           }}
           alEtiqueta={alEtiqueta}
           alAMano={aMano}
-          alCambiarModo={(modo) => setEscaner({ modo, mensaje: null, ocupado: false, codigo: escaner.codigo, parcial: escaner.parcial })}
-          alCerrar={() => (pedido.panel === 'codigo' || pedido.panel === 'etiqueta' ? cerrar() : setEscaner(null))}
+          alCambiarModo={(modo) => {
+            dejarElEscaneo();
+            setEscaner({ modo, mensaje: null, ocupado: false, codigo: escaner.codigo, parcial: escaner.parcial });
+          }}
+          alCerrar={() => {
+            dejarElEscaneo();
+            if (pedido.panel === 'codigo' || pedido.panel === 'etiqueta') cerrar();
+            else setEscaner(null);
+          }}
           arriba={insets.top + 8}
           abajo={insets.bottom}
         />

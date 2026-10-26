@@ -167,14 +167,28 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   // Lo que la escena toma del momento en que se arma. Lo encendido, la calidad y la riqueza no la
   // rehacen: se cambian en la que está (más abajo), así el cielo no vuelve a aparecer desde negro.
   const deAhora = () => ({ encendidos, particulas: ajustes.particulas, brotes: musgo.brotes, riqueza });
-  const valoresDeAhora = useEffectEvent(deAhora);
   const [escenaInicial] = useState(() => nuevaEscena(deAhora()));
   const escena = useSharedValue<Escena>(escenaInicial);
+  // Lo que la escena usa de la forma del día. Un cambio que no la mueve (lo que lleva un hábito de
+  // Salud, que llega cada vez que se vuelve a la app) no la rehace: una escena nueva arranca desde
+  // negro y con lo encendido ya puesto, sin el brillo ni el día completo.
+  const firma = useMemo(
+    () => JSON.stringify([
+      dia.clave,
+      plano.estrellas,
+      plano.lineas,
+      plano.centro,
+      // Las de hoy se encienden con los hábitos de la escena: lo que dice el día no cuenta.
+      plano.universo.estrellas.map((s) => [s.x, s.y, s.habito, s.habito >= 0 || s.encendida]),
+      dia.habitos.map((h) => h.auto ?? ''),
+    ]),
+    [dia, plano],
+  );
+  const escenaDeAhora = useEffectEvent(() => nuevaEscena(deAhora()));
   // Otro tamaño, otro día u otros hábitos, o reiniciar: escena nueva con los hábitos como están.
-  // La textura del cielo fijo sigue siendo la misma, así que el cielo aparece enseguida.
   useEffect(() => {
-    escena.value = nuevaEscena(valoresDeAhora());
-  }, [nuevaEscena, vuelta, escena]);
+    escena.value = escenaDeAhora();
+  }, [firma, ancho, alto, movimientoReducido, vuelta, escena]);
   useEffect(() => {
     const particulas = ajustes.particulas;
     const brotes = musgo.brotes;
@@ -229,10 +243,11 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   const pxFondo = alto * Math.min(dpr, ajustes.dprFondo);
   // El fondo es caro de dibujar: cambia de a 5 %, no con cada hábito que se marca.
   const riquezaDelFondo = Math.round(riqueza * 20) / 20;
-  const tamFondo = useMemo(
-    () => ({ width: Math.ceil(plano.fondo.tam[0] * pxFondo), height: Math.ceil(plano.fondo.tam[1] * pxFondo) }),
-    [plano, pxFondo],
-  );
+  // Con los números y no con el plano, que es otro con cada cambio del día: si no, la textura se
+  // volvía a dibujar (dos veces) sin haber cambiado de tamaño.
+  const anchoFondo = Math.ceil(plano.fondo.tam[0] * pxFondo);
+  const altoFondo = Math.ceil(plano.fondo.tam[1] * pxFondo);
+  const tamFondo = useMemo(() => ({ width: anchoFondo, height: altoFondo }), [anchoFondo, altoFondo]);
   const fondo = useTexture(
     <Fill>
       <Shader

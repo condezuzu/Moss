@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
+import { cambioPorDia, controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
 import { sumarDias, type DiaSemana } from './fechas';
 import {
   ajusteDiario, enRango, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, pisoDe,
@@ -251,6 +251,60 @@ describe('el control semanal', () => {
     const corta = sumarDias(HOY, -5);
     const c = controlSemanal({ hoy: HOY, pesadas: pesadas(corta, 5, () => 80), comidas: comidas(corta, 5, () => 2500), gastoAnterior: 2700, metasAnteriores: anteriores, perfil });
     expect(c.motivo).toBe('faltanDatos');
+  });
+
+  it('el primer control, con la primera semana entera (7 días con datos), ya mide', () => {
+    const d0 = sumarDias(HOY, -7);
+    const c = controlSemanal({ hoy: HOY, pesadas: pesadas(d0, 7, (i) => (i % 3 === 0 ? 80 : null)), comidas: comidas(d0, 7, () => 2500), gastoAnterior: 2700, metasAnteriores: anteriores, perfil });
+    expect(c.motivo).toBe('control');
+    expect(c.datos.gastoMedido).toBe(2500);
+    // Con la primera comida un día después, son 6 días: todavía no.
+    const tarde = controlSemanal({ hoy: HOY, pesadas: pesadas(d0, 7, () => 80), comidas: comidas(d0, 7, (i) => (i ? 2500 : null)), gastoAnterior: 2700, metasAnteriores: anteriores, perfil });
+    expect(tarde.motivo).toBe('faltanDatos');
+  });
+
+  it('las pesadas de antes de la primera comida (las de Salud) no cuentan', () => {
+    // Dos meses subiendo medio kilo por semana antes de Moss; con Moss, 2.000 kcal y el peso quieto.
+    const d0 = sumarDias(HOY, -14);
+    const antes = pesadas(sumarDias(d0, -60), 60, (i) => 78 + (0.5 * i) / 7);
+    const tope = antes[antes.length - 1].kg;
+    const todas = [...antes, ...pesadas(d0, 14, () => tope)];
+    const conMoss = comidas(d0, 14, () => 2000);
+    const semana1 = controlSemanal({ hoy: sumarDias(d0, 7), pesadas: todas, comidas: conMoss, gastoAnterior: 2000, metasAnteriores: anteriores, perfil });
+    expect(semana1.datos.gastoMedido).toBe(2000);
+    const semana2 = controlSemanal({ hoy: HOY, pesadas: todas, comidas: conMoss, gastoAnterior: 2000, metasAnteriores: anteriores, perfil });
+    expect(semana2.datos.gastoMedido).toBe(2000);
+    expect(semana2.datos.dias).toBe(13);
+  });
+
+  it('las primeras semanas mide el ritmo entero, sin el atraso de la tendencia', () => {
+    // Medio kilo por semana con 2.000 kcal: el gasto es 2.000 + 0,5 × 7.700 / 7 = 2.550.
+    const d0 = sumarDias(HOY, -15);
+    const c = controlSemanal({ hoy: HOY, pesadas: pesadas(d0, 15, (i) => 85 - (0.5 * i) / 7), comidas: comidas(d0, 15, () => 2000), gastoAnterior: 2550, metasAnteriores: anteriores, perfil });
+    expect(c.datos.gastoMedido).toBe(2550);
+    expect(c.datos.cambioDeTendencia!).toBeCloseTo((-0.5 * 14) / 7, 5);
+  });
+});
+
+describe('el cambio del peso por día', () => {
+  const desde = '2026-09-01';
+  const hasta = '2026-09-15';
+
+  it('las primeras semanas, la recta por el peso de cada día; con la tendencia arrancada, lo que se movió ella', () => {
+    const lineal = pesadas(desde, 15, (i) => 80 - 0.1 * i);
+    expect(cambioPorDia(lineal, desde, hasta)!).toBeCloseTo(-0.1, 6);
+    // Con pesadas salteadas, en línea recta entre ellas.
+    expect(cambioPorDia(lineal.filter((_, i) => i % 4 === 0 || i === 14), desde, hasta)!).toBeCloseTo(-0.1, 6);
+    const largo = pesadas('2026-07-01', 77, (i) => 85 - 0.1 * i);
+    const t = tendencia(largo, hasta);
+    expect(cambioPorDia(largo, desde, hasta)).toBeCloseTo((t.get(hasta)! - t.get(desde)!) / 14, 10);
+    // Si los datos empiezan después (la primera comida), vuelve a ser la recta.
+    expect(cambioPorDia(largo, desde, hasta, '2026-08-25')!).toBeCloseTo(-0.1, 6);
+  });
+
+  it('sin pesadas en el tramo, no hay cambio', () => {
+    expect(cambioPorDia([], desde, hasta)).toBeNull();
+    expect(cambioPorDia(pesadas('2026-09-05', 10, () => 80), desde, hasta)).toBeNull();
   });
 });
 

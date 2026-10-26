@@ -8,7 +8,7 @@
 
 import type { Comida } from '../dominio/comidas';
 import type { Idioma } from './porciones';
-import { leerReceta, nombreDeMedida, type Tamano, type Unidad } from './recetaDeTexto';
+import { leerReceta, nombreDeMedida, type LineaDeReceta, type Tamano, type Unidad } from './recetaDeTexto';
 
 export type Dicho = {
   /** Lo que se dijo de este alimento, para mostrarlo. */
@@ -22,15 +22,21 @@ export type Dicho = {
   medida?: string;
   /** Vino después de «con» y sin cantidad: va como acompañante, en una porción chica (la manteca de la tostada). */
   acompanante?: true;
+  /** «Arroz y pollo», que recetaDeTexto lee como dos: si la base no tiene el nombre entero, va cada uno. */
+  partes?: Dicho[];
 };
 
-export type FraseLeida = { dichos: Dicho[]; comida: Comida | null };
+/** `ayer`: se dijo «ayer», «anoche», «yesterday» o «last night»: es del día anterior. «Anoche», sin otra comida, es la cena. */
+export type FraseLeida = { dichos: Dicho[]; comida: Comida | null; ayer: boolean };
 
 const NUMERO = '(?:\\d+(?:[.,]\\d+)?|un|una|uno|medio|media|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|a|an|one|two|three|four|five|six|seven|eight|nine|ten|half)';
 /** Lo que abre un alimento nuevo: una cantidad o un artículo. */
 const EMPIEZA_ALIMENTO = new RegExp(`^(?:${NUMERO}|un par|unos|unas|el|la|los|las|some|the|a couple)(?![\\p{L}])`, 'u');
 
-const MULETILLAS = /^(?:(?:eh+|em+|mm+|este|bueno|a ver|o sea|nada|mir[aá]|che|pues|entonces|hoy|ayer|anoche|well|so|um+|uh+|okay|ok|last night)(?![\p{L}])[\s,]*)+/u;
+const MULETILLAS = /^(?:(?:eh+|em+|mm+|este|bueno|a ver|o sea|nada|mir[aá]|che|pues|entonces|hoy|today|well|so|um+|uh+|okay|ok)(?![\p{L}])[\s,]*)+/u;
+/** El día, dicho en cualquier lugar de la frase («comí pizza anoche»); «pan de ayer» no es el día. */
+const AYER = /(?<![\p{L}])(?<!de\s)(?:ayer|anoche|last night|yesterday)(?![\p{L}])/gu;
+const ANOCHE = /(?<![\p{L}])(?<!de\s)(?:anoche|last night)(?![\p{L}])/u;
 const VERBOS = /^(?:(?:me\s+)?(?:com[ií]|tom[eé]|desayun[eé]|almorc[eé]|merend[eé]|cen[eé]|picote[eé]|clav[eé]|baj[eé])|i\s+(?:had|ate|drank)|had|ate|drank)(?![\p{L}])\s*/u;
 
 const COMIDAS_DICHAS: [RegExp, Comida][] = [
@@ -58,19 +64,19 @@ const SEPARADORES = new RegExp(
 );
 
 /** «Dos, no, tres medialunas»: queda la cantidad corregida. */
-const CORRECCION = new RegExp(`(?<![\\p{L}])${NUMERO}\\s*,?\\s*(?:no|digo|perd[oó]n|mejor)\\s*,?\\s*(${NUMERO})(?![\\p{L}])`, 'gu');
+const CORRECCION = new RegExp(`(?<![\\p{L}])${NUMERO}\\s*,?\\s*(?<![\\p{L}])(?:no|digo|perd[oó]n|mejor)(?![\\p{L}])\\s*,?\\s*(${NUMERO})(?![\\p{L}])`, 'gu');
 /**
  * «Dos huevos, no, tres» o «dos medialunas, no, eran tres»: el número corregido va con lo de antes.
  * Lo de antes son palabras sueltas, sin cruzar un «y»: «un café y dos huevos, no, tres».
  */
 const CORRECCION_DESPUES = new RegExp(
-  `(?<![\\p{L}])${NUMERO}((?:\\s+(?!(?:y|e|and|no|digo|mejor)(?![\\p{L}]))[\\p{L}]+)+?)\\s*,?\\s*(?:no|digo|perd[oó]n|mejor|i mean|sorry)\\s*,?\\s*(?:(?:eran?|fueron|son|it was|they were)\\s+)?(${NUMERO})(?![\\p{L}])`,
+  `(?<![\\p{L}])${NUMERO}((?:\\s+(?!(?:y|e|and|no|digo|mejor)(?![\\p{L}]))[\\p{L}]+)+?)\\s*,?\\s*(?<![\\p{L}])(?:no|digo|perd[oó]n|mejor|i mean|sorry)(?![\\p{L}])\\s*,?\\s*(?:(?:eran?|fueron|son|it was|they were)\\s+)?(${NUMERO})(?![\\p{L}])`,
   'gu',
 );
 /** «Un huevo y medio», «una pizza y media»: uno y medio de eso. */
 const Y_MEDIO = new RegExp(`(?<![\\p{L}])(${NUMERO})((?:\\s+(?!(?:y|e|and|con|with)(?![\\p{L}]))[\\p{L}]+){1,3}?)\\s+(?:y|and\\s+a)\\s+(?:medio|media|half)(?![\\p{L}])`, 'gu');
 /** Lo que queda solo y no es un alimento: una negación, un número o una palabra de unión. */
-const VACIO = new RegExp(`^(?:no|s[ií]|ok|okay|nada|algo|eso|esto|eran?|fueron|son|y|e|o|de|con|sin|${NUMERO})$`, 'u');
+const VACIO = new RegExp(`^(?:no|s[ií]|ok|okay|nada|algo|eso|esto|eran?|fueron|son|y|e|o|de|con|sin|${NUMERO}|(?:y|and)\\s+(?:an?\\s+)?(?:medio|media|half))$`, 'u');
 
 const recortar = (s: string) => s.replace(/^[\s,;:.]+|[\s,;:.]+$/g, '').trim();
 
@@ -81,7 +87,7 @@ function pedazos(texto: string): string[] {
     let desde = 0;
     for (const m of p.matchAll(/\s(?:y|e|and)\s/gu)) {
       const derecha = p.slice(m.index + m[0].length);
-      if (EMPIEZA_ALIMENTO.test(derecha) && !/^(?:medio|media|half)(?![\p{L}])/u.test(derecha)) {
+      if (EMPIEZA_ALIMENTO.test(derecha) && !/^(?:an?\s+)?(?:medio|media|half)(?![\p{L}])/u.test(derecha)) {
         salida.push(p.slice(desde, m.index));
         desde = m.index + m[0].length;
       }
@@ -111,7 +117,7 @@ export function conCon(texto: string, idioma: Idioma): string[] {
 }
 
 /** La frase sin las comidas nombradas ni las correcciones, con los separadores como comas. */
-function prepararTexto(texto: string): { texto: string; comida: Comida | null } {
+function prepararTexto(texto: string): { texto: string; comida: Comida | null; ayer: boolean } {
   let s = ` ${texto.toLowerCase().replace(/\s+/g, ' ')} `;
   let comida: Comida | null = null;
   for (const [re, c] of COMIDAS_DICHAS) {
@@ -120,6 +126,10 @@ function prepararTexto(texto: string): { texto: string; comida: Comida | null } 
       s = s.replace(re, ' ');
     }
   }
+  if (!comida && ANOCHE.test(s)) comida = 'cena';
+  const sinDia = s.replace(AYER, ' ');
+  const ayer = sinDia !== s;
+  s = sinDia;
   s = s.replace(CORRECCION, (_, segundo: string) => segundo);
   s = s.replace(CORRECCION_DESPUES, (_, cosa: string, segundo: string) => `${segundo}${cosa}`);
   s = s.replace(Y_MEDIO, (todo: string, n: string, cosa: string) => {
@@ -127,23 +137,28 @@ function prepararTexto(texto: string): { texto: string; comida: Comida | null } 
     return Number.isInteger(valor) && valor > 0 ? `${valor}½${cosa}` : todo;
   });
   s = s.replace(SEPARADORES, ', ');
-  return { texto: s.trim(), comida };
+  return { texto: s.trim(), comida, ayer };
 }
 
 const PALABRA_CANTIDAD = new RegExp(`^(?:${NUMERO}|un par de|unos|unas|el|la|los|las|some|the)\\s+`, 'u');
 /** «Un plato de arroz»: el plato, el bol o la porción son una porción de lo que sigue. */
 const RECIPIENTE = new RegExp(`^(${NUMERO})\\s+(?:platos?|bol(?:es)?|bowls?|taz[oó]n(?:es)?|cuencos?|porci[oó]n(?:es)?|raci[oó]n(?:es)?|plates?|servings?)\\s+(?:de|of)\\s+`, 'u');
 
+function dichoDeLinea(texto: string, l: LineaDeReceta, idioma: Idioma): Dicho {
+  const medida = l.unidad ? nombreDeMedida(l.unidad, idioma) : null;
+  return { texto, buscado: l.buscado, cantidad: l.cantidad, unidad: l.unidad, ...(l.tamano ? { tamano: l.tamano } : {}), ...(medida ? { medida } : {}) };
+}
+
 /** Un pedazo: con recetaDeTexto; si no encuentra el alimento («un cortado» le parece una preparación), lo que queda sin la cantidad. */
 function leerUno(original: string, idioma: Idioma): Dicho {
   const texto = original.replace(RECIPIENTE, '$1 ');
   // Este pedazo ya es un solo alimento: si recetaDeTexto lo parte en el «y» («jamón y queso»), se junta.
-  const lineas = leerReceta(texto, idioma).lineas;
+  const lineas = leerReceta(texto, idioma).lineas.filter((x) => x.buscado);
   const [l] = lineas;
-  if (l && l.buscado) {
-    const buscado = lineas.map((x) => x.buscado).filter(Boolean).join(idioma === 'en' ? ' and ' : ' y ');
-    const medida = l.unidad ? nombreDeMedida(l.unidad, idioma) : null;
-    return { texto: original, buscado, cantidad: l.cantidad, unidad: l.unidad, ...(l.tamano ? { tamano: l.tamano } : {}), ...(medida ? { medida } : {}) };
+  if (l) {
+    const buscado = lineas.map((x) => x.buscado).join(idioma === 'en' ? ' and ' : ' y ');
+    const partes = lineas.length > 1 ? lineas.map((x) => dichoDeLinea(x.texto, x, idioma)) : null;
+    return { ...dichoDeLinea(original, { ...l, buscado }, idioma), ...(partes ? { partes } : {}) };
   }
   const primera = /^(\S+)\s/.exec(texto)?.[1] ?? '';
   const n = VALOR_DE_PALABRA[primera] ?? Number(primera.replace(',', '.'));
@@ -160,7 +175,7 @@ const VALOR_DE_PALABRA: Record<string, number> = {
  * conCon): si no, se corta en dos y lo de después del «con», sin cantidad, va como acompañante.
  */
 export function leerFrase(texto: string, idioma: Idioma, esNombre: (buscado: string) => boolean = () => false): FraseLeida {
-  const { texto: preparado, comida } = prepararTexto(texto);
+  const { texto: preparado, comida, ayer } = prepararTexto(texto);
   const dichos: Dicho[] = [];
   let anterior: Dicho | null = null;
   for (const pedazo of pedazos(preparado)) {
@@ -200,5 +215,5 @@ export function leerFrase(texto: string, idioma: Idioma, esNombre: (buscado: str
       dichos.push(partido && otro.cantidad === null ? { ...otro, acompanante: true } : otro);
     }
   }
-  return { dichos: dichos.filter((d) => d.buscado && !VACIO.test(d.buscado)), comida };
+  return { dichos: dichos.filter((d) => d.buscado && !VACIO.test(d.buscado)), comida, ayer };
 }

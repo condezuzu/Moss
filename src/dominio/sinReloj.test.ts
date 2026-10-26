@@ -167,6 +167,23 @@ describe('las noches de Moss junto a las de Salud', () => {
     // Donde Salud no tiene nada, la de Moss.
     expect(conNochesDeMoss([], [propia('2026-10-22', 'estimada')], UY).map((n) => n.clave)).toEqual(['2026-10-22']);
   });
+
+  it('cada hora en la zona de su momento: un cambio de hora no corre las noches de antes ni la del cambio', () => {
+    // Nueva York: hasta el 1 de noviembre de 2026 a las 6 UTC, −240; después, −300.
+    const cambio = Date.parse('2026-11-01T06:00:00.000Z');
+    const zonaDe = (ms: number) => (ms < cambio ? -240 : -300);
+    const noche = (fecha: string, dormirse: string, despertar: string): NochePropia => ({
+      fecha, actualizado: despertar, hora: { dormirse, despertar, origen: 'confirmada', confianza: 'media' },
+    });
+    // Una de la semana anterior, de 23:00 a 7:00 con la hora de entonces.
+    const antes = nocheDeMoss(noche('2026-10-29', '2026-10-29T03:00:00.000Z', '2026-10-29T11:00:00.000Z'), zonaDe)!;
+    expect([antes.dormirse, antes.despertar]).toEqual([300, 780]);
+    // La del cambio: de 23:00 a 7:00 son 9 horas.
+    const delCambio = nocheDeMoss(noche('2026-11-01', '2026-11-01T03:00:00.000Z', '2026-11-01T12:00:00.000Z'), zonaDe)!;
+    expect([delCambio.dormido, delCambio.dormirse, delCambio.despertar]).toEqual([540, 300, 780]);
+    // Con una sola zona, la de después del cambio, esa noche se corría una hora.
+    expect(nocheDeMoss(noche('2026-10-29', '2026-10-29T03:00:00.000Z', '2026-10-29T11:00:00.000Z'), -300)!.despertar).toBe(720);
+  });
 });
 
 describe('lo que guarda el teléfono', () => {

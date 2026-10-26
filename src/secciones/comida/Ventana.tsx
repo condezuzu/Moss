@@ -181,6 +181,8 @@ export function Ventana(p: Props) {
       setDetalle(d);
       setPorciones(d.porciones);
       setConDesecho(false);
+      // El aceite elegido no sigue en una versión que ya lo trae (o que no lo pregunta).
+      if (d.aceite !== 'preguntar') setAceite(0);
       setMedicion({ tipo: 'peso', valor: p.sistema === 'imperial' ? Math.round((gramos / GRAMOS_POR_ONZA) * 10) / 10 : Math.round(gramos) });
     }).catch(() => {});
   };

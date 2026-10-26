@@ -139,21 +139,39 @@ export function productoDe(respuesta: unknown, idioma: 'es' | 'en'): Producto | 
   };
 }
 
-export type Pedir = (url: string, init: { headers: Record<string, string> }) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+export type Pedir = (url: string, init: { headers: Record<string, string>; signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+
+/** Lo que se espera a Open Food Facts, en total: con mala conexión, mejor ofrecer la etiqueta que quedarse buscando. */
+export const ESPERA_OFF = 10000;
 
 /**
- * Busca un código en Open Food Facts. Devuelve null si no está; si no hay conexión (o Open Food
- * Facts se cae, que pasa seguido), tira el error: quien llama ofrece el escáner de etiqueta.
- * `contacto` va en el User-Agent, como piden ellos.
+ * Busca un código en Open Food Facts. Devuelve null si no está; si no hay conexión, Open Food
+ * Facts se cae (pasa seguido) o no contesta en `espera` ms, tira el error: quien llama ofrece el
+ * escáner de etiqueta. `contacto` va en el User-Agent, como piden ellos.
  */
-export async function buscarEnOff(codigo: string, op: { idioma: 'es' | 'en'; version: string; contacto: string; pedir?: Pedir }): Promise<Producto | null> {
+export async function buscarEnOff(codigo: string, op: { idioma: 'es' | 'en'; version: string; contacto: string; pedir?: Pedir; espera?: number }): Promise<Producto | null> {
   const pedir: Pedir = op.pedir ?? ((url, init) => fetch(url, init));
-  for (const c of codigosPosibles(codigo)) {
-    const respuesta = await pedir(`${API}${c}.json?fields=${CAMPOS}`, { headers: { 'User-Agent': `Moss/${op.version} (${op.contacto})` } });
-    if (respuesta.status === 404) continue;
-    if (!respuesta.ok) throw new Error(`Open Food Facts respondió ${respuesta.status}`);
-    const producto = productoDe(await respuesta.json(), op.idioma);
-    if (producto) return producto;
+  const control = new AbortController();
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  const vencido = new Promise<never>((_, rechazar) => {
+    reloj = setTimeout(() => {
+      control.abort();
+      rechazar(new Error('Open Food Facts no respondió a tiempo'));
+    }, op.espera ?? ESPERA_OFF);
+  });
+  const buscar = async () => {
+    for (const c of codigosPosibles(codigo)) {
+      const respuesta = await pedir(`${API}${c}.json?fields=${CAMPOS}`, { headers: { 'User-Agent': `Moss/${op.version} (${op.contacto})` }, signal: control.signal });
+      if (respuesta.status === 404) continue;
+      if (!respuesta.ok) throw new Error(`Open Food Facts respondió ${respuesta.status}`);
+      const producto = productoDe(await respuesta.json(), op.idioma);
+      if (producto) return producto;
+    }
+    return null;
+  };
+  try {
+    return await Promise.race([buscar(), vencido]);
+  } finally {
+    clearTimeout(reloj);
   }
-  return null;
 }

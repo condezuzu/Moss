@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
+import { soloLosDeEjemplo } from '@/almacen/almacen';
 import PantallaDelCielo from '@/cielo/PantallaDelCielo';
 import { t } from '@/textos';
 import { colores } from '@/tema';
@@ -23,7 +24,7 @@ import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
 import { AvisoFlotante, Icono } from './comida/comunes';
 import { HojaRegistro } from './comida/HojaRegistro';
-import { abrirRegistro, quitarAviso, useAviso, useRegistro } from './comida/registro';
+import { abrirRegistro, cerrarRegistro, quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { Entrada } from './entrada/Entrada';
 import { EditorDeHabito } from './habitos/Editor';
 import { Mes } from './habitos/Mes';
@@ -85,6 +86,27 @@ export default function Secciones() {
   useEffect(() => {
     sinSecciones.set(!conSecciones);
   }, [conSecciones, sinSecciones]);
+  // Al volver a la entrada (cerrar sesión, cambiar de cuenta o borrar los datos), al terminarla se
+  // abre otra vez en Inicio, sin hojas abiertas.
+  const [conSeccionesAntes, setConSeccionesAntes] = useState(conSecciones);
+  if (conSecciones !== conSeccionesAntes) {
+    setConSeccionesAntes(conSecciones);
+    if (!conSecciones) {
+      setActual(0);
+      setAnterior(0);
+      setAscentAbierta(false);
+      setHojaAbierta(false);
+      setEditando(undefined);
+      setVerMes(false);
+    }
+  }
+  useEffect(() => {
+    if (conSecciones) return;
+    posicion.set(0);
+    subida.set(0);
+    hoja.set(0);
+    cerrarRegistro();
+  }, [conSecciones, posicion, subida, hoja]);
   // Con Ascent arriba, una hoja abierta o sin las secciones (en la entrada), las pestañas no se deslizan.
   const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0 && !sinSecciones.get());
 
@@ -120,7 +142,8 @@ export default function Secciones() {
 
   // Tocar un aviso lleva a lo suyo: anotar esa comida, el cielo de Hábitos, el peso o el sueño.
   useAlTocarUnAviso((a) => {
-    if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida });
+    // La comida de su día: un aviso de la cena tocado después de medianoche anota la cena de ayer.
+    if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida, ...(a.dia ? { dia: a.dia } : {}) });
     else if (a.tipo === 'pesarse') abrirHoja('peso');
     else ir(a.tipo === 'dormir' ? PESTANAS.indexOf('sueno') : HABITOS);
   });
@@ -179,34 +202,47 @@ export default function Secciones() {
             <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
               <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
               <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
-                {PESTANAS.map((n, i) =>
-                  i === HABITOS ? (
-                    <BotonesDeHabitos key={n} ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
-                  ) : !armada(i) ? (
-                    <View key={n} style={{ width: ancho }} pointerEvents="none" />
-                  ) : n === 'comida' ? (
-                    <PaginaDeComida key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
-                  ) : n === 'inicio' ? (
-                    <PaginaDeInicio key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
-                  ) : n === 'progreso' ? (
-                    <PaginaDeProgreso key={n} ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
-                  ) : n === 'sueno' ? (
-                    <PaginaDeSueno key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
-                  ) : (
-                    <PaginaDePerfil key={n} ancho={ancho} arriba={insets.top} abajo={abajo} />
-                  ),
-                )}
+                {/* Las secciones de al lado quedan armadas pero fuera de la pantalla: VoiceOver no las recorre. */}
+                {PESTANAS.map((n, i) => (
+                  <View
+                    key={n}
+                    style={[estilos.pagina, { width: ancho }]}
+                    pointerEvents="box-none"
+                    accessibilityElementsHidden={i !== actual}
+                    importantForAccessibility={i === actual ? 'auto' : 'no-hide-descendants'}
+                  >
+                    {i === HABITOS ? (
+                      <BotonesDeHabitos ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
+                    ) : !armada(i) ? (
+                      <View style={{ width: ancho }} pointerEvents="none" />
+                    ) : n === 'comida' ? (
+                      <PaginaDeComida ancho={ancho} arriba={insets.top} abajo={abajo} />
+                    ) : n === 'inicio' ? (
+                      <PaginaDeInicio ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
+                    ) : n === 'progreso' ? (
+                      <PaginaDeProgreso ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
+                    ) : n === 'sueno' ? (
+                      <PaginaDeSueno ancho={ancho} arriba={insets.top} abajo={abajo} />
+                    ) : (
+                      <PaginaDePerfil ancho={ancho} arriba={insets.top} abajo={abajo} />
+                    )}
+                  </View>
+                ))}
               </Animated.View>
               {CONEXION_CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
             </Animated.View>
           )}
         </Animated.View>
-        {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(true)} />}
+        {/* Los primeros hábitos, solo si siguen los de ejemplo: los de una cuenta que ya tenía los suyos quedan. */}
+        {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(soloLosDeEjemplo(elAlmacen().estado()))} />}
         {conSecciones && (
           <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
             <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
             <AvisoFlotante aviso={aviso} alIrse={quitarAviso} arriba={insets.top + 8} />
-            <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
+            {/* Cerrada, la hoja del «+» sigue armada abajo: VoiceOver no la recorre. */}
+            <View style={StyleSheet.absoluteFill} pointerEvents="box-none" accessibilityElementsHidden={!hojaAbierta} importantForAccessibility={hojaAbierta ? 'auto' : 'no-hide-descendants'}>
+              <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
+            </View>
             <HojaRegistro />
           </Animated.View>
         )}
@@ -241,6 +277,8 @@ const estilos = StyleSheet.create({
   atras: { overflow: 'hidden', backgroundColor: colores.noche0 },
   velo: { backgroundColor: colores.noche0 },
   tira: { position: 'absolute', top: 0, bottom: 0, left: 0, flexDirection: 'row' },
+  // En fila, como en la tira: la sección se estira a todo el alto.
+  pagina: { flexDirection: 'row' },
   botonesDeHabitos: { position: 'absolute', right: 16, flexDirection: 'row', gap: 8 },
   botonDeHabitos: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.45)' },
 });

@@ -20,6 +20,15 @@ describe('el ritmo de la tendencia', () => {
   it('con menos de dos semanas no se mide', () => {
     expect(ritmoSemanal(tendencia(bajando(10, 78, -0.5), HOY), HOY)).toBeNull();
   });
+
+  it('las primeras semanas, con las pesadas, mide el ritmo entero: la tendencia sola va atrasada', () => {
+    const pesadas = bajando(15, 78, -0.5);
+    const t = tendencia(pesadas, HOY);
+    expect(ritmoSemanal(t, HOY, pesadas)!).toBeCloseTo(-0.5, 5);
+    expect(ritmoSemanal(t, HOY)!).toBeGreaterThan(-0.3);
+    const p = progresoAlObjetivo({ hoy: HOY, tendencia: t, pesadas, objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 70 });
+    expect(p.ritmo!).toBeCloseTo(-0.5, 5);
+  });
 });
 
 describe('el progreso al objetivo', () => {
@@ -38,6 +47,13 @@ describe('el progreso al objetivo', () => {
 
   it('a medio kilo de la meta, llegaste', () => {
     expect(progresoAlObjetivo({ ...base, pesoMeta: t.get(HOY)! - 0.3, pesoInicial: 78 }).estado).toBe('llegaste');
+    // Pasándola, también.
+    expect(progresoAlObjetivo({ ...base, pesoMeta: t.get(HOY)! + 1, pesoInicial: 78 }).estado).toBe('llegaste');
+  });
+
+  it('con la meta del otro lado de donde se empezó (al pasar de bajar a subir), no llegaste: revisa la meta', () => {
+    const p = progresoAlObjetivo({ ...base, objetivo: 'subir', pesoMeta: 70, pesoInicial: 78 });
+    expect(p).toMatchObject({ estado: 'otroLado', hecho: null, fecha: null });
   });
 
   it('con menos de la mitad del ritmo del plan, despacio; quieto o al revés, sin fecha', () => {
@@ -99,5 +115,24 @@ describe('el día del control', () => {
     expect(e).toMatchObject({ fecha: '2026-10-26', faltan: 5, diasConComida: 3, pesadas: 1, alcanza: false });
     // Si toca hoy y todavía no corrió, es hoy.
     expect(estadoDelControl({ hoy: HOY, dia: 3, ultimaMeta: '2026-10-14', pesadas: [], comidas }).fecha).toBe(HOY);
+  });
+
+  it('si ya tocó y no corrió (al cambiar el día del control), es hoy, no un día pasado', () => {
+    // El último control fue el lunes 19; el miércoles 21 se elige el martes: el del 20 corre hoy.
+    const e = estadoDelControl({ hoy: HOY, dia: 2, ultimaMeta: '2026-10-19', pesadas: [], comidas: [] });
+    expect(e).toMatchObject({ fecha: HOY, faltan: 0 });
+  });
+
+  it('el primer control mide si para entonces hay 7 días con pesadas y comida; si no, lo dice', () => {
+    // Entrada el lunes 19, con pesada y comida desde ese día: el control del lunes 26 mira del 19 al 25.
+    const desde19 = ['2026-10-19', '2026-10-20', '2026-10-21'];
+    const pesadas = [{ fecha: '2026-10-19', kg: 74 }];
+    const lunes = estadoDelControl({ hoy: HOY, dia: 1, ultimaMeta: '2026-10-19', pesadas, comidas: [...desde19, '2026-10-22'].map((fecha) => ({ fecha, kcal: 2500 })) });
+    expect(lunes).toMatchObject({ fecha: '2026-10-26', tramoCorto: false });
+    // Con el control el viernes 23, del 19 al 22 son 4 días: ese no mide.
+    const viernes = estadoDelControl({ hoy: HOY, dia: 5, ultimaMeta: '2026-10-19', pesadas, comidas: desde19.map((fecha) => ({ fecha, kcal: 2500 })) });
+    expect(viernes).toMatchObject({ fecha: '2026-10-23', tramoCorto: true, alcanza: false });
+    // Sin nada registrado todavía, lo más pronto es hoy.
+    expect(estadoDelControl({ hoy: HOY, dia: 1, ultimaMeta: '2026-10-19', pesadas: [], comidas: [] }).tramoCorto).toBe(true);
   });
 });

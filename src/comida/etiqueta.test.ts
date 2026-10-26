@@ -151,3 +151,36 @@ describe('lo que conviene revisar', () => {
     expect(e.avisos).toContain('mililitros');
   });
 });
+
+describe('encabezados y formas de decir', () => {
+  it('dos columnas con el tamaño de la porción en el encabezado: lo de 100 g queda por 100 g', () => {
+    const e = leerEtiqueta(['Información nutricional', 'Por 100 g Por porción (30 g)', 'Valor energético 370 kcal 111 kcal', 'Carbohidratos 60 g 18 g', 'Proteínas 10 g 3 g', 'Grasas totales 10 g 3 g']);
+    expect(e.por100g).toMatchObject({ kcal: 370, carbohidratos: 60, proteina: 10, grasas: 10 });
+    expect(e.porPorcion).toMatchObject({ kcal: 111, carbohidratos: 18 });
+    expect(e.normalizado).toMatchObject({ kcal: 370, carbohidratos: 60 });
+    expect(e.porcion?.gramos).toBe(30);
+    const bebida = leerEtiqueta(['Por 100 ml Por porción 200 ml', 'Porción: 200 ml (1 vaso)', 'Valor energético 42 kcal 84 kcal', 'Carbohidratos 10,5 g 21 g', 'Proteínas 0 g 0 g', 'Grasas totales 0 g 0 g']);
+    expect(bebida.normalizado).toMatchObject({ kcal: 42, carbohidratos: 10.5 });
+    expect(bebida.porcion?.gramos).toBe(200);
+    // La porción primero, y el 100 «por 100 g» después.
+    const alReves = leerEtiqueta(['Por porción (30 g) Por 100 g', 'Valor energético 111 kcal 370 kcal', 'Carbohidratos 18 g 60 g', 'Proteínas 3 g 10 g', 'Grasas totales 3 g 10 g']);
+    expect(alReves.por100g).toMatchObject({ kcal: 370, carbohidratos: 60 });
+  });
+
+  it('«Porción 100 g (1 pote)» es la porción, no un encabezado', () => {
+    const e = leerEtiqueta(['Porción 100 g (1 pote)', 'Valor energético 80 kcal', 'Carbohidratos 12 g', 'Proteínas 4 g', 'Grasas totales 2 g']);
+    expect(e.porPorcion).toMatchObject({ kcal: 80, carbohidratos: 12 });
+    expect(e.porcion?.gramos).toBe(100);
+  });
+
+  it('«Contenido energético», «saturates», las insaturadas, los miles y el sodio pegado', () => {
+    expect(leerEtiqueta(['Porción 30 g', 'Contenido energético 120 kcal']).porPorcion.kcal).toBe(120);
+    expect(leerEtiqueta(['Fat 10g', 'of which saturates 1.5g']).porPorcion.saturadas).toBe(1.5);
+    const us = leerEtiqueta(['Total Fat 8g', 'Polyunsaturated Fat 2g', 'Monounsaturated Fat 3g', 'Saturated Fat 1g']);
+    expect(us.porPorcion).toMatchObject({ grasas: 8, saturadas: 1 });
+    expect(leerEtiqueta(['Grasas totales 9 g', 'Grasas monoinsaturadas 4 g', 'Grasas saturadas 2 g']).porPorcion).toMatchObject({ grasas: 9, saturadas: 2 });
+    expect(leerEtiqueta(['Sodio 1.200 mg']).porPorcion.sodio).toBe(1200);
+    expect(leerEtiqueta(['Sodio120mg']).porPorcion.sodio).toBe(120);
+    expect(leerEtiqueta(['Energy 1,674 kJ']).porPorcion.kcal).toBe(400);
+  });
+});

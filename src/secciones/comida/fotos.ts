@@ -20,7 +20,8 @@ export function fotoDe(dia: ClaveDia, comida: Comida): string | null {
   if (!hayFotos) return null;
   try {
     const f = archivo(dia, comida);
-    return f.exists ? f.uri : null;
+    // Con la hora del archivo: si la foto se reemplazó, la imagen guardada en memoria no se usa.
+    return f.exists ? `${f.uri}?${f.modificationTime ?? 0}` : null;
   } catch {
     return null;
   }
@@ -49,5 +50,16 @@ export function borrarFoto(dia: ClaveDia, comida: Comida): void {
     if (f.exists) f.delete();
   } catch {
     // Si no estaba, no hay nada que borrar.
+  }
+}
+
+/** Todas: al borrar los datos o la cuenta y al cerrar sesión, así ninguna aparece en otra cuenta. */
+export function borrarFotos(): void {
+  if (!hayFotos) return;
+  try {
+    const d = carpeta();
+    if (d.exists) d.delete();
+  } catch (error) {
+    console.warn('Moss no pudo borrar las fotos', error);
   }
 }

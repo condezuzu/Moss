@@ -11,7 +11,8 @@ import { elAlmacen } from '@/almacen';
 import type { AvisoDeHabito, Cuando, Evento } from '@/dominio/avisos';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
-import type { DatoDeSalud, Fuente, Habito } from '@/dominio/habitos';
+import { cantidadesPorDia, type DatoDeSalud, type Fuente, type Habito } from '@/dominio/habitos';
+import { catalogo } from '@/datos/catalogo';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { decimal } from '@/comida/porciones';
@@ -33,9 +34,12 @@ export const METAS: Record<Exclude<DatoDeSalud, 'acostarse'>, readonly number[]>
   agua: [1500, 2000, 2500, 3000],
   mindfulness: [5, 10, 15, 20],
 };
+/** Cada cuánto de la meta es una unidad de la que se escribe: el sueño en horas y el agua en litros, como se muestran. */
+const ESCRITA_EN: Record<keyof typeof METAS, number> = { pasos: 1, sueno: 60, agua: 1000, mindfulness: 1 };
 const ICONO_DE_SALUD: Record<keyof typeof METAS, SFSymbol> = { pasos: 'figure.walk', sueno: 'moon', agua: 'drop', mindfulness: 'figure.mind.and.body' };
 const ICONO_DE_COMIDA = { proteina: 'fork.knife', registrar: 'list.bullet', calorias: 'flame' } as const satisfies Record<string, SFSymbol>;
 const TODOS: DiaSemana[] = [0, 1, 2, 3, 4, 5, 6];
+const MAS_ESTRELLAS = Math.max(...catalogo.map((c) => c.estrellas.length));
 
 /** Lo que dice la meta de un dato de Salud: «8.000 pasos», «Dormir 7 h». */
 export function textoDeMeta(dato: keyof typeof METAS, meta: number): string {
@@ -84,6 +88,12 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
 
   const guardar = () => {
     if (!valido) return;
+    // Cada hábito del día es una estrella: más que la constelación más grande no tienen dónde ir.
+    const otros = cantidadesPorDia(e.habitos.filter((x) => x.id !== original?.id), e.hoy);
+    if (dias.some((d) => otros[d] >= MAS_ESTRELLAS && !original?.dias.includes(d))) {
+      avisar(t('habitos.demasiados', { n: MAS_ESTRELLAS }));
+      return;
+    }
     const datos = { nombre: nombreFinal, icono, dias: [...dias].sort(), fuente };
     let habito = original?.id;
     if (original) elAlmacen().ponerHabito({ ...original, ...datos });
@@ -160,17 +170,20 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
           </View>
           <TextInput
             key={fuente.dato}
-            defaultValue={METAS[fuente.dato].includes(fuente.meta) ? '' : String(fuente.meta)}
+            defaultValue={METAS[fuente.dato].includes(fuente.meta) ? '' : decimal(fuente.meta / ESCRITA_EN[fuente.dato], idioma())}
             onChangeText={(x) => {
+              const dato = fuente.dato as keyof typeof METAS;
+              // Vacío vuelve a la del medio: si no, quedaba lo último que se borró («1 pasos»).
               const n = Number(x.replace(',', '.'));
-              if (Number.isFinite(n) && n > 0) cambiarFuente({ ...fuente, meta: Math.round(n) });
+              if (!x.trim()) cambiarFuente({ ...fuente, meta: METAS[dato][Math.floor(METAS[dato].length / 2)] });
+              else if (Number.isFinite(n) && n > 0) cambiarFuente({ ...fuente, meta: Math.max(1, Math.round(n * ESCRITA_EN[dato])) });
             }}
-            placeholder={t('habitos.metaPropia')}
+            placeholder={t(`habitos.metaPropia.${fuente.dato}`)}
             placeholderTextColor="rgba(239, 230, 207, 0.35)"
-            keyboardType="number-pad"
+            keyboardType={ESCRITA_EN[fuente.dato] > 1 ? 'decimal-pad' : 'number-pad'}
             maxLength={6}
             style={[st.campo, st.mensaje]}
-            accessibilityLabel={t('habitos.metaPropia')}
+            accessibilityLabel={t(`habitos.metaPropia.${fuente.dato}`)}
           />
         </Aparece>
       )}

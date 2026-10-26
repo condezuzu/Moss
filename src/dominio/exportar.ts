@@ -23,6 +23,13 @@ function campo(v: Valor): string {
   const texto = typeof v === 'number' ? String(Math.round(v * 100) / 100) : v;
   return /[",\r\n]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto;
 }
+/** El momento en la hora del teléfono, como lo lee una planilla: «2026-10-26 21:30». En UTC, una cena tarde caía al día siguiente. */
+function horaLocal(iso: string): string {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return iso;
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())} ${dos(d.getHours())}:${dos(d.getMinutes())}`;
+}
 const csv = (cabeza: string[], filas: Valor[][]) => [cabeza, ...filas].map((f) => f.map(campo).join(',')).join('\n') + '\n';
 
 /** Lo comido, sin lo borrado, en el orden del día. */
@@ -35,7 +42,7 @@ export function csvDeRegistros(
     const porcion = r.cantidad && 'porcion' in r.cantidad ? r.cantidad : null;
     const v = r.valores;
     return [
-      r.dia, op.comida(r.comida), r.momento, r.nombre, r.fuente, porcion?.porcion, porcion?.veces, gramosDe(r.cantidad),
+      r.dia, op.comida(r.comida), horaLocal(r.momento), r.nombre, r.fuente, porcion?.porcion, porcion?.veces, gramosDe(r.cantidad),
       v.kcal, v.proteina, v.carbohidratos, v.grasas, v.fibra, v.azucares, v.saturadas, v.sodio, v.alcohol, r.planificado ? op.si : op.no,
     ];
   }));

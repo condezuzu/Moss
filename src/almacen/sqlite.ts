@@ -1,5 +1,5 @@
 // El repositorio de la app: SQLite en el teléfono. Las versiones del esquema van en
-// PRAGMA user_version; para cambiarlo se suma un bloque `if (version < N)` al final de migrar().
+// PRAGMA user_version; para cambiarlo se suma un `bloque(N, ...)` al final de migrar().
 // Cada fila lleva `cambio`, un número que solo crece: lo que pasa del último subido está pendiente.
 
 import * as SQLite from 'expo-sqlite';
@@ -17,42 +17,38 @@ const TABLAS = ['habitos', 'periodos', 'marcas', 'dias', 'logros', 'perfil', 'me
 
 async function migrar(db: SQLite.SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
-  let version = (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'))?.user_version ?? 0;
-  if (version < 1) {
-    await db.execAsync(`
-      CREATE TABLE habitos (id TEXT PRIMARY KEY NOT NULL, datos TEXT NOT NULL, cambio INTEGER NOT NULL);
-      CREATE TABLE periodos (dia INTEGER NOT NULL, constelacion TEXT NOT NULL, cantidad INTEGER NOT NULL, desde TEXT NOT NULL, hasta TEXT, cambio INTEGER NOT NULL);
-      CREATE TABLE marcas (habito TEXT NOT NULL, dia TEXT NOT NULL, hecho INTEGER NOT NULL, momento TEXT NOT NULL, origen TEXT NOT NULL, cambio INTEGER NOT NULL, PRIMARY KEY (habito, dia));
-      CREATE TABLE dias (clave TEXT PRIMARY KEY NOT NULL, datos TEXT NOT NULL, cambio INTEGER NOT NULL);
-      CREATE TABLE logros (id TEXT PRIMARY KEY NOT NULL, desde TEXT NOT NULL, cambio INTEGER NOT NULL);
-      CREATE TABLE perfil (id INTEGER PRIMARY KEY CHECK (id = 1), datos TEXT NOT NULL, cambio INTEGER NOT NULL);
-      CREATE TABLE metas (desde TEXT PRIMARY KEY NOT NULL, datos TEXT NOT NULL, cambio INTEGER NOT NULL);
-      CREATE TABLE pesos (fecha TEXT PRIMARY KEY NOT NULL, kg REAL NOT NULL, origen TEXT NOT NULL, momento TEXT NOT NULL, cambio INTEGER NOT NULL);
-      CREATE TABLE ajustes (clave TEXT PRIMARY KEY NOT NULL, valor TEXT NOT NULL, cambio INTEGER NOT NULL);
-      CREATE INDEX marcas_por_dia ON marcas (dia);
-    `);
-    version = 1;
-  }
-  if (version < 2) {
-    // Lo que se come: cada cosa entera, en JSON, con su clave y, en los registros y el agua, su día.
-    await db.execAsync(`
-      ${['registros', 'recetas', 'propios', 'favoritos', 'agua'].map((c) => `CREATE TABLE ${c} (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);`).join('\n      ')}
-      CREATE INDEX registros_por_dia ON registros (dia);
-      CREATE INDEX agua_por_dia ON agua (dia);
-    `);
-    version = 2;
-  }
-  if (version < 3) {
-    // Las medidas del cuerpo, como lo que se come: una por día.
-    await db.execAsync('CREATE TABLE medidas (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
-    version = 3;
-  }
-  if (version < 4) {
-    // Las noches propias (la cara de la mañana y la hora sin reloj), igual: una por noche.
-    await db.execAsync('CREATE TABLE noches (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
-    version = 4;
-  }
-  await db.execAsync(`PRAGMA user_version = ${version}`);
+  const version = (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'))?.user_version ?? 0;
+  // Cada bloque va entero o no va: con su número de versión, en una transacción. Si la app se cierra
+  // a la mitad, la próxima vez se vuelve a correr sin encontrar nada hecho a medias.
+  const bloque = async (n: number, sql: string) => {
+    if (version >= n) return;
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(sql);
+      await db.execAsync(`PRAGMA user_version = ${n}`);
+    });
+  };
+  await bloque(1, `
+    CREATE TABLE IF NOT EXISTS habitos (id TEXT PRIMARY KEY NOT NULL, datos TEXT NOT NULL, cambio INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS periodos (dia INTEGER NOT NULL, constelacion TEXT NOT NULL, cantidad INTEGER NOT NULL, desde TEXT NOT NULL, hasta TEXT, cambio INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS marcas (habito TEXT NOT NULL, dia TEXT NOT NULL, hecho INTEGER NOT NULL, momento TEXT NOT NULL, origen TEXT NOT NULL, cambio INTEGER NOT NULL, PRIMARY KEY (habito, dia));
+    CREATE TABLE IF NOT EXISTS dias (clave TEXT PRIMARY KEY NOT NULL, datos TEXT NOT NULL, cambio INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS logros (id TEXT PRIMARY KEY NOT NULL, desde TEXT NOT NULL, cambio INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS perfil (id INTEGER PRIMARY KEY CHECK (id = 1), datos TEXT NOT NULL, cambio INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS metas (desde TEXT PRIMARY KEY NOT NULL, datos TEXT NOT NULL, cambio INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS pesos (fecha TEXT PRIMARY KEY NOT NULL, kg REAL NOT NULL, origen TEXT NOT NULL, momento TEXT NOT NULL, cambio INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS ajustes (clave TEXT PRIMARY KEY NOT NULL, valor TEXT NOT NULL, cambio INTEGER NOT NULL);
+    CREATE INDEX IF NOT EXISTS marcas_por_dia ON marcas (dia);
+  `);
+  // Lo que se come: cada cosa entera, en JSON, con su clave y, en los registros y el agua, su día.
+  await bloque(2, `
+    ${['registros', 'recetas', 'propios', 'favoritos', 'agua'].map((c) => `CREATE TABLE IF NOT EXISTS ${c} (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);`).join('\n    ')}
+    CREATE INDEX IF NOT EXISTS registros_por_dia ON registros (dia);
+    CREATE INDEX IF NOT EXISTS agua_por_dia ON agua (dia);
+  `);
+  // Las medidas del cuerpo, como lo que se come: una por día.
+  await bloque(3, 'CREATE TABLE IF NOT EXISTS medidas (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
+  // Las noches propias (la cara de la mañana y la hora sin reloj), igual: una por noche.
+  await bloque(4, 'CREATE TABLE IF NOT EXISTS noches (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
 }
 
 type FilaPeriodo = { dia: number; constelacion: string; cantidad: number; desde: string; hasta: string | null };
@@ -66,10 +62,12 @@ const peso = (f: FilaPeso): Peso => ({ fecha: f.fecha, kg: f.kg, origen: f.orige
 export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio> {
   const db = await SQLite.openDatabaseAsync(nombre);
   await migrar(db);
-  const maximo = await db.getFirstAsync<{ n: number | null }>(`SELECT MAX(n) AS n FROM (${TABLAS.map((t) => `SELECT MAX(cambio) AS n FROM ${t}`).join(' UNION ALL ')})`);
-  let secuencia = maximo?.n ?? 0;
-  const siguiente = () => ++secuencia;
   const subido = async () => Number((await db.getFirstAsync<{ valor: string }>("SELECT valor FROM ajustes WHERE clave = 'subido'"))?.valor ?? 0);
+  const maximo = await db.getFirstAsync<{ n: number | null }>(`SELECT MAX(n) AS n FROM (${TABLAS.map((t) => `SELECT MAX(cambio) AS n FROM ${t}`).join(' UNION ALL ')})`);
+  // Nunca por debajo de lo ya subido: lo que baja de la cuenta pisa filas con el número 0, y un
+  // número nuevo que no pase el subido nunca quedaría pendiente.
+  let secuencia = Math.max(maximo?.n ?? 0, await subido());
+  const siguiente = () => ++secuencia;
 
   /** Lo de una colección de la comida: lo de `desde` en adelante, o lo que cambió después de `cambio`. */
   async function leer<C extends Coleccion>(coleccion: C, filtro: { desde?: ClaveDia; cambio?: number } = {}): Promise<DeComida[C][]> {

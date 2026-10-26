@@ -12,6 +12,7 @@ import { elAlmacen } from '@/almacen';
 import type { ClaveDia } from '@/dominio/fechas';
 import { habitualDe, instanteDe, quePreguntar } from '@/dominio/sinReloj';
 import type { Cara, Noche, NochePropia, OrigenDeNoche } from '@/dominio/sueno';
+import { DESDE_LAS } from '@/salud/nocheSinReloj';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { horaDelDia } from '../comida/datos';
@@ -28,8 +29,12 @@ const ocultas = new Set<ClaveDia>();
 
 /** Guarda la hora de una noche de Moss (en minutos desde las 18), con lo que había estimado el teléfono. */
 export function ponerHora(clave: ClaveDia, dormirse: number, despertar: number, origen: OrigenDeNoche, antes: NochePropia | undefined) {
-  const zona = -new Date().getTimezoneOffset();
-  const iso = (min: number) => new Date(instanteDe(clave, zona, Math.round(min))).toISOString();
+  // Cada hora en la zona de su momento, como las muestra nocheDeMoss: un cambio de hora no la corre.
+  const zonaEn = (ms: number) => -new Date(ms).getTimezoneOffset();
+  const iso = (min: number) => {
+    const aprox = instanteDe(clave, zonaEn(Date.now()), Math.round(min));
+    return new Date(instanteDe(clave, zonaEn(aprox), Math.round(min))).toISOString();
+  };
   const h = antes?.hora;
   elAlmacen().ponerHoraDeLaNoche(clave, {
     dormirse: iso(dormirse), despertar: iso(despertar), origen, confianza: h?.confianza ?? 'media', ...(h?.estimada ? { estimada: h.estimada } : {}),
@@ -78,7 +83,8 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
   const [, setOculta] = useState(0);
   // La cara elegida brilla un momento antes de que se vaya la pregunta.
   const [tocada, setTocada] = useState<Cara | null>(null);
-  const oculta = ocultas.has(hoy);
+  // Antes de las 4 la noche de hoy todavía no pasó: lo que se conteste sería de la que viene.
+  const oculta = ocultas.has(hoy) || new Date().getHours() < DESDE_LAS;
   const cara = propia?.cara ?? null;
   const modo = !oculta && noche?.moss?.origen === 'estimada' ? quePreguntar(hoy, noche.moss.confianza, desde) : null;
   const conCaras = (!cara && !oculta) || cambiando;

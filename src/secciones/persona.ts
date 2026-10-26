@@ -7,7 +7,7 @@ import type { Estado } from '@/almacen/almacen';
 import { controlSemanal, estadoDelControl, tendencia, ultimoDiaDeControl, type ComidaDelDia, type Control, type EstadoDelControl, type Peso } from '@/dominio/control';
 import { rangoDeGrasa, ultimasMedidas, type Medidas, type RangoDeGrasa } from '@/dominio/cuerpo';
 import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { edadDe, metaPara, type Macros, type Perfil } from '@/dominio/metas';
+import { edadDe, metaPara, objetivoPermitido, type Macros, type Perfil } from '@/dominio/metas';
 import { balance, progresoAlObjetivo, type Balance, type Progreso } from '@/dominio/progreso';
 import { comidasParaElControl, vigentes } from '@/dominio/registros';
 import { conNochesDeMoss } from '@/dominio/sinReloj';
@@ -87,8 +87,10 @@ export function calcularPersona(e: Pick<Estado, 'hoy' | 'perfil' | 'pesos' | 'me
     const antes = t.get(sumarDias(hoy, -dias));
     return pesoHoy !== null && antes !== undefined ? pesoHoy - antes : null;
   };
+  // Se empezó con la primera meta (la entrada), no con la pesada más vieja: Salud trae las de antes de Moss.
   const primero = [...t.keys()][0];
-  const pesoInicial = primero ? (t.get(primero) ?? null) : null;
+  const empezo = ej ? undefined : e.metas[0]?.desde;
+  const pesoInicial = (empezo ? t.get(empezo) : undefined) ?? (primero ? (t.get(primero) ?? null) : null);
   const edad = edadDe(perfil, hoy);
   const c = { edad, sexo: perfil.sexo, pesoKg: pesoHoy ?? pesos[pesos.length - 1]?.kg ?? 70, objetivo: perfil.objetivo, ritmo: perfil.ritmo };
 
@@ -133,7 +135,8 @@ export function calcularPersona(e: Pick<Estado, 'hoy' | 'perfil' | 'pesos' | 'me
     deEjemplo, perfil, pesos, tendencia: t, pesoHoy,
     cambio7: atras(7), cambio30: atras(30), pesoInicial,
     serie: serieDe(t, pesos, hoy, 56), serieDesde: sumarDias(hoy, -55), serie30: serieDe(t, pesos, hoy, 30),
-    progreso: progresoAlObjetivo({ hoy, tendencia: t, objetivo: perfil.objetivo, ritmo: perfil.ritmo, pesoMeta: perfil.pesoMeta, pesoInicial }),
+    // Sin déficit, bajar queda en mantener (objetivoPermitido): el progreso es el de mantener.
+    progreso: progresoAlObjetivo({ hoy, tendencia: t, pesadas: pesos, objetivo: objetivoPermitido(perfil), ritmo: perfil.ritmo, pesoMeta: perfil.pesoMeta, pesoInicial }),
     gasto,
     balance: gasto !== null ? balance(comidas, gasto, sumarDias(hoy, -1), 7) : { dias: [], promedio: null },
     control,
@@ -162,7 +165,7 @@ export type Sueno = {
  * sección, con el aviso de que no son tuyas.
  */
 export function suenoDe(hoy: ClaveDia, perfil: Perfil | null, salud: LoDeSalud | null = null, propias: Map<ClaveDia, NochePropia> = new Map()): Sueno {
-  const noches = conNochesDeMoss(salud?.noches ?? [], [...propias.values()], -new Date().getTimezoneOffset());
+  const noches = conNochesDeMoss(salud?.noches ?? [], [...propias.values()], (ms) => -new Date(ms).getTimezoneOffset());
   if (noches.length) {
     const lecturas = salud?.lecturas ?? { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() };
     return { deEjemplo: false, noches, soloEnCama: salud?.soloEnCama ?? new Map(), lecturas, fuentes: salud?.fuentes ?? [], necesidad: necesidad(edadDe(perfil ?? ejemplo(hoy).perfil, hoy)) };

@@ -115,4 +115,8 @@ describe('buscar alimentos', () => {
     await expect(buscar('100% "jugo" OR *')).resolves.toBeInstanceOf(Array);
     await expect(buscar('a')).resolves.toBeInstanceOf(Array);
   });
+
+  it('lo corto con un error no trae cualquier cosa: «coke» no es «Cooked taro»', async () => {
+    expect((await buscar('coke', { idioma: 'en', region: 'US' })).map((r) => r.nombre)).not.toContainEqual(expect.stringMatching(/^Cooked/));
+  });
 });

@@ -11,7 +11,7 @@ import {
 import { leerMovimiento } from '../../modules/movimiento';
 
 /** Desde las 4 hay noche para estimar; con un reloj o un anillo, se espera su noche hasta las 14. */
-const DESDE_LAS = 4;
+export const DESDE_LAS = 4;
 const ESPERAR_AL_RELOJ_HASTA = 14;
 
 export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<void> {
@@ -33,7 +33,7 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
     ...e.uso.map(([desde, hasta]): Actividad => ({ desde, hasta, tipo: 'moss' })),
   ];
   const propias = [...e.noches.values()];
-  const noches = conNochesDeMoss(deSalud, propias, zona);
+  const noches = conNochesDeMoss(deSalud, propias, (ms) => -new Date(ms).getTimezoneOffset());
   const est = estimarNoche({ clave: e.hoy, zona, actividad, habitual: habitualDe(noches, e.hoy), ajuste: aprenderAjuste(propias, e.hoy) });
   if (!est) return;
   const iso = (minutos: number) => new Date(instanteDe(e.hoy, zona, Math.round(minutos))).toISOString();

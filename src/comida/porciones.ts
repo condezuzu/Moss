@@ -127,7 +127,11 @@ export function conUnaUnidad<P extends { nombre: string; gramos: number }>(porci
     const m = /^(\d+)\s+(\S.*)$/.exec(p.nombre);
     const n = m ? Number(m[1]) : 0;
     if (m && n >= 2 && n <= 100 && !METRICAS.test(m[2].split(/[\s,(]/)[0])) {
-      const una = `1 ${singularDePorcion(m[2], idioma)}`;
+      // Lo de después de la coma o el paréntesis, si es lo que pesa el paquete («10 large (1 oz)»,
+      // «11 crackers (1 NLEA serving)»), no es de una sola.
+      const corte = m[2].search(/[,(]/);
+      const resto = (corte >= 0 && /\d|serving|porci[oó]n|nlea/i.test(m[2].slice(corte)) && m[2].slice(0, corte).trim()) || m[2];
+      const una = `1 ${singularDePorcion(resto, idioma)}`;
       if (!nombres.has(una.toLowerCase())) {
         nombres.add(una.toLowerCase());
         salida.push({ nombre: una, gramos: Math.round((p.gramos / n) * 10) / 10, deUna: true });

@@ -47,16 +47,23 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   }, [aviso]);
   const avisar = (texto: string, deshacer?: () => void) => setAviso((antes) => ({ texto, deshacer, clave: (antes?.clave ?? 0) + 1 }));
 
-  // Al cerrarla vuelve al menú, después de bajar: así no salta mientras se va.
-  const cerrar = () => {
-    alCerrar();
-    setTimeout(() => alCambiarVista('menu'), 420);
-  };
+  // Al cerrarla vuelve al menú, después de bajar: así no salta mientras se va. Si se vuelve a abrir
+  // antes, la vuelta no corre: si no, pisaba la vista con que se abrió (el peso, desde Progreso).
+  useEffect(() => {
+    if (abierta) return;
+    const espera = setTimeout(() => alCambiarVista('menu'), 420);
+    return () => clearTimeout(espera);
+  }, [abierta, alCambiarVista]);
+  const cerrar = alCerrar;
 
   const estiloFondo = useAnimatedStyle(() => ({ opacity: hoja.get() }));
-  // Con el teclado (el peso, las medidas), la hoja sube con él: si no, tapaba lo que se escribe.
+  // Con el teclado (el peso, las medidas), la hoja sube con él: si no, tapaba lo que se escribe. Y se
+  // achica lo mismo, para que lo de arriba (volver, la figura) no se vaya de la pantalla.
   const { animado: teclado } = useTeclado();
-  const estiloHoja = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - hoja.get()) * (altoHoja.get() + 40) - Math.max(0, teclado.get() - insets.bottom) }] }));
+  const estiloHoja = useAnimatedStyle(() => {
+    const sube = Math.max(0, teclado.get() - insets.bottom);
+    return { maxHeight: alto - insets.top - 24 - sube, transform: [{ translateY: (1 - hoja.get()) * (altoHoja.get() + 40) - sube }] };
+  });
   // Bajarla con el dedo desde arriba: sigue al dedo y, al soltar, se cierra o vuelve.
   const arrastre = usePanGesture({
     activeOffsetY: [-10, 10],
@@ -77,7 +84,7 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
         <Pressable style={StyleSheet.absoluteFill} onPress={cerrar} accessibilityRole="button" accessibilityLabel={t('comun.cancelar')} />
       </Animated.View>
       <Animated.View
-        style={[estilos.hoja, { paddingBottom: insets.bottom + 18, maxHeight: alto - insets.top - 24 }, estiloHoja]}
+        style={[estilos.hoja, { paddingBottom: insets.bottom + 18 }, estiloHoja]}
         onLayout={(ev) => altoHoja.set(ev.nativeEvent.layout.height)}
         accessibilityViewIsModal
       >
@@ -88,17 +95,17 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
         </GestureDetector>
         {/* Cambiar de vista nunca es de golpe: el peso y las medidas entran de costado; el menú, con un fundido. */}
         {vista === 'menu' && (
-          <Animated.View key="menu" entering={FadeIn.duration(260)}>
+          <Animated.View key="menu" entering={FadeIn.duration(260)} style={estilos.vista}>
             <Menu alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />
           </Animated.View>
         )}
         {vista === 'peso' && (
-          <Animated.View key="peso" entering={ENTRA_PANEL}>
+          <Animated.View key="peso" entering={ENTRA_PANEL} style={estilos.vista}>
             <VistaDePeso alVolver={() => alCambiarVista('menu')} avisar={avisar} />
           </Animated.View>
         )}
         {vista === 'medidas' && (
-          <Animated.View key="medidas" entering={ENTRA_PANEL}>
+          <Animated.View key="medidas" entering={ENTRA_PANEL} style={estilos.vista}>
             <VistaDeMedidas alVolver={() => alCambiarVista('menu')} avisar={avisar} />
           </Animated.View>
         )}
@@ -464,6 +471,8 @@ const estilos = StyleSheet.create({
   },
   arriba: { height: 26, alignItems: 'center', justifyContent: 'center' },
   asa: { width: 38, height: 4, borderRadius: 2, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
+  // Que la vista se achique hasta el tope de la hoja: así su scroll scrollea y el pie queda a la vista.
+  vista: { flexShrink: 1 },
   cuerpo: { flexGrow: 0 },
   cuerpoAdentro: { paddingHorizontal: 16, paddingTop: 6 },
   cuerpoMedidas: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 },

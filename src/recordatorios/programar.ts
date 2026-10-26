@@ -66,7 +66,7 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
 export function horasDeComida(e: Pick<Estado, 'hoy' | 'registros'>): (c: Comida) => number {
   const desde = sumarDias(e.hoy, -21);
   const registros = vigentes(e.registros.values()).filter((r) => r.dia >= desde && r.dia < e.hoy && !r.planificado);
-  return (c: Comida) => horaHabitual(registros.filter((r) => r.comida === c).map((r) => minutosDe(r.momento)), c === 'snack' ? 16 * 60 : HORA_TIPICA[c]);
+  return (c: Comida) => horaHabitual(registros.filter((r) => r.comida === c).map((r) => minutosDe(r.momento)), c === 'snack' ? 16 * 60 : HORA_TIPICA[c], c === 'cena' || c === 'merienda');
 }
 
 /** Lo que el plan dejó para esa comida de ese día, en pocas palabras: «pollo a la plancha, arroz». */
@@ -136,7 +136,8 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     try {
       await Notifications.scheduleNotificationAsync({
         // Lo que lleva el aviso para abrir lo suyo al tocarlo (useAlTocarUnAviso).
-        content: { title: 'Moss', body: textoDe(n, e), data: { tipo: primero.tipo, ...(primero.comida ? { comida: primero.comida } : {}) } },
+        // La comida va con su día: tocado pasada la medianoche o a la mañana, se anota en el día del aviso.
+        content: { title: 'Moss', body: textoDe(n, e), data: { tipo: primero.tipo, ...(primero.comida ? { comida: primero.comida, dia: n.dia } : {}) } },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fecha },
       });
     } catch {
@@ -145,8 +146,8 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   }
 }
 
-/** Lo que se abre al tocar un aviso. */
-export type AlTocarUnAviso = { tipo: Aviso['tipo']; comida?: Comida };
+/** Lo que se abre al tocar un aviso; con una comida, el día del aviso. */
+export type AlTocarUnAviso = { tipo: Aviso['tipo']; comida?: Comida; dia?: ClaveDia };
 
 /**
  * Tocar un aviso abre lo suyo (la comida para anotarla, Hábitos, el peso o el sueño), también si
@@ -157,7 +158,8 @@ export function useAlTocarUnAviso(abrir: (a: AlTocarUnAviso) => void) {
     const datos = respuesta?.notification.request.content.data as Partial<AlTocarUnAviso> | undefined;
     if (!datos?.tipo) return;
     Notifications.clearLastNotificationResponse();
-    abrir({ tipo: datos.tipo, ...(datos.comida ? { comida: datos.comida } : {}) });
+    const dia = typeof datos.dia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(datos.dia) ? datos.dia : undefined;
+    abrir({ tipo: datos.tipo, ...(datos.comida ? { comida: datos.comida } : {}), ...(dia ? { dia } : {}) });
   });
   useEffect(() => {
     if (!hayAvisos) return;

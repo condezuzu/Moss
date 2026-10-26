@@ -1,14 +1,18 @@
 // Lo de Perfil que sale del teléfono: exportar todo en CSV, y borrar los datos o la cuenta y cerrar
 // sesión. Borrar y cerrar sesión dejan el teléfono como la primera vez (vuelve la entrada).
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isAuthRetryableFetchError, type Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { File, Paths } from 'expo-file-system';
 import { Platform, Share } from 'react-native';
 
-import { elAlmacen } from '@/almacen';
+import { elAlmacen, sinSincronizar, subirLoQueFalta } from '@/almacen';
+import { buzon } from '@/almacen/buzonDeMoss';
 import { csvDeMetas, csvDePesos, csvDeRegistros } from '@/dominio/exportar';
 import { haySupabase, supabase } from '@/lib/supabase';
 import { t } from '@/textos';
+import { borrarFotos } from '@/secciones/comida/fotos';
 import { borrarEnElServidor } from './cuentaApple';
 
 const columnas = () => ({
@@ -57,17 +61,42 @@ export async function correoDeLaCuenta(): Promise<string | null> {
   }
 }
 
+/**
+ * La sesión guardada, o null si no hay. undefined si hay una pero ahora no se puede confirmar (sin
+ * conexión y vencida): entonces no se borra nada, porque la sesión sigue y volvería a sincronizar.
+ */
+async function laSesion(): Promise<Session | null | undefined> {
+  const { data, error } = await supabase().auth.getSession();
+  // Si la cuenta ya no la acepta, supabase-js la borró: no hay sesión.
+  if (error) return isAuthRetryableFetchError(error) ? undefined : null;
+  return data.session;
+}
+
+/** La lista de compras tachada (Plan.tsx). */
+const COMPRADAS = 'moss:compradas';
+
+/** Todo lo de la persona en el teléfono: el almacén, las fotos de las comidas, lo tachado y lo que esperaba en el buzón. */
+async function borrarElTelefono() {
+  await elAlmacen().olvidarTodo();
+  borrarFotos();
+  await AsyncStorage.removeItem(COMPRADAS).catch(() => {});
+  await buzon().vaciar().catch(() => {});
+}
+
 /** «Borrar mis datos de Moss»: en la cuenta (la cuenta queda) y en el teléfono. */
 export async function borrarMisDatos(): Promise<boolean> {
-  if (haySupabase()) {
-    const { data } = await supabase().auth.getSession();
-    if (data.session) {
-      const { error } = await supabase().rpc('borrar_mis_datos');
-      if (error) return false;
+  return sinSincronizar(async () => {
+    if (haySupabase()) {
+      const sesion = await laSesion();
+      if (sesion === undefined) return false;
+      if (sesion) {
+        const { error } = await supabase().rpc('borrar_mis_datos');
+        if (error) return false;
+      }
     }
-  }
-  await elAlmacen().olvidarTodo();
-  return true;
+    await borrarElTelefono();
+    return true;
+  });
 }
 
 /**
@@ -76,9 +105,14 @@ export async function borrarMisDatos(): Promise<boolean> {
  * borrar (cuentaApple.ts). Cancelar la hoja de Apple no borra nada y devuelve null: no es un error.
  */
 export async function borrarLaCuenta(): Promise<boolean | null> {
-  if (haySupabase()) {
-    const { data } = await supabase().auth.getSession();
-    const borrada = await borrarEnElServidor(data.session?.user, {
+  if (!haySupabase()) {
+    await borrarElTelefono();
+    return true;
+  }
+  const sesion = await laSesion();
+  if (sesion === undefined) return false;
+  return sinSincronizar(async () => {
+    const borrada = await borrarEnElServidor(sesion?.user, {
       codigoDeApple: codigoNuevoDeApple,
       funcion: async (codigoDeApple) => {
         const { error, response } = await supabase().functions.invoke('moss-borrar-cuenta', { body: { codigoDeApple } });
@@ -89,9 +123,9 @@ export async function borrarLaCuenta(): Promise<boolean | null> {
     });
     if (borrada !== true) return borrada;
     await supabase().auth.signOut().catch(() => {});
-  }
-  await elAlmacen().olvidarTodo();
-  return true;
+    await borrarElTelefono();
+    return true;
+  });
 }
 
 /** Un código de autorización nuevo de Apple, o null si la persona cierra la hoja o falla. */
@@ -105,8 +139,35 @@ async function codigoNuevoDeApple(): Promise<string | null> {
   }
 }
 
-/** Cerrar sesión borra lo del teléfono: los datos quedan en la cuenta. */
-export async function cerrarSesion(): Promise<void> {
-  if (haySupabase()) await supabase().auth.signOut().catch(() => {});
-  await elAlmacen().olvidarTodo();
+/**
+ * Cómo terminó cerrar sesión: `sinSubir`, que lo último no llegó a la cuenta (sin conexión) y no se
+ * tocó nada: se puede cerrar igual, perdiéndolo; `sinConexion`, que la sesión no se puede cerrar ahora.
+ */
+export type AlCerrarSesion = 'listo' | 'sinSubir' | 'sinConexion';
+
+/**
+ * Cerrar sesión borra lo del teléfono: los datos quedan en la cuenta. Por eso antes sube lo que
+ * falta, salvo que se elija perderlo.
+ */
+export async function cerrarSesion(aunqueSePierda = false): Promise<AlCerrarSesion> {
+  if (!haySupabase()) {
+    await borrarElTelefono();
+    return 'listo';
+  }
+  if (!aunqueSePierda) {
+    try {
+      await subirLoQueFalta();
+    } catch {
+      return 'sinSubir';
+    }
+  }
+  if ((await laSesion()) === undefined) return 'sinConexion';
+  return sinSincronizar(async () => {
+    // Solo esta sesión: Ascent y los otros teléfonos con la misma cuenta siguen adentro.
+    await supabase().auth.signOut({ scope: 'local' }).catch(() => {});
+    // Si la sesión quedó, no se borra nada: seguiría sincronizando el teléfono vacío.
+    if ((await laSesion()) !== null) return 'sinConexion';
+    await borrarElTelefono();
+    return 'listo';
+  });
 }

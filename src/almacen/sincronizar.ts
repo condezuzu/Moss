@@ -48,6 +48,8 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
   let conocida = false;
   let deOtraCuenta = false;
   let parado = true;
+  // Se paró para siempre (se cerró la sesión o se borra el teléfono): lo que vuelva de la cuenta ya no se toca.
+  let soltado = false;
   let fallas = 0;
   let pedidoDeBajada = false;
   let reloj: ReturnType<typeof setTimeout> | undefined;
@@ -65,6 +67,7 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
     const p = await almacen.enCola((r) => r.pendientes());
     if (sinCambios(p)) return;
     await remoto.subir(p);
+    if (soltado) return;
     await almacen.enCola((r) => r.subidoHasta(p.hasta));
   }
 
@@ -72,14 +75,16 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
     const desde = await almacen.enCola((r) => r.leerAjuste(BAJADO));
     const hoy = almacen.estado().hoy;
     const { datos, hasta } = await remoto.bajar(desde, sumarDias(hoy, -DIAS_DE_MARCAS), sumarDias(hoy, -DIAS_DE_COMIDA));
+    // De acá en adelante todo entra a la cola en el mismo instante: nunca detrás de un borrado que llegó antes.
+    if (soltado) return;
     almacen.mezclar(datos);
     // En la cola, después de lo mezclado: si la app se cierra antes de guardarlo, la próxima vez se vuelve a bajar.
     if (hasta && hasta !== desde) await almacen.enCola((r) => r.guardarAjuste(BAJADO, hasta));
   }
 
-  /** Devuelve false si los datos del teléfono son de otra cuenta: entonces no se toca nada. */
+  /** Devuelve false si los datos del teléfono son de otra cuenta, o si se paró: entonces no se toca nada. */
   async function vuelta(conBajada: boolean): Promise<boolean> {
-    if (deOtraCuenta) return false;
+    if (deOtraCuenta || soltado) return false;
     await almacen.iniciar();
     if (!conocida) {
       const dueno = await almacen.enCola((r) => r.leerAjuste(DUENO));
@@ -90,18 +95,22 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
       }
       if (!dueno) {
         await bajar();
+        if (soltado) return false;
         await almacen.enCola((r) => r.guardarAjuste(DUENO, usuario));
         conBajada = false;
       }
       conocida = true;
     }
-    await subir();
+    // Si la subida falla, igual baja lo nuevo; el error sale al final, para reintentar más tarde.
+    const errores: unknown[] = [];
+    await subir().catch((error: unknown) => errores.push(error));
     if (conBajada) {
       await bajar();
       // Lo mezclado puede haber rearmado el día de hoy.
-      await subir();
+      if (!errores.length) await subir();
     }
-    return true;
+    if (errores.length) throw errores[0];
+    return !soltado;
   }
 
   // Solo: cada pedido espera un poco y, si la vuelta falla, se reintenta cada vez más espaciado.
@@ -130,6 +139,7 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
   }
 
   function parar() {
+    soltado = true;
     parado = true;
     clearTimeout(reloj);
     dejarDeOir?.();
@@ -148,7 +158,13 @@ export function crearSincronizador({ almacen, remoto, usuario, espera = 3000, re
     },
     /** La app volvió del fondo: baja lo que haya cambiado en la cuenta. */
     alVolver: () => pedir(true, 0),
+    /** Para para siempre: lo que esté en camino ya no toca el teléfono. */
     parar,
+    /** Para y espera a que termine la vuelta que esté en camino. */
+    terminar(): Promise<void> {
+      parar();
+      return enOrden(async () => {});
+    },
     /** Para mostrarlo en Ajustes cuando exista: el teléfono tiene datos de otra cuenta y no sincroniza. */
     deOtraCuenta: () => deOtraCuenta,
   };

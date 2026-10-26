@@ -7,8 +7,8 @@
 import { ACEITE_POR_100G } from './cantidades';
 import type { Comida } from './comidas';
 import type { ComidaDelDia } from './control';
-import { diasEntre, type ClaveDia } from './fechas';
-import type { Macros } from './metas';
+import { diasEntre, partesDe, type ClaveDia } from './fechas';
+import { estadoDeMacro, type Macros } from './metas';
 import { escalarMicros, sumarMicros, type Micros } from './micronutrientes';
 
 /** De dónde sale un alimento: la base del teléfono, el catálogo uruguayo, Open Food Facts, los propios o una receta. */
@@ -201,7 +201,8 @@ export function cumpleLaComida(
   if (meta === 'registrar') return comidas.every((c) => comido.some((r) => r.comida === c));
   if (!metaDelDia || !comido.length) return false;
   const total = sumarValores(comido.map((r) => r.valores));
-  if (meta === 'proteina') return total.proteina >= metaDelDia.proteina;
+  // La misma regla que el punto del macro: se cumple cuando el número redondeado llega a la meta.
+  if (meta === 'proteina') return estadoDeMacro(total.proteina, metaDelDia.proteina) !== 'falta';
   return Math.abs(total.kcal - metaDelDia.kcal) <= MARGEN_DE_CALORIAS * metaDelDia.kcal;
 }
 
@@ -210,8 +211,8 @@ export function aguaDelDia(tomas: Iterable<TomaDeAgua>, dia: ClaveDia): number {
 }
 
 /**
- * Una comida (o el día entero, sin `comida`) a otro día, como registros nuevos: a la misma hora que
- * el original y, si el día todavía no llegó, planificados.
+ * Una comida (o el día entero, sin `comida`) a otro día, como registros nuevos: a la misma hora del
+ * reloj que el original y, si el día todavía no llegó o el original no se había comido, planificados.
  */
 export function copiar(
   registros: Iterable<Registro>,
@@ -219,18 +220,22 @@ export function copiar(
   hacia: { dia: ClaveDia; comida?: Comida },
   op: { hoy: ClaveDia; ahora: string; nuevoId: () => string },
 ): Registro[] {
-  const corrimiento = diasEntre(desde.dia, hacia.dia) * 86_400_000;
+  const p = partesDe(hacia.dia);
   return delDia(registros, desde.dia)
     .filter((r) => !desde.comida || r.comida === desde.comida)
-    .map((r) => ({
-      ...itemDe(r),
-      id: op.nuevoId(),
-      dia: hacia.dia,
-      comida: hacia.comida ?? r.comida,
-      momento: new Date(Date.parse(r.momento) + corrimiento).toISOString(),
-      planificado: hacia.dia > op.hoy,
-      actualizado: op.ahora,
-    }));
+    .map((r) => {
+      // La hora local en el otro día: sumar días de 24 h correría una hora con el cambio de horario.
+      const o = new Date(r.momento);
+      return {
+        ...itemDe(r),
+        id: op.nuevoId(),
+        dia: hacia.dia,
+        comida: hacia.comida ?? r.comida,
+        momento: new Date(p.anio, p.mes, p.dia, o.getHours(), o.getMinutes(), o.getSeconds(), o.getMilliseconds()).toISOString(),
+        planificado: r.planificado || hacia.dia > op.hoy,
+        actualizado: op.ahora,
+      };
+    });
 }
 
 /** Lo planificado de un día (o de una comida) pasa a registrado: «confirmar» cuando el día llega, o «Comí esto». */
@@ -290,7 +295,7 @@ const masNuevoPrimero = (a: Registro, b: Registro) => -porMomento(a, b);
 /** La última cantidad con que se anotó un alimento: es la que trae su ventana. */
 export function ultimaCantidad(registros: Iterable<Registro>, fuente: Fuente, ref: string): Cantidad | undefined {
   const clave = claveDeAlimento(fuente, ref);
-  return vigentes(registros).filter((r) => claveDeAlimento(r.fuente, r.ref) === clave).sort(masNuevoPrimero)[0]?.cantidad;
+  return comidos(registros).filter((r) => claveDeAlimento(r.fuente, r.ref) === clave).sort(masNuevoPrimero)[0]?.cantidad;
 }
 
 /** Los alimentos de los últimos registros, sin repetir, del más reciente al más viejo. */

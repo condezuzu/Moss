@@ -47,6 +47,9 @@
       "crear": "Create account",
       "olvide": "I forgot my password",
       "legal": "By continuing you accept the Terms and the Privacy Policy.",
+      "legalConEnlaces": "By continuing you accept the {terminos} and the {privacidad}.",
+      "terminos": "Terms",
+      "privacidad": "Privacy Policy",
       "errores": {
         "credenciales": "That email and password don’t match.",
         "conexion": "No connection. Try again.",
@@ -56,8 +59,7 @@
         "correo": "Enter your email.",
         "otro": "Couldn’t sign in. Try again."
       },
-      "enviado": "We sent you an email to reset your password.",
-      "sinCuenta": "This test build has no account: Moss keeps everything on the phone."
+      "enviado": "We sent you an email to reset your password."
     },
     "cuestionario": {
       "paso": "{n} of {total}",
@@ -105,6 +107,7 @@
       "ritmoTexto": "{pct}% of your weight a week",
       "resultadoTitulo": "Your starting point",
       "resultadoTexto": "Moss adjusts your targets every week from your weight and what you eat.",
+      "profesional": "These are estimates: they don’t replace a health professional.",
       "kcal": "kcal a day",
       "proteina": "Protein",
       "carbohidratos": "Carbs",
@@ -317,7 +320,8 @@
       "soloIphone": "Reading the label works on the iPhone. You can type the values.",
       "aMano": "Type it in",
       "sinPermiso": "Moss needs the camera to read the barcode and the label.",
-      "darPermiso": "Allow the camera",
+      "darPermiso": "Continue",
+      "abrirAjustes": "Open Settings",
       "sacarFoto": "Take the photo",
       "deOff": "Data from Open Food Facts (ODbL)",
       "otraVez": "Scan another",
@@ -571,6 +575,14 @@
     "enSieteDias": "{n} {unidad} in 7 days",
     "kcalPorDia": "kcal a day",
     "balanceTexto": "7-day balance, against {gasto} burned",
+    "balanceDias": {
+      "uno": "{n}-day balance, against {gasto} burned",
+      "otros": "{n}-day balance, against {gasto} burned"
+    },
+    "balanceDiasSinNumeros": {
+      "uno": "{n}-day balance: eaten against burned",
+      "otros": "{n}-day balance: eaten against burned"
+    },
     "encendidas": "{n} of {total}",
     "dormiste": "Slept {h}",
     "pasos": "{n} steps",
@@ -660,6 +672,7 @@
       "estable": "Stable",
       "seMueve": "Changing",
       "sinMeta": "No goal weight",
+      "otroLado": "Check your goal",
       "faltanDatos": "Needs data"
     },
     "objetivoA": {
@@ -684,6 +697,7 @@
       "estable": "Your trend moves less than 150 g a week: you’re maintaining.",
       "seMueve": "Your trend is moving {ritmo} {unidad} a week.",
       "sinMeta": "You’re going {ritmo} {unidad} a week; the plan is {plan}. Pick a goal weight to see when you’d get there.",
+      "otroLado": "Your goal weight is on the other side of where you started. Pick a new one in your strategy.",
       "faltanDatos": "Two weeks of weigh-ins are needed to measure your pace."
     },
     "peso": "Weight",
@@ -729,9 +743,11 @@
     },
     "controlListo": "The week already has what it needs: the check-in will measure your expenditure and adjust your targets.",
     "controlFalta": "The check-in needs at least 4 logged days and one weigh-in in the week. Without them, your targets stay as they are.",
+    "controlPrimero": "The check-in measures with at least 7 days of weigh-ins and logged food, and this one doesn’t have them yet: your targets stay as they are. The next one can.",
     "diaDelControl": "Check-in day",
     "diaDelControlNota": "That day, when you open Moss, the check-in measures the week before. If you don’t open the app that day, it runs next time.",
     "controlTexto": "The check-in measured an expenditure of about {gasto} kcal a day. Moss takes it in gradually: the estimate went from {antes} to {ahora} kcal.",
+    "controlSinMedir": "That check-in didn’t measure: it was missing logged days, weigh-ins or a full week of data. Your expenditure and targets stayed as they were.",
     "comoSeCalcula": "How it’s calculated",
     "metas": {
       "titulo": "Targets",
@@ -842,6 +858,7 @@
     "masTemprano": "{t} earlier",
     "regularidadTexto": "From {n} of the last 14 nights. The ± is how much your time moves from night to night: up to half an hour is very regular. The weekend compares the middle of your Friday and Saturday nights with the rest, assuming you don’t work those days.",
     "faltanNoches": "{n} nights measured; {minimo} are needed.",
+    "pocoSegurasNoCuentan": "Low-confidence nights don’t count.",
     "deuda": "Sleep debt",
     "sinDeuda": "No debt",
     "deudaDe": "short of what you need ({necesidad} a night)",
@@ -1009,6 +1026,9 @@
     "cerrarSesionTitulo": "Sign out?",
     "cerrarSesionTexto": "What’s on this phone is deleted; your data stays in your account.",
     "errorBorrar": "That didn’t work. Check your connection and try again.",
+    "sinSubirTitulo": "Your latest changes didn’t reach your account",
+    "sinSubirTexto": "Without a connection, what you logged recently couldn’t be uploaded. If you sign out now, it’s lost.",
+    "cerrarIgual": "Sign out anyway",
     "exportarTexto": "Each file is a CSV that any spreadsheet opens.",
     "archivos": {
       "registros": "Food log",
@@ -1029,7 +1049,7 @@
     },
     "privacidadTexto": [
       "Your data is yours. Moss stores what you log, your answers, your weight and your nights on your phone and, with your account, on its server, for your other devices. It doesn't sell or share them, show ads or track you.",
-      "From Health, Moss reads steps, sleep, water, mindful minutes, weight, age, sex and height. With your account, your weight, birth year, sex, height and which habits you completed are uploaded; Health's steps and sleep stay on your phone. Moss doesn't write to Health.",
+      "From Apple Health, Moss reads steps, sleep, water, mindful minutes, weight, date of birth, sex and height and, at night, heart rate, resting heart rate, heart rate variability and respiratory rate. With your account, your weight, birth year, sex, height, which habits you completed and the estimated time of your night are uploaded; everything else stays on your phone. Moss never writes to Apple Health.",
       "Meal photos stay on your phone. When you scan a code that isn't in Moss, Open Food Facts is asked about that code only.",
       "If you choose to, what you search for and don't find is sent without your name; so is a mistake you report. You can export everything as CSV and delete your data or your account here."
     ],
@@ -1584,7 +1604,13 @@
       "texto": "It rings on the days you choose, and not if it's already done. Moss groups the ones that fall close together and never goes over the daily maximum (Profile › Reminders)."
     },
     "minimo": "You need at least 3 habits: the constellation changes with how many there are.",
-    "metaPropia": "Another goal"
+    "metaPropia": {
+      "pasos": "Another goal, in steps",
+      "sueno": "Another goal, in hours",
+      "agua": "Another goal, in liters",
+      "mindfulness": "Another goal, in minutes"
+    },
+    "demasiados": "A day can have up to {n} habits: that's how many stars the largest constellation has."
   },
   "compartir": {
     "boton": "Share",
@@ -1616,7 +1642,7 @@
     },
     "conPlan": "{hora}: {plan}.",
     "pesarse": "Good time to weigh in, before breakfast.",
-    "pesarseControl": "Check-in day: weigh in before breakfast and Moss adjusts your target."
+    "pesarseControl": "Check-in day: good time to weigh in, before breakfast."
   },
   "entreno": {
     "previa": "You train at {hora}: this is your pre-workout meal.",

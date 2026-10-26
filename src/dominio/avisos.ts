@@ -102,6 +102,12 @@ export const MAXIMO_POR_DIA = 6;
 export const PESARSE_DESPUES = 10;
 /** Sin noches para saber cuándo se despierta: a las 8. */
 const PESARSE_SIN_SUENO = 8 * 60;
+/**
+ * Los de un hábito al despertarse o antes de dormirse, sin noches para saberlo: como si se
+ * despertara a las 7:30 y se durmiera a las 23. El de la hora de dormir, en cambio, no suena.
+ */
+export const DESPERTAR_SIN_SUENO = 7 * 60 + 30;
+export const DORMIR_SIN_SUENO = 23 * 60;
 export const ANTES_DE_DORMIR = 30;
 /** Lo que se adelanta la hora de dormir por la deuda, como mucho. */
 export const PAGO_MAXIMO = 30;
@@ -185,7 +191,7 @@ export type DelDia = {
   dia: ClaveDia;
   ajustes: Avisos;
   habitos: readonly Habito[];
-  /** Sin sueño, ni el de dormir ni los que van con la hora de despertarse o de dormirse. */
+  /** Sin sueño no hay el de dormir, y los de un hábito con la hora de despertarse o de dormirse usan las de fábrica. */
   sueno: Sueno | null;
   /** La hora de siempre de cada comida, en minutos desde la medianoche (horaHabitual, en recordatorios.ts). */
   horaDeComida: (c: Comida) => number;
@@ -233,8 +239,8 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     const c = r.cuando;
     if (c.tipo === 'evento') conEvento.push({ aviso, evento: c.evento, despues: c.despues });
     else if (c.tipo === 'hora') fijos.push({ ...aviso, minutos: c.minutos });
-    else if (c.tipo === 'despertar' && horas.despertar !== null) fijos.push({ ...aviso, minutos: horas.despertar + c.despues });
-    else if (c.tipo === 'dormir' && horas.dormir !== null) fijos.push({ ...aviso, minutos: horas.dormir - c.antes });
+    else if (c.tipo === 'despertar') fijos.push({ ...aviso, minutos: (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues });
+    else if (c.tipo === 'dormir') fijos.push({ ...aviso, minutos: (horas.dormir ?? DORMIR_SIN_SUENO) - c.antes });
   }
   const horario = Object.entries(ajustes.horario ?? {}).filter(([, m]) => Number.isFinite(m)) as [Comida, number][];
   for (const [comida, minutos] of horario) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });
@@ -263,8 +269,9 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   for (const e of conEvento) {
     const paso = op.eventos?.[e.evento];
     if (paso == null) continue;
-    // «En el momento» es al minuto siguiente: cuando se reprograma, el minuto del evento ya pasó.
-    const aviso = redondo({ ...e.aviso, minutos: paso + Math.max(1, e.despues) });
+    // «En el momento» es dos minutos después: al reprogramar (un segundo y medio después de anotar,
+    // más lo que se espera al permiso) ya puede ser el minuto siguiente, y lo de ese minuto se pierde.
+    const aviso = redondo({ ...e.aviso, minutos: paso + Math.max(2, e.despues) });
     if (!valido(aviso) || !falta(aviso)) continue;
     // Solo con un grupo que suena después: si sonó antes, quizás fue antes de que se supiera el evento.
     const siguiente = grupos.find((g) => g.minutos >= aviso.minutos && g.minutos - aviso.minutos <= VENTANA);

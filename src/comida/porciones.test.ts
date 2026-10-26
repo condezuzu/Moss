@@ -42,6 +42,13 @@ describe('conUnaUnidad', () => {
     expect(conUnaUnidad([{ nombre: '30 g', gramos: 30 }, { nombre: '1 taza', gramos: 240 }], 'es')).toHaveLength(2);
     expect(conUnaUnidad([{ nombre: '2 oz', gramos: 57 }], 'en')).toHaveLength(1);
   });
+
+  it('la de una no copia lo que pesa el paquete', () => {
+    expect(conUnaUnidad([{ nombre: '10 large (1 oz)', gramos: 28 }], 'en')[0]).toEqual({ nombre: '1 large', gramos: 2.8, deUna: true });
+    expect(conUnaUnidad([{ nombre: '11 crackers (1 NLEA serving)', gramos: 30 }], 'en')[0]).toMatchObject({ nombre: '1 cracker', deUna: true });
+    expect(conUnaUnidad([{ nombre: '15 galletas (30 g)', gramos: 30 }], 'es')[0]).toMatchObject({ nombre: '1 galleta', gramos: 2 });
+    expect(conUnaUnidad([{ nombre: '5 unidades grandes (4 cm de diámetro)', gramos: 90 }], 'es')[0]).toMatchObject({ nombre: '1 unidad grande', gramos: 18 });
+  });
 });
 
 describe('numeroDePorcion', () => {

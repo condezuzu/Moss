@@ -57,7 +57,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   }, []);
 
   const p = e.perfil;
-  const altura = (cm: number) => (sistema === 'imperial' ? `${Math.floor(cm / CM_POR_PULGADA / 12)}′ ${Math.round(cm / CM_POR_PULGADA) % 12}″` : `${numero(cm)} cm`);
+  const altura = (cm: number) => (sistema === 'imperial' ? piesYPulgadas(cm) : `${numero(cm)} cm`);
   // false es un error; null, que se canceló (la hoja de Apple al borrar la cuenta): no se dice nada.
   const confirmar = (titulo: string, texto: string, accion: () => Promise<boolean | null | void>) =>
     Alert.alert(titulo, texto, [
@@ -180,7 +180,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
             texto={t('perfil.cambiarCuenta')}
             alTocar={() => Alert.alert(t('perfil.cambiarCuenta'), t('perfil.cambiarCuentaTexto'), [
               { text: t('comun.cancelar'), style: 'cancel' },
-              { text: t('perfil.cambiarCuenta'), onPress: () => { cerrarSesion().catch(() => {}); } },
+              { text: t('perfil.cambiarCuenta'), onPress: salir },
             ])}
             estilo={st.salir}
           />
@@ -189,7 +189,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
             texto={t('perfil.cerrarSesion')}
             alTocar={() => Alert.alert(t('perfil.cerrarSesionTitulo'), t('perfil.cerrarSesionTexto'), [
               { text: t('comun.cancelar'), style: 'cancel' },
-              { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: () => { cerrarSesion().catch(() => {}); } },
+              { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: salir },
             ])}
             estilo={st.salir}
           />
@@ -211,6 +211,12 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   );
 }
 
+// Las pulgadas se redondean antes de partirlas: si no, 152 cm (5′ 0″) daba 4′ 0″.
+function piesYPulgadas(cm: number) {
+  const pulgadas = Math.round(cm / CM_POR_PULGADA);
+  return `${Math.floor(pulgadas / 12)}′ ${pulgadas % 12}″`;
+}
+
 /** Tus datos: el sexo, la edad, la altura y la actividad. Las metas no cambian por esto. */
 function TusDatos({ perfil, hoy, imperial, alCerrar }: { perfil: DatosDelPerfil; hoy: string; imperial: boolean; alCerrar: () => void }) {
   const [sexo, setSexo] = useState<Sexo>(perfil.sexo);
@@ -222,7 +228,7 @@ function TusDatos({ perfil, hoy, imperial, alCerrar }: { perfil: DatosDelPerfil;
     alCerrar();
   };
   const paso = imperial ? CM_POR_PULGADA : 1;
-  const altura = imperial ? `${Math.floor(alturaCm / CM_POR_PULGADA / 12)}′ ${Math.round(alturaCm / CM_POR_PULGADA) % 12}″` : `${numero(alturaCm)} cm`;
+  const altura = imperial ? piesYPulgadas(alturaCm) : `${numero(alturaCm)} cm`;
   return (
     <HojaModal abierta titulo={t('perfil.tusDatos')} alCerrar={alCerrar} pie={<Boton tipo="principal" texto={t('comun.guardar')} alTocar={guardar} />}>
       <EtiquetaDeGrupo>{t('perfil.sexo')}</EtiquetaDeGrupo>
@@ -431,6 +437,18 @@ const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
 function hayAvisos(e: Estado): boolean {
   const a = e.avisos;
   return !!(e.recordatorios?.length || a.dormir?.encendido || Object.keys(a.horario ?? {}).length || a.pesarse?.encendido || a.habitos?.length);
+}
+
+/** Cerrar sesión: si lo último no llegó a la cuenta, se avisa antes de perderlo; sin conexión, no se puede. */
+function salir() {
+  cerrarSesion().then((r) => {
+    if (r === 'sinSubir') {
+      Alert.alert(t('perfil.sinSubirTitulo'), t('perfil.sinSubirTexto'), [
+        { text: t('comun.cancelar'), style: 'cancel' },
+        { text: t('perfil.cerrarIgual'), style: 'destructive', onPress: () => { cerrarSesion(true).catch(() => Alert.alert(t('perfil.errorBorrar'))); } },
+      ]);
+    } else if (r === 'sinConexion') Alert.alert(t('perfil.errorBorrar'));
+  }).catch(() => Alert.alert(t('perfil.errorBorrar')));
 }
 
 /** «Lun Mié Vie · 19:00», «Todos los días · 19:00» o que todavía no se cargó: corto, para que entre en la fila. */

@@ -14,7 +14,7 @@ import { gramosDeLinea, leerReceta, type LineaDeReceta } from '@/comida/recetaDe
 import type { Comida } from '@/dominio/comidas';
 import type { Sistema } from '@/dominio/cantidades';
 import { escalar, gramosDe, itemDeAlimento, itemRapido, sumarValores, valoresDeReceta, type AlimentoPropio, type Item, type Receta, type Valores } from '@/dominio/registros';
-import { plural, t } from '@/textos';
+import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ENTRA_PANEL, SALE_PANEL } from '../movimiento';
 import { ACOMODA } from '../tarjetas';
@@ -23,11 +23,27 @@ import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma } from './dato
 
 /** Un número escrito con coma o con punto; vacío es null. */
 const leer = (texto: string): number | null => {
-  const limpio = texto.trim().replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+  let limpio = texto.trim().replace(/\s/g, '');
+  if (limpio.includes(',') && limpio.includes('.')) {
+    // Con coma y punto, el último separa los decimales y el otro, los miles: «1,050.5», «1.050,5».
+    limpio = limpio.lastIndexOf(',') > limpio.lastIndexOf('.') ? limpio.replace(/\./g, '') : limpio.replace(/,/g, '');
+  } else if (idioma() === 'en') {
+    // En inglés la coma separa los miles («1,520»); el punto es el decimal.
+    if (/^[1-9]\d{0,2}(,\d{3})+$/.test(limpio)) limpio = limpio.replace(/,/g, '');
+  } else {
+    limpio = limpio.replace(/\.(?=\d{3}(\D|$))/g, '');
+  }
+  limpio = limpio.replace(',', '.');
   if (!limpio) return null;
   const n = Number(limpio);
   return Number.isFinite(n) && n >= 0 ? n : null;
 };
+
+/** Un número para llenar un campo: con el decimal del idioma y sin separar los miles, así `leer` lo lee igual. */
+const paraCampo = (n: number) => String(Math.round(n * 10) / 10).replace('.', idioma() === 'es' ? ',' : '.');
+
+/** Las kcal que dan los macros (4/4/9): las de un campo de kcal vacío. */
+const kcalDeMacros = (proteina: number, carbohidratos: number, grasas: number) => proteina * 4 + carbohidratos * 4 + grasas * 9;
 
 export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number }) {
   return (
@@ -137,26 +153,36 @@ export function PanelGuardarComo({ alGuardar, alAtras, abajo }: { alGuardar: (no
 }
 
 // ------------------------------------------------------------------ la carga rápida
-export function PanelRapida({ directo, comida, alSumar, alAtras, abajo }: { directo: boolean; comida: Comida; alSumar: (item: Item) => void; alAtras: () => void; abajo: number }) {
-  const [c, setC] = useState({ nombre: '', kcal: '', proteina: '', carbohidratos: '', grasas: '' });
+export function PanelRapida({ directo, comida, inicial, alSumar, alQuitar, alAtras, abajo }: {
+  directo: boolean; comida: Comida; inicial?: { nombre: string; valores: Valores }; alSumar: (item: Item) => void; alQuitar?: () => void; alAtras: () => void; abajo: number;
+}) {
+  // Corrigiendo una carga rápida, abre con lo que tenía.
+  const [c, setC] = useState(() => {
+    const v = inicial?.valores;
+    const campo = (x: number | undefined) => (x ? paraCampo(x) : '');
+    return { nombre: inicial?.nombre ?? '', kcal: campo(v?.kcal), proteina: campo(v?.proteina), carbohidratos: campo(v?.carbohidratos), grasas: campo(v?.grasas) };
+  });
   const poner = (k: keyof typeof c) => (v: string) => setC((x) => ({ ...x, [k]: v }));
   const proteina = leer(c.proteina) ?? 0;
   const carbohidratos = leer(c.carbohidratos) ?? 0;
   const grasas = leer(c.grasas) ?? 0;
   // Sin las calorías, salen de los macros.
-  const kcal = leer(c.kcal) ?? proteina * 4 + carbohidratos * 4 + grasas * 9;
+  const kcal = leer(c.kcal) ?? kcalDeMacros(proteina, carbohidratos, grasas);
   return (
     <Panel
       titulo={t('comida.cargaRapida')}
       alAtras={alAtras}
       abajo={abajo}
       pie={
-        <Boton
-          tipo="grande"
-          texto={directo ? t(`comida.agregarA.${comida}`) : t('comida.sumar')}
-          desactivado={!kcal}
-          alTocar={() => alSumar(itemRapido(c.nombre.trim() || t('comida.cargaRapida'), { kcal, proteina, carbohidratos, grasas }))}
-        />
+        <>
+          <Boton
+            tipo="grande"
+            texto={inicial ? t('comun.guardar') : directo ? t(`comida.agregarA.${comida}`) : t('comida.sumar')}
+            desactivado={!kcal}
+            alTocar={() => alSumar(itemRapido(c.nombre.trim() || t('comida.cargaRapida'), { kcal, proteina, carbohidratos, grasas }))}
+          />
+          {alQuitar && <Boton tipo="quitar" texto={t('comida.quitar')} alTocar={alQuitar} />}
+        </>
       }
     >
       <Campo etiqueta={t('comida.nombre')} valor={c.nombre} alCambiar={poner('nombre')} texto />
@@ -372,17 +398,29 @@ export type DatosDeEtiqueta = { codigo?: string; nombre?: string; marca?: string
 
 const CAMPOS_DE_ETIQUETA = [['kcal', 'kcal'], ['carbohidratos', 'g'], ['proteina', 'g'], ['grasas', 'g'], ['saturadas', 'g'], ['azucares', 'g'], ['fibra', 'g'], ['sodio', 'mg']] as const;
 
+const completa = (x: Leidos) => (['kcal', 'proteina', 'carbohidratos', 'grasas'] as const).every((k) => x[k] != null);
+
 export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: DatosDeEtiqueta; alGuardar: (propio: Omit<AlimentoPropio, 'id' | 'actualizado' | 'borrado'>) => void; alAtras: () => void; abajo: number }) {
-  const v = inicial.leida?.porPorcion ?? inicial.porPorcion ?? {};
-  const porcion = inicial.leida?.porcion ?? inicial.porcion ?? null;
-  const [c, setC] = useState<Record<string, string>>(() => ({
-    nombre: inicial.nombre ?? '', marca: inicial.marca ?? '', codigo: inicial.codigo ?? '',
-    porcionNombre: porcion?.texto ?? '', porcionGramos: porcion ? numero(porcion.gramos, 1) : '',
-    ...Object.fromEntries(CAMPOS_DE_ETIQUETA.map(([k]) => [k, v[k] != null ? numero(v[k]!, 1) : ''])),
-  }));
+  const [c, setC] = useState<Record<string, string>>(() => {
+    const leida = inicial.leida;
+    // Una etiqueta con solo la columna por 100 g (las de Europa) llena los campos con esa columna,
+    // llevada a la porción; si no dice la porción, la porción son esos 100 g.
+    const desde100 = !!leida && !completa(leida.porPorcion) && completa(leida.por100g);
+    const porcion = leida?.porcion ?? inicial.porcion ?? (desde100 ? { texto: '100 g', gramos: 100 } : null);
+    const v: Leidos = desde100 && porcion
+      ? Object.fromEntries(Object.entries(leida.por100g).map(([k, x]) => [k, x * (porcion.gramos / 100)]))
+      : (leida?.porPorcion ?? inicial.porPorcion ?? {});
+    return {
+      nombre: inicial.nombre ?? '', marca: inicial.marca ?? '', codigo: inicial.codigo ?? '',
+      porcionNombre: porcion?.texto ?? '', porcionGramos: porcion ? paraCampo(porcion.gramos) : '',
+      ...Object.fromEntries(CAMPOS_DE_ETIQUETA.map(([k]) => [k, v[k] != null ? paraCampo(v[k]!) : ''])),
+    };
+  });
   const poner = (k: string) => (x: string) => setC((antes) => ({ ...antes, [k]: x }));
   const gramos = leer(c.porcionGramos);
   const avisos = inicial.leida?.avisos ?? [];
+  // Sin las kcal (no se leyeron o no se escribieron), salen de los macros, como en la carga rápida.
+  const kcalDerivadas = kcalDeMacros(leer(c.proteina) ?? 0, leer(c.carbohidratos) ?? 0, leer(c.grasas) ?? 0);
   const guardar = () => {
     if (!c.nombre.trim() || !gramos) return;
     const f = 100 / gramos;
@@ -390,7 +428,7 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
       const x = leer(c[k]);
       return x === null ? undefined : x * f;
     };
-    const por100g: Valores = { kcal: por100('kcal') ?? 0, proteina: por100('proteina') ?? 0, carbohidratos: por100('carbohidratos') ?? 0, grasas: por100('grasas') ?? 0 };
+    const por100g: Valores = { kcal: por100('kcal') ?? kcalDerivadas * f, proteina: por100('proteina') ?? 0, carbohidratos: por100('carbohidratos') ?? 0, grasas: por100('grasas') ?? 0 };
     for (const k of ['saturadas', 'azucares', 'fibra', 'sodio'] as const) if (por100(k) !== undefined) por100g[k] = por100(k);
     const codigo = c.codigo.replace(/\D/g, '');
     alGuardar({
@@ -414,6 +452,7 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
           valor={c[k]}
           alCambiar={poner(k)}
           unidad={unidad}
+          ejemplo={k === 'kcal' && !c.kcal && kcalDerivadas ? numero(Math.round(kcalDerivadas)) : undefined}
           mal={k === 'kcal' && avisos.includes('noCierra')}
         />
       ))}

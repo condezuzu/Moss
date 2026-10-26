@@ -41,7 +41,9 @@ const degradado = (g: string) => (Platform.OS === 'web' ? { backgroundImage: g }
 export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
   const e = useEstado();
   const s = useSueno();
-  const [clave, setClave] = useState<ClaveDia>(e.hoy);
+  // Sin elegir, la de hoy: pasada la medianoche sigue siendo la de hoy, no la de ayer.
+  const [elegida, setElegida] = useState<ClaveDia | null>(null);
+  const clave = elegida ?? e.hoy;
   const [abierto, setAbierto] = useState<string | null>(null);
   // Las dos semanas antes de una noche: con eso se miden el horario de siempre y lo tuyo.
   const anterioresA = (c: ClaveDia) => ultimasNoches(s.noches, sumarDias(c, -1), DIAS);
@@ -53,7 +55,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('sueno.titulo')} />
         {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
         <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} desde={e.metas[0]?.desde ?? null} />
-        <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={setClave} />
+        <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={(c) => setElegida(c === e.hoy ? null : c)} />
         {/* Poco sueño por semanas: la sugerencia de un médico, arriba. Una estimación, no un diagnóstico. */}
         {pocoSuenoSostenido(ultimasNoches(s.noches, e.hoy, DIAS)) && (
           <Aparece>
@@ -114,6 +116,9 @@ function Tira({ s, hoy, elegida, alElegir }: { s: Sueno; hoy: ClaveDia; elegida:
   );
 }
 
+/** Dónde terminan los tramos: con un cambio de hora en la noche, `despertar` es la hora del reloj y no el tiempo que pasó. */
+const finDeLosTramos = (n: Noche) => (n.tramos.length ? Math.max(...n.tramos.map((x) => x.hasta)) : n.despertar);
+
 function tituloDe(clave: ClaveDia, hoy: ClaveDia) {
   if (clave === hoy) return t('sueno.anoche');
   const dias = lista('fecha.dias');
@@ -133,7 +138,7 @@ function LaNoche({ n, hoy, ancho, anteriores }: { n: Noche; hoy: ClaveDia; ancho
         <View style={st.hipnoEtiquetas}>
           {etapas.map((x) => <Text key={x} style={st.hipnoEtiqueta}>{t(`sueno.etapas.${x}`)}</Text>)}
         </View>
-        <Hipnograma desde={n.dormirse} hasta={n.despertar} tramos={n.tramos} ancho={ancho - 70} alto={96} guias />
+        <Hipnograma desde={n.dormirse} hasta={finDeLosTramos(n)} tramos={n.tramos} ancho={ancho - 70} alto={96} guias />
       </View>
       <View style={{ paddingLeft: 70 }}>
         <Eje izquierda={reloj(n.dormirse)} derecha={reloj(n.despertar)} />
@@ -296,10 +301,16 @@ function LaCalidad({ n, necesidad, anteriores, abierto, alAbrir }: { n: Noche; n
   );
 }
 
+/** Cuántas noches faltan; si hay estimaciones poco seguras, que no cuentan, lo dice. */
+const faltanNoches = (seguras: number, todas: number, minimo: number) =>
+  t('sueno.faltanNoches', { n: seguras, minimo }) + (todas > seguras ? ` ${t('sueno.pocoSegurasNoCuentan')}` : '');
+
 // ------------------------------------------------------------------ el horario
 function ElHorario({ noches, clave }: { noches: (Noche | null)[]; clave: ClaveDia }) {
   const h = horarioDe(noches);
   const medidas = noches.filter((n): n is Noche => n !== null);
+  // Cuentan como en horario(): las de confianza baja no entran.
+  const seguras = medidas.filter((n) => n.confianza.horario !== 'baja').length;
   const bien = h && (h.regularidad === 'muyRegular' || h.regularidad === 'regular');
   if (!medidas.length) return null;
   const desde = Math.min(...medidas.map((n) => n.dormirse)) - 30;
@@ -332,7 +343,7 @@ function ElHorario({ noches, clave }: { noches: (Noche | null)[]; clave: ClaveDi
         <Eje izquierda={reloj(desde)} derecha={reloj(hasta)} />
       </View>
       {!h ? (
-        <Parrafo>{t('sueno.faltanNoches', { n: medidas.length, minimo: MINIMOS.regularidad })}</Parrafo>
+        <Parrafo>{faltanNoches(seguras, medidas.length, MINIMOS.regularidad)}</Parrafo>
       ) : (
         <>
           <View style={st.datos}>
@@ -352,11 +363,14 @@ function ElHorario({ noches, clave }: { noches: (Noche | null)[]; clave: ClaveDi
 // ------------------------------------------------------------------ la deuda
 function LaDeuda({ noches, necesidad }: { noches: (Noche | null)[]; necesidad: number }) {
   const d = deudaDeSueno(noches, necesidad);
+  const conDatos = noches.filter((n): n is Noche => n !== null);
+  // Cuentan como en deudaDeSueno(): las de confianza baja no entran.
+  const seguras = conDatos.filter((n) => n.confianza.duracion !== 'baja').length;
   const conDeuda = d !== null && d.minutos >= 15;
   return (
     <Carta titulo={t('sueno.deuda')}>
       <Cifra valor={d ? (conDeuda ? duracion(Math.round(d.minutos)) : t('sueno.sinDeuda')) : '—'} texto={conDeuda ? t('sueno.deudaDe', { necesidad: duracion(necesidad) }) : undefined} />
-      <Nota>{d ? t('sueno.deudaNoches', { n: d.noches, de: d.de }) : t('sueno.faltanNoches', { n: noches.filter(Boolean).length, minimo: MINIMOS.deuda })}</Nota>
+      <Nota>{d ? t('sueno.deudaNoches', { n: d.noches, de: d.de }) : faltanNoches(seguras, conDatos.length, MINIMOS.deuda)}</Nota>
       <Parrafo chico>{t('sueno.deudaTexto')}</Parrafo>
     </Carta>
   );

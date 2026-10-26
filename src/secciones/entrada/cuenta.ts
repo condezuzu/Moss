@@ -34,9 +34,8 @@ function errorDe(e: { code?: string; status?: number; message?: string } | null 
 export async function entrarConApple(): Promise<Resultado> {
   if (!haySupabase()) return { ok: true };
   try {
-    const credencial = await AppleAuthentication.signInAsync({
-      requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL],
-    });
+    // Solo el correo: Moss no usa el nombre (guía 5.1.1 de Apple, pedir solo lo que se usa).
+    const credencial = await AppleAuthentication.signInAsync({ requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL] });
     if (!credencial.identityToken) return { ok: false, error: 'otro' };
     const { error } = await supabase().auth.signInWithIdToken({ provider: 'apple', token: credencial.identityToken });
     return error ? { ok: false, error: errorDe(error) } : { ok: true };

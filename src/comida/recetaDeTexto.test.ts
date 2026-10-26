@@ -358,6 +358,12 @@ describe('una receta pegada entera', () => {
     expect(rinde('Final weight 900 g', 'en')).toEqual([null, 900]);
     expect(rinde('Final weight: 2 lb', 'en')).toEqual([null, 907.2]);
   });
+
+  it('el título con las porciones entre paréntesis no es un ingrediente, y las porciones quedan', () => {
+    const receta = leerReceta('Milanesas al horno (4 porciones)\n1 kg de nalga\n3 huevos\n200 g de pan rallado', 'es');
+    expect(receta.porciones).toBe(4);
+    expect(receta.lineas.map((l) => l.buscado)).toEqual(['nalga', 'huevo', 'pan rallado']);
+  });
 });
 
 describe('nada se rompe', () => {

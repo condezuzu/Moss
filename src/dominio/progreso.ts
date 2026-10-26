@@ -2,7 +2,7 @@
 // camino y en qué fecha llegaría, y el balance entre lo comido y lo gastado. Todo se mide sobre la
 // tendencia, nunca sobre el peso de un día.
 
-import type { ComidaDelDia } from './control';
+import { cambioPorDia, type ComidaDelDia, type Pesada } from './control';
 import { diasEntre, sumarDias, type ClaveDia } from './fechas';
 import { RITMOS, type Objetivo, type Ritmo } from './metas';
 
@@ -19,17 +19,23 @@ const ESTABLE_KG_SEMANA = 0.15;
 /** Más allá de dos años no se da fecha: a ese ritmo no es una fecha. */
 const HORIZONTE_DIAS = 730;
 
-/** Los kilos por semana de la tendencia en sus últimas tres semanas (o desde que hay, si son dos o más). */
-export function ritmoSemanal(tendencia: Map<ClaveDia, number>, hasta: ClaveDia): number | null {
+/**
+ * Los kilos por semana de las últimas tres semanas (o desde que hay, si son dos o más). Con las
+ * pesadas, sin el atraso de la tendencia en sus primeras semanas (cambioPorDia).
+ */
+export function ritmoSemanal(tendencia: Map<ClaveDia, number>, hasta: ClaveDia, pesadas?: Pesada[]): number | null {
   const fin = tendencia.get(hasta);
   const primero = [...tendencia.keys()][0];
   if (fin === undefined || primero === undefined) return null;
   const dias = Math.min(DIAS_DEL_RITMO, diasEntre(primero, hasta));
   if (dias < DIAS_MINIMOS) return null;
-  return ((fin - tendencia.get(sumarDias(hasta, -dias))!) / dias) * 7;
+  const desde = sumarDias(hasta, -dias);
+  const porDia = pesadas ? cambioPorDia(pesadas, desde, hasta) : null;
+  return (porDia ?? (fin - tendencia.get(desde)!) / dias) * 7;
 }
 
-export type EstadoDelObjetivo = 'llegaste' | 'enCamino' | 'despacio' | 'quieto' | 'alReves' | 'estable' | 'seMueve' | 'sinMeta' | 'faltanDatos';
+/** «otroLado»: el peso meta quedó del otro lado de donde se empezó (por ejemplo, al pasar de bajar a subir). */
+export type EstadoDelObjetivo = 'llegaste' | 'enCamino' | 'despacio' | 'quieto' | 'alReves' | 'estable' | 'seMueve' | 'sinMeta' | 'otroLado' | 'faltanDatos';
 
 export type Progreso = {
   estado: EstadoDelObjetivo;
@@ -49,6 +55,8 @@ export type Progreso = {
 export type EntradaDelProgreso = {
   hoy: ClaveDia;
   tendencia: Map<ClaveDia, number>;
+  /** Las pesadas de la tendencia, para medir el ritmo sin su atraso al principio. */
+  pesadas?: Pesada[];
   objetivo: Objetivo;
   ritmo: Ritmo;
   pesoMeta?: number | null;
@@ -58,7 +66,7 @@ export type EntradaDelProgreso = {
 
 export function progresoAlObjetivo(e: EntradaDelProgreso): Progreso {
   const peso = e.tendencia.get(e.hoy) ?? null;
-  const ritmo = ritmoSemanal(e.tendencia, e.hoy);
+  const ritmo = ritmoSemanal(e.tendencia, e.hoy, e.pesadas);
   const ritmoPlan = e.objetivo === 'mantener' || peso === null ? 0 : (RITMOS[e.objetivo][e.ritmo] / 100) * peso;
   const base = { peso, ritmo, ritmoPlan, faltan: null, fecha: null, hecho: null };
   if (peso === null) return { ...base, estado: 'faltanDatos' };
@@ -72,7 +80,11 @@ export function progresoAlObjetivo(e: EntradaDelProgreso): Progreso {
   const faltan = Math.max(0, (e.pesoMeta - peso) * direccion);
   const camino = e.pesoInicial ? (e.pesoMeta - e.pesoInicial) * direccion : 0;
   const hecho = camino > 0 ? Math.min(1, Math.max(0, 1 - faltan / camino)) : null;
-  if (faltan <= LLEGASTE_KG) return { ...base, faltan, hecho: hecho === null ? null : 1, estado: 'llegaste' };
+  if (faltan <= LLEGASTE_KG) {
+    // Si la meta ya estaba pasada al empezar, no se llegó: está del otro lado.
+    if (e.pesoInicial && camino <= 0) return { ...base, estado: 'otroLado' };
+    return { ...base, faltan, hecho: hecho === null ? null : 1, estado: 'llegaste' };
+  }
   if (ritmo === null) return { ...base, faltan, hecho, estado: 'faltanDatos' };
 
   const avance = ritmo * direccion;

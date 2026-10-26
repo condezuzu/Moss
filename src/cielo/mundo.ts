@@ -35,7 +35,10 @@ export const CALIDADES: Record<Calidad, AjustesDeCalidad> = {
 /** El rectángulo del mundo que cubre la textura del cielo fijo, con margen para la cámara. */
 export function mundoDelFondo(aspecto: number): { min: Punto; tam: Punto } {
   const margenX = 0.08;
-  return { min: [-aspecto / 2 - margenX, -0.62], tam: [aspecto + 2 * margenX, 1.24 + ZONA_UNIVERSO] };
+  // Arriba sobra para el estirón de más allá de tu universo (el arrastre y el resorte al soltar):
+  // fuera de la textura el cielo se cortaba en negro.
+  const margenArriba = 0.3;
+  return { min: [-aspecto / 2 - margenX, -0.62], tam: [aspecto + 2 * margenX, 1.24 + ZONA_UNIVERSO + margenArriba] };
 }
 
 /** Azar con semilla (mulberry32): el mismo musgo en cada arranque. */

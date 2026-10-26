@@ -12,7 +12,7 @@ import { conMayuscula } from '@/comida/buscar';
 import { KG_POR_LIBRA, largoEn, pesoCorporalEn, type Sistema } from '@/dominio/cantidades';
 import { cambioDe, cinturaAltura, rangoDeGrasa, SITIOS, ultimasMedidas } from '@/dominio/cuerpo';
 import { diasEntre, sumarDias, type DiaSemana } from '@/dominio/fechas';
-import { ESTILOS, EXTRAS, pesoMinimoSano, pisoDe, repartirSemana, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
+import { ESTILOS, EXTRAS, objetivoPermitido, pesoMinimoSano, pisoDe, repartirSemana, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
 import type { EstadoDelObjetivo } from '@/dominio/progreso';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -29,7 +29,7 @@ import {
 type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
 
 const TIPO_DE_ESTADO: Record<EstadoDelObjetivo, TipoDeChip | undefined> = {
-  llegaste: 'bien', enCamino: 'bien', estable: 'bien', despacio: 'atencion', quieto: 'atencion', alReves: 'atencion', seMueve: 'atencion', sinMeta: 'tenue', faltanDatos: 'tenue',
+  llegaste: 'bien', enCamino: 'bien', estable: 'bien', despacio: 'atencion', quieto: 'atencion', alReves: 'atencion', seMueve: 'atencion', sinMeta: 'tenue', otroLado: 'atencion', faltanDatos: 'tenue',
 };
 
 /** Los pesos en la unidad de cada uno: con lo redondeado para mostrar y sin redondear para las cuentas. */
@@ -38,6 +38,8 @@ function unidades(sistema: Sistema) {
   return {
     unidad,
     peso: (kg: number, decimales = 1) => numero(pesoCorporalEn(kg, sistema).valor, decimales),
+    /** El peso meta: de a medio kilo o de a una libra (PasosDelPesoMeta). */
+    meta: (kg: number) => numero(pesoCorporalEn(kg, sistema).valor, kg % 1 && sistema !== 'imperial' ? 1 : 0),
     enUnidad: (kg: number) => (sistema === 'imperial' ? kg / KG_POR_LIBRA : kg),
   };
 }
@@ -82,10 +84,11 @@ type U = ReturnType<typeof unidades>;
 function ElObjetivo({ p, hoy, u }: { p: Persona; hoy: string; u: U }) {
   const g = p.progreso;
   const metaKg = p.perfil.pesoMeta;
-  const objetivo = p.perfil.objetivo;
+  // Sin déficit, bajar queda en mantener (objetivoPermitido): se muestra lo que se usa.
+  const objetivo = objetivoPermitido(p.perfil);
   const titulo = objetivo === 'mantener'
     ? t('progreso.mantenerEn', { kg: u.peso(p.pesoHoy ?? 0), unidad: u.unidad })
-    : metaKg ? t(objetivo === 'bajar' ? 'progreso.objetivoA.bajar' : 'progreso.objetivoA.subir', { kg: u.peso(metaKg, metaKg % 1 ? 1 : 0), unidad: u.unidad }) : t(`progreso.objetivos.${objetivo}`);
+    : metaKg ? t(objetivo === 'bajar' ? 'progreso.objetivoA.bajar' : 'progreso.objetivoA.subir', { kg: u.meta(metaKg), unidad: u.unidad }) : t(`progreso.objetivos.${objetivo}`);
   return (
     <Carta titulo={t('progreso.objetivo')} derecha={<Chip texto={t(`progreso.estados.${g.estado}`)} tipo={TIPO_DE_ESTADO[g.estado]} />}>
       <Text style={s.objetivoTitulo}>{titulo}</Text>
@@ -93,7 +96,7 @@ function ElObjetivo({ p, hoy, u }: { p: Persona; hoy: string; u: U }) {
       {g.hecho !== null && p.pesoInicial !== null && g.peso !== null && metaKg ? (
         <Camino
           hecho={g.hecho}
-          etiquetas={[t('progreso.empezaste', { kg: u.peso(p.pesoInicial) }), u.peso(g.peso), t('progreso.meta', { kg: u.peso(metaKg, metaKg % 1 ? 1 : 0) })]}
+          etiquetas={[t('progreso.empezaste', { kg: u.peso(p.pesoInicial) }), u.peso(g.peso), t('progreso.meta', { kg: u.meta(metaKg) })]}
         />
       ) : null}
       <Parrafo>
@@ -115,7 +118,7 @@ function ElPeso({ p, u, ancho, alRegistrar }: { p: Persona; u: U; ancho: number;
         <Nota>{t('progreso.cambios', { semana: conSigno(u.enUnidad(p.cambio7), 1), mes: p.cambio30 === null ? '—' : conSigno(u.enUnidad(p.cambio30), 1), unidad: u.unidad })}</Nota>
       )}
       <View style={s.grafico}>
-        <Linea serie={p.serie} ancho={ancho} alto={92} meta={p.perfil.objetivo !== 'mantener' ? (p.perfil.pesoMeta ?? null) : null} />
+        <Linea serie={p.serie} ancho={ancho} alto={92} meta={objetivoPermitido(p.perfil) !== 'mantener' ? (p.perfil.pesoMeta ?? null) : null} />
       </View>
       <Eje izquierda={fechaDiaMes(p.serieDesde)} derecha={t('progreso.hoy')} />
       <Parrafo chico>{t('progreso.pesoLeyenda')}</Parrafo>
@@ -204,9 +207,10 @@ function ElGasto({ p, u, abierto, alAbrir }: { p: Persona; u: U; abierto: boolea
         </View>
         {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} gasto={p.gasto} ancho={150} alto={52} />}
       </View>
-      {p.control && k && (
+      {p.control && k && k.gastoMedido === null && <Parrafo>{t('progreso.controlSinMedir')}</Parrafo>}
+      {p.control && k && k.gastoMedido !== null && (
         <>
-          <Parrafo>{t('progreso.controlTexto', { gasto: numero(k.gastoMedido ?? p.gasto), antes: numero(p.control.gastoAntes), ahora: numero(p.gasto) })}</Parrafo>
+          <Parrafo>{t('progreso.controlTexto', { gasto: numero(k.gastoMedido), antes: numero(p.control.gastoAntes), ahora: numero(p.gasto) })}</Parrafo>
           <ComoSeCalcula abierto={abierto} alTocar={alAbrir}>
             <Parrafo>
               {t('progreso.comoSeCalculaTexto', { promedio: numero(k.comidaPromedio ?? 0), dias: k.dias ?? 21, cambio: conSigno(u.enUnidad(k.cambioDeTendencia ?? 0), 1), unidad: u.unidad })}
@@ -239,24 +243,26 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
   // El peso meta no baja de un IMC de 18,5: al llegar, se dice por qué.
   const [enElMinimo, setEnElMinimo] = useState(false);
   const minimo = pesoMinimoSano(perfil.alturaCm);
-  const ritmo = perfil.objetivo === 'mantener' ? '' : ` · ${t(`progreso.ritmos.${perfil.ritmo}`)}`;
+  // Sin déficit, bajar queda en mantener (objetivoPermitido): se muestra lo que se usa.
+  const objetivo = objetivoPermitido(perfil);
+  const ritmo = objetivo === 'mantener' ? '' : ` · ${t(`progreso.ritmos.${perfil.ritmo}`)}`;
   const metaKg = perfil.pesoMeta;
   const m = p.meta;
   return (
     <Carta>
-      <Fila titulo={t('progreso.objetivo')} valor={t(`progreso.objetivos.${perfil.objetivo}`) + ritmo} abierta={abierto === 'objetivo'} alTocar={() => alternar('objetivo')} />
+      <Fila titulo={t('progreso.objetivo')} valor={t(`progreso.objetivos.${objetivo}`) + ritmo} abierta={abierto === 'objetivo'} alTocar={() => alternar('objetivo')} />
       {abierto === 'objetivo' && (
         <Eleccion>
           <Segmento<Objetivo>
             opciones={(['bajar', 'mantener', 'subir'] as const).map((o) => [o, t(`progreso.objetivos.${o}`)] as const)}
-            elegida={perfil.objetivo}
-            alElegir={(objetivo) => {
+            elegida={objetivo}
+            alElegir={(o) => {
               // Sin déficit, bajar de peso no se elige acá (src/dominio/metas.ts, objetivoPermitido).
-              if (!(objetivo === 'bajar' && perfil.sinDeficit)) ponerEstrategia({ objetivo });
+              if (!(o === 'bajar' && perfil.sinDeficit)) ponerEstrategia({ objetivo: o });
             }}
           />
           {perfil.sinDeficit && <Parrafo chico>{t('entrada.cuidado.bajarNo')}</Parrafo>}
-          {perfil.objetivo !== 'mantener' && (
+          {objetivo !== 'mantener' && (
             <Aparece>
               <Segmento<Ritmo>
                 opciones={(['suave', 'recomendado', 'rapido'] as const).map((r) => [r, t(`progreso.ritmos.${r}`)] as const)}
@@ -265,8 +271,8 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
               />
               <Parrafo chico>
                 {t('progreso.ritmoTexto', {
-                  pct: numero(Math.abs(RITMOS[perfil.objetivo][perfil.ritmo]), 2),
-                  kg: numero(u.enUnidad(Math.abs((RITMOS[perfil.objetivo][perfil.ritmo] / 100) * (p.pesoHoy ?? 0))), 2), unidad: u.unidad,
+                  pct: numero(Math.abs(RITMOS[objetivo][perfil.ritmo]), 2),
+                  kg: numero(u.enUnidad(Math.abs((RITMOS[objetivo][perfil.ritmo] / 100) * (p.pesoHoy ?? 0))), 2), unidad: u.unidad,
                 })}
               </Parrafo>
             </Aparece>
@@ -274,11 +280,11 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
           <Parrafo chico>{t('progreso.objetivoNota')}</Parrafo>
         </Eleccion>
       )}
-      {perfil.objetivo !== 'mantener' && (
+      {objetivo !== 'mantener' && (
         <Aparece>
           <Fila
             titulo={t('progreso.pesoMeta')}
-            valor={metaKg ? `${u.peso(metaKg, metaKg % 1 ? 1 : 0)} ${u.unidad}` : t('progreso.sinPesoMeta')}
+            valor={metaKg ? `${u.meta(metaKg)} ${u.unidad}` : t('progreso.sinPesoMeta')}
             abierta={abierto === 'pesoMeta'}
             alTocar={() => alternar('pesoMeta')}
           />
@@ -317,7 +323,8 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
 /** El peso meta de a medio kilo, o de a una libra, no por debajo de `minimo` (un IMC de 18,5). */
 function PasosDelPesoMeta({ kg, u, minimo, alCambiar, alMinimo }: { kg: number; u: U; minimo: number; alCambiar: (kg: number) => void; alMinimo: () => void }) {
   const cambiar = (signo: 1 | -1) => {
-    const nuevo = u.unidad === 'lb' ? Math.round((u.enUnidad(kg) + signo) * KG_POR_LIBRA * 10) / 10 : Math.round((kg + 0.5 * signo) * 2) / 2;
+    // En libras, desde la libra que se ve: redondeado a 0,1 kg (lo que guarda la cuenta), vuelve a esa libra.
+    const nuevo = u.unidad === 'lb' ? Math.round((Math.round(u.enUnidad(kg)) + signo) * KG_POR_LIBRA * 10) / 10 : Math.round((kg + 0.5 * signo) * 2) / 2;
     if (nuevo < minimo) alMinimo();
     else if (nuevo <= 400) alCambiar(nuevo);
   };
@@ -326,7 +333,7 @@ function PasosDelPesoMeta({ kg, u, minimo, alCambiar, alMinimo }: { kg: number; 
       <Pressable onPress={() => cambiar(-1)} style={s.paso} accessibilityRole="button" accessibilityLabel={t('progreso.bajarMeta')}>
         <Icono nombre="minus" tam={16} peso="semibold" />
       </Pressable>
-      <Text style={s.pasoValor}>{`${u.peso(kg, kg % 1 && u.unidad === 'kg' ? 1 : 0)} ${u.unidad}`}</Text>
+      <Text style={s.pasoValor}>{`${u.meta(kg)} ${u.unidad}`}</Text>
       <Pressable onPress={() => cambiar(1)} style={s.paso} accessibilityRole="button" accessibilityLabel={t('progreso.subirMeta')}>
         <Icono nombre="plus" tam={16} peso="semibold" />
       </Pressable>
@@ -364,7 +371,8 @@ function ElControl({ p }: { p: Persona }) {
   if (!ec) return null;
   // Mientras quedan días antes del control, todavía puede llegar: está en curso, no le falta nada.
   const quedan = Math.max(0, ec.faltan - 1);
-  const estado = ec.alcanza ? 'alcanza' : ec.diasConComida + quedan >= ec.minimos.diasConComida ? 'enCurso' : 'faltanDatos';
+  // Con el tramo corto (la primera semana), ese control no mide aunque lleguen los datos.
+  const estado = ec.alcanza ? 'alcanza' : !ec.tramoCorto && ec.diasConComida + quedan >= ec.minimos.diasConComida ? 'enCurso' : 'faltanDatos';
   return (
     <Carta titulo={t('progreso.proximoControl')} derecha={<Chip texto={t(`progreso.${estado}`)} tipo={estado === 'alcanza' ? 'bien' : estado === 'faltanDatos' ? 'atencion' : undefined} />}>
       <Cifra valor={conMayuscula(fechaLarga(ec.fecha))} texto={ec.faltan === 0 ? t('progreso.hoy') : ec.faltan === 1 ? t('progreso.manana') : t('progreso.enDias', { n: ec.faltan })} />
@@ -372,7 +380,7 @@ function ElControl({ p }: { p: Persona }) {
         <Requisito hecho={ec.diasConComida} total={ec.minimos.diasConComida} clave="progreso.diasConComida" />
         <Requisito hecho={ec.pesadas} total={ec.minimos.pesadas} clave="progreso.pesadas" />
       </View>
-      <Parrafo>{t(estado === 'alcanza' ? 'progreso.controlListo' : estado === 'enCurso' ? 'progreso.controlEnCurso' : 'progreso.controlFalta', { n: quedan })}</Parrafo>
+      <Parrafo>{t(estado === 'alcanza' ? 'progreso.controlListo' : estado === 'enCurso' ? 'progreso.controlEnCurso' : ec.tramoCorto ? 'progreso.controlPrimero' : 'progreso.controlFalta', { n: quedan })}</Parrafo>
       <EtiquetaDeGrupo>{t('progreso.diaDelControl')}</EtiquetaDeGrupo>
       <Dias elegidos={[p.diaDelControl]} alTocar={(d) => elAlmacen().ponerEstrategia({ diaDelControl: d })} />
       <Parrafo chico>{t('progreso.diaDelControlNota')}</Parrafo>
@@ -392,7 +400,11 @@ function Metas({ alVolver }: { alVolver: () => void }) {
   const estilo = p.perfil.estilo ?? 'equilibrada';
   // A mano, por debajo del piso no se guarda (motivoParaNo): se dice por qué.
   const [bajoElPiso, setBajoElPiso] = useState(false);
-  const aMano = (macros: Omit<Macros, 'kcal'>) => setBajoElPiso(almacen.ponerMetasAMano(macros) === null);
+  const aMano = (macros: Omit<Macros, 'kcal'>) => {
+    const guardada = almacen.ponerMetasAMano(macros) !== null;
+    setBajoElPiso(!guardada);
+    return guardada;
+  };
   const cambiarAltos = (d: DiaSemana) => {
     if (!semana) return;
     const altos = semana.altos.includes(d) ? semana.altos.filter((x) => x !== d) : [...semana.altos, d];
@@ -421,7 +433,8 @@ function Metas({ alVolver }: { alVolver: () => void }) {
         alElegir={(q) => {
           if (q === quien) return;
           if (q === 'moss') almacen.metasDeMoss();
-          else almacen.ponerMetasAMano({ proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas });
+          // Con las kcal de Moss: los gramos redondeados pueden sumar 1 o 2 kcal menos y quedar bajo el piso.
+          else almacen.ponerMetasAMano({ proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, kcal: m.kcal });
         }}
       />
       <Parrafo chico>{t(quien === 'moss' ? 'progreso.metas.mossTexto' : 'progreso.metas.aManoTexto')}</Parrafo>
@@ -490,12 +503,12 @@ function Metas({ alVolver }: { alVolver: () => void }) {
 }
 
 /** Un macro a mano: se guarda al terminar de escribir. */
-function CampoDeMacro({ macro, gramos, alCambiar }: { macro: Macro; gramos: number; alCambiar: (g: number) => void }) {
+function CampoDeMacro({ macro, gramos, alCambiar }: { macro: Macro; gramos: number; alCambiar: (g: number) => boolean }) {
   const [texto, setTexto] = useState(String(gramos));
   const guardar = () => {
-    const g = Math.round(Number(texto.replace(',', '.')));
-    if (Number.isFinite(g) && g >= 0 && g <= 1000 && g !== gramos) alCambiar(g);
-    else setTexto(String(gramos));
+    // Vacío no es cero; y lo que no se guardó (bajo el piso) no queda escrito: vuelve a lo que había.
+    const g = texto.trim() ? Math.round(Number(texto.replace(',', '.'))) : Number.NaN;
+    if (!(Number.isFinite(g) && g >= 0 && g <= 1000 && g !== gramos && alCambiar(g))) setTexto(String(gramos));
   };
   return (
     <View style={s.campo}>
