@@ -152,7 +152,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       crearEscena({
         ancho,
         alto,
-        habitos: soloCielo ? [] : plano.estrellas.map(([x, y], i) => ({ x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto })),
+        habitos: soloCielo ? [] : plano.estrellas.map(([x, y], i) => ({ x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto, fija: dia.habitos[i].auto === 'comida' })),
         lineas: soloCielo ? [] : plano.lineas,
         centro: plano.centro,
         brotes: a.brotes,
@@ -283,6 +283,10 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         const nombre = h.nombre;
         if (ev.tipo === 'automatico') {
           Haptics.selectionAsync().catch(() => {});
+          if (h.auto === 'comida') {
+            setAviso({ texto: t.t('cielo.seEnciendeConLaComida'), clave: Date.now() });
+            continue;
+          }
           const valor = t.valorAutomatico(h);
           setAviso({ texto: valor ? `${t.t('cielo.seEnciendeSola')} · ${valor}` : t.t('cielo.seEnciendeSola'), clave: Date.now() });
           continue;

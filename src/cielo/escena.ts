@@ -24,7 +24,8 @@ const BROTE_NUCLEO = [0.95, 0.96, 0.7];
 /** Segundos que la estela de una estrella fugaz sigue a la vista después de que se apaga la cabeza. */
 const RESTO_DE_LA_ESTELA = 0.45;
 
-export type HabitoEnEscena = { x: number; y: number; encendido: boolean; auto: boolean; luz: number; pop: number };
+/** `fija`: un hábito de comida, que se enciende y se apaga solo con lo anotado; tocarlo no lo cambia. */
+export type HabitoEnEscena = { x: number; y: number; encendido: boolean; auto: boolean; fija: boolean; luz: number; pop: number };
 export type LineaEnEscena = { a: number; b: number; prof: number; avance: number };
 export type EstrellaDelUniverso = { x: number; y: number; encendida: boolean; habito: number };
 
@@ -97,7 +98,7 @@ export type Escena = {
 export type EntradaDeEscena = {
   ancho: number;
   alto: number;
-  habitos: { x: number; y: number; encendido: boolean; auto: boolean }[];
+  habitos: { x: number; y: number; encendido: boolean; auto: boolean; fija?: boolean }[];
   lineas: { a: number; b: number; prof: number }[];
   centro: Punto;
   brotes: Brote[];
@@ -116,7 +117,7 @@ export function crearEscena(d: EntradaDeEscena): Escena {
     alto: d.alto,
     cam: { y: 0, v: 0, objetivo: 0, arrastrando: false, desde: 0 },
     paginaX: 0,
-    habitos: d.habitos.map((h) => ({ ...h, luz: h.encendido ? 1 : 0, pop: 0 })),
+    habitos: d.habitos.map((h) => ({ ...h, fija: !!h.fija, luz: h.encendido ? 1 : 0, pop: 0 })),
     lineas: d.lineas.map((l) => ({ ...l, avance: completo ? 1 : 0 })),
     centro: d.centro,
     completo,
@@ -263,6 +264,12 @@ export function tocar(e: Escena, px: number, py: number): number {
   const mejor = estrellaEn(e, px, py);
   if (mejor < 0) return -1;
   const h = e.habitos[mejor];
+  // Lo de la comida lo decide lo anotado: si el toque la encendiera, el almacén la volvería a apagar.
+  if (h.fija) {
+    e.efectos.push({ tipo: 2, x: h.x, y: h.y, t0: e.t, dur: 0.4 });
+    e.eventos.push({ tipo: 'automatico', indice: mejor });
+    return mejor;
+  }
   cambiarHabito(e, mejor, !h.encendido, false);
   return mejor;
 }

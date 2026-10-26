@@ -101,14 +101,16 @@ export function pasoDeCantidad(valor: number, signo: 1 | -1, tipo: 'peso' | 'vol
   const donde = signo > 0 ? valor : valor - 1e-9;
   const paso = (tramos.find(([hasta]) => donde < hasta) ?? tramos[tramos.length - 1])[1];
   const siguiente = signo > 0 ? Math.floor(valor / paso + 1e-9) * paso + paso : Math.ceil(valor / paso - 1e-9) * paso - paso;
-  return Math.max(tramos[0][1], Math.round(siguiente * 100) / 100);
+  const nuevo = Math.max(tramos[0][1], Math.round(siguiente * 100) / 100);
+  // Por debajo del primer paso (½ cucharadita en ml, medio gramo), bajar deja donde está.
+  return signo < 0 ? Math.min(valor, nuevo) : nuevo;
 }
 
 /** Las veces de una porción con − y +: de a una desde una, y de a media hasta ¼ por debajo. */
 export function pasoDePorcion(veces: number, signo: 1 | -1): number {
   if (signo > 0) return veces < 1 ? Math.min(1, Math.floor(veces * 2 + 1e-9) / 2 + 0.5) : Math.floor(veces + 1e-9) + 1;
   if (veces > 1) return Math.ceil(veces - 1e-9) - 1;
-  return veces > 0.5 ? 0.5 : 0.25;
+  return veces > 0.5 ? 0.5 : Math.min(veces, 0.25);
 }
 
 /** Un ajuste rápido sobre las veces de una porción: ×½ de 1 son ½, ×2 de 1½ son 3. */

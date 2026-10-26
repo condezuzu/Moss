@@ -35,7 +35,8 @@ elegido queda en el teléfono (no sube a la cuenta).
 - **Qué días:** los del hábito, o algunos de ellos.
 - **Qué dice:** tu mensaje (hasta 120 letras) o «{hábito}, cuando puedas».
 - **No suena** si el hábito ya está hecho ese día. Lo de «después de comer»
-  espera a que anotes esa comida.
+  espera a que anotes esa comida; «en el momento» suena al minuto siguiente
+  (el minuto en que se anotó ya pasó cuando se reprograma).
 
 ## Los primeros hábitos
 
@@ -52,12 +53,15 @@ Cada comida elegida avisa a su hora (de a un cuarto de hora, entre las 5 y las
 23:45), si todavía no se anotó: «Hora del almuerzo». Si hay un plan para esa
 comida, dice qué toca: «Hora del almuerzo: pollo a la plancha, arroz». Arranca
 con el desayuno, el almuerzo y la cena a la hora en que se suelen anotar. Con
-horario, el aviso de «sin anotar» de esa comida cuenta desde esta hora.
+horario, el aviso de «sin anotar» de esa comida cuenta desde esta hora; si con
+una comida tarde caería a 20 minutos o menos del de su hora (o antes, por el tope
+de las 23:30), no suena: alcanza con el del horario.
 
 ## Pesarse
 
 Al rato de despertarse (10 minutos; sin noches, a las 8), antes de desayunar: el
-día del control o todos los días. Si ya te pesaste, no suena. El día del control
+día del control o todos los días. Si ya te pesaste, no suena: pesarse vuelve a
+programar los avisos, igual que cambiar el perfil o la meta. El día del control
 dice que Moss ajusta la meta.
 
 ## Las comidas sin anotar
@@ -77,6 +81,10 @@ paran solas.
 - **El plan de cada día** sale de lo elegido y de las horas de siempre, no de lo
   ya hecho: al reprogramar (cada vez que se abre Moss o cambia algo) lo que ya
   sonó no vuelve a sonar y el máximo no se pasa.
+- **Una programación a la vez:** si llega otra mientras una programa, la primera
+  se corta y la segunda empieza de cero (dos a la vez duplicaban avisos). Lo que
+  ya pasó no se programa (iOS lo rechaza y cortaba los demás), y hoy y ahora
+  salen del mismo instante, también a la medianoche.
 - **Las horas son de reloj:** un cambio de hora no corre nada. La noche es del
   día en que empieza (un aviso a las 0:15 es de la noche anterior).
 

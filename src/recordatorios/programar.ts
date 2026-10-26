@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 import type { Estado } from '@/almacen/almacen';
 import { avisosDeLaSemana, cuandoSuena, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos } from '@/dominio/avisos';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
-import { diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { claveDelDia, diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { horaHabitual } from '@/dominio/recordatorios';
 import { vigentes } from '@/dominio/registros';
 import { habitualDe } from '@/dominio/sinReloj';
@@ -92,35 +92,56 @@ function textoDe(n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): str
   return n.avisos.map(uno).join(' · ');
 }
 
+// Una programación a la vez: si mientras una programa llega otra, la primera se corta y la segunda
+// empieza de cero. Dos a la vez se borraban lo programado y duplicaban el resto.
+let enCurso: Promise<void> = Promise.resolve();
+let vuelta = 0;
+
 /** Borra los avisos que había y programa los de la semana, si hay alguno encendido y permiso. */
-export async function programarAvisos(e: Para): Promise<void> {
-  if (!hayAvisos) return;
+export function programarAvisos(e: Para): Promise<void> {
+  const esta = ++vuelta;
+  enCurso = enCurso.then(() => programar(e, () => esta !== vuelta)).catch(() => {});
+  return enCurso;
+}
+
+async function programar(e: Para, vieja: () => boolean): Promise<void> {
+  if (!hayAvisos || vieja()) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
   const ajustes: Avisos = { ...e.avisos, comidas: e.recordatorios ?? [] };
   const alguno = !!ajustes.dormir?.encendido || !!ajustes.comidas?.length || !!ajustes.habitos?.length || !!Object.keys(ajustes.horario ?? {}).length || !!ajustes.pesarse?.encendido;
   if (!alguno || !(await Notifications.getPermissionsAsync()).granted) return;
   const horaDeComida = horasDeComida(e);
+  const ahora = new Date();
+  // Hoy y ahora, del mismo instante: a la medianoche, el almacén todavía puede tener el día de ayer.
+  const hoy = claveDelDia(ahora);
   // Cuándo se anotó cada comida hoy (la primera vez): los avisos de «después de comer» esperan eso.
-  const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === e.hoy && !r.planificado).sort((a, b) => (a.momento < b.momento ? -1 : 1));
+  const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).sort((a, b) => (a.momento < b.momento ? -1 : 1));
   const eventosHoy: Partial<Record<Evento, number>> = {};
   for (const r of deHoy) if (r.comida !== 'snack' && eventosHoy[r.comida] === undefined) eventosHoy[r.comida] = minutosDe(r.momento);
-  const ahora = new Date();
   const lista = avisosDeLaSemana({
-    hoy: e.hoy, ahora: ahora.getHours() * 60 + ahora.getMinutes(), ajustes, habitos: e.habitos, sueno: suenoParaAvisos(e), horaDeComida,
+    hoy, ahora: ahora.getHours() * 60 + ahora.getMinutes(), ajustes, habitos: e.habitos, sueno: suenoParaAvisos(e), horaDeComida,
     marcas: e.marcas, anotadasHoy: new Set(deHoy.map((r) => r.comida)), eventosHoy,
     // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).
     diaDelControl: e.perfil?.diaDelControl ?? (e.metas[0] ? diaDeLaSemana(e.metas[0].desde) : undefined),
-    pesadoHoy: e.pesos.some((p) => p.fecha === e.hoy),
+    pesadoHoy: e.pesos.some((p) => p.fecha === hoy),
   });
   for (const n of lista) {
+    if (vieja()) return;
     const c = cuandoSuena(n.dia, n.minutos);
     const [a, m, d] = c.dia.split('-').map(Number);
+    const fecha = new Date(a, m - 1, d, c.hora, c.minuto);
+    // iOS rechaza una fecha que ya pasó, y cortaría los que siguen.
+    if (fecha.getTime() <= Date.now()) continue;
     const primero = n.avisos[0];
-    await Notifications.scheduleNotificationAsync({
-      // Lo que lleva el aviso para abrir lo suyo al tocarlo (useAlTocarUnAviso).
-      content: { title: 'Moss', body: textoDe(n, e), data: { tipo: primero.tipo, ...(primero.comida ? { comida: primero.comida } : {}) } },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(a, m - 1, d, c.hora, c.minuto) },
-    });
+    try {
+      await Notifications.scheduleNotificationAsync({
+        // Lo que lleva el aviso para abrir lo suyo al tocarlo (useAlTocarUnAviso).
+        content: { title: 'Moss', body: textoDe(n, e), data: { tipo: primero.tipo, ...(primero.comida ? { comida: primero.comida } : {}) } },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fecha },
+      });
+    } catch {
+      // Uno que no se pudo programar no deja sin los demás.
+    }
   }
 }
 

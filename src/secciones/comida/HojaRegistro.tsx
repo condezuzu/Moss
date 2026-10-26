@@ -664,7 +664,10 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                 avisar(plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${comidaDicha}`) }), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
                 cerrar();
               }}
-              alBuscar={(x) => {
+              alBuscar={(x, encontrados, comidaDicha) => {
+                // Lo que sí se encontró espera en la canasta: se busca lo que falta y se agrega todo junto.
+                for (const item of encontrados) a.ponerEnCanasta(item);
+                setComida(comidaDicha);
                 setPanel(null);
                 setTexto(x);
               }}

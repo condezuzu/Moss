@@ -399,8 +399,9 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
     }
   }
   // El snack: el de antes de entrenar, un rato antes de la sesión; el de la noche, después de la cena.
+  // Va aunque haya uno anotado más temprano (la regla ya mira si hubo uno a su hora); si está planificado, la línea va en él.
   const snack = lineas.get('snack');
-  if (snack && !comidas.some((c) => c.comida === 'snack')) {
+  if (snack && !comidas.some((c) => c.comida === 'snack' && c.planificada)) {
     entradas.push({ tipo: 'vacia', comida: 'snack', ahora: false, minutos: Math.max(ahora, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45) });
   }
   // Una comida registrada ahora ya marca la hora: «ahora» va solo si no la hay.

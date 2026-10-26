@@ -31,6 +31,27 @@ describe('la comida dicha de una vez', () => {
     expect(leerFrase('a glass of milk', 'en').dichos[0].medida).toBe('glass');
   });
 
+  it('la corrección después de lo dicho, y nada de lo que queda suelto', () => {
+    expect(resumen('dos huevos, no, tres').map(([c, , b]) => [c, b])).toEqual([[3, 'huevo']]);
+    expect(resumen('comí dos medialunas, no, eran tres').map(([c, , b]) => [c, b])).toEqual([[3, 'medialuna']]);
+    expect(resumen('un café y dos huevos, no, tres').map(([c, , b]) => [c, b])).toEqual([[1, 'café'], [3, 'huevo']]);
+  });
+
+  it('el «y» después de un «con» empieza otra cosa, salvo que el nombre entero exista', () => {
+    expect(resumen('un café con leche y medialunas', esNombre).map(([c, , b, a]) => [c, b, a])).toEqual([[1, 'café con leche', false], [null, 'medialuna', false]]);
+    expect(resumen('una tostada con manteca y mermelada').map(([, , b, a]) => [b, a])).toEqual([['tostada', false], ['manteca', true], ['mermelada', true]]);
+  });
+
+  it('uno y medio, y la comida por el verbo o el momento del día', () => {
+    expect(resumen('un huevo y medio').map(([c, , b]) => [c, b])).toEqual([[1.5, 'huevo']]);
+    expect(resumen('una pizza y media').map(([c, , b]) => [c, b])).toEqual([[1.5, 'pizza']]);
+    expect(leerFrase('desayuné dos huevos', 'es').comida).toBe('desayuno');
+    expect(leerFrase('cené una milanesa', 'es').comida).toBe('cena');
+    expect(leerFrase('a la noche comí pizza', 'es')).toMatchObject({ comida: 'cena', dichos: [{ buscado: 'pizza' }] });
+    expect(leerFrase('al mediodía una milanesa', 'es')).toMatchObject({ comida: 'almuerzo', dichos: [{ buscado: 'milanesa' }] });
+    expect(leerFrase('anoche comí pizza', 'es').dichos.map((d) => d.buscado)).toEqual(['pizza']);
+  });
+
   it('lo que se calla es lo de antes: la unidad o el alimento', () => {
     expect(resumen('200 gramos de arroz y 150 de pollo a la plancha').map(([c, u]) => [c, u])).toEqual([[200, 'g'], [150, 'g']]);
     expect(resumen('dos empanadas de carne y una de jamón y queso').map(([c, , b]) => [c, b])).toEqual([[2, 'empanada de carne'], [1, 'empanada de jamón y queso']]);

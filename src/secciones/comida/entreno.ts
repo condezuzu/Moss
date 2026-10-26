@@ -41,7 +41,9 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
   for (const r of vigentes(e.registros.values()).filter((x) => x.dia === e.hoy && !x.planificado)) {
     const antes = anotado[r.comida];
     const hora = minutosDe(r.momento);
-    anotado[r.comida] = { hora: antes ? Math.min(antes.hora, hora) : hora, proteina: (antes?.proteina ?? 0) + r.valores.proteina, kcal: (antes?.kcal ?? 0) + r.valores.kcal };
+    // Del snack, la última vez: el de después de la cena es el que cuenta para antes de dormir.
+    const cuando = !antes ? hora : r.comida === 'snack' ? Math.max(antes.hora, hora) : Math.min(antes.hora, hora);
+    anotado[r.comida] = { hora: cuando, proteina: (antes?.proteina ?? 0) + r.valores.proteina, kcal: (antes?.kcal ?? 0) + r.valores.kcal };
   }
   const sueno = suenoParaAvisos(e);
   const horas = sueno ? horasDeSueno(e.hoy, sueno) : { despertar: null, dormir: null };

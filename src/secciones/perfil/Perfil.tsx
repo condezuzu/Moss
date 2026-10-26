@@ -84,7 +84,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
       { clave: 'idioma', titulo: t('perfil.idioma'), valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
       { clave: 'calidad', titulo: t('perfil.calidad'), valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
-      { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: e.recordatorios?.length || e.avisos.dormir?.encendido ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
+      { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
       { clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), alTocar: () => elAlmacen().ponerNumeros(!e.numeros) },
     ]],
     ['perfil.conexiones', [
@@ -427,6 +427,12 @@ const TIPOS = ['fuerza', 'resistencia', 'mixta'] as const;
 /** Lunes primero, como en la galería. */
 const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
 
+/** Si suena algún aviso: los de comidas sin anotar, dormir, el horario, pesarse o un hábito. */
+function hayAvisos(e: Estado): boolean {
+  const a = e.avisos;
+  return !!(e.recordatorios?.length || a.dormir?.encendido || Object.keys(a.horario ?? {}).length || a.pesarse?.encendido || a.habitos?.length);
+}
+
 /** «Lun Mié Vie · 19:00», «Todos los días · 19:00» o que todavía no se cargó: corto, para que entre en la fila. */
 function resumenDeEntreno(entreno: Entreno | null): string {
   if (!entreno || !entreno.dias.length) return t('entreno.perfil.sinCargar');
@@ -447,7 +453,8 @@ function CuandoEntrenas({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const entreno: Entreno = e.entreno ?? { dias: [], hora: 19 * 60, minutos: 60, tipo: 'fuerza' };
   const poner = (cambios: Partial<Entreno>) => {
     const nuevo = { ...entreno, ...cambios };
-    elAlmacen().ponerEntreno(nuevo.dias.length ? nuevo : null);
+    // Sin días también se guarda: así la hora, la duración y el tipo vuelven al elegir otro día.
+    elAlmacen().ponerEntreno(nuevo);
   };
   const alternarDia = (d: DiaSemana) => poner({ dias: entreno.dias.includes(d) ? entreno.dias.filter((x) => x !== d) : [...entreno.dias, d] });
   const letras = lista('fecha.diasCortos');
@@ -458,7 +465,7 @@ function CuandoEntrenas({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       <View style={st.comidas}>
         {DIAS_DE_LA_SEMANA.map((d) => <Pastilla key={d} texto={letras[d]} elegida={entreno.dias.includes(d)} alTocar={() => alternarDia(d)} />)}
       </View>
-      {!!e.entreno && (
+      {entreno.dias.length > 0 && (
         <Aparece>
           <EtiquetaDeGrupo>{t('entreno.perfil.hora')}</EtiquetaDeGrupo>
           <Pasos valor={horaDeReloj(entreno.hora)} alBajar={() => poner({ hora: Math.max(5 * 60, entreno.hora - 15) })} alSubir={() => poner({ hora: Math.min(23 * 60, entreno.hora + 15) })} />

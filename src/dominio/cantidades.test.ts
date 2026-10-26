@@ -11,6 +11,11 @@ describe('los pasos de − y +', () => {
     expect(pasoDeCantidad(15, -1, 'peso', 'metrico')).toBe(10);
     expect(pasoDeCantidad(10, -1, 'peso', 'metrico')).toBe(9);
     expect(pasoDeCantidad(1, -1, 'peso', 'metrico')).toBe(1);
+    // Por debajo del primer paso, bajar no sube.
+    expect(pasoDeCantidad(0.5, -1, 'peso', 'metrico')).toBe(0.5);
+    expect(pasoDeCantidad(2.5, -1, 'volumen', 'metrico')).toBe(2.5);
+    expect(pasoDePorcion(0.125, -1)).toBe(0.125);
+    expect(pasoDePorcion(0.5, -1)).toBe(0.25);
   });
 
   it('van a números redondos según el tramo', () => {

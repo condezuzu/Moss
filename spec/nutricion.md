@@ -405,15 +405,25 @@ entender la frase sin nube) está en [`registrar-rapido.md`](registrar-rapido.md
   - `src/comida/entender.ts` busca cada cosa con el buscador de siempre: gana lo
     que ya se eligió antes para esas palabras, después el nombre exacto y lo que
     ya se comió. La cantidad es la dicha, la última o la porción de siempre (la
-    de contar: «2 huevos» son 2 huevos, nunca 2 tazas).
+    de contar: «2 huevos» son 2 huevos, nunca 2 tazas). Una medida de la casa
+    queda como se dijo: «un vaso de leche» es «1 vaso (200 ml)» y «dos
+    cucharadas», 2 cucharadas, no gramos (26/10/2026).
 - **Las preguntas:** solo si cambian el número (40 kcal, o un 15 % si son al
   menos 15), con la respuesta ya marcada, una por alimento y tres por comida:
-  cuál («¿Qué leche?»), crudo o cocido («¿Los 200 g son crudos o cocidos?», si no
-  se dijo cómo) o cuánto (sin cantidad ni una vez anterior). Cada respuesta se
+  cuál («¿Qué leche?»), crudo o cocido («¿Los 200 g son crudos o cocidos?» o, con
+  una medida, «¿Lo mediste crudo o cocido?», si no se dijo cómo) o cuánto (sin cantidad ni una vez anterior). Cada respuesta se
   recuerda: la próxima vez esas palabras no preguntan. «Agregar» nunca espera.
+- **Lo que se entiende además:** la corrección después de lo dicho («dos huevos,
+  no, tres»), «un huevo y medio», la comida por el verbo («desayuné…») o por el
+  momento del día («a la noche…»), y que lo de después de un «y» que sigue al
+  «con» es otra cosa («café con leche y medialunas»). Contar va por unidad
+  aunque sean muchas («20 uvas», si hay «1 uva»); sin cantidad, la porción de
+  siempre, no la de una unidad. Crudo o cocido se recuerda aparte de «cuál»: «un
+  plato de arroz» no queda crudo por haber contestado «200 g de arroz».
 - **La revisión:** cada cosa con su cantidad, que se cambia con − y +, y una
-  cruz para sacarla; lo que no se encontró, con «Buscarlo». «Agregar al
-  almuerzo» anota todo, con deshacer.
+  cruz para sacarla; lo que no se encontró, con «Buscarlo», que deja lo demás
+  esperando en la canasta. Volver a hablar suma («y una banana») sin perder lo
+  revisado. «Agregar al almuerzo» anota todo, con deshacer.
 - **Toques:** el «+», «Decir lo que comí», hablar y «Agregar»: **3**, para
   cualquier cantidad de alimentos (más uno por pregunta que se quiera cambiar).
 

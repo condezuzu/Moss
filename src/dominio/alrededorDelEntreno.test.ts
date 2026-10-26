@@ -50,6 +50,34 @@ describe('antes y después de entrenar', () => {
     expect(lineasDelDia(noche)).toEqual([{ comida: 'snack', clase: 'antesDeDormir', hora: h('21:30'), proteina: 30 }]);
   });
 
+  it('lo de antes de dormir dice lo que falta, sin pasarse; con un snack después de la cena, nada', () => {
+    const noche = (proteina: number, snack?: number): Contexto => tarde({
+      ahora: h('22:15'),
+      anotado: {
+        ...tarde().anotado, merienda: { hora: h('17:30'), proteina: 20, kcal: 400 }, cena: { hora: h('21:30'), proteina: 20, kcal: 600 },
+        ...(snack !== undefined ? { snack: { hora: snack, proteina: 5, kcal: 100 } } : {}),
+      },
+      comido: { kcal: 2000, proteina, carbohidratos: 170, grasas: 60 },
+    });
+    expect(lineasDelDia(noche(113))[0].proteina).toBe(25);
+    expect(lineasDelDia(noche(70))[0].proteina).toBe(70);
+    // El snack de la mañana no cuenta; el de después de la cena, sí.
+    expect(lineasDelDia(noche(110, h('10:30')))).toHaveLength(1);
+    expect(lineasDelDia(noche(110, h('22:00')))).toEqual([]);
+  });
+
+  it('una sesión larga sin comida antes: el snack, salvo que ya se haya anotado uno en las 4 horas de antes', () => {
+    const larga: Sesion = { inicio: h('16:00'), minutos: 90, tipo: 'resistencia' };
+    const sinMerienda = (snack?: number): Contexto => tarde({
+      ahora: h('12:00'), sesiones: [larga],
+      horaDeComida: { desayuno: h('8:00'), almuerzo: h('11:00'), merienda: h('20:30'), cena: h('22:00') },
+      anotado: { desayuno: { hora: h('8:00'), proteina: 30, kcal: 450 }, almuerzo: { hora: h('11:00'), proteina: 40, kcal: 650 }, ...(snack !== undefined ? { snack: { hora: snack, proteina: 5, kcal: 150 } } : {}) },
+    });
+    expect(lineasDelDia(sinMerienda()).map((l) => [l.comida, l.clase])).toEqual([['snack', 'snackPrevio']]);
+    expect(lineasDelDia(sinMerienda(h('14:30')))).toEqual([]);
+    expect(lineasDelDia(sinMerienda(h('9:00'))).map((l) => l.clase)).toEqual(['snackPrevio']);
+  });
+
   it('correr en ayunas, sin peso: antes, algo chico si es larga; al terminar, proteína apenas se pueda', () => {
     const correr: Sesion = { inicio: h('7:00'), minutos: 75, tipo: 'resistencia' };
     const manana = (ahora: number): Contexto => ({

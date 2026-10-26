@@ -36,7 +36,12 @@ export type ParaEntender = {
   alias: (buscado: string) => number | undefined;
   /** Si ese alimento ya se comió: entonces no se pregunta cuál. */
   conocido: (id: number) => boolean;
+  /** Lo que se contestó antes, crudo o cocido, para esas palabras con una cantidad medida (claveMedida). */
+  medido?: (buscado: string) => number | undefined;
 };
+
+/** Dónde se recuerda crudo o cocido: aparte de «cuál», así «un plato de arroz» no queda crudo por «200 g de arroz». */
+export const claveMedida = (buscado: string) => `medido:${normalizar(buscado)}`;
 
 export const DIFERENCIA_KCAL = 40;
 export const DIFERENCIA_PARTE = 0.15;
@@ -62,16 +67,23 @@ const ML_DEL_POCILLO = 80;
 /** Cómo se cocinó, dicho: entonces no se pregunta crudo o cocido. */
 const COMO_SE_COCINA = /(?:plancha|horno|hervid|frit|asad|cocid|crud|revuelt|guisad|saltead|grill|baked|boiled|fried|roast|cooked|raw|scrambled)/;
 
+/** La porción de siempre: la primera de la base, no la de una unidad que se sumó para contar. */
+const deSiempre = (d: Pick<Detalle, 'porciones'>) => d.porciones.find((p) => !p.deUna) ?? d.porciones[0];
+
+/** La porción que se llama como lo dicho: «1 huevo» para «2 huevos», «1 uva» para «20 uvas». */
+function porcionNombrada(dicho: Dicho, d: Pick<Detalle, 'porciones'>): { nombre: string; gramos: number } | undefined {
+  const palabra = llano(dicho.buscado).split(' ')[0];
+  return d.porciones.find((p) => /^1\s/.test(p.nombre) && llano(p.nombre).split(' ')[1] === palabra);
+}
+
 /**
  * La porción para contar lo dicho («2 huevos»): la que se llama como lo dicho («1 huevo»), la de una
  * unidad, en lo que se toma la taza o el vaso, o la de siempre. Nunca «2 tazas» de huevos.
  */
 function porcionParaContar(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densidad'>): { nombre: string; gramos: number } | undefined {
-  const palabra = llano(dicho.buscado).split(' ')[0];
-  const nombrada = d.porciones.find((p) => /^1\s/.test(p.nombre) && llano(p.nombre).split(' ')[1] === palabra);
   const unidad = d.porciones.find((p) => DE_A_UNA.test(p.nombre));
   const recipiente = d.densidad ? d.porciones.find((p) => RECIPIENTE.test(p.nombre)) : undefined;
-  return nombrada ?? unidad ?? recipiente ?? d.porciones[0];
+  return porcionNombrada(dicho, d) ?? unidad ?? recipiente ?? deSiempre(d);
 }
 
 /**
@@ -93,14 +105,13 @@ export function cantidadPara(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densi
     if (unidad === 'pocillo') return { cantidad: { porcion: '1 pocillo', gramosPorcion: Math.round(ML_DEL_POCILLO * (d.densidad ?? 1)), veces: cantidad }, supuesto: false };
   }
   if (cantidad !== null) {
-    // Mucho y sin unidad («150 de pollo»): son gramos.
-    if (cantidad >= 20) return { cantidad: { gramos: cantidad }, supuesto: false };
+    // Mucho y sin unidad («150 de pollo»): son gramos, salvo que se cuente («20 uvas»: hay «1 uva»).
+    if (cantidad >= 20 && !porcionNombrada(dicho, d)) return { cantidad: { gramos: cantidad }, supuesto: false };
     const una = porcionParaContar(dicho, d);
     return una ? { cantidad: { porcion: una.nombre, gramosPorcion: una.gramos, veces: cantidad }, supuesto: false } : { cantidad: { gramos: 100 * cantidad }, supuesto: true };
   }
   if (ultima) return { cantidad: ultima, supuesto: false };
-  const porciones = dicho.acompanante ? [...d.porciones].sort((a, b) => a.gramos - b.gramos) : d.porciones;
-  const p = porciones[0];
+  const p = dicho.acompanante ? [...d.porciones].sort((a, b) => a.gramos - b.gramos)[0] : deSiempre(d);
   return { cantidad: p ? { porcion: p.nombre, gramosPorcion: p.gramos, veces: 1 } : { gramos: 100 }, supuesto: true };
 }
 
@@ -140,7 +151,10 @@ async function entenderUno(dicho: Dicho, p: ParaEntender): Promise<Entendido> {
     if (otro) {
       // Los gramos son los mismos; la taza de arroz crudo pesa otra cosa que la de cocido.
       const alterna = opcion(otro, 'gramos' in cantidad ? cantidad : cantidadPara(dicho, otro, undefined).cantidad);
-      if (cambiaElNumero(alterna.valores.kcal, elegida.valores.kcal)) return { ...sola, opciones: [elegida, alterna], pregunta: 'crudo' };
+      // Lo que se contestó antes para estas palabras medidas va sin volver a preguntar.
+      const antes = p.medido?.(dicho.buscado);
+      if (antes === otro.id) return { ...sola, opciones: [alterna] };
+      if (antes !== primero.id && cambiaElNumero(alterna.valores.kcal, elegida.valores.kcal)) return { ...sola, opciones: [elegida, alterna], pregunta: 'crudo' };
     }
   }
   // Cuánto: no se dijo, no hay una vez anterior y cambia mucho. El acompañante, sus porciones chicas

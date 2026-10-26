@@ -11,7 +11,7 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - el almacén y la sincronización sirven igual para la comida;
 - las metas ya están programadas.
 
-**Dónde estamos (23/10/2026, a la mañana):**
+**Dónde estamos (26/10/2026, a la noche):**
 - **La app tiene lo de la v1 menos los widgets**, con tests y probada en la web
   (`npm run app:capturas`). Falta probarla en tu iPhone.
   - La entrada: la frase, las dos diapositivas, la cuenta con Apple o correo, el
@@ -47,6 +47,20 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
   - la revisión de Apple: el sitio con la privacidad y los términos, borrar la
     cuenta revocando Sign in with Apple, los datos cifrados y fuera de iCloud, y
     la ficha ([`revision.md`](revision.md)).
+- **El 26/10/2026** (lo que pediste después de probarla en el iPhone):
+  - el lag: el cielo se frena detrás de las otras secciones y dibuja menos por
+    cuadro; las animaciones salen rápido y nada va en cámara lenta;
+  - registrar más rápido: decir o escribir la comida entera de una vez
+    («Decir lo que comí», con el reconocimiento del iPhone, sin nube), tu comida
+    de siempre en dos toques y «anotar todo junto» desde el buscador
+    ([`registrar-rapido.md`](registrar-rapido.md), con cómo lo hacen las otras apps);
+  - la porción de una unidad («1 galletita»), crudo o cocido arriba, el teclado
+    que ya no tapa, los pasos que no saltan a 10 g, y el aviso de deshacer arriba
+    y por poco tiempo; sin las frases de «Con esto llegas al…»;
+  - qué comer antes y después de entrenar, en la comida que toca, con Perfil ›
+    Entrenamiento ([`entreno.md`](entreno.md));
+  - los avisos: el horario de comidas, pesarse y los hábitos con su aviso de
+    fábrica; tocar un aviso abre lo suyo ([`avisos.md`](avisos.md)).
 - **La base de alimentos**: USDA más 1.949 curados (313 platos como recetas y
   306 productos con su código de barras). 1.194 genéricos verificados con una
   segunda tabla oficial (TACO, Ciqual o CoFID), 112 platos por sus ingredientes
@@ -54,7 +68,7 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - **Lo que decidí solo** está en [`decisiones.md`](decisiones.md), «Tomadas por
   mi cuenta»; lo que espera tu respuesta, en «Pendientes» y en la galería.
 - **Falta para la v1:**
-  - la build en tu iPhone (espera que entres a Apple) y probarla ahí;
+  - probar en tu iPhone la build `telefono` de EAS (la instalás desde su enlace);
   - correr `0004` a `0007` en Supabase y desplegar `moss-borrar-cuenta`, con lo
     demás de [`ascent.md`](ascent.md) y [`revision.md`](revision.md);
   - los widgets de la pantalla de bloqueo (D8), después de la prueba de un día;

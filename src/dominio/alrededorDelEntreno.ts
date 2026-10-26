@@ -31,7 +31,7 @@ export type Contexto = {
   sesiones: readonly Sesion[];
   /** La hora de cada comida: la del horario, la de siempre o la típica. */
   horaDeComida: Record<Principal, number>;
-  /** Lo anotado hoy de cada comida: cuándo (la primera vez) y lo que suma. */
+  /** Lo anotado hoy de cada comida: cuándo (la primera vez; del snack, la última) y lo que suma. */
   anotado: Partial<Record<Comida, { hora: number; proteina: number; kcal: number }>>;
   /** La meta del día y lo comido hasta ahora. */
   meta: Macros;
@@ -144,6 +144,8 @@ function antes(c: Contexto, s: Sesion): Linea[] {
     // Sin comida en las 4 horas de antes: si la sesión es larga, algo chico antes.
     if (!larga(s)) return [];
     const proxima = PRINCIPALES.filter((comida) => c.horaDeComida[comida] < s.inicio && sinAnotar(c, comida)).sort((a, b) => c.horaDeComida[b] - c.horaDeComida[a])[0];
+    // Un snack anotado en las 4 horas de antes ya es lo de antes.
+    if (!proxima && c.anotado.snack && c.anotado.snack.hora >= s.inicio - COMIDA_PREVIA[1]) return [];
     return [{ ...base, comida: proxima ?? 'snack', clase: 'snackPrevio', carbohidratos: carbohidratosDelSnack(c) }];
   }
   if (!sinAnotar(c, previa.comida)) return [];
@@ -192,7 +194,8 @@ function antesDeDormir(c: Contexto): Linea[] {
   if (!c.anotado.cena || c.anotado.snack && c.anotado.snack.hora > c.anotado.cena.hora) return [];
   const falta = c.meta.proteina - c.comido.proteina;
   if (falta < FALTA_PARA_DORMIR) return [];
-  return [{ comida: 'snack', clase: 'antesDeDormir', hora: c.anotado.cena.hora, proteina: aCinco(limitar(falta, 30, 40)) }];
+  // Lo que falta, de a 5 y nunca más: «Te faltan 25 g» con 27.
+  return [{ comida: 'snack', clase: 'antesDeDormir', hora: c.anotado.cena.hora, proteina: Math.floor(falta / 5) * 5 }];
 }
 
 /**

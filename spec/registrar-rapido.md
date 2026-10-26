@@ -2,7 +2,7 @@
 
 *26 de octubre de 2026. Cada dato lleva su fuente entre corchetes ([n]); la lista del final (§6) da el enlace y la fecha de cada una, y marca **(2025)** o **(2026)** lo que es de esos años. «Sin verificar» quiere decir que no lo pude confirmar en una fuente primaria. [M1]–[M4] son archivos de Moss.*
 
-**Lo que ya está (26/10):** «Lo de siempre» (`deSiempre`, en la hoja de registro, 2 toques) y decir o escribir la comida entera con el micrófono propio (`expo-speech-recognition`, en el teléfono), `frase.ts` y `entender.ts`, con las preguntas de §5.4. Cómo quedó, en [`nutricion.md`](nutricion.md), «Decir la comida de una vez». Falta medir la voz con frases de acá (§5.6) y lo de §4 desde el 3.
+**Lo que ya está (26/10):** «Lo de siempre» (`deSiempre`, en la hoja de registro, 2 toques) y decir o escribir la comida entera con el micrófono propio (`expo-speech-recognition`, en el teléfono cuando el idioma lo permite), `frase.ts` y `entender.ts`, con las preguntas de §5.4. Cómo quedó, en [`nutricion.md`](nutricion.md), «Decir la comida de una vez». Falta medir la voz con frases de acá (§5.6) y lo de §4 desde el 3.
 
 ---
 
@@ -459,6 +459,7 @@ Lo que devuelve pasa por **el mismo buscador y las mismas preguntas** que las re
 | «dos huevos revueltos, una tostada con manteca y un café con leche» | Huevos revueltos ×2 (122 g) · Pan tostado («tostada» en UY), 1 rebanada (25 g) · Mantequilla («manteca» en UY), sin cantidad: la última que usaste, o 1 cdta (4,7 g) supuesta · Café con leche, 1 taza (252 g) | Solo «¿Cuánta manteca?», y solo si no hay historia: 1 cdta (≈34 kcal) contra 1 cda (≈102) |
 | «un vaso de leche y una banana» | Leche, 1 vaso (206 g) · Banana, 1 mediana (118 g) | «¿Qué leche?»: entera (≈126 kcal) o descremada (≈70), salvo que tu historia ya lo diga |
 | «200 gramos de arroz» | «arroz» es Arroz blanco cocido, pero hay versión cruda | «¿Los 200 g son crudos o cocidos?»: crudo ≈730 kcal, cocido ≈260 |
+| «una taza de arroz» | Arroz blanco cocido, 1 taza; la medida queda como se dijo, no en gramos | «¿Lo mediste crudo o cocido?»: cada versión con el peso de su taza |
 | «dos, no, tres medialunas» | Croissant («medialuna» en UY) ×3, 57 g cada uno | No |
 | «two scrambled eggs, a toast with butter and a coffee with milk» | Lo mismo que el primero, en inglés | Lo mismo |
 

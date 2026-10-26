@@ -56,7 +56,7 @@ export type Avisos = {
   horario?: Partial<Record<Comida, number>>;
   /** Pesarse a la mañana, al rato de despertarse: el día del control o, con `todos`, cada día. */
   pesarse?: { encendido: boolean; todos?: boolean };
-  /** Cuántas veces puede sonar por día, como mucho (4 de fábrica). */
+  /** Cuántas veces puede sonar por día, como mucho (6 de fábrica). */
   maximoPorDia?: number;
 };
 
@@ -239,8 +239,11 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   const horario = Object.entries(ajustes.horario ?? {}).filter(([, m]) => Number.isFinite(m)) as [Comida, number][];
   for (const [comida, minutos] of horario) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });
   for (const comida of ajustes.comidas ?? []) {
-    const hora = ajustes.horario?.[comida] ?? op.horaDeComida(comida);
-    fijos.push({ id: `comida:${comida}`, tipo: 'comida', comida, minutos: Math.min(ULTIMO_DE_COMIDA, hora + DESPUES_MIN) });
+    const enHorario = ajustes.horario?.[comida];
+    const minutos = Math.min(ULTIMO_DE_COMIDA, (enHorario ?? op.horaDeComida(comida)) + DESPUES_MIN);
+    // Con una comida tarde en el horario, el de «sin anotar» sonaría con el de su hora o antes: alcanza con ese.
+    if (enHorario !== undefined && minutos - enHorario <= VENTANA) continue;
+    fijos.push({ id: `comida:${comida}`, tipo: 'comida', comida, minutos });
   }
   if (ajustes.pesarse?.encendido) {
     const control = op.diaDelControl === semana;
@@ -260,7 +263,8 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   for (const e of conEvento) {
     const paso = op.eventos?.[e.evento];
     if (paso == null) continue;
-    const aviso = redondo({ ...e.aviso, minutos: paso + e.despues });
+    // «En el momento» es al minuto siguiente: cuando se reprograma, el minuto del evento ya pasó.
+    const aviso = redondo({ ...e.aviso, minutos: paso + Math.max(1, e.despues) });
     if (!valido(aviso) || !falta(aviso)) continue;
     // Solo con un grupo que suena después: si sonó antes, quizás fue antes de que se supiera el evento.
     const siguiente = grupos.find((g) => g.minutos >= aviso.minutos && g.minutos - aviso.minutos <= VENTANA);

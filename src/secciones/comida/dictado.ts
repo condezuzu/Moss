@@ -1,9 +1,10 @@
-// Decir la comida en voz alta: el reconocimiento de voz del iPhone, en el teléfono (sin nube ni
-// costo), con expo-speech-recognition. El audio no se guarda ni sale del teléfono. Si el idioma no se
-// reconoce en el teléfono, queda el micrófono del teclado, que hace lo mismo.
+// Decir la comida en voz alta: el reconocimiento de voz de Apple, sin costo, con
+// expo-speech-recognition. Se pide en el teléfono (requiresOnDeviceRecognition), que iOS cumple cuando
+// el idioma tiene su modelo ahí; si no, lo reconoce Apple. Moss no guarda el audio. Si el idioma no se
+// reconoce, queda el micrófono del teclado, que hace lo mismo.
 
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { idioma } from '@/textos';
@@ -23,14 +24,13 @@ async function idiomaDelDictado(): Promise<string | null> {
   return PARECIDOS[lengua].find((x) => locales.includes(x)) ?? locales.find((x) => x.startsWith(`${lengua}-`)) ?? null;
 }
 
-/** Si hay reconocimiento de voz: en el iPhone, sí; en la web de prueba, no. */
+/**
+ * Si hay reconocimiento de voz: en el iPhone, sí; en la web de prueba, no. No con
+ * isRecognitionAvailable, que mira el idioma del teléfono: «es-UY» no tiene reconocedor aunque
+ * «es-419» sí. El idioma se elige al empezar (idiomaDelDictado) y, sin ninguno, se dice.
+ */
 export function hayDictado(): boolean {
-  if (Platform.OS !== 'ios') return false;
-  try {
-    return ExpoSpeechRecognitionModule.isRecognitionAvailable();
-  } catch {
-    return false;
-  }
+  return Platform.OS === 'ios';
 }
 
 /**
@@ -42,9 +42,23 @@ export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (
   const [escuchando, setEscuchando] = useState(false);
   const [error, setError] = useState<ErrorDelDictado | null>(null);
   const ultimo = useRef('');
+  // Si se cierra mientras escucha, el micrófono se apaga: no queda escuchando de fondo.
+  const activo = useRef(false);
+  useEffect(() => {
+    const vivo = activo;
+    return () => {
+      if (!vivo.current) return;
+      try {
+        ExpoSpeechRecognitionModule.abort();
+      } catch {
+        // Ya había terminado.
+      }
+    };
+  }, []);
 
   useSpeechRecognitionEvent('start', () => {
     ultimo.current = '';
+    activo.current = true;
     setEscuchando(true);
   });
   useSpeechRecognitionEvent('result', (ev) => {
@@ -53,10 +67,12 @@ export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (
     op.alTexto(texto);
   });
   useSpeechRecognitionEvent('end', () => {
+    activo.current = false;
     setEscuchando(false);
     op.alTerminar(ultimo.current);
   });
   useSpeechRecognitionEvent('error', (ev) => {
+    activo.current = false;
     setEscuchando(false);
     // Sin hablar no es un error: solo no hay nada.
     if (ev.error === 'no-speech' || ev.error === 'aborted') return;

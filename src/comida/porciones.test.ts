@@ -30,10 +30,10 @@ describe('singularDePorcion', () => {
 describe('conUnaUnidad', () => {
   it('suma la de una sola unidad adelante de la del paquete', () => {
     expect(conUnaUnidad([{ nombre: '7 galletas', gramos: 31 }], 'es')).toEqual([
-      { nombre: '1 galleta', gramos: 4.4 },
+      { nombre: '1 galleta', gramos: 4.4, deUna: true },
       { nombre: '7 galletas', gramos: 31 },
     ]);
-    expect(conUnaUnidad([{ nombre: '7 crackers', gramos: 30 }], 'en')[0]).toEqual({ nombre: '1 cracker', gramos: 4.3 });
+    expect(conUnaUnidad([{ nombre: '7 crackers', gramos: 30 }], 'en')[0]).toEqual({ nombre: '1 cracker', gramos: 4.3, deUna: true });
   });
 
   it('no repite la que ya está ni toca lo que se cuenta en gramos', () => {

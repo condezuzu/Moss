@@ -12,11 +12,11 @@ import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useShare
 import { elAlmacen } from '@/almacen';
 import { baseDeAlimentos } from '@/comida/base';
 import { normalizar } from '@/comida/buscar';
-import { entender, type Entendido, type Opcion } from '@/comida/entender';
+import { claveMedida, entender, type Entendido, type Opcion } from '@/comida/entender';
 import { conCon, leerFrase } from '@/comida/frase';
 import { pasoDeCantidad, pasoDePorcion, type Sistema } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
-import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Item } from '@/dominio/registros';
+import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Cantidad, type Item } from '@/dominio/registros';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ACOMODA } from '../tarjetas';
@@ -35,16 +35,23 @@ type Props = {
   alAtras: () => void;
   /** Lo entendido, para anotarlo en la comida (la dicha, si se dijo: «en el almuerzo»). */
   alAgregar: (items: Item[], comida: Comida) => void;
-  /** Lo que no se encontró se busca a mano. */
-  alBuscar: (texto: string) => void;
+  /** Lo que no se encontró se busca a mano; lo que sí, espera en la canasta. */
+  alBuscar: (texto: string, encontrados: Item[], comida: Comida) => void;
   abajo: number;
 };
 
 /** La cantidad de una opción, un paso más o menos: las porciones de a una, los gramos por tramos. */
 function otraCantidad(o: Opcion, signo: 1 | -1): Opcion {
   const c = o.cantidad;
-  // Los gramos van siempre en gramos, también con el sistema imperial.
-  const cantidad = 'porcion' in c ? { ...c, veces: pasoDePorcion(c.veces, signo) } : { gramos: pasoDeCantidad(c.gramos, signo, 'peso', 'metrico') };
+  let cantidad: Exclude<Cantidad, null>;
+  if ('porcion' in c) cantidad = { ...c, veces: pasoDePorcion(c.veces, signo) };
+  else {
+    // Los gramos van siempre en gramos, también con el sistema imperial; el aceite queda, y los ml y
+    // el peso entero cambian con ellos.
+    const gramos = pasoDeCantidad(c.gramos, signo, 'peso', 'metrico');
+    const f = gramos / c.gramos;
+    cantidad = { ...c, gramos, ...(c.ml !== undefined ? { ml: Math.round(c.ml * f) } : {}), ...(c.bruto !== undefined ? { bruto: Math.round(c.bruto * f) } : {}) };
+  }
   return { ...o, cantidad, valores: valoresDeCantidad(o.alimento.por100g, cantidad) };
 }
 
@@ -57,7 +64,8 @@ export function PanelDecir(p: Props) {
   // El texto que se entendió: si se cambia, hay que volver a entender.
   const [entendido, setEntendido] = useState<string | null>(null);
 
-  const entenderTexto = async (frase: string) => {
+  /** Entiende la frase; con `sumarA`, lo nuevo va después de lo que ya estaba revisado. */
+  const entenderTexto = async (frase: string, sumarA?: { lista: Entendido[]; completo: string }) => {
     if (!frase.trim()) return;
     setEntendiendo(true);
     const op = opcionesDeIdioma();
@@ -77,24 +85,41 @@ export function PanelDecir(p: Props) {
       ultimaCantidad: (ref) => ultimaCantidad(e.registros.values(), 'base', ref),
       alias: (b) => e.alias[normalizar(b)],
       conocido: (id) => (premio.get(id) ?? 0) > 0,
+      medido: (b) => e.alias[claveMedida(b)],
     });
-    setEntendido(frase);
-    setEntendidos(lista);
+    setEntendido(sumarA ? sumarA.completo : frase);
+    setEntendidos(sumarA ? [...sumarA.lista, ...lista] : lista);
     setEntendiendo(false);
     Haptics.selectionAsync().catch(() => {});
   };
-  const entenderYa = (frase: string) => {
-    entenderTexto(frase).catch(() => setEntendiendo(false));
+  const entenderYa = (frase: string, sumarA?: { lista: Entendido[]; completo: string }) => {
+    entenderTexto(frase, sumarA).catch(() => setEntendiendo(false));
   };
 
-  const dictado = useDictado({ alTexto: setTexto, alTerminar: entenderYa });
+  // Al volver a hablar, lo nuevo se suma («y una banana»): lo ya revisado no se pierde.
+  const [previo, setPrevio] = useState<{ texto: string; lista: Entendido[] | null }>({ texto: '', lista: null });
+  const conPrevio = (nuevo: string) => {
+    const antes = previo.texto.replace(/[\s,.;]+$/, '');
+    return antes && nuevo ? `${antes}, ${nuevo}` : antes || nuevo;
+  };
+  const dictado = useDictado({
+    alTexto: (x) => setTexto(conPrevio(x)),
+    alTerminar: (x) => {
+      if (previo.lista?.length && x.trim()) entenderYa(x, { lista: previo.lista, completo: conPrevio(x) });
+      else entenderYa(conPrevio(x));
+    },
+  });
   const conMicrofono = hayDictado();
   // Lo que la persona suele comer ayuda a reconocer los nombres.
   const contexto = () => recientes(e.registros.values(), 60).map((i) => i.nombre);
   const hablar = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     if (dictado.escuchando) dictado.parar();
-    else dictado.empezar(contexto()).catch(() => {});
+    else {
+      // Lo entendido sigue si el texto no se cambió a mano desde entonces.
+      setPrevio({ texto, lista: entendidos && entendido !== null && texto.trim() === entendido.trim() ? entendidos : null });
+      dictado.empezar(contexto()).catch(() => {});
+    }
   };
   // Al abrir, cuando el panel ya entró: escucha, o entiende lo que se escribió en el buscador.
   useEffect(() => {
@@ -118,12 +143,15 @@ export function PanelDecir(p: Props) {
   const total = sumarValores(elegidas.map(({ o }) => o.valores));
   const cambioElTexto = entendido !== null && texto.trim() !== entendido.trim();
 
-  const agregar = () => {
-    const items = elegidas.map(({ o }) => ({ ...itemDeAlimento('base', o.alimento.ref, o.alimento.nombre, o.alimento.por100g, o.cantidad), estimado: true as const }));
-    // Cada respuesta se recuerda: la próxima vez, esas palabras ya no preguntan.
-    for (const { x, o } of elegidas) if (x.pregunta === 'cual' || x.pregunta === 'crudo') elAlmacen().ponerAlias(normalizar(x.dicho.buscado), Number(o.alimento.ref));
-    p.alAgregar(items, comida);
+  /** Lo elegido, como ítems. Cada respuesta se recuerda: la próxima vez, esas palabras ya no preguntan. */
+  const confirmar = () => {
+    for (const { x, o } of elegidas) {
+      if (x.pregunta === 'cual') elAlmacen().ponerAlias(normalizar(x.dicho.buscado), Number(o.alimento.ref));
+      if (x.pregunta === 'crudo') elAlmacen().ponerAlias(claveMedida(x.dicho.buscado), Number(o.alimento.ref));
+    }
+    return elegidas.map(({ o }) => ({ ...itemDeAlimento('base', o.alimento.ref, o.alimento.nombre, o.alimento.por100g, o.cantidad), estimado: true as const }));
   };
+  const agregar = () => p.alAgregar(confirmar(), comida);
 
   return (
     <Panel
@@ -158,7 +186,7 @@ export function PanelDecir(p: Props) {
           {entendidos.length === 0 && <Text style={st.nota}>{t('comida.decir.nada')}</Text>}
           {entendidos.map((x, i) => (
             <Animated.View key={`${x.dicho.texto}-${i}`} entering={FadeIn.duration(240)} exiting={FadeOut.duration(160)} layout={ACOMODA}>
-              <Fila x={x} sistema={p.sistema} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => p.alBuscar(x.dicho.buscado)} />
+              <Fila x={x} sistema={p.sistema} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => p.alBuscar(x.dicho.buscado, confirmar(), comida)} />
             </Animated.View>
           ))}
         </Animated.View>

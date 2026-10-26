@@ -5,7 +5,7 @@
     "NSHealthUpdateUsageDescription": "Moss no escribe nada en Salud: solo lee los datos que eliges.",
     "NSCameraUsageDescription": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono.",
     "NSMotionUsageDescription": "Sin reloj, Moss usa el movimiento del teléfono para estimar cuándo dormiste. El movimiento no sale del teléfono: solo se guarda la hora estimada.",
-    "NSMicrophoneUsageDescription": "Moss usa el micrófono solo mientras dices lo que comiste, para anotarlo. El audio se procesa en el teléfono y no se guarda.",
-    "NSSpeechRecognitionUsageDescription": "Moss convierte en texto, en el teléfono, lo que dices de tu comida para anotarlo. No se guarda ni sale del teléfono."
+    "NSMicrophoneUsageDescription": "Moss usa el micrófono solo mientras dices lo que comiste, para anotarlo. Moss no guarda el audio.",
+    "NSSpeechRecognitionUsageDescription": "Moss convierte en texto lo que dices de tu comida para anotarlo, con el reconocimiento de voz de Apple (en el teléfono cuando el idioma lo permite). Moss no guarda el audio."
   }
 }

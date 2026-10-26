@@ -3,6 +3,7 @@
 // - un toque sobre una estrella, y otra vez el cielo después de recargar (tiene que acordarse);
 // - el día completo y tu universo;
 // - las secciones: Ascent desde el cielo (y no desde la barra), la flecha, las pestañas, Inicio y el «+»;
+// - decir lo que comí, escrito (en la web no hay micrófono), con sus preguntas, y anotarlo;
 // - las primeras pantallas de la entrada, en un navegador sin perfil.
 // Es lo más cerca del iPhone que se puede llegar desde Windows; el rendimiento real se mide en el
 // teléfono. Cada corrida arranca de cero: el navegador es nuevo y los hábitos de ejemplo también,
@@ -22,9 +23,15 @@ const navegador = await chromium.launch({ args: ['--use-angle=swiftshader', '--e
 const PANTALLA = { viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, locale: 'es-UY' };
 const pagina = await navegador.newPage(PANTALLA);
 const errores = [];
+// Cada error, en el momento y con la última foto: así se sabe en qué paso pasó.
+let ultimaFoto = '(antes de la primera foto)';
 const anotarErrores = (p) => {
-  p.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()); });
-  p.on('pageerror', (e) => errores.push(String(e)));
+  const anotar = (texto) => {
+    errores.push(texto);
+    console.log(`  ! después de «${ultimaFoto}»: ${texto.slice(0, 200)}`);
+  };
+  p.on('console', (m) => { if (m.type() === 'error') anotar(m.text()); });
+  p.on('pageerror', (e) => anotar(String(e)));
 };
 anotarErrores(pagina);
 
@@ -66,6 +73,7 @@ async function abrir() {
 
 const foto = async (nombre, p = pagina) => {
   await p.screenshot({ path: join(salida, nombre + '.png') });
+  ultimaFoto = nombre;
   console.log('·', nombre);
 };
 const panel = async (texto) => {
@@ -173,6 +181,16 @@ await foto('mas');
 await pagina.getByLabel('Sumar un vaso de 250 ml').last().click();
 await pagina.waitForTimeout(500);
 await foto('mas-agua');
+// Decir lo que comí (lo pediste el 26/10): lo entendido, con sus preguntas, y anotado con deshacer.
+await pagina.getByText('Decir lo que comí').first().click();
+await pagina.waitForTimeout(1500);
+await pagina.getByLabel('Decir lo que comí').last().fill('en el almuerzo comí 200 gramos de arroz, una milanesa con puré y un vaso de leche');
+await pagina.getByRole('button', { name: 'Entender' }).click();
+await pagina.waitForTimeout(3500);
+await foto('decir');
+await pagina.getByRole('button', { name: /Agregar al almuerzo/ }).click();
+await pagina.waitForTimeout(1200);
+await foto('decir-anotado');
 
 // La entrada, en un navegador sin nada guardado: la frase, los hábitos y la comida. El círculo de
 // abajo se llama «Seguir», se habilita cuando se llena el aro y late sin parar: se toca forzado.

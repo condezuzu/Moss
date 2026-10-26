@@ -22,7 +22,8 @@ export type Valores100 = {
   micros?: Micros;
 };
 
-export type PorcionDeAlimento = { nombre: string; gramos: number };
+/** `deUna`: la de una unidad que sumó conUnaUnidad («1 galleta» de «7 galletas»), que no es la de siempre. */
+export type PorcionDeAlimento = { nombre: string; gramos: number; deUna?: true };
 export type Pariente = { id: number; nombre: string };
 
 export type Detalle = {

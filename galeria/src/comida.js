@@ -501,7 +501,7 @@ const Comida = (() => {
         });
         // El snack: el de antes de entrenar, un rato antes de la sesión; el de la noche, después de la cena.
         const snack = lineas.get('snack');
-        if (snack && !entradas.some((x) => x.comida && x.comida.tipo === 'snack')) {
+        if (snack && !entradas.some((x) => x.comida && x.comida.tipo === 'snack' && x.comida.plan)) {
           entradas.push({ vacia: 'snack', hora: Math.max(AHORA, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45) });
         }
         // Una comida registrada ahora ya marca la hora: «ahora» va solo si no la hay.

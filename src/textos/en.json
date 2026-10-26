@@ -23,6 +23,7 @@
     "encendida": "{habito} · lit",
     "apagada": "{habito} · unlit",
     "seEnciendeSola": "Lights up on its own from Health",
+    "seEnciendeConLaComida": "Lights up on its own with what you log",
     "desdeSalud": "{habito} · lit from Health",
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Your universe",

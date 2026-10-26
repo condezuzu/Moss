@@ -129,7 +129,7 @@ Las constelaciones y los mitos pasan a segundo plano: siguen siendo parte de la 
 ## Registro
 
 - Marcar a mano: tocando la estrella directo en el cielo (no hay lista), con vibración y destello. Se puede deshacer.
-- Automático desde Apple Health: pasos, agua, mindfulness y cualquier dato de Salud que el usuario elija como hábito.
+- Automático desde Apple Health: pasos, agua, mindfulness y cualquier dato de Salud que el usuario elija como hábito. Una estrella de Salud también se corrige tocándola; la de un hábito de comida, no: sigue lo que se anota, y tocarla lo dice.
 - Sueño desde Apple Health, en su sección (cambio 9, [`sueno.md`](sueno.md)):
   - la duración, las etapas (REM, núcleo, profundo), lo despierto y el tiempo en cama;
   - el horario y qué tan regular es, y la deuda;

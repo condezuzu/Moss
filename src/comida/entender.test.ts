@@ -10,7 +10,7 @@ import { join } from 'node:path';
 
 import { buscarAlimentos, normalizar } from './buscar';
 import { detalleDeAlimento } from './detalle';
-import { cambiaElNumero, entender, type Entendido, type ParaEntender } from './entender';
+import { cambiaElNumero, claveMedida, entender, type Entendido, type ParaEntender } from './entender';
 import { conCon, leerFrase } from './frase';
 
 const db = new DatabaseSync(join(__dirname, '../../assets/alimentos.db'), { readOnly: true });
@@ -82,6 +82,27 @@ describe('lo dicho, en alimentos de la base', () => {
     const [arroz] = await decir('una taza de arroz', { conocido: () => true });
     expect(arroz.pregunta).toBe('crudo');
     expect(Math.abs(arroz.opciones[0].valores.kcal - arroz.opciones[1].valores.kcal)).toBeGreaterThan(100);
+  });
+
+  it('crudo o cocido se recuerda aparte: no vuelve a preguntar, y no cambia lo que no se midió', async () => {
+    const [primera] = await decir('200 gramos de arroz', { conocido: () => true });
+    const crudo = Number(primera.opciones[1].alimento.ref);
+    const recordado = new Map([[claveMedida('arroz'), crudo]]);
+    const [otra] = await decir('200 gramos de arroz', { conocido: () => true, medido: (b) => recordado.get(claveMedida(b)) });
+    expect(otra.pregunta).toBeNull();
+    expect(Number(otra.opciones[0].alimento.ref)).toBe(crudo);
+    const [plato] = await decir('un plato de arroz', { conocido: () => true, medido: (b) => recordado.get(claveMedida(b)) });
+    expect(Number(plato.opciones[0].alimento.ref)).not.toBe(crudo);
+  });
+
+  it('lo que se cuenta va por unidad aunque sean muchas; sin cantidad, la porción de siempre y no la de una', async () => {
+    const [uvas] = await decir('20 uvas', { conocido: () => true });
+    const c = uvas.opciones[0].cantidad;
+    expect('veces' in c ? [c.porcion.startsWith('1 uva'), c.veces] : c).toEqual([true, 20]);
+    expect(kcal(uvas)).toBeGreaterThan(60);
+    const [galletas] = await decir('galletas', { conocido: () => true });
+    const g = galletas.opciones[galletas.elegida].cantidad;
+    expect('porcion' in g && g.porcion.startsWith('1 ')).toBe(false);
   });
 
   it('lo que se eligió antes para esas palabras gana, sin preguntar', async () => {

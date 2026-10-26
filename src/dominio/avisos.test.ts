@@ -244,6 +244,11 @@ describe('el horario de comidas y pesarse', () => {
     expect(resumen(delDia(ajustes, { anotadas: new Set<Comida>(['desayuno']) }))).toEqual([[h('12:30'), ['horario:almuerzo']]]);
   });
 
+  it('con una cena tarde en el horario, el de «sin anotar» no suena antes ni junto con el de su hora', () => {
+    expect(resumen(delDia({ horario: { cena: h('23:45') }, comidas: ['cena'] }))).toEqual([[h('23:45'), ['horario:cena']]]);
+    expect(resumen(delDia({ horario: { cena: h('23:15') }, comidas: ['cena'] }))).toEqual([[h('23:15'), ['horario:cena']]]);
+  });
+
   it('con horario, lo de «sin anotar» cuenta desde la hora elegida y no desde la de siempre', () => {
     const lista = delDia({ horario: { almuerzo: h('12:00') }, comidas: ['almuerzo'] });
     expect(resumen(lista)).toEqual([[h('12:00'), ['horario:almuerzo']], [h('12:00') + DESPUES_MIN, ['comida:almuerzo']]]);
@@ -297,6 +302,14 @@ describe('los avisos de la semana', () => {
   it('lo de un evento, solo hoy', () => {
     const lista = semana({ habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'almuerzo', despues: 60 }, dias: [] }] }, { eventosHoy: { almuerzo: h('13:00') } });
     expect(lista.map((x) => [x.dia, x.minutos])).toEqual([[VIERNES, h('14:00')]]);
+  });
+
+  it('«en el momento» suena al minuto siguiente del evento, aunque se programe en ese mismo minuto', () => {
+    const lista = semana({ habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'almuerzo', despues: 0 }, dias: [] }] }, { ahora: h('13:00'), eventosHoy: { almuerzo: h('13:00') } });
+    expect(lista.map((x) => [x.dia, x.minutos])).toEqual([[VIERNES, h('13:01')]]);
+    // Más tarde ya sonó: no se repite.
+    const despues = semana({ habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'almuerzo', despues: 0 }, dias: [] }] }, { ahora: h('13:20'), eventosHoy: { almuerzo: h('13:00') } });
+    expect(despues).toEqual([]);
   });
 
   it('pasada la medianoche sigue lo de anoche que todavía no sonó', () => {

@@ -120,8 +120,8 @@ export function singularDePorcion(texto: string, idioma: Idioma): string {
  * así no se arranca del número que eligió el paquete. Lo que ya tiene la de una, o se cuenta en
  * gramos, queda igual.
  */
-export function conUnaUnidad<P extends { nombre: string; gramos: number }>(porciones: readonly P[], idioma: Idioma): (P | { nombre: string; gramos: number })[] {
-  const salida: (P | { nombre: string; gramos: number })[] = [];
+export function conUnaUnidad<P extends { nombre: string; gramos: number }>(porciones: readonly P[], idioma: Idioma): (P | { nombre: string; gramos: number; deUna: true })[] {
+  const salida: (P | { nombre: string; gramos: number; deUna: true })[] = [];
   const nombres = new Set(porciones.map((p) => p.nombre.toLowerCase()));
   for (const p of porciones) {
     const m = /^(\d+)\s+(\S.*)$/.exec(p.nombre);
@@ -130,7 +130,7 @@ export function conUnaUnidad<P extends { nombre: string; gramos: number }>(porci
       const una = `1 ${singularDePorcion(m[2], idioma)}`;
       if (!nombres.has(una.toLowerCase())) {
         nombres.add(una.toLowerCase());
-        salida.push({ nombre: una, gramos: Math.round((p.gramos / n) * 10) / 10 });
+        salida.push({ nombre: una, gramos: Math.round((p.gramos / n) * 10) / 10, deUna: true });
       }
     }
     salida.push(p);

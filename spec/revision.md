@@ -163,21 +163,23 @@ qué se mira:
 
 ### NSMicrophoneUsageDescription y NSSpeechRecognitionUsageDescription (decir la comida) — nuevos
 
-Desde el 26/10, «Decir lo que comí» escucha con el reconocimiento de voz del
-iPhone, **solo en el teléfono** (`requiresOnDeviceRecognition`): el audio no se
-guarda ni sale de ahí. Se piden al tocar el micrófono. Van en las opciones de
+Desde el 26/10, «Decir lo que comí» escucha con el reconocimiento de voz de
+Apple. Pide hacerlo en el teléfono (`requiresOnDeviceRecognition`), y iOS lo
+cumple cuando el idioma tiene su modelo ahí; si no, lo reconoce Apple en sus
+servidores. Por eso los textos no prometen «en el teléfono»: Moss no guarda el
+audio, y eso es lo que dicen. Se piden al tocar el micrófono. Van en las opciones de
 `expo-speech-recognition` y de `expo-camera` y `expo-image-picker` (si quedan en
 `false` en esos dos, borran la clave del micrófono y la app se cierra al pedirlo)
 y en los dos `locales`:
 
 - **es:** «Moss usa el micrófono solo mientras dices lo que comiste, para
-  anotarlo. El audio se procesa en el teléfono y no se guarda.» / «Moss convierte
-  en texto, en el teléfono, lo que dices de tu comida para anotarlo. No se guarda
-  ni sale del teléfono.»
+  anotarlo. Moss no guarda el audio.» / «Moss convierte en texto lo que dices de
+  tu comida para anotarlo, con el reconocimiento de voz de Apple (en el teléfono
+  cuando el idioma lo permite). Moss no guarda el audio.»
 - **en:** «Moss uses the microphone only while you say what you ate, to log it.
-  The audio is processed on your phone and never saved.» / «Moss turns what you
-  say about your meal into text, on your phone, to log it. It is never saved or
-  sent anywhere.»
+  Moss never saves the audio.» / «Moss turns what you say about your meal into
+  text to log it, using Apple's speech recognition (on your phone when the
+  language allows it). Moss never saves the audio.»
 
 En las respuestas de privacidad no cambia nada: el audio y el texto no se
 recolectan (no salen del teléfono).

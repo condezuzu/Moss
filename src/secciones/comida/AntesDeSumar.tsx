@@ -239,7 +239,7 @@ const estilos = StyleSheet.create({
   enlace: { alignSelf: 'center', marginTop: 14, paddingVertical: 6, paddingHorizontal: 10 },
   enlaceTexto: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.45)' },
   velo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(5, 8, 18, 0.55)' },
-  reporteLugar: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
+  reporteLugar: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, justifyContent: 'flex-end' },
   reporte: {
     gap: 14, paddingTop: 16, paddingHorizontal: 18, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colores.ventana,
     borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)',

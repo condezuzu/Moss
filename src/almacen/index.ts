@@ -97,8 +97,9 @@ export function useAlmacenListo(): boolean {
         if (a.estado().listo) programarAvisos(a.estado()).catch(() => {});
       }, 1500);
     };
-    // Lo anotado, lo hecho, los hábitos, las noches, Salud y los avisos mismos.
-    const queMueve = (e: ReturnType<Almacen['estado']>) => [e.registros, e.recordatorios, e.avisos, e.marcas, e.habitos, e.noches, e.salud, e.listo] as const;
+    // Lo anotado, lo hecho, los hábitos, las noches, Salud, los avisos mismos, el peso (pesarse no
+    // suena si ya te pesaste), el perfil y las metas (el día del control) y el día que empieza.
+    const queMueve = (e: ReturnType<Almacen['estado']>) => [e.registros, e.recordatorios, e.avisos, e.marcas, e.habitos, e.noches, e.salud, e.pesos, e.perfil, e.metas, e.hoy, e.listo] as const;
     let antes = queMueve(a.estado());
     const sinOir = a.suscribir(() => {
       const ahora = queMueve(a.estado());

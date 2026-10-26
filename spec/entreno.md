@@ -448,14 +448,17 @@ const FALTA_PARA_DORMIR = 25;          // g de proteína que faltan (derivado)
   `snackPrevio`.
 - **Sin comida en las 4 h previas** (hueco largo): si la sesión es larga, la
   línea `snackPrevio` va en la próxima comida que se ve antes de T (la merienda o
-  el snack vacíos también sirven).
+  el snack vacíos también sirven). Si ya anotaste un snack en esas 4 h, ese es
+  lo de antes: no hay línea.
 - **A la mañana en ayunas:** T antes de despertar + 2 h y nada anotado desde que
   te despertaste: si es larga, `ayunasLarga` en el desayuno, hasta T; si es
   corta, nada antes [21][19].
 - **La posterior:** la primera comida principal con hora entre fin − 15 min y
   fin + 4 h.
 - **Antes de dormir:** la cena, o el snack de la noche si la cena ya está
-  anotada.
+  anotada. Del snack cuenta la última vez que se anotó: el de la mañana no es el
+  de la noche. La línea va en un snack vacío aunque haya uno anotado más
+  temprano.
 
 ### 5.5 Las reglas
 
@@ -545,7 +548,8 @@ merienda 17:30, cena 21:30; se duerme a las 23:45; anota café (95 mg).
   140 / 4 = 35) → 35 g. «Después de entrenar: unos 35 g de proteína en esta
   comida.»
 - Si después de la cena faltan 30 g: «Te faltan 30 g de proteína: un yogur o
-  leche antes de dormir también cuentan.»
+  leche antes de dormir también cuentan.» Dice lo que falta de verdad, de a 5 y
+  hacia abajo: con 27 g, «25 g»; con 70, «70 g» (lo de 30 a 40 g es el porqué).
 
 **2. Correr en ayunas.** Sin peso cargado; meta de 100 g de proteína en 4
 comidas (la parte es 25 g); 75 min a las 7:00; se despierta 6:30; desayuno

@@ -23,6 +23,7 @@
     "encendida": "{habito} · encendida",
     "apagada": "{habito} · apagada",
     "seEnciendeSola": "Se enciende sola con Salud",
+    "seEnciendeConLaComida": "Se enciende sola con lo que anotas",
     "desdeSalud": "{habito} · encendida desde Salud",
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Tu universo",
