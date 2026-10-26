@@ -252,7 +252,7 @@ function preguntaDe(x: Entendido): string {
   const que = x.dicho.buscado;
   if (x.pregunta === 'crudo') {
     const o = x.opciones[0];
-    return t('comida.decir.crudo', { gramos: numero('gramos' in o.cantidad ? Math.round(o.cantidad.gramos) : 0) });
+    return 'gramos' in o.cantidad ? t('comida.decir.crudo', { gramos: numero(Math.round(o.cantidad.gramos)) }) : t('comida.decir.crudoMedida');
   }
   return t(x.pregunta === 'cual' ? 'comida.decir.cual' : 'comida.decir.cuanto', { que });
 }

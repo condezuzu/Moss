@@ -94,6 +94,7 @@ const Comida = (() => {
     listo: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     vaso: '<path class="cm-nivel" d="M7.7 9.5h8.6l-.95 9.1a1 1 0 0 1-1 .9H9.65a1 1 0 0 1-1-.9z"/><path d="M6.5 4.5h11l-1.4 14.2a1.5 1.5 0 0 1-1.5 1.3H9.4a1.5 1.5 0 0 1-1.5-1.3z"/>',
     microfono: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5v3"/>',
+    pesa: '<path d="M3.5 9.5v5M6.5 7.5v9M17.5 7.5v9M20.5 9.5v5M6.5 12h11"/>',
     globo: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.4 2.5 13.6 0 16M12 4c-2.5 2.4-2.5 13.6 0 16"/>',
     borrar: '<path d="M9 5.5h10a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H9L3.5 12z"/><path d="m11.5 9.5 5 5M16.5 9.5l-5 5"/>',
     mayus: '<path d="M12 4.5 4.5 12H9v7h6v-7h4.5z"/>',
@@ -195,6 +196,9 @@ const Comida = (() => {
       canasta: [],
       // Las recetas guardadas desde un texto pegado: { nombre, porciones, items }.
       recetas: [],
+      // Cuándo entrena (Perfil › Entrenamiento): pesas a las 19, una hora, todos los días; y si se ve la línea.
+      entreno: { dias: [0, 1, 2, 3, 4, 5, 6], hora: 19 * 60, minutos: 60, tipo: 'fuerza' },
+      verEntreno: true,
       // Los toques desde Inicio hasta registrar algo (se cuentan para comparar con la especificación).
       toques: 0,
       escribio: false,
@@ -299,6 +303,8 @@ const Comida = (() => {
 
     let avisoZona = 0;
     let deshacerZona = null;
+    // Tocarlo lo cierra; deshacer es el botón.
+    $z('.cm-aviso').addEventListener('click', (ev) => { if (!ev.target.closest('button')) $z('.cm-aviso').classList.remove('visible'); });
     function avisarZona(texto, deshacer) {
       const a = $z('.cm-aviso');
       a.querySelector('span').textContent = texto;
@@ -307,7 +313,7 @@ const Comida = (() => {
       if (deshacer) a.appendChild(boton('cm-aviso-btn', tx('comun.deshacer'), () => { const f = deshacerZona; deshacerZona = null; a.classList.remove('visible'); if (f) f(); }));
       a.classList.add('visible');
       clearTimeout(avisoZona);
-      avisoZona = setTimeout(() => a.classList.remove('visible'), deshacer ? 4200 : 2800);
+      avisoZona = setTimeout(() => a.classList.remove('visible'), deshacer ? 3200 : 2200);
     }
 
     // ------------------------------------------------------------ fechas y promedios
@@ -486,11 +492,18 @@ const Comida = (() => {
       const d = s.dia;
       const entradas = comidasDe(d).map((c) => ({ comida: c, hora: c.hora }));
       if (d === 0) {
+        // Qué comer antes y después de entrenar: en la comida que toca, aunque todavía no sea su hora.
+        const lineas = lineasDeEntreno();
         Object.entries(HORA_TIPICA).forEach(([tipo, h]) => {
           if (entradas.some((x) => (x.comida ? x.comida.tipo : x.vacia) === tipo)) return;
           const actual = Comidas.comidaDeLaHora(AHORA) === tipo;
-          if (h <= AHORA || actual) entradas.push({ vacia: tipo, hora: actual ? AHORA : h });
+          if (h <= AHORA || actual || lineas.has(tipo)) entradas.push({ vacia: tipo, hora: actual ? AHORA : h });
         });
+        // El snack: el de antes de entrenar, un rato antes de la sesión; el de la noche, después de la cena.
+        const snack = lineas.get('snack');
+        if (snack && !entradas.some((x) => x.comida && x.comida.tipo === 'snack')) {
+          entradas.push({ vacia: 'snack', hora: Math.max(AHORA, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45) });
+        }
         // Una comida registrada ahora ya marca la hora: «ahora» va solo si no la hay.
         if (!entradas.some((x) => x.comida && Math.abs(x.hora - AHORA) < 1)) entradas.push({ ahora: true, hora: AHORA - 0.5 });
       }
@@ -543,6 +556,9 @@ const Comida = (() => {
         delete it.nuevo;
       });
       art.appendChild(lista);
+      // En lo planificado, qué comer alrededor del entrenamiento (como en la app).
+      const linea = c.plan && diaDe(c) === 0 ? lineasDeEntreno().get(c.tipo) : null;
+      if (linea) art.appendChild(lineaDeEntreno(linea));
       const pie = el('footer');
       [['p', t.p], ['c', t.c], ['g', t.g]].forEach(([m, g]) => {
         const chip = el('span', 'cm-mini cm-mini-' + m);
@@ -797,6 +813,8 @@ const Comida = (() => {
     function tarjetaVacia(tipo) {
       const art = el('article', 'cm-tarjeta vacia');
       art.appendChild(el('b', null, tx('comida.comidas.' + tipo)));
+      const linea = s.dia === 0 ? lineasDeEntreno().get(tipo) : null;
+      if (linea) art.appendChild(lineaDeEntreno(linea));
       const acciones = el('div', 'cm-acciones');
       acciones.append(
         boton('cm-accion principal', `${icono('mas')}<span>${tx('comida.agregar')}</span>`, () => abrirHoja({ comida: tipo })),
@@ -948,7 +966,8 @@ const Comida = (() => {
     lupa.innerHTML = icono('lupa');
     const escanear = boton('hj-icono', icono('codigo'), () => avisarHoja('Galería: el escáner de código de barras llega en la etapa 6.'));
     const etiqueta = boton('hj-icono', icono('etiqueta'), () => abrirEtiqueta());
-    $h('.hj-busca').append(lupa, entrada, escanear, etiqueta);
+    const microfono = boton('hj-icono', icono('microfono'), () => abrirDecir({ escuchar: true }));
+    $h('.hj-busca').append(lupa, entrada, microfono, escanear, etiqueta);
     const cerrarB = boton('hj-cerrar', icono('cerrar'), () => cerrarHoja());
     $h('.hj-cerrar-lugar').replaceWith(cerrarB);
     entrada.addEventListener('input', () => { s.escribio = true; pintarCuerpo(); });
@@ -968,6 +987,7 @@ const Comida = (() => {
       entrada.value = '';
       entrada.placeholder = tx('comida.buscar');
       escanear.setAttribute('aria-label', tx('comida.escanear'));
+      microfono.setAttribute('aria-label', tx('comida.decir.titulo'));
       etiqueta.setAttribute('aria-label', tx('comida.etiqueta'));
       hoja.setAttribute('aria-label', tx('comida.registrar'));
       pintarChips();
@@ -1033,8 +1053,8 @@ const Comida = (() => {
     }
 
     // Una fila: el alimento con la porción que se va a usar. El «+», o la fila, abre su ventana.
-    function fila(a, porcion, veces, extra) {
-      const it = { alimento: a.id, porcion, veces };
+    function fila(a, porcion, veces, extra, gramos) {
+      const it = gramos != null ? { alimento: a.id, gramos } : { alimento: a.id, porcion, veces };
       const f = el('div', 'hj-fila');
       f.dataset.toque = '';
       f.tabIndex = 0;
@@ -1043,16 +1063,17 @@ const Comida = (() => {
       const nombre = el('b', null, nombreDe(a));
       if (extra) nombre.appendChild(el('small', null, ` · ${extra}`));
       textos.append(nombre, el('span', null, `${cantidadDe(it)} · ${numero(Math.round(valoresDe(it).kcal))} kcal`));
-      const mas = boton('hj-mas', icono('mas'), () => abrirVentana(a, { porcion, veces, boton: mas }), tx('comida.sumarAlimento', { alimento: nombreDe(a) }));
+      const mas = boton('hj-mas', icono('mas'), () => abrirVentana(a, { porcion, veces, gramos, boton: mas }), tx('comida.sumarAlimento', { alimento: nombreDe(a) }));
       f.append(textos, mas);
-      f.addEventListener('click', () => abrirVentana(a, { porcion, veces, boton: mas }));
-      f.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') abrirVentana(a, { porcion, veces, boton: mas }); });
+      f.addEventListener('click', () => abrirVentana(a, { porcion, veces, gramos, boton: mas }));
+      f.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') abrirVentana(a, { porcion, veces, gramos, boton: mas }); });
       return f;
     }
 
     const conUltima = (a, veces, porcion) => {
       const u = s.ultima.get(a.id);
-      return u ? [u.porcion, u.veces] : [porcion == null ? a.d : porcion, veces || 1];
+      if (u) return u.gramos != null ? [null, 1, u.gramos] : [u.porcion, u.veces, null];
+      return [porcion == null ? a.d : porcion, veces || 1, null];
     };
 
     function pintarCuerpo() {
@@ -1066,8 +1087,24 @@ const Comida = (() => {
           const filas = lista.filter((a) => a && !vistos.has(a.id)).slice(0, 4);
           if (!filas.length) return;
           cuerpo.appendChild(el('h4', 'hj-titulo', titulo));
-          filas.forEach((a) => { vistos.add(a.id); const [p, v] = conUltima(a); cuerpo.appendChild(fila(a, p, v)); });
+          filas.forEach((a) => { vistos.add(a.id); const [p, v, g] = conUltima(a); cuerpo.appendChild(fila(a, p, v, null, g)); });
         };
+        const siempre = deSiempre(s.hoja.comida);
+        if (siempre) {
+          const b = boton('hj-siempre', '', () => {
+            const r = registrarDirecto(siempre, tx('comida.deSiempre.' + s.hoja.comida), s.hoja.comida);
+            const tipo = s.hoja.comida;
+            cerrarHoja();
+            avisarZona(tx('comida.deSiempre.' + tipo), r.deshacer);
+          });
+          b.dataset.toque = '';
+          const textos = el('div', 'hj-fila-txt');
+          textos.append(el('b', null, tx('comida.deSiempre.' + s.hoja.comida)), el('span', null, `${siempre.map(nombreDeItem).join(', ')} · ${numero(Math.round(sumar(siempre).kcal))} kcal`));
+          const mas = el('span', 'hj-siempre-mas');
+          mas.innerHTML = icono('mas');
+          b.append(textos, mas);
+          cuerpo.appendChild(b);
+        }
         seccion(tx('comida.sueles.' + s.hoja.comida), SUELES[s.hoja.comida].map(([n]) => porNombre.get(n)));
         // Lo último que se registró, del más nuevo al más viejo.
         const recientes = [];
@@ -1076,7 +1113,21 @@ const Comida = (() => {
         seccion(tx('comida.favoritos'), [...s.favoritos].map((id) => porId.get(id)));
         return;
       }
+      // Una comida entera escrita de una vez (como pareceUnaComida en la app): se anota toda junta.
+      const comidaEntera = /,/.test(texto) || /\s(?:y|e|and)\s+(?:\d|un|una|dos|tres|cuatro|media|medio|a|an|two|three)(?![\p{L}])/iu.test(texto);
+      if (comidaEntera) {
+        const b = boton('hj-siempre', '', () => abrirDecir({ texto }));
+        b.dataset.toque = '';
+        const textos = el('div', 'hj-fila-txt');
+        textos.append(el('b', null, tx('comida.decir.todoJunto')), el('span', null, texto));
+        const chispa = el('span', 'hj-siempre-mas');
+        chispa.innerHTML = icono('chispa');
+        b.append(textos, chispa);
+        cuerpo.appendChild(b);
+      }
       const resultados = buscar(texto);
+      // Sin resultados para una comida entera no hay nada que crear: está «anotar todo junto».
+      if (!resultados.length && comidaEntera) return;
       if (!resultados.length) {
         const vacio = el('div', 'hj-vacio');
         vacio.appendChild(el('p', null, tx('comida.sinResultados', { texto })));
@@ -1090,11 +1141,11 @@ const Comida = (() => {
         return;
       }
       resultados.forEach(({ a, coincide }) => {
-        const [p, v] = conUltima(a);
+        const [p, v, g] = conUltima(a);
         // Si lo que coincidió es otro nombre («aguacate» para la palta), se muestra al lado.
         const n = Buscar.normalizar;
         const extra = n(coincide) !== n(nombreDe(a)) && !n(nombreDe(a)).includes(n(texto)) && coincide.length < 28 ? coincide.toLowerCase() : null;
-        cuerpo.appendChild(fila(a, p, v, extra));
+        cuerpo.appendChild(fila(a, p, v, extra, g));
       });
     }
 
@@ -1573,6 +1624,281 @@ const Comida = (() => {
       });
     }
 
+    // ------------------------------------------------------------ tu comida de siempre
+    // La misma combinación de alimentos en esa comida al menos dos veces en las dos últimas semanas
+    // (deSiempre en src/dominio/registros.ts), con las cantidades de la última vez.
+    function deSiempre(tipo) {
+      const veces = new Map();
+      for (let d = -1; d >= -14; d--) {
+        const c = comidasDe(d).find((x) => x.tipo === tipo && !x.plan);
+        if (!c) continue;
+        const ids = [...new Set(c.items.filter((it) => !it.rapida).map((it) => it.alimento))].sort((a, b) => a - b);
+        if (ids.length < 2) continue;
+        const firma = ids.join('|');
+        const v = veces.get(firma) || { n: 0, d, c };
+        v.n += 1;
+        veces.set(firma, v);
+      }
+      const mejor = [...veces.values()].filter((v) => v.n >= 2).sort((a, b) => b.n - a.n || b.d - a.d)[0];
+      return mejor ? mejor.c.items.filter((it) => !it.rapida).map((it) => ({ alimento: it.alimento, porcion: it.porcion, veces: it.veces, gramos: it.gramos })) : null;
+    }
+
+    // ------------------------------------------------------------ decir lo que comí
+    // Decir o escribir la comida de una vez (Frase, el mismo lector que la app): en el iPhone escucha
+    // el reconocimiento de voz del teléfono; acá la frase de ejemplo se escribe sola, como si se
+    // dictara. Cada cosa se busca con el buscador de siempre (como entender.ts) y se revisa: su
+    // cantidad se cambia ahí, y se pregunta solo si cambia el número (40 kcal o un 15 %).
+    const llano = (t) => Buscar.normalizar(t).split(' ').map((p) => (p.length > 3 ? p.replace(/(?:es|s)$/, '') : p)).join(' ');
+    const COCCION = /(?:plancha|horno|hervid|frit|asad|cocid|crud|revuelt|guisad|saltead|grill|baked|boiled|fried|roast|cooked|raw|scrambled)/;
+    const cambiaElNumero = (a, b) => { const d = Math.abs(a - b); return d >= 40 || (d >= 15 && d >= 0.15 * Math.max(a, b)); };
+    const kcalDe = (it) => valoresDe(it).kcal;
+    function itemDicho(a, dicho) {
+      const porciones = a.p.map((p, i) => ({ nombre: porcionDe(a, i), gramos: p[2], i }));
+      // Una medida de la casa queda como se dijo («1 vaso», no «206 g»), con la porción de ese nombre.
+      if (dicho.cantidad != null && dicho.medida) {
+        const medida = Buscar.normalizar('1 ' + dicho.medida);
+        const propia = porciones.find((p) => { const n = Buscar.normalizar(p.nombre); return n === medida || n.startsWith(medida + ' '); });
+        if (propia) return { item: { alimento: a.id, porcion: propia.i, veces: dicho.cantidad }, supuesto: false };
+      }
+      if (dicho.cantidad != null && (dicho.unidad || dicho.tamano)) {
+        const g = RecetaDeTexto.gramosDeLinea(dicho, { porciones, densidad: null });
+        if (g) return { item: { alimento: a.id, gramos: Math.round(g) }, supuesto: false };
+      }
+      if (dicho.cantidad != null) {
+        if (dicho.cantidad >= 20) return { item: { alimento: a.id, gramos: dicho.cantidad }, supuesto: false };
+        const palabra = llano(dicho.buscado).split(' ')[0];
+        const una = porciones.find((p) => /^1\s/.test(p.nombre) && llano(p.nombre).split(' ')[1] === palabra)
+          || porciones.find((p) => /^1\s+(?:unidad|mediana?o?|grande|pieza|rebanada|porci[oó]n t[ií]pica|medium|large|piece|slice)/i.test(p.nombre));
+        return { item: { alimento: a.id, porcion: una ? una.i : a.d, veces: dicho.cantidad }, supuesto: false };
+      }
+      const ultima = s.ultima.get(a.id);
+      if (ultima) return { item: Object.assign({ alimento: a.id }, ultima), supuesto: false };
+      const chica = dicho.acompanante ? porciones.slice().sort((x, y) => x.gramos - y.gramos)[0] : null;
+      return { item: { alimento: a.id, porcion: chica ? chica.i : a.d, veces: 1 }, supuesto: true };
+    }
+    function entenderDicho(dicho) {
+      const buscado = llano(dicho.buscado);
+      const exacto = (r) => llano(nombreDe(r.a)) === buscado || llano(r.coincide) === buscado;
+      const res = buscar(dicho.buscado).sort((x, y) => Number(exacto(y)) - Number(exacto(x)));
+      if (!res.length) return { dicho, opciones: [], elegida: 0, pregunta: null, supuesto: false };
+      const top = res[0].a;
+      const { item, supuesto } = itemDicho(top, dicho);
+      const sola = { dicho, opciones: [item], elegida: 0, pregunta: null, supuesto };
+      if (!exacto(res[0]) && !s.usos.has(top.id)) {
+        const cabeza = buscado.split(' ')[0];
+        const parecidos = res.slice(1).filter((r) => { const p = llano(nombreDe(r.a)).split(' '); return p[0] === cabeza && p.length <= 3 && !p.includes('con'); }).slice(0, 2);
+        const opciones = [item, ...parecidos.map((r) => itemDicho(r.a, dicho).item)];
+        if (opciones.some((o) => cambiaElNumero(kcalDe(o), kcalDe(item)))) return Object.assign({}, sola, { opciones, pregunta: 'cual' });
+      }
+      if ((item.gramos != null || dicho.medida) && dicho.unidad && !COCCION.test(buscado)) {
+        const nombre = top.es;
+        const otro = porNombre.get(nombre.replace(/cocid([oa])/, 'crud$1')) || porNombre.get(nombre.replace(/crud([oa])/, 'cocid$1'));
+        if (otro && otro !== top) {
+          // Los gramos son los mismos; la taza de arroz crudo pesa otra cosa que la de cocido.
+          const alterna = item.gramos != null ? { alimento: otro.id, gramos: item.gramos } : itemDicho(otro, dicho).item;
+          if (cambiaElNumero(kcalDe(alterna), kcalDe(item))) return Object.assign({}, sola, { opciones: [item, alterna], pregunta: 'crudo' });
+        }
+      }
+      if (supuesto && item.porcion != null) {
+        const opciones = [0.5, 1, 1.5].map((veces) => Object.assign({}, item, { veces }));
+        if (opciones.some((o) => cambiaElNumero(kcalDe(o), kcalDe(item)))) return Object.assign({}, sola, { opciones, elegida: 1, pregunta: 'cuanto' });
+      }
+      return sola;
+    }
+
+    function abrirDecir({ escuchar, texto } = {}) {
+      if (!s.hoja) return;
+      abrirSub('hj-decir', (sub) => {
+        cabezaDeSub(sub, tx('comida.decir.titulo'));
+        const cuerpo = el('div', 'hj-cuerpo dc-cuerpo');
+        const lugar = el('div', 'dc-mic-lugar');
+        const mic = boton('dc-mic', icono('microfono'), () => (escuchando ? parar() : empezar()), tx('comida.decir.hablar'));
+        mic.dataset.toque = '';
+        lugar.append(el('span', 'dc-aro'), mic);
+        const ayuda = el('p', 'dc-ayuda', tx('comida.decir.ayuda'));
+        const area = el('textarea', 'hj-pegar-area dc-area');
+        area.rows = 3;
+        area.placeholder = tx('comida.decir.ejemplo');
+        area.setAttribute('aria-label', tx('comida.decir.titulo'));
+        if (texto) area.value = texto;
+        const resultado = el('div', 'dc-resultado');
+        cuerpo.append(lugar, ayuda, area, resultado);
+        sub.appendChild(cuerpo);
+        const pie = el('footer', 'fi-pie');
+        const entenderB = boton('fi-secundario', tx('comida.decir.entender'), () => entenderYa());
+        const agregarB = boton('fi-agregar', '', () => agregar());
+        agregarB.dataset.toque = '';
+        agregarB.hidden = true;
+        pie.append(entenderB, agregarB);
+        sub.appendChild(pie);
+        let escuchando = false;
+        let reloj = 0;
+        let lista = null;
+        let comidaDicha = s.hoja.comida;
+        let entendido = null;
+        area.addEventListener('input', () => pintarPie());
+        function empezar() {
+          escuchando = true;
+          sub.classList.add('escuchando');
+          mic.setAttribute('aria-label', tx('comida.decir.parar'));
+          ayuda.textContent = tx('comida.decir.teEscucho');
+          const frase = tx('comida.decir.ejemplo').toLowerCase();
+          area.value = '';
+          let i = 0;
+          clearInterval(reloj);
+          reloj = setInterval(() => {
+            if (!sub.classList.contains('hj-decir')) { clearInterval(reloj); return; }
+            i = Math.min(frase.length, i + 3);
+            area.value = frase.slice(0, i);
+            if (i >= frase.length) { parar(); entenderYa(); }
+          }, 55);
+        }
+        function parar() {
+          clearInterval(reloj);
+          escuchando = false;
+          sub.classList.remove('escuchando');
+          mic.setAttribute('aria-label', tx('comida.decir.hablar'));
+          ayuda.textContent = tx('comida.decir.ayuda');
+        }
+        function entenderYa() {
+          const frase = area.value.trim();
+          if (!frase) return;
+          const conNombre = new Set(Frase.conCon(frase, idioma).filter((b) => { const r = buscar(b)[0]; return r && Buscar.normalizar(r.coincide) === Buscar.normalizar(b); }));
+          const leida = Frase.leerFrase(frase, idioma, (b) => conNombre.has(b));
+          if (leida.comida) comidaDicha = leida.comida;
+          lista = leida.dichos.map(entenderDicho);
+          entendido = frase;
+          escena.haptico('suave');
+          pintar();
+        }
+        function pintarPie() {
+          const listos = lista && entendido === area.value.trim() ? lista.filter((x) => x.opciones.length) : [];
+          agregarB.hidden = !listos.length;
+          entenderB.hidden = !!listos.length;
+          if (listos.length) agregarB.textContent = `${tx('comida.agregarA.' + comidaDicha)} · ${numero(Math.round(sumar(listos.map((x) => x.opciones[x.elegida])).kcal))} kcal`;
+        }
+        function pintar() {
+          resultado.innerHTML = '';
+          if (!lista.length) resultado.appendChild(el('p', 'hj-pegar-texto', tx('comida.decir.nada')));
+          lista.forEach((x, i) => {
+            const bloque = el('div', 'dc-bloque');
+            const fila = el('div', 'dc-fila');
+            const textos = el('div', 'hj-fila-txt');
+            const it = x.opciones[x.elegida];
+            if (!it) {
+              textos.append(el('b', 'dc-sin', tx('comida.decir.noEncontre', { que: x.dicho.buscado })), boton('dc-buscar', tx('comida.decir.buscar'), () => { cerrarSub(); entrada.value = x.dicho.buscado; pintarCuerpo(); }));
+              fila.append(textos, boton('rv-quitar', icono('cerrar'), () => { lista.splice(i, 1); pintar(); }, tx('comida.quitar')));
+              bloque.appendChild(fila);
+              resultado.appendChild(bloque);
+              return;
+            }
+            const detalle = el('span', null, `${cantidadDe(it)} · ${numero(Math.round(kcalDe(it)))} kcal`);
+            if (x.supuesto) detalle.appendChild(el('em', 'dc-supuesto', ` · ${tx('comida.decir.supuesto')}`));
+            textos.append(el('b', null, nombreDeItem(it)), detalle);
+            const mover = (signo) => {
+              const o = x.opciones[x.elegida];
+              if (o.gramos != null) o.gramos = Math.max(1, o.gramos + 10 * signo);
+              else o.veces = signo > 0 ? (o.veces < 1 ? Math.min(1, o.veces + 0.5) : Math.floor(o.veces) + 1) : (o.veces > 1 ? Math.ceil(o.veces) - 1 : o.veces > 0.5 ? 0.5 : 0.25);
+              x.supuesto = false;
+              pintar();
+            };
+            const pasos = el('div', 'dc-pasos');
+            pasos.append(boton('fi-paso', icono('menos'), () => mover(-1), '−'), boton('fi-paso', icono('mas'), () => mover(1), '+'));
+            fila.append(textos, pasos, boton('rv-quitar', icono('cerrar'), () => { lista.splice(i, 1); pintar(); }, tx('comida.quitar')));
+            bloque.appendChild(fila);
+            if (x.pregunta) {
+              const g = x.opciones[0].gramos;
+              const crudo = g != null ? tx('comida.decir.crudo', { gramos: numero(g) }) : tx('comida.decir.crudoMedida');
+              bloque.appendChild(el('p', 'dc-pregunta', x.pregunta === 'crudo' ? crudo : tx(x.pregunta === 'cual' ? 'comida.decir.cual' : 'comida.decir.cuanto', { que: x.dicho.buscado })));
+              const chips = el('div', 'fi-porciones dc-opciones');
+              x.opciones.forEach((o, k) => {
+                const b = boton('fi-porcion', `<span>${x.pregunta === 'cuanto' ? cantidadDe(o) : nombreDeItem(o)}</span><small>${numero(Math.round(kcalDe(o)))} kcal</small>`, () => { x.elegida = k; escena.haptico('suave'); pintar(); });
+                b.setAttribute('aria-pressed', String(k === x.elegida));
+                chips.appendChild(b);
+              });
+              bloque.appendChild(chips);
+            }
+            resultado.appendChild(bloque);
+          });
+          pintarPie();
+        }
+        function agregar() {
+          const items = lista.filter((x) => x.opciones.length).map((x) => Object.assign({}, x.opciones[x.elegida]));
+          if (!items.length) return;
+          const r = registrarDirecto(items, area.value.trim(), comidaDicha);
+          cerrarHoja();
+          avisarZona(plural('comida.decir.anotado', items.length, { comida: tx('comida.aLa.' + comidaDicha) }), r.deshacer);
+        }
+        if (escuchar) setTimeout(empezar, 380);
+        else if (texto) entenderYa();
+      });
+    }
+
+    // ------------------------------------------------------------ antes y después de entrenar
+    // Una línea en la comida que toca (AlrededorDelEntreno, la misma regla que la app), nunca un
+    // aviso. Tocarla dice por qué, con las fuentes, y ahí se apaga.
+    function lineasDeEntreno() {
+      if (!s.verEntreno) return new Map();
+      const sesiones = AlrededorDelEntreno.sesionesDelDia(s.entreno, fechaClave(0));
+      if (!sesiones.length) return new Map();
+      const anotado = {};
+      comidasDe(0).filter((c) => !c.plan).forEach((c) => {
+        const v = sumar(c.items);
+        const antes = anotado[c.tipo];
+        anotado[c.tipo] = { hora: antes ? Math.min(antes.hora, c.hora) : c.hora, proteina: (antes ? antes.proteina : 0) + v.p, kcal: (antes ? antes.kcal : 0) + v.kcal };
+      });
+      // Lo comido, sin lo planificado (como totalDelDia(…, false) en la app).
+      const t = sumar(comidasDe(0).filter((c) => !c.plan).flatMap((c) => c.items));
+      const lineas = AlrededorDelEntreno.lineasDelDia({
+        ahora: AHORA, sesiones, horaDeComida: HORA_TIPICA, anotado,
+        meta: { kcal: META.kcal, proteina: META.p, carbohidratos: META.c, grasas: META.g },
+        comido: { kcal: t.kcal, proteina: t.p, carbohidratos: t.c, grasas: t.g },
+        comidasHabituales: 4, pesoKg: Datos.PESADAS[Datos.PESADAS.length - 1].kg, edad: HOY[0] - Datos.PERFIL.nacimiento,
+        despertar: 7 * 60 + 30, dormir: 23 * 60 + 30, cafeinaPorToma: null, sinDeficit: false,
+      });
+      return new Map(lineas.map((l) => [l.comida, l]));
+    }
+    function textoDeLinea(l) {
+      const h = hora(l.hora);
+      const conNumeros = !tel.classList.contains('sin-numeros');
+      const c = conNumeros ? l.carbohidratos : null;
+      const p = conNumeros ? l.proteina : null;
+      const cuanto = c && p ? tx('entreno.cantidades', { c, p }) : p ? tx('entreno.soloProteina', { p }) : c ? tx('entreno.soloCarbohidratos', { c }) : '';
+      const partes = [];
+      if (l.clase === 'previa') partes.push(tx('entreno.previa', { hora: h }), cuanto || tx('entreno.previaSinNumeros'));
+      else if (l.clase === 'previaLiviana') partes.push(tx('entreno.previaLiviana', { hora: h }), cuanto);
+      else if (l.clase === 'snackPrevio') partes.push(c ? tx('entreno.snackPrevio', { c }) : tx('entreno.snackPrevioSinNumeros'));
+      else if (l.clase === 'ayunasLarga') partes.push(c ? tx('entreno.ayunasLarga', { c }) : tx('entreno.ayunasLargaSinNumeros'));
+      else if (l.clase === 'despues') partes.push(p ? tx('entreno.despues', { p }) : tx('entreno.despuesSinNumeros'));
+      else if (l.clase === 'despuesPronto') partes.push(p ? tx('entreno.despuesPronto', { p }) : tx('entreno.despuesProntoSinNumeros'));
+      else if (l.clase === 'reponer') partes.push(tx('entreno.reponer', { hora: h }), cuanto);
+      else partes.push(p ? tx('entreno.antesDeDormir', { p }) : tx('entreno.antesDeDormirSinNumeros'));
+      if (l.durantePorHora) partes.push(conNumeros ? tx('entreno.durante', { a: l.durantePorHora[0], b: l.durantePorHora[1] }) : tx('entreno.duranteSinNumeros'));
+      if (l.cafeinaHasta != null) partes.push(tx('entreno.cafeina', { hora: hora(l.cafeinaHasta) }));
+      return partes.filter(Boolean).join(' ');
+    }
+    const hojaPorQue = Util.hoja(tel, 'pq-hoja', () => opciones.alCambiar());
+    function abrirPorQue(l) {
+      const h = hojaPorQue.el;
+      h.innerHTML = '';
+      const cab = el('header', 'hb-cab');
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('entreno.porQue.titulo')), boton('hb-cerrar', icono('cerrar'), () => hojaPorQue.cerrar(), tx('comida.cerrar')));
+      const cuerpo = el('div', 'pq-cuerpo');
+      const clave = l.clase === 'reponer' ? 'reponer' : l.clase === 'antesDeDormir' ? 'antesDeDormir' : l.clase === 'despues' || l.clase === 'despuesPronto' ? 'despues' : 'antes';
+      cuerpo.append(el('p', 'pq-texto', tx('entreno.porQue.' + clave)));
+      if (l.cafeinaHasta != null) cuerpo.appendChild(el('p', 'pq-texto', tx('entreno.porQue.cafeina')));
+      cuerpo.append(el('p', 'pf-nota', tx('entreno.porQue.fuentes')), el('p', 'pf-nota', tx('entreno.porQue.medico')), el('p', 'pf-nota', tx('entreno.porQue.volver')));
+      const pie = el('footer', 'fi-pie');
+      pie.appendChild(boton('fi-secundario', tx('entreno.porQue.noMostrar'), () => { s.verEntreno = false; hojaPorQue.cerrar(); pintarZona(400); avisarCambio(); }));
+      h.append(cab, cuerpo, pie);
+      hojaPorQue.abrir();
+    }
+    function lineaDeEntreno(l) {
+      const b = boton('cm-entreno', `${icono('pesa')}<span>${textoDeLinea(l)}</span>`, () => abrirPorQue(l));
+      b.setAttribute('aria-label', textoDeLinea(l));
+      return b;
+    }
+
     // ------------------------------------------------------------ la ventana del alimento
     // Sube desde abajo, sobre la lista: la porción, la cantidad o los gramos, y cuánto deja para el
     // resto del día. Sirve para sumar, para cambiar algo de la comida que se arma (`enCanasta`) y
@@ -1951,8 +2277,7 @@ const Comida = (() => {
 
     // Registrar de un toque, sin la revisión: lo que sale de la hoja del «+» (los recientes, las
     // guardadas, la carga rápida). Queda en la comida de esta hora y se puede deshacer.
-    function registrarDirecto(items, texto) {
-      const tipo = comidaDeAhora();
+    function registrarDirecto(items, texto, tipo = comidaDeAhora()) {
       const c = comidaDeHoy(tipo);
       const nuevos = items.map((it) => Object.assign({}, it, { nuevo: true }));
       c.items.push(...nuevos);
@@ -1984,8 +2309,8 @@ const Comida = (() => {
         if (it.rapida || vistos.has(it.alimento)) return;
         vistos.add(it.alimento);
         const a = porId.get(it.alimento);
-        const [porcion, veces] = conUltima(a);
-        const item = { alimento: a.id, porcion, veces };
+        const [porcion, veces, gramos] = conUltima(a);
+        const item = gramos != null ? { alimento: a.id, gramos } : { alimento: a.id, porcion, veces };
         lista.push({ id: a.id, nombre: nombreDe(a), cantidad: cantidadDe(item), kcal: valoresDe(item).kcal, item });
       })));
       return lista.slice(0, n);
@@ -2065,7 +2390,7 @@ const Comida = (() => {
       },
       // Para las capturas: los mismos caminos que los toques.
       escribir(texto) { if (!s.hoja) return; entrada.value = texto; s.escribio = true; pintarCuerpo(); },
-      ficha(nombre) { const a = porNombre.get(nombre); if (!a || !s.hoja) return false; const [p, v] = conUltima(a); abrirVentana(a, { porcion: p, veces: v }); return true; },
+      ficha(nombre) { const a = porNombre.get(nombre); if (!a || !s.hoja) return false; const [p, v, g] = conUltima(a); abrirVentana(a, { porcion: p, veces: v, gramos: g }); return true; },
       agregarPrimero() { const b = $h('.hj-cuerpo .hj-mas'); if (b) b.click(); },
       sumar() { const b = ventana.querySelector('.vt-pie .fi-agregar'); if (b) b.click(); },
       listo() { const b = $h('.hj-listo'); if (b) b.click(); },
@@ -2073,6 +2398,11 @@ const Comida = (() => {
       cargaRapida() { if (s.hoja) abrirRapida(); },
       guardadas() { if (s.hoja) abrirGuardadas(); },
       pegarReceta() { if (s.hoja) abrirPegarReceta(); },
+      decir(op) { if (s.hoja) abrirDecir(op || {}); },
+      get entreno() { return Object.assign({}, s.entreno, { ver: s.verEntreno }); },
+      ponerEntreno(e, ver) { s.entreno = e; if (ver !== undefined) s.verEntreno = ver; if (s.dia === 0) pintarZona(400); },
+      // Para las capturas: la de hoy o, si ya no queda ninguna, la de después de entrenar.
+      porQue() { abrirPorQue([...lineasDeEntreno().values()][0] || { comida: 'cena', clase: 'despues', hora: 20 * 60, proteina: 30 }); },
       etiqueta(conError) { if (s.hoja) abrirEtiqueta(conError); },
       copiarDeAyer: (tipo) => (s.hoja ? sumarDeAyer(tipo || s.hoja.comida) : copiarDeAyer(tipo || 'cena')),
       bajarA(destino) {

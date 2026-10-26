@@ -64,7 +64,14 @@ const Mas = (() => {
     function pintarMenu() {
       const tipo = comida.comidaDeAhora();
       const persona = opciones.persona();
+      // Decir la comida entera de una vez: lo más rápido para lo que no es de siempre.
+      const decir = boton('mas-principal mas-decir', `${icono('microfono')}<b>${tx('mas.decir')}</b><span>${tx('mas.decirDetalle')}</span>`, () => {
+        cerrar(true);
+        comida.abrirHoja({});
+        comida.decir({ escuchar: true });
+      });
       const principales = el('div', 'mas-principales');
+      principales.appendChild(decir);
       const agregar = boton('mas-principal', `${icono('comida')}<b>${tx('mas.agregarComida')}</b><span>${tx('comida.comidas.' + tipo)}</span>`, () => {
         cerrar(true);
         comida.abrirHoja({});

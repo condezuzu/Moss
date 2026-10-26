@@ -8,7 +8,7 @@
 
 import type { Comida } from '../dominio/comidas';
 import type { Idioma } from './porciones';
-import { leerReceta, type Tamano, type Unidad } from './recetaDeTexto';
+import { leerReceta, nombreDeMedida, type Tamano, type Unidad } from './recetaDeTexto';
 
 export type Dicho = {
   /** Lo que se dijo de este alimento, para mostrarlo. */
@@ -18,6 +18,8 @@ export type Dicho = {
   cantidad: number | null;
   unidad: Unidad | null;
   tamano?: Tamano;
+  /** La medida de la casa como se dijo, en singular («vaso»): la cantidad queda en esa medida. */
+  medida?: string;
   /** Vino después de «con» y sin cantidad: va como acompañante, en una porción chica (la manteca de la tostada). */
   acompanante?: true;
 };
@@ -108,7 +110,8 @@ function leerUno(original: string, idioma: Idioma): Dicho {
   const [l] = lineas;
   if (l && l.buscado) {
     const buscado = lineas.map((x) => x.buscado).filter(Boolean).join(idioma === 'en' ? ' and ' : ' y ');
-    return { texto: original, buscado, cantidad: l.cantidad, unidad: l.unidad, ...(l.tamano ? { tamano: l.tamano } : {}) };
+    const medida = l.unidad ? nombreDeMedida(l.unidad, idioma) : null;
+    return { texto: original, buscado, cantidad: l.cantidad, unidad: l.unidad, ...(l.tamano ? { tamano: l.tamano } : {}), ...(medida ? { medida } : {}) };
   }
   const primera = /^(\S+)\s/.exec(texto)?.[1] ?? '';
   const n = VALOR_DE_PALABRA[primera] ?? Number(primera.replace(',', '.'));

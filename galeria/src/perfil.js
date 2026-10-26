@@ -155,6 +155,63 @@ const SeccionPerfil = (() => {
       h.append(cab, cuerpo);
       cuerpo.scrollTop = arriba;
     }
+    // Cuándo entrenás (lo pediste el 26/10): con esto, Comida dice qué comer antes y después, en la
+    // comida que toca. Como en la app (Perfil.tsx, CuandoEntrenas).
+    function pintarEntreno() {
+      const h = hoja.el;
+      h.innerHTML = '';
+      const e = opciones.comida.entreno;
+      const cab = el('header', 'hb-cab');
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('entreno.perfil.titulo')), boton('hb-cerrar', icono('cerrar'), () => hoja.cerrar(), tx('comida.cerrar')));
+      const cuerpo = el('div', 'pf-avisos');
+      const poner = (cambios, ver) => { const nuevo = Object.assign({}, e, cambios); delete nuevo.ver; opciones.comida.ponerEntreno(nuevo, ver); pintarEntreno(); pintar(); };
+      const chips = (valores, nombre, elegido, alElegir) => {
+        const fila = el('div', 'fi-porciones pf-aviso-chips');
+        valores.forEach((v) => {
+          const b = boton('fi-porcion', `<span>${nombre(v)}</span>`, () => alElegir(v));
+          b.setAttribute('aria-pressed', String(elegido(v)));
+          fila.appendChild(b);
+        });
+        return fila;
+      };
+      cuerpo.appendChild(el('p', 'pf-nota', tx('entreno.perfil.texto')));
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('entreno.perfil.dias')));
+      cuerpo.appendChild(chips(DIAS, (d) => tx('fecha.diasCortos.' + d), (d) => e.dias.includes(d), (d) => poner({ dias: e.dias.includes(d) ? e.dias.filter((x) => x !== d) : [...e.dias, d] })));
+      if (!e.dias.length) { h.append(cab, cuerpo); return; }
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('entreno.perfil.hora')));
+      const reloj = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+      const pasos = el('div', 'fi-stepper');
+      pasos.append(boton('fi-paso', icono('menos'), () => poner({ hora: Math.max(5 * 60, e.hora - 15) }), '−15'), el('b', 'fi-valor', reloj(e.hora)), boton('fi-paso', icono('mas'), () => poner({ hora: Math.min(23 * 60, e.hora + 15) }), '+15'));
+      cuerpo.appendChild(pasos);
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('entreno.perfil.duracion')));
+      cuerpo.appendChild(chips([30, 45, 60, 90, 120], (n) => tx('entreno.perfil.minutos', { n }), (n) => e.minutos === n, (n) => poner({ minutos: n })));
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('entreno.perfil.tipo')));
+      cuerpo.appendChild(chips(['fuerza', 'resistencia', 'mixta'], (x) => tx('entreno.perfil.tipos.' + x), (x) => e.tipo === x, (x) => poner({ tipo: x })));
+      const caja = el('section', 'pf-aviso');
+      const fila = el('div', 'pf-aviso-fila');
+      const llave = boton('in-llave', '<i></i>', () => poner({}, !e.ver), tx('entreno.perfil.ver'));
+      llave.setAttribute('aria-pressed', String(e.ver));
+      fila.append(el('b', null, tx('entreno.perfil.ver')), llave);
+      caja.append(fila, el('p', 'pf-nota', tx('entreno.porQue.medico')));
+      cuerpo.appendChild(caja);
+      h.append(cab, cuerpo);
+    }
+    const DIAS = [1, 2, 3, 4, 5, 6, 0];
+    function resumenDeEntreno(e) {
+      if (!e.dias.length) return tx('entreno.perfil.sinCargar');
+      const h = `${String(Math.floor(e.hora / 60)).padStart(2, '0')}:${String(e.hora % 60).padStart(2, '0')}`;
+      const dias = DIAS.filter((d) => e.dias.includes(d));
+      const cuales = dias.length === 7 ? tx('entreno.perfil.todos')
+        : dias.length === 5 && dias.every((d) => d >= 1 && d <= 5) ? tx('entreno.perfil.entreSemana')
+          : dias.length <= 3 ? dias.map((d) => tx('fecha.diasCortos.' + d)).join(' ')
+            : tx('entreno.perfil.nDias', { n: dias.length });
+      return `${cuales} · ${h}`;
+    }
+    function abrirEntreno() {
+      pintarEntreno();
+      hoja.abrir();
+    }
+
     function abrirAvisos() {
       pintarAvisos();
       hoja.abrir();
@@ -192,6 +249,8 @@ const SeccionPerfil = (() => {
         ['perfil.edad', tx('perfil.anios', { n: edad }), true],
         ['perfil.altura', `${numero(p.alturaCm)} cm`, true],
         ['perfil.actividad', tx('perfil.actividades.' + p.actividad), true],
+        // Para qué comer antes y después de entrenar (Comida); con «sin déficit» no se ve.
+        ...(s.sinDeficit || !opciones.comida ? [] : [['entreno.perfil.titulo', resumenDeEntreno(opciones.comida.entreno), true, null, abrirEntreno]]),
         // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál).
         ['perfil.cuidado', tx(s.sinDeficit ? 'perfil.sinDeficit' : 'perfil.ninguno'), true, s.sinDeficit ? 'ok' : null, () => { s.sinDeficit = !s.sinDeficit; pintar(); }, s.sinDeficit ? 'perfil.sinDeficitTexto' : null],
       ]);
@@ -250,6 +309,7 @@ const SeccionPerfil = (() => {
       pintar,
       abrirAparatos,
       abrirAvisos,
+      abrirEntreno,
       // Para las capturas: los avisos encendidos.
       ponerAvisos(cambios) { Object.assign(s.avisos, cambios); if (hoja.abierta) pintarAvisos(); pintar(); },
       // Para las capturas: los números ocultos y sin déficit.

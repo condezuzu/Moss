@@ -467,6 +467,8 @@
     alCambiarCara: () => { if (ascent) ascent.pintar(); },
   }));
   perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    // Comida, para Entrenamiento: cuándo entrenas cambia lo que dice cada comida.
+    comida,
     persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length,
     // Los números ocultos (Perfil): sin calorías ni gramos en Inicio, Comida y la ventana del alimento.
     alNumeros: (si) => tel.classList.toggle('sin-numeros', !si),
@@ -920,6 +922,7 @@
     horaSinProponer: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('sinProponer'); sueno.verNoche(0); },
     aparatos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirAparatos(); },
     avisos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.ponerAvisos({ dormir: true, comidas: ['almuerzo', 'cena'] }); perfilSec.abrirAvisos(); },
+    entreno: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirEntreno(); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -1211,6 +1214,7 @@
       dia: () => comida.verDia(arg), bajar: () => comida.bajarA(arg), teclado: () => comida.teclado(arg), dictar: () => comida.dictar(),
       armar: () => comida.armarDia(), armarSemana: () => comida.armarSemana(), compras: () => comida.compras(), tusComidas: () => comida.tusComidas(),
       cerrarPlan: () => comida.cerrarPlan(), otra: () => comida.otraDel(arg), comiEsto: () => comida.comiEsto(arg), pegarReceta: () => comida.pegarReceta(),
+      decir: () => comida.decir(arg), porQue: () => comida.porQue(), entreno: () => comida.ponerEntreno(arg.entreno || comida.entreno, arg.ver),
     };
     const r = pasos[accion]();
     refrescarControles();

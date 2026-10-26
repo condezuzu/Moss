@@ -535,6 +535,7 @@
       "cual": "Which {que}?",
       "cuanto": "How much {que}?",
       "crudo": "Are the {gramos} g raw or cooked?",
+      "crudoMedida": "Did you measure it raw or cooked?",
       "anotado": {
         "uno": "{n} food logged {comida}",
         "otros": "{n} foods logged {comida}"
@@ -1646,6 +1647,9 @@
     "perfil": {
       "titulo": "Training",
       "sinCargar": "Not set",
+      "todos": "Every day",
+      "entreSemana": "Mon to Fri",
+      "nDias": "{n} days",
       "texto": "With your days and time, Food tells you what to eat before and after training, in the right meal. It never notifies you: you see it when you log.",
       "dias": "Which days",
       "hora": "What time",

@@ -452,6 +452,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .mas-principal b { font: 500 15px/1.15 var(--texto); }
 .mas-principal span { font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; }
 .mas-principal:active, .mas-chip:active, .mas-rapido:active { transform: scale(0.97); }
+.mas-decir { grid-column: 1 / -1; }
 .mas-etq { margin: 18px 20px 8px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
 .mas-rapidos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; }
 .mas-rapido { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 0 8px 0 13px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(239, 230, 207, 0.04); color: var(--tinta); font: 400 13.5px/1.15 var(--texto); text-align: left; }
@@ -714,7 +715,10 @@ section.item p { margin: 0; max-width: 64ch; }
 /* Los números ocultos (Perfil): sin calorías ni gramos, quedan las figuras y las barras. */
 .tel.sin-numeros .in-cal-cifra, .tel.sin-numeros .in-macro b, .tel.sin-numeros .in-macro small, .tel.sin-numeros .cm-macro b, .tel.sin-numeros .cm-carta-cifra,
 .tel.sin-numeros .kc-por, .tel.sin-numeros .vt-cifras .fi-kcal, .tel.sin-numeros .vt-macro, .tel.sin-numeros .fi-queda, .tel.sin-numeros .vt-barra b,
-.tel.sin-numeros .vt-secundarios, .tel.sin-numeros .vt-micro b, .tel.sin-numeros .in-fila + .in-fila .in-dato-cifra { display: none; }
+.tel.sin-numeros .vt-secundarios, .tel.sin-numeros .vt-micro b, .tel.sin-numeros .in-fila + .in-fila .in-dato-cifra,
+.tel.sin-numeros .cm-resumen-cifra, .tel.sin-numeros .comida:not(.planificado) .cm-resumen-txt > span, .tel.sin-numeros .cm-tk, .tel.sin-numeros .cm-item-k { display: none; }
+/* De los macros de cada comida quedan los puntos, como en la app. */
+.tel.sin-numeros .cm-mini { font-size: 0; }
 .pf-nota { margin: 0 4px 10px; font: 400 13px/18px var(--texto); color: rgba(239, 230, 207, 0.6); }
 .pf-con-ascent li { grid-template-columns: 18px minmax(0, 1fr); gap: 14px; padding: 12px 16px; }
 .pf-con-ascent li svg { width: 18px; height: 18px; color: rgba(239, 230, 207, 0.6); }
@@ -1038,6 +1042,13 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-tarjeta.vacia { background: rgba(6, 10, 22, 0.35); border: 1px dashed rgba(232, 196, 106, 0.38); display: grid; gap: 11px; padding: 12px 14px 13px; }
 .cm-tarjeta.vacia > b { font: 500 15px/1.2 var(--texto); }
 .cm-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Qué comer antes y después de entrenar: una línea tranquila en la comida que toca, nunca un aviso. */
+.cm-entreno { appearance: none; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: 11px; border: 1px solid rgba(166, 191, 148, 0.2); background: rgba(166, 191, 148, 0.06); color: rgba(239, 230, 207, 0.78); font: 400 12.5px/1.38 var(--texto); text-align: left; animation: cm-entra 0.45s ease both; }
+.cm-tarjeta.vacia .cm-entreno { margin-top: 0; }
+.cm-entreno svg { flex: none; width: 16px; height: 16px; margin-top: 1px; color: var(--salvia); stroke-width: 1.7; }
+.pq-cuerpo { min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 10px 20px 14px; display: grid; gap: 12px; }
+.pq-cuerpo .pf-nota { margin: 0; padding: 0; }
+.pq-texto { margin: 0; font: 400 14px/1.5 var(--texto); color: rgba(239, 230, 207, 0.86); }
 .cm-accion { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px 0 10px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.36); background: rgba(232, 196, 106, 0.06); color: var(--oro-claro); font: 400 13px/1 var(--texto); }
 .cm-accion.principal { background: var(--oro); border-color: var(--oro); color: #1a1406; font-weight: 500; }
 .cm-accion svg { width: 15px; height: 15px; stroke-width: 2; }
@@ -1091,7 +1102,8 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-enlace svg { width: 15px; height: 15px; transition: transform 0.25s; }
 .cm-enlace.abierto svg { transform: rotate(90deg); }
 .cm-aviso, .hj-aviso { position: absolute; left: 50%; translate: -50% 12px; opacity: 0; transition: opacity 0.25s, translate 0.3s; display: flex; align-items: center; gap: 10px; padding: 7px 7px 7px 16px; min-height: 42px; border-radius: 999px; background: rgba(9, 14, 30, 0.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(232, 196, 106, 0.24); font: 400 13px/1.2 var(--texto); color: var(--tinta); white-space: nowrap; max-width: calc(100% - 28px); pointer-events: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
-.cm-aviso { bottom: calc(var(--pestanas) + 16px); z-index: 3; }
+/* Arriba, como en la app (lo pediste el 26/10): abajo tapaba la comida recién anotada. */
+.cm-aviso { top: calc(var(--arriba) + 4px); translate: -50% -12px; z-index: 3; }
 .cm-aviso.visible, .hj-aviso.visible { opacity: 1; translate: -50% 0; pointer-events: auto; }
 .cm-aviso:not(:has(button)), .hj-aviso:not(:has(button)) { padding-right: 16px; }
 .cm-aviso > span, .hj-aviso > span { overflow: hidden; text-overflow: ellipsis; }
@@ -1252,6 +1264,37 @@ section.item p { margin: 0; max-width: 64ch; }
 .hj-pegar-lista { list-style: none; margin: 0; padding: 0; }
 .hj-pegar-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(239, 230, 207, 0.06); cursor: pointer; transition: opacity 0.25s; }
 .hj-pegar-fila:last-child { border-bottom: 0; }
+/* Tu comida de siempre y «anotar todo junto»: arriba de la lista, en un toque. */
+.hj-siempre { appearance: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; margin: 12px 0 2px; padding: 11px 12px 11px 14px; border-radius: 16px; border: 1px solid rgba(232, 196, 106, 0.28); background: rgba(232, 196, 106, 0.07); color: var(--tinta); text-align: left; animation: cm-entra 0.35s ease both; }
+.hj-siempre:active { transform: scale(0.98); }
+.hj-siempre .hj-fila-txt span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.hj-siempre-mas { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--oro); color: #1a1406; }
+.hj-siempre-mas svg { width: 16px; height: 16px; stroke-width: 2.2; }
+/* Decir lo que comí: el micrófono grande, lo que se dijo y cada cosa con su cantidad. */
+.dc-cuerpo { padding-top: 6px; }
+.dc-mic-lugar { position: relative; display: grid; place-items: center; height: 112px; }
+.dc-mic { appearance: none; cursor: pointer; position: relative; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(232, 196, 106, 0.5); background: rgba(232, 196, 106, 0.1); color: var(--oro-claro); display: grid; place-items: center; transition: background 0.25s, transform 0.15s; }
+.dc-mic:active { transform: scale(0.95); }
+.dc-mic svg { width: 30px; height: 30px; stroke-width: 1.6; }
+.dc-aro { position: absolute; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(232, 196, 106, 0.4); opacity: 0; pointer-events: none; }
+.escuchando .dc-mic { background: var(--oro); color: #1a1406; }
+.escuchando .dc-aro { animation: dc-escucha 1.6s ease-out infinite; }
+@keyframes dc-escucha { from { opacity: 0.8; transform: scale(1); } to { opacity: 0; transform: scale(1.55); } }
+.dc-ayuda { margin: 0 6px 12px; text-align: center; font: 400 13px/1.45 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.dc-area { min-height: 84px; }
+.dc-resultado { margin-top: 12px; animation: cm-entra 0.4s ease both; }
+.dc-resultado:empty { display: none; }
+.dc-bloque { padding: 8px 0; border-bottom: 1px solid rgba(239, 230, 207, 0.06); animation: cm-entra 0.35s ease both; }
+.dc-bloque:last-child { border-bottom: 0; }
+.dc-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; }
+.dc-fila .hj-fila-txt b { white-space: normal; }
+.dc-pasos { display: inline-flex; gap: 4px; }
+.dc-pasos .fi-paso { width: 32px; height: 32px; }
+.dc-supuesto { font-style: normal; color: rgba(232, 196, 106, 0.8); }
+.dc-sin { color: rgba(239, 230, 207, 0.7) !important; }
+.dc-buscar { appearance: none; cursor: pointer; justify-self: start; padding: 0; border: 0; background: none; color: var(--oro-claro); font: 400 12.5px/1.2 var(--texto); text-decoration: underline; text-underline-offset: 3px; }
+.dc-pregunta { margin: 9px 0 7px; font: 400 13px/1.3 var(--texto); color: var(--oro-claro); }
+.dc-opciones { margin-bottom: 2px; }
 .hj-pegar-fila.fuera { opacity: 0.35; }
 .hj-pegar-fila.fuera .hj-fila-txt b { text-decoration: line-through; }
 .hj-pegar-fila.sin { cursor: default; }
@@ -1611,6 +1654,8 @@ section.item p { margin: 0; max-width: 64ch; }
   .cm-armar-dia { transition: opacity 0.2s; }
   .pf-aviso-chips, .pf-horario, .pf-horario-pasos, .hh-aviso { animation: none; }
   .pf-sub, .pg-limite, .ent-lista-datos li { animation: none; }
+  .hj-siempre, .dc-resultado, .dc-bloque, .cm-entreno { animation-duration: 0.01s; }
+  .escuchando .dc-aro { animation: none; opacity: 0.6; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
   .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: none; box-shadow: 0 0 0 2px var(--c); }

@@ -104,6 +104,15 @@ const UNIDADES: readonly (readonly [Unidad, readonly string[], readonly string[]
   ['trozo', ['trozo', 'trocito', 'pedazo', 'pedacito'], ['chunk'], []],
 ];
 
+/** Las medidas de la casa: se dicen así («un vaso», «dos cucharadas») y así se anotan, de a una. */
+const DE_LA_CASA = new Set<Unidad>(['taza', 'cucharada', 'cucharadita', 'vaso', 'lata', 'rebanada', 'feta', 'diente', 'puñado', 'trozo', 'filete', 'paquete', 'sobre']);
+
+/** El nombre en singular de una medida de la casa («vaso», «glass»); de lo que se pesa o se mide en ml, null. */
+export function nombreDeMedida(unidad: Unidad, idioma: Idioma): string | null {
+  if (!DE_LA_CASA.has(unidad)) return null;
+  return UNIDADES.find(([u]) => u === unidad)?.[idioma === 'en' ? 2 : 1][0] ?? null;
+}
+
 /** La forma escrita, sin puntos ni espacios, para buscarla: «fl. oz.» y «floz» son la misma. */
 const claveDeUnidad = (s: string) => aplanar(s).replace(/[.\s]/g, '');
 

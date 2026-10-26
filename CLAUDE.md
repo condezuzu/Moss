@@ -44,7 +44,7 @@ SDK y la memoria no alcanza.
   `assets/alimentos.db`:
   - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada, `recetaDeTexto.ts`, que usa `porciones.ts`, y `frase.ts`, que usa los dos;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `micronutrientes.ts`, `dejaElDia.ts`, `control.ts`,
-    `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts`,
+    `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts`, `alrededorDelEntreno.ts`,
     `musculos.ts`, `rendimiento.ts`, `estadisticas.ts` y `plan.ts`, que solo importan entre ellos
     (`DEL_DOMINIO` en `construir.mjs`).
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
@@ -149,7 +149,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
 - `entrada`;
-- `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
+- `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `decir` (decir lo que comí, sus preguntas, tu comida de siempre y anotar todo junto), `entreno` (qué comer antes y después de entrenar, por qué y Perfil › Entrenamiento), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso`, `metas`, `sueno`;
 - `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
@@ -236,7 +236,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `datos.js`: la persona de mentira (perfil, pesadas, medidas, noches de Salud y lo que tiene en Ascent).
 - `comida.js`: Comida, con el cuadro de día, semana y mes, y la hoja de
   registro con la ventana del alimento, la comida que se arma, la revisión, la
-  etiqueta y el teclado.
+  etiqueta, el teclado, decir lo que comí y tu comida de siempre; y qué comer
+  antes y después de entrenar.
 - `inicio.js`: Inicio con sus bloques, personalizar, y los gráficos chicos.
 - `mas.js`: la hoja del «+», con el peso y las medidas.
 - `progreso.js`: Progreso, con la estrategia y las metas.

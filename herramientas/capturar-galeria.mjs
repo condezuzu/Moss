@@ -636,6 +636,67 @@ const pasos = {
     await comida('cerrar');
     await pagina.waitForTimeout(800);
   },
+  // Decir lo que comí (lo pediste el 26/10): desde el «+», escuchar (acá se escribe sola), lo que
+  // entendió, una frase con preguntas y anotarla; y «tu comida de siempre» arriba de la lista.
+  async decir() {
+    await pestana(1);
+    await mas('abrir');
+    await pagina.waitForTimeout(900);
+    await foto('decir-mas');
+    await pagina.evaluate(() => document.querySelector('.mas-decir').click());
+    await pagina.waitForTimeout(1500);
+    await foto('decir-escuchando');
+    await esperarA(() => !!document.querySelector('.hj-decir .dc-bloque'));
+    await pagina.waitForTimeout(600);
+    await foto('decir-entendido');
+    await pagina.evaluate(() => {
+      const a = document.querySelector('.hj-decir .dc-area');
+      a.value = 'en el almuerzo comí 200 gramos de arroz, una milanesa con puré y un vaso de leche';
+      a.dispatchEvent(new Event('input'));
+      [...document.querySelectorAll('.hj-decir .fi-pie .fi-secundario')].find((b) => !b.hidden).click();
+    });
+    await pagina.waitForTimeout(800);
+    await foto('decir-preguntas');
+    await pagina.evaluate(() => { const c = document.querySelector('.hj-decir .hj-cuerpo'); c.scrollTop = c.scrollHeight; });
+    await pagina.waitForTimeout(400);
+    await foto('decir-preguntas-abajo');
+    await pagina.evaluate(() => document.querySelector('.hj-decir .fi-agregar').click());
+    await pagina.waitForTimeout(1300);
+    await foto('decir-anotado');
+    await comida('registrar');
+    await pagina.waitForTimeout(900);
+    await foto('decir-de-siempre');
+    await comida('escribir', 'dos huevos, una tostada y un café');
+    await pagina.waitForTimeout(700);
+    await foto('decir-todo-junto');
+    await comida('cerrar');
+    await pagina.waitForTimeout(800);
+  },
+  // Antes y después de entrenar (lo pediste el 26/10): la línea en la comida que toca, por qué, y
+  // Perfil › Entrenamiento. La persona de mentira entrena pesas a las 19.
+  async entreno() {
+    await pestana(1);
+    await comida('bajar', 'ahora');
+    await pagina.waitForTimeout(900);
+    await foto('entreno-cena');
+    // Si entrenara a las 22:30, la cena sería la previa.
+    await comida('entreno', { entreno: { dias: [0, 1, 2, 3, 4, 5, 6], hora: 22 * 60 + 30, minutos: 90, tipo: 'resistencia' } });
+    await pagina.waitForTimeout(900);
+    await foto('entreno-previa');
+    await comida('entreno', { entreno: { dias: [0, 1, 2, 3, 4, 5, 6], hora: 19 * 60, minutos: 60, tipo: 'fuerza' } });
+    await pagina.waitForTimeout(600);
+    await comida('porQue');
+    await hojaAbierta('pq-hoja');
+    await foto('entreno-por-que');
+    await pagina.evaluate(() => { const b = document.querySelector('.pq-hoja .hb-cerrar'); if (b) b.click(); });
+    await pagina.waitForTimeout(700);
+    await seccion('entreno');
+    await hojaAbierta('pf-hoja');
+    await foto('entreno-perfil');
+    await pagina.evaluate(() => { const b = document.querySelector('.pf-hoja .hb-cerrar'); if (b) b.click(); });
+    await pagina.waitForTimeout(700);
+    await pestana(0);
+  },
   // Lo que cuida (lo pediste el 22/10): tus datos y el consentimiento, «¿Alguno es tu caso?», bajar
   // apagado sin déficit, menos de 18, los números ocultos, Perfil, poco sueño y los límites de Progreso.
   async seguridad() {

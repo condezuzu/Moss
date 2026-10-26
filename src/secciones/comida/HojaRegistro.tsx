@@ -555,7 +555,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
               const extra = n(r.coincide) !== n(r.nombre) && !n(r.nombre).includes(n(q)) && r.coincide.length < 28 ? r.coincide.toLowerCase() : undefined;
               return <Fila key={r.id} nombre={r.nombre} extra={extra} detalle={`${cantidadDeTexto(cantidad, sistema)} · ${numero(Math.round(kcal))} kcal`} alAbrir={() => abrirResultado(r)} />;
             })}
-            {q && hallado?.texto === q && !lista.length && !propiosHallados.length && (
+            {q && hallado?.texto === q && !lista.length && !propiosHallados.length && !pareceUnaComida(q) && (
               <View style={estilos.vacio}>
                 <Text style={estilos.vacioTexto}>{t('comida.sinResultados', { texto: q })}</Text>
                 <View style={estilos.vacioAcciones}>

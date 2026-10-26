@@ -14,6 +14,7 @@ const Util = (() => {
     mas: '<path d="M12 6v12M6 12h12"/>',
     balanza: '<rect x="4" y="4.5" width="16" height="15" rx="3.5"/><path d="M9 9.5a4 4 0 0 1 6 0M12 9.5l1.4-1.6"/>',
     lupa: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
+    microfono: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5v3"/>',
     rayo: '<path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3z"/>',
     gota: '<path d="M12 3.5s5.5 6 5.5 10.2a5.5 5.5 0 0 1-11 0C6.5 9.5 12 3.5 12 3.5z"/>',
     cinta: '<path d="M3.5 9.5h17v5h-17z"/><path d="M7 9.5v2.2M10.5 9.5v3M14 9.5v2.2M17.5 9.5v3"/>',

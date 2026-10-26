@@ -26,6 +26,11 @@ describe('la comida dicha de una vez', () => {
     ]);
   });
 
+  it('la medida de la casa, como se dijo: el vaso queda vaso; los gramos, no', () => {
+    expect(leerFrase('un vaso de leche, dos cucharadas de azúcar y 200 g de arroz', 'es').dichos.map((d) => d.medida ?? null)).toEqual(['vaso', 'cucharada', null]);
+    expect(leerFrase('a glass of milk', 'en').dichos[0].medida).toBe('glass');
+  });
+
   it('lo que se calla es lo de antes: la unidad o el alimento', () => {
     expect(resumen('200 gramos de arroz y 150 de pollo a la plancha').map(([c, u]) => [c, u])).toEqual([[200, 'g'], [150, 'g']]);
     expect(resumen('dos empanadas de carne y una de jamón y queso').map(([c, , b]) => [c, b])).toEqual([[2, 'empanada de carne'], [1, 'empanada de jamón y queso']]);

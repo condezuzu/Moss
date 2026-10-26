@@ -427,11 +427,16 @@ const TIPOS = ['fuerza', 'resistencia', 'mixta'] as const;
 /** Lunes primero, como en la galería. */
 const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
 
-/** «L M V · 19:00», o que todavía no se cargó. */
+/** «Lun Mié Vie · 19:00», «Todos los días · 19:00» o que todavía no se cargó: corto, para que entre en la fila. */
 function resumenDeEntreno(entreno: Entreno | null): string {
   if (!entreno || !entreno.dias.length) return t('entreno.perfil.sinCargar');
   const letras = lista('fecha.diasCortos');
-  return `${DIAS_DE_LA_SEMANA.filter((d) => entreno.dias.includes(d)).map((d) => letras[d]).join(' ')} · ${horaDeReloj(entreno.hora)}`;
+  const dias = DIAS_DE_LA_SEMANA.filter((d) => entreno.dias.includes(d));
+  const cuales = dias.length === 7 ? t('entreno.perfil.todos')
+    : dias.length === 5 && dias.every((d) => d >= 1 && d <= 5) ? t('entreno.perfil.entreSemana')
+      : dias.length <= 3 ? dias.map((d) => letras[d]).join(' ')
+        : t('entreno.perfil.nDias', { n: dias.length });
+  return `${cuales} · ${horaDeReloj(entreno.hora)}`;
 }
 
 /**

@@ -82,6 +82,13 @@ export function cantidadPara(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densi
   const { cantidad, unidad } = dicho;
   if (cantidad !== null && (unidad || dicho.tamano)) {
     const gramos = gramosDeLinea(dicho, { porciones: d.porciones, densidad: d.densidad });
+    // Una medida de la casa queda como se dijo («1 vaso», no «206 g»): con la porción de ese nombre, si el alimento la tiene.
+    if (gramos && dicho.medida) {
+      const medida = normalizar(`1 ${dicho.medida}`);
+      const propia = d.porciones.find((x) => { const n = normalizar(x.nombre); return n === medida || n.startsWith(`${medida} `); });
+      const porcion = propia ? { porcion: propia.nombre, gramosPorcion: propia.gramos } : { porcion: `1 ${dicho.medida}`, gramosPorcion: Math.round(gramos / cantidad) };
+      return { cantidad: { ...porcion, veces: cantidad }, supuesto: false };
+    }
     if (gramos) return { cantidad: { gramos }, supuesto: false };
     if (unidad === 'pocillo') return { cantidad: { porcion: '1 pocillo', gramosPorcion: Math.round(ML_DEL_POCILLO * (d.densidad ?? 1)), veces: cantidad }, supuesto: false };
   }
@@ -127,11 +134,12 @@ async function entenderUno(dicho: Dicho, p: ParaEntender): Promise<Entendido> {
     const opciones = [elegida, ...otros.map((d) => opcion(d, cantidadPara(dicho, d, undefined).cantidad))];
     if (opciones.some((o) => cambiaElNumero(o.valores.kcal, elegida.valores.kcal))) return { ...sola, opciones, pregunta: 'cual' };
   }
-  // Crudo o cocido: se dijeron gramos, están las dos versiones y no se dijo cómo («a la plancha», «crudo»).
-  if ('gramos' in cantidad && dicho.unidad && (primero.crudo || primero.cocidos.length) && !COMO_SE_COCINA.test(buscado)) {
+  // Crudo o cocido: se dijeron gramos o una medida, están las dos versiones y no se dijo cómo («a la plancha», «crudo»).
+  if (('gramos' in cantidad || dicho.medida) && dicho.unidad && (primero.crudo || primero.cocidos.length) && !COMO_SE_COCINA.test(buscado)) {
     const otro = await p.detalle(primero.crudo ? primero.crudo.id : primero.cocidos[0].id);
     if (otro) {
-      const alterna = opcion(otro, cantidad);
+      // Los gramos son los mismos; la taza de arroz crudo pesa otra cosa que la de cocido.
+      const alterna = opcion(otro, 'gramos' in cantidad ? cantidad : cantidadPara(dicho, otro, undefined).cantidad);
       if (cambiaElNumero(alterna.valores.kcal, elegida.valores.kcal)) return { ...sola, opciones: [elegida, alterna], pregunta: 'crudo' };
     }
   }

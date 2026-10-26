@@ -69,6 +69,21 @@ describe('lo dicho, en alimentos de la base', () => {
     expect(Math.abs(arroz.opciones[0].valores.kcal - arroz.opciones[1].valores.kcal)).toBeGreaterThan(100);
   });
 
+  it('una medida de la casa queda como se dijo: «1 vaso», no gramos', async () => {
+    const [leche] = await decir('un vaso de leche entera');
+    const c = leche.opciones[leche.elegida].cantidad;
+    expect('porcion' in c ? [c.porcion, c.veces] : c).toEqual(['1 vaso (200 ml)', 1]);
+    const [azucar] = await decir('dos cucharadas de azúcar', { conocido: () => true });
+    const d = azucar.opciones[azucar.elegida].cantidad;
+    expect('porcion' in d ? [d.porcion.split(' (')[0], d.veces] : d).toEqual(['1 cucharada', 2]);
+  });
+
+  it('una taza de arroz también pregunta crudo o cocido, cada una con su peso', async () => {
+    const [arroz] = await decir('una taza de arroz', { conocido: () => true });
+    expect(arroz.pregunta).toBe('crudo');
+    expect(Math.abs(arroz.opciones[0].valores.kcal - arroz.opciones[1].valores.kcal)).toBeGreaterThan(100);
+  });
+
   it('lo que se eligió antes para esas palabras gana, sin preguntar', async () => {
     const [primera] = await decir('un vaso de leche');
     const id = Number(primera.opciones[primera.opciones.length - 1].alimento.ref);

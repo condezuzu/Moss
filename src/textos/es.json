@@ -535,6 +535,7 @@
       "cual": "¿Qué {que}?",
       "cuanto": "¿Qué cantidad de {que}?",
       "crudo": "¿Los {gramos} g son crudos o cocidos?",
+      "crudoMedida": "¿Lo mediste crudo o cocido?",
       "anotado": {
         "uno": "{n} alimento anotado {comida}",
         "otros": "{n} alimentos anotados {comida}"
@@ -1646,6 +1647,9 @@
     "perfil": {
       "titulo": "Entrenamiento",
       "sinCargar": "Sin cargar",
+      "todos": "Todos los días",
+      "entreSemana": "Lun a vie",
+      "nDias": "{n} días",
       "texto": "Con tus días y tu hora, Comida te dice qué comer antes y después de entrenar, en la comida que toca. Nunca te avisa: lo ves al anotar.",
       "dias": "Qué días",
       "hora": "A qué hora",
