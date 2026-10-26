@@ -243,13 +243,13 @@ function TusDatos({ perfil, hoy, imperial, alCerrar }: { perfil: DatosDelPerfil;
   );
 }
 
-/** La calidad de las animaciones: la automática (según el iPhone, y baja sola si hace falta) o una fija. */
+/** La calidad de toda la app: la automática (según el iPhone, y baja sola si hace falta) o una fija. */
 function CalidadDelCielo({ elegida, alCerrar }: { elegida: Calidad | null; alCerrar: () => void }) {
   return (
     <HojaModal abierta titulo={t('perfil.calidad')} alCerrar={alCerrar}>
       <View style={{ gap: 8 }}>
         {([null, 'alta', 'media', 'baja'] as const).map((c) => (
-          <Opcion key={c ?? 'automatica'} titulo={t(`perfil.calidades.${c ?? 'automatica'}`)} elegida={c === elegida} alTocar={() => elAlmacen().ponerCalidad(c)} />
+          <Opcion key={c ?? 'automatica'} titulo={t(`perfil.calidades.${c ?? 'automatica'}`)} detalle={t(`perfil.calidadesDetalle.${c ?? 'automatica'}`)} elegida={c === elegida} alTocar={() => elAlmacen().ponerCalidad(c)} />
         ))}
       </View>
       <Parrafo chico>{t('perfil.calidadTexto')}</Parrafo>

@@ -980,7 +980,7 @@
     "unidades": "Units",
     "metrico": "kg and cm",
     "idioma": "Language",
-    "calidad": "Animation quality",
+    "calidad": "Quality",
     "alta": "High",
     "recordatorios": "Reminders",
     "apagados": "Off",
@@ -1045,7 +1045,13 @@
       "media": "Medium",
       "baja": "Low"
     },
-    "calidadTexto": "Automatic chooses for your iPhone and steps down by itself if the sky stutters. Low uses less battery.",
+    "calidadTexto": "If anything stutters, Automatic steps down by itself. Low uses less battery.",
+    "calidadesDetalle": {
+      "automatica": "Chosen for your iPhone. You start with this one.",
+      "alta": "The full sky and the moon in full detail.",
+      "media": "Fewer stars and auroras; everything else the same.",
+      "baja": "A simpler, stiller sky and a moon without texture."
+    },
     "aparatos": {
       "titulo": "Devices",
       "soloIphone": "Just the iPhone",

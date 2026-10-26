@@ -31,8 +31,8 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
 import { riquezaDe } from '@/dominio/luz';
-import { calidadDeFabrica, unEscalonMenos } from './calidad';
-import { useCalidadElegida, useCieloDeHoy, useEncendidos } from './dia';
+import { bajarLaAutomatica } from './calidad';
+import { useCalidad, useCieloDeHoy, useEncendidos } from './dia';
 import { efectos } from './efectos';
 import {
   avancesNuevos,
@@ -109,10 +109,9 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   const dpr = PixelRatio.get();
   // La elegida en Perfil manda; si no, la automática, que arranca según el modelo y baja un
   // escalón si el teléfono no llega. El panel de prueba la puede forzar.
-  const elegida = useCalidadElegida();
-  const [automatica, setAutomatica] = useState<Calidad>(calidadDeFabrica);
+  const deLaApp = useCalidad();
   const [delPanel, setDelPanel] = useState<Calidad | null>(null);
-  const calidad = delPanel ?? elegida ?? automatica;
+  const calidad = delPanel ?? deLaApp;
   const ajustes = CALIDADES[calidad];
   const [movimientoReducido, setMovimientoReducido] = useState(false);
   // El día viene del almacén. Lo que React sabe alcanza para el texto; lo que se anima vive en la
@@ -272,7 +271,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     (eventos: Evento[]) => {
       for (const ev of eventos) {
         if (ev.tipo === 'cuadros') { setCuadros(ev.valor); continue; }
-        if (ev.tipo === 'lento') { setAutomatica((c) => unEscalonMenos(c)); continue; }
+        if (ev.tipo === 'lento') { bajarLaAutomatica(); continue; }
         if (ev.tipo === 'listo') { setFondoListo(true); continue; }
         if (ev.tipo === 'completo') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -327,6 +326,10 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   // Hasta dónde llegó cada línea y qué hábitos están apagados: sus caminos se rehacen solo con esto.
   const avances = useSharedValue<number[]>([]);
   const apagados = useSharedValue('');
+  // En baja, con el cielo quieto, va a 30 cuadros: la mitad del trabajo. Al moverse vuelve a 60.
+  const treinta = useSharedValue(calidad === 'baja');
+  useEffect(() => treinta.set(calidad === 'baja'), [calidad, treinta]);
+  const ultimoCuadro = useSharedValue(0);
 
   useFrameCallback((info) => {
     'worklet';
@@ -337,7 +340,10 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     // va de ahí, con Ascent y en la entrada.
     const antes = escena.value;
     if (!soloCielo && ascent === 0 && antes.velado === 0 && antes.aparicion >= 1 && Math.abs(corrida) >= ancho && Math.abs(antes.paginaX) >= ancho) return;
-    const dt = Math.min(0.05, (info.timeSincePreviousFrame ?? 16.7) / 1000);
+    const quieto = ascent === 0 && Math.abs(corrida - antes.paginaX) < 0.5 && Math.abs(antes.cam.v) < 1e-3;
+    if (treinta.value && quieto && ultimoCuadro.value > 0 && info.timestamp - ultimoCuadro.value < 30) return;
+    const dt = Math.min(0.05, (ultimoCuadro.value > 0 ? info.timestamp - ultimoCuadro.value : (info.timeSincePreviousFrame ?? 16.7)) / 1000);
+    ultimoCuadro.value = info.timestamp;
     const hayFondo = fondo.value !== null;
     escena.modify((e) => {
       'worklet';

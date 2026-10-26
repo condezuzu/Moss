@@ -18,6 +18,28 @@ export function calidadDeFabrica(): Calidad {
   return 'baja';
 }
 
+// La automática es una sola para toda la app (el cielo, la luna): la que dice el modelo, y un
+// escalón menos cada vez que el cielo avisa que no llega.
+let automatica: Calidad | null = null;
+const oyentes = new Set<() => void>();
+
+export function calidadAutomatica(): Calidad {
+  automatica ??= calidadDeFabrica();
+  return automatica;
+}
+
+export function bajarLaAutomatica() {
+  const nueva = unEscalonMenos(calidadAutomatica());
+  if (nueva === automatica) return;
+  automatica = nueva;
+  oyentes.forEach((o) => o());
+}
+
+export function oirLaAutomatica(oyente: () => void): () => void {
+  oyentes.add(oyente);
+  return () => oyentes.delete(oyente);
+}
+
 export function unEscalonMenos(c: Calidad): Calidad {
   return ORDEN[Math.min(ORDEN.indexOf(c) + 1, ORDEN.length - 1)];
 }

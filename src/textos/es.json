@@ -980,7 +980,7 @@
     "unidades": "Unidades",
     "metrico": "kg y cm",
     "idioma": "Idioma",
-    "calidad": "Calidad de las animaciones",
+    "calidad": "Calidad",
     "alta": "Alta",
     "recordatorios": "Avisos",
     "apagados": "Apagados",
@@ -1045,7 +1045,13 @@
       "media": "Media",
       "baja": "Baja"
     },
-    "calidadTexto": "La automática elige según tu iPhone y baja sola si el cielo se traba. La baja gasta menos batería.",
+    "calidadTexto": "Si algo se traba, la automática baja sola. La baja gasta menos batería.",
+    "calidadesDetalle": {
+      "automatica": "Según tu iPhone. Empiezas con esta.",
+      "alta": "El cielo completo y la luna con todo su detalle.",
+      "media": "Menos estrellas y auroras; lo demás igual.",
+      "baja": "El cielo más simple y quieto, y la luna sin textura."
+    },
     "aparatos": {
       "titulo": "Aparatos",
       "soloIphone": "Solo el iPhone",

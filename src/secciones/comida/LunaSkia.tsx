@@ -1,6 +1,9 @@
 // La luna de la comida, la de la galería (galeria/src/luna.js): la parte iluminada es lo que llevas
-// del día contra la meta. La cara con su degradé, los mares difuminados, el grano y la sombra con
-// el borde suave. Se dibuja en una caja de 100 × 100 (el disco es de radio 40; el resto, el halo).
+// del día contra la meta. Desde el 27/10, en los colores de Moss: luz de luna cálida, los mares
+// suaves con algunos cráteres, la sombra del borde, un resplandor que crece con la fase (como el de
+// las estrellas) y el disco oscuro con su borde, que siempre muestra la meta. Pasada la meta, el
+// borde y el resplandor se doran. Se dibuja en una caja de 100 × 100 con el disco de radio 40; el
+// lienzo es más grande que la caja para que el resplandor no se corte.
 // Las lunas chicas de la semana y del mes son más simples: la noche, la luz y el borde.
 
 import {
@@ -9,6 +12,8 @@ import {
 import { useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { useCalidad } from '@/cielo/dia';
+
 /** La parte iluminada de una luna de radio r: p va de 0 (nueva) a 1 (llena). La misma de la galería. */
 export function fase(p: number, r: number): string {
   'worklet';
@@ -16,14 +21,17 @@ export function fase(p: number, r: number): string {
   return `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r} A ${rx.toFixed(2)} ${r} 0 0 ${p < 0.5 ? 0 : 1} 0 ${-r} Z`;
 }
 
-const MARES: readonly [number, number, number, number][] = [[-13, -15, 11, 8.5], [5, -11, 7, 6], [13, -1, 8, 7], [-21, 5, 8, 15], [-3, 14, 7, 4.5], [22, -14, 4, 3.2], [19, 13, 5, 4]];
-// El grano: el ruido, en un color de piedra, con su alfa estirada (como el feColorMatrix de la galería).
-const GRANO = [0, 0, 0, 0, 0.32, 0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0.26, 0, 0, 0, 1.5, -0.72];
+const MARES: readonly [number, number, number, number][] = [[-12, -14, 11, 8.5], [5, -10, 7, 6], [13, 0, 7.5, 7], [-20, 6, 7.5, 13], [-2, 15, 6.5, 4.2], [20, 14, 4.5, 3.6]];
+const CRATERES: readonly [number, number, number][] = [[-6, 27, 2.4], [10, 23, 1.5], [24, -2, 1.3], [-26, -6, 1.2]];
+// El grano: el ruido, en un color de piedra cálida, con su alfa estirada (como el feColorMatrix de la galería).
+const GRANO = [0, 0, 0, 0, 0.42, 0, 0, 0, 0, 0.35, 0, 0, 0, 0, 0.22, 0, 0, 0, 1, -0.4];
+/** Lo que sobra alrededor de la caja, para el resplandor. */
+const MARGEN = 0.12;
 
 export type PropsDeLuna = {
   /** El lado, en puntos: el disco ocupa el 80 %. */
   tam: number;
-  /** Lo comido sobre la meta: 0 es nueva y 1, llena. */
+  /** Lo comido sobre la meta: 0 es nueva y 1, llena; más de 1, pasada. */
   fraccion: number;
   /** Cuánto tarda en llegar a la fase nueva. */
   ms?: number;
@@ -35,32 +43,47 @@ export default function LunaSkia({ tam, fraccion, ms = 1100 }: PropsDeLuna) {
     ahora.set(ms ? withTiming(fraccion, { duration: ms, easing: Easing.out(Easing.cubic) }) : fraccion);
   }, [ahora, fraccion, ms]);
   const camino = useDerivedValue<SkPath>(() => Skia.Path.MakeFromSVGString(fase(0.04 + 0.96 * Math.min(1, Math.max(0, ahora.get())), 40)) ?? Skia.Path.Make());
+  // El resplandor crece con la fase; pasada la meta, se dora.
+  const brillo = useDerivedValue(() => (ahora.get() > 1 ? 0.36 : 0.07 + 0.2 * Math.min(1, Math.max(0, ahora.get()))));
+  const pasada = fraccion > 1;
+  // En calidad baja, sin el grano ni los desenfoques de los mares y del borde: lo que más cuesta.
+  const simple = useCalidad() === 'baja';
   const disco = useMemo(() => Skia.Path.Circle(0, 0, 40), []);
   const s = tam / 100;
+  const margen = tam * MARGEN;
+  const lado = tam + 2 * margen;
   return (
-    <Canvas style={{ width: tam, height: tam }} pointerEvents="none">
-      <Group transform={[{ translateX: tam / 2 }, { translateY: tam / 2 }, { scale: s }]}>
-        <Circle cx={0} cy={0} r={46} color="rgba(236, 230, 214, 0.07)">
-          <Blur blur={9 / s} />
-        </Circle>
+    <Canvas style={{ width: lado, height: lado, margin: -margen }} pointerEvents="none">
+      <Group transform={[{ translateX: lado / 2 }, { translateY: lado / 2 }, { scale: s }]}>
+        <Group transform={[{ scale: 1.06 }]}>
+          <Path path={camino} color={pasada ? '#f0c56a' : '#f6e3a6'} opacity={brillo}>
+            <Blur blur={7} />
+          </Path>
+        </Group>
         <Group clip={disco}>
-          <Circle cx={0} cy={0} r={40} color="#12172a" />
-          <Mask mask={<Path path={camino} color="white"><Blur blur={1.4} /></Path>}>
+          <Circle cx={0} cy={0} r={40}>
+            <RadialGradient c={vec(-8, -9.6)} r={57.6} colors={['#1b2342', '#0b1022']} />
+          </Circle>
+          <Mask mask={<Path path={camino} color="white"><Blur blur={1.2} /></Path>}>
             <Circle cx={0} cy={0} r={40}>
-              <RadialGradient c={vec(-8, -11.2)} r={57.6} colors={['#f7f3e8', '#e4ddcc', '#b9b09b']} positions={[0, 0.6, 1]} />
+              <RadialGradient c={vec(-11.2, -14.4)} r={60.8} colors={['#fffaf0', '#f0e5ca', '#d6c39b', '#bfa77a']} positions={[0, 0.5, 0.88, 1]} />
             </Circle>
-            <Group opacity={0.5} layer={<Paint><Blur blur={2.4} /></Paint>}>
-              {MARES.map(([cx, cy, rx, ry]) => <Oval key={`${cx},${cy}`} x={cx - rx} y={cy - ry} width={2 * rx} height={2 * ry} color="#8c8574" />)}
+            <Group opacity={simple ? 0.3 : 0.42} layer={simple ? undefined : <Paint><Blur blur={2.2} /></Paint>}>
+              {MARES.map(([cx, cy, rx, ry]) => <Oval key={`${cx},${cy}`} x={cx - rx} y={cy - ry} width={2 * rx} height={2 * ry} color="#a48d62" />)}
             </Group>
-            <Circle cx={0} cy={0} r={40} opacity={0.55}>
-              <FractalNoise freqX={0.16} freqY={0.16} octaves={3} seed={4} />
-              <ColorMatrix matrix={GRANO} />
+            {CRATERES.map(([cx, cy, r]) => <Circle key={`${cx},${cy}`} cx={cx} cy={cy} r={r} style="stroke" strokeWidth={0.7} color="#9c8459" opacity={0.28} />)}
+            {!simple && (
+              <Circle cx={0} cy={0} r={40} opacity={0.16}>
+                <FractalNoise freqX={0.5} freqY={0.5} octaves={2} seed={7} />
+                <ColorMatrix matrix={GRANO} />
+              </Circle>
+            )}
+            <Circle cx={0} cy={0} r={40} style="stroke" strokeWidth={simple ? 3 : 6} color="#8a7348" opacity={simple ? 0.25 : 0.4}>
+              {!simple && <Blur blur={2.2} />}
             </Circle>
-            <Circle cx={-7} cy={27} r={1.5} color="#f8f4ea" opacity={0.7} />
-            <Circle cx={9} cy={22} r={1} color="#f8f4ea" opacity={0.7} />
           </Mask>
         </Group>
-        <Circle cx={0} cy={0} r={40} style="stroke" strokeWidth={0.6} color="rgba(236, 230, 214, 0.16)" />
+        <Circle cx={0} cy={0} r={40} style="stroke" strokeWidth={pasada ? 1 : 0.7} color={pasada ? 'rgba(240, 197, 106, 0.6)' : 'rgba(246, 227, 166, 0.22)'} />
       </Group>
     </Canvas>
   );
@@ -95,9 +118,9 @@ export function LunitasSkia({ lunas, ancho, tam }: PropsDeLunitas) {
         const punteado = l.estado === 'plan' || l.estado === 'futuro';
         return (
           <Group key={i} transform={[{ translateX: columna * (i + 0.5) }, { translateY: tam / 2 }, { scale: s }]}>
-            {l.estado !== 'futuro' && <Circle cx={0} cy={0} r={9.5} color="#141a2e" />}
-            {camino && <Path path={camino} color="#e6dfcc" opacity={l.estado === 'plan' ? 0.35 : 1} />}
-            <Circle cx={0} cy={0} r={9.5} style="stroke" strokeWidth={0.9} color={l.estado === 'vacio' ? 'rgba(236, 230, 214, 0.16)' : 'rgba(236, 230, 214, 0.28)'}>
+            {l.estado !== 'futuro' && <Circle cx={0} cy={0} r={9.5} color="#141c36" />}
+            {camino && <Path path={camino} color="#ecdcb2" opacity={l.estado === 'plan' ? 0.35 : 1} />}
+            <Circle cx={0} cy={0} r={9.5} style="stroke" strokeWidth={0.9} color={l.estado === 'vacio' ? 'rgba(246, 227, 166, 0.16)' : 'rgba(246, 227, 166, 0.3)'}>
               {punteado && <DashPathEffect intervals={[2, 2.2]} />}
             </Circle>
           </Group>

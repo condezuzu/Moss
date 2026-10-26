@@ -200,11 +200,8 @@ section.item p { margin: 0; max-width: 64ch; }
 /* La luna de la comida: se llena con lo que se come; los arcos son los macros. */
 .ent-escenario-luna { position: relative; width: 230px; height: 230px; margin: 26px auto 0; }
 .ent-luna { width: 100%; height: 100%; overflow: visible; }
-.ent-luna-halo { fill: rgba(236, 230, 214, 0.07); filter: blur(9px); }
-.ent-luna-noche { fill: #12172a; }
-.ent-luna-contorno { fill: none; stroke: rgba(236, 230, 214, 0.16); stroke-width: 0.6; }
-.ent-mares { fill: #8c8574; opacity: 0.5; }
-.ent-crater { fill: #f8f4ea; opacity: 0.7; }
+.ent-luna-halo { fill: rgba(246, 227, 166, 0.13); filter: blur(9px); }
+.ent-luna-contorno { fill: none; stroke: rgba(246, 227, 166, 0.22); stroke-width: 0.7; }
 .ent-arco { fill: none; stroke-width: 2.4; stroke-linecap: round; transform: rotate(-90deg); }
 .ent-arco-p { stroke: var(--oro-claro); }
 .ent-arco-c { stroke: var(--salvia); }
@@ -314,13 +311,15 @@ section.item p { margin: 0; max-width: 64ch; }
 .in-calorias { padding: 12px 16px 16px; }
 .in-cal-arriba { display: flex; align-items: center; gap: 14px; }
 .in-luna { flex: none; display: block; margin: -6px -4px -6px -10px; }
-/* La luna de la comida (luna.js): la de antes, con su cara, sus mares y la sombra suave. */
+/* La luna de la comida (luna.js): luz de luna cálida, el resplandor que crece y el borde de la meta. */
 .luna { overflow: visible; }
-.luna-halo { fill: rgba(236, 230, 214, 0.07); filter: blur(9px); }
-.luna-noche { fill: #12172a; }
-.luna-contorno { fill: none; stroke: rgba(236, 230, 214, 0.16); stroke-width: 0.6; }
-.luna-mares { fill: #8c8574; opacity: 0.5; }
-.luna-crater { fill: #f8f4ea; opacity: 0.7; }
+.luna-resplandor { fill: #f6e3a6; transition: fill 0.4s; }
+.luna.pasada .luna-resplandor { fill: #f0c56a; }
+.luna-mares { fill: #a48d62; opacity: 0.42; }
+.luna-crateres { fill: none; stroke: #9c8459; stroke-opacity: 0.28; stroke-width: 0.7; }
+.luna-limbo { fill: none; stroke: #8a7348; stroke-opacity: 0.4; stroke-width: 6; }
+.luna-contorno { fill: none; stroke: rgba(246, 227, 166, 0.22); stroke-width: 0.7; transition: stroke 0.4s, stroke-width 0.4s; }
+.luna.pasada .luna-contorno { stroke: rgba(240, 197, 106, 0.6); stroke-width: 1; }
 .in-cal-cifra { display: grid; gap: 4px; min-width: 0; }
 .in-cal-etq { font: 400 10px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); }
 .in-cal-cifra b { font: 300 54px/0.95 var(--numeros); letter-spacing: -0.025em; color: #fbf2d9; font-variant-numeric: tabular-nums; }
@@ -948,9 +947,9 @@ section.item p { margin: 0; max-width: 64ch; }
 .cm-tira-dia b, .cm-grafica-dia b, .cm-cal-dia b { font: 500 12.5px/1 var(--numeros); font-variant-numeric: tabular-nums; }
 .cm-tira-dia.hoy b, .cm-grafica-dia.hoy b, .cm-cal-dia.hoy b { color: var(--oro-claro); }
 .cm-lunita { width: 24px; height: 24px; display: block; }
-.cm-lunita-noche { fill: #141a2e; }
-.cm-lunita-luz { fill: #e6dfcc; }
-.cm-lunita-borde { fill: none; stroke: rgba(236, 230, 214, 0.28); stroke-width: 0.9; }
+.cm-lunita-noche { fill: #141c36; }
+.cm-lunita-luz { fill: #ecdcb2; }
+.cm-lunita-borde { fill: none; stroke: rgba(246, 227, 166, 0.3); stroke-width: 0.9; }
 .cm-lunita.plan .cm-lunita-luz { opacity: 0.35; }
 .cm-lunita.plan .cm-lunita-borde, .cm-lunita.futuro .cm-lunita-borde { stroke-dasharray: 2 2.2; }
 .cm-lunita.futuro .cm-lunita-noche { fill: transparent; }

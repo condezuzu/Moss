@@ -12,6 +12,8 @@ import { claveDeMarca, luzAcumulada } from '@/dominio/dias';
 import { partesDe, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import { habitosDelDia, type Habito } from '@/dominio/habitos';
 import { semanaDe } from '@/dominio/semana';
+import { calidadAutomatica, oirLaAutomatica } from './calidad';
+import type { Calidad } from './mundo';
 
 /**
  * D5, pendiente: si la luz de hoy hace crecer el cielo recién mañana (de noche, lo recomendado) o
@@ -100,6 +102,13 @@ export function useCieloDeHoy(): DiaDelCielo {
 export function useCalidadElegida() {
   const a = elAlmacen();
   return useSyncExternalStore(a.suscribir, () => a.estado().calidad);
+}
+
+/** La calidad de toda la app: la elegida en Perfil o, si no, la automática. */
+export function useCalidad(): Calidad {
+  const elegida = useCalidadElegida();
+  const automatica = useSyncExternalStore(oirLaAutomatica, calidadAutomatica);
+  return elegida ?? automatica;
 }
 
 /** Qué hábito de hoy está encendido, en el orden de las estrellas. */
