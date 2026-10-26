@@ -1,6 +1,7 @@
 // Los avisos (lo pediste el 23/10/2026): la hora de dormir como Rise, los de cada hábito y los de
-// las comidas, con un máximo por día y juntos los que caen cerca. Pocos y útiles: Moss nunca
-// insiste. Acá van códigos; el texto, sin culpa, lo arma la interfaz.
+// las comidas, con un máximo por día y juntos los que caen cerca. El 26/10 sumaste el horario de
+// comidas (avisa a la hora de comer, para comer ordenado) y pesarse a la mañana. Pocos y útiles:
+// Moss nunca insiste. Acá van códigos; el texto, sin culpa, lo arma la interfaz.
 // - El plan de cada día sale de lo que elegiste y de las horas de siempre, no de lo que ya hiciste:
 //   no cambia en el día, así que al reprogramar (cada vez que se abre Moss o se anota algo) lo que
 //   ya sonó no vuelve a sonar y el máximo no se pasa. Lo hecho y lo anotado solo sacan avisos.
@@ -18,6 +19,7 @@
 
 import type { Comida } from './comidas';
 import { claveDeMarca, type Marca } from './dias';
+import type { Fuente } from './habitos';
 import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import { tocaElDia, type Habito } from './habitos';
 import { DESPUES_MIN, DIAS } from './recordatorios';
@@ -48,6 +50,13 @@ export type Avisos = {
   habitos?: AvisoDeHabito[];
   /** Las comidas que avisan si a su hora de siempre no se anotaron (recordatorios.ts). */
   comidas?: Comida[];
+  /**
+   * El horario de comidas, para comer ordenado: cada comida elegida avisa a su hora, en minutos
+   * desde la medianoche, si todavía no se anotó. Con horario, lo de «sin anotar» cuenta desde esta hora.
+   */
+  horario?: Partial<Record<Comida, number>>;
+  /** Pesarse a la mañana, al rato de despertarse: el día del control o, con `todos`, cada día. */
+  pesarse?: { encendido: boolean; todos?: boolean };
   /** Cuántas veces puede sonar por día, como mucho (4 de fábrica). */
   maximoPorDia?: number;
 };
@@ -67,13 +76,15 @@ export type Sueno = {
   deuda: number | null;
 };
 
-/** Un aviso: el de dormir, el de un hábito o el de una comida. */
+/** Un aviso: el de dormir, el de un hábito, el de una comida (sin anotar o a su hora) o el de pesarse. */
 export type Aviso = {
-  /** 'dormir', 'comida:cena' o 'habito:<id>:<n>', el n-ésimo aviso de ese hábito (desde 0). */
+  /** 'dormir', 'comida:cena', 'horario:cena', 'pesarse' o 'habito:<id>:<n>', el n-ésimo aviso de ese hábito (desde 0). */
   id: string;
   /** Su hora, en minutos desde la medianoche del día; lo de la noche puede pasar de 1440. */
   minutos: number;
-  tipo: 'dormir' | 'habito' | 'comida';
+  tipo: 'dormir' | 'habito' | 'comida' | 'horario' | 'pesarse';
+  /** En el de pesarse, si ese día es el del control: el texto lo dice. */
+  control?: boolean;
   habito?: string;
   comida?: Comida;
   mensaje?: string;
@@ -86,7 +97,12 @@ export type Notificacion = { dia: ClaveDia; minutos: number; avisos: Aviso[] };
 
 /** Lo que cae a esta distancia del primero de un grupo, o menos, suena con él. */
 export const VENTANA = 20;
-export const MAXIMO_POR_DIA = 4;
+// Con el horario de comidas, cuatro se llenaban solo con comer: seis deja lugar a los hábitos.
+export const MAXIMO_POR_DIA = 6;
+/** Pesarse, al rato de despertarse: antes de desayunar, como se pesa en el control. */
+export const PESARSE_DESPUES = 10;
+/** Sin noches para saber cuándo se despierta: a las 8. */
+const PESARSE_SIN_SUENO = 8 * 60;
 export const ANTES_DE_DORMIR = 30;
 /** Lo que se adelanta la hora de dormir por la deuda, como mucho. */
 export const PAGO_MAXIMO = 30;
@@ -135,7 +151,8 @@ export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | nul
 }
 
 type Grupo = { minutos: number; avisos: Aviso[] };
-const CATEGORIA: Record<Aviso['tipo'], number> = { dormir: 0, habito: 1, comida: 2 };
+// El horario y pesarse se eligen como un hábito: valen lo mismo. Lo de «sin anotar» es el respaldo.
+const CATEGORIA: Record<Aviso['tipo'], number> = { dormir: 0, horario: 1, habito: 1, pesarse: 1, comida: 2 };
 const porHora = (a: Aviso, b: Aviso) => a.minutos - b.minutos || CATEGORIA[a.tipo] - CATEGORIA[b.tipo] || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const redondo = <T extends { minutos: number }>(a: T): T => ({ ...a, minutos: Math.round(a.minutos) });
 const valido = (a: Aviso) => Number.isFinite(a.minutos) && a.minutos >= 0;
@@ -177,6 +194,10 @@ export type DelDia = {
   marcas?: ReadonlyMap<string, Pick<Marca, 'hecho'>>;
   /** Las comidas ya anotadas ese día, sin lo planificado: no avisan. */
   anotadas?: ReadonlySet<Comida>;
+  /** El día de la semana del control (control.ts): ese día, pesarse avisa aunque no sea cada día. */
+  diaDelControl?: DiaSemana;
+  /** Si ya se pesó ese día: pesarse no avisa. */
+  pesado?: boolean;
   /**
    * Lo que ya pasó ese día, en minutos desde la medianoche: cuándo se anotó cada comida (la primera
    * vez) y cuándo terminó el entrenamiento de Ascent.
@@ -216,14 +237,25 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     else if (c.tipo === 'despertar' && horas.despertar !== null) fijos.push({ ...aviso, minutos: horas.despertar + c.despues });
     else if (c.tipo === 'dormir' && horas.dormir !== null) fijos.push({ ...aviso, minutos: horas.dormir - c.antes });
   }
+  const horario = Object.entries(ajustes.horario ?? {}).filter(([, m]) => Number.isFinite(m)) as [Comida, number][];
+  for (const [comida, minutos] of horario) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });
   for (const comida of ajustes.comidas ?? []) {
-    fijos.push({ id: `comida:${comida}`, tipo: 'comida', comida, minutos: Math.min(ULTIMO_DE_COMIDA, op.horaDeComida(comida) + DESPUES_MIN) });
+    const hora = ajustes.horario?.[comida] ?? op.horaDeComida(comida);
+    fijos.push({ id: `comida:${comida}`, tipo: 'comida', comida, minutos: Math.min(ULTIMO_DE_COMIDA, hora + DESPUES_MIN) });
+  }
+  if (ajustes.pesarse?.encendido) {
+    const control = op.diaDelControl === semana;
+    if (control || ajustes.pesarse.todos) {
+      const minutos = horas.despertar !== null ? horas.despertar + PESARSE_DESPUES : PESARSE_SIN_SUENO;
+      fijos.push({ id: 'pesarse', tipo: 'pesarse', minutos, ...(control ? { control: true } : {}) });
+    }
   }
 
   const maximo = Math.max(0, Math.floor(ajustes.maximoPorDia ?? MAXIMO_POR_DIA));
   const plan = elegir(agrupar(fijos.map(redondo).filter(valido)), conEvento.map((e) => e.aviso.id), maximo);
 
-  const falta = (a: Aviso) => !(a.habito && op.marcas?.get(claveDeMarca(a.habito, dia))?.hecho) && !(a.comida && op.anotadas?.has(a.comida));
+  const falta = (a: Aviso) =>
+    !(a.habito && op.marcas?.get(claveDeMarca(a.habito, dia))?.hecho) && !(a.comida && op.anotadas?.has(a.comida)) && !(a.tipo === 'pesarse' && op.pesado);
   const grupos = plan.grupos.map((g) => ({ minutos: g.minutos, avisos: g.avisos.filter(falta) }));
   const solos: Grupo[] = [];
   for (const e of conEvento) {
@@ -247,19 +279,40 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
  * lo de anoche que todavía no sonó (pasada la medianoche, el de dormir de ayer). Se rehace cada vez
  * que se abre Moss o se anota algo: si no se abre en una semana, para solo.
  */
-export function avisosDeLaSemana(op: Omit<DelDia, 'dia' | 'anotadas' | 'eventos' | 'ahora'> & {
+export function avisosDeLaSemana(op: Omit<DelDia, 'dia' | 'anotadas' | 'eventos' | 'ahora' | 'pesado'> & {
   hoy: ClaveDia;
   /** Los minutos de ahora, desde la medianoche. */
   ahora: number;
   anotadasHoy?: ReadonlySet<Comida>;
   eventosHoy?: Partial<Record<Evento, number>>;
+  pesadoHoy?: boolean;
 }): Notificacion[] {
-  const { hoy, ahora, anotadasHoy, eventosHoy, ...comun } = op;
+  const { hoy, ahora, anotadasHoy, eventosHoy, pesadoHoy, ...comun } = op;
   return [
     ...avisosDelDia({ ...comun, dia: sumarDias(hoy, -1), ahora: ahora + DIA }),
-    ...avisosDelDia({ ...comun, dia: hoy, ahora, anotadas: anotadasHoy, eventos: eventosHoy }),
+    ...avisosDelDia({ ...comun, dia: hoy, ahora, anotadas: anotadasHoy, eventos: eventosHoy, pesado: pesadoHoy }),
     ...Array.from({ length: DIAS - 1 }, (_, i) => avisosDelDia({ ...comun, dia: sumarDias(hoy, i + 1) })).flat(),
   ];
+}
+
+/**
+ * El aviso con que llega un hábito nuevo de los primeros (Sugeridos), a la hora en que más ayuda: lo
+ * de la noche antes de dormirse, meditar al despertarse, los pasos y el agua a la tarde si todavía
+ * faltan (un hábito hecho no avisa). Dormir va con el aviso de la hora de dormir; lo de la comida,
+ * con el horario de comidas. Se cambia o se saca en el editor del hábito.
+ */
+export function avisoDeFabrica(fuente: Fuente, nombre?: 'leer' | 'escribir' | 'entrenar'): Cuando | null {
+  if (fuente.tipo === 'salud') {
+    if (fuente.dato === 'mindfulness') return { tipo: 'despertar', despues: 15 };
+    if (fuente.dato === 'pasos') return { tipo: 'hora', minutos: 18 * 60 };
+    if (fuente.dato === 'agua') return { tipo: 'hora', minutos: 16 * 60 };
+    return null;
+  }
+  if (fuente.tipo !== 'manual') return null;
+  if (nombre === 'leer') return { tipo: 'dormir', antes: 45 };
+  if (nombre === 'escribir') return { tipo: 'dormir', antes: 30 };
+  if (nombre === 'entrenar') return { tipo: 'hora', minutos: 17 * 60 + 30 };
+  return null;
 }
 
 /**

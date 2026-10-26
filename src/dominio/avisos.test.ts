@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  ADELANTO_MAXIMO, ANTES_DE_DORMIR, avisosDeLaSemana, avisosDelDia, cuandoSuena, horaDeDormir, horasDeSueno, MAXIMO_POR_DIA, MENSAJE_MAXIMO, PAGO_MAXIMO,
-  VENTANA,
+  ADELANTO_MAXIMO, ANTES_DE_DORMIR, avisoDeFabrica, avisosDeLaSemana, avisosDelDia, cuandoSuena, horaDeDormir, horasDeSueno, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
+  PAGO_MAXIMO, PESARSE_DESPUES, VENTANA,
   type Avisos, type DelDia, type Notificacion, type Sueno,
 } from './avisos';
 import type { Comida } from './comidas';
@@ -190,8 +190,10 @@ describe('los avisos de un día', () => {
       [h('21:45'), ['comida:cena']],
       [h('23:00'), ['dormir']],
     ]);
-    expect(MAXIMO_POR_DIA).toBe(4);
-    expect(resumen(delDia(ajustes)).map(([minutos]) => minutos)).toEqual([h('9:00'), h('13:45'), h('18:00'), h('23:00')]);
+    // De fábrica entran los cinco; con cuatro, sale la cena (una comida sin anotar, la última).
+    expect(MAXIMO_POR_DIA).toBe(6);
+    expect(resumen(delDia(ajustes))).toHaveLength(5);
+    expect(resumen(delDia({ ...ajustes, maximoPorDia: 4 })).map(([minutos]) => minutos)).toEqual([h('9:00'), h('13:45'), h('18:00'), h('23:00')]);
     expect(resumen(delDia({ ...ajustes, maximoPorDia: 3 })).map(([minutos]) => minutos)).toEqual([h('9:00'), h('13:45'), h('23:00')]);
     // Con dos, el grupo de dos le gana al agua, aunque sea más temprana.
     expect(resumen(delDia({ ...ajustes, maximoPorDia: 2 })).map(([minutos]) => minutos)).toEqual([h('13:45'), h('23:00')]);
@@ -232,6 +234,51 @@ describe('los avisos de un día', () => {
     const ajustes: Avisos = { dormir: { encendido: true }, habitos: [aLas('leer', '18:00')], comidas: ['almuerzo', 'cena'], maximoPorDia: 2 };
     expect(resumen(delDia(ajustes))).toEqual([[h('18:00'), ['habito:leer:0']], [h('23:00'), ['dormir']]]);
     expect(resumen(delDia(ajustes, { marcas: hecho('leer') }))).toEqual([[h('23:00'), ['dormir']]]);
+  });
+});
+
+describe('el horario de comidas y pesarse', () => {
+  it('cada comida del horario avisa a su hora, si todavía no se anotó', () => {
+    const ajustes: Avisos = { horario: { desayuno: h('7:45'), almuerzo: h('12:30') } };
+    expect(resumen(delDia(ajustes))).toEqual([[h('7:45'), ['horario:desayuno']], [h('12:30'), ['horario:almuerzo']]]);
+    expect(resumen(delDia(ajustes, { anotadas: new Set<Comida>(['desayuno']) }))).toEqual([[h('12:30'), ['horario:almuerzo']]]);
+  });
+
+  it('con horario, lo de «sin anotar» cuenta desde la hora elegida y no desde la de siempre', () => {
+    const lista = delDia({ horario: { almuerzo: h('12:00') }, comidas: ['almuerzo'] });
+    expect(resumen(lista)).toEqual([[h('12:00'), ['horario:almuerzo']], [h('12:00') + DESPUES_MIN, ['comida:almuerzo']]]);
+  });
+
+  it('el horario vale como un hábito en el máximo: las comidas sin anotar salen primero', () => {
+    const ajustes: Avisos = { horario: { desayuno: h('8:00'), almuerzo: h('13:00') }, comidas: ['cena'], maximoPorDia: 2 };
+    expect(resumen(delDia(ajustes)).map(([, ids]) => ids)).toEqual([['horario:desayuno'], ['horario:almuerzo']]);
+  });
+
+  it('pesarse avisa al rato de despertarse el día del control, o cada día si se eligió', () => {
+    const control = diaDeLaSemana(VIERNES);
+    expect(resumen(delDia({ pesarse: { encendido: true } }, { diaDelControl: control }))).toEqual([[h('7:30') + PESARSE_DESPUES, ['pesarse']]]);
+    expect(delDia({ pesarse: { encendido: true } }, { diaDelControl: control })[0].avisos[0].control).toBe(true);
+    expect(delDia({ pesarse: { encendido: true } }, { diaDelControl: ((control + 1) % 7) as DiaSemana })).toEqual([]);
+    expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }))).toEqual([[h('7:30') + PESARSE_DESPUES, ['pesarse']]]);
+  });
+
+  it('pesarse no avisa si ya se pesó, y sin datos del sueño va a las 8', () => {
+    expect(delDia({ pesarse: { encendido: true, todos: true } }, { pesado: true })).toEqual([]);
+    expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }, { sueno: null }))).toEqual([[h('8:00'), ['pesarse']]]);
+  });
+});
+
+describe('el aviso de fábrica de los primeros hábitos', () => {
+  it('a la hora en que más ayuda cada uno', () => {
+    expect(avisoDeFabrica({ tipo: 'salud', dato: 'mindfulness', meta: 10 })).toEqual({ tipo: 'despertar', despues: 15 });
+    expect(avisoDeFabrica({ tipo: 'salud', dato: 'pasos', meta: 8000 })).toEqual({ tipo: 'hora', minutos: h('18:00') });
+    expect(avisoDeFabrica({ tipo: 'manual' }, 'leer')).toEqual({ tipo: 'dormir', antes: 45 });
+  });
+
+  it('dormir y lo de comida no llevan: tienen sus propios avisos', () => {
+    expect(avisoDeFabrica({ tipo: 'salud', dato: 'sueno', meta: 420 })).toBeNull();
+    expect(avisoDeFabrica({ tipo: 'comida', meta: 'proteina' })).toBeNull();
+    expect(avisoDeFabrica({ tipo: 'manual' })).toBeNull();
   });
 });
 

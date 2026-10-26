@@ -3,7 +3,9 @@
 Lo pediste el 22/10/2026: un aviso de la hora de dormir como el de Rise, los de
 cada hábito (a una hora, relativos, después de algo, por día de la semana y con
 mensaje propio), los de comida solo si no se anotó, y un máximo por día con lo
-que cae cerca junto. Pocos y útiles: Moss nunca insiste ni culpa.
+que cae cerca junto. El 26/10 sumaste el horario de comidas (para comer
+ordenado), pesarte a la mañana y que los hábitos lleguen con su aviso. Pocos y
+útiles: Moss nunca insiste ni culpa.
 
 La regla está en `src/dominio/avisos.ts` (con sus tests); el teléfono los
 programa en `src/recordatorios/programar.ts`; se eligen en Perfil › Avisos y en
@@ -35,7 +37,30 @@ elegido queda en el teléfono (no sube a la cuenta).
 - **No suena** si el hábito ya está hecho ese día. Lo de «después de comer»
   espera a que anotes esa comida.
 
-## Las comidas
+## Los primeros hábitos
+
+Los que se eligen al terminar la entrada llegan con un aviso a la hora en que
+más ayudan (`avisoDeFabrica`): leer 45 minutos antes de dormir, escribir 30,
+meditar 15 minutos después de despertarte, los pasos a las 18 y el agua a las 16
+(si todavía faltan: lo hecho no avisa) y entrenar a las 17:30. Dormir enciende el
+aviso de la hora de dormir; lo de la comida va con el horario de comidas. El
+permiso se pide al elegirlos, y cada aviso se cambia o se saca en su hábito.
+
+## El horario de comidas
+
+Cada comida elegida avisa a su hora (de a un cuarto de hora, entre las 5 y las
+23:45), si todavía no se anotó: «Hora del almuerzo». Si hay un plan para esa
+comida, dice qué toca: «Hora del almuerzo: pollo a la plancha, arroz». Arranca
+con el desayuno, el almuerzo y la cena a la hora en que se suelen anotar. Con
+horario, el aviso de «sin anotar» de esa comida cuenta desde esta hora.
+
+## Pesarse
+
+Al rato de despertarse (10 minutos; sin noches, a las 8), antes de desayunar: el
+día del control o todos los días. Si ya te pesaste, no suena. El día del control
+dice que Moss ajusta la meta.
+
+## Las comidas sin anotar
 
 Las que elijas, un rato después de tu hora de siempre (45 minutos, no después de
 las 23:30), y solo si esa comida no está anotada. Si no abrís Moss en una semana,
@@ -45,14 +70,20 @@ paran solas.
 
 - **Juntos:** lo que cae a 20 minutos o menos del primero de un grupo suena con
   él, a su hora: nada llega tarde y entre dos sonidos hay más de 20 minutos.
-- **El máximo** cuenta las veces que suena (2, 3, 4 o 6 por día; 4 de fábrica).
-  Si sobran, quedan primero el de dormir, después los de hábitos y al final los
-  de comidas, que casi siempre ya se anotaron.
+- **El máximo** cuenta las veces que suena (2, 3, 4, 6 u 8 por día; 6 de
+  fábrica, para que el horario de comidas no deje sin lugar a los hábitos). Si
+  sobran, quedan primero el de dormir, después los de hábitos, el horario y
+  pesarse, y al final los de comidas sin anotar, que casi siempre ya se anotaron.
 - **El plan de cada día** sale de lo elegido y de las horas de siempre, no de lo
   ya hecho: al reprogramar (cada vez que se abre Moss o cambia algo) lo que ya
   sonó no vuelve a sonar y el máximo no se pasa.
 - **Las horas son de reloj:** un cambio de hora no corre nada. La noche es del
   día en que empieza (un aviso a las 0:15 es de la noche anterior).
+
+## Al tocarlo
+
+Tocar un aviso abre lo suyo: el horario y las comidas, la hoja para anotar esa
+comida; pesarse, el peso del «+»; dormir, Sueño; un hábito, el cielo de Hábitos.
 
 ## Lo que queda
 

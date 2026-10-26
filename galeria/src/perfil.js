@@ -19,7 +19,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, avisos: { dormir: false, antes: 30, comidas: [], maximo: 4 } };
+    const s = { abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, avisos: { dormir: false, antes: 30, comidas: [], maximo: 6, horario: {}, pesarse: false, todos: false } };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -121,11 +121,36 @@ const SeccionPerfil = (() => {
       };
       bloque(tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: '23:20' }), a.dormir, (v) => { a.dormir = v; },
         chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
+      // El horario de comidas: cada comida elegida, con su hora de a un cuarto de hora (como Perfil.tsx).
+      const HORAS = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
+      const reloj = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+      const filas = el('div', 'pf-horario');
+      ['desayuno', 'almuerzo', 'merienda', 'cena'].forEach((c) => {
+        const fila = el('div', 'pf-horario-fila');
+        const elegida = a.horario[c] !== undefined;
+        const chip = boton('fi-porcion', `<span>${tx('comida.comidas.' + c)}</span>`, () => {
+          if (elegida) delete a.horario[c]; else a.horario[c] = HORAS[c];
+          pintarAvisos(); pintar();
+        });
+        chip.setAttribute('aria-pressed', String(elegida));
+        fila.appendChild(chip);
+        if (elegida) {
+          const mover = (dm) => { a.horario[c] = Math.min(23 * 60 + 45, Math.max(5 * 60, a.horario[c] + dm)); pintarAvisos(); };
+          const pasos = el('div', 'fi-stepper pf-horario-pasos');
+          pasos.append(boton('fi-paso', icono('menos'), () => mover(-15), '−15'), el('b', 'fi-valor', reloj(a.horario[c])), boton('fi-paso', icono('mas'), () => mover(15), '+15'));
+          fila.appendChild(pasos);
+        }
+        filas.appendChild(fila);
+      });
+      bloque(tx('perfil.avisos.horario'), tx('perfil.avisos.horarioTexto'), Object.keys(a.horario).length > 0,
+        (v) => { a.horario = v ? { desayuno: HORAS.desayuno, almuerzo: HORAS.almuerzo, cena: HORAS.cena } : {}; }, filas);
+      bloque(tx('perfil.avisos.pesarse'), tx('perfil.avisos.pesarseTexto'), a.pesarse, (v) => { a.pesarse = v; },
+        chips([false, true], (todos) => tx(todos ? 'perfil.avisos.pesarseTodos' : 'perfil.avisos.pesarseControl'), (todos) => a.todos === todos, (todos) => { a.todos = todos; }));
       bloque(tx('perfil.recordatoriosLlave'), tx('perfil.recordatoriosTexto'), a.comidas.length > 0, (v) => { a.comidas = v ? ['desayuno', 'almuerzo', 'cena'] : []; },
         chips(['desayuno', 'almuerzo', 'merienda', 'cena'], (c) => tx('comida.comidas.' + c), (c) => a.comidas.includes(c),
           (c) => { a.comidas = a.comidas.includes(c) ? a.comidas.filter((x) => x !== c) : [...a.comidas, c]; }));
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.maximo')));
-      cuerpo.appendChild(chips([2, 3, 4, 6], String, (n) => a.maximo === n, (n) => { a.maximo = n; }));
+      cuerpo.appendChild(chips([2, 3, 4, 6, 8], String, (n) => a.maximo === n, (n) => { a.maximo = n; }));
       cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoTexto')));
       h.append(cab, cuerpo);
       cuerpo.scrollTop = arriba;
@@ -174,7 +199,7 @@ const SeccionPerfil = (() => {
         ['perfil.unidades', tx('perfil.metrico'), true],
         ['perfil.idioma', u.idioma() === 'es' ? 'Español' : 'English', true],
         ['perfil.calidad', tx('perfil.alta'), true],
-        ['perfil.recordatorios', tx(s.avisos.dormir || s.avisos.comidas.length ? 'perfil.encendidos' : 'perfil.apagados'), true, null, abrirAvisos],
+        ['perfil.recordatorios', tx(s.avisos.dormir || s.avisos.comidas.length || Object.keys(s.avisos.horario).length || s.avisos.pesarse ? 'perfil.encendidos' : 'perfil.apagados'), true, null, abrirAvisos],
         // Ocultar los números: sin calorías ni gramos, solo las figuras y las barras.
         ['perfil.numeros', tx(s.numeros ? 'perfil.visibles' : 'perfil.ocultos'), true, null, () => { s.numeros = !s.numeros; opciones.alNumeros(s.numeros); pintar(); }, 'perfil.numerosTexto'],
       ]);

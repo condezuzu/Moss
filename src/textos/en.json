@@ -1106,7 +1106,13 @@
       "dormirSinDatos": "A little before the time to go to bed: the one that lets you sleep what you need. Moss needs to know when you wake up: a few nights is enough.",
       "antes": "{n} min before",
       "maximo": "At most per day",
-      "maximoTexto": "Reminders that fall close together ring together, and never more than this a day. If there are too many, bedtime and your habits come first. Each habit's reminder is set in the habit."
+      "maximoTexto": "Reminders that fall close together ring together, and never more than this a day. If there are too many, bedtime and your habits come first. Each habit's reminder is set in the habit.",
+      "horario": "Meal times",
+      "horarioTexto": "A reminder at each meal time, to keep your meals on schedule. If you already logged it, it stays quiet; with a plan, it says what’s next.",
+      "pesarse": "Morning weigh-in",
+      "pesarseTexto": "Right after you wake up, before breakfast: the trend comes from weighing the same way. If you already weighed in, it stays quiet.",
+      "pesarseControl": "Check-in day",
+      "pesarseTodos": "Every day"
     },
     "cambiarCuenta": "Switch account",
     "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account."
@@ -1502,7 +1508,8 @@
       "despues": "Later you can add, change or archive each one.",
       "leer": "Read 20 pages",
       "entrenar": "Work out",
-      "escribir": "Journal"
+      "escribir": "Journal",
+      "avisos": "Each one comes with a reminder at the time it helps most, and it stays quiet once done. Change or remove it in the habit."
     },
     "mes": {
       "titulo": "Your month",
@@ -1554,6 +1561,16 @@
   "recordatorios": {
     "cuerpo": "When you can, log your {comida}.",
     "dormir": "Bed at {hora}: that way you sleep what you need.",
-    "habito": "{habito}, when you can."
+    "habito": "{habito}, when you can.",
+    "horario": {
+      "desayuno": "Time for breakfast",
+      "almuerzo": "Time for lunch",
+      "merienda": "Time for your afternoon snack",
+      "cena": "Time for dinner",
+      "snack": "Time for your snack"
+    },
+    "conPlan": "{hora}: {plan}.",
+    "pesarse": "Good time to weigh in, before breakfast.",
+    "pesarseControl": "Check-in day: weigh in before breakfast and Moss adjusts your target."
   }
 }

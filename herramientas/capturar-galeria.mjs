@@ -906,6 +906,13 @@ const pasos = {
     await pagina.evaluate(() => window.__seccion('avisos'));
     await pagina.waitForTimeout(900);
     await foto('avisos-perfil');
+    // El horario de comidas (lo pediste el 26/10) y pesarse, encendidos.
+    await pagina.getByRole('button', { name: 'Horario de comidas' }).click();
+    await pagina.getByRole('button', { name: 'Pesarme a la mañana' }).click();
+    await pagina.waitForTimeout(600);
+    await foto('avisos-horario');
+    await pagina.getByRole('button', { name: 'Horario de comidas' }).click();
+    await pagina.getByRole('button', { name: 'Pesarme a la mañana' }).click();
     await habitos('nuevo');
     await habitos('como', 'manual');
     await habitos('escribir', 'Estirar');

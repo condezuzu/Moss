@@ -16,7 +16,7 @@ import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
-import { horaDeReloj, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
+import { horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
 import { horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
 import { lista, t } from '@/textos';
@@ -255,11 +255,15 @@ function CalidadDelCielo({ elegida, alCerrar }: { elegida: Calidad | null; alCer
 const COMIDAS_QUE_AVISAN: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 
 const MINUTOS_ANTES_DE_DORMIR = [15, 30, 45, 60] as const;
-const MAXIMOS_POR_DIA = [2, 3, 4, 6] as const;
+const MAXIMOS_POR_DIA = [2, 3, 4, 6, 8] as const;
+/** El horario de comidas se mueve de a un cuarto de hora. */
+const CUARTO = 15;
+const aCuarto = (m: number) => Math.round(m / CUARTO) * CUARTO;
 
 /**
- * Los avisos (lo pediste el 22/10): la hora de dormir, como Rise; las comidas que avisan si no se
- * anotaron; y cuántos como mucho por día. Los de cada hábito se eligen en el hábito.
+ * Los avisos (lo pediste el 22/10): la hora de dormir, como Rise; el horario de comidas, para comer
+ * ordenado; pesarse a la mañana; las comidas que avisan si no se anotaron; y cuántos como mucho por
+ * día. Los de cada hábito se eligen en el hábito.
  */
 function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const comidas = e.recordatorios;
@@ -286,6 +290,24 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const sueno = suenoParaAvisos(e);
   const estaNoche = sueno ? horasDeSueno(e.hoy, sueno).dormir : null;
   const maximo = e.avisos.maximoPorDia ?? MAXIMO_POR_DIA;
+  // El horario arranca con las comidas de siempre, a la hora en que se suelen anotar.
+  const horario = e.avisos.horario ?? {};
+  const conHorario = Object.keys(horario).length > 0;
+  const horaDe = horasDeComida(e);
+  const encenderHorario = (si: boolean) => {
+    if (!si) elAlmacen().ponerAvisos({ horario: undefined });
+    else conPermiso(() => elAlmacen().ponerAvisos({ horario: { desayuno: aCuarto(horaDe('desayuno')), almuerzo: aCuarto(horaDe('almuerzo')), cena: aCuarto(horaDe('cena')) } }));
+  };
+  const ponerHora = (c: Comida, minutos: number | null) => {
+    const { [c]: _sacada, ...resto } = horario;
+    const nuevo = minutos === null ? resto : { ...resto, [c]: Math.min(23 * 60 + 45, Math.max(5 * 60, minutos)) };
+    elAlmacen().ponerAvisos({ horario: Object.keys(nuevo).length ? nuevo : undefined });
+  };
+  const pesarse = e.avisos.pesarse;
+  const encenderPesarse = (si: boolean) => {
+    if (!si) elAlmacen().ponerAvisos({ pesarse: { encendido: false, todos: pesarse?.todos } });
+    else conPermiso(() => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: pesarse?.todos } }));
+  };
   const alternar = (c: Comida) => {
     const lista = comidas ?? [];
     const nueva = lista.includes(c) ? lista.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || lista.includes(x));
@@ -310,6 +332,53 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
             {MINUTOS_ANTES_DE_DORMIR.map((n) => (
               <Pastilla key={n} texto={t('perfil.avisos.antes', { n })} elegida={(dormir.antes ?? 30) === n} alTocar={() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: n } })} />
             ))}
+          </View>
+        </Aparece>
+      )}
+      <View style={st.llave}>
+        <Text style={st.llaveTexto}>{t('perfil.avisos.horario')}</Text>
+        <Switch
+          value={conHorario}
+          onValueChange={encenderHorario}
+          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+          thumbColor={colores.pergamino}
+          accessibilityLabel={t('perfil.avisos.horario')}
+        />
+      </View>
+      <Parrafo chico>{t('perfil.avisos.horarioTexto')}</Parrafo>
+      {conHorario && (
+        <Aparece style={st.horario}>
+          {COMIDAS_QUE_AVISAN.map((c) => {
+            const minutos = horario[c];
+            return (
+              <View key={c} style={st.horarioFila}>
+                <Pastilla texto={t(`comida.comidas.${c}`)} elegida={minutos !== undefined} alTocar={() => ponerHora(c, minutos !== undefined ? null : aCuarto(horaDe(c)))} />
+                {minutos !== undefined && (
+                  <Aparece>
+                    <Pasos valor={horaDeReloj(minutos)} alBajar={() => ponerHora(c, minutos - CUARTO)} alSubir={() => ponerHora(c, minutos + CUARTO)} />
+                  </Aparece>
+                )}
+              </View>
+            );
+          })}
+        </Aparece>
+      )}
+      <View style={st.llave}>
+        <Text style={st.llaveTexto}>{t('perfil.avisos.pesarse')}</Text>
+        <Switch
+          value={!!pesarse?.encendido}
+          onValueChange={encenderPesarse}
+          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+          thumbColor={colores.pergamino}
+          accessibilityLabel={t('perfil.avisos.pesarse')}
+        />
+      </View>
+      <Parrafo chico>{t('perfil.avisos.pesarseTexto')}</Parrafo>
+      {!!pesarse?.encendido && (
+        <Aparece>
+          <View style={st.comidas}>
+            <Pastilla texto={t('perfil.avisos.pesarseControl')} elegida={!pesarse.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true } })} />
+            <Pastilla texto={t('perfil.avisos.pesarseTodos')} elegida={!!pesarse.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: true } })} />
           </View>
         </Aparece>
       )}
@@ -391,6 +460,8 @@ const st = StyleSheet.create({
   llave: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 6 },
   llaveTexto: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   comidas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  horario: { gap: 8, marginBottom: 6 },
+  horarioFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 46 },
   pasos: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)' },
   paso: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   pasoValor: { minWidth: 96, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino, fontVariant: ['tabular-nums'] },

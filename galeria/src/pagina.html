@@ -422,6 +422,9 @@ section.item p { margin: 0; max-width: 64ch; }
 .pf-aviso-fila b { font: 400 15.5px/1.2 var(--texto); color: var(--tinta); }
 .pf-aviso .pf-nota { margin: 8px 0 0; }
 .pf-aviso-chips { margin: 12px 0 8px; animation: cm-entra 0.35s ease both; }
+.pf-horario { display: grid; gap: 8px; margin: 12px 0 8px; animation: cm-entra 0.35s ease both; }
+.pf-horario-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 46px; }
+.pf-horario-pasos { animation: cm-entra 0.3s ease both; }
 .hh-aviso { animation: cm-entra 0.35s ease both; }
 .hh-aviso-dias { margin-top: 10px; }
 .hh-aviso-mensaje { margin-top: 10px; }
@@ -1606,7 +1609,7 @@ section.item p { margin: 0; max-width: 64ch; }
   .vt-plegable, .vt-pista i, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
   .ent-aviso, .ent-llave i, .ent-llave i::after { transition: none; }
   .cm-armar-dia { transition: opacity 0.2s; }
-  .pf-aviso-chips, .hh-aviso { animation: none; }
+  .pf-aviso-chips, .pf-horario, .pf-horario-pasos, .hh-aviso { animation: none; }
   .pf-sub, .pg-limite, .ent-lista-datos li { animation: none; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */

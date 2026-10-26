@@ -6,7 +6,7 @@
 import type { Calidad } from '@/cielo/mundo';
 import type { Constelacion } from '@/datos/catalogo';
 import type { Sistema } from '@/dominio/cantidades';
-import { COMIDAS, type Comida } from '@/dominio/comidas';
+import { COMIDAS, HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
@@ -163,6 +163,12 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     if (dormir && typeof dormir.encendido === 'boolean') avisos.dormir = { encendido: dormir.encendido, ...(Number.isFinite(dormir.antes) ? { antes: dormir.antes } : {}) };
     if (Array.isArray(x.habitos)) avisos.habitos = (x.habitos as AvisoDeHabito[]).filter((a) => a && typeof a.habito === 'string' && a.cuando && typeof a.cuando.tipo === 'string' && Array.isArray(a.dias));
     if (typeof x.maximoPorDia === 'number' && x.maximoPorDia >= 0) avisos.maximoPorDia = x.maximoPorDia;
+    if (x.horario && typeof x.horario === 'object') {
+      const horario = Object.fromEntries(Object.entries(x.horario as Record<string, unknown>).filter(([c, m]) => c in HORA_TIPICA && typeof m === 'number' && m >= 0 && m < 1440));
+      if (Object.keys(horario).length) avisos.horario = horario as AjustesDeAvisos['horario'];
+    }
+    const pesarse = x.pesarse as AjustesDeAvisos['pesarse'];
+    if (pesarse && typeof pesarse.encendido === 'boolean') avisos.pesarse = { encendido: pesarse.encendido, ...(pesarse.todos ? { todos: true } : {}) };
     return avisos;
   } catch {
     return {};
@@ -509,11 +515,13 @@ export function crearAlmacen(op: Opciones) {
      * Los primeros hábitos, apenas termina la entrada: los que había (los de ejemplo) se archivan y
      * quedan los elegidos, desde hoy y en ese orden. Arman la primera constelación.
      */
-    elegirPrimerosHabitos(elegidos: Pick<Habito, 'nombre' | 'icono' | 'dias' | 'fuente'>[]) {
+    /** Devuelve los hábitos nuevos, en el orden en que llegaron: así se les ponen sus avisos. */
+    elegirPrimerosHabitos(elegidos: Pick<Habito, 'nombre' | 'icono' | 'dias' | 'fuente'>[]): Habito[] {
       const ahora = momento();
       const viejos = estado.habitos.map((h) => (h.hasta && h.hasta < estado.hoy ? h : { ...archivar(h, estado.hoy), actualizado: ahora }));
       const nuevos = elegidos.map((d, i): Habito => ({ ...d, id: nuevoId(), orden: i, desde: estado.hoy, actualizado: ahora }));
       cambiarHabitos([...viejos, ...nuevos]);
+      return nuevos;
     },
     /**
      * El final de la entrada: guarda las respuestas, el peso de hoy y la meta de arranque.

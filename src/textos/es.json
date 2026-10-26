@@ -1106,7 +1106,13 @@
       "dormirSinDatos": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitas. Hace falta saber a qué hora te despiertas: con unas noches alcanza.",
       "antes": "{n} min antes",
       "maximo": "Como mucho por día",
-      "maximoTexto": "Lo que cae cerca suena junto, y nunca más que esto por día. Si sobran, quedan primero el de dormir y los de tus hábitos. Los de cada hábito se eligen en el hábito."
+      "maximoTexto": "Lo que cae cerca suena junto, y nunca más que esto por día. Si sobran, quedan primero el de dormir y los de tus hábitos. Los de cada hábito se eligen en el hábito.",
+      "horario": "Horario de comidas",
+      "horarioTexto": "Te avisa a la hora de cada comida, para comer ordenado. Si ya la anotaste, no suena; si tienes un plan, dice qué toca.",
+      "pesarse": "Pesarme a la mañana",
+      "pesarseTexto": "Al rato de despertarte, antes de desayunar: la tendencia sale de pesarte siempre igual. Si ya te pesaste, no suena.",
+      "pesarseControl": "El día del control",
+      "pesarseTodos": "Todos los días"
     },
     "cambiarCuenta": "Cambiar de cuenta",
     "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta."
@@ -1502,7 +1508,8 @@
       "despues": "Después puedes sumar, cambiar o archivar cada uno.",
       "leer": "Leer 20 páginas",
       "entrenar": "Entrenar",
-      "escribir": "Escribir"
+      "escribir": "Escribir",
+      "avisos": "Cada uno llega con un aviso a la hora en que más ayuda, y no suena si ya está hecho. Lo cambias o lo sacas en el hábito."
     },
     "mes": {
       "titulo": "Tu mes",
@@ -1554,6 +1561,16 @@
   "recordatorios": {
     "cuerpo": "Cuando puedas, anota tu {comida}.",
     "dormir": "A la cama a las {hora}: así duermes lo que necesitas.",
-    "habito": "{habito}, cuando puedas."
+    "habito": "{habito}, cuando puedas.",
+    "horario": {
+      "desayuno": "Hora del desayuno",
+      "almuerzo": "Hora del almuerzo",
+      "merienda": "Hora de la merienda",
+      "cena": "Hora de la cena",
+      "snack": "Hora del snack"
+    },
+    "conPlan": "{hora}: {plan}.",
+    "pesarse": "Buen momento para pesarte, antes de desayunar.",
+    "pesarseControl": "Hoy es el control: pésate antes de desayunar y Moss ajusta tu meta."
   }
 }

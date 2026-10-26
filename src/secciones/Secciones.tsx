@@ -17,12 +17,13 @@ import PantallaDelCielo from '@/cielo/PantallaDelCielo';
 import { t } from '@/textos';
 import { colores } from '@/tema';
 import { CONEXION_CON_ASCENT } from '@/lib/ascent';
+import { useAlTocarUnAviso } from '@/recordatorios/programar';
 import { Ascent } from './Ascent';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
 import { AvisoFlotante, Icono } from './comida/comunes';
 import { HojaRegistro } from './comida/HojaRegistro';
-import { quitarAviso, useAviso, useRegistro } from './comida/registro';
+import { abrirRegistro, quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { Entrada } from './entrada/Entrada';
 import { EditorDeHabito } from './habitos/Editor';
 import { Mes } from './habitos/Mes';
@@ -116,6 +117,13 @@ export default function Secciones() {
     hoja.set(subirOBajar(hoja.get(), 0));
     setHojaAbierta(false);
   };
+
+  // Tocar un aviso lleva a lo suyo: anotar esa comida, el cielo de Hábitos, el peso o el sueño.
+  useAlTocarUnAviso((a) => {
+    if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida });
+    else if (a.tipo === 'pesarse') abrirHoja('peso');
+    else ir(a.tipo === 'dormir' ? PESTANAS.indexOf('sueno') : HABITOS);
+  });
 
   const tira = usePanGesture({
     enabled: deslizable,

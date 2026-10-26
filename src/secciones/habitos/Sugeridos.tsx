@@ -8,6 +8,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
+import { avisoDeFabrica } from '@/dominio/avisos';
+import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
 import type { Fuente } from '@/dominio/habitos';
 import { t } from '@/textos';
@@ -17,7 +19,7 @@ import { HojaModal } from '../HojaModal';
 import { Aparece, Parrafo } from '../tarjetas';
 import { habitoSugerido, nombreDe } from './Editor';
 
-type Sugerido = { clave: string; fuente: Fuente; icono: SFSymbol; nombre?: () => string; dias?: DiaSemana[] };
+type Sugerido = { clave: string; fuente: Fuente; icono: SFSymbol; nombre?: () => string; dias?: DiaSemana[]; manual?: 'leer' | 'escribir' | 'entrenar' };
 
 const SUGERIDOS: readonly Sugerido[] = [
   { clave: 'proteina', fuente: { tipo: 'comida', meta: 'proteina' }, icono: 'fork.knife' },
@@ -27,9 +29,9 @@ const SUGERIDOS: readonly Sugerido[] = [
   { clave: 'pasos', fuente: { tipo: 'salud', dato: 'pasos', meta: 8000 }, icono: 'figure.walk' },
   { clave: 'agua', fuente: { tipo: 'salud', dato: 'agua', meta: 2000 }, icono: 'drop' },
   { clave: 'meditar', fuente: { tipo: 'salud', dato: 'mindfulness', meta: 10 }, icono: 'figure.mind.and.body' },
-  { clave: 'leer', fuente: { tipo: 'manual' }, icono: 'book', nombre: () => t('habitos.sugeridos.leer'), dias: [1, 2, 3, 4, 5] },
-  { clave: 'entrenar', fuente: { tipo: 'manual' }, icono: 'dumbbell', nombre: () => t('habitos.sugeridos.entrenar'), dias: [1, 3, 5] },
-  { clave: 'escribir', fuente: { tipo: 'manual' }, icono: 'pencil', nombre: () => t('habitos.sugeridos.escribir') },
+  { clave: 'leer', fuente: { tipo: 'manual' }, icono: 'book', nombre: () => t('habitos.sugeridos.leer'), dias: [1, 2, 3, 4, 5], manual: 'leer' },
+  { clave: 'entrenar', fuente: { tipo: 'manual' }, icono: 'dumbbell', nombre: () => t('habitos.sugeridos.entrenar'), dias: [1, 3, 5], manual: 'entrenar' },
+  { clave: 'escribir', fuente: { tipo: 'manual' }, icono: 'pencil', nombre: () => t('habitos.sugeridos.escribir'), manual: 'escribir' },
 ];
 const DE_FABRICA = ['proteina', 'registrar', 'dormir', 'pasos'];
 const MINIMO = 3;
@@ -42,10 +44,20 @@ export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
   };
   const armar = () => {
     // En el orden de la lista: la comida primero, en las estrellas más brillantes.
-    const lista = SUGERIDOS.filter((s) => elegidos.includes(s.clave)).map((s) => habitoSugerido(s.fuente, s.icono, s.nombre?.(), s.dias));
-    elAlmacen().elegirPrimerosHabitos(lista);
+    const sugeridos = SUGERIDOS.filter((s) => elegidos.includes(s.clave));
+    const nuevos = elAlmacen().elegirPrimerosHabitos(sugeridos.map((s) => habitoSugerido(s.fuente, s.icono, s.nombre?.(), s.dias)));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     alCerrar();
+    // Cada uno llega con su aviso, y dormir con el de la hora de dormir: con permiso, se ponen solos.
+    pedirPermisoDeAvisos().then((ok) => {
+      if (!ok) return;
+      const a = elAlmacen();
+      sugeridos.forEach((s, i) => {
+        const cuando = avisoDeFabrica(s.fuente, s.manual);
+        if (cuando && nuevos[i]) a.ponerAvisoDeHabito(nuevos[i].id, { cuando, dias: [] });
+      });
+      if (sugeridos.some((s) => s.clave === 'dormir') && !a.estado().avisos.dormir) a.ponerAvisos({ dormir: { encendido: true, antes: 30 } });
+    }).catch(() => {});
   };
   const listos = elegidos.length >= MINIMO;
   return (
@@ -77,6 +89,7 @@ export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
           );
         })}
       </View>
+      <Parrafo chico>{t('habitos.sugeridos.avisos')}</Parrafo>
       <Parrafo chico>{t('habitos.sugeridos.despues')}</Parrafo>
     </HojaModal>
   );
