@@ -42,7 +42,7 @@ SDK y la memoria no alcanza.
 - **La galería usa la lógica de la app tal cual**: `construir.mjs` pasa a
   JavaScript los módulos que usa, con los alimentos curados de
   `assets/alimentos.db`:
-  - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada, y `recetaDeTexto.ts`, que usa `porciones.ts`;
+  - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada, `recetaDeTexto.ts`, que usa `porciones.ts`, y `frase.ts`, que usa los dos;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `micronutrientes.ts`, `dejaElDia.ts`, `control.ts`,
     `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts`,
     `musculos.ts`, `rendimiento.ts`, `estadisticas.ts` y `plan.ts`, que solo importan entre ellos
@@ -171,6 +171,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/plan.md](spec/plan.md) | las etapas hasta la v1 y en qué etapa estamos |
 | [spec/decisiones.md](spec/decisiones.md) | decisiones: primero las pendientes |
 | [spec/nutricion.md](spec/nutricion.md) | la comida, el centro de la app: la base de datos y los nombres, la búsqueda, los flujos de registro con sus toques, los escáneres, las metas |
+| [spec/registrar-rapido.md](spec/registrar-rapido.md) | registrar más rápido: cómo lo hacen las otras apps, la voz en el iPhone sin costo y cómo entender la frase sin nube, con sus fuentes |
 | [spec/progreso.md](spec/progreso.md) | Progreso: el peso, las medidas y la grasa corporal con cinta, el progreso al objetivo, el balance y la estrategia con el día del control |
 | [spec/sueno.md](spec/sueno.md) | Sueño: lo que trae Salud, las reglas para que sea confiable, la calidad, la deuda, la regularidad, lo del reloj y cómo se estima la noche sin reloj |
 | [spec/aparatos.md](spec/aparatos.md) | relojes y anillos: qué escribe cada marca en Salud, el orden de las fuentes, el mismo sueño desde dos fuentes y las conexiones directas |
@@ -195,7 +196,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
 | `supabase/functions/` | las funciones de Moss en el servidor: `moss-borrar-cuenta` revoca Sign in with Apple y borra la cuenta (cómo desplegarla, en su README; se prueba con `node herramientas/probar-borrar-cuenta.mjs`) |
 | `modules/` | los módulos nativos propios: `movimiento` (el historial de movimiento, para la noche sin reloj), `leer-etiqueta` (Vision) y `respaldo` (saca la carpeta de SQLite de la copia de seguridad) |
-| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final) y Open Food Facts por código de barras (`off.ts`) |
+| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final), el de la comida dicha de una vez (`frase.ts`) y lo dicho en alimentos de la base, con sus preguntas (`entender.ts`) y Open Food Facts por código de barras (`off.ts`) |
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/salud/` | Salud: los permisos, lo que llena el cuestionario y la lectura de cada día (`leer.ts`, con `convertir.ts` puro y con tests) |

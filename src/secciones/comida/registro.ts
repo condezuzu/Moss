@@ -7,7 +7,7 @@ import type { Comida } from '@/dominio/comidas';
 import type { ClaveDia } from '@/dominio/fechas';
 import type { Item } from '@/dominio/registros';
 
-export type Panel = 'revision' | 'rapida' | 'guardadas' | 'crear' | 'receta' | 'pegar' | 'codigo' | 'etiqueta';
+export type Panel = 'revision' | 'rapida' | 'guardadas' | 'crear' | 'receta' | 'pegar' | 'codigo' | 'etiqueta' | 'decir';
 
 export type Pedido = {
   /** Sin comida, la de la hora. */

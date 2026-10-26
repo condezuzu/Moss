@@ -29,7 +29,7 @@ const leer = (texto: string): number | null => {
   return Number.isFinite(n) && n >= 0 ? n : null;
 };
 
-function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number }) {
+export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number }) {
   return (
     <Animated.View entering={ENTRA_PANEL} exiting={SALE_PANEL} style={estilos.panel}>
       <View style={estilos.cabeza}>

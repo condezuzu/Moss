@@ -161,11 +161,31 @@ qué se mira:
   (still, walking or driving) to estimate when you fell asleep and woke up. That
   activity never leaves your phone: only the estimated times are saved.»
 
+### NSMicrophoneUsageDescription y NSSpeechRecognitionUsageDescription (decir la comida) — nuevos
+
+Desde el 26/10, «Decir lo que comí» escucha con el reconocimiento de voz del
+iPhone, **solo en el teléfono** (`requiresOnDeviceRecognition`): el audio no se
+guarda ni sale de ahí. Se piden al tocar el micrófono. Van en las opciones de
+`expo-speech-recognition` y de `expo-camera` y `expo-image-picker` (si quedan en
+`false` en esos dos, borran la clave del micrófono y la app se cierra al pedirlo)
+y en los dos `locales`:
+
+- **es:** «Moss usa el micrófono solo mientras dices lo que comiste, para
+  anotarlo. El audio se procesa en el teléfono y no se guarda.» / «Moss convierte
+  en texto, en el teléfono, lo que dices de tu comida para anotarlo. No se guarda
+  ni sale del teléfono.»
+- **en:** «Moss uses the microphone only while you say what you ate, to log it.
+  The audio is processed on your phone and never saved.» / «Moss turns what you
+  say about your meal into text, on your phone, to log it. It is never saved or
+  sent anywhere.»
+
+En las respuestas de privacidad no cambia nada: el audio y el texto no se
+recolectan (no salen del teléfono).
+
 ### Lo que no necesita texto
 
-Los avisos (se piden al prender Recordatorios), la fototeca (no se usa: la foto
-es solo con la cámara) y el micrófono (apagado en los dos plugins). Ninguno
-falta.
+Los avisos (se piden al prender Recordatorios o al elegir los primeros hábitos)
+y la fototeca (no se usa: la foto es solo con la cámara). Ninguno falta.
 
 ## c) Guía por guía
 

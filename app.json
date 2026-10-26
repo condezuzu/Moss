@@ -78,7 +78,7 @@
         "expo-camera",
         {
           "cameraPermission": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono.",
-          "microphonePermission": false,
+          "microphonePermission": "Moss usa el micrófono solo mientras dices lo que comiste, para anotarlo. El audio se procesa en el teléfono y no se guarda.",
           "recordAudioAndroid": false
         }
       ],
@@ -87,10 +87,18 @@
         {
           "photosPermission": false,
           "cameraPermission": "Moss usa la cámara para leer el código de barras y la etiqueta de lo que comes, y para la foto de una comida si quieres sacarla. Las fotos no salen del teléfono.",
-          "microphonePermission": false
+          "microphonePermission": "Moss usa el micrófono solo mientras dices lo que comiste, para anotarlo. El audio se procesa en el teléfono y no se guarda."
         }
       ],
-      "expo-image"
+      "expo-image",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Moss usa el micrófono solo mientras dices lo que comiste, para anotarlo. El audio se procesa en el teléfono y no se guarda.",
+          "speechRecognitionPermission": "Moss convierte en texto, en el teléfono, lo que dices de tu comida para anotarlo. No se guarda ni sale del teléfono.",
+          "androidSpeechServicePackages": []
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

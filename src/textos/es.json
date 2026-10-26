@@ -516,6 +516,34 @@
       "merienda": "Tu merienda de siempre",
       "cena": "Tu cena de siempre",
       "snack": "Tu snack de siempre"
+    },
+    "decir": {
+      "titulo": "Decir lo que comí",
+      "ayuda": "Toca el micrófono y di todo junto: «dos huevos revueltos, una tostada con manteca y un café con leche».",
+      "ayudaTeclado": "Escribe todo junto, o usa el micrófono del teclado: «dos huevos revueltos, una tostada con manteca y un café con leche».",
+      "teEscucho": "Te escucho… Cuando termines, toca de nuevo o haz una pausa.",
+      "ejemplo": "Dos huevos revueltos, una tostada con manteca y un café con leche",
+      "hablar": "Hablar",
+      "parar": "Terminar",
+      "entender": "Entender",
+      "entendiendo": "Entendiendo…",
+      "nada": "No encontré ningún alimento. Prueba diciéndolo de otra manera, o búscalo.",
+      "supuesto": "cantidad supuesta",
+      "noEncontre": "No encontré «{que}»",
+      "buscar": "Buscarlo",
+      "todoJunto": "Anotar todo junto",
+      "cual": "¿Qué {que}?",
+      "cuanto": "¿Qué cantidad de {que}?",
+      "crudo": "¿Los {gramos} g son crudos o cocidos?",
+      "anotado": {
+        "uno": "{n} alimento anotado {comida}",
+        "otros": "{n} alimentos anotados {comida}"
+      },
+      "error": {
+        "permiso": "Para escucharte, Moss necesita el micrófono y el reconocimiento de voz: actívalos en los Ajustes del iPhone. Mientras, puedes escribir.",
+        "idioma": "Tu iPhone no reconoce este idioma sin conexión. Usa el micrófono del teclado: también funciona.",
+        "otro": "No pude escucharte. Prueba de nuevo, o escríbelo."
+      }
     }
   },
   "inicio": {
@@ -575,7 +603,9 @@
     "tendencia": "Tendencia: {peso}",
     "pesoNota": "Con una balanza conectada a Salud, el peso llega solo. Moss usa la tendencia, no el número de un día.",
     "pesoGuardado": "Peso guardado: {peso}",
-    "pronto": "Esto llega pronto a la app."
+    "pronto": "Esto llega pronto a la app.",
+    "decir": "Decir lo que comí",
+    "decirDetalle": "Todo de una vez, hablando o escribiendo"
   },
   "cuerpo": {
     "sitios": {

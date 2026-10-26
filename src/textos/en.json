@@ -516,6 +516,34 @@
       "merienda": "Your usual afternoon snack",
       "cena": "Your usual dinner",
       "snack": "Your usual snack"
+    },
+    "decir": {
+      "titulo": "Say what I ate",
+      "ayuda": "Tap the microphone and say it all at once: “two scrambled eggs, a toast with butter and a coffee with milk.”",
+      "ayudaTeclado": "Type it all at once, or use the keyboard’s microphone: “two scrambled eggs, a toast with butter and a coffee with milk.”",
+      "teEscucho": "Listening… When you’re done, tap again or pause.",
+      "ejemplo": "Two scrambled eggs, a toast with butter and a coffee with milk",
+      "hablar": "Speak",
+      "parar": "Done",
+      "entender": "Understand",
+      "entendiendo": "Understanding…",
+      "nada": "I couldn’t find any food. Try saying it another way, or search for it.",
+      "supuesto": "assumed amount",
+      "noEncontre": "Couldn’t find “{que}”",
+      "buscar": "Search for it",
+      "todoJunto": "Log it all at once",
+      "cual": "Which {que}?",
+      "cuanto": "How much {que}?",
+      "crudo": "Are the {gramos} g raw or cooked?",
+      "anotado": {
+        "uno": "{n} food logged {comida}",
+        "otros": "{n} foods logged {comida}"
+      },
+      "error": {
+        "permiso": "To hear you, Moss needs the microphone and speech recognition: turn them on in iPhone Settings. Meanwhile, you can type.",
+        "idioma": "Your iPhone can’t recognize this language offline. Use the keyboard’s microphone: it works too.",
+        "otro": "I couldn’t hear you. Try again, or type it."
+      }
     }
   },
   "inicio": {
@@ -575,7 +603,9 @@
     "tendencia": "Trend: {peso}",
     "pesoNota": "With a scale connected to Health, your weight comes in on its own. Moss uses the trend, not one day’s number.",
     "pesoGuardado": "Weight saved: {peso}",
-    "pronto": "This is coming soon to the app."
+    "pronto": "This is coming soon to the app.",
+    "decir": "Say what I ate",
+    "decirDetalle": "All at once, speaking or typing"
   },
   "cuerpo": {
     "sitios": {

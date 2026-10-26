@@ -31,12 +31,13 @@ import {
   claveDeAlimento, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
   valoresDeCantidad, valoresDeReceta, vigentes, type AlimentoPropio, type Cantidad, type Item, type Receta, type Valores,
 } from '@/dominio/registros';
-import { idioma, t } from '@/textos';
+import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { Aparece } from '../tarjetas';
 import { useTeclado } from '../teclado';
 import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
+import { PanelDecir } from './Decir';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
 import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
@@ -49,6 +50,11 @@ import { origenDe, Ventana, type AlimentoAbierto, type ModoDeVentana } from './V
 
 type VentanaAbierta = { alimento: AlimentoAbierto; inicial?: Cantidad; estimado?: boolean; modo: ModoDeVentana };
 type EstadoDelEscaner = { modo: 'codigo' | 'etiqueta'; mensaje: string | null; ocupado: boolean; codigo?: string; parcial?: Producto | null };
+
+/** Lo escrito en el buscador parece una comida entera: varias cosas, con comas o con «y» y otra cantidad. */
+function pareceUnaComida(q: string): boolean {
+  return /,/.test(q) || /\s(?:y|e|and)\s+(?:\d|un|una|dos|tres|cuatro|media|medio|a|an|two|three)(?![\p{L}])/iu.test(q);
+}
 
 /** Los valores sin el aceite de cocción que se les sumó. */
 function sinAceite(v: Valores, aceite: number | undefined): Valores {
@@ -125,6 +131,13 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   });
   const [ventana, setVentana] = useState<VentanaAbierta | null>(() => ventanaParaCorregir(a.estado(), pedido.editar));
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  // Decir la comida: con el micrófono (escucha apenas abre) o con lo que se escribió en el buscador.
+  const [decirCon, setDecirCon] = useState<{ escuchar: boolean; texto?: string }>({ escuchar: pedido.panel === 'decir' });
+  const decir = (con: { escuchar: boolean; texto?: string }) => {
+    Keyboard.dismiss();
+    setDecirCon(con);
+    setPanel('decir');
+  };
   // Lo último que se sumó a la comida que se arma: la bandeja lo dice un momento, en lugar de un aviso.
   const [recienSumado, setRecienSumado] = useState<{ texto: string; vez: number } | null>(null);
   useEffect(() => {
@@ -439,6 +452,9 @@ function Hoja({ pedido }: { pedido: Pedido }) {
               style={estilos.entrada}
               accessibilityLabel={t('comida.buscar')}
             />
+            <Pressable onPress={() => decir({ escuchar: true })} style={estilos.icono} accessibilityRole="button" accessibilityLabel={t('comida.decir.titulo')}>
+              <Icono nombre="mic" tam={20} />
+            </Pressable>
             <Pressable onPress={() => setEscaner({ modo: 'codigo', mensaje: null, ocupado: false })} style={estilos.icono} accessibilityRole="button" accessibilityLabel={t('comida.escanear')}>
               <Icono nombre="barcode.viewfinder" tam={21} />
             </Pressable>
@@ -501,6 +517,19 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                 {s.filas.map(filaDeItem)}
               </View>
             ))}
+            {q && pareceUnaComida(q) && (
+              <Aparece>
+                <Pressable onPress={() => decir({ escuchar: false, texto: q })} style={({ pressed }) => [estilos.siempre, pressed && estilos.filaApretada]} accessibilityRole="button">
+                  <View style={estilos.filaTextos}>
+                    <Text style={estilos.siempreTitulo}>{t('comida.decir.todoJunto')}</Text>
+                    <Text style={estilos.filaDetalle} numberOfLines={2}>{q}</Text>
+                  </View>
+                  <View style={estilos.mas}>
+                    <Icono nombre="sparkles" tam={16} peso="semibold" />
+                  </View>
+                </Pressable>
+              </Aparece>
+            )}
             {q && propiosHallados.map(({ tipo, x }) => {
               const alimento = tipo === 'propio' ? alimentoDePropio(x as AlimentoPropio) : alimentoDeReceta(x as Receta);
               const porcion = alimento.porciones[0];
@@ -618,6 +647,26 @@ function Hoja({ pedido }: { pedido: Pedido }) {
               alPegarReceta={() => {
                 setBorrador(null);
                 setPanel('pegar');
+              }}
+            />
+          )}
+          {panel === 'decir' && (
+            <PanelDecir
+              comida={comida}
+              sistema={sistema}
+              escuchar={decirCon.escuchar}
+              textoInicial={decirCon.texto}
+              abajo={insets.bottom}
+              alAtras={() => (pedido.panel === 'decir' ? cerrar() : setPanel(null))}
+              alAgregar={(items, comidaDicha) => {
+                const nuevos = a.registrar(items, { comida: comidaDicha, dia, momento: momentoPara(dia, comidaDicha, e.hoy) });
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                avisar(plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${comidaDicha}`) }), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
+                cerrar();
+              }}
+              alBuscar={(x) => {
+                setPanel(null);
+                setTexto(x);
               }}
             />
           )}

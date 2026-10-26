@@ -19,9 +19,8 @@
 
 import type { Comida } from './comidas';
 import { claveDeMarca, type Marca } from './dias';
-import type { Fuente } from './habitos';
 import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
-import { tocaElDia, type Habito } from './habitos';
+import { tocaElDia, type Fuente, type Habito } from './habitos';
 import { DESPUES_MIN, DIAS } from './recordatorios';
 
 /** Lo que pasa en el día y puede llamar al aviso de un hábito: anotar una comida o entrenar con Ascent. */

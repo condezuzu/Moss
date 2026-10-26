@@ -166,6 +166,18 @@ function Menu({ alCerrar, alIr, avisar }: { alCerrar: () => void; alIr: (v: Vist
 
   return (
     <ScrollView style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoAdentro} showsVerticalScrollIndicator={false}>
+      {/* Decir la comida entera de una vez: lo más rápido para lo que no es de siempre. */}
+      <View style={[estilos.fila, estilos.filaDecir]}>
+        <Principal
+          icono="mic"
+          titulo={t('mas.decir')}
+          detalle={t('mas.decirDetalle')}
+          alTocar={() => {
+            alCerrar();
+            abrirRegistro({ comida, panel: 'decir' });
+          }}
+        />
+      </View>
       <View style={estilos.fila}>
         <Principal
           icono="fork.knife"
@@ -456,6 +468,7 @@ const estilos = StyleSheet.create({
   cuerpoAdentro: { paddingHorizontal: 16, paddingTop: 6 },
   cuerpoMedidas: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 },
   fila: { flexDirection: 'row', gap: 10 },
+  filaDecir: { marginBottom: 10 },
   principal: { flex: 1, gap: 4, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.07)' },
   apretado: { opacity: 0.8, transform: [{ scale: 0.97 }] },
   principalTitulo: { marginTop: 6, fontFamily: letras.textoMedio, fontSize: 15, color: colores.pergamino },

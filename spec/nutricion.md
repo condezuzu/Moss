@@ -311,7 +311,7 @@ pasó de 2 a 5. Con el «+» en la barra (cambio 9, D17):
 | Código de barras ya conocido | **5**: registrar, escáner, sumar, listo y agregar (lee solo, sin disparar) |
 | Código nuevo con etiqueta | **8** y el nombre, una sola vez; la próxima son 5 |
 | Carga rápida de calorías y macros | **3** y los números: el «+», calorías y macros, y agregar |
-| Dictado | **6**: registrar, el micrófono del teclado, «+», sumar, listo y agregar |
+| Decir la comida entera (26/10) | **3** y hablar: el «+», «Decir lo que comí» (abre escuchando) y «Agregar», para cualquier cantidad de alimentos |
 | Planificar un día futuro | **1 o 2** para ir al día, y lo mismo que hoy; al llegar el día, **1** para confirmar todo |
 | Compartir una receta | **2 o 3**: compartir y elegir a quién |
 | Agua | **2**: el «+» y el vaso de 250 ml (o llega sola desde Salud) |
@@ -382,12 +382,40 @@ pasó de 2 a 5. Con el «+» en la barra (cambio 9, D17):
 
    Son las mismas fotos de la carga del catálogo uruguayo.
 
-## Dictado por voz (atajo 11)
+## Decir la comida de una vez (26/10/2026)
 
-- **El dictado del teclado del iPhone** funciona en el buscador sin programar nada: es el micrófono del teclado.
-- **Después se puede:**
-  - sumar un botón propio con `SFSpeechRecognizer`;
-  - entender cantidades dictadas («dos huevos y una banana»).
+Lo pediste el 26/10: decir la comida entera («dos huevos revueltos, una tostada
+con manteca y un café con leche») y que Moss tome lo que importa y pregunte solo
+lo que no entiende. La investigación (las otras apps, la voz en el iPhone y cómo
+entender la frase sin nube) está en [`registrar-rapido.md`](registrar-rapido.md).
+
+- **Dónde:** «Decir lo que comí» arriba de la hoja del «+» (abre escuchando), el
+  micrófono del buscador y, si en el buscador se escribe una comida entera,
+  «Anotar todo junto».
+- **La voz:** el reconocimiento del iPhone, **solo en el teléfono**
+  (`expo-speech-recognition` con `requiresOnDeviceRecognition`): gratis, sin
+  conexión y sin que el audio salga. Lo que la persona come más ayuda a reconocer
+  los nombres (`contextualStrings`). Sin reconocimiento para el idioma, el
+  micrófono del teclado hace lo mismo; escribir también.
+- **Entender, sin IA y con tests:**
+  - `src/comida/frase.ts` parte la frase: saca muletillas y verbos, entiende la
+    comida que se nombra («en el almuerzo») y las correcciones («dos, no, tres»),
+    completa lo que se calla («y una de jamón y queso», «y 150 de pollo») y corta
+    el «con» solo si el nombre entero no está en la base (café con leche es uno).
+  - `src/comida/entender.ts` busca cada cosa con el buscador de siempre: gana lo
+    que ya se eligió antes para esas palabras, después el nombre exacto y lo que
+    ya se comió. La cantidad es la dicha, la última o la porción de siempre (la
+    de contar: «2 huevos» son 2 huevos, nunca 2 tazas).
+- **Las preguntas:** solo si cambian el número (40 kcal, o un 15 % si son al
+  menos 15), con la respuesta ya marcada, una por alimento y tres por comida:
+  cuál («¿Qué leche?»), crudo o cocido («¿Los 200 g son crudos o cocidos?», si no
+  se dijo cómo) o cuánto (sin cantidad ni una vez anterior). Cada respuesta se
+  recuerda: la próxima vez esas palabras no preguntan. «Agregar» nunca espera.
+- **La revisión:** cada cosa con su cantidad, que se cambia con − y +, y una
+  cruz para sacarla; lo que no se encontró, con «Buscarlo». «Agregar al
+  almuerzo» anota todo, con deshacer.
+- **Toques:** el «+», «Decir lo que comí», hablar y «Agregar»: **3**, para
+  cualquier cantidad de alimentos (más uno por pregunta que se quiera cambiar).
 
 ## Las metas
 
