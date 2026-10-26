@@ -684,8 +684,8 @@ carbohidratos (1 g/kg) en cada uno, más la proteína de B1.
 6. **Mucha resistencia:** la meta de carbohidratos de Moss puede quedar debajo
    de lo de ACSM (5 a 10 g/kg por día). ¿Se dice algo, y dónde?
 7. **La sesión prevista:** 3 de 4 semanas (lo propuesto) o 2 de 4.
-8. **El nombre del módulo y el escenario de la galería** (¿dentro de `comida` o
-   uno nuevo, `entreno`?).
+8. ~~El nombre del módulo y el escenario de la galería~~ Quedó (26/10):
+   `src/dominio/alrededorDelEntreno.ts` y el escenario `entreno` de la galería.
 
 ---
 
