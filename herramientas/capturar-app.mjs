@@ -81,7 +81,11 @@ const panel = async (texto) => {
   await pagina.getByText(texto, { exact: true }).click();
   await pagina.getByText(/cps ·/).click();
 };
-const cuenta = () => pagina.getByText(/de \d+ encendidas|DÍA COMPLETO/i).first().textContent();
+// Cuántas van ya no se ve en Hábitos: lo dice la cabecera para VoiceOver (aria-label en la web).
+const cuenta = () => pagina.evaluate(() => {
+  const cabecera = [...document.querySelectorAll('[aria-label]')].map((el) => el.getAttribute('aria-label')).find((l) => /de \d+ encendidas|d[ií]a completo/i.test(l));
+  return cabecera?.match(/\d+ de \d+ encendidas|d[ií]a completo/i)?.[0] ?? null;
+});
 
 const cielo = await abrir();
 await foto('inicio');
@@ -121,8 +125,7 @@ await pagina.waitForTimeout(2500);
 await foto('universo');
 
 // Las secciones (cambios 9 y 10): Ascent sube con el dedo desde el cielo, pero no desde la barra;
-// la flecha de arriba la baja y la tenue de abajo la sube; la tira de pestañas y el «+». Con la
-// conexión con Ascent apagada (la v1, src/lib/ascent.ts) el gesto no sube nada.
+// la flecha de arriba la baja y la tenue de abajo la sube; la tira de pestañas y el «+».
 await abrir();
 const { width: an, height: al } = pagina.viewportSize();
 const arrastrar = async (desde, hasta, nombre) => {
@@ -148,7 +151,7 @@ if (await pagina.getByLabel('Volver al cielo').count()) {
   await pagina.getByLabel('Volver al cielo').click();
   await pagina.waitForTimeout(1200);
 } else {
-  console.log('  Ascent: apagada (EXPO_PUBLIC_CON_ASCENT), el gesto no sube nada');
+  errores.push('Ascent: el gesto no subió la sección');
 }
 await arrastrar([an - 40, 420], [an - 200, 420], 'pestanas-deslizando');
 await foto('perfil');
@@ -192,8 +195,9 @@ await pagina.getByRole('button', { name: /Agregar al almuerzo/ }).click();
 await pagina.waitForTimeout(1200);
 await foto('decir-anotado');
 
-// La entrada, en un navegador sin nada guardado: la frase, los hábitos y la comida. El círculo de
-// abajo se llama «Seguir», se habilita cuando se llena el aro y late sin parar: se toca forzado.
+// La entrada, en un navegador sin nada guardado: la frase, los hábitos y la comida. La estrella guía
+// espera abajo sobre un botón invisible que se llama «Seguir» y se habilita cuando termina su parte;
+// mientras respira se mueve, así que se toca forzado.
 const nueva = await navegador.newPage(PANTALLA);
 anotarErrores(nueva);
 await nueva.goto(URL);
@@ -207,7 +211,7 @@ await nueva.waitForTimeout(8000);
 await foto('entrada-frase', nueva);
 for (const nombre of ['entrada-habitos', 'entrada-comida']) {
   await tocarSeguir();
-  await nueva.waitForTimeout(4000);
+  await nueva.waitForTimeout(4600);
   await foto(nombre, nueva);
 }
 

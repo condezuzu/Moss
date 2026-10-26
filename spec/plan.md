@@ -11,11 +11,36 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
 - el almacén y la sincronización sirven igual para la comida;
 - las metas ya están programadas.
 
-**Dónde estamos (26/10/2026, a la noche):**
-- **La app tiene lo de la v1 menos los widgets**, con tests y probada en la web
-  (`npm run app:capturas`). Falta probarla en tu iPhone.
-  - La entrada: la frase, las dos diapositivas, la cuenta con Apple o correo, el
-    cuestionario con Salud primero, el resultado y los primeros hábitos.
+**Dónde estamos (26/10/2026, tarde a la noche): la v1 entera, lista para la build
+de la tienda.** Todo lo nativo compila en EAS (build de simulador `4cf64d0c`) y la
+app está probada en la web. La tanda de esta noche sumó:
+- **la conexión real con Ascent** (D27): el llavero compartido de las dos apps,
+  vincular en dos toques o con la cuenta de Ascent, `moss-vincular` y
+  `0008_vinculo.sql`, la sección vinculada con datos de verdad y lo que cambia en
+  las otras secciones; sin el interruptor ([`ascent.md`](ascent.md));
+- **los widgets**: el cielo en la pantalla de inicio (con «hecho») y la noche en la
+  pantalla bloqueada para confirmarla, más una tarea de segundo plano
+  ([`widgets.md`](widgets.md));
+- **el sueño con menos esfuerzo**: las acciones de Atajos (alarma, cargador,
+  enfoque Sueño) y el despertador de Moss con AlarmKit (D28,
+  [`sueno-sin-esfuerzo.md`](sueno-sin-esfuerzo.md));
+- **las actualizaciones por aire** (`expo-updates`, canales en CLAUDE.md), el
+  manifiesto de privacidad, la protección de datos explícita y los textos de los
+  permisos;
+- **el calor**: el cielo y las animaciones se frenan del todo en reposo, en todas
+  las calidades;
+- **las notas del viernes**: la zona de toque de las estrellas, el globito, las
+  estrellas de comida, el arranque con vida, menos información junta, la entrada
+  con la estrella guía y Perfil con nombre, foto y editar;
+- **la cuenta solo con Apple** y el sitio legal publicado en
+  https://condezuzu.github.io/moss-app/ ([`revision.md`](revision.md)).
+
+Antes de esta tanda:
+- **La app tenía lo de la v1 menos los widgets**, con tests y probada en la web
+  (`npm run app:capturas`).
+  - La entrada: la frase, las dos diapositivas con la estrella guía, la cuenta
+    solo con Apple (sin correo en la v1), el cuestionario con Salud primero, el
+    resultado y los primeros hábitos.
   - Las seis secciones:
     - Inicio a tu medida;
     - Comida, con la hoja de registro, los escáneres y la foto de cada comida;
@@ -67,17 +92,19 @@ recién después los hábitos, Salud y las zonas del cielo. Lo hecho no se tira:
   y los productos por su etiqueta ([`fuentes.md`](fuentes.md)).
 - **Lo que decidí solo** está en [`decisiones.md`](decisiones.md), «Tomadas por
   mi cuenta»; lo que espera tu respuesta, en «Pendientes» y en la galería.
-- **Falta para la v1:**
-  - probar en tu iPhone la build `telefono` de EAS (la instalás desde su enlace);
-  - correr `0004` a `0007` en Supabase y desplegar `moss-borrar-cuenta`, con lo
-    demás de [`ascent.md`](ascent.md) y [`revision.md`](revision.md);
-  - los widgets de la pantalla de bloqueo (D8), después de la prueba de un día;
-  - que las constelaciones vuelvan a importar (la comida que enciende, el año
-    como cielo, compartir);
-  - las capturas para la tienda, la cuenta de prueba para quien revisa y lo de
-    App Store Connect;
-  - repasar accesibilidad y rendimiento en el iPhone;
-  - el flum entero al final de la entrada (hoy, un fundido).
+- **Falta para mandarla** (la lista completa, en orden, en
+  [`revision.md`](revision.md) «g»):
+  - Supabase: correr `0001` a `0009` en el SQL Editor, exponer `moss`, el
+    proveedor Apple, `moss://**`, y `npm run servidor:preparar` con la `.p8`;
+  - la build de la tienda, la primera interactiva (los widgets suman un App
+    Group y una extensión), y probarla en TestFlight;
+  - las capturas para la tienda, el video de la vinculación y lo de App Store
+    Connect;
+  - Ascent 1.2.0 (la rama `moss-vinculo`), juntada con `build-8-nativo`.
+- **Para después (por OTA):** que las constelaciones vuelvan a importar (la
+  comida que enciende, el año como cielo, compartir); aplicar un toque del widget
+  de un día anterior; el modo de bajo consumo; el flum entero al final de la
+  entrada.
 
 Las etapas van en orden, con estas excepciones:
 
@@ -242,7 +269,8 @@ Lo pedido para esta etapa:
   - el resultado.
 
   Va en Reanimated y Skia, con el mismo cielo de fondo y la cámara que sube.
-  - La frase y las diapositivas no se saltean durante 2,5 s.
+  - La frase y las diapositivas no se saltean: la estrella guía hace su parte y
+    recién ahí espera abajo; tocarla es seguir.
   - La entrada termina con un flum a Inicio.
 - **La meta inicial**: la fórmula de [`nutricion.md`](nutricion.md), con tests.
 - **Supabase**: el proyecto de Ascent, esquema `moss` y RLS en todas las tablas

@@ -1,7 +1,8 @@
 // Prueba las migraciones de Moss (supabase/moss/*.sql) en un Postgres local, sin tocar Supabase:
 // PGlite es Postgres de verdad compilado a WebAssembly. Se arma lo mínimo de Supabase que usan
 // (los roles, auth.users y auth.uid()) y se comprueba:
-// - que solo tocan el esquema `moss` (el resto del proyecto es de Ascent);
+// - que solo tocan el esquema `moss` (el resto del proyecto es de Ascent): de `public` solo leen,
+//   adentro de funciones security definer, sin escribir ni llamar funciones de Ascent;
 // - que cada usuario ve y toca solo lo suyo (RLS), y que anon no ve nada;
 // - que en un conflicto gana el cambio más nuevo y que la hora de llegada la pone la base;
 // - que la semilla es la primera que llega, que los períodos se reemplazan enteros y que
@@ -15,10 +16,16 @@
 // - que lo comido y el catálogo guardan los micronutrientes, y que las búsquedas sin resultado y
 //   los reportes de errores se anotan sin usuario y no se leen desde la app (0006_alimentos.sql);
 // - que lo armado por el plan guarda su opción y cómo comes va en el perfil (0007_plan.sql);
+// - que tu nombre va en la fila del perfil con su propia hora: llega antes que el perfil sin
+//   trabarlo, gana el más nuevo y «borrar mis datos» lo borra (0009_perfil.sql);
 // - que borrar la cuenta borra todo en cascada;
 // - que el teléfono baja el catálogo del servidor;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
-//   ellos con el repositorio SQLite del iPhone.
+//   ellos con el repositorio SQLite del iPhone;
+// - el vínculo con Ascent (0008_vinculo.sql), contra tablas de Ascent de mentira con las columnas
+//   que lee: quién lo ve y quién lo escribe, vincular y volver a vincular, desvincular, que lo de
+//   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, y la app
+//   (src/lib/ascentRemoto.ts) vinculando por la función moss-vincular de verdad.
 // Uso: npm run supabase:verificar   → sale con código 1 si algo falla.
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -37,15 +44,54 @@ const mal = (texto) => { fallas++; console.log(`✗ ${texto}`); };
 const comprobar = (condicion, texto) => (condicion ? bien(texto) : mal(texto));
 
 // ------------------------------------------------------------ 1. Solo el esquema moss
+// Las migraciones crean y tocan solo cosas de `moss`. De Ascent (`public`) solo se lee, y solo adentro
+// de una función security definer de Moss que revisa el vínculo (0008_vinculo.sql): nunca se escribe
+// ni se llama una función de Ascent (spec/ascent.md, «Lo que hay que cuidar»).
 const sinComentarios = (sql) => sql.replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\$\$[\s\S]*?\$\$/g, (cuerpo) => cuerpo.replace(/'[^']*'/g, "''"));
+const OTROS_ESQUEMAS = ['public', 'auth', 'storage', 'extensions', 'graphql', 'graphql_public', 'realtime', 'vault', 'net', 'cron', 'pgsodium', 'supabase_functions', 'supabase_migrations', 'pg_catalog', 'information_schema'];
+/** Los cuerpos de las funciones security definer, con dónde empiezan y terminan en el texto. */
+function cuerposDefiner(sql) {
+  return [...sql.matchAll(/\bcreate\s+(?:or\s+replace\s+)?function\s+([\w.]+)([\s\S]*?)\bas\s+(\$\w*\$)([\s\S]*?)\3([^;]*)/gi)]
+    .filter((m) => /\bsecurity\s+definer\b/i.test(m[2] + m[5]))
+    .map((m) => {
+      const desde = m.index + m[0].indexOf(m[3]) + m[3].length;
+      return { nombre: m[1], cabeza: m[2] + m[5], cuerpo: m[4], desde, hasta: desde + m[4].length };
+    });
+}
+/** Lo que un `x.y` puede tener adelante sin ser un esquema: alias de tablas y consultas, y la función que nombra sus parámetros. */
+function nombresLocales(sql) {
+  const nombres = new Set();
+  const sumar = (patron) => { for (const m of sql.matchAll(patron)) nombres.add(m[1].toLowerCase()); };
+  sumar(/\b(?:from|join)\s+(?:only\s+)?[a-z_][\w.]*\s+(?:as\s+)?([a-z_]\w*)/gi);
+  sumar(/\b([a-z_]\w*)\s+as\s+(?:not\s+)?(?:materialized\s+)?\(/gi);
+  sumar(/\)\s+(?:with\s+ordinality\s+)?(?:as\s+)?([a-z_]\w*)/gi);
+  sumar(/\bfunction\s+[a-z_]\w*\.([a-z_]\w*)\s*\(/gi);
+  return nombres;
+}
 for (const archivo of migraciones) {
   const sql = sinComentarios(readFileSync(join(carpeta, archivo), 'utf8'));
-  const ajenos = [...sql.matchAll(/\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b/gi)]
-    .map((m) => `${m[1]}.${m[2]}`)
+  const definer = cuerposDefiner(sql);
+  const locales = nombresLocales(sql);
+  const ajenos = [];
+  const publicAfuera = [];
+  for (const m of sql.matchAll(/\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b/gi)) {
+    const [esquema, nombre] = [m[1].toLowerCase(), m[2].toLowerCase()];
     // new, old y excluded son la fila que llega, la que estaba y la propuesta en un upsert.
-    .filter((nombre) => !/^moss\./i.test(nombre) && !/^auth\.(users|uid)$/i.test(nombre) && !/^(new|old|excluded)\./i.test(nombre) && !/^\d/.test(nombre));
+    if (esquema === 'moss' || ['new', 'old', 'excluded'].includes(esquema) || (esquema === 'auth' && ['users', 'uid'].includes(nombre))) continue;
+    if (esquema === 'public') {
+      if (!definer.some((f) => m.index >= f.desde && m.index < f.hasta)) publicAfuera.push(m[0]);
+      continue;
+    }
+    if (OTROS_ESQUEMAS.includes(esquema) || !locales.has(esquema)) ajenos.push(m[0]);
+  }
   comprobar(!ajenos.length, `${archivo}: solo nombra objetos de moss (y auth.users, auth.uid)${ajenos.length ? ': ' + [...new Set(ajenos)].join(', ') : ''}`);
-  comprobar(!/\bschema\s+public\b|\bpublic\./i.test(sql), `${archivo}: no toca public`);
+  const escriben = definer.filter((f) => /\bpublic\./i.test(f.cuerpo)
+    && (/\b(?:insert\s+into|update|delete\s+from|truncate(?:\s+table)?|merge\s+into|alter\s+\w+|drop\s+\w+|create\s+(?:or\s+replace\s+)?\w+|lock(?:\s+table)?)\s+(?:only\s+)?public\./i.test(f.cuerpo)
+      || /\bpublic\.\w+\s*\(/i.test(f.cuerpo) || /\bfor\s+(?:no\s+key\s+)?(?:update|share)\b/i.test(f.cuerpo)));
+  comprobar(!/\bschema\s+public\b/i.test(sql) && !publicAfuera.length && !escriben.length,
+    `${archivo}: de public solo lee, adentro de funciones security definer, sin escribir ni llamar funciones de Ascent${publicAfuera.length ? `: afuera, ${[...new Set(publicAfuera)].join(', ')}` : ''}${escriben.length ? `: ${escriben.map((f) => f.nombre).join(', ')}` : ''}`);
+  const sinRuta = definer.filter((f) => !/\bset\s+search_path\s*=\s*''/i.test(f.cabeza));
+  comprobar(!sinRuta.length, `${archivo}: cada función security definer fija search_path = ''${sinRuta.length ? `: ${sinRuta.map((f) => f.nombre).join(', ')}` : ''}`);
 }
 
 // ------------------------------------------------------------ 2. Lo mínimo de Supabase
@@ -61,6 +107,41 @@ await db.exec(`
   $$;
   grant usage on schema auth to anon, authenticated, service_role;
   grant execute on function auth.uid() to anon, authenticated, service_role;
+`);
+// Lo de Ascent que lee 0008_vinculo.sql, solo con las columnas que lee, como en su schema.sql (versión
+// 96): cada alta crea un perfil sin nombre de usuario (on_auth_user_created), y desde Moss no se lee
+// nada directo, sin las funciones del vínculo.
+await db.exec(`
+  create table public.profiles (id uuid primary key references auth.users (id) on delete cascade, username text);
+  create table public.logs (
+    id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
+    fecha date not null, es_descanso boolean not null default false, unique (user_id, fecha));
+  create table public.sesiones (
+    id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
+    log_id uuid not null references public.logs (id) on delete cascade, inicio timestamptz not null default now(), fin timestamptz,
+    estado text not null default 'corriendo', series int not null default 0, bloques jsonb not null default '[]');
+  create table public.ejercicios (id text primary key, nombre text not null, grupo text not null);
+  create table public.prs (
+    id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
+    ejercicio text not null references public.ejercicios (id), peso numeric(6, 2) not null, reps int not null,
+    es_real boolean not null default false, fecha date not null, creado timestamptz not null default now());
+  create table public.weights (
+    id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
+    fecha date not null, valor numeric(5, 2) not null, unique (user_id, fecha));
+  create function public.handle_new_user() returns trigger language plpgsql security definer set search_path = public as $$
+  begin
+    insert into public.profiles (id) values (new.id);
+    return new;
+  end;
+  $$;
+  create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+  alter table public.profiles enable row level security;
+  alter table public.logs enable row level security;
+  alter table public.sesiones enable row level security;
+  alter table public.ejercicios enable row level security;
+  alter table public.prs enable row level security;
+  alter table public.weights enable row level security;
+  grant usage on schema public to anon, authenticated, service_role;
 `);
 for (const archivo of migraciones) {
   try {
@@ -312,6 +393,44 @@ comprobar((await como(B, 'select * from moss.medidas')).rows.length === 0 && (aw
 comprobar((await como(B, 'select * from moss.noches')).rows.length === 0 && (await como(A, 'select * from moss.noches')).rows.length === 1, '«borrar mis datos» también borra las noches, y solo las propias');
 comprobar(await falla('anon', 'select moss.borrar_mis_datos()'), 'sin sesión no se puede borrar nada');
 
+// Tu nombre (0009_perfil.sql): en la fila del perfil, con su propia hora. Una cuenta solo para esto.
+const E = '00000000-0000-4000-8000-00000000000e';
+await db.exec(`insert into auth.users (id) values ('${E}')`);
+const ponerNombre = (usuario, valor, cuando) => como(usuario, 'select moss.poner_nombre($1, $2)', [valor, cuando]);
+const filaDeE = async () => (await como(E, 'select nombre, nombre_actualizado, actualizado, nacimiento, recibido from moss.perfiles')).rows[0];
+await ponerNombre(E, 'Agustín Conde', new Date(0).toISOString());
+const conApple = await filaDeE();
+await como(E, `insert into moss.perfiles (nacimiento, sexo, altura_cm, actividad, objetivo, ritmo, actualizado) values (1990, 'm', 178, 'algo', 'mantener', 'recomendado', '2026-10-01T10:00:00Z')
+  on conflict (usuario) do update set nacimiento = excluded.nacimiento, sexo = excluded.sexo, altura_cm = excluded.altura_cm, actividad = excluded.actividad,
+  objetivo = excluded.objetivo, ritmo = excluded.ritmo, actualizado = excluded.actualizado`);
+const conPerfil = await filaDeE();
+comprobar(
+  conApple.nombre === 'Agustín Conde' && conApple.actualizado.getTime() === 0 && conPerfil.nacimiento === 1990 && conPerfil.nombre === 'Agustín Conde',
+  'tu nombre llega antes que el perfil sin trabarlo, y el perfil no lo borra',
+);
+await ponerNombre(E, 'Agus', '2026-10-02T10:00:00Z');
+const masNuevo = await filaDeE();
+await ponerNombre(E, 'Viejo', '2026-10-01T10:00:00Z');
+comprobar(
+  masNuevo.nombre === 'Agus' && masNuevo.recibido > conPerfil.recibido && (await filaDeE()).nombre === 'Agus'
+    && masNuevo.actualizado.getTime() === conPerfil.actualizado.getTime(),
+  'tu nombre: gana el más nuevo y avisa que cambió (recibido), sin mover la hora del perfil',
+);
+await ponerNombre(E, '   ', '2026-10-03T10:00:00Z');
+const sinNombre = await filaDeE();
+await ponerNombre(E, 'x'.repeat(70), '2026-10-04T10:00:00Z');
+comprobar(
+  sinNombre.nombre === null && sinNombre.nombre_actualizado.toISOString() === '2026-10-03T10:00:00.000Z' && (await filaDeE()).nombre.length === 60,
+  'tu nombre: vacío lo borra con su hora (así llega a los otros teléfonos), y no pasa de 60 letras',
+);
+comprobar(
+  (await como(A, `select * from moss.perfiles where nombre = '${'x'.repeat(60)}'`)).rows.length === 0 && await falla('anon', `select moss.poner_nombre('x', now())`)
+    && await falla(E, `update moss.perfiles set nombre = '', nombre_actualizado = now()`),
+  'tu nombre: nadie más lo ve, sin sesión no se pone y nunca queda vacío (sin nombre, null)',
+);
+await como(E, 'select moss.borrar_mis_datos()');
+comprobar((await como(E, 'select * from moss.perfiles')).rows.length === 0, '«borrar mis datos» también borra tu nombre');
+
 // ------------------------------------------------------------ 6. Borrar la cuenta
 comprobar(await falla('anon', 'select moss.borrar_cuenta()'), 'sin sesión no se puede borrar ninguna cuenta');
 // Una cuenta solo para esto: las otras siguen en uso más abajo.
@@ -334,6 +453,9 @@ registerHooks({
   resolve(especificador, contexto, siguiente) {
     if (especificador === 'expo-sqlite') especificador = pathToFileURL(join(raiz, 'herramientas/expo-sqlite-node.mjs')).href;
     if (especificador === '@react-native-async-storage/async-storage') especificador = pathToFileURL(join(raiz, 'herramientas/async-storage-node.mjs')).href;
+    // src/lib/supabase.ts, que usa src/lib/ascentRemoto.ts: el cliente no se crea (va uno de mentira), pero se importa.
+    if (especificador === 'react-native') return { url: 'data:text/javascript,export const AppState = { addEventListener() {} };', shortCircuit: true };
+    if (especificador === 'react-native-url-polyfill/auto') return { url: 'data:text/javascript,', shortCircuit: true };
     if (especificador.startsWith('@/')) especificador = pathToFileURL(join(raiz, 'src', especificador.slice(2))).href;
     if (/^(\.|file:)/.test(especificador) && !/\.[a-z]+$/i.test(especificador)) {
       for (const final of ['.ts', '/index.ts']) {
@@ -387,7 +509,7 @@ function clienteDe(usuario) {
         },
       };
     },
-    rpc(funcion, argumentos) {
+    rpc(funcion, argumentos = {}) {
       const nombres = Object.keys(argumentos);
       const valores = nombres.map((n) => (typeof argumentos[n] === 'string' ? argumentos[n] : JSON.stringify(argumentos[n])));
       return respuesta(como(usuario, `select moss.${funcion}(${nombres.map((n, i) => `${n} => $${i + 1}`).join(', ')}) as r`, valores).then((r) => r.rows[0].r));
@@ -545,6 +667,23 @@ comprobar(
   'app: la cara de la mañana y la hora corregida de la noche (con lo que había estimado el teléfono) llegan al otro teléfono, sin volver a subir',
 );
 
+// Tu nombre (0009_perfil.sql): el que trajo Apple llega al otro teléfono, y el que escribes le gana, sin tocar el perfil.
+pasa();
+a.almacen.ponerNombre('Agustín Conde', true);
+await a.sinc.vuelta();
+await b.sinc.vuelta();
+const nombreDeApple = b.almacen.estado().nombre?.valor;
+pasa();
+b.almacen.ponerNombre('Agus');
+await b.sinc.vuelta();
+await a.sinc.vuelta();
+comprobar(
+  nombreDeApple === 'Agustín Conde' && a.almacen.estado().nombre?.valor === 'Agus' && a.almacen.estado().perfil?.nacimiento === 1990
+    && (await enLaCuenta(`select count(*) as n from moss.perfiles where usuario = $U and nombre = 'Agus' and nacimiento = 1990`)) === 1
+    && !(await pendiente(a)) && !(await pendiente(b)),
+  'app: tu nombre llega al otro teléfono, el que escribes le gana al que trajo Apple y el perfil queda',
+);
+
 // Los dos sin conexión el resto del día, cada uno marca algo distinto; se sincronizan al otro día.
 pasa();
 a.almacen.marcar('agua', true, 'toque');
@@ -613,7 +752,7 @@ const nueva = a.espia.bajada.datos;
 comprobar(
   !vacia.habitos.length && !vacia.marcas.length && !vacia.dias.length && !vacia.perfil && !vacia.semilla && !vacia.metas.length && !vacia.pesos.length
     && !vacia.registros.length && !vacia.agua.length && !vacia.recetas.length && !vacia.favoritos.length && !vacia.medidas.length && !vacia.noches.length
-    && !nueva.habitos.length && nueva.marcas.length === 1 && nueva.dias.length === 1 && hechosDeHoy(a) === 'meditar,agua' && hechosDeHoy(b) === 'meditar,agua',
+    && !vacia.nombre && !nueva.habitos.length && nueva.marcas.length === 1 && nueva.dias.length === 1 && hechosDeHoy(a) === 'meditar,agua' && hechosDeHoy(b) === 'meditar,agua',
   'app: al volver, baja solo lo que cambió desde la última vez',
 );
 
@@ -630,6 +769,7 @@ comprobar(
   c.almacen.estado().registros.has(cena.id) && ![...c.almacen.estado().registros.keys()].some((id) => id.startsWith('viejo-')),
   'app: de lo comido, un teléfono nuevo baja solo los últimos cuatro meses; lo viejo queda en la cuenta',
 );
+comprobar(c.almacen.estado().nombre?.valor === 'Agus' && !(await c.almacen.enCola((r) => r.pendientes())).nombre, 'app: un teléfono nuevo baja tu nombre, sin volver a subirlo');
 
 const intruso = crearSincronizador({ almacen: a.almacen, remoto: remotoSupabase(clienteDe(B)), usuario: B });
 const sincronizo = await intruso.vuelta();
@@ -641,6 +781,241 @@ await actualizarCatalogo(clienteDe(B));
 const delCatalogo = (await filasDelCatalogo()).find((f) => f.id === -200001);
 comprobar(delCatalogo?.nombre_es === 'Leche entera' && delCatalogo.densidad === 1.03 && delCatalogo.porciones[0]?.gramos === 206 && delCatalogo.codigos[0] === '7730000000001',
   'app: el teléfono baja el catálogo del servidor, con sus porciones, su densidad y sus códigos');
+
+// ------------------------------------------------------------ 8. El vínculo con Ascent (0008_vinculo.sql)
+// Cuentas nuevas, cada una con su perfil de Ascent sin nombre (lo crea el disparador, como en Ascent):
+// MOSS es la de Moss (con Apple), ASCENT la de Ascent (con el correo), OTRA otra cuenta de Moss que
+// nunca usó Ascent, SOLA una que usa las dos apps con la misma cuenta y TERCERO, alguien más.
+const [MOSS, ASCENT, OTRA, SOLA, TERCERO] = ['e1', 'e2', 'e3', 'e4', 'e5'].map((x) => `00000000-0000-4000-8000-0000000000${x}`);
+await db.exec(`insert into auth.users (id) values ('${MOSS}'), ('${ASCENT}'), ('${OTRA}'), ('${SOLA}'), ('${TERCERO}');
+  update public.profiles set username = 'agus' where id = '${ASCENT}';
+  update public.profiles set username = 'sola' where id = '${SOLA}';
+  update public.profiles set username = 'tercero' where id = '${TERCERO}';
+  insert into public.ejercicios (id, nombre, grupo) values ('sentadilla', 'Sentadilla', 'piernas'), ('press_mancuernas', 'Press con mancuernas', 'pecho'),
+    ('dominadas', 'Dominadas', 'espalda'), ('flexiones', 'Flexiones', 'pecho'), ('cinta', 'Cinta', 'cardio'), ('propio_abc', 'Mi máquina', 'espalda');`);
+const diaDeAscent = async (usuario, fecha, descanso = false) => (await db.query('insert into public.logs (user_id, fecha, es_descanso) values ($1, $2, $3) returning id', [usuario, fecha, descanso])).rows[0].id;
+const sesionDeAscent = (usuario, log, { inicio, minutos = null, estado = 'terminada', series, bloques }) => db.query(
+  'insert into public.sesiones (user_id, log_id, inicio, fin, estado, series, bloques) values ($1, $2, $3, $4, $5, $6, $7)',
+  [usuario, log, inicio, minutos === null ? null : new Date(Date.parse(inicio) + minutos * 60_000).toISOString(), estado, series, JSON.stringify(bloques)]);
+// ASCENT: el 20 una sesión abandonada (con bloques rotos, que se ignoran) y una de 55 minutos con barra,
+// mancuernas y lastre; el 21 una de 3 minutos (no cuenta como duración) con el peso del cuerpo y otra
+// con un ejercicio propio de un lado por vez; el 22 descanso; el 23 anotado sin cronómetro; el 24 un
+// descanso con una sesión que todavía corre; y uno viejo, de septiembre.
+const veinte = await diaDeAscent(ASCENT, '2026-10-20');
+await sesionDeAscent(ASCENT, veinte, { inicio: '2026-10-20T20:30:00Z', estado: 'abandonada', series: 1,
+  bloques: [5, { ejercicio: 3, series: 2 }, { ejercicio: 'sentadilla', series: 'abc' }, { ejercicio: 'sentadilla', series: -1, pesos: [10] }] });
+await sesionDeAscent(ASCENT, veinte, { inicio: '2026-10-20T21:00:00Z', minutos: 55, series: 7, bloques: [
+  { ejercicio: 'sentadilla', series: 3, pesos: [100, 100, 105], reps: [5, 5, 3], carga: 'total' },
+  { ejercicio: 'press_mancuernas', series: 2, pesos: [30, null], carga: 'par' },
+  { ejercicio: 'dominadas', series: 2, pesos: [10], reps: [8, 'x'], carga: 'lastre' }] });
+const veintiuno = await diaDeAscent(ASCENT, '2026-10-21');
+await sesionDeAscent(ASCENT, veintiuno, { inicio: '2026-10-21T11:00:00Z', minutos: 3, series: 2, bloques: [{ ejercicio: 'flexiones', series: 2, pesos: [20, 20], carga: 'corporal' }] });
+await sesionDeAscent(ASCENT, veintiuno, { inicio: '2026-10-21T22:00:00Z', minutos: 40, series: 4,
+  bloques: [{ ejercicio: 'propio_abc', series: 4, pesos: [50, 50, '55', true], reps: [10, 10, 8.5, 1000], carga: 'una' }] });
+await diaDeAscent(ASCENT, '2026-10-22', true);
+await diaDeAscent(ASCENT, '2026-10-23');
+await sesionDeAscent(ASCENT, await diaDeAscent(ASCENT, '2026-10-24', true), { inicio: '2026-10-24T12:00:00Z', estado: 'corriendo', series: 3, bloques: [{ ejercicio: 'cinta', series: 1, minutos: 30 }] });
+await sesionDeAscent(ASCENT, await diaDeAscent(ASCENT, '2026-09-01'), { inicio: '2026-09-01T21:00:00Z', minutos: 60, series: 5, bloques: [{ ejercicio: 'sentadilla', series: 5, pesos: [90, 90, 90, 90, 90] }] });
+await db.exec(`insert into public.prs (user_id, ejercicio, peso, reps, es_real, fecha) values
+    ('${ASCENT}', 'sentadilla', 140, 1, true, '2026-06-01'), ('${ASCENT}', 'sentadilla', 115, 5, false, '2026-10-15'),
+    ('${ASCENT}', 'press_mancuernas', 32, 8, false, '2026-10-18'), ('${ASCENT}', 'dominadas', 20, 3, false, '2026-05-01'), ('${ASCENT}', 'dominadas', 10, 5, false, '2026-10-19');
+  insert into public.weights (user_id, fecha, valor) values ('${ASCENT}', '2026-10-20', 80), ('${ASCENT}', '2026-10-21', 79.8), ('${ASCENT}', '2026-10-23', 79.5), ('${ASCENT}', '2026-09-10', 82);
+  insert into moss.pesos (usuario, fecha, kg, origen, momento) values ('${MOSS}', '2026-10-21', 79.6, 'salud', now()), ('${MOSS}', '2026-10-22', 79.7, 'manual', now()), ('${MOSS}', '2026-09-15', 81, 'manual', now());
+  insert into public.prs (user_id, ejercicio, peso, reps, es_real, fecha) values ('${TERCERO}', 'sentadilla', 250, 1, true, '2026-10-25');
+  insert into public.weights (user_id, fecha, valor) values ('${TERCERO}', '2026-10-25', 95), ('${SOLA}', '2026-10-22', 60);
+  insert into moss.pesos (usuario, fecha, kg, origen, momento) values ('${TERCERO}', '2026-10-25', 94, 'manual', now()), ('${SOLA}', '2026-10-23', 59.5, 'manual', now());`);
+await sesionDeAscent(TERCERO, await diaDeAscent(TERCERO, '2026-10-25'), { inicio: '2026-10-25T21:00:00Z', minutos: 70, series: 4, bloques: [{ ejercicio: 'sentadilla', series: 4, pesos: [200, 200, 200, 200] }] });
+await sesionDeAscent(SOLA, await diaDeAscent(SOLA, '2026-10-22'), { inicio: '2026-10-22T09:00:00Z', minutos: 30, series: 2, bloques: [{ ejercicio: 'press_mancuernas', series: 2, pesos: [10, 10], carga: 'par' }] });
+
+const vinculos = async () => (await db.query('select moss, ascent, origen from moss.vinculo order by desde, moss')).rows.map((v) => `${v.moss.slice(-2)}-${v.ascent.slice(-2)}-${v.origen}`).join();
+const vincularConLaClave = (cuentaMoss, cuentaAscent, origen) => db.transaction(async (tx) => {
+  await tx.exec('set local role service_role');
+  return (await tx.query('select moss.vincular_cuentas(cuenta_moss => $1, cuenta_ascent => $2, origen => $3) as r', [cuentaMoss, cuentaAscent, origen])).rows[0].r;
+});
+const errorAlVincular = (...argumentos) => vincularConLaClave(...argumentos).then(() => null, (e) => e.message);
+const estadoDe = async (u) => (await como(u, 'select moss.estado_del_vinculo() as r')).rows[0].r;
+const sesionesDe = async (u, desde = '2026-10-01') => (await como(u, 'select moss.ascent_sesiones($1) as r', [desde])).rows[0].r;
+const marcasDe = async (u, desde = '2026-09-01') => (await como(u, 'select moss.ascent_marcas($1) as r', [desde])).rows[0].r;
+const pesosDe = async (u, app = 'moss', desde = '2026-10-01') => (await como(u, 'select moss.pesos_compartidos($1, $2) as r', [desde, app])).rows[0].r;
+const pesosEnTexto = (lista) => lista.map((p) => `${p.fecha} ${Number(p.kg)} ${p.de}`).join(', ');
+
+comprobar(
+  JSON.stringify(await estadoDe(MOSS)) === JSON.stringify({ desde: null, nombre: null, vinculada: false })
+    && !(await sesionesDe(MOSS)).length && !(await marcasDe(MOSS, '2000-01-01')).length && !(await pesosDe(MOSS)).length,
+  'vínculo: sin vincular, no está vinculada y las lecturas cruzadas no devuelven nada',
+);
+comprobar(
+  await falla(MOSS, `insert into moss.vinculo (moss, ascent, origen) values ('${MOSS}', '${ASCENT}', 'moss')`)
+    && await falla(MOSS, `select moss.vincular_cuentas('${MOSS}', '${ASCENT}', 'moss')`) && await falla('anon', `select moss.vincular_cuentas('${MOSS}', '${ASCENT}', 'moss')`)
+    && await falla('anon', 'select moss.estado_del_vinculo()') && await falla('anon', `select moss.ascent_sesiones('2026-10-01')`) && !(await vinculos()),
+  'vínculo: nadie lo escribe desde la app, ni en la tabla ni con moss.vincular_cuentas (solo la clave de servicio); sin sesión no se pregunta nada',
+);
+comprobar(
+  (await errorAlVincular(MOSS, OTRA, 'moss')) === 'sin_ascent' && (await errorAlVincular(MOSS, ASCENT, 'web')) === 'pedido' && (await errorAlVincular(MOSS, null, 'moss')) === 'pedido' && !(await vinculos()),
+  'vínculo: la cuenta de Ascent tiene que tener nombre de usuario (si no, sin_ascent), y sin las dos cuentas o desde otra app no se vincula',
+);
+const vinculoNuevo = await vincularConLaClave(MOSS, ASCENT, 'moss');
+const estadoDeMoss = await estadoDe(MOSS);
+comprobar(
+  vinculoNuevo?.nombre === 'agus' && (await vinculos()) === 'e1-e2-moss' && estadoDeMoss.vinculada === true && estadoDeMoss.nombre === 'agus' && !Number.isNaN(Date.parse(estadoDeMoss.desde))
+    && JSON.stringify(await estadoDe(ASCENT)) === JSON.stringify(estadoDeMoss) && (await estadoDe(TERCERO)).vinculada === false,
+  'vínculo: se vincula una cuenta de Moss con una de Ascent, y las dos ven el mismo estado (con el usuario de Ascent); un tercero no',
+);
+comprobar(
+  (await como(MOSS, 'select * from moss.vinculo')).rows.length === 1 && (await como(ASCENT, 'select * from moss.vinculo')).rows.length === 1
+    && !(await como(TERCERO, 'select * from moss.vinculo')).rows.length && await falla('anon', 'select * from moss.vinculo')
+    && await falla(MOSS, `update moss.vinculo set origen = 'ascent'`) && await falla(ASCENT, 'delete from moss.vinculo') && (await vinculos()) === 'e1-e2-moss',
+  'vínculo: cada cuenta ve solo su vínculo (de los dos lados) y nadie lo cambia ni lo borra directo',
+);
+
+const sesiones = await sesionesDe(MOSS);
+const resumen = (lista) => lista.map((d) => `${d.fecha} ${d.series} ${Number(d.kilos)} ${Number(d.minutos)} ${d.inicio ? new Date(d.inicio).toISOString().slice(11, 16) : '-'}`).join(', ');
+const ejerciciosDel = (fecha) => sesiones.find((d) => d.fecha === fecha)?.ejercicios.map((e) => `${e.id}:${e.nombre}:${e.musculos.join('/')}:${e.series.map((x) => `${x.kilos ?? '-'}x${x.reps ?? '-'}`).join(' ')}`).join(', ');
+comprobar(
+  resumen(sesiones) === '2026-10-20 8 375 55 20:30, 2026-10-21 6 200 40 11:00, 2026-10-23 0 0 0 -, 2026-10-24 3 0 0 12:00',
+  `vínculo: los días de gimnasio de Ascent, juntando las sesiones de cada día, con el peso movido como lo cuenta Ascent (${resumen(sesiones)})`,
+);
+comprobar(
+  ejerciciosDel('2026-10-20') === 'sentadilla:Sentadilla:piernas:100x5 100x5 105x3, press_mancuernas:Press con mancuernas:pecho:60x- -x-, dominadas:Dominadas:espalda:10x8 -x-'
+    && ejerciciosDel('2026-10-21') === 'flexiones:Flexiones:pecho:-x- -x-, propio_abc:Mi máquina:espalda:100x10 100x10 -x- -x-'
+    && ejerciciosDel('2026-10-23') === '' && ejerciciosDel('2026-10-24') === 'cinta:Cinta:cardio:-x-',
+  'vínculo: cada ejercicio con su nombre, su grupo y sus series (×2 con mancuernas o un lado por vez, el lastre solo, el peso del cuerpo sin número, lo roto afuera)',
+);
+const marcas = (lista) => lista.map((m) => `${m.fecha} ${m.ejercicio} ${Number(m.kilos)}x${m.reps}`).join(', ');
+comprobar(
+  marcas(await marcasDe(MOSS)) === '2026-05-01 Dominadas 20x3, 2026-06-01 Sentadilla 140x1, 2026-10-15 Sentadilla 115x5, 2026-10-18 Press con mancuernas 32x8, 2026-10-19 Dominadas 10x5'
+    && marcas(await marcasDe(MOSS, '2026-10-16')) === '2026-05-01 Dominadas 20x3, 2026-06-01 Sentadilla 140x1, 2026-10-18 Press con mancuernas 32x8, 2026-10-19 Dominadas 10x5',
+  'vínculo: las marcas desde una fecha y, de cada ejercicio, la mejor de siempre aunque sea de antes',
+);
+comprobar(
+  pesosEnTexto(await pesosDe(MOSS)) === '2026-10-20 80 ascent, 2026-10-21 79.6 moss, 2026-10-22 79.7 moss, 2026-10-23 79.5 ascent'
+    && pesosEnTexto(await pesosDe(ASCENT, 'ascent')) === '2026-10-20 80 ascent, 2026-10-21 79.8 ascent, 2026-10-22 79.7 moss, 2026-10-23 79.5 ascent'
+    && pesosEnTexto(await pesosDe(MOSS, 'moss', '2026-09-01')).startsWith('2026-09-10 82 ascent, 2026-09-15 81 moss'),
+  'vínculo: el peso de las dos apps junto, uno por día, desde las dos; el día que hay de las dos gana el de la app que pregunta',
+);
+const deMoss = JSON.stringify([await sesionesDe(MOSS, '2000-01-01'), await marcasDe(MOSS, '2000-01-01'), await pesosDe(MOSS, 'moss', '2000-01-01')]);
+comprobar(
+  !deMoss.includes('2026-10-25') && !deMoss.includes('250') && !/\b9[45]\b/.test(deMoss) && !(await sesionesDe(ASCENT)).length && !(await marcasDe(ASCENT)).length
+    && !(await sesionesDe(TERCERO)).length && !(await marcasDe(TERCERO)).length && !(await pesosDe(TERCERO)).length,
+  'vínculo: nunca llega nada de un tercero, y lo de Ascent lo lee solo la cuenta de Moss del vínculo',
+);
+
+await vincularConLaClave(OTRA, ASCENT, 'ascent');
+comprobar(
+  (await vinculos()) === 'e3-e2-ascent' && !(await estadoDe(MOSS)).vinculada && !(await sesionesDe(MOSS)).length && (await sesionesDe(OTRA)).length === 4,
+  'vínculo: vincular otra vez borra el vínculo anterior de esa cuenta de Ascent, y la de Moss de antes deja de leerla',
+);
+await vincularConLaClave(SOLA, SOLA, 'moss');
+comprobar(
+  (await estadoDe(SOLA)).nombre === 'sola' && resumen(await sesionesDe(SOLA)) === '2026-10-22 2 40 30 09:00' && pesosEnTexto(await pesosDe(SOLA)) === '2026-10-22 60 ascent, 2026-10-23 59.5 moss'
+    && (await vinculos()) === 'e3-e2-ascent,e4-e4-moss',
+  'vínculo: la misma cuenta en las dos apps se vincula consigo misma y lee lo suyo de Ascent',
+);
+await vincularConLaClave(SOLA, ASCENT, 'moss');
+comprobar((await vinculos()) === 'e4-e2-moss', 'vínculo: vincular borra los vínculos anteriores de las dos cuentas, de cualquier lado');
+await como(ASCENT, 'select moss.desvincular()');
+await como(ASCENT, 'select moss.desvincular()');
+comprobar(!(await vinculos()) && !(await estadoDe(SOLA)).vinculada && await falla('anon', 'select moss.desvincular()'), 'vínculo: se desvincula desde cualquiera de los dos lados, y otra vez no pasa nada');
+
+await vincularConLaClave(MOSS, ASCENT, 'moss');
+await como(MOSS, 'select moss.borrar_mis_datos()');
+comprobar(
+  (await vinculos()) === 'e1-e2-moss' && pesosEnTexto(await pesosDe(MOSS)) === '2026-10-20 80 ascent, 2026-10-21 79.8 ascent, 2026-10-23 79.5 ascent' && (await sesionesDe(MOSS)).length === 4,
+  'vínculo: «borrar mis datos de Moss» borra lo de Moss y no toca Ascent ni el vínculo (se quita desde Perfil)',
+);
+
+// La app (src/lib/ascentRemoto.ts) y la función moss-vincular, contra esta base: Auth de mentira (cada
+// token es de una cuenta) y PostgREST como lo llama la función, con la clave de servicio.
+const SECRETA = 'sb_secret_de_prueba';
+globalThis.Deno = { env: { get: (k) => ({ SUPABASE_URL: 'https://proyecto.supabase.co', SUPABASE_SECRET_KEYS: JSON.stringify({ default: SECRETA }) })[k] } };
+const { default: funcionVincular } = await import('../supabase/functions/moss-vincular/index.ts');
+const ascentRemoto = await import('../src/lib/ascentRemoto.ts');
+const tokenDe = (cuenta) => `token-${cuenta}`;
+const deJson = (estado, cuerpo) => new Response(JSON.stringify(cuerpo), { status: estado, headers: { 'Content-Type': 'application/json' } });
+const fetchDeVerdad = globalThis.fetch;
+globalThis.fetch = async (url, init = {}) => {
+  const headers = new Headers(init.headers);
+  if (String(url) === 'https://proyecto.supabase.co/auth/v1/user') {
+    const cuenta = /^Bearer token-(.+)$/.exec(headers.get('authorization') ?? '')?.[1];
+    if (!cuenta) return deJson(401, { code: 'bad_jwt' });
+    const existe = (await db.query('select 1 from auth.users where id::text = $1', [cuenta])).rows.length;
+    return existe ? deJson(200, { id: cuenta }) : deJson(403, { code: 'user_not_found' });
+  }
+  if (String(url) === 'https://proyecto.supabase.co/rest/v1/rpc/vincular_cuentas') {
+    if (headers.get('apikey') !== SECRETA) return deJson(401, { code: 'PGRST301', message: 'sin la clave' });
+    if (headers.get('content-profile') !== 'moss') return deJson(404, { code: 'PGRST202', message: 'no está en public' });
+    const { cuenta_moss, cuenta_ascent, origen } = JSON.parse(init.body);
+    try {
+      return deJson(200, await vincularConLaClave(cuenta_moss, cuenta_ascent, origen));
+    } catch (e) {
+      return deJson(e.code === '23505' ? 409 : /^(P0001|22)/.test(e.code ?? '') ? 400 : 500, { code: e.code, message: e.message });
+    }
+  }
+  throw new Error(`pedido inesperado a ${url}`);
+};
+/** El cliente de la app, con la sesión de una cuenta (o sin sesión) y las funciones del servidor. */
+const conSesion = (cuenta) => ({
+  ...clienteDe(cuenta),
+  auth: { getSession: async () => ({ data: { session: cuenta ? { access_token: tokenDe(cuenta) } : null }, error: null }) },
+  functions: {
+    async invoke(funcion, { body, headers }) {
+      const r = await funcionVincular.fetch(new Request(`https://proyecto.supabase.co/functions/v1/${funcion}`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }));
+      return r.ok ? { data: await r.json(), error: null, response: r } : { data: null, error: new Error('FunctionsHttpError'), response: r };
+    },
+  },
+});
+await como(MOSS, 'select moss.desvincular()');
+ascentRemoto.probarCon(() => conSesion(MOSS));
+const errores = [await ascentRemoto.vincular(''), await ascentRemoto.vincular(tokenDe('00000000-0000-4000-8000-0000000000ff')), await ascentRemoto.vincular(tokenDe(OTRA))].map((r) => r.ok || r.error).join();
+ascentRemoto.probarCon(() => conSesion(null));
+const sinSesion = await ascentRemoto.vincular(tokenDe(ASCENT));
+ascentRemoto.probarCon(() => conSesion(MOSS));
+const vinculada = await ascentRemoto.vincular(tokenDe(ASCENT));
+comprobar(
+  errores === 'vencida,vencida,sin_ascent' && !sinSesion.ok && sinSesion.error === 'sin_sesion' && vinculada.ok && vinculada.nombre === 'agus' && (await vinculos()) === 'e1-e2-moss',
+  'app: vincular pasa por moss-vincular con las dos sesiones: una sesión de Ascent vencida, una cuenta que nunca usó Ascent o sin sesión en Moss no vinculan',
+);
+const estadoEnLaApp = await ascentRemoto.estadoDelVinculo();
+const enLaApp = await ascentRemoto.sesionesDeAscent('2026-10-01');
+const primera = enLaApp[0]?.ejercicios[0];
+comprobar(
+  estadoEnLaApp.vinculada && estadoEnLaApp.nombre === 'agus' && typeof estadoEnLaApp.desde === 'string'
+    && enLaApp.map((d) => `${d.fecha} ${d.series} ${d.kilos} ${d.minutos} ${'inicio' in d}`).join() === '2026-10-20 8 375 55 true,2026-10-21 6 200 40 true,2026-10-23 0 0 0 false,2026-10-24 3 0 0 true'
+    && primera?.id === 'sentadilla' && primera.nombre === 'Sentadilla' && primera.musculos.join() === 'piernas' && primera.series[2].kilos === 105 && primera.series[2].reps === 3
+    && enLaApp[0].ejercicios[1].series[1].kilos === null,
+  'app: el estado del vínculo y los días de gimnasio de Ascent llegan con la forma de src/lib/ascentRemoto.ts',
+);
+const marcasEnLaApp = await ascentRemoto.marcasDeAscent('2026-10-16');
+const pesosEnLaApp = await ascentRemoto.pesosCompartidos('2026-10-01');
+comprobar(
+  marcasEnLaApp.map((m) => `${m.id} ${m.ejercicio} ${m.fecha} ${m.kilos} ${m.reps}`).join() === 'dominadas Dominadas 2026-05-01 20 3,sentadilla Sentadilla 2026-06-01 140 1,press_mancuernas Press con mancuernas 2026-10-18 32 8,dominadas Dominadas 2026-10-19 10 5'
+    && pesosEnLaApp.map((p) => `${p.fecha} ${p.kg} ${p.de}`).join() === '2026-10-20 80 ascent,2026-10-21 79.8 ascent,2026-10-23 79.5 ascent',
+  'app: las marcas y el peso compartido llegan con la forma de src/lib/ascentRemoto.ts',
+);
+const desdeAscent = await funcionVincular.fetch(new Request('https://proyecto.supabase.co/functions/v1/moss-vincular', {
+  method: 'POST', headers: { Authorization: `Bearer ${tokenDe(ASCENT)}` }, body: JSON.stringify({ otra: tokenDe(MOSS), desde: 'ascent' }),
+}));
+comprobar(desdeAscent.status === 200 && (await desdeAscent.json()).nombre === 'agus' && (await vinculos()) === 'e1-e2-ascent', 'app: desde Ascent se vincula igual, con las cuentas al revés');
+await ascentRemoto.desvincular();
+comprobar(!(await ascentRemoto.estadoDelVinculo()).vinculada && !(await ascentRemoto.sesionesDeAscent('2026-10-01')).length && !(await vinculos()), 'app: desvincular desde Moss');
+ascentRemoto.probarCon(() => null);
+const sinSupabase = [await ascentRemoto.estadoDelVinculo(), await ascentRemoto.sesionesDeAscent('2026-10-01'), await ascentRemoto.marcasDeAscent('2026-10-01'),
+  await ascentRemoto.pesosCompartidos('2026-10-01'), await ascentRemoto.vincular(tokenDe(ASCENT)), await ascentRemoto.desvincular()];
+ascentRemoto.probarCon(() => ({ ...conSesion(MOSS), rpc: async () => ({ data: null, error: { message: 'Failed to fetch' } }), functions: { invoke: async () => ({ data: null, error: new Error('FunctionsFetchError') }) } }));
+const sinConexion = [await ascentRemoto.sesionesDeAscent('2026-10-01').then(() => 'resolvió', () => 'rechazó'), await ascentRemoto.estadoDelVinculo().then(() => 'resolvió', () => 'rechazó'), (await ascentRemoto.vincular(tokenDe(ASCENT))).error];
+comprobar(
+  JSON.stringify(sinSupabase) === JSON.stringify([{ vinculada: false, nombre: null, desde: null }, [], [], [], { ok: false, error: 'sin_sesion' }, null]) && sinConexion.join() === 'rechazó,rechazó,red',
+  'app: sin Supabase no hay vínculo ni nada que leer; sin conexión las lecturas se rechazan (queda lo que había) y vincular dice «red»',
+);
+globalThis.fetch = fetchDeVerdad;
+
+// Borrar la cuenta, de cualquiera de los dos lados, borra el vínculo.
+await vincularConLaClave(MOSS, ASCENT, 'moss');
+await vincularConLaClave(SOLA, SOLA, 'moss');
+await db.exec(`delete from auth.users where id = '${ASCENT}'`);
+const sinAscent = await vinculos();
+await como(SOLA, 'select moss.borrar_cuenta()');
+comprobar(sinAscent === 'e4-e4-moss' && !(await vinculos()), 'vínculo: borrar la cuenta (la de Ascent, la de Moss o la misma de las dos) borra el vínculo');
 
 await db.close();
 console.log(fallas ? `\n${fallas} comprobaciones fallaron.` : '\nTodo bien.');

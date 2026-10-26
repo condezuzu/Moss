@@ -1,6 +1,10 @@
 // El cielo de la etapa 1: lo que la galería mostró, ahora en Skia y en el hilo de la interfaz.
 // Un pase de shader dibuja el cielo (fijo + aurora + estrellas que titilan); encima van las líneas
 // y dos Atlas con todas las luces (antes y después del musgo). React solo dibuja el texto.
+// Los cuadros corren solo mientras hacen falta (latido.ts): un toque, un gesto, un dato nuevo o la
+// llegada a Hábitos lo despiertan; unos segundos después, sin nada en marcha, deja de pedir cuadros y
+// queda la última imagen. Detrás de las otras secciones, con la app en el fondo o con la pantalla
+// bloqueada, no corre.
 
 import {
   Atlas,
@@ -23,10 +27,10 @@ import {
 } from '@shopify/react-native-skia';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { AccessibilityInfo, PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, AppState, PixelRatio, Platform, StyleSheet, useWindowDimensions, View, type AppStateStatus } from 'react-native';
 import { GestureDetector, useCompetingGestures, useLongPressGesture, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
-import { useAnimatedReaction, useDerivedValue, useFrameCallback, useSharedValue, type DerivedValue, type SharedValue } from 'react-native-reanimated';
+import { useAnimatedReaction, useDerivedValue, useSharedValue, type DerivedValue, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
@@ -36,22 +40,28 @@ import { useCalidad, useCieloDeHoy, useEncendidos } from './dia';
 import { efectos } from './efectos';
 import {
   avancesNuevos,
+  avivar,
   CAPACIDAD_CIELO,
   CAPACIDAD_FRENTE,
   claveDeApagados,
   completarDia,
   crearEscena,
   estrellaEn,
+  hayMovimiento,
   lanzarFugaz,
   paso,
   ponerEncendidos,
   repetirAnimacion,
+  saludar,
   simularSalud,
   tocar,
+  VIVO_AL_LLEGAR,
+  VIVO_AL_TOCAR,
   type Escena,
   type Evento,
 } from './escena';
 import { DIAGNOSTICO, Interfaz, type Aviso } from './Interfaz';
+import { arrancar, crearMedidor, frenar, relevar } from './latido';
 import { CELDA, crearReserva, volcarLuces, type Reserva } from './luces';
 import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad } from './mundo';
 import type { Brote } from './musgo';
@@ -97,12 +107,16 @@ export type PropsDelCielo = {
   entrada?: { camara: SharedValue<number> };
   /** Mantener apretada una estrella abre el editor de su hábito. */
   alEditarHabito?: (id: string) => void;
+  /** Tocar la estrella de un hábito de comida dice de dónde sale su luz y lleva a Comida. */
+  alIrAComida?: () => void;
 };
 
 const RIQUEZA_DE_LA_ENTRADA = 0.6;
 const RIQUEZA_INICIAL = 0.6;
+/** Hasta que se toca una estrella por primera vez, Hábitos muestra cómo se marca un hábito. */
+const CLAVE_DEL_GLOBITO = 'moss:tocoUnaEstrella';
 
-export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHabito }: PropsDelCielo) {
+export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHabito, alIrAComida }: PropsDelCielo) {
   const soloCielo = !!entrada;
   const camaraDeLaEntrada = entrada?.camara;
   const { width: ancho, height: alto } = useWindowDimensions();
@@ -120,7 +134,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   const encendidos = useEncendidos();
   const completo = encendidos.length > 0 && encendidos.every(Boolean);
   const [aviso, setAviso] = useState<Aviso | null>(null);
-  const [cuadros, setCuadros] = useState(0);
+  const [medidor] = useState(crearMedidor);
   const [fondoListo, setFondoListo] = useState(false);
   const [vuelta, setVuelta] = useState(0);
   // El progreso es el cielo: sale de la luz juntada desde siempre. El panel de prueba la puede forzar.
@@ -132,6 +146,8 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setMovimientoReducido).catch(() => {});
+    const suscripcion = AccessibilityInfo.addEventListener('reduceMotionChanged', setMovimientoReducido);
+    return () => suscripcion.remove();
   }, []);
 
   const plano: Plano = useMemo(() => armarPlano(ancho, alto, dia), [ancho, alto, dia]);
@@ -151,7 +167,9 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       crearEscena({
         ancho,
         alto,
-        habitos: soloCielo ? [] : plano.estrellas.map(([x, y], i) => ({ x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto, fija: dia.habitos[i].auto === 'comida' })),
+        habitos: soloCielo ? [] : plano.estrellas.map(([x, y], i) => ({
+          x, y, encendido: a.encendidos[i], auto: !!dia.habitos[i].auto, fija: dia.habitos[i].auto === 'comida', caja: plano.etiquetas[i]?.caja,
+        })),
         lineas: soloCielo ? [] : plano.lineas,
         centro: plano.centro,
         brotes: a.brotes,
@@ -185,41 +203,12 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     [dia, plano],
   );
   const escenaDeAhora = useEffectEvent(() => nuevaEscena(deAhora()));
-  // Otro tamaño, otro día u otros hábitos, o reiniciar: escena nueva con los hábitos como están.
-  useEffect(() => {
-    escena.value = escenaDeAhora();
-  }, [firma, ancho, alto, movimientoReducido, vuelta, escena]);
-  useEffect(() => {
-    const particulas = ajustes.particulas;
-    const brotes = musgo.brotes;
-    scheduleOnUI(() => {
-      'worklet';
-      escena.modify((e) => {
-        'worklet';
-        e.factorParticulas = particulas;
-        e.brotes = brotes;
-        e.riqueza = riqueza;
-        return e;
-      });
-    });
-  }, [ajustes.particulas, musgo, riqueza, escena]);
-  // Lo que se enciende fuera del cielo (la comida, Salud, otro teléfono) llega a la escena que está.
-  // Lo que se tocó acá ya está igual y no cambia nada.
-  useEffect(() => {
-    const lista = encendidos;
-    scheduleOnUI(() => {
-      'worklet';
-      escena.modify((e) => {
-        'worklet';
-        ponerEncendidos(e, lista);
-        return e;
-      });
-    });
-  }, [encendidos, escena]);
 
   const t = useTextos();
-  // Una sola vez, la primera vez que se ve Hábitos (la app abre en Inicio): qué hace tocar una estrella.
+  // Hasta que se toca una estrella por primera vez (y se acuerda), Hábitos muestra cómo se marca un
+  // hábito. Aparece la primera vez que se ve Hábitos: la app abre en Inicio.
   const [vistoHabitos, setVistoHabitos] = useState(false);
+  const [globito, setGlobito] = useState(false);
   useAnimatedReaction(
     () => (paginaX ? Math.abs(paginaX.value) < 1 : true),
     (ahora, antes) => {
@@ -227,14 +216,16 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     },
   );
   useEffect(() => {
-    if (soloCielo || !vistoHabitos) return;
-    AsyncStorage.getItem('moss:globitoEstrellas').then((visto) => {
-      if (visto) return;
-      setAviso({ texto: t.t('cielo.globito'), clave: Date.now() });
-      AsyncStorage.setItem('moss:globitoEstrellas', '1').catch(() => {});
+    if (soloCielo) return;
+    AsyncStorage.getItem(CLAVE_DEL_GLOBITO).then((tocada) => {
+      if (!tocada) setGlobito(true);
     }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [soloCielo, vistoHabitos]);
+  }, [soloCielo]);
+  const quitarGlobito = useCallback(() => {
+    if (!globito) return;
+    setGlobito(false);
+    AsyncStorage.setItem(CLAVE_DEL_GLOBITO, '1').catch(() => {});
+  }, [globito]);
 
   // ------------------------------------------------------------------ texturas
   // El cielo fijo se dibuja una vez por tamaño, calidad y riqueza. Mientras llega la textura nueva
@@ -285,7 +276,8 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   const alEventos = useCallback(
     (eventos: Evento[]) => {
       for (const ev of eventos) {
-        if (ev.tipo === 'cuadros') { setCuadros(ev.valor); continue; }
+        if (ev.tipo === 'cuadros') { medidor.poner({ fps: ev.valor, total: ev.total, reposo: false }); continue; }
+        if (ev.tipo === 'reposo') { medidor.poner({ ...medidor.leer(), total: ev.total, reposo: true }); continue; }
         if (ev.tipo === 'lento') { bajarLaAutomatica(); continue; }
         if (ev.tipo === 'listo') { setFondoListo(true); continue; }
         if (ev.tipo === 'completo') {
@@ -294,11 +286,23 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         }
         if (ev.tipo === 'incompleto') continue;
         const h = dia.habitos[ev.indice];
+        if (!h) continue;
         const nombre = h.nombre;
         if (ev.tipo === 'automatico') {
           Haptics.selectionAsync().catch(() => {});
+          quitarGlobito();
           if (h.auto === 'comida') {
-            setAviso({ texto: t.t('cielo.seEnciendeConLaComida'), clave: Date.now() });
+            // Dice qué la enciende y lleva a Comida, donde se anota.
+            const irAComida = alIrAComida;
+            setAviso({
+              texto: t.t(`cielo.seEnciendeCon.${h.comida ?? 'registrar'}`),
+              clave: Date.now(),
+              ...(irAComida ? { accion: { texto: t.t('cielo.verComida'), alTocar: () => { setAviso(null); irAComida(); } } } : {}),
+            });
+            continue;
+          }
+          if (h.auto === 'ascent') {
+            setAviso({ texto: t.t('cielo.seEnciendeConAscent'), clave: Date.now() });
             continue;
           }
           const valor = t.valorAutomatico(h);
@@ -313,21 +317,29 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         } else {
           if (prendida) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
           else Haptics.selectionAsync().catch(() => {});
+          quitarGlobito();
           // Sin «Deshacer»: tocar otra vez la estrella la apaga.
           setAviso({ texto: t.t(prendida ? 'cielo.encendida' : 'cielo.apagada', { habito: nombre }), clave: Date.now() });
         }
       }
     },
-    [dia, t],
+    [dia, t, medidor, quitarGlobito, alIrAComida],
   );
+  // Los cuadros le pasan los eventos a una función que no cambia: un lazo que siguió con un cuadro de
+  // un render anterior igual los manda a lo de ahora (el día, los hábitos de hoy).
+  const alEventosDeAhora = useRef(alEventos);
+  useEffect(() => {
+    alEventosDeAhora.current = alEventos;
+  }, [alEventos]);
+  const recibirEventos = useCallback((lista: Evento[]) => alEventosDeAhora.current(lista), []);
 
   const drenar = useCallback(() => {
     'worklet';
     const e = escena.value;
     if (e.eventos.length === 0) return;
     const lista = e.eventos.splice(0, e.eventos.length);
-    scheduleOnRN(alEventos, lista);
-  }, [escena, alEventos]);
+    scheduleOnRN(recibirEventos, lista);
+  }, [escena, recibirEventos]);
 
   // Las luces de los dos Atlas: las arma cada cuadro, solo las que hay, con objetos de Skia que se
   // reusan (luces.ts).
@@ -341,12 +353,28 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   // Hasta dónde llegó cada línea y qué hábitos están apagados: sus caminos se rehacen solo con esto.
   const avances = useSharedValue<number[]>([]);
   const apagados = useSharedValue('');
-  // En baja, con el cielo quieto, va a 30 cuadros: la mitad del trabajo. Al moverse vuelve a 60.
-  const treinta = useSharedValue(calidad === 'baja');
-  useEffect(() => treinta.set(calidad === 'baja'), [calidad, treinta]);
+  // En baja, solo la cámara, las pestañas y Ascent van a 60 cuadros; lo demás, a 30.
+  const enBaja = useSharedValue(calidad === 'baja');
+  useEffect(() => enBaja.set(calidad === 'baja'), [calidad, enBaja]);
   const ultimoCuadro = useSharedValue(0);
+  // El lazo de cuadros (latido.ts): la vuelta que corre (0, quieto) y el número de la última.
+  const corre = useSharedValue(0);
+  const vueltas = useSharedValue(0);
+  const reposoAvisado = useSharedValue(false);
 
-  useFrameCallback((info) => {
+  // El cielo queda quieto: no pide más cuadros y queda la última imagen.
+  const quedarQuieto = () => {
+    'worklet';
+    ultimoCuadro.value = 0;
+    if (DIAGNOSTICO && !reposoAvisado.value) {
+      reposoAvisado.value = true;
+      scheduleOnRN(recibirEventos, [{ tipo: 'reposo', total: escena.value.medicion.total }]);
+    }
+    return false;
+  };
+
+  // Un cuadro: devuelve si hace falta otro.
+  const cuadro = (ahora: number): boolean => {
     'worklet';
     const corrida = paginaX ? paginaX.value : 0;
     const ascent = subida ? subida.progreso.value : 0;
@@ -354,12 +382,22 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     // dibujar, así cada cuadro queda para la interfaz. Se mueve en Hábitos, mientras se llega o se
     // va de ahí, con Ascent y en la entrada.
     const antes = escena.value;
-    if (!soloCielo && ascent === 0 && antes.velado === 0 && antes.aparicion >= 1 && Math.abs(corrida) >= ancho && Math.abs(antes.paginaX) >= ancho) return;
-    const quieto = ascent === 0 && Math.abs(corrida - antes.paginaX) < 0.5 && Math.abs(antes.cam.v) < 1e-3;
-    if (treinta.value && quieto && ultimoCuadro.value > 0 && info.timestamp - ultimoCuadro.value < 30) return;
-    const dt = Math.min(0.05, (ultimoCuadro.value > 0 ? info.timestamp - ultimoCuadro.value : (info.timeSincePreviousFrame ?? 16.7)) / 1000);
-    ultimoCuadro.value = info.timestamp;
+    if (!soloCielo && ascent === 0 && antes.velado === 0 && antes.aparicion >= 1 && Math.abs(corrida) >= ancho && Math.abs(antes.paginaX) >= ancho) return quedarQuieto();
+    const subiendo = (ascent > 0 || antes.velado > 0) && Math.abs(antes.cam.y - CAMARA_DE_ASCENT * ascent) > 1e-4;
+    const llevada = camaraDeLaEntrada ? camaraDeLaEntrada.value !== antes.cam.objetivo : false;
+    const camara = antes.cam.arrastrando || antes.cam.v !== 0 || antes.cam.y !== antes.cam.objetivo;
+    const interaccion = subiendo || llevada || camara || Math.abs(corrida - antes.paginaX) >= 0.5;
+    const enMarcha = hayMovimiento(antes);
+    if (!interaccion && !enMarcha && antes.t >= antes.vivoHasta) return quedarQuieto();
+    // Sin nada que siga al dedo (el titilar, la aurora, un toque en baja), a 30 cuadros: la mitad del trabajo.
+    const aPleno = interaccion || (enMarcha && !enBaja.value);
+    if (!aPleno && ultimoCuadro.value > 0 && ahora - ultimoCuadro.value < 30) return true;
+    const dt = Math.min(0.05, (ultimoCuadro.value > 0 ? ahora - ultimoCuadro.value : 16.7) / 1000);
+    ultimoCuadro.value = ahora;
+    reposoAvisado.value = false;
     const hayFondo = fondo.value !== null;
+    // Para saber si el teléfono llega: solo a pleno y en Hábitos (no en la entrada ni con Ascent).
+    const muestra = aPleno && !soloCielo && corrida === 0 && ascent === 0;
     escena.modify((e) => {
       'worklet';
       e.paginaX = corrida;
@@ -377,7 +415,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         e.fondoListo = true;
         e.eventos.push({ tipo: 'listo' });
       }
-      paso(e, dt);
+      paso(e, dt, muestra);
       return e;
     }, true);
     const e = escena.value;
@@ -399,11 +437,128 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     const clave = claveDeApagados(e);
     if (clave !== apagados.value) apagados.value = clave;
     drenar();
+    return true;
+  };
+
+  // Despierta el cielo por `segundos` (un toque, un gesto, un dato nuevo): si estaba quieto, vuelve a
+  // pedir cuadros desde este mismo hilo, sin pasar por React.
+  const despertar = (segundos: number) => {
+    'worklet';
+    escena.modify((e) => {
+      'worklet';
+      avivar(e, segundos);
+      return e;
+    }, false);
+    arrancar(corre, vueltas, cuadro, requestAnimationFrame);
+  };
+  // La llegada a Hábitos: las estrellas saludan y, la primera vez, pasa una fugaz.
+  const llegar = () => {
+    'worklet';
+    escena.modify((e) => {
+      'worklet';
+      saludar(e);
+      return e;
+    }, false);
+    arrancar(corre, vueltas, cuadro, requestAnimationFrame);
+  };
+  const dormir = () => {
+    'worklet';
+    frenar(corre);
+    ultimoCuadro.value = 0;
+  };
+  const relevarCuadro = () => {
+    'worklet';
+    relevar(corre, vueltas, cuadro, requestAnimationFrame);
+  };
+  // Un render nuevo trae lo que sabe React ahora: el lazo que corre sigue con este cuadro.
+  useEffect(() => {
+    scheduleOnUI(relevarCuadro);
   });
+  useEffect(() => () => corre.set(0), [corre]);
+  const despertarDesdeReact = useEffectEvent((segundos: number) => scheduleOnUI(despertar, segundos));
+
+  // Otro tamaño, otro día u otros hábitos, o reiniciar: escena nueva con los hábitos como están.
+  useEffect(() => {
+    escena.set(escenaDeAhora());
+    despertarDesdeReact(VIVO_AL_LLEGAR);
+  }, [firma, ancho, alto, movimientoReducido, vuelta, escena]);
+  useEffect(() => {
+    const particulas = ajustes.particulas;
+    const brotes = musgo.brotes;
+    scheduleOnUI(() => {
+      'worklet';
+      escena.modify((e) => {
+        'worklet';
+        e.factorParticulas = particulas;
+        e.brotes = brotes;
+        e.riqueza = riqueza;
+        return e;
+      });
+    });
+    despertarDesdeReact(VIVO_AL_TOCAR);
+  }, [ajustes.particulas, musgo, riqueza, escena]);
+  // Lo que se enciende fuera del cielo (la comida, Salud, otro teléfono) llega a la escena que está.
+  // Lo que se tocó acá ya está igual y no cambia nada.
+  useEffect(() => {
+    const lista = encendidos;
+    scheduleOnUI(() => {
+      'worklet';
+      escena.modify((e) => {
+        'worklet';
+        ponerEncendidos(e, lista);
+        return e;
+      });
+    });
+    despertarDesdeReact(VIVO_AL_TOCAR);
+  }, [encendidos, escena]);
+  // Un hábito que cambia de nombre cambia lo que ocupa su etiqueta, sin rehacer la escena.
+  useEffect(() => {
+    const cajas = plano.etiquetas.map((x) => x.caja);
+    scheduleOnUI(() => {
+      'worklet';
+      escena.modify((e) => {
+        'worklet';
+        for (let i = 0; i < e.habitos.length && i < cajas.length; i++) e.habitos[i].caja = cajas[i];
+        return e;
+      }, false);
+    });
+  }, [plano, escena]);
+
+  // La app en el fondo, la pantalla bloqueada o el centro de control encima: el cielo no corre.
+  const alCambiarLaApp = useEffectEvent((estado: AppStateStatus) => {
+    if (estado === 'active') scheduleOnUI(despertar, VIVO_AL_TOCAR);
+    else scheduleOnUI(dormir);
+  });
+  useEffect(() => {
+    const suscripcion = AppState.addEventListener('change', (estado) => alCambiarLaApp(estado));
+    return () => suscripcion.remove();
+  }, []);
+
+  // Las pestañas: el cielo se mueve mientras Hábitos asoma, llega o se va, y al llegar saluda.
+  useAnimatedReaction(
+    () => (paginaX ? paginaX.value : 0),
+    (ahora, antes) => {
+      if (antes === null || ahora === antes || soloCielo) return;
+      if (Math.abs(ahora) >= ancho && Math.abs(antes) >= ancho) return;
+      if (ahora === 0) llegar();
+      else despertar(VIVO_AL_TOCAR);
+    },
+  );
+  // Ascent que sube o baja, la cámara de la entrada y la textura del cielo que llega.
+  useAnimatedReaction(
+    () => (subida ? subida.progreso.value : 0) + (camaraDeLaEntrada ? camaraDeLaEntrada.value * 7 : 0) + (fondo.value ? 0.5 : 0),
+    (ahora, antes) => {
+      if (antes !== null && ahora !== antes) despertar(VIVO_AL_TOCAR);
+    },
+  );
 
   // ------------------------------------------------------------------ gestos
   const toque = useTapGesture({
     maxDistance: 12,
+    onBegin: () => {
+      'worklet';
+      despertar(VIVO_AL_TOCAR);
+    },
     onActivate: (ev) => {
       'worklet';
       if (subida) {
@@ -436,6 +591,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       'worklet';
       inicioY.set(ev.absoluteY);
       modo.set('nada');
+      despertar(VIVO_AL_TOCAR);
     },
     onUpdate: (ev) => {
       'worklet';
@@ -505,10 +661,15 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     const h = dia.habitos[i];
     if (!h || !alEditarHabito) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    quitarGlobito();
     alEditarHabito(h.id);
-  }, [dia, alEditarHabito]);
+  }, [dia, alEditarHabito, quitarGlobito]);
   const apretar = useLongPressGesture({
     minDuration: 450,
+    onBegin: () => {
+      'worklet';
+      despertar(VIVO_AL_TOCAR);
+    },
     onActivate: (ev) => {
       'worklet';
       const i = estrellaEn(escena.value, ev.x, ev.y);
@@ -592,37 +753,32 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   const alfaUniversoHoy = useDerivedValue(() => (escena.value.completo ? 0.7 : 0));
 
   // ------------------------------------------------------------------ acciones del panel de prueba
-  const enLaEscena = useCallback(
-    (accion: (e: Escena) => void) => {
-      scheduleOnUI(() => {
+  const enLaEscena = (accion: (e: Escena) => void) => {
+    scheduleOnUI(() => {
+      'worklet';
+      escena.modify((e) => {
         'worklet';
-        escena.modify((e) => {
-          'worklet';
-          accion(e);
-          return e;
-        }, true);
-      });
+        accion(e);
+        return e;
+      }, true);
+      despertar(VIVO_AL_TOCAR);
+    });
+  };
+  const acciones = {
+    salud: () => enLaEscena((e) => { 'worklet'; simularSalud(e); }),
+    completar: () => enLaEscena((e) => { 'worklet'; completarDia(e); }),
+    repetir: () => enLaEscena((e) => { 'worklet'; repetirAnimacion(e); }),
+    universo: () => enLaEscena((e) => { 'worklet'; e.cam.objetivo = e.cam.objetivo > 0 ? 0 : ZONA_UNIVERSO; e.cam.v = 0; }),
+    fugaz: () => enLaEscena((e) => { 'worklet'; lanzarFugaz(e); }),
+    // Apaga todo lo de hoy en el almacén y rearma la escena con eso.
+    reiniciar: () => {
+      elAlmacen().reiniciarHoy();
+      setAviso(null);
+      setVuelta((v) => v + 1);
     },
-    [escena],
-  );
-  const acciones = useMemo(
-    () => ({
-      salud: () => enLaEscena((e) => { 'worklet'; simularSalud(e); }),
-      completar: () => enLaEscena((e) => { 'worklet'; completarDia(e); }),
-      repetir: () => enLaEscena((e) => { 'worklet'; repetirAnimacion(e); }),
-      universo: () => enLaEscena((e) => { 'worklet'; e.cam.objetivo = e.cam.objetivo > 0 ? 0 : ZONA_UNIVERSO; e.cam.v = 0; }),
-      fugaz: () => enLaEscena((e) => { 'worklet'; lanzarFugaz(e); }),
-      // Apaga todo lo de hoy en el almacén y rearma la escena con eso.
-      reiniciar: () => {
-        elAlmacen().reiniciarHoy();
-        setAviso(null);
-        setVuelta((v) => v + 1);
-      },
-      calidad: setDelPanel,
-      riqueza: setRiquezaForzada,
-    }),
-    [enLaEscena],
-  );
+    calidad: setDelPanel,
+    riqueza: setRiquezaForzada,
+  };
 
   // Los gestos van solo sobre el lienzo: si envolvieran también a la interfaz, un toque en un
   // botón (Deshacer, el panel de prueba) le llegaría además al cielo y encendería la estrella que
@@ -680,7 +836,8 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         alCerrarAviso={() => setAviso(null)}
         calidad={calidad}
         riqueza={riqueza}
-        cuadros={cuadros}
+        medidor={medidor}
+        globito={globito && vistoHabitos && dia.habitos.length > 0}
         acciones={acciones}
         abajo={abajo}
         subida={subida?.progreso}

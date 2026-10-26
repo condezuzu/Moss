@@ -53,3 +53,6 @@ public/alimentos.json
 # Lo que bajan las herramientas (los datos de USDA)
 .cache/
 .revision/
+
+# El CLI de Supabase deja acá su estado local.
+supabase/.temp/

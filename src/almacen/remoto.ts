@@ -1,6 +1,7 @@
 // Supabase tal como lo usa la sincronización: subir lo pendiente y bajar lo que cambió. Las filas
-// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0007_plan.sql). El usuario no viaja:
-// lo pone la base con la sesión, y RLS no deja ver ni tocar lo de nadie más.
+// llevan los nombres de supabase/moss/ (de 0001_esquema.sql a 0007_plan.sql, y tu nombre en
+// 0009_perfil.sql). El usuario no viaja: lo pone la base con la sesión, y RLS no deja ver ni tocar
+// lo de nadie más.
 
 import type { Periodo } from '@/dominio/constelaciones';
 import { SITIOS, type Medidas } from '@/dominio/cuerpo';
@@ -10,6 +11,7 @@ import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
 import { microsValidos } from '@/dominio/micronutrientes';
+import { limpiarNombre } from '@/dominio/nombre';
 import { preferenciasDe, type Preferencias } from '@/dominio/plan';
 import { esCara, type Confianza, type NochePropia, type OrigenDeNoche } from '@/dominio/sueno';
 import { SECUNDARIOS, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua, type Valores } from '@/dominio/registros';
@@ -106,8 +108,11 @@ function conMicros(v: Valores, micros: unknown): Valores {
 
 type Filas = { [K in keyof typeof filaDe]: ReturnType<(typeof filaDe)[K]> };
 type Recibida<F> = F & { recibido: string };
-/** Hasta que se contesta el cuestionario, la fila del perfil tiene solo la semilla. */
-type FilaPerfil = Recibida<{ [K in keyof Filas['perfil']]: Filas['perfil'][K] | null }> & { semilla: string | null };
+/**
+ * Hasta que se contesta el cuestionario, la fila del perfil tiene solo la semilla o tu nombre, que
+ * va con su propia hora (0009_perfil.sql).
+ */
+type FilaPerfil = Recibida<{ [K in keyof Filas['perfil']]: Filas['perfil'][K] | null }> & { semilla: string | null; nombre?: string | null; nombre_actualizado?: string | null };
 
 // De la base al teléfono, campo por campo: las filas traen además el usuario y la hora en que llegaron.
 const deFila = {
@@ -208,6 +213,8 @@ export function remotoSupabase(cliente: Cliente): Remoto {
       };
       // La semilla es de la cuenta: la base se queda con la primera que llega, y al bajar llega a todos.
       if (c.semilla) llamar('poner_semilla', { valor: c.semilla });
+      // Tu nombre, con su hora: la base se queda con el más nuevo, sin tocar lo demás del perfil.
+      if (c.nombre) llamar('poner_nombre', { valor: c.nombre.valor, cuando: c.nombre.actualizado });
       if (c.perfil) poner('perfiles', [filaDe.perfil(c.perfil)], 'usuario');
       poner('habitos', c.habitos.map(filaDe.habito), 'usuario,id');
       if (c.periodos) llamar('poner_periodos', { lista: c.periodos.map(filaDe.periodo) });
@@ -261,6 +268,7 @@ export function remotoSupabase(cliente: Cliente): Remoto {
         datos: {
           perfil: perfil && perfil.nacimiento !== null ? deFila.perfil(perfil as Filas['perfil']) : null,
           semilla: perfil?.semilla ?? null,
+          nombre: perfil?.nombre_actualizado ? { valor: limpiarNombre(perfil.nombre ?? ''), actualizado: hora(perfil.nombre_actualizado) } : null,
           habitos: habitos.map(deFila.habito),
           periodos: periodos.map(deFila.periodo),
           marcas: marcas.map(deFila.marca),

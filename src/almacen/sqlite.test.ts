@@ -69,6 +69,17 @@ describe('el repositorio en SQLite', () => {
     expect((await otraVez.pendientes()).marcas.map((m) => m.dia)).toEqual(['2026-10-27']);
   });
 
+  it('tu nombre sube como la semilla: queda pendiente al cambiarlo, y no lo que baja de la cuenta', async () => {
+    const r = await repositorioSQLite('nombre.db');
+    await r.guardarAjuste('nombre', JSON.stringify({ valor: 'Ana', actualizado: '2026-10-26T12:00:00.000Z' }));
+    await r.guardarAjuste('calidad', 'baja');
+    expect((await r.pendientes()).nombre).toEqual({ valor: 'Ana', actualizado: '2026-10-26T12:00:00.000Z' });
+    await r.subidoHasta((await r.pendientes()).hasta);
+    await r.guardarDeLaNube({ ...nada, nombre: { valor: 'Ana María', actualizado: '2026-10-26T13:00:00.000Z' } });
+    expect(sinCambios(await r.pendientes())).toBe(true);
+    expect((await r.cargar('2026-10-01', '2026-10-01')).ajustes.nombre).toContain('Ana María');
+  });
+
   it('una migración que quedó a medias se termina la próxima vez', async () => {
     // Se cortó después de crear una tabla, antes de anotar la versión.
     await repositorioSQLite('previa.db');

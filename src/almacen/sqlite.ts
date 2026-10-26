@@ -11,9 +11,11 @@ import type { ClaveDia, DiaSemana } from '@/dominio/fechas';
 import type { Habito } from '@/dominio/habitos';
 import type { IdDeLogro, Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
-import { COLECCIONES, DE_COMIDA, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Pendientes, type Repositorio } from './repositorio';
+import {
+  AJUSTES_QUE_SUBEN, COLECCIONES, DE_COMIDA, NOMBRE, nombreDeAjuste, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Pendientes, type Repositorio,
+} from './repositorio';
 
-const TABLAS = ['habitos', 'periodos', 'marcas', 'dias', 'logros', 'perfil', 'metas', 'pesos', 'ajustes', ...COLECCIONES];
+const TABLAS = ['habitos', 'periodos', 'marcas', 'dias', 'logros', 'perfil', 'metas', 'pesos', 'ajustes', ...COLECCIONES, 'anclas'];
 
 async function migrar(db: SQLite.SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
@@ -49,6 +51,9 @@ async function migrar(db: SQLite.SQLiteDatabase) {
   await bloque(3, 'CREATE TABLE IF NOT EXISTS medidas (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
   // Las noches propias (la cara de la mañana y la hora sin reloj), igual: una por noche.
   await bloque(4, 'CREATE TABLE IF NOT EXISTS noches (clave TEXT PRIMARY KEY NOT NULL, dia TEXT, datos TEXT NOT NULL, cambio INTEGER NOT NULL);');
+  // Lo que avisan los Atajos y el despertador (src/salud/anclas.ts): queda en el teléfono, no sube.
+  // `cambio` es siempre 0: está solo para que borrarTodo() también las borre.
+  await bloque(5, 'CREATE TABLE IF NOT EXISTS anclas (id TEXT PRIMARY KEY NOT NULL, que TEXT NOT NULL, en INTEGER NOT NULL, cambio INTEGER NOT NULL DEFAULT 0);');
 }
 
 type FilaPeriodo = { dia: number; constelacion: string; cantidad: number; desde: string; hasta: string | null };
@@ -161,7 +166,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
       await db.withTransactionAsync(() => poner(coleccion, lista, siguiente));
     },
     async guardarAjuste(clave, valor) {
-      await db.runAsync('INSERT OR REPLACE INTO ajustes (clave, valor, cambio) VALUES (?, ?, ?)', clave, valor, clave === 'semilla' ? siguiente() : 0);
+      await db.runAsync('INSERT OR REPLACE INTO ajustes (clave, valor, cambio) VALUES (?, ?, ?)', clave, valor, (AJUSTES_QUE_SUBEN as readonly string[]).includes(clave) ? siguiente() : 0);
     },
     async leerAjuste(clave) {
       return (await db.getFirstAsync<{ valor: string }>('SELECT valor FROM ajustes WHERE clave = ?', clave))?.valor ?? null;
@@ -187,13 +192,14 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
           await db.runAsync('INSERT OR REPLACE INTO pesos (fecha, kg, origen, momento, cambio) VALUES (?, ?, ?, ?, 0)', p.fecha, p.kg, p.origen, p.momento);
         }
         if (c.semilla) await db.runAsync("INSERT OR REPLACE INTO ajustes (clave, valor, cambio) VALUES ('semilla', ?, 0)", c.semilla);
+        if (c.nombre) await db.runAsync('INSERT OR REPLACE INTO ajustes (clave, valor, cambio) VALUES (?, ?, 0)', NOMBRE, JSON.stringify(c.nombre));
         for (const coleccion of COLECCIONES) await poner(coleccion, c[coleccion] as DeComida[typeof coleccion][], () => 0);
       });
     },
     async pendientes(): Promise<Pendientes> {
       const desde = await subido();
       const hasta = secuencia;
-      const [habitos, periodosPendientes, marcas, dias, logros, perfil, metas, pesos, semilla] = await Promise.all([
+      const [habitos, periodosPendientes, marcas, dias, logros, perfil, metas, pesos, semilla, nombre] = await Promise.all([
         db.getAllAsync<{ datos: string }>('SELECT datos FROM habitos WHERE cambio > ?', desde),
         db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM periodos WHERE cambio > ?', desde),
         db.getAllAsync<FilaMarca>('SELECT * FROM marcas WHERE cambio > ?', desde),
@@ -203,6 +209,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
         db.getAllAsync<{ datos: string }>('SELECT datos FROM metas WHERE cambio > ?', desde),
         db.getAllAsync<FilaPeso>('SELECT * FROM pesos WHERE cambio > ?', desde),
         db.getFirstAsync<{ valor: string }>("SELECT valor FROM ajustes WHERE clave = 'semilla' AND cambio > ?", desde),
+        db.getFirstAsync<{ valor: string }>('SELECT valor FROM ajustes WHERE clave = ? AND cambio > ?', NOMBRE, desde),
       ]);
       // Si cambió algún período, se suben todos: en Supabase se reemplazan juntos.
       const periodos = periodosPendientes?.n ? (await db.getAllAsync<FilaPeriodo>('SELECT * FROM periodos')).map(periodo) : null;
@@ -218,6 +225,7 @@ export async function repositorioSQLite(nombre = 'moss.db'): Promise<Repositorio
         metas: metas.map((f) => JSON.parse(f.datos) as MetaGuardada),
         pesos: pesos.map(peso),
         semilla: semilla?.valor ?? null,
+        nombre: nombreDeAjuste(nombre?.valor),
         ...comida,
       };
     },

@@ -118,7 +118,9 @@ SDK y la memoria no alcanza.
 | Repo | github.com/condezuzu/moss, privado (el remoto `origin`); Moss tiene su propio repo, aparte del de Ascent |
 | App | `uy.moss.app` · equipo `XF9N8X9KJG` · EAS `condeag` |
 | Supabase | el proyecto de Ascent (`okeanaihymbvbdmrdqph`), esquema `moss`. Cómo y por qué: `spec/ascent.md` |
-| La otra app | Ascent: `C:\Users\agusc\ascent`, github.com/condezuzu/ascent |
+| Sitio | la portada, la privacidad y los términos: https://condezuzu.github.io/moss-app/, del repo público `condezuzu/moss-app` (GitHub Pages, rama `main`). Se publica copiando `docs/` tal cual a la raíz de ese repo |
+| Actualizaciones por aire | `expo-updates`, con la huella nativa como versión. Canales: `production` (la build `store`), `preview` (`telefono` y `simulador`) y `development` (`dev`). Una OTA solo llega a las builds con la misma huella |
+| La otra app | Ascent: `C:\Users\agusc\ascent`, github.com/condezuzu/ascent. Lo de Ascent para el vínculo (D27) está en la rama `moss-vinculo`, en el worktree `C:\Users\agusc\ascent-moss` |
 
 ## Comandos
 
@@ -138,6 +140,10 @@ SDK y la memoria no alcanza.
 | `npm run web:exportar` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
 | `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas, Inicio y el «+»), decir lo que comí y, en un navegador limpio, las primeras pantallas de la entrada |
 | `npx eas-cli@latest build --profile dev --platform ios` | la build de desarrollo para el iPhone (la primera vez pide entrar a Apple); su JavaScript llega de `npx expo start` |
+| `npx eas-cli@latest build --profile simulador --platform ios --non-interactive` | compila todo lo nativo sin credenciales de Apple: la forma de probar Swift nuevo sin una Mac |
+| `npx eas-cli@latest build --profile store --platform ios` | la build para la tienda. Con una capacidad o una extensión nueva, la primera vez sin `--non-interactive`: pide entrar a Apple para armar los perfiles |
+| `npx eas-cli@latest update --channel production --environment production --message "…"` | una actualización por aire para la build de la tienda |
+| `npm run servidor:preparar -- <ruta a AuthKey_XXXXXXXXXX.p8>` | carga la clave de Sign in with Apple como secreto y despliega `moss-borrar-cuenta` y `moss-vincular` (antes, una vez: `npx supabase login`). Sin la ruta, solo despliega. La `.p8` está en la raíz del repo, fuera de Git (`*.p8` en `.gitignore`) |
 | `npm run catalogo:verificar` | valida el catálogo y las distancias entre estrellas |
 | `npx expo start` | Metro para la build `dev` del teléfono (Expo Go no sirve: Salud necesita build propia) |
 
@@ -153,7 +159,8 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso`, `metas`, `sueno`;
 - `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
-- `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`.
+- `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`;
+- `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado).
 
 La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
 3 Sueño, 4 Hábitos y 5 Perfil: los escenarios del cielo pasan antes a Hábitos
@@ -194,23 +201,29 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`), el sueño (`sueno.ts`), lo que Moss hace con el entrenamiento de Ascent (`entrenamiento.ts`: calorías según el día, proteína después de entrenar, recuperación y por qué no subís), «Tu mes» (`estadisticas.ts`, sin rachas), los enlaces para compartir (`compartir.ts`), cuándo recordar anotar (`recordatorios.ts`), el plan de comidas (`plan.ts`: lo tuyo y las comidas tipo, armar el día y la semana, otra, la lista de compras y adaptar a la meta nueva), qué comer antes y después de entrenar (`alrededorDelEntreno.ts`) y cuándo suena cada aviso (`avisos.ts`: la hora de dormir, los hábitos y las comidas, juntos y con un máximo por día) |
 | `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), con los hábitos, las metas, la estrategia, lo que se come (y la canasta, que no sube) y las medidas del cuerpo, sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
 | `supabase/moss/` | las migraciones del esquema `moss`, que se corren a mano en el SQL Editor |
-| `supabase/functions/` | las funciones de Moss en el servidor: `moss-borrar-cuenta` revoca Sign in with Apple y borra la cuenta (cómo desplegarla, en su README; se prueba con `node herramientas/probar-borrar-cuenta.mjs`) |
+| `supabase/functions/` | las funciones de Moss en el servidor: `moss-borrar-cuenta` revoca Sign in with Apple y borra la cuenta, y `moss-vincular` vincula una cuenta de Moss con una de Ascent con las dos sesiones (cómo desplegarlas, en sus README; se prueban con `node herramientas/probar-borrar-cuenta.mjs` y `node herramientas/probar-vincular.mjs`) |
 | `modules/` | los módulos nativos propios: `movimiento` (el historial de movimiento, para la noche sin reloj), `leer-etiqueta` (Vision) y `respaldo` (saca la carpeta de SQLite de la copia de seguridad) |
+| `app-intents/` | el Swift que va dentro del target de la app (módulos en línea): las acciones de Atajos de la noche, sus frases, y el despertador con AlarmKit (iOS 26+). Lo que llega se guarda como anclas (`src/salud/anclas.ts`) |
+| `plugins/` | los plugins de configuración propios: `con-alarmkit.js` enlaza AlarmKit como opcional |
 | `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final), el de la comida dicha de una vez (`frase.ts`) y lo dicho en alimentos de la base, con sus preguntas (`entender.ts`) y Open Food Facts por código de barras (`off.ts`) |
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/salud/` | Salud: los permisos, lo que llena el cuestionario y la lectura de cada día (`leer.ts`, con `convertir.ts` puro y con tests) |
 | `src/recordatorios/` | los avisos (la hora de dormir, los hábitos y las comidas), programados en el teléfono con la regla de `src/dominio/avisos.ts` |
+| `src/widgets/` | los widgets (`expo-widgets`): el del cielo (`Cielo.widget.tsx`) y el de la noche (`Noche.widget.tsx`), que corren solos en la extensión, sus líneas de tiempo y los toques (`cielo.ts`, `noche.ts`, puros y con tests) y lo que los pone al día desde la app (`index.ts`). Ver `spec/widgets.md` |
+| `src/fondo/` | la tarea de segundo plano (`expo-background-task`): con Moss cerrada, pone el día al día y los widgets |
 | `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
 | `src/cielo/shaders/` | ruido y `crece()`, cielo fijo, aurora, estrellas que titilan y estrella fugaz |
 | `src/datos/` | catálogo de constelaciones |
 | `src/textos/` | el diccionario y `t()`: cielo, entrada, comida, Inicio, el «+», el cuerpo, Progreso, Sueño, Perfil, diagnóstico |
 | `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
-| `src/lib/ascent.ts` | el interruptor de la conexión con Ascent: apagado en la v1 (`EXPO_PUBLIC_CON_ASCENT=1` la prende) |
+| `src/lib/ascent.ts` | Ascent en este iPhone: si está instalada, abrirla y su página en la App Store |
+| `src/lib/llavero.ts` | el llavero que comparten Moss y Ascent (D27): la sesión de cada app, con su contrato (`sesionCompartida.ts`) |
+| `src/secciones/ascent/` | la sección de Ascent vinculada (`Vinculada.tsx`, `calculos.ts`), la hoja de vincular (con la cuenta de Ascent, `cuentaDeAscent.ts`), la recuperación en Sueño y la fila de Perfil; lo que llega de Ascent queda en `src/almacen/ascent.ts` |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
 | `herramientas/` | capturas y verificaciones |
-| `docs/` | el sitio de GitHub Pages: la política de privacidad y los términos, en es y en |
+| `docs/` | el sitio: la portada, la política de privacidad y los términos, en es y en, con enlaces relativos. Se publica en el repo público `condezuzu/moss-app` |
 
 `src/cielo/` tiene estas piezas:
 
@@ -245,5 +258,6 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `perfil.js`: Perfil.
 - `ascent.js`: Ascent, arriba de Hábitos, sin vincular y vinculada.
 - `habitos.js`: Hábitos: el editor, «Tu mes» y los primeros hábitos.
+- `widgets.js`: los widgets, en la pantalla de inicio, la bloqueada y StandBy, con su sección.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
   «+» en la barra.

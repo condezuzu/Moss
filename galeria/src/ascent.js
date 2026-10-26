@@ -85,20 +85,62 @@ const SeccionAscent = (() => {
     }
 
     // ------------------------------------------------------------ vincular en dos toques
-    // (spec/ascent.md, «Vincular en menos de 10 segundos»): Ascent dejó su sesión en el llavero que
-    // comparten las apps del equipo, así que Moss ya sabe qué cuenta es. La hoja dice cuál, qué pasa
-    // cada app y «Vincular»: al tocarlo, la luna entra en la órbita.
+    // (spec/ascent.md, «Vincular en menos de 10 segundos»): Ascent deja su sesión en el llavero que
+    // comparten las apps del equipo, y Moss lo mira al abrir la hoja y cada vez que vuelve a primer
+    // plano. Con la sesión, «@usuario · Ascent en este iPhone», qué pasa cada app y «Vincular»: al
+    // tocarlo, la luna entra en la órbita. Con Ascent sin sesión, «Abre Ascent y vuelve»; sin
+    // Ascent, «Conseguir Ascent»; sin la cuenta de Moss, que hace falta entrar. Siempre, abajo y
+    // chico, entrar con la cuenta de Ascent: para quien no la tiene en este iPhone y para quien
+    // revisa en Apple. En la galería, el iPhone y lo que contesta el servidor se eligen arriba.
+    let esteIphone = 'sesion';
+    let resultado = 'bien';
     const hojaVincular = Util.hoja(tel, 'as-hoja', () => opciones.alCambiar());
-    function abrirVincular() {
+    const hv = { estado: 'sesion', conCorreo: false, correoEscrito: '', claveEscrita: '', vinculando: null, error: null, errorDe: null, entra: false };
+    const usuarioDeAscent = () => '@' + Datos.PERFIL.nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    let esperaDeLaHoja = 0;
+
+    function abrirVincular(estado) {
+      clearTimeout(esperaDeLaHoja);
+      Object.assign(hv, { estado: estado || esteIphone, conCorreo: false, vinculando: null, error: null, errorDe: null, entra: false });
+      pintarHoja();
+      hojaVincular.abrir();
+      opciones.alCambiar();
+    }
+
+    // Vincular con la sesión del llavero o con el correo: lo que contesta el servidor se elige arriba.
+    function vincularDesdeLaHoja(de) {
+      if (hv.vinculando) return;
+      Object.assign(hv, { vinculando: de, error: null, errorDe: null });
+      pintarHoja();
+      esperaDeLaHoja = setTimeout(() => {
+        hv.vinculando = null;
+        // Con el correo, la sesión es nueva: no vence, pero la contraseña puede estar mal.
+        const r = de === 'correo' && resultado === 'vencida' ? 'credenciales' : de === 'llavero' && resultado === 'credenciales' ? 'vencida' : resultado;
+        if (r !== 'bien') {
+          Object.assign(hv, { error: r, errorDe: de });
+          pintarHoja();
+          return;
+        }
+        hojaVincular.cerrar();
+        // Cuando la hoja termina de bajar, la luna entra en la órbita.
+        esperaDeLaHoja = setTimeout(() => opciones.alVincular(true), 380);
+      }, 800);
+    }
+
+    function pintarHoja() {
       const h = hojaVincular.el;
+      const antes = h.querySelector('.as-hoja-cuerpo');
+      const arribaDe = antes ? antes.scrollTop : 0;
       h.innerHTML = '';
       const cab = el('header', 'hb-cab');
       cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('ascent.vincularHoja.titulo')), boton('hb-cerrar', icono('cerrar'), () => hojaVincular.cerrar(), tx('comida.cerrar')));
       const cuerpo = el('div', 'as-hoja-cuerpo');
+      const k = hv.estado;
       const cuenta = el('div', 'as-hoja-cuenta');
       cuenta.innerHTML = MARCA;
       const quien = el('div');
-      quien.append(el('b', null, '@' + Datos.PERFIL.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')), el('span', null, tx('ascent.vincularHoja.enEsteIphone')));
+      if (k === 'sesion') quien.append(el('b', null, usuarioDeAscent()), el('span', null, tx('ascent.vincularHoja.enEsteIphone')));
+      else quien.append(el('b', null, tx(`ascent.vincularHoja.${k}.titulo`)), el('span', null, tx(`ascent.vincularHoja.${k}.texto`)));
       cuenta.appendChild(quien);
       cuerpo.appendChild(cuenta);
       const lista = (titulo, cosas) => {
@@ -110,16 +152,79 @@ const SeccionAscent = (() => {
       lista(tx('ascent.vincularHoja.deMoss'), tx('ascent.vincularHoja.mossComparte'));
       lista(tx('ascent.vincularHoja.deAscent'), tx('ascent.vincularHoja.ascentComparte'));
       cuerpo.appendChild(el('p', 'as-hoja-nota', tx('ascent.vincularHoja.nota')));
-      cuerpo.appendChild(boton('as-vincular as-hoja-vincular', tx('ascent.vincularHoja.vincular'), () => {
-        hojaVincular.cerrar();
-        // Cuando la hoja termina de bajar, la luna entra en la órbita.
-        setTimeout(() => opciones.alVincular(true), 380);
-      }));
+      // El error va donde se mira: arriba del botón que se tocó.
+      const error = (de) => {
+        if (!hv.error || hv.errorDe !== de) return;
+        const p = el('p', 'as-hoja-error', tx('ascent.vincularHoja.errores.' + hv.error));
+        p.setAttribute('role', 'alert');
+        cuerpo.appendChild(p);
+      };
+      error('llavero');
+      if (k === 'sesion') {
+        const b = boton('as-vincular as-hoja-vincular', tx(hv.vinculando === 'llavero' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.vincular'), () => vincularDesdeLaHoja('llavero'));
+        b.disabled = !!hv.vinculando;
+        cuerpo.appendChild(b);
+      } else if (k === 'sinSesion') {
+        // En el iPhone abre Ascent; al volver, Ascent ya dejó la sesión y la hoja la ve sola.
+        cuerpo.appendChild(boton('as-vincular as-hoja-vincular', tx('ascent.vincularHoja.sinSesion.boton'), () => {
+          esperaDeLaHoja = setTimeout(() => { Object.assign(hv, { estado: 'sesion', error: null, errorDe: null }); pintarHoja(); }, 900);
+        }));
+      } else if (k === 'sinAscent') {
+        cuerpo.appendChild(boton('as-vincular as-hoja-vincular', tx('ascent.vincularHoja.sinAscent.boton'), () => {}));
+      }
       cuerpo.appendChild(boton('as-conseguir as-hoja-ahora-no', tx('ascent.vincularHoja.ahoraNo'), () => hojaVincular.cerrar()));
+      if (k !== 'sinCuenta') {
+        const enlace = boton('as-hoja-con-correo' + (hv.conCorreo ? ' abierto' : ''), `<span>${tx('ascent.vincularHoja.conCorreo')}</span>${icono('adelante')}`, () => {
+          Object.assign(hv, { conCorreo: !hv.conCorreo, entra: !hv.conCorreo });
+          if (hv.errorDe === 'correo') Object.assign(hv, { error: null, errorDe: null });
+          pintarHoja();
+          if (hv.conCorreo) {
+            const c = h.querySelector('.as-hoja-cuerpo');
+            c.scrollTop = c.scrollHeight;
+          }
+        });
+        enlace.setAttribute('aria-expanded', String(hv.conCorreo));
+        cuerpo.appendChild(enlace);
+      }
+      if (hv.conCorreo && k !== 'sinCuenta') {
+        const form = el('form', 'as-hoja-form' + (hv.entra ? ' as-entra' : ''));
+        hv.entra = false;
+        const campo = (tipo, clave, guardado, auto) => {
+          const i = el('input', 'as-campo');
+          Object.assign(i, { type: tipo, placeholder: tx('ascent.vincularHoja.' + clave), autocomplete: auto, value: hv[guardado] });
+          i.setAttribute('aria-label', i.placeholder);
+          i.addEventListener('input', () => { hv[guardado] = i.value; });
+          return i;
+        };
+        form.append(campo('email', 'correo', 'correoEscrito', 'username'), campo('password', 'clave', 'claveEscrita', 'current-password'));
+        cuerpo.appendChild(form);
+        error('correo');
+        const entrar = boton('as-hoja-entrar', tx(hv.vinculando === 'correo' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.entrar'), () => {
+          const vacio = [...form.querySelectorAll('.as-campo')].find((i) => !i.value.trim());
+          if (vacio) { vacio.focus(); return; }
+          vincularDesdeLaHoja('correo');
+        });
+        entrar.disabled = !!hv.vinculando;
+        form.addEventListener('submit', (ev) => { ev.preventDefault(); entrar.click(); });
+        cuerpo.append(entrar, el('p', 'as-hoja-nota', tx('ascent.vincularHoja.notaCorreo')));
+      }
       h.append(cab, cuerpo);
-      hojaVincular.abrir();
-      opciones.alCambiar();
+      cuerpo.scrollTop = arribaDe;
     }
+
+    // Lo que se elige en la galería: cómo está Ascent en este iPhone y qué contesta el servidor.
+    const elegir = (id, alElegir) => {
+      const cont = document.getElementById(id);
+      if (!cont) return;
+      cont.addEventListener('click', (ev) => {
+        const b = ev.target.closest('button');
+        if (!b) return;
+        cont.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        alElegir(b.dataset.valor);
+      });
+    };
+    elegir('s-iphone', (v) => { esteIphone = v; abrirVincular(v); });
+    elegir('s-servidor', (v) => { resultado = v; });
 
     // ------------------------------------------------------------ rendimiento, músculos y marca
     // Como antes de entrenar hoy: 10 minutos antes de la sesión de piernas de las 18:40.
@@ -299,6 +404,27 @@ const SeccionAscent = (() => {
       }
       k.appendChild(el('p', 'as-nota', proteina));
       return k;
+    }
+
+    // El gimnasio se enciende solo: un hábito con la fuente «Ascent», como los de Salud. Si no hay
+    // ninguno, se suma acá con un toque (los días, los que suele entrenar); en la galería solo cambia
+    // la carta.
+    let conGimnasio = false;
+    function cartaGimnasio() {
+      const c = carta('as-gimnasio', tx('ascent.funciones.gimnasio.titulo'));
+      const nombre = tx('ascent.gimnasio.nombre');
+      if (conGimnasio) {
+        c.appendChild(el('p', 'as-texto', tx('ascent.gimnasio.listo', { nombre })));
+        return c;
+      }
+      c.appendChild(el('p', 'as-texto', tx('ascent.gimnasio.sumar', { nombre })));
+      c.appendChild(boton('as-hoja-entrar as-gimnasio-sumar', tx('ascent.gimnasio.boton', { nombre }), () => {
+        conGimnasio = true;
+        const nueva = cartaGimnasio();
+        nueva.classList.add('as-entra');
+        c.replaceWith(nueva);
+      }));
+      return c;
     }
 
     function cartaRecuperacion() {
@@ -523,7 +649,7 @@ const SeccionAscent = (() => {
       flecha.setAttribute('aria-label', tx('ascent.flecha'));
       contenido.appendChild(cabecera());
       if (vinculada) {
-        contenido.append(...[hoyEnAscent(), grupo('soloConLasDos'), cartaRecuperacion(), cartaRendimiento(), cartaMusculos(), cartaMarca(), cartaEstancamiento(), cartaAnio()].filter(Boolean));
+        contenido.append(...[hoyEnAscent(), cartaGimnasio(), grupo('soloConLasDos'), cartaRecuperacion(), cartaRendimiento(), cartaMusculos(), cartaMarca(), cartaEstancamiento(), cartaAnio()].filter(Boolean));
         contenido.appendChild(el('p', 'as-pie', tx('ascent.desvincular')));
       } else {
         contenido.append(grupo('soloConLasDos'), cartaRecuperacion(), cartaRendimiento(), cartaMusculos(), cartaMarca(), cartaEstancamiento(), cartaAnio());
@@ -643,7 +769,7 @@ const SeccionAscent = (() => {
       // Para las capturas: la hoja de vincular.
       abrirVincular,
       get hojaVincularAbierta() { return hojaVincular.abierta; },
-      cerrarVincular() { hojaVincular.cerrar(true); },
+      cerrarVincular() { clearTimeout(esperaDeLaHoja); hojaVincular.cerrar(true); },
       // La línea del rendimiento en Sueño.
       rendimientoDeHoy: () => (vinculada ? calcularRendimiento().r : null),
       bajarA(selector) {

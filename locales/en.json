@@ -3,9 +3,20 @@
     "CFBundleDisplayName": "Moss",
     "NSHealthShareUsageDescription": "Moss reads your date of birth, sex, height and weight from Apple Health to set your targets; your steps, water, mindful minutes and sleep to light up those habits and estimate your night if you don’t wear a watch; and your nighttime heart rate, resting heart rate, heart rate variability and respiratory rate for the Sleep section. Moss never writes to Apple Health.",
     "NSHealthUpdateUsageDescription": "Moss never writes to Apple Health: it only reads the data above.",
-    "NSCameraUsageDescription": "Moss uses the camera to scan the barcode or nutrition label of what you eat, and to take a meal photo if you want one. Labels are read on your phone, and Moss never uploads your photos.",
+    "NSCameraUsageDescription": "Moss uses the camera to scan the barcode or nutrition label of what you eat, and to take a meal photo or your profile photo if you want. Labels are read on your phone, and Moss never uploads your photos.",
     "NSMotionUsageDescription": "If you don’t wear a watch, Moss looks at your phone’s activity (still, walking or driving) to estimate when you fell asleep and woke up. That activity never leaves your phone: only the estimated times are saved.",
     "NSMicrophoneUsageDescription": "Moss uses the microphone only while you say what you ate, to log it. Moss never saves the audio.",
-    "NSSpeechRecognitionUsageDescription": "Moss turns what you say about your meal into text to log it, using Apple's speech recognition (on your phone when the language allows it). Moss never saves the audio."
+    "NSSpeechRecognitionUsageDescription": "Moss turns what you say about your meal into text to log it, using Apple's speech recognition (on your phone when the language allows it). Moss never saves the audio.",
+    "NSAlarmKitUsageDescription": "Moss rings at the time you choose in Sleep and notes when you stop the alarm, to know when you woke up.",
+    "Localizable.strings": {
+      "Paré la alarma": "I stopped the alarm",
+      "Conecté el cargador": "I plugged in the charger",
+      "Desconecté el cargador": "I unplugged the charger",
+      "Empezó el enfoque Sueño": "Sleep Focus started",
+      "Terminó el enfoque Sueño": "Sleep Focus ended",
+      "Me voy a dormir": "I'm going to sleep",
+      "Me desperté": "I woke up",
+      "Paré el despertador de Moss": "I stopped the Moss alarm"
+    }
   }
 }

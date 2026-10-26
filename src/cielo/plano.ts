@@ -9,10 +9,13 @@ import { Skia, type SkPath } from '@shopify/react-native-skia';
 import type { Texto } from '@/datos/catalogo';
 import type { EstrellaDelUniverso } from './escena';
 import type { DiaDelCielo } from './dia';
-import { encajar, mundoDelFondo, profundidades, proyectar, ZONA_UNIVERSO, type Punto } from './mundo';
+import { encajar, mundoDelFondo, profundidades, proyectar, separar, ZONA_UNIVERSO, type Punto } from './mundo';
 import { armarMusgo, type Brote } from './musgo';
 
 export type Lado = 'abajo' | 'der' | 'izq';
+
+/** La distancia mínima entre dos estrellas de hoy, en puntos: más cerca, cuesta tocar la que se quiere. */
+const SEPARACION = 60;
 
 export type Plano = {
   ancho: number;
@@ -22,7 +25,8 @@ export type Plano = {
   estrellas: Punto[];
   lineas: { a: number; b: number; prof: number }[];
   centro: Punto;
-  etiquetas: { x: number; y: number; lado: Lado }[];
+  /** `caja`: lo que ocupa la etiqueta respecto de su estrella, en puntos (x0, y0, x1, y1): tocarla también vale. */
+  etiquetas: { x: number; y: number; lado: Lado; caja: number[] }[];
   autos: { indice: number; avance: number }[];
   fantasmas: SkPath;
   universo: {
@@ -48,7 +52,7 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo): Plano
 
   // Un día sin hábitos no tiene constelación: queda el cielo solo.
   const c = dia.constelacion;
-  const estrellas = c ? encajar(proyectar(c.estrellas), [0, 0.075], aspecto * 0.68, 0.4) : [];
+  const estrellas = c ? separar(encajar(proyectar(c.estrellas), [0, 0.075], aspecto * 0.68, 0.4), SEPARACION / alto) : [];
   const prof = c ? profundidades(estrellas.length, c.lineas) : [];
   const lineas = (c?.lineas ?? []).map(([a, b]) => (prof[a] <= prof[b] ? { a, b, prof: prof[a] } : { a: b, b: a, prof: prof[b] }));
   const centro = estrellas.length
@@ -69,7 +73,11 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo): Plano
     let lado: Lado = estrellas.length < 2 || Math.abs(dx) < 0.22 ? 'abajo' : dx > 0 ? 'der' : 'izq';
     if (lado === 'der' && sx + 22 + anchoEtiqueta > ancho - 8) lado = 'abajo';
     if (lado === 'izq' && sx - 22 - anchoEtiqueta < 8) lado = 'abajo';
-    return { x: sx, y: sy, lado };
+    // Con un poco de margen, y con lugar para la segunda línea de los automáticos (Interfaz.tsx).
+    const caja = lado === 'abajo' ? [-anchoEtiqueta / 2 - 6, 8, anchoEtiqueta / 2 + 6, 46]
+      : lado === 'der' ? [16, -16, 28 + anchoEtiqueta, 24]
+        : [-28 - anchoEtiqueta, -16, -16, 24];
+    return { x: sx, y: sy, lado, caja };
   });
 
   const constructorFantasmas = Skia.PathBuilder.Make();

@@ -1,0 +1,5 @@
+/* Las frases de AtajosDeMoss.swift en español: cada una lleva ${applicationName}. */
+"${applicationName}, I'm going to sleep" = "${applicationName}, me voy a dormir";
+"Tell ${applicationName} I'm going to sleep" = "Anota en ${applicationName} que me voy a dormir";
+"${applicationName}, I woke up" = "${applicationName}, me desperté";
+"Tell ${applicationName} I woke up" = "Anota en ${applicationName} que me desperté";

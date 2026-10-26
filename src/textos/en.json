@@ -23,16 +23,23 @@
     "encendida": "{habito} · lit",
     "apagada": "{habito} · unlit",
     "seEnciendeSola": "Lights up on its own from Health",
-    "seEnciendeConLaComida": "Lights up on its own with what you log",
+    "seEnciendeCon": {
+      "proteina": "Lights up on its own when you reach your protein",
+      "registrar": "Lights up on its own when you log all your meals",
+      "calorias": "Lights up on its own when you stay within your calories"
+    },
+    "verComida": "Food",
     "desdeSalud": "{habito} · lit from Health",
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Your universe",
-    "globito": "Tap a star to mark its habit. Health ones mark themselves, but you can tap them too."
+    "globito": "Tap a star to mark its habit",
+    "seEnciendeConAscent": "Lights up on its own with Ascent"
   },
   "entrada": {
     "frase": "We first make our habits, and then our habits make us.",
     "fraseAutor": "Attributed to John Dryden",
     "seguir": "Continue",
+    "tocaLaEstrella": "Tap the star",
     "habitosTitulo": "Your habits are stars",
     "habitosTexto": "Tap a star to light it. Every day has its own constellation.",
     "comidaTitulo": "Food, made to measure",
@@ -118,15 +125,13 @@
     },
     "datos": {
       "titulo": "Your data is yours",
+      "texto": "Moss stores what you eat, your weight and your sleep on your phone and in your account, only so it can work.",
       "lineas": [
-        "What you log and what Moss reads from Health stays on your phone and, for your other devices, in your account.",
-        "Moss doesn't sell your data, show ads or track you.",
-        "You can export or delete it anytime, from Profile."
+        "No ads, no tracking.",
+        "Moss doesn't sell your data.",
+        "Export or delete it whenever you want."
       ],
-      "salud": "Moss stores health data: what you eat, your weight and how you sleep. It only uses it for you.",
-      "politica": "Read the privacy policy",
-      "busquedas": "Send, without your name, what I search for and don't find",
-      "busquedasTexto": "This helps Moss add what is missing. You can change it in Profile.",
+      "politica": "Privacy Policy",
       "acepto": "I agree, continue"
     },
     "cuidado": {
@@ -575,6 +580,10 @@
     "enSieteDias": "{n} {unidad} in 7 days",
     "kcalPorDia": "kcal a day",
     "balanceTexto": "7-day balance, against {gasto} burned",
+    "balanceCorto": {
+      "uno": "{n}-day balance",
+      "otros": "{n}-day balance"
+    },
     "balanceDias": {
       "uno": "{n}-day balance, against {gasto} burned",
       "otros": "{n}-day balance, against {gasto} burned"
@@ -930,7 +939,10 @@
       "teDespertaste": "Woke up",
       "guardar": "Save",
       "antes": "5 minutes earlier",
-      "despues": "5 minutes later"
+      "despues": "5 minutes later",
+      "horaDormirse": "Did you fall asleep at {hora}?",
+      "sinProponerDormirse": "What time did you fall asleep?",
+      "horaDormirseNota": "You woke up at {hora}: your iPhone told Moss. {seguridad}."
     },
     "sinCalidadEstimada": "Moss isn’t sure about this night: confirm it or change it and the quality shows up.",
     "origen": {
@@ -973,6 +985,88 @@
       "titulo": "You've slept little for weeks",
       "texto": "Over the last two weeks you slept less than 6 hours a night. If it continues, it's worth talking to a doctor.",
       "nota": "It's an estimate from Moss, not a diagnosis."
+    },
+    "afinar": {
+      "titulo": "Fine-tune",
+      "texto": "Without a watch, Moss estimates your night with your phone. With these, it knows the exact time you woke up or went to sleep, and asks less.",
+      "hoy": "today, {hora}",
+      "ayer": "yesterday, {hora}",
+      "dia": "{dia}, {hora}",
+      "despertador": {
+        "titulo": "Alarm",
+        "apagado": "Off",
+        "unaVez": "once",
+        "todos": "every day",
+        "semana": "Monday to Friday",
+        "finDe": "Saturday and Sunday",
+        "hora": "Time",
+        "dias": "Days",
+        "sinDias": "With no days, it rings just once.",
+        "texto": "It rings even if your iPhone is silenced or in a Focus, and Moss notes when you stop it: that's how it knows when you woke up.",
+        "reloj": "If you like, it can replace your Clock alarm: turn that one off so two don't ring.",
+        "oculta": "To ring, Moss can't be hidden or require Face ID to open.",
+        "sinPermiso": "Moss isn't allowed to set alarms. You can allow it in Settings.",
+        "ajustes": "Open Settings",
+        "error": "The alarm couldn't be set. Try again.",
+        "alarma": "Good morning",
+        "detener": "Stop"
+      },
+      "atajos": {
+        "titulo": "Automatic shortcuts",
+        "fila": "Your Clock alarm, the charger and the Sleep Focus",
+        "texto": "iOS doesn't let an app create automations by itself: you set each one up once in the Shortcuts app, in about a minute. Then they run on their own, even with Moss closed, and Moss only notes the time.",
+        "abrir": "Open Shortcuts",
+        "pasos": [
+          "Open Shortcuts, go to Automation and tap +.",
+          "Choose {activador}.",
+          "Choose “Run Immediately” so it runs without asking, then tap Next.",
+          "Search for “Moss” and choose “{accion}”.",
+          "Tap Done."
+        ],
+        "llego": "Arrived {cuando}",
+        "noLlego": "Nothing yet",
+        "siri": "“I'm going to sleep” and “I woke up” are in Shortcuts too: say them to Siri (“Moss, I'm going to sleep”) or put them on the Action button.",
+        "recientes": "What arrived these days",
+        "nada": "Nothing has arrived yet.",
+        "horario": "it's the schedule, doesn't count",
+        "cuales": {
+          "alarma": {
+            "titulo": "When you stop the alarm",
+            "activador": "Alarm › Is Stopped (any, or your wake-up alarm)",
+            "accion": "I stopped the alarm"
+          },
+          "conectar": {
+            "titulo": "When you plug in the charger",
+            "activador": "Charger › Is Connected",
+            "accion": "I plugged in the charger"
+          },
+          "desconectar": {
+            "titulo": "When you unplug the charger",
+            "activador": "Charger › Is Disconnected",
+            "accion": "I unplugged the charger"
+          },
+          "empieza": {
+            "titulo": "When the Sleep Focus starts",
+            "activador": "Focus › Sleep › When Turning On",
+            "accion": "Sleep Focus started"
+          },
+          "termina": {
+            "titulo": "When the Sleep Focus ends",
+            "activador": "Focus › Sleep › When Turning Off",
+            "accion": "Sleep Focus ended"
+          }
+        },
+        "senales": {
+          "alarmaParada": "You stopped the alarm",
+          "despertadorParado": "You stopped the Moss alarm",
+          "meDesperte": "I woke up",
+          "meVoyADormir": "I'm going to sleep",
+          "enfoqueEmpezo": "Sleep Focus started",
+          "enfoqueTermino": "Sleep Focus ended",
+          "cargadorConectado": "You plugged in the charger",
+          "cargadorDesconectado": "You unplugged the charger"
+        }
+      }
     }
   },
   "perfil": {
@@ -1014,6 +1108,18 @@
     "vinculada": "Linked",
     "imperial": "lb and inches",
     "sinCuenta": "No account",
+    "agregarNombre": "Add your name",
+    "editar": {
+      "titulo": "Edit profile",
+      "nombre": "Your name",
+      "nombreCampo": "Name",
+      "sinNombre": "What’s your name? Only you see it, here in Profile.",
+      "foto": "Your photo",
+      "sacarFoto": "Take photo",
+      "elegirFoto": "Choose photo",
+      "quitarFoto": "Remove photo",
+      "fotoNota": "Your photo stays on this iPhone: it isn’t uploaded to your account."
+    },
     "conectar": "Connect",
     "pronto": "Soon",
     "idiomaDelTelefono": "Your phone’s",
@@ -1048,9 +1154,9 @@
       "estrellas": "Stars: Yale Bright Star Catalogue (Hoffleit and Warren, 1991; CDS) and IAU star names (WGSN, CC BY 4.0)"
     },
     "privacidadTexto": [
-      "Your data is yours. Moss stores what you log, your answers, your weight and your nights on your phone and, with your account, on its server, for your other devices. It doesn't sell or share them, show ads or track you.",
+      "Your data is yours. Moss stores what you log, your answers, your weight and your nights on your phone and, with your account, on its server, for your other devices. It doesn't sell them or share them with third parties, show ads or track you. If you link Ascent, the two apps share what you accept when linking, until you unlink.",
       "From Apple Health, Moss reads steps, sleep, water, mindful minutes, weight, date of birth, sex and height and, at night, heart rate, resting heart rate, heart rate variability and respiratory rate. With your account, your weight, birth year, sex, height, which habits you completed and the estimated time of your night are uploaded; everything else stays on your phone. Moss never writes to Apple Health.",
-      "Meal photos stay on your phone. When you scan a code that isn't in Moss, Open Food Facts is asked about that code only.",
+      "Meal photos and your profile photo stay on your phone. When you scan a code that isn't in Moss, Open Food Facts is asked about that code only.",
       "If you choose to, what you search for and don't find is sent without your name; so is a mistake you report. You can export everything as CSV and delete your data or your account here."
     ],
     "version": "Moss {v}",
@@ -1249,7 +1355,8 @@
     "universo": "Today / Universe",
     "fugaz": "Shooting star",
     "reiniciar": "Reset",
-    "cuadros": "{n} fps · {calidad}",
+    "cuadros": "{n} fps · {calidad} · {total} frames",
+    "reposo": "At rest · {calidad} · {total} frames",
     "alta": "high",
     "media": "medium",
     "baja": "low",
@@ -1320,7 +1427,18 @@
         "gimnasio": "gym",
         "descanso": "rest",
         "previsto": "expected"
-      }
+      },
+      "grupos": {
+        "pecho": "Chest",
+        "espalda": "Back",
+        "hombros": "Shoulders",
+        "brazos": "Arms",
+        "piernas": "Legs",
+        "core": "Core",
+        "cardio": "Cardio"
+      },
+      "y": "{a} and {b}",
+      "sinDetalle": "You went to the gym: Ascent doesn’t have today’s sets."
     },
     "recuperacion": {
       "titulo": "Recovery",
@@ -1342,7 +1460,8 @@
         "carga": "3 days: {n}% of your usual",
         "comida": "Yesterday: {p} of {meta} g protein"
       },
-      "explicacion": "Sleep, 40: how much you slept against what you need, and the night’s quality. Load, 40: what you trained in the previous 3 days against your 4-week average, minus days in a row. Food, 20: yesterday’s protein and whether you ate at least 80% of your target. It’s a guide."
+      "explicacion": "Sleep, 40: how much you slept against what you need, and the night’s quality. Load, 40: what you trained in the previous 3 days against your 4-week average, minus days in a row. Food, 20: yesterday’s protein and whether you ate at least 80% of your target. It’s a guide.",
+      "sinNoche": "Last night is missing: today’s recovery needs it."
     },
     "estancamiento": {
       "titulo": "Why you’re stuck",
@@ -1372,7 +1491,9 @@
         "calorias": "calories"
       },
       "sinDiferencia": "There’s no clear difference in your sleep, protein or calories: the probable cause lies elsewhere.",
-      "sinMarcas": "Without PRs"
+      "sinMarcas": "Without PRs",
+      "sinEstancar": "No exercise has been stuck for weeks. If one stalls, you’ll see the likely cause here.",
+      "marca": "{kg} kg × {reps}"
     },
     "anio": {
       "titulo": "Your year",
@@ -1429,7 +1550,6 @@
       "ayer": "yesterday",
       "dia": "on {dia}"
     },
-    "pronto": "Linking is coming soon.",
     "rendimiento": {
       "titulo": "Expected performance",
       "texto": "What you can expect today, in max strength and in reps, from your sleep, your food and what you trained.",
@@ -1472,7 +1592,9 @@
         "Two numbers, in % of your usual: max strength (1 to 3 reps) and reps. Short sleep barely touches max strength and hits reps much harder.",
         "It adds up last night’s sleep (or several short nights in a row), how you said you slept, food (coming in fasted, few carbs, losing fast), muscle fatigue and deloads. Between −15 and +4 %.",
         "Your strength moves about 3 % from one day to the next: that’s why it says “as usual” most days. It isn’t a guarantee."
-      ]
+      ],
+      "previsto": "{sesion}, like every {dia}",
+      "sinSesion": "Once you log sessions in Ascent, you’ll see here what to expect today."
     },
     "musculos": {
       "titulo": "Your muscles",
@@ -1513,17 +1635,62 @@
       "mossComparte": [
         "How long you slept and how you said you slept",
         "What you eat: calories and protein",
-        "Your weight"
+        "Your weight",
+        "Your goal and its pace"
       ],
       "deAscent": "Ascent shares with Moss",
       "ascentComparte": [
         "Your workouts, with their sets and your PRs",
-        "Your weight",
-        "Your friends"
+        "Your weight"
       ],
       "nota": "Each app keeps its own data. You can unlink them anytime from Profile.",
       "vincular": "Link",
-      "ahoraNo": "Not now"
+      "ahoraNo": "Not now",
+      "sinSesion": {
+        "titulo": "Open Ascent and come back",
+        "texto": "Ascent is on this iPhone but signed out: once you sign in, it leaves the session for Moss.",
+        "boton": "Open Ascent"
+      },
+      "sinAscent": {
+        "titulo": "Ascent isn’t on this iPhone",
+        "texto": "If you use it on another phone, sign in with your Ascent account below.",
+        "boton": "Get Ascent"
+      },
+      "sinCuenta": {
+        "titulo": "First, your Moss account",
+        "texto": "Linking joins your Moss account with your Ascent one: you need to be signed in to Moss."
+      },
+      "conCorreo": "Sign in with your Ascent account",
+      "correo": "Ascent email",
+      "clave": "Ascent password",
+      "entrar": "Sign in and link",
+      "notaCorreo": "Moss doesn’t keep your email or password: it uses them once, to link.",
+      "vinculando": "Linking…",
+      "errores": {
+        "sin_sesion": "Your Moss session ended. Sign in to Moss again and try again.",
+        "vencida": "The Ascent session expired. Open Ascent and come back, or sign in with your Ascent account.",
+        "sin_ascent": "That account hasn’t used Ascent yet. Sign in to Ascent with it once and come back.",
+        "red": "No connection. Try again in a moment.",
+        "servidor": "Couldn’t link. Try again in a while.",
+        "credenciales": "That email or password doesn’t match an Ascent account.",
+        "confirmar": "That Ascent account hasn’t confirmed its email yet."
+      }
+    },
+    "gimnasio": {
+      "nombre": "Gym",
+      "sumar": "Add “{nombre}” to your habits: its star lights up on its own the day you log the session in Ascent.",
+      "boton": "Add “{nombre}”",
+      "listo": "“{nombre}” lights up on its own the day you log the session in Ascent."
+    },
+    "perfil": {
+      "vinculada": "Linked with {usuario} since {fecha}.",
+      "vinculadaSinNombre": "Linked since {fecha}.",
+      "ver": "See Ascent in Moss",
+      "desvincular": "Unlink",
+      "desvincularTitulo": "Unlink Ascent?",
+      "desvincularTexto": "The two apps stop sharing your data. Each app keeps its own.",
+      "error": "Couldn’t unlink: try again with a connection.",
+      "hecho": "Ascent is unlinked."
     }
   },
   "habitos": {
@@ -1696,5 +1863,19 @@
       },
       "ver": "What to eat before and after"
     }
+  },
+  "widgets": {
+    "cuenta": "{n} of {total}",
+    "solos": "Today's habits light up on their own",
+    "sinHabitos": "No habits today",
+    "hecho": "Done",
+    "sinHacer": "Not done",
+    "anoche": "Last night",
+    "horas": "{desde} → {hasta}",
+    "si": "Yes",
+    "fueAsi": "Is that right?",
+    "confirmada": "Confirmed",
+    "seVeEnMoss": "Open Moss to see it",
+    "seAnotaEnMoss": "Log it in Moss"
   }
 }

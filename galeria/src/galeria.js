@@ -217,6 +217,8 @@
       permitirArrastre: () => !esTactil || tel.classList.contains('inmersivo'),
       alCambiar: () => refrescarControles(),
       alMantener: (i) => { mantenido = true; habitosSec.editar(i); },
+      // Tocar la estrella de un hábito de comida dice qué la enciende, con un botón a Comida.
+      alIrAComida: () => pestanas.ir(1),
     });
   } catch (err) {
     const aviso = document.createElement('div');
@@ -1124,7 +1126,31 @@
   dibujarCatalogo();
   refrescarControles();
 
+  // ------------------------------------------------------------ los widgets (spec/widgets.md)
+  // Abrir Moss desde un widget: lo tocado ahí se enciende en el cielo, de a una estrella.
+  const widgets = SeccionWidgets.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    cielo: () => escena.hoy,
+    anoche: () => sueno.anoche(),
+    sinReloj: () => soloIphone,
+    movimientoReducido,
+    alAbrirMoss: (cambios, seccion) => {
+      cerrarHojas();
+      if (ascent.ocupada) ascent.cerrar(true);
+      escena.irA('hoy');
+      pestanas.ir(seccion === 'sueno' ? 3 : HABITOS, true);
+      cambios.forEach((nombre, i) => setTimeout(() => { escena.tocarPorNombre(nombre); refrescarControles(); }, (movimientoReducido ? 0 : 450) + i * 320));
+    },
+  }));
+
   // Ganchos para las capturas automáticas (herramientas/capturar-galeria.mjs).
+  window.__widgets = (accion, arg) => {
+    const pasos = {
+      inicio: () => widgets.ir('inicio'), bloqueo: () => widgets.ir('bloqueo'), standby: () => widgets.ir('standby'), cerrar: () => widgets.cerrar(),
+      tocar: () => widgets.tocar(arg), confirmar: () => widgets.confirmar(), modo: () => widgets.ponerModo(arg), deNoche: () => widgets.deNoche(arg),
+      abrirMoss: () => widgets.abrirMoss(arg), olvidar: () => widgets.olvidar(),
+    };
+    return pasos[accion]();
+  };
   window.__tocar = (texto) => escena.tocarPorNombre(texto);
   window.__accion = (nombre) => { acciones[nombre](); refrescarControles(); };
   window.__idioma = (v) => document.querySelector(`#s-idioma [data-valor="${v}"]`).click();
@@ -1151,6 +1177,7 @@
     const pasos = {
       noche: () => sueno.verNoche(arg), bajar: () => sueno.bajarA(arg), subir: () => sueno.subir(), abrir: () => sueno.abrir(arg),
       hora: () => sueno.preguntarHora(arg), editarHora: () => sueno.editarHora(), editarNoche: () => sueno.editarNoche(arg), olvidar: () => sueno.olvidarHoras(),
+      afinar: () => (Array.isArray(arg) ? sueno.afinar(arg[0], arg[1]) : sueno.afinar(arg)),
     };
     pasos[accion]();
   };

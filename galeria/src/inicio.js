@@ -77,7 +77,7 @@ const SeccionInicio = (() => {
         const barra = el('i', 'in-macro-barra');
         const relleno = el('i');
         barra.appendChild(relleno);
-        x.append(el('span', 'in-macro-nombre', tx('comida.' + clave)), el('b', null, valor), el('small', null, tx('inicio.deMeta', { comido: numero(Math.round(t[m])), meta: numero(meta[m]) })), barra);
+        x.append(el('span', 'in-macro-nombre', tx('comida.' + clave)), el('b', null, valor), barra);
         requestAnimationFrame(() => { relleno.style.width = `${Math.min(100, (t[m] / meta[m]) * 100).toFixed(1)}%`; });
         macros.appendChild(x);
       });
@@ -98,7 +98,6 @@ const SeccionInicio = (() => {
       else fila.append(el('b', null, p.peso == null ? '—' : `${numero(p.peso, 1)} kg`), el('span', null, tx('inicio.tendencia')));
       c.appendChild(fila);
       if (p.hecho != null) c.appendChild(barraDelCamino(d.pesoInicial, p.peso, metaKg, p.hecho));
-      if (p.ritmo != null) c.appendChild(el('p', 'in-nota', tx('inicio.ritmo', { ritmo: conSigno(p.ritmo, 2), plan: conSigno(p.ritmoPlan, 2), unidad: 'kg' })));
       return c;
     }
 
@@ -132,14 +131,14 @@ const SeccionInicio = (() => {
       const cifra2 = el('div', 'in-dato-cifra');
       const bal = d.balance.promedio;
       cifra2.append(el('b', null, bal == null ? '—' : conSigno(Math.round(bal))), el('small', null, ' ' + tx('inicio.kcalPorDia')));
-      izq2.append(cifra2, el('span', null, tx('inicio.balanceTexto', { gasto: numero(d.gasto) })));
+      izq2.append(cifra2, el('span', null, tx('inicio.balanceCorto.otros', { n: d.balance.dias.length || 7 })));
       fila2.append(izq2, Graficos.balance(d.balance.dias, d.gasto, { ancho: 150, alto: 44 }));
       c.append(fila, fila2);
       return c;
     }
 
     // ------------------------------------------------------------ el día en el cielo
-    // La constelación de hoy en chico, con lo encendido, y lo que llega solo de Salud.
+    // La constelación de hoy en chico, con lo encendido: lo que llega de Salud está en Sueño y en Hábitos.
     function cielo() {
       const { constelacion, habitos } = opciones.cielo();
       const c = carta('in-cielo', tx('inicio.bloques.cielo'), 4);
@@ -148,14 +147,6 @@ const SeccionInicio = (() => {
       const lienzo = el('canvas', 'in-mini-cielo');
       c.appendChild(lienzo);
       requestAnimationFrame(() => dibujarConstelacion(lienzo, constelacion, habitos));
-      const datos = el('div', 'in-cielo-datos');
-      habitos.filter((h) => h.auto === 'sueno' || h.auto === 'pasos').forEach((h) => {
-        const dato = el('span', 'in-chip' + (h.encendido ? ' hecho' : ''));
-        dato.innerHTML = icono(h.auto === 'sueno' ? 'sueno' : 'huellas');
-        dato.append(h.auto === 'sueno' ? tx('inicio.dormiste', { h: u.duracion(h.valor) }) : tx('inicio.pasos', { n: numero(h.valor) }));
-        datos.appendChild(dato);
-      });
-      c.appendChild(datos);
       return c;
     }
 

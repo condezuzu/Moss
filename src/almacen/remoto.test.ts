@@ -37,6 +37,13 @@ describe('subir a la cuenta', () => {
     aviso.mockRestore();
   });
 
+  it('tu nombre sube con su hora por su función, sin tocar lo demás del perfil', async () => {
+    const llamadas: [string, object][] = [];
+    const falso = { from: () => ({ upsert: async () => ({ error: null }) }), rpc: async (f: string, a: object) => { llamadas.push([f, a]); return { error: null }; } };
+    await remotoSupabase(falso as unknown as Cliente).subir({ ...nada(), nombre: { valor: 'Ana', actualizado: '2026-10-26T12:00:00.000Z' } });
+    expect(llamadas).toEqual([['poner_nombre', { valor: 'Ana', cuando: '2026-10-26T12:00:00.000Z' }]]);
+  });
+
   it('sin conexión tira el error, para reintentar', async () => {
     const c = cliente(false);
     await expect(remotoSupabase(c.cliente).subir({ ...nada(), marcas: [marca('leer')] })).rejects.toThrow('marcas: Failed to fetch');

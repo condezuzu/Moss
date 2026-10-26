@@ -32,6 +32,8 @@ export type HabitoDelCielo = {
   /** Lo que lleva hoy un hábito automático (llega con Salud, etapa 8) y su meta. */
   valor?: number;
   meta?: number;
+  /** Lo que lo enciende, si es de comida: tocar su estrella lo dice. */
+  comida?: 'proteina' | 'registrar' | 'calorias';
 };
 
 export type DiaDeLaSemanaDelCielo = { dia: DiaSemana; constelacion: Constelacion; hechos: number; hoy: boolean };
@@ -48,13 +50,14 @@ export type DiaDelCielo = {
   fecha: { diaSemana: DiaSemana; diaMes: number; mes: number };
 };
 
-function automatico(h: Habito, salud: Estado['salud'], hoy: ClaveDia): Pick<HabitoDelCielo, 'auto' | 'meta' | 'valor'> {
+function automatico(h: Habito, salud: Estado['salud'], hoy: ClaveDia): Pick<HabitoDelCielo, 'auto' | 'meta' | 'valor' | 'comida'> {
   if (h.fuente.tipo === 'salud') {
     // Lo que lleva hoy, si Salud lo dijo.
     const valor = salud?.dia === hoy && h.fuente.dato !== 'acostarse' ? salud.valores[h.fuente.dato] : undefined;
     return { auto: h.fuente.dato, meta: h.fuente.meta, ...(valor !== undefined ? { valor } : {}) };
   }
   if (h.fuente.tipo === 'manual') return {};
+  if (h.fuente.tipo === 'comida') return { auto: 'comida', comida: h.fuente.meta };
   return { auto: h.fuente.tipo };
 }
 

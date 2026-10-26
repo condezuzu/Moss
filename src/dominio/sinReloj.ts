@@ -1,8 +1,9 @@
 // Sin reloj (spec/sueno.md, «Sin reloj»): desde iOS 18, sin un reloj o un anillo Salud no tiene nada
-// de la noche, así que la arma Moss cada mañana con lo que el teléfono ya guardó. Nada corre de noche.
-// - La ventana tranquila es el hueco sin actividad (pasos, el teléfono en movimiento, Moss abierta) de
-//   5 a 12 horas que empieza entre las 18 y las 4. Lo suelto de la madrugada no la corta: es una
-//   interrupción.
+// de la noche, así que la arma Moss cada mañana con lo que el teléfono ya guardó. De noche solo se
+// guarda la hora de un Atajo o del despertador de Moss (spec/sueno-sin-esfuerzo.md).
+// - La ventana tranquila es el hueco sin actividad (pasos, el teléfono en movimiento, Moss abierta, un
+//   Atajo) de 5 a 12 horas que empieza entre las 18 y las 4. Lo suelto de la madrugada no la corta: es
+//   una interrupción.
 // - Te dormiste un rato después de la última actividad (más si dejaste el teléfono mucho antes de lo
 //   de siempre) y te despertaste 18 minutos antes de la primera: las reglas publicadas de Sahha.
 // - Lo que aprende de tus correcciones corre las dos horas.
@@ -14,9 +15,12 @@ import { ceroDe, type Confianza, type Fuente, type Noche, type NochePropia } fro
 
 const MIN = 60_000;
 
-/** Algo que dice que estabas despierto, en milisegundos: pasos, el teléfono en movimiento, Moss abierta o un Atajo. */
-export type Actividad = { desde: number; hasta: number; tipo: 'pasos' | 'movimiento' | 'moss' | 'atajo' };
-/** Lo que avisa un Atajo, si lo configuraste: que te ibas a dormir (el Focus de Sueño) o que te despertaste (la alarma). */
+/**
+ * Algo que dice que estabas despierto, en milisegundos: pasos, el teléfono en movimiento, Moss abierta o
+ * un Atajo. Con `fin`, puede ser lo último del día y nunca es una interrupción.
+ */
+export type Actividad = { desde: number; hasta: number; tipo: 'pasos' | 'movimiento' | 'moss' | 'atajo'; fin?: true };
+/** Lo que avisa un Atajo o el despertador de Moss: que te ibas a dormir o que te despertaste (deLasSenales). */
 export type Ancla = { en: number; que: 'dormir' | 'despertar' };
 /** Lo de siempre, en minutos desde las 18: la mediana de las últimas noches del mismo tipo (entre semana o fin de semana). */
 export type Habitual = { dormirse: number; despertar: number; noches: number };
@@ -39,6 +43,8 @@ export type Estimacion = {
   /** Las veces que se usó el teléfono en medio de la noche: se marcan, no se cuentan como despierto. */
   interrupciones: number;
   motivos: Motivo[];
+  /** Qué borde sale de un ancla: con el de despertar, a la mañana se pregunta solo la hora de dormirte. */
+  anclada: { dormirse: boolean; despertar: boolean };
 };
 
 /** La ventana tranquila: de 5 a 12 horas, empezando entre las 18 y las 4 (en minutos desde las 18). */
@@ -85,12 +91,12 @@ export function latencia(adelanto: number | null): number {
   return 202;
 }
 
-type Bloque = { desde: number; hasta: number; tipos: Actividad['tipo'][] };
+type Bloque = { desde: number; hasta: number; tipos: Actividad['tipo'][]; fin: boolean };
 
 /** La actividad en minutos desde las 18, dentro de lo que se mira, juntando lo que está pegado. */
 function bloques(actividad: Actividad[], cero: number): Bloque[] {
   const lista = actividad
-    .map((a) => ({ desde: (a.desde - cero) / MIN, hasta: (Math.max(a.hasta, a.desde + MIN) - cero) / MIN, tipo: a.tipo }))
+    .map((a) => ({ desde: (a.desde - cero) / MIN, hasta: (Math.max(a.hasta, a.desde + MIN) - cero) / MIN, tipo: a.tipo, fin: !!a.fin }))
     .filter((a) => a.hasta > MIRA.desde && a.desde < MIRA.hasta)
     .sort((a, b) => a.desde - b.desde);
   const r: Bloque[] = [];
@@ -98,9 +104,10 @@ function bloques(actividad: Actividad[], cero: number): Bloque[] {
     const ultimo = r[r.length - 1];
     if (ultimo && a.desde - ultimo.hasta < JUNTAS) {
       ultimo.hasta = Math.max(ultimo.hasta, a.hasta);
+      ultimo.fin ||= a.fin;
       if (!ultimo.tipos.includes(a.tipo)) ultimo.tipos.push(a.tipo);
     } else {
-      r.push({ desde: a.desde, hasta: a.hasta, tipos: [a.tipo] });
+      r.push({ desde: a.desde, hasta: a.hasta, tipos: [a.tipo], fin: a.fin });
     }
   }
   return r;
@@ -114,7 +121,7 @@ function ventanas(b: Bloque[], desde: number): Ventana[] {
   for (let i = 0; i + 1 < b.length; i++) {
     let j = i + 1;
     let interrupciones = 0;
-    const suelto = (k: number) => k + 1 < b.length && b[k].desde >= desde && b[k].hasta - b[k].desde <= SUELTO.largo
+    const suelto = (k: number) => k + 1 < b.length && !b[k].fin && b[k].desde >= desde && b[k].hasta - b[k].desde <= SUELTO.largo
       && b[k].desde - b[k - 1].hasta >= SUELTO.silencio && b[k + 1].desde - b[k].hasta >= SUELTO.silencio;
     while (suelto(j)) {
       interrupciones++;
@@ -139,8 +146,9 @@ export function estimarNoche(d: {
 }): Estimacion | null {
   const cero = ceroDe(d.clave, d.zona);
   const anclas = (d.anclas ?? []).map((a) => ({ en: (a.en - cero) / MIN, que: a.que }));
-  // Prender el Focus de Sueño es tocar el teléfono: cuenta como actividad.
-  const conAnclas = [...d.actividad, ...(d.anclas ?? []).filter((a) => a.que === 'dormir').map((a): Actividad => ({ desde: a.en, hasta: a.en + MIN, tipo: 'atajo' }))];
+  // Un ancla es tocar el teléfono: cuenta como actividad. La de irte a dormir puede ser lo último del
+  // día aunque llegue tarde: nunca es una interrupción.
+  const conAnclas = [...d.actividad, ...(d.anclas ?? []).map((a): Actividad => ({ desde: a.en, hasta: a.en + MIN, tipo: 'atajo', ...(a.que === 'dormir' ? { fin: true as const } : {}) }))];
   const b = bloques(conAnclas, cero);
   const h = d.habitual;
   const validas = ventanas(b, h ? h.dormirse - SUELTO.antesDeLoDeSiempre : SUELTO.sinHistoria).filter((v) => v.hasta - v.desde >= VENTANA.minimo && v.hasta - v.desde <= VENTANA.maximo && v.desde >= 0 && v.desde <= VENTANA.empiezaHasta);
@@ -160,9 +168,14 @@ export function estimarNoche(d: {
   }
   const adelanto = h ? h.dormirse - v.desde : null;
   let despertar = v.hasta - AL_DESPERTAR;
-  // La alarma o el Focus apagado (un Atajo) dicen cuándo te despertaste.
-  const alDespertar = anclas.filter((a) => a.que === 'despertar' && a.en > v!.desde + 60 && a.en <= v!.hasta).sort((x, y) => x.en - y.en)[0];
+  // La alarma, «Me desperté» o el Focus apagado dicen cuándo te despertaste; si después hubo hora y
+  // media de silencio, te volviste a dormir y no cuenta.
+  const alDespertar = anclas
+    .filter((a) => a.que === 'despertar' && a.en > v!.desde + 60 && a.en <= v!.hasta && v!.hasta - a.en < SUELTO.silencio)
+    .sort((x, y) => x.en - y.en)[0];
   if (alDespertar) despertar = alDespertar.en;
+  // «Me voy a dormir» o el Focus prendido justo al empezar el hueco.
+  const alDormir = anclas.some((a) => a.que === 'dormir' && a.en <= v!.desde && a.en >= v!.desde - JUNTAS - 1);
   const cruda = { dormirse: v.desde + latencia(adelanto), despertar };
   const ajuste = d.ajuste ?? { dormirse: 0, despertar: 0, correcciones: 0 };
   // Lo aprendido corre las horas, pero nunca antes de la última actividad ni después de la primera.
@@ -198,7 +211,9 @@ export function estimarNoche(d: {
     p -= 0.1;
     motivos.push('distintaDeLoDeSiempre');
   }
-  if (alDespertar) p += 0.05;
+  // Un borde exacto (spec/sueno-sin-esfuerzo.md): una propuesta, como lo demás.
+  if (alDespertar) p += 0.1;
+  if (alDormir) p += 0.05;
   if (sinVentana) {
     p = Math.min(p, 0.4);
     motivos.push('sinVentana');
@@ -215,6 +230,7 @@ export function estimarNoche(d: {
     probabilidad: p,
     interrupciones: v.interrupciones,
     motivos,
+    anclada: { dormirse: alDormir, despertar: !!alDespertar },
   };
 }
 
@@ -366,4 +382,75 @@ export function actividadDeLosPasos(muestras: { desde: number; hasta: number; pa
     if (m.hasta - m.desde <= 10 * MIN || m.hasta - m.desde <= 2 * largo) return [{ desde: m.desde, hasta: m.hasta, tipo: 'pasos' as const }];
     return [{ desde: m.desde, hasta: m.desde + largo, tipo: 'pasos' as const }, { desde: m.hasta - largo, hasta: m.hasta, tipo: 'pasos' as const }];
   });
+}
+
+// ------------------------------------------------------------------ los Atajos y el despertador
+// spec/sueno-sin-esfuerzo.md: cada acción de Moss en Atajos, y el despertador de Moss, deja constancia
+// de qué pasó y a qué hora; el teléfono la guarda (src/salud/anclas.ts) y acá se vuelve actividad y
+// anclas. Ninguna dice la hora exacta de dormirse: son topes («despierto a las 23:52»).
+
+/** El nombre con que las despacha el Swift (app-intents/). */
+export const SENALES = ['alarmaParada', 'despertadorParado', 'meDesperte', 'meVoyADormir', 'enfoqueEmpezo', 'enfoqueTermino', 'cargadorConectado', 'cargadorDesconectado'] as const;
+export type QueSenal = (typeof SENALES)[number];
+/** Lo que avisó un Atajo o el despertador, tal como llegó (en milisegundos). El id es el de la invocación: así no cuenta dos veces. */
+export type Senal = { id: string; que: QueSenal; en: number };
+
+/** De 19 a 4, conectar el cargador puede ser lo último del día; volver a conectarlo a los 30 minutos de desconectarlo es usar el teléfono de noche. */
+const CARGADOR = { desde: 19 * 60, hasta: 4 * 60, reconectar: 30 };
+/** El enfoque Sueño con horario: la misma hora, al minuto (con uno de tolerancia), en 2 noches más de las últimas 14. */
+const PROGRAMADO = { otras: 2, tolerancia: 1, dias: 14 };
+
+const porInstante = (zona: Zona) => (typeof zona === 'number' ? () => zona : zona);
+/** El minuto del reloj (de 0 a 1439) de un instante. */
+const minutoDelReloj = (ms: number, zona: (ms: number) => number) => (((Math.floor(ms / MIN + zona(ms)) % 1440) + 1440) % 1440);
+/** La noche de un instante, de las 18 a las 18: un número por día. */
+const nocheDe = (ms: number, zona: (ms: number) => number) => Math.floor((ms / MIN + zona(ms) + 360) / 1440);
+
+/** Si el enfoque Sueño empezó o terminó por el horario: eso dice el plan, no lo que hiciste. */
+export function esProgramado(s: Senal, todas: Senal[], zona: (ms: number) => number): boolean {
+  if (s.que !== 'enfoqueEmpezo' && s.que !== 'enfoqueTermino') return false;
+  const minuto = minutoDelReloj(s.en, zona);
+  const otras = todas.filter((o) => {
+    if (o.que !== s.que || Math.abs(o.en - s.en) > PROGRAMADO.dias * 1440 * MIN || nocheDe(o.en, zona) === nocheDe(s.en, zona)) return false;
+    const d = Math.abs(minutoDelReloj(o.en, zona) - minuto);
+    return Math.min(d, 1440 - d) <= PROGRAMADO.tolerancia;
+  });
+  return new Set(otras.map((o) => nocheDe(o.en, zona))).size >= PROGRAMADO.otras;
+}
+
+/**
+ * Lo que avisaron los Atajos y el despertador, como actividad y anclas para estimarNoche:
+ * - la alarma o el despertador parados y «Me desperté», anclas de despertar;
+ * - «Me voy a dormir», ancla de dormir;
+ * - el enfoque Sueño, ancla de dormir al empezar y de despertar al terminar, salvo que sea el horario;
+ * - el cargador, tocar el teléfono; de 19 a 4, conectarlo puede ser lo último del día.
+ */
+export function deLasSenales(senales: Senal[], zona: Zona): { actividad: Actividad[]; anclas: Ancla[] } {
+  const z = porInstante(zona);
+  const actividad: Actividad[] = [];
+  const anclas: Ancla[] = [];
+  for (const s of senales) {
+    if (s.que === 'alarmaParada' || s.que === 'despertadorParado' || s.que === 'meDesperte') {
+      anclas.push({ en: s.en, que: 'despertar' });
+    } else if (s.que === 'meVoyADormir') {
+      anclas.push({ en: s.en, que: 'dormir' });
+    } else if (s.que === 'enfoqueEmpezo' || s.que === 'enfoqueTermino') {
+      if (!esProgramado(s, senales, z)) anclas.push({ en: s.en, que: s.que === 'enfoqueEmpezo' ? 'dormir' : 'despertar' });
+    } else {
+      const minuto = minutoDelReloj(s.en, z);
+      const reconectado = senales.some((o) => o.que === 'cargadorDesconectado' && o.en <= s.en && s.en - o.en <= CARGADOR.reconectar * MIN);
+      const fin = s.que === 'cargadorConectado' && (minuto >= CARGADOR.desde || minuto < CARGADOR.hasta) && !reconectado;
+      actividad.push({ desde: s.en, hasta: s.en + MIN, tipo: 'atajo', ...(fin ? { fin: true as const } : {}) });
+    }
+  }
+  return { actividad, anclas };
+}
+
+/**
+ * Si la hora de despertar de la noche (en minutos desde las 18) salió de un ancla: entonces a la mañana
+ * se pregunta solo a qué hora te dormiste («¿Te dormiste a las 00:30?»).
+ */
+export function despertarAnclado(anclas: Ancla[], clave: ClaveDia, zona: number, despertar: number): boolean {
+  const cero = ceroDe(clave, zona);
+  return anclas.some((a) => a.que === 'despertar' && Math.abs((a.en - cero) / MIN - despertar) < 1);
 }

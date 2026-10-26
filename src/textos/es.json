@@ -23,16 +23,23 @@
     "encendida": "{habito} · encendida",
     "apagada": "{habito} · apagada",
     "seEnciendeSola": "Se enciende sola con Salud",
-    "seEnciendeConLaComida": "Se enciende sola con lo que anotas",
+    "seEnciendeCon": {
+      "proteina": "Se enciende sola cuando llegas a tu proteína",
+      "registrar": "Se enciende sola cuando anotas todas tus comidas",
+      "calorias": "Se enciende sola cuando quedas dentro de tus calorías"
+    },
+    "verComida": "Comida",
     "desdeSalud": "{habito} · encendida desde Salud",
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Tu universo",
-    "globito": "Toca una estrella para marcar su hábito. Los de Salud se marcan solos, pero también puedes tocarlos."
+    "globito": "Toca una estrella para marcar su hábito",
+    "seEnciendeConAscent": "Se enciende sola con Ascent"
   },
   "entrada": {
     "frase": "Primero hacemos nuestros hábitos, después nuestros hábitos nos hacen a nosotros.",
     "fraseAutor": "Atribuida a John Dryden",
     "seguir": "Seguir",
+    "tocaLaEstrella": "Toca la estrella",
     "habitosTitulo": "Tus hábitos son estrellas",
     "habitosTexto": "Toca una estrella para encenderla. Cada día tiene su propia constelación.",
     "comidaTitulo": "Tu comida, a tu medida",
@@ -118,15 +125,13 @@
     },
     "datos": {
       "titulo": "Tus datos son tuyos",
+      "texto": "Moss guarda lo que comes, tu peso y tu sueño en tu teléfono y en tu cuenta, solo para que funcione.",
       "lineas": [
-        "Lo que anotas y lo que Moss lee de Salud queda en tu teléfono y, para tus otros dispositivos, en tu cuenta.",
-        "Moss no vende tus datos, no muestra publicidad y no te rastrea.",
-        "Puedes exportarlos o borrarlos cuando quieras, desde Perfil."
+        "Sin publicidad ni rastreo.",
+        "Moss no vende tus datos.",
+        "Los exportas o los borras cuando quieras."
       ],
-      "salud": "Moss guarda datos de salud: lo que comes, tu peso y cómo duermes. Solo los usa para ti.",
-      "politica": "Leer la política de privacidad",
-      "busquedas": "Mandar, sin tu nombre, lo que busco y no encuentro",
-      "busquedasTexto": "Así Moss suma lo que falta. Se cambia en Perfil.",
+      "politica": "Política de privacidad",
       "acepto": "Acepto y sigo"
     },
     "cuidado": {
@@ -575,6 +580,10 @@
     "enSieteDias": "{n} {unidad} en 7 días",
     "kcalPorDia": "kcal por día",
     "balanceTexto": "balance de 7 días, contra un gasto de {gasto}",
+    "balanceCorto": {
+      "uno": "balance de {n} día",
+      "otros": "balance de {n} días"
+    },
     "balanceDias": {
       "uno": "balance de {n} día, contra un gasto de {gasto}",
       "otros": "balance de {n} días, contra un gasto de {gasto}"
@@ -930,7 +939,10 @@
       "teDespertaste": "Te despertaste",
       "guardar": "Guardar",
       "antes": "5 minutos antes",
-      "despues": "5 minutos después"
+      "despues": "5 minutos después",
+      "horaDormirse": "¿Te dormiste a las {hora}?",
+      "sinProponerDormirse": "¿A qué hora te dormiste?",
+      "horaDormirseNota": "Te despertaste a las {hora}: lo avisó tu iPhone. {seguridad}."
     },
     "sinCalidadEstimada": "Moss no está segura de esta noche: confírmala o cámbiala y aparece la calidad.",
     "origen": {
@@ -973,6 +985,88 @@
       "titulo": "Hace semanas que duermes poco",
       "texto": "En las últimas dos semanas dormiste menos de 6 horas por noche. Si sigue así, vale la pena hablarlo con un médico.",
       "nota": "Es una estimación de Moss, no un diagnóstico."
+    },
+    "afinar": {
+      "titulo": "Afinar",
+      "texto": "Sin reloj, Moss estima tu noche con el teléfono. Con esto sabe la hora exacta en que te despertaste o te fuiste a dormir, y pregunta menos.",
+      "hoy": "hoy, {hora}",
+      "ayer": "ayer, {hora}",
+      "dia": "{dia}, {hora}",
+      "despertador": {
+        "titulo": "Despertador",
+        "apagado": "Apagado",
+        "unaVez": "una vez",
+        "todos": "todos los días",
+        "semana": "de lunes a viernes",
+        "finDe": "sábado y domingo",
+        "hora": "Hora",
+        "dias": "Días",
+        "sinDias": "Sin días, suena una sola vez.",
+        "texto": "Suena aunque el iPhone esté en silencio o con un enfoque, y Moss anota la hora en que lo paras: así sabe cuándo te despertaste.",
+        "reloj": "Si quieres, reemplaza a la alarma del Reloj: apágala allí para que no suenen dos.",
+        "oculta": "Para que suene, Moss no puede estar oculta ni pedir Face ID para abrirse.",
+        "sinPermiso": "Moss no tiene permiso para poner alarmas. Puedes darlo en Ajustes.",
+        "ajustes": "Abrir Ajustes",
+        "error": "No se pudo poner el despertador. Prueba de nuevo.",
+        "alarma": "Buenos días",
+        "detener": "Detener"
+      },
+      "atajos": {
+        "titulo": "Atajos automáticos",
+        "fila": "La alarma del Reloj, el cargador y el enfoque Sueño",
+        "texto": "iOS no deja que una app arme automatizaciones sola: se arman una vez en la app Atajos, en un minuto cada una. Después corren solas, aun con Moss cerrada, y Moss solo anota la hora.",
+        "abrir": "Abrir Atajos",
+        "pasos": [
+          "Abre Atajos, ve a Automatización y toca +.",
+          "Elige {activador}.",
+          "Elige «Ejecutar inmediatamente», para que corra sin preguntar, y toca Siguiente.",
+          "Busca «Moss» y elige «{accion}».",
+          "Toca Listo."
+        ],
+        "llego": "Llegó {cuando}",
+        "noLlego": "Todavía no llegó",
+        "siri": "«Me voy a dormir» y «Me desperté» también están en Atajos: díselas a Siri («Moss, me voy a dormir») o ponlas en el botón de Acción.",
+        "recientes": "Lo que llegó estos días",
+        "nada": "Todavía no llegó nada.",
+        "horario": "es el horario, no cuenta",
+        "cuales": {
+          "alarma": {
+            "titulo": "Al parar la alarma",
+            "activador": "Alarma › Se detuvo (cualquiera o la de despertar)",
+            "accion": "Paré la alarma"
+          },
+          "conectar": {
+            "titulo": "Al conectar el cargador",
+            "activador": "Cargador › Esté conectado",
+            "accion": "Conecté el cargador"
+          },
+          "desconectar": {
+            "titulo": "Al desconectar el cargador",
+            "activador": "Cargador › Esté desconectado",
+            "accion": "Desconecté el cargador"
+          },
+          "empieza": {
+            "titulo": "Al empezar el enfoque Sueño",
+            "activador": "Enfoque (o Concentración) › Sueño › Al activar",
+            "accion": "Empezó el enfoque Sueño"
+          },
+          "termina": {
+            "titulo": "Al terminar el enfoque Sueño",
+            "activador": "Enfoque (o Concentración) › Sueño › Al desactivar",
+            "accion": "Terminó el enfoque Sueño"
+          }
+        },
+        "senales": {
+          "alarmaParada": "Paraste la alarma",
+          "despertadorParado": "Paraste el despertador de Moss",
+          "meDesperte": "Me desperté",
+          "meVoyADormir": "Me voy a dormir",
+          "enfoqueEmpezo": "Empezó el enfoque Sueño",
+          "enfoqueTermino": "Terminó el enfoque Sueño",
+          "cargadorConectado": "Conectaste el cargador",
+          "cargadorDesconectado": "Desconectaste el cargador"
+        }
+      }
     }
   },
   "perfil": {
@@ -1014,6 +1108,18 @@
     "vinculada": "Vinculada",
     "imperial": "lb y pulgadas",
     "sinCuenta": "Sin cuenta",
+    "agregarNombre": "Agrega tu nombre",
+    "editar": {
+      "titulo": "Editar perfil",
+      "nombre": "Tu nombre",
+      "nombreCampo": "Nombre",
+      "sinNombre": "¿Cómo te llamas? Solo lo ves tú, aquí en Perfil.",
+      "foto": "Tu foto",
+      "sacarFoto": "Sacar foto",
+      "elegirFoto": "Elegir foto",
+      "quitarFoto": "Quitar foto",
+      "fotoNota": "Tu foto queda en este iPhone: no sube a tu cuenta."
+    },
     "conectar": "Conectar",
     "pronto": "Pronto",
     "idiomaDelTelefono": "El del teléfono",
@@ -1048,9 +1154,9 @@
       "estrellas": "Estrellas: Yale Bright Star Catalogue (Hoffleit y Warren, 1991; CDS) y los nombres de la IAU (WGSN, CC BY 4.0)"
     },
     "privacidadTexto": [
-      "Tus datos son tuyos. Moss guarda lo que anotas, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte, no muestra publicidad y no te rastrea.",
+      "Tus datos son tuyos. Moss guarda lo que anotas, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte con terceros, no muestra publicidad y no te rastrea. Si vinculas Ascent, las dos apps comparten lo que aceptas al vincular, hasta que desvinculas.",
       "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, fecha de nacimiento, sexo y altura y, de la noche, frecuencia cardíaca, frecuencia en reposo, variabilidad y respiración. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura, qué hábitos cumpliste y la hora estimada de tu noche; lo demás queda en el teléfono. Moss no escribe en Salud.",
-      "Las fotos de la comida quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
+      "Las fotos de la comida y la de tu perfil quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
       "Si lo eliges, lo que buscas y no encuentras se manda sin tu nombre; un error que reportas, también. Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
     ],
     "version": "Moss {v}",
@@ -1249,7 +1355,8 @@
     "universo": "Hoy / Universo",
     "fugaz": "Estrella fugaz",
     "reiniciar": "Reiniciar",
-    "cuadros": "{n} cps · {calidad}",
+    "cuadros": "{n} cps · {calidad} · {total} cuadros",
+    "reposo": "En reposo · {calidad} · {total} cuadros",
     "alta": "alta",
     "media": "media",
     "baja": "baja",
@@ -1320,7 +1427,18 @@
         "gimnasio": "gimnasio",
         "descanso": "descanso",
         "previsto": "previsto"
-      }
+      },
+      "grupos": {
+        "pecho": "Pecho",
+        "espalda": "Espalda",
+        "hombros": "Hombros",
+        "brazos": "Brazos",
+        "piernas": "Piernas",
+        "core": "Core",
+        "cardio": "Cardio"
+      },
+      "y": "{a} y {b}",
+      "sinDetalle": "Fuiste al gimnasio: Ascent no tiene las series de hoy."
     },
     "recuperacion": {
       "titulo": "Recuperación",
@@ -1342,7 +1460,8 @@
         "carga": "3 días: {n} % de lo de siempre",
         "comida": "Ayer: {p} de {meta} g de proteína"
       },
-      "explicacion": "Sueño, 40: lo que dormiste contra lo que necesitas y la calidad de la noche. Carga, 40: lo que entrenaste en los 3 días anteriores contra tu promedio de 4 semanas, menos los días seguidos. Comida, 20: la proteína de ayer y si comiste al menos el 80 % de la meta. Es orientativo."
+      "explicacion": "Sueño, 40: lo que dormiste contra lo que necesitas y la calidad de la noche. Carga, 40: lo que entrenaste en los 3 días anteriores contra tu promedio de 4 semanas, menos los días seguidos. Comida, 20: la proteína de ayer y si comiste al menos el 80 % de la meta. Es orientativo.",
+      "sinNoche": "Falta tu noche de anoche: con ella sale la recuperación de hoy."
     },
     "estancamiento": {
       "titulo": "Por qué no subes",
@@ -1372,7 +1491,9 @@
         "calorias": "las calorías"
       },
       "sinDiferencia": "No hay una diferencia clara en tu sueño, tu proteína ni tus calorías: la causa probable está en otro lado.",
-      "sinMarcas": "Sin marcas"
+      "sinMarcas": "Sin marcas",
+      "sinEstancar": "Ningún ejercicio lleva semanas sin subir. Si alguno se estanca, aquí verás la causa probable.",
+      "marca": "{kg} kg × {reps}"
     },
     "anio": {
       "titulo": "Tu año",
@@ -1429,7 +1550,6 @@
       "ayer": "ayer",
       "dia": "el {dia}"
     },
-    "pronto": "Vincular llega pronto.",
     "rendimiento": {
       "titulo": "Rendimiento esperado",
       "texto": "Lo que puedes esperar hoy, en fuerza máxima y en repeticiones, con el sueño, la comida y lo que entrenaste.",
@@ -1472,7 +1592,9 @@
         "Son dos números en % respecto de lo tuyo: la fuerza máxima (1 a 3 repeticiones) y las repeticiones. Dormir poco toca poco la fuerza máxima y mucho más las repeticiones.",
         "Suma el sueño de anoche (o las noches seguidas cortas), cómo dijiste que dormiste, la comida (llegar en ayunas, pocos carbohidratos, bajar rápido), la fatiga del músculo y la descarga. Entre −15 y +4 %.",
         "Un día a otro, tu fuerza cambia más o menos un 3 %: por eso dice «como siempre» la mayoría de los días. No es una garantía."
-      ]
+      ],
+      "previsto": "{sesion}, como cada {dia}",
+      "sinSesion": "Cuando anotes sesiones en Ascent, aquí verás qué puedes esperar hoy."
     },
     "musculos": {
       "titulo": "Tus músculos",
@@ -1513,17 +1635,62 @@
       "mossComparte": [
         "Cuánto dormiste y cómo dijiste que dormiste",
         "Lo que comes: las calorías y la proteína",
-        "Tu peso"
+        "Tu peso",
+        "Tu objetivo y su ritmo"
       ],
       "deAscent": "Ascent le pasa a Moss",
       "ascentComparte": [
         "Tus entrenamientos, con sus series y tus marcas",
-        "Tu peso",
-        "Tus amigos"
+        "Tu peso"
       ],
       "nota": "Lo de cada app queda en cada app. Puedes desvincularlas cuando quieras, desde Perfil.",
       "vincular": "Vincular",
-      "ahoraNo": "Ahora no"
+      "ahoraNo": "Ahora no",
+      "sinSesion": {
+        "titulo": "Abre Ascent y vuelve",
+        "texto": "Ascent está en este iPhone, pero sin sesión: al entrar, la deja para Moss.",
+        "boton": "Abrir Ascent"
+      },
+      "sinAscent": {
+        "titulo": "Ascent no está en este iPhone",
+        "texto": "Si la usas en otro teléfono, entra con tu cuenta de Ascent aquí abajo.",
+        "boton": "Conseguir Ascent"
+      },
+      "sinCuenta": {
+        "titulo": "Primero, tu cuenta de Moss",
+        "texto": "Vincular junta tu cuenta de Moss con la de Ascent: hace falta haber entrado a Moss."
+      },
+      "conCorreo": "Entrar con tu cuenta de Ascent",
+      "correo": "Correo de Ascent",
+      "clave": "Contraseña de Ascent",
+      "entrar": "Entrar y vincular",
+      "notaCorreo": "Moss no guarda tu correo ni tu contraseña: los usa una vez, para vincular.",
+      "vinculando": "Vinculando…",
+      "errores": {
+        "sin_sesion": "Tu sesión de Moss se cerró. Vuelve a entrar a Moss y prueba de nuevo.",
+        "vencida": "La sesión de Ascent venció. Abre Ascent y vuelve, o entra con tu cuenta de Ascent.",
+        "sin_ascent": "Esa cuenta todavía no usó Ascent. Entra a Ascent con ella una vez y vuelve.",
+        "red": "Sin conexión. Prueba de nuevo en un momento.",
+        "servidor": "No se pudo vincular. Prueba de nuevo en un rato.",
+        "credenciales": "El correo o la contraseña no coinciden con una cuenta de Ascent.",
+        "confirmar": "Esa cuenta de Ascent todavía no confirmó su correo."
+      }
+    },
+    "gimnasio": {
+      "nombre": "Gimnasio",
+      "sumar": "Suma «{nombre}» a tus hábitos: su estrella se enciende sola el día que anotas la sesión en Ascent.",
+      "boton": "Sumar «{nombre}»",
+      "listo": "«{nombre}» se enciende sola el día que anotas la sesión en Ascent."
+    },
+    "perfil": {
+      "vinculada": "Vinculada con {usuario} desde el {fecha}.",
+      "vinculadaSinNombre": "Vinculada desde el {fecha}.",
+      "ver": "Ver lo de Ascent",
+      "desvincular": "Desvincular",
+      "desvincularTitulo": "¿Desvincular Ascent?",
+      "desvincularTexto": "Las dos apps dejan de compartir tus datos. Lo de cada app queda en cada app.",
+      "error": "No se pudo desvincular: prueba de nuevo con conexión.",
+      "hecho": "Ascent quedó desvinculada."
     }
   },
   "habitos": {
@@ -1696,5 +1863,19 @@
       },
       "ver": "Qué comer antes y después"
     }
+  },
+  "widgets": {
+    "cuenta": "{n} de {total}",
+    "solos": "Los de hoy se encienden solos",
+    "sinHabitos": "Hoy no hay hábitos",
+    "hecho": "Hecho",
+    "sinHacer": "Sin hacer",
+    "anoche": "Anoche",
+    "horas": "{desde} → {hasta}",
+    "si": "Sí",
+    "fueAsi": "¿Fue así?",
+    "confirmada": "Confirmada",
+    "seVeEnMoss": "Se ve al abrir Moss",
+    "seAnotaEnMoss": "Anótala en Moss"
   }
 }

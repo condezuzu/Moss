@@ -703,3 +703,64 @@ describe('el control y los pesos de Salud que llegan después', () => {
     expect(almacen.estado().metas[1]).toBe(metas[1]);
   });
 });
+
+describe('tu nombre', () => {
+  const nada = (): Datos => ({ habitos: [], periodos: [], dias: [], marcas: [], logros: [], perfil: null, metas: [], pesos: [], semilla: null, ...sinComida() });
+  const hace = (iso: string) => ({ valor: 'Agus', actualizado: iso });
+
+  it('se guarda limpio, sube a la cuenta y otra sesión lo recuerda', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerNombre('  Agustín   Conde ');
+    expect(almacen.estado().nombre).toEqual({ valor: 'Agustín Conde', actualizado: '2026-10-21T15:00:00.000Z' });
+    await almacen.esperar();
+    expect((await repositorio.pendientes()).nombre?.valor).toBe('Agustín Conde');
+    expect((await armar(repositorio)).almacen.estado().nombre?.valor).toBe('Agustín Conde');
+  });
+
+  it('el mismo nombre no es un cambio; borrarlo sí, y viaja', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerNombre('Ana');
+    await almacen.esperar();
+    await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
+    const version = almacen.estado().version;
+    almacen.ponerNombre(' Ana ');
+    expect(almacen.estado().version).toBe(version);
+    almacen.ponerNombre('');
+    await almacen.esperar();
+    expect((await repositorio.pendientes()).nombre).toMatchObject({ valor: '' });
+  });
+
+  it('el que trae Apple va con la hora más vieja: solo si no había ninguno', async () => {
+    const { almacen } = await armar();
+    almacen.ponerNombre('Agustín Conde', true);
+    expect(almacen.estado().nombre).toEqual({ valor: 'Agustín Conde', actualizado: new Date(0).toISOString() });
+    almacen.ponerNombre('Agus');
+    almacen.ponerNombre('Otro de Apple', true);
+    expect(almacen.estado().nombre?.valor).toBe('Agus');
+    // Sin nombre, Apple no deja nada.
+    const otro = await armar();
+    otro.almacen.ponerNombre('   ', true);
+    expect(otro.almacen.estado().nombre).toBeNull();
+  });
+
+  it('de la cuenta llega el más nuevo, sin quedar pendiente; al de Apple le gana cualquiera', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerNombre('Agustín Conde', true);
+    await almacen.esperar();
+    await repositorio.subidoHasta((await repositorio.pendientes()).hasta);
+    expect(almacen.mezclar({ ...nada(), nombre: hace('2026-10-20T10:00:00.000Z') })).toBe(true);
+    expect(almacen.estado().nombre?.valor).toBe('Agus');
+    await almacen.esperar();
+    expect((await repositorio.pendientes()).nombre).toBeNull();
+    almacen.ponerNombre('Agustín');
+    expect(almacen.mezclar({ ...nada(), nombre: hace('2026-10-20T11:00:00.000Z') })).toBe(false);
+    expect(almacen.estado().nombre?.valor).toBe('Agustín');
+  });
+
+  it('borrar el teléfono lo borra', async () => {
+    const { almacen } = await armar();
+    almacen.ponerNombre('Ana');
+    await almacen.olvidarTodo();
+    expect(almacen.estado().nombre).toBeNull();
+  });
+});

@@ -2,6 +2,10 @@
 // arma la lista de luces (sprites) que dibujan los Atlas de Skia. Es la misma lógica que
 // galeria/src/escena.js. React se entera solo de lo que cambia texto (un toque, el día completo,
 // la luz que llega desde Salud), por la cola `eventos`.
+// El cielo no se mueve solo para siempre: un toque, un gesto, un dato nuevo o la llegada a Hábitos
+// lo dejan vivo unos segundos (`vivoHasta`); después, sin nada en marcha, queda quieto
+// (`debeSeguir`) y Cielo.tsx deja de pedir cuadros. El titilar, la aurora y las fugaces corren solo
+// mientras está vivo.
 
 import { HORIZONTE, PARALAJE, type Punto } from './mundo';
 import type { Brote } from './musgo';
@@ -10,6 +14,18 @@ import type { Brote } from './musgo';
 export const DATOS_POR_SPRITE = 9;
 export const CAPACIDAD_CIELO = 900;
 export const CAPACIDAD_FRENTE = 260;
+
+/** Segundos que el cielo sigue vivo después de un toque, un gesto o un dato nuevo. */
+export const VIVO_AL_TOCAR = 6;
+/** Al llegar a Hábitos: la llegada tiene su animación y después se aquieta. */
+export const VIVO_AL_LLEGAR = 8;
+/** Hasta dónde un toque elige la estrella más cercana, en puntos: las de una figura chica quedan juntas. */
+export const RADIO_DE_TOQUE = 52;
+/** Los puntos del aro de un hábito de comida, que se enciende solo con lo que se anota. */
+const PUNTOS_DE_COMIDA = 12;
+/** Los cuadros a pleno que se miden para saber si el teléfono llega (después de los primeros de cada tramo). */
+const MUESTRAS = 90;
+const CUADROS_SIN_MEDIR = 20;
 
 /** Celdas de la hoja de sprites (Cielo.tsx, fuenteHoja). */
 export const SPRITE = { brillo: 0, nucleo: 1, brazos: 2, aro: 3, aroFino: 4, disco: 5 } as const;
@@ -24,12 +40,16 @@ const BROTE_NUCLEO = [0.95, 0.96, 0.7];
 /** Segundos que la estela de una estrella fugaz sigue a la vista después de que se apaga la cabeza. */
 const RESTO_DE_LA_ESTELA = 0.45;
 
-/** `fija`: un hábito de comida, que se enciende y se apaga solo con lo anotado; tocarlo no lo cambia. */
-export type HabitoEnEscena = { x: number; y: number; encendido: boolean; auto: boolean; fija: boolean; luz: number; pop: number };
+/**
+ * `fija`: un hábito de comida, que se enciende y se apaga solo con lo anotado; tocarlo no lo cambia.
+ * `caja`: dónde queda su etiqueta respecto de la estrella, en puntos (x0, y0, x1, y1): tocarla también vale.
+ */
+export type HabitoEnEscena = { x: number; y: number; encendido: boolean; auto: boolean; fija: boolean; luz: number; pop: number; caja: number[] | null };
 export type LineaEnEscena = { a: number; b: number; prof: number; avance: number };
 export type EstrellaDelUniverso = { x: number; y: number; encendida: boolean; habito: number };
 
-type Efecto = { tipo: 0 | 1 | 2; x: number; y: number; t0: number; dur: number };
+/** 0 destello, 1 onda, 2 aro que se cierra (apagar), 3 el saludo de la llegada. */
+type Efecto = { tipo: 0 | 1 | 2 | 3; x: number; y: number; t0: number; dur: number };
 type Particula = {
   x: number; y: number; vx: number; vy: number; vida: number; max: number; tam: number;
   color: number[]; brillo: number; frena: number; sube: number; par: number;
@@ -41,9 +61,23 @@ export type Evento =
   | { tipo: 'encendida' | 'apagada' | 'automatico' | 'salud'; indice: number }
   | { tipo: 'completo' }
   | { tipo: 'incompleto' }
-  | { tipo: 'cuadros'; valor: number }
+  | { tipo: 'cuadros'; valor: number; total: number }
+  | { tipo: 'reposo'; total: number }
   | { tipo: 'lento' }
   | { tipo: 'listo' };
+
+type Medicion = {
+  /** Para los cuadros por segundo del panel de prueba. */
+  cuadros: number;
+  tiempo: number;
+  /** Los cuadros dibujados desde que se armó la escena. */
+  total: number;
+  /** Lo que tardó cada cuadro a pleno, en segundos, para decidir si la calidad baja un escalón. */
+  muestras: Float32Array;
+  n: number;
+  seguidos: number;
+  avisado: boolean;
+};
 
 export type Escena = {
   t: number;
@@ -59,6 +93,12 @@ export type Escena = {
   tCompleto: number;
   rafagaHecha: boolean;
   aurora: { tiempo: number; intensidad: number; oleada: number };
+  /** Si la aurora ya llegó al brillo que le toca: después de un día completo vuelve despacio. */
+  auroraQuieta: boolean;
+  /** Hasta cuándo (en el tiempo de la escena) el cielo sigue vivo aunque no pase nada. */
+  vivoHasta: number;
+  /** Las veces que se llegó a Hábitos con esta escena: la primera trae una fugaz. */
+  llegadas: number;
   efectos: Efecto[];
   particulas: Particula[];
   esporasSalud: EsporaSalud[];
@@ -86,7 +126,7 @@ export type Escena = {
   frente: Float32Array;
   nFrente: number;
   eventos: Evento[];
-  medicion: { cuadros: number; tiempo: number; desde: number; total: number; totalTiempo: number; avisado: boolean };
+  medicion: Medicion;
   /** Sube cada vez que alguna línea cambia hasta dónde llegó; Cielo.tsx rehace su camino solo entonces. */
   versionLineas: number;
   /** La versión de las líneas que Cielo.tsx ya dibujó. */
@@ -98,7 +138,7 @@ export type Escena = {
 export type EntradaDeEscena = {
   ancho: number;
   alto: number;
-  habitos: { x: number; y: number; encendido: boolean; auto: boolean; fija?: boolean }[];
+  habitos: { x: number; y: number; encendido: boolean; auto: boolean; fija?: boolean; caja?: number[] }[];
   lineas: { a: number; b: number; prof: number }[];
   centro: Punto;
   brotes: Brote[];
@@ -117,13 +157,16 @@ export function crearEscena(d: EntradaDeEscena): Escena {
     alto: d.alto,
     cam: { y: 0, v: 0, objetivo: 0, arrastrando: false, desde: 0 },
     paginaX: 0,
-    habitos: d.habitos.map((h) => ({ ...h, fija: !!h.fija, luz: h.encendido ? 1 : 0, pop: 0 })),
+    habitos: d.habitos.map((h) => ({ ...h, fija: !!h.fija, caja: h.caja ?? null, luz: h.encendido ? 1 : 0, pop: 0 })),
     lineas: d.lineas.map((l) => ({ ...l, avance: completo ? 1 : 0 })),
     centro: d.centro,
     completo,
     tCompleto: completo ? -30 : -1,
     rafagaHecha: completo,
     aurora: { tiempo: 40, intensidad: 1, oleada: 0 },
+    auroraQuieta: !completo,
+    vivoHasta: 0,
+    llegadas: 0,
     efectos: [],
     particulas: [],
     esporasSalud: [],
@@ -145,7 +188,7 @@ export function crearEscena(d: EntradaDeEscena): Escena {
     frente: new Float32Array(CAPACIDAD_FRENTE * DATOS_POR_SPRITE),
     nFrente: 0,
     eventos: [],
-    medicion: { cuadros: 0, tiempo: 0, desde: 0, total: 0, totalTiempo: 0, avisado: false },
+    medicion: { cuadros: 0, tiempo: 0, total: 0, muestras: new Float32Array(MUESTRAS), n: 0, seguidos: 0, avisado: false },
     versionLineas: 1,
     lineasVistas: 0,
     contarCuadros: d.contarCuadros ?? false,
@@ -244,18 +287,30 @@ export function ponerEncendidos(e: Escena, encendidos: boolean[]) {
   for (const x of nuevos) if (x.tipo === 'completo' || x.tipo === 'incompleto') e.eventos.push(x);
 }
 
-/** La estrella de un hábito que queda bajo (px, py), en puntos, o -1. */
+/**
+ * La estrella de un hábito que queda bajo (px, py), en puntos, o -1: la más cercana dentro de un
+ * radio generoso y, lejos de todas, la de la etiqueta tocada.
+ */
 export function estrellaEn(e: Escena, px: number, py: number): number {
   'worklet';
   if (e.paginaX !== 0) return -1;
   let mejor = -1;
-  let distancia = 34;
+  let distancia = RADIO_DE_TOQUE;
   for (let i = 0; i < e.habitos.length; i++) {
     const h = e.habitos[i];
     const d = Math.hypot(enX(e, h.x, PARALAJE.cielo) - px, enY(e, h.y, PARALAJE.cielo) - py);
     if (d < distancia) { distancia = d; mejor = i; }
   }
-  return mejor;
+  if (mejor >= 0) return mejor;
+  for (let i = 0; i < e.habitos.length; i++) {
+    const h = e.habitos[i];
+    const c = h.caja;
+    if (!c) continue;
+    const dx = px - enX(e, h.x, PARALAJE.cielo);
+    const dy = py - enY(e, h.y, PARALAJE.cielo);
+    if (dx >= c[0] && dx <= c[2] && dy >= c[1] && dy <= c[3]) return i;
+  }
+  return -1;
 }
 
 /** Un toque en (px, py), en puntos. Devuelve el hábito tocado, o -1. */
@@ -309,6 +364,50 @@ export function lanzarFugaz(e: Escena) {
   if (!e.fugaz) e.proximaFugaz = e.t;
 }
 
+/** Deja el cielo vivo `segundos` más. Con Reducir movimiento no tiene vida propia: solo lo que responde a un toque. */
+export function avivar(e: Escena, segundos: number) {
+  'worklet';
+  if (e.movimientoReducido) return;
+  if (e.t + segundos > e.vivoHasta) e.vivoHasta = e.t + segundos;
+}
+
+/**
+ * La llegada a Hábitos: cada estrella saluda con un aro tenue, de la más brillante a la última, y
+ * la primera vez pasa una estrella fugaz. Después el cielo se aquieta.
+ */
+export function saludar(e: Escena) {
+  'worklet';
+  avivar(e, VIVO_AL_LLEGAR);
+  if (e.movimientoReducido) return;
+  let quedan = 0;
+  for (const f of e.efectos) if (f.tipo !== 3) e.efectos[quedan++] = f;
+  e.efectos.length = quedan;
+  for (let i = 0; i < e.habitos.length; i++) {
+    const h = e.habitos[i];
+    e.efectos.push({ tipo: 3, x: h.x, y: h.y, t0: e.t + 0.12 + 0.07 * i, dur: 0.7 });
+  }
+  if (e.llegadas === 0 && !e.fugaz) e.proximaFugaz = Math.min(e.proximaFugaz, e.t + 1.4);
+  e.llegadas++;
+}
+
+/** Si algo está en marcha: un toque, la cámara, una fugaz, el día completo, el cielo que aparece. */
+export function hayMovimiento(e: Escena): boolean {
+  'worklet';
+  if (e.efectos.length > 0 || e.particulas.length > 0 || e.esporasSalud.length > 0 || e.fugaz !== null) return true;
+  if (e.cam.arrastrando || e.cam.v !== 0 || e.cam.y !== e.cam.objetivo) return true;
+  if (e.fondoListo && e.aparicion < 1) return true;
+  if (!e.auroraQuieta || (e.completo && e.t - e.tCompleto < 9.5)) return true;
+  for (const h of e.habitos) if (h.luz !== (h.encendido ? 1 : 0) || h.pop !== 0) return true;
+  for (const l of e.lineas) if (l.avance !== (e.completo ? 1 : 0)) return true;
+  return false;
+}
+
+/** Si hace falta otro cuadro: con nada en marcha y pasado el rato de vida, el cielo queda quieto. */
+export function debeSeguir(e: Escena): boolean {
+  'worklet';
+  return e.t < e.vivoHasta || hayMovimiento(e);
+}
+
 function puntoDeEspora(s: EsporaSalud, u: number): Punto {
   'worklet';
   const k = salida(u);
@@ -316,29 +415,34 @@ function puntoDeEspora(s: EsporaSalud, u: number): Punto {
   return [v * v * s.o[0] + 2 * v * k * s.c[0] + k * k * s.d[0], v * v * s.o[1] + 2 * v * k * s.c[1] + k * k * s.d[1]];
 }
 
-// Cuadros por segundo cada medio segundo, y un aviso si los primeros segundos con el cielo ya
-// dibujado van lentos: la pantalla baja un escalón de calidad.
-function medir(e: Escena, dt: number) {
+// Cuadros por segundo cada medio segundo (solo con el panel de prueba), y un aviso si el teléfono no
+// llega: la calidad baja un escalón. Se mide solo con el cielo a la vista en Hábitos y a pleno, sin
+// los primeros cuadros de cada tramo, y con la mediana: al arrancar la app, la entrada y las secciones
+// que se arman traban algún cuadro, y con el promedio de esos segundos la calidad bajaba dos escalones
+// y el cielo del primer día se veía apagado.
+function medir(e: Escena, dt: number, muestra: boolean) {
   'worklet';
   const m = e.medicion;
+  m.total++;
   m.cuadros++;
   m.tiempo += dt;
   if (m.tiempo >= 0.5) {
-    if (e.contarCuadros) e.eventos.push({ tipo: 'cuadros', valor: m.cuadros / m.tiempo });
+    if (e.contarCuadros) e.eventos.push({ tipo: 'cuadros', valor: m.cuadros / m.tiempo, total: m.total });
     m.cuadros = 0;
     m.tiempo = 0;
   }
-  if (e.aparicion >= 1 && !m.avisado) {
-    if (m.desde === 0) m.desde = e.t;
-    if (e.t - m.desde > 1) {
-      m.total++;
-      m.totalTiempo += dt;
-    }
-    if (e.t - m.desde > 4) {
-      m.avisado = true;
-      if (m.total / m.totalTiempo < 48) e.eventos.push({ tipo: 'lento' });
-    }
+  if (m.avisado) return;
+  if (!muestra || e.aparicion < 1) {
+    m.seguidos = 0;
+    return;
   }
+  m.seguidos++;
+  if (m.seguidos <= CUADROS_SIN_MEDIR) return;
+  m.muestras[m.n++] = dt;
+  if (m.n < m.muestras.length) return;
+  m.avisado = true;
+  const orden = Array.from(m.muestras).sort((a, b) => a - b);
+  if (orden[orden.length >> 1] > 1 / 45) e.eventos.push({ tipo: 'lento' });
 }
 
 function armarSprites(e: Escena) {
@@ -361,18 +465,30 @@ function armarSprites(e: Escena) {
     n = sprite(b, n, cap, sx, sy, radioNucleo, giro, SPRITE.brazos, BLANCO_CALIDO, (0.32 + 0.95 * luz) * (0.12 + 0.55 * luz));
     const apagada = 1 - luz;
     if (apagada > 0.01) {
-      // Los automáticos llevan además el arco de avance, que es un Path (Cielo.tsx).
-      if (h.auto) n = sprite(b, n, cap, sx, sy, 20, 0, SPRITE.aro, PERGAMINO, 0.16 * apagada);
-      else n = sprite(b, n, cap, sx, sy, 18, 0, SPRITE.aro, PERGAMINO, (0.3 + 0.13 * Math.sin(e.t * 2.2 + i * 1.7)) * apagada);
+      if (h.fija) {
+        // Los de comida, un aro de puntos dorados: se encienden solos con lo que se anota.
+        n = sprite(b, n, cap, sx, sy, 22, 0, SPRITE.aro, ORO_CLARO, 0.12 * apagada);
+        for (let k = 0; k < PUNTOS_DE_COMIDA; k++) {
+          const a = (k / PUNTOS_DE_COMIDA) * Math.PI * 2;
+          n = sprite(b, n, cap, sx + Math.cos(a) * 19, sy + Math.sin(a) * 19, 3, 0, SPRITE.disco, ORO_CLARO, 0.95 * apagada);
+        }
+      } else if (h.auto) {
+        // Los de Salud llevan además el arco de avance, que es un Path (Cielo.tsx).
+        n = sprite(b, n, cap, sx, sy, 20, 0, SPRITE.aro, PERGAMINO, 0.16 * apagada);
+      } else {
+        n = sprite(b, n, cap, sx, sy, 18, 0, SPRITE.aro, PERGAMINO, (0.3 + 0.13 * Math.sin(e.t * 2.2 + i * 1.7)) * apagada);
+      }
     }
   }
 
   for (const f of e.efectos) {
     const u = (e.t - f.t0) / f.dur;
+    if (u < 0) continue;
     const sx = enX(e, f.x, PARALAJE.cielo), sy = enY(e, f.y, PARALAJE.cielo);
     if (f.tipo === 0) n = sprite(b, n, cap, sx, sy, 14 + 56 * salida(u), 0, SPRITE.disco, ORO_CLARO, 1.1 * (1 - u));
     else if (f.tipo === 1) n = sprite(b, n, cap, sx, sy, 14 + 78 * salida(u), 0, SPRITE.aroFino, ORO, 0.75 * (1 - u));
-    else n = sprite(b, n, cap, sx, sy, 42 - 26 * salida(u), 0, SPRITE.aroFino, PERGAMINO, 0.4 * (1 - u));
+    else if (f.tipo === 2) n = sprite(b, n, cap, sx, sy, 42 - 26 * salida(u), 0, SPRITE.aroFino, PERGAMINO, 0.4 * (1 - u));
+    else n = sprite(b, n, cap, sx, sy, 17 + 17 * salida(u), 0, SPRITE.aroFino, ORO_CLARO, 0.32 * Math.sin(Math.PI * u));
   }
 
   // La chispa en la punta de cada línea mientras se enciende.
@@ -451,9 +567,11 @@ export function claveDeApagados(e: Escena): string {
 
 // Va al final a propósito: el plugin de worklets guarda las funciones que usa cada worklet en el
 // momento en que se define, así que todo lo que usa paso() tiene que estar definido antes.
-export function paso(e: Escena, dt: number) {
+// `muestra`: si este cuadro cuenta para saber si el teléfono llega (Cielo.tsx: a pleno, en Hábitos).
+export function paso(e: Escena, dt: number, muestra = false) {
   'worklet';
   e.t += dt;
+  const vivo = e.t < e.vivoHasta;
 
   // La cámara va a la zona elegida con un resorte crítico (sin rebote).
   if (!e.cam.arrastrando) {
@@ -470,8 +588,12 @@ export function paso(e: Escena, dt: number) {
   }
 
   for (const h of e.habitos) {
-    h.luz += ((h.encendido ? 1 : 0) - h.luz) * (1 - Math.exp(-dt * (h.encendido ? 16 : 7)));
+    const meta = h.encendido ? 1 : 0;
+    h.luz += (meta - h.luz) * (1 - Math.exp(-dt * (h.encendido ? 16 : 7)));
     h.pop *= Math.exp(-dt * 6);
+    // Quietas del todo al llegar, como la cámara: si no, el cielo nunca termina de moverse.
+    if (Math.abs(meta - h.luz) < 0.002) h.luz = meta;
+    if (h.pop < 0.01) h.pop = 0;
   }
 
   const dc = e.completo ? e.t - e.tCompleto : -1;
@@ -487,6 +609,7 @@ export function paso(e: Escena, dt: number) {
   e.aurora.intensidad += (objetivoI - e.aurora.intensidad) * ritmo;
   e.aurora.oleada += (objetivoO - e.aurora.oleada) * ritmo;
   e.aurora.tiempo += dt * (1 + 2.2 * e.aurora.oleada) * (e.movimientoReducido ? 0.4 : 1);
+  e.auroraQuieta = Math.abs(objetivoI - e.aurora.intensidad) < 0.004 && Math.abs(objetivoO - e.aurora.oleada) < 0.004;
 
   let lineasMovidas = false;
   for (const l of e.lineas) {
@@ -516,6 +639,8 @@ export function paso(e: Escena, dt: number) {
   for (const p of e.particulas) {
     p.vida += dt;
     if (p.espora) {
+      // Pasado el rato de vida, las esporas se apagan enseguida: no quedan quietas en el aire.
+      if (!vivo && p.max > p.vida + 0.8) p.max = p.vida + 0.8;
       p.y += p.vy * dt;
       p.x = p.x0 + 0.012 * Math.sin(e.t * 0.9 + p.fase) * suave(0, 1.5, p.vida);
       // Al subir se alejan: el paralaje pasa del musgo al cielo.
@@ -535,8 +660,8 @@ export function paso(e: Escena, dt: number) {
   e.efectos.length = quedan;
 
   // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas. Son
-  // de vez en cuando: una cada siete segundos, más o menos.
-  if (e.brotes.length && Math.random() < (0.05 + 0.15 * e.riqueza) * e.factorParticulas * dt) {
+  // de vez en cuando: una cada siete segundos, más o menos, y solo con el cielo vivo.
+  if (vivo && e.brotes.length && Math.random() < (0.05 + 0.15 * e.riqueza) * e.factorParticulas * dt) {
     const k = e.brotes[Math.floor(Math.random() * e.brotes.length)];
     e.particulas.push({
       x: k.x, y: k.y, vx: 0, vy: 0.018 + Math.random() * 0.03, vida: 0, max: 5 + Math.random() * 5,
@@ -563,8 +688,8 @@ export function paso(e: Escena, dt: number) {
 
   // Una estrella fugaz cada tanto, en la zona de hoy: cae en diagonal y rápido. Una de cada cinco
   // es una bola de fuego, más brillante, que estalla antes de apagarse. La cabeza se apaga y la
-  // estela queda un instante donde estaba.
-  if (!e.fugaz && e.t >= e.proximaFugaz && !e.movimientoReducido) {
+  // estela queda un instante donde estaba. Solo con el cielo vivo: quieto, el tiempo no corre.
+  if (vivo && !e.fugaz && e.t >= e.proximaFugaz && !e.movimientoReducido) {
     const izquierda = Math.random() < 0.5;
     const angulo = (izquierda ? Math.PI : 0) + (izquierda ? 1 : -1) * (0.45 + Math.random() * 0.45);
     e.fugaz = {
@@ -596,6 +721,6 @@ export function paso(e: Escena, dt: number) {
 
   if (e.fondoListo) e.aparicion = Math.min(1, e.aparicion + dt / 0.8);
 
-  medir(e, dt);
+  medir(e, dt, muestra);
   armarSprites(e);
 }

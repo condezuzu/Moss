@@ -1,12 +1,13 @@
-// El texto sobre el cielo: cabecera, etiquetas de las estrellas, aviso con deshacer, frase en el
-// musgo y el universo. Cada capa sigue a la cámara con el mismo paralaje que su parte del cielo,
-// en el hilo de la interfaz. El cielo es el protagonista: el nombre de la constelación va chico, y
-// el día completo no tiene texto propio.
+// El texto sobre el cielo: cabecera, etiquetas de las estrellas, aviso, globito, frase en el musgo
+// y el universo. Cada capa sigue a la cámara con el mismo paralaje que su parte del cielo, en el
+// hilo de la interfaz. El cielo es el protagonista: el nombre de la constelación va chico, y el día
+// completo no tiene texto propio (lo encendido lo dicen las estrellas y la luz de hoy; VoiceOver lo
+// lee en la cabecera).
 
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { lista, t } from '@/textos';
@@ -14,11 +15,13 @@ import { colores } from '@/tema';
 import type { Escena } from './escena';
 import { luzDelDia } from '@/dominio/luz';
 import type { DiaDelCielo } from './dia';
+import type { Medidor } from './latido';
 import { PARALAJE, type Calidad } from './mundo';
 import type { Plano } from './plano';
-import { nombreEn, valorAutomatico } from './textosDelCielo';
+import { nombreEn, valorCorto } from './textosDelCielo';
 
-export type Aviso = { texto: string; clave: number; deshacer?: () => void };
+/** `accion`: un botón al lado del texto (el de un hábito de comida lleva a Comida). */
+export type Aviso = { texto: string; clave: number; accion?: { texto: string; alTocar: () => void } };
 
 type Acciones = {
   salud: () => void;
@@ -41,7 +44,9 @@ type Props = {
   alCerrarAviso: () => void;
   calidad: Calidad;
   riqueza: number;
-  cuadros: number;
+  medidor: Medidor;
+  /** Cómo se marca un hábito, hasta que se toca una estrella por primera vez. */
+  globito: boolean;
   acciones: Acciones;
   /** Lo que ocupa la barra de pestañas abajo; sin barra, 0. */
   abajo: number;
@@ -84,22 +89,24 @@ export function Interfaz(p: Props) {
     const momento = e.completo ? suave(0.6, 1.4, dc) * (1 - suave(7.5, 9.0, dc)) : 0;
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) * (1 - e.velado) };
   });
-  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: 1 - escena.value.velado }));
+  // Mientras está el globito, la frase se aparta: van en el mismo lugar.
+  const conFrase = useSharedValue(p.globito ? 0 : 1);
+  useEffect(() => {
+    conFrase.set(withTiming(p.globito ? 0 : 1, { duration: 400 }));
+  }, [p.globito, conFrase]);
+  const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: (1 - escena.value.velado) * conFrase.get() }));
   // El panel de prueba es de Hábitos: no se ve encima de las otras secciones.
   const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }], opacity: 1 - escena.value.velado }));
-  // La flecha tenue de Ascent va con la frase y respira apenas; mientras Ascent sube, se apaga.
+  // La flecha tenue de Ascent va con la frase y respira apenas, con el reloj del cielo: cuando el
+  // cielo queda quieto, ella también (sin una animación propia que corra para siempre).
   const reducido = useReducedMotion();
-  const respira = useSharedValue(0);
-  const conFlecha = !!p.subida;
-  useEffect(() => {
-    if (!reducido && conFlecha) respira.value = withRepeat(withTiming(1, { duration: 1900 }), -1, true);
-  }, [reducido, conFlecha, respira]);
   const estiloFlecha = useAnimatedStyle(() => {
     const e = escena.value;
     const subio = subida ? subida.get() : 0;
+    const respira = reducido ? 0 : 0.5 - 0.5 * Math.cos((e.t * 2 * Math.PI) / 3.8);
     return {
-      opacity: (1 - Math.min(1, subio * 2.5)) * (1 - 0.45 * respira.value),
-      transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * PARALAJE.lomas[2] * alto - 3 * respira.value }],
+      opacity: (1 - Math.min(1, subio * 2.5)) * (1 - 0.45 * respira),
+      transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * PARALAJE.lomas[2] * alto - 3 * respira }],
     };
   });
   const estiloUniverso = useAnimatedStyle(() => {
@@ -112,7 +119,7 @@ export function Interfaz(p: Props) {
   const cerrarAviso = useEffectEvent(() => p.alCerrarAviso());
   useEffect(() => {
     if (!p.aviso) return;
-    const espera = setTimeout(cerrarAviso, p.aviso.deshacer ? 4200 : 2600);
+    const espera = setTimeout(cerrarAviso, p.aviso.accion ? 4200 : 2600);
     return () => clearTimeout(espera);
   }, [p.aviso]);
 
@@ -121,6 +128,13 @@ export function Interfaz(p: Props) {
     num: p.dia.fecha.diaMes,
     mes: lista('fecha.mesesCortos')[p.dia.fecha.mes],
   });
+  const luz = luzDelDia(hechos);
+  const cabeceraParaVoiceOver = [
+    fecha,
+    c ? nombreEn(c.nombres) : '',
+    p.encendidos.length ? (p.completo ? t('cielo.completa') : t('cielo.encendidas', { n: hechos, total: p.encendidos.length })) : '',
+    `${luz} ${t('cielo.luzDeHoy')}`,
+  ].filter(Boolean).join(', ');
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -140,8 +154,8 @@ export function Interfaz(p: Props) {
         {p.plano.etiquetas.map((e, i) => {
           const h = p.dia.habitos[i];
           const encendida = p.encendidos[i];
-          // Un automático encendido muestra al menos su meta; sin datos todavía, nada.
-          const textoAuto = !h.auto ? '' : encendida && h.meta ? valorAutomatico({ ...h, valor: Math.max(h.valor ?? 0, h.meta) }) : valorAutomatico(h);
+          // Lo que lleva hoy un automático, solo mientras no llegó: encendido, ya lo dice la estrella.
+          const textoAuto = !h.auto || encendida ? '' : valorCorto(h);
           const posicion =
             e.lado === 'abajo' ? { left: e.x - 90, top: e.y + 14, width: 180, alignItems: 'center' as const }
               : e.lado === 'der' ? { left: e.x + 22, top: e.y - 9, width: 180, alignItems: 'flex-start' as const }
@@ -158,20 +172,23 @@ export function Interfaz(p: Props) {
         })}
       </Animated.View>
 
-      <Animated.View style={[estilos.cabecera, { top: insets.top + 14 }, estiloCabecera]} pointerEvents="none">
+      <Animated.View
+        style={[estilos.cabecera, { top: insets.top + 14 }, estiloCabecera]}
+        pointerEvents="none"
+        accessible
+        accessibilityRole="header"
+        accessibilityLabel={cabeceraParaVoiceOver}
+      >
         <View style={estilos.cabeceraFila}>
           <View>
             <Text style={estilos.fecha}>{fecha}</Text>
             {c && <Text style={estilos.nombre}>{nombreEn(c.nombres)}</Text>}
           </View>
           <View style={estilos.luz}>
-            <Text style={estilos.luzNumero}>{luzDelDia(hechos)}</Text>
+            <Text style={estilos.luzNumero}>{luz}</Text>
             <Text style={estilos.luzTexto}>{t('cielo.luzDeHoy')}</Text>
           </View>
         </View>
-        <Text style={[estilos.cuenta, p.completo && estilos.cuentaCompleta]}>
-          {p.completo ? t('cielo.completa') : t('cielo.encendidas', { n: hechos, total: p.encendidos.length })}
-        </Text>
       </Animated.View>
 
       <Animated.View style={[estilos.frase, { bottom: p.abajo ? p.abajo + 38 : insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
@@ -185,14 +202,19 @@ export function Interfaz(p: Props) {
         </Animated.View>
       )}
 
-      {/* El aviso es de Hábitos: se va con su página. */}
+      {/* El aviso y el globito son de Hábitos: se van con su página. */}
       <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
+      {p.globito && !p.aviso && (
+        <Animated.View entering={FadeInDown.duration(320).delay(500)} exiting={FadeOut.duration(260)} style={[estilos.aviso, estilos.globito, { bottom: p.abajo ? p.abajo + 40 : insets.bottom + 40 }]} pointerEvents="none">
+          <Text style={estilos.avisoTexto} numberOfLines={2}>{t('cielo.globito')}</Text>
+        </Animated.View>
+      )}
       {p.aviso && (
         <Animated.View key={p.aviso.clave} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(200)} style={[estilos.aviso, { bottom: p.abajo ? p.abajo + 24 : insets.bottom + 96 }]}>
           <Text style={estilos.avisoTexto} numberOfLines={2}>{p.aviso.texto}</Text>
-          {p.aviso.deshacer && (
-            <Pressable onPress={p.aviso.deshacer} style={estilos.avisoBoton} accessibilityRole="button" hitSlop={8}>
-              <Text style={estilos.avisoBotonTexto}>{t('comun.deshacer')}</Text>
+          {p.aviso.accion && (
+            <Pressable onPress={p.aviso.accion.alTocar} style={estilos.avisoBoton} accessibilityRole="button" hitSlop={8}>
+              <Text style={estilos.avisoBotonTexto}>{p.aviso.accion.texto}</Text>
             </Pressable>
           )}
         </Animated.View>
@@ -201,7 +223,7 @@ export function Interfaz(p: Props) {
 
       {DIAGNOSTICO && (
         <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
-          <PanelDePrueba arriba={insets.top + 126} calidad={p.calidad} riqueza={p.riqueza} cuadros={p.cuadros} acciones={p.acciones} />
+          <PanelDePrueba arriba={insets.top + 126} calidad={p.calidad} riqueza={p.riqueza} medidor={p.medidor} acciones={p.acciones} />
         </Animated.View>
       )}
     </View>
@@ -210,14 +232,20 @@ export function Interfaz(p: Props) {
 
 // Solo en builds de desarrollo o de diagnóstico: para probar en el teléfono lo que la galería
 // prueba con sus botones.
-function PanelDePrueba({ arriba, calidad, riqueza, cuadros, acciones }: {
+function PanelDePrueba({ arriba, calidad, riqueza, medidor, acciones }: {
   arriba: number;
   calidad: Calidad;
   riqueza: number;
-  cuadros: number;
+  medidor: Medidor;
   acciones: Acciones;
 }) {
   const [abierto, setAbierto] = useState(false);
+  // Los cuadros dibujados: con el cielo quieto el número no se mueve, y así se comprueba que paró.
+  const medida = useSyncExternalStore(medidor.suscribir, medidor.leer);
+  const nombreDeCalidad = t(`diagnostico.${calidad}`);
+  const cuadros = medida.reposo
+    ? t('diagnostico.reposo', { total: medida.total, calidad: nombreDeCalidad })
+    : t('diagnostico.cuadros', { n: Math.round(medida.fps), total: medida.total, calidad: nombreDeCalidad });
   const botones: [string, () => void][] = [
     [t('diagnostico.salud'), acciones.salud],
     [t('diagnostico.completar'), acciones.completar],
@@ -229,7 +257,7 @@ function PanelDePrueba({ arriba, calidad, riqueza, cuadros, acciones }: {
   return (
     <View style={[estilos.panel, { top: arriba }]} pointerEvents="box-none">
       <Pressable onPress={() => setAbierto((a) => !a)} style={estilos.panelBoton} accessibilityRole="button" hitSlop={10}>
-        <Text style={estilos.panelBotonTexto}>{t('diagnostico.cuadros', { n: Math.round(cuadros), calidad: t(`diagnostico.${calidad}`) })}</Text>
+        <Text style={estilos.panelBotonTexto}>{cuadros}</Text>
       </Pressable>
       {abierto && (
         <View style={estilos.panelCaja}>
@@ -270,8 +298,6 @@ const estilos = StyleSheet.create({
   luz: { alignItems: 'flex-end' },
   luzNumero: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 26, lineHeight: 27, color: colores.oroClaro, ...SOMBRA },
   luzTexto: { marginTop: 4, fontFamily: 'Jost_400Regular', fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: colores.pergaminoTenue },
-  cuenta: { marginTop: 8, fontFamily: 'Jost_400Regular', fontSize: 12, color: colores.pergaminoTenue },
-  cuentaCompleta: { color: colores.oro, letterSpacing: 1.9, textTransform: 'uppercase', fontSize: 10.5 },
 
   etiqueta: { position: 'absolute' },
   etiquetaFila: { flexDirection: 'row', alignItems: 'center', gap: 5 },
@@ -297,6 +323,7 @@ const estilos = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.22)',
   },
   avisoTexto: { flexShrink: 1, fontFamily: 'Jost_400Regular', fontSize: 13, color: colores.pergamino },
+  globito: { paddingRight: 16, borderColor: 'rgba(232, 196, 106, 0.32)' },
   avisoBoton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(232, 196, 106, 0.12)' },
   avisoBotonTexto: { fontFamily: 'Jost_500Medium', fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase', color: colores.oro },
 

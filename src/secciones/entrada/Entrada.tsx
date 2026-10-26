@@ -1,16 +1,17 @@
 // La entrada a la app, la de la galería (galeria/src/entrada.js): la frase de apertura, dos
-// diapositivas, tus datos (qué se guarda y el consentimiento para los datos de salud), la cuenta y
-// el cuestionario que arma la meta inicial de comida, con lo que cuida: mayores de 18 y sin déficit
-// en el embarazo, la lactancia o con una condición médica. Cada pantalla tiene
-// su lugar en el cielo: la cámara sube a medida que se avanza. La frase y las diapositivas no se
-// saltean: el botón se llena en 2,5 s. Al final la cámara baja hasta hoy, se guardan las respuestas
-// (el perfil, el peso de hoy y la meta) y aparece Inicio.
+// diapositivas, tus datos (qué guarda Moss y el consentimiento para los datos de salud), la cuenta
+// (solo con Apple) y el cuestionario que arma la meta inicial de comida, con lo que cuida: mayores de
+// 18 y sin déficit en el embarazo, la lactancia o con una condición médica. La recorre una estrella
+// guía (Guia.tsx, con el guion de guion.ts): en la frase y las diapositivas espera abajo y tocarla es
+// seguir, así que no se saltean. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida
+// que se avanza. Al final la estrella se va, la cámara baja hasta hoy, se guardan las respuestas (el
+// perfil, el peso de hoy y la meta) y aparece Inicio.
 
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
@@ -25,12 +26,14 @@ import { colores, letras } from '@/tema';
 import { COLOR_DE_MACRO, Icono, MACROS } from '../comida/comunes';
 import { numero, sistemaDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
-import { MiniCielo } from '../graficos/Graficos';
-import { crearCuenta, entrarConApple, entrarConCorreo, hayApple, olvideLaClave, type ErrorDeCuenta, type Resultado } from './cuenta';
-import { Anillos } from './Lienzos';
-import { Boton, Chispas, Circulo, Deslizador, Opcion } from './piezas';
-
-type Paso = 'frase' | 'habitos' | 'comida' | 'datos' | 'cuenta' | 'salud' | 'edad' | 'sexo' | 'altura' | 'peso' | 'actividad' | 'cuidado' | 'objetivo' | 'resultado';
+import { entrarConApple, hayApple, type ErrorDeCuenta } from './cuenta';
+import { Guia } from './Guia';
+import {
+  anclas as medirAnclas, barraEn, esDiapositiva, estado, guionDe, guionDeSalida, LUNA, PALABRAS, reposo,
+  type Anclas, type EscenaDeLuna, type Evento, type Guion, type Lugar, type Paso, type Recorrido,
+} from './guion';
+import { Anillos, Casiopea } from './Lienzos';
+import { Boton, Deslizador, Opcion } from './piezas';
 
 /** Cada pantalla y dónde queda la cámara: sube a medida que se avanza, como en la galería. */
 const PASOS: readonly { id: Paso; camara: number }[] = [
@@ -61,6 +64,15 @@ const DE_FABRICA: Respuestas = { edad: 29, sexo: null, alturaCm: 172, pesoKg: 74
 type DeSalud = ReadonlySet<'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>;
 /** Lo que deja cada pantalla arriba, debajo del borde del teléfono. */
 const ARRIBA = 28;
+/** Lo que deja cada pantalla a los costados. */
+const LADOS = 26;
+const CASIOPEA = buscarConstelacion('cassiopeia');
+
+function vibrar(e: Evento) {
+  if (e === 'completo') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  else if (e === 'toque') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  else Haptics.selectionAsync().catch(() => {});
+}
 
 type Retomar = { i: number; r: Respuestas; deSalud: DeSalud };
 
@@ -80,6 +92,7 @@ function avanceInicial(total: number): Retomar {
 
 export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; alTerminar?: () => void }) {
   const insets = useSafeAreaInsets();
+  const { width: W, height: H } = useWindowDimensions();
   const reducido = useReducedMotion();
   const [pasos] = useState(pasosDeEstaVersion);
   // Se retoma donde quedó; si la cuenta ya tenía un perfil, sus respuestas vienen llenas.
@@ -89,6 +102,39 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const [deSalud, setDeSalud] = useState<DeSalud>(inicio.deSalud);
   const [terminando, setTerminando] = useState(false);
   const paso = pasos[i];
+
+  // La estrella guía: el guion de la pantalla de ahora y el reloj que lo recorre (ms desde que empezó).
+  const a = useMemo(() => medirAnclas(W, H, insets.top, insets.bottom, ARRIBA, LADOS), [W, H, insets.top, insets.bottom]);
+  const recorrido = useSharedValue<Recorrido | null>(null);
+  const reloj = useSharedValue(0);
+  const kDe = (j: number) => {
+    const c = CUESTIONARIO.indexOf(pasos[j]?.id);
+    return c >= 0 ? (c + 1) / CUESTIONARIO.length : 0;
+  };
+  const guionPara = (j: number, desde: Lugar) => guionDe(pasos[j].id, a, desde, kDe(j), CASIOPEA);
+  // Al abrir (o retomar), sale de donde habría quedado la pantalla anterior.
+  const [guion, setGuion] = useState<Guion>(() => guionPara(inicio.i, reposo(pasos[inicio.i - 1]?.id, a, kDe(inicio.i - 1))));
+  // En la frase y las diapositivas: ya terminó su parte y espera que la toquen.
+  const [espera, setEspera] = useState(false);
+  /** Dónde está la estrella ahora mismo: de ahí sale la pantalla siguiente. */
+  const lugarDeAhora = (): Lugar => {
+    const g = recorrido.get();
+    if (!g) return reposo(pasos[i - 1]?.id, a, kDe(i - 1));
+    const e = estado(g, reloj.get(), false);
+    const b = barraEn(g, reloj.get());
+    return { pos: [e.x, e.y], escala: e.escala, brillo: e.base, enBarra: b.visible > 0.5 ? b.k : null };
+  };
+  useEffect(() => {
+    recorrido.set(guion.recorrido);
+    const dura = guion.fin + 600;
+    reloj.set(0);
+    reloj.set(withTiming(dura, { duration: dura, easing: Easing.linear }));
+    const esperas = guion.eventos.map(([ms, e]) => setTimeout(() => vibrar(e), ms));
+    if (esDiapositiva(paso.id) && !terminando) esperas.push(setTimeout(() => setEspera(true), guion.fin));
+    return () => esperas.forEach(clearTimeout);
+    // El guion cambia junto con la pantalla: alcanza con él.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guion, recorrido, reloj]);
   // Después de Salud, si la cuenta trajo su perfil (otro teléfono, reinstalar o volver a entrar),
   // el cuestionario no se pregunta otra vez: se sale como al terminar y quedan sus metas y sus hábitos.
   const conPerfil = useSyncExternalStore(elAlmacen().suscribir, () => elAlmacen().estado().perfil !== null);
@@ -103,7 +149,12 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     camara.set(paso.camara);
   }, [camara, paso.camara]);
 
-  const siguiente = () => setI((x) => Math.min(pasos.length - 1, x + 1));
+  const siguiente = () => {
+    if (i >= pasos.length - 1) return;
+    setEspera(false);
+    setGuion(guionPara(i + 1, lugarDeAhora()));
+    setI(i + 1);
+  };
   const poner = <K extends keyof Respuestas>(clave: K, valor: Respuestas[K]) => {
     setR((antes) => ({ ...antes, [clave]: valor }));
     // Lo que se cambia a mano ya no es de Salud.
@@ -128,6 +179,8 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const terminar = () => {
     if (saliendo || !r.sexo) return;
     setTerminando(true);
+    // La estrella sube y se va, como en la galería antes del flum.
+    setGuion(guionDeSalida(lugarDeAhora()));
     const sexo = r.sexo;
     const { caso, ...respuestas } = r;
     salir(() => {
@@ -149,22 +202,38 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   }));
 
   const enCuestionario = CUESTIONARIO.indexOf(paso.id);
+  const relleno = { paddingTop: insets.top + ARRIBA, paddingBottom: insets.bottom + 24 };
+  // La frase, las diapositivas y la cuenta tienen lo suyo en un lugar fijo, el que recorre la estrella: no corren.
+  const fija = esDiapositiva(paso.id) || paso.id === 'cuenta';
   return (
     <Animated.View style={[StyleSheet.absoluteFill, estiloSalida]} pointerEvents={saliendo ? 'none' : 'box-none'}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View key={paso.id} entering={FadeInDown.delay(i === 0 ? 120 : 280).duration(620)} exiting={FadeOut.duration(320)} style={{ flex: 1 }}>
+          {fija ? (
+            <>
+              {paso.id === 'frase' && <Frase a={a} reducido={reducido} />}
+              {paso.id === 'habitos' && guion.casiopea && (
+                <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                  <Casiopea escena={guion.casiopea} reloj={reloj} reducido={reducido} ancho={a.W} alto={a.H} />
+                </View>
+              )}
+              {paso.id === 'comida' && guion.luna && <LunaQueSeLlena luna={guion.luna} reloj={reloj} reducido={reducido} />}
+              {paso.id === 'cuenta' && <Marca a={a} letras={guion.letras} reducido={reducido} />}
+              <View style={[s.pantalla, s.fija, relleno]} pointerEvents="box-none">
+                {paso.id === 'habitos' && <Encabezado titulo={t('entrada.habitosTitulo')} texto={t('entrada.habitosTexto')} />}
+                {paso.id === 'comida' && <Encabezado titulo={t('entrada.comidaTitulo')} texto={t('entrada.comidaTexto')} />}
+                {paso.id === 'cuenta' && <Cuenta alEntrar={siguiente} />}
+              </View>
+            </>
+          ) : (
           <ScrollView
-            contentContainerStyle={[s.pantalla, { paddingTop: insets.top + ARRIBA, paddingBottom: insets.bottom + 24 }]}
+            contentContainerStyle={[s.pantalla, relleno]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
             {enCuestionario >= 0 && <Avance n={enCuestionario + 1} total={CUESTIONARIO.length} />}
-            {paso.id === 'frase' && <Frase alSeguir={siguiente} reducido={reducido} />}
-            {paso.id === 'habitos' && <Diapositiva titulo={t('entrada.habitosTitulo')} texto={t('entrada.habitosTexto')} alSeguir={siguiente} reducido={reducido}><Casiopea reducido={reducido} /></Diapositiva>}
-            {paso.id === 'comida' && <Diapositiva titulo={t('entrada.comidaTitulo')} texto={t('entrada.comidaTexto')} alSeguir={siguiente} reducido={reducido}><LunaQueSeLlena reducido={reducido} /></Diapositiva>}
             {paso.id === 'datos' && <TusDatos alSeguir={siguiente} />}
-            {paso.id === 'cuenta' && <Cuenta alEntrar={siguiente} />}
             {paso.id === 'salud' && (
               <Salud
                 alSeguir={siguiente}
@@ -197,8 +266,10 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
             )}
             {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={terminar} reducido={reducido} />}
           </ScrollView>
+          )}
         </Animated.View>
       </KeyboardAvoidingView>
+      <Guia recorrido={recorrido} reloj={reloj} anclas={a} reducido={reducido} tocable={esDiapositiva(paso.id) && !saliendo} lista={espera} alTocar={siguiente} />
     </Animated.View>
   );
 }
@@ -209,173 +280,114 @@ const Texto = ({ children, centrado }: { children: ReactNode; centrado?: boolean
 const Pie = ({ children }: { children: ReactNode }) => <View style={s.pie}>{children}</View>;
 const Espacio = () => <View style={{ flex: 1, minHeight: 24 }} />;
 
-/** La barra del cuestionario: cuánto falta. */
+/** Cuánto falta del cuestionario. La barra es de la estrella (Guia.tsx), que va en su punta: acá queda su lugar. */
 function Avance({ n, total }: { n: number; total: number }) {
-  const lleno = useSharedValue((n - 1) / total);
-  useEffect(() => {
-    lleno.set(withTiming(n / total, { duration: 700 }));
-  }, [lleno, n, total]);
-  const estilo = useAnimatedStyle(() => ({ width: `${lleno.get() * 100}%` }));
   return (
     <View>
-      <View style={s.avance}>
-        <Animated.View style={[s.avanceLleno, estilo]} />
-      </View>
+      <View style={s.avance} />
       <Text style={s.paso}>{t('entrada.cuestionario.paso', { n, total })}</Text>
     </View>
   );
 }
 
 // ------------------------------------------------------------------ la frase y las diapositivas
-function Frase({ alSeguir, reducido }: { alSeguir: () => void; reducido: boolean }) {
+/** La frase, centrada en el 44 % del alto: las palabras aparecen mientras la estrella la presenta desde arriba. */
+function Frase({ a, reducido }: { a: Anclas; reducido: boolean }) {
   const palabras = t('entrada.frase').split(' ');
-  const { height: alto } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   return (
-    <>
-      {/* Como en la galería: la frase empieza cerca de la mitad del cielo. */}
-      <View style={[s.frase, { marginTop: Math.max(40, alto * 0.45 - insets.top - ARRIBA) }]}>
-        <View style={s.fraseTexto} accessible accessibilityLabel={t('entrada.frase')}>
-          {palabras.map((p, k) => (
-            <Animated.Text key={k} entering={reducido ? undefined : FadeIn.delay(350 + k * 75).duration(900)} style={s.palabra}>{p}</Animated.Text>
-          ))}
-        </View>
-        <Animated.Text entering={reducido ? undefined : FadeIn.delay(1700).duration(1000)} style={s.autor}>{t('entrada.fraseAutor')}</Animated.Text>
+    <View style={[s.frase, { height: a.H * 0.88 }]} pointerEvents="none">
+      <View style={s.fraseTexto} accessible accessibilityLabel={t('entrada.frase')}>
+        {palabras.map((p, k) => (
+          <Animated.Text key={k} entering={reducido ? undefined : FadeIn.delay(PALABRAS.desde + k * PALABRAS.cada).duration(900)} style={s.palabra}>{p}</Animated.Text>
+        ))}
       </View>
-      <Espacio />
-      <Circulo alTocar={alSeguir} reducido={reducido} />
-    </>
+      <Animated.Text entering={reducido ? undefined : FadeIn.delay(PALABRAS.autor).duration(1000)} style={s.autor}>{t('entrada.fraseAutor')}</Animated.Text>
+    </View>
   );
 }
 
-function Diapositiva({ titulo, texto, alSeguir, reducido, children }: { titulo: string; texto: string; alSeguir: () => void; reducido: boolean; children: ReactNode }) {
+function Encabezado({ titulo, texto }: { titulo: string; texto: string }) {
   return (
     <>
       <Titulo centrado>{titulo}</Titulo>
       <Texto centrado>{texto}</Texto>
-      <View style={s.escenario}>{children}</View>
-      <Circulo alTocar={alSeguir} reducido={reducido} />
     </>
   );
 }
 
-/** Casiopea, que se enciende sola, estrella por estrella. */
-function Casiopea({ reducido }: { reducido: boolean }) {
-  const { width } = useWindowDimensions();
-  const constelacion = buscarConstelacion('cassiopeia');
-  const total = constelacion.estrellas.length;
-  const [encendidas, setEncendidas] = useState(reducido ? total : 0);
-  useEffect(() => {
-    if (reducido) return;
-    let n = 0;
-    const id = setInterval(() => {
-      n++;
-      setEncendidas(n);
-      Haptics.selectionAsync().catch(() => {});
-      if (n >= total) clearInterval(id);
-    }, 420);
-    return () => clearInterval(id);
-  }, [reducido, total]);
-  return <MiniCielo constelacion={constelacion} encendidas={constelacion.estrellas.map((_, k) => k < encendidas)} ancho={width - 52} alto={230} sinFondo />;
-}
-
-/** La luna de la comida: se llena con lo que comes, con un anillo por macro. */
-function LunaQueSeLlena({ reducido }: { reducido: boolean }) {
+/** La luna de la comida, en el centro: se llena mientras la estrella le da tres vueltas, y cada vuelta deja el anillo de un macro. */
+function LunaQueSeLlena({ luna, reloj, reducido }: { luna: EscenaDeLuna; reloj: SharedValue<number>; reducido: boolean }) {
   const [llena, setLlena] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setLlena(true), 250);
+    const id = setTimeout(() => setLlena(true), luna.llena[0]);
     return () => clearTimeout(id);
-  }, []);
+  }, [luna]);
   return (
-    <View style={s.lunaGrande}>
-      <Luna tam={118} fraccion={llena ? 1 : 0.06} ms={reducido ? 0 : 2000} />
-      <Anillos tam={230} ms={reducido ? 0 : 2000} />
-      <Chispas tam={230} reducido={reducido} />
+    <View style={[s.lunaGrande, s.lunaFija, { left: luna.centro[0] - LUNA.caja / 2, top: luna.centro[1] - LUNA.caja / 2 }]} pointerEvents="none">
+      <Luna tam={118} fraccion={llena ? 1 : 0.06} ms={reducido ? 0 : luna.llena[1] - luna.llena[0]} />
+      <Anillos tam={LUNA.caja} ms={0} vueltas={luna.vueltas} reloj={reloj} />
+    </View>
+  );
+}
+
+/** La marca de la cuenta, en el 36 % del alto: cada letra aparece cuando la estrella pasa por encima. */
+function Marca({ a, letras: cuando, reducido }: { a: Anclas; letras?: number[]; reducido: boolean }) {
+  return (
+    <View style={[s.marcaCaja, { top: a.marca[1] - 36 }]} pointerEvents="none">
+      <View style={s.marca} accessible accessibilityRole="header" accessibilityLabel="Moss">
+        {'Moss'.split('').map((letra, k) => (
+          <Animated.Text key={k} entering={reducido ? undefined : FadeInDown.delay(cuando?.[k] ?? 150 + k * 120).duration(1100)} style={s.marcaLetra}>{letra}</Animated.Text>
+        ))}
+      </View>
+      <Animated.Text entering={reducido ? undefined : FadeIn.delay(1900).duration(1000)} style={s.lema}>{t('entrada.cuenta.lema')}</Animated.Text>
     </View>
   );
 }
 
 // ------------------------------------------------------------------ la cuenta
+/** Solo con Apple (la v1 no ofrece correo: la lógica sigue en cuenta.ts, sin usar). */
 function Cuenta({ alEntrar }: { alEntrar: () => void }) {
   const [apple, setApple] = useState(false);
-  const [formulario, setFormulario] = useState(false);
-  const [correo, setCorreo] = useState('');
-  const [clave, setClave] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<ErrorDeCuenta | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
   useEffect(() => {
     hayApple().then(setApple).catch(() => {});
   }, []);
-  const probar = async (accion: () => Promise<Resultado>, avisoSiSale?: string) => {
+  const entrar = async () => {
+    if (ocupado) return;
     setOcupado(true);
     setError(null);
-    setAviso(null);
-    const resultado = await accion();
+    const resultado = await entrarConApple();
     setOcupado(false);
-    if (resultado.ok && avisoSiSale) setAviso(avisoSiSale);
-    else if (resultado.ok) {
+    if (resultado.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       alEntrar();
     } else setError(resultado.error);
   };
+  // La marca va arriba (Marca); abajo, Apple y lo que se acepta.
   return (
-    <View style={s.cuenta}>
-      <View style={s.marca} accessible accessibilityRole="header" accessibilityLabel="Moss">
-        {'Moss'.split('').map((letra, k) => (
-          <Animated.Text key={k} entering={FadeInDown.delay(150 + k * 120).duration(1100)} style={s.marcaLetra}>{letra}</Animated.Text>
-        ))}
-      </View>
-      <Animated.Text entering={FadeIn.delay(800).duration(1000)} style={s.lema}>{t('entrada.cuenta.lema')}</Animated.Text>
-      <Animated.View entering={FadeInDown.delay(1000).duration(800)} style={s.botones}>
+    <>
+      <Espacio />
+      <Animated.View entering={FadeInDown.delay(2100).duration(800)} style={s.botones}>
         {apple ? (
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
             cornerRadius={25}
             style={s.apple}
-            onPress={() => !ocupado && probar(entrarConApple)}
+            onPress={entrar}
           />
         ) : (
-          <Boton tipo="apple" texto={t('entrada.cuenta.apple')} alTocar={() => probar(entrarConApple)} desactivado={ocupado} icono={<Icono nombre="applelogo" tam={17} color="#000" />} />
+          <Boton tipo="apple" texto={t('entrada.cuenta.apple')} alTocar={entrar} desactivado={ocupado} icono={<Icono nombre="applelogo" tam={17} color="#000" />} />
         )}
-        {!formulario ? (
-          <Boton tipo="secundario" texto={t('entrada.cuenta.correo')} alTocar={() => setFormulario(true)} desactivado={ocupado} />
-        ) : (
-          <Animated.View entering={FadeIn.duration(300)} style={s.formulario}>
-            <TextInput
-              value={correo}
-              onChangeText={setCorreo}
-              placeholder={t('entrada.cuenta.correoCampo')}
-              placeholderTextColor="rgba(239, 230, 207, 0.4)"
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              textContentType="emailAddress"
-              style={s.campo}
-            />
-            <TextInput
-              value={clave}
-              onChangeText={setClave}
-              placeholder={t('entrada.cuenta.claveCampo')}
-              placeholderTextColor="rgba(239, 230, 207, 0.4)"
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-              style={s.campo}
-            />
-            <Boton texto={t('entrada.cuenta.entrar')} alTocar={() => probar(() => entrarConCorreo(correo, clave))} desactivado={ocupado} />
-            <Boton tipo="secundario" texto={t('entrada.cuenta.crear')} alTocar={() => probar(() => crearCuenta(correo, clave))} desactivado={ocupado} />
-            <Pressable onPress={() => probar(() => olvideLaClave(correo), t('entrada.cuenta.enviado'))} accessibilityRole="button" hitSlop={8}>
-              <Text style={[s.chico, s.enlace]}>{t('entrada.cuenta.olvide')}</Text>
-            </Pressable>
-          </Animated.View>
+        {error && (
+          <Animated.Text entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)} style={s.error} accessibilityLiveRegion="polite">
+            {t(`entrada.cuenta.errores.${error}`)}
+          </Animated.Text>
         )}
-        {error && <Text style={s.error} accessibilityLiveRegion="polite">{t(`entrada.cuenta.errores.${error}`)}</Text>}
-        {aviso && <Text style={s.aviso} accessibilityLiveRegion="polite">{aviso}</Text>}
+        <Legal />
       </Animated.View>
-      <Legal />
-    </View>
+    </>
   );
 }
 
@@ -399,42 +411,29 @@ function Legal() {
 
 // ------------------------------------------------------------------ tus datos
 /**
- * Antes de la cuenta: qué se guarda y dónde, y el consentimiento para los datos de salud (Ley 18.331
- * y la guía 5.1.1 de Apple). Mandar lo que no se encuentra es opcional y empieza apagado.
+ * Antes de la cuenta, una idea y una acción: qué guarda Moss y para qué, y el consentimiento para los
+ * datos de salud (Ley 18.331 y la guía 5.1.1 de Apple). Mandar lo que no se encuentra ya no se pregunta
+ * acá: empieza apagado y se prende en Perfil.
  */
 function TusDatos({ alSeguir }: { alSeguir: () => void }) {
-  const [mandar, setMandar] = useState(false);
   return (
     <>
       <Titulo>{t('entrada.datos.titulo')}</Titulo>
+      <Texto>{t('entrada.datos.texto')}</Texto>
       <View style={s.datos}>
         {lista('entrada.datos.lineas').map((linea, k) => (
-          <Animated.View key={linea} entering={FadeInDown.delay(150 + k * 120).duration(600)} style={s.datoFila}>
+          <Animated.View key={linea} entering={FadeInDown.delay(500 + k * 140).duration(600)} style={s.datoFila}>
             <View style={s.datoPunto} />
             <Text style={s.datoTexto}>{linea}</Text>
           </Animated.View>
         ))}
       </View>
-      <Texto>{t('entrada.datos.salud')}</Texto>
       <Pressable onPress={() => Linking.openURL(urlDe('privacidad')).catch(() => {})} accessibilityRole="link" hitSlop={8}>
         <Text style={[s.chico, s.enlace, s.izquierda]}>{t('entrada.datos.politica')}</Text>
       </Pressable>
-      <View style={s.llave}>
-        <View style={{ flex: 1 }}>
-          <Text style={s.llaveTitulo}>{t('entrada.datos.busquedas')}</Text>
-          <Text style={s.llaveTexto}>{t('entrada.datos.busquedasTexto')}</Text>
-        </View>
-        <Switch value={mandar} onValueChange={setMandar} trackColor={{ true: colores.salvia, false: 'rgba(239, 230, 207, 0.14)' }} accessibilityLabel={t('entrada.datos.busquedas')} />
-      </View>
       <Espacio />
       <Pie>
-        <Boton
-          texto={t('entrada.datos.acepto')}
-          alTocar={() => {
-            elAlmacen().ponerMandarBusquedas(mandar);
-            alSeguir();
-          }}
-        />
+        <Boton texto={t('entrada.datos.acepto')} alTocar={alSeguir} />
       </Pie>
     </>
   );
@@ -716,39 +715,31 @@ const s = StyleSheet.create({
   legal: { marginTop: 6, fontSize: 10.5, color: 'rgba(239, 230, 207, 0.4)' },
   enlace: { textDecorationLine: 'underline' },
   izquierda: { textAlign: 'left' },
-  datos: { marginTop: 16, gap: 10, maxWidth: 340 },
-  datoFila: { flexDirection: 'row', gap: 11 },
-  datoPunto: { width: 5, height: 5, marginTop: 9, borderRadius: 3, backgroundColor: colores.oro },
-  datoTexto: { flex: 1, fontFamily: letras.textoLiviano, fontSize: 15, lineHeight: 22, color: 'rgba(239, 230, 207, 0.86)', ...SOMBRA },
-  llave: {
-    marginTop: 18, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13, paddingHorizontal: 14, borderRadius: 16,
-    borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.55)',
-  },
-  llaveTitulo: { fontFamily: letras.texto, fontSize: 14, lineHeight: 19, color: colores.pergamino },
-  llaveTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.55)' },
+  datos: { marginTop: 18, gap: 9, maxWidth: 340 },
+  datoFila: { flexDirection: 'row', gap: 12 },
+  // Un rombo chico, como una estrella lejana.
+  datoPunto: { width: 5, height: 5, marginTop: 8.5, marginLeft: 2, backgroundColor: colores.oroClaro, transform: [{ rotate: '45deg' }], shadowColor: colores.oroClaro, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
+  datoTexto: { flex: 1, fontFamily: letras.textoLiviano, fontSize: 15, lineHeight: 21, color: 'rgba(239, 230, 207, 0.86)', ...SOMBRA },
   menor: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   pie: { gap: 10, width: '100%', maxWidth: 340, alignSelf: 'center', paddingTop: 18 },
-  avance: { height: 2, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(239, 230, 207, 0.12)' },
-  avanceLleno: { height: '100%', backgroundColor: colores.oro, shadowColor: colores.oro, shadowOpacity: 0.7, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
+  avance: { height: 2 },
   paso: { marginTop: 16, marginBottom: 10, fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.5)' },
   centrado: { textAlign: 'center', alignSelf: 'center' },
-  frase: { alignSelf: 'center', alignItems: 'center' },
+  fija: { flex: 1 },
+  frase: { position: 'absolute', left: 28, right: 28, top: 0, alignItems: 'center', justifyContent: 'center' },
   fraseTexto: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 7, maxWidth: 230 },
   palabra: { fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 29, lineHeight: 36, color: colores.cifra, textShadowColor: 'rgba(232, 196, 106, 0.35)', textShadowRadius: 18, textShadowOffset: { width: 0, height: 0 } },
   autor: { marginTop: 18, textAlign: 'center', fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2.3, textTransform: 'uppercase', color: 'rgba(185, 227, 107, 0.75)' },
-  escenario: { flex: 1, minHeight: 250, alignItems: 'center', justifyContent: 'center' },
   lunaGrande: { width: 230, height: 230, alignItems: 'center', justifyContent: 'center' },
+  lunaFija: { position: 'absolute' },
   lunaResultado: { width: 196, height: 196, alignSelf: 'center', marginTop: 14 },
-  cuenta: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
+  marcaCaja: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   marca: { flexDirection: 'row' },
   marcaLetra: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 66, lineHeight: 72, color: colores.cifra, textShadowColor: 'rgba(232, 196, 106, 0.45)', textShadowRadius: 22, textShadowOffset: { width: 0, height: 0 } },
   lema: { marginTop: 8, fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 18, color: 'rgba(239, 230, 207, 0.72)' },
-  botones: { width: '100%', maxWidth: 330, marginTop: 40, gap: 10 },
+  botones: { width: '100%', maxWidth: 330, alignSelf: 'center', gap: 10 },
   apple: { width: '100%', height: 50 },
-  formulario: { gap: 10 },
-  campo: { paddingVertical: 15, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)', backgroundColor: 'rgba(6, 10, 22, 0.6)', fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   error: { marginTop: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: '#f0a58a', textAlign: 'center' },
-  aviso: { marginTop: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: colores.salvia, textAlign: 'center' },
   iconosDeSalud: { marginTop: 38, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   iconoDeSalud: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.25)', alignItems: 'center', justifyContent: 'center' },
   numero: { marginTop: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14 },

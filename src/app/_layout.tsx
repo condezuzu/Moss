@@ -10,7 +10,10 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { registrarTareaDeFondo } from '@/fondo/tarea';
+import { RecibirAnclas } from '@/secciones/sueno/RecibirAnclas';
 import { colores } from '@/tema';
+import { useWidgets } from '@/widgets';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -34,12 +37,19 @@ export default function Raiz() {
     if (cargadas || error) SplashScreen.hideAsync().catch(() => {});
   }, [cargadas, error]);
 
+  // Los widgets aplican lo tocado en ellos y quedan al día; la tarea de fondo los refresca con Moss cerrada.
+  useWidgets();
+  useEffect(() => {
+    registrarTareaDeFondo();
+  }, []);
+
   if (!cargadas && !error) return null;
 
   return (
     <GestureHandlerRootView style={estilos.raiz}>
       <SafeAreaProvider>
         <StatusBar style="light" />
+        <RecibirAnclas />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colores.noche0 } }} />
       </SafeAreaProvider>
     </GestureHandlerRootView>

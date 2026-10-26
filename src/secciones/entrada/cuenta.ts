@@ -5,7 +5,19 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
 
+import { elAlmacen } from '@/almacen';
+import { nombreDeLasPartes } from '@/dominio/nombre';
 import { haySupabase, supabase } from '@/lib/supabase';
+
+/** El nombre que trae Apple, en el orden de cada idioma; sin nombre, vacío. */
+function nombreDeApple(partes: AppleAuthentication.AppleAuthenticationFullName | null): string {
+  if (!partes?.givenName && !partes?.familyName) return '';
+  try {
+    return AppleAuthentication.formatFullName({ ...partes, nickname: null, middleName: null, namePrefix: null, nameSuffix: null }) || nombreDeLasPartes(partes);
+  } catch {
+    return nombreDeLasPartes(partes);
+  }
+}
 
 export type ErrorDeCuenta = 'credenciales' | 'conexion' | 'confirmar' | 'existe' | 'clave' | 'correo' | 'otro';
 export type Resultado = { ok: true } | { ok: false; error: ErrorDeCuenta | null };
@@ -34,11 +46,16 @@ function errorDe(e: { code?: string; status?: number; message?: string } | null 
 export async function entrarConApple(): Promise<Resultado> {
   if (!haySupabase()) return { ok: true };
   try {
-    // Solo el correo: Moss no usa el nombre (guía 5.1.1 de Apple, pedir solo lo que se usa).
-    const credencial = await AppleAuthentication.signInAsync({ requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL] });
+    // El correo y el nombre, que se ve arriba de Perfil (guía 5.1.1 de Apple: pedir solo lo que se usa).
+    const credencial = await AppleAuthentication.signInAsync({
+      requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL],
+    });
     if (!credencial.identityToken) return { ok: false, error: 'otro' };
     const { error } = await supabase().auth.signInWithIdToken({ provider: 'apple', token: credencial.identityToken });
-    return error ? { ok: false, error: errorDe(error) } : { ok: true };
+    if (error) return { ok: false, error: errorDe(error) };
+    // Apple da el nombre solo la primera vez: se guarda, y si no viene, Perfil lo pide.
+    elAlmacen().ponerNombre(nombreDeApple(credencial.fullName), true);
+    return { ok: true };
   } catch (e) {
     // Cerrar la hoja de Apple no es un error: no se dice nada.
     if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return { ok: false, error: null };

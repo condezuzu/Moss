@@ -8,9 +8,10 @@ import { claveDeMarca, type Dia, type Marca } from '@/dominio/dias';
 import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
+import type { Nombre } from '@/dominio/nombre';
 import { DE_COMIDA, type Cambios, type Coleccion, type DeComida, type ListasDeComida } from './repositorio';
 
-/** Lo que se mezcla: los datos guardados, más la semilla (que en el teléfono va con los ajustes). */
+/** Lo que se mezcla: los datos guardados, más la semilla y tu nombre (que en el teléfono van con los ajustes). */
 export type Datos = ListasDeComida & {
   habitos: Habito[];
   periodos: Periodo[];
@@ -21,6 +22,7 @@ export type Datos = ListasDeComida & {
   metas: MetaGuardada[];
   pesos: Peso[];
   semilla: string | null;
+  nombre?: Nombre | null;
 };
 
 // Todas las horas son ISO en UTC (remoto.ts las normaliza al bajar): compararlas como texto es compararlas en el tiempo.
@@ -56,6 +58,8 @@ export function ganadores(local: Datos, remoto: Datos): Cambios {
     metas: porClave(local.metas, remoto.metas, (m) => m.desde, (r, l) => masNueva(r.momento, l.momento)),
     pesos: porClave(local.pesos, remoto.pesos, (p) => p.fecha, (r, l) => masNueva(r.momento, l.momento)),
     perfil: remoto.perfil && (!local.perfil || masNueva(remoto.perfil.actualizado, local.perfil.actualizado)) ? remoto.perfil : null,
+    // Tu nombre va aparte del perfil, con su hora: el que trae Apple tiene la más vieja y le gana cualquier otro.
+    nombre: remoto.nombre && (!local.nombre || masNueva(remoto.nombre.actualizado, local.nombre.actualizado)) ? remoto.nombre : null,
     // Un logro nunca se pierde. Si los dos teléfonos lo ganaron, queda la fecha que guardó la cuenta (la del que subió primero).
     logros: porClave(local.logros, remoto.logros, (l) => l.id, (r, l) => r.desde !== l.desde),
     // Los períodos y la semilla son de la cuenta: un teléfono usa los suyos solo hasta conocerlos.
@@ -86,6 +90,7 @@ export function aplicar(local: Datos, g: Cambios): Datos {
     metas: encima(local.metas, g.metas, (m) => m.desde).sort((a, b) => (a.desde < b.desde ? -1 : 1)),
     pesos: encima(local.pesos, g.pesos, (p) => p.fecha).sort((a, b) => (a.fecha < b.fecha ? -1 : 1)),
     perfil: g.perfil ?? local.perfil,
+    nombre: g.nombre ?? local.nombre ?? null,
     periodos: g.periodos ?? local.periodos,
     semilla: g.semilla ?? local.semilla,
   };

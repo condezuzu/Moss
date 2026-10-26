@@ -54,6 +54,37 @@ const hojaAbierta = (clase) => esperarA((c) => {
   const h = document.querySelector('.' + c);
   return !!h && !h.hidden && !h.classList.contains('saliendo') && h.getAnimations().every((a) => a.playState !== 'running');
 }, clase);
+// Lo que se elige en el panel de Ascent de la galería: cómo está Ascent en este iPhone (abre la hoja
+// de vincular) y qué contesta el servidor al vincular.
+const elegirEn = (id, valor) => pagina.evaluate(([i, v]) => document.querySelector(`#${i} [data-valor="${v}"]`).click(), [id, valor]);
+/** La hoja de vincular en cada estado, un error y entrar con la cuenta de Ascent; queda cerrada. */
+async function hojaDeVincular(sufijo = '') {
+  const estados = sufijo ? [['sesion', 'ascent-hoja']] : [['sesion', 'ascent-hoja'], ['sinSesion', 'ascent-hoja-sin-sesion'], ['sinAscent', 'ascent-hoja-sin-ascent'], ['sinCuenta', 'ascent-hoja-sin-cuenta']];
+  for (const [estado, nombre] of estados) {
+    await elegirEn('s-iphone', estado);
+    await hojaAbierta('as-hoja');
+    await pagina.waitForTimeout(300);
+    await foto(nombre + sufijo);
+  }
+  if (!sufijo) {
+    await elegirEn('s-iphone', 'sesion');
+    await elegirEn('s-servidor', 'red');
+    await pagina.click('.as-hoja-vincular');
+    await pagina.waitForTimeout(1300);
+    await foto('ascent-hoja-error');
+    await elegirEn('s-servidor', 'credenciales');
+    await pagina.click('.as-hoja-con-correo');
+    await pagina.waitForTimeout(600);
+    await pagina.fill('.as-hoja-form input[type=email]', 'agustin@ejemplo.com');
+    await pagina.fill('.as-hoja-form input[type=password]', 'una contraseña');
+    await pagina.click('.as-hoja-entrar');
+    await pagina.waitForTimeout(1300);
+    await foto('ascent-hoja-correo');
+    await elegirEn('s-servidor', 'bien');
+  }
+  await pagina.click('.as-hoja .hb-cerrar');
+  await pagina.waitForTimeout(600);
+}
 // Un arrastre de costado con el mouse, como un dedo: se saca la foto con el dedo todavía abajo.
 async function arrastrar(desde, hasta, y, nombre) {
   await pagina.mouse.move(desde, y);
@@ -144,12 +175,16 @@ const pasos = {
     }
   },
   async entrada() {
+    // La estrella guía: nace en el musgo, presenta la frase y espera abajo; si nadie la toca, abajo
+    // dice «Toca la estrella». Tocarla es seguir.
     await pagina.evaluate(() => window.__accion('entrada'));
-    await pagina.waitForTimeout(900);
-    await foto('entrada-frase-0900');
-    await pagina.waitForTimeout(2200);
-    await foto('entrada-frase-3100');
-    for (const [paso, esperas] of [['habitos', [900, 2600]], ['comida', [1100, 2800]], ['cuenta', [2400]], ['salud', [1400]], ['edad', [900]], ['sexo', [900]], ['peso', [900]], ['actividad', [900]], ['objetivo', [900]], ['resultado', [2600]]]) {
+    await pagina.waitForTimeout(1200);
+    await foto('entrada-frase-1200');
+    await pagina.waitForTimeout(2600);
+    await foto('entrada-frase-3800');
+    await pagina.waitForTimeout(3200);
+    await foto('entrada-frase-pista');
+    for (const [paso, esperas] of [['habitos', [1500, 4500]], ['comida', [1600, 4200]], ['datos', [1500]], ['cuenta', [2800]], ['salud', [1900]], ['edad', [900]], ['sexo', [900]], ['peso', [900]], ['actividad', [900]], ['objetivo', [900]], ['resultado', [2600]]]) {
       await pagina.evaluate((p) => window.__entrada(p), paso);
       let t = 0;
       for (const ms of esperas) {
@@ -348,6 +383,37 @@ const pasos = {
       await pagina.waitForTimeout(500);
       await foto(nombre);
     }
+    await sueno('noche', 0);
+    // Sin reloj (spec/sueno-sin-esfuerzo.md): «Afinar», el despertador, la guía de los Atajos con lo que
+    // llegó, y la pregunta de la mañana con la alarma parada (solo la hora de dormirte).
+    await pagina.evaluate(() => window.__aparato('iphone'));
+    await sueno('afinar', ['prender', false]);
+    await sueno('bajar', '.sn-afinar');
+    await pagina.waitForTimeout(500);
+    await foto('sueno-afinar');
+    await sueno('afinar', 'despertador');
+    await pagina.waitForTimeout(700);
+    await sueno('afinar', ['prender', true]);
+    await pagina.waitForTimeout(300);
+    await foto('sueno-despertador');
+    await sueno('afinar', 'cerrar');
+    await pagina.waitForTimeout(500);
+    await foto('sueno-afinar-prendido');
+    await sueno('afinar', ['atajos', 'alarma']);
+    await pagina.waitForTimeout(700);
+    await foto('sueno-atajos');
+    await sueno('afinar', 'bajarHoja');
+    await pagina.waitForTimeout(300);
+    await foto('sueno-atajos-llego');
+    await sueno('afinar', 'cerrar');
+    await sueno('afinar', ['prender', false]);
+    await sueno('olvidar');
+    await sueno('hora', 'soloDormirse');
+    await sueno('subir');
+    await pagina.waitForTimeout(800);
+    await foto('sueno-solo-dormirse');
+    await sueno('hora', null);
+    await pagina.evaluate(() => window.__aparato('reloj'));
     await sueno('noche', 0);
   },
   // Solo con el iPhone (spec/sueno.md, «Sin reloj»): la pregunta de la hora, cambiarla, sin proponer,
@@ -703,10 +769,7 @@ const pasos = {
     const entrada = (paso) => pagina.evaluate((p) => window.__entrada(p), paso);
     const seguridad = (accion, arg) => pagina.evaluate(([a, x]) => window.__seguridad(a, x), [accion, arg]);
     await entrada('datos');
-    await pagina.waitForTimeout(1600);
-    // Con un click de verdad, Playwright corre la pantalla para ver la llave: se toca desde la página.
-    await pagina.evaluate(() => document.querySelector('.ent-llave').click());
-    await pagina.waitForTimeout(400);
+    await pagina.waitForTimeout(2000);
     await foto('seguridad-datos');
     await seguridad('caso', 'embarazo');
     await entrada('cuidado');
@@ -845,14 +908,22 @@ const pasos = {
       await foto(nombre);
     }
     await ascent('subir');
+    // La hoja de vincular (D27): con la sesión de Ascent en el llavero, sin sesión, sin Ascent y sin
+    // la cuenta de Moss; un error del servidor y entrar con la cuenta de Ascent.
+    await hojaDeVincular();
     await ascent('vincular', true);
     await pagina.waitForTimeout(1700);
     await foto('ascent-vinculada');
-    for (const [selector, nombre] of [['.as-recuperacion', 'ascent-vinculada-2'], ['.as-estanc', 'ascent-vinculada-3'], ['.as-funciones', 'ascent-vinculada-4']]) {
+    for (const [selector, nombre] of [['.as-gimnasio', 'ascent-gimnasio'], ['.as-recuperacion', 'ascent-vinculada-2'], ['.as-estanc', 'ascent-vinculada-3'], ['.as-funciones', 'ascent-vinculada-4']]) {
       await ascent('bajar', selector);
       await pagina.waitForTimeout(300);
       await foto(nombre);
     }
+    // El gimnasio que se enciende solo: sumarlo con un toque.
+    await ascent('bajar', '.as-gimnasio');
+    await pagina.click('.as-gimnasio-sumar');
+    await pagina.waitForTimeout(700);
+    await foto('ascent-gimnasio-sumado');
     // Con pocas semanas, «Por qué no subes» todavía junta información.
     await ascent('pocas', true);
     await ascent('bajar', '.as-estanc');
@@ -987,6 +1058,42 @@ const pasos = {
   },
   async perfil() {
     await pestana(5);
+    // Arriba, la persona; tocarla abre Editar perfil: la foto, el nombre y tus datos.
+    const enPerfil = (accion, arg) => pagina.evaluate(([a, x]) => window.__perfil(a, x), [accion, arg]);
+    await foto('perfil');
+    await pagina.click('.pf-cab');
+    await pagina.mouse.move(1, 1);
+    await hojaAbierta('pf-hoja-editar');
+    await foto('perfil-editar');
+    await enPerfil('foto');
+    await pagina.waitForTimeout(500);
+    await foto('perfil-editar-foto');
+    await pagina.evaluate(() => { const c = document.querySelector('.pf-hoja-editar .hh-cuerpo'); c.scrollTop = c.scrollHeight; });
+    await pagina.waitForTimeout(300);
+    await foto('perfil-editar-datos');
+    await enPerfil('guardar');
+    await pagina.waitForTimeout(700);
+    await foto('perfil-con-foto');
+    // Sin el nombre (Apple no lo trajo): arriba se invita a ponerlo y Editar perfil lo pide.
+    await enPerfil('sinNombre');
+    await pagina.waitForTimeout(500);
+    await foto('perfil-sin-nombre');
+    await enPerfil('abrir');
+    await hojaAbierta('pf-hoja-editar');
+    await foto('perfil-editar-sin-nombre');
+    await enPerfil('escribir', 'Ana');
+    await pagina.waitForTimeout(400);
+    await foto('perfil-editar-escribiendo');
+    await enPerfil('cerrar');
+    await pagina.waitForTimeout(500);
+    await pagina.evaluate(() => window.__idioma('en'));
+    await enPerfil('abrir');
+    await hojaAbierta('pf-hoja-editar');
+    await foto('perfil-editar-ingles');
+    await enPerfil('cerrar');
+    await pagina.waitForTimeout(500);
+    await pagina.evaluate(() => window.__idioma('es'));
+    await enPerfil('sinNombre', true);
     await pagina.evaluate(() => document.querySelector('.pf-scroll').scrollTo(0, 99999));
     await pagina.waitForTimeout(400);
     await foto('perfil-abajo');
@@ -998,12 +1105,67 @@ const pasos = {
     await ascent('abrir');
     await pagina.waitForTimeout(500);
     await foto('ascent-ingles');
+    await hojaDeVincular('-ingles');
     await ascent('vincular', true);
     await pagina.waitForTimeout(1700);
     await foto('ascent-vinculada-ingles');
     await ascent('vincular', false);
     await ascent('cerrar');
     await pagina.evaluate(() => window.__idioma('es'));
+    await pestana(0);
+  },
+  // Los widgets (spec/widgets.md): la pantalla de inicio con el chico y el mediano, un «hecho»
+  // tocado ahí, tintados y transparentes, StandBy, la noche en la pantalla bloqueada (con reloj y
+  // sin reloj, antes y después del «Sí»), en inglés, y abrir Moss con lo tocado encendiéndose.
+  async widgets() {
+    const widgets = (accion, arg) => pagina.evaluate(([a, x]) => window.__widgets(a, x), [accion, arg]);
+    await alCielo();
+    await widgets('inicio');
+    await pagina.waitForTimeout(700);
+    await foto('widgets-inicio');
+    await widgets('tocar', 'Escribir');
+    await pagina.waitForTimeout(700);
+    await foto('widgets-tocar');
+    for (const modo of ['tintado', 'transparente']) {
+      await widgets('modo', modo);
+      await pagina.waitForTimeout(500);
+      await foto('widgets-' + modo);
+    }
+    await widgets('modo', 'color');
+    await widgets('standby');
+    await pagina.waitForTimeout(700);
+    await foto('widgets-standby');
+    await widgets('deNoche', true);
+    await pagina.waitForTimeout(300);
+    await foto('widgets-standby-noche');
+    await widgets('deNoche', false);
+    await widgets('bloqueo');
+    await pagina.waitForTimeout(700);
+    await foto('widgets-bloqueo-reloj');
+    await pagina.evaluate(() => window.__aparato('iphone'));
+    await widgets('bloqueo');
+    await pagina.waitForTimeout(500);
+    await foto('widgets-bloqueo');
+    await widgets('confirmar');
+    await pagina.waitForTimeout(1200);
+    await foto('widgets-confirmada');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await pagina.waitForTimeout(400);
+    await foto('widgets-bloqueo-ingles');
+    await widgets('inicio');
+    await pagina.waitForTimeout(700);
+    await foto('widgets-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await widgets('inicio');
+    await pagina.waitForTimeout(500);
+    await widgets('abrirMoss');
+    await pagina.waitForTimeout(1600);
+    await foto('widgets-abrir-moss');
+    await widgets('olvidar');
+    // Lo de después no se fotografía: alcanza con volver al cielo de siempre.
+    await pagina.evaluate(() => window.__accion('reiniciar'));
+    await pagina.waitForTimeout(800);
     await pestana(0);
   },
 };

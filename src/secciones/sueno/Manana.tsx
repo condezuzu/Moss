@@ -10,8 +10,9 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import type { ClaveDia } from '@/dominio/fechas';
-import { habitualDe, instanteDe, quePreguntar } from '@/dominio/sinReloj';
+import { deLasSenales, despertarAnclado, habitualDe, instanteDe, quePreguntar } from '@/dominio/sinReloj';
 import type { Cara, Noche, NochePropia, OrigenDeNoche } from '@/dominio/sueno';
+import { useSenales } from '@/salud/anclas';
 import { DESDE_LAS } from '@/salud/nocheSinReloj';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -43,9 +44,12 @@ export function ponerHora(clave: ClaveDia, dormirse: number, despertar: number, 
 
 /**
  * Las dos horas, de a 5 minutos, con «Guardar» (en minutos desde las 18). `cambiadas` dice si se movió
- * alguna: guardar sin moverlas es confirmar lo que había, con sus horas exactas.
+ * alguna: guardar sin moverlas es confirmar lo que había, con sus horas exactas. Con `soloDormirse`
+ * (la hora de despertar salió de un ancla), solo la de dormirte.
  */
-export function EditorDeHora({ desde, hasta, alGuardar }: { desde: number; hasta: number; alGuardar: (dormirse: number, despertar: number, cambiadas: boolean) => void }) {
+export function EditorDeHora({ desde, hasta, alGuardar, soloDormirse }: {
+  desde: number; hasta: number; alGuardar: (dormirse: number, despertar: number, cambiadas: boolean) => void; soloDormirse?: boolean;
+}) {
   const [a, setA] = useState(Math.round(desde / 5) * 5);
   const [b, setB] = useState(Math.round(hasta / 5) * 5);
   const [cambiadas, setCambiadas] = useState(false);
@@ -64,8 +68,8 @@ export function EditorDeHora({ desde, hasta, alGuardar }: { desde: number; hasta
   return (
     <View style={st.editor}>
       {fila(t('sueno.manana.teDormiste'), a, (d) => { setCambiadas(true); setA((x) => Math.min(b - 60, x + d)); })}
-      {fila(t('sueno.manana.teDespertaste'), b, (d) => { setCambiadas(true); setB((x) => Math.max(a + 60, x + d)); })}
-      <Pressable onPress={() => (cambiadas ? alGuardar(a, b, true) : alGuardar(desde, hasta, false))} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
+      {!soloDormirse && fila(t('sueno.manana.teDespertaste'), b, (d) => { setCambiadas(true); setB((x) => Math.max(a + 60, x + d)); })}
+      <Pressable onPress={() => (cambiadas ? alGuardar(a, soloDormirse ? hasta : b, true) : alGuardar(desde, hasta, false))} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
         <Text style={st.principalTexto}>{t('sueno.manana.guardar')}</Text>
       </Pressable>
     </View>
@@ -87,6 +91,10 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
   const oculta = ocultas.has(hoy) || new Date().getHours() < DESDE_LAS;
   const cara = propia?.cara ?? null;
   const modo = !oculta && noche?.moss?.origen === 'estimada' ? quePreguntar(hoy, noche.moss.confianza, desde) : null;
+  // Con la alarma parada (o «Me desperté»), la hora de despertar ya se sabe: se pregunta solo la de dormirte.
+  const senales = useSenales(15);
+  const soloDormirse = !!noche && !!senales?.length
+    && despertarAnclado(deLasSenales(senales, (ms) => -new Date(ms).getTimezoneOffset()).anclas, hoy, -new Date().getTimezoneOffset(), noche.despertar);
   const conCaras = (!cara && !oculta) || cambiando;
   const nombres = lista('sueno.manana.caras');
 
@@ -108,8 +116,14 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
             <Aparece key={`hora-${modo}-${editando}`}>
               {modo === 'proponer' && !editando ? (
                 <>
-                  <Text style={st.pregunta}>{t('sueno.manana.hora', { desde: reloj(noche.dormirse), hasta: reloj(noche.despertar) })}</Text>
-                  <Text style={st.nota}>{t('sueno.manana.horaNota', { seguridad: t(`sueno.seguridad.${noche.moss!.confianza}`) })}</Text>
+                  <Text style={st.pregunta}>
+                    {soloDormirse ? t('sueno.manana.horaDormirse', { hora: reloj(noche.dormirse) }) : t('sueno.manana.hora', { desde: reloj(noche.dormirse), hasta: reloj(noche.despertar) })}
+                  </Text>
+                  <Text style={st.nota}>
+                    {soloDormirse
+                      ? t('sueno.manana.horaDormirseNota', { hora: reloj(noche.despertar), seguridad: t(`sueno.seguridad.${noche.moss!.confianza}`) })
+                      : t('sueno.manana.horaNota', { seguridad: t(`sueno.seguridad.${noche.moss!.confianza}`) })}
+                  </Text>
                   <View style={st.acciones}>
                     <Pressable
                       onPress={() => { Haptics.selectionAsync().catch(() => {}); ponerHora(hoy, noche.dormirse, noche.despertar, 'confirmada', propia); }}
@@ -125,14 +139,15 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
                 </>
               ) : (
                 <>
-                  <Text style={st.pregunta}>{t('sueno.manana.sinProponer')}</Text>
+                  <Text style={st.pregunta}>{t(soloDormirse ? 'sueno.manana.sinProponerDormirse' : 'sueno.manana.sinProponer')}</Text>
                   {(() => {
                     // Sin proponer, arranca en lo de siempre y no en lo estimado: así se mide cuánto se acepta lo propuesto.
                     const h = modo === 'sinProponer' ? habitualDe(noches, hoy) : null;
                     return (
                       <EditorDeHora
                         desde={h ? h.dormirse : noche.dormirse}
-                        hasta={h ? h.despertar : noche.despertar}
+                        hasta={h && !soloDormirse ? h.despertar : noche.despertar}
+                        soloDormirse={soloDormirse}
                         alGuardar={(x, y, cambiadas) => {
                           // Sin proponer, lo escrito siempre es tuyo; si no, sin mover nada es un «Sí».
                           ponerHora(hoy, x, y, modo === 'sinProponer' ? 'manual' : cambiadas ? 'corregida' : 'confirmada', propia);

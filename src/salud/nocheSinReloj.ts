@@ -1,14 +1,16 @@
 // Sin reloj, cada mañana (spec/sueno.md, «Sin reloj»): arma la noche de anoche con lo que guardó el
-// teléfono (los pasos de Salud, el movimiento y cuándo usaste Moss) y la guarda como estimada, con lo
-// aprendido de tus correcciones (src/dominio/sinReloj.ts). No pisa lo que confirmaste ni la noche
-// de un reloj o un anillo, y nunca escribe en Salud.
+// teléfono (los pasos de Salud, el movimiento, cuándo usaste Moss y lo que avisaron los Atajos y el
+// despertador) y la guarda como estimada, con lo aprendido de tus correcciones
+// (src/dominio/sinReloj.ts). No pisa lo que confirmaste ni la noche de un reloj o un anillo, y nunca
+// escribe en Salud.
 
 import type { Almacen } from '@/almacen/almacen';
 import { sumarDias } from '@/dominio/fechas';
 import {
-  actividadDeLosPasos, actividadDelMovimiento, aprenderAjuste, conNochesDeMoss, estimarNoche, habitualDe, instanteDe, type Actividad,
+  actividadDeLosPasos, actividadDelMovimiento, aprenderAjuste, conNochesDeMoss, deLasSenales, estimarNoche, habitualDe, instanteDe, type Actividad,
 } from '@/dominio/sinReloj';
 import { leerMovimiento } from '../../modules/movimiento';
+import { leerSenales } from './anclas';
 
 /** Desde las 4 hay noche para estimar; con un reloj o un anillo, se espera su noche hasta las 14. */
 export const DESDE_LAS = 4;
@@ -26,15 +28,19 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
 
   const zona = -ahora.getTimezoneOffset();
   // Desde las 12 del día anterior: alcanza para ver la tarde, la noche y la mañana.
-  const movimiento = await leerMovimiento(instanteDe(e.hoy, zona, -360), ahora.getTime());
+  const inicio = instanteDe(e.hoy, zona, -360);
+  const movimiento = await leerMovimiento(inicio, ahora.getTime());
+  // Lo de los Atajos, con dos semanas antes: así se ve si el enfoque Sueño sigue un horario.
+  const atajos = deLasSenales(await leerSenales(inicio - 14 * 86_400_000).catch(() => []), (ms) => -new Date(ms).getTimezoneOffset());
   const actividad: Actividad[] = [
     ...actividadDeLosPasos(e.salud?.pasosRecientes ?? []),
     ...actividadDelMovimiento(movimiento, ahora.getTime()),
     ...e.uso.map(([desde, hasta]): Actividad => ({ desde, hasta, tipo: 'moss' })),
+    ...atajos.actividad,
   ];
   const propias = [...e.noches.values()];
   const noches = conNochesDeMoss(deSalud, propias, (ms) => -new Date(ms).getTimezoneOffset());
-  const est = estimarNoche({ clave: e.hoy, zona, actividad, habitual: habitualDe(noches, e.hoy), ajuste: aprenderAjuste(propias, e.hoy) });
+  const est = estimarNoche({ clave: e.hoy, zona, actividad, anclas: atajos.anclas, habitual: habitualDe(noches, e.hoy), ajuste: aprenderAjuste(propias, e.hoy) });
   if (!est) return;
   const iso = (minutos: number) => new Date(instanteDe(e.hoy, zona, Math.round(minutos))).toISOString();
   const hora = {

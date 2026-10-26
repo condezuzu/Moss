@@ -12,7 +12,8 @@
         "simulator": false,
         "resourceClass": "m-medium"
       },
-      "environment": "preview"
+      "environment": "preview",
+      "channel": "development"
     },
     "telefono": {
       "distribution": "internal",
@@ -20,7 +21,8 @@
         "simulator": false,
         "resourceClass": "m-medium"
       },
-      "environment": "preview"
+      "environment": "preview",
+      "channel": "preview"
     },
     "simulador": {
       "distribution": "internal",
@@ -28,7 +30,8 @@
         "simulator": true,
         "resourceClass": "m-medium"
       },
-      "environment": "preview"
+      "environment": "preview",
+      "channel": "preview"
     },
     "store": {
       "distribution": "store",
@@ -37,7 +40,8 @@
         "simulator": false,
         "resourceClass": "m-medium"
       },
-      "environment": "preview"
+      "environment": "production",
+      "channel": "production"
     }
   },
   "submit": {

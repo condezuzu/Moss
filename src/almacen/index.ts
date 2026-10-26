@@ -1,12 +1,14 @@
 // El almacén de la app: uno solo, con SQLite (localStorage en la web). Las pantallas lo leen con
 // sus propios ganchos; acá está el que lo arranca, cambia de día y lo sincroniza con la cuenta.
 
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
 import { msHastaMedianoche } from '@/dominio/fechas';
+import { borrarMiSesion, dejarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
 import { programarAvisos } from '@/recordatorios/programar';
 import { leerSalud } from '@/salud/leer';
@@ -32,6 +34,38 @@ let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; ret
 /** Lo más que se espera a la vuelta que esté en camino antes de borrar: después, lo que vuelva ya no se toca igual. */
 const ESPERA_AL_SOLTAR = 15_000;
 
+// Quién está en la cuenta, para lo de Ascent (src/almacen/ascent.ts): sin sesión no hay vínculo.
+let usuarioDeLaCuenta: string | null = null;
+const oyentesDeLaSesion = new Set<(usuario: string | null) => void>();
+
+/** Avisa cada vez que cambia la sesión, y ya mismo con la de ahora. */
+export function oirLaSesion(oyente: (usuario: string | null) => void): () => void {
+  oyentesDeLaSesion.add(oyente);
+  oyente(usuarioDeLaCuenta);
+  return () => oyentesDeLaSesion.delete(oyente);
+}
+
+/**
+ * Ascent ve la sesión de Moss en el llavero que comparten las apps del equipo (spec/ascent.md, D27):
+ * se deja al entrar y al renovarla, y se saca sin sesión. Con la sesión que trae el aviso: adentro
+ * del aviso no se usa el cliente de Supabase.
+ */
+function compartirLaSesion(evento: AuthChangeEvent, sesion: Session | null) {
+  if (!sesion || evento === 'SIGNED_OUT') {
+    borrarMiSesion().catch(() => {});
+    return;
+  }
+  if (evento !== 'SIGNED_IN' && evento !== 'TOKEN_REFRESHED' && evento !== 'INITIAL_SESSION') return;
+  // El nombre del perfil de Moss, si lo tiene; si no, vacío.
+  const perfil = elAlmacen().estado().perfil as { nombre?: unknown } | null;
+  dejarMiSesion({
+    usuario: sesion.user.id,
+    nombre: typeof perfil?.nombre === 'string' ? perfil.nombre : '',
+    token: sesion.access_token,
+    vence: sesion.expires_at ?? Math.floor(Date.now() / 1000) + sesion.expires_in,
+  });
+}
+
 /**
  * Con sesión, sincroniza con la cuenta; sin sesión, el almacén anda solo. Hasta que exista la
  * pantalla de la cuenta (la entrada), nunca hay sesión.
@@ -53,11 +87,17 @@ function sincronizarConLaCuenta(a: Almacen) {
     if (usuario) actualizarCatalogo(cliente).catch(() => {});
     avisarSesion(Boolean(usuario));
   };
-  const { data } = cliente.auth.onAuthStateChange((_evento, sesion) => {
+  const { data } = cliente.auth.onAuthStateChange((evento, sesion) => {
     // Se anota ya: cerrar sesión sabe al terminar si la sesión sigue.
     usuarioDeLaSesion = sesion?.user.id ?? null;
+    compartirLaSesion(evento, sesion);
     // Supabase pide no usar su cliente dentro de este aviso: se sigue apenas termine.
-    setTimeout(seguir, 0);
+    setTimeout(() => {
+      seguir();
+      if (usuarioDeLaCuenta === usuarioDeLaSesion) return;
+      usuarioDeLaCuenta = usuarioDeLaSesion;
+      oyentesDeLaSesion.forEach((o) => o(usuarioDeLaCuenta));
+    }, 0);
   });
   deLaCuenta = {
     async subirLoQueFalta() {
@@ -129,7 +169,12 @@ export function useAlmacenListo(): boolean {
   const listo = useSyncExternalStore(a.suscribir, () => a.estado().listo);
   useEffect(() => {
     // Abrir Moss dice que estás despierto: sin reloj, es lo más exacto para la noche (spec/sueno.md).
-    a.iniciar().then(() => a.anotarUso('abrir')).then(actualizarSalud).catch((error) => console.warn('Moss no pudo abrir sus datos', error));
+    // Si iOS la abre en segundo plano (la tarea de fondo, un Atajo, el pre-arranque), nadie la usó:
+    // el «abrir» llega después, con el cambio a `active`.
+    a.iniciar()
+      .then(() => (AppState.currentState === 'background' ? undefined : a.anotarUso('abrir')))
+      .then(actualizarSalud)
+      .catch((error) => console.warn('Moss no pudo abrir sus datos', error));
     const cuenta = sincronizarConLaCuenta(a);
     let reloj: ReturnType<typeof setTimeout>;
     const esperarMedianoche = () => {

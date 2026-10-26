@@ -11,6 +11,7 @@ import type { ClaveDia } from '@/dominio/fechas';
 import type { Habito } from '@/dominio/habitos';
 import type { Logro } from '@/dominio/logros';
 import type { MetaGuardada, Perfil } from '@/dominio/metas';
+import { leerNombre, type Nombre } from '@/dominio/nombre';
 import type { NochePropia } from '@/dominio/sueno';
 import { claveDeFavorito, type AlimentoPropio, type Favorito, type Receta, type Registro, type TomaDeAgua } from '@/dominio/registros';
 
@@ -60,14 +61,32 @@ export type Cambios = ListasDeComida & {
   metas: MetaGuardada[];
   pesos: Peso[];
   semilla: string | null;
+  /** Tu nombre, con su hora; sin cambios, nada. */
+  nombre?: Nombre | null;
 };
+
+/**
+ * De los ajustes, los que suben a la cuenta: la semilla y tu nombre (en JSON, con su hora). Los demás
+ * quedan en el teléfono.
+ */
+export const AJUSTES_QUE_SUBEN = ['semilla', 'nombre'] as const;
+export const NOMBRE = 'nombre';
+
+/** El nombre guardado en los ajustes, si se entiende. */
+export function nombreDeAjuste(texto: string | null | undefined): Nombre | null {
+  try {
+    return texto ? leerNombre(JSON.parse(texto)) : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Lo que falta subir, hasta el cambio `hasta`. */
 export type Pendientes = Cambios & { hasta: number };
 
 export const sinCambios = (c: Cambios) =>
   !c.habitos.length && !c.periodos && !c.marcas.length && !c.dias.length && !c.logros.length && !c.perfil && !c.metas.length && !c.pesos.length && !c.semilla
-  && COLECCIONES.every((k) => !c[k].length);
+  && !c.nombre && COLECCIONES.every((k) => !c[k].length);
 
 export interface Repositorio {
   /**
@@ -87,7 +106,7 @@ export interface Repositorio {
   guardarPeso(peso: Peso): Promise<void>;
   /** Lo que se come: registros, recetas, propios, favoritos o agua. Cada cosa reemplaza la de su misma clave. */
   guardarComida<C extends Coleccion>(coleccion: C, lista: DeComida[C][]): Promise<void>;
-  /** De los ajustes, solo la semilla sube a la cuenta. */
+  /** De los ajustes, solo la semilla y tu nombre suben a la cuenta (AJUSTES_QUE_SUBEN). */
   guardarAjuste(clave: string, valor: string): Promise<void>;
   leerAjuste(clave: string): Promise<string | null>;
   /** Lo que bajó de la cuenta y ganó: reemplaza lo del teléfono y no queda pendiente. */
@@ -191,7 +210,7 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
     },
     async guardarAjuste(clave, valor) {
       m.ajustes = { ...m.ajustes, [clave]: valor };
-      if (clave === 'semilla') tocar('semilla');
+      if ((AJUSTES_QUE_SUBEN as readonly string[]).includes(clave)) tocar(clave);
       await listo();
     },
     async leerAjuste(clave) {
@@ -225,6 +244,10 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
         m.ajustes = { ...m.ajustes, semilla: c.semilla };
         llego('semilla');
       }
+      if (c.nombre) {
+        m.ajustes = { ...m.ajustes, [NOMBRE]: JSON.stringify(c.nombre) };
+        llego(NOMBRE);
+      }
       for (const coleccion of COLECCIONES) {
         const clave = DE_COMIDA[coleccion].clave as (x: unknown) => string;
         (m[coleccion] as unknown[]) = encima(m[coleccion] as unknown[], c[coleccion], clave);
@@ -244,6 +267,7 @@ export function repositorioEnMemoria(inicial: Partial<Memoria> = {}, alCambiar?:
         metas: m.metas.filter((x) => pendiente(`metas|${x.desde}`)),
         pesos: m.pesos.filter((x) => pendiente(`pesos|${x.fecha}`)),
         semilla: pendiente('semilla') ? (m.ajustes.semilla ?? null) : null,
+        nombre: pendiente(NOMBRE) ? nombreDeAjuste(m.ajustes[NOMBRE]) : null,
         ...pendientesDeComida(m, pendiente),
       });
     },

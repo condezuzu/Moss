@@ -27,6 +27,7 @@ import { COMIDAS, type Comida } from '@/dominio/comidas';
 import { sumarDias } from '@/dominio/fechas';
 import { edadDe, type Macros } from '@/dominio/metas';
 import type { ParaQuien } from '@/dominio/micronutrientes';
+import { SITIO } from '@/lib/sitio';
 import {
   claveDeAlimento, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
   valoresDeCantidad, valoresDeReceta, vigentes, type AlimentoPropio, type Cantidad, type Item, type Receta, type Registro, type Valores,
@@ -341,7 +342,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     }
     try {
       const version = Constants.expoConfig?.version ?? '1.0.0';
-      const producto = await buscarEnOff(codigo, { idioma: idioma(), version, contacto: 'github.com/condezuzu/moss' });
+      const producto = await buscarEnOff(codigo, { idioma: idioma(), version, contacto: SITIO });
       if (!sigue()) return;
       if (producto?.verificado) {
         const p = producto.por100g;

@@ -238,8 +238,9 @@ Así que, sin reloj, la estimación la arma Moss.
 
 ### Lo que hace Moss (sin permisos especiales)
 
-**Nada corre de noche.** Al abrir Moss a la mañana, arma la noche con lo que el
-teléfono guardó:
+**De noche solo se guarda la hora de un Atajo o del despertador de Moss**
+([`sueno-sin-esfuerzo.md`](sueno-sin-esfuerzo.md)). Al abrir Moss a la mañana,
+arma la noche con lo que el teléfono guardó:
 
 1. **Los pasos**, en bloques de 5 minutos, de las últimas 36 horas.
 2. **El movimiento**: caminar o ir en auto es estar despierto; un movimiento corto
@@ -273,7 +274,8 @@ teléfono guardó:
   teléfono más de una hora antes de lo de siempre (hasta −0,3), si lo agarraste
   más de una hora después de tu hora de despertarte (hasta −0,3), por cada uso de
   noche (−0,08, hasta tres) y si la noche dura dos horas más o menos que la de
-  siempre (−0,1). La alarma de un Atajo suma 0,05. Sin hueco, como mucho 0,4. Las
+  siempre (−0,1). Un ancla de despertar (la alarma, el despertador de Moss, «Me
+  desperté») suma 0,1, y una de dormir al empezar el hueco, 0,05. Sin hueco, como mucho 0,4. Las
   cuentas están en `src/dominio/sinReloj.ts`, con sus tests.
 - **Las siestas** no se estiman.
 

@@ -25,7 +25,9 @@ import { useSueno } from '../ganchos';
 import { Hipnograma } from '../graficos/Graficos';
 import type { Sueno } from '../persona';
 import { Aparece, AvisoDeEjemplo, Cabecera, Carta, Chip, Cifra, ComoSeCalcula, e as tarjeta, Eje, Nota, Parrafo, Recuadro, type TipoDeChip } from '../tarjetas';
+import { Afinar } from './Afinar';
 import { EditorDeHora, LaManana, ponerHora } from './Manana';
+import { RecuperacionEnSueno } from '../ascent/EnSueno';
 
 const DIAS = 14;
 const AZUL = { claro: '#8fd3e8', medio: '#6f86d6', hondo: '#4b4fa8' };
@@ -65,6 +67,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
             </Carta>
           </Aparece>
         )}
+        {clave === e.hoy && <RecuperacionEnSueno />}
         {/* Elegir otra noche no cambia todo de golpe: lo de esa noche entra con un fundido. */}
         <Aparece key={clave}>
           {noche?.moss ? (
@@ -81,6 +84,12 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
           <ElHorario noches={ultimasNoches(s.noches, clave, DIAS)} clave={clave} />
           {noche && !noche.moss && <LoDelReloj n={noche} s={s} anteriores={anterioresA(noche.clave)} />}
         </Aparece>
+        {/* Sin reloj ni anillo en las dos semanas: lo que le da a Moss horas exactas (spec/sueno-sin-esfuerzo.md). */}
+        {!s.noches.some((n) => !n.moss && n.clave >= sumarDias(e.hoy, -DIAS) && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra')) && (
+          <Aparece>
+            <Afinar hoy={e.hoy} />
+          </Aparece>
+        )}
         <LasFuentes n={noche} s={s} clave={clave} />
         <Text style={st.pie}>{t('sueno.noMedico')}</Text>
       </ScrollView>

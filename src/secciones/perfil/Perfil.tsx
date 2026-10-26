@@ -1,16 +1,16 @@
-// Perfil, la última sección (antes Ajustes), la de la galería (galeria/src/perfil.js): tus datos
-// (con «sin déficit»), las preferencias (con ocultar los números), Salud, los aparatos y Ascent, y
-// tus datos para llevar o borrar, con la política de privacidad, los términos, el contacto y los
-// créditos de lo que usa Moss. Las metas están en Progreso, con la estrategia.
+// Perfil, la última sección (antes Ajustes), la de la galería (galeria/src/perfil.js): arriba, la
+// persona (tu foto o tu inicial y tu nombre), que abre Editar perfil; tus datos (con «sin déficit»),
+// las preferencias (con ocultar los números), Salud, los aparatos y Ascent, y tus datos para llevar
+// o borrar, con la política de privacidad, los términos, el contacto y los créditos de lo que usa
+// Moss. Las metas están en Progreso, con la estrategia.
 
 import Constants from 'expo-constants';
 import type { SFSymbol } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View, type ViewStyle } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
-import { CONEXION_CON_ASCENT } from '@/lib/ascent';
 import { urlDe } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
@@ -18,6 +18,7 @@ import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import type { Comida } from '@/dominio/comidas';
 import type { DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
+import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
 import { horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
 import { horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
@@ -29,8 +30,11 @@ import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
 import { aparatoPrincipal, Aparatos } from './Aparatos';
+import { useFilaDeAscent } from '../ascent/filaDePerfil';
 import { Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exportarTodo } from './cuenta';
+import { borrarFotoDePerfil, elegirFotoDePerfil, fotoDePerfil, guardarFotoDePerfil, hayFotoDePerfil } from './foto';
+import { Avatar, Persona } from './Persona';
 
 /** Una fila; `detalle` dice debajo, chico, qué hace. */
 type Fila = { clave: string; titulo: string; valor?: string; detalle?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion' };
@@ -47,10 +51,13 @@ const FUNCIONES_CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'cuenta'
 
 export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
   const e = useEstado();
+  const ascent = useFilaDeAscent();
   const sistema = sistemaDe(e);
   const [correo, setCorreo] = useState<string | null>(null);
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'datos' | 'privacidad' | 'recordatorios' | 'calidad' | 'aparatos' | 'entreno' | null>(null);
+  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'aparatos' | 'entreno' | null>(null);
+  // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
+  const [foto, setFoto] = useState(fotoDePerfil);
   useEffect(() => {
     correoDeLaCuenta().then(setCorreo).catch(() => {});
     saludPedida().then(setSalud).catch(() => {});
@@ -67,10 +74,10 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
 
   const grupos: [string, Fila[]][] = [
     ['perfil.tusDatos', p ? [
-      { clave: 'sexo', titulo: t('perfil.sexo'), valor: t(`perfil.sexos.${p.sexo}`), alTocar: () => setHoja('datos') },
-      { clave: 'edad', titulo: t('perfil.edad'), valor: t('perfil.anios', { n: edadDe(p, e.hoy) }), alTocar: () => setHoja('datos') },
-      { clave: 'altura', titulo: t('perfil.altura'), valor: altura(p.alturaCm), alTocar: () => setHoja('datos') },
-      { clave: 'actividad', titulo: t('perfil.actividad'), valor: t(`perfil.actividades.${p.actividad}`), alTocar: () => setHoja('datos') },
+      { clave: 'sexo', titulo: t('perfil.sexo'), valor: t(`perfil.sexos.${p.sexo}`), alTocar: () => setHoja('editar') },
+      { clave: 'edad', titulo: t('perfil.edad'), valor: t('perfil.anios', { n: edadDe(p, e.hoy) }), alTocar: () => setHoja('editar') },
+      { clave: 'altura', titulo: t('perfil.altura'), valor: altura(p.alturaCm), alTocar: () => setHoja('editar') },
+      { clave: 'actividad', titulo: t('perfil.actividad'), valor: t(`perfil.actividades.${p.actividad}`), alTocar: () => setHoja('editar') },
       // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál). Cambia la meta desde hoy.
       // Para qué comer antes y después de entrenar (Comida); con «sin déficit» no se ve.
       ...(p.sinDeficit ? [] : [{ clave: 'entreno', titulo: t('entreno.perfil.titulo'), valor: resumenDeEntreno(e.entreno), alTocar: () => setHoja('entreno') }]),
@@ -98,8 +105,8 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         },
       }] : []),
       { clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos') },
-      // Ascent no se nombra hasta que la conexión funcione (src/lib/ascent.ts).
-      ...(CONEXION_CON_ASCENT ? [{ clave: 'ascent', titulo: t('perfil.ascent'), valor: t('perfil.pronto') }] : []),
+      // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent.
+      ascent,
     ]],
     ['perfil.tusDatosParaLlevar', [
       { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', alTocar: () => { exportarTodo(e.hoy).catch(() => avisar(t('perfil.errorBorrar'))); } },
@@ -121,13 +128,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   return (
     <View style={{ width: ancho }}>
       <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
-        {/* Como en la galería: la inicial en oro y la cuenta. */}
-        <View style={st.cuenta} accessibilityRole="header">
-          <View style={st.inicial}>
-            <Text style={st.inicialTexto}>{(correo || 'M').charAt(0).toUpperCase()}</Text>
-          </View>
-          <Text style={st.correo} numberOfLines={1} ellipsizeMode="middle">{correo || t('perfil.sinCuenta')}</Text>
-        </View>
+        <Persona nombre={e.nombre?.valor ?? ''} correo={correo} foto={foto} alTocar={() => setHoja('editar')} />
         {grupos.filter(([, filas]) => filas.length).map(([titulo, filas]) => (
           <View key={titulo}>
             <Text style={st.grupo}>{t(titulo as 'perfil.tusDatos')}</Text>
@@ -158,7 +159,6 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
           ))}
         </View>
         {/* Al final, lo que anda solo si vinculas Ascent: información, no una función de Perfil. */}
-        {CONEXION_CON_ASCENT && <>
         <Text style={st.grupo}>{t('perfil.informacion')}</Text>
         <Text style={st.informacion}>{t('perfil.informacionAscent')}</Text>
         <View style={st.lista}>
@@ -172,7 +172,6 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
             </View>
           ))}
         </View>
-        </>}
         {correo !== null && (
           <Aparece>
           <Boton
@@ -197,7 +196,9 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         )}
         <Text style={st.version}>{t('perfil.version', { v: version })}</Text>
       </ScrollView>
-      {hoja === 'datos' && p && <TusDatos perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} alCerrar={() => setHoja(null)} />}
+      {hoja === 'editar' && (
+        <EditarPerfil perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} nombreGuardado={e.nombre?.valor ?? ''} foto={foto} alGuardarFoto={setFoto} alCerrar={() => setHoja(null)} />
+      )}
       {hoja === 'recordatorios' && <Avisos e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'calidad' && <CalidadDelCielo elegida={e.calidad} alCerrar={() => setHoja(null)} />}
       {hoja === 'entreno' && <CuandoEntrenas e={e} alCerrar={() => setHoja(null)} />}
@@ -217,20 +218,84 @@ function piesYPulgadas(cm: number) {
   return `${Math.floor(pulgadas / 12)}′ ${pulgadas % 12}″`;
 }
 
-/** Tus datos: el sexo, la edad, la altura y la actividad. Las metas no cambian por esto. */
-function TusDatos({ perfil, hoy, imperial, alCerrar }: { perfil: DatosDelPerfil; hoy: string; imperial: boolean; alCerrar: () => void }) {
-  const [sexo, setSexo] = useState<Sexo>(perfil.sexo);
-  const [edad, setEdad] = useState(edadDe(perfil, hoy));
-  const [alturaCm, setAlturaCm] = useState(perfil.alturaCm);
-  const [actividad, setActividad] = useState<Actividad>(perfil.actividad);
+/**
+ * Editar perfil, el de la galería: tu foto (solo en este teléfono), tu nombre (sin uno, Moss lo pide)
+ * y tus datos, que antes tenían su hoja: el sexo, la edad, la altura y la actividad (las metas no
+ * cambian por esto). Todo se guarda junto con «Guardar»; cerrar deja todo como estaba.
+ */
+function EditarPerfil({ perfil, hoy, imperial, nombreGuardado, foto, alGuardarFoto, alCerrar }: {
+  perfil: DatosDelPerfil | null; hoy: string; imperial: boolean; nombreGuardado: string; foto: string | null; alGuardarFoto: (foto: string | null) => void; alCerrar: () => void;
+}) {
+  const [nombre, setNombre] = useState(nombreGuardado);
+  // La foto elegida, todavía sin guardar: undefined, que no se tocó; null, que se quitó.
+  const [fotoNueva, setFotoNueva] = useState<string | null | undefined>(undefined);
+  const [eligiendo, setEligiendo] = useState(false);
+  const [sexo, setSexo] = useState<Sexo>(perfil?.sexo ?? 'f');
+  const [edad, setEdad] = useState(perfil ? edadDe(perfil, hoy) : RANGOS_DEL_CUESTIONARIO.edad[0]);
+  const [alturaCm, setAlturaCm] = useState(perfil?.alturaCm ?? RANGOS_DEL_CUESTIONARIO.alturaCm[0]);
+  const [actividad, setActividad] = useState<Actividad>(perfil?.actividad ?? 'algo');
+  const laFoto = fotoNueva === undefined ? foto : fotoNueva;
+  // El selector se abre encima de la hoja, que queda abierta debajo.
+  const elegir = (desde: 'camara' | 'carrete') => {
+    if (eligiendo) return;
+    setEligiendo(true);
+    elegirFotoDePerfil(desde).then((uri) => { if (uri) setFotoNueva(uri); }).catch(() => {}).finally(() => setEligiendo(false));
+  };
   const guardar = () => {
-    elAlmacen().ponerDatos({ sexo, nacimiento: Number(hoy.slice(0, 4)) - edad, alturaCm, actividad });
+    elAlmacen().ponerNombre(nombre);
+    const nacimiento = Number(hoy.slice(0, 4)) - edad;
+    if (perfil && (sexo !== perfil.sexo || nacimiento !== perfil.nacimiento || alturaCm !== perfil.alturaCm || actividad !== perfil.actividad)) {
+      elAlmacen().ponerDatos({ sexo, nacimiento, alturaCm, actividad });
+    }
+    if (fotoNueva === null) {
+      borrarFotoDePerfil();
+      alGuardarFoto(null);
+    } else if (fotoNueva) {
+      guardarFotoDePerfil(fotoNueva).then(alGuardarFoto).catch((error) => console.warn('Moss no pudo guardar tu foto', error));
+    }
     alCerrar();
   };
   const paso = imperial ? CM_POR_PULGADA : 1;
   const altura = imperial ? piesYPulgadas(alturaCm) : `${numero(alturaCm)} cm`;
   return (
-    <HojaModal abierta titulo={t('perfil.tusDatos')} alCerrar={alCerrar} pie={<Boton tipo="principal" texto={t('comun.guardar')} alTocar={guardar} />}>
+    <HojaModal abierta titulo={t('perfil.editar.titulo')} alCerrar={alCerrar} pie={<Boton tipo="principal" texto={t('comun.guardar')} alTocar={guardar} />}>
+      <View style={st.foto}>
+        <Avatar foto={laFoto} nombre={nombre} tam={96} />
+        {hayFotoDePerfil && (
+          <>
+            <View style={st.fotoBotones}>
+              <Boton icono="camera" texto={t('perfil.editar.sacarFoto')} alTocar={() => elegir('camara')} desactivado={eligiendo} />
+              <Boton icono="photo.on.rectangle" texto={t('perfil.editar.elegirFoto')} alTocar={() => elegir('carrete')} desactivado={eligiendo} />
+            </View>
+            {laFoto && (
+              <Aparece>
+                <Pressable onPress={() => setFotoNueva(null)} accessibilityRole="button" hitSlop={8}>
+                  <Text style={st.quitarFoto}>{t('perfil.editar.quitarFoto')}</Text>
+                </Pressable>
+              </Aparece>
+            )}
+            <Text style={st.fotoNota}>{t('perfil.editar.fotoNota')}</Text>
+          </>
+        )}
+      </View>
+      <EtiquetaDeGrupo>{t('perfil.editar.nombre')}</EtiquetaDeGrupo>
+      {/* Sin un nombre guardado (Apple no lo trajo), Moss lo pide. */}
+      {!nombreGuardado && <Text style={st.pedido}>{t('perfil.editar.sinNombre')}</Text>}
+      <TextInput
+        value={nombre}
+        onChangeText={setNombre}
+        placeholder={t('perfil.editar.nombreCampo')}
+        placeholderTextColor="rgba(239, 230, 207, 0.35)"
+        maxLength={LARGO_DEL_NOMBRE}
+        autoCapitalize="words"
+        autoComplete="name"
+        textContentType="name"
+        returnKeyType="done"
+        selectionColor={colores.oro}
+        style={st.campo}
+        accessibilityLabel={t('perfil.editar.nombre')}
+      />
+      {perfil && <>
       <EtiquetaDeGrupo>{t('perfil.sexo')}</EtiquetaDeGrupo>
       <Segmento<Sexo> opciones={[['f', t('perfil.sexos.f')], ['m', t('perfil.sexos.m')]]} elegida={sexo} alElegir={setSexo} />
       <EtiquetaDeGrupo>{t('perfil.edad')}</EtiquetaDeGrupo>
@@ -245,6 +310,7 @@ function TusDatos({ perfil, hoy, imperial, alCerrar }: { perfil: DatosDelPerfil;
         })}
       </View>
       <Parrafo chico>{t('perfil.tusDatosNota')}</Parrafo>
+      </>}
     </HojaModal>
   );
 }
@@ -526,16 +592,16 @@ function Pasos({ valor, alBajar, alSubir }: { valor: string; alBajar: () => void
   );
 }
 
-const ORO_DE_LA_INICIAL = 'linear-gradient(160deg, #fdeebf 0%, #e8c46a 72%)';
-
 const st = StyleSheet.create({
-  cuenta: { marginTop: 10, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  inicial: {
-    width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', backgroundColor: colores.oro,
-    ...((Platform.OS === 'web' ? { backgroundImage: ORO_DE_LA_INICIAL } : { experimental_backgroundImage: ORO_DE_LA_INICIAL }) as ViewStyle),
+  foto: { alignItems: 'center', gap: 12, paddingTop: 8 },
+  fotoBotones: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
+  quitarFoto: { paddingVertical: 2, paddingHorizontal: 10, fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.6)' },
+  fotoNota: { textAlign: 'center', fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.5)' },
+  pedido: { marginTop: -2, marginBottom: 10, fontFamily: letras.textoLiviano, fontSize: 13.5, lineHeight: 19, color: 'rgba(246, 227, 166, 0.85)' },
+  campo: {
+    paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)', backgroundColor: 'rgba(6, 10, 22, 0.6)',
+    fontFamily: letras.texto, fontSize: 16, color: colores.pergamino,
   },
-  inicialTexto: { fontFamily: letras.numero, fontSize: 24, color: '#1a1406' },
-  correo: { flex: 1, fontFamily: letras.numeroMedio, fontSize: 20, color: colores.pergamino },
   grupo: { marginTop: 26, marginBottom: 8, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   lista: { borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(8, 12, 26, 0.72)' },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 16 },

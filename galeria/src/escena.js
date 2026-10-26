@@ -5,6 +5,9 @@
 // día, para la entrada a la app); de la entrada a la app se viaja con el «flum» (viajar). El cielo
 // queda quieto detrás de las tres pestañas, como el planeta de Ascent: lo que se desliza con su
 // pestaña es la constelación (desplazarPagina).
+// Como en la app (src/cielo/escena.ts y latido.ts), los cuadros corren solo mientras hacen falta: un
+// toque, un gesto o un cambio lo dejan vivo unos segundos y después, sin nada en marcha, deja de
+// pedir cuadros y queda la última imagen. Detrás de las otras secciones no corre.
 
 const Escena = (() => {
   const TAU = Math.PI * 2;
@@ -24,6 +27,15 @@ const Escena = (() => {
   const BLANCO_CALIDO = [1.0, 0.96, 0.86];
   // Segundos que la estela de una estrella fugaz sigue a la vista después de que se apaga la cabeza.
   const RESTO_DE_LA_ESTELA = 0.45;
+  // Lo mismo que src/cielo/escena.ts: cuánto sigue vivo el cielo, el radio del toque y el aro de la comida.
+  const VIVO_AL_TOCAR = 6;
+  const VIVO_AL_LLEGAR = 8;
+  const RADIO_DE_TOQUE = 52;
+  const PUNTOS_DE_COMIDA = 12;
+  // La distancia mínima entre dos estrellas de hoy, en px CSS (src/cielo/plano.ts, SEPARACION).
+  const SEPARACION = 60;
+  // Hasta que se toca una estrella por primera vez, Hábitos muestra cómo se marca un hábito.
+  const GUARDADO_GLOBITO = 'moss-galeria-globito';
 
   const CALIDADES = {
     // densidad: qué fracción de las celdas de 64 px tiene una estrella que titila (vivo.glsl).
@@ -86,6 +98,32 @@ const Escena = (() => {
     const escala = plano.length < 2 ? 1 : Math.min(maxAncho / ancho, maxAlto / alto);
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
     return plano.map(([x, y]) => [centro[0] + (x - cx) * escala, centro[1] + (y - cy) * escala]);
+  }
+
+  // Aparta las estrellas que quedaron más cerca que `minimo`, sin mover el centro (src/cielo/mundo.ts).
+  function separar(plano, minimo) {
+    const p = plano.map(([x, y]) => [x, y]);
+    if (p.length < 2) return p;
+    const centro = (q) => q.reduce((s, a) => [s[0] + a[0] / q.length, s[1] + a[1] / q.length], [0, 0]);
+    const [cx, cy] = centro(p);
+    for (let vuelta = 0; vuelta < 24; vuelta++) {
+      let movio = false;
+      for (let i = 0; i < p.length; i++) {
+        for (let j = i + 1; j < p.length; j++) {
+          let dx = p[j][0] - p[i][0], dy = p[j][1] - p[i][1];
+          let d = Math.hypot(dx, dy);
+          if (d >= minimo) continue;
+          if (d < 1e-9) { dx = 1; dy = 0; d = 1; }
+          const falta = (minimo - d) / 2 + 1e-6;
+          p[i][0] -= (dx / d) * falta; p[i][1] -= (dy / d) * falta;
+          p[j][0] += (dx / d) * falta; p[j][1] += (dy / d) * falta;
+          movio = true;
+        }
+      }
+      if (!movio) break;
+    }
+    const [nx, ny] = centro(p);
+    return p.map(([x, y]) => [x - nx + cx, y - ny + cy]);
   }
 
   // Orden en que se encienden las líneas: desde la estrella más brillante hacia afuera.
@@ -151,6 +189,10 @@ const Escena = (() => {
       pausado: false,
       perdido: false,
       fugaz: null, proximaFugaz: 7,
+      // Vivo hasta este momento del tiempo de la escena; las veces que se llegó a Hábitos.
+      vivoHasta: 0,
+      llegadas: 0,
+      auroraQuieta: true,
       alCambiar: opciones.alCambiar || (() => {}),
       haptico: opciones.haptico || (() => {}),
     };
@@ -169,52 +211,72 @@ const Escena = (() => {
 
     // ---------------------------------------------------------------- interfaz HTML
     // El cielo es el protagonista: el nombre de la constelación va chico, debajo de la fecha, y el
-    // día completo no tiene texto propio.
+    // día completo no tiene texto propio (lo encendido lo dicen las estrellas y la luz de hoy; el
+    // lector de pantalla lo lee en la cabecera).
     ui.innerHTML = `
       <header class="cab">
         <div class="cab-fila">
           <div><div class="cab-dia"></div><div class="cab-nombre"></div></div>
           <div class="cab-luz"><b></b><span></span></div>
         </div>
-        <div class="cab-cuenta"></div>
       </header>
       <div class="etiquetas"></div>
       <div class="universo-titulo"></div>
       <div class="universo-etiquetas"></div>
+      <div class="aviso globito" aria-hidden="true"><span class="aviso-txt"></span></div>
       <div class="aviso" role="status"><span class="aviso-txt"></span><button type="button" class="aviso-btn"></button></div>
       <footer class="frase"><q></q><cite></cite></footer>
       <div class="fps" hidden></div>`;
     const $ = (s) => ui.querySelector(s);
     const dom = {
       dia: $('.cab-dia'), nombre: $('.cab-nombre'), luz: $('.cab-luz b'), luzTxt: $('.cab-luz span'),
-      cuenta: $('.cab-cuenta'), etiquetas: $('.etiquetas'), aviso: $('.aviso'), avisoTxt: $('.aviso-txt'),
+      etiquetas: $('.etiquetas'), aviso: $('.aviso[role="status"]'), avisoTxt: $('.aviso[role="status"] .aviso-txt'),
       avisoBtn: $('.aviso-btn'), frase: $('.frase q'), cita: $('.frase cite'), fps: $('.fps'), cab: $('.cab'),
-      uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'), pie: $('.frase'),
+      uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'), pie: $('.frase'), globito: $('.globito'),
     };
+    // El globito va donde la frase, que se aparta mientras está.
+    dom.globito.style.bottom = 'calc(var(--pestanas) + 40px)';
+    dom.globito.style.borderColor = 'rgba(232, 196, 106, 0.32)';
+    dom.globito.style.paddingRight = '16px';
+    dom.globito.style.pointerEvents = 'none';
     let etiquetas = [];
     let etiquetasUniverso = [];
     let temporizadorAviso = 0;
+    let accionDelAviso = null;
+    let globitoPendiente = true;
+    try { globitoPendiente = !localStorage.getItem(GUARDADO_GLOBITO); } catch (_) { /* sin guardado, se muestra */ }
 
-    function avisar(texto, conDeshacer) {
+    // `accion`: un botón al lado del texto ({ texto, alTocar }); el de un hábito de comida lleva a Comida.
+    function avisar(texto, accion) {
       dom.avisoTxt.textContent = texto;
-      dom.avisoBtn.hidden = !conDeshacer;
-      dom.avisoBtn.textContent = tx('comun.deshacer');
+      accionDelAviso = accion ? accion.alTocar : null;
+      dom.avisoBtn.hidden = !accion;
+      dom.avisoBtn.textContent = accion ? accion.texto : '';
+      // Con botón, el texto puede ir en dos líneas, como en la app.
+      dom.aviso.style.whiteSpace = accion ? 'normal' : '';
       dom.aviso.classList.add('visible');
       clearTimeout(temporizadorAviso);
-      temporizadorAviso = setTimeout(() => dom.aviso.classList.remove('visible'), conDeshacer ? 4200 : 2600);
+      temporizadorAviso = setTimeout(() => dom.aviso.classList.remove('visible'), accion ? 4200 : 2600);
     }
 
     dom.avisoBtn.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      const u = e.ultimoToque;
-      if (!u) return;
-      e.ultimoToque = null;
-      cambiarHabito(u.indice, u.antes, { conAviso: false });
+      const a = accionDelAviso;
+      accionDelAviso = null;
       dom.aviso.classList.remove('visible');
+      if (a) a();
     });
 
+    function quitarGlobito() {
+      if (!globitoPendiente) return;
+      globitoPendiente = false;
+      try { localStorage.setItem(GUARDADO_GLOBITO, '1'); } catch (_) { /* no pasa nada */ }
+    }
+
+    // Debajo de la etiqueta, solo lo que lleva hoy un automático que no llegó: la meta ya está en el nombre.
     function textoAuto(h) {
-      if (h.auto === 'pasos') return numero(h.valor) + ' / ' + numero(h.meta);
+      if (h.encendido) return '';
+      if (h.auto === 'pasos') return numero(h.valor);
       if (h.auto === 'sueno') { const hs = Math.floor(h.valor / 60), m = h.valor % 60; return tx('cielo.horasMinutos', { h: hs, m }); }
       return '';
     }
@@ -253,8 +315,9 @@ const Escena = (() => {
       dom.nombre.textContent = nombreDe(c.datos.nombres);
       dom.luz.textContent = luzDelDia(hechos);
       dom.luzTxt.textContent = tx('cielo.luzDeHoy');
-      dom.cuenta.textContent = e.completo ? tx('cielo.completa') : tx('cielo.encendidas', { n: hechos, total: e.habitos.length });
-      dom.cab.classList.toggle('completa', e.completo);
+      dom.cab.setAttribute('aria-label', [dom.dia.textContent, dom.nombre.textContent,
+        e.completo ? tx('cielo.completa') : tx('cielo.encendidas', { n: hechos, total: e.habitos.length }), luzDelDia(hechos) + ' ' + tx('cielo.luzDeHoy')].join(', '));
+      dom.globito.querySelector('.aviso-txt').textContent = tx('cielo.globito');
       const f = opciones.frase;
       dom.frase.textContent = nombreDe(f.texto);
       dom.cita.textContent = nombreDe(f.autor);
@@ -276,6 +339,7 @@ const Escena = (() => {
       armarMusgo();
       if (e.constelacion) ubicarConstelacion();
       armarUniverso();
+      avivar(VIVO_AL_TOCAR);
     }
 
     // El cielo fijo se arma aparte y reemplaza al de antes cuando está entero (motor.avanzarFondo).
@@ -381,8 +445,8 @@ const Escena = (() => {
     function ubicarConstelacion() {
       const c = e.constelacion;
       const plano = proyectar(c.datos.estrellas);
-      // Abajo queda lugar para la frase del día, sobre el musgo.
-      c.pos = encajar(plano, [0, 0.075], e.aspecto * 0.68, 0.4);
+      // Abajo queda lugar para la frase del día, sobre el musgo. Las estrellas pegadas se apartan.
+      c.pos = separar(encajar(plano, [0, 0.075], e.aspecto * 0.68, 0.4), SEPARACION / e.escalaCss);
       c.lineas = c.datos.lineas.map(([a, b]) => [a, b]);
       c.prof = profundidades(c.pos.length, c.lineas);
       c.lineas = c.lineas.map(([a, b]) => (c.prof[a] <= c.prof[b] ? [a, b] : [b, a]));
@@ -460,11 +524,9 @@ const Escena = (() => {
         e.efectos.push({ tipo: 'apagar', x, y, t0: e.t, dur: 0.5 });
         e.haptico('suave');
       }
-      if (conAviso) {
-        e.ultimoToque = { indice: i, antes: !encender };
-        avisar(tx(encender ? 'cielo.encendida' : 'cielo.apagada', { habito: nombreDe(h.nombre) }), true);
-      }
-      if (desdeSalud) avisar(tx('cielo.desdeSalud', { habito: nombreDe(h.nombre) }), false);
+      // Sin «Deshacer», como en la app: tocar otra vez la estrella la apaga.
+      if (conAviso) avisar(tx(encender ? 'cielo.encendida' : 'cielo.apagada', { habito: nombreDe(h.nombre) }));
+      if (desdeSalud) avisar(tx('cielo.desdeSalud', { habito: nombreDe(h.nombre) }));
       revisarCompleto();
       refrescarEtiquetas();
       refrescarCabecera();
@@ -483,17 +545,23 @@ const Escena = (() => {
       }
     }
 
-    // La estrella de hoy más cerca del punto (en píxeles del lienzo), o -1. Solo en Hábitos.
+    // La estrella de hoy más cerca del punto (en píxeles del lienzo) dentro de un radio generoso y,
+    // lejos de todas, la de la etiqueta tocada; o -1. Solo en Hábitos.
     function estrellaEn(px, py) {
       const c = e.constelacion;
       if (!c || e.modo !== 'hoy' || e.viaje || e.paginaPx !== 0) return -1;
-      let mejor = -1, dist = 34;
+      let mejor = -1, dist = RADIO_DE_TOQUE;
       c.pos.forEach(([x, y], i) => {
         const [sx, sy] = posPantalla(x, y, PARALAJE.cielo);
         const d = Math.hypot(sx - px, sy - py);
         if (d < dist) { dist = d; mejor = i; }
       });
-      return mejor;
+      if (mejor >= 0) return mejor;
+      const r = contenedor.getBoundingClientRect();
+      return etiquetas.findIndex((el) => {
+        const q = el.getBoundingClientRect();
+        return q.width > 0 && px >= q.left - r.left - 6 && px <= q.right - r.left + 6 && py >= q.top - r.top - 6 && py <= q.bottom - r.top + 6;
+      });
     }
 
     function tocar(px, py) {
@@ -501,9 +569,10 @@ const Escena = (() => {
       if (mejor < 0) return;
       const c = e.constelacion;
       const h = e.habitos[mejor];
-      if (h.auto) {
-        const detalle = textoAuto(h);
-        avisar(h.auto === 'comida' ? tx('habitos.comidaTexto') : tx('cielo.seEnciendeSola') + (detalle ? ' · ' + detalle : ''), false);
+      quitarGlobito();
+      // Los de comida se encienden solos con lo anotado: tocarlos dice qué los enciende y lleva a Comida.
+      if (h.auto === 'comida') {
+        avisar(tx('cielo.seEnciendeCon.' + ((h.fuente && h.fuente.meta) || 'registrar')), opciones.alIrAComida ? { texto: tx('cielo.verComida'), alTocar: opciones.alIrAComida } : null);
         e.haptico('suave');
         e.efectos.push({ tipo: 'apagar', x: c.pos[mejor][0], y: c.pos[mejor][1], t0: e.t, dur: 0.4 });
         return;
@@ -518,6 +587,7 @@ const Escena = (() => {
     let esperaMantener = 0;
     contenedor.addEventListener('pointerdown', (ev) => {
       if (ev.target.closest('button') || e.paginaPx !== 0) return;
+      avivar(VIVO_AL_TOCAR);
       const r = contenedor.getBoundingClientRect();
       const p = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, cam0: e.cam.y, ultimoY: ev.clientY, ultimoT: performance.now(), v: 0, movio: false, lejos: false, rx: r.left, ry: r.top };
       puntero = p;
@@ -573,17 +643,23 @@ const Escena = (() => {
     function actualizar(dt) {
       e.t += dt;
       const c = e.constelacion;
+      const vivo = e.t < e.vivoHasta;
 
       if (!e.cam.arrastre) {
         const k = 70, amort = 2 * Math.sqrt(k);
         const a = -k * (e.cam.y - e.cam.objetivo) - amort * e.cam.v;
         e.cam.v += a * dt;
         e.cam.y += e.cam.v * dt;
+        // Quieta del todo al llegar, como en la app.
+        if (Math.abs(e.cam.y - e.cam.objetivo) < 1e-4 && Math.abs(e.cam.v) < 1e-3) { e.cam.y = e.cam.objetivo; e.cam.v = 0; }
       }
 
       e.habitos.forEach((h) => {
-        h.luz += ((h.encendido ? 1 : 0) - h.luz) * (1 - Math.exp(-dt * (h.encendido ? 16 : 7)));
+        const meta = h.encendido ? 1 : 0;
+        h.luz += (meta - h.luz) * (1 - Math.exp(-dt * (h.encendido ? 16 : 7)));
         h.pop *= Math.exp(-dt * 6);
+        if (Math.abs(meta - h.luz) < 0.002) h.luz = meta;
+        if (h.pop < 0.01) h.pop = 0;
       });
 
       const dc = e.completo ? e.t - e.tCompleto : -1;
@@ -598,6 +674,7 @@ const Escena = (() => {
       e.aurora.intensidad += (objI - e.aurora.intensidad) * ritmo;
       e.aurora.oleada += (objO - e.aurora.oleada) * ritmo;
       e.aurora.tiempo += dt * (1 + 2.2 * e.aurora.oleada) * (opciones.movimientoReducido ? 0.4 : 1);
+      e.auroraQuieta = Math.abs(objI - e.aurora.intensidad) < 0.004 && Math.abs(objO - e.aurora.oleada) < 0.004;
 
       if (c) {
         c.lineas.forEach((_, k) => {
@@ -627,9 +704,11 @@ const Escena = (() => {
       e.efectos = e.efectos.filter((f) => e.t - f.t0 < f.dur);
 
       // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas. Son
-      // de vez en cuando: una cada siete segundos, más o menos.
+      // de vez en cuando: una cada siete segundos, más o menos, y solo con el cielo vivo; pasado el
+      // rato, las que hay se apagan enseguida.
       const tasa = (0.05 + 0.15 * e.riqueza) * CALIDADES[e.calidad].particulas;
-      if (Math.random() < tasa * dt && e.musgo.brotes.length) {
+      if (!vivo) e.particulas.forEach((p) => { if (p.espora && p.max > p.vida + 0.8) p.max = p.vida + 0.8; });
+      if (vivo && Math.random() < tasa * dt && e.musgo.brotes.length) {
         const k = e.musgo.brotes[Math.floor(Math.random() * e.musgo.brotes.length)];
         e.particulas.push({ espora: true, x: k.x, y: k.y, x0: k.x, vx: 0, vy: 0.018 + Math.random() * 0.03, vida: 0, max: 5 + Math.random() * 5, tam: 1.8 + Math.random() * 1.6, color: MUSGO_LUZ, brillo: 0.7, frena: 0, sube: 0, fase: Math.random() * TAU, par: PARALAJE.lomas[2] });
       }
@@ -642,7 +721,7 @@ const Escena = (() => {
       // Una estrella fugaz cada tanto, en la zona de hoy: cae en diagonal y rápido. Una de cada
       // cinco es una bola de fuego, más brillante, que estalla antes de apagarse. La cabeza se apaga
       // y la estela queda un instante donde estaba.
-      if (!e.fugaz && e.t >= e.proximaFugaz && !opciones.movimientoReducido) {
+      if (vivo && !e.fugaz && e.t >= e.proximaFugaz && !opciones.movimientoReducido) {
         const r = Math.random;
         const izquierda = r() < 0.5;
         const ang = (izquierda ? Math.PI : 0) + (izquierda ? 1 : -1) * (0.45 + r() * 0.45);
@@ -712,7 +791,15 @@ const Escena = (() => {
         sprite(sp, x, y, tamN, 1, BLANCO_CALIDO, 0.32 + 0.95 * luz, 1, 0.12 + 0.55 * luz, 0, e.t * 0.05 + i);
         const apagada = 1 - luz;
         if (apagada > 0.01) {
-          if (h.auto) {
+          if (h.auto === 'comida') {
+            // Un aro de puntos dorados: se enciende solo con lo que se anota.
+            const r = 19 / e.escalaCss;
+            sprite(sp, x, y, 22, 1, ORO_CLARO, 0.12 * apagada, 2, 0.86, 0.06);
+            for (let k = 0; k < PUNTOS_DE_COMIDA; k++) {
+              const a = (k / PUNTOS_DE_COMIDA) * TAU;
+              sprite(sp, x + Math.cos(a) * r, y + Math.sin(a) * r, 3, 1, ORO_CLARO, 0.95 * apagada, 4);
+            }
+          } else if (h.auto) {
             sprite(sp, x, y, 20, 1, PERGAMINO, 0.16 * apagada, 2, 0.86, 0.06);
             sprite(sp, x, y, 20, 1, MUSGO_LUZ, 0.95 * apagada, 3, 0.86, h.meta ? clamp(h.valor / h.meta, 0, 1) : 0);
           } else {
@@ -724,10 +811,13 @@ const Escena = (() => {
 
     }
 
-    // El destello, la onda y el aro que se cierra de un toque (de verdad o de la demostración).
+    // El destello, la onda y el aro que se cierra de un toque (de verdad o de la demostración), y el
+    // saludo de cada estrella al llegar a Hábitos.
     function dibujarEfectos() {
       e.efectos.forEach((f) => {
         const u = (e.t - f.t0) / f.dur;
+        if (u < 0) return;
+        if (f.tipo === 'saludo') { const r = mezclar(17, 34, salida(u)); sprite(sp, f.x, f.y, r, 1, ORO_CLARO, 0.32 * Math.sin(Math.PI * u), 2, 0.92, 2.2 / r); return; }
         if (f.tipo === 'destello') sprite(sp, f.x, f.y, mezclar(14, 70, salida(u)), 1, ORO_CLARO, 1.1 * (1 - u), 4);
         else if (f.tipo === 'onda') { const r = mezclar(14, 92, salida(u)); sprite(sp, f.x, f.y, r, 1, ORO, 0.75 * (1 - u), 2, 0.92, 2.2 / r); }
         else if (f.tipo === 'apagar') { const r = mezclar(42, 16, salida(u)); sprite(sp, f.x, f.y, r, 1, PERGAMINO, 0.4 * (1 - u), 2, 0.9, 1.6 / r); }
@@ -1018,7 +1108,10 @@ const Escena = (() => {
       dom.etiquetas.style.opacity = opac * (1 - 0.55 * momento) * sinVelo;
       dom.uEtiquetas.style.opacity = suave(0.5, 1.1, e.cam.y) * sinVelo;
       dom.uTitulo.style.opacity = suave(0.6, 1.15, e.cam.y) * sinVelo;
-      dom.pie.style.opacity = sinVelo;
+      // El globito, solo en Hábitos y hasta tocar una estrella; mientras está, la frase se aparta.
+      const conGlobito = globitoPendiente && e.modo === 'hoy' && e.paginaPx === 0 && e.habitos.length > 0 && e.cam.objetivo === 0 && e.velado === 0 && !dom.aviso.classList.contains('visible');
+      dom.globito.classList.toggle('visible', conGlobito);
+      dom.pie.style.opacity = sinVelo * (conGlobito ? 0 : 1);
     }
 
     // Safari descarta el contexto gráfico cuando la pestaña pasa mucho tiempo en segundo plano:
@@ -1030,15 +1123,64 @@ const Escena = (() => {
       e.perdido = false;
       redimensionar();
       e.aparicion = 0;
+      // El lazo paró al perderse: sin esto, el cielo queda negro hasta el próximo toque.
+      avivar(VIVO_AL_LLEGAR);
     });
+
+    // ---------------------------------------------------------------- reposo (src/cielo/escena.ts)
+    // Deja el cielo vivo `segundos` más y, si estaba quieto, vuelve a pedir cuadros. Con Reducir
+    // movimiento no tiene vida propia: solo lo que responde a un toque.
+    function avivar(segundos) {
+      if (!opciones.movimientoReducido) e.vivoHasta = Math.max(e.vivoHasta, e.t + segundos);
+      despertarLazo();
+    }
+
+    // La llegada a Hábitos: cada estrella saluda con un aro tenue y la primera vez pasa una fugaz.
+    function saludar() {
+      avivar(VIVO_AL_LLEGAR);
+      if (opciones.movimientoReducido || !e.constelacion) return;
+      e.efectos = e.efectos.filter((f) => f.tipo !== 'saludo');
+      e.constelacion.pos.forEach(([x, y], i) => e.efectos.push({ tipo: 'saludo', x, y, t0: e.t + 0.12 + 0.07 * i, dur: 0.7 }));
+      if (e.llegadas === 0 && !e.fugaz) e.proximaFugaz = Math.min(e.proximaFugaz, e.t + 1.4);
+      e.llegadas++;
+    }
+
+    function hayMovimiento() {
+      if (e.efectos.length || e.particulas.length || e.esporasSalud.length || e.fugaz || e.viaje) return true;
+      if (e.cam.arrastre || e.cam.v !== 0 || e.cam.y !== e.cam.objetivo) return true;
+      if (!e.fondoListo || e.aparicion < 1) return true;
+      if (!e.auroraQuieta || (e.completo && e.t - e.tCompleto < 9.5)) return true;
+      if (e.habitos.some((h) => h.luz !== (h.encendido ? 1 : 0) || h.pop !== 0)) return true;
+      if (e.constelacion && e.constelacion.avance && e.constelacion.avance.some((a) => a !== (e.completo ? 1 : 0))) return true;
+      const d = e.demo;
+      return !!d && (!d.completo || d.avance.some((a) => a < 1) || d.luz.some((l) => l < 0.999) || d.pop.some((p) => p > 0.01));
+    }
 
     let ultimo = 0;
     // Menos de 1 para revisar las animaciones en cámara lenta (capturas por software).
     let velocidad = 1;
-    function cuadro(ahora) {
-      if (e.pausado) { ultimo = 0; return; }
+    let corriendo = false;
+    function despertarLazo() {
+      if (corriendo || e.pausado) return;
+      corriendo = true;
+      ultimo = 0;
       requestAnimationFrame(cuadro);
-      if (e.perdido) return;
+    }
+    // Sin pedir más cuadros: queda la última imagen.
+    function quedarQuieto() {
+      corriendo = false;
+      ultimo = 0;
+      dom.fps.textContent = 'en reposo · ' + e.calidad + ' · ' + e.cuadro + ' cuadros';
+    }
+    function cuadro(ahora) {
+      if (e.pausado || e.perdido) { corriendo = false; ultimo = 0; return; }
+      // Detrás de las otras secciones el cielo no se calcula ni se vuelve a dibujar, como en la app.
+      const oculto = e.modo === 'hoy' && !e.viaje && e.velado === 0 && e.fondoListo && e.aparicion >= 1 && Math.abs(e.paginaPx) >= e.cssAncho;
+      const enMarcha = hayMovimiento() || !!(puntero && puntero.movio);
+      if (oculto || (!enMarcha && e.t >= e.vivoHasta)) { quedarQuieto(); return; }
+      requestAnimationFrame(cuadro);
+      // Sin nada en marcha (el titilar y la aurora, que van lentos), a 30 cuadros: la mitad del trabajo.
+      if (!enMarcha && ultimo && ahora - ultimo < 30) return;
       const dt = (ultimo ? Math.min(0.05, (ahora - ultimo) / 1000) : 1 / 60) * velocidad;
       ultimo = ahora;
       e.cuadro++;
@@ -1051,7 +1193,7 @@ const Escena = (() => {
         e.fps.valor = (e.fps.cuadros * 1000) / (ahora - e.fps.desde);
         e.fps.desde = ahora;
         e.fps.cuadros = 0;
-        dom.fps.textContent = Math.round(e.fps.valor) + ' fps · ' + e.calidad;
+        dom.fps.textContent = Math.round(e.fps.valor) + ' fps · ' + e.calidad + ' · ' + e.cuadro + ' cuadros';
       }
     }
 
@@ -1067,16 +1209,16 @@ const Escena = (() => {
       esperaTam = setTimeout(() => { redimensionar(); e.aparicion = 0; }, motor.estado.fondo ? 140 : 0);
     }).observe(contenedor);
     redimensionar();
-    requestAnimationFrame(cuadro);
 
     // ---------------------------------------------------------------- API para la galería
     return {
-      ponerConstelacion,
+      ponerConstelacion(datos, habitos) { ponerConstelacion(datos, habitos); avivar(VIVO_AL_LLEGAR); },
       // Para las capturas automáticas: el mismo camino que un toque, sin coordenadas.
       tocarPorNombre(texto) {
         const i = e.habitos.findIndex((h) => nombreDe(h.nombre).includes(texto));
         if (i < 0) return false;
         const [sx, sy] = posPantalla(e.constelacion.pos[i][0], e.constelacion.pos[i][1], 1);
+        avivar(VIVO_AL_TOCAR);
         tocar(sx, sy);
         return true;
       },
@@ -1088,11 +1230,12 @@ const Escena = (() => {
         const [sx, sy] = posPantalla(e.constelacion.pos[i][0], e.constelacion.pos[i][1], PARALAJE.cielo);
         return { x: r.left + sx, y: r.top + sy };
       },
-      avisar(texto) { avisar(texto, false); },
+      avisar(texto) { avisar(texto); avivar(0.5); },
       // Los que se encienden solos con la comida no esperan a Salud.
       simularSalud() {
         const i = e.habitos.findIndex((h) => h.auto && h.auto !== 'comida' && !h.encendido);
         if (i < 0 || e.esporasSalud.some((s) => s.indice === i)) return false;
+        avivar(VIVO_AL_TOCAR);
         const h = e.habitos[i];
         h.valor = Math.max(h.valor, h.meta);
         refrescarEtiquetas();
@@ -1109,56 +1252,70 @@ const Escena = (() => {
         return true;
       },
       completarDia() {
+        avivar(VIVO_AL_TOCAR);
         e.habitos.forEach((h, i) => { if (!h.auto && !h.encendido) cambiarHabito(i, true, { conAviso: false }); });
         if (!this.simularSalud()) revisarCompleto();
       },
       repetirAnimacion() {
         if (!e.completo) return;
+        avivar(VIVO_AL_TOCAR);
         e.tCompleto = e.t;
         e.rafagaHecha = false;
         e.constelacion.avance = e.constelacion.avance.map(() => 0);
         e.haptico('completo');
       },
-      irA(zona) { e.cam.objetivo = zona === 'universo' ? ZONA_UNIVERSO : 0; e.cam.v = 0; },
+      irA(zona) { e.cam.objetivo = zona === 'universo' ? ZONA_UNIVERSO : 0; e.cam.v = 0; avivar(VIVO_AL_TOCAR); },
       zona() { return e.cam.objetivo > 0 ? 'universo' : 'hoy'; },
       ponerCalidad(n) { e.calidad = n; redimensionar(); },
-      ponerIdioma(id) { e.idioma = id; refrescarEtiquetas(); refrescarCabecera(); refrescarUniverso(); },
+      ponerIdioma(id) { e.idioma = id; refrescarEtiquetas(); refrescarCabecera(); refrescarUniverso(); avivar(0.5); },
       ponerRiqueza(r) {
         if (Math.abs(r - e.riqueza) < 0.001) return;
         e.riqueza = r;
         armarMusgo();
         redimensionarFondo();
+        avivar(VIVO_AL_TOCAR);
       },
-      lanzarFugaz() { if (!e.fugaz) e.proximaFugaz = e.t; },
+      lanzarFugaz() { if (!e.fugaz) e.proximaFugaz = e.t; avivar(VIVO_AL_TOCAR); },
       ponerVia(v) {
         if (Math.abs(v - e.via) < 0.001) return;
         e.via = v;
         redimensionarFondo();
+        avivar(VIVO_AL_TOCAR);
       },
       velocidad(v) { velocidad = v; },
       // Las pestañas: `px` es dónde está Hábitos respecto de la pantalla (positivo, a la derecha).
-      desplazarPagina(px) { e.paginaPx = px; },
+      desplazarPagina(px) {
+        if (px === e.paginaPx) return;
+        const antes = e.paginaPx;
+        e.paginaPx = px;
+        // Mientras Hábitos asoma, llega o se va, el cielo se mueve; al llegar, saluda.
+        if (e.modo !== 'hoy' || (Math.abs(px) >= e.cssAncho && Math.abs(antes) >= e.cssAncho)) return;
+        if (px === 0) saludar(); else avivar(VIVO_AL_TOCAR);
+      },
       // Si el dedo arrastra la cámara, el gesto es del cielo y no de las pestañas.
       get arrastrando() { return !!(puntero && puntero.movio); },
       // Las pestañas se quedaron con el gesto: lo que empezó acá ya no es un toque.
       soltarGesto() { puntero = null; },
-      viajar,
+      viajar(v) { const si = viajar(v); avivar(VIVO_AL_TOCAR); return si; },
       get viajando() { return !!e.viaje; },
       // La entrada: el cielo solo, con la cámara donde la pida cada pantalla.
-      ponerModo(modo) { e.modo = modo; ui.hidden = modo !== 'hoy'; },
+      ponerModo(modo) { e.modo = modo; ui.hidden = modo !== 'hoy'; avivar(VIVO_AL_TOCAR); },
       get modo() { return e.modo; },
-      camara(y, deUna) { e.cam.objetivo = y; e.cam.v = 0; if (deUna) e.cam.y = y; },
+      camara(y, deUna) { e.cam.objetivo = y; e.cam.v = 0; if (deUna) e.cam.y = y; avivar(VIVO_AL_TOCAR); },
       // Ascent arriba: lo de hoy (la constelación, el universo y sus textos) se apaga y queda el cielo.
-      velar(v) { e.velado = Math.min(1, Math.max(0, v)); },
-      aparecer() { e.aparicion = 0; },
-      ponerDemo,
-      quitarDemo() { e.demo = null; },
+      velar(v) { const nuevo = Math.min(1, Math.max(0, v)); if (nuevo !== e.velado) { e.velado = nuevo; avivar(VIVO_AL_TOCAR); } },
+      aparecer() { e.aparicion = 0; avivar(VIVO_AL_TOCAR); },
+      ponerDemo(...a) { ponerDemo(...a); avivar(VIVO_AL_TOCAR); },
+      quitarDemo() { e.demo = null; avivar(0.5); },
       get riqueza() { return e.riqueza; },
       get idioma() { return e.idioma; },
       haptico: (tipo) => e.haptico(tipo),
-      ponerSemana(semana) { opciones.semana = semana; armarUniverso(); },
+      ponerSemana(semana) { opciones.semana = semana; armarUniverso(); avivar(0.5); },
       mostrarFps(si) { dom.fps.hidden = !si; },
-      pausar(si) { const antes = e.pausado; e.pausado = si; if (antes && !si) requestAnimationFrame(cuadro); },
+      // Los cuadros dibujados y si el cielo está quieto: para comprobar que en reposo no corre.
+      get cuadros() { return e.cuadro; },
+      get quieto() { return !corriendo; },
+      pausar(si) { e.pausado = si; if (!si) avivar(VIVO_AL_TOCAR); },
       redimensionar,
       get completo() { return e.completo; },
       get nombre() { return e.constelacion ? nombreDe(e.constelacion.datos.nombres) : ''; },

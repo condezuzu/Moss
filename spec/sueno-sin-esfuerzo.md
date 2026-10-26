@@ -21,7 +21,7 @@ final.
 |---|---|---|---|
 | 1. **Atajos que avisan a Moss** (App Intents) | La hora exacta en que paró la alarma, conectó o desconectó el cargador, o empezó y terminó el Focus de Sueño | Armar una o dos automatizaciones en Atajos; en iOS 27, agregarlas desde un enlace | **v1** |
 | 2. **Preguntar solo lo dudoso** | — | Nada | **v1** |
-| 3. **El despertador de Moss** (AlarmKit, iOS 26+) | La hora programada y la hora exacta en que lo paró | Poner la alarma en Moss en vez del Reloj y aceptar el permiso | después de la v1 |
+| 3. **El despertador de Moss** (AlarmKit, iOS 26+) | La hora programada y la hora exacta en que lo paró | Poner la alarma en Moss en vez del Reloj y aceptar el permiso | **v1** desde el 26/10/2026 (D28), sin «posponer» |
 | 4. **El filtro de Concentración de Sueño** | La hora en que el Focus empieza y termina | Agregar el filtro de Moss en Ajustes | después, solo si los Atajos no alcanzan |
 | 5. **Confirmar desde la pantalla bloqueada** (widget) | Solo «sí» a la noche que muestra | Agregar el widget | después, y solo si la noche puede estar lista antes de abrir Moss |
 | 6. Live Activity, notificación con botones y lo demás | — | — | no |
@@ -591,16 +591,84 @@ module.exports = (config) => ({
    programado, el cargador de 19 a 4, la pregunta de un solo borde) y sus tests.
 3. La build `dev` y las pruebas de arriba.
 
-## Para decidir (D28)
+## D28, resuelta (26/10/2026)
 
-- **Los Atajos en la v1**, con `expo-app-intents` en alfa.
-- **Con la alarma parada, preguntar solo la hora de dormirse.**
-- **El despertador de Moss después de la v1**, al principio sin «posponer».
+- **Los Atajos y el despertador, en la v1** (lo pediste para esta build, «si iOS
+  lo permite»). El despertador, sin «posponer».
+- **Con la hora de despertar sacada de un ancla, se pregunta solo la de
+  dormirse.**
 - **Ni widget ni notificación para confirmar**, por ahora.
 
-Si se aprueba, cambian también: «Nada corre de noche» y la regla del Focus en
-`sueno.md` y `sinReloj.ts`, el 0,05 de la alarma, y D28 en
-[`decisiones.md`](decisiones.md).
+## Lo que quedó en la v1 (26/10/2026)
+
+### El Swift (`app-intents/`, en el target de la app)
+
+| Archivo | Qué hay |
+|---|---|
+| `AccionesDeSueno.swift` | Las siete acciones. Cada una solo llama a `AppIntentDispatcher.shared.dispatch(name:)` y corre en segundo plano (sin `openAppWhenRun`) |
+| `AtajosDeMoss.swift` | El `AppShortcutsProvider`: «Me voy a dormir» y «Me desperté», con dos frases cada una |
+| `PareElDespertador.swift` | La `LiveActivityIntent` que AlarmKit corre al parar el despertador (iOS 26, oculta en Atajos) |
+| `AlarmasDeMoss.swift` | Lo de AlarmKit: permiso, la alarma puesta, poner (reemplaza la que había) y sacar. Todo con `@available(iOS 26.0, *)`; el `stopButton` de iOS 26.0 solo antes de la 26.1, que lo pone el sistema |
+| `Despertador.swift` | El módulo en línea `Despertador`: `disponible`, `permiso`, `pedirPermiso`, `programada`, `programar(hora, minuto, días, título, detener)` y `cancelar` |
+| `es.lproj/AppShortcuts.strings` | Las frases en español |
+
+| Acción (es / en) | Lo que despacha | Para el dominio |
+|---|---|---|
+| Paré la alarma / I stopped the alarm | `alarmaParada` | ancla de despertar |
+| Conecté el cargador / I plugged in the charger | `cargadorConectado` | actividad; de 19 a 4, puede ser lo último del día |
+| Desconecté el cargador / I unplugged the charger | `cargadorDesconectado` | actividad |
+| Empezó el enfoque Sueño / Sleep Focus started | `enfoqueEmpezo` | ancla de dormir, salvo que sea el horario |
+| Terminó el enfoque Sueño / Sleep Focus ended | `enfoqueTermino` | ancla de despertar, salvo que sea el horario |
+| Me voy a dormir / I'm going to sleep | `meVoyADormir` | ancla de dormir |
+| Me desperté / I woke up | `meDesperte` | ancla de despertar |
+| (el despertador de Moss) | `despertadorParado` | ancla de despertar |
+
+- **Los títulos** son claves de `Localizable.strings`, que arma Expo desde
+  `locales/es.json` y `locales/en.json` («Localizable.strings» dentro de `ios`).
+  Es la excepción a «todo el texto está en `src/textos`».
+- **Las frases** van en inglés en el código, el idioma de desarrollo del
+  proyecto (`developmentRegion = en`), y en español en
+  `app-intents/es.lproj/AppShortcuts.strings`, que entra como recurso por la
+  carpeta sincronizada de los módulos en línea.
+- **AlarmKit se enlaza como opcional** (`plugins/con-alarmkit.js`:
+  `-weak_framework AlarmKit` en `OTHER_LDFLAGS` del target de la app).
+
+### En JavaScript
+
+- **`src/secciones/sueno/RecibirAnclas.tsx`**, montado en `src/app/_layout.tsx`:
+  `useAppIntents` espera a que el almacén abra la base, guarda cada invocación
+  en la tabla `anclas` (bloque 5 de `migrar()`, con el `id` de la invocación como
+  clave), la saca de la cola y vuelve a estimar la noche. Si no se pudo guardar,
+  queda en la cola para la próxima.
+- **`src/salud/anclas.ts`**: la tabla, que no sube a la cuenta; se guarda un mes y
+  `borrarTodo()` también la borra.
+- **Las reglas** (`src/dominio/sinReloj.ts`, `deLasSenales`, con sus tests):
+  - el enfoque Sueño con horario: la misma hora, al minuto (±1), en 2 noches más
+    de las últimas 14, no cuenta;
+  - el cargador conectado de 19 a 4 puede ser lo último del día (nunca una
+    interrupción), salvo que se vuelva a conectar a los 30 minutos de
+    desconectarlo;
+  - «Me voy a dormir» y el enfoque prendido a mano, igual;
+  - un ancla de despertar no cuenta si después hubo hora y media de silencio (te
+    volviste a dormir);
+  - la confianza sube 0,1 con un ancla de despertar y 0,05 con una de dormir al
+    empezar el hueco (propuestas, a calibrar con la prueba en sombra).
+- **La pregunta de la mañana**: con la hora de despertar sacada de un ancla, «¿Te
+  dormiste a las 00:30?», y el editor muestra solo esa hora.
+- **«Afinar» en Sueño** (sin reloj ni anillo en las dos semanas): la fila del
+  despertador (hora, días y la llave; en la hoja, lo que hay que saber), y los
+  Atajos automáticos con la guía paso a paso de las cinco automatizaciones, si
+  llegó cada una y la lista de lo que llegó estos días, con su hora (lo del
+  horario dice que no cuenta). Es también el diagnóstico de la noche.
+
+### Lo que hay que mirar en la build
+
+- Que el `.ipa` tenga `Metadata.appintents` y que en Atajos aparezcan las
+  acciones de Moss, en español y en inglés.
+- Que AlarmKit quede opcional (`llvm-objdump --macho --dylibs-used`: `AlarmKit`
+  con `weak`).
+- Las pruebas de «Cómo probarlo», arriba, también con el despertador en iOS 26 y
+  27.
 
 ## Fuentes
 

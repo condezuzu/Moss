@@ -10,10 +10,12 @@ import { Platform, Share } from 'react-native';
 import { elAlmacen, sinSincronizar, subirLoQueFalta } from '@/almacen';
 import { buzon } from '@/almacen/buzonDeMoss';
 import { csvDeMetas, csvDePesos, csvDeRegistros } from '@/dominio/exportar';
+import { borrarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
 import { t } from '@/textos';
 import { borrarFotos } from '@/secciones/comida/fotos';
 import { borrarEnElServidor } from './cuentaApple';
+import { borrarFotoDePerfil } from './foto';
 
 const columnas = () => ({
   dia: t('exportar.columnas.dia'), comida: t('exportar.columnas.comida'), momento: t('exportar.columnas.momento'), alimento: t('exportar.columnas.alimento'),
@@ -75,10 +77,11 @@ async function laSesion(): Promise<Session | null | undefined> {
 /** La lista de compras tachada (Plan.tsx). */
 const COMPRADAS = 'moss:compradas';
 
-/** Todo lo de la persona en el teléfono: el almacén, las fotos de las comidas, lo tachado y lo que esperaba en el buzón. */
+/** Todo lo de la persona en el teléfono: el almacén (con tu nombre), las fotos de las comidas, tu foto, lo tachado y lo que esperaba en el buzón. */
 async function borrarElTelefono() {
   await elAlmacen().olvidarTodo();
   borrarFotos();
+  borrarFotoDePerfil();
   await AsyncStorage.removeItem(COMPRADAS).catch(() => {});
   await buzon().vaciar().catch(() => {});
 }
@@ -122,6 +125,8 @@ export async function borrarLaCuenta(): Promise<boolean | null> {
       sinRevocar: async () => !(await supabase().rpc('borrar_cuenta')).error,
     });
     if (borrada !== true) return borrada;
+    // La sesión que Ascent veía en el llavero compartido se va con la cuenta, aunque salir falle.
+    await borrarMiSesion();
     await supabase().auth.signOut().catch(() => {});
     await borrarElTelefono();
     return true;

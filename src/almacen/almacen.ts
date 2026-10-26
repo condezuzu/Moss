@@ -18,6 +18,7 @@ import { logrosNuevos, type Logro } from '@/dominio/logros';
 import {
   edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil,
 } from '@/dominio/metas';
+import { limpiarNombre, type Nombre } from '@/dominio/nombre';
 import { adaptarRegistros, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
 import {
   borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
@@ -27,7 +28,7 @@ import { aplicar, ganadores, type Datos } from './mezclar';
 import type { LoDeSalud } from '@/salud/convertir';
 import type { Cara, NochePropia } from '@/dominio/sueno';
 import type { AvisoDeHabito, Avisos } from '@/dominio/avisos';
-import { DE_COMIDA, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
+import { DE_COMIDA, NOMBRE, nombreDeAjuste, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
 
 /** Los avisos que se eligen; los de comida van aparte, en `recordatorios`. */
 export type AjustesDeAvisos = Omit<Avisos, 'comidas'>;
@@ -50,6 +51,8 @@ export type Estado = MapasDeComida & {
   logros: Logro[];
   /** Las respuestas del cuestionario; hasta contestarlo, nada. */
   perfil: Perfil | null;
+  /** Tu nombre, con la hora de su cambio (src/dominio/nombre.ts): va aparte del perfil y sube a la cuenta. Sin nombre, null. */
+  nombre: Nombre | null;
   /** Las metas de comida desde cada fecha, de la más vieja a la más nueva. */
   metas: MetaGuardada[];
   pesos: Peso[];
@@ -271,7 +274,7 @@ export function crearAlmacen(op: Opciones) {
   let repositorio: Repositorio | undefined;
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
-    perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
+    perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
     recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
@@ -375,7 +378,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), listo: true }, true);
     revisarControl();
   }
 
@@ -692,6 +695,18 @@ export function crearAlmacen(op: Opciones) {
       cambiar({ perfil, ...(cambios.sexo !== undefined && cambios.sexo !== antes.sexo ? alDia({ ...estado, perfil }).estado : {}) }, false);
     },
     /**
+     * Tu nombre, desde Editar perfil (vacío lo borra). El que trae Apple al entrar va con la hora más
+     * vieja posible, como los hábitos de ejemplo: queda solo si no había ninguno, y cualquier nombre
+     * que escribas, en cualquier teléfono, le gana.
+     */
+    ponerNombre(texto: string, deApple = false) {
+      const valor = limpiarNombre(texto);
+      if (deApple ? !valor || estado.nombre : valor === (estado.nombre?.valor ?? '')) return;
+      const nombre: Nombre = { valor, actualizado: deApple ? DESDE_SIEMPRE : momento() };
+      guardar((r) => r.guardarAjuste(NOMBRE, JSON.stringify(nombre)));
+      cambiar({ nombre }, false);
+    },
+    /**
      * Lo que se leyó de Salud. Los hábitos automáticos de hoy que llegaron a su meta se encienden
      * solos (Salud nunca los apaga), y los días sin peso toman el de Salud.
      */
@@ -961,7 +976,7 @@ export function crearAlmacen(op: Opciones) {
     mezclar(remoto: Datos): boolean {
       const local: Datos = {
         habitos: estado.habitos, periodos: estado.periodos, dias: [...estado.dias.values()], marcas: [...estado.marcas.values()],
-        logros: estado.logros, perfil: estado.perfil, metas: estado.metas, pesos: estado.pesos, semilla: estado.semilla, ...listasDe(estado),
+        logros: estado.logros, perfil: estado.perfil, nombre: estado.nombre, metas: estado.metas, pesos: estado.pesos, semilla: estado.semilla, ...listasDe(estado),
       };
       const g = ganadores(local, remoto);
       if (sinCambios(g)) return false;
@@ -996,7 +1011,7 @@ export function crearAlmacen(op: Opciones) {
         metas: d.metas,
         perfil: d.perfil,
       });
-      cambiar({ ...nuevo, semilla, perfil: d.perfil, metas: d.metas, pesos: d.pesos, ...comida }, true);
+      cambiar({ ...nuevo, semilla, perfil: d.perfil, nombre: d.nombre ?? null, metas: d.metas, pesos: d.pesos, ...comida }, true);
       return true;
     },
     /** Si ya es otro día (medianoche, o la app vuelve del fondo), arma el nuevo. */

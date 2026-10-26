@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { elAlmacen } from '@/almacen';
 import { useCieloDeHoy, useEncendidos } from '@/cielo/dia';
 import { decimal } from '@/comida/porciones';
-import { KG_POR_LIBRA, pesoCorporalEn } from '@/dominio/cantidades';
+import { pesoCorporalEn } from '@/dominio/cantidades';
 import { estadoDeMacro } from '@/dominio/metas';
 import { calidadDeNoche, ultimasNoches } from '@/dominio/sueno';
 import { aguaDelDia } from '@/dominio/registros';
@@ -152,7 +152,6 @@ function Calorias() {
                 <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
               </View>
               {numeros && <Text style={estilos.macroValor}>{valor}</Text>}
-              {numeros && <Text style={estilos.macroDe}>{t('inicio.deMeta', { comido: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>}
               <View style={estilos.barra}>
                 <View style={[estilos.barraLlena, { width: `${Math.min(100, (comido[m] / meta[m]) * 100)}%`, backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
               </View>
@@ -174,8 +173,6 @@ function Objetivo() {
     return `${numero(v.valor, dec)} ${v.unidad}`;
   };
   const unidad = pesoCorporalEn(1, sistema).unidad;
-  // El ritmo va con dos decimales: sin el redondeo de pesoCorporalEn.
-  const ritmo = (x: number) => conSigno(sistema === 'imperial' ? x / KG_POR_LIBRA : x, 2);
   const g = p.progreso;
   const metaKg = p.perfil.pesoMeta;
   const bien = g.estado === 'enCamino' || g.estado === 'llegaste' || g.estado === 'estable';
@@ -211,7 +208,6 @@ function Objetivo() {
       {g.hecho !== null && p.pesoInicial !== null && g.peso !== null && metaKg ? (
         <Camino hecho={g.hecho} etiquetas={[numero(pesoCorporalEn(p.pesoInicial, sistema).valor, 1), numero(pesoCorporalEn(g.peso, sistema).valor, 1), numero(pesoCorporalEn(metaKg, sistema).valor, metaKg % 1 ? 1 : 0)]} />
       ) : null}
-      {g.ritmo !== null && <Text style={estilos.nota}>{t('inicio.ritmo', { ritmo: ritmo(g.ritmo), plan: ritmo(g.ritmoPlan), unidad })}</Text>}
     </>
   );
 }
@@ -249,7 +245,7 @@ function Peso({ anchoGrafico }: { anchoGrafico: number }) {
               {!p.balance.dias.length
                 ? t('progreso.sinBalance')
                 : e.numeros
-                  ? plural('inicio.balanceDias', p.balance.dias.length, { gasto: numero(p.gasto) })
+                  ? plural('inicio.balanceCorto', p.balance.dias.length)
                   : plural('inicio.balanceDiasSinNumeros', p.balance.dias.length)}
             </Text>
           </View>
@@ -262,7 +258,7 @@ function Peso({ anchoGrafico }: { anchoGrafico: number }) {
 }
 
 // ------------------------------------------------------------------ el día en el cielo
-/** La constelación de hoy en chico, con lo encendido, y lo que llega solo de Salud. */
+/** La constelación de hoy en chico, con lo encendido: lo que llega de Salud está en Sueño y en Hábitos. */
 function Cielo({ ancho }: { ancho: number }) {
   const dia = useCieloDeHoy();
   const encendidos = useEncendidos();
@@ -271,15 +267,6 @@ function Cielo({ ancho }: { ancho: number }) {
     <>
       <Cabeza titulo={t('inicio.bloques.cielo')} derecha={dia.habitos.length ? <Chip texto={t('inicio.encendidas', { n: hechos, total: dia.habitos.length })} /> : undefined} />
       {dia.constelacion ? <MiniCielo constelacion={dia.constelacion} encendidas={encendidos} ancho={ancho} alto={118} /> : <View style={{ height: 40 }} />}
-      <View style={estilos.chips}>
-        {/* useEncendidos va en el orden de todos los hábitos del día: cada chip lleva el índice de su hábito. */}
-        {dia.habitos.map((h, i) => ({ h, i })).filter(({ h }) => (h.auto === 'sueno' || h.auto === 'pasos') && h.valor !== undefined).map(({ h, i }) => (
-          <View key={h.id} style={[estilos.dato2, encendidos[i] && estilos.dato2Hecho]}>
-            <Icono nombre={h.auto === 'sueno' ? 'moon' : 'figure.walk'} tam={13} color={encendidos[i] ? colores.oroClaro : 'rgba(239, 230, 207, 0.5)'} />
-            <Text style={[estilos.dato2Texto, encendidos[i] && estilos.dato2TextoHecho]}>{h.auto === 'sueno' ? t('inicio.dormiste', { h: duracion(h.valor ?? 0) }) : t('inicio.pasos', { n: numero(h.valor ?? 0) })}</Text>
-          </View>
-        ))}
-      </View>
     </>
   );
 }
@@ -488,7 +475,6 @@ const estilos = StyleSheet.create({
   macroNombre: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   macroNombreTexto: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
   macroValor: { fontFamily: letras.numero, fontSize: 20, color: colores.pergamino, fontVariant: ['tabular-nums'] },
-  macroDe: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
   barra: { height: 3, marginTop: 3, borderRadius: 3, backgroundColor: 'rgba(239, 230, 207, 0.08)', overflow: 'hidden' },
   barraLlena: { height: '100%', borderRadius: 3 },
   objFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 9 },
@@ -501,10 +487,6 @@ const estilos = StyleSheet.create({
   datoCifra: { fontFamily: letras.numero, fontSize: 26, letterSpacing: -0.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
   datoUnidad: { fontFamily: letras.texto, fontSize: 12, letterSpacing: 0, color: 'rgba(239, 230, 207, 0.55)' },
   datoTexto: { fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
-  dato2: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingLeft: 8, paddingRight: 10, borderRadius: 999, backgroundColor: 'rgba(239, 230, 207, 0.06)' },
-  dato2Hecho: {},
-  dato2Texto: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.72)', fontVariant: ['tabular-nums'] },
-  dato2TextoHecho: { color: colores.cifra },
   vasos: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 3 },
   vaso: { width: 7, height: 16, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderBottomLeftRadius: 3, borderBottomRightRadius: 3, borderWidth: 1, borderColor: 'rgba(188, 216, 242, 0.35)' },
   vasoLleno: { backgroundColor: '#bcd8f2', borderColor: '#bcd8f2' },

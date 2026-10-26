@@ -25,6 +25,13 @@ export function valorAutomatico(h: HabitoDelCielo) {
   return '';
 }
 
+/** Debajo de la etiqueta, solo lo que lleva hoy: la meta ya está en el nombre («8.000 pasos»). */
+export function valorCorto(h: HabitoDelCielo) {
+  if (h.valor === undefined) return '';
+  if (h.auto === 'pasos') return miles(h.valor);
+  return valorAutomatico(h);
+}
+
 export function useTextos() {
   return useMemo(() => ({ t, nombre: nombreEn, valorAutomatico }), []);
 }

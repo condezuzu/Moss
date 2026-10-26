@@ -17,9 +17,9 @@ import { soloLosDeEjemplo } from '@/almacen/almacen';
 import PantallaDelCielo from '@/cielo/PantallaDelCielo';
 import { t } from '@/textos';
 import { colores } from '@/tema';
-import { CONEXION_CON_ASCENT } from '@/lib/ascent';
 import { useAlTocarUnAviso } from '@/recordatorios/programar';
 import { Ascent } from './Ascent';
+import { alAbrirAscent } from './ascent/abrir';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
 import { AvisoFlotante, Icono } from './comida/comunes';
@@ -129,6 +129,15 @@ export default function Secciones() {
     subida.set(subirOBajar(subida.get(), 0));
     setAscentAbierta(false);
   };
+  // Desde la recuperación en Sueño o la fila de Perfil: pasa por Hábitos y la sube, como en la galería.
+  useEffect(() => alAbrirAscent(() => {
+    if (actual !== HABITOS) {
+      cambiarDePestana(HABITOS);
+      posicion.set(HABITOS);
+    }
+    subida.set(subirOBajar(subida.get(), 1));
+    setAscentAbierta(true);
+  }));
   const abrirHoja = (vista: VistaDelMas = 'menu') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setVistaDelMas(vista);
@@ -188,15 +197,15 @@ export default function Secciones() {
           <PantallaDelCielo
             paginaX={paginaX}
             abajo={abajo}
-            // Sin la conexión con Ascent (la v1), ni el gesto para subirla ni su flecha.
-            subida={CONEXION_CON_ASCENT ? {
+            subida={{
               progreso: subida,
               limiteY: alto - abajo - 8,
               flecha: { x: ancho / 2, y: alto - abajo - 24 },
               alCambiar: setAscentAbierta,
-            } : undefined}
+            }}
             entrada={entrada}
             alEditarHabito={setEditando}
+            alIrAComida={() => ir(PESTANAS.indexOf('comida'))}
           />
           {conSecciones && (
             <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -229,7 +238,7 @@ export default function Secciones() {
                   </View>
                 ))}
               </Animated.View>
-              {CONEXION_CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
+              <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />
             </Animated.View>
           )}
         </Animated.View>

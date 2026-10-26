@@ -1,5 +1,25 @@
-// La conexión con Ascent (spec/ascent.md). Hasta que funcione de verdad, la v1 no muestra nada de
-// Ascent: ni la sección arriba de Hábitos, ni su flecha, ni su fila en Perfil. Se prende con
-// EXPO_PUBLIC_CON_ASCENT=1 (en las variables de EAS o en .env), sin tocar el código.
+// Ascent, la otra app del equipo (spec/ascent.md): si está en este iPhone, abrirla y su página en la
+// App Store. Para saber si está, app.json declara su esquema en LSApplicationQueriesSchemes.
 
-export const CONEXION_CON_ASCENT = process.env.EXPO_PUBLIC_CON_ASCENT === '1';
+import { Linking } from 'react-native';
+
+const ESQUEMA = 'ascent://';
+export const ASCENT_EN_LA_APP_STORE = 'https://apps.apple.com/app/id6815006917';
+
+/** Si Ascent está instalada en este iPhone. */
+export async function hayAscent(): Promise<boolean> {
+  try {
+    return await Linking.canOpenURL(ESQUEMA);
+  } catch {
+    return false;
+  }
+}
+
+/** Abre Ascent: al entrar deja su sesión en el llavero compartido, y Moss la ve al volver. */
+export function abrirLaApp(): void {
+  Linking.openURL(ESQUEMA).catch(() => {});
+}
+
+export function irALaAppStore(): void {
+  Linking.openURL(ASCENT_EN_LA_APP_STORE).catch(() => {});
+}

@@ -86,6 +86,38 @@ export function encajar(plano: Punto[], centro: Punto, maxAncho: number, maxAlto
   return plano.map(([x, y]) => [centro[0] + (x - cx) * escala, centro[1] + (y - cy) * escala]);
 }
 
+/**
+ * Aparta las estrellas que quedaron más cerca que `minimo`, de a poco y sin mover el centro: en una
+ * figura con dos estrellas pegadas (los Aselli de Cáncer) costaba tocar la que se quería. Las demás
+ * quedan donde estaban.
+ */
+export function separar(plano: Punto[], minimo: number): Punto[] {
+  const p = plano.map(([x, y]): Punto => [x, y]);
+  if (p.length < 2) return p;
+  const [cx, cy] = p.reduce<Punto>((s, q) => [s[0] + q[0] / p.length, s[1] + q[1] / p.length], [0, 0]);
+  for (let vuelta = 0; vuelta < 24; vuelta++) {
+    let movio = false;
+    for (let i = 0; i < p.length; i++) {
+      for (let j = i + 1; j < p.length; j++) {
+        let dx = p[j][0] - p[i][0];
+        let dy = p[j][1] - p[i][1];
+        let d = Math.hypot(dx, dy);
+        if (d >= minimo) continue;
+        // Dos en el mismo lugar: se apartan de costado.
+        if (d < 1e-9) { dx = 1; dy = 0; d = 1; }
+        const falta = (minimo - d) / 2 + 1e-6;
+        const ux = dx / d, uy = dy / d;
+        p[i][0] -= ux * falta; p[i][1] -= uy * falta;
+        p[j][0] += ux * falta; p[j][1] += uy * falta;
+        movio = true;
+      }
+    }
+    if (!movio) break;
+  }
+  const [nx, ny] = p.reduce<Punto>((s, q) => [s[0] + q[0] / p.length, s[1] + q[1] / p.length], [0, 0]);
+  return p.map(([x, y]) => [x - nx + cx, y - ny + cy]);
+}
+
 /** Orden en que se encienden las líneas: desde la estrella más brillante hacia afuera. */
 export function profundidades(n: number, lineas: [number, number][]): number[] {
   const prof = new Array<number>(n).fill(Infinity);

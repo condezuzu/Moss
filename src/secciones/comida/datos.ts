@@ -6,6 +6,7 @@ import { useSyncExternalStore } from 'react';
 
 import { elAlmacen } from '@/almacen';
 import { metaVigente, type Estado } from '@/almacen/almacen';
+import { estadoConAscent, metaConAscent, suscribirConAscent } from '@/almacen/ascent';
 import { conMayuscula } from '@/comida/buscar';
 import { cantidadDePorcion, decimal } from '@/comida/porciones';
 import { ACEITE, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
@@ -17,8 +18,8 @@ import { idioma, lista, t } from '@/textos';
 
 /** Todo el estado del almacén: cambia de objeto con cada cambio, así React sabe cuándo pintar. */
 export function useEstado(): Estado {
-  const a = elAlmacen();
-  return useSyncExternalStore(a.suscribir, a.estado);
+  // También cambia con lo que llega de Ascent: la meta del día depende de eso (src/almacen/ascent.ts).
+  return useSyncExternalStore(suscribirConAscent, estadoConAscent);
 }
 
 /**
@@ -85,10 +86,13 @@ export const hora = (minutos: number) => `${String(Math.floor(minutos / 60)).pad
 /** La comida que toca ahora. */
 export const comidaDeAhora = (): Comida => comidaDeLaHora(minutosDe(new Date()));
 
-/** La meta de un día, sin lo que no son macros, con la semana repartida si se reparte. Antes del cuestionario, null. */
-export function metaDelDia(e: Pick<Estado, 'metas' | 'perfil'>, dia: ClaveDia): Macros | null {
+/**
+ * La meta de un día, sin lo que no son macros, con la semana repartida si se reparte y, con Ascent
+ * vinculada, las calorías según el día y la proteína de la sesión. Antes del cuestionario, null.
+ */
+export function metaDelDia(e: Pick<Estado, 'metas' | 'perfil' | 'pesos' | 'hoy'>, dia: ClaveDia): Macros | null {
   const m = metaVigente(e, dia);
-  return m ? metaRepartida({ kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas }, e.perfil, diaDeLaSemana(dia)) : null;
+  return m ? metaConAscent(metaRepartida({ kcal: m.kcal, proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas }, e.perfil, diaDeLaSemana(dia)), e, dia) : null;
 }
 
 export type ComidaDelDia = { comida: Comida; registros: Registro[]; total: Valores; minutos: number; planificada: boolean };

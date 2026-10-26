@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  actividadDeLosPasos, actividadDelMovimiento, aprenderAjuste, conNochesDeMoss, estimarNoche, habitualDe, instanteDe, latencia, nocheDeMoss, quePreguntar,
-  type Actividad, type Habitual,
+  actividadDeLosPasos, actividadDelMovimiento, aprenderAjuste, conNochesDeMoss, deLasSenales, despertarAnclado, estimarNoche, habitualDe, instanteDe, latencia, nocheDeMoss, quePreguntar,
+  type Actividad, type Habitual, type Senal,
 } from './sinReloj';
 import { armarNoches, type Fuente, type NochePropia } from './sueno';
 
@@ -87,9 +87,72 @@ describe('la noche sin reloj', () => {
     expect(e.motivos).toContain('sinVentana');
   });
 
-  it('un Atajo: la alarma dice cuándo te despertaste', () => {
+  it('un Atajo: la alarma dice cuándo te despertaste, y la confianza sube', () => {
+    const sin = estimar(dia('23:30', '07:30'))!;
     const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 06:50'), que: 'despertar' }] })!;
     expect(e.despertar).toBe(min('2026-10-22 06:50'));
+    expect(e.anclada).toEqual({ dormirse: false, despertar: true });
+    expect(e.probabilidad).toBeCloseTo(sin.probabilidad + 0.1, 5);
+    expect(sin.anclada).toEqual({ dormirse: false, despertar: false });
+  });
+
+  it('la alarma parada a la madrugada, si después te volviste a dormir, es una interrupción y no tu hora de despertar', () => {
+    const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 03:00'), que: 'despertar' }] })!;
+    expect(e.despertar).toBe(min('2026-10-22 07:12'));
+    expect(e).toMatchObject({ interrupciones: 1, anclada: { despertar: false } });
+  });
+
+  it('«Me voy a dormir» tarde es lo último del día, no una interrupción', () => {
+    // Sin ancla, lo suelto de las 00:40 sería una interrupción y la noche empezaría a las 22:00.
+    const suelto = estimar(dia('22:00', '07:30', [uso('2026-10-22 00:40', '2026-10-22 00:41', 'atajo')]))!;
+    expect(suelto.dormirse).toBe(min('2026-10-21 22:00') + 153);
+    const e = estimar(dia('22:00', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 00:40'), que: 'dormir' }] })!;
+    expect(e.dormirse).toBe(min('2026-10-22 00:41') + 18);
+    expect(e.anclada).toEqual({ dormirse: true, despertar: false });
+  });
+
+  // Lo que avisan los Atajos y el despertador (spec/sueno-sin-esfuerzo.md).
+  const senal = (que: Senal['que'], texto: string, segundos = 0): Senal => ({ id: `${que}-${texto}-${segundos}`, que, en: hora(texto) + segundos * 1000 });
+
+  it('la alarma, el despertador y «Me desperté» son anclas de despertar; «Me voy a dormir», de dormir', () => {
+    const { anclas, actividad } = deLasSenales([
+      senal('alarmaParada', '2026-10-22 06:50'), senal('despertadorParado', '2026-10-22 06:55'), senal('meDesperte', '2026-10-22 07:00'), senal('meVoyADormir', '2026-10-21 23:40'),
+    ], UY);
+    expect(anclas.map((a) => a.que)).toEqual(['despertar', 'despertar', 'despertar', 'dormir']);
+    expect(actividad).toEqual([]);
+  });
+
+  it('el cargador de 19 a 4 puede ser lo último del día, salvo que vuelva a conectarse al rato de desconectarlo', () => {
+    const { actividad } = deLasSenales([
+      senal('cargadorConectado', '2026-10-21 17:30'), senal('cargadorConectado', '2026-10-22 00:40'),
+      senal('cargadorDesconectado', '2026-10-22 03:00'), senal('cargadorConectado', '2026-10-22 03:04'),
+    ], UY);
+    expect(actividad.map((a) => !!a.fin)).toEqual([false, true, false, false]);
+    // Conectarlo a las 00:40 dice que estabas despierto: la noche empieza ahí.
+    const e = estimar(dia('22:00', '07:30', actividad.slice(1, 2)))!;
+    expect(e.dormirse).toBe(min('2026-10-22 00:41') + 18);
+    // Desconectarlo y volver a conectarlo a la madrugada es usar el teléfono: una interrupción.
+    const noche = estimar(dia('23:30', '07:30', actividad.slice(2)))!;
+    expect(noche).toMatchObject({ dormirse: min('2026-10-22 00:01'), interrupciones: 1 });
+  });
+
+  it('el enfoque Sueño a la misma hora varias noches es el horario y no cuenta; prendido a mano, sí', () => {
+    const horario = [senal('enfoqueEmpezo', '2026-10-19 23:15', 20), senal('enfoqueEmpezo', '2026-10-20 23:15', 5), senal('enfoqueEmpezo', '2026-10-21 23:16')];
+    const aMano = senal('enfoqueEmpezo', '2026-10-18 22:47');
+    expect(deLasSenales([...horario, aMano], UY).anclas).toEqual([{ en: aMano.en, que: 'dormir' }]);
+    // Con dos noches todavía no se sabe: cuentan.
+    expect(deLasSenales(horario.slice(0, 2), UY).anclas).toHaveLength(2);
+    // Apagado a mano a la mañana, ancla de despertar.
+    expect(deLasSenales([senal('enfoqueTermino', '2026-10-22 07:03')], UY).anclas).toEqual([{ en: hora('2026-10-22 07:03'), que: 'despertar' }]);
+  });
+
+  it('con la hora de despertar sacada de un ancla, a la mañana se pregunta solo la de dormirte', () => {
+    const { anclas } = deLasSenales([senal('alarmaParada', '2026-10-22 06:50', 30)], UY);
+    const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas })!;
+    // Lo que se guarda es al minuto, como la noche de Moss.
+    expect(despertarAnclado(anclas, '2026-10-22', UY, Math.round(e.despertar))).toBe(true);
+    const sin = estimar(dia('23:30', '07:30'))!;
+    expect(despertarAnclado(anclas, '2026-10-22', UY, Math.round(sin.despertar))).toBe(false);
   });
 
   it('lo aprendido corre las horas: dos correcciones de media hora más tarde', () => {

@@ -1,6 +1,7 @@
-// Perfil, la última sección (antes Ajustes): tus datos, las preferencias, Salud, los aparatos y
-// Ascent, tus datos para llevar o borrar y de dónde salen los alimentos. Las metas pasaron a
-// Progreso, con la estrategia. Es una maqueta: lo que hace cada fila ya está en la especificación.
+// Perfil, la última sección (antes Ajustes): arriba, la persona (su foto o su inicial, y su nombre),
+// que abre Editar perfil; tus datos, las preferencias, Salud, los aparatos y Ascent, tus datos para
+// llevar o borrar y de dónde salen los alimentos. Las metas pasaron a Progreso, con la estrategia.
+// Es una maqueta: lo que hace cada fila ya está en la especificación.
 // Aparatos (spec/aparatos.md) es una hoja: los que escriben tu sueño, de cuál sale la noche y qué
 // llega de cada marca.
 
@@ -218,14 +219,220 @@ const SeccionPerfil = (() => {
       opciones.alCambiar();
     }
 
+    // ------------------------------------------------------------ la persona y Editar perfil
+    // Arriba de Perfil, la persona: su foto (o su inicial; sin nombre, la silueta) y su nombre, con el
+    // correo de la cuenta debajo. Tocarla abre Editar perfil, como en la app (Perfil.tsx): la foto, el
+    // nombre y tus datos, que se guardan juntos. La foto queda solo en el teléfono: acá se elige de
+    // verdad (en el iPhone, con la cámara o las fotos) y se recorta cuadrada y chica, como en la app
+    // (src/secciones/perfil/foto.ts).
+    // Cerrar sin «Guardar» deja todo como estaba.
+    const editar = Util.hoja(tel, 'hh-hoja pf-hoja-editar', () => { ed = null; opciones.alCambiar(); });
+    const CORREO = 'agustin@icloud.com';
+    const CAMARA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8.5a2 2 0 0 1 2-2h1.8l1.4-2h4.6l1.4 2h1.8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg>';
+    const FOTOS = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/></svg>';
+    const RANGOS = Metas.RANGOS_DEL_CUESTIONARIO;
+    // Lo guardado: el nombre (el de la persona de mentira), la foto y tus datos, si se cambiaron.
+    Object.assign(s, { nombre: opciones.persona().perfil.nombre || '', foto: null, datos: null });
+    // Lo que se está editando, hasta «Guardar».
+    let ed = null;
+    const datosDe = () => {
+      const p = opciones.persona().perfil;
+      return s.datos || { sexo: p.sexo, edad: Number(Datos.HOY.slice(0, 4)) - p.nacimiento, alturaCm: p.alturaCm, actividad: p.actividad };
+    };
+    const inicial = (nombre) => ([...nombre.trim()][0] || '').toLocaleUpperCase();
+
+    // El círculo se rehace en su lugar: así el oro entra con una transición al escribir la primera letra.
+    function pintarAvatar(a, foto, nombre, grande) {
+      a.className = 'pf-avatar' + (grande ? ' grande' : '') + (!foto && !nombre.trim() ? ' vacio' : '');
+      if (foto) {
+        const img = a.querySelector('img') || el('img');
+        if (img.getAttribute('src') !== foto) img.src = foto;
+        img.alt = '';
+        a.replaceChildren(img);
+      } else if (nombre.trim()) a.textContent = inicial(nombre);
+      else a.innerHTML = icono('perfil');
+      return a;
+    }
+    const avatar = (foto, nombre, grande) => pintarAvatar(el('div'), foto, nombre, grande);
+
+    // Lo que trae el selector, con el cuadrado del medio achicado a 512 px.
+    function achicar(archivo) {
+      return createImageBitmap(archivo).then((imagen) => {
+        const lado = Math.min(imagen.width, imagen.height);
+        const destino = Math.min(512, lado);
+        const lienzo = el('canvas');
+        lienzo.width = destino;
+        lienzo.height = destino;
+        const ctx = lienzo.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(imagen, (imagen.width - lado) / 2, (imagen.height - lado) / 2, lado, lado, 0, 0, destino, destino);
+        return lienzo.toDataURL('image/jpeg', 0.85);
+      });
+    }
+    function elegirFoto(conCamara) {
+      const entrada = el('input');
+      entrada.type = 'file';
+      entrada.accept = 'image/*';
+      if (conCamara) entrada.setAttribute('capture', 'user');
+      entrada.addEventListener('change', () => {
+        const archivo = entrada.files && entrada.files[0];
+        if (!archivo || !ed) return;
+        achicar(archivo).then((url) => {
+          if (!ed) return;
+          ed.foto = url;
+          pintarEditar(true);
+        }).catch(() => {});
+      });
+      entrada.click();
+    }
+    // Para las capturas: una foto de mentira, un atardecer sobre las sierras.
+    function fotoDeMentira() {
+      const lienzo = el('canvas');
+      lienzo.width = 512;
+      lienzo.height = 512;
+      const x = lienzo.getContext('2d');
+      const cielo = x.createLinearGradient(0, 0, 0, 512);
+      [[0, '#f2c48d'], [0.45, '#c98a8a'], [0.75, '#5d5a8c'], [1, '#262b4d']].forEach(([en, color]) => cielo.addColorStop(en, color));
+      x.fillStyle = cielo;
+      x.fillRect(0, 0, 512, 512);
+      const sol = x.createRadialGradient(300, 250, 0, 300, 250, 74);
+      sol.addColorStop(0, 'rgba(255, 242, 214, 1)');
+      sol.addColorStop(0.55, 'rgba(255, 226, 180, 0.85)');
+      sol.addColorStop(1, 'rgba(255, 226, 180, 0)');
+      x.fillStyle = sol;
+      x.fillRect(200, 150, 200, 200);
+      const sierra = (color, puntos) => {
+        x.fillStyle = color;
+        x.beginPath();
+        x.moveTo(0, 512);
+        puntos.forEach(([px, py]) => x.lineTo(px, py));
+        x.lineTo(512, 512);
+        x.fill();
+      };
+      sierra('#3b3c66', [[0, 330], [90, 282], [170, 318], [260, 264], [350, 310], [430, 272], [512, 300]]);
+      sierra('#1d2140', [[0, 402], [110, 352], [200, 390], [300, 342], [400, 380], [512, 352]]);
+      return lienzo.toDataURL('image/jpeg', 0.85);
+    }
+
+    function pintarEditar(mantener) {
+      const h = editar.el;
+      const antes = h.querySelector('.hh-cuerpo');
+      const arriba = mantener && antes ? antes.scrollTop : 0;
+      h.innerHTML = '';
+      h.setAttribute('aria-label', tx('perfil.editar.titulo'));
+      const cab = el('header', 'hh-cab');
+      cab.append(el('h3', 'hh-titulo', tx('perfil.editar.titulo')), boton('hb-cerrar', icono('cerrar'), () => editar.cerrar(), tx('comida.cerrar')));
+      const cuerpo = el('div', 'hh-cuerpo');
+
+      // La foto, sus dos botones y dónde queda. Solo lo que cambió entra con un fundido.
+      const caja = el('div', 'pf-editar-foto');
+      const grande = avatar(ed.foto, ed.nombre, true);
+      grande.setAttribute('role', 'img');
+      grande.setAttribute('aria-label', tx('perfil.editar.foto'));
+      const otraFoto = ed.foto !== ed.fotoPintada;
+      if (otraFoto) grande.classList.add('entra');
+      ed.fotoPintada = ed.foto;
+      const botones = el('div', 'pf-editar-botones');
+      botones.append(
+        boton('cm-accion', `${CAMARA}<span>${tx('perfil.editar.sacarFoto')}</span>`, () => elegirFoto(true)),
+        boton('cm-accion', `${FOTOS}<span>${tx('perfil.editar.elegirFoto')}</span>`, () => elegirFoto(false)),
+      );
+      caja.append(grande, botones);
+      if (ed.foto) {
+        const quitar = boton('pf-quitar-foto', tx('perfil.editar.quitarFoto'), () => { ed.foto = null; pintarEditar(true); });
+        if (otraFoto) quitar.classList.add('entra');
+        caja.appendChild(quitar);
+      }
+      caja.appendChild(el('p', 'pf-editar-nota', tx('perfil.editar.fotoNota')));
+      cuerpo.appendChild(caja);
+
+      // El nombre: sin uno guardado, Moss lo pide.
+      cuerpo.appendChild(el('div', 'aj-etq', tx('perfil.editar.nombre')));
+      if (!s.nombre.trim()) cuerpo.appendChild(el('p', 'pf-pedido', tx('perfil.editar.sinNombre')));
+      const campo = el('input', 'hh-campo');
+      campo.type = 'text';
+      campo.maxLength = 60;
+      campo.value = ed.nombre;
+      campo.placeholder = tx('perfil.editar.nombreCampo');
+      campo.autocomplete = 'name';
+      campo.setAttribute('aria-label', tx('perfil.editar.nombre'));
+      campo.addEventListener('input', () => {
+        ed.nombre = campo.value;
+        // Sin foto, el círculo grande muestra la inicial de lo que se escribe.
+        if (!ed.foto) pintarAvatar(grande, null, ed.nombre, true);
+      });
+      cuerpo.appendChild(campo);
+
+      // Tus datos, como estaban en su hoja: no cambian las metas.
+      const d = ed.datos;
+      const repintar = () => pintarEditar(true);
+      cuerpo.appendChild(el('div', 'aj-etq', tx('perfil.sexo')));
+      const sexos = el('div', 'aj-segmento');
+      ['f', 'm'].forEach((v) => {
+        const b = boton('aj-seg', '', () => { d.sexo = v; repintar(); });
+        b.textContent = tx('perfil.sexos.' + v);
+        b.setAttribute('aria-pressed', String(d.sexo === v));
+        sexos.appendChild(b);
+      });
+      cuerpo.appendChild(sexos);
+      const pasos = (valor, bajar, subir) => {
+        const p = el('div', 'fi-stepper');
+        p.append(boton('fi-paso', icono('menos'), () => { bajar(); repintar(); }, '−'), el('b', 'fi-valor pf-valor', valor), boton('fi-paso', icono('mas'), () => { subir(); repintar(); }, '+'));
+        return p;
+      };
+      cuerpo.appendChild(el('div', 'aj-etq', tx('perfil.edad')));
+      cuerpo.appendChild(pasos(tx('perfil.anios', { n: d.edad }), () => { d.edad = Math.max(RANGOS.edad[0], d.edad - 1); }, () => { d.edad = Math.min(RANGOS.edad[1], d.edad + 1); }));
+      cuerpo.appendChild(el('div', 'aj-etq', tx('perfil.altura')));
+      cuerpo.appendChild(pasos(`${numero(d.alturaCm)} cm`, () => { d.alturaCm = Math.max(RANGOS.alturaCm[0], d.alturaCm - 1); }, () => { d.alturaCm = Math.min(RANGOS.alturaCm[1], d.alturaCm + 1); }));
+      cuerpo.appendChild(el('div', 'aj-etq', tx('perfil.actividad')));
+      const actividades = el('div', 'pf-actividades');
+      ['poco', 'algo', 'activo', 'muy'].forEach((a) => {
+        const [titulo, detalle] = tx('entrada.cuestionario.actividad.' + a);
+        const b = boton('ent-opcion', `<b>${titulo}</b><span>${detalle}</span>`, () => { d.actividad = a; repintar(); });
+        b.setAttribute('aria-pressed', String(d.actividad === a));
+        actividades.appendChild(b);
+      });
+      cuerpo.appendChild(actividades);
+      cuerpo.appendChild(el('p', 'hh-nota', tx('perfil.tusDatosNota')));
+
+      const pie = el('footer', 'hh-pie');
+      const guardar = boton('cm-accion principal', '', () => guardarEditar());
+      guardar.textContent = tx('comun.guardar');
+      pie.appendChild(guardar);
+      h.append(el('div', 'hb-asa'), cab, cuerpo, pie);
+      cuerpo.scrollTop = arriba;
+    }
+    function abrirEditar() {
+      if (hoja.abierta) hoja.cerrar(true);
+      ed = { nombre: s.nombre, foto: s.foto, fotoPintada: s.foto, datos: Object.assign({}, datosDe()) };
+      pintarEditar();
+      editar.abrir();
+      opciones.alCambiar();
+    }
+    function guardarEditar() {
+      if (!ed) return;
+      s.nombre = ed.nombre.replace(/\s+/g, ' ').trim();
+      s.foto = ed.foto;
+      s.datos = ed.datos;
+      ed = null;
+      editar.cerrar();
+      pintar();
+    }
+
+    // Lo último que se pintó arriba: el nombre o la foto nuevos entran con un fundido; lo demás queda quieto.
+    const pintado = { nombre: s.nombre, foto: s.foto };
     function pintar() {
       cont.innerHTML = '';
-      const p = opciones.persona().perfil;
-      const cab = el('header', 'pf-cab');
-      const inicial = el('div', 'pf-inicial', p.nombre.charAt(0));
+      const cab = boton('pf-cab', '', () => abrirEditar(), tx('perfil.editar.titulo'));
       const nombres = el('div', 'pf-nombres');
-      nombres.append(el('h2', null, p.nombre));
-      cab.append(inicial, nombres);
+      const titulo = s.nombre ? el('h2', null, s.nombre) : el('h2', 'pf-sin-nombre', tx('perfil.agregarNombre'));
+      if (s.nombre !== pintado.nombre) titulo.classList.add('entra');
+      nombres.append(titulo, el('span', null, CORREO));
+      const circulo = avatar(s.foto, s.nombre);
+      if (s.foto !== pintado.foto || (!s.foto && s.nombre !== pintado.nombre)) circulo.classList.add('entra');
+      Object.assign(pintado, { nombre: s.nombre, foto: s.foto });
+      cab.append(circulo, nombres);
+      cab.insertAdjacentHTML('beforeend', icono('adelante'));
       cont.appendChild(cab);
 
       const grupo = (titulo, filas) => {
@@ -243,12 +450,13 @@ const SeccionPerfil = (() => {
         });
         cont.appendChild(ul);
       };
-      const edad = Number(Datos.HOY.slice(0, 4)) - p.nacimiento;
+      // Tus datos se cambian en Editar perfil, con el nombre y la foto.
+      const d = datosDe();
       grupo('perfil.tusDatos', [
-        ['perfil.sexo', tx('perfil.sexos.' + p.sexo), true],
-        ['perfil.edad', tx('perfil.anios', { n: edad }), true],
-        ['perfil.altura', `${numero(p.alturaCm)} cm`, true],
-        ['perfil.actividad', tx('perfil.actividades.' + p.actividad), true],
+        ['perfil.sexo', tx('perfil.sexos.' + d.sexo), true, null, abrirEditar],
+        ['perfil.edad', tx('perfil.anios', { n: d.edad }), true, null, abrirEditar],
+        ['perfil.altura', `${numero(d.alturaCm)} cm`, true, null, abrirEditar],
+        ['perfil.actividad', tx('perfil.actividades.' + d.actividad), true, null, abrirEditar],
         // Para qué comer antes y después de entrenar (Comida); con «sin déficit» no se ve.
         ...(s.sinDeficit || !opciones.comida ? [] : [['entreno.perfil.titulo', resumenDeEntreno(opciones.comida.entreno), true, null, abrirEntreno]]),
         // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál).
@@ -304,12 +512,31 @@ const SeccionPerfil = (() => {
     }
 
     pintar();
+    // Para las capturas: Editar perfil, con la foto de mentira, lo que se escribe y sin nombre.
+    window.__perfil = (accion, arg) => {
+      const pasos = {
+        abrir: () => abrirEditar(),
+        foto: () => { if (ed) { ed.foto = arg === false ? null : fotoDeMentira(); pintarEditar(true); } },
+        escribir: () => {
+          const campo = editar.el.querySelector('.hh-campo');
+          if (!ed || !campo) return;
+          campo.value = arg;
+          campo.dispatchEvent(new Event('input'));
+        },
+        guardar: () => guardarEditar(),
+        cerrar: () => editar.cerrar(),
+        // Sin nombre ni foto, como si Apple no lo hubiera traído; `true` vuelve a la persona de mentira.
+        sinNombre: () => { Object.assign(s, { nombre: arg ? opciones.persona().perfil.nombre : '', foto: null }); pintar(); },
+      };
+      pasos[accion]();
+    };
     return {
       zona,
       pintar,
       abrirAparatos,
       abrirAvisos,
       abrirEntreno,
+      abrirEditar,
       // Para las capturas: los avisos encendidos.
       ponerAvisos(cambios) { Object.assign(s.avisos, cambios); if (hoja.abierta) pintarAvisos(); pintar(); },
       // Para las capturas: los números ocultos y sin déficit.
@@ -317,8 +544,8 @@ const SeccionPerfil = (() => {
       // Para las capturas: una marca desplegada.
       desplegar(m) { s.abierta = m; pintarAparatos(); },
       bajarHoja() { const c = hoja.el.querySelector('.pf-aparatos'); if (c) c.scrollTop = c.scrollHeight; },
-      get hojaAbierta() { return hoja.abierta; },
-      cerrarHoja() { hoja.cerrar(true); },
+      get hojaAbierta() { return hoja.abierta || editar.abierta; },
+      cerrarHoja() { hoja.cerrar(true); editar.cerrar(true); },
     };
   }
 

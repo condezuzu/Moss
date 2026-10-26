@@ -76,6 +76,20 @@ describe('mezclar lo que baja de la cuenta', () => {
     expect(aplicar(local, ganadores(local, nada())).perfil?.alturaCm).toBe(165);
   });
 
+  it('tu nombre va con su hora, aparte del perfil: gana el más nuevo, y al que trajo Apple le gana cualquiera', () => {
+    const nombre = (valor: string, actualizado: string) => ({ valor, actualizado });
+    const deApple = nombre('Agustín Conde', new Date(0).toISOString());
+    expect(ganadores({ ...nada(), nombre: nombre('Agus', a(5)) }, { ...nada(), nombre: nombre('Agustín', a(4)) }).nombre).toBeNull();
+    expect(ganadores({ ...nada(), nombre: nombre('Agus', a(5)) }, { ...nada(), nombre: nombre('', a(6)) }).nombre).toEqual(nombre('', a(6)));
+    expect(ganadores({ ...nada(), nombre: deApple }, { ...nada(), nombre: nombre('Agus', a(0)) }).nombre?.valor).toBe('Agus');
+    expect(ganadores(nada(), { ...nada(), nombre: deApple }).nombre).toEqual(deApple);
+    // Un perfil más nuevo no se lleva el nombre, ni al revés.
+    const local: Datos = { ...nada(), perfil: perfil(165, a(1)), nombre: nombre('Agus', a(9)) };
+    const g = ganadores(local, { ...nada(), perfil: perfil(170, a(8)), nombre: nombre('Otro', a(2)) });
+    expect([g.perfil?.alturaCm, g.nombre]).toEqual([170, null]);
+    expect(aplicar(local, g).nombre?.valor).toBe('Agus');
+  });
+
   it('de lo que se come gana lo más nuevo, y un borrado más nuevo también gana', () => {
     const local: Datos = { ...nada(), registros: [registro('cena', 500, a(5)), registro('postre', 200, a(5)), registro('mate', 2, a(5))] };
     const remoto: Datos = { ...nada(), registros: [registro('cena', 600, a(6)), borrado(registro('postre', 200, a(5)), a(7)), registro('mate', 9, a(4)), registro('fruta', 80, a(1))] };

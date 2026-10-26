@@ -169,9 +169,11 @@ Detalle en [`widgets.md`](widgets.md).
 
 Está en la galería, sección 3.
 
-- **Cuenta:** Sign in with Apple y correo con contraseña.
-  - Correo y contraseña es lo que usa Ascent, así que la misma cuenta entra en
-    las dos.
+- **Cuenta:** solo Sign in with Apple (decidido el 26/10/2026 para la v1: sin
+  correo). Quien tiene Ascent con correo y contraseña entra a Moss con Apple y
+  vincula las dos cuentas (D27), o desde la hoja de vincular con su cuenta de
+  Ascent. La lógica de correo sigue en `src/secciones/entrada/cuenta.ts`, sin usar.
+  - Antes: Sign in with Apple y correo con contraseña, lo que usa Ascent.
   - Sin Google: obligaría a Sign in with Apple por la regla 4.8, y Ascent lo sacó.
   - Apple acepta el inicio de sesión obligatorio porque la cuenta sirve para algo
     de verdad: guardar y sincronizar, Ascent y, después, los amigos.
@@ -182,8 +184,9 @@ Está en la galería, sección 3.
   completos. Si lo preferís al final, es un cambio chico.
 - **Agregué el ritmo** cuando el objetivo es bajar o subir, como MacroFactor: por
   defecto, «recomendado».
-- **La frase y las diapositivas pasan tocando**, cuando se llena el aro (como el
-  circulito de Ascent), o solas. En la galería están las dos.
+- **La frase y las diapositivas pasan tocando la estrella guía** (26/10/2026: ya
+  no el circulito, que se parecía al de Ascent), cuando terminó su parte. No se
+  saltean.
 - **Con la comida al centro, propongo invertir las diapositivas:** primero «Tu
   comida, a tu medida» y después «Tus hábitos son estrellas».
 
@@ -242,16 +245,26 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
+### D28 · El sueño con menos esfuerzo (resuelta el 26/10/2026, a la noche)
+
+- **Atajos y despertador en la v1**, si iOS lo permite: las siete acciones de
+  Moss en Atajos (la alarma, el cargador, el enfoque Sueño, «Me voy a dormir» y
+  «Me desperté») y el despertador de Moss con AlarmKit (iOS 26 o más), sin
+  «posponer». Cómo quedó, en [`sueno-sin-esfuerzo.md`](sueno-sin-esfuerzo.md),
+  «Lo que quedó en la v1».
+- **Con la hora de despertar sacada de un ancla, se pregunta solo la de
+  dormirse.**
+- **Ni widget ni notificación para confirmar**, por ahora.
+
 ### D26 y D27 (las respondiste el 22/10/2026, a la noche)
 
 - **D26 · El Tiempo de uso (Family Controls):** después de la v1, cuando haya
   datos de la prueba contra un reloj.
 - **D27 · Vincular en dos toques con el llavero compartido:** de acuerdo (ver
-  [`ascent.md`](ascent.md), «Vincular en menos de 10 segundos»). **En la v1 no
-  se muestra nada de Ascent** hasta que la conexión funcione de verdad: queda
-  detrás de un interruptor (`src/lib/ascent.ts`, `EXPO_PUBLIC_CON_ASCENT=1`),
-  que esconde la sección arriba de Hábitos, su gesto y su flecha, y lo de Ascent
-  en Perfil. La galería lo sigue mostrando.
+  [`ascent.md`](ascent.md), «Vincular en menos de 10 segundos»). Desde el
+  26/10/2026 **la v1 sale con la conexión de verdad**: sin interruptor, con la
+  sección, su gesto y su flecha, y con entrar con la cuenta de Ascent en la hoja
+  de vincular (para quien no la tiene en el iPhone y para quien revisa en Apple).
 
 ### Sueño y Ascent (lo pediste el 22/10/2026)
 
