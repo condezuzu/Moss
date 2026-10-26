@@ -509,6 +509,13 @@
         "normal": "Some",
         "mucho": "Plenty"
       }
+    },
+    "deSiempre": {
+      "desayuno": "Your usual breakfast",
+      "almuerzo": "Your usual lunch",
+      "merienda": "Your usual afternoon snack",
+      "cena": "Your usual dinner",
+      "snack": "Your usual snack"
     }
   },
   "inicio": {
@@ -1572,5 +1579,55 @@
     "conPlan": "{hora}: {plan}.",
     "pesarse": "Good time to weigh in, before breakfast.",
     "pesarseControl": "Check-in day: weigh in before breakfast and Moss adjusts your target."
+  },
+  "entreno": {
+    "previa": "You train at {hora}: this is your pre-workout meal.",
+    "previaSinNumeros": "Include carbs and some protein.",
+    "previaLiviana": "You train at {hora}: keep it light, low in fat and fiber.",
+    "cantidades": "About {c} g of carbs and {p} g of protein.",
+    "soloProteina": "About {p} g of protein.",
+    "soloCarbohidratos": "About {c} g of carbs.",
+    "snackPrevio": "If you eat something before training: fruit, bread or juice, about {c} g of carbs.",
+    "snackPrevioSinNumeros": "If you eat something before training: fruit, bread or juice.",
+    "ayunasLarga": "If you train for over an hour on an empty stomach, a little something first can help: fruit or bread, about {c} g of carbs.",
+    "ayunasLargaSinNumeros": "If you train for over an hour on an empty stomach, a little something first can help: fruit or bread.",
+    "despues": "After training: about {p} g of protein in this meal.",
+    "despuesSinNumeros": "After training: make this meal include protein.",
+    "despuesPronto": "After training without eating first: about {p} g of protein as soon as you can.",
+    "despuesProntoSinNumeros": "After training without eating first: something with protein as soon as you can.",
+    "reponer": "You train again at {hora}: add carbs now and before the session.",
+    "antesDeDormir": "You are {p} g short on protein: yogurt or milk before bed counts too.",
+    "antesDeDormirSinNumeros": "You are short on protein: yogurt or milk before bed counts too.",
+    "durante": "If it goes past 90 minutes, bring {a} to {b} g of carbs per hour.",
+    "duranteSinNumeros": "If it goes past 90 minutes, bring something with carbs.",
+    "cafeina": "If you have coffee before, keep it before {hora}.",
+    "porQue": {
+      "titulo": "Why",
+      "antes": "Before a long session, carbs in the hours before help you perform; close to training, keep it light so it sits well. For a short session, your usual meal is enough.",
+      "despues": "What matters most is protein across the whole day, spread over your meals. After training, about 0.3 g per kilo in the next meal helps recovery; no need to rush unless it has been many hours without food.",
+      "reponer": "With two sessions on the same day, carbs in between help you start the second one with energy.",
+      "antesDeDormir": "Protein before bed counts toward the day too: 30 to 40 g, for example from yogurt or milk.",
+      "cafeina": "Caffeine takes hours to clear: late in the day, it makes sleep shallower even if you still fall asleep.",
+      "fuentes": "Sources: ACSM, Academy of Nutrition and Dietetics and Dietitians of Canada (2016); ISSN, Kerksick et al. (2017) and Jäger et al. (2017); Morton et al. (2018); Schoenfeld and Aragon (2018); Gardiner et al. (2023).",
+      "medico": "This is general guidance for healthy people. It is not medical advice.",
+      "noMostrar": "Don’t show again",
+      "volver": "You can turn it back on in Profile › Training."
+    },
+    "perfil": {
+      "titulo": "Training",
+      "sinCargar": "Not set",
+      "texto": "With your days and time, Food tells you what to eat before and after training, in the right meal. It never notifies you: you see it when you log.",
+      "dias": "Which days",
+      "hora": "What time",
+      "duracion": "How long",
+      "minutos": "{n} min",
+      "tipo": "What you do",
+      "tipos": {
+        "fuerza": "Weights",
+        "resistencia": "Running, cycling or swimming",
+        "mixta": "Mixed: soccer, HIIT"
+      },
+      "ver": "What to eat before and after"
+    }
   }
 }

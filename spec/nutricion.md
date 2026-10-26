@@ -283,7 +283,7 @@ La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
   - debajo, lo que solés comer a esa hora, tus recientes y tus favoritos.
 - **Registrar es armar la comida y revisarla antes de agregarla** (lo pediste el 21/10/2026):
   - el «+» de cada fila abre la ventana del alimento: sus porciones, la cantidad en medios o los gramos, y cuánto queda en el día; viene con la última porción que usaste o, la primera vez, con la típica;
-  - «Sumar» lo pone en la comida que se arma, que se ve abajo con su total; la hoja no se cierra y se suman varios seguidos, con un aviso para deshacer;
+  - «Sumar» lo pone en la comida que se arma, que se ve abajo con su total; la hoja no se cierra y se suman varios seguidos. La bandeja de abajo dice un momento qué se sumó (26/10: un aviso encima tapaba la lista);
   - «Listo» abre la revisión: se cambia una porción, se quita algo o se guarda como comida;
   - «Agregar» registra todo junto. Antes no se registra nada, y si se cierra la hoja, lo juntado queda guardado.
 - **Todo se corrige después** tocando el registro en la línea del día, que abre la misma ventana.
@@ -305,6 +305,7 @@ pasó de 2 a 5. Con el «+» en la barra (cambio 9, D17):
 | Varios alimentos de una vez | **3 + 2 por alimento** y escribir |
 | Armar un plato y guardarlo para la próxima | lo anterior **+ 1** y un nombre |
 | Una comida guardada | **2**: el «+» y la guardada (registra directo, con deshacer) |
+| Tu comida de siempre (26/10) | **2**: «Agregar» en el hueco de la comida y «Tu desayuno de siempre» (anota directo, con deshacer); **3** desde el «+». Sale sola: la misma combinación de alimentos en esa comida al menos dos veces en dos semanas (\`deSiempre\`), con las cantidades de la última vez. Si ya se está armando otra cosa, se suma a lo que se arma |
 | Copiar una comida de ayer | **2**: «copiar de ayer» en el hueco de la comida (abre la revisión) y agregar |
 | Copiar un día entero | **3**: copiar día, elegir el día y confirmar |
 | Código de barras ya conocido | **5**: registrar, escáner, sumar, listo y agregar (lee solo, sin disparar) |

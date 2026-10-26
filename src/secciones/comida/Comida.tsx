@@ -17,6 +17,7 @@ import { conMayuscula } from '@/comida/buscar';
 import { comidaDeLaHora, type Comida } from '@/dominio/comidas';
 import { diasEntre, lunesDe, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
+import type { Linea } from '@/dominio/alrededorDelEntreno';
 import { delDia, type Registro, type Valores } from '@/dominio/registros';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -31,6 +32,8 @@ import {
 } from './datos';
 import { Luna, Lunitas, type Lunita } from './Luna';
 import { AccionesDelPlan, ArmarElDia, PlanDeLaSemana } from './Plan';
+import { lineasDeHoy } from './entreno';
+import { LineaDeEntreno } from './LineaDeEntreno';
 import { abrirRegistro } from './registro';
 
 const VISTAS = ['dia', 'semana', 'mes'] as const;
@@ -385,13 +388,20 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   const comidas = comidasDelDia(e.registros, dia);
   const entradas: Entrada[] = comidas.map((c) => ({ tipo: 'comida', comida: c, minutos: c.minutos }));
   const ahora = minutosDe(new Date());
+  // Qué comer antes y después de entrenar: en la comida que toca, aunque todavía no sea su hora.
+  const lineas = dia === e.hoy ? lineasDeHoy(e) : new Map<Comida, Linea>();
   for (const [tipo, minutos] of Object.entries(HORA_TIPICA) as [Comida, number][]) {
     if (comidas.some((c) => c.comida === tipo)) continue;
     if (dia !== e.hoy) entradas.push({ tipo: 'vacia', comida: tipo, ahora: false, minutos });
     else {
       const actual = comidaDeLaHora(ahora) === tipo;
-      if (minutos <= ahora || actual) entradas.push({ tipo: 'vacia', comida: tipo, ahora: actual, minutos: actual ? ahora : minutos });
+      if (minutos <= ahora || actual || lineas.has(tipo)) entradas.push({ tipo: 'vacia', comida: tipo, ahora: actual, minutos: actual ? ahora : minutos });
     }
+  }
+  // El snack: el de antes de entrenar, un rato antes de la sesión; el de la noche, después de la cena.
+  const snack = lineas.get('snack');
+  if (snack && !comidas.some((c) => c.comida === 'snack')) {
+    entradas.push({ tipo: 'vacia', comida: 'snack', ahora: false, minutos: Math.max(ahora, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45) });
   }
   // Una comida registrada ahora ya marca la hora: «ahora» va solo si no la hay.
   if (dia === e.hoy && !comidas.some((c) => Math.abs(c.minutos - ahora) < 1)) entradas.push({ tipo: 'ahora', minutos: ahora - 0.5 });
@@ -418,8 +428,8 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
             <Text style={estilos.hora}>{x.tipo === 'vacia' && x.ahora ? '' : hora(Math.round(x.minutos))}</Text>
             <View style={[estilos.nodo, x.tipo === 'vacia' && estilos.nodoVacio, planificada && estilos.nodoPlan]} />
             {x.tipo === 'comida'
-              ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} e={e} avisar={avisar} />
-              : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} />}
+              ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} e={e} avisar={avisar} linea={x.comida.planificada ? lineas.get(x.comida.comida) : undefined} />
+              : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} linea={lineas.get(x.comida)} />}
           </Animated.View>
         );
       })}
@@ -427,7 +437,9 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   );
 }
 
-function Tarjeta({ c, dia, sistema, e, avisar }: { c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe>; e: Estado; avisar: (texto: string, deshacer?: () => void) => void }) {
+function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
+  c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe>; e: Estado; avisar: (texto: string, deshacer?: () => void) => void; linea?: Linea;
+}) {
   const numeros = useNumeros();
   // La foto, opcional y solo en el teléfono (D10): un toque en la comida ya registrada.
   const [foto, setFoto] = useState(() => fotoDe(dia, c.comida));
@@ -450,6 +462,7 @@ function Tarjeta({ c, dia, sistema, e, avisar }: { c: ComidaDelDia; dia: ClaveDi
           </Text>
         )}
       </View>
+      {linea && <LineaDeEntreno linea={linea} />}
       {c.registros.map((r) => (
         <Animated.View key={r.id} entering={FadeIn.duration(280)} exiting={FadeOut.duration(180)} layout={ACOMODA}>
           <FilaDeRegistro r={r} sistema={sistema} />
@@ -519,12 +532,13 @@ function FilaDeRegistro({ r, sistema }: { r: Registro; sistema: ReturnType<typeo
   );
 }
 
-function TarjetaVacia({ comida, dia, hoy, e }: { comida: Comida; dia: ClaveDia; hoy: ClaveDia; e: Estado }) {
+function TarjetaVacia({ comida, dia, hoy, e, linea }: { comida: Comida; dia: ClaveDia; hoy: ClaveDia; e: Estado; linea?: Linea }) {
   const ayer = sumarDias(hoy, -1);
   const deAyer = dia === hoy ? delDia(e.registros.values(), ayer).filter((r) => r.comida === comida) : [];
   return (
     <View style={[estilos.tarjeta, estilos.tarjetaVacia]}>
       <Text style={estilos.tarjetaTitulo}>{t(`comida.comidas.${comida}`)}</Text>
+      {linea && <LineaDeEntreno linea={linea} />}
       <View style={estilos.acciones}>
         <Boton texto={t('comida.agregar')} icono="plus" tipo="principal" alTocar={() => abrirRegistro({ comida, dia })} />
         {deAyer.length > 0 && (

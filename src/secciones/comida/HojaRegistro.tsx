@@ -28,14 +28,17 @@ import { sumarDias } from '@/dominio/fechas';
 import { edadDe, type Macros } from '@/dominio/metas';
 import type { ParaQuien } from '@/dominio/micronutrientes';
 import {
-  claveDeAlimento, delDia, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
+  claveDeAlimento, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemsParaRegistrar, premios, recientes, sueles, sumarValores, ultimaCantidad,
   valoresDeCantidad, valoresDeReceta, vigentes, type AlimentoPropio, type Cantidad, type Item, type Receta, type Valores,
 } from '@/dominio/registros';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
+import { Aparece } from '../tarjetas';
 import { useTeclado } from '../teclado';
 import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
+import { lineasDeHoy } from './entreno';
+import { LineaDeEntreno } from './LineaDeEntreno';
 import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
 import { Escaner } from './Escaner';
 import {
@@ -331,6 +334,10 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   const q = texto.trim();
   const ayer = sumarDias(dia, -1);
   const deAyer = delDia(e.registros.values(), ayer).filter((r) => r.comida === comida);
+  // Qué comer antes o después de entrenar, si esta comida es la que toca hoy.
+  const lineaDeEntreno = dia === e.hoy && !soloEditar ? lineasDeHoy(e).get(comida) : undefined;
+  // Tu comida de siempre, entera de un toque: la misma combinación dos veces en dos semanas.
+  const siempre = useMemo(() => deSiempre(e.registros.values(), comida, dia), [e.registros, comida, dia]);
   const secciones = useMemo(() => {
     const vistos = new Set<string>();
     const seccion = (titulo: string, lista: Item[]) => {
@@ -412,6 +419,11 @@ function Hoja({ pedido }: { pedido: Pedido }) {
               {COMIDAS.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={c === comida} alTocar={() => setComida(c)} estilo={estilos.chip} />)}
             </ScrollView>
           )}
+          {!eligiendo && lineaDeEntreno && (
+            <View key={comida} style={estilos.entreno}>
+              <LineaDeEntreno linea={lineaDeEntreno} />
+            </View>
+          )}
           <View style={estilos.busca}>
             <Icono nombre="magnifyingglass" tam={17} color="rgba(239, 230, 207, 0.5)" />
             <TextInput
@@ -452,6 +464,37 @@ function Hoja({ pedido }: { pedido: Pedido }) {
             </ScrollView>
           )}
           <ScrollView style={estilos.cuerpo} contentContainerStyle={[estilos.cuerpoAdentro, { paddingBottom: 14 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+            {!q && !eligiendo && siempre && (
+              <Aparece>
+                <Pressable
+                  onPress={() => {
+                    // Armando otra cosa, se suma a lo que se arma; si no, se anota directo, con deshacer.
+                    if (e.canasta.length) {
+                      for (const item of siempre) a.ponerEnCanasta(item);
+                      Haptics.selectionAsync().catch(() => {});
+                      setRecienSumado({ texto: t(`comida.deSiempre.${comida}`), vez: otraVez() });
+                      return;
+                    }
+                    const nuevos = a.registrar(siempre, { comida, dia, momento: momentoPara(dia, comida, e.hoy) });
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                    avisar(t(`comida.deSiempre.${comida}`), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
+                    cerrar();
+                  }}
+                  style={({ pressed }) => [estilos.siempre, pressed && estilos.filaApretada]}
+                  accessibilityRole="button"
+                >
+                  <View style={estilos.filaTextos}>
+                    <Text style={estilos.siempreTitulo} numberOfLines={1}>{t(`comida.deSiempre.${comida}`)}</Text>
+                    <Text style={estilos.filaDetalle} numberOfLines={2}>
+                      {`${siempre.map((i) => i.nombre).join(', ')} · ${numero(Math.round(sumarValores(siempre.map((i) => i.valores)).kcal))} kcal`}
+                    </Text>
+                  </View>
+                  <View style={estilos.mas}>
+                    <Icono nombre="plus" tam={17} peso="semibold" />
+                  </View>
+                </Pressable>
+              </Aparece>
+            )}
             {!q && secciones.map((s) => (
               <View key={s.titulo}>
                 <Etiqueta estilo={estilos.titulo}>{s.titulo}</Etiqueta>
@@ -772,6 +815,7 @@ const estilos = StyleSheet.create({
   cerrar: { position: 'absolute', right: 12, top: 6, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   paneles: { flex: 1 },
   chipsLugar: { flexGrow: 0 },
+  entreno: { marginHorizontal: 16 },
   chips: { gap: 6, paddingHorizontal: 16, paddingVertical: 3 },
   chip: { borderRadius: 999, minHeight: 32, paddingVertical: 0, paddingHorizontal: 11 },
   busca: { marginTop: 10, marginHorizontal: 16, height: 48, flexDirection: 'row', alignItems: 'center', gap: 2, paddingLeft: 13, paddingRight: 4, borderRadius: 14, backgroundColor: 'rgba(239, 230, 207, 0.07)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)' },
@@ -784,6 +828,8 @@ const estilos = StyleSheet.create({
   titulo: { marginTop: 16, marginBottom: 2 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingVertical: 7, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
   filaApretada: { opacity: 0.7 },
+  siempre: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10, marginBottom: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.06)' },
+  siempreTitulo: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.oroClaro },
   filaTextos: { flex: 1, gap: 4, minWidth: 0 },
   filaNombre: { fontFamily: letras.texto, fontSize: 15.5, color: colores.pergamino },
   filaExtra: { fontSize: 12.5, color: 'rgba(239, 230, 207, 0.48)' },

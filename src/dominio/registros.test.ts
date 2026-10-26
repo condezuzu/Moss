@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 import {
-  aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
+  aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
   itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
   type Item, type Receta, type Registro, type Valores,
 } from './registros';
@@ -222,6 +222,26 @@ describe('los atajos', () => {
     ];
     expect(sueles(lista, 'merienda', HOY).map((i) => i.nombre)).toEqual(['Banana', 'Arroz blanco']);
     expect(sueles(lista, 'cena', HOY)).toEqual([]);
+  });
+
+  it('la comida de siempre: la misma combinación dos veces en dos semanas, con las cantidades de la última', () => {
+    const cafe = itemDeAlimento('base', '2', 'Café con leche', ARROZ, { gramos: 200 });
+    const lista = [
+      reg(cafe, dias(1), 'desayuno', 8), reg(banana(2), dias(1), 'desayuno', 8.1),
+      reg(cafe, dias(3), 'desayuno', 8), reg(banana(1), dias(3), 'desayuno', 8.1),
+      reg(cafe, dias(2), 'desayuno', 8), reg(arroz(), dias(2), 'desayuno', 8.1),
+    ];
+    const siempre = deSiempre(lista, 'desayuno', HOY);
+    expect(siempre?.map((i) => i.nombre)).toEqual(['Café con leche', 'Banana']);
+    expect(siempre?.[1].cantidad).toEqual({ porcion: '1 mediana', gramosPorcion: 118, veces: 2 });
+  });
+
+  it('sin repetirse, de un solo alimento o de hace más de dos semanas, no hay comida de siempre', () => {
+    const cafe = itemDeAlimento('base', '2', 'Café con leche', ARROZ, { gramos: 200 });
+    expect(deSiempre([reg(cafe, dias(1), 'desayuno', 8), reg(banana(), dias(1), 'desayuno', 8)], 'desayuno', HOY)).toBeNull();
+    expect(deSiempre([reg(cafe, dias(1), 'desayuno', 8), reg(cafe, dias(2), 'desayuno', 8)], 'desayuno', HOY)).toBeNull();
+    const viejas = [20, 21].flatMap((d) => [reg(cafe, dias(d), 'desayuno', 8), reg(banana(), dias(d), 'desayuno', 8)]);
+    expect(deSiempre(viejas, 'desayuno', HOY)).toBeNull();
   });
 
   it('el premio del buscador: lo usado sube, lo de esta semana un poco más, y tiene tope', () => {

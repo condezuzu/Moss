@@ -14,7 +14,9 @@ import { CONEXION_CON_ASCENT } from '@/lib/ascent';
 import { urlDe } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
+import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import type { Comida } from '@/dominio/comidas';
+import type { DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
 import { horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
@@ -48,7 +50,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const sistema = sistemaDe(e);
   const [correo, setCorreo] = useState<string | null>(null);
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'datos' | 'privacidad' | 'recordatorios' | 'calidad' | 'aparatos' | null>(null);
+  const [hoja, setHoja] = useState<'datos' | 'privacidad' | 'recordatorios' | 'calidad' | 'aparatos' | 'entreno' | null>(null);
   useEffect(() => {
     correoDeLaCuenta().then(setCorreo).catch(() => {});
     saludPedida().then(setSalud).catch(() => {});
@@ -70,6 +72,8 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       { clave: 'altura', titulo: t('perfil.altura'), valor: altura(p.alturaCm), alTocar: () => setHoja('datos') },
       { clave: 'actividad', titulo: t('perfil.actividad'), valor: t(`perfil.actividades.${p.actividad}`), alTocar: () => setHoja('datos') },
       // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál). Cambia la meta desde hoy.
+      // Para qué comer antes y después de entrenar (Comida); con «sin déficit» no se ve.
+      ...(p.sinDeficit ? [] : [{ clave: 'entreno', titulo: t('entreno.perfil.titulo'), valor: resumenDeEntreno(e.entreno), alTocar: () => setHoja('entreno') }]),
       {
         clave: 'cuidado', titulo: t('perfil.cuidado'), valor: t(p.sinDeficit ? 'perfil.sinDeficit' : 'perfil.ninguno'), tipo: p.sinDeficit ? 'ok' as const : undefined,
         detalle: p.sinDeficit ? t('perfil.sinDeficitTexto') : undefined, alTocar: () => elAlmacen().ponerEstrategia({ sinDeficit: !p.sinDeficit }),
@@ -196,6 +200,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       {hoja === 'datos' && p && <TusDatos perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} alCerrar={() => setHoja(null)} />}
       {hoja === 'recordatorios' && <Avisos e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'calidad' && <CalidadDelCielo elegida={e.calidad} alCerrar={() => setHoja(null)} />}
+      {hoja === 'entreno' && <CuandoEntrenas e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
       {hoja === 'privacidad' && (
         <HojaModal abierta titulo={t('perfil.privacidad')} alCerrar={() => setHoja(null)}>
@@ -413,6 +418,66 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
         {MAXIMOS_POR_DIA.map((n) => <Pastilla key={n} texto={String(n)} elegida={maximo === n} alTocar={() => elAlmacen().ponerAvisos({ maximoPorDia: n })} />)}
       </View>
       <Parrafo chico>{t('perfil.avisos.maximoTexto')}</Parrafo>
+    </HojaModal>
+  );
+}
+
+const DURACIONES = [30, 45, 60, 90, 120] as const;
+const TIPOS = ['fuerza', 'resistencia', 'mixta'] as const;
+/** Lunes primero, como en la galería. */
+const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
+
+/** «L M V · 19:00», o que todavía no se cargó. */
+function resumenDeEntreno(entreno: Entreno | null): string {
+  if (!entreno || !entreno.dias.length) return t('entreno.perfil.sinCargar');
+  const letras = lista('fecha.diasCortos');
+  return `${DIAS_DE_LA_SEMANA.filter((d) => entreno.dias.includes(d)).map((d) => letras[d]).join(' ')} · ${horaDeReloj(entreno.hora)}`;
+}
+
+/**
+ * Cuándo entrenás (lo pediste el 26/10): con esto, Comida dice qué comer antes y después, en la
+ * comida que toca. Con Ascent vinculada, después de la v1, sale de ahí.
+ */
+function CuandoEntrenas({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
+  const entreno: Entreno = e.entreno ?? { dias: [], hora: 19 * 60, minutos: 60, tipo: 'fuerza' };
+  const poner = (cambios: Partial<Entreno>) => {
+    const nuevo = { ...entreno, ...cambios };
+    elAlmacen().ponerEntreno(nuevo.dias.length ? nuevo : null);
+  };
+  const alternarDia = (d: DiaSemana) => poner({ dias: entreno.dias.includes(d) ? entreno.dias.filter((x) => x !== d) : [...entreno.dias, d] });
+  const letras = lista('fecha.diasCortos');
+  return (
+    <HojaModal abierta titulo={t('entreno.perfil.titulo')} alCerrar={alCerrar}>
+      <Parrafo chico>{t('entreno.perfil.texto')}</Parrafo>
+      <EtiquetaDeGrupo>{t('entreno.perfil.dias')}</EtiquetaDeGrupo>
+      <View style={st.comidas}>
+        {DIAS_DE_LA_SEMANA.map((d) => <Pastilla key={d} texto={letras[d]} elegida={entreno.dias.includes(d)} alTocar={() => alternarDia(d)} />)}
+      </View>
+      {!!e.entreno && (
+        <Aparece>
+          <EtiquetaDeGrupo>{t('entreno.perfil.hora')}</EtiquetaDeGrupo>
+          <Pasos valor={horaDeReloj(entreno.hora)} alBajar={() => poner({ hora: Math.max(5 * 60, entreno.hora - 15) })} alSubir={() => poner({ hora: Math.min(23 * 60, entreno.hora + 15) })} />
+          <EtiquetaDeGrupo>{t('entreno.perfil.duracion')}</EtiquetaDeGrupo>
+          <View style={st.comidas}>
+            {DURACIONES.map((m) => <Pastilla key={m} texto={t('entreno.perfil.minutos', { n: m })} elegida={entreno.minutos === m} alTocar={() => poner({ minutos: m })} />)}
+          </View>
+          <EtiquetaDeGrupo>{t('entreno.perfil.tipo')}</EtiquetaDeGrupo>
+          <View style={st.comidas}>
+            {TIPOS.map((x) => <Pastilla key={x} texto={t(`entreno.perfil.tipos.${x}`)} elegida={entreno.tipo === x} alTocar={() => poner({ tipo: x })} />)}
+          </View>
+          <View style={st.llave}>
+            <Text style={st.llaveTexto}>{t('entreno.perfil.ver')}</Text>
+            <Switch
+              value={e.verEntreno}
+              onValueChange={(v) => elAlmacen().ponerVerEntreno(v)}
+              trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+              thumbColor={colores.pergamino}
+              accessibilityLabel={t('entreno.perfil.ver')}
+            />
+          </View>
+          <Parrafo chico>{t('entreno.porQue.medico')}</Parrafo>
+        </Aparece>
+      )}
     </HojaModal>
   );
 }

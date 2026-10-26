@@ -11,7 +11,8 @@ import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/cons
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
-import { claveDelDia, diaDeLaSemana, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { claveDelDia, diaDeLaSemana, partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
+import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
 import {
@@ -73,6 +74,10 @@ export type Estado = MapasDeComida & {
   fuenteDelSueno: string | null;
   /** Los números de la comida (las calorías y los gramos), o solo las figuras y las barras. Queda en el teléfono. */
   numeros: boolean;
+  /** Cuándo entrenás, puesto a mano (Perfil › Entrenamiento); queda en el teléfono. */
+  entreno: Entreno | null;
+  /** Si se ve qué comer antes y después de entrenar («No mostrar más» lo apaga). */
+  verEntreno: boolean;
   /**
    * Si se manda, sin la cuenta, lo que se busca y no se encuentra (src/almacen/buzon.ts). Lo elige la
    * persona en la entrada o en Perfil, y empieza apagado (guía 5.1.1 de Apple). Queda en el teléfono.
@@ -121,6 +126,8 @@ const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 const NUMEROS = 'numeros';
+const ENTRENO = 'entreno';
+const VER_ENTRENO = 'verEntreno';
 const BUSQUEDAS = 'mandarBusquedas';
 const ENTRADA = 'entrada';
 const AVANCE = 'avanceDeEntrada';
@@ -172,6 +179,17 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     return avisos;
   } catch {
     return {};
+  }
+}
+
+function leerEntreno(texto: string | undefined): Entreno | null {
+  try {
+    const x = texto ? (JSON.parse(texto) as Partial<Entreno>) : null;
+    if (!x || !Array.isArray(x.dias) || typeof x.hora !== 'number' || typeof x.minutos !== 'number') return null;
+    if (x.tipo !== 'fuerza' && x.tipo !== 'resistencia' && x.tipo !== 'mixta') return null;
+    return { dias: x.dias.filter((d): d is DiaSemana => Number.isInteger(d) && d >= 0 && d <= 6), hora: x.hora, minutos: x.minutos, tipo: x.tipo };
+  } catch {
+    return null;
   }
 }
 
@@ -233,7 +251,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -324,7 +342,7 @@ export function crearAlmacen(op: Opciones) {
       metas: g.metas,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), listo: true }, true);
     revisarControl();
   }
 
@@ -729,6 +747,15 @@ export function crearAlmacen(op: Opciones) {
       cambiar({ calidad }, false);
     },
     /** Los números de la comida: a la vista o no (solo las figuras y las barras). */
+    /** Cuándo entrenás; null lo saca. */
+    ponerEntreno(entreno: Entreno | null) {
+      guardar((r) => r.guardarAjuste(ENTRENO, entreno ? JSON.stringify(entreno) : ''));
+      cambiar({ entreno }, false);
+    },
+    ponerVerEntreno(verEntreno: boolean) {
+      guardar((r) => r.guardarAjuste(VER_ENTRENO, verEntreno ? '' : 'no'));
+      cambiar({ verEntreno }, false);
+    },
     ponerNumeros(numeros: boolean) {
       guardar((r) => r.guardarAjuste(NUMEROS, numeros ? '' : 'no'));
       cambiar({ numeros }, false);

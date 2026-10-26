@@ -333,6 +333,35 @@ export function sueles(registros: Iterable<Registro>, comida: Comida, hoy: Clave
   return [...puntos.values()].filter((p) => p.veces >= VECES_SUELES).sort((a, b) => b.puntos - a.puntos).slice(0, cuantos).map((p) => itemDe(p.ultimo));
 }
 
+/** La comida de siempre se busca en las últimas dos semanas. */
+const VENTANA_DE_SIEMPRE = 14;
+
+/**
+ * La comida de siempre: los mismos alimentos en esa comida al menos dos veces en las últimas dos
+ * semanas (la combinación más repetida y, entre iguales, la más reciente), con las cantidades de la
+ * última vez, para sumarla entera de un toque. La de un solo alimento no cuenta: para eso está «sueles».
+ */
+export function deSiempre(registros: Iterable<Registro>, comida: Comida, hoy: ClaveDia): Item[] | null {
+  const porDia = new Map<ClaveDia, Registro[]>();
+  for (const r of comidos(registros)) {
+    const dias = diasEntre(r.dia, hoy);
+    if (r.comida !== comida || dias < 1 || dias > VENTANA_DE_SIEMPRE) continue;
+    porDia.set(r.dia, [...(porDia.get(r.dia) ?? []), r]);
+  }
+  const veces = new Map<string, { veces: number; dia: ClaveDia }>();
+  for (const [dia, lista] of porDia) {
+    const alimentos = [...new Set(lista.map((r) => claveDeAlimento(r.fuente, r.ref)))].sort();
+    if (alimentos.length < 2) continue;
+    const firma = alimentos.join('|');
+    const v = veces.get(firma) ?? { veces: 0, dia };
+    v.veces += 1;
+    if (dia > v.dia) v.dia = dia;
+    veces.set(firma, v);
+  }
+  const mejor = [...veces.values()].filter((v) => v.veces >= 2).sort((a, b) => b.veces - a.veces || (a.dia < b.dia ? 1 : -1))[0];
+  return mejor ? porDia.get(mejor.dia)!.sort(porMomento).map(itemDe) : null;
+}
+
 /** El premio más grande: alcanza para subir uno o dos escalones del orden del buscador, no más. */
 const PREMIO_MAXIMO = 10;
 

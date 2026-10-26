@@ -509,6 +509,13 @@
         "normal": "Normal",
         "mucho": "Mucho"
       }
+    },
+    "deSiempre": {
+      "desayuno": "Tu desayuno de siempre",
+      "almuerzo": "Tu almuerzo de siempre",
+      "merienda": "Tu merienda de siempre",
+      "cena": "Tu cena de siempre",
+      "snack": "Tu snack de siempre"
     }
   },
   "inicio": {
@@ -1572,5 +1579,55 @@
     "conPlan": "{hora}: {plan}.",
     "pesarse": "Buen momento para pesarte, antes de desayunar.",
     "pesarseControl": "Hoy es el control: pésate antes de desayunar y Moss ajusta tu meta."
+  },
+  "entreno": {
+    "previa": "Entrenas a las {hora}: esta comida es tu previa.",
+    "previaSinNumeros": "Que tenga carbohidratos y algo de proteína.",
+    "previaLiviana": "Entrenas a las {hora}: mejor algo liviano, con poca grasa y poca fibra.",
+    "cantidades": "Unos {c} g de carbohidratos y {p} g de proteína.",
+    "soloProteina": "Unos {p} g de proteína.",
+    "soloCarbohidratos": "Unos {c} g de carbohidratos.",
+    "snackPrevio": "Si comes algo antes de entrenar: una fruta, pan o jugo, unos {c} g de carbohidratos.",
+    "snackPrevioSinNumeros": "Si comes algo antes de entrenar: una fruta, pan o jugo.",
+    "ayunasLarga": "Si entrenas más de una hora en ayunas, algo chico antes puede ayudarte: una fruta o pan, unos {c} g de carbohidratos.",
+    "ayunasLargaSinNumeros": "Si entrenas más de una hora en ayunas, algo chico antes puede ayudarte: una fruta o pan.",
+    "despues": "Después de entrenar: unos {p} g de proteína en esta comida.",
+    "despuesSinNumeros": "Después de entrenar: que esta comida tenga proteína.",
+    "despuesPronto": "Después de entrenar sin haber comido: unos {p} g de proteína apenas puedas.",
+    "despuesProntoSinNumeros": "Después de entrenar sin haber comido: algo con proteína apenas puedas.",
+    "reponer": "Vuelves a entrenar a las {hora}: suma carbohidratos ahora y antes de la sesión.",
+    "antesDeDormir": "Te faltan {p} g de proteína: un yogur o leche antes de dormir también cuentan.",
+    "antesDeDormirSinNumeros": "Te falta proteína: un yogur o leche antes de dormir también cuentan.",
+    "durante": "Si pasa de 90 minutos, lleva de {a} a {b} g de carbohidratos por hora.",
+    "duranteSinNumeros": "Si pasa de 90 minutos, lleva algo con carbohidratos.",
+    "cafeina": "Si tomas café antes, que sea antes de las {hora}.",
+    "porQue": {
+      "titulo": "Por qué",
+      "antes": "Antes de una sesión larga, los carbohidratos de las horas previas ayudan a rendir; cerca de entrenar, mejor algo liviano para que no caiga pesado. Para una sesión corta alcanza con tu comida de siempre.",
+      "despues": "Lo que más cuenta es la proteína de todo el día, repartida en tus comidas. Después de entrenar, unos 0,3 g por kilo en la comida siguiente ayudan a recuperar; no hace falta apurarse, salvo que lleves muchas horas sin comer.",
+      "reponer": "Con dos sesiones el mismo día, los carbohidratos entre una y otra te ayudan a llegar con energía a la segunda.",
+      "antesDeDormir": "La proteína de antes de dormir también cuenta para el día: de 30 a 40 g, por ejemplo de yogur o leche.",
+      "cafeina": "La cafeína tarda horas en irse: tomada tarde, le quita profundidad al sueño aunque te duermas igual.",
+      "fuentes": "Fuentes: ACSM, Academy of Nutrition and Dietetics y Dietitians of Canada (2016); ISSN, Kerksick y otros (2017) y Jäger y otros (2017); Morton y otros (2018); Schoenfeld y Aragon (2018); Gardiner y otros (2023).",
+      "medico": "Es una guía general para personas sanas. No es un consejo médico.",
+      "noMostrar": "No mostrar más",
+      "volver": "Se vuelve a prender en Perfil › Entrenamiento."
+    },
+    "perfil": {
+      "titulo": "Entrenamiento",
+      "sinCargar": "Sin cargar",
+      "texto": "Con tus días y tu hora, Comida te dice qué comer antes y después de entrenar, en la comida que toca. Nunca te avisa: lo ves al anotar.",
+      "dias": "Qué días",
+      "hora": "A qué hora",
+      "duracion": "Cuánto dura",
+      "minutos": "{n} min",
+      "tipo": "Qué haces",
+      "tipos": {
+        "fuerza": "Pesas",
+        "resistencia": "Correr, bici o nadar",
+        "mixta": "Mixto: fútbol, HIIT"
+      },
+      "ver": "Qué comer antes y después"
+    }
   }
 }
