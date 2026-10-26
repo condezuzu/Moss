@@ -5,7 +5,7 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { buzon } from '@/almacen/buzonDeMoss';
 import { MOTIVOS, type Motivo } from '@/almacen/buzon';
@@ -16,6 +16,7 @@ import type { Macros } from '@/dominio/metas';
 import { destacados, GRUPOS, referenciaDe, UNIDAD, type Micro, type Micros, type ParaQuien } from '@/dominio/micronutrientes';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, Pastilla } from './comunes';
 import { numero } from './datos';
@@ -170,9 +171,9 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
     setEnviado(true);
   };
   return (
-    <Animated.View entering={FadeIn.duration(250)} exiting={FadeOut.duration(220)} style={estilos.velo}>
+    <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={estilos.velo}>
       <Pressable style={StyleSheet.absoluteFill} onPress={alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
-      <Animated.View entering={SlideInDown.duration(320)} exiting={SlideOutDown.duration(260)} style={[estilos.reporte, { paddingBottom: abajo + 10 }]}>
+      <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.reporte, { paddingBottom: abajo + 10 }]}>
         {enviado ? (
           <Aparece style={estilos.gracias}>
             <Text style={estilos.graciasTexto}>{t('comida.reportar.gracias')}</Text>

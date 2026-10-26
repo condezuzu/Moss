@@ -15,18 +15,18 @@ import {
   Path,
   Shader,
   Skia,
-  useColorBuffer,
-  useRectBuffer,
-  useRSXformBuffer,
   useTexture,
+  type SkColor,
+  type SkHostRect,
   type SkPath,
+  type SkRSXform,
 } from '@shopify/react-native-skia';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { AccessibilityInfo, PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, useCompetingGestures, useLongPressGesture, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
-import { useDerivedValue, useFrameCallback, useSharedValue, type DerivedValue, type SharedValue } from 'react-native-reanimated';
+import { useAnimatedReaction, useDerivedValue, useFrameCallback, useSharedValue, type DerivedValue, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
@@ -35,11 +35,12 @@ import { calidadDeFabrica, unEscalonMenos } from './calidad';
 import { useCalidadElegida, useCieloDeHoy, useEncendidos } from './dia';
 import { efectos } from './efectos';
 import {
+  avancesNuevos,
   CAPACIDAD_CIELO,
   CAPACIDAD_FRENTE,
+  claveDeApagados,
   completarDia,
   crearEscena,
-  DATOS_POR_SPRITE,
   estrellaEn,
   lanzarFugaz,
   paso,
@@ -50,7 +51,8 @@ import {
   type Escena,
   type Evento,
 } from './escena';
-import { Interfaz, type Aviso } from './Interfaz';
+import { DIAGNOSTICO, Interfaz, type Aviso } from './Interfaz';
+import { CELDA, crearReserva, volcarLuces, type Reserva } from './luces';
 import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad } from './mundo';
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
@@ -61,7 +63,6 @@ import { colores } from '@/tema';
 /** Hasta dónde sube la cámara del cielo con Ascent arriba: menos que el dedo, porque está más lejos. */
 const CAMARA_DE_ASCENT = 0.75;
 
-const CELDA = 128;
 const MUESTREO = { filter: FilterMode.Linear, mipmap: MipmapMode.None };
 const ORO = 'rgb(255, 204, 112)';
 const PERGAMINO = 'rgb(240, 230, 207)';
@@ -159,6 +160,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         factorParticulas: a.particulas,
         riqueza: a.riqueza,
         movimientoReducido,
+        contarCuadros: DIAGNOSTICO,
       }),
     [ancho, alto, plano, dia, movimientoReducido, soloCielo],
   );
@@ -203,16 +205,23 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   }, [encendidos, escena]);
 
   const t = useTextos();
-  // Una sola vez: qué hace tocar una estrella.
+  // Una sola vez, la primera vez que se ve Hábitos (la app abre en Inicio): qué hace tocar una estrella.
+  const [vistoHabitos, setVistoHabitos] = useState(false);
+  useAnimatedReaction(
+    () => (paginaX ? Math.abs(paginaX.value) < 1 : true),
+    (ahora, antes) => {
+      if (ahora && !antes) scheduleOnRN(setVistoHabitos, true);
+    },
+  );
   useEffect(() => {
-    if (soloCielo) return;
+    if (soloCielo || !vistoHabitos) return;
     AsyncStorage.getItem('moss:globitoEstrellas').then((visto) => {
       if (visto) return;
       setAviso({ texto: t.t('cielo.globito'), clave: Date.now() });
       AsyncStorage.setItem('moss:globitoEstrellas', '1').catch(() => {});
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [soloCielo]);
+  }, [soloCielo, vistoHabitos]);
 
   // ------------------------------------------------------------------ texturas
   // El cielo fijo se dibuja una vez por tamaño, calidad y riqueza. Mientras llega la textura nueva
@@ -302,12 +311,30 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     scheduleOnRN(alEventos, lista);
   }, [escena, alEventos]);
 
+  // Las luces de los dos Atlas: las arma cada cuadro, solo las que hay, con objetos de Skia que se
+  // reusan (luces.ts).
+  const reservas = useSharedValue<{ cielo: Reserva; frente: Reserva } | null>(null);
+  const rectsCielo = useSharedValue<SkHostRect[]>([]);
+  const formasCielo = useSharedValue<SkRSXform[]>([]);
+  const coloresCielo = useSharedValue<SkColor[]>([]);
+  const rectsFrente = useSharedValue<SkHostRect[]>([]);
+  const formasFrente = useSharedValue<SkRSXform[]>([]);
+  const coloresFrente = useSharedValue<SkColor[]>([]);
+  // Hasta dónde llegó cada línea y qué hábitos están apagados: sus caminos se rehacen solo con esto.
+  const avances = useSharedValue<number[]>([]);
+  const apagados = useSharedValue('');
+
   useFrameCallback((info) => {
     'worklet';
-    const dt = Math.min(0.05, (info.timeSincePreviousFrame ?? 16.7) / 1000);
-    const hayFondo = fondo.value !== null;
     const corrida = paginaX ? paginaX.value : 0;
     const ascent = subida ? subida.progreso.value : 0;
+    // Detrás de las otras secciones el cielo se ve velado y quieto: no se calcula ni se vuelve a
+    // dibujar, así cada cuadro queda para la interfaz. Se mueve en Hábitos, mientras se llega o se
+    // va de ahí, con Ascent y en la entrada.
+    const antes = escena.value;
+    if (!soloCielo && ascent === 0 && antes.velado === 0 && antes.aparicion >= 1 && Math.abs(corrida) >= ancho && Math.abs(antes.paginaX) >= ancho) return;
+    const dt = Math.min(0.05, (info.timeSincePreviousFrame ?? 16.7) / 1000);
+    const hayFondo = fondo.value !== null;
     escena.modify((e) => {
       'worklet';
       e.paginaX = corrida;
@@ -328,6 +355,24 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       paso(e, dt);
       return e;
     }, true);
+    const e = escena.value;
+    let r = reservas.value;
+    if (r === null) {
+      r = { cielo: crearReserva(CAPACIDAD_CIELO), frente: crearReserva(CAPACIDAD_FRENTE) };
+      reservas.value = r;
+    }
+    const cielo = volcarLuces(r.cielo, e.cielo, e.nCielo);
+    rectsCielo.value = cielo.rects;
+    formasCielo.value = cielo.formas;
+    coloresCielo.value = cielo.colores;
+    const frente = volcarLuces(r.frente, e.frente, e.nFrente);
+    rectsFrente.value = frente.rects;
+    formasFrente.value = frente.formas;
+    coloresFrente.value = frente.colores;
+    const nuevos = avancesNuevos(e);
+    if (nuevos) avances.value = nuevos;
+    const clave = claveDeApagados(e);
+    if (clave !== apagados.value) apagados.value = clave;
     drenar();
   });
 
@@ -485,91 +530,41 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   const luzLoma2 = useDerivedValue(() => musgo.lomas[2].luz * (0.65 + 0.35 * escena.value.aurora.intensidad));
   const lucesLomas = [luzLoma0, luzLoma1, luzLoma2];
 
-  // Las líneas que se encienden, hasta donde llegó cada una.
+  // Las líneas que se encienden, hasta donde llegó cada una. Con las líneas quietas no se rehace:
+  // un camino nuevo también obliga a Skia a volver a desenfocar el halo.
   const caminoLineas = useDerivedValue(() => {
-    const e = escena.value;
+    const lista = avances.value;
     const p = Skia.PathBuilder.Make();
-    for (const l of e.lineas) {
-      if (l.avance <= 0) continue;
-      const a = e.habitos[l.a];
-      const b = e.habitos[l.b];
-      const ax = ancho / 2 + a.x * alto, ay = alto / 2 - a.y * alto;
-      const bx = ancho / 2 + b.x * alto, by = alto / 2 - b.y * alto;
-      p.moveTo(ax, ay).lineTo(ax + (bx - ax) * l.avance, ay + (by - ay) * l.avance);
+    for (let i = 0; i < lista.length && i < plano.lineas.length; i++) {
+      if (lista[i] <= 0) continue;
+      const a = plano.estrellas[plano.lineas[i].a];
+      const b = plano.estrellas[plano.lineas[i].b];
+      const ax = ancho / 2 + a[0] * alto, ay = alto / 2 - a[1] * alto;
+      const bx = ancho / 2 + b[0] * alto, by = alto / 2 - b[1] * alto;
+      p.moveTo(ax, ay).lineTo(ax + (bx - ax) * lista[i], ay + (by - ay) * lista[i]);
     }
     return p.detach();
   });
   const opacidadFantasmas = useDerivedValue(() => {
-    const e = escena.value;
     let max = 0;
-    for (const l of e.lineas) max = Math.max(max, l.avance);
+    for (const a of avances.value) max = Math.max(max, a);
     return 0.16 * (1 - max);
   });
 
   // El arco de avance de los hábitos automáticos que todavía no se encendieron.
   const caminoArcos = useDerivedValue(() => {
-    const e = escena.value;
+    const clave = apagados.value;
     const p = Skia.PathBuilder.Make();
     for (const a of plano.autos) {
-      const h = e.habitos[a.indice];
-      if (!h || h.luz > 0.5 || a.avance <= 0) continue;
-      const sx = ancho / 2 + h.x * alto, sy = alto / 2 - h.y * alto;
+      const s = plano.estrellas[a.indice];
+      if (!s || clave[a.indice] !== '0' || a.avance <= 0) continue;
+      const sx = ancho / 2 + s[0] * alto, sy = alto / 2 - s[1] * alto;
       const r = 17.2;
       p.addArc(Skia.XYWHRect(sx - r, sy - r, 2 * r, 2 * r), -90, 360 * a.avance);
     }
     return p.detach();
   });
   const alfaUniversoHoy = useDerivedValue(() => (escena.value.completo ? 0.7 : 0));
-
-  // ------------------------------------------------------------------ los dos Atlas
-  const rectsCielo = useRectBuffer(CAPACIDAD_CIELO, (r, i) => {
-    'worklet';
-    const e = escena.value;
-    const celda = i < e.nCielo ? e.cielo[i * DATOS_POR_SPRITE + 4] : 0;
-    r.setXYWH(celda * CELDA, 0, CELDA, CELDA);
-  });
-  const formasCielo = useRSXformBuffer(CAPACIDAD_CIELO, (x, i) => {
-    'worklet';
-    const e = escena.value;
-    if (i >= e.nCielo) { x.set(0, 0, -1e4, -1e4); return; }
-    const o = i * DATOS_POR_SPRITE;
-    const s = (2 * e.cielo[o + 2]) / CELDA;
-    const c = Math.cos(e.cielo[o + 3]) * s, n = Math.sin(e.cielo[o + 3]) * s;
-    const m = CELDA / 2;
-    x.set(c, n, e.cielo[o] - (c * m - n * m), e.cielo[o + 1] - (n * m + c * m));
-  });
-  const coloresCielo = useColorBuffer(CAPACIDAD_CIELO, (col, i) => {
-    'worklet';
-    const e = escena.value;
-    if (i >= e.nCielo) { col[0] = 0; col[1] = 0; col[2] = 0; col[3] = 0; return; }
-    const o = i * DATOS_POR_SPRITE;
-    const k = Math.min(1, e.cielo[o + 8]);
-    col[0] = e.cielo[o + 5] * k; col[1] = e.cielo[o + 6] * k; col[2] = e.cielo[o + 7] * k; col[3] = 1;
-  });
-  const rectsFrente = useRectBuffer(CAPACIDAD_FRENTE, (r, i) => {
-    'worklet';
-    const e = escena.value;
-    const celda = i < e.nFrente ? e.frente[i * DATOS_POR_SPRITE + 4] : 0;
-    r.setXYWH(celda * CELDA, 0, CELDA, CELDA);
-  });
-  const formasFrente = useRSXformBuffer(CAPACIDAD_FRENTE, (x, i) => {
-    'worklet';
-    const e = escena.value;
-    if (i >= e.nFrente) { x.set(0, 0, -1e4, -1e4); return; }
-    const o = i * DATOS_POR_SPRITE;
-    const s = (2 * e.frente[o + 2]) / CELDA;
-    const c = Math.cos(e.frente[o + 3]) * s, n = Math.sin(e.frente[o + 3]) * s;
-    const m = CELDA / 2;
-    x.set(c, n, e.frente[o] - (c * m - n * m), e.frente[o + 1] - (n * m + c * m));
-  });
-  const coloresFrente = useColorBuffer(CAPACIDAD_FRENTE, (col, i) => {
-    'worklet';
-    const e = escena.value;
-    if (i >= e.nFrente) { col[0] = 0; col[1] = 0; col[2] = 0; col[3] = 0; return; }
-    const o = i * DATOS_POR_SPRITE;
-    const k = Math.min(1, e.frente[o + 8]);
-    col[0] = e.frente[o + 5] * k; col[1] = e.frente[o + 6] * k; col[2] = e.frente[o + 7] * k; col[3] = 1;
-  });
 
   // ------------------------------------------------------------------ acciones del panel de prueba
   const enLaEscena = useCallback(

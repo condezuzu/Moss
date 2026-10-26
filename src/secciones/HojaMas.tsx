@@ -10,7 +10,7 @@ import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeInDown, FadeOut, SlideInRight, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -26,7 +26,7 @@ import { Icono } from './comida/comunes';
 import { cantidadDeTexto, comidaDeAhora, fechaCorta, numero, sistemaDe, useEstado } from './comida/datos';
 import { abrirRegistro } from './comida/registro';
 import { Figura } from './Figura';
-import { entre, subirOBajar } from './movimiento';
+import { ENTRA_PANEL, entre, subirOBajar } from './movimiento';
 
 export type VistaDelMas = 'menu' | 'peso' | 'medidas';
 type Vista = VistaDelMas;
@@ -90,12 +90,12 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
           </Animated.View>
         )}
         {vista === 'peso' && (
-          <Animated.View key="peso" entering={SlideInRight.duration(320)}>
+          <Animated.View key="peso" entering={ENTRA_PANEL}>
             <VistaDePeso alVolver={() => alCambiarVista('menu')} avisar={avisar} />
           </Animated.View>
         )}
         {vista === 'medidas' && (
-          <Animated.View key="medidas" entering={SlideInRight.duration(320)}>
+          <Animated.View key="medidas" entering={ENTRA_PANEL}>
             <VistaDeMedidas alVolver={() => alCambiarVista('menu')} avisar={avisar} />
           </Animated.View>
         )}

@@ -10,7 +10,7 @@ import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
@@ -32,6 +32,7 @@ import {
 } from '@/dominio/registros';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { AvisoAbajo, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
 import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
 import { Escaner } from './Escaner';
@@ -392,10 +393,10 @@ function Hoja({ pedido }: { pedido: Pedido }) {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      <Animated.View entering={FadeIn.duration(350)} exiting={FadeOut.duration(300)} style={[StyleSheet.absoluteFill, estilos.fondo]}>
+      <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={[StyleSheet.absoluteFill, estilos.fondo]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={cerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
       </Animated.View>
-      <Animated.View entering={SlideInDown.duration(460)} exiting={SlideOutDown.duration(380)} style={[estilos.hoja, { top: insets.top + 12 }]} accessibilityViewIsModal>
+      <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.hoja, { top: insets.top + 12 }]} accessibilityViewIsModal>
         <View style={estilos.arriba}>
           <View style={estilos.asa} />
           {!panel && (
@@ -675,7 +676,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
 
         {ventana && (
           <>
-            <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(260)} style={[StyleSheet.absoluteFill, estilos.velo]}>
+            <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={[StyleSheet.absoluteFill, estilos.velo]}>
               <Pressable style={StyleSheet.absoluteFill} onPress={() => (soloEditar ? cerrar() : setVentana(null))} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
             </Animated.View>
             <Ventana

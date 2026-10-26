@@ -6,7 +6,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, SlideInRight, SlideOutRight } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { baseDeAlimentos } from '@/comida/base';
 import type { Etiqueta as EtiquetaLeida, Leidos } from '@/comida/etiqueta';
@@ -16,6 +16,7 @@ import type { Sistema } from '@/dominio/cantidades';
 import { escalar, gramosDe, itemDeAlimento, itemRapido, sumarValores, valoresDeReceta, type AlimentoPropio, type Item, type Receta, type Valores } from '@/dominio/registros';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { ENTRA_PANEL, SALE_PANEL } from '../movimiento';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Etiqueta, Icono, MACROS, Punto } from './comunes';
 import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma } from './datos';
@@ -30,7 +31,7 @@ const leer = (texto: string): number | null => {
 
 function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number }) {
   return (
-    <Animated.View entering={SlideInRight.duration(380)} exiting={SlideOutRight.duration(320)} style={estilos.panel}>
+    <Animated.View entering={ENTRA_PANEL} exiting={SALE_PANEL} style={estilos.panel}>
       <View style={estilos.cabeza}>
         <Pressable onPress={alAtras} style={estilos.atras} accessibilityRole="button" accessibilityLabel={t('comun.atras')}>
           <Icono nombre="chevron.left" tam={18} peso="medium" />

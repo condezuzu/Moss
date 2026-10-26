@@ -108,7 +108,10 @@ export function useEncendidos(): boolean[] {
   return useSyncExternalStore(a.suscribir, () => {
     const e = a.estado();
     if (encendidos?.version !== e.version) {
-      encendidos = { version: e.version, lista: habitosDelDia(e.habitos, e.hoy).map((h) => e.marcas.get(claveDeMarca(h.id, e.hoy))?.hecho ?? false) };
+      const lista = habitosDelDia(e.habitos, e.hoy).map((h) => e.marcas.get(claveDeMarca(h.id, e.hoy))?.hecho ?? false);
+      // Anotar una comida también cambia la versión: si lo encendido es igual, el cielo no se vuelve a dibujar.
+      const igual = encendidos !== undefined && encendidos.lista.length === lista.length && lista.every((x, i) => x === encendidos!.lista[i]);
+      encendidos = { version: e.version, lista: igual ? encendidos!.lista : lista };
     }
     return encendidos.lista;
   });

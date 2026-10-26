@@ -39,6 +39,8 @@ await pagina.addInitScript(() => {
     perfil: { sexo: 'm', alturaCm: 178, actividad: 'algo', objetivo: 'bajar', ritmo: 'recomendado', nacimiento: d.getFullYear() - 34, actualizado: momento },
     pesos: [{ fecha: hoy, kg: 82, origen: 'manual', momento }],
     metas: [{ desde: hoy, kcal: 2150, proteina: 165, carbohidratos: 215, grasas: 70, gasto: 2650, motivo: 'inicial', momento }],
+    // Sin la entrada terminada en este teléfono, la app vuelve a la entrada aunque haya perfil.
+    ajustes: { entrada: 'hecha' },
     // Sin reloj: nueve noches que estimó Moss, algunas confirmadas; la de anoche, sin estar segura.
     noches: Array.from({ length: 9 }, (_, i) => {
       const dia = new Date(d.getFullYear(), d.getMonth(), d.getDate() - i);
@@ -140,7 +142,7 @@ if (await pagina.getByLabel('Volver al cielo').count()) {
 } else {
   console.log('  Ascent: apagada (EXPO_PUBLIC_CON_ASCENT), el gesto no sube nada');
 }
-await arrastrar([an - 40, 420], [an - 200, 430], 'pestanas-deslizando');
+await arrastrar([an - 40, 420], [an - 200, 420], 'pestanas-deslizando');
 await foto('perfil');
 // Sueño sin reloj: la pregunta de la hora (o las horas, la mañana que pregunta sin proponer), la
 // noche corregida y de dónde sale cada dato.

@@ -4,7 +4,7 @@
 // el día completo no tiene texto propio.
 
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,7 +53,7 @@ type Props = {
 const RIQUEZAS = [0, 0.6, 1];
 
 // La web solo se usa para probar el cielo sin iPhone: ahí el panel de prueba siempre está.
-const DIAGNOSTICO = __DEV__ || process.env.EXPO_PUBLIC_DIAGNOSTICO === '1' || Platform.OS === 'web';
+export const DIAGNOSTICO = __DEV__ || process.env.EXPO_PUBLIC_DIAGNOSTICO === '1' || Platform.OS === 'web';
 
 function suave(a: number, b: number, x: number) {
   'worklet';
@@ -86,9 +86,10 @@ export function Interfaz(p: Props) {
   // La flecha tenue de Ascent va con la frase y respira apenas; mientras Ascent sube, se apaga.
   const reducido = useReducedMotion();
   const respira = useSharedValue(0);
+  const conFlecha = !!p.subida;
   useEffect(() => {
-    if (!reducido) respira.value = withRepeat(withTiming(1, { duration: 1900 }), -1, true);
-  }, [reducido, respira]);
+    if (!reducido && conFlecha) respira.value = withRepeat(withTiming(1, { duration: 1900 }), -1, true);
+  }, [reducido, conFlecha, respira]);
   const estiloFlecha = useAnimatedStyle(() => {
     const e = p.escena.value;
     const subio = p.subida ? p.subida.get() : 0;
@@ -102,11 +103,14 @@ export function Interfaz(p: Props) {
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: suave(0.5, 1.1, e.cam.y) * (1 - e.velado) };
   });
 
+  // Solo un aviso nuevo vuelve a contar: si el tiempo dependiera de la función para cerrarlo, cada
+  // vez que el cielo se vuelve a dibujar empezaría de nuevo y el aviso no se iría nunca.
+  const cerrarAviso = useEffectEvent(() => p.alCerrarAviso());
   useEffect(() => {
     if (!p.aviso) return;
-    const espera = setTimeout(p.alCerrarAviso, p.aviso.deshacer ? 4200 : 2600);
+    const espera = setTimeout(cerrarAviso, p.aviso.deshacer ? 4200 : 2600);
     return () => clearTimeout(espera);
-  }, [p.aviso, p.alCerrarAviso]);
+  }, [p.aviso]);
 
   const fecha = t('cielo.fecha', {
     dia: lista('fecha.dias')[p.dia.fecha.diaSemana],
@@ -177,9 +181,11 @@ export function Interfaz(p: Props) {
         </Animated.View>
       )}
 
+      {/* El aviso es de Hábitos: se va con su página. */}
+      <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
       {p.aviso && (
         <Animated.View key={p.aviso.clave} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(200)} style={[estilos.aviso, { bottom: p.abajo ? p.abajo + 24 : insets.bottom + 96 }]}>
-          <Text style={estilos.avisoTexto} numberOfLines={1}>{p.aviso.texto}</Text>
+          <Text style={estilos.avisoTexto} numberOfLines={2}>{p.aviso.texto}</Text>
           {p.aviso.deshacer && (
             <Pressable onPress={p.aviso.deshacer} style={estilos.avisoBoton} accessibilityRole="button" hitSlop={8}>
               <Text style={estilos.avisoBotonTexto}>{t('comun.deshacer')}</Text>
@@ -187,6 +193,7 @@ export function Interfaz(p: Props) {
           )}
         </Animated.View>
       )}
+      </Animated.View>
 
       {DIAGNOSTICO && (
         <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">

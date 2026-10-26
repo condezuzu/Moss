@@ -9,7 +9,7 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { baseDeAlimentos } from '@/comida/base';
 import { rindeAlCocinar, type Detalle } from '@/comida/detalle';
@@ -22,6 +22,7 @@ import type { ParaQuien } from '@/dominio/micronutrientes';
 import { gramosDe, valoresDeCantidad, type Cantidad, type Fuente, type Item, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { ENTRA_HOJA, SALE_HOJA } from '../movimiento';
 import { Aparece } from '../tarjetas';
 import { ComoDeja, DeDonde, EnlaceReportar, Micronutrientes, Reporte, Sello } from './AntesDeSumar';
 import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
@@ -226,7 +227,7 @@ export function Ventana(p: Props) {
     : [];
 
   return (
-    <Animated.View entering={SlideInDown.duration(340)} exiting={SlideOutDown.duration(300)} style={[estilos.ventana, { paddingBottom: p.abajo + 10 }]}>
+    <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.ventana, { paddingBottom: p.abajo + 10 }]}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" bounces={false}>
         <View style={estilos.cabeza}>
           <View style={estilos.titulos}>

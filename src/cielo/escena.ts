@@ -86,6 +86,12 @@ export type Escena = {
   nFrente: number;
   eventos: Evento[];
   medicion: { cuadros: number; tiempo: number; desde: number; total: number; totalTiempo: number; avisado: boolean };
+  /** Sube cada vez que alguna línea cambia hasta dónde llegó; Cielo.tsx rehace su camino solo entonces. */
+  versionLineas: number;
+  /** La versión de las líneas que Cielo.tsx ya dibujó. */
+  lineasVistas: number;
+  /** Solo con el panel de prueba: los cuadros por segundo le llegan a React. */
+  contarCuadros: boolean;
 };
 
 export type EntradaDeEscena = {
@@ -99,6 +105,7 @@ export type EntradaDeEscena = {
   factorParticulas: number;
   riqueza: number;
   movimientoReducido: boolean;
+  contarCuadros?: boolean;
 };
 
 export function crearEscena(d: EntradaDeEscena): Escena {
@@ -138,6 +145,9 @@ export function crearEscena(d: EntradaDeEscena): Escena {
     nFrente: 0,
     eventos: [],
     medicion: { cuadros: 0, tiempo: 0, desde: 0, total: 0, totalTiempo: 0, avisado: false },
+    versionLineas: 1,
+    lineasVistas: 0,
+    contarCuadros: d.contarCuadros ?? false,
   };
 }
 
@@ -158,12 +168,20 @@ function salida(t: number) {
   return 1 - u * u * u;
 }
 
-/** De mundo a puntos de pantalla, para una capa con su paralaje. */
-export function aPantalla(e: Escena, x: number, y: number, par: number): Punto {
+/**
+ * De mundo a puntos de pantalla, para una capa con su paralaje. Son dos funciones y no un par
+ * porque corren cientos de veces por cuadro: un arreglo nuevo en cada una es basura para el hilo
+ * de la interfaz.
+ */
+function enX(e: Escena, x: number, par: number) {
   'worklet';
   // Lo que va con el cielo (la constelación y tu universo) se corre con su pestaña; el musgo queda.
-  const corrida = par === PARALAJE.cielo ? e.paginaX : 0;
-  return [e.ancho / 2 + x * e.alto + corrida, e.alto / 2 - (y - e.cam.y * par) * e.alto];
+  return e.ancho / 2 + x * e.alto + (par === PARALAJE.cielo ? e.paginaX : 0);
+}
+
+function enY(e: Escena, y: number, par: number) {
+  'worklet';
+  return e.alto / 2 - (y - e.cam.y * par) * e.alto;
 }
 
 function sprite(b: Float32Array, n: number, cap: number, sx: number, sy: number, radio: number, rot: number, celda: number, color: number[], intensidad: number) {
@@ -232,8 +250,8 @@ export function estrellaEn(e: Escena, px: number, py: number): number {
   let mejor = -1;
   let distancia = 34;
   for (let i = 0; i < e.habitos.length; i++) {
-    const [sx, sy] = aPantalla(e, e.habitos[i].x, e.habitos[i].y, PARALAJE.cielo);
-    const d = Math.hypot(sx - px, sy - py);
+    const h = e.habitos[i];
+    const d = Math.hypot(enX(e, h.x, PARALAJE.cielo) - px, enY(e, h.y, PARALAJE.cielo) - py);
     if (d < distancia) { distancia = d; mejor = i; }
   }
   return mejor;
@@ -275,6 +293,7 @@ export function repetirAnimacion(e: Escena) {
   e.tCompleto = e.t;
   e.rafagaHecha = false;
   e.lineas.forEach((l) => { l.avance = 0; });
+  e.versionLineas++;
 }
 
 /** Adelanta la próxima estrella fugaz (para el panel de prueba). */
@@ -298,7 +317,7 @@ function medir(e: Escena, dt: number) {
   m.cuadros++;
   m.tiempo += dt;
   if (m.tiempo >= 0.5) {
-    e.eventos.push({ tipo: 'cuadros', valor: m.cuadros / m.tiempo });
+    if (e.contarCuadros) e.eventos.push({ tipo: 'cuadros', valor: m.cuadros / m.tiempo });
     m.cuadros = 0;
     m.tiempo = 0;
   }
@@ -325,7 +344,7 @@ function armarSprites(e: Escena) {
 
   for (let i = 0; i < e.habitos.length; i++) {
     const h = e.habitos[i];
-    const [sx, sy] = aPantalla(e, h.x, h.y, PARALAJE.cielo);
+    const sx = enX(e, h.x, PARALAJE.cielo), sy = enY(e, h.y, PARALAJE.cielo);
     const luz = h.luz;
     const respira = 1 + 0.05 * Math.sin(e.t * 1.7 + i * 2.3);
     n = sprite(b, n, cap, sx, sy, (30 + 30 * luz) * (1 + 0.3 * h.pop) * pulso, 0, SPRITE.brillo, ORO, (0.1 + 0.45 * luz) * respira);
@@ -343,7 +362,7 @@ function armarSprites(e: Escena) {
 
   for (const f of e.efectos) {
     const u = (e.t - f.t0) / f.dur;
-    const [sx, sy] = aPantalla(e, f.x, f.y, PARALAJE.cielo);
+    const sx = enX(e, f.x, PARALAJE.cielo), sy = enY(e, f.y, PARALAJE.cielo);
     if (f.tipo === 0) n = sprite(b, n, cap, sx, sy, 14 + 56 * salida(u), 0, SPRITE.disco, ORO_CLARO, 1.1 * (1 - u));
     else if (f.tipo === 1) n = sprite(b, n, cap, sx, sy, 14 + 78 * salida(u), 0, SPRITE.aroFino, ORO, 0.75 * (1 - u));
     else n = sprite(b, n, cap, sx, sy, 42 - 26 * salida(u), 0, SPRITE.aroFino, PERGAMINO, 0.4 * (1 - u));
@@ -353,14 +372,15 @@ function armarSprites(e: Escena) {
   for (const l of e.lineas) {
     if (l.avance > 0 && l.avance < 1) {
       const a = e.habitos[l.a], c = e.habitos[l.b];
-      const [sx, sy] = aPantalla(e, a.x + (c.x - a.x) * l.avance, a.y + (c.y - a.y) * l.avance, PARALAJE.cielo);
+      const sx = enX(e, a.x + (c.x - a.x) * l.avance, PARALAJE.cielo), sy = enY(e, a.y + (c.y - a.y) * l.avance, PARALAJE.cielo);
       n = sprite(b, n, cap, sx, sy, 10, 0, SPRITE.brillo, ORO_CLARO, 0.9);
     }
   }
 
   for (const s of e.universo) {
-    const [sx, sy] = aPantalla(e, s.x, s.y, PARALAJE.cielo);
+    const sy = enY(e, s.y, PARALAJE.cielo);
     if (sy < -40 || sy > e.alto + 40) continue;
+    const sx = enX(e, s.x, PARALAJE.cielo);
     const on = s.habito >= 0 ? e.habitos[s.habito].encendido : s.encendida;
     n = sprite(b, n, cap, sx, sy, on ? 20 : 13, 0, SPRITE.brillo, on ? ORO : PERGAMINO, on ? 0.32 : 0.1);
     n = sprite(b, n, cap, sx, sy, on ? 9 : 7, 0.3, SPRITE.nucleo, BLANCO_CALIDO, on ? 0.9 : 0.5);
@@ -369,12 +389,12 @@ function armarSprites(e: Escena) {
 
   for (const p of e.particulas) {
     if (p.espora) continue;
-    const [sx, sy] = aPantalla(e, p.x, p.y, p.par);
+    const sx = enX(e, p.x, p.par), sy = enY(e, p.y, p.par);
     n = sprite(b, n, cap, sx, sy, p.tam * 2.2, 0, SPRITE.brillo, p.color, p.brillo * (1 - p.vida / p.max) * 0.5);
   }
   for (const s of e.esporasSalud) {
     const [x, y] = puntoDeEspora(s, (e.t - s.t0) / s.dur);
-    const [sx, sy] = aPantalla(e, x, y, PARALAJE.cielo);
+    const sx = enX(e, x, PARALAJE.cielo), sy = enY(e, y, PARALAJE.cielo);
     n = sprite(b, n, cap, sx, sy, 26, 0, SPRITE.brillo, MUSGO_LUZ, 0.55);
     n = sprite(b, n, cap, sx, sy, 9, e.t * 2, SPRITE.nucleo, BLANCO_CALIDO, 1);
   }
@@ -386,7 +406,7 @@ function armarSprites(e: Escena) {
   const capF = CAPACIDAD_FRENTE;
   const luzAurora = 0.75 + 0.25 * e.aurora.intensidad;
   for (const k of e.brotes) {
-    const [sx, sy] = aPantalla(e, k.x, k.y, PARALAJE.lomas[2]);
+    const sx = enX(e, k.x, PARALAJE.lomas[2]), sy = enY(e, k.y, PARALAJE.lomas[2]);
     const titila = 0.7 + 0.3 * Math.sin(e.t * 0.9 + k.fase * 3);
     m = sprite(f, m, capF, sx, sy, 5.5 * k.tam, 0, SPRITE.brillo, BROTE, 0.15 * k.brillo * titila * luzAurora);
     m = sprite(f, m, capF, sx, sy, 1.8 * k.tam, 0, SPRITE.disco, BROTE_NUCLEO, 0.4 * k.brillo * titila);
@@ -397,11 +417,29 @@ function armarSprites(e: Escena) {
     const alto = suave(HORIZONTE + 0.05, HORIZONTE + 0.4, p.y);
     const color = [MUSGO_LUZ[0] + (1 - MUSGO_LUZ[0]) * alto, MUSGO_LUZ[1] + (0.97 - MUSGO_LUZ[1]) * alto, MUSGO_LUZ[2] + (0.88 - MUSGO_LUZ[2]) * alto];
     const visible = suave(0, 0.8, p.vida) * (1 - suave(0.75, 1, u));
-    const [sx, sy] = aPantalla(e, p.x, p.y, p.par);
+    const sx = enX(e, p.x, p.par), sy = enY(e, p.y, p.par);
     m = sprite(f, m, capF, sx, sy, p.tam * 2.6, 0, SPRITE.brillo, color, 0.28 * visible);
     m = sprite(f, m, capF, sx, sy, p.tam, 0.4, SPRITE.nucleo, color, 0.9 * visible);
   }
   e.nFrente = m;
+}
+
+/** Hasta dónde llegó cada línea, en el orden de plano.lineas, si cambió desde la última vez que se pidió; si no, null. */
+export function avancesNuevos(e: Escena): number[] | null {
+  'worklet';
+  if (e.versionLineas === e.lineasVistas) return null;
+  e.lineasVistas = e.versionLineas;
+  const lista: number[] = [];
+  for (const l of e.lineas) lista.push(l.avance);
+  return lista;
+}
+
+/** Qué hábitos están apagados ('0') o encendidos ('1'): los arcos de avance cambian solo con esto. */
+export function claveDeApagados(e: Escena): string {
+  'worklet';
+  let clave = '';
+  for (const h of e.habitos) clave += h.luz > 0.5 ? '1' : '0';
+  return clave;
 }
 
 // Va al final a propósito: el plugin de worklets guarda las funciones que usa cada worklet en el
@@ -416,6 +454,12 @@ export function paso(e: Escena, dt: number) {
     const a = -k * (e.cam.y - e.cam.objetivo) - 2 * Math.sqrt(k) * e.cam.v;
     e.cam.v += a * dt;
     e.cam.y += e.cam.v * dt;
+    // Quieta del todo al llegar: si no, se sigue moviendo en millonésimas y todo lo que va con
+    // ella (los textos, las capas) se vuelve a mandar en cada cuadro.
+    if (Math.abs(e.cam.y - e.cam.objetivo) < 1e-4 && Math.abs(e.cam.v) < 1e-3) {
+      e.cam.y = e.cam.objetivo;
+      e.cam.v = 0;
+    }
   }
 
   for (const h of e.habitos) {
@@ -437,9 +481,13 @@ export function paso(e: Escena, dt: number) {
   e.aurora.oleada += (objetivoO - e.aurora.oleada) * ritmo;
   e.aurora.tiempo += dt * (1 + 2.2 * e.aurora.oleada) * (e.movimientoReducido ? 0.4 : 1);
 
+  let lineasMovidas = false;
   for (const l of e.lineas) {
+    const antes = l.avance;
     l.avance = e.completo ? salida((dc - 0.15 - l.prof * 0.3) / 0.4) : Math.max(0, l.avance - dt * 2.6);
+    if (l.avance !== antes) lineasMovidas = true;
   }
+  if (lineasMovidas) e.versionLineas++;
 
   if (e.completo && !e.rafagaHecha && dc >= 1.0) {
     e.rafagaHecha = true;
@@ -457,7 +505,8 @@ export function paso(e: Escena, dt: number) {
     }
   }
 
-  e.particulas = e.particulas.filter((p) => {
+  let vivas = 0;
+  for (const p of e.particulas) {
     p.vida += dt;
     if (p.espora) {
       p.y += p.vy * dt;
@@ -471,9 +520,12 @@ export function paso(e: Escena, dt: number) {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
     }
-    return p.vida < p.max;
-  });
-  e.efectos = e.efectos.filter((f) => e.t - f.t0 < f.dur);
+    if (p.vida < p.max) e.particulas[vivas++] = p;
+  }
+  e.particulas.length = vivas;
+  let quedan = 0;
+  for (const f of e.efectos) if (e.t - f.t0 < f.dur) e.efectos[quedan++] = f;
+  e.efectos.length = quedan;
 
   // Esporas: suben despacio desde la luz del musgo y, si llegan alto, se vuelven estrellas. Son
   // de vez en cuando: una cada siete segundos, más o menos.
@@ -486,19 +538,21 @@ export function paso(e: Escena, dt: number) {
     });
   }
 
-  e.esporasSalud = e.esporasSalud.filter((s) => {
+  let siguen = 0;
+  for (const s of e.esporasSalud) {
     const u = (e.t - s.t0) / s.dur;
     if (u >= 1) {
       cambiarHabito(e, s.indice, true, true);
-      return false;
+      continue;
     }
     const [x, y] = puntoDeEspora(s, u);
     e.particulas.push({
       x, y, vx: (Math.random() - 0.5) * 0.02, vy: (Math.random() - 0.5) * 0.02, vida: 0, max: 0.5 + Math.random() * 0.4,
       tam: 1.5 + Math.random() * 2, color: MUSGO_LUZ, brillo: 0.8, frena: 2, sube: 0, par: 1, espora: false, x0: 0, fase: 0,
     });
-    return true;
-  });
+    e.esporasSalud[siguen++] = s;
+  }
+  e.esporasSalud.length = siguen;
 
   // Una estrella fugaz cada tanto, en la zona de hoy: cae en diagonal y rápido. Una de cada cinco
   // es una bola de fuego, más brillante, que estalla antes de apagarse. La cabeza se apaga y la

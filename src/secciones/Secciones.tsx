@@ -32,7 +32,7 @@ import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDePerfil } from './perfil/Perfil';
 import { PaginaDeProgreso } from './progreso/Progreso';
 import { PaginaDeSueno } from './sueno/Sueno';
-import { CEDE_EN_EL_BORDE, entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
+import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
 
 const ULTIMA = PESTANAS.length - 1;
 
@@ -57,7 +57,7 @@ export default function Secciones() {
   const registro = useRegistro();
   const conRegistro = useSharedValue(0);
   useEffect(() => {
-    conRegistro.set(withTiming(registro ? 1 : 0, { duration: registro ? 450 : 380 }));
+    conRegistro.set(withTiming(registro ? 1 : 0, { duration: registro ? 340 : 230, easing: LLEGA }));
   }, [registro, conRegistro]);
   const aviso = useAviso();
   // Solo se arman la sección de ahora y sus vecinas (menos memoria y menos lienzos de Skia en un
@@ -168,7 +168,7 @@ export default function Secciones() {
             alEditarHabito={setEditando}
           />
           {conSecciones && (
-            <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+            <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
               <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
               <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
                 {PESTANAS.map((n, i) =>
@@ -195,7 +195,7 @@ export default function Secciones() {
         </Animated.View>
         {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(true)} />}
         {conSecciones && (
-          <Animated.View entering={FadeIn.duration(900)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
             <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
             <AvisoAbajo aviso={aviso} alIrse={quitarAviso} abajo={abajo + 14} />
             <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
