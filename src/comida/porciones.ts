@@ -8,7 +8,7 @@ const FRACCIONES: readonly (readonly [number, string])[] = [[0.25, '¼'], [1 / 3
 const VALOR_DE: Record<string, number> = Object.fromEntries(FRACCIONES.map(([v, f]) => [f, v]));
 
 /** Lo que se multiplica tal cual, sin plural: «30 g» por dos son «60 g». */
-const METRICAS = /^(g|kg|ml|l)$/i;
+const METRICAS = /^(g|kg|ml|l|oz|lb)$/i;
 
 /** Lo que no cambia en plural: unidades, adverbios y, en inglés, los adjetivos de tamaño. */
 const INVARIABLES: Record<Idioma, Set<string>> = {
@@ -71,6 +71,71 @@ export function pluralDePorcion(texto: string, idioma: Idioma): string {
     if (PREPOSICIONES.has(p.toLowerCase())) seguir = false;
     return seguir && p ? pluralDePalabra(p, idioma) : p;
   }).join(' ') + cola;
+}
+
+/** Las palabras en inglés que terminan en -ie: «cookies» es «cookie» y no «cooky». */
+const IE_EN_INGLES = new Set(['cookie', 'brownie', 'pie', 'smoothie', 'veggie', 'calorie', 'tie']);
+
+/** El singular de una palabra en plural («galletas», «unidades», «crackers»); si no está en plural, igual. */
+function singularDePalabra(palabra: string, idioma: Idioma): string {
+  const p = palabra.toLowerCase();
+  if (INVARIABLES[idioma].has(p) || /\d/.test(palabra) || palabra.length < 3) return palabra;
+  if (idioma === 'en') {
+    if (/ies$/i.test(palabra)) return IE_EN_INGLES.has(p.slice(0, -1)) ? palabra.slice(0, -1) : `${palabra.slice(0, -3)}y`;
+    if (/(ss|sh|ch|x|z|o)es$/i.test(palabra)) return palabra.slice(0, -2);
+    if (/[^s]s$/i.test(palabra)) return palabra.slice(0, -1);
+    return palabra;
+  }
+  if (/iones$/i.test(palabra)) return `${palabra.slice(0, -5)}ión`;
+  if (/ones$/i.test(palabra)) return `${palabra.slice(0, -4)}ón`;
+  if (/[aeiou]ces$/i.test(palabra)) return `${palabra.slice(0, -3)}z`;
+  // «unidades», «panes», «flores»: después de una sola consonante, el plural agrega -es.
+  if (/[aeiou][dlnrj]es$/i.test(palabra)) return palabra.slice(0, -2);
+  if (/[aeiouáéó]s$/i.test(palabra)) return palabra.slice(0, -1);
+  // Lo que viene del inglés («crackers», «snacks»).
+  if (/[^aeious]s$/i.test(palabra)) return palabra.slice(0, -1);
+  return palabra;
+}
+
+/** El singular de una porción sin su número, con las mismas reglas que el plural: «galletas rellenas» → «galleta rellena». */
+export function singularDePorcion(texto: string, idioma: Idioma): string {
+  const corte = texto.search(/[,(]/);
+  const cabeza = corte < 0 ? texto : texto.slice(0, corte);
+  const cola = corte < 0 ? '' : texto.slice(corte);
+  const palabras = cabeza.split(' ');
+  if (idioma === 'en') {
+    const ultima = palabras.map((p) => p.length > 0).lastIndexOf(true);
+    if (ultima >= 0) palabras[ultima] = singularDePalabra(palabras[ultima], idioma);
+    return palabras.join(' ') + cola;
+  }
+  let seguir = true;
+  return palabras.map((p) => {
+    if (PREPOSICIONES.has(p.toLowerCase())) seguir = false;
+    return seguir && p ? singularDePalabra(p, idioma) : p;
+  }).join(' ') + cola;
+}
+
+/**
+ * Las porciones con la de una sola unidad adelante: «7 galletas» (31 g) suma «1 galleta» (4,4 g),
+ * así no se arranca del número que eligió el paquete. Lo que ya tiene la de una, o se cuenta en
+ * gramos, queda igual.
+ */
+export function conUnaUnidad<P extends { nombre: string; gramos: number }>(porciones: readonly P[], idioma: Idioma): (P | { nombre: string; gramos: number })[] {
+  const salida: (P | { nombre: string; gramos: number })[] = [];
+  const nombres = new Set(porciones.map((p) => p.nombre.toLowerCase()));
+  for (const p of porciones) {
+    const m = /^(\d+)\s+(\S.*)$/.exec(p.nombre);
+    const n = m ? Number(m[1]) : 0;
+    if (m && n >= 2 && n <= 100 && !METRICAS.test(m[2].split(/[\s,(]/)[0])) {
+      const una = `1 ${singularDePorcion(m[2], idioma)}`;
+      if (!nombres.has(una.toLowerCase())) {
+        nombres.add(una.toLowerCase());
+        salida.push({ nombre: una, gramos: Math.round((p.gramos / n) * 10) / 10 });
+      }
+    }
+    salida.push(p);
+  }
+  return salida;
 }
 
 /** Lo que se comió, con palabras: `veces` porciones de `porcion` («1 rebanada», «½ taza», «30 g»). */

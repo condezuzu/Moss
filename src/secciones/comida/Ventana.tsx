@@ -15,7 +15,7 @@ import { baseDeAlimentos } from '@/comida/base';
 import { rindeAlCocinar, type Detalle } from '@/comida/detalle';
 import { cantidadDePorcion, decimal, numeroDePorcion } from '@/comida/porciones';
 import {
-  ACEITE, AJUSTES, aGramos, ajustar, aMl, aOjoDeFabrica, comestible, gramosDeMl, GRAMOS_POR_ONZA, ML_POR_ONZA_LIQUIDA, unidadDePeso, unidadDeVolumen, type Sistema,
+  ACEITE, AJUSTES, aGramos, ajustar, aMl, aOjoDeFabrica, comestible, gramosDeMl, GRAMOS_POR_ONZA, ML_POR_ONZA_LIQUIDA, pasoDeCantidad, pasoDePorcion, unidadDePeso, unidadDeVolumen, type Sistema,
 } from '@/dominio/cantidades';
 import type { Macros } from '@/dominio/metas';
 import type { ParaQuien } from '@/dominio/micronutrientes';
@@ -193,11 +193,7 @@ export function Ventana(p: Props) {
 
   const paso = (signo: 1 | -1) => {
     setEscrito(null);
-    setMedicion((m) => {
-      if (m.tipo === 'porcion') return { ...m, veces: Math.max(0.5, Math.round((m.veces + 0.5 * signo) * 100) / 100) };
-      const unidad = m.tipo === 'peso' ? (p.sistema === 'imperial' ? 0.5 : 10) : p.sistema === 'imperial' ? 1 : 50;
-      return { ...m, valor: Math.max(unidad, Math.round((m.valor + unidad * signo) * 10) / 10) };
-    });
+    setMedicion((m) => (m.tipo === 'porcion' ? { ...m, veces: pasoDePorcion(m.veces, signo) } : { ...m, valor: pasoDeCantidad(m.valor, signo, m.tipo, p.sistema) }));
   };
   const multiplicar = (factor: number) => {
     setEscrito(null);
@@ -228,7 +224,7 @@ export function Ventana(p: Props) {
 
   return (
     <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.ventana, { paddingBottom: p.abajo + 10 }]}>
-      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" bounces={false}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" bounces={false} automaticallyAdjustKeyboardInsets>
         <View style={estilos.cabeza}>
           <View style={estilos.titulos}>
             <Text style={estilos.nombre}>{alimento.nombre}</Text>
@@ -258,6 +254,17 @@ export function Ventana(p: Props) {
 
         {deDonde && <DeDonde detalle={detalle} origen={alimento.origen} />}
 
+        {/* Lo que más cambia los números va primero: el arroz crudo tiene casi el triple que el cocido. */}
+        {versiones.length > 1 && (
+          <Aparece>
+            <Etiqueta estilo={estilos.etiquetaArriba}>{`${t('comida.medir.crudo')} · ${t('comida.medir.cocido')}`}</Etiqueta>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila}>
+              {versiones.map((v) => <Pastilla key={v.id} texto={v.texto} elegida={v.id === Number(alimento.ref)} alTocar={() => v.id !== Number(alimento.ref) && pasarA(v.id)} />)}
+            </ScrollView>
+            <Rinde detalle={detalle} />
+          </Aparece>
+        )}
+
         {numeros && (
           <View style={estilos.cifras}>
             <Text style={estilos.kcal}>
@@ -284,16 +291,6 @@ export function Ventana(p: Props) {
           </Text>
         )}
         {numeros && valores.micros && <Micronutrientes micros={valores.micros} persona={p.persona} />}
-
-        {versiones.length > 1 && (
-          <>
-            <Etiqueta estilo={estilos.etiqueta}>{`${t('comida.medir.crudo')} · ${t('comida.medir.cocido')}`}</Etiqueta>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila}>
-              {versiones.map((v) => <Pastilla key={v.id} texto={v.texto} elegida={v.id === Number(alimento.ref)} alTocar={() => v.id !== Number(alimento.ref) && pasarA(v.id)} />)}
-            </ScrollView>
-            <Rinde detalle={detalle} />
-          </>
-        )}
 
         <Etiqueta estilo={estilos.etiqueta}>{t('comida.porcion')}</Etiqueta>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila} keyboardShouldPersistTaps="handled">
@@ -450,6 +447,7 @@ const estilos = StyleSheet.create({
   queda: { marginTop: 6, fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.78)' },
   secundarios: { marginTop: 8, fontFamily: letras.texto, fontSize: 12, lineHeight: 16, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
   etiqueta: { marginTop: 18, marginBottom: 8 },
+  etiquetaArriba: { marginTop: 14, marginBottom: 8 },
   fila: { flexDirection: 'row', flexWrap: 'nowrap', gap: 8, paddingRight: 18 },
   filaSimple: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
   filaPesado: { marginTop: 16 },

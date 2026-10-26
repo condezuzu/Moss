@@ -9,8 +9,8 @@
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
@@ -20,6 +20,7 @@ import { baseDeAlimentos } from '@/comida/base';
 import { normalizar, type Resultado } from '@/comida/buscar';
 import { formasDelCodigo, type Detalle } from '@/comida/detalle';
 import { leerEtiqueta } from '@/comida/etiqueta';
+import { conUnaUnidad } from '@/comida/porciones';
 import { buscarEnOff, type Producto } from '@/comida/off';
 import { ACEITE_POR_100G } from '@/dominio/cantidades';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
@@ -33,7 +34,8 @@ import {
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
-import { AvisoAbajo, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
+import { useTeclado } from '../teclado';
+import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
 import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
 import { Escaner } from './Escaner';
 import {
@@ -44,21 +46,6 @@ import { origenDe, Ventana, type AlimentoAbierto, type ModoDeVentana } from './V
 
 type VentanaAbierta = { alimento: AlimentoAbierto; inicial?: Cantidad; estimado?: boolean; modo: ModoDeVentana };
 type EstadoDelEscaner = { modo: 'codigo' | 'etiqueta'; mensaje: string | null; ocupado: boolean; codigo?: string; parcial?: Producto | null };
-
-/** La altura del teclado, para que nada quede abajo de él. */
-function useTeclado(): number {
-  const [alto, setAlto] = useState(0);
-  useEffect(() => {
-    const ios = Platform.OS === 'ios';
-    const mostrar = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', (ev) => setAlto(ev.endCoordinates.height));
-    const ocultar = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setAlto(0));
-    return () => {
-      mostrar.remove();
-      ocultar.remove();
-    };
-  }, []);
-  return alto;
-}
 
 /** Los valores sin el aceite de cocción que se les sumó. */
 function sinAceite(v: Valores, aceite: number | undefined): Valores {
@@ -122,7 +109,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   const e = useEstado();
   const a = elAlmacen();
   const insets = useSafeAreaInsets();
-  const teclado = useTeclado();
+  const { alto: teclado, animado: tecladoAnimado } = useTeclado();
   const sistema = sistemaDe(e);
   const dia = pedido.dia ?? e.hoy;
   const [comida, setComida] = useState<Comida>(pedido.comida ?? comidaDeAhora());
@@ -135,6 +122,13 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   });
   const [ventana, setVentana] = useState<VentanaAbierta | null>(() => ventanaParaCorregir(a.estado(), pedido.editar));
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  // Lo último que se sumó a la comida que se arma: la bandeja lo dice un momento, en lugar de un aviso.
+  const [recienSumado, setRecienSumado] = useState<{ texto: string; vez: number } | null>(null);
+  useEffect(() => {
+    if (!recienSumado) return;
+    const espera = setTimeout(() => setRecienSumado(null), 1800);
+    return () => clearTimeout(espera);
+  }, [recienSumado]);
   const [borrador, setBorrador] = useState<Borrador | null>(null);
   const [eligiendo, setEligiendo] = useState(false);
   const [crear, setCrear] = useState<DatosDeEtiqueta | null>(null);
@@ -237,7 +231,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
     Keyboard.dismiss();
     const { id, nombre, porcion, coincide: _c, curado: _cu, verificado: _v, ...valores } = r;
     setVentana({
-      alimento: { fuente: 'base', ref: String(id), nombre, por100g: valores, porciones: porcion ? [porcion] : [], origen: t('comida.fuente.usda') },
+      alimento: { fuente: 'base', ref: String(id), nombre, por100g: valores, porciones: porcion ? conUnaUnidad([porcion], idioma()) : [], origen: t('comida.fuente.usda') },
       inicial: ultimaCantidad(e.registros.values(), 'base', String(id)),
       modo: modoNuevo,
     });
@@ -253,10 +247,8 @@ function Hoja({ pedido }: { pedido: Pedido }) {
   // ------------------------------------------------------------ la comida que se arma
   const sumar = (item: Item) => {
     a.ponerEnCanasta(item);
-    const indice = a.estado().canasta.length - 1;
-    avisarAca(t('comida.sumado', { alimento: [item.nombre, cantidadDeTexto(item.cantidad, sistema)].filter(Boolean).join(' · ') }), () => {
-      if (a.estado().canasta[indice] === item) a.quitarDeCanasta(indice);
-    });
+    Haptics.selectionAsync().catch(() => {});
+    setRecienSumado({ texto: [item.nombre, cantidadDeTexto(item.cantidad, sistema)].filter(Boolean).join(' · '), vez: otraVez() });
   };
   const agregar = () => {
     const nuevos = a.agregarCanasta({ comida, dia, momento: momentoPara(dia, comida, e.hoy) });
@@ -384,7 +376,9 @@ function Hoja({ pedido }: { pedido: Pedido }) {
 
   const lista = hallado && q ? hallado.lista : [];
   const enCanasta = e.canasta.length > 0 && !soloEditar && !eligiendo;
-  const abajo = teclado || (enCanasta ? 0 : insets.bottom);
+  // El lugar del teclado (o del borde de abajo) sube con el teclado, con su misma curva.
+  const sinTeclado = enCanasta ? 0 : insets.bottom;
+  const estiloAbajo = useAnimatedStyle(() => ({ height: Math.max(sinTeclado, tecladoAnimado.get()) }));
 
   const filaDeItem = (item: Item, i: number) => {
     const detalle = [cantidadDeTexto(item.cantidad, sistema), `${numero(Math.round(item.valores.kcal))} kcal`].filter(Boolean).join(' · ');
@@ -448,7 +442,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
                   icono="doc.on.doc"
                   alTocar={() => {
                     for (const r of deAyer) a.ponerEnCanasta({ fuente: r.fuente, ref: r.ref, nombre: r.nombre, cantidad: r.cantidad, valores: r.valores, ...(r.estimado ? { estimado: true as const } : {}) });
-                    avisarAca(t('comida.sumado', { alimento: t(`comida.deAyer.${comida}`) }));
+                    setRecienSumado({ texto: t(`comida.deAyer.${comida}`), vez: otraVez() });
                   }}
                 />
               )}
@@ -481,7 +475,8 @@ function Hoja({ pedido }: { pedido: Pedido }) {
             })}
             {q && lista.map((r) => {
               const ultima = ultimaCantidad(e.registros.values(), 'base', String(r.id));
-              const cantidad: Cantidad = ultima ?? (r.porcion ? { porcion: r.porcion.nombre, gramosPorcion: r.porcion.gramos, veces: 1 } : { gramos: 100 });
+              const una = r.porcion ? conUnaUnidad([r.porcion], idioma())[0] : null;
+              const cantidad: Cantidad = ultima ?? (una ? { porcion: una.nombre, gramosPorcion: una.gramos, veces: 1 } : { gramos: 100 });
               const kcal = valoresDeCantidad(r, cantidad!).kcal;
               const n = normalizar;
               // Si lo que coincidió es otro nombre («aguacate» para la palta), se muestra al lado.
@@ -655,7 +650,13 @@ function Hoja({ pedido }: { pedido: Pedido }) {
         {enCanasta && !panel && (
           <View style={[estilos.bandeja, { paddingBottom: teclado ? 0 : insets.bottom }]}>
             <View style={estilos.bandejaTextos}>
-              <Text style={estilos.bandejaTitulo} numberOfLines={1}>{t(`comida.tuComida.${comida}`)}</Text>
+              {recienSumado ? (
+                <Animated.Text key={recienSumado.vez} entering={FadeIn.duration(180)} exiting={FadeOut.duration(160)} style={[estilos.bandejaTitulo, estilos.bandejaSumado]} numberOfLines={1}>
+                  {t('comida.sumado', { alimento: recienSumado.texto })}
+                </Animated.Text>
+              ) : (
+                <Animated.Text key="titulo" entering={FadeIn.duration(180)} style={estilos.bandejaTitulo} numberOfLines={1}>{t(`comida.tuComida.${comida}`)}</Animated.Text>
+              )}
               <Text style={estilos.bandejaDetalle}>{resumenDeCanasta(e.canasta)}</Text>
             </View>
             <Pressable
@@ -670,9 +671,9 @@ function Hoja({ pedido }: { pedido: Pedido }) {
             </Pressable>
           </View>
         )}
-        <View style={{ height: abajo }} />
+        <Animated.View style={estiloAbajo} />
 
-        <AvisoAbajo aviso={aviso} alIrse={() => setAviso(null)} abajo={(teclado || 0) + (enCanasta && !panel ? 76 + (teclado ? 0 : insets.bottom) : insets.bottom + 12)} />
+        <AvisoFlotante aviso={aviso} alIrse={() => setAviso(null)} abajo={(teclado || 0) + (enCanasta && !panel ? 76 + (teclado ? 0 : insets.bottom) : insets.bottom + 12)} />
 
         {ventana && (
           <>
@@ -796,6 +797,7 @@ const estilos = StyleSheet.create({
   bandeja: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 64, paddingHorizontal: 16, borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.2)', backgroundColor: 'rgba(10, 15, 33, 0.97)' },
   bandejaTextos: { flex: 1, gap: 4, minWidth: 0, paddingVertical: 10 },
   bandejaTitulo: { fontFamily: letras.textoMedio, fontSize: 14, color: colores.pergamino },
+  bandejaSumado: { color: colores.oroClaro },
   bandejaDetalle: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.62)', fontVariant: ['tabular-nums'] },
   listo: { height: 42, paddingHorizontal: 24, borderRadius: 999, backgroundColor: colores.oro, alignItems: 'center', justifyContent: 'center' },
   listoTexto: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.tinta },

@@ -1,10 +1,10 @@
 // Las piezas chicas de la comida: los íconos (SF Symbols, con un signo en la web de prueba), el
-// aviso de abajo con «Deshacer», los puntos de color de cada macro y los botones de la galería.
+// aviso con «Deshacer», los puntos de color de cada macro y los botones de la galería.
 
 import { SymbolView, type SFSymbol, type SymbolWeight } from 'expo-symbols';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -43,17 +43,32 @@ export function Punto({ macro, tam = 6 }: { macro: Macro; tam?: number }) {
 
 export type Aviso = { texto: string; deshacer?: () => void; vez: number };
 
-/** El aviso de abajo: dice lo que pasó y, si se puede, ofrece deshacerlo. Se va solo. */
-export function AvisoAbajo({ aviso, alIrse, abajo }: { aviso: Aviso | null; alIrse: () => void; abajo: number }) {
+/**
+ * Un aviso corto: dice lo que pasó y, si se puede, ofrece deshacerlo. Arriba (con `arriba`) no tapa
+ * la barra ni lo que se toca después; abajo, dentro de una hoja. Se va solo, o con un toque.
+ */
+export function AvisoFlotante({ aviso, alIrse, arriba, abajo = 0 }: { aviso: Aviso | null; alIrse: () => void; arriba?: number; abajo?: number }) {
+  // Solo un aviso nuevo vuelve a contar: si el tiempo dependiera de la función para irse, cada vez
+  // que la pantalla se vuelve a dibujar (una letra en el buscador) empezaría de nuevo.
+  const irse = useEffectEvent(() => alIrse());
   useEffect(() => {
     if (!aviso) return;
-    const espera = setTimeout(alIrse, aviso.deshacer ? 4200 : 2800);
+    const espera = setTimeout(irse, aviso.deshacer ? 3200 : 2200);
     return () => clearTimeout(espera);
-  }, [aviso, alIrse]);
+  }, [aviso]);
   if (!aviso) return null;
+  const desdeArriba = arriba !== undefined;
   return (
-    <Animated.View key={aviso.vez} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(180)} style={[estilos.aviso, { bottom: abajo }]} pointerEvents="box-none">
-      <Text style={estilos.avisoTexto} numberOfLines={1}>{aviso.texto}</Text>
+    <Animated.View
+      key={aviso.vez}
+      entering={(desdeArriba ? FadeInDown : FadeInUp).duration(220)}
+      exiting={FadeOut.duration(180)}
+      style={[estilos.aviso, desdeArriba ? { top: arriba } : { bottom: abajo }]}
+      pointerEvents="box-none"
+    >
+      <Pressable onPress={alIrse} style={estilos.avisoTextoLugar} accessibilityRole="button" accessibilityHint={t('comida.cerrar')}>
+        <Text style={estilos.avisoTexto} numberOfLines={1}>{aviso.texto}</Text>
+      </Pressable>
       {aviso.deshacer && (
         <Pressable
           onPress={() => {
@@ -122,7 +137,8 @@ export const estilos = StyleSheet.create({
     paddingLeft: 16, paddingRight: 7, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(9, 14, 30, 0.95)',
     borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)', shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 15, shadowOffset: { width: 0, height: 10 },
   },
-  avisoTexto: { flexShrink: 1, fontFamily: letras.texto, fontSize: 13, color: colores.pergamino, paddingRight: 9 },
+  avisoTextoLugar: { flexShrink: 1, paddingVertical: 4 },
+  avisoTexto: { fontFamily: letras.texto, fontSize: 13, color: colores.pergamino, paddingRight: 9 },
   avisoBoton: { paddingHorizontal: 11, paddingVertical: 9, borderRadius: 999, backgroundColor: 'rgba(232, 196, 106, 0.12)' },
   avisoBotonTexto: { fontFamily: letras.textoMedio, fontSize: 11, letterSpacing: 1.1, textTransform: 'uppercase', color: colores.oro },
   boton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 34, paddingHorizontal: 13, borderRadius: 999 },

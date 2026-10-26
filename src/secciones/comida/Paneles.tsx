@@ -39,7 +39,7 @@ function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAt
         <Text style={estilos.titulo} numberOfLines={1}>{titulo}</Text>
         <View style={estilos.lugar} />
       </View>
-      <ScrollView style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoAdentro} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoAdentro} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
         {children}
       </ScrollView>
       {pie && <View style={[estilos.pie, { paddingBottom: abajo + 6 }]}>{pie}</View>}

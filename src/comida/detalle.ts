@@ -6,6 +6,7 @@
 import { MICROS, type Micro, type Micros } from '@/dominio/micronutrientes';
 
 import type { BaseDeAlimentos, Idioma } from './buscar';
+import { conUnaUnidad } from './porciones';
 
 export type Valores100 = {
   kcal: number;
@@ -90,8 +91,8 @@ const ORIGENES: Record<string, Detalle['origen']> = { sr: 'usda', fndds: 'usda',
 export async function detalleDeAlimento(base: BaseDeAlimentos, id: number, op: { idioma: Idioma; region?: string }): Promise<Detalle | null> {
   const [a] = await base.getAllAsync<FilaAlimento>('SELECT * FROM alimentos WHERE id = ?', id);
   if (!a) return null;
-  const porciones = (await base.getAllAsync<{ es: string | null; en: string; gramos: number }>('SELECT es, en, gramos FROM porciones WHERE alimento = ? ORDER BY id', id))
-    .map((p) => ({ nombre: op.idioma === 'es' ? (p.es ?? p.en) : p.en, gramos: p.gramos }));
+  const porciones = conUnaUnidad((await base.getAllAsync<{ es: string | null; en: string; gramos: number }>('SELECT es, en, gramos FROM porciones WHERE alimento = ? ORDER BY id', id))
+    .map((p) => ({ nombre: op.idioma === 'es' ? (p.es ?? p.en) : p.en, gramos: p.gramos })), op.idioma);
   // Lo cocido ve su crudo y las otras formas de cocinarlo; lo crudo, todas sus formas cocidas.
   const raiz = a.crudo ?? a.id;
   const cocidos = (await base.getAllAsync<{ id: number }>('SELECT id FROM alimentos WHERE crudo = ? ORDER BY id', raiz)).map((x) => x.id).filter((x) => x !== a.id);

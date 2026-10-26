@@ -20,7 +20,7 @@ import { CONEXION_CON_ASCENT } from '@/lib/ascent';
 import { Ascent } from './Ascent';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
-import { AvisoAbajo, Icono } from './comida/comunes';
+import { AvisoFlotante, Icono } from './comida/comunes';
 import { HojaRegistro } from './comida/HojaRegistro';
 import { quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { Entrada } from './entrada/Entrada';
@@ -197,7 +197,7 @@ export default function Secciones() {
         {conSecciones && (
           <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
             <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
-            <AvisoAbajo aviso={aviso} alIrse={quitarAviso} abajo={abajo + 14} />
+            <AvisoFlotante aviso={aviso} alIrse={quitarAviso} arriba={insets.top + 8} />
             <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
             <HojaRegistro />
           </Animated.View>

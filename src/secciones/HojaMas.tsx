@@ -27,6 +27,7 @@ import { cantidadDeTexto, comidaDeAhora, fechaCorta, numero, sistemaDe, useEstad
 import { abrirRegistro } from './comida/registro';
 import { Figura } from './Figura';
 import { ENTRA_PANEL, entre, subirOBajar } from './movimiento';
+import { useTeclado } from './teclado';
 
 export type VistaDelMas = 'menu' | 'peso' | 'medidas';
 type Vista = VistaDelMas;
@@ -53,7 +54,9 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   };
 
   const estiloFondo = useAnimatedStyle(() => ({ opacity: hoja.get() }));
-  const estiloHoja = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - hoja.get()) * (altoHoja.get() + 40) }] }));
+  // Con el teclado (el peso, las medidas), la hoja sube con él: si no, tapaba lo que se escribe.
+  const { animado: teclado } = useTeclado();
+  const estiloHoja = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - hoja.get()) * (altoHoja.get() + 40) - Math.max(0, teclado.get() - insets.bottom) }] }));
   // Bajarla con el dedo desde arriba: sigue al dedo y, al soltar, se cierra o vuelve.
   const arrastre = usePanGesture({
     activeOffsetY: [-10, 10],

@@ -23,7 +23,7 @@ import { colores, letras } from '@/tema';
 import { HojaModal } from '../HojaModal';
 import { entre, viaje } from '../movimiento';
 import { ACOMODA, Aparece } from '../tarjetas';
-import { AvisoAbajo, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
+import { AvisoFlotante, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
   cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, letraDelDia, metaDelDia, minutosDe, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
@@ -92,7 +92,7 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
         <LineaDelDia e={e} dia={dia} avisar={avisar} />
         <AccionesDelDia e={e} dia={dia} avisar={avisar} />
       </ScrollView>
-      <AvisoAbajo aviso={aviso} alIrse={() => setAviso(null)} abajo={abajo + 16} />
+      <AvisoFlotante aviso={aviso} alIrse={() => setAviso(null)} arriba={arriba + 8} />
     </View>
   );
 }

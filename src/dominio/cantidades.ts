@@ -85,6 +85,32 @@ export function aOjoDeFabrica(cantidad: { porcion: string } | { gramos: number }
   return 'porcion' in cantidad && !DE_ENVASE.test(cantidad.porcion);
 }
 
+/** Los pasos de − y +, por tramos: hasta dónde llega cada tramo y de a cuánto se mueve. */
+const TRAMOS: Record<'peso' | 'volumen', Record<Sistema, readonly (readonly [number, number])[]>> = {
+  peso: { metrico: [[10, 1], [50, 5], [Infinity, 10]], imperial: [[1, 0.1], [4, 0.25], [Infinity, 0.5]] },
+  volumen: { metrico: [[50, 5], [250, 25], [Infinity, 50]], imperial: [[4, 0.5], [Infinity, 1]] },
+};
+
+/**
+ * Un toque en − o en +: de a 1 g hasta 10, de a 5 hasta 50 y de a 10 después, siempre a un número
+ * redondo. Bajar nunca sube: con un paso fijo de 10 g, bajar desde 5 g llevaba a 10.
+ */
+export function pasoDeCantidad(valor: number, signo: 1 | -1, tipo: 'peso' | 'volumen', s: Sistema): number {
+  const tramos = TRAMOS[tipo][s];
+  // Bajando desde el borde de un tramo, el paso es el del tramo de abajo: de 10 g se baja a 9.
+  const donde = signo > 0 ? valor : valor - 1e-9;
+  const paso = (tramos.find(([hasta]) => donde < hasta) ?? tramos[tramos.length - 1])[1];
+  const siguiente = signo > 0 ? Math.floor(valor / paso + 1e-9) * paso + paso : Math.ceil(valor / paso - 1e-9) * paso - paso;
+  return Math.max(tramos[0][1], Math.round(siguiente * 100) / 100);
+}
+
+/** Las veces de una porción con − y +: de a una desde una, y de a media hasta ¼ por debajo. */
+export function pasoDePorcion(veces: number, signo: 1 | -1): number {
+  if (signo > 0) return veces < 1 ? Math.min(1, Math.floor(veces * 2 + 1e-9) / 2 + 0.5) : Math.floor(veces + 1e-9) + 1;
+  if (veces > 1) return Math.ceil(veces - 1e-9) - 1;
+  return veces > 0.5 ? 0.5 : 0.25;
+}
+
 /** Un ajuste rápido sobre las veces de una porción: ×½ de 1 son ½, ×2 de 1½ son 3. */
 export function ajustar(veces: number, factor: number): number {
   return Math.round(veces * factor * 1000) / 1000;

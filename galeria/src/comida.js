@@ -1640,7 +1640,7 @@ const Comida = (() => {
       const macros = el('div', 'vt-macros');
       cifras.append(kcal, macros);
       const queda = el('div', 'fi-queda');
-      // Cómo deja el día (DejaElDia, el mismo módulo que la app): cada macro antes y con esto, y una frase.
+      // Cómo deja el día (DejaElDia, el mismo módulo que la app): cada macro antes y con esto.
       const deja = el('div', 'vt-deja');
       const barras = {};
       DejaElDia.MACROS.forEach((m) => {
@@ -1651,8 +1651,6 @@ const Comida = (() => {
         barras[m] = fila;
         deja.appendChild(fila);
       });
-      const frase = el('p', 'vt-frase');
-      deja.appendChild(frase);
       const secundarios = el('div', 'vt-secundarios');
       // Las vitaminas y los minerales: lo que más aporta, y todo al tocar «Ver todo».
       const persona = { sexo: Datos.PERFIL.sexo, edad: HOY[0] - Datos.PERFIL.nacimiento };
@@ -1746,10 +1744,6 @@ const Comida = (() => {
           barras[m].classList.toggle('lleno', b.despues >= 1);
           barras[m].querySelector('b').textContent = tx('comida.porcentaje', { n: numero(Math.round(b.despues * 100)) });
         });
-        const f0 = dejaria.frase;
-        frase.textContent = !f0 ? '' : f0.tipo === 'llegas' ? tx('comida.deja.llegas.' + f0.macro, { n: f0.porcentaje })
-          : f0.tipo === 'completas' ? tx('comida.deja.completas.' + f0.macro) : tx('comida.deja.pasas.' + f0.macro, { n: numero(f0.gramos) });
-        frase.classList.toggle('vacia', !f0);
         macros.innerHTML = '';
         [['p', v.p], ['c', v.c], ['g', v.g]].forEach(([m, g]) => {
           const chip = el('span', 'vt-macro fi-macro-' + m);

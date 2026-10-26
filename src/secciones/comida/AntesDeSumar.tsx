@@ -3,20 +3,21 @@
 // «Reportar un error». Lo que se abre crece y lo que se va se desvanece: nada aparece de golpe.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import { buzon } from '@/almacen/buzonDeMoss';
 import { MOTIVOS, type Motivo } from '@/almacen/buzon';
 import type { Detalle } from '@/comida/detalle';
 import { VERSION_DE_LA_BASE } from '@/comida/version-de-la-base';
-import { comoDejaElDia, MACROS as MACROS_DEL_DIA, type Frase } from '@/dominio/dejaElDia';
+import { comoDejaElDia, MACROS as MACROS_DEL_DIA } from '@/dominio/dejaElDia';
 import type { Macros } from '@/dominio/metas';
 import { destacados, GRUPOS, referenciaDe, UNIDAD, type Micro, type Micros, type ParaQuien } from '@/dominio/micronutrientes';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
+import { useTeclado } from '../teclado';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, Pastilla } from './comunes';
 import { numero } from './datos';
@@ -61,19 +62,9 @@ export function DeDonde({ detalle, origen }: { detalle: Detalle | null; origen: 
 }
 
 // ------------------------------------------------------------ cómo deja el día
-function textoDeFrase(f: Frase): string {
-  if (f.tipo === 'llegas') return t(`comida.deja.llegas.${f.macro}`, { n: f.porcentaje });
-  if (f.tipo === 'completas') return t(`comida.deja.completas.${f.macro}`);
-  return t(`comida.deja.pasas.${f.macro}`, { n: numero(f.gramos) });
-}
-
-/**
- * Cada macro con lo que ya había (apagado) y lo que suma esto (con su color), y una frase. Sin los
- * números, quedan las barras y solo la frase que no tiene cifras («completas tu proteína»).
- */
+/** Cada macro con lo que ya había (apagado) y lo que suma esto (con su color). Sin los números, solo las barras. */
 export function ComoDeja({ antes, esto, meta, numeros = true }: { antes: Macros; esto: Macros; meta: Macros; numeros?: boolean }) {
-  const { barras, frase } = comoDejaElDia(antes, esto, meta);
-  const texto = frase && (numeros || frase.tipo === 'completas') ? textoDeFrase(frase) : null;
+  const { barras } = comoDejaElDia(antes, esto, meta);
   return (
     <View style={estilos.deja}>
       {MACROS_DEL_DIA.map((m) => {
@@ -91,11 +82,6 @@ export function ComoDeja({ antes, esto, meta, numeros = true }: { antes: Macros;
           </View>
         );
       })}
-      {texto && (
-        <Animated.Text key={texto} entering={FadeIn.duration(220)} exiting={FadeOut.duration(150)} style={estilos.frase}>
-          {texto}
-        </Animated.Text>
-      )}
     </View>
   );
 }
@@ -159,11 +145,15 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
   const [motivo, setMotivo] = useState<Motivo | null>(null);
   const [nota, setNota] = useState('');
   const [enviado, setEnviado] = useState(false);
+  const irse = useEffectEvent(() => alCerrar());
   useEffect(() => {
     if (!enviado) return;
-    const espera = setTimeout(alCerrar, 1700);
+    const espera = setTimeout(irse, 1700);
     return () => clearTimeout(espera);
-  }, [enviado, alCerrar]);
+  }, [enviado]);
+  // La nota se escribe con el teclado: la hoja sube con él.
+  const { animado: teclado } = useTeclado();
+  const estiloSube = useAnimatedStyle(() => ({ transform: [{ translateY: -Math.max(0, teclado.get() - abajo) }] }));
   const enviar = () => {
     if (!motivo) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -173,6 +163,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
   return (
     <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={estilos.velo}>
       <Pressable style={StyleSheet.absoluteFill} onPress={alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
+      <Animated.View style={[estilos.reporteLugar, estiloSube]} pointerEvents="box-none">
       <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.reporte, { paddingBottom: abajo + 10 }]}>
         {enviado ? (
           <Aparece style={estilos.gracias}>
@@ -205,6 +196,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
           </>
         )}
       </Animated.View>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -231,7 +223,6 @@ const estilos = StyleSheet.create({
   pista: { flex: 1, height: 5, borderRadius: 3, backgroundColor: 'rgba(239, 230, 207, 0.07)', overflow: 'hidden' },
   tramo: { position: 'absolute', top: 0, bottom: 0, left: 0 },
   barraPorcentaje: { width: 40, textAlign: 'right', fontFamily: letras.numeroMedio, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.78)', fontVariant: ['tabular-nums'] },
-  frase: { marginTop: 3, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.85)' },
   etiqueta: { marginTop: 18, marginBottom: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   chip: { flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: 'rgba(239, 230, 207, 0.05)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)' },
@@ -248,6 +239,7 @@ const estilos = StyleSheet.create({
   enlace: { alignSelf: 'center', marginTop: 14, paddingVertical: 6, paddingHorizontal: 10 },
   enlaceTexto: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.45)' },
   velo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(5, 8, 18, 0.55)' },
+  reporteLugar: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   reporte: {
     gap: 14, paddingTop: 16, paddingHorizontal: 18, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colores.ventana,
     borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)',

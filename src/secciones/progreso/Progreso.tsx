@@ -46,7 +46,7 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   const [vista, setVista] = useState<'principal' | 'metas'>('principal');
   return (
     <View style={{ width: ancho }}>
-      <ScrollView key={vista} contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView key={vista} contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {vista === 'principal' ? <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} /> : <Metas alVolver={() => setVista('principal')} />}
       </ScrollView>
     </View>

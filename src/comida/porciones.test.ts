@@ -1,6 +1,48 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { cantidadDePorcion, decimal, numeroDePorcion, pluralDePorcion } from './porciones';
+import { cantidadDePorcion, conUnaUnidad, decimal, numeroDePorcion, pluralDePorcion, singularDePorcion } from './porciones';
+
+describe('singularDePorcion', () => {
+  it('en español, hasta la preposición', () => {
+    expect(singularDePorcion('galletas', 'es')).toBe('galleta');
+    expect(singularDePorcion('unidades', 'es')).toBe('unidad');
+    expect(singularDePorcion('rebanadas de pan', 'es')).toBe('rebanada de pan');
+    expect(singularDePorcion('galletas rellenas', 'es')).toBe('galleta rellena');
+    expect(singularDePorcion('porciones', 'es')).toBe('porción');
+    expect(singularDePorcion('nueces', 'es')).toBe('nuez');
+    expect(singularDePorcion('panes', 'es')).toBe('pan');
+    expect(singularDePorcion('filetes', 'es')).toBe('filete');
+    expect(singularDePorcion('piezas grandes', 'es')).toBe('pieza grande');
+    expect(singularDePorcion('dulces', 'es')).toBe('dulce');
+    expect(singularDePorcion('crackers', 'es')).toBe('cracker');
+  });
+
+  it('en inglés, la última palabra', () => {
+    expect(singularDePorcion('cookies', 'en')).toBe('cookie');
+    expect(singularDePorcion('crackers', 'en')).toBe('cracker');
+    expect(singularDePorcion('medium slices', 'en')).toBe('medium slice');
+    expect(singularDePorcion('berries', 'en')).toBe('berry');
+    expect(singularDePorcion('sandwiches', 'en')).toBe('sandwich');
+    expect(singularDePorcion('tbsp', 'en')).toBe('tbsp');
+  });
+});
+
+describe('conUnaUnidad', () => {
+  it('suma la de una sola unidad adelante de la del paquete', () => {
+    expect(conUnaUnidad([{ nombre: '7 galletas', gramos: 31 }], 'es')).toEqual([
+      { nombre: '1 galleta', gramos: 4.4 },
+      { nombre: '7 galletas', gramos: 31 },
+    ]);
+    expect(conUnaUnidad([{ nombre: '7 crackers', gramos: 30 }], 'en')[0]).toEqual({ nombre: '1 cracker', gramos: 4.3 });
+  });
+
+  it('no repite la que ya está ni toca lo que se cuenta en gramos', () => {
+    const conLaDeUna = [{ nombre: '4 unidades', gramos: 28 }, { nombre: '1 unidad', gramos: 7 }];
+    expect(conUnaUnidad(conLaDeUna, 'es')).toEqual(conLaDeUna);
+    expect(conUnaUnidad([{ nombre: '30 g', gramos: 30 }, { nombre: '1 taza', gramos: 240 }], 'es')).toHaveLength(2);
+    expect(conUnaUnidad([{ nombre: '2 oz', gramos: 57 }], 'en')).toHaveLength(1);
+  });
+});
 
 describe('numeroDePorcion', () => {
   it('escribe enteros y fracciones comunes', () => {

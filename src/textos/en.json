@@ -412,23 +412,6 @@
       "uruguay": "the Uruguayan table",
       "otra": "another official table"
     },
-    "deja": {
-      "llegas": {
-        "proteina": "This gets you to {n}% of your protein",
-        "carbohidratos": "This gets you to {n}% of your carbs",
-        "grasas": "This gets you to {n}% of your fat"
-      },
-      "completas": {
-        "proteina": "This completes your protein for the day",
-        "carbohidratos": "This completes your carbs for the day",
-        "grasas": "This completes your fat for the day"
-      },
-      "pasas": {
-        "proteina": "This puts you {n} g over your protein",
-        "carbohidratos": "This puts you {n} g over your carbs",
-        "grasas": "This puts you {n} g over your fat"
-      }
-    },
     "micros": {
       "titulo": "Vitamins and minerals",
       "verTodo": "See all",

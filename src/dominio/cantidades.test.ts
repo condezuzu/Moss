@@ -1,9 +1,41 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  ACEITE, aCm, aGramos, ajustar, AJUSTES, aKg, aMl, aOjoDeFabrica, comestible, largoEn, pesoCorporalEn, GRAMOS_POR_ONZA, gramosDeMl, ML_POR_ONZA_LIQUIDA, mlDeGramos, pesoEn,
-  sistemaDeRegion, volumenEn,
+  ACEITE, aCm, aGramos, ajustar, AJUSTES, aKg, aMl, aOjoDeFabrica, comestible, largoEn, pesoCorporalEn, GRAMOS_POR_ONZA, gramosDeMl, ML_POR_ONZA_LIQUIDA, mlDeGramos, pasoDeCantidad,
+  pasoDePorcion, pesoEn, sistemaDeRegion, volumenEn,
 } from './cantidades';
+
+describe('los pasos de − y +', () => {
+  it('bajar nunca sube, y los gramos chicos van de a uno', () => {
+    expect(pasoDeCantidad(5, -1, 'peso', 'metrico')).toBe(4);
+    expect(pasoDeCantidad(15, -1, 'peso', 'metrico')).toBe(10);
+    expect(pasoDeCantidad(10, -1, 'peso', 'metrico')).toBe(9);
+    expect(pasoDeCantidad(1, -1, 'peso', 'metrico')).toBe(1);
+  });
+
+  it('van a números redondos según el tramo', () => {
+    expect(pasoDeCantidad(9, 1, 'peso', 'metrico')).toBe(10);
+    expect(pasoDeCantidad(10, 1, 'peso', 'metrico')).toBe(15);
+    expect(pasoDeCantidad(37, 1, 'peso', 'metrico')).toBe(40);
+    expect(pasoDeCantidad(37, -1, 'peso', 'metrico')).toBe(35);
+    expect(pasoDeCantidad(55, -1, 'peso', 'metrico')).toBe(50);
+    expect(pasoDeCantidad(50, -1, 'peso', 'metrico')).toBe(45);
+    expect(pasoDeCantidad(100, 1, 'peso', 'metrico')).toBe(110);
+    expect(pasoDeCantidad(200, 1, 'volumen', 'metrico')).toBe(225);
+    expect(pasoDeCantidad(3.5, -1, 'peso', 'imperial')).toBe(3.25);
+    expect(pasoDeCantidad(0.3, 1, 'peso', 'imperial')).toBe(0.4);
+  });
+
+  it('las porciones van de a una, y de a media por debajo de una', () => {
+    expect(pasoDePorcion(1, 1)).toBe(2);
+    expect(pasoDePorcion(1.5, 1)).toBe(2);
+    expect(pasoDePorcion(0.5, 1)).toBe(1);
+    expect(pasoDePorcion(2.5, -1)).toBe(2);
+    expect(pasoDePorcion(1, -1)).toBe(0.5);
+    expect(pasoDePorcion(0.5, -1)).toBe(0.25);
+    expect(pasoDePorcion(0.25, -1)).toBe(0.25);
+  });
+});
 
 describe('la parte comestible', () => {
   it('lo pesado con cáscara o hueso descuenta lo que no se come', () => {

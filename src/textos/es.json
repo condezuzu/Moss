@@ -412,23 +412,6 @@
       "uruguay": "la tabla de Uruguay",
       "otra": "otra tabla oficial"
     },
-    "deja": {
-      "llegas": {
-        "proteina": "Con esto llegas al {n} % de tu proteína",
-        "carbohidratos": "Con esto llegas al {n} % de tus carbohidratos",
-        "grasas": "Con esto llegas al {n} % de tus grasas"
-      },
-      "completas": {
-        "proteina": "Con esto completas tu proteína del día",
-        "carbohidratos": "Con esto completas tus carbohidratos del día",
-        "grasas": "Con esto completas tus grasas del día"
-      },
-      "pasas": {
-        "proteina": "Con esto pasas tu proteína por {n} g",
-        "carbohidratos": "Con esto pasas tus carbohidratos por {n} g",
-        "grasas": "Con esto pasas tus grasas por {n} g"
-      }
-    },
     "micros": {
       "titulo": "Vitaminas y minerales",
       "verTodo": "Ver todo",
