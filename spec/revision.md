@@ -706,7 +706,7 @@ PERMISSIONS (ALL OPTIONAL)
 - Camera: Add (+) > Add food > barcode icon (barcodes; labels are read on device), meal photos and the profile photo. Photos use the system picker, with no library access.
 - Microphone and Speech Recognition: Add (+) > Say what I ate.
 - Notifications: local reminders, Profile > Reminders.
-- AlarmKit (iOS 26+): Sleep > alarm. It rings at the time the user sets and records when it is stopped, as the wake-up time.
+- AlarmKit (iOS 26+): Sleep > Fine-tune > Alarm (the card shows when no watch or ring has written sleep in two weeks). It rings at the time the user sets and records when it is stopped, as the wake-up time.
 - Shortcuts: Moss actions (alarm stopped, charger, Sleep Focus) for automations the user builds in the Shortcuts app. No prompt.
 - Widgets: Home Screen (today's sky) and Lock Screen (last night, confirmed with a tap). A background task keeps them current.
 
@@ -716,9 +716,10 @@ Moss is not a medical device. Targets use published formulas (Mifflin-St Jeor; U
 Privacy: https://condezuzu.github.io/moss-app/en/privacy/
 ```
 
-Antes de pegarla, revisar contra la build los nombres que dependen de lo que
-está terminando hoy: «Sign in with your Ascent account», «Profile › Connections
-› Ascent», la flecha de Hábitos y «Sleep › alarm».
+Los nombres coinciden con los textos de la app en inglés (revisado el 26/10/2026
+contra `src/textos/en.json`: «Link with Ascent», «Sign in with your Ascent
+account», «Profile › Connections», «Sleep › Fine-tune › Alarm», «Say what I
+ate», «Privacy and data › Delete account»).
 
 ### En español (referencia)
 
@@ -746,7 +747,7 @@ PERMISOS (TODOS OPTATIVOS)
 - Cámara: Agregar (+) › Agregar comida › el ícono del código (códigos; las etiquetas se leen en el teléfono), las fotos de la comida y la de perfil. Las fotos usan el selector del sistema, sin acceso a la fototeca.
 - Micrófono y reconocimiento de voz: Agregar (+) › Decir lo que comí.
 - Avisos: locales, en Perfil › Avisos.
-- AlarmKit (iOS 26 o más): Sueño › despertador. Suena a la hora elegida y anota cuándo se para, como la hora de despertarse.
+- AlarmKit (iOS 26 o más): Sueño › Afinar › Despertador (la tarjeta aparece si ningún reloj o anillo escribió sueño en dos semanas). Suena a la hora elegida y anota cuándo se para, como la hora de despertarse.
 - Atajos: acciones de Moss (la alarma parada, el cargador, la Concentración Sueño) para las automatizaciones que arma la persona en la app Atajos. Sin pedido.
 - Widgets: pantalla de inicio (el cielo de hoy) y pantalla bloqueada (anoche, para confirmar con un toque). Una tarea de segundo plano los tiene al día.
 
