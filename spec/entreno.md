@@ -625,7 +625,7 @@ carbohidratos (1 g/kg) en cada uno, más la proteína de B1.
   nada de «ganarte», «quemar» o «compensar»; nunca sugerir saltear una comida ni
   entrenar en ayunas para bajar; nunca calorías gastadas; Ocultar los números se
   respeta siempre. Comer poco con mucho entrenamiento daña [52].
-- **Edad:** Moss es para mayores de 18; no hay reglas para menores.
+- **Edad:** Moss es para mayores de 16; antes de los 18 solo cambia el ritmo de bajar (spec/nutricion.md).
 - **No es consejo médico.** En «Por qué»: «Es una guía general para personas
   sanas. No es un consejo médico.»
 

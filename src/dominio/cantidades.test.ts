@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
   ACEITE, aCm, aGramos, ajustar, AJUSTES, aKg, aMl, aOjoDeFabrica, comestible, largoEn, pesoCorporalEn, GRAMOS_POR_ONZA, gramosDeMl, ML_POR_ONZA_LIQUIDA, mlDeGramos, pasoDeCantidad,
-  pasoDePorcion, pesoEn, sistemaDeRegion, volumenEn,
+  pasoDePorcion, pesoEn, pesoParaGuardar, sistemaDeRegion, volumenEn,
 } from './cantidades';
 
 describe('los pasos de − y +', () => {
@@ -124,5 +124,24 @@ describe('el cuerpo en el sistema de cada uno', () => {
     expect(aKg(80, 'metrico')).toBe(80);
     expect(largoEn(85.5, 'imperial')).toEqual({ valor: 33.7, unidad: 'in' });
     expect(aCm(33.7, 'imperial')).toBeCloseTo(85.6, 1);
+  });
+});
+
+describe('el peso de la hoja del «+»', () => {
+  it('con el campo borrado no se guarda el peso de antes: no hay nada que guardar', () => {
+    expect(pesoParaGuardar('', 74.5, 'metrico')).toBeNull();
+    expect(pesoParaGuardar('  ', 74.5, 'metrico')).toBeNull();
+    expect(pesoParaGuardar('abc', 74.5, 'metrico')).toBeNull();
+  });
+
+  it('lo escrito gana sobre lo de los pasos, con coma o punto y en libras', () => {
+    expect(pesoParaGuardar('72,34', 74.5, 'metrico')).toBe(72.3);
+    expect(pesoParaGuardar('160', 74.5, 'imperial')).toBe(72.6);
+    expect(pesoParaGuardar(null, 74.5, 'metrico')).toBe(74.5);
+  });
+
+  it('lo imposible no se guarda', () => {
+    expect(pesoParaGuardar('7', 74.5, 'metrico')).toBeNull();
+    expect(pesoParaGuardar('745', 74.5, 'metrico')).toBeNull();
   });
 });

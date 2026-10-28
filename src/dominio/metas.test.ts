@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { cambioPorDia, controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
 import { sumarDias, type DiaSemana } from './fechas';
 import {
-  ajusteDiario, enRango, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, pisoDe,
+  ajusteDiario, EDAD_MINIMA, enRango, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, pisoDe,
   RANGOS_DEL_CUESTIONARIO, repartirSemana, RITMOS, ritmoPermitido,
   type Cuestionario, type Macros,
 } from './metas';
@@ -11,10 +11,11 @@ import {
 const BASE: Cuestionario = { edad: 29, sexo: 'm', alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado' };
 
 describe('los límites que cuidan', () => {
-  it('Moss es para mayores de 18', () => {
-    expect(RANGOS_DEL_CUESTIONARIO.edad[0]).toBe(18);
-    expect(enRango(RANGOS_DEL_CUESTIONARIO.edad, 17)).toBe(false);
-    expect(enRango(RANGOS_DEL_CUESTIONARIO.edad, 18)).toBe(true);
+  it('Moss es para mayores de 16', () => {
+    expect(EDAD_MINIMA).toBe(16);
+    expect(RANGOS_DEL_CUESTIONARIO.edad[0]).toBe(EDAD_MINIMA);
+    expect(enRango(RANGOS_DEL_CUESTIONARIO.edad, 15)).toBe(false);
+    expect(enRango(RANGOS_DEL_CUESTIONARIO.edad, 16)).toBe(true);
   });
 
   it('sin déficit (embarazo, lactancia o una condición médica), bajar queda en mantener', () => {
@@ -72,6 +73,8 @@ describe('la meta inicial', () => {
     expect(ritmoPermitido({ edad: 16, objetivo: 'bajar', ritmo: 'rapido' })).toBe('recomendado');
     expect(ritmoPermitido({ edad: 16, objetivo: 'subir', ritmo: 'rapido' })).toBe('rapido');
     expect(ritmoPermitido({ edad: 30, objetivo: 'bajar', ritmo: 'rapido' })).toBe('rapido');
+    expect(ritmoPermitido({ edad: 17, objetivo: 'bajar', ritmo: 'rapido' })).toBe('recomendado');
+    expect(ritmoPermitido({ edad: 18, objetivo: 'bajar', ritmo: 'rapido' })).toBe('rapido');
   });
 
   it('la proteína nunca pasa del 40 % de las kcal, y los carbohidratos no son negativos', () => {

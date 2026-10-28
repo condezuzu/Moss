@@ -491,7 +491,7 @@ const Entrada = (() => {
       { id: 'datos', camara: 0.98, armar: armarDatos },
       { id: 'cuenta', camara: 1.08, armar: armarCuenta },
       { id: 'salud', camara: 1.16, cuestionario: true, armar: armarSalud },
-      { id: 'edad', camara: 1.19, cuestionario: true, armar: (p, c) => (r.edad < 18 ? armarMenor(p) : pantallaNumero(p, c.paso, { clave: 'edad', titulo: 'entrada.cuestionario.edadTitulo', min: 18, max: 90, paso: 1, dec: 0, unidad: tx('entrada.cuestionario.anos') })) },
+      { id: 'edad', camara: 1.19, cuestionario: true, armar: (p, c) => (r.edad < 16 ? armarMenor(p) : pantallaNumero(p, c.paso, { clave: 'edad', titulo: 'entrada.cuestionario.edadTitulo', min: 16, max: 90, paso: 1, dec: 0, unidad: tx('entrada.cuestionario.anos') })) },
       { id: 'sexo', camara: 1.22, cuestionario: true, armar: armarSexo },
       { id: 'altura', camara: 1.25, cuestionario: true, armar: (p, c) => pantallaNumero(p, c.paso, { clave: 'altura', titulo: 'entrada.cuestionario.alturaTitulo', min: 130, max: 220, paso: 1, dec: 0, unidad: 'cm' }) },
       { id: 'peso', camara: 1.28, cuestionario: true, armar: (p, c) => pantallaNumero(p, c.paso, { clave: 'peso', titulo: 'entrada.cuestionario.pesoTitulo', texto: 'entrada.cuestionario.pesoTexto', min: 35, max: 200, paso: 0.1, dec: 1, unidad: 'kg' }) },
@@ -1042,7 +1042,7 @@ const Entrada = (() => {
       salir,
       irA(id) { const i = PASOS.findIndex((p) => p.id === id); if (i >= 0) { if (actual < 0) empezar(); ir(i, true); } },
       // Para las capturas: Salud dice 16 años, o es su caso (sin déficit).
-      menor() { r.edad = 16; desdeSalud.edad = 16; },
+      menor() { r.edad = 15; desdeSalud.edad = 15; },
       caso(v) { r.caso = v; r.sinDeficit = v !== 'nada'; if (v === 'embarazo') r.sexo = 'f'; },
       get paso() { return actual >= 0 ? PASOS[actual].id : null; },
       metas: () => metas(Object.assign({}, r, { sexo: r.sexo || 'm' })),

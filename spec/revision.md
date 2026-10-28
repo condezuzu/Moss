@@ -60,7 +60,7 @@ que Pages sirva los archivos tal cual.
 
 En orden de gravedad. Los arreglos del 22 y 23/10 están hechos (revocar Apple en
 `moss-borrar-cuenta`, los enlaces a la política y a los términos, el
-consentimiento de los datos de salud, 18 años, sin déficit, el piso y el IMC del
+consentimiento de los datos de salud, 16 años, sin déficit, el piso y el IMC del
 peso meta, las búsquedas con su sí, los datos cifrados y fuera de la copia, y
 «Ayuda y contacto»). Lo que falta o hay que mirar para esta build:
 
@@ -297,7 +297,7 @@ Las guías son las del 16/10/2026 (siguen siendo las vigentes el 26/10).
 | 1.4.1 Daño físico (salud y entrenamiento) | PASA |
 | 2.1 App completa | DEPENDE de la lista de «g» |
 | 2.3 Metadatos (2.3.1, 2.3.3, 2.3.7 a 2.3.9, 2.3.12) | PASA con «d» y «e» |
-| 2.3.6 Clasificación por edad | 18+ (ver «h») |
+| 2.3.6 Clasificación por edad | 16+ (ver «h») |
 | 2.4.1 Apps de iPhone en el iPad | RIESGO |
 | 2.5.1 Salud (HealthKit) y AlarmKit | PASA (RIESGO chico: los nombres de Salud) |
 | 2.5.2 Las actualizaciones por aire | PASA |
@@ -521,7 +521,7 @@ Con tu permiso, Moss lee de la app Salud tu peso, altura, pasos, agua, minutos d
 TUS DATOS SON TUYOS
 Sin anuncios y sin rastreo. Entras con Apple, y Moss guarda tus datos en el teléfono y en tu cuenta para sincronizarlos. Puedes exportarlos y borrar tu cuenta desde la app.
 
-Moss es para mayores de 18 años. No es un dispositivo médico: sus números son estimaciones y no reemplazan a un profesional de la salud. Si estás embarazada, amamantando o tienes una condición médica, consulta a un profesional antes de cambiar lo que comes.
+Moss es para mayores de 16 años. No es un dispositivo médico: sus números son estimaciones y no reemplazan a un profesional de la salud. Si estás embarazada, amamantando o tienes una condición médica, consulta a un profesional antes de cambiar lo que comes.
 
 Términos de uso: https://condezuzu.github.io/moss-app/terminos/
 Privacidad: https://condezuzu.github.io/moss-app/privacidad/
@@ -577,7 +577,7 @@ With your permission, Moss reads your weight, height, steps, water, mindful minu
 YOUR DATA IS YOURS
 No ads and no tracking. You sign in with Apple, and Moss keeps your data on your phone and in your account to sync it. You can export it and delete your account from the app.
 
-Moss is for people 18 and older. It isn’t a medical device: its numbers are estimates and don’t replace a health professional. If you’re pregnant, breastfeeding or have a medical condition, talk to a professional before changing what you eat.
+Moss is for people 16 and older. It isn’t a medical device: its numbers are estimates and don’t replace a health professional. If you’re pregnant, breastfeeding or have a medical condition, talk to a professional before changing what you eat.
 
 Terms of Use: https://condezuzu.github.io/moss-app/en/terms/
 Privacy: https://condezuzu.github.io/moss-app/en/privacy/
@@ -697,7 +697,7 @@ una cuenta de Apple de prueba:
 Moss is a food log (calories and macros) with weight, sleep and habits. Free, with no ads, no in-app purchases and no tracking.
 
 SIGN IN
-Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed for Moss itself. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 18 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
+Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed for Moss itself. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 16 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
 
 LINKING WITH ASCENT (OPTIONAL)
 Ascent is our gym app, already on the App Store (same developer and team). Moss works fully without it. The demo account below is an Ascent account: use it only to test the link, not to sign in to Moss.
@@ -723,7 +723,7 @@ PERMISSIONS (ALL OPTIONAL)
 - Widgets: Home Screen (today's sky) and Lock Screen (last night, confirmed with a tap). A background task keeps them current.
 
 HEALTH AND SAFETY
-Moss is not a medical device. Targets use published formulas (Mifflin-St Jeor; U.S. Navy for body fat), each with "How it's calculated". 18+ only. Pregnancy, breastfeeding or a medical condition remove any deficit. Targets never go below a calorie floor or aim to lose more than 1% of body weight a week. Training estimates say they are estimates.
+Moss is not a medical device. Targets use published formulas (Mifflin-St Jeor; U.S. Navy for body fat), each with "How it's calculated". 16+ only; no fast weight loss under 18. Pregnancy, breastfeeding or a medical condition remove any deficit. Targets never go below a calorie floor or aim to lose more than 1% of body weight a week. Training estimates say they are estimates.
 
 Privacy: https://condezuzu.github.io/moss-app/en/privacy/
 ```
@@ -739,7 +739,7 @@ ate», «Privacy and data › Delete account»).
 Moss es un registro de comida (calorías y macros) con peso, sueño y hábitos. Es gratis, sin anuncios, sin compras y sin rastreo.
 
 ENTRAR
-La única forma de entrar es Sign in with Apple: sirve cualquier cuenta de Apple. Una cuenta nueva pasa por una entrada corta: el consentimiento de los datos, un cuestionario (hay que tener 18 años o más) y el pedido de Salud, optativo, con «Ahora no». Hasta tener datos propios, Progreso y Sueño muestran datos de ejemplo, marcados como tales.
+La única forma de entrar es Sign in with Apple: sirve cualquier cuenta de Apple. Una cuenta nueva pasa por una entrada corta: el consentimiento de los datos, un cuestionario (hay que tener 16 años o más) y el pedido de Salud, optativo, con «Ahora no». Hasta tener datos propios, Progreso y Sueño muestran datos de ejemplo, marcados como tales.
 
 VINCULAR CON ASCENT (OPTATIVO)
 Ascent es nuestra app de gimnasio, ya en la App Store (mismo desarrollador y equipo). Moss anda entera sin ella. Para probar el vínculo sin la versión nueva de Ascent:
@@ -864,7 +864,7 @@ Privacidad: https://condezuzu.github.io/moss-app/privacidad/
 - **Washington (EE. UU.):** la ley «My Health My Data» pide una política de datos
   de salud propia, con su enlace aparte en la portada.
 - **Texas, Utah y Luisiana:** sus leyes de edad en las tiendas rigen desde junio,
-  mayo y julio de 2026. Con 18+, la App Store pide el permiso de los padres a los
+  mayo y julio de 2026. Con 16+, la App Store pide el permiso de los padres a los
   menores. Más adelante, la Declared Age Range API podría confirmar la edad sin
   preguntarla.
 
@@ -906,33 +906,24 @@ que contestarlo para mandar cualquier app o actualización.
 9+; MyFitnessPal está en 16+ (información médica frecuente) y Lose It! en 18+.
 «None» también se defiende; con la subida de abajo, el número no cambia.
 
-**El mínimo de 18 de Moss obliga a subirla a 18+.** Apple: «If your app has a
-EULA with minimum age requirements that exceed the rating that Apple
-calculated, you must override to a rating that adheres to the requirements.»
-Los términos de Moss piden 18 (el punto 2), así que: Age Categories and Override
-› **Override to Higher Age Rating › 18+**. Es todo lo que Apple pide por eso: ni
-verificar la edad ni nada para la revisión. La página sigue mostrando lo que se
-contestó (salud y bienestar, alcohol poco frecuente). **Age Suitability URL**
-(opcional): https://condezuzu.github.io/moss-app/en/terms/#age. «Made for
-Kids»: no.
+**El mínimo de 16 de Moss obliga a subirla a 16+** (lo decidiste el 28/10/2026;
+antes era 18). Apple: «If your app has a EULA with minimum age requirements that
+exceed the rating that Apple calculated, you must override to a rating that
+adheres to the requirements.» Los términos de Moss piden 16 (el punto 2), así
+que: Age Categories and Override › **Override to Higher Age Rating › 16+**. Es
+todo lo que Apple pide por eso: ni verificar la edad ni nada para la revisión.
+La página sigue mostrando lo que se contestó (salud y bienestar, alcohol poco
+frecuente). **Age Suitability URL** (opcional):
+https://condezuzu.github.io/moss-app/en/terms/#age. «Made for Kids»: no.
 
-**Lo que cambia con 18+:**
-- En **Australia, Brasil y Singapur**, desde el 24/2/2026 la App Store solo deja
-  bajar apps 18+ a quien confirmó que es adulto (lo hace Apple sola). Va a haber
-  menos descargas allí, sobre todo en Brasil.
-- En **Texas, Utah y Luisiana**, las cuentas nuevas de menores necesitan el
-  permiso de los padres para bajar apps (ver «g», 5).
-- Los padres que limitan por edad en Tiempo de uso no ven Moss.
+**Lo que cambia con 16+** (y no pasaría con 18+): en Australia, Brasil y
+Singapur la App Store no pide confirmar que se es adulto; en Texas, Utah y
+Luisiana los menores igual necesitan el permiso de los padres (ver «g», 5); los
+padres que limitan por edad en Tiempo de uso no ven Moss si el límite es menor.
 
-**Cómo convive con la regla de adentro.** La regla de 18, por las metas de
-calorías, sigue en la app: el cuestionario arranca en 18 y, si Salud dice menos,
-la entrada no sigue. La clasificación lo dice antes de bajarla y lo hace cumplir
-donde Apple controla la edad. Los términos, la app y la tienda dicen lo mismo.
-
-**Para no tener 18+** habría que bajar el mínimo de los términos y de la app
-(por ejemplo, a 16, con metas sin déficit para menores de 18): con 16 sería
-16+, y con 13 quedaría la calculada. Es una decisión de producto, y la de la
-seguridad del 22/10 fue 18: no la cambié.
+**Cómo convive con la regla de adentro.** El cuestionario arranca en 16 y, si
+Salud dice menos, la entrada no sigue. Antes de los 18, bajar «rápido» no está
+(se usa el ritmo recomendado). Los términos, la app y la tienda dicen lo mismo.
 
 ---
 

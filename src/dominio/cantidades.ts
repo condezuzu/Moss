@@ -129,6 +129,16 @@ export function pesoCorporalEn(kg: number, s: Sistema): { valor: number; unidad:
 
 export const aKg = (valor: number, s: Sistema) => (s === 'imperial' ? valor * KG_POR_LIBRA : valor);
 
+/**
+ * El peso que guarda la hoja del «+», en kg con un decimal: lo escrito si se escribió, o lo de los
+ * pasos. Lo escrito vacío o sin número no es el peso de antes: es nada, y no se guarda.
+ */
+export function pesoParaGuardar(escrito: string | null, valor: number, s: Sistema): number | null {
+  const n = escrito === null ? valor : escrito.trim() ? Number(escrito.trim().replace(',', '.')) : NaN;
+  const kg = Math.round(aKg(n, s) * 10) / 10;
+  return Number.isFinite(kg) && kg >= 20 && kg <= 400 ? kg : null;
+}
+
 export function largoEn(cm: number, s: Sistema): { valor: number; unidad: 'cm' | 'in' } {
   return s === 'imperial' ? { valor: Math.round((cm / CM_POR_PULGADA) * 10) / 10, unidad: 'in' } : { valor: Math.round(cm * 10) / 10, unidad: 'cm' };
 }

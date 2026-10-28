@@ -16,7 +16,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
 import { decimal } from '@/comida/porciones';
-import { aCm, aKg, largoEn, pesoCorporalEn } from '@/dominio/cantidades';
+import { aCm, largoEn, pesoCorporalEn, pesoParaGuardar } from '@/dominio/cantidades';
 import { tendencia } from '@/dominio/control';
 import { medidaValida, rangoDeGrasa, SITIOS, ultimasMedidas, type Centimetros, type Sitio } from '@/dominio/cuerpo';
 import { claveDeAlimento, itemsParaRegistrar, recientes, sumarValores, vigentes, type Item } from '@/dominio/registros';
@@ -326,8 +326,7 @@ function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (text
   const [escrito, setEscrito] = useState<string | null>(null);
   const unidad = pesoCorporalEn(1, sistema).unidad;
   const deTendencia = ultimo ? tendencia(e.pesos, e.hoy).get(e.hoy) : undefined;
-  const kg = aKg(valor, sistema);
-  const valido = kg >= 20 && kg <= 400;
+  const kg = pesoParaGuardar(escrito, valor, sistema);
   const paso = (signo: 1 | -1) => {
     setEscrito(null);
     setValor((v) => Math.round((v + 0.1 * signo) * 10) / 10);
@@ -347,7 +346,8 @@ function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (text
               const n = Number(x.replace(',', '.'));
               if (n > 0) setValor(n);
             }}
-            onBlur={() => setEscrito(null)}
+            // Al salir del campo, lo escrito vacío queda vacío: si no, volvía el peso de antes y se guardaba ese.
+            onBlur={() => setEscrito((x) => (x !== null && pesoParaGuardar(x, valor, sistema) === null ? x : null))}
             keyboardType="decimal-pad"
             selectTextOnFocus
             style={estilos.pesoEntrada}
@@ -367,9 +367,10 @@ function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (text
       </View>
       <View style={estilos.pie}>
         <Guardar
-          desactivado={!valido}
+          desactivado={kg === null}
           alTocar={() => {
-            elAlmacen().anotarPeso(Math.round(kg * 10) / 10, 'manual');
+            if (kg === null) return;
+            elAlmacen().anotarPeso(kg, 'manual');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
             avisar(t('mas.pesoGuardado', { peso: textoDePeso(kg, sistema) }));
             alVolver();

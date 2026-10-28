@@ -1,7 +1,7 @@
 // La entrada a la app, la de la galería (galeria/src/entrada.js): la frase de apertura, dos
 // diapositivas, tus datos (qué guarda Moss y el consentimiento para los datos de salud), la cuenta
 // (solo con Apple) y el cuestionario que arma la meta inicial de comida, con lo que cuida: mayores de
-// 18 y sin déficit en el embarazo, la lactancia o con una condición médica. La recorre una estrella
+// 16 (y sin bajar «rápido» antes de los 18), y sin déficit en el embarazo, la lactancia o con una condición médica. La recorre una estrella
 // guía (Guia.tsx, con el guion de guion.ts): en la frase y las diapositivas espera abajo y tocarla es
 // seguir, así que no se saltean. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida
 // que se avanza. Al final la estrella se va, la cámara baja hasta hoy, se guardan las respuestas (el
@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
-import { edadDe, MAYORIA_DE_EDAD, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { EDAD_MINIMA, edadDe, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
 import { urlDe } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
@@ -243,7 +243,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 }}
               />
             )}
-            {paso.id === 'edad' && (deSalud.has('edad') && r.edad < MAYORIA_DE_EDAD ? <Menor /> : (
+            {paso.id === 'edad' && (deSalud.has('edad') && r.edad < EDAD_MINIMA ? <Menor /> : (
               <Numero titulo={t('entrada.cuestionario.edadTitulo')} valor={Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])} min={RANGOS_DEL_CUESTIONARIO.edad[0]} max={RANGOS_DEL_CUESTIONARIO.edad[1]} paso={1} decimales={0} unidad={t('entrada.cuestionario.anos')} deSalud={deSalud.has('edad')} alCambiar={(v) => poner('edad', v)} alSeguir={() => { poner('edad', Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])); siguiente(); }} />
             ))}
             {paso.id === 'sexo' && <ElSexo sexo={r.sexo} deSalud={deSalud.has('sexo')} alElegir={(v) => poner('sexo', v)} alSeguir={siguiente} />}
@@ -439,7 +439,7 @@ function TusDatos({ alSeguir }: { alSeguir: () => void }) {
   );
 }
 
-/** Menos de 18, según Salud: Moss no sigue (lo pediste el 22/10/2026). */
+/** Menos de 16, según Salud: Moss no sigue (lo pediste el 22/10/2026). */
 function Menor() {
   return (
     <View style={s.menor}>

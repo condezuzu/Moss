@@ -689,7 +689,7 @@ de la tienda.
 - **5.1.1(v):** borrar la cuenta desde la app (ya está en el plan).
 - **Edad:** contar calorías clasifica la app como 9+. No hay una regla de Apple
   sobre menores en apps de dieta, pero MacroFactor pide 18+ en sus términos.
-  Por eso, bajar «rápido» queda para mayores de edad, y los pisos de calorías
+  Moss pide 16 (desde el 28/10/2026); bajar «rápido» queda para mayores de 18, y los pisos de calorías
   valen siempre.
 
 ## Datos (esquema `moss`)

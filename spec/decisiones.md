@@ -475,9 +475,9 @@ Cómo anda, en [`nutricion.md`](nutricion.md), «El plan de comidas».
 
 ### La seguridad (la noche del 22 al 23/10/2026)
 
-- **Mayores de 18:** la edad empieza en 18; si Salud dice menos, la entrada no
-  sigue. Apple tiene que ver la clasificación 18+ en App Store Connect (eso lo
-  hacés vos).
+- **Mayores de 16** (el 28/10/2026; antes, 18): la edad empieza en 16; si Salud
+  dice menos, la entrada no sigue. Antes de los 18, bajar «rápido» no está. En
+  App Store Connect, la clasificación sube a 16+ (spec/revision.md «h»).
 - **Sin déficit, sin guardar el porqué:** embarazo, lactancia o una condición
   médica se preguntan juntos y solo se guarda «sin déficit» (lo mínimo, y no es
   un dato de salud que haya que cuidar). Con eso, bajar de peso queda en

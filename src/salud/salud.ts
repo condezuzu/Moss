@@ -8,7 +8,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-import { enRango, MAYORIA_DE_EDAD, RANGOS_DEL_CUESTIONARIO } from '@/dominio/metas';
+import { EDAD_MINIMA, enRango, RANGOS_DEL_CUESTIONARIO } from '@/dominio/metas';
 
 /** Todo lo que Moss va a leer: lo del cuestionario, lo de los hábitos que se encienden solos y lo del sueño. */
 const LO_QUE_SE_LEE: readonly ObjectTypeIdentifier[] = [
@@ -76,7 +76,7 @@ export async function datosDelCuestionario(hoy: Date = new Date()): Promise<DelC
   try {
     const nacimiento = getDateOfBirth();
     const edad = nacimiento ? edadA(nacimiento, hoy) : null;
-    if (edad !== null && (enRango(RANGOS_DEL_CUESTIONARIO.edad, edad) || (edad >= 0 && edad < MAYORIA_DE_EDAD))) r.edad = edad;
+    if (edad !== null && (enRango(RANGOS_DEL_CUESTIONARIO.edad, edad) || (edad >= 0 && edad < EDAD_MINIMA))) r.edad = edad;
   } catch {}
   try {
     const sexo = getBiologicalSex();

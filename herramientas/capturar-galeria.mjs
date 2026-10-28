@@ -764,7 +764,7 @@ const pasos = {
     await pestana(0);
   },
   // Lo que cuida (lo pediste el 22/10): tus datos y el consentimiento, «¿Alguno es tu caso?», bajar
-  // apagado sin déficit, menos de 18, los números ocultos, Perfil, poco sueño y los límites de Progreso.
+  // apagado sin déficit, menos de 16, los números ocultos, Perfil, poco sueño y los límites de Progreso.
   async seguridad() {
     const entrada = (paso) => pagina.evaluate((p) => window.__entrada(p), paso);
     const seguridad = (accion, arg) => pagina.evaluate(([a, x]) => window.__seguridad(a, x), [accion, arg]);
