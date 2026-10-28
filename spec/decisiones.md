@@ -245,6 +245,32 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
+### D30 · La 1.0 sale sin la vinculación con Ascent (la decidiste el 28/10/2026, a la noche)
+
+Lo dijiste así: «Ascent 1.2.0 no existe, así que en esta versión de Moss ocultá
+todo lo de vincular con Ascent (botón, pantallas, menciones en la app) detrás de
+una bandera que se pueda prender después por OTA.»
+
+- **`CON_ASCENT`** (`src/lib/banderas.ts`), en `false`:
+  - no están la sección arriba de Hábitos (ni el gesto ni la flecha), la fila de
+    Conexiones, el final de Perfil, la recuperación en Sueño ni la frase de
+    Ascent en la privacidad;
+  - Moss no deja su sesión en el llavero compartido, y saca la que hubiera
+    quedado.
+- **La tienda:** la ficha ya no tiene «Si usas Ascent», y las notas para quien
+  revisa no la nombran: van sin la cuenta de Ascent y sin el video.
+  `spec/revision.md` «f» guarda lo que vuelve cuando se prenda.
+- **Lo demás del vínculo** (el almacén, las funciones del servidor, las tablas)
+  queda como está: sin un vínculo no hace nada.
+- **Para prenderla:** `true` y una OTA, cuando Ascent 1.2.0 esté en la tienda. La
+  guía 2.3.1 de Apple no quiere funciones ocultas: lo más seguro es prenderla en
+  una actualización de la tienda, con su nota para quien revisa.
+- **El mismo Apple ID:** Ascent no tiene Sign in with Apple (revisado el 28/10 en
+  todas sus ramas). Hoy el usuario de Auth es el mismo cuando el Apple ID
+  comparte su correo con la cuenta de Ascent, porque Supabase los une solo. Es
+  el caso normal, y lo cubre la migración de borrado de Ascent (la 99 de su
+  main).
+
 ### D29 · Moss y Ascent, dos cuentas (la decidiste el 28/10/2026)
 
 Lo dijiste así: «Moss y Ascent tienen cuentas separadas, cada una con su

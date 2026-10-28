@@ -11,6 +11,7 @@ import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextIn
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
+import { CON_ASCENT } from '@/lib/banderas';
 import { urlDe } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
@@ -105,7 +106,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       }] : []),
       { clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos') },
       // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent.
-      ascent,
+      ...(CON_ASCENT ? [ascent] : []),
     ]],
     ['perfil.tusDatosParaLlevar', [
       { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', alTocar: () => { exportarTodo(e.hoy).catch(() => avisar(t('perfil.errorBorrar'))); } },
@@ -158,19 +159,23 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
           ))}
         </View>
         {/* Al final, lo que anda solo si vinculas Ascent: información, no una función de Perfil. */}
-        <Text style={st.grupo}>{t('perfil.informacion')}</Text>
-        <Text style={st.informacion}>{t('perfil.informacionAscent')}</Text>
-        <View style={st.lista}>
-          {FUNCIONES_CON_ASCENT.map((f, i) => (
-            <View key={f.clave} style={[st.funcion, i > 0 && st.filaSeparada]}>
-              <Icono nombre={f.icono} tam={18} color="rgba(239, 230, 207, 0.6)" peso="light" />
-              <View style={{ flex: 1 }}>
-                <Text style={st.funcionTitulo}>{t(`ascent.funciones.${f.clave}.titulo`)}</Text>
-                <Text style={st.funcionTexto}>{t(`ascent.funciones.${f.clave}.texto`)}</Text>
-              </View>
+        {CON_ASCENT && (
+          <>
+            <Text style={st.grupo}>{t('perfil.informacion')}</Text>
+            <Text style={st.informacion}>{t('perfil.informacionAscent')}</Text>
+            <View style={st.lista}>
+              {FUNCIONES_CON_ASCENT.map((f, i) => (
+                <View key={f.clave} style={[st.funcion, i > 0 && st.filaSeparada]}>
+                  <Icono nombre={f.icono} tam={18} color="rgba(239, 230, 207, 0.6)" peso="light" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={st.funcionTitulo}>{t(`ascent.funciones.${f.clave}.titulo`)}</Text>
+                    <Text style={st.funcionTexto}>{t(`ascent.funciones.${f.clave}.texto`)}</Text>
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </>
+        )}
         {correo !== null && (
           <Aparece>
           <Boton
@@ -204,7 +209,10 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
       {hoja === 'privacidad' && (
         <HojaModal abierta titulo={t('perfil.privacidad')} alCerrar={() => setHoja(null)}>
-          {lista('perfil.privacidadTexto').map((parrafo) => <Parrafo key={parrafo}>{parrafo}</Parrafo>)}
+          {lista('perfil.privacidadTexto').map((parrafo, i) => {
+            const texto = CON_ASCENT && i === 0 ? `${parrafo} ${t('perfil.privacidadConAscent')}` : parrafo;
+            return <Parrafo key={texto}>{texto}</Parrafo>;
+          })}
         </HojaModal>
       )}
     </View>

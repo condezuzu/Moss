@@ -1154,8 +1154,9 @@
       "cofid": "Verification: McCance and Widdowson's The Composition of Foods Integrated Dataset 2021, Public Health England. Contains public sector information licensed under the Open Government Licence v3.0",
       "estrellas": "Stars: Yale Bright Star Catalogue (Hoffleit and Warren, 1991; CDS) and IAU star names (WGSN, CC BY 4.0)"
     },
+    "privacidadConAscent": "If you link Ascent, the two apps share what you accept when linking, until you unlink.",
     "privacidadTexto": [
-      "Your data is yours. Moss stores what you log, your answers, your weight and your nights on your phone and, with your account, on its server, for your other devices. It doesn't sell them or share them with third parties, show ads or track you. If you link Ascent, the two apps share what you accept when linking, until you unlink.",
+      "Your data is yours. Moss stores what you log, your answers, your weight and your nights on your phone and, with your account, on its server, for your other devices. It doesn't sell them or share them with third parties, show ads or track you.",
       "From Apple Health, Moss reads steps, sleep, water, mindful minutes, weight, date of birth, sex and height and, at night, heart rate, resting heart rate, heart rate variability and respiratory rate. With your account, your weight, birth year, sex, height, which habits you completed and the estimated time of your night are uploaded; everything else stays on your phone. Moss never writes to Apple Health.",
       "Meal photos and your profile photo stay on your phone. When you scan a code that isn't in Moss, Open Food Facts is asked about that code only.",
       "If you choose to, what you search for and don't find is sent without your name; so is a mistake you report. You can export everything as CSV and delete your data or your account here."

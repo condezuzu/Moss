@@ -471,7 +471,7 @@ el nombre, el subtítulo, las palabras clave ni el texto promocional.
 Si `Moss` sola queda libre, el nombre puede ser solo «Moss» y el subtítulo
 cargar lo demás; con el nombre largo se encuentra mejor.
 
-### Descripción (español, 3.785 caracteres)
+### Descripción (español, 3.417 caracteres)
 
 ```
 Moss es un registro de comida para iPhone. Anotas lo que comes en pocos toques, o lo dices, y Moss ajusta tus metas de calorías y macros cada semana con la tendencia de tu peso. Tus hábitos te acompañan como estrellas en un cielo nocturno.
@@ -512,9 +512,6 @@ HÁBITOS COMO ESTRELLAS
 WIDGETS
 Tu cielo de hoy en la pantalla de inicio, y tu noche en la pantalla bloqueada, para confirmarla con un toque.
 
-SI USAS ASCENT
-Vincula Moss con Ascent, nuestra app de gimnasio, y tu sueño y tu comida se cruzan con tu entrenamiento: tu recuperación, el rendimiento que puedes esperar, los días buenos para intentar una marca, un solo peso, las calorías según el día, la proteína después de entrenar y el gimnasio que se enciende solo. Es opcional: Moss funciona igual sin Ascent.
-
 FUNCIONA CON SALUD
 Con tu permiso, Moss lee de la app Salud tu peso, altura, pasos, agua, minutos de atención plena, sueño y lo que mide tu reloj de noche. Moss no escribe en Salud.
 
@@ -527,7 +524,7 @@ Términos de uso: https://condezuzu.github.io/moss-app/terminos/
 Privacidad: https://condezuzu.github.io/moss-app/privacidad/
 ```
 
-### Description (inglés, 3.623 caracteres)
+### Description (inglés, 3.276 caracteres)
 
 ```
 Moss is a food log for iPhone. Log what you eat in a few taps, or just say it, and Moss adjusts your calorie and macro targets every week, based on your weight trend. Your habits keep you company as stars in a night sky.
@@ -567,9 +564,6 @@ HABITS AS STARS
 
 WIDGETS
 Today’s sky on your Home Screen, and last night on your Lock Screen, to confirm it with a tap.
-
-IF YOU USE ASCENT
-Link Moss with Ascent, our gym app, and your sleep and food meet your training: your recovery, the performance you can expect, good days to try a personal record, one weight for both apps, calories by day, protein after training and a gym habit that lights up on its own. It’s optional: Moss works just the same without Ascent.
 
 WORKS WITH APPLE HEALTH
 With your permission, Moss reads your weight, height, steps, water, mindful minutes, sleep and what your watch measures at night from Apple Health. Moss never writes to Apple Health.
@@ -654,15 +648,81 @@ imitar los anillos de Actividad); la misma pantalla en cada idioma, con su texto
 
 ## f) Las notas para quien revisa
 
-App Store Connect › la versión › App Review Information:
-- **Sign-in required:** sí. En **User name** y **Password**, la cuenta de
-  demostración de **Ascent** (Moss entra con Apple; esa cuenta es para
-  vincular). Las notas lo aclaran.
-- **Contact:** Agustín Conde Zuzulich, nodoexpweb@gmail.com y tu teléfono con
+App Store Connect › la versión › App Review Information (cargado por API el 28/10/2026):
+- **Sign-in required:** no. Moss entra solo con Sign in with Apple: quien revisa
+  usa su propio Apple ID y no hace falta una cuenta de demostración.
+- **Contact:** Agustín Conde Zuzulich, nodoexpweb@gmail.com y tu teléfono, con
   `+598`.
-- **Notes:** hasta 4.000 bytes; se pega la versión en inglés (3.445 bytes con el
-  marcador, unos 3.500 con la cuenta). La española es para vos.
-- **Attachment:** el video de la vinculación (abajo).
+- **Notes:** la versión en inglés (2202 bytes; el tope es 4.000). La española es
+  para vos.
+- **Attachment:** ninguno. En la 1.0 la vinculación con Ascent está apagada
+  (`src/lib/banderas.ts`, decidido el 28/10/2026), así que no van el video ni la
+  cuenta de Ascent, y las notas no la nombran.
+
+### En inglés (para pegar)
+
+```
+Moss is a food log (calories and macros) with weight, sleep and habits. Free, with no ads, no in-app purchases and no tracking.
+
+SIGN IN
+Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 16 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
+
+ACCOUNT DELETION
+Profile > Privacy and data > Delete account. The user confirms with Apple, we revoke the Sign in with Apple token with the REST API and delete the account and all its data at once, on the server and on the phone.
+
+PERMISSIONS (ALL OPTIONAL)
+- Apple Health, read only: onboarding and Profile. NSHealthUpdateUsageDescription is there only because the HealthKit library links write APIs; Moss never writes.
+- Motion: a card in Sleep, to estimate sleep without a watch.
+- Camera: Add (+) > Add food > barcode icon (barcodes; labels are read on device), meal photos and the profile photo. Choosing a photo uses the system picker; Moss only reads the photo you pick.
+- Microphone and Speech Recognition: Add (+) > Say what I ate.
+- Notifications: local reminders, Profile > Reminders.
+- AlarmKit (iOS 26+): Sleep > Fine-tune > Alarm (the card shows when no watch or ring has written sleep in two weeks). It rings at the time the user sets and records when it is stopped, as the wake-up time.
+- Shortcuts: Moss actions (alarm stopped, charger, Sleep Focus) for automations the user builds in the Shortcuts app. No prompt.
+- Widgets: Home Screen (today's sky) and Lock Screen (last night, confirmed with a tap). A background task keeps them current.
+
+HEALTH AND SAFETY
+Moss is not a medical device. Targets use published formulas (Mifflin-St Jeor; U.S. Navy for body fat), each with "How it's calculated". 16+ only; no fast weight loss under 18. Pregnancy, breastfeeding or a medical condition remove any deficit. Targets never go below a calorie floor or aim to lose more than 1% of body weight a week.
+
+Privacy: https://condezuzu.github.io/moss-app/en/privacy/
+```
+
+Los nombres coinciden con los textos de la app en inglés (`src/textos/en.json`:
+«Profile › Privacy and data › Delete account», «Sleep › Fine-tune › Alarm»,
+«Say what I ate»).
+
+### En español (referencia)
+
+```
+Moss es un registro de comida (calorías y macros) con peso, sueño y hábitos. Es gratis, sin anuncios, sin compras y sin rastreo.
+
+ENTRAR
+La única forma de entrar es Sign in with Apple: sirve cualquier cuenta de Apple, así que no hace falta una cuenta de demostración. Una cuenta nueva pasa por una entrada corta: el consentimiento de los datos, un cuestionario (hay que tener 16 años o más) y el pedido de Salud, optativo, con «Ahora no». Hasta tener datos propios, Progreso y Sueño muestran datos de ejemplo, marcados como tales.
+
+BORRAR LA CUENTA
+Perfil › Privacidad y datos › Borrar la cuenta. La persona confirma con Apple, revocamos el token de Sign in with Apple con la API REST y borramos la cuenta y todos sus datos en el acto, en el servidor y en el teléfono.
+
+PERMISOS (TODOS OPTATIVOS)
+- Salud, solo lectura: la entrada y Perfil. NSHealthUpdateUsageDescription está solo porque la biblioteca de HealthKit enlaza las APIs de escritura; Moss nunca escribe.
+- Movimiento: una tarjeta en Sueño, para estimar el sueño sin reloj.
+- Cámara: Agregar (+) › Agregar comida › el ícono del código (códigos; las etiquetas se leen en el teléfono), las fotos de la comida y la de perfil. Elegir una foto usa el selector del sistema; Moss solo lee la foto que eliges.
+- Micrófono y reconocimiento de voz: Agregar (+) › Decir lo que comí.
+- Avisos: locales, en Perfil › Avisos.
+- AlarmKit (iOS 26 o más): Sueño › Afinar › Despertador (la tarjeta aparece si ningún reloj o anillo escribió sueño en dos semanas). Suena a la hora elegida y anota cuándo se para, como la hora de despertarse.
+- Atajos: acciones de Moss (la alarma parada, el cargador, la Concentración Sueño) para las automatizaciones que arma la persona en la app Atajos. Sin pedido.
+- Widgets: pantalla de inicio (el cielo de hoy) y pantalla bloqueada (anoche, para confirmar con un toque). Una tarea de segundo plano los tiene al día.
+
+SALUD Y SEGURIDAD
+Moss no es un dispositivo médico. Las metas usan fórmulas publicadas (Mifflin-St Jeor; la de la Marina de EE. UU. para la grasa), cada una con su «Cómo se calcula». Solo mayores de 16; antes de los 18, sin bajar «rápido». Embarazo, lactancia o una condición médica sacan todo déficit. Las metas nunca bajan de un piso de calorías ni apuntan a perder más del 1 % del peso por semana.
+
+Privacidad: https://condezuzu.github.io/moss-app/privacidad/
+```
+
+### Para cuando se prenda la vinculación
+
+Cuando Ascent 1.2.0 esté en la App Store y `CON_ASCENT` pase a `true`, la
+actualización que la prenda vuelve a llevar, en App Review Information, la cuenta
+de demostración de Ascent, el video y esta parte de las notas (antes de
+«ACCOUNT DELETION»), con «Moss and Ascent are separate accounts…» en el borrado.
 
 **La cuenta de demostración de Ascent.** Conviene reusar la de la revisión de
 Ascent (`supabase/cuenta-de-revision.mjs`, en su repo), que tiene unas seis
@@ -691,14 +751,7 @@ una cuenta de Apple de prueba:
    cable: AirDrop no llega a Windows) y subirlo en **Attachment**. Si no lo
    toma, un enlace que no pida cuenta, en las notas.
 
-### En inglés (para pegar)
-
 ```
-Moss is a food log (calories and macros) with weight, sleep and habits. Free, with no ads, no in-app purchases and no tracking.
-
-SIGN IN
-Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed for Moss itself. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 16 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
-
 LINKING WITH ASCENT (OPTIONAL)
 Ascent is our gym app, already on the App Store (same developer and team). Moss works fully without it. The demo account below is an Ascent account: use it only to test the link, not to sign in to Moss.
 Ascent demo account: [EMAIL] / [PASSWORD]
@@ -708,65 +761,6 @@ Ascent demo account: [EMAIL] / [PASSWORD]
 Once linked, Moss shows today's workout, recovery, expected performance, good days to try a PR, one weight for both apps, calories by day and protein after training, and the Gym habit lights up on its own. Unlink in Profile > Connections > Ascent.
 With both apps on the iPhone (Ascent's update is in review now), linking takes two taps: each app leaves a one-hour session token in a keychain access group that only our team's apps can read (never a refresh token), and our server checks both sessions before saving the link. The attached video shows it.
 Moss shares with Ascent: sleep duration and quality, daily calories and protein, weight and goal. Ascent shares with Moss: workouts (sets, weights, reps), PRs and weight. Same developer, explicit consent, no third parties.
-
-ACCOUNT DELETION
-Profile > Privacy and data > Delete account. The user confirms with Apple, we revoke the Sign in with Apple token with the REST API and delete the Moss account and all its Moss data at once, on the server and on the phone. Moss and Ascent are separate accounts: deleting the Moss account also removes the link, and the Ascent account stays as it is (it just stops receiving Moss data). If the person used the same email for both, we delete everything from Moss and remove the Sign in with Apple identity, so the Moss account no longer exists.
-
-PERMISSIONS (ALL OPTIONAL)
-- Apple Health, read only: onboarding and Profile. NSHealthUpdateUsageDescription is there only because the HealthKit library links write APIs; Moss never writes.
-- Motion: a card in Sleep, to estimate sleep without a watch.
-- Camera: Add (+) > Add food > barcode icon (barcodes; labels are read on device), meal photos and the profile photo. Choosing a photo uses the system picker; Moss only reads the photo you pick.
-- Microphone and Speech Recognition: Add (+) > Say what I ate.
-- Notifications: local reminders, Profile > Reminders.
-- AlarmKit (iOS 26+): Sleep > Fine-tune > Alarm (the card shows when no watch or ring has written sleep in two weeks). It rings at the time the user sets and records when it is stopped, as the wake-up time.
-- Shortcuts: Moss actions (alarm stopped, charger, Sleep Focus) for automations the user builds in the Shortcuts app. No prompt.
-- Widgets: Home Screen (today's sky) and Lock Screen (last night, confirmed with a tap). A background task keeps them current.
-
-HEALTH AND SAFETY
-Moss is not a medical device. Targets use published formulas (Mifflin-St Jeor; U.S. Navy for body fat), each with "How it's calculated". 16+ only; no fast weight loss under 18. Pregnancy, breastfeeding or a medical condition remove any deficit. Targets never go below a calorie floor or aim to lose more than 1% of body weight a week. Training estimates say they are estimates.
-
-Privacy: https://condezuzu.github.io/moss-app/en/privacy/
-```
-
-Los nombres coinciden con los textos de la app en inglés (revisado el 26/10/2026
-contra `src/textos/en.json`: «Link with Ascent», «Sign in with your Ascent
-account», «Profile › Connections», «Sleep › Fine-tune › Alarm», «Say what I
-ate», «Privacy and data › Delete account»).
-
-### En español (referencia)
-
-```
-Moss es un registro de comida (calorías y macros) con peso, sueño y hábitos. Es gratis, sin anuncios, sin compras y sin rastreo.
-
-ENTRAR
-La única forma de entrar es Sign in with Apple: sirve cualquier cuenta de Apple. Una cuenta nueva pasa por una entrada corta: el consentimiento de los datos, un cuestionario (hay que tener 16 años o más) y el pedido de Salud, optativo, con «Ahora no». Hasta tener datos propios, Progreso y Sueño muestran datos de ejemplo, marcados como tales.
-
-VINCULAR CON ASCENT (OPTATIVO)
-Ascent es nuestra app de gimnasio, ya en la App Store (mismo desarrollador y equipo). Moss anda entera sin ella. Para probar el vínculo sin la versión nueva de Ascent:
-1. Hábitos: deslizar para arriba desde encima de la barra, o tocar la flecha chica (también Perfil › Conexiones › Ascent).
-2. «Vincular con Ascent» › «Entrar con tu cuenta de Ascent», con la cuenta de demostración: [correo y contraseña de la cuenta de demostración de Ascent] (también en Sign-In Information).
-3. La hoja dice qué pasa cada app. Nada se comparte hasta tocar «Vincular».
-Vinculada, Moss muestra la sesión de hoy, la recuperación, el rendimiento esperado, los días buenos para intentar marca, un solo peso, las calorías según el día y la proteína después de entrenar, y el hábito del gimnasio se enciende solo. Se desvincula en Perfil › Conexiones › Ascent.
-Con las dos apps en el iPhone (la actualización de Ascent está en revisión ahora), vincular son dos toques: cada app deja una sesión de una hora en un grupo del llavero que solo leen las apps de nuestro equipo (nunca el token de refresco), y el servidor revisa las dos sesiones antes de guardar el vínculo. El video adjunto lo muestra.
-Moss le pasa a Ascent: cuánto y cómo dormiste, las calorías y la proteína de cada día, el peso y el objetivo. Ascent le pasa a Moss: los entrenamientos (series, pesos, repeticiones), las marcas y el peso. Mismo desarrollador, consentimiento expreso, sin terceros.
-
-BORRAR LA CUENTA
-Perfil › Privacidad y datos › Borrar la cuenta. La persona confirma con Apple, revocamos el token de Sign in with Apple con la API REST y borramos la cuenta de Moss y todo lo de Moss en el acto, en el servidor y en el teléfono. Moss y Ascent son cuentas separadas: borrar la de Moss también borra el vínculo, y la de Ascent sigue intacta (solo deja de recibir los datos de Moss). Si la persona usó el mismo correo en las dos, borramos todo lo de Moss y quitamos la identidad de Sign in with Apple, así la cuenta de Moss deja de existir.
-
-PERMISOS (TODOS OPTATIVOS)
-- Salud, solo lectura: la entrada y Perfil. NSHealthUpdateUsageDescription está solo porque la biblioteca de HealthKit enlaza las APIs de escritura; Moss nunca escribe.
-- Movimiento: una tarjeta en Sueño, para estimar el sueño sin reloj.
-- Cámara: Agregar (+) › Agregar comida › el ícono del código (códigos; las etiquetas se leen en el teléfono), las fotos de la comida y la de perfil. Las fotos usan el selector del sistema, sin acceso a la fototeca.
-- Micrófono y reconocimiento de voz: Agregar (+) › Decir lo que comí.
-- Avisos: locales, en Perfil › Avisos.
-- AlarmKit (iOS 26 o más): Sueño › Afinar › Despertador (la tarjeta aparece si ningún reloj o anillo escribió sueño en dos semanas). Suena a la hora elegida y anota cuándo se para, como la hora de despertarse.
-- Atajos: acciones de Moss (la alarma parada, el cargador, la Concentración Sueño) para las automatizaciones que arma la persona en la app Atajos. Sin pedido.
-- Widgets: pantalla de inicio (el cielo de hoy) y pantalla bloqueada (anoche, para confirmar con un toque). Una tarea de segundo plano los tiene al día.
-
-SALUD Y SEGURIDAD
-Moss no es un dispositivo médico. Las metas usan fórmulas publicadas (Mifflin-St Jeor; la de la Marina de EE. UU. para la grasa), cada una con su «Cómo se calcula». Solo mayores de 18. Embarazo, lactancia o una condición médica sacan todo déficit. Las metas nunca bajan de un piso de calorías ni apuntan a perder más del 1 % del peso por semana. Lo de entrenar dice que es una estimación.
-
-Privacidad: https://condezuzu.github.io/moss-app/privacidad/
 ```
 
 ## g) La lista, en orden

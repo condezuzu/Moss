@@ -9,7 +9,13 @@ import { compartirLaSesion } from './index';
 const mockDejar = jest.fn();
 const mockBorrar = jest.fn(async () => {});
 let mockEstado: { perfil: object | null; nombre: { valor: string; actualizado: string } | null } = { perfil: null, nombre: null };
+let mockConAscent = true;
 
+jest.mock('@/lib/banderas', () => ({
+  get CON_ASCENT() {
+    return mockConAscent;
+  },
+}));
 jest.mock('@/lib/llavero', () => ({ dejarMiSesion: (s: unknown) => mockDejar(s), borrarMiSesion: () => mockBorrar() }));
 jest.mock('./almacen', () => ({ crearAlmacen: () => ({ estado: () => mockEstado }) }));
 jest.mock('@/comida/catalogoLocal', () => ({}));
@@ -32,6 +38,16 @@ describe('la sesión para Ascent', () => {
   beforeEach(() => {
     mockDejar.mockClear();
     mockBorrar.mockClear();
+    mockConAscent = true;
+  });
+
+  it('con la vinculación apagada no se deja, y se saca la que hubiera quedado', () => {
+    mockConAscent = false;
+    mockEstado = { perfil: null, nombre: { valor: 'Agustín', actualizado: '2026-10-27T12:00:00.000Z' } };
+    compartirLaSesion('SIGNED_IN', sesion);
+    compartirLaSesion('INITIAL_SESSION', sesion);
+    expect(mockDejar).not.toHaveBeenCalled();
+    expect(mockBorrar).toHaveBeenCalledTimes(2);
   });
 
   it('lleva tu nombre de Moss, que no está en el perfil', () => {

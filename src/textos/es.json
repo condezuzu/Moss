@@ -1154,8 +1154,9 @@
       "cofid": "Verificación: McCance and Widdowson's The Composition of Foods Integrated Dataset 2021, Public Health England. Contains public sector information licensed under the Open Government Licence v3.0",
       "estrellas": "Estrellas: Yale Bright Star Catalogue (Hoffleit y Warren, 1991; CDS) y los nombres de la IAU (WGSN, CC BY 4.0)"
     },
+    "privacidadConAscent": "Si vinculas Ascent, las dos apps comparten lo que aceptas al vincular, hasta que desvinculas.",
     "privacidadTexto": [
-      "Tus datos son tuyos. Moss guarda lo que anotas, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte con terceros, no muestra publicidad y no te rastrea. Si vinculas Ascent, las dos apps comparten lo que aceptas al vincular, hasta que desvinculas.",
+      "Tus datos son tuyos. Moss guarda lo que anotas, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte con terceros, no muestra publicidad y no te rastrea.",
       "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, fecha de nacimiento, sexo y altura y, de la noche, frecuencia cardíaca, frecuencia en reposo, variabilidad y respiración. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura, qué hábitos cumpliste y la hora estimada de tu noche; lo demás queda en el teléfono. Moss no escribe en Salud.",
       "Las fotos de la comida y la de tu perfil quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
       "Si lo eliges, lo que buscas y no encuentras se manda sin tu nombre; un error que reportas, también. Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."

@@ -8,6 +8,7 @@ import { AppState } from 'react-native';
 import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
 import { msHastaMedianoche } from '@/dominio/fechas';
+import { CON_ASCENT } from '@/lib/banderas';
 import { borrarMiSesion, dejarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
 import { programarAvisos } from '@/recordatorios/programar';
@@ -50,11 +51,12 @@ export function oirLaSesion(oyente: (usuario: string | null) => void): () => voi
 
 /**
  * Ascent ve la sesión de Moss en el llavero que comparten las apps del equipo (spec/ascent.md, D27):
- * se deja al entrar y al renovarla, y se saca sin sesión. Con la sesión que trae el aviso: adentro
- * del aviso no se usa el cliente de Supabase.
+ * se deja al entrar y al renovarla, y se saca sin sesión. Con la vinculación apagada
+ * (src/lib/banderas.ts) no se deja, y se saca la que hubiera quedado. Con la sesión que trae el
+ * aviso: adentro del aviso no se usa el cliente de Supabase.
  */
 export function compartirLaSesion(evento: AuthChangeEvent, sesion: Session | null) {
-  if (!sesion || evento === 'SIGNED_OUT') {
+  if (!sesion || evento === 'SIGNED_OUT' || !CON_ASCENT) {
     borrarMiSesion().catch(() => {});
     return;
   }

@@ -15,6 +15,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { elAlmacen } from '@/almacen';
 import { soloLosDeEjemplo } from '@/almacen/almacen';
 import PantallaDelCielo from '@/cielo/PantallaDelCielo';
+import { CON_ASCENT } from '@/lib/banderas';
 import { t } from '@/textos';
 import { colores } from '@/tema';
 import { useAlTocarUnAviso } from '@/recordatorios/programar';
@@ -197,12 +198,13 @@ export default function Secciones() {
           <PantallaDelCielo
             paginaX={paginaX}
             abajo={abajo}
-            subida={{
+            // Sin la vinculación (src/lib/banderas.ts), el cielo no tiene ni el gesto ni la flecha de Ascent.
+            subida={CON_ASCENT ? {
               progreso: subida,
               limiteY: alto - abajo - 8,
               flecha: { x: ancho / 2, y: alto - abajo - 24 },
               alCambiar: setAscentAbierta,
-            }}
+            } : undefined}
             entrada={entrada}
             alEditarHabito={setEditando}
             alIrAComida={() => ir(PESTANAS.indexOf('comida'))}
@@ -238,7 +240,7 @@ export default function Secciones() {
                   </View>
                 ))}
               </Animated.View>
-              <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />
+              {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
             </Animated.View>
           )}
         </Animated.View>

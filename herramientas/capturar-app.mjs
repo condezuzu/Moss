@@ -11,7 +11,7 @@
 // Uso: npm run web:exportar && npm run web:ver   (en otra terminal)
 //      npm run app:capturas
 
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 
@@ -137,10 +137,16 @@ const arrastrar = async (desde, hasta, nombre) => {
   await pagina.mouse.up();
   await pagina.waitForTimeout(1200);
 };
+// Con la vinculación apagada (src/lib/banderas.ts, D30), el gesto no sube nada y Ascent no se nombra.
+const conAscent = /CON_ASCENT = true/.test(readFileSync('src/lib/banderas.ts', 'utf8'));
 // En el borde de la barra, donde no hay botón: soltar sobre un botón lo tocaría.
 await arrastrar([3, al - 30], [3, al - 330], 'ascent-desde-la-barra');
-await arrastrar([an / 2, al - 220], [an / 2, al - 520], 'ascent-subiendo');
-if (await pagina.getByLabel('Volver al cielo').count()) {
+await arrastrar([an / 2, al - 220], [an / 2, al - 520], conAscent ? 'ascent-subiendo' : 'sin-ascent-arrastrando');
+if (!conAscent) {
+  if (await pagina.getByLabel('Volver al cielo').count()) errores.push('Ascent: con la vinculación apagada, el gesto subió la sección');
+  const nombrada = await pagina.getByText(/Ascent/).count();
+  if (nombrada) errores.push(`Ascent: con la vinculación apagada, aparece ${nombrada} vez o veces`);
+} else if (await pagina.getByLabel('Volver al cielo').count()) {
   await foto('ascent');
   await pagina.getByLabel('Volver al cielo').click();
   await pagina.waitForTimeout(1200);

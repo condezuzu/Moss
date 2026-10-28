@@ -221,6 +221,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `src/textos/` | el diccionario y `t()`: cielo, entrada, comida, Inicio, el «+», el cuerpo, Progreso, Sueño, Perfil, diagnóstico |
 | `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
 | `src/lib/ascent.ts` | Ascent en este iPhone: si está instalada, abrirla y su página en la App Store |
+| `src/lib/banderas.ts` | lo que se prende por OTA: `CON_ASCENT`, la vinculación con Ascent, apagada en la 1.0 (D30) |
 | `src/lib/llavero.ts` | el llavero que comparten Moss y Ascent (D27): la sesión de cada app, con su contrato (`sesionCompartida.ts`) |
 | `src/secciones/ascent/` | la sección de Ascent vinculada (`Vinculada.tsx`, `calculos.ts`), la hoja de vincular (con la cuenta de Ascent, `cuentaDeAscent.ts`), la recuperación en Sueño y la fila de Perfil; lo que llega de Ascent queda en `src/almacen/ascent.ts` |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |

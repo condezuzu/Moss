@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import { actualizarSalud } from '@/almacen';
+import { CON_ASCENT } from '@/lib/banderas';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
   calidadDeNoche, deudaDeSueno, horario as horarioDe, MAXIMOS, MINIMOS, nivelDeLaNoche, pareceIncompleta, pocoSuenoSostenido, ultimasNoches, vitalDeNoche,
@@ -68,7 +69,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
             </Carta>
           </Aparece>
         )}
-        {clave === e.hoy && <RecuperacionEnSueno />}
+        {CON_ASCENT && clave === e.hoy && <RecuperacionEnSueno />}
         {/* Elegir otra noche no cambia todo de golpe: lo de esa noche entra con un fundido. */}
         <Aparece key={clave}>
           {noche?.moss ? (
