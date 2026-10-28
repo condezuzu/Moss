@@ -157,6 +157,25 @@ describe('los días', () => {
     expect(hoy(almacen)).toMatchObject({ hechos: [], luz: 0 });
   });
 
+  it('marcar otro día reciente rearma su resumen, o lo arma si Moss no se abrió ese día; fuera de las dos semanas, nada', async () => {
+    const { almacen, ir } = await armar();
+    // Moss no se abre el 22: se abre el 23.
+    ir('2026-10-23T13:00:00Z');
+    almacen.revisarDia();
+    expect(almacen.estado().dias.has('2026-10-22')).toBe(false);
+    almacen.marcarEnDia('leer', '2026-10-22', true, 'toque', '2026-10-23T02:40:00.000Z');
+    almacen.marcarEnDia('meditar', '2026-10-21', true, 'toque', '2026-10-22T02:00:00.000Z');
+    const e = almacen.estado();
+    expect(e.dias.get('2026-10-22')).toMatchObject({ habitos: ['meditar', 'leer', 'agua'], hechos: ['leer'], luz: 3 });
+    expect(e.dias.get('2026-10-22')!.constelacion).not.toBeNull();
+    expect(e.dias.get('2026-10-21')!.hechos).toEqual(['meditar']);
+    expect(hoy(almacen).hechos).toEqual([]);
+    const antes = almacen.estado();
+    expect(almacen.marcarEnDia('leer', '2026-10-01', true, 'toque')).toEqual([]);
+    expect(almacen.marcarEnDia('leer', '2026-10-24', true, 'toque')).toEqual([]);
+    expect(almacen.estado()).toBe(antes);
+  });
+
   it('si viajás, el día corta en tu hora', async () => {
     const { almacen, ir } = await armar();
     // 23:00 en Montevideo: todavía es el 21.

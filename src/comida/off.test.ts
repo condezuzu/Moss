@@ -42,6 +42,12 @@ describe('el producto', () => {
     expect(productoDe({ ...GALLETITAS, product: { ...GALLETITAS.product, nutriments: sinKcal } }, 'es')!.por100g.kcal).toBe(440);
   });
 
+  it('sin kcal y cargado en kcal, igual las saca de energy_100g, que Open Food Facts siempre da en kJ', () => {
+    const { 'energy-kcal_100g': _, ...sinKcal } = GALLETITAS.product.nutriments;
+    const nutriments = { ...sinKcal, energy_unit: 'kcal' };
+    expect(productoDe({ ...GALLETITAS, product: { ...GALLETITAS.product, nutriments } }, 'es')!.por100g.kcal).toBe(440);
+  });
+
   it('si falta un macro, no está completo: conviene la etiqueta', () => {
     const { fat_100g: _, ...sinGrasas } = GALLETITAS.product.nutriments;
     const p = productoDe({ ...GALLETITAS, product: { ...GALLETITAS.product, nutriments: sinGrasas } }, 'es')!;

@@ -106,8 +106,10 @@ describe('lo tocado en el widget', () => {
     l = tocar(l, 0, 'leer', true, ahora + 2000);
     const r = repartirToques(toquesDeLaLinea(l), almacen.estado());
     expect(r.aplicar.map((x) => x.id).sort()).toEqual(['escribir', 'leer']);
-    for (const x of r.aplicar) almacen.marcar(x.id, x.hecho, 'toque');
+    for (const x of r.aplicar) almacen.marcarEnDia(x.id, x.dia, x.hecho, 'toque', new Date(x.en).toISOString());
     const e = almacen.estado();
+    // Con la hora del toque, no la de abrir Moss: un cambio en otro teléfono entre los dos gana.
+    expect(e.marcas.get(claveDeMarca('leer', '2026-10-21'))!.momento).toBe(new Date(ahora + 2000).toISOString());
     expect(e.dias.get('2026-10-21')!.hechos).toEqual(['leer', 'escribir']);
     // La línea nueva ya no los trae pendientes: los trae hechos.
     const nueva = linea(e);
@@ -139,25 +141,34 @@ describe('lo tocado en el widget', () => {
     expect(r).toEqual({ aplicar: [], esperan: [] });
   });
 
-  it('a la medianoche: lo tocado ayer espera en la primera entrada, hasta dos semanas', async () => {
+  it('a la medianoche: lo tocado ayer se aplica a ayer, con la hora del toque, y no a hoy', async () => {
     const { almacen, ir } = await armar();
-    const l = tocar(linea(almacen.estado()), 0, 'escribir', true, Date.parse('2026-10-22T02:50:00Z'));
-    // Moss se abre al otro día: hoy es el jueves y el toque era del miércoles.
+    const en = Date.parse('2026-10-22T02:50:00Z');
+    const l = tocar(linea(almacen.estado()), 0, 'escribir', true, en);
+    // Moss se abre al otro día: hoy es el jueves y el toque era del miércoles (23:50 en Montevideo).
     ir('2026-10-22T13:00:00Z');
     almacen.revisarDia();
     expect(almacen.estado().hoy).toBe('2026-10-22');
     const r = repartirToques(toquesDeLaLinea(l), almacen.estado());
-    expect(r.aplicar).toEqual([]);
-    expect(r.esperan).toEqual([{ id: 'escribir', dia: '2026-10-21', hecho: true, en: Date.parse('2026-10-22T02:50:00Z') }]);
-    const nueva = linea(almacen.estado(), r.esperan);
-    expect(nueva[0].props.dia).toBe('2026-10-22');
-    expect(nueva[0].props.atrasados).toEqual([{ id: 'escribir', dia: '2026-10-21', hecho: true, en: Date.parse('2026-10-22T02:50:00Z') }]);
-    expect(nueva[1].props.atrasados).toEqual([]);
-    // Lo que espera vuelve a leerse de la línea nueva, y pasadas dos semanas se olvida.
-    expect(toquesDeLaLinea(nueva)).toHaveLength(1);
+    expect(r).toEqual({ aplicar: [{ id: 'escribir', dia: '2026-10-21', hecho: true, en }], esperan: [] });
+    for (const x of r.aplicar) almacen.marcarEnDia(x.id, x.dia, x.hecho, 'toque', new Date(x.en).toISOString());
+    const e = almacen.estado();
+    expect(e.marcas.get(claveDeMarca('escribir', '2026-10-21'))).toMatchObject({ hecho: true, momento: '2026-10-22T02:50:00.000Z' });
+    expect(e.dias.get('2026-10-21')!.hechos).toEqual(['escribir']);
+    expect(e.dias.get('2026-10-22')!.hechos).toEqual([]);
+    // Ya aplicado, la misma línea no aplica nada otra vez; y pasadas dos semanas, un toque viejo se olvida.
+    expect(repartirToques(toquesDeLaLinea(l), e).aplicar).toEqual([]);
     ir('2026-11-05T13:00:00Z');
     almacen.revisarDia();
-    expect(repartirToques(toquesDeLaLinea(nueva), almacen.estado())).toEqual({ aplicar: [], esperan: [] });
+    expect(repartirToques([{ id: 'leer', dia: '2026-10-21', hecho: true, en }], almacen.estado())).toEqual({ aplicar: [], esperan: [] });
+  });
+
+  it('lo atrasado que dejó una versión anterior en la línea también se aplica', async () => {
+    const { almacen, ir } = await armar();
+    ir('2026-10-22T13:00:00Z');
+    almacen.revisarDia();
+    const vieja = linea(almacen.estado(), [{ id: 'leer', dia: '2026-10-21', hecho: true, en: Date.parse('2026-10-22T02:00:00Z') }]);
+    expect(repartirToques(toquesDeLaLinea(vieja), almacen.estado()).aplicar.map((x) => x.id)).toEqual(['leer']);
   });
 
   it('un toque más viejo que lo marcado en Moss no lo pisa', async () => {

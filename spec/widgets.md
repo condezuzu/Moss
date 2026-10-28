@@ -62,10 +62,12 @@ Investigado el 21/10/2026 y hecho el 26/10/2026, para la build de la revisión. 
   constelación y todo apagado. A las 0:00 el widget pasa solo al día nuevo, aunque no se abra
   Moss en una semana.
 - **El día lo calcula la app** y va en cada entrada.
-- **Un toque de ayer** (marcar a las 23:50 y abrir Moss al otro día) no se puede aplicar todavía:
-  el almacén solo marca hoy (`marcar`).
-  - Espera en la primera entrada de la línea (`atrasados`), hasta 14 días, sin perderse.
-  - Falta una función del almacén que marque otro día con la hora del toque (abajo).
+- **Un toque de ayer** (marcar a las 23:50 y abrir Moss al otro día) se aplica a ese día, hasta 14
+  días atrás, con `marcarEnDia` del almacén, que rearma el resumen de ese día (o lo arma, si Moss
+  no se abrió).
+  - Todos los toques van con la hora del toque, no la de abrir Moss: entre teléfonos gana de
+    verdad el último.
+  - Lo `atrasados` que dejó en la línea una versión anterior se lee y se aplica igual.
 
 ## La noche, sin abrir Moss
 
@@ -104,12 +106,6 @@ Investigado el 21/10/2026 y hecho el 26/10/2026, para la build de la revisión. 
 
 ## Lo que falta o no se pudo
 
-- **Marcar otro día desde el almacén.** Hace falta `marcarEnDia(habito, dia, hecho, origen,
-  momento)`:
-  - que rearme el resumen de ese día como `conLaComida`;
-  - con la hora del toque y no la de ahora, así entre teléfonos gana de verdad el último.
-
-  Con eso, los `atrasados` se aplican, y los de hoy también deberían usarla.
 - **Que Moss no anote «abierta» cuando iOS la abre en segundo plano.** `useAlmacenListo`
   (`src/almacen/index.ts`) llama a `anotarUso('abrir')` aunque la app arranque en segundo plano: por
   la tarea, por un Atajo o por el pre-arranque de iOS.

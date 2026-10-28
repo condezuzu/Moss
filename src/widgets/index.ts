@@ -73,13 +73,13 @@ async function unaVuelta() {
   const a = elAlmacen();
   if (!w || !a.estado().listo) return;
 
-  // El cielo: los «hecho» de hoy van al almacén (gana el último); los de días anteriores esperan.
+  // El cielo: los «hecho» van al almacén con su día y su hora (gana el último).
   let esperan: ReturnType<typeof repartirToques>['esperan'] = [];
   await alDia(
     w.cielo,
     (linea) => {
       const r = repartirToques(toquesDeLaLinea(linea), a.estado());
-      for (const x of r.aplicar) a.marcar(x.id, x.hecho, 'toque');
+      for (const x of r.aplicar) a.marcarEnDia(x.id, x.dia, x.hecho, 'toque', new Date(x.en).toISOString());
       esperan = r.esperan;
     },
     () => lineaDelCielo(a.estado(), {

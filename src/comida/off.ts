@@ -56,7 +56,8 @@ function valoresDe(n: Nutriments, sufijo: '_100g' | '_serving'): Partial<Valores
   const poner = (clave: keyof ValoresOff, valor: number | undefined) => {
     if (valor !== undefined) v[clave] = valor;
   };
-  const kj = numero(n[`energy-kj${sufijo}`]) ?? (n[`energy${sufijo}`] !== undefined && n.energy_unit !== 'kcal' ? numero(n[`energy${sufijo}`]) : undefined);
+  // `energy_*` viene siempre normalizado a kJ, aunque `energy_unit` diga en qué se cargó.
+  const kj = numero(n[`energy-kj${sufijo}`]) ?? numero(n[`energy${sufijo}`]);
   poner('kcal', numero(n[`energy-kcal${sufijo}`]) ?? (kj !== undefined ? Math.round(kj / 4.184) : undefined));
   poner('proteina', numero(n[`proteins${sufijo}`]));
   poner('carbohidratos', numero(n[`carbohydrates${sufijo}`]));

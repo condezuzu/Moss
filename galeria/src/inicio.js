@@ -51,6 +51,35 @@ const SeccionInicio = (() => {
       return c;
     };
 
+    // Lo que quedaba la última vez que se pintó: al anotar, la cifra cuenta desde ahí (como la de
+    // Comida, y la de la app: src/secciones/animados.tsx). Con Reducir movimiento, va directo.
+    let quedaAntes = null;
+    const quieto = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function cifraQueCuenta(hasta) {
+      const b = el('b', null, numero(quedaAntes == null || quieto() ? hasta : quedaAntes));
+      const desde = quedaAntes;
+      quedaAntes = hasta;
+      if (desde == null || desde === hasta || quieto()) return b;
+      const t0 = performance.now();
+      const paso = (ahora) => {
+        const k = Math.min(1, (ahora - t0) / 480);
+        b.textContent = numero(Math.round(desde + (hasta - desde) * (1 - Math.pow(1 - k, 3))));
+        if (k < 1 && b.isConnected) requestAnimationFrame(paso);
+      };
+      requestAnimationFrame(paso);
+      return b;
+    }
+
+    // Cada barra arranca donde estaba la vez anterior (al sumar un vaso, los macros no vuelven a cero)
+    // y la primera vez, de cero: como en la app, que se llena al aparecer y después solo se corre.
+    const anchosAntes = new Map();
+    function llenar(nodo, clave, valor, prop = 'width') {
+      const antes = anchosAntes.get(clave + prop);
+      if (antes != null) nodo.style[prop] = antes;
+      anchosAntes.set(clave + prop, valor);
+      requestAnimationFrame(() => { nodo.style[prop] = valor; });
+    }
+
     // ------------------------------------------------------------ calorías y macros: lo que queda
     function calorias(ms) {
       const c = carta('in-calorias', null, 1);
@@ -61,7 +90,7 @@ const SeccionInicio = (() => {
       c.classList.add('con-' + Kcal.estilo);
       const arriba = el('div', 'in-cal-arriba');
       const cifra = el('div', 'in-cal-cifra');
-      cifra.append(el('span', 'in-cal-etq', tx(queda >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')), el('b', null, numero(Math.abs(Math.round(queda)))),
+      cifra.append(el('span', 'in-cal-etq', tx(queda >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')), cifraQueCuenta(Math.abs(Math.round(queda))),
         el('small', null, tx('inicio.kcalDe', { comido: numero(Math.round(t.kcal)), meta: numero(meta.kcal) })));
       // La barra va debajo de la cifra; las otras, al lado o alrededor.
       if (Kcal.estilo === 'barra') arriba.append(cifra, f.el);
@@ -78,10 +107,11 @@ const SeccionInicio = (() => {
         const relleno = el('i');
         barra.appendChild(relleno);
         x.append(el('span', 'in-macro-nombre', tx('comida.' + clave)), el('b', null, valor), barra);
-        requestAnimationFrame(() => { relleno.style.width = `${Math.min(100, (t[m] / meta[m]) * 100).toFixed(1)}%`; });
+        llenar(relleno, 'macro-' + m, `${Math.min(100, (t[m] / meta[m]) * 100).toFixed(1)}%`);
         macros.appendChild(x);
       });
       c.append(arriba, macros);
+      Util.caber([...macros.querySelectorAll('.in-macro-nombre')], 12);
       return c;
     }
 
@@ -109,7 +139,8 @@ const SeccionInicio = (() => {
       const marca = el('span', 'in-camino-marca');
       pista.append(relleno, marca);
       const pct = (hecho * 100).toFixed(1) + '%';
-      requestAnimationFrame(() => { relleno.style.width = pct; marca.style.left = pct; });
+      llenar(relleno, 'camino', pct);
+      llenar(marca, 'camino', pct, 'left');
       const etiquetas = el('div', 'in-camino-etq');
       etiquetas.append(el('span', null, numero(desde, 1)), el('span', 'ahora', numero(ahora, 1)), el('span', null, numero(hasta, hasta % 1 ? 1 : 0)));
       b.append(pista, etiquetas);
@@ -131,7 +162,9 @@ const SeccionInicio = (() => {
       const cifra2 = el('div', 'in-dato-cifra');
       const bal = d.balance.promedio;
       cifra2.append(el('b', null, bal == null ? '—' : conSigno(Math.round(bal))), el('small', null, ' ' + tx('inicio.kcalPorDia')));
-      izq2.append(cifra2, el('span', null, tx('inicio.balanceCorto.otros', { n: d.balance.dias.length || 7 })));
+      // Sin días todavía, solo lo que falta: una raya y «kcal por día» no dicen nada.
+      if (d.balance.dias.length) izq2.append(cifra2, el('span', null, u.plural('inicio.balanceCorto', d.balance.dias.length)));
+      else izq2.append(el('span', null, tx('progreso.sinBalance')));
       fila2.append(izq2, Graficos.balance(d.balance.dias, d.gasto, { ancho: 150, alto: 44 }));
       c.append(fila, fila2);
       return c;
@@ -218,6 +251,7 @@ const SeccionInicio = (() => {
     }
 
     // ------------------------------------------------------------ el agua
+    let vasosAntes = null;
     function agua() {
       const a = opciones.comida.agua();
       const c = carta('in-agua', tx('inicio.bloques.agua'));
@@ -227,7 +261,9 @@ const SeccionInicio = (() => {
       cifra.append(el('b', null, Porciones.decimal(a.litros, u.idioma())), el('small', null, ' ' + tx('inicio.deLitros', { meta: Porciones.decimal(a.meta, u.idioma()) })));
       izq.appendChild(cifra);
       const vasos = el('div', 'in-vasos');
-      for (let i = 0; i < Math.max(a.vasosMeta, a.vasos); i++) vasos.appendChild(el('i', i < a.vasos ? 'lleno' : null));
+      // El que se acaba de sumar se llena con un fundido; los demás ya estaban.
+      for (let i = 0; i < Math.max(a.vasosMeta, a.vasos); i++) vasos.appendChild(el('i', i < a.vasos ? (vasosAntes != null && i >= vasosAntes ? 'lleno nuevo' : 'lleno') : null));
+      vasosAntes = a.vasos;
       const mas = boton('in-agua-mas', icono('mas'), () => { opciones.comida.sumarAgua(); }, tx('mas.sumarVaso'));
       fila.append(izq, vasos, mas);
       c.appendChild(fila);

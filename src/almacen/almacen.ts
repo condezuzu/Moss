@@ -497,10 +497,32 @@ export function crearAlmacen(op: Opciones) {
 
   /** Encender o apagar un hábito hoy. Devuelve los logros que se ganaron con eso. */
   function marcar(habito: string, hecho: boolean, origen: Origen): Logro[] {
-    const marca: Marca = { habito, dia: estado.hoy, hecho, momento: momento(), origen };
-    const marcas = new Map(estado.marcas).set(claveDeMarca(habito, estado.hoy), marca);
+    return marcarEnDia(habito, estado.hoy, hecho, origen);
+  }
+
+  /**
+   * Encender o apagar un hábito hoy o en uno de los días recientes (lo tocado en el widget antes de
+   * la medianoche), con la hora en que pasó: entre teléfonos gana de verdad el último. El resumen de
+   * ese día se rearma, o se arma si Moss no se abrió ese día.
+   */
+  function marcarEnDia(habito: string, dia: ClaveDia, hecho: boolean, origen: Origen, cuando = momento()): Logro[] {
+    if (dia > estado.hoy || dia < sumarDias(estado.hoy, -DIAS_DE_MARCAS)) return [];
+    const marca: Marca = { habito, dia, hecho, momento: cuando, origen };
+    const marcas = new Map(estado.marcas).set(claveDeMarca(habito, dia), marca);
     guardar((r) => r.guardarMarca(marca));
-    const { estado: nuevo, ganados } = alDia({ ...estado, marcas });
+    let dias = estado.dias;
+    if (dia !== estado.hoy) {
+      const antes = dias.get(dia);
+      const rehecho = antes
+        ? rehacerDia(antes, [...marcas.values()])
+        : resumirDia(dia, habitosDelDia(estado.habitos, dia), [...marcas.values()], periodoDe(estado.periodos, dia)?.constelacion ?? null);
+      if (!mismoResumen(antes, rehecho)) {
+        const nuevo: Dia = { ...rehecho, actualizado: momento() };
+        dias = new Map(dias).set(dia, nuevo);
+        guardar((r) => r.guardarDia(nuevo));
+      }
+    }
+    const { estado: nuevo, ganados } = alDia({ ...estado, marcas, dias });
     cambiar(nuevo, false);
     return ganados;
   }
@@ -610,6 +632,7 @@ export function crearAlmacen(op: Opciones) {
     /** Para la sincronización: el repositorio, en la misma cola que las escrituras. */
     enCola,
     marcar,
+    marcarEnDia,
     /** Crear o editar un hábito. Si cambia la cantidad de un día, ese día pasa a otra constelación. */
     ponerHabito(habito: Habito) {
       cambiarHabitos([...estado.habitos.filter((h) => h.id !== habito.id), { ...habito, actualizado: momento() }]);

@@ -53,17 +53,16 @@ export function oirLaSesion(oyente: (usuario: string | null) => void): () => voi
  * se deja al entrar y al renovarla, y se saca sin sesión. Con la sesión que trae el aviso: adentro
  * del aviso no se usa el cliente de Supabase.
  */
-function compartirLaSesion(evento: AuthChangeEvent, sesion: Session | null) {
+export function compartirLaSesion(evento: AuthChangeEvent, sesion: Session | null) {
   if (!sesion || evento === 'SIGNED_OUT') {
     borrarMiSesion().catch(() => {});
     return;
   }
   if (evento !== 'SIGNED_IN' && evento !== 'TOKEN_REFRESHED' && evento !== 'INITIAL_SESSION') return;
-  // El nombre del perfil de Moss, si lo tiene; si no, vacío.
-  const perfil = elAlmacen().estado().perfil as { nombre?: unknown } | null;
+  // Tu nombre de Moss, si lo tiene (va aparte del perfil: src/dominio/nombre.ts); si no, vacío.
   dejarMiSesion({
     usuario: sesion.user.id,
-    nombre: typeof perfil?.nombre === 'string' ? perfil.nombre : '',
+    nombre: elAlmacen().estado().nombre?.valor ?? '',
     token: sesion.access_token,
     vence: sesion.expires_at ?? Math.floor(Date.now() / 1000) + sesion.expires_in,
   });

@@ -341,14 +341,17 @@ section.item p { margin: 0; max-width: 64ch; }
 .in-macro-c { --c: var(--salvia); --c-rgb: 166, 191, 148; }
 .in-macro-g { --c: #a9c4f5; --c-rgb: 169, 196, 245; }
 .in-macro-nombre, .cm-macro-nombre { display: inline-flex; align-items: center; gap: 6px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.13em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); white-space: nowrap; }
+/* Un nombre largo (CARBOHIDRATOS) se achica hasta caber, como adjustsFontSizeToFit en la app (Util.caber). */
+.in-macro-nombre[style*="--justo"], .cm-macro-nombre[style*="--justo"] { font-size: var(--justo); height: 9.5px; }
 .in-macro b { font: 400 20px/1 var(--numeros); color: var(--tinta); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .in-macro small { font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.5); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .in-macro-barra { position: relative; display: block; height: 3px; margin-top: 3px; border-radius: 3px; background: rgba(239, 230, 207, 0.08); overflow: hidden; }
 .in-macro-barra i { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--c); opacity: 0.75; transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1); }
 /* El punto de cada macro: apagado mientras falta; brilla al cumplir lo pedido; si te pasás por mucho, tiembla un poco. */
 .in-macro-nombre::before, .cm-macro-nombre::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--c); opacity: 0.55; transition: opacity 0.6s, box-shadow 0.6s; }
-.cumplido .in-macro-nombre::before, .cumplido .cm-macro-nombre::before, .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { opacity: 1; box-shadow: 0 0 0 2px rgba(var(--c-rgb), 0.16), 0 0 10px 1px var(--c); animation: brilla 3.2s ease-in-out infinite; }
-.pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: tiembla 2.6s linear infinite; }
+.cumplido .in-macro-nombre::before, .cumplido .cm-macro-nombre::before, .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { opacity: 1; box-shadow: 0 0 0 2px rgba(var(--c-rgb), 0.16), 0 0 10px 1px var(--c); animation: brilla 3.2s ease-in-out 2; }
+/* Brilla o tiembla un par de veces al llegar y después queda quieto: nada se mueve para siempre. */
+.pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: tiembla 2.6s linear 2; }
 .cumplido .in-macro-barra i, .pasado .in-macro-barra i { opacity: 1; box-shadow: 0 0 8px var(--c); }
 @keyframes brilla { 50% { box-shadow: 0 0 0 3px rgba(var(--c-rgb), 0.1), 0 0 14px 2px var(--c); } }
 /* Un temblor corto y quieto el resto del tiempo: que se note sin molestar. */
@@ -387,6 +390,9 @@ section.item p { margin: 0; max-width: 64ch; }
 .in-vasos { flex: 1; display: flex; gap: 3px; justify-content: flex-end; flex-wrap: wrap; }
 .in-vasos i { width: 7px; height: 16px; border-radius: 2px 2px 3px 3px; border: 1px solid rgba(188, 216, 242, 0.35); }
 .in-vasos i.lleno { background: #bcd8f2; border-color: #bcd8f2; box-shadow: 0 0 6px rgba(188, 216, 242, 0.5); }
+/* El vaso que se acaba de sumar se llena con un fundido, como en la app (src/secciones/animados.tsx). */
+.in-vasos i.nuevo { animation: vaso-llena 0.32s ease-out both; }
+@keyframes vaso-llena { from { background: transparent; border-color: rgba(188, 216, 242, 0.35); box-shadow: none; } }
 .in-agua-mas { appearance: none; cursor: pointer; flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(232, 196, 106, 0.42); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); display: grid; place-items: center; }
 .in-agua-mas svg { width: 16px; height: 16px; stroke-width: 2; }
 .in-pie { display: flex; justify-content: center; margin-top: 18px; }
@@ -1725,6 +1731,8 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
   .hj-siempre, .dc-resultado, .dc-bloque, .cm-entreno { animation-duration: 0.01s; }
   .escuchando .dc-aro { animation: none; opacity: 0.6; }
   .as-luna, .as-orbita, .as-luna-halo { transition: none; }
+  .in-vasos i.nuevo { animation: none; }
+  .sn-parte-barra i { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
   .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: none; box-shadow: 0 0 0 2px var(--c); }
 }

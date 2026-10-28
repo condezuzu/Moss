@@ -10,6 +10,7 @@ import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, withTimi
 import type { DiaSemana } from '@/dominio/fechas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { useFraccion } from './animados';
 import { Icono } from './comida/comunes';
 
 /** De lunes a domingo, como se lee la semana. */
@@ -154,12 +155,15 @@ export const EtiquetaDeGrupo = ({ children }: { children: ReactNode }) => <Text 
 
 /** El camino al peso meta: de dónde se empezó a la meta, con hoy marcado. Las etiquetas: el inicio, hoy y la meta. */
 export function Camino({ hecho, etiquetas }: { hecho: number; etiquetas: readonly [string, string, string] }) {
-  const pct = `${Math.min(100, Math.max(0, hecho * 100))}%` as const;
+  // Como la galería (.in-camino-pista i): el tramo hecho se recorre y la marca de hoy lo acompaña.
+  const x = useFraccion(hecho);
+  const lleno = useAnimatedStyle(() => ({ width: `${x.get() * 100}%` }));
+  const marca = useAnimatedStyle(() => ({ left: `${x.get() * 100}%` }));
   return (
     <View style={e.camino}>
       <View style={e.caminoPista}>
-        <View style={[e.caminoLleno, { width: pct }]} />
-        <View style={[e.caminoMarca, { left: pct }]} />
+        <Animated.View style={[e.caminoLleno, lleno]} />
+        <Animated.View style={[e.caminoMarca, marca]} />
       </View>
       <View style={e.caminoEtiquetas}>
         <Text style={e.caminoEtiqueta}>{etiquetas[0]}</Text>

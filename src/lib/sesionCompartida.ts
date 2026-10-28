@@ -8,7 +8,7 @@ export type SesionCompartida = {
   app: App;
   /** El id de la cuenta (auth.users). */
   usuario: string;
-  /** El nombre de la persona en esa app: el de usuario en Ascent, el del perfil en Moss (o vacío). */
+  /** El nombre de la persona en esa app: el de usuario en Ascent, tu nombre en Moss (o vacío). */
   nombre: string;
   /** El access token de Supabase: lo revisa el servidor al vincular. Nunca el de refresco. */
   token: string;

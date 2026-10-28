@@ -113,13 +113,14 @@ export function toquesDeLaLinea(linea: { props: unknown }[]): ToqueConDia[] {
 }
 
 /**
- * Qué hacer con cada toque. Los de hoy se aplican si cambian algo y si lo que tiene el almacén de ese
- * hábito ese día es más viejo (gana el último). Los de días anteriores, que el almacén todavía no
- * marca, esperan hasta DIAS_QUE_ESPERA. El resto (un hábito que ya no está, uno automático, un día
- * que no llegó) se olvida.
+ * Qué hacer con cada toque. Los de hoy y los de los días anteriores (hasta DIAS_QUE_ESPERA: lo tocado
+ * a las 23:50 y abierto Moss al otro día) se aplican, con su día y su hora (marcarEnDia), si cambian
+ * algo y si lo que tiene el almacén de ese hábito ese día es más viejo (gana el último). El resto (un
+ * hábito que ya no está, uno automático, un día que no llegó) se olvida.
  */
 export function repartirToques(toques: ToqueConDia[], e: Pick<Estado, 'hoy' | 'habitos' | 'marcas'>): { aplicar: ToqueConDia[]; esperan: ToqueConDia[] } {
   const aplicar: ToqueConDia[] = [];
+  // Lo de días anteriores esperaba a que el almacén pudiera marcar otro día: ya puede, no espera nada.
   const esperan: ToqueConDia[] = [];
   const desde = sumarDias(e.hoy, -DIAS_QUE_ESPERA);
   for (const t of toques) {
@@ -129,7 +130,7 @@ export function repartirToques(toques: ToqueConDia[], e: Pick<Estado, 'hoy' | 'h
     const marca = e.marcas.get(claveDeMarca(t.id, t.dia));
     if (marca && Date.parse(marca.momento) >= t.en) continue;
     if ((marca?.hecho ?? false) === t.hecho) continue;
-    (t.dia === e.hoy ? aplicar : esperan).push(t);
+    aplicar.push(t);
   }
   return { aplicar, esperan };
 }

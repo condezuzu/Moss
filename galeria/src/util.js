@@ -140,5 +140,27 @@ const Util = (() => {
     return api;
   }
 
-  return { crear, hoja, icono, ICONOS, SVG };
+  // Como adjustsFontSizeToFit en la app: el texto que no cabe en su lugar se achica, hasta el 80 %.
+  // Se mide con el nodo ya en la página y a la vista (si la sección está oculta, se espera), y otra
+  // vez cuando llega la letra. `fijo`: lo que no se achica con ella (el punto del macro y su espacio).
+  function caber(nodos, fijo = 0) {
+    const medir = (n) => {
+      n.style.removeProperty('--justo');
+      const lugar = n.parentElement ? n.parentElement.clientWidth : 0;
+      if (!lugar || n.scrollWidth <= lugar) return !!lugar;
+      const tam = parseFloat(getComputedStyle(n).fontSize);
+      const justo = (tam * (lugar - fijo)) / (n.scrollWidth - fijo);
+      n.style.setProperty('--justo', `${Math.max(tam * 0.8, justo - 0.05).toFixed(2)}px`);
+      return true;
+    };
+    let vueltas = 0;
+    const intentar = () => {
+      const pendientes = nodos.filter((n) => n.isConnected && !medir(n));
+      if (pendientes.length && ++vueltas < 120) setTimeout(() => requestAnimationFrame(intentar), 250);
+    };
+    requestAnimationFrame(intentar);
+    if (document.fonts) document.fonts.ready.then(() => nodos.forEach((n) => n.isConnected && medir(n)));
+  }
+
+  return { crear, hoja, icono, caber, ICONOS, SVG };
 })();

@@ -26,6 +26,7 @@ import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, nu
 import { Luna } from '../comida/Luna';
 import { usePersona, useSueno } from '../ganchos';
 import { ACOMODA, Aparece, Camino } from '../tarjetas';
+import { Relleno, useCuenta, Vaso } from '../animados';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
 
 export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'] as const;
@@ -125,7 +126,14 @@ function Calorias() {
       </View>
     );
   }
+  return <CaloriasConMeta numeros={numeros} comido={comido} meta={meta} />;
+}
+
+// Aparte, así el hook de la cifra que cuenta no depende de si hay meta.
+function CaloriasConMeta({ numeros, comido, meta }: { numeros: boolean; comido: ReturnType<typeof totalDe>; meta: NonNullable<ReturnType<typeof metaDelDia>> }) {
   const queda = meta.kcal - comido.kcal;
+  // Al anotar, «te quedan» cuenta hasta lo nuevo en vez de saltar.
+  const cifra = useCuenta(Math.abs(Math.round(queda)));
   return (
     <>
       <View style={estilos.calArriba}>
@@ -133,7 +141,7 @@ function Calorias() {
         {numeros && (
           <Aparece style={estilos.calCifra}>
             <Text style={estilos.calEtiqueta}>{t(queda >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')}</Text>
-            <Text style={estilos.calNumero}>{numero(Math.abs(Math.round(queda)))}</Text>
+            <Text style={estilos.calNumero}>{numero(Math.round(cifra))}</Text>
             <Text style={estilos.calDe}>{t('inicio.kcalDe', { comido: numero(Math.round(comido.kcal)), meta: numero(meta.kcal) })}</Text>
           </Aparece>
         )}
@@ -153,7 +161,7 @@ function Calorias() {
               </View>
               {numeros && <Text style={estilos.macroValor}>{valor}</Text>}
               <View style={estilos.barra}>
-                <View style={[estilos.barraLlena, { width: `${Math.min(100, (comido[m] / meta[m]) * 100)}%`, backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
+                <Relleno fraccion={comido[m] / meta[m]} style={[estilos.barraLlena, { backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
               </View>
             </View>
           );
@@ -235,7 +243,8 @@ function Peso({ anchoGrafico }: { anchoGrafico: number }) {
       {p.gasto !== null && (
         <View style={[estilos.fila, estilos.filaSegunda]}>
           <View style={estilos.dato}>
-            {e.numeros && (
+            {/* Sin días todavía, solo lo que falta: una raya y «kcal por día» no dicen nada. */}
+            {e.numeros && p.balance.dias.length > 0 && (
               <Text style={estilos.datoCifra}>
                 {p.balance.promedio === null ? '—' : conSigno(Math.round(p.balance.promedio))}
                 <Text style={estilos.datoUnidad}>{` ${t('inicio.kcalPorDia')}`}</Text>
@@ -319,7 +328,7 @@ function Agua() {
           <Text style={estilos.datoUnidad}>{` ${t('inicio.deLitros', { meta: decimal((VASOS_META * VASO_ML) / 1000, idioma()) })}`}</Text>
         </Text>
         <View style={estilos.vasos}>
-          {Array.from({ length: Math.max(VASOS_META, vasos) }, (_, i) => <View key={i} style={[estilos.vaso, i < vasos && estilos.vasoLleno]} />)}
+          {Array.from({ length: Math.max(VASOS_META, vasos) }, (_, i) => <Vaso key={i} lleno={i < vasos} extra={i >= VASOS_META} style={estilos.vaso} llenoStyle={estilos.vasoLleno} />)}
         </View>
         <Pressable
           onPress={() => {

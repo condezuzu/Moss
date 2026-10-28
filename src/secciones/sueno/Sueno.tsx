@@ -19,6 +19,7 @@ import {
 import { pedirMovimiento, permisoDeMovimiento } from '../../../modules/movimiento';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { Relleno } from '../animados';
 import { Icono } from '../comida/comunes';
 import { duracion, fechaCorta, fechaDiaMes, horaDelDia, letraDelDia, numero, useEstado } from '../comida/datos';
 import { useSueno } from '../ganchos';
@@ -296,7 +297,7 @@ function LaCalidad({ n, necesidad, anteriores, abierto, alAbrir }: { n: Noche; n
                     <Text style={st.parteNombre}>{t(`sueno.partes.${parte}`)}</Text>
                     <Text style={st.partePuntos}>{puntos === null ? (parte === 'continuidad' && n.moss ? t('sueno.sinRelojParte') : t('sueno.todaviaNo')) : `${puntos} / ${maximo}`}</Text>
                   </View>
-                  <View style={st.partePista}>{puntos !== null && <View style={[st.parteLlena, { width: `${(puntos / maximo) * 100}%` }]} />}</View>
+                  <View style={st.partePista}>{puntos !== null && <Relleno fraccion={puntos / maximo} style={st.parteLlena} />}</View>
                 </View>
               );
             })}

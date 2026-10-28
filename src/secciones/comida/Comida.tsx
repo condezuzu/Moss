@@ -24,6 +24,7 @@ import { colores, letras } from '@/tema';
 import { HojaModal } from '../HojaModal';
 import { entre, viaje } from '../movimiento';
 import { ACOMODA, Aparece } from '../tarjetas';
+import { Relleno, useCuenta } from '../animados';
 import { AvisoFlotante, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
@@ -244,7 +245,7 @@ export function BarrasDeMacros({ comido, meta, conEstado }: { comido: Pick<Valor
             </View>
             {numeros && <Text style={estilos.macroCifra}>{meta ? t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) }) : `${numero(Math.round(comido[m]))} g`}</Text>}
             <View style={estilos.barra}>
-              <View style={[estilos.barraLlena, { width: `${lleno * 100}%`, backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
+              <Relleno fraccion={lleno} style={[estilos.barraLlena, { backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
             </View>
           </View>
         );
@@ -257,6 +258,8 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   const meta = metaDelDia(e, dia);
   const comido = totalDe(e.registros, dia, e.hoy);
   const queda = meta ? meta.kcal - comido.kcal : 0;
+  // Al anotar, lo comido cuenta hasta lo nuevo, como en la galería.
+  const kcal = useCuenta(Math.round(comido.kcal));
   let linea = '';
   if (dia === e.hoy && meta && e.numeros) linea = t(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) });
   else if (dia > e.hoy) linea = t('comida.planificado');
@@ -269,7 +272,7 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
         <View style={estilos.resumenTextos}>
           {e.numeros && (
             <Text style={estilos.resumenCifra}>
-              {numero(Math.round(comido.kcal))}
+              {numero(Math.round(kcal))}
               {meta && <Text style={estilos.resumenDe}>{`  ${t('comida.deMetaCorto', { meta: numero(meta.kcal) })}`}</Text>}
             </Text>
           )}

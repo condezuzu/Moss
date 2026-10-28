@@ -446,6 +446,7 @@ const Comida = (() => {
         cont.appendChild(col);
         requestAnimationFrame(() => { relleno.style.width = `${Math.min(100, (t[m] / META[m]) * 100).toFixed(1)}%`; });
       });
+      Util.caber([...cont.querySelectorAll('.cm-macro-nombre')], 12);
     }
 
     // ------------------------------------------------------------ el día
