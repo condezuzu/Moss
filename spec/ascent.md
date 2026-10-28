@@ -84,6 +84,27 @@ salvo el vínculo, y deja la cuenta. Las pruebas, caso por caso, están en `npm
 run supabase:verificar` (sección 9) y en `node
 herramientas/probar-borrar-cuenta.mjs`.
 
+**En producción (28/10/2026).** La migración de Ascent está aplicada como la
+**99** (`099_borrar_solo_ascent` en su historial; la 98 de su main es la de
+grupos). Los cuatro casos de la tabla se probaron contra la base real con
+`npx supabase db query --linked -f herramientas/probar-borrado-en-produccion.sql`.
+Es un solo bloque con cuentas de prueba que termina en `raise exception` con el
+resultado, así que todo se deshace y no queda nada. Los cuatro dieron bien.
+
+**El mismo usuario de Auth es lo normal.** Ascent no tiene Sign in with Apple
+(revisado en todas sus ramas). El usuario es el mismo cuando el Apple ID con
+que se entra a Moss comparte su correo real con la cuenta de Ascent: Supabase
+los une solo. Si Ascent suma Sign in with Apple en este proyecto, el mismo
+Apple ID sería siempre el mismo usuario: Apple da el mismo identificador a las
+apps del equipo. Entonces `moss-borrar-cuenta`, que decide por las identidades,
+hay que cambiarlo antes (D29).
+
+**Al juntar `moss-vinculo` en el main de Ascent:** van a chocar
+`migracion-98-borrar-solo-ascent.sql` y los cambios de `eliminar_cuenta()` en
+`schema.sql`. Queda lo de main: la 98 es la de grupos y la 99 es la del borrado,
+con el mismo cuerpo. Los textos de la baja (`bajaMoss`, `dosCuentas`) siguen
+solo en `moss-vinculo`.
+
 ### Cada app anda sola (revisado el 28/10/2026)
 
 Sin vincular, o si `moss-vincular` y las lecturas de Ascent fallan o tardan,
