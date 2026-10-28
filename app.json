@@ -20,7 +20,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "uy.moss.app",
       "appleTeamId": "XF9N8X9KJG",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "usesAppleSignIn": true,
       "icon": "./assets/images/icon.png",
       "infoPlist": {

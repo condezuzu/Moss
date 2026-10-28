@@ -47,7 +47,8 @@
   "submit": {
     "store": {
       "ios": {
-        "appleTeamId": "XF9N8X9KJG"
+        "appleTeamId": "XF9N8X9KJG",
+        "ascAppId": "6828034537"
       }
     }
   }
