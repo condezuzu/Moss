@@ -697,12 +697,13 @@ una cuenta de Apple de prueba:
 Moss is a food log (calories and macros) with weight, sleep and habits. Free, with no ads, no in-app purchases and no tracking.
 
 SIGN IN
-Sign in with Apple is the only way to sign in: any Apple Account works. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 18 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
+Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed for Moss itself. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 18 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
 
 LINKING WITH ASCENT (OPTIONAL)
-Ascent is our gym app, already on the App Store (same developer and team). Moss works fully without it. To test the link without Ascent's new version:
-1. Habits tab: swipe up from above the tab bar or tap the small arrow (also Profile > Connections > Ascent).
-2. "Link with Ascent" > "Sign in with your Ascent account", with this demo account: [correo y contraseña de la cuenta de demostración de Ascent] (also in Sign-In Information).
+Ascent is our gym app, already on the App Store (same developer and team). Moss works fully without it. The demo account below is an Ascent account: use it only to test the link, not to sign in to Moss.
+Ascent demo account: [EMAIL] / [PASSWORD]
+1. In Moss, Habits tab: swipe up from above the tab bar, or tap the small arrow (also Profile > Connections > Ascent).
+2. "Link with Ascent" > "Sign in with your Ascent account", and enter the demo account above. You don't need to install Ascent.
 3. The sheet lists what each app shares. Nothing is shared until you tap "Link".
 Once linked, Moss shows today's workout, recovery, expected performance, good days to try a PR, one weight for both apps, calories by day and protein after training, and the Gym habit lights up on its own. Unlink in Profile > Connections > Ascent.
 With both apps on the iPhone (Ascent's update is in review now), linking takes two taps: each app leaves a one-hour session token in a keychain access group that only our team's apps can read (never a refresh token), and our server checks both sessions before saving the link. The attached video shows it.
@@ -714,7 +715,7 @@ Profile > Privacy and data > Delete account. The user confirms with Apple, we re
 PERMISSIONS (ALL OPTIONAL)
 - Apple Health, read only: onboarding and Profile. NSHealthUpdateUsageDescription is there only because the HealthKit library links write APIs; Moss never writes.
 - Motion: a card in Sleep, to estimate sleep without a watch.
-- Camera: Add (+) > Add food > barcode icon (barcodes; labels are read on device), meal photos and the profile photo. Photos use the system picker, with no library access.
+- Camera: Add (+) > Add food > barcode icon (barcodes; labels are read on device), meal photos and the profile photo. Choosing a photo uses the system picker; Moss only reads the photo you pick.
 - Microphone and Speech Recognition: Add (+) > Say what I ate.
 - Notifications: local reminders, Profile > Reminders.
 - AlarmKit (iOS 26+): Sleep > Fine-tune > Alarm (the card shows when no watch or ring has written sleep in two weeks). It rings at the time the user sets and records when it is stopped, as the wake-up time.
