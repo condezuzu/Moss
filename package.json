@@ -85,7 +85,8 @@
     "alimentos": "node --disable-warning=ExperimentalWarning herramientas/alimentos.mjs",
     "alimentos:verificar": "node --disable-warning=ExperimentalWarning herramientas/verificar-alimentos.mjs",
     "alimentos:comparar": "node --disable-warning=ExperimentalWarning herramientas/comparar-fuentes.mjs",
-    "servidor:preparar": "node herramientas/preparar-servidor.mjs"
+    "servidor:preparar": "node herramientas/preparar-servidor.mjs",
+    "migraciones": "node herramientas/migraciones.mjs"
   },
   "private": true,
   "jest": {

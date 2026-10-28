@@ -47,12 +47,13 @@ que Pages sirva los archivos tal cual.
 - **Las dos políticas** (26/10/2026) suman la cuenta solo con Apple, el nombre
   (sincroniza) y la foto (en el teléfono), cómo comes (dieta y alergias del plan,
   que faltaban), Ascent (qué comparte cada app, el consentimiento, deshacerlo,
-  qué pasa con los datos, la misma cuenta o dos, el token de una hora en el
-  llavero del equipo y entrar con la cuenta de Ascent), los widgets, el
+  qué pasa con los datos, que son dos cuentas aunque usen el mismo correo
+  (28/10/2026, D29), el token de una hora en el llavero del equipo y entrar con
+  la cuenta de Ascent), los widgets, el
   despertador y los Atajos (las horas quedan en el teléfono), el micrófono, las
   actualizaciones de Expo y la tabla de quién trata los datos.
-- **Los términos** suman la cuenta con Apple, la misma cuenta en las dos apps,
-  Ascent, el despertador, los widgets, los Atajos, las actualizaciones y que lo
+- **Los términos** suman la cuenta con Apple, que la de Moss es aparte de la de
+  Ascent y que borrar una deja la otra intacta (28/10/2026, D29), Ascent, el despertador, los widgets, los Atajos, las actualizaciones y que lo
   de entrenar es una estimación. `#edad` y `#age` marcan «Quién puede usarla».
 
 ## Lo que tiene que estar en la build
@@ -63,10 +64,12 @@ consentimiento de los datos de salud, 18 años, sin déficit, el piso y el IMC d
 peso meta, las búsquedas con su sí, los datos cifrados y fuera de la copia, y
 «Ayuda y contacto»). Lo que falta o hay que mirar para esta build:
 
-1. **`moss-borrar-cuenta` desplegada con la `.p8`** (5.1.1(v)). Con la cuenta
-   solo con Apple, todas las cuentas tienen que revocar. Mientras la función no
-   esté, la app borra con `moss.borrar_cuenta()` sin revocar: eso no pasa la
-   revisión. Después, sacar ese respaldo (`sinRevocar`).
+1. **`moss-borrar-cuenta` desplegada con la `.p8`, y *Allow manual linking*
+   activado** (5.1.1(v)). Con la cuenta solo con Apple, todas las cuentas tienen
+   que revocar. Desde D29 ya no hay respaldo: sin la función, la app no borra la
+   cuenta (`moss.borrar_cuenta(cuenta)` solo la llama la función, con la clave
+   de servicio). Sin *Allow manual linking*, la cuenta que también es la de
+   Ascent no se puede separar.
 2. **Solo Apple en la entrada:** sin «Continuar con correo», «Crear cuenta» ni
    «Olvidé mi contraseña». El correo y la contraseña quedan solo en la hoja de
    vincular, para la cuenta de Ascent.
@@ -306,7 +309,7 @@ Las guías son las del 16/10/2026 (siguen siendo las vigentes el 26/10).
 | 5.1.1(i) Política de privacidad | PASA |
 | 5.1.1(ii) Permiso | PASA con el texto nuevo de la cámara |
 | 5.1.1(iii) y (x) Mínimos datos y el nombre | PASA si el nombre es optativo |
-| 5.1.1(v) Cuenta y borrar la cuenta | DEPENDE de desplegar `moss-borrar-cuenta` |
+| 5.1.1(v) Cuenta y borrar la cuenta | DEPENDE de desplegar `moss-borrar-cuenta` y activar *Allow manual linking* |
 | 5.1.1(ix) Campos regulados | RIESGO bajo |
 | 5.1.2 Uso y compartir (con Ascent) | PASA |
 | 5.1.3 Datos de salud (con Ascent) | PASA |
@@ -322,16 +325,22 @@ solo para autorizar el vínculo, y la cuenta de Moss sigue siendo la de Apple.
 ### 5.1.1(v) · Cuenta y borrar la cuenta — DEPENDE
 
 - **Borrar desde la app:** Perfil › Privacidad y datos › Borrar la cuenta,
-  inmediato, con el aviso de que no se deshace y que se borra en cualquier app
-  donde se entre con esa cuenta. Bien.
+  inmediato, con el aviso de que no se deshace y de que se borra todo lo de Moss.
+  Vinculada, el aviso suma que la cuenta de Ascent sigue intacta y deja de
+  recibir los datos de Moss. Bien.
 - **Revocar Sign in with Apple** («should use the Sign in with Apple REST API to
   revoke user tokens»): la persona confirma con Apple, `moss-borrar-cuenta`
   canjea el código, revoca y recién ahí borra. **Tiene que estar desplegada con
   la `.p8`** (su README): con la cuenta solo con Apple, toda cuenta revoca, y el
   respaldo que borra sin revocar no pasa.
-- **Con Ascent:** si la cuenta es la misma en las dos apps, se borra en las dos
-  (el aviso lo dice); si son dos cuentas vinculadas, se borran la de Moss y el
-  vínculo (`on delete cascade`) y la de Ascent sigue.
+- **Con Ascent** (D29, 28/10/2026): son dos cuentas, así que la de Moss deja
+  de existir aunque la de Ascent siga, como pide la guía. Si el usuario de Auth
+  es solo de Moss (solo Apple), se borra entero; si también es el de Ascent (el
+  mismo correo), se borra todo lo de Moss y el vínculo y se le quita la
+  identidad de Apple: Moss ya no puede entrar a esa cuenta ni guarda nada de
+  ella, y Ascent queda intacta. En los dos casos se revoca Apple antes. Probado
+  caso por caso (`npm run supabase:verificar`, sección 9, y `node
+  herramientas/probar-borrar-cuenta.mjs`).
 - **La cuenta obligatoria** era un RIESGO («If your app doesn’t include
   significant account-based features, let people use it without a login»). Ahora
   la cuenta sincroniza, restaura en un teléfono nuevo y vincula con Ascent:
@@ -698,7 +707,7 @@ With both apps on the iPhone (Ascent's update is in review now), linking takes t
 Moss shares with Ascent: sleep duration and quality, daily calories and protein, weight and goal. Ascent shares with Moss: workouts (sets, weights, reps), PRs and weight. Same developer, explicit consent, no third parties.
 
 ACCOUNT DELETION
-Profile > Privacy and data > Delete account. The user confirms with Apple, we revoke the Sign in with Apple token with the REST API and delete the account at once, on the server and on the phone. If the same account is used in Ascent, the warning says it is deleted there too.
+Profile > Privacy and data > Delete account. The user confirms with Apple, we revoke the Sign in with Apple token with the REST API and delete the Moss account and all its Moss data at once, on the server and on the phone. Moss and Ascent are separate accounts: deleting the Moss account also removes the link, and the Ascent account stays as it is (it just stops receiving Moss data). If the person used the same email for both, we delete everything from Moss and remove the Sign in with Apple identity, so the Moss account no longer exists.
 
 PERMISSIONS (ALL OPTIONAL)
 - Apple Health, read only: onboarding and Profile. NSHealthUpdateUsageDescription is there only because the HealthKit library links write APIs; Moss never writes.
@@ -739,7 +748,7 @@ Con las dos apps en el iPhone (la actualización de Ascent está en revisión ah
 Moss le pasa a Ascent: cuánto y cómo dormiste, las calorías y la proteína de cada día, el peso y el objetivo. Ascent le pasa a Moss: los entrenamientos (series, pesos, repeticiones), las marcas y el peso. Mismo desarrollador, consentimiento expreso, sin terceros.
 
 BORRAR LA CUENTA
-Perfil › Privacidad y datos › Borrar la cuenta. La persona confirma con Apple, revocamos el token de Sign in with Apple con la API REST y borramos la cuenta en el acto, en el servidor y en el teléfono. Si la misma cuenta se usa en Ascent, el aviso dice que se borra también ahí.
+Perfil › Privacidad y datos › Borrar la cuenta. La persona confirma con Apple, revocamos el token de Sign in with Apple con la API REST y borramos la cuenta de Moss y todo lo de Moss en el acto, en el servidor y en el teléfono. Moss y Ascent son cuentas separadas: borrar la de Moss también borra el vínculo, y la de Ascent sigue intacta (solo deja de recibir los datos de Moss). Si la persona usó el mismo correo en las dos, borramos todo lo de Moss y quitamos la identidad de Sign in with Apple, así la cuenta de Moss deja de existir.
 
 PERMISOS (TODOS OPTATIVOS)
 - Salud, solo lectura: la entrada y Perfil. NSHealthUpdateUsageDescription está solo porque la biblioteca de HealthKit enlaza las APIs de escritura; Moss nunca escribe.

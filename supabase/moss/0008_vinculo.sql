@@ -1,10 +1,13 @@
--- Moss · esquema 8: el vínculo con Ascent (spec/ascent.md, «Vincular en menos de 10 segundos», D27).
+-- Moss · esquema 8: el vínculo con Ascent (spec/ascent.md, «Vincular en menos de 10 segundos», D27) y
+-- borrar la cuenta de Moss (spec/ascent.md, «Dos cuentas», D29).
 --
--- Vincular es dar permiso: la persona acepta que Moss y Ascent compartan sus datos. Cada vínculo une
--- una cuenta de Moss con una de Ascent, que pueden ser la misma o dos distintas (Moss con Apple y
--- Ascent con el correo, por ejemplo). Lo escribe solo la función del servidor `moss-vincular`, con
--- la clave de servicio y después de revisar las dos sesiones; cada app lo ve y lo borra desde su
--- lado. No se sincroniza con el teléfono: se pregunta.
+-- La cuenta de Moss y la de Ascent son dos cuentas, cada una con lo suyo. Vincular las conecta para
+-- que compartan datos, no las junta. Cada vínculo une una cuenta de Moss con una de Ascent: dos
+-- usuarios de Auth distintos (correos o Apple ID distintos) o el mismo, si Supabase unió el Apple ID
+-- de Moss al correo de Ascent; ahí cada cuenta es lo de su esquema (`moss` o `public`). Lo escribe
+-- solo la función del servidor `moss-vincular`, con la clave de servicio y después de revisar las
+-- dos sesiones; cada app lo ve y lo borra desde su lado. No se sincroniza con el teléfono: se
+-- pregunta.
 --
 -- Lo que Moss lee de Ascent pasa por funciones `security definer` de este esquema. Corren como su
 -- dueño, así que cada una revisa quién llama (auth.uid()) y el vínculo, y de Ascent solo leen: nunca
@@ -73,13 +76,49 @@ as $$
   );
 $$;
 
--- Desde cualquiera de las dos apps: borra el vínculo de la cuenta que llama. Los datos quedan en cada app.
+-- Desde cualquiera de las dos apps: borra el vínculo de la cuenta que llama, sea de Moss o de Ascent.
+-- Los datos quedan en cada app. Ascent la llama también desde su eliminar_cuenta() cuando el usuario
+-- de Auth sigue (porque también es la cuenta de Moss): así Moss deja de recibir lo de Ascent.
 create or replace function moss.desvincular() returns void
 language sql
 security definer
 set search_path = ''
 as $$
   delete from moss.vinculo vinculo where (select auth.uid()) in (vinculo.moss, vinculo.ascent);
+$$;
+
+-- Borrar la cuenta de Moss: todo lo de Moss de esa cuenta y los vínculos donde es la de Moss. La
+-- llama solo `moss-borrar-cuenta` (supabase/functions/), con la clave de servicio, cuando ya revisó
+-- la sesión y revocó Apple. No toca auth.users: la función decide con las identidades de Auth si
+-- además se borra el usuario (solo de Moss) o se le quita Apple (también de Ascent, que sigue
+-- intacta). Si se suma una tabla con `usuario`, va también aquí (y en borrar_mis_datos): lo
+-- comprueba `npm run supabase:verificar`.
+create or replace function moss.borrar_cuenta(cuenta uuid) returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if cuenta is null then
+    raise exception 'pedido' using errcode = '22023';
+  end if;
+  delete from moss.vinculo vinculo where vinculo.moss = cuenta;
+  delete from moss.noches where usuario = cuenta;
+  delete from moss.medidas where usuario = cuenta;
+  delete from moss.registros where usuario = cuenta;
+  delete from moss.recetas where usuario = cuenta;
+  delete from moss.propios where usuario = cuenta;
+  delete from moss.favoritos where usuario = cuenta;
+  delete from moss.agua where usuario = cuenta;
+  delete from moss.marcas where usuario = cuenta;
+  delete from moss.dias where usuario = cuenta;
+  delete from moss.periodos where usuario = cuenta;
+  delete from moss.habitos where usuario = cuenta;
+  delete from moss.logros where usuario = cuenta;
+  delete from moss.pesos where usuario = cuenta;
+  delete from moss.metas where usuario = cuenta;
+  delete from moss.perfiles where usuario = cuenta;
+end;
 $$;
 
 -- Los días de gimnasio de la cuenta de Ascent vinculada, desde `desde`, para la cuenta de Moss que
@@ -224,7 +263,7 @@ as $$
     from (select distinct on (peso.fecha) peso.fecha, peso.kg, peso.de from peso order by peso.fecha, peso.de = pesos_compartidos.app desc, peso.de) uno;
 $$;
 
-revoke execute on function moss.vincular_cuentas(uuid, uuid, text) from public, anon, authenticated;
-grant execute on function moss.vincular_cuentas(uuid, uuid, text) to service_role;
+revoke execute on function moss.vincular_cuentas(uuid, uuid, text), moss.borrar_cuenta(uuid) from public, anon, authenticated;
+grant execute on function moss.vincular_cuentas(uuid, uuid, text), moss.borrar_cuenta(uuid) to service_role;
 revoke execute on function moss.estado_del_vinculo(), moss.desvincular(), moss.ascent_sesiones(date), moss.ascent_marcas(date), moss.pesos_compartidos(date, text) from public, anon;
 grant execute on function moss.estado_del_vinculo(), moss.desvincular(), moss.ascent_sesiones(date), moss.ascent_marcas(date), moss.pesos_compartidos(date, text) to authenticated;

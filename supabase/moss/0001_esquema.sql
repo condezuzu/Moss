@@ -181,7 +181,7 @@ as $$
   from jsonb_array_elements(lista) as p;
 $$;
 
--- «Borrar mis datos de Moss»: todo lo de Moss del usuario, sin tocar la cuenta (es la misma de Ascent).
+-- «Borrar mis datos de Moss»: todo lo de Moss del usuario, sin tocar la cuenta ni el vínculo con Ascent.
 create or replace function moss.borrar_mis_datos() returns void
 language sql
 security invoker

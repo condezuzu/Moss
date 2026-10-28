@@ -106,9 +106,16 @@ async function conSesion(): Promise<{ cliente: Cliente; token: string } | null> 
 async function llamar(funcion: string, argumentos?: Objeto): Promise<unknown> {
   const sesion = await conSesion();
   if (!sesion) return null;
-  const { data, error } = await sesion.cliente.rpc(funcion, argumentos);
-  if (error) throw new Error(`moss.${funcion}: ${error.code || error.message}`);
-  return data;
+  // Con tope: un pedido colgado no puede dejar lo de Ascent esperando hasta reabrir la app.
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  const tope = new Promise<never>((_, mal) => (reloj = setTimeout(() => mal(new Error(`moss.${funcion}: sin respuesta`)), ESPERA_MS)));
+  try {
+    const { data, error } = await Promise.race([sesion.cliente.rpc(funcion, argumentos), tope]);
+    if (error) throw new Error(`moss.${funcion}: ${error.code || error.message}`);
+    return data;
+  } finally {
+    clearTimeout(reloj);
+  }
 }
 
 /** Si esta cuenta está vinculada con una de Ascent. Sirve igual desde las dos apps. */

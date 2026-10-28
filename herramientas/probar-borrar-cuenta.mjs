@@ -1,6 +1,8 @@
-// Corre supabase/functions/moss-borrar-cuenta/index.ts en Node (con tipos borrados) contra Apple y
-// Auth de mentira: que revoca Apple antes de borrar, que no borra nada si Apple o la configuración
-// fallan y que ningún token aparece en los logs ni en las respuestas.
+// Corre supabase/functions/moss-borrar-cuenta/index.ts en Node (con tipos borrados) contra Apple, Auth
+// y PostgREST de mentira: que revoca Apple antes de borrar, que no borra nada si Apple o la
+// configuración fallan, que borra lo de Moss y después el usuario solo si es solo de Moss (si también
+// es la cuenta de Ascent, le quita Apple y nada más), y que ningún token aparece en los logs ni en las
+// respuestas. Lo mismo contra la base (PGlite), en `npm run supabase:verificar`, sección 8.
 // Uso: node herramientas/probar-borrar-cuenta.mjs
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, verify } from 'node:crypto';
@@ -30,6 +32,10 @@ const ID_TOKEN = 'ID_TOKEN_SECRETO';
 const CLAVE = 'sb_secret_CLAVE_SECRETA';
 const VIEJA = 'eyJ.SERVICE_ROLE_SECRETA.firma';
 const ID = '715ed5db-f090-4b8c-a067-640ecee36aa0';
+// El identity_id de cada fila de identidad (el que se quita) y el sub de Apple (el id del proveedor).
+const IDENTIDAD_APPLE = '9b0c1e7e-4d1b-4f35-9a52-2a6f3f0c7d11';
+const IDENTIDAD_CORREO = '3f8e2a40-5f0e-4c8f-8e3e-0d5b9f6a1c22';
+const SUB_APPLE = '001234.abcdef0123456789.0123';
 const secretos = [JWT, CODIGO, REFRESCO, ACCESO, ID_TOKEN, CLAVE, VIEJA, base64Apple.slice(20, 60)];
 
 const base = () => ({
@@ -46,7 +52,9 @@ globalThis.Deno = { env: { get: (k) => env[k] } };
 // --- Apple y Auth de mentira ---
 const json = (estado, cuerpo) => new Response(cuerpo === undefined ? null : JSON.stringify(cuerpo), { status: estado, headers: { 'Content-Type': 'application/json' } });
 const normal = () => ({
-  user: () => json(200, { id: ID, email: 'a@b.c', identities: [{ provider: 'apple' }] }),
+  user: () => json(200, { id: ID, email: 'a@b.c', identities: [{ identity_id: IDENTIDAD_APPLE, id: SUB_APPLE, user_id: ID, provider: 'apple' }] }),
+  moss: () => new Response(null, { status: 204 }),
+  quitar: () => json(200, {}),
   token: () => json(200, { access_token: ACCESO, token_type: 'Bearer', expires_in: 3600, refresh_token: REFRESCO, id_token: ID_TOKEN }),
   revoke: () => new Response(null, { status: 200 }),
   borrar: () => json(200, {}),
@@ -69,6 +77,8 @@ globalThis.fetch = async (url, init = {}) => {
     return u.endsWith('/token') ? escenario.token(form) : escenario.revoke(form);
   }
   if (u.startsWith('https://proyecto.supabase.co/auth/v1/admin/users/')) return escenario.borrar(u, headers);
+  if (u === 'https://proyecto.supabase.co/rest/v1/rpc/borrar_cuenta') return escenario.moss(headers, cuerpo);
+  if (u.startsWith('https://proyecto.supabase.co/auth/v1/user/identities/')) return escenario.quitar(u, headers);
   throw new Error(`pedido inesperado a ${u}`);
 };
 
@@ -150,24 +160,85 @@ caso('Auth caído o sin responder: 502 auth', async () => {
   assert.deepEqual([r.estado, r.cuerpo], [502, { error: 'auth' }]);
 });
 
-caso('cuenta de correo, sin código: verifica con Auth y borra con la clave secreta', async () => {
+const SOLO_MOSS = ['GET /auth/v1/user', 'POST /rest/v1/rpc/borrar_cuenta', `DELETE /auth/v1/admin/users/${ID}`];
+
+caso('sin código: verifica con Auth, borra lo de Moss y, si es solo de Moss, el usuario, con la clave secreta', async () => {
   const r = await llamar();
-  assert.deepEqual([r.estado, r.cuerpo, r.rutas], [200, { ok: true }, ['GET /auth/v1/user', `DELETE /auth/v1/admin/users/${ID}`]]);
-  const [usuario, borrar] = llamadas;
+  assert.deepEqual([r.estado, r.cuerpo, r.rutas], [200, { ok: true }, SOLO_MOSS]);
+  const [usuario, moss, borrar] = llamadas;
   assert.equal(usuario.headers.get('apikey'), CLAVE);
   assert.equal(usuario.headers.get('authorization'), `Bearer ${JWT}`);
+  assert.equal(moss.headers.get('apikey'), CLAVE);
+  assert.equal(moss.headers.get('authorization'), `Bearer ${CLAVE}`);
+  assert.equal(moss.headers.get('content-profile'), 'moss');
+  assert.deepEqual(JSON.parse(moss.cuerpo), { cuenta: ID });
   assert.equal(borrar.headers.get('apikey'), CLAVE);
   assert.equal(borrar.headers.get('authorization'), `Bearer ${CLAVE}`);
   assert.deepEqual(JSON.parse(borrar.cuerpo), { should_soft_delete: false });
   // Un cuerpo vacío o {} también es «sin Apple».
   assert.equal((await llamar({ cuerpo: '{}' })).estado, 200);
-  assert.equal((await llamar({ cuerpo: '{"codigoDeApple":null}' })).rutas.length, 2);
+  assert.equal((await llamar({ cuerpo: '{"codigoDeApple":null}' })).rutas.length, 3);
+});
+
+caso('solo de Moss (solo Apple, aunque sean dos identidades de Apple): borra lo de Moss y el usuario de Auth', async () => {
+  escenario.user = () => json(200, { id: ID, identities: [{ identity_id: IDENTIDAD_APPLE, provider: 'apple' }, { identity_id: IDENTIDAD_CORREO, provider: 'apple' }] });
+  const r = await llamar({ cuerpo: conApple });
+  assert.deepEqual([r.estado, r.cuerpo, r.rutas], [200, { ok: true }, ['GET /auth/v1/user', 'POST apple/auth/token', 'POST apple/auth/revoke', ...SOLO_MOSS.slice(1)]]);
+});
+
+caso('la misma cuenta que Ascent (Apple y el correo): borra lo de Moss y le quita Apple con la sesión de quien llama; el usuario sigue', async () => {
+  escenario.user = () => json(200, { id: ID, identities: [{ identity_id: IDENTIDAD_CORREO, id: ID, provider: 'email' }, { identity_id: IDENTIDAD_APPLE, id: SUB_APPLE, provider: 'apple' }] });
+  const r = await llamar({ cuerpo: conApple });
+  assert.deepEqual([r.estado, r.cuerpo, r.rutas], [200, { ok: true, queda: true },
+    ['GET /auth/v1/user', 'POST apple/auth/token', 'POST apple/auth/revoke', 'POST /rest/v1/rpc/borrar_cuenta', `DELETE /auth/v1/user/identities/${IDENTIDAD_APPLE}`]]);
+  const quitar = llamadas.at(-1);
+  assert.equal(quitar.headers.get('apikey'), CLAVE);
+  assert.equal(quitar.headers.get('authorization'), `Bearer ${JWT}`);
+  assert.equal(quitar.headers.get('x-supabase-api-version'), '2024-01-01');
+  assert.ok(!r.rutas.some((x) => x.includes('/admin/')), 'nunca borra el usuario de Auth');
+});
+
+caso('la misma cuenta que Ascent, ya sin Apple (un intento anterior se la quitó): borra lo de Moss y nada más', async () => {
+  escenario.user = () => json(200, { id: ID, identities: [{ identity_id: IDENTIDAD_CORREO, provider: 'email' }] });
+  const r = await llamar({ cuerpo: conApple });
+  assert.deepEqual([r.estado, r.cuerpo, r.rutas.at(-1)], [200, { ok: true, queda: true }, 'POST /rest/v1/rpc/borrar_cuenta']);
+});
+
+caso('sin identidades a la vista no se borra el usuario: podría ser de Ascent', async () => {
+  for (const identities of [undefined, [], 'x', [{ sin: 'proveedor' }]]) {
+    escenario.user = () => json(200, { id: ID, identities });
+    const r = await llamar();
+    assert.deepEqual([r.estado, r.cuerpo, r.rutas], [200, { ok: true, queda: true }, ['GET /auth/v1/user', 'POST /rest/v1/rpc/borrar_cuenta']], JSON.stringify(identities));
+  }
+});
+
+caso('quitar Apple: sin «Allow manual linking», 500 configuracion; si ya no estaba, ok; otro error, 500 separar', async () => {
+  escenario.user = () => json(200, { id: ID, identities: [{ identity_id: IDENTIDAD_CORREO, provider: 'email' }, { identity_id: IDENTIDAD_APPLE, provider: 'apple' }] });
+  escenario.quitar = () => json(404, { code: 'manual_linking_disabled', message: 'Manual linking is disabled' });
+  assert.deepEqual((await llamar()).cuerpo, { error: 'configuracion' });
+  escenario.quitar = () => json(422, { code: 'identity_not_found', message: 'Identity does not exist' });
+  assert.deepEqual((await llamar()).cuerpo, { ok: true, queda: true });
+  escenario.quitar = () => json(422, { code: 'email_conflict_identity_not_deletable', message: `x ${JWT}` });
+  const conflicto = await llamar();
+  assert.deepEqual([conflicto.estado, conflicto.cuerpo], [500, { error: 'separar' }]);
+  escenario.quitar = () => { throw new TypeError('network'); };
+  assert.deepEqual((await llamar()).cuerpo, { error: 'separar' });
+  escenario.user = () => json(200, { id: ID, identities: [{ provider: 'email' }, { provider: 'apple' }] });
+  assert.deepEqual((await llamar()).cuerpo, { error: 'separar' }, 'sin identity_id no se puede quitar');
+});
+
+caso('si no se puede borrar lo de Moss: 500 borrar, y ni el usuario ni Apple en Auth se tocan', async () => {
+  for (const moss of [() => json(404, { code: 'PGRST202', message: 'no existe' }), () => json(500, { code: '23503', message: `x ${CLAVE}` }), () => { throw new TypeError('network'); }]) {
+    escenario.moss = moss;
+    const r = await llamar();
+    assert.deepEqual([r.estado, r.cuerpo, r.rutas], [500, { error: 'borrar' }, ['GET /auth/v1/user', 'POST /rest/v1/rpc/borrar_cuenta']]);
+  }
 });
 
 caso('Apple: canjea el código, revoca el de refresco y recién ahí borra', async () => {
   secretosDeCliente.length = 0;
   const r = await llamar({ cuerpo: conApple, autorizacion: `bearer ${JWT}` });
-  assert.deepEqual([r.estado, r.cuerpo, r.rutas], [200, { ok: true }, ['GET /auth/v1/user', 'POST apple/auth/token', 'POST apple/auth/revoke', `DELETE /auth/v1/admin/users/${ID}`]]);
+  assert.deepEqual([r.estado, r.cuerpo, r.rutas], [200, { ok: true }, ['GET /auth/v1/user', 'POST apple/auth/token', 'POST apple/auth/revoke', ...SOLO_MOSS.slice(1)]]);
   const canje = new URLSearchParams(llamadas[1].cuerpo);
   assert.deepEqual([...canje.keys()].sort(), ['client_id', 'client_secret', 'code', 'grant_type']);
   assert.deepEqual([canje.get('client_id'), canje.get('code'), canje.get('grant_type')], ['uy.moss.app', CODIGO, 'authorization_code']);
@@ -274,6 +345,7 @@ caso('sin las claves nuevas usa la service_role; sin nada, 500', async () => {
     assert.equal(r.estado, 200);
     assert.equal(llamadas[0].headers.get('apikey'), VIEJA);
     assert.equal(llamadas[1].headers.get('authorization'), `Bearer ${VIEJA}`);
+    assert.equal(llamadas[2].headers.get('authorization'), `Bearer ${VIEJA}`);
   }
   env = { ...base(), SUPABASE_SECRET_KEYS: undefined, SUPABASE_SERVICE_ROLE_KEY: undefined };
   assert.deepEqual([(await llamar()).estado, (await llamar()).cuerpo], [500, { error: 'configuracion' }]);

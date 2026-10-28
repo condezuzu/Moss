@@ -1,4 +1,5 @@
-// La cuenta de la entrada: la misma de Ascent, en su proyecto de Supabase (spec/ascent.md). Con
+// La cuenta de Moss de la entrada, en el proyecto de Supabase que comparte con Ascent: es una cuenta
+// aparte de la de Ascent, aunque a veces compartan el usuario de Auth (spec/ascent.md, «Dos cuentas»). Con
 // Apple (nativo, con signInWithIdToken) o con correo y contraseña. Una build sin Supabase (la web
 // de prueba) sigue sin cuenta: Moss guarda todo en el teléfono.
 

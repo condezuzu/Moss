@@ -85,6 +85,25 @@ describe('lo de Ascent en el teléfono', () => {
     expect(deOtraCuenta.estado()).toMatchObject({ vinculo: { vinculada: false }, sesiones: [] });
   });
 
+  it('si al abrir ya no hay sesión (la cuenta se borró o se cerró en otro lado), lo guardado de Ascent se va y la meta vuelve a ser la de Moss', async () => {
+    const s = servidor(true);
+    const guardado = { texto: null as string | null };
+    await crear(s.remoto, guardado).ponerSesion('u-1');
+    const alAbrir = crear(s.remoto, guardado);
+    await alAbrir.iniciar();
+    // Mientras no se sabe de quién es la sesión, vale lo guardado: no parpadea.
+    expect(alAbrir.estado().vinculo.vinculada).toBe(true);
+    await alAbrir.ponerSesion(null);
+    expect(alAbrir.estado()).toMatchObject({ conCuenta: false, vinculo: { vinculada: false }, sesiones: [], pesos: [] });
+
+    // Y si la sesión se sabe antes de leer lo guardado, tampoco vuelve.
+    const antesDeLeer = crear(s.remoto, guardado);
+    await crear(s.remoto, guardado).ponerSesion('u-1');
+    await antesDeLeer.ponerSesion(null);
+    await antesDeLeer.iniciar();
+    expect(antesDeLeer.estado().vinculo.vinculada).toBe(false);
+  });
+
   it('la segunda vez pide desde una semana antes del último día, no todo de nuevo', async () => {
     const s = servidor(true);
     const a = crear(s.remoto);

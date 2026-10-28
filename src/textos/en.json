@@ -1128,7 +1128,8 @@
     "borrarDatosTitulo": "Delete your Moss data?",
     "borrarDatosTexto": "Your habits, food log, weight, measurements and targets are deleted, on this phone and in your account. The account stays.",
     "borrarCuentaTitulo": "Delete your account?",
-    "borrarCuentaTexto": "Your account and everything saved with it are deleted, in any app where you sign in with this account. It can’t be undone.",
+    "borrarCuentaTexto": "Your Moss account and everything in Moss are deleted: your habits, food log, weight, measurements, nights and targets, on this phone and on the server. It can’t be undone.",
+    "borrarCuentaConAscent": "Your Ascent account stays as it is: it just stops getting your Moss data.",
     "cerrarSesionTitulo": "Sign out?",
     "cerrarSesionTexto": "What’s on this phone is deleted; your data stays in your account.",
     "errorBorrar": "That didn’t work. Check your connection and try again.",
@@ -1402,7 +1403,7 @@
     "bajada": "Link the two apps and your sleep and food meet your training.",
     "vincular": "Link with Ascent",
     "conseguir": "Don’t have Ascent? Find it on the App Store",
-    "permiso": "Linking lets the two apps share your data, and you can undo it in Profile.",
+    "permiso": "Linking connects your Moss account with your Ascent account so they share data: each one stays a separate account, with its own data. You can undo it in Profile.",
     "soloConLasDos": "Only with both",
     "mejorConectadas": "Fine alone, better linked",
     "conAscent": "With Ascent",
@@ -1529,11 +1530,6 @@
           "subir": "Bulking: Ascent expects you to go up"
         }
       },
-      "cuenta": {
-        "titulo": "Your friends",
-        "texto": "The same friends list in both apps.",
-        "vivo": "{n} friends from Ascent"
-      },
       "proteina": {
         "titulo": "Protein after training",
         "texto": "A session bigger than your usual raises that day’s protein.",
@@ -1643,7 +1639,7 @@
         "Your workouts, with their sets and your PRs",
         "Your weight"
       ],
-      "nota": "Each app keeps its own data. You can unlink them anytime from Profile.",
+      "nota": "Each app keeps its own account and data. You can unlink them anytime from Profile.",
       "vincular": "Link",
       "ahoraNo": "Not now",
       "sinSesion": {
@@ -1658,7 +1654,7 @@
       },
       "sinCuenta": {
         "titulo": "First, your Moss account",
-        "texto": "Linking joins your Moss account with your Ascent one: you need to be signed in to Moss."
+        "texto": "Linking connects your Moss account with your Ascent one: you need to be signed in to Moss."
       },
       "conCorreo": "Sign in with your Ascent account",
       "correo": "Ascent email",

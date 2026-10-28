@@ -279,7 +279,7 @@ Lo pedido para esta etapa:
   - Un chequeo impide tocar otro esquema.
   - Tus pasos en el panel de Supabase están en `ascent.md`.
 - **Cuenta:** Sign in with Apple nativo (`expo-apple-authentication` +
-  `signInWithIdToken`) y correo con contraseña, la misma cuenta que Ascent.
+  `signInWithIdToken`), una cuenta de Moss aparte de la de Ascent (D29).
 - **Sincronización**: una cola local que sube a Supabase. Si hay conflicto por el
   mismo hábito y día, gana el último cambio.
 - **Borrar la cuenta y los datos**, como pide Apple:

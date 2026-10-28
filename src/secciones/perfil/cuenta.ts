@@ -103,8 +103,9 @@ export async function borrarMisDatos(): Promise<boolean> {
 }
 
 /**
- * «Borrar la cuenta», con todo lo guardado en ella, en cualquier app donde se entre con ella. Si la
- * cuenta usa Apple, primero se confirma con Apple, así el servidor revoca la autorización antes de
+ * «Borrar la cuenta» de Moss, con todo lo de Moss, en el servidor y en el teléfono. La cuenta de
+ * Ascent, si la hay, sigue intacta y deja de recibir lo de Moss (spec/ascent.md, «Dos cuentas»). Si
+ * la cuenta usa Apple, primero se confirma con Apple, así el servidor revoca la autorización antes de
  * borrar (cuentaApple.ts). Cancelar la hoja de Apple no borra nada y devuelve null: no es un error.
  */
 export async function borrarLaCuenta(): Promise<boolean | null> {
@@ -121,13 +122,13 @@ export async function borrarLaCuenta(): Promise<boolean | null> {
         const { error, response } = await supabase().functions.invoke('moss-borrar-cuenta', { body: { codigoDeApple } });
         return error ? (response?.status ?? 0) : null;
       },
-      // moss.borrar_cuenta(): solo mientras la función no esté desplegada (un 404).
-      sinRevocar: async () => !(await supabase().rpc('borrar_cuenta')).error,
     });
     if (borrada !== true) return borrada;
     // La sesión que Ascent veía en el llavero compartido se va con la cuenta, aunque salir falle.
     await borrarMiSesion();
-    await supabase().auth.signOut().catch(() => {});
+    // Solo esta sesión: si el usuario de Auth también es la cuenta de Ascent, sus sesiones siguen. Los
+    // otros teléfonos con Moss salen solos al ver que la cuenta ya no tiene Apple (almacen/index.ts).
+    await supabase().auth.signOut({ scope: 'local' }).catch(() => {});
     await borrarElTelefono();
     return true;
   });

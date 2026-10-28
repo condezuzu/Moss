@@ -264,7 +264,6 @@ const Datos = (() => {
     ];
     return {
       vinculadaDesde: '2026-10-03',
-      amigos: 4,
       sesiones,
       marcas,
       avisos,

@@ -7,7 +7,7 @@
 
 const SeccionPerfil = (() => {
   // Lo que anda solo con las dos apps vinculadas, con su ícono (antes en la sección de Ascent).
-  const CON_ASCENT = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['cuenta', 'amigos'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
+  const CON_ASCENT = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
   // Las marcas de Aparatos, en el orden en que miden mejor el sueño (spec/aparatos.md, «El orden»).
   const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'coros', 'suunto', 'eightSleep', 'samsung'];
   function crear(tel, opciones) {
@@ -485,7 +485,7 @@ const SeccionPerfil = (() => {
         ['perfil.terminos', '', true],
         ['perfil.contacto', '', true],
         ['perfil.borrarDatos', '', false, 'peligro'],
-        // Avisa que la cuenta es la misma en Ascent (spec/ascent.md, «Borrar la cuenta»).
+        // Borra la cuenta de Moss; vinculada, el aviso dice que Ascent sigue intacta (spec/ascent.md, «Dos cuentas»).
         ['perfil.borrarCuenta', '', false, 'peligro'],
       ]);
       // De dónde salen los alimentos y las estrellas, con su licencia, como en la app (Perfil.tsx).

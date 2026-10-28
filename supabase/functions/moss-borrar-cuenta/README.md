@@ -1,14 +1,32 @@
 # moss-borrar-cuenta
 
-«Borrar la cuenta» de Perfil. Borra el usuario de Auth (y con él, en cascada, todo
-lo de `moss`). Si la cuenta usa Sign in with Apple, la app pide confirmar con
-Apple y manda el código nuevo. Con ese código, la función revoca la autorización
-con la API REST de Apple antes de borrar, como pide la App Store (5.1.1(v),
-[`spec/revision.md`](../../../spec/revision.md)). Si Apple falla, no se borra
-nada.
+«Borrar la cuenta» de Perfil: borra la cuenta de Moss. Si usa Sign in with Apple,
+la app pide confirmar con Apple y manda el código nuevo. Con ese código, la
+función revoca la autorización con la API REST de Apple antes de borrar, como
+pide la App Store (5.1.1(v), [`spec/revision.md`](../../../spec/revision.md)). Si
+Apple falla, no se borra nada.
 
-No usa paquetes ni toca `public`. Mientras no esté desplegada, la app borra con
-`moss.borrar_cuenta()`, sin revocar Apple (`src/secciones/perfil/cuentaApple.ts`).
+La cuenta de Moss y la de Ascent son dos cuentas (D29, [`spec/ascent.md`](../../../spec/ascent.md),
+«Dos cuentas»), aunque a veces sean el mismo usuario de Auth: si alguien entra a
+Moss con un Apple ID cuyo correo es el de su cuenta de Ascent, Supabase une Apple
+a ese usuario. Por eso, después de Apple:
+
+1. `moss.borrar_cuenta(cuenta)` ([`0008_vinculo.sql`](../../moss/0008_vinculo.sql),
+   solo con la clave de servicio) borra todo lo de Moss de esa cuenta y sus
+   vínculos del lado de Moss.
+2. **Solo de Moss** (todas sus identidades son de Apple): borra el usuario de
+   Auth.
+3. **También es la cuenta de Ascent** (tiene otra identidad, el correo): no borra
+   el usuario. Le quita la identidad de Apple con la sesión de quien llama (lo
+   mismo que `auth.unlinkIdentity()`; Auth no tiene un pedido de administración
+   para esto), y la cuenta de Ascent queda intacta. Necesita *Allow manual
+   linking* en Authentication › Sign In / Providers; sin eso responde
+   `configuracion`, con lo de Moss ya borrado, y volver a intentarlo después de
+   activarlo termina.
+
+La decisión sale de las identidades que devuelve Auth: la función no usa paquetes
+ni lee ni escribe `public`. Sin la función desplegada, la app no borra la cuenta
+(no hay otro camino que revoque Apple y deje intacta la de Ascent).
 
 ## 1. La clave de Apple (una vez)
 
@@ -78,12 +96,16 @@ clave secreta de Supabase no sirve (el log dice qué respondió Auth).
 
 **En el iPhone, de punta a punta:**
 
-- Con correo: entrar con una cuenta de prueba, Perfil › Borrar la cuenta. Vuelve
-  la entrada y el usuario ya no está en Authentication › Users.
-- Con Apple: entrar con Apple, Perfil › Borrar la cuenta. Aparece la hoja de
-  Apple y, después de Face ID, vuelve la entrada. Moss ya no está en la lista de
-  apps que usan Iniciar sesión con Apple (Ajustes › tu nombre) y el usuario no
-  está en Authentication › Users.
+- Solo de Moss: entrar con un Apple ID cuyo correo no tenga cuenta de Ascent (u
+  ocultándolo), Perfil › Borrar la cuenta. Aparece la hoja de Apple y, después
+  de Face ID, vuelve la entrada. Moss ya no está en la lista de apps que usan
+  Iniciar sesión con Apple (Ajustes › tu nombre) y el usuario no está en
+  Authentication › Users.
+- La misma cuenta que Ascent: con una cuenta de prueba de Ascent, entrar a Moss
+  con un Apple ID con ese mismo correo (Authentication › Users muestra un solo
+  usuario con las dos identidades), vincular y borrar la cuenta en Moss. El
+  usuario sigue, con la identidad `email` sola; Ascent entra igual, con todo lo
+  suyo, y ya no ve el vínculo; en `moss` no queda nada de ese usuario.
 - En Edge Functions › moss-borrar-cuenta › Logs solo aparecen pasos, estados y
   códigos de error, nunca tokens.
 
@@ -91,23 +113,26 @@ clave secreta de Supabase no sirve (el log dice qué respondió Auth).
 
 | Estado | Cuerpo | Qué pasó |
 |---|---|---|
-| 200 | `{"ok":true}` | Borrada (o ya no existía) |
+| 200 | `{"ok":true}` | Borrada con el usuario de Auth (o ya no existía) |
+| 200 | `{"ok":true,"queda":true}` | Borrado lo de Moss y quitado Apple; el usuario sigue porque también es la cuenta de Ascent |
 | 400 | `{"error":"pedido"}` | El cuerpo no es `{ codigoDeApple }` |
 | 401 | `{"error":"sin_sesion"}` | Sin sesión, o vencida |
 | 405 | `{"error":"metodo"}` | No es POST |
-| 500 | `{"error":"configuracion"}` | Faltan secretos |
-| 500 | `{"error":"borrar"}` | Auth no borró el usuario |
+| 500 | `{"error":"configuracion"}` | Faltan secretos, o falta *Allow manual linking* para quitar Apple (lo de Moss ya se borró) |
+| 500 | `{"error":"borrar"}` | No se borró lo de Moss (y entonces nada más), o Auth no borró el usuario |
+| 500 | `{"error":"separar"}` | Lo de Moss se borró, pero Auth no quitó Apple: volver a intentarlo |
 | 500 | `{"error":"interno"}` | Otro error |
 | 502 | `{"error":"auth"}` | Auth no respondió |
 | 502 | `{"error":"apple","apple":"…"}` | Apple no canjeó o no revocó, y no se borró nada. `invalid_grant`: el código venció (dura cinco minutos) o ya se usó |
 
 Nunca responde 404: para la app, 404 quiere decir que la función no está
-desplegada.
+desplegada, y entonces no borra nada.
 
 ## Después
 
-- Con la función desplegada y probada, sacar el respaldo de
-  `moss.borrar_cuenta()` (`sinRevocar` en `src/secciones/perfil/cuenta.ts` y en
-  `cuentaApple.ts`) y, en una migración, quitarle el `grant` a `authenticated`.
-- Cuando Ascent sume Sign in with Apple, conviene agruparla con `uy.moss.app`
-  como App ID principal. Si no, esta función revoca solo la autorización de Moss.
+- **Si Ascent suma Sign in with Apple**, «solo tiene Apple» deja de querer decir
+  «es solo de Moss»: Apple le da el mismo identificador a una persona en todas
+  las apps del equipo, así que el mismo Apple ID caería en el mismo usuario de
+  Auth para las dos, y esta función lo borraría con lo de Ascent. Antes de ese
+  cambio hay que decidir otra señal (ver `spec/ascent.md`, «Dos cuentas»).
+- Revocar con `client_id` `uy.moss.app` corta solo la autorización de Moss.

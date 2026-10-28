@@ -11,6 +11,7 @@ import { msHastaMedianoche } from '@/dominio/fechas';
 import { borrarMiSesion, dejarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
 import { programarAvisos } from '@/recordatorios/programar';
+import { yaNoEsDeMoss } from '@/secciones/perfil/cuentaApple';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { idioma } from '@/textos';
@@ -35,13 +36,15 @@ let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; ret
 const ESPERA_AL_SOLTAR = 15_000;
 
 // Quién está en la cuenta, para lo de Ascent (src/almacen/ascent.ts): sin sesión no hay vínculo.
-let usuarioDeLaCuenta: string | null = null;
+// undefined hasta que Supabase dice si hay sesión: así lo guardado de Ascent no parpadea al abrir, y
+// sin sesión se va.
+let usuarioDeLaCuenta: string | null | undefined;
 const oyentesDeLaSesion = new Set<(usuario: string | null) => void>();
 
-/** Avisa cada vez que cambia la sesión, y ya mismo con la de ahora. */
+/** Avisa cada vez que cambia la sesión, y ya mismo con la de ahora si ya se sabe. */
 export function oirLaSesion(oyente: (usuario: string | null) => void): () => void {
   oyentesDeLaSesion.add(oyente);
-  oyente(usuarioDeLaCuenta);
+  if (usuarioDeLaCuenta !== undefined) oyente(usuarioDeLaCuenta);
   return () => oyentesDeLaSesion.delete(oyente);
 }
 
@@ -71,7 +74,11 @@ function compartirLaSesion(evento: AuthChangeEvent, sesion: Session | null) {
  * pantalla de la cuenta (la entrada), nunca hay sesión.
  */
 function sincronizarConLaCuenta(a: Almacen) {
-  if (!haySupabase()) return { alVolver: () => {}, parar: () => {} };
+  if (!haySupabase()) {
+    usuarioDeLaCuenta = null;
+    oyentesDeLaSesion.forEach((o) => o(null));
+    return { alVolver: () => {}, parar: () => {} };
+  }
   const cliente = supabase();
   let actual: { usuario: string; sincronizador: Sincronizador } | undefined;
   let usuarioDeLaSesion: string | null = null;
@@ -88,15 +95,22 @@ function sincronizarConLaCuenta(a: Almacen) {
     avisarSesion(Boolean(usuario));
   };
   const { data } = cliente.auth.onAuthStateChange((evento, sesion) => {
+    // La cuenta de Moss se borró desde otro teléfono y el usuario de Auth quedó solo para Ascent:
+    // como si no hubiera sesión, así nada de este teléfono la vuelve a llenar.
+    const borradaEnOtroLado = Boolean(sesion && yaNoEsDeMoss(sesion.user));
+    const deMoss = borradaEnOtroLado ? null : sesion;
     // Se anota ya: cerrar sesión sabe al terminar si la sesión sigue.
-    usuarioDeLaSesion = sesion?.user.id ?? null;
-    compartirLaSesion(evento, sesion);
+    usuarioDeLaSesion = deMoss?.user.id ?? null;
+    compartirLaSesion(evento, deMoss);
     // Supabase pide no usar su cliente dentro de este aviso: se sigue apenas termine.
     setTimeout(() => {
+      // Solo la de este teléfono: las sesiones de Ascent con ese usuario siguen.
+      if (borradaEnOtroLado) cliente.auth.signOut({ scope: 'local' }).catch(() => {});
       seguir();
-      if (usuarioDeLaCuenta === usuarioDeLaSesion) return;
-      usuarioDeLaCuenta = usuarioDeLaSesion;
-      oyentesDeLaSesion.forEach((o) => o(usuarioDeLaCuenta));
+      const ahora = usuarioDeLaSesion;
+      if (usuarioDeLaCuenta === ahora) return;
+      usuarioDeLaCuenta = ahora;
+      oyentesDeLaSesion.forEach((o) => o(ahora));
     }, 0);
   });
   deLaCuenta = {

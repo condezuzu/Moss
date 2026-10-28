@@ -29,40 +29,83 @@ los datos de las dos apps:
 Los riesgos que había anotado tienen arreglo, y está más abajo, en «Lo que hay
 que cuidar».
 
-## Una cuenta
+**Desde el 28/10/2026 (D29) las cuentas son dos** y la lista de amigos ya no se
+comparte (ver «Dos cuentas»). El proyecto compartido sigue: el peso único y las
+lecturas cruzadas siguen siendo consultas dentro de la misma base, con RLS.
 
-- Las dos apps usan el mismo `auth.users`. La misma cuenta entra en las dos.
-- **Métodos:**
-  - **Correo y contraseña**, como Ascent hoy: las mismas credenciales andan en
-    las dos apps.
-  - **Sign in with Apple**, en las dos apps. Apple le da el mismo identificador
-    a una persona en todas las apps de un mismo equipo (`XF9N8X9KJG`). Si
-    `uy.moss.app` y `uy.ascent.app` están como Client IDs del proveedor Apple
-    del proyecto, el mismo Apple ID cae en la misma cuenta.
-  - **Google no.** Obligaría a Sign in with Apple por la regla 4.8 de Apple, y
-    Ascent lo sacó el 15/9.
-- **Si alguien termina con dos cuentas** (por ejemplo, entró a Moss con Apple
-  ocultando el correo y a Ascent con su correo):
-  - Puede sumar la otra forma de entrar a una de las dos cuentas: Supabase lo
-    llama *manual identity linking* (`linkIdentity`), y va en Ajustes › Cuenta.
-  - Fusionar dos cuentas que ya tienen datos no es automático: es un caso de
-    soporte.
-  - Desde el 22/10/2026, la entrada de Moss no nombra a Ascent (Moss es Moss),
-    así que dos cuentas es más probable. Vincular tiene que andar igual y rápido
-    (ver «Vincular en menos de 10 segundos»).
-- **Para más adelante:** «Continuar como… (tu cuenta de Ascent)» en un toque.
-  - Usa un grupo de llavero compartido entre las dos apps (`keychain-access-groups`,
-    mismo equipo) y una función que emite una sesión nueva para Moss
-    (`generateLink` más `verifyOtp`).
-  - Nunca se comparte el token de refresco: Supabase lo rota, y la otra app
-    quedaría deslogueada.
+## Dos cuentas (D29, la decidiste el 28/10/2026)
 
-## Vincular es dar permiso, no unir cuentas
+Lo dijiste así: Moss y Ascent tienen cuentas separadas, cada una con su
+información, y se pueden vincular aunque usen correos o Apple ID distintos.
+Vincular es conectar dos cuentas distintas para que compartan datos, no
+fusionarlas. Borrar la cuenta de Moss borra todo lo de Moss y corta el vínculo;
+Ascent sigue intacta y solo deja de recibir datos de Moss. Y al revés igual.
 
-Como la cuenta es la misma, «vincular» quiere decir: **la persona acepta que las
-dos apps compartan sus datos**. Hace falta igual, porque Moss guarda sueño y
-comida, y Apple pide consentimiento para compartir datos de salud (reglas 5.1.2
-y 5.1.3).
+**El principio:** Moss y Ascent tienen que funcionar perfectamente solas.
+Ninguna necesita a la otra para nada básico. Vincular es un plus, y lo exclusivo
+(la recuperación, el rendimiento esperado, los días para intentar marca, por qué
+no subís y tu año) es el premio por vincular.
+
+- **Cómo se entra:** Moss, solo con Sign in with Apple; Ascent, con correo y
+  contraseña. Google no (obligaría a Sign in with Apple por la regla 4.8, y
+  Ascent lo sacó el 15/9).
+- **Qué es cada cuenta.** Las dos apps usan el mismo proyecto y el mismo
+  `auth.users`, pero la cuenta de Moss es lo de `moss` y la de Ascent es lo de
+  `public`. Casi siempre son dos usuarios de Auth. A veces son el mismo: si
+  alguien entra a Moss con un Apple ID cuyo correo (no oculto y confirmado) es
+  el de su cuenta de Ascent, Supabase une esa identidad de Apple al usuario que
+  ya existía. Aun así son dos cuentas: cada una se borra sin tocar la otra.
+- **Cómo se sabe de qué app es un usuario, sin leer `public`:** por sus
+  identidades en Auth. Solo Apple es solo de Moss; con la identidad `email`
+  también es de Ascent. Si Ascent suma Sign in with Apple (el cambio 5 de
+  abajo), esto deja de valer: Apple le da el mismo identificador a una persona
+  en todas las apps del equipo, así que un Apple ID caería en el mismo usuario
+  para las dos sin ninguna otra identidad. Antes de ese cambio hay que elegir
+  otra señal (por ejemplo, una función de Ascent que diga si la cuenta usa
+  Ascent, que lea solo `public` y que Moss llame desde el servidor; hoy Moss no
+  llama funciones de Ascent, así que sería una excepción a discutir).
+- **Ya no va:** el inicio de sesión compartido («Continuar como…» con la cuenta
+  de Ascent, fusionar cuentas, sumar a una la forma de entrar de la otra con
+  `linkIdentity`) y la lista de amigos compartida. Moss no tiene amigos, y la
+  fila «Tus amigos» salió de Perfil.
+
+### Borrar, de cada lado
+
+| Desde | Mismo usuario de Auth | Qué pasa |
+|---|---|---|
+| Moss | no (solo Apple) | `moss-borrar-cuenta` revoca Apple, borra todo lo de `moss` y borra el usuario de Auth. El vínculo se va (`on delete cascade`). Ascent queda intacta y deja de recibir lo de Moss |
+| Moss | sí (Apple y el correo) | Revoca Apple, borra todo lo de `moss` con sus vínculos del lado de Moss y le quita la identidad de Apple al usuario (`DELETE /auth/v1/user/identities/{id}`, con la sesión de quien llama). El usuario, `public` y la sesión de Ascent quedan intactos. Los otros teléfonos con Moss salen solos: Moss no sigue con una sesión sin Apple |
+| Ascent | no | `eliminar_cuenta()` borra su usuario de Auth, y el vínculo se va con él. Moss queda intacta |
+| Ascent | sí | `eliminar_cuenta()` llama a `moss.desvincular()`, borra lo suyo de `public` y no borra el usuario de Auth (si le quita la identidad `email`, Ascent deja de existir para esa persona). Moss queda intacta |
+
+Así se cumple la 5.1.1(v): la cuenta de Moss deja de existir aunque la de Ascent
+siga. «Borrar mis datos de Moss» borra lo mismo que borrar la cuenta en `moss`,
+salvo el vínculo, y deja la cuenta. Las pruebas, caso por caso, están en `npm
+run supabase:verificar` (sección 9) y en `node
+herramientas/probar-borrar-cuenta.mjs`.
+
+### Cada app anda sola (revisado el 28/10/2026)
+
+Sin vincular, o si `moss-vincular` y las lecturas de Ascent fallan o tardan,
+nada básico de Moss espera a Ascent: la entrada, las seis secciones, el cielo,
+las metas, los avisos, los widgets, la tarea de fondo y la sincronización no lo
+llaman. Lo que llega de Ascent cambia, vinculada, la meta de calorías del día, la
+proteína después de entrenar, el peso único y el hábito del gimnasio, y cada uno
+vuelve solo a lo de Moss sin el vínculo. Lo que se corrigió con este criterio:
+
+- Al abrir sin sesión (la cuenta se borró o se cerró en otro lado), lo guardado
+  de Ascent seguía moviendo la meta, el peso y la fila de Perfil: ahora se va
+  (`src/almacen/ascent.ts`, `src/almacen/index.ts`).
+- El aviso de borrar la cuenta ya no dice que se borra «en cualquier app»: borra
+  lo de Moss y, vinculada, dice que Ascent sigue intacta.
+- «Tus amigos» salió de lo que anda con las dos apps (Moss no tiene amigos).
+
+## Vincular conecta dos cuentas, no las junta
+
+«Vincular» quiere decir: **la persona acepta que sus dos cuentas compartan
+datos**, sean dos usuarios de Auth o el mismo. Hace falta igual, porque Moss
+guarda sueño y comida, y Apple pide consentimiento para compartir datos de salud
+(reglas 5.1.2 y 5.1.3).
 
 - Una fila en `moss.vinculo` (la cuenta de Moss, la de Ascent, desde cuándo y
   desde qué app) y dos funciones que llaman las dos apps:
@@ -71,18 +114,14 @@ y 5.1.3).
   - `moss.desvincular()`.
   - Vincular no es una función que llame la app: pasa por `moss-vincular`, que
     revisa las dos sesiones (ver «Vincular en menos de 10 segundos»).
-- **El botón «Vincular»** está en las tarjetas bloqueadas y en Ajustes (lo que
-  sigue era con la misma cuenta; desde D27, el flujo es el de más abajo):
-  1. Si la otra app no está instalada, abre su página en la App Store. Para
-     saberlo, cada app declara el esquema de la otra en
-     `LSApplicationQueriesSchemes` y prueba `canOpenURL`.
-  2. Si está instalada y esta cuenta ya la usó, muestra qué se comparte y un
-     botón para aceptar. Con eso quedan desbloqueadas las dos.
-  3. Si está instalada pero esta cuenta nunca la usó, muestra «Entra a Ascent con
-     esta misma cuenta» y abre `ascent://vincular` (o `moss://vincular` desde
-     Ascent). Allá se ve el mismo permiso.
+- **El botón «Vincular»** está en la sección de Ascent y en Perfil, y sigue el
+  flujo de D27 (más abajo). El de antes, que pedía entrar a la otra app «con
+  esta misma cuenta», ya no va: con dos cuentas no hace falta que coincidan.
+  Para saber si la otra app está instalada, cada app declara el esquema de la
+  otra en `LSApplicationQueriesSchemes` y prueba `canOpenURL`.
 - **Desvincular** está en Ajustes de cada app. Los datos quedan en cada app y se
-  deja de leer lo de la otra.
+  deja de leer lo de la otra. Borrar cualquiera de las dos cuentas también
+  desvincula (ver «Borrar, de cada lado»).
 - **La regla:** toda lectura cruzada pasa por funciones `security definer` del
   esquema `moss`. Cada función revisa `auth.uid()` y el vínculo. Ninguna app lee
   las tablas de la otra directo.
@@ -166,8 +205,15 @@ mismo al revés, con la sesión de Moss en el llavero.
     sesión de la otra app), `sin_ascent` (409), `pedido` (400),
     `configuracion` o `interno`.
 - **`moss.estado_del_vinculo()`** y **`moss.desvincular()`**, desde cualquiera de
-  las dos apps. «Borrar mis datos de Moss» no desvincula: el permiso se quita
-  desde Perfil.
+  las dos apps. `moss.desvincular()` corta el vínculo de `auth.uid()` de
+  cualquiera de los dos lados: Ascent la llama también desde su
+  `eliminar_cuenta()` cuando el usuario de Auth sigue porque también es la cuenta
+  de Moss. «Borrar mis datos de Moss» no desvincula: el permiso se quita desde
+  Perfil.
+- **`moss.borrar_cuenta(cuenta)`** (D29): la llama solo `moss-borrar-cuenta`, con
+  la clave de servicio. Borra todo lo de `moss` de esa cuenta y sus vínculos del
+  lado de Moss; el usuario de Auth lo decide la función (ver «Borrar, de cada
+  lado»).
 - **Las lecturas para Moss** (ver la tabla de abajo): `moss.ascent_sesiones`,
   `moss.ascent_marcas` y `moss.pesos_compartidos`.
 - **En la app:** `src/lib/ascentRemoto.ts` (`vincular`, `desvincular`,
@@ -175,7 +221,8 @@ mismo al revés, con la sesión de Moss en el llavero.
   `pesosCompartidos`).
 - **Las pruebas:**
   - `npm run supabase:verificar`, sección 8: contra las tablas de Ascent de
-    mentira, con la app llamando a la función de verdad.
+    mentira, con la app llamando a la función de verdad; sección 9: las dos
+    cuentas, con `moss-vincular` y `moss-borrar-cuenta` de verdad.
   - `node herramientas/probar-vincular.mjs`: la función contra Auth y PostgREST
     de mentira.
 
@@ -193,7 +240,6 @@ Las tres primeras están escritas, en
 | `moss.semanas_para_ascent(desde)` | por semana: sueño promedio, proteína promedio por día y balance por día | las dos: «Por qué no subís» |
 | `moss.objetivo()` | objetivo y ritmo de Moss | Ascent: qué espera de la fuerza |
 | `moss.anio(anio)` y `moss.ascent_anio(anio)` | totales del año de cada app | el resumen anual, en las dos |
-| `moss.amigos()` | `public.friendships`, respetando `son_amigos()` y `bloqueos` | Moss, cuando tenga social |
 
 ### Lo que devuelven las tres escritas
 
@@ -320,10 +366,11 @@ Ascent (la recuperación) hacen la misma cuenta.
      ahí la semana puede pasarse.
 6. **Objetivo compartido:** en definición, Ascent relaja el umbral de
    estancamiento y no espera marcas; en volumen, espera progreso.
-7. **Login y amigos**
-   - Es la misma cuenta.
-   - La lista de amigos es `public.friendships` de Ascent: Moss la lee y no
-     tiene otra.
+7. **Login y amigos: ya no van** (D29, 28/10/2026)
+   - Cada app tiene su cuenta y su forma de entrar: no hay inicio de sesión
+     compartido.
+   - Moss no tiene amigos ni lee `public.friendships`. Si algún día tiene algo
+     social, es suyo, con su cuenta.
 8. **Proteína post-entreno** (la fórmula que propuse el 22/10, D24)
    - Depende del tamaño de la sesión en Ascent: las series y el peso movido,
      cada uno contra el promedio de sus sesiones de las 4 semanas anteriores, y
@@ -367,7 +414,8 @@ es de las dos apps. En la galería, sección 7.
     luna de Moss: sin vincular queda afuera de la órbita, y al vincular entra.
 - **Sin vincular:**
   - Arriba, «Si usas Ascent», «Vincular con Ascent» y «¿No tienes Ascent?» (la
-    App Store). Vincular es dar permiso, y lo dice.
+    App Store). Vincular conecta tus dos cuentas para que compartan datos, y lo
+    dice.
   - Después, «Solo con las dos»: la recuperación con el rendimiento y los
     músculos, por qué no subís y tu año.
   - Cada una muestra vacío lo que va a mostrar, con un candado chico.
@@ -406,24 +454,27 @@ En Ascent van en Stats (ver la lista de cambios).
      datos propios al crear la cuenta.
    - Lo único: al contar usuarios de Ascent, un perfil sin nombre no cuenta
      (`where username is not null`).
-2. **Borrar la cuenta**
-   - `eliminar_cuenta()` borra `auth.users`, y eso borra todo. Está bien, porque
-     la cuenta es una sola, pero las dos apps lo tienen que decir: «Tu cuenta es
-     la misma en Moss y en Ascent: borrarla borra los datos de las dos».
+2. **Borrar la cuenta** (cambió el 28/10/2026, D29: ver «Borrar, de cada lado»)
+   - Cada app borra solo su cuenta. Borrar la de Moss borra todo lo de `moss` y
+     el vínculo; Ascent sigue intacta y deja de recibir lo de Moss. Y al revés.
+     Ya no se avisa que «se borra en las dos».
    - Además, cada app ofrece «Borrar mis datos de Moss» (o «de Ascent») sin
      borrar la cuenta.
-   - Con Sign in with Apple, al borrar la cuenta hay que revocar el token de
-     Apple. Va en una función del servidor con la clave de Apple.
-   - **Borrar desde Moss saltea `eliminar_cuenta()`** (26/10/2026). Moss borra
-     `auth.users` (con `moss-borrar-cuenta` o `moss.borrar_cuenta()`) y la
-     cascada no hace lo que `eliminar_cuenta()` hace antes de borrar:
-     - los ejercicios propios quedan con `creado_por` en null y sin `huerfano`,
-       que es como se ve el catálogo: **todos los usuarios de Ascent pasarían a
-       verlos**;
-     - si la cuenta ganó un reto, `challenges.ganador` (sin cascada) frena el
-       borrado, y Moss dice que no se pudo.
-     - El arreglo va en Ascent: el cambio 4 de la lista de abajo.
-   - El vínculo (`moss.vinculo`) se borra solo con cualquiera de las dos cuentas.
+   - Con Sign in with Apple, al borrar la cuenta se revoca el token de Apple, en
+     `moss-borrar-cuenta`, con la clave de Apple.
+   - Moss borra el usuario de Auth solo cuando solo tiene Apple. Ese usuario
+     nunca pudo usar Ascent (Ascent entra con correo), así que de Ascent solo
+     tiene el perfil sin nombre que crea `handle_new_user()`, y la cascada no
+     deja nada colgado. Lo de antes (26/10/2026: los ejercicios propios que
+     pasaban al catálogo de todos y `challenges.ganador` frenando el borrado) ya
+     no lo puede provocar Moss; el cambio 4 de Ascent sigue sirviendo para borrar
+     desde el panel.
+   - Cuando el usuario de Auth es el mismo, Moss no lo borra: le quita Apple. Y
+     Ascent, al borrar su cuenta, no lo borra: llama a `moss.desvincular()` y
+     borra lo suyo (el cambio 4).
+   - El vínculo (`moss.vinculo`) se borra solo con cualquiera de los dos
+     usuarios de Auth, y con `moss.borrar_cuenta` o `moss.desvincular()` cuando
+     el usuario sigue.
 3. **Las pruebas de Ascent.** `retrato_del_schema()` y `npm run test:conexion`
    marcan lo que sobra en `public`. Moss no toca `public`, así que no saltan.
 4. **Funciones de Ascent con efectos.**
@@ -485,8 +536,17 @@ Para la sesión aparte sobre Ascent.
      `moss.pesos_compartidos(desde, app => 'ascent')` cuando hay vínculo.
    - Ascent sigue escribiendo solo en `public.weights`.
 4. **Borrar**
-   - `borrar_datos_de_ascent()` borra lo de Ascent y deja la cuenta;
-     `eliminar_cuenta()` queda igual, con el texto nuevo.
+   - `borrar_datos_de_ascent()` borra lo de Ascent y deja la cuenta.
+   - **`eliminar_cuenta()` borra solo la cuenta de Ascent** (D29, 28/10/2026).
+     Si el usuario de Auth también tiene la identidad de Apple (es también la
+     cuenta de Moss), no borra `auth.users`: llama a `moss.desvincular()` (con
+     la sesión de quien borra; está en `authenticated`), borra lo suyo de
+     `public` (el perfil, con su cascada, y lo que hoy hace antes de borrar) y,
+     para que la cuenta de Ascent deje de existir, le quita la identidad `email`
+     y la contraseña (por ejemplo, desde la app con `unlinkIdentity`, que pide
+     *Allow manual linking*). Si no, borra `auth.users` como hoy, y el vínculo
+     se va solo. Como el esquema `moss` puede no estar todavía en la base, que la
+     llame solo si existe (`to_regprocedure('moss.desvincular()')`).
    - **Lo que hace falta antes de que Moss salga** (una migración de Ascent, la
      97): un disparador `before delete on public.profiles` que haga lo que
      `eliminar_cuenta()` hace antes de borrar. Es decir, borrar los retos donde
@@ -503,6 +563,9 @@ Necesita una build nativa nueva: va en una rama, como siempre que cambia
 
 5. **Sign in with Apple** con `expo-apple-authentication` y `signInWithIdToken`,
    junto a correo y contraseña. Es la misma pantalla `movil/src/Login.tsx`.
+   **En pausa desde D29:** con Apple en Ascent, «solo tiene Apple» deja de
+   querer decir «es solo de Moss», y borrar la cuenta de Moss podría borrar la
+   de Ascent (ver «Dos cuentas»). Antes hay que elegir otra señal.
 6. **Stats › General** (`movil/src/StatsGeneral.tsx`): las tarjetas bloqueadas
    después de Peso y Pasos:
    - Recuperación.
@@ -520,8 +583,10 @@ Necesita una build nativa nueva: va en una rama, como siempre que cambia
 11. **Esquemas y enlaces:**
     - `LSApplicationQueriesSchemes: ["moss"]` en `app.json`.
     - La ruta `ascent://vincular`.
-12. **Texto de borrar la cuenta:** que avise que la cuenta se borra en
-    cualquier app donde se entre con ella, como en Moss.
+12. **Texto de borrar la cuenta:** que diga que borra la cuenta de Ascent y lo
+    de Ascent, y que Moss, si la tiene, sigue intacta y deja de recibir sus
+    datos (D29; en Moss, `perfil.borrarCuentaTexto` y
+    `perfil.borrarCuentaConAscent`).
 13. **El peso movido, con las repeticiones** (pedido el 22/10/2026): hoy
     `kilosDelBloque` (`nucleo/volumen.ts`) suma el peso de cada serie, sin las
     repeticiones. Debería contar peso × repeticiones cuando las repeticiones
@@ -564,13 +629,14 @@ Ascent (26/10/2026). Antes de mandarla, en este orden:
    - `0002_comida.sql` (lo que se come);
    - `0003_progreso.sql` (la estrategia y las medidas del cuerpo);
    - `0004_medir.sql` (cómo se mide lo comido, el catálogo en el servidor, la
-     semana repartida y borrar la cuenta);
+     semana repartida);
    - `0005_noches.sql` (las noches propias: la cara y la hora confirmada o
      corregida);
    - `0006_alimentos.sql` (los micronutrientes, las búsquedas sin resultado y
      los reportes);
    - `0007_plan.sql` (el plan de comidas);
-   - `0008_vinculo.sql` (el vínculo con Ascent y lo que Moss lee de Ascent);
+   - `0008_vinculo.sql` (el vínculo con Ascent, lo que Moss lee de Ascent y
+     borrar la cuenta de Moss);
    - y los que haya después (`0009_…`), siempre por número.
 
    Todos están probados con `npm run supabase:verificar`. Solo crean cosas en el
@@ -583,7 +649,11 @@ Ascent (26/10/2026). Antes de mandarla, en este orden:
 4. Authentication › Sign In / Providers › **Apple**: activarlo y poner en
    *Client IDs* `uy.moss.app`. Cuando Ascent tenga Apple, sumar `uy.ascent.app`.
    Para el inicio nativo en iPhone alcanza con los identificadores.
-5. Authentication › Sign In / Providers: activar *Allow manual linking*.
+5. Authentication › Sign In / Providers: activar *Allow manual linking*. Hace
+   falta para borrar la cuenta de Moss cuando el usuario de Auth también es el
+   de Ascent: `moss-borrar-cuenta` le quita Apple con `DELETE
+   /auth/v1/user/identities/{id}`, que sin esto responde 404
+   (`manual_linking_disabled`).
 6. Las dos funciones del servidor: `moss-borrar-cuenta` (revoca Apple y borra la
    cuenta) y `moss-vincular` (vincula con Ascent).
    - Una vez, `npx supabase login`.
@@ -614,6 +684,7 @@ interruptor: `EXPO_PUBLIC_CON_ASCENT` no hace falta.
 
 **En Ascent** (la sesión de su repo):
 
-- el cambio 4 de la lista de arriba (borrar por cualquier camino), antes de que
+- el cambio 4 de la lista de arriba (borrar solo la cuenta de Ascent, con
+  `moss.desvincular()` cuando el usuario de Auth es el mismo), antes de que
   Moss salga;
 - su lado de D27 (el cambio 17).

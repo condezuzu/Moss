@@ -1,7 +1,8 @@
-// Borrar la cuenta en el servidor (spec/revision.md, 5.1.1(v)): si la cuenta usa Sign in with
+// Borrar la cuenta de Moss en el servidor (spec/revision.md, 5.1.1(v)): si la cuenta usa Sign in with
 // Apple, la persona confirma con Apple y el código nuevo va a la función `moss-borrar-cuenta`, que
-// revoca la autorización de Apple y recién después borra. Sin el teléfono ni Supabase, para probarlo:
-// cuenta.ts le pasa los pasos de verdad.
+// revoca la autorización de Apple y recién después borra todo lo de Moss (y el usuario, si es solo de
+// Moss; si también es la cuenta de Ascent, le quita Apple y Ascent queda intacta). Sin el teléfono
+// ni Supabase, para probarlo: cuenta.ts le pasa los pasos de verdad.
 
 /** Lo que importa del usuario de la sesión (`session.user` de supabase-js). */
 export type UsuarioDeLaSesion = {
@@ -14,8 +15,6 @@ export type PasosParaBorrar = {
   codigoDeApple: () => Promise<string | null>;
   /** La función `moss-borrar-cuenta`: null si borró, o el estado HTTP con que falló (0 si no hubo respuesta). */
   funcion: (codigoDeApple: string | undefined) => Promise<number | null>;
-  /** `moss.borrar_cuenta()`, la de antes, que no revoca Apple: true si borró. */
-  sinRevocar: () => Promise<boolean>;
 };
 
 /** Si la cuenta usa Sign in with Apple: se creó con Apple, lo tiene vinculado o tiene esa identidad. */
@@ -26,8 +25,18 @@ export function usaApple(usuario: UsuarioDeLaSesion | null | undefined): boolean
 }
 
 /**
- * Borra la cuenta en el servidor: true si quedó borrada y false si falló. Cancelar la hoja de Apple
- * no borra nada y no es un error: null, así Perfil no muestra nada.
+ * Si la sesión ya no es de una cuenta de Moss: Moss entra solo con Apple, así que un usuario de Auth
+ * con sus identidades a la vista y ninguna de Apple es la cuenta de Ascent que quedó después de borrar
+ * la de Moss desde otro teléfono. Sin las identidades no se sabe, y se sigue como siempre.
+ */
+export function yaNoEsDeMoss(usuario: UsuarioDeLaSesion | null | undefined): boolean {
+  const identidades = usuario?.identities;
+  return Array.isArray(identidades) && identidades.length > 0 && !identidades.some((i) => i.provider === 'apple');
+}
+
+/**
+ * Borra la cuenta de Moss en el servidor: true si quedó borrada y false si falló. Cancelar la hoja de
+ * Apple no borra nada y no es un error: null, así Perfil no muestra nada.
  */
 export async function borrarEnElServidor(usuario: UsuarioDeLaSesion | null | undefined, pasos: PasosParaBorrar): Promise<boolean | null> {
   let codigo: string | undefined;
@@ -36,9 +45,7 @@ export async function borrarEnElServidor(usuario: UsuarioDeLaSesion | null | und
     if (!nuevo) return null;
     codigo = nuevo;
   }
-  const fallo = await pasos.funcion(codigo);
-  if (fallo === null) return true;
-  // 404 es que la función todavía no está desplegada: solo entonces se borra como antes, sin revocar
-  // Apple. Sacarlo cuando esté desplegada (supabase/functions/moss-borrar-cuenta/README.md).
-  return fallo === 404 ? pasos.sinRevocar() : false;
+  // Sin la función desplegada (404) tampoco se borra: no hay otro camino que revoque Apple y deje
+  // intacta la cuenta de Ascent.
+  return (await pasos.funcion(codigo)) === null;
 }

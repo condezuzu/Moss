@@ -92,6 +92,8 @@ export function crearAscent(op: OpcionesDeAscent) {
   const ahora = op.ahora ?? (() => new Date());
   let estado: DeAscent = { ...vacio(), listo: false, conCuenta: false, version: 0 };
   let usuario: string | null = null;
+  /** Ya se sabe si hay sesión y de quién: hasta entonces vale lo guardado, para que no parpadee. */
+  let sesionSabida = false;
   /** Lo guardado de la última vez, hasta saber de quién es la sesión. */
   let deAntes: Guardado | null = null;
   /** Sube con cada vincular, desvincular o cambio de sesión: lo que llegue de antes ya no vale. */
@@ -114,9 +116,9 @@ export function crearAscent(op: OpcionesDeAscent) {
     op.guardado.escribir(JSON.stringify(g)).catch(() => {});
   }
 
-  /** Lo guardado, si es de esta cuenta (o si todavía no se sabe de quién es la sesión). */
+  /** Lo guardado, si es de esta cuenta (o si todavía no se sabe de quién es la sesión). Sin sesión, nada. */
   function usarLoDeAntes() {
-    if (!deAntes || (usuario && deAntes.usuario !== usuario)) return;
+    if (!deAntes || (sesionSabida && (!usuario || deAntes.usuario !== usuario))) return;
     const { v: _v, usuario: _u, ...datos } = deAntes;
     cambiar({ ...datos });
   }
@@ -191,7 +193,10 @@ export function crearAscent(op: OpcionesDeAscent) {
     refrescar,
     /** La sesión de Moss en este teléfono: sin sesión no hay vínculo, y con otra cuenta se empieza de cero. */
     async ponerSesion(nuevo: string | null) {
-      if (nuevo === usuario && estado.conCuenta === !!nuevo) return;
+      // La primera vez sigue aunque no haya sesión: así se va lo guardado de una sesión que ya no está.
+      const primera = !sesionSabida;
+      sesionSabida = true;
+      if (!primera && nuevo === usuario && estado.conCuenta === !!nuevo) return;
       const otra = usuario !== null && nuevo !== usuario;
       usuario = nuevo;
       generacion++;

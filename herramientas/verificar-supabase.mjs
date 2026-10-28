@@ -18,14 +18,19 @@
 // - que lo armado por el plan guarda su opción y cómo comes va en el perfil (0007_plan.sql);
 // - que tu nombre va en la fila del perfil con su propia hora: llega antes que el perfil sin
 //   trabarlo, gana el más nuevo y «borrar mis datos» lo borra (0009_perfil.sql);
-// - que borrar la cuenta borra todo en cascada;
+// - que borrar la cuenta de Moss (moss.borrar_cuenta, solo con la clave de servicio) y «borrar mis
+//   datos» borran en cada tabla de Moss con usuario, y que borrar el usuario de Auth borra todo en
+//   cascada;
 // - que el teléfono baja el catálogo del servidor;
 // - y la app de verdad (src/almacen) sincronizando varios teléfonos contra esta base, uno de
 //   ellos con el repositorio SQLite del iPhone;
 // - el vínculo con Ascent (0008_vinculo.sql), contra tablas de Ascent de mentira con las columnas
 //   que lee: quién lo ve y quién lo escribe, vincular y volver a vincular, desvincular, que lo de
 //   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, y la app
-//   (src/lib/ascentRemoto.ts) vinculando por la función moss-vincular de verdad.
+//   (src/lib/ascentRemoto.ts) vinculando por la función moss-vincular de verdad;
+// - y las dos cuentas (D29), con moss-vincular y moss-borrar-cuenta de verdad: vincular con el mismo
+//   correo y con correos distintos, borrar en Moss (solo de Moss, o la misma cuenta que Ascent),
+//   borrar en Ascent (dos usuarios, o el mismo) y desvincular.
 // Uso: npm run supabase:verificar   → sale con código 1 si algo falla.
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -102,6 +107,8 @@ await db.exec(`
   create role service_role nologin bypassrls;
   create schema auth;
   create table auth.users (id uuid primary key);
+  -- Solo para el Auth de mentira de la sección 8: las migraciones no la nombran.
+  create table auth.identities (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users (id) on delete cascade, provider text not null);
   create function auth.uid() returns uuid language sql stable as $$
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
@@ -282,9 +289,9 @@ comprobar(
 await como(A, `delete from moss.propios where id = 'p-off'`);
 await como(A, `delete from moss.registros where id = 'r3'`);
 /** Lo que hace Moss con la clave de servicio, que no pasa por RLS. */
-const comoServicio = (sql) => db.transaction(async (tx) => {
+const comoServicio = (sql, parametros = []) => db.transaction(async (tx) => {
   await tx.exec('set local role service_role');
-  return tx.query(sql);
+  return tx.query(sql, parametros);
 });
 await comoServicio(`insert into moss.catalogo (id, nombre_es, nombre_en, kcal, proteina, carbohidratos, grasas, codigos, porciones, densidad, actualizado)
   values (-200001, 'Leche entera', 'Whole milk', 61, 3.1, 4.8, 3.2, '{7730000000001}', '[{"es":"1 vaso","en":"1 glass","gramos":206}]', 1.03, '2000-01-01')`);
@@ -431,14 +438,51 @@ comprobar(
 await como(E, 'select moss.borrar_mis_datos()');
 comprobar((await como(E, 'select * from moss.perfiles')).rows.length === 0, '«borrar mis datos» también borra tu nombre');
 
-// ------------------------------------------------------------ 6. Borrar la cuenta
-comprobar(await falla('anon', 'select moss.borrar_cuenta()'), 'sin sesión no se puede borrar ninguna cuenta');
+// ------------------------------------------------------------ 6. Borrar la cuenta de Moss
+// Las tablas de Moss que son de alguien (con `usuario`), leídas de la base: así una tabla nueva que
+// falte en borrar_cuenta o en borrar_mis_datos salta acá.
+const tablasConUsuario = (await db.query(`select table_name as t from information_schema.columns
+  where table_schema = 'moss' and column_name = 'usuario' order by 1`)).rows.map((f) => f.t);
+const definicion = async (firma) => (await db.query(`select pg_get_functiondef($1::regprocedure) as d`, [firma])).rows[0].d;
+for (const firma of ['moss.borrar_cuenta(uuid)', 'moss.borrar_mis_datos()']) {
+  const texto = await definicion(firma);
+  const faltan = tablasConUsuario.filter((t) => !new RegExp(`delete from moss\\.${t}\\b`).test(texto));
+  comprobar(!faltan.length && tablasConUsuario.length >= 15, `${firma} borra en cada tabla de Moss con usuario (${tablasConUsuario.length})${faltan.length ? `: faltan ${faltan.join(', ')}` : ''}`);
+}
+/** Cuántas filas de Moss tiene una cuenta, en todas las tablas con usuario y en el vínculo. */
+async function filasDeMoss(usuario) {
+  let n = 0;
+  for (const t of tablasConUsuario) n += Number((await db.query(`select count(*) as n from moss.${t} where usuario = $1`, [usuario])).rows[0].n);
+  return n;
+}
+/** Una fila en cada cosa que se anota en Moss, con la sesión de esa cuenta. */
+async function llenarMoss(usuario) {
+  await como(usuario, `insert into moss.habitos (id, nombre, icono, dias, fuente, orden, desde) values ('leer', 'Leer', 'book', '{1,2,3,4,5}', '{"tipo":"manual"}', 0, '2026-10-19')`);
+  await como(usuario, `insert into moss.marcas (habito, dia, hecho, momento, origen) values ('leer', '2026-10-21', true, '2026-10-21T10:00:00Z', 'toque')`);
+  await como(usuario, `insert into moss.registros (id, dia, comida, momento, fuente, nombre, kcal, proteina, carbohidratos, grasas) values ('r1', '2026-10-21', 'snack', '2026-10-21T10:00:00Z', 'rapida', 'Alfajor', 250, 3, 35, 11)`);
+  await como(usuario, `insert into moss.pesos (fecha, kg, origen, momento) values ('2026-10-21', 70, 'manual', now())`);
+  await como(usuario, `insert into moss.medidas (fecha, cuello) values ('2026-10-21', 34)`);
+  await como(usuario, `insert into moss.noches (fecha, cara) values ('2026-10-21', 3)`);
+  await como(usuario, `select moss.poner_nombre('Alguien', now())`);
+}
+
+comprobar(
+  await falla('anon', `select moss.borrar_cuenta('${B}')`) && await falla(B, `select moss.borrar_cuenta('${B}')`) && await falla(B, `select moss.borrar_cuenta('${A}')`)
+    && (await comoServicio('select moss.borrar_cuenta(null)').then(() => false, (e) => e.message === 'pedido')),
+  'borrar la cuenta de Moss: solo con la clave de servicio (la función moss-borrar-cuenta, que revisa la sesión), nunca desde la app ni sin cuenta',
+);
 // Una cuenta solo para esto: las otras siguen en uso más abajo.
 const D = '00000000-0000-4000-8000-00000000000d';
 await db.exec(`insert into auth.users (id) values ('${D}')`);
-await como(D, 'select moss.borrar_cuenta()');
+await llenarMoss(D);
+const deAAntes = await filasDeMoss(A);
+const llena = await filasDeMoss(D);
+await comoServicio('select moss.borrar_cuenta($1)', [D]);
 const cuentas = (await db.query('select id from auth.users order by id')).rows.map((f) => f.id);
-comprobar(!cuentas.includes(D) && [A, B, C].every((x) => cuentas.includes(x)), 'borrar la cuenta borra solo la de quien la llama');
+comprobar(
+  llena >= 7 && (await filasDeMoss(D)) === 0 && (await filasDeMoss(A)) === deAAntes && [A, B, C, D].every((x) => cuentas.includes(x)),
+  'borrar la cuenta de Moss borra todo lo de Moss de esa cuenta y nada de otra; el usuario de Auth lo decide la función, no la base',
+);
 await db.exec(`delete from auth.users where id = '${A}'`);
 const quedan = (await db.query(`select (select count(*) from moss.habitos) + (select count(*) from moss.marcas) + (select count(*) from moss.dias)
   + (select count(*) from moss.periodos) + (select count(*) from moss.metas) + (select count(*) from moss.pesos)
@@ -1009,13 +1053,172 @@ comprobar(
 );
 globalThis.fetch = fetchDeVerdad;
 
-// Borrar la cuenta, de cualquiera de los dos lados, borra el vínculo.
+// ------------------------------------------------------------ 9. Dos cuentas (D29)
+// Moss y Ascent son dos cuentas, aunque a veces compartan el usuario de Auth (Supabase une el Apple ID
+// de Moss al correo de Ascent cuando coinciden). Las funciones de verdad (moss-vincular y
+// moss-borrar-cuenta) contra esta base, con un Auth de mentira que conoce las identidades de cada
+// usuario. Borrar desde Ascent se simula como lo hace Ascent: con dos usuarios, borra el suyo de
+// Auth; con el mismo, llama a moss.desvincular() y borra lo suyo de `public`.
+const { default: funcionBorrar } = await import('../supabase/functions/moss-borrar-cuenta/index.ts');
+const cuentaNueva = async (id, proveedores, usuarioDeAscent = null) => {
+  await db.query('insert into auth.users (id) values ($1)', [id]);
+  for (const p of proveedores) await db.query('insert into auth.identities (user_id, provider) values ($1, $2)', [id, p]);
+  if (usuarioDeAscent) {
+    await db.query('update public.profiles set username = $2 where id = $1', [id, usuarioDeAscent]);
+    await sesionDeAscent(id, await diaDeAscent(id, '2026-10-20'), { inicio: '2026-10-20T09:00:00Z', minutos: 40, series: 3, bloques: [{ ejercicio: 'sentadilla', series: 3, pesos: [80, 80, 80] }] });
+    await db.query(`insert into public.weights (user_id, fecha, valor) values ($1, '2026-10-20', 75)`, [id]);
+  }
+};
+/** Lo de Ascent de una cuenta, en `public`: si tiene perfil, con qué nombre, y cuántos días y pesos. */
+const deAscentEn = async (id) => (await db.query(`select (select username from public.profiles where id = $1) as nombre,
+  (select count(*) from public.profiles where id = $1)::int as perfil, (select count(*) from public.logs where user_id = $1)::int as dias,
+  (select count(*) from public.weights where user_id = $1)::int as pesos`, [id])).rows[0];
+const existe = async (id) => (await db.query('select 1 from auth.users where id = $1', [id])).rows.length === 1;
+const proveedoresDe = async (id) => (await db.query('select provider from auth.identities where user_id = $1 order by provider', [id])).rows.map((f) => f.provider).join();
+const llamarFuncion = async (funcion, token, cuerpo) => {
+  const r = await funcion.fetch(new Request('https://proyecto.supabase.co/functions/v1/x', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(cuerpo) }));
+  return { estado: r.status, cuerpo: await r.json() };
+};
+const vincularDesde = (desde, propia, otra) => llamarFuncion(funcionVincular, tokenDe(propia), { otra: tokenDe(otra), desde });
+const borrarEnMoss = (cuenta) => llamarFuncion(funcionBorrar, tokenDe(cuenta), {});
+globalThis.fetch = async (url, init = {}) => {
+  const u = String(url);
+  const headers = new Headers(init.headers);
+  const deLaSesion = /^Bearer token-(.+)$/.exec(headers.get('authorization') ?? '')?.[1];
+  const conLaClave = headers.get('apikey') === SECRETA && headers.get('authorization') === `Bearer ${SECRETA}`;
+  if (u === 'https://proyecto.supabase.co/auth/v1/user') {
+    if (!deLaSesion) return deJson(401, { code: 'bad_jwt' });
+    if (!(await existe(deLaSesion))) return deJson(403, { code: 'user_not_found' });
+    const filas = (await db.query('select id, provider from auth.identities where user_id = $1', [deLaSesion])).rows;
+    return deJson(200, { id: deLaSesion, identities: filas.map((f) => ({ identity_id: f.id, id: deLaSesion, user_id: deLaSesion, provider: f.provider })) });
+  }
+  if (u === 'https://proyecto.supabase.co/rest/v1/rpc/vincular_cuentas' || u === 'https://proyecto.supabase.co/rest/v1/rpc/borrar_cuenta') {
+    if (!conLaClave) return deJson(401, { code: 'PGRST301', message: 'sin la clave' });
+    if (headers.get('content-profile') !== 'moss') return deJson(404, { code: 'PGRST202', message: 'no está en public' });
+    const datos = JSON.parse(init.body);
+    try {
+      if (u.endsWith('/borrar_cuenta')) {
+        await comoServicio('select moss.borrar_cuenta($1)', [datos.cuenta]);
+        return new Response(null, { status: 204 });
+      }
+      return deJson(200, await vincularConLaClave(datos.cuenta_moss, datos.cuenta_ascent, datos.origen));
+    } catch (e) {
+      return deJson(/^(P0001|22)/.test(e.code ?? '') ? 400 : 500, { code: e.code, message: e.message });
+    }
+  }
+  const borrarUsuario = /^https:\/\/proyecto\.supabase\.co\/auth\/v1\/admin\/users\/(.+)$/.exec(u)?.[1];
+  if (borrarUsuario && init.method === 'DELETE') {
+    if (!conLaClave) return deJson(401, { code: 'no_authorization' });
+    const r = await db.query('delete from auth.users where id::text = $1', [decodeURIComponent(borrarUsuario)]);
+    return r.affectedRows ? deJson(200, {}) : deJson(404, { code: 'user_not_found' });
+  }
+  // Como GoTrue (DeleteIdentity): con la sesión del usuario, solo una identidad suya y nunca la última.
+  const quitar = /^https:\/\/proyecto\.supabase\.co\/auth\/v1\/user\/identities\/(.+)$/.exec(u)?.[1];
+  if (quitar && init.method === 'DELETE') {
+    if (!deLaSesion) return deJson(401, { code: 'bad_jwt' });
+    const suyas = (await db.query('select id from auth.identities where user_id = $1', [deLaSesion])).rows.map((f) => f.id);
+    if (suyas.length <= 1) return deJson(422, { code: 'single_identity_not_deletable' });
+    if (!suyas.includes(quitar)) return deJson(422, { code: 'identity_not_found' });
+    await db.query('delete from auth.identities where id = $1', [quitar]);
+    return deJson(200, {});
+  }
+  throw new Error(`pedido inesperado a ${u}`);
+};
+
+const [MISMA, SOLO_MOSS, SOLO_ASCENT, MOSS2, ASCENT2, MISMA2] = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'].map((x) => `00000000-0000-4000-8000-0000000000${x}`);
+await cuentaNueva(MISMA, ['email', 'apple'], 'misma');
+await cuentaNueva(SOLO_MOSS, ['apple']);
+await cuentaNueva(SOLO_ASCENT, ['email'], 'otra');
+for (const c of [MISMA, SOLO_MOSS]) await llenarMoss(c);
+
+// Vincular con el mismo correo: el mismo usuario de Auth en los dos lados.
+const mismoCorreo = await vincularDesde('moss', MISMA, MISMA);
+comprobar(
+  mismoCorreo.estado === 200 && mismoCorreo.cuerpo.nombre === 'misma' && (await vinculos()).includes('f1-f1-moss') && (await estadoDe(MISMA)).vinculada
+    && (await sesionesDe(MISMA)).length === 1 && pesosEnTexto(await pesosDe(MISMA)) === '2026-10-20 75 ascent, 2026-10-21 70 moss',
+  'dos cuentas: con el mismo correo, el mismo usuario de Auth se vincula consigo mismo y cada app lee lo suyo y lo de la otra',
+);
+// Vincular con correos distintos: dos usuarios de Auth.
+const correosDistintos = await vincularDesde('ascent', SOLO_ASCENT, SOLO_MOSS);
+comprobar(
+  correosDistintos.estado === 200 && (await vinculos()).includes('f2-f3-ascent') && (await estadoDe(SOLO_MOSS)).nombre === 'otra' && (await estadoDe(SOLO_ASCENT)).vinculada
+    && (await sesionesDe(SOLO_MOSS)).length === 1,
+  'dos cuentas: con correos (o Apple ID) distintos, dos usuarios de Auth se vinculan, desde cualquiera de las dos apps',
+);
+
+// Borrar en Moss una cuenta solo de Moss: se va el usuario de Auth, con lo de Moss y el vínculo; Ascent sigue.
+const ascentAntes = await deAscentEn(SOLO_ASCENT);
+const soloDeMoss = await borrarEnMoss(SOLO_MOSS);
+comprobar(
+  soloDeMoss.estado === 200 && !soloDeMoss.cuerpo.queda && !(await existe(SOLO_MOSS)) && (await filasDeMoss(SOLO_MOSS)) === 0 && !(await vinculos()).includes('f2-')
+    && (await existe(SOLO_ASCENT)) && JSON.stringify(await deAscentEn(SOLO_ASCENT)) === JSON.stringify(ascentAntes) && ascentAntes.dias === 1
+    && !(await estadoDe(SOLO_ASCENT)).vinculada,
+  'borrar en Moss (solo de Moss): se borra el usuario de Auth con todo lo de Moss y el vínculo; la cuenta de Ascent queda intacta y deja de recibir lo de Moss',
+);
+
+// Borrar en Moss la cuenta que también es la de Ascent: se va lo de Moss y Apple; el usuario y `public` siguen.
+const misma = await deAscentEn(MISMA);
+const compartida = await borrarEnMoss(MISMA);
+comprobar(
+  compartida.estado === 200 && compartida.cuerpo.queda === true && (await existe(MISMA)) && (await proveedoresDe(MISMA)) === 'email'
+    && (await filasDeMoss(MISMA)) === 0 && !(await vinculos()).includes('f1-') && JSON.stringify(await deAscentEn(MISMA)) === JSON.stringify(misma) && misma.pesos === 1
+    && !(await estadoDe(MISMA)).vinculada && pesosEnTexto(await pesosDe(MISMA)) === '',
+  'borrar en Moss (la misma cuenta que Ascent): se borra todo lo de Moss y el vínculo y se le quita Apple; el usuario de Auth y lo de Ascent quedan intactos',
+);
+const otraVez = await borrarEnMoss(MISMA);
+comprobar(otraVez.estado === 200 && (await existe(MISMA)) && (await proveedoresDe(MISMA)) === 'email', 'borrar en Moss otra vez (se perdió la respuesta): no pasa nada más y Ascent sigue');
+
+// Borrar en Ascent, con dos usuarios: Ascent borra el suyo de Auth y el vínculo se va solo; Moss intacta.
+await cuentaNueva(MOSS2, ['apple']);
+await cuentaNueva(ASCENT2, ['email'], 'ascent2');
+await llenarMoss(MOSS2);
+await vincularDesde('moss', MOSS2, ASCENT2);
+const moss2 = await filasDeMoss(MOSS2);
+await db.query('delete from auth.users where id = $1', [ASCENT2]);
+comprobar(
+  !(await vinculos()).includes('f4-') && (await existe(MOSS2)) && (await filasDeMoss(MOSS2)) === moss2 && moss2 >= 7 && !(await estadoDe(MOSS2)).vinculada
+    && !(await sesionesDe(MOSS2)).length,
+  'borrar en Ascent (dos usuarios): se borra el usuario de Ascent y el vínculo con él; la cuenta de Moss queda intacta y deja de recibir lo de Ascent',
+);
+
+// Borrar en Ascent la cuenta que también es la de Moss: Ascent llama a moss.desvincular() con su
+// sesión y borra lo suyo de `public`, sin borrar el usuario de Auth.
+await cuentaNueva(MISMA2, ['email', 'apple'], 'misma2');
+await llenarMoss(MISMA2);
+await vincularDesde('ascent', MISMA2, MISMA2);
+const misma2 = await filasDeMoss(MISMA2);
+await como(MISMA2, 'select moss.desvincular()');
+await db.query('delete from public.profiles where id = $1', [MISMA2]);
+comprobar(
+  !(await vinculos()).includes('f6-') && (await existe(MISMA2)) && (await filasDeMoss(MISMA2)) === misma2 && (await deAscentEn(MISMA2)).perfil === 0
+    && !(await estadoDe(MISMA2)).vinculada && pesosEnTexto(await pesosDe(MISMA2)) === '',
+  'borrar en Ascent (la misma cuenta que Moss): con moss.desvincular() se corta el vínculo y lo de Moss queda intacto',
+);
+
+// Desvincular, de los dos lados y con la misma cuenta: los datos quedan en cada app.
+await cuentaNueva(ASCENT2, ['email'], 'ascent2');
+await vincularDesde('moss', MOSS2, ASCENT2);
+await como(ASCENT2, 'select moss.desvincular()');
+const desdeAscentSolo = await vinculos();
+await vincularDesde('ascent', ASCENT2, MOSS2);
+await como(MOSS2, 'select moss.desvincular()');
+const desdeMossSolo = await vinculos();
+await vincularDesde('moss', MISMA2, MISMA2);
+await como(MISMA2, 'select moss.desvincular()');
+comprobar(
+  !desdeAscentSolo.includes('f4-') && !desdeMossSolo.includes('f4-') && !(await vinculos()).includes('f6-') && (await filasDeMoss(MOSS2)) === moss2
+    && (await filasDeMoss(MISMA2)) === misma2 && (await deAscentEn(ASCENT2)).dias === 1 && (await existe(MOSS2)) && (await existe(ASCENT2)) && (await existe(MISMA2)),
+  'desvincular: desde Moss, desde Ascent o con la misma cuenta, se corta solo el vínculo y cada app queda con lo suyo',
+);
+globalThis.fetch = fetchDeVerdad;
+
+// Borrar el usuario de Auth, de cualquiera de los dos lados (o la misma cuenta), también borra el vínculo.
 await vincularConLaClave(MOSS, ASCENT, 'moss');
 await vincularConLaClave(SOLA, SOLA, 'moss');
 await db.exec(`delete from auth.users where id = '${ASCENT}'`);
 const sinAscent = await vinculos();
-await como(SOLA, 'select moss.borrar_cuenta()');
-comprobar(sinAscent === 'e4-e4-moss' && !(await vinculos()), 'vínculo: borrar la cuenta (la de Ascent, la de Moss o la misma de las dos) borra el vínculo');
+await db.exec(`delete from auth.users where id = '${SOLA}'`);
+comprobar(sinAscent.includes('e4-e4-moss') && !sinAscent.includes('e1-') && !(await vinculos()).includes('e4-'), 'vínculo: borrar el usuario de Auth (el de Ascent, el de Moss o el mismo de las dos) borra el vínculo');
 
 await db.close();
 console.log(fallas ? `\n${fallas} comprobaciones fallaron.` : '\nTodo bien.');

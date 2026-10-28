@@ -1,14 +1,20 @@
-// moss-borrar-cuenta: «Borrar la cuenta» de Perfil. Borra la cuenta de quien llama y, si la cuenta
-// usa Sign in with Apple, antes revoca su autorización con la API REST de Apple, como pide la App
-// Store (5.1.1(v), spec/revision.md). La app manda un código nuevo de Apple; si Apple falla, no se
-// borra nada.
+// moss-borrar-cuenta: «Borrar la cuenta» de Perfil. Borra la cuenta de Moss de quien llama y, si usa
+// Sign in with Apple, antes revoca su autorización con la API REST de Apple, como pide la App Store
+// (5.1.1(v), spec/revision.md). La app manda un código nuevo de Apple; si Apple falla, no se borra
+// nada.
 //
-// Borrar el usuario de Auth borra en cascada todo lo de `moss` (y lo de Ascent: la cuenta es una
-// sola, y la app lo avisa antes). La función no lee ni escribe el esquema `public` (spec/ascent.md).
+// La cuenta de Moss y la de Ascent son dos cuentas (spec/ascent.md, «Dos cuentas», D29), aunque a
+// veces compartan el usuario de Auth: si alguien entra a Moss con un Apple ID cuyo correo es el de
+// su cuenta de Ascent, Supabase une Apple a ese usuario. Por eso, después de Apple:
+// 1. `moss.borrar_cuenta(cuenta)` borra todo lo de Moss de esa cuenta y sus vínculos del lado de Moss;
+// 2. si el usuario de Auth solo tiene la identidad de Apple, es solo de Moss y se borra;
+// 3. si tiene otra (el correo de Ascent), no se borra: se le quita Apple, y Ascent queda intacta.
+// La decisión sale de las identidades que devuelve Auth: la función no lee ni escribe `public`.
 //
-// Sin dependencias: la sesión se verifica y el usuario se borra con los mismos pedidos a Auth que
-// hacen `auth.getUser(jwt)` y `auth.admin.deleteUser(id)` de supabase-js, y el secreto de Apple se
-// firma con Web Crypto. Se despliega con --no-verify-jwt (ver README.md).
+// Sin dependencias: la sesión se verifica, el usuario se borra y la identidad se quita con los
+// mismos pedidos a Auth que hacen `auth.getUser(jwt)`, `auth.admin.deleteUser(id)` y
+// `auth.unlinkIdentity()` de supabase-js, y el secreto de Apple se firma con Web Crypto. Se despliega
+// con --no-verify-jwt (ver README.md).
 
 // El tsc de la app también lee este archivo (tsconfig incluye **/*.ts) y no conoce Deno.
 declare const Deno: { env: { get(nombre: string): string | undefined } };
@@ -16,9 +22,12 @@ declare const Deno: { env: { get(nombre: string): string | undefined } };
 const APPLE = 'https://appleid.apple.com';
 const ESPERA_MS = 10_000;
 
-type CodigoDeError = 'metodo' | 'sin_sesion' | 'pedido' | 'configuracion' | 'auth' | 'apple' | 'borrar' | 'interno';
-type Respuesta = { ok: true } | { error: CodigoDeError; apple?: string };
-type Auth = { url: string; clave: string };
+type CodigoDeError = 'metodo' | 'sin_sesion' | 'pedido' | 'configuracion' | 'auth' | 'apple' | 'borrar' | 'separar' | 'interno';
+/** `queda`: el usuario de Auth sigue porque también es la cuenta de Ascent (solo se le quitó Apple). */
+type Respuesta = { ok: true; queda?: boolean } | { error: CodigoDeError; apple?: string };
+type Servidor = { url: string; clave: string };
+type Identidad = { id: string; proveedor: string };
+type Usuario = { id: string; identidades: Identidad[] };
 type Apple = { equipo: string; idDeClave: string; clavePrivada: string; cliente: string };
 
 const responder = (estado: number, cuerpo: Respuesta) => Response.json(cuerpo, { status: estado });
@@ -27,6 +36,9 @@ const responder = (estado: number, cuerpo: Respuesta) => Response.json(cuerpo, {
 // de error, que podría traer parte de una respuesta.
 const registrar = (...partes: (string | number)[]) => console.error('moss-borrar-cuenta:', ...partes);
 const nombreDe = (e: unknown) => (e instanceof Error ? e.name : typeof e);
+/** El código de error de Auth (con la versión 2024-01-01 de su API, `code`; sin ella, `error_code`). */
+const codigoDeAuth = (datos: { code?: unknown; error_code?: unknown } | null) => (typeof datos?.code === 'string' ? datos.code : typeof datos?.error_code === 'string' ? datos.error_code : '');
+const codigoParaElLog = (codigo: string) => (/^[a-z_]{1,40}$/.test(codigo) ? codigo : '-');
 
 /** Un pedido con tope: si Apple o Auth no contestan, la app se entera y no se borra nada. */
 const pedir = (url: string, init: RequestInit = {}) => fetch(url, { ...init, signal: AbortSignal.timeout(ESPERA_MS) });
@@ -55,10 +67,10 @@ async function borrarLaCuenta(pedido: Request): Promise<Response> {
     registrar('faltan SUPABASE_URL o la clave secreta');
     return responder(500, { error: 'configuracion' });
   }
-  const auth: Auth = { url: `${url}/auth/v1`, clave };
+  const servidor: Servidor = { url, clave };
 
   // Primero quién llama: sin una sesión válida no se le pide nada a Apple.
-  const usuario = await quienLlama(auth, jwt);
+  const usuario = await quienLlama(servidor, jwt);
   if (usuario === 'borrado') return responder(200, { ok: true });
   if (usuario === 'sin_sesion') return responder(401, { error: 'sin_sesion' });
   if (usuario === 'caido') return responder(502, { error: 'auth' });
@@ -73,7 +85,17 @@ async function borrarLaCuenta(pedido: Request): Promise<Response> {
     if (revocada !== true) return responder(502, { error: 'apple', apple: revocada });
   }
 
-  return (await borrarUsuario(auth, usuario.id)) ? responder(200, { ok: true }) : responder(500, { error: 'borrar' });
+  if (!(await borrarLoDeMoss(servidor, usuario.id))) return responder(500, { error: 'borrar' });
+
+  // Solo de Moss: el usuario entero. Sin identidades conocidas no se borra: podría ser de Ascent.
+  const soloDeMoss = usuario.identidades.length > 0 && usuario.identidades.every((i) => i.proveedor === 'apple');
+  if (soloDeMoss) return (await borrarUsuario(servidor, usuario.id)) ? responder(200, { ok: true }) : responder(500, { error: 'borrar' });
+
+  for (const identidad of usuario.identidades.filter((i) => i.proveedor === 'apple')) {
+    const quitada = await quitarIdentidad(servidor, jwt, identidad.id);
+    if (quitada !== true) return responder(500, { error: quitada });
+  }
+  return responder(200, { ok: true, queda: true });
 }
 
 /** `{ codigoDeApple? }`, o null si el cuerpo no es eso. Sin cuerpo es borrar sin Apple. */
@@ -111,35 +133,67 @@ function configDeApple(): Apple | null {
   return equipo && idDeClave && clavePrivada ? { equipo, idDeClave, clavePrivada, cliente } : null;
 }
 
+/** Las identidades como las devuelve Auth: `identity_id` es la de la fila (la que se quita), `id` es la del proveedor. */
+function identidadesDe(lista: unknown): Identidad[] {
+  if (!Array.isArray(lista)) return [];
+  return lista.flatMap((i) => (typeof i?.provider === 'string' ? [{ id: typeof i.identity_id === 'string' ? i.identity_id : '', proveedor: i.provider }] : []));
+}
+
 /**
- * Quién llama, según Auth (el pedido de `auth.getUser(jwt)`). Si el usuario ya no existe, la cuenta
- * ya está borrada: pasa si la respuesta del primer intento se perdió y la app lo vuelve a pedir.
+ * Quién llama, según Auth (el pedido de `auth.getUser(jwt)`), con sus identidades. Si el usuario ya
+ * no existe, la cuenta ya está borrada: pasa si la respuesta del primer intento se perdió y la app lo
+ * vuelve a pedir.
  */
-async function quienLlama(auth: Auth, jwt: string): Promise<{ id: string } | 'borrado' | 'sin_sesion' | 'caido'> {
+async function quienLlama(servidor: Servidor, jwt: string): Promise<Usuario | 'borrado' | 'sin_sesion' | 'caido'> {
   let r: Response;
   try {
-    r = await pedir(`${auth.url}/user`, {
-      headers: { apikey: auth.clave, Authorization: `Bearer ${jwt}`, 'X-Supabase-Api-Version': '2024-01-01' },
+    r = await pedir(`${servidor.url}/auth/v1/user`, {
+      headers: { apikey: servidor.clave, Authorization: `Bearer ${jwt}`, 'X-Supabase-Api-Version': '2024-01-01' },
     });
   } catch (e) {
     registrar('Auth no respondió', nombreDe(e));
     return 'caido';
   }
   const datos = await r.json().catch(() => null);
-  if (r.ok) return typeof datos?.id === 'string' ? { id: datos.id } : 'caido';
-  if (datos?.code === 'user_not_found' || datos?.error_code === 'user_not_found') return 'borrado';
+  if (r.ok) return typeof datos?.id === 'string' ? { id: datos.id, identidades: identidadesDe(datos.identities) } : 'caido';
+  if (codigoDeAuth(datos) === 'user_not_found') return 'borrado';
   // También el 401: con la clave secreta mal puesta, toda sesión parecería vencida.
   registrar('Auth /user respondió', r.status);
   return r.status === 401 || r.status === 403 ? 'sin_sesion' : 'caido';
 }
 
-/** Borra el usuario de Auth (el pedido de `auth.admin.deleteUser(id)`), y con él todo lo de `moss`. */
-async function borrarUsuario(auth: Auth, id: string): Promise<boolean> {
+/** Todo lo de Moss de la cuenta, con `moss.borrar_cuenta` (0008_vinculo.sql), por PostgREST y con la clave de servicio. */
+async function borrarLoDeMoss(servidor: Servidor, cuenta: string): Promise<boolean> {
   try {
-    const r = await pedir(`${auth.url}/admin/users/${encodeURIComponent(id)}`, {
+    const r = await pedir(`${servidor.url}/rest/v1/rpc/borrar_cuenta`, {
+      method: 'POST',
+      headers: {
+        apikey: servidor.clave,
+        Authorization: `Bearer ${servidor.clave}`,
+        'Content-Type': 'application/json',
+        // Las funciones de Moss están en el esquema moss, no en public.
+        'Content-Profile': 'moss',
+      },
+      body: JSON.stringify({ cuenta }),
+    });
+    if (r.ok) return true;
+    const datos = await r.json().catch(() => null);
+    // El código es de Postgres o de PostgREST (PGRST202…): dice qué pasó sin repetir el mensaje.
+    registrar('borrar_cuenta respondió', r.status, typeof datos?.code === 'string' && /^[A-Z0-9]{1,10}$/.test(datos.code) ? datos.code : '-');
+    return false;
+  } catch (e) {
+    registrar('la base no respondió', nombreDe(e));
+    return false;
+  }
+}
+
+/** Borra el usuario de Auth (el pedido de `auth.admin.deleteUser(id)`): solo cuando es solo de Moss. */
+async function borrarUsuario(servidor: Servidor, id: string): Promise<boolean> {
+  try {
+    const r = await pedir(`${servidor.url}/auth/v1/admin/users/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       // Como el cliente de administración de supabase-js: la clave en apikey y en Authorization.
-      headers: { apikey: auth.clave, Authorization: `Bearer ${auth.clave}`, 'Content-Type': 'application/json' },
+      headers: { apikey: servidor.clave, Authorization: `Bearer ${servidor.clave}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ should_soft_delete: false }),
     });
     // 404: otro pedido la borró antes.
@@ -150,6 +204,35 @@ async function borrarUsuario(auth: Auth, id: string): Promise<boolean> {
     registrar('Auth no respondió al borrar', nombreDe(e));
     return false;
   }
+}
+
+/**
+ * Le quita la identidad de Apple al usuario que también es de Ascent (el pedido de
+ * `auth.unlinkIdentity()`, con la sesión de quien llama: Auth no tiene uno de administración para
+ * esto). Necesita *Allow manual linking* en el proyecto; sin eso Auth responde 404
+ * `manual_linking_disabled` y es un error de configuración.
+ */
+async function quitarIdentidad(servidor: Servidor, jwt: string, identidad: string): Promise<true | 'separar' | 'configuracion'> {
+  if (!identidad) {
+    registrar('Auth no mandó el identity_id de Apple');
+    return 'separar';
+  }
+  let r: Response;
+  try {
+    r = await pedir(`${servidor.url}/auth/v1/user/identities/${encodeURIComponent(identidad)}`, {
+      method: 'DELETE',
+      headers: { apikey: servidor.clave, Authorization: `Bearer ${jwt}`, 'X-Supabase-Api-Version': '2024-01-01' },
+    });
+  } catch (e) {
+    registrar('Auth no respondió al quitar Apple', nombreDe(e));
+    return 'separar';
+  }
+  if (r.ok) return true;
+  const codigo = codigoDeAuth(await r.json().catch(() => null));
+  // Otro pedido ya la quitó.
+  if (codigo === 'identity_not_found') return true;
+  registrar('Auth no quitó Apple', r.status, codigoParaElLog(codigo));
+  return codigo === 'manual_linking_disabled' ? 'configuracion' : 'separar';
 }
 
 /**

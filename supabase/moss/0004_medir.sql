@@ -1,5 +1,6 @@
 -- Moss · esquema 4: cómo se mide lo comido (spec/nutricion.md, «Cómo se miden los alimentos») y el
--- catálogo en el servidor (spec/decisiones.md, D11).
+-- catálogo en el servidor (spec/decisiones.md, D11). Borrar la cuenta de Moss va en
+-- 0008_vinculo.sql, cuando ya están todas las tablas y el vínculo.
 --
 -- Lo comido sigue las reglas de siempre. El catálogo es distinto: no es de nadie, lo escribe solo
 -- Moss con la clave de servicio y lo lee cualquier usuario con sesión (la entrada pide la cuenta).
@@ -18,21 +19,6 @@ alter table moss.perfiles
   add column semana_altos smallint[] check (semana_altos <@ array[0, 1, 2, 3, 4, 5, 6]::smallint[] and cardinality(semana_altos) between 1 and 6),
   add column semana_extra smallint check (semana_extra in (200, 300, 500)),
   add constraint perfiles_semana_check check ((semana_altos is null) = (semana_extra is null));
-
--- Borrar la cuenta (spec/ascent.md, «Borrar la cuenta»): es la misma de Ascent, así que borra los
--- datos de las dos apps; Moss lo avisa antes. La corre el dueño de la función, el único que puede
--- borrar en auth.users, y solo borra la cuenta de quien la llama. Revocar el token de Apple va en
--- la función del servidor moss-borrar-cuenta (supabase/functions/), que la app usa primero; esta queda
--- mientras la función no esté desplegada.
-create or replace function moss.borrar_cuenta() returns void
-language sql
-security definer
-set search_path = ''
-as $$
-  delete from auth.users where id = (select auth.uid());
-$$;
-revoke execute on function moss.borrar_cuenta() from public, anon;
-grant execute on function moss.borrar_cuenta() to authenticated;
 
 -- Los productos y los platos ya van dentro de la app (assets/alimentos.db), así andan sin conexión
 -- desde el primer día. Esta tabla corrige y suma sin sacar una versión nueva: una fila con el id de

@@ -1128,7 +1128,8 @@
     "borrarDatosTitulo": "¿Borrar tus datos de Moss?",
     "borrarDatosTexto": "Se borran tus hábitos, lo que comiste, tu peso, tus medidas y tus metas, en este teléfono y en tu cuenta. La cuenta queda.",
     "borrarCuentaTitulo": "¿Borrar la cuenta?",
-    "borrarCuentaTexto": "Se borran tu cuenta y todo lo que guardaste con ella, en cualquier app donde entres con esta cuenta. No se puede deshacer.",
+    "borrarCuentaTexto": "Se borran tu cuenta de Moss y todo lo de Moss: tus hábitos, lo que comiste, tu peso, tus medidas, tus noches y tus metas, en este teléfono y en el servidor. No se puede deshacer.",
+    "borrarCuentaConAscent": "Tu cuenta de Ascent sigue intacta: solo deja de recibir tus datos de Moss.",
     "cerrarSesionTitulo": "¿Cerrar sesión?",
     "cerrarSesionTexto": "Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
     "errorBorrar": "No se pudo. Revisa la conexión e inténtalo de nuevo.",
@@ -1402,7 +1403,7 @@
     "bajada": "Vincula las dos apps y tu sueño y tu comida se cruzan con tu entrenamiento.",
     "vincular": "Vincular con Ascent",
     "conseguir": "¿No tienes Ascent? Búscala en la App Store",
-    "permiso": "Vincular da permiso para que las dos apps compartan tus datos, y se quita desde Perfil.",
+    "permiso": "Vincular conecta tu cuenta de Moss con la de Ascent para que compartan datos: cada una sigue siendo una cuenta aparte, con lo suyo. Se quita desde Perfil.",
     "soloConLasDos": "Solo con las dos",
     "mejorConectadas": "Andan solas, mejor conectadas",
     "conAscent": "Con Ascent",
@@ -1529,11 +1530,6 @@
           "subir": "Volumen: Ascent espera que subas"
         }
       },
-      "cuenta": {
-        "titulo": "Tus amigos",
-        "texto": "La misma lista de amigos en las dos apps.",
-        "vivo": "{n} amigos de Ascent"
-      },
       "proteina": {
         "titulo": "Proteína después de entrenar",
         "texto": "Una sesión más grande que las de siempre sube la proteína de ese día.",
@@ -1643,7 +1639,7 @@
         "Tus entrenamientos, con sus series y tus marcas",
         "Tu peso"
       ],
-      "nota": "Lo de cada app queda en cada app. Puedes desvincularlas cuando quieras, desde Perfil.",
+      "nota": "Cada app sigue con su cuenta y lo suyo. Puedes desvincularlas cuando quieras, desde Perfil.",
       "vincular": "Vincular",
       "ahoraNo": "Ahora no",
       "sinSesion": {
@@ -1658,7 +1654,7 @@
       },
       "sinCuenta": {
         "titulo": "Primero, tu cuenta de Moss",
-        "texto": "Vincular junta tu cuenta de Moss con la de Ascent: hace falta haber entrado a Moss."
+        "texto": "Vincular conecta tu cuenta de Moss con la de Ascent: hace falta haber entrado a Moss."
       },
       "conCorreo": "Entrar con tu cuenta de Ascent",
       "correo": "Correo de Ascent",

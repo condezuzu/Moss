@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
+import { useAscent } from '@/almacen/ascent';
 import type { AvisoDeHabito, Cuando, Evento } from '@/dominio/avisos';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
@@ -64,7 +65,10 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
   const [nombre, setNombre] = useState(original?.nombre ?? '');
   const [icono, setIcono] = useState<string>(original?.icono ?? 'star');
   const [dias, setDias] = useState<DiaSemana[]>(original?.dias ?? TODOS);
-  const [fuente, setFuente] = useState<Fuente>(original?.fuente ?? { tipo: 'manual' });
+  const ascent = useAscent();
+  // El gimnasio de Ascent sin el vínculo es un hábito más, a mano: el editor ya lo muestra así, y así se guarda.
+  const sinAscent = ascent.listo && !ascent.vinculo.vinculada;
+  const [fuente, setFuente] = useState<Fuente>(original ? (original.fuente.tipo === 'ascent' && sinAscent ? { tipo: 'manual' } : original.fuente) : { tipo: 'manual' });
   // Mientras el nombre sea el propuesto, sigue a la meta que se elige.
   const [nombrePropio, setNombrePropio] = useState(!!original && original.nombre !== nombreDe(original.fuente));
   const guardado = original ? e.avisos.habitos?.find((a) => a.habito === original.id) : undefined;
