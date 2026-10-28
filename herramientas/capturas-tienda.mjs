@@ -333,7 +333,7 @@ const PANTALLAS = [
     n: 4, nombre: 'inicio',
     texto: { es: 'Lo que te queda hoy', en: 'What’s left for today' },
     // Con tres hábitos ya tocados en el cielo, como a la noche: la tarjeta del cielo no queda vacía.
-    async armar(p) {
+    async armar(p, idioma) {
       await pestana(p, 4);
       await esperarCielo(p);
       const cielo = await p.evaluate(() => globalThis.__cielo);
@@ -344,6 +344,18 @@ const PANTALLAS = [
       }
       await pestana(p, 0);
       await p.waitForTimeout(1500);
+      // Con todos los bloques, la tarjeta del cielo queda cortada por la barra: como haría alguien
+      // desde «Personalizar Inicio», se esconde el progreso al objetivo (Progreso ya lo muestra).
+      await p.getByText(tx(idioma, 'inicio.personalizar'), { exact: true }).first().click();
+      await p.waitForTimeout(1200);
+      await p.getByRole('switch', { name: tx(idioma, 'inicio.bloques.objetivo') }).first().click();
+      await p.waitForTimeout(500);
+      await p.keyboard.press('Escape');
+      await p.waitForTimeout(900);
+      await p.mouse.move(p.viewportSize().width / 2, 400);
+      await p.mouse.wheel(0, -3000);
+      await p.waitForTimeout(900);
+      await p.mouse.move(1, 1);
     },
   },
   {
