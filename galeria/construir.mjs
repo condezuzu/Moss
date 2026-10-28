@@ -123,7 +123,7 @@ function tienda() {
     const archivo = `${String(c.n).padStart(2, '0')}-${c.nombre}.jpg`;
     return { ...c, es: jpeg(`es-${archivo}`), en: jpeg(`en-${archivo}`) };
   }).filter((c) => c.es || c.en);
-  return { icono: jpeg('icono.jpg'), capturas };
+  return { icono: jpeg('icono.jpg'), iconoRecibido: jpeg('icono-recibido.jpg'), capturas };
 }
 const datosDeTienda = tienda();
 if (!datosDeTienda) console.warn('Sin capturas/tienda/vista (npm run tienda:capturas): la sección «Tienda» queda vacía.');

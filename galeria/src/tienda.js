@@ -58,7 +58,8 @@ const SeccionTienda = (() => {
       <h3 class="td-sub">El ícono</h3>
       <div class="td-iconos">
         ${datos.icono ? `
-        <figure class="td-figura"><img class="td-cuadrado" src="${datos.icono}" alt="El ícono de Moss, cuadrado"><figcaption>El archivo: 1024 × 1024,<br>cuadrado y sin transparencia</figcaption></figure>
+        ${datos.iconoRecibido ? `<figure class="td-figura"><img class="td-cuadrado" src="${datos.iconoRecibido}" alt="El ícono que mandaste, tal cual"><figcaption>El que mandaste,<br>tal cual</figcaption></figure>` : ''}
+        <figure class="td-figura"><img class="td-cuadrado" src="${datos.icono}" alt="El ícono de Moss, cuadrado"><figcaption>El de la build: assets/images/icon.png,<br>1024 × 1024, sin transparencia</figcaption></figure>
         <figure class="td-figura"><img class="td-grande" src="${datos.icono}" alt="El ícono de Moss, con las esquinas del iPhone"><figcaption>Con las esquinas que le pone iOS</figcaption></figure>
         <figure class="td-figura">
           <div class="td-inicio" aria-label="El ícono de Moss en la pantalla de inicio">
