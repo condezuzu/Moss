@@ -136,7 +136,7 @@ SDK y la memoria no alcanza.
 | `npm run galeria` | arma `galeria/dist/index.html` con los shaders, el catálogo, los textos, los alimentos curados y los módulos de la comida |
 | `npm run galeria:ver` | sirve la galería en http://localhost:4173 |
 | `npm run galeria:capturas` | capturas a 393×852 @2× en `capturas/galeria` (ver los escenarios abajo) |
-| `npm run tienda:capturas` | las capturas para la App Store (spec/revision.md «e»), sacadas de la galería con su texto arriba: `capturas/tienda/<tamaño>/<idioma>/`, en 1320×2868 y 1206×2622 (con `npm run galeria:ver` prendido) |
+| `npm run tienda:capturas` | las capturas para la App Store (spec/revision.md «e»), sacadas de la app de verdad en la web con una persona inventada (Lucía), dentro de un iPhone dibujado y con su texto arriba: `capturas/tienda/<tamaño>/<idioma>/`, en 1320×2868 y 1206×2622, y las vistas chicas para la galería en `capturas/tienda/vista/` (con `npm run web:ver` prendido; después, `npm run galeria`) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
 | `npm run web:exportar` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
 | `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas, Inicio y el «+»), decir lo que comí y, en un navegador limpio, las primeras pantallas de la entrada |
@@ -261,5 +261,6 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `ascent.js`: Ascent, arriba de Hábitos, sin vincular y vinculada.
 - `habitos.js`: Hábitos: el editor, «Tu mes» y los primeros hábitos.
 - `widgets.js`: los widgets, en la pantalla de inicio, la bloqueada y StandBy, con su sección.
+- `tienda.js`: la sección «Tienda»: el ícono y las capturas de la App Store, en es y en.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
   «+» en la barra.

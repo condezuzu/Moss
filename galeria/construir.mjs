@@ -1,7 +1,8 @@
 // Arma galeria/dist/index.html: un solo archivo con la página, los shaders del cielo, el
 // catálogo, los textos, los alimentos curados y los módulos de la app que usa (la comida, las
 // metas, el control, el cuerpo, el progreso, el sueño con y sin reloj, el rendimiento y los músculos
-// con Ascent, y las estadísticas de Hábitos). Todo se lee
+// con Ascent, y las estadísticas de Hábitos), y para la sección «Tienda», el ícono y las capturas
+// de la App Store achicadas (capturas/tienda/vista). Todo lo demás se lee
 // de src/ y de assets/, que es lo mismo que usa la app: la galería nunca tiene una copia propia.
 // Uso: npm run galeria
 
@@ -111,6 +112,22 @@ if (faltan.length) {
 const alimentos = alimentosCurados();
 if (!alimentos) console.warn('Sin assets/alimentos.db (npm run alimentos): la galería de la comida queda sin alimentos.');
 
+// La sección «Tienda»: las vistas chicas en JPEG que deja npm run tienda:capturas (los PNG de tamaño
+// exacto pesan demasiado para un solo HTML). Sin correr esa herramienta, la sección lo dice.
+function tienda() {
+  const carpeta = join(raiz, 'capturas/tienda/vista');
+  const textos = leerJson('capturas/tienda/vista/textos.json');
+  if (!textos) return null;
+  const jpeg = (archivo) => (existsSync(join(carpeta, archivo)) ? 'data:image/jpeg;base64,' + readFileSync(join(carpeta, archivo)).toString('base64') : null);
+  const capturas = textos.map((c) => {
+    const archivo = `${String(c.n).padStart(2, '0')}-${c.nombre}.jpg`;
+    return { ...c, es: jpeg(`es-${archivo}`), en: jpeg(`en-${archivo}`) };
+  }).filter((c) => c.es || c.en);
+  return { icono: jpeg('icono.jpg'), capturas };
+}
+const datosDeTienda = tienda();
+if (!datosDeTienda) console.warn('Sin capturas/tienda/vista (npm run tienda:capturas): la sección «Tienda» queda vacía.');
+
 // "</" adentro de un <script> lo cortaría.
 const json = (v) => JSON.stringify(v).replace(/<\//g, '<\\/');
 const js = [
@@ -118,6 +135,7 @@ const js = [
   `const CATALOGO = ${json(catalogo)};`,
   `const TEXTOS = ${json(textos)};`,
   `const ALIMENTOS = ${json(alimentos)};`,
+  `const TIENDA = ${json(datosDeTienda)};`,
   modulo('Buscar', 'src/comida/buscar.ts'),
   modulo('Porciones', 'src/comida/porciones.ts'),
   modulo('RecetaDeTexto', 'src/comida/recetaDeTexto.ts'),
@@ -139,7 +157,7 @@ const js = [
   modulo('Musculos', 'src/dominio/musculos.ts'),
   modulo('Rendimiento', 'src/dominio/rendimiento.ts'),
   modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'widgets', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'widgets', 'tienda', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

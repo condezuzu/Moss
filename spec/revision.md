@@ -618,31 +618,33 @@ tamaños:
 | 6,9" (Dynamic Island, grande) | **1320 × 2868** (o 1290 × 2796) | iPhone 16, 17 y 18 Pro Max | 440 × 956 × 3 |
 | Dynamic Island, mediana | 1206 × 2622 (o 1179 × 2556) | iPhone 16 Pro, 17, 17 Pro y 18 Pro (y tu 15 Pro, a 1179 × 2556) | 402 × 874 × 3 |
 
-`npm run app:capturas` hoy saca 393 × 852 × 2 (786 × 1704), que **no sirve**:
-le falta un modo de tienda a × 3 con esos dos viewports. Lo que no se puede
+**Cómo.** `npm run tienda:capturas` (herramientas/capturas-tienda.mjs) las saca
+de la app de verdad en la web (`npm run web:exportar` y `web:ver`), a × 3 con
+esos dos viewports, con una persona inventada, **Lucía**, sin correo: tres
+semanas de comidas de la base, siete de pesadas y dos de noches sin reloj, a las
+ocho y pico de la noche (le falta la cena). La web se corrige solo en lo que
+dibuja distinto del iPhone: los márgenes de la isla, los SF Symbols (dibujados
+en línea fina), la sombra de las vistas sin fondo y el panel de prueba del cielo.
+Cada pantalla va dentro de un iPhone dibujado, con la hora 9:41, sobre el azul
+noche de `src/tema.ts`, con el texto arriba en Cormorant Garamond, crema. Las
+vistas chicas quedan en la sección «Tienda» de la galería. Lo que no se puede
 sacar de la web (los widgets) sale de tu iPhone.
 
-**Cómo.** Desde la app en la web (`npm run web:exportar` y `web:ver`), con la
-persona de ejemplo (`persona.ts`, `ejemplo.ts`) pero con **un nombre inventado**
-(por ejemplo, Lucía; no el tuyo) y sin correo. El texto va arriba, sobre el
-cielo, en la serif de Moss, y abajo la pantalla.
-
-**El orden** (las tres primeras se ven en la búsqueda: comida primero):
+**El orden** (las tres primeras se ven en la búsqueda: lo mejor primero):
 
 | # | Pantalla | Texto en español | Texto en inglés |
 |---|---|---|---|
-| 1 | Inicio: lo que queda hoy, la luna y los macros | Lo que te queda hoy, de un vistazo | What’s left today, at a glance |
-| 2 | La hoja de registro: la búsqueda y la comida que se arma | Registra en pocos toques | Log food in a few taps |
-| 3 | Decir lo que comí: lo dicho y los alimentos entendidos | Dilo y queda anotado | Say it, and it’s logged |
-| 4 | El escáner y la revisión de la etiqueta | Escanea el código o la etiqueta | Scan the barcode or the label |
-| 5 | Progreso: el peso con su tendencia y el último control | Metas que se ajustan cada semana | Targets that adjust every week |
-| 6 | Sueño: la noche, la deuda y el despertador | Tu sueño, con reloj o sin él | Your sleep, with or without a watch |
-| 7 | Hábitos: la constelación de hoy | Cada hábito es una estrella | Every habit is a star |
-| 8 | Optativa, del iPhone: el widget del cielo y «Anoche» en la pantalla bloqueada | Tu cielo y tu noche, sin abrir Moss | Your sky and your night, without opening Moss |
+| 1 | La hoja de registro de la cena: la búsqueda y la comida que se arma abajo | Anota tu comida en segundos | Log your meals in seconds |
+| 2 | Hábitos: la constelación de hoy, con el día completo | Cada hábito, una estrella | Every habit is a star |
+| 3 | Sueño: anoche, las noches y la deuda | Tu sueño, noche a noche | Your sleep, night by night |
+| 4 | Inicio: lo que queda hoy, la luna y los macros | Lo que te queda hoy | What’s left for today |
+| 5 | Decir lo que comí: lo dicho y los alimentos entendidos | Dilo de una vez | Say it all at once |
+| 6 | Progreso: el objetivo y el peso con su tendencia | Tu progreso, semana a semana | Your progress, week by week |
+| 7 | Optativa, del iPhone: el widget del cielo y «Anoche» en la pantalla bloqueada | Tu cielo y tu noche, sin abrir Moss | Your sky and your night, without opening Moss |
 
-**Datos:** tres semanas de la persona de ejemplo; comidas de todos los días (sin
-bebidas alcohólicas); un peso que baja de a poco hacia 71 kg; hábitos como
-Meditar 10 min, Dormir 7 h y Leer 20 páginas; noches con y sin reloj.
+**Datos:** los de Lucía (arriba): comidas de todos los días, sin bebidas
+alcohólicas; un peso que baja de a poco de 71,8 a 69,6 kg, con meta en 65; los
+hábitos de ejemplo (Meditar 10 min, Dormir 7 h, Leer 20 páginas…).
 
 **Reglas:** la app en uso (no la entrada, la cuenta ni el arranque); datos
 inventados; sin precios ni «gratis»; sin «el más preciso» ni nada médico; sin la
