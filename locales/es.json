@@ -17,6 +17,8 @@
       "Me voy a dormir": "Me voy a dormir",
       "Me desperté": "Me desperté",
       "Paré el despertador de Moss": "Paré el despertador de Moss"
-    }
+    },
+    "NSPhotoLibraryUsageDescription": "Moss usa tus fotos solo cuando eliges una: la de una comida o la de tu perfil. Las fotos quedan en el teléfono y Moss no las sube.",
+    "NSPhotoLibraryAddUsageDescription": "Moss guarda en tus fotos solo una imagen que tú eliges guardar."
   }
 }

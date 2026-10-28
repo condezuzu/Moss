@@ -30,7 +30,8 @@
         "NSAlarmKitUsageDescription": "Moss suena a la hora que eliges en Sueño y anota cuándo paras la alarma, para saber a qué hora te despertaste.",
         "LSApplicationQueriesSchemes": [
           "ascent"
-        ]
+        ],
+        "NSPhotoLibraryAddUsageDescription": "Moss guarda en tus fotos solo una imagen que tú eliges guardar."
       },
       "entitlements": {
         "keychain-access-groups": [
@@ -204,7 +205,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": false,
+          "photosPermission": "Moss usa tus fotos solo cuando eliges una: la de una comida o la de tu perfil. Las fotos quedan en el teléfono y Moss no las sube.",
           "cameraPermission": "Moss usa la cámara para escanear el código de barras o la etiqueta nutricional de lo que comes, y para sacar la foto de una comida o la de tu perfil, si quieres. La etiqueta se lee en el teléfono y Moss no sube tus fotos.",
           "microphonePermission": "Moss usa el micrófono solo mientras dices lo que comiste, para anotarlo. Moss no guarda el audio."
         }

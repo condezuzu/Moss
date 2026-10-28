@@ -17,6 +17,8 @@
       "Me voy a dormir": "I'm going to sleep",
       "Me desperté": "I woke up",
       "Paré el despertador de Moss": "I stopped the Moss alarm"
-    }
+    },
+    "NSPhotoLibraryUsageDescription": "Moss uses your photos only when you pick one: a meal photo or your profile photo. Photos stay on your phone, and Moss never uploads them.",
+    "NSPhotoLibraryAddUsageDescription": "Moss saves to your photos only an image you choose to save."
   }
 }
