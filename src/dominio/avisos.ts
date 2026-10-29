@@ -17,7 +17,7 @@
 //   cambio de hora no corre nada. La noche es del día en que empieza: un aviso a las 0:15 de esa
 //   noche es 1455. Cada día se agrupa aparte.
 
-import type { Comida } from './comidas';
+import { horasCorridas, type Comida } from './comidas';
 import { claveDeMarca, type Marca } from './dias';
 import { diaDeLaSemana, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import { tocaElDia, type Fuente, type Habito } from './habitos';
@@ -105,6 +105,8 @@ export const VENTANA = 20;
 export const MAXIMO_POR_DIA = 6;
 /** Pesarse, al rato de despertarse: antes de desayunar, como se pesa en el control. */
 export const PESARSE_DESPUES = 10;
+/** Y siempre al menos esto antes del desayuno de siempre. */
+export const ANTES_DEL_DESAYUNO = 15;
 /** Sin noches para saber cuándo se despierta: a las 8. */
 const PESARSE_SIN_SUENO = 8 * 60;
 /**
@@ -253,11 +255,16 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     else if (c.tipo === 'despertar') fijos.push({ ...aviso, minutos: (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues });
     else if (c.tipo === 'dormir') fijos.push({ ...aviso, minutos: (horas.acostarse ?? DORMIR_SIN_SUENO) - c.antes });
   }
-  const horario = Object.entries(ajustes.horario ?? {}).filter(([, m]) => Number.isFinite(m)) as [Comida, number][];
+  // Hoy, lo que falta corre con la última comida que anotaste (lo pediste el 29/10/2026): desayunar
+  // hora y media tarde corre el aviso del almuerzo y el de la cena lo mismo.
+  const anotadasHoy = Object.fromEntries(Object.entries(op.eventos ?? {}).filter(([k]) => k !== 'entrenamiento')) as Partial<Record<Comida, number>>;
+  const corridas = horasCorridas(Object.fromEntries((ajustes.comidas ?? []).map((c) => [c, op.horaDeComida(c)])), anotadasHoy);
+  const delHorario = horasCorridas(ajustes.horario ?? {}, anotadasHoy);
+  const horario = (Object.keys(ajustes.horario ?? {}) as Comida[]).map((c) => [c, delHorario[c]] as [Comida, number]).filter(([, m]) => Number.isFinite(m));
   for (const [comida, minutos] of horario) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });
   for (const comida of ajustes.comidas ?? []) {
-    const enHorario = ajustes.horario?.[comida];
-    const minutos = Math.min(ULTIMO_DE_COMIDA, (enHorario ?? op.horaDeComida(comida)) + DESPUES_MIN);
+    const enHorario = delHorario[comida];
+    const minutos = Math.min(ULTIMO_DE_COMIDA, (enHorario ?? corridas[comida] ?? op.horaDeComida(comida)) + DESPUES_MIN);
     // Con una comida tarde en el horario, el de «sin anotar» sonaría con el de su hora o antes: alcanza con ese.
     if (enHorario !== undefined && minutos - enHorario <= VENTANA) continue;
     fijos.push({ id: `comida:${comida}`, tipo: 'comida', comida, minutos });
@@ -265,7 +272,11 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   if (ajustes.pesarse?.encendido) {
     const control = op.diaDelControl === semana;
     if (control || ajustes.pesarse.todos) {
-      const minutos = horas.despertar !== null ? horas.despertar + PESARSE_DESPUES : PESARSE_SIN_SUENO;
+      // Al rato de despertarte y antes de desayunar (lo pediste el 29/10/2026): si desayunás enseguida,
+      // un cuarto de hora antes del desayuno de siempre, pero nunca antes de despertarte.
+      const alDespertar = horas.despertar !== null ? horas.despertar + PESARSE_DESPUES : PESARSE_SIN_SUENO;
+      const desayuno = (ajustes.horario?.desayuno ?? op.horaDeComida('desayuno')) - ANTES_DEL_DESAYUNO;
+      const minutos = Math.max(horas.despertar ?? 0, Math.min(alDespertar, desayuno));
       fijos.push({ id: 'pesarse', tipo: 'pesarse', minutos, ...(control ? { control: true } : {}) });
     }
   }
@@ -273,8 +284,10 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   const maximo = Math.max(0, Math.floor(ajustes.maximoPorDia ?? MAXIMO_POR_DIA));
   const plan = elegir(agrupar(fijos.map(redondo).filter(valido)), conEvento.map((e) => e.aviso.id), maximo);
 
+  // Pesarse, después de desayunar, ya no es lo mismo: con el desayuno anotado no suena.
   const falta = (a: Aviso) =>
-    !(a.habito && op.marcas?.get(claveDeMarca(a.habito, dia))?.hecho) && !(a.comida && op.anotadas?.has(a.comida)) && !(a.tipo === 'pesarse' && op.pesado);
+    !(a.habito && op.marcas?.get(claveDeMarca(a.habito, dia))?.hecho) && !(a.comida && op.anotadas?.has(a.comida))
+    && !(a.tipo === 'pesarse' && (op.pesado || op.anotadas?.has('desayuno')));
   const grupos = plan.grupos.map((g) => ({ minutos: g.minutos, avisos: g.avisos.filter(falta) }));
   const solos: Grupo[] = [];
   for (const e of conEvento) {

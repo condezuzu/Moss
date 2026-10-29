@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { comidaDeLaHora } from './comidas';
+import { comidaDeLaHora, horasCorridas, HORA_TIPICA } from './comidas';
 
 const a = (h: number, m = 0) => comidaDeLaHora(h * 60 + m);
 
@@ -29,5 +29,23 @@ describe('comidaDeLaHora', () => {
     expect(a(23, 59)).toBe('cena');
     expect(a(0)).toBe('snack');
     expect(a(2, 15)).toBe('snack');
+  });
+});
+
+describe('horasCorridas: lo que falta corre con la última que comiste', () => {
+  const h = (hh: number, m = 0) => hh * 60 + m;
+
+  it('desayunar hora y media tarde corre el almuerzo, la merienda y la cena lo mismo', () => {
+    expect(horasCorridas(HORA_TIPICA, { desayuno: h(9, 30) })).toEqual({ desayuno: h(9, 30), almuerzo: h(14, 30), merienda: h(19), cena: h(22, 30) });
+  });
+
+  it('almorzar temprano adelanta lo que sigue; lo de antes queda donde estaba', () => {
+    expect(horasCorridas(HORA_TIPICA, { desayuno: h(8, 20), almuerzo: h(12) })).toEqual({ desayuno: h(8, 20), almuerzo: h(12), merienda: h(16, 30), cena: h(20) });
+  });
+
+  it('sin nada anotado, las de siempre; lo que no tiene hora de siempre no corre', () => {
+    expect(horasCorridas(HORA_TIPICA, {})).toEqual(HORA_TIPICA);
+    expect(horasCorridas({ almuerzo: h(13), cena: h(21) }, { desayuno: h(9) })).toEqual({ desayuno: h(9), almuerzo: h(13), cena: h(21) });
+    expect(horasCorridas({ desayuno: h(8), almuerzo: h(13), cena: h(21) }, { desayuno: h(9), snack: h(11) })).toEqual({ desayuno: h(9), almuerzo: h(14), cena: h(22), snack: h(11) });
   });
 });

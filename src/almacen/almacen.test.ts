@@ -434,6 +434,26 @@ describe('lo que se come', () => {
     expect(almacen.estado().registros.get(armados[0].id)?.planificado).toBe(true);
   });
 
+  it('anotar o confirmar una comida la pone a su hora y corre lo planificado que sigue, con la misma distancia', async () => {
+    const { almacen, ir } = await armar();
+    const comida = (c: 'desayuno' | 'almuerzo' | 'cena', item = banana()) => ({ comida: c, opcion: c, items: [item], valores: item.valores });
+    // El plan, armado a las 7: desayuno a las 8, almuerzo a las 13 y cena a las 21 (en Montevideo, UTC−3).
+    ir('2026-10-21T10:00:00Z');
+    const horas: Record<string, number> = { desayuno: 8 * 60, almuerzo: 13 * 60, cena: 21 * 60 };
+    const [, almuerzo, cena] = almacen.planificar('2026-10-21', [comida('desayuno'), comida('almuerzo', alfajor()), comida('cena')], (c) => horas[c]);
+    // «Comí esto» del desayuno a las 9:30: hora y media tarde.
+    ir('2026-10-21T12:30:00Z');
+    almacen.confirmarComida('2026-10-21', 'desayuno');
+    const r = almacen.estado().registros;
+    expect(vigentes(r.values()).find((x) => x.comida === 'desayuno')!.momento).toBe('2026-10-21T12:30:00.000Z');
+    expect(r.get(almuerzo.id)!.momento.slice(11, 16)).toBe('17:30');
+    expect(r.get(cena.id)!.momento.slice(11, 16)).toBe('01:30');
+    // Almorzar media hora antes de lo corrido adelanta la cena media hora.
+    ir('2026-10-21T17:00:00Z');
+    almacen.registrar([alfajor()], { comida: 'almuerzo' });
+    expect(almacen.estado().registros.get(cena.id)!.momento.slice(11, 16)).toBe('01:00');
+  });
+
   it('se cargan solo los últimos cuatro meses de lo comido', async () => {
     const viejo: Registro = { ...alfajor(), id: 'viejo', dia: '2026-05-01', comida: 'snack', momento: '2026-05-01T15:00:00.000Z', planificado: false, actualizado: '2026-05-01T15:00:00.000Z' };
     const reciente: Registro = { ...viejo, id: 'reciente', dia: '2026-09-01' };

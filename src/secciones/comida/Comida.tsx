@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { elAlmacen } from '@/almacen';
 import { DIAS_DE_COMIDA, type Estado } from '@/almacen/almacen';
 import { conMayuscula } from '@/comida/buscar';
-import { comidaDeLaHora, type Comida } from '@/dominio/comidas';
+import { comidaDeLaHora, horasCorridas, type Comida } from '@/dominio/comidas';
 import { diasEntre, lunesDe, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import type { Linea } from '@/dominio/alrededorDelEntreno';
@@ -432,7 +432,11 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   const ahora = minutosEnElDia(new Date(), dia);
   // Qué comer antes y después de entrenar: en la comida que toca, aunque todavía no sea su hora.
   const lineas = dia === e.hoy ? lineasDeHoy(e) : new Map<Comida, Linea>();
-  for (const [tipo, minutos] of Object.entries(HORA_TIPICA) as [Comida, number][]) {
+  // Lo que falta, corrido por la última que comiste: con la misma distancia entre ellas.
+  const anotadas = Object.fromEntries(comidas.filter((c) => !c.planificada).map((c) => [c.comida, c.minutos]));
+  const horas = horasCorridas({ ...HORA_TIPICA, ...e.avisos.horario }, anotadas);
+  for (const tipo of Object.keys(HORA_TIPICA) as Comida[]) {
+    const minutos = horas[tipo] ?? HORA_TIPICA[tipo as keyof typeof HORA_TIPICA];
     if (comidas.some((c) => c.comida === tipo)) continue;
     if (dia !== e.hoy) entradas.push({ tipo: 'vacia', comida: tipo, ahora: false, minutos });
     else {

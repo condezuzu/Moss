@@ -20,6 +20,31 @@ const FRANJAS: readonly (readonly [number, Comida])[] = [
   [19 * 60 + 30, 'cena'],
 ];
 
+/** Las que tienen hora en el día, en orden: el snack va a cualquier hora y no corre nada. */
+export const CON_HORA = ['desayuno', 'almuerzo', 'merienda', 'cena'] as const;
+
+/**
+ * Las horas de las comidas que todavía faltan, corridas por la última que ya anotaste (lo pediste el
+ * 29/10/2026): si desayunaste una hora y media más tarde que siempre, el almuerzo, la merienda y la
+ * cena van una hora y media más tarde, con la misma distancia entre ellas; si más temprano, más
+ * temprano. Lo anotado queda a su hora. `base` son las horas de siempre (o las del horario) y
+ * `anotadas`, cuándo se anotó cada una ese día, en minutos del día.
+ */
+export function horasCorridas(base: Partial<Record<Comida, number>>, anotadas: Partial<Record<Comida, number>>): Partial<Record<Comida, number>> {
+  const r: Partial<Record<Comida, number>> = { ...base, ...anotadas };
+  let corrimiento = 0;
+  for (const c of CON_HORA) {
+    const anotada = anotadas[c];
+    const deSiempre = base[c];
+    if (anotada !== undefined) {
+      if (deSiempre !== undefined) corrimiento = anotada - deSiempre;
+    } else if (deSiempre !== undefined) {
+      r[c] = deSiempre + corrimiento;
+    }
+  }
+  return r;
+}
+
 /**
  * La comida que toca a una hora, en minutos desde la medianoche. Lo de después de la medianoche en la
  * cuenta del día anterior (D32: la 1470 son las 0:30) es de madrugada, como a esa hora del reloj.

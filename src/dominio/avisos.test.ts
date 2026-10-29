@@ -282,9 +282,31 @@ describe('el horario de comidas y pesarse', () => {
     expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }))).toEqual([[h('7:30') + PESARSE_DESPUES, ['pesarse']]]);
   });
 
-  it('pesarse no avisa si ya se pesó, y sin datos del sueño va a las 8', () => {
+  it('pesarse no avisa si ya se pesó; sin datos del sueño, a las 8 o antes del desayuno de siempre', () => {
     expect(delDia({ pesarse: { encendido: true, todos: true } }, { pesado: true })).toEqual([]);
-    expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }, { sueno: null }))).toEqual([[h('8:00'), ['pesarse']]]);
+    // El desayuno de siempre es a las 8: un cuarto de hora antes.
+    expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }, { sueno: null }))).toEqual([[h('7:45'), ['pesarse']]]);
+  });
+
+  it('hoy, el horario y lo de «sin anotar» corren con la última comida que anotaste', () => {
+    const horario = { desayuno: h('8:00'), almuerzo: h('13:00'), cena: h('21:00') };
+    // Desayunaste a las 9:30: hora y media tarde.
+    const hoy = delDia({ horario, comidas: ['cena'] }, { eventos: { desayuno: h('9:30') }, anotadas: new Set<Comida>(['desayuno']) });
+    const cuando = (id: string) => hoy.find((n) => n.avisos.some((a) => a.id === id))?.minutos;
+    expect(cuando('horario:almuerzo')).toBe(h('14:30'));
+    expect(cuando('horario:cena')).toBe(h('22:30'));
+    // Otro día, sin nada anotado, a su hora.
+    const otro = delDia({ horario });
+    expect(otro.find((n) => n.avisos.some((a) => a.id === 'horario:almuerzo'))?.minutos).toBe(h('13:00'));
+  });
+
+  it('pesarse va antes del desayuno: si desayunás enseguida, antes; nunca antes de despertarte; anotado el desayuno, no suena', () => {
+    const temprano = (desayuno: string) => ({ horaDeComida: (c: Comida) => (c === 'desayuno' ? h(desayuno) : HORA_DE_COMIDA[c]) });
+    expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }, temprano('7:50')))).toEqual([[h('7:35'), ['pesarse']]]);
+    expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }, temprano('7:35')))).toEqual([[h('7:30'), ['pesarse']]]);
+    // Con horario de comidas, el desayuno del horario.
+    expect(resumen(delDia({ pesarse: { encendido: true, todos: true }, horario: { desayuno: h('7:40') } })).find(([, ids]) => (ids as string[]).includes('pesarse'))?.[0]).toBe(h('7:30'));
+    expect(delDia({ pesarse: { encendido: true, todos: true } }, { anotadas: new Set<Comida>(['desayuno']) })).toEqual([]);
   });
 });
 

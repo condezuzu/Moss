@@ -6,12 +6,12 @@
 import type { Calidad } from '@/cielo/mundo';
 import type { Constelacion } from '@/datos/catalogo';
 import type { Sistema } from '@/dominio/cantidades';
-import { COMIDAS, HORA_TIPICA, type Comida } from '@/dominio/comidas';
+import { COMIDAS, CON_HORA, HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
-import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, diaLogico, partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, diaLogico, minutosEnElDia, partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
@@ -606,7 +606,30 @@ export function crearAlmacen(op: Opciones) {
       id: nuevoId(), dia, comida: donde.comida, momento: new Date(desde + i).toISOString(), planificado: dia > estado.hoy, actualizado: cuando,
     }));
     ponerComida('registros', nuevos);
+    if (dia === estado.hoy) correrLoQueSigue(dia, donde.comida, new Date(desde));
     return nuevos;
+  }
+
+  /**
+   * Lo planificado que sigue a una comida que se acaba de anotar corre lo mismo que ella (lo pediste el
+   * 29/10/2026): si el desayuno planificado era a las 8 y desayunaste a las 9:30, el almuerzo
+   * planificado pasa de las 13 a las 14:30, con la misma distancia entre las comidas. La hora de
+   * referencia es la del plan para esa comida o, sin plan, la del horario o la de siempre.
+   */
+  function correrLoQueSigue(dia: ClaveDia, comida: Comida, cuando: Date) {
+    const orden = CON_HORA as readonly Comida[];
+    const i = orden.indexOf(comida);
+    if (i < 0) return;
+    const planificados = [...estado.registros.values()].filter((r) => !r.borrado && r.dia === dia && r.planificado);
+    const delPlan = planificados.filter((r) => r.comida === comida).map((r) => minutosEnElDia(new Date(r.momento), dia));
+    const referencia = delPlan.length ? Math.min(...delPlan) : (estado.avisos.horario?.[comida] ?? HORA_TIPICA[comida as keyof typeof HORA_TIPICA]);
+    const corrimiento = minutosEnElDia(cuando, dia) - referencia;
+    // Un rato no cambia nada: el plan queda como estaba.
+    if (Math.abs(corrimiento) < 5) return;
+    const cambian = planificados
+      .filter((r) => orden.indexOf(r.comida) > i)
+      .map((r) => ({ ...r, momento: new Date(Date.parse(r.momento) + corrimiento * 60_000).toISOString(), actualizado: momento() }));
+    if (cambian.length) ponerComida('registros', cambian);
   }
 
   /** La hora de dormir y cuántos avisos por día: lo que cambia se suma a lo que había. */
@@ -836,7 +859,12 @@ export function crearAlmacen(op: Opciones) {
     planificar,
     /** «Comí esto»: lo planificado de una comida pasa a anotado, con un toque. Devuelve los ids, para deshacer. */
     confirmarComida(dia: ClaveDia, comida: Comida): string[] {
-      const hechos = confirmar(estado.registros.values(), dia, momento(), comida);
+      const cuando = momento();
+      // «Comí esto» hoy: a la hora en que lo dijiste, y lo planificado que sigue corre lo mismo (antes
+      // de confirmar, mientras la hora del plan de esta comida sigue a mano).
+      const hoy = dia === estado.hoy;
+      const hechos = confirmar(estado.registros.values(), dia, cuando, comida).map((r, i) => (hoy ? { ...r, momento: new Date(Date.parse(cuando) + i).toISOString() } : r));
+      if (hoy && hechos.length) correrLoQueSigue(dia, comida, new Date(cuando));
       ponerComida('registros', hechos);
       return hechos.map((r) => r.id);
     },
