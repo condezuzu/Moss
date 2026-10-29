@@ -999,7 +999,7 @@
     },
     "afinar": {
       "titulo": "Afinar",
-      "texto": "Sin reloj, Moss estima tu noche con el teléfono. Con esto sabe la hora exacta en que te despertaste o te fuiste a dormir, y pregunta menos.",
+      "texto": "Sin reloj, Moss estima tu noche con el teléfono y aprende cuánto tardas en dormirte. Para que sepa la hora exacta sin armar nada, usa el despertador de Moss o toca «Me voy a dormir» en el aviso de la noche. Los atajos son opcionales.",
       "hoy": "hoy, {hora}",
       "ayer": "ayer, {hora}",
       "dia": "{dia}, {hora}",
@@ -1024,7 +1024,7 @@
       },
       "atajos": {
         "titulo": "Atajos automáticos",
-        "fila": "La alarma del Reloj, el cargador y el enfoque Sueño",
+        "fila": "Opcional: la alarma del Reloj, el cargador y el enfoque Sueño",
         "texto": "iOS no deja que una app arme automatizaciones sola: se arman una vez en la app Atajos, en un minuto cada una. Después corren solas, aun con Moss cerrada, y Moss solo anota la hora.",
         "abrir": "Abrir Atajos",
         "pasos": [
@@ -1297,7 +1297,7 @@
       "horario": "Horario de comidas",
       "horarioTexto": "Te avisa a la hora de cada comida, para comer ordenado. Si ya la anotaste, no suena; si tienes un plan, dice qué toca.",
       "pesarse": "Pesarme a la mañana",
-      "pesarseTexto": "Al rato de despertarte, antes de desayunar: la tendencia sale de pesarte siempre igual. Si ya te pesaste, no suena.",
+      "pesarseTexto": "Al rato de despertarte, después de ir al baño y antes de desayunar: la tendencia sale de pesarte siempre igual. Si ya te pesaste, no suena.",
       "pesarseControl": "El día del control",
       "pesarseTodos": "Todos los días"
     },
@@ -1821,8 +1821,8 @@
       "snack": "Hora del snack"
     },
     "conPlan": "{hora}: {plan}.",
-    "pesarse": "Buen momento para pesarte, antes de desayunar.",
-    "pesarseControl": "Hoy es el día del control: buen momento para pesarte, antes de desayunar."
+    "pesarse": "Buen momento para pesarte: después del baño y antes de desayunar.",
+    "pesarseControl": "Hoy es el día del control: buen momento para pesarte, después del baño y antes de desayunar."
   },
   "entreno": {
     "previa": "Entrenas a las {hora}: esta comida es tu previa.",

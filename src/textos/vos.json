@@ -197,7 +197,8 @@
           "Tocá Listo."
         ],
         "siri": "«Me voy a dormir» y «Me desperté» también están en Atajos: decíselas a Siri («Moss, me voy a dormir») o ponelas en el botón de Acción."
-      }
+      },
+      "texto": "Sin reloj, Moss estima tu noche con el teléfono y aprende cuánto tardás en dormirte. Para que sepa la hora exacta sin armar nada, usá el despertador de Moss o tocá «Me voy a dormir» en el aviso de la noche. Los atajos son opcionales."
     }
   },
   "perfil": {

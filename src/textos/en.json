@@ -999,7 +999,7 @@
     },
     "afinar": {
       "titulo": "Fine-tune",
-      "texto": "Without a watch, Moss estimates your night with your phone. With these, it knows the exact time you woke up or went to sleep, and asks less.",
+      "texto": "Without a watch, Moss estimates your night with your phone and learns how long you take to fall asleep. To know the exact time without setting anything up, use Moss's alarm or tap “Going to bed” on the bedtime notification. Shortcuts are optional.",
       "hoy": "today, {hora}",
       "ayer": "yesterday, {hora}",
       "dia": "{dia}, {hora}",
@@ -1024,7 +1024,7 @@
       },
       "atajos": {
         "titulo": "Automatic shortcuts",
-        "fila": "Your Clock alarm, the charger and the Sleep Focus",
+        "fila": "Optional: your Clock alarm, the charger and the Sleep Focus",
         "texto": "iOS doesn't let an app create automations by itself: you set each one up once in the Shortcuts app, in about a minute. Then they run on their own, even with Moss closed, and Moss only notes the time.",
         "abrir": "Open Shortcuts",
         "pasos": [
@@ -1297,7 +1297,7 @@
       "horario": "Meal times",
       "horarioTexto": "A reminder at each meal time, to keep your meals on schedule. If you already logged it, it stays quiet; with a plan, it says what’s next.",
       "pesarse": "Morning weigh-in",
-      "pesarseTexto": "Right after you wake up, before breakfast: the trend comes from weighing the same way. If you already weighed in, it stays quiet.",
+      "pesarseTexto": "Shortly after you wake up, after the bathroom and before breakfast: the trend comes from weighing the same way. If you already weighed in, it stays quiet.",
       "pesarseControl": "Check-in day",
       "pesarseTodos": "Every day"
     },
@@ -1821,8 +1821,8 @@
       "snack": "Time for your snack"
     },
     "conPlan": "{hora}: {plan}.",
-    "pesarse": "Good time to weigh in, before breakfast.",
-    "pesarseControl": "Check-in day: good time to weigh in, before breakfast."
+    "pesarse": "Good time to weigh in: after the bathroom and before breakfast.",
+    "pesarseControl": "Check-in day: good time to weigh in, after the bathroom and before breakfast."
   },
   "entreno": {
     "previa": "You train at {hora}: this is your pre-workout meal.",
