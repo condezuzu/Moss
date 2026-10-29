@@ -275,6 +275,8 @@ comprobar(
     && await conVentana('2026-10-11', '2026-10-11T02:30:00Z', '2026-10-11T11:20:00Z').then(() => true, () => false),
   'la ventana tranquila de una noche: las dos horas juntas, solo con lo estimado y la primera antes que la última',
 );
+// La de prueba se va: lo que sigue cuenta las noches de A.
+await como(A, `delete from moss.noches where fecha = '2026-10-11'`);
 const subirNoche = (cara, dormirse, despertar, origen, actualizado) => como(A, `
   insert into moss.noches (fecha, cara, dormirse, despertar, origen, confianza, actualizado) values ('2026-10-21', $1, $2, $3, $4, case when $4::text is null then null else 'media' end, $5)
   on conflict (usuario, fecha) do update set cara = excluded.cara, dormirse = excluded.dormirse, despertar = excluded.despertar,
