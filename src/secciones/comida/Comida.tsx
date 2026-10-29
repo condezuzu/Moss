@@ -5,7 +5,7 @@
 
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
@@ -165,6 +165,9 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
   const pos = useSharedValue(VISTAS.indexOf(vista));
   const desde = useSharedValue(0);
   const altos = useSharedValue<number[]>([0, 0, 0]);
+  // Las tres medidas llegan juntas: leer el valor compartido, cambiar una y escribirlo perdía las
+  // otras en el iPhone (la lectura vuelve vieja), y el cuadro quedaba sin alto al volver de «Mes».
+  const medidas = useRef([0, 0, 0]);
   // La vista cambia también desde los puntos de abajo o al tocar un día: el cuadro va solo.
   useEffect(() => {
     pos.set(viaje(VISTAS.indexOf(vista)));
@@ -196,11 +199,12 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
   const estiloTira = useAnimatedStyle(() => ({ transform: [{ translateX: -pos.get() * ancho }] }));
   const estiloAlto = useAnimatedStyle(() => {
     const a = altos.get();
+    // Hasta tener las tres medidas, el alto natural (devolver {} después de un alto dejaría el último).
+    if (!a[0] || !a[1] || !a[2]) return {};
     const p = entre(pos.get(), 0, 2);
     const i = Math.floor(p);
     const f = p - i;
-    const alto = a[i] * (1 - f) + a[Math.min(2, i + 1)] * f;
-    return alto ? { height: alto } : {};
+    return { height: a[i] * (1 - f) + a[Math.min(2, i + 1)] * f };
   });
   return (
     <GestureDetector gesture={pan}>
@@ -211,10 +215,8 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
               key={i}
               style={[estilos.pagina, { width: ancho }]}
               onLayout={(ev) => {
-                const alto = ev.nativeEvent.layout.height;
-                const a = [...altos.get()];
-                a[i] = alto;
-                altos.set(a);
+                medidas.current[i] = ev.nativeEvent.layout.height;
+                altos.set([...medidas.current]);
               }}
             >
               {pagina}

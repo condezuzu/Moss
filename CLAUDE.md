@@ -106,7 +106,7 @@ SDK y la memoria no alcanza.
     y `npm run alimentos:verificar` (los tests del buscador corren contra la
     base armada).
   - Si tocaste los shaders: `npm run shaders:verificar`.
-  - Si tocaste el cielo de la app: `npm run web:exportar` y
+  - Si tocaste el cielo de la app: `npm run web:exportar` (deja la app en `web-exportada/`) y
     `npm run app:capturas` (con `npm run web:ver` prendido).
   - Si tocaste la galería: `npm run galeria` y `npm run galeria:capturas` (con
     `npm run galeria:ver` prendido).

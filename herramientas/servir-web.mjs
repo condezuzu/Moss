@@ -1,4 +1,5 @@
-// Sirve la app exportada para la web (dist/web) en http://localhost:4174.
+// Sirve la app exportada para la web (web-exportada/) en http://localhost:4174. No va en dist/:
+// `eas update` borra esa carpeta cada vez que publica.
 // Uso: npm run web:exportar && npm run web:ver
 // Es la forma de ver el cielo de Skia sin un iPhone: en la web, Skia es CanvasKit.
 
@@ -7,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'web');
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', 'web-exportada');
 const puerto = Number(process.env.PORT) || 4174;
 const tipos = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.wasm': 'application/wasm',
@@ -24,7 +25,13 @@ createServer(async (pedido, respuesta) => {
   } catch {
     // Expo Router con salida "single": toda ruta que no es un archivo es la app.
     archivo = join(raiz, 'index.html');
-    cuerpo = await readFile(archivo);
+    try {
+      cuerpo = await readFile(archivo);
+    } catch {
+      // Sin exportar todavía (o a mitad de exportar): se avisa en vez de caerse.
+      respuesta.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Falta exportar: npm run web:exportar');
+      return;
+    }
   }
   respuesta.writeHead(200, { 'Content-Type': tipos[extname(archivo)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
   respuesta.end(cuerpo);
