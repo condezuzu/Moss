@@ -880,7 +880,7 @@ que contestarlo para mandar cualquier app o actualización.
 |---|---|---|---|
 | In-App Controls | Parental Controls | No | No tiene |
 | | Age Assurance | No | Pide el año de nacimiento y no deja seguir a menores, pero es lo que dice la persona: no confirma la edad (Apple da de ejemplo la Declared Age Range API, estimarla o un documento) |
-| Capabilities | Unrestricted Web Access | No | La política y los términos se abren en el navegador; Moss no tiene uno libre |
+| Capabilities | Unrestricted Web Access | No | La política y los términos se abren dentro de Moss, en una hoja de Safari (desde la 1.1); son solo esas páginas, no un navegador libre |
 | | User-Generated Content | No | Compartir una receta con un enlace es de persona a persona, no una distribución amplia |
 | | Social Media | No | Sin muro ni nada que se difunda |
 | | Messaging and Chat | No | |

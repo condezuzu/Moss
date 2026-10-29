@@ -10,7 +10,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,7 +18,7 @@ import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
 import { EDAD_MINIMA, edadDe, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
-import { urlDe } from '@/lib/sitio';
+import { abrirPagina } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
 import { lista, t } from '@/textos';
@@ -393,14 +393,13 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
 
 /** Lo que se acepta al continuar, con los Términos y la Política de privacidad para abrirlos. */
 function Legal() {
-  const enlaces = { terminos: urlDe('terminos'), privacidad: urlDe('privacidad') } as const;
   return (
     <Text style={[s.chico, s.legal]}>
       {t('entrada.cuenta.legalConEnlaces').split(/(\{\w+\})/).map((parte, k) => {
         const clave = parte.slice(1, -1);
         if (clave !== 'terminos' && clave !== 'privacidad') return parte;
         return (
-          <Text key={k} style={s.enlace} onPress={() => Linking.openURL(enlaces[clave]).catch(() => {})} accessibilityRole="link" suppressHighlighting>
+          <Text key={k} style={s.enlace} onPress={() => abrirPagina(clave)} accessibilityRole="link" suppressHighlighting>
             {t(`entrada.cuenta.${clave}`)}
           </Text>
         );
@@ -428,7 +427,7 @@ function TusDatos({ alSeguir }: { alSeguir: () => void }) {
           </Animated.View>
         ))}
       </View>
-      <Pressable onPress={() => Linking.openURL(urlDe('privacidad')).catch(() => {})} accessibilityRole="link" hitSlop={8}>
+      <Pressable onPress={() => abrirPagina('privacidad')} accessibilityRole="link" hitSlop={8}>
         <Text style={[s.chico, s.enlace, s.izquierda]}>{t('entrada.datos.politica')}</Text>
       </Pressable>
       <Espacio />

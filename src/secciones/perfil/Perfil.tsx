@@ -12,7 +12,7 @@ import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextIn
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
-import { urlDe } from '@/lib/sitio';
+import { abrirPagina } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
@@ -118,9 +118,9 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         clave: 'mejorarBase', titulo: t('perfil.mejorarBase'), valor: t(e.mandarBusquedas ? 'perfil.si' : 'perfil.no'), detalle: t('perfil.mejorarBaseTexto'),
         alTocar: () => elAlmacen().ponerMandarBusquedas(!e.mandarBusquedas),
       },
-      { clave: 'politica', titulo: t('perfil.politica'), alTocar: () => { Linking.openURL(urlDe('privacidad')).catch(() => {}); } },
-      { clave: 'terminos', titulo: t('perfil.terminos'), alTocar: () => { Linking.openURL(urlDe('terminos')).catch(() => {}); } },
-      { clave: 'contacto', titulo: t('perfil.contacto'), alTocar: () => { Linking.openURL(urlDe('contacto')).catch(() => {}); } },
+      { clave: 'politica', titulo: t('perfil.politica'), alTocar: () => abrirPagina('privacidad') },
+      { clave: 'terminos', titulo: t('perfil.terminos'), alTocar: () => abrirPagina('terminos') },
+      { clave: 'contacto', titulo: t('perfil.contacto'), alTocar: () => abrirPagina('contacto') },
       { clave: 'borrarDatos', titulo: t('perfil.borrarDatos'), tipo: 'peligro', alTocar: () => confirmar(t('perfil.borrarDatosTitulo'), t('perfil.borrarDatosTexto'), borrarMisDatos) },
       ...(correo !== null ? [{ clave: 'borrarCuenta', titulo: t('perfil.borrarCuenta'), tipo: 'peligro' as const, alTocar: () => confirmar(t('perfil.borrarCuentaTitulo'), ascent.tipo === 'ok' ? `${t('perfil.borrarCuentaTexto')} ${t('perfil.borrarCuentaConAscent')}` : t('perfil.borrarCuentaTexto'), borrarLaCuenta) }] : []),
     ]],
