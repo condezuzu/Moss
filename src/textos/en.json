@@ -269,7 +269,9 @@
       "etiqueta": "Yours · from the label",
       "receta": "Moss recipe · USDA ingredients",
       "producto": "Product · from its label",
-      "productoOff": "Product · data from Open Food Facts (ODbL)"
+      "productoOff": "Product · data from Open Food Facts (ODbL)",
+      "cadena": "Official · {fuente}",
+      "aproximado": "Approximate · {fuente}"
     },
     "favorito": "Favorite",
     "nombre": "Name",
@@ -538,7 +540,7 @@
       "entender": "Understand",
       "entendiendo": "Understanding…",
       "nada": "I couldn’t find any food. Try saying it another way, or search for it.",
-      "supuesto": "assumed amount",
+      "supuesto": "approximate",
       "noEncontre": "Couldn’t find “{que}”",
       "buscar": "Search for it",
       "todoJunto": "Log it all at once",
@@ -546,6 +548,12 @@
       "cuanto": "How much {que}?",
       "crudo": "Are the {gramos} g raw or cooked?",
       "crudoMedida": "Did you measure it raw or cooked?",
+      "tamano": "Small, medium or large?",
+      "tamanos": {
+        "chico": "Small",
+        "mediano": "Medium",
+        "grande": "Large"
+      },
       "anotado": {
         "uno": "{n} food logged {comida}",
         "otros": "{n} foods logged {comida}"

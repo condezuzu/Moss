@@ -86,15 +86,20 @@ const SIN_VENTANA = { antesDe: 480, despuesDe: 600 };
 /** La mitad del rango que se muestra, en minutos, al dormirte y al despertarte. */
 const RANGO: Record<Confianza, [number, number]> = { alta: [20, 15], media: [35, 25], baja: [60, 45] };
 /**
- * Lo de fábrica pesa como dos respuestas: con tres o cuatro ya manda lo tuyo (spec/sueno.md, «Aprender
- * de cada persona»).
+ * Cuánto pesa lo tuyo contra lo de fábrica (spec/sueno.md, «Aprender de cada persona»): un promedio
+ * con contracción, `n·τ² / (n·τ² + σ²)`, con τ lo que cambia de una persona a otra y σ el ruido de
+ * cada noche (Sahha mide 24 minutos de error mediano por borde). Con una corrección, un tercio; con
+ * tres, más de la mitad; con siete, casi todo.
  */
-const PREVIO = 2;
+const ENTRE_PERSONAS = 25;
+const DE_CADA_NOCHE = 35;
 /**
- * Una corrección pesa como 3 «Sí» (dice algo que Moss no sabía); lo viejo pierde la mitad del peso en
- * 30 noches, y una noche de antes, sin la ventana guardada, pesa la mitad.
+ * Un «Sí» pesa un tercio de una corrección (dice poco: puede ser aceptar sin mirar); lo viejo pierde
+ * la mitad del peso en 30 noches, y una noche de antes, sin la ventana guardada, pesa la mitad.
  */
-const PESO = { corregida: 3, confirmada: 1, vidaMedia: 30, sinVentana: 0.5 };
+const PESO = { corregida: 1, confirmada: 1 / 3, vidaMedia: 30, sinVentana: 0.5 };
+/** Una corrección de más de tres horas es casi siempre un error (la mañana por la tarde): no enseña. */
+const CORRECCION_MAXIMA = 180;
 
 const limitar = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 const mediana = (xs: number[]) => {
@@ -291,8 +296,9 @@ export function habitualDe(noches: Pick<Noche, 'clave' | 'dormirse' | 'despertar
  * diste contra la ventana tranquila de esa noche. Cuánto tardaste en dormirte es la hora en que te
  * dormiste menos la última actividad; en tocar el teléfono, la primera actividad menos la hora en que
  * te despertaste. De cada uno, la mediana con pesos (un dato raro no la mueve), mezclada con lo de
- * Sahha como si fuera dos respuestas. `elegida` es la de «Tardo en dormirme», si se eligió: gana a la
- * aprendida. Las noches de antes, sin la ventana guardada, la toman de lo estimado y pesan la mitad.
+ * Sahha según cuántas respuestas hay (ENTRE_PERSONAS y DE_CADA_NOCHE). `elegida` es la de «Tardo en
+ * dormirme», si se eligió: gana a la aprendida. Las noches de antes, sin la ventana guardada, la
+ * toman de lo estimado y pesan la mitad.
  */
 export function aprenderPersonal(propias: readonly NochePropia[], clave: ClaveDia, elegida?: number | null): Personal {
   const latencias: { x: number; peso: number }[] = [];
@@ -309,13 +315,14 @@ export function aprenderPersonal(propias: readonly NochePropia[], clave: ClaveDi
     const latencia = (Date.parse(h.dormirse) - desde) / MIN;
     const alDespertar = (hasta - Date.parse(h.despertar)) / MIN;
     // Lo que no puede ser (dormirte más de un cuarto de hora antes de la última actividad) no enseña nada.
-    if (latencia >= -15 && latencia <= 300) latencias.push({ x: Math.max(0, latencia), peso });
-    if (alDespertar >= -15 && alDespertar <= 180) despertares.push({ x: Math.max(0, alDespertar), peso });
+    if (latencia >= -15 && latencia - LATENCIA <= CORRECCION_MAXIMA) latencias.push({ x: Math.max(0, latencia), peso });
+    if (alDespertar >= -15 && alDespertar - AL_DESPERTAR <= CORRECCION_MAXIMA) despertares.push({ x: Math.max(0, alDespertar), peso });
   }
   const mezcla = (lista: { x: number; peso: number }[], previo: number, tope: number) => {
     const m = medianaPesada(lista);
-    const pesos = lista.reduce((s, v) => s + v.peso, 0);
-    return m === null ? previo : Math.round(limitar((PREVIO * previo + pesos * m) / (PREVIO + pesos), 0, tope));
+    const n = lista.reduce((s, v) => s + v.peso, 0);
+    const tuyo = (n * ENTRE_PERSONAS ** 2) / (n * ENTRE_PERSONAS ** 2 + DE_CADA_NOCHE ** 2);
+    return m === null ? previo : Math.round(limitar(previo + tuyo * (m - previo), 0, tope));
   };
   const aprendida = mezcla(latencias, LATENCIA, 240);
   return { latencia: elegida ?? aprendida, aprendida, alDespertar: mezcla(despertares, AL_DESPERTAR, 120), noches: Math.max(latencias.length, despertares.length) };

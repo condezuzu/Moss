@@ -34,6 +34,10 @@ export type Detalle = {
   marca: string | null;
   /** 'off' si los datos son de Open Food Facts, que pide nombrarlo (ODbL). */
   atribucion: 'off' | null;
+  /** La comida de una cadena: de dónde salen los valores («McDonald's Uruguay, información nutricional, 2025»). */
+  deDonde: string | null;
+  /** Si los valores son una estimación de Moss y no un dato oficial: se dice «aproximado». */
+  aproximado: boolean;
   por100g: Valores100;
   /** La primera es la de siempre. */
   porciones: PorcionDeAlimento[];
@@ -67,6 +71,7 @@ type FilaAlimento = {
   fibra: number | null; azucares: number | null; saturadas: number | null; sodio: number | null; alcohol: number | null;
   marca: string | null; densidad: number | null; desecho: number | null; desecho_es: string | null; desecho_en: string | null;
   aceite: string | null; crudo: number | null; atribucion: string | null; verificado?: string | null; segunda?: string | null;
+  fuente_texto?: string | null; aproximado?: number | null;
 } & Partial<Record<Micro, number | null>>;
 
 const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
@@ -114,6 +119,8 @@ export async function detalleDeAlimento(base: BaseDeAlimentos, id: number, op: {
     origen: ORIGENES[a.fuente] ?? 'usda',
     marca: a.marca,
     atribucion: a.atribucion === 'off' ? 'off' : null,
+    deDonde: a.fuente_texto ?? null,
+    aproximado: a.aproximado === 1,
     por100g,
     porciones,
     densidad: a.densidad,

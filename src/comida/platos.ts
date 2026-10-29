@@ -1,0 +1,59 @@
+// Las porciones de un plato dicho sin cantidad (D36, lo pediste el 29/10/2026): «un plato de fideos»
+// o «comí guiso» va con la porción mediana, se puede cambiar a chica o grande con una sola pregunta, y
+// queda marcado «aproximado». Los gramos son de comida cocida, como se sirve, de USDA FNDDS, del
+// manual del MSP de Uruguay y de las Guías Alimentarias de Argentina (spec/evidencia-1.1.md, 6).
+// La galería puede usar este archivo: no importa nada.
+
+export type Tamano = 'chico' | 'mediano' | 'grande';
+export const TAMANOS: readonly Tamano[] = ['chico', 'mediano', 'grande'];
+
+/** Chico, mediano y grande, en gramos. */
+export type PorcionesDePlato = Record<Tamano, number>;
+
+/** Sin una fila de la tabla, a partir del «1 plato» del alimento: chico ≈ 0,65 y grande ≈ 1,5 (FNDDS). */
+export const CHICO = 0.65;
+export const GRANDE = 1.5;
+
+/** Lo que se reconoce por el nombre, sin tildes y en minúsculas. El orden importa: lo primero que coincide gana. */
+const TABLA: readonly (readonly [RegExp, PorcionesDePlato])[] = [
+  [/\b(?:guiso|estofado|locro|buseca|mondongo)/, { chico: 200, mediano: 300, grande: 450 }],
+  [/\b(?:sopa|caldo|crema de|puchero)/, { chico: 200, mediano: 300, grande: 450 }],
+  [/\b(?:fideos?|pasta|spaghetti|espagueti|tallarin|noquis?|ravioles?|raviolis?|sorrentinos?|canelones?|lasa(?:n|ñ)a|macarrones?|tirabuzones?|mostachol)/, { chico: 200, mediano: 300, grande: 450 }],
+  [/\bpolenta/, { chico: 200, mediano: 300, grande: 450 }],
+  [/\barroz\b(?! con leche)/, { chico: 160, mediano: 250, grande: 375 }],
+  [/\blentejas?\b/, { chico: 90, mediano: 150, grande: 200 }],
+  [/\bmilanesas?/, { chico: 120, mediano: 160, grande: 240 }],
+  [/\bpure\b/, { chico: 125, mediano: 200, grande: 300 }],
+  [/\bensaladas?\b/, { chico: 75, mediano: 150, grande: 250 }],
+  [/\bpizzas?\b/, { chico: 85, mediano: 120, grande: 160 }],
+  [/\bempanadas?\b/, { chico: 70, mediano: 105, grande: 130 }],
+  [/\b(?:tartas?|pascualina|quiche)\b/, { chico: 120, mediano: 180, grande: 250 }],
+];
+
+const llano = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/**
+ * Las porciones de un plato por su nombre (el del alimento de la base o lo dicho), o null si no es un
+ * plato de la tabla. «Guiso de lentejas» es un guiso, no lentejas solas.
+ */
+export function porcionesDePlato(...nombres: (string | null | undefined)[]): PorcionesDePlato | null {
+  for (const n of nombres) {
+    if (!n) continue;
+    const t = llano(n);
+    const fila = TABLA.find(([re]) => re.test(t));
+    if (fila) return fila[1];
+  }
+  return null;
+}
+
+/** De un «1 plato» de la base (los platos de Moss lo tienen): mediano ese, chico y grande en proporción. */
+export const porcionesDesde = (mediano: number): PorcionesDePlato => ({ chico: Math.round(mediano * CHICO), mediano, grande: Math.round(mediano * GRANDE) });
+
+/** «Chico», «grande»… dicho en la frase: el tamaño del plato, si se dijo. */
+export function tamanoDicho(texto: string): Tamano | null {
+  const t = llano(texto);
+  if (/\b(?:chic[oa]|pequen[oa]|small|little)\b/.test(t)) return 'chico';
+  if (/\b(?:grande|abundante|large|big)\b/.test(t)) return 'grande';
+  if (/\b(?:median[oa]|medium)\b/.test(t)) return 'mediano';
+  return null;
+}

@@ -120,3 +120,24 @@ describe('buscar alimentos', () => {
     expect((await buscar('coke', { idioma: 'en', region: 'US' })).map((r) => r.nombre)).not.toContainEqual(expect.stringMatching(/^Cooked/));
   });
 });
+
+describe('la comida de las cadenas (alimentos/cadenas.txt)', () => {
+  it('se encuentra por su nombre y por cómo se la llama', async () => {
+    expect((await primero('big mac'))?.nombre).toBe('Big Mac');
+    expect((await primero('cuarto de libra'))?.nombre).toMatch(/^Cuarto de Libra/);
+    expect((await primero('mcnuggets'))?.nombre).toBe('Chicken McNuggets');
+  });
+
+  it('cada una dice de dónde salen sus valores; lo que no es oficial, que es aproximado', () => {
+    const filas = db.prepare(`SELECT nombre_es, fuente_texto, aproximado, marca FROM alimentos WHERE id IN (SELECT id FROM alimentos WHERE fuente_texto IS NOT NULL)`).all() as { nombre_es: string; fuente_texto: string; aproximado: number | null; marca: string }[];
+    expect(filas.length).toBeGreaterThanOrEqual(100);
+    expect(filas.every((f) => f.fuente_texto.length > 5 && f.marca)).toBe(true);
+    const bigMac = filas.find((f) => f.nombre_es === 'Big Mac')!;
+    expect(bigMac).toMatchObject({ aproximado: null });
+    expect(bigMac.fuente_texto).toMatch(/McDonald's Uruguay/);
+    // Mostaza y La Pasiva no publican sus valores: todo lo suyo es aproximado.
+    const sinTabla = filas.filter((f) => f.marca === 'Mostaza' || f.marca === 'La Pasiva');
+    expect(sinTabla.length).toBeGreaterThan(10);
+    expect(sinTabla.every((f) => f.aproximado === 1)).toBe(true);
+  });
+});

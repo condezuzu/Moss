@@ -163,3 +163,34 @@ describe('lo dicho, en alimentos de la base', () => {
     expect(papas.pregunta).toBe('cuanto');
   });
 });
+
+describe('los platos dichos sin cantidad (D36)', () => {
+  const gramos = (e: Entendido) => e.opciones.map((o) => ('gramos' in o.cantidad ? o.cantidad.gramos : null));
+
+  it('«un plato de fideos»: mediano, con una sola pregunta (chico, mediano o grande) y aproximado', async () => {
+    const [fideos] = await decir('un plato de fideos', { conocido: () => false });
+    expect(fideos.pregunta).toBe('tamano');
+    expect(gramos(fideos)).toEqual([200, 300, 450]);
+    expect(fideos.elegida).toBe(1);
+    expect(fideos.supuesto).toBe(true);
+  });
+
+  it('con el tamaño dicho no pregunta; dos platos son el doble', async () => {
+    const [grande] = await decir('un plato grande de guiso');
+    expect(grande.pregunta).toBeNull();
+    expect(gramos(grande)).toEqual([450]);
+    expect(grande.supuesto).toBe(true);
+    const [dos] = await decir('dos platos de arroz');
+    expect(gramos(dos)).toEqual([320, 500, 750]);
+  });
+
+  it('un plato sin «plato» y sin cantidad también; lo contado o lo ya comido, no', async () => {
+    const [guiso] = await decir('guiso');
+    expect(guiso.pregunta).toBe('tamano');
+    const [empanadas] = await decir('2 empanadas');
+    expect(empanadas.pregunta).not.toBe('tamano');
+    const [antes] = await decir('guiso', { ultimaCantidad: () => ({ gramos: 280 }), conocido: () => true });
+    expect(antes.pregunta).toBeNull();
+    expect(gramos(antes)).toEqual([280]);
+  });
+});

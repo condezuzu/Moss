@@ -9,12 +9,16 @@ import { valoresDeCantidad } from '@/dominio/registros';
 import { normalizar, type Resultado } from './buscar';
 import type { Detalle } from './detalle';
 import type { Dicho } from './frase';
+import { porcionesDePlato, porcionesDesde, TAMANOS as TAMANOS_DE_PLATO } from './platos';
 import { gramosDeLinea } from './recetaDeTexto';
 
 export type AlimentoDicho = { ref: string; nombre: string; por100g: Valores; porciones: { nombre: string; gramos: number }[] };
 export type Opcion = { alimento: AlimentoDicho; cantidad: Exclude<Cantidad, null>; valores: Valores };
-/** Cuál de varios parecidos («¿qué leche?»), crudo o cocido (se dijeron gramos), o cuánto (no se dijo). */
-export type TipoDePregunta = 'cual' | 'crudo' | 'cuanto';
+/**
+ * Cuál de varios parecidos («¿qué leche?»), crudo o cocido (se dijeron gramos), cuánto (no se dijo), o
+ * el tamaño de un plato dicho sin cantidad (D36: chico, mediano o grande, en ese orden).
+ */
+export type TipoDePregunta = 'cual' | 'crudo' | 'cuanto' | 'tamano';
 
 export type Entendido = {
   dicho: Dicho;
@@ -141,6 +145,13 @@ export function cantidadPara(dicho: Dicho, d: Pick<Detalle, 'porciones' | 'densi
   return { cantidad: p ? { porcion: p.nombre, gramosPorcion: p.gramos, veces: 1 } : { gramos: 100 }, supuesto: true };
 }
 
+/** El «1 plato» (o el bol) de la base, para un plato que no está en la tabla de platos.ts. */
+const PLATO_DE_LA_BASE = /^1\s+(?:plato|bowl|bol|plate)(?![\p{L}])/iu;
+const platoDeLaBase = (d: Pick<Detalle, 'porciones'>) => {
+  const p = d.porciones.find((x) => PLATO_DE_LA_BASE.test(x.nombre));
+  return p ? porcionesDesde(p.gramos) : null;
+};
+
 const alimentoDe = (d: Detalle): AlimentoDicho => ({ ref: String(d.id), nombre: d.nombre, por100g: d.por100g as Valores, porciones: d.porciones });
 const opcion = (d: Detalle, cantidad: Exclude<Cantidad, null>): Opcion => ({ alimento: alimentoDe(d), cantidad, valores: valoresDeCantidad(d.por100g as Valores, cantidad) });
 
@@ -155,7 +166,18 @@ async function entenderUno(dicho: Dicho, p: ParaEntender): Promise<Entendido> {
   const id = deAntes ?? resultados[0]?.id;
   const primero = id === undefined ? null : await p.detalle(id);
   if (!primero) return nada;
-  const { cantidad, supuesto } = cantidadPara(dicho, primero, p.ultimaCantidad(String(primero.id)));
+  const ultima = p.ultimaCantidad(String(primero.id));
+  // Un plato sin cuánto (D36): «un plato de fideos», o «guiso» sin cantidad y sin una vez anterior. La
+  // porción mediana, chica o grande con una sola pregunta (no se pregunta cuál ni crudo o cocido), y
+  // aproximado. Lo que se cuenta («2 empanadas») o se acompaña no es un plato sin cuánto.
+  const plato = porcionesDePlato(primero.nombre, dicho.buscado) ?? (dicho.vago ? platoDeLaBase(primero) : null);
+  if (plato && !ultima && !dicho.acompanante && (dicho.vago || (dicho.cantidad === null && !dicho.unidad))) {
+    const veces = dicho.vago ? (dicho.cantidad ?? 1) : 1;
+    const opciones = TAMANOS_DE_PLATO.map((t) => opcion(primero, { gramos: plato[t] * veces }));
+    if (dicho.plato) return { dicho, opciones: [opciones[TAMANOS_DE_PLATO.indexOf(dicho.plato)]], elegida: 0, pregunta: null, supuesto: true };
+    return { dicho, opciones, elegida: TAMANOS_DE_PLATO.indexOf('mediano'), pregunta: 'tamano', supuesto: true };
+  }
+  const { cantidad, supuesto } = cantidadPara(dicho, primero, ultima);
   const elegida = opcion(primero, cantidad);
   const sola: Entendido = { dicho, opciones: [elegida], elegida: 0, pregunta: null, supuesto };
 

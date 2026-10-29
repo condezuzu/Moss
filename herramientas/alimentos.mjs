@@ -367,7 +367,7 @@ function leerCurados() {
   return curados;
 }
 
-const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'ean', 'off', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]);
+const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'ean', 'off', 'fuente', 'aproximado', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]);
 /** «crudo=Arroz blanco crudo · ml · marca=Conaprole»: cada detalle, con su valor o en true. */
 function leerDetalles(texto, donde) {
   const d = {};
@@ -658,6 +658,10 @@ for (const a of alimentos.values()) {
     a.atribucion = 'off';
     deOff++;
   }
+  // La comida de las cadenas (alimentos/cadenas.txt): de dónde salen sus valores y si son una estimación.
+  if (d.fuente) a.fuenteTexto = String(d.fuente);
+  if (d.aproximado) a.aproximado = 1;
+  if (d.aproximado && !d.fuente) errores.push(`${donde}: lo aproximado dice de dónde sale («fuente=…»)`);
 }
 
 // Lo verificado: primero lo comparado con una segunda fuente; después los platos con todos sus
@@ -718,6 +722,10 @@ db.exec(`
     aceite TEXT,
     crudo INTEGER,
     atribucion TEXT,
+    -- La comida de una cadena: de dónde salen los valores, como se muestra («McDonald's Uruguay,
+    -- información nutricional, 2025»), y 1 si son una estimación de Moss y no un dato oficial.
+    fuente_texto TEXT,
+    aproximado INTEGER,
     -- Verificado: el día y con qué. Una segunda fuente oficial ('cnf:…', 'taco:…', spec/fuentes.md),
     -- 'ingredientes' (un plato con todos sus ingredientes verificados) o 'etiqueta' (un producto
     -- cuya etiqueta cierra). Sin verificar, null.
@@ -746,7 +754,7 @@ db.exec(`
 `);
 db.exec('BEGIN');
 const COLUMNAS = ['id', 'fuente', 'descripcion', 'nombre_es', 'nombre_en', 'categoria', 'kcal', 'proteina', 'carbohidratos', 'grasas', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol',
-  'porcion', 'marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'verificado', 'segunda', ...CLAVES_MICROS];
+  'porcion', 'marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'fuente_texto', 'aproximado', 'verificado', 'segunda', ...CLAVES_MICROS];
 const ponerAlimento = db.prepare(`INSERT INTO alimentos (${COLUMNAS.join(', ')}) VALUES (${COLUMNAS.map(() => '?').join(', ')})`);
 const ponerPorcion = db.prepare('INSERT INTO porciones (alimento, en, es, gramos) VALUES (?, ?, ?, ?)');
 const ponerAlias = db.prepare('INSERT INTO alias VALUES (?, ?, ?, ?)');
@@ -761,7 +769,7 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
   ponerAlimento.run(
     a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas),
     tal(a.fibra), tal(a.azucares), tal(a.saturadas), tal(a.sodio), tal(a.alcohol), null,
-    a.marca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null,
+    a.marca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null, a.fuenteTexto ?? null, a.aproximado ?? null,
     a.verificado ?? null, a.segunda ?? null, ...CLAVES_MICROS.map((k) => fino(a[k])),
   );
   // De los curados: primero sus porciones (la primera es la de siempre); de USDA, solo las que

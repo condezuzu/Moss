@@ -24,6 +24,12 @@ export type Dicho = {
   acompanante?: true;
   /** «Arroz y pollo», que recetaDeTexto lee como dos: si la base no tiene el nombre entero, va cada uno. */
   partes?: Dicho[];
+  /**
+   * Se dijo un plato, un bol o una porción sin cuánto (D36): «un plato de fideos». `plato` es el tamaño
+   * si se dijo («un plato grande de fideos»).
+   */
+  vago?: true;
+  plato?: 'chico' | 'mediano' | 'grande';
 };
 
 /** `ayer`: se dijo «ayer», «anoche», «yesterday» o «last night»: es del día anterior. «Anoche», sin otra comida, es la cena. */
@@ -141,8 +147,12 @@ function prepararTexto(texto: string): { texto: string; comida: Comida | null; a
 }
 
 const PALABRA_CANTIDAD = new RegExp(`^(?:${NUMERO}|un par de|unos|unas|el|la|los|las|some|the)\\s+`, 'u');
-/** «Un plato de arroz»: el plato, el bol o la porción son una porción de lo que sigue. */
-const RECIPIENTE = new RegExp(`^(${NUMERO})\\s+(?:platos?|bol(?:es)?|bowls?|taz[oó]n(?:es)?|cuencos?|porci[oó]n(?:es)?|raci[oó]n(?:es)?|plates?|servings?)\\s+(?:de|of)\\s+`, 'u');
+/**
+ * «Un plato de arroz»: el plato, el bol o la porción son una porción de lo que sigue, quizás con su
+ * tamaño («un plato grande de fideos»).
+ */
+const RECIPIENTE = new RegExp(`^(${NUMERO})\\s+(?:platos?|bol(?:es)?|bowls?|taz[oó]n(?:es)?|cuencos?|porci[oó]n(?:es)?|raci[oó]n(?:es)?|plates?|servings?)(?:\\s+(chic[oa]s?|median[oa]s?|grandes?|peque[nñ][oa]s?|abundantes?|small|medium|large|big))?\\s+(?:de|of)\\s+`, 'u');
+const TAMANO_DEL_PLATO: Record<string, 'chico' | 'mediano' | 'grande'> = { chic: 'chico', pequ: 'chico', smal: 'chico', medi: 'mediano', gran: 'grande', abun: 'grande', larg: 'grande', big: 'grande' };
 
 function dichoDeLinea(texto: string, l: LineaDeReceta, idioma: Idioma): Dicho {
   const medida = l.unidad ? nombreDeMedida(l.unidad, idioma) : null;
@@ -151,7 +161,13 @@ function dichoDeLinea(texto: string, l: LineaDeReceta, idioma: Idioma): Dicho {
 
 /** Un pedazo: con recetaDeTexto; si no encuentra el alimento («un cortado» le parece una preparación), lo que queda sin la cantidad. */
 function leerUno(original: string, idioma: Idioma): Dicho {
-  const texto = original.replace(RECIPIENTE, '$1 ');
+  const recipiente = RECIPIENTE.exec(original);
+  const tamano = recipiente?.[2] ? TAMANO_DEL_PLATO[recipiente[2].slice(0, 4)] ?? TAMANO_DEL_PLATO[recipiente[2].slice(0, 3)] : undefined;
+  const vago = recipiente ? { vago: true as const, ...(tamano ? { plato: tamano } : {}) } : {};
+  return { ...leerSinRecipiente(original, original.replace(RECIPIENTE, '$1 '), idioma), ...vago };
+}
+
+function leerSinRecipiente(original: string, texto: string, idioma: Idioma): Dicho {
   // Este pedazo ya es un solo alimento: si recetaDeTexto lo parte en el «y» («jamón y queso»), se junta.
   const lineas = leerReceta(texto, idioma).lineas.filter((x) => x.buscado);
   const [l] = lineas;

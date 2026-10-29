@@ -12,7 +12,7 @@ import { formasDelCodigo, type CuradoDelPlan, type Detalle, type Valores100 } fr
 type AlimentoWeb = {
   id: number; f: string; es: string; en: string; v: [number, number, number, number]; s: (number | null)[];
   p: [string | null, string, number][]; t: [string, string, number, string][];
-  m: string | null; d: number | null; x: [number, string, string] | null; a: string | null; c: number | null; o: string | null;
+  m: string | null; d: number | null; x: [number, string, string] | null; a: string | null; c: number | null; o: string | null; q?: string; z?: 1;
   /** Los micronutrientes en el orden de MICROS, sin los null del final; y verificado: [día, con qué]. */
   u?: (number | null)[]; w?: [string, string] | null;
 };
@@ -90,6 +90,8 @@ export const baseDeAlimentos = {
       origen: ORIGENES[a.f] ?? 'usda',
       marca: a.m,
       atribucion: a.o === 'off' ? 'off' : null,
+      deDonde: a.q ?? null,
+      aproximado: a.z === 1,
       por100g: valoresDe(a),
       porciones: a.p.map(([es, en, gramos]) => ({ nombre: op.idioma === 'es' ? (es ?? en) : en, gramos })),
       densidad: a.d,

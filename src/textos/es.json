@@ -269,7 +269,9 @@
       "etiqueta": "Tuyo · de la etiqueta",
       "receta": "Receta de Moss · con ingredientes de USDA",
       "producto": "Producto · de su etiqueta",
-      "productoOff": "Producto · datos de Open Food Facts (ODbL)"
+      "productoOff": "Producto · datos de Open Food Facts (ODbL)",
+      "cadena": "Oficial · {fuente}",
+      "aproximado": "Aproximado · {fuente}"
     },
     "favorito": "Favorito",
     "nombre": "Nombre",
@@ -538,7 +540,7 @@
       "entender": "Entender",
       "entendiendo": "Entendiendo…",
       "nada": "No encontré ningún alimento. Prueba diciéndolo de otra manera, o búscalo.",
-      "supuesto": "cantidad supuesta",
+      "supuesto": "aproximado",
       "noEncontre": "No encontré «{que}»",
       "buscar": "Buscarlo",
       "todoJunto": "Anotar todo junto",
@@ -546,6 +548,12 @@
       "cuanto": "¿Qué cantidad de {que}?",
       "crudo": "¿Los {gramos} g son crudos o cocidos?",
       "crudoMedida": "¿Lo mediste crudo o cocido?",
+      "tamano": "¿Chico, mediano o grande?",
+      "tamanos": {
+        "chico": "Chico",
+        "mediano": "Mediano",
+        "grande": "Grande"
+      },
       "anotado": {
         "uno": "{n} alimento anotado {comida}",
         "otros": "{n} alimentos anotados {comida}"

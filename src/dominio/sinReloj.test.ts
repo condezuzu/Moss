@@ -174,16 +174,20 @@ describe('la noche sin reloj', () => {
       expect(aprenderPersonal([], '2026-10-22')).toEqual({ latencia: LATENCIA, aprendida: LATENCIA, alDespertar: 18, noches: 0 });
     });
 
-    it('tres noches en que tardaste dos horas en dormirte: casi dos horas, aunque lo de fábrica sea media hora', () => {
+    it('las noches en que tardaste dos horas en dormirte: con tres, más de la mitad del camino; con siete, casi dos horas', () => {
       // Te dormiste a la 1:30 con la última actividad a las 23:30: dos horas con el teléfono en la cama.
-      const noches = ['2026-10-19', '2026-10-20', '2026-10-21'].map((f) => respuesta(f, '2026-10-20 01:30', '2026-10-20 07:20'));
-      const p = aprenderPersonal(noches, '2026-10-22');
+      const dias = (n: number) => Array.from({ length: n }, (_, i) => `2026-10-${String(21 - i).padStart(2, '0')}`);
+      const p = aprenderPersonal(dias(3).map((f) => respuesta(f, '2026-10-20 01:30', '2026-10-20 07:20')), '2026-10-22');
       expect(p.noches).toBe(3);
-      // Lo de fábrica pesa como dos respuestas y cada corrección como tres: más de 100 minutos.
-      expect(p.latencia).toBeGreaterThan(100);
-      expect(p.latencia).toBeLessThanOrEqual(120);
+      expect(p.latencia).toBeGreaterThan(31 + (120 - 31) / 2);
+      expect(p.latencia).toBeLessThan(100);
       expect(p.alDespertar).toBeGreaterThanOrEqual(10);
       expect(p.alDespertar).toBeLessThan(18);
+      const siete = aprenderPersonal(dias(7).map((f) => respuesta(f, '2026-10-20 01:30', '2026-10-20 07:20')), '2026-10-22');
+      expect(siete.latencia).toBeGreaterThan(95);
+      expect(siete.latencia).toBeLessThanOrEqual(120);
+      // Una corrección de más de tres horas (la tarde por la mañana) no enseña nada.
+      expect(aprenderPersonal([respuesta('2026-10-21', '2026-10-20 13:30', '2026-10-20 15:20')], '2026-10-22').latencia).toBe(LATENCIA);
       // Y la noche de hoy se corre con eso: ya no media hora después de la última actividad.
       const e = estimar(dia('23:30', '07:30'), SIEMPRE, { personal: p })!;
       expect(e.dormirse).toBe(min('2026-10-21 23:30') + p.latencia);

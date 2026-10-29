@@ -14,6 +14,7 @@ import { baseDeAlimentos } from '@/comida/base';
 import { normalizar } from '@/comida/buscar';
 import { claveMedida, entender, type Entendido, type Opcion } from '@/comida/entender';
 import { conCon, leerFrase } from '@/comida/frase';
+import { TAMANOS as TAMANOS_DE_PLATO } from '@/comida/platos';
 import { pasoDeCantidad, pasoDePorcion, type Sistema } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
 import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Cantidad, type Item } from '@/dominio/registros';
@@ -267,7 +268,11 @@ function Fila({ x, sistema, alMover, alQuitar, alElegir, alBuscar }: {
             {x.opciones.map((op, k) => (
               <Pastilla
                 key={k}
-                texto={x.pregunta === 'cuanto' ? cantidadDeTexto(op.cantidad, sistema) : op.alimento.nombre}
+                texto={
+                  x.pregunta === 'tamano'
+                    ? `${t(`comida.decir.tamanos.${TAMANOS_DE_PLATO[k]}`)} · ${cantidadDeTexto(op.cantidad, sistema)}`
+                    : x.pregunta === 'cuanto' ? cantidadDeTexto(op.cantidad, sistema) : op.alimento.nombre
+                }
                 detalle={`${numero(Math.round(op.valores.kcal))} kcal`}
                 elegida={k === x.elegida}
                 alTocar={() => alElegir(k)}
@@ -286,6 +291,7 @@ function preguntaDe(x: Entendido): string {
     const o = x.opciones[0];
     return 'gramos' in o.cantidad ? t('comida.decir.crudo', { gramos: numero(Math.round(o.cantidad.gramos)) }) : t('comida.decir.crudoMedida');
   }
+  if (x.pregunta === 'tamano') return t('comida.decir.tamano');
   return t(x.pregunta === 'cual' ? 'comida.decir.cual' : 'comida.decir.cuanto', { que });
 }
 

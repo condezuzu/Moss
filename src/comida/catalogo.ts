@@ -101,7 +101,7 @@ export function detalleDelCatalogo(filas: FilaDelCatalogo[], id: number, op: { i
   if (f.retirado) return null;
   const crudo = f.crudo !== null ? filas.find((x) => x.id === f.crudo) : undefined;
   return {
-    id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), origen: f.marca ? 'producto' : 'propio', marca: f.marca, atribucion: null,
+    id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), origen: f.marca ? 'producto' : 'propio', marca: f.marca, atribucion: null, deDonde: null, aproximado: false,
     por100g: valoresDe(f),
     porciones: f.porciones.map((p) => ({ nombre: op.idioma === 'es' ? p.es : p.en, gramos: p.gramos })),
     densidad: f.densidad,
