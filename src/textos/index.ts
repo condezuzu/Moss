@@ -2,6 +2,7 @@ import { getLocales } from 'expo-localization';
 
 import en from './en.json';
 import es from './es.json';
+import vos from './vos.json';
 
 export type Idioma = 'es' | 'en';
 
@@ -36,18 +37,45 @@ export type Clave = Rutas<typeof es, string>;
 export type ClaveDeLista = Rutas<typeof es, readonly string[]>;
 export type ClaveDePlural = Rutas<typeof es, Plural>;
 
-let elegido: Idioma | undefined;
+// El voseo es una capa sobre es.json: solo los textos que cambian, con las mismas claves (lo revisa
+// vos.test.ts). Una clave que no está en es.json, o con otra forma, no compila.
+type Parcial<T> = T extends string | readonly string[] ? T : { readonly [K in keyof T]?: Parcial<T[K]> };
+const voseo = vos satisfies Parcial<Forma<typeof es>>;
 
-// iOS reinicia la app cuando cambia el idioma del teléfono: basta con leerlo una vez.
+/** Las regiones donde se habla de vos (lo decidiste el 28/10/2026). */
+const CON_VOSEO = new Set(['UY', 'AR']);
+
+let elegido: Idioma | undefined;
+let conVos: boolean | undefined;
+
+// iOS reinicia la app cuando cambia el idioma o la región del teléfono: basta con leerlos una vez.
 export function idioma(): Idioma {
   elegido ??= /^es(-|$)/i.test(getLocales()[0].languageTag) ? 'es' : 'en';
   return elegido;
 }
 
-function buscar(clave: string): unknown {
-  let nodo: unknown = diccionarios[idioma()];
-  for (const parte of clave.split('.')) nodo = (nodo as Record<string, unknown>)[parte];
+/** Si la app habla de vos: en español, con el teléfono en Uruguay o Argentina. */
+export function hablaDeVos(): boolean {
+  if (conVos === undefined) {
+    const l = getLocales()[0];
+    const region = l.regionCode ?? l.languageTag.split('-')[1];
+    conVos = idioma() === 'es' && !!region && CON_VOSEO.has(region.toUpperCase());
+  }
+  return conVos;
+}
+
+function enDiccionario(raiz: unknown, clave: string): unknown {
+  let nodo = raiz;
+  for (const parte of clave.split('.')) nodo = (nodo as Record<string, unknown> | undefined)?.[parte];
   return nodo;
+}
+
+function buscar(clave: string): unknown {
+  if (hablaDeVos()) {
+    const deVos = enDiccionario(voseo, clave);
+    if (deVos !== undefined) return deVos;
+  }
+  return enDiccionario(diccionarios[idioma()], clave);
 }
 
 function interpolar(texto: string, variables: Variables = {}): string {

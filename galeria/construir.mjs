@@ -128,6 +128,16 @@ function tienda() {
 const datosDeTienda = tienda();
 if (!datosDeTienda) console.warn('Sin capturas/tienda/vista (npm run tienda:capturas): la sección «Tienda» queda vacía.');
 
+// La revisión, antes y después: capturas/revision/vista/pares.json dice qué fotos van juntas.
+function revision() {
+  const carpeta = join(raiz, 'capturas/revision/vista');
+  const pares = leerJson('capturas/revision/vista/pares.json');
+  if (!pares) return null;
+  const jpeg = (archivo) => (existsSync(join(carpeta, archivo)) ? 'data:image/jpeg;base64,' + readFileSync(join(carpeta, archivo)).toString('base64') : null);
+  return pares.map((p) => ({ ...p, fotos: p.fotos.map((x) => ({ rotulo: x.rotulo, src: jpeg(x.archivo) })).filter((x) => x.src) }));
+}
+const datosDeRevision = revision();
+
 // "</" adentro de un <script> lo cortaría.
 const json = (v) => JSON.stringify(v).replace(/<\//g, '<\\/');
 const js = [
@@ -136,6 +146,7 @@ const js = [
   `const TEXTOS = ${json(textos)};`,
   `const ALIMENTOS = ${json(alimentos)};`,
   `const TIENDA = ${json(datosDeTienda)};`,
+  `const REVISION = ${json(datosDeRevision)};`,
   modulo('Buscar', 'src/comida/buscar.ts'),
   modulo('Porciones', 'src/comida/porciones.ts'),
   modulo('RecetaDeTexto', 'src/comida/recetaDeTexto.ts'),
@@ -157,7 +168,7 @@ const js = [
   modulo('Musculos', 'src/dominio/musculos.ts'),
   modulo('Rendimiento', 'src/dominio/rendimiento.ts'),
   modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'widgets', 'tienda', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

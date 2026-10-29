@@ -12,7 +12,7 @@ import type { DiaDelCielo } from './dia';
 import { encajar, mundoDelFondo, profundidades, proyectar, separar, ZONA_UNIVERSO, type Punto } from './mundo';
 import { armarMusgo, type Brote } from './musgo';
 
-export type Lado = 'abajo' | 'der' | 'izq';
+export type Lado = 'abajo' | 'arriba' | 'der' | 'izq';
 
 /** La distancia mínima entre dos estrellas de hoy, en puntos: más cerca, cuesta tocar la que se quiere. */
 const SEPARACION = 60;
@@ -59,25 +59,51 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo): Plano
     ? estrellas.reduce<Punto>((s, p) => [s[0] + p[0] / estrellas.length, s[1] + p[1] / estrellas.length], [0, 0])
     : ([0, 0.075] as Punto);
 
-  // Cada etiqueta va del lado de afuera de la constelación, para no taparle las líneas. Nunca
-  // arriba: la estrella más alta quedaría pegada a la cabecera. Si de costado no entra, va abajo.
+  // Cada etiqueta va del lado de afuera de la constelación, para no taparle las líneas; si de
+  // costado no entra, va abajo. Arriba, solo si tapa menos que los otros lados y lejos de la cabecera.
   let x0 = Infinity, x1 = -Infinity;
   estrellas.forEach(([x]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); });
   const anchoFigura = Math.max(x1 - x0, 1e-6);
+  // Con un poco de margen, y con lugar para la segunda línea de los automáticos (Interfaz.tsx).
+  const cajaDe = (lado: Lado, anchoEtiqueta: number) => (lado === 'abajo' ? [-anchoEtiqueta / 2 - 6, 8, anchoEtiqueta / 2 + 6, 46]
+    : lado === 'arriba' ? [-anchoEtiqueta / 2 - 6, -46, anchoEtiqueta / 2 + 6, -8]
+      : lado === 'der' ? [16, -16, 28 + anchoEtiqueta, 24]
+        : [-28 - anchoEtiqueta, -16, -16, 24]);
+  const entra = (lado: Lado, sx: number, sy: number, anchoEtiqueta: number) =>
+    lado === 'der' ? sx + 22 + anchoEtiqueta <= ancho - 8
+      : lado === 'izq' ? sx - 22 - anchoEtiqueta >= 8
+        : lado === 'arriba' ? sy - 46 >= alto * 0.2
+          : true;
+  // Lo que ya ocupa lugar en la pantalla: las estrellas y las etiquetas puestas. En un iPhone chico,
+  // o en una constelación apretada como la Corona Boreal, dos etiquetas vecinas se encimaban.
+  const enPantallaTodas = estrellas.map(aPantalla);
+  const ocupado: number[][] = enPantallaTodas.map(([x, y]) => [x - 10, y - 10, x + 10, y + 10]);
+  const encima = (r: number[], propia: number) => ocupado.reduce((suma, o, k) => {
+    if (k === propia) return suma;
+    const w = Math.min(r[2], o[2]) - Math.max(r[0], o[0]);
+    const h = Math.min(r[3], o[3]) - Math.max(r[1], o[1]);
+    return w > 0 && h > 0 ? suma + w * h : suma;
+  }, 0);
   const etiquetas = estrellas.map((p, i) => {
-    const [sx, sy] = aPantalla(p);
+    const [sx, sy] = enPantallaTodas[i];
     const h = dia.habitos[i];
     const largo = h.nombre.length;
     const anchoEtiqueta = 18 + 6.4 * largo;
     const dx = (p[0] - centro[0]) / anchoFigura;
     let lado: Lado = estrellas.length < 2 || Math.abs(dx) < 0.22 ? 'abajo' : dx > 0 ? 'der' : 'izq';
-    if (lado === 'der' && sx + 22 + anchoEtiqueta > ancho - 8) lado = 'abajo';
-    if (lado === 'izq' && sx - 22 - anchoEtiqueta < 8) lado = 'abajo';
-    // Con un poco de margen, y con lugar para la segunda línea de los automáticos (Interfaz.tsx).
-    const caja = lado === 'abajo' ? [-anchoEtiqueta / 2 - 6, 8, anchoEtiqueta / 2 + 6, 46]
-      : lado === 'der' ? [16, -16, 28 + anchoEtiqueta, 24]
-        : [-28 - anchoEtiqueta, -16, -16, 24];
-    return { x: sx, y: sy, lado, caja };
+    if (!entra(lado, sx, sy, anchoEtiqueta)) lado = 'abajo';
+    const enPantalla = (l: Lado) => {
+      const c = cajaDe(l, anchoEtiqueta);
+      return [sx + c[0], sy + c[1], sx + c[2], sy + c[3]];
+    };
+    // Si tapa algo, el lado que menos tapa (a igualdad, el de siempre).
+    if (encima(enPantalla(lado), i) > 0) {
+      for (const l of ['abajo', 'der', 'izq', 'arriba'] as Lado[]) {
+        if (l !== lado && entra(l, sx, sy, anchoEtiqueta) && encima(enPantalla(l), i) < encima(enPantalla(lado), i)) lado = l;
+      }
+    }
+    ocupado.push(enPantalla(lado));
+    return { x: sx, y: sy, lado, caja: cajaDe(lado, anchoEtiqueta) };
   });
 
   const constructorFantasmas = Skia.PathBuilder.Make();

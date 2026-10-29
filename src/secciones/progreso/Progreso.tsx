@@ -117,11 +117,20 @@ function ElPeso({ p, u, ancho, alRegistrar }: { p: Persona; u: U; ancho: number;
       {p.cambio7 !== null && (
         <Nota>{t('progreso.cambios', { semana: conSigno(u.enUnidad(p.cambio7), 1), mes: p.cambio30 === null ? '—' : conSigno(u.enUnidad(p.cambio30), 1), unidad: u.unidad })}</Nota>
       )}
-      <View style={s.grafico}>
-        <Linea serie={p.serie} ancho={ancho} alto={92} meta={objetivoPermitido(p.perfil) !== 'mantener' ? (p.perfil.pesoMeta ?? null) : null} />
-      </View>
-      <Eje izquierda={fechaDiaMes(p.serieDesde)} derecha={t('progreso.hoy')} />
-      <Parrafo chico>{t('progreso.pesoLeyenda')}</Parrafo>
+      {/* Con una sola pesada no hay línea: era un punto suelto en un gráfico vacío. */}
+      {p.serie.filter((x) => x.punto !== null).length < 2 ? (
+        <Aparece>
+          <Parrafo chico>{t('progreso.unaPesada')}</Parrafo>
+        </Aparece>
+      ) : (
+        <Aparece>
+          <View style={s.grafico}>
+            <Linea serie={p.serie} ancho={ancho} alto={92} meta={objetivoPermitido(p.perfil) !== 'mantener' ? (p.perfil.pesoMeta ?? null) : null} />
+          </View>
+          <Eje izquierda={fechaDiaMes(p.serieDesde)} derecha={t('progreso.hoy')} />
+          <Parrafo chico>{t('progreso.pesoLeyenda')}</Parrafo>
+        </Aparece>
+      )}
     </Carta>
   );
 }

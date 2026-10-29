@@ -158,6 +158,7 @@ export function Interfaz(p: Props) {
           const textoAuto = !h.auto || encendida ? '' : valorCorto(h);
           const posicion =
             e.lado === 'abajo' ? { left: e.x - 90, top: e.y + 14, width: 180, alignItems: 'center' as const }
+              : e.lado === 'arriba' ? { left: e.x - 90, top: e.y - 46, height: 34, width: 180, alignItems: 'center' as const, justifyContent: 'flex-end' as const }
               : e.lado === 'der' ? { left: e.x + 22, top: e.y - 9, width: 180, alignItems: 'flex-start' as const }
                 : { left: e.x - 202, top: e.y - 9, width: 180, alignItems: 'flex-end' as const };
           return (

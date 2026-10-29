@@ -715,6 +715,7 @@
     "cambios": "{semana} {unidad} en 7 días · {mes} {unidad} en 30 días",
     "hoy": "hoy",
     "pesoLeyenda": "Los puntos son tus pesadas; la línea es la tendencia, que es la que cuenta. La línea punteada es tu meta.",
+    "unaPesada": "Con otra pesada, otro día, aparece la línea de tu tendencia.",
     "medidas": "Medidas",
     "medir": "Medir",
     "cinturaAltura": "Cintura sobre altura: {n}. La guía NICE (Reino Unido) recomienda menos de 0,5.",

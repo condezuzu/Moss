@@ -715,6 +715,7 @@
     "cambios": "{semana} {unidad} in 7 days · {mes} {unidad} in 30 days",
     "hoy": "today",
     "pesoLeyenda": "The dots are your weigh-ins; the line is the trend, which is what counts. The dashed line is your goal.",
+    "unaPesada": "Weigh in again on another day and your trend line appears.",
     "medidas": "Measurements",
     "medir": "Measure",
     "cinturaAltura": "Waist-to-height: {n}. The UK NICE guideline recommends under 0.5.",

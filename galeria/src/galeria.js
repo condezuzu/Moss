@@ -1126,6 +1126,7 @@
   dibujarCatalogo();
   refrescarControles();
   SeccionTienda.crear($('#tienda-contenido'));
+  SeccionRevision.crear($('#revision-contenido'));
 
   // ------------------------------------------------------------ los widgets (spec/widgets.md)
   // Abrir Moss desde un widget: lo tocado ahí se enciende en el cielo, de a una estrella.

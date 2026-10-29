@@ -238,7 +238,8 @@ function Peso({ anchoGrafico }: { anchoGrafico: number }) {
           </Text>
           <Text style={estilos.datoTexto}>{cambio === null ? t('inicio.tendencia') : t('inicio.enSieteDias', { n: conSigno(cambio, 1), unidad: pesoCorporalEn(1, sistema).unidad })}</Text>
         </View>
-        <Linea serie={p.serie30} ancho={anchoGrafico} alto={44} />
+        {/* Con una sola pesada no hay línea, solo un punto suelto. */}
+        {p.serie30.filter((x) => x.punto !== null).length >= 2 && <Aparece><Linea serie={p.serie30} ancho={anchoGrafico} alto={44} /></Aparece>}
       </View>
       {p.gasto !== null && (
         <View style={[estilos.fila, estilos.filaSegunda]}>

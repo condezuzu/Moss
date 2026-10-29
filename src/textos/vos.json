@@ -1,0 +1,356 @@
+{
+  "cielo": {
+    "seEnciendeCon": {
+      "proteina": "Se enciende sola cuando llegás a tu proteína",
+      "registrar": "Se enciende sola cuando anotás todas tus comidas",
+      "calorias": "Se enciende sola cuando quedás dentro de tus calorías"
+    },
+    "globito": "Tocá una estrella para marcar su hábito"
+  },
+  "entrada": {
+    "tocaLaEstrella": "Tocá la estrella",
+    "habitosTexto": "Tocá una estrella para encenderla. Cada día tiene su propia constelación.",
+    "comidaTexto": "Registrás lo que comés y Moss ajusta tus metas cada semana.",
+    "cuenta": {
+      "legal": "Al continuar aceptás los Términos y la Política de privacidad.",
+      "legalConEnlaces": "Al continuar aceptás los {terminos} y la {privacidad}.",
+      "errores": {
+        "conexion": "No hay conexión. Intentalo de nuevo.",
+        "confirmar": "Te enviamos un correo: confirmalo y volvé a entrar.",
+        "existe": "Ya hay una cuenta con ese correo: entrá con tu contraseña.",
+        "correo": "Escribí tu correo.",
+        "otro": "No se pudo entrar. Intentalo de nuevo."
+      }
+    },
+    "cuestionario": {
+      "edadTitulo": "¿Cuántos años tenés?",
+      "alturaTitulo": "¿Cuánto medís?",
+      "pesoTitulo": "¿Cuánto pesás?",
+      "actividadTitulo": "¿Cuánto te movés en un día normal?",
+      "actividad": {
+        "algo": [
+          "Algo",
+          "Caminás o entrenás de 1 a 3 días por semana."
+        ],
+        "activo": [
+          "Bastante",
+          "Entrenás de 3 a 5 días por semana."
+        ],
+        "muy": [
+          "Mucho",
+          "Entrenás casi todos los días o tu trabajo es físico."
+        ]
+      },
+      "objetivoTitulo": "¿Qué querés lograr?",
+      "resultadoTexto": "Moss ajusta tus metas cada semana con tu peso y lo que comés.",
+      "sinSalud": "No se pudo leer Salud. Podés seguir y contestar a mano."
+    },
+    "datos": {
+      "texto": "Moss guarda lo que comés, tu peso y tu sueño en tu teléfono y en tu cuenta, solo para que funcione.",
+      "lineas": [
+        "Sin publicidad ni rastreo.",
+        "Moss no vende tus datos.",
+        "Los exportás o los borrás cuando quieras."
+      ]
+    },
+    "menor": {
+      "texto": "Según Salud, todavía no tenés 16 años. Cuando los cumplas, aquí te esperamos."
+    },
+    "cuidado": {
+      "aviso": "Moss no te propondrá comer menos de lo que gastás. Para cambiar tu peso, mejor con un profesional que te acompañe."
+    }
+  },
+  "comida": {
+    "revisarTexto": "Revisá que esté todo bien antes de agregar.",
+    "etiquetaRevision": {
+      "leida": "Leído de la foto. Revisá que esté bien antes de guardar.",
+      "noCierra": "Las kcal no cierran con los macros: revisalas.",
+      "faltan": "Falta un valor: completalo.",
+      "sinPorcion": "No se leyó la porción: escribila."
+    },
+    "cargaRapidaTexto": "Si dejás las calorías vacías, salen de los macros.",
+    "medir": {
+      "escribir": "Escribí la cantidad"
+    },
+    "escaner": {
+      "codigoTexto": "Apuntá al código: se lee solo.",
+      "noEsta": "No lo encontramos. Sacá una foto de la etiqueta y queda guardado para la próxima.",
+      "incompleto": "Le faltan datos: sacá una foto de la etiqueta para completarlo.",
+      "sinConexion": "Sin conexión no se puede buscar un código nuevo: sacá una foto de la etiqueta.",
+      "etiquetaTexto": "Encuadrá la tabla nutricional, con buena luz, y tocá el botón.",
+      "noSeLeyo": "No se pudo leer. Probá con más luz, más cerca y de frente.",
+      "soloIphone": "Leer la etiqueta anda en el iPhone. Podés cargar los valores a mano.",
+      "noCierra": "Los datos de este producto no cierran. Mejor leé la etiqueta."
+    },
+    "crear": {
+      "texto": "Escribí lo que dice la etiqueta, por porción."
+    },
+    "receta": {
+      "texto": "Cargá los ingredientes y, si querés, pesá la olla cocida una vez: después registrás cada plato en gramos.",
+      "eligeIngrediente": "Elegí un ingrediente para {receta}",
+      "pegarTexto": "Pegala como la tenés, con el título y lo que rinde: Moss lee cada ingrediente con su cantidad y lo busca. Después revisás lo que encontró.",
+      "encontrados": "{n} de {total} ingredientes encontrados. Tocá uno para quitarlo."
+    },
+    "sinMeta": "Tu meta aparece cuando completás el cuestionario de la entrada.",
+    "reportar": {
+      "nota": "Contanos más (opcional)"
+    },
+    "plan": {
+      "sinCompras": "Armá algún día y aparece aquí.",
+      "preferenciasTexto": "Moss arma primero con lo que comés seguido; si falta, con comidas tipo de tu forma de comer.",
+      "dieta": "Cómo comés",
+      "alergias": "Lo que no comés"
+    },
+    "decir": {
+      "ayuda": "Tocá el micrófono y decí todo junto: «dos huevos revueltos, una tostada con manteca y un café con leche».",
+      "ayudaTeclado": "Escribí todo junto, o usá el micrófono del teclado: «dos huevos revueltos, una tostada con manteca y un café con leche».",
+      "teEscucho": "Te escucho… Cuando termines, tocá de nuevo o hacé una pausa.",
+      "nada": "No encontré ningún alimento. Probá diciéndolo de otra manera, o buscalo.",
+      "error": {
+        "permiso": "Para escucharte, Moss necesita el micrófono y el reconocimiento de voz: activalos en los Ajustes del iPhone. Mientras, podés escribir.",
+        "idioma": "Tu iPhone no reconoce este idioma sin conexión. Usá el micrófono del teclado: también funciona.",
+        "otro": "No pude escucharte. Probá de nuevo, o escribilo."
+      }
+    },
+    "sueles": {
+      "desayuno": "Lo que solés desayunar",
+      "almuerzo": "Lo que solés almorzar",
+      "merienda": "Lo que solés merendar",
+      "cena": "Lo que solés cenar",
+      "snack": "Lo que solés picar"
+    }
+  },
+  "inicio": {
+    "personalizarTexto": "Elegí qué bloques ves y arrastralos para ordenarlos."
+  },
+  "cuerpo": {
+    "como": {
+      "cinturaHombre": "A la altura del ombligo, de pie y con la panza relajada. Medí al final de una exhalación normal, sin meter la panza.",
+      "cinturaMujer": "En la parte más angosta, entre el ombligo y el esternón. Si no se nota, medí un par de veces y quedate con la menor."
+    },
+    "consejos": [
+      "Una cinta que no se estire, sobre la piel.",
+      "De pie, con los pies juntos y los brazos al costado, relajado.",
+      "La cinta derecha, paralela al piso: un espejo ayuda.",
+      "Firme, sin hundir la piel.",
+      "Al final de una exhalación normal: sin meter la panza.",
+      "Siempre a la misma hora, antes de comer y después de ir al baño.",
+      "Medí dos veces; si difieren más de 1 cm, una tercera, y anotá el promedio."
+    ],
+    "aviso": "Es una estimación a partir de tus medidas, no una medición: un estudio de laboratorio (DEXA) podría dar 3 o 4 puntos más o menos. Es menos precisa con muy poca grasa, mucho músculo o mucha grasa, y no sirve en el embarazo ni antes de los 18. Medí siempre igual y mirá la tendencia."
+  },
+  "progreso": {
+    "estados": {
+      "otroLado": "Revisá la meta"
+    },
+    "textos": {
+      "llegaste": "Llegaste a tu peso meta. Si querés quedarte ahí, cambiá el objetivo a mantener.",
+      "sinMeta": "Vas a {ritmo} {unidad} por semana; el plan es {plan}. Elegí un peso meta para ver cuándo llegarías.",
+      "otroLado": "Tu peso meta quedó del otro lado de donde empezaste. Elegí uno nuevo en la estrategia."
+    },
+    "diaDelControlNota": "Ese día, al abrir Moss, el control mide la semana anterior. Si ese día no abrís la app, corre la próxima vez.",
+    "metas": {
+      "mossTexto": "Moss las ajusta cada semana con tu peso y lo que comés.",
+      "aManoTexto": "Las ponés vos. Moss sigue midiendo tu gasto, pero no las cambia."
+    },
+    "controlEnCurso": "El control necesita al menos 4 días con comida y una pesada en la semana. Quedan {n} días: si seguís registrando, alcanza.",
+    "gastoInicial": "Lo estimado con tus respuestas. El control de cada semana lo mide con tu peso y lo que comés.",
+    "sinBalance": "Registrá lo que comés unos días para ver el balance."
+  },
+  "sueno": {
+    "incompleta": "Parece incompleta: dormiste mucho menos que siempre y te despertaste temprano. ¿El reloj se quedó sin batería? Podés dejarla fuera.",
+    "habitosPendientes": "Los hábitos de sueño de ese día quedan pendientes: podés marcarlos a mano.",
+    "comoCalidad": [
+      "Es un número de Moss, de 0 a 100, en tres partes. No es el puntaje de sueño de Apple: Apple no lo comparte con otras apps, así que pueden no coincidir.",
+      "Duración (50): lo que dormiste contra lo que necesitás ({necesidad}). Con 4 horas suma 0, y al llegar, 50.",
+      "Horario (30): cuánto se corrieron tu hora de dormirte y la de despertarte de las de siempre (la mediana de tus últimas dos semanas). Hasta media hora suma todo; desde hora y media, nada. Con menos de 5 noches no entra y el total se reescala.",
+      "Continuidad (20): los minutos despierto entre que te dormiste y te despertaste (todo hasta 20, nada desde 60) y los despertares de 5 minutos o más (todo con uno, nada con cuatro).",
+      "Las etapas, el tiempo en cama y el corazón no entran: el reloj los mide con menos acierto."
+    ],
+    "dormirte": "Te dormís",
+    "despertarte": "Te despertás",
+    "regularidadTexto": "Con {n} noches de las últimas 14. El ± es cuánto se corre tu hora de una noche a otra: hasta media hora es muy regular. El fin de semana compara la mitad de tu sueño del viernes y el sábado con la del resto, y supone que esos días no trabajás.",
+    "deudaDe": "menos de lo que necesitás ({necesidad} por noche)",
+    "deudaTexto": "Lo que te faltó para lo que necesitás cada noche de las últimas dos semanas, pesando más las más recientes, menos lo que dormiste de más (hasta 2 horas por noche). Las siestas cuentan; las noches sin datos no suman ni restan.",
+    "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo dormís, consultá a un médico.",
+    "sinCalidadEstimada": "Moss no está segura de esta noche: confirmala o cambiala y aparece la calidad.",
+    "estimadaTexto": "Sin reloj, Moss la estima con tus pasos, el movimiento del teléfono y cuándo usás la app.",
+    "porTi": "Confirmada por vos",
+    "corregidaPorTi": "Corregida por vos",
+    "pocoSueno": {
+      "titulo": "Hace semanas que dormís poco"
+    },
+    "afinar": {
+      "despertador": {
+        "texto": "Suena aunque el iPhone esté en silencio o con un enfoque, y Moss anota la hora en que lo parás: así sabe cuándo te despertaste.",
+        "reloj": "Si querés, reemplaza a la alarma del Reloj: apagala allí para que no suenen dos.",
+        "sinPermiso": "Moss no tiene permiso para poner alarmas. Podés darlo en Ajustes.",
+        "error": "No se pudo poner el despertador. Probá de nuevo."
+      },
+      "atajos": {
+        "pasos": [
+          "Abrí Atajos, andá a Automatización y tocá +.",
+          "Elegí {activador}.",
+          "Elegí «Ejecutar inmediatamente», para que corra sin preguntar, y tocá Siguiente.",
+          "Buscá «Moss» y elegí «{accion}».",
+          "Tocá Listo."
+        ],
+        "siri": "«Me voy a dormir» y «Me desperté» también están en Atajos: decíselas a Siri («Moss, me voy a dormir») o ponelas en el botón de Acción."
+      }
+    }
+  },
+  "perfil": {
+    "agregarNombre": "Agregá tu nombre",
+    "editar": {
+      "sinNombre": "¿Cómo te llamás? Solo lo ves vos, aquí en Perfil."
+    },
+    "errorBorrar": "No se pudo. Revisá la conexión e intentalo de nuevo.",
+    "sinSubirTexto": "Sin conexión no se pudo subir lo que anotaste hace poco. Si cerrás sesión ahora, se pierde.",
+    "informacionAscent": "Si usás Ascent y vinculás las dos apps, esto anda solo:",
+    "privacidadConAscent": "Si vinculás Ascent, las dos apps comparten lo que aceptás al vincular, hasta que desvinculás.",
+    "privacidadTexto": [
+      "Tus datos son tuyos. Moss guarda lo que anotás, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte con terceros, no muestra publicidad y no te rastrea.",
+      "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, fecha de nacimiento, sexo y altura y, de la noche, frecuencia cardíaca, frecuencia en reposo, variabilidad y respiración. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura, qué hábitos cumpliste y la hora estimada de tu noche; lo demás queda en el teléfono. Moss no escribe en Salud.",
+      "Las fotos de la comida y la de tu perfil quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
+      "Si lo elegís, lo que buscás y no encontrás se manda sin tu nombre; un error que reportás, también. Podés exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
+    ],
+    "recordatoriosTexto": "Un rato después de tu hora de siempre, y solo si todavía no anotaste esa comida. Si no abrís Moss en una semana, paran solos.",
+    "recordatoriosSinPermiso": "Para avisarte, Moss necesita permiso para las notificaciones: activalo en los Ajustes del iPhone.",
+    "calidadesDetalle": {
+      "automatica": "Según tu iPhone. Empezás con esta."
+    },
+    "aparatos": {
+      "varios": "Si usás más de uno, Moss toma uno por noche, el que elijas, y nunca los suma.",
+      "marcas": {
+        "iphone": {
+          "texto": "Con el iPhone solo, Moss estima cuándo dormiste con tus pasos, el movimiento y cuándo usás la app, y te pregunta a la mañana para confirmarlo. Con un reloj o un anillo, se mide."
+        },
+        "oura": {
+          "texto": "Cuánto y cuándo dormiste, con etapas, y la frecuencia y la respiración de la noche. La variabilidad y la temperatura se quedan en la app de Oura. Abrila cada día para que lleguen los datos."
+        },
+        "garmin": {
+          "texto": "Cuánto y cuándo dormiste, con etapas, la frecuencia y los pasos. Abrí Garmin Connect para que mande los datos. La variabilidad y la Body Battery se quedan en Garmin."
+        },
+        "google": {
+          "texto": "Con un Fitbit o un Fitbit Air: cuánto y cuándo dormiste, con etapas, la frecuencia, la frecuencia en reposo, la respiración y el oxígeno. Conectá la app Google Health con Salud. La variabilidad no llega."
+        },
+        "withings": {
+          "texto": "El peso y la composición corporal; con el Sleep Analyzer o un ScanWatch, también el sueño. Si creaste tu cuenta después del 12 de octubre de 2026, necesitás Withings+ para mandar datos a Salud."
+        }
+      }
+    },
+    "sinDeficitTexto": "Por embarazo, lactancia o una condición médica: Moss no te propone comer menos de lo que gastás.",
+    "avisos": {
+      "dormirTexto": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitás, con algo de la deuda y sin adelantarse más de una hora a la de siempre. Esta noche, {hora}.",
+      "dormirSinDatos": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitás. Hace falta saber a qué hora te despertás: con unas noches alcanza.",
+      "horarioTexto": "Te avisa a la hora de cada comida, para comer ordenado. Si ya la anotaste, no suena; si tenés un plan, dice qué toca."
+    },
+    "cambiarCuentaTexto": "Se cierra esta sesión y entrás con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta."
+  },
+  "ascent": {
+    "etiqueta": "Si usás Ascent",
+    "bajada": "Vinculá las dos apps y tu sueño y tu comida se cruzan con tu entrenamiento.",
+    "conseguir": "¿No tenés Ascent? Buscala en la App Store",
+    "recuperacion": {
+      "explicacion": "Sueño, 40: lo que dormiste contra lo que necesitás y la calidad de la noche. Carga, 40: lo que entrenaste en los 3 días anteriores contra tu promedio de 4 semanas, menos los días seguidos. Comida, 20: la proteína de ayer y si comiste al menos el 80 % de la meta. Es orientativo."
+    },
+    "estancamiento": {
+      "titulo": "Por qué no subís",
+      "frases": {
+        "sueno": "Tus mejores marcas llegan las semanas que dormís {horas} o más.",
+        "proteina": "Tus mejores marcas llegan las semanas que llegás a la proteína.",
+        "calorias": "Tus mejores marcas llegan las semanas que comés más cerca de tu gasto."
+      }
+    },
+    "funciones": {
+      "peso": {
+        "texto": "Te pesás en una y se anota en las dos."
+      },
+      "gimnasio": {
+        "texto": "Si registrás el día en Ascent, la estrella del gimnasio se enciende sola.",
+        "vivo": "Sumá «Gimnasio» a tus hábitos y se enciende sola"
+      }
+    },
+    "rendimiento": {
+      "texto": "Lo que podés esperar hoy, en fuerza máxima y en repeticiones, con el sueño, la comida y lo que entrenaste.",
+      "motivos": {
+        "deuda": "Venís con deuda de sueño",
+        "ayuno": "Llegás con 8 horas sin comer",
+        "descarga": "Venís de una semana de descarga, con la misma carga",
+        "sinEntrenarlo": "Hace {dias} días que no lo entrenás"
+      },
+      "sinSesion": "Cuando anotes sesiones en Ascent, aquí verás qué podés esperar hoy."
+    },
+    "musculos": {
+      "texto": "Qué músculos están descansados y cuáles no, con las series que anotás en Ascent."
+    },
+    "marca": {
+      "nota": "Es una estimación, no una promesa. Si la entrada en calor se siente pesada, guardala para otro día."
+    },
+    "vincularHoja": {
+      "mossComparte": [
+        "Cuánto dormiste y cómo dijiste que dormiste",
+        "Lo que comés: las calorías y la proteína",
+        "Tu peso",
+        "Tu objetivo y su ritmo"
+      ],
+      "nota": "Cada app sigue con su cuenta y lo suyo. Podés desvincularlas cuando quieras, desde Perfil.",
+      "sinSesion": {
+        "titulo": "Abrí Ascent y volvé"
+      },
+      "sinAscent": {
+        "texto": "Si la usás en otro teléfono, entrá con tu cuenta de Ascent aquí abajo."
+      },
+      "errores": {
+        "sin_sesion": "Tu sesión de Moss se cerró. Volvé a entrar a Moss y probá de nuevo.",
+        "vencida": "La sesión de Ascent venció. Abrí Ascent y volvé, o entrá con tu cuenta de Ascent.",
+        "sin_ascent": "Esa cuenta todavía no usó Ascent. Entrá a Ascent con ella una vez y volvé.",
+        "red": "Sin conexión. Probá de nuevo en un momento.",
+        "servidor": "No se pudo vincular. Probá de nuevo en un rato."
+      }
+    },
+    "gimnasio": {
+      "sumar": "Sumá «{nombre}» a tus hábitos: su estrella se enciende sola el día que anotás la sesión en Ascent.",
+      "listo": "«{nombre}» se enciende sola el día que anotás la sesión en Ascent."
+    },
+    "perfil": {
+      "error": "No se pudo desvincular: probá de nuevo con conexión."
+    }
+  },
+  "habitos": {
+    "aManoTexto": "Tocás la estrella cuando lo hacés.",
+    "comidaTexto": "Se enciende sola con lo que registrás.",
+    "mantener": "Mantené apretada una estrella para editar su hábito.",
+    "sugeridos": {
+      "titulo": "Elegí tus primeros hábitos",
+      "texto": "De 3 a 5 para empezar: arman tu primera constelación. Los de comida se encienden solos con lo que registrás.",
+      "despues": "Después podés sumar, cambiar o archivar cada uno.",
+      "avisos": "Cada uno llega con un aviso a la hora en que más ayuda, y no suena si ya está hecho. Lo cambiás o lo sacás en el hábito."
+    }
+  },
+  "compartir": {
+    "enlace": "Para sumarlo a Moss, tocá:"
+  },
+  "recordatorios": {
+    "cuerpo": "Cuando puedas, anotá tu {comida}.",
+    "dormir": "A la cama a las {hora}: así dormís lo que necesitás."
+  },
+  "entreno": {
+    "previa": "Entrenás a las {hora}: esta comida es tu previa.",
+    "previaLiviana": "Entrenás a las {hora}: mejor algo liviano, con poca grasa y poca fibra.",
+    "snackPrevio": "Si comés algo antes de entrenar: una fruta, pan o jugo, unos {c} g de carbohidratos.",
+    "snackPrevioSinNumeros": "Si comés algo antes de entrenar: una fruta, pan o jugo.",
+    "ayunasLarga": "Si entrenás más de una hora en ayunas, algo chico antes puede ayudarte: una fruta o pan, unos {c} g de carbohidratos.",
+    "ayunasLargaSinNumeros": "Si entrenás más de una hora en ayunas, algo chico antes puede ayudarte: una fruta o pan.",
+    "reponer": "Volvés a entrenar a las {hora}: sumá carbohidratos ahora y antes de la sesión.",
+    "durante": "Si pasa de 90 minutos, llevá de {a} a {b} g de carbohidratos por hora.",
+    "duranteSinNumeros": "Si pasa de 90 minutos, llevá algo con carbohidratos.",
+    "cafeina": "Si tomás café antes, que sea antes de las {hora}.",
+    "perfil": {
+      "tipo": "Qué hacés"
+    }
+  },
+  "widgets": {
+    "seAnotaEnMoss": "Anotala en Moss"
+  }
+}

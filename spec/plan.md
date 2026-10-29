@@ -583,6 +583,28 @@ Recuperación, y en Moss en Sueño y en la sección de Ascent; sin vincular,
 bloqueado con el botón para vincular. Las cuentas van en el dominio, con tests, y
 la galería las muestra; los datos llegan con la conexión con Ascent.
 
+## La próxima build (después de la 1.0, build 6)
+
+Lo que necesita una build nueva, no una OTA (lo pediste el 28/10/2026):
+
+- **Prender Ascent:** `CON_ASCENT = true` (D30), cuando Ascent 1.2.0 esté en la
+  tienda, con la ficha y las notas para quien revisa de `revision.md` «f».
+- **Los parches de Expo** que pide `npx expo-doctor` (por ejemplo `expo` 58.0.21,
+  `@expo/ui` 58.0.25, `expo-camera` 58.0.14), con `npx expo install --fix`.
+- **Las capturas en inglés:** en EN van ahora las cinco en español del usuario.
+
+## Después de la aprobación de la 1.0 (lo pediste el 28/10/2026)
+
+- **Recetas uruguayas, unas 100:** las de todos los días (guiso, tarta de
+  verdura, milanesa con puré, ñoquis, torta frita, chivito, buseca…), cada una con
+  sus ingredientes de la base curada y lo que rinde, para buscarlas como un
+  alimento más.
+- **El ayuno intermitente como hábito-estrella:** la ventana de comer (por
+  ejemplo 16:8) es una estrella que se enciende si lo anotado del día cae
+  adentro; sin rachas, como el resto.
+- **El modo cocina:** una receta paso a paso, con la pantalla prendida y letras
+  grandes, que al final anota la porción.
+
 ## Después de la v1
 
 - **Importar recetas desde un link.**

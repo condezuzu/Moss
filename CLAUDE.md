@@ -31,7 +31,8 @@ SDK y la memoria no alcanza.
 - **Todo el texto que se lee está en `src/textos/es.json` y `en.json`.**
   - El inglés tiene que tener exactamente las mismas claves (lo comprueba
     `tsc`).
-  - Interfaz en **español neutro** (tú, nunca vos) e inglés.
+  - Interfaz en **español neutro** (tú) e inglés; con el iPhone en Uruguay o
+    Argentina, de vos: `src/textos/vos.json`, solo lo que cambia (D31).
   - El código y los comentarios, en español.
 - **Un solo juego de shaders**: `src/cielo/shaders/*.glsl`, que usan la galería
   (WebGL) y la app (Skia).
@@ -139,6 +140,7 @@ SDK y la memoria no alcanza.
 | `npm run tienda:capturas` | las capturas para la App Store (spec/revision.md «e»), sacadas de la app de verdad en la web con una persona inventada (Lucía), dentro de un iPhone dibujado y con su texto arriba: `capturas/tienda/<tamaño>/<idioma>/`, en 1320×2868 y 1206×2622, y las vistas chicas para la galería en `capturas/tienda/vista/` (con `npm run web:ver` prendido; después, `npm run galeria`) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
 | `npm run web:exportar` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
+| `node herramientas/recorrer-pantallas.mjs <carpeta>` | todas las pantallas de la app en la web (las seis secciones con su scroll, el «+» y la entrada hasta el resultado) en un iPhone chico y uno grande, en es-UY, es-ES y en-US (con `npm run web:ver` prendido) |
 | `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas, Inicio y el «+»), decir lo que comí y, en un navegador limpio, las primeras pantallas de la entrada |
 | `npx eas-cli@latest build --profile dev --platform ios` | la build de desarrollo para el iPhone (la primera vez pide entrar a Apple); su JavaScript llega de `npx expo start` |
 | `npx eas-cli@latest build --profile simulador --platform ios --non-interactive` | compila todo lo nativo sin credenciales de Apple: la forma de probar Swift nuevo sin una Mac |

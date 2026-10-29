@@ -10,7 +10,7 @@ import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, LayoutAnimationConfig, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
@@ -110,12 +110,29 @@ function alimentoDePropio(a: AlimentoPropio): AlimentoAbierto {
   };
 }
 
+/** Lo que dura la salida más larga (SALE_HOJA), con un margen. */
+const SALIDA_MS = 280;
+
 export function HojaRegistro() {
   const pedido = useRegistro();
-  return pedido ? <Hoja key={pedido.vez} pedido={pedido} /> : null;
+  // Cerrada, la hoja sigue armada lo que dura su salida, con el contenido ya sacado: así el velo y la
+  // hoja se van con su animación. Desarmarla de una sola vez hacía que Reanimated, en la web, animara
+  // lo que React ya había sacado (el error de removeChild y el velo que quedaba).
+  const [saliendo, setSaliendo] = useState<ReturnType<typeof useRegistro>>(null);
+  const anterior = useRef(pedido);
+  useEffect(() => {
+    const antes = anterior.current;
+    anterior.current = pedido;
+    if (pedido || !antes) return;
+    setSaliendo(antes);
+    const espera = setTimeout(() => setSaliendo(null), SALIDA_MS);
+    return () => clearTimeout(espera);
+  }, [pedido]);
+  const visto = pedido ?? saliendo;
+  return visto ? <Hoja key={visto.vez} pedido={visto} abierta={pedido !== null} /> : null;
 }
 
-function Hoja({ pedido }: { pedido: Pedido }) {
+function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const e = useEstado();
   const a = elAlmacen();
   const insets = useSafeAreaInsets();
@@ -479,10 +496,14 @@ function Hoja({ pedido }: { pedido: Pedido }) {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      {/* Al cerrar, la hoja sigue armada sin su contenido lo que dura la salida (ver HojaRegistro). */}
+      {abierta && (<>
       <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={[StyleSheet.absoluteFill, estilos.fondo]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={cerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
       </Animated.View>
       <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.hoja, { top: insets.top + 12 }]} accessibilityViewIsModal>
+        {/* Lo de adentro se va con la hoja: sus propias salidas (las filas de «decir») no corren. */}
+        <LayoutAnimationConfig skipExiting>
         <View style={estilos.arriba}>
           <View style={estilos.asa} />
           {!panel && (
@@ -889,6 +910,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
             />
           </>
         )}
+        </LayoutAnimationConfig>
       </Animated.View>
 
       {escaner && (
@@ -914,6 +936,7 @@ function Hoja({ pedido }: { pedido: Pedido }) {
           abajo={insets.bottom}
         />
       )}
+      </>)}
     </View>
   );
 }

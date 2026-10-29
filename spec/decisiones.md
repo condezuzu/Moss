@@ -245,6 +245,22 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
+### D31 · Con el iPhone en Uruguay o Argentina, Moss habla de vos (la decidiste el 28/10/2026)
+
+Lo dijiste así: «si el idioma de la región del iPhone es Uruguay o Argentina
+(es-UY, es-AR), la app habla con voseo (Construí, Registrá, Comé, Dormí). En el
+resto del español queda con tú, como ahora.»
+
+- `src/textos/vos.json` es una capa sobre `es.json`: solo los textos que cambian,
+  con las mismas claves. `hablaDeVos()` (`src/textos/index.ts`) mira la región
+  del teléfono una vez; `t()`, `lista()` y `plural()` buscan primero ahí.
+- El subjuntivo queda como con tú («cuando quieras»), que es como se dice en
+  Uruguay. «Aquí» y «allí» quedan.
+- `vos.test.ts` revisa que cada clave exista en `es.json` con la misma forma y las
+  mismas variables, y que no quede ninguna forma de tú.
+- Lo que no pasa por `t()` sigue con tú hasta la próxima build: las frases de las
+  acciones de Atajos, que están en Swift (`app-intents/`).
+
 ### D30 · La 1.0 sale sin la vinculación con Ascent (la decidiste el 28/10/2026, a la noche)
 
 Lo dijiste así: «Ascent 1.2.0 no existe, así que en esta versión de Moss ocultá
