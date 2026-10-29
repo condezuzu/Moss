@@ -511,7 +511,7 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
       <View style={c.planificada && estilos.tenueDePlan}>
       <View style={estilos.tarjetaCabeza}>
         <Text style={estilos.tarjetaTitulo}>{t(`comida.comidas.${c.comida}`)}</Text>
-        {c.planificada && <Text style={estilos.etiquetaPlan}>{t('comida.planificado')}</Text>}
+        {c.planificada && <Text style={estilos.etiquetaPlan}>{t(delPlan ? 'comida.plan.sugerida' : 'comida.planificado')}</Text>}
         {numeros && (
           <Text style={estilos.tarjetaKcal}>
             {numero(Math.round(total.kcal))}

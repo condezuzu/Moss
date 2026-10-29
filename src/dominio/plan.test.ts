@@ -13,9 +13,9 @@ import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 import type { Macros } from './metas';
 import {
-  adaptar, adaptarRegistros, cambiarPorOtra, comidasDelPlan, diaPlaneadoDe, DIETAS, estaTachada, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas, permitida,
-  planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, tachadasDe, tachar, type DiaPlaneado, type Opcion, type Preferencias,
-  type Resolver,
+  adaptar, adaptarRegistros, afinidadDe, cambiarPorOtra, COMBINADAS, comidasDelPlan, diaPlaneadoDe, DIETAS, estaTachada, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas,
+  permitida, planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, tachadasDe, tachar, type DiaPlaneado, type Opcion,
+  type Plantilla, type Preferencias, type Resolver,
 } from './plan';
 import { gramosDe, itemDeAlimento, itemRapido, valoresDeCantidad, type Item, type Registro, type Valores } from './registros';
 
@@ -32,7 +32,8 @@ const resolver: Resolver = (nombre) => {
   return { fuente: 'base', ref: String(a.id), nombre, por100g, porciones };
 };
 const TIPO = PLANTILLAS.map((p) => opcionDePlantilla(p, resolver, 'es')).filter((op): op is Opcion => op !== null);
-const plantilla = (clave: string) => PLANTILLAS.find((p) => p.clave === clave)!;
+const COMBI = COMBINADAS.map((p) => opcionDePlantilla(p, resolver, 'es')).filter((op): op is Opcion => op !== null);
+const plantilla = (clave: string) => PLANTILLAS.find((p) => p.clave === clave) ?? COMBINADAS.find((p) => p.clave === clave)!;
 
 const HOY = '2026-10-21';
 const META: Macros = { kcal: 2200, proteina: 140, carbohidratos: 250, grasas: 70 };
@@ -119,6 +120,71 @@ describe('las comidas tipo', () => {
 
   it('si falta un alimento en la base, no hay comida tipo', () => {
     expect(opcionDePlantilla(plantilla('avena-banana'), (nombre) => (nombre === 'Banana' ? null : resolver(nombre)), 'es')).toBeNull();
+  });
+});
+
+describe('las combinadas', () => {
+  const nombres = (p: Plantilla) => [...new Set(p.items.map(([nombre]) => nombre))].sort().join('+');
+
+  it('cada alimento es un curado de la base, las claves no se repiten y ninguna es ya una comida tipo', () => {
+    const existe = db.prepare('SELECT 1 FROM alimentos WHERE nombre_es = ?');
+    const faltan = COMBINADAS.flatMap((p) => p.items.filter(([nombre]) => !existe.get(nombre)).map(([nombre]) => `${p.clave}: ${nombre}`));
+    expect([...new Set(faltan.map((f) => f.split(': ')[1]))]).toEqual([]);
+    expect(COMBI).toHaveLength(COMBINADAS.length);
+    expect(new Set([...PLANTILLAS, ...COMBINADAS].map((p) => p.clave)).size).toBe(PLANTILLAS.length + COMBINADAS.length);
+    const tipo = new Set(PLANTILLAS.map(nombres));
+    expect(COMBINADAS.filter((p) => tipo.has(nombres(p))).map((p) => p.clave)).toEqual([]);
+    expect(COMBI.every((op) => op.origen === 'combinada' && op.veces === 0)).toBe(true);
+  });
+
+  it('son cientos, de cada dieta y en cada comida, con su nombre en los dos idiomas', () => {
+    expect(COMBINADAS.length).toBeGreaterThanOrEqual(500);
+    for (const dieta of DIETAS) {
+      for (const comida of ['desayuno', 'almuerzo', 'snack'] as const) {
+        const deEsa = COMBINADAS.filter((p) => p.comida === comida && p.dietas.includes(dieta));
+        expect([dieta, comida, deEsa.length >= 10]).toEqual([dieta, comida, true]);
+      }
+    }
+    expect(COMBINADAS.find((p) => p.clave === 'combinada:almuerzo:pollo-quinoa-brocoli')).toMatchObject({
+      nombre: { es: 'Pollo a la plancha con quinoa y brócoli', en: 'Grilled chicken with quinoa and broccoli' },
+      dietas: ['todo'], contiene: [], minutos: 18,
+    });
+    expect(COMBINADAS.find((p) => p.clave === 'combinada:desayuno:soja-mani-kiwi')).toMatchObject({
+      nombre: { es: 'Leche de soja, tostadas con mantequilla de maní y kiwi', en: 'Soy milk, toast with peanut butter and kiwi' },
+      dietas: DIETAS, contiene: ['gluten', 'mani', 'soja'],
+    });
+    // Lo que no va junto no está.
+    expect(COMBINADAS.filter((p) => /garbanzos-pure|lentejas-pure|cafe-avena|cafe-granola|cottage-queso/.test(p.clave))).toEqual([]);
+  });
+
+  it('salen cuando lo demás se acabó, o cuando sin ellas no se llega', () => {
+    const conTodo = [...TIPO, ...COMBI];
+    for (const semilla of SEMILLAS.slice(0, 8)) {
+      const conLasTipo = planearSemana({ desde: HOY, metaDe: () => META, opciones: TIPO, pref: TODO, semilla });
+      const semana = planearSemana({ desde: HOY, metaDe: () => META, opciones: conTodo, pref: TODO, semilla });
+      semana.forEach((d, i) => {
+        if (conLasTipo[i].alcanza) expect(d.comidas.filter((c) => c.opcion.startsWith('combinada:')).map((c) => c.opcion)).toEqual([]);
+      });
+    }
+    // Sin comidas tipo de almuerzo y de cena, el almuerzo y la cena son combinadas.
+    const sinGrandes = conTodo.filter((op) => op.origen === 'combinada' || (op.comida !== 'almuerzo' && op.comida !== 'cena'));
+    const dia = planearDia({ dia: HOY, meta: META, opciones: sinGrandes, pref: TODO, semilla: 1 });
+    expect(dia.comidas.filter((c) => c.comida === 'almuerzo' || c.comida === 'cena').every((c) => c.opcion.startsWith('combinada:'))).toBe(true);
+    expect(dia.alcanza).toBe(true);
+  });
+
+  it('respetan la dieta, las alergias y el tiempo para cocinar', () => {
+    const pref: Preferencias = { ...TODO, dieta: 'vegana', alergias: ['frutosSecos'], tiempo: 'poco' };
+    for (const semilla of SEMILLAS.slice(0, 5)) {
+      const dia = planearDia({ dia: HOY, meta: META, opciones: COMBI, pref, semilla });
+      expect(dia.comidas).toHaveLength(4);
+      for (const c of dia.comidas) {
+        const p = plantilla(c.opcion);
+        expect(p.dietas).toContain('vegana');
+        expect(p.contiene).not.toContain('frutosSecos');
+        expect(p.minutos).toBeLessThanOrEqual(MINUTOS.poco);
+      }
+    }
   });
 });
 
@@ -397,18 +463,85 @@ describe('cambiar por otra', () => {
     expect(distintas).toBe(SEMILLAS.length * 4);
   });
 
-  it('nunca propone lo que no te gusta, y sin otra parecida no hay cambio', () => {
+  it('nunca propone lo que no te gusta; sin nada parecido, algo menos parecido, y sin ninguna otra no hay cambio', () => {
     const dia = planearDia({ dia: HOY, meta: META, opciones: TIPO, pref: TODO, semilla: 4 });
     const enElDia = dia.comidas.map((c) => c.opcion);
     const grandes = TIPO.filter((op) => (op.comida === 'almuerzo' || op.comida === 'cena') && !enElDia.includes(op.clave)).map((op) => op.clave);
     const noMeGusta = grandes.filter((_, i) => i % 2 === 0);
     for (const semilla of SEMILLAS) {
       const nuevo = cambiarPorOtra(dia, 'almuerzo', { opciones: TIPO, pref: { ...TODO, noMeGusta }, meta: META, semilla });
-      if (nuevo) expect(noMeGusta).not.toContain(nuevo.comidas[1].opcion);
+      expect(nuevo).not.toBeNull();
+      expect(noMeGusta).not.toContain(nuevo!.comidas[1].opcion);
     }
+    // Con una sola otra, sale esa, aunque no se parezca.
+    const queda = grandes[grandes.length - 1];
+    expect(cambiarPorOtra(dia, 'almuerzo', { opciones: TIPO, pref: { ...TODO, noMeGusta: grandes.slice(0, -1) }, meta: META, semilla: 1 })!.comidas[1].opcion).toBe(queda);
     expect(cambiarPorOtra(dia, 'almuerzo', { opciones: TIPO, pref: { ...TODO, noMeGusta: grandes }, meta: META, semilla: 1 })).toBeNull();
     // Un plan de cuatro comidas no tiene snack.
     expect(cambiarPorOtra(dia, 'snack', { opciones: TIPO, pref: TODO, meta: META, semilla: 1 })).toBeNull();
+  });
+
+  it('no se acaba: lo que ya viste vuelve recién cuando viste todo, y lo tipo sale antes que lo combinado', () => {
+    const opciones = [...TIPO, ...COMBI];
+    let dia = planearDia({ dia: HOY, meta: META, opciones, pref: TODO, semilla: 3 });
+    const vistas: string[] = [];
+    for (let vez = 0; vez < 80; vez++) {
+      vistas.push(dia.comidas[1].opcion);
+      const nuevo = cambiarPorOtra(dia, 'almuerzo', { opciones, pref: TODO, meta: META, semilla: vez, vistas });
+      expect(vistas).not.toContain(nuevo!.comidas[1].opcion);
+      dia = nuevo!;
+    }
+    expect(vistas[1].startsWith('combinada:')).toBe(false);
+    expect(vistas.filter((c) => c.startsWith('combinada:')).length).toBeGreaterThan(40);
+    // Cuando ya viste todo, vuelve a lo visto.
+    const tres = ['pollo-arroz', 'carne-papa', 'merluza-papas'];
+    const pocas = TIPO.filter((op) => (op.comida !== 'almuerzo' && op.comida !== 'cena') || tres.includes(op.clave));
+    const pref: Preferencias = { ...TODO, comidas: 3 };
+    const armado = planearDia({ dia: HOY, meta: META, opciones: pocas, pref, semilla: 1 });
+    const libre = tres.filter((c) => !armado.comidas.some((x) => x.opcion === c));
+    expect(libre).toHaveLength(1);
+    expect(cambiarPorOtra(armado, 'almuerzo', { opciones: pocas, pref, meta: META, semilla: 1, vistas: tres })!.comidas[1].opcion).toBe(libre[0]);
+  });
+});
+
+describe('lo que aprende', () => {
+  const polloArroz = () => TIPO.find((op) => op.clave === 'pollo-arroz')!;
+  const claveDe = (nombre: string, op = polloArroz()) => {
+    const it = op.items.find((x) => x.nombre === nombre)!;
+    return `${it.fuente}:${it.ref}`;
+  };
+
+  it('lo que comés seguido sale más, hasta el doble con ocho comidas en cuatro semanas', () => {
+    const pollo = polloArroz().items[0];
+    const veces = (n: number) => Array.from({ length: n }, (_, i) => reg(pollo, hace(i + 1), i % 2 ? 'almuerzo' : 'cena', 13));
+    expect(afinidadDe({ opciones: TIPO, pref: TODO, registros: veces(4), hoy: HOY }).get(claveDe('Pechuga de pollo a la plancha'))).toBeCloseTo(1.5, 9);
+    expect(afinidadDe({ opciones: TIPO, pref: TODO, registros: veces(12), hoy: HOY }).get(claveDe('Pechuga de pollo a la plancha'))).toBe(2);
+    // Dos veces en la misma comida es una; lo planificado y lo de hace más de cuatro semanas no cuentan.
+    const otras = [reg(pollo, hace(1), 'cena', 21), reg(pollo, hace(1), 'cena', 21.5), reg(pollo, hace(2), 'cena', 21, { planificado: true }), reg(pollo, hace(30), 'cena', 21)];
+    expect(afinidadDe({ opciones: TIPO, pref: TODO, registros: otras, hoy: HOY }).get(claveDe('Pechuga de pollo a la plancha'))).toBeCloseTo(1 + 1 / 8, 9);
+  });
+
+  it('lo que no te gusta baja lo principal que lleva, y lo que te gusta lo sube; la lechuga y el aceite no cuentan', () => {
+    const noGusta = afinidadDe({ opciones: TIPO, pref: { ...TODO, noMeGusta: ['pollo-arroz'] }, registros: [], hoy: HOY });
+    expect(noGusta.get(claveDe('Pechuga de pollo a la plancha'))).toBe(0.5);
+    expect(noGusta.get(claveDe('Arroz blanco cocido'))).toBe(0.5);
+    expect(noGusta.has(claveDe('Lechuga'))).toBe(false);
+    expect(noGusta.has(claveDe('Aceite de oliva'))).toBe(false);
+    // Dos que no te gustan con pollo: un cuarto. Tres: el mínimo.
+    expect(afinidadDe({ opciones: TIPO, pref: { ...TODO, noMeGusta: ['pollo-arroz', 'wrap-pollo'] }, registros: [], hoy: HOY }).get(claveDe('Pechuga de pollo a la plancha'))).toBe(0.25);
+    const tresConPollo = COMBI.filter((op) => op.clave.startsWith('combinada:almuerzo:pollo-')).slice(0, 3).map((op) => op.clave);
+    expect(afinidadDe({ opciones: COMBI, pref: { ...TODO, noMeGusta: tresConPollo }, registros: [], hoy: HOY }).get(claveDe('Pechuga de pollo a la plancha'))).toBe(0.2);
+    expect(afinidadDe({ opciones: TIPO, pref: { ...TODO, meGusta: ['pollo-arroz'] }, registros: [], hoy: HOY }).get(claveDe('Pechuga de pollo a la plancha'))).toBe(1.5);
+  });
+
+  it('y eso mueve lo que se sugiere', () => {
+    const salmon = COMBI.find((op) => op.clave === 'combinada:almuerzo:salmon-arroz-ensalada')!.items[0];
+    const cenas = Array.from({ length: 8 }, (_, i) => reg(salmon, hace(i + 1), 'cena', 21));
+    const afinidad = afinidadDe({ opciones: COMBI, pref: TODO, registros: cenas, hoy: HOY });
+    const conSalmon = (a?: typeof afinidad) => SEMILLAS.slice(0, 6)
+      .flatMap((semilla) => todasLasComidas(planearSemana({ desde: HOY, metaDe: () => META, opciones: COMBI, pref: TODO, semilla, afinidad: a })))
+      .filter((c) => c.items.some((it) => it.ref === salmon.ref)).length;
+    expect(conSalmon(afinidad)).toBeGreaterThan(conSalmon());
   });
 });
 

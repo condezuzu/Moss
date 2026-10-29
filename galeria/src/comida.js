@@ -100,6 +100,8 @@ const Comida = (() => {
     mayus: '<path d="M12 4.5 4.5 12H9v7h6v-7h4.5z"/>',
     chispa: '<path d="M12 3.5c.8 4.2 2.3 5.7 6.5 6.5-4.2.8-5.7 2.3-6.5 6.5-.8-4.2-2.3-5.7-6.5-6.5 4.2-.8 5.7-2.3 6.5-6.5zM18.5 15.5c.3 1.6.9 2.2 2.5 2.5-1.6.3-2.2.9-2.5 2.5-.3-1.6-.9-2.2-2.5-2.5 1.6-.3 2.2-.9 2.5-2.5z"/>',
     corazon: '<path d="M12 19s-7-4.3-7-9.2A4 4 0 0 1 12 7.5a4 4 0 0 1 7 2.3C19 14.7 12 19 12 19z"/>',
+    pulgar: '<path d="M7.5 10.5v9h-2a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM7.5 10.5 11 4.2a1.6 1.6 0 0 1 2.9 1.2L13 9.5h5.1a1.6 1.6 0 0 1 1.6 1.9l-1.3 6.6a2 2 0 0 1-2 1.5H7.5"/>',
+    pulgarAbajo: '<path transform="rotate(180 12 12)" d="M7.5 10.5v9h-2a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM7.5 10.5 11 4.2a1.6 1.6 0 0 1 2.9 1.2L13 9.5h5.1a1.6 1.6 0 0 1 1.6 1.9l-1.3 6.6a2 2 0 0 1-2 1.5H7.5"/>',
     compras: '<path d="M5 6.5h14l-1.4 8.2a1.5 1.5 0 0 1-1.5 1.3H8a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M8.5 6.5 9.5 4h5l1 2.5M9 19.5h.01M15 19.5h.01"/>',
   };
   const icono = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n]}</svg>`;
@@ -206,6 +208,8 @@ const Comida = (() => {
       pref: { dieta: 'todo', alergias: [], comidas: 4, tiempo: 'normal', noMeGusta: [], meGusta: [] },
       compradas: new Set(),
       semilla: 0,
+      // Lo que «Otra» ya mostró en cada comida de cada día: no vuelve hasta haber mostrado todo.
+      vistas: {},
     };
     const armarDia = (comidas) => comidas.map((c) => Object.assign({}, c, { items: c.items.map(([n, v, p]) => item(n, v, p)).filter(Boolean) }));
     for (let k = PRIMER_DIA; k <= ULTIMO_DIA; k++) {
@@ -536,7 +540,7 @@ const Comida = (() => {
       const cab = el('header');
       const titulo = el('b', null, tx('comida.comidas.' + c.tipo));
       cab.appendChild(titulo);
-      if (c.plan) cab.appendChild(el('em', 'cm-etiqueta', tx('comida.planificado')));
+      if (c.plan) cab.appendChild(el('em', 'cm-etiqueta', tx(c.opcion ? 'comida.plan.sugerida' : 'comida.planificado')));
       const total = el('span', 'cm-tk');
       total.append(numero(Math.round(t.kcal)), el('small', null, ' kcal'));
       cab.appendChild(total);
@@ -568,24 +572,25 @@ const Comida = (() => {
       });
       if (!c.plan) pie.appendChild(boton('cm-foto', icono('camara'), () => avisarZona('Galería: la foto queda como recuerdo, sin análisis.'), tx('comida.foto')));
       art.appendChild(pie);
-      // Lo que armó Moss: «Comí esto» (hoy o antes), otra parecida, me gusta y no me gusta.
+      // Lo que sugirió Moss: «Comí esto» (hoy o antes); «Otra», que la cambia solo esta vez; y me gusta
+      // y no me gusta, que cambian lo que sugiere de acá en adelante.
       if (c.plan && c.opcion) {
         const acciones = el('div', 'cm-acciones cm-plan-acciones');
         if (diaDe(c) <= 0) acciones.appendChild(boton('cm-accion principal', `${icono('listo')}<span>${tx('comida.plan.comiEsto')}</span>`, () => comiEsto(c)));
         acciones.appendChild(boton('cm-accion', `<span>${tx('comida.plan.otra')}</span>`, () => otra(c)));
-        const gusta = boton('cm-accion cm-redondo cm-gusta', icono('corazon'), () => gusto(c, gusta), tx('comida.plan.meGusta'));
+        const gusta = boton('cm-accion cm-redondo cm-gusta', icono('pulgar'), () => gusto(c, gusta), tx('comida.plan.meGusta'));
         gusta.setAttribute('aria-pressed', String(s.pref.meGusta.includes(c.opcion)));
-        acciones.append(gusta, boton('cm-accion cm-redondo', icono('cerrar'), () => noMeGusta(c), tx('comida.plan.noMeGusta')));
+        acciones.append(gusta, boton('cm-accion cm-redondo', icono('pulgarAbajo'), () => noMeGusta(c), tx('comida.plan.noMeGusta')));
         art.appendChild(acciones);
       }
       return art;
     }
 
     // ------------------------------------------------------------ el plan de comidas
-    // Moss arma las comidas que faltan con Plan (src/dominio/plan.ts, el mismo módulo que la app):
-    // primero lo que comes seguido, después comidas tipo de tu forma de comer, escaladas para llegar
-    // a la meta. Quedan planificadas, tenues: «Comí esto» las anota, «Otra» la cambia por una
-    // parecida y lo que no te gusta no vuelve.
+    // Moss sugiere las comidas que faltan con Plan (src/dominio/plan.ts, el mismo módulo que la app):
+    // primero lo que comes seguido, después comidas tipo de tu forma de comer y al final las
+    // combinadas, escaladas para llegar a la meta. Quedan planificadas, tenues: «Comí esto» las
+    // anota, «Otra» la cambia por otra que no viste y lo que no te gusta no vuelve.
     const HORA_DEL_PLAN = Object.assign({ snack: 11 * 60 }, HORA_TIPICA);
     const metaDelPlan = () => ({ kcal: META.kcal, proteina: META.p, carbohidratos: META.c, grasas: META.g });
     const aMacros = (v) => ({ kcal: v.kcal, proteina: v.p, carbohidratos: v.c, grasas: v.g });
@@ -625,10 +630,12 @@ const Comida = (() => {
         return { fuente: 'base', ref: String(a.id), nombre: nombreDe(a), por100g: { kcal: a.v[0], proteina: a.v[1], carbohidratos: a.v[2], grasas: a.v[3] },
           porciones: a.p.map((p, i) => ({ nombre: porcionDe(a, i), gramos: p[2] })) };
       };
-      const lista = [...Plan.opcionesTuyas(registros, fechaClave(0)), ...Plan.PLANTILLAS.map((p) => Plan.opcionDePlantilla(p, resolver, idioma)).filter(Boolean)];
-      opcionesGuardadas = { idioma, lista };
+      const lista = [...Plan.opcionesTuyas(registros, fechaClave(0)), ...[...Plan.PLANTILLAS, ...Plan.COMBINADAS].map((p) => Plan.opcionDePlantilla(p, resolver, idioma)).filter(Boolean)];
+      opcionesGuardadas = { idioma, lista, registros };
       return lista;
     }
+    // Lo que aprendió de lo que comes y de lo que te gusta o no (Plan.afinidadDe).
+    const afinidad = (pref) => Plan.afinidadDe({ opciones: opcionesDelPlan(), pref, registros: opcionesGuardadas.registros, hoy: fechaClave(0) });
     const recientesDe = (k) => [k - 1, k - 2].flatMap((x) => comidasDe(x).filter((c) => c.opcion).map((c) => c.opcion));
     // Las comidas que faltan de un día; hoy, solo las que todavía no pasaron.
     function faltanDe(k) {
@@ -641,7 +648,10 @@ const Comida = (() => {
       const faltan = faltanDe(k);
       if (k < 0 || !faltan.length) return null;
       s.semilla++;
-      const dia = Plan.planearDia({ dia: fechaClave(k), meta: metaDelPlan(), opciones: opcionesDelPlan(), pref: s.pref, semilla: s.semilla, solo: faltan, yaComido: aMacros(totalDe(k)), recientes: recientesDe(k) });
+      const dia = Plan.planearDia({
+        dia: fechaClave(k), meta: metaDelPlan(), opciones: opcionesDelPlan(), pref: s.pref, semilla: s.semilla, solo: faltan, yaComido: aMacros(totalDe(k)), recientes: recientesDe(k),
+        afinidad: afinidad(s.pref),
+      });
       if (!s.dias[String(k)]) s.dias[String(k)] = [];
       const lista = s.dias[String(k)];
       dia.comidas.forEach((c) => lista.push({ tipo: c.comida, hora: k === 0 ? Math.max(HORA_DEL_PLAN[c.comida], AHORA) : HORA_DEL_PLAN[c.comida], plan: true, entra: true, opcion: c.opcion,
@@ -684,7 +694,9 @@ const Comida = (() => {
     }
     function otra(c, callado) {
       s.semilla++;
-      const nuevo = Plan.cambiarPorOtra(diaPlaneadoDe(diaDe(c)), c.tipo, { opciones: opcionesDelPlan(), pref: s.pref, meta: metaDelPlan(), semilla: s.semilla });
+      const vistas = (s.vistas[`${diaDe(c)} ${c.tipo}`] ||= []);
+      if (!vistas.includes(c.opcion)) vistas.push(c.opcion);
+      const nuevo = Plan.cambiarPorOtra(diaPlaneadoDe(diaDe(c)), c.tipo, { opciones: opcionesDelPlan(), pref: s.pref, meta: metaDelPlan(), semilla: s.semilla, vistas, afinidad: afinidad(s.pref) });
       const cambiada = nuevo && nuevo.comidas.find((x) => x.comida === c.tipo);
       if (!cambiada) {
         if (!callado) avisarZona(tx('comida.plan.sinOtra'));
@@ -701,18 +713,25 @@ const Comida = (() => {
       s.pref.meGusta = ya ? s.pref.meGusta.filter((x) => x !== c.opcion) : [...s.pref.meGusta, c.opcion];
       b.setAttribute('aria-pressed', String(!ya));
       escena.haptico('suave');
+      if (!ya) avisarZona(tx('comida.plan.gustada'));
     }
-    // No me gusta: no se vuelve a proponer (lo anotado no se toca) y se cambia ya por otra.
+    // No me gusta: no se vuelve a sugerir (lo anotado no se toca), lo que lleva sale menos y se cambia
+    // ya por otra.
     function noMeGusta(c) {
-      const antes = { opcion: c.opcion, items: c.items };
+      const antes = { opcion: c.opcion, items: c.items, gustaba: s.pref.meGusta.includes(c.opcion) };
+      s.pref.meGusta = s.pref.meGusta.filter((x) => x !== antes.opcion);
       s.pref.noMeGusta = [...s.pref.noMeGusta, c.opcion];
-      if (!otra(c, true)) {
+      const volver = () => {
         s.pref.noMeGusta = s.pref.noMeGusta.filter((x) => x !== antes.opcion);
+        if (antes.gustaba) s.pref.meGusta = [...s.pref.meGusta, antes.opcion];
+      };
+      if (!otra(c, true)) {
+        volver();
         avisarZona(tx('comida.plan.sinOtra'));
         return;
       }
       avisarZona(tx('comida.plan.quitada'), () => {
-        s.pref.noMeGusta = s.pref.noMeGusta.filter((x) => x !== antes.opcion);
+        volver();
         c.opcion = antes.opcion;
         c.items = antes.items;
         pintarZona(500);

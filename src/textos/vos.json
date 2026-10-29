@@ -97,8 +97,8 @@
       "nota": "Contanos más (opcional)"
     },
     "plan": {
-      "sinCompras": "Armá algún día y aparece acá.",
-      "preferenciasTexto": "Moss arma primero con lo que comés seguido; si falta, con comidas tipo de tu forma de comer.",
+      "sinCompras": "Tocá «Sugerir el día» y aparece acá.",
+      "preferenciasTexto": "Moss te sugiere primero lo que comés seguido y, si falta, comidas de tu forma de comer. Lo que marcás que te gusta o no te gusta cambia lo que sugiere después.",
       "dieta": "Cómo comés",
       "alergias": "Lo que no comés"
     },

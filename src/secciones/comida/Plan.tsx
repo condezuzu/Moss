@@ -1,6 +1,6 @@
-// El plan de comidas en Comida, como en la galería (galeria/src/comida.js): «Armar el día» arriba de
-// la línea, lo armado con «Comí esto», «Otra», me gusta y no me gusta; «Tus comidas»; y en la
-// semana, «Armar la semana» y la lista de compras. Las reglas están en src/dominio/plan.ts.
+// El plan de comidas en Comida, como en la galería (galeria/src/comida.js): «Sugerir el día» arriba
+// de la línea, lo sugerido con «Comí esto», «Otra», me gusta y no me gusta; «Tus comidas»; y en la
+// semana, «Sugerir la semana» y la lista de compras. Las reglas están en src/dominio/plan.ts.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
@@ -14,8 +14,9 @@ import { baseDeAlimentos } from '@/comida/base';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { lunesDe, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
-  ALERGENOS, cambiarPorOtra, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra, PLANTILLAS,
-  PREFERENCIAS_DE_FABRICA, queFalta, recientesDe, tachadasDe, tachar as tacharEn, type DiaPlaneado, type Tachadas, type Opcion, type Preferencias, type Resolver,
+  afinidadDe, ALERGENOS, cambiarPorOtra, COMBINADAS, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra,
+  PLANTILLAS, PREFERENCIAS_DE_FABRICA, queFalta, recientesDe, tachadasDe, tachar as tacharEn, type Afinidad, type DiaPlaneado, type Tachadas, type Opcion,
+  type Preferencias, type Resolver,
 } from '@/dominio/plan';
 import { totalDelDia } from '@/dominio/registros';
 import { t } from '@/textos';
@@ -32,19 +33,21 @@ export const horaDe = (c: Comida) => (c === 'snack' ? 11 * 60 : HORA_TIPICA[c]);
 const semillaNueva = () => Math.floor(Math.random() * 2 ** 31);
 const comoCome = (e: Pick<Estado, 'perfil'>): Preferencias => e.perfil?.comer ?? PREFERENCIAS_DE_FABRICA;
 
-// Las comidas tipo, con los curados de la base en el idioma de la app: se arman una vez por idioma.
+// Las comidas tipo y las combinadas, con los curados de la base en el idioma de la app: se arman una
+// vez por idioma.
 let comidasTipo: { clave: string; opciones: Promise<Opcion[]> } | null = null;
 function lasComidasTipo(): Promise<Opcion[]> {
   const op = opcionesDeIdioma();
   const clave = `${op.idioma}-${op.region ?? ''}`;
   if (comidasTipo?.clave !== clave) {
-    const nombres = [...new Set(PLANTILLAS.flatMap((p) => p.items.map(([nombre]) => nombre)))];
+    const todas = [...PLANTILLAS, ...COMBINADAS];
+    const nombres = [...new Set(todas.flatMap((p) => p.items.map(([nombre]) => nombre)))];
     const opciones = baseDeAlimentos.curados(nombres, op).then((curados) => {
       const resolver: Resolver = (nombre) => {
         const c = curados.get(nombre);
         return c ? { fuente: 'base', ref: String(c.id), nombre: c.nombre, por100g: c.por100g, porciones: c.porciones } : null;
       };
-      return PLANTILLAS.flatMap((p) => opcionDePlantilla(p, resolver, op.idioma) ?? []);
+      return todas.flatMap((p) => opcionDePlantilla(p, resolver, op.idioma) ?? []);
     });
     opciones.catch(() => {
       comidasTipo = null;
@@ -71,6 +74,10 @@ function useOpciones(e: Estado): Opcion[] | null {
   return useMemo(() => (tipo ? [...tuyas, ...tipo] : null), [tuyas, tipo]);
 }
 
+/** Lo que aprendió de lo que comes y de lo que te gusta o no (afinidadDe), con esas preferencias. */
+const afinidadCon = (e: Estado, opciones: readonly Opcion[], pref: Preferencias): Afinidad =>
+  afinidadDe({ opciones, pref, registros: e.registros.values(), hoy: e.hoy });
+
 /** Arma lo que falta de un día con lo que queda de la meta, y lo guarda planificado. null si no había nada que armar. */
 function armarUnDia(e: Estado, dia: ClaveDia, opciones: readonly Opcion[]): DiaPlaneado | null {
   const meta = metaDelDia(e, dia);
@@ -80,6 +87,7 @@ function armarUnDia(e: Estado, dia: ClaveDia, opciones: readonly Opcion[]): DiaP
   if (!solo.length) return null;
   const armado = planearDia({
     dia, meta, opciones, pref, semilla: semillaNueva(), solo, yaComido: totalDelDia(e.registros.values(), dia, true), recientes: recientesDe(e.registros.values(), dia),
+    afinidad: afinidadCon(e, opciones, pref),
   });
   if (!armado.comidas.length) return null;
   elAlmacen().planificar(dia, armado.comidas, horaDe);
@@ -119,31 +127,44 @@ export function ArmarElDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisa
   );
 }
 
-function BotonRedondo({ icono, etiqueta, elegido, alTocar }: { icono: 'heart' | 'heart.fill' | 'xmark'; etiqueta: string; elegido?: boolean; alTocar: () => void }) {
+function BotonRedondo({ icono, etiqueta, elegido, alTocar }: { icono: 'hand.thumbsup' | 'hand.thumbsup.fill' | 'hand.thumbsdown'; etiqueta: string; elegido?: boolean; alTocar: () => void }) {
   return (
     <Pressable
       onPress={alTocar}
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       accessibilityState={elegido === undefined ? undefined : { selected: elegido }}
-      style={({ pressed }) => [estilos.redondo, pressed && estilos.apretado]}
+      style={({ pressed }) => [estilos.redondo, elegido && estilos.redondoElegido, pressed && estilos.apretado]}
     >
       <Icono nombre={icono} tam={14} peso="semibold" />
     </Pressable>
   );
 }
 
-/** Lo que se hace con una comida armada: «Comí esto» (hoy o antes), otra parecida, me gusta y no me gusta. */
+// Lo que «Otra» ya mostró en cada comida de cada día, mientras Moss está abierta: así no vuelve a
+// lo mismo hasta haber mostrado todo (cambiarPorOtra).
+const VISTAS = new Map<string, string[]>();
+
+/**
+ * Lo que se hace con una comida sugerida: «Comí esto» (hoy o antes); «Otra», que la cambia solo esta
+ * vez; y me gusta y no me gusta, que cambian lo que Moss sugiere de acá en adelante: lo que no te
+ * gusta no vuelve y se cambia ya por otra, y lo que lleva sale menos (afinidadDe).
+ */
 export function AccionesDelPlan({ e, c, dia, avisar }: { e: Estado; c: ComidaDelDia; dia: ClaveDia; avisar: Avisar }) {
   const opciones = useOpciones(e);
   const clave = c.registros.find((r) => r.plan)?.plan ?? `planificada:${c.comida}`;
   const pref = comoCome(e);
   const gusta = pref.meGusta.includes(clave);
-  /** Cambia la comida por otra parecida; devuelve cómo deshacerlo, o null si no hay otra. */
+  /** Cambia la comida por otra; devuelve cómo deshacerlo, o null si no hay otra. */
   const otra = (prefs: Preferencias) => {
     const meta = metaDelDia(e, dia);
     if (!opciones || !meta) return null;
-    const nuevo = cambiarPorOtra(diaPlaneadoDe(e.registros.values(), dia), c.comida, { opciones, pref: prefs, meta, semilla: semillaNueva() });
+    const vistas = VISTAS.get(`${dia} ${c.comida}`) ?? [];
+    if (!vistas.includes(clave)) vistas.push(clave);
+    VISTAS.set(`${dia} ${c.comida}`, vistas);
+    const nuevo = cambiarPorOtra(diaPlaneadoDe(e.registros.values(), dia), c.comida, {
+      opciones, pref: prefs, meta, semilla: semillaNueva(), vistas, afinidad: afinidadCon(e, opciones, prefs),
+    });
     const cambiada = nuevo?.comidas.find((x) => x.comida === c.comida);
     return cambiada ? elAlmacen().cambiarPlanificada(dia, cambiada, horaDe) : null;
   };
@@ -159,10 +180,10 @@ export function AccionesDelPlan({ e, c, dia, avisar }: { e: Estado; c: ComidaDel
   const meGusta = () => {
     Haptics.selectionAsync().catch(() => {});
     elAlmacen().ponerComer({ ...pref, meGusta: gusta ? pref.meGusta.filter((x) => x !== clave) : [...pref.meGusta, clave] });
+    if (!gusta) avisar(t('comida.plan.gustada'));
   };
-  // No vuelve a proponerse (lo anotado no se toca) y se cambia ya por otra.
   const noMeGusta = () => {
-    const sinEsta = { ...pref, noMeGusta: [...pref.noMeGusta, clave] };
+    const sinEsta = { ...pref, meGusta: pref.meGusta.filter((x) => x !== clave), noMeGusta: [...pref.noMeGusta, clave] };
     const deshacer = otra(sinEsta);
     if (!deshacer) {
       avisar(t('comida.plan.sinOtra'));
@@ -172,15 +193,15 @@ export function AccionesDelPlan({ e, c, dia, avisar }: { e: Estado; c: ComidaDel
     avisar(t('comida.plan.quitada'), () => {
       deshacer();
       const ahora = comoCome(elAlmacen().estado());
-      elAlmacen().ponerComer({ ...ahora, noMeGusta: ahora.noMeGusta.filter((x) => x !== clave) });
+      elAlmacen().ponerComer({ ...ahora, noMeGusta: ahora.noMeGusta.filter((x) => x !== clave), meGusta: gusta ? [...ahora.meGusta, clave] : ahora.meGusta });
     });
   };
   return (
     <View style={estilos.acciones}>
       {dia <= e.hoy && <Boton texto={t('comida.plan.comiEsto')} icono="checkmark" tipo="principal" alTocar={comi} />}
       <Boton texto={t('comida.plan.otra')} tipo="contorno" alTocar={cambiar} desactivado={!opciones} />
-      <BotonRedondo icono={gusta ? 'heart.fill' : 'heart'} etiqueta={t('comida.plan.meGusta')} elegido={gusta} alTocar={meGusta} />
-      <BotonRedondo icono="xmark" etiqueta={t('comida.plan.noMeGusta')} alTocar={noMeGusta} />
+      <BotonRedondo icono={gusta ? 'hand.thumbsup.fill' : 'hand.thumbsup'} etiqueta={t('comida.plan.meGusta')} elegido={gusta} alTocar={meGusta} />
+      <BotonRedondo icono="hand.thumbsdown" etiqueta={t('comida.plan.noMeGusta')} alTocar={noMeGusta} />
     </View>
   );
 }
@@ -299,6 +320,7 @@ const estilos = StyleSheet.create({
   enlace: { paddingVertical: 8, fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.62)', textDecorationLine: 'underline', textDecorationColor: 'rgba(239, 230, 207, 0.25)' },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10 },
   redondo: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.06)' },
+  redondoElegido: { borderColor: 'rgba(232, 196, 106, 0.6)', backgroundColor: 'rgba(232, 196, 106, 0.16)' },
   apretado: { opacity: 0.75, transform: [{ scale: 0.97 }] },
   semana: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
   texto: { marginBottom: 6, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },

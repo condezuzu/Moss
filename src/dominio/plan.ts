@@ -1,9 +1,11 @@
-// El plan de comidas: Moss arma las comidas de un día o de una semana que llegan a la meta, y las
+// El plan de comidas: Moss sugiere las comidas de un día o de una semana que llegan a la meta, y las
 // rehace cuando la meta cambia. Primero lo que la persona come seguido, después lo que marcó que le
-// gusta y, si falta, las comidas tipo (PLANTILLAS), siempre dentro de lo que contestó: la dieta,
-// las alergias, cuántas comidas hace y cuánto tiempo tiene para cocinar. Lo que no le gusta deja de
-// proponerse, pero no se borra. El plan se guarda como registros planificados (registros.ts) y se
-// confirma con `confirmar`; «Comí esto» registra una comida sola (itemsDeComida).
+// gusta y, si falta, las comidas tipo (PLANTILLAS) y al final las combinadas (COMBINADAS), siempre
+// dentro de lo que contestó: la dieta, las alergias, cuántas comidas hace y cuánto tiempo tiene para
+// cocinar. Lo que no le gusta deja de sugerirse, pero no se borra, y lo que come y lo que le gusta
+// o no le gusta mueve la suerte de cada alimento (afinidadDe). El plan se guarda como registros
+// planificados (registros.ts) y se confirma con `confirmar`; «Comí esto» registra una comida sola
+// (itemsDeComida).
 // La galería usa este mismo archivo: lo que no es un tipo se importa solo de fechas.ts.
 
 import type { Comida } from './comidas';
@@ -35,7 +37,8 @@ export type Opcion = {
   nombre: string | null;
   comida: Comida;
   items: Item[];
-  origen: 'tuya' | 'tipo';
+  /** Lo tuyo, una comida tipo, o una combinada (COMBINADAS): las combinadas salen cuando lo demás se acabó. */
+  origen: 'tuya' | 'tipo' | 'combinada';
   /** Cuántas veces la comiste en las últimas semanas; una comida tipo, 0. */
   veces: number;
   dietas: Dieta[];
@@ -82,6 +85,8 @@ export type Plantilla = {
   dietas: readonly Dieta[];
   contiene: readonly Alergeno[];
   minutos: number;
+  /** Las de COMBINADAS. */
+  combinada?: true;
 };
 
 // Quién puede comer cada una: lo vegano, cualquiera; lo que tiene carne, solo quien come de todo.
@@ -215,6 +220,121 @@ export const PLANTILLAS: readonly Plantilla[] = [
   { clave: 'wrap-hummus', nombre: { es: 'Wrap de hummus, garbanzos y verduras', en: 'Hummus, chickpea and vegetable wrap' }, comida: 'cena',
     items: [['Tortilla de harina', 71], ['Hummus', 60], ['Garbanzos en lata', 76], ['Lechuga', 35], ['Tomate', 61.5], ['Zanahoria', 61]], dietas: VEGANA, contiene: ['gluten', 'sesamo'], minutos: 10 },
 ];
+
+// ------------------------------------------------------------ las combinadas
+
+/** Una parte de una combinada: sus alimentos, cómo se nombra, quién la come y lo que lleva hacerla. */
+type Parte = { clave: string; es: string; en: string; items: Plantilla['items']; dietas: readonly Dieta[]; contiene: readonly Alergeno[]; minutos: number };
+const parte = (clave: string, es: string, en: string, items: Plantilla['items'], dietas: readonly Dieta[], contiene: readonly Alergeno[], minutos: number): Parte =>
+  ({ clave, es, en, items, dietas, contiene, minutos });
+
+// Los gramos caen en una porción con nombre: 1 pechuga mediana, 1 filete, 1 taza. Las legumbres,
+// de lata: listas en minutos.
+const PROTEINAS: readonly Parte[] = [
+  parte('pollo', 'Pollo a la plancha', 'Grilled chicken', [['Pechuga de pollo a la plancha', 120]], CON_CARNE, [], 12),
+  parte('carne', 'Carne a la plancha', 'Grilled steak', [['Lomo', 160]], CON_CARNE, [], 10),
+  parte('cerdo', 'Cerdo a la plancha', 'Grilled pork', [['Lomo de cerdo', 120]], CON_CARNE, [], 12),
+  parte('merluza', 'Merluza', 'Hake', [['Merluza', 135]], CON_PESCADO, ['pescado'], 10),
+  parte('salmon', 'Salmón', 'Salmon', [['Salmón', 140]], CON_PESCADO, ['pescado'], 12),
+  parte('atun', 'Atún', 'Tuna', [['Atún en agua', 165]], CON_PESCADO, ['pescado'], 2),
+  parte('huevos', 'Huevos duros', 'Hard-boiled eggs', [['Huevo duro', 100]], VEGETARIANA, ['huevo'], 12),
+  parte('tofu', 'Tofu a la plancha', 'Grilled tofu', [['Tofu firme', 150]], VEGANA, ['soja'], 10),
+  parte('garbanzos', 'Garbanzos', 'Chickpeas', [['Garbanzos', 164]], VEGANA, [], 3),
+  parte('lentejas', 'Lentejas', 'Lentils', [['Lentejas', 198]], VEGANA, [], 3),
+];
+const GUARNICIONES: readonly Parte[] = [
+  parte('arroz', 'arroz', 'rice', [['Arroz blanco cocido', 158]], VEGANA, [], 20),
+  parte('integral', 'arroz integral', 'brown rice', [['Arroz integral cocido', 202]], VEGANA, [], 35),
+  parte('papa', 'papa al horno', 'baked potato', [['Papa al horno', 173]], VEGANA, [], 35),
+  parte('papas', 'papas hervidas', 'boiled potatoes', [['Papa hervida', 272]], VEGANA, [], 25),
+  parte('batata', 'batata al horno', 'baked sweet potato', [['Batata al horno', 150]], VEGANA, [], 35),
+  parte('quinoa', 'quinoa', 'quinoa', [['Quinoa cocida', 185]], VEGANA, [], 15),
+  parte('fideos', 'fideos', 'pasta', [['Pasta cocida', 248]], VEGANA, ['gluten'], 10),
+  parte('pure', 'puré', 'mashed potatoes', [['Puré de papas', 250]], VEGETARIANA, ['leche'], 25),
+  parte('pan', 'pan integral', 'whole-wheat bread', [['Pan integral', 64]], VEGANA, ['gluten'], 1),
+];
+const VERDURAS: readonly Parte[] = [
+  parte('ensalada', 'ensalada', 'salad', [['Lechuga', 35], ['Tomate', 123], ['Aceite de oliva', 4.5]], VEGANA, [], 5),
+  parte('brocoli', 'brócoli', 'broccoli', [['Brócoli cocido', 156]], VEGANA, [], 8),
+  parte('verduras', 'verduras', 'vegetables', [['Verduras mixtas cocidas', 180]], VEGANA, [], 10),
+  parte('judias', 'judías verdes', 'green beans', [['Judías verdes', 125]], VEGANA, [], 8),
+  parte('zanahoria', 'zanahoria rallada', 'grated carrot', [['Zanahoria', 110], ['Aceite de oliva', 4.5]], VEGANA, [], 5),
+  parte('espinaca', 'espinaca salteada', 'sautéed spinach', [['Espinaca', 90], ['Aceite de oliva', 4.5]], VEGANA, [], 5),
+];
+// La granola puede llevar miel: vegetariana. Los alérgenos, de más ante la duda, como en PLANTILLAS.
+const BASES: readonly Parte[] = [
+  parte('yogur', 'Yogur griego', 'Greek yogurt', [['Yogur griego descremado', 170]], VEGETARIANA, ['leche'], 2),
+  parte('cottage', 'Queso cottage', 'Cottage cheese', [['Queso cottage', 113]], VEGETARIANA, ['leche'], 2),
+  parte('leche', 'Leche', 'Milk', [['Leche descremada', 206]], VEGETARIANA, ['leche'], 2),
+  parte('cafe', 'Café con leche', 'Coffee with milk', [['Café con leche', 252]], VEGETARIANA, ['leche'], 5),
+  parte('soja', 'Leche de soja', 'Soy milk', [['Leche de soja', 206]], VEGANA, ['soja'], 2),
+];
+const CEREALES: readonly Parte[] = [
+  parte('avena', 'avena', 'oats', [['Avena', 40]], VEGANA, ['gluten'], 5),
+  parte('granola', 'granola', 'granola', [['Granola', 55]], VEGETARIANA, ['gluten', 'frutosSecos'], 1),
+  parte('queso', 'tostadas con queso', 'toast with cheese', [['Pan integral', 64], ['Queso fresco', 30]], VEGETARIANA, ['gluten', 'leche'], 5),
+  parte('huevo', 'tostadas con huevo duro', 'toast with a boiled egg', [['Pan integral', 64], ['Huevo duro', 50]], VEGETARIANA, ['gluten', 'huevo'], 12),
+  parte('mani', 'tostadas con mantequilla de maní', 'toast with peanut butter', [['Pan integral', 64], ['Mantequilla de maní', 16]], VEGANA, ['gluten', 'mani'], 5),
+];
+const FRUTAS: readonly Parte[] = [
+  parte('banana', 'banana', 'banana', [['Banana', 118]], VEGANA, [], 1),
+  parte('manzana', 'manzana', 'apple', [['Manzana', 182]], VEGANA, [], 1),
+  parte('naranja', 'naranja', 'orange', [['Naranja', 131]], VEGANA, [], 1),
+  parte('pera', 'pera', 'pear', [['Pera', 178]], VEGANA, [], 1),
+  parte('kiwi', 'kiwi', 'kiwi', [['Kiwi', 138]], VEGANA, [], 1),
+  parte('arandanos', 'arándanos', 'blueberries', [['Arándanos', 74]], VEGANA, [], 1),
+  parte('mandarinas', 'mandarinas', 'mandarins', [['Mandarina', 176]], VEGANA, [], 1),
+];
+const PARA_PICAR: readonly Parte[] = [
+  parte('almendras', 'almendras', 'almonds', [['Almendras', 28]], VEGANA, ['frutosSecos'], 1),
+  parte('nueces', 'nueces', 'walnuts', [['Nueces', 28]], VEGANA, ['frutosSecos'], 1),
+  parte('yogur', 'yogur griego', 'Greek yogurt', [['Yogur griego descremado', 170]], VEGETARIANA, ['leche'], 1),
+  parte('queso', 'queso', 'cheese', [['Queso fresco', 30]], VEGETARIANA, ['leche'], 1),
+  parte('mani', 'mantequilla de maní', 'peanut butter', [['Mantequilla de maní', 16]], VEGANA, ['mani'], 1),
+  parte('semillas', 'semillas de calabaza', 'pumpkin seeds', [['Semillas de calabaza', 15]], VEGANA, [], 1),
+];
+
+// Lo que no va junto: el puré con legumbres, la avena o la granola en el café, y dos quesos.
+const NO_VAN = new Set(['garbanzos+pure', 'lentejas+pure', 'cafe+avena', 'cafe+granola', 'cottage+queso']);
+const nombresDe = (items: Plantilla['items']) => [...new Set(items.map(([nombre]) => nombre))].sort().join('+');
+const mayuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * Las combinadas (lo pediste el 29/10/2026): una proteína, una guarnición y una verdura para el
+ * almuerzo y la cena; algo con leche (o de soja), un cereal o tostadas y una fruta para el desayuno
+ * y la merienda; y una fruta con algo para el snack. Salen cuando lo demás se acabó, así «Otra» no
+ * se acaba nunca. Las que ya son una comida tipo no están.
+ */
+export const COMBINADAS: readonly Plantilla[] = (() => {
+  const tipo = new Set(PLANTILLAS.map((p) => nombresDe(p.items)));
+  const lista: Plantilla[] = [];
+  const agregar = (comida: Comida, partes: readonly Parte[], nombre: { es: string; en: string }) => {
+    if (partes.some((a, i) => partes.some((b, j) => j > i && NO_VAN.has(`${a.clave}+${b.clave}`)))) return;
+    const items = partes.flatMap((p) => p.items);
+    if (tipo.has(nombresDe(items))) return;
+    lista.push({
+      clave: `combinada:${comida}:${partes.map((p) => p.clave).join('-')}`,
+      nombre,
+      comida,
+      items,
+      dietas: DIETAS.filter((d) => partes.every((p) => p.dietas.includes(d))),
+      contiene: ALERGENOS.filter((a) => partes.some((p) => p.contiene.includes(a))),
+      // Lo de cada parte se hace a la vez: lo que más tarda, y un rato para servir.
+      minutos: Math.max(...partes.map((p) => p.minutos)) + 3,
+      combinada: true,
+    });
+  };
+  for (const p of PROTEINAS) for (const g of GUARNICIONES) for (const v of VERDURAS) {
+    agregar('almuerzo', [p, g, v], { es: `${p.es} con ${g.es} y ${v.es}`, en: `${p.en} with ${g.en} and ${v.en}` });
+  }
+  for (const b of BASES) for (const c of CEREALES) for (const f of FRUTAS) {
+    agregar('desayuno', [b, c, f], { es: `${b.es}, ${c.es} y ${f.es}`, en: `${b.en}, ${c.en} and ${f.en}` });
+  }
+  for (const f of FRUTAS) for (const x of PARA_PICAR) {
+    agregar('snack', [f, x], { es: `${mayuscula(f.es)} con ${x.es}`, en: `${mayuscula(f.en)} with ${x.en}` });
+  }
+  return lista;
+})();
 
 // ------------------------------------------------------------ los valores (como en registros.ts)
 
@@ -503,17 +623,35 @@ const PARECIDAS: Record<Comida, readonly Comida[]> = {
 
 /**
  * El orden en que se elige para una comida: lo tuyo de esa comida (0), lo que te gusta (1), lo tuyo
- * de una parecida (2), lo que te gusta de una parecida (3) y las comidas tipo (4 y 5). null si no va.
+ * de una parecida (2), lo que te gusta de una parecida (3), las comidas tipo (4 y 5) y las combinadas
+ * (6 y 7), que salen cuando lo demás se acabó. null si no va.
  */
 function nivel(op: Opcion, comida: Comida, pref: Preferencias): number | null {
   const lugar = PARECIDAS[comida].indexOf(op.comida);
   if (lugar < 0) return null;
-  const desde = op.origen === 'tuya' ? 0 : pref.meGusta.includes(op.clave) ? 1 : 4;
-  return lugar === 0 ? desde : desde + (desde === 4 ? 1 : 2);
+  const desde = op.origen === 'tuya' ? 0 : pref.meGusta.includes(op.clave) ? 1 : op.origen === 'tipo' ? 4 : 6;
+  return lugar === 0 ? desde : desde + (desde >= 4 ? 1 : 2);
 }
+const ULTIMO_NIVEL = 7;
 
-/** Lo tuyo sale más cuanto más lo comés; lo que te gusta, el doble. */
-const peso = (op: Opcion, pref: Preferencias) => (op.origen === 'tuya' ? Math.max(1, op.veces) : 1) * (pref.meGusta.includes(op.clave) ? 2 : 1);
+/**
+ * Cuánto sale cada alimento (lo pediste el 29/10/2026): lo que comés seguido sale más (hasta el doble);
+ * lo de lo que marcaste «me gusta», más; lo de «no me gusta», menos, también en otras comidas que lo
+ * llevan. Sin un alimento en el mapa, 1. Lo arma afinidadDe.
+ */
+export type Afinidad = ReadonlyMap<string, number>;
+
+/**
+ * Lo tuyo sale más cuanto más lo comés; lo que te gusta, el doble; y cada una, según la afinidad de
+ * sus alimentos, pesada por sus kcal: el pollo cuenta más que la lechuga.
+ */
+const peso = (op: Opcion, pref: Preferencias, afinidad?: Afinidad) => {
+  const base = (op.origen === 'tuya' ? Math.max(1, op.veces) : 1) * (pref.meGusta.includes(op.clave) ? 2 : 1);
+  if (!afinidad?.size) return base;
+  const kcal = op.items.reduce((s, it) => s + Math.max(0, it.valores.kcal), 0);
+  if (!(kcal > 0)) return base;
+  return base * op.items.reduce((s, it) => s + (afinidad.get(claveDe(it)) ?? 1) * Math.max(0, it.valores.kcal), 0) / kcal;
+};
 
 /** Cuánto se evita una opción en una comida (lo reciente, lo repetido en la semana): se elige entre las que menos. */
 type Penalidad = (op: Opcion, comida: Comida) => number;
@@ -528,15 +666,15 @@ function candidatas(comida: Comida, permitidas: readonly Opcion[], pref: Prefere
  * Una opción por comida, nivel por nivel: cada comida se queda primero con lo suyo, así el desayuno
  * no se lleva la merienda de siempre. Dentro de un nivel, a la suerte con su peso.
  */
-function elegirDelDia(comidas: readonly Comida[], permitidas: readonly Opcion[], pref: Preferencias, al: () => number, penalidad: Penalidad): (Opcion | null)[] {
+function elegirDelDia(comidas: readonly Comida[], permitidas: readonly Opcion[], pref: Preferencias, al: () => number, penalidad: Penalidad, afinidad?: Afinidad): (Opcion | null)[] {
   const elegidas: (Opcion | null)[] = comidas.map(() => null);
   const usadas = new Set<string>();
-  for (let n = 0; n <= 5; n++) {
+  for (let n = 0; n <= ULTIMO_NIVEL; n++) {
     comidas.forEach((comida, i) => {
       if (elegidas[i]) return;
       const deEste = candidatas(comida, permitidas, pref, usadas, penalidad).filter((op) => nivel(op, comida, pref) === n);
       if (!deEste.length) return;
-      const op = sortear(deEste, (x) => peso(x, pref), al);
+      const op = sortear(deEste, (x) => peso(x, pref, afinidad), al);
       elegidas[i] = op;
       usadas.add(op.clave);
     });
@@ -564,40 +702,46 @@ type Cambio = { i: number; op: Opcion; error: number };
  * comidas tipo que no marcaste, mirando el día parejo, sin agrandar ni achicar comidas para la
  * proteína: mejor otra comida que un desayuno doble. Si ni moviendo kcal se llega a lo que pide
  * alcanza(), se cambia lo que más acerca el día a la meta, y lo tuyo y lo que te gusta solo si
- * cambiando lo demás no se mejora nada.
+ * cambiando lo demás no se mejora nada. Las combinadas entran solo si sin ellas no se llega: son
+ * tantas que, si no, casi todo cambio sería una.
  */
 function mejorar(comidas: readonly Comida[], elegidas: readonly (Opcion | null)[], partes: readonly number[], permitidas: readonly Opcion[], pref: Preferencias, penalidad: Penalidad, meta: Macros, al: () => number): (Opcion | null)[] {
   const resultado = [...elegidas];
   const protegida = (op: Opcion) => op.origen === 'tuya' || pref.meGusta.includes(op.clave);
   const parejo = (lista: readonly (Opcion | null)[]) => errorPosible(lista, partes, meta, false, PROTEINA_BUSCADA);
   const moviendo = (lista: readonly (Opcion | null)[]) => errorPosible(lista, partes, meta, true, PROTEINA_MINIMA);
-  const cambios = (cuales: (op: Opcion) => boolean, error: typeof parejo): Cambio[] =>
-    resultado.flatMap((actual, i) => {
-      if (!actual || !cuales(actual)) return [];
-      const usadas = new Set(resultado.flatMap((op, j) => (op && j !== i ? [op.clave] : [])));
-      return candidatas(comidas[i], permitidas, pref, usadas, penalidad)
-        .filter((op) => op.clave !== actual.clave)
-        .map((op) => ({ i, op, error: error(resultado.map((x, j) => (j === i ? op : x))) }));
-    });
   const menor = (lista: Cambio[]) => lista.reduce<Cambio | null>((m, c) => (!m || c.error < m.error - 1e-9 ? c : m), null);
-  for (let vuelta = 0; vuelta < comidas.length; vuelta++) {
-    const ahora = parejo(resultado);
-    if (ahora <= 0) break;
-    const posibles = cambios((op) => !protegida(op), parejo);
-    const arreglan = posibles.filter((c) => c.error <= 0);
-    // Entre los cambios que alcanzan, a la suerte: si no, siempre ganaría la misma comida.
-    const cambio = arreglan.length ? sortear(arreglan, () => 1, al) : menor(posibles);
-    if (!cambio || cambio.error >= ahora - 1e-9) break;
-    resultado[cambio.i] = cambio.op;
-  }
-  for (let vuelta = 0; vuelta < comidas.length; vuelta++) {
-    const ahora = moviendo(resultado);
-    if (ahora <= 0) break;
-    const mejora = (lista: Cambio[]) => menor(lista.filter((c) => c.error < ahora - 1e-9));
-    const cambio = mejora(cambios((op) => !protegida(op), moviendo)) ?? mejora(cambios(protegida, moviendo));
-    if (!cambio) break;
-    resultado[cambio.i] = cambio.op;
-  }
+  const pasada = (entre: readonly Opcion[]) => {
+    const cambios = (cuales: (op: Opcion) => boolean, error: typeof parejo): Cambio[] =>
+      resultado.flatMap((actual, i) => {
+        if (!actual || !cuales(actual)) return [];
+        const usadas = new Set(resultado.flatMap((op, j) => (op && j !== i ? [op.clave] : [])));
+        return candidatas(comidas[i], entre, pref, usadas, penalidad)
+          .filter((op) => op.clave !== actual.clave)
+          .map((op) => ({ i, op, error: error(resultado.map((x, j) => (j === i ? op : x))) }));
+      });
+    for (let vuelta = 0; vuelta < comidas.length; vuelta++) {
+      const ahora = parejo(resultado);
+      if (ahora <= 0) break;
+      const posibles = cambios((op) => !protegida(op), parejo);
+      const arreglan = posibles.filter((c) => c.error <= 0);
+      // Entre los cambios que alcanzan, a la suerte: si no, siempre ganaría la misma comida.
+      const cambio = arreglan.length ? sortear(arreglan, () => 1, al) : menor(posibles);
+      if (!cambio || cambio.error >= ahora - 1e-9) break;
+      resultado[cambio.i] = cambio.op;
+    }
+    for (let vuelta = 0; vuelta < comidas.length; vuelta++) {
+      const ahora = moviendo(resultado);
+      if (ahora <= 0) break;
+      const mejora = (lista: Cambio[]) => menor(lista.filter((c) => c.error < ahora - 1e-9));
+      const cambio = mejora(cambios((op) => !protegida(op), moviendo)) ?? mejora(cambios(protegida, moviendo));
+      if (!cambio) break;
+      resultado[cambio.i] = cambio.op;
+    }
+  };
+  const sinCombinar = permitidas.filter((op) => op.origen !== 'combinada');
+  pasada(sinCombinar);
+  if (sinCombinar.length < permitidas.length && moviendo(resultado) > 0) pasada(permitidas);
   return resultado;
 }
 
@@ -606,7 +750,7 @@ const MINIMO_PARA_ARMAR = 150;
 
 function planear(
   dia: ClaveDia, metaDelDia: Macros, opciones: readonly Opcion[], pref: Preferencias, al: () => number, penalidad: Penalidad,
-  solo?: readonly Comida[], yaComido?: Macros,
+  solo?: readonly Comida[], yaComido?: Macros, afinidad?: Afinidad,
 ): DiaPlaneado {
   const comidas = comidasDelPlan(pref.comidas).filter((c) => !solo || solo.includes(c));
   // Lo que ya se comió sale de la meta: se arma lo que falta con lo que queda.
@@ -616,7 +760,7 @@ function planear(
   if (!comidas.length || meta.kcal < MINIMO_PARA_ARMAR) return { dia, comidas: [], valores: { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 }, alcanza: true };
   const partes = comidas.map((c) => REPARTO[pref.comidas][c] ?? 0);
   const permitidas = opciones.filter((op) => permitida(op, pref)).sort(porClave);
-  const elegidas = mejorar(comidas, elegirDelDia(comidas, permitidas, pref, al, penalidad), partes, permitidas, pref, penalidad, meta, al);
+  const elegidas = mejorar(comidas, elegirDelDia(comidas, permitidas, pref, al, penalidad, afinidad), partes, permitidas, pref, penalidad, meta, al);
   const elecciones = comidas.flatMap((comida, i) => {
     const op = elegidas[i];
     return op ? [{ comida, opcion: op.clave, base: op.items, parte: partes[i] }] : [];
@@ -633,7 +777,7 @@ function planear(
  */
 export function permitida(op: Opcion, pref: Preferencias): boolean {
   if (pref.noMeGusta.includes(op.clave) || !op.dietas.includes(pref.dieta)) return false;
-  if (op.origen === 'tipo' && op.contiene.some((a) => pref.alergias.includes(a))) return false;
+  if (op.origen !== 'tuya' && op.contiene.some((a) => pref.alergias.includes(a))) return false;
   return op.minutos <= MINUTOS[pref.tiempo];
 }
 
@@ -741,7 +885,7 @@ function porcionDe(porciones: readonly { nombre: string; gramos: number }[], gra
   return p ? { porcion: p.nombre, gramosPorcion: p.gramos, veces: Math.round(veces(p) * 2) / 2 } : null;
 }
 
-/** Una comida tipo con los alimentos de la base, en el idioma de la app. null si falta alguno. */
+/** Una comida tipo (o una combinada) con los alimentos de la base, en el idioma de la app. null si falta alguno. */
 export function opcionDePlantilla(p: Plantilla, resolver: Resolver, idioma: 'es' | 'en'): Opcion | null {
   const items: Item[] = [];
   for (const [nombre, gramos] of p.items) {
@@ -750,7 +894,46 @@ export function opcionDePlantilla(p: Plantilla, resolver: Resolver, idioma: 'es'
     const cantidad = porcionDe(a.porciones ?? [], gramos) ?? { gramos };
     items.push({ fuente: a.fuente, ref: a.ref, nombre: a.nombre, cantidad, valores: escalarValores(a.por100g, (gramosDe(cantidad) ?? 0) / 100) });
   }
-  return { clave: p.clave, nombre: p.nombre[idioma], comida: p.comida, items, origen: 'tipo', veces: 0, dietas: [...p.dietas], contiene: [...p.contiene], minutos: p.minutos };
+  return {
+    clave: p.clave, nombre: p.nombre[idioma], comida: p.comida, items, origen: p.combinada ? 'combinada' : 'tipo', veces: 0,
+    dietas: [...p.dietas], contiene: [...p.contiene], minutos: p.minutos,
+  };
+}
+
+// Lo que comés seguido sale más: el doble con 8 comidas en las últimas cuatro semanas.
+const SEGUIDO = 8;
+const ME_GUSTA = 1.5;
+const NO_ME_GUSTA = 0.5;
+
+/**
+ * Cuánto sale cada alimento en lo que Moss sugiere (lo pediste el 29/10/2026): lo que comiste en las
+ * últimas cuatro semanas, más cuanto más seguido (hasta el doble); lo principal de cada comida que
+ * marcaste «me gusta», ×1,5, y de cada una que marcaste «no me gusta», ×0,5, así otra comida con lo
+ * mismo también sale menos (dos que no te gustan con pollo dejan el pollo en un cuarto). Lo principal
+ * es lo que pesa en su comida (como en afinar): la lechuga o el aceite no cuentan. Entre 0,2 y 3.
+ */
+export function afinidadDe(o: { opciones: readonly Opcion[]; pref: Preferencias; registros: Iterable<Registro>; hoy: ClaveDia; dias?: number }): Afinidad {
+  const dias = o.dias ?? 28;
+  const enComidas = new Map<string, Set<string>>();
+  for (const r of o.registros) {
+    const hace = diasEntre(r.dia, o.hoy);
+    if (r.borrado || r.planificado || hace < 0 || hace >= dias) continue;
+    const k = claveDe(r);
+    enComidas.set(k, (enComidas.get(k) ?? new Set<string>()).add(`${r.dia} ${r.comida}`));
+  }
+  const afinidad = new Map<string, number>();
+  const por = (k: string, f: number) => afinidad.set(k, (afinidad.get(k) ?? 1) * f);
+  for (const [k, comidas] of enComidas) por(k, 1 + Math.min(1, comidas.size / SEGUIDO));
+  const gusta = new Set(o.pref.meGusta);
+  const noGusta = new Set(o.pref.noMeGusta);
+  for (const op of o.opciones) {
+    const f = gusta.has(op.clave) ? ME_GUSTA : noGusta.has(op.clave) ? NO_ME_GUSTA : 1;
+    if (f === 1) continue;
+    const total = op.items.reduce((s, it) => s + it.valores.kcal, 0);
+    for (const k of new Set(op.items.filter((it) => it.valores.kcal >= PRINCIPAL * total).map(claveDe))) por(k, f);
+  }
+  for (const [k, x] of afinidad) afinidad.set(k, Math.min(3, Math.max(0.2, x)));
+  return afinidad;
 }
 
 /**
@@ -764,17 +947,17 @@ export function opcionDePlantilla(p: Plantilla, resolver: Resolver, idioma: 'es'
  */
 export function planearDia(o: {
   dia: ClaveDia; meta: Macros; opciones: readonly Opcion[]; pref: Preferencias; semilla: number; recientes?: readonly string[];
-  solo?: readonly Comida[]; yaComido?: Macros;
+  solo?: readonly Comida[]; yaComido?: Macros; afinidad?: Afinidad;
 }): DiaPlaneado {
   const recientes = new Set(o.recientes ?? []);
-  return planear(o.dia, o.meta, o.opciones, o.pref, azar(o.semilla), (op) => (recientes.has(op.clave) ? 1 : 0), o.solo, o.yaComido);
+  return planear(o.dia, o.meta, o.opciones, o.pref, azar(o.semilla), (op) => (recientes.has(op.clave) ? 1 : 0), o.solo, o.yaComido, o.afinidad);
 }
 
 /**
  * Una semana desde `desde`, cada día con su meta. Para variar, el mismo almuerzo o la misma cena
  * van a lo sumo dos veces en la semana y nunca dos días seguidos (si hay con qué).
  */
-export function planearSemana(o: { desde: ClaveDia; metaDe: (dia: ClaveDia) => Macros; opciones: readonly Opcion[]; pref: Preferencias; semilla: number }): DiaPlaneado[] {
+export function planearSemana(o: { desde: ClaveDia; metaDe: (dia: ClaveDia) => Macros; opciones: readonly Opcion[]; pref: Preferencias; semilla: number; afinidad?: Afinidad }): DiaPlaneado[] {
   const al = azar(o.semilla);
   const grandes = (c: Comida) => c === 'almuerzo' || c === 'cena';
   const veces = new Map<string, number>();
@@ -783,7 +966,7 @@ export function planearSemana(o: { desde: ClaveDia; metaDe: (dia: ClaveDia) => M
   for (let i = 0; i < 7; i++) {
     const dia = sumarDias(o.desde, i);
     const penalidad: Penalidad = (op, comida) => (!grandes(comida) ? 0 : (veces.get(op.clave) ?? 0) >= 2 ? 2 : ayer.has(op.clave) ? 1 : 0);
-    const plan = planear(dia, o.metaDe(dia), o.opciones, o.pref, al, penalidad);
+    const plan = planear(dia, o.metaDe(dia), o.opciones, o.pref, al, penalidad, undefined, undefined, o.afinidad);
     const deHoy = plan.comidas.filter((c) => grandes(c.comida)).map((c) => c.opcion);
     for (const clave of deHoy) veces.set(clave, (veces.get(clave) ?? 0) + 1);
     ayer = new Set(deHoy);
@@ -792,37 +975,66 @@ export function planearSemana(o: { desde: ClaveDia; metaDe: (dia: ClaveDia) => M
   return semana;
 }
 
-// Cambiar por otra pide algo parecido: hasta un 15 % de las kcal y de la proteína (o 3 g, en lo que
-// casi no tiene: un 15 % de una fruta no deja cambiarla por nada).
-const PARECIDO = 0.15;
+// «Otra» pide algo parecido: primero hasta un 15 % de las kcal y de la proteína (o 3 g, en lo que
+// casi no tiene: un 15 % de una fruta no deja cambiarla por nada); si no queda nada así, de a poco
+// algo menos parecido.
+const PARECIDOS = [0.15, 0.3, 0.6, Infinity] as const;
 const PROTEINA_PARECIDA = 3;
-const parecida = (a: Valores, b: Valores) =>
-  Math.abs(a.kcal - b.kcal) <= PARECIDO * b.kcal && Math.abs(a.proteina - b.proteina) <= Math.max(PARECIDO * b.proteina, PROTEINA_PARECIDA);
+type KcalYProteina = Pick<Valores, 'kcal' | 'proteina'>;
+const parecida = (a: KcalYProteina, b: KcalYProteina, margen: number) =>
+  margen === Infinity
+  || (Math.abs(a.kcal - b.kcal) <= margen * b.kcal && Math.abs(a.proteina - b.proteina) <= Math.max(margen * b.proteina, PROTEINA_PARECIDA));
 
 /**
- * «Cambiar por otra»: otra opción para esa comida que, escalada, queda a menos de un 15 % de las
- * kcal y de la proteína de la que estaba, y que no está ya en el día. Elige como planearDia. null
- * si no hay ninguna.
+ * «Otra» (lo pediste el 29/10/2026, que no se acabe): otra opción para esa comida, escalada a sus
+ * kcal, que no está ya en el día. Primero lo que todavía no viste ahí (`vistas`) y lo más parecido:
+ * hasta un 15 % de las kcal y de la proteína, después un 30 %, un 60 % y lo que sea. Cuando ya viste
+ * todo, vuelve a lo visto. En cada paso elige como planearDia. null solo si no hay ninguna otra.
  */
-export function cambiarPorOtra(dia: DiaPlaneado, comida: Comida, o: { opciones: readonly Opcion[]; pref: Preferencias; meta: Macros; semilla: number }): DiaPlaneado | null {
+export function cambiarPorOtra(dia: DiaPlaneado, comida: Comida, o: {
+  opciones: readonly Opcion[]; pref: Preferencias; meta: Macros; semilla: number; vistas?: readonly string[]; afinidad?: Afinidad;
+}): DiaPlaneado | null {
   const i = dia.comidas.findIndex((c) => c.comida === comida);
   if (i < 0) return null;
   const vieja = dia.comidas[i];
   const enElDia = new Set(dia.comidas.flatMap((c) => [c.opcion, firma(c.items)]));
-  const otras = o.opciones
+  const vistas = new Set(o.vistas ?? []);
+  const posibles = o.opciones
     .filter((op) => permitida(op, o.pref) && nivel(op, comida, o.pref) !== null && !enElDia.has(op.clave) && !enElDia.has(firma(op.items)))
-    .sort(porClave)
-    .flatMap((op) => {
-      const items = aKcal(op.items, vieja.valores.kcal);
-      const valores = valoresDe(items);
-      return parecida(valores, vieja.valores) ? [{ op, items, valores }] : [];
-    });
-  if (!otras.length) return null;
-  const mejor = Math.min(...otras.map((x) => nivel(x.op, comida, o.pref) ?? 5));
-  const nueva = sortear(otras.filter((x) => nivel(x.op, comida, o.pref) === mejor), (x) => peso(x.op, o.pref), azar(o.semilla));
-  const comidas = dia.comidas.map((c, j) => (j === i ? { comida, opcion: nueva.op.clave, items: nueva.items, valores: nueva.valores } : c));
-  const valores = sumar(comidas.map((c) => c.valores));
-  return { dia: dia.dia, comidas, valores, alcanza: alcanza(valores, o.meta) };
+    .sort(porClave);
+  // Escalar con los pasos (aKcal) es lo caro, y hay cientos de opciones: se filtra con el factor
+  // de cada una, y se escala de verdad solo la elegida, que se vuelve a mirar.
+  const estimadas = new Map<string, KcalYProteina>();
+  const estimada = (op: Opcion) => {
+    let x = estimadas.get(op.clave);
+    if (!x) {
+      const m = medidas(op.items, 1);
+      const [f] = factores([m], { kcal: vieja.valores.kcal, proteina: 0 });
+      x = { kcal: m.fijasKcal + m.kcal * f, proteina: m.fijasProteina + m.proteina * f };
+      estimadas.set(op.clave, x);
+    }
+    return x;
+  };
+  for (const yaVista of [false, true]) {
+    const deEstas = posibles.filter((op) => vistas.has(op.clave) === yaVista);
+    for (const margen of PARECIDOS) {
+      const otras = deEstas.filter((op) => parecida(estimada(op), vieja.valores, margen));
+      while (otras.length) {
+        const mejor = Math.min(...otras.map((op) => nivel(op, comida, o.pref) ?? ULTIMO_NIVEL));
+        const nueva = sortear(otras.filter((op) => nivel(op, comida, o.pref) === mejor), (op) => peso(op, o.pref, o.afinidad), azar(o.semilla));
+        const items = aKcal(nueva.items, vieja.valores.kcal);
+        const deEsta = valoresDe(items);
+        if (!parecida(deEsta, vieja.valores, margen)) {
+          otras.splice(otras.indexOf(nueva), 1);
+          continue;
+        }
+        const comidas = dia.comidas.map((c, j) => (j === i ? { comida, opcion: nueva.clave, items, valores: deEsta } : c));
+        const valores = sumar(comidas.map((c) => c.valores));
+        return { dia: dia.dia, comidas, valores, alcanza: alcanza(valores, o.meta) };
+      }
+    }
+  }
+  return null;
 }
 
 /**
