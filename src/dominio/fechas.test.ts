@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { claveDelDia, diaDeLaSemana, diasEntre, lunesDe, partesDe, sumarDias } from './fechas';
+import { claveDelDia, diaDeLaSemana, diaLogico, diasEntre, lunesDe, minutosEnElDia, msHastaElCorte, partesDe, sumarDias } from './fechas';
 
 describe('el día local', () => {
   it('un mismo instante cae en días distintos según la zona', () => {
@@ -38,5 +38,33 @@ describe('cuentas con días', () => {
     expect(lunesDe('2026-10-21')).toBe('2026-10-19');
     expect(lunesDe('2026-10-19')).toBe('2026-10-19');
     expect(lunesDe('2026-10-25')).toBe('2026-10-19');
+  });
+
+  describe('el día que empieza al despertarse (D32)', () => {
+    it('antes del corte todavía es el día anterior; con el corte en 0, el del calendario', () => {
+      // 0:30, 3:59, 4:00 y 23:30 del 22 en Montevideo (UTC−3).
+      expect(diaLogico(new Date('2026-10-22T03:30:00Z'), 240, 'America/Montevideo')).toBe('2026-10-21');
+      expect(diaLogico(new Date('2026-10-22T06:59:00Z'), 240, 'America/Montevideo')).toBe('2026-10-21');
+      expect(diaLogico(new Date('2026-10-22T07:00:00Z'), 240, 'America/Montevideo')).toBe('2026-10-22');
+      expect(diaLogico(new Date('2026-10-23T02:30:00Z'), 240, 'America/Montevideo')).toBe('2026-10-22');
+      expect(diaLogico(new Date('2026-10-22T03:30:00Z'), 0, 'America/Montevideo')).toBe('2026-10-22');
+    });
+
+    it('el año nuevo a las 2 de la mañana es todavía el 31', () => {
+      expect(diaLogico(new Date(2027, 0, 1, 2, 0), 240)).toBe('2026-12-31');
+      expect(diaLogico(new Date(2027, 0, 1, 4, 0), 240)).toBe('2027-01-01');
+    });
+
+    it('lo de después de la medianoche cuenta al final de su día', () => {
+      expect(minutosEnElDia(new Date(2026, 9, 22, 21, 0), '2026-10-22')).toBe(21 * 60);
+      expect(minutosEnElDia(new Date(2026, 9, 23, 0, 30), '2026-10-22')).toBe(1470);
+    });
+
+    it('el próximo corte: hoy si no pasó, mañana si ya pasó', () => {
+      expect(msHastaElCorte(new Date(2026, 9, 22, 2, 0), 240)).toBe(2 * 3_600_000);
+      expect(msHastaElCorte(new Date(2026, 9, 22, 23, 0), 240)).toBe(5 * 3_600_000);
+      expect(msHastaElCorte(new Date(2026, 9, 22, 23, 0), 0)).toBe(3_600_000);
+      expect(msHastaElCorte(new Date(2026, 9, 22, 4, 0), 240)).toBe(24 * 3_600_000);
+    });
   });
 });

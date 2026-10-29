@@ -1175,12 +1175,11 @@
       "baja": "Baja"
     },
     "calidadTexto": "Si algo se traba, la automática baja sola. La baja gasta menos batería.",
-    "calidadesDetalle": {
-      "automatica": "Según tu iPhone. Empiezas con esta.",
-      "alta": "El cielo completo y la luna con todo su detalle.",
-      "media": "Menos estrellas y auroras; lo demás igual.",
-      "baja": "El cielo más simple y quieto, y la luna sin textura."
-    },
+    "corte": "El día empieza",
+    "corteHora": "A las {hora}",
+    "corteMedianoche": "A la medianoche",
+    "corteDeFabrica": "La de fábrica",
+    "corteTexto": "Lo que anotas antes de esa hora cuenta para el día anterior: si cenas o te acuestas tarde, sigue siendo tu día.",
     "aparatos": {
       "titulo": "Aparatos",
       "soloIphone": "Solo el iPhone",

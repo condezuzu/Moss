@@ -1175,12 +1175,11 @@
       "baja": "Low"
     },
     "calidadTexto": "If anything stutters, Automatic steps down by itself. Low uses less battery.",
-    "calidadesDetalle": {
-      "automatica": "Chosen for your iPhone. You start with this one.",
-      "alta": "The full sky and the moon in full detail.",
-      "media": "Fewer stars and auroras; everything else the same.",
-      "baja": "A simpler, stiller sky and a moon without texture."
-    },
+    "corte": "Day starts",
+    "corteHora": "At {hora}",
+    "corteMedianoche": "At midnight",
+    "corteDeFabrica": "The default",
+    "corteTexto": "Anything you log before that time counts for the day before: if you eat dinner or go to bed late, it's still your day.",
     "aparatos": {
       "titulo": "Devices",
       "soloIphone": "Just the iPhone",

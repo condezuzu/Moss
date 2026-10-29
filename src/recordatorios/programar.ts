@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 import type { Estado } from '@/almacen/almacen';
 import { avisosDeLaSemana, cuandoSuena, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos } from '@/dominio/avisos';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
-import { claveDelDia, diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { diaDeLaSemana, diaLogico, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { horaHabitual } from '@/dominio/recordatorios';
 import { vigentes } from '@/dominio/registros';
 import { habitualDe } from '@/dominio/sinReloj';
@@ -38,10 +38,8 @@ export async function pedirPermisoDeAvisos(): Promise<boolean> {
   }
 }
 
-const minutosDe = (iso: string) => {
-  const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
-};
+/** Cuándo se anotó, en la cuenta de su día (D32): la cena de las 0:30 es la 1470, no la 30. */
+const minutosDe = (r: { momento: string; dia: ClaveDia }) => minutosEnElDia(new Date(r.momento), r.dia);
 
 /** «23:20» de unos minutos en la cuenta de un día (lo de la noche pasa de 1440). */
 export const horaDeReloj = (minutos: number) => {
@@ -49,7 +47,7 @@ export const horaDeReloj = (minutos: number) => {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 };
 
-type Para = Pick<Estado, 'hoy' | 'registros' | 'recordatorios' | 'avisos' | 'habitos' | 'marcas' | 'perfil' | 'salud' | 'noches' | 'metas' | 'pesos'>;
+type Para = Pick<Estado, 'hoy' | 'corte' | 'registros' | 'recordatorios' | 'avisos' | 'habitos' | 'marcas' | 'perfil' | 'salud' | 'noches' | 'metas' | 'pesos'>;
 
 /** Lo del sueño que usan los avisos: sin noches de verdad (las de ejemplo no valen), nada. */
 export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches'>): SuenoDeAvisos | null {
@@ -66,7 +64,7 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
 export function horasDeComida(e: Pick<Estado, 'hoy' | 'registros'>): (c: Comida) => number {
   const desde = sumarDias(e.hoy, -21);
   const registros = vigentes(e.registros.values()).filter((r) => r.dia >= desde && r.dia < e.hoy && !r.planificado);
-  return (c: Comida) => horaHabitual(registros.filter((r) => r.comida === c).map((r) => minutosDe(r.momento)), c === 'snack' ? 16 * 60 : HORA_TIPICA[c], c === 'cena' || c === 'merienda');
+  return (c: Comida) => horaHabitual(registros.filter((r) => r.comida === c).map(minutosDe), c === 'snack' ? 16 * 60 : HORA_TIPICA[c], c === 'cena' || c === 'merienda');
 }
 
 /** Lo que el plan dejó para esa comida de ese día, en pocas palabras: «pollo a la plancha, arroz». */
@@ -112,14 +110,15 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   if (!alguno || !(await Notifications.getPermissionsAsync()).granted) return;
   const horaDeComida = horasDeComida(e);
   const ahora = new Date();
-  // Hoy y ahora, del mismo instante: a la medianoche, el almacén todavía puede tener el día de ayer.
-  const hoy = claveDelDia(ahora);
+  // Hoy y ahora, del mismo instante: justo al corte, el almacén todavía puede tener el día anterior.
+  // Con el día que empieza a las 4 (D32), a la 1 hoy es ayer y ahora es la 1500 de ese día.
+  const hoy = diaLogico(ahora, e.corte);
   // Cuándo se anotó cada comida hoy (la primera vez): los avisos de «después de comer» esperan eso.
   const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).sort((a, b) => (a.momento < b.momento ? -1 : 1));
   const eventosHoy: Partial<Record<Evento, number>> = {};
-  for (const r of deHoy) if (r.comida !== 'snack' && eventosHoy[r.comida] === undefined) eventosHoy[r.comida] = minutosDe(r.momento);
+  for (const r of deHoy) if (r.comida !== 'snack' && eventosHoy[r.comida] === undefined) eventosHoy[r.comida] = minutosDe(r);
   const lista = avisosDeLaSemana({
-    hoy, ahora: ahora.getHours() * 60 + ahora.getMinutes(), ajustes, habitos: e.habitos, sueno: suenoParaAvisos(e), horaDeComida,
+    hoy, ahora: minutosEnElDia(ahora, hoy), ajustes, habitos: e.habitos, sueno: suenoParaAvisos(e), horaDeComida,
     marcas: e.marcas, anotadasHoy: new Set(deHoy.map((r) => r.comida)), eventosHoy,
     // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).
     diaDelControl: e.perfil?.diaDelControl ?? (e.metas[0] ? diaDeLaSemana(e.metas[0].desde) : undefined),

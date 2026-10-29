@@ -147,14 +147,40 @@ describe('local primero', () => {
 });
 
 describe('los días', () => {
-  it('a la medianoche cambia el día y lo de ayer queda guardado', async () => {
+  it('a las 4 de la mañana cambia el día (D32) y lo de ayer queda guardado', async () => {
     const { almacen, ir } = await armar();
     almacen.marcar('meditar', true, 'toque');
+    // A las 0:30 todavía es el 21: lo que se hace ahora cuenta para ese día.
     ir('2026-10-22T03:30:00Z');
+    expect(almacen.revisarDia()).toBe(false);
+    almacen.marcar('leer', true, 'toque');
+    ir('2026-10-22T07:00:00Z');
     expect(almacen.revisarDia()).toBe(true);
     expect(almacen.estado().hoy).toBe('2026-10-22');
-    expect(almacen.estado().dias.get('2026-10-21')).toMatchObject({ hechos: ['meditar'], luz: 3 });
+    expect(almacen.estado().dias.get('2026-10-21')).toMatchObject({ hechos: ['meditar', 'leer'] });
     expect(hoy(almacen)).toMatchObject({ hechos: [], luz: 0 });
+  });
+
+  it('el corte se elige: a la medianoche, como antes; y cambiarlo pasado el corte nuevo arma el día', async () => {
+    const { almacen, ir } = await armar();
+    ir('2026-10-22T03:30:00Z');
+    almacen.ponerCorte(0);
+    expect(almacen.estado().corte).toBe(0);
+    expect(almacen.estado().hoy).toBe('2026-10-22');
+    // Volver a las 4 a las 0:30: todavía es el 21.
+    almacen.ponerCorte(240);
+    expect(almacen.estado().hoy).toBe('2026-10-21');
+    // Lo que no es un corte de los que se eligen queda en el de fábrica.
+    almacen.ponerCorte(17);
+    expect(almacen.estado().corte).toBe(240);
+  });
+
+  it('la cena anotada a las 0:30 es del día anterior', async () => {
+    const { almacen, ir } = await armar();
+    ir('2026-10-22T03:30:00Z');
+    almacen.revisarDia();
+    const [r] = almacen.registrar([{ fuente: 'rapida', ref: null, nombre: 'Pizza', cantidad: null, valores: { kcal: 600, proteina: 25, carbohidratos: 70, grasas: 22 } }], { comida: 'cena' });
+    expect(r.dia).toBe('2026-10-21');
   });
 
   it('marcar otro día reciente rearma su resumen, o lo arma si Moss no se abrió ese día; fuera de las dos semanas, nada', async () => {

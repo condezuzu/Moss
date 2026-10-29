@@ -7,7 +7,7 @@ import {
   queryCategorySamples, queryQuantitySamples, queryStatisticsForQuantity, type CategoryTypeIdentifier, type QuantityTypeIdentifier,
 } from '@kingstinct/react-native-healthkit';
 
-import { claveDelDia } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, diaLogico, partesDe } from '@/dominio/fechas';
 import { armarNoches, soloEnCama } from '@/dominio/sueno';
 import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, ultimaPorDia, type DeSalud, type LoDeSalud } from './convertir';
 import { saludPedida } from './salud';
@@ -56,18 +56,23 @@ async function categoria(id: CategoryTypeIdentifier, desde: Date, hasta: Date): 
 
 /**
  * Todo lo de Salud que usa Moss, o null si Salud no se pidió en este teléfono. `elegida` es el
- * aparato del que sale la noche, si se eligió en Perfil › Aparatos.
+ * aparato del que sale la noche, si se eligió en Perfil › Aparatos. Los valores del día son los del
+ * día de Moss (D32): a la 1 de la mañana, antes del corte, son los de ayer, el día que sigue.
  */
-export async function leerSalud(ahora: Date = new Date(), elegida: string | null = null): Promise<LoDeSalud | null> {
+export async function leerSalud(ahora: Date = new Date(), elegida: string | null = null, corte = CORTE_DE_FABRICA): Promise<LoDeSalud | null> {
   if (!(await saludPedida())) return null;
-  const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+  const clave = diaLogico(ahora, corte);
+  const p = partesDe(clave);
+  const hoy = new Date(p.anio, p.mes, p.dia);
+  // Lo del día, del día del calendario de Moss: pasada la medianoche, hasta su fin.
+  const finDelDia = new Date(Math.min(ahora.getTime(), new Date(p.anio, p.mes, p.dia + 1).getTime()));
   const hace = (dias: number) => new Date(hoy.getTime() - dias * DIA_MS);
   // Las noches empiezan a las 18 del día anterior.
   const desdeLasNoches = new Date(hace(28).getTime() - 6 * 3_600_000);
   const [pasos, agua, mindful, sueno, reposo, pesos, recientes] = await Promise.all([
-    suma('HKQuantityTypeIdentifierStepCount', 'count', hoy, ahora),
-    suma('HKQuantityTypeIdentifierDietaryWater', 'mL', hoy, ahora),
-    categoria('HKCategoryTypeIdentifierMindfulSession', hoy, ahora),
+    suma('HKQuantityTypeIdentifierStepCount', 'count', hoy, finDelDia),
+    suma('HKQuantityTypeIdentifierDietaryWater', 'mL', hoy, finDelDia),
+    categoria('HKCategoryTypeIdentifierMindfulSession', hoy, finDelDia),
     categoria('HKCategoryTypeIdentifierSleepAnalysis', desdeLasNoches, ahora),
     cantidades('HKQuantityTypeIdentifierRestingHeartRate', 'count/min', hace(28), ahora),
     cantidades('HKQuantityTypeIdentifierBodyMass', 'kg', hace(60), ahora),
@@ -92,7 +97,7 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
     deLasNoches('HKQuantityTypeIdentifierHeartRateVariabilitySDNN', 'ms', ventanas),
     deLasNoches('HKQuantityTypeIdentifierRespiratoryRate', 'count/min', ventanas),
   ]);
-  const clave = claveDelDia(ahora);
+  // La noche de ese día (la que terminó a su mañana).
   const anoche = noches.find((n) => n.clave === clave);
   return {
     dia: clave,

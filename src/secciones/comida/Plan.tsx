@@ -12,7 +12,7 @@ import { elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
 import { baseDeAlimentos } from '@/comida/base';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
-import { lunesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { lunesDe, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
   ALERGENOS, cambiarPorOtra, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra, PLANTILLAS,
   PREFERENCIAS_DE_FABRICA, queFalta, recientesDe, tachadasDe, tachar as tacharEn, type DiaPlaneado, type Tachadas, type Opcion, type Preferencias, type Resolver,
@@ -23,7 +23,7 @@ import { colores, letras } from '@/tema';
 import { HojaModal } from '../HojaModal';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Etiqueta, Icono, Pastilla } from './comunes';
-import { cantidadDeTexto, metaDelDia, minutosDe, opcionesDeIdioma, sistemaDe, type ComidaDelDia } from './datos';
+import { cantidadDeTexto, metaDelDia, opcionesDeIdioma, sistemaDe, type ComidaDelDia } from './datos';
 
 type Avisar = (texto: string, deshacer?: () => void) => void;
 
@@ -76,7 +76,7 @@ function armarUnDia(e: Estado, dia: ClaveDia, opciones: readonly Opcion[]): DiaP
   const meta = metaDelDia(e, dia);
   if (!meta) return null;
   const pref = comoCome(e);
-  const solo = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosDe(new Date()), pref, horaDe });
+  const solo = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosEnElDia(new Date(), e.hoy), pref, horaDe });
   if (!solo.length) return null;
   const armado = planearDia({
     dia, meta, opciones, pref, semilla: semillaNueva(), solo, yaComido: totalDelDia(e.registros.values(), dia, true), recientes: recientesDe(e.registros.values(), dia),
@@ -91,7 +91,7 @@ export function ArmarElDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisa
   const opciones = useOpciones(e);
   const [hoja, setHoja] = useState(false);
   if (dia < e.hoy) return null;
-  const falta = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosDe(new Date()), pref: comoCome(e), horaDe }).length > 0;
+  const falta = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosEnElDia(new Date(), e.hoy), pref: comoCome(e), horaDe }).length > 0;
   const armar = () => {
     if (!opciones) return;
     const armado = armarUnDia(e, dia, opciones);

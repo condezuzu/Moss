@@ -217,9 +217,6 @@
     ],
     "recordatoriosTexto": "Un rato después de tu hora de siempre, y solo si todavía no anotaste esa comida. Si no abrís Moss en una semana, paran solos.",
     "recordatoriosSinPermiso": "Para avisarte, Moss necesita permiso para las notificaciones: activalo en los Ajustes del iPhone.",
-    "calidadesDetalle": {
-      "automatica": "Según tu iPhone. Empezás con esta."
-    },
     "aparatos": {
       "varios": "Si usás más de uno, Moss toma uno por noche, el que elijas, y nunca los suma.",
       "marcas": {
@@ -246,7 +243,8 @@
       "dormirSinDatos": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitás. Hace falta saber a qué hora te despertás: con unas noches alcanza.",
       "horarioTexto": "Te avisa a la hora de cada comida, para comer ordenado. Si ya la anotaste, no suena; si tenés un plan, dice qué toca."
     },
-    "cambiarCuentaTexto": "Se cierra esta sesión y entrás con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta."
+    "cambiarCuentaTexto": "Se cierra esta sesión y entrás con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
+    "corteTexto": "Lo que anotás antes de esa hora cuenta para el día anterior: si cenás o te acostás tarde, sigue siendo tu día."
   },
   "ascent": {
     "etiqueta": "Si usás Ascent",

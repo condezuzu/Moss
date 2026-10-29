@@ -11,7 +11,7 @@ import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/cons
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
-import { claveDelDia, diaDeLaSemana, partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, diaLogico, partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
@@ -94,6 +94,11 @@ export type Estado = MapasDeComida & {
   avanceDeEntrada: unknown;
   /** Lo de Salud, leído al abrir la app y al volver (src/salud/leer.ts): en memoria, no se guarda ni sube. */
   salud: LoDeSalud | null;
+  /**
+   * A qué hora empieza el día, en minutos desde la medianoche (D32): lo de antes cuenta para el día
+   * anterior. De fábrica, las 4. Queda en el teléfono.
+   */
+  corte: number;
   /** Para que cada usuario reciba su propio orden del catálogo. */
   semilla: string;
   /** Sube con cada cambio. */
@@ -137,6 +142,9 @@ const ALIAS = 'alias';
 const BUSQUEDAS = 'mandarBusquedas';
 const ENTRADA = 'entrada';
 const AVANCE = 'avanceDeEntrada';
+const CORTE = 'corte';
+/** El corte guardado; lo que no es uno de los que se eligen, el de fábrica. */
+const corteDe = (x: string | undefined): number => CORTES.find((c) => String(c) === x) ?? CORTE_DE_FABRICA;
 /** Tres días de uso alcanzan para la noche de anoche. */
 const DIAS_DE_USO = 3;
 
@@ -273,9 +281,9 @@ export function crearAlmacen(op: Opciones) {
   const nuevoId = op.nuevoId ?? idNuevo;
   let repositorio: Repositorio | undefined;
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
-    listo: false, hoy: claveDelDia(ahora(), zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
+    listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -350,8 +358,11 @@ export function crearAlmacen(op: Opciones) {
 
   async function arrancar() {
     repositorio = await op.abrir();
-    const hoy = claveDelDia(ahora(), zona());
-    const g = await repositorio.cargar(sumarDias(hoy, -DIAS_DE_MARCAS), sumarDias(hoy, -DIAS_DE_COMIDA));
+    // Lo que se carga, con el corte de fábrica: con el elegido cambia a lo sumo un día, y sobra.
+    const aprox = diaLogico(ahora(), CORTE_DE_FABRICA, zona());
+    const g = await repositorio.cargar(sumarDias(aprox, -DIAS_DE_MARCAS), sumarDias(aprox, -DIAS_DE_COMIDA));
+    const corte = corteDe(g.ajustes[CORTE]);
+    const hoy = diaLogico(ahora(), corte, zona());
     let semilla = g.ajustes.semilla;
     if (!semilla) {
       semilla = (op.nuevaSemilla ?? (() => Math.random().toString(36).slice(2)))();
@@ -378,7 +389,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, listo: true }, true);
     revisarControl();
   }
 
@@ -897,6 +908,14 @@ export function crearAlmacen(op: Opciones) {
       guardar((r) => r.guardarAjuste(VER_ENTRENO, verEntreno ? '' : 'no'));
       cambiar({ verEntreno }, false);
     },
+    /** A qué hora empieza el día (D32): si con el nuevo ya es otro día (o todavía es ayer), se arma ese. */
+    ponerCorte(corte: number) {
+      const elegido = corteDe(String(corte));
+      guardar((r) => r.guardarAjuste(CORTE, String(elegido)));
+      cambiar({ corte: elegido }, false);
+      const hoy = diaLogico(ahora(), elegido, zona());
+      if (estado.listo && hoy !== estado.hoy) cambiar(alDia({ ...estado, hoy }).estado, true);
+    },
     ponerNumeros(numeros: boolean) {
       guardar((r) => r.guardarAjuste(NUMEROS, numeros ? '' : 'no'));
       cambiar({ numeros }, false);
@@ -1039,7 +1058,7 @@ export function crearAlmacen(op: Opciones) {
     },
     /** Si ya es otro día (medianoche, o la app vuelve del fondo), arma el nuevo. */
     revisarDia(): boolean {
-      const hoy = claveDelDia(ahora(), zona());
+      const hoy = diaLogico(ahora(), estado.corte, zona());
       if (!estado.listo || hoy === estado.hoy) return false;
       cambiar(alDia({ ...estado, hoy }).estado, true);
       revisarControl();

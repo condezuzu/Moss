@@ -1,7 +1,8 @@
 // El widget del cielo (spec/widgets.md): lo que la app escribe en su línea de tiempo y lo que lee de
-// vuelta. Va una entrada por día, desde hoy y los seis que siguen, así a la medianoche el widget pasa
-// solo al día nuevo aunque no se abra Moss. Los «hecho» del widget corren en la extensión y quedan en
-// su entrada, con su día; la app los aplica por el almacén con la clave hábito:día (gana el último).
+// vuelta. Va una entrada por día, desde hoy y los seis que siguen, así a la hora en que empieza el día
+// (D32, las 4 de fábrica) el widget pasa solo al día nuevo aunque no se abra Moss. Los «hecho» del
+// widget corren en la extensión y quedan en su entrada, con su día; la app los aplica por el almacén
+// con la clave hábito:día (gana el último).
 
 import type { Estado } from '@/almacen/almacen';
 import { encajar, proyectar } from '@/cielo/mundo';
@@ -21,7 +22,7 @@ export const DIAS_QUE_ESPERA = 14;
 
 export type ToqueConDia = ToqueDelWidget & { dia: ClaveDia };
 type Entrada = { date: Date; props: PropsCielo };
-type ParaElCielo = Pick<Estado, 'hoy' | 'habitos' | 'periodos' | 'dias' | 'marcas'>;
+type ParaElCielo = Pick<Estado, 'hoy' | 'habitos' | 'periodos' | 'dias' | 'marcas'> & Partial<Pick<Estado, 'corte'>>;
 
 const redondo = (x: number) => Math.round(x * 1000) / 1000;
 
@@ -44,10 +45,10 @@ export function formaDeLaConstelacion(c: Constelacion | null, cantidad: number):
   };
 }
 
-/** La medianoche del teléfono al empezar ese día. */
-export function comienzoDe(clave: ClaveDia): Date {
+/** Cuándo empieza ese día en el teléfono: su medianoche más el corte (D32). */
+export function comienzoDe(clave: ClaveDia, corte = 0): Date {
   const p = partesDe(clave);
-  return new Date(p.anio, p.mes, p.dia);
+  return new Date(p.anio, p.mes, p.dia, 0, corte);
 }
 
 /**
@@ -68,7 +69,7 @@ export function lineaDelCielo(e: ParaElCielo, d: {
     const id = e.dias.get(dia)?.constelacion ?? periodoDe(e.periodos, dia)?.constelacion;
     const c = (id && d.catalogo.find((x) => x.id === id)) || null;
     entradas.push({
-      date: comienzoDe(dia),
+      date: comienzoDe(dia, e.corte),
       props: {
         dia,
         nombre: c && habitos.length ? c.nombres[d.idioma] : '',

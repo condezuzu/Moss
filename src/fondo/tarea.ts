@@ -38,7 +38,7 @@ async function correr(): Promise<void> {
   await a.iniciar();
   a.revisarDia();
   // Con el teléfono bloqueado Salud no se lee: sin eso no se sabe si hay reloj, y la noche no se estima.
-  const salud = await leerSalud(new Date(), a.estado().fuenteDelSueno).catch(() => null);
+  const salud = await leerSalud(new Date(), a.estado().fuenteDelSueno, a.estado().corte).catch(() => null);
   if (salud) {
     a.ponerSalud(salud);
     await estimarAnoche(a).catch(() => {});

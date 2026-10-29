@@ -5,12 +5,12 @@ import type { Estado } from '@/almacen/almacen';
 import { lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
 import { horasDeSueno } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
-import { diasEntre } from '@/dominio/fechas';
+import { diasEntre, minutosEnElDia } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
 import { totalDelDia, vigentes } from '@/dominio/registros';
 import { horaDeReloj, horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
 import { t } from '@/textos';
-import { metaDelDia, minutosDe } from './datos';
+import { metaDelDia } from './datos';
 
 const PRINCIPALES: readonly Principal[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 
@@ -40,7 +40,7 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
   const anotado: Contexto['anotado'] = {};
   for (const r of vigentes(e.registros.values()).filter((x) => x.dia === e.hoy && !x.planificado)) {
     const antes = anotado[r.comida];
-    const hora = minutosDe(r.momento);
+    const hora = minutosEnElDia(new Date(r.momento), e.hoy);
     // Del snack, la última vez: el de después de la cena es el que cuenta para antes de dormir.
     const cuando = !antes ? hora : r.comida === 'snack' ? Math.max(antes.hora, hora) : Math.min(antes.hora, hora);
     anotado[r.comida] = { hora: cuando, proteina: (antes?.proteina ?? 0) + r.valores.proteina, kcal: (antes?.kcal ?? 0) + r.valores.kcal };
@@ -49,7 +49,7 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
   const horas = sueno ? horasDeSueno(e.hoy, sueno) : { despertar: null, dormir: null };
   const comido = totalDelDia(e.registros.values(), e.hoy, false);
   return {
-    ahora: minutosDe(ahora),
+    ahora: minutosEnElDia(ahora, e.hoy),
     sesiones,
     horaDeComida,
     anotado,

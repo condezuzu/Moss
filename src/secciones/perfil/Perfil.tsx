@@ -17,7 +17,7 @@ import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import type { Comida } from '@/dominio/comidas';
-import type { DiaSemana } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, CORTES, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
 import { horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
@@ -55,7 +55,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const sistema = sistemaDe(e);
   const [correo, setCorreo] = useState<string | null>(null);
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'aparatos' | 'entreno' | null>(null);
+  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | null>(null);
   // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
   const [foto, setFoto] = useState(fotoDePerfil);
   useEffect(() => {
@@ -90,6 +90,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       { clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial') },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
       { clave: 'idioma', titulo: t('perfil.idioma'), valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
+      { clave: 'corte', titulo: t('perfil.corte'), valor: e.corte === 0 ? t('perfil.corteMedianoche') : t('perfil.corteHora', { hora: horaDelCorte(e.corte) }), alTocar: () => setHoja('corte') },
       { clave: 'calidad', titulo: t('perfil.calidad'), valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
       { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
       { clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), alTocar: () => elAlmacen().ponerNumeros(!e.numeros) },
@@ -205,6 +206,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       )}
       {hoja === 'recordatorios' && <Avisos e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'calidad' && <CalidadDelCielo elegida={e.calidad} alCerrar={() => setHoja(null)} />}
+      {hoja === 'corte' && <CorteDelDia elegido={e.corte} alCerrar={() => setHoja(null)} />}
       {hoja === 'entreno' && <CuandoEntrenas e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
       {hoja === 'privacidad' && (
@@ -328,10 +330,33 @@ function CalidadDelCielo({ elegida, alCerrar }: { elegida: Calidad | null; alCer
     <HojaModal abierta titulo={t('perfil.calidad')} alCerrar={alCerrar}>
       <View style={{ gap: 8 }}>
         {([null, 'alta', 'media', 'baja'] as const).map((c) => (
-          <Opcion key={c ?? 'automatica'} titulo={t(`perfil.calidades.${c ?? 'automatica'}`)} detalle={t(`perfil.calidadesDetalle.${c ?? 'automatica'}`)} elegida={c === elegida} alTocar={() => elAlmacen().ponerCalidad(c)} />
+          <Opcion key={c ?? 'automatica'} titulo={t(`perfil.calidades.${c ?? 'automatica'}`)} elegida={c === elegida} alTocar={() => elAlmacen().ponerCalidad(c)} />
         ))}
       </View>
       <Parrafo chico>{t('perfil.calidadTexto')}</Parrafo>
+    </HojaModal>
+  );
+}
+
+/** «4:00»: las horas del corte, sin el cero de adelante. */
+const horaDelCorte = (minutos: number) => `${Math.floor(minutos / 60)}:${String(minutos % 60).padStart(2, '0')}`;
+
+/** A qué hora empieza el día (D32): lo de antes cuenta para el día anterior. */
+function CorteDelDia({ elegido, alCerrar }: { elegido: number; alCerrar: () => void }) {
+  return (
+    <HojaModal abierta titulo={t('perfil.corte')} alCerrar={alCerrar}>
+      <Parrafo chico>{t('perfil.corteTexto')}</Parrafo>
+      <View style={{ gap: 8, marginTop: 12 }}>
+        {CORTES.map((c) => (
+          <Opcion
+            key={c}
+            titulo={c === 0 ? t('perfil.corteMedianoche') : t('perfil.corteHora', { hora: horaDelCorte(c) })}
+            detalle={c === CORTE_DE_FABRICA ? t('perfil.corteDeFabrica') : undefined}
+            elegida={c === elegido}
+            alTocar={() => elAlmacen().ponerCorte(c)}
+          />
+        ))}
+      </View>
     </HojaModal>
   );
 }

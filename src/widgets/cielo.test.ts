@@ -38,15 +38,15 @@ const tocar = (l: { date: Date; props: PropsCielo }[], i: number, id: string, he
   l.map((x, k) => (k === i ? { ...x, props: { ...x.props, pendientes: [...x.props.pendientes, { id, hecho, en }] } } : x));
 
 describe('la línea de tiempo del widget del cielo', () => {
-  it('arma hoy con lo hecho y los días que siguen apagados, cada uno desde su medianoche', async () => {
+  it('arma hoy con lo hecho y los días que siguen apagados, cada uno desde que empieza (las 4, D32)', async () => {
     const { almacen } = await armar();
     almacen.marcar('meditar', true, 'toque');
     const l = linea(almacen.estado());
     expect(l).toHaveLength(DIAS_ARMADOS);
     expect(l.map((x) => x.props.dia)).toEqual(['2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27']);
-    // Cada entrada empieza a la medianoche del teléfono: a las 0:00 el widget pasa solo al día nuevo.
+    // Cada entrada empieza cuando empieza el día en el teléfono: a las 4 el widget pasa solo al día nuevo.
     l.forEach((x, k) => {
-      expect([x.date.getHours(), x.date.getMinutes()]).toEqual([0, 0]);
+      expect([x.date.getHours(), x.date.getMinutes()]).toEqual([4, 0]);
       if (k) expect(x.date.getTime()).toBeGreaterThan(l[k - 1].date.getTime());
     });
     const hoy = l[0].props;

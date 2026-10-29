@@ -11,7 +11,7 @@ import { conMayuscula } from '@/comida/buscar';
 import { cantidadDePorcion, decimal } from '@/comida/porciones';
 import { ACEITE, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
 import { comidaDeLaHora, COMIDAS, HORA_TIPICA, type Comida } from '@/dominio/comidas';
-import { diaDeLaSemana, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { diaDeLaSemana, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { metaRepartida, type Macros } from '@/dominio/metas';
 import { delDia, sumarValores, totalDelDia, type Cantidad, type Registro, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
@@ -81,7 +81,11 @@ export function minutosDe(instante: string | Date): number {
   return d.getHours() * 60 + d.getMinutes();
 }
 
-export const hora = (minutos: number) => `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(Math.round(minutos) % 60).padStart(2, '0')}`;
+/** «21:30»; lo de después de la medianoche (más de 1440, D32) vuelve a empezar: 1470 son las 00:30. */
+export function hora(minutos: number): string {
+  const m = ((Math.round(minutos) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
 
 /** La comida que toca ahora. */
 export const comidaDeAhora = (): Comida => comidaDeLaHora(minutosDe(new Date()));
@@ -103,7 +107,7 @@ export function comidasDelDia(registros: Estado['registros'], dia: ClaveDia): Co
   for (const r of delDia(registros.values(), dia)) porComida.set(r.comida, [...(porComida.get(r.comida) ?? []), r]);
   return [...porComida]
     .map(([comida, lista]) => ({
-      comida, registros: lista, total: sumarValores(lista.map((r) => r.valores)), minutos: minutosDe(lista[0].momento), planificada: lista.every((r) => r.planificado),
+      comida, registros: lista, total: sumarValores(lista.map((r) => r.valores)), minutos: minutosEnElDia(new Date(lista[0].momento), dia), planificada: lista.every((r) => r.planificado),
     }))
     .sort((a, b) => a.minutos - b.minutos || COMIDAS.indexOf(a.comida) - COMIDAS.indexOf(b.comida));
 }

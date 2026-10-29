@@ -15,7 +15,7 @@ import { elAlmacen } from '@/almacen';
 import { DIAS_DE_COMIDA, type Estado } from '@/almacen/almacen';
 import { conMayuscula } from '@/comida/buscar';
 import { comidaDeLaHora, type Comida } from '@/dominio/comidas';
-import { diasEntre, lunesDe, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { diasEntre, lunesDe, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import type { Linea } from '@/dominio/alrededorDelEntreno';
 import { delDia, sumarValores, totalDelDia, type Registro, type Valores } from '@/dominio/registros';
@@ -28,7 +28,7 @@ import { Relleno, useCuenta } from '../animados';
 import { AvisoFlotante, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
-  cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, letraDelDia, metaDelDia, minutosDe, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
+  cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
   useEstado, type ComidaDelDia,
 } from './datos';
 import { Luna, Lunitas, type Lunita } from './Luna';
@@ -428,7 +428,8 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   const sistema = sistemaDe(e);
   const comidas = comidasDelDia(e.registros, dia);
   const entradas: Entrada[] = comidas.map((c) => ({ tipo: 'comida', comida: c, minutos: c.minutos }));
-  const ahora = minutosDe(new Date());
+  // En la cuenta del día (D32): pasada la medianoche, antes del corte, la 1470 de hoy.
+  const ahora = minutosEnElDia(new Date(), dia);
   // Qué comer antes y después de entrenar: en la comida que toca, aunque todavía no sea su hora.
   const lineas = dia === e.hoy ? lineasDeHoy(e) : new Map<Comida, Linea>();
   for (const [tipo, minutos] of Object.entries(HORA_TIPICA) as [Comida, number][]) {

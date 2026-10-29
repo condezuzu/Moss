@@ -20,9 +20,13 @@ const FRANJAS: readonly (readonly [number, Comida])[] = [
   [19 * 60 + 30, 'cena'],
 ];
 
-/** La comida que toca a una hora, en minutos desde la medianoche (0 a 1439). */
+/**
+ * La comida que toca a una hora, en minutos desde la medianoche. Lo de después de la medianoche en la
+ * cuenta del día anterior (D32: la 1470 son las 0:30) es de madrugada, como a esa hora del reloj.
+ */
 export function comidaDeLaHora(minutos: number): Comida {
+  const reloj = ((minutos % 1440) + 1440) % 1440;
   let elegida: Comida = 'snack';
-  for (const [desde, comida] of FRANJAS) if (minutos >= desde) elegida = comida;
+  for (const [desde, comida] of FRANJAS) if (reloj >= desde) elegida = comida;
   return elegida;
 }

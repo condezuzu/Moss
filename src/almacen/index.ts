@@ -7,7 +7,7 @@ import { AppState } from 'react-native';
 
 import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
-import { msHastaMedianoche } from '@/dominio/fechas';
+import { msHastaElCorte } from '@/dominio/fechas';
 import { CON_ASCENT } from '@/lib/banderas';
 import { borrarMiSesion, dejarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
@@ -170,7 +170,7 @@ export async function subirLoQueFalta(): Promise<void> {
  * Después, sin reloj, estima la noche de anoche con lo que guardó el teléfono.
  */
 export async function actualizarSalud(): Promise<void> {
-  const s = await leerSalud(new Date(), elAlmacen().estado().fuenteDelSueno).catch(() => null);
+  const s = await leerSalud(new Date(), elAlmacen().estado().fuenteDelSueno, elAlmacen().estado().corte).catch(() => null);
   if (s) elAlmacen().ponerSalud(s);
   await estimarAnoche(elAlmacen()).catch(() => {});
 }
@@ -192,13 +192,14 @@ export function useAlmacenListo(): boolean {
       .catch((error) => console.warn('Moss no pudo abrir sus datos', error));
     const cuenta = sincronizarConLaCuenta(a);
     let reloj: ReturnType<typeof setTimeout>;
-    const esperarMedianoche = () => {
+    // El día cambia a la hora elegida (D32), no a la medianoche.
+    const esperarElCorte = () => {
       reloj = setTimeout(() => {
         a.revisarDia();
-        esperarMedianoche();
-      }, msHastaMedianoche(new Date()) + 500);
+        esperarElCorte();
+      }, msHastaElCorte(new Date(), a.estado().corte) + 500);
     };
-    esperarMedianoche();
+    esperarElCorte();
     // Los avisos se vuelven a programar cuando cambia algo que los mueve, un rato después.
     let espera: ReturnType<typeof setTimeout> | undefined;
     const reprogramar = () => {
