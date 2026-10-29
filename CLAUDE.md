@@ -122,7 +122,7 @@ SDK y la memoria no alcanza.
 | App | `uy.moss.app` · equipo `XF9N8X9KJG` · EAS `condeag` |
 | Supabase | el proyecto de Ascent (`okeanaihymbvbdmrdqph`), esquema `moss`. Cómo y por qué: `spec/ascent.md` |
 | Sitio | la portada, la privacidad y los términos: https://condezuzu.github.io/moss-app/, del repo público `condezuzu/moss-app` (GitHub Pages, rama `main`). Se publica copiando `docs/` tal cual a la raíz de ese repo |
-| Actualizaciones por aire | `expo-updates`, con la huella nativa como versión. Canales: `production` (la build `store`), `preview` (`telefono` y `simulador`) y `development` (`dev`). Una OTA solo llega a las builds con la misma huella |
+| Actualizaciones por aire | `expo-updates`, con la huella nativa como versión. Canales: `production` (la build `store`), `preview` (`telefono` y `simulador`) y `development` (`dev`). Una OTA solo llega a las builds con la misma huella. Cada OTA se publica en `production` y en `preview` (con `--environment preview`): la build `telefono` de tu iPhone escucha `preview` |
 | La otra app | Ascent: `C:\Users\agusc\ascent`, github.com/condezuzu/ascent. Lo de Ascent para el vínculo (D27) está en la rama `moss-vinculo`, en el worktree `C:\Users\agusc\ascent-moss` |
 
 ## Comandos
