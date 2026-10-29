@@ -12,7 +12,7 @@ import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSh
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { elAlmacen } from '@/almacen';
+import { almacenListo, elAlmacen } from '@/almacen';
 import { soloLosDeEjemplo } from '@/almacen/almacen';
 import PantallaDelCielo from '@/cielo/PantallaDelCielo';
 import { CON_ASCENT } from '@/lib/banderas';
@@ -25,7 +25,8 @@ import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
 import { PaginaDeComida } from './comida/Comida';
 import { AvisoFlotante, Icono } from './comida/comunes';
 import { HojaRegistro } from './comida/HojaRegistro';
-import { abrirRegistro, cerrarRegistro, quitarAviso, useAviso, useRegistro } from './comida/registro';
+import { abrirRegistro, avisar, cerrarRegistro, quitarAviso, useAviso, useRegistro } from './comida/registro';
+import { guardarSenales } from '@/salud/anclas';
 import { Entrada } from './entrada/Entrada';
 import { EditorDeHabito } from './habitos/Editor';
 import { Mes } from './habitos/Mes';
@@ -152,6 +153,12 @@ export default function Secciones() {
 
   // Tocar un aviso lleva a lo suyo: anotar esa comida, el cielo de Hábitos, el peso o el sueño.
   useAlTocarUnAviso((a) => {
+    // «Me voy a dormir» (D33): la hora queda como la de un Atajo, y Moss no se abre en ninguna sección.
+    if (a.meVoyADormir) {
+      const { id, en } = a.meVoyADormir;
+      almacenListo().then(() => guardarSenales([{ id, que: 'meVoyADormir', en }])).then(() => avisar(t('recordatorios.buenasNoches'))).catch(() => {});
+      return;
+    }
     // La comida de su día: un aviso de la cena tocado después de medianoche anota la cena de ayer.
     if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida, ...(a.dia ? { dia: a.dia } : {}) });
     else if (a.tipo === 'pesarse') abrirHoja('peso');

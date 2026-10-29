@@ -43,10 +43,13 @@ export type NochePropia = {
   fecha: ClaveDia;
   cara?: Cara;
   /**
-   * `estimada` es lo que estimó el teléfono antes de corregirlo con lo aprendido: con eso se aprende
-   * cuánto se corre en tu caso (src/dominio/sinReloj.ts).
+   * `estimada` es lo que estimó el teléfono, con `quieto`, la ventana tranquila de esa noche (la última
+   * actividad y la primera): con eso se aprende cuánto tardás en dormirte (src/dominio/sinReloj.ts).
    */
-  hora?: { dormirse: string; despertar: string; origen: OrigenDeNoche; confianza: Confianza; estimada?: { dormirse: string; despertar: string } };
+  hora?: {
+    dormirse: string; despertar: string; origen: OrigenDeNoche; confianza: Confianza;
+    estimada?: { dormirse: string; despertar: string; quieto?: { desde: string; hasta: string } };
+  };
   actualizado: string;
   borrado?: true;
 };

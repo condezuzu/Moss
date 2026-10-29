@@ -265,6 +265,16 @@ comprobar(
     && await falla(A, `insert into moss.noches (fecha, cara, estimada_dormirse, estimada_despertar) values ('2026-10-15', 3, '2026-10-15T03:00:00Z', '2026-10-15T11:00:00Z')`),
   'las noches: la cara va de 1 a 5, las dos horas van juntas con su origen, una noche dura de 1 a 18 horas, y lo estimado va con sus dos horas y con la hora de la noche',
 );
+// La ventana tranquila (0010_noches_quieto.sql): las dos juntas, solo con lo estimado y en orden.
+const conVentana = (fecha, desde, hasta, estimada = true) => como(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza${estimada ? ', estimada_dormirse, estimada_despertar' : ''}, quieto_desde, quieto_hasta)
+  values ('${fecha}', '${fecha}T03:00:00Z', '${fecha}T11:00:00Z', 'estimada', 'media'${estimada ? `, '${fecha}T03:00:00Z', '${fecha}T11:00:00Z'` : ''}, ${desde ? `'${desde}'` : 'null'}, ${hasta ? `'${hasta}'` : 'null'})`);
+comprobar(
+  await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza, estimada_dormirse, estimada_despertar, quieto_desde) values ('2026-10-14', '2026-10-14T03:00:00Z', '2026-10-14T11:00:00Z', 'estimada', 'media', '2026-10-14T03:00:00Z', '2026-10-14T11:00:00Z', '2026-10-14T02:30:00Z')`)
+    && await falla(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza, quieto_desde, quieto_hasta) values ('2026-10-13', '2026-10-13T03:00:00Z', '2026-10-13T11:00:00Z', 'confirmada', 'media', '2026-10-13T02:30:00Z', '2026-10-13T11:20:00Z')`)
+    && await conVentana('2026-10-12', '2026-10-12T11:20:00Z', '2026-10-12T02:30:00Z').then(() => false, () => true)
+    && await conVentana('2026-10-11', '2026-10-11T02:30:00Z', '2026-10-11T11:20:00Z').then(() => true, () => false),
+  'la ventana tranquila de una noche: las dos horas juntas, solo con lo estimado y la primera antes que la última',
+);
 const subirNoche = (cara, dormirse, despertar, origen, actualizado) => como(A, `
   insert into moss.noches (fecha, cara, dormirse, despertar, origen, confianza, actualizado) values ('2026-10-21', $1, $2, $3, $4, case when $4::text is null then null else 'media' end, $5)
   on conflict (usuario, fecha) do update set cara = excluded.cara, dormirse = excluded.dormirse, despertar = excluded.despertar,

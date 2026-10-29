@@ -13,7 +13,7 @@ import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, diaLogico, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { horaHabitual } from '@/dominio/recordatorios';
 import { vigentes } from '@/dominio/registros';
-import { habitualDe } from '@/dominio/sinReloj';
+import { aprenderPersonal, habitualDe } from '@/dominio/sinReloj';
 import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
 import { suenoDe } from '@/secciones/persona';
 import { t } from '@/textos';
@@ -47,16 +47,18 @@ export const horaDeReloj = (minutos: number) => {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 };
 
-type Para = Pick<Estado, 'hoy' | 'corte' | 'registros' | 'recordatorios' | 'avisos' | 'habitos' | 'marcas' | 'perfil' | 'salud' | 'noches' | 'metas' | 'pesos'>;
+type Para = Pick<Estado, 'hoy' | 'corte' | 'latencia' | 'registros' | 'recordatorios' | 'avisos' | 'habitos' | 'marcas' | 'perfil' | 'salud' | 'noches' | 'metas' | 'pesos'>;
 
 /** Lo del sueño que usan los avisos: sin noches de verdad (las de ejemplo no valen), nada. */
-export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches'>): SuenoDeAvisos | null {
+export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'latencia'>): SuenoDeAvisos | null {
   const s = suenoDe(e.hoy, e.perfil, e.salud, e.noches);
   if (s.deEjemplo) return null;
   return {
     habitual: (clave) => habitualDe(s.noches, clave),
     necesidad: s.necesidad,
     deuda: deudaDeSueno(ultimasNoches(s.noches, e.hoy, 14), s.necesidad)?.minutos ?? null,
+    // Lo que tardás en dormirte (D33): la hora de ir a la cama la descuenta.
+    latencia: aprenderPersonal([...e.noches.values()], e.hoy, e.latencia).latencia,
   };
 }
 
@@ -90,6 +92,18 @@ function textoDe(n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): str
   return n.avisos.map(uno).join(' · ');
 }
 
+/**
+ * El aviso de dormir trae «Me voy a dormir» (D33): tocarlo deja la hora en que te fuiste a la cama,
+ * como el Atajo, sin armar nada (src/dominio/sinReloj.ts, deLasSenales).
+ */
+const CATEGORIA_DORMIR = 'dormir';
+export const ME_VOY_A_DORMIR = 'meVoyADormir';
+let categorias: Promise<unknown> | undefined;
+const prepararCategorias = () =>
+  (categorias ??= Notifications.setNotificationCategoryAsync(CATEGORIA_DORMIR, [
+    { identifier: ME_VOY_A_DORMIR, buttonTitle: t('recordatorios.meVoyADormir'), options: { opensAppToForeground: true } },
+  ]).catch(() => {}));
+
 // Una programación a la vez: si mientras una programa llega otra, la primera se corta y la segunda
 // empieza de cero. Dos a la vez se borraban lo programado y duplicaban el resto.
 let enCurso: Promise<void> = Promise.resolve();
@@ -108,6 +122,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const ajustes: Avisos = { ...e.avisos, comidas: e.recordatorios ?? [] };
   const alguno = !!ajustes.dormir?.encendido || !!ajustes.comidas?.length || !!ajustes.habitos?.length || !!Object.keys(ajustes.horario ?? {}).length || !!ajustes.pesarse?.encendido;
   if (!alguno || !(await Notifications.getPermissionsAsync()).granted) return;
+  await prepararCategorias();
   const horaDeComida = horasDeComida(e);
   const ahora = new Date();
   // Hoy y ahora, del mismo instante: justo al corte, el almacén todavía puede tener el día anterior.
@@ -136,7 +151,10 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
       await Notifications.scheduleNotificationAsync({
         // Lo que lleva el aviso para abrir lo suyo al tocarlo (useAlTocarUnAviso).
         // La comida va con su día: tocado pasada la medianoche o a la mañana, se anota en el día del aviso.
-        content: { title: 'Moss', body: textoDe(n, e), data: { tipo: primero.tipo, ...(primero.comida ? { comida: primero.comida, dia: n.dia } : {}) } },
+        content: {
+          title: 'Moss', body: textoDe(n, e), data: { tipo: primero.tipo, ...(primero.comida ? { comida: primero.comida, dia: n.dia } : {}) },
+          ...(n.avisos.some((a) => a.tipo === 'dormir') ? { categoryIdentifier: CATEGORIA_DORMIR } : {}),
+        },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fecha },
       });
     } catch {
@@ -145,8 +163,11 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   }
 }
 
-/** Lo que se abre al tocar un aviso; con una comida, el día del aviso. */
-export type AlTocarUnAviso = { tipo: Aviso['tipo']; comida?: Comida; dia?: ClaveDia };
+/**
+ * Lo que se abre al tocar un aviso; con una comida, el día del aviso. Con `meVoyADormir`, se tocó ese
+ * botón del aviso de dormir: `id` y `en` son los de esa vez, para guardarla como ancla.
+ */
+export type AlTocarUnAviso = { tipo: Aviso['tipo']; comida?: Comida; dia?: ClaveDia; meVoyADormir?: { id: string; en: number } };
 
 /**
  * Tocar un aviso abre lo suyo (la comida para anotarla, Hábitos, el peso o el sueño), también si
@@ -158,7 +179,9 @@ export function useAlTocarUnAviso(abrir: (a: AlTocarUnAviso) => void) {
     if (!datos?.tipo) return;
     Notifications.clearLastNotificationResponse();
     const dia = typeof datos.dia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(datos.dia) ? datos.dia : undefined;
-    abrir({ tipo: datos.tipo, ...(datos.comida ? { comida: datos.comida } : {}), ...(dia ? { dia } : {}) });
+    // La hora del toque es la de irte a la cama: la del aviso puede ser de hace un rato.
+    const meVoyADormir = respuesta?.actionIdentifier === ME_VOY_A_DORMIR ? { id: `${respuesta.notification.request.identifier}:${ME_VOY_A_DORMIR}`, en: Date.now() } : undefined;
+    abrir({ tipo: datos.tipo, ...(datos.comida ? { comida: datos.comida } : {}), ...(dia ? { dia } : {}), ...(meVoyADormir ? { meVoyADormir } : {}) });
   });
   useEffect(() => {
     if (!hayAvisos) return;

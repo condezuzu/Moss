@@ -17,16 +17,17 @@ import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import type { Comida } from '@/dominio/comidas';
-import { CORTE_DE_FABRICA, CORTES, type DiaSemana } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, CORTES, sumarDias, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
 import { horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
 import { horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
+import { aprenderPersonal, LATENCIAS } from '@/dominio/sinReloj';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, Icono, Pastilla } from '../comida/comunes';
-import { numero, sistemaDe, useEstado } from '../comida/datos';
+import { duracion, numero, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
@@ -397,7 +398,10 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
     else conPermiso(() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
   };
   const sueno = suenoParaAvisos(e);
-  const estaNoche = sueno ? horasDeSueno(e.hoy, sueno).dormir : null;
+  // La hora de ir a la cama esta noche y de dónde sale: la de despertarte mañana, lo que necesitás y lo que tardás.
+  const estaNoche = sueno ? horasDeSueno(e.hoy, sueno).acostarse : null;
+  const manana = sueno ? horasDeSueno(sumarDias(e.hoy, 1), sueno).despertar : null;
+  const personal = aprenderPersonal([...e.noches.values()], e.hoy, e.latencia);
   const maximo = e.avisos.maximoPorDia ?? MAXIMO_POR_DIA;
   // El horario arranca con las comidas de siempre, a la hora en que se suelen anotar.
   const horario = e.avisos.horario ?? {};
@@ -434,7 +438,11 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
           accessibilityLabel={t('perfil.avisos.dormir')}
         />
       </View>
-      <Parrafo chico>{estaNoche !== null ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche) }) : t('perfil.avisos.dormirSinDatos')}</Parrafo>
+      <Parrafo chico>
+        {estaNoche !== null && manana !== null && sueno
+          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(sueno.necesidad), latencia: personal.latencia })
+          : t('perfil.avisos.dormirSinDatos')}
+      </Parrafo>
       {!!dormir?.encendido && (
         <Aparece>
           <View style={st.comidas}>
@@ -444,6 +452,15 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
           </View>
         </Aparece>
       )}
+      {/* Tardo en dormirme (D33): lo que aprende Moss de tus respuestas, o un número fijo. */}
+      <Text style={[st.llaveTexto, { marginTop: 18 }]}>{t('perfil.avisos.tardo')}</Text>
+      <View style={st.comidas}>
+        <Pastilla texto={t('perfil.avisos.tardoAprendido', { n: personal.aprendida })} elegida={e.latencia === null} alTocar={() => elAlmacen().ponerLatencia(null)} />
+        {LATENCIAS.map((n) => (
+          <Pastilla key={n} texto={t('perfil.avisos.minutos', { n })} elegida={e.latencia === n} alTocar={() => elAlmacen().ponerLatencia(n)} />
+        ))}
+      </View>
+      <Parrafo chico>{t('perfil.avisos.tardoTexto')}</Parrafo>
       <View style={st.llave}>
         <Text style={st.llaveTexto}>{t('perfil.avisos.horario')}</Text>
         <Switch

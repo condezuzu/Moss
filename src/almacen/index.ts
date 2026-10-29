@@ -30,6 +30,22 @@ export function elAlmacen(): Almacen {
   return almacen;
 }
 
+/** Hasta que el almacén abrió la base: tablas como la de anclas existen recién después de migrar. */
+export function almacenListo(): Promise<void> {
+  const a = elAlmacen();
+  return new Promise((listo) => {
+    if (a.estado().listo) {
+      listo();
+      return;
+    }
+    const dejar = a.suscribir(() => {
+      if (!a.estado().listo) return;
+      dejar();
+      listo();
+    });
+  });
+}
+
 /** La sincronización con la cuenta mientras la app está abierta: Perfil la frena antes de borrar el teléfono. */
 let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void } | undefined;
 

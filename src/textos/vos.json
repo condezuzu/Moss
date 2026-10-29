@@ -175,7 +175,7 @@
     "deudaTexto": "Lo que te faltó para lo que necesitás cada noche de las últimas dos semanas, pesando más las más recientes, menos lo que dormiste de más (hasta 2 horas por noche). Las siestas cuentan; las noches sin datos no suman ni restan.",
     "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo dormís, consultá a un médico.",
     "sinCalidadEstimada": "Moss no está segura de esta noche: confirmala o cambiala y aparece la calidad.",
-    "estimadaTexto": "Sin reloj, Moss la estima con tus pasos, el movimiento del teléfono y cuándo usás la app.",
+    "estimadaTexto": "Sin reloj, Moss toma la última vez que usaste o moviste el teléfono y le suma lo que tardás en dormirte ({latencia} min); a la mañana, la primera vez menos lo que tardás en agarrarlo ({despertar} min). Cada respuesta le enseña lo tuyo.",
     "porTi": "Confirmada por vos",
     "corregidaPorTi": "Corregida por vos",
     "pocoSueno": {
@@ -239,12 +239,14 @@
     },
     "sinDeficitTexto": "Por embarazo, lactancia o una condición médica: Moss no te propone comer menos de lo que gastás.",
     "avisos": {
-      "dormirTexto": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitás, con algo de la deuda y sin adelantarse más de una hora a la de siempre. Esta noche, {hora}.",
-      "dormirSinDatos": "Un rato antes de la hora de ir a la cama: la que te deja dormir lo que necesitás. Hace falta saber a qué hora te despertás: con unas noches alcanza.",
-      "horarioTexto": "Te avisa a la hora de cada comida, para comer ordenado. Si ya la anotaste, no suena; si tenés un plan, dice qué toca."
+      "dormirTexto": "Esta noche, a la cama a las {hora}: para despertarte a las {despertar} habiendo dormido {horas}, con los {latencia} min que tardás en dormirte. Te avisa un rato antes.",
+      "dormirSinDatos": "Te avisa un rato antes de la hora de ir a la cama. Para calcularla hace falta saber a qué hora te despertás: con unas noches alcanza.",
+      "horarioTexto": "Te avisa a la hora de cada comida, para comer ordenado. Si ya la anotaste, no suena; si tenés un plan, dice qué toca.",
+      "tardoTexto": "Desde que dejás el teléfono hasta que te dormís. Moss lo aprende cada vez que contestás «¿Dormiste de… a…?»."
     },
     "cambiarCuentaTexto": "Se cierra esta sesión y entrás con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
-    "corteTexto": "Lo que anotás antes de esa hora cuenta para el día anterior: si cenás o te acostás tarde, sigue siendo tu día."
+    "corteTexto": "Lo que anotás antes de esa hora cuenta para el día anterior: si cenás o te acostás tarde, sigue siendo tu día.",
+    "mejorarBaseTexto": "Si buscás un alimento y Moss no lo tiene, manda solo lo que escribiste, sin tu nombre ni tu cuenta, para sumarlo."
   },
   "ascent": {
     "etiqueta": "Si usás Ascent",

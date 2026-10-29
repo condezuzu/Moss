@@ -4,9 +4,11 @@
 // - La ventana tranquila es el hueco sin actividad (pasos, el teléfono en movimiento, Moss abierta, un
 //   Atajo) de 5 a 12 horas que empieza entre las 18 y las 4. Lo suelto de la madrugada no la corta: es
 //   una interrupción.
-// - Te dormiste un rato después de la última actividad (más si dejaste el teléfono mucho antes de lo
-//   de siempre) y te despertaste 18 minutos antes de la primera: las reglas publicadas de Sahha.
-// - Lo que aprende de tus correcciones corre las dos horas.
+// - Te dormiste un rato después de la última actividad y te despertaste un rato antes de la primera.
+//   Esos dos ratos son tuyos (D33, lo pediste el 29/10/2026): empiezan en lo de Sahha (31 y 18
+//   minutos) y se aprenden de cada «¿Dormiste de X a Y?» que contestás, o se eligen en «Tardo en
+//   dormirme». El de dormirte incluye el rato con el teléfono en la cama, que el movimiento no ve.
+// - Si dejaste el teléfono mucho antes que siempre, te dormiste cerca de tu hora de siempre.
 // - Dice qué tan segura está y, si no lo está, pregunta a la mañana.
 // La estimación nunca se escribe en Salud (guía 5.1.3 de Apple).
 
@@ -24,18 +26,23 @@ export type Actividad = { desde: number; hasta: number; tipo: 'pasos' | 'movimie
 export type Ancla = { en: number; que: 'dormir' | 'despertar' };
 /** Lo de siempre, en minutos desde las 18: la mediana de las últimas noches del mismo tipo (entre semana o fin de semana). */
 export type Habitual = { dormirse: number; despertar: number; noches: number };
-/** Cuánto correr la estimación en tu caso, en minutos, por lo que corregiste. */
-export type Ajuste = { dormirse: number; despertar: number; correcciones: number };
+/**
+ * Lo tuyo, en minutos (D33): cuánto tardás en dormirte después de la última actividad y en tocar el
+ * teléfono después de despertarte. `aprendida` es la que aprendió Moss de tus respuestas; `latencia`,
+ * la que se usa: la que elegiste en «Tardo en dormirme» o, sin elegir, la aprendida. `noches`, de
+ * cuántas respuestas aprendió.
+ */
+export type Personal = { latencia: number; aprendida: number; alDespertar: number; noches: number };
 /** Por qué la estimación no es segura. */
 export type Motivo = 'sinHistoria' | 'pocosDatos' | 'dejasteAntes' | 'agarrasteTarde' | 'usoDeNoche' | 'distintaDeLoDeSiempre' | 'sinVentana';
 
 export type Estimacion = {
   clave: ClaveDia;
-  /** En minutos desde las 18 del día anterior, ya corridas por lo aprendido. */
+  /** En minutos desde las 18 del día anterior, con lo tuyo. */
   dormirse: number;
   despertar: number;
-  /** Lo estimado antes de correrlo: es lo que se guarda para aprender. */
-  cruda: { dormirse: number; despertar: number };
+  /** La ventana tranquila: la última actividad y la primera. Se guarda para aprender lo tuyo (aprenderPersonal). */
+  quieto: { desde: number; hasta: number };
   rango: { dormirse: [number, number]; despertar: [number, number] };
   confianza: Confianza;
   /** La probabilidad de que los dos bordes estén dentro de una hora (una propuesta, para calibrar). */
@@ -58,16 +65,36 @@ const SUELTO = { largo: 20, silencio: 90, antesDeLoDeSiempre: 15, sinHistoria: 3
 const MIRA = { desde: -360, hasta: 1200 };
 /** Dos actividades separadas por menos de 5 minutos son una sola. */
 const JUNTAS = 5;
-/** De que te despertaste a la primera actividad de la mañana (Sahha). */
-const AL_DESPERTAR = 18;
+/** De que te despertaste a la primera actividad de la mañana, sin nada aprendido (Sahha). */
+export const AL_DESPERTAR = 18;
+/**
+ * De la última actividad a dormirte, sin nada aprendido: 31 minutos, lo de Sahha para quien deja el
+ * teléfono a su hora de siempre.
+ */
+export const LATENCIA = 31;
+/** Lo que se puede elegir en «Tardo en dormirme», en minutos (D33). */
+export const LATENCIAS = [5, 10, 15, 20, 30, 45, 60, 90] as const;
+/**
+ * Con el teléfono dejado más de una hora antes de lo de costumbre, te dormiste cerca de tu hora de
+ * siempre: Sahha mide 153 minutos con 2 a 3 horas antes, que es más o menos esa hora.
+ */
+const TEMPRANO = { mas: 60, antesDeLoDeSiempre: 30 };
+/** Con el teléfono dejado después de tu hora de siempre, Sahha mide 18 minutos: lo tuyo, en esa proporción. */
+const TARDE = 18;
 /** Sin ventana: la última actividad antes de las 2 y la primera después de las 4. */
 const SIN_VENTANA = { antesDe: 480, despuesDe: 600 };
 /** La mitad del rango que se muestra, en minutos, al dormirte y al despertarte. */
 const RANGO: Record<Confianza, [number, number]> = { alta: [20, 15], media: [35, 25], baja: [60, 45] };
-/** Cuánto pesa lo de los estudios contra lo tuyo, en noches corregidas (spec/sueno.md, «Aprender de cada persona»). */
-const PREVIO = 6;
-/** Una corrección pesa como 6 noches confirmadas, y lo viejo pierde la mitad del peso en 30 noches. */
-const PESO = { corregida: 6, confirmada: 1, vidaMedia: 30 };
+/**
+ * Lo de fábrica pesa como dos respuestas: con tres o cuatro ya manda lo tuyo (spec/sueno.md, «Aprender
+ * de cada persona»).
+ */
+const PREVIO = 2;
+/**
+ * Una corrección pesa como 3 «Sí» (dice algo que Moss no sabía); lo viejo pierde la mitad del peso en
+ * 30 noches, y una noche de antes, sin la ventana guardada, pesa la mitad.
+ */
+const PESO = { corregida: 3, confirmada: 1, vidaMedia: 30, sinVentana: 0.5 };
 
 const limitar = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 const mediana = (xs: number[]) => {
@@ -76,19 +103,17 @@ const mediana = (xs: number[]) => {
   return o.length % 2 ? o[k] : (o[k - 1] + o[k]) / 2;
 };
 
-/**
- * Cuánto tardás en dormirte después de la última actividad, según cuánto antes de tu hora de siempre
- * dejaste el teléfono (en minutos; Sahha): a la hora de siempre, 31; con 1 a 1,5 horas antes, 76; con
- * 2 a 3, 153; con 3 o más, 202. Si lo dejaste más tarde que siempre, 18. Sin historia, 31.
- */
-export function latencia(adelanto: number | null): number {
-  if (adelanto === null) return 31;
-  if (adelanto < 0) return 18;
-  if (adelanto < 60) return 31;
-  if (adelanto < 90) return 76;
-  if (adelanto < 120) return 76 + ((adelanto - 90) / 30) * (153 - 76);
-  if (adelanto < 180) return 153;
-  return 202;
+/** La mediana con pesos: el valor donde se pasa la mitad del peso. null si no hay nada. */
+function medianaPesada(lista: { x: number; peso: number }[]): number | null {
+  const o = [...lista].sort((a, b) => a.x - b.x);
+  const total = o.reduce((s, v) => s + v.peso, 0);
+  if (!(total > 0)) return null;
+  let acumulado = 0;
+  for (const v of o) {
+    acumulado += v.peso;
+    if (acumulado >= total / 2) return v.x;
+  }
+  return o[o.length - 1].x;
 }
 
 type Bloque = { desde: number; hasta: number; tipos: Actividad['tipo'][]; fin: boolean };
@@ -142,7 +167,8 @@ export function estimarNoche(d: {
   actividad: Actividad[];
   anclas?: Ancla[];
   habitual: Habitual | null;
-  ajuste?: Ajuste | null;
+  /** Lo tuyo (aprenderPersonal); sin nada, lo de Sahha. */
+  personal?: Personal | null;
 }): Estimacion | null {
   const cero = ceroDe(d.clave, d.zona);
   const anclas = (d.anclas ?? []).map((a) => ({ en: (a.en - cero) / MIN, que: a.que }));
@@ -166,8 +192,12 @@ export function estimarNoche(d: {
     v = { desde, hasta, interrupciones: b.filter((x) => x.desde > desde && x.hasta < hasta).length };
     sinVentana = true;
   }
+  const tuya = d.personal?.latencia ?? LATENCIA;
   const adelanto = h ? h.dormirse - v.desde : null;
-  let despertar = v.hasta - AL_DESPERTAR;
+  // Si lo dejaste después de tu hora de siempre, te dormís antes: en Sahha, 18 minutos contra 31.
+  const latencia = adelanto !== null && adelanto < 0 ? Math.round((tuya * TARDE) / LATENCIA) : tuya;
+  const temprano = h !== null && adelanto !== null && adelanto > latencia + TEMPRANO.mas;
+  let despertar = v.hasta - (d.personal?.alDespertar ?? AL_DESPERTAR);
   // La alarma, «Me desperté» o el Focus apagado dicen cuándo te despertaste; si después hubo hora y
   // media de silencio, te volviste a dormir y no cuenta.
   const alDespertar = anclas
@@ -176,11 +206,10 @@ export function estimarNoche(d: {
   if (alDespertar) despertar = alDespertar.en;
   // «Me voy a dormir» o el Focus prendido justo al empezar el hueco.
   const alDormir = anclas.some((a) => a.que === 'dormir' && a.en <= v!.desde && a.en >= v!.desde - JUNTAS - 1);
-  const cruda = { dormirse: v.desde + latencia(adelanto), despertar };
-  const ajuste = d.ajuste ?? { dormirse: 0, despertar: 0, correcciones: 0 };
-  // Lo aprendido corre las horas, pero nunca antes de la última actividad ni después de la primera.
-  const dormirse = limitar(cruda.dormirse + ajuste.dormirse, v.desde + 5, v.hasta);
-  const despertarFinal = alDespertar ? cruda.despertar : limitar(cruda.despertar + ajuste.despertar, dormirse, v.hasta);
+  const conLatencia = v.desde + latencia;
+  // Nunca antes de la última actividad ni después de la primera.
+  const dormirse = limitar(temprano ? Math.max(conLatencia, h.dormirse - TEMPRANO.antesDeLoDeSiempre) : conLatencia, v.desde + 5, v.hasta);
+  const despertarFinal = alDespertar ? despertar : limitar(despertar, dormirse, v.hasta);
   if (despertarFinal - dormirse < 120) return null;
 
   // Qué tan segura está: una propuesta que se calibra con la prueba contra un reloj (spec/sueno.md).
@@ -194,10 +223,12 @@ export function estimarNoche(d: {
     p -= 0.2;
     motivos.push('pocosDatos');
   }
-  if (adelanto !== null && adelanto > 60) {
-    p -= 0.15 * Math.min(2, (adelanto - 60) / 60);
+  if (temprano) {
+    p -= 0.15 * Math.min(2, (adelanto - latencia - TEMPRANO.mas) / 60 + 0.5);
     motivos.push('dejasteAntes');
   }
+  // Con tres respuestas o más, lo tuyo ya es tuyo.
+  if ((d.personal?.noches ?? 0) >= 3) p += 0.05;
   const tarde = h ? v.hasta - AL_DESPERTAR - h.despertar : 0;
   if (tarde > 60 && !alDespertar) {
     p -= 0.1 * Math.min(3, (tarde - 60) / 60);
@@ -224,7 +255,7 @@ export function estimarNoche(d: {
     clave: d.clave,
     dormirse,
     despertar: despertarFinal,
-    cruda,
+    quieto: { desde: v.desde, hasta: v.hasta },
     rango: rangoDe(dormirse, despertarFinal, confianza),
     confianza,
     probabilidad: p,
@@ -256,24 +287,38 @@ export function habitualDe(noches: Pick<Noche, 'clave' | 'dormirse' | 'despertar
 }
 
 /**
- * Cuánto correr la estimación en tu caso: el promedio de lo que corregiste (la hora que diste menos la
- * que estimó el teléfono), donde una corrección pesa como 6 «Sí» y lo viejo pierde la mitad del peso
- * en 30 noches, contra 6 noches de no correr nada. Hasta hora y media.
+ * Lo tuyo (D33), de cada «¿Dormiste de X a Y?» que contestaste en los últimos cuatro meses: la hora que
+ * diste contra la ventana tranquila de esa noche. Cuánto tardaste en dormirte es la hora en que te
+ * dormiste menos la última actividad; en tocar el teléfono, la primera actividad menos la hora en que
+ * te despertaste. De cada uno, la mediana con pesos (un dato raro no la mueve), mezclada con lo de
+ * Sahha como si fuera dos respuestas. `elegida` es la de «Tardo en dormirme», si se eligió: gana a la
+ * aprendida. Las noches de antes, sin la ventana guardada, la toman de lo estimado y pesan la mitad.
  */
-export function aprenderAjuste(propias: NochePropia[], clave: ClaveDia): Ajuste {
-  let pesos = 0, dormirse = 0, despertar = 0, correcciones = 0;
+export function aprenderPersonal(propias: readonly NochePropia[], clave: ClaveDia, elegida?: number | null): Personal {
+  const latencias: { x: number; peso: number }[] = [];
+  const despertares: { x: number; peso: number }[] = [];
   for (const np of propias) {
     const h = np.hora;
-    if (np.borrado || !h?.estimada || h.origen === 'estimada' || np.fecha >= clave) continue;
+    if (np.borrado || !h?.estimada || (h.origen !== 'confirmada' && h.origen !== 'corregida') || np.fecha >= clave) continue;
     const edad = diasEntre(np.fecha, clave);
     if (edad > 120) continue;
-    const peso = (h.origen === 'confirmada' ? PESO.confirmada : PESO.corregida) * 0.5 ** (edad / PESO.vidaMedia);
-    pesos += peso;
-    dormirse += (peso * (Date.parse(h.dormirse) - Date.parse(h.estimada.dormirse))) / MIN;
-    despertar += (peso * (Date.parse(h.despertar) - Date.parse(h.estimada.despertar))) / MIN;
-    if (h.origen !== 'confirmada') correcciones++;
+    const q = h.estimada.quieto;
+    const desde = q ? Date.parse(q.desde) : Date.parse(h.estimada.dormirse) - LATENCIA * MIN;
+    const hasta = q ? Date.parse(q.hasta) : Date.parse(h.estimada.despertar) + AL_DESPERTAR * MIN;
+    const peso = (h.origen === 'corregida' ? PESO.corregida : PESO.confirmada) * 0.5 ** (edad / PESO.vidaMedia) * (q ? 1 : PESO.sinVentana);
+    const latencia = (Date.parse(h.dormirse) - desde) / MIN;
+    const alDespertar = (hasta - Date.parse(h.despertar)) / MIN;
+    // Lo que no puede ser (dormirte más de un cuarto de hora antes de la última actividad) no enseña nada.
+    if (latencia >= -15 && latencia <= 300) latencias.push({ x: Math.max(0, latencia), peso });
+    if (alDespertar >= -15 && alDespertar <= 180) despertares.push({ x: Math.max(0, alDespertar), peso });
   }
-  return { dormirse: limitar(dormirse / (PREVIO + pesos), -90, 90), despertar: limitar(despertar / (PREVIO + pesos), -90, 90), correcciones };
+  const mezcla = (lista: { x: number; peso: number }[], previo: number, tope: number) => {
+    const m = medianaPesada(lista);
+    const pesos = lista.reduce((s, v) => s + v.peso, 0);
+    return m === null ? previo : Math.round(limitar((PREVIO * previo + pesos * m) / (PREVIO + pesos), 0, tope));
+  };
+  const aprendida = mezcla(latencias, LATENCIA, 240);
+  return { latencia: elegida ?? aprendida, aprendida, alDespertar: mezcla(despertares, AL_DESPERTAR, 120), noches: Math.max(latencias.length, despertares.length) };
 }
 
 /** Las dos primeras semanas con Moss se pregunta cada mañana (lo pediste el 22/10/2026): así aprende rápido cómo se corre en tu caso. */

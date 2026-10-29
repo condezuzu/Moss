@@ -73,6 +73,11 @@ export type Sueno = {
   necesidad: number;
   /** La deuda de las dos semanas (deudaDeSueno), en minutos; null mientras no hay. */
   deuda: number | null;
+  /**
+   * Cuánto tardás en dormirte desde que te acostás, en minutos (D33: lo que aprende Moss o lo que
+   * elegiste en «Tardo en dormirme»). La hora de ir a la cama es la de dormirte menos esto.
+   */
+  latencia?: number;
 };
 
 /** Un aviso: el de dormir, el de un hábito, el de una comida (sin anotar o a su hora) o el de pesarse. */
@@ -87,7 +92,7 @@ export type Aviso = {
   habito?: string;
   comida?: Comida;
   mensaje?: string;
-  /** En el de dormir, la hora de dormirse (en la misma cuenta que `minutos`), para el texto. */
+  /** En el de dormir, la hora de ir a la cama (en la misma cuenta que `minutos`), para el texto. */
   dormirA?: number;
 };
 
@@ -139,11 +144,12 @@ export function horaDeDormir(d: { despertar: number | null; necesidad: number; d
 }
 
 /**
- * A qué hora se despierta ese día y a qué hora dormirse esa noche, en minutos desde la medianoche
- * del día (pasada la medianoche, más de 1440). La mañana sale de la alarma de ese día o de lo de
- * siempre; la noche, de la mañana siguiente y de la deuda de hoy, que se rehace al reprogramar.
+ * A qué hora se despierta ese día, a qué hora dormirse esa noche y a qué hora ir a la cama para eso
+ * (D33: dormirse menos lo que tardás), en minutos desde la medianoche del día (pasada la medianoche,
+ * más de 1440). La mañana sale de la alarma de ese día o de lo de siempre; la noche, de la mañana
+ * siguiente y de la deuda de hoy, que se rehace al reprogramar.
  */
-export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | null; dormir: number | null } {
+export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | null; dormir: number | null; acostarse: number | null } {
   // La mañana de un día, en la cuenta de su noche (desde las 18 del anterior).
   const manana = (clave: ClaveDia): number | null => {
     const alarma = s.alarmas?.[diaDeLaSemana(clave)];
@@ -152,7 +158,11 @@ export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | nul
   const hoy = manana(dia);
   const siguiente = sumarDias(dia, 1);
   const dormir = horaDeDormir({ despertar: manana(siguiente), necesidad: s.necesidad, deuda: s.deuda, habitual: s.habitual(siguiente)?.dormirse ?? null });
-  return { despertar: hoy === null ? null : aCinco(hoy - MEDIANOCHE), dormir: dormir === null ? null : dormir + LAS_18 };
+  return {
+    despertar: hoy === null ? null : aCinco(hoy - MEDIANOCHE),
+    dormir: dormir === null ? null : dormir + LAS_18,
+    acostarse: dormir === null ? null : aCinco(dormir + LAS_18 - (s.latencia ?? 0)),
+  };
 }
 
 type Grupo = { minutos: number; avisos: Aviso[] };
@@ -220,12 +230,13 @@ export type DelDia = {
 export function avisosDelDia(op: DelDia): Notificacion[] {
   const { dia, ajustes } = op;
   const semana = diaDeLaSemana(dia);
-  const horas = op.sueno ? horasDeSueno(dia, op.sueno) : { despertar: null, dormir: null };
+  const horas = op.sueno ? horasDeSueno(dia, op.sueno) : { despertar: null, dormir: null, acostarse: null };
   const fijos: Aviso[] = [];
   const conEvento: { aviso: Omit<Aviso, 'minutos'>; evento: Evento; despues: number }[] = [];
 
-  if (ajustes.dormir?.encendido && horas.dormir !== null) {
-    fijos.push({ id: 'dormir', tipo: 'dormir', minutos: horas.dormir - (ajustes.dormir.antes ?? ANTES_DE_DORMIR), dormirA: horas.dormir });
+  // Un rato antes de la hora de ir a la cama, que ya descuenta lo que tardás en dormirte.
+  if (ajustes.dormir?.encendido && horas.acostarse !== null) {
+    fijos.push({ id: 'dormir', tipo: 'dormir', minutos: horas.acostarse - (ajustes.dormir.antes ?? ANTES_DE_DORMIR), dormirA: horas.acostarse });
   }
   const vistos = new Map<string, number>();
   for (const r of ajustes.habitos ?? []) {
@@ -240,7 +251,7 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     if (c.tipo === 'evento') conEvento.push({ aviso, evento: c.evento, despues: c.despues });
     else if (c.tipo === 'hora') fijos.push({ ...aviso, minutos: c.minutos });
     else if (c.tipo === 'despertar') fijos.push({ ...aviso, minutos: (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues });
-    else if (c.tipo === 'dormir') fijos.push({ ...aviso, minutos: (horas.dormir ?? DORMIR_SIN_SUENO) - c.antes });
+    else if (c.tipo === 'dormir') fijos.push({ ...aviso, minutos: (horas.acostarse ?? DORMIR_SIN_SUENO) - c.antes });
   }
   const horario = Object.entries(ajustes.horario ?? {}).filter(([, m]) => Number.isFinite(m)) as [Comida, number][];
   for (const [comida, minutos] of horario) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });

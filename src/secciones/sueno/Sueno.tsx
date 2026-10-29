@@ -17,6 +17,7 @@ import {
   calidadDeNoche, deudaDeSueno, horario as horarioDe, MAXIMOS, MINIMOS, nivelDeLaNoche, pareceIncompleta, pocoSuenoSostenido, ultimasNoches, vitalDeNoche,
   type Confianza, type Fuente, type Noche, type NochePropia, type OrigenDeNoche, type TipoDeVital,
 } from '@/dominio/sueno';
+import { aprenderPersonal } from '@/dominio/sinReloj';
 import { pedirMovimiento, permisoDeMovimiento } from '../../../modules/movimiento';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -183,6 +184,9 @@ function LaNoche({ n, hoy, ancho, anteriores }: { n: Noche; hoy: ClaveDia; ancho
  */
 function LaNocheDeMoss({ n, hoy, propia }: { n: Noche; hoy: ClaveDia; propia: NochePropia | undefined }) {
   const [editando, setEditando] = useState(false);
+  // Cómo se mide (D33): la última y la primera actividad, con lo que tardás, que se aprende de tus respuestas.
+  const e = useEstado();
+  const personal = aprenderPersonal([...e.noches.values()], hoy, e.latencia);
   const m = n.moss!;
   const r = m.rango;
   const a = r ? r.dormirse[0] : n.dormirse, b = r ? r.despertar[1] : n.despertar;
@@ -200,7 +204,7 @@ function LaNocheDeMoss({ n, hoy, propia }: { n: Noche; hoy: ClaveDia; propia: No
       </View>
       <Eje izquierda={reloj(desde)} derecha={reloj(hasta)} />
       {r && <Parrafo>{`${t('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${t(`sueno.seguridad.${m.confianza}`)}.`}</Parrafo>}
-      {m.origen === 'estimada' && <Parrafo chico>{t('sueno.estimadaTexto')}</Parrafo>}
+      {m.origen === 'estimada' && <Parrafo chico>{t('sueno.estimadaTexto', { latencia: personal.latencia, despertar: personal.alDespertar })}</Parrafo>}
       <Parrafo chico>{t('sueno.sinRelojEtapas')}</Parrafo>
       {editando ? (
         <Aparece style={st.editorNoche}>

@@ -80,7 +80,8 @@ const filaDe = {
   noches: (n: NochePropia) => ({
     fecha: n.fecha, cara: n.cara ?? null, dormirse: n.hora?.dormirse ?? null, despertar: n.hora?.despertar ?? null,
     origen: (n.hora?.origen ?? null) as OrigenDeNoche | null, confianza: (n.hora?.confianza ?? null) as Confianza | null,
-    estimada_dormirse: n.hora?.estimada?.dormirse ?? null, estimada_despertar: n.hora?.estimada?.despertar ?? null, borrado: !!n.borrado, actualizado: n.actualizado,
+    estimada_dormirse: n.hora?.estimada?.dormirse ?? null, estimada_despertar: n.hora?.estimada?.despertar ?? null,
+    quieto_desde: n.hora?.estimada?.quieto?.desde ?? null, quieto_hasta: n.hora?.estimada?.quieto?.hasta ?? null, borrado: !!n.borrado, actualizado: n.actualizado,
   }),
 };
 
@@ -161,7 +162,12 @@ const deFila = {
     ...(f.dormirse && f.despertar && f.origen && f.confianza ? {
       hora: {
         dormirse: hora(f.dormirse), despertar: hora(f.despertar), origen: f.origen, confianza: f.confianza,
-        ...(f.estimada_dormirse && f.estimada_despertar ? { estimada: { dormirse: hora(f.estimada_dormirse), despertar: hora(f.estimada_despertar) } } : {}),
+        ...(f.estimada_dormirse && f.estimada_despertar ? {
+          estimada: {
+            dormirse: hora(f.estimada_dormirse), despertar: hora(f.estimada_despertar),
+            ...(f.quieto_desde && f.quieto_hasta ? { quieto: { desde: hora(f.quieto_desde), hasta: hora(f.quieto_hasta) } } : {}),
+          },
+        } : {}),
       },
     } : {}),
     actualizado: hora(f.actualizado),

@@ -68,24 +68,37 @@ describe('la hora de dormir', () => {
 
 describe('las horas de sueño de un día', () => {
   it('la mañana sale de lo de siempre y la noche, de la mañana siguiente, en minutos desde la medianoche', () => {
-    expect(horasDeSueno(VIERNES, SUENO)).toEqual({ despertar: h('7:30'), dormir: h('23:30') });
+    expect(horasDeSueno(VIERNES, SUENO)).toEqual({ despertar: h('7:30'), dormir: h('23:30'), acostarse: h('23:30') });
   });
 
   it('la alarma gana a lo de siempre, y la del sábado decide la noche del viernes, que pasa de la medianoche', () => {
     // Se despierta el sábado a las 9 y necesita 8 horas: dormirse a la 1 del sábado, que es la noche del viernes.
-    expect(horasDeSueno(VIERNES, { ...SUENO, alarmas: { 5: h('6:30'), 6: h('9:00') } })).toEqual({ despertar: h('6:30'), dormir: 24 * 60 + h('1:00') });
+    expect(horasDeSueno(VIERNES, { ...SUENO, alarmas: { 5: h('6:30'), 6: h('9:00') } })).toEqual({ despertar: h('6:30'), dormir: 24 * 60 + h('1:00'), acostarse: 24 * 60 + h('1:00') });
   });
 
   it('lo de siempre es el de cada noche: el fin de semana puede ser otro', () => {
     const finde = (c: string) => [6, 0].includes(diaDeLaSemana(c));
     const s: Sueno = { ...SUENO, habitual: (c) => (finde(c) ? { dormirse: n('0:30'), despertar: n('9:30') } : { dormirse: n('23:30'), despertar: n('7:30') }) };
     // La noche del viernes termina el sábado.
-    expect(horasDeSueno(VIERNES, s)).toEqual({ despertar: h('7:30'), dormir: 24 * 60 + h('1:30') });
+    expect(horasDeSueno(VIERNES, s)).toEqual({ despertar: h('7:30'), dormir: 24 * 60 + h('1:30'), acostarse: 24 * 60 + h('1:30') });
     expect(horasDeSueno(JUEVES, s).dormir).toBe(h('23:30'));
   });
 
   it('sin datos del sueño, nada', () => {
-    expect(horasDeSueno(VIERNES, { ...SUENO, habitual: () => null })).toEqual({ despertar: null, dormir: null });
+    expect(horasDeSueno(VIERNES, { ...SUENO, habitual: () => null })).toEqual({ despertar: null, dormir: null, acostarse: null });
+  });
+
+  it('a la cama, lo que tardás en dormirte antes de la hora de dormirte (D33), de a 5 minutos', () => {
+    expect(horasDeSueno(VIERNES, { ...SUENO, latencia: 25 })).toEqual({ despertar: h('7:30'), dormir: h('23:30'), acostarse: h('23:05') });
+    expect(horasDeSueno(VIERNES, { ...SUENO, latencia: 47 }).acostarse).toBe(h('22:45'));
+  });
+});
+
+describe('el aviso de dormir con lo que tardás en dormirte', () => {
+  it('suena un rato antes de la hora de ir a la cama, y dice esa hora', () => {
+    expect(delDia({ dormir: { encendido: true } }, { sueno: { ...SUENO, latencia: 30 } })).toEqual([
+      { dia: VIERNES, minutos: h('22:30'), avisos: [{ id: 'dormir', tipo: 'dormir', minutos: h('22:30'), dormirA: h('23:00') }] },
+    ]);
   });
 });
 

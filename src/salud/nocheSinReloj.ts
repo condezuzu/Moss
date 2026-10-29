@@ -7,7 +7,7 @@
 import type { Almacen } from '@/almacen/almacen';
 import { sumarDias } from '@/dominio/fechas';
 import {
-  actividadDeLosPasos, actividadDelMovimiento, aprenderAjuste, conNochesDeMoss, deLasSenales, estimarNoche, habitualDe, instanteDe, type Actividad,
+  actividadDeLosPasos, actividadDelMovimiento, aprenderPersonal, conNochesDeMoss, deLasSenales, estimarNoche, habitualDe, instanteDe, type Actividad,
 } from '@/dominio/sinReloj';
 import { leerMovimiento } from '../../modules/movimiento';
 import { leerSenales } from './anclas';
@@ -40,12 +40,14 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
   ];
   const propias = [...e.noches.values()];
   const noches = conNochesDeMoss(deSalud, propias, (ms) => -new Date(ms).getTimezoneOffset());
-  const est = estimarNoche({ clave: e.hoy, zona, actividad, anclas: atajos.anclas, habitual: habitualDe(noches, e.hoy), ajuste: aprenderAjuste(propias, e.hoy) });
+  const personal = aprenderPersonal(propias, e.hoy, e.latencia);
+  const est = estimarNoche({ clave: e.hoy, zona, actividad, anclas: atajos.anclas, habitual: habitualDe(noches, e.hoy), personal });
   if (!est) return;
   const iso = (minutos: number) => new Date(instanteDe(e.hoy, zona, Math.round(minutos))).toISOString();
   const hora = {
     dormirse: iso(est.dormirse), despertar: iso(est.despertar), origen: 'estimada' as const, confianza: est.confianza,
-    estimada: { dormirse: iso(est.cruda.dormirse), despertar: iso(est.cruda.despertar) },
+    // Con la ventana tranquila: cuando contestes «¿Dormiste de X a Y?», de ahí se aprende lo tuyo.
+    estimada: { dormirse: iso(est.dormirse), despertar: iso(est.despertar), quieto: { desde: iso(est.quieto.desde), hasta: iso(est.quieto.hasta) } },
   };
   // Solo si cambió: cada cambio sube a la cuenta.
   if (antes?.hora && antes.hora.dormirse === hora.dormirse && antes.hora.despertar === hora.despertar && antes.hora.confianza === hora.confianza) return;

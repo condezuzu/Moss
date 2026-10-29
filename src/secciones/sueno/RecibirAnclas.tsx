@@ -5,28 +5,12 @@
 
 import * as AppIntents from 'expo-app-intents';
 
-import { elAlmacen } from '@/almacen';
+import { almacenListo, elAlmacen } from '@/almacen';
 import { SENALES, type QueSenal, type Senal } from '@/dominio/sinReloj';
 import { guardarSenales } from '@/salud/anclas';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
 
 const conocida = (nombre: string): nombre is QueSenal => (SENALES as readonly string[]).includes(nombre);
-
-/** Hasta que el almacén abrió la base: la tabla de anclas existe recién después de migrar. */
-function almacenListo(): Promise<void> {
-  const a = elAlmacen();
-  return new Promise((listo) => {
-    if (a.estado().listo) {
-      listo();
-      return;
-    }
-    const dejar = a.suscribir(() => {
-      if (!a.estado().listo) return;
-      dejar();
-      listo();
-    });
-  });
-}
 
 export function RecibirAnclas() {
   AppIntents.useAppIntents(async (pendientes) => {
