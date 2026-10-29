@@ -392,6 +392,14 @@ Ascent (la recuperación) hacen la misma cuenta.
      compartido.
    - Moss no tiene amigos ni lee `public.friendships`. Si algún día tiene algo
      social, es suyo, con su cuenta.
+   - **Lo social, para cuando se prenda el vínculo** (lo pediste el 29/10/2026):
+     la parte social de [`especificacion.md`](especificacion.md) (ver el cielo
+     de un amigo, el ranking por constancia, sus hábitos si los muestra y el
+     destello al completar el día) se piensa junto con `CON_ASCENT`. Antes hay
+     que decidir de dónde salen los amigos: los de Ascent, con la amistad
+     confirmada en las dos apps y leídos con una función de Moss que revise el
+     vínculo (como lo demás de Ascent, y cambiando lo de arriba), o una lista
+     propia de Moss. Nada de esto va en la 1.1.
 8. **Proteína post-entreno** (la fórmula que propuse el 22/10, D24)
    - Depende del tamaño de la sesión en Ascent: las series y el peso movido,
      cada uno contra el promedio de sus sesiones de las 4 semanas anteriores, y

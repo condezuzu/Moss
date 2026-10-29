@@ -68,8 +68,9 @@ SDK y la memoria no alcanza.
     ahí.
   - Se revisa con `npm run alimentos:verificar`.
 - **El dominio es puro**: `src/dominio/` no importa nada del teléfono ni de
-  React, y cada regla tiene su test. Las fechas son claves `AAAA-MM-DD` en la
-  hora local del momento en que pasa cada cosa.
+  React, y cada regla tiene su test. Las fechas son claves `AAAA-MM-DD` del día
+  de Moss: el día empieza a la hora de corte (las 4 de fábrica, D32), así que lo
+  de la madrugada es del día anterior (`diaLogico()` en `fechas.ts`).
 - **Local primero**:
   - Todo pasa por el almacén (`src/almacen/`): actualiza en memoria al instante y
     guarda atrás, en orden.
@@ -163,7 +164,8 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `entrada`;
 - `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `decir` (decir lo que comí, sus preguntas, tu comida de siempre y anotar todo junto), `entreno` (qué comer antes y después de entrenar, por qué y Perfil › Entrenamiento), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
-- `progreso`, `metas`, `sueno`;
+- `progreso` (con «Semana a semana»), `plazo` (el ritmo y el plazo, D35), `metas`, `sueno`;
+- `primerdia` (Inicio sin datos) y `cuestionario` (las preguntas de la entrada);
 - `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
 - `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`;
 - `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado).
@@ -184,6 +186,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/plan.md](spec/plan.md) | las etapas hasta la v1 y en qué etapa estamos |
 | [spec/decisiones.md](spec/decisiones.md) | decisiones: primero las pendientes |
 | [spec/nutricion.md](spec/nutricion.md) | la comida, el centro de la app: la base de datos y los nombres, la búsqueda, los flujos de registro con sus toques, los escáneres, las metas |
+| [spec/evidencia-1.1.md](spec/evidencia-1.1.md) | la evidencia de la 1.1 (D32 a D36): dormirse sin reloj, la hora de ir a la cama, el día que empieza al despertarse, pesarse, la meta con plazo y las porciones de los platos |
 | [spec/registrar-rapido.md](spec/registrar-rapido.md) | registrar más rápido: cómo lo hacen las otras apps, la voz en el iPhone sin costo y cómo entender la frase sin nube, con sus fuentes |
 | [spec/progreso.md](spec/progreso.md) | Progreso: el peso, las medidas y la grasa corporal con cinta, el progreso al objetivo, el balance y la estrategia con el día del control |
 | [spec/sueno.md](spec/sueno.md) | Sueño: lo que trae Salud, las reglas para que sea confiable, la calidad, la deuda, la regularidad, lo del reloj y cómo se estima la noche sin reloj |
@@ -211,8 +214,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `modules/` | los módulos nativos propios: `movimiento` (el historial de movimiento, para la noche sin reloj), `leer-etiqueta` (Vision) y `respaldo` (saca la carpeta de SQLite de la copia de seguridad) |
 | `app-intents/` | el Swift que va dentro del target de la app (módulos en línea): las acciones de Atajos de la noche, sus frases, y el despertador con AlarmKit (iOS 26+). Lo que llega se guarda como anclas (`src/salud/anclas.ts`) |
 | `plugins/` | los plugins de configuración propios: `con-alarmkit.js` enlaza AlarmKit como opcional |
-| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final), el de la comida dicha de una vez (`frase.ts`) y lo dicho en alimentos de la base, con sus preguntas (`entender.ts`) y Open Food Facts por código de barras (`off.ts`) |
-| `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región |
+| `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final), el de la comida dicha de una vez (`frase.ts`) y lo dicho en alimentos de la base, con sus preguntas (`entender.ts`, con los platos dichos sin cantidad de `platos.ts`: chico, mediano o grande) y Open Food Facts por código de barras (`off.ts`) |
+| `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región; y las cadenas (`cadenas.txt`: McDonald's, Burger King, Subway, Mostaza, La Pasiva y Starbucks, cada producto con su fuente o «aproximado») |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/salud/` | Salud: los permisos, lo que llena el cuestionario y la lectura de cada día (`leer.ts`, con `convertir.ts` puro y con tests) |
 | `src/recordatorios/` | los avisos (la hora de dormir, los hábitos y las comidas), programados en el teléfono con la regla de `src/dominio/avisos.ts` |

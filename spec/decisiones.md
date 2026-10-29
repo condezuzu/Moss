@@ -5,6 +5,23 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D39 · Lo visual de la 1.1, en la galería (armado el 29/10/2026)
+
+En la galería, sección «1.1 · Lo nuevo, para aprobar», con sus botones:
+- **El ritmo y el plazo** (Progreso › Estrategia): la regla con las zonas
+  viable, exigente y muy agresivo, la fecha o el ritmo, las kcal por día y los
+  avisos (D35).
+- **Los gráficos de Progreso:** el camino a la meta, el peso de 1 mes, 3 meses o
+  todo, «Semana a semana» y una línea chiquita en cada medida.
+- **Inicio el primer día**, sin datos: la meta de hoy con la luna nueva que
+  brilla y qué hacer primero, el camino con la fecha a un ritmo viable y el
+  cielo que espera.
+- **El cuestionario:** la constelación de las preguntas, las opciones con ícono
+  que entran de a una, la regla de los números y la aurora abajo.
+
+¿Se programan así en la app? El plazo, además, necesita una columna en
+`moss.perfiles` (el ritmo en % o la fecha) con su migración.
+
 ### D25 · Cómo se ven las kcal: luna, anillo, arco o barra
 
 La luna no te terminó de cerrar (22/10/2026). En la galería, sección 2, están
@@ -244,6 +261,93 @@ Están en la galería, sección 10, «Para decidir»:
   (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
 
 ## Resueltas
+
+### D38 · Los términos y la privacidad se abren dentro de Moss (29/10/2026)
+
+Lo pediste: «Términos y privacidad dentro de la app, no en Safari». Se abren en
+una hoja de Safari sobre Moss (`abrirPagina()`, `src/lib/sitio.ts`, con
+`expo-web-browser`, que ya está en la build 6): la misma página del sitio, sin
+salir de la app. Se cambia por OTA.
+
+### D37 · El plan de comidas es una sugerencia (29/10/2026)
+
+Lo pediste: el plan como «te sugerimos esto», me gusta y no me gusta en un toque
+que cambien lo que viene, que aprenda de lo registrado, cambiar una comida, que
+«Otra» no se acabe y que la cruz y «Otra» no hagan lo mismo.
+- **Los textos:** «Sugerir el día», «Sugerir la semana» y «Te sugerimos» en la
+  tarjeta.
+- **Los pulgares:** el de arriba la marca «me gusta» (sale más, y lo principal
+  que lleva también, en otras comidas); el de abajo no la sugiere más, baja lo
+  que lleva y la cambia ya por otra. «Otra» la cambia solo esta vez.
+- **Lo que aprende** (`afinidadDe`, `src/dominio/plan.ts`): lo que comiste en
+  cuatro semanas sale más, hasta el doble con 8 comidas; cada «me gusta» multiplica
+  lo principal de esa comida por 1,5 y cada «no me gusta», por 0,5 (entre 0,2 y 3).
+  Lo principal es lo que pesa al menos un 15 % de las kcal: la lechuga no cuenta.
+- **«Otra» no se acaba:** primero lo que no viste en esa comida y a menos de un
+  15 % de las kcal y de la proteína; si no queda, 30 %, 60 % y lo que sea; cuando
+  viste todo, vuelve a lo visto.
+- **Las combinadas** (`COMBINADAS`): unas 650 comidas de una proteína, una
+  guarnición y una verdura, desayunos y snacks, que salen cuando lo demás se
+  acabó o no alcanza.
+
+### D36 · Los platos dichos sin cantidad y las cadenas (29/10/2026)
+
+- **«Un plato de fideos»** o «comí guiso» va con la porción mediana y una sola
+  pregunta corta: chico, mediano o grande. Queda marcado «aproximado». La tabla,
+  con sus fuentes, está en `src/comida/platos.ts` y en
+  [`evidencia-1.1.md`](evidencia-1.1.md) (6).
+- **Las cadenas** (`alimentos/cadenas.txt`): McDonald's, con la tabla oficial de
+  Uruguay; Burger King y Starbucks, con la de Estados Unidos; Subway, con la de
+  México; Mostaza y La Pasiva, aproximadas (no publican la suya). Cada producto
+  dice su fuente, y la ventana dice «Oficial» o «Aproximado».
+
+### D35 · La meta con plazo (29/10/2026; la pantalla, en D39)
+
+Lo pediste: «peso meta y plazo, viabilidad, avisos tipo "sin entrenamiento de
+fuerza…"», como MacroFactor.
+- **Las cuentas** (`src/dominio/progreso.ts`, con tests): con el ritmo, la fecha
+  (`plazoConRitmo`); con la fecha, el ritmo (`plazoConFecha`).
+- **Qué tan exigente:** bajando, viable hasta 0,5 % del peso por semana, exigente
+  hasta 1 %, y muy agresivo pasando el 1 %, 1 kg por semana o 1.000 kcal de
+  déficit por día; subiendo, 0,25 y 0,5 %. El «rápido» de Moss (0,75 %) queda en
+  exigente.
+- **Los avisos:** sin entrenar fuerza, bajando se pierde músculo y subiendo casi
+  todo es grasa; con esa fecha la comida quedaría debajo del piso (y cuándo se
+  llegaría con el piso); menores de 18, mejor viable.
+- **El piso de los hombres pasa a 1.500 kcal** (era 1.400), el borde de abajo de
+  la guía AHA/ACC/TOS 2013. Las fuentes, en [`evidencia-1.1.md`](evidencia-1.1.md) (5).
+
+### D34 · Pesarse a la mañana (29/10/2026)
+
+El aviso de pesarse suena al rato de despertarte y antes del desayuno: a los 10
+minutos de tu hora de despertarte, o 15 antes del desayuno si llega antes, y
+nunca antes de despertarte. Si ya te pesaste o anotaste el desayuno, no suena. El
+texto dice «después del baño y antes de desayunar» ([`evidencia-1.1.md`](evidencia-1.1.md), 4).
+
+### D33 · El sueño sin reloj aprende cuánto tardás en dormirte (29/10/2026)
+
+Lo pediste: el sueño sin reloj erraba unas dos horas; medirlo mejor, con lo que
+tardás desde que dejás el teléfono (elegible y aprendido), calibrar con «¿Dormiste
+de X a Y?», y la hora de dormir como Rise.
+- **Cómo se mide** y **qué aprende**: en [`sueno.md`](sueno.md), «Lo que hace
+  Moss» y «Aprender de cada persona».
+- **«Tardo en dormirme»** (Perfil › Avisos): lo que aprende Moss o un número fijo.
+- **La hora de ir a la cama**, como Rise: la de dormirte para despertarte a tu
+  hora habiendo dormido lo de siempre, menos lo que tardás en dormirte.
+- **«Me voy a dormir»** en el aviso de la noche: deja la hora como un Atajo, sin
+  armar nada.
+- **La ventana tranquila de cada noche** se guarda para aprender y sube a la
+  cuenta: la migración `0010_noches_quieto.sql` tiene que estar aplicada antes
+  de cualquier OTA con esto.
+
+### D32 · El día empieza al despertarse (29/10/2026)
+
+Lo pediste: «Día lógico: cambia al despertar (4:00 por defecto, configurable)».
+- `diaLogico()` (`src/dominio/fechas.ts`): lo de antes de la hora de corte
+  cuenta para el día anterior. De fábrica, las 4, como el día de Oura; en Perfil,
+  «El día empieza», de 0 a 6.
+- Lo usan el almacén (el día cambia a esa hora), Comida (la cena de las 0:30 es
+  la 1470 de ayer), Salud, los avisos y los widgets.
 
 ### D31 · Con el iPhone en Uruguay o Argentina, Moss habla de vos (la decidiste el 28/10/2026)
 

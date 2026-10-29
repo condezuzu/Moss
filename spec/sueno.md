@@ -261,12 +261,19 @@ arma la noche con lo que el teléfono guardó:
     de las 0:30). Antes de esa hora, mirar el teléfono es lo último del día.
   - Sin hueco, de la última actividad antes de las 2 a la primera después de las
     4, con confianza baja.
-- **Cuándo te dormiste:** la última actividad más lo que tardás en dormirte, que
-  depende de cuánto antes de lo de siempre dejaste el teléfono: 31 minutos a la
-  hora de siempre, 76 si fue 1 a 1,5 horas antes, 153 si fue 2 a 3 horas antes y
-  202 si fue 3 a 4 horas antes; 15 a 22 minutos si fue más tarde [73].
-- **Cuándo te despertaste:** la primera actividad menos 18 minutos, sin pasar la
-  primera caminata, la alarma parada o el Focus apagado [73].
+- **Cuándo te dormiste** (D33, desde el 29/10/2026): la última actividad más lo
+  que tardás en dormirte, que es tuyo (abajo, «Aprender de cada persona»); sin
+  respuestas, los 31 minutos de Sahha [73].
+  - Si dejaste el teléfono más de una hora antes de lo de siempre, te dormiste
+    cerca de tu hora de siempre (media hora antes, como mucho), no del teléfono:
+    es lo que medía Sahha con 76 a 202 minutos [73].
+  - Si lo dejaste después de tu hora de siempre, lo que tardás se achica en la
+    misma proporción que en Sahha (18 de cada 31) [73].
+- **Cuándo te despertaste:** la primera actividad menos lo que tardás en agarrar
+  el teléfono (tuyo; sin respuestas, 18 minutos), sin pasar la primera caminata,
+  la alarma parada o el Focus apagado [73].
+- **Sin armar nada**, las anclas exactas son el despertador de Moss y «Me voy a
+  dormir» en el aviso de la noche; los Atajos quedan como opcionales.
 - **Los despertares de la noche** quedan marcados como interrupciones, sin decir
   cuánto: el teléfono lo mide mal (48,8 minutos de error) [72].
 - **La confianza** (una propuesta, para calibrar con la prueba de abajo): parte de
@@ -299,9 +306,18 @@ mañana cuando la confianza no es alta, la meta es la de un diario: 79 a 86 %
 - **Lo que tardás en dormirte** después de dejar el teléfono, y lo que tardás en
   agarrarlo al despertar: arrancan con los números de arriba y se ajustan con
   tus correcciones [64][65][73].
-- **Las correcciones valen más que un «Sí»**, que puede ser por no pensar: una
-  corrección pesa como 5 a 7 noches y lo viejo pierde la mitad del peso en unas
-  30 noches (propuesta, sin estudio directo).
+- **Las correcciones valen más que un «Sí»**, que puede ser por no pensar: un
+  «Sí» pesa un tercio de una corrección, y lo viejo pierde la mitad del peso en 30
+  días (propuesta, sin estudio directo). Lo que corrige más de 3 horas no enseña
+  nada: fue otra cosa.
+- **Con pocas respuestas, cerca de lo de Sahha:** lo tuyo se mueve de a poco
+  (encogido hacia lo general, con 25 minutos entre personas y 35 de una noche a
+  otra): con 3 noches, más de la mitad del camino; con 7, casi todo
+  (`aprenderPersonal`, `src/dominio/sinReloj.ts`).
+- **Se aprende de la ventana tranquila de cada noche**, que se guarda con lo
+  estimado y sube a la cuenta: lo que contestás en un teléfono enseña en el otro.
+- **«Tardo en dormirme»** en Perfil › Avisos deja elegir un número fijo en lugar
+  de lo aprendido.
 - **Las noches de viaje** o con cambio de huso no enseñan nada [73].
 - Los modelos personales le ganan a los generales: 91,8 contra 87,6 % [66].
 
