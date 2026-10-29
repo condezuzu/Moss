@@ -1,17 +1,25 @@
 // Progreso (spec/progreso.md): el peso con su tendencia, las medidas, el rango de grasa corporal,
-// el gasto estimado con el balance, y el progreso al objetivo. Abajo, la estrategia: el objetivo, las
-// metas de hoy (con quién las pone, cómo se reparten los macros y repartir la semana, que antes
-// estaban en Ajustes), cómo viene el próximo control y qué día de la semana se hace. Las cuentas
-// son las de la app: Control, Progreso, Cuerpo y Metas.
+// el gasto estimado con el balance, y el progreso al objetivo con el camino hasta la meta. Abajo, la
+// estrategia: el objetivo, el peso meta con su ritmo y su plazo (D35, como MacroFactor), las metas
+// de hoy (con quién las pone, cómo se reparten los macros y repartir la semana, que antes estaban
+// en Ajustes), cómo viene el próximo control y qué día de la semana se hace. Las cuentas son las de
+// la app: Control, Progreso, Cuerpo y Metas.
 
 const SeccionProgreso = (() => {
   const SEMANA = [1, 2, 3, 4, 5, 6, 0];
   const EXTRAS = [200, 300, 500];
+  // Hasta dónde llega la regla del ritmo, en % del peso por semana: más allá de lo muy agresivo.
+  const TOPE = { bajar: 1.15, subir: 0.7 };
+  const RANGOS = [['mes', 30], ['tresMeses', 90], ['todo', 0]];
 
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
     const { tx, numero, conSigno, el, boton, icono } = u;
-    const s = { vista: 'principal', abierto: null, quien: 'moss', aMano: { proteina: 160, carbohidratos: 280, grasas: 80 }, reparte: false, altos: [6, 0], extra: 300 };
+    const s = {
+      vista: 'principal', abierto: null, quien: 'moss', aMano: { proteina: 160, carbohidratos: 280, grasas: 80 }, reparte: false, altos: [6, 0], extra: 300,
+      // El ritmo y el plazo: el ritmo en % del peso por semana (sin tocar, el del perfil) o la fecha elegida.
+      pct: null, porFecha: false, fecha: null, fuerza: null, rango: 'tresMeses',
+    };
 
     const zona = el('section', 'progreso pagina-app');
     zona.innerHTML = '<div class="pg-scroll"></div>';
@@ -57,6 +65,7 @@ const SeccionProgreso = (() => {
       cont.appendChild(cab);
       cont.appendChild(objetivo(d));
       cont.appendChild(peso(d));
+      cont.appendChild(semanas(d));
       cont.appendChild(medidas(d));
       cont.appendChild(grasa(d));
       cont.appendChild(gasto(d));
@@ -77,7 +86,20 @@ const SeccionProgreso = (() => {
         f.append(el('b', null, u.fechaCorta(p.fecha)), el('span', null, tx('progreso.llegarias')));
         c.appendChild(f);
       }
-      if (p.hecho != null) c.appendChild(caminoDe(d.pesoInicial, p.peso, metaKg, p.hecho));
+      // El camino: la tendencia desde que empezó y, punteado, hasta la meta a su ritmo (o al del plan).
+      const destino = p.fecha || (plazoActual(d) || {}).fecha;
+      if (metaKg && d.perfil.objetivo !== 'mantener' && destino && d.tendencia) {
+        const desde = [...d.tendencia.keys()][0];
+        const pasado = [...d.tendencia].filter((_, i, a) => i % 2 === 0 || i === a.length - 1).map(([f, kg]) => ({ dia: Fechas.diasEntre(desde, f), kg }));
+        const total = Fechas.diasEntre(desde, destino);
+        c.appendChild(Graficos.camino(pasado, [{ dia: total, kg: metaKg }], metaKg, { ancho: 320, alto: 96, clase: 'pg-grafico' }));
+        const eje = el('div', 'pg-eje pg-eje-camino');
+        const hoy = el('span', 'pg-eje-hoy', tx('progreso.hoy'));
+        hoy.style.left = `${((Fechas.diasEntre(desde, Datos.HOY) / total) * 100).toFixed(1)}%`;
+        eje.append(el('span', null, tx('progreso.empezaste', { kg: numero(d.pesoInicial, 1) })), hoy, el('span', null, tx('progreso.meta', { kg: numero(metaKg, metaKg % 1 ? 1 : 0) })));
+        c.appendChild(eje);
+        c.appendChild(el('p', 'pg-texto pg-leyenda', tx('progreso.plazo.caminoTexto')));
+      } else if (p.hecho != null) c.appendChild(caminoDe(d.pesoInicial, p.peso, metaKg, p.hecho));
       c.appendChild(el('p', 'pg-texto', tx('progreso.textos.' + p.estado, {
         ritmo: p.ritmo == null ? '' : conSigno(p.ritmo, 2), plan: conSigno(p.ritmoPlan, 2), faltan: p.faltan == null ? '' : numero(p.faltan, 1),
         semanas: p.fecha ? Math.round(Fechas.diasEntre(Datos.HOY, p.fecha) / 7) : '',
@@ -105,11 +127,65 @@ const SeccionProgreso = (() => {
       const cifra = el('div', 'pg-cifra');
       cifra.append(el('b', null, numero(d.pesoHoy, 1)), el('span', null, ` kg · ${tx('progreso.tendencia')}`));
       c.append(cifra, el('div', 'pg-nota', tx('progreso.cambios', { semana: conSigno(d.cambio7, 1), mes: conSigno(d.cambio30, 1) })));
-      c.appendChild(Graficos.linea(d.serie, { ancho: 320, alto: 92, clase: 'pg-grafico', meta: d.perfil.objetivo !== 'mantener' ? d.perfil.pesoMeta : null }));
+      // Cuánto se mira para atrás: un mes, tres o todo (con lo que haya).
+      const rangos = segmento(RANGOS.map(([k]) => [k, tx('progreso.graficos.rangos.' + k)]), s.rango, (v) => { s.rango = v; pintar(); });
+      rangos.classList.add('pg-rangos');
+      c.appendChild(rangos);
+      const desde = [...d.tendencia.keys()][0];
+      const hay = Fechas.diasEntre(desde, Datos.HOY) + 1;
+      const pedido = RANGOS.find(([k]) => k === s.rango)[1];
+      const dias = pedido ? Math.min(pedido, hay) : hay;
+      c.appendChild(Graficos.linea(serieDe(d, dias), { ancho: 320, alto: 92, clase: 'pg-grafico', meta: d.perfil.objetivo !== 'mantener' ? d.perfil.pesoMeta : null }));
       const eje = el('div', 'pg-eje');
-      eje.append(el('span', null, u.fechaCorta(d.serieDesde)), el('span', null, tx('progreso.hoy')));
+      eje.append(el('span', null, u.fechaCorta(Fechas.sumarDias(Datos.HOY, -(dias - 1)))), el('span', null, tx('progreso.hoy')));
       c.appendChild(eje);
       c.appendChild(el('p', 'pg-texto pg-leyenda', tx('progreso.pesoLeyenda')));
+      return c;
+    }
+
+    // Los últimos `dias`, con la pesada de cada día y la tendencia (como serieDe en galeria.js).
+    function serieDe(d, dias) {
+      const porFecha = new Map(d.pesadas.map((x) => [x.fecha, x.kg]));
+      return Array.from({ length: dias }, (_, i) => {
+        const f = Fechas.sumarDias(Datos.HOY, i - dias + 1);
+        return { x: i / Math.max(1, dias - 1), punto: porFecha.has(f) ? porFecha.get(f) : null, linea: d.tendencia.has(f) ? d.tendencia.get(f) : null };
+      });
+    }
+
+    // ------------------------------------------------------------ semana a semana
+    // Las últimas seis semanas: cuánto cambió la tendencia y lo que comió en promedio, contra la meta.
+    function semanas(d) {
+      const c = carta('pg-semanas', tx('progreso.graficos.semanas'));
+      const N = 6;
+      const ayer = Fechas.sumarDias(Datos.HOY, -1);
+      const comidas = opciones.comida.kcalPorDia();
+      const lista = Array.from({ length: N }, (_, i) => {
+        const fin = Fechas.sumarDias(ayer, -7 * (N - 1 - i));
+        const inicio = Fechas.sumarDias(fin, -6);
+        const antes = d.tendencia.get(Fechas.sumarDias(inicio, -1));
+        const despues = d.tendencia.get(fin);
+        const conComida = comidas.filter((x) => x.fecha >= inicio && x.fecha <= fin);
+        return {
+          inicio,
+          cambio: antes != null && despues != null ? despues - antes : null,
+          kcal: conComida.length >= 3 ? conComida.reduce((t, x) => t + x.kcal, 0) / conComida.length : null,
+        };
+      });
+      const valores = (f) => {
+        const fila = el('div', 'pg-valores');
+        lista.forEach((x) => { const v = f(x); fila.appendChild(el('span', v == null ? 'tenue' : '', v == null ? '—' : v)); });
+        return fila;
+      };
+      c.appendChild(el('div', 'pg-etq-graf', tx('progreso.graficos.semanasCambio')));
+      c.appendChild(Graficos.barras(lista.map((x) => x.cambio), { ancho: 320, alto: 54, clase: 'pg-grafico' }));
+      c.appendChild(valores((x) => (x.cambio == null ? null : conSigno(x.cambio, 1))));
+      c.appendChild(el('div', 'pg-etq-graf', tx('progreso.graficos.semanasComida')));
+      c.appendChild(Graficos.columnas(lista.map((x) => x.kcal), opciones.comida.meta.kcal, { ancho: 320, alto: 54, clase: 'pg-grafico' }));
+      c.appendChild(valores((x) => (x.kcal == null ? null : numero(Math.round(x.kcal / 10) * 10))));
+      const eje = valores((x) => u.fechaCorta(x.inicio));
+      eje.classList.add('pg-valores-eje');
+      c.appendChild(eje);
+      c.appendChild(el('p', 'pg-texto pg-leyenda', tx('progreso.graficos.semanasTexto')));
       return c;
     }
 
@@ -122,7 +198,9 @@ const SeccionProgreso = (() => {
         if (cm == null) return;
         const li = el('li');
         const cambio = Cuerpo.cambioDe(Datos.MEDIDAS, sitio, Datos.HOY, Fechas.sumarDias(Datos.HOY, -30));
-        li.append(el('span', null, tx('cuerpo.sitios.' + sitio)), el('b', null, `${Porciones.decimal(cm, u.idioma())} cm`), el('em', cambio == null ? '' : cambio < 0 ? 'baja' : cambio > 0 ? 'sube' : '', cambio == null ? '' : `${conSigno(cambio, 1)} cm`));
+        const historia = Datos.MEDIDAS.map((m) => m[sitio]).filter((v) => v != null);
+        li.append(el('span', null, tx('cuerpo.sitios.' + sitio)), Graficos.chispa(historia, { clase: 'pg-chispa' }), el('b', null, `${Porciones.decimal(cm, u.idioma())} cm`),
+          el('em', cambio == null ? '' : cambio < 0 ? 'baja' : cambio > 0 ? 'sube' : '', cambio == null ? '' : `${conSigno(cambio, 1)} cm`));
         lista.appendChild(li);
       });
       c.appendChild(lista);
@@ -187,13 +265,16 @@ const SeccionProgreso = (() => {
         return f;
       };
       const p = d.perfil;
-      const ritmo = p.objetivo === 'mantener' ? '' : ` · ${tx('progreso.ritmos.' + p.ritmo)}`;
-      fila('progreso.objetivo', tx('progreso.objetivos.' + p.objetivo) + ritmo, () => { s.abierto = s.abierto === 'objetivo' ? null : 'objetivo'; pintar(); }, s.abierto === 'objetivo');
+      const alternar = (cual) => () => { s.abierto = s.abierto === cual ? null : cual; pintar(); };
+      fila('progreso.objetivo', tx('progreso.objetivos.' + p.objetivo), alternar('objetivo'), s.abierto === 'objetivo');
       if (s.abierto === 'objetivo') lista.appendChild(eleccionObjetivo(p));
       if (p.objetivo !== 'mantener') {
         const metaKg = p.pesoMeta;
-        fila('progreso.pesoMeta', metaKg ? `${numero(metaKg, metaKg % 1 ? 1 : 0)} kg` : tx('progreso.sinPesoMeta'), () => { s.abierto = s.abierto === 'pesoMeta' ? null : 'pesoMeta'; pintar(); }, s.abierto === 'pesoMeta');
+        fila('progreso.pesoMeta', metaKg ? `${numero(metaKg, metaKg % 1 ? 1 : 0)} kg` : tx('progreso.sinPesoMeta'), alternar('pesoMeta'), s.abierto === 'pesoMeta');
         if (s.abierto === 'pesoMeta') lista.appendChild(eleccionPesoMeta(p));
+        const plazo = plazoActual(d);
+        const filaPlazo = fila('progreso.plazo.fila', plazo ? valorDelPlazo(plazo) : '—', alternar('plazo'), s.abierto === 'plazo');
+        if (s.abierto === 'plazo') lista.appendChild(eleccionPlazo(d, plazo, filaPlazo));
       }
       const m = opciones.comida.meta;
       fila('progreso.metasActuales', `${numero(m.kcal)} kcal`, () => { s.vista = 'metas'; pintar(); cont.scrollTop = 0; });
@@ -220,13 +301,107 @@ const SeccionProgreso = (() => {
 
     function eleccionObjetivo(p) {
       const caja = el('div', 'pg-eleccion');
-      caja.appendChild(segmento(['bajar', 'mantener', 'subir'].map((o) => [o, tx('progreso.objetivos.' + o)]), p.objetivo, (v) => opciones.ponerEstrategia({ objetivo: v })));
-      if (p.objetivo !== 'mantener') {
-        caja.appendChild(segmento(['suave', 'recomendado', 'rapido'].map((r) => [r, tx('progreso.ritmos.' + r)]), p.ritmo, (v) => opciones.ponerEstrategia({ ritmo: v })));
-        const pct = Metas.RITMOS[p.objetivo][p.ritmo];
-        caja.appendChild(el('p', 'aj-nota', tx('progreso.ritmoTexto', { pct: numero(Math.abs(pct), 2), kg: numero(Math.abs(pct / 100 * opciones.persona().pesoHoy), 2) })));
-      }
+      caja.appendChild(segmento(['bajar', 'mantener', 'subir'].map((o) => [o, tx('progreso.objetivos.' + o)]), p.objetivo, (v) => { s.pct = null; s.porFecha = false; opciones.ponerEstrategia({ objetivo: v }); }));
       caja.appendChild(el('p', 'aj-nota', tx('progreso.objetivoNota')));
+      return caja;
+    }
+
+    // ------------------------------------------------------------ el ritmo y el plazo (D35)
+    // Como en MacroFactor: el ritmo da la fecha, o la fecha da el ritmo (Progreso.plazoConRitmo y
+    // plazoConFecha, las cuentas de la app), con qué tan exigente es y lo que conviene saber.
+    function plazoActual(d) {
+      const p = d.perfil;
+      if (p.objetivo === 'mantener' || !p.pesoMeta) return null;
+      const e = { hoy: Datos.HOY, pesoKg: d.pesoHoy, pesoMeta: p.pesoMeta, sexo: p.sexo, edad: Number(Datos.HOY.slice(0, 4)) - p.nacimiento, gasto: d.gasto, entrenaFuerza: s.fuerza };
+      if (Progreso.direccionDe(e.pesoKg, e.pesoMeta) !== p.objetivo) return null;
+      if (s.porFecha && s.fecha) return Progreso.plazoConFecha(e, s.fecha);
+      return Progreso.plazoConRitmo(e, s.pct ?? Math.abs(Metas.RITMOS[p.objetivo][p.ritmo]));
+    }
+    const valorDelPlazo = (plazo) => `${numero(plazo.pct, 2)} % · ${u.fechaCorta(plazo.fecha)}`;
+
+    function eleccionPlazo(d, plazo, filaPlazo) {
+      const p = d.perfil;
+      const caja = el('div', 'pg-eleccion pg-plazo');
+      if (!plazo) {
+        caja.appendChild(el('p', 'aj-nota', tx('progreso.plazo.sinCamino')));
+        return caja;
+      }
+      const dir = plazo.direccion;
+      const tope = TOPE[dir];
+      // Arriba, la fecha, en cuántas semanas y qué tan exigente es.
+      const res = el('div', 'pg-plazo-res');
+      const cifra = el('div', 'pg-cifra');
+      const fecha = el('b');
+      const enSemanas = el('span');
+      cifra.append(fecha, enSemanas);
+      const chip = el('em', 'pg-viab');
+      res.append(cifra, chip);
+      // La regla: el ritmo, con las zonas de color y los tres de siempre debajo.
+      const regla = el('div', 'pg-regla');
+      const pos = (pct) => Math.min(100, (pct / tope) * 100);
+      regla.style.setProperty('--viable', pos(Progreso.bordeDe(dir, 'viable', d.pesoHoy)).toFixed(1) + '%');
+      regla.style.setProperty('--exigente', pos(Progreso.bordeDe(dir, 'exigente', d.pesoHoy)).toFixed(1) + '%');
+      const input = el('input');
+      input.type = 'range';
+      input.min = '0.05';
+      input.max = String(tope);
+      input.step = '0.01';
+      input.value = String(Math.min(tope, plazo.pct));
+      input.setAttribute('aria-label', tx('progreso.plazo.ritmo'));
+      const marcas = el('div', 'pg-marcas');
+      ['suave', 'recomendado', 'rapido'].forEach((r) => {
+        const pct = Math.abs(Metas.RITMOS[dir][r]);
+        const b = boton('pg-marca', tx('progreso.ritmos.' + r), () => { s.pct = pct; s.porFecha = false; opciones.ponerEstrategia({ ritmo: r }); });
+        b.style.left = pos(pct).toFixed(1) + '%';
+        b.dataset.pct = String(pct);
+        marcas.appendChild(b);
+      });
+      regla.append(input, marcas);
+      const porSemana = el('div', 'pg-nota');
+      const texto = el('p', 'pg-texto');
+      const kcal = el('p', 'aj-nota');
+      // O la fecha: una semana antes o después, y el ritmo sale solo.
+      const cambiarModo = boton('cm-enlace pg-modo', '', () => {
+        s.porFecha = !s.porFecha;
+        s.fecha = s.porFecha ? plazoActual(d)?.fecha ?? plazo.fecha : null;
+        if (!s.porFecha) s.pct = Number(input.value);
+        pintar();
+      });
+      cambiarModo.innerHTML = `<span>${tx(s.porFecha ? 'progreso.plazo.elegirRitmo' : 'progreso.plazo.elegirFecha')}</span>${icono('adelante')}`;
+      const fechas = el('div', 'fi-stepper pg-fechas');
+      const fechaElegida = el('b', 'fi-valor');
+      const mover = (dias) => { s.fecha = Fechas.sumarDias(s.fecha, dias); pintar(); };
+      fechas.append(boton('fi-paso', icono('menos'), () => mover(-7), tx('progreso.plazo.antes')), fechaElegida, boton('fi-paso', icono('mas'), () => mover(7), tx('progreso.plazo.despues')));
+      fechas.hidden = !s.porFecha;
+      const avisos = el('div', 'pg-avisos');
+
+      function refrescar(x) {
+        fecha.textContent = u.fechaCorta(x.fecha);
+        enSemanas.textContent = tx('progreso.plazo.enSemanas', { n: Math.round(x.semanas) });
+        chip.className = 'pg-viab ' + x.viabilidad;
+        chip.textContent = tx('progreso.plazo.viabilidad.' + x.viabilidad);
+        porSemana.textContent = tx('progreso.plazo.porSemana', { pct: numero(x.pct, 2), kg: numero(x.kgPorSemana, 2) });
+        texto.textContent = tx('progreso.plazo.textos.' + x.viabilidad, { exigente: u.fechaCorta(x.fechaExigente), viable: u.fechaCorta(x.fechaViable) });
+        kcal.textContent = tx(dir === 'bajar' ? 'progreso.plazo.kcalMenos' : 'progreso.plazo.kcalMas', { n: numero(Math.round(x.kcal / 10) * 10) });
+        fechaElegida.textContent = u.fechaCorta(x.fecha);
+        marcas.querySelectorAll('.pg-marca').forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(Number(b.dataset.pct) - x.pct) < 0.005)));
+        avisos.innerHTML = '';
+        x.avisos.forEach((a) => avisos.appendChild(el('p', 'pg-aviso pg-aviso-' + a, tx('progreso.plazo.avisos.' + a, {
+          piso: numero(Metas.pisoDe(p.sexo)), fecha: x.fechaConPiso ? u.fechaCorta(x.fechaConPiso) : '',
+        }))));
+        if (filaPlazo) filaPlazo.querySelector('b').textContent = valorDelPlazo(x);
+      }
+      // Mientras se arrastra, cambia solo el panel; al soltar, se pinta todo (el camino de arriba).
+      input.addEventListener('input', () => {
+        s.pct = Number(input.value);
+        s.porFecha = false;
+        fechas.hidden = true;
+        const x = plazoActual(d);
+        if (x) refrescar(x);
+      });
+      input.addEventListener('change', () => pintar());
+      refrescar(plazo);
+      caja.append(res, regla, porSemana, texto, kcal, cambiarModo, fechas, avisos);
       return caja;
     }
 
@@ -382,6 +557,16 @@ const SeccionProgreso = (() => {
       ponerQuien(q) { s.quien = q; cambioDeMeta(); },
       repartir(si) { s.reparte = si; pintar(); },
       abrir(cual) { s.abierto = cual; pintar(); },
+      // El ritmo y el plazo: { pct } o { semanas } (la fecha desde hoy), y si entrena fuerza.
+      plazo(o = {}) {
+        const { semanas, fuerza } = o;
+        s.abierto = 'plazo';
+        if ('pct' in o) { s.pct = o.pct; s.porFecha = false; }
+        if (semanas != null) { s.porFecha = true; s.fecha = Fechas.sumarDias(Datos.HOY, semanas * 7); }
+        if (fuerza !== undefined) s.fuerza = fuerza;
+        pintar();
+      },
+      rango(r) { s.rango = r; pintar(); },
       bajarA(selector) {
         const n = cont.querySelector(selector);
         if (n) cont.scrollTo({ top: Math.max(0, cont.scrollTop + n.getBoundingClientRect().top - cont.getBoundingClientRect().top - 70), behavior: 'auto' });

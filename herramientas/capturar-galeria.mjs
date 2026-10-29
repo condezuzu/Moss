@@ -341,7 +341,7 @@ const pasos = {
     await progreso('subir');
     await pagina.waitForTimeout(800);
     await foto('progreso');
-    for (const [selector, nombre] of [['.pg-medidas', 'progreso-medidas'], ['.pg-gasto', 'progreso-gasto'], ['.pg-seccion', 'progreso-estrategia'], ['.pg-control', 'progreso-control']]) {
+    for (const [selector, nombre] of [['.pg-peso', 'progreso-peso'], ['.pg-semanas', 'progreso-semanas'], ['.pg-medidas', 'progreso-medidas'], ['.pg-gasto', 'progreso-gasto'], ['.pg-seccion', 'progreso-estrategia'], ['.pg-control', 'progreso-control']]) {
       await progreso('bajar', selector);
       await pagina.waitForTimeout(400);
       await foto(nombre);
@@ -360,6 +360,60 @@ const pasos = {
     await pagina.waitForTimeout(400);
     await foto('progreso-jueves');
     await pagina.evaluate(() => window.__estrategia({ diaDelControl: 1 }));
+    await progreso('subir');
+  },
+  // Inicio el primer día, sin nada anotado: la meta de hoy, el camino y el cielo que espera.
+  async primerdia() {
+    await pestana(0);
+    await enInicio('primerDia', true);
+    await enInicio('subir');
+    await pagina.waitForTimeout(900);
+    await foto('primer-dia');
+    await enInicio('bajar');
+    await pagina.waitForTimeout(500);
+    await foto('primer-dia-abajo');
+    await enInicio('primerDia', false);
+    await enInicio('subir');
+  },
+  // El cuestionario de la entrada con su constelación, las opciones con ícono y la regla.
+  async cuestionario() {
+    const entrada = (paso) => pagina.evaluate((p) => window.__entrada(p), paso);
+    for (const paso of ['edad', 'altura', 'actividad', 'objetivo']) {
+      await entrada(paso);
+      await pagina.waitForTimeout(paso === 'edad' ? 2200 : 1600);
+      await foto('cuestionario-' + paso);
+    }
+    await pagina.evaluate(() => window.__accion('entrada'));
+    await pagina.waitForTimeout(1200);
+  },
+  // El ritmo y el plazo (D35): el ritmo del perfil, uno exigente, la fecha que pide uno muy agresivo
+  // (con el piso), entrenando fuerza, y el rango del peso.
+  async plazo() {
+    await pestana(2);
+    await progreso('plazo', { pct: 0.5, fuerza: null });
+    await progreso('bajar', '.pg-seccion');
+    await pagina.waitForTimeout(500);
+    await foto('plazo-ritmo');
+    await progreso('plazo', { pct: 0.85 });
+    await pagina.waitForTimeout(400);
+    await foto('plazo-exigente');
+    await progreso('plazo', { semanas: 4 });
+    await pagina.waitForTimeout(400);
+    await foto('plazo-fecha');
+    await progreso('plazo', { pct: 0.5, fuerza: true });
+    await pagina.waitForTimeout(400);
+    await foto('plazo-con-fuerza');
+    await progreso('abrir', null);
+    await progreso('subir');
+    await pagina.waitForTimeout(500);
+    await foto('plazo-camino');
+    await progreso('rango', 'mes');
+    await progreso('bajar', '.pg-peso');
+    await pagina.waitForTimeout(400);
+    await foto('plazo-peso-mes');
+    await progreso('rango', 'tresMeses');
+    await progreso('plazo', { pct: null, fuerza: null });
+    await progreso('abrir', null);
     await progreso('subir');
   },
   // Sueño: anoche de arriba abajo, cómo sale la calidad, y las noches que faltan o se cortaron.

@@ -122,7 +122,11 @@
     }
   },
   "inicio": {
-    "personalizarTexto": "Elegí qué bloques ves y arrastralos para ordenarlos."
+    "personalizarTexto": "Elegí qué bloques ves y arrastralos para ordenarlos.",
+    "primerDia": {
+      "caloriasTexto": "Empezá por lo próximo que comas: en unos días, Moss conoce tus comidas y te las sugiere.",
+      "caminoTexto": "A un ritmo viable, llegarías el {fecha}. Pesate mañana al despertarte: con dos semanas de pesadas, Moss mide tu ritmo de verdad."
+    }
   },
   "cuerpo": {
     "como": {
@@ -156,7 +160,12 @@
     },
     "controlEnCurso": "El control necesita al menos 4 días con comida y una pesada en la semana. Quedan {n} días: si seguís registrando, alcanza.",
     "gastoInicial": "Lo estimado con tus respuestas. El control de cada semana lo mide con tu peso y lo que comés.",
-    "sinBalance": "Registrá lo que comés unos días para ver el balance."
+    "sinBalance": "Registrá lo que comés unos días para ver el balance.",
+    "plazo": {
+      "kcalMenos": "Unas {n} kcal por día menos de lo que gastás.",
+      "kcalMas": "Unas {n} kcal por día más de lo que gastás.",
+      "sinCamino": "Elegí un peso meta para ver cuándo llegarías."
+    }
   },
   "sueno": {
     "incompleta": "Parece incompleta: dormiste mucho menos que siempre y te despertaste temprano. ¿El reloj se quedó sin batería? Podés dejarla fuera.",

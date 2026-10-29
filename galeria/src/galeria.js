@@ -386,6 +386,7 @@
     return {
       perfil,
       pesadas: Datos.PESADAS,
+      tendencia: t,
       pesoHoy,
       cambio7: pesoHoy - atras(7),
       cambio30: pesoHoy - atras(30),
@@ -925,6 +926,13 @@
     aparatos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirAparatos(); },
     avisos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.ponerAvisos({ dormir: true, comidas: ['almuerzo', 'cena'] }); perfilSec.abrirAvisos(); },
     entreno: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirEntreno(); },
+    // Lo nuevo de la 1.1, para aprobar.
+    plazo: () => { cerrarHojas(); pestanas.ir(2); progreso.verPrincipal(); progreso.plazo({}); progreso.bajarA('.pg-seccion'); },
+    graficos: () => { cerrarHojas(); pestanas.ir(2); progreso.verPrincipal(); progreso.abrir(null); progreso.subir(); },
+    primerDia: () => { cerrarHojas(); pestanas.ir(0); inicio.primerDia(true); inicio.subir(); },
+    conDatos: () => { cerrarHojas(); pestanas.ir(0); inicio.primerDia(false); inicio.subir(); },
+    cuestionario: () => { cerrarHojas(); entrada.irA('edad'); },
+    plan: () => { cerrarHojas(); pestanas.ir(1); comida.armarDia(); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -1161,7 +1169,7 @@
   window.__via = (v) => { rVia.value = Math.round(v * 100); $('#o-via').textContent = rVia.value + '%'; escena.ponerVia(v); };
   window.__pagina = (i, deUna) => pestanas.ir(i, deUna);
   window.__inicio = (accion, arg) => {
-    const pasos = { personalizar: () => inicio.personalizar(), cerrar: () => inicio.cerrar(), poner: () => inicio.poner(arg[0], arg[1]), mover: () => inicio.mover(arg[0], arg[1]), fabrica: () => inicio.deFabrica(), bajar: () => inicio.bajar(), subir: () => inicio.subir() };
+    const pasos = { personalizar: () => inicio.personalizar(), cerrar: () => inicio.cerrar(), poner: () => inicio.poner(arg[0], arg[1]), mover: () => inicio.mover(arg[0], arg[1]), fabrica: () => inicio.deFabrica(), bajar: () => inicio.bajar(), subir: () => inicio.subir(), primerDia: () => inicio.primerDia(arg) };
     pasos[accion]();
     refrescarControles();
   };
@@ -1171,7 +1179,7 @@
     refrescarControles();
   };
   window.__progreso = (accion, arg) => {
-    const pasos = { metas: () => progreso.verMetas(), principal: () => progreso.verPrincipal(), quien: () => progreso.ponerQuien(arg), repartir: () => progreso.repartir(arg), abrir: () => progreso.abrir(arg), bajar: () => progreso.bajarA(arg), subir: () => progreso.subir() };
+    const pasos = { metas: () => progreso.verMetas(), principal: () => progreso.verPrincipal(), quien: () => progreso.ponerQuien(arg), repartir: () => progreso.repartir(arg), abrir: () => progreso.abrir(arg), bajar: () => progreso.bajarA(arg), subir: () => progreso.subir(), plazo: () => progreso.plazo(arg), rango: () => progreso.rango(arg) };
     pasos[accion]();
   };
   window.__estrategia = (cambios) => ponerEstrategia(cambios);

@@ -613,7 +613,19 @@
     "personalizarTexto": "Elige qué bloques ves y arrástralos para ordenarlos.",
     "personalizarNota": "Al tocar un bloque en Inicio, vas a su sección.",
     "mover": "Mover",
-    "ejemplo": "Ejemplo"
+    "ejemplo": "Ejemplo",
+    "primerDia": {
+      "etiqueta": "Para hoy",
+      "kcalHoy": "kcal, tu meta de hoy",
+      "anotar": "Anotar lo que comí",
+      "decir": "Decirlo",
+      "caloriasTexto": "Empieza por lo próximo que comas: en unos días, Moss conoce tus comidas y te las sugiere.",
+      "camino": "Tu camino",
+      "caminoTexto": "A un ritmo viable, llegarías el {fecha}. Pésate mañana al despertarte: con dos semanas de pesadas, Moss mide tu ritmo de verdad.",
+      "pesarme": "Anotar mi peso",
+      "cieloTexto": "Cada hábito que marques enciende una estrella; con todos, se dibuja la constelación de hoy.",
+      "habitos": "Elegir mis hábitos"
+    }
   },
   "mas": {
     "titulo": "Agregar",
@@ -812,6 +824,47 @@
     "limites": {
       "piso": "Menos de {n} kcal por día, no: es menos de lo que el cuerpo necesita para funcionar.",
       "imc": "El peso meta más bajo para tu altura es {n} {unidad}: un IMC de 18,5."
+    },
+    "plazo": {
+      "fila": "Ritmo y plazo",
+      "ritmo": "Ritmo",
+      "porSemana": "{pct} % del peso por semana · {kg} kg",
+      "enSemanas": "en {n} semanas",
+      "elegirFecha": "Elegir la fecha",
+      "elegirRitmo": "Elegir el ritmo",
+      "antes": "Una semana antes",
+      "despues": "Una semana después",
+      "viabilidad": {
+        "viable": "Viable",
+        "exigente": "Exigente",
+        "muyAgresivo": "Muy agresivo"
+      },
+      "textos": {
+        "viable": "Se sostiene y cuida el músculo.",
+        "exigente": "Se puede, con más hambre y menos energía: mejor por unas semanas.",
+        "muyAgresivo": "Es más de lo que se sostiene: exigente, llegarías el {exigente}, y viable, el {viable}."
+      },
+      "kcalMenos": "Unas {n} kcal por día menos de lo que gastas.",
+      "kcalMas": "Unas {n} kcal por día más de lo que gastas.",
+      "avisos": {
+        "sinFuerzaBajar": "Sin entrenamiento de fuerza, una parte de lo que bajes es músculo; entrenando fuerza tres veces por semana, casi nada.",
+        "sinFuerzaSubir": "Sin entrenar fuerza, unos dos tercios de lo que subas es grasa.",
+        "piso": "Con esa fecha comerías menos de {piso} kcal, y Moss no baja de ahí: llegarías el {fecha}.",
+        "menor": "Antes de los 18, mejor un ritmo viable."
+      },
+      "sinCamino": "Elige un peso meta para ver cuándo llegarías.",
+      "caminoTexto": "La línea llena es tu tendencia; la punteada sigue hasta la meta, a tu ritmo."
+    },
+    "graficos": {
+      "rangos": {
+        "mes": "1 mes",
+        "tresMeses": "3 meses",
+        "todo": "Todo"
+      },
+      "semanas": "Semana a semana",
+      "semanasCambio": "Cambio de la tendencia, en kg",
+      "semanasComida": "Lo que comiste, kcal por día",
+      "semanasTexto": "Cada columna es una semana. La línea es tu meta de calorías; sin tres días anotados, la semana no cuenta."
     }
   },
   "sueno": {

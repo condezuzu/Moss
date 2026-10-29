@@ -613,7 +613,19 @@
     "personalizarTexto": "Choose which blocks you see and drag them into order.",
     "personalizarNota": "Tap a block on Home to open its section.",
     "mover": "Move",
-    "ejemplo": "Example"
+    "ejemplo": "Example",
+    "primerDia": {
+      "etiqueta": "For today",
+      "kcalHoy": "kcal, today's goal",
+      "anotar": "Log what I ate",
+      "decir": "Say it",
+      "caloriasTexto": "Start with the next thing you eat: in a few days, Moss knows your meals and suggests them.",
+      "camino": "Your path",
+      "caminoTexto": "At a sustainable pace, you'd get there on {fecha}. Weigh in tomorrow when you wake up: with two weeks of weigh-ins, Moss measures your real pace.",
+      "pesarme": "Log my weight",
+      "cieloTexto": "Every habit you check lights up a star; with all of them, today's constellation is drawn.",
+      "habitos": "Choose my habits"
+    }
   },
   "mas": {
     "titulo": "Add",
@@ -812,6 +824,47 @@
     "limites": {
       "piso": "Not below {n} kcal a day: that's less than your body needs to work.",
       "imc": "The lowest goal weight for your height is {n} {unidad}: a BMI of 18.5."
+    },
+    "plazo": {
+      "fila": "Pace and date",
+      "ritmo": "Pace",
+      "porSemana": "{pct} % of your weight a week · {kg} kg",
+      "enSemanas": "in {n} weeks",
+      "elegirFecha": "Pick the date",
+      "elegirRitmo": "Pick the pace",
+      "antes": "A week earlier",
+      "despues": "A week later",
+      "viabilidad": {
+        "viable": "Sustainable",
+        "exigente": "Demanding",
+        "muyAgresivo": "Too aggressive"
+      },
+      "textos": {
+        "viable": "You can keep it up, and it protects your muscle.",
+        "exigente": "Doable, with more hunger and less energy: best for a few weeks.",
+        "muyAgresivo": "It's more than you can keep up: demanding, you'd get there on {exigente}; sustainable, on {viable}."
+      },
+      "kcalMenos": "About {n} kcal a day below what you burn.",
+      "kcalMas": "About {n} kcal a day above what you burn.",
+      "avisos": {
+        "sinFuerzaBajar": "Without strength training, part of what you lose is muscle; training strength three times a week keeps almost all of it.",
+        "sinFuerzaSubir": "Without strength training, about two thirds of what you gain is fat.",
+        "piso": "With that date you'd eat under {piso} kcal, and Moss doesn't go below that: you'd get there on {fecha}.",
+        "menor": "Under 18, a sustainable pace is best."
+      },
+      "sinCamino": "Pick a goal weight to see when you'd get there.",
+      "caminoTexto": "The solid line is your trend; the dotted one goes on to your goal, at your pace."
+    },
+    "graficos": {
+      "rangos": {
+        "mes": "1 month",
+        "tresMeses": "3 months",
+        "todo": "All"
+      },
+      "semanas": "Week by week",
+      "semanasCambio": "Trend change, in kg",
+      "semanasComida": "What you ate, kcal a day",
+      "semanasTexto": "Each column is a week. The line is your calorie goal; a week with fewer than three logged days doesn't count."
     }
   },
   "sueno": {

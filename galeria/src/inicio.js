@@ -12,7 +12,8 @@ const SeccionInicio = (() => {
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
     const { tx, numero, conSigno, el, boton, icono } = u;
-    const s = { orden: [...BLOQUES], visibles: new Set(DE_FABRICA) };
+    // `primerDia`: recién instalada, sin nada anotado (la maqueta del 29/10/2026).
+    const s = { orden: [...BLOQUES], visibles: new Set(DE_FABRICA), primerDia: false };
     try {
       const g = JSON.parse(localStorage.getItem(GUARDADO) || 'null');
       if (g && Array.isArray(g.orden)) { s.orden = [...g.orden.filter((b) => BLOQUES.includes(b)), ...BLOQUES.filter((b) => !g.orden.includes(b))]; s.visibles = new Set(g.visibles); }
@@ -272,12 +273,76 @@ const SeccionInicio = (() => {
 
     const ARMAR = { calorias, objetivo, peso, cielo, sueno, agua };
 
+    // ------------------------------------------------------------ el primer día
+    // Sin nada todavía, cada bloque dice qué hacer y con qué se va a llenar, en vez de ceros y rayas.
+    function caloriasPrimerDia() {
+      const c = carta('in-calorias in-primer', null, 1);
+      const meta = opciones.comida.meta;
+      const arriba = el('div', 'in-cal-arriba');
+      const luna = el('div', 'in-luna-nueva');
+      luna.appendChild(el('i'));
+      const cifra = el('div', 'in-cal-cifra');
+      cifra.append(el('span', 'in-cal-etq', tx('inicio.primerDia.etiqueta')), el('b', null, numero(meta.kcal)), el('small', null, tx('inicio.primerDia.kcalHoy')));
+      arriba.append(luna, cifra);
+      const metas = el('div', 'in-metas-chips');
+      [['p', 'proteina'], ['c', 'carbohidratos'], ['g', 'grasas']].forEach(([m, clave], k) => {
+        const x = el('span', 'in-meta-chip in-meta-' + m);
+        x.style.animationDelay = `${(0.25 + k * 0.1).toFixed(2)}s`;
+        x.append(el('i'), el('b', null, tx('inicio.gramos', { n: numero(meta[m]) })), ` ${tx('comida.' + clave).toLowerCase()}`);
+        metas.appendChild(x);
+      });
+      const acciones = el('div', 'in-primer-acciones');
+      acciones.append(
+        boton('cm-accion principal', `${icono('mas')}<span>${tx('inicio.primerDia.anotar')}</span>`, () => opciones.ir(1)),
+        boton('cm-accion', `${icono('microfono')}<span>${tx('inicio.primerDia.decir')}</span>`, () => opciones.ir(1)),
+      );
+      c.append(arriba, metas, el('p', 'in-primer-texto', tx('inicio.primerDia.caloriasTexto')), acciones);
+      return c;
+    }
+
+    // El camino: hoy y la meta, unidos por lo que falta, con la fecha a un ritmo viable.
+    function caminoPrimerDia() {
+      const d = opciones.persona();
+      const p = d.perfil;
+      const c = carta('in-objetivo in-primer', tx('inicio.primerDia.camino'), 2);
+      const desde = Math.round(d.pesoHoy * 10) / 10;
+      const plazo = Progreso.plazoConRitmo({ hoy: Datos.HOY, pesoKg: desde, pesoMeta: p.pesoMeta, sexo: p.sexo, edad: Number(Datos.HOY.slice(0, 4)) - p.nacimiento, gasto: d.gasto, entrenaFuerza: true },
+        Progreso.BORDES[p.objetivo === 'subir' ? 'subir' : 'bajar'][0]);
+      const fila = el('div', 'in-obj-fila');
+      fila.append(el('b', null, `${numero(desde, 1)} → ${numero(p.pesoMeta, p.pesoMeta % 1 ? 1 : 0)} kg`));
+      c.appendChild(fila);
+      if (plazo) {
+        const total = Fechas.diasEntre(Datos.HOY, plazo.fecha);
+        c.appendChild(Graficos.camino([{ dia: 0, kg: desde }], [{ dia: total, kg: p.pesoMeta }], p.pesoMeta, { ancho: 300, alto: 64, clase: 'in-camino-primer' }));
+        c.appendChild(el('p', 'in-primer-texto', tx('inicio.primerDia.caminoTexto', { fecha: u.fechaCorta(plazo.fecha) })));
+      }
+      const acciones = el('div', 'in-primer-acciones');
+      acciones.appendChild(boton('cm-accion', `${icono('balanza')}<span>${tx('inicio.primerDia.pesarme')}</span>`, () => opciones.ir(2)));
+      c.appendChild(acciones);
+      return c;
+    }
+
+    // El cielo: la constelación de hoy con sus estrellas esperando, que titilan.
+    function cieloPrimerDia() {
+      const { constelacion, habitos } = opciones.cielo();
+      const c = carta('in-cielo in-primer', tx('inicio.bloques.cielo'), 4);
+      const lienzo = el('canvas', 'in-mini-cielo in-cielo-espera');
+      c.appendChild(lienzo);
+      requestAnimationFrame(() => dibujarConstelacion(lienzo, constelacion, habitos.map((h) => Object.assign({}, h, { encendido: false }))));
+      c.appendChild(el('p', 'in-primer-texto', tx('inicio.primerDia.cieloTexto')));
+      const acciones = el('div', 'in-primer-acciones');
+      acciones.appendChild(boton('cm-accion', `${icono('estrella')}<span>${tx('inicio.primerDia.habitos')}</span>`, () => opciones.ir(4)));
+      c.appendChild(acciones);
+      return c;
+    }
+
     function pintar(ms) {
       const hoy = u.partes(Datos.HOY);
       zona.querySelector('.in-fecha').textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) });
       zona.querySelector('.in-titulo').textContent = tx('inicio.titulo');
       bloquesEl.innerHTML = '';
-      s.orden.filter((b) => s.visibles.has(b)).forEach((b) => bloquesEl.appendChild(ARMAR[b](ms)));
+      if (s.primerDia) [caloriasPrimerDia(), caminoPrimerDia(), cieloPrimerDia()].forEach((b) => bloquesEl.appendChild(b));
+      else s.orden.filter((b) => s.visibles.has(b)).forEach((b) => bloquesEl.appendChild(ARMAR[b](ms)));
       const pie = zona.querySelector('.in-pie');
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));
@@ -370,6 +435,7 @@ const SeccionInicio = (() => {
       poner(bloque, si) { if (si) s.visibles.add(bloque); else s.visibles.delete(bloque); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       mover(bloque, a) { const i = s.orden.indexOf(bloque); s.orden.splice(i, 1); s.orden.splice(a, 0, bloque); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       deFabrica() { s.orden = [...BLOQUES]; s.visibles = new Set(DE_FABRICA); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
+      primerDia(si) { s.primerDia = !!si; pintar(0); },
       bajar() { zona.querySelector('.in-scroll').scrollTo(0, 99999); },
       subir() { zona.querySelector('.in-scroll').scrollTo(0, 0); },
     };
@@ -378,8 +444,9 @@ const SeccionInicio = (() => {
   return { crear };
 })();
 
-// Los gráficos chicos de las secciones nuevas: una línea con su tendencia, el balance de la semana
-// y el hipnograma de una noche. SVG con los colores de la galería.
+// Los gráficos chicos de las secciones nuevas: una línea con su tendencia, el balance de la semana,
+// el hipnograma de una noche, el camino a la meta, las barras de cada semana y la línea chiquita de
+// una medida. SVG con los colores de la galería.
 const Graficos = (() => {
   const SVG = 'http://www.w3.org/2000/svg';
   const svg = (ancho, alto, clase, html) => {
@@ -438,5 +505,70 @@ const Graficos = (() => {
     return svg(ancho, alto, 'gr-hipno ' + (clase || ''), guias + tramos);
   }
 
-  return { linea, balance, hipnograma };
+  // El camino a la meta: la tendencia hasta hoy (llena) y el plan hasta la fecha (punteado), con la
+  // meta. `pasado` y `plan` son [{ dia, kg }], con `dia` contado desde el primero.
+  function camino(pasado, plan, meta, { ancho = 300, alto = 96, clase } = {}) {
+    const m = 6;
+    const todos = [...pasado, ...plan];
+    const ultimoDia = Math.max(...todos.map((p) => p.dia), 1);
+    const valores = todos.map((p) => p.kg).concat([meta]);
+    const min = Math.min(...valores) - 0.4, max = Math.max(...valores) + 0.4;
+    const X = (d) => m + (d / ultimoDia) * (ancho - 2 * m);
+    const Y = (v) => m + (1 - (v - min) / (max - min)) * (alto - 2 * m);
+    const trazo = (lista) => lista.map((p, i) => `${i ? 'L' : 'M'}${X(p.dia).toFixed(1)} ${Y(p.kg).toFixed(1)}`).join(' ');
+    const hoy = pasado[pasado.length - 1];
+    const fin = plan[plan.length - 1];
+    const id = 'c' + Math.random().toString(36).slice(2, 8);
+    const area = pasado.length > 1 ? `${trazo(pasado)} L${X(hoy.dia).toFixed(1)} ${alto} L${X(pasado[0].dia).toFixed(1)} ${alto} Z` : '';
+    return svg(ancho, alto, 'gr-camino ' + (clase || ''), `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6bf94" stop-opacity="0.22"/><stop offset="1" stop-color="#a6bf94" stop-opacity="0"/></linearGradient></defs>
+      <line x1="${m}" x2="${ancho - m}" y1="${Y(meta).toFixed(1)}" y2="${Y(meta).toFixed(1)}" class="gr-meta"/>
+      <path d="${area}" fill="url(#${id})" stroke="none"/>
+      <path d="${trazo(pasado)}" class="gr-linea gr-hecho"/>
+      ${plan.length ? `<path d="${trazo([hoy, ...plan])}" class="gr-plan"/>` : ''}
+      ${hoy ? `<circle cx="${X(hoy.dia).toFixed(1)}" cy="${Y(hoy.kg).toFixed(1)}" r="3" class="gr-fin"/>` : ''}
+      ${fin ? `<circle cx="${X(fin.dia).toFixed(1)}" cy="${Y(fin.kg).toFixed(1)}" r="3.4" class="gr-destino"/>` : ''}`);
+  }
+
+  // Barras desde el cero: lo negativo baja y lo positivo sube (el cambio de cada semana). Si todo va
+  // para el mismo lado, el cero queda en el borde y las barras usan todo el alto.
+  function barras(valores, { ancho = 300, alto = 60, clase, tope } = {}) {
+    const m = 3;
+    const hay = valores.filter((v) => v != null);
+    const max = tope || Math.max(0.1, ...hay.map((v) => Math.abs(v)));
+    const cero = hay.every((v) => v <= 0) ? m : hay.every((v) => v >= 0) ? alto - m : alto / 2;
+    const lugar = Math.max(cero - m, alto - m - cero);
+    const paso = (ancho - 2 * m) / valores.length;
+    const lista = valores.map((v, i) => {
+      if (v == null) return '';
+      const h = Math.max(1.5, (Math.abs(v) / max) * lugar);
+      const x = m + i * paso + paso * 0.24;
+      return `<rect x="${x.toFixed(1)}" y="${(v < 0 ? cero : cero - h).toFixed(1)}" width="${(paso * 0.52).toFixed(1)}" height="${h.toFixed(1)}" rx="2" class="${v < 0 ? 'gr-baja' : 'gr-sube'}"/>`;
+    }).join('');
+    return svg(ancho, alto, 'gr-barras ' + (clase || ''), `<line x1="${m}" x2="${ancho - m}" y1="${cero}" y2="${cero}" class="gr-guia"/>${lista}`);
+  }
+
+  // Lo comido de cada semana contra la meta (la línea): columnas que llegan o no.
+  function columnas(valores, meta, { ancho = 300, alto = 60, clase } = {}) {
+    const m = 3;
+    const max = Math.max(meta * 1.2, ...valores.map((v) => v ?? 0));
+    const Y = (v) => alto - m - (v / max) * (alto - 2 * m);
+    const paso = (ancho - 2 * m) / valores.length;
+    const lista = valores.map((v, i) => (v == null ? `<rect x="${(m + i * paso + paso * 0.24).toFixed(1)}" y="${(alto - m - 2).toFixed(1)}" width="${(paso * 0.52).toFixed(1)}" height="2" rx="1" class="gr-vacia"/>`
+      : `<rect x="${(m + i * paso + paso * 0.24).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(paso * 0.52).toFixed(1)}" height="${(alto - m - Y(v)).toFixed(1)}" rx="2" class="gr-columna${v > meta * 1.05 ? ' arriba' : v < meta * 0.9 ? ' abajo' : ''}"/>`)).join('');
+    return svg(ancho, alto, 'gr-columnas ' + (clase || ''), `${lista}<line x1="${m}" x2="${ancho - m}" y1="${Y(meta).toFixed(1)}" y2="${Y(meta).toFixed(1)}" class="gr-gasto"/>`);
+  }
+
+  // Una línea chiquita, para el lado de un número (las medidas).
+  function chispa(valores, { ancho = 54, alto = 18, clase } = {}) {
+    const m = 2.5;
+    if (valores.length < 2) return svg(ancho, alto, clase, '');
+    const min = Math.min(...valores), max = Math.max(...valores);
+    const X = (i) => m + (i / (valores.length - 1)) * (ancho - 2 * m);
+    const Y = (v) => (max === min ? alto / 2 : m + (1 - (v - min) / (max - min)) * (alto - 2 * m));
+    const d = valores.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ');
+    const ult = valores.length - 1;
+    return svg(ancho, alto, 'gr-chispa ' + (clase || ''), `<path d="${d}" class="gr-linea"/><circle cx="${X(ult).toFixed(1)}" cy="${Y(valores[ult]).toFixed(1)}" r="2" class="gr-fin"/>`);
+  }
+
+  return { linea, balance, hipnograma, camino, barras, columnas, chispa };
 })();

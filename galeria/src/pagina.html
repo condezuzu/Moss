@@ -279,6 +279,32 @@ section.item p { margin: 0; max-width: 64ch; }
 .ent-segmento .ent-opcion { text-align: center; padding: 11px 6px; }
 .ent-segmento .ent-opcion b { font-size: 13.5px; }
 .ent-salud { margin: 38px auto 0; display: flex; gap: 16px; justify-content: center; }
+/* El cuestionario, tan lindo como la entrada (29/10/2026): la constelación de las preguntas, las
+   opciones que entran de a una con su ícono, la regla de los números y la aurora abajo. */
+.ent-cuestionario::after { content: ''; position: absolute; left: -10%; right: -10%; bottom: 0; height: 42%; z-index: -1; pointer-events: none;
+  background: radial-gradient(60% 60% at 30% 100%, rgba(120, 214, 170, 0.26), transparent 72%), radial-gradient(55% 55% at 78% 100%, rgba(140, 170, 230, 0.2), transparent 72%);
+  animation: ent-aurora 9s ease-in-out infinite alternate; }
+@keyframes ent-aurora { from { opacity: 0.55; transform: translateY(6px) scaleY(0.94); } to { opacity: 1; transform: none; } }
+.ent-cab-pasos { display: flex; align-items: center; gap: 12px; margin: 14px 0 8px; }
+.ent-cab-pasos .ent-paso { margin: 0; }
+.ent-constelacion { flex: none; width: 150px; height: 30px; overflow: visible; }
+.ent-constelacion line { stroke: rgba(239, 230, 207, 0.12); stroke-width: 0.8; }
+.ent-constelacion line.hecha { stroke: rgba(232, 196, 106, 0.45); }
+.ent-constelacion line.nueva { stroke: rgba(232, 196, 106, 0.6); stroke-dasharray: var(--largo); stroke-dashoffset: var(--largo); animation: ent-traza 0.7s 0.5s ease-out forwards; }
+@keyframes ent-traza { to { stroke-dashoffset: 0; } }
+.ent-constelacion circle { fill: rgba(239, 230, 207, 0.2); }
+.ent-constelacion circle.hecha { fill: var(--oro-claro); filter: drop-shadow(0 0 3px rgba(246, 227, 166, 0.8)); }
+.ent-constelacion circle.ahora { fill: #fbf2d9; filter: drop-shadow(0 0 5px rgba(251, 242, 217, 0.95)); transform-box: fill-box; transform-origin: center; animation: ent-late 2.4s 1.1s ease-in-out infinite; }
+@keyframes ent-late { 50% { transform: scale(1.35); } }
+.ent-opcion { animation: ent-entra 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ent-opcion-textos { display: grid; gap: 4px; }
+.con-icono .ent-opcion { grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 12px; }
+.ent-opcion-icono { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(239, 230, 207, 0.14); color: rgba(239, 230, 207, 0.55); transition: color 0.25s, border-color 0.25s, box-shadow 0.25s; }
+.ent-opcion-icono svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ent-opcion[aria-pressed='true'] .ent-opcion-icono { color: var(--oro-claro); border-color: rgba(232, 196, 106, 0.6); box-shadow: 0 0 14px rgba(232, 196, 106, 0.3); }
+.ent-numero b { text-shadow: 0 0 34px rgba(246, 227, 166, 0.28); }
+.ent-regla { position: relative; display: flex; justify-content: space-between; margin-top: 2px; padding-top: 12px; font: 400 11px/1 var(--numeros); color: rgba(239, 230, 207, 0.38); font-variant-numeric: tabular-nums;
+  background: repeating-linear-gradient(90deg, rgba(239, 230, 207, 0.22) 0 1px, transparent 1px 10%) top / 100% 7px no-repeat; }
 .ent-salud-icono { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(166, 191, 148, 0.25); color: rgba(239, 230, 207, 0.3); animation: ent-enciende 0.6s ease-out both; }
 .ent-salud-icono svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 @keyframes ent-enciende { from { color: rgba(239, 230, 207, 0.25); box-shadow: none; } to { color: var(--salvia); border-color: rgba(166, 191, 148, 0.55); box-shadow: 0 0 14px rgba(166, 191, 148, 0.2); } }
@@ -382,6 +408,26 @@ section.item p { margin: 0; max-width: 64ch; }
 /* El día en el cielo: la constelación de hoy en chico. */
 .in-cielo { background: radial-gradient(120% 100% at 50% 0%, rgba(20, 30, 62, 0.85), rgba(6, 9, 20, 0.85)); }
 .in-mini-cielo { display: block; width: 100%; height: 118px; }
+/* El primer día, sin datos: la luna nueva con su borde que brilla, las metas como pastillas de
+   color, qué hacer primero y el cielo que espera. */
+.in-primer { cursor: default; }
+.in-luna-nueva { flex: none; position: relative; width: 74px; height: 74px; margin: 2px 4px 2px -2px; border-radius: 50%;
+  background: radial-gradient(circle at 62% 38%, rgba(30, 40, 72, 0.9), rgba(8, 12, 26, 0.95) 70%);
+  box-shadow: inset -3px 2px 0 rgba(246, 227, 166, 0.55), 0 0 22px rgba(246, 227, 166, 0.16); animation: in-respira 4.8s ease-in-out infinite; }
+.in-luna-nueva i { position: absolute; inset: -9px; border-radius: 50%; border: 1px solid rgba(246, 227, 166, 0.12); }
+@keyframes in-respira { 50% { box-shadow: inset -4px 2px 0 rgba(246, 227, 166, 0.75), 0 0 30px rgba(246, 227, 166, 0.26); } }
+.in-metas-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.in-meta-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 999px; background: rgba(239, 230, 207, 0.05); font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.7); animation: ent-entra 0.5s both; }
+.in-meta-chip b { font: 500 12.5px/1 var(--numeros); color: var(--tinta); }
+.in-meta-chip i { width: 6px; height: 6px; border-radius: 50%; }
+.in-meta-p i { background: var(--oro-claro); box-shadow: 0 0 6px var(--oro-claro); }
+.in-meta-c i { background: var(--salvia); box-shadow: 0 0 6px var(--salvia); }
+.in-meta-g i { background: #d9a37a; box-shadow: 0 0 6px #d9a37a; }
+.in-primer-texto { margin: 12px 0 0; font: 300 13.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.78); }
+.in-primer-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.in-camino-primer { display: block; width: 100%; height: auto; margin-top: 8px; }
+.in-cielo-espera { animation: in-titila 3.2s ease-in-out infinite; }
+@keyframes in-titila { 50% { opacity: 0.72; } }
 .in-cielo-datos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .in-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 8px; border-radius: 999px; background: rgba(239, 230, 207, 0.06); font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.72); font-variant-numeric: tabular-nums; }
 .in-chip svg { width: 14px; height: 14px; color: rgba(239, 230, 207, 0.5); }
@@ -590,6 +636,51 @@ section.item p { margin: 0; max-width: 64ch; }
 .pg-control .aj-etq { margin-top: 14px; }
 .pg-control .aj-dias { margin: 4px 0 0; }
 .progreso.en-metas .pg-scroll { padding-top: calc(var(--arriba) + 22px); }
+/* El ritmo y el plazo (D35): la fecha arriba, la regla con sus zonas y lo que conviene saber. */
+.pg-plazo { gap: 8px; }
+.pg-plazo-res { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pg-viab { flex: none; font: 500 10px/1 var(--texto); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; transition: color 0.3s, background 0.3s; }
+.pg-viab.viable { color: var(--salvia); background: rgba(166, 191, 148, 0.12); }
+.pg-viab.exigente { color: var(--oro-claro); background: rgba(232, 196, 106, 0.12); }
+.pg-viab.muyAgresivo { color: #eaa196; background: rgba(231, 140, 128, 0.13); }
+.pg-regla { position: relative; padding: 6px 0 2px; }
+.pg-regla input[type='range'] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 6px; margin: 10px 0 0; border-radius: 6px; outline: none; cursor: pointer;
+  background: linear-gradient(90deg, rgba(166, 191, 148, 0.6) 0 var(--viable), rgba(232, 196, 106, 0.6) var(--viable) var(--exigente), rgba(231, 140, 128, 0.55) var(--exigente) 100%); }
+.pg-regla input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #fbf2d9; box-shadow: 0 0 0 4px rgba(251, 242, 217, 0.14), 0 0 14px rgba(251, 242, 217, 0.55); }
+.pg-regla input[type='range']::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #fbf2d9; box-shadow: 0 0 0 4px rgba(251, 242, 217, 0.14), 0 0 14px rgba(251, 242, 217, 0.55); }
+.pg-marcas { position: relative; height: 30px; margin: 0 12px; }
+.pg-marca { position: absolute; top: 8px; transform: translateX(-50%); appearance: none; border: 0; background: none; padding: 4px 2px; cursor: pointer; font: 400 11.5px/1 var(--texto); color: rgba(239, 230, 207, 0.45); white-space: nowrap; transition: color 0.2s; }
+.pg-marca::before { content: ''; position: absolute; left: 50%; top: -6px; width: 1px; height: 5px; background: rgba(239, 230, 207, 0.3); }
+.pg-marca[aria-pressed='true'] { color: var(--tinta); }
+.pg-modo { justify-self: start; }
+.pg-fechas { justify-self: start; animation: sn-aparece 0.3s both; }
+.pg-fechas .fi-valor { min-width: 92px; text-align: center; }
+.pg-avisos { display: grid; gap: 8px; }
+.pg-avisos:empty { display: none; }
+.pg-avisos .pg-aviso { margin: 0; animation: sn-aparece 0.3s both; }
+.pg-aviso-piso, .pg-aviso-menor { border-color: rgba(232, 196, 106, 0.22); color: rgba(246, 227, 166, 0.85); }
+/* Los gráficos nuevos de Progreso. */
+.pg-rangos { margin: 6px 0 0; align-self: start; justify-self: start; }
+.pg-rangos .aj-seg { padding: 7px 12px; font-size: 12.5px; white-space: nowrap; }
+.pg-eje-camino { position: relative; }
+.pg-eje-hoy { position: absolute; top: 0; transform: translateX(-50%); color: var(--tinta); }
+.pg-etq-graf { margin-top: 8px; font: 400 11px/1 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.pg-valores { display: grid; grid-template-columns: repeat(6, 1fr); text-align: center; font: 400 11px/1 var(--numeros); color: rgba(239, 230, 207, 0.75); font-variant-numeric: tabular-nums; }
+.pg-valores .tenue { color: rgba(239, 230, 207, 0.3); }
+.pg-valores-eje { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(239, 230, 207, 0.06); font: 400 10px/1 var(--texto); color: rgba(239, 230, 207, 0.42); }
+.pg-lista li { grid-template-columns: minmax(0, 1fr) 54px auto 64px; }
+.pg-chispa { width: 54px; height: 18px; align-self: center; }
+.gr-hecho { stroke: var(--salvia); }
+.gr-plan { fill: none; stroke: rgba(246, 227, 166, 0.75); stroke-width: 1.6; stroke-dasharray: 2 4; stroke-linecap: round; }
+.gr-destino { fill: none; stroke: var(--oro-claro); stroke-width: 1.4; }
+.gr-baja { fill: rgba(166, 191, 148, 0.75); }
+.gr-sube { fill: rgba(232, 196, 106, 0.6); }
+.gr-vacia { fill: rgba(239, 230, 207, 0.12); }
+.gr-columna { fill: rgba(166, 191, 148, 0.6); }
+.gr-columna.arriba { fill: rgba(232, 196, 106, 0.65); }
+.gr-columna.abajo { fill: rgba(239, 230, 207, 0.35); }
+.gr-camino .gr-fin { fill: #fbf2d9; }
+
 
 /* Sueño: las dos semanas para elegir, la noche, la calidad, el horario, la deuda, el reloj y las fuentes. */
 .sn-noches { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; padding: 10px 6px 8px; border-radius: 18px; background: rgba(8, 12, 26, 0.6); border: 1px solid rgba(239, 230, 207, 0.08); touch-action: pan-y; }
@@ -1762,6 +1853,30 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <p class="bajada">Prototipo interactivo con datos de mentira. Es la referencia visual que después se pasa a la app: los shaders del cielo, los textos, los alimentos y el buscador son los mismos archivos, y los tiempos y proporciones también.</p>
       <p class="lema">“Do so much volume that it will be unreasonable to fail.”<span>El lema de Moss</span></p>
     </header>
+
+    <section class="item" id="nuevo">
+      <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
+      <p>Lo que pediste el 29/10 que es visual y todavía no está en la app: probalo acá y, si te cierra, se programa. Lo demás de la tanda ya está en la rama <b>mejoras-1.1</b> (el plan como sugerencia, los platos con tamaño, las cadenas, el día que empieza a las 4, la hora de dormir y Afinar sin atajos).</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="plazo">El ritmo y el plazo</button>
+          <button class="boton" type="button" data-seccion="graficos">Los gráficos de Progreso</button>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-seccion="primerDia">Inicio el primer día</button>
+          <button class="boton" type="button" data-seccion="conDatos">Inicio con datos</button>
+          <button class="boton" type="button" data-seccion="cuestionario">El cuestionario</button>
+          <button class="boton" type="button" data-seccion="plan">El plan sugerido</button>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>El ritmo y el plazo</b> (Progreso › Estrategia › Ritmo y plazo), como MacroFactor: arrastrás el ritmo y sale la fecha, o elegís la fecha y sale el ritmo. La regla tiene las zonas de color: <b>viable</b> (hasta 0,5 % del peso por semana bajando, 0,25 % subiendo), <b>exigente</b> (hasta 1 % o 0,5 %) y <b>muy agresivo</b> (más, o más de 1 kg o de 1.000 kcal de déficit por día). Debajo, cuántas kcal por día son, y los avisos: sin fuerza, bajando se pierde músculo y subiendo casi todo es grasa; con esa fecha quedarías debajo del piso; o sos menor. Las cuentas son las de la app (progreso.ts, con tests). Para guardarlo en la app hace falta una columna nueva en Supabase.</li>
+        <li><b>Los gráficos de Progreso</b>: el camino a la meta (la tendencia y, punteado, hasta la fecha a tu ritmo), el peso de 1 mes, 3 meses o todo, <b>Semana a semana</b> (cuánto cambió la tendencia y lo que comiste contra la meta) y una línea chiquita al lado de cada medida.</li>
+        <li><b>Inicio el primer día</b>, para que sin datos no se vea apagada: la meta de hoy con la luna nueva que brilla y qué hacer primero, tu camino hasta la meta con la fecha a un ritmo viable, y el cielo con sus estrellas esperando. Comparalo con «Inicio con datos».</li>
+        <li><b>El cuestionario</b>, tan lindo como la entrada: arriba, una constelación chica con una estrella por pregunta que se enciende al contestar; las opciones entran de a una y llevan su ícono; los números tienen su regla, y abajo sube una aurora.</li>
+        <li><b>El plan sugerido</b>, que ya está en la app: «Te sugerimos», pulgar arriba y abajo (cambian lo que se sugiere después, también lo que lleva lo mismo), y «Otra», que no repite lo que ya viste y no se acaba.</li>
+      </ul>
+    </section>
 
     <section class="item" id="secciones">
       <h2><span class="n">1</span>Las seis secciones y el «+»</h2>

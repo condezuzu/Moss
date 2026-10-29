@@ -133,9 +133,10 @@ const Datos = (() => {
       ];
       if (anoche) actividad.push({ desde: instante(clave, 490), hasta: instante(clave, 494), tipo: 'moss' }, { desde: instante(clave, 620), hasta: instante(clave, 626), tipo: 'movimiento' });
       const noches = SinReloj.conNochesDeMoss([], propias, ZONA);
-      const e = SinReloj.estimarNoche({ clave, zona: ZONA, actividad, habitual: SinReloj.habitualDe(noches, clave), ajuste: SinReloj.aprenderAjuste(propias, clave) });
+      const e = SinReloj.estimarNoche({ clave, zona: ZONA, actividad, habitual: SinReloj.habitualDe(noches, clave), personal: SinReloj.aprenderPersonal(propias, clave) });
       if (!e) continue;
-      const estimada = { dormirse: iso(clave, e.cruda.dormirse), despertar: iso(clave, e.cruda.despertar) };
+      // Como en la app (src/salud/nocheSinReloj.ts): lo estimado con la ventana tranquila, de donde se aprende lo suyo.
+      const estimada = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), quieto: { desde: iso(clave, e.quieto.desde), hasta: iso(clave, e.quieto.hasta) } };
       let hora = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), origen: 'estimada', confianza: e.confianza, estimada };
       // Dos mañanas corrigió la hora (a la de verdad, de a 5 minutos) y varias la confirmó.
       if (i === 20 || i === 9) hora = Object.assign({}, hora, { dormirse: iso(clave, Math.round(dormirse / 5) * 5), despertar: iso(clave, Math.round(despertar / 5) * 5), origen: 'corregida' });

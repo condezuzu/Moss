@@ -501,6 +501,11 @@ const Entrada = (() => {
       { id: 'resultado', camara: 1.37, armar: armarResultado },
     ];
     const enCuestionario = PASOS.filter((p) => p.cuestionario);
+    // Los íconos de las opciones: cuánto se mueve y hacia dónde va.
+    const ICONOS_DE = {
+      actividad: { poco: 'telefono', algo: 'huellas', activo: 'pesa', muy: 'rayo' },
+      objetivo: { bajar: 'abajo', mantener: 'objetivo', subir: 'arriba' },
+    };
 
     function pantalla(clase) {
       const p = el('section', 'ent-pantalla ' + clase);
@@ -510,8 +515,30 @@ const Entrada = (() => {
 
     function cabezaDeCuestionario(p, paso) {
       const i = enCuestionario.indexOf(paso);
-      // La barra es de la estrella (va por encima): acá queda su lugar.
-      p.append(el('div', 'ent-progreso-hueco'), el('div', 'ent-paso', tx('entrada.cuestionario.paso', { n: i + 1, total: enCuestionario.length })));
+      // La barra es de la estrella (va por encima): acá queda su lugar. Debajo, la constelación de
+      // las preguntas: lo contestado encendido y la de ahora, prendiéndose.
+      const cab = el('div', 'ent-cab-pasos');
+      cab.append(constelacionDePasos(i, enCuestionario.length), el('div', 'ent-paso', tx('entrada.cuestionario.paso', { n: i + 1, total: enCuestionario.length })));
+      p.append(el('div', 'ent-progreso-hueco'), cab);
+    }
+
+    // Una estrella por pregunta, en zigzag, como una constelación chica.
+    function constelacionDePasos(actual, total) {
+      const W = 150, H = 30;
+      const pts = Array.from({ length: total }, (_, k) => [6 + (k * (W - 12)) / (total - 1), H - 8 - (k % 2 ? 9 : 0) - k * 1.2]);
+      const lineas = pts.slice(1).map(([x, y], k) => {
+        const [x0, y0] = pts[k];
+        const largo = Math.hypot(x - x0, y - y0).toFixed(1);
+        const clase = k + 1 < actual ? 'hecha' : k + 1 === actual ? 'nueva' : '';
+        return `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" class="${clase}" style="--largo:${largo}"/>`;
+      }).join('');
+      const estrellas = pts.map(([x, y], k) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${k === actual ? 2.6 : 2}" class="${k < actual ? 'hecha' : k === actual ? 'ahora' : ''}"/>`).join('');
+      const n = document.createElementNS(SVG, 'svg');
+      n.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      n.setAttribute('class', 'ent-constelacion');
+      n.setAttribute('aria-hidden', 'true');
+      n.innerHTML = lineas + estrellas;
+      return n;
     }
 
     // La frase: la estrella nace en el musgo, sube por la izquierda hasta arriba de la frase mientras
@@ -829,18 +856,29 @@ const Entrada = (() => {
       const mostrar = () => { valor.textContent = numero(Number(rango.value), cfg.dec); };
       rango.addEventListener('input', () => { r[cfg.clave] = Number(rango.value); mostrar(); delete desdeSalud[cfg.clave]; const chip = grande.querySelector('em'); if (chip) chip.remove(); });
       mostrar();
-      p.append(grande, rango, el('div', 'ent-pie'));
+      const regla = el('div', 'ent-regla');
+      regla.append(el('span', null, numero(cfg.min, 0)), el('span', null, numero(cfg.max, 0)));
+      p.append(grande, rango, regla, el('div', 'ent-pie'));
       p.querySelector('.ent-pie').appendChild(botonSeguir(tx('entrada.seguir'), siguiente, 'ent-principal'));
     }
 
-    function opcionesDe(p, lista, elegida, alElegir, clase) {
-      const caja = el('div', 'ent-opciones ' + (clase || ''));
-      lista.forEach(([valor, titulo, detalle]) => {
+    // Cada opción entra un poco después de la anterior; con ícono, a la izquierda (ICONOS_DE).
+    function opcionesDe(p, lista, elegida, alElegir, clase, iconos) {
+      const caja = el('div', 'ent-opciones ' + (clase || '') + (iconos ? ' con-icono' : ''));
+      lista.forEach(([valor, titulo, detalle], k) => {
         const b = el('button', 'ent-opcion');
         b.type = 'button';
+        b.style.animationDelay = `${(0.32 + k * 0.08).toFixed(2)}s`;
         b.setAttribute('aria-pressed', String(valor === elegida));
-        b.appendChild(el('b', null, titulo));
-        if (detalle) b.appendChild(el('span', null, detalle));
+        if (iconos && iconos[valor]) {
+          const i = el('i', 'ent-opcion-icono');
+          i.innerHTML = Util.icono(iconos[valor]);
+          b.appendChild(i);
+        }
+        const textos = el('div', 'ent-opcion-textos');
+        textos.appendChild(el('b', null, titulo));
+        if (detalle) textos.appendChild(el('span', null, detalle));
+        b.appendChild(textos);
         b.addEventListener('click', () => {
           caja.querySelectorAll('.ent-opcion').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
           escena.haptico('suave');
@@ -865,7 +903,7 @@ const Entrada = (() => {
     function armarActividad(p, { paso }) {
       cabezaDeCuestionario(p, paso);
       p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuestionario.actividadTitulo')));
-      opcionesDe(p, ['poco', 'algo', 'activo', 'muy'].map((k) => [k, ...tx('entrada.cuestionario.actividad.' + k)]), r.actividad, (v) => { r.actividad = v; });
+      opcionesDe(p, ['poco', 'algo', 'activo', 'muy'].map((k) => [k, ...tx('entrada.cuestionario.actividad.' + k)]), r.actividad, (v) => { r.actividad = v; }, '', ICONOS_DE.actividad);
       p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.seguir'), siguiente, 'ent-principal'));
     }
 
@@ -879,7 +917,7 @@ const Entrada = (() => {
         if (r.objetivo !== 'mantener') textoRitmo.textContent = tx('entrada.cuestionario.ritmoTexto', { pct: numero(Math.abs(RITMO[r.objetivo][r.ritmo]), 2) });
       };
       if (r.sinDeficit && r.objetivo === 'bajar') r.objetivo = 'mantener';
-      const objetivos = opcionesDe(p, [['bajar', tx('entrada.cuestionario.bajar'), r.sinDeficit ? tx('entrada.cuidado.bajarNo') : null], ['mantener', tx('entrada.cuestionario.mantener')], ['subir', tx('entrada.cuestionario.subir')]], r.objetivo, (v) => { r.objetivo = v; pintarRitmo(); });
+      const objetivos = opcionesDe(p, [['bajar', tx('entrada.cuestionario.bajar'), r.sinDeficit ? tx('entrada.cuidado.bajarNo') : null], ['mantener', tx('entrada.cuestionario.mantener')], ['subir', tx('entrada.cuestionario.subir')]], r.objetivo, (v) => { r.objetivo = v; pintarRitmo(); }, '', ICONOS_DE.objetivo);
       // Sin déficit, bajar de peso no se elige acá: se dice por qué, corto.
       if (r.sinDeficit) objetivos.firstChild.disabled = true;
       ritmo.appendChild(el('span', 'ent-paso', tx('entrada.cuestionario.ritmo')));
