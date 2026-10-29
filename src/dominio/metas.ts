@@ -74,7 +74,8 @@ export const MAYORIA_DE_EDAD = 18;
 /** El peso meta más bajo: el de un índice de masa corporal de 18,5, el borde de lo sano de la OMS. */
 export const IMC_MINIMO = 18.5;
 
-const PISOS: Record<Sexo, number> = { f: 1200, m: 1400 };
+/** Lo mínimo por día: 1.200 kcal para mujeres y 1.500 para hombres, el borde de abajo de la guía AHA/ACC/TOS 2013. */
+const PISOS: Record<Sexo, number> = { f: 1200, m: 1500 };
 /** Proteína por kilo según el objetivo; todas dentro del rango de 1,2 a 2,2 g. */
 const PROTEINA_POR_KG: Record<Objetivo, number> = { bajar: 2.0, mantener: 1.6, subir: 1.8 };
 /** Con mucho peso y pocas calorías, la proteína por kilo se comería el resto: nunca pasa del 40 %. */

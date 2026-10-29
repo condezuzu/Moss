@@ -526,7 +526,7 @@ Cómo anda, en [`nutricion.md`](nutricion.md), «El plan de comidas».
   mantener, se dice por qué y se sugiere un profesional. El embarazo y la
   lactancia se preguntan solo a las mujeres.
 - **El piso y el peso meta:** las metas a mano por debajo del piso (1.200 kcal
-  para mujeres, 1.400 para hombres) no se guardan, y el peso meta no baja de un
+  para mujeres, 1.500 para hombres, desde la 1.1: el borde de abajo de la guía AHA/ACC/TOS 2013) no se guardan, y el peso meta no baja de un
   IMC de 18,5; en los dos casos, una frase corta dice por qué. El ritmo más
   rápido para bajar sigue en 0,75 % del peso por semana, debajo del 1 % pedido.
 - **Ocultar los números** quita las calorías y los gramos de Inicio, Comida y la

@@ -35,7 +35,7 @@ describe('los límites que cuidan', () => {
     expect(motivoParaNo({ kcal: 1100 }, 'f')).toBe('piso');
     expect(motivoParaNo({ kcal: 1200 }, 'f')).toBeNull();
     expect(motivoParaNo({ kcal: 1300 }, 'm')).toBe('piso');
-    expect(pisoDe('m')).toBe(1400);
+    expect(pisoDe('m')).toBe(1500);
   });
 
   it('el peso meta más bajo es el de un IMC de 18,5', () => {

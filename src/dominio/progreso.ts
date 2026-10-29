@@ -4,7 +4,7 @@
 
 import { cambioPorDia, type ComidaDelDia, type Pesada } from './control';
 import { diasEntre, sumarDias, type ClaveDia } from './fechas';
-import { RITMOS, type Objetivo, type Ritmo } from './metas';
+import { KCAL_POR_KG, MAYORIA_DE_EDAD, pisoDe, RITMOS, type Objetivo, type Ritmo, type Sexo } from './metas';
 
 /** El ritmo se mide en las últimas tres semanas de tendencia, y hacen falta al menos dos. */
 const DIAS_DEL_RITMO = 21;
@@ -112,4 +112,119 @@ export function balance(comidas: ComidaDelDia[], gasto: number, hasta: ClaveDia,
     .map((c) => ({ fecha: c.fecha, kcal: c.kcal, balance: c.kcal - gasto }));
   const promedio = lista.length ? lista.reduce((s, d) => s + d.balance, 0) / lista.length : null;
   return { dias: lista, promedio };
+}
+
+// ------------------------------------------------------------ la meta con plazo (D35)
+// Como en MacroFactor (lo pediste el 29/10/2026): con el peso meta, el ritmo da la fecha o la fecha
+// da el ritmo, y se dice cuánto pide ese ritmo y lo que conviene saber. Los bordes y sus fuentes, en
+// spec/evidencia-1.1.md (5).
+
+export type Viabilidad = 'viable' | 'exigente' | 'muyAgresivo';
+export type Direccion = Exclude<Objetivo, 'mantener'>;
+
+/** Hasta dónde es viable y hasta dónde exigente, en % del peso por semana. */
+export const BORDES: Record<Direccion, readonly [number, number]> = { bajar: [0.5, 1], subir: [0.25, 0.5] };
+/** Bajando, más de 1 kg por semana o más de 1.000 kcal de déficit por día ya es muy agresivo. */
+const KG_POR_SEMANA_MAXIMOS = 1;
+const DEFICIT_MAXIMO = 1000;
+/** Con medio kilo o menos de diferencia no hay camino: es mantener (como LLEGASTE_KG). */
+const SIN_CAMINO_KG = LLEGASTE_KG;
+
+/** Las kcal por día de menos (o de más) que pide un ritmo en kg por semana. */
+export const kcalPorDia = (kgPorSemana: number) => (Math.abs(kgPorSemana) * KCAL_POR_KG) / 7;
+
+/** Qué tan exigente es un ritmo, en % del peso por semana (siempre positivo). */
+export function viabilidad(direccion: Direccion, pct: number, pesoKg: number): Viabilidad {
+  const [viable, exigente] = BORDES[direccion];
+  const kg = (pct / 100) * pesoKg;
+  const demasiado = pct > exigente + 1e-9 || (direccion === 'bajar' && (kg > KG_POR_SEMANA_MAXIMOS + 1e-9 || kcalPorDia(kg) > DEFICIT_MAXIMO + 1e-9));
+  return demasiado ? 'muyAgresivo' : pct > viable + 1e-9 ? 'exigente' : 'viable';
+}
+
+/** El ritmo más rápido que todavía es de una viabilidad, en % del peso por semana. */
+export function bordeDe(direccion: Direccion, cual: 'viable' | 'exigente', pesoKg: number): number {
+  const pct = BORDES[direccion][cual === 'viable' ? 0 : 1];
+  if (direccion === 'subir' || !(pesoKg > 0)) return pct;
+  const maximoKg = Math.min(KG_POR_SEMANA_MAXIMOS, (DEFICIT_MAXIMO * 7) / KCAL_POR_KG);
+  return Math.min(pct, (maximoKg / pesoKg) * 100);
+}
+
+/**
+ * Lo que conviene saber de un plazo: sin entrenamiento de fuerza, bajando se pierde músculo y
+ * subiendo, casi todo es grasa; con ese ritmo la comida quedaría debajo del piso; o es menor de edad
+ * y el ritmo no es el viable.
+ */
+export type AvisoDelPlazo = 'sinFuerzaBajar' | 'sinFuerzaSubir' | 'piso' | 'menor';
+
+export type Plazo = {
+  direccion: Direccion;
+  /** Los kilos que faltan, siempre positivos. */
+  faltan: number;
+  /** El ritmo, en % del peso de hoy y en kg por semana (siempre positivos), y las kcal por día de menos o de más. */
+  pct: number;
+  kgPorSemana: number;
+  kcal: number;
+  fecha: ClaveDia;
+  semanas: number;
+  viabilidad: Viabilidad;
+  /** Desde cuándo sería viable y desde cuándo exigente: lo que se puede sugerir. */
+  fechaViable: ClaveDia;
+  fechaExigente: ClaveDia;
+  /** Lo que pide el piso de kcal: con más déficit, quedaría por debajo; null si no llega a eso. */
+  fechaConPiso: ClaveDia | null;
+  avisos: AvisoDelPlazo[];
+};
+
+export type EntradaDelPlazo = {
+  hoy: ClaveDia;
+  /** El peso de la tendencia hoy (o el último). */
+  pesoKg: number;
+  pesoMeta: number;
+  sexo: Sexo;
+  edad: number;
+  /** Lo que gasta por día (el del último control, o el estimado al empezar). */
+  gasto: number;
+  /** Si entrena fuerza (Perfil › Entrenamiento o Ascent); sin saberlo, null, y el aviso va. */
+  entrenaFuerza: boolean | null;
+};
+
+/** Hacia dónde va, o null si con esa meta no hay camino (es mantener). */
+export const direccionDe = (pesoKg: number, pesoMeta: number): Direccion | null =>
+  Math.abs(pesoMeta - pesoKg) <= SIN_CAMINO_KG ? null : pesoMeta < pesoKg ? 'bajar' : 'subir';
+
+const fechaConRitmo = (hoy: ClaveDia, faltan: number, kgPorSemana: number) => sumarDias(hoy, Math.ceil((faltan / kgPorSemana) * 7));
+
+function armarPlazo(e: EntradaDelPlazo, direccion: Direccion, pct: number, fecha: ClaveDia): Plazo {
+  const faltan = Math.abs(e.pesoMeta - e.pesoKg);
+  const kgPorSemana = (pct / 100) * e.pesoKg;
+  const kcal = kcalPorDia(kgPorSemana);
+  const cual = viabilidad(direccion, pct, e.pesoKg);
+  const conPiso = direccion === 'bajar' ? e.gasto - pisoDe(e.sexo) : Infinity;
+  const fechaConPiso = conPiso <= 0 ? null : direccion === 'bajar' && kcal > conPiso ? fechaConRitmo(e.hoy, faltan, (conPiso * 7) / KCAL_POR_KG) : null;
+  const avisos: AvisoDelPlazo[] = [];
+  if (fechaConPiso || (direccion === 'bajar' && conPiso <= 0)) avisos.push('piso');
+  if (e.edad < MAYORIA_DE_EDAD && cual !== 'viable') avisos.push('menor');
+  if (e.entrenaFuerza !== true) avisos.push(direccion === 'bajar' ? 'sinFuerzaBajar' : 'sinFuerzaSubir');
+  return {
+    direccion, faltan, pct, kgPorSemana, kcal, fecha, semanas: diasEntre(e.hoy, fecha) / 7, viabilidad: cual,
+    fechaViable: fechaConRitmo(e.hoy, faltan, (bordeDe(direccion, 'viable', e.pesoKg) / 100) * e.pesoKg),
+    fechaExigente: fechaConRitmo(e.hoy, faltan, (bordeDe(direccion, 'exigente', e.pesoKg) / 100) * e.pesoKg),
+    fechaConPiso, avisos,
+  };
+}
+
+/** Con el ritmo (en % del peso por semana), la fecha en que se llegaría. null si no hay camino o el ritmo es 0. */
+export function plazoConRitmo(e: EntradaDelPlazo, pct: number): Plazo | null {
+  const direccion = direccionDe(e.pesoKg, e.pesoMeta);
+  if (!direccion || !(pct > 0) || !(e.pesoKg > 0)) return null;
+  return armarPlazo(e, direccion, pct, fechaConRitmo(e.hoy, Math.abs(e.pesoMeta - e.pesoKg), (pct / 100) * e.pesoKg));
+}
+
+/** Con la fecha, el ritmo que hace falta. null si no hay camino o la fecha no es de acá en adelante. */
+export function plazoConFecha(e: EntradaDelPlazo, fecha: ClaveDia): Plazo | null {
+  const direccion = direccionDe(e.pesoKg, e.pesoMeta);
+  const dias = diasEntre(e.hoy, fecha);
+  if (!direccion || dias < 7 || !(e.pesoKg > 0)) return null;
+  const pct = ((Math.abs(e.pesoMeta - e.pesoKg) / (dias / 7)) / e.pesoKg) * 100;
+  return armarPlazo(e, direccion, pct, fecha);
 }

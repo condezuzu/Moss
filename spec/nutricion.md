@@ -440,7 +440,7 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
    - **Ritmo:** bajar es 0,25, 0,5 o 0,75 % del peso por semana; subir es 0,1,
      0,25 o 0,4 %; se pasa a kcal con 7.700 kcal por kilo.
    - **Menores de 18:** bajar «rápido» no está; se usa el recomendado.
-   - **Pisos:** 1.200 kcal para mujeres y 1.400 para hombres.
+   - **Pisos:** 1.200 kcal para mujeres y 1.500 para hombres (la guía AHA/ACC/TOS 2013; hasta la 1.0, 1.400).
    - **Redondeo:** el gasto y las kcal, a la decena.
    - Es la cuenta de la galería (`galeria/src/entrada.js`, `metas`). El ejemplo
      de la galería da 2.770 kcal, con 119 g de proteína, 387 de carbohidratos y

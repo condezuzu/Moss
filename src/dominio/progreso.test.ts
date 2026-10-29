@@ -2,8 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 
 import { estadoDelControl, tendencia, ultimoDiaDeControl, type Pesada } from './control';
 import { sumarDias } from './fechas';
-import { estadoDeMacro } from './metas';
-import { balance, progresoAlObjetivo, ritmoSemanal } from './progreso';
+import { estadoDeMacro, RITMOS } from './metas';
+import { balance, bordeDe, direccionDe, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoSemanal, viabilidad, type EntradaDelPlazo } from './progreso';
 
 const HOY = '2026-10-21';
 /** Pesadas de todos los días hasta hoy, bajando `kgPorSemana` desde `inicial`. */
@@ -134,5 +134,64 @@ describe('el día del control', () => {
     expect(viernes).toMatchObject({ fecha: '2026-10-23', tramoCorto: true, alcanza: false });
     // Sin nada registrado todavía, lo más pronto es hoy.
     expect(estadoDelControl({ hoy: HOY, dia: 1, ultimaMeta: '2026-10-19', pesadas: [], comidas: [] }).tramoCorto).toBe(true);
+  });
+});
+
+describe('la meta con plazo', () => {
+  const HOY = '2026-10-29';
+  const ELLA: EntradaDelPlazo = { hoy: HOY, pesoKg: 80, pesoMeta: 72, sexo: 'f', edad: 34, gasto: 2300, entrenaFuerza: true };
+
+  it('bajar hasta 0,5 % por semana es viable; hasta 1 %, exigente; más, muy agresivo', () => {
+    expect(viabilidad('bajar', 0.5, 80)).toBe('viable');
+    expect(viabilidad('bajar', 0.75, 80)).toBe('exigente');
+    expect(viabilidad('bajar', 1, 80)).toBe('exigente');
+    expect(viabilidad('bajar', 1.1, 80)).toBe('muyAgresivo');
+    // Con mucho peso, el kilo por semana y las 1.000 kcal de déficit llegan antes que el 1 %.
+    expect(viabilidad('bajar', 0.95, 120)).toBe('muyAgresivo');
+    expect(viabilidad('bajar', 0.9, 105)).toBe('muyAgresivo');
+    expect(bordeDe('bajar', 'exigente', 120)).toBeCloseTo(((1000 * 7) / 7700 / 120) * 100, 9);
+    // El «rápido» de Moss es exigente.
+    expect(viabilidad('bajar', -RITMOS.bajar.rapido, 80)).toBe('exigente');
+  });
+
+  it('subir hasta 0,25 % es viable; hasta 0,5 %, exigente; más, muy agresivo', () => {
+    expect(viabilidad('subir', 0.25, 70)).toBe('viable');
+    expect(viabilidad('subir', 0.4, 70)).toBe('exigente');
+    expect(viabilidad('subir', 0.6, 70)).toBe('muyAgresivo');
+  });
+
+  it('con el ritmo, la fecha; con la fecha, el ritmo', () => {
+    const conRitmo = plazoConRitmo(ELLA, 0.5)!;
+    // 0,4 kg por semana para 8 kg: 20 semanas.
+    expect(conRitmo).toMatchObject({ direccion: 'bajar', faltan: 8, fecha: sumarDias(HOY, 140), viabilidad: 'viable', avisos: [] });
+    expect(conRitmo.kgPorSemana).toBeCloseTo(0.4, 9);
+    expect(conRitmo.kcal).toBeCloseTo(440, 9);
+    const enDiez = plazoConFecha(ELLA, sumarDias(HOY, 70))!;
+    expect(enDiez.pct).toBeCloseTo(1, 9);
+    expect(enDiez.viabilidad).toBe('exigente');
+    expect(plazoConFecha(ELLA, sumarDias(HOY, 56))!.viabilidad).toBe('muyAgresivo');
+    // Lo que se puede sugerir: viable desde las 20 semanas y exigente desde las 10.
+    expect(enDiez).toMatchObject({ fechaViable: sumarDias(HOY, 140), fechaExigente: sumarDias(HOY, 70) });
+    const subir = plazoConRitmo({ ...ELLA, pesoKg: 70, pesoMeta: 75 }, 0.25)!;
+    expect(subir).toMatchObject({ direccion: 'subir', fecha: sumarDias(HOY, 200), viabilidad: 'viable' });
+  });
+
+  it('sin camino o sin tiempo no hay plazo', () => {
+    expect(direccionDe(80, 79.6)).toBeNull();
+    expect(plazoConRitmo({ ...ELLA, pesoMeta: 79.8 }, 0.5)).toBeNull();
+    expect(plazoConRitmo(ELLA, 0)).toBeNull();
+    expect(plazoConFecha(ELLA, sumarDias(HOY, 3))).toBeNull();
+  });
+
+  it('avisa del piso, de la edad y de la fuerza', () => {
+    // Con 1.700 kcal de gasto y el piso de 1.200, el déficit no pasa de 500 kcal: 8 kg en 124 días.
+    const piso = plazoConFecha({ ...ELLA, gasto: 1700 }, sumarDias(HOY, 70))!;
+    expect(piso.avisos).toEqual(['piso']);
+    expect(piso.fechaConPiso).toBe(sumarDias(HOY, 124));
+    expect(plazoConRitmo({ ...ELLA, gasto: 1700 }, 0.5)!.fechaConPiso).toBeNull();
+    expect(plazoConFecha({ ...ELLA, edad: 17 }, sumarDias(HOY, 70))!.avisos).toEqual(['menor']);
+    expect(plazoConRitmo({ ...ELLA, edad: 17 }, 0.5)!.avisos).toEqual([]);
+    expect(plazoConRitmo({ ...ELLA, entrenaFuerza: null }, 0.5)!.avisos).toEqual(['sinFuerzaBajar']);
+    expect(plazoConRitmo({ ...ELLA, pesoKg: 70, pesoMeta: 75, entrenaFuerza: false }, 0.25)!.avisos).toEqual(['sinFuerzaSubir']);
   });
 });
