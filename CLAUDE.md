@@ -93,6 +93,8 @@ SDK y la memoria no alcanza.
   - Moss vive en el esquema `moss` y **nunca toca `public`** (es de Ascent).
   - **Nunca llama funciones de Ascent**: lee sus tablas desde funciones propias
     que revisan el vínculo. Ver `spec/ascent.md`.
+- **Respondeme siempre en español** (lo pediste el 28/10/2026): los mensajes, los
+  resúmenes y las preguntas, aunque el pedido o una herramienta vengan en otro idioma.
 - Paquetes siempre con `npx expo install`.
 - Comentá solo las líneas que tienen un porqué no obvio.
 - **Antes de dar algo por terminado:**

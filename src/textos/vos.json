@@ -20,7 +20,8 @@
         "existe": "Ya hay una cuenta con ese correo: entrá con tu contraseña.",
         "correo": "Escribí tu correo.",
         "otro": "No se pudo entrar. Intentalo de nuevo."
-      }
+      },
+      "lema": "Tu cielo empieza acá."
     },
     "cuestionario": {
       "edadTitulo": "¿Cuántos años tenés?",
@@ -54,7 +55,7 @@
       ]
     },
     "menor": {
-      "texto": "Según Salud, todavía no tenés 16 años. Cuando los cumplas, aquí te esperamos."
+      "texto": "Según Salud, todavía no tenés 16 años. Cuando los cumplas, acá te esperamos."
     },
     "cuidado": {
       "aviso": "Moss no te propondrá comer menos de lo que gastás. Para cambiar tu peso, mejor con un profesional que te acompañe."
@@ -96,7 +97,7 @@
       "nota": "Contanos más (opcional)"
     },
     "plan": {
-      "sinCompras": "Armá algún día y aparece aquí.",
+      "sinCompras": "Armá algún día y aparece acá.",
       "preferenciasTexto": "Moss arma primero con lo que comés seguido; si falta, con comidas tipo de tu forma de comer.",
       "dieta": "Cómo comés",
       "alergias": "Lo que no comés"
@@ -183,7 +184,7 @@
     "afinar": {
       "despertador": {
         "texto": "Suena aunque el iPhone esté en silencio o con un enfoque, y Moss anota la hora en que lo parás: así sabe cuándo te despertaste.",
-        "reloj": "Si querés, reemplaza a la alarma del Reloj: apagala allí para que no suenen dos.",
+        "reloj": "Si querés, reemplaza a la alarma del Reloj: apagala ahí para que no suenen dos.",
         "sinPermiso": "Moss no tiene permiso para poner alarmas. Podés darlo en Ajustes.",
         "error": "No se pudo poner el despertador. Probá de nuevo."
       },
@@ -202,7 +203,7 @@
   "perfil": {
     "agregarNombre": "Agregá tu nombre",
     "editar": {
-      "sinNombre": "¿Cómo te llamás? Solo lo ves vos, aquí en Perfil."
+      "sinNombre": "¿Cómo te llamás? Solo lo ves vos, acá en Perfil."
     },
     "errorBorrar": "No se pudo. Revisá la conexión e intentalo de nuevo.",
     "sinSubirTexto": "Sin conexión no se pudo subir lo que anotaste hace poco. Si cerrás sesión ahora, se pierde.",
@@ -212,7 +213,7 @@
       "Tus datos son tuyos. Moss guarda lo que anotás, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte con terceros, no muestra publicidad y no te rastrea.",
       "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, fecha de nacimiento, sexo y altura y, de la noche, frecuencia cardíaca, frecuencia en reposo, variabilidad y respiración. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura, qué hábitos cumpliste y la hora estimada de tu noche; lo demás queda en el teléfono. Moss no escribe en Salud.",
       "Las fotos de la comida y la de tu perfil quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
-      "Si lo elegís, lo que buscás y no encontrás se manda sin tu nombre; un error que reportás, también. Podés exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
+      "Si lo elegís, lo que buscás y no encontrás se manda sin tu nombre; un error que reportás, también. Podés exportar todo en CSV y borrar tus datos o tu cuenta desde acá."
     ],
     "recordatoriosTexto": "Un rato después de tu hora de siempre, y solo si todavía no anotaste esa comida. Si no abrís Moss en una semana, paran solos.",
     "recordatoriosSinPermiso": "Para avisarte, Moss necesita permiso para las notificaciones: activalo en los Ajustes del iPhone.",
@@ -260,7 +261,8 @@
         "sueno": "Tus mejores marcas llegan las semanas que dormís {horas} o más.",
         "proteina": "Tus mejores marcas llegan las semanas que llegás a la proteína.",
         "calorias": "Tus mejores marcas llegan las semanas que comés más cerca de tu gasto."
-      }
+      },
+      "sinEstancar": "Ningún ejercicio lleva semanas sin subir. Si alguno se estanca, acá verás la causa probable."
     },
     "funciones": {
       "peso": {
@@ -279,7 +281,7 @@
         "descarga": "Venís de una semana de descarga, con la misma carga",
         "sinEntrenarlo": "Hace {dias} días que no lo entrenás"
       },
-      "sinSesion": "Cuando anotes sesiones en Ascent, aquí verás qué podés esperar hoy."
+      "sinSesion": "Cuando anotes sesiones en Ascent, acá verás qué podés esperar hoy."
     },
     "musculos": {
       "texto": "Qué músculos están descansados y cuáles no, con las series que anotás en Ascent."
@@ -299,7 +301,7 @@
         "titulo": "Abrí Ascent y volvé"
       },
       "sinAscent": {
-        "texto": "Si la usás en otro teléfono, entrá con tu cuenta de Ascent aquí abajo."
+        "texto": "Si la usás en otro teléfono, entrá con tu cuenta de Ascent acá abajo."
       },
       "errores": {
         "sin_sesion": "Tu sesión de Moss se cerró. Volvé a entrar a Moss y probá de nuevo.",

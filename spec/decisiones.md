@@ -255,7 +255,7 @@ resto del español queda con tú, como ahora.»
   con las mismas claves. `hablaDeVos()` (`src/textos/index.ts`) mira la región
   del teléfono una vez; `t()`, `lista()` y `plural()` buscan primero ahí.
 - El subjuntivo queda como con tú («cuando quieras»), que es como se dice en
-  Uruguay. «Aquí» y «allí» quedan.
+  Uruguay. «Aquí» pasa a «acá» y «allí» a «ahí» (lo pediste el 28/10/2026).
 - `vos.test.ts` revisa que cada clave exista en `es.json` con la misma forma y las
   mismas variables, y que no quede ninguna forma de tú.
 - Lo que no pasa por `t()` sigue con tú hasta la próxima build: las frases de las

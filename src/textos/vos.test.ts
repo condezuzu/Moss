@@ -41,7 +41,8 @@ test('con las mismas variables que en es.json', () => {
 });
 
 test('con vos encima, ningún texto queda con formas de tú', () => {
-  const TU = /\b(tú|contigo|tienes|puedes|quieres|eres|haces|sabes|necesitas|prefieres|sueles|registras|comes|duermes)\b/i;
+  // «Aquí» y «allí» también: de vos se dice «acá» y «ahí» (lo pediste el 28/10/2026).
+  const TU = /(?<!\p{L})(tú|contigo|tienes|puedes|quieres|eres|haces|sabes|necesitas|prefieres|sueles|registras|comes|duermes|aquí|allí)(?!\p{L})/iu;
   const conVos = new Map(deVos);
   const quedan = hojas(es as Nodo)
     .flatMap(([ruta, valor]) => textos(conVos.get(ruta) ?? valor).map((texto) => [ruta, texto] as const))
