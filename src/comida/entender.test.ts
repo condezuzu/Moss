@@ -184,6 +184,56 @@ describe('los platos dichos sin cantidad (D36)', () => {
     expect(gramos(dos)).toEqual([320, 500, 750]);
   });
 
+  it('«medio plato de arroz» es la mitad de un plato, aunque ya se haya comido arroz (lo pediste el 30/10/2026)', async () => {
+    const [medio] = await decir('medio plato de arroz');
+    expect(medio.pregunta).toBe('tamano');
+    expect(gramos(medio)).toEqual([80, 125, 188]);
+    expect(medio.elegida).toBe(1);
+    expect(medio.supuesto).toBe(true);
+    // Antes era media taza, por la última vez; la vez anterior solo marca el tamaño más cercano.
+    const [conAntes] = await decir('medio plato de arroz', { ultimaCantidad: () => ({ gramos: 80 }), conocido: () => true });
+    expect(gramos(conAntes)).toEqual([80, 125, 188]);
+    expect(conAntes.elegida).toBe(0);
+  });
+
+  it('un plato de cualquier cosa da una cantidad con sentido: no 100 g ni media porción', async () => {
+    const [pollo] = await decir('medio plato de pollo');
+    expect(pollo.pregunta).toBe('tamano');
+    expect(gramos(pollo)).toEqual([50, 75, 113]);
+    const [carne] = await decir('un plato de carne');
+    expect(gramos(carne)).toEqual([100, 150, 225]);
+    const [verduras] = await decir('un plato de verduras');
+    expect(gramos(verduras)).toEqual([100, 150, 225]);
+    const [poroto] = await decir('un plato de porotos');
+    expect(gramos(poroto)).toEqual([90, 150, 200]);
+    // «Pollo» a secas sigue preguntando cuál, no el tamaño.
+    const [solo] = await decir('pollo');
+    expect(solo.pregunta).not.toBe('tamano');
+  });
+
+  it('«un poco» y «mucho»: el plato chico o grande, sin preguntar; de lo demás, media porción o una y media', async () => {
+    const [poco] = await decir('un poco de arroz');
+    expect(gramos(poco)).toEqual([160]);
+    expect(poco).toMatchObject({ pregunta: null, supuesto: true });
+    const [mucho] = await decir('mucho arroz');
+    expect(gramos(mucho)).toEqual([375]);
+    expect(mucho.pregunta).toBeNull();
+    const [queso] = await decir('un poco de queso muzzarella', { conocido: () => true });
+    expect(queso.supuesto).toBe(true);
+    expect(queso.pregunta).toBeNull();
+    const c = queso.opciones[queso.elegida].cantidad;
+    expect('veces' in c ? c.veces : 0.5).toBe(0.5);
+  });
+
+  it('«media pizza» son cuatro porciones, no media porción', async () => {
+    const [media] = await decir('media pizza');
+    expect(gramos(media)).toEqual([480]);
+    expect(media).toMatchObject({ pregunta: null, supuesto: true });
+    // Media empanada sí es media.
+    const [empanada] = await decir('media empanada');
+    expect(empanada.opciones[empanada.elegida].cantidad).toMatchObject({ veces: 0.5 });
+  });
+
   it('un plato sin «plato» y sin cantidad también; lo contado o lo ya comido, no', async () => {
     const [guiso] = await decir('guiso');
     expect(guiso.pregunta).toBe('tamano');

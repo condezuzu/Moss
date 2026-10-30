@@ -20,6 +20,12 @@ const FRANJAS: readonly (readonly [number, Comida])[] = [
   [19 * 60 + 30, 'cena'],
 ];
 
+/**
+ * A qué minuto va lo dicho con el nombre de una comida (lo pediste el 30/10/2026): «el desayuno comí…»,
+ * dicho a la tarde, va a la hora de esa comida; si esa hora recién pasó o no llegó, a la de ahora (null).
+ */
+export const minutoDeLoDicho = (hora: number | undefined, ahora: number): number | null => (hora !== undefined && hora + 60 <= ahora ? hora : null);
+
 /** Las que tienen hora en el día, en orden: el snack va a cualquier hora y no corre nada. */
 export const CON_HORA = ['desayuno', 'almuerzo', 'merienda', 'cena'] as const;
 

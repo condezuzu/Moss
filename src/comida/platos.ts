@@ -30,6 +30,25 @@ const TABLA: readonly (readonly [RegExp, PorcionesDePlato])[] = [
   [/\b(?:tartas?|pascualina|quiche)\b/, { chico: 120, mediano: 180, grande: 250 }],
 ];
 
+/**
+ * Lo que no es un plato por sí mismo, pero se dice así (lo pediste el 30/10/2026): «medio plato de
+ * pollo», «un plato de verduras». Solo cuando se nombró el plato: «pollo» a secas no pregunta el tamaño.
+ */
+const CUANDO_SE_DICE_PLATO: readonly (readonly [RegExp, PorcionesDePlato])[] = [
+  [/\b(?:pollo|pechuga|carne|bife|asado|lomo|cerdo|pavo|pescado|merluza|salmon|atun)/, { chico: 100, mediano: 150, grande: 225 }],
+  [/\b(?:verduras?|vegetales|vegetables?|brocoli|zapallo|calabaza|espinaca|acelga|chauchas?|judias|zanahorias?|berenjenas?)/, { chico: 100, mediano: 150, grande: 225 }],
+  [/\b(?:garbanzos?|porotos?|frijoles?|habas?|arvejas?|alubias?)/, { chico: 90, mediano: 150, grande: 200 }],
+  [/\b(?:papas?|patatas?|boniatos?|batatas?|camote)/, { chico: 125, mediano: 200, grande: 300 }],
+];
+/** Un plato de cualquier otra cosa: como uno de arroz. Queda «aproximado» y se puede cambiar. */
+const PLATO_CUALQUIERA: PorcionesDePlato = { chico: 160, mediano: 250, grande: 375 };
+
+/** Las cosas que se cortan en porciones, enteras: «media pizza» son 4 porciones de 8, no media porción. */
+const ENTERAS: readonly (readonly [RegExp, number])[] = [
+  [/\bpizzas?\b/, 8 * 120],
+  [/\b(?:tartas?|pascualina|quiche)\b/, 6 * 180],
+];
+
 const llano = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /**
@@ -44,6 +63,18 @@ export function porcionesDePlato(...nombres: (string | null | undefined)[]): Por
     if (fila) return fila[1];
   }
   return null;
+}
+
+/** Se dijo «un plato de…»: lo de la tabla, el «1 plato» de la base o, si no, lo que da cualquier plato. */
+export function porcionesAlDecirPlato(deLaBase: PorcionesDePlato | null, ...nombres: (string | null | undefined)[]): PorcionesDePlato {
+  const textos = nombres.flatMap((n) => (n ? [llano(n)] : []));
+  return porcionesDePlato(...nombres) ?? deLaBase ?? CUANDO_SE_DICE_PLATO.find(([re]) => textos.some((t) => re.test(t)))?.[1] ?? PLATO_CUALQUIERA;
+}
+
+/** Cuánto pesa entera una cosa que se corta en porciones, o null si no es de esas. */
+export function gramosDeLaEntera(...nombres: (string | null | undefined)[]): number | null {
+  const textos = nombres.flatMap((n) => (n ? [llano(n)] : []));
+  return ENTERAS.find(([re]) => textos.some((t) => re.test(t)))?.[1] ?? null;
 }
 
 /** De un «1 plato» de la base (los platos de Moss lo tienen): mediano ese, chico y grande en proporción. */

@@ -73,6 +73,59 @@ describe('la comida dicha de una vez', () => {
     expect(leida.dichos.map((d) => d.buscado)).toEqual(['arroz con pollo', 'ensalada']);
   });
 
+  it('la comida nombrada sin preposición, al empezar (lo pediste el 30/10/2026)', () => {
+    expect(leerFrase('el desayuno comí dos tostadas', 'es')).toMatchObject({ comida: 'desayuno', dichos: [{ buscado: 'tostada', cantidad: 2 }] });
+    expect(leerFrase('El almuerzo fue una milanesa', 'es')).toMatchObject({ comida: 'almuerzo', dichos: [{ buscado: 'milanesa', cantidad: 1 }] });
+    expect(leerFrase('la cena comí pizza', 'es')).toMatchObject({ comida: 'cena', dichos: [{ buscado: 'pizza' }] });
+    expect(leerFrase('la merienda un café', 'es')).toMatchObject({ comida: 'merienda', dichos: [{ buscado: 'café' }] });
+    expect(leerFrase('snack: una manzana', 'es')).toMatchObject({ comida: 'snack', dichos: [{ buscado: 'manzana' }] });
+    expect(leerFrase('desayuno: dos huevos', 'es')).toMatchObject({ comida: 'desayuno', dichos: [{ buscado: 'huevo', cantidad: 2 }] });
+    expect(leerFrase('hoy el almuerzo fue una milanesa', 'es').comida).toBe('almuerzo');
+    expect(leerFrase('bueno la cena comí pizza', 'es').comida).toBe('cena');
+    expect(leerFrase('almuerzo de pollo con arroz', 'es').dichos[0].buscado).toBe('pollo');
+    expect(leerFrase('la cena de ayer fue pizza', 'es')).toMatchObject({ comida: 'cena', ayer: true, dichos: [{ buscado: 'pizza' }] });
+    expect(leerFrase('breakfast: two eggs', 'en')).toMatchObject({ comida: 'desayuno', dichos: [{ cantidad: 2 }] });
+  });
+
+  it('con preposición, en todas las comidas: también el snack', () => {
+    expect(leerFrase('en el snack una manzana', 'es')).toMatchObject({ comida: 'snack', dichos: [{ buscado: 'manzana' }] });
+    expect(leerFrase('para el snack unas galletitas', 'es').comida).toBe('snack');
+    expect(leerFrase('de snack una banana', 'es').comida).toBe('snack');
+    expect(leerFrase('como colación una banana', 'es').comida).toBe('snack');
+    expect(leerFrase('a la cena pizza', 'es').comida).toBe('cena');
+    expect(leerFrase('comí dos huevos en el desayuno', 'es')).toMatchObject({ comida: 'desayuno', dichos: [{ buscado: 'huevo' }] });
+    expect(leerFrase('I had two eggs at breakfast', 'en').comida).toBe('desayuno');
+    expect(leerFrase('an apple as a snack', 'en').comida).toBe('snack');
+    expect(leerFrase('cenamos pizza', 'es')).toMatchObject({ comida: 'cena', dichos: [{ buscado: 'pizza' }] });
+    // Lo que no nombra una comida no la inventa.
+    expect(leerFrase('dos huevos', 'es').comida).toBeNull();
+    expect(leerFrase('una cena', 'es').comida).toBeNull();
+  });
+
+  it('un plato de algo, con todas sus formas', () => {
+    const plato = (texto: string) => {
+      const [d] = leerFrase(texto, 'es').dichos;
+      return [d.cantidad, d.buscado, d.vago ?? false, d.plato ?? null];
+    };
+    expect(plato('medio plato de arroz')).toEqual([0.5, 'arroz', true, null]);
+    expect(plato('un cuarto de plato de ensalada')).toEqual([0.25, 'ensalada', true, null]);
+    expect(plato('tres cuartos de plato de fideos')).toEqual([0.75, 'fideo', true, null]);
+    expect(plato('un platito de sopa')).toEqual([1, 'sopa', true, 'chico']);
+    expect(plato('un platazo de ñoquis')).toEqual([1, 'ñoqui', true, 'grande']);
+    expect(plato('un plato hondo de sopa')).toEqual([1, 'sopa', true, null]);
+    expect(plato('un plato lleno de arroz')).toEqual([1, 'arroz', true, 'grande']);
+    expect(plato('un plato de fideos grande')).toEqual([1, 'fideo', true, 'grande']);
+    expect(leerFrase('half a plate of rice', 'en').dichos[0]).toMatchObject({ cantidad: 0.5, buscado: 'rice', vago: true });
+  });
+
+  it('«un poco» y «mucho» dicen cuánto, sin número', () => {
+    expect(leerFrase('un poco de arroz', 'es').dichos[0]).toMatchObject({ buscado: 'arroz', cantidad: null, cuanto: 'poco' });
+    expect(leerFrase('mucho arroz', 'es').dichos[0]).toMatchObject({ buscado: 'arroz', cantidad: null, cuanto: 'mucho' });
+    expect(leerFrase('bastante ensalada', 'es').dichos[0]).toMatchObject({ buscado: 'ensalada', cuanto: 'mucho' });
+    expect(leerFrase('pollo y un poco de ensalada', 'es').dichos.map((d) => [d.buscado, d.cuanto ?? null])).toEqual([['pollo', null], ['ensalada', 'poco']]);
+    expect(leerFrase('a little rice', 'en').dichos[0]).toMatchObject({ buscado: 'rice', cuanto: 'poco' });
+  });
+
   it('sin cantidad, sin cantidad: lo decide la historia o la porción típica', () => {
     expect(resumen('un chivito, papas fritas y una coca')).toEqual([[1, null, 'chivito', false], [null, null, 'papa frita', false], [1, null, 'coca', false]]);
   });

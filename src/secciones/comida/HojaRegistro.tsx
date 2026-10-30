@@ -41,7 +41,7 @@ import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './c
 import { PanelDecir } from './Decir';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
-import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
+import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoDeLoDicho, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
 import { Escaner } from './Escaner';
 import {
   PanelCrear, PanelGuardadas, PanelGuardarComo, PanelPegarReceta, PanelRapida, PanelReceta, PanelRevision, recetaDe, resumenDeCanasta, type Borrador, type DatosDeEtiqueta,
@@ -755,7 +755,9 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               alAtras={() => (pedido.panel === 'decir' ? cerrar() : setPanel(null))}
               alAgregar={(items, comidaDicha, ayer) => {
                 const elDia = ayer ? sumarDias(e.hoy, -1) : dia;
-                const nuevos = a.registrar(items, { comida: comidaDicha, dia: elDia, momento: momentoPara(elDia, comidaDicha, e.hoy) });
+                // Si se nombró otra comida, va a su hora: «el desayuno comí…», dicho a la tarde.
+                const momento = comidaDicha === comida ? momentoPara(elDia, comidaDicha, e.hoy) : momentoDeLoDicho(e, elDia, comidaDicha);
+                const nuevos = a.registrar(items, { comida: comidaDicha, dia: elDia, momento });
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
                 avisar(plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${comidaDicha}`) }), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
                 cerrar();

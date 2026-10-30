@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { comidaDeLaHora, horasCorridas, HORA_TIPICA } from './comidas';
+import { comidaDeLaHora, horasCorridas, HORA_TIPICA, minutoDeLoDicho } from './comidas';
 
 const a = (h: number, m = 0) => comidaDeLaHora(h * 60 + m);
 
@@ -47,5 +47,14 @@ describe('horasCorridas: lo que falta corre con la última que comiste', () => {
     expect(horasCorridas(HORA_TIPICA, {})).toEqual(HORA_TIPICA);
     expect(horasCorridas({ almuerzo: h(13), cena: h(21) }, { desayuno: h(9) })).toEqual({ desayuno: h(9), almuerzo: h(13), cena: h(21) });
     expect(horasCorridas({ desayuno: h(8), almuerzo: h(13), cena: h(21) }, { desayuno: h(9), snack: h(11) })).toEqual({ desayuno: h(9), almuerzo: h(14), cena: h(22), snack: h(11) });
+  });
+});
+
+describe('lo dicho con el nombre de una comida', () => {
+  it('va a la hora de esa comida si ya pasó; si recién pasó o no llegó, a la de ahora', () => {
+    expect(minutoDeLoDicho(8 * 60, 15 * 60)).toBe(8 * 60);
+    expect(minutoDeLoDicho(13 * 60, 13 * 60 + 30)).toBeNull();
+    expect(minutoDeLoDicho(21 * 60, 15 * 60)).toBeNull();
+    expect(minutoDeLoDicho(undefined, 15 * 60)).toBeNull();
   });
 });

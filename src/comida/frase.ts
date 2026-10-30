@@ -30,6 +30,8 @@ export type Dicho = {
    */
   vago?: true;
   plato?: 'chico' | 'mediano' | 'grande';
+  /** «Un poco de arroz», «mucho puré»: cuánto, sin número. */
+  cuanto?: 'poco' | 'mucho';
 };
 
 /** `ayer`: se dijo «ayer», «anoche», «yesterday» o «last night»: es del día anterior. «Anoche», sin otra comida, es la cena. */
@@ -37,31 +39,47 @@ export type FraseLeida = { dichos: Dicho[]; comida: Comida | null; ayer: boolean
 
 const NUMERO = '(?:\\d+(?:[.,]\\d+)?|un|una|uno|medio|media|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|a|an|one|two|three|four|five|six|seven|eight|nine|ten|half)';
 /** Lo que abre un alimento nuevo: una cantidad o un artículo. */
-const EMPIEZA_ALIMENTO = new RegExp(`^(?:${NUMERO}|un par|unos|unas|el|la|los|las|some|the|a couple)(?![\\p{L}])`, 'u');
+const EMPIEZA_ALIMENTO = new RegExp(`^(?:${NUMERO}|un par|unos|unas|el|la|los|las|some|the|a couple|much[oa]s?|bastante|poco|algo de)(?![\\p{L}])`, 'u');
 
 const MULETILLAS = /^(?:(?:eh+|em+|mm+|este|bueno|a ver|o sea|nada|mir[aá]|che|pues|entonces|hoy|today|well|so|um+|uh+|okay|ok)(?![\p{L}])[\s,]*)+/u;
 /** El día, dicho en cualquier lugar de la frase («comí pizza anoche»); «pan de ayer» no es el día. */
 const AYER = /(?<![\p{L}])(?<!de\s)(?:ayer|anoche|last night|yesterday)(?![\p{L}])/gu;
 const ANOCHE = /(?<![\p{L}])(?<!de\s)(?:anoche|last night)(?![\p{L}])/u;
-const VERBOS = /^(?:(?:me\s+)?(?:com[ií]|tom[eé]|desayun[eé]|almorc[eé]|merend[eé]|cen[eé]|picote[eé]|clav[eé]|baj[eé])|i\s+(?:had|ate|drank)|had|ate|drank)(?![\p{L}])\s*/u;
+const VERBOS = /^(?:(?:me\s+)?(?:com[ií]|comimos|tom[eé]|tomamos|desayun[eé]|desayunamos|almorc[eé]|almorzamos|merend[eé]|merendamos|cen[eé]|cenamos|picote[eé]|clav[eé]|baj[eé])|(?:i|we)\s+(?:had|ate|drank)|had|ate|drank)(?![\p{L}])\s*/u;
+
+/** La comida con lo que la nombra antes, en cualquier lugar: «en el almuerzo», «de cena», «para el snack», «for lunch». */
+const nombrada = (palabras: string, ingles: string) => new RegExp(
+  `(?:^|\\s)(?:en|de|para|a|al|como)\\s+(?:el\\s+|la\\s+|un\\s+|mi\\s+)?(?:${palabras})(?![\\p{L}])|(?:^|\\s)(?:for|at|during|as)\\s+(?:a\\s+|my\\s+)?(?:${ingles})(?![\\p{L}])`,
+  'u',
+);
 
 const COMIDAS_DICHAS: [RegExp, Comida][] = [
-  [/(?:^|\s)(?:en|de|para|a|al)\s+(?:el\s+|la\s+)?desayuno(?![\p{L}])|for\s+breakfast/u, 'desayuno'],
-  [/(?:^|\s)(?:en|de|para|a|al)\s+(?:el\s+|la\s+)?almuerzo(?![\p{L}])|for\s+lunch/u, 'almuerzo'],
-  [/(?:^|\s)(?:en|de|para|a|al)\s+(?:el\s+|la\s+)?merienda(?![\p{L}])/u, 'merienda'],
-  [/(?:^|\s)(?:en|de|para|a|al)\s+(?:el\s+|la\s+)?cena(?![\p{L}])|for\s+dinner/u, 'cena'],
-  [/(?:^|\s)(?:de|para|como)\s+(?:un\s+)?snack(?![\p{L}])|for\s+a\s+snack/u, 'snack'],
+  [nombrada('desayuno', 'breakfast'), 'desayuno'],
+  [nombrada('almuerzo', 'lunch'), 'almuerzo'],
+  [nombrada('merienda', 'afternoon\\s+snack'), 'merienda'],
+  [nombrada('cena', 'dinner|supper'), 'cena'],
+  [nombrada('snack|colaci[oó]n|tentempi[eé]', 'snack'), 'snack'],
   // El verbo también dice la comida: «desayuné dos huevos».
-  [/(?:^|\s)desayun[eé](?![\p{L}])/u, 'desayuno'],
-  [/(?:^|\s)almorc[eé](?![\p{L}])/u, 'almuerzo'],
-  [/(?:^|\s)merend[eé](?![\p{L}])/u, 'merienda'],
-  [/(?:^|\s)cen[eé](?![\p{L}])/u, 'cena'],
+  [/(?:^|\s)(?:desayun[eé]|desayunamos)(?![\p{L}])/u, 'desayuno'],
+  [/(?:^|\s)(?:almorc[eé]|almorzamos)(?![\p{L}])/u, 'almuerzo'],
+  [/(?:^|\s)(?:merend[eé]|merendamos)(?![\p{L}])/u, 'merienda'],
+  [/(?:^|\s)(?:cen[eé]|cenamos)(?![\p{L}])/u, 'cena'],
   // Y el momento del día, si no se nombró la comida: «a la noche comí pizza».
   [/(?:^|\s)(?:(?:a|en|por)\s+la|esta)\s+ma[ñn]ana(?![\p{L}])|this\s+morning|in\s+the\s+morning/u, 'desayuno'],
   [/(?:^|\s)al?\s+mediod[ií]a(?![\p{L}])|at\s+noon/u, 'almuerzo'],
   [/(?:^|\s)(?:(?:a|en|por)\s+la|esta)\s+tarde(?![\p{L}])|this\s+afternoon|in\s+the\s+afternoon/u, 'merienda'],
   [/(?:^|\s)(?:(?:a|en|por)\s+la|esta)\s+noche(?![\p{L}])|tonight|at\s+night/u, 'cena'],
 ];
+
+/**
+ * La comida al empezar, sin nada antes (lo pediste el 30/10/2026): «el desayuno comí…», «la cena fue
+ * pizza», «desayuno: dos huevos», «almuerzo de pollo». «La cena de ayer» también dice el día.
+ */
+const COMIDA_AL_EMPEZAR = /^(?:y\s+)?(?:el\s+|la\s+|mi\s+|my\s+)?(desayuno|almuerzo|merienda|cena|snack|colaci[oó]n|tentempi[eé]|breakfast|lunch|dinner|supper)(?![\p{L}])(?:\s+de\s+(hoy|ayer)(?![\p{L}])|\s+de(?=\s))?\s*[:,-]?\s*(?:(?:fue|fueron|era|eran|was|were)(?![\p{L}]))?/u;
+const COMIDA_DE_LA_PALABRA: Record<string, Comida> = {
+  desayuno: 'desayuno', breakfast: 'desayuno', almuerzo: 'almuerzo', lunch: 'almuerzo', merienda: 'merienda', cena: 'cena', dinner: 'cena', supper: 'cena',
+  snack: 'snack', colacion: 'snack', colación: 'snack', tentempie: 'snack', tentempié: 'snack',
+};
 
 /** Lo que separa un alimento del siguiente, además de la coma: «después», «también», «de postre», «para tomar». */
 const SEPARADORES = new RegExp(
@@ -126,6 +144,12 @@ export function conCon(texto: string, idioma: Idioma): string[] {
 function prepararTexto(texto: string): { texto: string; comida: Comida | null; ayer: boolean } {
   let s = ` ${texto.toLowerCase().replace(/\s+/g, ' ')} `;
   let comida: Comida | null = null;
+  const desde = s.trim().replace(MULETILLAS, '');
+  const alEmpezar = COMIDA_AL_EMPEZAR.exec(desde);
+  if (alEmpezar) {
+    comida = COMIDA_DE_LA_PALABRA[alEmpezar[1]];
+    s = ` ${desde.slice(alEmpezar[0].length)} `;
+  }
   for (const [re, c] of COMIDAS_DICHAS) {
     if (re.test(s)) {
       comida = comida ?? c;
@@ -134,7 +158,7 @@ function prepararTexto(texto: string): { texto: string; comida: Comida | null; a
   }
   if (!comida && ANOCHE.test(s)) comida = 'cena';
   const sinDia = s.replace(AYER, ' ');
-  const ayer = sinDia !== s;
+  const ayer = sinDia !== s || alEmpezar?.[2] === 'ayer';
   s = sinDia;
   s = s.replace(CORRECCION, (_, segundo: string) => segundo);
   s = s.replace(CORRECCION_DESPUES, (_, cosa: string, segundo: string) => `${segundo}${cosa}`);
@@ -151,8 +175,17 @@ const PALABRA_CANTIDAD = new RegExp(`^(?:${NUMERO}|un par de|unos|unas|el|la|los
  * «Un plato de arroz»: el plato, el bol o la porción son una porción de lo que sigue, quizás con su
  * tamaño («un plato grande de fideos»).
  */
-const RECIPIENTE = new RegExp(`^(${NUMERO})\\s+(?:platos?|bol(?:es)?|bowls?|taz[oó]n(?:es)?|cuencos?|porci[oó]n(?:es)?|raci[oó]n(?:es)?|plates?|servings?)(?:\\s+(chic[oa]s?|median[oa]s?|grandes?|peque[nñ][oa]s?|abundantes?|small|medium|large|big))?\\s+(?:de|of)\\s+`, 'u');
-const TAMANO_DEL_PLATO: Record<string, 'chico' | 'mediano' | 'grande'> = { chic: 'chico', pequ: 'chico', smal: 'chico', medi: 'mediano', gran: 'grande', abun: 'grande', larg: 'grande', big: 'grande' };
+const RECIPIENTE = new RegExp(`^(${NUMERO}|un\\s+cuarto\\s+de|tres\\s+cuartos\\s+de|un\\s+tercio\\s+de|half\\s+a|a\\s+quarter\\s+of|a\\s+third\\s+of)\\s+(plat(?:os?|itos?|azos?)|bol(?:es)?|bowls?|taz[oó]n(?:es)?|cuencos?|porci[oó]n(?:es)?|raci[oó]n(?:es)?|plates?|servings?)(?:\\s+(?:hond[oa]s?|play[oa]s?))?(?:\\s+(chic[oa]s?|median[oa]s?|grandes?|peque[nñ][oa]s?|abundantes?|llen[oa]s?|colmad[oa]s?|bien\\s+servid[oa]s?|small|medium|large|big|full))?\\s+(?:de|of)\\s+`, 'u');
+const TAMANO_DEL_PLATO: Record<string, 'chico' | 'mediano' | 'grande'> = {
+  chic: 'chico', pequ: 'chico', smal: 'chico', medi: 'mediano', gran: 'grande', abun: 'grande', llen: 'grande', colm: 'grande', bien: 'grande', larg: 'grande', big: 'grande', full: 'grande',
+};
+/** Lo que no es una palabra de cantidad de las de siempre: «un cuarto de plato». */
+const FRACCION_DEL_PLATO: Record<string, number> = { 'un cuarto de': 0.25, 'tres cuartos de': 0.75, 'un tercio de': 0.33, 'half a': 0.5, 'a quarter of': 0.25, 'a third of': 0.33 };
+/** El tamaño que se dijo después del alimento, como lo lee recetaDeTexto: «un plato de fideos grande». */
+const TAMANO_DE_LA_RECETA: Record<Tamano, 'chico' | 'mediano' | 'grande'> = { pequeno: 'chico', mediano: 'mediano', grande: 'grande' };
+/** «Un poco de arroz», «mucho puré», «bastante ensalada». */
+const POCO = /^(?:un\s+poco(?:\s+de)?|un\s+poquito(?:\s+de)?|poquito(?:\s+de)?|poco(?:\s+de)?|algo\s+de|a\s+little(?:\s+bit)?(?:\s+of)?|a\s+bit\s+of)\s+/u;
+const MUCHO = /^(?:much[oa]s?(?:\s+de)?|bastante(?:\s+de)?|un\s+mont[oó]n\s+de|a\s+lot\s+of|lots\s+of|plenty\s+of)\s+/u;
 
 function dichoDeLinea(texto: string, l: LineaDeReceta, idioma: Idioma): Dicho {
   const medida = l.unidad ? nombreDeMedida(l.unidad, idioma) : null;
@@ -161,10 +194,15 @@ function dichoDeLinea(texto: string, l: LineaDeReceta, idioma: Idioma): Dicho {
 
 /** Un pedazo: con recetaDeTexto; si no encuentra el alimento («un cortado» le parece una preparación), lo que queda sin la cantidad. */
 function leerUno(original: string, idioma: Idioma): Dicho {
+  const cuanto = POCO.exec(original) ?? MUCHO.exec(original);
+  if (cuanto) return { ...leerSinRecipiente(original, original.slice(cuanto[0].length), idioma), cantidad: null, cuanto: POCO.test(original) ? 'poco' : 'mucho' };
   const recipiente = RECIPIENTE.exec(original);
-  const tamano = recipiente?.[2] ? TAMANO_DEL_PLATO[recipiente[2].slice(0, 4)] ?? TAMANO_DEL_PLATO[recipiente[2].slice(0, 3)] : undefined;
-  const vago = recipiente ? { vago: true as const, ...(tamano ? { plato: tamano } : {}) } : {};
-  return { ...leerSinRecipiente(original, original.replace(RECIPIENTE, '$1 '), idioma), ...vago };
+  if (!recipiente) return leerSinRecipiente(original, original, idioma);
+  const [todo, numero, cual, dicho] = recipiente;
+  const leido = leerSinRecipiente(original, `${FRACCION_DEL_PLATO[numero] ?? numero} ${original.slice(todo.length)}`, idioma);
+  const porLaPalabra = cual.startsWith('platit') ? 'chico' as const : cual.startsWith('plataz') ? 'grande' as const : undefined;
+  const plato = dicho ? TAMANO_DEL_PLATO[dicho.slice(0, 4)] ?? TAMANO_DEL_PLATO[dicho.slice(0, 3)] : porLaPalabra ?? (leido.tamano ? TAMANO_DE_LA_RECETA[leido.tamano] : undefined);
+  return { ...leido, vago: true, ...(plato ? { plato } : {}) };
 }
 
 function leerSinRecipiente(original: string, texto: string, idioma: Idioma): Dicho {
