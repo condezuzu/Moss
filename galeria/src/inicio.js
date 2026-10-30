@@ -107,7 +107,8 @@ const SeccionInicio = (() => {
         const barra = el('i', 'in-macro-barra');
         const relleno = el('i');
         barra.appendChild(relleno);
-        x.append(el('span', 'in-macro-nombre', tx('comida.' + clave)), el('b', null, valor), barra);
+        // Lo comido y la meta siempre a la vista: también al pasarse.
+        x.append(el('span', 'in-macro-nombre', tx('comida.' + clave)), el('b', null, valor), barra, el('small', null, tx('comida.gramosDe', { n: numero(Math.round(t[m])), meta: numero(meta[m]) })));
         llenar(relleno, 'macro-' + m, `${Math.min(100, (t[m] / meta[m]) * 100).toFixed(1)}%`);
         macros.appendChild(x);
       });

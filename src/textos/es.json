@@ -1317,7 +1317,20 @@
         "samsung": {
           "nombre": "Samsung o Pixel Watch",
           "texto": "El Pixel Watch, el Galaxy Watch y el Galaxy Ring no funcionan con iPhone."
+        },
+        "anillo": {
+          "nombre": "Otros anillos",
+          "texto": "Evie, Circular, Colmi y otros: lo que su app mande a Salud, que a veces no incluye el sueño. Si la noche no aparece en la app Salud, a Moss tampoco le llega."
         }
+      },
+      "noLlego": {
+        "titulo": "¿Usaste un reloj o un anillo y no llegó nada?",
+        "pasos": [
+          "En la app del aparato, prende la conexión con Salud (Apple Health) y deja que escriba Sueño.",
+          "Abre esa app a la mañana: muchas solo mandan los datos al abrirlas.",
+          "En la app Salud, mira en Explorar › Sueño si está esa noche. Si ahí no está, a Moss tampoco le llega: Moss solo lee lo que hay en Salud.",
+          "En Ajustes › Privacidad y seguridad › Salud › Moss, deja prendido Sueño."
+        ]
       }
     },
     "cuidado": "Cuidados",

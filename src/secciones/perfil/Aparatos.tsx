@@ -10,7 +10,7 @@ import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { sumarDias } from '@/dominio/fechas';
 import { marcaDe, NIVEL_DE_LA_MARCA, type Fuente } from '@/dominio/sueno';
-import { plural, t } from '@/textos';
+import { lista as listaDeTextos, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
 import { useEstado } from '../comida/datos';
@@ -19,13 +19,13 @@ import { HojaModal } from '../HojaModal';
 import { Aparece, EtiquetaDeGrupo, Parrafo } from '../tarjetas';
 
 /** Las marcas de la lista, en el orden en que miden mejor el sueño (spec/aparatos.md, «El orden»). */
-const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'coros', 'suunto', 'eightSleep', 'samsung'] as const;
+const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'anillo', 'coros', 'suunto', 'eightSleep', 'samsung'] as const;
 type ConTexto = (typeof MARCAS)[number] | 'iphone';
 
-/** El nombre de la marca si se reconoce (Xiaomi y Huawei van con Amazfit en la lista); si no, el de la app. */
+/** El nombre de la marca si se reconoce (Xiaomi y Huawei van con Amazfit en la lista); si no, o si es otro anillo, el de la app. */
 const nombreDe = (f: Fuente) => {
   const m = marcaDe(f);
-  return (MARCAS as readonly string[]).includes(m) ? t(`perfil.aparatos.marcas.${m as (typeof MARCAS)[number]}.nombre`) : f.nombre;
+  return m !== 'anillo' && (MARCAS as readonly string[]).includes(m) ? t(`perfil.aparatos.marcas.${m as (typeof MARCAS)[number]}.nombre`) : f.nombre;
 };
 
 /** El aparato de las noches para la fila de Perfil: el que mejor mide entre los que escribieron sueño; sin ninguno, el iPhone. */
@@ -57,6 +57,27 @@ function DeCadaUno({ marca, abierta, alTocar, primera }: { marca: ConTexto; abie
       {abierta && (
         <Aparece>
           <Text style={st.marcaTexto}>{t(`perfil.aparatos.marcas.${marca}.texto`)}</Text>
+        </Aparece>
+      )}
+    </View>
+  );
+}
+
+/** Si un aparato no aparece, qué mirar y en qué orden: Moss solo lee lo que hay en Salud (spec/aparatos.md). */
+function NoLlego() {
+  const [abierta, setAbierta] = useState(false);
+  const giro = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '90deg' : '0deg', { duration: 260 }) }] }), [abierta]);
+  return (
+    <View style={[st.lista, st.noLlego]}>
+      <Pressable onPress={() => setAbierta((x) => !x)} style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
+        <Text style={st.filaTitulo}>{t('perfil.aparatos.noLlego.titulo')}</Text>
+        <Animated.View style={giro}>
+          <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" />
+        </Animated.View>
+      </Pressable>
+      {abierta && (
+        <Aparece>
+          {listaDeTextos('perfil.aparatos.noLlego.pasos').map((paso, i) => <Text key={paso} style={st.marcaTexto}>{`${i + 1}. ${paso}`}</Text>)}
         </Aparece>
       )}
     </View>
@@ -99,6 +120,7 @@ export function Aparatos({ alCerrar }: { alCerrar: () => void }) {
           </View>
         )}
       </View>
+      <NoLlego />
       {aparatos.length > 1 && (
         <Aparece>
           <EtiquetaDeGrupo>{t('perfil.aparatos.laNoche')}</EtiquetaDeGrupo>
@@ -122,6 +144,7 @@ export function Aparatos({ alCerrar }: { alCerrar: () => void }) {
 const st = StyleSheet.create({
   lista: { borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(8, 12, 26, 0.72)' },
   separada: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
+  noLlego: { marginTop: 10 },
   tuyo: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 16 },
   filaTitulo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },

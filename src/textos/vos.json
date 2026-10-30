@@ -245,6 +245,14 @@
         "withings": {
           "texto": "El peso y la composición corporal; con el Sleep Analyzer o un ScanWatch, también el sueño. Si creaste tu cuenta después del 12 de octubre de 2026, necesitás Withings+ para mandar datos a Salud."
         }
+      },
+      "noLlego": {
+        "pasos": [
+          "En la app del aparato, prendé la conexión con Salud (Apple Health) y dejá que escriba Sueño.",
+          "Abrí esa app a la mañana: muchas solo mandan los datos al abrirlas.",
+          "En la app Salud, mirá en Explorar › Sueño si está esa noche. Si ahí no está, a Moss tampoco le llega: Moss solo lee lo que hay en Salud.",
+          "En Ajustes › Privacidad y seguridad › Salud › Moss, dejá prendido Sueño."
+        ]
       }
     },
     "sinDeficitTexto": "Por embarazo, lactancia o una condición médica: Moss no te propone comer menos de lo que gastás.",

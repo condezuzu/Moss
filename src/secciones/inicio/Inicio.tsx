@@ -163,6 +163,8 @@ function CaloriasConMeta({ numeros, comido, meta }: { numeros: boolean; comido: 
               <View style={estilos.barra}>
                 <Relleno fraccion={comido[m] / meta[m]} style={[estilos.barraLlena, { backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
               </View>
+              {/* Lo comido y la meta siempre a la vista: también al pasarse (lo pediste el 30/10/2026). */}
+              {numeros && <Text style={estilos.macroDe}>{t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>}
             </View>
           );
         })}
@@ -485,6 +487,7 @@ const estilos = StyleSheet.create({
   macroNombre: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   macroNombreTexto: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
   macroValor: { fontFamily: letras.numero, fontSize: 20, color: colores.pergamino, fontVariant: ['tabular-nums'] },
+  macroDe: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
   barra: { height: 3, marginTop: 3, borderRadius: 3, backgroundColor: 'rgba(239, 230, 207, 0.08)', overflow: 'hidden' },
   barraLlena: { height: '100%', borderRadius: 3 },
   objFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 9 },

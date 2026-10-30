@@ -9,7 +9,7 @@ const SeccionPerfil = (() => {
   // Lo que anda solo con las dos apps vinculadas, con su ícono (antes en la sección de Ascent).
   const CON_ASCENT = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
   // Las marcas de Aparatos, en el orden en que miden mejor el sueño (spec/aparatos.md, «El orden»).
-  const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'coros', 'suunto', 'eightSleep', 'samsung'];
+  const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'anillo', 'coros', 'suunto', 'eightSleep', 'samsung'];
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
     const { tx, numero, el, boton, icono } = u;
@@ -49,6 +49,18 @@ const SeccionPerfil = (() => {
       if (sinReloj) tuyo('iphone', opciones.nochesSinReloj(), 1);
       else tuyo('appleWatch', Datos.NOCHES.filter((n) => n.clave > Fechas.sumarDias(Datos.HOY, -30)).length, 4);
       cuerpo.appendChild(tuyos);
+      // Si un aparato no aparece, qué mirar y en qué orden: Moss solo lee lo que hay en Salud.
+      const noLlego = el('ul', 'pf-lista pf-marcas pf-no-llego');
+      const liNoLlego = el('li', s.abierta === 'noLlego' ? 'abierta' : null);
+      const filaNoLlego = boton('pf-marca', `<span>${tx('perfil.aparatos.noLlego.titulo')}</span>${icono('adelante')}`, () => {
+        s.abierta = s.abierta === 'noLlego' ? null : 'noLlego';
+        liNoLlego.classList.toggle('abierta', s.abierta === 'noLlego');
+      });
+      const textoNoLlego = el('div', 'pf-marca-texto');
+      tx('perfil.aparatos.noLlego.pasos').forEach((paso, i) => textoNoLlego.appendChild(el('p', null, `${i + 1}. ${paso}`)));
+      liNoLlego.append(filaNoLlego, textoNoLlego);
+      noLlego.appendChild(liNoLlego);
+      cuerpo.appendChild(noLlego);
       // De cuál sale la noche: la automática (la más precisa de cada noche) o la que elijas.
       if (!sinReloj) {
         cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.aparatos.laNoche')));

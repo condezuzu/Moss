@@ -1317,7 +1317,20 @@
         "samsung": {
           "nombre": "Samsung or Pixel Watch",
           "texto": "The Pixel Watch, the Galaxy Watch and the Galaxy Ring don’t work with iPhone."
+        },
+        "anillo": {
+          "nombre": "Other rings",
+          "texto": "Evie, Circular, Colmi and others: whatever their app sends to Health, which sometimes leaves out sleep. If the night isn't in the Health app, it can't reach Moss."
         }
+      },
+      "noLlego": {
+        "titulo": "Used a watch or a ring and nothing came through?",
+        "pasos": [
+          "In the device's app, turn on the Apple Health connection and let it write Sleep.",
+          "Open that app in the morning: many only send data when opened.",
+          "In the Health app, check Browse › Sleep for that night. If it isn't there, it can't reach Moss: Moss only reads what's in Health.",
+          "In Settings › Privacy & Security › Health › Moss, keep Sleep on."
+        ]
       }
     },
     "cuidado": "Care",

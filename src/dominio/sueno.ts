@@ -170,12 +170,14 @@ function episodios(muestras: Muestra[]): Episodio[] {
 /** Las marcas que escriben sueño en Salud (spec/aparatos.md). */
 export type Marca =
   | 'appleWatch' | 'oura' | 'google' | 'whoop' | 'polar' | 'garmin' | 'withings' | 'ringconn' | 'ultrahuman' | 'amazfit' | 'xiaomi'
-  | 'huawei' | 'coros' | 'suunto' | 'eightSleep' | 'otra' | 'telefono' | 'moss';
+  | 'huawei' | 'coros' | 'suunto' | 'eightSleep' | 'anillo' | 'otra' | 'telefono' | 'moss';
 /** Por la app que escribe en Salud (su identificador o su nombre): los aparatos escriben desde su app del iPhone. */
 const MARCAS: [Marca, RegExp][] = [
   ['oura', /oura/i], ['google', /fitbit|google/i], ['whoop', /whoop/i], ['polar', /polar/i], ['garmin', /garmin/i],
   ['withings', /withings|health ?mate/i], ['ringconn', /ringconn/i], ['ultrahuman', /ultrahuman/i], ['amazfit', /amazfit|zepp|huami/i],
   ['xiaomi', /xiaomi|mi ?fit/i], ['huawei', /huawei/i], ['coros', /coros/i], ['suunto', /suunto/i], ['eightSleep', /eight ?sleep/i],
+  // Los demás anillos: su app corre en el iPhone, pero mide un aparato, no el teléfono.
+  ['anillo', /qring|colmi|evie|movano|circular|\bring\b|anillo/i],
 ];
 /** La marca de un aparato o una app, por su identificador y su nombre; sin reconocerla, `otra` o `telefono`. */
 export function marcaDe(f: Pick<Fuente, 'id' | 'nombre' | 'tipo'>): Marca {
@@ -192,7 +194,7 @@ export function marcaDe(f: Pick<Fuente, 'id' | 'nombre' | 'tipo'>): Marca {
  */
 export const NIVEL_DE_LA_MARCA: Record<Marca, number> = {
   appleWatch: 91, oura: 90, google: 80, whoop: 70, polar: 60, garmin: 50, withings: 50,
-  ringconn: 40, ultrahuman: 40, amazfit: 40, xiaomi: 40, huawei: 40, coros: 40, suunto: 40, eightSleep: 40, otra: 40,
+  ringconn: 40, ultrahuman: 40, amazfit: 40, xiaomi: 40, huawei: 40, coros: 40, suunto: 40, eightSleep: 40, anillo: 40, otra: 40,
   telefono: 30, moss: 10,
 };
 
