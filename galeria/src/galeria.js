@@ -432,6 +432,9 @@
     persona,
     cielo: () => escena.hoy || { constelacion: LIRA, habitos: habitosLira() },
     sueno: () => (sueno ? sueno.anoche() : null),
+    sinReloj: () => soloIphone,
+    registrarPeso: () => mas.ir('peso'),
+    medir: () => mas.ir('medidas'),
     ir: (i) => pestanas.ir(i),
   }));
   mas = Mas.crear(tel, Object.assign({}, opcionesDeSeccion, {
@@ -933,6 +936,7 @@
     conDatos: () => { cerrarHojas(); pestanas.ir(0); inicio.primerDia(false); inicio.subir(); },
     cuestionario: () => { cerrarHojas(); entrada.irA('edad'); },
     plan: () => { cerrarHojas(); pestanas.ir(1); comida.armarDia(); },
+    todo: () => { cerrarHojas(); pestanas.ir(0); inicio.subir(); inicio.abrirTodo(); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -1169,7 +1173,7 @@
   window.__via = (v) => { rVia.value = Math.round(v * 100); $('#o-via').textContent = rVia.value + '%'; escena.ponerVia(v); };
   window.__pagina = (i, deUna) => pestanas.ir(i, deUna);
   window.__inicio = (accion, arg) => {
-    const pasos = { personalizar: () => inicio.personalizar(), cerrar: () => inicio.cerrar(), poner: () => inicio.poner(arg[0], arg[1]), mover: () => inicio.mover(arg[0], arg[1]), fabrica: () => inicio.deFabrica(), bajar: () => inicio.bajar(), subir: () => inicio.subir(), primerDia: () => inicio.primerDia(arg) };
+    const pasos = { personalizar: () => inicio.personalizar(), cerrar: () => inicio.cerrar(), poner: () => inicio.poner(arg[0], arg[1]), mover: () => inicio.mover(arg[0], arg[1]), fabrica: () => inicio.deFabrica(), bajar: () => inicio.bajar(), subir: () => inicio.subir(), primerDia: () => inicio.primerDia(arg), cerrarTodo: () => inicio.cerrarTodo(), bajarTodo: () => inicio.bajarTodo(arg) };
     pasos[accion]();
     refrescarControles();
   };

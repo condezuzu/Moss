@@ -5,6 +5,41 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D40 · Suscribirse para usar Moss (lo pensaste el 30/10/2026)
+
+Lo dijiste así: «después de que te llegue la introducción de la app, te aparezca
+ahí la pestaña para poder suscribirse e iniciar sesión. O al revés, primero la de
+iniciar sesión y después para suscribirte y ahí poder usar la app.»
+
+**Cambia algo decidido:** Moss es «global y gratis» (`CLAUDE.md`,
+`especificacion.md`), y lo dicen la ficha de la tienda («Free… no in-app
+purchases») y los términos del sitio («Moss es gratis»).
+
+**El orden que propongo:** la introducción, tus datos, **iniciar sesión**, el
+cuestionario, tu meta y recién ahí **suscribirse**.
+- Iniciar sesión antes: la suscripción tiene que servir en todos los aparatos
+  (guía 3.1.2(a)) y Moss ya sincroniza con la cuenta, así que tiene funciones de
+  cuenta de verdad (guía 5.1.1(v), que pide dejar usar sin cuenta solo si no las
+  hay). Con Sign in with Apple no se escribe ningún dato.
+- Suscribirse después del cuestionario: ya vio su meta y lo que Moss le arma. De 40
+  apps relevadas, 31 ponen el primer cobro en el último tercio de la entrada
+  (Lazyweb), y RevenueCat recomienda cobrar en la entrada con una prueba gratis.
+  Son datos de dónde va, no de cuál convierte más: se puede probar después.
+
+**Lo que falta decidir:**
+- Qué queda gratis, si queda algo: ¿todo pago (con prueba) o lo básico gratis?
+- El precio mensual y anual, y cuántos días de prueba.
+
+**Lo que pide, una vez decidido:**
+- Una build: las compras dentro de la app son nativas (StoreKit); no van por OTA.
+- App Store Connect: el acuerdo de apps pagas (banco e impuestos), el grupo de
+  suscripciones y sus precios, y el Small Business Program (15 %).
+- La pantalla, con lo que pide Apple: qué incluye y el precio (3.1.2(c)), restaurar
+  compras (3.1.1), y los enlaces a los términos y a la privacidad.
+- Saber en el servidor quién está suscrito, para el teléfono nuevo y para no
+  depender solo del aparato.
+- Cambiar la ficha, los términos, la privacidad y las notas para quien revisa.
+
 ### D39 · Lo visual de la 1.1, en la galería (armado el 29/10/2026)
 
 En la galería, sección «1.1 · Lo nuevo, para aprobar», con sus botones:
@@ -18,6 +53,10 @@ En la galería, sección «1.1 · Lo nuevo, para aprobar», con sus botones:
   cielo que espera.
 - **El cuestionario:** la constelación de las preguntas, las opciones con ícono
   que entran de a una, la regla de los números y la aurora abajo.
+- **Tocar la luna** (lo pediste el 30/10/2026): «Todo lo de hoy», con lo comido, la
+  meta y lo que falta o te pasaste; lo que Moss sabe de ti y de dónde lo sacó; lo
+  que le falta (`faltaParaEstimar`, en `progreso.ts`) y, abajo de todo, cómo lo
+  estima.
 
 ¿Se programan así en la app? El plazo, además, necesita una columna en
 `moss.perfiles` (el ritmo en % o la fecha) con su migración.
@@ -261,6 +300,24 @@ Están en la galería, sección 10, «Para decidir»:
   (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
 
 ## Resueltas
+
+### D41 · Las notas del 30/10/2026
+
+- **La voz:** la comida se nombra como sea: «el desayuno comí…», «la cena fue…»,
+  «desayuno: dos huevos», «en el snack…», «at breakfast». «Medio plato de arroz» es
+  la mitad de un plato aunque ya se haya comido arroz (antes daba media taza), y un
+  plato de cualquier cosa da una cantidad con sentido, «aproximado». También «un
+  cuarto de plato», «un platito», «un poco», «mucho» y «media pizza». Lo dicho con
+  el nombre de otra comida va a su hora, si ya pasó.
+- **La sugerencia se va al comer:** anotar una comida saca lo sugerido de esa comida
+  y lo de otra cuya hora ya pasó; deshacer lo devuelve (`sugerenciasQueSobran`, en
+  `plan.ts`). Lo sugerido de un día que ya pasó no se muestra. Lo planificado a mano
+  queda.
+- **Los macros en Inicio:** lo comido y la meta siempre a la vista, también al
+  pasarse.
+- **Los anillos:** Moss lee cualquier aparato que escriba sueño en Salud. Los que no
+  conoce por nombre cuentan como aparato, no como una app del teléfono, y Perfil ›
+  Aparatos dice qué mirar si no llegó nada ([`aparatos.md`](aparatos.md)).
 
 ### D38 · Los términos y la privacidad se abren dentro de Moss (29/10/2026)
 

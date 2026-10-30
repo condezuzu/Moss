@@ -625,6 +625,75 @@
       "pesarme": "Log my weight",
       "cieloTexto": "Every habit you check lights up a star; with all of them, today's constellation is drawn.",
       "habitos": "Choose my habits"
+    },
+    "todo": {
+      "titulo": "All of today",
+      "hoy": "Today",
+      "comiste": "Eaten",
+      "meta": "Goal",
+      "queda": "Left",
+      "calorias": "Calories",
+      "deMacro": "{n} g of {macro}",
+      "teFaltan": "You still need {lista}.",
+      "tePasaste": "You're over by {lista}.",
+      "llegaste": "You've hit everything.",
+      "sinAnotar": "Not logged yet: {lista}.",
+      "verComida": "See what I ate",
+      "sabe": "What Moss knows about you",
+      "peso": "Weight, the trend",
+      "origen": {
+        "pesadas": "from your weigh-ins",
+        "dijiste": "you told Moss when you started",
+        "elegiste": "you chose it",
+        "ritmo": "you chose it, at {pct} % a week",
+        "control": "measured by the {fecha} check-in",
+        "medidas": "from your measurements",
+        "aparato": "from {aparato}",
+        "estimado": "estimated with your phone"
+      },
+      "falta": "What Moss is missing",
+      "faltaItems": {
+        "pesadas": {
+          "uno": "One more weigh-in before {fecha}: the check-in needs it to measure your expenditure.",
+          "otros": "{n} more weigh-ins before {fecha}: the check-in needs them to measure your expenditure."
+        },
+        "comida": {
+          "uno": "One more day of logged food before {fecha}, for the check-in.",
+          "otros": "{n} more days of logged food before {fecha}, for the check-in."
+        },
+        "pesoMeta": "A goal weight, to tell you when you'd get there.",
+        "medidas": "Your tape measurements, to estimate your body fat.",
+        "reloj": "A watch or a ring: for now your sleep is estimated with your phone."
+      },
+      "faltaNada": "Nothing: with what you log, it can already measure.",
+      "como": "How it estimates",
+      "comoEstima": {
+        "calorias": {
+          "titulo": "Your calories",
+          "texto": "It starts with your expenditure: the Mifflin-St Jeor formula, with your height, weight, age and activity. Each week, the check-in compares what you ate with how your trend changed, and adjusts it little by little. Your goal is that expenditure, minus (or plus) what your pace asks for: each kilo is about 7,700 kcal."
+        },
+        "macros": {
+          "titulo": "The macros",
+          "texto": "Protein goes by body weight: 2 g per kilo when losing, 1.6 maintaining and 1.8 gaining. Fat is at least 27 % of calories and 0.6 g per kilo. Carbs are what's left, unless you choose another split."
+        },
+        "peso": {
+          "titulo": "Your weight",
+          "texto": "Moss looks at the trend, not a single day's number: it averages your weigh-ins, so water and salt don't move it. Your pace comes from the last three weeks."
+        },
+        "grasa": {
+          "titulo": "Body fat",
+          "texto": "With a tape, using the US Navy method. That's why it's a range: against a lab scan, it's off by 3 or 4 points."
+        },
+        "sueno": {
+          "titulo": "Your sleep",
+          "texto": "With a watch or a ring, what comes through Health. Without them, Moss looks at your phone's last activity at night and first in the morning, and counts how long you take to fall asleep, which it learns from your answers."
+        },
+        "alimentos": {
+          "titulo": "The foods",
+          "texto": "Official tables: USDA and, for the most common foods, a second table to verify; chains, with their own. Anything marked “approximate” is an estimate, and you can fix it."
+        }
+      },
+      "pie": "No number comes from AI: they're published formulas and your own data."
     }
   },
   "mas": {

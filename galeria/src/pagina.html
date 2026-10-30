@@ -411,6 +411,33 @@ section.item p { margin: 0; max-width: 64ch; }
 /* El primer día, sin datos: la luna nueva con su borde que brilla, las metas como pastillas de
    color, qué hacer primero y el cielo que espera. */
 .in-primer { cursor: default; }
+/* Todo lo de hoy: al tocar la luna. */
+.in-todo { display: flex; flex-direction: column; max-height: 90%; }
+.tt-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: 0 18px calc(var(--abajo) + 20px); }
+.tt-tabla { display: grid; border-radius: 14px; background: rgba(239, 230, 207, 0.04); border: 1px solid rgba(239, 230, 207, 0.08); padding: 4px 12px; }
+.tt-fila { display: grid; grid-template-columns: minmax(0, 1fr) 62px 62px 62px; align-items: baseline; gap: 6px; padding: 9px 0; font: 400 13px/1.2 var(--numeros); color: rgba(239, 230, 207, 0.6); font-variant-numeric: tabular-nums; border-top: 1px solid rgba(239, 230, 207, 0.06); }
+.tt-fila > :not(:first-child) { text-align: right; }
+.tt-cabeza { border-top: 0; padding: 7px 0 5px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(239, 230, 207, 0.45); }
+.tt-nombre { font: 400 13.5px/1.2 var(--texto); color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tt-fila b { font-weight: 500; color: var(--tinta); }
+.tt-fila em { font-style: normal; color: var(--tinta); }
+.tt-fila em.cumplido { color: var(--salvia); }
+.tt-fila em.pasado { color: var(--oro-claro); }
+.tt-kcal .tt-nombre { font-weight: 500; }
+.tt-frase { margin: 10px 4px 0; font: 300 13.5px/1.5 var(--texto); color: rgba(239, 230, 207, 0.82); }
+.tt-enlace { margin: 6px 4px 0; }
+.tt-sabe li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
+.tt-sabe li > div { display: grid; gap: 3px; min-width: 0; }
+.tt-sabe span { font: 400 14px/1.2 var(--texto); color: var(--tinta); }
+.tt-sabe small { font: 400 11px/1.25 var(--texto); color: rgba(239, 230, 207, 0.48); }
+.tt-sabe b { flex: none; white-space: nowrap; text-align: right; font: 400 14px/1.25 var(--numeros); color: rgba(239, 230, 207, 0.8); font-variant-numeric: tabular-nums; }
+.tt-falta { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tt-falta li { position: relative; padding: 0 4px 0 20px; font: 300 13.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.82); }
+.tt-falta li::before { content: ''; position: absolute; left: 6px; top: 0.56em; width: 5px; height: 5px; transform: rotate(45deg); background: var(--oro-claro); box-shadow: 0 0 6px rgba(246, 227, 166, 0.6); }
+.tt-como { margin: 0 4px 12px; display: grid; gap: 3px; }
+.tt-como b { font: 500 13.5px/1.3 var(--texto); color: var(--tinta); }
+.tt-como p { margin: 0; font: 300 13px/1.5 var(--texto); color: rgba(239, 230, 207, 0.68); }
+.tt-pie { margin: 6px 4px 0; padding-top: 12px; border-top: 1px solid rgba(239, 230, 207, 0.08); font: 400 12.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.55); }
 .in-luna-nueva { flex: none; position: relative; width: 74px; height: 74px; margin: 2px 4px 2px -2px; border-radius: 50%;
   background: radial-gradient(circle at 62% 38%, rgba(30, 40, 72, 0.9), rgba(8, 12, 26, 0.95) 70%);
   box-shadow: inset -3px 2px 0 rgba(246, 227, 166, 0.55), 0 0 22px rgba(246, 227, 166, 0.16); animation: in-respira 4.8s ease-in-out infinite; }
@@ -1867,6 +1894,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           <button class="boton" type="button" data-seccion="conDatos">Inicio con datos</button>
           <button class="boton" type="button" data-seccion="cuestionario">El cuestionario</button>
           <button class="boton" type="button" data-seccion="plan">El plan sugerido</button>
+          <button class="boton" type="button" data-seccion="todo">Tocar la luna</button>
         </div>
       </div>
       <ul class="lista">
@@ -1874,6 +1902,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         <li><b>Los gráficos de Progreso</b>: el camino a la meta (la tendencia y, punteado, hasta la fecha a tu ritmo), el peso de 1 mes, 3 meses o todo, <b>Semana a semana</b> (cuánto cambió la tendencia y lo que comiste contra la meta) y una línea chiquita al lado de cada medida.</li>
         <li><b>Inicio el primer día</b>, para que sin datos no se vea apagada: la meta de hoy con la luna nueva que brilla y qué hacer primero, tu camino hasta la meta con la fecha a un ritmo viable, y el cielo con sus estrellas esperando. Comparalo con «Inicio con datos».</li>
         <li><b>El cuestionario</b>, tan lindo como la entrada: arriba, una constelación chica con una estrella por pregunta que se enciende al contestar; las opciones entran de a una y llevan su ícono; los números tienen su regla, y abajo sube una aurora.</li>
+        <li><b>Tocar la luna</b> (el bloque de las calorías en Inicio) abre <b>Todo lo de hoy</b>: lo comido, la meta y lo que falta o te pasaste de cada cosa; lo que Moss sabe de vos y de dónde lo sacó; lo que le falta para estimar mejor, y abajo de todo, cómo lo estima. Probalo también con «Cenar» en la sección 2, para ver cómo queda al pasarte.</li>
         <li><b>El plan sugerido</b>, que ya está en la app: «Te sugerimos», pulgar arriba y abajo (cambian lo que se sugiere después, también lo que lleva lo mismo), y «Otra», que no repite lo que ya viste y no se acaba.</li>
       </ul>
     </section>

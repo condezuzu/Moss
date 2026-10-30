@@ -98,6 +98,19 @@ gramos de comida cocida, como se sirve:
 | Lentejas en guiso | 200 | 300 | 450 |
 | Lentejas solas | 90 | 150 | 200 |
 
+Cuando se nombra el plato de algo que no es un plato por sí mismo (lo pediste el 30/10/2026; son
+aproximaciones de Moss con la misma proporción, y quedan marcadas «aproximado»):
+
+| Dicho | Chica | Mediana | Grande |
+|---|---|---|---|
+| Un plato de carne, pollo o pescado | 100 | 150 | 225 |
+| Un plato de verduras | 100 | 150 | 225 |
+| Un plato de porotos o garbanzos | 90 | 150 | 200 |
+| Un plato de papas o boniato | 125 | 200 | 300 |
+| Un plato de cualquier otra cosa | 160 | 250 | 375 |
+
+Lo que se corta en porciones, entero: la pizza, 8 porciones; la tarta, 6. «Media pizza» son 4.
+
 Fuentes: USDA FNDDS 2021–2023; MSP Uruguay 2005, *Manual para la promoción de prácticas saludables de
 alimentación*; Guías Alimentarias para la Población Argentina; Carbajal Azcona (UCM) 2015, *Pesos de
 medidas caseras y raciones habituales*. No hay una tabla oficial de Argentina o Uruguay con chica,

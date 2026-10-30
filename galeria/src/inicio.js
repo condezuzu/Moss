@@ -37,12 +37,13 @@ const SeccionInicio = (() => {
       return figura;
     };
 
+    // `irA`: la sección a la que lleva, o qué hace al tocarlo.
     const carta = (clase, titulo, irA) => {
       const c = el('article', 'in-bloque ' + clase);
       if (irA != null) {
         c.tabIndex = 0;
         c.setAttribute('role', 'button');
-        c.addEventListener('click', () => opciones.ir(irA));
+        c.addEventListener('click', () => (typeof irA === 'function' ? irA() : opciones.ir(irA)));
       }
       if (titulo) {
         const cab = el('header', 'in-bloque-cab');
@@ -83,7 +84,7 @@ const SeccionInicio = (() => {
 
     // ------------------------------------------------------------ calorías y macros: lo que queda
     function calorias(ms) {
-      const c = carta('in-calorias', null, 1);
+      const c = carta('in-calorias', null, abrirTodo);
       const meta = opciones.comida.meta;
       const t = opciones.comida.totalDe(0);
       const queda = meta.kcal - t.kcal;
@@ -274,6 +275,107 @@ const SeccionInicio = (() => {
 
     const ARMAR = { calorias, objetivo, peso, cielo, sueno, agua };
 
+    // ------------------------------------------------------------ todo lo de hoy
+    // Tocar la luna (lo pediste el 30/10/2026): lo de hoy con lo que falta, lo que Moss sabe de ti y de
+    // dónde, lo que le falta y, abajo de todo, cómo lo estima. Saberlo da seguridad.
+    const hojaTodo = Util.hoja(tel, 'in-todo', () => opciones.alCambiar());
+    function abrirTodo() {
+      pintarTodo();
+      hojaTodo.abrir();
+      opciones.alCambiar();
+    }
+    const enLista = (cosas) => {
+      const y = u.idioma() === 'es' ? ' y ' : ' and ';
+      return cosas.length < 2 ? cosas.join('') : `${cosas.slice(0, -1).join(', ')}${y}${cosas[cosas.length - 1]}`;
+    };
+    function filaDeHoy(nombre, comido, meta, unidad, clase) {
+      const estado = Metas.estadoDeMacro(comido, meta);
+      const resto = meta - comido;
+      const fila = el('div', 'tt-fila ' + (clase || ''));
+      const cuanto = (n) => `${numero(Math.round(n))}${unidad}`;
+      fila.append(el('span', 'tt-nombre', nombre), el('b', null, cuanto(comido)), el('span', null, cuanto(meta)),
+        el('em', estado, estado === 'falta' ? cuanto(resto) : estado === 'pasado' ? `+${cuanto(-resto)}` : '✓'));
+      return fila;
+    }
+    function pintarTodo() {
+      const h = hojaTodo.el;
+      h.innerHTML = '';
+      const d = opciones.persona();
+      const p = d.perfil;
+      const meta = opciones.comida.meta;
+      const t = opciones.comida.totalDe(0);
+      const cab = el('header', 'hb-cab');
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('inicio.todo.titulo')), boton('hb-cerrar', icono('cerrar'), () => hojaTodo.cerrar(), tx('comida.cerrar')));
+      const cuerpo = el('div', 'tt-cuerpo');
+
+      // Hoy: lo comido, la meta y lo que falta o se pasó.
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('inicio.todo.hoy')));
+      const tabla = el('div', 'tt-tabla');
+      const cabeza = el('div', 'tt-fila tt-cabeza');
+      cabeza.append(el('span'), el('span', null, tx('inicio.todo.comiste')), el('span', null, tx('inicio.todo.meta')), el('span', null, tx('inicio.todo.queda')));
+      tabla.append(cabeza, filaDeHoy(tx('inicio.todo.calorias'), t.kcal, meta.kcal, '', 'tt-kcal'));
+      [['p', 'proteina'], ['c', 'carbohidratos'], ['g', 'grasas']].forEach(([m, clave]) => tabla.appendChild(filaDeHoy(tx('comida.' + clave), t[m], meta[m], ' g', 'tt-' + m)));
+      cuerpo.appendChild(tabla);
+      const macro = (m, clave, n) => tx('inicio.todo.deMacro', { n: numero(Math.round(n)), macro: tx('comida.' + clave).toLowerCase() });
+      const macros = [['p', 'proteina'], ['c', 'carbohidratos'], ['g', 'grasas']].map(([m, clave]) => ({ m, clave, estado: Metas.estadoDeMacro(t[m], meta[m]), resto: meta[m] - t[m] }));
+      const faltan = macros.filter((x) => x.estado === 'falta').map((x) => macro(x.m, x.clave, x.resto));
+      const pasados = macros.filter((x) => x.estado === 'pasado').map((x) => macro(x.m, x.clave, -x.resto));
+      const frases = [];
+      if (faltan.length) frases.push(tx('inicio.todo.teFaltan', { lista: enLista(faltan) }));
+      if (pasados.length) frases.push(tx('inicio.todo.tePasaste', { lista: enLista(pasados) }));
+      if (!faltan.length && !pasados.length) frases.push(tx('inicio.todo.llegaste'));
+      const sinAnotar = opciones.comida.sinAnotar();
+      if (sinAnotar.length) frases.push(tx('inicio.todo.sinAnotar', { lista: enLista(sinAnotar.map((c) => tx('comida.comidas.' + c).toLowerCase())) }));
+      cuerpo.appendChild(el('p', 'tt-frase', frases.join(' ')));
+      cuerpo.appendChild(boton('cm-enlace tt-enlace', `<span>${tx('inicio.todo.verComida')}</span>${icono('adelante')}`, () => { hojaTodo.cerrar(); opciones.ir(1); }));
+
+      // Lo que Moss sabe de ti, y de dónde lo sacó.
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('inicio.todo.sabe')));
+      const sabe = el('ul', 'pf-lista tt-sabe');
+      const dato = (nombre, valor, origen) => {
+        const li = el('li');
+        const textos = el('div');
+        textos.append(el('span', null, nombre), el('small', null, origen));
+        li.append(textos, el('b', null, valor));
+        sabe.appendChild(li);
+      };
+      const edad = Number(Datos.HOY.slice(0, 4)) - p.nacimiento;
+      dato(tx('inicio.todo.peso'), `${numero(d.pesoHoy, 1)} kg`, tx('inicio.todo.origen.pesadas'));
+      dato(tx('perfil.altura'), `${numero(p.alturaCm)} cm`, tx('inicio.todo.origen.dijiste'));
+      dato(tx('perfil.edad'), numero(edad), tx('inicio.todo.origen.dijiste'));
+      dato(tx('perfil.sexo'), tx(p.sexo === 'f' ? 'entrada.cuestionario.femenino' : 'entrada.cuestionario.masculino'), tx('inicio.todo.origen.dijiste'));
+      dato(tx('perfil.actividad'), tx('entrada.cuestionario.actividad.' + p.actividad)[0], tx('inicio.todo.origen.dijiste'));
+      const pct = p.objetivo === 'mantener' ? null : Math.abs(Metas.RITMOS[p.objetivo][p.ritmo]);
+      dato(tx('progreso.objetivo'), p.objetivo === 'mantener' ? tx('progreso.objetivos.mantener') : tx('progreso.objetivoA.' + p.objetivo, { kg: numero(p.pesoMeta, p.pesoMeta % 1 ? 1 : 0) }), pct == null ? tx('inicio.todo.origen.elegiste') : tx('inicio.todo.origen.ritmo', { pct: numero(pct, 2) }));
+      dato(tx('progreso.gasto'), `${numero(d.gasto)} ${tx('inicio.kcalPorDia')}`, tx('inicio.todo.origen.control', { fecha: u.fechaCorta(d.control.fecha) }));
+      if (d.grasa) dato(tx('progreso.grasa'), tx('cuerpo.rango', { desde: d.grasa.desde, hasta: d.grasa.hasta }), tx('inicio.todo.origen.medidas'));
+      const noche = opciones.sueno();
+      if (noche) dato(tx('inicio.bloques.sueno'), u.duracion(noche.dormido), noche.fuente && noche.fuente.tipo !== 'moss' ? tx('inicio.todo.origen.aparato', { aparato: noche.fuente.nombre }) : tx('inicio.todo.origen.estimado'));
+      cuerpo.appendChild(sabe);
+
+      // Lo que le falta a Moss para estimar mejor (Progreso.faltaParaEstimar, la regla de la app).
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('inicio.todo.falta')));
+      const falta = Progreso.faltaParaEstimar({ control: d.estadoControl, objetivo: p.objetivo, pesoMeta: p.pesoMeta, conMedidas: !!d.grasa, sinReloj: opciones.sinReloj() });
+      if (falta.length) {
+        const lista = el('ul', 'tt-falta');
+        falta.forEach((x) => {
+          const texto = x.fecha ? u.plural('inicio.todo.faltaItems.' + x.que, x.n, { fecha: u.fechaCorta(x.fecha) }) : tx('inicio.todo.faltaItems.' + x.que);
+          lista.appendChild(el('li', null, texto));
+        });
+        cuerpo.appendChild(lista);
+      } else cuerpo.appendChild(el('p', 'tt-frase', tx('inicio.todo.faltaNada')));
+
+      // Abajo de todo, cómo lo estima.
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('inicio.todo.como')));
+      ['calorias', 'macros', 'peso', 'grasa', 'sueno', 'alimentos'].forEach((k) => {
+        const parte = el('div', 'tt-como');
+        parte.append(el('b', null, tx(`inicio.todo.comoEstima.${k}.titulo`)), el('p', null, tx(`inicio.todo.comoEstima.${k}.texto`)));
+        cuerpo.appendChild(parte);
+      });
+      cuerpo.appendChild(el('p', 'tt-pie', tx('inicio.todo.pie')));
+      h.append(cab, cuerpo);
+    }
+
     // ------------------------------------------------------------ el primer día
     // Sin nada todavía, cada bloque dice qué hacer y con qué se va a llenar, en vez de ceros y rayas.
     function caloriasPrimerDia() {
@@ -437,6 +539,13 @@ const SeccionInicio = (() => {
       mover(bloque, a) { const i = s.orden.indexOf(bloque); s.orden.splice(i, 1); s.orden.splice(a, 0, bloque); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       deFabrica() { s.orden = [...BLOQUES]; s.visibles = new Set(DE_FABRICA); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       primerDia(si) { s.primerDia = !!si; pintar(0); },
+      abrirTodo,
+      cerrarTodo: () => hojaTodo.cerrar(),
+      bajarTodo: (selector) => {
+        const cuerpo = hojaTodo.el.querySelector('.tt-cuerpo');
+        const n = hojaTodo.el.querySelector(selector);
+        if (cuerpo && n) cuerpo.scrollTop += n.getBoundingClientRect().top - cuerpo.getBoundingClientRect().top - 44;
+      },
       bajar() { zona.querySelector('.in-scroll').scrollTo(0, 99999); },
       subir() { zona.querySelector('.in-scroll').scrollTo(0, 0); },
     };

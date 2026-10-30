@@ -165,7 +165,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `decir` (decir lo que comí, sus preguntas, tu comida de siempre y anotar todo junto), `entreno` (qué comer antes y después de entrenar, por qué y Perfil › Entrenamiento), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso` (con «Semana a semana»), `plazo` (el ritmo y el plazo, D35), `metas`, `sueno`;
-- `primerdia` (Inicio sin datos) y `cuestionario` (las preguntas de la entrada);
+- `primerdia` (Inicio sin datos), `cuestionario` (las preguntas de la entrada) y `todo` (tocar la luna: Todo lo de hoy, también al pasarse);
 - `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
 - `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`;
 - `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado).

@@ -625,6 +625,75 @@
       "pesarme": "Anotar mi peso",
       "cieloTexto": "Cada hábito que marques enciende una estrella; con todos, se dibuja la constelación de hoy.",
       "habitos": "Elegir mis hábitos"
+    },
+    "todo": {
+      "titulo": "Todo lo de hoy",
+      "hoy": "Hoy",
+      "comiste": "Comiste",
+      "meta": "Meta",
+      "queda": "Falta",
+      "calorias": "Calorías",
+      "deMacro": "{n} g de {macro}",
+      "teFaltan": "Te faltan {lista}.",
+      "tePasaste": "Te pasaste {lista}.",
+      "llegaste": "Llegaste a todo.",
+      "sinAnotar": "Falta anotar: {lista}.",
+      "verComida": "Ver lo que comí",
+      "sabe": "Lo que Moss sabe de ti",
+      "peso": "Peso, la tendencia",
+      "origen": {
+        "pesadas": "de tus pesadas",
+        "dijiste": "lo dijiste al empezar",
+        "elegiste": "lo elegiste",
+        "ritmo": "lo elegiste, a {pct} % por semana",
+        "control": "lo midió el control del {fecha}",
+        "medidas": "con tus medidas",
+        "aparato": "de {aparato}",
+        "estimado": "estimado con el teléfono"
+      },
+      "falta": "Lo que le falta a Moss",
+      "faltaItems": {
+        "pesadas": {
+          "uno": "Una pesada más antes del {fecha}: el control la necesita para medir tu gasto.",
+          "otros": "{n} pesadas más antes del {fecha}: el control las necesita para medir tu gasto."
+        },
+        "comida": {
+          "uno": "Un día más con comida anotada antes del {fecha}, para el control.",
+          "otros": "{n} días más con comida anotada antes del {fecha}, para el control."
+        },
+        "pesoMeta": "Un peso meta, para decirte cuándo llegarías.",
+        "medidas": "Tus medidas con la cinta, para estimar tu grasa corporal.",
+        "reloj": "Un reloj o un anillo: hoy tu sueño es una estimación con el teléfono."
+      },
+      "faltaNada": "Nada: con lo que anotas, ya puede medir.",
+      "como": "Cómo lo estima",
+      "comoEstima": {
+        "calorias": {
+          "titulo": "Tus calorías",
+          "texto": "Empieza con tu gasto: la fórmula de Mifflin-St Jeor, con tu altura, tu peso, tu edad y tu actividad. Cada semana, el control compara lo que comiste con cómo cambió tu tendencia y ajusta el gasto de a poco. Tu meta es ese gasto, menos (o más) lo que pide tu ritmo: cada kilo son unas 7.700 kcal."
+        },
+        "macros": {
+          "titulo": "Los macros",
+          "texto": "La proteína va por kilo de peso: 2 g bajando, 1,6 manteniendo y 1,8 subiendo. Las grasas, al menos el 27 % de las calorías y 0,6 g por kilo. Los carbohidratos son lo que queda, salvo que elijas otro reparto."
+        },
+        "peso": {
+          "titulo": "Tu peso",
+          "texto": "Moss mira la tendencia, no el número de un día: promedia tus pesadas, así el agua y la sal no la mueven. El ritmo sale de las últimas tres semanas."
+        },
+        "grasa": {
+          "titulo": "La grasa corporal",
+          "texto": "Con la cinta, por el método de la Marina de EE. UU. Por eso es un rango: contra un estudio de laboratorio, erra 3 o 4 puntos."
+        },
+        "sueno": {
+          "titulo": "Tu sueño",
+          "texto": "Con un reloj o un anillo, lo que llega de Salud. Sin ellos, Moss mira la última actividad del teléfono a la noche y la primera a la mañana, y cuenta lo que tardas en dormirte, que aprende de tus respuestas."
+        },
+        "alimentos": {
+          "titulo": "Los alimentos",
+          "texto": "Tablas oficiales: USDA y, en los más comunes, una segunda tabla para verificar; las cadenas, con la suya. Lo marcado «aproximado» es una estimación, y se puede corregir."
+        }
+      },
+      "pie": "Ningún número sale de una IA: son fórmulas publicadas y tus propios datos."
     }
   },
   "mas": {

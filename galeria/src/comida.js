@@ -228,7 +228,9 @@ const Comida = (() => {
 
     const comidasDe = (d) => s.dias[String(d)] || [];
     const diaDe = (c) => Number(Object.keys(s.dias).find((d) => s.dias[d].includes(c)) || 0);
-    const totalDe = (d) => sumar(comidasDe(d).flatMap((c) => c.items));
+    // Lo comido: hoy y antes, sin lo sugerido que no se confirmó; en un día que no llegó, con lo planificado.
+    const totalDe = (d) => sumar(comidasDe(d).filter((c) => d > 0 || !c.plan).flatMap((c) => c.items));
+    const totalConPlan = (d) => sumar(comidasDe(d).flatMap((c) => c.items));
 
     // Una cifra que cuenta de lo que mostraba hasta la nueva.
     function contar(nodo, hasta, ms) {
@@ -649,7 +651,7 @@ const Comida = (() => {
       if (k < 0 || !faltan.length) return null;
       s.semilla++;
       const dia = Plan.planearDia({
-        dia: fechaClave(k), meta: metaDelPlan(), opciones: opcionesDelPlan(), pref: s.pref, semilla: s.semilla, solo: faltan, yaComido: aMacros(totalDe(k)), recientes: recientesDe(k),
+        dia: fechaClave(k), meta: metaDelPlan(), opciones: opcionesDelPlan(), pref: s.pref, semilla: s.semilla, solo: faltan, yaComido: aMacros(totalConPlan(k)), recientes: recientesDe(k),
         afinidad: afinidad(s.pref),
       });
       if (!s.dias[String(k)]) s.dias[String(k)] = [];
@@ -2378,6 +2380,8 @@ const Comida = (() => {
       comiEsto(tipo) { const c = comidasDe(s.dia).find((x) => x.tipo === tipo && x.plan); if (c) comiEsto(c); },
       get dia() { return s.dia; },
       get vistaActual() { return s.vista; },
+      // Las comidas de hoy que ya tendrían que estar y no se anotaron.
+      sinAnotar: () => Plan.comidasDelPlan(s.pref.comidas).filter((t) => HORA_DEL_PLAN[t] <= AHORA && !comidasDe(0).some((c) => c.tipo === t && !c.plan)),
       get meta() { return Object.assign({}, META); },
       // Lo comido de un día (0 es hoy), y las kcal de cada día ya vivido con algo registrado: lo que
       // mira el control (Control.controlSemanal).

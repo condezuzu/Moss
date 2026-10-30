@@ -362,6 +362,30 @@ const pasos = {
     await pagina.evaluate(() => window.__estrategia({ diaDelControl: 1 }));
     await progreso('subir');
   },
+  // Tocar la luna: Todo lo de hoy, de arriba abajo, y cómo queda al pasarse.
+  async todo() {
+    await pestana(0);
+    await enInicio('subir');
+    await pagina.waitForTimeout(500);
+    await pagina.click('.in-calorias');
+    await hojaAbierta('in-todo');
+    await foto('todo');
+    for (const [selector, nombre] of [['.tt-sabe', 'todo-sabe'], ['.tt-falta', 'todo-falta'], ['.tt-como', 'todo-como'], ['.tt-pie', 'todo-pie']]) {
+      await enInicio('bajarTodo', selector);
+      await pagina.waitForTimeout(300);
+      await foto(nombre);
+    }
+    await enInicio('cerrarTodo');
+    await pagina.waitForTimeout(500);
+    await seccion('cena');
+    await pagina.waitForTimeout(1200);
+    await foto('todo-inicio-pasado');
+    await pagina.click('.in-calorias');
+    await hojaAbierta('in-todo');
+    await foto('todo-pasado');
+    await enInicio('cerrarTodo');
+    await pagina.waitForTimeout(400);
+  },
   // Inicio el primer día, sin nada anotado: la meta de hoy, el camino y el cielo que espera.
   async primerdia() {
     await pestana(0);

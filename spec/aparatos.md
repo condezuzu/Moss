@@ -68,6 +68,26 @@ Lo de la noche (nivel 4), por marca:
 | **Eight Sleep** | El sueño de la funda [E1] | Sin confirmar [E2] | — | — |
 | **Samsung y Pixel Watch** | No funcionan con iPhone [S1][S2][F8] | — | — | — |
 
+### Los anillos, uno por uno (30/10/2026)
+
+Lo pediste después de usar un anillo una noche sin que llegara nada. Moss no filtra
+por marca: lee toda muestra de sueño que haya en Salud. Si la noche no está en la
+app Salud (Explorar › Sueño), a Moss no le puede llegar.
+
+| Anillo | ¿Escribe el sueño en Salud? | Qué pide |
+|---|---|---|
+| **Oura** | Sí, con etapas [O1] | Membresía (Gen3 y Ring 4), prender Apple Health en su app y abrirla cada día |
+| **RingConn** | Sí, con etapas [R1] | Prender Apple Health en su app |
+| **Amazfit Helio** | Parece que sí, por Zepp: lo dicen reportes de usuarios, no Amazfit [Z2] | Prender Apple Health en Zepp |
+| **Ultrahuman** | Conecta con Salud, pero no encontré si manda el sueño [U1] | Darle todos los permisos |
+| **Evie** | Las fuentes se contradicen: Sahha y Notebookcheck dicen que sí; una reseña anterior, que no [Ev1][Ev2] | Prender la sincronización en su app |
+| **Circular** | Sin confirmar: no encontré nada de Circular | — |
+| **Colmi y otros baratos** (QRing) | Su app dice integrarse con Salud; sin confirmar el sueño [Co1] | Darle permisos en Ajustes |
+| **Galaxy Ring** | No funciona con iPhone [S2] | — |
+
+Hay que probarlos con un anillo en la mano: lo «sin confirmar» es lo que no pude ver
+en una fuente del fabricante.
+
 ## Las conexiones directas, después de la v1
 
 | Marca | Qué agrega a Salud | Lo que pide | Para Moss |
@@ -238,6 +258,9 @@ la fuente que sigue.
 - **Suunto:** «Los entrenamientos, los pasos y la frecuencia; el sueño no llega a
   Salud.»
 - **Eight Sleep:** «El sueño que mide la funda.»
+- **Otros anillos:** «Evie, Circular, Colmi y otros: lo que su app mande a Salud,
+  que a veces no incluye el sueño. Si la noche no aparece en la app Salud, a Moss
+  tampoco le llega.»
 - **Samsung y Pixel:** «El Pixel Watch, el Galaxy Watch y el Galaxy Ring no
   funcionan con iPhone.»
 - **Varios aparatos:** «Si usas más de uno, Moss toma uno por noche, el que
@@ -327,6 +350,10 @@ de fuentes sin confirmar: hay que revisarlos con un aparato antes de lanzar.
 - [R2] https://ringconn.com/blogs/guides/health-connect-sync
 - [R5] https://de.ringconn.com/en/blogs/guides/smart-ring-kompatibilitaet-apple-health-samsung-health
 - [Z1] https://haid.app/en/integrations/amazfit
+- [Z2] https://idevice.com/smart-rings/amazfit-helio-ring/roadmap?view=faq
+- [Ev1] https://sahha.ai/integrations/evie-ring/
+- [Ev2] https://www.notebookcheck.net/Movano-Evie-Ring-adds-new-data-tracking-features.977795.0.html
+- [Co1] https://mwm.ai/apps/qring/6473672621
 - [C1] https://support.coros.com/hc/en-us/articles/360041549551-Connecting-Apple-Health-with-COROS-App
 - [C2] https://docs.tryterra.co/faq/help-topics/data-api-sdk/provider-coverage-and-per-provider-data-availability/coros-sleep-stages-not-exposed
 - [Su1] https://apizone.suunto.com/faq

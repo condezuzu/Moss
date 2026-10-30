@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { estadoDelControl, tendencia, ultimoDiaDeControl, type Pesada } from './control';
 import { sumarDias } from './fechas';
 import { estadoDeMacro, RITMOS } from './metas';
-import { balance, bordeDe, direccionDe, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoSemanal, viabilidad, type EntradaDelPlazo } from './progreso';
+import { balance, bordeDe, direccionDe, faltaParaEstimar, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoSemanal, viabilidad, type EntradaDelPlazo } from './progreso';
 
 const HOY = '2026-10-21';
 /** Pesadas de todos los días hasta hoy, bajando `kgPorSemana` desde `inicial`. */
@@ -134,6 +134,27 @@ describe('el día del control', () => {
     expect(viernes).toMatchObject({ fecha: '2026-10-23', tramoCorto: true, alcanza: false });
     // Sin nada registrado todavía, lo más pronto es hoy.
     expect(estadoDelControl({ hoy: HOY, dia: 1, ultimaMeta: '2026-10-19', pesadas: [], comidas: [] }).tramoCorto).toBe(true);
+  });
+});
+
+describe('lo que le falta a Moss', () => {
+  const control = { fecha: '2026-11-02', diasConComida: 2, pesadas: 0, minimos: { diasConComida: 4, pesadas: 1 } };
+
+  it('lo que pide el control, el peso meta, las medidas y el reloj', () => {
+    expect(faltaParaEstimar({ control, objetivo: 'bajar', pesoMeta: null, conMedidas: false, sinReloj: true })).toEqual([
+      { que: 'pesadas', n: 1, fecha: '2026-11-02' },
+      { que: 'comida', n: 2, fecha: '2026-11-02' },
+      { que: 'pesoMeta' },
+      { que: 'medidas' },
+      { que: 'reloj' },
+    ]);
+  });
+
+  it('con todo eso, nada; manteniendo no hace falta un peso meta', () => {
+    const lleno = { ...control, diasConComida: 4, pesadas: 2 };
+    expect(faltaParaEstimar({ control: lleno, objetivo: 'bajar', pesoMeta: 71, conMedidas: true, sinReloj: false })).toEqual([]);
+    expect(faltaParaEstimar({ control: lleno, objetivo: 'mantener', pesoMeta: null, conMedidas: true, sinReloj: false })).toEqual([]);
+    expect(faltaParaEstimar({ control: null, objetivo: 'mantener', conMedidas: true, sinReloj: false })).toEqual([]);
   });
 });
 

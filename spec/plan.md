@@ -602,9 +602,11 @@ Lo de la tanda del 29/10, separado por cómo llega:
   el piso de 1.500 kcal (D35), los platos con tamaño y las cadenas (D36), el plan
   como sugerencia (D37), los términos dentro de Moss (D38), correr las comidas
   al anotar una antes, Afinar sin atajos, el arreglo de «Mes» en Comida y la
-  galería al día.
+  galería al día. Y lo del 30/10 (D41): la voz, la sugerencia que se va al comer, la
+  meta de cada macro en Inicio y «¿no llegó nada?» en Aparatos.
 - **Para aprobar en la galería** (D39): el ritmo y el plazo, los gráficos de
-  Progreso, Inicio el primer día y el cuestionario.
+  Progreso, Inicio el primer día, el cuestionario y tocar la luna.
+- **Para decidir** (D40): suscribirse para usar Moss, que cambia «gratis» y pide build.
 - **Con build:** el filtro de enfoque de Sueño (que Moss sepa cuándo empieza sin
   un Atajo) y las frases de los Atajos de vos, que están en Swift.
 

@@ -126,6 +126,15 @@
     "primerDia": {
       "caloriasTexto": "Empezá por lo próximo que comas: en unos días, Moss conoce tus comidas y te las sugiere.",
       "caminoTexto": "A un ritmo viable, llegarías el {fecha}. Pesate mañana al despertarte: con dos semanas de pesadas, Moss mide tu ritmo de verdad."
+    },
+    "todo": {
+      "sabe": "Lo que Moss sabe de vos",
+      "faltaNada": "Nada: con lo que anotás, ya puede medir.",
+      "comoEstima": {
+        "sueno": {
+          "texto": "Con un reloj o un anillo, lo que llega de Salud. Sin ellos, Moss mira la última actividad del teléfono a la noche y la primera a la mañana, y cuenta lo que tardás en dormirte, que aprende de tus respuestas."
+        }
+      }
     }
   },
   "cuerpo": {

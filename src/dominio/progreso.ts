@@ -2,7 +2,7 @@
 // camino y en qué fecha llegaría, y el balance entre lo comido y lo gastado. Todo se mide sobre la
 // tendencia, nunca sobre el peso de un día.
 
-import { cambioPorDia, type ComidaDelDia, type Pesada } from './control';
+import { cambioPorDia, type ComidaDelDia, type EstadoDelControl, type Pesada } from './control';
 import { diasEntre, sumarDias, type ClaveDia } from './fechas';
 import { KCAL_POR_KG, MAYORIA_DE_EDAD, pisoDe, RITMOS, type Objetivo, type Ritmo, type Sexo } from './metas';
 
@@ -112,6 +112,34 @@ export function balance(comidas: ComidaDelDia[], gasto: number, hasta: ClaveDia,
     .map((c) => ({ fecha: c.fecha, kcal: c.kcal, balance: c.kcal - gasto }));
   const promedio = lista.length ? lista.reduce((s, d) => s + d.balance, 0) / lista.length : null;
   return { dias: lista, promedio };
+}
+
+// ------------------------------------------------------------ lo que le falta a Moss
+/** Lo que falta para estimar mejor: cuántas pesadas o días con comida pide el control, y lo que todavía no sabe. */
+export type FaltaParaEstimar = { que: 'pesadas' | 'comida'; n: number; fecha: ClaveDia } | { que: 'pesoMeta' | 'medidas' | 'reloj' };
+
+/**
+ * Lo que le falta a Moss (lo pediste el 30/10/2026: da seguridad saberlo): lo que el próximo control
+ * necesita antes de su día, un peso meta si va a bajar o a subir, las medidas para la grasa corporal y,
+ * sin reloj ni anillo, que el sueño es estimado.
+ */
+export function faltaParaEstimar(o: {
+  control: Pick<EstadoDelControl, 'fecha' | 'diasConComida' | 'pesadas' | 'minimos'> | null;
+  objetivo: Objetivo;
+  pesoMeta?: number | null;
+  conMedidas: boolean;
+  sinReloj: boolean;
+}): FaltaParaEstimar[] {
+  const lista: FaltaParaEstimar[] = [];
+  if (o.control) {
+    const { pesadas, diasConComida, minimos, fecha } = o.control;
+    if (pesadas < minimos.pesadas) lista.push({ que: 'pesadas', n: minimos.pesadas - pesadas, fecha });
+    if (diasConComida < minimos.diasConComida) lista.push({ que: 'comida', n: minimos.diasConComida - diasConComida, fecha });
+  }
+  if (o.objetivo !== 'mantener' && !o.pesoMeta) lista.push({ que: 'pesoMeta' });
+  if (!o.conMedidas) lista.push({ que: 'medidas' });
+  if (o.sinReloj) lista.push({ que: 'reloj' });
+  return lista;
 }
 
 // ------------------------------------------------------------ la meta con plazo (D35)

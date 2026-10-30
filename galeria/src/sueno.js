@@ -747,7 +747,7 @@ const SeccionSueno = (() => {
         const n = noches().find((x) => x.clave === Datos.HOY);
         if (!n) return null;
         const q = Sueno.calidadDeNoche(n, necesidad, anterioresA(n.clave));
-        return { dormido: n.dormido, dormirse: n.dormirse + 18 * 60, despertar: n.despertar + 18 * 60, calidad: q ? q.puntos : null, enCamaDesde: n.dormirse, enCamaHasta: n.despertar, tramos: n.tramos };
+        return { fuente: n.fuente, dormido: n.dormido, dormirse: n.dormirse + 18 * 60, despertar: n.despertar + 18 * 60, calidad: q ? q.puntos : null, enCamaDesde: n.dormirse, enCamaHasta: n.despertar, tramos: n.tramos };
       },
       // Para las capturas y los botones de la galería: `k` días antes de hoy, o una clave.
       verNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; s.editando = null; pintar(); cont.scrollTop = 0; },
