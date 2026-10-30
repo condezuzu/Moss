@@ -434,6 +434,42 @@ describe('lo que se come', () => {
     expect(almacen.estado().registros.get(armados[0].id)?.planificado).toBe(true);
   });
 
+  it('la sugerencia se va al comer: anotar esa comida o una después de su hora la saca, y deshacer la devuelve', async () => {
+    const { almacen, ir } = await armar();
+    const comida = (c: 'desayuno' | 'almuerzo' | 'cena', item = banana()) => ({ comida: c, opcion: c, items: [item], valores: item.valores });
+    ir('2026-10-21T10:00:00Z');
+    const horas: Record<string, number> = { desayuno: 8 * 60, almuerzo: 13 * 60, cena: 21 * 60 };
+    const [desayuno, almuerzo, cena] = almacen.planificar('2026-10-21', [comida('desayuno'), comida('almuerzo'), comida('cena')], (c) => horas[c]);
+    const r = () => almacen.estado().registros;
+    // A las 13, el almuerzo: se van lo sugerido del almuerzo y el desayuno, que ya pasó; la cena queda.
+    ir('2026-10-21T16:00:00Z');
+    const [anotado] = almacen.registrar([alfajor()], { comida: 'almuerzo' });
+    expect(r().get(almuerzo.id)!.borrado).toBe(true);
+    expect(r().get(desayuno.id)!.borrado).toBe(true);
+    expect(r().get(cena.id)!.borrado).toBeUndefined();
+    expect(vigentes(r().values()).filter((x) => x.comida === 'almuerzo').map((x) => x.id)).toEqual([anotado.id]);
+    // Deshacer lo anotado las devuelve.
+    almacen.borrarRegistro(anotado.id);
+    expect(r().get(almuerzo.id)!.borrado).toBeUndefined();
+    expect(r().get(desayuno.id)!.borrado).toBeUndefined();
+  });
+
+  it('«Comí esto» también saca lo sugerido que ya pasó, y deshacerlo lo devuelve', async () => {
+    const { almacen, ir } = await armar();
+    const comida = (c: 'desayuno' | 'almuerzo', item = banana()) => ({ comida: c, opcion: c, items: [item], valores: item.valores });
+    ir('2026-10-21T10:00:00Z');
+    const horas: Record<string, number> = { desayuno: 8 * 60, almuerzo: 13 * 60 };
+    const [desayuno, almuerzo] = almacen.planificar('2026-10-21', [comida('desayuno'), comida('almuerzo')], (c) => horas[c]);
+    ir('2026-10-21T16:00:00Z');
+    const ids = almacen.confirmarComida('2026-10-21', 'almuerzo');
+    const r = () => almacen.estado().registros;
+    expect(r().get(desayuno.id)!.borrado).toBe(true);
+    expect(r().get(almuerzo.id)!.planificado).toBe(false);
+    almacen.volverAPlanificar(ids);
+    expect(r().get(desayuno.id)!.borrado).toBeUndefined();
+    expect(r().get(almuerzo.id)!.planificado).toBe(true);
+  });
+
   it('anotar o confirmar una comida la pone a su hora y corre lo planificado que sigue, con la misma distancia', async () => {
     const { almacen, ir } = await armar();
     const comida = (c: 'desayuno' | 'almuerzo' | 'cena', item = banana()) => ({ comida: c, opcion: c, items: [item], valores: item.valores });

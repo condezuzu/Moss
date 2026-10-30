@@ -1225,10 +1225,20 @@ const Comida = (() => {
       pintarBandeja(true);
     }
 
+    // Al comer, lo sugerido de esa comida y lo que ya pasó se van (Plan.sugerenciasQueSobran, en la
+    // app). Devuelve cómo volver a ponerlo, para deshacer.
+    function sacarLoSugerido(tipo) {
+      const lista = comidasDe(0);
+      const sobran = lista.filter((x) => x.plan && x.opcion && (x.tipo === tipo || x.hora < AHORA));
+      sobran.forEach((x) => lista.splice(lista.indexOf(x), 1));
+      return () => { lista.push(...sobran); lista.sort((a, b) => a.hora - b.hora); };
+    }
+
     // «Agregar»: lo juntado pasa de una vez a la comida de hoy, y recién ahí queda registrado.
     function agregarCanasta() {
       if (!s.hoja || !s.canasta.length) return;
       const tipo = s.hoja.comida;
+      sacarLoSugerido(tipo);
       const c = comidaDeHoy(tipo);
       const items = s.canasta.map((it) => Object.assign({}, it, { nuevo: true }));
       c.items.push(...items);
@@ -2298,6 +2308,7 @@ const Comida = (() => {
     // Registrar de un toque, sin la revisión: lo que sale de la hoja del «+» (los recientes, las
     // guardadas, la carga rápida). Queda en la comida de esta hora y se puede deshacer.
     function registrarDirecto(items, texto, tipo = comidaDeAhora()) {
+      const devolver = sacarLoSugerido(tipo);
       const c = comidaDeHoy(tipo);
       const nuevos = items.map((it) => Object.assign({}, it, { nuevo: true }));
       c.items.push(...nuevos);
@@ -2315,6 +2326,7 @@ const Comida = (() => {
         deshacer() {
           nuevos.forEach((it) => { const i = c.items.indexOf(it); if (i >= 0) c.items.splice(i, 1); });
           if (!c.items.length) comidasDe(0).splice(comidasDe(0).indexOf(c), 1);
+          devolver();
           if (s.dia === 0 && s.vista === 'dia') pintarZona(600);
           avisarCambio();
         },

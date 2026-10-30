@@ -14,7 +14,7 @@ import { sumarDias } from './fechas';
 import type { Macros } from './metas';
 import {
   adaptar, adaptarRegistros, afinidadDe, cambiarPorOtra, COMBINADAS, comidasDelPlan, diaPlaneadoDe, DIETAS, estaTachada, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas,
-  permitida, planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, tachadasDe, tachar, type DiaPlaneado, type Opcion,
+  permitida, planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, sugerenciaVencida, sugerenciasQueSobran, tachadasDe, tachar, type DiaPlaneado, type Opcion,
   type Plantilla, type Preferencias, type Resolver,
 } from './plan';
 import { gramosDe, itemDeAlimento, itemRapido, valoresDeCantidad, type Item, type Registro, type Valores } from './registros';
@@ -542,6 +542,38 @@ describe('lo que aprende', () => {
       .flatMap((semilla) => todasLasComidas(planearSemana({ desde: HOY, metaDe: () => META, opciones: COMBI, pref: TODO, semilla, afinidad: a })))
       .filter((c) => c.items.some((it) => it.ref === salmon.ref)).length;
     expect(conSalmon(afinidad)).toBeGreaterThan(conSalmon());
+  });
+});
+
+describe('lo sugerido que sobra al comer', () => {
+  const sugerida = (comida: Comida, hora: number, extra: Partial<Registro> = {}) => reg(banana(), HOY, comida, hora, { planificado: true, plan: comida, ...extra });
+  const lasDe = (lista: Registro[], comida: Comida, hora: number) => sugerenciasQueSobran(lista, HOY, comida, reg(banana(), HOY, comida, hora).momento).map((r) => r.comida);
+
+  it('lo de esa comida y lo de otra cuya hora ya pasó; lo que viene queda', () => {
+    const lista = [sugerida('desayuno', 8), sugerida('almuerzo', 13), sugerida('merienda', 17.5), sugerida('cena', 21)];
+    expect(lasDe(lista, 'almuerzo', 13.2)).toEqual(['desayuno', 'almuerzo']);
+    expect(lasDe(lista, 'desayuno', 7.5)).toEqual(['desayuno']);
+    // Un snack a las 11 saca el desayuno, que ya pasó, y deja el almuerzo.
+    expect(lasDe(lista, 'snack', 11)).toEqual(['desayuno']);
+    // Con lo de la cena, ya pasó todo.
+    expect(lasDe(lista, 'cena', 21.5)).toEqual(['desayuno', 'almuerzo', 'merienda', 'cena']);
+  });
+
+  it('lo planificado a mano, lo ya comido, lo borrado y lo de otro día no se tocan', () => {
+    const lista = [
+      reg(banana(), HOY, 'almuerzo', 13, { planificado: true }),
+      reg(banana(), HOY, 'almuerzo', 13),
+      sugerida('almuerzo', 13, { borrado: true }),
+      reg(banana(), hace(1), 'almuerzo', 13, { planificado: true, plan: 'almuerzo' }),
+    ];
+    expect(lasDe(lista, 'almuerzo', 13.2)).toEqual([]);
+  });
+
+  it('lo sugerido de un día que ya pasó está vencido; lo de hoy y lo planificado a mano, no', () => {
+    expect(sugerenciaVencida({ dia: hace(1), planificado: true, plan: 'x' }, HOY)).toBe(true);
+    expect(sugerenciaVencida({ dia: HOY, planificado: true, plan: 'x' }, HOY)).toBe(false);
+    expect(sugerenciaVencida({ dia: hace(1), planificado: true }, HOY)).toBe(false);
+    expect(sugerenciaVencida({ dia: hace(1), planificado: false, plan: 'x' }, HOY)).toBe(false);
   });
 });
 

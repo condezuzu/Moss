@@ -1185,6 +1185,19 @@ export function queFalta(o: { registros: Iterable<Registro>; dia: ClaveDia; hoy:
   return comidasDelPlan(o.pref.comidas).filter((c) => !hay.has(c) && (o.dia > o.hoy || o.horaDe(c) + YA_PASO >= o.ahora));
 }
 
+/**
+ * Lo sugerido que sobra al anotar una comida (lo pediste el 30/10/2026: se quedaba todo el día y no
+ * dejaba ver lo comido): lo de esa comida y lo de otra cuya hora ya pasó. Lo planificado a mano (sin
+ * `plan`) queda. `cuando` es la hora de lo que se anotó.
+ */
+export function sugerenciasQueSobran(registros: Iterable<Registro>, dia: ClaveDia, comida: Comida, cuando: string): Registro[] {
+  const hasta = Date.parse(cuando);
+  return [...registros].filter((r) => !r.borrado && r.dia === dia && r.planificado && !!r.plan && (r.comida === comida || Date.parse(r.momento) < hasta));
+}
+
+/** Lo sugerido de un día que ya pasó y no se comió: ya no sugiere nada, y no se muestra. */
+export const sugerenciaVencida = (r: Pick<Registro, 'dia' | 'planificado' | 'plan'>, hoy: ClaveDia) => r.planificado && !!r.plan && r.dia < hoy;
+
 /** Lo que el plan evita: las opciones de los días de antes. */
 export function recientesDe(registros: Iterable<Registro>, dia: ClaveDia, dias = 2): string[] {
   const desde = sumarDias(dia, -dias);

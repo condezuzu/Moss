@@ -10,9 +10,10 @@ import { estadoConAscent, metaConAscent, suscribirConAscent } from '@/almacen/as
 import { conMayuscula } from '@/comida/buscar';
 import { cantidadDePorcion, decimal } from '@/comida/porciones';
 import { ACEITE, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
-import { comidaDeLaHora, COMIDAS, HORA_TIPICA, type Comida } from '@/dominio/comidas';
+import { comidaDeLaHora, COMIDAS, HORA_TIPICA, minutoDeLoDicho, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { metaRepartida, type Macros } from '@/dominio/metas';
+import { sugerenciaVencida } from '@/dominio/plan';
 import { delDia, sumarValores, totalDelDia, type Cantidad, type Registro, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 
@@ -102,9 +103,9 @@ export function metaDelDia(e: Pick<Estado, 'metas' | 'perfil' | 'pesos' | 'hoy'>
 export type ComidaDelDia = { comida: Comida; registros: Registro[]; total: Valores; minutos: number; planificada: boolean };
 
 /** Lo de un día, agrupado por comida y en el orden de la línea: cada comida a la hora de lo primero que tiene. */
-export function comidasDelDia(registros: Estado['registros'], dia: ClaveDia): ComidaDelDia[] {
+export function comidasDelDia(registros: Estado['registros'], dia: ClaveDia, hoy: ClaveDia): ComidaDelDia[] {
   const porComida = new Map<Comida, Registro[]>();
-  for (const r of delDia(registros.values(), dia)) porComida.set(r.comida, [...(porComida.get(r.comida) ?? []), r]);
+  for (const r of delDia(registros.values(), dia)) if (!sugerenciaVencida(r, hoy)) porComida.set(r.comida, [...(porComida.get(r.comida) ?? []), r]);
   return [...porComida]
     .map(([comida, lista]) => ({
       comida, registros: lista, total: sumarValores(lista.map((r) => r.valores)), minutos: minutosEnElDia(new Date(lista[0].momento), dia), planificada: lista.every((r) => r.planificado),
@@ -145,6 +146,16 @@ export function momentoPara(dia: ClaveDia, comida: Comida, hoy: ClaveDia): strin
   const p = partesDe(dia);
   const minutos = comida === 'snack' ? 11 * 60 : HORA_TIPICA[comida];
   return new Date(p.anio, p.mes, p.dia, Math.floor(minutos / 60), minutos % 60).toISOString();
+}
+
+/** Cuándo va lo dicho con el nombre de otra comida: a su hora, si ya pasó; así no corre lo que sigue. */
+export function momentoDeLoDicho(e: Pick<Estado, 'hoy' | 'avisos'>, dia: ClaveDia, comida: Comida): string | undefined {
+  if (dia !== e.hoy) return momentoPara(dia, comida, e.hoy);
+  const hora = comida === 'snack' ? undefined : e.avisos.horario?.[comida] ?? HORA_TIPICA[comida];
+  const minuto = minutoDeLoDicho(hora, minutosEnElDia(new Date(), dia));
+  if (minuto === null) return undefined;
+  const p = partesDe(dia);
+  return new Date(p.anio, p.mes, p.dia, Math.floor(minuto / 60), minuto % 60).toISOString();
 }
 
 /** Un cambio, con el signo de verdad: «+0,4», «−1,2». */

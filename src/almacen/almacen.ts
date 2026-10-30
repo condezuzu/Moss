@@ -19,7 +19,7 @@ import {
   edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil,
 } from '@/dominio/metas';
 import { limpiarNombre, type Nombre } from '@/dominio/nombre';
-import { adaptarRegistros, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
+import { adaptarRegistros, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
 import {
   borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
@@ -607,7 +607,28 @@ export function crearAlmacen(op: Opciones) {
     }));
     ponerComida('registros', nuevos);
     if (dia === estado.hoy) correrLoQueSigue(dia, donde.comida, new Date(desde));
+    if (dia <= estado.hoy) sacarLoSugerido(dia, donde.comida, new Date(desde).toISOString(), nuevos);
     return nuevos;
+  }
+
+  // Lo sugerido que sacó lo último que se anotó: si eso se deshace, vuelve.
+  let sacado: { anotados: Set<string>; sugeridos: Registro[] } | null = null;
+
+  /** Al comer, lo sugerido de esa comida y lo que ya pasó se van (plan.ts). */
+  function sacarLoSugerido(dia: ClaveDia, comida: Comida, cuando: string, anotados: readonly Pick<Registro, 'id'>[]) {
+    const sugeridos = sugerenciasQueSobran(estado.registros.values(), dia, comida, cuando);
+    sacado = sugeridos.length ? { anotados: new Set(anotados.map((r) => r.id)), sugeridos } : null;
+    if (!sugeridos.length) return;
+    const hora = momento();
+    ponerComida('registros', sugeridos.map((r) => borrado(r, hora)));
+  }
+
+  function devolverLoSugerido(id: string) {
+    if (!sacado?.anotados.delete(id) || sacado.anotados.size) return;
+    const { sugeridos } = sacado;
+    sacado = null;
+    const hora = momento();
+    ponerComida('registros', sugeridos.map((r) => restaurado(r, hora)));
   }
 
   /**
@@ -835,7 +856,11 @@ export function crearAlmacen(op: Opciones) {
       ponerComida('registros', [{ ...sinMarca, ...resto, ...marca, actualizado: momento() }]);
     },
     /** Devuelve lo borrado (para el aviso de deshacer). */
-    borrarRegistro: (id: string) => borrarDe('registros', id),
+    borrarRegistro(id: string) {
+      const x = borrarDe('registros', id);
+      devolverLoSugerido(id);
+      return x;
+    },
     deshacerBorrado(id: string) {
       const r = estado.registros.get(id);
       if (r?.borrado) ponerComida('registros', [restaurado(r, momento())]);
@@ -866,6 +891,7 @@ export function crearAlmacen(op: Opciones) {
       const hechos = confirmar(estado.registros.values(), dia, cuando, comida).map((r, i) => (hoy ? { ...r, momento: new Date(Date.parse(cuando) + i).toISOString() } : r));
       if (hoy && hechos.length) correrLoQueSigue(dia, comida, new Date(cuando));
       ponerComida('registros', hechos);
+      if (hechos.length) sacarLoSugerido(dia, comida, hechos[0].momento, hechos);
       return hechos.map((r) => r.id);
     },
     /** Deshacer «Comí esto». */
@@ -875,6 +901,7 @@ export function crearAlmacen(op: Opciones) {
         const r = estado.registros.get(id);
         return r && !r.borrado ? [{ ...r, planificado: true, actualizado: cuando }] : [];
       }));
+      ids.forEach(devolverLoSugerido);
     },
     /**
      * «Otra» y «No me gusta»: la comida planificada pasa a ser otra, a la misma hora. Devuelve cómo

@@ -18,6 +18,7 @@ import { comidaDeLaHora, horasCorridas, type Comida } from '@/dominio/comidas';
 import { diasEntre, lunesDe, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import type { Linea } from '@/dominio/alrededorDelEntreno';
+import { sugerenciaVencida } from '@/dominio/plan';
 import { delDia, sumarValores, totalDelDia, type Registro, type Valores } from '@/dominio/registros';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -44,8 +45,8 @@ type Vista = (typeof VISTAS)[number];
 // en cada cambio): la semana y el mes miran decenas de días cada vez que se pinta la pestaña.
 const indices = new WeakMap<Estado['registros'], Map<ClaveDia, Registro[]>>();
 
-/** Lo de un día, como delDia, sin recorrer todo lo registrado. */
-function registrosDe(e: Pick<Estado, 'registros'>, dia: ClaveDia): Registro[] {
+/** Lo de un día, como delDia, sin recorrer todo lo registrado y sin lo sugerido de un día que ya pasó. */
+function registrosDe(e: Pick<Estado, 'registros' | 'hoy'>, dia: ClaveDia): Registro[] {
   let indice = indices.get(e.registros);
   if (!indice) {
     indice = new Map();
@@ -56,7 +57,7 @@ function registrosDe(e: Pick<Estado, 'registros'>, dia: ClaveDia): Registro[] {
     }
     indices.set(e.registros, indice);
   }
-  return delDia(indice.get(dia) ?? [], dia);
+  return delDia(indice.get(dia) ?? [], dia).filter((r) => !sugerenciaVencida(r, e.hoy));
 }
 
 /** Como totalDe: hoy y antes, sin lo planificado; en un día que no llegó, con lo planificado. */
@@ -426,7 +427,7 @@ type Entrada = { minutos: number } & ({ tipo: 'comida'; comida: ComidaDelDia } |
  */
 function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (texto: string, deshacer?: () => void) => void }) {
   const sistema = sistemaDe(e);
-  const comidas = comidasDelDia(e.registros, dia);
+  const comidas = comidasDelDia(e.registros, dia, e.hoy);
   const entradas: Entrada[] = comidas.map((c) => ({ tipo: 'comida', comida: c, minutos: c.minutos }));
   // En la cuenta del día (D32): pasada la medianoche, antes del corte, la 1470 de hoy.
   const ahora = minutosEnElDia(new Date(), dia);
