@@ -261,17 +261,43 @@ arma la noche con lo que el teléfono guardó:
     de las 0:30). Antes de esa hora, mirar el teléfono es lo último del día.
   - Sin hueco, de la última actividad antes de las 2 a la primera después de las
     4, con confianza baja.
-- **Cuándo te dormiste** (D33, desde el 29/10/2026): la última actividad más lo
-  que tardás en dormirte, que es tuyo (abajo, «Aprender de cada persona»); sin
-  respuestas, los 31 minutos de Sahha [73].
-  - Si dejaste el teléfono más de una hora antes de lo de siempre, te dormiste
-    cerca de tu hora de siempre (media hora antes, como mucho), no del teléfono:
-    es lo que medía Sahha con 76 a 202 minutos [73].
-  - Si lo dejaste después de tu hora de siempre, lo que tardás se achica en la
-    misma proporción que en Sahha (18 de cada 31) [73].
-- **Cuándo te despertaste:** la primera actividad menos lo que tardás en agarrar
-  el teléfono (tuyo; sin respuestas, 18 minutos), sin pasar la primera caminata,
-  la alarma parada o el Focus apagado [73].
+- **Ninguna señal decide sola** (lo pediste el 31/10/2026). Cada una propone una
+  hora con su duda, en minutos, y la hora es el promedio pesado por 1/duda²: la de
+  menos duda pesa más. Lo único que no se negocia: no estabas dormido antes de lo
+  último que hiciste con el teléfono, ni después de lo primero. Las dudas son una
+  propuesta, a calibrar con la prueba de abajo (`DUDA` en `sinReloj.ts`).
+- **Cuándo te dormiste** (D33 y D42). Proponen dos:
+  - **El teléfono:** lo último que hiciste más lo que tardás en dormirte, que es
+    tuyo (abajo, «Aprender de cada persona»); sin respuestas, los 31 minutos de
+    Sahha [73]. Duda 35. Lo dejaste después de tu hora de siempre: lo que tardás se
+    achica como en Sahha (18 de cada 31) [73].
+  - **Tu hora de siempre**, si es después de lo último que hiciste. Duda 60; con
+    menos de 5 noches, 80.
+  - **Si dejaste el teléfono antes de tu hora**, la duda del teléfono crece un minuto
+    por minuto. Dejarlo una hora y media o tres horas antes da unos 70 y 160 minutos
+    hasta dormirte: lo que mide Sahha (76 y 153) [73].
+  - **El cargador** conectado de noche, con hasta 20 minutos de uso después, afirma
+    que te acostaste: la duda baja a 28 y crece la mitad. **Si seguiste usando el
+    teléfono más que eso, no cuenta** y manda lo último que hiciste.
+  - **«Me voy a dormir» o el Focus prendido a mano:** duda 20.
+  - **Lo que parecía una interrupción** pero cae antes de la hora en que te daría
+    dormido, o hasta media hora después, es que seguías despierto: corre el final del
+    día.
+  - Con 3 respuestas o más, lo tuyo deja menos duda (por 0,8).
+- **Cuándo te despertaste.** Proponen dos:
+  - **Lo primero que hiciste** (pasos, movimiento, Moss) menos lo que tardás en
+    agarrar el teléfono (tuyo; sin respuestas, 18 minutos) [73]. Duda 30.
+  - **Desconectar el cargador**, si fue lo primero: hasta 10 minutos antes. Duda 20.
+  - **Tu hora de siempre**, si es antes de lo primero que hiciste. Duda 60.
+  - **Si agarraste el teléfono mucho más tarde que siempre**, la duda crece y pesa
+    más tu hora.
+  - **La alarma, el despertador de Moss, «Me desperté» o el Focus apagado a mano**
+    mandan: son la hora, salvo que después haya hora y media de silencio (te volviste a
+    dormir).
+- **Entre dos huecos posibles**, además de lo de siempre pesan las señales: empezar
+  con el cargador o un aviso, o terminar con ellos.
+- **Dice por qué:** `pistas` lleva cada señal con su hora y cuánto pesó. La vista está
+  en la galería (D39).
 - **Sin armar nada**, las anclas exactas son el despertador de Moss y «Me voy a
   dormir» en el aviso de la noche; los Atajos quedan como opcionales.
 - **Los despertares de la noche** quedan marcados como interrupciones, sin decir
@@ -282,8 +308,10 @@ arma la noche con lo que el teléfono guardó:
   más de una hora después de tu hora de despertarte (hasta −0,3), por cada uso de
   noche (−0,08, hasta tres) y si la noche dura dos horas más o menos que la de
   siempre (−0,1). Un ancla de despertar (la alarma, el despertador de Moss, «Me
-  desperté») suma 0,1, y una de dormir al empezar el hueco, 0,05. Sin hueco, como mucho 0,4. Las
-  cuentas están en `src/dominio/sinReloj.ts`, con sus tests.
+  desperté») suma 0,1, y una de dormir al empezar el hueco, 0,05; el cargador al
+  empezar o desconectarlo al terminar, 0,05, y conectarlo y seguir usándolo resta
+  0,05. Sin hueco, como mucho 0,4. Las cuentas están en `src/dominio/sinReloj.ts`,
+  con sus tests.
 - **Las siestas** no se estiman.
 
 **Qué tan bien anda, esperable:** entre el 46 % (solo los pasos) y el 66 % de

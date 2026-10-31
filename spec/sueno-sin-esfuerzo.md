@@ -15,6 +15,81 @@ Completa «Sin reloj» de [`sueno.md`](sueno.md), que ya prevé las anclas de un
 Atajo (`Ancla` en `src/dominio/sinReloj.ts`). Las fuentes, numeradas, están al
 final.
 
+## Las señales, una por una (31/10/2026)
+
+Lo pediste: qué puede leer iOS de verdad, qué necesita Atajos y qué necesita una
+build. La columna «Hoy» dice si anda con la build 6, por OTA.
+
+| Señal | Cómo llega | ¿Con Moss cerrada? | Hoy |
+|---|---|---|---|
+| **Pasos** | Salud y `CMPedometer`, 7 días | Sí: queda guardado | ✅ Solo el permiso |
+| **El teléfono en movimiento** (caminar, el auto, agarrarlo, quieto) | `CMMotionActivity`, 7 días | Sí: queda guardado | ✅ Solo el permiso |
+| **Moss abierta** | Moss misma | No hace falta | ✅ |
+| **Tu horario** y **tus respuestas** | Moss | No hace falta | ✅ |
+| **Cuánto tardás en dormirte** | Aprende de tus respuestas | No hace falta | ✅ |
+| **«Me voy a dormir»** | El botón del aviso de la noche, Siri o Atajos | Sí | ✅ |
+| **El despertador de Moss** | AlarmKit, iOS 26 o más | Sí | ✅ |
+| **Conectar y desconectar el cargador** | **Atajos**: una automatización con las acciones de Moss | Sí | 🟡 Las acciones están en la build 6; falta armarla |
+| **La alarma del Reloj, parada** | **Atajos** | Sí | 🟡 Ídem |
+| **El enfoque Sueño** | **Atajos** | Sí | 🟡 Ídem |
+| **El enfoque Sueño, sin Atajos** | Filtro de Concentración, con una extensión | Sí | 🔴 Build |
+| **Saber si está cargando al abrir Moss** (ver que el Atajo no corrió) | `UIDevice.batteryState`, con `expo-battery` | Solo con Moss abierta | 🔴 Build |
+| **Cargando y bloqueado de madrugada** | Leerlo en la tarea de fondo; iOS decide cuándo corre [S1] | A veces | 🔴 Build |
+| **Tiempo de uso** («lo usó a las 0:40») | Family Controls y una extensión: Moss no lee datos, recibe avisos de umbral | Sí | 🔴 Build, y permiso de Apple que tarda de días a semanas. En iOS 26 hay reportes de avisos que llegan antes de tiempo [S2] |
+| **Pantalla prendida y desbloqueo** | No hay forma pública con la app cerrada | No | ⛔ |
+| **Micrófono, luz del cuarto, otras apps** | No se hace: batería, privacidad y la guía 2.5.14 | — | ⛔ |
+
+**Lo que no se puede ver:** usar el teléfono sin moverlo (acostado, apoyado). Lo tapa,
+en parte, lo que Moss aprende de tus respuestas: si siempre seguís un rato en la cama,
+tu «tardo en dormirme» lo incluye. Lo arreglaría el Tiempo de uso, con una build y el
+permiso de Apple.
+
+## La guía del cargador (31/10/2026, en la galería)
+
+Lo pediste: instalar en un toque, una guía visual, menos de un minuto, y que Moss
+detecte si anda. Lo que se puede:
+
+- **Una app no puede crear una automatización.** La arma la persona, o la agrega desde
+  un enlace.
+- **En iOS 27 se puede casi todo de un toque** [12][14]: la automatización viaja con el
+  atajo. Se toca «Instalar», se abre Atajos, se deja prendida «Activar la automatización»
+  y «Añadir atajo». Hay una falla de Apple: si el botón no responde, se toca «Omitir
+  configuración» (FB24252363) [14].
+- **Hasta iOS 26:** el atajo se instala de un toque, pero la automatización se arma a
+  mano: Automatización, +, Cargador, las dos opciones marcadas (Apple permite elegir
+  conectar y desconectar en la misma), «Ejecutar inmediatamente» y el atajo. Son 5 toques
+  con el atajo ya instalado. En iOS 26 esa opción se llama de otra forma («Preguntar
+  antes de ejecutar», apagada) [S3]: hay que copiar los nombres del iPhone.
+- **El iPhone está dibujado**, sin capturas de Apple. **Lo que pide el camino:** la
+  persona sale de Moss para ir a Atajos, así que se puede mirar entero antes («Mirar cómo
+  se hace»), y al volver sigue donde quedó.
+- **Termina probándolo:** conectar el cargador y ver que llegó, con Moss abierta.
+
+**Lo que tenés que armar en tu iPhone, una vez** (un enlace de iCloud no se puede crear
+desde Windows):
+
+1. En Atajos, un atajo «Moss: cargador»: si está conectado al cargador, «Conecté el
+   cargador»; si no, «Desconecté el cargador».
+2. En iOS 27: Editar, Automatización, Cargador; e Info, Privacidad, «Permitir ejecutar con
+   el iPhone bloqueado» [9].
+3. Compartir, Copiar enlace de iCloud, y pasármelo. Va en una constante y llega por OTA.
+4. Probar el enlace en un iOS anterior: si no se instala, hacen falta dos.
+
+Con una build se simplifica: una sola acción de Moss que lea la batería, sin el «si».
+
+**Que Moss detecte si anda.** No puede ver las automatizaciones, pero sí lo que le llega
+(`estadoDelCargador`, en `sinReloj.ts`, con tests):
+
+| Estado | Cuándo | Qué dice |
+|---|---|---|
+| `sinArmar` | Nunca llegó nada | Para qué sirve y que lleva un minuto |
+| `anda` | Llegó en los últimos 3 días | «Funciona · llegó anoche, 23:41» |
+| `dejoDeLlegar` | Nada hace 3 días o más: casi todos cargan cada día o dos | Lo dice en la fila, y un aviso arriba de Afinar con «Revisar» |
+| `aMedias` | Tres o más de un solo sentido en la semana | «Llega solo al conectar: falta la otra» |
+
+Sin notificaciones: Moss nunca insiste. Con una build, se suma comparar al abrir: si está
+cargando y no llegó nada, la automatización no corrió.
+
 ## La recomendación
 
 | | Qué aprende Moss | Lo que hace la persona, una vez | Cuándo |
@@ -689,6 +764,9 @@ module.exports = (config) => ({
 13. iThinkDifferent, Atajos en iOS 27 beta 2: https://www.ithinkdiff.com/?p=339738
 14. one sec, automatizaciones en iOS 27: https://tutorials.one-sec.app/en/articles/10309122
 15. 9to5Mac, disparadores nuevos de iOS 27: https://9to5mac.com/2026/09/29/ios-27s-shortcuts-app-adds-35-new-improved-actions-heres-whats-new/
+- S1. Apple DTS, las tareas de fondo corren cuando iOS decide: https://developer.apple.com/forums/thread/127500
+- S2. Foro, los avisos de umbral en iOS 26: https://developer.apple.com/forums/thread/808470
+- S3. La opción de iOS 26, según una guía de terceros: https://allthings.how/how-to-make-siri-talk-charging-iphone/
 16. Guías de revisión de Apple: https://developer.apple.com/app-store/review/guidelines/
 
 **Apple: Sueño, Concentración y Salud**

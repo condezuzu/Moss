@@ -949,7 +949,7 @@ const Entrada = (() => {
         leyenda.appendChild(fila);
       });
       p.append(leyenda, el('p', 'ent-chico', tx('entrada.cuestionario.gasto', { n: numero(m.gasto) })), el('p', 'ent-texto', tx('entrada.cuestionario.resultadoTexto')));
-      p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.cuestionario.empezar'), terminar, 'ent-principal'));
+      p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.cuestionario.empezar'), () => (opciones.antesDeTerminar ? opciones.antesDeTerminar(terminar) : terminar()), 'ent-principal'));
       l.llenar(1600, 200);
       // La cifra cuenta hasta la meta.
       const t0 = performance.now() + 200;

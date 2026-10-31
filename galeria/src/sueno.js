@@ -129,6 +129,7 @@ const SeccionSueno = (() => {
           boton('sn-otra', tx('sueno.manana.otraHora'), () => { s.editandoHora = true; pintar(); }),
         );
         b.appendChild(acciones);
+        b.appendChild(porque(clave));
         return b;
       }
       // Sin proponer, arranca en lo de siempre y no en lo estimado: así se mide cuánto se acepta lo propuesto.
@@ -141,6 +142,60 @@ const SeccionSueno = (() => {
         listo();
       }, s.soloDormirse));
       return b;
+    }
+    /** Cómo llegó a esa hora (lo pediste el 31/10/2026): cada señal, su hora y cuánto pesó (`pistas` de SinReloj.estimarNoche). */
+    function porque(clave) {
+      const e = Datos.ESTIMACIONES[clave];
+      const caja = el('div', 'sn-porque');
+      if (!e) return caja;
+      const abrir = boton('sn-porque-abrir', `<span>${tx('sueno.manana.porque.abrir')}</span>${icono(s.porque ? 'arriba' : 'abajo')}`, () => { s.porque = !s.porque; pintar(); });
+      abrir.setAttribute('aria-expanded', String(!!s.porque));
+      caja.appendChild(abrir);
+      if (!s.porque) return caja;
+      const dentro = el('div', 'sn-porque-dentro');
+      dentro.appendChild(lineaDeLaNoche(e));
+      [['dormirse', e.dormirse], ['despertar', e.despertar]].forEach(([borde, hora]) => {
+        const cab = el('h5');
+        cab.append(el('span', null, tx('sueno.manana.porque.' + borde)), el('b', null, reloj(hora)));
+        const ul = el('ul');
+        e.pistas[borde].forEach((p) => {
+          const li = el('li', p.noCuenta ? 'no-cuenta' : null);
+          const fila = el('div');
+          fila.append(el('span', null, nombreDePista(p)), el('b', null, reloj(p.en)));
+          li.appendChild(fila);
+          if (p.peso > 0 && e.pistas[borde].some((o) => o !== p && o.peso > 0)) {
+            const barra = el('i');
+            barra.style.setProperty('--peso', String(p.peso));
+            li.appendChild(barra);
+          } else if (p.noCuenta) li.appendChild(el('small', null, tx('sueno.manana.porque.noCuenta')));
+          else if (!p.peso) li.appendChild(el('small', null, tx('sueno.manana.porque.confirma')));
+          ul.appendChild(li);
+        });
+        dentro.append(cab, ul);
+      });
+      const yo = SinReloj.aprenderPersonal(propias(), clave);
+      dentro.appendChild(el('p', 'sn-nota', tx(yo.noches > 0 ? 'sueno.manana.porque.tardas' : 'sueno.manana.porque.tardasFabrica', { n: yo.latencia })));
+      dentro.appendChild(el('p', 'sn-nota', tx('sueno.manana.porque.nota')));
+      caja.appendChild(dentro);
+      return caja;
+    }
+    function nombreDePista(p) {
+      if (p.que !== 'ultimaActividad' && p.que !== 'primeraActividad') return tx('sueno.manana.porque.pistas.' + p.que);
+      const tipos = p.tipos || [];
+      return tx(`sueno.manana.porque.pistas.${p.que}.${tipos.find((t) => t !== 'atajo') || tipos[0] || 'movimiento'}`);
+    }
+    /** La noche en una línea: lo dormido, con una marca por cada señal. */
+    function lineaDeLaNoche(e) {
+      const todas = [...e.pistas.dormirse, ...e.pistas.despertar];
+      const desde = Math.min(e.dormirse, ...todas.map((p) => p.en)) - 15, hasta = Math.max(e.despertar, ...todas.map((p) => p.en)) + 15;
+      const x = (m) => (8 + ((m - desde) / (hasta - desde)) * 304).toFixed(1);
+      const marcas = todas.map((p) => `<circle class="${p.noCuenta ? 'no-cuenta' : ''}" cx="${x(p.en)}" cy="14" r="${p.noCuenta ? 2.6 : 3.2}"/>`).join('');
+      const v = el('div', 'sn-porque-linea');
+      v.innerHTML = `<svg viewBox="0 0 320 28" aria-hidden="true"><line class="base" x1="8" x2="312" y1="14" y2="14"/><line class="dormido" x1="${x(e.dormirse)}" x2="${x(e.despertar)}" y1="14" y2="14"/>${marcas}</svg>`;
+      const pie = el('div', 'sn-porque-horas');
+      pie.append(el('span', null, reloj(desde + 15)), el('span', null, reloj(hasta - 15)));
+      v.appendChild(pie);
+      return v;
     }
     /** Sin reloj y sin permiso, una vez: el movimiento del teléfono mejora la estimación. */
     function cartaDeMovimiento() {
@@ -207,7 +262,11 @@ const SeccionSueno = (() => {
       if (noche) cont.appendChild(calidad(noche));
       cont.appendChild(horario());
       if (noche && !noche.moss) cont.appendChild(vitales(noche));
-      if (sinReloj()) cont.appendChild(afinar());
+      if (sinReloj()) {
+        const avisar = avisoDelCargador();
+        if (avisar) cont.appendChild(avisar);
+        cont.appendChild(afinar());
+      }
       cont.appendChild(fuentes(noche));
       cont.appendChild(el('p', 'sn-pie', tx('sueno.noMedico')));
       cont.scrollTop = arriba;
@@ -628,6 +687,34 @@ const SeccionSueno = (() => {
       llave.setAttribute('aria-pressed', String(despertador.prendido));
       return llave;
     };
+    // Lo que le llegó del cargador, según cómo esté en la galería (`cargador`, abajo): Moss no ve las
+    // automatizaciones de Atajos, pero sí lo que le llega (SinReloj.estadoDelCargador).
+    function estadoDelCargador() {
+      const en = (dias, h, m) => SinReloj.instanteDe(Fechas.sumarDias(Datos.HOY, dias), Datos.ZONA, (h < 18 ? h + 6 : h - 18) * 60 + m);
+      const lista = {
+        sinArmar: [],
+        anda: [['cargadorConectado', 0, 23, 41], ['cargadorDesconectado', 0, 7, 18]],
+        dejoDeLlegar: [['cargadorConectado', -4, 23, 30], ['cargadorDesconectado', -4, 7, 10]],
+        aMedias: [['cargadorConectado', -2, 23, 40], ['cargadorConectado', -1, 23, 52], ['cargadorConectado', 0, 23, 41]],
+      }[s.cargador || 'sinArmar'].map(([que, dias, h, m], i) => ({ id: 'cargador-' + i, que, en: en(dias, h, m) }));
+      return SinReloj.estadoDelCargador(lista, en(0, 9, 0));
+    }
+    function textoDelCargador(e) {
+      if (e.estado === 'anda') return tx('sueno.afinar.cargador.anda', { cuando: cuando(e.ultima) });
+      if (e.estado === 'dejoDeLlegar') return tx('sueno.afinar.cargador.dejoDeLlegar', { dias: e.dias });
+      if (e.estado === 'aMedias') return tx(e.falta === 'conectar' ? 'sueno.afinar.cargador.faltaConectar' : 'sueno.afinar.cargador.faltaDesconectar');
+      return tx('sueno.afinar.cargador.sinArmar');
+    }
+    /** Si dejó de llegar, lo avisa una vez arriba de «Afinar», con «Revisar». */
+    function avisoDelCargador() {
+      const e = estadoDelCargador();
+      if (e.estado !== 'dejoDeLlegar') return null;
+      const c = carta('sn-movimiento sn-aviso-cargador', null);
+      const txt = el('div');
+      txt.append(el('b', null, tx('sueno.afinar.cargador.avisoTitulo')), el('p', null, tx('sueno.afinar.cargador.avisoTexto')));
+      c.append(txt, boton('sn-permitir', tx('sueno.afinar.cargador.avisoBoton'), () => opciones.abrirGuia && opciones.abrirGuia()));
+      return c;
+    }
     function afinar() {
       const c = carta('sn-afinar', tx('sueno.afinar.titulo'));
       c.appendChild(el('p', 'sn-nota', tx('sueno.afinar.texto')));
@@ -640,7 +727,13 @@ const SeccionSueno = (() => {
       t2.append(el('b', null, tx('sueno.afinar.atajos.titulo')), el('span', null, tx('sueno.afinar.atajos.fila')));
       atajos.appendChild(t2);
       atajos.insertAdjacentHTML('beforeend', icono('adelante'));
-      c.append(fila, atajos);
+      const est = estadoDelCargador();
+      const cargador = boton('sn-afinar-fila sn-afinar-cargador', '', () => opciones.abrirGuia && opciones.abrirGuia());
+      const t3 = el('span', 'sn-afinar-textos');
+      t3.append(el('b', null, tx('sueno.afinar.cargador.titulo')), el('span', est.estado === 'anda' ? 'llego' : est.estado === 'sinArmar' ? null : 'falla', textoDelCargador(est)));
+      cargador.appendChild(t3);
+      cargador.insertAdjacentHTML('beforeend', icono('adelante'));
+      c.append(fila, cargador, atajos);
       return c;
     }
     // Las dos hojas de «Afinar»: el despertador y los Atajos.
@@ -761,6 +854,9 @@ const SeccionSueno = (() => {
         pintar();
       },
       editarHora() { s.editandoHora = true; pintar(); },
+      // Para los botones de la galería: abrir el porqué y cómo está el cargador.
+      porque(si) { s.porque = si !== false; pintar(); },
+      cargador(estado) { s.cargador = estado; pintar(); },
       editarNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; s.editando = s.clave; pintar(); },
       olvidarHoras() {
         horas = {};

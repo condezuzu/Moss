@@ -31,8 +31,8 @@ SDK y la memoria no alcanza.
 - **Todo el texto que se lee está en `src/textos/es.json` y `en.json`.**
   - El inglés tiene que tener exactamente las mismas claves (lo comprueba
     `tsc`).
-  - Interfaz en **español neutro** (tú) e inglés; con el iPhone en Uruguay o
-    Argentina, de vos: `src/textos/vos.json`, solo lo que cambia (D31).
+  - Interfaz en **español neutro** (tú) e inglés, también con el iPhone en Uruguay
+    o Argentina: nada de voseo ni de palabras rioplatenses (D31).
   - El código y los comentarios, en español.
 - **Un solo juego de shaders**: `src/cielo/shaders/*.glsl`, que usan la galería
   (WebGL) y la app (Skia).
@@ -96,6 +96,10 @@ SDK y la memoria no alcanza.
     que revisan el vínculo. Ver `spec/ascent.md`.
 - **Respondeme siempre en español** (lo pediste el 28/10/2026): los mensajes, los
   resúmenes y las preguntas, aunque el pedido o una herramienta vengan en otro idioma.
+- **La huella nativa (lo aprendí el 31/10/2026):** los `scripts` de `package.json` y el
+  `.gitignore` cuentan como el código nativo: cambiar una línea corta las OTA a las
+  builds instaladas. Se tocan solo para la próxima build, y antes de cada OTA se corre
+  `node herramientas/verificar-huella.mjs`.
 - Paquetes siempre con `npx expo install`.
 - Comentá solo las líneas que tienen un porqué no obvio.
 - **Antes de dar algo por terminado:**
@@ -107,7 +111,7 @@ SDK y la memoria no alcanza.
     y `npm run alimentos:verificar` (los tests del buscador corren contra la
     base armada).
   - Si tocaste los shaders: `npm run shaders:verificar`.
-  - Si tocaste el cielo de la app: `npm run web:exportar` (deja la app en `web-exportada/`) y
+  - Si tocaste el cielo de la app: `node herramientas/exportar-web.mjs` (deja la app en `web-exportada/`) y
     `npm run app:capturas` (con `npm run web:ver` prendido).
   - Si tocaste la galería: `npm run galeria` y `npm run galeria:capturas` (con
     `npm run galeria:ver` prendido).
@@ -142,7 +146,8 @@ SDK y la memoria no alcanza.
 | `npm run galeria:capturas` | capturas a 393×852 @2× en `capturas/galeria` (ver los escenarios abajo) |
 | `npm run tienda:capturas` | las capturas para la App Store (spec/revision.md «e»), sacadas de la app de verdad en la web con una persona inventada (Lucía), dentro de un iPhone dibujado y con su texto arriba: `capturas/tienda/<tamaño>/<idioma>/`, en 1320×2868 y 1206×2622, y las vistas chicas para la galería en `capturas/tienda/vista/` (con `npm run web:ver` prendido; después, `npm run galeria`) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
-| `npm run web:exportar` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
+| `node herramientas/exportar-web.mjs` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
+| `node herramientas/verificar-huella.mjs` | compara la huella nativa de esta carpeta con la de la build de la tienda: se corre antes de cada OTA |
 | `node herramientas/recorrer-pantallas.mjs <carpeta>` | todas las pantallas de la app en la web (las seis secciones con su scroll, el «+» y la entrada hasta el resultado) en un iPhone chico y uno grande, en es-UY, es-ES y en-US (con `npm run web:ver` prendido) |
 | `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas, Inicio y el «+»), decir lo que comí y, en un navegador limpio, las primeras pantallas de la entrada |
 | `npx eas-cli@latest build --profile dev --platform ios` | la build de desarrollo para el iPhone (la primera vez pide entrar a Apple); su JavaScript llega de `npx expo start` |
@@ -166,6 +171,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso` (con «Semana a semana»), `plazo` (el ritmo y el plazo, D35), `metas`, `sueno`;
 - `primerdia` (Inicio sin datos), `cuestionario` (las preguntas de la entrada) y `todo` (tocar la luna: Todo lo de hoy, también al pasarse);
+- `senales` (cómo llegó a la hora de la noche sin reloj), `guia` (la guía del cargador, los dos caminos y lo que ve en Afinar) y `suscripcion` (la propuesta de D40: Premium, la hoja de Apple, lo bloqueado y Perfil);
 - `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
 - `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`;
 - `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado).
@@ -198,6 +204,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/avisos.md](spec/avisos.md) | los avisos: la hora de dormir, los de cada hábito, las comidas sin anotar, juntos y con un máximo por día |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
 | [spec/revision.md](spec/revision.md) | la revisión de Apple: las respuestas de privacidad, los permisos, cada guía, la ficha en es y en, las capturas, las notas para quien revisa y lo que hay que hacer en App Store Connect |
+| [spec/suscripcion.md](spec/suscripcion.md) | la suscripción (D40): qué es gratis y qué es Premium, lo que pide Apple, qué cargar en App Store Connect, qué cambia en la ficha y los términos, y el código de oferta para la publicidad |
 | [spec/fuentes.md](spec/fuentes.md) | las segundas tablas oficiales de los curados: cuáles y por qué, cómo se comparan, lo que hay que mostrar en Créditos y lo que queda por revisar |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
 
@@ -268,6 +275,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `perfil.js`: Perfil.
 - `ascent.js`: Ascent, arriba de Hábitos, sin vincular y vinculada.
 - `habitos.js`: Hábitos: el editor, «Tu mes» y los primeros hábitos.
+- `atajos.js`: la guía del cargador, con un iPhone dibujado.
+- `suscripcion.js`: la propuesta de suscripción (D40), sin compras de verdad.
 - `widgets.js`: los widgets, en la pantalla de inicio, la bloqueada y StandBy, con su sección.
 - `tienda.js`: la sección «Tienda»: el ícono y las capturas de la App Store, en es y en.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el

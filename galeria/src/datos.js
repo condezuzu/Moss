@@ -110,7 +110,8 @@ const Datos = (() => {
   // Lo que guardó el teléfono cada día (los pasos, el movimiento y cuándo usó Moss) y lo que Moss
   // estimó con eso cada mañana (SinReloj, src/dominio/sinReloj.ts): algunas mañanas lo confirmó y dos
   // lo corrigió, y con eso aprendió. Anoche usó el teléfono a las 2 y a las 4: Moss no está segura y
-  // pregunta. Las noches de verdad son las mismas que las del reloj.
+  // pregunta. Las noches de verdad son las mismas que las del reloj. Con el atajo del cargador armado.
+  const ESTIMACIONES = {};
   const PROPIAS_SIN_RELOJ = (() => {
     const r = azar(47);
     const propias = [];
@@ -132,9 +133,14 @@ const Datos = (() => {
         { desde: instante(clave, primero + 30), hasta: instante(clave, primero + 33), tipo: 'moss' },
       ];
       if (anoche) actividad.push({ desde: instante(clave, 490), hasta: instante(clave, 494), tipo: 'moss' }, { desde: instante(clave, 620), hasta: instante(clave, 626), tipo: 'movimiento' });
+      actividad.push(
+        { desde: instante(clave, ultimo - 8), hasta: instante(clave, ultimo - 7), tipo: 'atajo', cargador: 'conectado', fin: true },
+        { desde: instante(clave, primero), hasta: instante(clave, primero + 1), tipo: 'atajo', cargador: 'desconectado' },
+      );
       const noches = SinReloj.conNochesDeMoss([], propias, ZONA);
       const e = SinReloj.estimarNoche({ clave, zona: ZONA, actividad, habitual: SinReloj.habitualDe(noches, clave), personal: SinReloj.aprenderPersonal(propias, clave) });
       if (!e) continue;
+      ESTIMACIONES[clave] = e;
       // Como en la app (src/salud/nocheSinReloj.ts): lo estimado con la ventana tranquila, de donde se aprende lo suyo.
       const estimada = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), quieto: { desde: iso(clave, e.quieto.desde), hasta: iso(clave, e.quieto.hasta) } };
       let hora = { dormirse: iso(clave, e.dormirse), despertar: iso(clave, e.despertar), origen: 'estimada', confianza: e.confianza, estimada };
@@ -279,7 +285,7 @@ const Datos = (() => {
   return {
     HOY, AHORA_MIN, INICIO, PERFIL, GASTO_ANTERIOR, PESADAS, MEDIDAS, azar,
     ZONA, FUENTES, MUESTRAS, LECTURAS, NOCHES, SOLO_EN_CAMA, NOCHE_SIN_RELOJ: SIN_RELOJ, NOCHE_SIN_NADA: SIN_NADA, NOCHE_CORTADA: CORTADA,
-    PROPIAS_SIN_RELOJ,
+    PROPIAS_SIN_RELOJ, ESTIMACIONES,
     HABITOS, DIAS,
     ASCENT,
   };

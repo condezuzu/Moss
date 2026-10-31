@@ -603,12 +603,18 @@ Lo de la tanda del 29/10, separado por cómo llega:
   como sugerencia (D37), los términos dentro de Moss (D38), correr las comidas
   al anotar una antes, Afinar sin atajos, el arreglo de «Mes» en Comida y la
   galería al día. Y lo del 30/10 (D41): la voz, la sugerencia que se va al comer, la
-  meta de cada macro en Inicio y «¿no llegó nada?» en Aparatos.
+  meta de cada macro en Inicio y «¿no llegó nada?» en Aparatos. Y lo del 31/10 (D31,
+  D42): toda la app de tú, los avisos de dormir con textos variados y la noche sin reloj
+  con todas las señales.
 - **Para aprobar en la galería** (D39): el ritmo y el plazo, los gráficos de
-  Progreso, Inicio el primer día, el cuestionario y tocar la luna.
-- **Para decidir** (D40): suscribirse para usar Moss, que cambia «gratis» y pide build.
-- **Con build:** el filtro de enfoque de Sueño (que Moss sepa cuándo empieza sin
-  un Atajo) y las frases de los Atajos de vos, que están en Swift.
+  Progreso, Inicio el primer día, el cuestionario, tocar la luna, cómo llegó a la hora
+  y la guía del cargador. Las dos últimas van por OTA una vez aprobadas; la guía pide
+  además el enlace de iCloud que armás en tu iPhone.
+- **Para aprobar en la galería, con build** (D40): la suscripción. Lo que tenés que
+  cargar en App Store Connect está en [`suscripcion.md`](suscripcion.md).
+- **Con build:** el filtro de enfoque de Sueño (que Moss sepa cuándo empieza sin un
+  Atajo), una sola acción del cargador que lea la batería y ver al abrir si está
+  cargando (`expo-battery`).
 
 ## Después de la aprobación de la 1.0 (lo pediste el 28/10/2026)
 
@@ -624,6 +630,10 @@ Lo de la tanda del 29/10, separado por cómo llega:
 
 ## Después de la v1
 
+- **Una animación de Moss para publicidad**, con un código de oferta de Apple de dos
+  semanas gratis (lo pediste el 31/10/2026; ver [`suscripcion.md`](suscripcion.md)).
+- **Conectar directo con Oura, Garmin, Fitbit y Whoop**, para quien no usa Salud (lo
+  pediste el 31/10/2026; ver [`aparatos.md`](aparatos.md)).
 - **Importar recetas desde un link.**
 - **La app para Apple Watch.**
 - **Una Live Activity para registrar desde la isla, y Atajos y Siri.**

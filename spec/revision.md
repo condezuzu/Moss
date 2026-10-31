@@ -613,7 +613,7 @@ tamaños:
 | Dynamic Island, mediana | 1206 × 2622 (o 1179 × 2556) | iPhone 16 Pro, 17, 17 Pro y 18 Pro (y tu 15 Pro, a 1179 × 2556) | 402 × 874 × 3 |
 
 **Cómo.** `npm run tienda:capturas` (herramientas/capturas-tienda.mjs) las saca
-de la app de verdad en la web (`npm run web:exportar` y `web:ver`), a × 3 con
+de la app de verdad en la web (`node herramientas/exportar-web.mjs` y `npm run web:ver`), a × 3 con
 esos dos viewports, con una persona inventada, **Lucía**, sin correo: tres
 semanas de comidas de la base, siete de pesadas y dos de noches sin reloj, a las
 ocho y pico de la noche (le falta la cena). La web se corrige solo en lo que

@@ -82,11 +82,29 @@ app Salud (Explorar › Sueño), a Moss no le puede llegar.
 | **Ultrahuman** | Conecta con Salud, pero no encontré si manda el sueño [U1] | Darle todos los permisos |
 | **Evie** | Las fuentes se contradicen: Sahha y Notebookcheck dicen que sí; una reseña anterior, que no [Ev1][Ev2] | Prender la sincronización en su app |
 | **Circular** | Sin confirmar: no encontré nada de Circular | — |
-| **Colmi y otros baratos** (QRing) | Su app dice integrarse con Salud; sin confirmar el sueño [Co1] | Darle permisos en Ajustes |
+| **Colmi y otros baratos** (QRing) | Su app dice integrarse con Salud; sin confirmar el sueño [Co1]. FitMesh, una app de terceros, dice llevar el sueño del Colmi R02 y R03 a Salud, con etapas [Co2] | Darle permisos en Ajustes |
+| **«Daring»: los de la app Da Rings** (de Mo Young, la de Da Fit) | No encontré ningún anillo llamado Daring: lo más parecido es Da Rings. Su ficha dice «Integrates with Apple Health App» y guarda el sueño en su app, pero no dice si lo manda a Salud. Tiene 2,4 de 5 con 215 opiniones [Da1] | Prender Salud en su app. Hay que mirarlo con el anillo en la mano |
 | **Galaxy Ring** | No funciona con iPhone [S2] | — |
 
 Hay que probarlos con un anillo en la mano: lo «sin confirmar» es lo que no pude ver
 en una fuente del fabricante.
+
+## Para una versión futura: conectar directo, para quien no usa Salud (31/10/2026)
+
+Lo pediste: conexión directa por API con **Oura, Garmin, Fitbit y Whoop**. Las cuatro
+piden iniciar sesión en la marca (OAuth) y un servidor que guarde el permiso y traiga
+los datos: una función nueva de Supabase, una tabla por cuenta y lo que pide cada guía
+de privacidad. Va después de la suscripción: es un buen candidato a Premium.
+
+| Marca | Cómo está al 31/10/2026 | Lo que falta antes |
+|---|---|---|
+| **Whoop** | API v2 con OAuth y webhooks; sueño con etapas, eficiencia y respiración; 100 pedidos por minuto y 10.000 por día [W12]. Cupos con revisión [W4] | Registrar la app y pedir cupo. **La primera** |
+| **Oura** | API v2 con OAuth; hasta 10 usuarios hasta que Oura aprueba. Los tokens personales se dejaron de dar; el sueño suele pedir abrir su app [O11] | **Un sí por escrito** sobre las cláusulas de abajo |
+| **Garmin** | Connect Developer, OAuth 1.0a y solo para empresas. **Hay reportes opuestos:** en pausa desde mayo de 2026 o reabierto, con costo desde el 01/04/2027 [G11][G12] | Preguntarle a Garmin si toma solicitudes y si Moss entra |
+| **Fitbit** | **La Web API se apaga:** el 30/10 o el 02/11/2026, según la página de Google [F8]. Hay que ir a la Google Health API: los permisos son «restringidos» y piden una revisión de seguridad [F8][F7] | La revisión anual (CASA). **La última**, y solo si la piden |
+
+Cambia lo de abajo: Fitbit decía «no» porque Salud ya trae lo mismo. Eso sigue
+siendo cierto para quien usa Salud; esto es para quien no.
 
 ## Las conexiones directas, después de la v1
 
@@ -354,6 +372,13 @@ de fuentes sin confirmar: hay que revisarlos con un aparato antes de lanzar.
 - [Ev1] https://sahha.ai/integrations/evie-ring/
 - [Ev2] https://www.notebookcheck.net/Movano-Evie-Ring-adds-new-data-tracking-features.977795.0.html
 - [Co1] https://mwm.ai/apps/qring/6473672621
+- [Co2] https://www.fitmesh.fit/en/blog/smart-ring-data-apple-health
+- [Da1] https://apps.apple.com/us/app/-/id6443980625
+- [W12] https://tryterra.co/blog/whoop-api-data-access-permissions-limitations-2026
+- [O11] https://cdn.jsdelivr.net/npm/oura-hr@1.1.0/OURA-API.md
+- [G11] https://tryterra.co/blog/garmin-connect-developer-program-pause
+- [G12] https://openwearables.io/blog/garmin-connect-developer-program-reopened
+- [F8] https://developers.google.com/health/migration
 - [C1] https://support.coros.com/hc/en-us/articles/360041549551-Connecting-Apple-Health-with-COROS-App
 - [C2] https://docs.tryterra.co/faq/help-topics/data-api-sdk/provider-coverage-and-per-provider-data-availability/coros-sleep-stages-not-exposed
 - [Su1] https://apizone.suunto.com/faq

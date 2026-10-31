@@ -235,6 +235,11 @@
 
   // ------------------------------------------------------------ la entrada a la app
   let avanceSolo = false;
+  // La propuesta de suscripción (D40) y la guía del cargador: maquetas, para aprobar.
+  let conSuscripcion = false;
+  let suscripcion = null;
+  let guiaAtajos = null;
+  let estadoDeSuscripcion = 'gratis';
   const entrada = Entrada.crear(tel, escena, {
     textos: TEXTOS,
     catalogo: lista,
@@ -248,6 +253,12 @@
     alSalir: () => tel.classList.remove('en-entrada'),
     llegada: () => { pestanas.ir(0, true); comida.verDia(0); inicio.subir(); return inicio.zona; },
     alTerminar: () => habitosSec.sugeridos(),
+    // Con la propuesta de suscripción (D40), va después de la meta.
+    antesDeTerminar: (seguir) => {
+      if (!conSuscripcion) return seguir();
+      conSuscripcion = false;
+      suscripcion.abrir({ despues: seguir });
+    },
   });
 
   // ------------------------------------------------------------ la comida
@@ -471,11 +482,19 @@
     abrirAscent: () => abrirAscent(),
     // La cara de la mañana cambia la recuperación, que también está en Ascent.
     alCambiarCara: () => { if (ascent) ascent.pintar(); },
+    abrirGuia: () => guiaAtajos.abrir(versionDeLaGuia),
+  }));
+  // Qué iOS muestra la guía: en iOS 27 el atajo trae la automatización; hasta iOS 26, se arma a mano.
+  let versionDeLaGuia = 27;
+  guiaAtajos = GuiaAtajos.crear(tel, Object.assign({}, opcionesDeSeccion, { alArmar: () => sueno.cargador('anda') }));
+  suscripcion = Suscripcion.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    alCambiar: (estado) => { estadoDeSuscripcion = estado; if (perfilSec) perfilSec.pintar(); refrescarControles(); },
   }));
   perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, {
     // Comida, para Entrenamiento: cuándo entrenas cambia lo que dice cada comida.
     comida,
     persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length,
+    suscripcion: () => estadoDeSuscripcion, abrirSuscripcion: () => suscripcion.abrir(),
     // Los números ocultos (Perfil): sin calorías ni gramos en Inicio, Comida y la ventana del alimento.
     alNumeros: (si) => tel.classList.toggle('sin-numeros', !si),
   }));
@@ -616,6 +635,8 @@
     if (habitosSec.abierta) habitosSec.cerrar();
     if (perfilSec && perfilSec.hojaAbierta) perfilSec.cerrarHoja();
     if (ascent && ascent.hojaVincularAbierta) ascent.cerrarVincular();
+    if (suscripcion && suscripcion.abierta) suscripcion.cerrar();
+    if (guiaAtajos && guiaAtajos.abierta) guiaAtajos.cerrar();
   };
 
   // ------------------------------------------------------------ las seis secciones, como en Ascent
@@ -937,6 +958,22 @@
     cuestionario: () => { cerrarHojas(); entrada.irA('edad'); },
     plan: () => { cerrarHojas(); pestanas.ir(1); comida.armarDia(); },
     todo: () => { cerrarHojas(); pestanas.ir(0); inicio.subir(); inicio.abrirTodo(); },
+    // Lo nuevo del 31/10.
+    porque: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('proponer'); sueno.verNoche(0); sueno.porque(true); },
+    guia27: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 27; guiaAtajos.abrir(27); },
+    guia26: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 26; guiaAtajos.abrir(26); },
+    cargadorSinArmar: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('sinArmar'); sueno.bajarA('.sn-afinar'); },
+    cargadorAnda: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('anda'); sueno.bajarA('.sn-afinar'); },
+    cargadorDejo: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('dejoDeLlegar'); sueno.bajarA('.sn-aviso-cargador'); },
+    cargadorMedias: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('aMedias'); sueno.bajarA('.sn-afinar'); },
+    suscripcion: () => { cerrarHojas(); suscripcion.abrir(); },
+    entradaConSuscripcion: () => { cerrarHojas(); conSuscripcion = true; if (entrada.paso) entrada.salir(); entrada.empezar(); },
+    metaConSuscripcion: () => { cerrarHojas(); conSuscripcion = true; entrada.irA('resultado'); },
+    bloqueoPlan: () => { cerrarHojas(); pestanas.ir(1); suscripcion.abrir({ bloqueo: 'plan' }); },
+    bloqueoMetas: () => { cerrarHojas(); pestanas.ir(2); suscripcion.abrir({ bloqueo: 'metas' }); },
+    bloqueoSueno: () => { cerrarHojas(); pestanas.ir(3); suscripcion.abrir({ bloqueo: 'sueno' }); },
+    bloqueoTodo: () => { cerrarHojas(); pestanas.ir(0); suscripcion.abrir({ bloqueo: 'todo' }); },
+    perfilSuscripcion: () => { cerrarHojas(); pestanas.ir(5); perfilSec.pintar(); perfilSec.subir && perfilSec.subir(); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -948,7 +985,7 @@
     reiniciar: () => { if (entrada.paso) entrada.salir(); reiniciarHabitos(); cargarLira(); escena.irA('hoy'); pestanas.ir(HABITOS); },
     zona: enHabitos(() => escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo')),
     fugaz: enHabitos(() => escena.lanzarFugaz()),
-    entrada: () => { if (comida.hojaAbierta || mas.abierta) return; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
+    entrada: () => { if (comida.hojaAbierta || mas.abierta) return; conSuscripcion = false; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
   };
   // Va después de todo lo que usa refrescarControles (la escena lo llama al poner la constelación).
   cargarLira();
@@ -1192,10 +1229,14 @@
       noche: () => sueno.verNoche(arg), bajar: () => sueno.bajarA(arg), subir: () => sueno.subir(), abrir: () => sueno.abrir(arg),
       hora: () => sueno.preguntarHora(arg), editarHora: () => sueno.editarHora(), editarNoche: () => sueno.editarNoche(arg), olvidar: () => sueno.olvidarHoras(),
       afinar: () => (Array.isArray(arg) ? sueno.afinar(arg[0], arg[1]) : sueno.afinar(arg)),
+      porque: () => sueno.porque(arg),
+      cargador: () => sueno.cargador(arg),
     };
     pasos[accion]();
   };
   window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
+  window.__guia = (paso, extra) => guiaAtajos.irA(paso, extra);
+  window.__suscripcion = (accion, arg) => suscripcion[accion](arg);
   // Para las capturas de lo que cuida (lo pediste el 22/10): Salud dice 16 años, es su caso, los números ocultos, poco sueño.
   window.__seguridad = (accion, arg) => {
     const pasos = {
@@ -1242,7 +1283,7 @@
   };
   window.__estrella = (texto) => escena.dondeEsta(texto);
   window.__deslizando = () => pestanas.deslizando;
-  window.__entrada = (paso) => { entrada.irA(paso); refrescarControles(); };
+  window.__entrada = (paso) => { if (paso === null) { conSuscripcion = false; entrada.salir(); } else entrada.irA(paso); refrescarControles(); };
   window.__metas = () => entrada.metas();
   window.__velocidad = (v) => escena.velocidad(v);
   window.__comida = (accion, arg) => {

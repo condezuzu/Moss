@@ -23,9 +23,26 @@ elegido queda en el teléfono (no sube a la cuenta).
 - **La hora de despertar** es la alarma de ese día, si se sabe (después de la
   v1, con AlarmKit), o lo de siempre para esa noche: el viernes a la noche usa
   el despertar del sábado.
-- **El aviso** suena un rato antes (15, 30, 45 o 60 minutos; 30 de fábrica) y
-  dice a qué hora ir a la cama. Sin noches para saber cuándo te despertás, no
-  hay aviso de dormir.
+- **El aviso** suena un rato antes (15, 30, 45 o 60 minutos; 30 de fábrica). Sin
+  noches para saber cuándo te despertás, no hay aviso de dormir.
+- **Lo que dice** (lo pediste el 31/10/2026, repetía siempre lo mismo): cada noche otro
+  texto, corto y con un dato de esa noche. Pasa por los nueve antes de repetir
+  (`textoDeDormir`, en `avisos.ts`). Sale del día y nada más: reprogramar no lo cambia.
+  - «Deberías irte a dormir en una hora.»
+  - «Esta noche, a la cama a las 23:20.»
+  - «Baja las luces: a la cama en media hora.»
+  - «Para despertarte a las 7:30, a la cama a las 23:20.»
+  - «En 45 minutos te toca acostarte.»
+  - «Ve dejando el teléfono: a las 23:20, a la cama.»
+  - «A las 23:20 te toca ir a la cama.»
+  - «A la cama a las 23:20 y duermes 8 h.»
+  - «Empieza a bajar el ritmo: a las 23:20, a la cama.»
+  - Con una hora de deuda o más, una noche de cada cuatro: «Te faltan 1 h 30 min de
+    sueño: acostarte a las 23:20 ayuda.»
+- **De Rise:** recuerda la rutina de la noche, la ventana de melatonina, cuándo dejar
+  el café, la hora de dormir y bajar las luces, a una hora de su reloj del cuerpo
+  [R1][R2]. **No encontré sus textos literales:** los de arriba son nuestros, con esa
+  idea.
 
 ## Los de cada hábito
 
@@ -95,6 +112,11 @@ paran solas.
 
 Tocar un aviso abre lo suyo: el horario y las comidas, la hoja para anotar esa
 comida; pesarse, el peso del «+»; dormir, Sueño; un hábito, el cielo de Hábitos.
+
+## Fuentes de los textos
+
+- [R1] Rise, la rutina de la noche: https://www.risescience.com/blog/wind-down-time
+- [R2] Una reseña, los avisos de Rise: https://www.mattressclarity.com/accessories/rise-app-review/
 
 ## Lo que queda
 

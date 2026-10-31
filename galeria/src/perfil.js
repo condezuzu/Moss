@@ -474,6 +474,13 @@ const SeccionPerfil = (() => {
         // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál).
         ['perfil.cuidado', tx(s.sinDeficit ? 'perfil.sinDeficit' : 'perfil.ninguno'), true, s.sinDeficit ? 'ok' : null, () => { s.sinDeficit = !s.sinDeficit; pintar(); }, s.sinDeficit ? 'perfil.sinDeficitTexto' : null],
       ]);
+      // La suscripción, cuando exista (D40): en la galería, una maqueta.
+      if (opciones.suscripcion) {
+        const estado = opciones.suscripcion();
+        grupo('suscripcion.perfil.titulo', [
+          ['suscripcion.titulo', estado === 'prueba' ? tx('suscripcion.perfil.prueba', { n: 5 }) : tx('suscripcion.perfil.gratis'), true, null, opciones.abrirSuscripcion],
+        ]);
+      }
       grupo('perfil.preferencias', [
         ['perfil.unidades', tx('perfil.metrico'), true],
         ['perfil.idioma', u.idioma() === 'es' ? 'Español' : 'English', true],

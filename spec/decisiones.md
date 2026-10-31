@@ -5,7 +5,19 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
-### D40 · Suscribirse para usar Moss (lo pensaste el 30/10/2026)
+### D40 · La suscripción (propuesta el 30/10/2026, con tus números el 31/10/2026)
+
+**Lo que pediste el 31/10:** gratis, registrar comida, hábitos y cielo, y peso.
+Premium, el ajuste semanal de metas, el plan de comidas, el sueño avanzado y la hora
+de dormir, y «Todo lo de hoy». USD 4,99 por mes o 29,99 por año, con 7 días gratis.
+Entrada: introducción, iniciar sesión, cuestionario, meta y recién ahí la suscripción.
+
+**Está como maqueta en la galería, para aprobar**, sin código de compras. Todo lo
+demás (qué cargar en App Store Connect, qué cambia en la ficha y en los términos, lo
+que falta decidir y el código de oferta para la publicidad) está en
+[`suscripcion.md`](suscripcion.md).
+
+Lo de abajo es lo pensado el 30/10, que sigue valiendo.
 
 Lo dijiste así: «después de que te llegue la introducción de la app, te aparezca
 ahí la pestaña para poder suscribirse e iniciar sesión. O al revés, primero la de
@@ -26,11 +38,7 @@ cuestionario, tu meta y recién ahí **suscribirse**.
   (Lazyweb), y RevenueCat recomienda cobrar en la entrada con una prueba gratis.
   Son datos de dónde va, no de cuál convierte más: se puede probar después.
 
-**Lo que falta decidir:**
-- Qué queda gratis, si queda algo: ¿todo pago (con prueba) o lo básico gratis?
-- El precio mensual y anual, y cuántos días de prueba.
-
-**Lo que pide, una vez decidido:**
+**Lo que pide, una vez aprobado:**
 - Una build: las compras dentro de la app son nativas (StoreKit); no van por OTA.
 - App Store Connect: el acuerdo de apps pagas (banco e impuestos), el grupo de
   suscripciones y sus precios, y el Small Business Program (15 %).
@@ -53,6 +61,11 @@ En la galería, sección «1.1 · Lo nuevo, para aprobar», con sus botones:
   cielo que espera.
 - **El cuestionario:** la constelación de las preguntas, las opciones con ícono
   que entran de a una, la regla de los números y la aurora abajo.
+- **Cómo llegó a la hora** (lo pediste el 31/10/2026): abajo de «¿Dormiste de… a…?»,
+  la noche en una línea y cada señal con su hora y cuánto pesó. La lógica ya está
+  (D42); falta aprobar la vista.
+- **La guía del cargador** (lo pediste el 31/10/2026): el iPhone dibujado, los dos
+  caminos y los cuatro estados en Afinar. Ver [`sueno-sin-esfuerzo.md`](sueno-sin-esfuerzo.md).
 - **Tocar la luna** (lo pediste el 30/10/2026): «Todo lo de hoy», con lo comido, la
   meta y lo que falta o te pasaste; lo que Moss sabe de ti y de dónde lo sacó; lo
   que le falta (`faltaParaEstimar`, en `progreso.ts`) y, abajo de todo, cómo lo
@@ -301,6 +314,27 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
+### D42 · Las notas del 31/10/2026
+
+- **La noche sin reloj, rehecha:** ninguna señal decide sola. Cada una propone una
+  hora con su duda y Moss las junta ([`sueno.md`](sueno.md), «Las cuentas»). Qué lee
+  iOS de verdad, qué pide Atajos y qué pide una build está en
+  [`sueno-sin-esfuerzo.md`](sueno-sin-esfuerzo.md), «Las señales, una por una».
+- **Los avisos de la hora de dormir:** cada noche otro texto, y no vuelve hasta dentro
+  de nueve noches ([`avisos.md`](avisos.md)).
+- **El error de removeChild, encontrado:** era el contenedor de la hoja de registro
+  (`HojaRegistro.tsx`), no la hoja. Se iba a los 280 ms de cerrar; con el teléfono
+  ocupado, la salida del panel todavía corría, y Reanimated, en la web
+  (`reattachElementToAncestor`), colgaba lo que se estaba yendo de Secciones y al
+  terminar lo sacaba dos veces. Ahora el contenedor no se va nunca. Antes salía en 2 de
+  3 corridas; después, ninguna en 10 seguidas. Es solo de la web: en iOS ese código no
+  existe.
+- **La huella nativa:** el 29/10 cambié el script `web:exportar` y el `.gitignore` para
+  sacar la web de `dist/`, y eso solo cambió la huella: las OTA de esta rama no le habrían
+  llegado a la build 6. Volvieron como estaban (la huella es otra vez `fc0d415b…`); la web
+  se arma con `herramientas/exportar-web.mjs`, y `herramientas/verificar-huella.mjs` lo
+  comprueba antes de cada OTA.
+
 ### D41 · Las notas del 30/10/2026
 
 - **La voz:** la comida se nombra como sea: «el desayuno comí…», «la cena fue…»,
@@ -406,21 +440,19 @@ Lo pediste: «Día lógico: cambia al despertar (4:00 por defecto, configurable)
 - Lo usan el almacén (el día cambia a esa hora), Comida (la cena de las 0:30 es
   la 1470 de ayer), Salud, los avisos y los widgets.
 
-### D31 · Con el iPhone en Uruguay o Argentina, Moss habla de vos (la decidiste el 28/10/2026)
+### D31 · Toda la app de tú, también en Uruguay y Argentina (cambió el 31/10/2026)
 
-Lo dijiste así: «si el idioma de la región del iPhone es Uruguay o Argentina
-(es-UY, es-AR), la app habla con voseo (Construí, Registrá, Comé, Dormí). En el
-resto del español queda con tú, como ahora.»
+Lo dijiste así: «Sacá el voseo: nada de rioplatense. Toda la app en español con
+tú, también en es-UY y es-AR.» Reemplaza lo decidido el 28/10/2026, cuando Moss
+hablaba de vos con el iPhone en Uruguay o Argentina.
 
-- `src/textos/vos.json` es una capa sobre `es.json`: solo los textos que cambian,
-  con las mismas claves. `hablaDeVos()` (`src/textos/index.ts`) mira la región
-  del teléfono una vez; `t()`, `lista()` y `plural()` buscan primero ahí.
-- El subjuntivo queda como con tú («cuando quieras»), que es como se dice en
-  Uruguay. «Aquí» pasa a «acá» y «allí» a «ahí» (lo pediste el 28/10/2026).
-- `vos.test.ts` revisa que cada clave exista en `es.json` con la misma forma y las
-  mismas variables, y que no quede ninguna forma de tú.
-- Lo que no pasa por `t()` sigue con tú hasta la próxima build: las frases de las
-  acciones de Atajos, que están en Swift (`app-intents/`).
+- Ya no existen `src/textos/vos.json` ni `hablaDeVos()`: `es.json` es el único texto
+  en español. `tuteo.test.ts` revisa que no entren formas de vos.
+- También salieron las palabras rioplatenses de la interfaz (panza, cola, morrón,
+  manteca). Los nombres regionales de los alimentos siguen: eso es la base
+  (`alimentos/genericos.txt`), no la forma de hablarte.
+- La OTA del 28/10/2026 que ya está en `production` tiene el voseo: se va con la
+  primera OTA después de que Apple apruebe.
 
 ### D30 · La 1.0 sale sin la vinculación con Ascent (la decidiste el 28/10/2026, a la noche)
 

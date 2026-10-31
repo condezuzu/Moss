@@ -362,6 +362,75 @@ const pasos = {
     await pagina.evaluate(() => window.__estrategia({ diaDelControl: 1 }));
     await progreso('subir');
   },
+  // Cómo llegó a la hora: la pregunta con cada señal, y la noche de quien conectó y siguió usándolo.
+  async senales() {
+    await seccion('porque');
+    await pagina.waitForTimeout(900);
+    await foto('senales');
+    await sueno('bajar', '.sn-porque-dentro');
+    await pagina.waitForTimeout(400);
+    await foto('senales-abajo');
+    await sueno('subir');
+  },
+  // La guía del cargador: los dos caminos, paso a paso, y lo que ve en Afinar.
+  async guia() {
+    await seccion('guia27');
+    await pagina.waitForTimeout(600);
+    await foto('guia-presentacion');
+    for (const [paso, extra, nombre] of [[0, {}, 'guia27-1'], [1, {}, 'guia27-2'], [2, { llave: true }, 'guia27-3'], [3, {}, 'guia27-probar'], [3, { llego: true }, 'guia27-llego']]) {
+      await pagina.evaluate(([p, e]) => window.__guia(p, e), [paso, extra]);
+      await pagina.waitForTimeout(500);
+      await foto(nombre);
+    }
+    await seccion('guia26');
+    await pagina.waitForTimeout(500);
+    for (const [paso, nombre] of [[0, 'guia26-1'], [1, 'guia26-2'], [2, 'guia26-3'], [3, 'guia26-4'], [4, 'guia26-5']]) {
+      await pagina.evaluate((p) => window.__guia(p, {}), paso);
+      await pagina.waitForTimeout(500);
+      await foto(nombre);
+    }
+    for (const [accion, nombre] of [['cargadorSinArmar', 'cargador-sin-armar'], ['cargadorAnda', 'cargador-anda'], ['cargadorDejo', 'cargador-dejo'], ['cargadorMedias', 'cargador-medias']]) {
+      await seccion(accion);
+      await pagina.waitForTimeout(900);
+      await foto(nombre);
+    }
+    await seccion('cargadorSinArmar');
+  },
+  // La suscripción: después de la meta, la hoja de Apple, lo bloqueado y en Perfil.
+  async suscripcion() {
+    const sub = (accion, arg) => pagina.evaluate(([a, x]) => window.__suscripcion(a, x), [accion, arg]);
+    await seccion('suscripcion');
+    await pagina.waitForTimeout(600);
+    await foto('suscripcion');
+    await sub('bajar');
+    await pagina.waitForTimeout(300);
+    await foto('suscripcion-abajo');
+    await sub('plan', 'mensual');
+    await pagina.waitForTimeout(300);
+    await foto('suscripcion-mensual');
+    await sub('plan', 'anual');
+    await sub('apple');
+    await pagina.waitForTimeout(500);
+    await foto('suscripcion-apple');
+    await sub('listo');
+    await pagina.waitForTimeout(500);
+    await foto('suscripcion-listo');
+    for (const [accion, nombre] of [['bloqueoPlan', 'suscripcion-plan'], ['bloqueoSueno', 'suscripcion-sueno'], ['bloqueoTodo', 'suscripcion-todo']]) {
+      await seccion(accion);
+      await pagina.waitForTimeout(600);
+      await foto(nombre);
+    }
+    await sub('cerrar');
+    await pagina.waitForTimeout(500);
+    await seccion('perfilSuscripcion');
+    await pagina.waitForTimeout(500);
+    await foto('suscripcion-perfil');
+    await seccion('metaConSuscripcion');
+    await pagina.waitForTimeout(2500);
+    await foto('suscripcion-meta');
+    await pagina.evaluate(() => window.__entrada(null));
+    await pagina.waitForTimeout(800);
+  },
   // Tocar la luna: Todo lo de hoy, de arriba abajo, y cómo queda al pasarse.
   async todo() {
     await pestana(0);

@@ -411,6 +411,148 @@ section.item p { margin: 0; max-width: 64ch; }
 /* El primer día, sin datos: la luna nueva con su borde que brilla, las metas como pastillas de
    color, qué hacer primero y el cielo que espera. */
 .in-primer { cursor: default; }
+/* Cómo llegó a la hora: la noche en una línea y cada señal con su peso. */
+.sn-porque { margin-top: 12px; }
+.sn-porque-abrir { appearance: none; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border: 0; border-top: 1px solid rgba(239, 230, 207, 0.08); background: none; color: rgba(239, 230, 207, 0.72); font: 400 13px/1.2 var(--texto); text-align: left; }
+.sn-porque-abrir svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sn-porque-dentro { display: grid; gap: 8px; padding: 2px 0 4px; animation: sn-aparece 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.sn-porque-linea svg { display: block; width: 100%; height: auto; overflow: visible; }
+.sn-porque-linea line { stroke-linecap: round; }
+.sn-porque-linea .base { stroke: rgba(239, 230, 207, 0.14); stroke-width: 2; }
+.sn-porque-linea .dormido { stroke: rgba(232, 196, 106, 0.55); stroke-width: 4; }
+.sn-porque-linea circle { fill: var(--oro-claro); stroke: #0f1631; stroke-width: 1.5; }
+.sn-porque-linea circle.no-cuenta { fill: #0f1631; stroke: rgba(239, 230, 207, 0.5); stroke-width: 1.2; }
+.sn-porque-horas { display: flex; justify-content: space-between; margin: 2px 8px 0; font: 400 11px/1 var(--numeros); color: rgba(239, 230, 207, 0.45); font-variant-numeric: tabular-nums; }
+.sn-porque h5 { display: flex; align-items: baseline; justify-content: space-between; margin: 8px 0 0; font: 500 13.5px/1.2 var(--texto); color: var(--tinta); }
+.sn-porque h5 b { font: 500 14px/1 var(--numeros); font-variant-numeric: tabular-nums; }
+.sn-porque ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sn-porque li > div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.78); }
+.sn-porque li b { flex: none; font: 400 12.5px/1 var(--numeros); color: rgba(239, 230, 207, 0.7); font-variant-numeric: tabular-nums; }
+.sn-porque li > i { display: block; height: 2px; margin-top: 5px; border-radius: 1px; background: linear-gradient(90deg, var(--oro) calc(var(--peso) * 100%), rgba(239, 230, 207, 0.1) 0); }
+.sn-porque li small { display: block; margin-top: 2px; font: 400 11px/1.3 var(--texto); color: rgba(239, 230, 207, 0.48); }
+.sn-porque li.no-cuenta span { text-decoration: line-through; color: rgba(239, 230, 207, 0.48); }
+.sn-porque .sn-nota + .sn-nota { margin-top: 0; }
+.sn-afinar-textos span.falla { color: var(--oro-claro); }
+/* La guía del cargador: un iPhone dibujado con la app Atajos y lo que hay que tocar, latiendo. */
+.tel .gc { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; padding-top: calc(var(--arriba) - 8px); background: #0b1024; color: var(--tinta); animation: gc-entra 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.gc[hidden] { display: none; }
+.gc.saliendo { animation: gc-sale 0.32s cubic-bezier(0.5, 0, 0.9, 0.6) both; pointer-events: none; }
+@keyframes gc-entra { from { opacity: 0; transform: translateY(26px); } }
+@keyframes gc-sale { to { opacity: 0; transform: translateY(26px); } }
+.gc-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 22px 12px; display: flex; flex-direction: column; animation: sn-aparece 0.35s ease both; }
+.gc-titulo { margin: 4px 0 6px; font: 500 22px/1.2 var(--titulos); }
+.gc-texto { margin: 0 0 12px; font: 300 14px/1.45 var(--texto); color: rgba(239, 230, 207, 0.78); min-height: 40px; }
+.gc-cuenta { margin: 0; font: 400 11px/1 var(--texto); letter-spacing: 0.14em; text-transform: uppercase; color: var(--oro-claro); }
+.gc-chico { margin: 8px 0 0; font: 400 13px/1.4 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.gc-puntos { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 12px; }
+.gc-puntos li { position: relative; padding-left: 20px; font: 300 15px/1.45 var(--texto); color: rgba(239, 230, 207, 0.86); }
+.gc-puntos li::before { content: ''; position: absolute; left: 4px; top: 0.56em; width: 6px; height: 6px; transform: rotate(45deg); background: var(--oro-claro); box-shadow: 0 0 8px rgba(246, 227, 166, 0.6); }
+.gc-pie { flex: none; display: grid; gap: 8px; padding: 10px 22px calc(var(--abajo) + 12px); }
+.gc-pie-atras { justify-items: start; }
+.gc-ancho { width: 100%; }
+.gc-simular { border-style: dashed; color: rgba(239, 230, 207, 0.7); }
+.gc-atras { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 8px 8px 8px 0; border: 0; background: none; color: rgba(239, 230, 207, 0.65); font: 400 13.5px/1 var(--texto); }
+.gc-atras svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.gc-tel { position: relative; flex: 1; min-height: 330px; max-height: 470px; width: 232px; margin: 0 auto; padding: 8px; border-radius: 34px; background: #1b2033; box-shadow: 0 0 0 1px rgba(239, 230, 207, 0.14), 0 18px 40px rgba(0, 0, 0, 0.5); }
+.gc-isla { position: absolute; top: 15px; left: 50%; translate: -50% 0; width: 62px; height: 16px; border-radius: 9px; background: #000; z-index: 2; }
+.gc-pantalla { height: 100%; display: flex; flex-direction: column; gap: 6px; padding: 34px 10px 14px; border-radius: 27px; overflow: hidden; background: #f2f2f7; color: #15171f; font: 400 12px/1.25 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; }
+.gc-pantalla.entra { animation: gc-pantalla 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes gc-pantalla { from { opacity: 0; transform: translateX(22px); } }
+.gc-en-moss { align-items: center; justify-content: center; gap: 22px; background: #0f1631; color: var(--tinta); }
+.gc-moss { display: grid; justify-items: center; gap: 4px; }
+.gc-moss b { font: 500 28px/1 var(--titulos); }
+.gc-moss span { font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.gc-instalar { appearance: none; cursor: pointer; padding: 11px 18px; border: 0; border-radius: 13px; background: var(--tinta); color: #0b0f1d; font: 500 13px/1 var(--texto); }
+.gc-barra { display: flex; align-items: center; justify-content: space-between; min-height: 26px; }
+.gc-barra b { font: 700 17px/1.1 inherit; letter-spacing: -0.01em; }
+.gc-mas { appearance: none; cursor: pointer; width: 26px; height: 26px; border: 0; border-radius: 50%; background: none; color: #0a66e4; font: 400 22px/1 inherit; }
+.gc-fila { appearance: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; min-height: 34px; padding: 6px 10px; border: 0; border-radius: 9px; background: #fff; color: inherit; font: inherit; text-align: left; }
+button.gc-fila { cursor: pointer; }
+.gc-fila em { font-style: normal; color: #a1a1aa; }
+.gc-fila em.si { color: #0a66e4; font-weight: 600; }
+.gc-buscar { padding: 6px 10px; border-radius: 9px; background: #e4e4ea; color: #7c7c85; }
+.gc-espacio { height: 6px; }
+.gc-vacio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #7c7c85; }
+.gc-pestanas { display: flex; justify-content: space-around; padding-top: 8px; border-top: 1px solid #d8d8de; color: #7c7c85; font-size: 10.5px; }
+.gc-pestanas b { color: #0a66e4; font-weight: 600; }
+.gc-hoja-ios { justify-content: flex-end; background: #dfe0e7; gap: 8px; }
+.gc-ficha { display: grid; justify-items: center; gap: 8px; padding: 14px 8px 8px; font-size: 14px; }
+.gc-ficha b { font-weight: 600; }
+.gc-glifo { display: block; width: 42px; height: 42px; border-radius: 11px; background: linear-gradient(145deg, #5e7cff, #e4579e); }
+.gc-glifo.chico { width: 30px; height: 30px; border-radius: 8px; opacity: 0.7; }
+.gc-cuando { margin: 0 2px; font-size: 11px; line-height: 1.3; color: #5c5c66; text-align: center; }
+.gc-llave { flex: none; position: relative; width: 34px; height: 20px; border-radius: 10px; background: #bfc0c8; transition: background 0.25s; }
+.gc-llave::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.gc-llave.si { background: #34c759; }
+.gc-llave.si::after { transform: translateX(14px); }
+.gc-principal { appearance: none; cursor: pointer; width: 100%; min-height: 36px; border: 0; border-radius: 11px; background: #0a66e4; color: #fff; font: 600 13px/1 inherit; }
+.gc-toca { position: relative; z-index: 1; animation: gc-late 1.5s ease-in-out infinite; }
+@keyframes gc-late { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 150, 40, 0.0), 0 0 0 2px rgba(232, 150, 40, 0.75); } 50% { box-shadow: 0 0 0 7px rgba(232, 150, 40, 0.28), 0 0 0 2px rgba(232, 150, 40, 1); } }
+.gc-prueba { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.gc-estado { display: flex; align-items: center; gap: 12px; margin-top: 8px; padding: 14px; border-radius: 14px; background: rgba(239, 230, 207, 0.05); font: 400 14px/1.4 var(--texto); color: rgba(239, 230, 207, 0.82); animation: sn-aparece 0.35s ease both; }
+.gc-estado i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: rgba(239, 230, 207, 0.35); animation: gc-espera 1.4s ease-in-out infinite; }
+@keyframes gc-espera { 50% { opacity: 0.3; } }
+.gc-estado.llego { color: var(--tinta); }
+.gc-estado.llego i { background: var(--salvia); box-shadow: 0 0 10px var(--salvia); animation: none; }
+/* La suscripción: una pantalla sobria, con el precio que se cobra como lo más grande. */
+.tel .sb { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; background: radial-gradient(120% 60% at 50% 0%, rgba(30, 42, 84, 0.95), rgba(9, 12, 26, 1) 70%), #090c1a; color: var(--tinta); animation: gc-entra 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.sb[hidden] { display: none; }
+.sb.saliendo { animation: gc-sale 0.34s cubic-bezier(0.5, 0, 0.9, 0.6) both; pointer-events: none; }
+.sb > .hb-cerrar { top: calc(var(--arriba) - 4px); z-index: 2; }
+.gc .hb-cerrar svg, .sb > .hb-cerrar svg { fill: none; stroke: currentColor; stroke-linecap: round; }
+.gc .hb-cab { z-index: 2; }
+.sb-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: calc(var(--arriba) + 6px) 20px 12px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
+.sb-cab { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.sb-cab h2 { margin: 6px 0 0; font: 500 28px/1.1 var(--titulos); }
+.sb-cab p { margin: 0; max-width: 300px; font: 300 14.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.72); }
+.sb-estrella { display: block; width: 10px; height: 10px; transform: rotate(45deg); background: var(--oro-claro); box-shadow: 0 0 16px rgba(246, 227, 166, 0.8), 0 0 40px rgba(246, 227, 166, 0.3); }
+.sb-estrella.grande { width: 16px; height: 16px; }
+.sb-bloqueo { margin: 6px 28px 0 0; font: 500 23px/1.2 var(--titulos); }
+.sb-lista { padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.08); background: rgba(239, 230, 207, 0.03); }
+.sb-lista h3 { margin: 0 0 8px; font: 400 10px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
+.sb-premium { border-color: rgba(232, 196, 106, 0.28); }
+.sb-premium h3 { color: var(--oro-claro); }
+.sb-lista ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sb-lista li { position: relative; padding-left: 15px; font: 300 13.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.88); }
+.sb-lista li::before { content: ''; position: absolute; left: 2px; top: 0.5em; width: 5px; height: 5px; transform: rotate(45deg); background: var(--oro-claro); }
+.sb-gratis li::before { background: rgba(239, 230, 207, 0.4); }
+.sb-planes { display: grid; gap: 8px; }
+.sb-plan { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid rgba(239, 230, 207, 0.14); border-radius: 15px; background: none; color: inherit; text-align: left; transition: border-color 0.2s, background 0.2s; }
+.sb-plan[aria-checked='true'] { border-color: var(--oro); background: rgba(232, 196, 106, 0.08); }
+.sb-radio { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(239, 230, 207, 0.4); transition: border 0.2s; }
+.sb-plan[aria-checked='true'] .sb-radio { border: 5px solid var(--oro); }
+.sb-plan-textos { display: grid; gap: 2px; min-width: 0; }
+.sb-plan-textos small { font: 400 11.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.sb-plan-textos b { font: 500 17px/1.2 var(--numeros); font-variant-numeric: lining-nums tabular-nums; }
+.sb-plan-textos em { font: 400 11.5px/1.3 var(--texto); font-style: normal; color: rgba(239, 230, 207, 0.55); }
+.sb-legal { display: grid; gap: 6px; }
+.sb-legal p { margin: 0; font: 400 11px/1.4 var(--texto); color: rgba(239, 230, 207, 0.52); }
+.sb-legal .sb-recuerda { color: rgba(239, 230, 207, 0.7); }
+.sb-legal .sb-aviso { color: var(--oro-claro); animation: sn-aparece 0.3s ease both; }
+.sb-enlaces { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
+.sb-enlace { appearance: none; cursor: pointer; padding: 6px 0; border: 0; background: none; color: rgba(239, 230, 207, 0.78); font: 400 12px/1 var(--texto); text-decoration: underline; text-underline-offset: 2px; }
+.sb-pie { flex: none; display: grid; gap: 8px; padding: 10px 20px calc(var(--abajo) + 10px); border-top: 1px solid rgba(239, 230, 207, 0.06); }
+.sb-principal, .sb-secundario { appearance: none; cursor: pointer; width: 100%; min-height: 48px; border-radius: 15px; font: 500 15px/1 var(--texto); transition: transform 0.15s; }
+.sb-principal:active, .sb-secundario:active { transform: scale(0.98); }
+.sb-principal { border: 0; background: var(--tinta); color: #0b0f1d; }
+.sb-secundario { border: 1px solid rgba(239, 230, 207, 0.22); background: none; color: var(--tinta); }
+.sb-apple-fondo { position: absolute; inset: 0; z-index: 3; display: flex; align-items: flex-end; background: rgba(0, 0, 0, 0.5); animation: hj-aparece 0.3s ease both; }
+.sb-apple-fondo.saliendo { animation: gc-sale 0.28s ease both; pointer-events: none; }
+.sb-apple { width: 100%; padding: 12px 18px calc(var(--abajo) + 10px); border-radius: 18px 18px 0 0; background: #f2f2f7; color: #15171f; font: 400 13px/1.3 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; animation: hj-sube 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes hj-sube { from { transform: translateY(100%); } }
+.sb-apple-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+.sb-apple-x { appearance: none; cursor: pointer; border: 0; background: none; color: #0a66e4; font: inherit; font-size: 14px; }
+.sb-apple-ficha { display: grid; gap: 3px; padding: 12px; border-radius: 11px; background: #fff; }
+.sb-apple-ficha small { margin-top: 5px; color: #6c6c74; }
+.sb-apple-si { appearance: none; cursor: pointer; width: 100%; min-height: 44px; margin-top: 12px; border: 0; border-radius: 11px; background: #0a66e4; color: #fff; font: 600 15px/1 inherit; }
+.sb-apple-nota { margin: 8px 0 0; font-size: 11px; text-align: center; color: #6c6c74; }
+.sb-listo { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 28px; text-align: center; animation: sn-aparece 0.45s ease both; }
+.sb-listo h2 { margin: 14px 0 0; font: 500 26px/1.15 var(--titulos); }
+.sb-listo p { margin: 0 0 18px; font: 300 14.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.78); }
+@media (prefers-reduced-motion: reduce) {
+  .gc, .sb, .gc.saliendo, .sb.saliendo, .gc-pantalla.entra, .gc-toca, .gc-estado i, .sb-apple, .sb-apple-fondo, .gc-cuerpo, .sb-listo, .sn-porque-dentro { animation: none; }
+  .gc-toca { box-shadow: 0 0 0 2px rgba(232, 150, 40, 1); }
+}
 /* Todo lo de hoy: al tocar la luna. */
 .in-todo { display: flex; flex-direction: column; max-height: 90%; }
 .tt-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: 0 18px calc(var(--abajo) + 20px); }
@@ -1896,6 +2038,29 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           <button class="boton" type="button" data-seccion="plan">El plan sugerido</button>
           <button class="boton" type="button" data-seccion="todo">Tocar la luna</button>
         </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="porque">Cómo llegó a la hora</button>
+          <button class="boton" type="button" data-seccion="guia27">La guía del cargador, iOS 27</button>
+          <button class="boton" type="button" data-seccion="guia26">Hasta iOS 26</button>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-seccion="cargadorSinArmar">Cargador: sin armar</button>
+          <button class="boton" type="button" data-seccion="cargadorAnda">Funciona</button>
+          <button class="boton" type="button" data-seccion="cargadorDejo">Dejó de llegar</button>
+          <button class="boton" type="button" data-seccion="cargadorMedias">A medias</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="entradaConSuscripcion">La entrada con la suscripción</button>
+          <button class="boton" type="button" data-seccion="metaConSuscripcion">Desde la meta</button>
+          <button class="boton" type="button" data-seccion="suscripcion">Solo la suscripción</button>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-seccion="bloqueoPlan">Lo bloqueado: el plan</button>
+          <button class="boton" type="button" data-seccion="bloqueoMetas">Las metas</button>
+          <button class="boton" type="button" data-seccion="bloqueoSueno">El sueño</button>
+          <button class="boton" type="button" data-seccion="bloqueoTodo">Todo lo de hoy</button>
+          <button class="boton" type="button" data-seccion="perfilSuscripcion">En Perfil</button>
+        </div>
       </div>
       <ul class="lista">
         <li><b>El ritmo y el plazo</b> (Progreso › Estrategia › Ritmo y plazo), como MacroFactor: arrastrás el ritmo y sale la fecha, o elegís la fecha y sale el ritmo. La regla tiene las zonas de color: <b>viable</b> (hasta 0,5 % del peso por semana bajando, 0,25 % subiendo), <b>exigente</b> (hasta 1 % o 0,5 %) y <b>muy agresivo</b> (más, o más de 1 kg o de 1.000 kcal de déficit por día). Debajo, cuántas kcal por día son, y los avisos: sin fuerza, bajando se pierde músculo y subiendo casi todo es grasa; con esa fecha quedarías debajo del piso; o sos menor. Las cuentas son las de la app (progreso.ts, con tests). Para guardarlo en la app hace falta una columna nueva en Supabase.</li>
@@ -1903,6 +2068,10 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         <li><b>Inicio el primer día</b>, para que sin datos no se vea apagada: la meta de hoy con la luna nueva que brilla y qué hacer primero, tu camino hasta la meta con la fecha a un ritmo viable, y el cielo con sus estrellas esperando. Comparalo con «Inicio con datos».</li>
         <li><b>El cuestionario</b>, tan lindo como la entrada: arriba, una constelación chica con una estrella por pregunta que se enciende al contestar; las opciones entran de a una y llevan su ícono; los números tienen su regla, y abajo sube una aurora.</li>
         <li><b>Tocar la luna</b> (el bloque de las calorías en Inicio) abre <b>Todo lo de hoy</b>: lo comido, la meta y lo que falta o te pasaste de cada cosa; lo que Moss sabe de vos y de dónde lo sacó; lo que le falta para estimar mejor, y abajo de todo, cómo lo estima. Probalo también con «Cenar» en la sección 2, para ver cómo queda al pasarte.</li>
+        <li><b>Cómo llegó a la hora</b> (31/10), abajo de «¿Dormiste de… a…?»: la noche en una línea y cada señal con su hora y cuánto pesó. Si conectaste el cargador y seguiste usando el teléfono, aparece tachado: no cuenta. La lógica ya está en la rama; esta vista es lo que falta aprobar.</li>
+        <li><b>La guía del cargador</b> (31/10): tocá en el iPhone dibujado lo que late, como en Atajos. En iOS 27 son tres toques; hasta iOS 26, cinco, y con «Mirar cómo se hace» pasa sola. Termina probándolo: conectás el cargador y Moss dice si llegó. Abajo, los cuatro estados que ve en Sueño › Afinar: sin armar, funciona, dejó de llegar (con un aviso) y a medias.</li>
+        <li><b>La suscripción</b> (31/10, D40): la entrada ya es introducción, iniciar sesión, cuestionario y meta; «Empezar» en la meta abre Premium, con <b>Seguir con lo gratis</b> a la vista. USD 4,99 por mes o 29,99 por año, con 7 días gratis. También cómo se ve lo bloqueado, la hoja de Apple dibujada y la fila de Perfil. Nada cobra: no hay código de compras.</li>
+        <li><b>Los avisos de la hora de dormir</b> (31/10, ya en la rama; se ven en el teléfono, no acá): cada noche otro, y no se repite hasta dentro de nueve. «Deberías irte a dormir en una hora.», «Baja las luces: a la cama en media hora.», «Para despertarte a las 7:30, a la cama a las 23:20.», «A la cama a las 23:20 y duermes 8 h.» La lista entera está en <code>spec/avisos.md</code>.</li>
         <li><b>El plan sugerido</b>, que ya está en la app: «Te sugerimos», pulgar arriba y abajo (cambian lo que se sugiere después, también lo que lleva lo mismo), y «Otra», que no repite lo que ya viste y no se acaba.</li>
       </ul>
     </section>
