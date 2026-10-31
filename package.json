@@ -76,7 +76,7 @@
     "catalogo:verificar": "node herramientas/verificar-catalogo.mjs",
     "shaders:verificar": "node herramientas/verificar-shaders.mjs",
     "web:preparar": "setup-skia-web public",
-    "web:exportar": "setup-skia-web public && node --disable-warning=ExperimentalWarning herramientas/alimentos-web.mjs && expo export --platform web --output-dir web-exportada",
+    "web:exportar": "setup-skia-web public && node --disable-warning=ExperimentalWarning herramientas/alimentos-web.mjs && expo export --platform web --output-dir dist/web",
     "web:ver": "node herramientas/servir-web.mjs",
     "app:capturas": "node herramientas/capturar-app.mjs capturas/app",
     "tienda:capturas": "node herramientas/capturas-tienda.mjs capturas/tienda",

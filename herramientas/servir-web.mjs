@@ -1,6 +1,6 @@
 // Sirve la app exportada para la web (web-exportada/) en http://localhost:4174. No va en dist/:
 // `eas update` borra esa carpeta cada vez que publica.
-// Uso: npm run web:exportar && npm run web:ver
+// Uso: node herramientas/exportar-web.mjs && npm run web:ver
 // Es la forma de ver el cielo de Skia sin un iPhone: en la web, Skia es CanvasKit.
 
 import { createServer } from 'node:http';
@@ -29,7 +29,7 @@ createServer(async (pedido, respuesta) => {
       cuerpo = await readFile(archivo);
     } catch {
       // Sin exportar todavía (o a mitad de exportar): se avisa en vez de caerse.
-      respuesta.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Falta exportar: npm run web:exportar');
+      respuesta.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Falta exportar: node herramientas/exportar-web.mjs');
       return;
     }
   }

@@ -1,7 +1,7 @@
 // Recorre todas las pantallas de la app de verdad (en la web) en un iPhone chico y uno grande, para
 // buscar textos cortados, cosas encimadas y estados vacíos raros: las seis secciones con su scroll,
 // la hoja del «+», y la entrada hasta el final del cuestionario en un navegador sin nada guardado.
-// Uso: npm run web:exportar && npm run web:ver   (en otra terminal)
+// Uso: node herramientas/exportar-web.mjs && npm run web:ver   (en otra terminal)
 //      node herramientas/recorrer-pantallas.mjs capturas/revision/antes
 // Deja <carpeta>/<tamaño>-<idioma>/NN-pantalla.png y, al final, los errores de la consola.
 

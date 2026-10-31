@@ -8,7 +8,7 @@
 // Es lo más cerca del iPhone que se puede llegar desde Windows; el rendimiento real se mide en el
 // teléfono. Cada corrida arranca de cero: el navegador es nuevo y los hábitos de ejemplo también,
 // con una persona que ya pasó la entrada.
-// Uso: npm run web:exportar && npm run web:ver   (en otra terminal)
+// Uso: node herramientas/exportar-web.mjs && npm run web:ver   (en otra terminal)
 //      npm run app:capturas
 
 import { mkdirSync, readFileSync } from 'node:fs';

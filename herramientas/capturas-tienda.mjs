@@ -2,7 +2,7 @@
 // en la web (Skia es CanvasKit) con una persona inventada, Lucía: tres semanas de comidas, pesadas y
 // noches. Cada pantalla va dentro de un iPhone dibujado, con un texto corto arriba en la serif de
 // Moss, sobre el azul noche, en los dos tamaños que pide App Store Connect y en español e inglés.
-// Uso: npm run web:exportar && npm run web:ver   (en otra terminal)
+// Uso: node herramientas/exportar-web.mjs && npm run web:ver   (en otra terminal)
 //      npm run tienda:capturas                       todas
 //      node herramientas/capturas-tienda.mjs <carpeta> 1 3   solo esas pantallas
 // Deja capturas/tienda/<ancho>x<alto>/<es|en>/NN-nombre.png (PNG RGB sin alfa, al tamaño exacto),

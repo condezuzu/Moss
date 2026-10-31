@@ -1,5 +1,5 @@
 // Los alimentos curados de assets/alimentos.db en un JSON, para la web de prueba de la app
-// (src/comida/base.web.ts): en la web no hay SQLite. Lo corre `npm run web:exportar`.
+// (src/comida/base.web.ts): en la web no hay SQLite. Lo corre `herramientas/exportar-web.mjs`.
 // Por alimento: id, fuente, nombres, valores por 100 g y lo secundario, porciones [es, en, gramos],
 // textos de búsqueda [idioma, región, principal, texto], cómo se mide, los micronutrientes y si
 // está verificado.

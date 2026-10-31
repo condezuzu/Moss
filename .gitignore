@@ -56,6 +56,3 @@ public/alimentos.json
 
 # El CLI de Supabase deja acá su estado local.
 supabase/.temp/
-
-# La app para la web (npm run web:exportar): fuera de dist/, que borra eas update
-web-exportada/
