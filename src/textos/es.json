@@ -362,7 +362,7 @@
       "pegar": "Pegar una receta",
       "pegarTexto": "Pégala como la tienes, con el título y lo que rinde: Moss lee cada ingrediente con su cantidad y lo busca. Después revisas lo que encontró.",
       "leer": "Leer",
-      "ejemplo": "Guiso de lentejas\nIngredientes:\n- 2 tazas de lentejas cocidas\n- 1 cebolla grande picada\n- 2 zanahorias\n- 1 morrón rojo\n- 2 cucharadas de aceite de oliva\n- 400 g de tomate triturado\n- sal a gusto\nRinde 4 porciones",
+      "ejemplo": "Guiso de lentejas\nIngredientes:\n- 2 tazas de lentejas cocidas\n- 1 cebolla grande picada\n- 2 zanahorias\n- 1 pimiento rojo\n- 2 cucharadas de aceite de oliva\n- 400 g de tomate triturado\n- sal a gusto\nRinde 4 porciones",
       "encontrados": "{n} de {total} ingredientes encontrados. Toca uno para quitarlo.",
       "sinEncontrar": "No lo encontré",
       "sinCantidad": "Sin cantidad",
@@ -533,10 +533,10 @@
     },
     "decir": {
       "titulo": "Decir lo que comí",
-      "ayuda": "Toca el micrófono y di todo junto: «dos huevos revueltos, una tostada con manteca y un café con leche».",
-      "ayudaTeclado": "Escribe todo junto, o usa el micrófono del teclado: «dos huevos revueltos, una tostada con manteca y un café con leche».",
+      "ayuda": "Toca el micrófono y di todo junto: «dos huevos revueltos, una tostada con mantequilla y un café con leche».",
+      "ayudaTeclado": "Escribe todo junto, o usa el micrófono del teclado: «dos huevos revueltos, una tostada con mantequilla y un café con leche».",
       "teEscucho": "Te escucho… Cuando termines, toca de nuevo o haz una pausa.",
-      "ejemplo": "Dos huevos revueltos, una tostada con manteca y un café con leche",
+      "ejemplo": "Dos huevos revueltos, una tostada con mantequilla y un café con leche",
       "hablar": "Hablar",
       "parar": "Terminar",
       "entender": "Entender",
@@ -731,10 +731,10 @@
       "muslo": "Muslo"
     },
     "como": {
-      "cinturaHombre": "A la altura del ombligo, de pie y con la panza relajada. Mide al final de una exhalación normal, sin meter la panza.",
+      "cinturaHombre": "A la altura del ombligo, de pie y con el abdomen relajado. Mide al final de una exhalación normal, sin meter el abdomen.",
       "cinturaMujer": "En la parte más angosta, entre el ombligo y el esternón. Si no se nota, mide un par de veces y quédate con la menor.",
       "cuello": "Justo debajo de la nuez, con la cinta derecha alrededor del cuello, el mentón al frente y los hombros bajos. Firme: medido por uno mismo suele dar de más.",
-      "cadera": "En la parte más ancha de la cola, mirándote de costado, con los pies juntos.",
+      "cadera": "En la parte más ancha de los glúteos, mirándote de costado, con los pies juntos.",
       "brazo": "A mitad de camino entre la punta del hombro y el codo, con el brazo relajado al costado.",
       "pecho": "A la mitad del esternón, con la cinta por debajo de las axilas, después de exhalar.",
       "muslo": "A mitad de camino entre el pliegue de la ingle y el borde de arriba de la rodilla."
@@ -745,7 +745,7 @@
       "De pie, con los pies juntos y los brazos al costado, relajado.",
       "La cinta derecha, paralela al piso: un espejo ayuda.",
       "Firme, sin hundir la piel.",
-      "Al final de una exhalación normal: sin meter la panza.",
+      "Al final de una exhalación normal: sin meter el abdomen.",
       "Siempre a la misma hora, antes de comer y después de ir al baño.",
       "Mide dos veces; si difieren más de 1 cm, una tercera, y anota el promedio."
     ],
@@ -1075,7 +1075,39 @@
       "despues": "5 minutos después",
       "horaDormirse": "¿Te dormiste a las {hora}?",
       "sinProponerDormirse": "¿A qué hora te dormiste?",
-      "horaDormirseNota": "Te despertaste a las {hora}: lo avisó tu iPhone. {seguridad}."
+      "horaDormirseNota": "Te despertaste a las {hora}: lo avisó tu iPhone. {seguridad}.",
+      "porque": {
+        "abrir": "Cómo llegó Moss a esta hora",
+        "dormirse": "Te dormiste",
+        "despertar": "Te despertaste",
+        "pistas": {
+          "ultimaActividad": {
+            "pasos": "Tus últimos pasos",
+            "movimiento": "La última vez que se movió el teléfono",
+            "moss": "La última vez que usaste Moss",
+            "atajo": "Lo último que avisó un atajo"
+          },
+          "primeraActividad": {
+            "pasos": "Tus primeros pasos",
+            "movimiento": "La primera vez que se movió el teléfono",
+            "moss": "La primera vez que abriste Moss",
+            "atajo": "Lo primero que avisó un atajo"
+          },
+          "cargador": "Conectaste el cargador",
+          "desconectaste": "Desconectaste el cargador",
+          "habitual": "Tu hora de siempre",
+          "alarma": "Paraste la alarma",
+          "despertador": "Paraste el despertador de Moss",
+          "meDesperte": "Dijiste «Me desperté»",
+          "meVoyADormir": "Dijiste «Me voy a dormir»",
+          "enfoque": "El enfoque Sueño"
+        },
+        "confirma": "lo confirma",
+        "noCuenta": "no cuenta: seguiste usándolo",
+        "tardas": "Tardas unos {n} min en dormirte: lo aprendió de tus respuestas.",
+        "tardasFabrica": "Sin respuestas tuyas, calcula {n} min hasta dormirte. Con cada una aprende lo tuyo.",
+        "nota": "Cada señal propone una hora y pesa según cuánta duda deja. Nunca te da dormido antes de lo último que hiciste con el teléfono, ni despierto después de lo primero."
+      }
     },
     "sinCalidadEstimada": "Moss no está segura de esta noche: confírmala o cámbiala y aparece la calidad.",
     "origen": {
@@ -1198,6 +1230,97 @@
           "enfoqueTermino": "Terminó el enfoque Sueño",
           "cargadorConectado": "Conectaste el cargador",
           "cargadorDesconectado": "Desconectaste el cargador"
+        }
+      },
+      "cargador": {
+        "titulo": "El cargador",
+        "sinArmar": "Para saber mejor cuándo te acuestas y te levantas. Menos de un minuto.",
+        "anda": "Funciona · llegó {cuando}",
+        "dejoDeLlegar": "Hace {dias} días que no llega. Toca para revisarla.",
+        "faltaConectar": "Llega solo al desconectar: falta la otra.",
+        "faltaDesconectar": "Llega solo al conectar: falta la otra.",
+        "avisoTitulo": "La automatización del cargador dejó de llegar",
+        "avisoTexto": "Puede ser que se haya apagado en Atajos. Sin ella Moss estima igual, con menos señales.",
+        "avisoBoton": "Revisar",
+        "guia": {
+          "titulo": "Que Moss sepa cuándo te acuestas",
+          "puntos": [
+            "Conectas el cargador de noche y dejas el teléfono: Moss sabe que te acostaste.",
+            "Lo desconectas a la mañana: sabe que te levantaste.",
+            "Corre solo, con Moss cerrada, y solo guarda la hora."
+          ],
+          "minuto": "Menos de un minuto, una sola vez.",
+          "empezar": "Empezar",
+          "paso": "Paso {n} de {total}",
+          "atras": "Atrás",
+          "mirar": "Mirar cómo se hace",
+          "conAtajos27": {
+            "instalar": {
+              "titulo": "Instala el atajo",
+              "texto": "Un toque y se abre Atajos con todo armado."
+            },
+            "activar": {
+              "titulo": "Deja encendida la automatización",
+              "texto": "Es la opción que aparece en el atajo."
+            },
+            "anadir": {
+              "titulo": "Agrégalo",
+              "texto": "Toca «Añadir atajo» y vuelve a Moss."
+            }
+          },
+          "conAtajos26": {
+            "instalar": {
+              "titulo": "Instala el atajo",
+              "texto": "Un toque: toca «Añadir atajo» y queda en tu iPhone."
+            },
+            "automatizacion": {
+              "titulo": "Abre Automatización",
+              "texto": "En Atajos, abajo, Automatización. Arriba, +."
+            },
+            "cargador": {
+              "titulo": "Elige Cargador",
+              "texto": "Está en la lista, un poco más abajo."
+            },
+            "marcar": {
+              "titulo": "Marca las dos, y que no pregunte",
+              "texto": "Está conectado y Está desconectado. Después, «Ejecutar inmediatamente»."
+            },
+            "elegir": {
+              "titulo": "Elige el atajo",
+              "texto": "Moss: cargador. Y toca Listo."
+            }
+          },
+          "probar": {
+            "titulo": "Pruébalo",
+            "texto": "Conecta o desconecta el cargador ahora. Moss te dice si llegó.",
+            "esperando": "Esperando al cargador…",
+            "llego": "Llegó: conectaste el cargador a las {hora}. Ya está.",
+            "noLlego": "Todavía no llegó. Mira que la automatización esté encendida en Atajos.",
+            "listo": "Listo"
+          },
+          "ios": {
+            "automatizacion": "Automatización",
+            "atajos": "Atajos",
+            "nueva": "Nueva automatización",
+            "buscar": "Buscar",
+            "alarma": "Alarma",
+            "sueno": "Sueño",
+            "cargador": "Cargador",
+            "conectado": "Está conectado",
+            "desconectado": "Está desconectado",
+            "ejecutar": "Ejecutar inmediatamente",
+            "confirmar": "Ejecutar tras confirmar",
+            "notificar": "Notificar al ejecutar",
+            "siguiente": "Siguiente",
+            "listo": "Listo",
+            "anadir": "Añadir atajo",
+            "activar": "Activar la automatización",
+            "atajo": "Moss: cargador",
+            "cuando": "Cuando el cargador se conecta o se desconecta",
+            "misAtajos": "Mis atajos",
+            "otro1": "Temporizador de cocina",
+            "otro2": "Ir a casa"
+          }
         }
       }
     }
@@ -1944,7 +2067,24 @@
   },
   "recordatorios": {
     "cuerpo": "Cuando puedas, anota tu {comida}.",
-    "dormir": "A la cama a las {hora}: así duermes lo que necesitas.",
+    "dormirTextos": {
+      "enUnRato": "Deberías irte a dormir en {tiempo}.",
+      "estaNoche": "Esta noche, a la cama a las {hora}.",
+      "luces": "Baja las luces: a la cama en {tiempo}.",
+      "paraDespertar": "Para despertarte a las {despertar}, a la cama a las {hora}.",
+      "enTiempo": "En {tiempo} te toca acostarte.",
+      "pantallas": "Ve dejando el teléfono: a las {hora}, a la cama.",
+      "aLaHora": "A las {hora} te toca ir a la cama.",
+      "duermes": "A la cama a las {hora} y duermes {horas}.",
+      "bajaElRitmo": "Empieza a bajar el ritmo: a las {hora}, a la cama.",
+      "deuda": "Te faltan {deuda} de sueño: acostarte a las {hora} ayuda."
+    },
+    "dormirEn": {
+      "15": "15 minutos",
+      "30": "media hora",
+      "45": "45 minutos",
+      "60": "una hora"
+    },
     "meVoyADormir": "Me voy a dormir",
     "buenasNoches": "Buenas noches. Moss anotó la hora.",
     "habito": "{habito}, cuando puedas.",
@@ -2025,5 +2165,71 @@
     "confirmada": "Confirmada",
     "seVeEnMoss": "Se ve al abrir Moss",
     "seAnotaEnMoss": "Anótala en Moss"
+  },
+  "suscripcion": {
+    "titulo": "Moss Premium",
+    "bajada": "Lo gratis ya alcanza para registrar. Premium hace las cuentas por ti.",
+    "gratisTitulo": "Gratis, siempre",
+    "gratis": [
+      "Registrar comida: buscar, voz, código y etiqueta",
+      "Hábitos y tu cielo",
+      "Tu peso y su tendencia"
+    ],
+    "premiumTitulo": "Con Premium",
+    "premium": [
+      "Tus metas se ajustan cada semana",
+      "Plan de comidas y lista de compras",
+      "Sueño completo y hora de dormir",
+      "Todo lo de hoy: qué sabe Moss y cómo lo estima"
+    ],
+    "anual": {
+      "nombre": "Anual",
+      "precio": "USD 29,99 al año",
+      "detalle": "USD 2,50 por mes · 50 % menos que el mensual"
+    },
+    "mensual": {
+      "nombre": "Mensual",
+      "precio": "USD 4,99 al mes",
+      "detalle": "Cancela cuando quieras"
+    },
+    "prueba": "7 días gratis",
+    "empezar": "Empezar 7 días gratis",
+    "legal": "7 días gratis, después {precio}. Se renueva solo hasta que canceles, al menos 24 horas antes de que termine el período. Se cancela en Ajustes › tu nombre › Suscripciones.",
+    "recordatorio": "Moss te avisa dos días antes de que termine la prueba.",
+    "restaurar": "Restaurar compras",
+    "terminos": "Términos",
+    "privacidad": "Privacidad",
+    "seguirGratis": "Seguir con lo gratis",
+    "restaurando": "No hay nada para restaurar en este Apple ID.",
+    "apple": {
+      "tienda": "App Store",
+      "prueba": "Prueba gratis de 7 días",
+      "despues": "Después, {precio}",
+      "cuenta": "Cuenta: tu Apple ID",
+      "confirmar": "Suscribirme",
+      "cancelar": "Cancelar",
+      "nota": "(dibujo de la hoja de Apple: en la app la pone iOS)"
+    },
+    "listo": {
+      "titulo": "Ya tienes Premium",
+      "texto": "Tienes 7 días gratis. Moss te avisa dos días antes de que terminen.",
+      "seguir": "Seguir"
+    },
+    "bloqueo": {
+      "plan": "El plan de comidas es de Premium",
+      "metas": "El ajuste semanal de tus metas es de Premium",
+      "sueno": "El sueño completo es de Premium",
+      "dormir": "La hora de dormir es de Premium",
+      "todo": "Todo lo de hoy es de Premium",
+      "cerrar": "Ahora no"
+    },
+    "perfil": {
+      "titulo": "Suscripción",
+      "gratis": "Gratis",
+      "prueba": "Premium · te quedan {n} días de prueba",
+      "activa": "Premium · anual",
+      "administrar": "Administrar suscripción",
+      "verPlanes": "Ver Premium"
+    }
   }
 }

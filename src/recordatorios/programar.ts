@@ -15,6 +15,7 @@ import { horaHabitual } from '@/dominio/recordatorios';
 import { vigentes } from '@/dominio/registros';
 import { aprenderPersonal, habitualDe } from '@/dominio/sinReloj';
 import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
+import { duracion } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
 import { t } from '@/textos';
 
@@ -75,10 +76,29 @@ function planDe(e: Pick<Estado, 'registros'>, dia: ClaveDia, comida: Comida): st
   return nombres.length > 3 ? `${nombres.slice(0, 3).join(', ')}…` : nombres.join(', ');
 }
 
+/** «En una hora» o «en 45 minutos»: lo que falta para ir a la cama. */
+function tiempoHastaLaCama(minutos: number): string {
+  if (minutos === 60) return t('recordatorios.dormirEn.60');
+  if (minutos === 30) return t('recordatorios.dormirEn.30');
+  return minutos === 15 ? t('recordatorios.dormirEn.15') : t('recordatorios.dormirEn.45');
+}
+
+/** El aviso de dormir: cada noche otro texto (textoDeDormir), con las horas de esa noche. */
+function textoDeLaCama(a: Aviso): string {
+  const cama = a.dormirA ?? a.minutos;
+  return t(`recordatorios.dormirTextos.${a.texto ?? 'aLaHora'}`, {
+    hora: horaDeReloj(cama),
+    tiempo: tiempoHastaLaCama(cama - a.minutos),
+    despertar: horaDeReloj(a.despertarA ?? 0),
+    horas: duracion(a.duerme ?? 0),
+    deuda: duracion(a.deuda ?? 0),
+  });
+}
+
 /** Lo que dice cada aviso, sin culpa; los que suenan juntos, en una línea. */
 function textoDe(n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): string {
   const uno = (a: Aviso) => {
-    if (a.tipo === 'dormir') return t('recordatorios.dormir', { hora: horaDeReloj(a.dormirA ?? a.minutos) });
+    if (a.tipo === 'dormir') return textoDeLaCama(a);
     if (a.tipo === 'horario' && a.comida) {
       const hora = t(`recordatorios.horario.${a.comida}`);
       const plan = planDe(e, n.dia, a.comida);

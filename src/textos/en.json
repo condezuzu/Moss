@@ -1075,7 +1075,39 @@
       "despues": "5 minutes later",
       "horaDormirse": "Did you fall asleep at {hora}?",
       "sinProponerDormirse": "What time did you fall asleep?",
-      "horaDormirseNota": "You woke up at {hora}: your iPhone told Moss. {seguridad}."
+      "horaDormirseNota": "You woke up at {hora}: your iPhone told Moss. {seguridad}.",
+      "porque": {
+        "abrir": "How Moss got to this time",
+        "dormirse": "You fell asleep",
+        "despertar": "You woke up",
+        "pistas": {
+          "ultimaActividad": {
+            "pasos": "Your last steps",
+            "movimiento": "The last time your phone moved",
+            "moss": "The last time you used Moss",
+            "atajo": "The last thing a shortcut reported"
+          },
+          "primeraActividad": {
+            "pasos": "Your first steps",
+            "movimiento": "The first time your phone moved",
+            "moss": "The first time you opened Moss",
+            "atajo": "The first thing a shortcut reported"
+          },
+          "cargador": "You plugged in the charger",
+          "desconectaste": "You unplugged the charger",
+          "habitual": "Your usual time",
+          "alarma": "You stopped the alarm",
+          "despertador": "You stopped the Moss alarm",
+          "meDesperte": "You said “I woke up”",
+          "meVoyADormir": "You said “I'm going to sleep”",
+          "enfoque": "Sleep Focus"
+        },
+        "confirma": "confirms it",
+        "noCuenta": "doesn't count: you kept using it",
+        "tardas": "You take about {n} min to fall asleep: learned from your answers.",
+        "tardasFabrica": "Without your answers, it assumes {n} min to fall asleep. Each one teaches it yours.",
+        "nota": "Each signal suggests a time and counts according to how much doubt it leaves. Moss never has you asleep before the last thing you did on your phone, or awake after the first."
+      }
     },
     "sinCalidadEstimada": "Moss isn’t sure about this night: confirm it or change it and the quality shows up.",
     "origen": {
@@ -1198,6 +1230,97 @@
           "enfoqueTermino": "Sleep Focus ended",
           "cargadorConectado": "You plugged in the charger",
           "cargadorDesconectado": "You unplugged the charger"
+        }
+      },
+      "cargador": {
+        "titulo": "The charger",
+        "sinArmar": "To know better when you go to bed and get up. Under a minute.",
+        "anda": "Working · arrived {cuando}",
+        "dejoDeLlegar": "Nothing for {dias} days. Tap to check it.",
+        "faltaConectar": "Only arrives when unplugging: the other one is missing.",
+        "faltaDesconectar": "Only arrives when plugging in: the other one is missing.",
+        "avisoTitulo": "The charger automation stopped arriving",
+        "avisoTexto": "It may have been turned off in Shortcuts. Without it Moss still estimates, with fewer signals.",
+        "avisoBoton": "Check",
+        "guia": {
+          "titulo": "Let Moss know when you go to bed",
+          "puntos": [
+            "You plug in at night and leave your phone: Moss knows you went to bed.",
+            "You unplug in the morning: it knows you got up.",
+            "It runs on its own, with Moss closed, and only saves the time."
+          ],
+          "minuto": "Under a minute, just once.",
+          "empezar": "Start",
+          "paso": "Step {n} of {total}",
+          "atras": "Back",
+          "mirar": "Watch how it's done",
+          "conAtajos27": {
+            "instalar": {
+              "titulo": "Install the shortcut",
+              "texto": "One tap and Shortcuts opens with everything set up."
+            },
+            "activar": {
+              "titulo": "Keep the automation on",
+              "texto": "It's the option you see in the shortcut."
+            },
+            "anadir": {
+              "titulo": "Add it",
+              "texto": "Tap “Add Shortcut” and come back to Moss."
+            }
+          },
+          "conAtajos26": {
+            "instalar": {
+              "titulo": "Install the shortcut",
+              "texto": "One tap: tap “Add Shortcut” and it's on your iPhone."
+            },
+            "automatizacion": {
+              "titulo": "Open Automation",
+              "texto": "In Shortcuts, at the bottom, Automation. At the top, +."
+            },
+            "cargador": {
+              "titulo": "Choose Charger",
+              "texto": "It's in the list, a little further down."
+            },
+            "marcar": {
+              "titulo": "Check both, and don't ask",
+              "texto": "Is Connected and Is Disconnected. Then “Run Immediately”."
+            },
+            "elegir": {
+              "titulo": "Choose the shortcut",
+              "texto": "Moss: charger. Then tap Done."
+            }
+          },
+          "probar": {
+            "titulo": "Try it",
+            "texto": "Plug in or unplug the charger now. Moss tells you if it arrived.",
+            "esperando": "Waiting for the charger…",
+            "llego": "It arrived: you plugged in the charger at {hora}. All set.",
+            "noLlego": "Nothing yet. Check that the automation is on in Shortcuts.",
+            "listo": "Done"
+          },
+          "ios": {
+            "automatizacion": "Automation",
+            "atajos": "Shortcuts",
+            "nueva": "New Automation",
+            "buscar": "Search",
+            "alarma": "Alarm",
+            "sueno": "Sleep",
+            "cargador": "Charger",
+            "conectado": "Is Connected",
+            "desconectado": "Is Disconnected",
+            "ejecutar": "Run Immediately",
+            "confirmar": "Run After Confirmation",
+            "notificar": "Notify When Run",
+            "siguiente": "Next",
+            "listo": "Done",
+            "anadir": "Add Shortcut",
+            "activar": "Turn On the Automation",
+            "atajo": "Moss: charger",
+            "cuando": "When the charger is connected or disconnected",
+            "misAtajos": "My Shortcuts",
+            "otro1": "Kitchen timer",
+            "otro2": "Drive home"
+          }
         }
       }
     }
@@ -1944,7 +2067,24 @@
   },
   "recordatorios": {
     "cuerpo": "When you can, log your {comida}.",
-    "dormir": "Bed at {hora}: that way you sleep what you need.",
+    "dormirTextos": {
+      "enUnRato": "You should head to bed in {tiempo}.",
+      "estaNoche": "Tonight, bed at {hora}.",
+      "luces": "Dim the lights: bed in {tiempo}.",
+      "paraDespertar": "To wake up at {despertar}, be in bed by {hora}.",
+      "enTiempo": "Bedtime in {tiempo}.",
+      "pantallas": "Start putting your phone away: bed at {hora}.",
+      "aLaHora": "Your bedtime tonight is {hora}.",
+      "duermes": "In bed by {hora} and you sleep {horas}.",
+      "bajaElRitmo": "Start winding down: bed at {hora}.",
+      "deuda": "You're {deuda} short on sleep: bed at {hora} helps."
+    },
+    "dormirEn": {
+      "15": "15 minutes",
+      "30": "half an hour",
+      "45": "45 minutes",
+      "60": "an hour"
+    },
     "meVoyADormir": "Going to bed",
     "buenasNoches": "Good night. Moss noted the time.",
     "habito": "{habito}, when you can.",
@@ -2025,5 +2165,71 @@
     "confirmada": "Confirmed",
     "seVeEnMoss": "Open Moss to see it",
     "seAnotaEnMoss": "Log it in Moss"
+  },
+  "suscripcion": {
+    "titulo": "Moss Premium",
+    "bajada": "Free is enough to log. Premium does the math for you.",
+    "gratisTitulo": "Free, always",
+    "gratis": [
+      "Log food: search, voice, barcode and label",
+      "Habits and your sky",
+      "Your weight and its trend"
+    ],
+    "premiumTitulo": "With Premium",
+    "premium": [
+      "Your goals adjust every week",
+      "Meal plan and shopping list",
+      "Full sleep and bedtime",
+      "All of today: what Moss knows and how it estimates"
+    ],
+    "anual": {
+      "nombre": "Yearly",
+      "precio": "USD 29.99 per year",
+      "detalle": "USD 2.50 per month · 50% less than monthly"
+    },
+    "mensual": {
+      "nombre": "Monthly",
+      "precio": "USD 4.99 per month",
+      "detalle": "Cancel anytime"
+    },
+    "prueba": "7 days free",
+    "empezar": "Start 7 days free",
+    "legal": "7 days free, then {precio}. Renews automatically until you cancel, at least 24 hours before the period ends. Cancel in Settings › your name › Subscriptions.",
+    "recordatorio": "Moss reminds you two days before the trial ends.",
+    "restaurar": "Restore purchases",
+    "terminos": "Terms",
+    "privacidad": "Privacy",
+    "seguirGratis": "Continue with free",
+    "restaurando": "There's nothing to restore on this Apple ID.",
+    "apple": {
+      "tienda": "App Store",
+      "prueba": "7-day free trial",
+      "despues": "Then {precio}",
+      "cuenta": "Account: your Apple ID",
+      "confirmar": "Subscribe",
+      "cancelar": "Cancel",
+      "nota": "(drawing of Apple's sheet: in the app, iOS shows it)"
+    },
+    "listo": {
+      "titulo": "You have Premium",
+      "texto": "You have 7 free days. Moss reminds you two days before they end.",
+      "seguir": "Continue"
+    },
+    "bloqueo": {
+      "plan": "The meal plan is part of Premium",
+      "metas": "Weekly goal adjustments are part of Premium",
+      "sueno": "Full sleep is part of Premium",
+      "dormir": "Bedtime is part of Premium",
+      "todo": "All of today is part of Premium",
+      "cerrar": "Not now"
+    },
+    "perfil": {
+      "titulo": "Subscription",
+      "gratis": "Free",
+      "prueba": "Premium · {n} trial days left",
+      "activa": "Premium · yearly",
+      "administrar": "Manage subscription",
+      "verPlanes": "See Premium"
+    }
   }
 }

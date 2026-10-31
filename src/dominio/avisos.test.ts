@@ -2,12 +2,12 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
   ADELANTO_MAXIMO, ANTES_DE_DORMIR, avisoDeFabrica, DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO, avisosDeLaSemana, avisosDelDia, cuandoSuena, horaDeDormir, horasDeSueno, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
-  PAGO_MAXIMO, PESARSE_DESPUES, VENTANA,
+  PAGO_MAXIMO, PESARSE_DESPUES, textoDeDormir, TEXTOS_DE_DORMIR, VENTANA,
   type Avisos, type DelDia, type Notificacion, type Sueno,
 } from './avisos';
 import type { Comida } from './comidas';
 import { claveDeMarca } from './dias';
-import { diaDeLaSemana, type DiaSemana } from './fechas';
+import { diaDeLaSemana, sumarDias, type DiaSemana } from './fechas';
 import type { Habito } from './habitos';
 import { DESPUES_MIN } from './recordatorios';
 
@@ -68,35 +68,67 @@ describe('la hora de dormir', () => {
 
 describe('las horas de sueño de un día', () => {
   it('la mañana sale de lo de siempre y la noche, de la mañana siguiente, en minutos desde la medianoche', () => {
-    expect(horasDeSueno(VIERNES, SUENO)).toEqual({ despertar: h('7:30'), dormir: h('23:30'), acostarse: h('23:30') });
+    expect(horasDeSueno(VIERNES, SUENO)).toMatchObject({ despertar: h('7:30'), dormir: h('23:30'), acostarse: h('23:30') });
   });
 
   it('la alarma gana a lo de siempre, y la del sábado decide la noche del viernes, que pasa de la medianoche', () => {
     // Se despierta el sábado a las 9 y necesita 8 horas: dormirse a la 1 del sábado, que es la noche del viernes.
-    expect(horasDeSueno(VIERNES, { ...SUENO, alarmas: { 5: h('6:30'), 6: h('9:00') } })).toEqual({ despertar: h('6:30'), dormir: 24 * 60 + h('1:00'), acostarse: 24 * 60 + h('1:00') });
+    expect(horasDeSueno(VIERNES, { ...SUENO, alarmas: { 5: h('6:30'), 6: h('9:00') } })).toMatchObject({ despertar: h('6:30'), dormir: 24 * 60 + h('1:00'), acostarse: 24 * 60 + h('1:00'), despertarManana: 24 * 60 + h('9:00') });
   });
 
   it('lo de siempre es el de cada noche: el fin de semana puede ser otro', () => {
     const finde = (c: string) => [6, 0].includes(diaDeLaSemana(c));
     const s: Sueno = { ...SUENO, habitual: (c) => (finde(c) ? { dormirse: n('0:30'), despertar: n('9:30') } : { dormirse: n('23:30'), despertar: n('7:30') }) };
     // La noche del viernes termina el sábado.
-    expect(horasDeSueno(VIERNES, s)).toEqual({ despertar: h('7:30'), dormir: 24 * 60 + h('1:30'), acostarse: 24 * 60 + h('1:30') });
+    expect(horasDeSueno(VIERNES, s)).toMatchObject({ despertar: h('7:30'), dormir: 24 * 60 + h('1:30'), acostarse: 24 * 60 + h('1:30') });
     expect(horasDeSueno(JUEVES, s).dormir).toBe(h('23:30'));
   });
 
   it('sin datos del sueño, nada', () => {
-    expect(horasDeSueno(VIERNES, { ...SUENO, habitual: () => null })).toEqual({ despertar: null, dormir: null, acostarse: null });
+    expect(horasDeSueno(VIERNES, { ...SUENO, habitual: () => null })).toEqual({ despertar: null, dormir: null, acostarse: null, despertarManana: null });
   });
 
   it('a la cama, lo que tardás en dormirte antes de la hora de dormirte (D33), de a 5 minutos', () => {
-    expect(horasDeSueno(VIERNES, { ...SUENO, latencia: 25 })).toEqual({ despertar: h('7:30'), dormir: h('23:30'), acostarse: h('23:05') });
+    expect(horasDeSueno(VIERNES, { ...SUENO, latencia: 25 })).toMatchObject({ despertar: h('7:30'), dormir: h('23:30'), acostarse: h('23:05') });
     expect(horasDeSueno(VIERNES, { ...SUENO, latencia: 47 }).acostarse).toBe(h('22:45'));
+  });
+});
+
+describe('lo que dice el aviso de dormir', () => {
+  const noches = (cuantas: number, desde = '2026-10-23') => Array.from({ length: cuantas }, (_, i) => sumarDias(desde, i));
+
+  it('cada noche otro: no vuelve a ninguno hasta pasar por todos', () => {
+    const textos = noches(TEXTOS_DE_DORMIR.length).map((d) => textoDeDormir(d, null));
+    expect(new Set(textos).size).toBe(TEXTOS_DE_DORMIR.length);
+    // Y sigue igual en el mes siguiente: el mismo texto, recién a las nueve noches.
+    const mes = noches(60).map((d) => textoDeDormir(d, null));
+    mes.forEach((t, i) => mes.slice(i + 1, i + TEXTOS_DE_DORMIR.length).forEach((otro) => expect(otro).not.toBe(t)));
+  });
+
+  it('sale del día: reprogramar no lo cambia, y antes de la fecha de partida también anda', () => {
+    expect(textoDeDormir(VIERNES, null)).toBe(textoDeDormir(VIERNES, null));
+    expect(TEXTOS_DE_DORMIR).toContain(textoDeDormir('2025-03-01', null));
+  });
+
+  it('con una hora o más de deuda, una noche de cada cuatro la nombra', () => {
+    const textos = noches(28).map((d) => textoDeDormir(d, 90));
+    expect(textos.filter((t) => t === 'deuda')).toHaveLength(7);
+    textos.forEach((t, i) => i > 0 && expect(t === 'deuda' && textos[i - 1] === 'deuda').toBe(false));
+    expect(noches(28).map((d) => textoDeDormir(d, 59))).not.toContain('deuda');
+  });
+
+  it('el aviso lleva el texto de esa noche, y la deuda solo si la nombra', () => {
+    const dia = noches(8).find((d) => textoDeDormir(d, 90) === 'deuda')!;
+    const conDeuda = delDia({ dormir: { encendido: true } }, { dia, sueno: { ...SUENO, deuda: 90 } })[0].avisos[0];
+    expect(conDeuda).toMatchObject({ texto: 'deuda', deuda: 90 });
+    const otro = noches(8).find((d) => textoDeDormir(d, 90) !== 'deuda')!;
+    expect(delDia({ dormir: { encendido: true } }, { dia: otro, sueno: { ...SUENO, deuda: 90 } })[0].avisos[0].deuda).toBeUndefined();
   });
 });
 
 describe('el aviso de dormir con lo que tardás en dormirte', () => {
   it('suena un rato antes de la hora de ir a la cama, y dice esa hora', () => {
-    expect(delDia({ dormir: { encendido: true } }, { sueno: { ...SUENO, latencia: 30 } })).toEqual([
+    expect(delDia({ dormir: { encendido: true } }, { sueno: { ...SUENO, latencia: 30 } })).toMatchObject([
       { dia: VIERNES, minutos: h('22:30'), avisos: [{ id: 'dormir', tipo: 'dormir', minutos: h('22:30'), dormirA: h('23:00') }] },
     ]);
   });
@@ -105,8 +137,8 @@ describe('el aviso de dormir con lo que tardás en dormirte', () => {
 describe('los avisos de un día', () => {
   it('el de dormir avisa media hora antes de la hora de dormirse; apagado o sin datos del sueño, nada', () => {
     expect(ANTES_DE_DORMIR).toBe(30);
-    expect(delDia({ dormir: { encendido: true } })).toEqual([
-      { dia: VIERNES, minutos: h('23:00'), avisos: [{ id: 'dormir', tipo: 'dormir', minutos: h('23:00'), dormirA: h('23:30') }] },
+    expect(delDia({ dormir: { encendido: true } })).toMatchObject([
+      { dia: VIERNES, minutos: h('23:00'), avisos: [{ id: 'dormir', tipo: 'dormir', minutos: h('23:00'), dormirA: h('23:30'), despertarA: 24 * 60 + h('7:30'), duerme: 8 * 60 }] },
     ]);
     expect(resumen(delDia({ dormir: { encendido: true, antes: 45 } }))).toEqual([[h('22:45'), ['dormir']]]);
     expect(delDia({ dormir: { encendido: false } })).toEqual([]);
@@ -357,7 +389,7 @@ describe('los avisos de la semana', () => {
     const tarde: Sueno = { ...SUENO, habitual: () => ({ dormirse: n('0:45'), despertar: n('8:45') }) };
     const ajustes: Avisos = { dormir: { encendido: true }, habitos: [{ habito: 'leer', cuando: { tipo: 'dormir', antes: 15 }, dias: [] }] };
     const lista = semana(ajustes, { hoy: SABADO, ahora: h('0:05'), sueno: tarde });
-    expect(lista[0]).toEqual({
+    expect(lista[0]).toMatchObject({
       dia: VIERNES,
       minutos: 24 * 60 + h('0:15'),
       avisos: [

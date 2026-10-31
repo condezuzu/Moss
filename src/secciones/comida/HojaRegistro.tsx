@@ -129,7 +129,14 @@ export function HojaRegistro() {
     return () => clearTimeout(espera);
   }, [pedido]);
   const visto = pedido ?? saliendo;
-  return visto ? <Hoja key={visto.vez} pedido={visto} abierta={pedido !== null} /> : null;
+  // El contenedor no se va nunca. Si se iba con una salida todavía en curso (con el teléfono ocupado, la
+  // del panel dura más que SALIDA_MS), Reanimated, en la web, volvía a colgar lo que se estaba yendo de
+  // Secciones y, al terminar, lo sacaba dos veces: el error de removeChild (reattachElementToAncestor).
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      {visto && <Hoja key={visto.vez} pedido={visto} abierta={pedido !== null} />}
+    </View>
+  );
 }
 
 function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
@@ -495,7 +502,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   };
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <>
       {/* Al cerrar, la hoja sigue armada sin su contenido lo que dura la salida (ver HojaRegistro). */}
       {abierta && (<>
       <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={[StyleSheet.absoluteFill, estilos.fondo]}>
@@ -939,7 +946,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
         />
       )}
       </>)}
-    </View>
+    </>
   );
 }
 
