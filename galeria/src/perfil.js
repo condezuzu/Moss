@@ -132,7 +132,7 @@ const SeccionPerfil = (() => {
         if (encendido && debajo) caja.appendChild(debajo);
         cuerpo.appendChild(caja);
       };
-      bloque(tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: '23:20' }), a.dormir, (v) => { a.dormir = v; },
+      bloque(tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: '23:20', despertar: '07:30', horas: u.duracion(480), latencia: 20 }), a.dormir, (v) => { a.dormir = v; },
         chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
       // El horario de comidas: cada comida elegida, con su hora de a un cuarto de hora (como Perfil.tsx).
       const HORAS = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
