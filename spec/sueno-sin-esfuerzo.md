@@ -65,16 +65,28 @@ detecte si anda. Lo que se puede:
   se hace»), y al volver sigue donde quedó.
 - **Termina probándolo:** conectar el cargador y ver que llegó, con Moss abierta.
 
+**En la app desde el 31/10/2026** (`src/secciones/sueno/GuiaCargador.tsx`). Dos cosas
+distintas de la maqueta, porque ahí no se sale de Moss: «Empezar» abre el enlace de verdad
+(un toque), y «Mirar cómo se hace» termina volviendo a «Empezar», porque mirar no instala
+nada. **Hasta que esté el enlace** (`ATAJO_DEL_CARGADOR`, en `src/lib/sitio.ts`), la fila abre
+la guía de antes, con cada automatización a mano.
+
 **Lo que tenés que armar en tu iPhone, una vez** (un enlace de iCloud no se puede crear
-desde Windows):
+desde Windows; hace falta la build `telefono`, que trae las acciones de Moss):
 
-1. En Atajos, un atajo «Moss: cargador»: si está conectado al cargador, «Conecté el
-   cargador»; si no, «Desconecté el cargador».
-2. En iOS 27: Editar, Automatización, Cargador; e Info, Privacidad, «Permitir ejecutar con
-   el iPhone bloqueado» [9].
-3. Compartir, Copiar enlace de iCloud, y pasármelo. Va en una constante y llega por OTA.
-4. Probar el enlace en un iOS anterior: si no se instala, hacen falta dos.
+1. Atajos, pestaña Atajos, **+**. Arriba, tocar el nombre, Renombrar: «Moss: cargador».
+2. Agregar la acción **Obtener estado de la batería** [S4] (buscar «batería»). Dentro de la
+   acción, tocar «Nivel de batería» y elegir **Está conectado al cargador**.
+3. Agregar la acción **Si** (buscar «si»). Queda «Si [Estado de la batería] es verdadero».
+4. Entre **Si** y **De lo contrario**: buscar «Moss», acción **Conecté el cargador**.
+5. Entre **De lo contrario** y **Fin**: acción **Desconecté el cargador**.
+6. **Solo en iOS 27:** Editar, Automatización, Cargador, las dos opciones; e Info, Privacidad,
+   «Permitir ejecutar con el iPhone bloqueado» [9].
+7. Compartir, **Copiar enlace de iCloud** [S5], y pasármelo. Pide tener Atajos prendido en
+   Ajustes › tu nombre › iCloud. Va en una constante y llega por OTA.
+8. Probar el enlace en un iOS anterior: si no se instala, hacen falta dos.
 
+Los nombres en español están traducidos del inglés: hay que compararlos con el iPhone.
 Con una build se simplifica: una sola acción de Moss que lea la batería, sin el «si».
 
 **Que Moss detecte si anda.** No puede ver las automatizaciones, pero sí lo que le llega
@@ -767,6 +779,8 @@ module.exports = (config) => ({
 - S1. Apple DTS, las tareas de fondo corren cuando iOS decide: https://developer.apple.com/forums/thread/127500
 - S2. Foro, los avisos de umbral en iOS 26: https://developer.apple.com/forums/thread/808470
 - S3. La opción de iOS 26, según una guía de terceros: https://allthings.how/how-to-make-siri-talk-charging-iphone/
+- S4. «Get Battery Status», con «Is Connected to Charger»: https://ios.gadgethacks.com/how-to/make-your-iphone-speak-its-battery-level-every-time-you-start-stop-charging-0385040
+- S5. Apple, compartir un atajo: https://support.apple.com/guide/shortcuts/apdf01f8c054/ios
 16. Guías de revisión de Apple: https://developer.apple.com/app-store/review/guidelines/
 
 **Apple: Sueño, Concentración y Salud**

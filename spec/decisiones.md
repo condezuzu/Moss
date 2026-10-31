@@ -50,6 +50,9 @@ cuestionario, tu meta y recién ahí **suscribirse**.
 
 ### D39 · Lo visual de la 1.1, en la galería (armado el 29/10/2026)
 
+**Aprobado el 31/10/2026 y ya en la app:** cómo llegó a la hora y la guía del cargador
+(espera el enlace de iCloud). Lo demás de esta lista sigue para aprobar.
+
 En la galería, sección «1.1 · Lo nuevo, para aprobar», con sus botones:
 - **El ritmo y el plazo** (Progreso › Estrategia): la regla con las zonas
   viable, exigente y muy agresivo, la fecha o el ritmo, las kcal por día y los

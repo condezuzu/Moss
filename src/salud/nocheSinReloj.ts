@@ -4,10 +4,12 @@
 // (src/dominio/sinReloj.ts). No pisa lo que confirmaste ni la noche de un reloj o un anillo, y nunca
 // escribe en Salud.
 
+import { useSyncExternalStore } from 'react';
+
 import type { Almacen } from '@/almacen/almacen';
-import { sumarDias } from '@/dominio/fechas';
+import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
-  actividadDeLosPasos, actividadDelMovimiento, aprenderPersonal, conNochesDeMoss, deLasSenales, estimarNoche, habitualDe, instanteDe, type Actividad,
+  actividadDeLosPasos, actividadDelMovimiento, aprenderPersonal, conNochesDeMoss, deLasSenales, estimarNoche, habitualDe, instanteDe, type Actividad, type Estimacion, type Personal,
 } from '@/dominio/sinReloj';
 import { leerMovimiento } from '../../modules/movimiento';
 import { leerSenales } from './anclas';
@@ -15,6 +17,19 @@ import { leerSenales } from './anclas';
 /** Desde las 4 hay noche para estimar; con un reloj o un anillo, se espera su noche hasta las 14. */
 export const DESDE_LAS = 4;
 const ESPERAR_AL_RELOJ_HASTA = 14;
+
+// Cómo llegó a la hora de anoche, para contarlo a la mañana. No se guarda: se rehace cada vez que se abre Moss.
+type ComoLlego = { clave: ClaveDia; estimacion: Estimacion; personal: Personal };
+let comoLlego: ComoLlego | null = null;
+const oyentes = new Set<() => void>();
+
+export function useComoLlego(clave: ClaveDia): ComoLlego | null {
+  const actual = useSyncExternalStore((alCambiar) => {
+    oyentes.add(alCambiar);
+    return () => oyentes.delete(alCambiar);
+  }, () => comoLlego);
+  return actual?.clave === clave ? actual : null;
+}
 
 export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<void> {
   const e = a.estado();
@@ -43,6 +58,8 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
   const personal = aprenderPersonal(propias, e.hoy, e.latencia);
   const est = estimarNoche({ clave: e.hoy, zona, actividad, anclas: atajos.anclas, habitual: habitualDe(noches, e.hoy), personal });
   if (!est) return;
+  comoLlego = { clave: e.hoy, estimacion: est, personal };
+  oyentes.forEach((o) => o());
   const iso = (minutos: number) => new Date(instanteDe(e.hoy, zona, Math.round(minutos))).toISOString();
   const hora = {
     dormirse: iso(est.dormirse), despertar: iso(est.despertar), origen: 'estimada' as const, confianza: est.confianza,

@@ -177,7 +177,7 @@ const MARCAS: [Marca, RegExp][] = [
   ['withings', /withings|health ?mate/i], ['ringconn', /ringconn/i], ['ultrahuman', /ultrahuman/i], ['amazfit', /amazfit|zepp|huami/i],
   ['xiaomi', /xiaomi|mi ?fit/i], ['huawei', /huawei/i], ['coros', /coros/i], ['suunto', /suunto/i], ['eightSleep', /eight ?sleep/i],
   // Los demás anillos: su app corre en el iPhone, pero mide un aparato, no el teléfono.
-  ['anillo', /qring|colmi|evie|movano|circular|\bring\b|anillo/i],
+  ['anillo', /qring|colmi|evie|movano|circular|\brings?\b|darings?|moyoung|anillo/i],
 ];
 /** La marca de un aparato o una app, por su identificador y su nombre; sin reconocerla, `otra` o `telefono`. */
 export function marcaDe(f: Pick<Fuente, 'id' | 'nombre' | 'tipo'>): Marca {

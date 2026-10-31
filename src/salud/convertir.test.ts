@@ -22,6 +22,9 @@ describe('de Salud al dominio', () => {
     expect(tipoDeFuente('iPhone15,2', 'com.movano.evie', 'Evie')).toBe('otra');
     expect(tipoDeFuente('iPhone15,2', 'com.ejemplo.salud', 'Smart Ring')).toBe('otra');
     expect(tipoDeFuente('iPhone15,2', 'com.ejemplo.spring', 'Spring')).toBe('telefono');
+    // Da Rings, con cualquier forma de escribirlo.
+    expect(tipoDeFuente('iPhone15,2', 'com.moyoung.ejemplo', 'Da Rings')).toBe('otra');
+    expect(tipoDeFuente('iPhone15,2', 'com.ejemplo.salud', 'DaRings')).toBe('otra');
     expect(fuentesDe([sueno(3, local('2026-10-21', '23:40'), local('2026-10-22', '00:20')), sueno(0, local('2026-10-21', '23:20'), local('2026-10-22', '07:30'), iphone)])).toEqual([
       { id: 'com.apple.health.A1', nombre: 'Apple Watch de Ana', tipo: 'reloj' },
       { id: 'com.apple.health.B2', nombre: 'iPhone de Ana', tipo: 'telefono' },

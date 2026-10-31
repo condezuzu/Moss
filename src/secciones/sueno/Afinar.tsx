@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { claveDelDia, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { esProgramado, type QueSenal, type Senal } from '@/dominio/sinReloj';
+import { estadoDelCargador, esProgramado, type EstadoDelCargador, type QueSenal, type Senal } from '@/dominio/sinReloj';
+import { ATAJO_DEL_CARGADOR } from '@/lib/sitio';
 import { useSenales } from '@/salud/anclas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -16,6 +17,7 @@ import { horaDelDia } from '../comida/datos';
 import { HojaModal } from '../HojaModal';
 import { Aparece, Carta, Dias, EtiquetaDeGrupo, Parrafo } from '../tarjetas';
 import { alarmaPuesta, hayDespertador, pedirAlarmas, permisoDeAlarmas, ponerAlarma, sacarAlarma, type Alarma, type PermisoDeAlarmas } from './despertador';
+import { GuiaCargador } from './GuiaCargador';
 
 const SEMANA_LABORAL: DiaSemana[] = [1, 2, 3, 4, 5];
 /** Cada automatización y lo que avisa. */
@@ -42,6 +44,14 @@ function cuando(ms: number, hoy: ClaveDia): string {
   if (clave === hoy) return t('sueno.afinar.hoy', { hora });
   if (clave === sumarDias(hoy, -1)) return t('sueno.afinar.ayer', { hora });
   return t('sueno.afinar.dia', { dia: lista('fecha.diasCortos')[fecha.getDay()], hora });
+}
+
+/** Lo que dice la fila del cargador según lo que le llega a Moss (estadoDelCargador). */
+function textoDelCargador(e: EstadoDelCargador, hoy: ClaveDia): string {
+  if (e.estado === 'anda') return t('sueno.afinar.cargador.anda', { cuando: cuando(e.ultima, hoy) });
+  if (e.estado === 'dejoDeLlegar') return t('sueno.afinar.cargador.dejoDeLlegar', { dias: e.dias });
+  if (e.estado === 'aMedias') return t(e.falta === 'conectar' ? 'sueno.afinar.cargador.faltaConectar' : 'sueno.afinar.cargador.faltaDesconectar');
+  return t('sueno.afinar.cargador.sinArmar');
 }
 
 /** El despertador: lo que está puesto en el sistema, el permiso y lo que se está eligiendo. */
@@ -113,9 +123,35 @@ function useDespertador() {
 
 export function Afinar({ hoy }: { hoy: ClaveDia }) {
   const [hoja, setHoja] = useState<'despertador' | 'atajos' | null>(null);
+  const [guia, setGuia] = useState({ abierta: false, vez: 0 });
   const d = useDespertador();
-  const senales = useSenales(15);
+  // Un mes, lo que se guarda: alcanza para ver que dejó de llegar. La hora se renueva al volver a Moss.
+  const senales = useSenales(30);
+  const [ahora, setAhora] = useState(() => Date.now());
+  useEffect(() => {
+    const suscripcion = AppState.addEventListener('change', (estado) => { if (estado === 'active') setAhora(Date.now()); });
+    return () => suscripcion.remove();
+  }, []);
+  const cargador = estadoDelCargador(senales ?? [], ahora);
+  // Sin el enlace del atajo todavía no hay guía de un toque: queda la de cada automatización.
+  const abrirCargador = () => (ATAJO_DEL_CARGADOR ? setGuia((g) => ({ abierta: true, vez: g.vez + 1 })) : setHoja('atajos'));
   return (
+    <>
+    {cargador.estado === 'dejoDeLlegar' && (
+      <Aparece>
+        <Carta>
+          <View style={st.aviso2}>
+            <View style={st.filaTextos}>
+              <Text style={st.avisoTitulo}>{t('sueno.afinar.cargador.avisoTitulo')}</Text>
+              <Parrafo chico>{t('sueno.afinar.cargador.avisoTexto')}</Parrafo>
+            </View>
+            <Pressable onPress={abrirCargador} style={({ pressed }) => [st.boton, st.botonEnFila, pressed && st.botonApretado]} accessibilityRole="button">
+              <Text style={st.botonTexto}>{t('sueno.afinar.cargador.avisoBoton')}</Text>
+            </Pressable>
+          </View>
+        </Carta>
+      </Aparece>
+    )}
     <Carta titulo={t('sueno.afinar.titulo')}>
       <Parrafo chico>{t('sueno.afinar.texto')}</Parrafo>
       {d.disponible && (
@@ -133,6 +169,13 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
           />
         </View>
       )}
+      <Pressable onPress={abrirCargador} style={({ pressed }) => [st.fila, st.separada, pressed && st.apretada]} accessibilityRole="button">
+        <View style={st.filaTextos}>
+          <Text style={st.filaTitulo}>{t('sueno.afinar.cargador.titulo')}</Text>
+          <Text style={[st.filaDetalle, cargador.estado === 'anda' && st.llego, (cargador.estado === 'dejoDeLlegar' || cargador.estado === 'aMedias') && st.falla]}>{textoDelCargador(cargador, hoy)}</Text>
+        </View>
+        <Icono nombre="chevron.right" tam={13} peso="semibold" color="rgba(239, 230, 207, 0.45)" />
+      </Pressable>
       <Pressable onPress={() => setHoja('atajos')} style={({ pressed }) => [st.fila, st.separada, pressed && st.apretada]} accessibilityRole="button">
         <View style={st.filaTextos}>
           <Text style={st.filaTitulo}>{t('sueno.afinar.atajos.titulo')}</Text>
@@ -148,7 +191,9 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
       <HojaModal abierta={hoja === 'atajos'} titulo={t('sueno.afinar.atajos.titulo')} alCerrar={() => setHoja(null)}>
         <LosAtajos senales={senales ?? []} hoy={hoy} />
       </HojaModal>
+      {!!ATAJO_DEL_CARGADOR && <GuiaCargador key={guia.vez} abierta={guia.abierta} alCerrar={() => setGuia((g) => ({ ...g, abierta: false }))} />}
     </Carta>
+    </>
   );
 }
 
@@ -268,6 +313,10 @@ const st = StyleSheet.create({
   filaTitulo: { fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaDetalle: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
   llego: { color: colores.salvia },
+  falla: { color: colores.oroClaro },
+  aviso2: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avisoTitulo: { fontFamily: letras.textoMedio, fontSize: 14.5, color: colores.pergamino },
+  botonEnFila: { marginVertical: 0, alignSelf: 'center' },
   hoja: { gap: 6, paddingBottom: 12 },
   hora: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
   horaValor: { flex: 1, textAlign: 'center', fontFamily: letras.numero, fontSize: 34, color: colores.pergamino, fontVariant: ['tabular-nums'] },

@@ -1295,6 +1295,7 @@
             "texto": "Conecta o desconecta el cargador ahora. Moss te dice si llegó.",
             "esperando": "Esperando al cargador…",
             "llego": "Llegó: conectaste el cargador a las {hora}. Ya está.",
+            "llegoDesconectado": "Llegó: desconectaste el cargador a las {hora}. Ya está.",
             "noLlego": "Todavía no llegó. Mira que la automatización esté encendida en Atajos.",
             "listo": "Listo"
           },
@@ -1512,7 +1513,7 @@
         },
         "anillo": {
           "nombre": "Otros anillos",
-          "texto": "Evie, Circular, Colmi y otros: lo que su app mande a Salud, que a veces no incluye el sueño. Si la noche no aparece en la app Salud, a Moss tampoco le llega."
+          "texto": "Evie, Circular, Colmi, Da Rings y otros: lo que su app mande a Salud, que a veces no incluye el sueño. Si la noche no aparece en la app Salud, a Moss tampoco le llega."
         }
       },
       "noLlego": {

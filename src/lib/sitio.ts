@@ -13,6 +13,12 @@ export const SITIO = 'https://condezuzu.github.io/moss-app';
 /** El correo de contacto: el mismo de las páginas del sitio. */
 export const CORREO = 'nodoexpweb@gmail.com';
 
+/**
+ * El enlace de iCloud del atajo «Moss: cargador» (spec/sueno-sin-esfuerzo.md, «La guía del cargador»).
+ * Un enlace así solo se crea en un iPhone. Sin él, Afinar muestra la guía de cada automatización a mano.
+ */
+export const ATAJO_DEL_CARGADOR: string | null = process.env.EXPO_PUBLIC_ATAJO_DEL_CARGADOR || null;
+
 const PAGINAS = {
   privacidad: { es: '/privacidad/', en: '/en/privacy/' },
   terminos: { es: '/terminos/', en: '/en/terms/' },

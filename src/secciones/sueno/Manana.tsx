@@ -19,6 +19,7 @@ import { colores, letras } from '@/tema';
 import { horaDelDia } from '../comida/datos';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Caras } from './Caras';
+import { PorQueLaHora } from './PorQueLaHora';
 
 /** Una hora del sueño: los minutos se cuentan desde las 18 del día anterior. */
 const reloj = (minutos: number) => horaDelDia(minutos + 18 * 60);
@@ -136,6 +137,7 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
                       <Text style={st.secundarioTexto}>{t('sueno.manana.otraHora')}</Text>
                     </Pressable>
                   </View>
+                  <PorQueLaHora clave={hoy} />
                 </>
               ) : (
                 <>

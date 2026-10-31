@@ -12,7 +12,7 @@ import { colores, letras } from '@/tema';
 // En la web no hay SF Symbols: un signo parecido, para ver dónde va cada cosa en las capturas.
 const EN_LA_WEB: Partial<Record<string, string>> = {
   plus: '+', minus: '−', xmark: '×', 'magnifyingglass': '⌕', barcode: '▥', 'barcode.viewfinder': '▥', 'doc.text.viewfinder': '▤', 'doc.on.doc': '⧉',
-  'bookmark': '❏', 'bolt': 'ϟ', 'camera': '◉', 'star': '☆', 'star.fill': '★', 'chevron.left': '‹', 'chevron.right': '›',
+  'bookmark': '❏', 'bolt': 'ϟ', 'camera': '◉', 'star': '☆', 'star.fill': '★', 'chevron.left': '‹', 'chevron.right': '›', 'chevron.down': '⌄', 'chevron.up': '⌃',
   checkmark: '✓', 'trash': '⌫', 'fork.knife': '⑂', 'scalemass': '⚖', 'drop': '◖', ruler: '⊢', 'square.and.arrow.up': '⇪',
   'calendar': '▦', 'arrow.uturn.backward': '↶', 'list.bullet': '≡', 'pencil': '✎', 'sparkles': '✦', 'flame': '♨', heart: '♡', 'heart.fill': '♥', cart: '⊔',
   'hand.thumbsup': '△', 'hand.thumbsup.fill': '▲', 'hand.thumbsdown': '▽',

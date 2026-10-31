@@ -83,7 +83,7 @@ app Salud (Explorar › Sueño), a Moss no le puede llegar.
 | **Evie** | Las fuentes se contradicen: Sahha y Notebookcheck dicen que sí; una reseña anterior, que no [Ev1][Ev2] | Prender la sincronización en su app |
 | **Circular** | Sin confirmar: no encontré nada de Circular | — |
 | **Colmi y otros baratos** (QRing) | Su app dice integrarse con Salud; sin confirmar el sueño [Co1]. FitMesh, una app de terceros, dice llevar el sueño del Colmi R02 y R03 a Salud, con etapas [Co2] | Darle permisos en Ajustes |
-| **«Daring»: los de la app Da Rings** (de Mo Young, la de Da Fit) | No encontré ningún anillo llamado Daring: lo más parecido es Da Rings. Su ficha dice «Integrates with Apple Health App» y guarda el sueño en su app, pero no dice si lo manda a Salud. Tiene 2,4 de 5 con 215 opiniones [Da1] | Prender Salud en su app. Hay que mirarlo con el anillo en la mano |
+| **Los de la app Da Rings** (de Mo Young, la de Da Fit; es la de tu anillo, lo dijiste el 31/10/2026) | Su ficha dice «Integrates with Apple Health App» y guarda el sueño en su app, pero ni la ficha ni las opiniones dicen que el sueño llegue a Salud. Las opiniones hablan de pasos, calorías y oxígeno, y de que sincroniza lento. Tiene 2,4 de 5 con 215 opiniones [Da1][Da2] | En Da Rings, Perfil, prender Apple Health después de la primera sincronización [Da3], y dejar Sueño prendido en Salud. Hay que mirarlo con tu anillo: si la noche no está en Salud › Explorar › Sueño, a Moss no le llega. Moss ya la reconoce como un anillo si llega |
 | **Galaxy Ring** | No funciona con iPhone [S2] | — |
 
 Hay que probarlos con un anillo en la mano: lo «sin confirmar» es lo que no pude ver
@@ -374,6 +374,8 @@ de fuentes sin confirmar: hay que revisarlos con un aparato antes de lanzar.
 - [Co1] https://mwm.ai/apps/qring/6473672621
 - [Co2] https://www.fitmesh.fit/en/blog/smart-ring-data-apple-health
 - [Da1] https://apps.apple.com/us/app/-/id6443980625
+- [Da2] https://apps.apple.com/us/app/da-rings/id6443980625?see-all=reviews
+- [Da3] https://www.osawalla.com/blogs/news/smart-ring-apple-health-strava-sync-what-to-check-2026
 - [W12] https://tryterra.co/blog/whoop-api-data-access-permissions-limitations-2026
 - [O11] https://cdn.jsdelivr.net/npm/oura-hr@1.1.0/OURA-API.md
 - [G11] https://tryterra.co/blog/garmin-connect-developer-program-pause

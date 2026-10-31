@@ -1295,6 +1295,7 @@
             "texto": "Plug in or unplug the charger now. Moss tells you if it arrived.",
             "esperando": "Waiting for the charger…",
             "llego": "It arrived: you plugged in the charger at {hora}. All set.",
+            "llegoDesconectado": "It arrived: you unplugged the charger at {hora}. All set.",
             "noLlego": "Nothing yet. Check that the automation is on in Shortcuts.",
             "listo": "Done"
           },
@@ -1512,7 +1513,7 @@
         },
         "anillo": {
           "nombre": "Other rings",
-          "texto": "Evie, Circular, Colmi and others: whatever their app sends to Health, which sometimes leaves out sleep. If the night isn't in the Health app, it can't reach Moss."
+          "texto": "Evie, Circular, Colmi, Da Rings and others: whatever their app sends to Health, which sometimes doesn't include sleep. If the night isn't in the Health app, Moss doesn't get it either."
         }
       },
       "noLlego": {
