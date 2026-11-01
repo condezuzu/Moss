@@ -610,7 +610,9 @@ Lo de la tanda del 29/10, separado por cómo llega:
   Progreso, Inicio el primer día, el cuestionario y tocar la luna. Cómo llegó a la hora y
   la guía del cargador ya están en la app y van por OTA; la guía pide además el enlace de
   iCloud que armás en tu iPhone.
-- **Con build, en la rama `suscripcion`** (D40): la suscripción, aprobada, programada y
+- **Los widgets nuevos** (D43, en la galería para aprobar): el cielo y la noche pueden ir por OTA; la
+  comida, el agua y los tamaños nuevos piden build. Ver [`widgets.md`](widgets.md).
+- **En espera, en la rama `suscripcion`** (D40, hasta que se confirme si se cobra): la suscripción, aprobada, programada y
   apagada. Lo que tenés que cargar en App Store Connect y cómo se prende está en
   [`suscripcion.md`](suscripcion.md).
 - **Con build:** el filtro de enfoque de Sueño (que Moss sepa cuándo empieza sin un

@@ -190,6 +190,7 @@
   let escena;
   // Las secciones y las pestañas se arman después de la escena; hasta entonces, los controles no las miran.
   let comida = null;
+  let widgets = null;
   let pestanas = null;
   let inicio = null;
   let mas = null;
@@ -639,6 +640,7 @@
   };
   const cerrarHojas = () => {
     ponerCandados(false);
+    if (widgets && widgets.vista) widgets.cerrar();
     if (comida.hojaAbierta) comida.cerrarHoja();
     if (comida.hojaPlanAbierta) comida.cerrarPlan();
     if (mas.abierta) mas.cerrar();
@@ -987,6 +989,10 @@
     perfilSuscripcion: () => { cerrarHojas(); pestanas.ir(5); perfilSec.pintar(); perfilSec.subir && perfilSec.subir(); },
     cartaSueno: () => { cerrarHojas(); ponerCandados(true); pestanas.ir(3); sueno.bajarA('.sb-carta'); },
     cartaProgreso: () => { cerrarHojas(); ponerCandados(true); pestanas.ir(2); progreso.bajarA('.sb-carta'); },
+    // Los widgets nuevos (D43).
+    widgetsComida: () => { cerrarHojas(); widgets.ir('n-comida'); },
+    widgetsCielo: () => { cerrarHojas(); widgets.ir('n-cielo'); },
+    widgetsBloqueo: () => { cerrarHojas(); widgets.ir('n-bloqueo'); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -1192,26 +1198,42 @@
 
   // ------------------------------------------------------------ los widgets (spec/widgets.md)
   // Abrir Moss desde un widget: lo tocado ahí se enciende en el cielo, de a una estrella.
-  const widgets = SeccionWidgets.crear(tel, Object.assign({}, opcionesDeSeccion, {
+  widgets = SeccionWidgets.crear(tel, Object.assign({}, opcionesDeSeccion, {
     cielo: () => escena.hoy,
     anoche: () => sueno.anoche(),
     sinReloj: () => soloIphone,
+    comida: () => comida,
     movimientoReducido,
-    alAbrirMoss: (cambios, seccion) => {
+    alAbrirMoss: (cambios, seccion, confirmada, tocado, anotar) => {
       cerrarHojas();
       if (ascent.ocupada) ascent.cerrar(true);
       escena.irA('hoy');
-      pestanas.ir(seccion === 'sueno' ? 3 : HABITOS, true);
+      pestanas.ir({ sueno: 3, comida: COMIDA, inicio: 0 }[seccion] ?? HABITOS, true);
       cambios.forEach((nombre, i) => setTimeout(() => { escena.tocarPorNombre(nombre); refrescarControles(); }, (movimientoReducido ? 0 : 450) + i * 320));
+      // Lo tocado en los widgets de comida y de agua pasa al día, por el mismo camino que en Moss.
+      (tocado ? tocado.comidas : []).forEach((tipo) => comida.sumarDeSiempre(tipo));
+      for (let i = 0; tocado && i < tocado.vasos; i++) comida.sumarAgua();
+      for (let i = 0; tocado && i > tocado.vasos; i--) comida.quitarAgua();
+      // Un botón de un widget abre Moss justo ahí: la hoja de anotar, en esa comida.
+      if (anotar) {
+        comida.abrirHoja({ comida: anotar.tipo });
+        if (anotar.via === 'decir') comida.decir({ escuchar: true });
+        if (anotar.via === 'etiqueta') comida.etiqueta();
+        if (anotar.via === 'codigo') comida.escanear();
+      }
     },
   }));
 
   // Ganchos para las capturas automáticas (herramientas/capturar-galeria.mjs).
+  let cenaDeMas = null;
   window.__widgets = (accion, arg) => {
     const pasos = {
       inicio: () => widgets.ir('inicio'), bloqueo: () => widgets.ir('bloqueo'), standby: () => widgets.ir('standby'), cerrar: () => widgets.cerrar(),
       tocar: () => widgets.tocar(arg), confirmar: () => widgets.confirmar(), modo: () => widgets.ponerModo(arg), deNoche: () => widgets.deNoche(arg),
       abrirMoss: () => widgets.abrirMoss(arg), olvidar: () => widgets.olvidar(),
+      n: () => widgets.ir('n-' + arg), momento: () => widgets.momento(arg), tocarComida: () => widgets.tocarComida(arg), vasos: () => widgets.vasos(arg),
+      completar: () => widgets.completar(), olvidarTodo: () => widgets.olvidarTodo(),
+      pasarse: () => { cenaDeMas = comida.simularCena(); widgets.pintar(); }, noPasarse: () => { if (cenaDeMas) cenaDeMas.deshacer(); cenaDeMas = null; widgets.pintar(); },
     };
     return pasos[accion]();
   };

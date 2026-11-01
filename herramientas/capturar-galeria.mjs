@@ -1315,6 +1315,101 @@ const pasos = {
     await pagina.waitForTimeout(800);
     await pestana(0);
   },
+  // La propuesta de widgets (D43): la comida, chica, mediana y grande, con un toque que anota sin abrir
+  // Moss; el cielo con su fondo de verdad y el día completo; la noche, a la mañana y a la noche; la
+  // pantalla bloqueada; StandBy; tintados y transparentes, en inglés y abrir Moss con lo tocado.
+  async 'widgets-nuevos'() {
+    const widgets = (accion, arg) => pagina.evaluate(([a, x]) => window.__widgets(a, x), [accion, arg]);
+    const espera = (ms = 900) => pagina.waitForTimeout(ms);
+    await alCielo();
+    await pagina.evaluate(() => window.__aparato('iphone'));
+    await widgets('n', 'comida');
+    await espera();
+    await foto('wn-comida');
+    await widgets('tocarComida', 'cena');
+    await widgets('vasos', 1);
+    await espera(1200);
+    await foto('wn-comida-tocada');
+    await widgets('olvidarTodo');
+    await widgets('n', 'comidagrande');
+    await espera();
+    await foto('wn-grande');
+    await widgets('tocarComida', 'cena');
+    await espera(1200);
+    await foto('wn-grande-tocada');
+    await widgets('olvidarTodo');
+    await widgets('momento', 'manana');
+    await espera();
+    await foto('wn-grande-manana');
+    await widgets('n', 'comida');
+    await espera();
+    await foto('wn-comida-manana');
+    await widgets('momento', 'primerDia');
+    await espera();
+    await foto('wn-comida-primer-dia');
+    await widgets('momento', 'noche');
+    await widgets('n', 'cielo');
+    await espera();
+    await foto('wn-cielo');
+    await widgets('n', 'cielogrande');
+    await espera();
+    await foto('wn-cielo-grande');
+    await widgets('completar');
+    await espera(1500);
+    await foto('wn-cielo-grande-completo');
+    await widgets('n', 'cielo');
+    await espera(1200);
+    await foto('wn-cielo-completo');
+    await widgets('olvidarTodo');
+    await espera(1200);
+    await widgets('n', 'bloqueo');
+    await espera();
+    await foto('wn-bloqueo-noche');
+    await widgets('momento', 'manana');
+    await espera();
+    await foto('wn-bloqueo-manana');
+    await widgets('momento', 'noche');
+    await widgets('n', 'bloqueo2');
+    await espera();
+    await foto('wn-bloqueo-otra');
+    await widgets('n', 'standby');
+    await espera();
+    await foto('wn-standby');
+    for (const modo of ['tintado', 'transparente']) {
+      await widgets('modo', modo);
+      await widgets('n', 'comida');
+      await espera();
+      await foto('wn-comida-' + modo);
+      await widgets('n', 'cielo');
+      await espera();
+      await foto('wn-cielo-' + modo);
+    }
+    await widgets('modo', 'color');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await widgets('n', 'comida');
+    await espera();
+    await foto('wn-comida-ingles');
+    await widgets('n', 'comidagrande');
+    await espera();
+    await foto('wn-grande-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await widgets('n', 'comida');
+    await widgets('pasarse');
+    await espera(1200);
+    await foto('wn-comida-pasada');
+    await widgets('noPasarse');
+    await widgets('n', 'comida');
+    await widgets('tocarComida', 'cena');
+    await espera(500);
+    await widgets('abrirMoss', 'comida');
+    await espera(1600);
+    await foto('wn-abrir-moss');
+    await widgets('olvidar');
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await pagina.evaluate(() => window.__accion('reiniciar'));
+    await espera(800);
+    await pestana(0);
+  },
 };
 
 for (const e of escenarios.length ? escenarios : ['inicio', 'tocar', 'completo', 'universo']) {

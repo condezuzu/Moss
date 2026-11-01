@@ -2165,7 +2165,43 @@
     "fueAsi": "Is that right?",
     "confirmada": "Confirmed",
     "seVeEnMoss": "Open Moss to see it",
-    "seAnotaEnMoss": "Log it in Moss"
+    "seAnotaEnMoss": "Log it in Moss",
+    "anotarComida": {
+      "desayuno": "Log breakfast",
+      "almuerzo": "Log lunch",
+      "merienda": "Log afternoon snack",
+      "cena": "Log dinner",
+      "snack": "Log a snack"
+    },
+    "acciones": {
+      "buscar": "Search",
+      "decir": "Say",
+      "codigo": "Barcode",
+      "etiqueta": "Label"
+    },
+    "macroCorto": {
+      "p": "P",
+      "c": "C",
+      "g": "F"
+    },
+    "sinAnotar": "Not logged",
+    "agua": "Water",
+    "vasos": "{n} of {total} glasses",
+    "quitarVaso": "Remove a glass",
+    "aDormir": "Bedtime",
+    "enTiempo": "in {tiempo}",
+    "paraDespertar": "to wake up at {hora}",
+    "siFueAsi": "Yes, that's right",
+    "comidaCorta": {
+      "desayuno": "Breakfast",
+      "almuerzo": "Lunch",
+      "merienda": "Afternoon",
+      "cena": "Dinner",
+      "snack": "Snack"
+    },
+    "horasCorto": "{h} h {m}",
+    "teQuedanCorto": "{n} left",
+    "deMasCorto": "{n} over"
   },
   "suscripcion": {
     "titulo": "Moss Premium",

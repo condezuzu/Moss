@@ -2391,6 +2391,11 @@ const Comida = (() => {
       kcalPorDia: () => Object.keys(s.dias).map(Number).filter((k) => k < 0 && comidasDe(k).length).sort((a, b) => a - b)
         .map((k) => ({ fecha: fechaClave(k), kcal: totalDe(k).kcal })),
       comidaDeAhora,
+      // Para los widgets: lo anotado hoy por comida, tu comida de siempre y sumarla de un toque.
+      comidasDeHoy: () => comidasDe(0).filter((c) => !c.plan && c.items.length).map((c) => ({ tipo: c.tipo, hora: c.hora, valores: sumar(c.items), nombres: c.items.map(nombreDeItem) })),
+      siempreDe(tipo) { const items = deSiempre(tipo); return items ? { valores: sumar(items), nombres: items.map(nombreDeItem) } : null; },
+      sumarDeSiempre(tipo) { const items = deSiempre(tipo); return items ? registrarDirecto(items, tx('comida.deSiempre.' + tipo), tipo) : null; },
+      escanear() { if (s.hoja) escanear.click(); },
       recientes,
       listaGuardadas,
       registrarReciente(id) {

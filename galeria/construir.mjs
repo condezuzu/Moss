@@ -138,6 +138,13 @@ function revision() {
 }
 const datosDeRevision = revision();
 
+// Los fondos de los widgets (herramientas/fondos-de-widgets.mjs), los mismos que usaría la app.
+function fondosDeWidgets() {
+  const carpeta = join(raiz, 'assets/widgets');
+  const jpeg = (archivo) => (existsSync(join(carpeta, archivo)) ? 'data:image/jpeg;base64,' + readFileSync(join(carpeta, archivo)).toString('base64') : null);
+  return { noche: jpeg('cielo-noche.jpg'), aurora: jpeg('cielo-aurora.jpg') };
+}
+
 // "</" adentro de un <script> lo cortaría.
 const json = (v) => JSON.stringify(v).replace(/<\//g, '<\\/');
 const js = [
@@ -147,6 +154,7 @@ const js = [
   `const ALIMENTOS = ${json(alimentos)};`,
   `const TIENDA = ${json(datosDeTienda)};`,
   `const REVISION = ${json(datosDeRevision)};`,
+  `const FONDOS_WIDGETS = ${json(fondosDeWidgets())};`,
   modulo('Buscar', 'src/comida/buscar.ts'),
   modulo('Porciones', 'src/comida/porciones.ts'),
   modulo('RecetaDeTexto', 'src/comida/recetaDeTexto.ts'),
@@ -168,7 +176,7 @@ const js = [
   modulo('Musculos', 'src/dominio/musculos.ts'),
   modulo('Rendimiento', 'src/dominio/rendimiento.ts'),
   modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'suscripcion', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'suscripcion', 'widgets-nuevos', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

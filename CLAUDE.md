@@ -149,6 +149,7 @@ SDK y la memoria no alcanza.
 | `npm run tienda:capturas` | las capturas para la App Store (spec/revision.md «e»), sacadas de la app de verdad en la web con una persona inventada (Lucía), dentro de un iPhone dibujado y con su texto arriba: `capturas/tienda/<tamaño>/<idioma>/`, en 1320×2868 y 1206×2622, y las vistas chicas para la galería en `capturas/tienda/vista/` (con `npm run web:ver` prendido; después, `npm run galeria`) |
 | `npm run shaders:verificar` | compila los shaders con CanvasKit y deja vistas previas con riqueza 0, 0,6 y 1 en `capturas/shaders` |
 | `node herramientas/exportar-web.mjs` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
+| `node herramientas/fondos-de-widgets.mjs` | los fondos de los widgets, de los shaders de la app, en `assets/widgets/` (tarda varios minutos) |
 | `node herramientas/verificar-huella.mjs` | compara la huella nativa de esta carpeta con la de la build de la tienda: se corre antes de cada OTA |
 | `node herramientas/recorrer-pantallas.mjs <carpeta>` | todas las pantallas de la app en la web (las seis secciones con su scroll, el «+» y la entrada hasta el resultado) en un iPhone chico y uno grande, en es-UY, es-ES y en-US (con `npm run web:ver` prendido) |
 | `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas, Inicio y el «+»), decir lo que comí y, en un navegador limpio, las primeras pantallas de la entrada |
@@ -176,7 +177,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `senales` (cómo llegó a la hora de la noche sin reloj), `guia` (la guía del cargador, los dos caminos y lo que ve en Afinar) y `suscripcion` (la propuesta de D40: Premium, la hoja de Apple, lo bloqueado, la tarjeta en Sueño y Progreso, y Perfil);
 - `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
 - `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`;
-- `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado).
+- `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado) y `widgets-nuevos` (la propuesta de D43: la comida, el cielo, la noche, la pantalla bloqueada y StandBy).
 
 La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
 3 Sueño, 4 Hábitos y 5 Perfil: los escenarios del cielo pasan antes a Hábitos
@@ -280,6 +281,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `atajos.js`: la guía del cargador, con un iPhone dibujado.
 - `suscripcion.js`: la propuesta de suscripción (D40), sin compras de verdad.
 - `widgets.js`: los widgets, en la pantalla de inicio, la bloqueada y StandBy, con su sección.
+- `widgets-nuevos.js`: la propuesta de widgets (D43), para aprobar.
 - `tienda.js`: la sección «Tienda»: el ícono y las capturas de la App Store, en es y en.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
   «+» en la barra.

@@ -3,6 +3,78 @@
 Investigado el 21/10/2026 y hecho el 26/10/2026, para la build de la revisión. La galería
 (escenario `widgets`, sección «Los widgets») es la referencia visual.
 
+## La propuesta del 1/11/2026 (D43, para aprobar)
+
+Lo pediste el 1/11/2026 («mejoraría los widgets»). Está en la galería, sección «Los widgets», y se
+programa recién cuando la apruebes. Los dos problemas de lo que hay: **ninguno muestra comida**, que es
+lo más usado (spec/nutricion.md ya los pedía en la pantalla bloqueada), y **el del cielo no se parece al
+cielo de la app**: un degradé con la figura chica.
+
+| Widget | Tamaños | Qué muestra | Qué hace el toque |
+|---|---|---|---|
+| **Hoy** | chico, mediano, grande, redondo, rectangular y en línea | la luna, lo que queda y los macros; en mediano y grande, las comidas del día | el chico abre la hoja de anotar. Una comida que falta con «de siempre»: **la anota sin abrir Moss**; otro toque la saca. Sin «de siempre»: abre la hoja en esa comida. Una anotada: abre Comida |
+| **Anotar** | chico, mediano y redondo | Buscar, Decir, Código y Etiqueta; el chico y el redondo, una sola acción, a elegir al editar el widget | abre Moss justo ahí |
+| **Agua** | chico | los litros, los vasos y su barra | «+» y «−» sin abrir Moss |
+| **Cielo** | chico, mediano, grande y redondo | la figura sobre el cielo de verdad; se une a medida que se enciende; día completo: aurora y oro, sin texto. En el mediano, lo que falta primero | los «hecho» como hoy; lo demás abre Hábitos |
+| **Tu noche** | rectangular (como hoy), redondo y chico | a la mañana, «Anoche» con su «Sí»; a la tardecita, «A dormir» con la hora y cuánto falta | el «Sí» como hoy; lo demás abre Sueño |
+
+### Registrar: un toque menos
+
+- Hoy, desde la pantalla de inicio: abrir Moss, «+», elegir. Con **Anotar**: un toque y ya está en el
+  escáner, el micrófono o el buscador.
+- Con **Hoy**: un toque y la comida de siempre queda anotada, sin abrir nada. Lo que sumaría se ve antes
+  de tocarlo (+633) y, en el grande, también qué es.
+- Por lo que dicen sus páginas, MacroFactor abre sus flujos («launch shortcuts») y en Foodnoms tocar un
+  alimento abre su ficha para ajustarlo. MyFitnessPal anota solo el agua.
+
+### Qué llega cómo
+
+- **Por OTA, sin build** (las vistas se registran desde el JavaScript al abrir la app): el cielo nuevo,
+  chico y mediano; la noche nueva en la pantalla bloqueada; y que cada toque abra su sección (hoy, todo
+  abre Inicio).
+- **Con build:** Hoy, Anotar, Agua y cada tamaño nuevo, porque se declaran en `app.json` (cambia la
+  huella). También editar el widget (`ios.configuration`).
+
+### Cómo se hace
+
+- **El toque se guarda solo en su entrada.** `WidgetUserInteraction` (`ios/Widgets/AppIntent.swift`)
+  mezcla lo que devuelve el botón en la entrada que se veía y nada más. Con una entrada por comida, lo
+  anotado a las 13:00 desaparecería a las 15:00, hasta abrir Moss. Por eso **Hoy lleva una entrada por
+  día, con todas las comidas a la vista**, en vez de una sugerencia que cambia con la hora. Anotar no
+  tiene botones que guarden nada, así que su título sí cambia con la hora.
+- **Lo tocado espera en la línea**, como los «hecho»: cada toque guarda la comida, los alimentos (en
+  texto: iOS no guarda `null`) y la hora; al abrir Moss se anota por el almacén, con esa hora. Con plan
+  del día, el toque suma lo del plan, como «Comí esto».
+- **Los fondos** (`assets/widgets/`, 60 KB cada uno) los saca `herramientas/fondos-de-widgets.mjs` de los
+  shaders de la app, con las mismas estrellas en los dos. La app los copia a `widgetsDirectory` y el
+  widget los lee con `Image uiImage`. El fondo es contenido y no `containerBackground`, que solo acepta
+  colores y degradés: en tintado y transparente hay que sacarlo a mano (`widgetRenderingMode`), y para
+  que llegue a los bordes hace falta `ios.contentMarginsDisabled` (con build) o un `padding` negativo.
+- **La luna, con formas:** un disco oscuro, medio disco (`UnevenRoundedRectangle`) y una elipse encima,
+  más los mares con `blur`. Sin archivos ni Skia.
+- **Las estrellas:** círculos, el símbolo `sparkle` para los rayos y rectángulos finos para las líneas.
+- **`Link`** va en mediano y grande. El chico es un solo toque (`widgetURL`).
+- **La letra:** un widget no tiene Outfit (la fuente está en la app, no en la extensión): los números
+  van con la del sistema, `design: 'rounded'`.
+- **Los enlaces:** `moss://anotar?comida=cena&via=decir`, `moss://habitos`, `moss://sueno` y `moss://comida`.
+  `Secciones` tiene que leerlos.
+- **No se puede con `expo-widgets`:** subir en la pila inteligente a la hora de cada comida (`relevance`),
+  `widgetAccentable` y los controles del Centro de control.
+
+### Lo que hay que ver en un iPhone
+
+La imagen hasta los bordes, cómo la muestra StandBy (no se puede saber desde el widget si está ahí) y la
+luna con formas. Se prueba por OTA en la build `telefono`, que escucha `preview`.
+
+### Fuentes
+
+- MacroFactor, «Widgets»: https://macrofactor.com/widgets/ (actualizada el 16/1/2024)
+- MacStories, los widgets de Foodnoms: https://www.macstories.net/reviews/foodnoms-widgets-thoughtfully-combine-goal-summaries-with-actions-to-make-food-tracking-easier-than-ever/
+- MyFitnessPal, el widget de agua: spec/registrar-rapido.md, fuente 20
+- MacrosFirst, pantalla bloqueada: https://help.macrosfirst.com/en/articles/65-lock-screen-widgets
+- `Link` solo en mediano y grande (2020, sin confirmar en iOS 26): https://developer.apple.com/forums/thread/652578
+- `expo-widgets` 58.0.23: `ios/Widgets/AppIntent.swift`, `Utils.swift`, `plugin/src/types/WidgetConfig.type.ts`
+
 ## Qué hay en la v1
 
 - **`Cielo`, en la pantalla de inicio** (`systemSmall` y `systemMedium`):

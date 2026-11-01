@@ -2034,6 +2034,11 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <p>Lo que pediste el 29/10 que es visual y todavía no está en la app: probalo acá y, si te cierra, se programa. Lo demás de la tanda ya está en la rama <b>mejoras-1.1</b> (el plan como sugerencia, los platos con tamaño, las cadenas, el día que empieza a las 4, la hora de dormir y Afinar sin atajos).</p>
       <div class="panel">
         <div class="controles">
+          <button class="boton principal" type="button" data-seccion="widgetsComida">Los widgets nuevos: la comida</button>
+          <button class="boton" type="button" data-seccion="widgetsCielo">El cielo</button>
+          <button class="boton" type="button" data-seccion="widgetsBloqueo">La pantalla bloqueada</button>
+        </div>
+        <div class="controles">
           <button class="boton principal" type="button" data-seccion="plazo">El ritmo y el plazo</button>
           <button class="boton" type="button" data-seccion="graficos">Los gráficos de Progreso</button>
         </div>
@@ -2073,6 +2078,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>Los widgets nuevos</b> (1/11, D43): la comida, que no tenía ninguno, con un toque que anota sin abrir Moss; el cielo con el cielo de verdad de fondo y la aurora al completar el día; la noche también a la hora de dormir, y la pantalla bloqueada. Todo lo que hay que mirar y qué llega por OTA, en la sección <b>Los widgets</b>, más abajo.</li>
         <li><b>El ritmo y el plazo</b> (Progreso › Estrategia › Ritmo y plazo), como MacroFactor: arrastrás el ritmo y sale la fecha, o elegís la fecha y sale el ritmo. La regla tiene las zonas de color: <b>viable</b> (hasta 0,5 % del peso por semana bajando, 0,25 % subiendo), <b>exigente</b> (hasta 1 % o 0,5 %) y <b>muy agresivo</b> (más, o más de 1 kg o de 1.000 kcal de déficit por día). Debajo, cuántas kcal por día son, y los avisos: sin fuerza, bajando se pierde músculo y subiendo casi todo es grasa; con esa fecha quedarías debajo del piso; o sos menor. Las cuentas son las de la app (progreso.ts, con tests). Para guardarlo en la app hace falta una columna nueva en Supabase.</li>
         <li><b>Los gráficos de Progreso</b>: el camino a la meta (la tendencia y, punteado, hasta la fecha a tu ritmo), el peso de 1 mes, 3 meses o todo, <b>Semana a semana</b> (cuánto cambió la tendencia y lo que comiste contra la meta) y una línea chiquita al lado de cada medida.</li>
         <li><b>Inicio el primer día</b>, para que sin datos no se vea apagada: la meta de hoy con la luna nueva que brilla y qué hacer primero, tu camino hasta la meta con la fecha a un ritmo viable, y el cielo con sus estrellas esperando. Comparalo con «Inicio con datos».</li>
@@ -2080,7 +2086,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         <li><b>Tocar la luna</b> (el bloque de las calorías en Inicio) abre <b>Todo lo de hoy</b>: lo comido, la meta y lo que falta o te pasaste de cada cosa; lo que Moss sabe de vos y de dónde lo sacó; lo que le falta para estimar mejor, y abajo de todo, cómo lo estima. Probalo también con «Cenar» en la sección 2, para ver cómo queda al pasarte.</li>
         <li><b>Cómo llegó a la hora</b> (31/10), abajo de «¿Dormiste de… a…?»: la noche en una línea y cada señal con su hora y cuánto pesó. Si conectaste el cargador y seguiste usando el teléfono, aparece tachado: no cuenta. La lógica ya está en la rama; esta vista es lo que falta aprobar.</li>
         <li><b>La guía del cargador</b> (31/10): tocá en el iPhone dibujado lo que late, como en Atajos. En iOS 27 son tres toques; hasta iOS 26, cinco, y con «Mirar cómo se hace» pasa sola. Termina probándolo: conectás el cargador y Moss dice si llegó. Abajo, los cuatro estados que ve en Sueño › Afinar: sin armar, funciona, dejó de llegar (con un aviso) y a medias.</li>
-        <li><b>La suscripción</b> (31/10, D40): la entrada ya es introducción, iniciar sesión, cuestionario y meta; «Empezar» en la meta abre Premium, con <b>Seguir con lo gratis</b> a la vista. USD 4,99 por mes o 29,99 por año, con 7 días gratis. También cómo se ve lo bloqueado, la hoja de Apple dibujada y la fila de Perfil. Nada cobra: no hay código de compras.</li>
+        <li><b>La suscripción</b> (31/10, D40; <b>en espera</b> desde el 1/11, hasta que se confirme si se va a cobrar): son los botones de «La entrada con la suscripción» hasta «En Progreso». En la app no se ve: está en otra rama y apagada. La entrada ya es introducción, iniciar sesión, cuestionario y meta; «Empezar» en la meta abre Premium, con <b>Seguir con lo gratis</b> a la vista. USD 4,99 por mes o 29,99 por año, con 7 días gratis. También cómo se ve lo bloqueado, la hoja de Apple dibujada y la fila de Perfil. Nada cobra: no hay código de compras.</li>
         <li><b>Los avisos de la hora de dormir</b> (31/10, ya en la rama; se ven en el teléfono, no acá): cada noche otro, y no se repite hasta dentro de nueve. «Deberías irte a dormir en una hora.», «Baja las luces: a la cama en media hora.», «Para despertarte a las 7:30, a la cama a las 23:20.», «A la cama a las 23:20 y duermes 8 h.» La lista entera está en <code>spec/avisos.md</code>.</li>
         <li><b>El plan sugerido</b>, que ya está en la app: «Te sugerimos», pulgar arriba y abajo (cambian lo que se sugiere después, también lo que lleva lo mismo), y «Otra», que no repite lo que ya viste y no se acaba.</li>
       </ul>

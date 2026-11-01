@@ -2165,7 +2165,43 @@
     "fueAsi": "¿Fue así?",
     "confirmada": "Confirmada",
     "seVeEnMoss": "Se ve al abrir Moss",
-    "seAnotaEnMoss": "Anótala en Moss"
+    "seAnotaEnMoss": "Anótala en Moss",
+    "anotarComida": {
+      "desayuno": "Anotar el desayuno",
+      "almuerzo": "Anotar el almuerzo",
+      "merienda": "Anotar la merienda",
+      "cena": "Anotar la cena",
+      "snack": "Anotar un snack"
+    },
+    "acciones": {
+      "buscar": "Buscar",
+      "decir": "Decir",
+      "codigo": "Código",
+      "etiqueta": "Etiqueta"
+    },
+    "macroCorto": {
+      "p": "P",
+      "c": "C",
+      "g": "G"
+    },
+    "sinAnotar": "Sin anotar",
+    "agua": "Agua",
+    "vasos": "{n} de {total} vasos",
+    "quitarVaso": "Quitar un vaso",
+    "aDormir": "A dormir",
+    "enTiempo": "en {tiempo}",
+    "paraDespertar": "para despertarte a las {hora}",
+    "siFueAsi": "Sí, fue así",
+    "comidaCorta": {
+      "desayuno": "Desayuno",
+      "almuerzo": "Almuerzo",
+      "merienda": "Merienda",
+      "cena": "Cena",
+      "snack": "Snack"
+    },
+    "horasCorto": "{h} h {m}",
+    "teQuedanCorto": "te quedan {n}",
+    "deMasCorto": "{n} de más"
   },
   "suscripcion": {
     "titulo": "Moss Premium",

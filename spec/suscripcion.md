@@ -1,5 +1,7 @@
 # La suscripción (D40)
 
+**En espera desde el 1/11/2026:** todavía no se sabe si se va a cobrar. No se toca hasta que se confirme.
+
 Lo pediste el 31/10/2026, con los números, y aprobaste la maqueta ese mismo día
 (`galeria/src/suscripcion.js`, sección 1.1). **Está programada en la rama `suscripcion`,
 apagada**: pide una build y se prende con `PREMIUM_SALE` (abajo, «Cómo llega»). Falta

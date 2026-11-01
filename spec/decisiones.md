@@ -5,6 +5,26 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D43 · Los widgets nuevos (armados el 1/11/2026)
+
+Lo pediste el 1/11/2026. En la galería, sección «Los widgets», y arriba, en «1.1». Qué es cada uno, qué
+llega por OTA y qué pide build, en [`widgets.md`](widgets.md).
+
+- **Hoy:** la comida, que no tenía ninguno; un toque anota tu comida de siempre sin abrir Moss.
+- **Anotar:** cada botón abre Moss justo ahí. **Agua:** un vaso de un toque.
+- **El cielo:** con el cielo de verdad de fondo, sacado de los shaders, y la aurora al completar el día.
+- **La noche:** también a la hora de dormir. **Pantalla bloqueada:** lo que queda, el «+» y el cielo.
+
+¿Se programan así? Lo que va por OTA puede salir primero.
+
+### D40 · La suscripción: en espera (lo dijiste el 1/11/2026)
+
+**Todavía no se sabe si se va a cobrar.** Queda para cuando se confirme: no se toca, no se programa nada
+encima y sigue sin salir en ninguna build ni OTA. Lo armado no se pierde: el código, apagado, en la rama
+`suscripcion`; la maqueta, en la galería, sección 1.1, y lo demás, en [`suscripcion.md`](suscripcion.md).
+Moss sigue siendo gratis mientras tanto. Si se confirma, hay que revisar qué pasa con «A dormir» en los
+widgets, porque la hora de dormir está en la lista de Premium.
+
 ### D39 · Lo visual de la 1.1, en la galería (armado el 29/10/2026)
 
 **Aprobado el 31/10/2026 y ya en la app:** cómo llegó a la hora y la guía del cargador
@@ -274,7 +294,7 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
-### D40 · La suscripción (aprobada el 31/10/2026)
+### D40 · La suscripción (la maqueta, aprobada el 31/10/2026; en espera desde el 1/11, arriba)
 
 Lo pediste así: gratis, registrar comida, hábitos y cielo, y peso. Premium, el ajuste
 semanal de metas, el plan de comidas, el sueño avanzado y la hora de dormir, y «Todo lo

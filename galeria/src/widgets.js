@@ -15,7 +15,7 @@ const SeccionWidgets = (() => {
 
   const CSS = `
 .tel .wg { position: absolute; inset: 0; z-index: 8; overflow: hidden; color: #fff; opacity: 0; transition: opacity 0.35s ease; pointer-events: none;
-  font-family: -apple-system, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif; }
+  --letra: -apple-system, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif; font-family: var(--letra); }
 .tel .wg.visible { opacity: 1; pointer-events: auto; }
 .tel .wg[hidden] { display: none; }
 .wg-papel { position: absolute; inset: 0; background:
@@ -25,7 +25,7 @@ const SeccionWidgets = (() => {
 .wg.en-bloqueo .wg-papel { filter: brightness(0.72); }
 .wg-vista { position: absolute; inset: 0; opacity: 0; transition: opacity 0.35s ease; pointer-events: none; }
 .wg-vista.activa { opacity: 1; pointer-events: auto; }
-.wg-hora { position: absolute; top: 19px; left: 38px; font: 600 15px/1 inherit; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.wg-hora { position: absolute; top: 19px; left: 38px; font: 600 15px/1 var(--letra); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .wg-inicio .wg-hora { font-weight: 600; }
 
 /* La pantalla de inicio: el chico con cuatro íconos al lado, el mediano debajo y el dock. */
@@ -56,8 +56,8 @@ const SeccionWidgets = (() => {
 .wg-w.chico .wg-cielo { flex: 1; }
 .wg-w.mediano .wg-cielo { width: 126px; flex: none; }
 .wg-figura { align-self: center; display: block; overflow: visible; }
-.wg-cuenta { font: 500 15px/1.15 inherit; color: var(--texto); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-.wg-nombre { font: 400 11px/1.3 inherit; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wg-cuenta { font: 500 15px/1.15 var(--letra); color: var(--texto); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.wg-nombre { font: 400 11px/1.3 var(--letra); color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wg-figura .ln { stroke: var(--linea); stroke-width: 0.8; stroke-linecap: round; transition: stroke 0.5s; }
 .wg-figura .halo { fill: url(#wg-halo); opacity: 0; transition: opacity 0.45s; }
 .wg-figura .halo-stop { stop-color: var(--luz); }
@@ -68,7 +68,7 @@ const SeccionWidgets = (() => {
 /* Los «hecho» del mediano: un círculo que se llena, como la estrella. */
 .wg-lista { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 .wg-boton { appearance: none; border: 0; background: none; padding: 0 4px 0 2px; margin: 0; height: 30px; display: flex; align-items: center; gap: 9px; color: var(--texto);
-  font: 400 13.5px/1 inherit; text-align: left; cursor: pointer; border-radius: 8px; transition: background 0.15s, opacity 0.15s; }
+  font: 400 13.5px/1.25 var(--letra); text-align: left; cursor: pointer; border-radius: 8px; transition: background 0.15s, opacity 0.15s; }
 .wg-boton:active { opacity: 0.55; }
 .wg-boton span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; transition: opacity 0.35s; }
 .wg-boton.hecho span { opacity: 1; }
@@ -76,7 +76,7 @@ const SeccionWidgets = (() => {
 .wg-circulo::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--luz); transform: scale(0.2); opacity: 0; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.2), opacity 0.35s; }
 .wg-boton.hecho .wg-circulo { box-shadow: inset 0 0 0 1.2px var(--luz), 0 0 6px rgba(246, 227, 166, 0.25); }
 .wg-boton.hecho .wg-circulo::after { transform: scale(1); opacity: 1; }
-.wg-solos { margin: auto 0; font: 400 12.5px/1.35 inherit; color: var(--tenue); }
+.wg-solos { margin: auto 0; font: 400 12.5px/1.35 var(--letra); color: var(--tenue); }
 
 /* Cómo los muestra iOS 26: tintados (todo de un color, sin el fondo) o transparentes (de vidrio). */
 .wg.tintado .wg-w { --luz: #dbe6ff; --texto: #dbe6ff; --tenue: rgba(219, 230, 255, 0.55); --apagada: rgba(219, 230, 255, 0.4); --linea: rgba(219, 230, 255, 0.26);
@@ -91,16 +91,16 @@ const SeccionWidgets = (() => {
 .wg.transparente .wg-icono svg, .wg.transparente .wg-icono.moss svg { stroke: #fff; }
 
 /* La pantalla bloqueada: la fecha, la hora grande y la noche debajo, en blanco (iOS la vuelve monocroma). */
-.wg-bloqueo .wg-fecha { position: absolute; top: 74px; left: 0; right: 0; text-align: center; font: 600 19px/1 inherit; color: rgba(255, 255, 255, 0.86); }
+.wg-bloqueo .wg-fecha { position: absolute; top: 74px; left: 0; right: 0; text-align: center; font: 600 19px/1 var(--letra); color: rgba(255, 255, 255, 0.86); }
 .wg-bloqueo .wg-reloj { position: absolute; top: 92px; left: 0; right: 0; text-align: center; font: 600 104px/1 'SF Pro Rounded', -apple-system, 'Segoe UI', system-ui, sans-serif; letter-spacing: -0.03em; color: rgba(255, 255, 255, 0.93); font-variant-numeric: tabular-nums; }
 .wg-accesorios { position: absolute; top: 222px; left: 28px; right: 28px; display: flex; justify-content: center; }
 .wg-noche { position: relative; width: 160px; height: 72px; padding: 6px 2px 4px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto auto; column-gap: 8px; align-items: center; cursor: pointer; }
-.wg-noche b { grid-column: 1 / 3; display: flex; align-items: center; gap: 5px; font: 600 13px/1.25 inherit; color: rgba(255, 255, 255, 0.7); }
+.wg-noche b { grid-column: 1 / 3; display: flex; align-items: center; gap: 5px; font: 600 13px/1.25 var(--letra); color: rgba(255, 255, 255, 0.7); }
 .wg-noche b svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transition: opacity 0.35s; }
 .wg-noche.confirmada b svg { opacity: 1; }
-.wg-noche strong { font: 600 19px/1.15 inherit; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wg-noche small { grid-column: 1 / 3; font: 400 12px/1.3 inherit; color: rgba(255, 255, 255, 0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wg-si { appearance: none; border: 0; cursor: pointer; padding: 6px 15px; border-radius: 99px; background: rgba(255, 255, 255, 0.24); color: #fff; font: 600 14px/1 inherit; transition: opacity 0.3s, transform 0.2s; }
+.wg-noche strong { font: 600 19px/1.15 var(--letra); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wg-noche small { grid-column: 1 / 3; font: 400 12px/1.3 var(--letra); color: rgba(255, 255, 255, 0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wg-si { appearance: none; border: 0; cursor: pointer; padding: 6px 15px; border-radius: 99px; background: rgba(255, 255, 255, 0.24); color: #fff; font: 600 14px/1 var(--letra); transition: opacity 0.3s, transform 0.2s; }
 .wg-si:active { transform: scale(0.94); }
 .wg-noche.confirmada .wg-si, .wg-noche.sin-pregunta .wg-si { opacity: 0; pointer-events: none; }
 .wg-candado { position: absolute; right: 6px; top: 2px; width: 22px; height: 22px; opacity: 0; transition: opacity 0.25s; }
@@ -145,6 +145,7 @@ const SeccionWidgets = (() => {
     estilo.textContent = CSS;
     document.head.appendChild(estilo);
 
+    let nuevos = null;
     // Lo que se tocó en el widget y la app todavía no vio: por hábito, encendido o no.
     const pendientes = new Map();
     const s = { vista: null, modo: 'color', confirmada: false, deNoche: false };
@@ -194,7 +195,7 @@ const SeccionWidgets = (() => {
       if (!c) return null;
       const habitos = c.habitos.map((h, i) => {
         const tocado = pendientes.get(i);
-        return { indice: i, nombre: nombreDe(h.nombre), aMano: !h.auto, hecho: tocado === undefined ? !!h.encendido : tocado };
+        return { indice: i, nombre: nombreDe(h.nombre), aMano: !h.auto, base: !!h.encendido, hecho: tocado === undefined ? !!h.encendido : tocado };
       });
       return { constelacion: c.constelacion, habitos };
     }
@@ -375,13 +376,14 @@ const SeccionWidgets = (() => {
       if (raiz.hidden) return;
       pintarCielo();
       pintarNoche();
+      if (nuevos) nuevos.pintar();
     }
 
     // ------------------------------------------------------------ mostrar, cambiar y abrir Moss
     function ir(vista) {
       s.vista = vista;
       raiz.hidden = false;
-      raiz.classList.toggle('en-bloqueo', vista === 'bloqueo');
+      raiz.classList.toggle('en-bloqueo', vista.includes('bloqueo'));
       raiz.querySelectorAll('.wg-vista').forEach((v) => v.classList.toggle('activa', v.classList.contains('wg-' + vista)));
       pintar();
       requestAnimationFrame(() => raiz.classList.add('visible'));
@@ -397,7 +399,7 @@ const SeccionWidgets = (() => {
     }
 
     // Al abrir Moss se aplica lo tocado en el widget (gana el último toque) y se ve en el cielo.
-    function abrirMoss(seccion) {
+    function abrirMoss(seccion, anotar) {
       const c = opciones.cielo();
       const cambios = [];
       if (c) {
@@ -406,8 +408,9 @@ const SeccionWidgets = (() => {
         });
       }
       pendientes.clear();
+      const tocado = nuevos ? nuevos.sacarPendientes() : { comidas: [], vasos: 0 };
       cerrar();
-      opciones.alAbrirMoss(cambios, seccion || 'habitos', s.confirmada);
+      opciones.alAbrirMoss(cambios, seccion || 'habitos', s.confirmada, tocado, anotar);
     }
 
     function ponerModo(modo) {
@@ -417,6 +420,34 @@ const SeccionWidgets = (() => {
       document.querySelectorAll('#s-wg-modo button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === modo)));
       opciones.alCambiar();
     }
+
+    // ------------------------------------------------------------ la propuesta, para aprobar (D43)
+    const tocarHabito = (i) => {
+      const ahora = hoy().habitos[i];
+      pendientes.set(i, !(ahora && ahora.hecho));
+      pintarCielo();
+      if (nuevos) nuevos.pintar();
+      opciones.alCambiar();
+    };
+    const fondoDe = (dato) => {
+      if (!dato) return 'none';
+      const bytes = Uint8Array.from(atob(dato.split(',')[1]), (c) => c.charCodeAt(0));
+      return `url(${URL.createObjectURL(new Blob([bytes], { type: 'image/jpeg' }))})`;
+    };
+    raiz.style.setProperty('--wn-noche', fondoDe(FONDOS_WIDGETS.noche));
+    raiz.style.setProperty('--wn-aurora', fondoDe(FONDOS_WIDGETS.aurora));
+    nuevos = WidgetsNuevos.crear(raiz, {
+      u,
+      hoy,
+      nombreDe,
+      tocarHabito,
+      abrirMoss,
+      comida: opciones.comida,
+      anoche: opciones.anoche,
+      sinReloj: opciones.sinReloj,
+      movimientoReducido: opciones.movimientoReducido,
+      alCambiar: opciones.alCambiar,
+    });
 
     // ------------------------------------------------------------ lo que se revisa, a la derecha
     // Va antes de «Para decidir», que pasa a ser la siguiente.
@@ -428,9 +459,42 @@ const SeccionWidgets = (() => {
       if (numero) numero.textContent = String(n + 1);
       const seccion = el('section', 'item');
       seccion.id = 'widgets';
+      const ponerMomento = (m) => { nuevos.ponerMomento(m); pintar(); opciones.alCambiar(); };
       seccion.innerHTML = `
       <h2><span class="n">${n}</span>Los widgets</h2>
-      <p>El cielo en la pantalla de inicio, chico y mediano, y la noche en la pantalla bloqueada. Van con las medidas de este iPhone (158 y 338 puntos de ancho, y 160 × 72 el de la pantalla bloqueada), con lo que dibuja la app con SwiftUI. Tocá <b>Escribir</b> en el mediano y después <b>Abrir Moss</b>: la estrella se enciende en el cielo.</p>
+      <p><b>La propuesta, para aprobar (D43).</b> Los de hoy son de hábitos y de la noche: la comida, que es lo más usado, no tiene ninguno. Y el del cielo es un degradé con la figura chica, lejos del cielo de la app. Tocá lo que quieras en el teléfono: funciona como en el iPhone.</p>
+      <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-wn="comida">La comida</button>
+          <button class="boton" type="button" data-wn="comidagrande">La comida, grande</button>
+          <button class="boton principal" type="button" data-wn="cielo">El cielo</button>
+          <button class="boton" type="button" data-wn="cielogrande">El cielo, grande</button>
+        </div>
+        <div class="controles">
+          <button class="boton" type="button" data-wn="bloqueo">Pantalla bloqueada</button>
+          <button class="boton" type="button" data-wn="bloqueo2">Otra combinación</button>
+          <button class="boton" type="button" data-wn="standby">StandBy</button>
+        </div>
+        <div class="controles">
+          <div class="grupo"><span>Hora del día</span>
+            <div class="segmento" id="s-wn-momento"><button type="button" data-valor="noche" aria-pressed="true">21:47</button><button type="button" data-valor="manana" aria-pressed="false">7:12</button><button type="button" data-valor="primerDia" aria-pressed="false">Primer día</button></div>
+          </div>
+          <button class="boton" type="button" data-wn-accion="completar">Completar el día</button>
+          <button class="boton" type="button" data-wn-accion="olvidar">Olvidar lo tocado</button>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>Hoy, la comida</b> (chico, mediano y grande): la luna, lo que te queda y los macros, como en Inicio. En el mediano y en el grande, las comidas del día: la anotada dice sus kcal y la que falta, lo que sumaría tu comida de siempre. <b>Un toque la anota sin abrir Moss</b>: la luna y los números cambian ahí mismo, y otro toque la saca si te equivocaste. Probalo con <b>Cena</b> y después <b>Abrir Moss</b>: queda en tu día. Sin comida de siempre, el toque abre la hoja de anotar en esa comida. MacroFactor y Foodnoms, por lo que dicen sus páginas, abren la app para eso.</li>
+        <li><b>Anotar</b>: Buscar, Decir, Código y Etiqueta, cada uno abre Moss justo ahí. El chico es una sola acción, la que elijas al editar el widget (acá, Decir).</li>
+        <li><b>El agua</b> (chico): un vaso más de un toque, sin abrir Moss, y «−» por si te equivocaste.</li>
+        <li><b>El cielo, con el cielo de verdad</b> (chico, mediano y grande): el fondo sale de los mismos shaders de la app, guardado como imagen de unos 60 KB. La figura ocupa el widget, las estrellas encendidas tienen rayos y se unen entre ellas. Al completar el día sube la aurora y todo pasa a oro, sin texto, como en Hábitos: probá <b>Completar el día</b>. En el mediano, lo que falta va primero.</li>
+        <li><b>La noche, también de noche</b>: a la mañana, «Anoche» con su «Sí»; a la tardecita, «A dormir» con la hora y cuánto falta. En la pantalla de inicio y en la bloqueada: cambiá la <b>hora del día</b> y mirá las dos. El «Sí» es para quien no tiene reloj: se ve con <b>Solo el iPhone</b>, en Sueño.</li>
+        <li><b>La pantalla bloqueada</b>: lo que te queda en tres formas (redonda con la luna, rectangular con los macros y en la línea de la fecha), un «+» redondo que abre anotar y el cielo redondo con su figura.</li>
+        <li><b>Tocar abre lo que corresponde</b>: el cielo en Hábitos, la noche en Sueño, una comida en Comida. Hoy todo abre Inicio.</li>
+        <li><b>Por OTA, sin build:</b> el cielo nuevo, chico y mediano; la noche nueva en la pantalla bloqueada, y que cada toque abra su sección. <b>Con build:</b> Hoy, Anotar, el agua y los tamaños nuevos (grande, redondo, en línea y la noche en la pantalla de inicio), porque cada widget y cada tamaño se declaran en <code>app.json</code>.</li>
+        <li><b>Lo que hay que ver en un iPhone</b>, porque acá no se puede: que la imagen del cielo llegue a los bordes, cómo la muestra StandBy y la luna dibujada con formas de SwiftUI. Un widget no corre shaders ni la fuente de Moss: los números van con la letra del sistema.</li>
+      </ul>
+      <p><b>Los de hoy, para comparar.</b> El cielo en la pantalla de inicio, chico y mediano, y la noche en la pantalla bloqueada. Van con las medidas de este iPhone (158 y 338 puntos de ancho, y 160 × 72 el de la pantalla bloqueada), con lo que dibuja la app con SwiftUI. Tocá <b>Escribir</b> en el mediano y después <b>Abrir Moss</b>: la estrella se enciende en el cielo.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-wg="inicio">Pantalla de inicio</button>
@@ -463,6 +527,29 @@ const SeccionWidgets = (() => {
       </ul>`;
       if (decidir) columna.insertBefore(seccion, decidir);
       else columna.appendChild(seccion);
+      seccion.querySelectorAll('[data-wn]').forEach((b) => b.addEventListener('click', () => {
+        ir('n-' + b.dataset.wn);
+        if (!tel.classList.contains('inmersivo')) tel.scrollIntoView({ behavior: opciones.movimientoReducido ? 'auto' : 'smooth', block: 'center' });
+      }));
+      seccion.querySelectorAll('[data-wn-accion]').forEach((b) => b.addEventListener('click', () => {
+        if (b.dataset.wnAccion === 'completar') {
+          const d = hoy();
+          if (d) d.habitos.forEach((h) => pendientes.set(h.indice, true));
+          if (!s.vista || !s.vista.includes('cielo')) ir('n-cielo');
+        } else {
+          pendientes.clear();
+          s.confirmada = false;
+          nuevos.olvidar();
+        }
+        pintar();
+        opciones.alCambiar();
+      }));
+      seccion.querySelector('#s-wn-momento').addEventListener('click', (ev) => {
+        const b = ev.target.closest('button');
+        if (!b) return;
+        seccion.querySelectorAll('#s-wn-momento button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        ponerMomento(b.dataset.valor);
+      });
       const acciones = {
         inicio: () => ir('inicio'),
         bloqueo: () => ir('bloqueo'),
@@ -481,7 +568,7 @@ const SeccionWidgets = (() => {
         const b = ev.target.closest('button');
         if (!b) return;
         seccion.querySelectorAll('#s-wg-noche button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-        $('.wg-standby').classList.toggle('de-noche', b.dataset.valor === 'noche');
+        raiz.querySelectorAll('.wg-standby, .wg-n-standby').forEach((v) => v.classList.toggle('de-noche', b.dataset.valor === 'noche'));
       });
     }
     // El idioma de la galería cambia los textos del widget.
@@ -496,7 +583,19 @@ const SeccionWidgets = (() => {
       cerrar,
       abrirMoss,
       ponerModo,
-      deNoche(si) { s.deNoche = si; $('.wg-standby').classList.toggle('de-noche', si); },
+      deNoche(si) { s.deNoche = si; raiz.querySelectorAll('.wg-standby, .wg-n-standby').forEach((v) => v.classList.toggle('de-noche', si)); },
+      // La propuesta: la hora del día de mentira, lo que se toca y el día completo.
+      momento(m) { nuevos.ponerMomento(m); pintar(); opciones.alCambiar(); },
+      tocarComida: (tipo) => nuevos.tocarComida(tipo),
+      vasos: (n) => nuevos.vasos(n),
+      completar() {
+        const d = hoy();
+        if (!d) return;
+        d.habitos.forEach((h) => pendientes.set(h.indice, true));
+        pintar();
+        opciones.alCambiar();
+      },
+      olvidarTodo() { pendientes.clear(); s.confirmada = false; nuevos.olvidar(); pintar(); opciones.alCambiar(); },
       // Para las capturas: el mismo camino que un toque en el mediano.
       tocar(texto) {
         const b = [...raiz.querySelectorAll('.wg-mediano-sitio .wg-boton')].find((x) => x.textContent.includes(texto));
@@ -504,7 +603,7 @@ const SeccionWidgets = (() => {
         return !!b;
       },
       confirmar() { const b = raiz.querySelector('.wg-si'); if (b) b.click(); },
-      olvidar() { pendientes.clear(); s.confirmada = false; pintar(); },
+      olvidar() { pendientes.clear(); s.confirmada = false; nuevos.olvidar(); pintar(); },
       pintar,
     };
   }
