@@ -1,8 +1,9 @@
 # La suscripción (D40)
 
-Lo pediste el 31/10/2026, con los números. Está como maqueta en la galería, sin
-código de compras: `galeria/src/suscripcion.js`, sección 1.1. Cambia algo decidido
-(«global y gratis»): `CLAUDE.md` y `especificacion.md` se corrigen cuando se programe.
+Lo pediste el 31/10/2026, con los números, y aprobaste la maqueta ese mismo día
+(`galeria/src/suscripcion.js`, sección 1.1). **Está programada en la rama `suscripcion`,
+apagada**: pide una build y se prende con `PREMIUM_SALE` (abajo, «Cómo llega»). Falta
+probarla con una compra de verdad, en el sandbox de Apple.
 
 ## Qué es gratis y qué es Premium
 
@@ -16,8 +17,7 @@ código de compras: `galeria/src/suscripcion.js`, sección 1.1. Cambia algo deci
 **USD 4,99 por mes o USD 29,99 por año, con 7 días gratis.** El anual equivale a
 USD 2,50 por mes.
 
-**Lo que no nombraste y queda así en la maqueta** (es una propuesta, se cambia si
-querés):
+**Lo que no nombraste y quedó así** (lo aprobaste con la maqueta):
 
 - **Registrar comida** incluye buscar, la voz, el código de barras y la etiqueta:
   es lo más usado y lo que hace volver a la app.
@@ -25,7 +25,9 @@ querés):
 - **Sueño gratis:** cuánto dormiste anoche. **Premium:** calidad, deuda,
   regularidad, la noche sin reloj y Afinar.
 - **Peso gratis:** el peso y su tendencia. El camino a la meta y los gráficos de
-  Progreso no están en tu lista: faltan decidir.
+  Progreso quedan gratis mientras no digas otra cosa: no estaban en tu lista.
+- **«Todo lo de hoy»** todavía no está en la app (D39, sin aprobar): cuando esté, va con
+  su candado.
 - **Los widgets y la conexión con Ascent:** gratis por ahora.
 
 ## El orden de la entrada
@@ -54,7 +56,7 @@ mano. La hoja de confirmar la pone iOS; la de la galería es un dibujo.
 
 Tiene que hacerlo quien es Account Holder: yo no acepto acuerdos ni cargo datos de
 banco. Lo demás (los productos, los textos) puedo cargarlo por la API cuando me
-digas.
+digas. **Sin esto, la compra no se puede probar ni en el sandbox.**
 
 **1. Para poder cobrar (solo vos)**
 
@@ -94,35 +96,29 @@ En Monetization › Subscriptions, un grupo y dos productos:
 - **La primera suscripción y el primer grupo van con una versión nueva de la app**
   [S3]: se agregan en la página de la versión, con «Add for Review».
 
-**3. Para probar y para que el servidor sepa quién pagó**
+**3. Para probar**
 
 - **Sandbox:** Users and Access › Sandbox, una cuenta de prueba.
-- **La clave de In-App Purchase:** Users and Access › Integrations. Es un `.p8`, como
-  el de Sign in with Apple: nunca va a Git (`*.p8` ya está en `.gitignore`).
-- **App Store Server Notifications**, versión 2, en App Information: la URL de una
-  función nueva de Supabase, en producción y en sandbox.
+
+**No hace falta** la clave de In-App Purchase ni las App Store Server Notifications: el
+teléfono le pregunta a Apple directo, con StoreKit 2. Hacen falta recién si algún día
+un servidor tiene que saber quién pagó (por ejemplo, para Moss en la web).
 
 **4. La ficha**
 
-- **App Privacy:** sumar «Purchases» (Purchase History), ligado a la cuenta, si el
-  servidor guarda quién es Premium.
+- **App Privacy:** no cambia. Moss no guarda la compra ni la manda a ningún servidor.
 - **Pricing:** la app sigue gratis para bajar; «In-App Purchases» aparece solo.
 - **Descripción y notas:** lo de abajo.
 
 ## Qué cambia en la ficha
 
-`spec/revision.md`, cuando se programe:
+En `spec/revision.md` de la rama `suscripcion`, para pegar cuando se mande esa versión:
 
 - **«Lo demás de la ficha»:** «Precio: gratis. Sin compras.» pasa a «Gratis para
   bajar, con suscripción opcional».
-- **La descripción, al final, en los tres idiomas** (Apple pide los enlaces en la
-  metadata) [S1]:
-
-  > Moss Premium: USD 4,99 por mes o USD 29,99 por año, con 7 días gratis. El cobro va
-  > a tu cuenta de Apple y se renueva solo salvo que lo canceles al menos 24 horas antes
-  > de que termine el período. Se administra en Ajustes. Términos:
-  > https://condezuzu.github.io/moss-app/terminos/ · Privacidad:
-  > https://condezuzu.github.io/moss-app/privacidad/
+- **La descripción:** una parte nueva, «Moss Premium», antes de lo de mayores de 16 años,
+  con qué es gratis, qué suma, el precio y cómo se renueva. Los enlaces a los términos y a
+  la privacidad ya están al final, y Apple los pide en la metadata [S1].
 
 - **Las notas para quien revisa:** «Free, with no ads, no in-app purchases and no
   tracking» pasa a «Free to download with an optional subscription; no ads and no
@@ -132,43 +128,61 @@ En Monetization › Subscriptions, un grupo y dos productos:
 
 ## Qué cambia en los términos y la privacidad
 
-`docs/terminos/` y `docs/en/terms/`, que se publican recién con la versión que cobra:
+Ya están en `docs/` de la rama `suscripcion`, y se publican recién con la versión que cobra
+(con la fecha de ese día):
 
 - **El resumen:** «Moss es gratis, sin anuncios» pasa a «Lo básico de Moss es gratis y
   sin anuncios. Premium es una suscripción opcional».
-- **La sección 10:** la licencia ya no dice «gratuita».
-- **La sección 11:** «Moss se ofrece gratis y “tal cual”» pasa a «Moss se ofrece “tal
+- **Propiedad intelectual:** la licencia ya no dice «gratuita».
+- **Sin garantías:** «Moss se ofrece gratis y “tal cual”» pasa a «Moss se ofrece “tal
   cual”».
-- **Una sección nueva, «Moss Premium»:**
+- **Una sección nueva, la 9, «Moss Premium»:**
   - qué incluye, el precio, y que la prueba es una por persona;
   - que el cobro y la renovación los hace Apple, cuándo se cancela y cómo;
   - que los reembolsos se piden a Apple;
   - que al cancelar sigue hasta el fin del período, tus datos quedan y Premium se
     apaga;
   - que un cambio de precio se avisa antes, como manda Apple.
-- **La privacidad** (`docs/privacidad/`, `docs/en/privacy/`): Moss no ve la tarjeta;
-  guarda si la cuenta tiene Premium y hasta cuándo.
+- **La privacidad** (`docs/privacidad/`, `docs/en/privacy/`): Moss no ve la tarjeta y no
+  guarda la compra en sus servidores.
 
 Conviene que un abogado mire estos textos antes de cobrar: Uruguay y la UE tienen
 reglas propias para las suscripciones y el derecho a arrepentirse.
 
-## Lo que falta decidir
+## Lo decidido (31/10/2026)
 
-- **Quien ya usa Moss 1.0, que salió gratis:** hoy tiene todo eso. Mi recomendación:
-  quien tenga cuenta antes de que salga Premium lo sigue teniendo gratis. Es lo que
-  dijimos en la ficha, y sale barato: son los primeros. Se sabe por la fecha de la
-  cuenta.
-- **Lo que no nombraste**, arriba.
-- **Cómo se arma el cobro:** RevenueCat (menos trabajo, y suma un tercero a la
-  privacidad) o StoreKit con una función propia de Supabase.
+- **Quien ya usa Moss 1.0, que salió gratis, sigue con Premium gratis** (lo aprobaste).
+  Es lo que dijimos en la ficha, y sale barato: son los primeros. Se sabe por la fecha
+  de la cuenta, comparada con `PREMIUM_SALE`.
+- **El cobro: StoreKit 2 con un módulo propio** (`app-intents/Compras.swift`), sin RevenueCat
+  ni servidor. Menos datos, nada nuevo en la privacidad, anda sin conexión y sirve en
+  cualquier aparato con el mismo Apple ID. Si alguien entra a su cuenta de Moss con otro
+  Apple ID, ahí no ve Premium hasta que use el suyo: es lo que se resigna.
 
 ## Cómo llega
 
-- **Pide una build:** StoreKit es nativo. No va por OTA.
-- **Primero la galería:** que apruebes la maqueta. Después, el cobro, lo que se
-  bloquea en cada sección, la fila de Perfil y los textos de arriba.
-- **La fecha de vencimiento se guarda en el teléfono y en la cuenta:** si no hay
-  señal, Premium no se apaga de golpe.
+**Lo que hay en la rama `suscripcion`:**
+
+- `app-intents/Compras.swift`: los precios, comprar, restaurar y lo que tiene comprado.
+- `src/dominio/premium.ts`, con tests: quién lo tiene, la prueba y el aviso.
+- `src/lib/premium.ts`: lo que dice Apple. Hasta que contesta no se muestra ningún candado,
+  y lo que corre solo (el control, la noche, el aviso de dormir) espera.
+- `src/secciones/premium/Premium.tsx`: la pantalla de la maqueta, y una tarjeta para Sueño y
+  Progreso que **no estaba en la maqueta**: dice qué es de Premium y lleva a verlo. Está en
+  la galería, para aprobarla.
+- **Los candados:** el plan de comidas y la lista de compras, el ajuste semanal (la meta queda
+  como estaba), el sueño avanzado y la noche sin reloj, y la hora de dormir (queda elegida,
+  pero no suena).
+- **Dos días antes de que termine la prueba, un aviso.** Al empezarla, Moss pide el permiso.
+
+**Para prenderlo:**
+
+1. Hacer lo de App Store Connect, arriba.
+2. Poner el día de salida en `PREMIUM_SALE` (`src/lib/banderas.ts`): quien tenga cuenta de
+   antes de ese día queda con Premium de regalo.
+3. Una build, con la versión nueva: StoreKit es nativo y no va por OTA. Esa build corta las OTA
+   a la build 6: a partir de ahí, `herramientas/verificar-huella.mjs` lleva su huella.
+4. Probar la compra, cancelarla y restaurar con la cuenta de sandbox, en el iPhone.
 
 ## Para más adelante: la publicidad (lo pediste el 31/10/2026)
 

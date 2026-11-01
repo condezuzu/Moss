@@ -171,7 +171,7 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
 - `progreso` (con «Semana a semana»), `plazo` (el ritmo y el plazo, D35), `metas`, `sueno`;
 - `primerdia` (Inicio sin datos), `cuestionario` (las preguntas de la entrada) y `todo` (tocar la luna: Todo lo de hoy, también al pasarse);
-- `senales` (cómo llegó a la hora de la noche sin reloj), `guia` (la guía del cargador, los dos caminos y lo que ve en Afinar) y `suscripcion` (la propuesta de D40: Premium, la hoja de Apple, lo bloqueado y Perfil);
+- `senales` (cómo llegó a la hora de la noche sin reloj), `guia` (la guía del cargador, los dos caminos y lo que ve en Afinar) y `suscripcion` (la propuesta de D40: Premium, la hoja de Apple, lo bloqueado, la tarjeta en Sueño y Progreso, y Perfil);
 - `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
 - `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`;
 - `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado).

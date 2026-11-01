@@ -256,16 +256,20 @@ const SeccionSueno = (() => {
       if (rec) cont.appendChild(recuperacion(rec));
       const noche = noches().find((n) => n.clave === s.clave) || null;
       cont.appendChild(noche ? (noche.moss ? laNocheDeMoss(noche) : laNoche(noche)) : sinNoche(s.clave));
-      if (noche && noche.moss && !conMovimiento) cont.appendChild(cartaDeMovimiento());
-      // La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien.
-      cont.appendChild(deuda());
-      if (noche) cont.appendChild(calidad(noche));
-      cont.appendChild(horario());
-      if (noche && !noche.moss) cont.appendChild(vitales(noche));
-      if (sinReloj()) {
-        const avisar = avisoDelCargador();
-        if (avisar) cont.appendChild(avisar);
-        cont.appendChild(afinar());
+      // Sin Premium: cuánto dormiste y, en lugar de lo demás, lo que es de Premium (spec/suscripcion.md).
+      if (s.sinPremium) cont.appendChild(opciones.cartaPremium('sueno'));
+      else {
+        if (noche && noche.moss && !conMovimiento) cont.appendChild(cartaDeMovimiento());
+        // La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien.
+        cont.appendChild(deuda());
+        if (noche) cont.appendChild(calidad(noche));
+        cont.appendChild(horario());
+        if (noche && !noche.moss) cont.appendChild(vitales(noche));
+        if (sinReloj()) {
+          const avisar = avisoDelCargador();
+          if (avisar) cont.appendChild(avisar);
+          cont.appendChild(afinar());
+        }
       }
       cont.appendChild(fuentes(noche));
       cont.appendChild(el('p', 'sn-pie', tx('sueno.noMedico')));
@@ -842,6 +846,7 @@ const SeccionSueno = (() => {
         const q = Sueno.calidadDeNoche(n, necesidad, anterioresA(n.clave));
         return { fuente: n.fuente, dormido: n.dormido, dormirse: n.dormirse + 18 * 60, despertar: n.despertar + 18 * 60, calidad: q ? q.puntos : null, enCamaDesde: n.dormirse, enCamaHasta: n.despertar, tramos: n.tramos };
       },
+      sinPremium(si) { s.sinPremium = si; pintar(); },
       // Para las capturas y los botones de la galería: `k` días antes de hoy, o una clave.
       verNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; s.editando = null; pintar(); cont.scrollTop = 0; },
       // Para las capturas: la pregunta de la hora (`proponer`, `sinProponer`, `soloDormirse` o null), sin lo contestado antes.

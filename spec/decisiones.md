@@ -5,49 +5,6 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
-### D40 · La suscripción (propuesta el 30/10/2026, con tus números el 31/10/2026)
-
-**Lo que pediste el 31/10:** gratis, registrar comida, hábitos y cielo, y peso.
-Premium, el ajuste semanal de metas, el plan de comidas, el sueño avanzado y la hora
-de dormir, y «Todo lo de hoy». USD 4,99 por mes o 29,99 por año, con 7 días gratis.
-Entrada: introducción, iniciar sesión, cuestionario, meta y recién ahí la suscripción.
-
-**Está como maqueta en la galería, para aprobar**, sin código de compras. Todo lo
-demás (qué cargar en App Store Connect, qué cambia en la ficha y en los términos, lo
-que falta decidir y el código de oferta para la publicidad) está en
-[`suscripcion.md`](suscripcion.md).
-
-Lo de abajo es lo pensado el 30/10, que sigue valiendo.
-
-Lo dijiste así: «después de que te llegue la introducción de la app, te aparezca
-ahí la pestaña para poder suscribirse e iniciar sesión. O al revés, primero la de
-iniciar sesión y después para suscribirte y ahí poder usar la app.»
-
-**Cambia algo decidido:** Moss es «global y gratis» (`CLAUDE.md`,
-`especificacion.md`), y lo dicen la ficha de la tienda («Free… no in-app
-purchases») y los términos del sitio («Moss es gratis»).
-
-**El orden que propongo:** la introducción, tus datos, **iniciar sesión**, el
-cuestionario, tu meta y recién ahí **suscribirse**.
-- Iniciar sesión antes: la suscripción tiene que servir en todos los aparatos
-  (guía 3.1.2(a)) y Moss ya sincroniza con la cuenta, así que tiene funciones de
-  cuenta de verdad (guía 5.1.1(v), que pide dejar usar sin cuenta solo si no las
-  hay). Con Sign in with Apple no se escribe ningún dato.
-- Suscribirse después del cuestionario: ya vio su meta y lo que Moss le arma. De 40
-  apps relevadas, 31 ponen el primer cobro en el último tercio de la entrada
-  (Lazyweb), y RevenueCat recomienda cobrar en la entrada con una prueba gratis.
-  Son datos de dónde va, no de cuál convierte más: se puede probar después.
-
-**Lo que pide, una vez aprobado:**
-- Una build: las compras dentro de la app son nativas (StoreKit); no van por OTA.
-- App Store Connect: el acuerdo de apps pagas (banco e impuestos), el grupo de
-  suscripciones y sus precios, y el Small Business Program (15 %).
-- La pantalla, con lo que pide Apple: qué incluye y el precio (3.1.2(c)), restaurar
-  compras (3.1.1), y los enlaces a los términos y a la privacidad.
-- Saber en el servidor quién está suscrito, para el teléfono nuevo y para no
-  depender solo del aparato.
-- Cambiar la ficha, los términos, la privacidad y las notas para quien revisa.
-
 ### D39 · Lo visual de la 1.1, en la galería (armado el 29/10/2026)
 
 **Aprobado el 31/10/2026 y ya en la app:** cómo llegó a la hora y la guía del cargador
@@ -316,6 +273,25 @@ Están en la galería, sección 10, «Para decidir»:
   (`Moss/versión (correo)`). ¿Cuál va? No puse el tuyo sin preguntarte.
 
 ## Resueltas
+
+### D40 · La suscripción (aprobada el 31/10/2026)
+
+Lo pediste así: gratis, registrar comida, hábitos y cielo, y peso. Premium, el ajuste
+semanal de metas, el plan de comidas, el sueño avanzado y la hora de dormir, y «Todo lo
+de hoy». USD 4,99 por mes o 29,99 por año, con 7 días gratis. Entrada: introducción,
+iniciar sesión, cuestionario, meta y recién ahí la suscripción.
+
+- **Cambia «global y gratis»:** lo básico sigue gratis. La ficha, los términos y las notas
+  cambian con la versión que cobra.
+- **Quien ya tenía cuenta** antes de que salga Premium lo tiene de regalo (lo aprobaste el
+  31/10/2026).
+- **El cobro:** StoreKit 2 con un módulo propio, sin servidor ni terceros (lo decidí yo: menos
+  datos y nada nuevo en la privacidad).
+- **Está en la rama `suscripcion`, apagado:** pide una build y se prende poniendo el día de
+  salida en `PREMIUM_SALE`. No se mezcla con `mejoras-1.1` antes de esa build: el Swift nuevo
+  cambia la huella y cortaría las OTA a la build 6.
+- Lo demás (qué cargar en App Store Connect, la ficha, los términos y el código de oferta
+  para la publicidad), en [`suscripcion.md`](suscripcion.md).
 
 ### D42 · Las notas del 31/10/2026
 

@@ -123,12 +123,20 @@ const Suscripcion = (() => {
       raiz.classList.toggle('sb-chica', !!bloqueo);
       pintar();
     }
+    /** Lo que es de Premium, en su lugar (Sueño y Progreso): lo dice y lleva a verlo. */
+    function carta(que) {
+      const c = el('section', 'pg-carta sb-carta');
+      const textos = el('div', 'sb-carta-textos');
+      textos.append(el('b', null, tx('suscripcion.bloqueo.' + que)), el('p', null, tx('suscripcion.prueba')));
+      c.append(textos, boton('sb-carta-boton', tx('suscripcion.perfil.verPlanes'), () => abrir({ bloqueo: que })));
+      return c;
+    }
     function cerrar() {
       raiz.classList.add('saliendo');
       s.cierre = setTimeout(() => { raiz.hidden = true; raiz.classList.remove('saliendo'); }, quieto() ? 0 : 340);
     }
     return {
-      abrir, cerrar,
+      abrir, cerrar, carta,
       get abierta() { return !raiz.hidden; },
       // Para las capturas: el plan, la hoja de Apple, lo último y bajar.
       plan: elegirPlan,

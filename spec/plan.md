@@ -607,11 +607,12 @@ Lo de la tanda del 29/10, separado por cómo llega:
   D42): toda la app de tú, los avisos de dormir con textos variados y la noche sin reloj
   con todas las señales.
 - **Para aprobar en la galería** (D39): el ritmo y el plazo, los gráficos de
-  Progreso, Inicio el primer día, el cuestionario, tocar la luna, cómo llegó a la hora
-  y la guía del cargador. Las dos últimas van por OTA una vez aprobadas; la guía pide
-  además el enlace de iCloud que armás en tu iPhone.
-- **Para aprobar en la galería, con build** (D40): la suscripción. Lo que tenés que
-  cargar en App Store Connect está en [`suscripcion.md`](suscripcion.md).
+  Progreso, Inicio el primer día, el cuestionario y tocar la luna. Cómo llegó a la hora y
+  la guía del cargador ya están en la app y van por OTA; la guía pide además el enlace de
+  iCloud que armás en tu iPhone.
+- **Con build, en la rama `suscripcion`** (D40): la suscripción, aprobada, programada y
+  apagada. Lo que tenés que cargar en App Store Connect y cómo se prende está en
+  [`suscripcion.md`](suscripcion.md).
 - **Con build:** el filtro de enfoque de Sueño (que Moss sepa cuándo empieza sin un
   Atajo), una sola acción del cargador que lea la batería y ver al abrir si está
   cargando (`expo-battery`).

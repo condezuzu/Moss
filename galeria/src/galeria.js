@@ -465,6 +465,7 @@
     },
   }));
   progreso = SeccionProgreso.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    cartaPremium: (que) => suscripcion.carta(que),
     comida,
     persona,
     ponerEstrategia,
@@ -474,6 +475,7 @@
     medir: () => mas.ir('medidas'),
   }));
   sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    cartaPremium: (que) => suscripcion.carta(que),
     noches: () => (soloIphone ? [] : Datos.NOCHES),
     sinReloj: () => soloIphone,
     metaDeSueno: 8 * 60,
@@ -488,7 +490,7 @@
   let versionDeLaGuia = 27;
   guiaAtajos = GuiaAtajos.crear(tel, Object.assign({}, opcionesDeSeccion, { alArmar: () => sueno.cargador('anda') }));
   suscripcion = Suscripcion.crear(tel, Object.assign({}, opcionesDeSeccion, {
-    alCambiar: (estado) => { estadoDeSuscripcion = estado; if (perfilSec) perfilSec.pintar(); refrescarControles(); },
+    alCambiar: (estado) => { estadoDeSuscripcion = estado; if (estado === 'prueba') ponerCandados(false); if (perfilSec) perfilSec.pintar(); refrescarControles(); },
   }));
   perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, {
     // Comida, para Entrenamiento: cuándo entrenas cambia lo que dice cada comida.
@@ -627,7 +629,16 @@
     habitosSec.cerrar();
   }
 
+  // Sueño y Progreso como los ve quien no tiene Premium: solo con los botones de la tarjeta.
+  let candados = false;
+  const ponerCandados = (si) => {
+    if (candados === si) return;
+    candados = si;
+    sueno.sinPremium(si);
+    progreso.sinPremium(si);
+  };
   const cerrarHojas = () => {
+    ponerCandados(false);
     if (comida.hojaAbierta) comida.cerrarHoja();
     if (comida.hojaPlanAbierta) comida.cerrarPlan();
     if (mas.abierta) mas.cerrar();
@@ -974,6 +985,8 @@
     bloqueoSueno: () => { cerrarHojas(); pestanas.ir(3); suscripcion.abrir({ bloqueo: 'sueno' }); },
     bloqueoTodo: () => { cerrarHojas(); pestanas.ir(0); suscripcion.abrir({ bloqueo: 'todo' }); },
     perfilSuscripcion: () => { cerrarHojas(); pestanas.ir(5); perfilSec.pintar(); perfilSec.subir && perfilSec.subir(); },
+    cartaSueno: () => { cerrarHojas(); ponerCandados(true); pestanas.ir(3); sueno.bajarA('.sb-carta'); },
+    cartaProgreso: () => { cerrarHojas(); ponerCandados(true); pestanas.ir(2); progreso.bajarA('.sb-carta'); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.

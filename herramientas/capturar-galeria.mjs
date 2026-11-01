@@ -415,7 +415,7 @@ const pasos = {
     await sub('listo');
     await pagina.waitForTimeout(500);
     await foto('suscripcion-listo');
-    for (const [accion, nombre] of [['bloqueoPlan', 'suscripcion-plan'], ['bloqueoSueno', 'suscripcion-sueno'], ['bloqueoTodo', 'suscripcion-todo']]) {
+    for (const [accion, nombre] of [['bloqueoPlan', 'suscripcion-plan'], ['bloqueoSueno', 'suscripcion-sueno'], ['bloqueoTodo', 'suscripcion-todo'], ['cartaSueno', 'suscripcion-carta-sueno'], ['cartaProgreso', 'suscripcion-carta-progreso']]) {
       await seccion(accion);
       await pagina.waitForTimeout(600);
       await foto(nombre);
