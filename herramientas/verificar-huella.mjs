@@ -1,6 +1,7 @@
 // Una OTA solo le llega a una build con la misma huella nativa, y la huella cuenta más de lo que parece:
 // el código nativo, app.json, los `scripts` de package.json y hasta los bytes del .gitignore. Esto
-// compara la de esta carpeta con la de la build que está en la tienda. Se corre antes de cada OTA.
+// compara la de esta carpeta con la de la build que está en la tienda. Se corre antes de cada OTA. Lo
+// que no cuenta es el Swift de app-intents/: acá da bien aunque la build no tenga ese Swift.
 // Uso: node herramientas/verificar-huella.mjs [--arreglar]
 // --arreglar deja el .gitignore como cuando se armó la build 6: las 55 primeras líneas con CRLF y las
 // últimas con LF. Git puede reescribirlo al cambiar de rama (autocrlf) y la huella cambia sola.

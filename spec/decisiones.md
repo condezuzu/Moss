@@ -288,8 +288,9 @@ iniciar sesión, cuestionario, meta y recién ahí la suscripción.
 - **El cobro:** StoreKit 2 con un módulo propio, sin servidor ni terceros (lo decidí yo: menos
   datos y nada nuevo en la privacidad).
 - **Está en la rama `suscripcion`, apagado:** pide una build y se prende poniendo el día de
-  salida en `PREMIUM_SALE`. No se mezcla con `mejoras-1.1` antes de esa build: el Swift nuevo
-  cambia la huella y cortaría las OTA a la build 6.
+  salida en `PREMIUM_SALE`. Va aparte de `mejoras-1.1` para que las OTA de la 1.1 no lleven nada
+  de esto. No es por la huella: el Swift de `app-intents/` no la cambia (lo comprobé el
+  1/11/2026), y en una build sin el módulo `Compras` nada se bloquea.
 - Lo demás (qué cargar en App Store Connect, la ficha, los términos y el código de oferta
   para la publicidad), en [`suscripcion.md`](suscripcion.md).
 

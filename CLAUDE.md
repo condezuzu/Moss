@@ -99,7 +99,9 @@ SDK y la memoria no alcanza.
 - **La huella nativa (lo aprendí el 31/10/2026):** los `scripts` de `package.json` y el
   `.gitignore` cuentan como el código nativo: cambiar una línea corta las OTA a las
   builds instaladas. Se tocan solo para la próxima build, y antes de cada OTA se corre
-  `node herramientas/verificar-huella.mjs`.
+  `node herramientas/verificar-huella.mjs`. Al revés, el Swift de `app-intents/` no cuenta (lo
+  comprobé el 1/11/2026): una OTA también le llega a la build que no lo tiene, así que lo que lo
+  usa va con `requireOptionalNativeModule` y sin él no se rompe nada.
 - Paquetes siempre con `npx expo install`.
 - Comentá solo las líneas que tienen un porqué no obvio.
 - **Antes de dar algo por terminado:**

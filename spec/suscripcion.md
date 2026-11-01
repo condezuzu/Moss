@@ -180,8 +180,10 @@ reglas propias para las suscripciones y el derecho a arrepentirse.
 1. Hacer lo de App Store Connect, arriba.
 2. Poner el día de salida en `PREMIUM_SALE` (`src/lib/banderas.ts`): quien tenga cuenta de
    antes de ese día queda con Premium de regalo.
-3. Una build, con la versión nueva: StoreKit es nativo y no va por OTA. Esa build corta las OTA
-   a la build 6: a partir de ahí, `herramientas/verificar-huella.mjs` lleva su huella.
+3. Una build, con la versión nueva: StoreKit es nativo y no va por OTA. Tiene la misma huella que
+   la build 6 (el Swift de `app-intents/` no cuenta), así que las OTA les llegan a las dos: en la
+   que no tiene `Compras`, Premium queda apagado y nada se bloquea. Desde esa build, toda OTA tiene
+   que salir de una rama con la suscripción: si no, la saca de la build nueva.
 4. Probar la compra, cancelarla y restaurar con la cuenta de sandbox, en el iPhone.
 
 ## Para más adelante: la publicidad (lo pediste el 31/10/2026)
