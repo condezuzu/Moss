@@ -494,69 +494,11 @@ button.gc-fila { cursor: pointer; }
 @keyframes gc-espera { 50% { opacity: 0.3; } }
 .gc-estado.llego { color: var(--tinta); }
 .gc-estado.llego i { background: var(--salvia); box-shadow: 0 0 10px var(--salvia); animation: none; }
-/* La suscripción: una pantalla sobria, con el precio que se cobra como lo más grande. */
-.tel .sb { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; background: radial-gradient(120% 60% at 50% 0%, rgba(30, 42, 84, 0.95), rgba(9, 12, 26, 1) 70%), #090c1a; color: var(--tinta); animation: gc-entra 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.sb[hidden] { display: none; }
-.sb.saliendo { animation: gc-sale 0.34s cubic-bezier(0.5, 0, 0.9, 0.6) both; pointer-events: none; }
-.sb > .hb-cerrar { top: calc(var(--arriba) - 4px); z-index: 2; }
-.gc .hb-cerrar svg, .sb > .hb-cerrar svg { fill: none; stroke: currentColor; stroke-linecap: round; }
+.gc .hb-cerrar svg { fill: none; stroke: currentColor; stroke-linecap: round; }
 .gc .hb-cab { z-index: 2; }
-.sb-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: calc(var(--arriba) + 6px) 20px 12px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
-.sb-cab { display: grid; justify-items: center; gap: 6px; text-align: center; }
-.sb-cab h2 { margin: 6px 0 0; font: 500 28px/1.1 var(--titulos); }
-.sb-cab p { margin: 0; max-width: 300px; font: 300 14.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.72); }
-.sb-estrella { display: block; width: 10px; height: 10px; transform: rotate(45deg); background: var(--oro-claro); box-shadow: 0 0 16px rgba(246, 227, 166, 0.8), 0 0 40px rgba(246, 227, 166, 0.3); }
-.sb-estrella.grande { width: 16px; height: 16px; }
-.sb-bloqueo { margin: 6px 28px 0 0; font: 500 23px/1.2 var(--titulos); }
-.sb-lista { padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.08); background: rgba(239, 230, 207, 0.03); }
-.sb-lista h3 { margin: 0 0 8px; font: 400 10px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
-.sb-premium { border-color: rgba(232, 196, 106, 0.28); }
-.sb-premium h3 { color: var(--oro-claro); }
-.sb-lista ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.sb-lista li { position: relative; padding-left: 15px; font: 300 13.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.88); }
-.sb-lista li::before { content: ''; position: absolute; left: 2px; top: 0.5em; width: 5px; height: 5px; transform: rotate(45deg); background: var(--oro-claro); }
-.sb-gratis li::before { background: rgba(239, 230, 207, 0.4); }
-.sb-planes { display: grid; gap: 8px; }
-.sb-plan { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid rgba(239, 230, 207, 0.14); border-radius: 15px; background: none; color: inherit; text-align: left; transition: border-color 0.2s, background 0.2s; }
-.sb-plan[aria-checked='true'] { border-color: var(--oro); background: rgba(232, 196, 106, 0.08); }
-.sb-radio { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(239, 230, 207, 0.4); transition: border 0.2s; }
-.sb-plan[aria-checked='true'] .sb-radio { border: 5px solid var(--oro); }
-.sb-plan-textos { display: grid; gap: 2px; min-width: 0; }
-.sb-plan-textos small { font: 400 11.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.6); }
-.sb-plan-textos b { font: 500 17px/1.2 var(--numeros); font-variant-numeric: lining-nums tabular-nums; }
-.sb-plan-textos em { font: 400 11.5px/1.3 var(--texto); font-style: normal; color: rgba(239, 230, 207, 0.55); }
-.sb-legal { display: grid; gap: 6px; }
-.sb-legal p { margin: 0; font: 400 11px/1.4 var(--texto); color: rgba(239, 230, 207, 0.52); }
-.sb-legal .sb-recuerda { color: rgba(239, 230, 207, 0.7); }
-.sb-legal .sb-aviso { color: var(--oro-claro); animation: sn-aparece 0.3s ease both; }
-.sb-enlaces { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
-.sb-enlace { appearance: none; cursor: pointer; padding: 6px 0; border: 0; background: none; color: rgba(239, 230, 207, 0.78); font: 400 12px/1 var(--texto); text-decoration: underline; text-underline-offset: 2px; }
-.sb-pie { flex: none; display: grid; gap: 8px; padding: 10px 20px calc(var(--abajo) + 10px); border-top: 1px solid rgba(239, 230, 207, 0.06); }
-.sb-principal, .sb-secundario { appearance: none; cursor: pointer; width: 100%; min-height: 48px; border-radius: 15px; font: 500 15px/1 var(--texto); transition: transform 0.15s; }
-.sb-principal:active, .sb-secundario:active { transform: scale(0.98); }
-.sb-principal { border: 0; background: var(--tinta); color: #0b0f1d; }
-.sb-secundario { border: 1px solid rgba(239, 230, 207, 0.22); background: none; color: var(--tinta); }
-.sb-apple-fondo { position: absolute; inset: 0; z-index: 3; display: flex; align-items: flex-end; background: rgba(0, 0, 0, 0.5); animation: hj-aparece 0.3s ease both; }
-.sb-apple-fondo.saliendo { animation: gc-sale 0.28s ease both; pointer-events: none; }
-.sb-apple { width: 100%; padding: 12px 18px calc(var(--abajo) + 10px); border-radius: 18px 18px 0 0; background: #f2f2f7; color: #15171f; font: 400 13px/1.3 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; animation: hj-sube 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @keyframes hj-sube { from { transform: translateY(100%); } }
-.sb-apple-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
-.sb-apple-x { appearance: none; cursor: pointer; border: 0; background: none; color: #0a66e4; font: inherit; font-size: 14px; }
-.sb-apple-ficha { display: grid; gap: 3px; padding: 12px; border-radius: 11px; background: #fff; }
-.sb-apple-ficha small { margin-top: 5px; color: #6c6c74; }
-.sb-apple-si { appearance: none; cursor: pointer; width: 100%; min-height: 44px; margin-top: 12px; border: 0; border-radius: 11px; background: #0a66e4; color: #fff; font: 600 15px/1 inherit; }
-.sb-apple-nota { margin: 8px 0 0; font-size: 11px; text-align: center; color: #6c6c74; }
-.sb-listo { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 28px; text-align: center; animation: sn-aparece 0.45s ease both; }
-.sb-listo h2 { margin: 14px 0 0; font: 500 26px/1.15 var(--titulos); }
-.sb-listo p { margin: 0 0 18px; font: 300 14.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.78); }
-.pg-carta.sb-carta { display: flex; align-items: center; gap: 12px; animation: sn-aparece 0.45s ease both; }
-.sb-carta-textos { flex: 1; min-width: 0; }
-.sb-carta-textos b { display: block; font: 500 14.5px/1.3 var(--texto); color: var(--tinta); }
-.sb-carta-textos p { margin: 3px 0 0; font: 300 12.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.6); }
-.sb-carta-boton { appearance: none; cursor: pointer; min-height: 38px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--tinta); color: #0b0f1d; font: 500 14px/1 var(--texto); white-space: nowrap; transition: transform 0.15s; }
-.sb-carta-boton:active { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) {
-  .gc, .sb, .gc.saliendo, .sb.saliendo, .gc-pantalla.entra, .gc-toca, .gc-estado i, .sb-apple, .sb-apple-fondo, .gc-cuerpo, .sb-listo, .pg-carta.sb-carta, .sn-porque-dentro { animation: none; }
+  .gc, .gc.saliendo, .gc-pantalla.entra, .gc-toca, .gc-estado i, .gc-cuerpo, .sn-porque-dentro { animation: none; }
   .gc-toca { box-shadow: 0 0 0 2px rgba(232, 150, 40, 1); }
 }
 /* Todo lo de hoy: al tocar la luna. */
@@ -1190,7 +1132,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 .aviso-btn[hidden] { display: none; }
 
 /* La frase del día queda sobre las pestañas. */
-.frase { position: absolute; left: 26px; right: 26px; bottom: calc(var(--pestanas) + 38px); text-align: center; transition: opacity 0.6s; will-change: transform; }
+.frase { position: absolute; left: 26px; right: 26px; bottom: calc(var(--pestanas) + 46px); text-align: center; transition: opacity 0.6s; will-change: transform; }
 .frase q { display: block; font: italic 400 14px/1.32 var(--titulos); color: rgba(239, 230, 207, 0.74); quotes: '“' '”'; text-wrap: balance; }
 .frase cite { display: block; margin-top: 5px; font: 400 9px/1 var(--texto); font-style: normal; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(185, 227, 107, 0.6); }
 .fps { position: absolute; right: 12px; top: calc(var(--arriba) - 30px); font: 500 10px/1 var(--mono); color: var(--musgo); background: rgba(3, 5, 12, 0.6); padding: 4px 7px; border-radius: 6px; z-index: 5; }
@@ -1928,10 +1870,6 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 .as-cuadros { display: inline-flex; gap: 6px; }
 .as-cuadros i { width: 12px; height: 12px; border: 1px solid var(--as-apagado); }
 .as-cuadros i.lleno { background: var(--as-claro); border-color: var(--as-claro); }
-/* La flecha de Hábitos, debajo de la frase: muy tenue, apenas respira. Del tamaño de un dedo. */
-.as-flecha { position: absolute; left: 50%; bottom: -36px; translate: -50% 0; width: 64px; height: 44px; padding: 0; border: 0; background: none; color: rgba(239, 230, 207, 0.3); pointer-events: auto; cursor: pointer; display: grid; place-items: center; }
-.as-flecha svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; animation: as-respira 3.8s ease-in-out infinite; }
-@keyframes as-respira { 50% { transform: translateY(-3px); opacity: 0.55; } }
 
 /* La recuperación también en Sueño, con el vínculo. */
 .sn-con-ascent { font: 400 10px/1 var(--texto); font-style: normal; letter-spacing: 0.12em; text-transform: uppercase; color: #8a93a8; }
@@ -1984,7 +1922,6 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 @media (prefers-reduced-motion: reduce) {
   .aviso, .cab, .frase, .cm-aviso, .hj-aviso, .mas-aviso, .hj-panel, .hj-teclado, .cm-barra-macro i, .in-macro-barra i, .in-camino-pista i, .in-camino-marca, .velo-pestanas, .pestanas, .in-fila-orden { transition: none; }
   .ent-pantalla, .ent-pantalla.saliendo, .ent-frase-texto span, .ent-frase-autor, .ent-marca span, .ent-lema, .ent-pie-cuenta, .hoja, .hoja.saliendo, .hb, .hb.saliendo, .hj-fondo, .hb-fondo, .cm-ahora .cm-nodo, .cm-item.nuevo, .cm-tarjeta.entra, .hj-pegar-resultado, .as-contenido.as-entra { animation-duration: 0.01s; animation-delay: 0s; }
-  .as-flecha svg { animation: none; }
   .sn-manana, .sn-manana-hecha, .sn-cara { animation: none; transition: none; }
   .sn-pasos { animation: none; }
   .vt-plegable, .vt-pista i, .vt-reporte, .vt-reporte-caja, .vt-gracias { transition: none; }
@@ -2034,6 +1971,9 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <p>Lo que pediste el 29/10 que es visual y todavía no está en la app: probalo acá y, si te cierra, se programa. Lo demás de la tanda ya está en la rama <b>mejoras-1.1</b> (el plan como sugerencia, los platos con tamaño, las cadenas, el día que empieza a las 4, la hora de dormir y Afinar sin atajos).</p>
       <div class="panel">
         <div class="controles">
+          <button class="boton principal" type="button" data-seccion="saludo">El saludo del día</button>
+        </div>
+        <div class="controles">
           <button class="boton principal" type="button" data-seccion="widgetsComida">Los widgets nuevos: la comida</button>
           <button class="boton" type="button" data-seccion="widgetsCielo">El cielo</button>
           <button class="boton" type="button" data-seccion="widgetsBloqueo">La pantalla bloqueada</button>
@@ -2056,29 +1996,55 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           <button class="boton" type="button" data-seccion="guiaAMano">Sin el enlace de iCloud</button>
         </div>
         <div class="controles">
+          <button class="boton principal" type="button" data-seccion="avisosBloqueo">Los avisos en la pantalla bloqueada</button>
+        </div>
+        <div class="controles">
           <button class="boton" type="button" data-seccion="cargadorSinArmar">Cargador: sin armar</button>
           <button class="boton" type="button" data-seccion="cargadorAnda">Funciona</button>
           <button class="boton" type="button" data-seccion="cargadorDejo">Dejó de llegar</button>
           <button class="boton" type="button" data-seccion="cargadorMedias">A medias</button>
         </div>
         <div class="controles">
-          <button class="boton principal" type="button" data-seccion="entradaConSuscripcion">La entrada con la suscripción</button>
+          <button class="boton principal" type="button" data-seccion="entradaConSuscripcion">La entrada completa</button>
           <button class="boton" type="button" data-seccion="metaConSuscripcion">Desde la meta</button>
-          <button class="boton" type="button" data-seccion="suscripcion">Solo la suscripción</button>
+          <button class="boton principal" type="button" data-seccion="suscripcion">La pantalla de pago</button>
         </div>
         <div class="controles">
-          <button class="boton" type="button" data-seccion="bloqueoPlan">Lo bloqueado: el plan</button>
-          <button class="boton" type="button" data-seccion="bloqueoMetas">Las metas</button>
-          <button class="boton" type="button" data-seccion="bloqueoSueno">El sueño</button>
-          <button class="boton" type="button" data-seccion="bloqueoTodo">Todo lo de hoy</button>
-          <button class="boton" type="button" data-seccion="perfilSuscripcion">En Perfil</button>
+          <button class="boton" type="button" data-seccion="pagoSinConexion">Sin conexión</button>
+          <button class="boton" type="button" data-seccion="pagoRestaurada">Restaurada</button>
+          <button class="boton" type="button" data-seccion="pagoRegalo">Ya tenías cuenta</button>
+          <button class="boton" type="button" data-seccion="pagoVencida">Terminó la prueba</button>
+          <button class="boton" type="button" data-seccion="pagoTermino">Terminó la suscripción</button>
         </div>
         <div class="controles">
-          <button class="boton" type="button" data-seccion="cartaSueno">Para aprobar: la tarjeta en Sueño</button>
-          <button class="boton" type="button" data-seccion="cartaProgreso">En Progreso</button>
+          <button class="boton" type="button" data-seccion="perfilPrueba">Tu suscripción: en prueba</button>
+          <button class="boton" type="button" data-seccion="perfilActiva">Mensual</button>
+          <button class="boton" type="button" data-seccion="perfilCancelada">Cancelada</button>
+          <button class="boton" type="button" data-seccion="perfilRegalo">De regalo</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="suenoDatos">Sueño: con datos</button>
+          <button class="boton" type="button" data-seccion="suenoDos">Con 2 noches</button>
+          <button class="boton" type="button" data-seccion="suenoUna">Con 1 noche</button>
+          <button class="boton" type="button" data-seccion="suenoVacio">Sin noches</button>
+          <button class="boton" type="button" data-seccion="suenoPagada">Sin deuda</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-pestana="5">Perfil</button>
+          <button class="boton" type="button" data-seccion="avisos">Perfil › Avisos</button>
+          <button class="boton" type="button" data-seccion="entreno">Entrenamiento</button>
+          <button class="boton" type="button" data-seccion="aparatos">Aparatos</button>
+          <div class="grupo"><span>Ascent en Perfil</span>
+            <div class="segmento" id="s-ascent-perfil"><button type="button" data-valor="si" aria-pressed="true">Prendida</button><button type="button" data-valor="no" aria-pressed="false">Apagada</button></div>
+          </div>
         </div>
       </div>
       <ul class="lista">
+        <li><b>Sueño, con más color</b> (2/11, para aprobar): azul de noche y un poco de verde, solo cuando algo está bien (la noche que llegó a lo que necesitas, lo que sobró, la deuda pagada, una calidad alta, un horario regular). <b>El arco de la noche</b>: de izquierda a derecha, de cuando te dormiste a cuando te despertaste, con cada etapa en su carril, como un hipnograma doblado. <b>La deuda</b> con su medidor (contra una noche entera de lo que necesitas) y catorce barras contra esa línea: lo que faltó baja, lo que sobró sube, y las más viejas se ven más tenues porque pesan menos. <b>La calidad</b> en un anillo partido en lo que suma cada parte. <b>El horario</b> con las guías de las horas y la banda de tu hora de siempre: más angosta, más regular. <b>Los vitales</b> con su línea de dos semanas. Tocá una barra o una noche y se lee abajo. Las cuentas son las de la app (src/dominio/sueno.ts).</li>
+        <li><b>Sueño sin noches y con pocas</b> (botones de arriba): sin noches, una invitación concreta (conectar Salud, o solo el iPhone y mañana pregunta), y cada tarjeta con un ejemplo marcado como ejemplo y sus puntos: «0 de 5 noches» para la deuda, «0 de 8» para el horario, «0 de 7» para comparar con lo tuyo. Los mínimos son los de la app. Con una o dos noches ya se ve lo que hay, y los puntos dicen cuánto falta. Comparalo con la app de hoy, que muestra una persona de ejemplo con un aviso.</li>
+        <li><b>Perfil</b> (2/11, para aprobar): la tarjeta de quién eres con la edad, la altura y la meta; la suscripción a la vista; las conexiones arriba, con Ascent bien a la vista cuando se prenda (probalo con «Ascent en Perfil»); cada fila con su cuadrito de color, y las subpantallas con el mismo orden. Los créditos se despliegan, y se suman tres hojas que la app tiene y la galería no: la calidad, a qué hora empieza el día y la privacidad.</li>
+        <li><b>La foto de la comida</b> (2/11): en la sección <b>Comida</b>, «Sacar una foto» y «Tu día en fotos». Sacás la foto al anotar, decís o escribís qué es, y Moss lo calcula con la base; la foto no se analiza y queda en el día como diario. Sin fotos, Comida se ve igual que hoy.</li>
+        <li><b>El saludo del día</b> (2/11): arriba de Inicio, una frase corta con lo de hoy, que cambia y no se repite, sin IA. La regla ya está, con sus tests; falta aprobar cómo suena. El botón abre ocho días de ejemplo con su hora, <b>Abrir de nuevo</b> y todo lo que fue diciendo en dos semanas simuladas, para juzgar si se repite o suena a plantilla. También en inglés, con los números ocultos y con «sin déficit». Todavía no está en la app.</li>
         <li><b>Los widgets nuevos</b> (1/11, D43): la comida, que no tenía ninguno, con un toque que anota sin abrir Moss; el cielo con el cielo de verdad de fondo y la aurora al completar el día; la noche también a la hora de dormir, y la pantalla bloqueada. Todo lo que hay que mirar y qué llega por OTA, en la sección <b>Los widgets</b>, más abajo.</li>
         <li><b>El ritmo y el plazo</b> (Progreso › Estrategia › Ritmo y plazo), como MacroFactor: arrastrás el ritmo y sale la fecha, o elegís la fecha y sale el ritmo. La regla tiene las zonas de color: <b>viable</b> (hasta 0,5 % del peso por semana bajando, 0,25 % subiendo), <b>exigente</b> (hasta 1 % o 0,5 %) y <b>muy agresivo</b> (más, o más de 1 kg o de 1.000 kcal de déficit por día). Debajo, cuántas kcal por día son, y los avisos: sin fuerza, bajando se pierde músculo y subiendo casi todo es grasa; con esa fecha quedarías debajo del piso; o sos menor. Las cuentas son las de la app (progreso.ts, con tests). Para guardarlo en la app hace falta una columna nueva en Supabase.</li>
         <li><b>Los gráficos de Progreso</b>: el camino a la meta (la tendencia y, punteado, hasta la fecha a tu ritmo), el peso de 1 mes, 3 meses o todo, <b>Semana a semana</b> (cuánto cambió la tendencia y lo que comiste contra la meta) y una línea chiquita al lado de cada medida.</li>
@@ -2087,7 +2053,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         <li><b>Tocar la luna</b> (el bloque de las calorías en Inicio) abre <b>Todo lo de hoy</b>: lo comido, la meta y lo que falta o te pasaste de cada cosa; lo que Moss sabe de vos y de dónde lo sacó; lo que le falta para estimar mejor, y abajo de todo, cómo lo estima. Probalo también con «Cenar» en la sección 2, para ver cómo queda al pasarte.</li>
         <li><b>Cómo llegó a la hora</b> (31/10), abajo de «¿Dormiste de… a…?»: la noche en una línea y cada señal con su hora y cuánto pesó. Si conectaste el cargador y seguiste usando el teléfono, aparece tachado: no cuenta. La lógica ya está en la rama; esta vista es lo que falta aprobar.</li>
         <li><b>La guía del cargador</b> (31/10): tocá en el iPhone dibujado lo que late, como en Atajos. En iOS 27 son tres toques; hasta iOS 26, cinco, y con «Mirar cómo se hace» pasa sola. Termina probándolo: conectás el cargador y Moss dice si llegó. Abajo, los cuatro estados que ve en Sueño › Afinar: sin armar, funciona, dejó de llegar (con un aviso) y a medias.</li>
-        <li><b>La suscripción</b> (31/10, D40; <b>en espera</b> desde el 1/11, hasta que se confirme si se va a cobrar): son los botones de «La entrada con la suscripción» hasta «En Progreso». En la app no se ve: está en otra rama y apagada. La entrada ya es introducción, iniciar sesión, cuestionario y meta; «Empezar» en la meta abre Premium, con <b>Seguir con lo gratis</b> a la vista. USD 4,99 por mes o 29,99 por año, con 7 días gratis. También cómo se ve lo bloqueado, la hoja de Apple dibujada y la fila de Perfil. Nada cobra: no hay código de compras.</li>
+        <li><b>La suscripción</b> (D40, decidida el 2/11): toda Moss es de pago, con 7 días gratis; USD 9,99 por mes o 39,99 por año, con el anual preseleccionado (USD 3,33 por mes, ahorras 67 %). <b>La entrada completa</b>: una introducción más larga (la comida, la base sin IA de fotos, el sueño, los dos juntos, los hábitos y el cielo, y lo que cuesta), iniciar sesión, cuestionario, meta y ahí la pantalla de pago. «Saltar» lleva a lo que cuesta: nadie contesta el cuestionario sin saber que es de pago. La pantalla de pago destaca comida y sueño juntos, con un ejemplo; tocá un plan, «Empezar 7 días gratis» (la hoja de Apple es un dibujo), Cancelar, o abajo «Restaurar compras». Los estados: sin conexión, restaurada, ya tenías cuenta (de regalo), y cuando termina: tus datos a salvo, exportar, cerrar sesión y borrar la cuenta, sin pagar. En Perfil, la fila abre <b>Tu suscripción</b>. Nada cobra: en la app, está apagada hasta prender <code>PREMIUM_SALE</code>.</li>
         <li><b>Los avisos de la hora de dormir</b> (31/10, ya en la rama; se ven en el teléfono, no acá): cada noche otro, y no se repite hasta dentro de nueve. «Deberías irte a dormir en una hora.», «Baja las luces: a la cama en media hora.», «Para despertarte a las 7:30, a la cama a las 23:20.», «A la cama a las 23:20 y duermes 8 h.» La lista entera está en <code>spec/avisos.md</code>.</li>
         <li><b>El plan sugerido</b>, que ya está en la app: «Te sugerimos», pulgar arriba y abajo (cambian lo que se sugiere después, también lo que lleva lo mismo), y «Otra», que no repite lo que ya viste y no se acaba.</li>
       </ul>
@@ -2121,7 +2087,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           </ul></li>
         <li><b>Las medidas</b>: cintura, cuello, cadera, brazo, pecho y muslo, en centímetros. El tutorial es el dibujo: al tocar un campo, la cinta se marca en la figura y abajo dice cómo tomarla. «Cómo medir» despliega los consejos de siempre (la cinta sobre la piel, al final de una exhalación, dos veces).</li>
         <li><b>La grasa corporal</b> se estima con el método de la Marina de EE. UU. y se muestra como un rango chico, con el aviso de que es una estimación (sección 4).</li>
-        <li><b>Perfil</b> (antes Ajustes): tus datos, las preferencias, Salud y Ascent, exportar y borrar (los datos de Moss o la cuenta), los créditos y, al final, «Información adicional»: lo que anda solo si vinculás Ascent: de dónde salen los alimentos (USDA FoodData Central, Open Food Facts y TACO) y las estrellas, como en la app. Las metas pasaron a Progreso, con la estrategia.</li>
+        <li><b>Perfil</b> (antes Ajustes): quién eres y tus datos más importantes, la suscripción, Salud, los aparatos y Ascent, tus datos, las preferencias, exportar y borrar (los datos de Moss o la cuenta), los créditos (de dónde salen los alimentos y las estrellas, como en la app) y, al final, «Información adicional»: lo que anda solo si vinculás Ascent. Las metas pasaron a Progreso, con la estrategia.</li>
         <li><b>La entrada</b> sigue igual: la frase, las dos diapositivas, la cuenta y el cuestionario. No hay tutoriales por sección.</li>
       </ul>
     </section>
@@ -2187,6 +2153,11 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           <button class="boton" type="button" data-comida="tusComidas">Tus comidas</button>
           <button class="boton" type="button" data-comida="pegarReceta">Pegar una receta</button>
         </div>
+        <div class="controles">
+          <button class="boton" type="button" data-comida="foto">Sacar una foto</button>
+          <button class="boton" type="button" data-comida="fotoEjemplo">Tu día en fotos</button>
+          <button class="boton" type="button" data-comida="fotoSinFotos">Sin fotos</button>
+        </div>
         <div class="toques" id="toques">
           <div class="grupo"><span>Toques para registrar, contados desde el «+» o desde Comida</span></div>
           <ol></ol>
@@ -2194,6 +2165,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>La foto de la comida</b> (2/11, para aprobar): en la hoja de registro está la cámara, al lado del micrófono. Disparás (o elegís una de tus fotos), y sale «¿Qué es? Dilo o escríbelo» con la miniatura arriba: es decir lo que comí, con las mismas preguntas, y Moss lo calcula con la base. <b>La foto no se analiza</b>: lo dice una línea fija. La foto queda en <b>Tu día en fotos</b>; tocar una la abre con lo que se anotó. Con «Anotar después» queda marcada como sin anotar. Sin fotos, Comida se ve como hoy: compará con el botón «Sin fotos». Los platos son dibujos, y el selector de fotos es el del iPhone, dibujado.</li>
         <li><b>El cuadro que se desliza</b> (como pediste): empieza en el día, con lo comido contra la meta, la figura de las kcal (la que elijas en la sección 2) y los macros. Deslizalo a la izquierda y aparece la semana: el promedio de los días que ya terminaron y los siete días con una barra de calorías y una por macro contra la meta. Otra vez, y aparece el mes: el promedio y el calendario con una luna (o la figura elegida) por día. Debajo dice dónde estás (Día, Semana, Mes), y también se toca. Tocar un día de la semana o del mes vuelve al día.</li>
         <li><b>Arriba</b>, la tira de la semana con una luna chica (o la figura elegida) por día; <b>abajo</b>, la línea del día: cada comida en su hora, y la que falta espera en «ahora», con Agregar y Copiar de ayer. El peso y el gasto pasaron a Progreso.</li>
         <li><b>La hoja de registro</b> no cambió: la búsqueda con lo que sueles comer a esa hora, los recientes y los favoritos; la ventana del alimento con sus porciones; la comida que se arma abajo; la revisión antes de agregar; la etiqueta, y la carga rápida.</li>
@@ -2255,6 +2227,9 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           <div class="grupo"><span>Con qué duerme: con el reloj, o solo con el iPhone y lo que estima Moss</span>
             <div class="segmento" id="s-aparato"><button type="button" data-valor="reloj" aria-pressed="true">Apple Watch</button><button type="button" data-valor="iphone" aria-pressed="false">Solo el iPhone</button></div>
           </div>
+          <div class="grupo"><span>Cuántas noches tiene: para mirar los estados vacíos</span>
+            <div class="segmento" id="s-noches"><button type="button" data-valor="datos" aria-pressed="true">Con datos</button><button type="button" data-valor="dos" aria-pressed="false">2 noches</button><button type="button" data-valor="una" aria-pressed="false">1 noche</button><button type="button" data-valor="vacio" aria-pressed="false">Sin noches</button><button type="button" data-valor="pagada" aria-pressed="false">Sin deuda</button><button type="button" data-valor="mucha" aria-pressed="false">Mucha deuda</button></div>
+          </div>
         </div>
         <div class="controles">
           <button class="boton" type="button" data-seccion="hora">La pregunta de la hora</button>
@@ -2268,7 +2243,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
             <li>Va a la <b>recuperación</b>: la calidad de la noche pasa a ser tu respuesta (de 1 a 5, llevada a 0–100), y con reloj, el promedio de las dos. Sin reloj ni respuesta, la duración vale los 40 puntos del sueño: antes, sin reloj, nunca se pasaba de 20.</li>
             <li>En <b>La calidad</b> aparece aparte, como «Cómo dijiste que dormiste»: no cambia el puntaje de la noche.</li>
           </ul></li>
-        <li><b>La noche</b>: cuánto dormiste (lo que el reloj mide mejor), a qué hora te dormiste y te despertaste, las etapas con su hipnograma (como estimación), lo despierto y los despertares de 5 minutos o más, y el tiempo en cama solo si alguna fuente lo escribió.</li>
+        <li><b>La noche</b>: cuánto dormiste (lo que el reloj mide mejor), a qué hora te dormiste y te despertaste, las etapas en su arco (como estimación), lo despierto y los despertares de 5 minutos o más, y el tiempo en cama solo si alguna fuente lo escribió.</li>
         <li><b>La deuda</b> de sueño de las dos semanas va <b>segunda</b> (lo pediste): solo necesita cuánto dormiste, así que es lo que más gente puede tener bien.</li>
         <li><b>La calidad</b>, de 0 a 100, en tres partes que se explican: duración contra lo que necesitás (50), horario contra el de siempre (30) y continuidad (20). Las etapas no entran.</li>
         <li><b>El horario</b> de las dos semanas, qué tan regular es y cuánto más tarde dormís el fin de semana. <b>De noche, según el reloj</b>: la frecuencia, la variabilidad y la respiración contra lo tuyo.</li>
@@ -2344,24 +2319,29 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
     </section>
 
     <section class="item" id="ascent">
-      <h2><span class="n">7</span>Ascent, arriba de Hábitos</h2>
-      <p>La sección que solo se usa con Ascent vinculada. Está arriba de Hábitos: en el cielo, abajo, sobre el musgo, hay una flecha muy tenue que apunta para arriba. Tocá la flecha, o deslizá para arriba desde arriba de la barra (con el mouse, arrastrá el cielo; en el teléfono, a pantalla completa), y la sección sube desde el musgo siguiendo al dedo. El gesto nunca arranca sobre la barra: el borde de abajo es del gesto de inicio del iPhone. Para volver, deslizala para abajo, tocá la flecha de arriba o tocá Hábitos. Arrastrar el cielo para abajo sigue llevando a tu universo.</p>
+      <h2><span class="n">7</span>Ascent, abajo de Hábitos</h2>
+      <p>La sección que solo se usa con Ascent vinculada. Está abajo de Hábitos y sube desde el musgo: en el cielo, abajo, una señal con la marca de Ascent y una flecha que apunta para arriba dice que ahí está. Tocá la señal, o deslizá para arriba desde ella o desde el cielo (con el mouse, arrastrá; en el teléfono, a pantalla completa), y la sección sube siguiendo al dedo. El gesto nunca arranca sobre la barra: el borde de abajo es del gesto de inicio del iPhone. Para volver, deslizala para abajo, tocá la flecha de arriba o tocá Hábitos. Arrastrar el cielo para abajo sigue llevando a tu universo.</p>
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-ascent="abrir">Abrir Ascent</button>
           <button class="boton" type="button" data-ascent="cerrar">Volver al cielo</button>
           <button class="boton" type="button" data-ascent="sueno">La recuperación en Sueño</button>
+          <button class="boton" type="button" data-ascent="asomar">Repetir el movimiento de la señal</button>
+          <button class="boton" type="button" data-ascent="invitacion">Volver a invitar en Inicio</button>
         </div>
         <div class="controles">
           <div class="grupo"><span>Ascent</span>
             <div class="segmento" id="s-vinculo"><button type="button" data-valor="no" aria-pressed="true">Sin vincular</button><button type="button" data-valor="si" aria-pressed="false">Vinculada</button></div>
+          </div>
+          <div class="grupo"><span>La señal, vinculada</span>
+            <div class="segmento" id="s-senal"><button type="button" data-valor="hoy" aria-pressed="true">Entrenó hoy</button><button type="button" data-valor="antes" aria-pressed="false">Entrenó antes</button><button type="button" data-valor="nada" aria-pressed="false">Sin sesiones</button></div>
           </div>
           <div class="grupo"><span>Por qué no subes</span>
             <div class="segmento" id="s-estanc"><button type="button" data-valor="con" aria-pressed="true">Con datos</button><button type="button" data-valor="pocas" aria-pressed="false">Juntando información</button></div>
           </div>
         </div>
         <div class="controles">
-          <div class="grupo"><span>Este iPhone (abre la hoja de vincular)</span>
+          <div class="grupo"><span>Este iPhone (cambia la señal y la invitación, y abre la hoja de vincular)</span>
             <div class="segmento" id="s-iphone"><button type="button" data-valor="sesion" aria-pressed="true">Ascent con sesión</button><button type="button" data-valor="sinSesion" aria-pressed="false">Ascent sin sesión</button><button type="button" data-valor="sinAscent" aria-pressed="false">Sin Ascent</button><button type="button" data-valor="sinCuenta" aria-pressed="false">Sin cuenta de Moss</button></div>
           </div>
           <div class="grupo"><span>Al vincular, el servidor</span>
@@ -2370,6 +2350,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>Que se encuentre</b> (lo pediste el 2/11, para cuando se prenda la vinculación): en Hábitos, la señal, siempre a la vista y sin competir con el cielo, se toca o se desliza. Sin vincular y con Ascent en este iPhone dice «Vincular con Ascent»; sin Ascent, solo «Ascent». Vinculada, la luna entra en su órbita y dice la última sesión («Hoy: piernas»); sin una sesión reciente, solo «Ascent». La primera vez que se llega a Hábitos sube y baja apenas (con Reducir movimiento, no). En Inicio, solo con Ascent en este iPhone y sin vincular, una invitación debajo del segundo bloque: «Vincular» abre la hoja, y «Ahora no» no vuelve a aparecer. Y en Perfil, la fila sube. Mientras la vinculación esté apagada en la app, nada de esto se ve.</li>
         <li><b>El mismo cielo, sin caja</b> (lo pediste el 22/10): al subir, el cielo sube con el dedo, más despacio porque está más lejos, y lo de hoy (la constelación, sus nombres y los botones) se apaga en la primera mitad del gesto. Ascent queda sobre el mismo cielo, apenas oscurecido para leer, como «Tu universo».</li>
         <li><b>Tiene la cara de Ascent</b>: su azul gris y su crema, esquinas vivas y una línea arriba de cada parte en vez de cajas. Arriba está el planeta de Ascent con su órbita abierta, como en su ícono, y la luna de Moss: sin vincular queda afuera, y al vincular entra a la órbita.</li>
         <li><b>Sin vincular</b>: «Vincular con Ascent», la App Store para quien no la tiene y que vincular es dar permiso, y se quita desde Perfil. Abajo, cada función muestra vacío lo que va a mostrar (el anillo punteado, la tabla con rayas), con un candado chico. Así se ve qué te perdés sin que parezca roto.</li>
@@ -2401,14 +2382,18 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           <button class="boton" type="button" data-habitos="sugeridos">Los primeros hábitos</button>
         </div>
         <div class="controles">
-          <div class="grupo"><span>La frase y las diapositivas pasan</span>
+          <div class="grupo"><span>La frase y la introducción pasan</span>
             <div class="segmento" id="s-avance"><button type="button" data-valor="tocando" aria-pressed="true">Tocando la estrella</button><button type="button" data-valor="solo" aria-pressed="false">Solas</button></div>
           </div>
         </div>
         <div class="controles" id="saltos-entrada">
           <button class="boton" type="button" data-paso="frase">Frase</button>
+          <button class="boton" type="button" data-paso="comida">Anotar</button>
+          <button class="boton" type="button" data-paso="base">La base</button>
+          <button class="boton" type="button" data-paso="sueno">El sueño</button>
+          <button class="boton" type="button" data-paso="juntos">Juntos</button>
           <button class="boton" type="button" data-paso="habitos">Estrellas</button>
-          <button class="boton" type="button" data-paso="comida">Comida</button>
+          <button class="boton" type="button" data-paso="precio">Lo que cuesta</button>
           <button class="boton" type="button" data-paso="cuenta">Cuenta</button>
           <button class="boton" type="button" data-paso="salud">Cuestionario</button>
           <button class="boton" type="button" data-paso="resultado">Resultado</button>
@@ -2416,10 +2401,10 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       </div>
       <ul class="lista">
         <li><b>La frase</b> aparece palabra por palabra, desde el desenfoque, mientras el cielo se enciende sobre el musgo. Abajo dice «Atribuida a John Dryden», porque la atribución es dudosa.</li>
-        <li><b>La estrella guía</b> recorre toda la entrada (lo pediste el viernes: que no se pareciera a la de Ascent). Nace en el musgo, sube por la izquierda y presenta la frase; después baja a esperar. En la frase y las diapositivas no hay botón: la estrella espera abajo, respira y un aro se le cierra encima, y tocarla es seguir; si pasa un rato, abajo dice «Toca la estrella». No se puede saltear: se puede tocar recién cuando termina su parte. Con «Solas» pasan sin tocar.
+        <li><b>La estrella guía</b> recorre toda la entrada (lo pediste el viernes: que no se pareciera a la de Ascent). Nace en el musgo, sube por la izquierda y presenta la frase; después baja a esperar. En la frase y la introducción no hay botón: la estrella espera abajo, respira y un aro se le cierra encima, y tocarla es seguir; si pasa un rato, abajo dice «Toca la estrella». Se puede tocar recién cuando termina su parte. «Saltar», arriba, lleva a lo que cuesta, que no se saltea. Con «Solas» pasan sin tocar.
           <ul>
+            <li>En «Anota en segundos» le da tres vueltas a la luna, y cada vuelta anota un alimento de lo dicho. En «Comida de verdad» baja por lo que encontró y cada uno se enciende con su fuente. En «Tu sueño» dibuja la noche al cruzarla. En «Comida y sueño, juntos» une la noche con la luna de hoy, y en «Pruébala 7 días» camina la prueba: hoy, el aviso y el cobro.</li>
             <li>En «Tus hábitos son estrellas» va hasta Casiopea y salta de una estrella a la otra: cada una se enciende al tocarla, con los efectos de un toque real, la línea queda detrás y al final se conecta.</li>
-            <li>En «Tu comida, a tu medida» le da tres vueltas a la luna: cada vuelta deja el anillo de un macro (proteína, carbohidratos y grasas) mientras la luna se llena.</li>
             <li>Después sube a acompañar desde un rincón, escribe «Moss» en la cuenta pasando por encima de las letras y en el cuestionario va en la punta de la barra, que estira al avanzar. En el resultado queda arriba del título y al empezar se va con el flum.</li>
             <li>Con Reducir movimiento no viaja: se apaga donde estaba y se enciende donde va. Quieta no gasta: lo que respira es CSS, unas pocas veces.</li>
           </ul></li>
@@ -2432,7 +2417,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
             <li>Después nivel de actividad, <b>«¿Alguno es tu caso?»</b> (embarazo o lactancia, que solo se pregunta a las mujeres, o una condición médica) y objetivo. Si es su caso, Moss no pone en déficit: bajar de peso queda apagado, con el porqué, y sugiere un profesional. No se guarda cuál, solo «sin déficit». Si el objetivo es bajar o subir, también el ritmo (como mucho, 0,75 % del peso por semana).</li>
             <li>La meta inicial sale de la fórmula de Mifflin-St Jeor por el nivel de actividad, con un piso de calorías. La proteína va por kilo, las grasas son al menos el 27 % y los carbohidratos son el resto.</li>
           </ul></li>
-        <li><b>Empezar</b> te lleva a Inicio con un flum, y ahí sube <b>«Elige tus primeros hábitos»</b>: diez para elegir de 3 a 5, con los de comida primero (se encienden solos con lo que se registra), y cuatro elegidos de fábrica. «Armar mi constelación» arma el cielo de hoy con los que tocan hoy.</li>
+        <li><b>Después de la meta</b>, la pantalla de pago (arriba, en 1.1). Al empezar la prueba, un flum te lleva a Inicio, y ahí sube <b>«Elige tus primeros hábitos»</b>: diez para elegir de 3 a 5, con los de comida primero (se encienden solos con lo que se registra), y cuatro elegidos de fábrica. «Armar mi constelación» arma el cielo de hoy con los que tocan hoy.</li>
       </ul>
     </section>
 

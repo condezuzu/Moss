@@ -1,7 +1,7 @@
 # Moss
 
 App de comida para iPhone: trackear calorías y macros como MacroFactor, sin IA de
-fotos, global, con lo básico gratis y Moss Premium (D40). Seis secciones con el «+» en el medio de la barra: Inicio,
+fotos, global y de pago, con 7 días gratis (D40). Seis secciones con el «+» en el medio de la barra: Inicio,
 Comida, Progreso, Sueño, Hábitos y Perfil. La comida es el centro; los hábitos y
 el cielo acompañan:
 cada hábito es una estrella, los hábitos de cada día forman una constelación real
@@ -20,9 +20,12 @@ SDK y la memoria no alcanza.
   cambia en pantalla entra, sale o se acomoda con una animación (en la app,
   `entering`, `exiting` y `layout` de Reanimated; en la galería, CSS), y respeta
   Reducir movimiento.
-- **Moss es Moss**: no se presenta como «tu cuenta de Moss y Ascent». Ascent se
-  nombra solo donde se vincula (su sección, y lo que anda con las dos al final de
-  Perfil), y ni ahí hace falta.
+- **Moss es Moss**: no se presenta como «tu cuenta de Moss y Ascent», y la entrada,
+  la ficha y lo de cada día no la necesitan ni la nombran. Con `CON_ASCENT` apagada,
+  Ascent no se nombra en ningún lado. Prendida, solo en lo que lleva a vincular y en
+  lo que anda con las dos: su sección, la señal de Hábitos, la invitación de Inicio
+  (solo con Ascent en ese iPhone), la fila y el final de Perfil y la recuperación en
+  Sueño (`spec/ascent.md`, «Que se encuentre»).
 - **Sin mitos**:
   - nada de capítulos, historias, héroes ni figuras;
   - el nombre de la constelación va chico;
@@ -46,7 +49,7 @@ SDK y la memoria no alcanza.
   - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada, `recetaDeTexto.ts`, que usa `porciones.ts`, y `frase.ts`, que usa los dos;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `micronutrientes.ts`, `dejaElDia.ts`, `control.ts`,
     `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts`, `alrededorDelEntreno.ts`,
-    `musculos.ts`, `rendimiento.ts`, `estadisticas.ts` y `plan.ts`, que solo importan entre ellos
+    `musculos.ts`, `rendimiento.ts`, `estadisticas.ts`, `senalDeAscent.ts`, `saludo.ts`, `plan.ts` y `premium.ts`, que solo importan entre ellos (también `avisos.ts` y `loQueFalta.ts`, con `luz.ts`, `dias.ts`, `habitos.ts` y `recordatorios.ts`, que usan)
     (`DEL_DOMINIO` en `construir.mjs`).
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
   usa una función tiene que estar definido antes que ella. Por eso `paso()` va
@@ -151,8 +154,10 @@ SDK y la memoria no alcanza.
 | `node herramientas/exportar-web.mjs` + `npm run web:ver` | la app de verdad en la web (Skia es CanvasKit) en http://localhost:4174 |
 | `node herramientas/fondos-de-widgets.mjs` | los fondos de los widgets, de los shaders de la app, en `assets/widgets/` (tarda varios minutos) |
 | `node herramientas/verificar-huella.mjs` | compara la huella nativa de esta carpeta con la de la build de la tienda: se corre antes de cada OTA |
+| `node herramientas/preparar-proxima-build.mjs` | declara en `app.json` los widgets nuevos y prende `CON_WIDGETS_NUEVOS`. Cambia la huella: solo al armar la próxima build |
+| `node herramientas/bajar-marcas.mjs` + `node herramientas/marcas.mjs` | baja la exportación de Open Food Facts a `.cache/off` y arma `alimentos/marcas.txt`; después, `npm run alimentos` |
 | `node herramientas/recorrer-pantallas.mjs <carpeta>` | todas las pantallas de la app en la web (las seis secciones con su scroll, el «+» y la entrada hasta el resultado) en un iPhone chico y uno grande, en es-UY, es-ES y en-US (con `npm run web:ver` prendido) |
-| `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la flecha, las pestañas, Inicio y el «+»), decir lo que comí y, en un navegador limpio, las primeras pantallas de la entrada |
+| `npm run app:capturas` | capturas de la app en la web, con una persona que ya pasó la entrada: calidad, riqueza, toque, que se acuerde al recargar, día completo, universo, las secciones (Ascent desde el cielo y no desde la barra, la señal, las pestañas, Inicio y el «+»), decir lo que comí y, en un navegador limpio, las primeras pantallas de la entrada |
 | `npx eas-cli@latest build --profile dev --platform ios` | la build de desarrollo para el iPhone (la primera vez pide entrar a Apple); su JavaScript llega de `npx expo start` |
 | `npx eas-cli@latest build --profile simulador --platform ios --non-interactive` | compila todo lo nativo sin credenciales de Apple: la forma de probar Swift nuevo sin una Mac |
 | `npx eas-cli@latest build --profile store --platform ios` | la build para la tienda. Con una capacidad o una extensión nueva, la primera vez sin `--non-interactive`: pide entrar a Apple para armar los perfiles |
@@ -169,15 +174,16 @@ herramientas/capturar-galeria.mjs <carpeta> <escenarios…>`) son estos:
 - `tocar`, `completo`, `universo`;
 - `ingles`, `baja`;
 - `riqueza` (con la vía láctea), `fugaz`;
-- `entrada`;
-- `comida` (con el cuadro de día, semana y mes), `registrar`, `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `decir` (decir lo que comí, sus preguntas, tu comida de siempre y anotar todo junto), `entreno` (qué comer antes y después de entrenar, por qué y Perfil › Entrenamiento), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
+- `entrada` (la frase, la introducción, la cuenta, el cuestionario, la pantalla de pago y el flum);
+- `comida` (con el cuadro de día, semana y mes), `registrar`, `marcas` (buscar una cadena, una marca del súper o lo genérico), `ventana` (verificado, cómo deja el día, las vitaminas y reportar), `plan` (armar el día y la semana, otra, tus comidas y la lista de compras), `receta` (pegar una receta, revisarla y guardarla), `decir` (decir lo que comí, sus preguntas, tu comida de siempre y anotar todo junto), `entreno` (qué comer antes y después de entrenar, por qué y Perfil › Entrenamiento), `foto` (la foto de la comida: el visor, «¿Qué es?», anotar después, «Tu día en fotos» y lo que se ve sin fotos), `etiqueta`, `comida-ingles`, `kcal` (los cuatro estilos);
 - `mas` (la hoja del «+», el peso y las medidas), `macros`, `personalizar`;
-- `progreso` (con «Semana a semana»), `plazo` (el ritmo y el plazo, D35), `metas`, `sueno`;
+- `progreso` (con «Semana a semana»), `plazo` (el ritmo y el plazo, D35), `metas`, `sueno` (con datos: el arco de la noche, la deuda, la calidad, el horario y los vitales), `sueno-vacio` (sin noches, con una y con dos, sin deuda, con mucha, y en inglés);
 - `primerdia` (Inicio sin datos), `cuestionario` (las preguntas de la entrada) y `todo` (tocar la luna: Todo lo de hoy, también al pasarse);
-- `senales` (cómo llegó a la hora de la noche sin reloj), `guia` (la guía del cargador, los dos caminos y lo que ve en Afinar) y `suscripcion` (la propuesta de D40: Premium, la hoja de Apple, lo bloqueado, la tarjeta en Sueño y Progreso, y Perfil);
-- `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil`;
-- `ascent` (la flecha, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`;
-- `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado) y `widgets-nuevos` (la propuesta de D43: la comida, el cielo, la noche, la pantalla bloqueada y StandBy).
+- `senales` (cómo llegó a la hora de la noche sin reloj), `guia` (la guía del cargador, los dos caminos y lo que ve en Afinar) y `suscripcion` (D40: la pantalla de pago con cada estado, la hoja de Apple dibujada, cuando vence, el regalo y Tu suscripción en Perfil);
+- `editor` (el «+» y mantener apretada una estrella), `avisos` (Perfil › Avisos y el aviso de un hábito), `bloqueo` (los avisos en la pantalla bloqueada: un día, con lo que cambia lo que hiciste, y todos los textos, en es y en), `mes`, `sugeridos` (los primeros hábitos, después de la entrada) y `perfil` (la tarjeta, la suscripción en cada estado, Ascent prendida, apagada y vinculada, las subpantallas y en inglés);
+- `ascent` (la señal, el gesto, sin vincular, vinculada y lo que cambia en las otras secciones), `ascent-ingles`, `ascent-senal` (la señal de Hábitos en cada estado, tocarla y deslizar desde ella, y la invitación de Inicio con «Ahora no» y al vincular);
+- `widgets` (el chico y el mediano con un «hecho» tocado, tintados y transparentes, StandBy, la noche en la pantalla bloqueada antes y después del «Sí», en inglés, y abrir Moss con lo tocado) y `widgets-nuevos` (la propuesta de D43: la comida, el cielo, la noche, la pantalla bloqueada y StandBy);
+- `saludo` (el saludo del día arriba de Inicio y su hoja: cada día de ejemplo, la hora, abrir de nuevo, lo que fue diciendo en dos semanas, en inglés, con los números ocultos y con «sin déficit»).
 
 La galería abre en Inicio. Las secciones son 0 Inicio, 1 Comida, 2 Progreso,
 3 Sueño, 4 Hábitos y 5 Perfil: los escenarios del cielo pasan antes a Hábitos
@@ -204,10 +210,11 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/rendimiento.md](spec/rendimiento.md) | con Ascent: el rendimiento esperado, la fatiga por músculo y los días para intentar marca, con sus estudios |
 | [spec/entreno.md](spec/entreno.md) | qué comer antes y después de entrenar, en la comida que toca: la evidencia, las reglas, lo que hay en la v1 y lo que falta decidir |
 | [spec/sueno-sin-esfuerzo.md](spec/sueno-sin-esfuerzo.md) | el sueño con menos esfuerzo: los Atajos (App Intents), el despertador (AlarmKit), el filtro de Concentración y el widget, con sus fuentes |
-| [spec/avisos.md](spec/avisos.md) | los avisos: la hora de dormir, los de cada hábito, las comidas sin anotar, juntos y con un máximo por día |
+| [spec/avisos.md](spec/avisos.md) | los avisos: la hora de dormir, los de cada hábito, las comidas sin anotar y lo que falta, de a uno y con un máximo por día |
 | [spec/widgets.md](spec/widgets.md) | los widgets |
+| [spec/saludo.md](spec/saludo.md) | el saludo del día: qué señales usa, cuándo dice qué, cómo no se repite, cómo se probó y qué falta para conectarlo |
 | [spec/revision.md](spec/revision.md) | la revisión de Apple: las respuestas de privacidad, los permisos, cada guía, la ficha en es y en, las capturas, las notas para quien revisa y lo que hay que hacer en App Store Connect |
-| [spec/suscripcion.md](spec/suscripcion.md) | la suscripción (D40): qué es gratis y qué es Premium, lo que pide Apple, qué cargar en App Store Connect, qué cambia en la ficha y los términos, y el código de oferta para la publicidad |
+| [spec/suscripcion.md](spec/suscripcion.md) | la suscripción (D40): toda Moss de pago con 7 días gratis, quién entra, lo que pide Apple, lo que hay que cargar en App Store Connect para cobrar, qué cambia en los términos y el código de oferta para la publicidad |
 | [spec/fuentes.md](spec/fuentes.md) | las segundas tablas oficiales de los curados: cuáles y por qué, cómo se comparan, lo que hay que mostrar en Créditos y lo que queda por revisar |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
 
@@ -216,8 +223,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | Carpeta | Qué hay |
 |---|---|
 | `src/app/` | rutas de Expo Router: las secciones y `compartido`, que abre los enlaces `moss://compartido` |
-| `src/secciones/` | las seis secciones (`Secciones.tsx`): la tira con el gesto de Ascent, la barra con el «+» (`Barra.tsx`), la hoja del «+» (`HojaMas.tsx`), Ascent arriba de Hábitos (`Ascent.tsx`, `MarcaDeAscent.tsx`) y los movimientos (`movimiento.ts`). Cada sección en su carpeta: `inicio/`, `comida/` (con la foto de cada comida, compartir y el plan de comidas, `Plan.tsx`), `progreso/`, `sueno/`, `habitos/` (el editor, «Tu mes» y los primeros hábitos), `perfil/` (con exportar y borrar) y `entrada/` (la cuenta y el cuestionario). Lo que comparten: `tarjetas.tsx`, `HojaModal.tsx`, `teclado.ts` (el teclado como valor animado), `graficos/` y la persona de ejemplo mientras faltan datos (`persona.ts`, `ejemplo.ts`) |
-| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`), el sueño (`sueno.ts`), lo que Moss hace con el entrenamiento de Ascent (`entrenamiento.ts`: calorías según el día, proteína después de entrenar, recuperación y por qué no subís), «Tu mes» (`estadisticas.ts`, sin rachas), los enlaces para compartir (`compartir.ts`), cuándo recordar anotar (`recordatorios.ts`), el plan de comidas (`plan.ts`: lo tuyo y las comidas tipo, armar el día y la semana, otra, la lista de compras y adaptar a la meta nueva), qué comer antes y después de entrenar (`alrededorDelEntreno.ts`) y cuándo suena cada aviso (`avisos.ts`: la hora de dormir, los hábitos y las comidas, juntos y con un máximo por día) |
+| `src/secciones/` | las seis secciones (`Secciones.tsx`): la tira con el gesto de Ascent, la barra con el «+» (`Barra.tsx`), la hoja del «+» (`HojaMas.tsx`), Ascent abajo de Hábitos (`Ascent.tsx`, `MarcaDeAscent.tsx`) y los movimientos (`movimiento.ts`). Cada sección en su carpeta: `inicio/`, `comida/` (con la foto de cada comida, compartir y el plan de comidas, `Plan.tsx`), `progreso/`, `sueno/`, `habitos/` (el editor, «Tu mes» y los primeros hábitos), `perfil/` (con exportar y borrar) y `entrada/` (la cuenta y el cuestionario). Lo que comparten: `tarjetas.tsx`, `HojaModal.tsx`, `teclado.ts` (el teclado como valor animado), `graficos/` y la persona de ejemplo mientras faltan datos (`persona.ts`, `ejemplo.ts`) |
+| `src/dominio/` | las reglas, puras y con tests: fechas, luz y riqueza, hábitos, constelaciones por día, días, logros, semana, metas de comida (con los estilos, las metas a mano, repartir la semana y cuándo brilla o tiembla cada macro), control semanal (con el día que se elige), la comida de cada hora, lo que se come (`registros.ts`: registros, recetas, propios, favoritos, agua, los atajos y los hábitos de comida), exportar en CSV, el cuerpo (`cuerpo.ts`: la grasa con cinta y su rango), el progreso al objetivo y el balance (`progreso.ts`), el sueño (`sueno.ts`), lo que Moss hace con el entrenamiento de Ascent (`entrenamiento.ts`: calorías según el día, proteína después de entrenar, recuperación y por qué no subís), «Tu mes» (`estadisticas.ts`, sin rachas), los enlaces para compartir (`compartir.ts`), cuándo recordar anotar (`recordatorios.ts`), el plan de comidas (`plan.ts`: lo tuyo y las comidas tipo, armar el día y la semana, otra, la lista de compras y adaptar a la meta nueva), qué comer antes y después de entrenar (`alrededorDelEntreno.ts`), cómo se encuentra lo de Ascent (`senalDeAscent.ts`: la señal de Hábitos y la invitación de Inicio) y cuándo suena cada aviso y qué dice (`avisos.ts`: la hora de dormir, los hábitos y las comidas, de a uno y con un máximo por día; `loQueFalta.ts`: si vas muy bajo en proteína, calorías o agua) y el saludo del día (`saludo.ts`: qué decir arriba de Inicio, sin repetirse) |
 | `src/almacen/` | el almacén local (SQLite en el teléfono, localStorage en la web), con los hábitos, las metas, la estrategia, lo que se come (y la canasta, que no sube) y las medidas del cuerpo, sus ganchos, los hábitos de ejemplo y la sincronización: `sincronizar.ts` (cuándo), `remoto.ts` (Supabase) y `mezclar.ts` (qué gana) |
 | `supabase/moss/` | las migraciones del esquema `moss`. Las aplica `npm run migraciones -- --aplicar` (no el SQL Editor), y quedan anotadas en `moss.migraciones` |
 | `supabase/functions/` | las funciones de Moss en el servidor: `moss-borrar-cuenta` revoca Sign in with Apple y borra la cuenta, y `moss-vincular` vincula una cuenta de Moss con una de Ascent con las dos sesiones (cómo desplegarlas, en sus README; se prueban con `node herramientas/probar-borrar-cuenta.mjs` y `node herramientas/probar-vincular.mjs`; los dos borrados, contra la base real y sin dejar nada, con `npx supabase db query --linked -f herramientas/probar-borrado-en-produccion.sql`) |
@@ -225,11 +232,11 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `app-intents/` | el Swift que va dentro del target de la app (módulos en línea): las acciones de Atajos de la noche, sus frases, el despertador con AlarmKit (iOS 26+) y las compras con StoreKit 2 (`Compras.swift`). Lo que llega se guarda como anclas (`src/salud/anclas.ts`) |
 | `plugins/` | los plugins de configuración propios: `con-alarmkit.js` enlaza AlarmKit como opcional |
 | `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final), el de la comida dicha de una vez (`frase.ts`) y lo dicho en alimentos de la base, con sus preguntas (`entender.ts`, con los platos dichos sin cantidad de `platos.ts`: chico, mediano o grande) y Open Food Facts por código de barras (`off.ts`) |
-| `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región; y las cadenas (`cadenas.txt`: McDonald's, Burger King, Subway, Mostaza, La Pasiva y Starbucks, cada producto con su fuente o «aproximado») |
+| `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región; las cadenas (`cadenas.txt`: McDonald's, Burger King, Subway, Mostaza, La Pasiva, Starbucks, KFC, Domino's, Grido, Sbarro y otras, con sus combos, cada producto con su fuente o «aproximado») y lo de marca del súper (`marcas.txt`, de Open Food Facts: lo arma `node herramientas/marcas.mjs` con lo que baja `node herramientas/bajar-marcas.mjs`; no se edita a mano) |
 | `assets/alimentos.db` | la base de alimentos que arma `npm run alimentos` (no se edita a mano) |
 | `src/salud/` | Salud: los permisos, lo que llena el cuestionario y la lectura de cada día (`leer.ts`, con `convertir.ts` puro y con tests) |
 | `src/recordatorios/` | los avisos (la hora de dormir, los hábitos y las comidas), programados en el teléfono con la regla de `src/dominio/avisos.ts` |
-| `src/widgets/` | los widgets (`expo-widgets`): el del cielo (`Cielo.widget.tsx`) y el de la noche (`Noche.widget.tsx`), que corren solos en la extensión, sus líneas de tiempo y los toques (`cielo.ts`, `noche.ts`, puros y con tests) y lo que los pone al día desde la app (`index.ts`). Ver `spec/widgets.md` |
+| `src/widgets/` | los widgets (`expo-widgets`): el del cielo (`Cielo.widget.tsx`), el de la noche (`Noche.widget.tsx`) y, para la próxima build, Hoy, Anotar y Agua, que corren solos en la extensión, sus líneas de tiempo y los toques (`cielo.ts`, `noche.ts`, `hoy.ts`, `anotar.ts`, `agua.ts`, puros y con tests) y lo que los pone al día desde la app (`index.ts`). Ver `spec/widgets.md` |
 | `src/fondo/` | la tarea de segundo plano (`expo-background-task`): con Moss cerrada, pone el día al día y los widgets |
 | `src/contenido/` | las frases del día |
 | `src/cielo/` | el cielo en Skia (ver la lista de abajo) |
@@ -238,10 +245,10 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `src/textos/` | el diccionario y `t()`: cielo, entrada, comida, Inicio, el «+», el cuerpo, Progreso, Sueño, Perfil, diagnóstico |
 | `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
 | `src/lib/ascent.ts` | Ascent en este iPhone: si está instalada, abrirla y su página en la App Store |
-| `src/lib/banderas.ts` | lo que se prende por OTA: `CON_ASCENT`, la vinculación con Ascent, apagada en la 1.0 (D30), y `PREMIUM_SALE`, el día en que sale Moss Premium (D40; pide la build con StoreKit) |
-| `src/lib/premium.ts` | Moss Premium en el teléfono: lo que dice Apple (`app-intents/Compras.swift`), sin servidor ni terceros, y en la web una tienda de mentira. La pantalla está en `src/secciones/premium/` y las reglas, en `src/dominio/premium.ts` |
+| `src/lib/banderas.ts` | lo que se prende por OTA: `CON_ASCENT`, la vinculación con Ascent, apagada en la 1.0 (D30), y `PREMIUM_SALE`, el día en que Moss pasa a ser de pago (D40; pide la build con StoreKit) |
+| `src/lib/premium.ts` | La suscripción en el teléfono: lo que dice Apple (`app-intents/Compras.swift`), sin servidor ni terceros, y en la web una tienda de mentira. La pantalla de pago y Tu suscripción están en `src/secciones/premium/` y la regla de acceso, en `src/dominio/premium.ts` |
 | `src/lib/llavero.ts` | el llavero que comparten Moss y Ascent (D27): la sesión de cada app, con su contrato (`sesionCompartida.ts`) |
-| `src/secciones/ascent/` | la sección de Ascent vinculada (`Vinculada.tsx`, `calculos.ts`), la hoja de vincular (con la cuenta de Ascent, `cuentaDeAscent.ts`), la recuperación en Sueño y la fila de Perfil; lo que llega de Ascent queda en `src/almacen/ascent.ts` |
+| `src/secciones/ascent/` | la sección de Ascent vinculada (`Vinculada.tsx`, `calculos.ts`), la hoja de vincular (con la cuenta de Ascent, `cuentaDeAscent.ts`), la señal de Hábitos (`SenalDeAscent.tsx`, que usa `src/cielo/Interfaz.tsx`), la invitación de Inicio (`Invitacion.tsx`), la recuperación en Sueño y la fila de Perfil; lo que llega de Ascent queda en `src/almacen/ascent.ts` |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
 | `herramientas/` | capturas y verificaciones |
 | `docs/` | el sitio: la portada, la política de privacidad y los términos, en es y en, con enlaces relativos. Se publica en el repo público `condezuzu/moss-app` |
@@ -261,7 +268,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 - `motor.js`: el motor WebGL, con la pasada del flum.
 - `escena.js`: la escena, con los modos hoy y entrada, y la constelación que
   se corre con su pestaña.
-- `entrada.js`: la entrada a la app.
+- `entrada.js`: la entrada a la app, con la introducción.
 - `util.js`: lo que comparten las secciones nuevas (textos, números, íconos y
   la hoja de abajo).
 - `luna.js`: la luna de la comida, en SVG.
@@ -272,17 +279,20 @@ mirar una animación cuadro a cuadro está la cámara lenta
   registro con la ventana del alimento, la comida que se arma, la revisión, la
   etiqueta, el teclado, decir lo que comí y tu comida de siempre; y qué comer
   antes y después de entrenar.
+- `fotos.js`: la foto de la comida, para aprobar: el visor, la miniatura de «¿Qué es?», la tira «Tu día en fotos» y la hoja de cada foto, con los platos dibujados.
 - `inicio.js`: Inicio con sus bloques, personalizar, y los gráficos chicos.
 - `mas.js`: la hoja del «+», con el peso y las medidas.
 - `progreso.js`: Progreso, con la estrategia y las metas.
 - `sueno.js`: Sueño.
 - `perfil.js`: Perfil.
-- `ascent.js`: Ascent, arriba de Hábitos, sin vincular y vinculada.
+- `ascent.js`: Ascent, abajo de Hábitos y con su señal, sin vincular y vinculada, y la invitación de Inicio.
 - `habitos.js`: Hábitos: el editor, «Tu mes» y los primeros hábitos.
 - `atajos.js`: la guía del cargador, con un iPhone dibujado.
-- `suscripcion.js`: la propuesta de suscripción (D40), sin compras de verdad.
+- `avisos.js`: los avisos en la pantalla bloqueada, con la regla de verdad.
+- `suscripcion.js`: la pantalla de pago y Tu suscripción (D40), sin compras de verdad.
 - `widgets.js`: los widgets, en la pantalla de inicio, la bloqueada y StandBy, con su sección.
 - `widgets-nuevos.js`: la propuesta de widgets (D43), para aprobar.
+- `saludo.js`: el saludo del día, arriba de Inicio, y su hoja para probarlo.
 - `tienda.js`: la sección «Tienda»: el ícono y las capturas de la App Store, en es y en.
 - `galeria.js`: la página y las seis secciones, con el gesto de Ascent y el
   «+» en la barra.

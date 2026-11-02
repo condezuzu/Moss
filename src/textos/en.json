@@ -146,6 +146,62 @@
     "menor": {
       "titulo": "Moss is for ages 16 and up",
       "texto": "According to Health, you're not 16 yet. When you are, we'll be here."
+    },
+    "intro": {
+      "saltar": "Skip",
+      "comida": {
+        "titulo": "Log it in seconds",
+        "texto": "Say it all at once, search it or scan it. Your usual meal takes two taps, and your targets adjust every week.",
+        "frase": "“two scrambled eggs, a toast and a coffee with milk”",
+        "filas": [
+          "Scrambled eggs",
+          "Toast",
+          "Coffee with milk"
+        ],
+        "porciones": [
+          "2 eggs",
+          "1 slice",
+          "1 cup"
+        ],
+        "total": "{n} kcal, in a single sentence"
+      },
+      "base": {
+        "titulo": "Real food, no guessing",
+        "texto": "A reviewed database, with the names used where you live. No photo AI: you choose what you ate and see where every number comes from.",
+        "busca": "avocado",
+        "filas": [
+          "Avocado",
+          "Breaded steak",
+          "Dulce de leche"
+        ],
+        "porciones": [
+          "½ avocado",
+          "1 regular",
+          "1 tbsp"
+        ],
+        "verificado": "Checked against a second official table",
+        "sinIA": "No photo AI"
+      },
+      "sueno": {
+        "titulo": "Your sleep, too",
+        "texto": "With a watch or a ring, what they measure. With just your iPhone, Moss estimates it and asks when it isn’t sure.",
+        "anoche": "Last night",
+        "teDormiste": "Fell asleep",
+        "teDespertaste": "Woke up",
+        "deuda": "Debt",
+        "semanas": "Your last two weeks"
+      },
+      "juntos": {
+        "titulo": "Food and sleep, together",
+        "texto": "Sleeping too little makes people eat about 200 to 385 more kcal a day. Food apps can’t see your night and sleep apps can’t see your plate. Moss sees both."
+      },
+      "precio": {
+        "titulo": "Try it free for {n} days",
+        "texto": "Moss is paid: after the trial, {anual} per year or {mensual} per month. Cancel anytime in Settings.",
+        "nota": "No ads. Moss doesn’t sell your data.",
+        "tituloSinPrueba": "Moss is paid",
+        "textoSinPrueba": "{anual} per year or {mensual} per month. Cancel anytime in Settings."
+      }
     }
   },
   "comida": {
@@ -398,6 +454,44 @@
       "cambiar": "Take another",
       "borrar": "Delete photo",
       "nota": "The photo stays only on this phone and in its iCloud backup: it isn’t uploaded to your account."
+    },
+    "fotoDiario": {
+      "sacar": "Take a photo",
+      "noSeAnaliza": "Moss doesn’t analyze the photo. It’s just for your diary.",
+      "visor": "Photo of your meal",
+      "disparar": "Take the photo",
+      "tusFotos": "Your photos",
+      "elegir": "Choose from your photos",
+      "soloLaQueElijas": "Moss only gets the photo you choose.",
+      "queEs": "What is it? Say it or type it",
+      "ayuda": "Tap the mic and say what it is. Moss works it out from its food database.",
+      "otraFoto": "Retake",
+      "borrar": "Delete",
+      "despues": "Log it later",
+      "quedo": "Your photo is in your day, not logged yet",
+      "agregada": "Photo added {comida}",
+      "borrada": "Photo deleted",
+      "tira": "Your day in photos",
+      "cuantas": {
+        "uno": "{n} photo",
+        "otros": "{n} photos"
+      },
+      "pendientes": {
+        "uno": "{n} not logged",
+        "otros": "{n} not logged"
+      },
+      "sinAnotar": "Not logged",
+      "sinAnotarTexto": "You haven’t said what this is yet. Log it whenever you like.",
+      "anotar": "Log it",
+      "loAnotado": "What you logged",
+      "ejemplos": {
+        "fideos": "Pasta with tomato sauce and grated parmesan",
+        "milanesa": "Milanesa with mashed potatoes and salad",
+        "desayuno": "Coffee with milk and two slices of toast with dulce de leche",
+        "yogur": "Fruit yogurt with granola and a banana",
+        "pizza": "Two slices of cheese pizza",
+        "pollo": "Grilled chicken breast with rice"
+      }
     },
     "verificado": "Verified",
     "sinVerificar": "Not verified",
@@ -1042,8 +1136,65 @@
     },
     "fuentesTexto": "Moss uses a single source per night: the one you choose in Profile › Devices or, if not, the one that best tells sleep from wake. It never adds two together. Without a watch or a ring, it estimates the night with your phone. If a night is missing, it stays grey: nothing is made up.",
     "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor.",
+    "vacio": {
+      "ejemplo": "Sample",
+      "arriba": "Here’s how it’ll look",
+      "titulo": "Your first night shows up here",
+      "texto": "Moss puts each night together on its own. Choose how to start:",
+      "conReloj": {
+        "titulo": "With a watch or ring",
+        "texto": "Connect Health and your nights arrive on their own.",
+        "boton": "Connect Health"
+      },
+      "sinReloj": {
+        "titulo": "Just your iPhone",
+        "texto": "Tomorrow Moss estimates your night from your phone and asks if it got it right.",
+        "boton": "Use my iPhone",
+        "listo": "Done: it’ll ask you tomorrow."
+      },
+      "tira": "Your nights add up here.",
+      "tiraPocas": {
+        "uno": "{n} night out of the last 14",
+        "otros": "{n} nights out of the last 14"
+      },
+      "progreso": {
+        "uno": "{a} of {n} night",
+        "otros": "{a} of {n} nights"
+      },
+      "faltan": {
+        "uno": "{n} more night",
+        "otros": "{n} more nights"
+      },
+      "paraSaber": "to know your debt",
+      "deuda": "With {minimo} of the last 14 nights, Moss works out how much sleep you’re short.",
+      "calidad": "Shows up after your first night, with where each point comes from.",
+      "horario": "With {minimo} nights you’ll see when you fall asleep and wake up, and how regular it is.",
+      "vitales": "These come with a watch or ring. After {minimo} nights, they’re compared with your usual.",
+      "loTuyo": "With {minimo} earlier nights, Moss tells you if this is usual for you.",
+      "vitalesSinReloj": "With a watch or ring, your overnight heart rate, variability and breathing show up here.",
+      "precision": "The more Moss knows about your night, the more precise it is:",
+      "fuentes": "Once your first night arrives, you’ll see here which device each number comes from and how reliable it is.",
+      "noLlego": "Didn’t arrive? What to check"
+    },
+    "graficos": {
+      "deMenos": "Short",
+      "deMas": "Extra",
+      "necesitas": "You need {t}",
+      "menos": "{t} short",
+      "mas": "{t} extra",
+      "justo": "just what you need",
+      "sinDatos": "no data: doesn’t add or subtract",
+      "noCuenta": "low confidence: doesn’t count",
+      "sinFaltar": "no debt",
+      "medidorFin": {
+        "uno": "one night ({t})",
+        "otros": "{n} nights ({t})"
+      },
+      "alDia": "You’ve been getting the sleep you need.",
+      "desvio": "± {n} min",
+      "deSiempre": "Your usual time"
+    },
     "ejemplo": "These are sample nights: yours show up once you connect Health or after your first night with Moss.",
-    "ejemploSinPremium": "These are sample nights: yours show up once a watch or a ring writes your sleep to Health.",
     "unidad": {
       "frecuencia": "bpm",
       "variabilidad": "ms",
@@ -1434,7 +1585,7 @@
     "informacionAscent": "If you use Ascent and link both apps, this works on its own:",
     "fuentes": {
       "usda": "Foods: USDA FoodData Central (public domain)",
-      "off": "Products: Open Food Facts, under the ODbL",
+      "off": "Products: Open Food Facts, under the ODbL. The data Moss uses: condezuzu.github.io/moss-app/datos/marcas-open-food-facts.txt",
       "taco": "Verification: TACO, Tabela Brasileira de Composição de Alimentos, 4th ed. (NEPA-UNICAMP, 2011)",
       "ciqual": "Verification: Anses, Ciqual food composition table 2025 (19/11/2025), Licence Ouverte 2.0",
       "cofid": "Verification: McCance and Widdowson's The Composition of Foods Integrated Dataset 2021, Public Health England. Contains public sector information licensed under the Open Government Licence v3.0",
@@ -1587,10 +1738,19 @@
       "pesarse": "Morning weigh-in",
       "pesarseTexto": "Shortly after you wake up, after the bathroom and before breakfast: the trend comes from weighing the same way. If you already weighed in, it stays quiet.",
       "pesarseControl": "Check-in day",
-      "pesarseTodos": "Every day"
+      "pesarseTodos": "Every day",
+      "falta": "If I'm running low on something",
+      "faltaTexto": "A short notification with what's missing (protein, calories or water) and an idea of what to eat. One or two a day at most, and only on days you've logged something."
     },
     "cambiarCuenta": "Switch account",
-    "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account."
+    "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account.",
+    "mini": {
+      "bajar": "Down to",
+      "subir": "Up to",
+      "mantener": "Goal",
+      "fuentes": "Food and star data",
+      "ascent": "Your training and food, together"
+    }
   },
   "fecha": {
     "dias": [
@@ -1711,6 +1871,19 @@
     "mejorConectadas": "Fine alone, better linked",
     "conAscent": "With Ascent",
     "desvincular": "Unlink from Profile.",
+    "senal": {
+      "vincular": "Link with Ascent",
+      "marca": "Ascent",
+      "hoy": "Today: {sesion}",
+      "ayer": "Yesterday: {sesion}",
+      "dia": "{dia}: {sesion}"
+    },
+    "invitacion": {
+      "titulo": "You have Ascent on this iPhone",
+      "texto": "Link it and your sleep and food meet your training.",
+      "vincular": "Link",
+      "ahoraNo": "Not now"
+    },
     "hoy": {
       "titulo": "Today in Ascent",
       "sesion": "{nombre} · {min} min · {series} sets",
@@ -2096,7 +2269,6 @@
     }
   },
   "recordatorios": {
-    "cuerpo": "When you can, log your {comida}.",
     "dormirTextos": {
       "enUnRato": "You should head to bed in {tiempo}.",
       "estaNoche": "Tonight, bed at {hora}.",
@@ -2117,7 +2289,94 @@
     },
     "meVoyADormir": "Going to bed",
     "buenasNoches": "Good night. Moss noted the time.",
-    "habito": "{habito}, when you can.",
+    "sinAnotar": {
+      "desayuno": "Breakfast isn't logged yet",
+      "almuerzo": "Lunch isn't logged yet",
+      "merienda": "Your afternoon snack isn't logged yet",
+      "cena": "Dinner isn't logged yet",
+      "snack": "Your snack isn't logged yet"
+    },
+    "falta": {
+      "y": "{a} and {b}",
+      "ye": "{a} and {b}",
+      "ideas": {
+        "yogurGriego": "a Greek yogurt",
+        "huevos": "two eggs",
+        "atun": "a can of tuna",
+        "pollo": "150 g of chicken",
+        "lentejas": "a bowl of lentils",
+        "leche": "a glass of milk",
+        "tofu": "150 g of tofu",
+        "panConHuevo": "toast with an egg",
+        "avena": "a bowl of oatmeal",
+        "sandwich": "a sandwich",
+        "arrozConHuevo": "rice with an egg",
+        "frutaConYogur": "fruit with yogurt",
+        "frutosSecos": "a handful of nuts",
+        "pasta": "a plate of pasta"
+      },
+      "proteina": {
+        "alcanza": {
+          "uno": {
+            "0": "You're {cuanto} g short on protein: {idea} will do it.",
+            "1": "{cuanto} g of protein to go: {idea}.",
+            "2": "To hit today's protein: {idea}."
+          },
+          "dos": {
+            "0": "You're {cuanto} g short on protein: {idea} will do it.",
+            "1": "{cuanto} g of protein to go: {idea}.",
+            "2": "To hit today's protein: {idea}."
+          }
+        },
+        "acerca": {
+          "uno": {
+            "0": "You're {cuanto} g short on protein: {idea} gets you closer.",
+            "1": "You're {cuanto} g short on protein. Start with {idea}."
+          },
+          "dos": {
+            "0": "You're {cuanto} g short on protein: {idea} get you closer.",
+            "1": "You're {cuanto} g short on protein. Start with {idea}."
+          }
+        },
+        "sinNumero": {
+          "uno": "Low on protein today: {idea} would help.",
+          "dos": "Low on protein today: {idea} would help."
+        }
+      },
+      "calorias": {
+        "alcanza": {
+          "uno": {
+            "0": "You're {cuanto} kcal short: {idea} will do it.",
+            "1": "{cuanto} kcal to go: {idea}.",
+            "2": "To reach today's calories: {idea}."
+          },
+          "dos": {
+            "0": "You're {cuanto} kcal short: {idea} will do it.",
+            "1": "{cuanto} kcal to go: {idea}.",
+            "2": "To reach today's calories: {idea}."
+          }
+        },
+        "acerca": {
+          "uno": {
+            "0": "You're {cuanto} kcal short: {idea} gets you closer.",
+            "1": "You're {cuanto} kcal short. Start with {idea}."
+          },
+          "dos": {
+            "0": "You're {cuanto} kcal short: {idea} get you closer.",
+            "1": "You're {cuanto} kcal short. Start with {idea}."
+          }
+        },
+        "sinNumero": {
+          "uno": "Low on calories today: {idea} would help.",
+          "dos": "Low on calories today: {idea} would help."
+        }
+      },
+      "agua": {
+        "0": "{vasos} glasses of water to go: have one now.",
+        "1": "You're low on water today: have a glass now.",
+        "2": "A glass of water now would do you good."
+      }
+    },
     "horario": {
       "desayuno": "Time for breakfast",
       "almuerzo": "Time for lunch",
@@ -2125,10 +2384,477 @@
       "cena": "Time for dinner",
       "snack": "Time for your snack"
     },
-    "conPlan": "{hora}: {plan}.",
-    "pesarse": "Good time to weigh in: after the bathroom and before breakfast.",
-    "pesarseControl": "Check-in day: good time to weigh in, after the bathroom and before breakfast.",
-    "pruebaTermina": "Your Moss Premium trial ends in two days. If you don't want to continue, cancel it in Settings."
+    "conPlan": "{hora}: {plan}",
+    "pesarse": "Good time to weigh in",
+    "pesarseControl": "Check-in day: weigh in before breakfast",
+    "pruebaTermina": "Your Moss trial ends in two days"
+  },
+  "saludo": {
+    "comidas": {
+      "desayuno": "breakfast",
+      "almuerzo": "lunch",
+      "merienda": "your afternoon snack",
+      "cena": "dinner",
+      "snack": "your snack"
+    },
+    "frases": {
+      "primerDia": {
+        "dice1": "I barely know anything about you yet. Log one thing and we're underway.",
+        "dice2": "Hi. This fills in as you log what you eat.",
+        "sugiere1": "Start simple: log the next thing you eat.",
+        "sugiere2": "Today only takes one thing: log a meal.",
+        "pregunta1": "What was the last thing you ate? That's a good place to start."
+      },
+      "primerDiaManana": {
+        "sugiere1": "A good first step: log breakfast, whatever it was.",
+        "pregunta1": "Had breakfast yet? Log it and we're underway."
+      },
+      "primerDiaNoche": {
+        "dice1": "It's not too late to start: dinner is enough for today.",
+        "pregunta1": "Had dinner yet? Log that and we'll pick it up tomorrow."
+      },
+      "primerAnotado": {
+        "dice1": "First meal logged. Now there's something to work with.",
+        "dice2": "That's your day starting to take shape.",
+        "sugiere1": "Good start. If you eat anything else, add it when you can."
+      },
+      "suenoPoco": {
+        "dice1": "Short night: {horas}. A quiet day counts too.",
+        "dice2": "The night came up short: {horas}. It happens, and tonight can make up some.",
+        "dice3": "Less sleep than you need: {horas}. One day doesn't change anything.",
+        "sugiere1": "On {horas} of sleep, don't ask too much of your body today.",
+        "sugiere2": "{horas} last night. If you find a moment, a short nap helps.",
+        "pregunta1": "Only {horas} last night. Any room for a short nap today?"
+      },
+      "suenoBien": {
+        "dice1": "{horas} of sleep: just what you need.",
+        "dice2": "A good place to start from: {horas} of sleep.",
+        "dice3": "A solid night: {horas}. You've got something in the tank today.",
+        "dice4": "Last night delivered: {horas}. Nice way to start.",
+        "dice5": "A full night: {horas}.",
+        "sugiere1": "Make the most of it: {horas} of sleep doesn't happen every day.",
+        "pregunta1": "Can you feel it? You slept {horas} last night.",
+        "pregunta2": "How's the morning? That was {horas} of sleep."
+      },
+      "suenoNormal": {
+        "dice1": "{horas} last night. Right in the middle.",
+        "dice2": "Enough to get going: {horas} of sleep.",
+        "dice3": "Another night: {horas}.",
+        "sugiere1": "A little earlier to bed and you'd hit your number: {horas} last night.",
+        "pregunta1": "How do you feel? You slept {horas}."
+      },
+      "caraMala": {
+        "dice1": "The numbers say {horas}; you say you didn't rest. I believe you.",
+        "dice2": "{horas} of sleep, but you didn't feel rested. It happens. Take today slowly."
+      },
+      "caraBuena": {
+        "dice1": "Only {horas}, but you woke up fine. Even better.",
+        "dice2": "A short night, {horas}, and you still feel rested. That counts."
+      },
+      "deuda": {
+        "dice1": "You have {deuda} of sleep to catch up on from these two weeks. It comes back slowly.",
+        "sugiere1": "You're {deuda} behind on sleep. A little earlier for a few nights and it's gone.",
+        "pregunta1": "Feeling it? You're {deuda} behind on sleep."
+      },
+      "pocoYEntrena": {
+        "dice1": "Short night, training at {hora}. If it feels harder, that's the sleep, not you.",
+        "sugiere1": "{horas} of sleep and a session at {hora}: no need to chase records today.",
+        "sugiere2": "Training on {horas} of sleep today. Ease off a little if you need to.",
+        "pregunta1": "Still training at {hora}? On {horas} of sleep, maybe don't push as hard."
+      },
+      "pocoYDesayuno": {
+        "sugiere1": "Short night and you train today: don't skip breakfast.",
+        "sugiere2": "Training today after a short night. Start with a proper breakfast.",
+        "pregunta1": "Had breakfast? With little sleep and training today, eating first helps."
+      },
+      "bienYEntrena": {
+        "dice1": "Slept well, training at {hora}. Good day to go for a bit more.",
+        "dice2": "{horas} of sleep and a session at {hora}: everything's on your side today.",
+        "sugiere1": "If you wanted to try something new in training, you slept for it.",
+        "pregunta1": "A good night and a session at {hora}. Up for a little more today?"
+      },
+      "descansoPoco": {
+        "dice1": "Short night, and luckily no training today.",
+        "dice2": "{horas} of sleep and no session today: that works out."
+      },
+      "descansoBien": {
+        "dice1": "No training today and you slept {horas}. A day with no rush.",
+        "pregunta1": "Rest day after {horas} of sleep. Any plans?"
+      },
+      "entrenaHoy": {
+        "dice1": "Training's at {hora} today.",
+        "dice2": "Session at {hora} today. Your usual food is enough.",
+        "sugiere1": "You train at {hora}: plan your meals around it and you're set.",
+        "pregunta1": "Is the {hora} session still on?"
+      },
+      "descanso": {
+        "dice1": "No training today. Your body makes progress resting too.",
+        "dice2": "No session today: eat as usual. No need to cut anything.",
+        "pregunta1": "A day off training. Maybe use it for an early night?"
+      },
+      "previa": {
+        "dice1": "{comida} is your pre-workout for {hora}: carbs and a bit of protein.",
+        "sugiere1": "You train at {hora}: make sure {comida} has carbs and a bit of protein.",
+        "sugiere2": "With a {hora} session, I'd have your carbs at {comida}.",
+        "pregunta1": "What's for {comida}? Before training, something with carbs works well."
+      },
+      "previaCarbos": {
+        "dice1": "{comida} comes before training: about {c} g of carbs is just right.",
+        "sugiere1": "To get to {hora} feeling good: about {c} g of carbs at {comida}.",
+        "sugiere2": "You train at {hora}, so go for about {c} g of carbs at {comida}.",
+        "pregunta1": "Got {c} g of carbs at {comida}? You train at {hora}."
+      },
+      "previaLiviana": {
+        "dice1": "Before training, something light at {comida} sits better.",
+        "sugiere1": "You train at {hora}: keep {comida} light, low in fat and fiber.",
+        "pregunta1": "{comida} before training? Better something that won't sit heavy."
+      },
+      "snackPrevio": {
+        "dice1": "For {hora}, something small and easy is all you need.",
+        "sugiere1": "If you eat before training, keep it simple: fruit, bread or juice.",
+        "pregunta1": "Hungry by {hora}? A piece of fruit or some bread is plenty."
+      },
+      "snackPrevioCarbos": {
+        "dice1": "About {c} g of carbs and you're set for {hora}. Fruit is enough.",
+        "sugiere1": "Before {hora}, about {c} g of carbs: some fruit or bread will do."
+      },
+      "ayunasLarga": {
+        "dice1": "You train at {hora} and haven't eaten. A piece of fruit first can help.",
+        "sugiere1": "If you train fasted for over an hour, something small beforehand can help.",
+        "pregunta1": "Fasted at {hora}? For a long session, some fruit or bread first is better."
+      },
+      "sesionLarga": {
+        "sugiere1": "Long session at {hora}: bring something with carbs along.",
+        "pregunta1": "Bringing food for the {hora} session? Past 90 minutes, it helps."
+      },
+      "cafe": {
+        "dice1": "Coffee's fine until {hora}. After that, it can cost you sleep.",
+        "sugiere1": "If you want coffee before training, have it before {hora}: later, it costs you sleep.",
+        "pregunta1": "Coffee before training? Before {hora}, so it doesn't cut into your sleep."
+      },
+      "despues": {
+        "dice1": "{comida} comes after training: something with protein, whatever you have.",
+        "sugiere1": "After training, make sure {comida} has protein.",
+        "pregunta1": "Anything with protein for {comida}? After training, that helps most."
+      },
+      "despuesProteina": {
+        "dice1": "About {p} g of protein at {comida} and training is nicely wrapped up.",
+        "dice2": "Protein does its thing after training. At {comida}, about {p} g.",
+        "sugiere1": "After training, protein is what helps: about {p} g at {comida}.",
+        "sugiere2": "I'd build {comida} around protein: about {p} g, after training.",
+        "pregunta1": "What's for {comida}? After training, about {p} g of protein would be ideal."
+      },
+      "pronto": {
+        "dice1": "With training and hours without food, don't let {comida} wait too long.",
+        "sugiere1": "After training on an empty stomach, something with protein as soon as you can.",
+        "pregunta1": "Eaten since training? If not, something with protein as soon as you can."
+      },
+      "prontoProteina": {
+        "sugiere1": "About {p} g of protein as soon as you can: training without food calls for it.",
+        "pregunta1": "Eaten since training? About {p} g of protein, as soon as you can."
+      },
+      "reponer": {
+        "dice1": "Another session at {hora}. Carbs at {comida} will get you there.",
+        "sugiere1": "You train again at {hora}: carbs now and again before the session.",
+        "pregunta1": "Second session at {hora}? In between, carbs help most."
+      },
+      "dormirProteina": {
+        "dice1": "A yogurt before bed and protein's done: about {p} g to go.",
+        "sugiere1": "You're about {p} g short on protein: yogurt or milk before bed counts too.",
+        "pregunta1": "Room for a yogurt? About {p} g of protein left to finish the day."
+      },
+      "dormirProteinaPalabras": {
+        "sugiere1": "A little short on protein: yogurt or milk before bed counts too.",
+        "pregunta1": "Room for a yogurt? That's the protein you're missing."
+      },
+      "hechoFaltaProteina": {
+        "dice1": "You've trained and you're about {p} g short on protein: {comida} can cover it.",
+        "dice2": "Session done. All that's left is about {p} g of protein.",
+        "sugiere1": "You trained today, so at {comida} I'd go for about {p} g of protein.",
+        "pregunta1": "Today's session is done. How about {p} g of protein at {comida}?"
+      },
+      "hechoFaltaPalabras": {
+        "dice1": "Session done. Protein's what's left.",
+        "sugiere1": "You've trained: now, {comida} with some protein."
+      },
+      "hechoListo": {
+        "dice1": "Session done, protein covered. Time to rest.",
+        "dice2": "Trained, and protein's in. Next up is a good night's sleep.",
+        "pregunta1": "You trained and ate well. What more could you ask of a {dia}?"
+      },
+      "mananaEntrena": {
+        "dice1": "Training tomorrow at {entreno}. Tonight, rest.",
+        "pregunta1": "Training at {entreno} tomorrow. Gear ready?"
+      },
+      "sinDesayuno": {
+        "dice1": "Breakfast isn't logged yet. Whenever you're ready.",
+        "sugiere1": "When you have breakfast, log it: the rest of the day falls into place.",
+        "pregunta1": "Had breakfast? Log it before you forget.",
+        "pregunta2": "What's for breakfast today?"
+      },
+      "sinAlmuerzo": {
+        "dice1": "Lunch isn't in yet. No rush.",
+        "sugiere1": "If you've had lunch, now's a good time to log it.",
+        "pregunta1": "What's for lunch?",
+        "pregunta2": "Had lunch? Log it when you can."
+      },
+      "sinMerienda": {
+        "dice1": "This is usually your afternoon snack time, and it's not in yet.",
+        "sugiere1": "If you're having an afternoon snack, now's the time.",
+        "pregunta1": "Afternoon snack today?"
+      },
+      "sinCena": {
+        "dice1": "Dinner's still up in the air.",
+        "sugiere1": "When you have dinner, log it and the day's done.",
+        "pregunta1": "What's for dinner?",
+        "pregunta2": "Had dinner? If so, log it and you're done."
+      },
+      "nadaHoy": {
+        "dice1": "Today's still blank. One meal is enough to get going.",
+        "sugiere1": "If it's all piled up, say it in one go: Moss sorts it out.",
+        "pregunta1": "Nothing logged today yet. Start with the last thing you ate?",
+        "pregunta2": "Busy day? You can say all of today in one go."
+      },
+      "quedaAlmuerzo": {
+        "dice1": "For lunch and whatever follows, you have about {kcal} kcal left.",
+        "dice2": "Still about {kcal} kcal, and lunch ahead of you.",
+        "pregunta1": "What's for lunch? You've got about {kcal} kcal left today."
+      },
+      "quedaCena": {
+        "dice1": "Dinner's still to come, and there's room: about {kcal} kcal.",
+        "dice2": "About {kcal} kcal for dinner. Plenty for a proper meal.",
+        "sugiere1": "Dinner can be a real meal: about {kcal} kcal left.",
+        "pregunta1": "What's for dinner? You have about {kcal} kcal for it."
+      },
+      "cenaAjustada": {
+        "dice1": "Not much room for dinner, about {kcal} kcal. Something simple works.",
+        "sugiere1": "About {kcal} kcal left for dinner: protein and vegetables go a long way.",
+        "pregunta1": "Dinner with {kcal} kcal? Protein and vegetables stretch furthest."
+      },
+      "metaAntesDeCena": {
+        "dice1": "You hit your target before dinner. If you're hungry, eat anyway: one day changes nothing.",
+        "sugiere1": "Have dinner anyway, even if it goes over. Something simple, then rest.",
+        "pregunta1": "At your target with dinner to go? Eat anyway, something simple."
+      },
+      "queda": {
+        "dice1": "About {kcal} kcal left for the rest of today.",
+        "dice2": "There's room: about {kcal} kcal to go.",
+        "dice3": "Plenty of day left, and about {kcal} kcal.",
+        "dice4": "Still about {kcal} kcal for today.",
+        "sugiere1": "If you get hungry this afternoon, there's about {kcal} kcal.",
+        "pregunta1": "Something to snack on? You have about {kcal} kcal left."
+      },
+      "quedaNoche": {
+        "dice1": "About {kcal} kcal still left after dinner. In case you get hungry.",
+        "pregunta1": "Anything else before bed? About {kcal} kcal left."
+      },
+      "quedaPalabras": {
+        "dice1": "There's still room in the day. No rush.",
+        "dice2": "You've got room. Whatever comes next, log it and you're done.",
+        "sugiere1": "Still room for whatever you feel like eating."
+      },
+      "ritmoBien": {
+        "dice1": "You're at a good pace for this time of day.",
+        "dice2": "The day's been well spread out so far.",
+        "dice3": "You're right where I'd expect at this hour.",
+        "dice4": "Nice and even: nothing to adjust for now."
+      },
+      "ajustadoFaltaProteina": {
+        "dice1": "Calories look good; what's missing is about {p} g of protein.",
+        "sugiere1": "{kcal} kcal left and {p} g of protein to go: something lean goes further.",
+        "pregunta1": "Something high in protein, low in fat? {p} g to go and {kcal} kcal left."
+      },
+      "ajustadoFaltaPalabras": {
+        "dice1": "Calories are spot on, but you're short on protein for tonight.",
+        "sugiere1": "What fits best in the rest of today is something with protein."
+      },
+      "proteinaFalta": {
+        "dice1": "Protein's a little behind: about {p} g to go.",
+        "dice2": "You're about {p} g short on protein, with plenty of calories to get there.",
+        "sugiere1": "I'd start the next meal with protein: about {p} g to go.",
+        "pregunta1": "How's protein looking? About {p} g to go, and there's room for it."
+      },
+      "proteinaFaltaPalabras": {
+        "dice1": "Protein's a little behind, and there's room to catch up.",
+        "sugiere1": "At your next meal, I'd start with protein."
+      },
+      "proteinaLista": {
+        "dice1": "Protein's covered. The rest is up to you.",
+        "dice2": "You've hit today's protein. The rest, no rush.",
+        "sugiere1": "With protein sorted, the rest of today is for whatever you like."
+      },
+      "justo": {
+        "dice1": "You finished today right on target.",
+        "dice2": "A well-rounded day of eating. Nothing to adjust.",
+        "pregunta1": "See how today went? Right on target."
+      },
+      "justoYProteina": {
+        "dice1": "Calories and protein, both in the right place.",
+        "dice2": "You hit your target and your protein. A good day of eating."
+      },
+      "pasadoHoy": {
+        "dice1": "You went over by about {kcal} kcal today. One day doesn't move the trend.",
+        "dice2": "About {kcal} kcal over today. What matters is it's logged.",
+        "dice3": "Over target by about {kcal} kcal. Tomorrow, business as usual: nothing to cut.",
+        "sugiere1": "You went a little over. Log it all anyway: that keeps the week's numbers right.",
+        "pregunta1": "Over today? It happens. Sleep well and carry on as usual tomorrow."
+      },
+      "comioPoco": {
+        "dice1": "You're well under your target today. If you're hungry, there's room.",
+        "pregunta1": "Eat anything you didn't log? It happens."
+      },
+      "comioPocoKcal": {
+        "dice1": "About {kcal} kcal unused. If something didn't get logged, there's still time.",
+        "sugiere1": "If you're hungry, no need to hold out: {kcal} kcal left."
+      },
+      "ayerPasado": {
+        "dice1": "Yesterday was a big day. Today, your usual target.",
+        "dice2": "Yesterday's logged and done. Today you eat as usual, nothing to cut.",
+        "dice3": "You went over by about {kcal} kcal yesterday. Nothing needs to change today.",
+        "pregunta1": "A lot of food yesterday? The plan doesn't change: today, the usual."
+      },
+      "ayerJusto": {
+        "dice1": "You finished right on target yesterday. Good precedent.",
+        "dice2": "On target yesterday. Today starts from zero, just the same.",
+        "pregunta1": "Yesterday came out just right. Same again?"
+      },
+      "ayerPoco": {
+        "dice1": "Not much food logged for yesterday. If something's missing, it's quick to add.",
+        "pregunta1": "Not much logged yesterday. Miss anything? You can still add it."
+      },
+      "ayerNada": {
+        "dice1": "Nothing logged yesterday. No problem: today carries on.",
+        "sugiere1": "A day without logging changes nothing. Start with today."
+      },
+      "camaHoy": {
+        "dice1": "Bed at {hora}, and you get {horas} of sleep.",
+        "dice2": "To wake at {despertar}, bed at {hora} tonight.",
+        "dice3": "Tonight starts at {hora}. That's room for {horas} of sleep.",
+        "dice4": "Tonight, bed at {hora}.",
+        "sugiere1": "I'd aim for bed at {hora}: that's {horas} of sleep.",
+        "sugiere2": "Start winding down: bed at {hora}.",
+        "pregunta1": "Does bed at {hora} work? That gets you {horas}.",
+        "pregunta2": "What time tomorrow? If it's {despertar}, bed at {hora}."
+      },
+      "camaCerca": {
+        "dice1": "Bedtime in {tiempo}.",
+        "sugiere1": "Bed in {tiempo}. Good time to dim the lights.",
+        "sugiere2": "Put this down soon: bed at {hora}.",
+        "pregunta1": "Winding down? Bed in {tiempo}."
+      },
+      "camaPasada": {
+        "dice1": "If you go to bed now, you still get {horas}.",
+        "sugiere1": "There's still {horas} of sleep ahead, if you turn in now.",
+        "pregunta1": "Still up? Going to bed now gets you {horas}."
+      },
+      "camaTarde": {
+        "dice1": "It got late. Whatever's left can wait until tomorrow.",
+        "sugiere1": "Everything's still there tomorrow. For now, sleep what you can."
+      },
+      "camaYDeuda": {
+        "dice1": "You're {deuda} behind on sleep: bed at {hora} starts to fix that.",
+        "sugiere1": "With {deuda} of sleep to catch up on, bed at {hora} tonight.",
+        "pregunta1": "Bed at {hora}? You're carrying {deuda} of sleep debt, and it would help."
+      },
+      "camaYPocoSueno": {
+        "dice1": "{anoche} last night. Bed at {hora} tonight and you start catching up.",
+        "sugiere1": "You slept {anoche} last night: tonight, if you can, bed at {hora}.",
+        "pregunta1": "After {anoche} last night, how about bed at {hora}?"
+      },
+      "camaYMananaEntrena": {
+        "dice1": "Training at {entreno} tomorrow: bed at {hora} gets you {horas}.",
+        "sugiere1": "To be ready for tomorrow's session, bed at {hora}.",
+        "pregunta1": "Tomorrow at {entreno}? Then bed at {hora}."
+      },
+      "camaYCena": {
+        "dice1": "Dinner's still to come and bed's at {hora}. The sooner you eat, the better.",
+        "pregunta1": "Eating soon? Bedtime's at {hora}."
+      },
+      "madrugada": {
+        "dice1": "It's still your day: anything you log now counts for today.",
+        "dice2": "At this hour, the best thing left in today is sleep.",
+        "pregunta1": "Hard to fall asleep tonight? Put the phone down a while and try again."
+      },
+      "nadaManana": {
+        "dice1": "Good morning. The usual today: log what you eat and Moss does the math.",
+        "dice2": "Nothing urgent for now. Have a good day."
+      },
+      "nadaTarde": {
+        "dice1": "Good afternoon. All in order here.",
+        "dice2": "No news for now. Carry on."
+      },
+      "nadaNoche": {
+        "dice1": "Good evening. Everything's in place for today.",
+        "dice2": "Nothing pending. Rest well."
+      },
+      "lunes": {
+        "dice1": "Monday. Another week ahead, nothing to carry over.",
+        "sugiere1": "The week's starting: logging today is enough."
+      },
+      "finDeSemana": {
+        "dice1": "It's {dia}. Days like this count too, perfect or not.",
+        "sugiere1": "Weekend: eat what you like and log it. That's enough.",
+        "pregunta1": "Any plans this {dia}? Whatever you eat, log it later."
+      },
+      "diaNuevo": {
+        "dice1": "New day, nothing logged yet. No rush.",
+        "dice2": "Today starts from zero, like every day.",
+        "sugiere1": "Start the usual way: log the first thing you eat.",
+        "pregunta1": "How's the day looking? Log the first thing you eat and you're set."
+      },
+      "metaDeHoy": {
+        "dice1": "Today it's {kcal} kcal and {p} g of protein. The usual.",
+        "dice2": "New day: {kcal} kcal ahead of you.",
+        "sugiere1": "For today, about {p} g of protein; the rest falls into place.",
+        "pregunta1": "What's on today? You have {kcal} kcal to spread around."
+      },
+      "trasDesayuno": {
+        "dice1": "Breakfast logged. Nothing pending until lunch.",
+        "dice2": "Breakfast's in. Lunch is next.",
+        "pregunta1": "Breakfast done. Know what's for lunch?"
+      },
+      "trasAlmuerzo": {
+        "dice1": "Lunch logged. No rush until tonight.",
+        "dice2": "Lunch is done, and the day's in order.",
+        "sugiere1": "With lunch logged, the afternoon's free.",
+        "pregunta1": "How was lunch? It's logged; next is the afternoon."
+      },
+      "trasMerienda": {
+        "dice1": "Afternoon snack logged. Dinner's next.",
+        "dice2": "With your snack in, dinner can wait.",
+        "sugiere1": "Snack done: dinner whenever you're hungry.",
+        "pregunta1": "How was your snack? Dinner's later."
+      },
+      "pensarCena": {
+        "dice1": "Dinner's next. Still time to decide.",
+        "sugiere1": "If you're cooking, it's a good time to think about dinner.",
+        "pregunta1": "Thought about dinner yet?",
+        "pregunta2": "Eating in tonight?"
+      },
+      "pensarCenaKcal": {
+        "dice1": "For dinner and whatever else, about {kcal} kcal.",
+        "pregunta1": "Anything in mind for dinner? There's about {kcal} kcal for it."
+      },
+      "diaCerrado": {
+        "dice1": "Dinner logged. That's food done for today.",
+        "dice2": "Today's all logged.",
+        "dice3": "Today's saved. We'll carry on tomorrow.",
+        "dice4": "That's today. Sleep well.",
+        "dice5": "That's enough for today. See you tomorrow.",
+        "sugiere1": "Today's food is done: all that's left is to wind down.",
+        "pregunta1": "How was the day? The food's all logged."
+      },
+      "proteinaAlDia": {
+        "dice1": "Protein's looking good for this time of day.",
+        "dice2": "With the protein you've had, dinner won't need to do all the work.",
+        "sugiere1": "Keep protein like this and you'll get there without thinking about it."
+      },
+      "mitadDelDia": {
+        "dice1": "You're at {pct}% of your target, about right for now.",
+        "dice2": "So far, {pct}% of your target. There's room for what's next.",
+        "pregunta1": "{pct}% of your target at this hour? Just about right."
+      }
+    }
   },
   "entreno": {
     "previa": "You train at {hora}: this is your pre-workout meal.",
@@ -2161,7 +2887,9 @@
       "fuentes": "Sources: ACSM, Academy of Nutrition and Dietetics and Dietitians of Canada (2016); ISSN, Kerksick et al. (2017) and Jäger et al. (2017); Morton et al. (2018); Schoenfeld and Aragon (2018); Gardiner et al. (2023).",
       "medico": "This is general guidance for healthy people. It is not medical advice.",
       "noMostrar": "Don’t show again",
-      "volver": "You can turn it back on in Profile › Training."
+      "volver": "You can turn it back on in Profile › Training.",
+      "nocheCorta": "Sleeping too little makes you hungrier: in studies, people eat about 200 to 385 more kcal that day. It’s normal, and there’s nothing to make up for: your target doesn’t change.",
+      "fuentesNocheCorta": "Sources: Al Khatib et al. (2017); Fenton et al. (2021); Zhu et al. (2019)."
     },
     "perfil": {
       "titulo": "Training",
@@ -2181,7 +2909,8 @@
         "mixta": "Mixed: soccer, HIIT"
       },
       "ver": "What to eat before and after"
-    }
+    },
+    "nocheCorta": "You slept {h}: it’s normal to be hungrier today."
   },
   "widgets": {
     "cuenta": "{n} of {total}",
@@ -2237,82 +2966,123 @@
     "yaEsHora": "It's time"
   },
   "suscripcion": {
-    "titulo": "Moss Premium",
-    "bajada": "Free is enough to log. Premium does the math for you.",
-    "gratisTitulo": "Free, always",
-    "gratis": [
-      "Log food: search, voice, barcode and label",
-      "Habits and your sky",
-      "Your weight and its trend"
-    ],
-    "premiumTitulo": "With Premium",
-    "premium": [
-      "Your goals adjust every week",
-      "Meal plan and shopping list",
-      "Full sleep and bedtime",
-      "All of today: what Moss knows and how it estimates"
-    ],
+    "titulo": "Your subscription",
+    "pago": {
+      "titulo": "Food and sleep, together",
+      "texto": "Sleeping too little makes you hungrier. Food apps can’t see your night and sleep apps can’t see your plate. Moss sees both.",
+      "todoTitulo": "Includes all of Moss",
+      "todo": [
+        "Log your food in seconds, with no photo AI",
+        "Targets that adjust every week",
+        "Your sleep: each night, your schedule and your debt",
+        "Habits, your sky and the widgets"
+      ]
+    },
+    "ejemplo": {
+      "anoche": "Last night",
+      "hoy": "Today",
+      "hambre": "You slept {h}: it’s normal to be hungrier today."
+    },
+    "vencida": {
+      "tituloPrueba": "Your trial has ended",
+      "titulo": "Your subscription has ended",
+      "texto": "Your data is still here, safe: nothing was deleted. To keep using Moss, choose a plan."
+    },
+    "linea": {
+      "hoy": "Today",
+      "hoyTexto": "Full access",
+      "dia": "Day {n}",
+      "avisoTexto": "We remind you, if you allow notifications",
+      "cobroTexto": "{precio} is charged, unless you canceled"
+    },
     "anual": {
-      "nombre": "Yearly",
-      "precio": "USD 29.99 per year",
-      "detalle": "USD 2.50 per month · 50% less than monthly",
+      "nombre": "Moss yearly",
+      "por": "per year",
       "precioDe": "{precio} per year",
-      "detalleDe": "{mes} per month · {ahorro}% less than monthly"
+      "porMes": "{mes} per month",
+      "ahorro": "Save {ahorro}%",
+      "recomendado": "Recommended"
     },
     "mensual": {
-      "nombre": "Monthly",
-      "precio": "USD 4.99 per month",
-      "detalle": "Cancel anytime",
-      "precioDe": "{precio} per month"
+      "nombre": "Moss monthly",
+      "por": "per month",
+      "precioDe": "{precio} per month",
+      "detalle": "Charged every month"
     },
-    "prueba": "7 days free",
-    "empezar": "Start 7 days free",
+    "empezar": "Start {n} days free",
     "suscribirme": "Subscribe",
-    "legal": "7 days free, then {precio}. Renews automatically until you cancel, at least 24 hours before the period ends. Cancel in Settings › your name › Subscriptions.",
-    "legalSinPrueba": "{precio}. Renews automatically until you cancel, at least 24 hours before the period ends. Cancel in Settings › your name › Subscriptions.",
-    "recordatorio": "Moss reminds you two days before the trial ends.",
+    "enCurso": "One moment…",
+    "legal": "Free for {n} days. Then {precio}. Cancel anytime in Settings.",
+    "legalSinPrueba": "{precio}. Cancel anytime in Settings.",
+    "renovacion": "Renews automatically until you cancel, at least 24 hours before the period ends. Charged to your Apple Account.",
     "restaurar": "Restore purchases",
     "terminos": "Terms",
     "privacidad": "Privacy",
-    "seguirGratis": "Continue with free",
-    "restaurando": "There's nothing to restore on this Apple ID.",
-    "sinPrecios": "Couldn't reach the App Store. You weren't charged.",
     "reintentar": "Try again",
-    "error": "That didn't go through. You weren't charged.",
-    "pendiente": "It's waiting for approval. Once it's approved, it opens by itself.",
+    "cuenta": {
+      "titulo": "Your account",
+      "exportar": "Export my data",
+      "cerrarSesion": "Sign out",
+      "borrar": "Delete my account"
+    },
+    "notas": {
+      "cancelada": "You weren’t charged. It’s here whenever you want it.",
+      "sinConexion": "You’re offline. Once you’re back online, you’ll see the price in your currency and you can start.",
+      "nada": "There’s nothing to restore on this Apple Account.",
+      "errorRestaurar": "Couldn’t reach the App Store. Try again when you’re online.",
+      "error": "That didn’t go through. You weren’t charged.",
+      "pendiente": "It’s waiting for approval. Once it’s approved, Moss opens by itself."
+    },
     "apple": {
       "tienda": "App Store",
-      "prueba": "7-day free trial",
+      "prueba": "{n}-day free trial",
       "despues": "Then {precio}",
-      "cuenta": "Account: your Apple ID",
+      "cuenta": "Account: your Apple Account",
       "confirmar": "Subscribe",
       "cancelar": "Cancel",
-      "nota": "(drawing of Apple's sheet: in the app, iOS shows it)"
+      "nota": "(drawing of Apple’s sheet: in the app, iOS shows it)"
     },
     "listo": {
-      "titulo": "You have Premium",
-      "texto": "You have 7 free days. Moss reminds you two days before they end.",
-      "textoSinPrueba": "Everything is unlocked.",
+      "titulo": "You have {n} free days",
+      "texto": "Your trial ends on {fecha}. Then {precio} is charged, unless you cancel first in Settings. Moss reminds you two days before.",
+      "sinAvisos": "Without permission to notify you we can’t remind you: note the date, or turn on notifications in Settings.",
+      "tituloSinPrueba": "Everything is open",
+      "textoSinPrueba": "{precio} is charged. Manage it in Settings, whenever you want.",
       "seguir": "Continue"
     },
-    "bloqueo": {
-      "plan": "The meal plan is part of Premium",
-      "metas": "Weekly goal adjustments are part of Premium",
-      "sueno": "Full sleep is part of Premium",
-      "dormir": "Bedtime is part of Premium",
-      "todo": "All of today is part of Premium",
-      "cerrar": "Not now"
+    "restaurada": {
+      "titulo": "We found your subscription",
+      "texto": "Everything is just as you left it."
+    },
+    "regalo": {
+      "titulo": "For you, Moss stays free",
+      "texto": "You were using Moss before it became paid. There’s nothing to do: you won’t be charged."
     },
     "perfil": {
       "titulo": "Subscription",
-      "gratis": "Free",
-      "prueba": "Trial · {n} days left",
-      "activa": "Yearly",
-      "activaMensual": "Monthly",
-      "fundador": "On us",
-      "fundadorTexto": "For using Moss from the start.",
-      "administrar": "Manage subscription",
-      "verPlanes": "See Premium"
-    }
+      "prueba": {
+        "uno": "Trial · 1 day left",
+        "otros": "Trial · {n} days left"
+      },
+      "anual": "Yearly",
+      "mensual": "Monthly",
+      "regalo": "On us",
+      "vencida": "Ended"
+    },
+    "hoja": {
+      "estado": "Status",
+      "plan": "Plan",
+      "precio": "Price",
+      "primerCobro": "First charge",
+      "renueva": "Renews",
+      "termina": "Ends",
+      "activa": "Active",
+      "cancelada": "You canceled: you keep everything until that date and won’t be charged again.",
+      "regalo": "You were using Moss before it became paid: for you it stays free. There’s nothing to do.",
+      "administrar": "Manage in Settings",
+      "administrarTexto": "To change plans or cancel. Apple handles charges and refunds."
+    },
+    "borrarConSuscripcion": "Apple bills your subscription: deleting your account doesn’t cancel it. Cancel it first in Settings, or you’ll keep being charged.",
+    "administrarSuscripcion": "Manage subscription"
   }
 }

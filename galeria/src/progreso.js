@@ -71,8 +71,7 @@ const SeccionProgreso = (() => {
       cont.appendChild(gasto(d));
       cont.appendChild(el('h3', 'pg-seccion', tx('progreso.estrategia')));
       cont.appendChild(estrategia(d));
-      // Sin Premium, la meta queda como está: en lugar del control, lo que es de Premium (spec/suscripcion.md).
-      cont.appendChild(s.sinPremium ? opciones.cartaPremium('metas') : control(d));
+      cont.appendChild(control(d));
     }
 
     // ------------------------------------------------------------ el objetivo
@@ -552,7 +551,6 @@ const SeccionProgreso = (() => {
       zona,
       pintar,
       get vista() { return s.vista; },
-      sinPremium(si) { s.sinPremium = si; pintar(); },
       // Para las capturas y los botones de la galería.
       verMetas() { s.vista = 'metas'; pintar(); cont.scrollTop = 0; },
       verPrincipal() { s.vista = 'principal'; pintar(); },

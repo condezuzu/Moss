@@ -187,7 +187,14 @@ export default function Secciones() {
     }
     // La comida de su día: un aviso de la cena tocado después de medianoche anota la cena de ayer.
     if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida, ...(a.dia ? { dia: a.dia } : {}) });
+    // Lo que falta: para anotar lo que propone. Del agua, a Inicio, donde se suman los vasos.
+    else if (a.tipo === 'falta') {
+      if (a.que === 'agua') ir(PESTANAS.indexOf('inicio'));
+      else abrirRegistro({});
+    }
     else if (a.tipo === 'pesarse') abrirHoja('peso');
+    // El fin de la prueba: en Perfil está tu suscripción, y cómo cancelarla.
+    else if (a.tipo === 'prueba') ir(PESTANAS.indexOf('perfil'));
     else ir(a.tipo === 'dormir' ? PESTANAS.indexOf('sueno') : HABITOS);
   });
 
@@ -305,7 +312,7 @@ export default function Secciones() {
         {editando !== undefined && <EditorDeHabito key={editando ?? 'nuevo'} id={editando} alCerrar={() => setEditando(undefined)} />}
         {verMes && <Mes alCerrar={() => setVerMes(false)} />}
         {sugeridos && <Sugeridos alCerrar={() => setSugeridos(false)} />}
-        <PantallaPremium />
+        <PantallaPremium conSecciones={conSecciones} />
       </View>
     </GestureDetector>
   );

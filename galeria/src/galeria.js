@@ -199,6 +199,7 @@
   let perfilSec = null;
   let ascent = null;
   let habitosSec = null;
+  let saludoSec = null;
   // Mantener apretada una estrella abre su hábito: el click que llega al soltar no cierra la hoja.
   let mantenido = false;
   try {
@@ -236,11 +237,11 @@
 
   // ------------------------------------------------------------ la entrada a la app
   let avanceSolo = false;
-  // La propuesta de suscripción (D40) y la guía del cargador: maquetas, para aprobar.
+  // La suscripción (D40) y la guía del cargador: maquetas, para aprobar. La pantalla de pago va al terminar
+  // la entrada que se ve desde el principio, y no en los saltos a una pantalla de los otros escenarios.
   let conSuscripcion = false;
   let suscripcion = null;
   let guiaAtajos = null;
-  let estadoDeSuscripcion = 'gratis';
   const entrada = Entrada.crear(tel, escena, {
     textos: TEXTOS,
     catalogo: lista,
@@ -254,11 +255,11 @@
     alSalir: () => tel.classList.remove('en-entrada'),
     llegada: () => { pestanas.ir(0, true); comida.verDia(0); inicio.subir(); return inicio.zona; },
     alTerminar: () => habitosSec.sugeridos(),
-    // Con la propuesta de suscripción (D40), va después de la meta.
+    // La pantalla de pago (D40) va después de la meta.
     antesDeTerminar: (seguir) => {
       if (!conSuscripcion) return seguir();
       conSuscripcion = false;
-      suscripcion.abrir({ despues: seguir });
+      suscripcion.abrir({ despues: seguir, acceso: 'nueva' });
     },
   });
 
@@ -309,6 +310,9 @@
     compras: () => enLaZona(() => comida.compras()),
     tusComidas: () => enLaZona(() => comida.tusComidas()),
     pegarReceta: () => conHoja(() => comida.pegarReceta()),
+    foto: () => conHoja(() => comida.foto('visor')),
+    fotoEjemplo: () => enLaZona(() => { comida.verDia(0); comida.foto('ejemplo'); comida.bajarA('fotos'); }),
+    fotoSinFotos: () => enLaZona(() => comida.foto('nada')),
   };
   // Como si se escribiera: letra por letra, con la búsqueda en cada una.
   let escribiendo = 0;
@@ -346,6 +350,8 @@
   // (Entrenamiento, src/dominio/entrenamiento.ts).
   let metaBase = controlHecho.metas;
   let vinculada = false;
+  // Ascent en Perfil: prendida o apagada, como la 1.0 (CON_ASCENT en src/lib/banderas.ts).
+  let ascentPrendida = true;
   // Sin reloj: la misma persona, solo con el iPhone (spec/sueno.md, «Sin reloj»).
   let soloIphone = false;
   // «Por qué no subes» con pocas semanas: un botón de la galería, para ver cuando todavía junta.
@@ -440,6 +446,7 @@
 
   // ------------------------------------------------------------ las secciones nuevas
   inicio = SeccionInicio.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    saludo: (primerDia) => (saludoSec ? saludoSec.deInicio(primerDia) : null),
     comida,
     persona,
     cielo: () => escena.hoy || { constelacion: LIRA, habitos: habitosLira() },
@@ -448,6 +455,7 @@
     registrarPeso: () => mas.ir('peso'),
     medir: () => mas.ir('medidas'),
     ir: (i) => pestanas.ir(i),
+    invitacionDeAscent: () => (ascent ? ascent.invitacion() : null),
   }));
   mas = Mas.crear(tel, Object.assign({}, opcionesDeSeccion, {
     comida,
@@ -466,7 +474,6 @@
     },
   }));
   progreso = SeccionProgreso.crear(tel, Object.assign({}, opcionesDeSeccion, {
-    cartaPremium: (que) => suscripcion.carta(que),
     comida,
     persona,
     ponerEstrategia,
@@ -476,7 +483,6 @@
     medir: () => mas.ir('medidas'),
   }));
   sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, {
-    cartaPremium: (que) => suscripcion.carta(que),
     noches: () => (soloIphone ? [] : Datos.NOCHES),
     sinReloj: () => soloIphone,
     metaDeSueno: 8 * 60,
@@ -486,20 +492,28 @@
     // La cara de la mañana cambia la recuperación, que también está en Ascent.
     alCambiarCara: () => { if (ascent) ascent.pintar(); },
     abrirGuia: () => guiaAtajos.abrir(versionDeLaGuia),
+    abrirAparatos: () => accionesSeccion.aparatos(),
+    ponerAparato: (soloElIphone) => ponerAparato(soloElIphone),
+    alCambiarEstado: (v) => $$('#s-noches button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === v))),
   }));
   // Qué iOS muestra la guía: en iOS 27 el atajo trae la automatización; hasta iOS 26, se arma a mano.
   let versionDeLaGuia = 27;
   guiaAtajos = GuiaAtajos.crear(tel, Object.assign({}, opcionesDeSeccion, { alArmar: () => sueno.cargador('anda') }));
+  const avisosBloqueo = AvisosBloqueo.crear(tel, opcionesDeSeccion);
+  window.__avisosBloqueo = (p) => avisosBloqueo.poner(p);
   suscripcion = Suscripcion.crear(tel, Object.assign({}, opcionesDeSeccion, {
-    alCambiar: (estado) => { estadoDeSuscripcion = estado; if (estado === 'prueba') ponerCandados(false); if (perfilSec) perfilSec.pintar(); refrescarControles(); },
+    alCambiar: () => { if (perfilSec) perfilSec.pintar(); refrescarControles(); },
   }));
   perfilSec = SeccionPerfil.crear(tel, Object.assign({}, opcionesDeSeccion, {
     // Comida, para Entrenamiento: cuándo entrenas cambia lo que dice cada comida.
     comida,
     persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length,
-    suscripcion: () => estadoDeSuscripcion, abrirSuscripcion: () => suscripcion.abrir(),
+    suscripcion: () => suscripcion.valorDeFila(), abrirSuscripcion: () => suscripcion.abrirHoja(),
+    accesoDeSuscripcion: () => suscripcion.acceso,
+    ascentPrendida: () => ascentPrendida,
+    irAMetas: () => accionesSeccion.estrategia(),
     // Los números ocultos (Perfil): sin calorías ni gramos en Inicio, Comida y la ventana del alimento.
-    alNumeros: (si) => tel.classList.toggle('sin-numeros', !si),
+    alNumeros: (si) => { tel.classList.toggle('sin-numeros', !si); inicio.ponerSaludo(); },
   }));
   ascent = SeccionAscent.crear(tel, Object.assign({}, opcionesDeSeccion, {
     comida,
@@ -527,7 +541,22 @@
     },
     curva: bezier(0.16, 1, 0.3, 1),
     movimientoReducido,
+    repintarInicio: () => inicio.pintar(0),
   }));
+  // Inicio se pintó antes de que existiera Ascent, y su invitación sale de ahí.
+  inicio.pintar(0);
+
+  // El saludo del día: arriba de Inicio, con lo que la galería tiene de la persona, y su hoja para probarlo.
+  saludoSec = SeccionSaludo.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    comida,
+    persona,
+    noches: () => sueno.noches(),
+    cara: (clave) => sueno.cara(clave),
+    sinDeficit: () => perfilSec.sinDeficit,
+    ponerIdioma: (v) => window.__idioma(v),
+    alDecir: () => inicio.ponerSaludo(),
+  }));
+  inicio.ponerSaludo();
 
   // Vincular cambia la meta de hoy (el día de gimnasio), la recuperación en Sueño y la fila de Perfil.
   function vincular(si) {
@@ -630,16 +659,7 @@
     habitosSec.cerrar();
   }
 
-  // Sueño y Progreso como los ve quien no tiene Premium: solo con los botones de la tarjeta.
-  let candados = false;
-  const ponerCandados = (si) => {
-    if (candados === si) return;
-    candados = si;
-    sueno.sinPremium(si);
-    progreso.sinPremium(si);
-  };
   const cerrarHojas = () => {
-    ponerCandados(false);
     if (widgets && widgets.vista) widgets.cerrar();
     if (comida.hojaAbierta) comida.cerrarHoja();
     if (comida.hojaPlanAbierta) comida.cerrarPlan();
@@ -649,7 +669,9 @@
     if (perfilSec && perfilSec.hojaAbierta) perfilSec.cerrarHoja();
     if (ascent && ascent.hojaVincularAbierta) ascent.cerrarVincular();
     if (suscripcion && suscripcion.abierta) suscripcion.cerrar();
+    if (suscripcion && suscripcion.hojaAbierta) suscripcion.cerrarHoja();
     if (guiaAtajos && guiaAtajos.abierta) guiaAtajos.cerrar();
+    if (saludoSec && saludoSec.abierta) saludoSec.cerrar();
   };
 
   // ------------------------------------------------------------ las seis secciones, como en Ascent
@@ -693,7 +715,7 @@
     const paginas = [inicio.zona, comida.zona, progreso.zona, sueno.zona, tel.querySelector('.ui'), perfilSec.zona];
     const velo = document.createElement('div');
     velo.className = 'velo-pestanas';
-    velo.innerHTML = '<i></i>';
+    velo.innerHTML = '<i></i><i class="velo-sueno"></i>';
     tel.querySelector('canvas').after(velo);
     const barra = document.createElement('nav');
     barra.className = 'pestanas';
@@ -756,6 +778,8 @@
       const a = VELO[Math.floor(k)], b = VELO[Math.ceil(k)];
       const oscuro = a + (b - a) * (k - Math.floor(k));
       velo.firstChild.style.opacity = oscuro.toFixed(3);
+      // El azul de Sueño sigue al dedo, como el velo: la página se desliza y el fondo no.
+      velo.lastChild.style.opacity = Math.max(0, 1 - Math.abs(k - 3)).toFixed(3);
       // Sobre las secciones la barra es pareja, como en Ascent; sobre el cielo deja ver el musgo.
       barra.style.setProperty('--solida', Math.max(Math.min(1, ascent.progreso * 3), Math.min(1, oscuro / 0.7)).toFixed(3));
       botones.forEach((boton, i) => { boton.querySelector('.pt-luz').style.opacity = luz(i).toFixed(3); });
@@ -765,6 +789,9 @@
       botones.forEach((b, i) => b.setAttribute('aria-selected', String(i === actual)));
       paginas.forEach((p, i) => { p.inert = i !== actual; });
       comida.ponerEnZona(actual === COMIDA);
+      // Al volver a Inicio: lo que se cambió en otra sección (Perfil, por ejemplo) ya cuenta para el saludo.
+      if (actual === 0) inicio.ponerSaludo();
+      if (actual === HABITOS) ascent.asomar();
       refrescarControles();
     }
 
@@ -789,11 +816,11 @@
 
     // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni las
     // listas ni el cielo se enteran.
-    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta || escena.viajando || ascent.ocupada);
+    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta || escena.viajando || ascent.ocupada || (saludoSec && saludoSec.abierta));
     tel.addEventListener('pointerdown', (ev) => {
       gesto = null;
       if (bloqueado() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-      if (ev.target.closest('.pestanas, .barra-inmersiva, .sn-noches, .vt-porciones, .mas-chips, .cm-cuadro')) return;
+      if (ev.target.closest('.pestanas, .barra-inmersiva, .sn-noches, .vt-porciones, .mas-chips, .cm-cuadro, .fd-tira')) return;
       gesto = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, desde: 0 };
     }, true);
     tel.addEventListener('pointermove', (ev) => {
@@ -957,6 +984,12 @@
     estrategia: () => { cerrarHojas(); pestanas.ir(2); progreso.verPrincipal(); progreso.bajarA('.pg-seccion'); },
     mantener: () => { ponerEstrategia({ objetivo: perfil.objetivo === 'mantener' ? 'bajar' : 'mantener' }); pestanas.ir(0); },
     noche: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(-3); },
+    // Sueño para aprobar: con datos, con pocas noches, sin noches y sin deuda.
+    suenoDatos: () => { cerrarHojas(); pestanas.ir(3); sueno.ponerEstado('datos'); },
+    suenoDos: () => { cerrarHojas(); pestanas.ir(3); sueno.ponerEstado('dos'); },
+    suenoUna: () => { cerrarHojas(); pestanas.ir(3); sueno.ponerEstado('una'); },
+    suenoVacio: () => { cerrarHojas(); pestanas.ir(3); sueno.ponerEstado('vacio'); },
+    suenoPagada: () => { cerrarHojas(); pestanas.ir(3); sueno.ponerEstado('pagada'); setTimeout(() => sueno.bajarA('.sn-deuda'), 240); },
     sinReloj: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.verNoche(Datos.NOCHE_SIN_RELOJ); },
     hora: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('proponer'); sueno.verNoche(0); },
     horaSinProponer: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('sinProponer'); sueno.verNoche(0); },
@@ -975,25 +1008,30 @@
     porque: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('proponer'); sueno.verNoche(0); sueno.porque(true); },
     guia27: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 27; guiaAtajos.abrir(27); },
     guia26: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 26; guiaAtajos.abrir(26); },
+    avisosBloqueo: () => { cerrarHojas(); avisosBloqueo.abrir(); },
     guiaAMano: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 'aMano'; guiaAtajos.abrir('aMano'); },
     cargadorSinArmar: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('sinArmar'); sueno.bajarA('.sn-afinar'); },
     cargadorAnda: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('anda'); sueno.bajarA('.sn-afinar'); },
     cargadorDejo: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('dejoDeLlegar'); sueno.bajarA('.sn-aviso-cargador'); },
     cargadorMedias: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('aMedias'); sueno.bajarA('.sn-afinar'); },
-    suscripcion: () => { cerrarHojas(); suscripcion.abrir(); },
+    suscripcion: () => { cerrarHojas(); suscripcion.abrir({ acceso: 'nueva' }); },
     entradaConSuscripcion: () => { cerrarHojas(); conSuscripcion = true; if (entrada.paso) entrada.salir(); entrada.empezar(); },
     metaConSuscripcion: () => { cerrarHojas(); conSuscripcion = true; entrada.irA('resultado'); },
-    bloqueoPlan: () => { cerrarHojas(); pestanas.ir(1); suscripcion.abrir({ bloqueo: 'plan' }); },
-    bloqueoMetas: () => { cerrarHojas(); pestanas.ir(2); suscripcion.abrir({ bloqueo: 'metas' }); },
-    bloqueoSueno: () => { cerrarHojas(); pestanas.ir(3); suscripcion.abrir({ bloqueo: 'sueno' }); },
-    bloqueoTodo: () => { cerrarHojas(); pestanas.ir(0); suscripcion.abrir({ bloqueo: 'todo' }); },
-    perfilSuscripcion: () => { cerrarHojas(); pestanas.ir(5); perfilSec.pintar(); perfilSec.subir && perfilSec.subir(); },
-    cartaSueno: () => { cerrarHojas(); ponerCandados(true); pestanas.ir(3); sueno.bajarA('.sb-carta'); },
-    cartaProgreso: () => { cerrarHojas(); ponerCandados(true); pestanas.ir(2); progreso.bajarA('.sb-carta'); },
+    pagoVencida: () => { cerrarHojas(); suscripcion.poner('vencida', { deLaPrueba: true }); suscripcion.abrir(); },
+    pagoTermino: () => { cerrarHojas(); suscripcion.poner('vencida', { deLaPrueba: false }); suscripcion.abrir(); },
+    pagoSinConexion: () => { cerrarHojas(); suscripcion.abrir({ acceso: 'nueva' }); suscripcion.sinConexion(true); },
+    pagoRestaurada: () => { cerrarHojas(); suscripcion.abrir({ acceso: 'nueva' }); suscripcion.conAlgo(true); suscripcion.restaurar(); },
+    pagoRegalo: () => { cerrarHojas(); suscripcion.poner('regalo'); suscripcion.abrir({ vista: 'regalo' }); },
+    perfilPrueba: () => { cerrarHojas(); suscripcion.poner('prueba', { tengo: 'anual' }); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
+    perfilActiva: () => { cerrarHojas(); suscripcion.poner('activa', { tengo: 'mensual' }); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
+    perfilCancelada: () => { cerrarHojas(); suscripcion.poner('activa', { tengo: 'anual', cancelada: true }); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
+    perfilRegalo: () => { cerrarHojas(); suscripcion.poner('regalo'); pestanas.ir(5); perfilSec.pintar(); suscripcion.abrirHoja(); },
     // Los widgets nuevos (D43).
     widgetsComida: () => { cerrarHojas(); widgets.ir('n-comida'); },
     widgetsCielo: () => { cerrarHojas(); widgets.ir('n-cielo'); },
     widgetsBloqueo: () => { cerrarHojas(); widgets.ir('n-bloqueo'); },
+    // El saludo del día (2/11).
+    saludo: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); saludoSec.abrir(); },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -1005,7 +1043,7 @@
     reiniciar: () => { if (entrada.paso) entrada.salir(); reiniciarHabitos(); cargarLira(); escena.irA('hoy'); pestanas.ir(HABITOS); },
     zona: enHabitos(() => escena.irA(escena.zona() === 'universo' ? 'hoy' : 'universo')),
     fugaz: enHabitos(() => escena.lanzarFugaz()),
-    entrada: () => { if (comida.hojaAbierta || mas.abierta) return; conSuscripcion = false; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
+    entrada: () => { if (comida.hojaAbierta || mas.abierta) return; conSuscripcion = !entrada.paso; if (entrada.paso) entrada.salir(); else entrada.empezar(); },
   };
   // Va después de todo lo que usa refrescarControles (la escena lo llama al poner la constelación).
   cargarLira();
@@ -1017,6 +1055,8 @@
     abrir: () => abrirAscent(),
     cerrar: () => { if (ascent.ocupada) ascent.cerrar(); else pestanas.ir(HABITOS); },
     sueno: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(0); },
+    asomar: () => { cerrarHojas(); if (ascent.ocupada) ascent.cerrar(true); pestanas.ir(HABITOS); ascent.asomar(true); },
+    invitacion: () => { cerrarHojas(); pestanas.ir(0); ascent.volverAInvitar(); },
   };
   $$('[data-ascent]').forEach((b) => b.addEventListener('click', () => { accionesAscent[b.dataset.ascent](); refrescarControles(); }));
   // Los botones de la galería para los hábitos: el editor (como el «+» o mantener apretada una
@@ -1048,9 +1088,12 @@
       alElegir(b.dataset.valor);
     });
   }
-  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); ascent.pintar(); habitosSec.pintar(); dibujarCatalogo(); });
+  segmento('s-idioma', (v) => { escena.ponerIdioma(v); comida.ponerIdioma(v); pestanas.ponerTextos(); inicio.pintar(0); progreso.pintar(); sueno.pintar(); perfilSec.pintar(); ascent.pintar(); habitosSec.pintar(); saludoSec.pintar(); dibujarCatalogo(); });
   segmento('s-vinculo', (v) => vincular(v === 'si'));
   segmento('s-aparato', (v) => ponerAparato(v === 'iphone'));
+  segmento('s-noches', (v) => { cerrarHojas(); pestanas.ir(3); sueno.ponerEstado(v); });
+  segmento('s-ascent-perfil', (v) => { ascentPrendida = v === 'si'; cerrarHojas(); pestanas.ir(5); perfilSec.pintar(); });
+  window.__ascentEnPerfil = (si) => { ascentPrendida = si; perfilSec.pintar(); };
   window.__aparato = (v) => ponerAparato(v === 'iphone');
   segmento('s-estanc', (v) => { pocasSemanas = v === 'pocas'; ascent.pintar(); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
@@ -1267,11 +1310,13 @@
       afinar: () => (Array.isArray(arg) ? sueno.afinar(arg[0], arg[1]) : sueno.afinar(arg)),
       porque: () => sueno.porque(arg),
       cargador: () => sueno.cargador(arg),
+      estado: () => sueno.ponerEstado(arg),
     };
     pasos[accion]();
   };
   window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
   window.__guia = (paso, extra) => guiaAtajos.irA(paso, extra);
+  window.__saludo = (accion, arg) => saludoSec[accion](arg);
   window.__suscripcion = (accion, arg) => suscripcion[accion](arg);
   // Para las capturas de lo que cuida (lo pediste el 22/10): Salud dice 16 años, es su caso, los números ocultos, poco sueño.
   window.__seguridad = (accion, arg) => {
@@ -1291,6 +1336,10 @@
       pocas: () => { pocasSemanas = arg; ascent.pintar(); },
       bajar: () => ascent.bajarA(arg),
       subir: () => ascent.subir(),
+      iphone: () => ascent.ponerIphone(arg),
+      senal: () => ascent.senalCon(arg),
+      asomar: () => ascent.asomar(true),
+      volverAInvitar: () => ascent.volverAInvitar(),
     };
     pasos[accion]();
     refrescarControles();
@@ -1333,6 +1382,7 @@
       armar: () => comida.armarDia(), armarSemana: () => comida.armarSemana(), compras: () => comida.compras(), tusComidas: () => comida.tusComidas(),
       cerrarPlan: () => comida.cerrarPlan(), otra: () => comida.otraDel(arg), comiEsto: () => comida.comiEsto(arg), pegarReceta: () => comida.pegarReceta(),
       decir: () => comida.decir(arg), porQue: () => comida.porQue(), entreno: () => comida.ponerEntreno(arg.entreno || comida.entreno, arg.ver),
+      foto: () => (Array.isArray(arg) ? comida.foto(arg[0], arg[1]) : comida.foto(arg)),
     };
     const r = pasos[accion]();
     refrescarControles();

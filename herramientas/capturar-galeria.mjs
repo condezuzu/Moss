@@ -176,7 +176,7 @@ const pasos = {
   },
   async entrada() {
     // La estrella guía: nace en el musgo, presenta la frase y espera abajo; si nadie la toca, abajo
-    // dice «Toca la estrella». Tocarla es seguir.
+    // dice «Toca la estrella». Tocarla es seguir. Después, la introducción, y «Saltar» lleva a lo que cuesta.
     await pagina.evaluate(() => window.__accion('entrada'));
     await pagina.waitForTimeout(1200);
     await foto('entrada-frase-1200');
@@ -184,7 +184,7 @@ const pasos = {
     await foto('entrada-frase-3800');
     await pagina.waitForTimeout(3200);
     await foto('entrada-frase-pista');
-    for (const [paso, esperas] of [['habitos', [1500, 4500]], ['comida', [1600, 4200]], ['datos', [1500]], ['cuenta', [2800]], ['salud', [1900]], ['edad', [900]], ['sexo', [900]], ['peso', [900]], ['actividad', [900]], ['objetivo', [900]], ['resultado', [2600]]]) {
+    for (const [paso, esperas] of [['comida', [1600, 4600]], ['base', [1600, 4600]], ['sueno', [1800, 4600]], ['juntos', [1500, 4200]], ['habitos', [1500, 4500]], ['precio', [1800, 4200]], ['datos', [1500]], ['cuenta', [2800]], ['salud', [1900]], ['edad', [900]], ['sexo', [900]], ['peso', [900]], ['actividad', [900]], ['objetivo', [900]], ['resultado', [2600]]]) {
       await pagina.evaluate((p) => window.__entrada(p), paso);
       let t = 0;
       for (const ms of esperas) {
@@ -193,12 +193,21 @@ const pasos = {
         await foto(`entrada-${paso}-${ms}`);
       }
     }
-    // Empezar: el flum hasta Inicio, y ahí suben los primeros hábitos.
+    // Después de la meta, la pantalla de pago; al empezar la prueba, el flum hasta Inicio, y ahí suben los primeros hábitos.
     await pagina.click('.ent-resultado .ent-principal');
+    await pagina.waitForTimeout(700);
+    await foto('entrada-pago');
+    await pagina.evaluate(() => { window.__suscripcion('confirmarApple'); });
+    await esperarA(() => !!document.querySelector('.sb-listo'));
+    await pagina.waitForTimeout(600);
+    await foto('entrada-pago-listo');
+    await pagina.click('.sb-listo .sb-principal');
     for (const ms of [200, 420, 520, 750, 1400]) {
       await pagina.waitForTimeout(ms === 200 ? 200 : ms - [200, 420, 520, 750, 1400][[200, 420, 520, 750, 1400].indexOf(ms) - 1]);
       await foto('entrada-fin-' + ms);
     }
+    // Esperar la hoja mientras todavía se saca una foto del flum no termina nunca: primero, que pase.
+    await pagina.waitForTimeout(4000);
     await hojaAbierta('hh-hoja-sugeridos');
     await foto('entrada-fin-primeros');
     await habitos('cerrar');
@@ -396,35 +405,68 @@ const pasos = {
     }
     await seccion('cargadorSinArmar');
   },
-  // La suscripción: después de la meta, la hoja de Apple, lo bloqueado y en Perfil.
+  // La suscripción: la pantalla de pago y cada estado, en español y en inglés, y Tu suscripción en Perfil.
   async suscripcion() {
-    const sub = (accion, arg) => pagina.evaluate(([a, x]) => window.__suscripcion(a, x), [accion, arg]);
+    const sub = (accion, arg) => pagina.evaluate(([a, x]) => { window.__suscripcion(a, x); }, [accion, arg]);
     await seccion('suscripcion');
-    await pagina.waitForTimeout(600);
+    await pagina.waitForTimeout(700);
     await foto('suscripcion');
     await sub('bajar');
     await pagina.waitForTimeout(300);
     await foto('suscripcion-abajo');
     await sub('plan', 'mensual');
-    await pagina.waitForTimeout(300);
+    await pagina.waitForTimeout(350);
     await foto('suscripcion-mensual');
     await sub('plan', 'anual');
     await sub('apple');
     await pagina.waitForTimeout(500);
     await foto('suscripcion-apple');
-    await sub('listo');
-    await pagina.waitForTimeout(500);
-    await foto('suscripcion-listo');
-    for (const [accion, nombre] of [['bloqueoPlan', 'suscripcion-plan'], ['bloqueoSueno', 'suscripcion-sueno'], ['bloqueoTodo', 'suscripcion-todo'], ['cartaSueno', 'suscripcion-carta-sueno'], ['cartaProgreso', 'suscripcion-carta-progreso']]) {
+    await sub('cancelarApple');
+    await pagina.waitForTimeout(600);
+    await foto('suscripcion-cancelada');
+    await sub('restaurar');
+    await pagina.waitForTimeout(400);
+    await foto('suscripcion-nada-para-restaurar');
+    await sub('cuenta');
+    await pagina.waitForTimeout(450);
+    await foto('suscripcion-tu-cuenta');
+    await pagina.click('.sb-acciones-no');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(350);
+    await sub('enCurso', true);
+    await pagina.waitForTimeout(300);
+    await foto('suscripcion-en-curso');
+    await sub('enCurso', false);
+    await sub('sinAvisos', true);
+    await sub('confirmarApple');
+    await esperarA(() => !!document.querySelector('.sb-listo'));
+    await pagina.waitForTimeout(600);
+    await foto('suscripcion-listo-sin-avisos');
+    for (const [accion, nombre] of [['pagoSinConexion', 'suscripcion-sin-conexion'], ['pagoRestaurada', 'suscripcion-restaurada'], ['pagoRegalo', 'suscripcion-regalo'], ['pagoVencida', 'suscripcion-vencida'], ['pagoTermino', 'suscripcion-termino']]) {
       await seccion(accion);
       await pagina.waitForTimeout(600);
       await foto(nombre);
     }
     await sub('cerrar');
     await pagina.waitForTimeout(500);
-    await seccion('perfilSuscripcion');
+    for (const [accion, nombre] of [['perfilPrueba', 'suscripcion-hoja-prueba'], ['perfilActiva', 'suscripcion-hoja-mensual'], ['perfilCancelada', 'suscripcion-hoja-cancelada'], ['perfilRegalo', 'suscripcion-hoja-regalo']]) {
+      await seccion(accion);
+      await pagina.waitForTimeout(700);
+      await foto(nombre);
+    }
+    await sub('cerrarHoja');
+    await pagina.waitForTimeout(500);
+    await seccion('perfilPrueba');
+    await sub('cerrarHoja');
     await pagina.waitForTimeout(500);
     await foto('suscripcion-perfil');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('suscripcion');
+    await pagina.waitForTimeout(700);
+    await foto('suscripcion-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await sub('cerrar');
+    await pagina.waitForTimeout(500);
     await seccion('metaConSuscripcion');
     await pagina.waitForTimeout(2500);
     await foto('suscripcion-meta');
@@ -515,7 +557,7 @@ const pasos = {
     await sueno('noche', 0);
     await pagina.waitForTimeout(800);
     await foto('sueno');
-    for (const [selector, nombre] of [['.sn-calidad', 'sueno-calidad'], ['.sn-horario', 'sueno-horario'], ['.sn-deuda', 'sueno-deuda'], ['.sn-fuentes', 'sueno-fuentes']]) {
+    for (const [selector, nombre] of [['.sn-calidad', 'sueno-calidad'], ['.sn-horario', 'sueno-horario'], ['.sn-deuda', 'sueno-deuda'], ['.sn-vitales', 'sueno-vitales'], ['.sn-fuentes', 'sueno-fuentes']]) {
       await sueno('bajar', selector);
       await pagina.waitForTimeout(400);
       await foto(nombre);
@@ -562,6 +604,77 @@ const pasos = {
     await sueno('hora', null);
     await pagina.evaluate(() => window.__aparato('reloj'));
     await sueno('noche', 0);
+  },
+  // Sueño sin noches: la invitación, el ejemplo y los puntos de cada tarjeta; con una y dos noches, lo
+  // que ya hay y lo que falta; la deuda ya pagada, y lo mismo en inglés.
+  async 'sueno-vacio'() {
+    await pagina.evaluate(() => { localStorage.removeItem('moss-galeria-caras'); localStorage.removeItem('moss-galeria-movimiento'); });
+    await pestana(3);
+    const estado = async (e) => { await sueno('estado', e); await pagina.waitForTimeout(1500); };
+    const tarjetas = async (sufijo) => {
+      for (const selector of ['.sn-deuda', '.sn-calidad', '.sn-horario', '.sn-vitales', '.sn-fuentes']) {
+        await sueno('bajar', selector);
+        await pagina.waitForTimeout(350);
+        await foto(`sueno-${sufijo}-${selector.slice(4)}`);
+      }
+      await sueno('subir');
+    };
+    await estado('vacio');
+    await foto('sueno-vacio');
+    await pagina.click('.sn-camino .sn-otra');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(500);
+    await foto('sueno-vacio-iphone');
+    await sueno('bajar', '.sn-manana');
+    await pagina.waitForTimeout(350);
+    await foto('sueno-vacio-manana');
+    await tarjetas('vacio');
+    await sueno('bajar', '.sn-afinar');
+    await pagina.waitForTimeout(350);
+    await foto('sueno-vacio-afinar');
+    await sueno('subir');
+    await estado('una');
+    await foto('sueno-una');
+    await tarjetas('una');
+    await estado('dos');
+    await foto('sueno-dos');
+    await tarjetas('dos');
+    await estado('pagada');
+    await sueno('bajar', '.sn-deuda');
+    await pagina.waitForTimeout(400);
+    await foto('sueno-pagada');
+    await sueno('bajar', '.sn-calidad');
+    await pagina.waitForTimeout(400);
+    await foto('sueno-pagada-calidad');
+    await estado('mucha');
+    await sueno('bajar', '.sn-deuda');
+    await pagina.waitForTimeout(1200);
+    await foto('sueno-mucha');
+    await sueno('subir');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await estado('vacio');
+    await foto('sueno-vacio-ingles');
+    await sueno('bajar', '.sn-deuda');
+    await pagina.waitForTimeout(350);
+    await foto('sueno-vacio-ingles-deuda');
+    await estado('dos');
+    await sueno('bajar', '.sn-deuda');
+    await pagina.waitForTimeout(350);
+    await foto('sueno-dos-ingles-deuda');
+    await estado('datos');
+    await sueno('noche', 0);
+    await pagina.waitForTimeout(1200);
+    await foto('sueno-ingles');
+    await sueno('bajar', '.sn-deuda');
+    await pagina.waitForTimeout(350);
+    await foto('sueno-ingles-deuda');
+    await sueno('bajar', '.sn-vitales');
+    await pagina.waitForTimeout(350);
+    await foto('sueno-ingles-vitales');
+    await sueno('subir');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => localStorage.removeItem('moss-galeria-movimiento'));
+    await pestana(0);
   },
   // Solo con el iPhone (spec/sueno.md, «Sin reloj»): la pregunta de la hora, cambiarla, sin proponer,
   // la noche estimada con su franja y la precisión.
@@ -722,6 +835,16 @@ const pasos = {
     await foto('comida-copiada');
   },
   // La hoja de registro: lo de siempre, la búsqueda, la ventana, la revisión y la carga rápida.
+  async marcas() {
+    await pestana(1);
+    await comida('registrar');
+    await pagina.waitForTimeout(800);
+    for (const texto of ['mostaza', 'combo burger king', 'kelloggs', 'conaprole', 'nesquik', 'lays', 'leche']) {
+      await comida('escribir', texto);
+      await pagina.waitForTimeout(300);
+      await foto('marcas-' + texto.replace(/ /g, '-'));
+    }
+  },
   async registrar() {
     await pestana(1);
     await comida('registrar');
@@ -885,6 +1008,152 @@ const pasos = {
     await comida('cerrar');
     await pagina.waitForTimeout(800);
   },
+  // La foto de la comida (para aprobar, 2/11): sin fotos, Comida queda como hoy; el botón de la hoja, el
+  // visor, elegir de las fotos, «¿Qué es?» con y sin preguntas, anotar, deshacer, anotar después, la tira,
+  // abrir una, anotar la que quedó pendiente, borrar, desde la tarjeta, en inglés y con menos movimiento.
+  async foto() {
+    const tocar = (q) => pagina.evaluate((s) => document.querySelector(s).click(), q);
+    const camara = () => pagina.evaluate(() => [...document.querySelectorAll('.hj-busca .hj-icono')][1].click());
+    const toques = () => pagina.evaluate(() => document.querySelector('#toques ol li')?.textContent || '');
+    await pestana(1);
+    await comida('foto', 'nada');
+    await pagina.waitForTimeout(600);
+    await comida('bajar', 'dia');
+    await pagina.waitForTimeout(300);
+    await foto('foto-sin-fotos');
+    await comida('registrar');
+    await pagina.waitForTimeout(900);
+    await foto('foto-hoja');
+    await camara();
+    await pagina.waitForTimeout(700);
+    await foto('foto-visor');
+    await tocar('.fd-elegir');
+    await pagina.waitForTimeout(600);
+    await foto('foto-selector');
+    await tocar('.fd-selector-cab button');
+    await pagina.waitForTimeout(500);
+    await tocar('.fd-disparar');
+    await pagina.waitForTimeout(90);
+    await foto('foto-flash');
+    await pagina.waitForTimeout(250);
+    await foto('foto-escuchando');
+    await esperarA(() => !!document.querySelector('.hj-decir .dc-bloque'));
+    await pagina.waitForTimeout(600);
+    await foto('foto-entendido');
+    await pagina.evaluate(() => {
+      const a = document.querySelector('.hj-decir .dc-area');
+      a.value = '200 gramos de arroz, una milanesa con puré y un vaso de leche';
+      a.dispatchEvent(new Event('input'));
+      [...document.querySelectorAll('.hj-decir .fi-pie .fi-secundario')].find((b) => !b.hidden).click();
+    });
+    await pagina.waitForTimeout(700);
+    await foto('foto-preguntas');
+    await tocar('.hj-decir .fi-agregar');
+    await pagina.waitForTimeout(1300);
+    console.log('  toques, desde la hoja abierta:', await toques());
+    await comida('bajar', 'fotos');
+    await pagina.waitForTimeout(500);
+    await foto('foto-anotada');
+    await tocar('.cm-aviso-btn');
+    await pagina.waitForTimeout(800);
+    await foto('foto-deshecha');
+    // Otra, sin decir nada todavía.
+    await comida('registrar');
+    await pagina.waitForTimeout(800);
+    await camara();
+    await pagina.waitForTimeout(500);
+    await tocar('.fd-disparar');
+    await pagina.waitForTimeout(500);
+    await tocar('.fd-despues');
+    await pagina.waitForTimeout(1200);
+    await foto('foto-despues');
+    // El día con fotos.
+    await comida('foto', 'ejemplo');
+    await pagina.waitForTimeout(1000);
+    await comida('bajar', 'fotos');
+    await pagina.waitForTimeout(800);
+    await foto('foto-tira');
+    await comida('foto', ['abrir', 1]);
+    await hojaAbierta('fd-hoja');
+    await foto('foto-abierta');
+    await comida('foto', 'cerrarFoto');
+    await pagina.waitForTimeout(600);
+    await comida('foto', 'sinAnotar');
+    await hojaAbierta('fd-hoja');
+    await foto('foto-abierta-sin-anotar');
+    await tocar('.fd-hoja .fi-agregar');
+    await pagina.waitForTimeout(1200);
+    await foto('foto-anotar-pendiente');
+    await esperarA(() => !!document.querySelector('.hj-decir .dc-bloque'));
+    await pagina.waitForTimeout(500);
+    await tocar('.hj-decir .fi-agregar');
+    await pagina.waitForTimeout(1300);
+    await comida('bajar', 'fotos');
+    await pagina.waitForTimeout(600);
+    await foto('foto-pendiente-anotada');
+    // Borrar: se va con su animación, lo anotado queda y se puede deshacer.
+    await comida('foto', ['abrir', 0]);
+    await hojaAbierta('fd-hoja');
+    await tocar('.fd-hoja .fi-quitar');
+    await pagina.waitForTimeout(150);
+    await foto('foto-borrando');
+    await pagina.waitForTimeout(800);
+    await foto('foto-borrada');
+    await tocar('.cm-aviso-btn');
+    await pagina.waitForTimeout(800);
+    await foto('foto-devuelta');
+    // Desde la tarjeta de una comida ya anotada: el snack no tiene foto.
+    await comida('bajar', 'dia');
+    await pagina.waitForTimeout(300);
+    await pagina.evaluate(() => [...document.querySelectorAll('.cm-tarjeta')].find((t) => t.querySelector('.cm-foto')).querySelector('.cm-foto').click());
+    await pagina.waitForTimeout(800);
+    await foto('foto-tarjeta-visor');
+    await tocar('.fd-elegir');
+    await pagina.waitForTimeout(500);
+    await pagina.evaluate(() => document.querySelectorAll('.fd-grilla button')[3].click());
+    await pagina.waitForTimeout(1200);
+    await foto('foto-tarjeta');
+    // En inglés, con el aviso ya ido.
+    await pagina.waitForTimeout(3200);
+    await pagina.evaluate(() => window.__idioma('en'));
+    await pagina.waitForTimeout(600);
+    await comida('bajar', 'fotos');
+    await pagina.waitForTimeout(500);
+    await foto('foto-ingles-tira');
+    await comida('foto', ['abrir', 1]);
+    await hojaAbierta('fd-hoja');
+    await foto('foto-ingles-abierta');
+    await comida('foto', 'cerrarFoto');
+    await pagina.waitForTimeout(600);
+    await comida('registrar');
+    await pagina.waitForTimeout(800);
+    await foto('foto-ingles-hoja');
+    await camara();
+    await pagina.waitForTimeout(600);
+    await foto('foto-ingles-visor');
+    await tocar('.fd-disparar');
+    await esperarA(() => !!document.querySelector('.hj-decir .dc-bloque'));
+    await pagina.waitForTimeout(600);
+    await foto('foto-ingles-entendido');
+    await comida('cerrar');
+    await pagina.waitForTimeout(800);
+    await pagina.evaluate(() => window.__idioma('es'));
+    // Con Reducir movimiento, nada vuela.
+    await pagina.emulateMedia({ reducedMotion: 'reduce' });
+    await comida('registrar');
+    await pagina.waitForTimeout(500);
+    await camara();
+    await pagina.waitForTimeout(400);
+    await tocar('.fd-disparar');
+    await pagina.waitForTimeout(300);
+    await foto('foto-sin-movimiento');
+    await comida('cerrar');
+    await pagina.waitForTimeout(500);
+    await pagina.emulateMedia({ reducedMotion: 'no-preference' });
+    await comida('foto', 'nada');
+    await pagina.waitForTimeout(600);
+    await foto('foto-otra-vez-sin-fotos');
+  },
   // Antes y después de entrenar (lo pediste el 26/10): la línea en la comida que toca, por qué, y
   // Perfil › Entrenamiento. La persona de mentira entrena pesas a las 19.
   async entreno() {
@@ -993,14 +1262,120 @@ const pasos = {
     await pagina.waitForTimeout(600);
     await pagina.evaluate(() => window.__idioma('es'));
   },
-  // Ascent, arriba de Hábitos: la flecha, el gesto a mitad de camino (con el dedo todavía abajo),
+  // Que se encuentre (spec/ascent.md): la señal de Hábitos en cada estado y que se toque y se deslice
+  // sin encender la estrella de abajo, y la invitación de Inicio, con «Ahora no» y con vincular.
+  async 'ascent-senal'() {
+    const encendidas = () => pagina.evaluate(() => document.querySelector('.cab-luz b').textContent);
+    const ascentArriba = () => pagina.evaluate(() => document.querySelector('.ascent').getBoundingClientRect().top < 40);
+    const asoma = (hacer) => pagina.evaluate((h) => {
+      const a = document.querySelector('.as-senal').getAnimations().find((x) => x.animationName === 'as-senal-asoma');
+      if (!a) return false;
+      if (h === 'parar') { a.pause(); a.currentTime = 800 + 0.22 * 1500; } else a.finish();
+      return true;
+    }, hacer);
+    await alCielo();
+    await pagina.waitForTimeout(300);
+    // La primera vez que se llega, sube y baja: la foto, arriba de todo.
+    if (!(await asoma('parar'))) console.log('! la primera vez, la señal no se movió');
+    await pagina.waitForTimeout(200);
+    await foto('senal-asomando');
+    await asoma('seguir');
+    await pagina.waitForTimeout(300);
+    await foto('senal-primera-vez');
+    // Una estrella tocada: se va el globito y se ve la frase.
+    const estrella = await pagina.evaluate(() => window.__estrella('Escribir'));
+    await pagina.mouse.click(estrella.x, estrella.y);
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(1500);
+    await foto('senal-sin-vincular');
+    const antes = await encendidas();
+    await pagina.click('.as-senal');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(900);
+    await foto('senal-tocada');
+    if (!(await ascentArriba())) console.log('! la señal tocada no abrió Ascent');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(400);
+    if (await encendidas() !== antes) console.log('! tocar la señal cambió lo encendido');
+    // Deslizar desde la señal también sube, siguiendo al dedo.
+    const r = await pagina.evaluate(() => { const b = document.querySelector('.as-senal').getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; });
+    await pagina.mouse.move(r[0], r[1]);
+    await pagina.mouse.down();
+    await pagina.mouse.move(r[0], r[1] - 240, { steps: 12 });
+    await pagina.waitForTimeout(400);
+    await foto('senal-deslizando');
+    await pagina.mouse.up();
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(900);
+    if (!(await ascentArriba())) console.log('! deslizar desde la señal no abrió Ascent');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(400);
+    if (await encendidas() !== antes) console.log('! deslizar desde la señal cambió lo encendido');
+    await ascent('iphone', 'sinAscent');
+    await pagina.waitForTimeout(600);
+    await foto('senal-sin-ascent');
+    await ascent('iphone', 'sesion');
+    await ascent('vincular', true);
+    await pagina.waitForTimeout(1700);
+    await foto('senal-vinculada');
+    await ascent('senal', 'antes');
+    await pagina.waitForTimeout(600);
+    await foto('senal-vinculada-antes');
+    await ascent('senal', 'nada');
+    await pagina.waitForTimeout(600);
+    await foto('senal-vinculada-sin-sesiones');
+    await ascent('senal', 'hoy');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await pagina.waitForTimeout(600);
+    await foto('senal-vinculada-ingles');
+    await ascent('vincular', false);
+    await pagina.waitForTimeout(1300);
+    await foto('senal-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    // La invitación de Inicio.
+    await pestana(0);
+    await pagina.waitForTimeout(1000);
+    await foto('invitacion');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await pagina.waitForTimeout(500);
+    await foto('invitacion-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.waitForTimeout(300);
+    await pagina.click('.as-invita-no');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(150);
+    await foto('invitacion-yendose');
+    await pagina.waitForTimeout(700);
+    await foto('invitacion-ahora-no');
+    if (await pagina.locator('.as-invita').count()) console.log('! «Ahora no» dejó la invitación');
+    await ascent('volverAInvitar');
+    await ascent('iphone', 'sinAscent');
+    await pagina.waitForTimeout(500);
+    if (await pagina.locator('.as-invita').count()) console.log('! sin Ascent en este iPhone, invitó igual');
+    await foto('invitacion-sin-ascent');
+    await ascent('iphone', 'sesion');
+    await pagina.waitForTimeout(700);
+    // «Vincular» abre la hoja; al vincular, la invitación se va sola.
+    await pagina.click('.as-invita-si');
+    await pagina.mouse.move(1, 1);
+    await hojaAbierta('as-hoja');
+    await pagina.waitForTimeout(300);
+    await foto('invitacion-hoja');
+    await pagina.click('.as-hoja-vincular');
+    await pagina.waitForTimeout(2200);
+    await foto('invitacion-vinculada');
+    if (await pagina.locator('.as-invita').count()) console.log('! vinculada, siguió la invitación');
+    await ascent('vincular', false);
+    await pagina.waitForTimeout(600);
+  },
+  // Ascent, abajo de Hábitos: la señal, el gesto a mitad de camino (con el dedo todavía abajo),
   // sin vincular y vinculada, y lo que cambia en Inicio, Sueño y Perfil con el vínculo.
   async ascent() {
     await alCielo();
     await pagina.waitForTimeout(600);
     await foto('ascent-flecha');
-    // Tocar la flecha también abre la sección.
-    await pagina.click('.as-flecha');
+    // Tocar la señal también abre la sección.
+    await pagina.click('.as-senal');
     await pagina.mouse.move(1, 1);
     await pagina.waitForTimeout(900);
     await foto('ascent-flecha-tocada');
@@ -1244,6 +1619,61 @@ const pasos = {
     await pagina.evaluate(() => document.querySelector('.pf-scroll').scrollTo(0, 99999));
     await pagina.waitForTimeout(400);
     await foto('perfil-abajo');
+    // Las filas, de arriba abajo; los créditos desplegados; sin Ascent (como la 1.0) y Ascent vinculada.
+    await enPerfil('bajar', '.pf-grupo:nth-of-type(2)');
+    await pagina.waitForTimeout(300);
+    await foto('perfil-datos');
+    await enPerfil('creditos', true);
+    await enPerfil('bajar', '.pf-creditos-lista');
+    await pagina.waitForTimeout(500);
+    await foto('perfil-creditos');
+    await enPerfil('creditos', false);
+    await enPerfil('subir');
+    await pagina.evaluate(() => window.__ascentEnPerfil(false));
+    await pagina.waitForTimeout(400);
+    await foto('perfil-sin-ascent');
+    await pagina.evaluate(() => window.__ascentEnPerfil(true));
+    await ascent('vincular', true);
+    await pestana(5);
+    await pagina.waitForTimeout(500);
+    await foto('perfil-vinculada');
+    await ascent('vincular', false);
+    await pestana(5);
+    // La suscripción, en cada estado: solo la fila.
+    for (const [acceso, nombre] of [['prueba', 'perfil-en-prueba'], ['activa', 'perfil-anual'], ['regalo', 'perfil-regalo']]) {
+      await pagina.evaluate((a) => window.__suscripcion('poner', a), acceso);
+      await pagina.evaluate(() => window.__seguridad('numeros', true));
+      await pagina.waitForTimeout(300);
+      await foto(nombre);
+    }
+    await pagina.evaluate(() => { window.__suscripcion('poner', 'prueba'); window.__seguridad('numeros', true); });
+    // Las subpantallas.
+    for (const [cual, nombre] of [['calidad', 'perfil-calidad'], ['corte', 'perfil-corte'], ['privacidad', 'perfil-privacidad']]) {
+      await enPerfil('hoja', cual);
+      await hojaAbierta('pf-hoja');
+      await foto(nombre);
+      await enPerfil('cerrarHoja');
+      await pagina.waitForTimeout(500);
+    }
+    await seccion('entreno');
+    await hojaAbierta('pf-hoja');
+    await foto('perfil-entreno');
+    await enPerfil('cerrarHoja');
+    await pagina.waitForTimeout(500);
+    await seccion('aparatos');
+    await hojaAbierta('pf-hoja');
+    await foto('perfil-aparatos');
+    await enPerfil('cerrarHoja');
+    await pagina.waitForTimeout(500);
+    await pagina.evaluate(() => window.__idioma('en'));
+    await pagina.waitForTimeout(400);
+    await foto('perfil-ingles');
+    await seccion('avisos');
+    await hojaAbierta('pf-hoja');
+    await foto('perfil-avisos-ingles');
+    await enPerfil('cerrarHoja');
+    await pagina.waitForTimeout(500);
+    await pagina.evaluate(() => window.__idioma('es'));
     await pagina.evaluate(() => document.querySelector('.pf-scroll').scrollTo(0, 0));
     await pestana(0);
   },
@@ -1315,9 +1745,93 @@ const pasos = {
     await pagina.waitForTimeout(800);
     await pestana(0);
   },
+  // El saludo del día (spec/saludo.md): arriba de Inicio y su hoja, con cada día de ejemplo, la hora, abrir de
+  // nuevo, lo que fue diciendo en dos semanas, en inglés, con los números ocultos y con «sin déficit».
+  async saludo() {
+    const s = (accion, arg) => pagina.evaluate(([a, x]) => window.__saludo(a, x), [accion, arg]);
+    const espera = (ms = 900) => pagina.waitForTimeout(ms);
+    await pestana(0);
+    await enInicio('subir');
+    await espera();
+    await foto('saludo-inicio');
+    await enInicio('primerDia', true);
+    await espera();
+    await foto('saludo-inicio-primer-dia');
+    await enInicio('primerDia', false);
+    await seccion('saludo');
+    await espera(1000);
+    for (const dia of ['pocoEntrena', 'yaEntreno', 'descanso', 'pasoAyer', 'pasoHoy', 'sinSueno', 'primerDia', 'noche']) {
+      await s('dia', dia);
+      await espera();
+      await foto('saludo-' + dia);
+    }
+    await s('dia', 'pocoEntrena');
+    await s('abrirDeNuevo');
+    await espera();
+    await foto('saludo-abrir-de-nuevo');
+    await s('pasarRato');
+    await espera();
+    await foto('saludo-dos-horas');
+    await s('anotarProxima');
+    await espera();
+    await foto('saludo-anoto');
+    for (const [hora, nombre] of [['13:00', 'mediodia'], ['15:00', 'antes-de-entrenar'], ['20:00', 'despues-de-entrenar'], ['22:30', 'noche']]) {
+      await s('dia', 'pocoEntrena');
+      await s('hora', hora);
+      await espera();
+      await foto('saludo-a-la-hora-' + nombre);
+    }
+    await s('dia', 'pocoEntrena');
+    await s('bajar', '.sl-dos');
+    await espera(600);
+    await foto('saludo-dos-semanas');
+    await s('bajar', '.sl-lista h5:nth-of-type(6)');
+    await espera(500);
+    await foto('saludo-dos-semanas-2');
+    await s('subir');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await s('dia', 'yaEntreno');
+    await espera();
+    await foto('saludo-ingles');
+    await s('bajar', '.sl-dos');
+    await espera(500);
+    await foto('saludo-ingles-dos-semanas');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await s('numeros', false);
+    await espera();
+    await foto('saludo-sin-numeros');
+    await s('numeros', true);
+    await s('sinDeficit', true);
+    await espera();
+    await foto('saludo-sin-deficit');
+    await s('sinDeficit', false);
+    await s('cerrar');
+    await espera(600);
+    await foto('saludo-cerrada');
+  },
+
   // La propuesta de widgets (D43): la comida, chica, mediana y grande, con un toque que anota sin abrir
   // Moss; el cielo con su fondo de verdad y el día completo; la noche, a la mañana y a la noche; la
   // pantalla bloqueada; StandBy; tintados y transparentes, en inglés y abrir Moss con lo tocado.
+  async bloqueo() {
+    const poner = async (p, nombre, espera = 500) => {
+      await pagina.evaluate((x) => window.__avisosBloqueo(x), p);
+      await pagina.waitForTimeout(espera);
+      await foto(nombre);
+    };
+    await seccion('avisosBloqueo');
+    await pagina.waitForTimeout(500);
+    // Tu caso: ya entrenaste, y a las 17:40 suena solo la merienda.
+    await poner({ hora: 18 * 60, entreno: true, merendo: false, pocaProteina: false }, 'bloqueo-ya-entrene');
+    await poner({ hora: 18 * 60 + 10, entreno: false }, 'bloqueo-sin-entrenar');
+    await poner({ hora: 23 * 60 + 30, entreno: true, pocaProteina: true }, 'bloqueo-falta', 700);
+    await poner({ hora: 23 * 60 + 30, idioma: 'en' }, 'bloqueo-falta-ingles', 700);
+    await poner({ modo: 'todos', idioma: 'es', abajo: 0 }, 'bloqueo-todos-1');
+    await poner({ abajo: 620 }, 'bloqueo-todos-2');
+    await poner({ abajo: 1240 }, 'bloqueo-todos-3');
+    await poner({ abajo: 1860 }, 'bloqueo-todos-4');
+    await poner({ modo: 'todos', idioma: 'en', abajo: 620 }, 'bloqueo-todos-ingles');
+  },
   async 'widgets-nuevos'() {
     const widgets = (accion, arg) => pagina.evaluate(([a, x]) => window.__widgets(a, x), [accion, arg]);
     const espera = (ms = 900) => pagina.waitForTimeout(ms);

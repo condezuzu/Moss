@@ -18,7 +18,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas' };
+const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas', comidas: 'Comidas', luz: 'Luz', dias: 'Dias', habitos: 'Habitos', recordatorios: 'Recordatorios', loQueFalta: 'LoQueFalta', avisos: 'Avisos', alrededorDelEntreno: 'AlrededorDelEntreno' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -60,7 +60,7 @@ function alimentosCurados() {
       // Lo secundario: fibra, azúcares, saturadas, sodio (mg) y alcohol; null si la base no lo tiene.
       s: [a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol].map((n) => (n === null ? null : redondo(n))),
       // Los micronutrientes (MICROS) y lo verificado: [día, con qué], o null.
-      u: microsDe(a), w: a.verificado && a.segunda ? [a.verificado, a.segunda] : null, f: a.fuente, o: a.atribucion,
+      u: microsDe(a), w: a.verificado && a.segunda ? [a.verificado, a.segunda] : null, f: a.fuente, o: a.atribucion, m: a.marca, b: a.orden_marca,
       p: [], d: 0, t: [], porcion: a.porcion,
     }]));
   for (const p of db.prepare(`SELECT p.id, p.alimento, p.es, p.en, p.gramos FROM porciones p JOIN alimentos a ON a.id = p.alimento WHERE a.nombre_es IS NOT NULL ORDER BY p.id`).all()) {
@@ -162,9 +162,16 @@ const js = [
   modulo('Comidas', 'src/dominio/comidas.ts'),
   modulo('Etiqueta', 'src/comida/etiqueta.ts'),
   modulo('Fechas', 'src/dominio/fechas.ts'),
+  modulo('Luz', 'src/dominio/luz.ts'),
+  modulo('Dias', 'src/dominio/dias.ts'),
+  modulo('Habitos', 'src/dominio/habitos.ts'),
+  modulo('Recordatorios', 'src/dominio/recordatorios.ts'),
+  modulo('LoQueFalta', 'src/dominio/loQueFalta.ts'),
+  modulo('Avisos', 'src/dominio/avisos.ts'),
   modulo('AlrededorDelEntreno', 'src/dominio/alrededorDelEntreno.ts'),
   modulo('Plan', 'src/dominio/plan.ts'),
   modulo('Metas', 'src/dominio/metas.ts'),
+  modulo('Saludo', 'src/dominio/saludo.ts'),
   modulo('Micronutrientes', 'src/dominio/micronutrientes.ts'),
   modulo('DejaElDia', 'src/dominio/dejaElDia.ts'),
   modulo('Control', 'src/dominio/control.ts'),
@@ -176,7 +183,9 @@ const js = [
   modulo('Musculos', 'src/dominio/musculos.ts'),
   modulo('Rendimiento', 'src/dominio/rendimiento.ts'),
   modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'suscripcion', 'widgets-nuevos', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  modulo('Premium', 'src/dominio/premium.ts'),
+  modulo('SenalDeAscent', 'src/dominio/senalDeAscent.ts'),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'fotos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'avisos', 'suscripcion', 'widgets-nuevos', 'widgets', 'tienda', 'revision', 'saludo', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

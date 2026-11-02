@@ -3,16 +3,16 @@
 Investigado el 21/10/2026 y hecho el 26/10/2026, para la build de la revisión. La galería
 (escenario `widgets`, sección «Los widgets») es la referencia visual.
 
-## La propuesta del 1/11/2026 (D43, para aprobar)
+## Los widgets de la 1.1 (D43, aprobados el 2/11/2026 y programados)
 
-Lo pediste el 1/11/2026 («mejoraría los widgets»). Está en la galería, sección «Los widgets», y se
-programa recién cuando la apruebes. Los dos problemas de lo que hay: **ninguno muestra comida**, que es
-lo más usado (spec/nutricion.md ya los pedía en la pantalla bloqueada), y **el del cielo no se parece al
+Lo pediste el 1/11/2026 («mejoraría los widgets») y lo aprobaste el 2/11. Está en la galería, sección «Los
+widgets». Los dos problemas de lo que había: **ninguno mostraba comida**, que es
+lo más usado (spec/nutricion.md ya los pedía en la pantalla bloqueada), y **el del cielo no se parecía al
 cielo de la app**: un degradé con la figura chica.
 
 | Widget | Tamaños | Qué muestra | Qué hace el toque |
 |---|---|---|---|
-| **Hoy** | chico, mediano, grande, redondo, rectangular y en línea | la luna, lo que queda y los macros; en mediano y grande, las comidas del día | el chico abre la hoja de anotar. Una comida que falta con «de siempre»: **la anota sin abrir Moss**; otro toque la saca. Sin «de siempre»: abre la hoja en esa comida. Una anotada: abre Comida |
+| **Hoy** | chico, mediano, grande, redondo, rectangular y en línea | la luna, lo que queda y los macros; en mediano y grande, las comidas del día | el chico abre la hoja de anotar. Una comida que falta con «de siempre»: **la anota sin abrir Moss** y muestra «Anotado ✓»; otro toque la deshace. Sin «de siempre»: abre la hoja en esa comida. Una anotada: abre Comida |
 | **Anotar** | chico, mediano y redondo | Buscar, Decir, Código y Etiqueta; el chico y el redondo, una sola acción, a elegir al editar el widget | abre Moss justo ahí |
 | **Agua** | chico | los litros, los vasos y su barra | «+» y «−» sin abrir Moss |
 | **Cielo** | chico, mediano, grande y redondo | la figura sobre el cielo de verdad; se une a medida que se enciende; día completo: aurora y oro, sin texto. En el mediano, lo que falta primero | los «hecho» como hoy; lo demás abre Hábitos |
@@ -29,11 +29,12 @@ cielo de la app**: un degradé con la figura chica.
 
 ### Qué llega cómo
 
-- **Por OTA, sin build** (las vistas se registran desde el JavaScript al abrir la app): el cielo nuevo,
-  chico y mediano; la noche nueva en la pantalla bloqueada; y que cada toque abra su sección (hoy, todo
-  abre Inicio).
+- **Por OTA, sin build** (las vistas se registran desde el JavaScript al abrir la app), ya programado: el
+  cielo nuevo, chico y mediano; la noche nueva en la pantalla bloqueada; y que cada toque abra su sección.
 - **Con build:** Hoy, Anotar, Agua y cada tamaño nuevo, porque se declaran en `app.json` (cambia la
-  huella). También editar el widget (`ios.configuration`).
+  huella). También editar el widget (`ios.configuration`). Está todo programado y apagado con
+  `CON_WIDGETS_NUEVOS`. Al armar la próxima build, `node herramientas/preparar-proxima-build.mjs` los
+  declara y prende la bandera. Nunca antes de una OTA para las builds que ya están.
 
 ### Cómo se hace
 
