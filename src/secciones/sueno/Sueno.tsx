@@ -28,6 +28,8 @@ import { useSueno } from '../ganchos';
 import { Hipnograma } from '../graficos/Graficos';
 import type { Sueno } from '../persona';
 import { Aparece, AvisoDeEjemplo, Cabecera, Carta, Chip, Cifra, ComoSeCalcula, e as tarjeta, Eje, Nota, Parrafo, Recuadro, type TipoDeChip } from '../tarjetas';
+import { useTienePremium } from '@/lib/premium';
+import { CartaPremium } from '../premium/Premium';
 import { Afinar } from './Afinar';
 import { EditorDeHora, LaManana, ponerHora } from './Manana';
 import { RecuperacionEnSueno } from '../ascent/EnSueno';
@@ -54,11 +56,13 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const anterioresA = (c: ClaveDia) => ultimasNoches(s.noches, sumarDias(c, -1), DIAS);
   const noche = s.noches.find((n) => n.clave === clave) ?? null;
   const interior = ancho - 40 - 34;
+  // Gratis: cuánto dormiste. Lo demás es el sueño avanzado (spec/suscripcion.md).
+  const conPremium = useTienePremium();
   return (
     <View style={{ width: ancho }}>
       <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
         <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('sueno.titulo')} />
-        {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
+        {s.deEjemplo && <AvisoDeEjemplo texto={t(conPremium ? 'sueno.ejemplo' : 'sueno.ejemploSinPremium')} />}
         <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} desde={e.metas[0]?.desde ?? null} />
         <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={(c) => setElegida(c === e.hoy ? null : c)} />
         {/* Poco sueño por semanas: la sugerencia de un médico, arriba. Una estimación, no un diagnóstico. */}
@@ -80,15 +84,16 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
           ) : (
             <SinNoche clave={clave} hoy={e.hoy} cama={s.soloEnCama.get(clave)} />
           )}
-          {noche?.moss && <ElMovimiento />}
+          {noche?.moss && conPremium && <ElMovimiento />}
+          {!conPremium && <CartaPremium que="sueno" />}
           {/* La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien. */}
-          <LaDeuda noches={ultimasNoches(s.noches, clave, DIAS)} necesidad={s.necesidad} />
-          {noche && <LaCalidad n={noche} necesidad={s.necesidad} anteriores={anterioresA(noche.clave)} abierto={abierto === 'calidad'} alAbrir={() => setAbierto((a) => (a === 'calidad' ? null : 'calidad'))} />}
-          <ElHorario noches={ultimasNoches(s.noches, clave, DIAS)} clave={clave} />
-          {noche && !noche.moss && <LoDelReloj n={noche} s={s} anteriores={anterioresA(noche.clave)} />}
+          {conPremium && <LaDeuda noches={ultimasNoches(s.noches, clave, DIAS)} necesidad={s.necesidad} />}
+          {noche && conPremium && <LaCalidad n={noche} necesidad={s.necesidad} anteriores={anterioresA(noche.clave)} abierto={abierto === 'calidad'} alAbrir={() => setAbierto((a) => (a === 'calidad' ? null : 'calidad'))} />}
+          {conPremium && <ElHorario noches={ultimasNoches(s.noches, clave, DIAS)} clave={clave} />}
+          {noche && !noche.moss && conPremium && <LoDelReloj n={noche} s={s} anteriores={anterioresA(noche.clave)} />}
         </Aparece>
         {/* Sin reloj ni anillo en las dos semanas: lo que le da a Moss horas exactas (spec/sueno-sin-esfuerzo.md). */}
-        {!s.noches.some((n) => !n.moss && n.clave >= sumarDias(e.hoy, -DIAS) && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra')) && (
+        {conPremium && !s.noches.some((n) => !n.moss && n.clave >= sumarDias(e.hoy, -DIAS) && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra')) && (
           <Aparece>
             <Afinar hoy={e.hoy} />
           </Aparece>

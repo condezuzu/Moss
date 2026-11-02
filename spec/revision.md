@@ -471,7 +471,7 @@ el nombre, el subtítulo, las palabras clave ni el texto promocional.
 Si `Moss` sola queda libre, el nombre puede ser solo «Moss» y el subtítulo
 cargar lo demás; con el nombre largo se encuentra mejor.
 
-### Descripción (español, 3.417 caracteres)
+### Descripción (español, 3.811 caracteres)
 
 ```
 Moss es un registro de comida para iPhone. Anotas lo que comes en pocos toques, o lo dices, y Moss ajusta tus metas de calorías y macros cada semana con la tendencia de tu peso. Tus hábitos te acompañan como estrellas en un cielo nocturno.
@@ -518,13 +518,16 @@ Con tu permiso, Moss lee de la app Salud tu peso, altura, pasos, agua, minutos d
 TUS DATOS SON TUYOS
 Sin anuncios y sin rastreo. Entras con Apple, y Moss guarda tus datos en el teléfono y en tu cuenta para sincronizarlos. Puedes exportarlos y borrar tu cuenta desde la app.
 
+MOSS PREMIUM
+Lo gratis alcanza para registrar: comida, hábitos, cielo y peso. Moss Premium suma el ajuste semanal de metas, el plan de comidas y el sueño completo con la hora de dormir: USD 4,99 por mes o USD 29,99 por año, con 7 días gratis. El cobro va a tu cuenta de Apple y se renueva solo salvo que lo canceles al menos 24 horas antes de que termine el período. Se administra en Ajustes.
+
 Moss es para mayores de 16 años. No es un dispositivo médico: sus números son estimaciones y no reemplazan a un profesional de la salud. Si estás embarazada, amamantando o tienes una condición médica, consulta a un profesional antes de cambiar lo que comes.
 
 Términos de uso: https://condezuzu.github.io/moss-app/terminos/
 Privacidad: https://condezuzu.github.io/moss-app/privacidad/
 ```
 
-### Description (inglés, 3.276 caracteres)
+### Description (inglés, 3.645 caracteres)
 
 ```
 Moss is a food log for iPhone. Log what you eat in a few taps, or just say it, and Moss adjusts your calorie and macro targets every week, based on your weight trend. Your habits keep you company as stars in a night sky.
@@ -571,6 +574,9 @@ With your permission, Moss reads your weight, height, steps, water, mindful minu
 YOUR DATA IS YOURS
 No ads and no tracking. You sign in with Apple, and Moss keeps your data on your phone and in your account to sync it. You can export it and delete your account from the app.
 
+MOSS PREMIUM
+Free is enough to log: food, habits, sky and weight. Moss Premium adds weekly goal adjustments, the meal plan and full sleep with bedtime: USD 4.99 per month or USD 29.99 per year, with a 7-day free trial. Payment is charged to your Apple Account and renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Settings.
+
 Moss is for people 16 and older. It isn’t a medical device: its numbers are estimates and don’t replace a health professional. If you’re pregnant, breastfeeding or have a medical condition, talk to a professional before changing what you eat.
 
 Terms of Use: https://condezuzu.github.io/moss-app/en/terms/
@@ -590,7 +596,7 @@ texto genérico:
 ### Lo demás de la ficha
 
 - **Categoría:** Salud y forma física; la segunda, Estilo de vida.
-- **Precio:** gratis. Sin compras.
+- **Precio:** gratis para bajar, con la suscripción Moss Premium ([`suscripcion.md`](suscripcion.md)).
 - **URL de soporte:** https://condezuzu.github.io/moss-app/ (tiene el contacto).
 - **URL de marketing:** opcional; la misma portada.
 - **Copyright:** `2026 Agustín Conde Zuzulich` (Apple suma el ©).
@@ -662,7 +668,10 @@ App Store Connect › la versión › App Review Information (cargado por API el
 ### En inglés (para pegar)
 
 ```
-Moss is a food log (calories and macros) with weight, sleep and habits. Free, with no ads, no in-app purchases and no tracking.
+Moss is a food log (calories and macros) with weight, sleep and habits. Free to download with an optional subscription (Moss Premium), no ads and no tracking.
+
+MOSS PREMIUM
+It's offered after the onboarding goal screen and in Profile > Moss Premium; "Continue with free" is always there. Food logging, habits and the sky, and weight stay free. Premium opens weekly goal adjustments, the meal plan, full sleep and bedtime. Purchases and restores use StoreKit 2; no server stores them.
 
 SIGN IN
 Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 16 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
@@ -693,7 +702,10 @@ Los nombres coinciden con los textos de la app en inglés (`src/textos/en.json`:
 ### En español (referencia)
 
 ```
-Moss es un registro de comida (calorías y macros) con peso, sueño y hábitos. Es gratis, sin anuncios, sin compras y sin rastreo.
+Moss es un registro de comida (calorías y macros) con peso, sueño y hábitos. Se baja gratis y tiene una suscripción opcional (Moss Premium), sin anuncios y sin rastreo.
+
+MOSS PREMIUM
+Se ofrece después de la meta, al final de la entrada, y en Perfil › Moss Premium; «Seguir con lo gratis» siempre está. Registrar comida, los hábitos y el cielo, y el peso siguen gratis. Premium abre el ajuste semanal de metas, el plan de comidas, el sueño completo y la hora de dormir. Las compras y restaurar usan StoreKit 2; ningún servidor las guarda.
 
 ENTRAR
 La única forma de entrar es Sign in with Apple: sirve cualquier cuenta de Apple, así que no hace falta una cuenta de demostración. Una cuenta nueva pasa por una entrada corta: el consentimiento de los datos, un cuestionario (hay que tener 16 años o más) y el pedido de Salud, optativo, con «Ahora no». Hasta tener datos propios, Progreso y Sueño muestran datos de ejemplo, marcados como tales.

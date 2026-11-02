@@ -8,7 +8,7 @@
 import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
-import { elAlmacen } from '@/almacen';
+import { arrancarLoDePremium, elAlmacen } from '@/almacen';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { actualizarWidgets } from '@/widgets';
@@ -35,6 +35,8 @@ const modulos = cargar();
 
 async function correr(): Promise<void> {
   const a = elAlmacen();
+  // Con Moss cerrada nadie más lo arranca, y el control y la noche esperan a saber si hay Premium.
+  await arrancarLoDePremium().catch(() => {});
   await a.iniciar();
   a.revisarDia();
   // Con el teléfono bloqueado Salud no se lee: sin eso no se sabe si hay reloj, y la noche no se estima.

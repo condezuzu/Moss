@@ -14,7 +14,9 @@ import { diaDeLaSemana, diaLogico, minutosEnElDia, sumarDias, type ClaveDia } fr
 import { horaHabitual } from '@/dominio/recordatorios';
 import { vigentes } from '@/dominio/registros';
 import { aprenderPersonal, habitualDe } from '@/dominio/sinReloj';
+import { avisoDePrueba } from '@/dominio/premium';
 import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
+import { hayPremium, suscripcionActual } from '@/lib/premium';
 import { duracion } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
 import { t } from '@/textos';
@@ -139,8 +141,10 @@ export function programarAvisos(e: Para): Promise<void> {
 async function programar(e: Para, vieja: () => boolean): Promise<void> {
   if (!hayAvisos || vieja()) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
-  const ajustes: Avisos = { ...e.avisos, comidas: e.recordatorios ?? [] };
-  const alguno = !!ajustes.dormir?.encendido || !!ajustes.comidas?.length || !!ajustes.habitos?.length || !!Object.keys(ajustes.horario ?? {}).length || !!ajustes.pesarse?.encendido;
+  // La hora de dormir es de Premium: sin él queda elegida, pero no suena.
+  const ajustes: Avisos = { ...e.avisos, comidas: e.recordatorios ?? [], ...(hayPremium() ? {} : { dormir: undefined }) };
+  const finDePrueba = avisoDePrueba(suscripcionActual(), Date.now());
+  const alguno = !!ajustes.dormir?.encendido || !!ajustes.comidas?.length || !!ajustes.habitos?.length || !!Object.keys(ajustes.horario ?? {}).length || !!ajustes.pesarse?.encendido || finDePrueba !== null;
   if (!alguno || !(await Notifications.getPermissionsAsync()).granted) return;
   await prepararCategorias();
   const horaDeComida = horasDeComida(e);
@@ -180,6 +184,13 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     } catch {
       // Uno que no se pudo programar no deja sin los demás.
     }
+  }
+  // Dos días antes de que termine la prueba, como dice la pantalla de Premium.
+  if (finDePrueba !== null && !vieja()) {
+    await Notifications.scheduleNotificationAsync({
+      content: { title: 'Moss', body: t('recordatorios.pruebaTermina') },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(finDePrueba) },
+    }).catch(() => {});
   }
 }
 

@@ -7,3 +7,11 @@
  * `true` y una OTA.
  */
 export const CON_ASCENT = false;
+
+/**
+ * El día en que sale Moss Premium (AAAA-MM-DD): prenderlo es poner la fecha, y quien tiene cuenta de
+ * antes de ese día lo tiene de regalo (lo decidiste el 31/10/2026). Pide la build con StoreKit
+ * (app-intents/Compras.swift) y los productos cargados en App Store Connect (spec/suscripcion.md).
+ */
+export const PREMIUM_SALE: string | null = process.env.EXPO_PUBLIC_PREMIUM_SALE || null;
+export const CON_PREMIUM = PREMIUM_SALE !== null;

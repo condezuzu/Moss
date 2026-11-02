@@ -33,6 +33,9 @@ import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
 import { aparatoPrincipal, Aparatos } from './Aparatos';
 import { useFilaDeAscent } from '../ascent/filaDePerfil';
+import { diasDePrueba, estadoDePremium, planDe } from '@/dominio/premium';
+import { hayCompras, pareceTenerPremium, useEstadoDePremium } from '@/lib/premium';
+import { pedirPremium, pedirPremiumAlCerrarse } from '../premium/Premium';
 import { Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exportarTodo } from './cuenta';
 import { borrarFotoDePerfil, elegirFotoDePerfil, fotoDePerfil, guardarFotoDePerfil, hayFotoDePerfil } from './foto';
@@ -59,6 +62,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | null>(null);
   // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
   const [foto, setFoto] = useState(fotoDePerfil);
+  const premium = useEstadoDePremium();
   useEffect(() => {
     correoDeLaCuenta().then(setCorreo).catch(() => {});
     saludPedida().then(setSalud).catch(() => {});
@@ -73,6 +77,22 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       { text: t('perfil.borrar'), style: 'destructive', onPress: () => { accion().then((ok) => ok === false && avisar(t('perfil.errorBorrar'))).catch(() => avisar(t('perfil.errorBorrar'))); } },
     ]);
 
+  // Gratis, lleva a Premium; con una suscripción, a administrarla en Apple.
+  const estadoPremium = estadoDePremium(premium);
+  const filaDePremium: Fila = {
+    clave: 'premium',
+    titulo: t('suscripcion.titulo'),
+    valor: estadoPremium === 'gratis' ? t('suscripcion.perfil.gratis')
+      : estadoPremium === 'fundador' ? t('suscripcion.perfil.fundador')
+      : estadoPremium === 'prueba' && premium.suscripcion ? t('suscripcion.perfil.prueba', { n: diasDePrueba(premium.suscripcion, premium.leido) })
+      : premium.suscripcion && planDe(premium.suscripcion) === 'mensual' ? t('suscripcion.perfil.activaMensual')
+      : t('suscripcion.perfil.activa'),
+    detalle: estadoPremium === 'fundador' ? t('suscripcion.perfil.fundadorTexto') : undefined,
+    alTocar: () => {
+      if (estadoPremium === 'gratis') pedirPremium();
+      else if (estadoPremium !== 'fundador') Linking.openURL('https://apps.apple.com/account/subscriptions').catch(() => {});
+    },
+  };
   const grupos: [string, Fila[]][] = [
     ['perfil.tusDatos', p ? [
       { clave: 'sexo', titulo: t('perfil.sexo'), valor: t(`perfil.sexos.${p.sexo}`), alTocar: () => setHoja('editar') },
@@ -87,6 +107,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         detalle: p.sinDeficit ? t('perfil.sinDeficitTexto') : undefined, alTocar: () => elAlmacen().ponerEstrategia({ sinDeficit: !p.sinDeficit }),
       },
     ] : []],
+    ...(hayCompras() ? [['suscripcion.perfil.titulo', [filaDePremium]] as [string, Fila[]]] : []),
     ['perfil.preferencias', [
       { clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial') },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
@@ -395,6 +416,8 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const dormir = e.avisos.dormir;
   const encenderDormir = (si: boolean) => {
     if (!si) elAlmacen().ponerAvisos({ dormir: { encendido: false, antes: dormir?.antes } });
+    // Con esta hoja abierta, iOS no presenta otra: se cierra y después se abre Premium.
+    else if (!pareceTenerPremium()) { alCerrar(); pedirPremiumAlCerrarse('dormir'); }
     else conPermiso(() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
   };
   const sueno = suenoParaAvisos(e);

@@ -32,6 +32,7 @@ import {
   anclas as medirAnclas, barraEn, esDiapositiva, estado, guionDe, guionDeSalida, LUNA, PALABRAS, reposo,
   type Anclas, type EscenaDeLuna, type Evento, type Guion, type Lugar, type Paso, type Recorrido,
 } from './guion';
+import { ofrecerPremium } from '../premium/Premium';
 import { Anillos, Casiopea } from './Lienzos';
 import { Boton, Deslizador, Opcion } from './piezas';
 
@@ -264,7 +265,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 }}
               />
             )}
-            {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={terminar} reducido={reducido} />}
+            {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={() => ofrecerPremium(terminar)} reducido={reducido} />}
           </ScrollView>
           )}
         </Animated.View>

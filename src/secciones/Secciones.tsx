@@ -32,6 +32,7 @@ import { EditorDeHabito } from './habitos/Editor';
 import { Mes } from './habitos/Mes';
 import { Sugeridos } from './habitos/Sugeridos';
 import { HojaMas, type VistaDelMas } from './HojaMas';
+import { PantallaPremium } from './premium/Premium';
 import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDePerfil } from './perfil/Perfil';
 import { PaginaDeProgreso } from './progreso/Progreso';
@@ -267,6 +268,7 @@ export default function Secciones() {
         {editando !== undefined && <EditorDeHabito key={editando ?? 'nuevo'} id={editando} alCerrar={() => setEditando(undefined)} />}
         {verMes && <Mes alCerrar={() => setVerMes(false)} />}
         {sugeridos && <Sugeridos alCerrar={() => setSugeridos(false)} />}
+        <PantallaPremium />
       </View>
     </GestureDetector>
   );

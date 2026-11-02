@@ -16,6 +16,8 @@ import { ESTILOS, EXTRAS, objetivoPermitido, pesoMinimoSano, pisoDe, repartirSem
 import type { EstadoDelObjetivo } from '@/dominio/progreso';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { useTienePremium } from '@/lib/premium';
+import { CartaPremium } from '../premium/Premium';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto, type Macro } from '../comida/comunes';
 import { conSigno, fechaCorta, fechaDiaMes, fechaLarga, numero, sistemaDe, useEstado } from '../comida/datos';
 import { usePersona } from '../ganchos';
@@ -376,8 +378,10 @@ function Requisito({ hecho, total, clave }: { hecho: number; total: number; clav
 }
 
 function ElControl({ p }: { p: Persona }) {
+  const conPremium = useTienePremium();
   const ec = p.estadoControl;
   if (!ec) return null;
+  if (!conPremium) return <CartaPremium que="metas" />;
   // Mientras quedan días antes del control, todavía puede llegar: está en curso, no le falta nada.
   const quedan = Math.max(0, ec.faltan - 1);
   // Con el tramo corto (la primera semana), ese control no mide aunque lleguen los datos.

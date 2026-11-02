@@ -11,6 +11,7 @@ import { msHastaElCorte } from '@/dominio/fechas';
 import { CON_ASCENT } from '@/lib/banderas';
 import { borrarMiSesion, dejarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
+import { alCambiarPremium, arrancarPremium, cuentaDePremium, hayPremium, suscripcionActual } from '@/lib/premium';
 import { programarAvisos } from '@/recordatorios/programar';
 import { yaNoEsDeMoss } from '@/secciones/perfil/cuentaApple';
 import { leerSalud } from '@/salud/leer';
@@ -26,7 +27,7 @@ import { crearSincronizador, type Sincronizador } from './sincronizar';
 let almacen: Almacen | undefined;
 
 export function elAlmacen(): Almacen {
-  almacen ??= crearAlmacen({ abrir: abrirRepositorio, catalogo, sembrar: (hoy) => habitosDeEjemplo(hoy, idioma()) });
+  almacen ??= crearAlmacen({ abrir: abrirRepositorio, catalogo, sembrar: (hoy) => habitosDeEjemplo(hoy, idioma()), conAjusteSemanal: hayPremium });
   return almacen;
 }
 
@@ -45,6 +46,10 @@ export function almacenListo(): Promise<void> {
     });
   });
 }
+
+/** Lo de Premium, al abrir Moss o en la tarea de fondo. La fecha de la cuenta dice si lo tiene de regalo. */
+export const arrancarLoDePremium = () =>
+  arrancarPremium(async () => (haySupabase() ? (await supabase().auth.getSession()).data.session?.user.created_at : null));
 
 /** La sincronización con la cuenta mientras la app está abierta: Perfil la frena antes de borrar el teléfono. */
 let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void } | undefined;
@@ -123,6 +128,7 @@ function sincronizarConLaCuenta(a: Almacen) {
     setTimeout(() => {
       // Solo la de este teléfono: las sesiones de Ascent con ese usuario siguen.
       if (borradaEnOtroLado) cliente.auth.signOut({ scope: 'local' }).catch(() => {});
+      cuentaDePremium(deMoss?.user.created_at);
       seguir();
       const ahora = usuarioDeLaSesion;
       if (usuarioDeLaCuenta === ahora) return;
@@ -207,6 +213,20 @@ export function useAlmacenListo(): boolean {
       .then(actualizarSalud)
       .catch((error) => console.warn('Moss no pudo abrir sus datos', error));
     const cuenta = sincronizarConLaCuenta(a);
+    // Lo que depende de Premium corre cuando Apple contesta, y otra vez si cambia (al comprar, al vencer,
+    // al cancelar la prueba), no cada vez que se le pregunta.
+    const dePremium = () => `${hayPremium()} ${suscripcionActual()?.vence} ${suscripcionActual()?.renueva}`;
+    let premiumAntes = dePremium();
+    const sinOirPremium = alCambiarPremium(() => {
+      const ahora = dePremium();
+      if (ahora === premiumAntes) return;
+      premiumAntes = ahora;
+      if (!a.estado().listo) return;
+      a.revisarElControl();
+      estimarAnoche(a).catch(() => {});
+      reprogramar();
+    });
+    arrancarLoDePremium().catch(() => {});
     let reloj: ReturnType<typeof setTimeout>;
     // El día cambia a la hora elegida (D32), no a la medianoche.
     const esperarElCorte = () => {
@@ -256,6 +276,7 @@ export function useAlmacenListo(): boolean {
       clearTimeout(espera);
       sinOir();
       sinOirBusquedas();
+      sinOirPremium();
       suscripcion.remove();
       cuenta.parar();
     };

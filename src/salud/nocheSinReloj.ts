@@ -11,6 +11,7 @@ import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
   actividadDeLosPasos, actividadDelMovimiento, aprenderPersonal, conNochesDeMoss, deLasSenales, estimarNoche, habitualDe, instanteDe, type Actividad, type Estimacion, type Personal,
 } from '@/dominio/sinReloj';
+import { hayPremium } from '@/lib/premium';
 import { leerMovimiento } from '../../modules/movimiento';
 import { leerSenales } from './anclas';
 
@@ -32,6 +33,8 @@ export function useComoLlego(clave: ClaveDia): ComoLlego | null {
 }
 
 export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<void> {
+  // La noche sin reloj es parte del sueño avanzado (spec/suscripcion.md).
+  if (!hayPremium()) return;
   const e = a.estado();
   if (!e.listo || ahora.getHours() < DESDE_LAS) return;
   const deSalud = e.salud?.noches ?? [];

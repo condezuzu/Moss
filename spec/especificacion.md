@@ -94,7 +94,7 @@ Vamos a crear Moss, una app de hábitos para iPhone, desde cero. Es mi segunda a
 
 ## Concepto
 
-La comida es el centro de Moss: trackear calorías y macros tan bien como MacroFactor, sin IA de fotos, global desde el inicio y gratis. Los hábitos y el cielo siguen, pero acompañan: cada hábito es una estrella, los hábitos de cada día forman una constelación real, y todo vive en un cielo nocturno. El nombre viene de "mos" (costumbre en latín) y "moss" (musgo en inglés, que crece lento pero siempre).
+La comida es el centro de Moss: trackear calorías y macros tan bien como MacroFactor, sin IA de fotos, global desde el inicio y con lo básico gratis (D40). Los hábitos y el cielo siguen, pero acompañan: cada hábito es una estrella, los hábitos de cada día forman una constelación real, y todo vive en un cielo nocturno. El nombre viene de "mos" (costumbre en latín) y "moss" (musgo en inglés, que crece lento pero siempre).
 
 Competencia directa que ya existe: MacroFactor en la comida; Sideria y Stellar Habits en los hábitos como estrellas. Moss se diferencia por:
 
@@ -144,7 +144,7 @@ Las constelaciones y los mitos pasan a segundo plano: siguen siendo parte de la 
 
 ## La comida (el centro)
 
-La comida es el centro de Moss. La gente quiere trackear sus macros: si esta parte no es excelente, nadie va a usar la app. El modelo es MacroFactor, sin IA de fotos. Global desde el inicio y gratis. El cómo está en [`nutricion.md`](nutricion.md).
+La comida es el centro de Moss. La gente quiere trackear sus macros: si esta parte no es excelente, nadie va a usar la app. El modelo es MacroFactor, sin IA de fotos. Global desde el inicio y con lo básico gratis (D40). El cómo está en [`nutricion.md`](nutricion.md).
 
 **Base de datos**
 
@@ -335,7 +335,7 @@ La solución está en [`ascent.md`](ascent.md).
 
 - Solo iPhone. Expo, con build propia (Apple Health no funciona en Expo Go). Ya tengo la cuenta de Apple Developer activa.
 - Supabase con cuentas desde el inicio.
-- Global desde el inicio y gratis: español neutro e inglés, con todos los textos en un diccionario desde el día uno, y los nombres de los alimentos de cada país.
+- Global desde el inicio y con lo básico gratis (D40): español neutro e inglés, con todos los textos en un diccionario desde el día uno, y los nombres de los alimentos de cada país.
 
 ## Versión 1 (para mandar a revisión)
 

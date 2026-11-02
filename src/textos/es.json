@@ -1043,6 +1043,7 @@
     "fuentesTexto": "Moss usa una sola fuente por noche: la que elijas en Perfil › Aparatos o, si no, la que mejor distingue el sueño de la vigilia. Nunca suma dos. Sin reloj ni anillo, la estima con el teléfono. Si falta una noche, queda en gris: no se inventa.",
     "noMedico": "Moss no es un dispositivo médico. Si te preocupa cómo duermes, consulta a un médico.",
     "ejemplo": "Son noches de ejemplo: aparecen las tuyas cuando conectes Salud o después de tu primera noche con Moss.",
+    "ejemploSinPremium": "Son noches de ejemplo: aparecen las tuyas cuando un reloj o un anillo escriba tu sueño en Salud.",
     "unidad": {
       "frecuencia": "lpm",
       "variabilidad": "ms",
@@ -2098,7 +2099,8 @@
     },
     "conPlan": "{hora}: {plan}.",
     "pesarse": "Buen momento para pesarte: después del baño y antes de desayunar.",
-    "pesarseControl": "Hoy es el día del control: buen momento para pesarte, después del baño y antes de desayunar."
+    "pesarseControl": "Hoy es el día del control: buen momento para pesarte, después del baño y antes de desayunar.",
+    "pruebaTermina": "Tu prueba de Moss Premium termina en dos días. Si no quieres seguir, se cancela en Ajustes."
   },
   "entreno": {
     "previa": "Entrenas a las {hora}: esta comida es tu previa.",
@@ -2222,22 +2224,31 @@
     "anual": {
       "nombre": "Anual",
       "precio": "USD 29,99 al año",
-      "detalle": "USD 2,50 por mes · 50 % menos que el mensual"
+      "detalle": "USD 2,50 por mes · 50 % menos que el mensual",
+      "precioDe": "{precio} al año",
+      "detalleDe": "{mes} por mes · {ahorro} % menos que el mensual"
     },
     "mensual": {
       "nombre": "Mensual",
       "precio": "USD 4,99 al mes",
-      "detalle": "Cancela cuando quieras"
+      "detalle": "Cancela cuando quieras",
+      "precioDe": "{precio} al mes"
     },
     "prueba": "7 días gratis",
     "empezar": "Empezar 7 días gratis",
+    "suscribirme": "Suscribirme",
     "legal": "7 días gratis, después {precio}. Se renueva solo hasta que canceles, al menos 24 horas antes de que termine el período. Se cancela en Ajustes › tu nombre › Suscripciones.",
+    "legalSinPrueba": "{precio}. Se renueva solo hasta que canceles, al menos 24 horas antes de que termine el período. Se cancela en Ajustes › tu nombre › Suscripciones.",
     "recordatorio": "Moss te avisa dos días antes de que termine la prueba.",
     "restaurar": "Restaurar compras",
     "terminos": "Términos",
     "privacidad": "Privacidad",
     "seguirGratis": "Seguir con lo gratis",
     "restaurando": "No hay nada para restaurar en este Apple ID.",
+    "sinPrecios": "No se pudo conectar con la App Store. No se te cobró nada.",
+    "reintentar": "Reintentar",
+    "error": "No se pudo completar. No se te cobró nada.",
+    "pendiente": "Queda pendiente de aprobación. Cuando se apruebe, se abre solo.",
     "apple": {
       "tienda": "App Store",
       "prueba": "Prueba gratis de 7 días",
@@ -2250,6 +2261,7 @@
     "listo": {
       "titulo": "Ya tienes Premium",
       "texto": "Tienes 7 días gratis. Moss te avisa dos días antes de que terminen.",
+      "textoSinPrueba": "Ya está todo abierto.",
       "seguir": "Seguir"
     },
     "bloqueo": {
@@ -2263,8 +2275,11 @@
     "perfil": {
       "titulo": "Suscripción",
       "gratis": "Gratis",
-      "prueba": "Premium · te quedan {n} días de prueba",
-      "activa": "Premium · anual",
+      "prueba": "Prueba · quedan {n} días",
+      "activa": "Anual",
+      "activaMensual": "Mensual",
+      "fundador": "De regalo",
+      "fundadorTexto": "Por usar Moss desde el principio.",
       "administrar": "Administrar suscripción",
       "verPlanes": "Ver Premium"
     }

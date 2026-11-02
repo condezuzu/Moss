@@ -1043,6 +1043,7 @@
     "fuentesTexto": "Moss uses a single source per night: the one you choose in Profile › Devices or, if not, the one that best tells sleep from wake. It never adds two together. Without a watch or a ring, it estimates the night with your phone. If a night is missing, it stays grey: nothing is made up.",
     "noMedico": "Moss isn’t a medical device. If you’re worried about your sleep, talk to a doctor.",
     "ejemplo": "These are sample nights: yours show up once you connect Health or after your first night with Moss.",
+    "ejemploSinPremium": "These are sample nights: yours show up once a watch or a ring writes your sleep to Health.",
     "unidad": {
       "frecuencia": "bpm",
       "variabilidad": "ms",
@@ -2098,7 +2099,8 @@
     },
     "conPlan": "{hora}: {plan}.",
     "pesarse": "Good time to weigh in: after the bathroom and before breakfast.",
-    "pesarseControl": "Check-in day: good time to weigh in, after the bathroom and before breakfast."
+    "pesarseControl": "Check-in day: good time to weigh in, after the bathroom and before breakfast.",
+    "pruebaTermina": "Your Moss Premium trial ends in two days. If you don't want to continue, cancel it in Settings."
   },
   "entreno": {
     "previa": "You train at {hora}: this is your pre-workout meal.",
@@ -2222,22 +2224,31 @@
     "anual": {
       "nombre": "Yearly",
       "precio": "USD 29.99 per year",
-      "detalle": "USD 2.50 per month · 50% less than monthly"
+      "detalle": "USD 2.50 per month · 50% less than monthly",
+      "precioDe": "{precio} per year",
+      "detalleDe": "{mes} per month · {ahorro}% less than monthly"
     },
     "mensual": {
       "nombre": "Monthly",
       "precio": "USD 4.99 per month",
-      "detalle": "Cancel anytime"
+      "detalle": "Cancel anytime",
+      "precioDe": "{precio} per month"
     },
     "prueba": "7 days free",
     "empezar": "Start 7 days free",
+    "suscribirme": "Subscribe",
     "legal": "7 days free, then {precio}. Renews automatically until you cancel, at least 24 hours before the period ends. Cancel in Settings › your name › Subscriptions.",
+    "legalSinPrueba": "{precio}. Renews automatically until you cancel, at least 24 hours before the period ends. Cancel in Settings › your name › Subscriptions.",
     "recordatorio": "Moss reminds you two days before the trial ends.",
     "restaurar": "Restore purchases",
     "terminos": "Terms",
     "privacidad": "Privacy",
     "seguirGratis": "Continue with free",
     "restaurando": "There's nothing to restore on this Apple ID.",
+    "sinPrecios": "Couldn't reach the App Store. You weren't charged.",
+    "reintentar": "Try again",
+    "error": "That didn't go through. You weren't charged.",
+    "pendiente": "It's waiting for approval. Once it's approved, it opens by itself.",
     "apple": {
       "tienda": "App Store",
       "prueba": "7-day free trial",
@@ -2250,6 +2261,7 @@
     "listo": {
       "titulo": "You have Premium",
       "texto": "You have 7 free days. Moss reminds you two days before they end.",
+      "textoSinPrueba": "Everything is unlocked.",
       "seguir": "Continue"
     },
     "bloqueo": {
@@ -2263,8 +2275,11 @@
     "perfil": {
       "titulo": "Subscription",
       "gratis": "Free",
-      "prueba": "Premium · {n} trial days left",
-      "activa": "Premium · yearly",
+      "prueba": "Trial · {n} days left",
+      "activa": "Yearly",
+      "activaMensual": "Monthly",
+      "fundador": "On us",
+      "fundadorTexto": "For using Moss from the start.",
       "administrar": "Manage subscription",
       "verPlanes": "See Premium"
     }

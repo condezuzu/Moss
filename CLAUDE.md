@@ -1,7 +1,7 @@
 # Moss
 
 App de comida para iPhone: trackear calorías y macros como MacroFactor, sin IA de
-fotos, global y gratis. Seis secciones con el «+» en el medio de la barra: Inicio,
+fotos, global, con lo básico gratis y Moss Premium (D40). Seis secciones con el «+» en el medio de la barra: Inicio,
 Comida, Progreso, Sueño, Hábitos y Perfil. La comida es el centro; los hábitos y
 el cielo acompañan:
 cada hábito es una estrella, los hábitos de cada día forman una constelación real
@@ -222,7 +222,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `supabase/moss/` | las migraciones del esquema `moss`. Las aplica `npm run migraciones -- --aplicar` (no el SQL Editor), y quedan anotadas en `moss.migraciones` |
 | `supabase/functions/` | las funciones de Moss en el servidor: `moss-borrar-cuenta` revoca Sign in with Apple y borra la cuenta, y `moss-vincular` vincula una cuenta de Moss con una de Ascent con las dos sesiones (cómo desplegarlas, en sus README; se prueban con `node herramientas/probar-borrar-cuenta.mjs` y `node herramientas/probar-vincular.mjs`; los dos borrados, contra la base real y sin dejar nada, con `npx supabase db query --linked -f herramientas/probar-borrado-en-produccion.sql`) |
 | `modules/` | los módulos nativos propios: `movimiento` (el historial de movimiento, para la noche sin reloj), `leer-etiqueta` (Vision) y `respaldo` (saca la carpeta de SQLite de la copia de seguridad) |
-| `app-intents/` | el Swift que va dentro del target de la app (módulos en línea): las acciones de Atajos de la noche, sus frases, y el despertador con AlarmKit (iOS 26+). Lo que llega se guarda como anclas (`src/salud/anclas.ts`) |
+| `app-intents/` | el Swift que va dentro del target de la app (módulos en línea): las acciones de Atajos de la noche, sus frases, el despertador con AlarmKit (iOS 26+) y las compras con StoreKit 2 (`Compras.swift`). Lo que llega se guarda como anclas (`src/salud/anclas.ts`) |
 | `plugins/` | los plugins de configuración propios: `con-alarmkit.js` enlaza AlarmKit como opcional |
 | `src/comida/` | lo de la comida que usa la base de alimentos: el buscador (`buscar.ts`), con tests contra la base de verdad, cómo se leen las cantidades (`porciones.ts`: «2 rebanadas», «1½ tazas»), el lector de la tabla de una etiqueta (`etiqueta.ts`), el de una receta pegada como texto (`recetaDeTexto.ts`: cada ingrediente con su cantidad, lo que rinde y el peso final), el de la comida dicha de una vez (`frase.ts`) y lo dicho en alimentos de la base, con sus preguntas (`entender.ts`, con los platos dichos sin cantidad de `platos.ts`: chico, mediano o grande) y Open Food Facts por código de barras (`off.ts`) |
 | `alimentos/` | los genéricos curados (`genericos.txt`): nombre en español y en inglés, de dónde salen en USDA, porciones y nombres de cada región; y las cadenas (`cadenas.txt`: McDonald's, Burger King, Subway, Mostaza, La Pasiva y Starbucks, cada producto con su fuente o «aproximado») |
@@ -238,7 +238,8 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | `src/textos/` | el diccionario y `t()`: cielo, entrada, comida, Inicio, el «+», el cuerpo, Progreso, Sueño, Perfil, diagnóstico |
 | `src/lib/supabase.ts` | cliente, esquema `moss`, y `haySupabase()` (sin las variables, Moss anda sin cuenta) |
 | `src/lib/ascent.ts` | Ascent en este iPhone: si está instalada, abrirla y su página en la App Store |
-| `src/lib/banderas.ts` | lo que se prende por OTA: `CON_ASCENT`, la vinculación con Ascent, apagada en la 1.0 (D30) |
+| `src/lib/banderas.ts` | lo que se prende por OTA: `CON_ASCENT`, la vinculación con Ascent, apagada en la 1.0 (D30), y `PREMIUM_SALE`, el día en que sale Moss Premium (D40; pide la build con StoreKit) |
+| `src/lib/premium.ts` | Moss Premium en el teléfono: lo que dice Apple (`app-intents/Compras.swift`), sin servidor ni terceros, y en la web una tienda de mentira. La pantalla está en `src/secciones/premium/` y las reglas, en `src/dominio/premium.ts` |
 | `src/lib/llavero.ts` | el llavero que comparten Moss y Ascent (D27): la sesión de cada app, con su contrato (`sesionCompartida.ts`) |
 | `src/secciones/ascent/` | la sección de Ascent vinculada (`Vinculada.tsx`, `calculos.ts`), la hoja de vincular (con la cuenta de Ascent, `cuentaDeAscent.ts`), la recuperación en Sueño y la fila de Perfil; lo que llega de Ascent queda en `src/almacen/ascent.ts` |
 | `galeria/` | la galería: `src/` (ver la lista de abajo) y `construir.mjs` |
