@@ -1,7 +1,7 @@
 # La comida: cómo se hace
 
 Desde el 21/10/2026 la comida es el centro de Moss: trackear macros como
-MacroFactor, sin IA de fotos, global desde el inicio y gratis. Los hábitos y el
+MacroFactor, sin IA de fotos, global desde el inicio y de pago, con 7 días gratis (D40). Los hábitos y el
 cielo siguen, pero acompañan.
 
 Lo que tiene que hacer está en [`especificacion.md`](especificacion.md), «La
@@ -267,6 +267,32 @@ detalles, separados con « · »:
 - **Lo propio arriba:** lo creado desde la etiqueta o a mano sube con un premio propio: si lo buscás, es porque lo cargaste. En la galería, desde el 22/10/2026.
 - **Medido en la base de verdad:** de 1 a 17 ms por búsqueda en una PC; en el teléfono hay que medirlo.
 
+### Las marcas y las cadenas (2/11/2026)
+
+**Por qué no aparecían.** La base de la build 6 y de la OTA de production es del 23/10: no tiene cadenas y sus 429
+productos no incluyen Kellogg's, Nesquik, Pepsi, Lay's ni Tita. Y aun con la base nueva, «mostaza» daba el condimento y
+después, por el largo del nombre, una medialuna y un budín antes que las hamburguesas; «kelloggs», «lays» o «mcdonalds»
+no encontraban nada, porque el índice parte las palabras en el apóstrofo.
+
+**Qué hay ahora:**
+
+- **Las cadenas** (`alimentos/cadenas.txt`): el menú fijo, sin los especiales del momento, de McDonald's, Burger King,
+  Subway, Mostaza, La Pasiva, Starbucks, KFC, Domino's, Grido, Sbarro, Freddo, La Cigale, Cinnabon, Porto Vanila e Il Mondo
+  della Pizza, con sus combos. Cada línea dice su fuente; lo que no es un dato oficial lleva «aproximado». Los combos son
+  la suma de sus partes. Las que se miraron y no entraron están al final del archivo, con el motivo.
+- **Lo del súper** (`alimentos/marcas.txt`): unos 2.200 productos de unas 470 marcas, de la exportación de Open Food
+  Facts. Lo arma `node herramientas/marcas.mjs` con lo que baja `node herramientas/bajar-marcas.mjs`; no se edita a mano.
+  Entra lo cargado con Uruguay; de Argentina, las marcas que se venden acá; y de otros países, solo las marcas globales
+  que nadie cargó (Kellogg's, por ejemplo), con menos productos y marcadas «aproximado», porque la etiqueta es de allá.
+  Se descarta lo que no cierra con 4/4/9, lo cargado por porción en vez de por 100 g, lo escrito en otro idioma y lo que no
+  se anota (la yerba, el té). Un producto conserva su número al rearmar.
+
+**Cómo busca:** lo genérico primero («leche» es la leche). Si lo escrito nombra la marca (entera, sin signos, o desde la
+tercera letra), enseguida van sus productos en el orden de la marca: en una cadena, primero lo principal, después los combos
+y al final lo demás; en el súper, lo más escaneado. Con la marca nombrada se muestran hasta 200 resultados, para ver el menú
+entero. Cada resultado muestra su marca si el nombre no la dice. La base pesa 11,8 MB (el tope ahora es 14): va entera en
+la app y en la próxima actualización por aire.
+
 ## Registrar: los flujos y sus toques
 
 La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
@@ -312,6 +338,7 @@ pasó de 2 a 5. Con el «+» en la barra (cambio 9, D17):
 | Código nuevo con etiqueta | **8** y el nombre, una sola vez; la próxima son 5 |
 | Carga rápida de calorías y macros | **3** y los números: el «+», calorías y macros, y agregar |
 | Decir la comida entera (26/10) | **3** y hablar: el «+», «Decir lo que comí» (abre escuchando) y «Agregar», para cualquier cantidad de alimentos |
+| Foto y decir qué es (2/11, para aprobar) | **5** y hablar: el «+», agregar comida, la cámara, disparar y agregar; **4** desde el hueco de la comida. Ver «La foto de la comida» |
 | Planificar un día futuro | **1 o 2** para ir al día, y lo mismo que hoy; al llegar el día, **1** para confirmar todo |
 | Compartir una receta | **2 o 3**: compartir y elegir a quién |
 | Agua | **2**: el «+» y el vaso de 250 ml (o llega sola desde Salud) |
@@ -322,7 +349,7 @@ pasó de 2 a 5. Con el «+» en la barra (cambio 9, D17):
   - la última porción de cada alimento;
   - lo que solés comer a cada hora: por frecuencia y por lo reciente, en la misma franja horaria;
   - copiar.
-- **La foto de la comida** es opcional y no se analiza: un toque en la comida ya registrada. Dónde se guarda es D10.
+- **La foto de la comida** es opcional y no se analiza: un toque en la comida ya registrada. Dónde se guarda es D10. Sacarla al anotar y decir qué es, en «La foto de la comida», más abajo.
 - **El día:** las comidas con nombre van sobre una línea de horas, cada una con lo que tiene y sus totales. Lo planificado se ve atenuado hasta confirmarlo.
 - **Lo visual va primero a la galería.** Desde el 21/10/2026 están la línea del día, la hoja de registro, la ventana del alimento y la revisión, con la base y el buscador de verdad y los toques contados; falta aprobarlas. La revisión de la etiqueta llega con la etapa 6.
 
@@ -426,6 +453,104 @@ entender la frase sin nube) está en [`registrar-rapido.md`](registrar-rapido.md
   revisado. «Agregar al almuerzo» anota todo, con deshacer.
 - **Toques:** el «+», «Decir lo que comí», hablar y «Agregar»: **3**, para
   cualquier cantidad de alimentos (más uno por pregunta que se quiera cambiar).
+
+## La foto de la comida (2/11/2026)
+
+Lo pediste el 2/11: sacar una foto al anotar y después decir o escribir qué es. Moss
+lo calcula con la base. **Para aprobar en la galería** (`galeria/src/fotos.js`, sección
+Comida); en la app sigue la foto de hoy (`src/secciones/comida/fotos.ts`).
+
+- **La foto no se analiza.** Una línea fija lo dice en el visor, en «¿Qué es?» y al
+  abrirla: «La foto no se analiza: es solo para tu diario.» Los números salen de lo
+  que se dice, con `frase.ts` y `entender.ts`: es decir lo que comí, con sus mismas
+  preguntas.
+- **Dónde:** la cámara de la hoja de registro, al lado del micrófono. Abre un visor
+  con «Tus fotos» a mano: el selector del sistema, que no pide permiso y le da a Moss
+  solo la que se elige. Al disparar, sube «¿Qué es? Dilo o escríbelo» con la miniatura
+  arriba, ya escuchando.
+- **Toques:** es un camino más y no le suma un toque a ningún otro.
+
+  | Camino | Toques |
+  |---|---|
+  | Foto y decir qué es, desde el «+» | **5** y hablar: el «+», agregar comida, la cámara, disparar y agregar |
+  | Foto y decir qué es, desde el hueco de la comida | **4** y hablar |
+  | Foto de una comida ya anotada | **2**: la cámara de la tarjeta y disparar |
+  | Anotar después | **4 o 5**: lo mismo, con «Anotar después» en lugar de agregar. Anotarla más tarde son **3** y hablar: la foto, «Anotar» y agregar |
+
+- **Tu día en fotos:** arriba de la línea del día, una tira con las fotos de ese día.
+  Tocar una la abre con lo que se anotó con ella o, si se sacó después de anotar, con
+  toda su comida. Sin fotos no ocupa lugar: Comida se ve como hoy. En la tarjeta, una
+  miniatura en lugar de la cámara, no los 140 px de foto de hoy.
+- **Sin anotar:** «Anotar después», o cerrar sin agregar, deja la foto en el día con
+  «Sin anotar» en la tira, sin recordatorios ni culpa. Se anota en la comida y la hora en
+  que se sacó. Una foto nunca se pierde sin querer: deshacer lo anotado la devuelve a sin anotar.
+- **Borrar:** se borra la foto, nunca lo anotado, con deshacer. El archivo se va al
+  vencer el deshacer.
+- **Cambia D10 en dos cosas:** además de la cámara, el selector, y más de una foto por
+  comida. Lo demás sigue igual: quedan en el teléfono y en su copia de iCloud, no suben
+  a la cuenta y se borran con la cuenta. No pide build: el selector y `CameraView` ya
+  están. La política de privacidad dice que el selector es para la foto de perfil, y se
+  le suma la de la comida.
+
+### Para después: reconocer la foto con IA
+
+**Para suscriptores, cuando haya unos 5 pagando.** No se prende antes, y lo de hoy
+sigue gratis y sin IA.
+
+- **Es opcional, foto por foto:** un botón «Reconocer (aproximado)» en «¿Qué es?». Sin
+  tocarlo, la foto no sale del teléfono.
+- **Siempre «aproximado»:** el modelo dice qué ve y cuánto, como una frase, y esa frase
+  pasa por `entender.ts`. Los números siguen saliendo de la base; cada alimento se
+  marca «aproximado» (`comida.decir.supuesto`) y se revisa antes de agregar. Lo que no
+  se ve (el aceite, la leche del café) se escapa: Cronometer avisa lo mismo.
+- **Costo por foto, con precios del 2/11/2026** ([precios](https://platform.claude.com/docs/en/about-claude/pricing),
+  [tokens de una imagen](https://platform.claude.com/docs/en/build-with-claude/vision)):
+
+  | Modelo | Precio por millón (entrada / salida) | Por foto | 2 a 4 fotos por día (60 a 120 por mes) | De USD 9,99 por mes | De USD 39,99 por año |
+  |---|---|---|---|---|---|
+  | **Claude Haiku 5.5, sin razonar (el que recomiendo)** | USD 0,10 / 0,50 | **USD 0,0003** | USD 0,02 a 0,04 por mes | 0,2 a 0,4 % | 0,7 a 1,3 % |
+  | Claude Sonnet 5.5, sin razonar (la alternativa) | USD 2 / 10 | **USD 0,006** | USD 0,38 a 0,75 por mes | 4 a 9 % | 13 a 27 % |
+  | Claude Opus 5.5, el techo (no se puede dejar de razonar) | USD 4 / 20 | USD 0,023 | USD 1,35 a 2,71 por mes | 16 a 32 % | 48 a 96 % |
+
+  De dónde sale cada número:
+  - **La foto:** se achica en el teléfono a 1024×768. Son ⌈1024/28⌉ × ⌈768/28⌉ = **1.036 tokens**
+    (la fórmula de Anthropic). Mandarla entera llega al tope de 4.784, y cuesta 2,2 veces
+    más con Haiku.
+  - **Lo demás, estimado sin medir** (se confirma con `count_tokens`): **600 tokens** de
+    instrucciones y formato, y **300** de respuesta (la lista de lo que se ve). «Sin
+    razonar» es `thinking: disabled` en Haiku y `between_tools` en Sonnet. En Opus, 500
+    más de razonamiento; ese mismo razonamiento en los otros dos daría USD 0,0006 y
+    USD 0,011 por foto.
+  - **El porcentaje** es sobre lo que queda después del 15 % de Apple (Small Business
+    Program): USD 8,49 por mes, o USD 33,99 por año (USD 2,83 por mes). Con el precio de
+    antes (USD 4,99 y 29,99), sería 0,4 a 1,8 % con Haiku y 9 a 35 % con Sonnet.
+  - **Los 5 suscriptores:** 300 a 600 fotos por mes. Son USD 0,09 a 0,19 con Haiku y
+    USD 1,88 a 3,76 con Sonnet, contra USD 14 a 42 por mes después de Apple.
+  - **Sin contar:** reintentos ni la función del servidor. El caché no ayuda (dura 5
+    minutos y las fotos llegan a horas distintas), y el lote, con su 50 % menos,
+    tampoco: la persona está esperando.
+
+  El costo no es lo que frena; con Sonnet en el plan anual ya pesa. Antes de elegir, se
+  mide con 50 platos pesados, como las 50 etiquetas: primero Haiku, y Sonnet si Haiku
+  no alcanza. La decisión es tuya, con esos números.
+- **Dónde iría:** una función propia, `supabase/functions/moss-reconocer-foto`:
+  - la clave de la API, como secreto del servidor, nunca en el teléfono;
+  - comprueba la sesión y un tope por día (10 fotos, USD 0,09 al mes con Haiku);
+  - comprueba la suscripción con la transacción firmada de StoreKit: **hoy vive solo
+    en el teléfono**, así que esto es nuevo;
+  - la foto pasa y no se guarda: nada en Storage ni en `moss`;
+  - si no contesta, sigue «¿Qué es? Dilo o escríbelo», que anda sin conexión.
+- **Lo que cambia en la privacidad si se prende**, antes de prenderlo:
+  - **Apple (5.1.2(i)):** hay que decir que la foto va a una IA de terceros y [pedir
+    permiso explícito](https://developer.apple.com/app-store/review/guidelines/#data-use-and-sharing)
+    antes. Una hoja la primera vez, con quién la recibe, y se apaga en Perfil.
+  - **La política (`docs/`):** hoy dice que Moss «no comparte tus datos con servicios de
+    inteligencia artificial». Eso cambia: la foto que elijas reconocer va a Anthropic, que
+    [por defecto no entrena con ella](https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training)
+    y [la borra en 30 días](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data), salvo un acuerdo de retención cero.
+  - **La ficha y `app.json`:** las respuestas de privacidad de App Store Connect suman
+    fotos, y `spec/revision.md` también. Los textos de permisos dicen «Moss no sube tus
+    fotos», así que cambian con una build: tocan la huella nativa.
 
 ## Las metas
 
@@ -611,11 +736,13 @@ Ya andan en el almacén (22/10/2026, `cumpleLaComida` en `src/dominio/registros.
   Pide un permiso más, puede duplicar lo de otras apps y obliga a reflejar los
   borrados.
 
-## Global y gratis
+## Global, y lo que no le cuesta nada a Moss
+
+Desde D40 (2/11/2026), toda Moss es de pago, con 7 días gratis ([`suscripcion.md`](suscripcion.md)). Lo que sigue se escribió cuando era gratis, y sigue valiendo en lo que importa: nada de esto tiene un costo por usuario, ni se cobra aparte.
 
 - **Español e inglés** desde el día uno, con los nombres regionales de cada país.
 - **Unidades:** métricas o imperiales según el teléfono, y se cambian en Perfil. Afecta al peso, la altura, las porciones en onzas y el agua.
-- **Sin muro de pago.** Nada de lo que hace Moss tiene un costo por usuario:
+- **Sin partes bloqueadas.** Nada de lo que hace Moss tiene un costo por usuario:
   - la base va dentro de la app;
   - el reconocimiento de texto es el del iPhone;
   - Open Food Facts es gratis.
@@ -635,7 +762,7 @@ de la tienda.
   guardadas, recetas, copiar comidas y días;
 - porciones caseras, agua, peso con Salud, widgets.
 
-**Lo que en las otras se paga y en Moss es gratis:**
+**Lo que en las otras se paga aparte y en Moss viene con todo:**
 - el código de barras (pago en MyFitnessPal y en Lose It!);
 - la línea del día con la hora de cada comida (paga en MyFitnessPal y Cronometer);
 - metas distintas por día de la semana (pagas en casi todas);
@@ -673,7 +800,7 @@ de la tienda.
 - usar los pasos de Salud para que el gasto se ajuste antes (MacroFactor lo hace).
 
 **Lo que no:**
-- **IA de fotos:** decidido desde el principio.
+- **IA de fotos:** decidido desde el principio; lo básico es sin IA. Para suscriptores, más adelante y siempre «aproximado»: ver «La foto de la comida».
 - **Ayuno intermitente, planes de comida y lista del súper:** son otra app.
 - **Coach de IA, comunidad y desafíos:** no son la idea de Moss.
 - **Rachas:** Moss no tiene rachas; cuenta días acumulados.

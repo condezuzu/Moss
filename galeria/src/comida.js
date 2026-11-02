@@ -282,6 +282,7 @@ const Comida = (() => {
           </div>
         </section>
         <nav class="cm-puntos"></nav>
+        <div class="fd-lugar"></div>
         <h3 class="cm-seccion cm-seccion-dia"></h3>
         <p class="cm-nota" hidden></p>
         <div class="cm-armar"></div>
@@ -488,6 +489,7 @@ const Comida = (() => {
       nota.hidden = d <= 0;
       nota.textContent = tx(comidasDe(d).length ? 'comida.planificadoTexto' : 'comida.sinRegistros');
       pintarArmar();
+      fotos.pintarTira();
       pintarLinea();
     }
 
@@ -572,7 +574,10 @@ const Comida = (() => {
         chip.append(el('i'), `${numero(Math.round(g))} g`);
         pie.appendChild(chip);
       });
-      if (!c.plan) pie.appendChild(boton('cm-foto', icono('camara'), () => avisarZona('Galería: la foto queda como recuerdo, sin análisis.'), tx('comida.foto')));
+      if (!c.plan) {
+        const f = fotos.deComida(diaDe(c), c.tipo);
+        pie.appendChild(f ? fotos.mini(f) : boton('cm-foto', icono('camara'), () => abrirVisorDeComida(c), tx('comida.foto')));
+      }
       art.appendChild(pie);
       // Lo que sugirió Moss: «Comí esto» (hoy o antes); «Otra», que la cambia solo esta vez; y me gusta
       // y no me gusta, que cambian lo que sugiere de acá en adelante.
@@ -989,7 +994,8 @@ const Comida = (() => {
     const escanear = boton('hj-icono', icono('codigo'), () => avisarHoja('Galería: el escáner de código de barras llega en la etapa 6.'));
     const etiqueta = boton('hj-icono', icono('etiqueta'), () => abrirEtiqueta());
     const microfono = boton('hj-icono', icono('microfono'), () => abrirDecir({ escuchar: true }));
-    $h('.hj-busca').append(lupa, entrada, microfono, escanear, etiqueta);
+    const camara = boton('hj-icono', icono('camara'), () => abrirVisor());
+    $h('.hj-busca').append(lupa, entrada, microfono, camara, escanear, etiqueta);
     const cerrarB = boton('hj-cerrar', icono('cerrar'), () => cerrarHoja());
     $h('.hj-cerrar-lugar').replaceWith(cerrarB);
     entrada.addEventListener('input', () => { s.escribio = true; pintarCuerpo(); });
@@ -1010,6 +1016,7 @@ const Comida = (() => {
       entrada.placeholder = tx('comida.buscar');
       escanear.setAttribute('aria-label', tx('comida.escanear'));
       microfono.setAttribute('aria-label', tx('comida.decir.titulo'));
+      camara.setAttribute('aria-label', tx('comida.fotoDiario.sacar'));
       etiqueta.setAttribute('aria-label', tx('comida.etiqueta'));
       hoja.setAttribute('aria-label', tx('comida.registrar'));
       pintarChips();
@@ -1035,7 +1042,10 @@ const Comida = (() => {
     function cerrarHoja() {
       if (!s.hoja) return;
       const agregado = s.hoja.agregado;
+      // La foto recién sacada que no se anotó queda en el día: nunca se pierde una foto sin querer.
+      const sinAnotar = s.hoja.foto && fotos.pendiente(s.hoja.foto) ? s.hoja.foto : null;
       s.hoja = null;
+      if (sinAnotar) setTimeout(() => avisarZona(tx('comida.fotoDiario.quedo'), () => fotos.quitar(sinAnotar)), 380);
       entrada.blur();
       teclado(false);
       tel.classList.add('hoja-anim');
@@ -1166,7 +1176,7 @@ const Comida = (() => {
         const [p, v, g] = conUltima(a);
         // Si lo que coincidió es otro nombre («aguacate» para la palta), se muestra al lado.
         const n = Buscar.normalizar;
-        const extra = n(coincide) !== n(nombreDe(a)) && !n(nombreDe(a)).includes(n(texto)) && coincide.length < 28 ? coincide.toLowerCase() : null;
+        const extra = a.m ? (n(nombreDe(a)).includes(n(a.m)) ? null : a.m) : n(coincide) !== n(nombreDe(a)) && !n(nombreDe(a)).includes(n(texto)) && coincide.length < 28 ? coincide.toLowerCase() : null;
         cuerpo.appendChild(fila(a, p, v, extra, g));
       });
     }
@@ -1179,7 +1189,7 @@ const Comida = (() => {
       const normal = Buscar.normalizar(texto);
       const trigramas = new Set();
       normal.split(' ').forEach((p) => { for (let k = 0; k + 3 <= p.length; k++) trigramas.add(p.slice(k, k + 3)); });
-      return { alimento: a.id, idioma: i, region: region || null, principal, texto, palabras: normal.split(' '), trigramas, rango: 0 };
+      return { alimento: a.id, idioma: i, region: region || null, principal, texto, palabras: normal.split(' '), trigramas, rango: 0, marca: a.m, orden: a.b };
     });
     const corpus = ALIMENTOS.flatMap(textosDe);
     function buscar(texto) {
@@ -1198,15 +1208,15 @@ const Comida = (() => {
       // Lo usado sube; lo tuyo (creado desde la etiqueta), también: lo buscás porque lo cargaste.
       const premio = (id) => (s.usos.has(id) ? 2.5 * Math.log1p(s.usos.get(id)) : 0) + (porId.get(id).cat === 'etiqueta' ? 5 : 0);
       return Buscar.mejoresPorAlimento(candidatos, texto, { idioma, region: REGION, premio }, () => true)
-        .slice(0, 12)
+        .slice(0, Buscar.limiteDe(candidatos, texto, { limite: 12, limiteDeMarca: 200 }))
         .map((c) => ({ a: porId.get(c.alimento), coincide: c.texto }));
     }
 
     // ------------------------------------------------------------ la comida que se arma
-    function comidaDeHoy(tipo) {
+    function comidaDeHoy(tipo, cuando = AHORA) {
       let c = comidasDe(0).find((x) => x.tipo === tipo && !x.plan);
       if (!c) {
-        c = { tipo, hora: AHORA, items: [] };
+        c = { tipo, hora: cuando, items: [] };
         comidasDe(0).push(c);
       }
       return c;
@@ -1345,9 +1355,9 @@ const Comida = (() => {
       if (deUna) { sub.hidden = true; sub.innerHTML = ''; return; }
       setTimeout(() => { if (!hoja.classList.contains('en-sub')) { sub.hidden = true; sub.innerHTML = ''; } }, 380);
     }
-    function cabezaDeSub(sub, titulo, derecha) {
+    function cabezaDeSub(sub, titulo, derecha, alVolver) {
       const cab = el('header', 'hj-sub-cab');
-      cab.append(boton('hj-atras', icono('atras'), () => cerrarSub(), tx('comun.cancelar')), el('span', 'hj-sub-titulo', titulo || ''));
+      cab.append(boton('hj-atras', icono('atras'), () => (alVolver ? alVolver() : cerrarSub()), tx('comun.cancelar')), el('span', 'hj-sub-titulo', titulo || ''));
       cab.appendChild(derecha || el('span'));
       sub.appendChild(cab);
     }
@@ -1738,20 +1748,32 @@ const Comida = (() => {
       return sola;
     }
 
-    function abrirDecir({ escuchar, texto } = {}) {
+    // Con `foto`, es «¿Qué es? Dilo o escríbelo» (fotos.js): lo mismo, con la miniatura arriba, y lo
+    // anotado queda con esa foto. `desde` es de dónde vuela la miniatura.
+    function abrirDecir({ escuchar, texto, foto, desde } = {}) {
       if (!s.hoja) return;
       abrirSub('hj-decir', (sub) => {
-        cabezaDeSub(sub, tx('comida.decir.titulo'));
+        const ejemplo = foto ? tx('comida.fotoDiario.ejemplos.' + foto.plato) : tx('comida.decir.ejemplo');
+        const textoAyuda = tx(foto ? 'comida.fotoDiario.ayuda' : 'comida.decir.ayuda');
+        cabezaDeSub(sub, foto ? tx('comida.fotoDiario.queEs') : tx('comida.decir.titulo'), null, foto ? () => { parar(); salirDeFoto(); } : null);
+        if (foto) {
+          sub.classList.add('con-foto');
+          sub.appendChild(fotos.cabeza(foto, {
+            desde,
+            alOtra: () => { parar(); abrirVisor({ reemplazar: foto, escuchar: true }); },
+            alBorrar: () => { parar(); borrarEnCurso(foto); },
+          }));
+        }
         const cuerpo = el('div', 'hj-cuerpo dc-cuerpo');
         const lugar = el('div', 'dc-mic-lugar');
         const mic = boton('dc-mic', icono('microfono'), () => (escuchando ? parar() : empezar()), tx('comida.decir.hablar'));
         mic.dataset.toque = '';
         lugar.append(el('span', 'dc-aro'), mic);
-        const ayuda = el('p', 'dc-ayuda', tx('comida.decir.ayuda'));
+        const ayuda = el('p', 'dc-ayuda', textoAyuda);
         const area = el('textarea', 'hj-pegar-area dc-area');
         area.rows = 3;
-        area.placeholder = tx('comida.decir.ejemplo');
-        area.setAttribute('aria-label', tx('comida.decir.titulo'));
+        area.placeholder = ejemplo;
+        area.setAttribute('aria-label', foto ? tx('comida.fotoDiario.queEs') : tx('comida.decir.titulo'));
         if (texto) area.value = texto;
         const resultado = el('div', 'dc-resultado');
         cuerpo.append(lugar, ayuda, area, resultado);
@@ -1762,6 +1784,8 @@ const Comida = (() => {
         agregarB.dataset.toque = '';
         agregarB.hidden = true;
         pie.append(entenderB, agregarB);
+        // Anotar sin decir nada: la foto queda en el día, y la tira la marca.
+        if (foto) pie.appendChild(boton('fd-despues', tx('comida.fotoDiario.despues'), () => { parar(); salirDeFoto(); }));
         sub.appendChild(pie);
         let escuchando = false;
         let reloj = 0;
@@ -1774,7 +1798,7 @@ const Comida = (() => {
           sub.classList.add('escuchando');
           mic.setAttribute('aria-label', tx('comida.decir.parar'));
           ayuda.textContent = tx('comida.decir.teEscucho');
-          const frase = tx('comida.decir.ejemplo').toLowerCase();
+          const frase = ejemplo.toLowerCase();
           area.value = '';
           let i = 0;
           clearInterval(reloj);
@@ -1790,12 +1814,12 @@ const Comida = (() => {
           escuchando = false;
           sub.classList.remove('escuchando');
           mic.setAttribute('aria-label', tx('comida.decir.hablar'));
-          ayuda.textContent = tx('comida.decir.ayuda');
+          ayuda.textContent = textoAyuda;
         }
         function entenderYa() {
           const frase = area.value.trim();
           if (!frase) return;
-          const conNombre = new Set(Frase.conCon(frase, idioma).filter((b) => { const r = buscar(b)[0]; return r && Buscar.normalizar(r.coincide) === Buscar.normalizar(b); }));
+          const conNombre = new Set(Frase.conCon(frase, idioma).filter((b) => { const r = buscar(b)[0]; return r && Frase.mismoNombre(r.coincide, b); }));
           const leida = Frase.leerFrase(frase, idioma, (b) => conNombre.has(b));
           if (leida.comida) comidaDicha = leida.comida;
           lista = leida.dichos.map(entenderDicho);
@@ -1857,13 +1881,113 @@ const Comida = (() => {
         function agregar() {
           const items = lista.filter((x) => x.opciones.length).map((x) => Object.assign({}, x.opciones[x.elegida]));
           if (!items.length) return;
-          const r = registrarDirecto(items, area.value.trim(), comidaDicha);
+          const r = registrarDirecto(items, area.value.trim(), comidaDicha, foto ? foto.hora : undefined);
+          if (foto) fotos.anotar(foto, r.tipo, r.nuevos);
           cerrarHoja();
-          avisarZona(plural('comida.decir.anotado', items.length, { comida: tx('comida.aLa.' + comidaDicha) }), r.deshacer);
+          // Deshacer saca lo anotado; la foto no se pierde: vuelve a quedar sin anotar.
+          avisarZona(plural('comida.decir.anotado', items.length, { comida: tx('comida.aLa.' + comidaDicha) }), foto ? () => { r.deshacer(); fotos.desanotar(foto); } : r.deshacer);
         }
-        if (escuchar) setTimeout(empezar, 380);
+        if (escuchar) setTimeout(() => { if (s.hoja && s.hoja.sub === 'hj-decir') empezar(); }, 380);
         else if (texto) entenderYa();
       });
+    }
+
+    // ------------------------------------------------------------ la foto de la comida
+    // Un camino más para anotar, sin sumarle un toque a los otros (fotos.js). Cerrar sin anotar deja la
+    // foto en el día (cerrarHoja lo avisa, con deshacer).
+    const salirDeFoto = () => cerrarHoja();
+    function borrarEnCurso(f) {
+      s.hoja.foto = null;
+      fotos.quitar(f);
+      cerrarHoja();
+      setTimeout(() => avisarZona(tx('comida.fotoDiario.borrada'), () => fotos.devolver(f)), 380);
+    }
+    // El visor: desde el botón de la hoja, para decir qué es, o para cambiar la foto que ya hay.
+    function abrirVisor({ reemplazar, escuchar = true, plato = 'fideos', paraComida } = {}) {
+      if (!s.hoja) return;
+      abrirSub('hj-visor', (sub) => {
+        const volver = reemplazar || paraComida ? () => cerrarHoja() : null;
+        cabezaDeSub(sub, tx('comida.fotoDiario.visor'), null, volver);
+        fotos.armarVisor(sub, {
+          plato: reemplazar ? reemplazar.plato : plato,
+          alSacar: (elegido, desde) => {
+            if (paraComida) {
+              const f = fotos.nueva({ dia: diaDe(paraComida), hora: paraComida.hora, plato: elegido, comida: paraComida.tipo });
+              escena.haptico('toque');
+              cerrarHoja();
+              setTimeout(() => avisarZona(tx('comida.fotoDiario.agregada', { comida: tx('comida.aLa.' + paraComida.tipo) }), () => fotos.quitar(f)), 380);
+              return;
+            }
+            if (reemplazar) {
+              fotos.reemplazar(reemplazar, elegido);
+              escena.haptico('toque');
+              if (!fotos.pendiente(reemplazar)) { cerrarHoja(); return; }
+              abrirDecir({ foto: reemplazar, escuchar, desde });
+              return;
+            }
+            const f = fotos.nueva({ hora: AHORA, plato: elegido });
+            s.hoja.foto = f;
+            s.hoja.agregado = true;
+            escena.haptico('toque');
+            abrirDecir({ foto: f, escuchar, desde });
+          },
+        });
+      });
+    }
+    // La hoja abre directo en el panel: sube ya en su lugar, sin venir además de costado.
+    function abrirDirecto(comida) {
+      if (!abrirHoja({ comida, soloEditar: true })) return false;
+      hoja.classList.add('fd-directo');
+      setTimeout(() => hoja.classList.remove('fd-directo'), 60);
+      return true;
+    }
+    function abrirVisorDeComida(c) {
+      if (abrirDirecto(c.tipo)) abrirVisor({ paraComida: c });
+    }
+    // La foto sin anotar: «¿Qué es?» en la comida de la hora en que se sacó.
+    function anotarPendiente(f) {
+      if (!abrirDirecto(Comidas.comidaDeLaHora(f.hora))) return;
+      s.hoja.agregado = true;
+      abrirDecir({ foto: f, escuchar: true });
+    }
+    function sacarOtra(f) {
+      if (abrirDirecto(f.comida || Comidas.comidaDeLaHora(f.hora))) abrirVisor({ reemplazar: f });
+    }
+    // Las fotos, con lo anotado de cada una: lo de esa vez o, si se sacó después, toda la comida.
+    const fotos = FotosDeComida.crear(tel, {
+      lugar: $z('.fd-lugar'), tx, plural, el, boton, icono, hora, numero, sumar, valoresDe, nombreDeItem, cantidadDe,
+      dia: () => s.dia,
+      itemsDe(f) {
+        const c = comidasDe(f.dia).find((x) => x.tipo === f.comida && !x.plan);
+        if (!c) return [];
+        return f.items ? f.items.filter((it) => c.items.includes(it)) : c.items;
+      },
+      alCambiar: () => pintarLinea(),
+      alCerrarHoja: () => opciones.alCambiar(),
+      contarToque: () => { s.toques++; },
+      avisar: (texto, deshacer) => avisarZona(texto, deshacer),
+      anotarPendiente,
+      sacarOtra,
+    });
+    /** Para las capturas y los botones de la galería. */
+    function accionDeFoto(accion, arg) {
+      const pasos = {
+        // Un día con fotos: dos comidas anotadas y una sin anotar; y ayer, otras.
+        ejemplo() {
+          fotos.vaciar();
+          [[0, 'desayuno', 'desayuno'], [0, 'almuerzo', 'milanesa'], [0, 'merienda', 'yogur'], [-1, 'desayuno', 'desayuno'], [-1, 'almuerzo', 'pollo'], [-1, 'cena', 'fideos']].forEach(([d, tipo, plato]) => {
+            const c = comidasDe(d).find((x) => x.tipo === tipo && !x.plan);
+            if (c) fotos.nueva({ dia: d, hora: c.hora, plato, comida: tipo });
+          });
+          fotos.nueva({ hora: 20 * 60 + 15, plato: 'pollo' });
+        },
+        nada: () => fotos.vaciar(),
+        visor: () => abrirVisor(),
+        abrir: () => fotos.abrir(fotos.deDia(s.dia)[arg || 0]),
+        sinAnotar: () => fotos.abrir(fotos.deDia(s.dia).find(fotos.pendiente)),
+        cerrarFoto: () => fotos.cerrarHoja(),
+      };
+      return pasos[accion]();
     }
 
     // ------------------------------------------------------------ antes y después de entrenar
@@ -2309,9 +2433,9 @@ const Comida = (() => {
 
     // Registrar de un toque, sin la revisión: lo que sale de la hoja del «+» (los recientes, las
     // guardadas, la carga rápida). Queda en la comida de esta hora y se puede deshacer.
-    function registrarDirecto(items, texto, tipo = comidaDeAhora()) {
+    function registrarDirecto(items, texto, tipo = comidaDeAhora(), cuando = AHORA) {
       const devolver = sacarLoSugerido(tipo);
-      const c = comidaDeHoy(tipo);
+      const c = comidaDeHoy(tipo, cuando);
       const nuevos = items.map((it) => Object.assign({}, it, { nuevo: true }));
       c.items.push(...nuevos);
       nuevos.forEach((it) => {
@@ -2325,6 +2449,7 @@ const Comida = (() => {
       avisarCambio();
       return {
         tipo,
+        nuevos,
         deshacer() {
           nuevos.forEach((it) => { const i = c.items.indexOf(it); if (i >= 0) c.items.splice(i, 1); });
           if (!c.items.length) comidasDe(0).splice(comidasDe(0).indexOf(c), 1);
@@ -2440,6 +2565,7 @@ const Comida = (() => {
       guardadas() { if (s.hoja) abrirGuardadas(); },
       pegarReceta() { if (s.hoja) abrirPegarReceta(); },
       decir(op) { if (s.hoja) abrirDecir(op || {}); },
+      foto: accionDeFoto,
       get entreno() { return Object.assign({}, s.entreno, { ver: s.verEntreno }); },
       ponerEntreno(e, ver) { s.entreno = e; if (ver !== undefined) s.verEntreno = ver; if (s.dia === 0) pintarZona(400); },
       // Para las capturas: la de hoy o, si ya no queda ninguna, la de después de entrenar.
@@ -2447,7 +2573,7 @@ const Comida = (() => {
       etiqueta(conError) { if (s.hoja) abrirEtiqueta(conError); },
       copiarDeAyer: (tipo) => (s.hoja ? sumarDeAyer(tipo || s.hoja.comida) : copiarDeAyer(tipo || 'cena')),
       bajarA(destino) {
-        const n = (destino === 'semana' && $z('.cm-grafica')) || (destino === 'ahora' && ($z('.cm-ahora') || $z('.cm-linea .cm-entrada:last-child'))) || $z('.cm-seccion-dia');
+        const n = (destino === 'semana' && $z('.cm-grafica')) || (destino === 'fotos' && $z('.fd-lugar')) || (destino === 'ahora' && ($z('.cm-ahora') || $z('.cm-linea .cm-entrada:last-child'))) || $z('.cm-seccion-dia');
         const arriba = destino === 'ahora' ? 260 : 70;
         scroll.scrollTo({ top: Math.max(0, scroll.scrollTop + n.getBoundingClientRect().top - scroll.getBoundingClientRect().top - arriba), behavior: 'auto' });
         scroll.dispatchEvent(new Event('scroll'));
