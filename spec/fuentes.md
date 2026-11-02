@@ -201,3 +201,11 @@ Hay más para mirar, aunque no están en «revisar»:
   sobre.
 - **Pimiento rojo salteado:** usa sr «sauteed», con 12,8 g de grasa. Los demás
   salteados usan FNDDS «fat added», con unos 3 g.
+
+## Open Food Facts: lo de marca
+
+Los productos de `alimentos/marcas.txt` salen de la exportación de Open Food Facts, con licencia ODbL (cómo se eligen, en
+[`nutricion.md`](nutricion.md), «Las marcas y las cadenas»). Cada uno lo dice en su ventana, y Perfil › Créditos lo nombra.
+ODbL pide además que quien usa una base derivada pueda obtener una copia de ella o saber cómo se hizo: por eso
+`node herramientas/marcas.mjs` deja también `docs/datos/marcas-open-food-facts.txt`, que va con el sitio, y Créditos da su
+dirección. Lo que entró con la etiqueta de otro país lleva «aproximado».

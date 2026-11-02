@@ -1,7 +1,10 @@
 // Baja la exportación de Open Food Facts (lo que ellos piden usar para traer mucho, en vez de su API) y se
-// queda con lo que tiene a Uruguay o a Argentina entre sus países, con solo las columnas que usa
-// herramientas/marcas.mjs. El archivo pesa más de 1 GB: se procesa mientras llega y no se guarda entero.
-// Queda en .cache/off/marcas.tsv. Tarda según la conexión: unos minutos.
+// queda con lo que usa herramientas/marcas.mjs, con solo sus columnas. El archivo pesa más de 1 GB: se
+// procesa mientras llega y no se guarda entero.
+// - .cache/off/marcas.tsv: lo que tiene a Uruguay o a Argentina entre sus países.
+// - .cache/off/marcas-region.tsv: de otros países de la región, las marcas globales que acá se venden y que
+//   nadie cargó con Uruguay ni Argentina (Kellogg's, por ejemplo). marcas.mjs las marca como aproximadas.
+// Tarda según la conexión: unos minutos.
 // Uso: node herramientas/bajar-marcas.mjs
 
 import { createWriteStream, mkdirSync, renameSync } from 'node:fs';
@@ -15,11 +18,16 @@ const URL_EXPORTACION = 'https://static.openfoodfacts.org/data/en.openfoodfacts.
 const COLUMNAS = ['code', 'last_modified_t', 'product_name', 'generic_name', 'quantity', 'brands', 'brands_tags', 'categories_tags', 'countries_tags', 'serving_size', 'serving_quantity', 'product_quantity',
   'unique_scans_n', 'energy-kcal_100g', 'energy_100g', 'fat_100g', 'saturated-fat_100g', 'carbohydrates_100g', 'sugars_100g', 'fiber_100g', 'proteins_100g', 'sodium_100g', 'alcohol_100g'];
 const PAISES = /en:(uruguay|argentina)\b/;
+const REGION = /en:(mexico|chile|colombia|peru|ecuador|paraguay|bolivia|costa-rica|spain|brazil)\b/;
+const GLOBALES = /kellogg|nesquik|nesquick|\boreo\b|pringles|\blay'?s\b|doritos|cheetos|ruffles|coca.?cola|pepsi|sprite|fanta|schweppes|red.?bull|monster|snickers|m&m|kit.?kat|milka|nutella|kinder|toblerone|ferrero|quaker|gatorade|powerade|nescaf|maggi|knorr|hellmann|heinz|danone|activia|cadbury|lacta|garoto/i;
 
 mkdirSync(join(raiz, '.cache/off'), { recursive: true });
 const final = join(raiz, '.cache/off/marcas.tsv');
+const finalRegion = join(raiz, '.cache/off/marcas-region.tsv');
 const salida = createWriteStream(`${final}.parcial`);
+const salidaRegion = createWriteStream(`${finalRegion}.parcial`);
 salida.write(`${COLUMNAS.join('\t')}\n`);
+salidaRegion.write(`${COLUMNAS.join('\t')}\n`);
 
 const respuesta = await fetch(URL_EXPORTACION, { headers: { 'User-Agent': 'Moss/1.1 (https://condezuzu.github.io/moss-app/)' } });
 if (!respuesta.ok) throw new Error(`Open Food Facts respondió ${respuesta.status}`);
@@ -28,7 +36,7 @@ let indices = null;
 let resto = '';
 let leidas = 0;
 let guardadas = 0;
-const paisesEn = () => indices.countries_tags;
+let deLaRegion = 0;
 
 function linea(texto) {
   if (!indices) {
@@ -39,12 +47,18 @@ function linea(texto) {
     return;
   }
   leidas++;
-  if (!texto.includes('en:uruguay') && !texto.includes('en:argentina')) return;
+  if (!texto.includes('en:')) return;
   const campos = texto.split('\t');
-  if (!PAISES.test(campos[paisesEn()] ?? '')) return;
-  salida.write(`${COLUMNAS.map((c) => (indices[c] < 0 ? '' : (campos[indices[c]] ?? ''))).join('\t')}\n`);
-  guardadas++;
-  if (guardadas % 2000 === 0) console.log(`${leidas} leídas, ${guardadas} guardadas`);
+  const paises = campos[indices.countries_tags] ?? '';
+  const fila = () => `${COLUMNAS.map((c) => (indices[c] < 0 ? '' : (campos[indices[c]] ?? ''))).join('\t')}\n`;
+  if (PAISES.test(paises)) {
+    salida.write(fila());
+    guardadas++;
+  } else if (REGION.test(paises) && GLOBALES.test(campos[indices.brands] ?? '')) {
+    salidaRegion.write(fila());
+    deLaRegion++;
+  }
+  if (leidas % 1000000 === 0) console.log(`${leidas} leídas, ${guardadas} guardadas y ${deLaRegion} de la región`);
 }
 
 const descomprimido = Readable.fromWeb(respuesta.body).pipe(createGunzip());
@@ -55,6 +69,7 @@ for await (const trozo of descomprimido) {
   for (const p of partes) linea(p);
 }
 if (resto) linea(resto);
-await new Promise((listo) => salida.end(listo));
+await Promise.all([new Promise((listo) => salida.end(listo)), new Promise((listo) => salidaRegion.end(listo))]);
 renameSync(`${final}.parcial`, final);
-console.log(`Listo: ${leidas} productos leídos, ${guardadas} de Uruguay o Argentina, en .cache/off/marcas.tsv`);
+renameSync(`${finalRegion}.parcial`, finalRegion);
+console.log(`Listo: ${leidas} productos leídos, ${guardadas} de Uruguay o Argentina y ${deLaRegion} de marcas globales en la región.`);

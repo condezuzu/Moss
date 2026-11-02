@@ -141,3 +141,91 @@ describe('la comida de las cadenas (alimentos/cadenas.txt)', () => {
     expect(sinTabla.every((f) => f.aproximado === 1)).toBe(true);
   });
 });
+
+describe('las marcas', () => {
+  const nombres = async (q: string, op: Partial<Opciones> = {}) => (await buscar(q, op)).map((r) => r.nombre);
+
+  it('lo genérico va antes que cada marca', async () => {
+    const lista = await nombres('leche');
+    expect(lista[0]).toBe('Leche entera');
+    expect(lista.slice(0, 5).some((n) => /conaprole|claldy|parmalat/i.test(n))).toBe(false);
+  });
+
+  it('lo escrito nombra la marca: el producto genérico y enseguida los de la marca, en su orden', async () => {
+    const lista = await nombres('mostaza');
+    expect(lista[0]).toBe('Mostaza');
+    const hamburguesa = lista.findIndex((n) => /^Hamburguesa/.test(n));
+    const postre = lista.findIndex((n) => /Medialuna|Budín|Helado/.test(n));
+    expect(hamburguesa).toBeGreaterThan(0);
+    expect(hamburguesa).toBeLessThan(6);
+    if (postre >= 0) expect(hamburguesa).toBeLessThan(postre);
+  });
+
+  it.each([
+    ['kelloggs', "Kellogg's"],
+    ["kellogg's", "Kellogg's"],
+    ['kell', "Kellogg's"],
+    ['nesquik', 'Nesquik'],
+    ['lays', "Lay's"],
+    ['pepsi', 'Pepsi'],
+    ['coca cola', 'Coca-Cola'],
+    ['cocacola', 'Coca-Cola'],
+    ['conaprole', 'Conaprole'],
+    ['bagley', 'Bagley'],
+    ['mcdonalds', "McDonald's"],
+    ['dominos', "Domino's"],
+    ['kfc', 'KFC'],
+    ['grido', 'Grido'],
+    ['pasiva', 'La Pasiva'],
+    ['burger king', 'Burger King'],
+  ])('«%s» encuentra la marca, y arriba', async (q, marca) => {
+    const lista = await buscar(q);
+    expect(lista.length).toBeGreaterThan(0);
+    expect(lista.slice(0, 3).some((r) => r.marca === marca || r.nombre.includes(marca))).toBe(true);
+  });
+
+  it('la marca entera va antes que otra que empieza igual: Pepsi, y después PepsiCo', async () => {
+    const lista = await buscar('pepsi', { limite: 60 });
+    const pepsico = lista.findIndex((r) => /^pepsico$/i.test(r.marca ?? ''));
+    if (pepsico >= 0) expect(lista.slice(0, pepsico).every((r) => r.marca === 'Pepsi')).toBe(true);
+  });
+
+  it.each([
+    ['zucaritas', /Zucaritas/],
+    ['tita', /Tita/],
+    ['oreo', /Oreo/],
+    ['big mac', /Big Mac/],
+    ['whopper', /Whopper/],
+  ])('«%s» encuentra el producto', async (q, nombre) => {
+    expect((await nombres(q)).slice(0, 4).some((n) => nombre.test(n))).toBe(true);
+  });
+
+  it('marca y producto a la vez', async () => {
+    const lista = await buscar('leche conaprole');
+    expect(lista[0].marca).toBe('Conaprole');
+    expect(lista[0].nombre).toMatch(/leche/i);
+    expect(await nombres('combo mostaza')).toEqual(expect.arrayContaining([expect.stringMatching(/^Combo .*Mostaza$/)]));
+  });
+
+  it('el menú de una cadena: primero lo principal, después los combos y al final lo demás', async () => {
+    const lista = await nombres('mostaza', { limite: 100 });
+    const lugar = (patron: RegExp) => lista.findIndex((n) => patron.test(n));
+    expect(lugar(/^Hamburguesa Mostaza/)).toBeLessThan(lugar(/^Combo/));
+    const postre = lugar(/Muffin|Dona|Helado|Sundae/);
+    if (postre >= 0) expect(lugar(/^Combo/)).toBeLessThan(postre);
+  });
+
+  it('con la marca nombrada, más resultados: se ve el menú entero', async () => {
+    const corta = await nombres('conaprole', { limite: 10 });
+    const larga = await nombres('conaprole', { limite: 10, limiteDeMarca: 40 });
+    expect(corta).toHaveLength(10);
+    expect(larga.length).toBeGreaterThan(10);
+    // Sin marca nombrada, el límite de siempre.
+    expect(await nombres('arroz', { limite: 10, limiteDeMarca: 40 })).toHaveLength(10);
+  });
+
+  it('una marca que se llama como una palabra no se come lo genérico', async () => {
+    const lista = await nombres('pan');
+    expect(lista.slice(0, 3).some((n) => /^Pan\b/.test(n))).toBe(true);
+  });
+});

@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ESQUEMA = 4;
+const ESQUEMA = 5;
 
 // Los micronutrientes, con su número de nutriente en FNDDS (el viejo) y su id en SR Legacy. Las
 // unidades son las de USDA: mg, salvo el selenio, la vitamina A (RAE), la D, la K, el folato (DFE)
@@ -367,7 +367,7 @@ function leerCurados() {
   return curados;
 }
 
-const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'ean', 'off', 'fuente', 'aproximado', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]);
+const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'orden', 'ean', 'off', 'fuente', 'aproximado', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]);
 /** «crudo=Arroz blanco crudo · ml · marca=Conaprole»: cada detalle, con su valor o en true. */
 function leerDetalles(texto, donde) {
   const d = {};
@@ -512,6 +512,7 @@ const alias = [];
 const recetas = [];
 const codigos = new Map();
 const usados = new Map();
+const delaMarca = new Map();
 let deOff = 0;
 for (const g of curados) {
   // Los platos van después: sus ingredientes tienen que estar curados.
@@ -646,7 +647,14 @@ for (const a of alimentos.values()) {
     if (d.aceite !== true && d.aceite !== 'incluido') errores.push(`${donde}: el aceite es «aceite» (se pregunta) o «aceite=incluido» (frito)`);
     a.aceite = d.aceite === true ? 'preguntar' : 'incluido';
   }
-  if (d.marca) a.marca = String(d.marca);
+  if (d.marca) {
+    a.marca = String(d.marca);
+    // El lugar en que sale al buscar la marca: el que diga la línea o, si no, el orden del archivo.
+    const hasta = delaMarca.get(a.marca) ?? 0;
+    // Lo curado a mano, antes que lo de Open Food Facts (que dice su orden).
+    a.ordenMarca = d.orden !== undefined ? 1000 + Number(d.orden) : hasta;
+    delaMarca.set(a.marca, hasta + 1);
+  }
   if (d.ean) {
     for (const codigo of String(d.ean).split(',').map((c) => c.trim())) {
       if (!codigoValido(codigo)) errores.push(`${donde}: el código ${codigo} no es un EAN o UPC válido`);
@@ -685,6 +693,15 @@ if (errores.length) {
   process.exit(1);
 }
 
+// En una cadena, primero lo principal, después los combos y al final lo demás: es lo que se busca al escribir su nombre.
+const PRINCIPAL = /hamburguesa|burger|big mac|cuarto|mcn[ií]fica|stacker|whopper|\bsub\b|pizza|s[aá]nd?wich|wrap|pancho|chivito|milanesa|mega\b|taste\b/i;
+const COMBO = /\b(combo|mccombo|cajita)\b/i;
+const lugarEnLaCadena = (a) => (COMBO.test(a.es) ? 1 : PRINCIPAL.test(a.es) ? 0 : 2);
+for (const lista of Map.groupBy([...alimentos.values()].filter((a) => a.marca && a.categoria === 'comida rapida'), (a) => a.marca).values()) {
+  lista.sort((x, y) => lugarEnLaCadena(x) - lugarEnLaCadena(y) || x.ordenMarca - y.ordenMarca).forEach((a, i) => { a.ordenMarca = i; });
+}
+
+const normalizado = (texto) => texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const salida = process.env.SALIDA ? join(raiz, process.env.SALIDA) : join(raiz, 'assets/alimentos.db');
 rmSync(salida, { force: true });
 mkdirSync(dirname(salida), { recursive: true });
@@ -711,6 +728,8 @@ db.exec(`
     sodio REAL,
     alcohol REAL,
     porcion INTEGER,
+    -- La marca de un producto y el lugar en que sale al buscarla: las hamburguesas de una cadena, antes que sus postres.
+    orden_marca INTEGER,
     -- Cómo se mide: la marca de un producto; lo que se toma, en g por ml; la parte que no se come y
     -- qué es; si se pregunta por el aceite ('preguntar') o ya lo tiene ('incluido'); en lo cocido,
     -- su versión cruda; y de dónde salen los datos, si hay que nombrarlo ('off': Open Food Facts).
@@ -754,7 +773,7 @@ db.exec(`
 `);
 db.exec('BEGIN');
 const COLUMNAS = ['id', 'fuente', 'descripcion', 'nombre_es', 'nombre_en', 'categoria', 'kcal', 'proteina', 'carbohidratos', 'grasas', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol',
-  'porcion', 'marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'fuente_texto', 'aproximado', 'verificado', 'segunda', ...CLAVES_MICROS];
+  'porcion', 'marca', 'orden_marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'fuente_texto', 'aproximado', 'verificado', 'segunda', ...CLAVES_MICROS];
 const ponerAlimento = db.prepare(`INSERT INTO alimentos (${COLUMNAS.join(', ')}) VALUES (${COLUMNAS.map(() => '?').join(', ')})`);
 const ponerPorcion = db.prepare('INSERT INTO porciones (alimento, en, es, gramos) VALUES (?, ?, ?, ?)');
 const ponerAlias = db.prepare('INSERT INTO alias VALUES (?, ?, ?, ?)');
@@ -769,7 +788,7 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
   ponerAlimento.run(
     a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas),
     tal(a.fibra), tal(a.azucares), tal(a.saturadas), tal(a.sodio), tal(a.alcohol), null,
-    a.marca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null, a.fuenteTexto ?? null, a.aproximado ?? null,
+    a.marca ?? null, a.ordenMarca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null, a.fuenteTexto ?? null, a.aproximado ?? null,
     a.verificado ?? null, a.segunda ?? null, ...CLAVES_MICROS.map((k) => fino(a[k])),
   );
   // De los curados: primero sus porciones (la primera es la de siempre); de USDA, solo las que
@@ -797,10 +816,16 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
   ponerTexto.run(a.id, 'en', null, 0, a.descripcion);
   if (a.en && a.en !== a.descripcion) ponerTexto.run(a.id, 'en', null, 0, a.en);
   if (a.es) ponerTexto.run(a.id, 'es', null, 0, a.es);
-  // Un producto se encuentra también por su marca: «leche conaprole».
+  // Un producto se encuentra también por su marca: «leche conaprole». Y por su marca sin signos, como se
+  // escribe en el teléfono: «kelloggs», «lays», «mcdonalds», «cocacola».
   if (a.marca) {
-    ponerTexto.run(a.id, 'es', null, 0, `${a.es} ${a.marca}`);
-    ponerTexto.run(a.id, 'en', null, 0, `${a.en} ${a.marca}`);
+    const sinSignos = a.marca.replace(/[^\p{L}\p{N}]+/gu, '');
+    const conMarca = (nombre, marca) => (normalizado(nombre).split(' ').join('').includes(normalizado(marca).split(' ').join('')) ? null : `${nombre} ${marca}`);
+    for (const [idioma, nombre] of [['es', a.es], ['en', a.en]]) {
+      const texto = conMarca(nombre, a.marca);
+      if (texto) ponerTexto.run(a.id, idioma, null, 0, texto);
+      if (sinSignos !== a.marca) ponerTexto.run(a.id, idioma, null, 0, `${nombre} ${sinSignos}`);
+    }
   }
 }
 for (const a of alias) {

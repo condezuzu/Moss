@@ -5,6 +5,8 @@
 // El orden: primero el idioma de la app; después, qué tan parecido es a lo escrito, lo curado y el
 // nombre de la región; al final, bm25. Lo más usado sube con el premio que pasa quien llama, porque
 // el historial es de cada usuario y no está en esta base.
+// Los productos de marca van después de lo genérico («leche» es la leche, antes que cada marca), salvo si
+// lo escrito nombra la marca: «mostaza» da la mostaza y enseguida el menú de Mostaza, en el orden de la marca.
 // La galería usa este mismo archivo para ordenar (galeria/construir.mjs): no puede importar nada.
 
 /** Lo justo de expo-sqlite (o de cualquier SQLite) que necesita el buscador. */
@@ -23,6 +25,8 @@ export type Resultado = {
   curado: boolean;
   /** Comparado con una segunda fuente oficial, calculado con ingredientes verificados o con una etiqueta que cierra. */
   verificado?: boolean;
+  /** De qué marca es: se muestra si el nombre no la dice. */
+  marca?: string;
   /** Por 100 g. */
   kcal: number;
   proteina: number;
@@ -45,10 +49,12 @@ export type Opciones = {
   limite?: number;
   /** Lo que suma el uso: más es mejor. Lo calcula quien tiene el historial. */
   premio?: (id: number) => number;
+  /** Cuántos, si lo escrito nombra una marca: para ver el menú entero. Sin esto, el mismo límite. */
+  limiteDeMarca?: number;
 };
 
 /** Un nombre o alias que coincidió con lo escrito, con su rango de bm25 (más negativo, mejor). */
-export type Candidato = { alimento: number; idioma: Idioma; region: string | null; principal: number; texto: string; rango: number; aproximado: boolean };
+export type Candidato = { alimento: number; idioma: Idioma; region: string | null; principal: number; texto: string; rango: number; aproximado: boolean; marca?: string | null; orden?: number | null };
 
 /** Sin tildes, en minúsculas y con un solo espacio: así se compara lo escrito con los nombres. */
 export const normalizar = (texto: string) =>
@@ -99,10 +105,27 @@ function distancia(a: string, b: string): number {
   return d[a.length][b.length];
 }
 
+/**
+ * Si lo escrito nombra esa marca: entera, con o sin espacios («coca cola», «cocacola», «leche conaprole») o,
+ * mientras se escribe, desde la tercera letra («mosta», «kell»).
+ */
+export function nombraLaMarca(escrito: string, marca: string): 'entera' | 'empieza' | null {
+  const q = normalizar(escrito);
+  const m = normalizar(marca);
+  const junta = m.split(' ').join('');
+  if (` ${q} `.includes(` ${m} `) || q.split(' ').includes(junta)) return 'entera';
+  const ultima = q.split(' ').at(-1) ?? '';
+  return ultima.length >= 3 && (m.startsWith(ultima) || junta.startsWith(ultima)) ? 'empieza' : null;
+}
+
 /** Menos es mejor. Cada parte está pensada para que pese más que la siguiente. */
 export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boolean): number {
   const q = normalizar(escrito);
   const t = normalizar(c.texto);
+  // Con la marca nombrada, en el orden de la marca: el largo y bm25 pondrían los postres antes que las hamburguesas.
+  // La marca entera, antes que otra que empieza igual: «pepsi» es Pepsi, y después PepsiCo.
+  const nombrada = c.marca && !c.aproximado && c.idioma === op.idioma ? nombraLaMarca(escrito, c.marca) : null;
+  if (nombrada) return (nombrada === 'entera' ? 8 : 11) + (c.orden ?? 0) * 0.002 - (op.premio?.(c.alimento) ?? 0);
   let p: number;
   if (t === q) p = 0;
   // «pan» encuentra antes «Pan blanco» (la palabra entera) que «Pancho» (el principio de otra).
@@ -124,6 +147,8 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
   if (p <= 10 && /^,?\s*(con|with|in|en salsa)\b/.test(t.slice(q.length))) p += 6;
   if (c.idioma !== op.idioma) p += 100;
   if (!curado) p += 8;
+  // Un producto de marca, después de lo genérico.
+  if (c.marca) p += 7;
   // El nombre de la región gana un poco; uno de otra región pierde (plátano es banana en España y otra cosa en Colombia).
   if (c.region) p += c.region !== op.region ? 4 : c.principal ? -2 : 0;
   p -= op.premio?.(c.alimento) ?? 0;
@@ -155,11 +180,17 @@ export function mejoresPorAlimento(candidatos: Candidato[], texto: string, op: O
 /** Un texto de búsqueda en la memoria, con sus palabras y trigramas ya armados: hace las veces de los dos índices. */
 export type TextoEnMemoria = Omit<Candidato, 'rango' | 'aproximado'> & { palabras: string[]; trigramas: Set<string> };
 
-export function textoEnMemoria(alimento: number, idioma: Idioma, region: string | null, principal: number, texto: string): TextoEnMemoria {
+export function textoEnMemoria(alimento: number, idioma: Idioma, region: string | null, principal: number, texto: string, marca?: string | null, orden?: number | null): TextoEnMemoria {
   const normal = normalizar(texto);
   const trigramas = new Set<string>();
   for (const p of normal.split(' ')) for (let k = 0; k + 3 <= p.length; k++) trigramas.add(p.slice(k, k + 3));
-  return { alimento, idioma, region, principal, texto, palabras: normal.split(' '), trigramas };
+  return { alimento, idioma, region, principal, texto, palabras: normal.split(' '), trigramas, marca, orden };
+}
+
+/** Cuántos mostrar: más si lo mejor de la lista es de una marca nombrada, para que se vea el menú entero. */
+export function limiteDe(candidatos: Candidato[], texto: string, op: Opciones): number {
+  const limite = op.limite ?? 25;
+  return op.limiteDeMarca && candidatos.some((c) => c.marca && nombraLaMarca(texto, c.marca)) ? Math.max(limite, op.limiteDeMarca) : limite;
 }
 
 /**
@@ -171,7 +202,7 @@ export function candidatosEnMemoria(corpus: TextoEnMemoria[], texto: string, idi
   const palabras = normal.split(' ').filter(Boolean);
   if (!palabras.length) return [];
   const comoCandidato = (t: TextoEnMemoria, aproximado: boolean): Candidato => ({
-    alimento: t.alimento, idioma: t.idioma, region: t.region, principal: t.principal, texto: t.texto, rango: 0, aproximado,
+    alimento: t.alimento, idioma: t.idioma, region: t.region, principal: t.principal, texto: t.texto, rango: 0, aproximado, marca: t.marca, orden: t.orden,
   });
   const candidatos = corpus.filter((t) => palabras.every((p) => t.palabras.some((w) => w.startsWith(p)))).map((t) => comoCandidato(t, false));
   if (normal.length >= 3 && new Set(candidatos.map((c) => c.alimento)).size < POCOS) {
@@ -186,13 +217,12 @@ export function candidatosEnMemoria(corpus: TextoEnMemoria[], texto: string, idi
 }
 
 export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: Opciones): Promise<Resultado[]> {
-  const limite = op.limite ?? 25;
   const palabras = consultaDePalabras(texto);
   if (!palabras) return [];
   const candidatos: Candidato[] = [];
   const porPalabras = await base.getAllAsync<Omit<Candidato, 'aproximado'>>(
-    `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(palabras) AS rango
-     FROM palabras JOIN textos t ON t.id = palabras.rowid WHERE palabras MATCH ? ORDER BY rango LIMIT 300`,
+    `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(palabras) AS rango, a.marca, a.orden_marca AS orden
+     FROM palabras JOIN textos t ON t.id = palabras.rowid JOIN alimentos a ON a.id = t.alimento WHERE palabras MATCH ? ORDER BY rango LIMIT 500`,
     palabras,
   );
   candidatos.push(...porPalabras.map((c) => ({ ...c, aproximado: false })));
@@ -200,8 +230,8 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
   const trigramas = normalizar(texto).length >= 3 ? consultaDeTrigramas(texto) : null;
   if (trigramas && new Set(porPalabras.map((c) => c.alimento)).size < POCOS) {
     const porTrigramas = await base.getAllAsync<Omit<Candidato, 'aproximado'>>(
-      `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(trigramas) AS rango
-       FROM trigramas JOIN textos t ON t.id = trigramas.rowid WHERE trigramas MATCH ? AND t.idioma = ? ORDER BY rango LIMIT 150`,
+      `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(trigramas) AS rango, a.marca, a.orden_marca AS orden
+       FROM trigramas JOIN textos t ON t.id = trigramas.rowid JOIN alimentos a ON a.id = t.alimento WHERE trigramas MATCH ? AND t.idioma = ? ORDER BY rango LIMIT 150`,
       trigramas,
       op.idioma,
     );
@@ -212,10 +242,10 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
   const ids = [...new Set(candidatos.map((c) => c.alimento))];
   const lista = ids.join(',');
   type Secundario = 'fibra' | 'azucares' | 'saturadas' | 'sodio' | 'alcohol';
-  type Fila = { id: number; descripcion: string; nombre_es: string | null; nombre_en: string | null; kcal: number; proteina: number; carbohidratos: number; grasas: number; p_es: string | null; p_en: string | null; gramos: number | null; verificado: string | null }
+  type Fila = { id: number; descripcion: string; nombre_es: string | null; nombre_en: string | null; marca: string | null; kcal: number; proteina: number; carbohidratos: number; grasas: number; p_es: string | null; p_en: string | null; gramos: number | null; verificado: string | null }
     & Record<Secundario, number | null>;
   const filas = await base.getAllAsync<Fila>(
-    `SELECT a.id, a.descripcion, a.nombre_es, a.nombre_en, a.kcal, a.proteina, a.carbohidratos, a.grasas, a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol,
+    `SELECT a.id, a.descripcion, a.nombre_es, a.nombre_en, a.marca, a.kcal, a.proteina, a.carbohidratos, a.grasas, a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol,
        a.verificado, p.es AS p_es, p.en AS p_en, p.gramos
      FROM alimentos a LEFT JOIN porciones p ON p.id = a.porcion WHERE a.id IN (${lista})`,
   );
@@ -230,14 +260,14 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
     : new Map<number, string>();
 
   return mejoresPorAlimento(candidatos, texto, op, (id) => datos.get(id)?.nombre_es != null)
-    .slice(0, limite)
+    .slice(0, limiteDe(candidatos, texto, op))
     .map((c) => {
       const f = datos.get(c.alimento)!;
       const regional = principales.get(f.id);
       const nombre = op.idioma === 'es' ? (regional ? conMayuscula(regional) : (f.nombre_es ?? f.descripcion)) : (f.nombre_en ?? f.descripcion);
       const nombrePorcion = op.idioma === 'es' ? (f.p_es ?? f.p_en) : f.p_en;
       return {
-        id: f.id, nombre, coincide: c.texto, curado: f.nombre_es != null, verificado: f.verificado != null,
+        id: f.id, nombre, coincide: c.texto, curado: f.nombre_es != null, verificado: f.verificado != null, ...(f.marca ? { marca: f.marca } : {}),
         kcal: f.kcal, proteina: f.proteina, carbohidratos: f.carbohidratos, grasas: f.grasas, ...secundarios(f),
         porcion: nombrePorcion && f.gramos ? { nombre: nombrePorcion, gramos: f.gramos } : null,
       };

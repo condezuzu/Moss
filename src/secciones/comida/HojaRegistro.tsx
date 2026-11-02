@@ -202,7 +202,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     if (!q) return;
     let vigente = true;
     const espera = setTimeout(() => {
-      baseDeAlimentos.buscar(q, { ...opcionesDeIdioma(), limite: 30, premio: (id) => premio.get(id) ?? 0 })
+      baseDeAlimentos.buscar(q, { ...opcionesDeIdioma(), limite: 30, limiteDeMarca: 200, premio: (id) => premio.get(id) ?? 0 })
         .then((lista) => vigente && setHallado({ texto: q, lista }))
         .catch(() => vigente && setHallado({ texto: q, lista: [] }));
     }, 90);
@@ -290,7 +290,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   };
   const abrirResultado = (r: Resultado) => {
     Keyboard.dismiss();
-    const { id, nombre, porcion, coincide: _c, curado: _cu, verificado: _v, ...valores } = r;
+    const { id, nombre, porcion, coincide: _c, curado: _cu, verificado: _v, marca: _m, ...valores } = r;
     setVentana({
       alimento: { fuente: 'base', ref: String(id), nombre, por100g: valores, porciones: porcion ? conUnaUnidad([porcion], idioma()) : [], origen: t('comida.fuente.usda') },
       inicial: ultimaCantidad(e.registros.values(), 'base', String(id)),
@@ -652,7 +652,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               const kcal = valoresDeCantidad(r, cantidad!).kcal;
               const n = normalizar;
               // Si lo que coincidió es otro nombre («aguacate» para la palta), se muestra al lado.
-              const extra = n(r.coincide) !== n(r.nombre) && !n(r.nombre).includes(n(q)) && r.coincide.length < 28 ? r.coincide.toLowerCase() : undefined;
+              // De un producto, su marca si el nombre no la dice; de lo demás, cómo se llama lo que se buscó.
+              const extra = r.marca ? (n(r.nombre).includes(n(r.marca)) ? undefined : r.marca) : n(r.coincide) !== n(r.nombre) && !n(r.nombre).includes(n(q)) && r.coincide.length < 28 ? r.coincide.toLowerCase() : undefined;
               return <Fila key={r.id} nombre={r.nombre} extra={extra} detalle={`${cantidadDeTexto(cantidad, sistema)} · ${numero(Math.round(kcal))} kcal`} alAbrir={() => abrirResultado(r)} />;
             })}
             {q && hallado?.texto === q && !lista.length && !propiosHallados.length && !pareceUnaComida(q) && (

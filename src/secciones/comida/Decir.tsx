@@ -13,7 +13,7 @@ import { elAlmacen } from '@/almacen';
 import { baseDeAlimentos } from '@/comida/base';
 import { normalizar } from '@/comida/buscar';
 import { claveMedida, entender, type Entendido, type Opcion } from '@/comida/entender';
-import { conCon, leerFrase } from '@/comida/frase';
+import { conCon, leerFrase, mismoNombre } from '@/comida/frase';
 import { TAMANOS as TAMANOS_DE_PLATO } from '@/comida/platos';
 import { pasoDeCantidad, pasoDePorcion, type Sistema } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
@@ -78,7 +78,7 @@ export function PanelDecir(p: Props) {
     const conNombre = new Set<string>();
     await Promise.all(conCon(frase, op.idioma).map(async (b) => {
       const [r] = await buscar(b);
-      if (r && normalizar(r.coincide) === normalizar(b)) conNombre.add(b);
+      if (r && mismoNombre(r.coincide, b)) conNombre.add(b);
     }));
     const leida = leerFrase(frase, op.idioma, (b) => conNombre.has(b));
     if (leida.comida) setComida(leida.comida);

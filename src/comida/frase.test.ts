@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { conCon, leerFrase } from './frase';
+import { conCon, leerFrase, mismoNombre } from './frase';
 
 /** Lo que se busca y la cantidad de cada alimento: «2 huevo revuelto», «½ taza avena». */
 const resumen = (texto: string, esNombre?: (b: string) => boolean, idioma: 'es' | 'en' = 'es') =>
@@ -8,6 +8,17 @@ const resumen = (texto: string, esNombre?: (b: string) => boolean, idioma: 'es' 
 
 const nombres = new Set(['cafe con leche', 'café con leche', 'arroz con pollo', 'arroz con leche', 'coffee with milk']);
 const esNombre = (b: string) => nombres.has(b);
+
+describe('mismoNombre', () => {
+  it('lo dicho y el nombre de la base son lo mismo, con o sin plural, tildes y mayúsculas', () => {
+    expect(mismoNombre('yogur con fruta', 'Yogur con frutas')).toBe(true);
+    expect(mismoNombre('café con leche', 'Cafe con leche')).toBe(true);
+    expect(mismoNombre('tostada con manteca', 'Tostada')).toBe(false);
+    expect(mismoNombre('arroz con leche', 'Arroz con pollo')).toBe(false);
+    // Con dos palabras después del «con», se corta: las papas se preguntan aparte.
+    expect(mismoNombre('Milanesa con papas fritas', 'milanesa con papa frita')).toBe(false);
+  });
+});
 
 describe('la comida dicha de una vez', () => {
   it('cada alimento con su cantidad; «café con leche» es uno y «tostada con manteca», dos', () => {

@@ -74,7 +74,7 @@ export function conElCatalogo(resultados: Resultado[], filas: FilaDelCatalogo[],
   const comoResultado = (f: FilaDelCatalogo, coincide: string): Resultado => {
     const porcion = f.porciones[0];
     return {
-      id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), coincide, curado: true, verificado: !!f.verificado, ...valoresDe(f),
+      id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), coincide, curado: true, verificado: !!f.verificado, ...(f.marca ? { marca: f.marca } : {}), ...valoresDe(f),
       porcion: porcion ? { nombre: op.idioma === 'es' ? porcion.es : porcion.en, gramos: porcion.gramos } : null,
     };
   };
@@ -85,8 +85,8 @@ export function conElCatalogo(resultados: Resultado[], filas: FilaDelCatalogo[],
   });
   const yaEstan = new Set(resultados.map((r) => r.id));
   const corpus = filas.filter((f) => !f.retirado && !yaEstan.has(f.id)).flatMap((f) => [
-    textoEnMemoria(f.id, 'es', null, 0, f.nombre_es),
-    textoEnMemoria(f.id, 'en', null, 0, f.nombre_en),
+    textoEnMemoria(f.id, 'es', null, 0, f.nombre_es, f.marca),
+    textoEnMemoria(f.id, 'en', null, 0, f.nombre_en, f.marca),
     ...(f.marca ? [textoEnMemoria(f.id, 'es', null, 0, `${f.nombre_es} ${f.marca}`), textoEnMemoria(f.id, 'en', null, 0, `${f.nombre_en} ${f.marca}`)] : []),
     ...f.alias.map((a) => textoEnMemoria(f.id, 'es', null, 0, a)),
   ]);

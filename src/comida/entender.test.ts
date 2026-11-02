@@ -8,10 +8,10 @@ import { describe, expect, it } from '@jest/globals';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 
-import { buscarAlimentos, normalizar } from './buscar';
+import { buscarAlimentos } from './buscar';
 import { detalleDeAlimento } from './detalle';
 import { cambiaElNumero, claveMedida, entender, type Entendido, type ParaEntender } from './entender';
-import { conCon, leerFrase } from './frase';
+import { conCon, leerFrase, mismoNombre } from './frase';
 
 const db = new DatabaseSync(join(__dirname, '../../assets/alimentos.db'), { readOnly: true });
 const base = { getAllAsync: async <T,>(sql: string, ...parametros: (string | number)[]) => db.prepare(sql).all(...parametros) as T[] };
@@ -29,7 +29,7 @@ const para = (extra: Partial<ParaEntender> = {}): ParaEntender => ({
 
 /** Un «X con Y» es un solo alimento si el buscador lo encuentra con ese nombre. */
 async function nombresDe(texto: string): Promise<Set<string>> {
-  const lista = await Promise.all(conCon(texto, 'es').map(async (b) => ((await buscar(b))[0] && normalizar((await buscar(b))[0].coincide) === normalizar(b) ? b : null)));
+  const lista = await Promise.all(conCon(texto, 'es').map(async (b) => ((await buscar(b))[0] && mismoNombre((await buscar(b))[0].coincide, b) ? b : null)));
   return new Set(lista.filter((x): x is string => x !== null));
 }
 
@@ -161,6 +161,11 @@ describe('lo dicho, en alimentos de la base', () => {
     expect(nombre(papas)).toMatch(/papas fritas/i);
     expect(kcal(papas)).toBeGreaterThan(200);
     expect(papas.pregunta).toBe('cuanto');
+  });
+
+  it('un nombre con «con» que está en plural en la base es uno solo, y lo que sigue, otro', async () => {
+    const lista = await decir('yogur con frutas y granola', { conocido: () => true });
+    expect(lista.map(nombre)).toEqual([expect.stringMatching(/^yogur con frutas/i), expect.stringMatching(/granola/i)]);
   });
 });
 

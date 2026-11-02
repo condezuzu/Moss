@@ -140,6 +140,21 @@ export function conCon(texto: string, idioma: Idioma): string[] {
   return lista;
 }
 
+/**
+ * Si un nombre de la base es lo dicho. conCon deja «yogur con fruta» en singular y la base lo tiene como
+ * «Yogur con frutas»: sin el plural se cortaba en el «con» y salía otra cosa. Solo con una palabra después
+ * del «con»: «milanesa con papas fritas» se sigue cortando, porque las papas se preguntan aparte.
+ */
+export function mismoNombre(a: string, b: string): boolean {
+  const palabras = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const [x, y] = [palabras(a), palabras(b)];
+  if (x.join(' ') === y.join(' ')) return true;
+  const con = y.findIndex((p) => p === 'con' || p === 'with');
+  if (con < 0 || y.length - con !== 2 || x.length !== y.length) return false;
+  const sinPlural = (p: string) => p.replace(/(?<=[aeiou])s$/, '');
+  return x.every((p, i) => sinPlural(p) === sinPlural(y[i]));
+}
+
 /** La frase sin las comidas nombradas ni las correcciones, con los separadores como comas. */
 function prepararTexto(texto: string): { texto: string; comida: Comida | null; ayer: boolean } {
   let s = ` ${texto.toLowerCase().replace(/\s+/g, ' ')} `;

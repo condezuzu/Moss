@@ -3,7 +3,7 @@
 // herramientas/alimentos-web.mjs al exportar) y la búsqueda corre en la memoria, con el mismo orden
 // que en el teléfono (candidatosEnMemoria y mejoresPorAlimento).
 
-import { candidatosEnMemoria, conMayuscula, mejoresPorAlimento, textoEnMemoria, type Opciones, type Resultado, type TextoEnMemoria } from './buscar';
+import { candidatosEnMemoria, conMayuscula, limiteDe, mejoresPorAlimento, textoEnMemoria, type Opciones, type Resultado, type TextoEnMemoria } from './buscar';
 import { MICROS, type Micros } from '@/dominio/micronutrientes';
 
 import { formasDelCodigo, type CuradoDelPlan, type Detalle, type Valores100 } from './detalle';
@@ -12,7 +12,7 @@ import { formasDelCodigo, type CuradoDelPlan, type Detalle, type Valores100 } fr
 type AlimentoWeb = {
   id: number; f: string; es: string; en: string; v: [number, number, number, number]; s: (number | null)[];
   p: [string | null, string, number][]; t: [string, string, number, string][];
-  m: string | null; d: number | null; x: [number, string, string] | null; a: string | null; c: number | null; o: string | null; q?: string; z?: 1;
+  m: string | null; b?: number | null; d: number | null; x: [number, string, string] | null; a: string | null; c: number | null; o: string | null; q?: string; z?: 1;
   /** Los micronutrientes en el orden de MICROS, sin los null del final; y verificado: [día, con qué]. */
   u?: (number | null)[]; w?: [string, string] | null;
 };
@@ -26,7 +26,7 @@ function cargar(): Promise<Cargados> {
     .then((r) => r.json() as Promise<DatosWeb>)
     .then((d) => ({
       porId: new Map(d.alimentos.map((a) => [a.id, a])),
-      corpus: d.alimentos.flatMap((a) => a.t.map(([i, region, principal, texto]) => textoEnMemoria(a.id, i === 'en' ? 'en' : 'es', region || null, principal, texto))),
+      corpus: d.alimentos.flatMap((a) => a.t.map(([i, region, principal, texto]) => textoEnMemoria(a.id, i === 'en' ? 'en' : 'es', region || null, principal, texto, a.m, a.b))),
       recetas: d.recetas,
       codigos: d.codigos,
     }));
@@ -63,14 +63,15 @@ export type OpcionesDeIdioma = Pick<Opciones, 'idioma' | 'region'>;
 export const baseDeAlimentos = {
   async buscar(texto: string, op: Opciones): Promise<Resultado[]> {
     const { porId, corpus } = await cargar();
-    return mejoresPorAlimento(candidatosEnMemoria(corpus, texto, op.idioma), texto, op, () => true)
-      .slice(0, op.limite ?? 25)
+    const candidatos = candidatosEnMemoria(corpus, texto, op.idioma);
+    return mejoresPorAlimento(candidatos, texto, op, () => true)
+      .slice(0, limiteDe(candidatos, texto, op))
       .map((c) => {
         const a = porId.get(c.alimento)!;
         const v = valoresDe(a);
         const porcion = a.p[0];
         return {
-          id: a.id, nombre: nombreDe(a, op), coincide: c.texto, curado: true, verificado: !!a.w, ...v,
+          id: a.id, nombre: nombreDe(a, op), coincide: c.texto, curado: true, verificado: !!a.w, ...(a.m ? { marca: a.m } : {}), ...v,
           porcion: porcion ? { nombre: op.idioma === 'es' ? (porcion[0] ?? porcion[1]) : porcion[1], gramos: porcion[2] } : null,
         };
       });
