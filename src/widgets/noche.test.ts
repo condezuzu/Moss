@@ -10,7 +10,8 @@ import { confirmacionesDeLaLinea, decidir, lineaDeLaNoche, nocheDeAhora, nocheEs
 const ZONA = -180;
 const TEXTOS = {
   anoche: 'Anoche', si: 'Sí', fueAsi: '¿Fue así?', confirmada: 'Confirmada', seVeEnMoss: 'Se ve al abrir Moss', seAnotaEnMoss: 'Anótala en Moss',
-  horas: '{desde} → {hasta}', duracion: '{h} h {m} min',
+  horas: '{desde} → {hasta}', duracion: '{h} h {m} min', horasCorto: '{h} h {m}', siLargo: 'Sí, fue así', aDormir: 'A dormir', enTiempo: 'en {tiempo}', minutos: '{m} min', yaEsHora: 'Ya es hora',
+  paraDespertar: 'para despertarte a las {hora}',
 };
 const iso = (clave: ClaveDia, minutos: number) => new Date(instanteDe(clave, ZONA, minutos)).toISOString();
 
@@ -86,6 +87,50 @@ describe('la línea de tiempo del widget de la noche', () => {
 
   it('las horas, de 0 a 23', () => {
     expect([reloj(340), reloj(790), reloj(-30), reloj(360)]).toEqual(['23:40', '07:10', '17:30', '00:00']);
+  });
+});
+
+describe('«A dormir», a la tardecita', () => {
+  const HOY = '2026-10-21';
+  // A la cama a las 23:15, para despertarse a las 07:15.
+  const dormir = { acostarse: 23 * 60 + 15, despertar: 24 * 60 + 7 * 60 + 15 };
+
+  it('de mañana sigue «Anoche» y a las 19 empieza, de a media hora, hasta 90 minutos después', () => {
+    const l = armar(estado(HOY), new Date(2026, 9, 21, 9, 0), { dormir });
+    expect(l[0].props.aDormir).toBe(false);
+    const tarde = l.filter((x) => x.props.aDormir);
+    expect(tarde[0].date.getHours()).toBe(19);
+    expect(tarde[0].props).toMatchObject({ titulo: 'A dormir', horas: '23:15', cifra: '23:15', falta: 'en 4 h 15 min', nota: 'para despertarte a las 07:15', pregunta: false });
+    expect(tarde.at(-1)!.props.falta).toBe('Ya es hora');
+    expect(tarde.at(-1)!.date.getHours()).toBe(23);
+    // Después de un rato vuelve a lo de antes, hasta las 4 de la mañana.
+    const despues = l[l.indexOf(tarde.at(-1)!) + 1];
+    expect(despues.props.aDormir).toBe(false);
+    expect(despues.date.getHours()).toBe(0);
+    expect(despues.date.getMinutes()).toBe(45);
+    const tiempos = l.map((x) => x.date.getTime());
+    expect([...tiempos].sort((a, b) => a - b)).toEqual(tiempos);
+  });
+
+  it('si ya empezó, lo primero es «A dormir» con lo que falta desde esa media hora', () => {
+    const l = armar(estado(HOY), new Date(2026, 9, 21, 21, 47), { dormir });
+    expect(l[0].date.getHours()).toBe(21);
+    expect(l[0].props).toMatchObject({ aDormir: true, falta: 'en 1 h 45 min' });
+    expect(l[1].date.getHours()).toBe(22);
+  });
+
+  it('faltando menos de una hora, en minutos; sin hora de despertarse, sin esa frase', () => {
+    const l = armar(estado(HOY), new Date(2026, 9, 21, 22, 50), { dormir: { acostarse: dormir.acostarse, despertar: null } });
+    expect(l[0].props).toMatchObject({ aDormir: true, falta: 'en 45 min', nota: '' });
+  });
+
+  it('sin hora de dormir, no hay «A dormir»', () => {
+    expect(armar(estado(HOY), new Date(2026, 9, 21, 21, 0), { dormir: null }).some((x) => x.props.aDormir)).toBe(false);
+  });
+
+  it('lo de la tardecita no confirma nada', () => {
+    const l = armar(estado(HOY), new Date(2026, 9, 21, 21, 47), { dormir });
+    expect(confirmacionesDeLaLinea(l)).toEqual([]);
   });
 });
 

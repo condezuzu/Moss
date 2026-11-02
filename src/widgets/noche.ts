@@ -1,8 +1,8 @@
-// El widget de la noche, en la pantalla bloqueada (spec/sueno-sin-esfuerzo.md, 5): «Anoche» con las
-// dos horas y «Sí». Moss estima la noche al abrirse, así que deja armada desde antes la de la mañana
-// que viene: lo de siempre y, si se le pasa, la hora del despertador. Al abrir Moss, el «Sí» del widget
-// confirma la noche solo si coincide con lo que estimó; si no, Moss pregunta como siempre. Con un
-// reloj o un anillo, el widget muestra lo medido, sin botón.
+// El widget de la noche (spec/sueno-sin-esfuerzo.md, 5; spec/widgets.md, D43): a la mañana, «Anoche» con
+// las dos horas y «Sí»; a la tardecita, «A dormir» con la hora y cuánto falta. Moss estima la noche al
+// abrirse, así que deja armada desde antes la de la mañana que viene: lo de siempre y, si se le pasa, la
+// hora del despertador. Al abrir Moss, el «Sí» del widget confirma la noche solo si coincide con lo que
+// estimó; si no, Moss pregunta como siempre. Con un reloj o un anillo, muestra lo medido, sin botón.
 
 import type { Estado } from '@/almacen/almacen';
 import { partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
@@ -20,6 +20,17 @@ export type TextosDeLaNoche = {
   horas: string;
   /** Con {h} y {m}. */
   duracion: string;
+  /** Lo grande del chico: «7 h 36». Con {h} y {m}. */
+  horasCorto: string;
+  siLargo: string;
+  aDormir: string;
+  /** «en 1 h 30». Con {tiempo}. */
+  enTiempo: string;
+  /** Con {m}. */
+  minutos: string;
+  yaEsHora: string;
+  /** «para despertarte a las 07:15». Con {hora}. */
+  paraDespertar: string;
 };
 
 /** Lo que el «Sí» del widget dijo de una noche: las horas que mostraba (en minutos desde las 18) y cuándo. */
@@ -51,6 +62,17 @@ export function nocheEsperada(noches: Noche[], clave: ClaveDia, despertador: num
 export const conAparato = (salud: Estado['salud'], hoy: ClaveDia) =>
   (salud?.noches ?? []).some((n) => n.clave >= sumarDias(hoy, -14) && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra'));
 
+/** «A dormir» se ve desde las 19, o desde cinco horas antes, lo que sea más tarde, y hasta 90 minutos después. */
+export const A_DORMIR_DESDE = 19 * 60;
+export const A_DORMIR_ANTES = 5 * 60;
+export const A_DORMIR_DESPUES = 90;
+
+/** «07:15» de unos minutos en la cuenta de un día (lo de la noche pasa de 1440). */
+const relojDelDia = (minutos: number) => {
+  const m = ((Math.round(minutos) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+};
+
 /** La noche que se muestra ahora: hasta las 4 sigue la de ayer, que todavía es «anoche». */
 export const nocheDeAhora = (hoy: ClaveDia, ahora: Date): ClaveDia => (ahora.getHours() < DESDE_LAS ? sumarDias(hoy, -1) : hoy);
 
@@ -66,6 +88,9 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
   esperando?: ConfirmacionDelWidget | null;
   /** La hora del despertador de Moss para mañana, en minutos desde las 18 del día anterior. */
   despertador?: number | null;
+  /** A qué hora ir a la cama hoy y a qué hora despertarse mañana, en minutos desde la medianoche de hoy. Sin hora, no hay «A dormir». */
+  dormir?: { acostarse: number; despertar: number | null } | null;
+  fondo?: string;
 }): Entrada[] {
   const tx = d.textos;
   const noches = conNochesDeMoss(e.salud?.noches ?? [], [...e.noches.values()], d.zona);
@@ -74,11 +99,13 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
   const base = (clave: ClaveDia): PropsNoche => ({
     clave, titulo: tx.anoche, horas: '', nota: tx.seVeEnMoss, notaConfirmada: tx.seVeEnMoss, si: tx.si,
     pregunta: false, dormirse: 0, despertar: 0, confirmada: 0, hecha: false, url: d.url,
+    aDormir: false, cifra: '', falta: '', siLargo: tx.siLargo, fondo: d.fondo ?? '',
   });
   const conHoras = (p: PropsNoche, dormirse: number, despertar: number): PropsNoche => {
     const min = Math.max(0, Math.round(despertar - dormirse));
     const duracion = conVariables(tx.duracion, { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') });
-    return { ...p, horas: conVariables(tx.horas, { desde: reloj(dormirse), hasta: reloj(despertar) }), dormirse: Math.round(dormirse), despertar: Math.round(despertar), nota: duracion, notaConfirmada: `${tx.confirmada} · ${duracion}` };
+    const cifra = conVariables(tx.horasCorto, { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') });
+    return { ...p, horas: conVariables(tx.horas, { desde: reloj(dormirse), hasta: reloj(despertar) }), dormirse: Math.round(dormirse), despertar: Math.round(despertar), cifra, nota: duracion, notaConfirmada: `${tx.confirmada} · ${duracion}` };
   };
   // Lo de la mañana: si Moss propone, con «Sí»; la mañana de cada semana en que pregunta sin proponer, nada.
   const propuesta = (clave: ClaveDia, dormirse: number, despertar: number, confianza: 'alta' | 'media' | 'baja'): PropsNoche => {
@@ -106,8 +133,31 @@ export function lineaDeLaNoche(e: ParaLaNoche, d: {
   const esperada = aparato ? null : nocheEsperada(noches, manana, d.despertador ?? null);
   const p = partesDe(manana);
   const pasado = partesDe(sumarDias(manana, 1));
+
+  // A la tardecita, «A dormir»: de a media hora, porque iOS solo cambia el texto entre una entrada y otra.
+  const tarde: Entrada[] = [];
+  if (d.dormir) {
+    const { acostarse, despertar } = d.dormir;
+    const dia = partesDe(actual);
+    const fecha = (min: number) => new Date(dia.anio, dia.mes, dia.dia, 0, min);
+    const hora = relojDelDia(acostarse);
+    const nota = despertar === null ? '' : conVariables(tx.paraDespertar, { hora: relojDelDia(despertar) });
+    const paraDormir = (falta: string): PropsNoche => ({ ...base(manana), titulo: tx.aDormir, horas: hora, cifra: hora, falta, nota, notaConfirmada: nota, aDormir: true });
+    const cuanto = (min: number) => {
+      const r = Math.round(min);
+      return conVariables(tx.enTiempo, { tiempo: r >= 60 ? conVariables(tx.duracion, { h: Math.floor(r / 60), m: String(r % 60).padStart(2, '0') }) : conVariables(tx.minutos, { m: r }) });
+    };
+    const desde = Math.max(A_DORMIR_DESDE, acostarse - A_DORMIR_ANTES);
+    for (let m = desde; m < acostarse; m += 30) tarde.push({ date: fecha(m), props: paraDormir(cuanto(acostarse - m)) });
+    tarde.push({ date: fecha(acostarse), props: paraDormir(tx.yaEsHora) });
+    tarde.push({ date: fecha(acostarse + A_DORMIR_DESPUES), props: ahora });
+  }
+  // Lo de la tardecita que ya empezó manda ahora; lo que sigue va en su hora.
+  const yaEmpezo = tarde.filter((x) => x.date.getTime() <= d.ahora.getTime()).at(-1);
+  const delaTarde = tarde.filter((x) => x.date.getTime() > d.ahora.getTime());
   return [
-    { date: d.ahora, props: ahora },
+    { date: d.ahora, props: yaEmpezo?.props ?? ahora },
+    ...delaTarde,
     { date: new Date(p.anio, p.mes, p.dia, DESDE_LAS), props: esperada ? propuesta(manana, esperada.dormirse, esperada.despertar, 'media') : base(manana) },
     { date: new Date(pasado.anio, pasado.mes, pasado.dia, DESDE_LAS), props: base(sumarDias(manana, 1)) },
   ];

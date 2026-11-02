@@ -1046,10 +1046,10 @@ export function crearAlmacen(op: Opciones) {
     ponerFavorito(fuente: Fuente, ref: string, favorito: boolean) {
       ponerComida('favoritos', [{ fuente, ref, favorito, actualizado: momento() }]);
     },
-    /** Un vaso de 250 ml, o lo que se diga, hoy. */
-    sumarAgua(ml = 250): TomaDeAgua {
+    /** Un vaso de 250 ml, o lo que se diga, hoy o el día y a la hora de un toque en un widget. */
+    sumarAgua(ml = 250, donde: { dia?: ClaveDia; momento?: string } = {}): TomaDeAgua {
       const cuando = momento();
-      const toma: TomaDeAgua = { id: nuevoId(), dia: estado.hoy, ml, momento: cuando, actualizado: cuando };
+      const toma: TomaDeAgua = { id: nuevoId(), dia: donde.dia ?? estado.hoy, ml, momento: donde.momento ?? cuando, actualizado: cuando };
       ponerComida('agua', [toma]);
       return toma;
     },

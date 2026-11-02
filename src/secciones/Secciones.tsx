@@ -5,8 +5,8 @@
 // Sin perfil, primero la entrada, sobre el mismo cielo: al terminarla aparece Inicio.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +27,7 @@ import { AvisoFlotante, Icono } from './comida/comunes';
 import { HojaRegistro } from './comida/HojaRegistro';
 import { abrirRegistro, avisar, cerrarRegistro, quitarAviso, useAviso, useRegistro } from './comida/registro';
 import { guardarSenales } from '@/salud/anclas';
+import { leerEnlace, type Enlace } from './enlaces';
 import { Entrada } from './entrada/Entrada';
 import { EditorDeHabito } from './habitos/Editor';
 import { Mes } from './habitos/Mes';
@@ -40,6 +41,30 @@ import { PaginaDeSueno } from './sueno/Sueno';
 import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
 
 const ULTIMA = PESTANAS.length - 1;
+
+// El enlace con el que se abrió Moss se atiende una sola vez: volver a la entrada y salir no lo repite.
+let inicialAtendido = false;
+
+/** Lo que abre un widget, en frío o con Moss abierta. Espera a que estén las secciones. */
+function useEnlaces(listas: boolean, alEnlace: (e: Enlace) => void) {
+  const ultimo = useRef(alEnlace);
+  useEffect(() => {
+    ultimo.current = alEnlace;
+  });
+  useEffect(() => {
+    if (!listas) return;
+    const atender = (url: string | null | undefined) => {
+      const e = url ? leerEnlace(url) : null;
+      if (e) ultimo.current(e);
+    };
+    if (!inicialAtendido) {
+      inicialAtendido = true;
+      Linking.getInitialURL().then(atender).catch(() => {});
+    }
+    const suscripcion = Linking.addEventListener('url', ({ url }) => atender(url));
+    return () => suscripcion.remove();
+  }, [listas]);
+}
 
 export default function Secciones() {
   const { width: ancho, height: alto } = useWindowDimensions();
@@ -164,6 +189,18 @@ export default function Secciones() {
     if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida, ...(a.dia ? { dia: a.dia } : {}) });
     else if (a.tipo === 'pesarse') abrirHoja('peso');
     else ir(a.tipo === 'dormir' ? PESTANAS.indexOf('sueno') : HABITOS);
+  });
+
+  // Tocar un widget lleva a lo suyo: su sección, o anotar justo ahí.
+  useEnlaces(conSecciones, (e) => {
+    if (hojaAbierta) cerrarHoja();
+    if ('seccion' in e) {
+      cerrarRegistro();
+      ir(PESTANAS.indexOf(e.seccion));
+      return;
+    }
+    const { comida, via } = e.anotar;
+    abrirRegistro({ ...(comida ? { comida } : {}), ...(via && via !== 'buscar' ? { panel: via } : {}) });
   });
 
   const tira = usePanGesture({

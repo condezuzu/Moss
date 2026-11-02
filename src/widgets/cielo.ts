@@ -61,6 +61,7 @@ export function lineaDelCielo(e: ParaElCielo, d: {
   textos: PropsCielo['textos'];
   url: string;
   atrasados?: ToqueConDia[];
+  fondos?: { noche: string; aurora: string };
 }): Entrada[] {
   const entradas: Entrada[] = [];
   for (let k = 0; k < DIAS_ARMADOS; k++) {
@@ -79,6 +80,8 @@ export function lineaDelCielo(e: ParaElCielo, d: {
         atrasados: k === 0 ? (d.atrasados ?? []).map((x) => ({ id: x.id, dia: x.dia, hecho: x.hecho, en: x.en })) : [],
         textos: d.textos,
         url: d.url,
+        fondoNoche: d.fondos?.noche ?? '',
+        fondoAurora: d.fondos?.aurora ?? '',
       },
     });
   }

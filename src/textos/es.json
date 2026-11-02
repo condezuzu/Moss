@@ -2203,7 +2203,10 @@
     },
     "horasCorto": "{h} h {m}",
     "teQuedanCorto": "te quedan {n}",
-    "deMasCorto": "{n} de más"
+    "deMasCorto": "{n} de más",
+    "anotado": "Anotado",
+    "deMeta": "{comido} de {meta}",
+    "yaEsHora": "Ya es hora"
   },
   "suscripcion": {
     "titulo": "Moss Premium",

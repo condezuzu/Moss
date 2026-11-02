@@ -9,6 +9,12 @@
 export const CON_ASCENT = false;
 
 /**
+ * Los widgets que se suman con la próxima build (D43): Hoy, Anotar y Agua. Cada uno se declara en
+ * app.json, y eso cambia la huella: lo prende herramientas/preparar-proxima-build.mjs, junto con app.json.
+ */
+export const CON_WIDGETS_NUEVOS = false;
+
+/**
  * El día en que sale Moss Premium (AAAA-MM-DD): prenderlo es poner la fecha, y quien tiene cuenta de
  * antes de ese día lo tiene de regalo (lo decidiste el 31/10/2026). Pide la build con StoreKit
  * (app-intents/Compras.swift) y los productos cargados en App Store Connect (spec/suscripcion.md).

@@ -10,19 +10,39 @@ import { AppState, Platform } from 'react-native';
 import { elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
 import { catalogo } from '@/datos/catalogo';
+import { horasDeSueno } from '@/dominio/avisos';
+import { COMIDAS, comidaDeLaHora, type Comida } from '@/dominio/comidas';
+import { CON_WIDGETS_NUEVOS } from '@/lib/banderas';
+import { suenoParaAvisos } from '@/recordatorios/programar';
+import { metaDelDia, numero, totalDe } from '@/secciones/comida/datos';
+import { enlaceASeccion, enlaceDeAnotar } from '@/secciones/enlaces';
 import { idioma, t } from '@/textos';
+import { lineaDelAgua, repartirAgua, toquesDelAgua } from './agua';
+import { lineaDeAnotar } from './anotar';
 import { lineaDelCielo, repartirToques, toquesDeLaLinea } from './cielo';
+import { fondosEnElGrupo } from './fondos';
+import { deshacerDeLaLinea, lineaDeHoy, repartirToquesDeHoy, toquesDeHoy } from './hoy';
 import { confirmacionesDeLaLinea, decidir, lineaDeLaNoche, type ConfirmacionDelWidget } from './noche';
-import type { PropsCielo, PropsNoche } from './tipos';
+import type { PropsAgua, PropsAnotar, PropsCielo, PropsHoy, PropsNoche } from './tipos';
 
 type Entrada<P> = { date: Date; props: P };
 type ElWidget<P> = { getTimeline(): Promise<Entrada<P>[]>; updateTimeline(entradas: Entrada<P>[]): void };
 
-const URL = 'moss://';
+const META_DE_AGUA = 2000;
 /** Cada hora en la zona de su momento, como las noches de Salud. */
 const zona = (ms: number) => -new Date(ms).getTimezoneOffset();
 
-let cargados: { cielo: ElWidget<PropsCielo>; noche: ElWidget<PropsNoche> } | null | undefined;
+type LosWidgets = {
+  cielo: ElWidget<PropsCielo>;
+  noche: ElWidget<PropsNoche>;
+  hoy?: ElWidget<PropsHoy>;
+  anotar?: ElWidget<PropsAnotar>;
+  agua?: ElWidget<PropsAgua>;
+  /** La carpeta del App Group: ahí van los fondos. */
+  carpeta: string | null;
+};
+
+let cargados: LosWidgets | null | undefined;
 
 function losWidgets() {
   if (cargados !== undefined) return cargados;
@@ -31,7 +51,13 @@ function losWidgets() {
   try {
     // Recién acá: importar expo-widgets sin su módulo nativo rompe al arrancar.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    cargados = { cielo: require('./Cielo.widget').default, noche: require('./Noche.widget').default };
+    cargados = {
+      cielo: require('./Cielo.widget').default,
+      noche: require('./Noche.widget').default,
+      carpeta: require('expo-widgets').widgetsDirectory ?? null,
+      // Con la build que los declara en app.json. Antes, no tiene sentido escribir sus líneas.
+      ...(CON_WIDGETS_NUEVOS ? { hoy: require('./Hoy.widget').default, anotar: require('./Anotar.widget').default, agua: require('./Agua.widget').default } : {}),
+    };
   } catch (error) {
     console.warn('Moss no pudo cargar los widgets', error);
   }
@@ -72,6 +98,7 @@ async function unaVuelta() {
   const w = losWidgets();
   const a = elAlmacen();
   if (!w || !a.estado().listo) return;
+  const fondos = await fondosEnElGrupo(w.carpeta);
 
   // El cielo: los «hecho» van al almacén con su día y su hora (gana el último).
   let esperan: ReturnType<typeof repartirToques>['esperan'] = [];
@@ -83,7 +110,7 @@ async function unaVuelta() {
       esperan = r.esperan;
     },
     () => lineaDelCielo(a.estado(), {
-      catalogo, idioma: idioma(), url: URL, atrasados: esperan,
+      catalogo, idioma: idioma(), url: enlaceASeccion('habitos'), atrasados: esperan, fondos,
       textos: { cuenta: t('widgets.cuenta'), solos: t('widgets.solos'), sinHabitos: t('widgets.sinHabitos'), hecho: t('widgets.hecho'), sinHacer: t('widgets.sinHacer') },
     }),
   );
@@ -103,13 +130,100 @@ async function unaVuelta() {
       }
     },
     () => lineaDeLaNoche(a.estado(), {
-      ahora: new Date(), zona, url: URL, esperando,
+      ahora: new Date(), zona, url: enlaceASeccion('sueno'), esperando, dormir: horaDeDormirHoy(a.estado()), fondo: fondos.noche,
       textos: {
         anoche: t('widgets.anoche'), si: t('widgets.si'), fueAsi: t('widgets.fueAsi'), confirmada: t('widgets.confirmada'),
         seVeEnMoss: t('widgets.seVeEnMoss'), seAnotaEnMoss: t('widgets.seAnotaEnMoss'), horas: t('widgets.horas'), duracion: t('cielo.horasMinutos'),
+        horasCorto: t('widgets.horasCorto'), siLargo: t('widgets.siFueAsi'), aDormir: t('widgets.aDormir'), enTiempo: t('widgets.enTiempo'),
+        minutos: t('fecha.minutos'), yaEsHora: t('widgets.yaEsHora'), paraDespertar: t('widgets.paraDespertar'),
       },
     }),
   );
+
+  // Hoy: lo de siempre tocado se anota con la hora del toque; otro toque lo saca.
+  if (w.hoy) {
+    let deshacer = new Map<string, string>();
+    await alDia(
+      w.hoy,
+      (linea) => {
+        deshacer = deshacerDeLaLinea(linea);
+        const r = repartirToquesDeHoy(toquesDeHoy(linea), a.estado());
+        for (const x of r.anotar) deshacer.set(x.clave, a.registrar(x.items, { comida: x.comida, dia: x.dia, momento: new Date(x.en).toISOString() }).map((n) => n.id).join(','));
+        for (const x of r.confirmar) deshacer.set(x.clave, a.confirmarComida(x.dia, x.comida).join(','));
+        for (const x of r.yaAnotado) deshacer.set(x.clave, x.ids.join(','));
+        for (const x of r.quitar) {
+          x.ids.forEach((id) => a.borrarRegistro(id));
+          deshacer.delete(x.clave);
+        }
+      },
+      () => {
+        const e = a.estado();
+        return lineaDeHoy(e, {
+          metaDe: (dia) => metaDelDia(e, dia),
+          nombres: Object.fromEntries(COMIDAS.map((c) => [c, t(`widgets.comidaCorta.${c}`)])) as Record<Comida, string>,
+          textos: {
+            teQuedan: t('inicio.teQuedan'), deMas: t('inicio.deMas'), kcal: t('comida.kcal'), de: t('widgets.deMeta'), anotado: t('widgets.anotado'), sinAnotar: t('widgets.sinAnotar'),
+            miles: idioma() === 'es' ? '.' : ',',
+            macros: { p: t('comida.proteina'), c: t('comida.carbohidratos'), g: t('comida.grasas') },
+            cortos: { p: t('widgets.macroCorto.p'), c: t('widgets.macroCorto.c'), g: t('widgets.macroCorto.g') },
+            buscar: t('widgets.acciones.buscar'), decir: t('widgets.acciones.decir'), codigo: t('widgets.acciones.codigo'),
+          },
+          urls: {
+            anotar: enlaceDeAnotar(), inicio: enlaceASeccion('inicio'), comida: enlaceASeccion('comida'), anotarComida: enlaceDeAnotar({ comida: '{comida}' }),
+            buscar: enlaceDeAnotar({ via: 'buscar' }), decir: enlaceDeAnotar({ via: 'decir' }), codigo: enlaceDeAnotar({ via: 'codigo' }),
+          },
+          fondo: fondos.noche,
+          deshacer,
+        });
+      },
+    );
+  }
+
+  // El agua: los vasos tocados, con la hora del toque.
+  if (w.agua) {
+    await alDia(
+      w.agua,
+      (linea) => {
+        const r = repartirAgua(toquesDelAgua(linea), a.estado());
+        for (const x of r.sumar) a.sumarAgua(x.ml, { dia: x.dia, momento: new Date(x.en).toISOString() });
+        for (const id of r.quitar) a.quitarAgua(id);
+      },
+      () => lineaDelAgua(a.estado(), {
+        meta: META_DE_AGUA,
+        textos: { titulo: t('widgets.agua'), vasos: t('widgets.vasos'), sumar: t('mas.sumarVaso'), quitar: t('widgets.quitarVaso'), decimal: idioma() === 'es' ? ',' : '.' },
+        url: enlaceASeccion('inicio'),
+        fondo: fondos.noche,
+      }),
+    );
+  }
+
+  // Anotar no guarda nada: solo el título de cada comida y lo que queda.
+  if (w.anotar) {
+    await alDia(w.anotar, () => {}, () => {
+      const e = a.estado();
+      const ahora = new Date();
+      const meta = metaDelDia(e, e.hoy);
+      const queda = meta ? meta.kcal - totalDe(e.registros, e.hoy, e.hoy).kcal : null;
+      return lineaDeAnotar(ahora, {
+        titulos: Object.fromEntries(COMIDAS.map((c) => [c, t(`widgets.anotarComida.${c}`)])) as Record<Comida, string>,
+        queda: queda === null ? '' : t(queda >= 0 ? 'widgets.teQuedanCorto' : 'widgets.deMasCorto', { n: numero(Math.abs(Math.round(queda))) }),
+        acciones: ([['buscar', 'magnifyingglass'], ['decir', 'mic'], ['codigo', 'barcode.viewfinder'], ['etiqueta', 'doc.text.viewfinder']] as const).map(([id, icono]) => ({
+          id, icono, nombre: t(`widgets.acciones.${id}`), url: enlaceDeAnotar({ via: id }),
+        })),
+        url: enlaceDeAnotar({ comida: comidaDeLaHora(ahora.getHours() * 60 + ahora.getMinutes()) }),
+        decirTitulo: t('comida.decir.titulo'),
+        fondo: fondos.noche,
+      });
+    });
+  }
+}
+
+/** A qué hora ir a la cama hoy (D33). Sin noches de verdad o sin hora de despertarse, no hay «A dormir». */
+function horaDeDormirHoy(e: Estado): { acostarse: number; despertar: number | null } | null {
+  const sueno = suenoParaAvisos(e);
+  if (!sueno) return null;
+  const h = horasDeSueno(e.hoy, sueno);
+  return h.acostarse === null ? null : { acostarse: h.acostarse, despertar: h.despertarManana };
 }
 
 let enCurso: Promise<void> | null = null;
@@ -136,7 +250,7 @@ export function actualizarWidgets(): Promise<void> {
 }
 
 /** Lo que muestran los widgets: si cambia, se escriben de nuevo. */
-const queMuestran = (e: Estado) => [e.listo, e.hoy, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas] as const;
+const queMuestran = (e: Estado) => [e.listo, e.hoy, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua] : [])] as const;
 
 /**
  * En la raíz de la app: al estar listo el almacén, al volver a Moss y cuando cambia algo que muestran,
