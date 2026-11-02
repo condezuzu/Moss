@@ -8,6 +8,7 @@ import { AppState } from 'react-native';
 import { actualizarCatalogo } from '@/comida/catalogoLocal';
 import { catalogo } from '@/datos/catalogo';
 import { msHastaElCorte } from '@/dominio/fechas';
+import { cuentaDeMossDesde } from '@/dominio/premium';
 import { CON_ASCENT } from '@/lib/banderas';
 import { borrarMiSesion, dejarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
@@ -27,7 +28,7 @@ import { crearSincronizador, type Sincronizador } from './sincronizar';
 let almacen: Almacen | undefined;
 
 export function elAlmacen(): Almacen {
-  almacen ??= crearAlmacen({ abrir: abrirRepositorio, catalogo, sembrar: (hoy) => habitosDeEjemplo(hoy, idioma()), conAjusteSemanal: hayPremium });
+  almacen ??= crearAlmacen({ abrir: abrirRepositorio, catalogo, sembrar: (hoy) => habitosDeEjemplo(hoy, idioma()) });
   return almacen;
 }
 
@@ -47,9 +48,9 @@ export function almacenListo(): Promise<void> {
   });
 }
 
-/** Lo de Premium, al abrir Moss o en la tarea de fondo. La fecha de la cuenta dice si lo tiene de regalo. */
+/** La suscripción, al abrir Moss o en la tarea de fondo. La fecha de la cuenta dice si la tiene de regalo. */
 export const arrancarLoDePremium = () =>
-  arrancarPremium(async () => (haySupabase() ? (await supabase().auth.getSession()).data.session?.user.created_at : null));
+  arrancarPremium(async () => (haySupabase() ? cuentaDeMossDesde((await supabase().auth.getSession()).data.session?.user) : null));
 
 /** La sincronización con la cuenta mientras la app está abierta: Perfil la frena antes de borrar el teléfono. */
 let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void } | undefined;
@@ -128,7 +129,8 @@ function sincronizarConLaCuenta(a: Almacen) {
     setTimeout(() => {
       // Solo la de este teléfono: las sesiones de Ascent con ese usuario siguen.
       if (borradaEnOtroLado) cliente.auth.signOut({ scope: 'local' }).catch(() => {});
-      cuentaDePremium(deMoss?.user.created_at);
+      // La fecha viene del servidor con cada sesión y cada renovación, y queda guardada: anda sin conexión.
+      cuentaDePremium(cuentaDeMossDesde(deMoss?.user));
       seguir();
       const ahora = usuarioDeLaSesion;
       if (usuarioDeLaCuenta === ahora) return;
@@ -213,18 +215,15 @@ export function useAlmacenListo(): boolean {
       .then(actualizarSalud)
       .catch((error) => console.warn('Moss no pudo abrir sus datos', error));
     const cuenta = sincronizarConLaCuenta(a);
-    // Lo que depende de Premium corre cuando Apple contesta, y otra vez si cambia (al comprar, al vencer,
-    // al cancelar la prueba), no cada vez que se le pregunta.
+    // Los avisos dependen de la suscripción: se rehacen cuando Apple contesta, y otra vez si cambia (al
+    // comprar, al vencer, al cancelar la prueba), no cada vez que se le pregunta.
     const dePremium = () => `${hayPremium()} ${suscripcionActual()?.vence} ${suscripcionActual()?.renueva}`;
     let premiumAntes = dePremium();
     const sinOirPremium = alCambiarPremium(() => {
       const ahora = dePremium();
       if (ahora === premiumAntes) return;
       premiumAntes = ahora;
-      if (!a.estado().listo) return;
-      a.revisarElControl();
-      estimarAnoche(a).catch(() => {});
-      reprogramar();
+      if (a.estado().listo) reprogramar();
     });
     arrancarLoDePremium().catch(() => {});
     let reloj: ReturnType<typeof setTimeout>;
@@ -238,15 +237,22 @@ export function useAlmacenListo(): boolean {
     esperarElCorte();
     // Los avisos se vuelven a programar cuando cambia algo que los mueve, un rato después.
     let espera: ReturnType<typeof setTimeout> | undefined;
+    const programarYa = () => {
+      clearTimeout(espera);
+      espera = undefined;
+      if (a.estado().listo) programarAvisos(a.estado()).catch(() => {});
+    };
     const reprogramar = () => {
       clearTimeout(espera);
-      espera = setTimeout(() => {
-        if (a.estado().listo) programarAvisos(a.estado()).catch(() => {});
-      }, 1500);
+      espera = setTimeout(programarYa, 1500);
     };
+    // Marcar algo y salir enseguida: con Moss de fondo el reloj se para, y sonaría igual lo que ya hiciste.
+    const sinSalir = AppState.addEventListener('change', (estado) => {
+      if (estado !== 'active' && espera !== undefined) programarYa();
+    });
     // Lo anotado, lo hecho, los hábitos, las noches, Salud, los avisos mismos, el peso (pesarse no
     // suena si ya te pesaste), el perfil y las metas (el día del control) y el día que empieza.
-    const queMueve = (e: ReturnType<Almacen['estado']>) => [e.registros, e.recordatorios, e.avisos, e.marcas, e.habitos, e.noches, e.salud, e.pesos, e.perfil, e.metas, e.hoy, e.listo] as const;
+    const queMueve = (e: ReturnType<Almacen['estado']>) => [e.registros, e.recordatorios, e.avisos, e.marcas, e.habitos, e.noches, e.salud, e.pesos, e.perfil, e.metas, e.hoy, e.listo, e.entreno, e.agua, e.numeros] as const;
     let antes = queMueve(a.estado());
     const sinOir = a.suscribir(() => {
       const ahora = queMueve(a.estado());
@@ -277,6 +283,7 @@ export function useAlmacenListo(): boolean {
       sinOir();
       sinOirBusquedas();
       sinOirPremium();
+      sinSalir.remove();
       suscripcion.remove();
       cuenta.parar();
     };

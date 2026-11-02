@@ -4,8 +4,11 @@ Lo pediste el 22/10/2026: un aviso de la hora de dormir como el de Rise, los de
 cada hábito (a una hora, relativos, después de algo, por día de la semana y con
 mensaje propio), los de comida solo si no se anotó, y un máximo por día con lo
 que cae cerca junto. El 26/10 sumaste el horario de comidas (para comer
-ordenado), pesarte a la mañana y que los hábitos lleguen con su aviso. Pocos y
-útiles: Moss nunca insiste ni culpa.
+ordenado), pesarte a la mañana y que los hábitos lleguen con su aviso. El 2/11
+los pediste más simples: cada uno dice una sola cosa, nada de lo que ya pasó, y
+un aviso aparte si vas muy bajo en algo. Pocos y útiles: Moss nunca insiste ni
+culpa. Se ven todos, en español y en inglés, como en la pantalla bloqueada, en la
+galería («Los avisos en la pantalla bloqueada»).
 
 La regla está en `src/dominio/avisos.ts` (con sus tests); el teléfono los
 programa en `src/recordatorios/programar.ts`; se eligen en Perfil › Avisos y en
@@ -50,8 +53,10 @@ elegido queda en el teléfono (no sube a la cuenta).
   después); antes de dormir (15, 30 o 60 minutos); o después de comer (desayuno,
   almuerzo, merienda o cena, en el momento o un rato después).
 - **Qué días:** los del hábito, o algunos de ellos.
-- **Qué dice:** tu mensaje (hasta 120 letras) o «{hábito}, cuando puedas».
-- **No suena** si el hábito ya está hecho ese día. Lo de «después de comer»
+- **Qué dice:** tu mensaje (hasta 120 letras) o el nombre del hábito: «Entrenar».
+- **No suena** si el hábito ya está hecho ese día. El de entrenar (el de los
+  primeros hábitos, o uno que se llame así), tampoco si la sesión de tu horario
+  ya empezó a esa hora o si ya entrenaste con Ascent. Lo de «después de comer»
   espera a que anotes esa comida; «en el momento» suena dos minutos después
   (el minuto en que se anotó ya pasó cuando se reprograma). Los que van con la
   hora de despertarse o de dormirse usan las 7:30 y las 23:00 mientras no haya
@@ -69,7 +74,8 @@ permiso se pide al elegirlos, y cada aviso se cambia o se saca en su hábito.
 ## El horario de comidas
 
 Cada comida elegida avisa a su hora (de a un cuarto de hora, entre las 5 y las
-23:45), si todavía no se anotó: «Hora del almuerzo». Si hay un plan para esa
+23:45), si todavía no se anotó y no anotaste una posterior (con la cena anotada,
+la merienda ya fue): «Hora de la merienda». Si hay un plan para esa
 comida, dice qué toca: «Hora del almuerzo: pollo a la plancha, arroz». Arranca
 con el desayuno, el almuerzo y la cena a la hora en que se suelen anotar. Con
 horario, el aviso de «sin anotar» de esa comida cuenta desde esta hora; si con
@@ -87,18 +93,52 @@ corrió al abrir Moss).
 ## Las comidas sin anotar
 
 Las que elijas, un rato después de tu hora de siempre (45 minutos, no después de
-las 23:30), y solo si esa comida no está anotada. Si no abrís Moss en una semana,
-paran solas.
+las 23:30), y solo si esa comida no está anotada: «Falta anotar la cena». Si no
+abres Moss en una semana, paran solas.
 
-## Juntos y con un máximo
+## Si vas muy bajo en algo
 
-- **Juntos:** lo que cae a 20 minutos o menos del primero de un grupo suena con
-  él, a su hora: nada llega tarde y entre dos sonidos hay más de 20 minutos.
+Un aviso aparte, corto y concreto: qué te falta y una idea de qué comer. «Te
+faltan 40 g de proteína: un yogur griego y dos huevos lo resuelven.» La regla está
+en `src/dominio/loQueFalta.ts`.
+
+- **Cuándo:** como mucho dos por día, y nunca dos veces de lo mismo. A la tarde
+  (dos horas antes de tu cena de siempre, no antes de las 16:30), si la proteína
+  va a quedar corta aun con las comidas que quedan, o si el agua va muy baja. A la
+  noche (después de anotar la cena, al menos media hora antes de ir a la cama), si
+  faltan 25 g de proteína o más, o 400 kcal o más (y al menos el 20 % de tu meta).
+- **Sin molestar:** solo si ese día anotaste algo; con lo planificado ya contado,
+  así que si la cena planeada lo resuelve no suena; y si ayer quedaste igual de
+  bajo en lo mismo, día por medio. Con «sin déficit» no aparece nunca. No propone
+  comer si ya no queda lugar en tus calorías.
+- **Las ideas:** primero lo que comes (lo de tus últimos registros que tenga
+  proteína de verdad, o calorías sin ser dulce ni alcohol); si no alcanza, una
+  lista corta que respeta tu dieta y tus alergias. Rotan cada día. Si no llegan a
+  cubrirlo, dice «te acercan» y no «lo resuelven».
+- **El agua:** solo si la sueles anotar. No propone comida: un vaso ahora.
+- **Con «Mostrar números» apagado**, sin números: «Vas bajo de proteína hoy: …».
+- **Se apaga** en Perfil › Avisos («Si voy muy bajo en algo»). Sin elegir, anda si
+  hay algún otro aviso prendido, y no cuenta para el máximo.
+- **Al tocarlo:** la hoja para anotar; el del agua, Inicio.
+
+## De a uno y con un máximo
+
+- **De a uno:** nada se junta. Entre dos avisos hay al menos 20 minutos: si dos
+  caen más cerca, el que importa menos suena un rato antes, si entra, o espera
+  (como mucho 45 minutos; más tarde ya no viene al caso, y no suena). Lo que estaba
+  en una misma línea, como «Hora de la merienda · Entrenar», ya no puede pasar.
+- **Lo que ya pasó no suena:** lo hecho y lo anotado salen de la lista cada vez
+  que cambia algo. Lo hecho antes de su hora tampoco atrasa a los demás.
+- **Al salir de Moss:** si marcas algo y sales enseguida, se reprograma en ese
+  momento. Antes esperaba un segundo y medio: con Moss de fondo ese reloj se paraba
+  y sonaba igual lo que ya habías hecho. Esa era la causa más probable del aviso
+  de entrenar después de haber entrenado.
 - **El máximo** cuenta las veces que suena (2, 3, 4, 6 u 8 por día; 6 de
   fábrica, para que el horario de comidas no deje sin lugar a los hábitos). Si
   sobran, quedan primero el de dormir, después los de hábitos, el horario y
   pesarse, y al final los de comidas sin anotar, que casi siempre ya se anotaron.
-- **El plan de cada día** sale de lo elegido y de las horas de siempre, no de lo
+  Lo de «muy bajo en algo» va aparte, con su propio tope.
+- **Cuáles entran** sale de lo elegido y de las horas de siempre, no de lo
   ya hecho: al reprogramar (cada vez que se abre Moss o cambia algo) lo que ya
   sonó no vuelve a sonar y el máximo no se pasa.
 - **Una programación a la vez:** si llega otra mientras una programa, la primera
@@ -111,7 +151,8 @@ paran solas.
 ## Al tocarlo
 
 Tocar un aviso abre lo suyo: el horario y las comidas, la hoja para anotar esa
-comida; pesarse, el peso del «+»; dormir, Sueño; un hábito, el cielo de Hábitos.
+comida; pesarse, el peso del «+»; dormir, Sueño; un hábito, el cielo de Hábitos;
+lo que falta, la hoja para anotar; el fin de la prueba, Perfil, donde está tu suscripción y cómo cancelarla.
 
 ## Fuentes de los textos
 

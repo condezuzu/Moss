@@ -8,16 +8,18 @@ import { useEffect, useEffectEvent } from 'react';
 import { Platform } from 'react-native';
 
 import type { Estado } from '@/almacen/almacen';
-import { avisosDeLaSemana, cuandoSuena, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos } from '@/dominio/avisos';
+import { sesionesDelDia } from '@/dominio/alrededorDelEntreno';
+import { avisosDeLaSemana, cuandoSuena, horasDeSueno, horaDeReloj, textoDelAviso, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos } from '@/dominio/avisos';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, diaLogico, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { horaHabitual } from '@/dominio/recordatorios';
-import { vigentes } from '@/dominio/registros';
+import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
+import { bajoAlFinal, loQueFaltaHoy, type FaltaConHora } from '@/dominio/loQueFalta';
 import { aprenderPersonal, habitualDe } from '@/dominio/sinReloj';
 import { avisoDePrueba } from '@/dominio/premium';
 import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
 import { hayPremium, suscripcionActual } from '@/lib/premium';
-import { duracion } from '@/secciones/comida/datos';
+import { duracion, metaDelDia } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
 import { t } from '@/textos';
 
@@ -44,13 +46,9 @@ export async function pedirPermisoDeAvisos(): Promise<boolean> {
 /** Cuándo se anotó, en la cuenta de su día (D32): la cena de las 0:30 es la 1470, no la 30. */
 const minutosDe = (r: { momento: string; dia: ClaveDia }) => minutosEnElDia(new Date(r.momento), r.dia);
 
-/** «23:20» de unos minutos en la cuenta de un día (lo de la noche pasa de 1440). */
-export const horaDeReloj = (minutos: number) => {
-  const m = ((Math.round(minutos) % 1440) + 1440) % 1440;
-  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-};
+export { horaDeReloj };
 
-type Para = Pick<Estado, 'hoy' | 'corte' | 'latencia' | 'registros' | 'recordatorios' | 'avisos' | 'habitos' | 'marcas' | 'perfil' | 'salud' | 'noches' | 'metas' | 'pesos'>;
+type Para = Pick<Estado, 'hoy' | 'corte' | 'latencia' | 'registros' | 'recordatorios' | 'avisos' | 'habitos' | 'marcas' | 'perfil' | 'salud' | 'noches' | 'metas' | 'pesos' | 'entreno' | 'agua' | 'numeros'>;
 
 /** Lo del sueño que usan los avisos: sin noches de verdad (las de ejemplo no valen), nada. */
 export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'latencia'>): SuenoDeAvisos | null {
@@ -78,40 +76,50 @@ function planDe(e: Pick<Estado, 'registros'>, dia: ClaveDia, comida: Comida): st
   return nombres.length > 3 ? `${nombres.slice(0, 3).join(', ')}…` : nombres.join(', ');
 }
 
-/** «En una hora» o «en 45 minutos»: lo que falta para ir a la cama. */
-function tiempoHastaLaCama(minutos: number): string {
-  if (minutos === 60) return t('recordatorios.dormirEn.60');
-  if (minutos === 30) return t('recordatorios.dormirEn.30');
-  return minutos === 15 ? t('recordatorios.dormirEn.15') : t('recordatorios.dormirEn.45');
-}
-
-/** El aviso de dormir: cada noche otro texto (textoDeDormir), con las horas de esa noche. */
-function textoDeLaCama(a: Aviso): string {
-  const cama = a.dormirA ?? a.minutos;
-  return t(`recordatorios.dormirTextos.${a.texto ?? 'aLaHora'}`, {
-    hora: horaDeReloj(cama),
-    tiempo: tiempoHastaLaCama(cama - a.minutos),
-    despertar: horaDeReloj(a.despertarA ?? 0),
-    horas: duracion(a.duerme ?? 0),
-    deuda: duracion(a.deuda ?? 0),
+/** Lo que dice un aviso, con las palabras del idioma de la app. */
+const textoDe = (n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): string =>
+  textoDelAviso(n, {
+    // Las claves las arma avisos.ts, y avisos.test.ts comprueba que existan todas.
+    t: t as (clave: string, valores?: Record<string, string | number>) => string,
+    habito: (id) => e.habitos.find((h) => h.id === id)?.nombre ?? '',
+    plan: (dia, comida) => planDe(e, dia, comida),
+    duracion,
   });
-}
 
-/** Lo que dice cada aviso, sin culpa; los que suenan juntos, en una línea. */
-function textoDe(n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): string {
-  const uno = (a: Aviso) => {
-    if (a.tipo === 'dormir') return textoDeLaCama(a);
-    if (a.tipo === 'horario' && a.comida) {
-      const hora = t(`recordatorios.horario.${a.comida}`);
-      const plan = planDe(e, n.dia, a.comida);
-      return plan ? t('recordatorios.conPlan', { hora, plan }) : `${hora}.`;
-    }
-    if (a.tipo === 'pesarse') return t(a.control ? 'recordatorios.pesarseControl' : 'recordatorios.pesarse');
-    if (a.tipo === 'comida' && a.comida) return t('recordatorios.cuerpo', { comida: t(`comida.comidas.${a.comida}`).toLowerCase() });
-    const habito = e.habitos.find((h) => h.id === a.habito)?.nombre ?? '';
-    return a.mensaje || t('recordatorios.habito', { habito });
-  };
-  return n.avisos.map(uno).join(' · ');
+/** Si hay que avisar de lo que falta: lo que se eligió o, sin elegir, si hay otro aviso prendido (y por lo tanto permiso). */
+export const conLoQueFalta = (ajustes: Avisos, alguno: boolean) => ajustes.falta?.encendido ?? alguno;
+
+/** Lo que Moss avisaría hoy de lo que falta, con lo anotado hasta ahora. Lo planificado cuenta: si la cena lo resuelve, nada. */
+export function faltasDeHoy(e: Para, hoy: ClaveDia, ahora: number, horaDeComida: (c: Comida) => number): FaltaConHora[] {
+  const meta = metaDelDia(e, hoy);
+  if (!meta) return [];
+  const registros = vigentes(e.registros.values()).filter((r) => r.dia === hoy);
+  const anotados = registros.filter((r) => !r.planificado);
+  const anotadas: Partial<Record<Comida, number>> = {};
+  for (const r of anotados) anotadas[r.comida] = Math.min(anotadas[r.comida] ?? Infinity, minutosDe(r));
+  const horaDeCena = horaDeComida('cena');
+  // A la tarde (lo mismo que loQueFaltaHoy): para saber qué dijo, si esa hora ya pasó.
+  const antesDeCenar = Math.max(16 * 60 + 30, horaDeCena - 120);
+  const dias21 = sumarDias(hoy, -21);
+  const meriendas = new Set(vigentes(e.registros.values()).filter((r) => r.comida === 'merienda' && !r.planificado && r.dia >= dias21 && r.dia < hoy).map((r) => r.dia));
+  const sueno = suenoParaAvisos(e);
+  const ayer = sumarDias(hoy, -1);
+  const metaDeAyer = metaDelDia(e, ayer);
+  // El agua, solo para quien la suele anotar: al menos tres días de los últimos siete, u hoy.
+  const conAgua = new Set(vigentes(e.agua.values()).filter((x) => x.dia >= sumarDias(hoy, -7)).map((x) => x.dia));
+  const tomasHoy = vigentes(e.agua.values()).filter((x) => x.dia === hoy);
+  return loQueFaltaHoy({
+    dia: hoy, ahora, meta, comido: totalDelDia(registros, hoy, true), comidoALaTarde: totalDelDia(registros.filter((r) => r.planificado || minutosDe(r) <= antesDeCenar), hoy, true), anotadas,
+    planeadas: new Set(registros.filter((r) => r.planificado).map((r) => r.comida)),
+    horaDeCena, acostarse: sueno ? horasDeSueno(hoy, sueno).acostarse : null,
+    comidasHabituales: meriendas.size >= 7 ? 4 : 3,
+    agua: conAgua.size >= 3 || conAgua.has(hoy)
+      ? { ml: aguaDelDia(tomasHoy, hoy), mlALaTarde: aguaDelDia(tomasHoy.filter((x) => minutosDe(x) <= antesDeCenar), hoy) }
+      : null,
+    bajoAyer: metaDeAyer ? bajoAlFinal(metaDeAyer, totalDelDia(e.registros.values(), ayer, false)) : [],
+    propios: recientes(e.registros.values(), 30).filter((i) => i.fuente !== 'rapida').map((i) => ({ nombre: i.nombre, proteina: i.valores.proteina, kcal: i.valores.kcal, azucares: i.valores.azucares, alcohol: i.valores.alcohol })),
+    dieta: e.perfil?.comer?.dieta, alergias: e.perfil?.comer?.alergias, sinDeficit: !!e.perfil?.sinDeficit, sinNumeros: !e.numeros,
+  });
 }
 
 /**
@@ -141,11 +149,13 @@ export function programarAvisos(e: Para): Promise<void> {
 async function programar(e: Para, vieja: () => boolean): Promise<void> {
   if (!hayAvisos || vieja()) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
-  // La hora de dormir es de Premium: sin él queda elegida, pero no suena.
-  const ajustes: Avisos = { ...e.avisos, comidas: e.recordatorios ?? [], ...(hayPremium() ? {} : { dormir: undefined }) };
+  // Sin acceso (venció o canceló) no suena nada: lo elegido queda, y vuelve al suscribirse.
+  if (!hayPremium()) return;
+  const ajustes: Avisos = { ...e.avisos, comidas: e.recordatorios ?? [] };
   const finDePrueba = avisoDePrueba(suscripcionActual(), Date.now());
-  const alguno = !!ajustes.dormir?.encendido || !!ajustes.comidas?.length || !!ajustes.habitos?.length || !!Object.keys(ajustes.horario ?? {}).length || !!ajustes.pesarse?.encendido || finDePrueba !== null;
-  if (!alguno || !(await Notifications.getPermissionsAsync()).granted) return;
+  const elegido = !!ajustes.dormir?.encendido || !!ajustes.comidas?.length || !!ajustes.habitos?.length || !!Object.keys(ajustes.horario ?? {}).length || !!ajustes.pesarse?.encendido;
+  const conFalta = conLoQueFalta(ajustes, elegido);
+  if ((!elegido && !conFalta && finDePrueba === null) || !(await Notifications.getPermissionsAsync()).granted) return;
   await prepararCategorias();
   const horaDeComida = horasDeComida(e);
   const ahora = new Date();
@@ -156,8 +166,11 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).sort((a, b) => (a.momento < b.momento ? -1 : 1));
   const eventosHoy: Partial<Record<Evento, number>> = {};
   for (const r of deHoy) if (r.comida !== 'snack' && eventosHoy[r.comida] === undefined) eventosHoy[r.comida] = minutosDe(r);
+  const minutos = minutosEnElDia(ahora, hoy);
   const lista = avisosDeLaSemana({
-    hoy, ahora: minutosEnElDia(ahora, hoy), ajustes, habitos: e.habitos, sueno: suenoParaAvisos(e), horaDeComida,
+    hoy, ahora: minutos, ajustes, habitos: e.habitos, sueno: suenoParaAvisos(e), horaDeComida,
+    sesionesDe: (dia) => sesionesDelDia(e.entreno, dia),
+    faltasHoy: conFalta ? faltasDeHoy(e, hoy, minutos, horaDeComida) : [],
     marcas: e.marcas, anotadasHoy: new Set(deHoy.map((r) => r.comida)), eventosHoy,
     // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).
     diaDelControl: e.perfil?.diaDelControl ?? (e.metas[0] ? diaDeLaSemana(e.metas[0].desde) : undefined),
@@ -170,14 +183,14 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     const fecha = new Date(a, m - 1, d, c.hora, c.minuto);
     // iOS rechaza una fecha que ya pasó, y cortaría los que siguen.
     if (fecha.getTime() <= Date.now()) continue;
-    const primero = n.avisos[0];
+    const { aviso } = n;
     try {
       await Notifications.scheduleNotificationAsync({
         // Lo que lleva el aviso para abrir lo suyo al tocarlo (useAlTocarUnAviso).
         // La comida va con su día: tocado pasada la medianoche o a la mañana, se anota en el día del aviso.
         content: {
-          title: 'Moss', body: textoDe(n, e), data: { tipo: primero.tipo, ...(primero.comida ? { comida: primero.comida, dia: n.dia } : {}) },
-          ...(n.avisos.some((a) => a.tipo === 'dormir') ? { categoryIdentifier: CATEGORIA_DORMIR } : {}),
+          title: 'Moss', body: textoDe(n, e), data: { tipo: aviso.tipo, ...(aviso.comida ? { comida: aviso.comida, dia: n.dia } : {}), ...(aviso.falta ? { que: aviso.falta.que } : {}) },
+          ...(aviso.tipo === 'dormir' ? { categoryIdentifier: CATEGORIA_DORMIR } : {}),
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fecha },
       });
@@ -185,10 +198,10 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
       // Uno que no se pudo programar no deja sin los demás.
     }
   }
-  // Dos días antes de que termine la prueba, como dice la pantalla de Premium.
+  // Dos días antes de que termine la prueba, como dice la pantalla de pago.
   if (finDePrueba !== null && !vieja()) {
     await Notifications.scheduleNotificationAsync({
-      content: { title: 'Moss', body: t('recordatorios.pruebaTermina') },
+      content: { title: 'Moss', body: t('recordatorios.pruebaTermina'), data: { tipo: 'prueba' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(finDePrueba) },
     }).catch(() => {});
   }
@@ -198,7 +211,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
  * Lo que se abre al tocar un aviso; con una comida, el día del aviso. Con `meVoyADormir`, se tocó ese
  * botón del aviso de dormir: `id` y `en` son los de esa vez, para guardarla como ancla.
  */
-export type AlTocarUnAviso = { tipo: Aviso['tipo']; comida?: Comida; dia?: ClaveDia; meVoyADormir?: { id: string; en: number } };
+export type AlTocarUnAviso = { tipo: Aviso['tipo'] | 'prueba'; comida?: Comida; dia?: ClaveDia; que?: string; meVoyADormir?: { id: string; en: number } };
 
 /**
  * Tocar un aviso abre lo suyo (la comida para anotarla, Hábitos, el peso o el sueño), también si
@@ -212,7 +225,7 @@ export function useAlTocarUnAviso(abrir: (a: AlTocarUnAviso) => void) {
     const dia = typeof datos.dia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(datos.dia) ? datos.dia : undefined;
     // La hora del toque es la de irte a la cama: la del aviso puede ser de hace un rato.
     const meVoyADormir = respuesta?.actionIdentifier === ME_VOY_A_DORMIR ? { id: `${respuesta.notification.request.identifier}:${ME_VOY_A_DORMIR}`, en: Date.now() } : undefined;
-    abrir({ tipo: datos.tipo, ...(datos.comida ? { comida: datos.comida } : {}), ...(dia ? { dia } : {}), ...(meVoyADormir ? { meVoyADormir } : {}) });
+    abrir({ tipo: datos.tipo, ...(datos.comida ? { comida: datos.comida } : {}), ...(dia ? { dia } : {}), ...(typeof datos.que === 'string' ? { que: datos.que } : {}), ...(meVoyADormir ? { meVoyADormir } : {}) });
   });
   useEffect(() => {
     if (!hayAvisos) return;

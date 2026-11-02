@@ -1,10 +1,13 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  ADELANTO_MAXIMO, ANTES_DE_DORMIR, avisoDeFabrica, DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO, avisosDeLaSemana, avisosDelDia, cuandoSuena, horaDeDormir, horasDeSueno, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
-  PAGO_MAXIMO, PESARSE_DESPUES, textoDeDormir, TEXTOS_DE_DORMIR, VENTANA,
-  type Avisos, type DelDia, type Notificacion, type Sueno,
+  ADELANTO_MAXIMO, ANTES_DE_DORMIR, ATRASO_MAXIMO, avisoDeFabrica, DESPERTAR_SIN_SUENO, DORMIR_SIN_SUENO, avisosDeLaSemana, avisosDelDia, cuandoSuena, horaDeDormir, horasDeSueno, SEPARACION, textoDelAviso, MAXIMO_POR_DIA, MENSAJE_MAXIMO,
+  PAGO_MAXIMO, PESARSE_DESPUES, textoDeDormir, TEXTOS_DE_DORMIR,
+  type Aviso, type Avisos, type DelDia, type Notificacion, type ParaElTexto, type Sueno,
 } from './avisos';
+import es from '../textos/es.json';
+import en from '../textos/en.json';
+import { IDEAS_DE_LA_LISTA, type Falta } from './loQueFalta';
 import type { Comida } from './comidas';
 import { claveDeMarca } from './dias';
 import { diaDeLaSemana, sumarDias, type DiaSemana } from './fechas';
@@ -33,8 +36,8 @@ const SUENO: Sueno = { habitual: () => ({ dormirse: n('23:30'), despertar: n('7:
 const HORA_DE_COMIDA: Record<Comida, number> = { desayuno: h('8:00'), almuerzo: h('13:00'), merienda: h('17:30'), cena: h('21:00'), snack: h('16:00') };
 const delDia = (ajustes: Avisos, extra: Partial<DelDia> = {}) =>
   avisosDelDia({ dia: VIERNES, ajustes, habitos: HABITOS, sueno: SUENO, horaDeComida: (c) => HORA_DE_COMIDA[c], ...extra });
-/** A qué hora suena cada cosa y qué junta. */
-const resumen = (lista: Notificacion[]) => lista.map((x) => [x.minutos, x.avisos.map((a) => a.id)]);
+/** A qué hora suena cada cosa. */
+const resumen = (lista: Notificacion[]) => lista.map((x): [number, string[]] => [x.minutos, [x.aviso.id]]);
 const hecho = (habito: string, dia = VIERNES) => new Map([[claveDeMarca(habito, dia), { hecho: true }]]);
 const aLas = (habito: string, hora: string) => ({ habito, cuando: { tipo: 'hora' as const, minutos: h(hora) }, dias: [] });
 
@@ -119,17 +122,17 @@ describe('lo que dice el aviso de dormir', () => {
 
   it('el aviso lleva el texto de esa noche, y la deuda solo si la nombra', () => {
     const dia = noches(8).find((d) => textoDeDormir(d, 90) === 'deuda')!;
-    const conDeuda = delDia({ dormir: { encendido: true } }, { dia, sueno: { ...SUENO, deuda: 90 } })[0].avisos[0];
+    const conDeuda = delDia({ dormir: { encendido: true } }, { dia, sueno: { ...SUENO, deuda: 90 } })[0].aviso;
     expect(conDeuda).toMatchObject({ texto: 'deuda', deuda: 90 });
     const otro = noches(8).find((d) => textoDeDormir(d, 90) !== 'deuda')!;
-    expect(delDia({ dormir: { encendido: true } }, { dia: otro, sueno: { ...SUENO, deuda: 90 } })[0].avisos[0].deuda).toBeUndefined();
+    expect(delDia({ dormir: { encendido: true } }, { dia: otro, sueno: { ...SUENO, deuda: 90 } })[0].aviso.deuda).toBeUndefined();
   });
 });
 
 describe('el aviso de dormir con lo que tardás en dormirte', () => {
   it('suena un rato antes de la hora de ir a la cama, y dice esa hora', () => {
     expect(delDia({ dormir: { encendido: true } }, { sueno: { ...SUENO, latencia: 30 } })).toMatchObject([
-      { dia: VIERNES, minutos: h('22:30'), avisos: [{ id: 'dormir', tipo: 'dormir', minutos: h('22:30'), dormirA: h('23:00') }] },
+      { dia: VIERNES, minutos: h('22:30'), aviso: { id: 'dormir', tipo: 'dormir', minutos: h('22:30'), dormirA: h('23:00') } },
     ]);
   });
 });
@@ -138,7 +141,7 @@ describe('los avisos de un día', () => {
   it('el de dormir avisa media hora antes de la hora de dormirse; apagado o sin datos del sueño, nada', () => {
     expect(ANTES_DE_DORMIR).toBe(30);
     expect(delDia({ dormir: { encendido: true } })).toMatchObject([
-      { dia: VIERNES, minutos: h('23:00'), avisos: [{ id: 'dormir', tipo: 'dormir', minutos: h('23:00'), dormirA: h('23:30'), despertarA: 24 * 60 + h('7:30'), duerme: 8 * 60 }] },
+      { dia: VIERNES, minutos: h('23:00'), aviso: { id: 'dormir', tipo: 'dormir', minutos: h('23:00'), dormirA: h('23:30'), despertarA: 24 * 60 + h('7:30'), duerme: 8 * 60 } },
     ]);
     expect(resumen(delDia({ dormir: { encendido: true, antes: 45 } }))).toEqual([[h('22:45'), ['dormir']]]);
     expect(delDia({ dormir: { encendido: false } })).toEqual([]);
@@ -171,7 +174,7 @@ describe('los avisos de un día', () => {
         { ...aLas('agua', '12:00'), mensaje: '   ' },
       ],
     });
-    expect(lista.map((x) => x.avisos[0])).toEqual([
+    expect(lista.map((x) => x.aviso)).toEqual([
       { id: 'habito:leer:0', tipo: 'habito', habito: 'leer', minutos: h('9:00'), mensaje: 'Un capítulo' },
       { id: 'habito:agua:0', tipo: 'habito', habito: 'agua', minutos: h('12:00') },
       { id: 'habito:leer:1', tipo: 'habito', habito: 'leer', minutos: h('21:00'), mensaje: 'a'.repeat(MENSAJE_MAXIMO - 1) + clave },
@@ -208,42 +211,50 @@ describe('los avisos de un día', () => {
     expect(resumen(delDia({ comidas: ['cena'] }, { horaDeComida: () => h('23:10') }))).toEqual([[h('23:30'), ['comida:cena']]]);
   });
 
-  it('lo que cae a 20 minutos del primero suena junto, a la hora del primero; entre dos sonidos, más de 20 minutos', () => {
+  it('nada se junta: cada aviso dice una sola cosa, y entre dos hay al menos 20 minutos', () => {
     const lista = delDia({ habitos: [aLas('agua', '10:00'), aLas('leer', '10:20'), aLas('estirar', '10:21'), aLas('pesas', '10:45')] });
     expect(resumen(lista)).toEqual([
-      [h('10:00'), ['habito:agua:0', 'habito:leer:0']],
-      [h('10:21'), ['habito:estirar:0']],
-      [h('10:45'), ['habito:pesas:0']],
+      [h('10:00'), ['habito:agua:0']],
+      [h('10:20'), ['habito:leer:0']],
+      [h('10:40'), ['habito:estirar:0']],
+      [h('11:00'), ['habito:pesas:0']],
     ]);
-    expect(lista.every((x, i) => i === 0 || x.minutos - lista[i - 1].minutos > VENTANA)).toBe(true);
+    expect(lista.every((x, i) => i === 0 || x.minutos - lista[i - 1].minutos >= SEPARACION)).toBe(true);
   });
 
-  it('el de dormir junta lo de antes de dormirse que cae cerca, y suena con lo primero', () => {
+  it('el de dormir no se mueve: lo de antes de dormirse que cae cerca suena un rato antes', () => {
     const lista = delDia({ dormir: { encendido: true }, habitos: [{ habito: 'leer', cuando: { tipo: 'dormir', antes: 45 }, dias: [] }] });
-    expect(resumen(lista)).toEqual([[h('22:45'), ['habito:leer:0', 'dormir']]]);
+    expect(resumen(lista)).toEqual([[h('22:40'), ['habito:leer:0']], [h('23:00'), ['dormir']]]);
   });
 
-  it('el máximo: primero el de dormir, después los hábitos y al final las comidas; entre iguales, el que junta más y el más temprano', () => {
+  it('lo que tendría que esperar demasiado ya no viene al caso, y no suena', () => {
+    const lista = delDia({ habitos: [aLas('agua', '10:00'), aLas('leer', '10:00'), aLas('estirar', '10:00'), aLas('pesas', '10:00')] });
+    expect(lista.map((x) => x.minutos)).toEqual([h('10:00'), h('10:20'), h('10:40')]);
+    expect(ATRASO_MAXIMO).toBe(45);
+  });
+
+  it('el máximo: primero el de dormir, después los hábitos y al final las comidas; entre iguales, el más temprano', () => {
     const ajustes: Avisos = {
       dormir: { encendido: true },
       habitos: [aLas('agua', '9:00'), aLas('estirar', '14:00'), aLas('leer', '18:00')],
       comidas: ['almuerzo', 'cena'],
     };
-    // Cinco grupos: el almuerzo (13:45) junta el estirar de las 14.
+    // El almuerzo (13:45) está pegado a estirar (14:00), que importa más: suena un rato antes.
     expect(resumen(delDia({ ...ajustes, maximoPorDia: 10 }))).toEqual([
       [h('9:00'), ['habito:agua:0']],
-      [h('13:45'), ['comida:almuerzo', 'habito:estirar:0']],
+      [h('13:40'), ['comida:almuerzo']],
+      [h('14:00'), ['habito:estirar:0']],
       [h('18:00'), ['habito:leer:0']],
       [h('21:45'), ['comida:cena']],
       [h('23:00'), ['dormir']],
     ]);
-    // De fábrica entran los cinco; con cuatro, sale la cena (una comida sin anotar, la última).
+    // De fábrica entran los seis; con cinco, sale la cena (una comida sin anotar, la última).
     expect(MAXIMO_POR_DIA).toBe(6);
-    expect(resumen(delDia(ajustes))).toHaveLength(5);
-    expect(resumen(delDia({ ...ajustes, maximoPorDia: 4 })).map(([minutos]) => minutos)).toEqual([h('9:00'), h('13:45'), h('18:00'), h('23:00')]);
-    expect(resumen(delDia({ ...ajustes, maximoPorDia: 3 })).map(([minutos]) => minutos)).toEqual([h('9:00'), h('13:45'), h('23:00')]);
-    // Con dos, el grupo de dos le gana al agua, aunque sea más temprana.
-    expect(resumen(delDia({ ...ajustes, maximoPorDia: 2 })).map(([minutos]) => minutos)).toEqual([h('13:45'), h('23:00')]);
+    expect(resumen(delDia(ajustes))).toHaveLength(6);
+    expect(resumen(delDia({ ...ajustes, maximoPorDia: 5 })).map(([, ids]) => ids[0])).not.toContain('comida:cena');
+    expect(resumen(delDia({ ...ajustes, maximoPorDia: 4 })).map(([minutos]) => minutos)).toEqual([h('9:00'), h('14:00'), h('18:00'), h('23:00')]);
+    expect(resumen(delDia({ ...ajustes, maximoPorDia: 3 })).map(([minutos]) => minutos)).toEqual([h('9:00'), h('14:00'), h('23:00')]);
+    expect(resumen(delDia({ ...ajustes, maximoPorDia: 2 })).map(([minutos]) => minutos)).toEqual([h('9:00'), h('23:00')]);
     expect(resumen(delDia({ ...ajustes, maximoPorDia: 1 }))).toEqual([[h('23:00'), ['dormir']]]);
     expect(delDia({ ...ajustes, maximoPorDia: 0 })).toEqual([]);
   });
@@ -260,21 +271,21 @@ describe('los avisos de un día', () => {
     expect(resumen(delDia(ajustes, { eventos: { cena: h('21:00') } }))).toEqual([[h('21:30'), ['habito:agua:0']], [h('23:00'), ['dormir']]]);
   });
 
-  it('lo de después de un evento va con el aviso de los 20 minutos siguientes; con uno de antes no, que pudo sonar antes de saberse', () => {
+  it('lo de después de un evento busca su hueco: solo puede esperar, porque recién se supo', () => {
     const ajustes: Avisos = { dormir: { encendido: true }, habitos: [{ habito: 'agua', cuando: { tipo: 'evento', evento: 'cena', despues: 30 }, dias: [] }] };
-    // Cenó a las 22:20: el agua (22:50) va con el de dormir de las 23:00.
-    expect(resumen(delDia(ajustes, { eventos: { cena: h('22:20') } }))).toEqual([[h('23:00'), ['habito:agua:0', 'dormir']]]);
-    expect(resumen(delDia(ajustes, { eventos: { cena: h('22:35') } }))).toEqual([[h('23:00'), ['dormir']], [h('23:05'), ['habito:agua:0']]]);
+    // Cenó a las 22:20: el agua (22:50) espera a que pase el de dormir de las 23:00.
+    expect(resumen(delDia(ajustes, { eventos: { cena: h('22:20') } }))).toEqual([[h('23:00'), ['dormir']], [h('23:20'), ['habito:agua:0']]]);
+    expect(resumen(delDia(ajustes, { eventos: { cena: h('21:00') } }))).toEqual([[h('21:30'), ['habito:agua:0']], [h('23:00'), ['dormir']]]);
   });
 
-  it('hoy, lo que ya sonó no vuelve a sonar, aunque después se haga lo primero del grupo', () => {
+  it('hoy, lo que ya sonó no vuelve a sonar, y lo hecho antes de su hora no atrasa a nadie', () => {
     const ajustes: Avisos = { habitos: [aLas('leer', '13:30')], comidas: ['almuerzo'] };
-    expect(resumen(delDia(ajustes, { ahora: h('13:00') }))).toEqual([[h('13:30'), ['habito:leer:0', 'comida:almuerzo']]]);
-    // Leyó antes de que sonara: el grupo suena igual a su hora, solo con el almuerzo.
-    expect(resumen(delDia(ajustes, { ahora: h('13:00'), marcas: hecho('leer') }))).toEqual([[h('13:30'), ['comida:almuerzo']]]);
-    // Sonó a las 13:30 y leyó después: el almuerzo de las 13:45 ya llegó con él.
-    expect(delDia(ajustes, { ahora: h('13:35'), marcas: hecho('leer') })).toEqual([]);
-    expect(delDia(ajustes, { ahora: h('13:35') })).toEqual([]);
+    expect(resumen(delDia(ajustes, { ahora: h('13:00') }))).toEqual([[h('13:30'), ['habito:leer:0']], [h('13:50'), ['comida:almuerzo']]]);
+    // Leyó antes de que sonara: el almuerzo no tiene que esperar.
+    expect(resumen(delDia(ajustes, { ahora: h('13:00'), marcas: hecho('leer') }))).toEqual([[h('13:45'), ['comida:almuerzo']]]);
+    // Sonó a las 13:30 y leyó después: el almuerzo sigue a las 13:50, y no se pierde.
+    expect(resumen(delDia(ajustes, { ahora: h('13:47'), marcas: hecho('leer') }))).toEqual([[h('13:50'), ['comida:almuerzo']]]);
+    expect(delDia(ajustes, { ahora: h('13:55') })).toEqual([]);
   });
 
   it('el máximo se cuenta sobre el plan del día: lo hecho o lo anotado no deja entrar lo que no entraba', () => {
@@ -309,7 +320,7 @@ describe('el horario de comidas y pesarse', () => {
   it('pesarse avisa al rato de despertarse el día del control, o cada día si se eligió', () => {
     const control = diaDeLaSemana(VIERNES);
     expect(resumen(delDia({ pesarse: { encendido: true } }, { diaDelControl: control }))).toEqual([[h('7:30') + PESARSE_DESPUES, ['pesarse']]]);
-    expect(delDia({ pesarse: { encendido: true } }, { diaDelControl: control })[0].avisos[0].control).toBe(true);
+    expect(delDia({ pesarse: { encendido: true } }, { diaDelControl: control })[0].aviso.control).toBe(true);
     expect(delDia({ pesarse: { encendido: true } }, { diaDelControl: ((control + 1) % 7) as DiaSemana })).toEqual([]);
     expect(resumen(delDia({ pesarse: { encendido: true, todos: true } }))).toEqual([[h('7:30') + PESARSE_DESPUES, ['pesarse']]]);
   });
@@ -324,12 +335,12 @@ describe('el horario de comidas y pesarse', () => {
     const horario = { desayuno: h('8:00'), almuerzo: h('13:00'), cena: h('21:00') };
     // Desayunaste a las 9:30: hora y media tarde.
     const hoy = delDia({ horario, comidas: ['cena'] }, { eventos: { desayuno: h('9:30') }, anotadas: new Set<Comida>(['desayuno']) });
-    const cuando = (id: string) => hoy.find((n) => n.avisos.some((a) => a.id === id))?.minutos;
+    const cuando = (id: string) => hoy.find((n) => n.aviso.id === id)?.minutos;
     expect(cuando('horario:almuerzo')).toBe(h('14:30'));
     expect(cuando('horario:cena')).toBe(h('22:30'));
     // Otro día, sin nada anotado, a su hora.
     const otro = delDia({ horario });
-    expect(otro.find((n) => n.avisos.some((a) => a.id === 'horario:almuerzo'))?.minutos).toBe(h('13:00'));
+    expect(otro.find((n) => n.aviso.id === 'horario:almuerzo')?.minutos).toBe(h('13:00'));
   });
 
   it('pesarse va antes del desayuno: si desayunás enseguida, antes; nunca antes de despertarte; anotado el desayuno, no suena', () => {
@@ -362,8 +373,8 @@ describe('los avisos de la semana', () => {
 
   it('de hoy, lo que falta y no se anotó; de los 6 días siguientes, todo', () => {
     const lista = semana({ comidas: ['almuerzo', 'cena'] }, { anotadasHoy: new Set<Comida>(['almuerzo']) });
-    expect(lista.filter((x) => x.dia === VIERNES).map((x) => x.avisos[0].id)).toEqual(['comida:cena']);
-    expect(lista.filter((x) => x.dia === SABADO).map((x) => x.avisos[0].id)).toEqual(['comida:almuerzo', 'comida:cena']);
+    expect(lista.filter((x) => x.dia === VIERNES).map((x) => x.aviso.id)).toEqual(['comida:cena']);
+    expect(lista.filter((x) => x.dia === SABADO).map((x) => x.aviso.id)).toEqual(['comida:almuerzo', 'comida:cena']);
     expect(new Set(lista.map((x) => x.dia)).size).toBe(7);
     expect(lista).toHaveLength(1 + 6 * 2);
   });
@@ -392,15 +403,139 @@ describe('los avisos de la semana', () => {
     expect(lista[0]).toMatchObject({
       dia: VIERNES,
       minutos: 24 * 60 + h('0:15'),
-      avisos: [
-        { id: 'dormir', tipo: 'dormir', minutos: 24 * 60 + h('0:15'), dormirA: 24 * 60 + h('0:45') },
-        { id: 'habito:leer:0', tipo: 'habito', habito: 'leer', minutos: 24 * 60 + h('0:30') },
-      ],
+      aviso: { id: 'dormir', tipo: 'dormir', minutos: 24 * 60 + h('0:15'), dormirA: 24 * 60 + h('0:45') },
     });
+    expect(lista[1]).toMatchObject({ dia: VIERNES, minutos: 24 * 60 + h('0:35'), aviso: { id: 'habito:leer:0', tipo: 'habito', habito: 'leer' } });
     expect(cuandoSuena(lista[0].dia, lista[0].minutos)).toEqual({ dia: SABADO, hora: 0, minuto: 15 });
     // Lo de anoche ya hecho no avisa, y lo que ya sonó no vuelve.
-    expect(semana(ajustes, { hoy: SABADO, ahora: h('0:05'), sueno: tarde, marcas: hecho('leer', VIERNES) })[0].avisos.map((a) => a.id)).toEqual(['dormir']);
-    expect(semana(ajustes, { hoy: SABADO, ahora: h('0:20'), sueno: tarde }).some((x) => x.dia === VIERNES)).toBe(false);
+    expect(semana(ajustes, { hoy: SABADO, ahora: h('0:05'), sueno: tarde, marcas: hecho('leer', VIERNES) }).filter((x) => x.dia === VIERNES).map((x) => x.aviso.id)).toEqual(['dormir']);
+    expect(semana(ajustes, { hoy: SABADO, ahora: h('0:20'), sueno: tarde }).filter((x) => x.dia === VIERNES).map((x) => x.aviso.id)).toEqual(['habito:leer:0']);
+    expect(semana(ajustes, { hoy: SABADO, ahora: h('0:40'), sueno: tarde }).some((x) => x.dia === VIERNES)).toBe(false);
+  });
+});
+
+describe('lo que ya pasó no avisa (lo pediste el 2/11/2026)', () => {
+  const entrenar: Habito = { ...habito('entrenar'), nombre: 'Entrenar', icono: 'dumbbell' };
+  const conEntrenar = [...HABITOS, entrenar];
+  const ajustes: Avisos = { horario: { merienda: h('17:30') }, habitos: [aLas('entrenar', '17:35')] };
+
+  it('«Hora de la merienda · Entrenar» ya no sale: cada cosa por su lado', () => {
+    const lista = delDia(ajustes, { habitos: conEntrenar });
+    expect(resumen(lista)).toEqual([[h('17:30'), ['horario:merienda']], [h('17:50'), ['habito:entrenar:0']]]);
+  });
+
+  it('con el hábito marcado, no avisa de entrenar', () => {
+    expect(resumen(delDia(ajustes, { habitos: conEntrenar, marcas: hecho('entrenar') }))).toEqual([[h('17:30'), ['horario:merienda']]]);
+  });
+
+  it('si la sesión de hoy ya empezó a esa hora, tampoco; si es después, sí', () => {
+    expect(resumen(delDia(ajustes, { habitos: conEntrenar, sesiones: [{ inicio: h('8:00'), minutos: 60 }] }))).toEqual([[h('17:30'), ['horario:merienda']]]);
+    expect(resumen(delDia(ajustes, { habitos: conEntrenar, sesiones: [{ inicio: h('19:00'), minutos: 60 }] }))).toHaveLength(2);
+    // Otro hábito cualquiera sigue a su hora, aunque se haya entrenado.
+    expect(resumen(delDia({ habitos: [aLas('leer', '17:35')] }, { habitos: conEntrenar, sesiones: [{ inicio: h('8:00'), minutos: 60 }] }))).toHaveLength(1);
+  });
+
+  it('entrenar con Ascent también cuenta', () => {
+    expect(resumen(delDia(ajustes, { habitos: conEntrenar, eventos: { entrenamiento: h('10:00') } }))).toEqual([[h('17:30'), ['horario:merienda']]]);
+  });
+
+  it('un hábito que se llama así también es de entrenar, en los dos idiomas', () => {
+    const gym = { ...habito('entrenar'), nombre: 'Gym' };
+    expect(delDia({ habitos: [aLas('entrenar', '18:00')] }, { habitos: [gym], sesiones: [{ inicio: h('8:00'), minutos: 60 }] })).toEqual([]);
+  });
+
+  it('anotada una comida, la de antes ya pasó: con la cena anotada no hay merienda', () => {
+    const horario = { almuerzo: h('13:00'), merienda: h('17:30'), cena: h('21:00') };
+    expect(resumen(delDia({ horario }, { anotadas: new Set<Comida>(['cena']) }))).toEqual([]);
+    expect(resumen(delDia({ horario }, { anotadas: new Set<Comida>(['almuerzo']) })).map(([, ids]) => ids[0])).toEqual(['horario:merienda', 'horario:cena']);
+    // Lo de «sin anotar», igual. El snack no es ni antes ni después.
+    expect(delDia({ comidas: ['almuerzo'] }, { anotadas: new Set<Comida>(['cena']) })).toEqual([]);
+    expect(delDia({ comidas: ['almuerzo'] }, { anotadas: new Set<Comida>(['snack']) })).toHaveLength(1);
+  });
+});
+
+describe('lo que falta, aparte del máximo', () => {
+  const faltas = [{ minutos: h('19:00'), falta: { que: 'proteina' as const, cuanto: 40, ideas: [{ id: 'huevos' }], alcanza: false, forma: 0 } }];
+
+  it('suena aunque el máximo esté lleno, en su hueco y sin correr a nadie', () => {
+    const lista = delDia({ habitos: [aLas('leer', '18:55')], maximoPorDia: 1 }, { faltas });
+    expect(resumen(lista)).toEqual([[h('18:55'), ['habito:leer:0']], [h('19:15'), ['falta:proteina']]]);
+  });
+
+  it('lo que ya pasó no vuelve', () => {
+    expect(delDia({}, { faltas, ahora: h('19:30') })).toEqual([]);
+  });
+
+  it('si tendría que esperar mucho, un rato antes: a la noche, más tarde ya es hora de acostarse', () => {
+    const lista = delDia({ dormir: { encendido: true }, habitos: [aLas('leer', '22:40')] }, { faltas: [{ ...faltas[0], minutos: h('22:40') }] });
+    expect(resumen(lista)).toEqual([[h('22:20'), ['falta:proteina']], [h('22:40'), ['habito:leer:0']], [h('23:00'), ['dormir']]]);
+  });
+});
+
+describe('lo que dice cada aviso', () => {
+  type Rama = { [k: string]: string | Rama };
+  const palabras = (idioma: Rama) => (clave: string, valores: Record<string, string | number> = {}) => {
+    const hoja = clave.split('.').reduce<string | Rama>((o, k) => (o as Rama)[k], idioma);
+    if (typeof hoja !== 'string') throw new Error(`Falta ${clave}`);
+    return hoja.replace(/\{(\w+)\}/g, (_, k) => {
+      if (valores[k] === undefined) throw new Error(`Falta {${k}} en ${clave}`);
+      return String(valores[k]);
+    });
+  };
+  const para = (idioma: Rama): ParaElTexto => ({ t: palabras(idioma), habito: () => 'Entrenar', plan: () => '', duracion: (m) => `${m} min` });
+  const texto = (aviso: Omit<Aviso, 'minutos' | 'id'>, idioma: Rama = es as unknown as Rama, otro: Partial<ParaElTexto> = {}) =>
+    textoDelAviso({ dia: VIERNES, minutos: h('17:30'), aviso: { id: 'x', minutos: h('17:30'), ...aviso } }, { ...para(idioma), ...otro });
+
+  it('una sola cosa, corta y como en tu ejemplo', () => {
+    expect(texto({ tipo: 'horario', comida: 'merienda' })).toBe('Hora de la merienda');
+    expect(texto({ tipo: 'habito', habito: 'entrenar' })).toBe('Entrenar');
+    expect(texto({ tipo: 'habito', habito: 'entrenar', mensaje: 'Las zapatillas' })).toBe('Las zapatillas');
+    expect(texto({ tipo: 'comida', comida: 'cena' })).toBe('Falta anotar la cena');
+    expect(texto({ tipo: 'pesarse' })).toBe('Buen momento para pesarte');
+    expect(texto({ tipo: 'horario', comida: 'cena' }, en as unknown as Rama)).toBe('Time for dinner');
+  });
+
+  it('con un plan, dice qué toca', () => {
+    expect(texto({ tipo: 'horario', comida: 'almuerzo' }, es as unknown as Rama, { plan: () => 'pollo, arroz' })).toBe('Hora del almuerzo: pollo, arroz');
+  });
+
+  it('lo que falta: qué, cuánto y la idea', () => {
+    const falta = (extra: Partial<Falta>): Falta => ({ que: 'proteina', cuanto: 40, ideas: [{ id: 'yogurGriego' }, { id: 'huevos' }], alcanza: true, forma: 0, ...extra });
+    expect(texto({ tipo: 'falta', falta: falta({}) })).toBe('Te faltan 40 g de proteína: un yogur griego y dos huevos lo resuelven.');
+    expect(texto({ tipo: 'falta', falta: falta({ ideas: [{ id: 'atun' }] }) })).toBe('Te faltan 40 g de proteína: una lata de atún lo resuelve.');
+    expect(texto({ tipo: 'falta', falta: falta({ alcanza: false }) })).toBe('Te faltan 40 g de proteína: un yogur griego y dos huevos te acercan.');
+    expect(texto({ tipo: 'falta', falta: falta({ forma: 1 }) })).toBe('40 g de proteína y llegas: un yogur griego y dos huevos.');
+    expect(texto({ tipo: 'falta', falta: falta({ ideas: [{ nombre: 'Yogur griego Conaprole' }, { nombre: 'Higos' }] }) })).toBe('Te faltan 40 g de proteína: yogur griego Conaprole e higos lo resuelven.');
+    expect(texto({ tipo: 'falta', falta: falta({ sinNumeros: true }) })).toBe('Vas bajo de proteína hoy: un yogur griego y dos huevos ayudan.');
+    expect(texto({ tipo: 'falta', falta: falta({ que: 'calorias', cuanto: 500, ideas: [{ id: 'pasta' }] }) })).toBe('Te faltan 500 kcal: un plato de pasta lo resuelve.');
+    expect(texto({ tipo: 'falta', falta: falta({ que: 'agua', cuanto: 5, ideas: [] }) })).toBe('Te faltan 5 vasos de agua: toma uno ahora.');
+    expect(texto({ tipo: 'falta', falta: falta({}) }, en as unknown as Rama)).toBe("You're 40 g short on protein: a Greek yogurt and two eggs will do it.");
+  });
+
+  it('todas las formas y todas las ideas tienen su texto, en los dos idiomas y sin dejar nada sin completar', () => {
+    for (const idioma of [es, en] as unknown as Rama[]) {
+      for (const id of IDEAS_DE_LA_LISTA) expect(palabras(idioma)(`recordatorios.falta.ideas.${id}`).length).toBeGreaterThan(2);
+      for (const que of ['proteina', 'calorias', 'agua'] as const) {
+        for (const alcanza of [true, false]) {
+          for (const sinNumeros of [true, false]) {
+            for (const ideas of [[{ id: 'huevos' }], [{ id: 'huevos' }, { id: 'leche' }]]) {
+              for (let forma = 0; forma < 6; forma++) {
+                const dicho = texto({ tipo: 'falta', falta: { que, cuanto: 40, ideas, alcanza, forma, ...(sinNumeros ? { sinNumeros: true as const } : {}) } }, idioma);
+                expect(dicho).not.toMatch(/[{}]|undefined/);
+                expect(dicho.length).toBeLessThanOrEqual(90);
+              }
+            }
+          }
+        }
+      }
+      for (const c of ['desayuno', 'almuerzo', 'merienda', 'cena', 'snack'] as const) {
+        expect(texto({ tipo: 'horario', comida: c }, idioma).length).toBeGreaterThan(3);
+        expect(texto({ tipo: 'comida', comida: c }, idioma).length).toBeGreaterThan(3);
+      }
+      for (const clave of [...TEXTOS_DE_DORMIR, 'deuda'] as const) {
+        expect(texto({ tipo: 'dormir', texto: clave, dormirA: h('23:30'), despertarA: h('7:30'), duerme: 480, deuda: 90 }, idioma)).not.toMatch(/[{}]|undefined/);
+      }
+    }
   });
 });
 

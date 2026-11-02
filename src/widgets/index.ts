@@ -50,7 +50,7 @@ function losWidgets() {
   if (Platform.OS !== 'ios' || !requireOptionalNativeModule('ExpoWidgets')) return cargados;
   try {
     // Recién acá: importar expo-widgets sin su módulo nativo rompe al arrancar.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    /* eslint-disable @typescript-eslint/no-require-imports */
     cargados = {
       cielo: require('./Cielo.widget').default,
       noche: require('./Noche.widget').default,
@@ -58,6 +58,7 @@ function losWidgets() {
       // Con la build que los declara en app.json. Antes, no tiene sentido escribir sus líneas.
       ...(CON_WIDGETS_NUEVOS ? { hoy: require('./Hoy.widget').default, anotar: require('./Anotar.widget').default, agua: require('./Agua.widget').default } : {}),
     };
+    /* eslint-enable @typescript-eslint/no-require-imports */
   } catch (error) {
     console.warn('Moss no pudo cargar los widgets', error);
   }
