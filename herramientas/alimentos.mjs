@@ -686,7 +686,7 @@ for (const [plato] of pesosFinales) {
   const suyos = ingredientes.filter(([p]) => p === plato).map(([, i]) => alimentos.get(i));
   if (!a.verificado && suyos.every((i) => i.verificado)) Object.assign(a, { verificado: suyos.map((i) => i.verificado).sort().at(-1), segunda: 'ingredientes' });
 }
-for (const a of alimentos.values()) if (a.fuente === 'producto' && !a.verificado && cierraLaEtiqueta(a)) Object.assign(a, { verificado: hoy, segunda: 'etiqueta' });
+for (const a of alimentos.values()) if (a.fuente === 'producto' && !a.verificado && !a.aproximado && cierraLaEtiqueta(a)) Object.assign(a, { verificado: hoy, segunda: 'etiqueta' });
 
 if (errores.length) {
   console.error(errores.join('\n'));

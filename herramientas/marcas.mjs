@@ -178,6 +178,22 @@ const PORCION = { bebidas: 200, alcohol: 330, cereales: 30, dulces: 30, untables
 // Menos que esto por 100 g es que se cargó lo de una porción: una galletita no tiene 140 kcal cada 100 g.
 const MINIMO_DE_KCAL = { snacks: 300, cereales: 250, pastas: 200 };
 const SIEMPRE_CALORICO = /\b(galletitas?|alfajor(es)?|obleas?|chocolate en barra|barra de chocolate|budin)\b/;
+// Lo que puede tener cada cosa por 100 g. Lo de afuera de esto es que se cargó lo de una porción: las kcal
+// igual cierran con los macros, así que solo se ve por el nombre. La primera que coincide manda.
+const KCAL_POSIBLES = [
+  [/\byogur|yogurt\b.*\b(descremad|light|0)/, 25, 85],
+  [/\byogur|yogurt\b/, 30, 175],
+  [/\bdulce de leche\b/, 150, 400],
+  [/\bleche\b(?!.*(condensada|polvo))/, 20, 110],
+  [/\b(barbacoa|bbq|ketchup)\b/, 40, 300],
+  [/\bmayonesa\b/, 100, 800],
+  [/\b(corn ?flakes|cereal(es)?|avena|granola|copos|musli|muesli)\b/, 250, 600],
+  [/\bmermelada\b/, 30, 350],
+  [/\bqueso\b/, 60, 480],
+  [/\bhelado\b/, 90, 450],
+  [/\b(jugo|gaseosa|refresco|cepita|del valle)\b/, 0, 70],
+  [/\b(palitos|papas fritas|papitas|chizitos|nachos)\b/, 300, 650],
+];
 const redondo = (n) => Math.round(n * 10) / 10;
 const texto = (n) => String(redondo(n));
 
@@ -254,7 +270,8 @@ function producto(f) {
   if ((v.azucares ?? 0) > v.carbohidratos + 1 || (v.saturadas ?? 0) > v.grasas + 1 || (v.sodio ?? 0) > 40000) return fuera('lo secundario no cierra');
   const categoria = categoriaDe(tags, es);
   if (/\bcorn ?flakes\b/.test(llano(es)) && v.grasas > 5) return fuera('valores de otro producto');
-  if (v.kcal < (MINIMO_DE_KCAL[categoria] ?? 0) || (SIEMPRE_CALORICO.test(llano(es)) && v.kcal < 250)) return fuera('valores por porción, no por 100 g');
+  const posible = KCAL_POSIBLES.find(([p]) => p.test(llano(es)));
+  if (v.kcal < (MINIMO_DE_KCAL[categoria] ?? 0) || (SIEMPRE_CALORICO.test(llano(es)) && v.kcal < 250) || (posible && (v.kcal < posible[1] || v.kcal > posible[2]))) return fuera('valores por porción, no por 100 g');
   const envase = (f.quantity || '').toLowerCase();
   // El cacao en polvo y el café instantáneo son bebidas, pero se miden en gramos: lo líquido tiene pocas kcal.
   const esPolvo = categoria === 'bebidas' && v.kcal > 120;
