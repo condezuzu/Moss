@@ -7,9 +7,10 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SenalDeAscent } from '@/secciones/ascent/SenalDeAscent';
 import { lista, t } from '@/textos';
 import { colores } from '@/tema';
 import type { Escena } from './escena';
@@ -50,8 +51,10 @@ type Props = {
   acciones: Acciones;
   /** Lo que ocupa la barra de pestañas abajo; sin barra, 0. */
   abajo: number;
-  /** Cuánto subió Ascent: la flecha se apaga mientras sube. */
+  /** Cuánto subió Ascent: la señal se apaga mientras sube. */
   subida?: SharedValue<number>;
+  /** La señal de Ascent: sin la vinculación, no está. */
+  senal?: { alAbrir: () => void; medio: SharedValue<number> };
 };
 
 // Las riquezas del panel de prueba: el primer día, tres meses (la de la galería) y la plena.
@@ -97,17 +100,11 @@ export function Interfaz(p: Props) {
   const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: (1 - escena.value.velado) * conFrase.get() }));
   // El panel de prueba es de Hábitos: no se ve encima de las otras secciones.
   const estiloPanel = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }], opacity: 1 - escena.value.velado }));
-  // La flecha tenue de Ascent va con la frase y respira apenas, con el reloj del cielo: cuando el
-  // cielo queda quieto, ella también (sin una animación propia que corra para siempre).
-  const reducido = useReducedMotion();
-  const estiloFlecha = useAnimatedStyle(() => {
+  // La señal de Ascent va con la frase: se corre con la pestaña y se va con el musgo a tu universo.
+  const estiloSenal = useAnimatedStyle(() => {
     const e = escena.value;
     const subio = subida ? subida.get() : 0;
-    const respira = reducido ? 0 : 0.5 - 0.5 * Math.cos((e.t * 2 * Math.PI) / 3.8);
-    return {
-      opacity: (1 - Math.min(1, subio * 2.5)) * (1 - 0.45 * respira),
-      transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * PARALAJE.lomas[2] * alto - 3 * respira }],
-    };
+    return { opacity: 1 - Math.min(1, subio * 2.5), transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * PARALAJE.lomas[2] * alto }] };
   });
   const estiloUniverso = useAnimatedStyle(() => {
     const e = escena.value;
@@ -192,26 +189,27 @@ export function Interfaz(p: Props) {
         </View>
       </Animated.View>
 
-      <Animated.View style={[estilos.frase, { bottom: p.abajo ? p.abajo + 38 : insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
+      <Animated.View style={[estilos.frase, { bottom: p.abajo ? p.abajo + (p.senal ? 46 : 38) : insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
         <Text style={estilos.fraseTexto}>{`“${nombreEn(p.dia.frase.texto)}”`}</Text>
         <Text style={estilos.fraseAutor}>{nombreEn(p.dia.frase.autor)}</Text>
       </Animated.View>
 
-      {p.subida && (
-        <Animated.View style={[estilos.flecha, { bottom: p.abajo + 2 }, estiloFlecha]} pointerEvents="none" accessibilityElementsHidden>
-          <SymbolView name="chevron.up" size={20} weight="light" tintColor="rgba(239, 230, 207, 0.32)" />
+      {/* No toma toques: los resuelven los gestos del cielo (Cielo.tsx). */}
+      {p.senal && (
+        <Animated.View style={[estilos.senal, { bottom: p.abajo + 8 }, estiloSenal]} pointerEvents="none">
+          <SenalDeAscent escena={escena} alAbrir={p.senal.alAbrir} medio={p.senal.medio} />
         </Animated.View>
       )}
 
       {/* El aviso y el globito son de Hábitos: se van con su página. */}
       <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
       {p.globito && !p.aviso && (
-        <Animated.View entering={FadeInDown.duration(320).delay(500)} exiting={FadeOut.duration(260)} style={[estilos.aviso, estilos.globito, { bottom: p.abajo ? p.abajo + 40 : insets.bottom + 40 }]} pointerEvents="none">
+        <Animated.View entering={FadeInDown.duration(320).delay(500)} exiting={FadeOut.duration(260)} style={[estilos.aviso, estilos.globito, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 40) : insets.bottom + 40 }]} pointerEvents="none">
           <Text style={estilos.avisoTexto} numberOfLines={2}>{t('cielo.globito')}</Text>
         </Animated.View>
       )}
       {p.aviso && (
-        <Animated.View key={p.aviso.clave} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(200)} style={[estilos.aviso, { bottom: p.abajo ? p.abajo + 24 : insets.bottom + 96 }]}>
+        <Animated.View key={p.aviso.clave} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(200)} style={[estilos.aviso, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 24) : insets.bottom + 96 }]}>
           <Text style={estilos.avisoTexto} numberOfLines={2}>{p.aviso.texto}</Text>
           {p.aviso.accion && (
             <Pressable onPress={p.aviso.accion.alTocar} style={estilos.avisoBoton} accessibilityRole="button" hitSlop={8}>
@@ -314,7 +312,7 @@ const estilos = StyleSheet.create({
   universoNombreHoy: { color: colores.pergamino },
 
   frase: { position: 'absolute', left: 26, right: 26, alignItems: 'center' },
-  flecha: { position: 'absolute', alignSelf: 'center', width: 64, height: 44, alignItems: 'center', justifyContent: 'center' },
+  senal: { position: 'absolute', alignSelf: 'center', maxWidth: '92%' },
   fraseTexto: { fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 14.5, lineHeight: 19, textAlign: 'center', color: 'rgba(239, 230, 207, 0.74)' },
   fraseAutor: { marginTop: 5, fontFamily: 'Jost_400Regular', fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(185, 227, 107, 0.6)' },
 

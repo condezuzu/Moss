@@ -13,7 +13,6 @@ import { elAlmacen } from '@/almacen';
 import { deAscent, useAscent } from '@/almacen/ascent';
 import { DIAS_MINIMOS, MAXIMOS_DE_RECUPERACION, SEMANAS_MINIMAS, type Causa } from '@/dominio/entrenamiento';
 import { diaDeLaSemana, type DiaSemana } from '@/dominio/fechas';
-import type { GrupoDeAscent } from '@/dominio/musculos';
 import type { Motivo } from '@/dominio/rendimiento';
 import { lista, t } from '@/textos';
 import { letras } from '@/tema';
@@ -25,15 +24,9 @@ import { Aparece } from '../tarjetas';
 import { Anillo } from './Anillo';
 import { calcularVista, type GrupoDeMusculos, type HoyEnAscent, type VistaDeAscent } from './calculos';
 import { C } from './colores';
+import { nombreDeSesion } from './nombres';
 
 const TODOS: DiaSemana[] = [0, 1, 2, 3, 4, 5, 6];
-
-/** «Piernas», «Pecho y hombros» o, sin ejercicios, «Gimnasio». */
-function nombreDeSesion(grupos: GrupoDeAscent[]): string {
-  const n = grupos.slice(0, 2).map((g) => t(`ascent.hoy.grupos.${g}`));
-  if (!n.length) return t('ascent.gimnasio.nombre');
-  return n.length === 2 ? t('ascent.hoy.y', { a: n[0], b: n[1].toLowerCase() }) : n[0];
-}
 
 export function Vinculada({ preparada }: { preparada: boolean }) {
   const e = useEstado();

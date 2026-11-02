@@ -19,8 +19,10 @@ import { estadoDeMacro } from '@/dominio/metas';
 import { calidadDeNoche, ultimasNoches } from '@/dominio/sueno';
 import { aguaDelDia } from '@/dominio/registros';
 import { sumarDias } from '@/dominio/fechas';
+import { CON_ASCENT } from '@/lib/banderas';
 import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { InvitacionDeAscent } from '../ascent/Invitacion';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
@@ -62,10 +64,10 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
       <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
         <Text style={estilos.fecha}>{fechaCorta(e.hoy)}</Text>
         <Text style={estilos.titulo}>{t('inicio.titulo')}</Text>
-        {orden.filter((b) => visibles.has(b)).map((b) => {
+        {orden.filter((b) => visibles.has(b)).flatMap((b, i, enOrden) => {
           const seccion = SECCION[b];
           // Sumar, sacar u ordenar bloques en Personalizar nunca es de golpe: entran, salen y se acomodan.
-          return (
+          const bloque = (
             <Animated.View key={b} entering={FadeIn.duration(320)} exiting={FadeOut.duration(200)} layout={ACOMODA}>
               {seccion === undefined ? (
                 // El agua no lleva a ninguna sección: es un bloque quieto, con su botón.
@@ -82,6 +84,8 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
               )}
             </Animated.View>
           );
+          // La invitación de Ascent, debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
+          return CON_ASCENT && i === Math.min(1, enOrden.length - 1) ? [bloque, <InvitacionDeAscent key="ascent" />] : [bloque];
         })}
         <View style={estilos.pie}>
           <Pressable onPress={() => setPersonalizando(true)} style={estilos.personalizar} accessibilityRole="button">

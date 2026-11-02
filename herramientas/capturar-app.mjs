@@ -2,7 +2,7 @@
 // - el cielo de Hábitos, calidad baja y dos riquezas;
 // - un toque sobre una estrella, y otra vez el cielo después de recargar (tiene que acordarse);
 // - el día completo y tu universo;
-// - las secciones: Ascent desde el cielo (y no desde la barra), la flecha, las pestañas, Inicio y el «+»;
+// - las secciones: Ascent desde el cielo (y no desde la barra), la señal, las pestañas, Inicio y el «+»;
 // - decir lo que comí, escrito (en la web no hay micrófono), con sus preguntas, y anotarlo;
 // - las primeras pantallas de la entrada, en un navegador sin perfil.
 // Es lo más cerca del iPhone que se puede llegar desde Windows; el rendimiento real se mide en el
@@ -125,7 +125,7 @@ await pagina.waitForTimeout(2500);
 await foto('universo');
 
 // Las secciones (cambios 9 y 10): Ascent sube con el dedo desde el cielo, pero no desde la barra;
-// la flecha de arriba la baja y la tenue de abajo la sube; la tira de pestañas y el «+».
+// la flecha de arriba la baja y la señal de abajo la sube; la tira de pestañas y el «+».
 await abrir();
 const { width: an, height: al } = pagina.viewportSize();
 const arrastrar = async (desde, hasta, nombre) => {
@@ -137,23 +137,30 @@ const arrastrar = async (desde, hasta, nombre) => {
   await pagina.mouse.up();
   await pagina.waitForTimeout(1200);
 };
-// Con la vinculación apagada (src/lib/banderas.ts, D30), el gesto no sube nada y Ascent no se nombra.
+// Con la vinculación apagada (src/lib/banderas.ts, D30), el gesto no sube nada y Ascent no se nombra,
+// ni en lo que se lee ni en lo que dice VoiceOver: en Hábitos, en Perfil ni en Inicio.
 const conAscent = /CON_ASCENT = true/.test(readFileSync('src/lib/banderas.ts', 'utf8'));
+const sinNombrarAscent = async (donde) => {
+  if (conAscent) return;
+  const nombrada = await pagina.getByText(/Ascent/).count() + await pagina.locator('[aria-label*="Ascent"]').count();
+  if (nombrada) errores.push(`Ascent: con la vinculación apagada, ${donde} la nombra ${nombrada} vez o veces`);
+};
+await sinNombrarAscent('Hábitos');
 // En el borde de la barra, donde no hay botón: soltar sobre un botón lo tocaría.
 await arrastrar([3, al - 30], [3, al - 330], 'ascent-desde-la-barra');
 await arrastrar([an / 2, al - 220], [an / 2, al - 520], conAscent ? 'ascent-subiendo' : 'sin-ascent-arrastrando');
 if (!conAscent) {
   if (await pagina.getByLabel('Volver al cielo').count()) errores.push('Ascent: con la vinculación apagada, el gesto subió la sección');
-  const nombrada = await pagina.getByText(/Ascent/).count();
-  if (nombrada) errores.push(`Ascent: con la vinculación apagada, aparece ${nombrada} vez o veces`);
+  await sinNombrarAscent('Hábitos, después del gesto');
 } else if (await pagina.getByLabel('Volver al cielo').count()) {
   await foto('ascent');
   await pagina.getByLabel('Volver al cielo').click();
   await pagina.waitForTimeout(1200);
   await foto('ascent-bajada');
+  // Tocar la señal, abajo, también la sube; no es un botón sobre el lienzo: lo resuelve el gesto del cielo.
   await pagina.mouse.click(an / 2, al - 58 - 24);
   await pagina.waitForTimeout(1200);
-  await foto('ascent-por-la-flecha');
+  await foto('ascent-por-la-senal');
   await pagina.getByLabel('Volver al cielo').click();
   await pagina.waitForTimeout(1200);
 } else {
@@ -161,6 +168,7 @@ if (!conAscent) {
 }
 await arrastrar([an - 40, 420], [an - 200, 420], 'pestanas-deslizando');
 await foto('perfil');
+await sinNombrarAscent('Perfil');
 // Sueño sin reloj: la pregunta de la hora (o las horas, la mañana que pregunta sin proponer), la
 // noche corregida y de dónde sale cada dato.
 await pagina.getByRole('tab', { name: 'Sueño' }).click();
@@ -182,6 +190,7 @@ await foto('sueno-fuentes');
 await pagina.getByRole('tab', { name: 'Inicio' }).click();
 await pagina.waitForTimeout(1500);
 await foto('seccion-inicio');
+await sinNombrarAscent('Inicio');
 // Las tarjetas de Comida, al lado, también tienen su «Agregar», e Inicio su vaso: los de la barra y
 // de la hoja van después en la página.
 await pagina.getByLabel('Agregar', { exact: true }).last().click();

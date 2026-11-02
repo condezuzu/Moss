@@ -135,8 +135,9 @@ guarda sueño y comida, y Apple pide consentimiento para compartir datos de salu
   - `moss.desvincular()`.
   - Vincular no es una función que llame la app: pasa por `moss-vincular`, que
     revisa las dos sesiones (ver «Vincular en menos de 10 segundos»).
-- **El botón «Vincular»** está en la sección de Ascent y en Perfil, y sigue el
-  flujo de D27 (más abajo). El de antes, que pedía entrar a la otra app «con
+- **El botón «Vincular»** está en la sección de Ascent, en Perfil y en la
+  invitación de Inicio (ver «Que se encuentre»), y sigue el flujo de D27 (más
+  abajo). El de antes, que pedía entrar a la otra app «con
   esta misma cuenta», ya no va: con dos cuentas no hace falta que coincidan.
   Para saber si la otra app está instalada, cada app declara el esquema de la
   otra en `LSApplicationQueriesSchemes` y prueba `canOpenURL`.
@@ -421,17 +422,18 @@ Ascent (la recuperación) hacen la misma cuenta.
 
 ### La sección de Ascent en Moss
 
-Está arriba de Hábitos (cambio 10 de la especificación) y es lo único de Moss que
-es de las dos apps. En la galería, sección 7.
+Está abajo de Hábitos y sube desde el musgo (el cambio 10 de la especificación la
+llama «arriba de Hábitos» porque queda encima del cielo, pero se llega desde
+abajo) y es lo único de Moss que es de las dos apps. En la galería, sección 7.
 
 - **Cómo se llega:**
-  - En Hábitos, una flecha muy tenue abajo, sobre el musgo y debajo de la frase,
-    apunta para arriba.
+  - En Hábitos, abajo, sobre el musgo y debajo de la frase, la señal de Ascent,
+    con su flecha para arriba (ver «Que se encuentre»).
   - Deslizar para arriba sube la sección desde el musgo, siguiendo al dedo.
     Cambia con un quinto de la pantalla o con un tirón, como las pestañas.
   - El gesto solo arranca arriba de la barra de pestañas: nunca en el borde de
-    abajo, que es del gesto de inicio del iPhone. Tocar la flecha también abre
-    la sección.
+    abajo, que es del gesto de inicio del iPhone. Tocar la señal también abre
+    la sección, y deslizar desde ella también la sube.
   - Se vuelve deslizando para abajo desde arriba de todo, con la flecha de
     arriba o tocando Hábitos.
   - Arrastrar el cielo para abajo sigue llevando a tu universo.
@@ -461,6 +463,58 @@ es de las dos apps. En la galería, sección 7.
   el sueño con el entrenamiento.
 
 En Ascent van en Stats (ver la lista de cambios).
+
+### Que se encuentre (lo pediste el 2/11/2026)
+
+Lo dijiste así: para la próxima build, cuando se prenda, que la vinculación sea
+fácil de encontrar en Moss; en Hábitos, una señal clara de que abajo está lo de
+Ascent. Y que en Ascent también sea muy visible la opción de vincular con Moss.
+Todo va detrás de `CON_ASCENT` (D30): con la bandera apagada, la app se ve igual
+que antes y Ascent no se nombra en ningún lado. Las reglas están en
+`src/dominio/senalDeAscent.ts`, con sus tests, y la galería las usa tal cual.
+
+**La dirección.** La sección está abajo y el dedo la sube, como dijiste: la señal
+va en el borde de abajo, sobre el musgo, con la flecha hacia donde se desliza. Tu
+universo queda del otro lado: arrastrar el cielo para abajo lo baja. No cambia
+ningún gesto.
+
+| | Sin vincular, con Ascent en este iPhone | Sin vincular, sin Ascent | Vinculada |
+|---|---|---|---|
+| **Hábitos: la señal** | «Vincular con Ascent», con la luna afuera de la órbita | «Ascent», con la luna afuera | La última sesión de la semana («Hoy: piernas», «Ayer: empuje», «El lunes: empuje»), con la luna en la órbita; sin una, «Ascent» |
+| **Inicio: la invitación** | Hasta «Ahora no» | Nada | Nada |
+| **Perfil: la fila** | «Vincular» | «Vincular» | «@usuario» |
+| **La sección** | «Vincular con Ascent» | «Vincular con Ascent» y la App Store | Lo de hoy |
+
+- **La señal de Hábitos**
+  - Una pastilla con la marca de Ascent en chico (a ese tamaño, la órbita y la luna
+    van más gruesas), qué hay y la flecha: siempre a la vista y sin competir con el
+    cielo, con los colores de Ascent. La frase sube 8 puntos para hacerle lugar, el
+    globito 12 y el aviso 28.
+  - Se toca o se desliza. No es un botón sobre el lienzo: el toque y el deslizamiento
+    los resuelven los gestos del cielo (`Cielo.tsx`). Así un deslizamiento que
+    empieza en ella también sube, y un toque no enciende la estrella de abajo. Para
+    VoiceOver sí es un botón.
+  - La primera vez que se ve sube y baja dos veces, apenas, y queda guardado en el
+    teléfono. Con Reducir movimiento, no se mueve. La flecha respira con el reloj
+    del cielo, como antes.
+  - Una sesión más vieja que una semana ya no dice nada útil: vuelve a «Ascent».
+- **La invitación de Inicio**
+  - Solo con Ascent en este iPhone (`canOpenURL`, ya declarado), con la cuenta de
+    Moss, sin vincular y sin haber dicho «Ahora no». Sin Ascent no se dice nada.
+  - Va debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
+  - «Vincular» abre la hoja sin salir de Inicio: dos toques, como pide D27.
+  - «Ahora no» queda guardado en este iPhone y no vuelve a aparecer. La señal y
+    Perfil siguen ahí. Al vincular, se va sola.
+- **Perfil:** con la bandera prendida, Conexiones pasa a ser lo primero, debajo de
+  tu foto, con Ascent en ella, como en la galería.
+- **Moss es Moss sigue valiendo:** la entrada, la ficha y lo de cada día no dependen
+  de Ascent, y nunca se habla de «tu cuenta de Moss y Ascent». Ascent se nombra solo
+  en lo que lleva a vincular.
+
+**En Ascent** (lo pediste junto con lo de arriba, y se lo pasamos a su sesión, que
+lo anota en su spec): la opción de vincular con Moss tiene que ser igual de visible.
+Hoy son la fila de Ajustes (el cambio 7) y las tarjetas de Stats (el cambio 6): que
+no haya que ir a buscarlas. Ver el cambio 17 bis.
 
 ## Lo que hay que cuidar (y cómo)
 
@@ -638,6 +692,10 @@ Necesita una build nativa nueva: va en una rama, como siempre que cambia
     - El estado y desvincular: `moss.estado_del_vinculo()` y
       `moss.desvincular()`, por RPC en el esquema `moss`
       (`supabase.schema('moss').rpc(...)`).
+
+**17 bis. Vincular con Moss, muy visible** (pedido el 2/11/2026, junto con «Que se
+encuentre»): en Ascent tiene que encontrarse sin buscarla, como en Moss. La pasó a
+su sesión la de Moss; lo que se decida ahí va en su spec.
 
 ### Infraestructura (las hacés vos en el panel)
 

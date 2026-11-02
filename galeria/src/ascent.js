@@ -1,15 +1,53 @@
-// La sección de Ascent (spec/ascent.md), arriba de Hábitos. Desde el cielo, tocar la flecha tenue
-// sobre el musgo o deslizar para arriba desde arriba de la barra la suben desde abajo, siguiendo al
-// dedo; se vuelve deslizando para abajo, con la flecha de arriba o tocando Hábitos. Sin vincular,
-// cada función muestra vacío lo que va a mostrar, con «Vincular» arriba; vinculada, lo de hoy, con
-// las cuentas de la app (Entrenamiento, src/dominio/entrenamiento.ts). Tiene los colores de Ascent
-// y su regla de líneas en vez de cajas: es la parte de Moss que es de las dos. Debajo de la
-// recuperación, el rendimiento esperado, los músculos y la marca posible (Rendimiento y Musculos,
-// src/dominio/rendimiento.ts y musculos.ts), como antes de entrenar hoy.
+// La sección de Ascent (spec/ascent.md), abajo de Hábitos: sube desde el musgo. Desde el cielo, tocar
+// la señal (la marca de Ascent con su flecha, sobre el musgo) o deslizar para arriba desde arriba de
+// la barra la suben, siguiendo al dedo; se vuelve deslizando para abajo, con la flecha de arriba o
+// tocando Hábitos. Sin vincular, cada función muestra vacío lo que va a mostrar, con «Vincular»
+// arriba; vinculada, lo de hoy, con las cuentas de la app (Entrenamiento, src/dominio/entrenamiento.ts).
+// Tiene los colores de Ascent y su regla de líneas en vez de cajas: es la parte de Moss que es de las
+// dos. Debajo de la recuperación, el rendimiento esperado, los músculos y la marca posible (Rendimiento
+// y Musculos, src/dominio/rendimiento.ts y musculos.ts), como antes de entrenar hoy. La invitación de
+// Inicio también sale de acá (SenalDeAscent, src/dominio/senalDeAscent.ts).
 
 const SeccionAscent = (() => {
   const PARTES = ['sueno', 'carga', 'comida'];
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+
+  // La señal de Hábitos (como SenalDeAscent.tsx) y la invitación de Inicio (como Invitacion.tsx).
+  const CSS = `
+.as-senal { appearance: none; cursor: pointer; box-sizing: border-box; position: absolute; left: 50%; bottom: calc(var(--pestanas) + 8px); translate: -50% var(--pie-y, 0px); display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px 0 5px; border: 1px solid rgba(138, 147, 168, 0.34); border-radius: 999px; background: rgba(5, 6, 10, 0.62); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #e8ecf6; font: 400 12.5px/1 var(--texto); letter-spacing: 0.01em; white-space: nowrap; pointer-events: auto; touch-action: none; transition: background-color 0.15s; }
+/* Del tamaño de un dedo, aunque se vea más chica. */
+.as-senal::before { content: ''; position: absolute; inset: -6px -4px; }
+.as-senal:active { background: rgba(26, 30, 42, 0.82); }
+.as-senal-texto { overflow: hidden; }
+.as-senal > svg:last-child { width: 14px; height: 14px; flex: none; color: #8a93a8; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; animation: as-senal-respira 3.8s ease-in-out infinite; }
+@keyframes as-senal-respira { 50% { transform: translateY(-2px); opacity: 0.55; } }
+.as-senal.asoma { animation: as-senal-asoma 1.5s ease-in-out 0.8s 1 both; }
+@keyframes as-senal-asoma { 0%, 44%, 80%, 100% { transform: translateY(0); } 22% { transform: translateY(-9px); } 62% { transform: translateY(-5px); } }
+.as-marca-chica { width: 24px; height: 24px; flex: none; overflow: visible; fill: none; }
+.as-chica-planeta { stroke: rgba(232, 236, 246, 0.4); stroke-width: 0.7; }
+.as-chica-orbita { fill: none; stroke-width: 1; stroke-linecap: round; transition: opacity 0.9s ease; }
+.as-chica-sin { stroke: rgba(138, 147, 168, 0.9); stroke-dasharray: 0.1 2.3; }
+.as-chica-con { stroke: #c4c2ba; opacity: 0; }
+.as-chica-luna { fill: #f6ecd2; transform: translate(9.3px, -7px); opacity: 0.8; transition: transform 1.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.9s; }
+.unida > .as-marca-chica .as-chica-sin { opacity: 0; }
+.unida > .as-marca-chica .as-chica-con { opacity: 0.9; }
+.unida > .as-marca-chica .as-chica-luna { transform: translate(6.55px, -4.59px); opacity: 1; }
+
+.as-invita { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; align-items: start; padding: 14px 16px 12px; border-radius: 20px; border: 1px solid rgba(138, 147, 168, 0.2); background: rgba(8, 12, 26, 0.72); color: #e8ecf6; overflow: hidden; }
+.as-invita.entra { animation: as-entra 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.pagina-app .as-invita svg.as-marca-chica { width: 40px; height: 40px; }
+.as-invita-titulo { display: block; font: 400 14.5px/1.25 var(--texto); }
+.as-invita-texto { margin: 4px 0 0; font: 400 12.5px/1.38 var(--texto); color: rgba(232, 236, 246, 0.62); }
+.as-invita-acciones { grid-column: 2; display: flex; align-items: center; gap: 6px; margin-top: 10px; margin-left: -1px; }
+.as-invita-si, .as-invita-no { appearance: none; cursor: pointer; height: 32px; border-radius: 999px; font: 400 13px/1 var(--texto); }
+.as-invita-si { padding: 0 15px; border: 1px solid rgba(232, 236, 246, 0.42); background: none; color: #e8ecf6; }
+.as-invita-si:active { background: rgba(232, 236, 246, 0.08); }
+.as-invita-no { padding: 0 10px; border: 0; background: none; color: rgba(232, 236, 246, 0.62); }
+@media (prefers-reduced-motion: reduce) {
+  .as-senal > svg:last-child, .as-senal.asoma { animation: none; }
+  .as-invita.entra { animation-duration: 0.01s; }
+  .as-chica-orbita, .as-chica-luna { transition: none; }
+}`;
 
   // El planeta de Ascent con su órbita abierta, como en su ícono, y la luna de Moss: sin vincular
   // queda afuera de la órbita; al vincular, entra.
@@ -25,10 +63,22 @@ const SeccionAscent = (() => {
     <path class="as-orbita as-orbita-con" d="${ORBITA}"/>
     <g class="as-luna"><circle r="9.5" class="as-luna-halo"/><circle r="5.2" fill="url(#asLunita)"/></g>
   </svg>`;
+  // La misma marca en chico: a 24 píxeles, la órbita y la luna de la grande no se ven.
+  const ORBITA_CHICA = 'M -4.59 -6.55 A 8 8 0 1 1 -6.55 4.59';
+  const MARCA_CHICA = `<svg class="as-marca-chica" viewBox="-12 -12 24 24" aria-hidden="true">
+    <defs><radialGradient id="asPlanetaChico" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#7b8498"/><stop offset="1" stop-color="#2b313e"/></radialGradient></defs>
+    <circle r="4.6" class="as-chica-planeta" fill="url(#asPlanetaChico)"/>
+    <path class="as-chica-orbita as-chica-sin" d="${ORBITA_CHICA}"/>
+    <path class="as-chica-orbita as-chica-con" d="${ORBITA_CHICA}"/>
+    <circle r="1.9" class="as-chica-luna"/>
+  </svg>`;
 
   function crear(tel, opciones) {
     const u = Util.crear(opciones);
     const { tx, numero, el, boton, icono } = u;
+    const estilo = document.createElement('style');
+    estilo.textContent = CSS;
+    document.head.appendChild(estilo);
     const A = Datos.ASCENT;
     const nombreDe = (v) => v[u.idioma()] || v.es;
     const curva = opciones.curva;
@@ -56,10 +106,13 @@ const SeccionAscent = (() => {
     arriba.insertAdjacentHTML('beforeend', MARCA);
     const marca = arriba.querySelector('.as-marca');
 
-    // La flecha tenue de Hábitos va con la frase: se va con ella cuando la cámara sube a tu universo.
-    // Tocarla también abre la sección.
-    const flecha = boton('as-flecha', icono('arriba'), () => abrir());
-    tel.querySelector('.ui .frase').appendChild(flecha);
+    // La señal de Hábitos va a la altura del musgo, abajo de la frase, y se va con ella cuando la
+    // cámara sube a tu universo. Se toca o se desliza desde ella, como el cielo.
+    const senal = boton('as-senal', `${MARCA_CHICA}<span class="as-senal-texto"></span>${icono('arriba')}`, () => abrir());
+    tel.querySelector('.ui').appendChild(senal);
+    const senalTexto = senal.querySelector('.as-senal-texto');
+    // La galería elige si la persona de mentira entrenó hoy: 'hoy', 'antes' o 'nada'.
+    let sesionesDeLaSenal = 'hoy';
 
     // ------------------------------------------------------------ lo que se calcula
     const necesidad = Sueno.necesidad(Number(Datos.HOY.slice(0, 4)) - Datos.PERFIL.nacimiento);
@@ -223,8 +276,91 @@ const SeccionAscent = (() => {
         alElegir(b.dataset.valor);
       });
     };
-    elegir('s-iphone', (v) => { esteIphone = v; abrirVincular(v); });
+    elegir('s-iphone', (v) => { ponerIphone(v); abrirVincular(v); });
     elegir('s-servidor', (v) => { resultado = v; });
+    elegir('s-senal', (v) => { sesionesDeLaSenal = v; pintarSenal(); });
+
+    // Cómo está Ascent en este iPhone cambia la señal y la invitación de Inicio.
+    function ponerIphone(v) {
+      esteIphone = v;
+      document.querySelectorAll('#s-iphone button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === v)));
+      pintarSenal();
+      opciones.repintarInicio();
+    }
+
+    // ------------------------------------------------------------ la señal de Hábitos
+    // Sin vincular invita, si Ascent está en este iPhone; vinculada, la última sesión; si no, la marca.
+    function textoDeLaSenal() {
+      const sesiones = sesionesDeLaSenal === 'nada' ? [] : A.sesiones.filter((s) => sesionesDeLaSenal === 'hoy' || s.fecha < Datos.HOY);
+      const s = SenalDeAscent.senalDeAscent({ conAscent: true, vinculada, instalada: esteIphone !== 'sinAscent', sesiones, hoy: Datos.HOY });
+      if (s.que !== 'sesion') return tx('ascent.senal.' + s.que);
+      const sesion = nombreDe(sesionDe(s.fecha).nombre).toLowerCase();
+      if (s.dias === 0) return tx('ascent.senal.hoy', { sesion });
+      if (s.dias === 1) return tx('ascent.senal.ayer', { sesion });
+      return tx('ascent.senal.dia', { dia: tx('fecha.dias.' + u.partes(s.fecha).dia), sesion });
+    }
+    function pintarSenal() {
+      const texto = textoDeLaSenal();
+      senal.classList.toggle('unida', vinculada);
+      senal.setAttribute('aria-label', texto === tx('ascent.senal.marca') ? tx('ascent.flecha') : `${tx('ascent.flecha')}. ${texto}`);
+      if (texto === senalTexto.textContent) return;
+      // Cambia de ancho acomodándose y el texto entra con un fundido.
+      const antes = senal.offsetWidth;
+      const habia = senalTexto.textContent !== '';
+      senalTexto.textContent = texto;
+      if (!habia || opciones.movimientoReducido) return;
+      senal.animate([{ width: `${antes}px` }, { width: `${senal.offsetWidth}px` }], { duration: 300, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+      senalTexto.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 360 });
+    }
+    // La primera vez que se llega a Hábitos, sube y baja apenas: de ahí se tira. Una sola vez.
+    let asomo = false;
+    function asomar(otraVez) {
+      if (asomo && !otraVez) return;
+      asomo = true;
+      senal.classList.remove('asoma');
+      void senal.offsetWidth;
+      senal.classList.add('asoma');
+    }
+
+    // ------------------------------------------------------------ la invitación de Inicio
+    // Solo con Ascent en este iPhone y sin vincular, y «Ahora no» es para siempre (en el teléfono queda
+    // guardado; en la galería, hasta recargar o con su botón). «Vincular» abre la hoja: dos toques.
+    let descartada = false;
+    let invitacionVista = false;
+    // La que se está yendo sigue en su lugar: Inicio se vuelve a pintar entero en cualquier momento.
+    let saliendo = null;
+    function invitacion() {
+      if (saliendo) return saliendo;
+      const invita = SenalDeAscent.invitarEnInicio({ conAscent: true, listo: true, conCuenta: esteIphone !== 'sinCuenta', vinculada, instalada: esteIphone !== 'sinAscent', descartada });
+      if (!invita) { invitacionVista = false; return null; }
+      const c = el('article', 'as-invita' + (invitacionVista ? '' : ' entra'));
+      invitacionVista = true;
+      c.innerHTML = MARCA_CHICA;
+      const textos = el('div');
+      textos.append(el('b', 'as-invita-titulo', tx('ascent.invitacion.titulo')), el('p', 'as-invita-texto', tx('ascent.invitacion.texto')));
+      const acciones = el('div', 'as-invita-acciones');
+      acciones.append(
+        boton('as-invita-si', tx('ascent.invitacion.vincular'), () => abrirVincular()),
+        boton('as-invita-no', tx('ascent.invitacion.ahoraNo'), () => { descartada = true; quitarInvitacion(); }),
+      );
+      c.append(textos, acciones);
+      return c;
+    }
+    // Se cierra acomodando lo de abajo, con el espacio entre los bloques incluido.
+    function quitarInvitacion() {
+      const n = document.querySelector('.as-invita');
+      if (!n || saliendo) return;
+      saliendo = n;
+      const a = n.animate(
+        [{ height: `${n.offsetHeight}px`, opacity: 1, marginBottom: '0px' }, { height: '0px', paddingTop: '0px', paddingBottom: '0px', borderTopWidth: '0px', borderBottomWidth: '0px', opacity: 0, marginBottom: '-12px' }],
+        { duration: opciones.movimientoReducido ? 1 : 320, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+      );
+      a.onfinish = () => {
+        saliendo = null;
+        invitacionVista = false;
+        n.remove();
+      };
+    }
 
     // ------------------------------------------------------------ rendimiento, músculos y marca
     // Como antes de entrenar hoy: 10 minutos antes de la sesión de piernas de las 18:40.
@@ -646,7 +782,7 @@ const SeccionAscent = (() => {
       contenido.innerHTML = '';
       zona.classList.toggle('vinculada', vinculada);
       volver.setAttribute('aria-label', tx('ascent.volver'));
-      flecha.setAttribute('aria-label', tx('ascent.flecha'));
+      pintarSenal();
       contenido.appendChild(cabecera());
       if (vinculada) {
         contenido.append(...[hoyEnAscent(), cartaGimnasio(), grupo('soloConLasDos'), cartaRecuperacion(), cartaRendimiento(), cartaMusculos(), cartaMarca(), cartaEstancamiento(), cartaAnio()].filter(Boolean));
@@ -664,7 +800,7 @@ const SeccionAscent = (() => {
       zona.style.visibility = p > 0.0005 ? 'visible' : 'hidden';
       zona.inert = p === 0;
       velo.style.opacity = (0.32 * p).toFixed(3);
-      flecha.style.opacity = (1 - Math.min(1, p * 2.5)).toFixed(3);
+      senal.style.opacity = (1 - Math.min(1, p * 2.5)).toFixed(3);
       if (opciones.alMover) opciones.alMover(p);
     }
     function ir(hasta, deUna) {
@@ -744,7 +880,17 @@ const SeccionAscent = (() => {
 
     return {
       zona,
-      flecha,
+      senal,
+      asomar,
+      invitacion,
+      ponerIphone,
+      // Para los botones de la galería: «Ahora no» se olvida al recargar o con esto.
+      volverAInvitar() { descartada = false; opciones.repintarInicio(); },
+      senalCon(v) {
+        sesionesDeLaSenal = v;
+        document.querySelectorAll('#s-senal button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === v)));
+        pintarSenal();
+      },
       pintar,
       abrir,
       cerrar,
@@ -759,6 +905,8 @@ const SeccionAscent = (() => {
       ponerVinculo(si) {
         vinculada = si;
         marca.classList.toggle('unida', si);
+        if (si) quitarInvitacion();
+        opciones.repintarInicio();
         pintar();
         contenido.classList.remove('as-entra');
         void contenido.offsetWidth;

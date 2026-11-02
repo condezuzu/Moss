@@ -7,7 +7,7 @@
 import Constants from 'expo-constants';
 import type { SFSymbol } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AlertButton } from 'react-native';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
@@ -20,7 +20,7 @@ import type { Comida } from '@/dominio/comidas';
 import { CORTE_DE_FABRICA, CORTES, sumarDias, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
-import { horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
+import { conLoQueFalta, horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
 import { horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { aprenderPersonal, LATENCIAS } from '@/dominio/sinReloj';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
@@ -33,11 +33,10 @@ import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
 import { aparatoPrincipal, Aparatos } from './Aparatos';
 import { useFilaDeAscent } from '../ascent/filaDePerfil';
-import { diasDePrueba, estadoDePremium, planDe } from '@/dominio/premium';
-import { hayCompras, pareceTenerPremium, useEstadoDePremium } from '@/lib/premium';
-import { pedirPremium, pedirPremiumAlCerrarse } from '../premium/Premium';
+import { hayCompras, useEstadoDePremium } from '@/lib/premium';
+import { avisoAlBorrarLaCuenta, HojaDeSuscripcion, valorDeSuscripcion } from '../premium/Premium';
 import { Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
-import { borrarLaCuenta, borrarMisDatos, cerrarSesion, correoDeLaCuenta, exportarTodo } from './cuenta';
+import { borrarLaCuenta, borrarMisDatos, correoDeLaCuenta, exportarTodo, salirDeLaCuenta } from './cuenta';
 import { borrarFotoDePerfil, elegirFotoDePerfil, fotoDePerfil, guardarFotoDePerfil, hayFotoDePerfil } from './foto';
 import { Avatar, Persona } from './Persona';
 
@@ -59,7 +58,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const sistema = sistemaDe(e);
   const [correo, setCorreo] = useState<string | null>(null);
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | null>(null);
+  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | 'suscripcion' | null>(null);
   // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
   const [foto, setFoto] = useState(fotoDePerfil);
   const premium = useEstadoDePremium();
@@ -71,29 +70,31 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const p = e.perfil;
   const altura = (cm: number) => (sistema === 'imperial' ? piesYPulgadas(cm) : `${numero(cm)} cm`);
   // false es un error; null, que se canceló (la hoja de Apple al borrar la cuenta): no se dice nada.
-  const confirmar = (titulo: string, texto: string, accion: () => Promise<boolean | null | void>) =>
+  const confirmar = (titulo: string, texto: string, accion: () => Promise<boolean | null | void>, otros: AlertButton[] = []) =>
     Alert.alert(titulo, texto, [
       { text: t('comun.cancelar'), style: 'cancel' },
+      ...otros,
       { text: t('perfil.borrar'), style: 'destructive', onPress: () => { accion().then((ok) => ok === false && avisar(t('perfil.errorBorrar'))).catch(() => avisar(t('perfil.errorBorrar'))); } },
     ]);
 
-  // Gratis, lleva a Premium; con una suscripción, a administrarla en Apple.
-  const estadoPremium = estadoDePremium(premium);
-  const filaDePremium: Fila = {
-    clave: 'premium',
-    titulo: t('suscripcion.titulo'),
-    valor: estadoPremium === 'gratis' ? t('suscripcion.perfil.gratis')
-      : estadoPremium === 'fundador' ? t('suscripcion.perfil.fundador')
-      : estadoPremium === 'prueba' && premium.suscripcion ? t('suscripcion.perfil.prueba', { n: diasDePrueba(premium.suscripcion, premium.leido) })
-      : premium.suscripcion && planDe(premium.suscripcion) === 'mensual' ? t('suscripcion.perfil.activaMensual')
-      : t('suscripcion.perfil.activa'),
-    detalle: estadoPremium === 'fundador' ? t('suscripcion.perfil.fundadorTexto') : undefined,
-    alTocar: () => {
-      if (estadoPremium === 'gratis') pedirPremium();
-      else if (estadoPremium !== 'fundador') Linking.openURL('https://apps.apple.com/account/subscriptions').catch(() => {});
-    },
-  };
+  const filaDeSuscripcion: Fila = { clave: 'suscripcion', titulo: t('suscripcion.titulo'), valor: valorDeSuscripcion(premium), alTocar: () => setHoja('suscripcion') };
+  const conexiones: [string, Fila[]] = ['perfil.conexiones', [
+    ...(haySalud() ? [{
+      clave: 'salud', titulo: t('perfil.salud'), valor: salud ? t('perfil.conectada') : t('perfil.conectar'), tipo: salud ? 'ok' as const : 'accion' as const,
+      alTocar: () => {
+        pedirPermisos().then((si) => {
+          setSalud(si);
+          if (si) actualizarSalud().catch(() => {});
+        }).catch(() => {});
+      },
+    }] : []),
+    { clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos') },
+    // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent.
+    ...(CON_ASCENT ? [ascent] : []),
+  ]];
   const grupos: [string, Fila[]][] = [
+    // Con la vinculación, Conexiones va primero: que Ascent se encuentre (spec/ascent.md, «Que se encuentre»).
+    ...(CON_ASCENT ? [conexiones] : []),
     ['perfil.tusDatos', p ? [
       { clave: 'sexo', titulo: t('perfil.sexo'), valor: t(`perfil.sexos.${p.sexo}`), alTocar: () => setHoja('editar') },
       { clave: 'edad', titulo: t('perfil.edad'), valor: t('perfil.anios', { n: edadDe(p, e.hoy) }), alTocar: () => setHoja('editar') },
@@ -107,7 +108,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         detalle: p.sinDeficit ? t('perfil.sinDeficitTexto') : undefined, alTocar: () => elAlmacen().ponerEstrategia({ sinDeficit: !p.sinDeficit }),
       },
     ] : []],
-    ...(hayCompras() ? [['suscripcion.perfil.titulo', [filaDePremium]] as [string, Fila[]]] : []),
+    ...(hayCompras() ? [['suscripcion.perfil.titulo', [filaDeSuscripcion]] as [string, Fila[]]] : []),
     ['perfil.preferencias', [
       { clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial') },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
@@ -117,20 +118,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
       { clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), alTocar: () => elAlmacen().ponerNumeros(!e.numeros) },
     ]],
-    ['perfil.conexiones', [
-      ...(haySalud() ? [{
-        clave: 'salud', titulo: t('perfil.salud'), valor: salud ? t('perfil.conectada') : t('perfil.conectar'), tipo: salud ? 'ok' as const : 'accion' as const,
-        alTocar: () => {
-          pedirPermisos().then((si) => {
-            setSalud(si);
-            if (si) actualizarSalud().catch(() => {});
-          }).catch(() => {});
-        },
-      }] : []),
-      { clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos') },
-      // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent.
-      ...(CON_ASCENT ? [ascent] : []),
-    ]],
+    ...(CON_ASCENT ? [] : [conexiones]),
     ['perfil.tusDatosParaLlevar', [
       { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', alTocar: () => { exportarTodo(e.hoy).catch(() => avisar(t('perfil.errorBorrar'))); } },
       { clave: 'privacidad', titulo: t('perfil.privacidad'), alTocar: () => setHoja('privacidad') },
@@ -143,7 +131,10 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       { clave: 'terminos', titulo: t('perfil.terminos'), alTocar: () => abrirPagina('terminos') },
       { clave: 'contacto', titulo: t('perfil.contacto'), alTocar: () => abrirPagina('contacto') },
       { clave: 'borrarDatos', titulo: t('perfil.borrarDatos'), tipo: 'peligro', alTocar: () => confirmar(t('perfil.borrarDatosTitulo'), t('perfil.borrarDatosTexto'), borrarMisDatos) },
-      ...(correo !== null ? [{ clave: 'borrarCuenta', titulo: t('perfil.borrarCuenta'), tipo: 'peligro' as const, alTocar: () => confirmar(t('perfil.borrarCuentaTitulo'), ascent.tipo === 'ok' ? `${t('perfil.borrarCuentaTexto')} ${t('perfil.borrarCuentaConAscent')}` : t('perfil.borrarCuentaTexto'), borrarLaCuenta) }] : []),
+      ...(correo !== null ? [{ clave: 'borrarCuenta', titulo: t('perfil.borrarCuenta'), tipo: 'peligro' as const, alTocar: () => {
+        const aviso = avisoAlBorrarLaCuenta(ascent.tipo === 'ok' ? `${t('perfil.borrarCuentaTexto')} ${t('perfil.borrarCuentaConAscent')}` : t('perfil.borrarCuentaTexto'));
+        confirmar(t('perfil.borrarCuentaTitulo'), aviso.texto, borrarLaCuenta, aviso.botones);
+      } }] : []),
     ]],
   ];
   const version = `${Constants.expoConfig?.version ?? '1.0.0'} (${Constants.expoConfig?.ios?.buildNumber ?? '1'})`;
@@ -206,7 +197,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
             texto={t('perfil.cambiarCuenta')}
             alTocar={() => Alert.alert(t('perfil.cambiarCuenta'), t('perfil.cambiarCuentaTexto'), [
               { text: t('comun.cancelar'), style: 'cancel' },
-              { text: t('perfil.cambiarCuenta'), onPress: salir },
+              { text: t('perfil.cambiarCuenta'), onPress: () => salirDeLaCuenta() },
             ])}
             estilo={st.salir}
           />
@@ -215,7 +206,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
             texto={t('perfil.cerrarSesion')}
             alTocar={() => Alert.alert(t('perfil.cerrarSesionTitulo'), t('perfil.cerrarSesionTexto'), [
               { text: t('comun.cancelar'), style: 'cancel' },
-              { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: salir },
+              { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: () => salirDeLaCuenta() },
             ])}
             estilo={st.salir}
           />
@@ -231,6 +222,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       {hoja === 'corte' && <CorteDelDia elegido={e.corte} alCerrar={() => setHoja(null)} />}
       {hoja === 'entreno' && <CuandoEntrenas e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
+      {hoja === 'suscripcion' && <HojaDeSuscripcion alCerrar={() => setHoja(null)} />}
       {hoja === 'privacidad' && (
         <HojaModal abierta titulo={t('perfil.privacidad')} alCerrar={() => setHoja(null)}>
           {lista('perfil.privacidadTexto').map((parrafo, i) => {
@@ -416,8 +408,6 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const dormir = e.avisos.dormir;
   const encenderDormir = (si: boolean) => {
     if (!si) elAlmacen().ponerAvisos({ dormir: { encendido: false, antes: dormir?.antes } });
-    // Con esta hoja abierta, iOS no presenta otra: se cierra y después se abre Premium.
-    else if (!pareceTenerPremium()) { alCerrar(); pedirPremiumAlCerrarse('dormir'); }
     else conPermiso(() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
   };
   const sueno = suenoParaAvisos(e);
@@ -532,6 +522,17 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
         </Aparece>
       )}
       <View style={st.llave}>
+        <Text style={st.llaveTexto}>{t('perfil.avisos.falta')}</Text>
+        <Switch
+          value={conLoQueFalta(e.avisos, true)}
+          onValueChange={(si) => (si ? conPermiso(() => elAlmacen().ponerAvisos({ falta: { encendido: true } })) : elAlmacen().ponerAvisos({ falta: { encendido: false } }))}
+          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+          thumbColor={colores.pergamino}
+          accessibilityLabel={t('perfil.avisos.falta')}
+        />
+      </View>
+      <Parrafo chico>{t('perfil.avisos.faltaTexto')}</Parrafo>
+      <View style={st.llave}>
         <Text style={st.llaveTexto}>{t('perfil.recordatoriosLlave')}</Text>
         <Switch
           value={!!comidas?.length}
@@ -575,18 +576,6 @@ const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
 function hayAvisos(e: Estado): boolean {
   const a = e.avisos;
   return !!(e.recordatorios?.length || a.dormir?.encendido || Object.keys(a.horario ?? {}).length || a.pesarse?.encendido || a.habitos?.length);
-}
-
-/** Cerrar sesión: si lo último no llegó a la cuenta, se avisa antes de perderlo; sin conexión, no se puede. */
-function salir() {
-  cerrarSesion().then((r) => {
-    if (r === 'sinSubir') {
-      Alert.alert(t('perfil.sinSubirTitulo'), t('perfil.sinSubirTexto'), [
-        { text: t('comun.cancelar'), style: 'cancel' },
-        { text: t('perfil.cerrarIgual'), style: 'destructive', onPress: () => { cerrarSesion(true).catch(() => Alert.alert(t('perfil.errorBorrar'))); } },
-      ]);
-    } else if (r === 'sinConexion') Alert.alert(t('perfil.errorBorrar'));
-  }).catch(() => Alert.alert(t('perfil.errorBorrar')));
 }
 
 /** «Lun Mié Vie · 19:00», «Todos los días · 19:00» o que todavía no se cargó: corto, para que entre en la fila. */

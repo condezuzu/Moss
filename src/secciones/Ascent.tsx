@@ -1,5 +1,5 @@
-// Ascent, arriba de Hábitos (cambio 10 de la especificación), como en la galería. Sube desde el
-// musgo con el gesto del cielo o tocando la flecha (Cielo.tsx), y se baja tirando para abajo desde
+// Ascent, abajo de Hábitos (cambio 10 de la especificación), como en la galería. Sube desde el
+// musgo con el gesto del cielo o tocando la señal (Cielo.tsx), y se baja tirando para abajo desde
 // arriba de todo, con la flecha de arriba o tocando Hábitos. Tiene los colores de Ascent y su regla:
 // esquina viva o píldora, y una línea arriba de cada parte en vez de cajas. Sin vincular, cada
 // función vacía con su candado y «Vincular con Ascent» (la hoja de vincular, D27); vinculada, lo de

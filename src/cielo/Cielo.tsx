@@ -80,16 +80,16 @@ const MUSGO_LUZ = 'rgb(189, 237, 115)';
 const aRgb = ([r, g, b]: number[]) => `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
 
 /**
- * Ascent, arriba de Hábitos: deslizar para arriba desde el cielo la sube siguiendo al dedo, y tocar
- * la flecha tenue también. Lo maneja este gesto, así un deslizamiento que empieza en la flecha
- * también sube.
+ * Ascent, abajo de Hábitos: deslizar para arriba desde el cielo la sube siguiendo al dedo, y tocar
+ * la señal también. Lo maneja este gesto, así un deslizamiento que empieza en la señal también sube
+ * y un toque en ella no enciende la estrella de abajo.
  */
 export type Subida = {
   /** Cuánto subió: 0 abajo, 1 arriba. */
   progreso: SharedValue<number>;
   /** Más abajo no arranca: ahí está la barra, y debajo, el gesto de inicio del iPhone. */
   limiteY: number;
-  /** El centro de la flecha con la cámara en hoy. */
+  /** El centro de la señal con la cámara en hoy. */
   flecha: { x: number; y: number };
   alCambiar: (abierta: boolean) => void;
 };
@@ -553,6 +553,8 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   );
 
   // ------------------------------------------------------------------ gestos
+  // Hasta dónde llega la señal de Ascent a cada lado: cambia con lo que dice.
+  const medioDeLaSenal = useSharedValue(32);
   const toque = useTapGesture({
     maxDistance: 12,
     onBegin: () => {
@@ -564,7 +566,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       if (subida) {
         const e = escena.value;
         const fy = subida.flecha.y + e.cam.y * PARALAJE.lomas[2] * alto;
-        if (e.paginaX === 0 && subida.progreso.get() === 0 && Math.abs(ev.x - subida.flecha.x) < 32 && Math.abs(ev.y - fy) < 22) {
+        if (e.paginaX === 0 && subida.progreso.get() === 0 && Math.abs(ev.x - subida.flecha.x) < medioDeLaSenal.get() && Math.abs(ev.y - fy) < 22) {
           subida.progreso.set(subirOBajar(0, 1));
           scheduleOnRN(subida.alCambiar, true);
           return;
@@ -841,6 +843,13 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         acciones={acciones}
         abajo={abajo}
         subida={subida?.progreso}
+        senal={subida ? {
+          medio: medioDeLaSenal,
+          alAbrir: () => {
+            subida.progreso.set(subirOBajar(subida.progreso.get(), 1));
+            subida.alCambiar(true);
+          },
+        } : undefined}
       />}
     </View>
   );
