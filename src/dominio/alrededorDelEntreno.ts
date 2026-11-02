@@ -49,7 +49,7 @@ export type Contexto = {
   sinDeficit: boolean;
 };
 
-export type Clase = 'previa' | 'previaLiviana' | 'snackPrevio' | 'ayunasLarga' | 'despues' | 'despuesPronto' | 'reponer' | 'antesDeDormir';
+export type Clase = 'previa' | 'previaLiviana' | 'snackPrevio' | 'ayunasLarga' | 'despues' | 'despuesPronto' | 'reponer' | 'antesDeDormir' | 'nocheCorta';
 
 /** Lo que se dice en una comida, en gramos de a 5; sin peso, a veces sin número. */
 export type Linea = {
@@ -63,6 +63,8 @@ export type Linea = {
   durantePorHora?: [number, number];
   /** El café, antes de esta hora: después le quita al sueño. */
   cafeinaHasta?: number;
+  /** En la noche corta: cuánto se durmió, en minutos. */
+  dormido?: number;
 };
 
 export const COMIDA_PREVIA: [number, number] = [120, 240];
@@ -196,6 +198,20 @@ function antesDeDormir(c: Contexto): Linea[] {
   if (falta < FALTA_PARA_DORMIR) return [];
   // Lo que falta, de a 5 y nunca más: «Te faltan 25 g» con 27.
   return [{ comida: 'snack', clase: 'antesDeDormir', hora: c.anotado.cena.hora, proteina: Math.floor(falta / 5) * 5 }];
+}
+
+/** Menos que esto anoche es una noche corta (spec/entreno.md, C2). */
+export const NOCHE_CORTA = 6 * 60;
+
+/**
+ * La noche corta (spec/entreno.md, C2): dormir poco da más hambre, y saberlo ayuda. Va en la primera comida sin
+ * anotar de la mañana o del mediodía, sin pedir nada: nadie probó que comer distinto lo compense, y no cambia
+ * ninguna meta. Con «sin déficit», nada; sin saber bien cuánto se durmió (`dormido` null), tampoco.
+ */
+export function lineaDeNocheCorta(d: { dormido: number | null; anotadas: ReadonlySet<Comida>; sinDeficit: boolean }): Linea | null {
+  if (d.sinDeficit || d.dormido === null || d.dormido >= NOCHE_CORTA) return null;
+  const comida = (['desayuno', 'almuerzo'] as const).find((c) => !d.anotadas.has(c));
+  return comida ? { comida, clase: 'nocheCorta', hora: 0, dormido: d.dormido } : null;
 }
 
 /**

@@ -21,7 +21,7 @@ export function LineaDeEntreno({ linea }: { linea: Linea }) {
   return (
     <Aparece>
       <Pressable onPress={() => setPorQue(true)} style={({ pressed }) => [st.linea, pressed && st.apretada]} accessibilityRole="button" accessibilityHint={t('entreno.porQue.titulo')}>
-        <Icono nombre="dumbbell" tam={13} color={colores.oroClaro} />
+        <Icono nombre={linea.clase === 'nocheCorta' ? 'moon.zzz' : 'dumbbell'} tam={13} color={colores.oroClaro} />
         <Text style={st.texto}>{textoDeLinea(linea, numeros)}</Text>
       </Pressable>
       {porQue && (
@@ -33,7 +33,7 @@ export function LineaDeEntreno({ linea }: { linea: Linea }) {
         >
           <Parrafo>{porQueDe(linea)}</Parrafo>
           {linea.cafeinaHasta !== undefined && <Parrafo>{t('entreno.porQue.cafeina')}</Parrafo>}
-          <Parrafo chico>{t('entreno.porQue.fuentes')}</Parrafo>
+          <Parrafo chico>{t(linea.clase === 'nocheCorta' ? 'entreno.porQue.fuentesNocheCorta' : 'entreno.porQue.fuentes')}</Parrafo>
           <Parrafo chico>{t('entreno.porQue.medico')}</Parrafo>
           <Parrafo chico>{t('entreno.porQue.volver')}</Parrafo>
         </HojaModal>

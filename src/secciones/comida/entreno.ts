@@ -2,15 +2,18 @@
 // (src/dominio/alrededorDelEntreno.ts) y dice cada línea en palabras, sin culpa.
 
 import type { Estado } from '@/almacen/almacen';
-import { lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
+import { lineaDeNocheCorta, lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
 import { horasDeSueno } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
-import { diasEntre, minutosEnElDia } from '@/dominio/fechas';
+import { diasEntre, minutosEnElDia, sumarDias } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
 import { totalDelDia, vigentes } from '@/dominio/registros';
+import { pareceIncompleta, ultimasNoches } from '@/dominio/sueno';
+import { hayCompras } from '@/lib/premium';
 import { horaDeReloj, horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
 import { t } from '@/textos';
-import { metaDelDia } from './datos';
+import { suenoDe } from '../persona';
+import { duracion, metaDelDia } from './datos';
 
 const PRINCIPALES: readonly Principal[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 
@@ -65,15 +68,32 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
   };
 }
 
+/** Cuánto se durmió anoche, si se sabe bien: sin las noches de ejemplo, las estimadas sin confirmar ni las que parecen cortadas. */
+function dormidoAnoche(e: Estado): number | null {
+  const s = suenoDe(e.hoy, e.perfil, e.salud, e.noches);
+  if (s.deEjemplo) return null;
+  const n = s.noches.find((x) => x.clave === e.hoy);
+  if (!n || n.moss?.origen === 'estimada') return null;
+  return pareceIncompleta(n, ultimasNoches(s.noches, sumarDias(e.hoy, -1), 14)) ? null : n.dormido;
+}
+
 /** Las líneas de hoy, por comida; apagadas en Perfil, ninguna. */
 export function lineasDeHoy(e: Estado, ahora = new Date()): Map<Comida, Linea> {
   if (!e.verEntreno) return new Map();
   const c = contextoDeHoy(e, ahora);
-  return new Map((c ? lineasDelDia(c) : []).map((l) => [l.comida, l]));
+  const lineas = new Map<Comida, Linea>((c ? lineasDelDia(c) : []).map((l) => [l.comida, l]));
+  // La noche corta va con la suscripción: es el ejemplo de su pantalla (D40).
+  if (hayCompras() && e.perfil) {
+    const anotadas = new Set(vigentes(e.registros.values()).filter((x) => x.dia === e.hoy && !x.planificado).map((x) => x.comida));
+    const corta = lineaDeNocheCorta({ dormido: dormidoAnoche(e), anotadas, sinDeficit: !!e.perfil.sinDeficit });
+    if (corta && !lineas.has(corta.comida)) lineas.set(corta.comida, corta);
+  }
+  return lineas;
 }
 
 /** Lo que dice una línea, en una o dos frases. Sin los números (Perfil › Los números), sin gramos. */
 export function textoDeLinea(l: Linea, numeros: boolean): string {
+  if (l.clase === 'nocheCorta') return t('entreno.nocheCorta', { h: duracion(l.dormido ?? 0) });
   const hora = horaDeReloj(l.hora);
   const c = numeros ? l.carbohidratos : undefined;
   const p = numeros ? l.proteina : undefined;
@@ -94,6 +114,7 @@ export function textoDeLinea(l: Linea, numeros: boolean): string {
 
 /** Por qué, según la línea: antes, después, reponer o antes de dormir. */
 export function porQueDe(l: Linea): string {
+  if (l.clase === 'nocheCorta') return t('entreno.porQue.nocheCorta');
   if (l.clase === 'reponer') return t('entreno.porQue.reponer');
   if (l.clase === 'antesDeDormir') return t('entreno.porQue.antesDeDormir');
   if (l.clase === 'despues' || l.clase === 'despuesPronto') return t('entreno.porQue.despues');

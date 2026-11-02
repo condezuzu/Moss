@@ -677,7 +677,7 @@ carbohidratos (1 g/kg) en cada uno, más la proteína de B1.
    puede prender a mano?
 2. **D24 y la meta base de proteína con «sin déficit»:** ¿se apaga D24? ¿Y la
    meta de 1,6 g/kg, que pasa el tope de KDIGO para la enfermedad renal?
-3. **La línea de la noche corta (C2):** ¿va, apagada de fábrica, o no va?
+3. **La línea de la noche corta (C2):** programada el 2/11/2026, solo con la suscripción prendida, porque es el ejemplo de la pantalla de pago (D40; `lineaDeNocheCorta`, sin depender de que estés bajando y sin apagarla de fábrica). Falta que lo apruebes.
 4. **El corte de la cafeína:** 8 h para dosis de hasta 200 mg (conservador, del
    metaanálisis) o 6 h para hasta 100 mg (del ensayo de 2025).
 5. **La hora a mano:** ¿en Perfil, por día de la semana? No toca el registro.

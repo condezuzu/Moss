@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { carbohidratosPrevios, larga, lineasDelDia, proteinaDeComida, sesionesDelDia, type Contexto, type Sesion } from './alrededorDelEntreno';
+import { carbohidratosPrevios, larga, lineaDeNocheCorta, lineasDelDia, NOCHE_CORTA, proteinaDeComida, sesionesDelDia, type Contexto, type Sesion } from './alrededorDelEntreno';
 
 /** «19:00» en minutos desde la medianoche. */
 const h = (texto: string) => {
@@ -27,6 +27,25 @@ const tarde = (extra: Partial<Contexto> = {}): Contexto => ({
   cafeinaPorToma: 95,
   sinDeficit: false,
   ...extra,
+});
+
+describe('la noche corta', () => {
+  const nada = new Set<'desayuno' | 'almuerzo'>();
+
+  it('con menos de 6 horas, lo dice en la primera comida sin anotar', () => {
+    expect(lineaDeNocheCorta({ dormido: 340, anotadas: nada, sinDeficit: false })).toEqual({ comida: 'desayuno', clase: 'nocheCorta', hora: 0, dormido: 340 });
+    expect(lineaDeNocheCorta({ dormido: 340, anotadas: new Set(['desayuno']), sinDeficit: false })?.comida).toBe('almuerzo');
+  });
+
+  it('a la tarde ya no: desayuno y almuerzo anotados', () => {
+    expect(lineaDeNocheCorta({ dormido: 340, anotadas: new Set(['desayuno', 'almuerzo']), sinDeficit: false })).toBeNull();
+  });
+
+  it('con 6 horas o más, sin saber cuánto se durmió o con «sin déficit», nada', () => {
+    expect(lineaDeNocheCorta({ dormido: NOCHE_CORTA, anotadas: nada, sinDeficit: false })).toBeNull();
+    expect(lineaDeNocheCorta({ dormido: null, anotadas: nada, sinDeficit: false })).toBeNull();
+    expect(lineaDeNocheCorta({ dormido: 340, anotadas: nada, sinDeficit: true })).toBeNull();
+  });
 });
 
 describe('antes y después de entrenar', () => {

@@ -94,7 +94,7 @@ en una fuente del fabricante.
 Lo pediste: conexión directa por API con **Oura, Garmin, Fitbit y Whoop**. Las cuatro
 piden iniciar sesión en la marca (OAuth) y un servidor que guarde el permiso y traiga
 los datos: una función nueva de Supabase, una tabla por cuenta y lo que pide cada guía
-de privacidad. Va después de la suscripción: es un buen candidato a Premium.
+de privacidad. Va después de la suscripción.
 
 | Marca | Cómo está al 31/10/2026 | Lo que falta antes |
 |---|---|---|
