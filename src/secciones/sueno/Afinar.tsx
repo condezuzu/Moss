@@ -8,7 +8,6 @@ import { AppState, Linking, Pressable, StyleSheet, Switch, Text, View } from 're
 
 import { claveDelDia, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import { estadoDelCargador, esProgramado, type EstadoDelCargador, type QueSenal, type Senal } from '@/dominio/sinReloj';
-import { ATAJO_DEL_CARGADOR } from '@/lib/sitio';
 import { useSenales } from '@/salud/anclas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -133,8 +132,7 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
     return () => suscripcion.remove();
   }, []);
   const cargador = estadoDelCargador(senales ?? [], ahora);
-  // Sin el enlace del atajo todavía no hay guía de un toque: queda la de cada automatización.
-  const abrirCargador = () => (ATAJO_DEL_CARGADOR ? setGuia((g) => ({ abierta: true, vez: g.vez + 1 })) : setHoja('atajos'));
+  const abrirCargador = () => setGuia((g) => ({ abierta: true, vez: g.vez + 1 }));
   return (
     <>
     {cargador.estado === 'dejoDeLlegar' && (
@@ -191,7 +189,7 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
       <HojaModal abierta={hoja === 'atajos'} titulo={t('sueno.afinar.atajos.titulo')} alCerrar={() => setHoja(null)}>
         <LosAtajos senales={senales ?? []} hoy={hoy} />
       </HojaModal>
-      {!!ATAJO_DEL_CARGADOR && <GuiaCargador key={guia.vez} abierta={guia.abierta} alCerrar={() => setGuia((g) => ({ ...g, abierta: false }))} />}
+      <GuiaCargador key={guia.vez} abierta={guia.abierta} alCerrar={() => setGuia((g) => ({ ...g, abierta: false }))} />
     </Carta>
     </>
   );

@@ -68,8 +68,10 @@ detecte si anda. Lo que se puede:
 **En la app desde el 31/10/2026** (`src/secciones/sueno/GuiaCargador.tsx`). Dos cosas
 distintas de la maqueta, porque ahí no se sale de Moss: «Empezar» abre el enlace de verdad
 (un toque), y «Mirar cómo se hace» termina volviendo a «Empezar», porque mirar no instala
-nada. **Hasta que esté el enlace** (`ATAJO_DEL_CARGADOR`, en `src/lib/sitio.ts`), la fila abre
-la guía de antes, con cada automatización a mano.
+nada. **Sin el enlace** (`ATAJO_DEL_CARGADOR`, en `src/lib/sitio.ts`), desde el 2/11/2026 la guía es la
+misma con otro camino, `aMano`: las dos automatizaciones, conectar y desconectar, cada una con su acción
+de Moss, con el iPhone dibujado y la prueba al final. Son unos toques más que con el enlace, y no hace
+falta nada de mi parte ni de la tuya para que funcione. Con el enlace, pasa solo a los caminos de arriba.
 
 **Lo que tenés que armar en tu iPhone, una vez** (un enlace de iCloud no se puede crear
 desde Windows; hace falta la build `telefono`, que trae las acciones de Moss):

@@ -84,7 +84,8 @@ const WidgetsNuevos = (() => {
 .wn-chip.siempre, .wn-chip.vacia { background: rgba(246, 227, 166, 0); box-shadow: inset 0 0 0 1px rgba(246, 227, 166, 0.3); }
 .wn-chip.siempre b, .wn-chip.vacia b { color: var(--luz); }
 .wn-chip.tocada { background: rgba(246, 227, 166, 0.15); box-shadow: inset 0 0 0 1px rgba(246, 227, 166, 0.5); }
-.wn-chip b .wn-ic { width: 11px; height: 11px; flex: none; color: var(--luz); }
+.wn-chip b em { font: 500 11px/1 var(--letra); font-style: normal; color: var(--luz); }
+.wn-chip b .wn-ic { width: 10px; height: 10px; flex: none; color: var(--luz); }
 .wn-chip b .wn-ic svg { stroke-width: 2.6; }
 
 /* Hoy, grande: una fila por comida, con lo que comiste o lo que sumaría un toque, y anotar abajo. */
@@ -107,7 +108,7 @@ const WidgetsNuevos = (() => {
 .wn-fila.siempre em, .wn-fila.siempre i.wn-ic, .wn-fila.vacia i.wn-ic { color: var(--luz); }
 .wn-fila.siempre i.wn-ic, .wn-fila.vacia i.wn-ic { box-shadow: inset 0 0 0 1px rgba(246, 227, 166, 0.45); }
 .wn-fila.tocada i.wn-ic { color: #0a1024; background: var(--luz); }
-.wn-fila.tocada em { color: var(--luz); }
+.wn-fila.tocada em, .wn-fila.tocada span { color: var(--luz); }
 .wn-acciones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
 .wn-accion { appearance: none; border: 0; margin: 0; cursor: pointer; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; gap: 5px; color: var(--texto); font: 400 12px/1 var(--letra); background: rgba(239, 230, 207, 0.08); transition: transform 0.15s; }
 .wn-accion:active { transform: scale(0.95); }
@@ -375,7 +376,7 @@ const WidgetsNuevos = (() => {
       b.querySelector('span').textContent = nombre;
       const valor = b.querySelector('b');
       const k = (v) => numero(Math.round(v.kcal));
-      if (estado === 'tocada') valor.innerHTML = `<span class="wn-ic" style="display:block">${icono('listo')}</span>${k(f.siempre.valores)}`;
+      if (estado === 'tocada') valor.innerHTML = `<em>${tx('widgets.anotado')}</em><span class="wn-ic" style="display:block">${icono('listo')}</span>`;
       else valor.textContent = estado === 'anotada' ? k(f.anotada.valores) : estado === 'siempre' ? `+${k(f.siempre.valores)}` : '+';
       b.setAttribute('aria-label', `${nombre}: ${valor.textContent}`);
       b.setAttribute('aria-pressed', String(estado === 'tocada'));
@@ -458,7 +459,7 @@ const WidgetsNuevos = (() => {
       ['anotada', 'tocada', 'siempre', 'vacia'].forEach((x) => b.classList.toggle(x, x === estado));
       b.children[0].textContent = tx('widgets.comidaCorta.' + f.tipo);
       const lista = f.anotada ? f.anotada.nombres : f.siempre ? f.siempre.nombres : [];
-      b.children[1].textContent = lista.length ? lista.join(', ') : tx('widgets.sinAnotar');
+      b.children[1].textContent = estado === 'tocada' ? tx('widgets.anotado') : lista.length ? lista.join(', ') : tx('widgets.sinAnotar');
       const v = f.anotada ? f.anotada.valores : f.siempre ? f.siempre.valores : null;
       poner(b.children[2], !v ? '' : `${estado === 'siempre' ? '+' : ''}${numero(Math.round(v.kcal))}`);
       b.children[3].innerHTML = icono(estado === 'anotada' || estado === 'tocada' ? 'listo' : 'mas');

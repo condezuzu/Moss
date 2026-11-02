@@ -1321,8 +1321,36 @@
             "cuando": "Cuando el cargador se conecta o se desconecta",
             "misAtajos": "Mis atajos",
             "otro1": "Temporizador de cocina",
-            "otro2": "Ir a casa"
-          }
+            "otro2": "Ir a casa",
+            "acciones": "Acciones"
+          },
+          "aMano": {
+            "automatizacion": {
+              "titulo": "Abre Automatización",
+              "texto": "En Atajos, abajo, Automatización. Arriba, +."
+            },
+            "cargador": {
+              "titulo": "Elige Cargador",
+              "texto": "Está en la lista, un poco más abajo."
+            },
+            "conectado": {
+              "titulo": "Marca «Está conectado»",
+              "texto": "Y «Ejecutar inmediatamente», para que no pregunte."
+            },
+            "accionConectado": {
+              "titulo": "Elige lo de Moss",
+              "texto": "«Nueva automatización en blanco», «Agregar acción», busca Moss y toca «Conecté el cargador». Listo."
+            },
+            "desconectado": {
+              "titulo": "Una más, para la mañana",
+              "texto": "Otra vez +, Cargador, y ahora «Está desconectado», también sin preguntar."
+            },
+            "accionDesconectado": {
+              "titulo": "Elige lo de Moss",
+              "texto": "Igual que antes, con «Desconecté el cargador». Listo."
+            }
+          },
+          "minutoAMano": "Un par de minutos, una sola vez."
         }
       }
     }

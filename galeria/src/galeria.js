@@ -975,6 +975,7 @@
     porque: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('proponer'); sueno.verNoche(0); sueno.porque(true); },
     guia27: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 27; guiaAtajos.abrir(27); },
     guia26: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 26; guiaAtajos.abrir(26); },
+    guiaAMano: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.bajarA('.sn-afinar'); versionDeLaGuia = 'aMano'; guiaAtajos.abrir('aMano'); },
     cargadorSinArmar: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('sinArmar'); sueno.bajarA('.sn-afinar'); },
     cargadorAnda: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('anda'); sueno.bajarA('.sn-afinar'); },
     cargadorDejo: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.cargador('dejoDeLlegar'); sueno.bajarA('.sn-aviso-cargador'); },

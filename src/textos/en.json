@@ -1321,8 +1321,36 @@
             "cuando": "When the charger is connected or disconnected",
             "misAtajos": "My Shortcuts",
             "otro1": "Kitchen timer",
-            "otro2": "Drive home"
-          }
+            "otro2": "Drive home",
+            "acciones": "Actions"
+          },
+          "aMano": {
+            "automatizacion": {
+              "titulo": "Open Automation",
+              "texto": "In Shortcuts, at the bottom, Automation. At the top, +."
+            },
+            "cargador": {
+              "titulo": "Choose Charger",
+              "texto": "It's on the list, a bit further down."
+            },
+            "conectado": {
+              "titulo": "Check “Is Connected”",
+              "texto": "And “Run Immediately”, so it doesn’t ask."
+            },
+            "accionConectado": {
+              "titulo": "Choose the Moss action",
+              "texto": "“New Blank Automation”, “Add Action”, search for Moss and tap “I connected the charger”. Done."
+            },
+            "desconectado": {
+              "titulo": "One more, for the morning",
+              "texto": "Again +, Charger, and now “Is Disconnected”, also without asking."
+            },
+            "accionDesconectado": {
+              "titulo": "Choose the Moss action",
+              "texto": "Same as before, with “I disconnected the charger”. Done."
+            }
+          },
+          "minutoAMano": "A couple of minutes, just once."
         }
       }
     }

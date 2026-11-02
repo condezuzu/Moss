@@ -1,7 +1,8 @@
 // La guía del cargador, la de la galería (galeria/src/atajos.js; spec/sueno-sin-esfuerzo.md): armar la
 // automatización que avisa a Moss cuando conectas o desconectas el cargador, con un iPhone dibujado que
 // muestra qué tocar. En iOS 27 la automatización viaja con el atajo; hasta iOS 26, el atajo se instala
-// de un toque y la automatización se arma a mano. Como la persona sale de Moss para ir a Atajos, se puede
+// de un toque y la automatización se arma a mano. Sin el enlace del atajo (hace falta armarlo en un iPhone),
+// se arman a mano las dos automatizaciones, igual de guiadas. Como la persona sale de Moss para ir a Atajos, se puede
 // mirar entera antes, y al volver sigue donde quedó. Termina probándolo con el cargador de verdad.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -17,7 +18,7 @@ import { Icono } from '../comida/comunes';
 import { horaDelDia } from '../comida/datos';
 import { Aparece } from '../tarjetas';
 
-type Tocar = 'instalar' | 'llave' | 'anadir' | 'mas' | 'cargador' | 'siguiente' | 'atajo';
+type Tocar = 'instalar' | 'llave' | 'anadir' | 'mas' | 'cargador' | 'siguiente' | 'atajo' | 'accion';
 
 // Cada pantalla del iPhone dibujado y qué hay que tocar en ella.
 const PASOS = {
@@ -33,6 +34,14 @@ const PASOS = {
     { id: 'marcar', clave: 'conAtajos26.marcar', pantalla: 'marcar', toca: 'siguiente' },
     { id: 'elegir', clave: 'conAtajos26.elegir', pantalla: 'elegir', toca: 'atajo' },
   ],
+  aMano: [
+    { id: 'automatizacion', clave: 'aMano.automatizacion', pantalla: 'automatizaciones', toca: 'mas' },
+    { id: 'cargador', clave: 'aMano.cargador', pantalla: 'lista', toca: 'cargador' },
+    { id: 'conectado', clave: 'aMano.conectado', pantalla: 'marcarConectado', toca: 'siguiente' },
+    { id: 'accionConectado', clave: 'aMano.accionConectado', pantalla: 'accionConectado', toca: 'accion' },
+    { id: 'desconectado', clave: 'aMano.desconectado', pantalla: 'marcarDesconectado', toca: 'siguiente' },
+    { id: 'accionDesconectado', clave: 'aMano.accionDesconectado', pantalla: 'accionDesconectado', toca: 'accion' },
+  ],
 } as const;
 type Paso = (typeof PASOS)[keyof typeof PASOS][number];
 
@@ -41,14 +50,15 @@ const LLAVE_MS = 420;
 /** Sin nada del cargador en este rato, se dice qué mirar. */
 const ESPERA_MS = 30_000;
 
-/** En iOS 27 la automatización viaja con el atajo; antes, no. En la web, para probarla: EXPO_PUBLIC_IOS_DE_PRUEBA. */
+/** En iOS 27 la automatización viaja con el atajo; antes, no; y sin el enlace, todo a mano. En la web, para probarla: EXPO_PUBLIC_IOS_DE_PRUEBA. */
 function versionDeLaGuia(): keyof typeof PASOS {
+  if (!ATAJO_DEL_CARGADOR) return 'aMano';
   const ios = Number(process.env.EXPO_PUBLIC_IOS_DE_PRUEBA ?? String(Platform.Version).split('.')[0]);
   return ios >= 27 ? 27 : 26;
 }
 
 
-function ios(clave: 'automatizacion' | 'atajos' | 'nueva' | 'buscar' | 'alarma' | 'sueno' | 'cargador' | 'conectado' | 'desconectado' | 'ejecutar' | 'confirmar' | 'siguiente' | 'anadir' | 'activar' | 'atajo' | 'cuando' | 'misAtajos' | 'otro1' | 'otro2') {
+function ios(clave: 'acciones' | 'automatizacion' | 'atajos' | 'nueva' | 'buscar' | 'alarma' | 'sueno' | 'cargador' | 'conectado' | 'desconectado' | 'ejecutar' | 'confirmar' | 'siguiente' | 'anadir' | 'activar' | 'atajo' | 'cuando' | 'misAtajos' | 'otro1' | 'otro2') {
   return t(`sueno.afinar.cargador.guia.ios.${clave}`);
 }
 
@@ -156,6 +166,29 @@ function IphoneDibujado({ paso, llave, alTocar }: { paso: Paso; llave: boolean; 
         <Tocable id="siguiente" toca={toca} alTocar={alTocar} style={st.iosPrincipal} radio={11} etiqueta={ios('siguiente')}><Text style={st.iosPrincipalTexto}>{ios('siguiente')}</Text></Tocable>
       </>
     );
+  } else if (pantalla === 'marcarConectado' || pantalla === 'marcarDesconectado') {
+    contenido = (
+      <>
+        {barra(ios('cargador'))}
+        {marca(ios('conectado'), pantalla === 'marcarConectado')}
+        {marca(ios('desconectado'), pantalla === 'marcarDesconectado')}
+        <View style={st.iosEspacio} />
+        {marca(ios('confirmar'), false)}
+        {marca(ios('ejecutar'), true)}
+        <Tocable id="siguiente" toca={toca} alTocar={alTocar} style={st.iosPrincipal} radio={11} etiqueta={ios('siguiente')}><Text style={st.iosPrincipalTexto}>{ios('siguiente')}</Text></Tocable>
+      </>
+    );
+  } else if (pantalla === 'accionConectado' || pantalla === 'accionDesconectado') {
+    const accion = (clave: 'conectar' | 'desconectar' | 'alarma') => t(`sueno.afinar.atajos.cuales.${clave}.accion`);
+    contenido = (
+      <>
+        {barra(ios('acciones'))}
+        <View style={st.iosBuscar}><Text style={st.iosBuscarTexto}>Moss</Text></View>
+        {fila(accion('conectar'), pantalla === 'accionConectado' ? 'accion' : undefined)}
+        {fila(accion('desconectar'), pantalla === 'accionDesconectado' ? 'accion' : undefined)}
+        {fila(accion('alarma'))}
+      </>
+    );
   } else {
     contenido = (
       <>
@@ -249,6 +282,12 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
   const empezar = () => {
     setLlave(false);
     setMirando(false);
+    // Sin el enlace, se abre Atajos y la guía acompaña desde el primer paso.
+    if (version === 'aMano') {
+      setPaso(0);
+      Linking.openURL('shortcuts://').catch(() => {});
+      return;
+    }
     // En iOS 27, lo de Atajos termina ahí: al volver, a probarlo. Hasta iOS 26, sigue la automatización.
     alVolver.current = version === 27 ? pasos.length : 1;
     setPaso(version === 27 ? 1 : 0);
@@ -287,7 +326,7 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
                   </View>
                 ))}
               </View>
-              <Text style={st.chico}>{t('sueno.afinar.cargador.guia.minuto')}</Text>
+              <Text style={st.chico}>{t(version === 'aMano' ? 'sueno.afinar.cargador.guia.minutoAMano' : 'sueno.afinar.cargador.guia.minuto')}</Text>
             </Aparece>
           )}
           {actual && (
@@ -331,7 +370,7 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
                 <Icono nombre="chevron.left" tam={14} color="rgba(239, 230, 207, 0.65)" peso="medium" />
                 <Text style={st.atrasTexto}>{t('sueno.afinar.cargador.guia.atras')}</Text>
               </Pressable>
-              {version === 26 && paso >= 1 && !enPrueba && !mirando && (
+              {(version === 'aMano' || (version === 26 && paso >= 1)) && !enPrueba && !mirando && (
                 <Pressable onPress={() => { Linking.openURL('shortcuts://').catch(() => {}); }} style={({ pressed }) => [st.abrirAtajos, pressed && st.principalApretado]} accessibilityRole="button">
                   <Text style={st.abrirAtajosTexto}>{t('sueno.afinar.atajos.abrir')}</Text>
                 </Pressable>

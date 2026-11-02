@@ -1,7 +1,8 @@
 // La guía del cargador (spec/sueno-sin-esfuerzo.md): armar la automatización que avisa a Moss cuando
 // conectas o desconectas el cargador, en menos de un minuto, con un iPhone dibujado que muestra qué tocar.
 // Hay dos caminos: en iOS 27 la automatización viaja con el atajo (un toque, la llave y «Añadir»); hasta
-// iOS 26, el atajo se instala igual de un toque y la automatización se arma a mano. Termina probándolo:
+// iOS 26, el atajo se instala igual de un toque y la automatización se arma a mano. Sin el enlace del atajo,
+// se arman a mano las dos automatizaciones, una para conectar y otra para desconectar. Termina probándolo:
 // Moss no ve las automatizaciones de Atajos, pero sí lo que le llega (SinReloj.estadoDelCargador).
 
 const GuiaAtajos = (() => {
@@ -18,6 +19,14 @@ const GuiaAtajos = (() => {
       { id: 'cargador', clave: 'conAtajos26.cargador', pantalla: 'lista', toca: 'cargador' },
       { id: 'marcar', clave: 'conAtajos26.marcar', pantalla: 'marcar', toca: 'siguiente' },
       { id: 'elegir', clave: 'conAtajos26.elegir', pantalla: 'elegir', toca: 'atajo' },
+    ],
+    aMano: [
+      { id: 'automatizacion', clave: 'aMano.automatizacion', pantalla: 'automatizaciones', toca: 'mas' },
+      { id: 'cargador', clave: 'aMano.cargador', pantalla: 'lista', toca: 'cargador' },
+      { id: 'conectado', clave: 'aMano.conectado', pantalla: 'marcarConectado', toca: 'siguiente' },
+      { id: 'accionConectado', clave: 'aMano.accionConectado', pantalla: 'accionConectado', toca: 'accion' },
+      { id: 'desconectado', clave: 'aMano.desconectado', pantalla: 'marcarDesconectado', toca: 'siguiente' },
+      { id: 'accionDesconectado', clave: 'aMano.accionDesconectado', pantalla: 'accionDesconectado', toca: 'accion' },
     ],
   };
   const quieto = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -99,6 +108,22 @@ const GuiaAtajos = (() => {
         p.appendChild(el('i', 'gc-espacio'));
         p.append(r(ios('confirmar'), false), r(ios('ejecutar'), true));
         p.appendChild(toca('gc-principal', ios('siguiente'), 'siguiente'));
+      } else if (paso.pantalla === 'marcarConectado' || paso.pantalla === 'marcarDesconectado') {
+        p.appendChild(barra(ios('cargador')));
+        const r = (t, si) => { const c = el('div', 'gc-fila gc-marca'); c.innerHTML = `<span>${t}</span>${si ? '<em class="si">✓</em>' : '<em></em>'}`; return c; };
+        p.append(r(ios('conectado'), paso.pantalla === 'marcarConectado'), r(ios('desconectado'), paso.pantalla === 'marcarDesconectado'));
+        p.appendChild(el('i', 'gc-espacio'));
+        p.append(r(ios('confirmar'), false), r(ios('ejecutar'), true));
+        p.appendChild(toca('gc-principal', ios('siguiente'), 'siguiente'));
+      } else if (paso.pantalla === 'accionConectado' || paso.pantalla === 'accionDesconectado') {
+        const accion = (clave) => tx(`sueno.afinar.atajos.cuales.${clave}.accion`);
+        p.appendChild(barra(ios('acciones')));
+        p.appendChild(el('div', 'gc-buscar', 'Moss'));
+        p.append(
+          fila(accion('conectar'), paso.pantalla === 'accionConectado' ? 'accion' : ''),
+          fila(accion('desconectar'), paso.pantalla === 'accionDesconectado' ? 'accion' : ''),
+          fila(accion('alarma'), ''),
+        );
       } else if (paso.pantalla === 'elegir') {
         p.appendChild(barra(ios('misAtajos')));
         p.appendChild(el('div', 'gc-buscar', ios('buscar')));
@@ -131,7 +156,7 @@ const GuiaAtajos = (() => {
         cuerpo.appendChild(el('h3', 'gc-titulo', guia('titulo')));
         const lista = el('ul', 'gc-puntos');
         guia('puntos').forEach((t) => lista.appendChild(el('li', null, t)));
-        cuerpo.append(lista, el('p', 'gc-chico', guia('minuto')));
+        cuerpo.append(lista, el('p', 'gc-chico', guia(s.version === 'aMano' ? 'minutoAMano' : 'minuto')));
         const pie = el('div', 'gc-pie');
         pie.append(boton('sn-si gc-ancho', guia('empezar'), () => { s.paso = 0; pintar(); }), boton('sn-otra gc-ancho', guia('mirar'), mirar));
         raiz.append(cab, cuerpo, pie);
@@ -176,7 +201,7 @@ const GuiaAtajos = (() => {
     function abrir(version) {
       clearTimeout(s.cierre);
       clearTimeout(s.solo);
-      Object.assign(s, { version: version === 26 ? 26 : 27, paso: -1, llave: false, llego: false });
+      Object.assign(s, { version: version === 26 || version === 'aMano' ? version : 27, paso: -1, llave: false, llego: false });
       raiz.hidden = false;
       raiz.classList.remove('saliendo');
       pintar();
