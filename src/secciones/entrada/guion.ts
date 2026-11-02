@@ -35,6 +35,14 @@ export type Guion = {
   luna?: EscenaDeLuna;
   /** En la cuenta: cuándo aparece cada letra de la marca, al pasar la estrella. */
   letras?: number[];
+  /** En la base: cuándo llega la estrella a cada resultado. */
+  base?: number[];
+  /** En el sueño: cuándo empieza a cruzar la noche y cuánto tarda. */
+  noche?: [number, number];
+  /** En los dos juntos: cuándo baja de la noche al día y cuánto tarda. */
+  juntos?: [number, number];
+  /** En lo que cuesta: cuándo llega a cada punto de la prueba. */
+  camino?: number[];
 };
 
 export type Anclas = {
@@ -184,8 +192,8 @@ export function anclas(W: number, H: number, arriba: number, abajo: number, arri
   };
 }
 
-export type Paso = 'frase' | 'habitos' | 'comida' | 'datos' | 'cuenta' | 'salud' | 'edad' | 'sexo' | 'altura' | 'peso' | 'actividad' | 'cuidado' | 'objetivo' | 'resultado';
-const DIAPOSITIVAS: readonly Paso[] = ['frase', 'habitos', 'comida'];
+export type Paso = 'frase' | 'habitos' | 'comida' | 'base' | 'sueno' | 'juntos' | 'precio' | 'datos' | 'cuenta' | 'salud' | 'edad' | 'sexo' | 'altura' | 'peso' | 'actividad' | 'cuidado' | 'objetivo' | 'resultado';
+const DIAPOSITIVAS: readonly Paso[] = ['frase', 'habitos', 'comida', 'base', 'sueno', 'juntos', 'precio'];
 /** La frase y las diapositivas: la estrella espera abajo y tocarla es seguir. */
 export const esDiapositiva = (p: Paso) => DIAPOSITIVAS.includes(p);
 
@@ -275,10 +283,21 @@ function guionDeHabitos(a: Anclas, desde: Lugar, estrellas: readonly Estrella[],
 /** Los anillos de la luna, en la caja de 230 puntos (54, 62 y 70 en la de 200). */
 export const LUNA = { caja: 230, radios: [54, 62, 70].map((r) => r * 1.15) };
 
-// «Tu comida, a tu medida»: la guía da tres vueltas a la luna, una por macro, y cada vuelta deja su
-// anillo mientras la luna se llena.
-function guionDeComida(a: Anclas, desde: Lugar): Guion {
-  const c = a.figura;
+/** Dónde va cada cosa de la introducción con la suscripción, en parte del alto de la pantalla, como en la galería. */
+export const INTRO = { luna: 0.46, dicho: 0.26, busca: 0.3, noche: 0.275, juntos: 0.29, camino: 0.37, nota: 0.58 };
+/** Con menos alto que esto (un iPhone chico), lo dicho no entra entre el texto y la luna. */
+export const ALTO_PARA_LO_DICHO = 720;
+/** Lo que mide la base: de la caja de búsqueda a la primera fila, y de una fila a la otra. */
+export const BASE = { hastaLasFilas: 50, fila: 64 };
+/** Lo que mide la tarjeta de la noche hasta la mitad del gráfico. */
+export const NOCHE = { hastaElGrafico: 50, grafico: 92 };
+/** Lo que mide el ejemplo de los dos juntos, en grande: la noche, el hilo y la luna. */
+export const JUNTOS = { relleno: 15, noche: 52, hilo: 30, margen: 5, luna: 48 };
+
+// «Tu comida, a tu medida» o «Anota en segundos»: la guía da tres vueltas a la luna, una por macro, y
+// cada vuelta deja su anillo mientras la luna se llena. Con la suscripción, la luna va un poco más arriba.
+function guionDeComida(a: Anclas, desde: Lugar, conPago: boolean): Guion {
+  const c: Punto = conPago ? [a.figura[0], a.H * INTRO.luna] : a.figura;
   const R = LUNA.radios;
   const arriba = (r: number): Punto => [c[0], c[1] - r];
   const LLEGA = 1100;
@@ -297,6 +316,98 @@ function guionDeComida(a: Anclas, desde: Lugar): Guion {
     fin: termina + 900,
     eventos: vueltas.map(([, fin]): [number, Evento] => [fin, 'suave']),
     luna: { centro: c, radios: R, vueltas, llena: [LLEGA, termina] },
+  };
+}
+
+// La base: la guía baja por lo que encontró, y cada resultado se enciende con su fuente.
+function guionDeBase(a: Anclas, desde: Lugar): Guion {
+  const y0 = a.H * INTRO.busca + BASE.hastaLasFilas;
+  const x = a.barra.x0 + 24;
+  const centro = (k: number): Punto => [x, y0 + k * BASE.fila + 28];
+  const LLEGA = 1150;
+  const SALTO = 340;
+  const PAUSA = 130;
+  const llegaA = [0, 1, 2].map((k) => LLEGA + k * (SALTO + PAUSA));
+  const sale = llegaA[2] + 320;
+  const tramos: Tramo[] = [{ t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.82], [a.W * 0.02, centro(0)[1] + 60], centro(0)), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] }];
+  [1, 2].forEach((k) => tramos.push({ t0: llegaA[k] - SALTO, ms: SALTO, ...recta(centro(k - 1), centro(k)), facil: 'suave', estela: true }));
+  tramos.push({ t0: sale, ms: 850, ...bezier(centro(2), [x + 20, centro(2)[1] + 130], [a.W * 0.3, a.H * 0.9], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] });
+  return { recorrido: { inicio: desde, tramos, barra: null }, fin: sale + 850, eventos: llegaA.map((t): [number, Evento] => [t, 'suave']), base: llegaA };
+}
+
+// El sueño: la guía cruza la noche y la va dibujando al pasar.
+function guionDeSueno(a: Anclas, desde: Lugar): Guion {
+  const y = a.H * INTRO.noche + NOCHE.hastaElGrafico + NOCHE.grafico / 2;
+  const izq: Punto = [a.barra.x0 + 16, y];
+  const der: Punto = [a.W - a.barra.x0 - 16, y];
+  const LLEGA = 1050;
+  const CRUZA = 1300;
+  const sale = LLEGA + CRUZA + 260;
+  return {
+    recorrido: {
+      inicio: desde,
+      tramos: [
+        { t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.8], [a.W * 0.02, y + 70], izq), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] },
+        { t0: LLEGA, ms: CRUZA, ...recta(izq, der), facil: 'lineal', estela: true },
+        { t0: sale, ms: 900, ...bezier(der, [a.W * 1.04, y + 130], [a.W * 0.96, a.H * 0.88], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] },
+      ],
+      barra: null,
+    },
+    fin: sale + 900,
+    eventos: [[LLEGA + CRUZA, 'suave']],
+    noche: [LLEGA, CRUZA],
+  };
+}
+
+// Los dos juntos: la guía sale de la noche, baja por el hilo que deja y llega a la luna de hoy.
+function guionDeJuntos(a: Anclas, desde: Lugar): Guion {
+  const y0 = a.H * INTRO.juntos + JUNTOS.relleno + JUNTOS.noche + JUNTOS.margen;
+  const x = a.barra.x0 + JUNTOS.relleno + JUNTOS.luna / 2;
+  const arriba: Punto = [x, y0];
+  const abajo: Punto = [x, y0 + JUNTOS.hilo + JUNTOS.margen + JUNTOS.luna / 2];
+  const LLEGA = 1100;
+  const BAJA = 700;
+  const sale = LLEGA + BAJA + 420;
+  return {
+    recorrido: {
+      inicio: desde,
+      tramos: [
+        { t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.8], [a.W * 0.02, arriba[1] + 40], arriba), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] },
+        { t0: LLEGA, ms: BAJA, ...recta(arriba, abajo), facil: 'suave', estela: true },
+        { t0: sale, ms: 850, ...bezier(abajo, [abajo[0] + 30, abajo[1] + 150], [a.W * 0.3, a.H * 0.9], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] },
+      ],
+      barra: null,
+    },
+    fin: sale + 850,
+    eventos: [[LLEGA + BAJA, 'toque']],
+    juntos: [LLEGA, BAJA],
+  };
+}
+
+// Lo que cuesta: la guía camina la prueba y cada punto se enciende al llegar.
+function guionDePrecio(a: Anclas, desde: Lugar): Guion {
+  const y = a.H * INTRO.camino + 5.5;
+  const lados = a.barra.x0;
+  const columna = (a.W - 2 * lados - 12) / 3;
+  const X = [lados + columna / 2, a.W / 2, a.W - lados - columna / 2];
+  const LLEGA = 1000;
+  const TRAMO = 650;
+  const cuando = [LLEGA, LLEGA + TRAMO + 120, LLEGA + 2 * (TRAMO + 120)];
+  const sale = cuando[2] + 380;
+  return {
+    recorrido: {
+      inicio: desde,
+      tramos: [
+        { t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.8], [a.W * 0.02, y + 40], [X[0], y]), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] },
+        { t0: cuando[1] - TRAMO, ms: TRAMO, ...recta([X[0], y], [X[1], y]), facil: 'suave', estela: true },
+        { t0: cuando[2] - TRAMO, ms: TRAMO, ...recta([X[1], y], [X[2], y]), facil: 'suave', estela: true },
+        { t0: sale, ms: 850, ...bezier([X[2], y], [a.W * 1.02, y + 140], [a.W * 0.9, a.H * 0.88], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] },
+      ],
+      barra: null,
+    },
+    fin: sale + 850,
+    eventos: cuando.map((t): [number, Evento] => [t, 'suave']),
+    camino: cuando,
   };
 }
 
@@ -377,11 +488,15 @@ export function guionDeSalida(desde: Lugar): Guion {
   };
 }
 
-/** El guion de una pantalla. k: lo que lleva la barra si es una pregunta del cuestionario. */
-export function guionDe(p: Paso, a: Anclas, desde: Lugar, k: number, casiopea: { estrellas: readonly Estrella[]; lineas: readonly (readonly [number, number])[] }): Guion {
+/** El guion de una pantalla. k: lo que lleva la barra si es una pregunta del cuestionario. conPago: la introducción con la suscripción. */
+export function guionDe(p: Paso, a: Anclas, desde: Lugar, k: number, casiopea: { estrellas: readonly Estrella[]; lineas: readonly (readonly [number, number])[] }, conPago = false): Guion {
   if (p === 'frase') return guionDeFrase(a);
   if (p === 'habitos') return guionDeHabitos(a, desde, casiopea.estrellas, casiopea.lineas);
-  if (p === 'comida') return guionDeComida(a, desde);
+  if (p === 'comida') return guionDeComida(a, desde, conPago);
+  if (p === 'base') return guionDeBase(a, desde);
+  if (p === 'sueno') return guionDeSueno(a, desde);
+  if (p === 'juntos') return guionDeJuntos(a, desde);
+  if (p === 'precio') return guionDePrecio(a, desde);
   if (p === 'datos') return guionDeDatos(a, desde);
   if (p === 'cuenta') return guionDeCuenta(a, desde);
   if (p === 'resultado') return guionDeResultado(a, desde);

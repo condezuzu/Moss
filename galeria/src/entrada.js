@@ -1,15 +1,113 @@
 // La entrada a la app, para aprobar en la galería antes de conectarla con la lógica: la frase de
-// apertura, dos diapositivas, tus datos, la cuenta y el cuestionario que arma la meta inicial de
-// comida. La recorre una estrella guía: nace en el musgo, presenta la frase, enciende Casiopea,
-// dibuja los anillos de la luna, acompaña desde arriba y en el cuestionario lleva la barra. En la
-// frase y las diapositivas espera abajo y tocarla es seguir: no hay cómo saltearlas. Cada pantalla
-// tiene su lugar en el cielo (la cámara sube a medida que se avanza) y al final un «flum» lleva al
-// cielo de hoy. Los textos salen del diccionario de la app (src/textos). La app hace lo mismo con el
-// guion de src/secciones/entrada/guion.ts.
+// apertura, la introducción (la comida, la base, el sueño, los dos juntos, los hábitos y el cielo, y lo
+// que cuesta), tus datos, la cuenta, el cuestionario que arma la meta inicial de comida y, al final, la
+// pantalla de pago (suscripcion.js). La recorre una estrella guía: nace en el musgo, presenta la frase,
+// da vueltas a la luna, recorre la base y la noche, une el sueño con la comida, enciende Casiopea, camina
+// la prueba, acompaña desde arriba y en el cuestionario lleva la barra. En la frase y la introducción
+// espera abajo y tocarla es seguir; «Saltar» lleva a lo que cuesta, que no se saltea: el cuestionario es
+// trabajo, y antes hay que saber que Moss es de pago. Cada pantalla tiene su lugar en el cielo (la cámara
+// sube a medida que se avanza) y al final un «flum» lleva al cielo de hoy. Los textos salen del
+// diccionario de la app (src/textos). La app hace lo mismo con el guion de src/secciones/entrada/guion.ts.
 
 const Entrada = (() => {
   const SVG = 'http://www.w3.org/2000/svg';
   const TAU = Math.PI * 2;
+  const CSS = `
+.ent-saltar { position: absolute; right: 18px; top: calc(var(--arriba) + 2px); z-index: 2; appearance: none; cursor: pointer; padding: 8px 10px; border: 0; background: none; color: rgba(239, 230, 207, 0.62); font: 400 13px/1 var(--texto); pointer-events: auto; opacity: 0; transition: opacity 0.4s; }
+.ent-saltar.visible { opacity: 1; }
+.ent-saltar:not(.visible) { pointer-events: none; }
+.ent-cab-intro { position: absolute; left: 28px; top: calc(var(--arriba) + 4px); }
+.ent-cab-intro .ent-constelacion { width: 92px; height: 26px; }
+.ent-intro .ent-texto { max-width: 322px; }
+.ent-fija { position: absolute; left: 28px; right: 28px; }
+@keyframes ent-sube { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.ent-aparece { opacity: 0; animation: ent-sube 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* La comida: lo dicho, la luna que se llena y lo que anotó. */
+.ent-comida .ent-escenario-luna { top: 46%; }
+.ent-dicho { top: 26%; margin: 0; display: flex; align-items: center; gap: 9px; padding: 8px 12px; border-radius: 14px; background: rgba(6, 10, 22, 0.6); border: 1px solid rgba(239, 230, 207, 0.12); text-align: left; font: italic 400 15.5px/1.24 var(--titulos); color: rgba(239, 230, 207, 0.92); }
+.ent-dicho svg { flex: none; width: 17px; height: 17px; fill: none; stroke: var(--oro-claro); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ent-filas { top: calc(46% + 92.5px); margin: 0; padding: 0; list-style: none; display: grid; gap: 1px; text-align: left; }
+.ent-filas li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 6px 2px; border-bottom: 1px solid rgba(239, 230, 207, 0.08); font: 400 14px/1.2 var(--texto); }
+.ent-filas li span { min-width: 0; color: var(--tinta); }
+.ent-filas li small { display: inline; margin-left: 6px; font: 300 12.5px/1 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.ent-filas li b { font: 400 13.5px/1 var(--numeros); font-variant-numeric: tabular-nums; color: rgba(239, 230, 207, 0.84); }
+.ent-total { top: calc(46% + 92.5px + 111px); margin: 0; font: 400 12.5px/1.2 var(--texto); color: var(--oro-claro); }
+
+/* La base: lo que se busca y lo que encuentra, cada uno con su fuente. */
+.ent-busca { top: 30%; height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 13px; border-radius: 13px; background: rgba(239, 230, 207, 0.08); text-align: left; font: 400 15px/1 var(--texto); color: var(--tinta); }
+.ent-busca svg { flex: none; width: 16px; height: 16px; fill: none; stroke: rgba(239, 230, 207, 0.6); stroke-width: 1.7; stroke-linecap: round; }
+.ent-busca span { display: inline-block; overflow: hidden; white-space: nowrap; width: var(--largo); animation: ent-escribe 0.7s 0.4s steps(6) both; border-right: 1.5px solid var(--oro-claro); padding-right: 1px; }
+@keyframes ent-escribe { from { width: 0; } }
+.ent-base-filas { top: calc(30% + 50px); margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; text-align: left; }
+.ent-base-fila { height: 56px; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 10px; align-items: center; padding: 0 12px; border-radius: 13px; background: rgba(6, 10, 22, 0.58); border: 1px solid rgba(239, 230, 207, 0.1); transition: border-color 0.4s; }
+.ent-base-fila i { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(239, 230, 207, 0.25); color: transparent; animation: ent-verificado 0.5s var(--cuando) ease-out both; }
+.ent-base-fila i svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes ent-verificado { to { color: var(--oro-claro); border-color: rgba(232, 196, 106, 0.7); box-shadow: 0 0 12px rgba(232, 196, 106, 0.28); } }
+.ent-base-fila b { display: block; font: 500 14.5px/1.2 var(--texto); }
+.ent-base-fila small { display: block; margin-top: 2px; font: 300 12.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.ent-base-fila em { font: normal 400 14px/1 var(--numeros); font-variant-numeric: tabular-nums; color: rgba(239, 230, 207, 0.86); }
+.ent-macros-mini { display: flex; gap: 2px; width: 60px; height: 3px; margin-top: 6px; border-radius: 2px; overflow: hidden; }
+.ent-macros-mini s { display: block; height: 100%; }
+.ent-m-p { background: var(--oro-claro); }
+.ent-m-c { background: var(--salvia); }
+.ent-m-g { background: #a9c4f5; }
+.ent-base-nota { top: calc(30% + 50px + 184px + 12px); margin: 0; display: grid; gap: 7px; justify-items: center; font: 400 12.5px/1.25 var(--texto); color: rgba(239, 230, 207, 0.7); }
+.ent-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.5); color: var(--oro-claro); font: 400 12.5px/1 var(--texto); }
+
+/* El sueño: la noche que dibuja la estrella, y lo que sale de ella. */
+.ent-noche { top: 27.5%; padding: 14px 16px; border-radius: 16px; background: rgba(6, 10, 22, 0.58); border: 1px solid rgba(239, 230, 207, 0.1); text-align: left; }
+.ent-noche-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ent-noche-cab span { font: 400 10.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
+.ent-noche-cab b { font: 400 24px/1 var(--numeros); font-variant-numeric: tabular-nums; color: #fbf2d9; }
+.ent-noche-grafico { margin-top: 12px; height: 92px; clip-path: inset(-2px 100% -2px 0); animation: ent-revela 1.3s var(--cuando) linear both; }
+.ent-noche-grafico svg { display: block; width: 100%; height: 100%; }
+@keyframes ent-revela { to { clip-path: inset(-2px 0 -2px 0); } }
+.ent-noche-datos { margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ent-noche-datos div { display: grid; gap: 3px; }
+.ent-noche-datos span { font: 400 11.5px/1.15 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.ent-noche-datos b { font: 400 15px/1 var(--numeros); font-variant-numeric: tabular-nums; color: var(--tinta); }
+.ent-noches { top: calc(27.5% + 214px); }
+.ent-noches span { display: block; margin-bottom: 8px; text-align: left; font: 400 10.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
+.ent-noches svg { display: block; width: 100%; height: 100%; }
+
+/* Los dos juntos: la estrella une la noche con el día. */
+.ent-juntos-caja { top: 29%; }
+.ent-juntos-caja .sb-juntos { padding: 15px 16px; background: rgba(6, 10, 22, 0.58); text-align: left; }
+.ent-juntos-caja .sb-j-grafico { height: 52px; }
+.ent-juntos-caja .sb-j-union { height: 30px; margin: 5px 0 5px 23px; transform-origin: top; animation: ent-une 0.7s var(--cuando) ease-in-out both; }
+@keyframes ent-une { from { transform: scaleY(0); } }
+.ent-juntos-caja .sb-j-hoy { animation: ent-sube 0.6s var(--luego) cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* Lo que cuesta: la estrella camina la prueba. */
+.ent-camino { top: 37%; height: 150px; }
+.ent-camino-hilo { position: absolute; left: 13%; right: 13%; top: 5px; height: 1px; background: rgba(239, 230, 207, 0.2); }
+.ent-camino-hilo i { display: block; height: 100%; background: var(--oro); box-shadow: 0 0 8px rgba(232, 196, 106, 0.7); transform-origin: left; animation: ent-camina var(--dura) var(--cuando) linear both; }
+@keyframes ent-camina { from { transform: scaleX(0); } }
+.ent-camino-puntos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ent-camino-puntos div { display: grid; align-content: start; justify-items: center; gap: 3px; text-align: center; }
+.ent-camino-puntos i { width: 11px; height: 11px; margin-bottom: 7px; border-radius: 50%; border: 1px solid rgba(239, 230, 207, 0.5); background: #0c1124; animation: ent-nodo 0.4s var(--cuando) ease-out both; }
+@keyframes ent-nodo { to { border-color: var(--oro); background: var(--oro); box-shadow: 0 0 12px rgba(232, 196, 106, 0.7); } }
+.ent-camino-puntos b { font: 500 14px/1.2 var(--texto); }
+.ent-camino-puntos span { font: 400 12.5px/1.28 var(--texto); color: rgba(239, 230, 207, 0.72); text-wrap: balance; }
+.ent-precio-nota { top: 58%; margin: 0; font: 400 13px/1.3 var(--texto); color: rgba(239, 230, 207, 0.66); }
+@media (prefers-reduced-motion: reduce) {
+  .ent-aparece, .ent-busca span, .ent-base-fila i, .ent-noche-grafico, .ent-juntos-caja .sb-j-union, .ent-juntos-caja .sb-j-hoy, .ent-camino-hilo i, .ent-camino-puntos i { animation-duration: 0.01s; animation-delay: 0s; }
+  .ent-saltar { transition: none; }
+}
+`;
+  // Lo del ejemplo de la comida, de la base (2 huevos, 122 g; 1 rebanada, 25 g; 1 taza, 252 g) y de lo que se busca.
+  const KCAL_DEL_DICHO = [234, 73, 101];
+  // kcal y los gramos de proteína, carbohidratos y grasas: ½ aguacate, 1 milanesa y 1 cucharada de dulce de leche.
+  const DE_LA_BASE = [[160, 2, 8.5, 14.7], [490, 31.8, 12.7, 33.7], [60, 1.3, 10.5, 1.4]];
+  let conEstilo = false;
+  function ponerEstilo() {
+    if (conEstilo) return;
+    conEstilo = true;
+    const estilo = document.createElement('style');
+    estilo.textContent = CSS;
+    document.head.appendChild(estilo);
+  }
   const limitar = (x, a, b) => Math.min(b, Math.max(a, x));
   const mezclar = (a, b, k) => a + (b - a) * k;
 
@@ -159,12 +257,14 @@ const Entrada = (() => {
   }
 
   function crear(tel, escena, opciones) {
+    ponerEstilo();
     const raiz = document.createElement('div');
     raiz.className = 'entrada';
     raiz.hidden = true;
     tel.appendChild(raiz);
 
     let idioma = 'es';
+    const u = Util.crear({ textos: opciones.textos, idioma: () => idioma });
     const tx = (clave, vars) => {
       let s = clave.split('.').reduce((o, k) => (o ? o[k] : undefined), opciones.textos[idioma]);
       if (s == null) return clave;
@@ -172,6 +272,7 @@ const Entrada = (() => {
       return s;
     };
     const numero = (n, dec) => n.toLocaleString(idioma === 'es' ? 'es-UY' : 'en-US', { minimumFractionDigits: dec || 0, maximumFractionDigits: dec || 0 });
+    const numero2 = (n) => numero(n, 2);
     const el = (etiqueta, clase, texto) => {
       const n = document.createElement(etiqueta);
       if (clase) n.className = clase;
@@ -209,7 +310,9 @@ const Entrada = (() => {
       boton.type = 'button';
       boton.disabled = true;
       const pista = el('p', 'ent-pista');
-      capa.append(lienzo, barra, estrella, boton, pista);
+      const saltar = el('button', 'ent-saltar');
+      saltar.type = 'button';
+      capa.append(lienzo, barra, estrella, boton, pista, saltar);
       raiz.appendChild(capa);
 
       let g = null;
@@ -278,6 +381,7 @@ const Entrada = (() => {
         boton,
         barra,
         pista,
+        saltar,
         get vivo() { return vivo; },
         reproducir(nuevo, a) {
           dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -336,6 +440,7 @@ const Entrada = (() => {
           boton.classList.add('oculto');
           boton.disabled = true;
           pista.classList.remove('visible');
+          saltar.classList.remove('visible');
         },
       };
     })();
@@ -483,11 +588,16 @@ const Entrada = (() => {
     }
 
     // ------------------------------------------------------------ las pantallas
-    // tocar: la estrella espera abajo y tocarla es seguir (la frase y las diapositivas).
+    // tocar: la estrella espera abajo y tocarla es seguir (la frase y la introducción).
+    // intro: lleva la constelación de la introducción, y se puede saltar hasta lo que cuesta.
     const PASOS = [
       { id: 'frase', camara: 0, tocar: true, armar: armarFrase },
-      { id: 'habitos', camara: 0.42, tocar: true, armar: armarHabitos },
-      { id: 'comida', camara: 0.8, tocar: true, armar: armarComida },
+      { id: 'comida', camara: 0.2, tocar: true, intro: true, armar: armarComida },
+      { id: 'base', camara: 0.36, tocar: true, intro: true, armar: armarBase },
+      { id: 'sueno', camara: 0.52, tocar: true, intro: true, armar: armarSueno },
+      { id: 'juntos', camara: 0.66, tocar: true, intro: true, armar: armarJuntos },
+      { id: 'habitos', camara: 0.8, tocar: true, intro: true, armar: armarHabitos },
+      { id: 'precio', camara: 0.92, tocar: true, intro: true, armar: armarPrecio },
       { id: 'datos', camara: 0.98, armar: armarDatos },
       { id: 'cuenta', camara: 1.08, armar: armarCuenta },
       { id: 'salud', camara: 1.16, cuestionario: true, armar: armarSalud },
@@ -501,6 +611,8 @@ const Entrada = (() => {
       { id: 'resultado', camara: 1.37, armar: armarResultado },
     ];
     const enCuestionario = PASOS.filter((p) => p.cuestionario);
+    const enIntro = PASOS.filter((p) => p.intro);
+    const SALTA_A = PASOS.findIndex((p) => p.id === 'precio');
     // Los íconos de las opciones: cuánto se mueve y hacia dónde va.
     const ICONOS_DE = {
       actividad: { poco: 'telefono', algo: 'huellas', activo: 'pesa', muy: 'rayo' },
@@ -520,6 +632,13 @@ const Entrada = (() => {
       const cab = el('div', 'ent-cab-pasos');
       cab.append(constelacionDePasos(i, enCuestionario.length), el('div', 'ent-paso', tx('entrada.cuestionario.paso', { n: i + 1, total: enCuestionario.length })));
       p.append(el('div', 'ent-progreso-hueco'), cab);
+    }
+
+    // Arriba de la introducción, la misma constelación chica: lo visto encendido y lo de ahora, prendiéndose.
+    function cabezaDeIntro(p, paso) {
+      const cab = el('div', 'ent-cab-intro');
+      cab.appendChild(constelacionDePasos(enIntro.indexOf(paso), enIntro.length));
+      p.appendChild(cab);
     }
 
     // Una estrella por pregunta, en zigzag, como una constelación chica.
@@ -590,7 +709,8 @@ const Entrada = (() => {
 
     // «Tus hábitos son estrellas»: la guía llega a la primera estrella y salta de una a la otra; cada
     // una se enciende al tocarla, la línea queda detrás, y al final se conecta como un día completo.
-    function armarHabitos(p, { a, desde }) {
+    function armarHabitos(p, { a, desde, paso }) {
+      cabezaDeIntro(p, paso);
       p.append(el('h2', 'ent-titulo', tx('entrada.habitosTitulo')), el('p', 'ent-texto', tx('entrada.habitosTexto')));
       const cas = casiopeaEn(a);
       if (!cas) return { inicio: desde, tramos: [{ t0: 100, ms: 900, ...recta(desde.pos, a.descanso), facil: 'suave' }], fin: 2500 };
@@ -687,15 +807,27 @@ const Entrada = (() => {
       };
     }
 
-    // «Tu comida, a tu medida»: la guía da tres vueltas a la luna, una por macro, y cada vuelta deja
-    // su anillo mientras la luna se llena.
-    function armarComida(p, { a, desde }) {
-      p.append(el('h2', 'ent-titulo', tx('entrada.comidaTitulo')), el('p', 'ent-texto', tx('entrada.comidaTexto')));
+    // Un texto que entra cuando la estrella llega a su lugar: `ms` desde que empieza la pantalla.
+    const aparece = (n, ms) => {
+      n.classList.add('ent-aparece');
+      n.style.animationDelay = `${(ms / 1000).toFixed(2)}s`;
+      return n;
+    };
+
+    // «Anota en segundos»: lo dicho arriba, y la guía da tres vueltas a la luna, una por macro. Cada vuelta
+    // deja su anillo y anota un alimento mientras la luna se llena.
+    function armarComida(p, { a, desde, paso }) {
+      cabezaDeIntro(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.intro.comida.titulo')), el('p', 'ent-texto', tx('entrada.intro.comida.texto')));
+      const dicho = el('p', 'ent-fija ent-dicho');
+      dicho.innerHTML = Util.icono('microfono');
+      dicho.appendChild(el('span', null, tx('entrada.intro.comida.frase')));
+      p.appendChild(aparece(dicho, 500));
       const l = luna();
       const escenario = el('div', 'ent-escenario-luna');
       escenario.appendChild(l.svg);
       p.appendChild(escenario);
-      const c = a.figura;
+      const c = [a.figura[0], a.H * 0.46];
       // Los radios de los anillos en la caja de 230 px (54, 62 y 70 en la de 200).
       const R = [54, 62, 70].map((x) => x * 1.15);
       const arriba = (radio) => [c[0], c[1] - radio];
@@ -703,6 +835,16 @@ const Entrada = (() => {
       const VUELTA = 560;
       const CAMBIO = 90;
       const vueltas = R.map((_, i) => LLEGA + i * (VUELTA + CAMBIO));
+      const filas = el('ul', 'ent-fija ent-filas');
+      tx('entrada.intro.comida.filas').forEach((nombre, i) => {
+        const li = el('li');
+        const texto = el('span', null, nombre);
+        texto.appendChild(el('small', null, tx('entrada.intro.comida.porciones')[i]));
+        li.append(texto, el('b', null, `${numero(KCAL_DEL_DICHO[i])} kcal`));
+        filas.appendChild(aparece(li, vueltas[i] + VUELTA - 200));
+      });
+      p.appendChild(filas);
+      p.appendChild(aparece(el('p', 'ent-fija ent-total', tx('entrada.intro.comida.total', { n: numero(KCAL_DEL_DICHO.reduce((x, y) => x + y, 0)) })), vueltas[2] + VUELTA + 150));
       const tramos = [{ t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.1, a.H * 0.86], [c[0] - 120, c[1] - R[0] - 6], arriba(R[0])), facil: 'suave', estela: true, escala: [desde.escala, 1], brillo: [desde.brillo, 1] }];
       R.forEach((radio, i) => {
         tramos.push({ t0: vueltas[i], ms: VUELTA, ...vuelta(c, radio), facil: 'lineal', estela: true });
@@ -716,6 +858,187 @@ const Entrada = (() => {
         fin: termina + 900,
         eventos: vueltas.map((v) => [v + VUELTA, () => escena.haptico('suave')]),
         pintar: (t) => l.pintar(limitar((t - LLEGA) / (termina - LLEGA), 0, 1), vueltas.map((v) => limitar((t - v) / VUELTA, 0, 1))),
+      };
+    }
+
+    // «Comida de verdad, sin adivinar»: lo que se busca y lo que encuentra. La guía baja por los resultados
+    // y cada uno se enciende con su fuente: se compara con una segunda tabla oficial (spec/fuentes.md).
+    function armarBase(p, { a, desde, paso }) {
+      cabezaDeIntro(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.intro.base.titulo')), el('p', 'ent-texto', tx('entrada.intro.base.texto')));
+      const busca = el('div', 'ent-fija ent-busca');
+      busca.innerHTML = Util.icono('lupa');
+      const texto = el('span', null, tx('entrada.intro.base.busca'));
+      texto.style.setProperty('--largo', `${tx('entrada.intro.base.busca').length * 0.5}em`);
+      busca.appendChild(texto);
+      const alto = a.H * 0.3 + 50;
+      const FILA = 64;
+      const X = 28 + 13 + 11;
+      const centro = (k) => [X, alto + k * FILA + 28];
+      const LLEGA = 1150;
+      const SALTO = 340;
+      const PAUSA = 130;
+      const llegaA = [0, 1, 2].map((k) => LLEGA + k * (SALTO + PAUSA));
+      const filas = el('ul', 'ent-fija ent-base-filas');
+      tx('entrada.intro.base.filas').forEach((nombre, k) => {
+        const [kcal, pr, ca, gr] = DE_LA_BASE[k];
+        const total = pr * 4 + ca * 4 + gr * 9;
+        const li = el('li', 'ent-base-fila');
+        const marca = el('i');
+        marca.innerHTML = Util.icono('listo');
+        marca.style.setProperty('--cuando', `${(llegaA[k] / 1000).toFixed(2)}s`);
+        const textos = el('div');
+        const macros = el('div', 'ent-macros-mini');
+        [['p', pr * 4], ['c', ca * 4], ['g', gr * 9]].forEach(([m, k2]) => {
+          const b = el('s', 'ent-m-' + m);
+          b.style.flex = `${(k2 / total).toFixed(3)} 0 0`;
+          macros.appendChild(b);
+        });
+        textos.append(el('b', null, nombre), el('small', null, tx('entrada.intro.base.porciones')[k]), macros);
+        li.append(marca, textos, el('em', null, `${numero(kcal)} kcal`));
+        filas.appendChild(aparece(li, 300 + k * 160));
+      });
+      const nota = el('div', 'ent-fija ent-base-nota');
+      nota.append(el('span', null, tx('entrada.intro.base.verificado')), el('span', 'ent-chip', tx('entrada.intro.base.sinIA')));
+      p.append(busca, filas, aparece(nota, llegaA[2] + 300));
+      const ultimo = centro(2);
+      const tramos = [{ t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.82], [a.W * 0.02, centro(0)[1] + 60], centro(0)), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] }];
+      [1, 2].forEach((k) => tramos.push({ t0: llegaA[k] - SALTO, ms: SALTO, ...recta(centro(k - 1), centro(k)), facil: 'suave', estela: true }));
+      const sale = llegaA[2] + 320;
+      tramos.push({ t0: sale, ms: 850, ...bezier(ultimo, [ultimo[0] + 20, ultimo[1] + 130], [a.W * 0.3, a.H * 0.9], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] });
+      return {
+        inicio: desde,
+        tramos,
+        fin: sale + 850,
+        eventos: llegaA.map((t) => [t, () => escena.haptico('suave')]),
+      };
+    }
+
+    // «Tu sueño, también»: la noche de anoche, que la guía dibuja al pasar, y lo que sale de ella.
+    function armarSueno(p, { a, desde, paso }) {
+      cabezaDeIntro(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.intro.sueno.titulo')), el('p', 'ent-texto', tx('entrada.intro.sueno.texto')));
+      const noches = Sueno.ultimasNoches(Datos.NOCHES, Datos.HOY, 14);
+      const n = noches[noches.length - 1] || Datos.NOCHES[Datos.NOCHES.length - 1];
+      const deuda = Sueno.deudaDeSueno(noches, 8 * 60);
+      const caja = el('section', 'ent-fija ent-noche');
+      const cab = el('div', 'ent-noche-cab');
+      cab.append(el('span', null, tx('entrada.intro.sueno.anoche')), el('b', null, u.duracion(n.dormido)));
+      const grafico = el('div', 'ent-noche-grafico');
+      grafico.appendChild(Graficos.hipnograma({ enCamaDesde: n.dormirse, enCamaHasta: n.despertar, tramos: n.tramos }, { ancho: 305, alto: 92, etiquetas: true }));
+      const LLEGA = 1050;
+      const CRUZA = 1300;
+      grafico.style.setProperty('--cuando', `${(LLEGA / 1000).toFixed(2)}s`);
+      const datos = el('div', 'ent-noche-datos');
+      [
+        ['teDormiste', u.horaMin(n.dormirse + 18 * 60)],
+        ['teDespertaste', u.horaMin(n.despertar + 18 * 60)],
+        ['deuda', deuda ? u.duracion(deuda.minutos) : '—'],
+      ].forEach(([clave, valor]) => {
+        const d = el('div');
+        d.append(el('span', null, tx('entrada.intro.sueno.' + clave)), el('b', null, valor));
+        datos.appendChild(d);
+      });
+      caja.append(cab, grafico, aparece(datos, LLEGA + CRUZA - 100));
+      const semana = el('div', 'ent-fija ent-noches');
+      semana.appendChild(el('span', null, tx('entrada.intro.sueno.semanas')));
+      semana.appendChild(Graficos.columnas(noches.slice(-14).map((x) => (x ? x.dormido : null)), 8 * 60, { ancho: 337, alto: 60 }));
+      p.append(aparece(caja, 250), aparece(semana, LLEGA + CRUZA));
+      // La línea que cruza es la del medio del gráfico: del borde izquierdo al derecho de la tarjeta.
+      const y = a.H * 0.275 + 14 + 24 + 12 + 46;
+      const izq = [28 + 16, y];
+      const der = [a.W - 28 - 16, y];
+      const sale = LLEGA + CRUZA + 260;
+      return {
+        inicio: desde,
+        tramos: [
+          { t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.8], [a.W * 0.02, y + 70], izq), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] },
+          { t0: LLEGA, ms: CRUZA, ...recta(izq, der), facil: 'lineal', estela: true },
+          { t0: sale, ms: 900, ...bezier(der, [a.W * 1.04, y + 130], [a.W * 0.96, a.H * 0.88], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] },
+        ],
+        fin: sale + 900,
+        eventos: [[LLEGA + CRUZA, () => escena.haptico('suave')]],
+      };
+    }
+
+    // «Comida y sueño, juntos»: el ejemplo de la pantalla de pago, en grande. La guía sale de la noche, baja
+    // por el hilo que deja y llega a la luna de hoy: ahí aparece lo que eso le dice al día.
+    function armarJuntos(p, { a, desde, paso }) {
+      cabezaDeIntro(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.intro.juntos.titulo')), el('p', 'ent-texto', tx('entrada.intro.juntos.texto')));
+      const caja = el('div', 'ent-fija ent-juntos-caja');
+      const ejemplo = Suscripcion.ejemplo(u);
+      caja.appendChild(ejemplo);
+      p.appendChild(aparece(caja, 250));
+      const LLEGA = 1100;
+      const BAJA = 700;
+      const union = caja.querySelector('.sb-j-union');
+      const hoy = caja.querySelector('.sb-j-hoy');
+      const luna = caja.querySelector('.sb-j-luna');
+      union.style.setProperty('--cuando', `${(LLEGA / 1000).toFixed(2)}s`);
+      hoy.style.setProperty('--luego', `${((LLEGA + BAJA - 150) / 1000).toFixed(2)}s`);
+      const top = a.H * 0.29;
+      const xUnion = 28 + 16 + 23;
+      const arriba = [xUnion, top + union.offsetTop];
+      const llega = [xUnion, top + luna.offsetTop + hoy.offsetTop + 22];
+      const sale = LLEGA + BAJA + 420;
+      return {
+        inicio: desde,
+        tramos: [
+          { t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.8], [a.W * 0.02, arriba[1] + 40], arriba), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] },
+          { t0: LLEGA, ms: BAJA, ...recta(arriba, llega), facil: 'suave', estela: true },
+          { t0: sale, ms: 850, ...bezier(llega, [llega[0] + 30, llega[1] + 150], [a.W * 0.3, a.H * 0.9], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] },
+        ],
+        fin: sale + 850,
+        eventos: [[LLEGA + BAJA, () => escena.haptico('toque')]],
+      };
+    }
+
+    // «Pruébala 7 días, gratis»: lo que cuesta, antes de pedir nada. La guía camina la prueba y cada punto se
+    // enciende al llegar: hoy, el aviso y el cobro. Estos precios son el respaldo; en la app, los de Apple.
+    function armarPrecio(p, { a, desde, paso }) {
+      cabezaDeIntro(p, paso);
+      const usd = (plan) => `USD ${numero2(Premium.PRECIOS[plan])}`;
+      p.append(
+        el('h2', 'ent-titulo', tx('entrada.intro.precio.titulo', { n: Premium.DIAS_DE_PRUEBA })),
+        el('p', 'ent-texto', tx('entrada.intro.precio.texto', { anual: usd('anual'), mensual: usd('mensual') })),
+      );
+      const camino = el('div', 'ent-fija ent-camino');
+      const LLEGA = 1000;
+      const TRAMO = 650;
+      const cuando = [LLEGA, LLEGA + TRAMO + 120, LLEGA + 2 * (TRAMO + 120)];
+      const hilo = el('div', 'ent-camino-hilo');
+      const lleno = el('i');
+      lleno.style.setProperty('--cuando', `${(LLEGA / 1000).toFixed(2)}s`);
+      lleno.style.setProperty('--dura', `${((cuando[2] - LLEGA) / 1000).toFixed(2)}s`);
+      hilo.appendChild(lleno);
+      const puntos = el('div', 'ent-camino-puntos');
+      [
+        [tx('suscripcion.linea.hoy'), tx('suscripcion.linea.hoyTexto')],
+        [tx('suscripcion.linea.dia', { n: Premium.DIA_DEL_AVISO }), tx('suscripcion.linea.avisoTexto')],
+        [tx('suscripcion.linea.dia', { n: Premium.DIAS_DE_PRUEBA }), tx('suscripcion.linea.cobroTexto', { precio: usd('anual') })],
+      ].forEach(([titulo, texto], k) => {
+        const d = el('div');
+        const nodo = el('i');
+        nodo.style.setProperty('--cuando', `${(cuando[k] / 1000).toFixed(2)}s`);
+        d.append(nodo, el('b', null, titulo), el('span', null, texto));
+        puntos.appendChild(d);
+      });
+      camino.append(hilo, puntos);
+      p.append(camino, aparece(el('p', 'ent-fija ent-precio-nota', tx('entrada.intro.precio.nota')), cuando[2] + 200));
+      const y = a.H * 0.37 + 5.5;
+      const X = [a.W * 0.5 - (a.W - 56 - 12) / 3 - 6, a.W * 0.5, a.W * 0.5 + (a.W - 56 - 12) / 3 + 6];
+      const sale = cuando[2] + 380;
+      return {
+        inicio: desde,
+        tramos: [
+          { t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.8], [a.W * 0.02, y + 40], [X[0], y]), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] },
+          { t0: cuando[1] - TRAMO, ms: TRAMO, ...recta([X[0], y], [X[1], y]), facil: 'suave', estela: true },
+          { t0: cuando[2] - TRAMO, ms: TRAMO, ...recta([X[1], y], [X[2], y]), facil: 'suave', estela: true },
+          { t0: sale, ms: 850, ...bezier([X[2], y], [a.W * 1.02, y + 140], [a.W * 0.9, a.H * 0.88], a.descanso), facil: 'suave', estela: true, escala: [0.8, 1] },
+        ],
+        fin: sale + 850,
+        eventos: cuando.map((t) => [t, () => escena.haptico('suave')]),
       };
     }
 
@@ -949,7 +1272,7 @@ const Entrada = (() => {
         leyenda.appendChild(fila);
       });
       p.append(leyenda, el('p', 'ent-chico', tx('entrada.cuestionario.gasto', { n: numero(m.gasto) })), el('p', 'ent-texto', tx('entrada.cuestionario.resultadoTexto')));
-      p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.cuestionario.empezar'), () => (opciones.antesDeTerminar ? opciones.antesDeTerminar(terminar) : terminar()), 'ent-principal'));
+      p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.seguir'), () => (opciones.antesDeTerminar ? opciones.antesDeTerminar(terminar) : terminar()), 'ent-principal'));
       l.llenar(1600, 200);
       // La cifra cuenta hasta la meta.
       const t0 = performance.now() + 200;
@@ -984,6 +1307,10 @@ const Entrada = (() => {
       siguiente();
     }
     guia.boton.addEventListener('click', tocarEstrella);
+    // Saltar lleva a lo que cuesta: el cuestionario es trabajo, y antes hay que saber que Moss es de pago.
+    guia.saltar.addEventListener('click', () => {
+      if (actual >= 0 && actual < SALTA_A) ir(SALTA_A);
+    });
 
     // salto: se llegó desde los controles de la galería y no tocando; la estrella sale de donde
     // habría quedado la pantalla anterior.
@@ -992,7 +1319,7 @@ const Entrada = (() => {
       clearTimeout(esperaPista);
       cancelAnimationFrame(animando);
       const a = anclas();
-      const desde = !salto && actual >= 0 && i === actual + 1 ? guia.vivo : reposo(i - 1, a);
+      const desde = !salto && actual >= 0 && i > actual ? guia.vivo : reposo(i - 1, a);
       const vieja = raiz.querySelector('.ent-pantalla:not(.saliendo)');
       if (vieja) {
         vieja.classList.add('saliendo');
@@ -1003,8 +1330,9 @@ const Entrada = (() => {
       escena.camara(paso.camara, i === 0);
       guia.esperar(false);
       guia.mostrarBoton(!!paso.tocar);
+      guia.saltar.classList.toggle('visible', i < SALTA_A);
       // La pantalla nueva entra cuando la cámara ya empezó a subir.
-      const p = pantalla('ent-' + paso.id + (paso.cuestionario ? ' ent-cuestionario' : ''));
+      const p = pantalla('ent-' + paso.id + (paso.cuestionario ? ' ent-cuestionario' : '') + (paso.intro ? ' ent-intro' : ''));
       p.style.animationDelay = vieja ? '0.26s' : '0.12s';
       let g = paso.armar(p, { a, desde, paso });
       if (paso.cuestionario) g = guionDeBarra(a, desde, paso);
@@ -1029,6 +1357,7 @@ const Entrada = (() => {
       raiz.style.transform = ''; raiz.style.opacity = ''; raiz.style.filter = '';
       guia.pista.textContent = tx('entrada.tocaLaEstrella');
       guia.boton.setAttribute('aria-label', tx('entrada.seguir'));
+      guia.saltar.textContent = tx('entrada.intro.saltar');
       escena.ponerModo('entrada');
       escena.aparecer();
       if (opciones.alEmpezar) opciones.alEmpezar();

@@ -1,7 +1,7 @@
 # Moss
 
 *Mos* es costumbre en latín; *moss* es musgo en inglés, que crece lento pero
-siempre. Moss es una app de comida para iPhone, global y gratis:
+siempre. Moss es una app de comida para iPhone, global y de pago, con 7 días gratis:
 
 - Calorías y macros con metas que se ajustan solas cada semana, como
   MacroFactor, sin IA de fotos.

@@ -770,31 +770,6 @@ describe('la comida enciende estrellas, también con la semana repartida y en lo
   });
 });
 
-describe('el control sin Premium', () => {
-  const respuestas: Cuestionario = { edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
-
-  it('sin el ajuste semanal la meta queda como estaba; al volver a tenerlo, corre', async () => {
-    let conAjuste = false;
-    let ahora = new Date('2026-10-14T15:00:00Z');
-    const almacen = crearAlmacen({ abrir: async () => repositorioEnMemoria(), catalogo: [], ahora: () => ahora, conAjusteSemanal: () => conAjuste });
-    await almacen.iniciar();
-    almacen.revisarDia();
-    almacen.responderCuestionario(respuestas);
-    for (let d = 14; d <= 20; d++) {
-      ahora = new Date(`2026-10-${d}T15:00:00Z`);
-      almacen.revisarDia();
-      almacen.anotarPeso(80, 'salud');
-      almacen.registrar([itemRapido('Todo el día', { kcal: 2500, proteina: 150, carbohidratos: 300, grasas: 75 })], { comida: 'cena' });
-    }
-    ahora = new Date('2026-10-21T15:00:00Z');
-    almacen.revisarDia();
-    expect(almacen.estado().metas.map((m) => m.motivo)).toEqual(['inicial']);
-    conAjuste = true;
-    almacen.revisarElControl();
-    expect(almacen.estado().metas.map((m) => m.motivo)).toEqual(['inicial', 'control']);
-  });
-});
-
 describe('el control y los pesos de Salud que llegan después', () => {
   const respuestas: Cuestionario = { edad: 36, sexo: 'm', alturaCm: 178, pesoKg: 80, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
   const salud = (pesos: [string, number][]) => ({

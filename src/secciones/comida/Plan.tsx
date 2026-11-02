@@ -21,7 +21,6 @@ import {
 import { totalDelDia } from '@/dominio/registros';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { conPremium } from '../premium/Premium';
 import { HojaModal } from '../HojaModal';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Etiqueta, Icono, Pastilla } from './comunes';
@@ -102,7 +101,7 @@ export function ArmarElDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisa
   if (dia < e.hoy) return null;
   const falta = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosEnElDia(new Date(), e.hoy), pref: comoCome(e), horaDe }).length > 0;
   const armar = () => {
-    if (!opciones || !conPremium('plan')) return;
+    if (!opciones) return;
     const armado = armarUnDia(e, dia, opciones);
     if (!armado) {
       avisar(t('comida.plan.nadaQueArmar'));
@@ -215,7 +214,7 @@ export function PlanDeLaSemana({ e, dia, avisar }: { e: Estado; dia: ClaveDia; a
   const domingo = sumarDias(lunes, 6);
   if (domingo < e.hoy) return null;
   const armar = () => {
-    if (!opciones || !conPremium('plan')) return;
+    if (!opciones) return;
     let alguno = false;
     // Cada día con lo que ya quedó armado el anterior: así evita repetir.
     for (let d = lunes < e.hoy ? e.hoy : lunes; d <= domingo; d = sumarDias(d, 1)) alguno = !!armarUnDia(elAlmacen().estado(), d, opciones) || alguno;
@@ -225,7 +224,7 @@ export function PlanDeLaSemana({ e, dia, avisar }: { e: Estado; dia: ClaveDia; a
   return (
     <View style={estilos.semana}>
       <Boton texto={t('comida.plan.armarSemana')} icono="sparkles" tipo="secundario" alTocar={armar} desactivado={!opciones} />
-      <Boton texto={t('comida.plan.compras')} icono="cart" tipo="secundario" alTocar={() => { if (conPremium('plan')) setCompras(true); }} />
+      <Boton texto={t('comida.plan.compras')} icono="cart" tipo="secundario" alTocar={() => setCompras(true)} />
       <HojaCompras e={e} abierta={compras} alCerrar={() => setCompras(false)} />
     </View>
   );

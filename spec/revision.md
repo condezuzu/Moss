@@ -304,6 +304,8 @@ Las guías son las del 16/10/2026 (siguen siendo las vigentes el 26/10).
 | 2.5.4 Segundo plano | PASA |
 | 2.5.11 Atajos | PASA |
 | 2.5.16 Widgets | PASA |
+| 3.1.1 Compras dentro de la app | PASA (con la versión que cobra) |
+| 3.1.2 Suscripciones | PASA (con la versión que cobra; ver abajo) |
 | 4.2.3 Anda sola | PASA |
 | 4.8 Inicio de sesión | PASA |
 | 5.1.1(i) Política de privacidad | PASA |
@@ -313,6 +315,28 @@ Las guías son las del 16/10/2026 (siguen siendo las vigentes el 26/10).
 | 5.1.1(ix) Campos regulados | RIESGO bajo |
 | 5.1.2 Uso y compartir (con Ascent) | PASA |
 | 5.1.3 Datos de salud (con Ascent) | PASA |
+
+### 3.1.1 y 3.1.2 · La suscripción — PASA, con la versión que cobra
+
+Mirado el 2/11/2026 contra las guías, la página de suscripciones de Apple y el Schedule 2, 3.8(b). Lo que
+pide cada una y dónde está, en [`suscripcion.md`](suscripcion.md), «La pantalla, con lo que pide Apple».
+
+- **3.1.1:** todo se cobra con StoreKit, y «Restaurar compras» está en la pantalla de pago y en Tu suscripción.
+- **3.1.2(a):** valor que sigue (la base que crece, las metas de cada semana, la sincronización), períodos de un
+  mes y un año, en todos los aparatos con la misma cuenta de Apple. La prueba se configura en App Store Connect.
+  «Sin tareas de más»: nada de lo que se paga pide publicar, invitar ni volver cierta cantidad de veces.
+- **3.1.2(a), nada de trampas:** el cuestionario es trabajo que se hace antes de ver la pantalla de pago, así que
+  la introducción lo dice antes: «Pruébala 7 días, gratis», con el precio, es su última pantalla, y «Saltar» lleva
+  ahí y no al cuestionario. Ninguna guía prohíbe una pantalla de pago que no se salta en una app de suscripción.
+- **3.1.2(b):** un solo grupo, así que no se puede pagar dos veces lo mismo.
+- **3.1.2(c):** lo que recibe por el precio, en «Incluye todo Moss»; el título, la duración y el precio, a la vista;
+  lo que se cobra es lo más destacado, y lo equivalente va abajo y en chico.
+- **Lo que dice la pantalla tiene que existir:** el aviso del día 5 (`avisoDePrueba`) y la línea de la noche corta
+  (`lineaDeNocheCorta`). «200 a 385 kcal» sale de metaanálisis ([`entreno.md`](entreno.md), 3.1).
+- **RIESGO a mirar: la cuenta antes de comprar** (5.1.1(v)). Apple rechaza a veces pedir registrarse para comprar
+  algo que no depende de una cuenta. Moss ya pide cuenta para todo, y lo justifica lo mismo que abajo: la cuenta
+  sincroniza, restaura en un teléfono nuevo y vincula con Ascent. Lo dicen las notas de «f». Lo pediste en este
+  orden (iniciar sesión antes de la pantalla de pago). Si lo rechazan, el arreglo es pasar la cuenta después de la compra.
 
 ### 4.8 · Inicio de sesión — PASA
 
@@ -341,6 +365,8 @@ solo para autorizar el vínculo, y la cuenta de Moss sigue siendo la de Apple.
   ella, y Ascent queda intacta. En los dos casos se revoca Apple antes. Probado
   caso por caso (`npm run supabase:verificar`, sección 9, y `node
   herramientas/probar-borrar-cuenta.mjs`).
+- **Sin pagar:** con la versión que cobra, borrar la cuenta también está en la pantalla de pago, y con una suscripción
+  activa el aviso dice que la cobra Apple y que hay que cancelarla, con «Administrar suscripción», como pide Apple.
 - **La cuenta obligatoria** era un RIESGO («If your app doesn’t include
   significant account-based features, let people use it without a login»). Ahora
   la cuenta sincroniza, restaura en un teléfono nuevo y vincula con Ascent:
@@ -466,15 +492,18 @@ el nombre, el subtítulo, las palabras clave ni el texto promocional.
 | Nombre | Moss: calorías y macros (23) | Moss: Calorie & Macro Tracker (29) |
 | Subtítulo | Comida, peso, sueño y hábitos (29) | Food, weight, sleep & habits (28) |
 | Palabras clave | `contador,kcal,proteína,dieta,nutrición,alimentos,bajar,código de barras,agua,recetas,déficit` (96 bytes) | `counter,kcal,protein,diet,nutrition,log,diary,barcode,scanner,lose,water,goals,recipes,meal,cut,bulk` (100 bytes) |
-| Texto promocional | Registra lo que comes en pocos toques, o dilo. Tus metas de calorías y macros se ajustan cada semana con la tendencia de tu peso. Sin anuncios. (143) | Log what you eat in a few taps, or just say it. Your calorie and macro targets adjust every week to your weight trend. No ads. (126) |
+| Texto promocional | Registra lo que comes en pocos toques, o dilo. Tus metas de calorías y macros se ajustan cada semana con la tendencia de tu peso. Sin anuncios. (143). Con la versión que cobra: Comida y sueño, juntos: anota en pocos toques, tus metas se ajustan cada semana y Moss ve también tu noche. 7 días gratis. (113) | Log what you eat in a few taps, or just say it. Your calorie and macro targets adjust every week to your weight trend. No ads. (126). With the paid version: Food and sleep, together: log in a few taps, your targets adjust every week and Moss sees your night too. 7 days free. (117) |
 
 Si `Moss` sola queda libre, el nombre puede ser solo «Moss» y el subtítulo
 cargar lo demás; con el nombre largo se encuentra mejor.
 
-### Descripción (español, 3.811 caracteres)
+### Descripción (español, 3.985 caracteres)
 
 ```
 Moss es un registro de comida para iPhone. Anotas lo que comes en pocos toques, o lo dices, y Moss ajusta tus metas de calorías y macros cada semana con la tendencia de tu peso. Tus hábitos te acompañan como estrellas en un cielo nocturno.
+
+COMIDA Y SUEÑO, JUNTOS
+Dormir poco da más hambre. Las apps de comida no ven tu noche y las de sueño no ven tu plato: Moss ve las dos.
 
 REGISTRA EN POCOS TOQUES
 • Di todo junto lo que comiste («dos huevos revueltos, una tostada y un café con leche») y Moss lo anota, con el reconocimiento de voz del iPhone.
@@ -518,8 +547,8 @@ Con tu permiso, Moss lee de la app Salud tu peso, altura, pasos, agua, minutos d
 TUS DATOS SON TUYOS
 Sin anuncios y sin rastreo. Entras con Apple, y Moss guarda tus datos en el teléfono y en tu cuenta para sincronizarlos. Puedes exportarlos y borrar tu cuenta desde la app.
 
-MOSS PREMIUM
-Lo gratis alcanza para registrar: comida, hábitos, cielo y peso. Moss Premium suma el ajuste semanal de metas, el plan de comidas y el sueño completo con la hora de dormir: USD 4,99 por mes o USD 29,99 por año, con 7 días gratis. El cobro va a tu cuenta de Apple y se renueva solo salvo que lo canceles al menos 24 horas antes de que termine el período. Se administra en Ajustes.
+MOSS ES DE PAGO, CON 7 DÍAS GRATIS
+Toda la app, sin partes bloqueadas: USD 39,99 por año o USD 9,99 por mes, o lo que muestre la App Store en tu país. La prueba es gratis y una sola vez: si no cancelas antes de que termine, empieza el cobro, y Moss te avisa dos días antes. Lo cobra tu cuenta de Apple y se renueva solo salvo que lo canceles al menos 24 horas antes de que termine el período. Se administra y se cancela en Ajustes.
 
 Moss es para mayores de 16 años. No es un dispositivo médico: sus números son estimaciones y no reemplazan a un profesional de la salud. Si estás embarazada, amamantando o tienes una condición médica, consulta a un profesional antes de cambiar lo que comes.
 
@@ -527,10 +556,13 @@ Términos de uso: https://condezuzu.github.io/moss-app/terminos/
 Privacidad: https://condezuzu.github.io/moss-app/privacidad/
 ```
 
-### Description (inglés, 3.645 caracteres)
+### Description (inglés, 3.856 caracteres)
 
 ```
 Moss is a food log for iPhone. Log what you eat in a few taps, or just say it, and Moss adjusts your calorie and macro targets every week, based on your weight trend. Your habits keep you company as stars in a night sky.
+
+FOOD AND SLEEP, TOGETHER
+Sleeping too little makes you hungrier. Food apps can’t see your night and sleep apps can’t see your plate: Moss sees both.
 
 LOG IN A FEW TAPS
 • Say everything you ate at once (“two scrambled eggs, a toast and a coffee with milk”) and Moss logs it, with the iPhone’s speech recognition.
@@ -574,8 +606,8 @@ With your permission, Moss reads your weight, height, steps, water, mindful minu
 YOUR DATA IS YOURS
 No ads and no tracking. You sign in with Apple, and Moss keeps your data on your phone and in your account to sync it. You can export it and delete your account from the app.
 
-MOSS PREMIUM
-Free is enough to log: food, habits, sky and weight. Moss Premium adds weekly goal adjustments, the meal plan and full sleep with bedtime: USD 4.99 per month or USD 29.99 per year, with a 7-day free trial. Payment is charged to your Apple Account and renews automatically unless you cancel at least 24 hours before the period ends. Manage it in Settings.
+MOSS IS PAID, WITH A 7-DAY FREE TRIAL
+The whole app, with nothing locked: USD 39.99 per year or USD 9.99 per month, or what the App Store shows in your country. The trial is free, once: if you don’t cancel before it ends, billing starts, and Moss reminds you two days before. It’s charged to your Apple Account and renews automatically unless you cancel at least 24 hours before the period ends. Manage or cancel it in Settings.
 
 Moss is for people 16 and older. It isn’t a medical device: its numbers are estimates and don’t replace a health professional. If you’re pregnant, breastfeeding or have a medical condition, talk to a professional before changing what you eat.
 
@@ -596,7 +628,7 @@ texto genérico:
 ### Lo demás de la ficha
 
 - **Categoría:** Salud y forma física; la segunda, Estilo de vida.
-- **Precio:** gratis para bajar, con la suscripción Moss Premium ([`suscripcion.md`](suscripcion.md)).
+- **Precio:** con la versión que cobra, la app sigue en Free y la tienda suma «Compras dentro de la app»: toda Moss es de pago, con 7 días gratis ([`suscripcion.md`](suscripcion.md)). La descripción de arriba es la de esa versión: al mandarla, se pasa también a `store.config.json`.
 - **URL de soporte:** https://condezuzu.github.io/moss-app/ (tiene el contacto).
 - **URL de marketing:** opcional; la misma portada.
 - **Copyright:** `2026 Agustín Conde Zuzulich` (Apple suma el ©).
@@ -656,7 +688,10 @@ imitar los anillos de Actividad); la misma pantalla en cada idioma, con su texto
 
 App Store Connect › la versión › App Review Information (cargado por API el 28/10/2026):
 - **Sign-in required:** no. Moss entra solo con Sign in with Apple: quien revisa
-  usa su propio Apple ID y no hace falta una cuenta de demostración.
+  usa su propio Apple ID y no hace falta una cuenta de demostración. **Con la versión que
+  cobra tampoco:** una cuenta nueva llega a la pantalla de pago y la prueba gratis, en el
+  entorno de revisión, se confirma con la cuenta de sandbox de Apple, sin cobro. Lo que hay
+  detrás se ve con la prueba empezada.
 - **Contact:** Agustín Conde Zuzulich, nodoexpweb@gmail.com y tu teléfono, con
   `+598`.
 - **Notes:** la versión en inglés (2202 bytes; el tope es 4.000). La española es
@@ -668,13 +703,15 @@ App Store Connect › la versión › App Review Information (cargado por API el
 ### En inglés (para pegar)
 
 ```
-Moss is a food log (calories and macros) with weight, sleep and habits. Free to download with an optional subscription (Moss Premium), no ads and no tracking.
+Moss is a food log (calories and macros) with weight, sleep and habits. It's a paid app: one auto-renewable subscription group (Moss yearly and Moss monthly) with a 7-day free trial. No ads and no tracking.
 
-MOSS PREMIUM
-It's offered after the onboarding goal screen and in Profile > Moss Premium; "Continue with free" is always there. Food logging, habits and the sky, and weight stay free. Premium opens weekly goal adjustments, the meal plan, full sleep and bedtime. Purchases and restores use StoreKit 2; no server stores them.
+SUBSCRIPTION
+The paywall appears after onboarding (intro, data consent, Sign in with Apple, questionnaire, goal) and when a subscription ends. The intro states the price and the trial before the questionnaire; "Skip" leads to that screen. The whole app is behind the subscription; nothing is locked piece by piece. On the paywall, with no payment: Restore purchases, Terms, Privacy, and Your account (export data, sign out, delete account).
+To test: finish onboarding, tap "Start 7 days free" and confirm with a sandbox account; then the whole app opens. Profile > Your subscription shows the status and opens Apple's Manage Subscriptions. Purchases and restores use StoreKit 2; no server stores them. Moss schedules a local notification two days before the trial ends, if notifications are allowed.
+Accounts created before the subscription launched keep Moss for free, so an older account never sees the paywall: use a new account to see it.
 
 SIGN IN
-Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 16 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
+Please sign in with your own Apple Account: Sign in with Apple is the only way to sign in to Moss, so no demo account is needed. The account is required because Moss stores your data in it to sync across devices, restore on a new phone and link with Ascent. A new account goes through a short onboarding: a data consent screen, a questionnaire (users must be 16 or older) and an optional Apple Health request with "Not now". Until there is enough of your own data, Progress and Sleep show sample data labeled as examples.
 
 ACCOUNT DELETION
 Profile > Privacy and data > Delete account. The user confirms with Apple, we revoke the Sign in with Apple token with the REST API and delete the account and all its data at once, on the server and on the phone.
@@ -702,13 +739,15 @@ Los nombres coinciden con los textos de la app en inglés (`src/textos/en.json`:
 ### En español (referencia)
 
 ```
-Moss es un registro de comida (calorías y macros) con peso, sueño y hábitos. Se baja gratis y tiene una suscripción opcional (Moss Premium), sin anuncios y sin rastreo.
+Moss es un registro de comida (calorías y macros) con peso, sueño y hábitos. Es de pago: un grupo de suscripción con renovación automática (Moss anual y Moss mensual), con 7 días de prueba gratis. Sin anuncios y sin rastreo.
 
-MOSS PREMIUM
-Se ofrece después de la meta, al final de la entrada, y en Perfil › Moss Premium; «Seguir con lo gratis» siempre está. Registrar comida, los hábitos y el cielo, y el peso siguen gratis. Premium abre el ajuste semanal de metas, el plan de comidas, el sueño completo y la hora de dormir. Las compras y restaurar usan StoreKit 2; ningún servidor las guarda.
+SUSCRIPCIÓN
+La pantalla de pago aparece después de la entrada (introducción, consentimiento de datos, Sign in with Apple, cuestionario y meta) y cuando termina una suscripción. La introducción dice el precio y la prueba antes del cuestionario, y «Saltar» lleva a esa pantalla. Toda la app va con la suscripción: nada se bloquea por partes. En la pantalla de pago, sin pagar: Restaurar compras, Términos, Privacidad y Tu cuenta (exportar los datos, cerrar sesión y borrar la cuenta).
+Para probarla: termina la entrada, toca «Empezar 7 días gratis» y confirma con una cuenta de sandbox; se abre toda la app. Perfil › Tu suscripción muestra el estado y abre la pantalla de Apple para administrarla. Las compras y restaurar usan StoreKit 2; ningún servidor las guarda. Moss programa un aviso local dos días antes de que termine la prueba, si los avisos están permitidos.
+Las cuentas creadas antes de que saliera la suscripción siguen gratis, así que una cuenta vieja no ve la pantalla de pago: para verla, usa una cuenta nueva.
 
 ENTRAR
-La única forma de entrar es Sign in with Apple: sirve cualquier cuenta de Apple, así que no hace falta una cuenta de demostración. Una cuenta nueva pasa por una entrada corta: el consentimiento de los datos, un cuestionario (hay que tener 16 años o más) y el pedido de Salud, optativo, con «Ahora no». Hasta tener datos propios, Progreso y Sueño muestran datos de ejemplo, marcados como tales.
+La única forma de entrar es Sign in with Apple: sirve cualquier cuenta de Apple, así que no hace falta una cuenta de demostración. La cuenta hace falta porque Moss guarda ahí los datos para sincronizar entre aparatos, restaurar en un teléfono nuevo y vincular con Ascent. Una cuenta nueva pasa por una entrada corta: el consentimiento de los datos, un cuestionario (hay que tener 16 años o más) y el pedido de Salud, optativo, con «Ahora no». Hasta tener datos propios, Progreso y Sueño muestran datos de ejemplo, marcados como tales.
 
 BORRAR LA CUENTA
 Perfil › Privacidad y datos › Borrar la cuenta. La persona confirma con Apple, revocamos el token de Sign in with Apple con la API REST y borramos la cuenta y todos sus datos en el acto, en el servidor y en el teléfono.
@@ -753,8 +792,8 @@ Ascent por TestFlight, entrada con la cuenta de demostración, y Moss entrada co
 una cuenta de Apple de prueba:
 1. Centro de control › Grabación de pantalla (si no está: Ajustes › Centro de
    control › sumar «Grabación de pantalla»). Cuenta tres segundos.
-2. En Moss, Hábitos › deslizar para arriba (o la flecha) › «Vincular con
-   Ascent»: la hoja dice «@usuario · Ascent en este iPhone» y qué pasa cada app ›
+2. En Moss, Hábitos › tocar «Vincular con Ascent», abajo (o deslizar para arriba) ›
+   «Vincular con Ascent»: la hoja dice «@usuario · Ascent en este iPhone» y qué pasa cada app ›
    «Vincular». La luna entra en la órbita; bajar por la sección vinculada (la
    sesión de hoy, la recuperación).
 3. Opcional: Perfil › Conexiones › Ascent › desvincular.
@@ -837,7 +876,7 @@ Moss shares with Ascent: sleep duration and quality, daily calories and protein,
 3. App Information: las localizaciones Spanish (Mexico) y Spanish (Spain), el
    subtítulo, las categorías, los derechos de contenido, la edad («h») y la
    Privacy Policy URL de cada idioma.
-4. Pricing and Availability: gratis, todos los países (con la DSA, la UE).
+4. Pricing and Availability: Free, todos los países (con la DSA, la UE). Con la versión que cobra, además los dos productos: [`suscripcion.md`](suscripcion.md).
 5. App Privacy: las respuestas de «a».
 6. La versión 1.0, en cada idioma: capturas, texto promocional, descripción,
    palabras clave, URL de soporte, copyright, la build, App Review Information

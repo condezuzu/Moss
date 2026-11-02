@@ -124,8 +124,6 @@ export type Opciones = {
   nuevaSemilla?: () => string;
   /** El id de lo que se crea (registros, recetas…). Los tests ponen el suyo. */
   nuevoId?: () => string;
-  /** Si corre el ajuste de cada semana, que es de Premium (spec/suscripcion.md). Sin decir nada, sí. */
-  conAjusteSemanal?: () => boolean;
 };
 
 /** Cuántos días de marcas se tienen a mano: alcanzan para deshacer y para los días recién vividos. */
@@ -489,7 +487,6 @@ export function crearAlmacen(op: Opciones) {
    * después de correrlo).
    */
   function revisarControl(rehacer = false) {
-    if (op.conAjusteSemanal && !op.conAjusteSemanal()) return;
     const { hoy, perfil, pesos } = estado;
     const metas = rehacer ? estado.metas.filter((m) => m !== controlDeHoy) : estado.metas;
     const ultima = metas[metas.length - 1];
@@ -935,10 +932,6 @@ export function crearAlmacen(op: Opciones) {
     },
     /** Las comidas que avisan; null los apaga. */
     ponerAvisos,
-    /** Al saber que hay Premium: el control que no corrió al abrir, porque Apple todavía no había contestado. */
-    revisarElControl() {
-      revisarControl();
-    },
     /** Por dónde va la entrada: si se cierra la app, se retoma ahí. */
     ponerAvanceDeEntrada(avance: unknown) {
       guardar((r) => r.guardarAjuste(AVANCE, JSON.stringify(avance)));

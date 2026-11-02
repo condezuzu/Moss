@@ -39,9 +39,28 @@ final class Compras: Module {
       return lista
     }
 
-    // Lo que tiene ahora, o null.
+    // Lo vigente, o null. Un pago que falló y está en su gracia sigue acá.
     AsyncFunction("estado") { () async throws -> [String: Any]? in
       return await Compras.estadoActual()
+    }
+
+    // La última que se conoce, aunque haya vencido, o null: sin conexión, Apple no puede saber que renovó.
+    AsyncFunction("ultima") { (ids: [String]) async throws -> [String: Any]? in
+      var ultima: StoreKit.Transaction?
+      for id in ids {
+        guard let resultado = await StoreKit.Transaction.latest(for: id),
+              case .verified(let transaccion) = resultado,
+              transaccion.revocationDate == nil else {
+          continue
+        }
+        if (transaccion.expirationDate ?? .distantPast) > (ultima?.expirationDate ?? .distantPast) {
+          ultima = transaccion
+        }
+      }
+      guard let transaccion = ultima else {
+        return nil
+      }
+      return await Compras.datos(de: transaccion)
     }
 
     // «comprado», «cancelado», «pendiente» (lo tiene que aprobar otra persona) o «error».
@@ -66,12 +85,16 @@ final class Compras: Module {
     }
 
     AsyncFunction("restaurar") { () async throws -> [String: Any]? in
-      try await AppStore.sync()
+      do {
+        try await AppStore.sync()
+      } catch StoreKitError.userCancelled {
+        // No quiso entrar a su cuenta de Apple: no es un error, y se dice lo que ya se sabe.
+      }
       return await Compras.estadoActual()
     }
   }
 
-  /** El precio lo da Apple en la moneda de cada país: nunca se escribe a mano. */
+  /** El precio lo da Apple en la moneda de cada país, y lo escribe con sus decimales: nunca se escribe a mano. */
   private static func datos(de producto: StoreKit.Product) async -> [String: Any] {
     var prueba = 0
     if let suscripcion = producto.subscription,
@@ -110,6 +133,10 @@ final class Compras: Module {
     guard let transaccion = actual else {
       return nil
     }
+    return await datos(de: transaccion)
+  }
+
+  private static func datos(de transaccion: StoreKit.Transaction) async -> [String: Any] {
     var enPrueba = false
     if #available(iOS 17.2, *) {
       enPrueba = transaccion.offer?.type == .introductory

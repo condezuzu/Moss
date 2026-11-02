@@ -76,7 +76,8 @@ En el orden en que llegaron:
 10. **Ascent, arriba de Hábitos** (lo pediste el 22/10/2026). La parte que solo
     se usa con Ascent vinculada es una sección propia, arriba de Hábitos:
     - en el cielo, abajo, sobre el musgo, una flecha muy tenue apunta para
-      arriba; deslizar para arriba sube la sección siguiendo al dedo, y se
+      arriba (desde el 2/11/2026, una señal clara: `ascent.md`, «Que se
+      encuentre»); deslizar para arriba sube la sección siguiendo al dedo, y se
       vuelve deslizando para abajo o tocando Hábitos;
     - sin vincular, cada función muestra vacío lo que va a mostrar, con
       «Vincular» arriba; vinculada, lo de hoy. Las dos formas tienen que verse
@@ -94,7 +95,7 @@ Vamos a crear Moss, una app de hábitos para iPhone, desde cero. Es mi segunda a
 
 ## Concepto
 
-La comida es el centro de Moss: trackear calorías y macros tan bien como MacroFactor, sin IA de fotos, global desde el inicio y con lo básico gratis (D40). Los hábitos y el cielo siguen, pero acompañan: cada hábito es una estrella, los hábitos de cada día forman una constelación real, y todo vive en un cielo nocturno. El nombre viene de "mos" (costumbre en latín) y "moss" (musgo en inglés, que crece lento pero siempre).
+La comida es el centro de Moss: trackear calorías y macros tan bien como MacroFactor, sin IA de fotos, global desde el inicio y de pago, con 7 días gratis (D40). Los hábitos y el cielo siguen, pero acompañan: cada hábito es una estrella, los hábitos de cada día forman una constelación real, y todo vive en un cielo nocturno. El nombre viene de "mos" (costumbre en latín) y "moss" (musgo en inglés, que crece lento pero siempre).
 
 Competencia directa que ya existe: MacroFactor en la comida; Sideria y Stellar Habits en los hábitos como estrellas. Moss se diferencia por:
 
@@ -144,7 +145,7 @@ Las constelaciones y los mitos pasan a segundo plano: siguen siendo parte de la 
 
 ## La comida (el centro)
 
-La comida es el centro de Moss. La gente quiere trackear sus macros: si esta parte no es excelente, nadie va a usar la app. El modelo es MacroFactor, sin IA de fotos. Global desde el inicio y con lo básico gratis (D40). El cómo está en [`nutricion.md`](nutricion.md).
+La comida es el centro de Moss. La gente quiere trackear sus macros: si esta parte no es excelente, nadie va a usar la app. El modelo es MacroFactor, sin IA de fotos. Global desde el inicio y de pago, con 7 días gratis (D40). El cómo está en [`nutricion.md`](nutricion.md).
 
 **Base de datos**
 
@@ -255,7 +256,7 @@ Perfil (cambio 9, 22/10/2026).
   - Se pasa tocando o deslizando, con la de al lado asomando, como en Ascent.
   - El cielo queda quieto detrás de todas, oscurecido salvo en Hábitos.
 - En Hábitos el cielo es continuo: arrastrar hacia abajo mueve la cámara por el espacio hasta tu universo, con la semana, en vez de saltar a otra pantalla.
-- Arriba de Hábitos está Ascent: una flecha muy tenue, abajo, sobre el musgo, apunta para arriba, y deslizar para arriba sube la sección siguiendo al dedo. Tiene los colores y la forma de Ascent: es la única parte de Moss que es de las dos apps.
+- Abajo de Hábitos está Ascent: una señal, sobre el musgo, con la flecha para arriba, y tocarla o deslizar para arriba sube la sección siguiendo al dedo (`ascent.md`, «Que se encuentre»). Tiene los colores y la forma de Ascent: es la única parte de Moss que es de las dos apps.
 - El final de la entrada tiene un movimiento como si se estuviera yendo muy lejos, muy rápido: una animación de un segundo, tipo «flum». Antes era para moverse entre secciones; con las pestañas quedó solo ahí.
 - Cielo nocturno sin contaminación lumínica: muchísimas estrellas y auroras. Desde el 21/10/2026, la vía láctea va mucho más tenue, al 30 %: Moss es más sobrio.
 - Las constelaciones son parte del fondo: cuantos más hábitos hechos, más cielo encendido, así cada cielo es distinto.
@@ -335,7 +336,7 @@ La solución está en [`ascent.md`](ascent.md).
 
 - Solo iPhone. Expo, con build propia (Apple Health no funciona en Expo Go). Ya tengo la cuenta de Apple Developer activa.
 - Supabase con cuentas desde el inicio.
-- Global desde el inicio y con lo básico gratis (D40): español neutro e inglés, con todos los textos en un diccionario desde el día uno, y los nombres de los alimentos de cada país.
+- Global desde el inicio y de pago, con 7 días gratis (D40): español neutro e inglés, con todos los textos en un diccionario desde el día uno, y los nombres de los alimentos de cada país.
 
 ## Versión 1 (para mandar a revisión)
 

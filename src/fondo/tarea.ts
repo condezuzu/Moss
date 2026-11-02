@@ -35,7 +35,7 @@ const modulos = cargar();
 
 async function correr(): Promise<void> {
   const a = elAlmacen();
-  // Con Moss cerrada nadie más lo arranca, y el control y la noche esperan a saber si hay Premium.
+  // Con Moss cerrada nadie más lo arranca, y los avisos preguntan si hay acceso y cuándo termina la prueba.
   await arrancarLoDePremium().catch(() => {});
   await a.iniciar();
   a.revisarDia();

@@ -5,25 +5,14 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
-### D43 · Los widgets nuevos (armados el 1/11/2026)
+### D40 · La suscripción: la maqueta, para aprobar (armada el 2/11/2026)
 
-Lo pediste el 1/11/2026. En la galería, sección «Los widgets», y arriba, en «1.1». Qué es cada uno, qué
-llega por OTA y qué pide build, en [`widgets.md`](widgets.md).
+Lo de cobrar ya está decidido (abajo, en «Resueltas»). Lo que falta aprobar es cómo se ve: en la galería, sección
+1.1, **la entrada completa** y **la pantalla de pago**. Y una decisión tuya:
 
-- **Hoy:** la comida, que no tenía ninguno; un toque anota tu comida de siempre sin abrir Moss.
-- **Anotar:** cada botón abre Moss justo ahí. **Agua:** un vaso de un toque.
-- **El cielo:** con el cielo de verdad de fondo, sacado de los shaders, y la aurora al completar el día.
-- **La noche:** también a la hora de dormir. **Pantalla bloqueada:** lo que queda, el «+» y el cielo.
-
-¿Se programan así? Lo que va por OTA puede salir primero.
-
-### D40 · La suscripción: en espera (lo dijiste el 1/11/2026)
-
-**Todavía no se sabe si se va a cobrar.** Queda para cuando se confirme: no se toca, no se programa nada
-encima y sigue sin salir en ninguna build ni OTA. Lo armado no se pierde: el código, apagado, en la rama
-`suscripcion`; la maqueta, en la galería, sección 1.1, y lo demás, en [`suscripcion.md`](suscripcion.md).
-Moss sigue siendo gratis mientras tanto. Si se confirma, hay que revisar qué pasa con «A dormir» en los
-widgets, porque la hora de dormir está en la lista de Premium.
+- **La línea de la noche corta** (C2 en [`entreno.md`](entreno.md), que estaba pendiente): la pantalla de pago pone de
+  ejemplo «Dormiste 5 h 40: es normal tener más hambre hoy», y lo que promete tiene que existir. La dejé programada
+  en Comida, solo con la suscripción prendida. ¿Va así, o preferís otro ejemplo?
 
 ### D39 · Lo visual de la 1.1, en la galería (armado el 29/10/2026)
 
@@ -294,25 +283,35 @@ Están en la galería, sección 10, «Para decidir»:
 
 ## Resueltas
 
-### D40 · La suscripción (la maqueta, aprobada el 31/10/2026; en espera desde el 1/11, arriba)
+### D43 · Los widgets nuevos: aprobados el 2/11/2026
 
-Lo pediste así: gratis, registrar comida, hábitos y cielo, y peso. Premium, el ajuste
-semanal de metas, el plan de comidas, el sueño avanzado y la hora de dormir, y «Todo lo
-de hoy». USD 4,99 por mes o 29,99 por año, con 7 días gratis. Entrada: introducción,
-iniciar sesión, cuestionario, meta y recién ahí la suscripción.
+Hoy (con «Anotado ✓» y otro toque para deshacer), Anotar, Agua, el cielo con el cielo de verdad de fondo, la noche también a la
+hora de dormir, y cada widget abre su sección. Lo que va por OTA, programado; lo demás, listo y apagado para la próxima
+build. Qué llega cómo, en [`widgets.md`](widgets.md).
 
-- **Cambia «global y gratis»:** lo básico sigue gratis. La ficha, los términos y las notas
-  cambian con la versión que cobra.
-- **Quien ya tenía cuenta** antes de que salga Premium lo tiene de regalo (lo aprobaste el
-  31/10/2026).
-- **El cobro:** StoreKit 2 con un módulo propio, sin servidor ni terceros (lo decidí yo: menos
-  datos y nada nuevo en la privacidad).
-- **Está en la rama `suscripcion`, apagado:** pide una build y se prende poniendo el día de
-  salida en `PREMIUM_SALE`. Va aparte de `mejoras-1.1` para que las OTA de la 1.1 no lleven nada
-  de esto. No es por la huella: el Swift de `app-intents/` no la cambia (lo comprobé el
-  1/11/2026), y en una build sin el módulo `Compras` nada se bloquea.
-- Lo demás (qué cargar en App Store Connect, la ficha, los términos y el código de oferta
-  para la publicidad), en [`suscripcion.md`](suscripcion.md).
+### D40 · La suscripción (decidida el 2/11/2026)
+
+Lo pediste así: **toda la app es paga, con 7 días de prueba gratis. USD 9,99 por mes o 39,99 por año**, el anual
+como opción recomendada, con el precio por mes y el ahorro. En la pantalla de pago se destaca lo que nos diferencia:
+comida y sueño juntos. Entrada: una introducción más larga y con buenos visuales, iniciar sesión, cuestionario y meta,
+y ahí la pantalla de pago. Va con la próxima build.
+
+Reemplaza lo del 31/10 (gratis más Premium, a USD 4,99 y 29,99, con partes bloqueadas), y lo que estaba «en espera»
+desde el 1/11. Con esto no hay nada que revisar en «A dormir» de los widgets: ya no hay partes bloqueadas.
+
+- **Cambia «global y gratis»:** global y de pago. Moss sigue sin IA de fotos.
+- **Quien ya tenía cuenta** queda de regalo (lo aprobaste el 31/10/2026). Se sabe por la fecha de su identidad de Apple
+  en Supabase, comparada con `PREMIUM_SALE`: no por una marca del teléfono, ni por la fecha del usuario, que puede ser
+  la de su cuenta de Ascent.
+- **El cobro:** StoreKit 2 con un módulo propio, sin servidor ni terceros (lo decidí yo: menos datos y nada nuevo en la
+  privacidad).
+- **Cuando vence o cancela:** la pantalla de pago, sin modo de solo lectura: lo más simple. No se borra nada, y sin pagar
+  se puede exportar, cerrar sesión, borrar la cuenta, restaurar y leer los términos.
+- **Sin conexión** nadie queda afuera: Apple guarda lo vigente en el teléfono, y quien renovaba sigue una semana más.
+- **«Saltar»** lleva a lo que cuesta: nadie contesta el cuestionario sin saber que es de pago.
+- **Apagada:** se prende poniendo el día en `PREMIUM_SALE`. Sin eso, Moss sigue gratis y la huella es la misma.
+- Lo demás (qué cargar en App Store Connect, la ficha, los términos, cómo se prende y el código de oferta para la
+  publicidad), en [`suscripcion.md`](suscripcion.md).
 
 ### D42 · Las notas del 31/10/2026
 
@@ -461,9 +460,9 @@ todo lo de vincular con Ascent (botón, pantallas, menciones en la app) detrás 
 una bandera que se pueda prender después por OTA.»
 
 - **`CON_ASCENT`** (`src/lib/banderas.ts`), en `false`:
-  - no están la sección arriba de Hábitos (ni el gesto ni la flecha), la fila de
-    Conexiones, el final de Perfil, la recuperación en Sueño ni la frase de
-    Ascent en la privacidad;
+  - no están la sección arriba de Hábitos (ni el gesto ni la señal), la invitación
+    de Inicio, la fila de Conexiones, el final de Perfil, la recuperación en Sueño
+    ni la frase de Ascent en la privacidad;
   - Moss no deja su sesión en el llavero compartido, y saca la que hubiera
     quedado.
 - **La tienda:** la ficha ya no tiene «Si usas Ascent», y las notas para quien

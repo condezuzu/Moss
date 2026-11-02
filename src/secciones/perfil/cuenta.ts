@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isAuthRetryableFetchError, type Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { File, Paths } from 'expo-file-system';
-import { Platform, Share } from 'react-native';
+import { Alert, Platform, Share } from 'react-native';
 
 import { elAlmacen, sinSincronizar, subirLoQueFalta } from '@/almacen';
 import { buzon } from '@/almacen/buzonDeMoss';
@@ -143,6 +143,20 @@ async function codigoNuevoDeApple(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/** Cerrar sesión: si lo último no llegó a la cuenta, se avisa antes de perderlo; sin conexión, no se puede. */
+export function salirDeLaCuenta(alSalir?: () => void) {
+  const errorDeSalir = () => Alert.alert(t('perfil.errorBorrar'));
+  cerrarSesion().then((r) => {
+    if (r === 'listo') alSalir?.();
+    else if (r === 'sinSubir') {
+      Alert.alert(t('perfil.sinSubirTitulo'), t('perfil.sinSubirTexto'), [
+        { text: t('comun.cancelar'), style: 'cancel' },
+        { text: t('perfil.cerrarIgual'), style: 'destructive', onPress: () => { cerrarSesion(true).then((x) => { if (x === 'listo') alSalir?.(); }).catch(errorDeSalir); } },
+      ]);
+    } else errorDeSalir();
+  }).catch(errorDeSalir);
 }
 
 /**

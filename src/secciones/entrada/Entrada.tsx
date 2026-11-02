@@ -1,9 +1,12 @@
 // La entrada a la app, la de la galería (galeria/src/entrada.js): la frase de apertura, dos
-// diapositivas, tus datos (qué guarda Moss y el consentimiento para los datos de salud), la cuenta
+// diapositivas (con la suscripción prendida, la introducción más larga: la comida, la base, el sueño,
+// los dos juntos, los hábitos y lo que cuesta, y al final la pantalla de pago), tus datos (qué guarda
+// Moss y el consentimiento para los datos de salud), la cuenta
 // (solo con Apple) y el cuestionario que arma la meta inicial de comida, con lo que cuida: mayores de
 // 16 (y sin bajar «rápido» antes de los 18), y sin déficit en el embarazo, la lactancia o con una condición médica. La recorre una estrella
 // guía (Guia.tsx, con el guion de guion.ts): en la frase y las diapositivas espera abajo y tocarla es
-// seguir, así que no se saltean. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida
+// seguir, así que no se saltean; con la suscripción, «Saltar» lleva a lo que cuesta, que no se saltea.
+// Cada pantalla tiene su lugar en el cielo: la cámara sube a medida
 // que se avanza. Al final la estrella se va, la cámara baja hasta hoy, se guardan las respuestas (el
 // perfil, el peso de hoy y la meta) y aparece Inicio.
 
@@ -11,28 +14,33 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
 import { EDAD_MINIMA, edadDe, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { DIA_DEL_AVISO, DIAS_DE_PRUEBA } from '@/dominio/premium';
+import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
+import { hayCompras } from '@/lib/premium';
 import { abrirPagina } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { COLOR_DE_MACRO, Icono, MACROS } from '../comida/comunes';
-import { numero, sistemaDe, useEstado } from '../comida/datos';
+import { duracion, horaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
+import { ejemplo } from '../ejemplo';
+import { Hipnograma } from '../graficos/Graficos';
 import { entrarConApple, hayApple, type ErrorDeCuenta } from './cuenta';
 import { Guia } from './Guia';
 import {
-  anclas as medirAnclas, barraEn, esDiapositiva, estado, guionDe, guionDeSalida, LUNA, PALABRAS, reposo,
+  ALTO_PARA_LO_DICHO, anclas as medirAnclas, barraEn, BASE, esDiapositiva, estado, guionDe, guionDeSalida, INTRO, JUNTOS, LUNA, NOCHE, PALABRAS, reposo,
   type Anclas, type EscenaDeLuna, type Evento, type Guion, type Lugar, type Paso, type Recorrido,
 } from './guion';
-import { ofrecerPremium } from '../premium/Premium';
+import { EjemploDeJuntos, ofrecerPremium, usePreciosDeLaEntrada } from '../premium/Premium';
 import { Anillos, Casiopea } from './Lienzos';
 import { Boton, Deslizador, Opcion } from './piezas';
 
@@ -55,8 +63,29 @@ const PASOS: readonly { id: Paso; camara: number }[] = [
 ];
 const CUESTIONARIO: readonly Paso[] = ['salud', 'edad', 'sexo', 'altura', 'peso', 'actividad', 'cuidado', 'objetivo'];
 
+/** Con la suscripción, la introducción más larga: lo que Moss hace, los dos juntos y lo que cuesta. Cada cámara, como en la galería. */
+const PASOS_CON_PAGO: readonly { id: Paso; camara: number }[] = [
+  { id: 'frase', camara: 0 },
+  { id: 'comida', camara: 0.2 },
+  { id: 'base', camara: 0.36 },
+  { id: 'sueno', camara: 0.52 },
+  { id: 'juntos', camara: 0.66 },
+  { id: 'habitos', camara: 0.8 },
+  { id: 'precio', camara: 0.92 },
+  ...PASOS.slice(PASOS.findIndex((p) => p.id === 'datos')),
+];
+/** Las pantallas de la introducción, con su constelación chica arriba. */
+const INTRODUCCION: readonly Paso[] = ['comida', 'base', 'sueno', 'juntos', 'habitos', 'precio'];
+// Lo del ejemplo, de la base: 2 huevos (122 g), 1 rebanada (25 g) y 1 taza (252 g).
+const KCAL_DEL_DICHO = [234, 73, 101];
+// kcal y gramos de proteína, carbohidratos y grasas: ½ aguacate, 1 milanesa y 1 cucharada de dulce de leche.
+const DE_LA_BASE: readonly [number, number, number, number][] = [[160, 2, 8.5, 14.7], [490, 31.8, 12.7, 33.7], [60, 1.3, 10.5, 1.4]];
+
 /** Una build sin Supabase no tiene cuenta: esa pantalla no se muestra, y Moss guarda todo en el teléfono. */
-const pasosDeEstaVersion = () => (haySupabase() ? PASOS : PASOS.filter((p) => p.id !== 'cuenta'));
+const pasosDeEstaVersion = () => {
+  const pasos = hayCompras() ? PASOS_CON_PAGO : PASOS;
+  return haySupabase() ? pasos : pasos.filter((p) => p.id !== 'cuenta');
+};
 
 /** Embarazo o lactancia, una condición médica o nada: de eso solo se guarda si va sin déficit. */
 type Caso = 'nada' | 'embarazo' | 'condicion';
@@ -112,7 +141,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     const c = CUESTIONARIO.indexOf(pasos[j]?.id);
     return c >= 0 ? (c + 1) / CUESTIONARIO.length : 0;
   };
-  const guionPara = (j: number, desde: Lugar) => guionDe(pasos[j].id, a, desde, kDe(j), CASIOPEA);
+  const guionPara = (j: number, desde: Lugar) => guionDe(pasos[j].id, a, desde, kDe(j), CASIOPEA, hayCompras());
   // Al abrir (o retomar), sale de donde habría quedado la pantalla anterior.
   const [guion, setGuion] = useState<Guion>(() => guionPara(inicio.i, reposo(pasos[inicio.i - 1]?.id, a, kDe(inicio.i - 1))));
   // En la frase y las diapositivas: ya terminó su parte y espera que la toquen.
@@ -150,12 +179,21 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     camara.set(paso.camara);
   }, [camara, paso.camara]);
 
-  const siguiente = () => {
-    if (i >= pasos.length - 1) return;
+  const irA = (j: number) => {
     setEspera(false);
-    setGuion(guionPara(i + 1, lugarDeAhora()));
-    setI(i + 1);
+    setGuion(guionPara(j, lugarDeAhora()));
+    setI(j);
   };
+  const siguiente = () => {
+    if (i < pasos.length - 1) irA(i + 1);
+  };
+  // Se borró la cuenta o se cerró la sesión desde la pantalla de pago: desde el principio, sin lo contestado.
+  const reiniciar = () => {
+    setR(DE_FABRICA);
+    setDeSalud(new Set());
+    irA(0);
+  };
+  const dondeCuesta = pasos.findIndex((p) => p.id === 'precio');
   const poner = <K extends keyof Respuestas>(clave: K, valor: Respuestas[K]) => {
     setR((antes) => ({ ...antes, [clave]: valor }));
     // Lo que se cambia a mano ya no es de Salud.
@@ -206,6 +244,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const relleno = { paddingTop: insets.top + ARRIBA, paddingBottom: insets.bottom + 24 };
   // La frase, las diapositivas y la cuenta tienen lo suyo en un lugar fijo, el que recorre la estrella: no corren.
   const fija = esDiapositiva(paso.id) || paso.id === 'cuenta';
+  const conPago = hayCompras();
   return (
     <Animated.View style={[StyleSheet.absoluteFill, estiloSalida]} pointerEvents={saliendo ? 'none' : 'box-none'}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -219,12 +258,24 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 </View>
               )}
               {paso.id === 'comida' && guion.luna && <LunaQueSeLlena luna={guion.luna} reloj={reloj} reducido={reducido} />}
+              {paso.id === 'comida' && conPago && guion.luna && <LoDicho a={a} luna={guion.luna} reducido={reducido} />}
+              {paso.id === 'base' && guion.base && <LaBase a={a} llegaA={guion.base} reducido={reducido} />}
+              {paso.id === 'sueno' && guion.noche && <LaNoche a={a} cruza={guion.noche} reducido={reducido} />}
+              {paso.id === 'juntos' && guion.juntos && <LosDosJuntos a={a} baja={guion.juntos} />}
+              {paso.id === 'precio' && guion.camino && <ElCamino a={a} cuando={guion.camino} reducido={reducido} />}
               {paso.id === 'cuenta' && <Marca a={a} letras={guion.letras} reducido={reducido} />}
               <View style={[s.pantalla, s.fija, relleno]} pointerEvents="box-none">
                 {paso.id === 'habitos' && <Encabezado titulo={t('entrada.habitosTitulo')} texto={t('entrada.habitosTexto')} />}
-                {paso.id === 'comida' && <Encabezado titulo={t('entrada.comidaTitulo')} texto={t('entrada.comidaTexto')} />}
+                {paso.id === 'comida' && (conPago
+                  ? <Encabezado titulo={t('entrada.intro.comida.titulo')} texto={t('entrada.intro.comida.texto')} />
+                  : <Encabezado titulo={t('entrada.comidaTitulo')} texto={t('entrada.comidaTexto')} />)}
+                {paso.id === 'base' && <Encabezado titulo={t('entrada.intro.base.titulo')} texto={t('entrada.intro.base.texto')} />}
+                {paso.id === 'sueno' && <Encabezado titulo={t('entrada.intro.sueno.titulo')} texto={t('entrada.intro.sueno.texto')} />}
+                {paso.id === 'juntos' && <Encabezado titulo={t('entrada.intro.juntos.titulo')} texto={t('entrada.intro.juntos.texto')} />}
+                {paso.id === 'precio' && <LoQueCuesta />}
                 {paso.id === 'cuenta' && <Cuenta alEntrar={siguiente} />}
               </View>
+              {conPago && INTRODUCCION.includes(paso.id) && <ConstelacionDeIntro i={INTRODUCCION.indexOf(paso.id)} arriba={insets.top + 4} />}
             </>
           ) : (
           <ScrollView
@@ -265,12 +316,20 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 }}
               />
             )}
-            {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={() => ofrecerPremium(terminar)} reducido={reducido} />}
+            {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={() => ofrecerPremium(terminar, reiniciar)} boton={conPago ? t('entrada.seguir') : t('entrada.cuestionario.empezar')} reducido={reducido} />}
           </ScrollView>
           )}
         </Animated.View>
       </KeyboardAvoidingView>
       <Guia recorrido={recorrido} reloj={reloj} anclas={a} reducido={reducido} tocable={esDiapositiva(paso.id) && !saliendo} lista={espera} alTocar={siguiente} />
+      {/* Saltar lleva a lo que cuesta: el cuestionario es trabajo, y antes hay que saber que Moss es de pago. */}
+      {conPago && i < dondeCuesta && !saliendo && (
+        <Animated.View entering={FadeIn.duration(320)} exiting={FadeOut.duration(320)} style={[s.saltar, { top: insets.top + 4 }]}>
+          <Pressable onPress={() => irA(dondeCuesta)} accessibilityRole="button" hitSlop={10}>
+            <Text style={s.saltarTexto}>{t('entrada.intro.saltar')}</Text>
+          </Pressable>
+        </Animated.View>
+      )}
     </Animated.View>
   );
 }
@@ -341,6 +400,200 @@ function Marca({ a, letras: cuando, reducido }: { a: Anclas; letras?: number[]; 
         ))}
       </View>
       <Animated.Text entering={reducido ? undefined : FadeIn.delay(1900).duration(1000)} style={s.lema}>{t('entrada.cuenta.lema')}</Animated.Text>
+    </View>
+  );
+}
+
+// ------------------------------------------------------------------ la introducción, con la suscripción
+/** Una estrella por pantalla, en zigzag, como la del cuestionario de la galería: lo visto encendido y lo de ahora, prendiéndose. */
+function ConstelacionDeIntro({ i, arriba }: { i: number; arriba: number }) {
+  const total = INTRODUCCION.length;
+  const pts = Array.from({ length: total }, (_, k) => [3 + (k * 86) / (total - 1), 17 - (k % 2 ? 6 : 0) - k * 0.8] as const);
+  return (
+    <View style={[s.constelacion, { top: arriba }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {pts.slice(1).map(([x, y], k) => {
+        const [x0, y0] = pts[k];
+        const largo = Math.hypot(x - x0, y - y0);
+        return <View key={k} style={[s.constelacionLinea, k < i && s.constelacionHecha, { left: (x + x0) / 2 - largo / 2, top: (y + y0) / 2, width: largo, transform: [{ rotate: `${Math.atan2(y - y0, x - x0)}rad` }] }]} />;
+      })}
+      {pts.map(([x, y], k) => <View key={k} style={[s.constelacionEstrella, k < i && s.constelacionEncendida, k === i && s.constelacionAhora, { left: x - 2, top: y - 2 }]} />)}
+    </View>
+  );
+}
+
+/** Lo dicho, arriba de la luna, y lo que anotó: cada vuelta de la estrella deja un alimento. */
+function LoDicho({ a, luna, reducido }: { a: Anclas; luna: EscenaDeLuna; reducido: boolean }) {
+  const lados = { left: a.barra.x0, right: a.barra.x0 };
+  const aparece = (ms: number) => (reducido ? undefined : FadeInDown.delay(ms).duration(550));
+  const porciones = lista('entrada.intro.comida.porciones');
+  // Debajo de la luna, midiendo desde ella: tres filas de 33 y lo que suman.
+  const filas = luna.centro[1] + LUNA.radios[2] + 12;
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {a.H >= ALTO_PARA_LO_DICHO && (
+        <Animated.View entering={aparece(500)} style={[s.dicho, lados, { top: a.H * INTRO.dicho }]}>
+          <Icono nombre="mic" tam={16} color={colores.oroClaro} />
+          <Text style={s.dichoTexto}>{t('entrada.intro.comida.frase')}</Text>
+        </Animated.View>
+      )}
+      <View style={[s.dichoFilas, lados, { top: filas }]}>
+        {lista('entrada.intro.comida.filas').map((nombre, k) => (
+          <Animated.View key={nombre} entering={aparece(luna.vueltas[k][1] - 200)} style={s.dichoFila}>
+            <Text style={s.dichoNombre} numberOfLines={1}>{nombre}<Text style={s.dichoPorcion}>{`  ${porciones[k]}`}</Text></Text>
+            <Text style={s.dichoKcal}>{`${numero(KCAL_DEL_DICHO[k])} kcal`}</Text>
+          </Animated.View>
+        ))}
+      </View>
+      <Animated.Text entering={aparece(luna.vueltas[2][1] + 150)} style={[s.dichoTotal, lados, { top: filas + 3 * 33 + 12 }]}>
+        {t('entrada.intro.comida.total', { n: numero(KCAL_DEL_DICHO.reduce((x, y) => x + y, 0)) })}
+      </Animated.Text>
+    </View>
+  );
+}
+
+/** Lo que se busca y lo que encuentra: cada resultado se enciende con su fuente al pasar la estrella. */
+function LaBase({ a, llegaA, reducido }: { a: Anclas; llegaA: number[]; reducido: boolean }) {
+  const lados = { left: a.barra.x0, right: a.barra.x0 };
+  const y = a.H * INTRO.busca;
+  const porciones = lista('entrada.intro.base.porciones');
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <View style={[s.busca, lados, { top: y }]}>
+        <Icono nombre="magnifyingglass" tam={15} color="rgba(239, 230, 207, 0.6)" />
+        <Text style={s.buscaTexto}>{t('entrada.intro.base.busca')}</Text>
+      </View>
+      <View style={[s.baseFilas, lados, { top: y + BASE.hastaLasFilas }]}>
+        {lista('entrada.intro.base.filas').map((nombre, k) => {
+          const [kcal, proteina, carbohidratos, grasas] = DE_LA_BASE[k];
+          const total = proteina * 4 + carbohidratos * 4 + grasas * 9;
+          return (
+            <Animated.View key={nombre} entering={reducido ? undefined : FadeInDown.delay(300 + k * 160).duration(550)} style={s.baseFila}>
+              <View style={s.baseMarca}>
+                <Animated.View entering={reducido ? undefined : FadeIn.delay(llegaA[k]).duration(450)} style={s.baseMarcaLuz}>
+                  <Icono nombre="checkmark" tam={11} color={colores.oroClaro} peso="semibold" />
+                </Animated.View>
+              </View>
+              <View style={s.baseTextos}>
+                <Text style={s.baseNombre} numberOfLines={1}>{nombre}</Text>
+                <Text style={s.basePorcion}>{porciones[k]}</Text>
+                <View style={s.baseMacros}>
+                  <View style={{ flex: (proteina * 4) / total, backgroundColor: COLOR_DE_MACRO.proteina }} />
+                  <View style={{ flex: (carbohidratos * 4) / total, backgroundColor: COLOR_DE_MACRO.carbohidratos }} />
+                  <View style={{ flex: (grasas * 9) / total, backgroundColor: COLOR_DE_MACRO.grasas }} />
+                </View>
+              </View>
+              <Text style={s.baseKcal}>{`${numero(kcal)} kcal`}</Text>
+            </Animated.View>
+          );
+        })}
+      </View>
+      <Animated.View entering={reducido ? undefined : FadeIn.delay(llegaA[2] + 300).duration(500)} style={[s.baseNota, lados, { top: y + BASE.hastaLasFilas + 3 * BASE.fila + 4 }]}>
+        <Text style={s.baseVerificado}>{t('entrada.intro.base.verificado')}</Text>
+        <Text style={s.chip}>{t('entrada.intro.base.sinIA')}</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+/** La noche de anoche, de ejemplo: la estrella la dibuja al cruzarla, y debajo lo que sale de ella. */
+function LaNoche({ a, cruza, reducido }: { a: Anclas; cruza: [number, number]; reducido: boolean }) {
+  const [hoy] = useState(() => elAlmacen().estado().hoy);
+  const noches = ultimasNoches(ejemplo(hoy).noches, hoy, 14);
+  const n = noches[noches.length - 1] ?? ejemplo(hoy).noches[0];
+  const deuda = deudaDeSueno(noches, 8 * 60);
+  const lados = { left: a.barra.x0, right: a.barra.x0 };
+  const interior = a.W - 2 * a.barra.x0 - 32;
+  const [llega, tarda] = cruza;
+  const ancho = useSharedValue(reducido ? interior : 0);
+  useEffect(() => {
+    if (!reducido) ancho.set(withDelay(llega, withTiming(interior, { duration: tarda, easing: Easing.linear })));
+  }, [ancho, interior, llega, tarda, reducido]);
+  const estiloDelGrafico = useAnimatedStyle(() => ({ width: ancho.get() }));
+  const maximo = 8 * 60 * 1.2;
+  const datos: [string, string][] = [
+    [t('entrada.intro.sueno.teDormiste'), horaDelDia(n.dormirse + 18 * 60)],
+    [t('entrada.intro.sueno.teDespertaste'), horaDelDia(n.despertar + 18 * 60)],
+    [t('entrada.intro.sueno.deuda'), deuda ? duracion(deuda.minutos) : '—'],
+  ];
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Animated.View entering={reducido ? undefined : FadeInDown.delay(250).duration(550)} style={[s.noche, lados, { top: a.H * INTRO.noche }]}>
+        <View style={[s.nocheCab, { height: NOCHE.hastaElGrafico - 26 }]}>
+          <Text style={s.nocheRotulo}>{t('entrada.intro.sueno.anoche')}</Text>
+          <Text style={s.nocheCifra}>{duracion(n.dormido)}</Text>
+        </View>
+        <Animated.View style={[s.nocheGrafico, estiloDelGrafico]}>
+          <Hipnograma desde={n.dormirse} hasta={n.despertar} tramos={n.tramos} ancho={interior} alto={NOCHE.grafico} guias />
+        </Animated.View>
+        <Animated.View entering={reducido ? undefined : FadeIn.delay(llega + tarda - 100).duration(450)} style={s.nocheDatos}>
+          {datos.map(([titulo, valor]) => (
+            <View key={titulo} style={s.nocheDato}>
+              <Text style={s.nocheDatoTitulo}>{titulo}</Text>
+              <Text style={s.nocheDatoValor}>{valor}</Text>
+            </View>
+          ))}
+        </Animated.View>
+      </Animated.View>
+      <Animated.View entering={reducido ? undefined : FadeIn.delay(llega + tarda).duration(500)} style={[lados, s.nochesCaja, { top: a.H * INTRO.noche + 214 }]}>
+        <Text style={s.nocheRotulo}>{t('entrada.intro.sueno.semanas')}</Text>
+        <View style={s.noches}>
+          {noches.map((x, k) => <View key={k} style={[s.nocheBarra, x ? { height: Math.max(3, (x.dormido / maximo) * 46) } : s.nocheVacia, x && x.dormido >= 8 * 60 * 0.9 && s.nocheBien]} />)}
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+function LosDosJuntos({ a, baja }: { a: Anclas; baja: [number, number] }) {
+  return (
+    <View style={[StyleSheet.absoluteFill, { top: a.H * INTRO.juntos, paddingHorizontal: a.barra.x0 }]} pointerEvents="none">
+      <EjemploDeJuntos ancho={a.W - 2 * a.barra.x0} medidas={JUNTOS} baja={baja} />
+    </View>
+  );
+}
+
+/** Lo que cuesta, antes de pedir nada: el precio lo da Apple, en la moneda de cada país. */
+function LoQueCuesta() {
+  const p = usePreciosDeLaEntrada();
+  if (!p.dias) return <Encabezado titulo={t('entrada.intro.precio.tituloSinPrueba')} texto={t('entrada.intro.precio.textoSinPrueba', { anual: p.anual, mensual: p.mensual })} />;
+  return <Encabezado titulo={t('entrada.intro.precio.titulo', { n: p.dias })} texto={t('entrada.intro.precio.texto', { anual: p.anual, mensual: p.mensual })} />;
+}
+
+/** La prueba, caminada por la estrella: hoy, el aviso y el cobro, cada uno encendido al llegar. */
+function ElCamino({ a, cuando, reducido }: { a: Anclas; cuando: number[]; reducido: boolean }) {
+  const p = usePreciosDeLaEntrada();
+  const lados = { left: a.barra.x0, right: a.barra.x0 };
+  const columna = (a.W - 2 * a.barra.x0 - 12) / 3;
+  const largo = a.W - 2 * a.barra.x0 - columna;
+  const lleno = useSharedValue(reducido ? largo : 0);
+  useEffect(() => {
+    if (!reducido) lleno.set(withDelay(cuando[0], withTiming(largo, { duration: cuando[2] - cuando[0], easing: Easing.linear })));
+  }, [lleno, largo, cuando, reducido]);
+  const estiloLleno = useAnimatedStyle(() => ({ width: lleno.get() }));
+  const puntos: [string, string][] = [
+    [t('suscripcion.linea.hoy'), t('suscripcion.linea.hoyTexto')],
+    [t('suscripcion.linea.dia', { n: p.dias - (DIAS_DE_PRUEBA - DIA_DEL_AVISO) }), t('suscripcion.linea.avisoTexto')],
+    [t('suscripcion.linea.dia', { n: p.dias }), t('suscripcion.linea.cobroTexto', { precio: p.anual })],
+  ];
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {p.dias > 0 && (
+        <View style={[s.camino, lados, { top: a.H * INTRO.camino }]}>
+          <View style={[s.caminoHilo, { left: columna / 2, right: columna / 2 }]}>
+            <Animated.View style={[s.caminoLleno, estiloLleno]} />
+          </View>
+          {puntos.map(([titulo, texto], k) => (
+            <View key={titulo} style={s.caminoPunto}>
+              <View style={s.caminoNodo}>
+                <Animated.View entering={reducido ? undefined : FadeIn.delay(cuando[k]).duration(350)} style={s.caminoNodoLuz} />
+              </View>
+              <Text style={s.caminoTitulo}>{titulo}</Text>
+              <Text style={s.caminoTexto}>{texto}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      <Animated.Text entering={reducido ? undefined : FadeIn.delay(cuando[2] + 200).duration(500)} style={[s.caminoNota, lados, { top: a.H * INTRO.nota }]}>{t('entrada.intro.precio.nota')}</Animated.Text>
     </View>
   );
 }
@@ -653,7 +906,7 @@ function ElObjetivo({ objetivo, ritmo, sinDeficit, alObjetivo, alRitmo, alSeguir
 }
 
 // ------------------------------------------------------------------ el resultado
-function ElResultado({ r, alEmpezar, reducido }: { r: Respuestas; alEmpezar: () => void; reducido: boolean }) {
+function ElResultado({ r, alEmpezar, boton, reducido }: { r: Respuestas; alEmpezar: () => void; boton: string; reducido: boolean }) {
   const { gasto, metas } = metasIniciales({ ...r, sexo: r.sexo ?? 'm' });
   const kcal = [metas.proteina * 4, metas.carbohidratos * 4, metas.grasas * 9];
   const total = kcal.reduce((a, b) => a + b, 0) || 1;
@@ -699,7 +952,7 @@ function ElResultado({ r, alEmpezar, reducido }: { r: Respuestas; alEmpezar: () 
       <Text style={s.chico}>{t('entrada.cuestionario.profesional')}</Text>
       <Espacio />
       <Pie>
-        <Boton texto={t('entrada.cuestionario.empezar')} alTocar={alEmpezar} />
+        <Boton texto={boton} alTocar={alEmpezar} />
       </Pie>
     </>
   );
@@ -761,4 +1014,57 @@ const s = StyleSheet.create({
   macroPunto: { width: 8, height: 8, borderRadius: 4 },
   macroNombre: { flex: 1, fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.8)' },
   macroGramos: { fontFamily: letras.numero, fontSize: 14, color: colores.pergamino, fontVariant: ['tabular-nums'] },
+  saltar: { position: 'absolute', right: 18, padding: 6 },
+  saltarTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.62)' },
+  constelacion: { position: 'absolute', left: 26, width: 92, height: 22 },
+  constelacionLinea: { position: 'absolute', height: 1, backgroundColor: 'rgba(239, 230, 207, 0.12)' },
+  constelacionHecha: { backgroundColor: 'rgba(232, 196, 106, 0.45)' },
+  constelacionEstrella: { position: 'absolute', width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(239, 230, 207, 0.2)' },
+  constelacionEncendida: { backgroundColor: colores.oroClaro },
+  constelacionAhora: { backgroundColor: colores.cifra, shadowColor: colores.cifra, shadowOpacity: 0.9, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
+  dicho: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(6, 10, 22, 0.6)' },
+  dichoTexto: { flex: 1, fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 15.5, lineHeight: 19, color: 'rgba(239, 230, 207, 0.92)' },
+  dichoFilas: { position: 'absolute' },
+  dichoFila: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, paddingVertical: 6, paddingHorizontal: 2, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)' },
+  dichoNombre: { flexShrink: 1, fontFamily: letras.texto, fontSize: 14, color: colores.pergamino },
+  dichoPorcion: { fontFamily: letras.textoLiviano, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.6)' },
+  dichoKcal: { fontFamily: letras.numero, fontSize: 13.5, color: 'rgba(239, 230, 207, 0.84)', fontVariant: ['tabular-nums'] },
+  dichoTotal: { position: 'absolute', textAlign: 'center', fontFamily: letras.texto, fontSize: 12.5, color: colores.oroClaro },
+  busca: { position: 'absolute', height: 40, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 13, borderRadius: 13, backgroundColor: 'rgba(239, 230, 207, 0.08)' },
+  buscaTexto: { fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
+  baseFilas: { position: 'absolute', gap: 8 },
+  baseFila: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.58)' },
+  baseMarca: { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.25)' },
+  baseMarcaLuz: { position: 'absolute', left: -1, top: -1, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.7)' },
+  baseTextos: { flex: 1, minWidth: 0 },
+  baseNombre: { fontFamily: letras.textoMedio, fontSize: 14.5, color: colores.pergamino },
+  basePorcion: { marginTop: 1, fontFamily: letras.textoLiviano, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.62)' },
+  baseMacros: { flexDirection: 'row', gap: 2, width: 60, height: 3, marginTop: 4, borderRadius: 2, overflow: 'hidden' },
+  baseKcal: { fontFamily: letras.numero, fontSize: 14, color: 'rgba(239, 230, 207, 0.86)', fontVariant: ['tabular-nums'] },
+  baseNota: { position: 'absolute', alignItems: 'center', gap: 7 },
+  baseVerificado: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.7)' },
+  chip: { overflow: 'hidden', paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.5)', fontFamily: letras.texto, fontSize: 12.5, color: colores.oroClaro },
+  noche: { position: 'absolute', paddingTop: 14, paddingBottom: 12, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.58)' },
+  nocheCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
+  nocheRotulo: { fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)' },
+  nocheCifra: { fontFamily: letras.numero, fontSize: 24, color: colores.cifra, fontVariant: ['tabular-nums'] },
+  nocheGrafico: { height: NOCHE.grafico, overflow: 'hidden' },
+  nocheDatos: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  nocheDato: { flex: 1, gap: 3 },
+  nocheDatoTitulo: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.6)' },
+  nocheDatoValor: { fontFamily: letras.numero, fontSize: 15, color: colores.pergamino, fontVariant: ['tabular-nums'] },
+  nochesCaja: { position: 'absolute', gap: 8 },
+  noches: { flexDirection: 'row', alignItems: 'flex-end', gap: 5, height: 46 },
+  nocheBarra: { flex: 1, borderRadius: 2, backgroundColor: 'rgba(239, 230, 207, 0.32)' },
+  nocheVacia: { height: 2, backgroundColor: 'rgba(239, 230, 207, 0.14)' },
+  nocheBien: { backgroundColor: 'rgba(166, 191, 148, 0.6)' },
+  camino: { position: 'absolute', flexDirection: 'row', gap: 6 },
+  caminoHilo: { position: 'absolute', top: 5, height: 1, backgroundColor: 'rgba(239, 230, 207, 0.2)' },
+  caminoLleno: { height: 1, backgroundColor: colores.oro },
+  caminoPunto: { flex: 1, alignItems: 'center', gap: 3 },
+  caminoNodo: { width: 11, height: 11, marginBottom: 7, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.5)', backgroundColor: '#0c1124' },
+  caminoNodoLuz: { position: 'absolute', left: -1, top: -1, width: 11, height: 11, borderRadius: 6, backgroundColor: colores.oro, shadowColor: colores.oro, shadowOpacity: 0.7, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
+  caminoTitulo: { fontFamily: letras.textoMedio, fontSize: 14, color: colores.pergamino },
+  caminoTexto: { textAlign: 'center', fontFamily: letras.texto, fontSize: 12.5, lineHeight: 16, color: 'rgba(239, 230, 207, 0.72)' },
+  caminoNota: { position: 'absolute', textAlign: 'center', fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.66)' },
 });
