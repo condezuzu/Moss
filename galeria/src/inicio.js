@@ -21,7 +21,7 @@ const SeccionInicio = (() => {
     const guardar = () => { try { localStorage.setItem(GUARDADO, JSON.stringify({ orden: s.orden, visibles: [...s.visibles] })); } catch (_) { /* no pasa nada */ } };
 
     const zona = el('section', 'inicio pagina-app');
-    zona.innerHTML = '<div class="in-scroll"><header class="in-cab"><div class="in-fecha"></div><h2 class="in-titulo"></h2></header><div class="in-bloques"></div><div class="in-pie"></div></div>';
+    zona.innerHTML = '<div class="in-scroll"><header class="in-cab"><div class="in-fecha"></div><h2 class="in-titulo"></h2><p class="in-saludo" aria-live="polite"></p></header><div class="in-bloques"></div><div class="in-pie"></div></div>';
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const bloquesEl = zona.querySelector('.in-bloques');
@@ -439,13 +439,23 @@ const SeccionInicio = (() => {
       return c;
     }
 
+    // El saludo del día (saludo.js): se pide en cada pintada, y solo se toca si la frase cambió.
+    function ponerSaludo() {
+      const texto = opciones.saludo ? opciones.saludo(s.primerDia) : null;
+      if (texto) SeccionSaludo.mostrar(zona.querySelector('.in-saludo'), texto);
+    }
+
     function pintar(ms) {
       const hoy = u.partes(Datos.HOY);
       zona.querySelector('.in-fecha').textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) });
       zona.querySelector('.in-titulo').textContent = tx('inicio.titulo');
+      ponerSaludo();
       bloquesEl.innerHTML = '';
       if (s.primerDia) [caloriasPrimerDia(), caminoPrimerDia(), cieloPrimerDia()].forEach((b) => bloquesEl.appendChild(b));
       else s.orden.filter((b) => s.visibles.has(b)).forEach((b) => bloquesEl.appendChild(ARMAR[b](ms)));
+      // La invitación de Ascent (ascent.js), debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
+      const invitacion = s.primerDia ? null : opciones.invitacionDeAscent();
+      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2] || null);
       const pie = zona.querySelector('.in-pie');
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));
@@ -539,6 +549,7 @@ const SeccionInicio = (() => {
       mover(bloque, a) { const i = s.orden.indexOf(bloque); s.orden.splice(i, 1); s.orden.splice(a, 0, bloque); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       deFabrica() { s.orden = [...BLOQUES]; s.visibles = new Set(DE_FABRICA); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       primerDia(si) { s.primerDia = !!si; pintar(0); },
+      ponerSaludo,
       abrirTodo,
       cerrarTodo: () => hojaTodo.cerrar(),
       bajarTodo: (selector) => {
