@@ -85,6 +85,42 @@ async function hojaDeVincular(sufijo = '') {
   await pagina.click('.as-hoja .hb-cerrar');
   await pagina.waitForTimeout(600);
 }
+// Ascent, abajo de Progreso (spec/ascent.md): el scroll de Progreso, cada parte de la sección y los
+// días de ejemplo del diagnóstico.
+const bajarProgreso = (y) => pagina.evaluate((v) => { const s = document.querySelector('.pg-scroll'); s.scrollTop = v === 'fondo' ? s.scrollHeight : v; }, y);
+const DIAS_DE_ASCENT = ['corta', 'bien', 'entreno', 'descanso', 'sinSueno'];
+const PARTES_DE_ASCENT = [['.as-hoy', 'hoy'], ['.as-rendimiento', 'rendimiento'], ['.as-musculos', 'musculos'], ['.as-pr', 'marca'], ['.as-estanc', 'estancamiento'], ['.as-gimnasio', 'gimnasio'], ['.as-anio', 'anio']];
+async function diasDeAscent(sufijo = '') {
+  for (const d of DIAS_DE_ASCENT) {
+    await ascent('dia', d);
+    await ascent('subir');
+    await pagina.waitForTimeout(900);
+    await foto(`ascent-dia-${d}${sufijo}`);
+    await ascent('bajar', '.as-figuras');
+    await pagina.waitForTimeout(400);
+    await foto(`ascent-dia-${d}-2${sufijo}`);
+  }
+  await ascent('dia', 'corta');
+}
+async function partesDeAscent(sufijo = '') {
+  for (const [selector, nombre] of PARTES_DE_ASCENT) {
+    await ascent('bajar', selector);
+    await pagina.waitForTimeout(400);
+    await foto(`ascent-parte-${nombre}${sufijo}`);
+  }
+  await ascent('subir');
+}
+// Un arrastre con el mouse, como un dedo; con nombre, saca la foto con el dedo todavía abajo.
+async function arrastreVertical(x0, y0, x1, y1, nombre) {
+  await pagina.mouse.move(x0, y0);
+  await pagina.mouse.down();
+  await pagina.mouse.move(x1, y1, { steps: 12 });
+  await pagina.waitForTimeout(400);
+  if (nombre) await foto(nombre);
+  await pagina.mouse.up();
+  await pagina.mouse.move(1, 1);
+  await pagina.waitForTimeout(900);
+}
 // Un arrastre de costado con el mouse, como un dedo: se saca la foto con el dedo todavía abajo.
 async function arrastrar(desde, hasta, y, nombre) {
   await pagina.mouse.move(desde, y);
@@ -1262,18 +1298,20 @@ const pasos = {
     await pagina.waitForTimeout(600);
     await pagina.evaluate(() => window.__idioma('es'));
   },
-  // Que se encuentre (spec/ascent.md): la señal de Hábitos en cada estado y que se toque y se deslice
-  // sin encender la estrella de abajo, y la invitación de Inicio, con «Ahora no» y con vincular.
+  // Que se encuentre (spec/ascent.md, «Ascent en Progreso»): la pestaña de arriba de la barra y el asomo del
+  // final, que se toquen y se deslicen, que el scroll y las pestañas sigan siendo del dedo, Hábitos sin
+  // nada de Ascent y la invitación de Inicio, con «Ahora no» y con vincular.
   async 'ascent-senal'() {
-    const encendidas = () => pagina.evaluate(() => document.querySelector('.cab-luz b').textContent);
     const ascentArriba = () => pagina.evaluate(() => document.querySelector('.ascent').getBoundingClientRect().top < 40);
+    const ascentAbajo = () => pagina.evaluate(() => document.querySelector('.ascent').style.visibility === 'hidden');
+    const enProgreso = () => pagina.evaluate(() => document.querySelector('.pestanas .pt-progreso').getAttribute('aria-selected') === 'true');
     const asoma = (hacer) => pagina.evaluate((h) => {
       const a = document.querySelector('.as-senal').getAnimations().find((x) => x.animationName === 'as-senal-asoma');
       if (!a) return false;
       if (h === 'parar') { a.pause(); a.currentTime = 800 + 0.22 * 1500; } else a.finish();
       return true;
     }, hacer);
-    await alCielo();
+    await pestana(2);
     await pagina.waitForTimeout(300);
     // La primera vez que se llega, sube y baja: la foto, arriba de todo.
     if (!(await asoma('parar'))) console.log('! la primera vez, la señal no se movió');
@@ -1282,35 +1320,86 @@ const pasos = {
     await asoma('seguir');
     await pagina.waitForTimeout(300);
     await foto('senal-primera-vez');
-    // Una estrella tocada: se va el globito y se ve la frase.
-    const estrella = await pagina.evaluate(() => window.__estrella('Escribir'));
-    await pagina.mouse.click(estrella.x, estrella.y);
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(1500);
-    await foto('senal-sin-vincular');
-    const antes = await encendidas();
     await pagina.click('.as-senal');
     await pagina.mouse.move(1, 1);
     await pagina.waitForTimeout(900);
     await foto('senal-tocada');
     if (!(await ascentArriba())) console.log('! la señal tocada no abrió Ascent');
     await ascent('cerrar');
-    await pagina.waitForTimeout(400);
-    if (await encendidas() !== antes) console.log('! tocar la señal cambió lo encendido');
+    await pagina.waitForTimeout(500);
+    // Ya se abrió una vez: la pista se pliega.
+    await foto('senal-sin-pista');
     // Deslizar desde la señal también sube, siguiendo al dedo.
     const r = await pagina.evaluate(() => { const b = document.querySelector('.as-senal').getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; });
-    await pagina.mouse.move(r[0], r[1]);
-    await pagina.mouse.down();
-    await pagina.mouse.move(r[0], r[1] - 240, { steps: 12 });
-    await pagina.waitForTimeout(400);
-    await foto('senal-deslizando');
-    await pagina.mouse.up();
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(900);
+    await arrastreVertical(r[0], r[1], r[0], r[1] - 240, 'senal-deslizando');
     if (!(await ascentArriba())) console.log('! deslizar desde la señal no abrió Ascent');
     await ascent('cerrar');
     await pagina.waitForTimeout(400);
-    if (await encendidas() !== antes) console.log('! deslizar desde la señal cambió lo encendido');
+    // En el medio del scroll, el dedo es del scroll.
+    await bajarProgreso(500);
+    await pagina.waitForTimeout(300);
+    await arrastreVertical(196, 600, 196, 350, 'senal-en-el-medio');
+    if (!(await ascentAbajo())) console.log('! en el medio del scroll, arrastrar abrió Ascent');
+    // Abajo de todo asoma el planeta, y seguir subiendo el dedo sube la sección.
+    await bajarProgreso('fondo');
+    await pagina.waitForTimeout(500);
+    await foto('senal-final');
+    await arrastreVertical(196, 560, 196, 330, 'senal-final-subiendo');
+    if (!(await ascentArriba())) console.log('! abajo de todo, seguir subiendo no abrió Ascent');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(400);
+    // Desde el asomo, tocándolo.
+    await pagina.click('.as-asomo');
+    await pagina.mouse.move(1, 1);
+    await pagina.waitForTimeout(900);
+    if (!(await ascentArriba())) console.log('! el asomo tocado no abrió Ascent');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(400);
+    // De costado, abajo de todo, sigue pasando de sección.
+    await arrastreVertical(340, 560, 60, 560);
+    if (await enProgreso()) console.log('! de costado, abajo de todo, no cambió de sección');
+    if (!(await ascentAbajo())) console.log('! de costado, abajo de todo, subió Ascent');
+    await pestana(2);
+    // Con la rueda: lo que venía bajando no cuenta; después de una pausa, sí.
+    await bajarProgreso(0);
+    await pagina.mouse.move(196, 500);
+    await pagina.mouse.wheel(0, 100000);
+    await pagina.waitForTimeout(60);
+    await pagina.mouse.wheel(0, 120);
+    await pagina.waitForTimeout(500);
+    if (!(await ascentAbajo())) console.log('! la inercia de la rueda abrió Ascent');
+    await pagina.mouse.wheel(0, 120);
+    await pagina.waitForTimeout(60);
+    await pagina.mouse.wheel(0, 120);
+    await pagina.waitForTimeout(900);
+    if (!(await ascentArriba())) console.log('! con la rueda, abajo de todo, no abrió Ascent');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(400);
+    // Desde la barra no arranca: el borde de abajo es del gesto de inicio del iPhone.
+    await arrastreVertical(196, 815, 196, 560);
+    if (!(await ascentAbajo())) console.log('! desde la barra subió Ascent');
+    await bajarProgreso(0);
+    // En las metas no hay señal.
+    await pagina.evaluate(() => window.__progreso('metas'));
+    await pagina.waitForTimeout(600);
+    await foto('senal-en-metas');
+    await pagina.evaluate(() => window.__progreso('principal'));
+    await pagina.waitForTimeout(300);
+    // Hábitos, como antes: sin señal; para arriba no sube nada, y para abajo sigue llevando a tu universo.
+    await alCielo();
+    await pagina.waitForTimeout(800);
+    await foto('senal-habitos');
+    if (await pagina.evaluate(() => { const b = document.querySelector('.as-senal').getBoundingClientRect(); return b.x >= 0 && b.x < 393; })) console.log('! la señal de Ascent se ve en Hábitos');
+    await arrastreVertical(196, 640, 196, 400);
+    if (!(await ascentAbajo())) console.log('! en Hábitos, para arriba subió Ascent');
+    await arrastreVertical(196, 180, 196, 740, 'senal-habitos-universo');
+    await pagina.waitForTimeout(600);
+    if (await pagina.evaluate(() => document.querySelector('#b-zona').textContent === 'Volver a hoy')) {
+      await pagina.evaluate(() => window.__accion('zona'));
+      await pagina.waitForTimeout(1500);
+    } else console.log('! en Hábitos, para abajo no llevó a tu universo');
+    // Lo que dice, en cada estado.
+    await pestana(2);
     await ascent('iphone', 'sinAscent');
     await pagina.waitForTimeout(600);
     await foto('senal-sin-ascent');
@@ -1318,19 +1407,20 @@ const pasos = {
     await ascent('vincular', true);
     await pagina.waitForTimeout(1700);
     await foto('senal-vinculada');
-    await ascent('senal', 'antes');
+    await ascent('dia', 'entreno');
     await pagina.waitForTimeout(600);
-    await foto('senal-vinculada-antes');
-    await ascent('senal', 'nada');
-    await pagina.waitForTimeout(600);
-    await foto('senal-vinculada-sin-sesiones');
-    await ascent('senal', 'hoy');
+    await foto('senal-vinculada-hoy');
+    await ascent('dia', 'corta');
     await pagina.evaluate(() => window.__idioma('en'));
     await pagina.waitForTimeout(600);
     await foto('senal-vinculada-ingles');
     await ascent('vincular', false);
     await pagina.waitForTimeout(1300);
     await foto('senal-ingles');
+    await bajarProgreso('fondo');
+    await pagina.waitForTimeout(500);
+    await foto('senal-final-ingles');
+    await bajarProgreso(0);
     await pagina.evaluate(() => window.__idioma('es'));
     // La invitación de Inicio.
     await pestana(0);
@@ -1368,63 +1458,25 @@ const pasos = {
     await ascent('vincular', false);
     await pagina.waitForTimeout(600);
   },
-  // Ascent, abajo de Hábitos: la señal, el gesto a mitad de camino (con el dedo todavía abajo),
-  // sin vincular y vinculada, y lo que cambia en Inicio, Sueño y Perfil con el vínculo.
+  // Ascent, abajo de Progreso: la pestaña y el asomo, el gesto a mitad de camino (con el dedo todavía
+  // abajo), sin vincular, la hoja de vincular, vinculada con los cinco días de ejemplo y cada parte con
+  // su gráfico, «sin déficit», los números ocultos y lo que cambia en Inicio, Sueño y Perfil con el vínculo.
   async ascent() {
-    await alCielo();
+    await pestana(2);
     await pagina.waitForTimeout(600);
     await foto('ascent-flecha');
-    // Tocar la señal también abre la sección.
-    await pagina.click('.as-senal');
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(900);
-    await foto('ascent-flecha-tocada');
-    await ascent('cerrar');
-    await pagina.waitForTimeout(300);
-    // Desde la barra no arranca: el borde de abajo es del gesto de inicio del iPhone.
-    await pagina.mouse.move(196, 815);
-    await pagina.mouse.down();
-    await pagina.mouse.move(196, 560, { steps: 12 });
-    await pagina.waitForTimeout(300);
-    await foto('ascent-desde-la-barra');
-    await pagina.mouse.up();
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(600);
-    await pagina.mouse.move(196, 640);
-    await pagina.mouse.down();
-    await pagina.mouse.move(196, 400, { steps: 12 });
-    await pagina.waitForTimeout(400);
-    await foto('ascent-subiendo');
-    await pagina.mouse.up();
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(900);
+    await bajarProgreso('fondo');
+    await pagina.waitForTimeout(500);
+    await foto('ascent-asomo');
+    await arrastreVertical(196, 640, 196, 400, 'ascent-subiendo');
     await foto('ascent');
     // Para volver: arrastrarla para abajo desde arriba de todo.
-    await pagina.mouse.move(196, 300);
-    await pagina.mouse.down();
-    await pagina.mouse.move(196, 560, { steps: 12 });
-    await pagina.waitForTimeout(400);
-    await foto('ascent-bajando');
-    await pagina.mouse.up();
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(900);
+    await arrastreVertical(196, 300, 196, 560, 'ascent-bajando');
     await foto('ascent-de-vuelta');
-    // Arrastrar el cielo para abajo sigue subiendo a tu universo.
-    await pagina.mouse.move(196, 300);
-    await pagina.mouse.down();
-    await pagina.mouse.move(196, 560, { steps: 12 });
-    await pagina.waitForTimeout(400);
-    await foto('ascent-universo-sigue');
-    await pagina.mouse.up();
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(1500);
-    if (await pagina.evaluate(() => document.querySelector('#b-zona').textContent === 'Volver a hoy')) {
-      await pagina.evaluate(() => window.__accion('zona'));
-      await pagina.waitForTimeout(1500);
-    }
+    await bajarProgreso(0);
     await ascent('abrir');
     await pagina.waitForTimeout(300);
-    for (const [selector, nombre] of [['.as-grupo', 'ascent-bloqueadas'], ['.as-anio', 'ascent-bloqueadas-2']]) {
+    for (const [selector, nombre] of [['.as-grupo', 'ascent-bloqueadas'], ['.as-musculos', 'ascent-bloqueadas-2'], ['.as-anio', 'ascent-bloqueadas-3']]) {
       await ascent('bajar', selector);
       await pagina.waitForTimeout(300);
       await foto(nombre);
@@ -1436,11 +1488,24 @@ const pasos = {
     await ascent('vincular', true);
     await pagina.waitForTimeout(1700);
     await foto('ascent-vinculada');
-    for (const [selector, nombre] of [['.as-gimnasio', 'ascent-gimnasio'], ['.as-recuperacion', 'ascent-vinculada-2'], ['.as-estanc', 'ascent-vinculada-3'], ['.as-funciones', 'ascent-vinculada-4']]) {
-      await ascent('bajar', selector);
-      await pagina.waitForTimeout(300);
-      await foto(nombre);
-    }
+    await diasDeAscent();
+    await partesDeAscent();
+    // Un buen día para intentar marca, y con la sesión ya hecha, las piernas cargadas.
+    await ascent('dia', 'bien');
+    await ascent('bajar', '.as-pr');
+    await pagina.waitForTimeout(400);
+    await foto('ascent-parte-marca-buen-dia');
+    await ascent('dia', 'entreno');
+    await ascent('bajar', '.as-musculos');
+    await pagina.waitForTimeout(400);
+    await foto('ascent-parte-musculos-cargados');
+    await ascent('dia', 'corta');
+    await ascent('subir');
+    // Explicar cómo se calcula.
+    await pagina.click('.as-diag .as-enlace');
+    await pagina.waitForTimeout(400);
+    await foto('ascent-como-se-calcula');
+    await pagina.click('.as-diag .as-enlace');
     // El gimnasio que se enciende solo: sumarlo con un toque.
     await ascent('bajar', '.as-gimnasio');
     await pagina.click('.as-gimnasio-sumar');
@@ -1454,6 +1519,23 @@ const pasos = {
     await ascent('pocas', false);
     await ascent('subir');
     await ascent('cerrar');
+    // Con «sin déficit» no hay diagnóstico ni lo que se come; con los números ocultos, sin gramos.
+    await pagina.evaluate(() => window.__seguridad('sinDeficit', true));
+    await ascent('abrir');
+    await pagina.waitForTimeout(500);
+    await foto('ascent-sin-deficit');
+    await ascent('cerrar');
+    await pagina.evaluate(() => window.__seguridad('sinDeficit', false));
+    await pagina.evaluate(() => window.__seguridad('numeros', false));
+    await ascent('abrir');
+    await pagina.waitForTimeout(500);
+    await foto('ascent-sin-numeros');
+    await ascent('bajar', '.as-figuras');
+    await pagina.waitForTimeout(300);
+    await foto('ascent-sin-numeros-2');
+    await ascent('subir');
+    await ascent('cerrar');
+    await pagina.evaluate(() => window.__seguridad('numeros', true));
     await pestana(0);
     await pagina.waitForTimeout(1200);
     await foto('ascent-inicio');
@@ -1679,13 +1761,26 @@ const pasos = {
   },
   async 'ascent-ingles'() {
     await pagina.evaluate(() => window.__idioma('en'));
+    await pestana(2);
+    await pagina.waitForTimeout(500);
+    await foto('ascent-flecha-ingles');
+    await bajarProgreso('fondo');
+    await pagina.waitForTimeout(500);
+    await foto('ascent-asomo-ingles');
+    await bajarProgreso(0);
     await ascent('abrir');
     await pagina.waitForTimeout(500);
     await foto('ascent-ingles');
+    await ascent('bajar', '.as-grupo');
+    await pagina.waitForTimeout(300);
+    await foto('ascent-bloqueadas-ingles');
+    await ascent('subir');
     await hojaDeVincular('-ingles');
     await ascent('vincular', true);
     await pagina.waitForTimeout(1700);
     await foto('ascent-vinculada-ingles');
+    await diasDeAscent('-ingles');
+    await partesDeAscent('-ingles');
     await ascent('vincular', false);
     await ascent('cerrar');
     await pagina.evaluate(() => window.__idioma('es'));
@@ -1831,6 +1926,8 @@ const pasos = {
     await poner({ abajo: 1240 }, 'bloqueo-todos-3');
     await poner({ abajo: 1860 }, 'bloqueo-todos-4');
     await poner({ modo: 'todos', idioma: 'en', abajo: 620 }, 'bloqueo-todos-ingles');
+    await pagina.click('.ab-cerrar');
+    await pagina.waitForTimeout(400);
   },
   async 'widgets-nuevos'() {
     const widgets = (accion, arg) => pagina.evaluate(([a, x]) => window.__widgets(a, x), [accion, arg]);

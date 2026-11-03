@@ -47,8 +47,10 @@
   const DORMIDO_ANOCHE = Math.round((Datos.NOCHES.find((n) => n.clave === Datos.HOY) || { dormido: 452 }).dormido);
   const PASOS_DE_HOY = 6240;
   // Hasta dónde sube la cámara del cielo con Ascent arriba: menos que el dedo, porque está más lejos.
-  const CAMARA_DE_ASCENT = 0.75;
+  const CAMARA_DE_ASCENT = 1;
   let subidaDeAscent = 0;
+  // Si la cámara es de Ascent mientras sube: desde tu universo, se queda donde está.
+  let camaraConAscent = false;
   // Los seis del miércoles, con los ids de la persona de mentira (Datos.HABITOS): así el editor y
   // «Tu mes» saben de cuál se trata.
   const habitosLira = () => [
@@ -356,17 +358,18 @@
   let soloIphone = false;
   // «Por qué no subes» con pocas semanas: un botón de la galería, para ver cuando todavía junta.
   let pocasSemanas = false;
-  function conAscent() {
-    const A = Datos.ASCENT;
+  // Con `sinHoy`, la sesión de hoy todavía no está anotada: hoy no cuenta como día de gimnasio.
+  function conAscent(sinHoy) {
+    const sesiones = sinHoy ? Datos.ASCENT.sesiones.filter((x) => x.fecha !== Datos.HOY) : Datos.ASCENT.sesiones;
     const inicio = controlHecho.fecha;
-    const promedio = Entrenamiento.promedioDeSesiones(Entrenamiento.sesionesAnteriores(A.sesiones, inicio));
+    const promedio = Entrenamiento.promedioDeSesiones(Entrenamiento.sesionesAnteriores(sesiones, inicio));
     const pesoKg = Datos.PESADAS[Datos.PESADAS.length - 1].kg;
     const costo = Entrenamiento.costoDeSesion(pesoKg, promedio ? promedio.minutos : 60);
     const semana = Entrenamiento.caloriasSegunElDia({
-      meta: metaBase, inicio, hoy: Datos.HOY, sesiones: A.sesiones, frecuencia: Entrenamiento.frecuenciaPorDia(A.sesiones, inicio), costo, sexo: perfil.sexo,
+      meta: metaBase, inicio, hoy: Datos.HOY, sesiones, frecuencia: Entrenamiento.frecuenciaPorDia(sesiones, inicio), costo, sexo: perfil.sexo,
     });
     const hoy = semana.find((d) => d.fecha === Datos.HOY);
-    const sesion = A.sesiones.find((x) => x.fecha === Datos.HOY) || null;
+    const sesion = sesiones.find((x) => x.fecha === Datos.HOY) || null;
     const tamano = sesion ? Entrenamiento.tamanoDeSesion(sesion, promedio) : 1;
     const extra = sesion ? Entrenamiento.proteinaDespuesDeEntrenar({ tamano, pesoKg, proteina: hoy.meta.proteina }) : 0;
     // Lo de un día de descanso: el último de la semana que ya pasó sin entrenar.
@@ -474,6 +477,9 @@
     },
   }));
   progreso = SeccionProgreso.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    // Al final del scroll, lo que dice que abajo está Ascent, y el planeta que asoma con eso.
+    asomoDeAscent: () => (ascent ? ascent.asomoDeProgreso() : null),
+    alPintar: () => { if (ascent) ascent.mirarElFinal(); },
     comida,
     persona,
     ponerEstrategia,
@@ -522,19 +528,24 @@
     noches: () => sueno.noches(),
     cara: (clave) => sueno.cara(clave),
     metaBase: () => metaBase,
-    conAscent: () => (vinculada ? conAscent() : null),
+    conAscent: (sinHoy) => (vinculada ? conAscent(sinHoy) : null),
     pocasSemanas: () => pocasSemanas,
+    sinDeficit: () => perfilSec.sinDeficit,
     alVincular: (si) => vincular(si),
-    // Al subir, el cielo sube con el dedo, más despacio (está más lejos), y lo de hoy se apaga: Ascent
-    // queda sobre el mismo cielo, como «Tu universo».
+    // Lo que le falta al diagnóstico se anota en su sección.
+    irASeccion: (que) => { ascent.cerrar(true); pestanas.ir(que === 'sueno' ? 3 : que === 'comida' ? COMIDA : 5); },
+    // Al subir, el cielo se aclara y sube con el dedo, más despacio (está más lejos), y Progreso se
+    // apaga: Ascent queda sobre el mismo cielo, como «Tu universo».
     alMover: (p) => {
       // Solo mientras Ascent se mueve: cerrada, la cámara es del cielo (hoy o el universo).
-      // Lo de hoy se apaga en la primera mitad del gesto, así no se mezcla con lo de Ascent.
+      // Lo de Progreso se apaga en la primera mitad del gesto, así no se mezcla con lo de Ascent.
       if (p > 0 || subidaDeAscent > 0) {
-        escena.velar(Math.min(1, p * 2));
-        escena.camara(CAMARA_DE_ASCENT * p, true);
-        const botones = tel.querySelector('.hh-botones');
-        if (botones) botones.style.opacity = String(Math.max(0, 1 - p * 2));
+        progreso.zona.style.opacity = String(Math.max(0, 1 - p * 2.2));
+        if (subidaDeAscent === 0) camaraConAscent = escena.zona() === 'hoy';
+        if (camaraConAscent) {
+          escena.velar(Math.min(1, p * 2));
+          escena.camara(CAMARA_DE_ASCENT * p, true);
+        }
       }
       subidaDeAscent = p;
       if (pestanas) pestanas.repintar();
@@ -542,9 +553,11 @@
     curva: bezier(0.16, 1, 0.3, 1),
     movimientoReducido,
     repintarInicio: () => inicio.pintar(0),
+    repintarProgreso: () => progreso.pintar(),
   }));
-  // Inicio se pintó antes de que existiera Ascent, y su invitación sale de ahí.
+  // Inicio y Progreso se pintaron antes de que existiera Ascent, y su invitación y su asomo salen de ahí.
   inicio.pintar(0);
+  progreso.pintar();
 
   // El saludo del día: arriba de Inicio, con lo que la galería tiene de la persona, y su hoja para probarlo.
   saludoSec = SeccionSaludo.crear(tel, Object.assign({}, opcionesDeSeccion, {
@@ -577,9 +590,9 @@
     if (ascent) ascent.pintar();
     $$('#s-aparato button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.valor === 'iphone') === soloElIphone)));
   }
-  // A Ascent se llega por Hábitos: desde Sueño o Perfil, se pasa por ahí.
+  // A Ascent se llega por Progreso: desde Sueño o Perfil, se pasa por ahí.
   function abrirAscent(deUna) {
-    if (!ascent.ocupada) { cerrarHojas(); pestanas.ir(HABITOS, true); }
+    if (!ascent.ocupada) { cerrarHojas(); pestanas.ir(PROGRESO, true); }
     ascent.abrir(deUna);
   }
 
@@ -672,6 +685,7 @@
     if (suscripcion && suscripcion.hojaAbierta) suscripcion.cerrarHoja();
     if (guiaAtajos && guiaAtajos.abierta) guiaAtajos.cerrar();
     if (saludoSec && saludoSec.abierta) saludoSec.cerrar();
+    if (avisosBloqueo.abierta) avisosBloqueo.cerrar();
   };
 
   // ------------------------------------------------------------ las seis secciones, como en Ascent
@@ -682,6 +696,7 @@
   // todas, como el planeta de Ascent, oscurecido salvo en Hábitos; la constelación va con su página.
   const PESTANAS = ['inicio', 'comida', 'progreso', 'sueno', 'habitos', 'perfil'];
   const HABITOS = 4;
+  const PROGRESO = 2;
   const UMBRAL = 0.22;
   const VELOCIDAD_MIN = 0.35;
   const VIAJE_MS = 340;
@@ -773,11 +788,14 @@
         p.style.visibility = Math.abs(corrida) >= w ? 'hidden' : '';
       });
       escena.desplazarPagina(HABITOS * w + x);
+      // El planeta que asoma al final de Progreso se va con su página.
+      ascent.seguirPagina(PROGRESO * w + x);
       // El cielo se aclara mientras arrastrás hacia Hábitos, no de golpe al llegar.
       const k = Math.min(PESTANAS.length - 1, Math.max(0, -x / w));
       const a = VELO[Math.floor(k)], b = VELO[Math.ceil(k)];
       const oscuro = a + (b - a) * (k - Math.floor(k));
-      velo.firstChild.style.opacity = oscuro.toFixed(3);
+      // Ascent trae su propio velo: el cielo se aclara mientras sube, como hacia Hábitos.
+      velo.firstChild.style.opacity = (oscuro * (1 - ascent.progreso)).toFixed(3);
       // El azul de Sueño sigue al dedo, como el velo: la página se desliza y el fondo no.
       velo.lastChild.style.opacity = Math.max(0, 1 - Math.abs(k - 3)).toFixed(3);
       // Sobre las secciones la barra es pareja, como en Ascent; sobre el cielo deja ver el musgo.
@@ -791,13 +809,13 @@
       comida.ponerEnZona(actual === COMIDA);
       // Al volver a Inicio: lo que se cambió en otra sección (Perfil, por ejemplo) ya cuenta para el saludo.
       if (actual === 0) inicio.ponerSaludo();
-      if (actual === HABITOS) ascent.asomar();
+      if (actual === PROGRESO) ascent.asomar();
       refrescarControles();
     }
 
     function ir(i, deUna) {
-      // Con Ascent arriba, Hábitos la baja; otra pestaña la saca de una.
-      if (ascent.ocupada) ascent.cerrar(i !== HABITOS || deUna);
+      // Con Ascent arriba, Progreso la baja; otra pestaña la saca de una.
+      if (ascent.ocupada) ascent.cerrar(i !== PROGRESO || deUna);
       cancelAnimationFrame(animacion);
       animacion = 0;
       actual = Math.max(0, Math.min(PESTANAS.length - 1, i));
@@ -828,7 +846,7 @@
       if (!g || ev.pointerId !== g.id) return;
       const dx = ev.clientX - g.x0, dy = ev.clientY - g.y0;
       if (!g.decidido) {
-        if (escena.arrastrando) { gesto = null; return; }
+        if (escena.arrastrando || (subida && subida.decidido)) { gesto = null; return; }
         if (Math.abs(dx) < DECIDE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
         g.decidido = true;
         g.desde = performance.now();
@@ -895,19 +913,21 @@
     };
   })();
 
-  // ------------------------------------------------------------ Ascent, arriba de Hábitos
-  // En Hábitos, deslizar para arriba sube la sección de Ascent desde el musgo, siguiendo al dedo;
-  // para abajo sigue llevando la cámara a tu universo. Se decide con el mismo umbral que el
-  // arrastre del cielo y antes que él: así el cielo no se mueve cuando el gesto es de Ascent.
+  // ------------------------------------------------------------ Ascent, abajo de Progreso
+  // Progreso tiene scroll: al llegar abajo y seguir subiendo el dedo, sube Ascent siguiendo al dedo,
+  // con el mismo gesto (y los mismos umbrales) con que se entra a tu universo desde Hábitos. Desde la
+  // pestaña de arriba de la barra o desde el asomo del final, con el scroll donde esté. Más arriba el
+  // dedo es del scroll y de costado es de las pestañas; la barra, nunca: es del gesto de inicio del iPhone.
   let subida = null;
   let ultimaSubida = -1e9;
-  const puedeSubir = () => pestanas.actual === HABITOS && !pestanas.deslizando && !ascent.ocupada && !entrada.paso && !comida.hojaAbierta
-    && !mas.abierta && !inicio.editando && !habitosSec.abierta && !escena.viajando && escena.zona() === 'hoy' && (!esTactil || tel.classList.contains('inmersivo'));
+  const scrollDeProgreso = progreso.zona.querySelector('.pg-scroll');
+  const alFondoDeProgreso = () => scrollDeProgreso.scrollTop + scrollDeProgreso.clientHeight >= scrollDeProgreso.scrollHeight - 2;
+  const puedeSubir = () => pestanas.actual === PROGRESO && !pestanas.deslizando && !ascent.ocupada && !entrada.paso && !comida.hojaAbierta
+    && !mas.abierta && !inicio.editando && !habitosSec.abierta && !progreso.zona.classList.contains('en-metas') && (!esTactil || tel.classList.contains('inmersivo'));
+  const subeDesde = (objetivo) => !!objetivo.closest('.progreso') && (!!objetivo.closest('.as-senal, .as-asomo') || alFondoDeProgreso());
   tel.addEventListener('pointerdown', (ev) => {
     subida = null;
-    if (!puedeSubir() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-    if (ev.target.closest('.pestanas, .barra-inmersiva, .pagina-app, .hh-botones')) return;
-    if (ev.clientY > tel.querySelector('.pestanas').getBoundingClientRect().top - 8) return;
+    if (!puedeSubir() || (ev.pointerType === 'mouse' && ev.button !== 0) || !subeDesde(ev.target)) return;
     subida = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, decidido: false, v: 0, ultimoY: ev.clientY, ultimoT: performance.now() };
   }, true);
   tel.addEventListener('pointermove', (ev) => {
@@ -915,10 +935,9 @@
     if (!g || ev.pointerId !== g.id) return;
     const dx = ev.clientX - g.x0, dy = ev.clientY - g.y0;
     if (!g.decidido) {
-      if (dy > 8 || Math.abs(dx) >= DECIDE_PX || escena.arrastrando) { subida = null; return; }
+      if (dy > 8 || Math.abs(dx) >= DECIDE_PX) { subida = null; return; }
       if (-dy <= 8 || Math.abs(dx) > -dy) return;
       g.decidido = true;
-      escena.soltarGesto();
       try { tel.setPointerCapture(ev.pointerId); } catch (_) { /* sin captura igual funciona */ }
     }
     ev.stopImmediatePropagation();
@@ -943,6 +962,34 @@
   tel.addEventListener('click', (ev) => {
     if (performance.now() - ultimaSubida < 400) { ev.stopImmediatePropagation(); ev.preventDefault(); }
   }, true);
+  // En el iPhone, abajo de todo, el navegador se queda con el dedo (rebota) si no se le dice nada.
+  let toqueDeSubida = null;
+  scrollDeProgreso.addEventListener('touchstart', (ev) => {
+    const t = ev.touches[0];
+    toqueDeSubida = t && puedeSubir() && subeDesde(ev.target) ? { x: t.clientX, y: t.clientY } : null;
+  }, { passive: true });
+  scrollDeProgreso.addEventListener('touchmove', (ev) => {
+    const t = ev.touches[0];
+    if (!toqueDeSubida || !t) return;
+    const dy = toqueDeSubida.y - t.clientY;
+    if (dy > 0 && dy > Math.abs(t.clientX - toqueDeSubida.x)) ev.preventDefault();
+  }, { passive: false });
+  // Con la rueda o el trackpad, lo mismo: abajo de todo, seguir bajando la sube. Lo que venía bajando
+  // (la inercia) no cuenta: tiene que haber una pausa antes de arrancar.
+  let rueda = 0;
+  let ultimaRueda = -1e9;
+  let finDeRueda = 0;
+  progreso.zona.addEventListener('wheel', (ev) => {
+    const antes = ultimaRueda;
+    ultimaRueda = performance.now();
+    if (!rueda && (ev.deltaY <= 0 || !puedeSubir() || !alFondoDeProgreso() || ultimaRueda - antes < 200)) return;
+    ev.preventDefault();
+    rueda = Math.max(0, rueda + ev.deltaY);
+    // Rinde el doble que el dedo: una vuelta de la rueda alcanza.
+    ascent.arrastrar((2 * rueda) / (tel.clientHeight || 1));
+    clearTimeout(finDeRueda);
+    finDeRueda = setTimeout(() => { ascent.soltar(ascent.progreso >= UMBRAL); rueda = 0; }, 180);
+  }, { passive: false });
   // Después de mantener apretada una estrella, el click de soltar no cierra la hoja que se abrió.
   let soltoTrasMantener = -1e9;
   tel.addEventListener('pointerup', () => { if (mantenido) { mantenido = false; soltoTrasMantener = performance.now(); } }, true);
@@ -1053,9 +1100,9 @@
   $$('[data-seccion]').forEach((b) => b.addEventListener('click', () => { accionesSeccion[b.dataset.seccion](); refrescarControles(); }));
   const accionesAscent = {
     abrir: () => abrirAscent(),
-    cerrar: () => { if (ascent.ocupada) ascent.cerrar(); else pestanas.ir(HABITOS); },
+    cerrar: () => { if (ascent.ocupada) ascent.cerrar(); else pestanas.ir(PROGRESO); },
     sueno: () => { cerrarHojas(); pestanas.ir(3); sueno.verNoche(0); },
-    asomar: () => { cerrarHojas(); if (ascent.ocupada) ascent.cerrar(true); pestanas.ir(HABITOS); ascent.asomar(true); },
+    asomar: () => { cerrarHojas(); if (ascent.ocupada) ascent.cerrar(true); pestanas.ir(PROGRESO); ascent.asomar(true); },
     invitacion: () => { cerrarHojas(); pestanas.ir(0); ascent.volverAInvitar(); },
   };
   $$('[data-ascent]').forEach((b) => b.addEventListener('click', () => { accionesAscent[b.dataset.ascent](); refrescarControles(); }));
@@ -1330,14 +1377,14 @@
     const pasos = {
       abrir: () => abrirAscent(true),
       cerrar: () => ascent.cerrar(true),
-      arrastrar: () => { if (pestanas.actual !== HABITOS) pestanas.ir(HABITOS, true); ascent.arrastrar(arg); },
+      arrastrar: () => { if (pestanas.actual !== PROGRESO) pestanas.ir(PROGRESO, true); ascent.arrastrar(arg); },
       vincular: () => vincular(arg),
       hojaVincular: () => ascent.abrirVincular(),
       pocas: () => { pocasSemanas = arg; ascent.pintar(); },
       bajar: () => ascent.bajarA(arg),
       subir: () => ascent.subir(),
       iphone: () => ascent.ponerIphone(arg),
-      senal: () => ascent.senalCon(arg),
+      dia: () => ascent.ponerDia(arg),
       asomar: () => ascent.asomar(true),
       volverAInvitar: () => ascent.volverAInvitar(),
     };

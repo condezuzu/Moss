@@ -55,6 +55,7 @@ const SeccionProgreso = (() => {
       zona.classList.toggle('en-metas', s.vista === 'metas');
       if (s.vista === 'metas') pintarMetas(); else pintarPrincipal();
       cont.scrollTop = arriba;
+      if (opciones.alPintar) opciones.alPintar();
     }
 
     function pintarPrincipal() {
@@ -72,6 +73,9 @@ const SeccionProgreso = (() => {
       cont.appendChild(el('h3', 'pg-seccion', tx('progreso.estrategia')));
       cont.appendChild(estrategia(d));
       cont.appendChild(control(d));
+      // Al final, lo que dice que abajo está Ascent (ascent.js).
+      const asomo = opciones.asomoDeAscent && opciones.asomoDeAscent();
+      if (asomo) cont.appendChild(asomo);
     }
 
     // ------------------------------------------------------------ el objetivo

@@ -269,8 +269,22 @@ const Datos = (() => {
       { sueno: 7 * 60 + 48, proteina: 149, balance: -270, diasConComida: 7, nochesConSueno: 6 },
       { sueno: 7 * 60 + 38, proteina: 152, balance: -310, diasConComida: 5, nochesConSueno: 7 },
     ];
+    // Los días de ejemplo del diagnóstico (spec/ascent.md, «El diagnóstico»), para elegir en la galería:
+    // a qué hora se mira, la noche, si hoy se entrena (la de piernas de las 18:40) y lo anotado.
+    const noche = (dormido, calidad, otras = {}) => ({ dormido, calidad, despertoAntes: false, seAcostoTarde: false, siesta: false, ...otras });
+    const MANANA = { desayuno: { hora: 8 * 60 + 5, p: 18, c: 60, g: 14, kcal: 430 }, almuerzo: { hora: 13 * 60, p: 28, c: 95, g: 28, kcal: 750 } };
+    const dias = {
+      corta: { ahora: 14 * 60 + 30, sesion: 'prevista', cafe: 95, noche: noche(350, 46, { despertoAntes: true }), ultimas3: [350, 455, 470], deuda: 180, anotado: MANANA },
+      bien: { ahora: 15 * 60 + 30, sesion: 'prevista', noche: noche(472, 84), ultimas3: [472, 455, 470], deuda: 40, anotado: MANANA },
+      entreno: { ahora: 20 * 60 + 10, sesion: 'hecha', noche: noche(452, 78), ultimas3: [452, 455, 470], deuda: 40, anotado: { ...MANANA, merienda: { hora: 17 * 60 + 30, p: 15, c: 55, g: 15, kcal: 395 } } },
+      descanso: { ahora: 15 * 60, sesion: null, noche: noche(445, 76), ultimas3: [445, 455, 470], deuda: 40, anotado: MANANA },
+      sinSueno: { ahora: 15 * 60 + 30, sesion: 'prevista', noche: null, ultimas3: [], deuda: null, anotado: MANANA },
+    };
     return {
       vinculadaDesde: '2026-10-03',
+      dias,
+      // Los ejercicios son las claves de Musculos, en español; lo que se lee de ellos, en cada idioma.
+      nombresDeEjercicios: { Sentadilla: { es: 'sentadilla', en: 'squat' } },
       sesiones,
       marcas,
       avisos,

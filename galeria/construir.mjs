@@ -18,7 +18,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas', comidas: 'Comidas', luz: 'Luz', dias: 'Dias', habitos: 'Habitos', recordatorios: 'Recordatorios', loQueFalta: 'LoQueFalta', avisos: 'Avisos', alrededorDelEntreno: 'AlrededorDelEntreno' };
+const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas', comidas: 'Comidas', luz: 'Luz', dias: 'Dias', habitos: 'Habitos', recordatorios: 'Recordatorios', loQueFalta: 'LoQueFalta', avisos: 'Avisos', alrededorDelEntreno: 'AlrededorDelEntreno', diagnostico: 'Diagnostico' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -185,6 +185,7 @@ const js = [
   modulo('Estadisticas', 'src/dominio/estadisticas.ts'),
   modulo('Premium', 'src/dominio/premium.ts'),
   modulo('SenalDeAscent', 'src/dominio/senalDeAscent.ts'),
+  modulo('Diagnostico', 'src/dominio/diagnostico.ts'),
   ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'fotos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'avisos', 'suscripcion', 'widgets-nuevos', 'widgets', 'tienda', 'revision', 'saludo', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 

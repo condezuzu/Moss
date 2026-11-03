@@ -420,6 +420,143 @@ Ascent (la recuperación) hacen la misma cuenta.
      enciende cuando `moss.ascent_sesiones(hoy)` trae el día de hoy.
    - Se revisa al abrir la app. Sube del musgo con la misma luz que los de Salud.
 
+### Ascent en Progreso, con el diagnóstico (para aprobar, lo pediste el 2/11/2026)
+
+**Es una propuesta: está en la galería (sección 7) y la app todavía no cambia.** La
+app sigue como dicen «La sección de Ascent en Moss» y «Que se encuentre», apagada con
+`CON_ASCENT`. Cuando la apruebes, esta parte reemplaza a esas dos, y el código de la
+señal en Hábitos (`src/secciones/ascent/SenalDeAscent.tsx`, y lo suyo en
+`src/cielo/Cielo.tsx` y `src/cielo/Interfaz.tsx`) se saca. Hasta entonces no se toca.
+
+Lo pediste así: que Ascent esté en Progreso y se entre como a tu constelación, con
+algo que diga que subiendo aparece; que se vea como el Ascent nuevo; que te diga qué
+te falta consumir antes o después de entrenar y te tire tips según cómo dormiste, un
+diagnóstico de tu rendimiento; más visuales con textos cortos; y la frase nueva
+debajo de «Si usas Ascent» y «Con Ascent».
+
+**Cómo se llega.** Los números del gesto son los mismos que los de hoy (`UMBRAL`,
+`VELOCIDAD_MIN` y 8 puntos para decidir).
+
+| Dónde empieza el dedo | Para arriba | Para abajo | De costado |
+|---|---|---|---|
+| Progreso, más arriba del final | El scroll | El scroll | Las pestañas |
+| Progreso, abajo de todo | Sube Ascent, siguiendo al dedo | El scroll | Las pestañas |
+| La pestaña de arriba de la barra o el asomo | Sube Ascent | Nada, o el scroll | Las pestañas |
+| La barra | Nada: el borde de abajo es del gesto de inicio del iPhone | Nada | Nada |
+
+- **Hábitos vuelve a como estaba:** su gesto vertical es solo el de tu universo, sin
+  señal ni nada de Ascent. Las metas de Progreso tampoco llevan señal.
+- **Se vuelve** deslizando para abajo desde arriba de todo, con la flecha de arriba o
+  tocando Progreso. También se llega desde Perfil y desde la recuperación en Sueño.
+- **Que quede claro que abajo está Ascent.**
+  - Siempre, una pestaña sale de la barra, cortada arriba como las cosas de Ascent:
+    la marca, qué hay (`senalDeAscent.ts`, sin cambios), «Desliza hacia arriba» y la
+    flecha, que respira. Después de abrirla una vez, «Desliza hacia arriba» se pliega.
+  - La primera vez que se llega a Progreso sube y baja apenas. Con Reducir
+    movimiento, no se mueve.
+  - Al final del scroll, «Abajo está Ascent · Desliza hacia arriba para abrirla», y
+    debajo asoma el planeta. La pestaña le deja el lugar. Las dos se tocan.
+- **La transición:** Progreso se apaga en la primera mitad del gesto, el velo del
+  cielo se va, el cielo sube más despacio que el dedo y el planeta crece hasta ser el
+  horizonte. En Ascent van a tener una entrada a Moss arriba de Stats que se abre
+  subiendo: son dos caras del mismo gesto.
+
+**Cómo se ve:** el lenguaje nuevo de Ascent (su `spec/estetica.md` y lo que contó su
+sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
+
+- Un número grande sin caja por pantalla (Outfit 200) y lo demás chico, sin caja.
+- Línea de pelo y aire en vez de tarjetas; octágono de esquinas cortadas solo para la
+  acción (y la hoja de vincular, cortada arriba); píldora para lo que se elige; lo
+  secundario, subrayado.
+- Su planeta como horizonte abajo, sin el arco con rayitas; la barra debajo del
+  número sí. El contenido se hunde detrás del horizonte en vez de cruzarlo.
+- Fondo `#05060a`, tinta `#e8ecf6`, secundario `#aab2c4`, apagado `#9098ab`, con piso
+  de contraste 4,5:1 en el texto. El acento es el del rango: en la maqueta, Luna
+  (`#7E8CA8`, `#C4C2BA`). **Falta decidir** si Moss recibe el rango de cada uno.
+- **Las letras:** Ascent usa Inter para leer y Geist Mono para los datos. La maqueta
+  usa las que ya tiene Moss: Jost, y Outfit con cifras tabulares. **Falta decidir** si
+  esta sección trae las de Ascent.
+
+**Sin vincular:** «Si usas Ascent», «Con Ascent» y la frase nueva, «Vincula las dos
+apps para entender tus entrenamientos y progresar mucho más rápido.», también en la
+invitación de Inicio. El octágono «Vincular con Ascent» y, subrayado, la App Store.
+Abajo, cada gráfico vacío, con su candado y su línea.
+
+**El diagnóstico, lo primero de la sección** (`src/dominio/diagnostico.ts`, puro y con
+tests; la galería lo usa tal cual). Cruza el sueño de anoche, lo que comiste y lo que
+falta, y el entrenamiento de hoy. No inventa nada: el rendimiento sale de
+`rendimiento.ts`, lo que se come, de las líneas de `alrededorDelEntreno.ts` (las mismas
+que en Comida), y cada consejo, de una spec. Sin culpa. Si falta un dato, dice cuál y
+no adivina. Con «sin déficit», nada: queda solo la recuperación, que ya estaba.
+
+- El número grande es la recuperación (`recuperacion()`, sin cambios), de 0 a 100, con
+  la barra de sueño, carga y comida en su proporción (40, 40 y 20). «Conviene ir…» se
+  dice solo antes de entrenar.
+- **Cómo vienes:**
+
+| Momento | Falta | Lo que dice |
+|---|---|---|
+| Antes de entrenar | La noche | «Falta saber cómo dormiste», y lleva a Sueño |
+| Antes de entrenar | | Según `rendimientoEsperado()`: «Hoy puede costar más que lo de siempre», «Hoy las repeticiones pueden costar más», «Hoy vienes como siempre» o «Hoy puedes rendir mejor que lo de siempre» |
+| Ya entrenó | Lo anotado | «Ya entrenaste» |
+| Ya entrenó | | «Ya entrenaste: te faltan 95 g de proteína» o «Ya entrenaste y llegaste a la proteína» |
+| Sin sesión hoy | | «Hoy no entrenas», y qué músculo sigue recuperándose |
+| Sin sesión hoy | Sesiones y horario | «Falta saber cuándo entrenas»: no da por hecho que descansa |
+
+- **Qué comer:** las líneas de la comida que toca, con su hora. Antes de entrenar se
+  adelanta también la de después, con la misma regla. Con los números ocultos, sin
+  gramos. Arriba, el día en una línea: las comidas, la sesión y ahora.
+- **Para hoy,** hasta tres consejos, en este orden:
+
+| Consejo | Cuándo | De dónde sale |
+|---|---|---|
+| Buen día para intentar marca | Antes de entrenar, si `buenDiaParaMarca()` aplica | `rendimiento.md` |
+| Una siesta de 20 minutos ayuda | Antes de entrenar, noche de 6 h o menos, sin siesta y con 60 minutos o más hasta la sesión | `rendimiento.md`, S (Easow 2025; Cunha 2023). Los 60 minutos son derivados |
+| Las series pueden sentirse más pesadas | Antes de entrenar, dos de las últimas tres noches de 6 h o menos | `rendimiento.md`, D (Kong 2025; Knowles 2022) |
+| No hace falta comer distinto | Noche de 6 h o menos | `entreno.md`, 3.6 y C3 |
+| Recuperar una hora de deuda lleva unos cuatro días | Deuda de 7 h o más | `sueno.md` (Kitamura 2016) |
+| No hace falta apurarse | Ya entrenó y comió antes | `entreno.md`, 2.2 y 2.3 |
+| Lo que más pesa es el total del día | Sin sesión, con algo anotado y 25 g o más por llegar | `entreno.md`, Resumen 1 y C1 |
+
+**No usa** «dormir poco da más hambre»: en `entreno.md` sigue pendiente (C2).
+
+**Lo que puede confundir lleva un gráfico y una línea** (con los colores validados:
+los gráficos usan énfasis y no categorías, y el estado siempre va con su palabra):
+
+- **Hoy en Ascent:** la semana del control en columnas finas, con el valor solo en hoy
+  y su leyenda.
+- **Rendimiento esperado:** la fuerza máxima y las repeticiones, con un punto sobre la
+  misma escala (−15 % a +4 %), lo tuyo marcado, la banda de lo normal y una línea con
+  lo que cambia de un día a otro. «Cómo se calcula» se despliega.
+- **Tus músculos:** lo que le falta a cada uno, con las marcas de 3 y 10 % donde cambia
+  de estado, y la palabra. Solo «cargado» lleva color.
+- **Marca:** las cinco condiciones y la probabilidad contra la línea de 35 %. Sin una
+  sesión por delante o sin la noche, lo dice y no mide nada.
+- **Por qué no subes:** dos puntos por fila, tus semanas con marcas y las de ahora, cada
+  fila en su escala (las de `porQueNoSube()`), con la que más cambió resaltada.
+- **Tu año:** cifras chicas.
+
+**Lo que falta programar en la app cuando lo apruebes:**
+
+1. El gesto en Progreso: hoy es un `ScrollView` adentro de la tira. Hace falta saber
+   cuándo está abajo de todo y seguir el sobre-scroll con el dedo (`onScroll` y
+   `onScrollEndDrag`, o un `Gesture.Pan()` que conviva con él), sin robarle el gesto al
+   scroll ni a la tira.
+2. La pestaña y el asomo en `src/secciones/progreso/`, el movimiento de la primera vez
+   guardado en el teléfono, y sacar la señal de Hábitos.
+3. El planeta como horizonte, en Skia, y el recorrido del cielo con Ascent subiendo
+   desde Progreso (hoy parte de Hábitos).
+4. El octágono y la pestaña cortada: Moss no tiene `react-native-svg`, así que van en
+   Skia o con un recorte en la vista.
+5. La sección nueva en `src/secciones/ascent/Vinculada.tsx`, sin tarjetas, con los
+   gráficos en `src/secciones/graficos/`.
+6. El diagnóstico con los datos de verdad: la noche y la deuda de Salud, lo anotado y
+   la meta de `src/almacen/`, la sesión de hoy (hecha, de Ascent; por venir, de su
+   frecuencia o del horario de Perfil) y `sabeCuandoEntrena`. La maqueta elige la hora
+   y el día; la app usa los de ahora, y lo tiene que repintar al anotar o al cambiar.
+7. Outfit 200 en la app, y Geist Mono e Inter si las querés. El acento del rango, si
+   se decide que Moss lo recibe.
+
 ### La sección de Ascent en Moss
 
 Está abajo de Hábitos y sube desde el musgo (el cambio 10 de la especificación la
@@ -465,6 +602,9 @@ abajo) y es lo único de Moss que es de las dos apps. En la galería, sección 7
 En Ascent van en Stats (ver la lista de cambios).
 
 ### Que se encuentre (lo pediste el 2/11/2026)
+
+Esto es lo que hoy está en la app, apagado. Lo reemplaza «Ascent en Progreso», que
+está para aprobar.
 
 Lo dijiste así: para la próxima build, cuando se prenda, que la vinculación sea
 fácil de encontrar en Moss; en Hábitos, una señal clara de que abajo está lo de

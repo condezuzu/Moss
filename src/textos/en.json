@@ -1863,7 +1863,7 @@
     "titulo": "With Ascent",
     "sinVincular": "Not linked",
     "vinculadaDesde": "Linked since {fecha}",
-    "bajada": "Link the two apps and your sleep and food meet your training.",
+    "bajada": "Link both apps to understand your workouts and progress much faster.",
     "vincular": "Link with Ascent",
     "conseguir": "Don’t have Ascent? Find it on the App Store",
     "permiso": "Linking connects your Moss account with your Ascent account so they share data: each one stays a separate account, with its own data. You can undo it in Profile.",
@@ -1876,11 +1876,12 @@
       "marca": "Ascent",
       "hoy": "Today: {sesion}",
       "ayer": "Yesterday: {sesion}",
-      "dia": "{dia}: {sesion}"
+      "dia": "{dia}: {sesion}",
+      "desliza": "Swipe up"
     },
     "invitacion": {
       "titulo": "You have Ascent on this iPhone",
-      "texto": "Link it and your sleep and food meet your training.",
+      "texto": "Link it to understand your workouts and progress much faster.",
       "vincular": "Link",
       "ahoraNo": "Not now"
     },
@@ -1915,7 +1916,8 @@
         "cardio": "Cardio"
       },
       "y": "{a} and {b}",
-      "sinDetalle": "You went to the gym: Ascent doesn’t have today’s sets."
+      "sinDetalle": "You went to the gym: Ascent doesn’t have today’s sets.",
+      "descanso": "No session today"
     },
     "recuperacion": {
       "titulo": "Recovery",
@@ -2098,7 +2100,16 @@
       "seguridad": "{nivel} confidence · {marcas} PRs in {semanas} weeks",
       "aciertos": "I flagged it {veces} times; you hit a PR in {marcas}.",
       "nota": "It’s an estimate, not a promise. If your warm-up feels heavy, save it for another day.",
-      "hoyNo": "No PR to try today: it lets you know when your conditions look like the ones of your PRs."
+      "hoyNo": "No PR to try today: it lets you know when your conditions look like the ones of your PRs.",
+      "hoyNoCorto": "Not a PR day for {ejercicio}",
+      "avisaDesde": "tells you from {p} %",
+      "condiciones": {
+        "cerca": "Close to your PR",
+        "recuperado": "Muscles recovered",
+        "sueno": "You slept well",
+        "sinPico": "No load spike",
+        "comida": "Food on track"
+      }
     },
     "vincularHoja": {
       "titulo": "Link with Ascent",
@@ -2163,6 +2174,89 @@
       "desvincularTexto": "The two apps stop sharing your data. Each app keeps its own.",
       "error": "Couldn’t unlink: try again with a connection.",
       "hecho": "Ascent is unlinked."
+    },
+    "volverAProgreso": "Back to Progress",
+    "asomo": {
+      "titulo": "Ascent is down here",
+      "texto": "Swipe up to open it"
+    },
+    "diagnostico": {
+      "etiqueta": "Your performance today",
+      "titular": {
+        "faltaNoche": "Last night’s sleep is missing",
+        "sinHorario": "Your training schedule is missing",
+        "descanso": "No training today",
+        "mejor": "You could perform better than usual today",
+        "comoSiempre": "Today looks like a usual day",
+        "repeticiones": "Reps may feel harder today",
+        "cuesta": "Today may feel harder than usual",
+        "entrenoHecho": "You trained",
+        "faltaProteina": "You trained: {g} g of protein to go",
+        "faltaProteinaSinNumeros": "You trained: some protein to go",
+        "proteinaLista": "You trained and reached your protein"
+      },
+      "sub": {
+        "faltaNoche": "Without it, there’s no saying how you’ll perform today.",
+        "sinHorario": "Log your sessions in Ascent or set your schedule in Profile.",
+        "repeticiones": "Top strength barely changes.",
+        "cuesta": "Reps most of all.",
+        "recuperandose": "{musculo}: ~{h} h to recover.",
+        "recuperados": "Your muscles have recovered."
+      },
+      "figuras": {
+        "dormiste": "Slept",
+        "sinNoche": "No sleep data",
+        "proteina": "Protein, of {meta} g",
+        "sinComida": "Not logged",
+        "hecho": "{nombre}, done",
+        "descanso": "Rest day"
+      },
+      "cuando": {
+        "antes": "Before",
+        "despues": "After",
+        "dormir": "Before bed"
+      },
+      "pasos": {
+        "liviana": "Something light, low in fat and fiber.",
+        "conProteina": "Make it include protein.",
+        "pronto": "As soon as you can."
+      },
+      "ahora": "Now",
+      "lineaDelDia": "Your day: meals, your session and the time now.",
+      "paraHoy": "For today",
+      "consejos": {
+        "siesta": "If you can, a 20-minute nap: after a short night, it helps.",
+        "noCompensar": "No need to eat differently: there’s no evidence it makes up for a short night.",
+        "seriesPesadas": "Two of your last three nights were short: sets may feel heavier.",
+        "deuda": "You have some sleep debt: making up an hour takes about four days.",
+        "sinApuro": "No need to rush: you ate before training.",
+        "totalDelDia": "{g} g of protein to go: the daily total matters most.",
+        "totalDelDiaSinNumeros": "Some protein to go: the daily total matters most.",
+        "marca": "A good day to try for a PR in {ejercicio}."
+      },
+      "faltan": {
+        "sueno": "Last night’s sleep is missing.",
+        "comida": "No food logged yet today.",
+        "sesion": "No sessions or schedule."
+      },
+      "irA": {
+        "sueno": "Go to Sleep",
+        "comida": "Go to Food",
+        "sesion": "Go to Profile"
+      },
+      "deCien": "Recovery, out of 100"
+    },
+    "graficos": {
+      "diagnostico": "Combines your sleep, your food and your training, and tells you what to do.",
+      "semana": "Gym days eat more; the week adds up the same.",
+      "rendimiento": "Today against your usual day.",
+      "rendimientoDescanso": "No session today: it’s back the day you train.",
+      "loTuyo": "your usual",
+      "musculos": "How far each muscle is from its usual, based on what you logged in Ascent.",
+      "marca": "It tells you when all five are met and the chance passes the line.",
+      "estancamiento": "Your weeks with PRs against the ones now.",
+      "anio": "Workouts, PRs, habits, sleep and food, all in one.",
+      "margen": "The line, about ±{n} %: how much a day can vary."
     }
   },
   "habitos": {

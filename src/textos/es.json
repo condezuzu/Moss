@@ -1863,7 +1863,7 @@
     "titulo": "Con Ascent",
     "sinVincular": "Sin vincular",
     "vinculadaDesde": "Vinculada desde el {fecha}",
-    "bajada": "Vincula las dos apps y tu sueño y tu comida se cruzan con tu entrenamiento.",
+    "bajada": "Vincula las dos apps para entender tus entrenamientos y progresar mucho más rápido.",
     "vincular": "Vincular con Ascent",
     "conseguir": "¿No tienes Ascent? Búscala en la App Store",
     "permiso": "Vincular conecta tu cuenta de Moss con la de Ascent para que compartan datos: cada una sigue siendo una cuenta aparte, con lo suyo. Se quita desde Perfil.",
@@ -1876,11 +1876,12 @@
       "marca": "Ascent",
       "hoy": "Hoy: {sesion}",
       "ayer": "Ayer: {sesion}",
-      "dia": "El {dia}: {sesion}"
+      "dia": "El {dia}: {sesion}",
+      "desliza": "Desliza hacia arriba"
     },
     "invitacion": {
       "titulo": "Tienes Ascent en este iPhone",
-      "texto": "Vincúlala y tu sueño y tu comida se cruzan con tu entrenamiento.",
+      "texto": "Vincúlala para entender tus entrenamientos y progresar mucho más rápido.",
       "vincular": "Vincular",
       "ahoraNo": "Ahora no"
     },
@@ -1915,7 +1916,8 @@
         "cardio": "Cardio"
       },
       "y": "{a} y {b}",
-      "sinDetalle": "Fuiste al gimnasio: Ascent no tiene las series de hoy."
+      "sinDetalle": "Fuiste al gimnasio: Ascent no tiene las series de hoy.",
+      "descanso": "Hoy no hay sesión"
     },
     "recuperacion": {
       "titulo": "Recuperación",
@@ -2098,7 +2100,16 @@
       "seguridad": "Seguridad {nivel} · {marcas} marcas en {semanas} semanas",
       "aciertos": "Te lo marqué {veces} veces; hiciste marca en {marcas}.",
       "nota": "Es una estimación, no una promesa. Si la entrada en calor se siente pesada, guárdala para otro día.",
-      "hoyNo": "Hoy no hay una marca para intentar: te avisa cuando tus condiciones se parecen a las de tus marcas."
+      "hoyNo": "Hoy no hay una marca para intentar: te avisa cuando tus condiciones se parecen a las de tus marcas.",
+      "hoyNoCorto": "Hoy no es día de marca en {ejercicio}",
+      "avisaDesde": "avisa desde {p} %",
+      "condiciones": {
+        "cerca": "Cerca de tu marca",
+        "recuperado": "Músculos recuperados",
+        "sueno": "Dormiste bien",
+        "sinPico": "Sin pico de carga",
+        "comida": "Comida en orden"
+      }
     },
     "vincularHoja": {
       "titulo": "Vincular con Ascent",
@@ -2163,6 +2174,89 @@
       "desvincularTexto": "Las dos apps dejan de compartir tus datos. Lo de cada app queda en cada app.",
       "error": "No se pudo desvincular: prueba de nuevo con conexión.",
       "hecho": "Ascent quedó desvinculada."
+    },
+    "volverAProgreso": "Volver a Progreso",
+    "asomo": {
+      "titulo": "Abajo está Ascent",
+      "texto": "Desliza hacia arriba para abrirla"
+    },
+    "diagnostico": {
+      "etiqueta": "Tu rendimiento hoy",
+      "titular": {
+        "faltaNoche": "Falta saber cómo dormiste",
+        "sinHorario": "Falta saber cuándo entrenas",
+        "descanso": "Hoy no entrenas",
+        "mejor": "Hoy puedes rendir mejor que lo de siempre",
+        "comoSiempre": "Hoy vienes como siempre",
+        "repeticiones": "Hoy las repeticiones pueden costar más",
+        "cuesta": "Hoy puede costar más que lo de siempre",
+        "entrenoHecho": "Ya entrenaste",
+        "faltaProteina": "Ya entrenaste: te faltan {g} g de proteína",
+        "faltaProteinaSinNumeros": "Ya entrenaste: te falta proteína",
+        "proteinaLista": "Ya entrenaste y llegaste a la proteína"
+      },
+      "sub": {
+        "faltaNoche": "Sin tu noche no se puede decir cómo vas a rendir hoy.",
+        "sinHorario": "Anota tus sesiones en Ascent o tu horario en Perfil.",
+        "repeticiones": "La fuerza máxima casi no cambia.",
+        "cuesta": "Sobre todo las repeticiones.",
+        "recuperandose": "{musculo}: ~{h} h para recuperarse.",
+        "recuperados": "Tus músculos ya están recuperados."
+      },
+      "figuras": {
+        "dormiste": "Dormiste",
+        "sinNoche": "Sin tu noche",
+        "proteina": "Proteína, de {meta} g",
+        "sinComida": "Sin anotar",
+        "hecho": "{nombre}, hecho",
+        "descanso": "Descanso"
+      },
+      "cuando": {
+        "antes": "Antes",
+        "despues": "Después",
+        "dormir": "Antes de dormir"
+      },
+      "pasos": {
+        "liviana": "Algo liviano, con poca grasa y poca fibra.",
+        "conProteina": "Que tenga proteína.",
+        "pronto": "Apenas puedas."
+      },
+      "ahora": "Ahora",
+      "lineaDelDia": "Tu día: las comidas, la sesión y la hora de ahora.",
+      "paraHoy": "Para hoy",
+      "consejos": {
+        "siesta": "Si puedes, una siesta de 20 minutos: después de una noche corta, ayuda.",
+        "noCompensar": "No hace falta comer distinto: nadie probó que lo compense.",
+        "seriesPesadas": "Dos de tus últimas tres noches fueron cortas: las series pueden sentirse más pesadas.",
+        "deuda": "Vienes con deuda de sueño: recuperar una hora lleva unos cuatro días.",
+        "sinApuro": "No hace falta apurarse: comiste antes de entrenar.",
+        "totalDelDia": "Te faltan {g} g de proteína: lo que más pesa es el total del día.",
+        "totalDelDiaSinNumeros": "Te falta proteína: lo que más pesa es el total del día.",
+        "marca": "Buen día para intentar marca en {ejercicio}."
+      },
+      "faltan": {
+        "sueno": "Falta tu noche de anoche.",
+        "comida": "Todavía no anotaste comida hoy.",
+        "sesion": "No hay sesiones ni horario."
+      },
+      "irA": {
+        "sueno": "Ir a Sueño",
+        "comida": "Ir a Comida",
+        "sesion": "Ir a Perfil"
+      },
+      "deCien": "Recuperación, de 100"
+    },
+    "graficos": {
+      "diagnostico": "Cruza cómo dormiste, lo que comiste y tu entrenamiento, y te dice qué hacer.",
+      "semana": "Los días de gimnasio comen más; la semana suma lo mismo.",
+      "rendimiento": "Hoy contra un día tuyo de siempre.",
+      "rendimientoDescanso": "Hoy no hay sesión: vuelve el día que entrenes.",
+      "loTuyo": "lo tuyo",
+      "musculos": "Lo que le falta a cada músculo para volver a lo suyo, según lo que anotaste en Ascent.",
+      "marca": "Avisa cuando se dan las cinco y la probabilidad pasa de la línea.",
+      "estancamiento": "Tus semanas con marcas contra las de ahora.",
+      "anio": "Entrenamientos, marcas, hábitos, sueño y comida, en uno solo.",
+      "margen": "La línea, más o menos {n} %: es lo que cambia de un día a otro."
     }
   },
   "habitos": {

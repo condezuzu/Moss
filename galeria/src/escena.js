@@ -235,11 +235,10 @@ const Escena = (() => {
       uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'), pie: $('.frase'), globito: $('.globito'),
     };
     // El globito va donde la frase, que se aparta mientras está.
-    dom.globito.style.bottom = 'calc(var(--pestanas) + 52px)';
+    dom.globito.style.bottom = 'calc(var(--pestanas) + 40px)';
     dom.globito.style.borderColor = 'rgba(232, 196, 106, 0.32)';
     dom.globito.style.paddingRight = '16px';
     dom.globito.style.pointerEvents = 'none';
-    let yDelPieAntes = null;
     let etiquetas = [];
     let etiquetasUniverso = [];
     let temporizadorAviso = 0;
@@ -1098,11 +1097,7 @@ const Escena = (() => {
       // La cabecera, la frase y el aviso son de la zona de hoy: se van con ella.
       const desplazamiento = e.cam.y * e.escalaCss;
       dom.cab.style.transform = `translate3d(0, ${desplazamiento.toFixed(1)}px, 0)`;
-      const yDelPie = (desplazamiento * PARALAJE.lomas[2]).toFixed(1);
-      dom.pie.style.transform = `translate3d(0, ${yDelPie}px, 0)`;
-      // La señal de Ascent (ascent.js) va con la frase, pero no se apaga con ella.
-      if (yDelPie !== yDelPieAntes) ui.style.setProperty('--pie-y', `${yDelPie}px`);
-      yDelPieAntes = yDelPie;
+      dom.pie.style.transform = `translate3d(0, ${(desplazamiento * PARALAJE.lomas[2]).toFixed(1)}px, 0)`;
       const opac = 1 - suave(0.15, 0.6, e.cam.y);
       // Mientras la constelación se conecta y sube la aurora, las etiquetas se apagan un poco: el
       // momento es del cielo.
