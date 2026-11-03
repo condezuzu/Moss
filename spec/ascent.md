@@ -311,7 +311,8 @@ Las cuentas de Moss están en `src/dominio/entrenamiento.ts`, con sus tests; la
 galería las usa tal cual. Las funciones de Supabase que comparten un número con
 Ascent (la recuperación) hacen la misma cuenta.
 
-1. **Recuperación**
+1. **Recuperación** (la que usa la app hoy; la propuesta del 2/11/2026 la reemplaza con el sueño, la
+   fatiga muscular y la comida: ver «Ascent en Progreso, con «Estás 87 % recuperado»» más abajo)
    - Un puntaje de 0 a 100, con una fórmula escrita y a la vista:
      - **Sueño, 40:** 20 × lo dormido anoche contra lo que necesitás (hasta
        1), más 20 × la calidad de la noche sobre 100. La calidad es la del
@@ -420,7 +421,7 @@ Ascent (la recuperación) hacen la misma cuenta.
      enciende cuando `moss.ascent_sesiones(hoy)` trae el día de hoy.
    - Se revisa al abrir la app. Sube del musgo con la misma luz que los de Salud.
 
-### Ascent en Progreso, con el diagnóstico (para aprobar, lo pediste el 2/11/2026)
+### Ascent en Progreso, con «Estás 87 % recuperado» (para aprobar, lo pediste el 2/11/2026)
 
 **Es una propuesta: está en la galería (sección 7) y la app todavía no cambia.** La
 app sigue como dicen «La sección de Ascent en Moss» y «Que se encuentre», apagada con
@@ -428,38 +429,54 @@ app sigue como dicen «La sección de Ascent en Moss» y «Que se encuentre», a
 señal en Hábitos (`src/secciones/ascent/SenalDeAscent.tsx`, y lo suyo en
 `src/cielo/Cielo.tsx` y `src/cielo/Interfaz.tsx`) se saca. Hasta entonces no se toca.
 
-Lo pediste así: que Ascent esté en Progreso y se entre como a tu constelación, con
-algo que diga que subiendo aparece; que se vea como el Ascent nuevo; que te diga qué
-te falta consumir antes o después de entrenar y te tire tips según cómo dormiste, un
-diagnóstico de tu rendimiento; más visuales con textos cortos; y la frase nueva
-debajo de «Si usas Ascent» y «Con Ascent».
+Lo pediste así (la segunda vuelta, el 2/11): Ascent **arriba** de Progreso, como tu
+universo («entro, boom, subo a lo de Ascent»), con algo en el encabezado que diga que
+subiendo entras a la colaboración con Ascent; la invitación de Inicio queda. Arriba de
+todo, lo que hay que hacer hoy y el porcentaje en grande: «Estás 87 % recuperado desde
+el último entrenamiento», explicado corto. Debajo, Sueño, Fatiga muscular (no «Carga»:
+«Carga 11» se leía como poca carga) y Alimentación, cada una con su franja y lo que
+conviene, con la UI de RISE. Que el sueño perfecto pida registrar la calidad, y poder
+corregir la noche en Sueño. Qué comer antes y después con su hora. La fatiga de cada
+músculo por día de la rutina (bíceps y tríceps aparte). «Marcas» y «Razones de
+estancamiento» con todos los ejercicios y sus razones. Tu año con colores. Y sacar «El
+gimnasio se enciende solo».
 
-**Cómo se llega.** Los números del gesto son los mismos que los de hoy (`UMBRAL`,
-`VELOCIDAD_MIN` y 8 puntos para decidir).
+**Cómo se llega.** Los números del gesto son los de siempre (`UMBRAL` 0,22 de la
+pantalla o `VELOCIDAD_MIN` 0,35 px/ms, y 8 puntos para decidir).
 
-| Dónde empieza el dedo | Para arriba | Para abajo | De costado |
+| Dónde empieza el dedo | Para abajo | Para arriba | De costado |
 |---|---|---|---|
-| Progreso, más arriba del final | El scroll | El scroll | Las pestañas |
-| Progreso, abajo de todo | Sube Ascent, siguiendo al dedo | El scroll | Las pestañas |
-| La pestaña de arriba de la barra o el asomo | Sube Ascent | Nada, o el scroll | Las pestañas |
+| Progreso, arriba de todo | Baja Ascent, siguiendo al dedo | El scroll | Las pestañas |
+| Progreso, más abajo | El scroll | El scroll | Las pestañas |
+| La entrada del encabezado | Baja Ascent | Nada, o el scroll | Las pestañas |
+| Ascent, abajo de todo | El scroll | Ascent sube y vuelve Progreso | Nada |
 | La barra | Nada: el borde de abajo es del gesto de inicio del iPhone | Nada | Nada |
 
-- **Hábitos vuelve a como estaba:** su gesto vertical es solo el de tu universo, sin
-  señal ni nada de Ascent. Las metas de Progreso tampoco llevan señal.
-- **Se vuelve** deslizando para abajo desde arriba de todo, con la flecha de arriba o
-  tocando Progreso. También se llega desde Perfil y desde la recuperación en Sueño.
-- **Que quede claro que abajo está Ascent.**
-  - Siempre, una pestaña sale de la barra, cortada arriba como las cosas de Ascent:
-    la marca, qué hay (`senalDeAscent.ts`, sin cambios), «Desliza hacia arriba» y la
-    flecha, que respira. Después de abrirla una vez, «Desliza hacia arriba» se pliega.
-  - La primera vez que se llega a Progreso sube y baja apenas. Con Reducir
-    movimiento, no se mueve.
-  - Al final del scroll, «Abajo está Ascent · Desliza hacia arriba para abrirla», y
-    debajo asoma el planeta. La pestaña le deja el lugar. Las dos se tocan.
-- **La transición:** Progreso se apaga en la primera mitad del gesto, el velo del
-  cielo se va, el cielo sube más despacio que el dedo y el planeta crece hasta ser el
-  horizonte. En Ascent van a tener una entrada a Moss arriba de Stats que se abre
-  subiendo: son dos caras del mismo gesto.
+- **Con la rueda o el trackpad, lo mismo:** arriba de todo de Progreso, seguir subiendo
+  la baja; abajo de todo de Ascent, seguir bajando la cierra. Lo que venía con inercia
+  no cuenta: hace falta una pausa de 200 ms.
+- **Se vuelve** también con la flecha de arriba (apunta para arriba: Ascent se va por
+  donde vino), con «Volver a Progreso» al final o tocando Progreso. También se llega
+  desde Perfil y desde la recuperación en Sueño.
+- **Que se note que arriba está Ascent:**
+  - **La entrada**, arriba a la derecha del encabezado de Progreso: el planeta de Ascent
+    con una órbita que es la recuperación de hoy y la luna de Moss en la punta del arco,
+    «82 % recuperado» y la sesión («Piernas · 18:40»; ya hecha, «Hoy: piernas»; sin
+    sesión, «Hoy descansas»). Sin vincular, la órbita punteada con la luna afuera, como
+    en el ícono, y «Vincular con Ascent» (sin Ascent en el iPhone, «Ascent»). Con la
+    franja «atención», el arco va en terracota. Tocarla abre Ascent; deslizar desde ella
+    también.
+  - Debajo, «Desliza hacia abajo» con su flecha, hasta que se abre una vez: al volver a
+    Progreso se pliega a la vista.
+  - Arriba de todo de la pantalla asoma el borde del planeta, colgado: baja con el dedo y
+    se va a medida que Ascent llega. Se apaga al bajar el scroll y en las metas.
+  - La primera vez que se llega a Progreso, Progreso baja 24 puntos y vuelve, y el borde
+    asoma un poco más, como si alguien tirara. Una sola vez; con Reducir movimiento, nada.
+- **La transición:** Ascent baja siguiendo al dedo; Progreso se apaga en la primera mitad
+  y baja un poco (el 22 % de la pantalla con el gesto entero), como empujado; el cielo
+  sube con la cámara, como hacia tu universo, y el planeta sube desde abajo hasta ser el
+  horizonte. En Ascent van a tener una entrada a Moss arriba de Stats: son dos caras del
+  mismo gesto.
 
 **Cómo se ve:** el lenguaje nuevo de Ascent (su `spec/estetica.md` y lo que contó su
 sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
@@ -468,94 +485,172 @@ sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
 - Línea de pelo y aire en vez de tarjetas; octágono de esquinas cortadas solo para la
   acción (y la hoja de vincular, cortada arriba); píldora para lo que se elige; lo
   secundario, subrayado.
-- Su planeta como horizonte abajo, sin el arco con rayitas; la barra debajo del
-  número sí. El contenido se hunde detrás del horizonte en vez de cruzarlo.
+- Su planeta como horizonte abajo. El contenido se hunde detrás del horizonte.
 - Fondo `#05060a`, tinta `#e8ecf6`, secundario `#aab2c4`, apagado `#9098ab`, con piso
   de contraste 4,5:1 en el texto. El acento es el del rango: en la maqueta, Luna
   (`#7E8CA8`, `#C4C2BA`). **Falta decidir** si Moss recibe el rango de cada uno.
+- **Las franjas** (como Oura): las mismas cuatro en el total y en cada parte, con su
+  palabra siempre. Solo «atención» tiene color (terracota `#CB8569`); las otras van de
+  gris oscuro a crema, más claras cuanto mejor.
 - **Las letras:** Ascent usa Inter para leer y Geist Mono para los datos. La maqueta
   usa las que ya tiene Moss: Jost, y Outfit con cifras tabulares. **Falta decidir** si
   esta sección trae las de Ascent.
 
-**Sin vincular:** «Si usas Ascent», «Con Ascent» y la frase nueva, «Vincula las dos
-apps para entender tus entrenamientos y progresar mucho más rápido.», también en la
-invitación de Inicio. El octágono «Vincular con Ascent» y, subrayado, la App Store.
-Abajo, cada gráfico vacío, con su candado y su línea.
+**Sin vincular:** «Si usas Ascent», «Con Ascent» y la frase, «Vincula las dos apps para
+entender tus entrenamientos y progresar mucho más rápido.», también en la invitación de
+Inicio. El octágono «Vincular con Ascent» y, subrayado, la App Store. Debajo, «Solo con
+las dos»: cada parte vacía, con su candado y su línea (cuánto estás recuperado, de qué
+sale, la fatiga por músculo, las marcas, las razones de estancamiento y tu año).
 
-**El diagnóstico, lo primero de la sección** (`src/dominio/diagnostico.ts`, puro y con
-tests; la galería lo usa tal cual). Cruza el sueño de anoche, lo que comiste y lo que
-falta, y el entrenamiento de hoy. No inventa nada: el rendimiento sale de
-`rendimiento.ts`, lo que se come, de las líneas de `alrededorDelEntreno.ts` (las mismas
-que en Comida), y cada consejo, de una spec. Sin culpa. Si falta un dato, dice cuál y
-no adivina. Con «sin déficit», nada: queda solo la recuperación, que ya estaba.
+**Vinculada, en este orden:**
 
-- El número grande es la recuperación (`recuperacion()`, sin cambios), de 0 a 100, con
-  la barra de sueño, carga y comida en su proporción (40, 40 y 20). «Conviene ir…» se
-  dice solo antes de entrenar.
-- **Cómo vienes:**
+1. **Cuánto estás recuperado** (`src/dominio/recuperado.ts`, puro y con tests; reemplaza a
+   `recuperacion()` de `entrenamiento.ts` cuando se apruebe).
+   - «Estás / 87 % / recuperado» («recuperada» con el perfil en `f`; en inglés, «You're
+     87% recovered») y «Desde tu último entreno: el lunes, empuje.». Ya entrenado:
+     «Llegaste / 91 % / recuperado» y «Así llegaste a piernas, hoy a las 18:40.».
+   - **Es un número del día**, como el de WHOOP: se mira a la hora de la sesión de hoy
+     (la que empieza ahí todavía no cuenta) o, sin sesión, a la hora de despertarse. Es
+     el mismo antes y después de entrenar, y el mismo que muestra Ascent.
+   - **Sueño, de 40:** 20 × lo dormido sobre lo que necesitas (hasta 1) + 20 × la calidad
+     sobre 100 (la del reloj, la de la mañana o el promedio: `calidadParaRecuperar()`).
+     **Sin calidad cuenta como regular (50): el sueño llega a 30**, y la fila lo dice.
+   - **Músculos, de 40:** 40 × (1 − la fatiga). **La fatiga muscular**
+     (`src/dominio/fatiga.ts`) es un índice de 0 a 100 donde menos es mejor: el promedio
+     de lo que les falta (`residual()` de `musculos.ts`) a los músculos principales de la
+     sesión de hoy o, sin sesión, a los que fueron principales en los 3 días anteriores,
+     sobre el 30 % que deja como mucho una sesión (el techo de `caidaInicial()`).
+   - **Comida, de 20:** como antes, 10 por la proteína de ayer contra la meta y 10 por
+     haber comido al menos el 80 % de las calorías.
+   - **Las franjas**, de mejor a peor: el total, 85 o más muy bien, de 70 a 84 bien, de 50
+     a 69 aceptable y menos atención; el sueño (de 40), 34, 26 y 18; la comida (de 20),
+     17, 13 y 9; la fatiga, al revés: hasta 5 % muy bien, hasta 15 bien (baja), hasta 40
+     aceptable (moderada) y más atención (alta). En la barra, un tramo igual por franja y
+     el punto en proporción dentro del suyo (`enLaBarra()`).
+   - **Qué conviene** (lo usa Sueño): muy bien, fuerte; bien o aceptable, normal;
+     atención, suave. La frase de debajo de la barra, antes de entrenar, sale de
+     `comoEntrenar()` (ver abajo), así no contradice lo del gimnasio.
+   - «¿Qué es este número?» despliega dos líneas llanas y lleva a «Cómo se calcula».
+   - El día de ejemplo «Durmió poco y entrena» da: sueño 24 (5 h 50 de 8 h, calidad 46),
+     fatiga 2 % → 39, comida 18 → **81, «Bien»**, «Hoy, entrena normal y sin ir al
+     fallo». «Durmió bien»: 93, muy bien, buen día para marca en sentadilla.
+   - **Las constantes son una propuesta para calibrar** con lo tuyo: el 30 %, los 3 días,
+     la calidad de 50 y los cortes de las franjas.
+   - **`moss.recuperacion(fecha)`, todavía sin escribir en Supabase, tiene que seguir
+     esta cuenta** (con la fatiga por músculo, que necesita las series de Ascent), para
+     que Ascent muestre el mismo número.
+2. **Hoy, concéntrate en** (`focoDeHoy()` en `diagnostico.ts`, con tests): hasta tres
+   cosas, cada una una sola idea, con su hora y en el orden del día.
+   - Primero lo que falta saber («Anota cómo dormiste», si no hay noche) y lo que conviene
+     comer antes de entrenar, a la hora de esa comida: la línea de la comida tal cual
+     (`alrededorDelEntreno.ts`), con los gramos de carbohidratos y proteína y «poca
+     grasa», y el café hasta su hora de corte. Por ejemplo, 17:30 «Merienda: algo
+     liviano · 75 g de carbohidratos, 20 g de proteína y poca grasa. Café, hasta las
+     15:30.»: una hora antes de entrenar, no apenas.
+   - Después, cómo ir en el gimnasio a la hora de la sesión (`comoEntrenar()`): buen día
+     para marca si está muy bien y una marca cerca; sin ir al fallo si la noche fue de 6 h
+     o menos; suave si los músculos de hoy piden atención o el total también; un poco
+     más fuerte si está muy bien con la fatiga baja; si no, como siempre (este va solo si
+     sobra lugar). No depende de la comida: vale con «sin déficit».
+   - «Termina antes de las 21:30», si lo fuerte termina a menos de 2 h de dormir
+     (Frimpong 2021; Leota 2025: 36 minutos más para dormirse). La misma regla que los
+     avisos.
+   - «A la cama» a la hora que deja dormir lo que necesitas, si el sueño es lo que más
+     falta y está aceptable o peor, o con deuda de 7 h o más.
+   - Al final, lo de después de entrenar y antes de dormir, y en un día de descanso,
+     «Descanso» (el músculo que más le falta) y la proteína del día.
+   - Con «sin déficit», nada, como el diagnóstico; con los números ocultos, sin gramos.
+3. **De qué sale:** Sueño, Fatiga muscular y Alimentación, en filas sin cajas: nombre,
+   valor («24 de 40», «2 %», «18 de 20»), la franja con su palabra y la barra; debajo, una
+   o dos líneas de explicación y lo que conviene según la franja (antes de entrenar, en
+   el gimnasio o para que sea perfecta).
+   - Sueño: lo dormido contra lo que necesitas y la calidad; la siesta, las series
+     pesadas o la deuda si toca. «Registra cómo dormiste: así puede llegar a 40» (sin
+     calidad) lleva a la pregunta de la mañana; siempre, «¿Dormiste distinto? Corrígelo
+     en Sueño» lleva a esa noche.
+   - Fatiga muscular: en qué músculos y cuánto; antes de entrenar, cómo ir; ya entrenado,
+     cuánto necesita lo de hoy (desde 48 h, en días); y, chico, el rendimiento esperado
+     (fuerza máxima y repeticiones, ± el ruido de cada día).
+   - Alimentación: la proteína y las calorías de ayer y qué falta para que sea perfecta;
+     después de una noche corta, «no hace falta comer distinto». Con «sin déficit», sin
+     metas.
+4. **Fatiga muscular, por músculo** (`fatigaPorDia()`, con tests): cada día de la rutina
+   de Ascent, hoy primero y después lo que sigue en la semana; en cada uno, cada músculo
+   principal por separado (bíceps y tríceps aparte) con su barra (de 0 a 15 %, con marcas
+   en 3 y 10), su palabra (recuperado, recuperándose o cargado; solo cargado con color) y
+   «listo en ~10 h». Es ahora, no a la hora de la sesión.
+5. **Marcas:** los ejercicios de la sesión de hoy con su probabilidad contra la línea de
+   35 % (`buenDiaParaMarca()`), los de buen día primero (`ordenarMarcas()`), y el porqué
+   de cada «hoy no» (`queFalla()`: las cinco condiciones, en palabras). En el de buen día,
+   la seguridad y los aciertos. Sin sesión, ya entrenado o sin la noche, lo dice.
+6. **Razones de estancamiento** (`src/dominio/estancados.ts`, con tests; no cambia
+   `porQueNoSube()`, que usa la app): todos los ejercicios que Ascent ve sin subir con el
+   umbral que se elige en sus Ajustes (2, 3, 6 u 8 semanas; 6 de fábrica; la maqueta usa
+   3 y lo dice), cada uno con «3 semanas sin subir · 80 kg × 5» y sus razones, de la que
+   más pesa a la que menos, cada una con su número y antes y ahora en una línea:
+   - en definición (objetivo «bajar»): mantener la fuerza ya es un buen resultado;
+   - dormiste menos, menos proteína o comiste más por debajo, cuando la diferencia con
+     las semanas en que subía llega a una escala entera (45 min, 15 g o 250 kcal por día,
+     como `porQueNoSube()`);
+   - poco descanso entre sesiones: el músculo principal con más de 10 % sin recuperar al
+     empezar, en la mitad o más de sus últimas sesiones (3 o más);
+   - lo entrenas menos seguido: dos tercios de lo de antes o menos;
+   - tus sesiones se achicaron: un 25 % menos, como la señal de Ascent.
+   Lo que vale para todos (la definición y lo que cambió igual en todos) va una vez,
+   arriba. Sin ninguna, «Sin una causa clara en tu sueño ni en tu comida». Siempre
+   «causa probable, no segura». Con «sin déficit», sin la definición ni las calorías.
+7. **Tu año:** un mapa del año, los meses en filas y los días en columnas; cada día
+   entrenado con el color de su grupo principal (pecho, piernas o espalda: tres tonos
+   apagados que pasan las comprobaciones de la skill dataviz de a pares, para
+   daltonismo y visión normal, sobre el fondo), un punto en cada marca y hoy con borde;
+   tocar un día dice qué fue. Debajo, la leyenda, «Tus últimas marcas» por grupo («Piernas:
+   sentadilla 107,5 kg × 5 · hace 8 semanas») y las cifras chicas de antes.
+8. **Lo que comparten las dos**, compacto: un solo peso, calorías según el día (un día de
+   gimnasio y uno de descanso), el mismo objetivo y la proteína después de entrenar.
+9. **Cómo se calcula**, al final y desplegable: las tres partes sumando 100 (40 + 40 + 20),
+   llenas con lo de hoy, la suma («24 + 39 + 18 = 81 %»), qué es cada parte, las franjas,
+   cuándo se mira, lo de comer con sus fuentes (ACSM 2016, ISSN 2017, Gardiner 2023,
+   Leota 2025) y que es orientativo (Apple 1.4.1).
 
-| Momento | Falta | Lo que dice |
-|---|---|---|
-| Antes de entrenar | La noche | «Falta saber cómo dormiste», y lleva a Sueño |
-| Antes de entrenar | | Según `rendimientoEsperado()`: «Hoy puede costar más que lo de siempre», «Hoy las repeticiones pueden costar más», «Hoy vienes como siempre» o «Hoy puedes rendir mejor que lo de siempre» |
-| Ya entrenó | Lo anotado | «Ya entrenaste» |
-| Ya entrenó | | «Ya entrenaste: te faltan 95 g de proteína» o «Ya entrenaste y llegaste a la proteína» |
-| Sin sesión hoy | | «Hoy no entrenas», y qué músculo sigue recuperándose |
-| Sin sesión hoy | Sesiones y horario | «Falta saber cuándo entrenas»: no da por hecho que descansa |
+**Se sacó:** «El gimnasio se enciende solo» y su botón (el hábito con Ascent sigue en el
+editor de Hábitos), «Hoy en Ascent» con la semana en columnas (lo de las calorías pasó a
+«Lo que comparten»), el titular y la línea del día del diagnóstico (ahora están en «Hoy,
+concéntrate en»), la pestaña de arriba de la barra y el asomo del final de Progreso.
 
-- **Qué comer:** las líneas de la comida que toca, con su hora. Antes de entrenar se
-  adelanta también la de después, con la misma regla. Con los números ocultos, sin
-  gramos. Arriba, el día en una línea: las comidas, la sesión y ahora.
-- **Para hoy,** hasta tres consejos, en este orden:
-
-| Consejo | Cuándo | De dónde sale |
-|---|---|---|
-| Buen día para intentar marca | Antes de entrenar, si `buenDiaParaMarca()` aplica | `rendimiento.md` |
-| Una siesta de 20 minutos ayuda | Antes de entrenar, noche de 6 h o menos, sin siesta y con 60 minutos o más hasta la sesión | `rendimiento.md`, S (Easow 2025; Cunha 2023). Los 60 minutos son derivados |
-| Las series pueden sentirse más pesadas | Antes de entrenar, dos de las últimas tres noches de 6 h o menos | `rendimiento.md`, D (Kong 2025; Knowles 2022) |
-| No hace falta comer distinto | Noche de 6 h o menos | `entreno.md`, 3.6 y C3 |
-| Recuperar una hora de deuda lleva unos cuatro días | Deuda de 7 h o más | `sueno.md` (Kitamura 2016) |
-| No hace falta apurarse | Ya entrenó y comió antes | `entreno.md`, 2.2 y 2.3 |
-| Lo que más pesa es el total del día | Sin sesión, con algo anotado y 25 g o más por llegar | `entreno.md`, Resumen 1 y C1 |
-
-**No usa** «dormir poco da más hambre»: en `entreno.md` sigue pendiente (C2).
-
-**Lo que puede confundir lleva un gráfico y una línea** (con los colores validados:
-los gráficos usan énfasis y no categorías, y el estado siempre va con su palabra):
-
-- **Hoy en Ascent:** la semana del control en columnas finas, con el valor solo en hoy
-  y su leyenda.
-- **Rendimiento esperado:** la fuerza máxima y las repeticiones, con un punto sobre la
-  misma escala (−15 % a +4 %), lo tuyo marcado, la banda de lo normal y una línea con
-  lo que cambia de un día a otro. «Cómo se calcula» se despliega.
-- **Tus músculos:** lo que le falta a cada uno, con las marcas de 3 y 10 % donde cambia
-  de estado, y la palabra. Solo «cargado» lleva color.
-- **Marca:** las cinco condiciones y la probabilidad contra la línea de 35 %. Sin una
-  sesión por delante o sin la noche, lo dice y no mide nada.
-- **Por qué no subes:** dos puntos por fila, tus semanas con marcas y las de ahora, cada
-  fila en su escala (las de `porQueNoSube()`), con la que más cambió resaltada.
-- **Tu año:** cifras chicas.
+**En la maqueta:** seis días de ejemplo para elegir (los cinco de antes y «Sin la calidad
+del sueño», que la galería suma al panel); la rutina sale de las sesiones de mentira
+(lunes empuje, miércoles piernas, viernes torso y domingo tirón); lo de Ascent de cada
+ejercicio estancado (cómo llegó a cada sesión, cada cuánto y los minutos) y los días del
+año antes del 14 de septiembre son inventados y lo dicen en `galeria/src/datos.js`.
 
 **Lo que falta programar en la app cuando lo apruebes:**
 
 1. El gesto en Progreso: hoy es un `ScrollView` adentro de la tira. Hace falta saber
-   cuándo está abajo de todo y seguir el sobre-scroll con el dedo (`onScroll` y
-   `onScrollEndDrag`, o un `Gesture.Pan()` que conviva con él), sin robarle el gesto al
-   scroll ni a la tira.
-2. La pestaña y el asomo en `src/secciones/progreso/`, el movimiento de la primera vez
-   guardado en el teléfono, y sacar la señal de Hábitos.
-3. El planeta como horizonte, en Skia, y el recorrido del cielo con Ascent subiendo
-   desde Progreso (hoy parte de Hábitos).
-4. El octágono y la pestaña cortada: Moss no tiene `react-native-svg`, así que van en
-   Skia o con un recorte en la vista.
-5. La sección nueva en `src/secciones/ascent/Vinculada.tsx`, sin tarjetas, con los
-   gráficos en `src/secciones/graficos/`.
-6. El diagnóstico con los datos de verdad: la noche y la deuda de Salud, lo anotado y
-   la meta de `src/almacen/`, la sesión de hoy (hecha, de Ascent; por venir, de su
-   frecuencia o del horario de Perfil) y `sabeCuandoEntrena`. La maqueta elige la hora
-   y el día; la app usa los de ahora, y lo tiene que repintar al anotar o al cambiar.
-7. Outfit 200 en la app, y Geist Mono e Inter si las querés. El acento del rango, si
-   se decide que Moss lo recibe.
+   cuándo está arriba de todo y seguir el sobre-scroll para abajo con el dedo (`onScroll`
+   y `onScrollEndDrag`, o un `Gesture.Pan()` que conviva con él), y lo mismo abajo de
+   todo de Ascent para volver, sin robarle el gesto al scroll ni a la tira.
+2. La entrada en el encabezado de `src/secciones/progreso/` (la órbita con el arco y la
+   luna, en Skia o con vistas), la pista y el movimiento de la primera vez guardados en el
+   teléfono, y sacar la señal de Hábitos.
+3. El borde del planeta arriba y el planeta como horizonte, en Skia, y el recorrido del
+   cielo con Ascent bajando desde Progreso (hoy sube desde Hábitos).
+4. La sección nueva en `src/secciones/ascent/Vinculada.tsx`, sin tarjetas, con las
+   franjas y el mapa del año en `src/secciones/graficos/`.
+5. Con los datos de verdad: la noche, la calidad y la deuda de Salud, la cara de la
+   mañana, lo anotado y la meta de `src/almacen/`, y las sesiones de Ascent con sus
+   bloques (ya llegan con `moss.ascent_sesiones`). Las cuentas están listas y con tests:
+   `recuperado.ts`, `fatiga.ts`, `estancados.ts`, y `focoDeHoy()`, `comoEntrenar()`,
+   `ordenarMarcas()` y `queFalla()` en `diagnostico.ts`.
+6. En Supabase: `moss.recuperacion(fecha)` con esta cuenta; leer la rutina activa de
+   Ascent (`nucleo/rutinas.ts`; hoy no hay función); y de Ascent, **todos** los
+   ejercicios estancados con su umbral (su `detectar()` devuelve una sola señal). Lo de
+   cada sesión (cómo llegó el músculo, cada cuánto, los minutos) sale en Moss de
+   `moss.ascent_sesiones`.
+7. Los textos nuevos están en `ascent.*`; los de antes (`ascent.recuperacion.*`,
+   `ascent.estancamiento.*`, `ascent.gimnasio.*`, `ascent.diagnostico.*`) los sigue
+   usando la app y se limpian al programarlo.
+8. Outfit 200 en la app, y Geist Mono e Inter si las querés. El acento del rango, si se
+   decide que Moss lo recibe.
 
 ### La sección de Ascent en Moss
 

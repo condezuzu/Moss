@@ -154,7 +154,7 @@ La comida es el centro de Moss. La gente quiere trackear sus macros: si esta par
 
 **Metas**
 
-- El cuestionario de la entrada (edad, sexo, altura, peso, actividad y objetivo) da la meta inicial de calorías y macros con una fórmula estándar.
+- El cuestionario de la entrada (edad, sexo, altura, peso, actividad y objetivo) da la meta inicial de calorías y macros con una fórmula estándar. El cuestionario nuevo, con las preguntas de MacroFactor y el plan, está para aprobar en la galería (`spec/nutricion.md`, «El cuestionario nuevo»).
 - Un check-in semanal automático recalcula el gasto real con la comida registrada y la tendencia del peso, y ajusta las metas. El ajuste es igual haya cumplido o no.
 - Peso diario desde Apple Health, desde Ascent o a mano en Moss. Se usa la tendencia, no el número de un día.
 - Se registran calorías, proteína, carbohidratos y grasas.

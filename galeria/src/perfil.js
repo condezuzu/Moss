@@ -7,8 +7,9 @@
 // llega de cada marca.
 
 const SeccionPerfil = (() => {
-  // Lo que anda solo con las dos apps vinculadas, con su ícono (antes en la sección de Ascent).
-  const CON_ASCENT = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['proteina', 'pesa'], ['gimnasio', 'estrella']];
+  // Lo que anda solo con las dos apps vinculadas, con su ícono (antes en la sección de Ascent). Sin «El gimnasio
+  // se enciende solo»: lo pediste sacar el 2/11 (el hábito del gimnasio se suma desde Hábitos, no desde Ascent).
+  const CON_ASCENT = [['peso', 'balanza'], ['calorias', 'rayo'], ['objetivo', 'objetivo'], ['proteina', 'pesa']];
   // Las marcas de Aparatos, en el orden en que miden mejor el sueño (spec/aparatos.md, «El orden»).
   const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'anillo', 'coros', 'suunto', 'eightSleep', 'samsung'];
   // Los íconos que solo usa Perfil; los demás, de Util.
@@ -120,6 +121,15 @@ const SeccionPerfil = (() => {
 .pf-lista.pf-tuyos .pf-fila > .sn-puntos { display: inline-flex; margin: 0; }
 .pf-tuyos .sn-puntos i { background: rgba(150, 178, 240, 0.2); }
 .pf-tuyos .sn-puntos i.lleno { background: #a8c8fa; box-shadow: none; }
+/* Conectar directo: cada marca con lo que suma y su botón; las que esperan aprobación, «Pronto». */
+.pf-lista.pf-directo .pf-fila { grid-template-columns: 30px minmax(0, 1fr) auto; cursor: default; }
+.pf-lista.pf-directo .pf-fila-textos b { display: block; font: 400 15px/1.2 var(--texto); color: var(--tinta); }
+.pf-lista.pf-directo .pf-fila-textos span { display: block; font: 400 12px/1.3 var(--texto); color: rgba(239, 230, 207, 0.56); }
+.pf-lista.pf-directo li.conectada .pf-fila-textos span { color: var(--salvia); }
+.pf-conectar { appearance: none; cursor: pointer; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.45); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); font: 500 12.5px/1 var(--texto); white-space: nowrap; }
+.pf-conectar.conectada { border-color: rgba(239, 230, 207, 0.16); background: none; color: rgba(239, 230, 207, 0.7); }
+.pf-pronto { font: 500 10px/1 var(--texto); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; color: rgba(239, 230, 207, 0.55); background: rgba(239, 230, 207, 0.06); }
+.pf-nota.pf-nota-tenue { color: rgba(239, 230, 207, 0.45); font-size: 12px; }
 .pf-lista.pf-tuyos .pf-fila-textos span { display: block; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.58); }
 .pf-lista.pf-tuyos .pf-fila-textos b { display: block; font: 400 15px/1.2 var(--texto); color: var(--tinta); }
 @media (prefers-reduced-motion: reduce) {
@@ -144,7 +154,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: false, antes: 30, comidas: [], maximo: 6, horario: {}, pesarse: false, todos: false, latencia: null } };
+    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: false, antes: 30, comidas: [], maximo: 6, horario: {}, pesarse: false, todos: false, latencia: null } };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -207,6 +217,30 @@ const SeccionPerfil = (() => {
         });
         cuerpo.appendChild(opcionesDeFuente);
       }
+      // Conectar directo (2/11/2026, para aprobar): lo que no llega a Salud, desde la app de la marca.
+      // Polar primero, porque no pide aprobación; Oura, WHOOP y Garmin, cuando aprueben (spec/aparatos.md).
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.aparatos.directo.titulo')));
+      cuerpo.appendChild(el('p', 'pf-nota pf-directo-texto', tx('perfil.aparatos.directo.texto')));
+      const directo = el('ul', 'pf-lista pf-filas pf-directo');
+      [['polar', true], ['oura', false], ['whoop', false], ['garmin', false]].forEach(([m, abierta]) => {
+        const conectada = s.conectadas.has(m);
+        const li = el('li', conectada ? 'conectada' : null);
+        const fila = el('div', 'pf-fila');
+        const txt = el('span', 'pf-fila-textos');
+        txt.append(el('b', null, tx(`perfil.aparatos.directo.marcas.${m}.nombre`)),
+          el('span', null, conectada ? tx('perfil.aparatos.directo.conectado', { hora: '7:12' }) : tx(`perfil.aparatos.directo.marcas.${m}.suma`)));
+        const accion = !abierta ? el('em', 'pf-pronto', tx('perfil.aparatos.directo.pronto'))
+          : boton('pf-conectar' + (conectada ? ' conectada' : ''), tx(conectada ? 'perfil.aparatos.directo.desconectar' : 'perfil.aparatos.directo.conectar'), () => {
+            if (conectada) s.conectadas.delete(m); else s.conectadas.add(m);
+            pintarAparatos();
+          });
+        fila.append(cuadro('reloj3', conectada ? 'salvia' : 'azul'), txt, accion);
+        li.appendChild(fila);
+        directo.appendChild(li);
+      });
+      cuerpo.appendChild(directo);
+      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.aparatos.directo.soloSalud')));
+      cuerpo.appendChild(el('p', 'pf-nota pf-nota-tenue', tx('perfil.aparatos.directo.nota')));
       // Qué llega de cada marca: cada una se despliega con su texto.
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.aparatos.cadaUno')));
       const marcas = el('ul', 'pf-lista pf-marcas');
@@ -232,7 +266,8 @@ const SeccionPerfil = (() => {
     }
 
     // Los avisos (lo pediste el 22/10): la hora de dormir, las comidas sin anotar y cuántos por día,
-    // como en la app (Perfil.tsx). Los de cada hábito se eligen en el hábito.
+    // como en la app (Perfil.tsx). Los de cada hábito se eligen en el hábito. El 3/11, para aprobar, lo que
+    // conviene hacer (como Rise), cada uno con su llave: todavía no está en la app.
     function pintarAvisos() {
       const h = hoja.el;
       const arriba = h.querySelector('.pf-avisos') ? h.querySelector('.pf-avisos').scrollTop : 0;
@@ -241,6 +276,16 @@ const SeccionPerfil = (() => {
       cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('perfil.avisos.titulo')), boton('hb-cerrar', icono('cerrar'), () => hoja.cerrar(), tx('comida.cerrar')));
       const cuerpo = el('div', 'pf-avisos');
       const a = s.avisos;
+      // Los íconos que solo usan estas llaves: una taza y una lamparita.
+      const DIBUJOS = {
+        taza: '<path d="M5 9.5h11v4.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M9 3.5c-.8 1 .8 2 0 3M12.5 3.5c-.8 1 .8 2 0 3"/>',
+        foco: '<path d="M9.5 17.5h5M10.5 20.5h3"/><path d="M12 3.5a5.5 5.5 0 0 0-3.3 9.9c.6.5.8 1.1.8 1.8v.3h5v-.3c0-.7.2-1.3.8-1.8A5.5 5.5 0 0 0 12 3.5z"/>',
+      };
+      const cuadroDe = (ico, color) => {
+        const c = cuadro(DIBUJOS[ico] ? 'reloj' : ico, color);
+        if (DIBUJOS[ico]) c.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${DIBUJOS[ico]}</svg>`;
+        return c;
+      };
       const chips = (valores, nombre, elegido, alElegir) => {
         const fila = el('div', 'fi-porciones pf-aviso-chips');
         valores.forEach((v) => {
@@ -256,7 +301,7 @@ const SeccionPerfil = (() => {
         const llave = boton('in-llave', '<i></i>', () => { alCambiar(!encendido); pintarAvisos(); pintar(); }, titulo);
         llave.setAttribute('aria-pressed', String(encendido));
         const nombre = el('span', 'pf-aviso-titulo');
-        nombre.append(cuadro(ico, color), el('b', null, titulo));
+        nombre.append(cuadroDe(ico, color), el('b', null, titulo));
         fila.append(nombre, llave);
         caja.append(fila, el('p', 'pf-nota', texto));
         if (encendido && debajo) caja.appendChild(debajo);
@@ -303,14 +348,26 @@ const SeccionPerfil = (() => {
           (c) => { a.comidas = a.comidas.includes(c) ? a.comidas.filter((x) => x !== c) : [...a.comidas, c]; }));
       // Si vas muy bajo en algo (src/dominio/loQueFalta.ts): aparte del máximo, con su propio tope.
       bloque('rayo', 'violeta', tx('perfil.avisos.falta'), tx('perfil.avisos.faltaTexto'), a.falta !== false, (v) => { a.falta = v; });
+      // Lo que conviene hacer (src/dominio/loQueConviene.ts), apagado de fábrica como lo demás. La recuperación,
+      // solo con Ascent vinculada y sin nombrarla.
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.conviene')));
+      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.convieneTexto')));
+      const conviene = [
+        ['antesDeEntrenar', 'pesa', 'oro'], ['despuesDeEntrenar', 'pesa', 'salvia'], ['cafe', 'taza', 'rosa'],
+        ['ultimaComida', 'comida', 'violeta'], ['entrenarTarde', 'cronometro', 'azul'], ['luces', 'foco', 'gris'],
+        ...(conAscent() && opciones.vinculada && opciones.vinculada() ? [['recuperacion', 'onda', 'ascent']] : []),
+      ];
+      for (const [que, ico, color] of conviene) bloque(ico, color, tx('perfil.avisos.' + que), tx(`perfil.avisos.${que}Texto`), !!a[que], (v) => { a[que] = v; });
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.maximo')));
       cuerpo.appendChild(chips([2, 3, 4, 6, 8], String, (n) => a.maximo === n, (n) => { a.maximo = n; }));
-      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoTexto')));
+      // Con lo que conviene cambia quién queda primero (avisos.ts, CATEGORIA).
+      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoTextoConviene')));
       h.append(cab, cuerpo);
       cuerpo.scrollTop = arriba;
     }
     // Cuándo entrenás (lo pediste el 26/10): con esto, Comida dice qué comer antes y después, en la
-    // comida que toca. Como en la app (Perfil.tsx, CuandoEntrenas).
+    // comida que toca. Como en la app (Perfil.tsx, CuandoEntrenas). El 3/11, para aprobar, lo que tardás
+    // en llegar al gimnasio: los avisos de antes de entrenar cuentan desde que salís.
     function pintarEntreno() {
       const h = hoja.el;
       h.innerHTML = '';
@@ -328,16 +385,20 @@ const SeccionPerfil = (() => {
         });
         return fila;
       };
+      // El camino al gimnasio, un ícono que solo usa esta pregunta.
+      const CAMINO = '<path d="M12 20.5s-6-5.4-6-10a6 6 0 0 1 12 0c0 4.6-6 10-6 10z"/><circle cx="12" cy="10.5" r="2.2"/>';
       const pregunta = (ico, color, titulo, debajo) => {
         const caja = el('section', 'pf-aviso');
         const fila = el('div', 'pf-aviso-fila');
         const nombre = el('span', 'pf-aviso-titulo');
-        nombre.append(cuadro(ico, color), el('b', null, titulo));
+        const c = cuadro(ico === 'camino' ? 'reloj' : ico, color);
+        if (ico === 'camino') c.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${CAMINO}</svg>`;
+        nombre.append(c, el('b', null, titulo));
         fila.appendChild(nombre);
         caja.append(fila, debajo);
         cuerpo.appendChild(caja);
       };
-      cuerpo.appendChild(el('p', 'pf-nota', tx('entreno.perfil.texto')));
+      cuerpo.appendChild(el('p', 'pf-nota', tx('entreno.perfil.textoConAvisos')));
       pregunta('pesa', 'oro', tx('entreno.perfil.dias'), chips(DIAS, (d) => tx('fecha.diasCortos.' + d), (d) => e.dias.includes(d), (d) => poner({ dias: e.dias.includes(d) ? e.dias.filter((x) => x !== d) : [...e.dias, d] }), 'pf-dias'));
       if (!e.dias.length) { h.append(cab, cuerpo); return; }
       const reloj = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -352,7 +413,24 @@ const SeccionPerfil = (() => {
       conHora.appendChild(filaHora);
       cuerpo.appendChild(conHora);
       pregunta('cronometro', 'violeta', tx('entreno.perfil.duracion'), chips([30, 45, 60, 90, 120], (n) => tx('entreno.perfil.minutos', { n }), (n) => e.minutos === n, (n) => poner({ minutos: n })));
-      pregunta('huellas', 'salvia', tx('entreno.perfil.tipo'), chips(['fuerza', 'resistencia', 'mixta'], (x) => tx('entreno.perfil.tipos.' + x), (x) => e.tipo === x, (x) => poner({ tipo: x })));
+      // Los mismos deportes que el cuestionario, varios a la vez; el horario de los avisos lleva el tipo reducido.
+      const tipos = e.tipos ?? (e.tipo === 'resistencia' ? ['resistencia'] : e.tipo === 'mixta' ? ['equipo'] : ['fuerza']);
+      const conTipos = el('div');
+      conTipos.append(
+        chips(Cuestionario.DEPORTES, (x) => tx('entrada.cuestionario.entreno.tipos.' + x)[0], (x) => tipos.includes(x), (x) => {
+          const nuevos = tipos.includes(x) ? tipos.filter((t) => t !== x) : Cuestionario.DEPORTES.filter((t) => t === x || tipos.includes(t));
+          if (nuevos.length) poner({ tipos: nuevos, tipo: Cuestionario.tipoDeSesion(nuevos) });
+        }),
+        el('p', 'pf-nota', tx('entrada.cuestionario.entreno.texto')),
+      );
+      pregunta('huellas', 'salvia', tx('entreno.perfil.tipo'), conTipos);
+      const viaje = e.viaje ?? LoQueConviene.VIAJE_DE_FABRICA;
+      const conViaje = el('div');
+      conViaje.append(
+        chips(LoQueConviene.VIAJES, (n) => (n ? tx('entreno.perfil.minutos', { n }) : tx('entreno.perfil.viajeCasa')), (n) => viaje === n, (n) => poner({ viaje: n })),
+        el('p', 'pf-nota', tx('entreno.perfil.viajeTexto')),
+      );
+      pregunta('camino', 'gris', tx('entreno.perfil.viaje'), conViaje);
       const caja = el('section', 'pf-aviso');
       const fila = el('div', 'pf-aviso-fila');
       const llave = boton('in-llave', '<i></i>', () => poner({}, !e.ver), tx('entreno.perfil.ver'));
@@ -667,9 +745,11 @@ const SeccionPerfil = (() => {
       mini(tx('perfil.edad'), edad, anios, abrirEditar);
       if (s.sistema === 'imperial') mini(tx('perfil.altura'), piesYPulgadas(d.alturaCm), '', abrirEditar);
       else mini(tx('perfil.altura'), numero(d.alturaCm), 'cm', abrirEditar);
+      // El peso de hoy (la tendencia), no la meta (lo pediste el 2/11/2026): la meta vive en el plan de Progreso.
       const irAMetas = () => opciones.irAMetas && opciones.irAMetas();
-      if (p.objetivo === 'mantener') mini(tx('perfil.mini.mantener'), tx('progreso.objetivos.mantener'), '', irAMetas, 'texto');
-      else mini(tx('perfil.mini.' + p.objetivo), numero(p.pesoMeta), 'kg', irAMetas);
+      const kg = opciones.persona().pesoHoy;
+      if (s.sistema === 'imperial') mini(tx('perfil.mini.peso'), numero(kg * 2.20462), 'lb', irAMetas);
+      else mini(tx('perfil.mini.peso'), numero(kg, 1), 'kg', irAMetas);
       tarjeta.appendChild(minis);
       return tarjeta;
     }
@@ -763,7 +843,8 @@ const SeccionPerfil = (() => {
         { ico: 'globo', color: 'azul', titulo: tx('perfil.idioma'), valor: tx('perfil.idiomaDelTelefono'), alTocar: () => { const otro = document.querySelector('#s-idioma button[aria-pressed="false"]'); if (otro) otro.click(); } },
         { ico: 'amanecer', color: 'oro', titulo: tx('perfil.corte'), valor: nombreDelCorte(s.corte), alTocar: () => abrirOpciones('corte') },
         { ico: 'estrella', color: 'violeta', titulo: tx('perfil.calidad'), valor: tx('perfil.calidades.' + (s.calidad || 'automatica')), alTocar: () => abrirOpciones('calidad') },
-        { ico: 'campana', color: 'rosa', titulo: tx('perfil.recordatorios'), valor: tx(s.avisos.dormir || s.avisos.comidas.length || Object.keys(s.avisos.horario).length || s.avisos.pesarse ? 'perfil.encendidos' : 'perfil.apagados'), alTocar: abrirAvisos },
+        { ico: 'campana', color: 'rosa', titulo: tx('perfil.recordatorios'), valor: tx(s.avisos.dormir || s.avisos.comidas.length || Object.keys(s.avisos.horario).length || s.avisos.pesarse
+          || ['antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion'].some((k) => s.avisos[k]) ? 'perfil.encendidos' : 'perfil.apagados'), alTocar: abrirAvisos },
         // Ocultar los números: sin calorías ni gramos, solo las figuras y las barras.
         { ico: 'ojo', color: 'gris', titulo: tx('perfil.numeros'), sub: tx('perfil.numerosTexto'), valor: tx(s.numeros ? 'perfil.visibles' : 'perfil.ocultos'), alTocar: () => { s.numeros = !s.numeros; opciones.alNumeros(s.numeros); pintar(); } },
       ]);

@@ -146,7 +146,15 @@ export function ajusteDiario(objetivo: Objetivo, ritmo: Ritmo, pesoKg: number): 
  * los carbohidratos con lo que queda; en las bajas en carbohidratos, al revés.
  */
 export function macrosPara(kcal: number, pesoKg: number, objetivo: Objetivo, estilo: Estilo = 'equilibrada'): Macros {
-  const proteina = Math.round(Math.min(pesoKg * PROTEINA_POR_KG[objetivo], (kcal * PROTEINA_MAXIMA) / 4));
+  return macrosConProteina(kcal, pesoKg, pesoKg * PROTEINA_POR_KG[objetivo], estilo);
+}
+
+/**
+ * Lo mismo, con los gramos de proteína ya elegidos (el nivel del cuestionario nuevo, cuestionario.ts):
+ * nunca pasa del 40 % de las kcal, y el resto se reparte igual.
+ */
+export function macrosConProteina(kcal: number, pesoKg: number, proteinaGramos: number, estilo: Estilo = 'equilibrada'): Macros {
+  const proteina = Math.round(Math.min(proteinaGramos, (kcal * PROTEINA_MAXIMA) / 4));
   if (estilo === 'equilibrada' || estilo === 'bajaEnGrasas') {
     const minimas = estilo === 'equilibrada' ? GRASAS_MINIMAS : GRASAS_BAJAS;
     const grasas = Math.round(Math.max(pesoKg * GRASAS_POR_KG, (kcal * minimas) / 9));

@@ -256,3 +256,86 @@ export function plazoConFecha(e: EntradaDelPlazo, fecha: ClaveDia): Plazo | null
   const pct = ((Math.abs(e.pesoMeta - e.pesoKg) / (dias / 7)) / e.pesoKg) * 100;
   return armarPlazo(e, direccion, pct, fecha);
 }
+
+// ------------------------------------------------------------ el plan por etapas
+// Lo pediste el 2/11/2026: arriba de Progreso, el plan («llegar acá en tanto tiempo; después, esto»),
+// que cambie según cómo vienes. Es el plazo (D35) con hitos cada cuatro semanas y lo que viene al
+// llegar: unas semanas en mantenimiento, comiendo lo que se gasta, para que el peso se asiente. Cómo
+// vienes compara el ritmo medido con el del plan; el control de cada semana ajusta las calorías para
+// seguirlo, así que la fecha del plan queda y lo que se mueve es a dónde llegarías a tu ritmo.
+
+export type TipoDeEtapa = Objetivo;
+export type Etapa = { tipo: TipoDeEtapa; desde: ClaveDia; hasta: ClaveDia | null; pesoDesde: number; pesoHasta: number };
+export type Hito = { fecha: ClaveDia; kg: number; meta: boolean };
+export type ComoVienes = 'alRitmo' | 'adelantado' | 'atrasado' | 'alReves' | 'llegaste' | 'estable' | 'seMueve' | 'faltanDatos';
+export type PlanPorEtapas = {
+  etapas: Etapa[];
+  hitos: Hito[];
+  comoVienes: ComoVienes;
+  /** El ritmo medido y el del plan, en kg por semana con su signo (negativo es bajar). */
+  ritmo: number | null;
+  ritmoPlan: number;
+  /** A dónde llegarías a tu ritmo, si va para el lado de la meta y en menos de dos años. */
+  fechaATuRitmo: ClaveDia | null;
+};
+
+const SEMANAS_POR_HITO = 4;
+/** Los hitos antes de la meta: en un plan largo se reparten, así entran en una línea. */
+const HITOS_MAXIMOS = 3;
+export const SEMANAS_DE_MANTENIMIENTO = 2;
+/** Al ritmo es estar a un cuarto del plan, o a 100 g por semana con un plan lento. */
+const AL_RITMO = 0.25;
+const AL_RITMO_KG = 0.1;
+
+export function planPorEtapas(e: {
+  hoy: ClaveDia;
+  /** El peso de la tendencia hoy. */
+  pesoKg: number;
+  objetivo: Objetivo;
+  pesoMeta?: number | null;
+  /** El plazo de hoy (plazoConRitmo o plazoConFecha); sin camino, null. */
+  plazo: Plazo | null;
+  /** El ritmo medido (ritmoSemanal), en kg por semana. */
+  ritmo: number | null;
+  /** Lo que sigue después del mantenimiento, si lo dijo en el cuestionario: mantener, ganar músculo o decidirlo después. */
+  despues?: 'mantener' | 'musculo' | 'despues' | null;
+}): PlanPorEtapas {
+  const { hoy, pesoKg, plazo, ritmo } = e;
+  if (e.objetivo === 'mantener' || !plazo) {
+    const meta = e.objetivo === 'mantener' || !e.pesoMeta ? pesoKg : e.pesoMeta;
+    const llego = e.objetivo !== 'mantener' && !!e.pesoMeta && Math.abs(e.pesoMeta - pesoKg) <= LLEGASTE_KG;
+    const comoVienes: ComoVienes = llego ? 'llegaste' : ritmo === null ? 'faltanDatos' : Math.abs(ritmo) <= ESTABLE_KG_SEMANA ? 'estable' : 'seMueve';
+    return { etapas: [{ tipo: 'mantener', desde: hoy, hasta: null, pesoDesde: pesoKg, pesoHasta: meta }], hitos: [], comoVienes, ritmo, ritmoPlan: 0, fechaATuRitmo: null };
+  }
+  const signo = plazo.direccion === 'bajar' ? -1 : 1;
+  const meta = pesoKg + signo * plazo.faltan;
+  const dias = diasEntre(hoy, plazo.fecha);
+  const finDelMantenimiento = sumarDias(plazo.fecha, SEMANAS_DE_MANTENIMIENTO * 7);
+  const etapas: Etapa[] = [
+    { tipo: plazo.direccion, desde: hoy, hasta: plazo.fecha, pesoDesde: pesoKg, pesoHasta: meta },
+    { tipo: 'mantener', desde: plazo.fecha, hasta: finDelMantenimiento, pesoDesde: meta, pesoHasta: meta },
+  ];
+  // Lo que sigue, sin fecha de fin: quedarse ahí o ganar músculo (subir despacio). «Después» lo decide al llegar.
+  if (e.despues === 'mantener' || e.despues === 'musculo') {
+    etapas.push({ tipo: e.despues === 'musculo' ? 'subir' : 'mantener', desde: finDelMantenimiento, hasta: null, pesoDesde: meta, pesoHasta: meta });
+  }
+  // Cada cuatro semanas, o repartidos si no entran; el último, la meta.
+  const cuantos = Math.min(HITOS_MAXIMOS, Math.floor((dias - 1) / (SEMANAS_POR_HITO * 7)));
+  const paso = cuantos > 0 ? (Math.floor((dias - 1) / (SEMANAS_POR_HITO * 7)) > HITOS_MAXIMOS ? dias / (cuantos + 1) : SEMANAS_POR_HITO * 7) : 0;
+  const hitos: Hito[] = Array.from({ length: cuantos }, (_, i) => {
+    const d = Math.round(paso * (i + 1));
+    return { fecha: sumarDias(hoy, d), kg: Math.round((pesoKg + (signo * plazo.faltan * d) / dias) * 10) / 10, meta: false };
+  });
+  hitos.push({ fecha: plazo.fecha, kg: meta, meta: true });
+  const ritmoPlan = signo * plazo.kgPorSemana;
+  const base = { etapas, hitos, ritmo, ritmoPlan, fechaATuRitmo: null as ClaveDia | null };
+  if (ritmo === null) return { ...base, comoVienes: 'faltanDatos' };
+  const avance = ritmo * signo;
+  const fechaATuRitmo = avance > QUIETO_KG_SEMANA && Math.ceil((plazo.faltan / avance) * 7) <= HORIZONTE_DIAS ? sumarDias(hoy, Math.ceil((plazo.faltan / avance) * 7)) : null;
+  const margen = Math.max(AL_RITMO * plazo.kgPorSemana, AL_RITMO_KG);
+  const comoVienes: ComoVienes = avance < -QUIETO_KG_SEMANA ? 'alReves'
+    : Math.abs(avance - plazo.kgPorSemana) <= margen ? 'alRitmo'
+    : avance > plazo.kgPorSemana ? 'adelantado'
+    : 'atrasado';
+  return { ...base, comoVienes, fechaATuRitmo };
+}

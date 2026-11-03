@@ -5,7 +5,8 @@
 // Sin culpa: describe, no reta. Con «sin déficit», nada. Si falta un dato, lo dice y no adivina.
 
 import { lineasDelDia, type Contexto, type Linea, type Sesion } from './alrededorDelEntreno';
-import type { Rendimiento } from './rendimiento';
+import type { Banda, Parte } from './recuperado';
+import type { CondicionesDeMarca, DiaDeMarca, Rendimiento } from './rendimiento';
 
 /** Lo que Ascent sabe de hoy: `hecha` si ya está anotada; si no, la que se espera. */
 export type SesionDeHoy = Sesion & { hecha: boolean };
@@ -148,4 +149,112 @@ export function diagnostico(x: EntradasDelDiagnostico): Diagnostico | null {
     consejos: consejos.slice(0, MAXIMO_DE_CONSEJOS),
     proteina: conComida ? { comido: c.comido.proteina, meta: c.meta.proteina, falta } : null,
   };
+}
+
+// ------------------------------------------------------------ hoy, concéntrate en
+
+/**
+ * Lo fuerte tiene que terminar 2 horas antes de dormir: terminar más cerca retrasa el dormirse unos 36
+ * minutos (Frimpong 2021; Leota 2025, con 14.689 personas). La misma regla usan los avisos.
+ */
+export const TERMINAR_ANTES_DE_DORMIR = 120;
+export const MAXIMO_DEL_FOCO = 3;
+/** El snack de antes va unos 45 minutos antes de empezar (entre 30 y 60: SNACK_PREVIO); el de la noche, una hora antes de dormir. */
+const SNACK_ANTES = 45;
+const SNACK_DE_LA_NOCHE = 60;
+
+export type ComoEntrenar = 'marca' | 'masFuerte' | 'comoSiempre' | 'sinFallo' | 'suave';
+export type Foco =
+  /** Lo que conviene comer, a la hora de esa comida: la línea de la comida, tal cual. */
+  | { que: 'comer'; cuando: Paso['cuando']; linea: Linea; hora: number }
+  /** Cómo ir en el gimnasio, a la hora de la sesión: por el sueño, la fatiga o el total. */
+  | { que: 'entrenar'; como: ComoEntrenar; porque: 'sueno' | 'fatiga' | 'total' | null; hora: number; ejercicio: string | null }
+  /** Lo fuerte que termina a menos de 2 horas de dormir. */
+  | { que: 'terminar'; antesDe: number; dormir: number; hora: number }
+  /** A la cama a la hora que deja dormir lo que necesitas, si el sueño es lo que más falta. */
+  | { que: 'dormir'; hora: number }
+  | { que: 'proteina'; gramos: number; hora: null }
+  | { que: 'descanso'; hora: null }
+  | { que: 'faltaNoche'; hora: null };
+
+export type EntradasDelFoco = EntradasDelDiagnostico & {
+  /** La recuperación de hoy (recuperado.ts); sin la noche, null. */
+  recuperado: { banda: Banda; bandas: { sueno: Banda; fatiga: Banda; comida: Banda }; loQueMasFalta: Parte } | null;
+};
+
+/**
+ * Cómo ir en el gimnasio antes de entrenar: buen día para marca si está muy recuperado y una marca está
+ * cerca; sin ir al fallo si la noche fue corta; suave si los músculos de hoy están cargados o el total pide
+ * atención; un poco más fuerte si está muy recuperado con los músculos descansados; si no, como siempre.
+ * No depende de la comida: también vale con «sin déficit».
+ */
+export function comoEntrenar(x: { recuperado: NonNullable<EntradasDelFoco['recuperado']>; sueno: EstadoDelSueno; marca: string | null }): { como: ComoEntrenar; porque: 'sueno' | 'fatiga' | 'total' | null } {
+  const r = x.recuperado;
+  if (x.marca && r.banda === 'muyBien') return { como: 'marca', porque: null };
+  if (x.sueno === 'corta' || x.sueno === 'muyCorta' || r.bandas.sueno === 'atencion') return { como: 'sinFallo', porque: 'sueno' };
+  if (r.bandas.fatiga === 'atencion') return { como: 'suave', porque: 'fatiga' };
+  if (r.banda === 'atencion') return { como: 'suave', porque: 'total' };
+  if (r.banda === 'muyBien' && (r.bandas.fatiga === 'muyBien' || r.bandas.fatiga === 'bien')) return { como: 'masFuerte', porque: null };
+  return { como: 'comoSiempre', porque: null };
+}
+
+/** Una hora del día para ordenar: lo de la madrugada va después de la noche. */
+const paraOrdenar = (h: number) => (h < 5 * 60 ? h + 24 * 60 : h);
+
+/**
+ * «Hoy, concéntrate en»: hasta tres cosas, cada una una sola idea y con su hora si tiene, en el orden del
+ * día. Primero lo que falta saber y lo que conviene comer antes de entrenar; después cómo ir en el gimnasio
+ * (con «como siempre», solo si sobra lugar), terminar a tiempo, la hora de ir a la cama si el sueño es lo
+ * que más falta y está aceptable o peor (o hay deuda que pesa), y lo de después. Con «sin déficit», nada,
+ * como el diagnóstico.
+ */
+export function focoDeHoy(x: EntradasDelFoco): Foco[] {
+  const d = diagnostico(x);
+  if (!d) return [];
+  const c = x.contexto;
+  const r = x.recuperado;
+  const s = x.sesion;
+  const horaDe = (l: Linea) => {
+    if (l.comida !== 'snack') return c.horaDeComida[l.comida];
+    if (l.clase === 'antesDeDormir') return c.dormir !== null ? c.dormir - SNACK_DE_LA_NOCHE : l.hora + 2 * 60;
+    return l.hora - SNACK_ANTES;
+  };
+  const candidatos: [number, Foco][] = [];
+  if (d.sueno === 'sinDatos' && s && !s.hecha) candidatos.push([1, { que: 'faltaNoche', hora: null }]);
+  if (d.momento === 'descanso' && x.sabeCuandoEntrena) candidatos.push([1, { que: 'descanso', hora: null }]);
+  for (const p of d.pasos) if (p.cuando === 'antes') candidatos.push([1, { que: 'comer', cuando: 'antes', linea: p.linea, hora: horaDe(p.linea) }]);
+  if (s && !s.hecha && c.ahora < s.inicio && r) {
+    const { como, porque } = comoEntrenar({ recuperado: r, sueno: d.sueno, marca: x.marca });
+    candidatos.push([como === 'comoSiempre' ? 5 : 2, { que: 'entrenar', como, porque, hora: s.inicio, ejercicio: como === 'marca' ? x.marca : null }]);
+  }
+  if (s && !s.hecha && c.ahora < s.inicio + s.minutos && c.dormir !== null && s.inicio + s.minutos > c.dormir - TERMINAR_ANTES_DE_DORMIR) {
+    candidatos.push([2, { que: 'terminar', antesDe: c.dormir - TERMINAR_ANTES_DE_DORMIR, dormir: c.dormir, hora: s.inicio }]);
+  }
+  const deudaQuePesa = x.deuda !== null && x.deuda >= DEUDA_QUE_PESA;
+  const suenoFlojo = r !== null && r.loQueMasFalta === 'sueno' && (r.bandas.sueno === 'aceptable' || r.bandas.sueno === 'atencion');
+  if (r && (suenoFlojo || deudaQuePesa)) {
+    const hora = c.despertar !== null && x.noche ? c.despertar - x.noche.necesidad : c.dormir;
+    if (hora !== null) candidatos.push([3, { que: 'dormir', hora: ((hora % 1440) + 1440) % 1440 }]);
+  }
+  for (const p of d.pasos) if (p.cuando !== 'antes') candidatos.push([4, { que: 'comer', cuando: p.cuando, linea: p.linea, hora: horaDe(p.linea) }]);
+  for (const k of d.consejos) if (k.que === 'totalDelDia') candidatos.push([4, { que: 'proteina', gramos: k.gramos, hora: null }]);
+  return candidatos
+    .map((x2, i) => ({ x: x2, i }))
+    .sort((a, b) => a.x[0] - b.x[0] || a.i - b.i)
+    .slice(0, MAXIMO_DEL_FOCO)
+    .map((a) => a.x[1])
+    .sort((a, b) => (a.hora === null ? -1 : paraOrdenar(a.hora)) - (b.hora === null ? -1 : paraOrdenar(b.hora)));
+}
+
+// ------------------------------------------------------------ marcas
+
+/** Las cinco condiciones de buenDiaParaMarca(), en el orden en que se dicen. */
+export const CONDICIONES: readonly (keyof CondicionesDeMarca)[] = ['cerca', 'recuperado', 'sueno', 'sinPico', 'comida'];
+
+/** Las condiciones que no se dan, en ese orden: el porqué de un «hoy no». */
+export const queFalla = (c: CondicionesDeMarca) => CONDICIONES.filter((k) => !c[k]);
+
+/** Los ejercicios de hoy para «Marcas»: los de buen día primero y después del más probable al menos. */
+export function ordenarMarcas<T extends { dia: DiaDeMarca }>(lista: readonly T[]): T[] {
+  return [...lista].sort((a, b) => Number(b.dia.aplica) - Number(a.dia.aplica) || b.dia.probabilidad - a.dia.probabilidad);
 }

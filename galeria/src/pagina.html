@@ -330,6 +330,7 @@ section.item p { margin: 0; max-width: 64ch; }
 .in-scroll, .pg-scroll, .sn-scroll, .pf-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 2px) 18px calc(var(--pestanas) + 40px); scrollbar-width: none; touch-action: pan-y; }
 .in-scroll::-webkit-scrollbar, .pg-scroll::-webkit-scrollbar, .sn-scroll::-webkit-scrollbar, .pf-scroll::-webkit-scrollbar { display: none; }
 .in-cab, .pg-cab { display: grid; gap: 2px; margin-bottom: 16px; }
+.pg-cab { position: relative; }
 .in-fecha, .pg-fecha { font: 400 11px/1.2 var(--texto); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239, 230, 207, 0.58); }
 .in-titulo, .pg-titulo { margin: 6px 0 0; font: 500 28px/1 var(--numeros); letter-spacing: -0.01em; }
 
@@ -354,6 +355,13 @@ section.item p { margin: 0; max-width: 64ch; }
 .luna.pasada .luna-resplandor { fill: #f0c56a; }
 .luna-mares { fill: #a48d62; opacity: 0.42; }
 .luna-crateres { fill: none; stroke: #9c8459; stroke-opacity: 0.28; stroke-width: 0.7; }
+.luna-crater-sombra { fill: #8f7a52; fill-opacity: 0.22; stroke: none; }
+.luna-crater-luz { fill: none; stroke: #fff8e6; stroke-opacity: 0.55; stroke-width: 0.6; stroke-linecap: round; }
+/* La luz cenicienta: la cara oscura deja ver apenas sus mares. */
+.luna-ceniza { opacity: 0.075; }
+.luna-ceniza .luna-mares { opacity: 0.9; }
+/* Donde termina la sombra, una línea de luz suave. */
+.luna-terminador { fill: none; stroke: #fff3d2; stroke-opacity: 0.35; stroke-width: 1.4; transition: opacity 0.4s; }
 .luna-limbo { fill: none; stroke: #8a7348; stroke-opacity: 0.4; stroke-width: 6; }
 .luna-contorno { fill: none; stroke: rgba(246, 227, 166, 0.22); stroke-width: 0.7; transition: stroke 0.4s, stroke-width 0.4s; }
 .luna.pasada .luna-contorno { stroke: rgba(240, 197, 106, 0.6); stroke-width: 1; }
@@ -528,6 +536,40 @@ button.gc-fila { cursor: pointer; }
 .tt-como b { font: 500 13.5px/1.3 var(--texto); color: var(--tinta); }
 .tt-como p { margin: 0; font: 300 13px/1.5 var(--texto); color: rgba(239, 230, 207, 0.68); }
 .tt-pie { margin: 6px 4px 0; padding-top: 12px; border-top: 1px solid rgba(239, 230, 207, 0.08); font: 400 12.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.55); }
+/* Cómo ver las calorías (2/11/2026): cada estilo con su muestra quieta; el elegido, en oro. */
+.tt-estilos { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.tt-estilo { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 7px; padding: 10px 2px 9px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.09); background: rgba(239, 230, 207, 0.03); color: rgba(239, 230, 207, 0.62); transition: border-color 0.25s, background 0.25s, color 0.25s; }
+.tt-estilo[aria-pressed='true'] { border-color: rgba(232, 196, 106, 0.6); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); }
+.tt-estilo-muestra { display: grid; place-items: center; width: 40px; height: 40px; }
+.tt-estilo-muestra .kc-barra { width: 38px; }
+.tt-estilo-nombre { font: 400 11.5px/1 var(--texto); }
+/* Para hoy (2/11/2026): al final de Inicio, una idea por fila, con su ícono en el color de lo que nombra. */
+.in-consejos { cursor: default; }
+.in-consejos:active { transform: none; }
+.in-consejos-lista { list-style: none; margin: 0; padding: 0; display: grid; }
+.in-consejo { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: start; gap: 10px; padding: 10px 0; border-top: 1px solid rgba(239, 230, 207, 0.06); animation: sn-aparece 0.4s both; }
+.in-consejo:first-child { border-top: 0; padding-top: 2px; }
+.in-consejo p { margin: 3px 0 0; font: 300 14px/1.45 var(--texto); color: rgba(239, 230, 207, 0.86); text-wrap: pretty; }
+.in-consejo-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(var(--c-rgb, 239, 230, 207), 0.1); color: var(--c, rgba(239, 230, 207, 0.7)); }
+.in-consejo-ico svg { width: 15px; height: 15px; }
+.in-consejo-agua .in-consejo-ico { --c: #a9c4f5; --c-rgb: 169, 196, 245; }
+.in-consejo-accion { appearance: none; cursor: pointer; align-self: center; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.45); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); font: 500 12.5px/1 var(--texto); }
+.in-consejo-nada { margin: 0; font: 300 13.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.6); }
+/* El control cuando se acerca: una línea debajo de la luna. */
+.in-control { padding: 12px 14px; }
+.in-control-fila { display: grid; grid-template-columns: 18px minmax(0, 1fr) 14px; align-items: center; gap: 11px; }
+.in-control-fila > svg:first-child { width: 18px; height: 18px; color: var(--oro-claro); }
+.in-control-fila > svg:last-child { width: 14px; height: 14px; color: rgba(239, 230, 207, 0.4); }
+.in-control-textos { display: grid; gap: 3px; min-width: 0; }
+.in-control-textos b { font: 500 14.5px/1.2 var(--texto); }
+.in-control-textos span { font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.6); }
+/* El musgo, abajo de todo: oscuro y apagado, con esporas que toman la luz de la luna. */
+.in-musgo { margin: 22px -18px 0; height: 52px; pointer-events: none; }
+.in-musgo svg { display: block; width: 100%; height: 100%; }
+.in-musgo-fondo { fill: #1a2620; stroke: none; }
+.in-musgo-suelo { fill: #141d18; stroke: none; }
+.in-musgo-esporas path { fill: none; stroke: rgba(150, 168, 128, 0.45); stroke-width: 0.8; stroke-linecap: round; }
+.in-musgo-esporas circle { fill: rgba(246, 227, 166, 0.55); }
 .in-luna-nueva { flex: none; position: relative; width: 74px; height: 74px; margin: 2px 4px 2px -2px; border-radius: 50%;
   background: radial-gradient(circle at 62% 38%, rgba(30, 40, 72, 0.9), rgba(8, 12, 26, 0.95) 70%);
   box-shadow: inset -3px 2px 0 rgba(246, 227, 166, 0.55), 0 0 22px rgba(246, 227, 166, 0.16); animation: in-respira 4.8s ease-in-out infinite; }
@@ -641,6 +683,14 @@ button.gc-fila { cursor: pointer; }
 .mas-agua-txt b { font: 500 13px/1 var(--numeros); color: rgba(239, 230, 207, 0.7); font-variant-numeric: tabular-nums; }
 .mas-agua-mas { appearance: none; cursor: pointer; flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(188, 216, 242, 0.4); background: rgba(188, 216, 242, 0.08); color: #d6e7f7; display: grid; place-items: center; }
 .mas-agua-mas svg { width: 15px; height: 15px; stroke-width: 2; }
+/* Tu comida de siempre, de un toque: ocupa lo que era «Calorías y macros». Sin una, el agua va sola. */
+.mas-siempre { min-height: 56px; padding: 8px 10px 8px 13px; }
+.mas-siempre-txt { display: grid; gap: 3px; min-width: 0; }
+.mas-siempre-txt b { font: 400 13.5px/1.15 var(--texto); }
+.mas-siempre-txt small { font: 400 11px/1.2 var(--texto); color: rgba(239, 230, 207, 0.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mas-siempre.hecho { border-color: rgba(239, 230, 207, 0.42); background: rgba(239, 230, 207, 0.08); }
+.mas-siempre.hecho .mas-siempre-txt b::before { content: '✓ '; color: var(--oro-claro); }
+.mas-rapidos.solo-agua { grid-template-columns: 1fr; }
 .mas-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 16px 2px; touch-action: pan-x; }
 .mas-chips::-webkit-scrollbar { display: none; }
 .mas-chip { appearance: none; cursor: pointer; flex: none; display: grid; gap: 3px; max-width: 190px; padding: 9px 13px; border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.12); background: rgba(239, 230, 207, 0.04); color: var(--tinta); text-align: left; transition: border-color 0.2s, background 0.2s; }
@@ -797,6 +847,56 @@ button.gc-fila { cursor: pointer; }
 .gr-columna.arriba { fill: rgba(232, 196, 106, 0.65); }
 .gr-columna.abajo { fill: rgba(239, 230, 207, 0.35); }
 .gr-camino .gr-fin { fill: #fbf2d9; }
+/* El plan por etapas (2/11/2026): a dónde y cuándo, la línea con los hitos y el mantenimiento, y cómo vienes. */
+.pg-plan-titulo { font: 500 21px/1.15 var(--numeros); }
+.pg-plan-para { margin-top: -2px; font: 400 13px/1.2 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.pg-pista { position: relative; height: 64px; margin: 14px 8px 0; }
+.pg-pista-linea { position: absolute; left: 0; right: 0; top: 19px; height: 3px; border-radius: 3px; background: rgba(239, 230, 207, 0.1); }
+.pg-pista-hecho { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 3px; background: linear-gradient(90deg, rgba(232, 196, 106, 0.2), var(--oro-claro)); transition: width 1.2s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.pg-pista-mant { position: absolute; top: 0; bottom: 0; border-radius: 0 3px 3px 0; background: repeating-linear-gradient(90deg, rgba(166, 191, 148, 0.55) 0 4px, transparent 4px 7px); }
+.pg-pista-punto { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; gap: 3px; animation: sn-aparece 0.4s both; }
+.pg-pista-punto i { width: 9px; height: 9px; margin-top: 16px; border-radius: 50%; background: #0b1122; border: 1.5px solid rgba(239, 230, 207, 0.45); }
+.pg-pista-punto.inicio { transform: none; justify-items: start; }
+.pg-pista-punto.inicio i { width: 7px; height: 7px; margin-top: 17px; background: var(--oro-claro); border-color: var(--oro-claro); }
+.pg-pista-punto.hoy i { width: 12px; height: 12px; margin-top: 14.5px; background: #fbf2d9; border-color: #fbf2d9; box-shadow: 0 0 0 3px rgba(251, 242, 217, 0.14), 0 0 10px rgba(251, 242, 217, 0.6); }
+.pg-pista-punto.meta i { width: 13px; height: 13px; margin-top: 14px; border: 2px solid var(--oro-claro); box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.12); }
+.pg-pista-punto small { margin-top: 4px; font: 400 10px/1 var(--texto); color: rgba(239, 230, 207, 0.48); white-space: nowrap; }
+.pg-pista-punto b { font: 400 12.5px/1 var(--numeros); color: rgba(239, 230, 207, 0.85); font-variant-numeric: tabular-nums; }
+.pg-pista-punto.hoy small, .pg-pista-punto.hoy b { color: var(--tinta); }
+.pg-pista-punto.meta b { color: var(--oro-claro); }
+.pg-pista-mant-etq { position: absolute; top: 2px; transform: translateX(-50%); font: 400 9.5px/1 var(--texto); letter-spacing: 0.04em; color: var(--salvia); white-space: nowrap; }
+.pg-plan-como { margin-top: 8px; }
+.pg-plan-despues { margin-top: 0; font-size: 13px; color: rgba(239, 230, 207, 0.66); }
+.pg-plan-ajusta { font-size: 12px; color: rgba(239, 230, 207, 0.45); }
+.pg-plan-cambiar { justify-self: start; margin-top: 2px; }
+.pg-plan-cambiar svg { transition: transform 0.25s; }
+.pg-plan-cambiar.abierto svg { transform: rotate(90deg); }
+.pg-plan-estrategia { margin-top: 2px; border-top: 1px solid rgba(239, 230, 207, 0.07); animation: sn-aparece 0.3s both; }
+/* El próximo control en una línea, arriba de todo; tocándolo se abre lo demás. */
+.pg-carta.pg-control { padding: 2px 14px; gap: 0; }
+.pg-cc-fila { appearance: none; cursor: pointer; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto 14px; align-items: center; gap: 11px; padding: 11px 0; border: 0; background: none; color: var(--tinta); text-align: left; }
+.pg-cc-fila > svg:first-child { width: 18px; height: 18px; color: var(--oro-claro); }
+.pg-cc-fila > svg:last-child { width: 14px; height: 14px; color: rgba(239, 230, 207, 0.4); transition: transform 0.25s; }
+.pg-control.abierto .pg-cc-fila > svg:last-child { transform: rotate(180deg); }
+.pg-cc-textos { display: grid; gap: 3px; min-width: 0; }
+.pg-cc-textos b { font: 500 14.5px/1.2 var(--texto); }
+.pg-cc-textos span { font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); font-variant-numeric: tabular-nums; }
+.pg-cc-dentro { padding: 0 0 12px; animation: sn-aparece 0.3s both; }
+.pg-cc-dentro .pg-texto { margin-top: 0; }
+/* Más datos: una fila que despliega lo que se mira de vez en cuando. */
+.pg-mas { margin-top: 12px; }
+.pg-mas-fila { appearance: none; cursor: pointer; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 16px; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 18px; border: 1px solid rgba(239, 230, 207, 0.09); background: rgba(8, 12, 26, 0.5); color: var(--tinta); text-align: left; }
+.pg-mas-fila div { display: grid; gap: 4px; }
+.pg-mas-fila b { font: 500 15px/1.2 var(--texto); }
+.pg-mas-fila span { font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.pg-mas-fila svg { width: 15px; height: 15px; color: rgba(239, 230, 207, 0.45); transition: transform 0.25s; }
+.pg-mas.abierto .pg-mas-fila svg { transform: rotate(180deg); }
+.pg-mas-dentro { animation: sn-aparece 0.35s both; }
+/* La grasa corporal sin medidas: la invitación, con la cinta, y que es una estimación. */
+.pg-invita-titulo { font: 500 18px/1.2 var(--numeros); }
+.pg-invita-boton { appearance: none; cursor: pointer; justify-self: start; display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.45); background: rgba(232, 196, 106, 0.1); color: var(--oro-claro); font: 500 14px/1 var(--texto); }
+.pg-invita-boton svg { width: 18px; height: 18px; }
+.pg-grasa-invita .pg-nota { font-size: 12px; line-height: 1.4; color: rgba(239, 230, 207, 0.5); }
 
 
 /* Sueño: las dos semanas para elegir, la noche, la calidad, el horario, la deuda, el reloj y las fuentes. */
@@ -1693,12 +1793,23 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 .sn-rec-fila b { font: 300 34px/1 var(--numeros); color: #fbf2d9; font-variant-numeric: tabular-nums; }
 .sn-rec-fila span { flex: 1; font: 400 14px/1.3 var(--texto); color: rgba(239, 230, 207, 0.78); }
 .sn-rec-fila svg { width: 16px; height: 16px; color: rgba(239, 230, 207, 0.4); }
+.sn-rec-fila .sn-rec-textos { display: grid; gap: 3px; }
+.sn-rec-textos small { font: 400 12px/1.2 var(--texto); color: rgba(214, 226, 250, 0.7); }
+.sn-rec-textos em { font: 400 15px/1.2 var(--texto); font-style: normal; color: var(--tinta); }
 
 /* Las kcal del día en otros estilos (kcal.js): el anillo, el arco y la barra, con la luna para comparar. */
 .kc-pista { fill: none; stroke: rgba(239, 230, 207, 0.09); }
 .kc-lleno { fill: none; stroke: #ece4cf; stroke-linecap: round; filter: drop-shadow(0 0 3px rgba(239, 230, 207, 0.35)); transition: stroke 0.6s; }
 .de-mas > .kc-lleno { stroke: var(--oro); filter: drop-shadow(0 0 4px rgba(232, 196, 106, 0.5)); }
 .kc-por { font: 300 16px/1 var(--numeros); fill: rgba(239, 230, 207, 0.62); stroke: none; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+/* Los anillos de los macros: cada uno en su color, el de los puntos de Inicio. */
+.kc-macros .kc-pista.kc-m-p { stroke: rgba(246, 227, 166, 0.13); }
+.kc-macros .kc-pista.kc-m-c { stroke: rgba(166, 191, 148, 0.13); }
+.kc-macros .kc-pista.kc-m-g { stroke: rgba(169, 196, 245, 0.13); }
+.kc-macros .kc-lleno.kc-m-p { stroke: var(--oro-claro); filter: drop-shadow(0 0 3px rgba(246, 227, 166, 0.35)); }
+.kc-macros .kc-lleno.kc-m-c { stroke: var(--salvia); filter: drop-shadow(0 0 3px rgba(166, 191, 148, 0.35)); }
+.kc-macros .kc-lleno.kc-m-g { stroke: #a9c4f5; filter: drop-shadow(0 0 3px rgba(169, 196, 245, 0.35)); }
+.in-calorias.con-macros .kc-grande { flex: none; display: block; margin: -2px 2px -2px -2px; }
 .kc-chica .kc-por { font-size: 21px; }
 .kc-estrella { fill: #fbf2d9; filter: drop-shadow(0 0 3px rgba(251, 242, 217, 0.95)) drop-shadow(0 0 8px rgba(232, 196, 106, 0.55)); }
 .de-mas > .kc-estrella { fill: var(--oro-claro); }
@@ -1783,10 +1894,20 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 
     <section class="item" id="nuevo">
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
-      <p>Lo que pediste del 29/10 al 2/11 que es visual y todavía no está en la app: probalo acá y, si te cierra, se programa. Lo demás ya está en la rama <b>mejoras-1.1</b> (el plan como sugerencia, los platos con tamaño, las cadenas y las marcas, el día que empieza a las 4, la hora de dormir, Afinar sin atajos, los avisos simples y los widgets).</p>
+      <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
         <div class="controles">
-          <button class="boton principal" type="button" data-seccion="saludo">El saludo del día</button>
+          <button class="boton principal" type="button" data-ascent="abrir">Ascent, arriba de Progreso</button>
+          <button class="boton principal" type="button" data-seccion="graficos">Progreso, más simple</button>
+          <button class="boton" type="button" data-seccion="paraHoy">Para hoy, abajo de Inicio</button>
+          <button class="boton" type="button" data-seccion="todo">Cómo ver las calorías</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="avisosBloqueo">Los avisos, como RISE</button>
+          <button class="boton" type="button" data-seccion="cuestionario">El cuestionario nuevo</button>
+          <button class="boton" type="button" data-seccion="suenoDatos">Sueño con auroras</button>
+          <button class="boton" type="button" data-seccion="mas">El «+»</button>
+          <button class="boton" type="button" data-seccion="aparatos">Perfil › Aparatos</button>
         </div>
         <div class="controles">
           <button class="boton principal" type="button" data-seccion="widgetsComida">Los widgets nuevos: la comida</button>
@@ -1855,18 +1976,22 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
-        <li><b>Ascent, abajo de Progreso</b> (2/11, para aprobar): en la sección <b>7</b>, con el diagnóstico de tu rendimiento en cinco días de ejemplo. En Progreso, la pestaña arriba de la barra y, al final del scroll, «Abajo está Ascent» te dicen que subiendo aparece.</li>
-        <li><b>Los avisos en la pantalla bloqueada</b> (2/11): con el botón de arriba. «Un día» muestra lo que suena según la hora y lo que ya hiciste, con la regla de verdad (esto ya está en la rama); «Todos», cada texto, en español y en inglés.</li>
+        <li><b>Ascent, arriba de Progreso</b> (2/11 a la noche, para aprobar): se entra como a tu universo: arriba de todo de Progreso, arrastrá para abajo (o tocá la entrada de arriba a la derecha, con la sesión de hoy). Arriba, <b>«Estás 81 % recuperado»</b> con sus franjas y qué conviene hoy; debajo, <b>«Hoy, concéntrate en»</b> (qué comer y a qué hora, cómo ir en el gimnasio y a qué hora a la cama); <b>de qué sale</b>: Sueño (de 40: sin la calidad, llega a 30, así te invita a registrarla, y «¿Dormiste distinto? Corrígelo en Sueño»), <b>Fatiga muscular</b> (menos es mejor) y Alimentación (de 20); <b>la fatiga por músculo</b>, por día de la rutina, con bíceps y tríceps separados; <b>Marcas</b>; <b>Razones de estancamiento</b> (todos los ejercicios, cada uno con su causa probable: la definición, el sueño, la proteína, las calorías, poco descanso, menos seguido o sesiones más cortas); <b>Tu año</b> con el color de cada grupo y las marcas; y <b>cómo se calcula</b>. Sin «El gimnasio se enciende solo». Seis días de ejemplo con el botón de la sección 7.</li>
+        <li><b>Progreso, más simple</b> (2/11 a la noche): arriba, el control en una línea (se abre al tocarlo) y <b>tu plan</b>: a dónde y cuándo, los hitos cada cuatro semanas, el mantenimiento al llegar y lo que sigue (lo que respondas en el cuestionario), cómo vienes y «Cambiar el plan» ahí mismo. Después el peso y <b>la grasa en el medio</b>, que sin medidas invita a medirla y dice que es una estimación. Semana a semana, las medidas y el gasto, plegados en «Más datos».</li>
+        <li><b>Inicio</b> (2/11 a la noche): sin el saludo de arriba (lo odiabas: se borró). Abajo de todo, <b>«Para hoy»</b>: hasta tres comentarios cortos de la comida, una idea cada uno (lo que falta anotar con «Anotar», el reparto de los macros, lo que falta de proteína y el agua); los de la hora de dormir y de entrenar pasaron a los avisos. <b>El control</b> aparece debajo de la luna desde dos días antes. <b>La luna</b> con la luz cenicienta y cráteres con relieve, y <b>el musgo</b> abajo de todo.</li>
+        <li><b>Cómo ver las calorías</b>: en <b>Todo lo de hoy</b> (tocar la luna), arriba, elegís luna, anillo, arco, barra o <b>los anillos de los macros</b> (nuevo: proteína, carbohidratos y grasas con sus colores). Cambia Inicio, el día de Comida y la semana.</li>
+        <li><b>Los avisos, como RISE</b> (2/11 a la noche): cada uno dice qué hacer y a qué hora, sin entrar a Moss: comer antes de entrenar (en la comida que cae antes de salir, contando lo que tardás en llegar: «Almuerzo a las 13:00: 75 g de carbohidratos, 40 g de proteína y poca grasa»), el café, la proteína después, la última comida grande, terminar antes de cierta hora si entrenás tarde, bajar las luces y, con Ascent, la recuperación. Nada de lo que ya pasó. Tres días de ejemplo y todos los textos, en es y en. En Perfil › Avisos, «Lo que conviene hacer», y en Entrenamiento, «Tardo en llegar al gimnasio».</li>
+        <li><b>El cuestionario nuevo</b> (como MacroFactor, 2/11 y 3/11): con Salud, una tarjeta para confirmar; la grasa (no sé, un número, por imagen o con cinta); cuánto te movés en tu día; <b>el tipo de deporte</b> (pesas, partidos, correr o bici o nadar, choques o combate; varios a la vez: con dos ya es mixto); cuándo entrenás y cuánto tardás en llegar; el objetivo (con recomposición); el peso meta con su fecha; qué sigue al llegar; cómo comer y tu día (despertarte, las comidas y acostarte).</li>
+        <li><b>Sueño con auroras</b> (2/11 a la noche): más oscuro, como una noche de Alaska, con auroras suaves arriba (sin nieve); los colores de cada cosa quedan igual, y el horario, lo del reloj y las fuentes van sin caja.</li>
+        <li><b>El «+»</b> (2/11 a la noche): en vez de «Calorías y macros», <b>tu comida de siempre de esta hora</b> en un toque (con deshacer); en vez de los recientes, <b>lo que solés comer a esta hora</b>. Las comidas guardadas siguen. Las «comidas precargadas» que propusiste son esto mismo.</li>
+        <li><b>Perfil</b>: la tarjeta muestra tu peso de hoy en vez de la meta; en Aparatos, <b>«Conectar directo»</b>: Polar ya, y Oura, WHOOP y Garmin «Pronto» (piden aprobación). Tu anillo (Da Rings) no tiene forma de conectarse directo: solo llega por Salud.</li>
         <li><b>Sueño, con más color</b> (2/11, para aprobar): azul de noche y un poco de verde, solo cuando algo está bien (la noche que llegó a lo que necesitas, lo que sobró, la deuda pagada, una calidad alta, un horario regular). <b>El arco de la noche</b>: de izquierda a derecha, de cuando te dormiste a cuando te despertaste, con cada etapa en su carril, como un hipnograma doblado. <b>La deuda</b> con su medidor (contra una noche entera de lo que necesitas) y catorce barras contra esa línea: lo que faltó baja, lo que sobró sube, y las más viejas se ven más tenues porque pesan menos. <b>La calidad</b> en un anillo partido en lo que suma cada parte. <b>El horario</b> con las guías de las horas y la banda de tu hora de siempre: más angosta, más regular. <b>Los vitales</b> con su línea de dos semanas. Tocá una barra o una noche y se lee abajo. Las cuentas son las de la app (src/dominio/sueno.ts).</li>
         <li><b>Sueño sin noches y con pocas</b> (botones de arriba): sin noches, una invitación concreta (conectar Salud, o solo el iPhone y mañana pregunta), y cada tarjeta con un ejemplo marcado como ejemplo y sus puntos: «0 de 5 noches» para la deuda, «0 de 8» para el horario, «0 de 7» para comparar con lo tuyo. Los mínimos son los de la app. Con una o dos noches ya se ve lo que hay, y los puntos dicen cuánto falta. Comparalo con la app de hoy, que muestra una persona de ejemplo con un aviso.</li>
         <li><b>Perfil</b> (2/11, para aprobar): la tarjeta de quién eres con la edad, la altura y la meta; la suscripción a la vista; las conexiones arriba, con Ascent bien a la vista cuando se prenda (probalo con «Ascent en Perfil»); cada fila con su cuadrito de color, y las subpantallas con el mismo orden. Los créditos se despliegan, y se suman tres hojas que la app tiene y la galería no: la calidad, a qué hora empieza el día y la privacidad.</li>
         <li><b>La foto de la comida</b> (2/11): en la sección <b>Comida</b>, «Sacar una foto» y «Tu día en fotos». Sacás la foto al anotar, decís o escribís qué es, y Moss lo calcula con la base; la foto no se analiza y queda en el día como diario. Sin fotos, Comida se ve igual que hoy.</li>
-        <li><b>El saludo del día</b> (2/11): arriba de Inicio, una frase corta con lo de hoy, que cambia y no se repite, sin IA. La regla ya está, con sus tests; falta aprobar cómo suena. El botón abre ocho días de ejemplo con su hora, <b>Abrir de nuevo</b> y todo lo que fue diciendo en dos semanas simuladas, para juzgar si se repite o suena a plantilla. También en inglés, con los números ocultos y con «sin déficit». Todavía no está en la app.</li>
         <li><b>Los widgets nuevos</b> (D43, aprobados el 2/11 y ya en la rama): la comida, que no tenía ninguno, con un toque que anota sin abrir Moss; el cielo con el cielo de verdad de fondo y la aurora al completar el día; la noche también a la hora de dormir, y la pantalla bloqueada. Todo lo que hay que mirar y qué llega por OTA, en la sección <b>Los widgets</b>, más abajo.</li>
         <li><b>El ritmo y el plazo</b> (Progreso › Estrategia › Ritmo y plazo), como MacroFactor: arrastrás el ritmo y sale la fecha, o elegís la fecha y sale el ritmo. La regla tiene las zonas de color: <b>viable</b> (hasta 0,5 % del peso por semana bajando, 0,25 % subiendo), <b>exigente</b> (hasta 1 % o 0,5 %) y <b>muy agresivo</b> (más, o más de 1 kg o de 1.000 kcal de déficit por día). Debajo, cuántas kcal por día son, y los avisos: sin fuerza, bajando se pierde músculo y subiendo casi todo es grasa; con esa fecha quedarías debajo del piso; o sos menor. Las cuentas son las de la app (progreso.ts, con tests). Para guardarlo en la app hace falta una columna nueva en Supabase.</li>
-        <li><b>Los gráficos de Progreso</b>: el camino a la meta (la tendencia y, punteado, hasta la fecha a tu ritmo), el peso de 1 mes, 3 meses o todo, <b>Semana a semana</b> (cuánto cambió la tendencia y lo que comiste contra la meta) y una línea chiquita al lado de cada medida.</li>
         <li><b>Inicio el primer día</b>, para que sin datos no se vea apagada: la meta de hoy con la luna nueva que brilla y qué hacer primero, tu camino hasta la meta con la fecha a un ritmo viable, y el cielo con sus estrellas esperando. Comparalo con «Inicio con datos».</li>
-        <li><b>El cuestionario</b>, tan lindo como la entrada: arriba, una constelación chica con una estrella por pregunta que se enciende al contestar; las opciones entran de a una y llevan su ícono; los números tienen su regla, y abajo sube una aurora.</li>
         <li><b>Tocar la luna</b> (el bloque de las calorías en Inicio) abre <b>Todo lo de hoy</b>: lo comido, la meta y lo que falta o te pasaste de cada cosa; lo que Moss sabe de vos y de dónde lo sacó; lo que le falta para estimar mejor, y abajo de todo, cómo lo estima. Probalo también con «Cenar» en la sección 2, para ver cómo queda al pasarte.</li>
         <li><b>Cómo llegó a la hora</b> (31/10), abajo de «¿Dormiste de… a…?»: la noche en una línea y cada señal con su hora y cuánto pesó. Si conectaste el cargador y seguiste usando el teléfono, aparece tachado: no cuenta. La lógica ya está en la rama; esta vista es lo que falta aprobar.</li>
         <li><b>La guía del cargador</b> (31/10): tocá en el iPhone dibujado lo que late, como en Atajos. En iOS 27 son tres toques; hasta iOS 26, cinco, y con «Mirar cómo se hace» pasa sola. Termina probándolo: conectás el cargador y Moss dice si llegó. Abajo, los cuatro estados que ve en Sueño › Afinar: sin armar, funciona, dejó de llegar (con un aviso) y a medias.</li>
@@ -1924,7 +2049,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
         <div class="controles">
           <div class="grupo"><span>Cómo se ven las kcal: cambian juntas Inicio, el día de Comida y la semana</span>
-            <div class="segmento" id="s-kcal"><button type="button" data-valor="luna" aria-pressed="true">Luna</button><button type="button" data-valor="anillo" aria-pressed="false">Anillo</button><button type="button" data-valor="arco" aria-pressed="false">Arco</button><button type="button" data-valor="barra" aria-pressed="false">Barra</button></div>
+            <div class="segmento" id="s-kcal"><button type="button" data-valor="luna" aria-pressed="true">Luna</button><button type="button" data-valor="anillo" aria-pressed="false">Anillo</button><button type="button" data-valor="arco" aria-pressed="false">Arco</button><button type="button" data-valor="barra" aria-pressed="false">Barra</button><button type="button" data-valor="macros" aria-pressed="false">Macros</button></div>
           </div>
         </div>
       </div>

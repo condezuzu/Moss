@@ -107,6 +107,13 @@ describe('local primero', () => {
     expect(otra.estado().avisos.habitos).toEqual([]);
   });
 
+  it('el interruptor de lo que falta y los de lo que conviene hacer también se recuerdan', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerAvisos({ falta: { encendido: false }, cafe: { encendido: true }, ultimaComida: { encendido: false } });
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().avisos).toEqual({ falta: { encendido: false }, cafe: { encendido: true }, ultimaComida: { encendido: false } });
+  });
+
   it('el aparato del que sale la noche se recuerda en el teléfono, y null vuelve a la automática', async () => {
     const { almacen, repositorio } = await armar();
     expect(almacen.estado().fuenteDelSueno).toBeNull();

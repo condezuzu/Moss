@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { estadoDelControl, tendencia, ultimoDiaDeControl, type Pesada } from './control';
 import { sumarDias } from './fechas';
 import { estadoDeMacro, RITMOS } from './metas';
-import { balance, bordeDe, direccionDe, faltaParaEstimar, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoSemanal, viabilidad, type EntradaDelPlazo } from './progreso';
+import { balance, bordeDe, direccionDe, faltaParaEstimar, planPorEtapas, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoSemanal, SEMANAS_DE_MANTENIMIENTO, viabilidad, type EntradaDelPlazo } from './progreso';
 
 const HOY = '2026-10-21';
 /** Pesadas de todos los días hasta hoy, bajando `kgPorSemana` desde `inicial`. */
@@ -214,5 +214,74 @@ describe('la meta con plazo', () => {
     expect(plazoConRitmo({ ...ELLA, edad: 17 }, 0.5)!.avisos).toEqual([]);
     expect(plazoConRitmo({ ...ELLA, entrenaFuerza: null }, 0.5)!.avisos).toEqual(['sinFuerzaBajar']);
     expect(plazoConRitmo({ ...ELLA, pesoKg: 70, pesoMeta: 75, entrenaFuerza: false }, 0.25)!.avisos).toEqual(['sinFuerzaSubir']);
+  });
+});
+
+describe('el plan por etapas', () => {
+  const HOY = '2026-10-29';
+  const ELLA: EntradaDelPlazo = { hoy: HOY, pesoKg: 80, pesoMeta: 72, sexo: 'f', edad: 34, gasto: 2300, entrenaFuerza: true };
+  // 0,4 kg por semana para 8 kg: 20 semanas, hasta el 18 de marzo.
+  const plazo = plazoConRitmo(ELLA, 0.5)!;
+  const plan = (ritmo: number | null, p = plazo) => planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo: p, ritmo });
+
+  it('llegar a la meta y después unas semanas en mantenimiento', () => {
+    const { etapas } = plan(-0.4);
+    expect(etapas).toEqual([
+      { tipo: 'bajar', desde: HOY, hasta: plazo.fecha, pesoDesde: 80, pesoHasta: 72 },
+      { tipo: 'mantener', desde: plazo.fecha, hasta: sumarDias(plazo.fecha, SEMANAS_DE_MANTENIMIENTO * 7), pesoDesde: 72, pesoHasta: 72 },
+    ]);
+  });
+
+  it('lo que sigue al mantenimiento, si lo dijo: quedarse ahí o ganar músculo, sin fecha de fin', () => {
+    const fin = sumarDias(plazo.fecha, SEMANAS_DE_MANTENIMIENTO * 7);
+    const conMusculo = planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'musculo' });
+    expect(conMusculo.etapas[2]).toEqual({ tipo: 'subir', desde: fin, hasta: null, pesoDesde: 72, pesoHasta: 72 });
+    expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'mantener' }).etapas[2].tipo).toBe('mantener');
+    // Sin decidirlo, el plan termina en el mantenimiento.
+    expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'despues' }).etapas).toHaveLength(2);
+  });
+
+  it('un hito cada cuatro semanas; en un plan largo, tres repartidos; el último es la meta', () => {
+    const { hitos } = plan(-0.4);
+    // 20 semanas: cuatro marcas de cuatro semanas no entran, van tres repartidas cada 35 días.
+    expect(hitos.map((h) => h.fecha)).toEqual([sumarDias(HOY, 35), sumarDias(HOY, 70), sumarDias(HOY, 105), plazo.fecha]);
+    expect(hitos.map((h) => h.kg)).toEqual([78, 76, 74, 72]);
+    expect(hitos.map((h) => h.meta)).toEqual([false, false, false, true]);
+    // 10 semanas: a las 4 y a las 8.
+    const corto = plazoConFecha(ELLA, sumarDias(HOY, 70))!;
+    expect(plan(-0.8, corto).hitos.map((h) => h.fecha)).toEqual([sumarDias(HOY, 28), sumarDias(HOY, 56), corto.fecha]);
+    // Menos de cuatro semanas: solo la meta.
+    const ya = plazoConRitmo({ ...ELLA, pesoMeta: 79 }, 0.5)!;
+    expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 79, plazo: ya, ritmo: null }).hitos).toHaveLength(1);
+  });
+
+  it('cómo vienes: al ritmo con un cuarto de margen, más rápido, más lento o al revés', () => {
+    expect(plan(-0.42).comoVienes).toBe('alRitmo');
+    expect(plan(-0.32).comoVienes).toBe('alRitmo');
+    expect(plan(-0.6).comoVienes).toBe('adelantado');
+    expect(plan(-0.2).comoVienes).toBe('atrasado');
+    expect(plan(0.2).comoVienes).toBe('alReves');
+    expect(plan(null).comoVienes).toBe('faltanDatos');
+    // Con un plan lento, el margen es de 100 g por semana.
+    const lento = plazoConRitmo(ELLA, 0.1)!;
+    expect(plan(-0.15, lento).comoVienes).toBe('alRitmo');
+  });
+
+  it('a tu ritmo, a dónde llegarías: más rápido, antes que el plan; quieto o al revés, sin fecha', () => {
+    expect(plan(-0.8).fechaATuRitmo).toBe(sumarDias(HOY, 70));
+    expect(plan(-0.2).fechaATuRitmo).toBe(sumarDias(HOY, 280));
+    expect(plan(-0.03).fechaATuRitmo).toBeNull();
+    expect(plan(0.3).fechaATuRitmo).toBeNull();
+    expect(plan(-0.4).ritmoPlan).toBeCloseTo(-0.4, 9);
+  });
+
+  it('manteniendo, una sola etapa sin fin, sin hitos, estable o cambiando', () => {
+    const m = planPorEtapas({ hoy: HOY, pesoKg: 75, objetivo: 'mantener', plazo: null, ritmo: 0.1 });
+    expect(m.etapas).toEqual([{ tipo: 'mantener', desde: HOY, hasta: null, pesoDesde: 75, pesoHasta: 75 }]);
+    expect(m.hitos).toEqual([]);
+    expect(m.comoVienes).toBe('estable');
+    expect(planPorEtapas({ hoy: HOY, pesoKg: 75, objetivo: 'mantener', plazo: null, ritmo: 0.4 }).comoVienes).toBe('seMueve');
+    // Ya en la meta (sin camino), llegaste.
+    expect(planPorEtapas({ hoy: HOY, pesoKg: 72.3, objetivo: 'bajar', pesoMeta: 72, plazo: null, ritmo: -0.2 }).comoVienes).toBe('llegaste');
   });
 });

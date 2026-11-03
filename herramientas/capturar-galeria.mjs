@@ -85,18 +85,18 @@ async function hojaDeVincular(sufijo = '') {
   await pagina.click('.as-hoja .hb-cerrar');
   await pagina.waitForTimeout(600);
 }
-// Ascent, abajo de Progreso (spec/ascent.md): el scroll de Progreso, cada parte de la sección y los
-// días de ejemplo del diagnóstico.
+// Ascent, arriba de Progreso (spec/ascent.md): el scroll de Progreso, cada parte de la sección y los
+// días de ejemplo.
 const bajarProgreso = (y) => pagina.evaluate((v) => { const s = document.querySelector('.pg-scroll'); s.scrollTop = v === 'fondo' ? s.scrollHeight : v; }, y);
-const DIAS_DE_ASCENT = ['corta', 'bien', 'entreno', 'descanso', 'sinSueno'];
-const PARTES_DE_ASCENT = [['.as-hoy', 'hoy'], ['.as-rendimiento', 'rendimiento'], ['.as-musculos', 'musculos'], ['.as-pr', 'marca'], ['.as-estanc', 'estancamiento'], ['.as-gimnasio', 'gimnasio'], ['.as-anio', 'anio']];
+const DIAS_DE_ASCENT = ['corta', 'bien', 'entreno', 'descanso', 'sinSueno', 'sinCalidad'];
+const PARTES_DE_ASCENT = [['.as-foco', 'foco'], ['.as-partes', 'partes'], ['.as-fila-fatiga', 'partes-2'], ['.as-fatiga', 'fatiga'], ['.as-marcas', 'marcas'], ['.as-estanc', 'estancamiento'], ['.as-anio', 'anio'], ['.as-comparten', 'comparten']];
 async function diasDeAscent(sufijo = '') {
   for (const d of DIAS_DE_ASCENT) {
     await ascent('dia', d);
     await ascent('subir');
     await pagina.waitForTimeout(900);
     await foto(`ascent-dia-${d}${sufijo}`);
-    await ascent('bajar', '.as-figuras');
+    await ascent('bajar', '.as-partes');
     await pagina.waitForTimeout(400);
     await foto(`ascent-dia-${d}-2${sufijo}`);
   }
@@ -139,6 +139,21 @@ const pasos = {
     await enInicio('bajar');
     await pagina.waitForTimeout(400);
     await foto('inicio-abajo');
+    // Para hoy en otros momentos del día (2/11): al mediodía sin el almuerzo, a la tarde con mucha
+    // proteína, sin nada anotado y cuando va bien.
+    for (const momento of ['mediodia', 'tarde', 'nada', 'bien']) {
+      await pagina.evaluate((m) => window.__paraHoy(m), momento);
+      await enInicio('bajar');
+      await pagina.waitForTimeout(500);
+      await foto('inicio-para-hoy-' + momento);
+    }
+    await pagina.evaluate(() => window.__paraHoy(null));
+    // El control, cuando se acerca: mañana, debajo de la luna.
+    await pagina.evaluate(() => window.__estrategia({ diaDelControl: 4 }));
+    await enInicio('subir');
+    await pagina.waitForTimeout(600);
+    await foto('inicio-control');
+    await pagina.evaluate(() => window.__estrategia({ diaDelControl: 1 }));
     await enInicio('subir');
     for (const [i, nombre, espera] of [[1, 'comida', 900], [2, 'progreso', 700], [3, 'sueno', 700], [4, 'habitos', 900], [5, 'perfil', 600]]) {
       await pestana(i);
@@ -220,7 +235,8 @@ const pasos = {
     await foto('entrada-frase-3800');
     await pagina.waitForTimeout(3200);
     await foto('entrada-frase-pista');
-    for (const [paso, esperas] of [['comida', [1600, 4600]], ['base', [1600, 4600]], ['sueno', [1800, 4600]], ['juntos', [1500, 4200]], ['habitos', [1500, 4500]], ['precio', [1800, 4200]], ['datos', [1500]], ['cuenta', [2800]], ['salud', [1900]], ['edad', [900]], ['sexo', [900]], ['peso', [900]], ['actividad', [900]], ['objetivo', [900]], ['resultado', [2600]]]) {
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    for (const [paso, esperas] of [['comida', [1600, 4600]], ['base', [1600, 4600]], ['sueno', [1800, 4600]], ['juntos', [1500, 4200]], ['habitos', [1500, 4500]], ['precio', [1800, 4200]], ['datos', [1500]], ['cuenta', [2800]], ['salud', [1900]]]) {
       await pagina.evaluate((p) => window.__entrada(p), paso);
       let t = 0;
       for (const ms of esperas) {
@@ -229,6 +245,29 @@ const pasos = {
         await foto(`entrada-${paso}-${ms}`);
       }
     }
+    // El cuestionario nuevo, tocando como una persona: conecta Salud (los cuatro datos van en una
+    // tarjeta), elige su figura, quiere bajar y sigue hasta el resultado, con el plan en una línea.
+    const tocarEnLaEntrada = (selector) => pagina.evaluate((s) => document.querySelector('.ent-pantalla:not(.saliendo) ' + s).click(), selector);
+    const seguir = async (nombre, antes) => {
+      await tocarEnLaEntrada('.ent-pie .ent-principal');
+      await pagina.waitForTimeout(1300);
+      if (antes) { await antes(); await pagina.waitForTimeout(600); }
+      await foto('entrada-' + nombre);
+    };
+    await seguir('tu');
+    await seguir('cuidado');
+    await seguir('grasa', async () => { await tocarEnLaEntrada('[data-valor="imagen"]'); await pagina.waitForTimeout(700); await tocarEnLaEntrada('.ent-figura[data-valor="3"]'); });
+    await seguir('movimiento');
+    await seguir('entreno');
+    await seguir('cuando');
+    await seguir('objetivo', () => tocarEnLaEntrada('[data-valor="bajar"]'));
+    await seguir('meta');
+    await seguir('despues');
+    await seguir('comer');
+    await seguir('dia');
+    await tocarEnLaEntrada('.ent-pie .ent-principal');
+    await pagina.waitForTimeout(2600);
+    await foto('entrada-resultado-2600');
     // Después de la meta, la pantalla de pago; al empezar la prueba, el flum hasta Inicio, y ahí suben los primeros hábitos.
     await pagina.click('.ent-resultado .ent-principal');
     await pagina.waitForTimeout(700);
@@ -380,30 +419,48 @@ const pasos = {
     await enInicio('fabrica');
     await enInicio('subir');
   },
-  // Progreso de arriba abajo, cómo se estima la grasa, la estrategia y el día del control.
+  // Progreso de arriba abajo (2/11/2026): el control en una línea y abierto, el plan con su línea y
+  // cambiarlo, el peso, la grasa (cómo se estima, y sin medidas, la invitación) y «Más datos» abierto.
   async progreso() {
     await pestana(2);
     await progreso('subir');
-    await pagina.waitForTimeout(800);
+    await pagina.waitForTimeout(1400);
     await foto('progreso');
-    for (const [selector, nombre] of [['.pg-peso', 'progreso-peso'], ['.pg-semanas', 'progreso-semanas'], ['.pg-medidas', 'progreso-medidas'], ['.pg-gasto', 'progreso-gasto'], ['.pg-seccion', 'progreso-estrategia'], ['.pg-control', 'progreso-control']]) {
+    await progreso('abrir', 'control');
+    await pagina.waitForTimeout(500);
+    await foto('progreso-control');
+    await progreso('abrir', 'objetivo');
+    await progreso('bajar', '.pg-plan-estrategia');
+    await pagina.waitForTimeout(500);
+    await foto('progreso-cambiar-plan');
+    await progreso('abrir', null);
+    await progreso('cambiarPlan', false);
+    await progreso('bajar', '.pg-peso');
+    await pagina.waitForTimeout(500);
+    await foto('progreso-peso');
+    await progreso('abrir', 'grasa');
+    await progreso('bajar', '.pg-grasa');
+    await pagina.waitForTimeout(500);
+    await foto('progreso-grasa-como');
+    await progreso('abrir', null);
+    await progreso('sinMedidas', true);
+    await progreso('bajar', '.pg-grasa');
+    await pagina.waitForTimeout(500);
+    await foto('progreso-grasa-invita');
+    await progreso('sinMedidas', false);
+    await progreso('masDatos', true);
+    for (const [selector, nombre] of [['.pg-mas', 'progreso-mas-datos'], ['.pg-semanas', 'progreso-semanas'], ['.pg-medidas', 'progreso-medidas'], ['.pg-gasto', 'progreso-gasto']]) {
       await progreso('bajar', selector);
       await pagina.waitForTimeout(400);
       await foto(nombre);
     }
-    await progreso('abrir', 'grasa');
-    await progreso('bajar', '.pg-grasa');
-    await pagina.waitForTimeout(400);
-    await foto('progreso-grasa-como');
-    await progreso('abrir', 'objetivo');
-    await progreso('bajar', '.pg-seccion');
-    await pagina.waitForTimeout(400);
-    await foto('progreso-objetivo');
+    await progreso('masDatos', false);
     await pagina.evaluate(() => window.__estrategia({ diaDelControl: 4 }));
-    await progreso('abrir', null);
-    await progreso('bajar', '.pg-control');
-    await pagina.waitForTimeout(400);
+    await progreso('subir');
+    await progreso('abrir', 'control');
+    await pagina.waitForTimeout(500);
     await foto('progreso-jueves');
+    await progreso('abrir', null);
     await pagina.evaluate(() => window.__estrategia({ diaDelControl: 1 }));
     await progreso('subir');
   },
@@ -517,6 +574,17 @@ const pasos = {
     await pagina.click('.in-calorias');
     await hojaAbierta('in-todo');
     await foto('todo');
+    // Cómo ver las calorías (2/11): los anillos de los macros, en la hoja y en Inicio.
+    await pagina.click('.tt-estilo[data-estilo="macros"]');
+    await pagina.waitForTimeout(700);
+    await foto('todo-estilo-macros');
+    await enInicio('cerrarTodo');
+    await pagina.waitForTimeout(900);
+    await foto('inicio-macros');
+    await pagina.evaluate(() => window.__kcal('luna'));
+    await pagina.waitForTimeout(400);
+    await pagina.click('.in-calorias');
+    await hojaAbierta('in-todo');
     for (const [selector, nombre] of [['.tt-sabe', 'todo-sabe'], ['.tt-falta', 'todo-falta'], ['.tt-como', 'todo-como'], ['.tt-pie', 'todo-pie']]) {
       await enInicio('bajarTodo', selector);
       await pagina.waitForTimeout(300);
@@ -546,15 +614,121 @@ const pasos = {
     await enInicio('primerDia', false);
     await enInicio('subir');
   },
-  // El cuestionario de la entrada con su constelación, las opciones con ícono y la regla.
+  // El cuestionario nuevo de la entrada (2/11/2026), pantalla por pantalla y en cada caso: sin Salud y con
+  // Salud (la tarjeta), la grasa de cada modo (con las figuras de hombre y de mujer), los deportes (varios, con
+  // lo de cada uno, los partidos, el día con dos sesiones y el combate) y sin entrenar, el peso
+  // meta con su ritmo o una fecha, subir con años de pesas, una comida que no se suele hacer, el resultado
+  // de cada objetivo, sin déficit, y en inglés.
   async cuestionario() {
     const entrada = (paso) => pagina.evaluate((p) => window.__entrada(p), paso);
-    for (const paso of ['edad', 'altura', 'actividad', 'objetivo']) {
-      await entrada(paso);
-      await pagina.waitForTimeout(paso === 'edad' ? 2200 : 1600);
-      await foto('cuestionario-' + paso);
+    const responder = (r) => pagina.evaluate((x) => window.__cuestionario('responder', x), r);
+    const tocar = (selector) => pagina.evaluate((s) => document.querySelector('.ent-pantalla:not(.saliendo) ' + s).click(), selector);
+    const espera = (ms = 1300) => pagina.waitForTimeout(ms);
+    const ver = async (paso, nombre, ms) => { await entrada(paso); await espera(ms); await foto('cuestionario-' + nombre); };
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    // Sin Salud, los cuatro datos de a uno.
+    await ver('sexo', 'sexo', 2200);
+    await responder({ sexo: 'm' });
+    for (const paso of ['edad', 'altura', 'peso']) await ver(paso, paso);
+    // La grasa: no sé, lo sé, por imagen y con cinta; y las figuras y la cinta de una mujer.
+    await ver('grasa', 'grasa');
+    for (const [modo, nombre] of [['dicha', 'grasa-dicha'], ['imagen', 'grasa-imagen'], ['cinta', 'grasa-cinta']]) {
+      await tocar(`[data-valor="${modo}"]`);
+      await espera(700);
+      if (modo === 'imagen') { await tocar('.ent-figura[data-valor="2"]'); await espera(400); }
+      await foto('cuestionario-' + nombre);
     }
-    await pagina.evaluate(() => window.__accion('entrada'));
+    await responder({ sexo: 'f', grasaModo: 'imagen', figura: 4 });
+    await ver('grasa', 'grasa-imagen-mujer');
+    await responder({ grasaModo: 'cinta' });
+    await ver('grasa', 'grasa-cinta-mujer');
+    await responder({ sexo: 'm', grasaModo: 'no', figura: null });
+    // Cuánto te mueves, qué deportes (varios a la vez; «No entreno» saca los demás) y cuándo: con pesas y
+    // partidos, lo de cada uno y si juega partidos y qué día; con correr el lunes a la mañana, el día con dos
+    // sesiones (también en tu día); con combate, la categoría de peso; y con uno solo.
+    const deportes = (x) => pagina.evaluate((v) => window.__cuestionario('entreno', v), x);
+    await ver('movimiento', 'movimiento');
+    await ver('entreno', 'entreno');
+    await tocar('[data-valor="equipo"]');
+    await espera(500);
+    await foto('cuestionario-entreno-varios');
+    await ver('cuando', 'cuando-varios');
+    await tocar('.ent-partidos [data-valor="si"]');
+    await espera(800);
+    await foto('cuestionario-cuando-partidos');
+    await deportes({ tipos: ['fuerza', 'resistencia'], de: { resistencia: { dias: [1, 6], hora: 7 * 60 + 30, minutos: 45 } } });
+    await ver('cuando', 'cuando-dos-sesiones');
+    await ver('dia', 'dia-dos-sesiones', 1600);
+    await deportes({ tipos: ['contacto'] });
+    await ver('cuando', 'cuando-combate');
+    await entrada('entreno');
+    await espera();
+    await tocar('[data-valor="no"]');
+    await espera(500);
+    await foto('cuestionario-entreno-no');
+    await tocar('[data-valor="fuerza"]');
+    await espera(400);
+    await ver('cuando', 'cuando');
+    // Bajar: el peso meta con el ritmo de cada uno, una fecha muy apurada y lo que sigue.
+    await entrada('objetivo');
+    await espera();
+    await tocar('[data-valor="bajar"]');
+    await espera(500);
+    await foto('cuestionario-objetivo');
+    await ver('meta', 'meta');
+    await tocar('.ent-ritmo-fila[data-valor="fecha"]');
+    await espera(600);
+    for (let i = 0; i < 6; i++) { await tocar('.ent-fecha-elegida button'); await espera(150); }
+    await espera(500);
+    await foto('cuestionario-meta-fecha');
+    await responder({ fecha: null, ritmo: 'recomendado' });
+    await ver('despues', 'despues', 1800);
+    // Subir con más de 3 años de pesas: la experiencia, el ritmo suave «para ti» y lo que sigue.
+    await responder({ objetivo: 'subir', pesoMeta: null, fecha: null });
+    await entrada('experiencia');
+    await espera();
+    await tocar('[data-valor="avanzado"]');
+    await espera(500);
+    await foto('cuestionario-experiencia');
+    await ver('meta', 'meta-subir');
+    await ver('despues', 'despues-subir', 1800);
+    // Cómo comes (con la proteína más alta) y tu día sin Salud, con una comida que no suele hacer.
+    await responder({ objetivo: 'bajar', pesoMeta: null, ritmo: 'recomendado' });
+    await entrada('comer');
+    await espera();
+    await tocar('[data-valor="alta"]');
+    await espera(500);
+    await foto('cuestionario-comer');
+    await ver('dia', 'dia', 1600);
+    await tocar('.ent-dia-nombre[data-valor="merienda"]');
+    await espera(500);
+    await foto('cuestionario-dia-sin-merienda');
+    // El resultado de cada objetivo, con el plan en una línea; con la grasa, por la masa magra.
+    for (const [r, nombre] of [[{ objetivo: 'bajar' }, 'resultado-bajar'], [{ objetivo: 'mantener' }, 'resultado-mantener'], [{ objetivo: 'recomponer', grasaModo: 'dicha', grasaPct: 22 }, 'resultado-recomponer'], [{ objetivo: 'subir', grasaModo: 'no', despues: 'musculo' }, 'resultado-subir']]) {
+      await responder(Object.assign({ pesoMeta: null, fecha: null }, r));
+      await ver('resultado', nombre, 2600);
+    }
+    // Con Salud: la tarjeta (y un dato abierto), los pasos que sugieren cuánto te mueves y tu día con sus noches.
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    await pagina.evaluate(() => window.__cuestionario('salud'));
+    await ver('tu', 'tu');
+    await tocar('.ent-fila[data-valor="peso"]');
+    await espera(700);
+    await foto('cuestionario-tu-abierto');
+    await ver('movimiento', 'movimiento-salud');
+    await ver('dia', 'dia-salud', 1600);
+    // Sin déficit: ni la grasa ni bajar ni recomponer.
+    await responder({ caso: 'condicion', sinDeficit: true });
+    await ver('objetivo', 'objetivo-sin-deficit');
+    await responder({ caso: 'nada', sinDeficit: false });
+    // En inglés, lo nuevo.
+    await pagina.evaluate(() => window.__idioma('en'));
+    await responder({ objetivo: 'bajar', pesoMeta: null, grasaModo: 'imagen', figura: 3 });
+    for (const paso of ['tu', 'grasa', 'movimiento', 'entreno', 'cuando', 'objetivo', 'meta', 'despues', 'comer', 'dia']) await ver(paso, 'en-' + paso);
+    await ver('resultado', 'en-resultado', 2600);
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    await pagina.evaluate(() => window.__entrada(null));
     await pagina.waitForTimeout(1200);
   },
   // El ritmo y el plazo (D35): el ritmo del perfil, uno exigente, la fecha que pide uno muy agresivo
@@ -562,7 +736,7 @@ const pasos = {
   async plazo() {
     await pestana(2);
     await progreso('plazo', { pct: 0.5, fuerza: null });
-    await progreso('bajar', '.pg-seccion');
+    await progreso('bajar', '.pg-plan-estrategia');
     await pagina.waitForTimeout(500);
     await foto('plazo-ritmo');
     await progreso('plazo', { pct: 0.85 });
@@ -575,6 +749,7 @@ const pasos = {
     await pagina.waitForTimeout(400);
     await foto('plazo-con-fuerza');
     await progreso('abrir', null);
+    await progreso('cambiarPlan', false);
     await progreso('subir');
     await pagina.waitForTimeout(500);
     await foto('plazo-camino');
@@ -799,23 +974,21 @@ const pasos = {
     await ascent('vincular', false);
     await ascent('cerrar');
   },
-  // Con Ascent (spec/rendimiento.md): el rendimiento esperado, los músculos y la marca posible,
-  // vinculada y sin vincular, y la línea del rendimiento en Sueño.
+  // Con Ascent (spec/rendimiento.md): la fatiga con el rendimiento esperado, los músculos por día de la
+  // rutina y las marcas, vinculada y sin vincular, cómo se calcula y la línea del rendimiento en Sueño.
   async rendimiento() {
     await pagina.evaluate(() => window.__aparato('reloj'));
     await ascent('vincular', true);
     await ascent('abrir');
     await pagina.waitForTimeout(900);
-    for (const [selector, nombre] of [['.as-rendimiento', 'rendimiento'], ['.as-musculos', 'rendimiento-musculos'], ['.as-pr', 'rendimiento-marca']]) {
+    for (const [selector, nombre] of [['.as-fila-fatiga', 'rendimiento'], ['.as-fatiga', 'rendimiento-musculos'], ['.as-marcas', 'rendimiento-marca']]) {
       await ascent('bajar', selector);
       await pagina.waitForTimeout(500);
       await foto(nombre);
     }
-    await pagina.click('.as-rendimiento .as-enlace');
-    await ascent('bajar', '.as-rendimiento');
-    await pagina.waitForTimeout(500);
+    await ascent('como');
+    await pagina.waitForTimeout(900);
     await foto('rendimiento-como');
-    await pagina.click('.as-rendimiento .as-enlace');
     await ascent('cerrar');
     await pestana(3);
     await sueno('noche', 0);
@@ -825,7 +998,7 @@ const pasos = {
     await ascent('vincular', false);
     await ascent('abrir');
     await pagina.waitForTimeout(900);
-    await ascent('bajar', '.as-rendimiento');
+    await ascent('bajar', '.as-partes-vacias');
     await pagina.waitForTimeout(500);
     await foto('rendimiento-sin-vincular');
     await ascent('cerrar');
@@ -1298,102 +1471,113 @@ const pasos = {
     await pagina.waitForTimeout(600);
     await pagina.evaluate(() => window.__idioma('es'));
   },
-  // Que se encuentre (spec/ascent.md, «Ascent en Progreso»): la pestaña de arriba de la barra y el asomo del
-  // final, que se toquen y se deslicen, que el scroll y las pestañas sigan siendo del dedo, Hábitos sin
-  // nada de Ascent y la invitación de Inicio, con «Ahora no» y con vincular.
+  // Que se encuentre (spec/ascent.md, «Ascent en Progreso»): la entrada del encabezado de Progreso y el borde
+  // del planeta arriba de todo, el movimiento de la primera vez, tocarla y deslizar para abajo, volver
+  // empujando para arriba, que el scroll, las pestañas y la rueda sigan siendo del dedo, que la barra no la
+  // abra, Hábitos sin nada de Ascent y la invitación de Inicio, con «Ahora no» y con vincular.
   async 'ascent-senal'() {
-    const ascentArriba = () => pagina.evaluate(() => document.querySelector('.ascent').getBoundingClientRect().top < 40);
-    const ascentAbajo = () => pagina.evaluate(() => document.querySelector('.ascent').style.visibility === 'hidden');
+    const ascentAbierta = () => pagina.evaluate(() => { const r = document.querySelector('.ascent').getBoundingClientRect(); return Math.abs(r.top) < 40; });
+    const ascentCerrada = () => pagina.evaluate(() => document.querySelector('.ascent').style.visibility === 'hidden');
     const enProgreso = () => pagina.evaluate(() => document.querySelector('.pestanas .pt-progreso').getAttribute('aria-selected') === 'true');
     const asoma = (hacer) => pagina.evaluate((h) => {
-      const a = document.querySelector('.as-senal').getAnimations().find((x) => x.animationName === 'as-senal-asoma');
+      const a = document.getAnimations().find((x) => x.id === 'as-asoma');
       if (!a) return false;
-      if (h === 'parar') { a.pause(); a.currentTime = 800 + 0.22 * 1500; } else a.finish();
+      if (h === 'parar') { a.pause(); a.currentTime = 700 + 0.3 * 1500; } else a.finish();
       return true;
     }, hacer);
+    const centroDe = (sel) => pagina.evaluate((x) => { const b = document.querySelector(x).getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; }, sel);
     await pestana(2);
     await pagina.waitForTimeout(300);
-    // La primera vez que se llega, sube y baja: la foto, arriba de todo.
-    if (!(await asoma('parar'))) console.log('! la primera vez, la señal no se movió');
+    // La primera vez que se llega, Progreso baja apenas y el borde del planeta asoma más: la foto, a mitad.
+    if (!(await asoma('parar'))) console.log('! la primera vez, Progreso no se movió');
     await pagina.waitForTimeout(200);
     await foto('senal-asomando');
     await asoma('seguir');
     await pagina.waitForTimeout(300);
     await foto('senal-primera-vez');
-    await pagina.click('.as-senal');
+    await pagina.click('.as-entrada');
     await pagina.mouse.move(1, 1);
     await pagina.waitForTimeout(900);
     await foto('senal-tocada');
-    if (!(await ascentArriba())) console.log('! la señal tocada no abrió Ascent');
-    await ascent('cerrar');
-    await pagina.waitForTimeout(500);
+    if (!(await ascentAbierta())) console.log('! la entrada tocada no abrió Ascent');
+    // Para volver: abajo de todo, empujar para arriba, siguiendo al dedo.
+    await ascent('bajar', 'fondo');
+    await pagina.waitForTimeout(300);
+    await arrastreVertical(196, 620, 196, 340, 'senal-volviendo');
+    if (!(await ascentCerrada())) console.log('! abajo de todo, empujar para arriba no volvió a Progreso');
+    await pagina.waitForTimeout(700);
     // Ya se abrió una vez: la pista se pliega.
     await foto('senal-sin-pista');
-    // Deslizar desde la señal también sube, siguiendo al dedo.
-    const r = await pagina.evaluate(() => { const b = document.querySelector('.as-senal').getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; });
-    await arrastreVertical(r[0], r[1], r[0], r[1] - 240, 'senal-deslizando');
-    if (!(await ascentArriba())) console.log('! deslizar desde la señal no abrió Ascent');
+    // Arriba de todo de Progreso, arrastrar para abajo la baja, siguiendo al dedo.
+    await arrastreVertical(196, 300, 196, 580, 'senal-deslizando');
+    if (!(await ascentAbierta())) console.log('! arriba de todo, arrastrar para abajo no abrió Ascent');
+    // En el medio de Ascent, empujar para arriba es del scroll: no la cierra.
+    await ascent('bajar', '.as-partes');
+    await pagina.waitForTimeout(300);
+    await arrastreVertical(196, 600, 196, 350);
+    if (!(await ascentAbierta())) console.log('! en el medio de Ascent, empujar para arriba la cerró');
     await ascent('cerrar');
     await pagina.waitForTimeout(400);
-    // En el medio del scroll, el dedo es del scroll.
+    // Deslizar desde la entrada también la baja.
+    const r = await centroDe('.as-entrada');
+    await arrastreVertical(r[0], r[1], r[0], r[1] + 260);
+    if (!(await ascentAbierta())) console.log('! deslizar desde la entrada no abrió Ascent');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(400);
+    // En el medio del scroll de Progreso, el dedo es del scroll.
     await bajarProgreso(500);
     await pagina.waitForTimeout(300);
-    await arrastreVertical(196, 600, 196, 350, 'senal-en-el-medio');
-    if (!(await ascentAbajo())) console.log('! en el medio del scroll, arrastrar abrió Ascent');
-    // Abajo de todo asoma el planeta, y seguir subiendo el dedo sube la sección.
-    await bajarProgreso('fondo');
-    await pagina.waitForTimeout(500);
-    await foto('senal-final');
-    await arrastreVertical(196, 560, 196, 330, 'senal-final-subiendo');
-    if (!(await ascentArriba())) console.log('! abajo de todo, seguir subiendo no abrió Ascent');
-    await ascent('cerrar');
-    await pagina.waitForTimeout(400);
-    // Desde el asomo, tocándolo.
-    await pagina.click('.as-asomo');
-    await pagina.mouse.move(1, 1);
-    await pagina.waitForTimeout(900);
-    if (!(await ascentArriba())) console.log('! el asomo tocado no abrió Ascent');
-    await ascent('cerrar');
-    await pagina.waitForTimeout(400);
-    // De costado, abajo de todo, sigue pasando de sección.
-    await arrastreVertical(340, 560, 60, 560);
-    if (await enProgreso()) console.log('! de costado, abajo de todo, no cambió de sección');
-    if (!(await ascentAbajo())) console.log('! de costado, abajo de todo, subió Ascent');
-    await pestana(2);
-    // Con la rueda: lo que venía bajando no cuenta; después de una pausa, sí.
+    await arrastreVertical(196, 350, 196, 600, 'senal-en-el-medio');
+    if (!(await ascentCerrada())) console.log('! en el medio del scroll, arrastrar abrió Ascent');
     await bajarProgreso(0);
+    await pagina.waitForTimeout(300);
+    // De costado, arriba de todo, sigue pasando de sección.
+    await arrastreVertical(340, 420, 60, 420);
+    if (await enProgreso()) console.log('! de costado, arriba de todo, no cambió de sección');
+    if (!(await ascentCerrada())) console.log('! de costado, arriba de todo, bajó Ascent');
+    await pestana(2);
+    // Con la rueda: lo que venía subiendo (la inercia) no cuenta; después de una pausa, sí. Y abajo de todo
+    // de Ascent, seguir bajando la cierra.
+    await bajarProgreso(800);
     await pagina.mouse.move(196, 500);
-    await pagina.mouse.wheel(0, 100000);
+    await pagina.mouse.wheel(0, -100000);
     await pagina.waitForTimeout(60);
-    await pagina.mouse.wheel(0, 120);
+    await pagina.mouse.wheel(0, -120);
     await pagina.waitForTimeout(500);
-    if (!(await ascentAbajo())) console.log('! la inercia de la rueda abrió Ascent');
+    if (!(await ascentCerrada())) console.log('! la inercia de la rueda abrió Ascent');
+    await pagina.mouse.wheel(0, -120);
+    await pagina.waitForTimeout(60);
+    await pagina.mouse.wheel(0, -120);
+    await pagina.waitForTimeout(900);
+    if (!(await ascentAbierta())) console.log('! con la rueda, arriba de todo, no abrió Ascent');
+    await ascent('bajar', 'fondo');
+    await pagina.waitForTimeout(400);
     await pagina.mouse.wheel(0, 120);
     await pagina.waitForTimeout(60);
     await pagina.mouse.wheel(0, 120);
     await pagina.waitForTimeout(900);
-    if (!(await ascentArriba())) console.log('! con la rueda, abajo de todo, no abrió Ascent');
+    if (!(await ascentCerrada())) console.log('! con la rueda, abajo de todo de Ascent, no volvió a Progreso');
     await ascent('cerrar');
     await pagina.waitForTimeout(400);
     // Desde la barra no arranca: el borde de abajo es del gesto de inicio del iPhone.
-    await arrastreVertical(196, 815, 196, 560);
-    if (!(await ascentAbajo())) console.log('! desde la barra subió Ascent');
-    await bajarProgreso(0);
-    // En las metas no hay señal.
+    await arrastreVertical(196, 790, 196, 850);
+    if (!(await ascentCerrada())) console.log('! desde la barra bajó Ascent');
+    // En las metas no hay entrada.
     await pagina.evaluate(() => window.__progreso('metas'));
     await pagina.waitForTimeout(600);
     await foto('senal-en-metas');
+    if (await pagina.locator('.progreso .as-entrada').count()) console.log('! en las metas está la entrada de Ascent');
     await pagina.evaluate(() => window.__progreso('principal'));
     await pagina.waitForTimeout(300);
-    // Hábitos, como antes: sin señal; para arriba no sube nada, y para abajo sigue llevando a tu universo.
+    // Hábitos, como antes: sin nada de Ascent; para abajo sigue llevando a tu universo.
     await alCielo();
     await pagina.waitForTimeout(800);
     await foto('senal-habitos');
-    if (await pagina.evaluate(() => { const b = document.querySelector('.as-senal').getBoundingClientRect(); return b.x >= 0 && b.x < 393; })) console.log('! la señal de Ascent se ve en Hábitos');
-    await arrastreVertical(196, 640, 196, 400);
-    if (!(await ascentAbajo())) console.log('! en Hábitos, para arriba subió Ascent');
+    if (await pagina.evaluate(() => { const b = document.querySelector('.as-entrada').getBoundingClientRect(); return b.x >= 0 && b.x < 393; })) console.log('! la entrada de Ascent se ve en Hábitos');
+    if (await pagina.evaluate(() => document.querySelector('.as-techo').style.visibility !== 'hidden')) console.log('! el borde del planeta se ve en Hábitos');
     await arrastreVertical(196, 180, 196, 740, 'senal-habitos-universo');
     await pagina.waitForTimeout(600);
+    if (!(await ascentCerrada())) console.log('! en Hábitos, para abajo bajó Ascent');
     if (await pagina.evaluate(() => document.querySelector('#b-zona').textContent === 'Volver a hoy')) {
       await pagina.evaluate(() => window.__accion('zona'));
       await pagina.waitForTimeout(1500);
@@ -1408,8 +1592,11 @@ const pasos = {
     await pagina.waitForTimeout(1700);
     await foto('senal-vinculada');
     await ascent('dia', 'entreno');
-    await pagina.waitForTimeout(600);
+    await pagina.waitForTimeout(900);
     await foto('senal-vinculada-hoy');
+    await ascent('dia', 'descanso');
+    await pagina.waitForTimeout(900);
+    await foto('senal-vinculada-descanso');
     await ascent('dia', 'corta');
     await pagina.evaluate(() => window.__idioma('en'));
     await pagina.waitForTimeout(600);
@@ -1417,10 +1604,6 @@ const pasos = {
     await ascent('vincular', false);
     await pagina.waitForTimeout(1300);
     await foto('senal-ingles');
-    await bajarProgreso('fondo');
-    await pagina.waitForTimeout(500);
-    await foto('senal-final-ingles');
-    await bajarProgreso(0);
     await pagina.evaluate(() => window.__idioma('es'));
     // La invitación de Inicio.
     await pestana(0);
@@ -1458,25 +1641,25 @@ const pasos = {
     await ascent('vincular', false);
     await pagina.waitForTimeout(600);
   },
-  // Ascent, abajo de Progreso: la pestaña y el asomo, el gesto a mitad de camino (con el dedo todavía
-  // abajo), sin vincular, la hoja de vincular, vinculada con los cinco días de ejemplo y cada parte con
-  // su gráfico, «sin déficit», los números ocultos y lo que cambia en Inicio, Sueño y Perfil con el vínculo.
+  // Ascent, arriba de Progreso: la entrada y el borde del planeta, el gesto a mitad de camino (con el dedo
+  // todavía abajo) para abrirla y para volver, sin vincular, la hoja de vincular, vinculada con los seis días
+  // de ejemplo y cada parte, «¿Qué es este número?» y «Cómo se calcula», tocar un día del año, «sin déficit»,
+  // los números ocultos y lo que cambia en Inicio, Sueño y Perfil con el vínculo.
   async ascent() {
     await pestana(2);
-    await pagina.waitForTimeout(600);
-    await foto('ascent-flecha');
-    await bajarProgreso('fondo');
-    await pagina.waitForTimeout(500);
-    await foto('ascent-asomo');
-    await arrastreVertical(196, 640, 196, 400, 'ascent-subiendo');
+    await pagina.waitForTimeout(2600);
+    await foto('ascent-entrada');
+    await arrastreVertical(196, 300, 196, 600, 'ascent-bajando');
     await foto('ascent');
-    // Para volver: arrastrarla para abajo desde arriba de todo.
-    await arrastreVertical(196, 300, 196, 560, 'ascent-bajando');
+    // Para volver: abajo de todo, empujarla para arriba.
+    await ascent('bajar', 'fondo');
+    await pagina.waitForTimeout(300);
+    await foto('ascent-final');
+    await arrastreVertical(196, 620, 196, 380, 'ascent-subiendo');
     await foto('ascent-de-vuelta');
-    await bajarProgreso(0);
     await ascent('abrir');
     await pagina.waitForTimeout(300);
-    for (const [selector, nombre] of [['.as-grupo', 'ascent-bloqueadas'], ['.as-musculos', 'ascent-bloqueadas-2'], ['.as-anio', 'ascent-bloqueadas-3']]) {
+    for (const [selector, nombre] of [['.as-grupo', 'ascent-bloqueadas'], ['.as-fatiga', 'ascent-bloqueadas-2'], ['.as-estanc', 'ascent-bloqueadas-3']]) {
       await ascent('bajar', selector);
       await pagina.waitForTimeout(300);
       await foto(nombre);
@@ -1492,45 +1675,55 @@ const pasos = {
     await partesDeAscent();
     // Un buen día para intentar marca, y con la sesión ya hecha, las piernas cargadas.
     await ascent('dia', 'bien');
-    await ascent('bajar', '.as-pr');
+    await ascent('bajar', '.as-marcas');
     await pagina.waitForTimeout(400);
-    await foto('ascent-parte-marca-buen-dia');
+    await foto('ascent-parte-marcas-buen-dia');
     await ascent('dia', 'entreno');
-    await ascent('bajar', '.as-musculos');
+    await ascent('bajar', '.as-fatiga');
     await pagina.waitForTimeout(400);
-    await foto('ascent-parte-musculos-cargados');
+    await foto('ascent-parte-fatiga-cargada');
     await ascent('dia', 'corta');
     await ascent('subir');
-    // Explicar cómo se calcula.
-    await pagina.click('.as-diag .as-enlace');
-    await pagina.waitForTimeout(400);
+    // «¿Qué es este número?» y «Cómo se calcula», desplegados.
+    await pagina.click('.as-rec .as-enlace');
+    await pagina.waitForTimeout(500);
+    await foto('ascent-que-es');
+    await ascent('como');
+    await pagina.waitForTimeout(900);
     await foto('ascent-como-se-calcula');
-    await pagina.click('.as-diag .as-enlace');
-    // El gimnasio que se enciende solo: sumarlo con un toque.
-    await ascent('bajar', '.as-gimnasio');
-    await pagina.click('.as-gimnasio-sumar');
-    await pagina.waitForTimeout(700);
-    await foto('ascent-gimnasio-sumado');
-    // Con pocas semanas, «Por qué no subes» todavía junta información.
+    await ascent('bajar', 'fondo');
+    await pagina.waitForTimeout(400);
+    await foto('ascent-como-se-calcula-2');
+    // Con pocas semanas, las razones del sueño y la comida todavía juntan información.
     await ascent('pocas', true);
     await ascent('bajar', '.as-estanc');
     await pagina.waitForTimeout(300);
     await foto('ascent-juntando');
     await ascent('pocas', false);
+    // Un día del año, tocado: el de la última marca.
+    await ascent('bajar', '.as-anio');
+    await pagina.waitForTimeout(300);
+    await pagina.click('.as-anio-dia.marca >> nth=-1');
+    await pagina.waitForTimeout(300);
+    await foto('ascent-anio-tocado');
     await ascent('subir');
     await ascent('cerrar');
-    // Con «sin déficit» no hay diagnóstico ni lo que se come; con los números ocultos, sin gramos.
+    // Con «sin déficit» no hay «Hoy, concéntrate en» ni metas de comida; con los números ocultos, sin gramos.
     await pagina.evaluate(() => window.__seguridad('sinDeficit', true));
     await ascent('abrir');
     await pagina.waitForTimeout(500);
     await foto('ascent-sin-deficit');
+    await ascent('bajar', '.as-fila-comida');
+    await pagina.waitForTimeout(300);
+    await foto('ascent-sin-deficit-2');
+    await ascent('subir');
     await ascent('cerrar');
     await pagina.evaluate(() => window.__seguridad('sinDeficit', false));
     await pagina.evaluate(() => window.__seguridad('numeros', false));
     await ascent('abrir');
     await pagina.waitForTimeout(500);
     await foto('ascent-sin-numeros');
-    await ascent('bajar', '.as-figuras');
+    await ascent('bajar', '.as-fila-comida');
     await pagina.waitForTimeout(300);
     await foto('ascent-sin-numeros-2');
     await ascent('subir');
@@ -1649,6 +1842,37 @@ const pasos = {
     await foto('avisos-horario');
     await pagina.getByRole('button', { name: 'Horario de comidas' }).click();
     await pagina.getByRole('button', { name: 'Pesarme a la mañana' }).click();
+    // Lo que conviene hacer (3/11, para aprobar), cada uno con su llave, en español y en inglés; y en
+    // Perfil › Entrenamiento, lo que tardas en llegar al gimnasio.
+    const conviene = ['Comer antes de entrenar', 'Proteína después de entrenar', 'Café', 'Última comida grande', 'Si entrenas tarde', 'Bajar las luces'];
+    const llaves = async () => { for (const nombre of conviene) await pagina.locator('.pf-hoja').getByRole('button', { name: nombre, exact: true }).click(); };
+    const alGrupo = () => pagina.evaluate(() => {
+      const c = document.querySelector('.pf-hoja .pf-avisos');
+      const g = [...document.querySelectorAll('.pf-hoja .pf-grupo')][0];
+      if (c && g) c.scrollTop = g.offsetTop - c.offsetTop - 8;
+    });
+    await llaves();
+    await alGrupo();
+    await pagina.waitForTimeout(500);
+    await foto('avisos-conviene');
+    await pagina.evaluate(() => { const c = document.querySelector('.pf-hoja .pf-avisos'); if (c) c.scrollTop = c.scrollHeight; });
+    await pagina.waitForTimeout(400);
+    await foto('avisos-conviene-abajo');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('avisos');
+    await pagina.waitForTimeout(700);
+    await alGrupo();
+    await pagina.waitForTimeout(400);
+    await foto('avisos-conviene-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await seccion('entreno');
+    await pagina.waitForTimeout(700);
+    await pagina.evaluate(() => { const c = document.querySelector('.pf-hoja .pf-avisos'); if (c) c.scrollTop = c.scrollHeight; });
+    await pagina.waitForTimeout(400);
+    await foto('avisos-entreno-viaje');
+    await seccion('avisos');
+    await pagina.waitForTimeout(700);
+    await llaves();
     await habitos('nuevo');
     await habitos('como', 'manual');
     await habitos('escribir', 'Estirar');
@@ -1763,11 +1987,7 @@ const pasos = {
     await pagina.evaluate(() => window.__idioma('en'));
     await pestana(2);
     await pagina.waitForTimeout(500);
-    await foto('ascent-flecha-ingles');
-    await bajarProgreso('fondo');
-    await pagina.waitForTimeout(500);
-    await foto('ascent-asomo-ingles');
-    await bajarProgreso(0);
+    await foto('ascent-entrada-ingles');
     await ascent('abrir');
     await pagina.waitForTimeout(500);
     await foto('ascent-ingles');
@@ -1781,6 +2001,9 @@ const pasos = {
     await foto('ascent-vinculada-ingles');
     await diasDeAscent('-ingles');
     await partesDeAscent('-ingles');
+    await ascent('como');
+    await pagina.waitForTimeout(900);
+    await foto('ascent-como-se-calcula-ingles');
     await ascent('vincular', false);
     await ascent('cerrar');
     await pagina.evaluate(() => window.__idioma('es'));
@@ -1840,95 +2063,56 @@ const pasos = {
     await pagina.waitForTimeout(800);
     await pestana(0);
   },
-  // El saludo del día (spec/saludo.md): arriba de Inicio y su hoja, con cada día de ejemplo, la hora, abrir de
-  // nuevo, lo que fue diciendo en dos semanas, en inglés, con los números ocultos y con «sin déficit».
-  async saludo() {
-    const s = (accion, arg) => pagina.evaluate(([a, x]) => window.__saludo(a, x), [accion, arg]);
-    const espera = (ms = 900) => pagina.waitForTimeout(ms);
-    await pestana(0);
-    await enInicio('subir');
-    await espera();
-    await foto('saludo-inicio');
-    await enInicio('primerDia', true);
-    await espera();
-    await foto('saludo-inicio-primer-dia');
-    await enInicio('primerDia', false);
-    await seccion('saludo');
-    await espera(1000);
-    for (const dia of ['pocoEntrena', 'yaEntreno', 'descanso', 'pasoAyer', 'pasoHoy', 'sinSueno', 'primerDia', 'noche']) {
-      await s('dia', dia);
-      await espera();
-      await foto('saludo-' + dia);
-    }
-    await s('dia', 'pocoEntrena');
-    await s('abrirDeNuevo');
-    await espera();
-    await foto('saludo-abrir-de-nuevo');
-    await s('pasarRato');
-    await espera();
-    await foto('saludo-dos-horas');
-    await s('anotarProxima');
-    await espera();
-    await foto('saludo-anoto');
-    for (const [hora, nombre] of [['13:00', 'mediodia'], ['15:00', 'antes-de-entrenar'], ['20:00', 'despues-de-entrenar'], ['22:30', 'noche']]) {
-      await s('dia', 'pocoEntrena');
-      await s('hora', hora);
-      await espera();
-      await foto('saludo-a-la-hora-' + nombre);
-    }
-    await s('dia', 'pocoEntrena');
-    await s('bajar', '.sl-dos');
-    await espera(600);
-    await foto('saludo-dos-semanas');
-    await s('bajar', '.sl-lista h5:nth-of-type(6)');
-    await espera(500);
-    await foto('saludo-dos-semanas-2');
-    await s('subir');
-    await pagina.evaluate(() => window.__idioma('en'));
-    await s('dia', 'yaEntreno');
-    await espera();
-    await foto('saludo-ingles');
-    await s('bajar', '.sl-dos');
-    await espera(500);
-    await foto('saludo-ingles-dos-semanas');
-    await pagina.evaluate(() => window.__idioma('es'));
-    await s('numeros', false);
-    await espera();
-    await foto('saludo-sin-numeros');
-    await s('numeros', true);
-    await s('sinDeficit', true);
-    await espera();
-    await foto('saludo-sin-deficit');
-    await s('sinDeficit', false);
-    await s('cerrar');
-    await espera(600);
-    await foto('saludo-cerrada');
-  },
 
-  // La propuesta de widgets (D43): la comida, chica, mediana y grande, con un toque que anota sin abrir
-  // Moss; el cielo con su fondo de verdad y el día completo; la noche, a la mañana y a la noche; la
-  // pantalla bloqueada; StandBy; tintados y transparentes, en inglés y abrir Moss con lo tocado.
+  // Los avisos en la pantalla bloqueada (spec/avisos.md): tu día (almuerzas a las 13:00, entrenas a las
+  // 16:00 y tardas una hora en llegar) a distintas horas, lo que ya pasó, sin entreno y entrenando tarde, en
+  // inglés, y cada texto de «Todos», lo de lo que conviene primero.
   async bloqueo() {
     const poner = async (p, nombre, espera = 500) => {
       await pagina.evaluate((x) => window.__avisosBloqueo(x), p);
       await pagina.waitForTimeout(espera);
       await foto(nombre);
     };
+    const hora = (h, m = 0) => h * 60 + m;
+    const nada = { otraHora: false, cenaTemprano: false, pocaProteina: false };
     await seccion('avisosBloqueo');
     await pagina.waitForTimeout(500);
-    // Tu caso: ya entrenaste, y a las 17:40 suena solo la merienda.
-    await poner({ hora: 18 * 60, entreno: true, merendo: false, pocaProteina: false }, 'bloqueo-ya-entrene');
-    await poner({ hora: 18 * 60 + 10, entreno: false }, 'bloqueo-sin-entrenar');
-    await poner({ hora: 23 * 60 + 30, entreno: true, pocaProteina: true }, 'bloqueo-falta', 700);
-    await poner({ hora: 23 * 60 + 30, idioma: 'en' }, 'bloqueo-falta-ingles', 700);
+    // El de comer, antes del almuerzo; el café, antes de salir; mientras vas, nada; al terminar, la proteína.
+    await poner({ modo: 'dia', idioma: 'es', dia: 'tarde', hora: hora(12, 30), ...nada }, 'bloqueo-entreno-almuerzo');
+    await poner({ hora: hora(15, 30) }, 'bloqueo-entreno-viaje');
+    await poner({ hora: hora(17) }, 'bloqueo-entreno-despues');
+    await poner({ hora: hora(23, 30) }, 'bloqueo-entreno-noche', 700);
+    // El día entero no entra en la pantalla: lo de la mañana, bajando la lista.
+    await poner({ abajo: 4000 }, 'bloqueo-entreno-noche-2');
+    // Lo que ya pasó no suena: entrenaste a la mañana; cenaste temprano (y poca proteína).
+    await poner({ otraHora: true }, 'bloqueo-entreno-otra-hora', 700);
+    await poner({ abajo: 4000 }, 'bloqueo-entreno-otra-hora-2');
+    await poner({ otraHora: false, cenaTemprano: true, pocaProteina: true }, 'bloqueo-cene-temprano', 700);
+    // Sin entreno, y entrenando tarde, con el máximo lleno.
+    await poner({ dia: 'no', ...nada, hora: hora(23, 30) }, 'bloqueo-sin-entreno', 700);
+    await poner({ abajo: 4000 }, 'bloqueo-sin-entreno-2');
+    await poner({ dia: 'noche', hora: hora(23, 30) }, 'bloqueo-entreno-tarde', 700);
+    await poner({ abajo: 4000 }, 'bloqueo-entreno-tarde-2');
+    await poner({ dia: 'tarde', hora: hora(23, 30), idioma: 'en' }, 'bloqueo-entreno-ingles', 700);
+    // Todos, por grupos.
     await poner({ modo: 'todos', idioma: 'es', abajo: 0 }, 'bloqueo-todos-1');
-    await poner({ abajo: 620 }, 'bloqueo-todos-2');
-    await poner({ abajo: 1240 }, 'bloqueo-todos-3');
-    await poner({ abajo: 1860 }, 'bloqueo-todos-4');
-    await poner({ modo: 'todos', idioma: 'en', abajo: 620 }, 'bloqueo-todos-ingles');
+    await poner({ abajo: 'Después de entrenar' }, 'bloqueo-todos-2');
+    await poner({ abajo: 'Si entrenas tarde' }, 'bloqueo-todos-3');
+    await poner({ abajo: 'Comidas' }, 'bloqueo-todos-4');
+    await poner({ abajo: 'Si vas muy bajo en algo' }, 'bloqueo-todos-5');
+    await poner({ abajo: 'Hábitos' }, 'bloqueo-todos-6');
+    await poner({ abajo: 'La hora de dormir' }, 'bloqueo-todos-7');
+    await poner({ modo: 'todos', idioma: 'en', abajo: 0 }, 'bloqueo-todos-ingles-1');
+    await poner({ abajo: 'Después de entrenar' }, 'bloqueo-todos-ingles-2');
+    await poner({ abajo: 'Si entrenas tarde' }, 'bloqueo-todos-ingles-3');
+    await pagina.evaluate((x) => window.__avisosBloqueo(x), { modo: 'dia', idioma: 'es', dia: 'tarde', hora: hora(17, 5), ...nada });
     await pagina.click('.ab-cerrar');
     await pagina.waitForTimeout(400);
   },
+
+  // La propuesta de widgets (D43): la comida, chica, mediana y grande, con un toque que anota sin abrir
+  // Moss; el cielo con su fondo de verdad y el día completo; la noche, a la mañana y a la noche; la
+  // pantalla bloqueada; StandBy; tintados y transparentes, en inglés y abrir Moss con lo tocado.
   async 'widgets-nuevos'() {
     const widgets = (accion, arg) => pagina.evaluate(([a, x]) => window.__widgets(a, x), [accion, arg]);
     const espera = (ms = 900) => pagina.waitForTimeout(ms);

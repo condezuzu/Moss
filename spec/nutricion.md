@@ -280,9 +280,10 @@ no encontraban nada, porque el índice parte las palabras en el apóstrofo.
   Subway, Mostaza, La Pasiva, Starbucks, KFC, Domino's, Grido, Sbarro, Freddo, La Cigale, Cinnabon, Porto Vanila e Il Mondo
   della Pizza, con sus combos. Cada línea dice su fuente; lo que no es un dato oficial lleva «aproximado». Los combos son
   la suma de sus partes. Las que se miraron y no entraron están al final del archivo, con el motivo.
-- **Lo del súper** (`alimentos/marcas.txt`): unos 2.100 productos de unas 460 marcas, de la exportación de Open Food
+- **Lo del súper** (`alimentos/marcas.txt`): unos 2.190 productos de unas 490 marcas, de la exportación de Open Food
   Facts. Lo arma `node herramientas/marcas.mjs` con lo que baja `node herramientas/bajar-marcas.mjs`; no se edita a mano.
-  Entra lo cargado con Uruguay; de Argentina, las marcas que se venden acá; y de otros países, solo las marcas globales
+  Entra lo cargado con Uruguay o con un código de GS1 Uruguay (773, aunque Open Food Facts le ponga otro país: suma unos
+  100 productos hechos acá, 3/11/2026); de Argentina, las marcas que se venden acá; y de otros países, solo las marcas globales
   que nadie cargó (Kellogg's, por ejemplo), con menos productos y marcadas «aproximado», porque la etiqueta es de allá.
   Se descarta lo que no cierra con 4/4/9, lo cargado por porción en vez de por 100 g, lo escrito en otro idioma y lo que no
   se anota (la yerba, el té). Un producto conserva su número al rearmar.
@@ -290,14 +291,54 @@ no encontraban nada, porque el índice parte las palabras en el apóstrofo.
 **Cómo busca:** lo genérico primero («leche» es la leche). Si lo escrito nombra la marca (entera, sin signos, o desde la
 tercera letra), enseguida van sus productos en el orden de la marca: en una cadena, primero lo principal, después los combos
 y al final lo demás; en el súper, lo más escaneado. Con la marca nombrada se muestran hasta 200 resultados, para ver el menú
-entero. Cada resultado muestra su marca si el nombre no la dice. La base pesa 11,7 MB (el tope ahora es 14): va entera en
+entero. Cada resultado muestra su marca si el nombre no la dice. La base pesa 11,8 MB (el tope ahora es 14): va entera en
 la app y en la próxima actualización por aire.
+
+### El stock de los súper (investigado el 2/11/2026)
+
+Lo pediste: entrar a los sitios de los supermercados y sumar todo su stock. **Sin permiso no se puede:**
+
+| Súper | Catálogo | EAN | Tabla nutricional | Qué dicen |
+|---|---|---|---|---|
+| Tienda Inglesa | Público, unos 7.800 de comida y bebida | Sí | En texto, por porción | El pie de cada página prohíbe recolectar, reproducir y comercializar su información |
+| Disco, Devoto, Géant (GDU) | Público, unos 11.700 en un Disco; dejaron VTEX | Sí | Solo una foto chica | El sitio es para comprar; nada sobre reutilizar |
+| Ta-Ta | Público (VTEX), unos 11.250 | Sí | En texto | Prohíbe entrar por otro medio que su interfaz y reproducir sus productos e imágenes |
+| El Dorado | Público (VTEX), unos 5.400 | Sí | No | Nada sobre acceso automatizado ni reutilizar |
+| Kinko, Macro Mercado, Frigo | Sin tienda en línea | — | — | — |
+
+- **La muestra:** de 30 EAN de las góndolas, 16 están en Open Food Facts y 14 con la tabla completa (bebidas, 0 de 6).
+  **El hueco es lo hecho en Uruguay:** de los EAN 773, solo 4 de 16 están completos; de los importados, 10 de 14. Al
+  escanear, Moss ya encuentra en vivo los que Open Food Facts tiene; buscando por nombre o sin conexión, no.
+- **Ningún registro público trae las tablas:** el decreto 272/018 solo obliga a los octógonos; el 37.455 de Montevideo
+  obliga a mostrar el rótulo al vender en línea, pero no da permiso para reutilizarlo; los datos abiertos de la Intendencia
+  traen nombre, marca y empresa, sin EAN ni tabla; GS1 Uruguay (el Catálogo Electrónico, Rondanet) es la fuente oficial
+  por EAN, pero no es abierta.
+- **Lo que se puede sin pedir nada:** completar en Open Food Facts los que tienen la foto de la tabla (la leche descremada
+  Conaprole, 7730105001284, y Oreo 354 g, 7622201502966); en `bajar-marcas.mjs` y `marcas.mjs`, aceptar todo EAN 773 (hecho el 3/11/2026) con
+  la tabla completa aunque Open Food Facts le ponga otro país (el yogur griego de Conaprole figura como de España); y una
+  tanda propia de fotos de unos 200 envasados uruguayos de los más vendidos, empezando por las bebidas, cargados en Open
+  Food Facts. Ofrecer mandar a Open Food Facts lo que el escáner de etiqueta lee cuando el código no está (D13) suma un
+  toque en ese caso: se discute antes.
+- **Lo que hay que pedir** (los mails los mandas tú): a GS1 Uruguay, acceso al Catálogo Electrónico para una app; a El
+  Dorado y Ta-Ta, y después a GDU y Tienda Inglesa, permiso para usar su lista de EAN y nombres, con crédito y un enlace
+  para comprar. Con una lista autorizada, los que Open Food Facts ya tiene entrarían a la base para buscarlos por nombre:
+  unos 2.000 a 3.000 productos más (estimado). Lo uruguayo que falta solo se llena con las fotos propias, D13 o GS1.
+- En la investigación se hicieron unas 9 consultas chicas a la API de Ta-Ta antes de leer sus términos: no se repiten.
+
+Fuentes: los términos de [Tienda Inglesa](https://www.tiendainglesa.com.uy/supermercado/landing/bases-y-condiciones/728),
+[GDU](https://www.disco.com.uy/terminos-y-condiciones), [Ta-Ta](https://www.tata.com.uy/terminos-y-condiciones/) y [El
+Dorado](https://www.eldorado.com.uy/institucional/terminos-y-condiciones); el [decreto
+272/018](https://www.impo.com.uy/bases/decretos-reglamento/272-2018); el [decreto 37.455 de la Junta Departamental de
+Montevideo](https://montevideo.gub.uy/sites/default/files/biblioteca/decreto37455juntadepartamentaldemontevideo.pdf); el
+[registro de alimentos de la Intendencia](https://catalogodatos.gub.uy/dataset/habilitacion-y-registro-de-alimentos); el
+[Catálogo Electrónico de GS1 Uruguay](https://gs1uy.org/nuestros-servicios/catalogo-electronico/).
 
 ## Registrar: los flujos y sus toques
 
 La gente registra 4 a 6 veces por día: cada toque cuenta. Las reglas:
 
-- **Un solo botón para registrar,** siempre a mano: el «+» del medio de la barra (cambio 9). Abre una hoja con «Agregar comida» (la búsqueda de siempre), el peso, la carga rápida (calorías y macros, los recientes, las guardadas y el agua) y las medidas. En Comida, la comida que falta tiene su propio «Agregar».
+- **Un solo botón para registrar,** siempre a mano: el «+» del medio de la barra (cambio 9). Abre una hoja con «Agregar comida» (la búsqueda de siempre), el peso, la carga rápida y las medidas. En Comida, la comida que falta tiene su propio «Agregar».
+- **La carga rápida del «+»** (2/11/2026, para aprobar; lo pediste así): «Tu cena de siempre» de un toque (la de la hora, con lo que lleva y sus kcal, y deshacer) y el agua; debajo, **lo que sueles comer a esta hora** (lo que más anotaste en esa comida en dos semanas, con la última cantidad) en vez de los recientes, que al almuerzo eran el desayuno; y las comidas guardadas. «Calorías y macros» sale del «+» (nadie lo entendía) y queda en la hoja de registro. **Las «comidas precargadas»** que propusiste («tocas desayuno y se carga el desayuno») ya son esto: tu comida de siempre sale sola de lo que anotas, sin armarla; las que quieras fijar a mano son las comidas guardadas. Por eso no va un tercer concepto.
 - **La hoja de registro abre lista para escribir:**
   - con el teclado arriba;
   - con la comida elegida por la hora, que se cambia con un toque (`src/dominio/comidas.ts`):
@@ -324,19 +365,19 @@ pasó de 2 a 5. Con el «+» en la barra (cambio 9, D17):
 
 | Flujo | Toques |
 |---|---|
-| Un reciente, desde el «+» | **2**: el «+» y el reciente (registra directo, con deshacer) |
+| Lo que sueles comer a esta hora, desde el «+» (2/11) | **2**: el «+» y el alimento (registra directo, con su última cantidad y deshacer). Antes eran los recientes, con los mismos toques |
 | Algo de siempre (sugerencia de la hora o favorito) | **6**: el «+», agregar comida, el «+» de la fila, sumar, listo y agregar; **5** desde Comida |
 | Buscar y agregar con su porción | **6** y escribir (**5** desde Comida) |
 | Buscar y elegir otra cantidad | **7** y escribir: el «+», agregar comida, el «+» de la fila, la porción, sumar, listo y agregar |
 | Varios alimentos de una vez | **3 + 2 por alimento** y escribir |
 | Armar un plato y guardarlo para la próxima | lo anterior **+ 1** y un nombre |
 | Una comida guardada | **2**: el «+» y la guardada (registra directo, con deshacer) |
-| Tu comida de siempre (26/10) | **2**: «Agregar» en el hueco de la comida y «Tu desayuno de siempre» (anota directo, con deshacer); **3** desde el «+». Sale sola: la misma combinación de alimentos en esa comida al menos dos veces en dos semanas (\`deSiempre\`), con las cantidades de la última vez. Si ya se está armando otra cosa, se suma a lo que se arma |
+| Tu comida de siempre (26/10) | **2**: «Agregar» en el hueco de la comida y «Tu desayuno de siempre» (anota directo, con deshacer); **2** también desde el «+» desde el 2/11 (estaba a 3), porque va en la carga rápida. Sale sola: la misma combinación de alimentos en esa comida al menos dos veces en dos semanas (\`deSiempre\`), con las cantidades de la última vez. Si ya se está armando otra cosa, se suma a lo que se arma |
 | Copiar una comida de ayer | **2**: «copiar de ayer» en el hueco de la comida (abre la revisión) y agregar |
 | Copiar un día entero | **3**: copiar día, elegir el día y confirmar |
 | Código de barras ya conocido | **5**: registrar, escáner, sumar, listo y agregar (lee solo, sin disparar) |
 | Código nuevo con etiqueta | **8** y el nombre, una sola vez; la próxima son 5 |
-| Carga rápida de calorías y macros | **3** y los números: el «+», calorías y macros, y agregar |
+| Carga rápida de calorías y macros | **4** y los números desde el 2/11 (sale del «+»): el «+», agregar comida, carga rápida y agregar |
 | Decir la comida entera (26/10) | **3** y hablar: el «+», «Decir lo que comí» (abre escuchando) y «Agregar», para cualquier cantidad de alimentos |
 | Foto y decir qué es (2/11, para aprobar) | **5** y hablar: el «+», agregar comida, la cámara, disparar y agregar; **4** desde el hueco de la comida. Ver «La foto de la comida» |
 | Planificar un día futuro | **1 o 2** para ir al día, y lo mismo que hoy; al llegar el día, **1** para confirmar todo |
@@ -567,9 +608,10 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
    - **Menores de 18:** bajar «rápido» no está; se usa el recomendado.
    - **Pisos:** 1.200 kcal para mujeres y 1.500 para hombres (la guía AHA/ACC/TOS 2013; hasta la 1.0, 1.400).
    - **Redondeo:** el gasto y las kcal, a la decena.
-   - Es la cuenta de la galería (`galeria/src/entrada.js`, `metas`). El ejemplo
-     de la galería da 2.770 kcal, con 119 g de proteína, 387 de carbohidratos y
-     83 de grasas.
+   - Es la cuenta de la app hasta programar el cuestionario nuevo (abajo): con el
+     ejemplo de los tests (29 años, 172 cm, 74,5 kg, «bastante», mantener) da
+     2.770 kcal, con 119 g de proteína, 387 de carbohidratos y 83 de grasas. La
+     galería ya usa la cuenta nueva.
 2. **Macros**
    - **Proteína primero, por kilo:** 2,0 g al bajar, 1,6 al mantener y 1,8 al
      subir, siempre dentro de 1,2–2,2. Nunca pasa del 40 % de las kcal: con
@@ -607,6 +649,155 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
    - Los días de entrenamiento redistribuyen la meta de la semana sin cambiar el
      total.
    - La proteína sube después de una sesión grande.
+
+### El cuestionario nuevo (2/11/2026, para aprobar)
+
+Lo pediste el 2/11/2026: que Progreso muestre un plan («llegar acá en tanto tiempo;
+después, esto») que cambie según cómo vienes, y para eso un cuestionario con las
+preguntas típicas de MacroFactor. Está en la galería (`galeria/src/entrada.js`,
+escenarios `cuestionario` y `entrada`), con las cuentas puras y con tests en
+`src/dominio/cuestionario.ts` (más `macrosConProteina` en `metas.ts`). La app sigue
+con el de la 1.0 hasta que se apruebe.
+
+**Lo que hacen las otras.** MacroFactor pregunta en unos 47 pasos: Salud, sexo,
+nacimiento, altura, peso, historial del peso, grasa (una grilla de 3 × 3 fotos),
+sesiones por semana, actividad fuera del ejercicio, experiencia con pesas y con
+cardio, objetivo, peso meta y ritmo con su fecha, programa, dieta, piso, reparto de
+la semana y proteína en cuatro niveles. Separa la vida diaria del ejercicio, usa la
+masa magra si sabe la grasa y trata la recomposición como mantener o ir muy lento.
+Carbon pregunta «¿sabes tu grasa?» y, si no, muestra imágenes; RP Diet arma la semana
+con la hora de entrenar y las comidas alrededor.
+
+**Las pantallas.** Una pregunta por pantalla y lo que va junto, agrupado; lo que no
+aplica se saltea, y la constelación de los pasos cuenta solo lo que aparece (de 8 a
+16 pantallas según lo contestado; con Salud, bajando y entrenando, 12).
+
+| Pantalla | Qué pregunta | Cuándo aparece | Para qué |
+|---|---|---|---|
+| Salud | conectar o «Ahora no» | siempre | trae sexo, edad, altura, peso, pasos y noches |
+| Esto dice Salud | los cuatro datos en una tarjeta, para confirmar; cada uno se abre para cambiarlo | con Salud | el gasto en reposo |
+| Sexo, edad, altura y peso | de a uno, como antes (sexo, obligatorio; 16 o más) | sin Salud | el gasto en reposo |
+| ¿Alguno es tu caso? | embarazo o lactancia, una condición médica, nada | siempre | sin déficit, como antes |
+| ¿Sabes tu porcentaje de grasa? | No sé · Lo sé (el número) · Por imagen (nueve figuras dibujadas, cada una un rango) · Con cinta (cintura, cuello y, en mujeres, cadera: la Marina, `Cuerpo.rangoDeGrasa`) | desde los 18 y sin cuidados | Katch-McArdle y la proteína por la masa magra |
+| ¿Cuánto te mueves en tu día? | casi todo el día sentado · de pie o caminando parte del día · un trabajo físico; con Salud, los pasos sugieren | siempre | lo que suma la vida diaria |
+| ¿Entrenas? | pesas o máquinas (también crossfit) · partidos (fútbol, básquetbol, hockey, vóley, tenis, pádel: intermitentes, nada de «aeróbico») · correr, bici o nadar · choques o combate (rugby, artes marciales, boxeo) · no entreno (o solo camino o hago yoga). Se elige más de uno | siempre | las kcal del entrenamiento y los consejos (salen de los deportes, `tipos`) |
+| ¿Cuándo entrenas? | con un deporte, sus días, la hora y cuánto dura; con dos o más, lo de cada uno, y se ve qué días tienen dos sesiones. Con partidos o choques, «¿Juegas partidos o compites?» y qué día (se suma a los días de ese deporte); con combate, «¿Compites por categoría de peso?». Y cuánto tardas en llegar (en casa, menos de 15, de 15 a 30, más de 30 minutos) | si entrena | las kcal de cada día, los consejos y los avisos |
+| ¿Qué quieres lograr? | bajar · mantener · subir · ganar músculo y perder grasa | siempre | la meta |
+| ¿Hace cuánto entrenas con pesas? | menos de un año · de 1 a 3 · más de 3 | al subir o recomponer, con pesas | el ritmo que se propone |
+| ¿A qué peso quieres llegar? | el peso (propone un 5 %; nunca debajo de un IMC de 18,5) y el ritmo: suave, recomendado y rápido, cada uno con su fecha, o «Elegir una fecha» con el ritmo que pide y qué tan exigente es (D35) | al bajar o subir | el plan |
+| Cuando llegues, ¿qué sigue? | mantener · ganar músculo · lo decido después, con el plan en una línea: hoy, la meta con su fecha y el final de las semanas en mantenimiento | al bajar o subir | la etapa que sigue en el plan de Progreso (`perfil.despues`, `planPorEtapas`) |
+| ¿Cómo quieres comer? | el reparto (con su barra), la proteína en gramos (más baja, recomendada, más alta) y qué comes (de todo, vegetariana, vegana, pescetariana) | siempre | los macros y el plan de comidas |
+| ¿Cómo es tu día? | una línea del día: te despiertas, las cuatro comidas (tocar una dice «no suelo»), el entreno con la hora de salir, y te acuestas; el fin de semana, igual o más tarde | siempre; con 3 noches en Salud, el sueño se muestra y no se pregunta | los avisos: qué comer antes de entrenar, contando el viaje, y la hora de dormir |
+| Tu punto de partida | la meta, el plan en una línea («Bajar a 71 kg para el 4 de enero; después, mantener») y de dónde sale el gasto (en reposo, la vida diaria y el entrenamiento) | al final | |
+
+**Las cuentas** (`src/dominio/cuestionario.ts`, con sus tests):
+- **En reposo:** Mifflin-St Jeor; con la grasa (desde los 18, sin cuidados y dentro
+  de lo posible), Katch-McArdle: 370 + 21,6 × la masa magra.
+- **La vida diaria, sin el entrenamiento:** sentado 1,35 (el «poco» de siempre), de
+  pie 1,5 y un trabajo físico 1,7. Son las categorías del IOM (2005): la vida diaria
+  sola llega a 1,39; con un rato de caminar, de 1,4 a 1,59; con un trabajo de
+  esfuerzo, de 1,6 a 1,89. Los pasos de Salud sugieren la respuesta (Tudor-Locke y
+  Bassett, 2004: menos de 5.000 por día es sedentario; más de 10.000, activo).
+- **El entrenamiento, aparte y neto, día por día:** cada día suma lo de sus sesiones,
+  (el MET − 1) × los kilos × las horas, y se promedian los siete días (`kcalDelDia`,
+  `kcalDelEntreno`): un día con pesas y partido suma los dos, y un deporte de un solo día
+  no se reparte en los demás. Los MET, del Compendio de Actividades Físicas (2024): pesas
+  o máquinas 5 (de 3,5 a 6, el mismo número de la sesión de Ascent; el crossfit, como un
+  circuito vigoroso, llega a 7,5); partidos 7 (fútbol 7, básquetbol 7,5, hockey 7,8, tenis
+  6,8, vóley de 4 a 6, sin competir; el pádel no está); correr, bici o nadar 8 (correr de
+  7,5 a 9,3, la bici de 6,8 a 8, nadar de 5,8 a 9,8); choques o combate 7,5 (rugby de 6,3
+  a 8,3, kickboxing 7,3, la bolsa de boxeo de 5,8 a 10,8, sparring 7,8).
+- **Para la base de hoy:** el nivel de actividad de siempre que más se parece
+  (`actividadEquivalente`).
+- **La recomposición:** en mantenimiento o, con mucha grasa (desde el 25 % en hombres
+  y el 32 % en mujeres, «obesidad» para el ACE), bajando al ritmo suave; con la
+  proteína más alta (Barakat y otros, 2020).
+- **La proteína por nivel**, en g por kilo (la recomendada es la de siempre):
+
+  | | Más baja | Recomendada | Más alta |
+  |---|---|---|---|
+  | Bajar | 1,6 | 2,0 | 2,2 |
+  | Mantener | 1,2 | 1,6 | 2,0 |
+  | Subir | 1,4 | 1,8 | 2,2 |
+  | Recomponer | 1,8 | 2,0 | 2,2 |
+
+  Con la grasa, va por la masa magra (contra un 15 % de grasa en hombres y un 25 % en
+  mujeres, la de la gente de esos estudios): un poco más para alguien muy magro y
+  menos con mucha grasa. Siempre entre 1,2 y 2,2 g por kilo (Morton y otros, 2018) y
+  nunca más del 40 % de las kcal.
+- **La experiencia con pesas:** subiendo, con más de 3 años se propone el ritmo suave
+  (el modelo de Aragon: del 1 al 1,5 % del peso por mes el primer año, de 0,5 a 1 %
+  hasta los tres y de 0,25 a 0,5 % después; lo de más es grasa).
+- **El peso meta:** un 5 % menos o más, de a medio kilo; bajando, nunca debajo de un
+  IMC de 18,5 (si ya está ahí, bajar no se elige y se dice por qué); al menos 1 kg de
+  camino. Con una fecha, el ritmo que pide; antes de los 18, bajando, nunca más que el
+  recomendado. El piso de siempre.
+- **El ejemplo de la galería** (29 años, 172 cm, 74,5 kg, sentado, pesas tres veces
+  por semana una hora, mantener) da 2.400 kcal: 1.680 en reposo, 590 de la vida
+  diaria y 130 de entrenar, con 119 g de proteína, 319 de carbohidratos y 72 de
+  grasas. La cuenta de la 1.0 le daba 2.770 («bastante», × 1,65): separar el
+  entrenamiento baja la estimación de quien entrena pero trabaja sentado, y el control
+  de cada semana corrige lo que falte.
+
+**Los consejos según el deporte** salen de los deportes (`tipos`) y de las sesiones de
+cada día, no de un «mixto»: básquetbol con pesas no pide lo mismo que bici con pesas. Qué
+cambia en cada uno, en [`entreno.md`](entreno.md), «Según el tipo de deporte». El tipo
+reducido (solo pesas es fuerza, solo correr, bici o nadar es resistencia, y lo demás,
+mixto: `tipoDeSesion`, `horarioDeLosAvisos`) queda solo para el horario de los avisos
+de comer antes y después (`alrededorDelEntreno.ts`), que hoy lleva uno.
+
+**Lo que se decidió en la maqueta:**
+- Con un cuidado (embarazo, lactancia o una condición médica, que incluye un trastorno
+  de la alimentación) no se pregunta la grasa: las figuras y el porcentaje no le hacen
+  bien a quien cuida lo que come, y sin déficit no hace falta tanta precisión. Tampoco
+  se ofrece recomponer.
+- La grasa nunca se muestra como una medida exacta: lo dicho se toma como una
+  estimación, y la figura y la cinta son rangos.
+- El entreno va en dos pantallas: los cinco tipos con sus ejemplos no entran junto con
+  los días, la hora y el viaje. Con dos deportes o más, cada uno tiene sus días y su hora
+  (así aparecen los días con dos sesiones); los partidos y la categoría de peso son una
+  línea más en la misma pantalla, y si no entra todo, se desliza.
+- La experiencia va antes del peso meta, porque elige el ritmo que se propone.
+- Del viaje se guarda el borde de arriba de cada tramo (0, 15, 30 y 45 minutos), así el
+  aviso de comer antes de entrenar llega con tiempo, nunca tarde.
+- Quedan en Perfil, no en la entrada: las unidades, «El día empieza», «Tardo en
+  dormirme», el piso, las metas a mano, el día del control, repartir la semana, el
+  tiempo para cocinar, «No como…» y prender los avisos.
+
+**Lo que falta para programarlo en la app:**
+1. `src/secciones/entrada/Entrada.tsx`: las pantallas nuevas y `metaDelCuestionario` en
+   lugar de `metasIniciales`; las figuras, en Skia o en SVG.
+2. Guardarlo y que suba con el perfil: una migración en `supabase/moss/`, con su regla en
+   `mezclar.ts`, sus filas en `remoto.ts` y su comprobación en `verificar-supabase.mjs`.
+   `moss.perfiles.objetivo` tiene un CHECK (bajar, mantener o subir): la recomposición va
+   como `mantener` más una marca `recomponer`. Lo nuevo (cuánto se mueve, los deportes con
+   su horario y el viaje, la experiencia, la grasa y cómo se supo, lo que sigue, el nivel
+   de proteína, las horas de comer y el sueño), en columnas o en un jsonb. `actividad` se
+   sigue llenando con `actividadEquivalente` mientras Perfil edite el nivel de siempre.
+3. Separar «avisarme a esa hora» (`ajustes.horario` de `avisos.ts`) de «mis horas de
+   comer» (las del cuestionario, que usan lo de comer antes de entrenar, el plan y la
+   comida de cada hora): hoy son lo mismo.
+4. Perfil › Entrenamiento (`ajustes.entreno`, que hoy queda solo en el teléfono) pasa a
+   guardar los deportes (`tipos`), la sesión de cada uno (`sesiones`), el viaje, los
+   partidos con su día y la categoría de peso, y lo llena el cuestionario. Los avisos de
+   comer antes y después leen las sesiones de cada día (`sesionesDeUnDia`) en lugar del
+   horario único.
+5. Leer la grasa (y la masa magra) de Salud cambia la privacidad: un permiso más de
+   HealthKit, su texto en `app.json` (toca la huella nativa: va con la próxima build), las
+   respuestas de privacidad de App Store Connect y `spec/revision.md`.
+6. Los consejos según el deporte: [`entreno.md`](entreno.md), «Según el tipo de deporte».
+
+Fuentes: MacroFactor ([las pantallas](https://screensdesign.com/apps/macrofactor-macro-tracker/?vs=171074),
+[sus algoritmos](https://macrofactor.com/macrofactors-algorithms-and-core-philosophy/),
+[las ecuaciones del gasto en reposo](https://macrofactor.com/best-bmr-equations/),
+[los programas](https://help.macrofactorapp.com/en/articles/34-what-are-the-different-program-options-in-coached-mode)
+y [la recomposición](https://help.macrofactorapp.com/en/articles/220-how-do-macrofactor-s-algorithms-respond-to-body-recomposition));
+[Carbon](https://help.joincarbon.com/en/articles/6040890-how-to-create-your-initial-goal);
+[RP Diet](https://docs.rpstrength.com/docs/diet-coach-app/1.22-beta/concepts/schedule/);
+el [Compendio de Actividades Físicas (2024)](https://pacompendium.com/); IOM, *Dietary
+Reference Intakes for Energy* (2005); [Tudor-Locke y Bassett (2004)](https://pubmed.ncbi.nlm.nih.gov/14715035/);
+Morton y otros (2018); Barakat y otros (2020); Helms y otros, *The Muscle and Strength
+Pyramid: Nutrition* (el modelo de Aragon).
 
 ## La pantalla de comida
 

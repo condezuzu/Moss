@@ -59,13 +59,17 @@ const LINEAS = {
   Pepsi: /pepsi|cola|black|twist|zero|max/i,
 };
 // Lo cargado en otro idioma: en una búsqueda en español no se encuentra, y en la lista se ve raro.
+// Más palabras de otros idiomas que se colaban (3/11/2026), y los nombres en otro alfabeto: nadie los busca en español.
+const OTRO_IDIOMA_MAS = /getränk|riegel|packung|erdbeer|zitrone|überraschung|tuinkruiden|bananen|schoko|\bkaffee?\b|maquereau|tartinade|avoine|calendrier|brisket|\bmaple\b|glazed|\bhoney\b/i;
+const OTRO_ALFABETO = /[Ѐ-ӿ֐-׿؀-ۿ぀-ヿ一-鿿가-힯]/;
 const OTRO_IDIOMA = /frutta|cioccolato|\bsecca\b|\blatte\b|céréales|poudre|cacaotée|pépites|noisette|saveur|\blait\b|\baux?\b|\bavec\b|\bsans\b|\bmit\b|\bund\b|\bchocolat\b|fraise|fromage|\bnocciol|\bsenza\b|\bessential\b|\bpowder\b|\bvitamins\b|\bminerals\b|\bflavou?red\b/i;
 // Palabras que van en mayúsculas de verdad.
 const SIGLAS = new Set(['TACC', 'UHT', 'BCAA', 'ZMA', 'BBQ', 'ADES', 'ENA', 'BC']);
 // Lo que no se anota: se toma, pero no es lo que está cargado (la yerba es la hoja, no el mate).
 const NO_SE_ANOTA = ['en:teas', 'en:herbal-teas', 'en:yerba-mate', 'en:infusions', 'en:baby-foods', 'en:baby-milks', 'en:non-food-products'];
 // Lo que no se entiende en una búsqueda en español. Lo que es nombre propio («Corn Flakes», «Special K») queda.
-const EN_INGLES = /\b(milk|cream|cheese|spread|herbal|teas?|juice|water|butter|peanut|flavou?r|flavored|sweetened|unsweetened|whole|wheat|bread|drink|with|strawberry|vanilla|sauce|soup|beans|sugar|salted|roasted|chicken|beef|chocolate bar)\b/i;
+// «rice» solo con lo que lo acompaña: Rice Krispies es el nombre del producto también acá.
+const EN_INGLES = /\b(milk|cream|cheese|spread|herbal|teas?|juice|water|butter|peanut|flavou?r|flavored|sweetened|unsweetened|whole|wheat|bread|drink|with|strawberry|vanilla|sauce|soup|beans|sugar|salted|roasted|chicken|beef|chocolate bar|flour|all-purpose|coating|seasoned|vegetables|wrappers|rice (?:cake|dessert|paper)|brown rice)\b/i;
 // Lo que no es una marca, o lo que nadie busca como marca.
 const NO_ES_MARCA = /^(uruguay|argentina|sin marca|unbranded|generico|generica|varios|otro|otros|na|n a|none)$/;
 // Lo de Brasil o Portugal que llega con su nombre: en una búsqueda en español, no ayuda.
@@ -243,14 +247,15 @@ function producto(f) {
   if (yaEstan.codigos.has(f.code)) return fuera('ya está curado');
   const m = marcaDe(f.brands, f.product_name);
   if (!m) return fuera('sin marca');
-  const enUruguay = f.countries_tags.includes('en:uruguay');
+  // Con un código de GS1 Uruguay (773) es de acá, aunque Open Food Facts le ponga otro país.
+  const enUruguay = f.countries_tags.includes('en:uruguay') || /^773\d{10}$/.test(f.code);
   const enArgentina = f.countries_tags.includes('en:argentina');
   if (!enUruguay && !m.conocida) return fuera('marca de Argentina que no se vende acá');
   if (!enUruguay && !enArgentina && !DE_AFUERA.has(m.marca)) return fuera('marca de otro país que no entra');
   if (!f.product_name || EN_PORTUGUES.test(llano(f.product_name)) || /[ãõç]/i.test(f.product_name)) return fuera('sin nombre o en portugués');
   const tags = f.categories_tags.split(',');
   if (NO_SE_ANOTA.some((t) => tags.includes(t))) return fuera('no se anota');
-  if (OTRO_IDIOMA.test(f.product_name)) return fuera('en otro idioma');
+  if (OTRO_IDIOMA.test(f.product_name) || OTRO_IDIOMA_MAS.test(f.product_name) || OTRO_ALFABETO.test(f.product_name)) return fuera('en otro idioma');
   // Moss es para todo el mundo: nada se presenta como de un país (lo comprueba verificar-alimentos.mjs).
   const es = nombreLimpio(f.product_name, m.marca);
   if (!es) return fuera('nombre que no sirve');

@@ -121,7 +121,201 @@
       "grasas": "Grasas",
       "gasto": "Gasto estimado: {n} kcal",
       "empezar": "Empezar",
-      "sinSalud": "No se pudo leer Salud. Puedes seguir y contestar a mano."
+      "sinSalud": "No se pudo leer Salud. Puedes seguir y contestar a mano.",
+      "tuTitulo": "Esto dice Salud",
+      "tuTexto": "Revisa que esté bien: con esto se calcula lo que gastas. Toca un dato para cambiarlo.",
+      "estaBien": "Está bien",
+      "sexo": "Sexo",
+      "edad": "Edad",
+      "altura": "Altura",
+      "peso": "Peso",
+      "grasa": {
+        "titulo": "¿Sabes tu porcentaje de grasa?",
+        "texto": "Es opcional. Con él, Moss calcula tu gasto con tu masa magra.",
+        "modos": {
+          "no": "No sé",
+          "dicha": "Lo sé",
+          "imagen": "Por imagen",
+          "cinta": "Con cinta"
+        },
+        "sinGrasa": "Sin problema: Moss usa tu peso, tu altura y tu edad, y lo ajusta cada semana con lo que pasa de verdad.",
+        "dichaTexto": "De una balanza de bioimpedancia o de un estudio: Moss lo toma como una estimación, nunca como una medida exacta.",
+        "imagenTexto": "Elige la figura que más se parece a ti. Es un rango, no un número exacto.",
+        "figura": "{desde}–{hasta} %",
+        "cintura": "Cintura",
+        "cinturaTexto": "A la altura del ombligo, sin apretar",
+        "cuello": "Cuello",
+        "cadera": "Cadera",
+        "rango": "Entre {desde} y {hasta} %",
+        "revisa": "Revisa las medidas: con estas no se puede calcular."
+      },
+      "movimiento": {
+        "titulo": "¿Cuánto te mueves en tu día?",
+        "texto": "Sin contar el entrenamiento: eso va después.",
+        "sentado": [
+          "Casi todo el día sentado",
+          "Oficina, estudio o muchas horas al volante."
+        ],
+        "dePie": [
+          "De pie o caminando parte del día",
+          "Atender, enseñar o cuidar a otros."
+        ],
+        "fisico": [
+          "Mucho: un trabajo físico",
+          "Obra, campo, reparto o mudanzas."
+        ],
+        "pasos": "Según Salud, caminas unos {n} pasos por día."
+      },
+      "entreno": {
+        "titulo": "¿Entrenas?",
+        "dias": "Qué días",
+        "iniciales": [
+          "L",
+          "M",
+          "X",
+          "J",
+          "V",
+          "S",
+          "D"
+        ],
+        "hora": "A qué hora",
+        "dura": "Cuánto dura",
+        "viaje": "Cuánto tardas en llegar",
+        "viajes": [
+          "En casa",
+          "< 15 min",
+          "15–30 min",
+          "> 30 min"
+        ],
+        "suma": "Suma unas {n} kcal por día a tu gasto, en promedio.",
+        "texto": "Elige todo lo que hagas.",
+        "cuandoTitulo": "¿Cuándo entrenas?",
+        "tipos": {
+          "fuerza": [
+            "Pesas o máquinas",
+            "También crossfit."
+          ],
+          "equipo": [
+            "Partidos",
+            "Fútbol, básquetbol, hockey, vóley, tenis, pádel."
+          ],
+          "resistencia": [
+            "Correr, bici o nadar"
+          ],
+          "contacto": [
+            "Choques o combate",
+            "Rugby, artes marciales, boxeo."
+          ],
+          "no": [
+            "No entreno",
+            "O solo camino o hago yoga."
+          ]
+        },
+        "dosSesiones": "{dias}: dos sesiones.",
+        "partidos": "¿Juegas partidos o compites?",
+        "partidoDia": "Qué día",
+        "categoria": "¿Compites por categoría de peso?",
+        "siNo": [
+          "No",
+          "Sí"
+        ]
+      },
+      "recomponer": "Ganar músculo y perder grasa",
+      "recomponerTexto": "Con pesas y proteína alta, sin cambiar mucho tu peso.",
+      "recomponerNo": "En tu caso, mejor con un profesional.",
+      "bajarNoSano": "Tu peso ya está en el borde de lo sano para tu altura.",
+      "experiencia": {
+        "titulo": "¿Hace cuánto entrenas con pesas?",
+        "texto": "Con los años de entrenamiento, el músculo llega más despacio: Moss ajusta tu plan a eso.",
+        "principiante": "Menos de un año",
+        "intermedio": "De 1 a 3 años",
+        "avanzado": "Más de 3 años",
+        "avanzadoSubir": "Moss te propone subir más despacio: lo de más sería grasa.",
+        "avanzadoRecomponer": "La recomposición va más lenta: los cambios llegan de a poco."
+      },
+      "meta": {
+        "titulo": "¿A qué peso quieres llegar?",
+        "minimo": "Lo más bajo que es sano para tu altura: {kg} kg.",
+        "ritmo": "A qué ritmo",
+        "porSemana": "{pct} % de tu peso por semana",
+        "elegirFecha": "Elegir una fecha",
+        "elegirFechaTexto": "Moss te dice qué ritmo pide",
+        "paraTi": "Para ti",
+        "desde18": "Desde los 18 años",
+        "viabilidad": {
+          "viable": "Viable",
+          "exigente": "Exigente",
+          "muyAgresivo": "Muy agresivo"
+        }
+      },
+      "despues": {
+        "titulo": "Cuando llegues a {kg} kg, ¿qué sigue?",
+        "texto": "Al llegar, {n} semanas comiendo lo que gastas, para que tu peso se asiente.",
+        "hoy": "Hoy",
+        "mantener": [
+          "Mantener",
+          "Quedarte en tu peso nuevo."
+        ],
+        "musculo": [
+          "Ganar músculo",
+          "Subir despacio, con pesas."
+        ],
+        "musculoSubir": "Seguir subiendo, más despacio.",
+        "despues": [
+          "Lo decido después",
+          "Moss te pregunta al llegar."
+        ],
+        "elegido": {
+          "mantener": "Mantener",
+          "musculo": "Ganar músculo",
+          "despues": "Lo decides"
+        }
+      },
+      "comer": {
+        "titulo": "¿Cómo quieres comer?",
+        "reparto": "Cómo se reparten las calorías",
+        "proteina": "Proteína",
+        "niveles": {
+          "baja": "Más baja",
+          "recomendada": "Recomendada",
+          "alta": "Más alta"
+        },
+        "gramos": "{n} g",
+        "dieta": "Qué comes"
+      },
+      "dia": {
+        "titulo": "¿Cómo es tu día?",
+        "texto": "Con esto, Moss sabe qué comer antes de entrenar y cuándo te toca dormir. Toca una comida si no la sueles hacer.",
+        "despertar": "Te despiertas",
+        "acostarse": "Te acuestas",
+        "dormirse": "Te duermes",
+        "noSuelo": "No suelo",
+        "finDeSemana": "El fin de semana",
+        "finDeSemanaOpciones": {
+          "igual": "Igual",
+          "tarde": "Más tarde"
+        },
+        "sesion": "{dias} · sales a las {hora}",
+        "sesionEnCasa": "{dias} · en casa"
+      },
+      "plan": {
+        "bajar": "Bajar a {kg} kg para el {fecha}",
+        "subir": "Subir a {kg} kg para el {fecha}",
+        "mantener": "Mantener tus {kg} kg.",
+        "recomponer": "Ganar músculo y perder grasa, sin cambiar mucho tu peso.",
+        "luego": {
+          "mantener": "; después, mantener.",
+          "musculo": "; después, ganar músculo.",
+          "despues": "; después, lo decides al llegar."
+        }
+      },
+      "fecha": "{num} de {mes}",
+      "partes": "{reposo} en reposo, {vida} de tu día y {entreno} de entrenar",
+      "partesSinEntreno": "{reposo} en reposo y {vida} de tu día",
+      "masaMagra": "con tu masa magra",
+      "menos": "Menos",
+      "mas": "Más",
+      "fechaConAnio": "{num} de {mes} de {anio}"
     },
     "datos": {
       "titulo": "Tus datos son tuyos",
@@ -669,7 +863,8 @@
       "peso": "Peso y balance",
       "cielo": "Tu día en el cielo",
       "sueno": "Sueño de anoche",
-      "agua": "Agua"
+      "agua": "Agua",
+      "consejos": "Para hoy"
     },
     "teQuedan": "Te quedan",
     "deMas": "Arriba de la meta",
@@ -787,7 +982,54 @@
           "texto": "Tablas oficiales: USDA y, en los más comunes, una segunda tabla para verificar; las cadenas, con la suya. Lo marcado «aproximado» es una estimación, y se puede corregir."
         }
       },
-      "pie": "Ningún número sale de una IA: son fórmulas publicadas y tus propios datos."
+      "pie": "Ningún número sale de una IA: son fórmulas publicadas y tus propios datos.",
+      "estilo": {
+        "titulo": "Cómo ver tus calorías",
+        "luna": "Luna",
+        "anillo": "Anillo",
+        "arco": "Arco",
+        "barra": "Barra",
+        "macros": "Macros"
+      }
+    },
+    "paraHoy": {
+      "comidas": {
+        "desayuno": "el desayuno",
+        "almuerzo": "el almuerzo",
+        "merienda": "la merienda",
+        "cena": "la cena",
+        "snack": "el snack"
+      },
+      "en": {
+        "desayuno": "en el desayuno",
+        "almuerzo": "en el almuerzo",
+        "merienda": "en la merienda",
+        "cena": "en la cena",
+        "snack": "en el snack",
+        "resto": "en lo que queda del día"
+      },
+      "anotar": "No anotaste {comidas}: si ya comiste, anótalo y Moss sigue la cuenta.",
+      "nadaAnotado": "Todavía no anotaste nada hoy. Si comiste, anótalo: Moss te sigue la cuenta.",
+      "anotarBoton": "Anotar",
+      "pocosCarbohidratos": "Vas bien de proteína y bajo en carbohidratos: {en}, suma arroz, papa, pan o fruta.",
+      "pocaProteina": "Vas alto en carbohidratos y bajo en proteína: {en}, que haya carne, pollo, pescado, huevos o legumbres.",
+      "muchaGrasa": "Hoy van muchas grasas: {en}, mejor algo magro.",
+      "faltaProteina": "Te faltan {g} g de proteína: {en}, pollo, pescado, huevos o un yogur griego te acercan.",
+      "faltaProteinaSinNumeros": "Te falta proteína: {en}, pollo, pescado, huevos o un yogur griego te acercan.",
+      "agua": "Llevas poca agua: {n} vasos más y llegas.",
+      "aguaSinNumeros": "Llevas poca agua: unos vasos más y llegas.",
+      "bien": "Vas bien hoy: nada que ajustar.",
+      "todaviaNada": "Cuando anotes algo, aquí verás qué conviene para el resto del día."
+    },
+    "control": {
+      "titulo": "Control el {dia} · {cuando}",
+      "hoy": "Hoy es el control",
+      "faltaPesada": "Te falta una pesada esta semana: pésate esa mañana.",
+      "faltanDias": {
+        "uno": "Te falta 1 día con comida: anota hoy y llega.",
+        "otros": "Te faltan {n} días con comida: anota y llega."
+      },
+      "listo": "Ya tiene lo que necesita: ese día ajusta tus metas."
     }
   },
   "mas": {
@@ -813,7 +1055,14 @@
     "pesoGuardado": "Peso guardado: {peso}",
     "pronto": "Esto llega pronto a la app.",
     "decir": "Decir lo que comí",
-    "decirDetalle": "Todo de una vez, hablando o escribiendo"
+    "decirDetalle": "Todo de una vez, hablando o escribiendo",
+    "aEstaHora": {
+      "desayuno": "Lo que sueles desayunar",
+      "almuerzo": "Lo que sueles almorzar",
+      "merienda": "Lo que sueles merendar",
+      "cena": "Lo que sueles cenar",
+      "snack": "Lo que sueles picar"
+    }
   },
   "cuerpo": {
     "sitios": {
@@ -940,7 +1189,7 @@
     "controlFalta": "El control necesita al menos 4 días con comida y una pesada en la semana. Si faltan, las metas quedan como están.",
     "controlPrimero": "El control mide con al menos 7 días de pesadas y comida registrada, y este todavía no los tiene: las metas quedan como están. El siguiente ya puede medir.",
     "diaDelControl": "Día del control",
-    "diaDelControlNota": "Ese día, al abrir Moss, el control mide la semana anterior. Si ese día no abres la app, corre la próxima vez.",
+    "diaDelControlNota": "Ese día, al abrir Moss, ajusta tus metas con la semana anterior.",
     "controlTexto": "El control midió un gasto de unas {gasto} kcal por día. Moss lo toma de a poco: el estimado pasó de {antes} a {ahora} kcal.",
     "controlSinMedir": "Ese control no midió: faltaban días con comida, pesadas o una semana entera de datos. El gasto y las metas quedaron como estaban.",
     "comoSeCalcula": "Cómo se calcula",
@@ -1025,9 +1274,74 @@
         "todo": "Todo"
       },
       "semanas": "Semana a semana",
-      "semanasCambio": "Cambio de la tendencia, en kg",
-      "semanasComida": "Lo que comiste, kcal por día",
-      "semanasTexto": "Cada columna es una semana. La línea es tu meta de calorías; sin tres días anotados, la semana no cuenta."
+      "semanasCambio": "Cuánto cambió tu peso, en kg",
+      "semanasComida": "Cuánto comiste, kcal por día",
+      "semanasTexto": "Cada columna es una semana: arriba, cuánto bajó o subió tu peso; abajo, cuánto comiste, con la línea de tu meta. Sin tres días anotados, la semana no cuenta."
+    },
+    "plan": {
+      "titulo": "Tu plan",
+      "estados": {
+        "alRitmo": "Al ritmo",
+        "adelantado": "Adelantado",
+        "atrasado": "Más lento",
+        "alReves": "Al revés",
+        "llegaste": "Llegaste",
+        "estable": "Estable",
+        "seMueve": "Cambiando",
+        "faltanDatos": "Faltan datos"
+      },
+      "etapas": {
+        "bajar": "Bajar a {kg} kg",
+        "subir": "Subir a {kg} kg",
+        "mantener": "Mantener {kg} kg"
+      },
+      "para": "para el {fecha}",
+      "comoVienes": {
+        "alRitmo": "Vas al ritmo del plan: {ritmo} kg por semana.",
+        "adelantado": "Vas más rápido que el plan: {ritmo} kg por semana (el plan, {plan}). A este ritmo llegas el {fecha}.",
+        "atrasado": "Vas más lento que el plan: {ritmo} kg por semana (el plan, {plan}). A este ritmo llegas el {fecha}; el control ajusta tus calorías.",
+        "atrasadoSinFecha": "Vas más lento que el plan: {ritmo} kg por semana (el plan, {plan}). El control ajusta tus calorías.",
+        "alReves": "Tu peso va para el otro lado: el próximo control ajusta tus calorías.",
+        "llegaste": "Llegaste a tu meta. Ahora, unas semanas en mantenimiento.",
+        "estable": "Te mantienes: tu peso se mueve menos de 150 g por semana.",
+        "seMueve": "Tu peso se mueve {ritmo} kg por semana: el control ajusta tus calorías para mantenerlo.",
+        "faltanDatos": "Con dos semanas de pesadas, Moss te dice cómo vienes."
+      },
+      "despues": {
+        "bajar": "Después, {n} semanas en mantenimiento: comes lo que gastas y el peso se asienta.",
+        "subir": "Después, {n} semanas en mantenimiento."
+      },
+      "ajusta": "El control de cada semana mira cómo vienes y ajusta tus calorías para seguir el plan.",
+      "cambiar": "Cambiar el plan",
+      "mantener": "Mantener",
+      "luego": {
+        "eliges": "Luego eliges cómo seguir.",
+        "mantener": "Luego, quedarte en {kg} kg.",
+        "musculo": "Luego, ganar músculo: subir despacio."
+      }
+    },
+    "control": {
+      "titulo": "Control el {dia} · {cuando}",
+      "comida": "{n} de {min} días con comida",
+      "comidaLista": "comida ✓",
+      "pesada": "falta una pesada",
+      "pesadaLista": "pesada ✓",
+      "textos": {
+        "alcanza": "Ya tiene lo que necesita: ese día ajusta tus metas.",
+        "enCurso": "Llega si sigues anotando tu comida.",
+        "faltanDatos": "Esta semana no llega: tus metas quedan como están."
+      }
+    },
+    "grasaInvita": {
+      "titulo": "Mide tu grasa corporal",
+      "textoHombre": "Con una cinta, en dos minutos: la cintura y el cuello. Con una vez alcanza; si quieres, cada mes.",
+      "textoMujer": "Con una cinta, en dos minutos: la cintura, el cuello y la cadera. Con una vez alcanza; si quieres, cada mes.",
+      "boton": "Medir",
+      "confianza": "Es una estimación con la cinta (la fórmula de la Marina de EE. UU.): puede errar 3 a 4 puntos. Sirve para ver cómo cambia."
+    },
+    "masDatos": {
+      "titulo": "Más datos",
+      "sub": "Semana a semana, medidas y gasto"
     }
   },
   "sueno": {
@@ -1704,6 +2018,34 @@
           "En la app Salud, mira en Explorar › Sueño si está esa noche. Si ahí no está, a Moss tampoco le llega: Moss solo lee lo que hay en Salud.",
           "En Ajustes › Privacidad y seguridad › Salud › Moss, deja prendido Sueño."
         ]
+      },
+      "directo": {
+        "titulo": "Conectar directo",
+        "texto": "Para lo que no llega a Salud: las etapas, la variabilidad o la temperatura, directo de la app de tu aparato. Lo de Salud sigue igual.",
+        "conectar": "Conectar",
+        "desconectar": "Desconectar",
+        "pronto": "Pronto",
+        "conectado": "Conectado · última noche a las {hora}",
+        "marcas": {
+          "polar": {
+            "nombre": "Polar",
+            "suma": "Suma las etapas y la recuperación de la noche"
+          },
+          "oura": {
+            "nombre": "Oura",
+            "suma": "Suma el hipnograma, la variabilidad y la temperatura"
+          },
+          "whoop": {
+            "nombre": "WHOOP",
+            "suma": "Suma las etapas y la variabilidad"
+          },
+          "garmin": {
+            "nombre": "Garmin",
+            "suma": "Suma la variabilidad y el estrés de la noche"
+          }
+        },
+        "soloSalud": "RingConn, Amazfit, Xiaomi, Huawei, Da Rings y otros anillos llegan solo por Salud: en su app, prende Apple Health.",
+        "nota": "Conectar te pide entrar a tu cuenta de esa marca. El permiso queda en tu iPhone y se quita con «Desconectar», que borra lo que trajo."
       }
     },
     "cuidado": "Cuidados",
@@ -1740,7 +2082,24 @@
       "pesarseControl": "El día del control",
       "pesarseTodos": "Todos los días",
       "falta": "Si voy muy bajo en algo",
-      "faltaTexto": "Un aviso corto con lo que te falta (proteína, calorías o agua) y una idea de qué comer. Uno o dos por día, como mucho, y solo si ese día anotaste algo."
+      "faltaTexto": "Un aviso corto con lo que te falta (proteína, calorías o agua) y una idea de qué comer. Uno o dos por día, como mucho, y solo si ese día anotaste algo.",
+      "conviene": "Lo que conviene hacer",
+      "convieneTexto": "Te dicen qué hacer y a qué hora, sin abrir Moss. Suenan solo los que tocan ese día, dentro del máximo.",
+      "antesDeEntrenar": "Comer antes de entrenar",
+      "antesDeEntrenarTexto": "Media hora antes de la comida que mejor te queda: a qué hora y cuánto comer. Cuenta lo que tardas en llegar al gimnasio.",
+      "despuesDeEntrenar": "Proteína después de entrenar",
+      "despuesDeEntrenarTexto": "Al terminar: cuánta y en qué comida.",
+      "cafe": "Café",
+      "cafeTexto": "Hasta qué hora, para que no te quite sueño. Los días que entrenas, si conviene uno antes y a qué hora.",
+      "ultimaComida": "Última comida grande",
+      "ultimaComidaTexto": "Tres horas antes de acostarte: cena antes de esa hora y, después, algo ligero.",
+      "entrenarTarde": "Si entrenas tarde",
+      "entrenarTardeTexto": "Si terminarías a menos de dos horas de la cama: hasta qué hora entrenar fuerte.",
+      "luces": "Bajar las luces",
+      "lucesTexto": "Hora y media antes de la cama: luz tenue y cálida.",
+      "recuperacion": "Tu recuperación",
+      "recuperacionTexto": "Al despertarte, los días que entrenas: si te conviene entrenar fuerte o suave.",
+      "maximoTextoConviene": "Moss nunca te avisa más veces que esto en un día. Si hay más, quedan primero la hora de dormir, lo de entrenar y tus hábitos; lo que cuenta desde la hora de la cama, al final."
     },
     "cambiarCuenta": "Cambiar de cuenta",
     "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
@@ -1749,7 +2108,8 @@
       "subir": "Subir a",
       "mantener": "Objetivo",
       "fuentes": "Alimentos y estrellas",
-      "ascent": "Tu entrenamiento y tu comida, juntos"
+      "ascent": "Tu entrenamiento y tu comida, juntos",
+      "peso": "Peso"
     }
   },
   "fecha": {
@@ -1986,7 +2346,24 @@
         "comida": "días con la comida"
       },
       "desde": "Lo de Moss cuenta desde el {fecha}.",
-      "horas": "{h} h {m}"
+      "horas": "{h} h {m}",
+      "texto2": "Cada día que entrenaste, con el color de lo que más trabajaste; el punto es una marca. Toca un día para verlo.",
+      "hastaHoy": "{anio}, hasta hoy",
+      "mapa": "{n} días entrenados y {m} marcas este año.",
+      "descanso": "Descanso",
+      "marca": "Marca",
+      "detalle": {
+        "hoy": "{cuando}: hoy.",
+        "descanso": "{cuando}: descanso.",
+        "entreno": "{cuando}: {grupo}.",
+        "marca": "{cuando}: {grupo}, con marca."
+      },
+      "ultimas": "Tus últimas marcas",
+      "hace": {
+        "uno": "hace 1 semana",
+        "otros": "hace {n} semanas"
+      },
+      "estaSemana": "esta semana"
     },
     "funciones": {
       "peso": {
@@ -2089,7 +2466,23 @@
         "brazos": "Brazos",
         "abdomen": "Abdomen"
       },
-      "nota": "El dolor no cuenta: la fuerza vuelve antes que el dolor."
+      "nota": "El dolor no cuenta: la fuerza vuelve antes que el dolor.",
+      "nombres": {
+        "cuadriceps": "Cuádriceps",
+        "gluteos": "Glúteos",
+        "isquios": "Isquios",
+        "espaldaBaja": "Espalda baja",
+        "aductores": "Aductores",
+        "pantorrillas": "Pantorrillas",
+        "pecho": "Pecho",
+        "espaldaAlta": "Espalda alta",
+        "hombros": "Hombros",
+        "biceps": "Bíceps",
+        "triceps": "Tríceps",
+        "antebrazos": "Antebrazos",
+        "abdomen": "Abdomen"
+      },
+      "listoEnTiempo": "listo en {tiempo}"
     },
     "marca": {
       "titulo": "Marca",
@@ -2101,15 +2494,7 @@
       "aciertos": "Te lo marqué {veces} veces; hiciste marca en {marcas}.",
       "nota": "Es una estimación, no una promesa. Si la entrada en calor se siente pesada, guárdala para otro día.",
       "hoyNo": "Hoy no hay una marca para intentar: te avisa cuando tus condiciones se parecen a las de tus marcas.",
-      "hoyNoCorto": "Hoy no es día de marca en {ejercicio}",
-      "avisaDesde": "avisa desde {p} %",
-      "condiciones": {
-        "cerca": "Cerca de tu marca",
-        "recuperado": "Músculos recuperados",
-        "sueno": "Dormiste bien",
-        "sinPico": "Sin pico de carga",
-        "comida": "Comida en orden"
-      }
+      "avisaDesde": "avisa desde {p} %"
     },
     "vincularHoja": {
       "titulo": "Vincular con Ascent",
@@ -2176,54 +2561,13 @@
       "hecho": "Ascent quedó desvinculada."
     },
     "volverAProgreso": "Volver a Progreso",
-    "asomo": {
-      "titulo": "Abajo está Ascent",
-      "texto": "Desliza hacia arriba para abrirla"
-    },
     "diagnostico": {
-      "etiqueta": "Tu rendimiento hoy",
-      "titular": {
-        "faltaNoche": "Falta saber cómo dormiste",
-        "sinHorario": "Falta saber cuándo entrenas",
-        "descanso": "Hoy no entrenas",
-        "mejor": "Hoy puedes rendir mejor que lo de siempre",
-        "comoSiempre": "Hoy vienes como siempre",
-        "repeticiones": "Hoy las repeticiones pueden costar más",
-        "cuesta": "Hoy puede costar más que lo de siempre",
-        "entrenoHecho": "Ya entrenaste",
-        "faltaProteina": "Ya entrenaste: te faltan {g} g de proteína",
-        "faltaProteinaSinNumeros": "Ya entrenaste: te falta proteína",
-        "proteinaLista": "Ya entrenaste y llegaste a la proteína"
-      },
       "sub": {
-        "faltaNoche": "Sin tu noche no se puede decir cómo vas a rendir hoy.",
-        "sinHorario": "Anota tus sesiones en Ascent o tu horario en Perfil.",
-        "repeticiones": "La fuerza máxima casi no cambia.",
-        "cuesta": "Sobre todo las repeticiones.",
-        "recuperandose": "{musculo}: ~{h} h para recuperarse.",
         "recuperados": "Tus músculos ya están recuperados."
       },
-      "figuras": {
-        "dormiste": "Dormiste",
-        "sinNoche": "Sin tu noche",
-        "proteina": "Proteína, de {meta} g",
-        "sinComida": "Sin anotar",
-        "hecho": "{nombre}, hecho",
-        "descanso": "Descanso"
-      },
-      "cuando": {
-        "antes": "Antes",
-        "despues": "Después",
-        "dormir": "Antes de dormir"
-      },
       "pasos": {
-        "liviana": "Algo liviano, con poca grasa y poca fibra.",
-        "conProteina": "Que tenga proteína.",
         "pronto": "Apenas puedas."
       },
-      "ahora": "Ahora",
-      "lineaDelDia": "Tu día: las comidas, la sesión y la hora de ahora.",
-      "paraHoy": "Para hoy",
       "consejos": {
         "siesta": "Si puedes, una siesta de 20 minutos: después de una noche corta, ayuda.",
         "noCompensar": "No hace falta comer distinto: nadie probó que lo compense.",
@@ -2231,32 +2575,256 @@
         "deuda": "Vienes con deuda de sueño: recuperar una hora lleva unos cuatro días.",
         "sinApuro": "No hace falta apurarse: comiste antes de entrenar.",
         "totalDelDia": "Te faltan {g} g de proteína: lo que más pesa es el total del día.",
-        "totalDelDiaSinNumeros": "Te falta proteína: lo que más pesa es el total del día.",
-        "marca": "Buen día para intentar marca en {ejercicio}."
-      },
-      "faltan": {
-        "sueno": "Falta tu noche de anoche.",
-        "comida": "Todavía no anotaste comida hoy.",
-        "sesion": "No hay sesiones ni horario."
+        "totalDelDiaSinNumeros": "Te falta proteína: lo que más pesa es el total del día."
       },
       "irA": {
-        "sueno": "Ir a Sueño",
-        "comida": "Ir a Comida",
-        "sesion": "Ir a Perfil"
-      },
-      "deCien": "Recuperación, de 100"
+        "sueno": "Ir a Sueño"
+      }
     },
     "graficos": {
-      "diagnostico": "Cruza cómo dormiste, lo que comiste y tu entrenamiento, y te dice qué hacer.",
-      "semana": "Los días de gimnasio comen más; la semana suma lo mismo.",
-      "rendimiento": "Hoy contra un día tuyo de siempre.",
-      "rendimientoDescanso": "Hoy no hay sesión: vuelve el día que entrenes.",
-      "loTuyo": "lo tuyo",
-      "musculos": "Lo que le falta a cada músculo para volver a lo suyo, según lo que anotaste en Ascent.",
-      "marca": "Avisa cuando se dan las cinco y la probabilidad pasa de la línea.",
-      "estancamiento": "Tus semanas con marcas contra las de ahora.",
-      "anio": "Entrenamientos, marcas, hábitos, sueño y comida, en uno solo.",
-      "margen": "La línea, más o menos {n} %: es lo que cambia de un día a otro."
+      "musculos": "Lo que le falta a cada músculo para volver a lo suyo, según lo que anotaste en Ascent."
+    },
+    "y": "y",
+    "recuperado": {
+      "estas": "Estás",
+      "llegaste": "Llegaste",
+      "palabra": {
+        "m": "recuperado",
+        "f": "recuperada"
+      },
+      "asi": "Así llegaste a {sesion}, hoy a las {hora}.",
+      "desde": "Desde tu último entreno: {cuando}, {sesion}.",
+      "cuando": {
+        "hoy": "hoy",
+        "ayer": "ayer",
+        "dia": "el {dia}"
+      },
+      "queEs": {
+        "enlace": "¿Qué es este número?",
+        "texto": "Junta cómo dormiste, cuánto descansaron tus músculos desde tu último entreno y cómo comiste ayer. 100 % es dormir lo que necesitas, con los músculos descansados y la comida en tu meta. Es orientativo, no un diagnóstico.",
+        "ver": "Ver cómo se calcula"
+      }
+    },
+    "bandas": {
+      "atencion": "Atención",
+      "aceptable": "Aceptable",
+      "bien": "Bien",
+      "muyBien": "Muy bien",
+      "frases": {
+        "atencion": "Hoy conviene ir suave en el gimnasio.",
+        "aceptable": "Hoy, entrena normal y sin ir al fallo.",
+        "bien": "Hoy puedes entrenar como siempre.",
+        "muyBien": "Hoy puedes ir fuerte."
+      }
+    },
+    "entrada": {
+      "sesion": "{sesion} · {hora}",
+      "descanso": "Hoy descansas",
+      "pista": "Desliza hacia abajo",
+      "etiqueta": "Abrir Ascent: {n} % {palabra}"
+    },
+    "vacio": {
+      "sinDatos": "Sin datos",
+      "recuperadoTitulo": "Cuánto estás recuperado",
+      "recuperado": "Tu sueño, tus músculos y tu comida, en un número: cuánto estás recuperado desde tu último entreno.",
+      "partes": "Sueño, fatiga muscular y alimentación, cada una con su franja y qué hacer.",
+      "marcas": "Qué ejercicios de hoy tienen buen día para intentar marca.",
+      "estancamiento": "Los ejercicios que no suben y sus razones más probables.",
+      "anio": "Cada día que entrenaste y cada marca, con el color de lo que trabajaste."
+    },
+    "foco": {
+      "titulo": "Hoy, concéntrate en",
+      "hoy": "Hoy",
+      "comer": {
+        "cyp": "{c} g de carbohidratos, {p} g de proteína y poca grasa.",
+        "soloC": "{c} g de carbohidratos fáciles, con poca grasa.",
+        "soloP": "{p} g de proteína y poca grasa.",
+        "sinNumeros": "Con carbohidratos, algo de proteína y poca grasa.",
+        "cafe": "Café, hasta las {hora}.",
+        "snack": "Algo chico antes de entrenar",
+        "liviana": "{comida}: algo liviano",
+        "ayunas": "{comida} antes de entrenar",
+        "previa": "{comida}, antes de entrenar",
+        "despues": "{comida}, después de entrenar",
+        "despuesTexto": "{p} g de proteína.",
+        "despuesSinNumeros": "Que tenga proteína.",
+        "dormir": "Antes de dormir",
+        "dormirTexto": "Algo con {p} g de proteína también cuenta.",
+        "dormirSinNumeros": "Algo con proteína también cuenta."
+      },
+      "entrenar": {
+        "marca": "Buen día para intentar marca en {ejercicio}.",
+        "masFuerte": "Vienes muy bien: puedes ir un poco más fuerte de lo normal.",
+        "comoSiempre": "Vienes bien: entrena como siempre.",
+        "sinFallo": "No vayas al fallo: dormiste poco y las series pueden pesar más.",
+        "suave": {
+          "fatiga": "Mejor suave: lo que entrenas hoy todavía se está recuperando.",
+          "total": "Hoy conviene ir suave."
+        }
+      },
+      "terminar": {
+        "titulo": "Termina antes de las {hora}",
+        "texto": "Te acuestas a las {dormir}: entrenar fuerte muy cerca de dormir retrasa el sueño."
+      },
+      "dormir": {
+        "titulo": "A la cama",
+        "texto": "Para dormir tus {horas}: el sueño es lo que más te falta."
+      },
+      "proteina": {
+        "titulo": "Proteína"
+      },
+      "descanso": {
+        "titulo": "Descanso",
+        "falta": "{musculo}: listo en {tiempo}."
+      },
+      "faltaNoche": {
+        "titulo": "Anota cómo dormiste",
+        "texto": "Sin tu noche no sale tu recuperación."
+      }
+    },
+    "partes": {
+      "titulo": "De qué sale",
+      "de": "{n} de {max}",
+      "sueno": {
+        "nombre": "Sueño",
+        "texto": "Dormiste {horas} de las {necesidad} que necesitas, y la calidad de la noche fue {calidad} de 100.",
+        "sinCalidad": "Dormiste {horas} de las {necesidad} que necesitas. Sin la calidad de la noche cuenta como regular: llega a 30.",
+        "registrar": "Registra cómo dormiste: así puede llegar a 40",
+        "corregir": "¿Dormiste distinto? Corrígelo en Sueño",
+        "consejos": {
+          "perfecto": "Perfecto: dormiste lo que necesitas, y bien.",
+          "casi": "Para que sea perfecto: {falta}.",
+          "faltaDormir": "dormir tus {horas}",
+          "faltaCalidad": "una noche más tranquila",
+          "bien": "Para que sea muy bueno: esta noche, a la cama a las {hora}.",
+          "aceptable": "Esta noche, a la cama a las {hora}: el sueño es lo que más te falta.",
+          "aceptableAntes": "En el gimnasio, sin ir al fallo; y esta noche, a la cama a las {hora}.",
+          "atencion": "Esta noche, a la cama a las {hora}.",
+          "atencionAntes": "Hoy, suave en el gimnasio; y esta noche, a la cama a las {hora}."
+        }
+      },
+      "fatiga": {
+        "nombre": "Fatiga muscular",
+        "niveles": {
+          "baja": "baja",
+          "moderada": "moderada",
+          "alta": "alta"
+        },
+        "texto": {
+          "hoy": "Fatiga {nivel} en lo que entrenas hoy: {musculos}.",
+          "recientes": "Fatiga {nivel} en lo que entrenaste estos 3 días: {musculos}.",
+          "hecha": "Fatiga {nivel} al empezar la sesión: {musculos}."
+        },
+        "consejos": {
+          "listos": "Tus músculos están bien recuperados: hoy puedes ir un poco más fuerte de lo normal.",
+          "listosPeroSueno": "Tus músculos están listos: lo que frena hoy es el sueño.",
+          "aceptable": "Todavía se están recuperando: entrena normal, sin ir al fallo.",
+          "atencion": "Están cargados: hoy mejor suave con {sesion}, o entrena otra cosa.",
+          "despues": "Lo de hoy necesita {tiempo} para recuperarse."
+        },
+        "rendimiento": "Rendimiento esperado: fuerza máxima {fuerza}; repeticiones, {reps} (± {n} %)."
+      },
+      "comida": {
+        "nombre": "Alimentación",
+        "texto": "Ayer: {p} de {meta} g de proteína y el {k} % de tus calorías.",
+        "textoSinNumeros": "Ayer: tu proteína y tus calorías, contra tu meta.",
+        "textoSinMetas": "Cuenta la proteína y lo que comiste ayer.",
+        "consejos": {
+          "perfecta": "Perfecta: llegaste a tu proteína y comiste lo suficiente.",
+          "casi": "Para que sea perfecta: los {g} g de proteína que faltaron ayer.",
+          "proteina": "Para subirla: llegar a tu proteína; ayer faltaron {g} g.",
+          "proteinaSinNumeros": "Para subirla: llegar a tu proteína.",
+          "calorias": "Ayer comiste menos del 80 % de tus calorías: hoy, que no falte.",
+          "caloriasAntes": "Ayer comiste menos del 80 % de tus calorías: hoy, que no falte la comida de antes de entrenar.",
+          "casiSinNumeros": "Para que sea perfecta: llegar a tu proteína."
+        }
+      }
+    },
+    "fatiga": {
+      "titulo": "Fatiga muscular, por músculo",
+      "hoy": "Hoy"
+    },
+    "marcas": {
+      "titulo": "Marcas",
+      "texto": "Los ejercicios de {sesion} de hoy: qué tan probable es hacer tu marca.",
+      "si": "Buen día para intentar marca.",
+      "no": "Hoy no: {razones}.",
+      "fallas": {
+        "cerca": "estás lejos de tu marca",
+        "recuperado": "los músculos todavía se recuperan",
+        "sueno": "dormiste poco",
+        "sinPico": "vienes con más series que de costumbre",
+        "comida": "la comida no acompaña",
+        "probabilidad": "la probabilidad no llega al 35 %"
+      },
+      "como": "Avisa cuando se dan las cinco (estás cerca de tu marca, los músculos se recuperaron, dormiste bien, sin pico de carga y la comida en orden) y la probabilidad pasa la línea del 35 %. Es una estimación, no una promesa.",
+      "sinSesion": "Hoy no entrenas: vuelve el día que te toque.",
+      "hecha": "Ya entrenaste {sesion} hoy: la próxima, el día que te toque.",
+      "sinNoche": "Sin tu noche no se puede medir: anota cómo dormiste."
+    },
+    "estancados": {
+      "titulo": "Razones de estancamiento",
+      "umbral": "Los ejercicios que Ascent ve sin subir hace {n} semanas o más: el umbral que elegiste en Ascent (de fábrica, 6).",
+      "semanas": "{n} semanas sin subir",
+      "definicion": "Estás en definición, bajando {kg} kg por semana: que la fuerza se mantenga ya es un buen resultado.",
+      "definicionSinRitmo": "Estás en definición: que la fuerza se mantenga ya es un buen resultado.",
+      "sinCausa": "Sin una causa clara en tu sueño ni en tu comida.",
+      "juntando": "Para el sueño y la comida, Moss todavía junta semanas: van {a} con marcas y {b} sin, de {min} de cada lado.",
+      "razones": {
+        "sueno": {
+          "titulo": "Dormiste menos",
+          "texto": "Ahora, {ahora} por noche; cuando subía, {antes}."
+        },
+        "proteina": {
+          "titulo": "Menos proteína",
+          "texto": "Ahora, {ahora} por día; cuando subía, {antes}."
+        },
+        "calorias": {
+          "titulo": "Comiste más por debajo",
+          "texto": "Ahora, {ahora} por día contra tu gasto; cuando subía, {antes}."
+        },
+        "cargado": {
+          "titulo": "Poco descanso entre sesiones",
+          "texto": "{musculo}, con carga al empezar: {veces} de tus últimas {de} sesiones."
+        },
+        "menosSeguido": {
+          "titulo": "Lo entrenas menos seguido",
+          "texto": "Ahora, {ahora} veces en 4 semanas; cuando subía, {antes}."
+        },
+        "sesionesMasCortas": {
+          "titulo": "Tus sesiones se achicaron",
+          "texto": "Ahora duran {ahora}; antes, {antes}."
+        }
+      },
+      "comunes": "En estas semanas, para todos",
+      "soloComunes": "Nada más propio de este ejercicio: lo de arriba.",
+      "leyenda": {
+        "antes": "Cuando subía",
+        "ahora": "Ahora"
+      }
+    },
+    "comparten": {
+      "titulo": "Lo que comparten las dos"
+    },
+    "como": {
+      "titulo": "Cómo se calcula",
+      "partes": {
+        "sueno": "Sueño",
+        "musculos": "Músculos",
+        "comida": "Comida"
+      },
+      "suma": "{s} + {m} + {c} = {t} %",
+      "sueno": "Sueño, hasta 40: la mitad por cuánto dormiste contra lo que necesitas ({necesidad}) y la otra mitad por la calidad de la noche, la de tu reloj o la que anotas a la mañana. Sin la calidad cuenta como regular, así que llega a 30.",
+      "musculos": "Músculos, hasta 40: 40 menos tu fatiga muscular. La fatiga es lo que les falta a los músculos que entrenas hoy (o, sin sesión, a los de los últimos 3 días) sobre lo más que deja una sesión dura, según tus series en Ascent. Hoy: {f} % de fatiga, {m} de 40.",
+      "comida": "Comida, hasta 20: 10 por la proteína de ayer contra tu meta y 10 por haber comido al menos el 80 % de tus calorías.",
+      "franjas": "Las franjas: las mismas cuatro para el total y para cada parte. En el total, 85 o más es muy bien; de 70 a 84, bien; de 50 a 69, aceptable, y menos, atención. En la fatiga, al revés: hasta 15 % es baja.",
+      "cuando": "Cuándo: es un número del día, que se mira a la hora de tu sesión o, si no entrenas, a la mañana. Ascent muestra el mismo.",
+      "comer": "Lo de comer: alrededor de 1 g de carbohidratos por kilo entre 1 y 4 horas antes de entrenar (ACSM 2016) y de 20 a 40 g de proteína por comida (ISSN 2017). El café, hasta 8 horas antes de dormir (Gardiner 2023), y lo fuerte, que termine 2 horas antes de acostarte (Leota 2025).",
+      "orientativo": "Es orientativo: una suma a la vista de cosas medidas por separado, no un diagnóstico. Con tus datos se va a ir ajustando."
+    },
+    "tiempo": {
+      "horas": "~{n} h",
+      "dias": "~{n} días"
     }
   },
   "habitos": {
@@ -2481,472 +3049,65 @@
     "conPlan": "{hora}: {plan}",
     "pesarse": "Buen momento para pesarte",
     "pesarseControl": "Hoy es tu control: pésate antes de desayunar",
-    "pruebaTermina": "Tu prueba de Moss termina en dos días"
-  },
-  "saludo": {
-    "comidas": {
-      "desayuno": "el desayuno",
-      "almuerzo": "el almuerzo",
-      "merienda": "la merienda",
-      "cena": "la cena",
-      "snack": "el snack"
-    },
-    "frases": {
-      "primerDia": {
-        "dice1": "Todavía no sé casi nada de ti. Con lo primero que anotes, empezamos.",
-        "dice2": "Hola. Esto se va llenando a medida que anotas lo que comes.",
-        "sugiere1": "Empieza por lo simple: anota lo próximo que comas.",
-        "sugiere2": "Hoy no hace falta más que una cosa: anotar una comida.",
-        "pregunta1": "¿Qué fue lo último que comiste? Por ahí se empieza."
-      },
-      "primerDiaManana": {
-        "sugiere1": "Un buen primer paso: anotar el desayuno, sea lo que sea.",
-        "pregunta1": "¿Ya desayunaste? Anótalo y empezamos."
-      },
-      "primerDiaNoche": {
-        "dice1": "No es tarde para empezar: con la cena alcanza por hoy.",
-        "pregunta1": "¿Ya cenaste? Anota eso y mañana seguimos."
-      },
-      "primerAnotado": {
-        "dice1": "Primera comida anotada. Ya hay por dónde empezar.",
-        "dice2": "Con eso ya empieza a tomar forma tu día.",
-        "sugiere1": "Buen comienzo. Si comes algo más, súmalo cuando puedas."
-      },
-      "suenoPoco": {
-        "dice1": "Noche corta: {horas}. Un día tranquilo también cuenta.",
-        "dice2": "Se te acortó la noche: {horas}. Pasa, y esta noche se recupera algo.",
-        "dice3": "Dormiste {horas}, menos de lo que necesitas. Un día no cambia nada.",
-        "sugiere1": "Con {horas} de sueño, hoy no le pidas tanto al cuerpo.",
-        "sugiere2": "Anoche fueron {horas}. Si encuentras un rato, una siesta corta ayuda.",
-        "pregunta1": "{horas} anoche. ¿Hay lugar para una siesta corta hoy?"
-      },
-      "suenoBien": {
-        "dice1": "Dormiste {horas}: justo lo que necesitas.",
-        "dice2": "{horas} de sueño. Buen punto de partida.",
-        "dice3": "Buena noche: {horas}. Hoy empiezas con ventaja.",
-        "dice4": "Anoche sí: {horas}. Así da gusto empezar.",
-        "dice5": "Noche completa: {horas}.",
-        "sugiere1": "Aprovecha: {horas} de sueño no salen todos los días.",
-        "pregunta1": "¿Se nota? Dormiste {horas} anoche.",
-        "pregunta2": "¿Cómo amaneciste? Fueron {horas} de sueño."
-      },
-      "suenoNormal": {
-        "dice1": "{horas} anoche. Ni mucho ni poco.",
-        "dice2": "Dormiste {horas}. Alcanza para empezar bien.",
-        "dice3": "Una noche más: {horas}.",
-        "sugiere1": "Anoche fueron {horas}. Un rato antes a la cama y llegas a lo que necesitas.",
-        "pregunta1": "Dormiste {horas}. ¿Cómo te levantaste?"
-      },
-      "caraMala": {
-        "dice1": "Los números dicen {horas}; tú dices que no descansaste. Te creo a ti.",
-        "dice2": "Dormiste {horas}, pero no descansaste. A veces pasa. Hoy, con calma."
-      },
-      "caraBuena": {
-        "dice1": "Solo {horas}, pero te levantaste bien. Mejor así.",
-        "dice2": "Poca noche, {horas}, y aun así dices que descansaste. Eso también vale."
-      },
-      "deuda": {
-        "dice1": "Tienes {deuda} de sueño atrasado de estas dos semanas. Se recupera poco a poco.",
-        "sugiere1": "Llevas {deuda} de sueño atrasado. Un rato antes a la cama, unas noches, y se va.",
-        "pregunta1": "¿Se siente el cansancio? Llevas {deuda} de sueño atrasado."
-      },
-      "pocoYEntrena": {
-        "dice1": "Noche corta y entreno a las {hora}. Si cuesta más, es por el sueño, no por ti.",
-        "sugiere1": "{horas} de sueño y entreno a las {hora}: hoy no hace falta buscar marcas.",
-        "sugiere2": "Hoy entrenas con {horas} de sueño. Si hace falta, baja un poco la exigencia.",
-        "pregunta1": "¿Entrenas igual a las {hora}? Con {horas} de sueño, mejor sin apretar tanto."
-      },
-      "pocoYDesayuno": {
-        "sugiere1": "Dormiste poco y hoy entrenas: no te saltes el desayuno.",
-        "sugiere2": "Hoy entrenas y dormiste poco. Empieza por un buen desayuno.",
-        "pregunta1": "¿Ya desayunaste? Con poco sueño y entreno hoy, ayuda empezar comiendo."
-      },
-      "bienYEntrena": {
-        "dice1": "Dormiste bien y entrenas a las {hora}. Buen día para buscar un poco más.",
-        "dice2": "{horas} de sueño y entreno a las {hora}: hoy está todo a favor.",
-        "sugiere1": "Si querías probar algo nuevo en el entreno, hoy dormiste para eso.",
-        "pregunta1": "Buena noche y entreno a las {hora}. ¿Hoy te animas a un poco más?"
-      },
-      "descansoPoco": {
-        "dice1": "Noche corta, y por suerte hoy no hay entreno.",
-        "dice2": "{horas} de sueño y día sin entreno: se acomoda bien."
-      },
-      "descansoBien": {
-        "dice1": "Hoy no hay entreno y dormiste {horas}. Un día para ir sin prisa.",
-        "pregunta1": "Dormiste {horas} y hoy descansas. ¿Algún plan?"
-      },
-      "entrenaHoy": {
-        "dice1": "A las {hora} te toca entrenar.",
-        "dice2": "Hoy hay entreno a las {hora}. Con tu comida de siempre alcanza.",
-        "sugiere1": "Entrenas a las {hora}: organiza las comidas alrededor de eso y listo.",
-        "pregunta1": "¿Sigue en pie el entreno de las {hora}?"
-      },
-      "descanso": {
-        "dice1": "Hoy no toca entrenar. El cuerpo también avanza descansando.",
-        "dice2": "Día sin entreno: la comida, como siempre. No hace falta recortar nada.",
-        "pregunta1": "Día libre de entreno. ¿Lo aprovechas para acostarte temprano?"
-      },
-      "previa": {
-        "dice1": "{comida} es tu previa para las {hora}: carbohidratos y algo de proteína.",
-        "sugiere1": "Entrenas a las {hora}: que {comida} tenga carbohidratos y algo de proteína.",
-        "sugiere2": "Con entreno a las {hora}, yo pondría los carbohidratos en {comida}.",
-        "pregunta1": "¿Qué hay para {comida}? Antes de entrenar, algo con carbohidratos te viene bien."
-      },
-      "previaCarbos": {
-        "dice1": "{comida} viene antes de entrenar: unos {c} g de carbohidratos son lo justo.",
-        "sugiere1": "Para llegar bien a las {hora}: unos {c} g de carbohidratos en {comida}.",
-        "sugiere2": "Entrenas a las {hora}, así que en {comida} unos {c} g de carbohidratos.",
-        "pregunta1": "¿Tienes {c} g de carbohidratos en {comida}? Entrenas a las {hora}."
-      },
-      "previaLiviana": {
-        "dice1": "Antes de entrenar, lo liviano en {comida} cae mejor.",
-        "sugiere1": "Entrenas a las {hora}: en {comida}, algo liviano, con poca grasa y poca fibra.",
-        "pregunta1": "¿{comida} antes de entrenar? Mejor algo que no caiga pesado."
-      },
-      "snackPrevio": {
-        "dice1": "Para las {hora}, con algo chico y fácil alcanza.",
-        "sugiere1": "Si comes algo antes de entrenar, que sea fácil: una fruta, pan o jugo.",
-        "pregunta1": "¿Llegas con hambre a las {hora}? Una fruta o un pan alcanza."
-      },
-      "snackPrevioCarbos": {
-        "dice1": "Unos {c} g de carbohidratos y llegas bien a las {hora}. Una fruta y listo.",
-        "sugiere1": "Antes de las {hora}, unos {c} g de carbohidratos: una fruta o pan alcanza."
-      },
-      "ayunasLarga": {
-        "dice1": "A las {hora} entrenas y todavía no comiste. Una fruta antes puede ayudarte.",
-        "sugiere1": "Si entrenas en ayunas y más de una hora, algo chico antes puede ayudarte.",
-        "pregunta1": "¿En ayunas a las {hora}? Para una sesión larga, mejor una fruta o pan antes."
-      },
-      "sesionLarga": {
-        "sugiere1": "Sesión larga a las {hora}: lleva algo con carbohidratos para el camino.",
-        "pregunta1": "¿Llevas algo para comer en la sesión de las {hora}? Pasando los 90 minutos, ayuda."
-      },
-      "cafe": {
-        "dice1": "Hasta las {hora}, café sin problema. Después, te puede quitar sueño.",
-        "sugiere1": "Si tomas café para entrenar, que sea antes de las {hora}: después le quita a tu noche.",
-        "pregunta1": "¿Café antes de entrenar? Antes de las {hora}, así no le quita a tu sueño."
+    "pruebaTermina": "Tu prueba de Moss termina en dos días",
+    "conviene": {
+      "antes": {
+        "titulo": "Come antes de entrenar",
+        "comida": {
+          "desayuno": "Desayuno a las {hora}",
+          "almuerzo": "Almuerzo a las {hora}",
+          "merienda": "Merienda a las {hora}",
+          "cena": "Cena a las {hora}",
+          "snack": "Algo liviano a las {hora}"
+        },
+        "adelantada": {
+          "desayuno": "Desayuno más temprano, a las {hora}",
+          "almuerzo": "Almuerzo más temprano, a las {hora}",
+          "merienda": "Merienda más temprano, a las {hora}",
+          "cena": "Cena más temprano, a las {hora}"
+        },
+        "todo": "{cuando}: {c} g de carbohidratos, {p} g de proteína y poca grasa.",
+        "sinCarbohidratos": "{cuando}: {p} g de proteína, carbohidratos y poca grasa.",
+        "sinNumeros": "{cuando}: carbohidratos, algo de proteína y poca grasa."
       },
       "despues": {
-        "dice1": "{comida} viene después del entreno: algo con proteína, lo que tengas.",
-        "sugiere1": "Después de entrenar, que {comida} tenga proteína.",
-        "pregunta1": "¿Hay algo con proteína para {comida}? Después de entrenar es lo que más ayuda."
+        "titulo": "Proteína después de entrenar",
+        "en": {
+          "desayuno": "en el desayuno de las {hora}",
+          "almuerzo": "en el almuerzo de las {hora}",
+          "merienda": "en la merienda de las {hora}",
+          "cena": "en la cena de las {hora}"
+        },
+        "antesDe": "antes de las {hora}",
+        "cuanto": "Unos {p} g, {donde}.",
+        "sinNumeros": "Algo con proteína, {donde}."
       },
-      "despuesProteina": {
-        "dice1": "Unos {p} g de proteína en {comida} y el entreno queda bien cerrado.",
-        "dice2": "La proteína hace lo suyo después de entrenar. En {comida}, unos {p} g.",
-        "sugiere1": "Después de entrenar, lo que ayuda es la proteína: unos {p} g en {comida}.",
-        "sugiere2": "Yo armaría {comida} alrededor de la proteína: unos {p} g, después de entrenar.",
-        "pregunta1": "¿Qué hay para {comida}? Después de entrenar, unos {p} g de proteína te vienen bien."
+      "cafe": {
+        "titulo": "Café antes de entrenar",
+        "antes": "Si tomas, a las {hora}: faltan {horas} para dormir.",
+        "tituloUltimo": "Último café",
+        "ultimo": "Hasta las {hora}. Después, descafeinado.",
+        "ultimoEntrenas": "Hasta las {hora}. Antes de entrenar a las {entreno}, mejor sin café."
       },
-      "pronto": {
-        "dice1": "Con entreno y varias horas sin comer, que {comida} no tarde mucho.",
-        "sugiere1": "Después de entrenar sin haber comido, algo con proteína apenas puedas.",
-        "pregunta1": "¿Comiste algo desde el entreno? Si no, algo con proteína apenas puedas."
+      "ultimaComida": {
+        "titulo": "Última comida grande",
+        "texto": "Cena antes de las {hora}: a las {cama}, a la cama. Después, algo ligero."
       },
-      "prontoProteina": {
-        "sugiere1": "Unos {p} g de proteína apenas puedas: entrenar sin comer pide eso.",
-        "pregunta1": "¿Ya comiste después de entrenar? Unos {p} g de proteína, apenas puedas."
+      "tarde": {
+        "titulo": "Termina antes de las {hora}",
+        "texto": "Más tarde, que sea suave: te acuestas a las {cama}.",
+        "tituloSuave": "Hoy, mejor suave",
+        "suave": "Entrenar fuerte a las {entreno} te quitaría sueño: te acuestas a las {cama}."
       },
-      "reponer": {
-        "dice1": "Hay otra sesión a las {hora}. Con carbohidratos en {comida} llegas bien.",
-        "sugiere1": "Vuelves a entrenar a las {hora}: carbohidratos ahora y otra vez antes de la sesión.",
-        "pregunta1": "¿Segunda sesión a las {hora}? Entre una y otra, los carbohidratos son lo que más ayuda."
+      "luces": {
+        "titulo": "Baja las luces",
+        "texto": "Luz tenue y cálida: a las {cama}, a la cama."
       },
-      "dormirProteina": {
-        "dice1": "Un yogur antes de dormir y cierras la proteína: faltan unos {p} g.",
-        "sugiere1": "Te faltan unos {p} g de proteína: un yogur o leche antes de dormir también cuentan.",
-        "pregunta1": "¿Te queda lugar para un yogur? Faltan unos {p} g de proteína para cerrar el día."
-      },
-      "dormirProteinaPalabras": {
-        "sugiere1": "Te falta un poco de proteína: un yogur o leche antes de dormir también cuentan.",
-        "pregunta1": "¿Te queda lugar para un yogur? Es lo que falta de proteína."
-      },
-      "hechoFaltaProteina": {
-        "dice1": "Ya entrenaste y faltan unos {p} g de proteína: {comida} puede con eso.",
-        "dice2": "Entreno hecho. Lo que queda son unos {p} g de proteína.",
-        "sugiere1": "Entrenaste hoy, así que en {comida} yo buscaría unos {p} g de proteína.",
-        "pregunta1": "Ya está el entreno de hoy. ¿Qué tal unos {p} g de proteína en {comida}?"
-      },
-      "hechoFaltaPalabras": {
-        "dice1": "Entreno hecho. Lo que queda es la proteína.",
-        "sugiere1": "Ya entrenaste: ahora, {comida} con algo de proteína."
-      },
-      "hechoListo": {
-        "dice1": "Entreno hecho y proteína al día. Queda descansar.",
-        "dice2": "Ya entrenaste y la proteína llegó. Lo que sigue es dormir bien.",
-        "pregunta1": "Entrenaste y comiste bien. ¿Qué más se le puede pedir a un {dia}?"
-      },
-      "mananaEntrena": {
-        "dice1": "Mañana hay entreno a las {entreno}. Hoy, a descansar.",
-        "pregunta1": "Mañana entrenas a las {entreno}. ¿Ya tienes la ropa lista?"
-      },
-      "sinDesayuno": {
-        "dice1": "El desayuno todavía no está anotado. Cuando quieras.",
-        "sugiere1": "Cuando desayunes, anótalo: el resto del día se acomoda solo.",
-        "pregunta1": "¿Ya desayunaste? Anótalo antes de que se te olvide.",
-        "pregunta2": "¿Qué hay de desayuno hoy?"
-      },
-      "sinAlmuerzo": {
-        "dice1": "Todavía no está el almuerzo. Sin prisa.",
-        "sugiere1": "Si ya almorzaste, es buen momento para anotarlo.",
-        "pregunta1": "¿Qué hay de almuerzo?",
-        "pregunta2": "¿Ya almorzaste? Anótalo cuando puedas."
-      },
-      "sinMerienda": {
-        "dice1": "Suele ser hora de merienda, y hoy todavía no está.",
-        "sugiere1": "Si vas a merendar, este es el momento.",
-        "pregunta1": "¿Merienda hoy?"
-      },
-      "sinCena": {
-        "dice1": "La cena todavía está por verse.",
-        "sugiere1": "Cuando cenes, anótalo y el día queda cerrado.",
-        "pregunta1": "¿Qué vas a cenar?",
-        "pregunta2": "¿Ya cenaste? Si fue así, anótalo y listo."
-      },
-      "nadaHoy": {
-        "dice1": "Hoy sigue en blanco. Con una comida ya alcanza para empezar.",
-        "sugiere1": "Si se te juntó todo, dilo de una vez: Moss lo separa.",
-        "pregunta1": "Todavía no hay nada anotado hoy. ¿Empezamos por lo último que comiste?",
-        "pregunta2": "¿Día ocupado? Puedes decir lo de hoy de una sola vez."
-      },
-      "quedaAlmuerzo": {
-        "dice1": "Para el almuerzo y lo que siga, te quedan unas {kcal} kcal.",
-        "dice2": "Todavía tienes unas {kcal} kcal, y el almuerzo por delante.",
-        "pregunta1": "¿Qué hay de almuerzo? Te quedan unas {kcal} kcal en el día."
-      },
-      "quedaCena": {
-        "dice1": "Falta la cena, y hay lugar: unas {kcal} kcal.",
-        "dice2": "Unas {kcal} kcal para la cena. Alcanza para una buena comida.",
-        "sugiere1": "Te quedan unas {kcal} kcal: la cena puede ser una comida de verdad.",
-        "pregunta1": "¿Qué vas a cenar? Tienes unas {kcal} kcal para eso."
-      },
-      "cenaAjustada": {
-        "dice1": "Queda poco margen para la cena, unas {kcal} kcal. Se puede con algo simple.",
-        "sugiere1": "Quedan unas {kcal} kcal para la cena: proteína y verduras rinden bastante.",
-        "pregunta1": "¿Cena con {kcal} kcal? Proteína y verduras rinden más que otra cosa."
-      },
-      "metaAntesDeCena": {
-        "dice1": "Llegaste a la meta antes de la cena. Si tienes hambre, come igual: un día no cambia nada.",
-        "sugiere1": "La cena va igual, aunque hoy pase la meta. Algo simple y a descansar.",
-        "pregunta1": "¿Ya en la meta y falta la cena? Come igual, con algo simple."
-      },
-      "queda": {
-        "dice1": "Te quedan unas {kcal} kcal para lo que falta de hoy.",
-        "dice2": "Hay margen: unas {kcal} kcal por delante.",
-        "dice3": "Queda bastante día, y unas {kcal} kcal.",
-        "dice4": "Todavía tienes unas {kcal} kcal para hoy.",
-        "sugiere1": "Si te da hambre a la tarde, hay unas {kcal} kcal.",
-        "pregunta1": "¿Algo para picar? Te quedan unas {kcal} kcal."
-      },
-      "quedaNoche": {
-        "dice1": "Después de la cena todavía quedan unas {kcal} kcal. Por si hay hambre.",
-        "pregunta1": "¿Algo más antes de dormir? Quedan unas {kcal} kcal."
-      },
-      "quedaPalabras": {
-        "dice1": "Todavía hay lugar en el día. Sin prisa.",
-        "dice2": "Vas con margen. Lo que venga, anótalo y listo.",
-        "sugiere1": "Todavía hay margen para lo que tengas ganas de comer."
-      },
-      "ritmoBien": {
-        "dice1": "Vas a buen ritmo para esta hora.",
-        "dice2": "El día viene bien repartido hasta ahora.",
-        "dice3": "Vas justo donde esperaba, a esta hora.",
-        "dice4": "Vas parejo: nada para ajustar por ahora."
-      },
-      "ajustadoFaltaProteina": {
-        "dice1": "Las calorías van bien; lo que falta son unos {p} g de proteína.",
-        "sugiere1": "Quedan {kcal} kcal y faltan {p} g de proteína: algo magro rinde más.",
-        "pregunta1": "¿Algo con mucha proteína y poca grasa? Faltan {p} g y quedan {kcal} kcal."
-      },
-      "ajustadoFaltaPalabras": {
-        "dice1": "Vas perfecto de calorías, pero te falta proteína para la noche.",
-        "sugiere1": "Lo que mejor encaja en lo que queda de hoy es algo con proteína."
-      },
-      "proteinaFalta": {
-        "dice1": "La proteína va un poco atrás: unos {p} g por delante.",
-        "dice2": "Te faltan unos {p} g de proteína, y hay calorías de sobra para llegar.",
-        "sugiere1": "Yo empezaría la próxima comida por la proteína: faltan unos {p} g.",
-        "pregunta1": "¿Cómo viene la proteína? Faltan unos {p} g, y hay lugar para ellos."
-      },
-      "proteinaFaltaPalabras": {
-        "dice1": "La proteína va un poco atrás, y hay lugar para alcanzarla.",
-        "sugiere1": "En la próxima comida, yo empezaría por la proteína."
-      },
-      "proteinaLista": {
-        "dice1": "La proteína ya está. Lo que queda es a gusto.",
-        "dice2": "Ya llegaste a la proteína de hoy. Lo demás, sin prisa.",
-        "sugiere1": "Con la proteína resuelta, lo que queda de hoy es para lo que te guste."
-      },
-      "justo": {
-        "dice1": "Hoy cerraste justo en tu meta.",
-        "dice2": "Día redondo de comida. No hay nada que ajustar.",
-        "pregunta1": "¿Viste lo de hoy? Justo en tu meta."
-      },
-      "justoYProteina": {
-        "dice1": "Calorías y proteína, las dos en su lugar.",
-        "dice2": "Llegaste a la meta y a la proteína. Un buen día de comida."
-      },
-      "pasadoHoy": {
-        "dice1": "Hoy pasaste la meta por unas {kcal} kcal. Un día no mueve la tendencia.",
-        "dice2": "Unas {kcal} kcal de más hoy. Lo importante es que está anotado.",
-        "dice3": "Comiste unas {kcal} kcal más que la meta. Mañana, lo de siempre: nada que recortar.",
-        "sugiere1": "Te pasaste un poco. Anótalo todo igual: así la semana sale bien calculada.",
-        "pregunta1": "¿Te pasaste hoy? Pasa. Duerme bien y mañana sigues como siempre."
-      },
-      "comioPoco": {
-        "dice1": "Hoy quedaste bastante por debajo de tu meta. Si tienes hambre, hay lugar.",
-        "pregunta1": "¿Comiste algo más que no anotaste? A veces se pasa."
-      },
-      "comioPocoKcal": {
-        "dice1": "Quedan unas {kcal} kcal sin usar. Si algo quedó sin anotar, estás a tiempo.",
-        "sugiere1": "Te quedan {kcal} kcal: si tienes hambre, no hay por qué aguantar."
-      },
-      "ayerPasado": {
-        "dice1": "Ayer fue un día grande. Hoy, tu meta de siempre.",
-        "dice2": "Lo de ayer ya quedó anotado. Hoy se come como siempre, sin recortar nada.",
-        "dice3": "Ayer pasaste la meta por unas {kcal} kcal. Hoy no hace falta hacer nada distinto.",
-        "pregunta1": "¿Mucha comida ayer? No cambia el plan: hoy, lo de siempre."
-      },
-      "ayerJusto": {
-        "dice1": "Ayer cerraste justo en tu meta. Buen antecedente.",
-        "dice2": "Ayer, en la meta. Hoy se empieza de cero, igual.",
-        "pregunta1": "Lo de ayer salió justo. ¿Repetimos?"
-      },
-      "ayerPoco": {
-        "dice1": "Ayer hay poca comida anotada. Si faltó algo, se agrega en un momento.",
-        "pregunta1": "Ayer quedó poco anotado. ¿Se te pasó algo? Todavía puedes sumarlo."
-      },
-      "ayerNada": {
-        "dice1": "Ayer quedó sin anotar. No pasa nada: hoy se sigue.",
-        "sugiere1": "Un día sin anotar no cambia nada. Empieza por lo de hoy."
-      },
-      "camaHoy": {
-        "dice1": "A las {hora}, a la cama, y duermes {horas}.",
-        "dice2": "Para despertarte a las {despertar}, esta noche a la cama a las {hora}.",
-        "dice3": "La noche de hoy empieza a las {hora}. Alcanza para {horas} de sueño.",
-        "dice4": "Esta noche, a la cama a las {hora}.",
-        "sugiere1": "Yo iría a la cama a las {hora}: son {horas} de sueño.",
-        "sugiere2": "Ve bajando el ritmo: a las {hora}, a la cama.",
-        "pregunta1": "¿Te parece bien acostarte a las {hora}? Así duermes {horas}.",
-        "pregunta2": "¿A qué hora mañana? Si es a las {despertar}, a la cama a las {hora}."
-      },
-      "camaCerca": {
-        "dice1": "En {tiempo} te toca acostarte.",
-        "sugiere1": "En {tiempo}, a la cama. Buen momento para bajar las luces.",
-        "sugiere2": "Deja esto en un rato: a las {hora}, a la cama.",
-        "pregunta1": "¿Vamos apagando? A la cama en {tiempo}."
-      },
-      "camaPasada": {
-        "dice1": "Si te acuestas ahora, todavía duermes {horas}.",
-        "sugiere1": "Todavía hay {horas} de sueño por delante, si te acuestas ahora.",
-        "pregunta1": "¿Todavía por aquí? Acostándote ahora llegas a {horas} de sueño."
-      },
-      "camaTarde": {
-        "dice1": "Se hizo tarde. Lo que falta de hoy puede esperar a mañana.",
-        "sugiere1": "Mañana sigue todo igual. Ahora, a dormir lo que se pueda."
-      },
-      "camaYDeuda": {
-        "dice1": "Llevas {deuda} de sueño atrasado: a las {hora} empiezas a recuperarlo.",
-        "sugiere1": "Con {deuda} de sueño atrasado, esta noche a la cama a las {hora}.",
-        "pregunta1": "¿A la cama a las {hora}? Arrastras {deuda} de sueño y eso ayuda."
-      },
-      "camaYPocoSueno": {
-        "dice1": "Anoche fueron {anoche}. Hoy, a la cama a las {hora} y vas recuperando.",
-        "sugiere1": "Anoche dormiste {anoche}: esta noche, si puedes, a las {hora} a la cama.",
-        "pregunta1": "Después de {anoche} anoche, ¿qué tal a la cama a las {hora}?"
-      },
-      "camaYMananaEntrena": {
-        "dice1": "Mañana entrenas a las {entreno}: a la cama a las {hora} te deja {horas}.",
-        "sugiere1": "Para llegar bien al entreno de mañana, a la cama a las {hora}.",
-        "pregunta1": "¿Mañana a las {entreno}? Entonces a las {hora}, a la cama."
-      },
-      "camaYCena": {
-        "dice1": "Falta la cena y a las {hora}, a la cama. Si cenas pronto, mejor.",
-        "pregunta1": "¿Cenas pronto? A las {hora} te toca acostarte."
-      },
-      "madrugada": {
-        "dice1": "Sigue siendo tu día: lo que anotes ahora cuenta para hoy.",
-        "dice2": "A esta hora, lo mejor que queda de hoy es dormir.",
-        "pregunta1": "¿Cuesta dormirse hoy? Deja el teléfono un rato y vuelve a intentar."
-      },
-      "nadaManana": {
-        "dice1": "Buenos días. Hoy, lo de siempre: anota lo que comas y Moss hace las cuentas.",
-        "dice2": "Nada urgente por ahora. Que tengas buen día."
-      },
-      "nadaTarde": {
-        "dice1": "Buenas tardes. Todo en orden por aquí.",
-        "dice2": "Sin novedades por ahora. Sigue con lo tuyo."
-      },
-      "nadaNoche": {
-        "dice1": "Buenas noches. Por hoy, todo en su lugar.",
-        "dice2": "Nada pendiente. Que descanses."
-      },
-      "lunes": {
-        "dice1": "Lunes. Otra semana por delante, sin nada que arrastrar.",
-        "sugiere1": "Empieza la semana: con anotar lo de hoy alcanza."
-      },
-      "finDeSemana": {
-        "dice1": "Es {dia}. Los días así también cuentan, y no hace falta que salgan perfectos.",
-        "sugiere1": "Fin de semana: come lo que te guste y anótalo. Con eso alcanza.",
-        "pregunta1": "¿Algún plan para este {dia}? Lo que comas, lo anotas después."
-      },
-      "diaNuevo": {
-        "dice1": "Día nuevo, nada anotado todavía. Sin prisa.",
-        "dice2": "Hoy empieza de cero, como todos.",
-        "sugiere1": "Empieza como siempre: lo primero que comas, anótalo.",
-        "pregunta1": "¿Cómo viene el día? Lo primero que comas, anótalo y listo."
-      },
-      "metaDeHoy": {
-        "dice1": "Hoy son {kcal} kcal y {p} g de proteína. Lo de siempre.",
-        "dice2": "Día nuevo: {kcal} kcal por delante.",
-        "sugiere1": "Para hoy, unos {p} g de proteína; lo demás se acomoda.",
-        "pregunta1": "¿Qué hay hoy? Tienes {kcal} kcal para repartir."
-      },
-      "trasDesayuno": {
-        "dice1": "Desayuno anotado. Hasta el almuerzo no hay nada pendiente.",
-        "dice2": "Ya está el desayuno. Lo que sigue es el almuerzo.",
-        "pregunta1": "Desayuno listo. ¿Ya sabes qué vas a almorzar?"
-      },
-      "trasAlmuerzo": {
-        "dice1": "Almuerzo anotado. Hasta la noche, sin prisa.",
-        "dice2": "Ya pasó el almuerzo, y el día viene en orden.",
-        "sugiere1": "Con el almuerzo anotado, la tarde queda libre.",
-        "pregunta1": "¿Qué tal el almuerzo? Ya está anotado; lo que sigue es la tarde."
-      },
-      "trasMerienda": {
-        "dice1": "Merienda anotada. Lo que sigue es la cena.",
-        "dice2": "Con la merienda adentro, la cena puede esperar.",
-        "sugiere1": "Ya merendaste: la cena, cuando tengas hambre.",
-        "pregunta1": "¿Qué tal la merienda? La cena, más tarde."
-      },
-      "pensarCena": {
-        "dice1": "Lo próximo es la cena. Todavía hay tiempo para decidir.",
-        "sugiere1": "Si vas a cocinar, es buena hora para pensar la cena.",
-        "pregunta1": "¿Ya pensaste qué vas a cenar?",
-        "pregunta2": "¿Cena en casa hoy?"
-      },
-      "pensarCenaKcal": {
-        "dice1": "Para la cena y lo que venga, unas {kcal} kcal.",
-        "pregunta1": "¿Tienes algo en mente para la cena? Hay unas {kcal} kcal para eso."
-      },
-      "diaCerrado": {
-        "dice1": "Cena anotada. Por hoy, la comida ya está.",
-        "dice2": "Ya está todo lo de hoy.",
-        "dice3": "Lo de hoy queda guardado. Mañana seguimos.",
-        "dice4": "Hoy ya está. Que duermas bien.",
-        "dice5": "Por hoy, suficiente. Hasta mañana.",
-        "sugiere1": "La comida de hoy ya está: lo que queda es bajar el ritmo.",
-        "pregunta1": "¿Qué tal estuvo el día? La comida ya quedó anotada."
-      },
-      "proteinaAlDia": {
-        "dice1": "La proteína va bien para esta hora.",
-        "dice2": "Con lo que llevas de proteína, la cena no tiene que hacer todo el trabajo.",
-        "sugiere1": "Sigue así con la proteína y llegas sin pensarlo."
-      },
-      "mitadDelDia": {
-        "dice1": "Vas por el {pct} % de la meta, bien para esta hora.",
-        "dice2": "Llevas el {pct} % de la meta. Queda lugar para lo que viene.",
-        "pregunta1": "¿El {pct} % de la meta a esta hora? Justo lo esperable."
+      "recuperacion": {
+        "titulo": "Recuperación: {pct} %",
+        "fuerte": "Hoy puedes entrenar fuerte.",
+        "suave": "Hoy, mejor suave: dormiste {horas}.",
+        "suaveSinSueno": "Hoy, mejor suave: tu cuerpo todavía se está recuperando."
       }
     }
   },
@@ -3002,7 +3163,11 @@
         "resistencia": "Correr, bici o nadar",
         "mixta": "Mixto: fútbol, HIIT"
       },
-      "ver": "Qué comer antes y después"
+      "ver": "Qué comer antes y después",
+      "textoConAvisos": "Con tus días, tu hora y lo que tardas en llegar, Comida te dice qué comer antes y después de entrenar, en la comida que toca. Si lo prendes en Avisos, también te avisa a tiempo.",
+      "viaje": "Tardo en llegar al gimnasio",
+      "viajeCasa": "En casa",
+      "viajeTexto": "Para avisarte con tiempo: Moss cuenta desde que sales, no desde que empiezas."
     },
     "nocheCorta": "Dormiste {h}: es normal tener más hambre hoy."
   },

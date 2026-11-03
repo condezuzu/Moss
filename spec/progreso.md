@@ -5,6 +5,42 @@ Lo que muestra la sección Progreso (cambio 9 de la
 están en `src/dominio/progreso.ts`, `src/dominio/cuerpo.ts` y
 `src/dominio/control.ts`, con sus tests. La galería las usa tal cual.
 
+## Más simple, con el plan arriba (2/11/2026, para aprobar en la galería)
+
+Lo pediste: «hay mucho gráfico, mucho visual, muchas palabras; una persona normal no
+quiere ver todo esto», con el plan al principio, el control más arriba y más chico, y la
+grasa corporal en el medio invitando a medirla. La app sigue como abajo hasta que lo
+apruebes. De arriba abajo:
+
+1. **Arriba a la derecha, Ascent:** la sección queda arriba de Progreso y se sube como a
+   tu universo ([`ascent.md`](ascent.md), «Ascent arriba de Progreso»).
+2. **El próximo control, en una línea:** «Control el lunes · en 5 días», lo que tiene
+   («2 de 4 días con comida · pesada ✓») y su estado. Tocándolo se abre qué pasa ese día y
+   el día de la semana. **En Inicio**, debajo de la luna, desde dos días antes.
+3. **Tu plan** (`planPorEtapas`, con tests): «Bajar a 71 kg para el lunes 4 de enero» y
+   una línea de puntos: desde que empezaste (lo hecho, en oro), hoy, un hito cada cuatro
+   semanas (o tres repartidos si es más largo), la meta y, después, el mantenimiento.
+   - **Cómo vienes:** el ritmo medido contra el del plan: al ritmo (a un cuarto del plan,
+     o a 100 g por semana con un plan lento), más rápido, más lento o al revés, con la
+     fecha a la que llegarías a tu ritmo. El control de cada semana ajusta las calorías
+     para seguir el plan: la fecha del plan queda y lo que se mueve es a dónde llegarías.
+   - **Al llegar:** dos semanas en mantenimiento, comiendo lo que se gasta, para que el
+     peso se asiente. Después, lo que dijiste en el cuestionario («Cuando llegues, ¿qué
+     sigue?»): quedarte ahí o ganar músculo (subir despacio); sin decidirlo, lo eliges al
+     llegar.
+   - **«Cambiar el plan»** despliega ahí mismo el objetivo, el peso meta, el ritmo y el
+     plazo (D35) y las metas de hoy.
+4. **El peso**, como abajo.
+5. **La grasa corporal**, en el medio. Sin medidas, una invitación: «Mide tu grasa
+   corporal · Con una cinta, en dos minutos: la cintura y el cuello (y la cadera). Con una
+   vez alcanza; si quieres, cada mes», con «Medir» y que es una estimación que puede errar
+   3 a 4 puntos y sirve para ver cómo cambia.
+6. **«Más datos»**, plegado: semana a semana (con nombres más claros: «Cuánto cambió tu
+   peso» y «Cuánto comiste»), las medidas y el gasto con el balance.
+
+Pendiente de decidir: si un plan de más de 16 semanas se parte con pausas de
+mantenimiento (MATADOR, 2018); hoy no se parte.
+
 ## Qué tiene
 
 De arriba abajo:

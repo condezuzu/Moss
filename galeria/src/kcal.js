@@ -5,7 +5,8 @@
 
 const Kcal = (() => {
   const SVG = 'http://www.w3.org/2000/svg';
-  const ESTILOS = ['luna', 'anillo', 'arco', 'barra'];
+  // «macros»: los anillos de la proteína, los carbohidratos y las grasas, con sus colores (2/11/2026).
+  const ESTILOS = ['luna', 'anillo', 'arco', 'barra', 'macros'];
   // Lo elegido queda en este navegador, como quedaría en el teléfono.
   const GUARDADO = 'moss-galeria-kcal';
   let estilo = 'luna';
@@ -147,12 +148,53 @@ const Kcal = (() => {
     };
   }
 
+  // ------------------------------------------------------------ los anillos de los macros
+  // Tres vueltas, de afuera hacia adentro: la proteína, los carbohidratos y las grasas, cada una con su
+  // color y su meta, como los anillos de Actividad. `ir` recibe además lo comido de cada macro sobre su
+  // meta; sin eso, las tres van con las calorías.
+  function anillosDeMacros({ tam, clase, grueso = 7 }) {
+    const s = svg('-50 -50 100 100', 'kc-macros ' + (clase || ''), tam, tam);
+    const MACROS = ['p', 'c', 'g'];
+    s.innerHTML = MACROS.map((m, i) => {
+      const r = 46 - grueso / 2 - i * (grueso + 2.5);
+      const vuelta = `M 0 ${-r} A ${r} ${r} 0 1 1 0 ${r} A ${r} ${r} 0 1 1 0 ${-r}`;
+      return `<path d="${vuelta}" class="kc-pista kc-m-${m}" stroke-width="${grueso}"/><path d="${vuelta}" pathLength="100" class="kc-lleno kc-m-${m}" stroke-width="${grueso}"/>`;
+    }).join('');
+    const llenos = [...s.querySelectorAll('.kc-lleno')];
+    let ahora = { p: 0, c: 0, g: 0 };
+    let cuadro = 0;
+    const dibujar = (v) => MACROS.forEach((m, i) => {
+      llenar(llenos[i], v[m]);
+      llenos[i].classList.toggle('de-mas', v[m] > 1.0005);
+    });
+    dibujar(ahora);
+    return {
+      el: s,
+      get fraccion() { return (ahora.p + ahora.c + ahora.g) / 3; },
+      ir(hasta, ms, _comidas, macros) {
+        const destino = macros || { p: hasta, c: hasta, g: hasta };
+        cancelAnimationFrame(cuadro);
+        const desde = Object.assign({}, ahora);
+        if (!ms) { ahora = destino; dibujar(ahora); return; }
+        const t0 = performance.now();
+        const paso = (t) => {
+          const k = salida((t - t0) / ms);
+          ahora = { p: desde.p + (destino.p - desde.p) * k, c: desde.c + (destino.c - desde.c) * k, g: desde.g + (destino.g - desde.g) * k };
+          dibujar(ahora);
+          if (k < 1) cuadro = requestAnimationFrame(paso);
+        };
+        cuadro = requestAnimationFrame(paso);
+      },
+    };
+  }
+
   // ------------------------------------------------------------ las de cada lugar
   /**
    * La de Inicio, grande: la luna o el anillo van al lado de la cifra; el arco, alrededor; la barra,
    * abajo. `porcentaje(n)` escribe lo que va adentro del anillo.
    */
   function grande(porcentaje) {
+    if (estilo === 'macros') return anillosDeMacros({ tam: 116, clase: 'kc-grande', grueso: 8 });
     if (estilo === 'anillo') return anillo({ tam: 112, clase: 'kc-grande', grueso: 5, porcentaje });
     if (estilo === 'arco') return arco({ ancho: null, clase: 'kc-grande', grueso: 1.9 });
     if (estilo === 'barra') return barra({ clase: 'kc-grande' });
@@ -161,6 +203,7 @@ const Kcal = (() => {
 
   /** La del día en Comida, al lado de lo comido; la barra va debajo de la cifra. */
   function chica(porcentaje) {
+    if (estilo === 'macros') return anillosDeMacros({ tam: 60, clase: 'kc-chica', grueso: 10 });
     if (estilo === 'anillo') return anillo({ tam: 58, clase: 'kc-chica', grueso: 7, porcentaje });
     if (estilo === 'arco') return arco({ ancho: 66, clase: 'kc-chica', grueso: 8, estrella: false });
     if (estilo === 'barra') return barra({ clase: 'kc-chica' });
@@ -195,6 +238,18 @@ const Kcal = (() => {
     return s;
   }
 
+  /** Una muestra chica de cada estilo, quieta, para elegir (Todo lo de hoy). */
+  function muestra(e) {
+    const ejemplo = 0.62;
+    if (e === 'macros') { const f = anillosDeMacros({ tam: 36, clase: 'kc-muestra', grueso: 9 }); f.ir(0, 0, null, { p: 0.72, c: 0.55, g: 0.85 }); return f.el; }
+    if (e === 'anillo') { const f = anillo({ tam: 36, clase: 'kc-muestra', grueso: 9 }); f.ir(ejemplo, 0); return f.el; }
+    if (e === 'arco') { const f = arco({ ancho: 40, clase: 'kc-muestra', grueso: 9, estrella: false }); f.ir(ejemplo, 0); return f.el; }
+    if (e === 'barra') { const f = barra({ clase: 'kc-muestra' }); f.ir(ejemplo, 0, [3, 4, 2]); return f.el; }
+    const luna = Luna.crear({ tam: 36, clase: 'kc-muestra' });
+    luna.ir(ejemplo, 0);
+    return luna.el;
+  }
+
   return {
     ESTILOS,
     get estilo() { return estilo; },
@@ -203,5 +258,6 @@ const Kcal = (() => {
     grande,
     chica,
     mini,
+    muestra,
   };
 })();

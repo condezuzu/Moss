@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { cambioPorDia, controlSemanal, tendencia, type ComidaDelDia, type Pesada } from './control';
 import { sumarDias, type DiaSemana } from './fechas';
 import {
-  ajusteDiario, EDAD_MINIMA, enRango, ESTILOS, gastoBasal, macrosDePorcentajes, macrosPara, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, pisoDe,
+  ajusteDiario, EDAD_MINIMA, enRango, ESTILOS, gastoBasal, macrosConProteina, macrosDePorcentajes, macrosPara, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, objetivoPermitido, pesoMinimoSano, pisoDe,
   RANGOS_DEL_CUESTIONARIO, repartirSemana, RITMOS, ritmoPermitido,
   type Cuestionario, type Macros,
 } from './metas';
@@ -45,7 +45,8 @@ describe('los límites que cuidan', () => {
 });
 
 describe('la meta inicial', () => {
-  it('da lo mismo que el resultado de la galería: 2.770 kcal, 119 g de proteína, 387 de carbohidratos y 83 de grasas', () => {
+  // La de la app hasta programar el cuestionario nuevo (cuestionario.ts), que en la galería da otra.
+  it('con el nivel de actividad: 2.770 kcal, 119 g de proteína, 387 de carbohidratos y 83 de grasas', () => {
     expect(metasIniciales(BASE)).toEqual({ gasto: 2770, metas: { kcal: 2770, proteina: 119, carbohidratos: 387, grasas: 83 } });
   });
 
@@ -92,6 +93,11 @@ describe('cómo se reparten los macros', () => {
 
   it('sin decir nada es la equilibrada, la de siempre', () => {
     expect(macrosPara(kcal, 74.5, 'mantener')).toEqual(de.equilibrada);
+  });
+
+  it('con la proteína ya elegida, el resto se reparte igual, y nunca pasa del 40 %', () => {
+    for (const e of ESTILOS) expect(macrosConProteina(kcal, 74.5, 74.5 * 1.6, e)).toEqual(de[e]);
+    expect(macrosConProteina(1400, 74.5, 200).proteina).toBe(140);
   });
 
   it('en todos, la proteína es la misma y los gramos suman las kcal', () => {

@@ -1,11 +1,28 @@
-# El saludo del día
+# El saludo del día (descartado)
+
+**Descartado el 2/11/2026, al verlo en la galería.** Lo dijiste así: «este tipo de
+texto los odio» («falta la cena y a las 22:20 a la cama; si cenas pronto, mejor»). Lo
+reemplazan dos cosas:
+
+- **En Inicio, abajo de todo, «Para hoy»** (`src/dominio/paraHoy.ts`, con tests): hasta
+  tres comentarios cortos de la comida, una idea cada uno: lo que falta anotar (con
+  «Anotar»), el reparto de los macros («vas bien de proteína y bajo en carbohidratos: en
+  la cena, suma arroz, papa, pan o fruta»), lo que falta de proteína y el agua. Con «sin
+  déficit», solo anotar y el agua.
+- **La hora de dormir, la última comida y lo de entrenar van en los avisos**, al estilo
+  de RISE ([`avisos.md`](avisos.md)).
+
+Se borraron `src/dominio/saludo.ts`, sus tests, `galeria/src/saludo.js` y los textos
+`saludo.*`; están en la historia de Git (el último commit con ellos es `5a1d35d`). Lo de
+abajo queda como registro de lo que se probó.
+
+---
 
 Lo pediste el 2/11/2026: al abrir Moss, arriba de Inicio, una frase corta con los
 datos reales del día, que cambie y no se repita, sin IA y sin sonar a plantilla.
 
-La regla está en `src/dominio/saludo.ts`, con sus tests. Devuelve un código y sus
-valores; el texto está en `saludo.frases.<código>` de `es.json` y `en.json`. Se
-prueba en la galería (botón «El saludo del día»). **Todavía no está en la app.**
+La regla estaba en `src/dominio/saludo.ts`, con sus tests. Devolvía un código y sus
+valores; el texto estaba en `saludo.frases.<código>` de `es.json` y `en.json`.
 
 ## Las señales
 

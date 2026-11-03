@@ -122,6 +122,68 @@ Los agregadores (Terra, Junction, Open Wearables) cuestan de US$300 a 499 por
 mes, o hay que alojarlos [Ag1][Ag2][Ag3]. Para Oura, el acuerdo exige que Oura
 apruebe a cada cliente del agregador [O5]. Quedan para después.
 
+### Conectar con la app del aparato, desde Perfil (2/11/2026)
+
+Lo pediste: en Perfil › Aparatos, además de «Automática» (por Salud), poder conectar
+directo con la app del anillo o del reloj, para tener el sueño más exacto. Lo que se
+encontró al 2/11/2026:
+
+- **Tu anillo no se puede conectar directo.** Da Rings es de MO YOUNG LIMITED (la de Da
+  Fit), no tiene API ni exportación y no está en ningún agregador; su sueño solo puede
+  llegar por Salud. Para saber si lo manda: Ajustes › Privacidad y seguridad › Salud ›
+  Da Rings, y ver si «Sueño» está entre lo que puede escribir. Leerlo por Bluetooth
+  tampoco conviene: el protocolo no está documentado y el anillo se empareja con una
+  sola app.
+- **No hay una app de anillos llamada «Sora».** Lo más parecido es SOXAI, un anillo
+  japonés que algunos sitios llaman «Sora Ring X»; se conecta con Salud y no tiene API.
+- **Lo que cambió:** Garmin reabrió su API el 21/10/2026, con una clave personal (solo
+  tus datos), Starter (gratis, con cupo, manda los datos por push) y Enterprise
+  (US$1.000 y un cargo por usuario); sus términos nuevos prohíben pasar los datos a
+  servicios no aprobados por escrito, y eso incluye Ascent. WHOOP cambió sus términos
+  el 6/10/2026: no competir (3.1.16) y no guardar «copias permanentes» (4.2.2). Oura
+  tiene un flujo sin servidor: el permiso vive 30 días en el teléfono y después hay que
+  volver a entrar.
+- **Lo que se gana:** conectar directo no distingue mejor dormido de despierto (el
+  algoritmo es del aparato). Suma lo que no llega a Salud: las etapas de WHOOP y Polar,
+  la variabilidad RMSSD, la temperatura y el hipnograma de Oura. Con Apple Watch,
+  RingConn, Amazfit, Xiaomi, Huawei o Da Rings no hay nada que conectar.
+- **Cómo, local primero:** el permiso en el llavero del iPhone; una Edge Function sin
+  estado que solo pone el secreto al canjear y renovar el permiso, sin guardar nada; el
+  teléfono baja las noches al abrir Moss y en la tarea de fondo; cada marca entra como
+  una fuente más, con «una noche, una fuente» (lo directo gana a la copia en Salud del
+  mismo aparato).
+- **El orden nuevo:** escribirles ya a Oura y a WHOOP (las dos necesitan un sí por
+  escrito sobre esas cláusulas); mientras tanto, **Polar**, la única que no hay que
+  esperar, para armar la pieza común (el llavero, la función y la fuente directa);
+  Garmin al final (pide servidor, tiene cupo y aprobación para pasar datos a Ascent).
+  **No:** Fitbit/Google, Samsung, RingConn, Circular, Amazfit, Xiaomi, Huawei,
+  Ultrahuman (salvo como socio) ni Da Rings.
+- **Agregadores, al 2/11/2026:** Junction US$300 por mes hasta 500 usuarios (sandbox
+  gratis), Sahha US$299 (pero en la nube solo Oura, WHOOP y Garmin), ROOK US$399, Terra
+  US$499, Thryve 499 €, Spike desde US$450; Open Wearables es gratis pero hay que
+  alojarlo. Pasan los datos por un tercero (hay que nombrarlo en la privacidad y pedir
+  permiso, guías 5.1.1(i) y 5.1.2(i)). Para una app que todavía no factura, no.
+- **En Perfil › Aparatos** (maqueta en la galería): arriba, «De dónde sale la noche»,
+  con «Automática (Salud)» elegida de fábrica; debajo, «Conectar directo», una fila por
+  marca con lo que suma y «Conectar» (Oura, WHOOP, Polar y Garmin, con «Pronto» mientras
+  no estén aprobadas); conectada, «Conectado · última noche 7:12» y «Desconectar», que
+  revoca el permiso y borra lo traído. Al pie, chico: «RingConn, Amazfit, Xiaomi, Huawei,
+  Da Rings y otros anillos llegan solo por Salud.»
+
+Fuentes nuevas (2/11/2026): la ficha de Da Rings
+(https://apps.apple.com/us/app/da-rings/id6443980625), el plugin de MO YOUNG
+(https://pub.dev/packages/moyoung_ble_plugin), SOXAI
+(https://www.docomo.ne.jp/product/soxairing/), Oura sin servidor
+(https://cloud.ouraring.com/docs/authentication), los términos de WHOOP
+(https://developer.whoop.com/api-terms-of-use), Garmin
+(https://developer.garmin.com/gc-developer-program/overview,
+https://the5krunner.com/2026/10/14/garmin-api-intervals-third-party-apps/), Polar
+(https://www.polar.com/accesslink-api/, https://www.polar.com/en/legal/polar-api-agreement)
+y los precios de Junction (https://www.junction.com/pricing), Terra
+(https://tryterra.co/pricing), ROOK (https://www.tryrook.io/pricing), Thryve
+(https://www.thryve.health/pricing), Spike (https://www.spikeapi.com/pricing) y Sahha
+(https://sahha.ai/pricing).
+
 ## Una noche, una fuente
 
 ### El orden

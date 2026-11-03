@@ -16,9 +16,13 @@ numeradas [n], con autores, año, revista y enlace.
   permiso (leer un tipo no pedido cierra la app), y sin reloj casi no hay.
 - **Dónde se ve:** una línea debajo del nombre de la comida que toca, en Comida
   (aunque todavía no sea su hora) y en la hoja de registro con esa comida
-  elegida. Nunca un aviso. Tocarla dice por qué, con las fuentes, y ahí se
+  elegida. La línea nunca es un aviso. Tocarla dice por qué, con las fuentes, y ahí se
   apaga; vuelve en Perfil › Entrenamiento. Con «sin déficit» no aparece ni la
   fila de Perfil.
+- **Los avisos** (3/11/2026, para aprobar): comer antes de entrenar, el café y la
+  proteína de después también llegan como avisos, cada uno con su interruptor,
+  con las mismas reglas y la comida previa contada desde que sales al gimnasio
+  (5.11). Están en [`avisos.md`](avisos.md), «Lo que conviene hacer».
 - **Lo que falta decidir** está en «7. Pendiente».
 
 ## Resumen
@@ -568,9 +572,11 @@ carbohidratos (1 g/kg) en cada uno, más la proteína de B1.
 ### 5.8 Cómo se ve, sin molestar
 
 - **Una línea debajo del nombre de la comida,** en Comida y en la hoja de
-  registro cuando esa comida está elegida. Nunca un aviso del teléfono, nunca en
-  otra pantalla. Los avisos de hábitos atados a «entrenamiento»
-  (`src/dominio/avisos.ts`) son otra cosa: los elige cada uno.
+  registro cuando esa comida está elegida. La línea no es un aviso del teléfono ni
+  está en otra pantalla. Los avisos de hábitos atados a «entrenamiento»
+  (`src/dominio/avisos.ts`) son otra cosa: los elige cada uno. Y los avisos de lo
+  que conviene (comer antes, el café, la proteína de después: 5.11 y
+  [`avisos.md`](avisos.md)) también: se prenden en Perfil › Avisos.
 - **Solo los días con sesión** (hecha o prevista). Las de antes se ven hasta T;
   las de después, desde el final hasta que se anota esa comida o pasan 4 h. Al
   anotar la comida, la línea se va con una animación (y respeta Reducir
@@ -640,7 +646,192 @@ carbohidratos (1 g/kg) en cada uno, más la proteína de B1.
 - Suplementos, preentrenos y dosis de cafeína [27][31].
 - Comidas «para dormir» y más proteína por dormir mal [37][38][44][45].
 
+### 5.11 La comida previa según tus horarios y el viaje (los avisos)
+
+Lo pediste el 3/11/2026: «como, espero una hora o dos, y tardo una hora en ir».
+Para los avisos (`src/dominio/loQueConviene.ts`), la comida previa cuenta desde
+que **sales**, no desde que empiezas:
+
+- **El viaje:** «Tardo en llegar al gimnasio», en Perfil › Entrenamiento: en
+  casa, 15, 30, 45 o 60 minutos; 15 de fábrica (`Entreno.viaje`, en
+  `alrededorDelEntreno.ts`). Salir es la hora de entrenar menos eso.
+- **Las horas de comer:** las que ya tiene Moss, en este orden: la del horario
+  de comidas (Perfil › Avisos), la mediana de cuándo la anotaste en tres semanas
+  (`horaHabitual`, en `recordatorios.ts`) y la típica (`HORA_TIPICA`: 8:00, 13:00,
+  17:30 y 21:00). Hoy, corridas por la última que anotaste (`horasCorridas`, como
+  el horario), y al cuarto de hora. No hizo falta nada nuevo.
+- **La previa:** la comida que cae entre 1 y 4 h antes de salir (A1 y A2, desde la
+  salida); la más cercana. Si ninguna cae, algo liviano 60 a 90 minutos antes de
+  salir (a los 75), con lo de la previa liviana; si una comida caía justo antes de
+  salir o durante el entreno, es esa, más temprano. Lo que caería entre una hora
+  antes de salir y el final del entreno no suena a su hora.
+- **Los gramos:** los de 5.5, contados hasta que empiezas (con 2 h o más, la
+  previa; con menos, la liviana), y «poca grasa» [3][24].
+- **El café de antes,** una hora antes de empezar [27]: con 60 minutos de viaje, al
+  salir.
+- **Lo que falta:**
+  - La línea de la comida todavía cuenta desde que empiezas (30 minutos a 4 h
+    antes): con el viaje, conviene que cuente desde que sales, como el aviso
+    (Pendiente 9).
+  - Las horas de comer de los días de entreno salen de todos los días: si los días
+    que entrenas comes a otra hora, habría que aprenderlas aparte o pedir una hora
+    a mano.
+  - Si no sueles merendar, la merienda típica de las 17:30 igual cuenta como
+    comida: para entrenar a la tarde es justo lo que conviene, y el aviso dice la
+    hora.
+
 ---
+
+### 5.12 Según el tipo de deporte (3/11/2026, para decidir)
+
+Lo pediste así: que el cuestionario pregunte qué tipo de ejercicio haces (algo con
+mucha carrera como fútbol o básquetbol, fuerza como el gimnasio, o mixto), porque «no
+gira todo dentro de proteína, carbohidratos y grasas», y que lo investigue. **Tienes
+razón, con dos correcciones:** el fútbol y el básquetbol no son «aeróbicos», son
+intermitentes (piques y saltos que gastan glucógeno), y el rugby no es gimnasio: es un
+deporte de equipo con choques. La proteína casi no cambia según el deporte (la meta de
+Moss, 1,6 a 2,2 g/kg, sirve para casi todos). Lo que cambia es cuántos carbohidratos
+según el día y cuándo, el agua y el sodio, la recuperación (que los choques y el
+alcohol hacen más lenta), algunos riesgos (energía baja, hierro, huesos, picos de
+carga) y cuánto rinde dormir más. El cuestionario ya pregunta los tipos (varios a la
+vez); las reglas de abajo **no están programadas**: se deciden y se prueban primero en
+la galería.
+
+| Tipo | Qué cambia | Qué vigilar | |
+|---|---|---|---|
+| Pesas o máquinas | Proteína y calorías: lo que ya hay | Nada nuevo | [D1] |
+| Partidos (fútbol, básquetbol, hockey, vóley, tenis, pádel) | Carbohidratos según el día, de 3 a 8 g/kg (6 a 8 el día antes y el del partido); comida 3 a 4 h antes con 1 a 3 g/kg; 30 a 60 g/h desde el calentamiento en lo largo | 72 h no alcanzan para recuperarse de un partido; partidos de noche; alcohol | [D2]–[D7] |
+| Correr, bici o nadar | 5 a 7 g/kg con 1 h por día; 6 a 10 con 1 a 3 h; 10 a 12 los días antes de una carrera de más de 90 min. Por hora se pierden ≈ 1,3 L de sudor y 1,2 g de sodio | Energía baja, hierro y calcio; tomar de más; picos de distancia | [D1][D8]–[D10] |
+| Choques o combate (rugby, artes marciales, boxeo) | Gasta más (rugby: hasta ≈ 5.400 kcal en un día, ≈ 230 kcal más en reposo el día después) | Comer de menos; alcohol; con categoría de peso, bajar 0,5 a 1 kg por semana y nunca cortes antes del pesaje | [D11]–[D13] |
+| Mixto | La suma de los dos, por tipo y no «mixto»: básquet con pesas no pide lo mismo que bici con pesas. El deporte no frena la hipertrofia; mejor separar las sesiones unas 3 h | Los días con dos sesiones (B3) | [D14] |
+
+**Las reglas que se podrían programar** (dato, umbral, la línea en tú y qué tan fuerte
+es; «derivado» es un umbral puesto a partir de las fuentes):
+
+1. **Partido** (partidos o choques, con el día en el cuestionario): el día antes y el del
+   partido, 5 g/kg o más de carbohidratos en amateurs (6 a 8 es en élite, derivado) y sin
+   déficit aunque esté bajando (derivado); lo mismo entre dos partidos a menos de 72 h.
+   «Mañana juegas: hoy y mañana, carbohidratos en cada comida.» Moderada [D1][D2][D6].
+2. **Carrera de más de 90 min** (cargada en Perfil): 10 a 12 g/kg los 2 días previos, con
+   poca fibra y sin déficit. «Tu carrera es pasado mañana: carbohidratos en todas tus
+   comidas y menos fibra.» Fuerte [D1].
+3. **Los carbohidratos del día** (resistencia y partidos; responde el pendiente 6): 5 a 7
+   g/kg los días con 1 h o más de entrenamiento, no el promedio de la semana. «Hoy
+   entrenas más de una hora: que tu plato tenga más carbohidratos.» Fuerte en
+   resistencia, moderada en partidos [D1][D2].
+4. **Pesarse antes y después** (dos pesadas a menos de 3 h alrededor de una sesión, más el
+   agua anotada): si perdió más del 2 %, tomar más durante; después, 1,25 a 1,5 L por
+   kilo perdido; con más de 2 h o mucho sudor, algo salado. «Perdiste 1,2 kg: toma unos
+   1,5 L en las próximas horas, con algo salado.» El método es fuerte; el corte del 2 %,
+   moderado [D1][D18][D19].
+5. **Alcohol después de jugar** (partidos o choques): 1 g/kg o más en las 12 h siguientes
+   (≈ 5 latas de cerveza para 70 kg). «Después de jugar, mucho alcohol frena la
+   recuperación y empeora el sueño.» Moderada a débil [D20]–[D22].
+6. **Partido de noche** (termina después de las 20 h, derivado): esa noche se duerme ≈ 80
+   min menos. «Jugaste tarde: es normal dormirte tarde. Si puedes, duerme más mañana o
+   haz una siesta corta temprano.» Moderada en la pérdida, débil en lo que conviene [D7].
+7. **Dormir más** (partidos): con 1 h o más de deuda por noche. «En semanas de partidos,
+   una hora más de sueño es de lo que más ayuda.» Débil a moderada [D23]–[D25]. Antes de
+   los 18, la necesidad de fábrica debería ser 9 h (AASM: 8 a 10) [D26].
+8. **Más carga y menos sueño** (derivado): la carga de la semana sube un 25 % sobre las
+   últimas 4 y 3 de 7 noches son de menos de 7 h (menos de 8 antes de los 18). «Esta
+   semana entrenas más y duermes menos: es la combinación que más se asocia con
+   lesiones.» Moderada en adolescentes (menos de 8 h, 1,7 veces más lesiones), débil en
+   adultos [D27]–[D31].
+9. **Pico de distancia** (corredores): la carrera de hoy pasa en más de un 10 % a la más
+   larga de los últimos 30 días (+64 % de lesiones; el aumento semanal en % y el ACWR no
+   se asociaron). «Fue tu carrera más larga del mes por bastante: subir poco a poco cuida
+   tus piernas.» Moderada [D9].
+10. **Energía baja**, con alguna de estas señales durante dos semanas (derivado; pesa más
+    el peso que lo anotado): quiere mantener o subir y su tendencia baja un 1 % en 3
+    semanas con 3 sesiones por semana o más; baja más de un 1 % por semana con mucha
+    carga; o, con masa magra conocida y 6 de 7 días anotados, (kcal comidas − kcal de
+    entrenar) / masa magra por debajo de 30 en mujeres o de 25 en hombres. El daño es
+    fuerte; detectarlo desde la app es débil [D1][D32][D34]. El texto, abajo.
+11. **Hierro y calcio** (resistencia, mujeres, vegetarianos; 14 días con al menos 10 bien
+    anotados): hierro debajo de 18 mg (mujeres de 19 a 50) o de 8 mg (hombres); calcio
+    debajo de 1.000 mg (1.500 con energía baja). «Tu hierro viene bajo: carne, legumbres u
+    hojas verdes con vitamina C. Si estás muy cansada, pide un análisis de ferritina.»
+    Moderada; lo anotado es un indicio [D1][D10][D15]. La vitamina D no entra: la comida
+    casi no la trae y saberlo pide un análisis [D35].
+
+Afuera por débiles: los viajes de 3 husos horarios o más [D36] y la frecuencia en reposo
+o la variabilidad como señal de energía baja.
+
+**El cuestionario** (lo arma `src/dominio/cuestionario.ts`): las opciones son «Pesas o
+máquinas» (también crossfit), «Partidos», «Correr, bici o nadar», «Choques o combate» y
+«No entreno (o solo camino o hago yoga)», varias a la vez; con partidos o choques, si
+juega o compite y qué día; con combate, si compite por categoría de peso; con dos tipos,
+cuándo hace cada uno. No pregunta la posición (la carga sale de Salud y de Ascent), el
+ayuno (sale del registro), la temporada, la menstruación (va como señal en la regla 10)
+ni los suplementos. Si Salud dice otro deporte (`soccer`, `rugby`, `martialArts`…), Moss
+propone el cambio y nunca lo hace solo.
+
+**Lo que no se dice:**
+
+- **Suplementos:** ni dosis ni marcas; nada de preentrenos, quemadores, BCAA, «detox» ni
+  megadosis de vitaminas C y E, que frenan la adaptación [D37]; ni hierro ni vitamina D sin
+  un análisis (≈ 15 % de más de 600 productos traía prohormonas sin declarar [D15]). Con
+  evidencia según el IOC, solo como dato y sin sugerirlos: la cafeína, la creatina en
+  fuerza, partidos y choques, el nitrato en resistencia [D15][D16].
+- **Diagnósticos:** nada de «estás deshidratado», «RED-S», «anemia» ni «sobreentrenamiento»,
+  ni un riesgo de lesión en % ni un puntaje [D32].
+- **Cortes de peso:** nada de sauna, diuréticos ni dejar el agua [D13].
+- **Mitos:** el ayuno, la cetogénica o entrenar con poco glucógeno para rendir más
+  [D17][D38]; comer según la fase del ciclo [D39]; metas fijas de agua o «con sed ya es
+  tarde» (tomar de más causa hiponatremia) [D1][D19]; la regla del 10 % semanal [D9].
+- **La energía baja** se dice una sola vez, con «No mostrar más», sin números si están
+  ocultos, sin hablar del peso como meta [D33] y diciendo que unos días así son normales
+  [D32]: «En las últimas semanas comiste bastante menos de lo que pide tu entrenamiento.
+  Que pase unos días es normal; si sigue, puede afectar tu energía, tu rendimiento y tu
+  salud. Sumar algo antes y después de entrenar ayuda. Si además se te cortó la
+  menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés
+  o estás sin energía hace semanas, habla con un médico o un nutricionista del deporte.»
+
+No se pudo leer entero: el consenso de la UEFA (dio 403; los números salen de resúmenes y
+de un artículo de 2025 que los cita), el consenso REDs y el del ACSM 2021 sobre el peso
+(solo los resúmenes). Los autores de [D3], [D5] y [D8] son del GSSI (Gatorade).
+
+Fuentes de esta sección: [D1] Thomas, Erdman, Burke 2016, ACSM/AND/DC,
+https://doi.org/10.1016/j.jand.2015.12.006 · [D2] Collins 2021, UEFA,
+https://doi.org/10.1136/bjsports-2019-101961 · [D3] Davis 2022, básquet,
+https://doi.org/10.1007/s40279-021-01606-7 · [D4] Ranchordas 2013, tenis,
+https://www.jssm.org/jssm-12-211.xml%3EFulltext · [D5] Williams, Rollo 2015,
+https://doi.org/10.1007/s40279-015-0399-3 · [D6] Silva 2018,
+https://doi.org/10.1007/s40279-017-0798-8 · [D7] Roberts, Teo, Warmington 2019,
+https://doi.org/10.1136/bjsports-2018-099322 · [D8] Barnes 2019,
+https://doi.org/10.1080/02640414.2019.1633159 · [D9] Frandsen 2025,
+https://doi.org/10.1136/bjsports-2024-109380 · [D10] Pengelly 2025,
+https://doi.org/10.1016/j.jshs.2024.101009 · [D11] Roberts, Gough 2024,
+https://doi.org/10.3390/nu16173011 · [D12] Burke 2021, ACSM,
+https://doi.org/10.1249/JSR.0000000000000831 · [D13] Ricci 2025, ISSN,
+https://doi.org/10.1080/15502783.2025.2467909 · [D14] Schumann 2022,
+https://doi.org/10.1007/s40279-021-01587-7 · [D15] Maughan 2018, IOC,
+https://doi.org/10.1136/bjsports-2018-099027 · [D16] Kreider 2017, ISSN,
+https://doi.org/10.1186/s12970-017-0173-z · [D17] Gejl, Nybo 2021,
+https://doi.org/10.1186/s12970-021-00435-3 · [D18] Goulet 2013,
+https://doi.org/10.1136/bjsports-2012-090958 · [D19] McDermott 2017, NATA,
+https://doi.org/10.4085/1062-6050-52.9.02 · [D20] Barnes, Mündel, Stannard 2010 y 2011,
+https://doi.org/10.1007/s00421-009-1311-3, https://doi.org/10.1007/s00421-010-1655-8 ·
+[D21] Murphy 2013, https://doi.org/10.1519/JSC.0b013e318267a5e9 · [D22] Parr 2014,
+https://doi.org/10.1371/journal.pone.0088384 · [D23] Mah 2011,
+https://doi.org/10.5665/SLEEP.1132 · [D24] Schwartz, Simon 2015,
+https://doi.org/10.1016/j.physbeh.2015.08.035 · [D25] Walsh 2021,
+https://doi.org/10.1136/bjsports-2020-102025 · [D26] Paruthi 2016, AASM,
+https://doi.org/10.5664/jcsm.5866 · [D27] Milewski 2014,
+https://doi.org/10.1097/BPO.0000000000000151 · [D28] Gao 2019,
+https://doi.org/10.1097/BPO.0000000000001306 · [D29] von Rosen 2017,
+https://doi.org/10.1111/sms.12855 · [D30] Dobrosielski 2021,
+https://doi.org/10.1007/s40279-020-01416-3 · [D31] Watson 2020,
+https://doi.org/10.1177/2325967120964481 · [D32] Mountjoy 2023, IOC REDs,
+https://doi.org/10.1136/bjsports-2023-106994 · [D33] Torstveit 2023,
+https://doi.org/10.1136/bjsports-2023-106932 · [D34] Vardardottir 2024,
+https://doi.org/10.14814/phy2.16112 · [D35] Harju 2022,
+https://doi.org/10.1007/s00394-022-02967-z · [D36] Janse van Rensburg 2021,
+https://doi.org/10.1007/s40279-021-01502-0 · [D37] Paulsen 2014,
+https://doi.org/10.1113/jphysiol.2013.267419 · [D38] Burke 2017,
+https://doi.org/10.1113/JP273230 · [D39] McNulty 2020,
+https://doi.org/10.1007/s40279-020-01319-3
 
 ## 6. Lo que no pude verificar
 
@@ -686,6 +877,8 @@ carbohidratos (1 g/kg) en cada uno, más la proteína de B1.
 7. **La sesión prevista:** 3 de 4 semanas (lo propuesto) o 2 de 4.
 8. ~~El nombre del módulo y el escenario de la galería~~ Quedó (26/10):
    `src/dominio/alrededorDelEntreno.ts` y el escenario `entreno` de la galería.
+9. **El viaje en la línea:** ¿la línea de la comida cuenta también desde que sales
+   (como los avisos, 5.11) o sigue desde que empiezas?
 
 ---
 

@@ -1,11 +1,14 @@
 // Inicio: lo primero que se ve, hecho de bloques que cada uno elige y ordena (spec/especificacion.md,
 // cambio 9). De fábrica: las calorías y los macros que quedan, el progreso al objetivo, el peso con
-// el balance y el día en el cielo. El sueño de anoche y el agua están para sumarlos. Tocar un
-// bloque lleva a su sección.
+// el balance, el día en el cielo y, al final, «Para hoy» (los comentarios cortos de la comida, que
+// reemplazan al saludo de arriba desde el 2/11/2026). El sueño de anoche y el agua están para
+// sumarlos. Cuando el control está cerca, va debajo de la luna. Tocar un bloque lleva a su sección.
 
 const SeccionInicio = (() => {
-  const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'];
-  const DE_FABRICA = ['calorias', 'objetivo', 'peso', 'cielo'];
+  const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua', 'consejos'];
+  const DE_FABRICA = ['calorias', 'objetivo', 'peso', 'cielo', 'consejos'];
+  // El control se muestra en Inicio desde dos días antes (lo pediste el 2/11/2026).
+  const CONTROL_CERCA = 2;
   // Lo elegido queda en este navegador, como quedaría en el teléfono.
   const GUARDADO = 'moss-galeria-inicio';
 
@@ -16,12 +19,18 @@ const SeccionInicio = (() => {
     const s = { orden: [...BLOQUES], visibles: new Set(DE_FABRICA), primerDia: false };
     try {
       const g = JSON.parse(localStorage.getItem(GUARDADO) || 'null');
-      if (g && Array.isArray(g.orden)) { s.orden = [...g.orden.filter((b) => BLOQUES.includes(b)), ...BLOQUES.filter((b) => !g.orden.includes(b))]; s.visibles = new Set(g.visibles); }
+      if (g && Array.isArray(g.orden)) {
+        s.orden = [...g.orden.filter((b) => BLOQUES.includes(b)), ...BLOQUES.filter((b) => !g.orden.includes(b))];
+        // Un bloque nuevo de fábrica aparece aunque haya algo guardado de antes.
+        s.visibles = new Set([...g.visibles, ...DE_FABRICA.filter((b) => !g.orden.includes(b))]);
+      }
     } catch (_) { /* sin guardado, lo de fábrica */ }
+    // «Para hoy» de ejemplo, para las capturas: null es el día de la galería.
+    s.ejemplo = null;
     const guardar = () => { try { localStorage.setItem(GUARDADO, JSON.stringify({ orden: s.orden, visibles: [...s.visibles] })); } catch (_) { /* no pasa nada */ } };
 
     const zona = el('section', 'inicio pagina-app');
-    zona.innerHTML = '<div class="in-scroll"><header class="in-cab"><div class="in-fecha"></div><h2 class="in-titulo"></h2><p class="in-saludo" aria-live="polite"></p></header><div class="in-bloques"></div><div class="in-pie"></div></div>';
+    zona.innerHTML = '<div class="in-scroll"><header class="in-cab"><div class="in-fecha"></div><h2 class="in-titulo"></h2></header><div class="in-bloques"></div><div class="in-pie"></div><div class="in-suelo"></div></div>';
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const bloquesEl = zona.querySelector('.in-bloques');
@@ -97,7 +106,7 @@ const SeccionInicio = (() => {
       // La barra va debajo de la cifra; las otras, al lado o alrededor.
       if (Kcal.estilo === 'barra') arriba.append(cifra, f.el);
       else arriba.append(f.el, cifra);
-      f.ir(t.kcal / meta.kcal, ms, opciones.comida.porComida(0));
+      f.ir(t.kcal / meta.kcal, ms, opciones.comida.porComida(0), { p: t.p / meta.p, c: t.c / meta.c, g: t.g / meta.g });
       const macros = el('div', 'in-macros');
       [['p', 'proteina'], ['c', 'carbohidratos'], ['g', 'grasas']].forEach(([m, clave]) => {
         const estado = Metas.estadoDeMacro(t[m], meta[m]);
@@ -273,7 +282,98 @@ const SeccionInicio = (() => {
       return c;
     }
 
-    const ARMAR = { calorias, objetivo, peso, cielo, sueno, agua };
+    // ------------------------------------------------------------ para hoy
+    // Al final de Inicio (lo pediste el 2/11/2026), en vez del saludo de arriba: hasta tres comentarios
+    // cortos de la comida, una idea cada uno (ParaHoy.paraHoy, la regla de la app). Sin nada que decir,
+    // una línea tranquila. La hora de dormir y lo de entrenar van en los avisos.
+    const EJEMPLOS_PARA_HOY = {
+      mediodia: { ahora: 14 * 60 + 30, comido: { kcal: 480, proteina: 22, carbohidratos: 70, grasas: 14 }, sinAnotar: ['almuerzo'], anotadas: 1, proxima: 'merienda' },
+      tarde: { ahora: 17 * 60 + 40, comido: { kcal: 1250, proteina: 110, carbohidratos: 95, grasas: 38 }, sinAnotar: [], anotadas: 3, proxima: 'cena', agua: { ml: 750, meta: 2000 } },
+      nada: { ahora: 15 * 60, comido: { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 }, sinAnotar: ['desayuno', 'almuerzo'], anotadas: 0, proxima: 'merienda' },
+      bien: { ahora: 20 * 60, comido: { kcal: 2050, proteina: 135, carbohidratos: 250, grasas: 62 }, sinAnotar: [], anotadas: 3, proxima: 'cena', agua: { ml: 1750, meta: 2000 } },
+    };
+    function entradaDeParaHoy() {
+      const meta = opciones.comida.meta;
+      const metaDeHoy = { kcal: meta.kcal, proteina: meta.p, carbohidratos: meta.c, grasas: meta.g };
+      const sinDeficit = !!opciones.persona().perfil.sinDeficit;
+      if (s.ejemplo) return Object.assign({ meta: metaDeHoy, agua: null, sinDeficit }, EJEMPLOS_PARA_HOY[s.ejemplo]);
+      const t = opciones.comida.totalDe(0);
+      const agua = opciones.comida.agua();
+      const ahora = Datos.AHORA_MIN;
+      return {
+        ahora, meta: metaDeHoy, sinDeficit,
+        comido: { kcal: t.kcal, proteina: t.p, carbohidratos: t.c, grasas: t.g },
+        sinAnotar: opciones.comida.sinAnotar(),
+        anotadas: new Set(opciones.comida.comidasDeHoy().map((c) => c.tipo)).size,
+        proxima: Comidas.CON_HORA.find((c) => Comidas.HORA_TIPICA[c] > ahora) || null,
+        agua: agua.vasos > 0 ? { ml: agua.litros * 1000, meta: agua.meta * 1000 } : null,
+      };
+    }
+    const ICONO_DEL_CONSEJO = { anotar: 'comida', nadaAnotado: 'comida', pocosCarbohidratos: 'rayo', pocaProteina: 'rayo', muchaGrasa: 'rayo', faltaProteina: 'rayo', agua: 'gota' };
+    const MACRO_DEL_CONSEJO = { pocosCarbohidratos: 'c', pocaProteina: 'p', muchaGrasa: 'g', faltaProteina: 'p' };
+    function textoDelConsejo(x, sinNumeros) {
+      const en = tx('inicio.paraHoy.en.' + (x.proxima || 'resto'));
+      if (x.tipo === 'anotar') {
+        const nombres = x.comidas.map((c) => tx('inicio.paraHoy.comidas.' + c));
+        const ni = u.idioma() === 'es' ? ' ni ' : ' or ';
+        return tx('inicio.paraHoy.anotar', { comidas: nombres.length < 2 ? nombres[0] : `${nombres.slice(0, -1).join(', ')}${ni}${nombres[nombres.length - 1]}` });
+      }
+      if (x.tipo === 'faltaProteina') return tx(sinNumeros ? 'inicio.paraHoy.faltaProteinaSinNumeros' : 'inicio.paraHoy.faltaProteina', { g: numero(x.gramos), en });
+      if (x.tipo === 'agua') return tx(sinNumeros ? 'inicio.paraHoy.aguaSinNumeros' : 'inicio.paraHoy.agua', { n: x.vasos });
+      return tx('inicio.paraHoy.' + x.tipo, { en });
+    }
+    function consejos() {
+      const c = carta('in-consejos', tx('inicio.bloques.consejos'));
+      const e = entradaDeParaHoy();
+      const lista = ParaHoy.paraHoy(e);
+      const sinNumeros = tel.classList.contains('sin-numeros');
+      if (!lista.length) {
+        c.appendChild(el('p', 'in-consejo-nada', tx(e.anotadas ? 'inicio.paraHoy.bien' : 'inicio.paraHoy.todaviaNada')));
+        return c;
+      }
+      const ul = el('ul', 'in-consejos-lista');
+      lista.forEach((x, i) => {
+        const li = el('li', 'in-consejo in-consejo-' + x.tipo + (MACRO_DEL_CONSEJO[x.tipo] ? ' in-macro-' + MACRO_DEL_CONSEJO[x.tipo] : ''));
+        li.style.animationDelay = `${(0.06 * i).toFixed(2)}s`;
+        const ico = el('span', 'in-consejo-ico');
+        ico.innerHTML = icono(ICONO_DEL_CONSEJO[x.tipo]);
+        li.append(ico, el('p', null, textoDelConsejo(x, sinNumeros)));
+        // Lo que falta anotar se anota de ahí mismo, en esa comida.
+        if (x.tipo === 'anotar' || x.tipo === 'nadaAnotado') {
+          li.appendChild(boton('in-consejo-accion', tx('inicio.paraHoy.anotarBoton'), (ev) => {
+            ev.stopPropagation();
+            opciones.comida.abrirHoja({ comida: x.tipo === 'anotar' ? x.comidas[0] : Comidas.comidaDeLaHora(e.ahora) });
+          }));
+        }
+        ul.appendChild(li);
+      });
+      c.appendChild(ul);
+      return c;
+    }
+
+    // ------------------------------------------------------------ el control, cuando se acerca
+    // Debajo de la luna, desde dos días antes (lo pediste el 2/11/2026): cuándo es y, si le falta algo,
+    // qué, en una línea. Lleva a Progreso.
+    function controlCerca() {
+      const e = opciones.persona().estadoControl;
+      if (!e || e.faltan > CONTROL_CERCA) return null;
+      const c = carta('in-control', null, 2);
+      const cuando = e.faltan === 1 ? tx('progreso.manana') : tx('progreso.enDias', { n: e.faltan });
+      const titulo = e.faltan === 0 ? tx('inicio.control.hoy') : tx('inicio.control.titulo', { dia: tx('fecha.dias.' + Fechas.diaDeLaSemana(e.fecha)), cuando });
+      const falta = e.pesadas < e.minimos.pesadas ? tx('inicio.control.faltaPesada')
+        : e.diasConComida < e.minimos.diasConComida ? u.plural('inicio.control.faltanDias', e.minimos.diasConComida - e.diasConComida)
+        : tx('inicio.control.listo');
+      const textos = el('div', 'in-control-textos');
+      textos.append(el('b', null, titulo), el('span', null, falta));
+      const fila = el('div', 'in-control-fila');
+      fila.innerHTML = icono('reloj');
+      fila.appendChild(textos);
+      fila.insertAdjacentHTML('beforeend', icono('adelante'));
+      c.appendChild(fila);
+      return c;
+    }
+
+    const ARMAR = { calorias, objetivo, peso, cielo, sueno, agua, consejos };
 
     // ------------------------------------------------------------ todo lo de hoy
     // Tocar la luna (lo pediste el 30/10/2026): lo de hoy con lo que falta, lo que Moss sabe de ti y de
@@ -307,6 +407,21 @@ const SeccionInicio = (() => {
       const cab = el('header', 'hb-cab');
       cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('inicio.todo.titulo')), boton('hb-cerrar', icono('cerrar'), () => hojaTodo.cerrar(), tx('comida.cerrar')));
       const cuerpo = el('div', 'tt-cuerpo');
+
+      // Arriba de todo, cómo ver las calorías (lo pediste el 2/11/2026): cada uno elige el suyo, y se
+      // ve en Inicio y en Comida.
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('inicio.todo.estilo.titulo')));
+      const estilos = el('div', 'tt-estilos');
+      Kcal.ESTILOS.forEach((e) => {
+        const b = boton('tt-estilo', '', () => { Kcal.poner(e); estilos.querySelectorAll('.tt-estilo').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.estilo === e))); });
+        b.dataset.estilo = e;
+        b.setAttribute('aria-pressed', String(e === Kcal.estilo));
+        const muestra = el('span', 'tt-estilo-muestra');
+        muestra.appendChild(Kcal.muestra(e));
+        b.append(muestra, el('span', 'tt-estilo-nombre', tx('inicio.todo.estilo.' + e)));
+        estilos.appendChild(b);
+      });
+      cuerpo.appendChild(estilos);
 
       // Hoy: lo comido, la meta y lo que falta o se pasó.
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('inicio.todo.hoy')));
@@ -439,26 +554,56 @@ const SeccionInicio = (() => {
       return c;
     }
 
-    // El saludo del día (saludo.js): se pide en cada pintada, y solo se toca si la frase cambió.
-    function ponerSaludo() {
-      const texto = opciones.saludo ? opciones.saludo(s.primerDia) : null;
-      if (texto) SeccionSaludo.mostrar(zona.querySelector('.in-saludo'), texto);
+    // «Para hoy» depende de lo anotado, del agua y de los números ocultos: se rehace solo ese bloque.
+    function refrescarConsejos() {
+      const viejo = bloquesEl.querySelector('.in-consejos');
+      if (viejo) viejo.replaceWith(consejos());
     }
 
     function pintar(ms) {
       const hoy = u.partes(Datos.HOY);
       zona.querySelector('.in-fecha').textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) });
       zona.querySelector('.in-titulo').textContent = tx('inicio.titulo');
-      ponerSaludo();
       bloquesEl.innerHTML = '';
       if (s.primerDia) [caloriasPrimerDia(), caminoPrimerDia(), cieloPrimerDia()].forEach((b) => bloquesEl.appendChild(b));
       else s.orden.filter((b) => s.visibles.has(b)).forEach((b) => bloquesEl.appendChild(ARMAR[b](ms)));
+      // El control, cuando se acerca, justo debajo de la luna.
+      const control = s.primerDia ? null : controlCerca();
+      const luna = bloquesEl.querySelector('.in-calorias');
+      if (control) bloquesEl.insertBefore(control, luna ? luna.nextSibling : bloquesEl.firstChild);
       // La invitación de Ascent (ascent.js), debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
       const invitacion = s.primerDia ? null : opciones.invitacionDeAscent();
-      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2] || null);
+      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[control ? 3 : 2] || null);
       const pie = zona.querySelector('.in-pie');
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));
+      // Abajo de todo, el musgo: donde termina el día, como en el cielo de Hábitos.
+      const suelo = zona.querySelector('.in-suelo');
+      if (!suelo.firstChild) suelo.appendChild(musgo());
+    }
+
+    // Un borde de musgo oscuro y apagado, con algunas esporas que toman la luz de la luna: poco verde,
+    // como lo pediste (sobria), y siempre igual (sin azar), para que no cambie al repintar.
+    function musgo() {
+      const caja = el('div', 'in-musgo');
+      caja.setAttribute('aria-hidden', 'true');
+      const ancho = 360;
+      let matas = '';
+      for (let x = -6, k = 0; x < ancho + 10; k++) {
+        const r = 7 + ((k * 37) % 11);
+        const alto = 14 + ((k * 53) % 13);
+        matas += `<ellipse cx="${x}" cy="${46 - alto / 2}" rx="${r}" ry="${alto / 1.6}"/>`;
+        x += r * 1.25;
+      }
+      let esporas = '';
+      for (let k = 0; k < 26; k++) {
+        const x = (k * 97) % ancho;
+        const y = 22 + ((k * 31) % 16);
+        const h = 6 + ((k * 13) % 7);
+        esporas += `<path d="M${x} ${y + h} q 1 ${-h / 2} 0 ${-h}"/><circle cx="${x}" cy="${y}" r="1.1"/>`;
+      }
+      caja.innerHTML = `<svg viewBox="0 0 ${ancho} 52" preserveAspectRatio="none"><g class="in-musgo-fondo">${matas}</g><rect class="in-musgo-suelo" x="0" y="40" width="${ancho}" height="12"/><g class="in-musgo-esporas">${esporas}</g></svg>`;
+      return caja;
     }
 
     // ------------------------------------------------------------ personalizar
@@ -549,7 +694,9 @@ const SeccionInicio = (() => {
       mover(bloque, a) { const i = s.orden.indexOf(bloque); s.orden.splice(i, 1); s.orden.splice(a, 0, bloque); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       deFabrica() { s.orden = [...BLOQUES]; s.visibles = new Set(DE_FABRICA); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },
       primerDia(si) { s.primerDia = !!si; pintar(0); },
-      ponerSaludo,
+      refrescarConsejos,
+      // «Para hoy» en otro momento del día (mediodia, tarde, nada, bien); null vuelve al de la galería.
+      ejemplo(e) { s.ejemplo = e || null; refrescarConsejos(); },
       abrirTodo,
       cerrarTodo: () => hojaTodo.cerrar(),
       bajarTodo: (selector) => {

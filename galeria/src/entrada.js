@@ -1,6 +1,7 @@
 // La entrada a la app, para aprobar en la galería antes de conectarla con la lógica: la frase de
 // apertura, la introducción (la comida, la base, el sueño, los dos juntos, los hábitos y el cielo, y lo
-// que cuesta), tus datos, la cuenta, el cuestionario que arma la meta inicial de comida y, al final, la
+// que cuesta), tus datos, la cuenta, el cuestionario que arma la meta inicial de comida y el plan (el
+// nuevo, del 2/11/2026, con las preguntas de MacroFactor: src/dominio/cuestionario.ts) y, al final, la
 // pantalla de pago (suscripcion.js). La recorre una estrella guía: nace en el musgo, presenta la frase,
 // da vueltas a la luna, recorre la base y la noche, une el sueño con la comida, enciende Casiopea, camina
 // la prueba, acompaña desde arriba y en el cuestionario lleva la barra. En la frase y la introducción
@@ -91,8 +92,166 @@ const Entrada = (() => {
 .ent-camino-puntos b { font: 500 14px/1.2 var(--texto); }
 .ent-camino-puntos span { font: 400 12.5px/1.28 var(--texto); color: rgba(239, 230, 207, 0.72); text-wrap: balance; }
 .ent-precio-nota { top: 58%; margin: 0; font: 400 13px/1.3 var(--texto); color: rgba(239, 230, 207, 0.66); }
+
+/* El cuestionario nuevo (2/11/2026): lo que depende de lo elegido crece y se achica (abierto y quieto,
+   deja ver los brillos de adentro), las etiquetas chicas, los pasos de a 15 minutos y las pantallas densas. */
+.ent-denso .ent-titulo { font-size: 28px; }
+.ent-denso .ent-texto { font-size: 14px; margin-top: 8px; }
+.ent-etiqueta { display: block; margin: 18px 0 9px; font: 400 10.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.5); }
+.ent-plegable { display: grid; grid-template-rows: 1fr; opacity: 1; transition: grid-template-rows 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.32s; }
+.ent-plegable.cerrado { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+.ent-plegable > div { min-height: 0; overflow: hidden; }
+.ent-plegable:not(.cerrado):not(.moviendo) > div { overflow: visible; }
+.ent-cambia { transition: opacity 0.18s; }
+.ent-cambia.saliendo { opacity: 0; }
+.ent-pasito { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.14); background: rgba(6, 10, 22, 0.5); }
+.ent-pasito button { appearance: none; cursor: pointer; width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 0; background: rgba(239, 230, 207, 0.07); color: var(--oro-claro); display: grid; place-items: center; transition: transform 0.15s; }
+.ent-pasito button:active { transform: scale(0.9); }
+.ent-pasito svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.ent-pasito b { min-width: 62px; text-align: center; font: 500 16px/1 var(--numeros); font-variant-numeric: lining-nums tabular-nums; color: #fbf2d9; }
+.ent-numero.ent-mediano { margin-top: 14px; }
+.ent-numero.ent-mediano b { font-size: 56px; }
+.ent-mediano + .ent-rango { margin-top: 14px; }
+/* La hoja de la página va en el body, después de esta: lo que pisa una regla suya lleva .entrada adelante. */
+.entrada .ent-opciones.ent-cuatro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.entrada .ent-cuatro .ent-opcion { padding: 11px 3px; }
+.entrada .ent-cuatro .ent-opcion b { font-size: 12.5px; white-space: nowrap; }
+.entrada .ent-opciones.ent-par { grid-template-columns: 1fr 1fr; }
+.ent-etiqueta + .ent-opciones { margin-top: 0; }
+.ent-opciones.ent-cuadro { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.ent-cuadro .ent-opcion { padding: 12px; align-content: center; }
+.ent-cuadro .ent-opcion b { font-size: 14.5px; }
+.con-icono.ent-cuadro .ent-opcion { grid-template-columns: 30px minmax(0, 1fr); gap: 10px; }
+.ent-cuadro .ent-opcion-icono { width: 30px; height: 30px; }
+.ent-segmento .ent-opcion span { font: 400 11.5px/1.2 var(--numeros); font-variant-numeric: tabular-nums; }
+.ent-opciones.ent-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0; }
+.ent-chips .ent-opcion { padding: 9px 14px; border-radius: 999px; }
+.ent-chips .ent-opcion b { font: 400 14px/1.1 var(--texto); }
+.ent-opcion[data-valor] { position: relative; }
+.ent-sugerida { display: inline-block; margin-left: 7px; padding: 3px 7px; border-radius: 999px; font: 400 10.5px/1 var(--texto); color: var(--salvia); border: 1px solid rgba(166, 191, 148, 0.45); vertical-align: 2px; }
+.ent-nota-salud { display: block; margin-top: 14px; font: 400 12.5px/1.35 var(--texto); color: var(--salvia); }
+
+/* Esto dice Salud: los cuatro datos en una tarjeta, y cada uno se abre para cambiarlo. */
+.ent-tarjeta { margin-top: 20px; border-radius: 18px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.12); overflow: hidden; animation: ent-entra 0.6s 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ent-fila { appearance: none; cursor: pointer; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto auto 14px; align-items: center; gap: 10px; padding: 15px 16px; background: none; border: 0; border-top: 1px solid rgba(239, 230, 207, 0.08); color: var(--tinta); text-align: left; }
+.ent-tarjeta > .ent-fila:first-child { border-top: 0; }
+.ent-fila span { font: 400 14.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.72); }
+.ent-fila b { font: 500 17px/1 var(--numeros); font-variant-numeric: lining-nums tabular-nums; color: #fbf2d9; }
+.ent-fila .ent-de-salud { margin: 0; transition: opacity 0.3s; }
+.ent-fila .ent-de-salud.apagado { opacity: 0; }
+.ent-fila i { color: rgba(239, 230, 207, 0.45); display: grid; }
+.ent-fila i svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.3s; }
+.ent-fila[aria-expanded='true'] i svg { transform: rotate(180deg); }
+.ent-editor { padding: 0 16px 14px; }
+.ent-editor .ent-rango { margin-top: 0; }
+.ent-editor .ent-opciones { margin-top: 2px; }
+
+/* La grasa: cómo la sabes, y debajo lo de cada modo. Las figuras son dibujos, sin rasgos. */
+.ent-grasa-zona { margin-top: 2px; }
+.ent-grasa-zona .ent-chico { margin-top: 14px; }
+.ent-figuras { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ent-figura { appearance: none; cursor: pointer; padding: 8px 4px 8px; border-radius: 14px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.12); color: rgba(239, 230, 207, 0.4); display: grid; justify-items: center; gap: 5px; transition: color 0.25s, border-color 0.25s, background 0.25s, box-shadow 0.25s; animation: ent-entra 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ent-figura svg { width: 40px; height: 62px; fill: currentColor; }
+.ent-figura svg .ent-brazos { fill: none; stroke: currentColor; stroke-linecap: round; }
+.ent-figura svg .ent-torso { stroke: #0a0f1f; stroke-width: 1.1; }
+.ent-figura span { font: 400 11.5px/1 var(--numeros); font-variant-numeric: tabular-nums; color: rgba(239, 230, 207, 0.66); }
+.ent-figura[aria-pressed='true'] { color: var(--oro-claro); border-color: rgba(232, 196, 106, 0.75); background: rgba(232, 196, 106, 0.1); box-shadow: 0 0 18px rgba(232, 196, 106, 0.18); }
+.ent-figura[aria-pressed='true'] span { color: var(--oro-claro); }
+.ent-medidas { margin-top: 12px; display: grid; gap: 8px; }
+.ent-medida { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 14px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.1); }
+.ent-medida b { display: block; font: 500 14.5px/1.2 var(--texto); }
+.ent-medida small { display: block; margin-top: 2px; font: 400 11.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.ent-resultado-cinta { margin-top: 12px; font: 400 15px/1.3 var(--texto); color: var(--oro-claro); text-align: center; }
+
+/* El entreno: qué deportes (se elige más de uno, con su marca a la derecha), y después qué días, a qué
+   hora, cuánto dura y cuánto tardas en llegar. */
+.ent-opciones.ent-varias { gap: 8px; margin-top: 18px; }
+.ent-varias .ent-opcion { padding: 12px 14px; }
+.con-icono.ent-varias .ent-opcion { grid-template-columns: 34px minmax(0, 1fr) 20px; }
+.ent-opcion-marca { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(239, 230, 207, 0.25); display: grid; place-items: center; color: transparent; transition: color 0.25s, background 0.25s, border-color 0.25s; }
+.ent-opcion-marca svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ent-opcion[aria-pressed='true'] .ent-opcion-marca { color: #1a1406; background: var(--oro); border-color: var(--oro); }
+.ent-dias { display: flex; justify-content: space-between; gap: 4px; }
+.ent-diasem { appearance: none; cursor: pointer; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1px solid rgba(239, 230, 207, 0.18); background: rgba(6, 10, 22, 0.5); color: rgba(239, 230, 207, 0.72); font: 500 13.5px/1 var(--texto); transition: color 0.25s, border-color 0.25s, background 0.25s, box-shadow 0.25s; }
+.ent-diasem[aria-pressed='true'] { background: rgba(232, 196, 106, 0.16); border-color: rgba(232, 196, 106, 0.8); color: var(--oro-claro); box-shadow: 0 0 12px rgba(232, 196, 106, 0.25); }
+.ent-dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ent-desliza { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -28px; padding: 0 28px 10px; scrollbar-width: none; }
+.ent-desliza::-webkit-scrollbar { display: none; }
+.ent-sesion + .ent-sesion { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(239, 230, 207, 0.08); }
+.ent-sesion-cab { display: flex; align-items: center; gap: 8px; margin: 14px 0 10px; color: var(--oro-claro); }
+.ent-sesion-cab svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ent-sesion-cab b { font: 500 14px/1.2 var(--texto); color: var(--tinta); }
+.ent-pregunta { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 118px; align-items: center; gap: 12px; }
+.ent-pregunta > span { font: 400 14px/1.3 var(--texto); color: var(--tinta); }
+.entrada .ent-pregunta .ent-opciones { margin-top: 0; }
+.entrada .ent-si-no .ent-opcion { padding: 9px 4px; }
+.ent-dia-partido .ent-etiqueta { margin-top: 12px; }
+.ent-suma { margin: 14px 0 0; font: 400 12.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.6); }
+
+/* El peso meta con su ritmo: cada ritmo con su fecha, o una fecha con el ritmo que pide. */
+.ent-ritmos { display: grid; gap: 6px; }
+.ent-ritmo-fila { appearance: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: rgba(6, 10, 22, 0.55); border: 1px solid rgba(239, 230, 207, 0.14); color: var(--tinta); text-align: left; transition: border-color 0.25s, background 0.25s, box-shadow 0.25s; animation: ent-entra 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ent-ritmo-fila b { font: 500 15px/1.2 var(--texto); }
+.ent-ritmo-fila span { display: block; margin-top: 2px; font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.6); }
+.ent-ritmo-fila em { font: normal 400 14px/1 var(--numeros); font-variant-numeric: lining-nums tabular-nums; color: rgba(239, 230, 207, 0.88); white-space: nowrap; }
+.ent-ritmo-fila[aria-pressed='true'] { border-color: rgba(232, 196, 106, 0.75); background: rgba(232, 196, 106, 0.1); box-shadow: 0 0 22px rgba(232, 196, 106, 0.18); }
+.ent-ritmo-fila:disabled { opacity: 0.45; cursor: default; }
+.ent-ritmo-fila i { display: grid; color: rgba(239, 230, 207, 0.5); }
+.ent-ritmo-fila i svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ent-fecha-elegida { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ent-fecha-elegida .ent-pasito b { min-width: 76px; }
+.ent-viab { display: grid; justify-items: end; gap: 4px; text-align: right; }
+.ent-viab em { font: normal 500 12.5px/1 var(--texto); }
+.ent-viab span { font: 400 12px/1.2 var(--numeros); font-variant-numeric: tabular-nums; color: rgba(239, 230, 207, 0.62); }
+.ent-viab .viable { color: var(--salvia); }
+.ent-viab .exigente { color: var(--oro-claro); }
+.ent-viab .muyAgresivo { color: #f0a58a; }
+
+/* El plan, en una línea: hoy, la meta y lo que sigue. */
+.ent-plan { position: relative; margin-top: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ent-plan-hilo { position: absolute; left: 16.67%; right: 16.67%; top: 5px; height: 1px; background: rgba(239, 230, 207, 0.18); }
+.ent-plan-hilo i { display: block; height: 100%; background: linear-gradient(90deg, var(--oro), rgba(232, 196, 106, 0.55)); box-shadow: 0 0 8px rgba(232, 196, 106, 0.6); transform-origin: left; animation: ent-camina 1.1s 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.ent-plan-nodo { position: relative; display: grid; align-content: start; justify-items: center; gap: 3px; text-align: center; }
+.ent-plan-nodo > i { width: 11px; height: 11px; margin-bottom: 7px; border-radius: 50%; background: var(--oro); box-shadow: 0 0 10px rgba(232, 196, 106, 0.7); }
+.ent-plan-nodo:last-child > i { background: #0c1124; border: 1px solid rgba(232, 196, 106, 0.75); box-shadow: none; }
+.ent-plan b { font: 500 13.5px/1.2 var(--numeros); font-variant-numeric: lining-nums tabular-nums; }
+.ent-plan span { font: 400 12px/1.28 var(--texto); color: rgba(239, 230, 207, 0.7); text-wrap: balance; }
+
+/* Cómo comes: el reparto con su barra, la proteína en gramos y lo que comes. */
+.ent-barra-macros { display: flex; gap: 2px; height: 4px; margin-top: 9px; border-radius: 2px; overflow: hidden; }
+.ent-barra-macros s { display: block; height: 100%; transition: flex-grow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ent-estilos .ent-opcion { padding: 11px 13px 12px; }
+.ent-estilos .ent-opcion-textos { gap: 0; }
+
+/* Tu día: de que te despiertas a que te acuestas, con las comidas y el entreno en el medio. */
+.ent-dia-lista { position: relative; margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.ent-dia-lista::before { content: ''; position: absolute; left: 6px; top: 22px; bottom: 22px; width: 1px; background: linear-gradient(rgba(169, 196, 245, 0.5), rgba(232, 196, 106, 0.5) 20%, rgba(232, 196, 106, 0.5) 80%, rgba(169, 196, 245, 0.5)); }
+.ent-dia-fila { position: relative; display: grid; grid-template-columns: 13px minmax(0, 1fr) auto; align-items: center; column-gap: 12px; min-height: 44px; animation: ent-entra 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ent-dia-nodo { position: relative; z-index: 1; width: 13px; height: 13px; border-radius: 50%; background: var(--oro); box-shadow: 0 0 8px rgba(232, 196, 106, 0.6); transition: background 0.25s, box-shadow 0.25s, border-color 0.25s; }
+.ent-dia-fila.sueno .ent-dia-nodo { background: #a9c4f5; box-shadow: 0 0 8px rgba(169, 196, 245, 0.55); }
+.ent-dia-fila.entreno .ent-dia-nodo { background: var(--salvia); box-shadow: 0 0 8px rgba(166, 191, 148, 0.55); }
+.ent-dia-fila.no .ent-dia-nodo { background: #0b1022; border: 1px solid rgba(239, 230, 207, 0.35); box-shadow: none; }
+.ent-dia-nombre { appearance: none; padding: 4px 0; border: 0; background: none; color: var(--tinta); text-align: left; display: grid; gap: 2px; }
+button.ent-dia-nombre { cursor: pointer; }
+.ent-dia-nombre b { font: 500 15px/1.2 var(--texto); transition: color 0.25s; }
+.ent-dia-nombre span { font: 400 12px/1.2 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.ent-dia-fila.no .ent-dia-nombre b { color: rgba(239, 230, 207, 0.45); }
+.ent-dia-valor { display: grid; justify-items: end; align-items: center; }
+.ent-dia-valor > * { grid-area: 1 / 1; transition: opacity 0.25s; }
+.ent-dia-valor .ent-dia-no { opacity: 0; font: 400 13px/1 var(--texto); color: rgba(239, 230, 207, 0.5); pointer-events: none; }
+.ent-dia-fila.no .ent-pasito { opacity: 0; pointer-events: none; }
+.ent-dia-fila.no .ent-dia-no { opacity: 1; }
+.ent-dia-fijo { display: inline-flex; align-items: center; gap: 8px; font: 500 15px/1 var(--numeros); font-variant-numeric: lining-nums tabular-nums; color: rgba(239, 230, 207, 0.86); }
+.ent-dia-fijo .ent-de-salud { margin: 0; }
+
+/* El resultado: el plan en una línea, y de dónde sale el gasto. */
+.ent-plan-linea { margin: 10px auto 0; max-width: 320px; font: italic 400 16.5px/1.32 var(--titulos); color: var(--oro-claro); text-align: center; text-wrap: balance; text-shadow: 0 0 14px rgba(3, 5, 12, 0.9); }
+.ent-partes { margin: 4px 0 0; font: 400 11.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.5); text-wrap: balance; }
 @media (prefers-reduced-motion: reduce) {
   .ent-aparece, .ent-busca span, .ent-base-fila i, .ent-noche-grafico, .ent-juntos-caja .sb-j-union, .ent-juntos-caja .sb-j-hoy, .ent-camino-hilo i, .ent-camino-puntos i { animation-duration: 0.01s; animation-delay: 0s; }
+  .ent-opcion, .ent-tarjeta, .ent-figura, .ent-ritmo-fila, .ent-dia-fila, .ent-plan-hilo i { animation-duration: 0.01s; animation-delay: 0s; }
+  .ent-plegable { transition: opacity 0.2s; }
+  .ent-fila i svg, .ent-barra-macros s, .ent-pasito button { transition: none; }
   .ent-saltar { transition: none; }
 }
 `;
@@ -111,21 +270,48 @@ const Entrada = (() => {
   const limitar = (x, a, b) => Math.min(b, Math.max(a, x));
   const mezclar = (a, b, k) => a + (b - a) * k;
 
-  // Mifflin-St Jeor por el nivel de actividad, más o menos el ritmo elegido (7.700 kcal por kg),
-  // con un piso, y sin déficit si es su caso (embarazo, lactancia o una condición médica). Es la
-  // meta inicial: después la ajusta el control de cada semana.
-  const ACTIVIDAD = { poco: 1.35, algo: 1.5, activo: 1.65, muy: 1.85 };
-  const RITMO = { bajar: { suave: -0.25, recomendado: -0.5, rapido: -0.75 }, subir: { suave: 0.1, recomendado: 0.25, rapido: 0.4 } };
-  function metas(r) {
-    const basal = 10 * r.peso + 6.25 * r.altura - 5 * r.edad + (r.sexo === 'f' ? -161 : 5);
-    const gasto = basal * ACTIVIDAD[r.actividad];
-    const objetivo = r.sinDeficit && r.objetivo === 'bajar' ? 'mantener' : r.objetivo;
-    const pct = objetivo === 'mantener' ? 0 : RITMO[objetivo][r.ritmo];
-    const kcal = Math.max(r.sexo === 'f' ? 1200 : 1400, Math.round((gasto + (pct / 100) * r.peso * 7700 / 7) / 10) * 10);
-    const proteina = Math.round(r.peso * (objetivo === 'bajar' ? 2.0 : objetivo === 'subir' ? 1.8 : 1.6));
-    const grasas = Math.round(Math.max(0.6 * r.peso, (kcal * 0.27) / 9));
-    const carbohidratos = Math.max(0, Math.round((kcal - proteina * 4 - grasas * 9) / 4));
-    return { gasto: Math.round(gasto / 10) * 10, kcal, proteina, grasas, carbohidratos };
+  // La meta inicial sale de src/dominio/cuestionario.ts (Cuestionario.metaDelCuestionario): el gasto por
+  // partes, el ritmo o la fecha, el piso y la proteína del nivel elegido. Después la ajusta el control.
+
+  // Los íconos que el cuestionario suma a los de util.js.
+  const ICONOS = {
+    silla: '<path d="M8 3.5v9.5h9.5M8 13v7.5M17.5 13v7.5M8 17h9.5"/>',
+    caja: '<path d="M4 8.5 12 4.5l8 4v8l-8 4-8-4z"/><path d="m4 8.5 8 4 8-4M12 12.5v8"/>',
+    pausa: '<path d="M9 7v10M15 7v10"/>',
+    cruzadas: '<path d="M8 19.5V5.5M4.8 8.7 8 5.5l3.2 3.2M16 4.5v14M12.8 15.3l3.2 3.2 3.2-3.2"/>',
+    pelota: '<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.6 6.2c2.6 2.9 2.6 8.7 0 11.6M17.4 6.2c-2.6 2.9-2.6 8.7 0 11.6"/>',
+    ovalada: '<ellipse cx="12" cy="12" rx="9" ry="5.4" transform="rotate(-35 12 12)"/><path d="m9.3 14.7 5.4-5.4M10.6 11.6l1.8 1.8M12.1 10.1l1.8 1.8"/>',
+  };
+  const iconoDe = (n) => (ICONOS[n] ? `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n]}</svg>` : Util.icono(n));
+
+  // Una figura de frente, de la cabeza a las rodillas, sin rasgos: con más grasa (k de 0 a 8), más ancha
+  // la cintura y, en las mujeres, la cadera. Sirve para comparar.
+  function figura(sexo, k) {
+    const t = k / 8;
+    const m = sexo === 'm';
+    const c = 26;
+    const w = {
+      cuello: 2.6,
+      hombro: m ? 14 + 1.6 * t : 11.6 + 1.6 * t,
+      pecho: m ? 11.8 + 3.2 * t : 10.6 + 3.4 * t,
+      cintura: m ? 8.6 + 9.4 * t : 7.6 + 8.6 * t,
+      cadera: m ? 10.2 + 6 * t : 12 + 8 * t,
+      muslo: m ? 9 + 4.6 * t : 9.8 + 6 * t,
+    };
+    const lado = [[w.cuello, 14.5], [w.hombro, 20], [w.pecho, 29], [w.cintura, 42], [w.cadera, 52], [w.muslo, 62], [w.muslo * 0.74, 78]];
+    const f = (p) => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`;
+    // Catmull-Rom: una curva suave que pasa por cada punto.
+    const curva = (pts) => pts.slice(0, -1).map((p1, i) => {
+      const p0 = pts[Math.max(0, i - 1)], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+      return ` C ${f([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6])} ${f([p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6])} ${f(p2)}`;
+    }).join('');
+    const izq = lado.map(([x, y]) => [c - x, y]);
+    const der = lado.map(([x, y]) => [c + x, y]).reverse();
+    const torso = `M ${f(izq[0])}${curva(izq)} L ${f([c - 1.4, 78])} L ${f([c, 63])} L ${f([c + 1.4, 78])} L ${f(der[0])}${curva(der)} Z`;
+    // Los brazos se abren con la cintura, para no taparla.
+    const fin = Math.max(w.hombro + 2.2, w.cintura + 3.2 + 1.2 * t);
+    const brazo = (s) => `M ${f([c + s * (w.hombro - 1.4), 21.5])} Q ${f([c + s * (w.hombro + 1.4 + t), 34])} ${f([c + s * fin, 51])}`;
+    return `<svg viewBox="0 0 52 80" aria-hidden="true"><path class="ent-brazos" d="${brazo(-1)} ${brazo(1)}" stroke-width="${(3.4 + 2.2 * t).toFixed(2)}"/><path class="ent-torso" d="${torso}"/><circle cx="${c}" cy="8.4" r="5.3"/></svg>`;
   }
 
   // La parte iluminada de una luna creciente de radio r: p va de 0 (nueva) a 1 (llena).
@@ -281,10 +467,105 @@ const Entrada = (() => {
     };
     const reducido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Lo que contestó: con Salud conectada, edad, sexo, altura y peso vienen de ahí (de mentira).
-    const r = { salud: false, edad: 29, sexo: null, altura: 172, peso: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado', sinDeficit: false, caso: 'nada' };
-    const DE_SALUD = { edad: 31, sexo: 'm', altura: 176, peso: 78.4 };
+    // Lo que contestó. Con Salud conectada, edad, sexo, altura, peso, los pasos y las noches vienen de
+    // ahí (de mentira; las noches, las de la persona de la galería). Cada deporte tiene sus días, su hora y
+    // cuánto dura en entreno.de; los elegidos están en entreno.tipos (vacío: no entrena, y lo de cada uno
+    // espera por si cambia de idea). Una comida en noSuele no se suele hacer.
+    const DE_FABRICA = {
+      salud: false, edad: 29, sexo: null, altura: 172, peso: 74.5, sinDeficit: false, caso: 'nada',
+      grasaModo: 'no', grasaPct: 18, figura: null, cinta: { cintura: 86, cuello: 38, cadera: 98 },
+      movimiento: 'sentado',
+      entreno: {
+        tipos: ['fuerza'],
+        de: {
+          fuerza: { dias: [1, 3, 5], hora: 18 * 60, minutos: 60 },
+          equipo: { dias: [2, 4], hora: 20 * 60, minutos: 90 },
+          resistencia: { dias: [2, 6], hora: 7 * 60 + 30, minutos: 45 },
+          contacto: { dias: [2, 4], hora: 20 * 60, minutos: 90 },
+        },
+        viaje: 15, partidos: false, diaDePartido: 6, categoriaDePeso: false,
+      },
+      objetivo: 'mantener', pesoMeta: null, ritmo: 'recomendado', fecha: null, experiencia: 'principiante', despues: 'mantener',
+      estilo: 'equilibrada', proteina: 'recomendada', dieta: 'todo',
+      horarios: Object.assign({}, Comidas.HORA_TIPICA), noSuele: {},
+      sueno: { despertar: 7 * 60, acostarse: 23 * 60, finDeSemana: 'igual' },
+    };
+    const copia = (x) => JSON.parse(JSON.stringify(x));
+    const r = copia(DE_FABRICA);
+    const DE_SALUD = { edad: 31, sexo: 'm', altura: 176, peso: 78.4, pasos: 7400 };
     let desdeSalud = {};
+
+    // Lo que sale de lo contestado, con la lógica de la app (src/dominio/cuestionario.ts).
+    const sexo = () => r.sexo || 'm';
+    const cambiaPeso = () => r.objetivo === 'bajar' || r.objetivo === 'subir';
+    const preguntaGrasa = () => !r.sinDeficit && r.edad >= Metas.MAYORIA_DE_EDAD;
+    // Lo que se guarda: los deportes, la sesión de cada uno, el viaje, los partidos y la categoría de peso. Al
+    // final, SOLO para el horario de los avisos (alrededorDelEntreno, que hoy lleva uno): el tipo reducido y
+    // el horario principal; los consejos salen de los deportes y de las sesiones de cada día.
+    function entrenoDicho() {
+      const e = r.entreno;
+      const tipos = Cuestionario.DEPORTES.filter((t) => e.tipos.includes(t));
+      if (!tipos.length) return null;
+      const preguntas = Cuestionario.preguntasDelEntreno(tipos);
+      const dicho = {
+        tipos,
+        sesiones: tipos.map((tipo) => Object.assign({ tipo }, copia(e.de[tipo]))),
+        viaje: e.viaje,
+        partidos: preguntas.partidos && e.partidos ? { dia: e.diaDePartido } : null,
+        categoriaDePeso: preguntas.categoriaDePeso ? e.categoriaDePeso : null,
+      };
+      return Object.assign(dicho, Cuestionario.horarioDeLosAvisos(dicho));
+    }
+    const levantaPesas = () => Cuestionario.entrenaFuerza(entrenoDicho());
+    const medidasDeCinta = () => (sexo() === 'f' ? copia(r.cinta) : { cintura: r.cinta.cintura, cuello: r.cinta.cuello });
+    function grasaDicha() {
+      if (!preguntaGrasa()) return null;
+      if (r.grasaModo === 'dicha') return { como: 'dicha', pct: r.grasaPct };
+      if (r.grasaModo === 'imagen' && r.figura != null) return { como: 'imagen', pct: Cuestionario.grasaDeFigura(sexo(), r.figura) };
+      if (r.grasaModo === 'cinta') {
+        const x = Cuerpo.rangoDeGrasa(sexo(), r.altura, medidasDeCinta());
+        return x ? { como: 'cinta', pct: Math.round(x.estimado * 10) / 10 } : null;
+      }
+      return null;
+    }
+    const persona = () => ({ edad: r.edad, sexo: sexo(), alturaCm: r.altura, pesoKg: r.peso, sinDeficit: r.sinDeficit, grasa: grasaDicha() });
+    const gastoTotal = () => Cuestionario.gastoEstimado(Object.assign(persona(), { movimiento: r.movimiento, entreno: entrenoDicho() })).total;
+    const entradaDelPlazo = () => ({ hoy: Datos.HOY, pesoKg: r.peso, pesoMeta: r.pesoMeta, sexo: sexo(), edad: r.edad, gasto: gastoTotal(), entrenaFuerza: levantaPesas() });
+    const pctDe = (ritmo) => Math.abs(Metas.RITMOS[r.objetivo][Metas.ritmoPermitido({ edad: r.edad, objetivo: r.objetivo, ritmo })]);
+    const plazoDeRitmo = (ritmo) => (cambiaPeso() && r.pesoMeta != null ? Progreso.plazoConRitmo(entradaDelPlazo(), pctDe(ritmo)) : null);
+    const plazoElegido = () => (!cambiaPeso() || r.pesoMeta == null ? null : r.fecha ? Progreso.plazoConFecha(entradaDelPlazo(), r.fecha) : plazoDeRitmo(r.ritmo));
+    function respuestas() {
+      const plazo = r.fecha ? plazoElegido() : null;
+      return Object.assign(persona(), {
+        movimiento: r.movimiento, entreno: entrenoDicho(), objetivo: r.objetivo, ritmo: r.ritmo,
+        pct: plazo ? plazo.pct : null, estilo: r.estilo, proteina: r.proteina,
+      });
+    }
+    const metaDeAhora = () => Cuestionario.metaDelCuestionario(respuestas());
+    // Las noches de Salud: con tres o más, el sueño no se pregunta (el horario, de Sueno.horario si alcanza).
+    function suenoDeSalud() {
+      if (!r.salud) return null;
+      const noches = Sueno.ultimasNoches(Datos.NOCHES, Datos.HOY, 14);
+      const medidas = noches.filter(Boolean);
+      if (medidas.length < Cuestionario.NOCHES_PARA_NO_PREGUNTAR) return null;
+      const h = Sueno.horario(noches);
+      const promedio = (k) => medidas.reduce((s, n) => s + n[k], 0) / medidas.length;
+      const reloj = (x) => (Math.round(x / 5) * 5 + 18 * 60) % 1440;
+      return { despertar: reloj(h ? h.despertar : promedio('despertar')), dormirse: reloj(h ? h.dormirse : promedio('dormirse')) };
+    }
+    // Lo que quedaría en el perfil (galeria/src/datos.js tiene los mismos campos).
+    function perfilDicho() {
+      const x = metaDeAhora();
+      const deSalud = suenoDeSalud();
+      return {
+        sexo: sexo(), edad: r.edad, alturaCm: r.altura, objetivo: x.objetivo, recomponer: x.recomponer, ritmo: r.ritmo, actividad: x.actividad,
+        pesoMeta: cambiaPeso() ? r.pesoMeta : null, sinDeficit: r.sinDeficit, estilo: r.estilo, proteina: r.proteina,
+        movimiento: r.movimiento, entreno: entrenoDicho(), experiencia: levantaPesas() ? r.experiencia : null, grasaDicha: grasaDicha(),
+        despues: cambiaPeso() ? r.despues : null, comer: { dieta: r.dieta },
+        horarios: Object.fromEntries(Comidas.CON_HORA.map((c) => [c, r.noSuele[c] ? null : r.horarios[c]])),
+        sueno: deSalud ? { despertar: deSalud.despertar, acostarse: deSalud.dormirse, finDeSemana: null } : copia(r.sueno),
+      };
+    }
 
     let actual = -1;
     let animando = 0;
@@ -475,7 +756,7 @@ const Entrada = (() => {
       if (paso.id === 'datos') return { pos: a.compania, escala: 0.62, brillo: 0.85 };
       if (paso.id === 'cuenta') return { pos: a.chispa, escala: 0.7, brillo: 0.95 };
       if (paso.id === 'resultado') return { pos: [a.W / 2, a.barra.y], escala: 0.62, brillo: 1 };
-      const k = (enCuestionario.indexOf(paso) + 1) / enCuestionario.length;
+      const k = avanceDe(paso);
       return { pos: [mezclar(a.barra.x0, a.barra.x1, k), a.barra.y], escala: 0.5, brillo: 0.9, enBarra: k };
     }
 
@@ -600,23 +881,44 @@ const Entrada = (() => {
       { id: 'precio', camara: 0.92, tocar: true, intro: true, armar: armarPrecio },
       { id: 'datos', camara: 0.98, armar: armarDatos },
       { id: 'cuenta', camara: 1.08, armar: armarCuenta },
+      // El cuestionario nuevo (2/11/2026): una pregunta por pantalla, con lo que va junto agrupado. `si`:
+      // cuándo aparece (con Salud, los cuatro datos van en una tarjeta para confirmar; la grasa, desde los 18
+      // y sin cuidados; la experiencia, al subir o recomponer con pesas; el peso meta y lo que sigue, al
+      // bajar o subir). Lo que no aparece se saltea al seguir.
       { id: 'salud', camara: 1.16, cuestionario: true, armar: armarSalud },
-      { id: 'edad', camara: 1.19, cuestionario: true, armar: (p, c) => (r.edad < 16 ? armarMenor(p) : pantallaNumero(p, c.paso, { clave: 'edad', titulo: 'entrada.cuestionario.edadTitulo', min: 16, max: 90, paso: 1, dec: 0, unidad: tx('entrada.cuestionario.anos') })) },
-      { id: 'sexo', camara: 1.22, cuestionario: true, armar: armarSexo },
-      { id: 'altura', camara: 1.25, cuestionario: true, armar: (p, c) => pantallaNumero(p, c.paso, { clave: 'altura', titulo: 'entrada.cuestionario.alturaTitulo', min: 130, max: 220, paso: 1, dec: 0, unidad: 'cm' }) },
-      { id: 'peso', camara: 1.28, cuestionario: true, armar: (p, c) => pantallaNumero(p, c.paso, { clave: 'peso', titulo: 'entrada.cuestionario.pesoTitulo', texto: 'entrada.cuestionario.pesoTexto', min: 35, max: 200, paso: 0.1, dec: 1, unidad: 'kg' }) },
-      { id: 'actividad', camara: 1.31, cuestionario: true, armar: armarActividad },
-      { id: 'cuidado', camara: 1.325, cuestionario: true, armar: armarCuidado },
-      { id: 'objetivo', camara: 1.34, cuestionario: true, armar: armarObjetivo },
+      { id: 'tu', camara: 1.18, cuestionario: true, si: () => r.salud, armar: (p, c) => (r.edad < Metas.EDAD_MINIMA ? armarMenor(p) : armarTu(p, c)) },
+      { id: 'sexo', camara: 1.18, cuestionario: true, si: () => !r.salud, armar: armarSexo },
+      { id: 'edad', camara: 1.19, cuestionario: true, si: () => !r.salud, armar: (p, c) => (r.edad < Metas.EDAD_MINIMA ? armarMenor(p) : pantallaNumero(p, c.paso, { clave: 'edad', titulo: 'entrada.cuestionario.edadTitulo', min: 16, max: 90, paso: 1, dec: 0, unidad: tx('entrada.cuestionario.anos') })) },
+      { id: 'altura', camara: 1.2, cuestionario: true, si: () => !r.salud, armar: (p, c) => pantallaNumero(p, c.paso, { clave: 'altura', titulo: 'entrada.cuestionario.alturaTitulo', min: 130, max: 220, paso: 1, dec: 0, unidad: 'cm' }) },
+      { id: 'peso', camara: 1.21, cuestionario: true, si: () => !r.salud, armar: (p, c) => pantallaNumero(p, c.paso, { clave: 'peso', titulo: 'entrada.cuestionario.pesoTitulo', texto: 'entrada.cuestionario.pesoTexto', min: 35, max: 200, paso: 0.1, dec: 1, unidad: 'kg' }) },
+      { id: 'cuidado', camara: 1.22, cuestionario: true, armar: armarCuidado },
+      { id: 'grasa', camara: 1.235, cuestionario: true, si: preguntaGrasa, armar: armarGrasa },
+      { id: 'movimiento', camara: 1.25, cuestionario: true, armar: armarMovimiento },
+      { id: 'entreno', camara: 1.26, cuestionario: true, armar: armarEntreno },
+      { id: 'cuando', camara: 1.27, cuestionario: true, si: () => r.entreno.tipos.length > 0, armar: armarCuando },
+      { id: 'objetivo', camara: 1.28, cuestionario: true, armar: armarObjetivo },
+      { id: 'experiencia', camara: 1.29, cuestionario: true, si: () => (r.objetivo === 'subir' || r.objetivo === 'recomponer') && levantaPesas(), armar: armarExperiencia },
+      { id: 'meta', camara: 1.3, cuestionario: true, si: cambiaPeso, armar: armarMeta },
+      { id: 'despues', camara: 1.315, cuestionario: true, si: cambiaPeso, armar: armarDespues },
+      { id: 'comer', camara: 1.33, cuestionario: true, armar: armarComer },
+      { id: 'dia', camara: 1.345, cuestionario: true, armar: armarDia },
       { id: 'resultado', camara: 1.37, armar: armarResultado },
     ];
-    const enCuestionario = PASOS.filter((p) => p.cuestionario);
+    const aplica = (p) => !p.si || p.si();
+    // El lugar de una pregunta entre las que aparecen con lo contestado hasta ahora (cambia al contestar).
+    function lugarDe(paso) {
+      const lista = PASOS.filter((x) => x.cuestionario && (x === paso || aplica(x)));
+      return { i: lista.indexOf(paso), total: lista.length };
+    }
+    const avanceDe = (paso) => { const l = lugarDe(paso); return (l.i + 1) / l.total; };
     const enIntro = PASOS.filter((p) => p.intro);
     const SALTA_A = PASOS.findIndex((p) => p.id === 'precio');
-    // Los íconos de las opciones: cuánto se mueve y hacia dónde va.
+    // Los íconos de las opciones: cuánto se mueve, qué entrena, hacia dónde va y lo que sigue.
     const ICONOS_DE = {
-      actividad: { poco: 'telefono', algo: 'huellas', activo: 'pesa', muy: 'rayo' },
-      objetivo: { bajar: 'abajo', mantener: 'objetivo', subir: 'arriba' },
+      movimiento: { sentado: 'silla', dePie: 'huellas', fisico: 'caja' },
+      entreno: { fuerza: 'pesa', equipo: 'pelota', resistencia: 'onda', contacto: 'ovalada', no: 'pausa' },
+      objetivo: { bajar: 'abajo', mantener: 'objetivo', subir: 'arriba', recomponer: 'cruzadas' },
+      despues: { mantener: 'objetivo', musculo: 'pesa', despues: 'reloj' },
     };
 
     function pantalla(clase) {
@@ -626,11 +928,11 @@ const Entrada = (() => {
     }
 
     function cabezaDeCuestionario(p, paso) {
-      const i = enCuestionario.indexOf(paso);
+      const { i, total } = lugarDe(paso);
       // La barra es de la estrella (va por encima): acá queda su lugar. Debajo, la constelación de
       // las preguntas: lo contestado encendido y la de ahora, prendiéndose.
       const cab = el('div', 'ent-cab-pasos');
-      cab.append(constelacionDePasos(i, enCuestionario.length), el('div', 'ent-paso', tx('entrada.cuestionario.paso', { n: i + 1, total: enCuestionario.length })));
+      cab.append(constelacionDePasos(i, total), el('div', 'ent-paso', tx('entrada.cuestionario.paso', { n: i + 1, total })));
       p.append(el('div', 'ent-progreso-hueco'), cab);
     }
 
@@ -1119,7 +1421,7 @@ const Entrada = (() => {
     // En el cuestionario la estrella va en la punta de la barra y la estira al avanzar. Si llega de
     // afuera, baja al principio de la barra y la recorre hasta la pregunta de ahora.
     function guionDeBarra(a, desde, paso) {
-      const k = (enCuestionario.indexOf(paso) + 1) / enCuestionario.length;
+      const k = avanceDe(paso);
       const punta = [mezclar(a.barra.x0, a.barra.x1, k), a.barra.y];
       if (desde.enBarra != null) {
         return {
@@ -1141,6 +1443,14 @@ const Entrada = (() => {
       };
     }
 
+    // Con Salud: los cuatro datos, los pasos (que sugieren cuánto te mueves) y, con tres noches, el sueño.
+    function conectarSalud() {
+      r.salud = true;
+      desdeSalud = Object.assign({}, DE_SALUD);
+      ['edad', 'sexo', 'altura', 'peso'].forEach((k) => { r[k] = DE_SALUD[k]; });
+      r.movimiento = Cuestionario.movimientoPorPasos(DE_SALUD.pasos) || r.movimiento;
+    }
+
     function armarSalud(p, { paso }) {
       cabezaDeCuestionario(p, paso);
       const iconos = el('div', 'ent-salud');
@@ -1151,9 +1461,7 @@ const Entrada = (() => {
         iconos.appendChild(c);
       });
       const conectar = botonSeguir(tx('entrada.cuestionario.conectar'), () => {
-        r.salud = true;
-        desdeSalud = Object.assign({}, DE_SALUD);
-        Object.assign(r, DE_SALUD);
+        conectarSalud();
         escena.haptico('toque');
         siguiente();
       }, 'ent-principal');
@@ -1191,11 +1499,12 @@ const Entrada = (() => {
       lista.forEach(([valor, titulo, detalle], k) => {
         const b = el('button', 'ent-opcion');
         b.type = 'button';
+        b.dataset.valor = valor;
         b.style.animationDelay = `${(0.32 + k * 0.08).toFixed(2)}s`;
         b.setAttribute('aria-pressed', String(valor === elegida));
         if (iconos && iconos[valor]) {
           const i = el('i', 'ent-opcion-icono');
-          i.innerHTML = Util.icono(iconos[valor]);
+          i.innerHTML = iconoDe(iconos[valor]);
           b.appendChild(i);
         }
         const textos = el('div', 'ent-opcion-textos');
@@ -1223,38 +1532,658 @@ const Entrada = (() => {
       p.appendChild(el('div', 'ent-pie')).appendChild(seguir);
     }
 
-    function armarActividad(p, { paso }) {
-      cabezaDeCuestionario(p, paso);
-      p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuestionario.actividadTitulo')));
-      opcionesDe(p, ['poco', 'algo', 'activo', 'muy'].map((k) => [k, ...tx('entrada.cuestionario.actividad.' + k)]), r.actividad, (v) => { r.actividad = v; }, '', ICONOS_DE.actividad);
-      p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.seguir'), siguiente, 'ent-principal'));
+    // ------------------------------------------------------------ las piezas del cuestionario nuevo
+    const etiqueta = (texto) => el('span', 'ent-etiqueta', texto);
+    const pie = (...botones) => { const n = el('div', 'ent-pie'); n.append(...botones); return n; };
+    const seguirBoton = (texto) => botonSeguir(texto || tx('entrada.seguir'), siguiente, 'ent-principal');
+    const kg = (x) => numero(x, Math.round(x * 10) % 10 ? 1 : 0);
+    const hasta2 = (x) => x.toLocaleString(idioma === 'es' ? 'es-UY' : 'en-US', { maximumFractionDigits: 2 });
+    // Una fecha del plan: corta y, a más de diez meses, con el año (si no, parecería de este).
+    const lejos = (clave) => Fechas.diasEntre(Datos.HOY, clave) > 300;
+    const fechaDelCamino = (clave) => u.fechaCorta(clave) + (lejos(clave) ? ` ${u.partes(clave).anio}` : '');
+    // Bajando o subiendo, siempre hay un peso meta: el que se propone, si todavía no eligió.
+    function asegurarMeta() {
+      if (cambiaPeso() && r.pesoMeta == null) r.pesoMeta = Cuestionario.pesoMetaSugerido(r.peso, r.altura, r.objetivo) ?? r.peso;
     }
 
+    // Lo que depende de lo elegido crece y se achica: nunca aparece ni desaparece de golpe.
+    function plegar(contenido, abierto) {
+      const caja = el('div', 'ent-plegable' + (abierto ? '' : ' cerrado'));
+      const adentro = el('div');
+      adentro.appendChild(contenido);
+      caja.appendChild(adentro);
+      caja.inert = !abierto;
+      let espera = 0;
+      return {
+        el: caja,
+        abrir(si) {
+          if (si === !caja.classList.contains('cerrado')) return;
+          caja.classList.add('moviendo');
+          caja.classList.toggle('cerrado', !si);
+          caja.inert = !si;
+          clearTimeout(espera);
+          espera = setTimeout(() => caja.classList.remove('moviendo'), 460);
+        },
+      };
+    }
+
+    // Un texto que cambia se apaga, cambia y se vuelve a prender (si cambia otra vez en el medio, queda el último).
+    function cambiarTexto(n, texto) {
+      n.dataset.texto = texto;
+      if (n.dataset.cambiando || n.textContent === texto) return;
+      if (reducido() || !n.isConnected) { n.textContent = texto; return; }
+      n.dataset.cambiando = '1';
+      n.classList.add('ent-cambia', 'saliendo');
+      setTimeout(() => { n.textContent = n.dataset.texto; n.classList.remove('saliendo'); delete n.dataset.cambiando; }, 180);
+    }
+
+    // Un número de a pasos (la hora de a 15 minutos, la duración, la cinta, la fecha), con su menos y su más.
+    function pasito(valor, cfg) {
+      const caja = el('div', 'ent-pasito');
+      const v = el('b');
+      let x = valor;
+      const mostrar = () => { v.textContent = cfg.formato(x); };
+      const boton = (signo) => {
+        const b = el('button');
+        b.type = 'button';
+        b.innerHTML = Util.icono(signo < 0 ? 'menos' : 'mas');
+        b.setAttribute('aria-label', `${cfg.nombre}: ${tx(signo < 0 ? 'entrada.cuestionario.menos' : 'entrada.cuestionario.mas')}`);
+        b.addEventListener('click', () => {
+          const nuevo = Math.min(cfg.max, Math.max(cfg.min, Math.round((x + signo * cfg.paso) * 100) / 100));
+          if (nuevo === x) return;
+          x = nuevo;
+          mostrar();
+          escena.haptico('suave');
+          cfg.alCambiar(x);
+        });
+        return b;
+      };
+      caja.append(boton(-1), v, boton(1));
+      caja.poner = (nuevo) => { x = nuevo; mostrar(); };
+      mostrar();
+      return caja;
+    }
+
+    // Un deslizador chico, para cambiar un dato sin otra pantalla.
+    function deslizador(clave, min, max, paso, alCambiar) {
+      const rango = el('input', 'ent-rango');
+      rango.type = 'range';
+      rango.min = min; rango.max = max; rango.step = paso;
+      rango.value = r[clave];
+      rango.setAttribute('aria-label', tx('entrada.cuestionario.' + clave));
+      rango.addEventListener('input', () => { r[clave] = Number(rango.value); alCambiar(); });
+      return rango;
+    }
+
+    // Con Salud: los cuatro datos juntos, para confirmar. Cada uno se abre para cambiarlo.
+    function armarTu(p, { paso }) {
+      cabezaDeCuestionario(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.tuTitulo')), el('p', 'ent-texto', tx('entrada.cuestionario.tuTexto')));
+      const tarjeta = el('div', 'ent-tarjeta');
+      const seguir = seguirBoton(tx('entrada.cuestionario.estaBien'));
+      seguir.disabled = !r.sexo;
+      const filas = [];
+      const fila = (clave, valorDe, editor) => {
+        const cab = el('button', 'ent-fila');
+        cab.type = 'button';
+        cab.dataset.valor = clave;
+        cab.setAttribute('aria-expanded', 'false');
+        const valor = el('b', null, valorDe());
+        const chip = desdeSalud[clave] != null ? el('em', 'ent-de-salud', tx('entrada.cuestionario.deSalud')) : el('em');
+        const flecha = el('i');
+        flecha.innerHTML = Util.icono('abajo');
+        cab.append(el('span', null, tx('entrada.cuestionario.' + clave)), valor, chip, flecha);
+        const cajaEditor = el('div', 'ent-editor');
+        const pl = plegar(cajaEditor, false);
+        cajaEditor.appendChild(editor(() => {
+          valor.textContent = valorDe();
+          // Lo cambiado a mano ya no es de Salud.
+          delete desdeSalud[clave];
+          chip.classList.add('apagado');
+        }));
+        cab.addEventListener('click', () => {
+          const abrir = cab.getAttribute('aria-expanded') !== 'true';
+          filas.forEach(([c, x]) => { c.setAttribute('aria-expanded', String(c === cab && abrir)); x.abrir(c === cab && abrir); });
+        });
+        filas.push([cab, pl]);
+        tarjeta.append(cab, pl.el);
+      };
+      fila('sexo', () => (r.sexo ? tx(r.sexo === 'f' ? 'entrada.cuestionario.femenino' : 'entrada.cuestionario.masculino') : '—'), (cambio) => {
+        const n = el('div');
+        opcionesDe(n, [['f', tx('entrada.cuestionario.femenino')], ['m', tx('entrada.cuestionario.masculino')]], r.sexo, (v) => { r.sexo = v; seguir.disabled = false; cambio(); }, 'ent-segmento ent-par');
+        return n;
+      });
+      fila('edad', () => `${numero(r.edad)} ${tx('entrada.cuestionario.anos')}`, (cambio) => deslizador('edad', Metas.EDAD_MINIMA, 90, 1, cambio));
+      fila('altura', () => `${numero(r.altura)} cm`, (cambio) => deslizador('altura', 130, 220, 1, cambio));
+      fila('peso', () => `${numero(r.peso, 1)} kg`, (cambio) => deslizador('peso', 35, 200, 0.1, cambio));
+      p.append(tarjeta, pie(seguir));
+    }
+
+    // ¿Sabes tu grasa? No sé, lo sé, por imagen o con cinta; debajo, lo de cada uno. Nunca se muestra
+    // como una medida exacta: lo dicho es una estimación, la figura un rango y la cinta también.
+    function armarGrasa(p, { paso }) {
+      p.classList.add('ent-denso');
+      cabezaDeCuestionario(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.grasa.titulo')), el('p', 'ent-texto', tx('entrada.cuestionario.grasa.texto')));
+      const seguir = seguirBoton();
+      const puede = () => { seguir.disabled = r.grasaModo === 'imagen' && r.figura == null; };
+      const modos = ['no', 'dicha', 'imagen', 'cinta'];
+      const paneles = {};
+      opcionesDe(p, modos.map((m) => [m, tx('entrada.cuestionario.grasa.modos.' + m)]), r.grasaModo, (v) => {
+        r.grasaModo = v;
+        modos.forEach((m) => paneles[m].abrir(m === v));
+        puede();
+      }, 'ent-segmento ent-cuatro');
+      const zona = el('div', 'ent-grasa-zona');
+      paneles.no = plegar(el('p', 'ent-chico ent-izquierda', tx('entrada.cuestionario.grasa.sinGrasa')), r.grasaModo === 'no');
+      paneles.dicha = plegar(panelGrasaDicha(), r.grasaModo === 'dicha');
+      paneles.imagen = plegar(panelFiguras(puede), r.grasaModo === 'imagen');
+      paneles.cinta = plegar(panelCinta(), r.grasaModo === 'cinta');
+      modos.forEach((m) => zona.appendChild(paneles[m].el));
+      p.append(zona, pie(seguir));
+      puede();
+    }
+
+    function panelGrasaDicha() {
+      const n = el('div');
+      const grande = el('div', 'ent-numero ent-mediano');
+      const valor = el('b');
+      grande.append(valor, el('span', null, '%'));
+      const rango = el('input', 'ent-rango');
+      rango.type = 'range';
+      rango.min = sexo() === 'f' ? 10 : 4; rango.max = 50; rango.step = 0.5;
+      rango.value = r.grasaPct;
+      rango.setAttribute('aria-label', tx('entrada.cuestionario.grasa.titulo'));
+      const mostrar = () => { valor.textContent = numero(r.grasaPct, r.grasaPct % 1 ? 1 : 0); };
+      rango.addEventListener('input', () => { r.grasaPct = Number(rango.value); mostrar(); });
+      mostrar();
+      n.append(grande, rango, el('p', 'ent-chico ent-izquierda', tx('entrada.cuestionario.grasa.dichaTexto')));
+      return n;
+    }
+
+    function panelFiguras(alElegir) {
+      const n = el('div');
+      n.appendChild(el('p', 'ent-chico ent-izquierda', tx('entrada.cuestionario.grasa.imagenTexto')));
+      const grilla = el('div', 'ent-figuras');
+      Cuestionario.FIGURAS[sexo()].forEach(([desde, hasta], k) => {
+        const b = el('button', 'ent-figura');
+        b.type = 'button';
+        b.dataset.valor = String(k);
+        b.style.animationDelay = `${(0.3 + k * 0.04).toFixed(2)}s`;
+        b.setAttribute('aria-pressed', String(r.figura === k));
+        b.innerHTML = figura(sexo(), k);
+        const rango = tx('entrada.cuestionario.grasa.figura', { desde: numero(desde), hasta: numero(hasta) });
+        b.appendChild(el('span', null, rango));
+        b.setAttribute('aria-label', rango);
+        b.addEventListener('click', () => {
+          r.figura = k;
+          grilla.querySelectorAll('.ent-figura').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          escena.haptico('suave');
+          alElegir();
+        });
+        grilla.appendChild(b);
+      });
+      n.appendChild(grilla);
+      return n;
+    }
+
+    // Con cinta: el método de la Marina (Cuerpo.rangoDeGrasa), la cintura y el cuello, y la cadera en las mujeres.
+    function panelCinta() {
+      const n = el('div');
+      const lista = el('div', 'ent-medidas');
+      const resultado = el('p', 'ent-resultado-cinta');
+      const pintar = () => {
+        const x = Cuerpo.rangoDeGrasa(sexo(), r.altura, medidasDeCinta());
+        cambiarTexto(resultado, x ? tx('entrada.cuestionario.grasa.rango', { desde: numero(x.desde), hasta: numero(x.hasta) }) : tx('entrada.cuestionario.grasa.revisa'));
+      };
+      (sexo() === 'f' ? ['cintura', 'cuello', 'cadera'] : ['cintura', 'cuello']).forEach((s) => {
+        const fila = el('div', 'ent-medida');
+        const textos = el('div');
+        textos.appendChild(el('b', null, tx('entrada.cuestionario.grasa.' + s)));
+        if (s === 'cintura') textos.appendChild(el('small', null, tx('entrada.cuestionario.grasa.cinturaTexto')));
+        fila.append(textos, pasito(r.cinta[s], {
+          nombre: tx('entrada.cuestionario.grasa.' + s), min: Cuerpo.RANGOS[s][0], max: Cuerpo.RANGOS[s][1], paso: 0.5,
+          formato: (x) => `${numero(x, x % 1 ? 1 : 0)} cm`, alCambiar: (x) => { r.cinta[s] = x; pintar(); },
+        }));
+        lista.appendChild(fila);
+      });
+      n.append(lista, resultado);
+      pintar();
+      return n;
+    }
+
+    // Fuera del entrenamiento, ¿cuánto te mueves? Con Salud, los pasos lo sugieren.
+    function armarMovimiento(p, { paso }) {
+      cabezaDeCuestionario(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.movimiento.titulo')), el('p', 'ent-texto', tx('entrada.cuestionario.movimiento.texto')));
+      opcionesDe(p, Cuestionario.MOVIMIENTOS.map((m) => [m, ...tx('entrada.cuestionario.movimiento.' + m)]), r.movimiento, (v) => { r.movimiento = v; }, '', ICONOS_DE.movimiento);
+      if (desdeSalud.pasos) p.appendChild(el('span', 'ent-nota-salud', tx('entrada.cuestionario.movimiento.pasos', { n: numero(desdeSalud.pasos) })));
+      p.appendChild(pie(seguirBoton()));
+    }
+
+    // ¿Entrenas? Qué deportes, con ejemplos que se reconocen: se elige más de uno (dos ya es mixto), y
+    // «No entreno» saca los demás. El tipo de deporte va a cambiar los consejos, no solo los macros.
+    function armarEntreno(p, { paso }) {
+      cabezaDeCuestionario(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.entreno.titulo')), el('p', 'ent-texto', tx('entrada.cuestionario.entreno.texto')));
+      const e = r.entreno;
+      const caja = el('div', 'ent-opciones con-icono ent-varias');
+      const pintar = () => caja.querySelectorAll('.ent-opcion').forEach((b) => {
+        const v = b.dataset.valor;
+        b.setAttribute('aria-pressed', String(v === 'no' ? !e.tipos.length : e.tipos.includes(v)));
+      });
+      [...Cuestionario.DEPORTES, 'no'].forEach((v, k) => {
+        const [titulo, detalle] = tx('entrada.cuestionario.entreno.tipos.' + v);
+        const b = el('button', 'ent-opcion');
+        b.type = 'button';
+        b.dataset.valor = v;
+        b.style.animationDelay = `${(0.32 + k * 0.07).toFixed(2)}s`;
+        const icono = el('i', 'ent-opcion-icono');
+        icono.innerHTML = iconoDe(ICONOS_DE.entreno[v]);
+        const textos = el('div', 'ent-opcion-textos');
+        textos.appendChild(el('b', null, titulo));
+        if (detalle) textos.appendChild(el('span', null, detalle));
+        const marca = el('i', 'ent-opcion-marca');
+        marca.innerHTML = Util.icono('listo');
+        b.append(icono, textos, marca);
+        b.addEventListener('click', () => {
+          if (v === 'no') e.tipos = [];
+          else e.tipos = e.tipos.includes(v) ? e.tipos.filter((x) => x !== v) : [...e.tipos, v];
+          escena.haptico('suave');
+          pintar();
+        });
+        caja.appendChild(b);
+      });
+      pintar();
+      p.append(caja, pie(seguirBoton()));
+    }
+
+    // Los días de la semana como chips, de lunes a domingo: varios, o uno solo (el del partido). `poner`
+    // los cambia desde afuera (el día del partido se suma a los días de ese deporte).
+    function chipsDeDias(elegidos, alCambiar, uno) {
+      const dias = el('div', 'ent-dias');
+      let lista = [...elegidos];
+      const iniciales = tx('entrada.cuestionario.entreno.iniciales');
+      const pintar = () => dias.querySelectorAll('.ent-diasem').forEach((b) => b.setAttribute('aria-pressed', String(lista.includes(Number(b.dataset.valor)))));
+      Fechas.SEMANA.forEach((d, k) => {
+        const b = el('button', 'ent-diasem', iniciales[k]);
+        b.type = 'button';
+        b.dataset.valor = String(d);
+        b.setAttribute('aria-label', tx('fecha.dias')[d]);
+        b.addEventListener('click', () => {
+          lista = uno ? [d] : lista.includes(d) ? lista.filter((x) => x !== d) : [...lista, d];
+          pintar();
+          escena.haptico('suave');
+          alCambiar(lista);
+        });
+        dias.appendChild(b);
+      });
+      dias.poner = (nuevos) => { lista = [...nuevos]; pintar(); };
+      pintar();
+      return dias;
+    }
+
+    // «Lun, Mié y Vie»: los días cortos, de lunes a domingo.
+    const listaDeDias = (dias) => new Intl.ListFormat(idioma === 'es' ? 'es' : 'en', { type: 'conjunction' })
+      .format(Fechas.SEMANA.filter((d) => dias.includes(d)).map((d) => tx('fecha.diasCortos')[d]));
+
+    // ¿Cuándo entrenas? Con un deporte, sus días, su hora y cuánto dura; con dos o más, lo de cada uno, y se
+    // ve qué días tienen dos sesiones. Con partidos o choques, si juegas partidos o compites y qué día; con
+    // combate, si compites por categoría de peso. Y cuánto tardas en llegar (lo de comer antes de entrenar
+    // cuenta el viaje), con lo que todo eso suma a tu gasto: cada día, lo de ese día.
+    function armarCuando(p, { paso }) {
+      p.classList.add('ent-denso');
+      cabezaDeCuestionario(p, paso);
+      p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuestionario.entreno.cuandoTitulo')));
+      const e = r.entreno;
+      const tipos = Cuestionario.DEPORTES.filter((t) => e.tipos.includes(t));
+      const varios = tipos.length > 1;
+      const preguntas = Cuestionario.preguntasDelEntreno(tipos);
+      // El día del partido también es un día de ese deporte (el de partidos, o si no el de choques).
+      const conPartidos = tipos.includes('equipo') ? 'equipo' : 'contacto';
+      if (preguntas.partidos && e.partidos && !e.de[conPartidos].dias.includes(e.diaDePartido)) e.de[conPartidos].dias = [...e.de[conPartidos].dias, e.diaDePartido];
+      const seguir = seguirBoton();
+      // Si no entra todo (cuatro deportes con sus preguntas), se desliza; el botón queda abajo.
+      const desliza = el('div', 'ent-desliza');
+      const dobles = el('p', 'ent-suma');
+      const plDobles = plegar(dobles, false);
+      const suma = el('p', 'ent-suma');
+      const chips = {};
+      const pintar = () => {
+        const dicho = entrenoDicho();
+        seguir.disabled = tipos.some((t) => !e.de[t].dias.length);
+        const dosSesiones = Cuestionario.diasConDosSesiones(dicho);
+        if (dosSesiones.length) cambiarTexto(dobles, tx('entrada.cuestionario.entreno.dosSesiones', { dias: listaDeDias(dosSesiones) }));
+        plDobles.abrir(dosSesiones.length > 0);
+        cambiarTexto(suma, tx('entrada.cuestionario.entreno.suma', { n: numero(Math.round(Cuestionario.kcalDelEntreno(dicho, r.peso) / 10) * 10) }));
+      };
+      const columna = (titulo, nodo) => { const c = el('div'); c.append(etiqueta(titulo), nodo); return c; };
+      tipos.forEach((t) => {
+        const s = e.de[t];
+        const bloque = el('div', 'ent-sesion');
+        bloque.dataset.valor = t;
+        if (varios) {
+          const cab = el('div', 'ent-sesion-cab');
+          cab.innerHTML = iconoDe(ICONOS_DE.entreno[t]);
+          cab.appendChild(el('b', null, tx('entrada.cuestionario.entreno.tipos.' + t)[0]));
+          bloque.appendChild(cab);
+        } else bloque.appendChild(etiqueta(tx('entrada.cuestionario.entreno.dias')));
+        chips[t] = chipsDeDias(s.dias, (dias) => { s.dias = dias; pintar(); });
+        const horas = el('div', 'ent-dos-col');
+        horas.append(
+          columna(tx('entrada.cuestionario.entreno.hora'), pasito(s.hora, { nombre: tx('entrada.cuestionario.entreno.hora'), min: 5 * 60, max: 23 * 60, paso: 15, formato: u.horaMin, alCambiar: (x) => { s.hora = x; pintar(); } })),
+          columna(tx('entrada.cuestionario.entreno.dura'), pasito(s.minutos, { nombre: tx('entrada.cuestionario.entreno.dura'), min: 15, max: 180, paso: 15, formato: (x) => tx('fecha.minutos', { m: x }), alCambiar: (x) => { s.minutos = x; pintar(); } })),
+        );
+        bloque.append(chips[t], horas);
+        desliza.appendChild(bloque);
+      });
+      desliza.appendChild(plDobles.el);
+      const siNo = tx('entrada.cuestionario.entreno.siNo');
+      const pregunta = (clave, clase, si, alCambiar) => {
+        const fila = el('div', 'ent-pregunta ' + clase);
+        fila.appendChild(el('span', null, tx('entrada.cuestionario.entreno.' + clave)));
+        opcionesDe(fila, [['no', siNo[0]], ['si', siNo[1]]], si ? 'si' : 'no', (v) => alCambiar(v === 'si'), 'ent-segmento ent-par ent-si-no');
+        return fila;
+      };
+      if (preguntas.partidos) {
+        // Al elegir el día del partido, se suma a los días de ese deporte, a la vista.
+        const sumarElPartido = () => {
+          const s = e.de[conPartidos];
+          if (e.partidos && !s.dias.includes(e.diaDePartido)) { s.dias = [...s.dias, e.diaDePartido]; chips[conPartidos].poner(s.dias); }
+          pintar();
+        };
+        const cualDia = el('div', 'ent-dia-partido');
+        cualDia.append(etiqueta(tx('entrada.cuestionario.entreno.partidoDia')), chipsDeDias([e.diaDePartido], ([d]) => { e.diaDePartido = d; sumarElPartido(); }, true));
+        const plDia = plegar(cualDia, e.partidos);
+        desliza.append(pregunta('partidos', 'ent-partidos', e.partidos, (si) => { e.partidos = si; plDia.abrir(si); sumarElPartido(); }), plDia.el);
+      }
+      if (preguntas.categoriaDePeso) desliza.appendChild(pregunta('categoria', 'ent-categoria', e.categoriaDePeso, (si) => { e.categoriaDePeso = si; }));
+      desliza.appendChild(etiqueta(tx('entrada.cuestionario.entreno.viaje')));
+      opcionesDe(desliza, Cuestionario.VIAJES.map((min, k) => [String(min), tx('entrada.cuestionario.entreno.viajes')[k]]), String(e.viaje), (v) => { e.viaje = Number(v); }, 'ent-segmento ent-cuatro');
+      desliza.appendChild(suma);
+      p.append(desliza, pie(seguir));
+      pintar();
+    }
+
+    // ¿Qué quieres lograr? Bajar, mantener, subir o recomponer (ganar músculo y perder grasa).
     function armarObjetivo(p, { paso }) {
       cabezaDeCuestionario(p, paso);
       p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuestionario.objetivoTitulo')));
-      const ritmo = el('div', 'ent-ritmo');
-      const textoRitmo = el('p', 'ent-chico');
-      const pintarRitmo = () => {
-        ritmo.hidden = r.objetivo === 'mantener';
-        if (r.objetivo !== 'mantener') textoRitmo.textContent = tx('entrada.cuestionario.ritmoTexto', { pct: numero(Math.abs(RITMO[r.objetivo][r.ritmo]), 2) });
-      };
-      if (r.sinDeficit && r.objetivo === 'bajar') r.objetivo = 'mantener';
-      const objetivos = opcionesDe(p, [['bajar', tx('entrada.cuestionario.bajar'), r.sinDeficit ? tx('entrada.cuidado.bajarNo') : null], ['mantener', tx('entrada.cuestionario.mantener')], ['subir', tx('entrada.cuestionario.subir')]], r.objetivo, (v) => { r.objetivo = v; pintarRitmo(); }, '', ICONOS_DE.objetivo);
-      // Sin déficit, bajar de peso no se elige acá: se dice por qué, corto.
-      if (r.sinDeficit) objetivos.firstChild.disabled = true;
-      ritmo.appendChild(el('span', 'ent-paso', tx('entrada.cuestionario.ritmo')));
-      opcionesDe(ritmo, ['suave', 'recomendado', 'rapido'].map((k) => [k, tx('entrada.cuestionario.' + k)]), r.ritmo, (v) => { r.ritmo = v; pintarRitmo(); }, 'ent-segmento');
-      ritmo.appendChild(textoRitmo);
-      p.appendChild(ritmo);
-      pintarRitmo();
-      p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.seguir'), siguiente, 'ent-principal'));
+      const sinLugar = !Cuestionario.rangoDelPesoMeta(r.peso, r.altura, 'bajar');
+      // Sin déficit, ni bajar ni recomponer; sin lugar para bajar (el IMC de 18,5), tampoco bajar. Se dice por qué, corto.
+      if ((r.sinDeficit && (r.objetivo === 'bajar' || r.objetivo === 'recomponer')) || (sinLugar && r.objetivo === 'bajar')) r.objetivo = 'mantener';
+      const lista = [
+        ['bajar', tx('entrada.cuestionario.bajar'), r.sinDeficit ? tx('entrada.cuidado.bajarNo') : sinLugar ? tx('entrada.cuestionario.bajarNoSano') : null],
+        ['mantener', tx('entrada.cuestionario.mantener')],
+        ['subir', tx('entrada.cuestionario.subir')],
+        ['recomponer', tx('entrada.cuestionario.recomponer'), tx(r.sinDeficit ? 'entrada.cuestionario.recomponerNo' : 'entrada.cuestionario.recomponerTexto')],
+      ];
+      const caja = opcionesDe(p, lista, r.objetivo, elegirObjetivo, '', ICONOS_DE.objetivo);
+      if (r.sinDeficit || sinLugar) caja.querySelector('[data-valor="bajar"]').disabled = true;
+      if (r.sinDeficit) caja.querySelector('[data-valor="recomponer"]').disabled = true;
+      p.appendChild(pie(seguirBoton()));
     }
 
-    // El resultado: la estrella deja la barra y queda arriba del título, el punto de partida.
+    // Al cambiar lo que quiere lograr, el peso meta y el ritmo vuelven a lo que se propone.
+    function elegirObjetivo(v) {
+      const antes = r.objetivo;
+      r.objetivo = v;
+      if (cambiaPeso() && antes !== v) {
+        r.pesoMeta = null;
+        r.fecha = null;
+        asegurarMeta();
+      }
+      r.ritmo = Cuestionario.ritmoSugerido(v, levantaPesas() ? r.experiencia : null);
+    }
+
+    // ¿Hace cuánto entrenas con pesas? Al subir, cambia el ritmo que se propone.
+    function armarExperiencia(p, { paso }) {
+      cabezaDeCuestionario(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.experiencia.titulo')), el('p', 'ent-texto', tx('entrada.cuestionario.experiencia.texto')));
+      const avanzado = tx(r.objetivo === 'subir' ? 'entrada.cuestionario.experiencia.avanzadoSubir' : 'entrada.cuestionario.experiencia.avanzadoRecomponer');
+      opcionesDe(p, [
+        ['principiante', tx('entrada.cuestionario.experiencia.principiante')],
+        ['intermedio', tx('entrada.cuestionario.experiencia.intermedio')],
+        ['avanzado', tx('entrada.cuestionario.experiencia.avanzado'), avanzado],
+      ], r.experiencia, (v) => {
+        r.experiencia = v;
+        if (!r.fecha) r.ritmo = Cuestionario.ritmoSugerido(r.objetivo, v);
+      });
+      p.appendChild(pie(seguirBoton()));
+    }
+
+    // ¿A qué peso quieres llegar? Y a qué ritmo: cada uno con su fecha, o una fecha con el ritmo que pide
+    // (D35). Al mover el peso, las fechas se mueven con él.
+    function armarMeta(p, { paso }) {
+      p.classList.add('ent-denso');
+      cabezaDeCuestionario(p, paso);
+      const dir = r.objetivo;
+      const [min, max] = Cuestionario.rangoDelPesoMeta(r.peso, r.altura, dir) || [r.peso, r.peso];
+      if (r.pesoMeta == null || r.pesoMeta < min || r.pesoMeta > max) r.pesoMeta = Cuestionario.pesoMetaSugerido(r.peso, r.altura, dir) ?? min;
+      p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuestionario.meta.titulo')));
+      const grande = el('div', 'ent-numero ent-mediano');
+      const valor = el('b');
+      grande.append(valor, el('span', null, 'kg'));
+      const rango = el('input', 'ent-rango');
+      rango.type = 'range';
+      rango.min = min; rango.max = max; rango.step = 0.5;
+      rango.value = r.pesoMeta;
+      rango.setAttribute('aria-label', tx('entrada.cuestionario.meta.titulo'));
+      const regla = el('div', 'ent-regla');
+      regla.append(el('span', null, kg(min)), el('span', null, kg(max)));
+      p.append(grande, rango, regla);
+      if (dir === 'bajar') p.appendChild(el('p', 'ent-chico ent-izquierda', tx('entrada.cuestionario.meta.minimo', { kg: kg(min) })));
+      p.appendChild(etiqueta(tx('entrada.cuestionario.meta.ritmo')));
+      const lista = el('div', 'ent-ritmos');
+      const sugerido = Cuestionario.ritmoSugerido(r.objetivo, levantaPesas() ? r.experiencia : null);
+      const filas = {};
+      ['suave', 'recomendado', 'rapido', 'fecha'].forEach((k, i) => {
+        const b = el('button', 'ent-ritmo-fila');
+        b.type = 'button';
+        b.dataset.valor = k;
+        b.style.animationDelay = `${(0.32 + i * 0.07).toFixed(2)}s`;
+        const textos = el('div');
+        const titulo = el('b', null, tx(k === 'fecha' ? 'entrada.cuestionario.meta.elegirFecha' : 'entrada.cuestionario.' + k));
+        if (k === sugerido && k !== 'recomendado') titulo.appendChild(el('em', 'ent-sugerida', tx('entrada.cuestionario.meta.paraTi')));
+        const detalle = el('span');
+        textos.append(titulo, detalle);
+        const fecha = el('em');
+        b.append(textos, fecha);
+        // Antes de los 18, bajar rápido no está (ritmoPermitido).
+        const menor = dir === 'bajar' && k === 'rapido' && r.edad < Metas.MAYORIA_DE_EDAD;
+        b.disabled = menor;
+        b.addEventListener('click', () => elegir(k));
+        filas[k] = { b, detalle, fecha, menor };
+        lista.appendChild(b);
+      });
+      // La fecha elegida: una semana antes o después, con lo exigente que es y el ritmo que pide.
+      const fechaCaja = el('div', 'ent-fecha-elegida');
+      const viab = el('div', 'ent-viab');
+      const chip = el('em');
+      const porSemana = el('span');
+      viab.append(chip, porSemana);
+      const pasoFecha = pasito(r.fecha ? Fechas.diasEntre(Datos.HOY, r.fecha) : 70, {
+        nombre: tx('entrada.cuestionario.meta.elegirFecha'), min: 7, max: 728, paso: 7,
+        formato: (d) => fechaDelCamino(Fechas.sumarDias(Datos.HOY, d)), alCambiar: (d) => { r.fecha = Fechas.sumarDias(Datos.HOY, d); refrescar(); },
+      });
+      fechaCaja.append(pasoFecha, viab);
+      const plFecha = plegar(fechaCaja, !!r.fecha);
+      p.append(lista, plFecha.el, pie(seguirBoton()));
+      function elegir(k) {
+        if (k === 'fecha') {
+          if (!r.fecha) { const x = plazoDeRitmo(r.ritmo); r.fecha = x ? x.fecha : Fechas.sumarDias(Datos.HOY, 70); }
+        } else {
+          r.ritmo = k;
+          r.fecha = null;
+        }
+        plFecha.abrir(k === 'fecha');
+        escena.haptico('suave');
+        refrescar();
+      }
+      function refrescar() {
+        ['suave', 'recomendado', 'rapido'].forEach((k) => {
+          const f = filas[k];
+          const x = plazoDeRitmo(k);
+          f.detalle.textContent = f.menor ? tx('entrada.cuestionario.meta.desde18') : tx('entrada.cuestionario.meta.porSemana', { pct: hasta2(pctDe(k)) });
+          f.fecha.textContent = x && !f.menor ? fechaDelCamino(x.fecha) : '';
+        });
+        filas.fecha.detalle.textContent = tx('entrada.cuestionario.meta.elegirFechaTexto');
+        const elegida = r.fecha ? Progreso.plazoConFecha(entradaDelPlazo(), r.fecha) : null;
+        filas.fecha.fecha.textContent = r.fecha ? fechaDelCamino(r.fecha) : '';
+        if (elegida) {
+          chip.className = elegida.viabilidad;
+          chip.textContent = tx('entrada.cuestionario.meta.viabilidad.' + elegida.viabilidad);
+          porSemana.textContent = tx('entrada.cuestionario.meta.porSemana', { pct: hasta2(elegida.pct) });
+          pasoFecha.poner(Fechas.diasEntre(Datos.HOY, r.fecha));
+        }
+        Object.entries(filas).forEach(([j, f]) => f.b.setAttribute('aria-pressed', String(r.fecha ? j === 'fecha' : j === r.ritmo)));
+      }
+      const mostrar = () => { valor.textContent = numero(r.pesoMeta, 1); };
+      rango.addEventListener('input', () => { r.pesoMeta = Number(rango.value); mostrar(); refrescar(); });
+      mostrar();
+      refrescar();
+    }
+
+    // Cuando llegues, ¿qué sigue? El plan en una línea: hoy, la meta con su fecha y lo que sigue después
+    // de las semanas en mantenimiento (Progreso lo lee de perfil.despues).
+    function armarDespues(p, { paso }) {
+      cabezaDeCuestionario(p, paso);
+      asegurarMeta();
+      const plazo = plazoElegido();
+      const semanas = Progreso.SEMANAS_DE_MANTENIMIENTO || 2;
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.despues.titulo', { kg: kg(r.pesoMeta) })), el('p', 'ent-texto', tx('entrada.cuestionario.despues.texto', { n: semanas })));
+      const plan = el('div', 'ent-plan');
+      const hilo = el('div', 'ent-plan-hilo');
+      hilo.appendChild(el('i'));
+      const nodo = (arriba, abajo) => { const d = el('div', 'ent-plan-nodo'); d.append(el('i'), el('b', null, arriba), el('span', null, abajo)); return d; };
+      const llegada = plazo ? plazo.fecha : null;
+      const ultimo = nodo(llegada ? fechaDelCamino(Fechas.sumarDias(llegada, semanas * 7)) : '—', tx('entrada.cuestionario.despues.elegido.' + r.despues));
+      plan.append(hilo, nodo(tx('entrada.cuestionario.despues.hoy'), `${kg(r.peso)} kg`), nodo(llegada ? fechaDelCamino(llegada) : '—', `${kg(r.pesoMeta)} kg`), ultimo);
+      p.appendChild(plan);
+      const musculo = tx('entrada.cuestionario.despues.musculo');
+      opcionesDe(p, [
+        ['mantener', ...tx('entrada.cuestionario.despues.mantener')],
+        ['musculo', musculo[0], r.objetivo === 'subir' ? tx('entrada.cuestionario.despues.musculoSubir') : musculo[1]],
+        ['despues', ...tx('entrada.cuestionario.despues.despues')],
+      ], r.despues, (v) => { r.despues = v; cambiarTexto(ultimo.querySelector('span'), tx('entrada.cuestionario.despues.elegido.' + v)); }, '', ICONOS_DE.despues);
+      p.appendChild(pie(seguirBoton()));
+    }
+
+    // ¿Cómo quieres comer? El reparto (con su barra, para la meta de ahora), la proteína en gramos y lo que comes.
+    function armarComer(p, { paso }) {
+      p.classList.add('ent-denso');
+      cabezaDeCuestionario(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.comer.titulo')), etiqueta(tx('entrada.cuestionario.comer.reparto')));
+      const estilos = opcionesDe(p, Metas.ESTILOS.map((e) => [e, tx('progreso.metas.estilos.' + e)[0]]), r.estilo, (v) => { r.estilo = v; }, 'ent-cuadro ent-estilos');
+      const barras = {};
+      estilos.querySelectorAll('.ent-opcion').forEach((b) => {
+        const barra = el('div', 'ent-barra-macros');
+        barras[b.dataset.valor] = ['p', 'c', 'g'].map((m) => barra.appendChild(el('s', 'ent-m-' + m)));
+        b.querySelector('.ent-opcion-textos').appendChild(barra);
+      });
+      p.appendChild(etiqueta(tx('entrada.cuestionario.comer.proteina')));
+      const niveles = opcionesDe(p, Cuestionario.NIVELES_DE_PROTEINA.map((n) => [n, tx('entrada.cuestionario.comer.niveles.' + n), ' ']), r.proteina, (v) => { r.proteina = v; pintar(); }, 'ent-segmento');
+      p.appendChild(etiqueta(tx('entrada.cuestionario.comer.dieta')));
+      opcionesDe(p, Plan.DIETAS.map((d) => [d, tx('comida.plan.dietas.' + d)]), r.dieta, (v) => { r.dieta = v; }, 'ent-chips');
+      p.appendChild(pie(seguirBoton()));
+      function pintar() {
+        const kcal = metaDeAhora().metas.kcal;
+        const proteina = Cuestionario.proteinaDelNivel(respuestas());
+        Metas.ESTILOS.forEach((e) => {
+          const m = Metas.macrosConProteina(kcal, r.peso, proteina, e);
+          [m.proteina * 4, m.carbohidratos * 4, m.grasas * 9].forEach((x, i) => { barras[e][i].style.flex = `${Math.max(0.001, x)} 0 0`; });
+        });
+        niveles.querySelectorAll('.ent-opcion').forEach((b) => {
+          const g = Metas.macrosConProteina(kcal, r.peso, Cuestionario.proteinaDelNivel(Object.assign(respuestas(), { proteina: b.dataset.valor }))).proteina;
+          b.querySelector('span').textContent = tx('entrada.cuestionario.comer.gramos', { n: numero(g) });
+        });
+      }
+      pintar();
+    }
+
+    // ¿Cómo es tu día? De que te despiertas a que te acuestas, con las comidas y el entreno en el medio:
+    // lo que usan los avisos (qué comer antes de entrenar, contando el viaje, y la hora de dormir). Con
+    // tres noches en Salud, el sueño ya se sabe: se muestra y no se pregunta.
+    function armarDia(p, { paso }) {
+      p.classList.add('ent-denso');
+      cabezaDeCuestionario(p, paso);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.dia.titulo')), el('p', 'ent-texto', tx('entrada.cuestionario.dia.texto')));
+      const deSalud = suenoDeSalud();
+      const e = entrenoDicho();
+      const medio = Comidas.CON_HORA.map((c) => ({ tipo: 'comida', comida: c, min: r.horarios[c] }));
+      if (e) e.sesiones.forEach((sesion) => medio.push({ tipo: 'entreno', sesion, min: sesion.hora }));
+      medio.sort((x, y) => x.min - y.min);
+      const lista = el('ul', 'ent-dia-lista');
+      [{ tipo: 'despertar' }, ...medio, { tipo: 'acostarse' }].forEach((f, k) => {
+        const deSueno = f.tipo === 'despertar' || f.tipo === 'acostarse';
+        const li = el('li', 'ent-dia-fila ' + (deSueno ? 'sueno' : f.tipo));
+        li.style.animationDelay = `${(0.3 + k * 0.05).toFixed(2)}s`;
+        const valor = el('div', 'ent-dia-valor');
+        let nombre;
+        if (f.tipo === 'comida') {
+          // Tocar la comida dice que no se suele hacer (y otra vez, que sí).
+          nombre = el('button', 'ent-dia-nombre');
+          nombre.type = 'button';
+          nombre.dataset.valor = f.comida;
+          nombre.appendChild(el('b', null, tx('comida.comidas.' + f.comida)));
+          const pintarNo = () => { li.classList.toggle('no', !!r.noSuele[f.comida]); nombre.setAttribute('aria-pressed', String(!r.noSuele[f.comida])); };
+          nombre.addEventListener('click', () => { r.noSuele[f.comida] = !r.noSuele[f.comida]; pintarNo(); escena.haptico('suave'); });
+          valor.append(pasito(r.horarios[f.comida], { nombre: tx('comida.comidas.' + f.comida), min: 4 * 60, max: 24 * 60 - 15, paso: 15, formato: u.horaMin, alCambiar: (x) => { r.horarios[f.comida] = x; } }), el('span', 'ent-dia-no', tx('entrada.cuestionario.dia.noSuelo')));
+          pintarNo();
+        } else if (f.tipo === 'entreno') {
+          // Cada deporte con sus días y la hora de salir (la del viaje), para lo de comer antes.
+          const ses = f.sesion;
+          const dias = listaDeDias(ses.dias);
+          nombre = el('div', 'ent-dia-nombre');
+          nombre.append(el('b', null, tx('entrada.cuestionario.entreno.tipos.' + ses.tipo)[0]), el('span', null, e.viaje ? tx('entrada.cuestionario.dia.sesion', { dias, hora: u.horaMin(ses.hora - e.viaje) }) : tx('entrada.cuestionario.dia.sesionEnCasa', { dias })));
+          valor.appendChild(el('span', 'ent-dia-fijo', `${u.horaMin(ses.hora)}–${u.horaMin(ses.hora + ses.minutos)}`));
+        } else {
+          const despertar = f.tipo === 'despertar';
+          nombre = el('div', 'ent-dia-nombre');
+          nombre.appendChild(el('b', null, tx('entrada.cuestionario.dia.' + (despertar ? 'despertar' : deSalud ? 'dormirse' : 'acostarse'))));
+          if (deSalud) {
+            const fijo = el('span', 'ent-dia-fijo', u.horaMin(despertar ? deSalud.despertar : deSalud.dormirse));
+            fijo.appendChild(el('em', 'ent-de-salud', tx('entrada.cuestionario.deSalud')));
+            valor.appendChild(fijo);
+          } else if (despertar) {
+            valor.appendChild(pasito(r.sueno.despertar, { nombre: tx('entrada.cuestionario.dia.despertar'), min: 4 * 60, max: 12 * 60, paso: 15, formato: u.horaMin, alCambiar: (x) => { r.sueno.despertar = x; } }));
+          } else {
+            // Pasada la medianoche sigue siendo la noche de ese día: se cuenta desde la tarde y se guarda la hora del reloj.
+            const noche = r.sueno.acostarse < 12 * 60 ? r.sueno.acostarse + 24 * 60 : r.sueno.acostarse;
+            valor.appendChild(pasito(noche, { nombre: tx('entrada.cuestionario.dia.acostarse'), min: 20 * 60, max: 27 * 60, paso: 15, formato: u.horaMin, alCambiar: (x) => { r.sueno.acostarse = x % (24 * 60); } }));
+          }
+        }
+        li.append(el('i', 'ent-dia-nodo'), nombre, valor);
+        lista.appendChild(li);
+      });
+      // Con varias sesiones el día crece: si no entra, se desliza y el botón queda abajo.
+      const desliza = el('div', 'ent-desliza');
+      desliza.appendChild(lista);
+      if (!deSalud) {
+        desliza.appendChild(etiqueta(tx('entrada.cuestionario.dia.finDeSemana')));
+        opcionesDe(desliza, ['igual', 'tarde'].map((k) => [k, tx('entrada.cuestionario.dia.finDeSemanaOpciones.' + k)]), r.sueno.finDeSemana, (v) => { r.sueno.finDeSemana = v; }, 'ent-segmento ent-par');
+      }
+      p.append(desliza, pie(seguirBoton()));
+    }
+
+    // El plan en una línea: «Bajar a 71 kg para el 4 de enero; después, mantener».
+    function lineaDelPlan(x) {
+      if (x.recomponer) return tx('entrada.cuestionario.plan.recomponer');
+      if (x.objetivo === 'mantener') return tx('entrada.cuestionario.plan.mantener', { kg: kg(r.peso) });
+      asegurarMeta();
+      const plazo = plazoElegido();
+      const f = plazo ? u.partes(plazo.fecha) : null;
+      const fecha = f ? tx(lejos(plazo.fecha) ? 'entrada.cuestionario.fechaConAnio' : 'entrada.cuestionario.fecha', { num: f.num, mes: tx('fecha.meses')[f.mes], anio: f.anio }) : '';
+      return tx('entrada.cuestionario.plan.' + x.objetivo, { kg: kg(r.pesoMeta), fecha }) + tx('entrada.cuestionario.plan.luego.' + r.despues);
+    }
+
+    // El resultado: la estrella deja la barra y queda arriba del título, el punto de partida, con el plan
+    // en una línea y de dónde sale el gasto (en reposo, la vida diaria y el entrenamiento).
     function armarResultado(p, { a, desde }) {
-      const m = metas(Object.assign({}, r, { sexo: r.sexo || 'm' }));
-      p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuestionario.resultadoTitulo')));
+      const meta = metaDeAhora();
+      const m = meta.metas;
+      const partes = Cuestionario.partesRedondas(meta.gasto);
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.resultadoTitulo')), el('p', 'ent-plan-linea', lineaDelPlan(meta)));
       const l = luna('ent-luna-grande');
       const kcalMacros = [m.proteina * 4, m.carbohidratos * 4, m.grasas * 9];
       const total = kcalMacros.reduce((x, y) => x + y, 0) || 1;
@@ -1271,7 +2200,9 @@ const Entrada = (() => {
         fila.append(el('i'), el('span', null, tx('entrada.cuestionario.' + k)), el('b', null, `${numero(g)} g`));
         leyenda.appendChild(fila);
       });
-      p.append(leyenda, el('p', 'ent-chico', tx('entrada.cuestionario.gasto', { n: numero(m.gasto) })), el('p', 'ent-texto', tx('entrada.cuestionario.resultadoTexto')));
+      const enPartes = tx(partes.entreno ? 'entrada.cuestionario.partes' : 'entrada.cuestionario.partesSinEntreno', { reposo: numero(partes.reposo), vida: numero(partes.vida), entreno: numero(partes.entreno) })
+        + (meta.gasto.conGrasa ? ` · ${tx('entrada.cuestionario.masaMagra')}` : '');
+      p.append(leyenda, el('p', 'ent-chico', tx('entrada.cuestionario.gasto', { n: numero(partes.total) })), el('p', 'ent-partes', enPartes), el('p', 'ent-texto', tx('entrada.cuestionario.resultadoTexto')));
       p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.seguir'), () => (opciones.antesDeTerminar ? opciones.antesDeTerminar(terminar) : terminar()), 'ent-principal'));
       l.llenar(1600, 200);
       // La cifra cuenta hasta la meta.
@@ -1341,8 +2272,11 @@ const Entrada = (() => {
       opciones.alCambiar && opciones.alCambiar(paso.id);
     }
 
+    // La que sigue entre las que aparecen con lo contestado (PASOS, `si`).
     function siguiente() {
-      if (actual < PASOS.length - 1) ir(actual + 1);
+      let i = actual + 1;
+      while (i < PASOS.length - 1 && !aplica(PASOS[i])) i++;
+      if (i < PASOS.length) ir(i);
     }
 
     function limpiar() {
@@ -1404,15 +2338,38 @@ const Entrada = (() => {
       if (opciones.alSalir) opciones.alSalir();
     }
 
+    // Para las capturas: contestar sin tocar (lo dado se mezcla con lo contestado), conectar Salud o
+    // volver a lo de fábrica. Con «salud», como al tocar «Conectar con Salud».
+    window.__cuestionario = (accion, arg) => {
+      if (accion === 'responder') Object.assign(r, copia(arg));
+      else if (accion === 'salud') conectarSalud();
+      // El entreno se mezcla aparte: lo de cada deporte, de a uno.
+      else if (accion === 'entreno') {
+        const { de, ...resto } = copia(arg);
+        Object.assign(r.entreno, resto);
+        Object.keys(de || {}).forEach((t) => Object.assign(r.entreno.de[t], de[t]));
+      }
+      else if (accion === 'reiniciar') { Object.assign(r, copia(DE_FABRICA)); desdeSalud = {}; }
+      return perfilDicho();
+    };
+
     return {
       empezar,
       salir,
-      irA(id) { const i = PASOS.findIndex((p) => p.id === id); if (i >= 0) { if (actual < 0) empezar(); ir(i, true); } },
+      irA(id) {
+        const i = PASOS.findIndex((p) => p.id === id);
+        if (i < 0) return;
+        idioma = escena.idioma;
+        if (actual < 0) empezar();
+        ir(i, true);
+      },
       // Para las capturas: Salud dice 16 años, o es su caso (sin déficit).
       menor() { r.edad = 15; desdeSalud.edad = 15; },
       caso(v) { r.caso = v; r.sinDeficit = v !== 'nada'; if (v === 'embarazo') r.sexo = 'f'; },
       get paso() { return actual >= 0 ? PASOS[actual].id : null; },
-      metas: () => metas(Object.assign({}, r, { sexo: r.sexo || 'm' })),
+      // La meta de arranque, como la del resultado, y lo que quedaría en el perfil.
+      metas: () => { const x = metaDeAhora(); return Object.assign({ gasto: Cuestionario.partesRedondas(x.gasto).total }, x.metas); },
+      perfil: perfilDicho,
     };
   }
 

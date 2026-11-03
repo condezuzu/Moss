@@ -199,6 +199,11 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     }
     const pesarse = x.pesarse as AjustesDeAvisos['pesarse'];
     if (pesarse && typeof pesarse.encendido === 'boolean') avisos.pesarse = { encendido: pesarse.encendido, ...(pesarse.todos ? { todos: true } : {}) };
+    // Los interruptores sueltos: lo que falta y los de lo que conviene hacer. Sin leerlos, apagarlos no duraba.
+    for (const clave of ['falta', 'antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion'] as const) {
+      const v = x[clave] as { encendido?: unknown } | undefined;
+      if (v && typeof v.encendido === 'boolean') avisos[clave] = { encendido: v.encendido };
+    }
     return avisos;
   } catch {
     return {};

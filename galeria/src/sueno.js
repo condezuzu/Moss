@@ -9,6 +9,8 @@
 // confiable es. Lo que falta se muestra como falta: nunca se inventa.
 // La propuesta para aprobar (más color, azul y un poco de verde): sin noches, una invitación concreta,
 // un ejemplo marcado como ejemplo y cuánto falta para cada cosa; con pocas, lo que ya hay y los puntos.
+// Desde el 2/11/2026, el fondo es una noche oscura con auroras suaves (lo pediste: «como Alaska», sin
+// nieve, que se note que es de noche); los colores de cada cosa quedan, y no todo va en caja.
 
 const SeccionSueno = (() => {
   const DIAS = 14;
@@ -23,19 +25,40 @@ const SeccionSueno = (() => {
   --sn-2: rgba(214, 226, 250, 0.82); --sn-3: rgba(196, 212, 246, 0.68); --sn-linea: rgba(150, 178, 240, 0.15);
   --sn-rem: #a8e2f0; --sn-nucleo: #6aa2f0; --sn-profundo: #6a5fd6; --sn-despierto: #efb08c; --sn-azul: #6b8ff0; --sn-verde: #2ea8a0; --sn-verde-claro: #8adbc8;
 }
-/* El azul de la noche no se desliza con la página: se aclara y se apaga con el gesto, como el velo del cielo. */
+/* La noche no se desliza con la página: se aclara y se apaga con el gesto, como el velo del cielo. Casi
+   negra, con algo del cielo detrás; arriba, la aurora: cortinas suaves de verde agua y un poco de violeta,
+   quietas, con sus pliegues. */
 .velo-pestanas .velo-sueno {
-  position: absolute; inset: 0; opacity: 0;
+  position: absolute; inset: 0; opacity: 0; overflow: hidden;
   background:
-    radial-gradient(120% 42% at 84% -4%, rgba(96, 132, 226, 0.3), rgba(96, 132, 226, 0) 72%),
-    radial-gradient(90% 30% at -6% 64%, rgba(50, 171, 146, 0.08), rgba(50, 171, 146, 0) 74%),
-    linear-gradient(180deg, rgba(17, 34, 82, 0.95) 0%, rgba(11, 22, 58, 0.96) 50%, rgba(7, 14, 38, 0.97) 100%);
+    radial-gradient(70% 34% at 50% -6%, rgba(36, 120, 112, 0.16), rgba(36, 120, 112, 0) 74%),
+    linear-gradient(180deg, rgba(4, 8, 18, 0.93) 0%, rgba(5, 9, 22, 0.95) 46%, rgba(3, 5, 13, 0.97) 100%);
+}
+.velo-pestanas .velo-sueno::before, .velo-pestanas .velo-sueno::after {
+  content: ''; position: absolute; left: -22%; right: -22%; top: -8%; height: 60%; transform: skewX(-16deg);
+}
+.velo-pestanas .velo-sueno::before {
+  filter: blur(24px);
+  background:
+    radial-gradient(34% 50% at 26% 34%, rgba(52, 196, 158, 0.2), rgba(52, 196, 158, 0) 70%),
+    radial-gradient(28% 40% at 50% 20%, rgba(64, 170, 196, 0.15), rgba(64, 170, 196, 0) 70%),
+    radial-gradient(32% 42% at 74% 30%, rgba(112, 104, 226, 0.13), rgba(112, 104, 226, 0) 72%);
+}
+.velo-pestanas .velo-sueno::after {
+  filter: blur(3px);
+  background: repeating-linear-gradient(90deg, rgba(150, 236, 206, 0.06) 0 2px, rgba(150, 236, 206, 0) 2px 13px);
+  -webkit-mask-image: radial-gradient(48% 46% at 36% 32%, #000, transparent 76%);
+  mask-image: radial-gradient(48% 46% at 36% 32%, #000, transparent 76%);
 }
 .sueno.pagina-app::after { background: linear-gradient(180deg, rgba(6, 12, 32, 0), rgba(6, 12, 32, 0.9) 75%); }
 .sn-scroll { transition: opacity 0.18s ease; }
 .sn-scroll.sn-fundiendo { opacity: 0; }
 .sueno .pg-fecha { color: var(--sn-3); }
-.sueno .pg-carta { background: rgba(40, 62, 132, 0.46); border-color: rgba(150, 178, 240, 0.17); }
+.sueno .pg-carta { background: rgba(12, 20, 46, 0.6); border-color: rgba(150, 178, 240, 0.11); }
+/* Más variedad, menos cajas: el horario, lo del reloj y las fuentes van abiertos, con una línea arriba. */
+.sueno .pg-carta.sn-horario, .sueno .pg-carta.sn-vitales, .sueno .pg-carta.sn-fuentes { margin-top: 20px; padding: 16px 4px 4px; background: none; border: 0; border-top: 1px solid rgba(150, 178, 240, 0.13); border-radius: 0; }
+/* La pregunta de la mañana toma un poco de la aurora. */
+.sueno .pg-carta.sn-manana { background: linear-gradient(135deg, rgba(30, 92, 92, 0.3), rgba(30, 34, 92, 0.34)); border-color: rgba(120, 220, 200, 0.14); }
 .sueno .pg-carta-titulo { color: var(--sn-2); }
 .sueno .pg-cifra span, .sueno .pg-nota, .sueno .pg-texto { color: var(--sn-2); }
 .sueno .pg-aviso { background: rgba(150, 178, 240, 0.08); border-color: var(--sn-linea); color: var(--sn-2); }
@@ -51,7 +74,7 @@ const SeccionSueno = (() => {
 .sueno .sn-porque-dentro.cerrando { height: 0 !important; padding: 0; opacity: 0; animation: none; }
 
 /* La tira de las dos semanas. */
-.sueno .sn-noches { background: rgba(40, 62, 132, 0.36); border-color: rgba(150, 178, 240, 0.15); margin-top: 12px; }
+.sueno .sn-noches { background: rgba(12, 20, 46, 0.42); border-color: rgba(150, 178, 240, 0.1); margin-top: 12px; }
 .sueno .sn-manana + .sn-noches, .sueno .sn-manana-hecha + .sn-noches { margin-top: 12px; }
 .sueno .sn-noche { color: var(--sn-3); }
 .sueno .sn-noche.elegida { background: rgba(150, 178, 240, 0.18); color: var(--tinta); }
@@ -69,7 +92,7 @@ const SeccionSueno = (() => {
 @keyframes sn-barra { from { transform: scaleY(0); } }
 
 /* El arco de la noche: el sueño de la noche, del anochecer a la mañana. */
-.sueno .pg-carta.sn-heroe { background: linear-gradient(178deg, #0d1a46 0%, #13245e 58%, #1d3376 100%); }
+.sueno .pg-carta.sn-heroe { background: linear-gradient(178deg, rgba(10, 18, 48, 0.82) 0%, rgba(14, 26, 66, 0.82) 62%, rgba(20, 36, 84, 0.8) 100%); }
 .sn-arco { position: relative; margin-top: 2px; }
 .sn-arco svg { display: block; width: 100%; height: auto; overflow: visible; }
 .sn-arco .pista { fill: none; stroke: rgba(150, 178, 240, 0.09); stroke-linecap: butt; }
@@ -794,9 +817,14 @@ const SeccionSueno = (() => {
     function recuperacion(r) {
       const c = carta('sn-recuperacion', tx('ascent.recuperacion.titulo'), el('em', 'sn-con-ascent', tx('ascent.conAscent')));
       const fila = boton('sn-rec-fila', '', () => opciones.abrirAscent());
-      fila.append(el('b', null, String(r.total)), el('span', null, tx('ascent.recuperacion.conviene.' + r.conviene)));
+      // Como arriba de Ascent (2/11/2026): «Estás 87 % recuperado», con su franja; debajo, lo que conviene hoy.
+      const palabra = tx('ascent.recuperado.palabra.' + (opciones.sexo && opciones.sexo() === 'f' ? 'f' : 'm'));
+      const textos = el('span', 'sn-rec-textos');
+      textos.append(el('small', null, tx('ascent.recuperado.estas')), el('em', null, r.banda ? `${palabra} · ${tx('ascent.bandas.' + r.banda)}` : palabra));
+      fila.append(textos, el('b', null, `${r.total} %`));
       fila.insertAdjacentHTML('beforeend', icono('adelante'));
       c.appendChild(fila);
+      if (r.banda) c.appendChild(el('p', 'sn-nota', tx('ascent.bandas.frases.' + r.banda)));
       // Debajo, el rendimiento esperado de hoy (spec/rendimiento.md).
       const rend = opciones.rendimiento ? opciones.rendimiento() : null;
       if (rend) c.appendChild(el('p', 'sn-nota', tx('ascent.rendimiento.enSueno', { categoria: tx('ascent.rendimiento.categorias.' + rend.categoria.max) })));

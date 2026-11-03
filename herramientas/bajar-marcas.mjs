@@ -1,7 +1,8 @@
 // Baja la exportación de Open Food Facts (lo que ellos piden usar para traer mucho, en vez de su API) y se
 // queda con lo que usa herramientas/marcas.mjs, con solo sus columnas. El archivo pesa más de 1 GB: se
 // procesa mientras llega y no se guarda entero.
-// - .cache/off/marcas.tsv: lo que tiene a Uruguay o a Argentina entre sus países.
+// - .cache/off/marcas.tsv: lo que tiene a Uruguay o a Argentina entre sus países, y lo que tiene un código
+//   de GS1 Uruguay (773) aunque esté cargado con otro país.
 // - .cache/off/marcas-region.tsv: de otros países de la región, las marcas globales que acá se venden y que
 //   nadie cargó con Uruguay ni Argentina (Kellogg's, por ejemplo). marcas.mjs las marca como aproximadas.
 // Tarda según la conexión: unos minutos.
@@ -18,6 +19,8 @@ const URL_EXPORTACION = 'https://static.openfoodfacts.org/data/en.openfoodfacts.
 const COLUMNAS = ['code', 'last_modified_t', 'product_name', 'generic_name', 'quantity', 'brands', 'brands_tags', 'categories_tags', 'countries_tags', 'serving_size', 'serving_quantity', 'product_quantity',
   'unique_scans_n', 'energy-kcal_100g', 'energy_100g', 'fat_100g', 'saturated-fat_100g', 'carbohydrates_100g', 'sugars_100g', 'fiber_100g', 'proteins_100g', 'sodium_100g', 'alcohol_100g'];
 const PAISES = /en:(uruguay|argentina)\b/;
+// El prefijo 773 es de GS1 Uruguay: hecho acá aunque Open Food Facts le ponga otro país (2/11/2026).
+const DE_URUGUAY = /^773\d{10}$/;
 const REGION = /en:(mexico|chile|colombia|peru|ecuador|paraguay|bolivia|costa-rica|spain|brazil)\b/;
 const GLOBALES = /kellogg|nesquik|nesquick|\boreo\b|pringles|\blay'?s\b|doritos|cheetos|ruffles|coca.?cola|pepsi|sprite|fanta|schweppes|red.?bull|monster|snickers|m&m|kit.?kat|milka|nutella|kinder|toblerone|ferrero|quaker|gatorade|powerade|nescaf|maggi|knorr|hellmann|heinz|danone|activia|cadbury|lacta|garoto/i;
 
@@ -51,7 +54,7 @@ function linea(texto) {
   const campos = texto.split('\t');
   const paises = campos[indices.countries_tags] ?? '';
   const fila = () => `${COLUMNAS.map((c) => (indices[c] < 0 ? '' : (campos[indices[c]] ?? ''))).join('\t')}\n`;
-  if (PAISES.test(paises)) {
+  if (PAISES.test(paises) || DE_URUGUAY.test(campos[indices.code] ?? '')) {
     salida.write(fila());
     guardadas++;
   } else if (REGION.test(paises) && GLOBALES.test(campos[indices.brands] ?? '')) {

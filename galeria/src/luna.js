@@ -2,6 +2,9 @@
 // de Moss: luz de luna cálida (pergamino que va a dorado), los mares suaves con algunos cráteres, la
 // sombra del borde, un resplandor que crece con la fase como el de las estrellas, y el disco oscuro
 // con su borde, que siempre muestra la meta. Pasada la meta, el borde y el resplandor se doran.
+// Desde el 2/11 (para aprobar): la luz cenicienta, que deja ver apenas los mares en la parte oscura
+// como en una luna de verdad, cráteres con relieve (sombra adentro y el borde que toma la luz) y una
+// línea de luz suave donde termina la sombra.
 // La app dibuja lo mismo con Skia (src/secciones/comida/LunaSkia.tsx).
 
 const Luna = (() => {
@@ -14,6 +17,13 @@ const Luna = (() => {
     return `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r} A ${rx.toFixed(2)} ${r} 0 0 ${p < 0.5 ? 0 : 1} 0 ${-r} Z`;
   }
   const salida = (u) => 1 - Math.pow(1 - Math.min(1, Math.max(0, u)), 3);
+
+  const MARES = '<ellipse cx="-12" cy="-14" rx="11" ry="8.5"/><ellipse cx="5" cy="-10" rx="7" ry="6"/><ellipse cx="13" cy="0" rx="7.5" ry="7"/>'
+    + '<ellipse cx="-20" cy="6" rx="7.5" ry="13"/><ellipse cx="-2" cy="15" rx="6.5" ry="4.2"/><ellipse cx="20" cy="14" rx="4.5" ry="3.6"/>';
+  // Cada cráter: [x, y, radio]. La sombra va adentro, del lado de la luz; el borde de enfrente la toma.
+  const CRATERES = [[-6, 27, 2.6], [10, 23, 1.6], [24, -2, 1.4], [-26, -6, 1.3], [-14, 20, 1.1], [17, -21, 1.8], [-29, 13, 0.9], [3, -27, 1.2]];
+  const crateres = CRATERES.map(([x, y, r]) => `<circle class="luna-crater-sombra" cx="${x - r * 0.18}" cy="${y - r * 0.18}" r="${r}"/>`
+    + `<path class="luna-crater-luz" d="M ${(x - r * 0.8).toFixed(2)} ${(y + r * 0.6).toFixed(2)} A ${r} ${r} 0 0 0 ${(x + r * 0.8).toFixed(2)} ${(y + r * 0.6).toFixed(2)}"/>`).join('');
 
   /**
    * Una luna de `tam` píxeles de CSS (el disco ocupa el 80 %; el resplandor sale del cuadro).
@@ -47,20 +57,20 @@ const Luna = (() => {
       <path class="luna-resplandor" filter="url(#${id}-resplandor)" transform="scale(1.06)"/>
       <g clip-path="url(#${id}-disco)">
         <circle r="40" fill="url(#${id}-noche)"/>
+        <g class="luna-ceniza"><circle r="40" fill="url(#${id}-cara)"/><g class="luna-mares" filter="url(#${id}-suave)">${MARES}</g></g>
         <g mask="url(#${id}-luz)">
           <circle r="40" fill="url(#${id}-cara)"/>
-          <g class="luna-mares" filter="url(#${id}-suave)">
-            <ellipse cx="-12" cy="-14" rx="11" ry="8.5"/><ellipse cx="5" cy="-10" rx="7" ry="6"/><ellipse cx="13" cy="0" rx="7.5" ry="7"/>
-            <ellipse cx="-20" cy="6" rx="7.5" ry="13"/><ellipse cx="-2" cy="15" rx="6.5" ry="4.2"/><ellipse cx="20" cy="14" rx="4.5" ry="3.6"/>
-          </g>
-          <g class="luna-crateres"><circle cx="-6" cy="27" r="2.4"/><circle cx="10" cy="23" r="1.5"/><circle cx="24" cy="-2" r="1.3"/><circle cx="-26" cy="-6" r="1.2"/></g>
+          <g class="luna-mares" filter="url(#${id}-suave)">${MARES}</g>
+          <g class="luna-crateres">${crateres}</g>
           <circle r="40" fill="#000" filter="url(#${id}-grano)" opacity="0.16"/>
           <circle r="40" class="luna-limbo" filter="url(#${id}-suave)"/>
         </g>
+        <path class="luna-terminador" filter="url(#${id}-suave)"/>
       </g>
       <circle r="40" class="luna-contorno"/>`;
     const faseEl = svg.querySelector('.luna-fase');
     const resplandor = svg.querySelector('.luna-resplandor');
+    const terminador = svg.querySelector('.luna-terminador');
     let ahora = 0;
     let cuadro = 0;
     const dibujar = (v) => {
@@ -68,6 +78,9 @@ const Luna = (() => {
       const d = fase(0.04 + 0.96 * p, 40);
       faseEl.setAttribute('d', d);
       resplandor.setAttribute('d', d);
+      terminador.setAttribute('d', d);
+      // Llena, no hay sombra: la línea se apaga.
+      terminador.style.opacity = String(p > 0.97 ? 0 : 1);
       // El resplandor crece con la fase; pasada la meta, se dora.
       resplandor.style.opacity = String(v > 1 ? 0.36 : 0.07 + 0.2 * p);
       svg.classList.toggle('pasada', v > 1.0001);

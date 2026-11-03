@@ -16,8 +16,11 @@ export type Sesion = { inicio: number; minutos: number; tipo: TipoDeSesion; seri
 
 export type Principal = Exclude<Comida, 'snack'>;
 
-/** Cuándo entrenás, puesto a mano en Perfil: qué días, a qué hora, cuánto dura y de qué tipo. */
-export type Entreno = { dias: DiaSemana[]; hora: number; minutos: number; tipo: Exclude<TipoDeSesion, 'suave'> };
+/**
+ * Cuándo entrenás, puesto a mano en Perfil: qué días, a qué hora, cuánto dura y de qué tipo. `viaje` es
+ * cuánto tardás en llegar al gimnasio, en minutos: los avisos de antes cuentan desde que salís (loQueConviene.ts).
+ */
+export type Entreno = { dias: DiaSemana[]; hora: number; minutos: number; tipo: Exclude<TipoDeSesion, 'suave'>; viaje?: number };
 
 /** Las sesiones de un día: la del horario, si ese día se entrena. */
 export function sesionesDelDia(entreno: Entreno | null, dia: ClaveDia): Sesion[] {
@@ -83,6 +86,8 @@ export const FALTA_PARA_DORMIR = 25;
 export const DURANTE: [number, number] = [30, 60];
 /** El café, tantas horas antes de dormir: 8 hasta 200 mg, 12 con más (Gardiner 2023 y 2025). */
 const CORTE_DE_CAFEINA = { hasta200: 8 * 60, masDe200: 12 * 60 };
+/** El último café, según la hora de dormirse y lo que tiene una toma (sin saberlo, como uno de hasta 200 mg). */
+export const corteDeCafeina = (dormir: number, porToma: number | null) => dormir - (porToma !== null && porToma > 200 ? CORTE_DE_CAFEINA.masDe200 : CORTE_DE_CAFEINA.hasta200);
 /** Como mucho tres líneas por día, y una por comida. */
 const MAXIMO_POR_DIA = 3;
 

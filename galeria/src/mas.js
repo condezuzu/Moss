@@ -1,8 +1,9 @@
 // El «+» del medio de la barra (spec/especificacion.md, cambio 9): una hoja con lo que se anota.
 // Arriba, lo principal: agregar comida (abre la hoja de registro de siempre) y registrar el peso.
-// Abajo, la carga rápida: calorías y macros a mano, los recientes y las comidas guardadas (un toque
-// las registra en la comida de esta hora, con deshacer) y el agua. Al final, las medidas del cuerpo
-// con la cinta, que estiman la grasa corporal como un rango chico (Cuerpo, src/dominio/cuerpo.ts).
+// Abajo, la carga rápida (2/11/2026): tu comida de siempre de esta hora en un toque y el agua; lo que
+// sueles comer a esta hora y las comidas guardadas (un toque las registra en la comida de esta hora,
+// con deshacer). Las calorías y macros a mano siguen en la hoja de registro. Al final, las medidas del
+// cuerpo con la cinta, que estiman la grasa corporal como un rango chico (Cuerpo, src/dominio/cuerpo.ts).
 
 const Mas = (() => {
   // Dónde va la cinta en el dibujo de cada medida: [x1, y, x2, curva].
@@ -83,7 +84,22 @@ const Mas = (() => {
 
       h.appendChild(el('h4', 'mas-etq', tx('mas.cargaRapida')));
       const rapidos = el('div', 'mas-rapidos');
-      rapidos.appendChild(boton('mas-rapido', `${icono('rayo')}<span>${tx('mas.caloriasYMacros')}</span>`, () => ir('rapida')));
+      // Tu comida de siempre de esta hora, de un toque (lo pediste el 2/11/2026: «tocas desayuno y se suma»).
+      const siempre = comida.siempreDe(tipo);
+      if (siempre) {
+        const b = boton('mas-rapido mas-siempre' + (s.hechos.has('siempre') ? ' hecho' : ''), '', () => {
+          const r = comida.sumarDeSiempre(tipo);
+          if (!r) return;
+          s.hechos.add('siempre');
+          b.classList.add('hecho');
+          aviso(tx('mas.registrado', { que: tx('comida.deSiempre.' + tipo), donde: tx('comida.aLa.' + tipo) }), () => { r.deshacer(); s.hechos.delete('siempre'); b.classList.remove('hecho'); });
+        });
+        b.innerHTML = icono('comida');
+        const t = el('span', 'mas-siempre-txt');
+        t.append(el('b', null, tx('comida.deSiempre.' + tipo)), el('small', null, `${siempre.nombres.join(', ')} · ${numero(Math.round(siempre.valores.kcal))} kcal`));
+        b.appendChild(t);
+        rapidos.appendChild(b);
+      } else rapidos.classList.add('solo-agua');
       const a = comida.agua();
       const agua = el('div', 'mas-rapido mas-agua');
       agua.innerHTML = icono('gota');
@@ -120,7 +136,7 @@ const Mas = (() => {
         });
         h.appendChild(carril);
       };
-      fila(tx('mas.recientes'), comida.recientes(8).map((r) => ({ clave: 'r' + r.id, id: r.id, nombre: r.nombre, detalle: r.cantidad, kcal: r.kcal })), (x) => comida.registrarReciente(x.id));
+      fila(tx('mas.aEstaHora.' + tipo), comida.deEstaHora(6).map((r) => ({ clave: 'h' + r.id, id: r.id, nombre: r.nombre, detalle: r.cantidad, kcal: r.kcal })), (x) => comida.registrarDeEstaHora(x.id));
       fila(tx('mas.guardadas'), comida.listaGuardadas().map((g) => ({ clave: 'g' + g.i, i: g.i, nombre: g.nombre, kcal: g.kcal })), (x) => comida.registrarGuardada(x.i));
 
       // Las medidas del cuerpo, con lo último que estimaron.

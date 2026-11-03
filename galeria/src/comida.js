@@ -481,7 +481,7 @@ const Comida = (() => {
         ? tx(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) })
         : d > 0 ? tx('comida.planificado') : '';
       linea.classList.toggle('de-mas', d === 0 && queda < 0);
-      lunaChica.ir(t.kcal / META.kcal, ms, comidasDe(d).map((c) => sumar(c.items).kcal));
+      lunaChica.ir(t.kcal / META.kcal, ms, comidasDe(d).map((c) => sumar(c.items).kcal), { p: t.p / META.p, c: t.c / META.c, g: t.g / META.g });
       zona.classList.toggle('planificado', d > 0);
       pintarMacros($z('.cm-macros-dia'), t, d <= 0);
       $z('.cm-seccion-dia').textContent = tx('comida.tuDia');
@@ -2460,6 +2460,26 @@ const Comida = (() => {
       };
     }
 
+    // Lo que más comes en esa comida en las dos últimas semanas (lo pediste el 2/11/2026: en el «+», en
+    // vez de lo último que anotaste, que a la hora del almuerzo es el desayuno), con la última cantidad;
+    // si no alcanza, lo que se suele comer a esa hora.
+    function deEstaHora(tipo, n) {
+      const veces = new Map();
+      for (let d = 0; d >= -14; d--) {
+        const c = comidasDe(d).find((x) => x.tipo === tipo && !x.plan);
+        if (!c) continue;
+        new Set(c.items.filter((it) => !it.rapida).map((it) => it.alimento)).forEach((id) => veces.set(id, (veces.get(id) || 0) + 1));
+      }
+      const ids = [...veces.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
+      (SUELES[tipo] || []).forEach(([nombre]) => { const a = porNombre.get(nombre); if (a && !ids.includes(a.id)) ids.push(a.id); });
+      return ids.slice(0, n).map((id) => {
+        const a = porId.get(id);
+        const [porcion, cuantas, gramos] = conUltima(a);
+        const item = gramos != null ? { alimento: a.id, gramos } : { alimento: a.id, porcion, veces: cuantas };
+        return { id: a.id, nombre: nombreDe(a), cantidad: cantidadDe(item), kcal: valoresDe(item).kcal, item };
+      });
+    }
+
     // Lo último que se registró, sin repetir y del más nuevo al más viejo, con la última cantidad.
     function recientes(n) {
       const vistos = new Set();
@@ -2525,6 +2545,11 @@ const Comida = (() => {
       listaGuardadas,
       registrarReciente(id) {
         const r = recientes(20).find((x) => x.id === id);
+        return r ? registrarDirecto([r.item], [r.nombre, r.cantidad].filter(Boolean).join(' · ')) : null;
+      },
+      deEstaHora: (n) => deEstaHora(comidaDeAhora(), n),
+      registrarDeEstaHora(id) {
+        const r = deEstaHora(comidaDeAhora(), 20).find((x) => x.id === id);
         return r ? registrarDirecto([r.item], [r.nombre, r.cantidad].filter(Boolean).join(' · ')) : null;
       },
       registrarGuardada(i) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { diagnostico, estadoDelSueno, type EntradasDelDiagnostico, type SesionDeHoy } from './diagnostico';
-import { rendimientoEsperado, type EntradasDelRendimiento } from './rendimiento';
+import { comoEntrenar, diagnostico, estadoDelSueno, focoDeHoy, MAXIMO_DEL_FOCO, ordenarMarcas, queFalla, TERMINAR_ANTES_DE_DORMIR, type EntradasDelDiagnostico, type EntradasDelFoco, type Foco, type SesionDeHoy } from './diagnostico';
+import { rendimientoEsperado, type CondicionesDeMarca, type EntradasDelRendimiento } from './rendimiento';
 
 // Fuerza de 58 minutos a las 18:40; 75 kg; meta de 160 g de proteína. Son las 15:30.
 const PIERNAS: SesionDeHoy = { inicio: 18 * 60 + 40, minutos: 58, tipo: 'fuerza', hecha: false };
@@ -208,5 +208,101 @@ describe('sin datos de sueño', () => {
     const despues = de(entradas({ noche: null, ultimas3: [], rendimiento: null, sesion: { ...PIERNAS, hecha: true } }, { ahora: 20 * 60 }));
     expect(despues.titular).toEqual({ que: 'faltaProteina', gramos: 95 });
     expect(despues.faltan).toEqual(['sueno']);
+  });
+});
+
+// ------------------------------------------------------------ hoy, concéntrate en
+
+type Recuperado = EntradasDelFoco['recuperado'];
+const BIEN: Recuperado = { banda: 'bien', bandas: { sueno: 'bien', fatiga: 'muyBien', comida: 'muyBien' }, loQueMasFalta: 'sueno' };
+const foco = (cambios: Partial<EntradasDelFoco> = {}, contexto: Partial<EntradasDelDiagnostico['contexto']> = {}) =>
+  focoDeHoy({ ...entradas(cambios, contexto), recuperado: BIEN, ...cambios });
+const que = (f: Foco[]) => f.map((x) => (x.que === 'entrenar' ? `entrenar:${x.como}` : x.que === 'comer' ? `comer:${x.cuando}` : x.que));
+
+describe('hoy, concéntrate en', () => {
+  it('durmió poco: lo de antes, sin ir al fallo y a la cama temprano, en el orden del día', () => {
+    const f = foco({
+      noche: { dormido: 350, necesidad: 480, siesta: false }, rendimiento: rendimiento(350),
+      recuperado: { banda: 'bien', bandas: { sueno: 'aceptable', fatiga: 'muyBien', comida: 'muyBien' }, loQueMasFalta: 'sueno' },
+    });
+    expect(que(f)).toEqual(['comer:antes', 'entrenar:sinFallo', 'dormir']);
+    expect(f.map((x) => x.hora)).toEqual([17 * 60 + 30, 18 * 60 + 40, 23 * 60 + 30]);
+    expect(f[1]).toMatchObject({ porque: 'sueno' });
+  });
+
+  it('muy recuperado y cerca de una marca: buen día para intentarla, con lo de antes y lo de después', () => {
+    const f = foco({ marca: 'sentadilla', recuperado: { banda: 'muyBien', bandas: { sueno: 'muyBien', fatiga: 'bien', comida: 'muyBien' }, loQueMasFalta: 'comida' } });
+    expect(que(f)).toEqual(['comer:antes', 'entrenar:marca', 'comer:despues']);
+    expect(f[1]).toMatchObject({ ejercicio: 'sentadilla', hora: 18 * 60 + 40 });
+  });
+
+  it('muy recuperado sin marca cerca: un poco más fuerte; con los músculos cargados, más suave', () => {
+    const muyBien: Recuperado = { banda: 'muyBien', bandas: { sueno: 'muyBien', fatiga: 'bien', comida: 'muyBien' }, loQueMasFalta: 'comida' };
+    expect(que(foco({ recuperado: muyBien }))).toContain('entrenar:masFuerte');
+    const cargado = foco({ recuperado: { banda: 'aceptable', bandas: { sueno: 'muyBien', fatiga: 'atencion', comida: 'muyBien' }, loQueMasFalta: 'musculos' } });
+    expect(cargado.find((x) => x.que === 'entrenar')).toMatchObject({ como: 'suave', porque: 'fatiga' });
+  });
+
+  it('«como siempre» solo si sobra lugar', () => {
+    const f = foco();
+    expect(que(f)).toEqual(['comer:antes', 'entrenar:comoSiempre', 'comer:despues']);
+  });
+
+  it('lo fuerte que termina a menos de 2 horas de dormir: terminar antes, con la hora', () => {
+    const f = foco({ sesion: { inicio: 22 * 60, minutos: 60, tipo: 'fuerza', hecha: false } }, { ahora: 12 * 60 });
+    expect(f.find((x) => x.que === 'terminar')).toEqual({ que: 'terminar', antesDe: 21 * 60 + 30, dormir: 23 * 60 + 30, hora: 22 * 60 });
+    expect(TERMINAR_ANTES_DE_DORMIR).toBe(120);
+    expect(foco().some((x) => x.que === 'terminar')).toBe(false);
+  });
+
+  it('sin la noche: primero, anotarla; y no dice cómo ir en el gimnasio', () => {
+    const f = foco({ noche: null, ultimas3: [], rendimiento: null, recuperado: null });
+    expect(que(f)[0]).toBe('faltaNoche');
+    expect(que(f)).not.toContain('entrenar:comoSiempre');
+  });
+
+  it('descanso: lo dice, y si falta proteína, lo que más pesa es el total del día', () => {
+    expect(foco({ sesion: null })).toEqual([{ que: 'descanso', hora: null }, { que: 'proteina', gramos: 95, hora: null }]);
+  });
+
+  it('con «sin déficit», nada', () => {
+    expect(foco({}, { sinDeficit: true })).toEqual([]);
+  });
+
+  it('como mucho tres', () => {
+    const f = foco({
+      noche: { dormido: 350, necesidad: 480, siesta: false }, rendimiento: rendimiento(350), sesion: { inicio: 22 * 60, minutos: 60, tipo: 'fuerza', hecha: false },
+      recuperado: { banda: 'aceptable', bandas: { sueno: 'atencion', fatiga: 'muyBien', comida: 'muyBien' }, loQueMasFalta: 'sueno' },
+    }, { ahora: 12 * 60 });
+    expect(f.length).toBe(MAXIMO_DEL_FOCO);
+  });
+});
+
+describe('cómo ir en el gimnasio', () => {
+  const r = (banda: 'atencion' | 'aceptable' | 'bien' | 'muyBien', sueno: 'atencion' | 'aceptable' | 'bien' | 'muyBien', fatiga: 'atencion' | 'aceptable' | 'bien' | 'muyBien') => ({ banda, bandas: { sueno, fatiga, comida: 'muyBien' as const }, loQueMasFalta: 'sueno' as const });
+  it('marca, más fuerte, sin fallo, suave o como siempre, según la recuperación y la noche', () => {
+    expect(comoEntrenar({ recuperado: r('muyBien', 'muyBien', 'bien'), sueno: 'bien', marca: 'sentadilla' })).toEqual({ como: 'marca', porque: null });
+    expect(comoEntrenar({ recuperado: r('muyBien', 'muyBien', 'bien'), sueno: 'bien', marca: null })).toEqual({ como: 'masFuerte', porque: null });
+    expect(comoEntrenar({ recuperado: r('bien', 'aceptable', 'muyBien'), sueno: 'corta', marca: null })).toEqual({ como: 'sinFallo', porque: 'sueno' });
+    expect(comoEntrenar({ recuperado: r('aceptable', 'bien', 'atencion'), sueno: 'bien', marca: null })).toEqual({ como: 'suave', porque: 'fatiga' });
+    expect(comoEntrenar({ recuperado: r('atencion', 'aceptable', 'aceptable'), sueno: 'algoCorta', marca: null })).toEqual({ como: 'suave', porque: 'total' });
+    expect(comoEntrenar({ recuperado: r('bien', 'bien', 'bien'), sueno: 'bien', marca: null })).toEqual({ como: 'comoSiempre', porque: null });
+  });
+  it('con una marca cerca pero sin estar muy recuperado, no la propone', () => {
+    expect(comoEntrenar({ recuperado: r('bien', 'bien', 'bien'), sueno: 'bien', marca: 'sentadilla' }).como).toBe('comoSiempre');
+  });
+});
+
+describe('marcas', () => {
+  const dia = (aplica: boolean, probabilidad: number, condiciones: Partial<CondicionesDeMarca> = {}) => ({
+    aplica, probabilidad, distancia: 2, condiciones: { cerca: true, recuperado: true, sueno: true, sinPico: true, comida: true, ...condiciones },
+  });
+  it('las de buen día primero, y después de la más probable a la menos', () => {
+    const lista = [{ ejercicio: 'prensa', dia: dia(false, 0.5) }, { ejercicio: 'sentadilla', dia: dia(true, 0.4) }, { ejercicio: 'curl', dia: dia(false, 0.1) }];
+    expect(ordenarMarcas(lista).map((x) => x.ejercicio)).toEqual(['sentadilla', 'prensa', 'curl']);
+  });
+  it('el porqué de un «hoy no»: las condiciones que fallan, en su orden', () => {
+    expect(queFalla(dia(false, 0.2, { sueno: false, cerca: false }).condiciones)).toEqual(['cerca', 'sueno']);
+    expect(queFalla(dia(true, 0.4).condiciones)).toEqual([]);
   });
 });
