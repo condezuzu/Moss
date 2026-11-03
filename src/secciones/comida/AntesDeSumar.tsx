@@ -47,7 +47,7 @@ export function DeDonde({ detalle, origen }: { detalle: Detalle | null; origen: 
   else {
     const d = detalle;
     lineas.push(d.origen === 'receta' && d.receta ? t('comida.deDonde.receta', { n: d.receta.ingredientes.length, g: numero(d.receta.pesoFinal) })
-      : d.origen === 'producto' ? t(d.atribucion === 'off' ? 'comida.deDonde.off' : 'comida.deDonde.producto')
+      : d.origen === 'producto' ? t(d.atribucion === 'off' ? 'comida.deDonde.off' : d.aproximado ? 'comida.deDonde.aproximado' : d.deDonde ? 'comida.deDonde.cadena' : 'comida.deDonde.producto')
         : d.origen === 'propio' ? t('comida.deDonde.propio') : t('comida.deDonde.usda'));
     const v = d.verificado;
     lineas.push(!v ? t('comida.deDonde.sin') : v.con === 'ingredientes' ? t('comida.deDonde.ingredientes') : v.con === 'etiqueta' ? t('comida.deDonde.etiqueta')

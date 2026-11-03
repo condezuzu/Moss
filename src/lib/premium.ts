@@ -2,11 +2,12 @@
 // servidor ni terceros. Va en la build que tenga el módulo; sin él, o con PREMIUM_SALE sin poner, Moss
 // sigue abierta como siempre. En la web, para probarla, una tienda de mentira.
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { requireOptionalNativeModule } from 'expo';
 import { useSyncExternalStore } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 
-import { acceso, DIAS_DE_PRUEBA, esDeRegalo, porMes, PRECIOS, PRODUCTOS, tieneAcceso, type Acceso, type Plan, type Suscripcion } from '@/dominio/premium';
+import { acceso, cuentaParaElRegalo, DIAS_DE_PRUEBA, esDeRegalo, porMes, PRECIOS, PRODUCTOS, tieneAcceso, type Acceso, type Plan, type Suscripcion } from '@/dominio/premium';
 import { idioma } from '@/textos';
 import { CON_PREMIUM, PREMIUM_SALE } from './banderas';
 
@@ -112,12 +113,34 @@ async function leerSuscripcion(): Promise<boolean> {
 }
 
 /**
- * Quien tenía cuenta antes de que se prendiera, con cada cambio de sesión (lo avisa el almacén): así
- * también quien vuelve a entrar con su cuenta durante la entrada, antes de que se le ofrezca.
+ * La fecha de la cuenta, guardada aparte de la sesión: sin conexión y con el token vencido, la sesión llega
+ * vacía (sin SIGNED_OUT), y quien la tiene de regalo vería la pantalla de pago. Se guarda también con
+ * PREMIUM_SALE sin poner: así ya está el día que se prende.
  */
-export function cuentaDePremium(creada: string | null | undefined) {
+const CUENTA_GUARDADA = 'moss:cuentaDeMoss';
+/** La que está guardada; undefined mientras no se leyó. */
+let guardada: string | null | undefined;
+let vez = 0;
+
+/**
+ * Quien tenía cuenta antes de que se prendiera, con cada cambio de sesión (lo avisa el almacén): así
+ * también quien vuelve a entrar con su cuenta durante la entrada, antes de que se le ofrezca. `salio`: se
+ * cerró la sesión o se borró la cuenta, y lo guardado se olvida.
+ */
+export async function cuentaDePremium(creada: string | null | undefined, salio = false): Promise<void> {
+  const esta = ++vez;
+  if ((creada || salio) && (creada || null) !== guardada) {
+    guardada = creada || null;
+    (creada ? AsyncStorage.setItem(CUENTA_GUARDADA, creada) : AsyncStorage.removeItem(CUENTA_GUARDADA)).catch(() => {});
+  }
   if (!PREMIUM_SALE) return;
-  const regalo = esDeRegalo(creada, PREMIUM_SALE);
+  if (guardada === undefined) {
+    const leida = await AsyncStorage.getItem(CUENTA_GUARDADA).catch(() => null);
+    // Mientras se leía llegó otra sesión: vale esa.
+    if (esta !== vez) return;
+    guardada = leida;
+  }
+  const regalo = esDeRegalo(cuentaParaElRegalo(creada, guardada, salio), PREMIUM_SALE);
   if (regalo !== estado.regalo) cambiar({ regalo });
 }
 
@@ -161,6 +184,8 @@ export const alCambiarPremium = suscribir;
 
 export const accesoDe = (e: EstadoDePremium): Acceso => acceso({ suscripcion: e.suscripcion, regalo: e.regalo, ultima: e.ultima, sinConexion: e.sinPrecios, ahora: Date.now() });
 export const accesoActual = (): Acceso => accesoDe(estado);
+/** Si ya se sabe si hay acceso: hasta que Apple y la cuenta contestan, no (y sin compras en esta build, sí). */
+export const seSabeElAcceso = () => !tienda || estado.listo;
 /** Para lo que corre solo (los avisos): sin saberlo, todavía no. Sin compras en esta build, sí. */
 export const hayPremium = () => !tienda || (estado.listo && tieneAcceso(accesoActual()));
 export const suscripcionActual = () => estado.suscripcion;

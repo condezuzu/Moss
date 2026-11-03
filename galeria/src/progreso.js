@@ -89,7 +89,7 @@ const SeccionProgreso = (() => {
     const kgCorto = (kg) => numero(kg, kg % 1 ? 1 : 0);
     function planDe(d) {
       const p = d.perfil;
-      return Progreso.planPorEtapas({ hoy: Datos.HOY, pesoKg: d.pesoHoy, objetivo: p.objetivo, pesoMeta: p.pesoMeta, plazo: plazoActual(d), ritmo: d.progreso.ritmo, despues: p.despues });
+      return Progreso.planPorEtapas({ hoy: Datos.HOY, pesoKg: d.pesoHoy, objetivo: p.objetivo, pesoMeta: p.pesoMeta, plazo: plazoActual(d), ritmo: d.progreso.ritmo, despues: p.despues, pesoInicial: d.pesoInicial });
     }
     function plan(d) {
       const pl = planDe(d);
@@ -501,7 +501,8 @@ const SeccionProgreso = (() => {
         fechaElegida.textContent = u.fechaCorta(x.fecha);
         marcas.querySelectorAll('.pg-marca').forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(Number(b.dataset.pct) - x.pct) < 0.005)));
         avisos.innerHTML = '';
-        x.avisos.forEach((a) => avisos.appendChild(el('p', 'pg-aviso pg-aviso-' + a, tx('progreso.plazo.avisos.' + a, {
+        // El del piso sin fecha se ve como el del piso.
+        x.avisos.forEach((a) => avisos.appendChild(el('p', 'pg-aviso pg-aviso-' + (a === 'pisoNoLlega' ? 'piso' : a), tx('progreso.plazo.avisos.' + a, {
           piso: numero(Metas.pisoDe(p.sexo)), fecha: x.fechaConPiso ? u.fechaCorta(x.fechaConPiso) : '',
         }))));
         if (filaPlazo) filaPlazo.querySelector('b').textContent = valorDelPlazo(x);

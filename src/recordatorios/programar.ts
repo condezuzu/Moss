@@ -8,17 +8,17 @@ import { useEffect, useEffectEvent } from 'react';
 import { Platform } from 'react-native';
 
 import type { Estado } from '@/almacen/almacen';
-import { sesionesDelDia } from '@/dominio/alrededorDelEntreno';
+import { comidasHabituales, sesionesDelDia } from '@/dominio/alrededorDelEntreno';
 import { avisosDeLaSemana, cuandoSuena, horasDeSueno, horaDeReloj, textoDelAviso, type Aviso, type Avisos, type Evento, type Notificacion, type Sueno as SuenoDeAvisos } from '@/dominio/avisos';
-import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
+import type { Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, diaLogico, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
-import { horaHabitual } from '@/dominio/recordatorios';
+import { horasDeSiempre } from '@/dominio/recordatorios';
 import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
-import { bajoAlFinal, loQueFaltaHoy, type FaltaConHora } from '@/dominio/loQueFalta';
+import { bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, type FaltaConHora } from '@/dominio/loQueFalta';
 import { aprenderPersonal, habitualDe } from '@/dominio/sinReloj';
-import { avisoDePrueba } from '@/dominio/premium';
+import { avisoDePrueba, avisosHasta } from '@/dominio/premium';
 import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
-import { hayPremium, suscripcionActual } from '@/lib/premium';
+import { accesoActual, hayPremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
 import { duracion, metaDelDia } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
 import { t } from '@/textos';
@@ -48,7 +48,13 @@ const minutosDe = (r: { momento: string; dia: ClaveDia }) => minutosEnElDia(new 
 
 export { horaDeReloj };
 
-type Para = Pick<Estado, 'hoy' | 'corte' | 'latencia' | 'registros' | 'recordatorios' | 'avisos' | 'habitos' | 'marcas' | 'perfil' | 'salud' | 'noches' | 'metas' | 'pesos' | 'entreno' | 'agua' | 'numeros'>;
+/**
+ * Lo del almacén que usan los avisos: cuando cambia algo de esto, el almacén los vuelve a programar
+ * (src/almacen/index.ts). Lo que tardas en dormirte y la hora en que empieza el día también los mueven.
+ */
+export const LO_QUE_MUEVE_LOS_AVISOS = ['hoy', 'corte', 'latencia', 'registros', 'recordatorios', 'avisos', 'habitos', 'marcas', 'perfil', 'salud', 'noches', 'metas', 'pesos', 'entreno', 'agua', 'numeros'] as const;
+
+type Para = Pick<Estado, (typeof LO_QUE_MUEVE_LOS_AVISOS)[number]>;
 
 /** Lo del sueño que usan los avisos: sin noches de verdad (las de ejemplo no valen), nada. */
 export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'latencia'>): SuenoDeAvisos | null {
@@ -63,11 +69,9 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
   };
 }
 
-/** La hora de siempre de cada comida: la mediana de cuándo se anotó en tres semanas, o la típica. */
+/** La hora de siempre de cada comida: la mediana de cuándo se anotó en tres semanas, o la típica (la misma con que se anota lo de otra comida). */
 export function horasDeComida(e: Pick<Estado, 'hoy' | 'registros'>): (c: Comida) => number {
-  const desde = sumarDias(e.hoy, -21);
-  const registros = vigentes(e.registros.values()).filter((r) => r.dia >= desde && r.dia < e.hoy && !r.planificado);
-  return (c: Comida) => horaHabitual(registros.filter((r) => r.comida === c).map(minutosDe), c === 'snack' ? 16 * 60 : HORA_TIPICA[c], c === 'cena' || c === 'merienda');
+  return horasDeSiempre(e.registros.values(), e.hoy);
 }
 
 /** Lo que el plan dejó para esa comida de ese día, en pocas palabras: «pollo a la plancha, arroz». */
@@ -89,8 +93,12 @@ const textoDe = (n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): str
 /** Si hay que avisar de lo que falta: lo que se eligió o, sin elegir, si hay otro aviso prendido (y por lo tanto permiso). */
 export const conLoQueFalta = (ajustes: Avisos, alguno: boolean) => ajustes.falta?.encendido ?? alguno;
 
+/** Si se eligió algún aviso: de las comidas sin anotar, dormir, el horario, pesarse o un hábito. Perfil dice lo mismo. */
+export const algunAviso = (e: Pick<Estado, 'avisos' | 'recordatorios'>) =>
+  !!e.recordatorios?.length || !!e.avisos.dormir?.encendido || !!e.avisos.habitos?.length || !!Object.keys(e.avisos.horario ?? {}).length || !!e.avisos.pesarse?.encendido;
+
 /** Lo que Moss avisaría hoy de lo que falta, con lo anotado hasta ahora. Lo planificado cuenta: si la cena lo resuelve, nada. */
-export function faltasDeHoy(e: Para, hoy: ClaveDia, ahora: number, horaDeComida: (c: Comida) => number): FaltaConHora[] {
+export function faltasDeHoy(e: Para, hoy: ClaveDia, ahora: number, horaDeComida: (c: Comida) => number, sueno = suenoParaAvisos(e)): FaltaConHora[] {
   const meta = metaDelDia(e, hoy);
   if (!meta) return [];
   const registros = vigentes(e.registros.values()).filter((r) => r.dia === hoy);
@@ -98,23 +106,22 @@ export function faltasDeHoy(e: Para, hoy: ClaveDia, ahora: number, horaDeComida:
   const anotadas: Partial<Record<Comida, number>> = {};
   for (const r of anotados) anotadas[r.comida] = Math.min(anotadas[r.comida] ?? Infinity, minutosDe(r));
   const horaDeCena = horaDeComida('cena');
-  // A la tarde (lo mismo que loQueFaltaHoy): para saber qué dijo, si esa hora ya pasó.
-  const antesDeCenar = Math.max(16 * 60 + 30, horaDeCena - 120);
-  const dias21 = sumarDias(hoy, -21);
-  const meriendas = new Set(vigentes(e.registros.values()).filter((r) => r.comida === 'merienda' && !r.planificado && r.dia >= dias21 && r.dia < hoy).map((r) => r.dia));
-  const sueno = suenoParaAvisos(e);
+  // Lo que se sabía a la hora de la tarde, para saber qué dijo si ya pasó: lo anotado hasta entonces, no lo
+  // que tiene una hora de antes (lo dicho a la noche con el nombre del almuerzo va a las 13).
+  const tarde = horaDeLaTarde(horaDeCena);
+  const yaAnotado = (x: { actualizado: string }) => minutosEnElDia(new Date(x.actualizado), hoy) <= tarde;
   const ayer = sumarDias(hoy, -1);
   const metaDeAyer = metaDelDia(e, ayer);
   // El agua, solo para quien la suele anotar: al menos tres días de los últimos siete, u hoy.
   const conAgua = new Set(vigentes(e.agua.values()).filter((x) => x.dia >= sumarDias(hoy, -7)).map((x) => x.dia));
   const tomasHoy = vigentes(e.agua.values()).filter((x) => x.dia === hoy);
   return loQueFaltaHoy({
-    dia: hoy, ahora, meta, comido: totalDelDia(registros, hoy, true), comidoALaTarde: totalDelDia(registros.filter((r) => r.planificado || minutosDe(r) <= antesDeCenar), hoy, true), anotadas,
+    dia: hoy, ahora, meta, comido: totalDelDia(registros, hoy, true), comidoALaTarde: totalDelDia(registros.filter((r) => r.planificado || yaAnotado(r)), hoy, true), anotadas,
     planeadas: new Set(registros.filter((r) => r.planificado).map((r) => r.comida)),
     horaDeCena, acostarse: sueno ? horasDeSueno(hoy, sueno).acostarse : null,
-    comidasHabituales: meriendas.size >= 7 ? 4 : 3,
+    comidasHabituales: comidasHabituales(e.registros.values(), hoy),
     agua: conAgua.size >= 3 || conAgua.has(hoy)
-      ? { ml: aguaDelDia(tomasHoy, hoy), mlALaTarde: aguaDelDia(tomasHoy.filter((x) => minutosDe(x) <= antesDeCenar), hoy) }
+      ? { ml: aguaDelDia(tomasHoy, hoy), mlALaTarde: aguaDelDia(tomasHoy.filter(yaAnotado), hoy) }
       : null,
     bajoAyer: metaDeAyer ? bajoAlFinal(metaDeAyer, totalDelDia(e.registros.values(), ayer, false)) : [],
     propios: recientes(e.registros.values(), 30).filter((i) => i.fuente !== 'rapida').map((i) => ({ nombre: i.nombre, proteina: i.valores.proteina, kcal: i.valores.kcal, azucares: i.valores.azucares, alcohol: i.valores.alcohol })),
@@ -148,12 +155,17 @@ export function programarAvisos(e: Para): Promise<void> {
 
 async function programar(e: Para, vieja: () => boolean): Promise<void> {
   if (!hayAvisos || vieja()) return;
+  // Mientras Apple y la cuenta no contestan no se sabe si hay acceso: lo programado queda como estaba, y
+  // se rehace cuando contestan (el almacén oye alCambiarPremium). Borrarlo dejaba la semana sin avisos.
+  if (!seSabeElAcceso()) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
   // Sin acceso (venció o canceló) no suena nada: lo elegido queda, y vuelve al suscribirse.
   if (!hayPremium()) return;
   const ajustes: Avisos = { ...e.avisos, comidas: e.recordatorios ?? [] };
   const finDePrueba = avisoDePrueba(suscripcionActual(), Date.now());
-  const elegido = !!ajustes.dormir?.encendido || !!ajustes.comidas?.length || !!ajustes.habitos?.length || !!Object.keys(ajustes.horario ?? {}).length || !!ajustes.pesarse?.encendido;
+  // Cancelada, nada después de que vence: sin acceso no suena, aunque Moss no se abra para borrarlo.
+  const hasta = avisosHasta(suscripcionActual(), accesoActual());
+  const elegido = algunAviso(e);
   const conFalta = conLoQueFalta(ajustes, elegido);
   if ((!elegido && !conFalta && finDePrueba === null) || !(await Notifications.getPermissionsAsync()).granted) return;
   await prepararCategorias();
@@ -167,10 +179,11 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const eventosHoy: Partial<Record<Evento, number>> = {};
   for (const r of deHoy) if (r.comida !== 'snack' && eventosHoy[r.comida] === undefined) eventosHoy[r.comida] = minutosDe(r);
   const minutos = minutosEnElDia(ahora, hoy);
+  const sueno = suenoParaAvisos(e);
   const lista = avisosDeLaSemana({
-    hoy, ahora: minutos, ajustes, habitos: e.habitos, sueno: suenoParaAvisos(e), horaDeComida,
+    hoy, ahora: minutos, ajustes, habitos: e.habitos, sueno, horaDeComida, corte: e.corte,
     sesionesDe: (dia) => sesionesDelDia(e.entreno, dia),
-    faltasHoy: conFalta ? faltasDeHoy(e, hoy, minutos, horaDeComida) : [],
+    faltasHoy: conFalta ? faltasDeHoy(e, hoy, minutos, horaDeComida, sueno) : [],
     marcas: e.marcas, anotadasHoy: new Set(deHoy.map((r) => r.comida)), eventosHoy,
     // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).
     diaDelControl: e.perfil?.diaDelControl ?? (e.metas[0] ? diaDeLaSemana(e.metas[0].desde) : undefined),
@@ -182,7 +195,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     const [a, m, d] = c.dia.split('-').map(Number);
     const fecha = new Date(a, m - 1, d, c.hora, c.minuto);
     // iOS rechaza una fecha que ya pasó, y cortaría los que siguen.
-    if (fecha.getTime() <= Date.now()) continue;
+    if (fecha.getTime() <= Date.now() || (hasta !== null && fecha.getTime() >= hasta)) continue;
     const { aviso } = n;
     try {
       await Notifications.scheduleNotificationAsync({

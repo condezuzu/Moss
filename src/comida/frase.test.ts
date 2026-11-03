@@ -129,6 +129,28 @@ describe('la comida dicha de una vez', () => {
     expect(leerFrase('half a plate of rice', 'en').dichos[0]).toMatchObject({ cantidad: 0.5, buscado: 'rice', vago: true });
   });
 
+  it('el plato sin número, con «½» o «y medio», y el tamaño antes del plato', () => {
+    const plato = (texto: string, idioma: 'es' | 'en' = 'es') => {
+      const [d] = leerFrase(texto, idioma).dichos;
+      return [d.cantidad, d.buscado, d.vago ?? false, d.plato ?? null];
+    };
+    expect(plato('un plato y medio de arroz')).toEqual([1.5, 'arroz', true, null]);
+    expect(plato('plato y medio de fideos')).toEqual([1.5, 'fideo', true, null]);
+    expect(plato('½ plato de arroz')).toEqual([0.5, 'arroz', true, null]);
+    expect(plato('1/2 plato de arroz')).toEqual([0.5, 'arroz', true, null]);
+    expect(plato('plato de fideos')).toEqual([1, 'fideo', true, null]);
+    expect(plato('un gran plato de guiso')).toEqual([1, 'guiso', true, 'grande']);
+    expect(plato('a big plate of pasta', 'en')).toEqual([1, 'pasta', true, 'grande']);
+    // Solo, el plato es de lo de antes: no se busca «plato».
+    expect(leerFrase('fideos, un plato grande', 'es').dichos.map((d) => [d.buscado, d.vago, d.plato])).toEqual([['fideo', true, 'grande']]);
+  });
+
+  it('«una porción» o «un bol» no son un plato, y «uno de» repite el plato', () => {
+    expect(leerFrase('una porción de queso', 'es').dichos[0].recipiente).toBe('otro');
+    expect(leerFrase('un plato de arroz', 'es').dichos[0].recipiente).toBe('plato');
+    expect(leerFrase('un plato de arroz y uno de fideos', 'es').dichos.map((d) => [d.buscado, d.vago ?? false])).toEqual([['arroz', true], ['fideo', true]]);
+  });
+
   it('«un poco» y «mucho» dicen cuánto, sin número', () => {
     expect(leerFrase('un poco de arroz', 'es').dichos[0]).toMatchObject({ buscado: 'arroz', cantidad: null, cuanto: 'poco' });
     expect(leerFrase('mucho arroz', 'es').dichos[0]).toMatchObject({ buscado: 'arroz', cantidad: null, cuanto: 'mucho' });

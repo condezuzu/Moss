@@ -215,6 +215,17 @@ describe('la meta con plazo', () => {
     expect(plazoConRitmo({ ...ELLA, entrenaFuerza: null }, 0.5)!.avisos).toEqual(['sinFuerzaBajar']);
     expect(plazoConRitmo({ ...ELLA, pesoKg: 70, pesoMeta: 75, entrenaFuerza: false }, 0.25)!.avisos).toEqual(['sinFuerzaSubir']);
   });
+
+  it('si el piso casi no deja déficit, no hay fecha con el piso: no se llega en dos años', () => {
+    // Gastando 1.150, comer el piso de 1.200 no baja nada.
+    const sinDeficit = plazoConRitmo({ ...ELLA, gasto: 1150 }, 0.5)!;
+    expect(sinDeficit.avisos).toEqual(['pisoNoLlega']);
+    expect(sinDeficit.fechaConPiso).toBeNull();
+    // Gastando 1.210, el piso deja 10 kcal por día: 8 kg en unos 17 años.
+    expect(plazoConFecha({ ...ELLA, gasto: 1210 }, sumarDias(HOY, 70))!).toMatchObject({ avisos: ['pisoNoLlega'], fechaConPiso: null });
+    // Si el ritmo entra arriba del piso, nada que decir.
+    expect(plazoConRitmo({ ...ELLA, gasto: 1700 }, 0.5)!.avisos).toEqual([]);
+  });
 });
 
 describe('el plan por etapas', () => {
@@ -283,5 +294,15 @@ describe('el plan por etapas', () => {
     expect(planPorEtapas({ hoy: HOY, pesoKg: 75, objetivo: 'mantener', plazo: null, ritmo: 0.4 }).comoVienes).toBe('seMueve');
     // Ya en la meta (sin camino), llegaste.
     expect(planPorEtapas({ hoy: HOY, pesoKg: 72.3, objetivo: 'bajar', pesoMeta: 72, plazo: null, ritmo: -0.2 }).comoVienes).toBe('llegaste');
+  });
+
+  it('pasando la meta también llegaste; con la meta del otro lado desde el principio, no', () => {
+    const como = (pesoKg: number, objetivo: 'bajar' | 'subir', pesoMeta: number, pesoInicial?: number) =>
+      planPorEtapas({ hoy: HOY, pesoKg, objetivo, pesoMeta, plazo: null, ritmo: -0.3, pesoInicial }).comoVienes;
+    expect(como(70.8, 'bajar', 72)).toBe('llegaste');
+    expect(como(70.8, 'bajar', 72, 80)).toBe('llegaste');
+    expect(como(76.2, 'subir', 75)).toBe('llegaste');
+    // Al pasar de bajar a subir con la meta abajo, no llegó: está del otro lado.
+    expect(como(74, 'subir', 71, 78)).toBe('seMueve');
   });
 });

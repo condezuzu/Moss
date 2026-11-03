@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import type { Comida } from './comidas';
-import { sumarDias } from './fechas';
+import { minutosEnElDia, sumarDias } from './fechas';
 import {
   aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
   itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
@@ -125,6 +125,20 @@ describe('copiar, planificar, confirmar y borrar', () => {
     const [copia] = copiar(cena, { dia: ayer }, { dia: sumarDias(HOY, 30) }, op);
     const [antes, despues] = [new Date(cena[0].momento), new Date(copia.momento)];
     expect([despues.getHours(), despues.getMinutes()]).toEqual([antes.getHours(), antes.getMinutes()]);
+  });
+
+  it('la cena de pasada la medianoche sigue siendo de la noche en el otro día (D32), no la primera', () => {
+    // A las 0:30 del 21, del 20: copiada al 22, queda a las 0:30 del 23, la 1470 del 22.
+    const tarde = reg(arroz(), ayer, 'cena', 24.5);
+    const [copia] = copiar([tarde, almuerzo], { dia: ayer, comida: 'cena' }, { dia: sumarDias(HOY, 1) }, op);
+    expect(minutosEnElDia(new Date(copia.momento), copia.dia)).toBe(24 * 60 + 30);
+    expect(delDia([copia, reg(arroz(), sumarDias(HOY, 1), 'almuerzo', 13, { planificado: true })], sumarDias(HOY, 1)).map((r) => r.comida)).toEqual(['almuerzo', 'cena']);
+  });
+
+  it('lo sugerido de un día que ya pasó no se copia: no se comió ni se ve', () => {
+    const sugerida = reg(banana(), ayer, 'cena', 21, { planificado: true, plan: 'tipo:x' });
+    const copia = copiar([almuerzo, sugerida], { dia: ayer }, { dia: HOY }, op);
+    expect(copia.map((r) => [r.comida, r.planificado])).toEqual([['almuerzo', false]]);
   });
 
   it('confirmar pasa lo planificado de ese día a registrado', () => {

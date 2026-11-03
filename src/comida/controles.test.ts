@@ -17,6 +17,7 @@ type Fila = Record<string, number | string | null> & {
   id: number; fuente: string; descripcion: string; nombre_es: string | null; kcal: number; proteina: number; carbohidratos: number; grasas: number;
   fibra: number | null; azucares: number | null; saturadas: number | null; sodio: number | null; alcohol: number | null; densidad: number | null;
   desecho: number | null; verificado: string | null; segunda: string | null; crudo: number | null; aceite: string | null; porcion: number | null;
+  categoria: string | null; marca: string | null; orden_marca: number | null; atribucion: string | null;
 };
 const todos = db.prepare('SELECT * FROM alimentos').all() as Fila[];
 const curados = todos.filter((a) => a.nombre_es);
@@ -110,6 +111,12 @@ describe('cómo se miden', () => {
     expect(malos.map(nombre)).toEqual([]);
   });
 
+  it('ningún alimento tiene la misma porción dos veces', () => {
+    const repetidas = db.prepare(`SELECT a.nombre_es, a.descripcion, coalesce(p.es, p.en) AS porcion FROM porciones p JOIN alimentos a ON a.id = p.alimento
+      GROUP BY p.alimento, coalesce(p.es, p.en), p.gramos HAVING count(*) > 1`).all() as { nombre_es: string | null; descripcion: string; porcion: string }[];
+    expect(repetidas.map((r) => `${r.nombre_es ?? r.descripcion}: ${r.porcion}`)).toEqual([]);
+  });
+
   it('lo que se toma tiene una densidad posible, y lo que tiene parte que no se come, una fracción posible', () => {
     expect(todos.filter((a) => a.densidad !== null && !(a.densidad >= 0.3 && a.densidad <= 2)).map(nombre)).toEqual([]);
     expect(todos.filter((a) => a.desecho !== null && !(a.desecho > 0 && a.desecho < 0.9)).map(nombre)).toEqual([]);
@@ -149,6 +156,68 @@ describe('los platos', () => {
       return p.peso_final < 0.4 * crudo || p.peso_final > 1.05 * crudo;
     });
     expect(malos.map((p) => p.nombre_es)).toEqual([]);
+  });
+});
+
+describe('los productos de marca', () => {
+  const productos = todos.filter((a) => a.fuente === 'producto');
+  // Lo de Open Food Facts (alimentos/marcas.txt, de herramientas/marcas.mjs); lo curado a mano también lo lleva.
+  const deOff = productos.filter((a) => a.atribucion === 'off');
+  const llano = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  /** El nombre llano sin la marca, que siempre está en el nombre: «Pringles Original» y «Original Pringles» son «original». */
+  const sinLaMarca = (a: Fila) => llano(a.nombre_es!).replace(new RegExp(`(^| )${llano(a.marca ?? '')}(?= |$)`, 'g'), ' ').split(' ').filter(Boolean).join(' ');
+  const porcionDe = db.prepare('SELECT gramos FROM porciones WHERE id = ?');
+
+  it('van por 100 g: lo seco tiene más de 40 g de macros, y con menos son los valores de una porción (el aceite de 108 kcal)', () => {
+    const CON_AGUA = /\b(helados?|postres?|flan|gelatina|mousse|crema|mermelada|compota|almibar|duraznos?|bebida|batido|shake|yogur|yogurt|danette|aderezo|salsa|vinagre|en aceite|en agua)\b/;
+    const malos = productos.filter((a) => ['grasas', 'panes', 'snacks', 'cereales', 'dulces'].includes(a.categoria ?? '') && a.densidad === null
+      && a.proteina + a.carbohidratos + a.grasas + (a.fibra ?? 0) < 40 && !CON_AGUA.test(llano(a.nombre_es!)));
+    expect(malos.map((a) => `${nombre(a)}: ${a.kcal} kcal`)).toEqual([]);
+  });
+
+  it('la porción de siempre de lo de Open Food Facts es de una vez: no pasa de 500 kcal (la leche en polvo no es de 150 g)', () => {
+    const malos = deOff.filter((a) => {
+      const p = porcionDe.get(a.porcion) as { gramos: number } | undefined;
+      return !p || (a.kcal * p.gramos) / 100 > 500;
+    });
+    expect(malos.map((a) => `${nombre(a)}: ${a.kcal} kcal`)).toEqual([]);
+  });
+
+  it('lo que está en conserva o en polvo no se mide como lo que se toma (el atún en agua no va por vaso)', () => {
+    const malos = deOff.filter((a) => a.densidad !== null && /\b(atun|caballa|sardinas?|arvejas|choclo|lentejas|garbanzos|porotos|palmitos|aceitunas|en polvo)\b/.test(llano(a.nombre_es!)));
+    expect(malos.map(nombre)).toEqual([]);
+  });
+
+  it('dos de la misma marca no se llaman igual sin la marca: «Pringles Original» y «Original Pringles» son el mismo', () => {
+    const vistos = new Map<string, string>();
+    const repetidos: string[] = [];
+    for (const a of productos.filter((x) => x.marca)) {
+      const clave = `${a.marca}|${sinLaMarca(a)}`;
+      if (vistos.has(clave)) repetidos.push(`${vistos.get(clave)} = ${a.nombre_es}`);
+      else vistos.set(clave, a.nombre_es!);
+    }
+    expect(repetidos).toEqual([]);
+  });
+
+  it('lo de Open Food Facts se llama en español: sin letras ni palabras de otro idioma («goût», «branco», «edition»)', () => {
+    const LETRAS = /[âêîôûàèùœæßë]/i;
+    const PALABRAS = /\b(and|the|of|with|without|potato(es)?|crisps|mayonnaise|great|edition|organic|instant|eiscreme|vanille|baunilha|morango|tropicais|molho|ervilha|branco|salgadinho|rosquinhas|tortinhas)\b/;
+    const malos = deOff.filter((a) => LETRAS.test(a.nombre_es!.replace(a.marca ?? '', '')) || PALABRAS.test(sinLaMarca(a)));
+    expect(malos.map(nombre)).toEqual([]);
+  });
+
+  it('en una cadena salen primero lo principal, después los combos y al final lo demás: las papas de Burger King, después de los combos', () => {
+    const COMBO = /\b(combo|mccombo|cajita|big box)\b/i;
+    const LO_DEMAS = /\b(papas|aros|nuggets|sundae|cono|malteada|milkshake|croissant|helado|postre|bebida|refresco|agua|caf[eé]|muffin|dona|medialuna)\b/i;
+    const malos: string[] = [];
+    const cadenas = todos.filter((a) => a.categoria === 'comida rapida' && a.marca);
+    for (const marca of new Set(cadenas.map((a) => a.marca!))) {
+      const suyos = cadenas.filter((a) => a.marca === marca).map((a) => ({ nombre: a.nombre_es!, solo: a.nombre_es!.replace(marca, ''), orden: a.orden_marca! }));
+      const combos = suyos.filter((a) => COMBO.test(a.solo)).map((a) => a.orden);
+      if (!combos.length) continue;
+      malos.push(...suyos.filter((a) => !COMBO.test(a.solo) && LO_DEMAS.test(a.solo) && a.orden < Math.min(...combos)).map((a) => a.nombre));
+    }
+    expect(malos).toEqual([]);
   });
 });
 

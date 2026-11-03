@@ -32,7 +32,7 @@ const AvisosBloqueo = (() => {
 .ab-titulo b { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .ab-titulo em { flex: none; font: 400 12px/1.2 var(--letra, inherit); font-style: normal; color: rgba(255, 255, 255, 0.62); font-variant-numeric: tabular-nums; }
 .ab-aviso p { margin: 1px 0 0; font: 400 14px/1.28 var(--letra, inherit); color: rgba(255, 255, 255, 0.94); }
-.ab-vacio { margin: auto; max-width: 240px; text-align: center; font: 400 13.5px/1.35 var(--letra, inherit); color: rgba(255, 255, 255, 0.72); }
+.ab-vacio { margin: auto; max-width: 240px; text-align: center; font: 400 13.5px/1.35 var(--letra, inherit); color: rgba(255, 255, 255, 0.72); animation: ab-abre 280ms ease; }
 .ab-panel { margin: 0 10px calc(var(--abajo) + 4px); padding: 11px 12px; border-radius: 20px; background: rgba(12, 16, 34, 0.76); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); display: flex; flex-direction: column; gap: 9px; }
 .ab-panel .ab-seg { align-self: flex-start; }
 .ab-hora { display: flex; align-items: center; gap: 10px; }
@@ -45,7 +45,7 @@ const AvisosBloqueo = (() => {
 @keyframes ab-abre { from { opacity: 0; transform: translateY(12px); } }
 @keyframes ab-entra { from { opacity: 0; transform: translateY(-14px) scale(0.97); } }
 @keyframes ab-sale { to { opacity: 0; transform: scale(0.96); } }
-@media (prefers-reduced-motion: reduce) { .tel .ab, .ab-aviso.entra, .ab-aviso.sale { animation-duration: 1ms; } .ab-reloj, .tel .ab.saliendo, .ab-seg button, .ab-chip { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .tel .ab, .ab-aviso.entra, .ab-aviso.sale, .ab-vacio { animation-duration: 1ms; } .ab-reloj, .tel .ab.saliendo, .ab-seg button, .ab-chip { transition: none; } }
 `;
   const quieto = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const hm = (texto) => { const [h, m] = texto.split(':').map(Number); return h * 60 + m; };
@@ -143,7 +143,7 @@ const AvisosBloqueo = (() => {
         const comido = suma(hechas);
         // Se programa antes de que suene: lo que ve el teléfono es el minuto anterior.
         const faltas = LoQueFalta.loQueFaltaHoy({
-          dia: DIA, ahora: T - 1, meta: META, comido, comidoALaTarde: suma(g.comidas.filter(([, cuando]) => cuando <= hm('18:30'))), anotadas,
+          dia: DIA, ahora: T - 1, meta: META, comido, comidoALaTarde: suma(g.comidas.filter(([, cuando]) => cuando <= LoQueFalta.horaDeLaTarde(HORARIO.cena))), anotadas,
           horaDeCena: HORARIO.cena, acostarse: hm('23:00'), comidasHabituales: 4, propios: propios(),
         });
         const entrenado = g.entrenado !== null && g.entrenado <= T ? g.entrenado : null;
@@ -202,9 +202,11 @@ const AvisosBloqueo = (() => {
     function pintarDia(cuerpo) {
       const todos = linea();
       const llegados = todos.filter((n) => n.minutos <= s.hora).reverse();
-      if (!llegados.length) cuerpo.appendChild(el('p', 'ab-vacio', 'Todavía no sonó nada.'));
-      // La clave lleva el día: al cambiarlo, lo de antes sale y entra lo nuevo.
-      else ponerAvisos(cuerpo, llegados.map((n) => ({ clave: `${s.dia}|${n.aviso.id}`, titulo: titulo(n), texto: texto(n), hora: u.horaMin(n.minutos) })));
+      // La clave lleva el día: al cambiarlo, lo de antes sale y entra lo nuevo. Sin nada, sale lo que había.
+      ponerAvisos(cuerpo, llegados.map((n) => ({ clave: `${s.dia}|${n.aviso.id}`, titulo: titulo(n), texto: texto(n), hora: u.horaMin(n.minutos) })));
+      const vacio = cuerpo.querySelector('.ab-vacio');
+      if (llegados.length) vacio?.remove();
+      else if (!vacio) cuerpo.appendChild(el('p', 'ab-vacio', 'Todavía no sonó nada.'));
       return { todos, llegados };
     }
 
@@ -301,7 +303,8 @@ const AvisosBloqueo = (() => {
       cab.appendChild(boton('ab-cerrar', '×', cerrar));
       const seg = el('div', 'ab-seg');
       for (const [modo, nombre] of [['dia', 'Un día'], ['todos', 'Todos']]) {
-        const b = boton('', nombre, () => { if (s.modo === modo) return; s.modo = modo; enPantalla.clear(); pintar(); });
+        // La lista de un modo no sirve para el otro: se arma de nuevo.
+        const b = boton('', nombre, () => { if (s.modo === modo) return; s.modo = modo; enPantalla.clear(); raiz.querySelector('.ab-lista')?.remove(); pintar(); });
         b.setAttribute('aria-pressed', String(s.modo === modo));
         seg.appendChild(b);
       }
@@ -327,7 +330,6 @@ const AvisosBloqueo = (() => {
         cuerpo.scrollTop = scrollAntes;
         return;
       }
-      cuerpo.querySelector('.ab-vacio')?.remove();
       const { todos, llegados } = pintarDia(cuerpo);
 
       const panel = el('div', 'ab-panel');
@@ -342,11 +344,17 @@ const AvisosBloqueo = (() => {
       const rango = el('input');
       Object.assign(rango, { type: 'range', min: hm('6:00'), max: 24 * 60 + 30, step: 5, value: s.hora });
       rango.setAttribute('aria-label', 'La hora del día');
-      rango.addEventListener('input', () => { s.hora = Number(rango.value); pintar(); });
       hora.appendChild(rango);
-      const proximo = todos.find((n) => n.minutos > s.hora);
-      const siguiente = boton('ab-siguiente', 'Siguiente ›', () => { if (proximo) { s.hora = proximo.minutos; pintar(); } });
-      siguiente.disabled = !proximo;
+      const proximo = () => todos.find((n) => n.minutos > s.hora);
+      const siguiente = boton('ab-siguiente', 'Siguiente ›', () => { const p = proximo(); if (p) { s.hora = p.minutos; pintar(); } });
+      siguiente.disabled = !proximo();
+      // Mientras se arrastra cambian solo el reloj, la lista y «Siguiente»: rearmar el panel cortaría el gesto.
+      rango.addEventListener('input', () => {
+        s.hora = Number(rango.value);
+        reloj.querySelector('b').textContent = u.horaMin(s.hora);
+        if (pintarDia(cuerpo).llegados.length) cuerpo.scrollTop = 0;
+        siguiente.disabled = !proximo();
+      });
       hora.appendChild(siguiente);
       panel.appendChild(hora);
       const chips = el('div', 'ab-chips');

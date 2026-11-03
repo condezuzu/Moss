@@ -88,6 +88,8 @@ const Mas = (() => {
       const siempre = comida.siempreDe(tipo);
       if (siempre) {
         const b = boton('mas-rapido mas-siempre' + (s.hechos.has('siempre') ? ' hecho' : ''), '', () => {
+          // Ya anotada: otro toque no la suma de nuevo (para sacarla está «Deshacer»).
+          if (s.hechos.has('siempre')) return;
           const r = comida.sumarDeSiempre(tipo);
           if (!r) return;
           s.hechos.add('siempre');
@@ -120,6 +122,8 @@ const Mas = (() => {
         const carril = el('div', 'mas-chips');
         lista.forEach((x) => {
           const chip = boton('mas-chip' + (s.hechos.has(x.clave) ? ' hecho' : ''), `<b></b><span></span>`, () => {
+            // Como en la app: lo que ya tiene ✓ no se anota otra vez.
+            if (s.hechos.has(x.clave)) return;
             const r = alTocar(x);
             if (!r) return;
             s.hechos.add(x.clave);

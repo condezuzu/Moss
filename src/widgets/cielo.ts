@@ -117,6 +117,22 @@ export function toquesDeLaLinea(linea: { props: unknown }[]): ToqueConDia[] {
 }
 
 /**
+ * Los toques con el día en que cuentan. La línea de la build 6 empezaba cada día a la medianoche: un
+ * «hecho» tocado en el día nuevo antes de que empezara el de Moss (D32) es de hoy. Apagar ahí no dice
+ * nada de hoy (ese día estaba todo apagado). Si hoy ya tenía un toque de ese hábito, gana el último.
+ */
+function conSuDia(toques: readonly ToqueConDia[], hoy: ClaveDia): ToqueConDia[] {
+  const ultimos = new Map<string, ToqueConDia>();
+  for (const t of toques) {
+    const x = t.dia > hoy && t.hecho && t.en >= comienzoDe(t.dia).getTime() ? { ...t, dia: hoy } : t;
+    const clave = claveDeMarca(x.id, x.dia);
+    const antes = ultimos.get(clave);
+    if (!antes || antes.en <= x.en) ultimos.set(clave, x);
+  }
+  return [...ultimos.values()];
+}
+
+/**
  * Qué hacer con cada toque. Los de hoy y los de los días anteriores (hasta DIAS_QUE_ESPERA: lo tocado
  * a las 23:50 y abierto Moss al otro día) se aplican, con su día y su hora (marcarEnDia), si cambian
  * algo y si lo que tiene el almacén de ese hábito ese día es más viejo (gana el último). El resto (un
@@ -127,7 +143,7 @@ export function repartirToques(toques: ToqueConDia[], e: Pick<Estado, 'hoy' | 'h
   // Lo de días anteriores esperaba a que el almacén pudiera marcar otro día: ya puede, no espera nada.
   const esperan: ToqueConDia[] = [];
   const desde = sumarDias(e.hoy, -DIAS_QUE_ESPERA);
-  for (const t of toques) {
+  for (const t of conSuDia(toques, e.hoy)) {
     if (t.dia > e.hoy || t.dia < desde) continue;
     const h = habitosDelDia(e.habitos, t.dia).find((x) => x.id === t.id);
     if (!h || esAutomatico(h)) continue;

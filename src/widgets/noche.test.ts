@@ -1,10 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
 import type { Estado } from '../almacen/almacen';
-import { sumarDias, type ClaveDia } from '../dominio/fechas';
+import { diaLogico, sumarDias, type ClaveDia } from '../dominio/fechas';
 import { instanteDe } from '../dominio/sinReloj';
 import type { Noche, NochePropia, OrigenDeNoche } from '../dominio/sueno';
-import { confirmacionesDeLaLinea, decidir, lineaDeLaNoche, nocheDeAhora, nocheEsperada, reloj, type ConfirmacionDelWidget } from './noche';
+import { nocheDeAhora } from '../salud/nocheSinReloj';
+import { confirmacionesDeLaLinea, decidir, lineaDeLaNoche, nocheEsperada, reloj, type ConfirmacionDelWidget } from './noche';
 
 // Montevideo, todo el año a −3: los minutos se cuentan desde las 18 del día anterior.
 const ZONA = -180;
@@ -49,12 +50,25 @@ describe('la línea de tiempo del widget de la noche', () => {
     expect(l[2].props).toMatchObject({ clave: '2026-10-23', horas: '', pregunta: false, nota: 'Se ve al abrir Moss' });
   });
 
-  it('hasta las 4 sigue siendo «anoche» la de ayer', () => {
-    expect(nocheDeAhora('2026-10-22', new Date(2026, 9, 22, 2, 30))).toBe('2026-10-21');
-    expect(nocheDeAhora('2026-10-22', new Date(2026, 9, 22, 4, 0))).toBe('2026-10-22');
-    const l = armar(estado('2026-10-22'), new Date(2026, 9, 22, 2, 30));
+  it('hasta las 4 sigue siendo «anoche» la de ayer, sea cual sea el corte (D32)', () => {
+    expect(nocheDeAhora(new Date(2026, 9, 22, 2, 30))).toBe('2026-10-21');
+    expect(nocheDeAhora(new Date(2026, 9, 22, 4, 0))).toBe('2026-10-22');
+    // A la 1:00 del 22, con el corte a las 4, el día de Moss ya es el 21: la noche no se resta dos veces,
+    // y la entrada de las 4 propone la del 22 con «Sí».
+    const ahora = new Date(2026, 9, 22, 1, 0);
+    const l = armar(estado(diaLogico(ahora, 240), propia('2026-10-21')), ahora);
     expect(l[0].props).toMatchObject({ clave: '2026-10-21', hecha: true, pregunta: false });
-    expect(l[1].props.clave).toBe('2026-10-22');
+    expect([l[1].date.getDate(), l[1].date.getHours()]).toEqual([22, 4]);
+    expect(l[1].props).toMatchObject({ clave: '2026-10-22', horas: '23:40 → 07:10', pregunta: true });
+  });
+
+  it('con el corte a las 6, a las 5 ya es la noche de hoy, y su «Sí» espera la estimación o la confirma', () => {
+    const ahora = new Date(2026, 9, 22, 5, 0);
+    const l = armar(estado(diaLogico(ahora, 360), propia('2026-10-21')), ahora);
+    expect(l[0].props).toMatchObject({ clave: '2026-10-22', pregunta: true });
+    const si: ConfirmacionDelWidget = { clave: '2026-10-22', dormirse: 340, despertar: 790, en: ahora.getTime() };
+    expect(decidir(si, undefined, nocheDeAhora(ahora), ZONA)).toBe('esperar');
+    expect(decidir(si, propia('2026-10-22', 'estimada', 345, 795), nocheDeAhora(ahora), ZONA)).toBe('aplicar');
   });
 
   it('sin estimar todavía, propone lo de siempre; y con el despertador, despierta a su hora', () => {
@@ -131,6 +145,27 @@ describe('«A dormir», a la tardecita', () => {
   it('lo de la tardecita no confirma nada', () => {
     const l = armar(estado(HOY), new Date(2026, 9, 21, 21, 47), { dormir });
     expect(confirmacionesDeLaLinea(l)).toEqual([]);
+  });
+
+  it('lo que vuelve después no pregunta otra vez: el «Sí» de la mañana quedó solo en su entrada', () => {
+    const l = armar(estado(HOY, propia(HOY, 'estimada', 352, 792)), new Date(2026, 9, 21, 7, 0), { dormir });
+    expect(l[0].props.pregunta).toBe(true);
+    const despues = l.find((x) => x.date.getHours() === 0 && x.date.getMinutes() === 45)!;
+    expect(despues.props).toMatchObject({ clave: HOY, horas: '23:52 → 07:12', pregunta: false, aDormir: false, nota: '7 h 20 min' });
+    // Un «Sí» que espera la estimación sigue confirmado.
+    const esperando: ConfirmacionDelWidget = { clave: HOY, dormirse: 340, despertar: 790, en: 123 };
+    const conSi = armar(estado(HOY), new Date(2026, 9, 21, 7, 30), { dormir, esperando });
+    expect(conSi.find((x) => x.date.getHours() === 0 && x.date.getMinutes() === 45)!.props).toMatchObject({ confirmada: 123, pregunta: true });
+  });
+
+  it('acostándose pasadas las 2:30, lo de la tardecita termina a las 4 y no tapa la noche que viene', () => {
+    // A la cama a las 2:45 (la 1605 de su día), para despertarse a las 11.
+    const l = armar(estado(HOY), new Date(2026, 9, 21, 21, 0), { dormir: { acostarse: 1605, despertar: 1440 + 660 } });
+    const tiempos = l.map((x) => x.date.getTime());
+    expect([...tiempos].sort((a, b) => a - b)).toEqual(tiempos);
+    const i = l.findIndex((x) => x.date.getDate() === 22 && x.date.getHours() === 4);
+    expect(l[i - 1].props).toMatchObject({ aDormir: true, falta: 'Ya es hora' });
+    expect(l[i].props.clave).toBe('2026-10-22');
   });
 });
 

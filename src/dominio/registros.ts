@@ -7,7 +7,7 @@
 import { ACEITE_POR_100G } from './cantidades';
 import type { Comida } from './comidas';
 import type { ComidaDelDia } from './control';
-import { diasEntre, partesDe, type ClaveDia } from './fechas';
+import { diasEntre, minutosEnElDia, partesDe, type ClaveDia } from './fechas';
 import { estadoDeMacro, type Macros } from './metas';
 import { escalarMicros, sumarMicros, type Micros } from './micronutrientes';
 
@@ -211,8 +211,10 @@ export function aguaDelDia(tomas: Iterable<TomaDeAgua>, dia: ClaveDia): number {
 }
 
 /**
- * Una comida (o el día entero, sin `comida`) a otro día, como registros nuevos: a la misma hora del
- * reloj que el original y, si el día todavía no llegó o el original no se había comido, planificados.
+ * Una comida (o el día entero, sin `comida`) a otro día, como registros nuevos: a la misma hora de
+ * su día que el original (la cena de las 0:30 sigue siendo de la noche, D32) y, si el día todavía no
+ * llegó o el original no se había comido, planificados. Lo sugerido de un día que ya pasó no se
+ * comió ni se ve: no se copia.
  */
 export function copiar(
   registros: Iterable<Registro>,
@@ -222,7 +224,7 @@ export function copiar(
 ): Registro[] {
   const p = partesDe(hacia.dia);
   return delDia(registros, desde.dia)
-    .filter((r) => !desde.comida || r.comida === desde.comida)
+    .filter((r) => (!desde.comida || r.comida === desde.comida) && !(r.planificado && r.plan && r.dia < op.hoy))
     .map((r) => {
       // La hora local en el otro día: sumar días de 24 h correría una hora con el cambio de horario.
       const o = new Date(r.momento);
@@ -231,7 +233,7 @@ export function copiar(
         id: op.nuevoId(),
         dia: hacia.dia,
         comida: hacia.comida ?? r.comida,
-        momento: new Date(p.anio, p.mes, p.dia, o.getHours(), o.getMinutes(), o.getSeconds(), o.getMilliseconds()).toISOString(),
+        momento: new Date(p.anio, p.mes, p.dia, 0, minutosEnElDia(o, r.dia), o.getSeconds(), o.getMilliseconds()).toISOString(),
         planificado: r.planificado || hacia.dia > op.hoy,
         actualizado: op.ahora,
       };

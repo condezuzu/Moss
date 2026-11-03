@@ -20,7 +20,10 @@ const Agua = (props: PropsAgua, entorno: WidgetEnvironment) => {
   let mono = /accent|vibrant/i.test(String(entorno.widgetRenderingMode));
   let sinFondo = mono || (entorno as { showsContainerBackground?: boolean }).showsContainerBackground === false || !!entorno.isLuminanceReduced;
   let tx = props.textos || { titulo: '', vasos: '', sumar: '', quitar: '', decimal: ',' };
-  let ml = (props.ml || 0) + (props.vasos || 0) * VASO;
+  let pendientes = props.pendientes || [];
+  let tocados = 0;
+  for (let i = 0; i < pendientes.length; i++) tocados += pendientes[i].vasos;
+  let ml = (props.ml || 0) + tocados * VASO;
   if (ml < 0) ml = 0;
   let meta = props.meta || 2000;
   let vasos = Math.round(ml / VASO);
@@ -29,8 +32,9 @@ const Agua = (props: PropsAgua, entorno: WidgetEnvironment) => {
   let ancho = 126;
   let f = Math.min(1, ml / meta);
 
+  // Cada toque queda con su hora: la app suma un vaso a esa hora o saca justo uno, aunque lea la línea dos veces.
   function tocar(cuanto: number) {
-    return () => ({ vasos: (props.vasos || 0) + cuanto, en: Date.now() });
+    return () => ({ pendientes: pendientes.concat([{ vasos: cuanto, en: Date.now() }]) });
   }
 
   return (
@@ -72,6 +76,6 @@ const Agua = (props: PropsAgua, entorno: WidgetEnvironment) => {
   );
 };
 
-const INICIAL: PropsAgua = { dia: '', ml: 0, meta: 2000, vasos: 0, en: 0, textos: { titulo: '', vasos: '', sumar: '', quitar: '', decimal: ',' }, url: 'moss://', fondo: '' };
+const INICIAL: PropsAgua = { dia: '', ml: 0, meta: 2000, pendientes: [], textos: { titulo: '', vasos: '', sumar: '', quitar: '', decimal: ',' }, url: 'moss://', fondo: '' };
 
 export default createWidget<PropsAgua>('Agua', Agua, INICIAL);

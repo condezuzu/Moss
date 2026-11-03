@@ -245,15 +245,17 @@ export function semanaDeMoss(noches: readonly number[], comidas: readonly { kcal
   };
 }
 
+export type ComparacionDeSemanas =
+  | { estado: 'juntando'; conMarcas: number; sinMarcas: number }
+  /** `diferencias`: cuánto va para el lado malo cada cosa, en su escala (dormir menos, menos proteína, más déficit). */
+  | { estado: 'comparado'; antes: Promedios; ahora: Promedios; diferencias: Record<Causa, number> };
+
 /**
- * «Por qué no subís»: Ascent dice qué ejercicio se estancó; Moss compara las semanas en que subía
- * con las del estancamiento, en el sueño, la proteína y el balance. Sin el mínimo de semanas,
- * todavía está juntando información. Cada diferencia se mide en su escala y solo cuenta la que va
- * para el lado malo (dormir menos, menos proteína, más déficit). Si la más grande llega a una escala
- * entera, es la causa probable (nunca segura: son semanas comparadas); si no, no hay una diferencia
- * clara.
+ * Las semanas en que subía contra las del estancamiento, en el sueño, la proteína y el balance, solo con
+ * las semanas completas: sin el mínimo de cada lado, todavía está juntando información. La usan «Por qué
+ * no subís» y las razones de estancamiento (estancados.ts).
  */
-export function porQueNoSube(conMarcas: readonly SemanaDeMoss[], sinMarcas: readonly SemanaDeMoss[]): PorQueNoSube {
+export function compararSemanas(conMarcas: readonly SemanaDeMoss[], sinMarcas: readonly SemanaDeMoss[]): ComparacionDeSemanas {
   const completa = (s: SemanaDeMoss) => s.diasConComida >= DIAS_MINIMOS && s.nochesConSueno >= DIAS_MINIMOS && s.sueno !== null && s.proteina !== null && s.balance !== null;
   const a = conMarcas.filter(completa);
   const b = sinMarcas.filter(completa);
@@ -270,6 +272,19 @@ export function porQueNoSube(conMarcas: readonly SemanaDeMoss[], sinMarcas: read
     proteina: (antes.proteina - ahora.proteina) / ESCALAS.proteina,
     calorias: (antes.balance - ahora.balance) / ESCALAS.calorias,
   };
+  return { estado: 'comparado', antes, ahora, diferencias };
+}
+
+/**
+ * «Por qué no subís»: Ascent dice qué ejercicio se estancó; Moss compara las semanas en que subía
+ * con las del estancamiento (compararSemanas). Cada diferencia se mide en su escala y solo cuenta la
+ * que va para el lado malo. Si la más grande llega a una escala entera, es la causa probable (nunca
+ * segura: son semanas comparadas); si no, no hay una diferencia clara.
+ */
+export function porQueNoSube(conMarcas: readonly SemanaDeMoss[], sinMarcas: readonly SemanaDeMoss[]): PorQueNoSube {
+  const c = compararSemanas(conMarcas, sinMarcas);
+  if (c.estado === 'juntando') return c;
+  const { antes, ahora, diferencias } = c;
   const causa = (Object.keys(diferencias) as Causa[]).reduce((x, y) => (diferencias[y] > diferencias[x] ? y : x));
   return diferencias[causa] >= 1 ? { estado: 'probable', causa, antes, ahora } : { estado: 'sinDiferencia', antes, ahora };
 }

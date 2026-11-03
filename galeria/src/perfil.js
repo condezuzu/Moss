@@ -308,7 +308,7 @@ const SeccionPerfil = (() => {
         cuerpo.appendChild(caja);
       };
       const latencia = a.latencia === null ? 20 : a.latencia;
-      bloque('sueno', 'azul', tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: '23:20', despertar: '07:30', horas: u.duracion(480), latencia }), a.dormir, (v) => { a.dormir = v; },
+      bloque('sueno', 'azul', tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: u.horaMin(7 * 60 + 30 - 480 - latencia), despertar: '07:30', horas: u.duracion(480), latencia }), a.dormir, (v) => { a.dormir = v; },
         chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
       // Tardo en dormirme (D33): lo que aprende Moss de tus respuestas, o un número fijo, como en la app.
       const tardo = el('section', 'pf-aviso');
@@ -466,7 +466,7 @@ const SeccionPerfil = (() => {
 
     // Las hojas chicas, como en la app (Perfil.tsx): la calidad del cielo, a qué hora empieza el día y la privacidad.
     const horaDelCorte = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
-    const nombreDelCorte = (c) => (c === 0 ? tx('perfil.corteMedianoche') : tx('perfil.corteHora', { hora: horaDelCorte(c) }));
+    const nombreDelCorte = (c) => (c === 0 ? tx('perfil.corteMedianoche') : u.plural('perfil.corteALaHora', Math.floor(c / 60), { hora: horaDelCorte(c) }));
     function pintarOpciones() {
       const h = hoja.el;
       h.innerHTML = '';

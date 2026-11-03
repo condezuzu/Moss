@@ -51,9 +51,11 @@ const ACEITES = [ACEITE.nada, ACEITE.cucharadita, ACEITE.cucharada, ACEITE.dosCu
 
 /** De dónde salen los valores de un alimento de la base, en una línea. */
 export function origenDe(d: Pick<Detalle, 'origen' | 'atribucion'> & Partial<Pick<Detalle, 'deDonde' | 'aproximado'>>): string {
-  // La comida de una cadena dice de dónde salen sus valores, y si son una estimación.
-  if (d.aproximado) return t('comida.fuente.aproximado', { fuente: d.deDonde ?? t('comida.fuente.propio') });
-  if (d.deDonde) return t('comida.fuente.cadena', { fuente: d.deDonde });
+  // La comida de una cadena dice de dónde salen sus valores, y si son una estimación. Esa fuente está
+  // escrita solo en español: en inglés va sin ella.
+  const fuente = idioma() === 'es' ? d.deDonde : null;
+  if (d.aproximado) return fuente ? t('comida.fuente.aproximado', { fuente }) : t(d.atribucion === 'off' ? 'comida.fuente.aproximadoOff' : 'comida.fuente.estimacionDeMoss');
+  if (d.deDonde) return fuente ? t('comida.fuente.cadena', { fuente }) : t('comida.fuente.deLaCadena');
   if (d.origen === 'producto') return t(d.atribucion === 'off' ? 'comida.fuente.productoOff' : 'comida.fuente.producto');
   return t(`comida.fuente.${d.origen === 'usda' ? 'usda' : d.origen === 'receta' ? 'receta' : 'propio'}`);
 }

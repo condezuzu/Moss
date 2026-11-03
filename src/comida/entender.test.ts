@@ -8,8 +8,8 @@ import { describe, expect, it } from '@jest/globals';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 
-import { buscarAlimentos } from './buscar';
-import { detalleDeAlimento } from './detalle';
+import { buscarAlimentos, type Resultado } from './buscar';
+import { detalleDeAlimento, type Detalle } from './detalle';
 import { cambiaElNumero, claveMedida, entender, type Entendido, type ParaEntender } from './entender';
 import { conCon, leerFrase, mismoNombre } from './frase';
 
@@ -37,6 +37,10 @@ async function decir(texto: string, extra?: Partial<ParaEntender>): Promise<Ente
   const nombres = await nombresDe(texto);
   return entender(leerFrase(texto, 'es', (b) => nombres.has(b)).dichos, para(extra));
 }
+
+const en = { idioma: 'en' as const, region: 'UY' };
+const enIngles = (texto: string) =>
+  entender(leerFrase(texto, 'en').dichos, para({ buscar: (t) => buscarAlimentos(base, t, { ...en, limite: 8 }), detalle: (id) => detalleDeAlimento(base, id, en) }));
 
 const nombre = (e: Entendido) => e.opciones[e.elegida]?.alimento.nombre ?? null;
 const kcal = (e: Entendido) => Math.round(e.opciones[e.elegida]?.valores.kcal ?? 0);
@@ -247,5 +251,88 @@ describe('los platos dichos sin cantidad (D36)', () => {
     const [antes] = await decir('guiso', { ultimaCantidad: () => ({ gramos: 280 }), conocido: () => true });
     expect(antes.pregunta).toBeNull();
     expect(gramos(antes)).toEqual([280]);
+  });
+
+  it('lo que solo se parece a un plato no lleva gramos de plato: «crema de leche», «pastafrola», «galletas de arroz»', async () => {
+    for (const texto of ['crema de leche', 'pasta de maní', 'pastafrola', 'galletas de arroz', 'sándwich de milanesa']) {
+      expect([texto, (await decir(texto))[0].pregunta]).not.toEqual([texto, 'tamano']);
+    }
+    expect(kcal((await decir('crema de leche'))[0])).toBeLessThan(100);
+    // «Pasta» son fideos, aunque el buscador traiga primero la pasta de maní.
+    const [pasta] = await decir('comí pasta');
+    expect([nombre(pasta), gramos(pasta)]).toEqual(['Fideos', [200, 300, 450]]);
+    for (const texto of ['guiso', 'crema de calabaza', 'sopa de verduras']) expect([texto, (await decir(texto))[0].pregunta]).toEqual([texto, 'tamano']);
+  });
+
+  it('una porción, un bol o un serving no son un plato: va la porción de siempre de la base', async () => {
+    expect(kcal((await decir('una porción de queso'))[0])).toBeLessThan(100);
+    const [torta] = await decir('una porción de torta');
+    const deLaBase = await detalleDeAlimento(base, Number(torta.opciones[torta.elegida].alimento.ref), op);
+    expect(gramos(torta)[torta.elegida]).toBe(deLaBase?.porciones.find((x) => !x.deUna)?.gramos);
+    expect(kcal((await decir('un bol de cereales'))[0])).toBeLessThan(300);
+    expect(kcal((await enIngles('a serving of almonds'))[0])).toBeLessThan(300);
+    // Un plato sigue siendo un plato.
+    expect(gramos((await decir('un plato de arroz'))[0])).toEqual([160, 250, 375]);
+  });
+
+  it('los gramos de un plato son de comida servida: lo crudo o seco va con su versión cocida', async () => {
+    const [polenta] = await decir('polenta');
+    expect([nombre(polenta), gramos(polenta)]).toEqual(['Polenta cocida', [200, 300, 450]]);
+    expect(kcal(polenta)).toBeLessThan(250);
+    const [avena] = await decir('un plato de avena');
+    expect([nombre(avena), gramos(avena)]).toEqual(['Avena cocida', [160, 250, 375]]);
+    // Con la porción de siempre, la de lo cocido: un bol de avena no son 40 g de avena cocida.
+    expect(kcal((await decir('un bol de avena'))[0])).toBeGreaterThan(100);
+    const [ingles] = await enIngles('a plate of pasta');
+    expect(nombre(ingles)).toBe('Cooked pasta');
+  });
+
+  it('lo de marca va con su porción: los fideos del paquete se pesan secos', async () => {
+    const valores = { kcal: 350, proteina: 12, carbohidratos: 72, grasas: 1.5 };
+    const paquete: Detalle = {
+      id: -1, nombre: 'Mostacholes Marca', origen: 'producto', marca: 'Marca', atribucion: 'off', deDonde: null, aproximado: false, por100g: valores,
+      porciones: [{ nombre: '1 porción (80 g)', gramos: 80 }], densidad: null, desecho: null, aceite: null, crudo: null, cocidos: [], receta: null, verificado: null,
+    };
+    const resultado: Resultado = { id: -1, nombre: paquete.nombre, coincide: 'Mostacholes Marca', curado: false, marca: 'Marca', ...valores, porcion: { nombre: '1 porción (80 g)', gramos: 80 } };
+    const conPaquete = para({ buscar: async () => [resultado], detalle: async () => paquete });
+    const [solo] = await entender(leerFrase('mostacholes', 'es').dichos, conPaquete);
+    expect(solo.opciones[solo.elegida].cantidad).toMatchObject({ gramosPorcion: 80, veces: 1 });
+    const [plato] = await entender(leerFrase('un plato de mostacholes', 'es').dichos, conPaquete);
+    expect(gramos(plato)).toEqual([52, 80, 120]);
+  });
+
+  it('si no se sabe qué plato es y elegir otro cambia más que un tamaño, se pregunta cuál', async () => {
+    const [ensalada] = await decir('ensalada');
+    expect(ensalada.pregunta).toBe('cual');
+    expect(ensalada.opciones.length).toBeGreaterThanOrEqual(2);
+    // Los guisos se parecen: el tamaño. Y lo que ya se comió no pregunta cuál.
+    expect((await decir('guiso'))[0].pregunta).toBe('tamano');
+    expect((await decir('ensalada', { conocido: () => true }))[0].pregunta).toBe('tamano');
+    expect((await enIngles('a plate of rice'))[0].pregunta).toBe('cual');
+    // «A plate of spaghetti» no es la salsa para los spaghetti.
+    expect(nombre((await enIngles('a plate of spaghetti'))[0])).toBe('Spaghetti and meatballs');
+  });
+
+  it('el tamaño dicho sin «plato» también cuenta: «milanesa grande», «pizza chica»', async () => {
+    const [milanesa] = await decir('milanesa grande');
+    expect([milanesa.pregunta, gramos(milanesa)]).toEqual([null, [240]]);
+    const [pizza] = await decir('pizza chica');
+    expect([pizza.pregunta, gramos(pizza)]).toEqual([null, [85]]);
+  });
+
+  it('«un plato y medio», «½ plato», «plato y medio» y el plato dicho después', async () => {
+    expect(gramos((await decir('un plato y medio de arroz'))[0])).toEqual([240, 375, 563]);
+    expect(gramos((await decir('½ plato de arroz'))[0])).toEqual([80, 125, 188]);
+    const [fideos] = await decir('plato y medio de fideos');
+    expect([nombre(fideos), gramos(fideos)]).toEqual(['Fideos', [300, 450, 675]]);
+    const despues = await decir('fideos, un plato grande');
+    expect(despues.map((e) => [nombre(e), gramos(e)])).toEqual([['Fideos', [450]]]);
+  });
+
+  it('«arroz y pollo» con lo que se dijo de los dos: un poco o mucho de cada uno, y «uno de» es otro plato', async () => {
+    expect(gramos((await decir('un poco de arroz y pollo'))[0])).toEqual([160]);
+    expect(gramos((await decir('mucho arroz y pollo'))[0])).toEqual([375]);
+    const lista = await decir('un plato de arroz y uno de fideos');
+    expect(lista.map((e) => [nombre(e), e.pregunta])).toEqual([['Arroz blanco cocido', 'tamano'], ['Fideos', 'tamano']]);
   });
 });

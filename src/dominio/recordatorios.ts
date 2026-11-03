@@ -3,8 +3,9 @@
 // no se anotó. Se programan los de la semana cada vez que se abre Moss o se anota algo: si no se
 // abre en una semana, paran solos.
 
-import type { Comida } from './comidas';
-import { sumarDias, type ClaveDia } from './fechas';
+import { HORA_TIPICA, type Comida } from './comidas';
+import { minutosEnElDia, sumarDias, type ClaveDia } from './fechas';
+import type { Registro } from './registros';
 
 /** Cuánto después de la hora habitual: da tiempo a comer antes del aviso. */
 export const DESPUES_MIN = 45;
@@ -25,6 +26,27 @@ export function horaHabitual(minutosAnotados: number[], tipica: number, deNoche 
   const medio = Math.floor(orden.length / 2);
   const mediana = orden.length % 2 ? orden[medio] : Math.round((orden[medio - 1] + orden[medio]) / 2);
   return Math.min(DIA - 1, mediana);
+}
+
+/** Cuántos días se miran para la hora de siempre. */
+const DIAS_DE_SIEMPRE = 21;
+
+/**
+ * La hora de siempre de cada comida: la mediana de cuándo se anotó en las últimas tres semanas (sin
+ * hoy ni lo planificado), en la cuenta de su día (D32: la cena de las 0:30 es tarde); sin datos, la
+ * típica, y el snack, las 16. La usan los avisos, la línea de Comida y lo que corre al comer.
+ */
+export function horasDeSiempre(registros: Iterable<Registro>, hoy: ClaveDia): (c: Comida) => number {
+  const desde = sumarDias(hoy, -DIAS_DE_SIEMPRE);
+  const anotadas = new Map<Comida, number[]>();
+  for (const r of registros) {
+    if (r.borrado || r.planificado || r.dia < desde || r.dia >= hoy) continue;
+    const minutos = minutosEnElDia(new Date(r.momento), r.dia);
+    const lista = anotadas.get(r.comida);
+    if (lista) lista.push(minutos);
+    else anotadas.set(r.comida, [minutos]);
+  }
+  return (c) => horaHabitual(anotadas.get(c) ?? [], c === 'snack' ? 16 * 60 : HORA_TIPICA[c], c === 'cena' || c === 'merienda');
 }
 
 export type Recordatorio = { dia: ClaveDia; comida: Comida; minutos: number };

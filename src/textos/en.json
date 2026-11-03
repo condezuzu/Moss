@@ -521,7 +521,10 @@
       "producto": "Product · from its label",
       "productoOff": "Product · data from Open Food Facts (ODbL)",
       "cadena": "Official · {fuente}",
-      "aproximado": "Approximate · {fuente}"
+      "aproximado": "Approximate · {fuente}",
+      "deLaCadena": "Official · from the chain",
+      "estimacionDeMoss": "Approximate · Moss estimate",
+      "aproximadoOff": "Approximate · Open Food Facts"
     },
     "favorito": "Favorite",
     "nombre": "Name",
@@ -699,7 +702,9 @@
       "con": "Checked against {tabla} on {fecha}: they match.",
       "ingredientes": "All its ingredients are verified.",
       "etiqueta": "The calories add up with the label macros.",
-      "sin": "Not yet checked against a second source."
+      "sin": "Not yet checked against a second source.",
+      "cadena": "The values are the ones the chain publishes.",
+      "aproximado": "The values are a Moss estimate, not official data."
     },
     "tablas": {
       "cnf": "the Canadian table (CNF)",
@@ -1262,7 +1267,8 @@
         "sinFuerzaBajar": "Without strength training, part of what you lose is muscle; training strength three times a week keeps almost all of it.",
         "sinFuerzaSubir": "Without strength training, about two thirds of what you gain is fat.",
         "piso": "With that date you'd eat under {piso} kcal, and Moss doesn't go below that: you'd get there on {fecha}.",
-        "menor": "Under 18, a sustainable pace is best."
+        "menor": "Under 18, a sustainable pace is best.",
+        "pisoNoLlega": "Moss doesn't go below {piso} kcal, and with what you burn that leaves little or no deficit: you wouldn't get there within two years."
       },
       "sinCamino": "Pick a goal weight to see when you'd get there.",
       "caminoTexto": "The solid line is your trend; the dotted one goes on to your goal, at your pace."
@@ -1572,7 +1578,8 @@
         "noCuenta": "doesn't count: you kept using it",
         "tardas": "You take about {n} min to fall asleep: learned from your answers.",
         "tardasFabrica": "Without your answers, it assumes {n} min to fall asleep. Each one teaches it yours.",
-        "nota": "Each signal suggests a time and counts according to how much doubt it leaves. Moss never has you asleep before the last thing you did on your phone, or awake after the first."
+        "nota": "Each signal suggests a time and counts according to how much doubt it leaves. Moss never has you asleep before the last thing you did on your phone, or awake after the first.",
+        "tardasElegida": "You take {n} min to fall asleep: you set it in Profile › Reminders."
       }
     },
     "sinCalidadEstimada": "Moss isn’t sure about this night: confirm it or change it and the quality shows up.",
@@ -1926,7 +1933,6 @@
     },
     "calidadTexto": "If anything stutters, Automatic steps down by itself. Low uses less battery.",
     "corte": "Day starts",
-    "corteHora": "At {hora}",
     "corteMedianoche": "At midnight",
     "corteDeFabrica": "The default",
     "corteTexto": "Anything you log before that time counts for the day before: if you eat dinner or go to bed late, it's still your day.",
@@ -2110,6 +2116,10 @@
       "fuentes": "Food and star data",
       "ascent": "Your training and food, together",
       "peso": "Weight"
+    },
+    "corteALaHora": {
+      "uno": "At {hora}",
+      "otros": "At {hora}"
     }
   },
   "fecha": {

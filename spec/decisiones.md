@@ -386,6 +386,12 @@ que cambien lo que viene, que aprenda de lo registrado, cambiar una comida, que
   pregunta corta: chico, mediano o grande. Queda marcado «aproximado». La tabla,
   con sus fuentes, está en `src/comida/platos.ts` y en
   [`evidencia-1.1.md`](evidencia-1.1.md) (6).
+  - Revisión de bugs (3/11/2026): el plato se reconoce por la primera palabra entera
+    del nombre (no «crema de leche» ni «pasta de maní»); lo crudo va con su versión
+    cocida; «una porción» o «un bol» de algo que no está en la tabla va con su porción
+    de siempre; «milanesa grande» va grande sin preguntar; y si no se sabe qué plato es
+    («ensalada», «sopa»), la única pregunta es cuál, con los gramos del plato. «Un plato
+    de arroz y pollo» es un plato de cada uno.
 - **Las cadenas** (`alimentos/cadenas.txt`): McDonald's, con la tabla oficial de
   Uruguay; Burger King y Starbucks, con la de Estados Unidos; Subway, con la de
   México; Mostaza y La Pasiva, aproximadas (no publican la suya). Cada producto
@@ -427,7 +433,7 @@ de X a Y?», y la hora de dormir como Rise.
 - **«Me voy a dormir»** en el aviso de la noche: deja la hora como un Atajo, sin
   armar nada.
 - **La ventana tranquila de cada noche** se guarda para aprender y sube a la
-  cuenta: la migración `0010_noches_quieto.sql` tiene que estar aplicada antes
+  cuenta: la migración `0010_noches_quieto.sql` y la `0011_noches_quieto_build6.sql` tienen que estar aplicadas antes
   de cualquier OTA con esto.
 
 ### D32 · El día empieza al despertarse (29/10/2026)

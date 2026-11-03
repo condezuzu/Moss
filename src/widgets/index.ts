@@ -11,9 +11,10 @@ import { elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
 import { catalogo } from '@/datos/catalogo';
 import { horasDeSueno } from '@/dominio/avisos';
-import { COMIDAS, comidaDeLaHora, type Comida } from '@/dominio/comidas';
+import { COMIDAS, type Comida } from '@/dominio/comidas';
 import { CON_WIDGETS_NUEVOS } from '@/lib/banderas';
 import { suenoParaAvisos } from '@/recordatorios/programar';
+import { nocheDeAhora } from '@/salud/nocheSinReloj';
 import { metaDelDia, numero, totalDe } from '@/secciones/comida/datos';
 import { enlaceASeccion, enlaceDeAnotar } from '@/secciones/enlaces';
 import { idioma, t } from '@/textos';
@@ -21,7 +22,7 @@ import { lineaDelAgua, repartirAgua, toquesDelAgua } from './agua';
 import { lineaDeAnotar } from './anotar';
 import { lineaDelCielo, repartirToques, toquesDeLaLinea } from './cielo';
 import { fondosEnElGrupo } from './fondos';
-import { deshacerDeLaLinea, lineaDeHoy, repartirToquesDeHoy, toquesDeHoy } from './hoy';
+import { aplicarToquesDeHoy, lineaDeHoy, type DelToque } from './hoy';
 import { confirmacionesDeLaLinea, decidir, lineaDeLaNoche, type ConfirmacionDelWidget } from './noche';
 import type { PropsAgua, PropsAnotar, PropsCielo, PropsHoy, PropsNoche } from './tipos';
 
@@ -125,37 +126,33 @@ async function unaVuelta() {
       for (const c of confirmacionesDeLaLinea(linea)) {
         const e = a.estado();
         const propia = e.noches.get(c.clave);
-        const que = decidir(c, propia, e.hoy, zona);
+        const que = decidir(c, propia, nocheDeAhora(new Date()), zona);
         if (que === 'aplicar' && propia?.hora) a.ponerHoraDeLaNoche(c.clave, { ...propia.hora, origen: 'confirmada' });
         if (que === 'esperar') esperando = c;
       }
     },
-    () => lineaDeLaNoche(a.estado(), {
-      ahora: new Date(), zona, url: enlaceASeccion('sueno'), esperando, dormir: horaDeDormirHoy(a.estado()), fondo: fondos.noche,
-      textos: {
-        anoche: t('widgets.anoche'), si: t('widgets.si'), fueAsi: t('widgets.fueAsi'), confirmada: t('widgets.confirmada'),
-        seVeEnMoss: t('widgets.seVeEnMoss'), seAnotaEnMoss: t('widgets.seAnotaEnMoss'), horas: t('widgets.horas'), duracion: t('cielo.horasMinutos'),
-        horasCorto: t('widgets.horasCorto'), siLargo: t('widgets.siFueAsi'), aDormir: t('widgets.aDormir'), enTiempo: t('widgets.enTiempo'),
-        minutos: t('fecha.minutos'), yaEsHora: t('widgets.yaEsHora'), paraDespertar: t('widgets.paraDespertar'),
-      },
-    }),
+    () => {
+      const ahora = new Date();
+      return lineaDeLaNoche(a.estado(), {
+        ahora, zona, url: enlaceASeccion('sueno'), esperando, dormir: horaDeDormirHoy(a.estado(), ahora), fondo: fondos.noche,
+        textos: {
+          anoche: t('widgets.anoche'), si: t('widgets.si'), fueAsi: t('widgets.fueAsi'), confirmada: t('widgets.confirmada'),
+          seVeEnMoss: t('widgets.seVeEnMoss'), seAnotaEnMoss: t('widgets.seAnotaEnMoss'), horas: t('widgets.horas'), duracion: t('cielo.horasMinutos'),
+          horasCorto: t('widgets.horasCorto'), siLargo: t('widgets.siFueAsi'), aDormir: t('widgets.aDormir'), enTiempo: t('widgets.enTiempo'),
+          minutos: t('fecha.minutos'), yaEsHora: t('widgets.yaEsHora'), paraDespertar: t('widgets.paraDespertar'),
+        },
+      });
+    },
   );
 
-  // Hoy: lo de siempre tocado se anota con la hora del toque; otro toque lo saca.
+  // Hoy: lo de siempre o lo del plan tocado se anota con la hora del toque; otro toque lo deshace.
   if (w.hoy) {
-    let deshacer = new Map<string, string>();
+    let deshacer = new Map<string, DelToque>();
+    const enEstaVuelta = new Map<string, DelToque | null>();
     await alDia(
       w.hoy,
       (linea) => {
-        deshacer = deshacerDeLaLinea(linea);
-        const r = repartirToquesDeHoy(toquesDeHoy(linea), a.estado());
-        for (const x of r.anotar) deshacer.set(x.clave, a.registrar(x.items, { comida: x.comida, dia: x.dia, momento: new Date(x.en).toISOString() }).map((n) => n.id).join(','));
-        for (const x of r.confirmar) deshacer.set(x.clave, a.confirmarComida(x.dia, x.comida).join(','));
-        for (const x of r.yaAnotado) deshacer.set(x.clave, x.ids.join(','));
-        for (const x of r.quitar) {
-          x.ids.forEach((id) => a.borrarRegistro(id));
-          deshacer.delete(x.clave);
-        }
+        deshacer = aplicarToquesDeHoy(linea, a, enEstaVuelta);
       },
       () => {
         const e = a.estado();
@@ -198,20 +195,24 @@ async function unaVuelta() {
     );
   }
 
-  // Anotar no guarda nada: solo el título de cada comida y lo que queda.
+  // Anotar no guarda nada: solo el título de cada comida y lo que queda ese día.
   if (w.anotar) {
     await alDia(w.anotar, () => {}, () => {
       const e = a.estado();
-      const ahora = new Date();
-      const meta = metaDelDia(e, e.hoy);
-      const queda = meta ? meta.kcal - totalDe(e.registros, e.hoy, e.hoy).kcal : null;
-      return lineaDeAnotar(ahora, {
+      return lineaDeAnotar(new Date(), {
         titulos: Object.fromEntries(COMIDAS.map((c) => [c, t(`widgets.anotarComida.${c}`)])) as Record<Comida, string>,
-        queda: queda === null ? '' : t(queda >= 0 ? 'widgets.teQuedanCorto' : 'widgets.deMasCorto', { n: numero(Math.abs(Math.round(queda))) }),
+        // Lo que quedará ese día cuando llegue: lo planificado no cuenta hasta comerlo, como en Inicio.
+        queda: (dia) => {
+          const meta = metaDelDia(e, dia);
+          if (!meta) return '';
+          const queda = meta.kcal - totalDe(e.registros, dia, dia).kcal;
+          return t(queda >= 0 ? 'widgets.teQuedanCorto' : 'widgets.deMasCorto', { n: numero(Math.abs(Math.round(queda))) });
+        },
+        corte: e.corte,
         acciones: ([['buscar', 'magnifyingglass'], ['decir', 'mic'], ['codigo', 'barcode.viewfinder'], ['etiqueta', 'doc.text.viewfinder']] as const).map(([id, icono]) => ({
           id, icono, nombre: t(`widgets.acciones.${id}`), url: enlaceDeAnotar({ via: id }),
         })),
-        url: enlaceDeAnotar({ comida: comidaDeLaHora(ahora.getHours() * 60 + ahora.getMinutes()) }),
+        url: enlaceDeAnotar({ comida: '{comida}' }),
         decirTitulo: t('comida.decir.titulo'),
         fondo: fondos.noche,
       });
@@ -219,11 +220,12 @@ async function unaVuelta() {
   }
 }
 
-/** A qué hora ir a la cama hoy (D33). Sin noches de verdad o sin hora de despertarse, no hay «A dormir». */
-function horaDeDormirHoy(e: Estado): { acostarse: number; despertar: number | null } | null {
+/** A qué hora ir a la cama esta noche (D33). Sin noches de verdad o sin hora de despertarse, no hay «A dormir». */
+function horaDeDormirHoy(e: Estado, ahora: Date): { acostarse: number; despertar: number | null } | null {
   const sueno = suenoParaAvisos(e);
   if (!sueno) return null;
-  const h = horasDeSueno(e.hoy, sueno);
+  // La de la noche de la línea, que cambia a las 4 y no con el corte (D32).
+  const h = horasDeSueno(nocheDeAhora(ahora), sueno);
   return h.acostarse === null ? null : { acostarse: h.acostarse, despertar: h.despertarManana };
 }
 
@@ -251,7 +253,7 @@ export function actualizarWidgets(): Promise<void> {
 }
 
 /** Lo que muestran los widgets: si cambia, se escriben de nuevo. */
-const queMuestran = (e: Estado) => [e.listo, e.hoy, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua] : [])] as const;
+const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos] : [])] as const;
 
 /**
  * En la raíz de la app: al estar listo el almacén, al volver a Moss y cuando cambia algo que muestran,

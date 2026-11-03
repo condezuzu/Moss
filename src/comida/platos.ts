@@ -14,20 +14,27 @@ export type PorcionesDePlato = Record<Tamano, number>;
 export const CHICO = 0.65;
 export const GRANDE = 1.5;
 
-/** Lo que se reconoce por el nombre, sin tildes y en minúsculas. El orden importa: lo primero que coincide gana. */
+/**
+ * Lo que se reconoce por el nombre, sin tildes y en minúsculas. El plato es la primera palabra entera
+ * («guiso de lentejas»), no un pedazo del nombre: «carne para guiso», «pasta de maní», «pastafrola» o
+ * «galletas de arroz» no son platos. El orden importa: lo primero que coincide gana.
+ */
 const TABLA: readonly (readonly [RegExp, PorcionesDePlato])[] = [
-  [/\b(?:guiso|estofado|locro|buseca|mondongo)/, { chico: 200, mediano: 300, grande: 450 }],
-  [/\b(?:sopa|caldo|crema de|puchero)/, { chico: 200, mediano: 300, grande: 450 }],
-  [/\b(?:fideos?|pasta|spaghetti|espagueti|tallarin|noquis?|ravioles?|raviolis?|sorrentinos?|canelones?|lasa(?:n|ñ)a|macarrones?|tirabuzones?|mostachol)/, { chico: 200, mediano: 300, grande: 450 }],
-  [/\bpolenta/, { chico: 200, mediano: 300, grande: 450 }],
-  [/\barroz\b(?! con leche)/, { chico: 160, mediano: 250, grande: 375 }],
-  [/\blentejas?\b/, { chico: 90, mediano: 150, grande: 200 }],
-  [/\bmilanesas?/, { chico: 120, mediano: 160, grande: 240 }],
-  [/\bpure\b/, { chico: 125, mediano: 200, grande: 300 }],
-  [/\bensaladas?\b/, { chico: 75, mediano: 150, grande: 250 }],
-  [/\bpizzas?\b/, { chico: 85, mediano: 120, grande: 160 }],
-  [/\bempanadas?\b/, { chico: 70, mediano: 105, grande: 130 }],
-  [/\b(?:tartas?|pascualina|quiche)\b/, { chico: 120, mediano: 180, grande: 250 }],
+  [/^(?:guisos?|estofados?|locros?|busecas?|mondongos?)\b/, { chico: 200, mediano: 300, grande: 450 }],
+  // La crema de leche, de maní o la que se unta no es una sopa.
+  [/^(?:sopas?|caldos?|pucheros?)\b|^crema de (?!leche|avellana|almendra|mani)/, { chico: 200, mediano: 300, grande: 450 }],
+  // Lo instantáneo va por el paquete; «pasta salad» es una ensalada.
+  [/^(?:fideos?|pasta(?! de | salad)|spaghetti|espaguetis?|tallarin(?:es)?|noquis?|raviol(?:es|is?)?|sorrentinos?|canelon(?:es)?|lasa(?:n|ñ)as?|macarron(?:es)?|tirabuzon(?:es)?|mostachol(?:es)?)\b(?!.*instantane)/, { chico: 200, mediano: 300, grande: 450 }],
+  [/^polenta\b/, { chico: 200, mediano: 300, grande: 450 }],
+  [/^arroz\b(?! con leche| inflado)/, { chico: 160, mediano: 250, grande: 375 }],
+  [/^lentejas?\b/, { chico: 90, mediano: 150, grande: 200 }],
+  // Una milanesa sola: al pan, con guarnición o a la napolitana es otra cosa, con su porción.
+  [/^milanesas?\b(?!.*\b(?:al pan|con|napolitana)\b)/, { chico: 120, mediano: 160, grande: 240 }],
+  [/^pure\b(?!.*instantane)/, { chico: 125, mediano: 200, grande: 300 }],
+  [/^ensaladas?\b/, { chico: 75, mediano: 150, grande: 250 }],
+  [/^pizzas?\b/, { chico: 85, mediano: 120, grande: 160 }],
+  [/^empanadas?\b/, { chico: 70, mediano: 105, grande: 130 }],
+  [/^(?:tartas?|pascualinas?|quiches?)\b/, { chico: 120, mediano: 180, grande: 250 }],
 ];
 
 /**
@@ -79,12 +86,3 @@ export function gramosDeLaEntera(...nombres: (string | null | undefined)[]): num
 
 /** De un «1 plato» de la base (los platos de Moss lo tienen): mediano ese, chico y grande en proporción. */
 export const porcionesDesde = (mediano: number): PorcionesDePlato => ({ chico: Math.round(mediano * CHICO), mediano, grande: Math.round(mediano * GRANDE) });
-
-/** «Chico», «grande»… dicho en la frase: el tamaño del plato, si se dijo. */
-export function tamanoDicho(texto: string): Tamano | null {
-  const t = llano(texto);
-  if (/\b(?:chic[oa]|pequen[oa]|small|little)\b/.test(t)) return 'chico';
-  if (/\b(?:grande|abundante|large|big)\b/.test(t)) return 'grande';
-  if (/\b(?:median[oa]|medium)\b/.test(t)) return 'mediano';
-  return null;
-}

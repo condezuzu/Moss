@@ -3,12 +3,13 @@ import { describe, expect, it } from '@jest/globals';
 import {
   actividadEquivalente, ajusteDeRecomposicion, diasConDosSesiones, entrenaFuerza, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
   horarioDeLosAvisos, katchMcArdle, kcalDelDia, kcalDelEntreno, masaMagra, MET_DEL_DEPORTE, metaDelCuestionario, movimientoPorPasos, NIVELES_DE_PROTEINA,
-  objetivoGuardado, objetivoUsado, partesRedondas, pesoMetaSugerido, preguntasDelEntreno, PROTEINA_POR_NIVEL, proteinaDelNivel, rangoDelPesoMeta,
+  objetivoGuardado, objetivoUsado, partesRedondas, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, PROTEINA_POR_NIVEL, proteinaDelNivel, rangoDelPesoMeta,
   ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
   type Deporte, type EntrenoDicho, type GrasaDicha, type ObjetivoDicho, type Respuestas, type SesionDicha,
 } from './cuestionario';
 import { KCAL_POR_KILO_Y_HORA } from './entrenamiento';
 import { ajusteDiario, gastoBasal, macrosPara, NIVELES, pesoMinimoSano, pisoDe } from './metas';
+import { kcalPorDia } from './progreso';
 
 // La persona del ejemplo de la galería: 29 años, 172 cm y 74,5 kg, sentada casi todo el día y con pesas
 // tres veces por semana, una hora.
@@ -235,6 +236,18 @@ describe('la meta de arranque', () => {
     expect(metaDelCuestionario({ ...menor, pct: 0.9 }).metas.kcal).toBe(metaDelCuestionario(menor).metas.kcal);
     expect(metaDelCuestionario({ ...menor, ritmo: 'rapido' }).metas.kcal).toBe(metaDelCuestionario(menor).metas.kcal);
     expect(metaDelCuestionario({ ...BASE, objetivo: 'subir', pct: 0.25 }).metas.kcal).toBe(metaDelCuestionario({ ...BASE, objetivo: 'subir' }).metas.kcal);
+  });
+
+  it('el ritmo de la fecha que usa la meta: el plan que se muestra es el mismo', () => {
+    // 17 años, de 80 a 72 kg en 70 días: la fecha pide el 1 % por semana y la meta usa el 0,5 % (0,4 kg).
+    const menor: Respuestas = { edad: 17, sexo: 'f', alturaCm: 168, pesoKg: 80, movimiento: 'sentado', entreno: null, objetivo: 'bajar', ritmo: 'recomendado', pct: 1 };
+    expect(pctDelPlan(menor)).toBe(0.5);
+    const deficit = gastoEstimado(menor).total - metaDelCuestionario(menor).metas.kcal;
+    expect(Math.abs(deficit - kcalPorDia(0.4))).toBeLessThanOrEqual(5);
+    expect(pctDelPlan({ ...menor, edad: 18 })).toBe(1);
+    expect(pctDelPlan({ ...menor, objetivo: 'subir', pct: 0.4 })).toBe(0.4);
+    expect(pctDelPlan({ ...menor, pct: null })).toBeNull();
+    expect(pctDelPlan({ ...menor, sinDeficit: true })).toBeNull();
   });
 
   it('sin déficit, bajar queda en mantener', () => {

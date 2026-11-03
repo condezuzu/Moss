@@ -5,7 +5,7 @@
 // «sin déficit» no aparece nada.
 
 import type { Comida } from './comidas';
-import { diaDeLaSemana, type ClaveDia, type DiaSemana } from './fechas';
+import { diaDeLaSemana, diasEntre, type ClaveDia, type DiaSemana } from './fechas';
 import type { Macros } from './metas';
 
 /** Lo suave (yoga, estirar, caminar un rato) no cambia lo que se come. */
@@ -26,6 +26,17 @@ export type Entreno = { dias: DiaSemana[]; hora: number; minutos: number; tipo: 
 export function sesionesDelDia(entreno: Entreno | null, dia: ClaveDia): Sesion[] {
   if (!entreno || !entreno.dias.includes(diaDeLaSemana(dia))) return [];
   return [{ inicio: entreno.hora, minutos: entreno.minutos, tipo: entreno.tipo }];
+}
+
+/**
+ * Las comidas que se suelen anotar, para esto y para lo que falta (loQueFalta.ts): con merienda en al menos 4
+ * de cada 10 días anotados de las dos últimas semanas, cuatro. Sin lo planificado, lo borrado ni lo de hoy.
+ */
+export function comidasHabituales(registros: Iterable<{ dia: ClaveDia; comida: Comida; planificado: boolean; borrado?: true }>, hoy: ClaveDia): 3 | 4 {
+  const recientes = [...registros].filter((r) => !r.borrado && !r.planificado && diasEntre(r.dia, hoy) > 0 && diasEntre(r.dia, hoy) <= 14);
+  const dias = new Set(recientes.map((r) => r.dia)).size;
+  const conMerienda = new Set(recientes.filter((r) => r.comida === 'merienda').map((r) => r.dia)).size;
+  return dias > 0 && conMerienda / dias >= 0.4 ? 4 : 3;
 }
 
 export type Contexto = {

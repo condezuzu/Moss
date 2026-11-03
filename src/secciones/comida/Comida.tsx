@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { elAlmacen } from '@/almacen';
 import { DIAS_DE_COMIDA, type Estado } from '@/almacen/almacen';
 import { conMayuscula } from '@/comida/buscar';
-import { comidaDeLaHora, horasCorridas, type Comida } from '@/dominio/comidas';
+import { comidaDeLaHora, CON_HORA, horasCorridas, type Comida } from '@/dominio/comidas';
 import { diasEntre, lunesDe, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import type { Linea } from '@/dominio/alrededorDelEntreno';
@@ -29,7 +29,7 @@ import { Relleno, useCuenta } from '../animados';
 import { AvisoFlotante, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
-  cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
+  cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, horasDeComer, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
   useEstado, type ComidaDelDia,
 } from './datos';
 import { Luna, Lunitas, type Lunita } from './Luna';
@@ -433,9 +433,11 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   const ahora = minutosEnElDia(new Date(), dia);
   // Qué comer antes y después de entrenar: en la comida que toca, aunque todavía no sea su hora.
   const lineas = dia === e.hoy ? lineasDeHoy(e) : new Map<Comida, Linea>();
-  // Lo que falta, corrido por la última que comiste: con la misma distancia entre ellas.
+  // Lo que falta, corrido por la última que comiste: con la misma distancia entre ellas. Desde la hora
+  // de cada comida (la del horario o la de siempre), la misma que la de lo que se anota.
   const anotadas = Object.fromEntries(comidas.filter((c) => !c.planificada).map((c) => [c.comida, c.minutos]));
-  const horas = horasCorridas({ ...HORA_TIPICA, ...e.avisos.horario }, anotadas);
+  const horaDe = horasDeComer(e);
+  const horas = horasCorridas(Object.fromEntries(CON_HORA.map((c) => [c, horaDe(c)])), anotadas);
   for (const tipo of Object.keys(HORA_TIPICA) as Comida[]) {
     const minutos = horas[tipo] ?? HORA_TIPICA[tipo as keyof typeof HORA_TIPICA];
     if (comidas.some((c) => c.comida === tipo)) continue;
@@ -449,8 +451,8 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   // Va aunque haya uno anotado más temprano (la regla ya mira si hubo uno a su hora); si está planificado, la línea va en él.
   const snack = lineas.get('snack');
   if (snack && !comidas.some((c) => c.comida === 'snack' && c.planificada)) {
-    // Después de una cena tarde, el de antes de dormir no pasa de las 23:59: la línea es la de hoy.
-    entradas.push({ tipo: 'vacia', comida: 'snack', ahora: false, minutos: Math.min(1439, Math.max(ahora, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45)) });
+    // Después de una cena tarde, el de antes de dormir no pasa del final del día, que llega hasta el corte (D32).
+    entradas.push({ tipo: 'vacia', comida: 'snack', ahora: false, minutos: Math.min(24 * 60 + e.corte - 1, Math.max(ahora, snack.clase === 'antesDeDormir' ? snack.hora + 30 : snack.hora - 45)) });
   }
   // Una comida registrada ahora ya marca la hora: «ahora» va solo si no la hay.
   if (dia === e.hoy && !comidas.some((c) => Math.abs(c.minutos - ahora) < 1)) entradas.push({ tipo: 'ahora', minutos: ahora - 0.5 });

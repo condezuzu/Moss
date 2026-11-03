@@ -82,6 +82,8 @@ export type ComidaDeHoy = {
   items: string;
   /** Anotado con un toque de este widget: los registros, separados por comas. Otro toque los saca. */
   deshacer: string;
+  /** Lo anotado con un toque era lo del plan, como con «Comí esto»: otro toque lo vuelve a planificar. */
+  confirmado: boolean;
 };
 
 /** Un toque en una comida: anotada o no, y cuándo (en milisegundos). */
@@ -116,15 +118,16 @@ export type PropsAnotar = {
   fondo: string;
 };
 
+/** Un toque en el agua: un vaso más (1) o uno menos (−1), y cuándo (en milisegundos). */
+export type ToqueDeAgua = { vasos: number; en: number };
+
 export type PropsAgua = {
   dia: string;
   /** Lo que tomó según Moss, en ml. */
   ml: number;
   meta: number;
-  /** Lo tocado en el widget y la app todavía no aplicó: en vasos, puede ser negativo. */
-  vasos: number;
-  /** Cuándo fue el último toque (en milisegundos), o 0. */
-  en: number;
+  /** Lo tocado en el widget que la app todavía no aplicó, cada toque con su hora. */
+  pendientes: ToqueDeAgua[];
   textos: { titulo: string; vasos: string; sumar: string; quitar: string; decimal: string };
   url: string;
   fondo: string;

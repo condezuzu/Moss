@@ -13,7 +13,8 @@ function textos(nodo: Nodo, ruta = ''): [string, string][] {
 }
 
 const DE_VOS = /(?<!\p{L})(vos|sos|tenés|querés|podés|sabés|hacés|decís|comés|dormís|necesitás|preferís|solés|registrás|fijate|registrá|anotá|tocá|mirá|agregá|sumá|construí|comé|usá|probá|poné|cerrá|guardá|borrá|cambiá|pasá|dejá|buscá|contá|confirmá|revisá|prendé|apagá|marcá|pesate|sacá|bajá|volvé|andá|vení|empezá|hacé|decí|elegí|escribí|abrí|subí|seguí|dormí)(?!\p{L})/iu;
-const RIOPLATENSE = /(?<!\p{L})(acá|panza|cola|morrón|manteca|capaz|dale|che|nomás|heladera|remera|pollera)(?!\p{L})/iu;
+// «A la mañana» es del Río de la Plata: en neutro, «por la mañana».
+const RIOPLATENSE = /(?<!\p{L})(acá|panza|cola|morrón|manteca|capaz|dale|che|nomás|heladera|remera|pollera|tuco|muzzarella|a la mañana|a la tarde|a la noche)(?!\p{L})/iu;
 
 test('ningún texto en español habla de vos', () => {
   expect(textos(es as Nodo).filter(([, texto]) => DE_VOS.test(texto))).toEqual([]);

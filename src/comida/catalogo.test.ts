@@ -36,6 +36,12 @@ describe('el catálogo del servidor', () => {
     expect(conElCatalogo(base, [], 'banana', op)).toBe(base);
   });
 
+  it('con una marca nombrada no corta el menú entero que trajo el buscador', () => {
+    const menu = Array.from({ length: 40 }, (_, k) => resultado(100 + k, `Combo ${k}`));
+    const filas = [fila({ id: 1, nombre_es: 'Leche', nombre_en: 'Milk' })];
+    expect(conElCatalogo(menu, filas, 'combo', { ...op, limite: 30, limiteDeMarca: 200 })).toHaveLength(40);
+  });
+
   it('el detalle sale de la fila, y lo retirado no se muestra', () => {
     const filas = [fila({ id: 1, nombre_es: 'arroz crudo', nombre_en: 'raw rice' }), fila({ id: 2, nombre_es: 'arroz cocido', nombre_en: 'cooked rice', crudo: 1 }), fila({ id: 3, nombre_es: 'x', nombre_en: 'x', retirado: true })];
     expect(detalleDelCatalogo(filas, 2, op)).toMatchObject({ nombre: 'Arroz cocido', crudo: { id: 1, nombre: 'arroz crudo' } });

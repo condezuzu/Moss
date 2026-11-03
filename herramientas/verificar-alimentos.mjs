@@ -5,7 +5,8 @@
 // - los nombres de cada región: uno principal por alimento y región, y ningún nombre principal
 //   que en la misma región sea de dos alimentos;
 // - cómo se mide: lo cocido con su versión cruda, los códigos de barras, las marcas de los
-//   productos, y que nada se presente como de un país (el catálogo es para todo el mundo);
+//   productos, que nada se presente como de un país (el catálogo es para todo el mundo) y que lo de
+//   otro país sea de las líneas que se conocen de su marca (herramientas/lineas-de-marcas.mjs);
 // - los dos índices de búsqueda, y el tamaño;
 // - y avisa (sin fallar) de los curados cuyas calorías no cierran con 4/4/9 (y 7 para el alcohol),
 //   o con más fibra o azúcares que carbohidratos o más saturadas que grasas, para mirarlos.
@@ -16,6 +17,8 @@ import { statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
+
+import { LINEAS } from './lineas-de-marcas.mjs';
 
 const ruta = process.env.BASE ? join(dirname(fileURLToPath(import.meta.url)), '..', process.env.BASE) : join(dirname(fileURLToPath(import.meta.url)), '../assets/alimentos.db');
 const db = new DatabaseSync(ruta, { readOnly: true });
@@ -67,6 +70,13 @@ comprobar(!huerfanos, `los ${uno('SELECT count(*) AS n FROM codigos').n} código
 const deUnPais = todas(`SELECT texto FROM (SELECT nombre_es AS texto FROM alimentos UNION ALL SELECT nombre_en FROM alimentos UNION ALL SELECT marca FROM alimentos UNION ALL SELECT texto FROM alias)
   WHERE texto LIKE '%urugua%' OR texto LIKE '%oriental%' OR texto LIKE '%charrúa%' OR texto LIKE '%criollo uy%'`);
 comprobar(!deUnPais.length, 'ningún nombre presenta un alimento como de un país', deUnPais.map((a) => a.texto));
+// Lo de otro país (aproximado) de una marca con líneas es de una de ellas: «Gazpacho Pepsi» o el agua Ciel no son Pepsi ni Coca-Cola.
+const llano = (t) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const deOtraLinea = todas(`SELECT nombre_es, marca FROM alimentos WHERE atribucion = 'off' AND aproximado = 1`).filter((a) => {
+  const linea = llano(a.nombre_es).replace(new RegExp(`(^| )${llano(a.marca)}(?= |$)`, 'g'), ' ').split(' ').filter(Boolean).join(' ');
+  return LINEAS[a.marca] && linea && !LINEAS[a.marca].test(linea);
+});
+comprobar(!deOtraLinea.length, 'lo de otro país es de las líneas que se conocen de su marca', deOtraLinea.map((a) => a.nombre_es));
 
 let indices = true;
 for (const tabla of ['palabras', 'trigramas']) {

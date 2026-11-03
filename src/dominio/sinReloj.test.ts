@@ -303,7 +303,7 @@ describe('la noche sin reloj', () => {
     });
 
     it('sin respuestas, lo de Sahha: 31 y 18 minutos', () => {
-      expect(aprenderPersonal([], '2026-10-22')).toEqual({ latencia: LATENCIA, aprendida: LATENCIA, alDespertar: 18, noches: 0 });
+      expect(aprenderPersonal([], '2026-10-22')).toEqual({ latencia: LATENCIA, aprendida: LATENCIA, elegida: false, alDespertar: 18, noches: 0 });
     });
 
     it('las noches en que tardaste dos horas en dormirte: con tres, más de la mitad del camino; con siete, casi dos horas', () => {
@@ -344,6 +344,10 @@ describe('la noche sin reloj', () => {
       const p = aprenderPersonal(noches, '2026-10-22', 15);
       expect(p.latencia).toBe(15);
       expect(p.aprendida).toBeGreaterThan(60);
+      // Con respuestas, lo que se usa no siempre es lo aprendido: dice si se eligió («Cómo llegó Moss a esta hora»).
+      expect(p.elegida).toBe(true);
+      expect(aprenderPersonal(noches, '2026-10-22').elegida).toBe(false);
+      expect(aprenderPersonal(noches, '2026-10-22', null).elegida).toBe(false);
     });
 
     it('un «Sí» pesa menos que una corrección; lo de hace meses, nada; sin la ventana, de lo estimado y la mitad', () => {

@@ -2,7 +2,7 @@
 // (src/dominio/alrededorDelEntreno.ts) y dice cada línea en palabras, sin culpa.
 
 import type { Estado } from '@/almacen/almacen';
-import { lineaDeNocheCorta, lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
+import { comidasHabituales, lineaDeNocheCorta, lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
 import { horasDeSueno } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
 import { diasEntre, minutosEnElDia, sumarDias } from '@/dominio/fechas';
@@ -23,14 +23,6 @@ function cafeinaPorToma(e: Pick<Estado, 'registros' | 'hoy'>): number | null {
   if (new Set(tomas.map((r) => r.dia)).size < 3) return null;
   const mg = tomas.map((r) => r.valores.micros!.cafeina!).sort((a, b) => a - b);
   return mg[Math.floor(mg.length / 2)];
-}
-
-/** Con merienda en al menos 4 de cada 10 días anotados de las dos últimas semanas, cuatro comidas. */
-function comidasHabituales(e: Pick<Estado, 'registros' | 'hoy'>): 3 | 4 {
-  const recientes = vigentes(e.registros.values()).filter((r) => !r.planificado && diasEntre(r.dia, e.hoy) > 0 && diasEntre(r.dia, e.hoy) <= 14);
-  const dias = new Set(recientes.map((r) => r.dia)).size;
-  const conMerienda = new Set(recientes.filter((r) => r.comida === 'merienda').map((r) => r.dia)).size;
-  return dias > 0 && conMerienda / dias >= 0.4 ? 4 : 3;
 }
 
 /** El contexto de hoy para la regla; sin perfil, sin meta o sin sesiones hoy, null. */
@@ -58,7 +50,7 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
     anotado,
     meta,
     comido: { kcal: comido.kcal, proteina: comido.proteina, carbohidratos: comido.carbohidratos, grasas: comido.grasas },
-    comidasHabituales: comidasHabituales(e),
+    comidasHabituales: comidasHabituales(e.registros.values(), e.hoy),
     pesoKg: e.pesos[e.pesos.length - 1]?.kg ?? null,
     edad: edadDe(e.perfil, e.hoy),
     despertar: horas.despertar,

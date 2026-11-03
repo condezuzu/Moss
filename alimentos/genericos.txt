@@ -1023,7 +1023,7 @@ Buseca | Tripe and bean stew | receta#9 Mondongo 500 · Frijoles blancos 400 · 
 Postre chajá | Chajá cake | receta#10 Bizcocho 400 · Crema batida 400 · Duraznos en almíbar 400 · Merengue 100 · Dulce de leche 150 | 1 porción / 1 slice=180 | chajá · torta chajá
 Martín Fierro | Cheese with quince paste | receta#11 Queso fresco 60 · Dulce de membrillo 40 | 1 porción / 1 serving=100 | queso y dulce · postre vigilante (AR)
 Choripán | Chorizo sandwich | receta#12 Pan francés 80 · Chorizo 75 | 1 unidad / 1 sandwich=155 | chori · choripan
-Polenta con tuco | Polenta with meat sauce | receta#13 Polenta cocida 300 · Salsa boloñesa 150 · Queso rallado 10 | 1 plato / 1 plate=460 | polenta con salsa
+Polenta con salsa boloñesa | Polenta with meat sauce | receta#13 Polenta cocida 300 · Salsa boloñesa 150 · Queso rallado 10 | 1 plato / 1 plate=460 | polenta con tuco* (AR UY) · polenta con salsa
 Alfajor de maicena | Cornstarch alfajor | receta#14 Maicena 300 · Harina de trigo 200 · Mantequilla 200 · Azúcar 150 · Yema de huevo 54 · Dulce de leche 400 · Coco rallado 30 → 1250 | 1 unidad / 1 alfajor=42 | alfajores de maicena · alfajor
 
 # suplementos

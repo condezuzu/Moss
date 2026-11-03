@@ -46,6 +46,11 @@ const TODAVIA_BAJO = 0.75;
 /** Las grasas van «muchas» si superan por esto el promedio de los otros dos, y ya pasaron esta parte. */
 const GRASA_DE_MAS = 0.3;
 const GRASA_MINIMA = 0.6;
+/**
+ * Con la meta ya baja en carbohidratos (keto o baja en carbohidratos: menos del 26 % de las kcal, como en
+ * metas.ts), pedir arroz, papa o pan iría contra la meta: no se dice.
+ */
+const CARBOHIDRATOS_BAJOS = 0.26;
 /** Lo que falta de proteína se dice desde la tarde, con 25 g o más (como loQueFalta.ts). */
 const PROTEINA_DESDE = 16 * 60;
 const PROTEINA_QUE_FALTA = 25;
@@ -69,8 +74,9 @@ export function paraHoy(e: EntradaDeParaHoy): ConsejoDeHoy[] {
     const g = parte(e.comido.grasas, e.meta.grasas);
     // Lo que falta de proteína no se dice si el reparto ya habló de la proteína (que falta o que va bien).
     let hablaDeProteina = false;
+    const conPocosCarbohidratos = e.meta.carbohidratos * 4 < CARBOHIDRATOS_BAJOS * e.meta.kcal;
     if (parte(e.comido.kcal, e.meta.kcal) >= COMIDO_PARA_REPARTO) {
-      if (p - c >= DESEQUILIBRIO && c < TODAVIA_BAJO) {
+      if (p - c >= DESEQUILIBRIO && c < TODAVIA_BAJO && !conPocosCarbohidratos) {
         lista.push({ tipo: 'pocosCarbohidratos', proxima: e.proxima });
         hablaDeProteina = true;
       } else if (c - p >= DESEQUILIBRIO && p < TODAVIA_BAJO) {

@@ -6,7 +6,7 @@
 import type { Calidad } from '@/cielo/mundo';
 import type { Constelacion } from '@/datos/catalogo';
 import type { Sistema } from '@/dominio/cantidades';
-import { COMIDAS, CON_HORA, HORA_TIPICA, type Comida } from '@/dominio/comidas';
+import { COMIDAS, CON_HORA, HORA_TIPICA, horasCorridas, type Comida } from '@/dominio/comidas';
 import { asignar, mismosPeriodos, periodoDe, type Periodo } from '@/dominio/constelaciones';
 import { medidaValida, SITIOS, type Centimetros, type Medidas } from '@/dominio/cuerpo';
 import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control';
@@ -20,6 +20,7 @@ import {
 } from '@/dominio/metas';
 import { limpiarNombre, type Nombre } from '@/dominio/nombre';
 import { adaptarRegistros, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
+import { horasDeSiempre } from '@/dominio/recordatorios';
 import {
   borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
   type AlimentoPropio, type Fuente, type Item, type Receta, type Registro, type TomaDeAgua,
@@ -610,52 +611,84 @@ export function crearAlmacen(op: Opciones) {
       fuente: it.fuente, ref: it.ref, nombre: it.nombre, cantidad: it.cantidad, valores: it.valores, ...(it.estimado ? { estimado: true as const } : {}),
       id: nuevoId(), dia, comida: donde.comida, momento: new Date(desde + i).toISOString(), planificado: dia > estado.hoy, actualizado: cuando,
     }));
-    ponerComida('registros', nuevos);
-    if (dia === estado.hoy) correrLoQueSigue(dia, donde.comida, new Date(desde));
-    if (dia <= estado.hoy) sacarLoSugerido(dia, donde.comida, new Date(desde).toISOString(), nuevos);
+    // Lo que cambia al comer va en el mismo cambio que lo comido.
+    ponerComida('registros', [...nuevos, ...(nuevos.length && dia <= estado.hoy ? alComer(dia, donde.comida, nuevos[0].momento, nuevos) : [])]);
     return nuevos;
   }
 
-  // Lo sugerido que sacó lo último que se anotó: si eso se deshace, vuelve.
-  let sacado: { anotados: Set<string>; sugeridos: Registro[] } | null = null;
+  /**
+   * Lo que cambió al comer la última vez, como estaba antes y como quedó (lo planificado que corrió y
+   * lo sugerido que se fue), y lo que «Comí esto» confirmó, como estaba: si se deshace todo lo que se
+   * anotó esa vez, vuelve. Queda solo en memoria, y solo de lo último que se anotó.
+   */
+  let sacado: { anotados: Set<string>; cambios: { antes: Registro; despues: Registro }[]; confirmados: Registro[] } | null = null;
+  /** El registro cuyo borrado devolvió eso: deshacer ese borrado vuelve a correr lo que sigue. */
+  let devueltoPor: string | null = null;
 
-  /** Al comer, lo sugerido de esa comida y lo que ya pasó se van (plan.ts). */
-  function sacarLoSugerido(dia: ClaveDia, comida: Comida, cuando: string, anotados: readonly Pick<Registro, 'id'>[]) {
-    const sugeridos = sugerenciasQueSobran(estado.registros.values(), dia, comida, cuando);
-    sacado = sugeridos.length ? { anotados: new Set(anotados.map((r) => r.id)), sugeridos } : null;
-    if (!sugeridos.length) return;
+  /**
+   * Al comer algo de una comida (anotarlo, «Comí esto» o deshacer su borrado), lo planificado que sigue
+   * corre (correrLoQueSigue; con `correr` en falso, no) y lo sugerido de esa comida y lo que ya pasó se
+   * van (plan.ts). Devuelve esos cambios, para guardarlos junto con lo comido, y se acuerda de cómo
+   * estaba todo (`sacado`), para deshacerlo.
+   */
+  function alComer(dia: ClaveDia, comida: Comida, cuando: string, comidos: readonly Registro[], op: { correr?: boolean; confirmados?: Registro[] } = {}): Registro[] {
+    const ids = new Set(comidos.map((r) => r.id));
+    const corridos = op.correr !== false && dia === estado.hoy ? correrLoQueSigue(dia, comida, new Date(cuando), ids) : [];
+    const corrido = new Map(corridos.map((r) => [r.id, r]));
+    // Lo que sobra se mira con lo que corrió ya en su hora nueva.
+    const sobran = sugerenciasQueSobran([...estado.registros.values()].filter((r) => !ids.has(r.id)).map((r) => corrido.get(r.id) ?? r), dia, comida, cuando);
+    const sacados = new Set(sobran.map((r) => r.id));
     const hora = momento();
-    ponerComida('registros', sugeridos.map((r) => borrado(r, hora)));
+    const despues = [...corridos.filter((r) => !sacados.has(r.id)), ...sobran.map((r) => borrado(estado.registros.get(r.id)!, hora))];
+    const cambios = despues.map((d) => ({ antes: estado.registros.get(d.id)!, despues: d }));
+    sacado = cambios.length || op.confirmados?.length ? { anotados: ids, cambios, confirmados: op.confirmados ?? [] } : null;
+    return despues;
   }
 
-  function devolverLoSugerido(id: string) {
-    if (!sacado?.anotados.delete(id) || sacado.anotados.size) return;
-    const { sugeridos } = sacado;
+  /**
+   * Deshacer lo anotado (o «Comí esto»): cuando ya no queda nada de esa vez, lo que había cambiado al
+   * comer vuelve a su hora, salvo lo que se tocó después. Devuelve si volvió.
+   */
+  function devolverLoSugerido(id: string): boolean {
+    if (!sacado?.anotados.delete(id) || sacado.anotados.size) return false;
+    const { cambios } = sacado;
     sacado = null;
     const hora = momento();
-    ponerComida('registros', sugeridos.map((r) => restaurado(r, hora)));
+    ponerComida('registros', cambios.filter((c) => estado.registros.get(c.antes.id) === c.despues).map((c) => restaurado(c.antes, hora)));
+    return true;
   }
 
   /**
    * Lo planificado que sigue a una comida que se acaba de anotar corre lo mismo que ella (lo pediste el
    * 29/10/2026): si el desayuno planificado era a las 8 y desayunaste a las 9:30, el almuerzo
-   * planificado pasa de las 13 a las 14:30, con la misma distancia entre las comidas. La hora de
-   * referencia es la del plan para esa comida o, sin plan, la del horario o la de siempre.
+   * planificado pasa de las 13 a las 14:30, con la misma distancia entre las comidas. Corre solo con lo
+   * primero que se come de esa comida en el día (`comidos`, los ids de lo que se acaba de comer): lo que
+   * se suma después ya no lo mueve. Y no pasa de la próxima comida ya comida, como horasCorridas. La
+   * hora de referencia es la del plan para esa comida o, sin plan, la del horario o la de siempre (la de
+   * los avisos), corrida por lo que ya se comió: la hora en que la espera la línea. Devuelve lo que corre.
    */
-  function correrLoQueSigue(dia: ClaveDia, comida: Comida, cuando: Date) {
+  function correrLoQueSigue(dia: ClaveDia, comida: Comida, cuando: Date, comidos: ReadonlySet<string>): Registro[] {
     const orden = CON_HORA as readonly Comida[];
     const i = orden.indexOf(comida);
-    if (i < 0) return;
-    const planificados = [...estado.registros.values()].filter((r) => !r.borrado && r.dia === dia && r.planificado);
+    if (i < 0) return [];
+    const deEseDia = [...estado.registros.values()].filter((r) => !r.borrado && r.dia === dia);
+    // Lo primero que se comió de cada comida, sin lo que se acaba de comer.
+    const comidas: Partial<Record<Comida, number>> = {};
+    for (const r of deEseDia) if (!r.planificado && !comidos.has(r.id)) comidas[r.comida] = Math.min(comidas[r.comida] ?? Infinity, minutosEnElDia(new Date(r.momento), dia));
+    if (comidas[comida] !== undefined) return [];
+    // Lo que sigue a una comida que ya se comió corrió con ella.
+    const hasta = orden.findIndex((c, j) => j > i && comidas[c] !== undefined);
+    const planificados = deEseDia.filter((r) => r.planificado);
     const delPlan = planificados.filter((r) => r.comida === comida).map((r) => minutosEnElDia(new Date(r.momento), dia));
-    const referencia = delPlan.length ? Math.min(...delPlan) : (estado.avisos.horario?.[comida] ?? HORA_TIPICA[comida as keyof typeof HORA_TIPICA]);
+    const deSiempre = horasDeSiempre(estado.registros.values(), estado.hoy);
+    const referencia = delPlan.length ? Math.min(...delPlan) : horasCorridas(Object.fromEntries(orden.map((c) => [c, estado.avisos.horario?.[c] ?? deSiempre(c)])), comidas)[comida]!;
     const corrimiento = minutosEnElDia(cuando, dia) - referencia;
     // Un rato no cambia nada: el plan queda como estaba.
-    if (Math.abs(corrimiento) < 5) return;
-    const cambian = planificados
-      .filter((r) => orden.indexOf(r.comida) > i)
-      .map((r) => ({ ...r, momento: new Date(Date.parse(r.momento) + corrimiento * 60_000).toISOString(), actualizado: momento() }));
-    if (cambian.length) ponerComida('registros', cambian);
+    if (Math.abs(corrimiento) < 5) return [];
+    const hora = momento();
+    return planificados
+      .filter((r) => orden.indexOf(r.comida) > i && (hasta < 0 || orden.indexOf(r.comida) < hasta))
+      .map((r) => ({ ...r, momento: new Date(Date.parse(r.momento) + corrimiento * 60_000).toISOString(), actualizado: hora }));
   }
 
   /** La hora de dormir y cuántos avisos por día: lo que cambia se suma a lo que había. */
@@ -863,12 +896,20 @@ export function crearAlmacen(op: Opciones) {
     /** Devuelve lo borrado (para el aviso de deshacer). */
     borrarRegistro(id: string) {
       const x = borrarDe('registros', id);
-      devolverLoSugerido(id);
+      devueltoPor = devolverLoSugerido(id) ? id : null;
       return x;
     },
+    /**
+     * Lo comido que vuelve saca otra vez lo sugerido que su borrado había devuelto y, si lo había
+     * devuelto todo (era lo último de esa vez), vuelve a correr lo que sigue.
+     */
     deshacerBorrado(id: string) {
       const r = estado.registros.get(id);
-      if (r?.borrado) ponerComida('registros', [restaurado(r, momento())]);
+      if (!r?.borrado) return;
+      const vuelto = restaurado(r, momento());
+      const correr = devueltoPor === id;
+      devueltoPor = null;
+      ponerComida('registros', [vuelto, ...(!vuelto.planificado && vuelto.dia <= estado.hoy ? alComer(vuelto.dia, vuelto.comida, vuelto.momento, [vuelto], { correr }) : [])]);
     },
     /** Una comida (o el día entero, sin `comida`) a otro día: a la misma hora y, si el día no llegó, planificada. */
     copiar(desde: { dia: ClaveDia; comida?: Comida }, hacia: { dia: ClaveDia; comida?: Comida }): Registro[] {
@@ -887,24 +928,27 @@ export function crearAlmacen(op: Opciones) {
     },
     // ---------------------------------------------------------------- el plan de comidas
     planificar,
-    /** «Comí esto»: lo planificado de una comida pasa a anotado, con un toque. Devuelve los ids, para deshacer. */
-    confirmarComida(dia: ClaveDia, comida: Comida): string[] {
-      const cuando = momento();
-      // «Comí esto» hoy: a la hora en que lo dijiste, y lo planificado que sigue corre lo mismo (antes
-      // de confirmar, mientras la hora del plan de esta comida sigue a mano).
-      const hoy = dia === estado.hoy;
-      const hechos = confirmar(estado.registros.values(), dia, cuando, comida).map((r, i) => (hoy ? { ...r, momento: new Date(Date.parse(cuando) + i).toISOString() } : r));
-      if (hoy && hechos.length) correrLoQueSigue(dia, comida, new Date(cuando));
-      ponerComida('registros', hechos);
-      if (hechos.length) sacarLoSugerido(dia, comida, hechos[0].momento, hechos);
+    /**
+     * «Comí esto»: lo planificado de una comida pasa a anotado, con un toque. Devuelve los ids, para
+     * deshacer. Hoy va a la hora en que lo dijiste y, con `cuando` (la del toque en el widget), a esa
+     * hora, en cualquier día; lo planificado que sigue corre desde ahí.
+     */
+    confirmarComida(dia: ClaveDia, comida: Comida, cuando?: string): string[] {
+      const ahora = momento();
+      const hora = cuando ?? (dia === estado.hoy ? ahora : undefined);
+      const hechos = confirmar(estado.registros.values(), dia, ahora, comida).map((r, i) => (hora ? { ...r, momento: new Date(Date.parse(hora) + i).toISOString() } : r));
+      if (!hechos.length) return [];
+      const confirmados = hechos.map((r) => estado.registros.get(r.id)!);
+      ponerComida('registros', [...hechos, ...alComer(dia, comida, hechos[0].momento, hechos, { confirmados })]);
       return hechos.map((r) => r.id);
     },
-    /** Deshacer «Comí esto». */
+    /** Deshacer «Comí esto»: vuelve a planificado, a la hora que tenía, y lo que corrió o se sacó, también. */
     volverAPlanificar(ids: readonly string[]) {
       const cuando = momento();
+      const antes = new Map((sacado?.confirmados ?? []).map((r) => [r.id, r.momento]));
       ponerComida('registros', ids.flatMap((id) => {
         const r = estado.registros.get(id);
-        return r && !r.borrado ? [{ ...r, planificado: true, actualizado: cuando }] : [];
+        return r && !r.borrado ? [{ ...r, planificado: true, momento: antes.get(id) ?? r.momento, actualizado: cuando }] : [];
       }));
       ids.forEach(devolverLoSugerido);
     },

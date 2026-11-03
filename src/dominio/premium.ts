@@ -47,6 +47,16 @@ export function cuentaDeMossDesde(u: { created_at?: string; identities?: { provi
   return u.identities?.find((i) => i.provider === 'apple')?.created_at ?? u.created_at ?? null;
 }
 
+/**
+ * La fecha de la cuenta que vale para el regalo: la de la sesión y, sin sesión, la que quedó guardada en el
+ * teléfono, porque sin conexión y con el token vencido la sesión llega vacía aunque se siga adentro (sin conexión
+ * nadie queda afuera). Al salir de la cuenta o borrarla, ninguna.
+ */
+export function cuentaParaElRegalo(deLaSesion: string | null | undefined, guardada: string | null | undefined, salio: boolean): string | null {
+  if (salio) return null;
+  return deLaSesion || guardada || null;
+}
+
 /** Si la cuenta es de antes de que se prendiera. `saleEl` es AAAA-MM-DD; sin cuenta, no. */
 export function esDeRegalo(cuentaCreada: string | null | undefined, saleEl: string): boolean {
   if (!cuentaCreada) return false;
@@ -62,6 +72,15 @@ export function avisoDePrueba(s: Suscripcion | null, ahora: number): number | nu
   if (!s?.prueba || s.renueva === false) return null;
   const en = s.vence - AVISO_ANTES;
   return en > ahora ? en : null;
+}
+
+/**
+ * Hasta cuándo pueden sonar los avisos que se programan, en milisegundos. Con la prueba o la suscripción
+ * cancelada, hasta que vence: después no hay acceso y no suena nada, aunque Moss no se abra para borrarlos.
+ * De regalo o renovándose, null: sin fin.
+ */
+export function avisosHasta(s: Suscripcion | null, a: Acceso): number | null {
+  return a !== 'regalo' && s?.renueva === false ? s.vence : null;
 }
 
 export const planDe = (s: Suscripcion): Plan => (s.producto === PRODUCTOS.anual ? 'anual' : 'mensual');

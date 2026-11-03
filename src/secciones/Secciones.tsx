@@ -176,6 +176,14 @@ export default function Secciones() {
     hoja.set(subirOBajar(hoja.get(), 0));
     setHojaAbierta(false);
   };
+  // Un aviso o un widget llevan a lo suyo: se cierra lo que estaba abierto encima, que lo taparía (la hoja
+  // del «+» y los modales de Hábitos: el editor, «Tu mes» y los primeros hábitos).
+  const cerrarCapas = () => {
+    if (hojaAbierta) cerrarHoja();
+    setEditando(undefined);
+    setVerMes(false);
+    setSugeridos(false);
+  };
 
   // Tocar un aviso lleva a lo suyo: anotar esa comida, el cielo de Hábitos, el peso o el sueño.
   useAlTocarUnAviso((a) => {
@@ -185,6 +193,7 @@ export default function Secciones() {
       almacenListo().then(() => guardarSenales([{ id, que: 'meVoyADormir', en }])).then(() => avisar(t('recordatorios.buenasNoches'))).catch(() => {});
       return;
     }
+    cerrarCapas();
     // La comida de su día: un aviso de la cena tocado después de medianoche anota la cena de ayer.
     if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida, ...(a.dia ? { dia: a.dia } : {}) });
     // Lo que falta: para anotar lo que propone. Del agua, a Inicio, donde se suman los vasos.
@@ -200,7 +209,7 @@ export default function Secciones() {
 
   // Tocar un widget lleva a lo suyo: su sección, o anotar justo ahí.
   useEnlaces(conSecciones, (e) => {
-    if (hojaAbierta) cerrarHoja();
+    cerrarCapas();
     if ('seccion' in e) {
       cerrarRegistro();
       ir(PESTANAS.indexOf(e.seccion));

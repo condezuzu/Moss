@@ -694,9 +694,14 @@ if (errores.length) {
 }
 
 // En una cadena, primero lo principal, después los combos y al final lo demás: es lo que se busca al escribir su nombre.
-const PRINCIPAL = /hamburguesa|burger|big mac|cuarto|mcn[ií]fica|stacker|whopper|\bsub\b|pizza|s[aá]nd?wich|wrap|pancho|chivito|milanesa|mega\b|taste\b/i;
-const COMBO = /\b(combo|mccombo|cajita)\b/i;
-const lugarEnLaCadena = (a) => (COMBO.test(a.es) ? 1 : PRINCIPAL.test(a.es) ? 0 : 2);
+// Se mira sin la marca: si no, «Burger King» hace principales a sus papas y sus helados. La porción de una pizzería es
+// de pizza o de fainá, y la Big Box es un combo.
+const PRINCIPAL = /hamburguesa|burger|big mac|cuarto|mcn[ií]fica|stacker|whopper|\bsub\b|pizza|s[aá]nd?wich|wrap|pancho|chivito|milanesa|mega\b|^taste\b|king bacon|chicken crispy|big king|porci[oó]n de/i;
+const COMBO = /\b(combo|mccombo|cajita|big box)\b/i;
+const lugarEnLaCadena = (a) => {
+  const nombre = a.es.replace(a.marca, '').trim();
+  return COMBO.test(nombre) ? 1 : PRINCIPAL.test(nombre) ? 0 : 2;
+};
 for (const lista of Map.groupBy([...alimentos.values()].filter((a) => a.marca && a.categoria === 'comida rapida'), (a) => a.marca).values()) {
   lista.sort((x, y) => lugarEnLaCadena(x) - lugarEnLaCadena(y) || x.ordenMarca - y.ordenMarca).forEach((a, i) => { a.ordenMarca = i; });
 }

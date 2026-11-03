@@ -1,6 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { carbohidratosPrevios, larga, lineaDeNocheCorta, lineasDelDia, NOCHE_CORTA, proteinaDeComida, sesionesDelDia, type Contexto, type Sesion } from './alrededorDelEntreno';
+import { carbohidratosPrevios, comidasHabituales, larga, lineaDeNocheCorta, lineasDelDia, NOCHE_CORTA, proteinaDeComida, sesionesDelDia, type Contexto, type Sesion } from './alrededorDelEntreno';
+import type { Comida } from './comidas';
+import { sumarDias } from './fechas';
 
 /** «19:00» en minutos desde la medianoche. */
 const h = (texto: string) => {
@@ -137,6 +139,38 @@ describe('el horario de entrenamiento', () => {
     expect(sesionesDelDia({ ...entreno, dias: [...entreno.dias] }, '2026-10-26')).toEqual([{ inicio: h('19:00'), minutos: 60, tipo: 'fuerza' }]);
     expect(sesionesDelDia({ ...entreno, dias: [...entreno.dias] }, '2026-10-27')).toEqual([]);
     expect(sesionesDelDia(null, '2026-10-26')).toEqual([]);
+  });
+});
+
+describe('las comidas que se suelen anotar', () => {
+  const HOY = '2026-11-03';
+  const TRES = ['desayuno', 'almuerzo', 'cena'] as const;
+  type Fila = { dia: string; comida: Comida; planificado: boolean; borrado?: true };
+  /** Anotó desayuno, almuerzo y cena cada uno de los últimos `dias` días, y merienda los de `conMerienda` (días para atrás). */
+  const registros = (dias: number, conMerienda: number[], extra: Fila[] = []): Fila[] => [
+    ...Array.from({ length: dias }, (_, i) => sumarDias(HOY, -(i + 1))).flatMap((dia, i) =>
+      [...TRES, ...(conMerienda.includes(i + 1) ? ['merienda' as const] : [])].map((comida) => ({ dia, comida, planificado: false }))),
+    ...extra,
+  ];
+
+  it('con merienda en 4 de cada 10 días anotados de las dos últimas semanas, cuatro; si no, tres', () => {
+    expect(comidasHabituales(registros(14, [1, 3, 5, 7, 9, 11]), HOY)).toBe(4);
+    expect(comidasHabituales(registros(14, [1, 3, 5, 7, 9]), HOY)).toBe(3);
+    // Cuenta sobre los días anotados: quien anotó solo cinco días, dos con merienda, cuatro.
+    expect(comidasHabituales(registros(5, [1, 2]), HOY)).toBe(4);
+    // Lo de hace más de dos semanas no cuenta: siete meriendas en tres semanas, pero cinco en las dos últimas.
+    expect(comidasHabituales(registros(21, [1, 3, 6, 9, 12, 16, 19]), HOY)).toBe(3);
+    expect(comidasHabituales([], HOY)).toBe(3);
+  });
+
+  it('sin lo planificado, lo borrado ni lo de hoy', () => {
+    const ruido: Fila[] = [
+      ...[2, 4, 6, 8].map((d) => ({ dia: sumarDias(HOY, -d), comida: 'merienda' as const, planificado: true })),
+      ...[2, 4, 6, 8].map((d) => ({ dia: sumarDias(HOY, -d), comida: 'merienda' as const, planificado: false, borrado: true as const })),
+      { dia: HOY, comida: 'merienda', planificado: false },
+    ];
+    expect(comidasHabituales(registros(10, [1, 3]), HOY)).toBe(3);
+    expect(comidasHabituales(registros(10, [1, 3], ruido), HOY)).toBe(3);
   });
 });
 

@@ -1255,7 +1255,7 @@ Pizza de queso | ciqual:25404 | revisado: la de restaurante lleva más queso (16
 Pizza napolitana | ciqual:25404 | revisado: otra receta, con rodajas de tomate (16 % C)
 Pizza sin queso | cofid:15-255 | revisado: la británica lleva más aceite y menos masa (46 % C)
 Polenta con queso | sin par | ninguna tabla tiene polenta con queso
-Polenta con tuco | sin par | ninguna tabla tiene polenta con salsa
+Polenta con salsa boloñesa | sin par | ninguna tabla tiene polenta con salsa
 Pollo a la naranja | cofid:19-324 | revisado: otra receta: el agridulce británico lleva menos pollo (34 % P)
 Pollo a la parmesana | sin par | ninguna tabla tiene pollo a la parmesana
 Pollo agridulce | cofid:19-324 | revisado: otra receta (22 % kcal)

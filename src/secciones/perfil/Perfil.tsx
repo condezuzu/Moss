@@ -17,14 +17,14 @@ import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import type { Comida } from '@/dominio/comidas';
-import { CORTE_DE_FABRICA, CORTES, sumarDias, type DiaSemana } from '@/dominio/fechas';
+import { CORTE_DE_FABRICA, CORTES, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
-import { conLoQueFalta, horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
-import { horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
+import { algunAviso, conLoQueFalta, horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
+import { duerme, horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { aprenderPersonal, LATENCIAS } from '@/dominio/sinReloj';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
-import { lista, t } from '@/textos';
+import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Boton, Icono, Pastilla } from '../comida/comunes';
 import { duracion, numero, sistemaDe, useEstado } from '../comida/datos';
@@ -113,7 +113,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       { clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial') },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
       { clave: 'idioma', titulo: t('perfil.idioma'), valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
-      { clave: 'corte', titulo: t('perfil.corte'), valor: e.corte === 0 ? t('perfil.corteMedianoche') : t('perfil.corteHora', { hora: horaDelCorte(e.corte) }), alTocar: () => setHoja('corte') },
+      { clave: 'corte', titulo: t('perfil.corte'), valor: nombreDelCorte(e.corte), alTocar: () => setHoja('corte') },
       { clave: 'calidad', titulo: t('perfil.calidad'), valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
       { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
       { clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), alTocar: () => elAlmacen().ponerNumeros(!e.numeros) },
@@ -354,6 +354,9 @@ function CalidadDelCielo({ elegida, alCerrar }: { elegida: Calidad | null; alCer
 
 /** «4:00»: las horas del corte, sin el cero de adelante. */
 const horaDelCorte = (minutos: number) => `${Math.floor(minutos / 60)}:${String(minutos % 60).padStart(2, '0')}`;
+/** «A la medianoche», «A la 1:00» o «A las 4:00». */
+const nombreDelCorte = (minutos: number) =>
+  minutos === 0 ? t('perfil.corteMedianoche') : plural('perfil.corteALaHora', Math.floor(minutos / 60), { hora: horaDelCorte(minutos) });
 
 /** A qué hora empieza el día (D32): lo de antes cuenta para el día anterior. */
 function CorteDelDia({ elegido, alCerrar }: { elegido: number; alCerrar: () => void }) {
@@ -364,7 +367,7 @@ function CorteDelDia({ elegido, alCerrar }: { elegido: number; alCerrar: () => v
         {CORTES.map((c) => (
           <Opcion
             key={c}
-            titulo={c === 0 ? t('perfil.corteMedianoche') : t('perfil.corteHora', { hora: horaDelCorte(c) })}
+            titulo={nombreDelCorte(c)}
             detalle={c === CORTE_DE_FABRICA ? t('perfil.corteDeFabrica') : undefined}
             elegida={c === elegido}
             alTocar={() => elAlmacen().ponerCorte(c)}
@@ -411,9 +414,12 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
     else conPermiso(() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
   };
   const sueno = suenoParaAvisos(e);
-  // La hora de ir a la cama esta noche y de dónde sale: la de despertarte mañana, lo que necesitás y lo que tardás.
-  const estaNoche = sueno ? horasDeSueno(e.hoy, sueno).acostarse : null;
-  const manana = sueno ? horasDeSueno(sumarDias(e.hoy, 1), sueno).despertar : null;
+  // La hora de ir a la cama esta noche y de dónde sale: la de despertarte mañana, lo que vas a dormir (como
+  // dice el aviso, con la deuda y lo de siempre) y lo que tardas en dormirte.
+  const horas = sueno ? horasDeSueno(e.hoy, sueno) : null;
+  const estaNoche = horas?.acostarse ?? null;
+  const manana = horas?.despertarManana ?? null;
+  const dormidas = horas ? duerme(horas) : null;
   const personal = aprenderPersonal([...e.noches.values()], e.hoy, e.latencia);
   const maximo = e.avisos.maximoPorDia ?? MAXIMO_POR_DIA;
   // El horario arranca con las comidas de siempre, a la hora en que se suelen anotar.
@@ -452,8 +458,8 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
         />
       </View>
       <Parrafo chico>
-        {estaNoche !== null && manana !== null && sueno
-          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(sueno.necesidad), latencia: personal.latencia })
+        {estaNoche !== null && manana !== null && dormidas !== null
+          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(dormidas), latencia: personal.latencia })
           : t('perfil.avisos.dormirSinDatos')}
       </Parrafo>
       {!!dormir?.encendido && (
@@ -524,7 +530,7 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       <View style={st.llave}>
         <Text style={st.llaveTexto}>{t('perfil.avisos.falta')}</Text>
         <Switch
-          value={conLoQueFalta(e.avisos, true)}
+          value={conLoQueFalta(e.avisos, algunAviso(e))}
           onValueChange={(si) => (si ? conPermiso(() => elAlmacen().ponerAvisos({ falta: { encendido: true } })) : elAlmacen().ponerAvisos({ falta: { encendido: false } }))}
           trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
           thumbColor={colores.pergamino}
@@ -572,10 +578,9 @@ const TIPOS = ['fuerza', 'resistencia', 'mixta'] as const;
 /** Lunes primero, como en la galería. */
 const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
 
-/** Si suena algún aviso: los de comidas sin anotar, dormir, el horario, pesarse o un hábito. */
+/** Si suena algún aviso: los de comidas sin anotar, dormir, el horario, pesarse, un hábito o lo que falta, si se prendió. */
 function hayAvisos(e: Estado): boolean {
-  const a = e.avisos;
-  return !!(e.recordatorios?.length || a.dormir?.encendido || Object.keys(a.horario ?? {}).length || a.pesarse?.encendido || a.habitos?.length);
+  return algunAviso(e) || !!e.avisos.falta?.encendido;
 }
 
 /** «Lun Mié Vie · 19:00», «Todos los días · 19:00» o que todavía no se cargó: corto, para que entre en la fila. */

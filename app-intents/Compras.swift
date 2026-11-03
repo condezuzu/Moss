@@ -144,7 +144,7 @@ final class Compras: Module {
       enPrueba = transaccion.offerType == .introductory
     }
     var renueva: Any = NSNull()
-    if let estado = await transaccion.subscriptionStatus, case .verified(let info) = estado.renewalInfo {
+    if let estado = await estadoDeLaSuscripcion(de: transaccion), case .verified(let info) = estado.renewalInfo {
       renueva = info.willAutoRenew
     }
     return [
@@ -153,5 +153,21 @@ final class Compras: Module {
       "prueba": enPrueba,
       "renueva": renueva,
     ]
+  }
+
+  // Moss abre desde iOS 16.4 y la transacción trae su estado recién desde iOS 17. Antes, sale del producto: de
+  // los estados de su grupo (puede haber otro, de la familia), el de la misma suscripción. Si Apple no
+  // contesta, nil: no se sabe si renueva.
+  private static func estadoDeLaSuscripcion(de transaccion: StoreKit.Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
+    if #available(iOS 17.0, *) {
+      return await transaccion.subscriptionStatus
+    }
+    let estados = (try? await StoreKit.Product.products(for: [transaccion.productID]).first?.subscription?.status) ?? []
+    return estados.first { estado in
+      guard case .verified(let suya) = estado.transaction else {
+        return false
+      }
+      return suya.originalID == transaccion.originalID
+    }
   }
 }

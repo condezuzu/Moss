@@ -12,7 +12,8 @@
 // - que lo comido guarda si fue a ojo y que el catálogo lo lee cualquier usuario y no lo escribe
 //   nadie desde la app (0004_medir.sql);
 // - que las noches propias (la cara de la mañana y la hora sin reloj) siguen las mismas reglas
-//   (0005_noches.sql);
+//   (0005_noches.sql), y que la ventana tranquila va solo con lo estimado, también cuando la build 6
+//   sube una noche sin ella (0010_noches_quieto.sql y 0011_noches_quieto_build6.sql);
 // - que lo comido y el catálogo guardan los micronutrientes, y que las búsquedas sin resultado y
 //   los reportes de errores se anotan sin usuario y no se leen desde la app (0006_alimentos.sql);
 // - que lo armado por el plan guarda su opción y cómo comes va en el perfil (0007_plan.sql);
@@ -275,8 +276,28 @@ comprobar(
     && await conVentana('2026-10-11', '2026-10-11T02:30:00Z', '2026-10-11T11:20:00Z').then(() => true, () => false),
   'la ventana tranquila de una noche: las dos horas juntas, solo con lo estimado y la primera antes que la última',
 );
-// La de prueba se va: lo que sigue cuenta las noches de A.
-await como(A, `delete from moss.noches where fecha = '2026-10-11'`);
+// La build 6 no conoce la ventana (0011_noches_quieto_build6.sql): su upsert no la nombra, así que sobre una noche
+// que otro teléfono subió con la suya, la deja como estaba.
+const conVentanaDeOtro = (fecha) => como(A, `insert into moss.noches (fecha, dormirse, despertar, origen, confianza, estimada_dormirse, estimada_despertar, quieto_desde, quieto_hasta, actualizado)
+  values ('${fecha}', '${fecha}T03:00:00Z', '${fecha}T11:00:00Z', 'estimada', 'media', '${fecha}T03:00:00Z', '${fecha}T11:00:00Z', '${fecha}T02:30:00Z', '${fecha}T11:20:00Z', '${fecha}T11:30:00Z')`);
+const deLaBuild6 = (fecha, conLoEstimado) => como(A, `
+  insert into moss.noches (fecha, cara, dormirse, despertar, origen, confianza, estimada_dormirse, estimada_despertar, borrado, actualizado)
+  values ('${fecha}', 4, ${conLoEstimado ? `'${fecha}T03:00:00Z', '${fecha}T11:00:00Z', 'confirmada', 'media', '${fecha}T03:00:00Z', '${fecha}T11:00:00Z'` : 'null, null, null, null, null, null'}, false, '${fecha}T11:35:00Z')
+  on conflict (usuario, fecha) do update set cara = excluded.cara, dormirse = excluded.dormirse, despertar = excluded.despertar, origen = excluded.origen,
+    confianza = excluded.confianza, estimada_dormirse = excluded.estimada_dormirse, estimada_despertar = excluded.estimada_despertar,
+    borrado = excluded.borrado, actualizado = excluded.actualizado`).then(() => true, () => false);
+await conVentanaDeOtro('2026-10-10');
+await conVentanaDeOtro('2026-10-09');
+const soloLaCara = await deLaBuild6('2026-10-10', false);
+const confirmada = await deLaBuild6('2026-10-09', true);
+const [sinVentana, conVentanaTodavia] = (await como(A, `select cara, quieto_desde from moss.noches where fecha in ('2026-10-10', '2026-10-09') order by fecha desc`)).rows;
+comprobar(
+  soloLaCara && confirmada && Number(sinVentana?.cara) === 4 && sinVentana.quieto_desde === null
+    && Number(conVentanaTodavia?.cara) === 4 && conVentanaTodavia.quieto_desde !== null,
+  'la build 6 sube solo la cara sobre una noche con ventana: se guarda y la ventana se va con lo estimado (si confirma lo estimado, queda)',
+);
+// Las de prueba se van: lo que sigue cuenta las noches de A.
+await como(A, `delete from moss.noches where fecha in ('2026-10-11', '2026-10-10', '2026-10-09')`);
 const subirNoche = (cara, dormirse, despertar, origen, actualizado) => como(A, `
   insert into moss.noches (fecha, cara, dormirse, despertar, origen, confianza, actualizado) values ('2026-10-21', $1, $2, $3, $4, case when $4::text is null then null else 'media' end, $5)
   on conflict (usuario, fecha) do update set cara = excluded.cara, dormirse = excluded.dormirse, despertar = excluded.despertar,

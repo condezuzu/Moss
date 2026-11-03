@@ -327,18 +327,27 @@ export type MetaDelCuestionario = {
   actividad: Actividad;
 };
 
+/**
+ * El ritmo de la fecha elegida que usa la meta, en % del peso por semana: antes de los 18, bajando, una fecha
+ * tampoco pide más que el ritmo recomendado (como ritmoPermitido). El plan que se muestra llega a ese ritmo.
+ * Sin fecha, o si no cambia el peso, null.
+ */
+export function pctDelPlan(r: Pick<Respuestas, 'edad' | 'objetivo' | 'pct' | 'sinDeficit'>): number | null {
+  const objetivo = objetivoGuardado(objetivoUsado(r));
+  if (objetivo === 'mantener' || r.pct == null || !(r.pct > 0)) return null;
+  return r.edad < MAYORIA_DE_EDAD && objetivo === 'bajar' ? Math.min(r.pct, Math.abs(RITMOS.bajar.recomendado)) : r.pct;
+}
+
 /** El gasto más o menos el ritmo, nunca debajo del piso ni en déficit si no se puede, con la proteína del nivel elegido. */
 export function metaDelCuestionario(r: Respuestas): MetaDelCuestionario {
   const gasto = gastoEstimado(r);
   const usado = objetivoUsado(r);
   const objetivo = objetivoGuardado(usado);
+  const pct = pctDelPlan(r);
   let ajuste = 0;
   if (usado === 'recomponer') ajuste = ajusteDeRecomposicion(r);
-  else if (objetivo !== 'mantener' && r.pct != null && r.pct > 0) {
-    // Antes de los 18, bajando, una fecha tampoco pide más que el ritmo recomendado (como ritmoPermitido).
-    const pct = r.edad < MAYORIA_DE_EDAD && objetivo === 'bajar' ? Math.min(r.pct, Math.abs(RITMOS.bajar.recomendado)) : r.pct;
-    ajuste = ((objetivo === 'bajar' ? -1 : 1) * (pct / 100) * r.pesoKg * KCAL_POR_KG) / 7;
-  } else ajuste = ajusteDiario(objetivo, ritmoPermitido({ edad: r.edad, objetivo, ritmo: r.ritmo }), r.pesoKg);
+  else if (pct !== null) ajuste = ((objetivo === 'bajar' ? -1 : 1) * (pct / 100) * r.pesoKg * KCAL_POR_KG) / 7;
+  else ajuste = ajusteDiario(objetivo, ritmoPermitido({ edad: r.edad, objetivo, ritmo: r.ritmo }), r.pesoKg);
   const kcal = Math.max(pisoDe(r.sexo), aDiez(gasto.total + ajuste));
   return {
     gasto,

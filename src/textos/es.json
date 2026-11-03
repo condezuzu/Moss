@@ -521,7 +521,10 @@
       "producto": "Producto · de su etiqueta",
       "productoOff": "Producto · datos de Open Food Facts (ODbL)",
       "cadena": "Oficial · {fuente}",
-      "aproximado": "Aproximado · {fuente}"
+      "aproximado": "Aproximado · {fuente}",
+      "deLaCadena": "Oficial · de la cadena",
+      "estimacionDeMoss": "Aproximado · estimación de Moss",
+      "aproximadoOff": "Aproximado · Open Food Facts"
     },
     "favorito": "Favorito",
     "nombre": "Nombre",
@@ -679,11 +682,11 @@
       "anotar": "Anotar",
       "loAnotado": "Lo que anotaste",
       "ejemplos": {
-        "fideos": "Fideos con tuco y queso rallado",
+        "fideos": "Pasta con salsa de tomate y queso rallado",
         "milanesa": "Una milanesa con puré y ensalada",
         "desayuno": "Café con leche y dos tostadas con dulce de leche",
         "yogur": "Un yogur, granola y una banana",
-        "pizza": "Dos porciones de pizza de muzzarella",
+        "pizza": "Dos porciones de pizza de queso",
         "pollo": "Pechuga de pollo a la plancha con arroz"
       }
     },
@@ -699,7 +702,9 @@
       "con": "Comparado con {tabla} el {fecha}: coinciden.",
       "ingredientes": "Todos sus ingredientes están verificados.",
       "etiqueta": "Las calorías cierran con los macros de la etiqueta.",
-      "sin": "Todavía no está comparado con una segunda fuente."
+      "sin": "Todavía no está comparado con una segunda fuente.",
+      "cadena": "Los valores son los que publica la cadena.",
+      "aproximado": "Los valores son una estimación de Moss, no un dato oficial."
     },
     "tablas": {
       "cnf": "la tabla de Canadá (CNF)",
@@ -975,7 +980,7 @@
         },
         "sueno": {
           "titulo": "Tu sueño",
-          "texto": "Con un reloj o un anillo, lo que llega de Salud. Sin ellos, Moss mira la última actividad del teléfono a la noche y la primera a la mañana, y cuenta lo que tardas en dormirte, que aprende de tus respuestas."
+          "texto": "Con un reloj o un anillo, lo que llega de Salud. Sin ellos, Moss mira la última actividad del teléfono por la noche y la primera por la mañana, y cuenta lo que tardas en dormirte, que aprende de tus respuestas."
         },
         "alimentos": {
           "titulo": "Los alimentos",
@@ -1262,7 +1267,8 @@
         "sinFuerzaBajar": "Sin entrenamiento de fuerza, una parte de lo que bajes es músculo; entrenando fuerza tres veces por semana, casi nada.",
         "sinFuerzaSubir": "Sin entrenar fuerza, unos dos tercios de lo que subas es grasa.",
         "piso": "Con esa fecha comerías menos de {piso} kcal, y Moss no baja de ahí: llegarías el {fecha}.",
-        "menor": "Antes de los 18, mejor un ritmo viable."
+        "menor": "Antes de los 18, mejor un ritmo viable.",
+        "pisoNoLlega": "Moss no baja de {piso} kcal, y con lo que gastas eso deja poco o nada de déficit: así no llegarías en dos años."
       },
       "sinCamino": "Elige un peso meta para ver cuándo llegarías.",
       "caminoTexto": "La línea llena es tu tendencia; la punteada sigue hasta la meta, a tu ritmo."
@@ -1572,7 +1578,8 @@
         "noCuenta": "no cuenta: seguiste usándolo",
         "tardas": "Tardas unos {n} min en dormirte: lo aprendió de tus respuestas.",
         "tardasFabrica": "Sin respuestas tuyas, calcula {n} min hasta dormirte. Con cada una aprende lo tuyo.",
-        "nota": "Cada señal propone una hora y pesa según cuánta duda deja. Nunca te da dormido antes de lo último que hiciste con el teléfono, ni despierto después de lo primero."
+        "nota": "Cada señal propone una hora y pesa según cuánta duda deja. Nunca te da dormido antes de lo último que hiciste con el teléfono, ni despierto después de lo primero.",
+        "tardasElegida": "Tardas {n} min en dormirte: lo elegiste en Perfil › Avisos."
       }
     },
     "sinCalidadEstimada": "Moss no está segura de esta noche: confírmala o cámbiala y aparece la calidad.",
@@ -1582,7 +1589,7 @@
       "corregida": "Corregida",
       "manual": "Escrita"
     },
-    "estimadaTexto": "Sin reloj, Moss toma la última vez que usaste o moviste el teléfono y le suma lo que tardas en dormirte ({latencia} min); a la mañana, la primera vez menos lo que tardas en agarrarlo ({despertar} min). Cada respuesta le enseña lo tuyo.",
+    "estimadaTexto": "Sin reloj, Moss toma la última vez que usaste o moviste el teléfono y le suma lo que tardas en dormirte ({latencia} min); por la mañana, la primera vez menos lo que tardas en agarrarlo ({despertar} min). Cada respuesta le enseña lo tuyo.",
     "rango": "Entre {a} y {b} al dormirte, y entre {c} y {d} al despertarte.",
     "seguridad": {
       "alta": "Bastante segura",
@@ -1712,7 +1719,7 @@
           "titulo": "Que Moss sepa cuándo te acuestas",
           "puntos": [
             "Conectas el cargador de noche y dejas el teléfono: Moss sabe que te acostaste.",
-            "Lo desconectas a la mañana: sabe que te levantaste.",
+            "Lo desconectas por la mañana: sabe que te levantaste.",
             "Corre solo, con Moss cerrada, y solo guarda la hora."
           ],
           "minuto": "Menos de un minuto, una sola vez.",
@@ -1926,7 +1933,6 @@
     },
     "calidadTexto": "Si algo se traba, la automática baja sola. La baja gasta menos batería.",
     "corte": "El día empieza",
-    "corteHora": "A las {hora}",
     "corteMedianoche": "A la medianoche",
     "corteDeFabrica": "La de fábrica",
     "corteTexto": "Lo que anotas antes de esa hora cuenta para el día anterior: si cenas o te acuestas tarde, sigue siendo tu día.",
@@ -1947,7 +1953,7 @@
       "marcas": {
         "iphone": {
           "nombre": "Solo el iPhone",
-          "texto": "Con el iPhone solo, Moss estima cuándo dormiste con tus pasos, el movimiento y cuándo usas la app, y te pregunta a la mañana para confirmarlo. Con un reloj o un anillo, se mide."
+          "texto": "Con el iPhone solo, Moss estima cuándo dormiste con tus pasos, el movimiento y cuándo usas la app, y te pregunta por la mañana para confirmarlo. Con un reloj o un anillo, se mide."
         },
         "appleWatch": {
           "nombre": "Apple Watch",
@@ -2014,7 +2020,7 @@
         "titulo": "¿Usaste un reloj o un anillo y no llegó nada?",
         "pasos": [
           "En la app del aparato, prende la conexión con Salud (Apple Health) y deja que escriba Sueño.",
-          "Abre esa app a la mañana: muchas solo mandan los datos al abrirlas.",
+          "Abre esa app por la mañana: muchas solo mandan los datos al abrirlas.",
           "En la app Salud, mira en Explorar › Sueño si está esa noche. Si ahí no está, a Moss tampoco le llega: Moss solo lee lo que hay en Salud.",
           "En Ajustes › Privacidad y seguridad › Salud › Moss, deja prendido Sueño."
         ]
@@ -2077,7 +2083,7 @@
       "maximoTexto": "Moss nunca te avisa más veces que esto en un día. Si hay más, quedan primero la hora de dormir y tus hábitos.",
       "horario": "Horario de comidas",
       "horarioTexto": "Te avisa a la hora de cada comida, para comer ordenado. Si ya la anotaste, no suena; si tienes un plan, dice qué toca.",
-      "pesarse": "Pesarme a la mañana",
+      "pesarse": "Pesarme por la mañana",
       "pesarseTexto": "Al rato de despertarte, después de ir al baño y antes de desayunar: la tendencia sale de pesarte siempre igual. Si ya te pesaste, no suena.",
       "pesarseControl": "El día del control",
       "pesarseTodos": "Todos los días",
@@ -2110,6 +2116,10 @@
       "fuentes": "Alimentos y estrellas",
       "ascent": "Tu entrenamiento y tu comida, juntos",
       "peso": "Peso"
+    },
+    "corteALaHora": {
+      "uno": "A la {hora}",
+      "otros": "A las {hora}"
     }
   },
   "fecha": {
@@ -2814,11 +2824,11 @@
         "comida": "Comida"
       },
       "suma": "{s} + {m} + {c} = {t} %",
-      "sueno": "Sueño, hasta 40: la mitad por cuánto dormiste contra lo que necesitas ({necesidad}) y la otra mitad por la calidad de la noche, la de tu reloj o la que anotas a la mañana. Sin la calidad cuenta como regular, así que llega a 30.",
+      "sueno": "Sueño, hasta 40: la mitad por cuánto dormiste contra lo que necesitas ({necesidad}) y la otra mitad por la calidad de la noche, la de tu reloj o la que anotas por la mañana. Sin la calidad cuenta como regular, así que llega a 30.",
       "musculos": "Músculos, hasta 40: 40 menos tu fatiga muscular. La fatiga es lo que les falta a los músculos que entrenas hoy (o, sin sesión, a los de los últimos 3 días) sobre lo más que deja una sesión dura, según tus series en Ascent. Hoy: {f} % de fatiga, {m} de 40.",
       "comida": "Comida, hasta 20: 10 por la proteína de ayer contra tu meta y 10 por haber comido al menos el 80 % de tus calorías.",
       "franjas": "Las franjas: las mismas cuatro para el total y para cada parte. En el total, 85 o más es muy bien; de 70 a 84, bien; de 50 a 69, aceptable, y menos, atención. En la fatiga, al revés: hasta 15 % es baja.",
-      "cuando": "Cuándo: es un número del día, que se mira a la hora de tu sesión o, si no entrenas, a la mañana. Ascent muestra el mismo.",
+      "cuando": "Cuándo: es un número del día, que se mira a la hora de tu sesión o, si no entrenas, por la mañana. Ascent muestra el mismo.",
       "comer": "Lo de comer: alrededor de 1 g de carbohidratos por kilo entre 1 y 4 horas antes de entrenar (ACSM 2016) y de 20 a 40 g de proteína por comida (ISSN 2017). El café, hasta 8 horas antes de dormir (Gardiner 2023), y lo fuerte, que termine 2 horas antes de acostarte (Leota 2025).",
       "orientativo": "Es orientativo: una suma a la vista de cosas medidas por separado, no un diagnóstico. Con tus datos se va a ir ajustando."
     },

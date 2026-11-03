@@ -48,6 +48,18 @@ describe('horasCorridas: lo que falta corre con la última que comiste', () => {
     expect(horasCorridas({ almuerzo: h(13), cena: h(21) }, { desayuno: h(9) })).toEqual({ desayuno: h(9), almuerzo: h(13), cena: h(21) });
     expect(horasCorridas({ desayuno: h(8), almuerzo: h(13), cena: h(21) }, { desayuno: h(9), snack: h(11) })).toEqual({ desayuno: h(9), almuerzo: h(14), cena: h(22), snack: h(11) });
   });
+
+  it('para los avisos, lo que ya llegó a su hora cuando se anotó la que corre no se mueve, y nada sale de 5:00 a 23:45', () => {
+    // El desayuno olvidado, anotado a las 13:20: el almuerzo ya sonó; la cena no va a las 2:20.
+    expect(horasCorridas(HORA_TIPICA, { desayuno: h(13, 20) }, true)).toEqual({ desayuno: h(13, 20), almuerzo: h(13), merienda: h(22, 50), cena: h(23, 45) });
+    expect(horasCorridas(HORA_TIPICA, { desayuno: h(13, 20) })).toEqual({ desayuno: h(13, 20), almuerzo: h(18, 20), merienda: h(22, 50), cena: h(26, 20) });
+    // La merienda de las 17 ya sonó cuando, a las 17:10, se anota el almuerzo.
+    const cuatro = { desayuno: h(8), almuerzo: h(13), merienda: h(17), cena: h(21) };
+    expect(horasCorridas(cuatro, { desayuno: h(8), almuerzo: h(17, 10) }, true)).toEqual({ desayuno: h(8), almuerzo: h(17, 10), merienda: h(17), cena: h(23, 45) });
+    // Lo que todavía no llegó corre como siempre, y nada antes de las 5.
+    expect(horasCorridas(HORA_TIPICA, { desayuno: h(9, 30) }, true)).toEqual(horasCorridas(HORA_TIPICA, { desayuno: h(9, 30) }));
+    expect(horasCorridas({ desayuno: h(10), almuerzo: h(10, 30) }, { desayuno: h(4) }, true)).toEqual({ desayuno: h(4), almuerzo: h(5) });
+  });
 });
 
 describe('lo dicho con el nombre de una comida', () => {

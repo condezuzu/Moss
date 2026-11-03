@@ -171,6 +171,24 @@ describe('lo tocado en el widget', () => {
     expect(repartirToques(toquesDeLaLinea(vieja), almacen.estado()).aplicar.map((x) => x.id)).toEqual(['leer']);
   });
 
+  it('lo tocado de madrugada en la línea de la build 6, que cambiaba de día a la medianoche, es de hoy (D32)', async () => {
+    const { almacen, ir } = await armar();
+    // Leer, hecho en Moss a las 21:00 del miércoles.
+    almacen.marcar('leer', true, 'toque');
+    // La OTA llega a la 1:00 del jueves: con el corte a las 4, todavía es el miércoles.
+    ir('2026-10-22T04:00:00Z');
+    almacen.revisarDia();
+    expect(almacen.estado().hoy).toBe('2026-10-21');
+    // A las 0:30 la build 6 ya mostraba el jueves: lo hecho ahí cuenta para el miércoles.
+    const en = Date.parse('2026-10-22T03:30:00Z');
+    expect(repartirToques([{ id: 'escribir', dia: '2026-10-22', hecho: true, en }], almacen.estado())).toEqual({ aplicar: [{ id: 'escribir', dia: '2026-10-21', hecho: true, en }], esperan: [] });
+    // Apagar en el jueves no apaga el miércoles.
+    expect(repartirToques([{ id: 'leer', dia: '2026-10-22', hecho: false, en }], almacen.estado()).aplicar).toEqual([]);
+    // Apagado el miércoles a las 23:30 y hecho otra vez en el jueves a las 0:30: gana lo último, y sigue hecho.
+    const apagado = { id: 'leer', dia: '2026-10-21', hecho: false, en: en - 3_600_000 };
+    expect(repartirToques([apagado, { id: 'leer', dia: '2026-10-22', hecho: true, en }], almacen.estado()).aplicar).toEqual([]);
+  });
+
   it('un toque más viejo que lo marcado en Moss no lo pisa', async () => {
     const { almacen } = await armar();
     almacen.marcar('meditar', true, 'toque');

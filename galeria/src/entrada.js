@@ -533,7 +533,16 @@ button.ent-dia-nombre { cursor: pointer; }
     const entradaDelPlazo = () => ({ hoy: Datos.HOY, pesoKg: r.peso, pesoMeta: r.pesoMeta, sexo: sexo(), edad: r.edad, gasto: gastoTotal(), entrenaFuerza: levantaPesas() });
     const pctDe = (ritmo) => Math.abs(Metas.RITMOS[r.objetivo][Metas.ritmoPermitido({ edad: r.edad, objetivo: r.objetivo, ritmo })]);
     const plazoDeRitmo = (ritmo) => (cambiaPeso() && r.pesoMeta != null ? Progreso.plazoConRitmo(entradaDelPlazo(), pctDe(ritmo)) : null);
-    const plazoElegido = () => (!cambiaPeso() || r.pesoMeta == null ? null : r.fecha ? Progreso.plazoConFecha(entradaDelPlazo(), r.fecha) : plazoDeRitmo(r.ritmo));
+    // Con una fecha, el ritmo que pide; pero antes de los 18, bajando, la meta no pasa del recomendado
+    // (Cuestionario.pctDelPlan), y el plan llega cuando llega a ese ritmo.
+    function plazoElegido() {
+      if (!cambiaPeso() || r.pesoMeta == null) return null;
+      if (!r.fecha) return plazoDeRitmo(r.ritmo);
+      const e = entradaDelPlazo();
+      const conFecha = Progreso.plazoConFecha(e, r.fecha);
+      const usado = conFecha && Cuestionario.pctDelPlan({ edad: r.edad, objetivo: r.objetivo, sinDeficit: r.sinDeficit, pct: conFecha.pct });
+      return usado && usado < conFecha.pct ? Progreso.plazoConRitmo(e, usado) : conFecha;
+    }
     function respuestas() {
       const plazo = r.fecha ? plazoElegido() : null;
       return Object.assign(persona(), {
@@ -2002,8 +2011,10 @@ button.ent-dia-nombre { cursor: pointer; }
       const chip = el('em');
       const porSemana = el('span');
       viab.append(chip, porSemana);
+      // De una semana a dos años, de a una semana.
+      const DIAS_MAXIMOS = 728;
       const pasoFecha = pasito(r.fecha ? Fechas.diasEntre(Datos.HOY, r.fecha) : 70, {
-        nombre: tx('entrada.cuestionario.meta.elegirFecha'), min: 7, max: 728, paso: 7,
+        nombre: tx('entrada.cuestionario.meta.elegirFecha'), min: 7, max: DIAS_MAXIMOS, paso: 7,
         formato: (d) => fechaDelCamino(Fechas.sumarDias(Datos.HOY, d)), alCambiar: (d) => { r.fecha = Fechas.sumarDias(Datos.HOY, d); refrescar(); },
       });
       fechaCaja.append(pasoFecha, viab);
@@ -2011,7 +2022,8 @@ button.ent-dia-nombre { cursor: pointer; }
       p.append(lista, plFecha.el, pie(seguirBoton()));
       function elegir(k) {
         if (k === 'fecha') {
-          if (!r.fecha) { const x = plazoDeRitmo(r.ritmo); r.fecha = x ? x.fecha : Fechas.sumarDias(Datos.HOY, 70); }
+          // Arranca en la del ritmo elegido, dentro de lo que se puede elegir.
+          if (!r.fecha) { const x = plazoDeRitmo(r.ritmo); r.fecha = Fechas.sumarDias(Datos.HOY, x ? Math.min(DIAS_MAXIMOS, Fechas.diasEntre(Datos.HOY, x.fecha)) : 70); }
         } else {
           r.ritmo = k;
           r.fecha = null;
@@ -2028,7 +2040,9 @@ button.ent-dia-nombre { cursor: pointer; }
           f.fecha.textContent = x && !f.menor ? fechaDelCamino(x.fecha) : '';
         });
         filas.fecha.detalle.textContent = tx('entrada.cuestionario.meta.elegirFechaTexto');
-        const elegida = r.fecha ? Progreso.plazoConFecha(entradaDelPlazo(), r.fecha) : null;
+        // Antes de los 18, una fecha que pide más que el ritmo recomendado pasa a la que llega a ese ritmo.
+        const elegida = r.fecha ? plazoElegido() : null;
+        if (elegida) r.fecha = elegida.fecha;
         filas.fecha.fecha.textContent = r.fecha ? fechaDelCamino(r.fecha) : '';
         if (elegida) {
           chip.className = elegida.viabilidad;

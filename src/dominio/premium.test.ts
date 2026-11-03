@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { acceso, ahorroDelAnual, avisoDePrueba, cuentaDeMossDesde, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, esDeRegalo, planDe, porMes, PRECIOS, PRODUCTOS, tieneAcceso, type Suscripcion } from './premium';
+import { acceso, ahorroDelAnual, avisoDePrueba, avisosHasta, cuentaDeMossDesde, cuentaParaElRegalo, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, esDeRegalo, planDe, porMes, PRECIOS, PRODUCTOS, tieneAcceso, type Suscripcion } from './premium';
 
 const DIA = 86_400_000;
 const AHORA = Date.parse('2026-12-10T12:00:00Z');
@@ -89,6 +89,18 @@ describe('el regalo', () => {
     expect(esDeRegalo(undefined, '2026-12-01')).toBe(false);
     expect(esDeRegalo('cualquier cosa', '2026-12-01')).toBe(false);
   });
+
+  it('sin conexión y con el token vencido la sesión llega vacía: vale la fecha guardada, y solo salir la olvida', () => {
+    const antes = '2026-10-29T10:00:00Z';
+    expect(cuentaParaElRegalo(antes, null, false)).toBe(antes);
+    expect(cuentaParaElRegalo(null, antes, false)).toBe(antes);
+    expect(esDeRegalo(cuentaParaElRegalo(undefined, antes, false), '2026-12-01')).toBe(true);
+    // La de la sesión gana a la guardada: es la que da el servidor.
+    expect(cuentaParaElRegalo('2027-01-05T10:00:00Z', antes, false)).toBe('2027-01-05T10:00:00Z');
+    // Al salir de la cuenta o borrarla, ya no es de regalo; sin nada, tampoco.
+    expect(cuentaParaElRegalo(null, antes, true)).toBeNull();
+    expect(cuentaParaElRegalo(null, null, false)).toBeNull();
+  });
 });
 
 describe('la prueba', () => {
@@ -118,6 +130,20 @@ describe('la prueba', () => {
 
   it('si no se sabe si renueva, avisa igual: es mejor de más', () => {
     expect(avisoDePrueba({ ...prueba, renueva: null }, AHORA)).toBe(AHORA + 3 * DIA);
+  });
+});
+
+describe('hasta cuándo suenan los avisos', () => {
+  it('con la prueba o la suscripción cancelada, hasta que vence: después no hay acceso', () => {
+    expect(avisosHasta({ ...prueba, renueva: false }, 'prueba')).toBe(prueba.vence);
+    expect(avisosHasta({ ...pagando, renueva: false }, 'activa')).toBe(pagando.vence);
+  });
+
+  it('renovándose, sin saber si renueva o de regalo, sin fin', () => {
+    expect(avisosHasta(prueba, 'prueba')).toBeNull();
+    expect(avisosHasta({ ...pagando, renueva: null }, 'activa')).toBeNull();
+    expect(avisosHasta({ ...prueba, renueva: false }, 'regalo')).toBeNull();
+    expect(avisosHasta(null, 'regalo')).toBeNull();
   });
 });
 

@@ -229,8 +229,10 @@ const Comida = (() => {
     const comidasDe = (d) => s.dias[String(d)] || [];
     const diaDe = (c) => Number(Object.keys(s.dias).find((d) => s.dias[d].includes(c)) || 0);
     // Lo comido: hoy y antes, sin lo sugerido que no se confirmó; en un día que no llegó, con lo planificado.
-    const totalDe = (d) => sumar(comidasDe(d).filter((c) => d > 0 || !c.plan).flatMap((c) => c.items));
+    const comidasDelTotal = (d) => comidasDe(d).filter((c) => d > 0 || !c.plan);
+    const totalDe = (d) => sumar(comidasDelTotal(d).flatMap((c) => c.items));
     const totalConPlan = (d) => sumar(comidasDe(d).flatMap((c) => c.items));
+    const kcalPorComida = (d) => comidasDelTotal(d).map((c) => sumar(c.items).kcal);
 
     // Una cifra que cuenta de lo que mostraba hasta la nueva.
     function contar(nodo, hasta, ms) {
@@ -481,7 +483,7 @@ const Comida = (() => {
         ? tx(queda >= 0 ? 'comida.quedanKcal' : 'comida.deMasKcal', { n: numero(Math.abs(Math.round(queda))) })
         : d > 0 ? tx('comida.planificado') : '';
       linea.classList.toggle('de-mas', d === 0 && queda < 0);
-      lunaChica.ir(t.kcal / META.kcal, ms, comidasDe(d).map((c) => sumar(c.items).kcal), { p: t.p / META.p, c: t.c / META.c, g: t.g / META.g });
+      lunaChica.ir(t.kcal / META.kcal, ms, kcalPorComida(d), { p: t.p / META.p, c: t.c / META.c, g: t.g / META.g });
       zona.classList.toggle('planificado', d > 0);
       pintarMacros($z('.cm-macros-dia'), t, d <= 0);
       $z('.cm-seccion-dia').textContent = tx('comida.tuDia');
@@ -637,7 +639,7 @@ const Comida = (() => {
         return { fuente: 'base', ref: String(a.id), nombre: nombreDe(a), por100g: { kcal: a.v[0], proteina: a.v[1], carbohidratos: a.v[2], grasas: a.v[3] },
           porciones: a.p.map((p, i) => ({ nombre: porcionDe(a, i), gramos: p[2] })) };
       };
-      const lista = [...Plan.opcionesTuyas(registros, fechaClave(0)), ...[...Plan.PLANTILLAS, ...Plan.COMBINADAS].map((p) => Plan.opcionDePlantilla(p, resolver, idioma)).filter(Boolean)];
+      const lista = [...Plan.opcionesTuyas(registros, fechaClave(0)), ...[...Plan.PLANTILLAS, ...Plan.combinadas()].map((p) => Plan.opcionDePlantilla(p, resolver, idioma)).filter(Boolean)];
       opcionesGuardadas = { idioma, lista, registros };
       return lista;
     }
@@ -2100,7 +2102,7 @@ const Comida = (() => {
       const deDondeTexto = el('div');
       deDondeTexto.appendChild(el('b', null, tx('comida.deDonde.titulo')));
       const origen = fuente === 'receta' && a.r ? tx('comida.deDonde.receta', { n: a.r[1], g: numero(a.r[0]) })
-        : fuente === 'producto' ? tx(a.o === 'off' ? 'comida.deDonde.off' : 'comida.deDonde.producto')
+        : fuente === 'producto' ? tx(a.o === 'off' ? 'comida.deDonde.off' : a.z ? 'comida.deDonde.aproximado' : a.q ? 'comida.deDonde.cadena' : 'comida.deDonde.producto')
           : fuente === 'propio' ? tx('comida.deDonde.propio') : tx('comida.deDonde.usda');
       deDondeTexto.appendChild(el('p', null, origen));
       const conQue = !a.w ? tx('comida.deDonde.sin') : a.w[1] === 'ingredientes' ? tx('comida.deDonde.ingredientes') : a.w[1] === 'etiqueta' ? tx('comida.deDonde.etiqueta')
@@ -2532,7 +2534,7 @@ const Comida = (() => {
       // mira el control (Control.controlSemanal).
       totalDe,
       // Las kcal de cada comida de un día, en orden: la barra de las kcal se reparte entre ellas.
-      porComida: (d) => comidasDe(d).map((c) => sumar(c.items).kcal),
+      porComida: kcalPorComida,
       kcalPorDia: () => Object.keys(s.dias).map(Number).filter((k) => k < 0 && comidasDe(k).length).sort((a, b) => a - b)
         .map((k) => ({ fecha: fechaClave(k), kcal: totalDe(k).kcal })),
       comidaDeAhora,

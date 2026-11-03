@@ -91,7 +91,8 @@ export function conElCatalogo(resultados: Resultado[], filas: FilaDelCatalogo[],
     ...f.alias.map((a) => textoEnMemoria(f.id, 'es', null, 0, a)),
   ]);
   const nuevos = mejoresPorAlimento(candidatosEnMemoria(corpus, texto, op.idioma), texto, op, () => true).map((c) => comoResultado(porId.get(c.alimento)!, c.texto));
-  return [...nuevos, ...corregidos].slice(0, op.limite ?? 25);
+  // Con una marca nombrada, buscarAlimentos ya trajo el menú entero (limiteDe): no se vuelve a cortar.
+  return [...nuevos, ...corregidos].slice(0, Math.max(op.limite ?? 25, resultados.length));
 }
 
 /** El detalle de un alimento del catálogo, o null si no está (o se retiró: entonces no se muestra). */

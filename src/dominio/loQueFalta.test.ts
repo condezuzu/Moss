@@ -1,7 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { AGUA_META_ML, bajoAlFinal, CALORIAS_BAJAS, loQueFaltaHoy, PROTEINA_BAJA, type DeHoy } from './loQueFalta';
+import { ATRASO_MAXIMO, avisosDelDia } from './avisos';
+import { AGUA_META_ML, bajoAlFinal, CALORIAS_BAJAS, ESPERA_DE_LA_TARDE, horaDeLaTarde, loQueFaltaHoy, PROTEINA_BAJA, type DeHoy } from './loQueFalta';
 import { sumarDias } from './fechas';
+import type { Habito } from './habitos';
 
 const h = (texto: string) => {
   const [hora, minuto] = texto.split(':').map(Number);
@@ -47,6 +49,26 @@ describe('a la tarde', () => {
 
   it('sin lugar en las calorías, no pide comer más', () => {
     expect(loQueFaltaHoy(base({ comido: macros(2150, 50) }))).toEqual([]);
+  });
+
+  it('la hora de la tarde es la misma para todos: dos horas antes de la cena, no antes de las 16:30', () => {
+    expect([horaDeLaTarde(h('21:00')), horaDeLaTarde(h('20:30')), horaDeLaTarde(h('18:00'))]).toEqual([h('19:00'), h('18:30'), h('16:30')]);
+  });
+
+  it('pasada su hora sigue un rato, porque otro aviso pudo correrlo: lo que ya sonó lo saca avisosDelDia', () => {
+    expect(ESPERA_DE_LA_TARDE).toBe(ATRASO_MAXIMO);
+    expect(loQueFaltaHoy(base({ ahora: h('19:05') }))[0].minutos).toBe(h('19:00'));
+    expect(loQueFaltaHoy(base({ ahora: h('19:00') + ESPERA_DE_LA_TARDE }))).toEqual([]);
+    // Cena a las 20, así que a las 18; los pasos avisan a las 18 y lo que falta espera a las 18:20.
+    const pasos: Habito = { id: 'pasos', nombre: 'Pasos', icono: 'star', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'manual' }, orden: 0, desde: '2026-01-01' };
+    const suena = (ahora: string) => avisosDelDia({
+      dia: PAR, ahora: h(ahora), ajustes: { habitos: [{ habito: 'pasos', cuando: { tipo: 'hora', minutos: h('18:00') }, dias: [] }] }, habitos: [pasos], sueno: null,
+      horaDeComida: () => h('20:00'), faltas: loQueFaltaHoy(base({ ahora: h(ahora), horaDeCena: h('20:00') })),
+    }).map((n) => [n.minutos, n.aviso.id]);
+    expect(suena('17:00')).toEqual([[h('18:00'), 'habito:pasos:0'], [h('18:20'), 'falta:proteina']]);
+    // A las 18:05 se reprograma: todavía no sonó, y sigue a las 18:20.
+    expect(suena('18:05')).toEqual([[h('18:20'), 'falta:proteina']]);
+    expect(suena('18:25')).toEqual([]);
   });
 });
 

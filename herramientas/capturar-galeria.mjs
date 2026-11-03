@@ -1837,11 +1837,11 @@ const pasos = {
     await foto('avisos-perfil');
     // El horario de comidas (lo pediste el 26/10) y pesarse, encendidos.
     await pagina.getByRole('button', { name: 'Horario de comidas' }).click();
-    await pagina.getByRole('button', { name: 'Pesarme a la mañana' }).click();
+    await pagina.getByRole('button', { name: 'Pesarme por la mañana' }).click();
     await pagina.waitForTimeout(600);
     await foto('avisos-horario');
     await pagina.getByRole('button', { name: 'Horario de comidas' }).click();
-    await pagina.getByRole('button', { name: 'Pesarme a la mañana' }).click();
+    await pagina.getByRole('button', { name: 'Pesarme por la mañana' }).click();
     // Lo que conviene hacer (3/11, para aprobar), cada uno con su llave, en español y en inglés; y en
     // Perfil › Entrenamiento, lo que tardas en llegar al gimnasio.
     const conviene = ['Comer antes de entrenar', 'Proteína después de entrenar', 'Café', 'Última comida grande', 'Si entrenas tarde', 'Bajar las luces'];

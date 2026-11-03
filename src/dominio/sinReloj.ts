@@ -34,10 +34,10 @@ export type Habitual = { dormirse: number; despertar: number; noches: number };
 /**
  * Lo tuyo, en minutos (D33): cuánto tardás en dormirte después de la última actividad y en tocar el
  * teléfono después de despertarte. `aprendida` es la que aprendió Moss de tus respuestas; `latencia`,
- * la que se usa: la que elegiste en «Tardo en dormirme» o, sin elegir, la aprendida. `noches`, de
- * cuántas respuestas aprendió.
+ * la que se usa: la que elegiste en «Tardo en dormirme» o, sin elegir, la aprendida (`elegida` dice
+ * cuál). `noches`, de cuántas respuestas aprendió.
  */
-export type Personal = { latencia: number; aprendida: number; alDespertar: number; noches: number };
+export type Personal = { latencia: number; aprendida: number; elegida: boolean; alDespertar: number; noches: number };
 /** Por qué la estimación no es segura. */
 export type Motivo = 'sinHistoria' | 'pocosDatos' | 'dejasteAntes' | 'agarrasteTarde' | 'usoDeNoche' | 'distintaDeLoDeSiempre' | 'sinVentana' | 'seguisteUsando';
 /**
@@ -436,7 +436,7 @@ export function aprenderPersonal(propias: readonly NochePropia[], clave: ClaveDi
     return m === null ? previo : Math.round(limitar(previo + tuyo * (m - previo), 0, tope));
   };
   const aprendida = mezcla(latencias, LATENCIA, 240);
-  return { latencia: elegida ?? aprendida, aprendida, alDespertar: mezcla(despertares, AL_DESPERTAR, 120), noches: Math.max(latencias.length, despertares.length) };
+  return { latencia: elegida ?? aprendida, aprendida, elegida: elegida != null, alDespertar: mezcla(despertares, AL_DESPERTAR, 120), noches: Math.max(latencias.length, despertares.length) };
 }
 
 /** Las dos primeras semanas con Moss se pregunta cada mañana (lo pediste el 22/10/2026): así aprende rápido cómo se corre en tu caso. */

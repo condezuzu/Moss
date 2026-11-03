@@ -179,10 +179,10 @@ export function bordeDe(direccion: Direccion, cual: 'viable' | 'exigente', pesoK
 
 /**
  * Lo que conviene saber de un plazo: sin entrenamiento de fuerza, bajando se pierde músculo y
- * subiendo, casi todo es grasa; con ese ritmo la comida quedaría debajo del piso; o es menor de edad
- * y el ritmo no es el viable.
+ * subiendo, casi todo es grasa; con ese ritmo la comida quedaría debajo del piso; el piso deja tan
+ * poco déficit (o nada) que no se llega en dos años; o es menor de edad y el ritmo no es el viable.
  */
-export type AvisoDelPlazo = 'sinFuerzaBajar' | 'sinFuerzaSubir' | 'piso' | 'menor';
+export type AvisoDelPlazo = 'sinFuerzaBajar' | 'sinFuerzaSubir' | 'piso' | 'pisoNoLlega' | 'menor';
 
 export type Plazo = {
   direccion: Direccion;
@@ -198,7 +198,7 @@ export type Plazo = {
   /** Desde cuándo sería viable y desde cuándo exigente: lo que se puede sugerir. */
   fechaViable: ClaveDia;
   fechaExigente: ClaveDia;
-  /** Lo que pide el piso de kcal: con más déficit, quedaría por debajo; null si no llega a eso. */
+  /** Lo que pide el piso de kcal: con más déficit, quedaría por debajo; null si no llega a eso o si con el piso no se llega en dos años. */
   fechaConPiso: ClaveDia | null;
   avisos: AvisoDelPlazo[];
 };
@@ -228,9 +228,13 @@ function armarPlazo(e: EntradaDelPlazo, direccion: Direccion, pct: number, fecha
   const kcal = kcalPorDia(kgPorSemana);
   const cual = viabilidad(direccion, pct, e.pesoKg);
   const conPiso = direccion === 'bajar' ? e.gasto - pisoDe(e.sexo) : Infinity;
-  const fechaConPiso = conPiso <= 0 ? null : direccion === 'bajar' && kcal > conPiso ? fechaConRitmo(e.hoy, faltan, (conPiso * 7) / KCAL_POR_KG) : null;
+  const conElPiso = kcal > conPiso && conPiso > 0 ? fechaConRitmo(e.hoy, faltan, (conPiso * 7) / KCAL_POR_KG) : null;
+  // Con el gasto en el piso o debajo no hay déficit; con muy poco, la fecha queda a años: tampoco es una fecha.
+  const noLlega = kcal > conPiso && (conElPiso === null || diasEntre(e.hoy, conElPiso) > HORIZONTE_DIAS);
+  const fechaConPiso = noLlega ? null : conElPiso;
   const avisos: AvisoDelPlazo[] = [];
-  if (fechaConPiso || (direccion === 'bajar' && conPiso <= 0)) avisos.push('piso');
+  if (noLlega) avisos.push('pisoNoLlega');
+  else if (fechaConPiso) avisos.push('piso');
   if (e.edad < MAYORIA_DE_EDAD && cual !== 'viable') avisos.push('menor');
   if (e.entrenaFuerza !== true) avisos.push(direccion === 'bajar' ? 'sinFuerzaBajar' : 'sinFuerzaSubir');
   return {
@@ -299,11 +303,16 @@ export function planPorEtapas(e: {
   ritmo: number | null;
   /** Lo que sigue después del mantenimiento, si lo dijo en el cuestionario: mantener, ganar músculo o decidirlo después. */
   despues?: 'mantener' | 'musculo' | 'despues' | null;
+  /** El peso de la tendencia cuando se fijó el objetivo: si la meta ya estaba pasada al empezar, no se llegó. */
+  pesoInicial?: number | null;
 }): PlanPorEtapas {
   const { hoy, pesoKg, plazo, ritmo } = e;
   if (e.objetivo === 'mantener' || !plazo) {
     const meta = e.objetivo === 'mantener' || !e.pesoMeta ? pesoKg : e.pesoMeta;
-    const llego = e.objetivo !== 'mantener' && !!e.pesoMeta && Math.abs(e.pesoMeta - pesoKg) <= LLEGASTE_KG;
+    // A medio kilo de la meta o pasándola, como progresoAlObjetivo; la meta del otro lado desde el principio no cuenta.
+    const direccion = e.objetivo === 'bajar' ? -1 : 1;
+    const llego = e.objetivo !== 'mantener' && !!e.pesoMeta && (e.pesoMeta - pesoKg) * direccion <= LLEGASTE_KG
+      && !(e.pesoInicial && (e.pesoMeta - e.pesoInicial) * direccion <= 0);
     const comoVienes: ComoVienes = llego ? 'llegaste' : ritmo === null ? 'faltanDatos' : Math.abs(ritmo) <= ESTABLE_KG_SEMANA ? 'estable' : 'seMueve';
     return { etapas: [{ tipo: 'mantener', desde: hoy, hasta: null, pesoDesde: pesoKg, pesoHasta: meta }], hitos: [], comoVienes, ritmo, ritmoPlan: 0, fechaATuRitmo: null };
   }

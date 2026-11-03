@@ -1,8 +1,30 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { DESPUES_MIN, horaHabitual, recordatoriosDeLaSemana } from './recordatorios';
+import type { Comida } from './comidas';
+import { DESPUES_MIN, horaHabitual, horasDeSiempre, recordatoriosDeLaSemana } from './recordatorios';
+import type { Registro } from './registros';
 
 describe('los recordatorios para anotar', () => {
+  it('la hora de siempre: la mediana de tres semanas, sin hoy, lo planificado ni lo borrado; sin datos, la típica', () => {
+    // A la hora local del teléfono, como el almacén: la cena de las 0:30 del 21 es del 20 (D32).
+    const r = (dia: string, comida: Comida, local: string, extra: Partial<Registro> = {}): Registro => ({
+      fuente: 'rapida', ref: null, nombre: comida, cantidad: null, valores: { kcal: 100, proteina: 1, carbohidratos: 1, grasas: 1 },
+      id: `${comida}-${local}`, dia, comida, momento: new Date(local).toISOString(), planificado: false, actualizado: '', ...extra,
+    });
+    const deSiempre = horasDeSiempre([
+      r('2026-10-20', 'desayuno', '2026-10-20T09:00'), r('2026-10-21', 'desayuno', '2026-10-21T09:30'), r('2026-10-22', 'desayuno', '2026-10-22T10:00'),
+      // Lo de hoy, lo planificado, lo borrado y lo de hace más de tres semanas no cuentan.
+      r('2026-10-23', 'desayuno', '2026-10-23T06:00'), r('2026-10-21', 'desayuno', '2026-10-21T06:00', { planificado: true }),
+      r('2026-10-22', 'desayuno', '2026-10-22T06:00', { borrado: true }), r('2026-10-01', 'desayuno', '2026-10-01T06:00'),
+      r('2026-10-20', 'cena', '2026-10-21T00:30'), r('2026-10-21', 'cena', '2026-10-22T00:20'),
+    ], '2026-10-23');
+    expect(deSiempre('desayuno')).toBe(9 * 60 + 30);
+    // Pasada la medianoche es tarde, no temprano: no pasa de las 23:59.
+    expect(deSiempre('cena')).toBe(24 * 60 - 1);
+    expect(deSiempre('almuerzo')).toBe(13 * 60);
+    expect(deSiempre('snack')).toBe(16 * 60);
+  });
+
   it('la hora habitual es la mediana de cuándo se anotó; sin datos, la típica', () => {
     expect(horaHabitual([], 13 * 60)).toBe(780);
     expect(horaHabitual([12 * 60, 13 * 60 + 30, 14 * 60], 13 * 60)).toBe(810);

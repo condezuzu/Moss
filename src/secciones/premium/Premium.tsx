@@ -16,7 +16,7 @@ import { elAlmacen } from '@/almacen';
 import { claveDelDia } from '@/dominio/fechas';
 import { ahorroDelAnual, DIA_DEL_AVISO, DIAS_DE_PRUEBA, diasDePrueba, planDe, porMes, PRECIOS, tieneAcceso, type Plan } from '@/dominio/premium';
 import type { Tramo } from '@/dominio/sueno';
-import { accesoActual, accesoDe, administrarSuscripcion, comprar, contestoApple, hayCompras, leerPrecios, precioDeRespaldo, restaurar, suscripcionActual, useEstadoDePremium, type EstadoDePremium } from '@/lib/premium';
+import { accesoActual, accesoDe, administrarSuscripcion, comprar, contestoApple, hayCompras, leerPrecios, precioDeRespaldo, restaurar, seSabeElAcceso, suscripcionActual, useEstadoDePremium, type EstadoDePremium } from '@/lib/premium';
 import { abrirPagina } from '@/lib/sitio';
 import { pedirPermisoDeAvisos, programarAvisos } from '@/recordatorios/programar';
 import { lista, plural, t } from '@/textos';
@@ -75,7 +75,9 @@ export function ofrecerPremium(despues: () => void, alOlvidar?: () => void) {
     return;
   }
   contestoApple().then(() => {
-    if (tieneAcceso(accesoActual())) despues();
+    // Si Apple no contestó a tiempo, no aparece la pantalla de pago (spec/suscripcion.md): si después dice que
+    // no hay acceso, aparece entonces.
+    if (!seSabeElAcceso() || tieneAcceso(accesoActual())) despues();
     else cambiar({ abierta: true, vista: 'pago', vez: pedido.vez + 1, despues, alOlvidar });
   }).catch(() => {});
 }

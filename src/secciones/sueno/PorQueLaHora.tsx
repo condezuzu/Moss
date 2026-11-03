@@ -13,7 +13,7 @@ import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
 import { horaDelDia } from '../comida/datos';
-import { ACOMODA, Aparece } from '../tarjetas';
+import { Aparece } from '../tarjetas';
 
 /** Una hora del sueño: los minutos se cuentan desde las 18 del día anterior. */
 const reloj = (minutos: number) => horaDelDia(minutos + 18 * 60);
@@ -75,8 +75,9 @@ export function PorQueLaHora({ clave }: { clave: ClaveDia }) {
   const giro = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierto ? '180deg' : '0deg', { duration: 260 }) }] }), [abierto]);
   if (!comoLlego) return null;
   const { estimacion: e, personal } = comoLlego;
+  // Llega un rato después de abrir (estimarAnoche no se guarda): entra con su fundido.
   return (
-    <Animated.View layout={ACOMODA} style={st.caja}>
+    <Aparece style={st.caja}>
       <Pressable onPress={() => setAbierto((x) => !x)} style={({ pressed }) => [st.abrir, pressed && st.apretado]} accessibilityRole="button" accessibilityState={{ expanded: abierto }}>
         <Text style={st.abrirTexto}>{t('sueno.manana.porque.abrir')}</Text>
         <Animated.View style={giro}>
@@ -88,11 +89,11 @@ export function PorQueLaHora({ clave }: { clave: ClaveDia }) {
           <LineaDeLaNoche e={e} />
           <Borde titulo={t('sueno.manana.porque.dormirse')} hora={e.dormirse} pistas={e.pistas.dormirse} />
           <Borde titulo={t('sueno.manana.porque.despertar')} hora={e.despertar} pistas={e.pistas.despertar} />
-          <Text style={st.nota}>{t(personal.noches > 0 ? 'sueno.manana.porque.tardas' : 'sueno.manana.porque.tardasFabrica', { n: personal.latencia })}</Text>
+          <Text style={st.nota}>{t(personal.elegida ? 'sueno.manana.porque.tardasElegida' : personal.noches > 0 ? 'sueno.manana.porque.tardas' : 'sueno.manana.porque.tardasFabrica', { n: personal.latencia })}</Text>
           <Text style={st.nota}>{t('sueno.manana.porque.nota')}</Text>
         </Aparece>
       )}
-    </Animated.View>
+    </Aparece>
   );
 }
 

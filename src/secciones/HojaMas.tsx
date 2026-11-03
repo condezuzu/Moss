@@ -23,7 +23,7 @@ import { claveDeAlimento, itemsParaRegistrar, recientes, sumarValores, vigentes,
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from './comida/comunes';
-import { cantidadDeTexto, comidaDeAhora, fechaCorta, numero, sistemaDe, useEstado } from './comida/datos';
+import { cantidadDeTexto, comidaDeAhora, fechaCorta, momentoDe, numero, sistemaDe, useEstado } from './comida/datos';
 import { abrirRegistro } from './comida/registro';
 import { Figura } from './Figura';
 import { ENTRA_PANEL, entre, subirOBajar } from './movimiento';
@@ -48,10 +48,15 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   const avisar = (texto: string, deshacer?: () => void) => setAviso((antes) => ({ texto, deshacer, clave: (antes?.clave ?? 0) + 1 }));
 
   // Al cerrarla vuelve al menú, después de bajar: así no salta mientras se va. Si se vuelve a abrir
-  // antes, la vuelta no corre: si no, pisaba la vista con que se abrió (el peso, desde Progreso).
+  // antes, la vuelta no corre: si no, pisaba la vista con que se abrió (el peso, desde Progreso). El
+  // menú se arma de nuevo, sin lo marcado: la próxima vez, lo mismo se vuelve a anotar.
+  const [vez, setVez] = useState(0);
   useEffect(() => {
     if (abierta) return;
-    const espera = setTimeout(() => alCambiarVista('menu'), 420);
+    const espera = setTimeout(() => {
+      alCambiarVista('menu');
+      setVez((v) => v + 1);
+    }, 420);
     return () => clearTimeout(espera);
   }, [abierta, alCambiarVista]);
   const cerrar = alCerrar;
@@ -96,7 +101,7 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
         {/* Cambiar de vista nunca es de golpe: el peso y las medidas entran de costado; el menú, con un fundido. */}
         {vista === 'menu' && (
           <Animated.View key="menu" entering={FadeIn.duration(260)} style={estilos.vista}>
-            <Menu alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />
+            <Menu key={vez} alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />
           </Animated.View>
         )}
         {vista === 'peso' && (
@@ -151,9 +156,11 @@ function Menu({ alCerrar, alIr, avisar }: { alCerrar: () => void; alIr: (v: Vist
     return rangoDeGrasa(e.perfil.sexo, e.perfil.alturaCm, ultimasMedidas(e.medidas.values(), e.hoy));
   }, [e.perfil, e.medidas, e.hoy]);
 
-  // Un toque y queda registrado en la comida de esta hora, con su última cantidad.
+  // Un toque y queda registrado en la comida de esta hora, con su última cantidad. Otro toque en lo ya
+  // marcado no lo anota dos veces: para sacarlo está «Deshacer».
   const registrar = (clave: string, nombre: string, items: Item[]) => {
-    const nuevos = a.registrar(items, { comida });
+    if (hechos.has(clave)) return;
+    const nuevos = a.registrar(items, { comida, momento: momentoDe(e, e.hoy, comida) });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setHechos((h) => new Set(h).add(clave));
     avisar(t('mas.registrado', { que: nombre, donde: t(`comida.aLa.${comida}`) }), () => {

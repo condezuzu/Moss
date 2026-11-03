@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  caloriasSegunElDia, costoDeSesion, frecuenciaPorDia, MET_DE_LA_SESION, MET_EN_REPOSO, metaConEntrenamiento, porQueNoSube, promedioDeSesiones,
+  caloriasSegunElDia, compararSemanas, costoDeSesion, frecuenciaPorDia, MET_DE_LA_SESION, MET_EN_REPOSO, metaConEntrenamiento, porQueNoSube, promedioDeSesiones,
   proteinaDespuesDeEntrenar, calidadParaRecuperar, recuperacion, semanaDeMoss, sentidaSobre100, tamanoDeSesion, TECHO_PROTEINA_POR_KG,
   type DiaConEntrenamiento, type SemanaDeMoss, type Sesion,
 } from './entrenamiento';
@@ -199,6 +199,17 @@ describe('por qué no subís', () => {
   it('si ninguna diferencia llega a su escala, no hay una diferencia clara', () => {
     const r = porQueNoSube(conMarcas, [semanaCon(445, 145, -350), semanaCon(450, 146, -340), semanaCon(452, 148, -360)]);
     expect(r.estado).toBe('sinDiferencia');
+  });
+
+  it('la comparación de las semanas, la misma para las razones de estancamiento: cada diferencia en su escala', () => {
+    const c = compararSemanas(conMarcas, [semanaCon(415, 120, -430), semanaCon(415, 124, -450), semanaCon(415, 122, -440)]);
+    expect(c.estado).toBe('comparado');
+    if (c.estado !== 'comparado') return;
+    expect(c.antes).toEqual({ sueno: 460, proteina: 152, balance: -290 });
+    expect(c.diferencias.sueno).toBeCloseTo(1, 9);
+    expect(c.diferencias.proteina).toBeCloseTo(2, 9);
+    expect(c.diferencias.calorias).toBeCloseTo(150 / 250, 9);
+    expect(compararSemanas(conMarcas.slice(0, 2), conMarcas)).toEqual(porQueNoSube(conMarcas.slice(0, 2), conMarcas));
   });
 
   it('el resumen de una semana: los promedios con lo que haya', () => {

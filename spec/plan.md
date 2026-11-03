@@ -597,7 +597,7 @@ Lo que necesita una build nueva, no una OTA (lo pediste el 28/10/2026):
 
 Lo de la tanda del 29/10, separado por cómo llega:
 - **Por OTA** (el runtime de la build 6), cuando Apple apruebe la 1.0 y con la
-  migración `0010` aplicada antes: el día que empieza a las 4 (D32), el sueño sin
+  migración `0010` y la `0011` aplicadas antes: el día que empieza a las 4 (D32), el sueño sin
   reloj que aprende y la hora de ir a la cama (D33), pesarse a la mañana (D34),
   el piso de 1.500 kcal (D35), los platos con tamaño y las cadenas (D36), el plan
   como sugerencia (D37), los términos dentro de Moss (D38), correr las comidas

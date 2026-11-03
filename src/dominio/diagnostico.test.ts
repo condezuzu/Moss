@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { horasDeSueno } from './avisos';
 import { comoEntrenar, diagnostico, estadoDelSueno, focoDeHoy, MAXIMO_DEL_FOCO, ordenarMarcas, queFalla, TERMINAR_ANTES_DE_DORMIR, type EntradasDelDiagnostico, type EntradasDelFoco, type Foco, type SesionDeHoy } from './diagnostico';
 import { rendimientoEsperado, type CondicionesDeMarca, type EntradasDelRendimiento } from './rendimiento';
 
@@ -228,6 +229,33 @@ describe('hoy, concéntrate en', () => {
     expect(que(f)).toEqual(['comer:antes', 'entrenar:sinFallo', 'dormir']);
     expect(f.map((x) => x.hora)).toEqual([17 * 60 + 30, 18 * 60 + 40, 23 * 60 + 30]);
     expect(f[1]).toMatchObject({ porque: 'sueno' });
+  });
+
+  it('a la cama, a la hora del aviso de dormir: con la deuda y lo que tardas en dormirte', () => {
+    // De 23:30 a 7:30, ocho horas, dos de deuda y 20 minutos para dormirse: el aviso dice 22:40.
+    const { acostarse } = horasDeSueno('2026-11-03', { habitual: () => ({ dormirse: 5 * 60 + 30, despertar: 13 * 60 + 30 }), necesidad: 480, deuda: 120, latencia: 20 });
+    expect(acostarse).toBe(22 * 60 + 40);
+    const f = foco({
+      noche: { dormido: 350, necesidad: 480, siesta: false }, rendimiento: rendimiento(350), deuda: 120, acostarse,
+      recuperado: { banda: 'bien', bandas: { sueno: 'aceptable', fatiga: 'muyBien', comida: 'muyBien' }, loQueMasFalta: 'sueno' },
+    });
+    expect(f.find((x) => x.que === 'dormir')).toEqual({ que: 'dormir', hora: 22 * 60 + 40 });
+  });
+
+  it('en ayunas, lo chico va antes de entrenar aunque el desayuno de siempre sea después', () => {
+    // El ejemplo 2 de spec/entreno.md: 75 minutos a las 7:00, se despierta 6:30 y desayuna 9:00.
+    const f = foco(
+      { sesion: { inicio: 7 * 60, minutos: 75, tipo: 'resistencia', hecha: false }, recuperado: { banda: 'muyBien', bandas: { sueno: 'muyBien', fatiga: 'bien', comida: 'muyBien' }, loQueMasFalta: 'comida' } },
+      { ahora: 6 * 60 + 35, despertar: 6 * 60 + 30, horaDeComida: { desayuno: 9 * 60, almuerzo: 13 * 60, merienda: 17 * 60, cena: 21 * 60 }, anotado: {}, comido: { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 } },
+    );
+    expect(f.map((x) => [x.que, x.hora])).toEqual([['comer', 6 * 60 + 30], ['entrenar', 7 * 60]]);
+    expect(f[0]).toMatchObject({ linea: { clase: 'ayunasLarga', comida: 'desayuno' } });
+    // Despierto desde temprano, unos 45 minutos antes de empezar.
+    const temprano = foco(
+      { sesion: { inicio: 7 * 60, minutos: 75, tipo: 'resistencia', hecha: false } },
+      { ahora: 5 * 60 + 40, despertar: 5 * 60 + 30, horaDeComida: { desayuno: 9 * 60, almuerzo: 13 * 60, merienda: 17 * 60, cena: 21 * 60 }, anotado: {}, comido: { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 } },
+    );
+    expect(temprano.find((x) => x.que === 'comer')!.hora).toBe(6 * 60 + 15);
   });
 
   it('muy recuperado y cerca de una marca: buen día para intentarla, con lo de antes y lo de después', () => {

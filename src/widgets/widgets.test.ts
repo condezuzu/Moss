@@ -191,10 +191,10 @@ describe('el widget Hoy, en la extensión', () => {
     meta: { kcal: 2600, p: 150, c: 325, g: 78 },
     comido: { kcal: 1575, p: 61, c: 210, g: 57 },
     comidas: [
-      { tipo: 'desayuno', nombre: 'Desayuno', anotado: { kcal: 412, p: 12, c: 79, g: 7 }, detalle: 'Café con leche', siempre: vacio, items: '[]', deshacer: '' },
-      { tipo: 'almuerzo', nombre: 'Almuerzo', anotado: { kcal: 792, p: 40, c: 90, g: 30 }, detalle: 'Milanesa', siempre: vacio, items: '[]', deshacer: '' },
-      { tipo: 'merienda', nombre: 'Merienda', anotado: vacio, detalle: '', siempre: vacio, items: '[]', deshacer: '' },
-      { tipo: 'cena', nombre: 'Cena', anotado: vacio, detalle: 'Fideos, Tuco', siempre: { kcal: 633, p: 21, c: 103, g: 14 }, items: '[{"nombre":"Fideos"}]', deshacer: '' },
+      { tipo: 'desayuno', nombre: 'Desayuno', anotado: { kcal: 412, p: 12, c: 79, g: 7 }, detalle: 'Café con leche', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'almuerzo', nombre: 'Almuerzo', anotado: { kcal: 792, p: 40, c: 90, g: 30 }, detalle: 'Milanesa', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'merienda', nombre: 'Merienda', anotado: vacio, detalle: '', siempre: vacio, items: '[]', deshacer: '', confirmado: false },
+      { tipo: 'cena', nombre: 'Cena', anotado: vacio, detalle: 'Fideos, Tuco', siempre: { kcal: 633, p: 21, c: 103, g: 14 }, items: '[{"nombre":"Fideos"}]', deshacer: '', confirmado: false },
     ],
     pendientes: [],
     textos: {
@@ -294,19 +294,22 @@ describe('los widgets Anotar y Agua, en la extensión', () => {
   const agua = jest.requireActual<{ default: Armado }>('./Agua.widget').default;
   const dibujarAgua = enLaExtension(agua);
   const AGUA: PropsAgua = {
-    dia: '2026-10-21', ml: 1250, meta: 2000, vasos: 0, en: 0, url: 'moss://inicio', fondo: '',
+    dia: '2026-10-21', ml: 1250, meta: 2000, pendientes: [], url: 'moss://inicio', fondo: '',
     textos: { titulo: 'Agua', vasos: '{n} de {total} vasos', sumar: 'Sumar un vaso', quitar: 'Quitar un vaso', decimal: ',' },
   };
 
-  it('el agua suma y saca de un toque, sin abrir Moss', () => {
+  it('el agua suma y saca de un toque, sin abrir Moss, y cada toque queda con su hora', () => {
     expect(agua.nombre).toBe('Agua');
     expect(textos(dibujarAgua(AGUA, {}))).toEqual(['Agua', '1,25 L', '5 de 8 vasos']);
+    const antes = Date.now();
     const mas = tocar(dibujarAgua, AGUA, {}, 'agua|2026-10-21|mas');
-    expect(mas.vasos).toBe(1);
-    expect(mas.en).toBeGreaterThan(0);
+    expect(mas.pendientes).toEqual([{ vasos: 1, en: expect.any(Number) }]);
+    expect(mas.pendientes[0].en).toBeGreaterThanOrEqual(antes);
     expect(textos(dibujarAgua(mas, {}))).toEqual(['Agua', '1,5 L', '6 de 8 vasos']);
-    const menos = tocar(dibujarAgua, mas, {}, 'agua|2026-10-21|menos');
-    expect(menos.vasos).toBe(0);
+    const dos = tocar(dibujarAgua, mas, {}, 'agua|2026-10-21|mas');
+    const menos = tocar(dibujarAgua, dos, {}, 'agua|2026-10-21|menos');
+    expect(menos.pendientes.map((t) => t.vasos)).toEqual([1, 1, -1]);
+    expect(textos(dibujarAgua(menos, {}))).toEqual(['Agua', '1,5 L', '6 de 8 vasos']);
   });
 
   it('sin vasos, no hay nada que sacar', () => {

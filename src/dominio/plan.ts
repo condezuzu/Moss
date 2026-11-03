@@ -1,6 +1,6 @@
 // El plan de comidas: Moss sugiere las comidas de un día o de una semana que llegan a la meta, y las
 // rehace cuando la meta cambia. Primero lo que la persona come seguido, después lo que marcó que le
-// gusta y, si falta, las comidas tipo (PLANTILLAS) y al final las combinadas (COMBINADAS), siempre
+// gusta y, si falta, las comidas tipo (PLANTILLAS) y al final las combinadas (combinadas()), siempre
 // dentro de lo que contestó: la dieta, las alergias, cuántas comidas hace y cuánto tiempo tiene para
 // cocinar. Lo que no le gusta deja de sugerirse, pero no se borra, y lo que come y lo que le gusta
 // o no le gusta mueve la suerte de cada alimento (afinidadDe). El plan se guarda como registros
@@ -37,7 +37,7 @@ export type Opcion = {
   nombre: string | null;
   comida: Comida;
   items: Item[];
-  /** Lo tuyo, una comida tipo, o una combinada (COMBINADAS): las combinadas salen cuando lo demás se acabó. */
+  /** Lo tuyo, una comida tipo, o una combinada (combinadas()): las combinadas salen cuando lo demás se acabó. */
   origen: 'tuya' | 'tipo' | 'combinada';
   /** Cuántas veces la comiste en las últimas semanas; una comida tipo, 0. */
   veces: number;
@@ -85,7 +85,7 @@ export type Plantilla = {
   dietas: readonly Dieta[];
   contiene: readonly Alergeno[];
   minutos: number;
-  /** Las de COMBINADAS. */
+  /** Las de combinadas(). */
   combinada?: true;
 };
 
@@ -199,8 +199,8 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Lomo de cerdo', 150], ['Batata al horno', 150], ['Judías verdes', 125], ['Aceite de oliva', 4.5]], dietas: CON_CARNE, contiene: [], minutos: 35 },
   { clave: 'empanada-ensalada', nombre: { es: 'Empanada de carne con ensalada', en: 'Beef empanada with salad' }, comida: 'almuerzo',
     items: [['Empanada de carne', 130], ['Lechuga', 35], ['Tomate', 123], ['Aceite de oliva', 4.5]], dietas: CON_CARNE, contiene: ['gluten', 'huevo'], minutos: 45 },
-  { clave: 'polenta-tuco', nombre: { es: 'Polenta con tuco', en: 'Polenta with meat sauce' }, comida: 'almuerzo',
-    items: [['Polenta con tuco', 460]], dietas: CON_CARNE, contiene: ['leche'], minutos: 30 },
+  { clave: 'polenta-tuco', nombre: { es: 'Polenta con salsa boloñesa', en: 'Polenta with meat sauce' }, comida: 'almuerzo',
+    items: [['Polenta con salsa boloñesa', 460]], dietas: CON_CARNE, contiene: ['leche'], minutos: 30 },
 
   // cenas
   { clave: 'omelet-ensalada', nombre: { es: 'Omelet de queso con ensalada', en: 'Cheese omelet with salad' }, comida: 'cena',
@@ -303,9 +303,15 @@ const mayuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * Las combinadas (lo pediste el 29/10/2026): una proteína, una guarnición y una verdura para el
  * almuerzo y la cena; algo con leche (o de soja), un cereal o tostadas y una fruta para el desayuno
  * y la merienda; y una fruta con algo para el snack. Salen cuando lo demás se acabó, así «Otra» no
- * se acaba nunca. Las que ya son una comida tipo no están.
+ * se acaba nunca. Las que ya son una comida tipo no están. Se arman la primera vez que se piden: son
+ * cientos y solo las usa el plan, así no pesan en cada arranque.
  */
-export const COMBINADAS: readonly Plantilla[] = (() => {
+export function combinadas(): readonly Plantilla[] {
+  return (yaArmadas ??= armarCombinadas());
+}
+let yaArmadas: readonly Plantilla[] | undefined;
+
+function armarCombinadas(): readonly Plantilla[] {
   const tipo = new Set(PLANTILLAS.map((p) => nombresDe(p.items)));
   const lista: Plantilla[] = [];
   const agregar = (comida: Comida, partes: readonly Parte[], nombre: { es: string; en: string }) => {
@@ -334,7 +340,7 @@ export const COMBINADAS: readonly Plantilla[] = (() => {
     agregar('snack', [f, x], { es: `${mayuscula(f.es)} con ${x.es}`, en: `${mayuscula(f.en)} with ${x.en}` });
   }
   return lista;
-})();
+}
 
 // ------------------------------------------------------------ los valores (como en registros.ts)
 

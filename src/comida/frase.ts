@@ -26,10 +26,12 @@ export type Dicho = {
   partes?: Dicho[];
   /**
    * Se dijo un plato, un bol o una porción sin cuánto (D36): «un plato de fideos». `plato` es el tamaño
-   * si se dijo («un plato grande de fideos»).
+   * si se dijo («un plato grande de fideos»), y `recipiente`, si fue un plato u otra cosa: «un bol de
+   * cereales» o «una porción de queso» no son un plato de cereales ni de queso.
    */
   vago?: true;
   plato?: 'chico' | 'mediano' | 'grande';
+  recipiente?: 'plato' | 'otro';
   /** «Un poco de arroz», «mucho puré»: cuánto, sin número. */
   cuanto?: 'poco' | 'mucho';
 };
@@ -186,18 +188,23 @@ function prepararTexto(texto: string): { texto: string; comida: Comida | null; a
 }
 
 const PALABRA_CANTIDAD = new RegExp(`^(?:${NUMERO}|un par de|unos|unas|el|la|los|las|some|the)\\s+`, 'u');
+const TAMANO_DICHO = 'chic[oa]s?|median[oa]s?|grandes?|gran|buen|peque[nñ][oa]s?|abundantes?|llen[oa]s?|colmad[oa]s?|bien\\s+servid[oa]s?|small|medium|large|big|full';
 /**
- * «Un plato de arroz»: el plato, el bol o la porción son una porción de lo que sigue, quizás con su
- * tamaño («un plato grande de fideos»).
+ * El plato, el bol o la porción, con cuántos y su tamaño, antes o después («un plato grande», «a big
+ * plate»). Sin número es uno («plato de fideos»); «½» y «1½» quedan así (el segundo, de Y_MEDIO).
  */
-const RECIPIENTE = new RegExp(`^(${NUMERO}|un\\s+cuarto\\s+de|tres\\s+cuartos\\s+de|un\\s+tercio\\s+de|half\\s+a|a\\s+quarter\\s+of|a\\s+third\\s+of)\\s+(plat(?:os?|itos?|azos?)|bol(?:es)?|bowls?|taz[oó]n(?:es)?|cuencos?|porci[oó]n(?:es)?|raci[oó]n(?:es)?|plates?|servings?)(?:\\s+(?:hond[oa]s?|play[oa]s?))?(?:\\s+(chic[oa]s?|median[oa]s?|grandes?|peque[nñ][oa]s?|abundantes?|llen[oa]s?|colmad[oa]s?|bien\\s+servid[oa]s?|small|medium|large|big|full))?\\s+(?:de|of)\\s+`, 'u');
+const DEL_RECIPIENTE = `(?:(${NUMERO}|\\d*½|\\d+\\/\\d+|un\\s+cuarto\\s+de|tres\\s+cuartos\\s+de|un\\s+tercio\\s+de|half\\s+a|a\\s+quarter\\s+of|a\\s+third\\s+of)\\s+)?(?:(${TAMANO_DICHO})\\s+)?(plat(?:os?|itos?|azos?)|bol(?:es)?|bowls?|taz[oó]n(?:es)?|cuencos?|porci[oó]n(?:es)?|raci[oó]n(?:es)?|plates?|servings?)(\\s+y\\s+medio)?(?:\\s+(?:hond[oa]s?|play[oa]s?))?(?:\\s+(${TAMANO_DICHO}))?`;
+/** «Un plato de arroz»: el plato, el bol o la porción son una porción de lo que sigue. */
+const RECIPIENTE = new RegExp(`^${DEL_RECIPIENTE}\\s+(?:de|of)\\s+`, 'u');
+/** «Fideos, un plato grande»: el plato solo, de lo que se dijo antes. */
+const SOLO_RECIPIENTE = new RegExp(`^${DEL_RECIPIENTE}$`, 'u');
 const TAMANO_DEL_PLATO: Record<string, 'chico' | 'mediano' | 'grande'> = {
-  chic: 'chico', pequ: 'chico', smal: 'chico', medi: 'mediano', gran: 'grande', abun: 'grande', llen: 'grande', colm: 'grande', bien: 'grande', larg: 'grande', big: 'grande', full: 'grande',
+  chic: 'chico', pequ: 'chico', smal: 'chico', medi: 'mediano', gran: 'grande', buen: 'grande', abun: 'grande', llen: 'grande', colm: 'grande', bien: 'grande', larg: 'grande', big: 'grande', full: 'grande',
 };
 /** Lo que no es una palabra de cantidad de las de siempre: «un cuarto de plato». */
 const FRACCION_DEL_PLATO: Record<string, number> = { 'un cuarto de': 0.25, 'tres cuartos de': 0.75, 'un tercio de': 0.33, 'half a': 0.5, 'a quarter of': 0.25, 'a third of': 0.33 };
-/** El tamaño que se dijo después del alimento, como lo lee recetaDeTexto: «un plato de fideos grande». */
-const TAMANO_DE_LA_RECETA: Record<Tamano, 'chico' | 'mediano' | 'grande'> = { pequeno: 'chico', mediano: 'mediano', grande: 'grande' };
+/** El tamaño que se dijo después del alimento, como lo lee recetaDeTexto: «un plato de fideos grande», «milanesa grande». */
+export const TAMANO_DE_LA_RECETA: Record<Tamano, 'chico' | 'mediano' | 'grande'> = { pequeno: 'chico', mediano: 'mediano', grande: 'grande' };
 /** «Un poco de arroz», «mucho puré», «bastante ensalada». */
 const POCO = /^(?:un\s+poco(?:\s+de)?|un\s+poquito(?:\s+de)?|poquito(?:\s+de)?|poco(?:\s+de)?|algo\s+de|a\s+little(?:\s+bit)?(?:\s+of)?|a\s+bit\s+of)\s+/u;
 const MUCHO = /^(?:much[oa]s?(?:\s+de)?|bastante(?:\s+de)?|un\s+mont[oó]n\s+de|a\s+lot\s+of|lots\s+of|plenty\s+of)\s+/u;
@@ -213,11 +220,15 @@ function leerUno(original: string, idioma: Idioma): Dicho {
   if (cuanto) return { ...leerSinRecipiente(original, original.slice(cuanto[0].length), idioma), cantidad: null, cuanto: POCO.test(original) ? 'poco' : 'mucho' };
   const recipiente = RECIPIENTE.exec(original);
   if (!recipiente) return leerSinRecipiente(original, original, idioma);
-  const [todo, numero, cual, dicho] = recipiente;
-  const leido = leerSinRecipiente(original, `${FRACCION_DEL_PLATO[numero] ?? numero} ${original.slice(todo.length)}`, idioma);
+  const [todo, numero = '1', antes, cual, yMedio, despues] = recipiente;
+  const cuantos = FRACCION_DEL_PLATO[numero] ?? numero;
+  // «Plato y medio», sin número: con número, Y_MEDIO ya lo dejó en «1½».
+  const conMedio = yMedio ? (VALOR_DE_PALABRA[cuantos] ?? Number(cuantos)) + 0.5 : cuantos;
+  const leido = leerSinRecipiente(original, `${conMedio} ${original.slice(todo.length)}`, idioma);
   const porLaPalabra = cual.startsWith('platit') ? 'chico' as const : cual.startsWith('plataz') ? 'grande' as const : undefined;
+  const dicho = despues ?? antes;
   const plato = dicho ? TAMANO_DEL_PLATO[dicho.slice(0, 4)] ?? TAMANO_DEL_PLATO[dicho.slice(0, 3)] : porLaPalabra ?? (leido.tamano ? TAMANO_DE_LA_RECETA[leido.tamano] : undefined);
-  return { ...leido, vago: true, ...(plato ? { plato } : {}) };
+  return { ...leido, vago: true, recipiente: /^plat/.test(cual) ? 'plato' : 'otro', ...(plato ? { plato } : {}) };
 }
 
 function leerSinRecipiente(original: string, texto: string, idioma: Idioma): Dicho {
@@ -250,13 +261,24 @@ export function leerFrase(texto: string, idioma: Idioma, esNombre: (buscado: str
   for (const pedazo of pedazos(preparado)) {
     let p = limpiar(pedazo);
     if (!p) continue;
+    // «Fideos, un plato grande»: el plato es de lo de antes, si no tenía cuánto; solo, no es un alimento.
+    if (SOLO_RECIPIENTE.test(p)) {
+      if (anterior && anterior.cantidad === null && !anterior.unidad && !anterior.cuanto) {
+        const conPlato = leerUno(`${p} de ${anterior.texto}`, idioma);
+        dichos[dichos.indexOf(anterior)] = conPlato;
+        anterior = conPlato;
+      }
+      continue;
+    }
     // Lo que se calla es lo de antes: «dos empanadas de carne y una de jamón» (la empanada), «200 g de
-    // arroz y 150 de pollo» o «un vaso de leche y uno de jugo» (la unidad).
+    // arroz y 150 de pollo» o «un vaso de leche y uno de jugo» (la unidad), o «un plato de arroz y uno de
+    // fideos» (el plato).
     const elipsis = new RegExp(`^(${NUMERO})\\s+de\\s+`, 'u').exec(p);
     if (elipsis && anterior) {
       // «uno de jugo» es «un vaso de jugo».
       const cuanto = elipsis[1] === 'uno' ? 'un' : elipsis[1];
-      p = `${cuanto} ${anterior.unidad ?? anterior.buscado.split(' ')[0]} de ${p.slice(elipsis[0].length)}`;
+      const recipiente = `${anterior.recipiente === 'otro' ? 'porción' : 'plato'}${anterior.plato ? ` ${anterior.plato}` : ''}`;
+      p = `${cuanto} ${anterior.vago ? recipiente : anterior.unidad ?? anterior.buscado.split(' ')[0]} de ${p.slice(elipsis[0].length)}`;
     }
     // «Café con leche y medialunas»: lo de después del «y» es otra cosa, salvo que el nombre entero exista.
     let resto: string | null = null;

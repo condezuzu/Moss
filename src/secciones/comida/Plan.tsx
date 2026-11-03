@@ -14,7 +14,7 @@ import { baseDeAlimentos } from '@/comida/base';
 import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { lunesDe, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
-  afinidadDe, ALERGENOS, cambiarPorOtra, COMBINADAS, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra,
+  afinidadDe, ALERGENOS, cambiarPorOtra, combinadas, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra,
   PLANTILLAS, PREFERENCIAS_DE_FABRICA, queFalta, recientesDe, tachadasDe, tachar as tacharEn, type Afinidad, type DiaPlaneado, type Tachadas, type Opcion,
   type Preferencias, type Resolver,
 } from '@/dominio/plan';
@@ -40,7 +40,7 @@ function lasComidasTipo(): Promise<Opcion[]> {
   const op = opcionesDeIdioma();
   const clave = `${op.idioma}-${op.region ?? ''}`;
   if (comidasTipo?.clave !== clave) {
-    const todas = [...PLANTILLAS, ...COMBINADAS];
+    const todas = [...PLANTILLAS, ...combinadas()];
     const nombres = [...new Set(todas.flatMap((p) => p.items.map(([nombre]) => nombre)))];
     const opciones = baseDeAlimentos.curados(nombres, op).then((curados) => {
       const resolver: Resolver = (nombre) => {

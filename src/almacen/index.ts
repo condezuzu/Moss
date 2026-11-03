@@ -12,8 +12,8 @@ import { cuentaDeMossDesde } from '@/dominio/premium';
 import { CON_ASCENT } from '@/lib/banderas';
 import { borrarMiSesion, dejarMiSesion } from '@/lib/llavero';
 import { haySupabase, supabase } from '@/lib/supabase';
-import { alCambiarPremium, arrancarPremium, cuentaDePremium, hayPremium, suscripcionActual } from '@/lib/premium';
-import { programarAvisos } from '@/recordatorios/programar';
+import { accesoActual, alCambiarPremium, arrancarPremium, cuentaDePremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
+import { LO_QUE_MUEVE_LOS_AVISOS, programarAvisos } from '@/recordatorios/programar';
 import { yaNoEsDeMoss } from '@/secciones/perfil/cuentaApple';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
@@ -130,7 +130,8 @@ function sincronizarConLaCuenta(a: Almacen) {
       // Solo la de este teléfono: las sesiones de Ascent con ese usuario siguen.
       if (borradaEnOtroLado) cliente.auth.signOut({ scope: 'local' }).catch(() => {});
       // La fecha viene del servidor con cada sesión y cada renovación, y queda guardada: anda sin conexión.
-      cuentaDePremium(cuentaDeMossDesde(deMoss?.user));
+      // Sin conexión y con el token vencido la sesión llega vacía: solo salir de la cuenta la olvida.
+      cuentaDePremium(cuentaDeMossDesde(deMoss?.user), evento === 'SIGNED_OUT' || borradaEnOtroLado).catch(() => {});
       seguir();
       const ahora = usuarioDeLaSesion;
       if (usuarioDeLaCuenta === ahora) return;
@@ -200,7 +201,33 @@ export async function actualizarSalud(): Promise<void> {
 }
 
 /**
- * Arranca el almacén y dice cuándo está listo. Con la app abierta, cambia de día a la medianoche y
+ * Con la app abierta, el día cambia a la hora elegida (D32), no a la medianoche. El corte guardado llega
+ * después de armar el reloj (al terminar de cargar) y se puede cambiar en Perfil: el reloj se vuelve a armar.
+ * Devuelve cómo pararlo.
+ */
+export function cambiarDeDiaAlCorte(a: Pick<Almacen, 'estado' | 'suscribir' | 'revisarDia'>): () => void {
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  let corte = a.estado().corte;
+  const esperarElCorte = () => {
+    clearTimeout(reloj);
+    corte = a.estado().corte;
+    reloj = setTimeout(() => {
+      a.revisarDia();
+      esperarElCorte();
+    }, msHastaElCorte(new Date(), corte) + 500);
+  };
+  esperarElCorte();
+  const sinOir = a.suscribir(() => {
+    if (a.estado().corte !== corte) esperarElCorte();
+  });
+  return () => {
+    clearTimeout(reloj);
+    sinOir();
+  };
+}
+
+/**
+ * Arranca el almacén y dice cuándo está listo. Con la app abierta, cambia de día a la hora del corte y
  * al volver del fondo, y con sesión se sincroniza con la cuenta.
  */
 export function useAlmacenListo(): boolean {
@@ -215,9 +242,9 @@ export function useAlmacenListo(): boolean {
       .then(actualizarSalud)
       .catch((error) => console.warn('Moss no pudo abrir sus datos', error));
     const cuenta = sincronizarConLaCuenta(a);
-    // Los avisos dependen de la suscripción: se rehacen cuando Apple contesta, y otra vez si cambia (al
-    // comprar, al vencer, al cancelar la prueba), no cada vez que se le pregunta.
-    const dePremium = () => `${hayPremium()} ${suscripcionActual()?.vence} ${suscripcionActual()?.renueva}`;
+    // Los avisos dependen de la suscripción: se rehacen cuando Apple contesta (hasta entonces quedan como
+    // estaban), y otra vez si cambia (al comprar, al vencer, al cancelar la prueba), no cada vez que se le pregunta.
+    const dePremium = () => `${seSabeElAcceso()} ${accesoActual()} ${suscripcionActual()?.vence} ${suscripcionActual()?.renueva}`;
     let premiumAntes = dePremium();
     const sinOirPremium = alCambiarPremium(() => {
       const ahora = dePremium();
@@ -226,15 +253,7 @@ export function useAlmacenListo(): boolean {
       if (a.estado().listo) reprogramar();
     });
     arrancarLoDePremium().catch(() => {});
-    let reloj: ReturnType<typeof setTimeout>;
-    // El día cambia a la hora elegida (D32), no a la medianoche.
-    const esperarElCorte = () => {
-      reloj = setTimeout(() => {
-        a.revisarDia();
-        esperarElCorte();
-      }, msHastaElCorte(new Date(), a.estado().corte) + 500);
-    };
-    esperarElCorte();
+    const sinCorte = cambiarDeDiaAlCorte(a);
     // Los avisos se vuelven a programar cuando cambia algo que los mueve, un rato después.
     let espera: ReturnType<typeof setTimeout> | undefined;
     const programarYa = () => {
@@ -250,9 +269,10 @@ export function useAlmacenListo(): boolean {
     const sinSalir = AppState.addEventListener('change', (estado) => {
       if (estado !== 'active' && espera !== undefined) programarYa();
     });
-    // Lo anotado, lo hecho, los hábitos, las noches, Salud, los avisos mismos, el peso (pesarse no
-    // suena si ya te pesaste), el perfil y las metas (el día del control) y el día que empieza.
-    const queMueve = (e: ReturnType<Almacen['estado']>) => [e.registros, e.recordatorios, e.avisos, e.marcas, e.habitos, e.noches, e.salud, e.pesos, e.perfil, e.metas, e.hoy, e.listo, e.entreno, e.agua, e.numeros] as const;
+    // Lo que usan los avisos (programar.ts): lo anotado, lo hecho, los hábitos, las noches, Salud, los avisos
+    // mismos, el peso (pesarse no suena si ya te pesaste), el perfil y las metas (el día del control), lo que
+    // tardas en dormirte, la hora en que empieza el día y el día mismo. Y que el almacén esté listo.
+    const queMueve = (e: ReturnType<Almacen['estado']>) => [e.listo, ...LO_QUE_MUEVE_LOS_AVISOS.map((k) => e[k])];
     let antes = queMueve(a.estado());
     const sinOir = a.suscribir(() => {
       const ahora = queMueve(a.estado());
@@ -278,7 +298,7 @@ export function useAlmacenListo(): boolean {
       reprogramar();
     });
     return () => {
-      clearTimeout(reloj);
+      sinCorte();
       clearTimeout(espera);
       sinOir();
       sinOirBusquedas();

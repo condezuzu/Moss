@@ -13,6 +13,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { LINEAS } from './lineas-de-marcas.mjs';
+
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 // Hasta tantos productos por marca: lo poco escaneado de una marca enorme es ruido, y la base tiene un tope.
 const TOPE_POR_MARCA = 70;
@@ -29,7 +31,7 @@ const MARCAS = new Map(Object.entries({
   bagley: 'Bagley', terrabusi: 'Terrabusi', arcor: 'Arcor', oreo: 'Oreo', mauri: 'Mauri', famosa: 'Famosa', 'maestro cubano': 'Maestro Cubano', portezuelo: 'Portezuelo', jorgito: 'Jorgito', havanna: 'Havanna', guaymallen: 'Guaymallén',
   tita: 'Tita', rhodesia: 'Rhodesia', milka: 'Milka', 'club social': 'Club Social', pepitos: 'Pepitos', criollitas: 'Criollitas', sonrisas: 'Sonrisas', chocolinas: 'Chocolinas', melba: 'Melba', traviata: 'Traviata', express: 'Express',
   mana: 'Maná', hogarenas: 'Hogareñas', bimbo: 'Bimbo', fargo: 'Fargo', 'los sorchantes': 'Los Sorchantes', bauducco: 'Bauducco', marinela: 'Marinela', cachafaz: 'Cachafaz', 'capitan del espacio': 'Capitán del Espacio',
-  'coca cola': 'Coca-Cola', cocacola: 'Coca-Cola', pepsi: 'Pepsi', pepsico: 'Pepsi', sprite: 'Sprite', fanta: 'Fanta', schweppes: 'Schweppes', '7up': '7 Up', '7 up': '7 Up', 'paso de los toros': 'Paso de los Toros', mirinda: 'Mirinda', salus: 'Salus', matutina: 'Matutina',
+  'coca cola': 'Coca-Cola', cocacola: 'Coca-Cola', coke: 'Coca-Cola', pepsi: 'Pepsi', pepsico: 'Pepsi', sprite: 'Sprite', fanta: 'Fanta', schweppes: 'Schweppes', '7up': '7 Up', '7 up': '7 Up', 'paso de los toros': 'Paso de los Toros', mirinda: 'Mirinda', salus: 'Salus', matutina: 'Matutina',
   villavicencio: 'Villavicencio', ades: 'Ades', 'del valle': 'Del Valle', baggio: 'Baggio', cepita: 'Cepita', citric: 'Citric', powerade: 'Powerade', gatorade: 'Gatorade', 'red bull': 'Red Bull', speed: 'Speed', monster: 'Monster', 'monster energy': 'Monster',
   aquarius: 'Aquarius', levite: 'Levité', tang: 'Tang', clight: 'Clight', bc: 'BC', frutte: 'Frutté', nix: 'Nix', h2oh: 'H2OH',
   'lay s': "Lay's", lays: "Lay's", pringles: 'Pringles', doritos: 'Doritos', cheetos: 'Cheetos', ruffles: 'Ruffles', pehuamar: 'Pehuamar', '3d': '3D', krachitos: 'Krachitos', twistos: 'Twistos', saladix: 'Saladix',
@@ -50,30 +52,25 @@ const NOMBRE_DEL_PAIS = { mexico: 'México', chile: 'Chile', colombia: 'Colombia
 const ERRATAS = { Nesquik: ['nesquick'], "Kellogg's": ['kellog s', 'kellogs'], "Hellmann's": ['helmann s', 'hellman s'] };
 // Lo que un producto de acá trae cargado en inglés o mal escrito, y tiene nombre conocido.
 const ARREGLOS = [[/^coke\b/i, 'Coca-Cola'], [/^coca(\s+(zero|light|sin\b.*))?$/i, 'Coca-Cola$1'], [/milk caramel spread/i, 'Dulce de leche'], [/cream cheese/i, 'Queso crema'], [/\bligth\b/gi, 'light'], [/zukaritas/gi, 'Zucaritas'], [/ultrapaseturizada/gi, 'ultrapasteurizada'], [/\bbudin\b/gi, 'budín']];
-// De las marcas de afuera entra lo que acá se conoce, no cada edición de otro país.
-const LINEAS = {
-  "Kellogg's": /corn ?flakes|zucaritas|froot ?loops|choco ?krispi|special ?k|all.?bran|krave|rice ?krispies|musli|muesli|granola|smacks|choco ?pops|cereal/i,
-  Nesquik: /cacao|polvo|chocolate en|cereal|bebida|listo|leche/i,
-  Quaker: /avena|oat|granola|barra|cereal/i,
-  'Coca-Cola': /coca|sin azucar|zero|light|original|cherry/i,
-  Pepsi: /pepsi|cola|black|twist|zero|max/i,
-};
 // Lo cargado en otro idioma: en una búsqueda en español no se encuentra, y en la lista se ve raro.
 // Más palabras de otros idiomas que se colaban (3/11/2026), y los nombres en otro alfabeto: nadie los busca en español.
-const OTRO_IDIOMA_MAS = /getränk|riegel|packung|erdbeer|zitrone|überraschung|tuinkruiden|bananen|schoko|\bkaffee?\b|maquereau|tartinade|avoine|calendrier|brisket|\bmaple\b|glazed|\bhoney\b/i;
+const OTRO_IDIOMA_MAS = /getränk|riegel|packung|erdbeer|zitrone|überraschung|tuinkruiden|bananen|schoko|\bkaffee?\b|maquereau|tartinade|avoine|calendrier|brisket|\bmaple\b|glazed|\bhoney\b|eiscreme|vanille/i;
 const OTRO_ALFABETO = /[Ѐ-ӿ֐-׿؀-ۿ぀-ヿ一-鿿가-힯]/;
+// Y las letras que el español no usa: «goût», «bâtonnets», «amêndoas».
+const OTRAS_LETRAS = /[âêîôûàèùœæßë]/i;
 const OTRO_IDIOMA = /frutta|cioccolato|\bsecca\b|\blatte\b|céréales|poudre|cacaotée|pépites|noisette|saveur|\blait\b|\baux?\b|\bavec\b|\bsans\b|\bmit\b|\bund\b|\bchocolat\b|fraise|fromage|\bnocciol|\bsenza\b|\bessential\b|\bpowder\b|\bvitamins\b|\bminerals\b|\bflavou?red\b/i;
 // Palabras que van en mayúsculas de verdad.
 const SIGLAS = new Set(['TACC', 'UHT', 'BCAA', 'ZMA', 'BBQ', 'ADES', 'ENA', 'BC']);
 // Lo que no se anota: se toma, pero no es lo que está cargado (la yerba es la hoja, no el mate).
 const NO_SE_ANOTA = ['en:teas', 'en:herbal-teas', 'en:yerba-mate', 'en:infusions', 'en:baby-foods', 'en:baby-milks', 'en:non-food-products'];
 // Lo que no se entiende en una búsqueda en español. Lo que es nombre propio («Corn Flakes», «Special K») queda.
-// «rice» solo con lo que lo acompaña: Rice Krispies es el nombre del producto también acá.
-const EN_INGLES = /\b(milk|cream|cheese|spread|herbal|teas?|juice|water|butter|peanut|flavou?r|flavored|sweetened|unsweetened|whole|wheat|bread|drink|with|strawberry|vanilla|sauce|soup|beans|sugar|salted|roasted|chicken|beef|chocolate bar|flour|all-purpose|coating|seasoned|vegetables|wrappers|rice (?:cake|dessert|paper)|brown rice)\b/i;
+// «rice» solo con lo que lo acompaña: Rice Krispies es el nombre del producto también acá. Se busca sin la
+// marca: «Instant Success» es la marca de una levadura.
+const EN_INGLES = /\b(milk|cream|cheese|spread|herbal|teas?|juice|water|butter|peanut|flavou?r|flavored|sweetened|unsweetened|whole|wheat|bread|drink|with|without|strawberry|vanilla|sauce|soup|beans|sugar|salted|roasted|chicken|beef|chocolate bar|flour|all-purpose|coating|seasoned|vegetables|wrappers|rice (?:cake|dessert|paper)|brown rice|and|the|of|potato(?:es)?|crisps|mayonnaise|great|edition|organic|instant|caffeine|oats|upside)\b/i;
 // Lo que no es una marca, o lo que nadie busca como marca.
 const NO_ES_MARCA = /^(uruguay|argentina|sin marca|unbranded|generico|generica|varios|otro|otros|na|n a|none)$/;
 // Lo de Brasil o Portugal que llega con su nombre: en una búsqueda en español, no ayuda.
-const EN_PORTUGUES = /\b(biscoito|bolacha|leite|suco|refrigerante|acucar|achocolatado|recheado|sabor de|queijo|manteiga|pao)\b|[ãõç]/i;
+const EN_PORTUGUES = /\b(biscoito|bolacha|leite|suco|refrigerante|acucar|achocolatado|recheado|sabor de|queijo|manteiga|pao|baunilha|morango|tropicais|molho|ervilha|branco|salgadinho|rosquinhas|tortinhas|vermelhas|meio amargo|pacote|cacau|caixa|picole|tablete|azeitona|maionese|ovo)\b|[ãõç]/i;
 
 const numero = (x) => {
   const n = Number(String(x ?? '').replace(',', '.'));
@@ -94,14 +91,18 @@ function cierra(v) {
 }
 
 /** La marca que se muestra: la de la lista, si alguna coincide; si no, la primera tal como viene. */
-function marcaDe(campo, nombre) {
+function marcaDe(campo, nombre, deAfuera) {
   const todas = campo.split(',').map((m) => m.replace(/^xx:/, '').trim()).filter(Boolean);
   const conocidas = todas.map((m) => MARCAS.get(llano(m))).filter(Boolean);
   // La más específica gana: «Nestlé, Nesquik» es Nesquik. Y si el nombre la dice, también: «Sprite», de Coca-Cola.
   let especifica = conocidas.find((m) => !DUENAS.has(m)) ?? conocidas[0];
   if (DUENAS.has(especifica)) especifica = DE_LAS_DUENAS.find((m) => patronesDe(m).some((p) => p.test(nombre))) ?? especifica;
-  if (especifica) return { marca: especifica, conocida: true, otras: conocidas.filter((m) => m !== especifica) };
-  const primera = todas[0]?.replace(/\s*\([^)]*\)/g, '').trim();
+  // «Alvalle, PepsiCo», de España: de la dueña es lo que la nombra; lo demás es de su otra marca, que acá no se
+  // conoce. De Uruguay y Argentina no: ahí la dueña es la marca que se busca («Cereal Mix», de Arcor).
+  const otra = deAfuera && DUENAS.has(especifica) && !patronesDe(especifica).some((p) => p.test(nombre))
+    ? todas.find((m) => !MARCAS.has(llano(m)) && !llano(m).includes(llano(especifica))) : undefined;
+  if (especifica && !otra) return { marca: especifica, conocida: true, otras: conocidas.filter((m) => m !== especifica) };
+  const primera = (otra ?? todas[0])?.replace(/\s*\([^)]*\)/g, '').trim();
   if (!primera || NO_ES_MARCA.test(llano(primera)) || primera.length < 2 || primera.length > 28) return null;
   const linda = primera === primera.toUpperCase() || primera === primera.toLowerCase() ? primera.toLowerCase().replace(/(^|[\s-])\p{L}/gu, (x) => x.toUpperCase()) : primera;
   return { marca: linda, conocida: false, otras: [] };
@@ -118,6 +119,8 @@ function patronesDe(marca) {
   if (!patrones.has(marca)) patrones.set(marca, [llano(marca), ...(ERRATAS[marca] ?? [])].map(patronDe));
   return patrones.get(marca);
 }
+/** El nombre llano sin la marca: «Pringles Original» y «Original Pringles» son «original». */
+const sinLaMarca = (nombre, marca) => llano(nombre).replace(new RegExp(`(^| )${llano(marca)}(?= |$)`, 'g'), ' ').split(' ').filter(Boolean).join(' ');
 
 function nombreLimpio(crudo, marca) {
   let s = crudo.replace(/[|·]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -150,7 +153,8 @@ function categoriaDe(tags, nombre) {
   const es = (x) => tags.includes(`en:${x}`);
   if (es('alcoholic-beverages') || es('beers') || es('wines')) return 'alcohol';
   if (es('cheeses')) return 'quesos';
-  if (es('dairies') || es('milks') || es('yogurts') || es('fermented-milk-products')) return 'lacteos';
+  // La manteca no se mide como la leche: es grasa, o se unta.
+  if ((es('dairies') || es('milks') || es('yogurts') || es('fermented-milk-products')) && !es('fats')) return 'lacteos';
   if (es('beverages') || es('sodas') || es('waters') || es('fruit-juices')) return 'bebidas';
   if (es('breakfast-cereals')) return 'cereales';
   if (es('spreads') || es('sweet-spreads') || es('jams')) return 'untables';
@@ -169,7 +173,8 @@ function categoriaDe(tags, nombre) {
   if (/\b(queso|requeson|muzzarella|mozzarella)\b/.test(n)) return 'quesos';
   if (/\b(leche|yogur|yogurt|postre lacteo|flan|crema de leche)\b/.test(n)) return 'lacteos';
   if (/\b(galletitas?|alfajor(es)?|chocolate|budin|obleas?|bizcochos?|helado|caramelos?|bombon(es)?|barra de)\b/.test(n)) return 'dulces';
-  if (/\b(jugo|agua|refresco|gaseosa|bebida)\b/.test(n)) return 'bebidas';
+  // El atún en agua no se toma.
+  if (/\b(jugo|agua|refresco|gaseosa|bebida)\b/.test(n.replace(/\ben agua\b/g, ''))) return 'bebidas';
   if (/\b(papas|papitas|chizitos|palitos|snacks?|mani|nachos)\b/.test(n)) return 'snacks';
   if (/\b(fideos|pasta|ravioles|tallarines|sorrentinos)\b/.test(n)) return 'pastas';
   if (/\b(pan|tostadas|panes|pancitos)\b/.test(n)) return 'panes';
@@ -182,9 +187,17 @@ const PORCION = { bebidas: 200, alcohol: 330, cereales: 30, dulces: 30, untables
 // Menos que esto por 100 g es que se cargó lo de una porción: una galletita no tiene 140 kcal cada 100 g.
 const MINIMO_DE_KCAL = { snacks: 300, cereales: 250, pastas: 200 };
 const SIEMPRE_CALORICO = /\b(galletitas?|alfajor(es)?|obleas?|chocolate en barra|barra de chocolate|budin)\b/;
+// Lo seco tiene más de 40 g de macros cada 100 g: con menos, es lo de una porción (el aceite de 108 kcal, la tostada
+// de 30), aunque las kcal cierren. Salvo lo que tiene agua, aunque la categoría sea de lo seco.
+const SECOS = new Set(['grasas', 'panes', 'snacks', 'cereales', 'dulces']);
+const CON_AGUA = /\b(helados?|postres?|flan|gelatina|mousse|crema|mermelada|compota|almibar|duraznos?|bebida|batido|shake|yogur|yogurt|danette|aderezo|salsa|vinagre|en aceite|en agua)\b/;
 // Lo que puede tener cada cosa por 100 g. Lo de afuera de esto es que se cargó lo de una porción: las kcal
-// igual cierran con los macros, así que solo se ve por el nombre. La primera que coincide manda.
+// igual cierran con los macros, así que solo se ve por el nombre. La primera que coincide manda: lo sólido va
+// antes que el queso o la leche que nombra («palitos sabor queso», «barrita de cereal con leche»).
 const KCAL_POSIBLES = [
+  [/\b(palitos|papas fritas|papitas|chizitos|nachos)\b/, 300, 650],
+  [/\b(barritas?|barra de cereal(es)?)\b/, 250, 600],
+  [/\b(manteca|margarina)\b/, 200, 902],
   [/\byogur|yogurt\b.*\b(descremad|light|0)/, 25, 85],
   [/\byogur|yogurt\b/, 30, 175],
   [/\bdulce de leche\b/, 150, 400],
@@ -196,7 +209,6 @@ const KCAL_POSIBLES = [
   [/\bqueso\b/, 60, 480],
   [/\bhelado\b/, 90, 450],
   [/\b(jugo|gaseosa|refresco|cepita|del valle)\b/, 0, 70],
-  [/\b(palitos|papas fritas|papitas|chizitos|nachos)\b/, 300, 650],
 ];
 const redondo = (n) => Math.round(n * 10) / 10;
 const texto = (n) => String(redondo(n));
@@ -214,11 +226,15 @@ function leer(archivo) {
 }
 const filas = [...leer('marcas.tsv'), ...leer('marcas-region.tsv')];
 
-// Un producto conserva su número al rearmar: lo que ya se anotó apunta a él.
+// Un producto conserva su número al rearmar: lo que ya se anotó apunta a él. Y el número de uno que sale no se le da
+// a otro: el siguiente sale del tope que guarda marcas.txt («Siguiente número»), que nunca baja, y salta los números
+// de los otros archivos (cadenas.txt usa desde el 6000).
 const numeros = new Map();
 let siguiente = PRIMER_NUMERO;
 if (existsSync(join(raiz, 'alimentos/marcas.txt'))) {
-  for (const linea of readFileSync(join(raiz, 'alimentos/marcas.txt'), 'utf8').split(/\r?\n/)) {
+  const anterior = readFileSync(join(raiz, 'alimentos/marcas.txt'), 'utf8');
+  siguiente = Math.max(siguiente, Number(anterior.match(/^\/\/ Siguiente número: (\d+)/m)?.[1] ?? 0));
+  for (const linea of anterior.split(/\r?\n/)) {
     const n = linea.match(/producto#(\d+)/);
     const codigos = linea.match(/ean=([\d,]+)/);
     if (!n || !codigos) continue;
@@ -227,13 +243,17 @@ if (existsSync(join(raiz, 'alimentos/marcas.txt'))) {
   }
 }
 
-// Lo que ya está curado a mano no se repite.
-const yaEstan = { codigos: new Set(), nombres: new Set() };
+// Lo que ya está curado a mano no se repite, tenga la marca donde la tenga.
+const yaEstan = { codigos: new Set(), nombres: new Set(), sinMarca: new Set(), numeros: new Set() };
 for (const archivo of readdirSync(join(raiz, 'alimentos'))) {
   if (!archivo.endsWith('.txt') || archivo === 'marcas.txt' || archivo === 'verificacion.txt') continue;
   for (const linea of readFileSync(join(raiz, 'alimentos', archivo), 'utf8').split(/\r?\n/)) {
     if (!linea.trim() || linea.startsWith('//') || linea.startsWith('#')) continue;
+    const n = linea.match(/\bproducto#(\d+)/);
+    if (n) yaEstan.numeros.add(Number(n[1]));
     yaEstan.nombres.add(llano(linea.split('|')[0]));
+    const marca = linea.match(/\bmarca=([^·|]+)/)?.[1].trim();
+    if (marca) yaEstan.sinMarca.add(`${llano(marca)}|${sinLaMarca(linea.split('|')[0], marca)}`);
     const m = linea.match(/ean=([\d,]+)/);
     if (m) m[1].split(',').forEach((c) => yaEstan.codigos.add(c));
   }
@@ -245,25 +265,26 @@ const fuera = (m) => { motivos.set(m, (motivos.get(m) ?? 0) + 1); return null; }
 function producto(f) {
   if (!codigoValido(f.code)) return fuera('código no válido');
   if (yaEstan.codigos.has(f.code)) return fuera('ya está curado');
-  const m = marcaDe(f.brands, f.product_name);
-  if (!m) return fuera('sin marca');
   // Con un código de GS1 Uruguay (773) es de acá, aunque Open Food Facts le ponga otro país.
   const enUruguay = f.countries_tags.includes('en:uruguay') || /^773\d{10}$/.test(f.code);
   const enArgentina = f.countries_tags.includes('en:argentina');
+  const m = marcaDe(f.brands, f.product_name, !enUruguay && !enArgentina);
+  if (!m) return fuera('sin marca');
   if (!enUruguay && !m.conocida) return fuera('marca de Argentina que no se vende acá');
   if (!enUruguay && !enArgentina && !DE_AFUERA.has(m.marca)) return fuera('marca de otro país que no entra');
   if (!f.product_name || EN_PORTUGUES.test(llano(f.product_name)) || /[ãõç]/i.test(f.product_name)) return fuera('sin nombre o en portugués');
   const tags = f.categories_tags.split(',');
   if (NO_SE_ANOTA.some((t) => tags.includes(t))) return fuera('no se anota');
-  if (OTRO_IDIOMA.test(f.product_name) || OTRO_IDIOMA_MAS.test(f.product_name) || OTRO_ALFABETO.test(f.product_name)) return fuera('en otro idioma');
+  if (OTRO_IDIOMA.test(f.product_name) || OTRO_IDIOMA_MAS.test(f.product_name) || OTRO_ALFABETO.test(f.product_name) || OTRAS_LETRAS.test(f.product_name)) return fuera('en otro idioma');
   // Moss es para todo el mundo: nada se presenta como de un país (lo comprueba verificar-alimentos.mjs).
   const es = nombreLimpio(f.product_name, m.marca);
   if (!es) return fuera('nombre que no sirve');
-  if (EN_INGLES.test(llano(es))) return fuera('en inglés');
+  if (EN_INGLES.test(sinLaMarca(es, m.marca))) return fuera('en inglés');
   // Moss es para todo el mundo: nada se presenta como de un país (lo comprueba verificar-alimentos.mjs).
   if (/urugua|oriental|charrúa/i.test(es)) return fuera('nombra un país');
-  if (!enUruguay && !enArgentina && LINEAS[m.marca] && !LINEAS[m.marca].test(llano(es))) return fuera('de otro país y no es de las líneas conocidas');
-  if (yaEstan.nombres.has(llano(es))) return fuera('ya está curado');
+  const linea = sinLaMarca(es, m.marca);
+  if (!enUruguay && !enArgentina && LINEAS[m.marca] && linea && !LINEAS[m.marca].test(linea)) return fuera('de otro país y no es de las líneas conocidas');
+  if (yaEstan.nombres.has(llano(es)) || yaEstan.sinMarca.has(`${llano(m.marca)}|${linea}`)) return fuera('ya está curado');
   const kcal = numero(f['energy-kcal_100g']) ?? (numero(f.energy_100g) !== null ? numero(f.energy_100g) / 4.184 : null);
   const v = { kcal, proteina: numero(f.proteins_100g), carbohidratos: numero(f.carbohydrates_100g), grasas: numero(f.fat_100g), fibra: numero(f.fiber_100g), azucares: numero(f.sugars_100g), saturadas: numero(f['saturated-fat_100g']), sodio: numero(f.sodium_100g), alcohol: numero(f.alcohol_100g) };
   if (v.kcal === null || v.proteina === null || v.carbohidratos === null || v.grasas === null) return fuera('sin los cuatro valores');
@@ -276,6 +297,7 @@ function producto(f) {
   const categoria = categoriaDe(tags, es);
   if (/\bcorn ?flakes\b/.test(llano(es)) && v.grasas > 5) return fuera('valores de otro producto');
   const posible = KCAL_POSIBLES.find(([p]) => p.test(llano(es)));
+  if (SECOS.has(categoria) && v.proteina + v.carbohidratos + v.grasas + (v.fibra ?? 0) < 40 && !CON_AGUA.test(llano(es))) return fuera('valores por porción, no por 100 g');
   if (v.kcal < (MINIMO_DE_KCAL[categoria] ?? 0) || (SIEMPRE_CALORICO.test(llano(es)) && v.kcal < 250) || (posible && (v.kcal < posible[1] || v.kcal > posible[2]))) return fuera('valores por porción, no por 100 g');
   const envase = (f.quantity || '').toLowerCase();
   // El cacao en polvo y el café instantáneo son bebidas, pero se miden en gramos: lo líquido tiene pocas kcal.
@@ -283,15 +305,21 @@ function producto(f) {
   const esCafe = esPolvo && tags.some((t) => t === 'en:coffees' || t === 'en:instant-coffees');
   const pareceLiquido = /\b(ml|cc|cl|l|lt|lts|litros?)\b/.test(envase) || categoria === 'bebidas' || categoria === 'alcohol' || /\bml\b/.test((f.serving_size || '').toLowerCase());
   const esLiquido = pareceLiquido && !esPolvo && v.kcal <= (categoria === 'alcohol' ? 400 : 120);
+  // El jugo en polvo con 10 kcal trae los valores de lo preparado, no los del polvo que se compra.
+  if (esLiquido && /\ben polvo\b/.test(llano(es))) return fuera('valores de lo preparado, no del polvo');
   const seBebe = esLiquido && (categoria === 'bebidas' || categoria === 'alcohol' || (/\b(leche|bebible|batido|beber)\b/.test(llano(es)) && !/\b(dulce de leche|en polvo)\b/.test(llano(es))));
   const unidad = esLiquido ? 'ml' : 'g';
   const deFabrica = esCafe ? 2 : esPolvo ? 15 : seBebe && categoria !== 'alcohol' ? 200 : PORCION[categoria];
   const cargada = numero(f.serving_quantity);
-  // Muchos cargan como porción los 100 g de la tabla: lo que se aleja mucho de lo normal no es una porción.
-  const deUna = cargada && cargada !== 100 && cargada >= deFabrica * 0.3 && cargada <= deFabrica * 3 ? cargada : deFabrica;
-  const tamano = numero(f.product_quantity);
-  // Lo que viene de a uno (un alfajor, una lata) se anota de a uno.
-  const deAUno = tamano && ((seBebe && tamano <= 600) || ((categoria === 'dulces' || categoria === 'snacks') && tamano <= 80));
+  // Lo que se toma no viene en menos de 100 ml: eso es el sobre del polvo, o se cargó mal («2,25 ml»).
+  const tamano = seBebe && numero(f.product_quantity) < 100 ? null : numero(f.product_quantity);
+  // La de la etiqueta, aunque sea chica (la leche en polvo, el azúcar en palillos); en lo que se toma, no: los gramos
+  // del sobre no son lo que se toma. Muchos cargan como porción los 100 g de la tabla, y lo que pasa del envase o de
+  // tres veces lo normal no es una porción. La de fábrica tampoco pasa del envase.
+  const minimo = esLiquido ? deFabrica * 0.3 : 1;
+  const deUna = cargada && cargada !== 100 && cargada >= minimo && cargada <= Math.min(tamano || Infinity, deFabrica * 3) ? cargada : Math.min(deFabrica, tamano || Infinity);
+  // Lo que viene de a uno (un alfajor, una lata) se anota de a uno, salvo que la etiqueta diga una porción más chica.
+  const deAUno = tamano && ((seBebe && tamano <= 600) || ((categoria === 'dulces' || categoria === 'snacks') && tamano <= 80 && deUna >= tamano * 0.7));
   const porciones = [];
   if (deAUno) porciones.push(seBebe ? `1 envase (${texto(tamano)} ml) / 1 package (${texto(tamano)} ml)=${texto(tamano)}` : `1 unidad (${texto(tamano)} g) / 1 piece (${texto(tamano)} g)=${texto(tamano)}`);
   if (!deAUno || deUna <= tamano * 0.7) porciones.push(seBebe ? `1 vaso (${texto(deUna)} ml) / 1 glass (${texto(deUna)} ml)=${texto(deUna)}` : `1 porción (${texto(deUna)} ${unidad}) / 1 serving (${texto(deUna)} ${unidad})=${texto(deUna)}`);
@@ -307,21 +335,27 @@ const nombreEnIngles = (es) => es;
 
 const buenos = filas.map(producto).filter(Boolean);
 
-// El mismo producto en varios tamaños va junto, si los valores se parecen; si no, queda el más escaneado.
+// El mismo producto en varios tamaños va junto, si los valores se parecen; si no, queda el más escaneado. Es el
+// mismo si se llama igual o si, sin la marca, se llama igual: «Pringles Original» y «Original Pringles».
 const porNombre = new Map();
 for (const p of buenos.sort((a, b) => a.origen - b.origen || b.escaneos - a.escaneos)) {
-  const clave = llano(p.es);
-  const antes = porNombre.get(clave);
-  if (!antes) porNombre.set(clave, { ...p, codigos: [p.codigo] });
-  else if (Math.abs(antes.v.kcal - p.v.kcal) <= Math.max(15, 0.1 * antes.v.kcal)) {
+  const claves = [llano(p.es), `${llano(p.marca)}|${sinLaMarca(p.es, p.marca)}`];
+  const antes = claves.map((c) => porNombre.get(c)).find(Boolean);
+  if (!antes) {
+    const nuevo = { ...p, porciones: [...p.porciones], codigos: [p.codigo] };
+    for (const c of claves) porNombre.set(c, nuevo);
+  } else if (Math.abs(antes.v.kcal - p.v.kcal) <= Math.max(15, 0.1 * antes.v.kcal)) {
+    for (const c of claves) if (!porNombre.has(c)) porNombre.set(c, antes);
     antes.codigos.push(p.codigo);
     antes.escaneos += p.escaneos;
-    if (antes.porciones.length === 1 && p.porciones.length > 1) antes.porciones.push(p.porciones[1]);
+    // El envase o la unidad de otro tamaño, si no hay ya una porción que pese lo mismo.
+    const envase = p.porciones.find((x) => /^1 (envase|unidad) /.test(x) && !antes.porciones.some((y) => y.split('=').pop() === x.split('=').pop()));
+    if (antes.porciones.length === 1 && envase) antes.porciones.push(envase);
   } else fuera('otro producto con el mismo nombre');
 }
 
 // Por marca, lo más escaneado primero, hasta el tope. Lo de afuera va después, entra poco y solo si falta.
-const porMarca = Map.groupBy([...porNombre.values()], (p) => p.marca);
+const porMarca = Map.groupBy([...new Set(porNombre.values())], (p) => p.marca);
 const elegidos = [...porMarca.entries()]
   .flatMap(([, lista]) => {
     const orden = lista.sort((a, b) => b.escaneos - a.escaneos);
@@ -330,6 +364,17 @@ const elegidos = [...porMarca.entries()]
     return [...deAca, ...deAfuera].map((p, i) => ({ ...p, orden: i }));
   })
   .sort((a, b) => a.categoria.localeCompare(b.categoria) || a.marca.localeCompare(b.marca) || a.orden - b.orden);
+
+// El número de antes, si alguno de sus códigos lo tenía y no se lo dio a otro; si no, uno nuevo.
+const dados = new Set();
+for (const p of elegidos) {
+  p.numero = p.codigos.map((c) => numeros.get(c)).find((x) => x !== undefined && !dados.has(x));
+  if (p.numero === undefined) {
+    while (yaEstan.numeros.has(siguiente)) siguiente++;
+    p.numero = siguiente++;
+  }
+  dados.add(p.numero);
+}
 
 // ---------------------------------------------------------------- escribir
 const lineas = [
@@ -340,6 +385,7 @@ const lineas = [
   '// «aproximado»: es la etiqueta de allá. «orden» es el lugar en que sale al buscar la marca.',
   '// Lo que se toma va por 100 ml, como dicen las etiquetas, con densidad 1: la diferencia con la real es de menos de 5 %.',
   `// Armado el ${new Date().toISOString().slice(0, 10)}.`,
+  `// Siguiente número: ${siguiente}. No baja nunca: el número de un producto que sale no se le da a otro.`,
 ];
 let categoria = null;
 for (const p of elegidos) {
@@ -347,13 +393,12 @@ for (const p of elegidos) {
     categoria = p.categoria;
     lineas.push('', `# ${categoria}`);
   }
-  const n = p.codigos.map((c) => numeros.get(c)).find((x) => x !== undefined) ?? siguiente++;
   const detalles = [`marca=${p.marca}`, `orden=${p.orden}`, `ean=${p.codigos.join(',')}`, 'off'];
   if (p.deAfuera) detalles.push('aproximado', `fuente=Open Food Facts, etiqueta de ${p.deAfuera}`);
   if (p.liquido) detalles.push('densidad=1');
   for (const k of ['fibra', 'azucares', 'saturadas', 'sodio', 'alcohol']) if (p.v[k] !== null && p.v[k] !== undefined) detalles.push(`${k}=${texto(p.v[k])}`);
   const alias = p.otras.map((o) => (llano(p.es).includes(llano(o)) ? null : `${p.es} ${o}`)).filter(Boolean).join(' · ');
-  lineas.push(`${p.es} | ${p.en} | producto#${n} ${texto(p.v.kcal)} ${texto(p.v.proteina)} ${texto(p.v.carbohidratos)} ${texto(p.v.grasas)} | ${p.porciones.join(' · ')} | ${alias} | ${detalles.join(' · ')}`);
+  lineas.push(`${p.es} | ${p.en} | producto#${p.numero} ${texto(p.v.kcal)} ${texto(p.v.proteina)} ${texto(p.v.carbohidratos)} ${texto(p.v.grasas)} | ${p.porciones.join(' · ')} | ${alias} | ${detalles.join(' · ')}`);
 }
 writeFileSync(join(raiz, 'alimentos/marcas.txt'), `${lineas.join('\n')}\n`);
 // ODbL: quien usa una base derivada tiene que poder obtenerla. Va con el sitio (spec/fuentes.md).

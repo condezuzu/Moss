@@ -30,6 +30,15 @@ describe('para hoy', () => {
     expect(paraHoy(dia({ comido: { kcal: 500, proteina: 40, carbohidratos: 20, grasas: 15 } }))).toEqual([]);
   });
 
+  it('con la meta baja en carbohidratos (keto o baja en carbohidratos), no pide carbohidratos', () => {
+    const keto = { kcal: 2400, proteina: 119, carbohidratos: 30, grasas: 200 };
+    expect(paraHoy(dia({ ahora: 15 * 60, meta: keto, comido: { kcal: 1000, proteina: 70, carbohidratos: 8, grasas: 78 } }))).toEqual([]);
+    const bajaEnCarbohidratos = { kcal: 2400, proteina: 119, carbohidratos: 150, grasas: 147 };
+    expect(paraHoy(dia({ ahora: 15 * 60, meta: bajaEnCarbohidratos, comido: { kcal: 1000, proteina: 70, carbohidratos: 40, grasas: 60 } }))).toEqual([]);
+    // Con la equilibrada, lo mismo comido sí lo dice.
+    expect(paraHoy(dia({ ahora: 15 * 60, comido: { kcal: 1000, proteina: 90, carbohidratos: 80, grasas: 30 } })).map((x) => x.tipo)).toEqual(['pocosCarbohidratos']);
+  });
+
   it('muchas grasas, si pasan por mucho a los otros dos', () => {
     const grasoso = dia({ comido: { kcal: 1300, proteina: 60, carbohidratos: 120, grasas: 60 } });
     expect(paraHoy(grasoso)).toEqual([{ tipo: 'muchaGrasa', proxima: 'merienda' }]);

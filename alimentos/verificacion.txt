@@ -1257,7 +1257,7 @@ Pizza de queso | ciqual:25404 Pizza au fromage ou pizza margherita, préemballé
 Pizza napolitana | ciqual:25404 Pizza au fromage ou pizza margherita, préemballée | 224 8.6 32.6 7.4 | 16 % C | revisado: otra receta, con rodajas de tomate (16 % C) | 2026-10-23
 Pizza sin queso | cofid:15-255 Pizza, tomato, homemade | 193 3.3 22.1 10.6 | 46 % C | revisado: la británica lleva más aceite y menos masa (46 % C) | 2026-10-23
 Polenta con queso | sin par | - | - | sin par | 2026-10-23
-Polenta con tuco | sin par | - | - | sin par | 2026-10-22
+Polenta con salsa boloñesa | sin par | - | - | sin par | 2026-10-22
 Pollo a la naranja | cofid:19-324 Sweet and sour chicken, takeaway | 194 7.6 - 10 | 34 % P | revisado: otra receta: el agridulce británico lleva menos pollo (34 % P) | 2026-10-23
 Pollo a la parmesana | sin par | - | - | sin par | 2026-10-23
 Pollo agridulce | cofid:19-324 Sweet and sour chicken, takeaway | 194 7.6 - 10 | 22 % kcal | revisado: otra receta (22 % kcal) | 2026-10-23

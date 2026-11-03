@@ -106,11 +106,28 @@ function vibrar(e: Evento) {
 
 type Retomar = { i: number; r: Respuestas; deSalud: DeSalud };
 
-function avanceInicial(total: number): Retomar {
+/**
+ * Dónde sigue lo guardado en el paso `id`: la lista cambia con la suscripción (y sin cuenta), así que el
+ * mismo número puede ser otra pantalla. Si esta versión no tiene ese paso, el anterior más cercano que sí.
+ */
+function retomarEn(id: string, pasos: readonly { id: Paso }[]): number {
+  const aca = pasos.findIndex((p) => p.id === id);
+  if (aca >= 0) return aca;
+  // La lista con suscripción tiene todos los pasos.
+  for (let k = PASOS_CON_PAGO.findIndex((p) => p.id === id) - 1; k >= 0; k--) {
+    const anterior = pasos.findIndex((p) => p.id === PASOS_CON_PAGO[k].id);
+    if (anterior >= 0) return anterior;
+  }
+  return 0;
+}
+
+function avanceInicial(pasos: readonly { id: Paso }[]): Retomar {
   const e = elAlmacen().estado();
-  const a = e.avanceDeEntrada as { i?: unknown; r?: Partial<Respuestas>; deSalud?: unknown } | null;
-  if (a && typeof a.i === 'number' && a.i >= 0 && a.i < total && a.r) {
-    return { i: a.i, r: { ...DE_FABRICA, ...a.r }, deSalud: new Set(Array.isArray(a.deSalud) ? a.deSalud : []) as DeSalud };
+  const a = e.avanceDeEntrada as { i?: unknown; id?: unknown; r?: Partial<Respuestas>; deSalud?: unknown } | null;
+  // Lo guardado antes, sin el id del paso, sigue con el número.
+  const i = typeof a?.id === 'string' ? retomarEn(a.id, pasos) : typeof a?.i === 'number' && a.i >= 0 && a.i < pasos.length ? a.i : null;
+  if (a && i !== null && a.r) {
+    return { i, r: { ...DE_FABRICA, ...a.r }, deSalud: new Set(Array.isArray(a.deSalud) ? a.deSalud : []) as DeSalud };
   }
   const p = e.perfil;
   const peso = e.pesos[e.pesos.length - 1]?.kg;
@@ -126,7 +143,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const reducido = useReducedMotion();
   const [pasos] = useState(pasosDeEstaVersion);
   // Se retoma donde quedó; si la cuenta ya tenía un perfil, sus respuestas vienen llenas.
-  const [inicio] = useState(() => avanceInicial(pasos.length));
+  const [inicio] = useState(() => avanceInicial(pasos));
   const [i, setI] = useState(inicio.i);
   const [r, setR] = useState<Respuestas>(inicio.r);
   const [deSalud, setDeSalud] = useState<DeSalud>(inicio.deSalud);
@@ -172,8 +189,8 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const saliendo = terminando || conLaCuenta;
 
   useEffect(() => {
-    if (!saliendo) elAlmacen().ponerAvanceDeEntrada({ i, r, deSalud: [...deSalud] });
-  }, [i, r, deSalud, saliendo]);
+    if (!saliendo) elAlmacen().ponerAvanceDeEntrada({ i, id: paso.id, r, deSalud: [...deSalud] });
+  }, [i, paso.id, r, deSalud, saliendo]);
 
   useEffect(() => {
     camara.set(paso.camara);

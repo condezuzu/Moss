@@ -457,6 +457,8 @@
     medir: () => mas.ir('medidas'),
     ir: (i) => pestanas.ir(i),
     invitacionDeAscent: () => (ascent ? ascent.invitacion() : null),
+    // «Sin déficit» es de Perfil, que se arma después.
+    sinDeficit: () => !!(perfilSec && perfilSec.sinDeficit),
   }));
   mas = Mas.crear(tel, Object.assign({}, opcionesDeSeccion, {
     comida,
@@ -837,7 +839,8 @@
 
     // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni las
     // listas ni el cielo se enteran.
-    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta || escena.viajando || ascent.ocupada);
+    // Con los avisos de la pantalla bloqueada arriba, tampoco: el gesto se quedaría con el deslizador de la hora.
+    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta || escena.viajando || ascent.ocupada || avisosBloqueo.abierta);
     tel.addEventListener('pointerdown', (ev) => {
       gesto = null;
       if (bloqueado() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
@@ -1143,8 +1146,8 @@
   segmento('s-vinculo', (v) => vincular(v === 'si'));
   segmento('s-aparato', (v) => ponerAparato(v === 'iphone'));
   segmento('s-noches', (v) => { cerrarHojas(); pestanas.ir(3); sueno.ponerEstado(v); });
-  // Prenderla o apagarla cambia Perfil y también Progreso: la entrada y el borde del planeta.
-  const ponerAscentPrendida = (si) => { ascentPrendida = si; perfilSec.pintar(); progreso.pintar(); };
+  // Prenderla o apagarla cambia Perfil, Progreso (la entrada y el borde del planeta) e Inicio (la invitación).
+  const ponerAscentPrendida = (si) => { ascentPrendida = si; perfilSec.pintar(); progreso.pintar(); inicio.pintar(0); };
   segmento('s-ascent-perfil', (v) => { cerrarHojas(); if (ascent.ocupada) ascent.cerrar(true); pestanas.ir(5); ponerAscentPrendida(v === 'si'); });
   window.__ascentEnPerfil = (si) => ponerAscentPrendida(si);
   window.__aparato = (v) => ponerAparato(v === 'iphone');

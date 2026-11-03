@@ -46,7 +46,10 @@ export type DeHoy = {
   meta: Macros;
   /** Lo comido, con lo planificado para lo que queda. */
   comido: Macros;
-  /** Lo anotado hasta la hora de la tarde, sin planificado: lo que ya dijo a esa hora, si ya pasó. */
+  /**
+   * Lo que se sabía a la hora de la tarde (lo anotado hasta entonces, con lo planificado): lo que dijo a esa
+   * hora, si ya pasó. Lo que se anota después con una hora de antes («el almuerzo comí…») no cuenta.
+   */
   comidoALaTarde?: Macros;
   /** Cuándo se anotó cada comida hoy, en minutos, sin lo planificado. */
   anotadas: Partial<Record<Comida, number>>;
@@ -81,6 +84,12 @@ const AGUA_BAJA = 0.4;
 /** A la tarde: dos horas antes de la cena de siempre, y nunca antes de las 16:30. */
 const TARDE_MINIMA = 16 * 60 + 30;
 const ANTES_DE_LA_CENA = 120;
+export const horaDeLaTarde = (horaDeCena: number) => Math.max(TARDE_MINIMA, horaDeCena - ANTES_DE_LA_CENA);
+/**
+ * Lo de la tarde se sigue devolviendo hasta esto después de su hora: avisosDelDia lo pudo correr un rato
+ * para no pisar a otro (lo que espera un aviso, ATRASO_MAXIMO en avisos.ts) y saca lo que ya sonó.
+ */
+export const ESPERA_DE_LA_TARDE = 45;
 /** A la noche: 75 minutos después de la cena de siempre y al menos 45 después de anotarla. */
 const DESPUES_DE_LA_CENA = 75;
 const DESPUES_DE_ANOTARLA = 45;
@@ -183,11 +192,11 @@ export function loQueFaltaHoy(d: DeHoy): FaltaConHora[] {
     return ideas && { que, cuanto: faltan, ...ideas, ...base };
   };
 
-  const horaDeLaTarde = Math.max(TARDE_MINIMA, d.horaDeCena - ANTES_DE_LA_CENA);
+  const tarde = horaDeLaTarde(d.horaDeCena);
   // A la tarde importa lo que va a faltar después de las comidas que quedaban a esa hora: cada una da su parte de la meta.
   const queQuedan = (['merienda', 'cena'] as const).filter((c) => {
     const cuando = d.anotadas[c];
-    return (cuando === undefined || cuando > horaDeLaTarde) && !d.planeadas?.has(c) && (c === 'cena' || d.comidasHabituales === 4);
+    return (cuando === undefined || cuando > tarde) && !d.planeadas?.has(c) && (c === 'cena' || d.comidasHabituales === 4);
   });
   const deLaTarde = (c: Macros, ml: number | null | undefined): QueFalta | null => {
     const vaAQuedar = d.meta.proteina - c.proteina - (queQuedan.length * d.meta.proteina) / d.comidasHabituales;
@@ -198,10 +207,10 @@ export function loQueFaltaHoy(d: DeHoy): FaltaConHora[] {
 
   const salida: FaltaConHora[] = [];
   let dijo: QueFalta | null;
-  if (d.ahora < horaDeLaTarde) {
+  if (d.ahora < tarde + ESPERA_DE_LA_TARDE) {
     dijo = deLaTarde(d.comido, d.agua?.ml);
     const falta = dijo && armar(dijo, d.comido);
-    if (falta) salida.push({ minutos: horaDeLaTarde, falta });
+    if (falta) salida.push({ minutos: tarde, falta });
   } else {
     // Esa hora ya pasó: lo que dijo, con lo que se había anotado entonces.
     dijo = deLaTarde(d.comidoALaTarde ?? d.comido, d.agua ? (d.agua.mlALaTarde ?? d.agua.ml) : null);

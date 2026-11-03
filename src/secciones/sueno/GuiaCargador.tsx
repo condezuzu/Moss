@@ -201,12 +201,12 @@ function IphoneDibujado({ paso, llave, alTocar }: { paso: Paso; llave: boolean; 
     );
   }
   return (
-    <View style={st.marco}>
+    <Aparece style={st.marco}>
       <Animated.View key={paso.id} entering={FadeInRight.duration(320)} exiting={FadeOut.duration(140)} style={[st.pantalla, pantalla === 'moss' && st.pantallaMoss, (pantalla === 'importar' || pantalla === 'importarListo' || pantalla === 'importarSimple') && st.pantallaHoja]}>
         {contenido}
       </Animated.View>
       <View style={st.isla} />
-    </View>
+    </Aparece>
   );
 }
 
@@ -356,31 +356,39 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
         <View style={[st.pie, { paddingBottom: insets.bottom + 12 }]}>
           {paso < 0 && (
             <>
-              <Pressable onPress={empezar} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
-                <Text style={st.principalTexto}>{t('sueno.afinar.cargador.guia.empezar')}</Text>
-              </Pressable>
-              <Pressable onPress={() => { setMirando(true); setLlave(false); setPaso(0); }} style={({ pressed }) => [st.secundario, pressed && st.apretado]} accessibilityRole="button">
-                <Text style={st.secundarioTexto}>{t('sueno.afinar.cargador.guia.mirar')}</Text>
-              </Pressable>
+              <Aparece key="empezar">
+                <Pressable onPress={empezar} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
+                  <Text style={st.principalTexto}>{t('sueno.afinar.cargador.guia.empezar')}</Text>
+                </Pressable>
+              </Aparece>
+              <Aparece key="mirar">
+                <Pressable onPress={() => { setMirando(true); setLlave(false); setPaso(0); }} style={({ pressed }) => [st.secundario, pressed && st.apretado]} accessibilityRole="button">
+                  <Text style={st.secundarioTexto}>{t('sueno.afinar.cargador.guia.mirar')}</Text>
+                </Pressable>
+              </Aparece>
             </>
           )}
           {paso >= 0 && !llego && (
-            <View style={st.pieFila}>
+            <Aparece key="fila" style={st.pieFila}>
               <Pressable onPress={atras} style={st.atras} accessibilityRole="button" hitSlop={6}>
                 <Icono nombre="chevron.left" tam={14} color="rgba(239, 230, 207, 0.65)" peso="medium" />
                 <Text style={st.atrasTexto}>{t('sueno.afinar.cargador.guia.atras')}</Text>
               </Pressable>
               {(version === 'aMano' || (version === 26 && paso >= 1)) && !enPrueba && !mirando && (
-                <Pressable onPress={() => { Linking.openURL('shortcuts://').catch(() => {}); }} style={({ pressed }) => [st.abrirAtajos, pressed && st.principalApretado]} accessibilityRole="button">
-                  <Text style={st.abrirAtajosTexto}>{t('sueno.afinar.atajos.abrir')}</Text>
-                </Pressable>
+                <Aparece key="abrirAtajos">
+                  <Pressable onPress={() => { Linking.openURL('shortcuts://').catch(() => {}); }} style={({ pressed }) => [st.abrirAtajos, pressed && st.principalApretado]} accessibilityRole="button">
+                    <Text style={st.abrirAtajosTexto}>{t('sueno.afinar.atajos.abrir')}</Text>
+                  </Pressable>
+                </Aparece>
               )}
-            </View>
+            </Aparece>
           )}
           {!!llego && (
-            <Pressable onPress={alCerrar} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
-              <Text style={st.principalTexto}>{t('sueno.afinar.cargador.guia.probar.listo')}</Text>
-            </Pressable>
+            <Aparece key="listo">
+              <Pressable onPress={alCerrar} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
+                <Text style={st.principalTexto}>{t('sueno.afinar.cargador.guia.probar.listo')}</Text>
+              </Pressable>
+            </Aparece>
           )}
         </View>
       </View>

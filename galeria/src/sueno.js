@@ -504,7 +504,7 @@ const SeccionSueno = (() => {
         dentro.append(cab, ul);
       });
       const yo = SinReloj.aprenderPersonal(propias(), clave);
-      dentro.appendChild(el('p', 'sn-nota', tx(yo.noches > 0 ? 'sueno.manana.porque.tardas' : 'sueno.manana.porque.tardasFabrica', { n: yo.latencia })));
+      dentro.appendChild(el('p', 'sn-nota', tx(yo.elegida ? 'sueno.manana.porque.tardasElegida' : yo.noches > 0 ? 'sueno.manana.porque.tardas' : 'sueno.manana.porque.tardasFabrica', { n: yo.latencia })));
       dentro.appendChild(el('p', 'sn-nota', tx('sueno.manana.porque.nota')));
       caja.appendChild(dentro);
       return caja;

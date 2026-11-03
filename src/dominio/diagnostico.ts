@@ -180,6 +180,11 @@ export type Foco =
 export type EntradasDelFoco = EntradasDelDiagnostico & {
   /** La recuperación de hoy (recuperado.ts); sin la noche, null. */
   recuperado: { banda: Banda; bandas: { sueno: Banda; fatiga: Banda; comida: Banda }; loQueMasFalta: Parte } | null;
+  /**
+   * A qué hora ir a la cama esta noche, en minutos desde la medianoche: la del aviso de dormir (horasDeSueno, en
+   * avisos.ts, con la deuda, lo de siempre y lo que tardas en dormirte). Sin saberla, la hora de dormir de siempre.
+   */
+  acostarse?: number | null;
 };
 
 /**
@@ -215,6 +220,11 @@ export function focoDeHoy(x: EntradasDelFoco): Foco[] {
   const r = x.recuperado;
   const s = x.sesion;
   const horaDe = (l: Linea) => {
+    // En ayunas, lo chico va antes de entrenar aunque el desayuno de siempre sea después, y no antes de despertarse.
+    if (l.clase === 'ayunasLarga') {
+      const antes = Math.min(c.horaDeComida.desayuno, l.hora - SNACK_ANTES);
+      return c.despertar !== null ? Math.max(c.despertar, antes) : antes;
+    }
     if (l.comida !== 'snack') return c.horaDeComida[l.comida];
     if (l.clase === 'antesDeDormir') return c.dormir !== null ? c.dormir - SNACK_DE_LA_NOCHE : l.hora + 2 * 60;
     return l.hora - SNACK_ANTES;
@@ -233,7 +243,7 @@ export function focoDeHoy(x: EntradasDelFoco): Foco[] {
   const deudaQuePesa = x.deuda !== null && x.deuda >= DEUDA_QUE_PESA;
   const suenoFlojo = r !== null && r.loQueMasFalta === 'sueno' && (r.bandas.sueno === 'aceptable' || r.bandas.sueno === 'atencion');
   if (r && (suenoFlojo || deudaQuePesa)) {
-    const hora = c.despertar !== null && x.noche ? c.despertar - x.noche.necesidad : c.dormir;
+    const hora = x.acostarse ?? c.dormir;
     if (hora !== null) candidatos.push([3, { que: 'dormir', hora: ((hora % 1440) + 1440) % 1440 }]);
   }
   for (const p of d.pasos) if (p.cuando !== 'antes') candidatos.push([4, { que: 'comer', cuando: p.cuando, linea: p.linea, hora: horaDe(p.linea) }]);

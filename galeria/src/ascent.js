@@ -13,11 +13,13 @@
 
 const SeccionAscent = (() => {
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
-  // La hora de cada comida, si no se anotó (HORA_TIPICA en la app).
-  const HORA_DE_COMIDA = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
+  // La hora de cada comida, si no se anotó: la típica de la app.
+  const HORA_DE_COMIDA = Comidas.HORA_TIPICA;
   // Lo de siempre de la persona de mentira: sin sesión hoy, la recuperación se mira a la hora de despertarse.
   const DESPERTAR = 7 * 60 + 30;
   const DORMIR = 23 * 60 + 30;
+  // Lo que tarda en dormirse: lo que aprendió Moss, como dice Perfil › Avisos.
+  const LATENCIA = 20;
   // El planeta, en píxeles sobre la barra, cuando es el horizonte.
   const HORIZONTE_PX = 74;
   // El borde del planeta que asoma arriba de Progreso: cuánto se ve quieto y cuánto baja con el dedo.
@@ -26,7 +28,7 @@ const SeccionAscent = (() => {
   // Hasta dónde llega la barra de cada músculo, en %: cargado es desde el 10.
   const TOPE_MUSCULO = 15;
   // Cada razón de estancamiento en su escala (las de porQueNoSube) para dibujar la distancia.
-  const ESCALAS = { sueno: 45, proteina: 15, calorias: 250 };
+  const ESCALAS = Entrenamiento.ESCALAS;
   // Los grupos del mapa del año, en el orden de la leyenda.
   const GRUPOS_DEL_ANIO = ['pecho', 'piernas', 'espalda'];
 
@@ -480,6 +482,14 @@ const SeccionAscent = (() => {
     const momentoDe = (d) => (!d || d.sesion ? sesionDeHoy.inicio : inicioDeHoy + DESPERTAR * 60e3);
     /** Ahora, en el día de ejemplo (o el de la galería). */
     const ahoraDe = (d) => inicioDeHoy + (d ? d.ahora : Datos.AHORA_MIN) * 60e3;
+    /**
+     * A qué hora ir a la cama esta noche: la del aviso de dormir (Avisos.horasDeSueno), con lo de siempre (en
+     * minutos desde las 18 del día anterior, como las noches), la deuda del día de ejemplo y lo que tarda en dormirse.
+     */
+    const acostarseDe = (d) => {
+      const habitual = { dormirse: DORMIR - 18 * 60, despertar: DESPERTAR + 6 * 60 };
+      return Avisos.horasDeSueno(Datos.HOY, { habitual: () => habitual, necesidad, deuda: d.deuda, latencia: LATENCIA }).acostarse;
+    };
 
     /** La recuperación de un día de ejemplo o, sin día, la de la persona de mentira (la que ve Sueño). */
     function calcularRecuperado(d) {
@@ -658,7 +668,7 @@ const SeccionAscent = (() => {
       const buena = marcas.find((m) => m.dia.aplica);
       const x = entradasDelDia(d, rend, buena ? enFrase(nombreDelEjercicio(buena.ejercicio)) : null);
       const diag = Diagnostico.diagnostico(x);
-      const foco = Diagnostico.focoDeHoy(Object.assign({}, x, { recuperado: rec }));
+      const foco = Diagnostico.focoDeHoy(Object.assign({}, x, { recuperado: rec, acostarse: acostarseDe(d) }));
       // Cómo ir en el gimnasio no depende de la comida: también se dice con «sin déficit».
       const gimnasio = rec && d.sesion === 'prevista' ? Diagnostico.comoEntrenar({ recuperado: rec, sueno: Diagnostico.estadoDelSueno(x.noche), marca: x.marca }) : null;
       return { rec, rend, marcas, diag, foco, gimnasio, rutina: fatigaDeLaRutina(d) };
@@ -926,7 +936,7 @@ const SeccionAscent = (() => {
     let saliendo = null;
     function invitacion() {
       if (saliendo) return saliendo;
-      const invita = SenalDeAscent.invitarEnInicio({ conAscent: true, listo: true, conCuenta: esteIphone !== 'sinCuenta', vinculada, instalada: esteIphone !== 'sinAscent', descartada });
+      const invita = SenalDeAscent.invitarEnInicio({ conAscent: !opciones.prendida || opciones.prendida(), listo: true, conCuenta: esteIphone !== 'sinCuenta', vinculada, instalada: esteIphone !== 'sinAscent', descartada });
       if (!invita) { invitacionVista = false; return null; }
       const c = el('article', 'as-invita' + (invitacionVista ? '' : ' entra'));
       invitacionVista = true;
@@ -1110,7 +1120,7 @@ const SeccionAscent = (() => {
       return f;
     }
     const consejo = (texto) => el('p', 'as-fila-consejo', texto);
-    const aLaCama = () => u.horaMin(((DESPERTAR - necesidad) % 1440 + 1440) % 1440);
+    const aLaCama = (d) => u.horaMin(acostarseDe(d));
 
     function filaSueno(d, k) {
       const r = k.rec;
@@ -1129,8 +1139,8 @@ const SeccionAscent = (() => {
       const porLaCalidad = !r.conCalidad && (b === 'muyBien' || b === 'bien');
       let texto = null;
       if (b === 'muyBien' && !porLaCalidad) texto = r.partes.sueno >= 40 ? tx('ascent.partes.sueno.consejos.perfecto') : tx('ascent.partes.sueno.consejos.casi', { falta: tx(r.anoche.dormido < necesidad ? 'ascent.partes.sueno.consejos.faltaDormir' : 'ascent.partes.sueno.consejos.faltaCalidad', { horas: de }) });
-      else if (b === 'bien' && !porLaCalidad) texto = tx('ascent.partes.sueno.consejos.bien', { hora: aLaCama() });
-      else if (b === 'aceptable' || b === 'atencion') texto = tx(`ascent.partes.sueno.consejos.${b}${antes ? 'Antes' : ''}`, { hora: aLaCama() });
+      else if (b === 'bien' && !porLaCalidad) texto = tx('ascent.partes.sueno.consejos.bien', { hora: aLaCama(d) });
+      else if (b === 'aceptable' || b === 'atencion') texto = tx(`ascent.partes.sueno.consejos.${b}${antes ? 'Antes' : ''}`, { hora: aLaCama(d) });
       if (texto) f.appendChild(consejo(texto));
       if (antes && consejos.includes('siesta')) f.appendChild(consejo(tx('ascent.diagnostico.consejos.siesta')));
       else if (antes && consejos.includes('seriesPesadas')) f.appendChild(consejo(tx('ascent.diagnostico.consejos.seriesPesadas')));

@@ -295,7 +295,7 @@ const SeccionInicio = (() => {
     function entradaDeParaHoy() {
       const meta = opciones.comida.meta;
       const metaDeHoy = { kcal: meta.kcal, proteina: meta.p, carbohidratos: meta.c, grasas: meta.g };
-      const sinDeficit = !!opciones.persona().perfil.sinDeficit;
+      const sinDeficit = !!(opciones.sinDeficit && opciones.sinDeficit());
       if (s.ejemplo) return Object.assign({ meta: metaDeHoy, agua: null, sinDeficit }, EJEMPLOS_PARA_HOY[s.ejemplo]);
       const t = opciones.comida.totalDe(0);
       const agua = opciones.comida.agua();
@@ -686,8 +686,9 @@ const SeccionInicio = (() => {
     return {
       zona,
       pintar,
-      get editando() { return hoja.abierta; },
-      cerrar() { hoja.cerrar(); },
+      // Con una hoja arriba (personalizar o «Todo lo de hoy»), el gesto de las pestañas no anda y la galería la cierra.
+      get editando() { return hoja.abierta || hojaTodo.abierta; },
+      cerrar() { hoja.cerrar(); hojaTodo.cerrar(); },
       // Para las capturas y los botones de la galería.
       personalizar: abrirPersonalizar,
       poner(bloque, si) { if (si) s.visibles.add(bloque); else s.visibles.delete(bloque); guardar(); pintar(0); if (hoja.abierta) pintarHoja(); },

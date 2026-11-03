@@ -13,7 +13,7 @@ import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 import type { Macros } from './metas';
 import {
-  adaptar, adaptarRegistros, afinidadDe, cambiarPorOtra, COMBINADAS, comidasDelPlan, diaPlaneadoDe, DIETAS, estaTachada, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas,
+  adaptar, adaptarRegistros, afinidadDe, cambiarPorOtra, combinadas, comidasDelPlan, diaPlaneadoDe, DIETAS, estaTachada, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas,
   permitida, planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, sugerenciaVencida, sugerenciasQueSobran, tachadasDe, tachar, type DiaPlaneado, type Opcion,
   type Plantilla, type Preferencias, type Resolver,
 } from './plan';
@@ -32,6 +32,7 @@ const resolver: Resolver = (nombre) => {
   return { fuente: 'base', ref: String(a.id), nombre, por100g, porciones };
 };
 const TIPO = PLANTILLAS.map((p) => opcionDePlantilla(p, resolver, 'es')).filter((op): op is Opcion => op !== null);
+const COMBINADAS = combinadas();
 const COMBI = COMBINADAS.map((p) => opcionDePlantilla(p, resolver, 'es')).filter((op): op is Opcion => op !== null);
 const plantilla = (clave: string) => PLANTILLAS.find((p) => p.clave === clave) ?? COMBINADAS.find((p) => p.clave === clave)!;
 

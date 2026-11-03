@@ -41,7 +41,7 @@ import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './c
 import { PanelDecir } from './Decir';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
-import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoDeLoDicho, momentoPara, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
+import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoDe, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
 import { Escaner } from './Escaner';
 import {
   PanelCrear, PanelGuardadas, PanelGuardarComo, PanelPegarReceta, PanelRapida, PanelReceta, PanelRevision, recetaDe, resumenDeCanasta, type Borrador, type DatosDeEtiqueta,
@@ -312,7 +312,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     setRecienSumado({ texto: [item.nombre, cantidadDeTexto(item.cantidad, sistema)].filter(Boolean).join(' · '), vez: otraVez() });
   };
   const agregar = () => {
-    const nuevos = a.agregarCanasta({ comida, dia, momento: momentoPara(dia, comida, e.hoy) });
+    const nuevos = a.agregarCanasta({ comida, dia, momento: momentoDe(e, dia, comida) });
     if (!nuevos.length) return;
     copia.current = null;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -591,7 +591,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                       setRecienSumado({ texto: t(`comida.deSiempre.${comida}`), vez: otraVez() });
                       return;
                     }
-                    const nuevos = a.registrar(siempre, { comida, dia, momento: momentoPara(dia, comida, e.hoy) });
+                    const nuevos = a.registrar(siempre, { comida, dia, momento: momentoDe(e, dia, comida) });
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
                     avisar(t(`comida.deSiempre.${comida}`), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
                     cerrar();
@@ -721,7 +721,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                   avisar(t('comida.guardado'));
                   cerrar();
                 } else if (pedido.directo) {
-                  const nuevos = a.registrar([item], { comida, dia, momento: momentoPara(dia, comida, e.hoy) });
+                  const nuevos = a.registrar([item], { comida, dia, momento: momentoDe(e, dia, comida) });
                   avisar(t('comida.agregadoA', { que: item.nombre, donde: t(`comida.aLa.${comida}`) }), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
                   cerrar();
                 } else {
@@ -764,8 +764,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               alAgregar={(items, comidaDicha, ayer) => {
                 const elDia = ayer ? sumarDias(e.hoy, -1) : dia;
                 // Si se nombró otra comida, va a su hora: «el desayuno comí…», dicho a la tarde.
-                const momento = comidaDicha === comida ? momentoPara(elDia, comidaDicha, e.hoy) : momentoDeLoDicho(e, elDia, comidaDicha);
-                const nuevos = a.registrar(items, { comida: comidaDicha, dia: elDia, momento });
+                const nuevos = a.registrar(items, { comida: comidaDicha, dia: elDia, momento: momentoDe(e, elDia, comidaDicha) });
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
                 avisar(plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${comidaDicha}`) }), () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
                 cerrar();

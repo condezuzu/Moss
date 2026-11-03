@@ -10,10 +10,11 @@ import { estadoConAscent, metaConAscent, suscribirConAscent } from '@/almacen/as
 import { conMayuscula } from '@/comida/buscar';
 import { cantidadDePorcion, decimal } from '@/comida/porciones';
 import { ACEITE, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
-import { comidaDeLaHora, COMIDAS, HORA_TIPICA, minutoDeLoDicho, type Comida } from '@/dominio/comidas';
+import { comidaDeLaHora, COMIDAS, minutoDeLoDicho, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { metaRepartida, type Macros } from '@/dominio/metas';
 import { sugerenciaVencida } from '@/dominio/plan';
+import { horasDeSiempre } from '@/dominio/recordatorios';
 import { delDia, sumarValores, totalDelDia, type Cantidad, type Registro, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 
@@ -140,22 +141,31 @@ export function cantidadDeTexto(c: Cantidad, sistema: Sistema): string {
 
 export { HORA_TIPICA } from '@/dominio/comidas';
 
-/** El momento de lo que se registra: hoy, ahora; otro día, a la hora típica de esa comida en ese día. */
-export function momentoPara(dia: ClaveDia, comida: Comida, hoy: ClaveDia): string | undefined {
-  if (dia === hoy) return undefined;
-  const p = partesDe(dia);
-  const minutos = comida === 'snack' ? 11 * 60 : HORA_TIPICA[comida];
-  return new Date(p.anio, p.mes, p.dia, Math.floor(minutos / 60), minutos % 60).toISOString();
+/**
+ * La hora de cada comida, una sola para todo (lo que se anota, la línea y lo que corre al comer): la
+ * del horario, si se eligió, o la de siempre, la que usan los avisos. El snack no tiene: a media mañana.
+ */
+export function horasDeComer(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'>): (c: Comida) => number {
+  const deSiempre = horasDeSiempre(e.registros.values(), e.hoy);
+  return (c) => (c === 'snack' ? 11 * 60 : (e.avisos.horario?.[c] ?? deSiempre(c)));
 }
 
-/** Cuándo va lo dicho con el nombre de otra comida: a su hora, si ya pasó; así no corre lo que sigue. */
-export function momentoDeLoDicho(e: Pick<Estado, 'hoy' | 'avisos'>, dia: ClaveDia, comida: Comida): string | undefined {
-  if (dia !== e.hoy) return momentoPara(dia, comida, e.hoy);
-  const hora = comida === 'snack' ? undefined : e.avisos.horario?.[comida] ?? HORA_TIPICA[comida];
-  const minuto = minutoDeLoDicho(hora, minutosEnElDia(new Date(), dia));
-  if (minuto === null) return undefined;
+/**
+ * El momento de lo que se anota, por cualquier vía (la hoja, el «+», tu comida de siempre, lo rápido,
+ * el código y Decir). Otro día, a la hora de esa comida. Hoy, ahora; pero una comida que no es la de la
+ * hora y cuya hora pasó hace más de una hora (el desayuno anotado a la tarde) va a su hora, como lo dicho
+ * con el nombre de otra comida (D41): así no corre lo que sigue. La cena pasada la medianoche, antes del
+ * corte, es la de la hora.
+ */
+export function momentoDe(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'>, dia: ClaveDia, comida: Comida): string | undefined {
+  const horaDe = horasDeComer(e);
   const p = partesDe(dia);
-  return new Date(p.anio, p.mes, p.dia, Math.floor(minuto / 60), minuto % 60).toISOString();
+  const enElDia = (minutos: number) => new Date(p.anio, p.mes, p.dia, Math.floor(minutos / 60), minutos % 60).toISOString();
+  if (dia !== e.hoy) return enElDia(horaDe(comida));
+  const ahora = minutosEnElDia(new Date(), dia);
+  if (comida === 'snack' || comida === comidaDeLaHora(ahora) || (comida === 'cena' && ahora >= 24 * 60)) return undefined;
+  const minuto = minutoDeLoDicho(horaDe(comida), ahora);
+  return minuto === null ? undefined : enElDia(minuto);
 }
 
 /** Un cambio, con el signo de verdad: «+0,4», «−1,2». */

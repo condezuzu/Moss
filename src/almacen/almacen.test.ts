@@ -497,6 +497,158 @@ describe('lo que se come', () => {
     expect(almacen.estado().registros.get(cena.id)!.momento.slice(11, 16)).toBe('01:00');
   });
 
+  describe('lo que corre al comer, y deshacerlo', () => {
+    // El plan, armado a las 7 (en Montevideo, UTC−3): las horas de abajo son las de UTC.
+    const comida = (c: 'desayuno' | 'almuerzo' | 'merienda' | 'cena') => ({ comida: c, opcion: c, items: [banana()], valores: banana().valores });
+    const HORAS: Record<string, number> = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
+    async function conPlan(comidas: ('desayuno' | 'almuerzo' | 'merienda' | 'cena')[]) {
+      const t = await armar();
+      t.ir('2026-10-21T10:00:00Z');
+      const plan = t.almacen.planificar('2026-10-21', comidas.map(comida), (c) => HORAS[c]);
+      const r = (id: string) => t.almacen.estado().registros.get(id)!;
+      return { ...t, plan, r, hora: (id: string) => r(id).momento.slice(11, 16) };
+    }
+
+    it('corre solo con lo primero que se come de esa comida: lo que se suma después no la vuelve a correr', async () => {
+      // El bug: cada cosa sumada al desayuno corría todo otra vez, y la cena terminaba a la madrugada.
+      const { almacen, ir, plan: [, almuerzo, cena], hora } = await conPlan(['desayuno', 'almuerzo', 'cena']);
+      ir('2026-10-21T12:30:00Z');
+      almacen.registrar([alfajor()], { comida: 'desayuno' });
+      expect([hora(almuerzo.id), hora(cena.id)]).toEqual(['17:30', '01:30']);
+      ir('2026-10-21T12:40:00Z');
+      almacen.registrar([banana()], { comida: 'desayuno' });
+      expect([hora(almuerzo.id), hora(cena.id)]).toEqual(['17:30', '01:30']);
+    });
+
+    it('lo que se suma después de «Comí esto» tampoco la corre', async () => {
+      const { almacen, ir, plan: [, almuerzo], hora } = await conPlan(['desayuno', 'almuerzo']);
+      ir('2026-10-21T12:30:00Z');
+      almacen.confirmarComida('2026-10-21', 'desayuno');
+      ir('2026-10-21T12:35:00Z');
+      almacen.registrar([alfajor()], { comida: 'desayuno' });
+      expect(hora(almuerzo.id)).toBe('17:30');
+    });
+
+    it('con lo planificado a mano, dos cosas en el almuerzo corren la cena una sola vez', async () => {
+      const { almacen, ir } = await armar();
+      // Ayer, para hoy: el almuerzo a las 13 y la cena a las 21.
+      const [cena] = almacen.registrar([banana()], { comida: 'cena', dia: '2026-10-22', momento: '2026-10-23T00:00:00.000Z' });
+      almacen.registrar([alfajor()], { comida: 'almuerzo', dia: '2026-10-22', momento: '2026-10-22T16:00:00.000Z' });
+      ir('2026-10-22T17:00:00Z');
+      almacen.revisarDia();
+      almacen.registrar([banana()], { comida: 'almuerzo' });
+      ir('2026-10-22T17:10:00Z');
+      almacen.registrar([alfajor()], { comida: 'almuerzo' });
+      expect(almacen.estado().registros.get(cena.id)!.momento).toBe('2026-10-23T01:00:00.000Z');
+    });
+
+    it('lo que sigue a una comida ya comida no corre con una anterior anotada después', async () => {
+      const { almacen, ir, plan: [, , cena], hora } = await conPlan(['desayuno', 'almuerzo', 'cena']);
+      ir('2026-10-21T16:00:00Z');
+      almacen.registrar([alfajor()], { comida: 'almuerzo' });
+      // El desayuno de las 9:30, anotado después (el toque de un widget).
+      almacen.registrar([banana()], { comida: 'desayuno', momento: '2026-10-21T12:30:00.000Z' });
+      expect(hora(cena.id)).toBe('00:00');
+    });
+
+    it('sin plan de esa comida, corre desde la hora del horario o la de siempre, no desde la típica', async () => {
+      const { almacen, ir, plan: [cena], hora } = await conPlan(['cena']);
+      // Desayuna siempre a las 9:30: hoy, a las 9:33, no corre nada.
+      for (const dia of ['2026-10-18', '2026-10-19', '2026-10-20']) almacen.registrar([banana()], { comida: 'desayuno', dia, momento: `${dia}T12:30:00.000Z` });
+      ir('2026-10-21T12:33:00Z');
+      almacen.registrar([banana()], { comida: 'desayuno' });
+      expect(hora(cena.id)).toBe('00:00');
+    });
+
+    it('sin plan de esa comida, la espera a su hora corrida por lo que ya comiste: lo corrido no se cuenta dos veces', async () => {
+      const { almacen, ir, plan: [, cena], hora } = await conPlan(['desayuno', 'cena']);
+      // Desayuno una hora tarde: la cena pasa a las 22.
+      ir('2026-10-21T12:00:00Z');
+      almacen.confirmarComida('2026-10-21', 'desayuno');
+      expect(hora(cena.id)).toBe('01:00');
+      // El almuerzo, sin plan, a las 14: es su hora de siempre corrida esa misma hora, y la cena queda.
+      ir('2026-10-21T17:00:00Z');
+      almacen.registrar([alfajor()], { comida: 'almuerzo' });
+      expect(hora(cena.id)).toBe('01:00');
+    });
+
+    it('deshacer «Comí esto» la vuelve a su hora y devuelve lo que corrió', async () => {
+      const { almacen, ir, plan: [desayuno, almuerzo, merienda, cena], r, hora } = await conPlan(['desayuno', 'almuerzo', 'merienda', 'cena']);
+      ir('2026-10-21T15:00:00Z');
+      const ids = almacen.confirmarComida('2026-10-21', 'desayuno');
+      expect(hora(almuerzo.id)).toBe('20:00');
+      almacen.volverAPlanificar(ids);
+      expect([desayuno, almuerzo, merienda, cena].map((x) => hora(x.id))).toEqual(['11:00', '16:00', '20:30', '00:00']);
+      expect(r(desayuno.id).planificado).toBe(true);
+    });
+
+    it('deshacer lo anotado devuelve lo que corrió, además de lo sugerido', async () => {
+      const { almacen, ir, plan: [almuerzo, merienda, cena], r, hora } = await conPlan(['almuerzo', 'merienda', 'cena']);
+      ir('2026-10-21T18:00:00Z');
+      const [anotado] = almacen.registrar([alfajor()], { comida: 'almuerzo' });
+      expect([hora(merienda.id), hora(cena.id)]).toEqual(['22:30', '02:00']);
+      almacen.borrarRegistro(anotado.id);
+      expect([hora(merienda.id), hora(cena.id)]).toEqual(['20:30', '00:00']);
+      expect(r(almuerzo.id).borrado).toBeUndefined();
+    });
+
+    it('deshacer el «Quitar» de lo comido vuelve a sacar lo sugerido y a correr lo que sigue', async () => {
+      // El bug: quedaban lo comido y lo sugerido a la vez.
+      const { almacen, ir, plan: [desayuno, almuerzo, cena], r, hora } = await conPlan(['desayuno', 'almuerzo', 'cena']);
+      ir('2026-10-21T17:00:00Z');
+      const [anotado] = almacen.registrar([alfajor()], { comida: 'almuerzo' });
+      almacen.borrarRegistro(anotado.id);
+      expect([r(desayuno.id).borrado, r(almuerzo.id).borrado, hora(cena.id)]).toEqual([undefined, undefined, '00:00']);
+      almacen.deshacerBorrado(anotado.id);
+      expect(delDia(almacen.estado().registros.values(), '2026-10-21').map((x) => [x.comida, x.planificado])).toEqual([['almuerzo', false], ['cena', true]]);
+      expect(hora(cena.id)).toBe('01:00');
+    });
+
+    it('deshacer un borrado que no devolvió nada no corre dos veces lo que sigue', async () => {
+      const { almacen, ir, plan: [, , cena], hora } = await conPlan(['desayuno', 'almuerzo', 'cena']);
+      ir('2026-10-21T17:00:00Z');
+      const [anotado] = almacen.registrar([alfajor()], { comida: 'almuerzo' });
+      // Algo anotado después: lo del almuerzo ya no se puede devolver.
+      ir('2026-10-21T17:30:00Z');
+      almacen.registrar([banana()], { comida: 'snack' });
+      almacen.borrarRegistro(anotado.id);
+      almacen.deshacerBorrado(anotado.id);
+      expect(hora(cena.id)).toBe('01:00');
+    });
+
+    it('lo que se cambió después de comer no vuelve al deshacer', async () => {
+      const { almacen, ir, plan: [, almuerzo], r } = await conPlan(['desayuno', 'almuerzo']);
+      ir('2026-10-21T12:30:00Z');
+      const ids = almacen.confirmarComida('2026-10-21', 'desayuno');
+      // «Otra» en el almuerzo, ya corrido: el de antes queda borrado aunque se deshaga «Comí esto».
+      almacen.cambiarPlanificada('2026-10-21', { ...comida('almuerzo'), opcion: 'otra', items: [alfajor()] }, (c) => HORAS[c]);
+      almacen.volverAPlanificar(ids);
+      expect(r(almuerzo.id).borrado).toBe(true);
+      expect(vigentes(almacen.estado().registros.values()).filter((x) => x.comida === 'almuerzo').map((x) => x.nombre)).toEqual(['Alfajor']);
+    });
+
+    it('anotar y «Comí esto» son un solo cambio, aunque corran lo que sigue y saquen lo sugerido', async () => {
+      const { almacen, ir } = await conPlan(['desayuno', 'almuerzo', 'cena']);
+      let cambios = 0;
+      almacen.suscribir(() => cambios++);
+      ir('2026-10-21T12:30:00Z');
+      almacen.registrar([alfajor()], { comida: 'desayuno' });
+      expect(cambios).toBe(1);
+      ir('2026-10-21T18:00:00Z');
+      almacen.confirmarComida('2026-10-21', 'almuerzo');
+      expect(cambios).toBe(2);
+    });
+
+    it('«Comí esto» desde el widget va a la hora del toque y corre desde ahí', async () => {
+      const { almacen, ir, plan: [desayuno, almuerzo], r, hora } = await conPlan(['desayuno', 'almuerzo']);
+      // Tocado a las 8:30, aplicado al abrir Moss a las 12:30.
+      ir('2026-10-21T15:30:00Z');
+      almacen.confirmarComida('2026-10-21', 'desayuno', '2026-10-21T11:30:00.000Z');
+      expect(r(desayuno.id)).toMatchObject({ planificado: false, momento: '2026-10-21T11:30:00.000Z', actualizado: '2026-10-21T15:30:00.000Z' });
+      expect(hora(almuerzo.id)).toBe('16:30');
+    });
+  });
+
   it('se cargan solo los últimos cuatro meses de lo comido', async () => {
     const viejo: Registro = { ...alfajor(), id: 'viejo', dia: '2026-05-01', comida: 'snack', momento: '2026-05-01T15:00:00.000Z', planificado: false, actualizado: '2026-05-01T15:00:00.000Z' };
     const reciente: Registro = { ...viejo, id: 'reciente', dia: '2026-09-01' };
