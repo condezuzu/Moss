@@ -196,7 +196,7 @@ const AvisosBloqueo = (() => {
           n({ tipo: 'comida', comida: 'merienda' }), n({ tipo: 'comida', comida: 'cena' }),
         ]],
         ['Si vas muy bajo en algo', todasLasFalta().map((falta) => n({ tipo: 'falta', falta }))],
-        ['Hábitos', [n({ tipo: 'habito', habito: 'entrenar' }), n({ tipo: 'habito', habito: 'leer' }), n({ tipo: 'habito', habito: 'leer', mensaje: en() ? 'One chapter, phone in the other room' : 'Un capítulo, con el teléfono en otra pieza' })]],
+        ['Hábitos', [n({ tipo: 'habito', habito: 'entrenar' }), n({ tipo: 'habito', habito: 'leer' }), n({ tipo: 'habito', habito: 'leer', mensaje: en() ? 'One chapter, phone in the other room' : 'Un capítulo, con el teléfono en otra habitación' })]],
         ['Pesarte', [n({ tipo: 'pesarse' }), n({ tipo: 'pesarse', control: true })]],
         ['La hora de dormir', [...Avisos.TEXTOS_DE_DORMIR, 'deuda'].map((texto) => n({ tipo: 'dormir', minutos: hm('23:00'), texto, dormirA: hm('23:30'), despertarA: 24 * 60 + hm('7:30'), duerme: 480, deuda: 90 }))],
         ['La prueba', [tx('recordatorios.pruebaTermina')]],

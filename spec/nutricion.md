@@ -280,7 +280,7 @@ no encontraban nada, porque el índice parte las palabras en el apóstrofo.
   Subway, Mostaza, La Pasiva, Starbucks, KFC, Domino's, Grido, Sbarro, Freddo, La Cigale, Cinnabon, Porto Vanila e Il Mondo
   della Pizza, con sus combos. Cada línea dice su fuente; lo que no es un dato oficial lleva «aproximado». Los combos son
   la suma de sus partes. Las que se miraron y no entraron están al final del archivo, con el motivo.
-- **Lo del súper** (`alimentos/marcas.txt`): unos 2.200 productos de unas 470 marcas, de la exportación de Open Food
+- **Lo del súper** (`alimentos/marcas.txt`): unos 2.100 productos de unas 460 marcas, de la exportación de Open Food
   Facts. Lo arma `node herramientas/marcas.mjs` con lo que baja `node herramientas/bajar-marcas.mjs`; no se edita a mano.
   Entra lo cargado con Uruguay; de Argentina, las marcas que se venden acá; y de otros países, solo las marcas globales
   que nadie cargó (Kellogg's, por ejemplo), con menos productos y marcadas «aproximado», porque la etiqueta es de allá.
@@ -290,7 +290,7 @@ no encontraban nada, porque el índice parte las palabras en el apóstrofo.
 **Cómo busca:** lo genérico primero («leche» es la leche). Si lo escrito nombra la marca (entera, sin signos, o desde la
 tercera letra), enseguida van sus productos en el orden de la marca: en una cadena, primero lo principal, después los combos
 y al final lo demás; en el súper, lo más escaneado. Con la marca nombrada se muestran hasta 200 resultados, para ver el menú
-entero. Cada resultado muestra su marca si el nombre no la dice. La base pesa 11,8 MB (el tope ahora es 14): va entera en
+entero. Cada resultado muestra su marca si el nombre no la dice. La base pesa 11,7 MB (el tope ahora es 14): va entera en
 la app y en la próxima actualización por aire.
 
 ## Registrar: los flujos y sus toques
