@@ -5,6 +5,8 @@
 //   (entrenar a otra hora, cenar temprano, comer poca proteína) cambia lo que suena después.
 // - «Todos»: cada aviso de la app, para revisar cómo dice cada cosa, en español y en inglés.
 // Lo que conviene (3/11, como Rise) lleva de título lo que hay que hacer; los demás, el nombre de la app.
+// Con un día de ejemplo de «Según el deporte» (deporte.js), «Deporte» es ese día: su fecha, su sesión, sus
+// partidos y su carrera, con «Mañana juegas» y «Tu carrera es pasado mañana» prendidos.
 
 const AvisosBloqueo = (() => {
   const CSS = `
@@ -71,13 +73,18 @@ const AvisosBloqueo = (() => {
     ultimaComida: { encendido: true },
     entrenarTarde: { encendido: true },
     luces: { encendido: true },
+    partido: { encendido: true },
+    carrera: { encendido: true },
   };
-  // Los días de ejemplo: sin entreno, el tuyo (almuerzas a las 13:00 y entrenas a las 16:00) y uno tarde.
-  const DIAS = [['no', 'Sin entreno', null], ['tarde', 'Entreno 16:00', hm('16:00')], ['noche', 'Entreno 20:30', hm('20:30')]];
-  const entrenoDe = (dia) => DIAS.find(([clave]) => clave === dia)[2];
+  // Los días de ejemplo: sin entreno, el tuyo (almuerzas a las 13:00 y entrenas a las 16:00) y uno tarde. El del
+  // deporte, con un ejemplo elegido: su sesión de ese día.
+  const DIAS = [['no', 'Sin entreno', null], ['tarde', 'Entreno 16:00', hm('16:00')], ['noche', 'Entreno 20:30', hm('20:30')], ['deporte', 'Deporte', null]];
 
   function crear(tel, opciones) {
-    const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0 };
+    const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0, deporte: null };
+    const conDeporte = () => s.dia === 'deporte' && !!s.deporte;
+    const entrenoDe = (dia) => (dia === 'deporte' ? (s.deporte && s.deporte.sesion ? s.deporte.sesion.inicio : null) : DIAS.find(([clave]) => clave === dia)[2]);
+    const diaDe = () => (conDeporte() ? s.deporte.dia : DIA);
     const u = Util.crear(Object.assign({}, opciones, { idioma: () => s.idioma || opciones.idioma() }));
     const { tx, el, boton } = u;
     const en = () => (s.idioma || opciones.idioma()) === 'en';
@@ -108,6 +115,7 @@ const AvisosBloqueo = (() => {
     /** Lo que pasa durante el día de ejemplo, según el día y los botones. */
     function guion() {
       const entreno = entrenoDe(s.dia);
+      const minutos = conDeporte() && s.deporte.sesion ? s.deporte.sesion.minutos : 60;
       const parte = s.pocaProteina ? 0.55 : 1;
       // Entrenando tarde, la cena es al volver; si no, antes de la hora que dice la última comida grande.
       const cena = s.cenaTemprano ? hm('19:00') : entreno !== null && entreno >= hm('19:00') ? hm('21:45') : hm('19:45');
@@ -120,8 +128,9 @@ const AvisosBloqueo = (() => {
           ['cena', cena, 700, 50 * parte],
         ],
         entreno,
+        minutos,
         // Cuándo marcaste «Entrenar»: al volver, o a la mañana si entrenaste a otra hora.
-        entrenado: s.otraHora ? hm('9:10') : entreno !== null ? entreno + 65 : null,
+        entrenado: s.otraHora ? hm('9:10') : entreno !== null ? entreno + minutos + 5 : null,
       };
     }
 
@@ -130,12 +139,16 @@ const AvisosBloqueo = (() => {
     const hechos = new Map();
     /** El día entero, minuto a minuto, con la regla de verdad: lo que ya sonó queda y lo que hiciste cambia lo que sigue. */
     function linea(maximo = MAXIMO) {
-      const clave = JSON.stringify([s.dia, s.otraHora, s.cenaTemprano, s.pocaProteina, maximo, en()]);
+      const clave = JSON.stringify([s.dia, conDeporte() ? s.deporte.nombre : null, s.otraHora, s.cenaTemprano, s.pocaProteina, maximo, en()]);
       if (hechos.has(clave)) return hechos.get(clave);
       const g = guion();
       const llegados = [];
       const ya = new Set();
       const dias = habitos();
+      const dia = diaDe();
+      // El día del deporte: su sesión (de su tipo), lo que tarda en llegar, sus partidos y su carrera.
+      const d = conDeporte() ? s.deporte : null;
+      const tipo = d && d.sesion ? d.sesion.tipo : 'fuerza';
       for (let T = hm('6:00'); T <= 24 * 60 + 30; T++) {
         // Se anota un par de minutos después de esa hora: lo que sonaba a esa hora ya sonó.
         const hechas = g.comidas.filter(([, cuando]) => cuando + 2 <= T);
@@ -143,16 +156,17 @@ const AvisosBloqueo = (() => {
         const comido = suma(hechas);
         // Se programa antes de que suene: lo que ve el teléfono es el minuto anterior.
         const faltas = LoQueFalta.loQueFaltaHoy({
-          dia: DIA, ahora: T - 1, meta: META, comido, comidoALaTarde: suma(g.comidas.filter(([, cuando]) => cuando <= LoQueFalta.horaDeLaTarde(HORARIO.cena))), anotadas,
+          dia, ahora: T - 1, meta: META, comido, comidoALaTarde: suma(g.comidas.filter(([, cuando]) => cuando <= LoQueFalta.horaDeLaTarde(HORARIO.cena))), anotadas,
           horaDeCena: HORARIO.cena, acostarse: hm('23:00'), comidasHabituales: 4, propios: propios(),
         });
         const entrenado = g.entrenado !== null && g.entrenado <= T ? g.entrenado : null;
         const lista = LoQueConviene.avisosConLoQueConviene({
-          dia: DIA, ajustes: { ...AJUSTES, maximoPorDia: maximo }, habitos: dias, sueno: SUENO, horaDeComida: (c) => HORARIO[c] ?? hm('16:00'),
-          marcas: new Map(entrenado !== null ? [[Dias.claveDeMarca('entrenar', DIA), { hecho: true }]] : []),
+          dia, ajustes: { ...AJUSTES, maximoPorDia: maximo }, habitos: dias, sueno: SUENO, horaDeComida: (c) => HORARIO[c] ?? hm('16:00'),
+          marcas: new Map(entrenado !== null ? [[Dias.claveDeMarca('entrenar', dia), { hecho: true }]] : []),
           anotadas: new Set(Object.keys(anotadas)), eventos: anotadas, ahora: T - 1, faltas,
-          sesiones: g.entreno !== null ? [{ inicio: g.entreno, minutos: 60, tipo: 'fuerza' }] : [], viaje: VIAJE, entrenado,
-          meta: META, comido, pesoKg: 75, edad: 32, comidasHabituales: 4,
+          sesiones: g.entreno !== null ? [{ inicio: g.entreno, minutos: g.minutos, tipo }] : [], viaje: d ? d.viaje : VIAJE, entrenado,
+          meta: META, comido, pesoKg: d ? d.pesoKg : 75, edad: 32, comidasHabituales: 4,
+          ...(d ? { partidos: d.partidos, carrera: d.carrera } : {}),
         });
         for (const n of lista) {
           if (n.minutos !== T || ya.has(n.aviso.id)) continue;
@@ -203,7 +217,8 @@ const AvisosBloqueo = (() => {
       const todos = linea();
       const llegados = todos.filter((n) => n.minutos <= s.hora).reverse();
       // La clave lleva el día: al cambiarlo, lo de antes sale y entra lo nuevo. Sin nada, sale lo que había.
-      ponerAvisos(cuerpo, llegados.map((n) => ({ clave: `${s.dia}|${n.aviso.id}`, titulo: titulo(n), texto: texto(n), hora: u.horaMin(n.minutos) })));
+      const delDia = conDeporte() ? `deporte:${s.deporte.nombre}` : s.dia;
+      ponerAvisos(cuerpo, llegados.map((n) => ({ clave: `${delDia}|${n.aviso.id}`, titulo: titulo(n), texto: texto(n), hora: u.horaMin(n.minutos) })));
       const vacio = cuerpo.querySelector('.ab-vacio');
       if (llegados.length) vacio?.remove();
       else if (!vacio) cuerpo.appendChild(el('p', 'ab-vacio', 'Todavía no sonó nada.'));
@@ -237,6 +252,7 @@ const AvisosBloqueo = (() => {
           c({ que: 'entrenarTarde', a: hm('21:00'), entreno: hm('21:15'), cama: hm('23:00'), suave: true }),
         ]],
         ['Bajar las luces', [c({ que: 'luces', cama: hm('23:00') })]],
+        ['Según el deporte', [c({ que: 'partido' }), c({ que: 'carrera' })]],
         ['Recuperación (con Ascent vinculada)', [
           c({ que: 'recuperacion', porcentaje: 87, fuerte: true }),
           c({ que: 'recuperacion', porcentaje: 52, fuerte: false, dormido: 340 }),
@@ -285,7 +301,13 @@ const AvisosBloqueo = (() => {
       const entreno = entrenoDe(s.dia);
       const faltas = todos.filter((n) => n.aviso.tipo === 'falta').length;
       const nota = [`${todos.length} avisos en todo el día${faltas ? `, ${faltas} de lo que falta` : ''}.`];
-      if (entreno !== null) nota.push(`Sales a las ${u.horaMin(entreno - VIAJE)} y empiezas a las ${u.horaMin(entreno)}: mientras vas, nada.`);
+      const viaje = conDeporte() ? s.deporte.viaje : VIAJE;
+      if (conDeporte()) nota.unshift(`${s.deporte.nombre}.`);
+      if (entreno !== null) nota.push(viaje ? `Sales a las ${u.horaMin(entreno - viaje)} y empiezas a las ${u.horaMin(entreno)}: mientras vas, nada.` : `Empiezas a las ${u.horaMin(entreno)}, desde casa.`);
+      // Lo del deporte suena a la hora del almuerzo y toma su lugar.
+      const delDeporte = todos.filter((x) => x.aviso.tipo === 'partido' || x.aviso.tipo === 'carrera');
+      if (delDeporte.length) nota.push(`${delDeporte.map((x) => `«${titulo(x)}»`).join(' y ')}, a la hora del almuerzo, en lugar de «Hora del almuerzo».`);
+      else if (conDeporte()) nota.push('Este día, nada del deporte en la pantalla bloqueada: lo de hoy está en Inicio y en Sueño.');
       const sinTope = linea(99);
       const nombre = (x) => (x.aviso.conviene ? titulo(x) : texto(x));
       const fuera = sinTope.filter((x) => x.aviso.tipo !== 'falta' && !todos.some((m) => m.aviso.id === x.aviso.id)).map((x) => `«${nombre(x)}»`);
@@ -318,7 +340,7 @@ const AvisosBloqueo = (() => {
       raiz.appendChild(cab);
 
       const reloj = el('div', 'ab-reloj' + (s.modo === 'todos' ? ' fuera' : ''));
-      reloj.append(el('span', null, u.fechaLarga(DIA).replace(/^./, (c) => c.toUpperCase())), el('b', null, u.horaMin(s.hora)));
+      reloj.append(el('span', null, u.fechaLarga(s.modo === 'dia' ? diaDe() : DIA).replace(/^./, (c) => c.toUpperCase())), el('b', null, u.horaMin(s.hora)));
       raiz.appendChild(reloj);
 
       const cuerpo = listaDeAntes || el('div', 'ab-lista');
@@ -334,7 +356,11 @@ const AvisosBloqueo = (() => {
 
       const panel = el('div', 'ab-panel');
       const dias = el('div', 'ab-seg');
-      for (const [clave, nombre] of DIAS) {
+      // «Deporte», solo con un día de ejemplo de «Según el deporte» elegido; con él, las horas solas, así entran en
+      // una fila.
+      const corto = { tarde: '16:00', noche: '20:30' };
+      for (const [clave, largo] of DIAS.filter(([c]) => c !== 'deporte' || s.deporte)) {
+        const nombre = s.deporte && corto[clave] ? corto[clave] : largo;
         const b = boton('', nombre, () => { if (s.dia !== clave) { s.dia = clave; pintar(); } });
         b.setAttribute('aria-pressed', String(s.dia === clave));
         dias.appendChild(b);
@@ -384,11 +410,22 @@ const AvisosBloqueo = (() => {
     return {
       abrir, cerrar,
       get abierta() { return !raiz.hidden; },
-      // Para las capturas: { modo, hora, idioma, dia, otraHora, cenaTemprano, pocaProteina, abajo }. `abajo` es
-      // cuánto bajar la lista, o el nombre de un grupo de «Todos» para llevarlo arriba.
+      /** El día de ejemplo de «Según el deporte» (Deporte.paraBloqueo), o null; abierta, se ve enseguida. */
+      ponerDeporte(d) {
+        s.deporte = d || null;
+        if (s.dia === 'deporte' && !s.deporte) s.dia = 'tarde';
+        if (raiz.hidden) return;
+        enPantalla.clear();
+        raiz.querySelector('.ab-lista')?.remove();
+        pintar();
+      },
+      // Para las capturas: { modo, hora, idioma, dia, otraHora, cenaTemprano, pocaProteina, abajo, deporte }. `abajo`
+      // es cuánto bajar la lista, o el nombre de un grupo de «Todos» para llevarlo arriba. `deporte`: el día de
+      // ejemplo de «Según el deporte» (Deporte.paraBloqueo), o null para sacarlo.
       poner(p) {
         Object.assign(s, p);
-        if (p.modo || p.idioma || p.dia) { enPantalla.clear(); raiz.querySelector('.ab-lista')?.remove(); }
+        if (s.dia === 'deporte' && !s.deporte) s.dia = 'tarde';
+        if (p.modo || p.idioma || p.dia || 'deporte' in p) { enPantalla.clear(); raiz.querySelector('.ab-lista')?.remove(); }
         pintar();
         const l = raiz.querySelector('.ab-lista');
         if (!l || p.abajo === undefined) return;

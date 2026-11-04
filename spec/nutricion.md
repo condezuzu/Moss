@@ -780,13 +780,16 @@ de comer antes y después (`alrededorDelEntreno.ts`), que hoy lleva uno.
    comida de cada hora): hoy son lo mismo.
 4. Perfil › Entrenamiento (`ajustes.entreno`, que hoy queda solo en el teléfono) pasa a
    guardar los deportes (`tipos`), la sesión de cada uno (`sesiones`), el viaje, los
-   partidos con su día y la categoría de peso, y lo llena el cuestionario. Los avisos de
+   partidos con su día y su hora (opcional), la próxima carrera y la categoría de peso, y
+   lo llena el cuestionario. Los avisos de
    comer antes y después leen las sesiones de cada día (`sesionesDeUnDia`) en lugar del
    horario único.
 5. Leer la grasa (y la masa magra) de Salud cambia la privacidad: un permiso más de
    HealthKit, su texto en `app.json` (toca la huella nativa: va con la próxima build), las
    respuestas de privacidad de App Store Connect y `spec/revision.md`.
-6. Los consejos según el deporte: [`entreno.md`](entreno.md), «Según el tipo de deporte».
+6. Los consejos según el deporte: la regla ya está (`segunElDeporte.ts`, para aprobar en
+   la galería); qué dato falta para cada una y lo que queda por decidir, en
+   [`entreno.md`](entreno.md), «Según el tipo de deporte» («En la galería»).
 
 Fuentes: MacroFactor ([las pantallas](https://screensdesign.com/apps/macrofactor-macro-tracker/?vs=171074),
 [sus algoritmos](https://macrofactor.com/macrofactors-algorithms-and-core-philosophy/),

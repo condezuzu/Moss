@@ -74,6 +74,9 @@ export type Avisos = {
   luces?: { encendido: boolean };
   /** Solo con Ascent vinculada. */
   recuperacion?: { encendido: boolean };
+  /** Según el deporte (segunElDeporte.ts): la víspera del partido y dos días antes de una carrera larga. */
+  partido?: { encendido: boolean };
+  carrera?: { encendido: boolean };
 };
 
 /** Lo del sueño que usan los avisos. */
@@ -103,13 +106,13 @@ export type Sueno = {
 export type Aviso = {
   /**
    * 'dormir', 'comida:cena', 'horario:cena', 'pesarse', 'falta:proteina', 'habito:<id>:<n>' (el n-ésimo aviso
-   * de ese hábito, desde 0) o los de lo que conviene: 'antesDeEntrenar:0', 'cafe', 'ultimaComida', 'luces'...
+   * de ese hábito, desde 0) o los de lo que conviene: 'antesDeEntrenar:0', 'cafe', 'ultimaComida', 'luces', 'partido'...
    */
   id: string;
   /** Su hora, en minutos desde la medianoche del día; lo de la noche puede pasar de 1440. */
   minutos: number;
   tipo: 'dormir' | 'habito' | 'comida' | 'horario' | 'pesarse' | 'falta'
-    | 'antesDeEntrenar' | 'despuesDeEntrenar' | 'cafe' | 'ultimaComida' | 'entrenarTarde' | 'luces' | 'recuperacion';
+    | 'antesDeEntrenar' | 'despuesDeEntrenar' | 'cafe' | 'ultimaComida' | 'entrenarTarde' | 'luces' | 'recuperacion' | 'partido' | 'carrera';
   /** En los de lo que conviene: qué dice (loQueConviene.ts). */
   conviene?: Conviene;
   /** Los avisos de ese día que este deja sin sentido: el de comer antes de entrenar reemplaza la hora de esa comida. */
@@ -243,8 +246,9 @@ export const duerme = (h: { dormir: number | null; despertarManana: number | nul
 // El horario y pesarse se eligen como un hábito: valen lo mismo. Lo de «sin anotar» es el respaldo.
 // Lo que conviene (3/11): lo de entrenar va antes que los hábitos (solo los días de entreno, y dice qué
 // comer y cuándo); lo que cuenta hacia atrás desde la cama, después, en este orden: lo más general, lo último.
+// La víspera del partido y la carrera larga, como lo de entrenar: son un día y dicen qué comer.
 const CATEGORIA: Record<Aviso['tipo'], number> = {
-  dormir: 0, antesDeEntrenar: 1, despuesDeEntrenar: 1, recuperacion: 1, horario: 2, habito: 2, pesarse: 2,
+  dormir: 0, antesDeEntrenar: 1, despuesDeEntrenar: 1, recuperacion: 1, partido: 1, carrera: 1, horario: 2, habito: 2, pesarse: 2,
   entrenarTarde: 3, ultimaComida: 4, cafe: 5, luces: 6, comida: 7, falta: 8,
 };
 const porHora = (a: Aviso, b: Aviso) => a.minutos - b.minutos || CATEGORIA[a.tipo] - CATEGORIA[b.tipo] || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
@@ -573,6 +577,9 @@ function textoDeLoQueConviene(c: Conviene, h: ParaElTexto): { titulo: string; te
         titulo: de('recuperacion.titulo', { pct: c.porcentaje }),
         texto: c.fuerte ? de('recuperacion.fuerte') : c.dormido !== undefined ? de('recuperacion.suave', { horas: h.duracion(c.dormido) }) : de('recuperacion.suaveSinSueno'),
       };
+    case 'partido':
+    case 'carrera':
+      return { titulo: de(`${c.que}.titulo`), texto: de(`${c.que}.texto`) };
   }
 }
 

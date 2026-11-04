@@ -23,7 +23,10 @@ numeradas [n], con autores, año, revista y enlace.
   proteína de después también llegan como avisos, cada uno con su interruptor,
   con las mismas reglas y la comida previa contada desde que sales al gimnasio
   (5.11). Están en [`avisos.md`](avisos.md), «Lo que conviene hacer».
-- **Lo que falta decidir** está en «7. Pendiente».
+- **Según el deporte** (4/11/2026, para aprobar): las once reglas de 5.12 en
+  `src/dominio/segunElDeporte.ts`, en «Para hoy», en Sueño, en una tarjeta de Inicio y
+  en dos avisos; se ven en la galería (sección 1.2). La app todavía no las usa.
+- **Lo que falta decidir** está en «7. Pendiente» y, lo del deporte, al final de 5.12.
 
 ## Resumen
 
@@ -682,7 +685,7 @@ que **sales**, no desde que empiezas:
 
 ---
 
-### 5.12 Según el tipo de deporte (3/11/2026, para decidir)
+### 5.12 Según el tipo de deporte (3/11/2026; en la galería el 4/11, para aprobar)
 
 Lo pediste así: que el cuestionario pregunte qué tipo de ejercicio haces (algo con
 mucha carrera como fútbol o básquetbol, fuerza como el gimnasio, o mixto), porque «no
@@ -694,8 +697,9 @@ Moss, 1,6 a 2,2 g/kg, sirve para casi todos). Lo que cambia es cuántos carbohid
 según el día y cuándo, el agua y el sodio, la recuperación (que los choques y el
 alcohol hacen más lenta), algunos riesgos (energía baja, hierro, huesos, picos de
 carga) y cuánto rinde dormir más. El cuestionario ya pregunta los tipos (varios a la
-vez); las reglas de abajo **no están programadas**: se deciden y se prueban primero en
-la galería.
+vez). Las reglas de abajo están en `src/dominio/segunElDeporte.ts`, con sus tests, y se
+prueban en la galería (sección 1.2, con siete días de ejemplo): **la app todavía no las
+usa**. Qué hay y dónde va cada una, al final («En la galería»).
 
 | Tipo | Qué cambia | Qué vigilar | |
 |---|---|---|---|
@@ -761,7 +765,9 @@ o la variabilidad como señal de energía baja.
 **El cuestionario** (lo arma `src/dominio/cuestionario.ts`): las opciones son «Pesas o
 máquinas» (también crossfit), «Partidos», «Correr, bici o nadar», «Choques o combate» y
 «No entreno (o solo camino o hago yoga)», varias a la vez; con partidos o choques, si
-juega o compite y qué día; con combate, si compite por categoría de peso; con dos tipos,
+juega o compite, qué día y, si la sabe, a qué hora empieza (`partidos: { dia, hora }`; la
+hora es para la regla 6, y «Varía» la deja sin hora); con combate, si compite por
+categoría de peso; con dos tipos,
 cuándo hace cada uno. No pregunta la posición (la carga sale de Salud y de Ascent), el
 ayuno (sale del registro), la temporada, la menstruación (va como señal en la regla 10)
 ni los suplementos. Si Salud dice otro deporte (`soccer`, `rugby`, `martialArts`…), Moss
@@ -791,6 +797,73 @@ propone el cambio y nunca lo hace solo.
 No se pudo leer entero: el consenso de la UEFA (dio 403; los números salen de resúmenes y
 de un artículo de 2025 que los cita), el consenso REDs y el del ACSM 2021 sobre el peso
 (solo los resúmenes). Los autores de [D3], [D5] y [D8] son del GSSI (Gatorade).
+
+**En la galería (4/11/2026, para aprobar).** Las once reglas, con sus umbrales tal cual
+(también lo «derivado»), están en `src/dominio/segunElDeporte.ts`, con un test por regla
+(justo antes y justo después del umbral) y uno que revisa que ningún texto, en es ni en en,
+nombre suplementos, diagnósticos ni un riesgo en %, y que la ferritina salga solo como
+análisis. Cada consejo dice qué es, dónde va y los números de su texto; las palabras las
+elige `textoDelDeporte` (y la tarjeta, `tarjetaDeEnergia`). «Para hoy» los mezcla
+(`paraHoy.ts`) y los avisos los arman con `partidoManana` y `diasParaLaCarrera`
+(`loQueConviene.ts`). La galería los usa tal cual (`galeria/src/deporte.js`, con siete días
+de ejemplo; escenario de capturas `deporte`). La app todavía no los usa.
+
+| Regla | Dónde va | Qué dato usa | ¿La app lo tiene? |
+|---|---|---|---|
+| 1. Partido | «Para hoy»: la víspera, el día y entre dos partidos a menos de 72 h. La víspera, también el aviso «Mañana juegas» | El día del partido y, para los 72 h, su hora | El día, en el cuestionario nuevo (para aprobar); la hora es nueva y opcional |
+| 2. Carrera de más de 90 min | «Para hoy», los dos días antes. Dos días antes, el aviso «Tu carrera es pasado mañana» | La fecha y lo que dura | No: «Próxima carrera», en Perfil › Entrenamiento (solo en la galería) |
+| 3. Los carbohidratos del día | «Para hoy» | Las sesiones de hoy, con su tipo y sus minutos | Sí: las del cuestionario (o las de Salud o Ascent) |
+| 4. Pesarse antes y después | «Para hoy» | Dos pesadas con hora a menos de 3 h, alrededor de una sesión, y el agua anotada | Las pesadas con hora y el agua sí; juntarlas con una sesión, no todavía |
+| 5. Alcohol después de jugar | «Para hoy», al día siguiente | El alcohol de lo anotado, con su hora, y el peso | Sí: la base trae el alcohol de cada alimento |
+| 6. Partido de noche | Sueño, una línea debajo de la noche, la mañana siguiente | La hora del partido y lo que dura | La hora, nueva (cuestionario y Perfil); lo que dura, el de la sesión de partidos (o 90 min) |
+| 7. Dormir más | Sueño | Las últimas 7 noches y lo que necesitas | Sí |
+| 8. Más carga y menos sueño | Sueño | La carga de esta semana y de las 4 anteriores, y las 7 noches | Las noches sí; la carga por semana (Salud o Ascent), no todavía |
+| 9. Pico de distancia | «Para hoy» | Lo que corriste, salida por salida, con los km, 30 días | No: Salud lo tiene, Moss no lo lee |
+| 10. Energía baja | Inicio, una tarjeta debajo de la luna, una sola vez | La tendencia del peso y las sesiones por semana; o lo comido, lo de entrenar y la masa magra | La tendencia y las sesiones sí; la masa magra, solo con la grasa |
+| 11. Hierro y calcio | «Para hoy» | El hierro y el calcio de lo anotado, 14 días | Sí: los micronutrientes de la base |
+
+Lo que decidí al programarlo:
+
+- **«Para hoy»:** lo del deporte va primero, en este orden: pesarse, la carrera, el partido,
+  los carbohidratos del día, el pico, el alcohol y el hierro o el calcio; siguen siendo tres
+  como mucho y nunca dos del mismo tema: la carrera gana a los carbohidratos del día, con
+  los carbohidratos del deporte no va «pocos carbohidratos» y con pesarse no va el agua.
+- **Sueño:** una sola línea, sin caja, con un trazo de la aurora: el partido de noche gana a
+  la carga con poco sueño, y esa a dormir más.
+- **Con «sin déficit»** no va nada de lo que es de comer (1, 2, 3, 5 y 11, ni los avisos):
+  quedan pesarse, el pico, Sueño y la tarjeta, sin números.
+- **Los avisos**, a la hora del almuerzo de siempre (la del horario o la de siempre, corrida
+  por lo anotado hoy) y en lugar de «Hora del almuerzo»; suenan aunque ya hayas almorzado,
+  porque hablan de todas las comidas. Cuentan como lo de entrenar para el máximo.
+- **Umbrales que puse** (derivados): pesarse dice algo desde medio kilo; 1,25 L por kilo, de a
+  0,1 L, y calla si ya tomaste eso después; «mucho sudor» es 1,5 L por hora o más (lo perdido
+  más lo tomado entre las pesadas); sin la hora del partido, el alcohol cuenta el día del
+  partido; dormir más pide 4 de las 7 noches medidas (el promedio de lo que faltó cada una);
+  la energía baja «durante dos semanas» es la señal del peso en 3 semanas hoy, hace una y
+  hace dos, la de cada semana las dos últimas y la de lo anotado en cada una de las dos (6
+  de 7 días), que no cuenta si el peso subió; «mucha carga» son 5 h por semana o más; un día
+  «bien anotado» llega a 3/4 de su meta; lo que dura un partido sin decirlo, 90 min.
+- **El hierro y el calcio**, con la referencia de la app (`micronutrientes.ts`): hierro 18 mg
+  en mujeres hasta los 50 y 8 desde los 51, y 8 en hombres; calcio 1.000 (1.200 en mujeres
+  desde los 51), y 1.500 con energía baja.
+- **Los textos** son los de arriba. El del hierro, sin género («Si notas mucho cansancio»); el
+  del partido de noche dice «duerme más esta noche» y no «mañana», porque se lee la mañana
+  siguiente. Los que no estaban los escribí yo: el partido de hoy y entre partidos, la carrera
+  de mañana, pesarse sin números o sin sal y «la próxima vez, toma más mientras entrenas», el
+  calcio y los dos juntos, y de qué sale la tarjeta (del peso, nunca cuánto).
+- **La hora del partido** en el cuestionario y en Perfil: «Varía» la deja sin hora.
+
+Para decidir:
+
+1. **La meta** de la víspera y del día del partido, y de los dos días antes de la carrera:
+   la regla marca «sin déficit aunque estés bajando», pero la meta todavía no cambia.
+2. **Con la meta keto o baja en carbohidratos**, las reglas 1 a 3 se dicen igual (en
+   «Para hoy», «pocos carbohidratos» calla con esas metas). ¿Se callan también?
+3. **Antes de los 18**, la regla 7 usa una necesidad de 9 h; Sueño (`sueno.ts`) sigue con 8.
+4. **La tarjeta de la energía baja** nombra la menstruación también a los hombres (es el
+   texto de arriba): ¿se adapta según el sexo? Y ese día «Para hoy» puede decir «Vas bien hoy».
+5. **De dónde sale** la carga de cada semana (regla 8) y lo que corriste (regla 9): Salud o
+   Ascent.
 
 Fuentes de esta sección: [D1] Thomas, Erdman, Burke 2016, ACSM/AND/DC,
 https://doi.org/10.1016/j.jand.2015.12.006 · [D2] Collins 2021, UEFA,

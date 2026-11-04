@@ -589,8 +589,12 @@ Lo que necesita una build nueva, no una OTA (lo pediste el 28/10/2026):
 
 - **Prender Ascent:** `CON_ASCENT = true` (D30), cuando Ascent 1.2.0 esté en la
   tienda, con la ficha y las notas para quien revisa de `revision.md` «f».
-- **Los parches de Expo** que pide `npx expo-doctor` (por ejemplo `expo` 58.0.21,
-  `@expo/ui` 58.0.25, `expo-camera` 58.0.14), con `npx expo install --fix`.
+- **Los parches de Expo** que pide `npx expo-doctor` (al 4/11: `expo` 58.0.23,
+  `@expo/ui` 58.0.27, `react-native` 0.88.1, `react-native-safe-area-context` 5.11.1 y
+  una veintena más), con `npx expo install --fix`.
+- **`expo-asset`**: lo importa `src/widgets/fondos.ts` y no está declarado en
+  `package.json` (llega como dependencia de `expo`). Se suma con `npx expo install
+  expo-asset`; antes de la OTA, no, porque cambia la huella.
 - **Las capturas en inglés:** en EN van ahora las cinco en español del usuario.
 
 ## La 1.1 (rama `mejoras-1.1`, 29/10/2026)

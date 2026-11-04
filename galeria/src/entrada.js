@@ -186,6 +186,10 @@ const Entrada = (() => {
 .entrada .ent-pregunta .ent-opciones { margin-top: 0; }
 .entrada .ent-si-no .ent-opcion { padding: 9px 4px; }
 .ent-dia-partido .ent-etiqueta { margin-top: 12px; }
+.ent-hora-partido { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ent-varia { appearance: none; cursor: pointer; padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.18); background: rgba(6, 10, 22, 0.5); color: rgba(239, 230, 207, 0.72); font: 500 13.5px/1 var(--texto); transition: color 0.25s, border-color 0.25s, background 0.25s; }
+.ent-pasito.sin-hora b { color: rgba(239, 230, 207, 0.4); }
+.ent-varia[aria-pressed='true'] { background: rgba(232, 196, 106, 0.16); border-color: rgba(232, 196, 106, 0.8); color: var(--oro-claro); }
 .ent-suma { margin: 14px 0 0; font: 400 12.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.6); }
 
 /* El peso meta con su ritmo: cada ritmo con su fecha, o una fecha con el ritmo que pide. */
@@ -483,7 +487,8 @@ button.ent-dia-nombre { cursor: pointer; }
           resistencia: { dias: [2, 6], hora: 7 * 60 + 30, minutos: 45 },
           contacto: { dias: [2, 4], hora: 20 * 60, minutos: 90 },
         },
-        viaje: 15, partidos: false, diaDePartido: 6, categoriaDePeso: false,
+        // La hora del partido es opcional (null: varía o no la sabe).
+        viaje: 15, partidos: false, diaDePartido: 6, horaDePartido: null, categoriaDePeso: false,
       },
       objetivo: 'mantener', pesoMeta: null, ritmo: 'recomendado', fecha: null, experiencia: 'principiante', despues: 'mantener',
       estilo: 'equilibrada', proteina: 'recomendada', dieta: 'todo',
@@ -511,7 +516,7 @@ button.ent-dia-nombre { cursor: pointer; }
         tipos,
         sesiones: tipos.map((tipo) => Object.assign({ tipo }, copia(e.de[tipo]))),
         viaje: e.viaje,
-        partidos: preguntas.partidos && e.partidos ? { dia: e.diaDePartido } : null,
+        partidos: preguntas.partidos && e.partidos ? { dia: e.diaDePartido, hora: e.horaDePartido } : null,
         categoriaDePeso: preguntas.categoriaDePeso ? e.categoriaDePeso : null,
       };
       return Object.assign(dicho, Cuestionario.horarioDeLosAvisos(dicho));
@@ -1903,6 +1908,34 @@ button.ent-dia-nombre { cursor: pointer; }
         };
         const cualDia = el('div', 'ent-dia-partido');
         cualDia.append(etiqueta(tx('entrada.cuestionario.entreno.partidoDia')), chipsDeDias([e.diaDePartido], ([d]) => { e.diaDePartido = d; sumarElPartido(); }, true));
+        // A qué hora empieza, si la sabe (para saber si termina tarde: esa noche se duerme menos). «Varía» la deja sin hora.
+        const varia = el('button', 'ent-varia', tx('entrada.cuestionario.entreno.partidoVaria'));
+        varia.type = 'button';
+        const DE_FABRICA_HORA = 16 * 60;
+        const horaDelPartido = pasito(e.horaDePartido ?? DE_FABRICA_HORA, {
+          nombre: tx('entrada.cuestionario.entreno.partidoHora'), min: 8 * 60, max: 23 * 60, paso: 15,
+          formato: (x) => (e.horaDePartido == null ? '—:—' : u.horaMin(x)),
+          alCambiar: (x) => {
+            // Sin hora, el primer toque pone la de fábrica; después, de a 15 minutos.
+            const antes = e.horaDePartido;
+            e.horaDePartido = antes == null ? DE_FABRICA_HORA : x;
+            if (antes == null) horaDelPartido.poner(DE_FABRICA_HORA);
+            horaDelPartido.classList.remove('sin-hora');
+            varia.setAttribute('aria-pressed', 'false');
+          },
+        });
+        varia.setAttribute('aria-pressed', String(e.horaDePartido == null));
+        horaDelPartido.classList.toggle('sin-hora', e.horaDePartido == null);
+        varia.addEventListener('click', () => {
+          e.horaDePartido = null;
+          horaDelPartido.poner(DE_FABRICA_HORA);
+          horaDelPartido.classList.add('sin-hora');
+          varia.setAttribute('aria-pressed', 'true');
+          escena.haptico('suave');
+        });
+        const filaHora = el('div', 'ent-hora-partido');
+        filaHora.append(varia, horaDelPartido);
+        cualDia.append(etiqueta(tx('entrada.cuestionario.entreno.partidoHora')), filaHora);
         const plDia = plegar(cualDia, e.partidos);
         desliza.append(pregunta('partidos', 'ent-partidos', e.partidos, (si) => { e.partidos = si; plDia.abrir(si); sumarElPartido(); }), plDia.el);
       }

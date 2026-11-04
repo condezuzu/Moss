@@ -7,11 +7,17 @@
 //   comidas, y si no, calla.
 // - Sin culpa: nunca reta ni pide comer menos. Con «sin déficit» (un cuidado de salud) solo quedan anotar y
 //   el agua; con los números ocultos, la interfaz los dice sin cifras.
+// - Según el deporte (3/11/2026, para aprobar): lo de segunElDeporte.ts que va en «Para hoy» va primero, en
+//   su orden, y ya llega con «sin déficit» y los números ocultos aplicados. Siguen siendo tres como mucho y
+//   nunca dos de lo mismo: si uno del deporte habla de carbohidratos, no va «pocos carbohidratos»; si habla
+//   del agua, no va el agua.
 
 import type { Comida } from './comidas';
 import type { Macros } from './metas';
+import type { ConsejoDelDeporte } from './segunElDeporte';
 
 export type ConsejoDeHoy =
+  | { tipo: 'deporte'; consejo: ConsejoDelDeporte }
   | { tipo: 'anotar'; comidas: Comida[] }
   | { tipo: 'nadaAnotado' }
   | { tipo: 'pocosCarbohidratos'; proxima: Comida | null }
@@ -35,6 +41,8 @@ export type EntradaDeParaHoy = {
   /** El agua de hoy, solo si se suele anotar. */
   agua?: { ml: number; meta: number } | null;
   sinDeficit?: boolean;
+  /** Lo de hoy según el deporte (segunElDeporte), en su orden: acá entra lo que va en «Para hoy». */
+  deporte?: readonly ConsejoDelDeporte[];
 };
 
 export const MAXIMO_DE_CONSEJOS = 3;
@@ -62,6 +70,13 @@ const VASO_ML = 250;
 const parte = (comido: number, meta: number) => (meta > 0 ? comido / meta : 1);
 
 export function paraHoy(e: EntradaDeParaHoy): ConsejoDeHoy[] {
+  // Lo del deporte primero, sin dos del mismo tema; y los temas que ya tocó no se repiten abajo.
+  const temas = new Set<ConsejoDelDeporte['tema']>();
+  const delDeporte: ConsejoDeHoy[] = (e.deporte ?? []).filter((c) => {
+    if (c.donde !== 'paraHoy' || temas.has(c.tema)) return false;
+    temas.add(c.tema);
+    return true;
+  }).map((consejo) => ({ tipo: 'deporte', consejo }));
   const lista: ConsejoDeHoy[] = [];
   if (e.anotadas === 0) {
     // Sin nada anotado no se sabe nada de la comida: solo, si ya pasaron dos comidas, que se anote.
@@ -76,7 +91,7 @@ export function paraHoy(e: EntradaDeParaHoy): ConsejoDeHoy[] {
     let hablaDeProteina = false;
     const conPocosCarbohidratos = e.meta.carbohidratos * 4 < CARBOHIDRATOS_BAJOS * e.meta.kcal;
     if (parte(e.comido.kcal, e.meta.kcal) >= COMIDO_PARA_REPARTO) {
-      if (p - c >= DESEQUILIBRIO && c < TODAVIA_BAJO && !conPocosCarbohidratos) {
+      if (p - c >= DESEQUILIBRIO && c < TODAVIA_BAJO && !conPocosCarbohidratos && !temas.has('carbohidratos')) {
         lista.push({ tipo: 'pocosCarbohidratos', proxima: e.proxima });
         hablaDeProteina = true;
       } else if (c - p >= DESEQUILIBRIO && p < TODAVIA_BAJO) {
@@ -89,6 +104,6 @@ export function paraHoy(e: EntradaDeParaHoy): ConsejoDeHoy[] {
     if (!hablaDeProteina && e.ahora >= PROTEINA_DESDE && falta >= PROTEINA_QUE_FALTA) lista.push({ tipo: 'faltaProteina', gramos: Math.round(falta / 5) * 5, proxima: e.proxima });
   }
 
-  if (e.agua && e.ahora >= AGUA_DESDE && e.agua.ml < AGUA_BAJA * e.agua.meta) lista.push({ tipo: 'agua', vasos: Math.ceil((e.agua.meta - e.agua.ml) / VASO_ML) });
-  return lista.slice(0, MAXIMO_DE_CONSEJOS);
+  if (e.agua && e.ahora >= AGUA_DESDE && e.agua.ml < AGUA_BAJA * e.agua.meta && !temas.has('agua')) lista.push({ tipo: 'agua', vasos: Math.ceil((e.agua.meta - e.agua.ml) / VASO_ML) });
+  return [...delDeporte, ...lista].slice(0, MAXIMO_DE_CONSEJOS);
 }

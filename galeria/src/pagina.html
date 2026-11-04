@@ -81,6 +81,8 @@ section.item p { margin: 0; max-width: 64ch; }
 .segmento { display: inline-flex; border: 1px solid rgba(232, 196, 106, 0.3); border-radius: 999px; padding: 3px; gap: 2px; }
 .segmento button { appearance: none; border: 0; background: transparent; padding: 6px 13px; border-radius: 999px; cursor: pointer; font: 400 13px/1 var(--texto); color: var(--tenue); }
 .segmento button[aria-pressed='true'] { background: rgba(232, 196, 106, 0.16); color: var(--oro-claro); }
+/* Un segmento con muchas opciones baja de renglón (los días de ejemplo del deporte). */
+.segmento.envuelve { flex-wrap: wrap; border-radius: 18px; }
 .grupo { display: grid; gap: 8px; }
 .grupo > span { font: 400 11px var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: var(--tenue); }
 .deslizador { display: flex; align-items: center; gap: 12px; }
@@ -555,6 +557,15 @@ button.gc-fila { cursor: pointer; }
 .in-consejo-agua .in-consejo-ico { --c: #a9c4f5; --c-rgb: 169, 196, 245; }
 .in-consejo-accion { appearance: none; cursor: pointer; align-self: center; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(232, 196, 106, 0.45); background: rgba(232, 196, 106, 0.08); color: var(--oro-claro); font: 500 12.5px/1 var(--texto); }
 .in-consejo-nada { margin: 0; font: 300 13.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.6); }
+/* La energía baja (según el deporte, para aprobar): una tarjeta tranquila, sin color de alarma, una sola vez. Al
+   tocar «No mostrar más» se pliega desde su alto, y el bloque de abajo sube con ella. */
+.in-energia { cursor: default; overflow: hidden; animation: sn-aparece 0.45s 0.1s cubic-bezier(0.2, 0.7, 0.2, 1) both; transition: height 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.24s ease, padding 0.32s ease, margin 0.32s ease, border-color 0.32s ease; }
+.in-energia:active { transform: none; }
+.in-energia-texto { margin: 0; font: 300 14px/1.5 var(--texto); color: rgba(239, 230, 207, 0.86); text-wrap: pretty; }
+.in-energia-sale { margin: 9px 0 0; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); }
+.in-energia-pie { display: flex; justify-content: flex-end; margin-top: 10px; }
+.in-energia-cerrar { appearance: none; cursor: pointer; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.18); background: none; color: rgba(239, 230, 207, 0.78); font: 500 12.5px/1 var(--texto); }
+.in-energia.saliendo { height: 0 !important; padding-top: 0; padding-bottom: 0; margin-bottom: -12px; opacity: 0; border-color: transparent; }
 /* El control cuando se acerca: una línea debajo de la luna. */
 .in-control { padding: 12px 14px; }
 .in-control-fila { display: grid; grid-template-columns: 18px minmax(0, 1fr) 14px; align-items: center; gap: 11px; }
@@ -1861,6 +1872,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
   .hj-siempre, .dc-resultado, .dc-bloque, .cm-entreno { animation-duration: 0.01s; }
   .escuchando .dc-aro { animation: none; opacity: 0.6; }
   .in-vasos i.nuevo { animation: none; }
+  .in-energia { animation: none; transition: none; }
   .sn-parte-barra i { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
   .pasado .in-macro-nombre::before, .pasado .cm-macro-nombre::before { animation: none; box-shadow: 0 0 0 2px var(--c); }
@@ -1896,6 +1908,12 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
       <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="deporte">Según el deporte</button>
+          <button class="boton" type="button" data-seccion="deporteTarjeta">La energía baja</button>
+          <button class="boton" type="button" data-seccion="deporteVispera">Mañana juegas, bloqueada</button>
+          <button class="boton" type="button" data-seccion="deporteCuestionario">La hora del partido</button>
+        </div>
         <div class="controles">
           <button class="boton principal" type="button" data-ascent="abrir">Ascent, arriba de Progreso</button>
           <button class="boton principal" type="button" data-seccion="graficos">Progreso, más simple</button>
@@ -1976,6 +1994,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>Según el deporte</b> (3/11, para aprobar; la investigación está en <code>spec/entreno.md</code>, 5.12): lo que cambia según lo que entrenás, más allá de la proteína. En <b>«Para hoy»</b>, primero y sin pasar de tres: el partido (la víspera, el día y entre dos partidos a menos de 72 h), la carrera de más de hora y media (los dos días antes), los carbohidratos de los días con una hora o más de resistencia o partidos, cuánto tomar si te pesaste antes y después, el alcohol después de jugar, el pico de distancia y el hierro o el calcio. En <b>Sueño</b>, una línea debajo de la noche: el partido de noche, más carga con menos sueño y dormir más en semanas de partidos. En <b>Inicio</b>, una tarjeta una sola vez: la energía baja. En la <b>pantalla bloqueada</b>, «Mañana juegas» y «Tu carrera es pasado mañana», a la hora del almuerzo. En el cuestionario, <b>la hora del partido</b> (opcional), y en Perfil › Entrenamiento, el partido y la próxima carrera. Siete días de ejemplo en la sección <b>1.2</b>, acá abajo. Las reglas son las de la app (<code>src/dominio/segunElDeporte.ts</code>, con sus tests); la app no cambia.</li>
         <li><b>Ascent, arriba de Progreso</b> (2/11 a la noche, para aprobar): se entra como a tu universo: arriba de todo de Progreso, arrastrá para abajo (o tocá la entrada de arriba a la derecha, con la sesión de hoy). Arriba, <b>«Estás 81 % recuperado»</b> con sus franjas y qué conviene hoy; debajo, <b>«Hoy, concéntrate en»</b> (qué comer y a qué hora, cómo ir en el gimnasio y a qué hora a la cama); <b>de qué sale</b>: Sueño (de 40: sin la calidad, llega a 30, así te invita a registrarla, y «¿Dormiste distinto? Corrígelo en Sueño»), <b>Fatiga muscular</b> (menos es mejor) y Alimentación (de 20); <b>la fatiga por músculo</b>, por día de la rutina, con bíceps y tríceps separados; <b>Marcas</b>; <b>Razones de estancamiento</b> (todos los ejercicios, cada uno con su causa probable: la definición, el sueño, la proteína, las calorías, poco descanso, menos seguido o sesiones más cortas); <b>Tu año</b> con el color de cada grupo y las marcas; y <b>cómo se calcula</b>. Sin «El gimnasio se enciende solo». Seis días de ejemplo con el botón de la sección 7.</li>
         <li><b>Progreso, más simple</b> (2/11 a la noche): arriba, el control en una línea (se abre al tocarlo) y <b>tu plan</b>: a dónde y cuándo, los hitos cada cuatro semanas, el mantenimiento al llegar y lo que sigue (lo que respondas en el cuestionario), cómo vienes y «Cambiar el plan» ahí mismo. Después el peso y <b>la grasa en el medio</b>, que sin medidas invita a medirla y dice que es una estimación. Semana a semana, las medidas y el gasto, plegados en «Más datos».</li>
         <li><b>Inicio</b> (2/11 a la noche): sin el saludo de arriba (lo odiabas: se borró). Abajo de todo, <b>«Para hoy»</b>: hasta tres comentarios cortos de la comida, una idea cada uno (lo que falta anotar con «Anotar», el reparto de los macros, lo que falta de proteína y el agua); los de la hora de dormir y de entrenar pasaron a los avisos. <b>El control</b> aparece debajo de la luna desde dos días antes. <b>La luna</b> con la luz cenicienta y cráteres con relieve, y <b>el musgo</b> abajo de todo.</li>
@@ -1998,6 +2017,45 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         <li><b>La suscripción</b> (D40, decidida el 2/11): toda Moss es de pago, con 7 días gratis; USD 9,99 por mes o 39,99 por año, con el anual preseleccionado (USD 3,33 por mes, ahorras 67 %). <b>La entrada completa</b>: una introducción más larga (la comida, la base sin IA de fotos, el sueño, los dos juntos, los hábitos y el cielo, y lo que cuesta), iniciar sesión, cuestionario, meta y ahí la pantalla de pago. «Saltar» lleva a lo que cuesta: nadie contesta el cuestionario sin saber que es de pago. La pantalla de pago destaca comida y sueño juntos, con un ejemplo; tocá un plan, «Empezar 7 días gratis» (la hoja de Apple es un dibujo), Cancelar, o abajo «Restaurar compras». Los estados: sin conexión, restaurada, ya tenías cuenta (de regalo), y cuando termina: tus datos a salvo, exportar, cerrar sesión y borrar la cuenta, sin pagar. En Perfil, la fila abre <b>Tu suscripción</b>. Nada cobra: en la app, está apagada hasta prender <code>PREMIUM_SALE</code>.</li>
         <li><b>Los avisos de la hora de dormir</b> (31/10, ya en la rama; se ven en el teléfono, no acá): cada noche otro, y no se repite hasta dentro de nueve. «Deberías irte a dormir en una hora.», «Baja las luces: a la cama en media hora.», «Para despertarte a las 7:30, a la cama a las 23:20.», «A la cama a las 23:20 y duermes 8 h.» La lista entera está en <code>spec/avisos.md</code>.</li>
         <li><b>El plan sugerido</b>, que ya está en la app: «Te sugerimos», pulgar arriba y abajo (cambian lo que se sugiere después, también lo que lleva lo mismo), y «Otra», que no repite lo que ya viste y no se acaba.</li>
+      </ul>
+    </section>
+
+    <section class="item" id="deporte">
+      <h2><span class="n">1.2</span>Según el deporte <small>para aprobar</small></h2>
+      <p>Lo pediste el 3/11: que el cuestionario pregunte qué deporte hacés y que eso cambie los consejos, porque no todo es proteína, carbohidratos y grasas. La investigación (once reglas, cada una con su umbral, su línea y qué tan fuerte es, y lo que no se dice) está en <code>spec/entreno.md</code>, 5.12; acá se ve andar con la regla de la app (<code>src/dominio/segunElDeporte.ts</code>, con sus tests), mezclada en «Para hoy» y en los avisos con la de siempre. Elegí un día de ejemplo: cada uno pone el deporte, la persona y el día, y se ve en Inicio, en Sueño, en la pantalla bloqueada y en Perfil › Entrenamiento. Lo demás de Inicio y de Sueño (la luna, el peso, las noches) sigue siendo la persona de la galería: lo del ejemplo es «Para hoy», la tarjeta, la línea de Sueño y la pantalla bloqueada. «Ninguno» deja la galería como siempre. La app no cambia.</p>
+      <div class="panel">
+        <div class="controles">
+          <div class="grupo"><span>El día de ejemplo</span>
+            <div class="segmento envuelve" id="s-deporte"><button type="button" data-valor="ninguno" aria-pressed="true">Ninguno</button><button type="button" data-valor="vispera" aria-pressed="false">1 · Fútbol, la víspera</button><button type="button" data-valor="anoche" aria-pressed="false">2 · Fútbol, jugaste anoche</button><button type="button" data-valor="carrera" aria-pressed="false">3 · Corredora, la carrera</button><button type="button" data-valor="pico" aria-pressed="false">4 · Corredora, la más larga</button><button type="button" data-valor="carga" aria-pressed="false">5 · Básquetbol y pesas</button><button type="button" data-valor="energia" aria-pressed="false">6 · Rugby, comiendo de menos</button><button type="button" data-valor="bici" aria-pressed="false">7 · Bici, pesado antes y después</button></div>
+          </div>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="deporteInicio">«Para hoy», en Inicio</button>
+          <button class="boton" type="button" data-seccion="deporteSueno">Sueño</button>
+          <button class="boton" type="button" data-seccion="deporteBloqueo">La pantalla bloqueada</button>
+          <button class="boton" type="button" data-seccion="deportePerfil">Perfil › Entrenamiento</button>
+          <button class="boton" type="button" data-seccion="deporteCuestionario">La hora del partido</button>
+        </div>
+        <div class="controles">
+          <div class="grupo"><span>El domingo después del partido (el 2)</span>
+            <div class="segmento" id="s-alcohol"><button type="button" data-valor="si" aria-pressed="true">Con alcohol anotado</button><button type="button" data-valor="no" aria-pressed="false">Sin alcohol</button></div>
+          </div>
+        </div>
+      </div>
+      <ul class="lista">
+        <li><b>Los días de ejemplo</b> (cada uno con su persona, su meta y su hora del día):
+          <ul>
+            <li><b>1. Fútbol, la víspera</b>: viernes 23 a las 17:40; juega los sábados a las 21. «Para hoy» empieza con «Mañana juegas: hoy y mañana, carbohidratos en cada comida.»; viene bajo en carbohidratos, pero «pocos carbohidratos» no va (nunca dos de lo mismo), y queda el agua. En la pantalla bloqueada, «Mañana juegas» a las 13:00, en lugar de «Hora del almuerzo».</li>
+            <li><b>2. Fútbol, jugaste anoche</b>: domingo 25; el partido terminó a las 22:30. En Sueño, debajo de la noche: «Jugaste tarde: es normal dormirte tarde…». Con alcohol anotado (84 g después del partido: más de un gramo por kilo en las 12 h siguientes), «Para hoy» lo dice; sin alcohol, nada (probalo arriba).</li>
+            <li><b>3. Corredora, la carrera del domingo</b>: viernes 23; su media maratón es el domingo y dura 2 h. «Tu carrera es pasado mañana: carbohidratos en todas tus comidas y menos fibra.» en «Para hoy» y, a la hora del almuerzo, en la pantalla bloqueada.</li>
+            <li><b>4. Corredora, la más larga del mes</b>: sábado 17, después de 18 km (la más larga de los 30 días anteriores era de 15). Hoy corrió más de una hora y su hierro viene bajo hace dos semanas (unos 11 mg de 18): entran los tres, que es el máximo.</li>
+            <li><b>5. Básquetbol y pesas</b>: miércoles 21, con básquetbol a las 19 (90 min): «Hoy entrenas más de una hora: que tu plato tenga más carbohidratos.» Esta semana entrena un 32 % más que las cuatro anteriores y 5 de 7 noches durmió menos de 7 h: en Sueño, «Esta semana entrenas más y duermes menos…». Dormir más (también tiene deuda) es del mismo tema: queda la carga.</li>
+            <li><b>6. Rugby, comiendo de menos</b>: jueves 22. Quiere mantener, entrena 5 veces por semana y su peso baja un 1,4 % cada tres semanas desde hace más de dos: la tarjeta, debajo de la luna, con «No mostrar más» (se pliega y no vuelve; elegí el ejemplo de nuevo para verla). Con «Los números» ocultos o con «sin déficit» (Perfil), sin números; del peso nunca dice cuánto.</li>
+            <li><b>7. Bici, pesado antes y después</b>: sábado 24, después de 2 h 30: «Perdiste 1,2 kg: toma unos 1,5 L en las próximas horas, con algo salado.» (1,25 L por kilo; con más de 2 h, algo salado; perdió el 1,7 %, así que no hace falta tomar más durante).</li>
+          </ul></li>
+        <li><b>Dónde va cada regla</b>: en «Para hoy», el partido, la carrera, los carbohidratos del día, pesarse, el alcohol, el pico de distancia y el hierro o el calcio, primero y en ese orden de importancia (pesarse, la carrera, el partido, los carbohidratos, el pico, el alcohol y los minerales), sin pasar de tres; en Sueño, el partido de noche, la carga con poco sueño y dormir más (una sola línea); en Inicio, la energía baja; en la pantalla bloqueada, la víspera del partido y la carrera, en «Lo que conviene hacer» de Perfil › Avisos, apagados de fábrica y dentro del máximo. Con «sin déficit», nada de lo que es de comer: quedan el agua, el pico, Sueño y la tarjeta sin números.</li>
+        <li><b>Lo que no se dice</b>: suplementos, diagnósticos (nada de «deshidratado» ni de nombres de enfermedades), un riesgo en %, cortes de peso ni el peso como meta. La ferritina, solo como análisis. Lo comprueba un test sobre todos los textos, en es y en en.</li>
+        <li><b>Lo que la app todavía no tiene</b> y la regla recibe opcional (sin eso, calla): la fecha y la duración de la carrera (Perfil › Entrenamiento, acá), dos pesadas alrededor de una sesión, las distancias de lo que corrés, la masa magra y la carga de cada semana.</li>
       </ul>
     </section>
 

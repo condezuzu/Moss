@@ -256,6 +256,19 @@ fábrica como todo lo demás.
   mañana, no suena.
 - No nombra Ascent («Moss es Moss»): su interruptor aparece solo vinculada.
 
+### Según el deporte: la víspera del partido y la carrera larga (4/11, para aprobar)
+
+- Con partidos o choques, la víspera del partido: «Mañana juegas · Hoy y mañana,
+  carbohidratos en cada comida.» Con correr, bici o nadar, dos días antes de una
+  carrera de más de hora y media (Perfil › Entrenamiento, «Próxima carrera»): «Tu
+  carrera es pasado mañana · Carbohidratos en todas tus comidas y menos fibra.»
+- A la hora del almuerzo de siempre y en lugar de «Hora del almuerzo»; suenan aunque
+  ya hayas almorzado, porque hablan de todas las comidas. En el máximo valen como lo
+  de entrenar. Con «sin déficit», no. Sus interruptores («La víspera del partido» y
+  «Antes de una carrera larga») aparecen solo con esos deportes.
+- **De dónde sale:** [`entreno.md`](entreno.md), 5.12, reglas 1 y 2 (ACSM 2016; UEFA
+  2021); la regla es `segunElDeporte.ts` (`partidoManana` y `diasParaLaCarrera`).
+
 ### Lo que ya pasó no suena
 
 - **Ya comiste esa comida** (o una posterior): no suenan el de antes, el de después

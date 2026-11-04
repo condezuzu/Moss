@@ -218,7 +218,9 @@
         "siNo": [
           "No",
           "Sí"
-        ]
+        ],
+        "partidoHora": "A qué hora empieza",
+        "partidoVaria": "Varía"
       },
       "recomponer": "Ganar músculo y perder grasa",
       "recomponerTexto": "Con pesas y proteína alta, sin cambiar mucho tu peso.",
@@ -1024,7 +1026,33 @@
       "agua": "Llevas poca agua: {n} vasos más y llegas.",
       "aguaSinNumeros": "Llevas poca agua: unos vasos más y llegas.",
       "bien": "Vas bien hoy: nada que ajustar.",
-      "todaviaNada": "Cuando anotes algo, aquí verás qué conviene para el resto del día."
+      "todaviaNada": "Cuando anotes algo, aquí verás qué conviene para el resto del día.",
+      "deporte": {
+        "partido": {
+          "hoy": "Hoy juegas: carbohidratos en cada comida.",
+          "manana": "Mañana juegas: hoy y mañana, carbohidratos en cada comida.",
+          "entrePartidos": "Vuelves a jugar en menos de tres días: carbohidratos en cada comida."
+        },
+        "carrera": {
+          "pasadoManana": "Tu carrera es pasado mañana: carbohidratos en todas tus comidas y menos fibra.",
+          "manana": "Tu carrera es mañana: carbohidratos en todas tus comidas y menos fibra."
+        },
+        "carbohidratos": "Hoy entrenas más de una hora: que tu plato tenga más carbohidratos.",
+        "pesarse": {
+          "texto": "Perdiste {kg} kg: toma unos {litros} L en las próximas horas.",
+          "textoConSal": "Perdiste {kg} kg: toma unos {litros} L en las próximas horas, con algo salado.",
+          "sinNumeros": "Sudaste bastante: toma más de lo de siempre en las próximas horas.",
+          "sinNumerosConSal": "Sudaste bastante: toma más de lo de siempre en las próximas horas, con algo salado.",
+          "masDurante": "La próxima vez, toma más mientras entrenas."
+        },
+        "alcohol": "Después de jugar, mucho alcohol frena la recuperación y empeora el sueño.",
+        "pico": "Fue tu carrera más larga del mes por bastante: subir poco a poco cuida tus piernas.",
+        "minerales": {
+          "hierro": "Tu hierro viene bajo: carne, legumbres u hojas verdes con vitamina C. Si notas mucho cansancio, pide un análisis de ferritina.",
+          "calcio": "Tu calcio viene bajo: lácteos, sardinas, tofu o almendras te acercan.",
+          "ambos": "Tu hierro y tu calcio vienen bajos: carne, legumbres, lácteos y hojas verdes te acercan. Si notas mucho cansancio, pide un análisis de ferritina."
+        }
+      }
     },
     "control": {
       "titulo": "Control el {dia} · {cuando}",
@@ -1035,6 +1063,22 @@
         "otros": "Te faltan {n} días con comida: anota y llega."
       },
       "listo": "Ya tiene lo que necesita: ese día ajusta tus metas."
+    },
+    "energiaBaja": {
+      "titulo": "Lo que pide tu entrenamiento",
+      "texto": "En las últimas semanas comiste bastante menos de lo que pide tu entrenamiento. Que pase unos días es normal; si sigue, puede afectar tu energía, tu rendimiento y tu salud. Sumar algo antes y después de entrenar ayuda. Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista del deporte.",
+      "deQueSale": {
+        "bajaRapida": "Moss lo vio en tu peso de las últimas dos semanas, con mucho entrenamiento.",
+        "tendencia": {
+          "conNumeros": "Moss lo vio en tu peso de las últimas {semanas} semanas, con {sesiones} sesiones por semana.",
+          "sinNumeros": "Moss lo vio en tu peso de las últimas semanas y en lo que entrenas."
+        },
+        "disponibilidad": {
+          "conNumeros": "Moss lo vio en lo que anotaste: unas {kcal} kcal por día, y entrenar te pide unas {entreno}.",
+          "sinNumeros": "Moss lo vio en lo que anotaste y en lo que entrenas."
+        }
+      },
+      "noMostrar": "No mostrar más"
     }
   },
   "mas": {
@@ -1825,6 +1869,11 @@
           "minutoAMano": "Un par de minutos, una sola vez."
         }
       }
+    },
+    "deporte": {
+      "partidoDeNoche": "Jugaste tarde: es normal dormirte tarde. Si puedes, duerme más esta noche o haz una siesta corta temprano.",
+      "cargaYSueno": "Esta semana entrenas más y duermes menos: es la combinación que más se asocia con lesiones.",
+      "dormirMas": "En semanas de partidos, una hora más de sueño es de lo que más ayuda."
     }
   },
   "perfil": {
@@ -2105,7 +2154,11 @@
       "lucesTexto": "Hora y media antes de la cama: luz tenue y cálida.",
       "recuperacion": "Tu recuperación",
       "recuperacionTexto": "Al despertarte, los días que entrenas: si te conviene entrenar fuerte o suave.",
-      "maximoTextoConviene": "Moss nunca te avisa más veces que esto en un día. Si hay más, quedan primero la hora de dormir, lo de entrenar y tus hábitos; lo que cuenta desde la hora de la cama, al final."
+      "maximoTextoConviene": "Moss nunca te avisa más veces que esto en un día. Si hay más, quedan primero la hora de dormir, lo de entrenar y tus hábitos; lo que cuenta desde la hora de la cama, al final.",
+      "partido": "La víspera del partido",
+      "partidoTexto": "A la hora del almuerzo: carbohidratos en cada comida, hoy y mañana.",
+      "carrera": "Antes de una carrera larga",
+      "carreraTexto": "Dos días antes de una carrera de más de hora y media, a la hora del almuerzo: carbohidratos y menos fibra."
     },
     "cambiarCuenta": "Cambiar de cuenta",
     "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
@@ -3118,6 +3171,14 @@
         "fuerte": "Hoy puedes entrenar fuerte.",
         "suave": "Hoy, mejor suave: dormiste {horas}.",
         "suaveSinSueno": "Hoy, mejor suave: tu cuerpo todavía se está recuperando."
+      },
+      "partido": {
+        "titulo": "Mañana juegas",
+        "texto": "Hoy y mañana, carbohidratos en cada comida."
+      },
+      "carrera": {
+        "titulo": "Tu carrera es pasado mañana",
+        "texto": "Carbohidratos en todas tus comidas y menos fibra."
       }
     }
   },
@@ -3177,7 +3238,16 @@
       "textoConAvisos": "Con tus días, tu hora y lo que tardas en llegar, Comida te dice qué comer antes y después de entrenar, en la comida que toca. Si lo prendes en Avisos, también te avisa a tiempo.",
       "viaje": "Tardo en llegar al gimnasio",
       "viajeCasa": "En casa",
-      "viajeTexto": "Para avisarte con tiempo: Moss cuenta desde que sales, no desde que empiezas."
+      "viajeTexto": "Para avisarte con tiempo: Moss cuenta desde que sales, no desde que empiezas.",
+      "partidos": "Juego partidos",
+      "partidoDia": "Qué día",
+      "partidoHora": "A qué hora empieza",
+      "partidoVaria": "Varía",
+      "partidoTexto": "Con el día, Moss te dice qué comer la víspera; con la hora, si terminas tarde, cómo recuperar el sueño.",
+      "carrera": "Próxima carrera",
+      "carreraFecha": "Cuándo",
+      "carreraTexto": "Si dura más de hora y media, Moss te dice qué comer los dos días antes.",
+      "carreraCorta": "Con hora y media o menos, no hace falta cargar carbohidratos antes."
     },
     "nocheCorta": "Dormiste {h}: es normal tener más hambre hoy."
   },

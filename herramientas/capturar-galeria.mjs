@@ -2110,6 +2110,143 @@ const pasos = {
     await pagina.waitForTimeout(400);
   },
 
+  // Según el deporte (3/11, para aprobar; spec/entreno.md 5.12): cada día de ejemplo en Inicio («Para hoy»,
+  // abajo), en Sueño (la línea debajo de la noche) y en la pantalla bloqueada (a la hora en que importa); el
+  // domingo sin alcohol; la tarjeta de la energía baja, sin números, con «sin déficit» y al tocar «No mostrar
+  // más»; Perfil › Entrenamiento con el partido y con la carrera, y sus avisos; la hora del partido en el
+  // cuestionario; lo del deporte en «Todos»; y en inglés.
+  async deporte() {
+    const deporte = (accion, arg) => pagina.evaluate(([a, x]) => window.__deporte(a, x), [accion, arg]);
+    const bloqueo = (p) => pagina.evaluate((x) => window.__avisosBloqueo(x), p);
+    const espera = (ms = 900) => pagina.waitForTimeout(ms);
+    const cerrarBloqueo = async () => { await pagina.click('.ab-cerrar'); await espera(450); };
+    // La hoja de Perfil abierta, con lo que diga `texto` arriba.
+    const alBloque = (texto) => pagina.evaluate((t) => {
+      const c = document.querySelector('.pf-hoja .pf-avisos');
+      const b = [...document.querySelectorAll('.pf-hoja .pf-aviso, .pf-hoja .pf-grupo')].find((x) => x.textContent.includes(t));
+      if (c && b) c.scrollTop = b.offsetTop - c.offsetTop - 8;
+    }, texto);
+    const EJEMPLOS = ['vispera', 'anoche', 'carrera', 'pico', 'carga', 'energia', 'bici'];
+    const nombre = (clave) => `deporte-${EJEMPLOS.indexOf(clave) + 1}-${clave}`;
+    async function enLosTres(clave, sufijo = '') {
+      await deporte('poner', clave);
+      await deporte('inicio');
+      await espera();
+      await foto(`${nombre(clave)}-inicio${sufijo}`);
+      await deporte('sueno');
+      await espera(1200);
+      await foto(`${nombre(clave)}-sueno${sufijo}`);
+      await deporte('bloqueo');
+      await espera(800);
+      await foto(`${nombre(clave)}-bloqueo${sufijo}`);
+      await cerrarBloqueo();
+    }
+    for (const clave of EJEMPLOS) await enLosTres(clave);
+    // El domingo, sin alcohol anotado: «Para hoy» no dice nada del deporte.
+    await deporte('poner', 'anoche');
+    await deporte('alcohol', false);
+    await deporte('inicio');
+    await espera();
+    await foto('deporte-2-anoche-inicio-sin-alcohol');
+    // La tarjeta, arriba de Inicio: con números, sin números, con «sin déficit», y al tocar «No mostrar más».
+    await deporte('tarjeta');
+    await espera(1100);
+    await foto('deporte-tarjeta');
+    await pagina.evaluate(() => window.__seguridad('numeros', false));
+    await espera(700);
+    await foto('deporte-tarjeta-sin-numeros');
+    await pagina.evaluate(() => window.__seguridad('numeros', true));
+    await pagina.evaluate(() => window.__seguridad('sinDeficit', true));
+    await deporte('tarjeta');
+    await espera(1100);
+    await foto('deporte-tarjeta-sin-deficit');
+    await pagina.evaluate(() => window.__seguridad('sinDeficit', false));
+    await deporte('tarjeta');
+    await espera(1100);
+    await pagina.click('.in-energia-cerrar');
+    await espera(160);
+    await foto('deporte-tarjeta-plegandose');
+    await espera(900);
+    await foto('deporte-tarjeta-no-mostrar');
+    // Perfil › Entrenamiento: el partido (qué día y a qué hora) y la próxima carrera (cuándo y cuánto dura).
+    await deporte('poner', 'vispera');
+    await deporte('perfil');
+    await hojaAbierta('pf-hoja');
+    await alBloque('Juego partidos');
+    await espera(500);
+    await foto('deporte-perfil-partido');
+    await pagina.click('.pf-hoja .hb-cerrar');
+    await espera(500);
+    await deporte('poner', 'carrera');
+    await deporte('perfil');
+    await hojaAbierta('pf-hoja');
+    await alBloque('Próxima carrera');
+    await espera(500);
+    await foto('deporte-perfil-carrera');
+    // Con 90 minutos, lo de antes no hace falta.
+    await pagina.locator('.pf-hoja .fi-porcion', { hasText: /^1 h 30 min$/ }).click();
+    await espera(500);
+    await alBloque('Próxima carrera');
+    await espera(300);
+    await foto('deporte-perfil-carrera-corta');
+    await pagina.click('.pf-hoja .hb-cerrar');
+    await espera(500);
+    // Perfil › Avisos, con la corredora: «Antes de una carrera larga», en lo que conviene hacer.
+    await seccion('avisos');
+    await hojaAbierta('pf-hoja');
+    await alBloque('Bajar las luces');
+    await espera(500);
+    await foto('deporte-perfil-avisos');
+    await pagina.click('.pf-hoja .hb-cerrar');
+    await espera(500);
+    // La hora del partido, en el cuestionario: abajo de «Qué día».
+    await deporte('poner', null);
+    await deporte('cuestionario');
+    await espera(2400);
+    await pagina.evaluate(() => { const d = document.querySelector('.ent-pantalla:not(.saliendo) .ent-desliza'); if (d) d.scrollTop = d.scrollHeight; });
+    await espera(500);
+    await foto('deporte-cuestionario-hora');
+    await pagina.click('.ent-pantalla:not(.saliendo) .ent-varia');
+    await espera(500);
+    await foto('deporte-cuestionario-varia');
+    await pagina.evaluate(() => { window.__cuestionario('entreno', { tipos: ['fuerza'], partidos: false, horaDePartido: null }); window.__entrada(null); });
+    await espera(1500);
+    // «Todos», lo del deporte, en es y en.
+    await seccion('avisosBloqueo');
+    await espera(500);
+    await bloqueo({ modo: 'todos', idioma: 'es', abajo: 'Según el deporte' });
+    await espera(500);
+    await foto('deporte-bloqueo-todos');
+    await bloqueo({ idioma: 'en', abajo: 'Según el deporte' });
+    await espera(500);
+    await foto('deporte-bloqueo-todos-ingles');
+    // Sin idioma propio, la pantalla bloqueada sigue al de la galería.
+    await bloqueo({ modo: 'dia', idioma: null });
+    await cerrarBloqueo();
+    // En inglés: la víspera, el domingo, la carga, la tarjeta y la bici.
+    await pagina.evaluate(() => window.__idioma('en'));
+    await enLosTres('vispera', '-ingles');
+    await deporte('poner', 'anoche');
+    await deporte('sueno');
+    await espera(1200);
+    await foto('deporte-2-anoche-sueno-ingles');
+    await deporte('poner', 'carga');
+    await deporte('sueno');
+    await espera(1200);
+    await foto('deporte-5-carga-sueno-ingles');
+    await deporte('tarjeta');
+    await espera(1100);
+    await foto('deporte-tarjeta-ingles');
+    await deporte('poner', 'bici');
+    await deporte('inicio');
+    await espera();
+    await foto('deporte-7-bici-inicio-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await deporte('poner', null);
+    await espera(600);
+    await pestana(0);
+  },
+
   // La propuesta de widgets (D43): la comida, chica, mediana y grande, con un toque que anota sin abrir
   // Moss; el cielo con su fondo de verdad y el día completo; la noche, a la mañana y a la noche; la
   // pantalla bloqueada; StandBy; tintados y transparentes, en inglés y abrir Moss con lo tocado.

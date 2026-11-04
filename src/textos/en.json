@@ -218,7 +218,9 @@
         "siNo": [
           "No",
           "Yes"
-        ]
+        ],
+        "partidoHora": "What time it starts",
+        "partidoVaria": "It varies"
       },
       "recomponer": "Build muscle and lose fat",
       "recomponerTexto": "With weights and high protein, without changing your weight much.",
@@ -1024,7 +1026,33 @@
       "agua": "Low on water: {n} more glasses and you're there.",
       "aguaSinNumeros": "Low on water: a few more glasses and you're there.",
       "bien": "You're on track today: nothing to adjust.",
-      "todaviaNada": "Once you log something, you'll see here what helps for the rest of the day."
+      "todaviaNada": "Once you log something, you'll see here what helps for the rest of the day.",
+      "deporte": {
+        "partido": {
+          "hoy": "You play today: carbs at every meal.",
+          "manana": "You play tomorrow: today and tomorrow, carbs at every meal.",
+          "entrePartidos": "You play again in less than three days: carbs at every meal."
+        },
+        "carrera": {
+          "pasadoManana": "Your race is the day after tomorrow: carbs at every meal and less fiber.",
+          "manana": "Your race is tomorrow: carbs at every meal and less fiber."
+        },
+        "carbohidratos": "You train for more than an hour today: put more carbs on your plate.",
+        "pesarse": {
+          "texto": "You lost {kg} kg: drink about {litros} L over the next few hours.",
+          "textoConSal": "You lost {kg} kg: drink about {litros} L over the next few hours, with something salty.",
+          "sinNumeros": "You sweated a lot: drink more than usual over the next few hours.",
+          "sinNumerosConSal": "You sweated a lot: drink more than usual over the next few hours, with something salty.",
+          "masDurante": "Next time, drink more while you train."
+        },
+        "alcohol": "After a game, a lot of alcohol slows your recovery and worsens your sleep.",
+        "pico": "That was your longest run of the month by a lot: building up little by little protects your legs.",
+        "minerales": {
+          "hierro": "Your iron is running low: meat, legumes or leafy greens with vitamin C. If you feel very tired, ask for a ferritin test.",
+          "calcio": "Your calcium is running low: dairy, sardines, tofu or almonds get you closer.",
+          "ambos": "Your iron and calcium are running low: meat, legumes, dairy and leafy greens get you closer. If you feel very tired, ask for a ferritin test."
+        }
+      }
     },
     "control": {
       "titulo": "Check-in on {dia} · {cuando}",
@@ -1035,6 +1063,22 @@
         "otros": "You need {n} more days logged: keep logging and it makes it."
       },
       "listo": "It has what it needs: that day it adjusts your targets."
+    },
+    "energiaBaja": {
+      "titulo": "What your training asks for",
+      "texto": "In the last few weeks you've eaten quite a bit less than your training asks for. A few days like that are normal; if it continues, it can affect your energy, your performance and your health. Adding something before and after training helps. If your period has also stopped (for men, if you notice less sex drive), you've had a stress fracture or you've been low on energy for weeks, talk to a doctor or a sports dietitian.",
+      "deQueSale": {
+        "bajaRapida": "Moss saw it in your weight over the last two weeks, with a lot of training.",
+        "tendencia": {
+          "conNumeros": "Moss saw it in your weight over the last {semanas} weeks, with {sesiones} sessions a week.",
+          "sinNumeros": "Moss saw it in your weight over the last few weeks and in your training."
+        },
+        "disponibilidad": {
+          "conNumeros": "Moss saw it in what you logged: about {kcal} kcal a day, and training takes about {entreno}.",
+          "sinNumeros": "Moss saw it in what you logged and in your training."
+        }
+      },
+      "noMostrar": "Don't show again"
     }
   },
   "mas": {
@@ -1825,6 +1869,11 @@
           "minutoAMano": "A couple of minutes, just once."
         }
       }
+    },
+    "deporte": {
+      "partidoDeNoche": "You played late: falling asleep late is normal. If you can, sleep more tonight or take a short nap early in the day.",
+      "cargaYSueno": "This week you're training more and sleeping less: that's the combination most linked to injuries.",
+      "dormirMas": "In weeks with games, an extra hour of sleep is one of the things that helps most."
     }
   },
   "perfil": {
@@ -2105,7 +2154,11 @@
       "lucesTexto": "An hour and a half before bed: soft, warm light.",
       "recuperacion": "Your recovery",
       "recuperacionTexto": "When you wake up on training days: whether to train hard or take it easy.",
-      "maximoTextoConviene": "Moss never reminds you more times than this in one day. If there are more, bedtime, your training and your habits come first; what counts back from bedtime comes last."
+      "maximoTextoConviene": "Moss never reminds you more times than this in one day. If there are more, bedtime, your training and your habits come first; what counts back from bedtime comes last.",
+      "partido": "The day before a game",
+      "partidoTexto": "At lunchtime: carbs at every meal, today and tomorrow.",
+      "carrera": "Before a long race",
+      "carreraTexto": "Two days before a race of more than an hour and a half, at lunchtime: carbs and less fiber."
     },
     "cambiarCuenta": "Switch account",
     "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account.",
@@ -3118,6 +3171,14 @@
         "fuerte": "You can train hard today.",
         "suave": "Take it easy today: you slept {horas}.",
         "suaveSinSueno": "Take it easy today: your body is still recovering."
+      },
+      "partido": {
+        "titulo": "You play tomorrow",
+        "texto": "Today and tomorrow, carbs at every meal."
+      },
+      "carrera": {
+        "titulo": "Race in two days",
+        "texto": "Carbs at every meal, and less fiber."
       }
     }
   },
@@ -3177,7 +3238,16 @@
       "textoConAvisos": "With your days, your time and how long it takes you to get there, Food tells you what to eat before and after training, in the right meal. Turn it on in Reminders and it also lets you know in time.",
       "viaje": "Time to get to the gym",
       "viajeCasa": "At home",
-      "viajeTexto": "So reminders come in time: Moss counts from when you leave, not from when you start."
+      "viajeTexto": "So reminders come in time: Moss counts from when you leave, not from when you start.",
+      "partidos": "I play games",
+      "partidoDia": "Which day",
+      "partidoHora": "What time it starts",
+      "partidoVaria": "It varies",
+      "partidoTexto": "With the day, Moss tells you what to eat the day before; with the time, if you finish late, how to catch up on sleep.",
+      "carrera": "Next race",
+      "carreraFecha": "When",
+      "carreraTexto": "If it lasts more than an hour and a half, Moss tells you what to eat the two days before.",
+      "carreraCorta": "At an hour and a half or less, there's no need to load up on carbs before."
     },
     "nocheCorta": "You slept {h}: it’s normal to be hungrier today."
   },

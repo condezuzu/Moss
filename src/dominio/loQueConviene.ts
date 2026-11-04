@@ -11,6 +11,9 @@
 // - Lo que cuenta hacia atrás desde la cama: la última comida grande (3 h antes), terminar lo fuerte (2 h
 //   antes) y bajar las luces (hora y media antes).
 // - Con Ascent vinculada, la recuperación al despertarte, los días que entrenás.
+// - Según el deporte (para aprobar, segunElDeporte.ts): la víspera de un partido, «Mañana juegas», y dos días
+//   antes de una carrera de más de 90 minutos, «Tu carrera es pasado mañana», a la hora del almuerzo de
+//   siempre: carbohidratos en todas las comidas. Toman el lugar de la hora del almuerzo.
 // Es parte del plan del día, como lo demás de avisos.ts: lo hecho (la comida anotada, entrenar a otra hora)
 // no lo saca del plan, lo deja como que sobra. Con «sin déficit», nada de comida ni de café para entrenar.
 // Acá van códigos; el texto sale de textoDelAviso y tituloDelAviso (avisos.ts). Las fuentes, en spec/avisos.md.
@@ -19,9 +22,10 @@ import { carbohidratosPrevios, COMIDA_PREVIA, corteDeCafeina, cuenta, ENTRE_PREV
 import { avisosDelDia, horasDeSueno, type Aviso, type DelDia, type Notificacion } from './avisos';
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import type { Macros } from './metas';
+import { DIAS_DE_CARGA, diasParaLaCarrera, partidoManana, type Carrera, type Partido } from './segunElDeporte';
 
 /** Los de lo que conviene: cada uno tiene su interruptor en Perfil › Avisos (Avisos, en avisos.ts). */
-export const QUE_CONVIENE = ['antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion'] as const;
+export const QUE_CONVIENE = ['antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion', 'partido', 'carrera'] as const;
 export type QueConviene = (typeof QUE_CONVIENE)[number];
 
 /**
@@ -31,6 +35,7 @@ export type QueConviene = (typeof QUE_CONVIENE)[number];
  * - cafe: antes de entrenar (a qué hora y cuánto falta para dormir) o el último del día (hasta qué hora).
  * - entrenarTarde: hasta qué hora lo fuerte; `suave` si ya no da el tiempo.
  * - recuperacion: de 0 a 100; lo dormido anoche, solo si fue poco.
+ * - partido y carrera: la víspera del partido y dos días antes de la carrera larga; el texto no lleva números.
  */
 export type Conviene =
   | { que: 'antesDeEntrenar'; comida: Comida; a: number; adelantada?: true; proteina?: number; carbohidratos?: number }
@@ -39,7 +44,9 @@ export type Conviene =
   | { que: 'ultimaComida'; a: number; cama: number }
   | { que: 'entrenarTarde'; a: number; entreno: number; cama: number; suave?: true }
   | { que: 'luces'; cama: number }
-  | { que: 'recuperacion'; porcentaje: number; fuerte: boolean; dormido?: number };
+  | { que: 'recuperacion'; porcentaje: number; fuerte: boolean; dormido?: number }
+  | { que: 'partido' }
+  | { que: 'carrera' };
 
 /** Lo que tardás en llegar al gimnasio si no se eligió, y lo que se puede elegir, en minutos. */
 export const VIAJE_DE_FABRICA = 15;
@@ -107,6 +114,9 @@ export type DeLoQueConviene = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'horaDe
   conAscent?: boolean;
   /** La recuperación de esa mañana, de 0 a 100, y lo dormido anoche, en minutos. Mientras no llega, null. */
   recuperacion?: { porcentaje: number; dormido?: number | null } | null;
+  /** Los partidos con fecha (partidosEntre, en segunElDeporte.ts) y la próxima carrera, de Perfil › Entrenamiento. */
+  partidos?: readonly Partido[];
+  carrera?: Carrera | null;
 };
 
 /**
@@ -249,6 +259,14 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
   }
 
   if (prendido('luces') && cama !== null) lista.push({ id: 'luces', tipo: 'luces', minutos: cama - LUCES, conviene: { que: 'luces', cama } });
+
+  // Según el deporte: a la hora del almuerzo, sin esperar a que lo anotes (habla de todas las comidas), y en
+  // lugar de la hora del almuerzo, que ya dice. Con «sin déficit», nada: es de comer.
+  if (!op.sinDeficit) {
+    const almuerzo = () => ({ minutos: hora.almuerzo, reemplaza: ['horario:almuerzo'] });
+    if (prendido('partido') && partidoManana(op.dia, op.partidos ?? [])) lista.push({ id: 'partido', tipo: 'partido', ...almuerzo(), conviene: { que: 'partido' } });
+    if (prendido('carrera') && diasParaLaCarrera(op.dia, op.carrera) === DIAS_DE_CARGA) lista.push({ id: 'carrera', tipo: 'carrera', ...almuerzo(), conviene: { que: 'carrera' } });
+  }
 
   if (prendido('recuperacion') && op.conAscent && despertar !== null && sesiones.length) {
     const r = op.recuperacion ?? null;

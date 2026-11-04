@@ -132,6 +132,17 @@ const SeccionPerfil = (() => {
 .pf-nota.pf-nota-tenue { color: rgba(239, 230, 207, 0.45); font-size: 12px; }
 .pf-lista.pf-tuyos .pf-fila-textos span { display: block; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.58); }
 .pf-lista.pf-tuyos .pf-fila-textos b { display: block; font: 400 15px/1.2 var(--texto); color: var(--tinta); }
+/* Según el deporte: el partido (qué día y a qué hora) y la próxima carrera (cuándo y cuánto dura). */
+.pf-deporte-etq { margin: 12px 0 0; font: 400 12.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.pf-hoja .pf-deporte-etq + .pf-dias, .pf-hoja .pf-deporte-etq + .pf-aviso-chips { margin-top: 8px; }
+.pf-deporte-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+.pf-deporte-fila > span { min-width: 0; font: 400 12.5px/1.25 var(--texto); color: rgba(239, 230, 207, 0.62); }
+.pf-deporte-lado { flex: none; display: flex; align-items: center; gap: 6px; }
+.pf-deporte-lado .fi-stepper { padding: 3px; }
+.pf-deporte-lado .fi-paso { width: 32px; height: 32px; }
+.pf-deporte-lado .fi-valor { min-width: 72px; font-size: 16px; }
+.pf-hoja .pf-varia { padding: 7px 10px; }
+.fi-stepper.pf-sin-valor .fi-valor { color: rgba(239, 230, 207, 0.45); }
 @media (prefers-reduced-motion: reduce) {
   .pf-entra, .perfil .pf-sub.entra, .pf-lista.pf-filas li.pf-crece { animation: none; }
   .pf-mini, .pf-plan, .pf-fila { transition: none; }
@@ -352,9 +363,14 @@ const SeccionPerfil = (() => {
       // solo con Ascent vinculada y sin nombrarla.
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.conviene')));
       cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.convieneTexto')));
+      // Según el deporte (para aprobar): la víspera del partido, con partidos o choques, y la carrera larga, con
+      // correr, bici o nadar (segunElDeporte.ts).
+      const tipos = opciones.comida.entreno.tipos || [];
       const conviene = [
         ['antesDeEntrenar', 'pesa', 'oro'], ['despuesDeEntrenar', 'pesa', 'salvia'], ['cafe', 'taza', 'rosa'],
         ['ultimaComida', 'comida', 'violeta'], ['entrenarTarde', 'cronometro', 'azul'], ['luces', 'foco', 'gris'],
+        ...(tipos.includes('equipo') || tipos.includes('contacto') ? [['partido', 'rayo', 'oro']] : []),
+        ...(tipos.includes('resistencia') ? [['carrera', 'objetivo', 'salvia']] : []),
         ...(conAscent() && opciones.vinculada && opciones.vinculada() ? [['recuperacion', 'onda', 'ascent']] : []),
       ];
       for (const [que, ico, color] of conviene) bloque(ico, color, tx('perfil.avisos.' + que), tx(`perfil.avisos.${que}Texto`), !!a[que], (v) => { a[que] = v; });
@@ -424,6 +440,66 @@ const SeccionPerfil = (() => {
         el('p', 'pf-nota', tx('entrada.cuestionario.entreno.texto')),
       );
       pregunta('huellas', 'salvia', tx('entreno.perfil.tipo'), conTipos);
+      // Según el deporte (para aprobar, segunElDeporte.ts): con partidos o choques, qué día juegas y a qué hora
+      // empieza (opcional: con la hora se sabe si terminas tarde); con correr, bici o nadar, la próxima carrera,
+      // con la fecha y cuánto dura (lo de los dos días antes, solo si pasa de hora y media).
+      const conLlave = (ico, color, titulo, prendida, alCambiar) => {
+        const caja = el('section', 'pf-aviso');
+        const fila = el('div', 'pf-aviso-fila');
+        const llave = boton('in-llave', '<i></i>', () => alCambiar(!prendida), titulo);
+        llave.setAttribute('aria-pressed', String(prendida));
+        const nombre = el('span', 'pf-aviso-titulo');
+        nombre.append(cuadro(ico, color), el('b', null, titulo));
+        fila.append(nombre, llave);
+        caja.appendChild(fila);
+        cuerpo.appendChild(caja);
+        return caja;
+      };
+      const filaCon = (etiqueta, ...nodos) => {
+        const f = el('div', 'pf-deporte-fila');
+        f.appendChild(el('span', null, etiqueta));
+        const lado = el('div', 'pf-deporte-lado');
+        lado.append(...nodos);
+        f.appendChild(lado);
+        return f;
+      };
+      const conPasos = (valor, alMover, nombre) => {
+        const p = el('div', 'fi-stepper' + (valor == null ? ' pf-sin-valor' : ''));
+        p.append(boton('fi-paso', icono('menos'), () => alMover(-1), `${nombre} −`), el('b', 'fi-valor', valor == null ? '—:—' : valor), boton('fi-paso', icono('mas'), () => alMover(1), `${nombre} +`));
+        return p;
+      };
+      if (tipos.includes('equipo') || tipos.includes('contacto')) {
+        const p = e.partido || null;
+        const caja = conLlave('rayo', 'oro', tx('entreno.perfil.partidos'), !!p, (si) => poner({ partido: si ? { dia: 6, hora: null } : null }));
+        if (p) {
+          const moverHora = (signo) => poner({ partido: { ...p, hora: p.hora == null ? 16 * 60 : Math.min(23 * 60, Math.max(8 * 60, p.hora + signo * 15)) } });
+          const varia = boton('fi-porcion pf-varia', `<span>${tx('entreno.perfil.partidoVaria')}</span>`, () => poner({ partido: { ...p, hora: null } }));
+          varia.setAttribute('aria-pressed', String(p.hora == null));
+          caja.append(
+            el('p', 'pf-deporte-etq', tx('entreno.perfil.partidoDia')),
+            chips(DIAS, (d) => tx('fecha.diasCortos.' + d), (d) => p.dia === d, (d) => poner({ partido: { ...p, dia: d } }), 'pf-dias'),
+            filaCon(tx('entreno.perfil.partidoHora'), varia, conPasos(p.hora == null ? null : reloj(p.hora), moverHora, tx('entreno.perfil.partidoHora'))),
+            el('p', 'pf-nota', tx('entreno.perfil.partidoTexto')),
+          );
+        }
+      }
+      if (tipos.includes('resistencia')) {
+        const c = e.carrera || null;
+        const caja = conLlave('objetivo', 'salvia', tx('entreno.perfil.carrera'), !!c, (si) => poner({ carrera: si ? { fecha: Fechas.sumarDias(Datos.HOY, 11), minutos: 120 } : null }));
+        if (c) {
+          const cuando = `${tx('fecha.diasCortos.' + Fechas.diaDeLaSemana(c.fecha))} ${u.fechaCorta(c.fecha)}`;
+          const moverFecha = (signo) => {
+            const fecha = Fechas.sumarDias(c.fecha, signo);
+            if (fecha > Datos.HOY) poner({ carrera: { ...c, fecha } });
+          };
+          caja.append(
+            filaCon(tx('entreno.perfil.carreraFecha'), conPasos(cuando, moverFecha, tx('entreno.perfil.carreraFecha'))),
+            el('p', 'pf-deporte-etq', tx('entreno.perfil.duracion')),
+            chips([60, 90, 120, 180, 240], (n) => u.duracion(n), (n) => c.minutos === n, (n) => poner({ carrera: { ...c, minutos: n } })),
+            el('p', 'pf-nota', tx(c.minutos > SegunElDeporte.CARRERA_LARGA ? 'entreno.perfil.carreraTexto' : 'entreno.perfil.carreraCorta')),
+          );
+        }
+      }
       const viaje = e.viaje ?? LoQueConviene.VIAJE_DE_FABRICA;
       const conViaje = el('div');
       conViaje.append(

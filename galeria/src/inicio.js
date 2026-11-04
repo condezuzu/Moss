@@ -3,6 +3,8 @@
 // el balance, el día en el cielo y, al final, «Para hoy» (los comentarios cortos de la comida, que
 // reemplazan al saludo de arriba desde el 2/11/2026). El sueño de anoche y el agua están para
 // sumarlos. Cuando el control está cerca, va debajo de la luna. Tocar un bloque lleva a su sección.
+// Con un día de ejemplo de «Según el deporte» (deporte.js, para aprobar): la fecha de ese día, «Para hoy» con
+// lo del deporte primero (SegunElDeporte y ParaHoy) y, si toca, la tarjeta de la energía baja debajo de la luna.
 
 const SeccionInicio = (() => {
   const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua', 'consejos'];
@@ -292,10 +294,14 @@ const SeccionInicio = (() => {
       nada: { ahora: 15 * 60, comido: { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 }, sinAnotar: ['desayuno', 'almuerzo'], anotadas: 0, proxima: 'merienda' },
       bien: { ahora: 20 * 60, comido: { kcal: 2050, proteina: 135, carbohidratos: 250, grasas: 62 }, sinAnotar: [], anotadas: 3, proxima: 'cena', agua: { ml: 1750, meta: 2000 } },
     };
+    // Un día de ejemplo de «Según el deporte» (deporte.js): su día, «Para hoy» con lo del deporte y la tarjeta.
+    const delDeporte = () => (opciones.deporte ? opciones.deporte() : null);
     function entradaDeParaHoy() {
       const meta = opciones.comida.meta;
       const metaDeHoy = { kcal: meta.kcal, proteina: meta.p, carbohidratos: meta.c, grasas: meta.g };
       const sinDeficit = !!(opciones.sinDeficit && opciones.sinDeficit());
+      const deporte = delDeporte();
+      if (deporte) return Object.assign({ sinDeficit }, deporte.paraHoy);
       if (s.ejemplo) return Object.assign({ meta: metaDeHoy, agua: null, sinDeficit }, EJEMPLOS_PARA_HOY[s.ejemplo]);
       const t = opciones.comida.totalDe(0);
       const agua = opciones.comida.agua();
@@ -311,7 +317,11 @@ const SeccionInicio = (() => {
     }
     const ICONO_DEL_CONSEJO = { anotar: 'comida', nadaAnotado: 'comida', pocosCarbohidratos: 'rayo', pocaProteina: 'rayo', muchaGrasa: 'rayo', faltaProteina: 'rayo', agua: 'gota' };
     const MACRO_DEL_CONSEJO = { pocosCarbohidratos: 'c', pocaProteina: 'p', muchaGrasa: 'g', faltaProteina: 'p' };
+    // Lo del deporte, por su tema: los carbohidratos con el color de los carbohidratos, el agua como el agua.
+    const ICONO_DEL_TEMA = { carbohidratos: 'rayo', agua: 'gota', alcohol: 'sueno', piernas: 'huellas', minerales: 'comida' };
+    const paraElTexto = () => ({ t: tx, numero });
     function textoDelConsejo(x, sinNumeros) {
+      if (x.tipo === 'deporte') return SegunElDeporte.textoDelDeporte(x.consejo, paraElTexto());
       const en = tx('inicio.paraHoy.en.' + (x.proxima || 'resto'));
       if (x.tipo === 'anotar') {
         const nombres = x.comidas.map((c) => tx('inicio.paraHoy.comidas.' + c));
@@ -333,10 +343,13 @@ const SeccionInicio = (() => {
       }
       const ul = el('ul', 'in-consejos-lista');
       lista.forEach((x, i) => {
-        const li = el('li', 'in-consejo in-consejo-' + x.tipo + (MACRO_DEL_CONSEJO[x.tipo] ? ' in-macro-' + MACRO_DEL_CONSEJO[x.tipo] : ''));
+        const tema = x.tipo === 'deporte' ? x.consejo.tema : null;
+        const clase = tema ? `in-consejo-deporte in-consejo-${x.consejo.que}${tema === 'carbohidratos' ? ' in-macro-c' : tema === 'agua' ? ' in-consejo-agua' : ''}`
+          : 'in-consejo-' + x.tipo + (MACRO_DEL_CONSEJO[x.tipo] ? ' in-macro-' + MACRO_DEL_CONSEJO[x.tipo] : '');
+        const li = el('li', 'in-consejo ' + clase);
         li.style.animationDelay = `${(0.06 * i).toFixed(2)}s`;
         const ico = el('span', 'in-consejo-ico');
-        ico.innerHTML = icono(ICONO_DEL_CONSEJO[x.tipo]);
+        ico.innerHTML = icono(tema ? ICONO_DEL_TEMA[tema] : ICONO_DEL_CONSEJO[x.tipo]);
         li.append(ico, el('p', null, textoDelConsejo(x, sinNumeros)));
         // Lo que falta anotar se anota de ahí mismo, en esa comida.
         if (x.tipo === 'anotar' || x.tipo === 'nadaAnotado') {
@@ -348,6 +361,24 @@ const SeccionInicio = (() => {
         ul.appendChild(li);
       });
       c.appendChild(ul);
+      return c;
+    }
+
+    // ------------------------------------------------------------ la energía baja, según el deporte
+    // Una sola vez, debajo de la luna, con el texto de spec/entreno.md (5.12) y de qué sale: sin números si están
+    // ocultos o con «sin déficit», y del peso nunca cuánto. «No mostrar más» la pliega, y no vuelve.
+    function energiaBaja(d) {
+      const c = carta('in-energia', tx('inicio.energiaBaja.titulo'));
+      const t = SegunElDeporte.tarjetaDeEnergia(d.tarjeta, paraElTexto());
+      c.append(el('p', 'in-energia-texto', t.texto), el('p', 'in-energia-sale', t.deQueSale));
+      const pie = el('div', 'in-energia-pie');
+      pie.appendChild(boton('in-energia-cerrar', tx('inicio.energiaBaja.noMostrar'), () => {
+        // Se pliega desde su alto, y recién después deja de estar.
+        c.style.height = `${c.offsetHeight}px`;
+        requestAnimationFrame(() => c.classList.add('saliendo'));
+        setTimeout(() => d.noMostrarMas(), quieto() ? 0 : 340);
+      }));
+      c.appendChild(pie);
       return c;
     }
 
@@ -554,26 +585,35 @@ const SeccionInicio = (() => {
       return c;
     }
 
-    // «Para hoy» depende de lo anotado, del agua y de los números ocultos: se rehace solo ese bloque.
+    // «Para hoy» depende de lo anotado, del agua y de los números ocultos: se rehace solo ese bloque (y la
+    // tarjeta de la energía baja, que también los usa).
     function refrescarConsejos() {
       const viejo = bloquesEl.querySelector('.in-consejos');
       if (viejo) viejo.replaceWith(consejos());
+      const tarjeta = bloquesEl.querySelector('.in-energia');
+      const d = delDeporte();
+      if (tarjeta && d && d.tarjeta) tarjeta.replaceWith(energiaBaja(d));
     }
 
     function pintar(ms) {
-      const hoy = u.partes(Datos.HOY);
+      // Con un día de ejemplo del deporte, es ese día.
+      const deporte = s.primerDia ? null : delDeporte();
+      const hoy = u.partes(deporte ? deporte.hoy : Datos.HOY);
       zona.querySelector('.in-fecha').textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) });
       zona.querySelector('.in-titulo').textContent = tx('inicio.titulo');
       bloquesEl.innerHTML = '';
       if (s.primerDia) [caloriasPrimerDia(), caminoPrimerDia(), cieloPrimerDia()].forEach((b) => bloquesEl.appendChild(b));
       else s.orden.filter((b) => s.visibles.has(b)).forEach((b) => bloquesEl.appendChild(ARMAR[b](ms)));
-      // El control, cuando se acerca, justo debajo de la luna.
+      // El control, cuando se acerca, justo debajo de la luna; y debajo, la energía baja.
       const control = s.primerDia ? null : controlCerca();
       const luna = bloquesEl.querySelector('.in-calorias');
       if (control) bloquesEl.insertBefore(control, luna ? luna.nextSibling : bloquesEl.firstChild);
+      const energia = deporte && deporte.tarjeta ? energiaBaja(deporte) : null;
+      const arriba = control || luna;
+      if (energia) bloquesEl.insertBefore(energia, arriba ? arriba.nextSibling : bloquesEl.firstChild);
       // La invitación de Ascent (ascent.js), debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
       const invitacion = s.primerDia ? null : opciones.invitacionDeAscent();
-      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[control ? 3 : 2] || null);
+      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2 + (control ? 1 : 0) + (energia ? 1 : 0)] || null);
       const pie = zona.querySelector('.in-pie');
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));

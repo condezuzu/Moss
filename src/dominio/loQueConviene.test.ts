@@ -297,9 +297,12 @@ describe('las prioridades y el máximo', () => {
   });
 
   it('cada uno se apaga solo; apagados todos, nada cambia', () => {
+    // Con todo lo del día: el entreno tarde, Ascent, el partido de mañana y la carrera de pasado mañana.
+    const todo = { conAscent: true, recuperacion: { porcentaje: 80 }, sesiones: [pesas('20:30')], partidos: [{ dia: '2026-11-04' }], carrera: { fecha: '2026-11-05', minutos: 120 } };
+    const prendidos = conviene(todo).map((a) => a.tipo);
+    expect(prendidos).toEqual(expect.arrayContaining(['antesDeEntrenar', 'recuperacion', 'partido', 'carrera']));
     for (const q of QUE_CONVIENE) {
-      const prendidos = conviene({ conAscent: true, recuperacion: { porcentaje: 80 }, sesiones: [pesas('20:30')] }).map((a) => a.tipo);
-      const sin = conviene({ conAscent: true, recuperacion: { porcentaje: 80 }, sesiones: [pesas('20:30')], ajustes: { ...TODOS, [q]: { encendido: false } } as Avisos });
+      const sin = conviene({ ...todo, ajustes: { ...TODOS, [q]: { encendido: false } } as Avisos });
       expect(sin.map((a) => a.tipo)).toEqual(prendidos.filter((t) => t !== q));
     }
     expect(conviene({ ajustes: {} })).toEqual([]);
@@ -309,6 +312,42 @@ describe('las prioridades y el máximo', () => {
 
   it('con «sin déficit», nada de comida para entrenar ni la última comida', () => {
     expect(conviene({ sinDeficit: true }).map((a) => a.tipo)).toEqual(['cafe', 'luces']);
+  });
+});
+
+describe('según el deporte: la víspera del partido y la carrera larga', () => {
+  const MIERCOLES = '2026-11-04';
+  const JUEVES = '2026-11-05';
+  const sinEntreno = (extra: Partial<DeLoQueConviene> = {}) => conviene({ sesiones: [], ...extra });
+
+  it('la víspera del partido, a la hora del almuerzo de siempre y en lugar de ella; el día del partido, no', () => {
+    expect(uno(sinEntreno({ partidos: [{ dia: MIERCOLES, hora: h('21:00') }] }), 'partido')).toEqual({
+      id: 'partido', tipo: 'partido', minutos: h('13:00'), reemplaza: ['horario:almuerzo'], conviene: { que: 'partido' },
+    });
+    expect(de(sinEntreno({ partidos: [{ dia: DIA }] }), 'partido')).toEqual([]);
+    expect(de(sinEntreno({ partidos: [{ dia: JUEVES }] }), 'partido')).toEqual([]);
+  });
+
+  it('dos días antes de una carrera de más de 90 minutos; el día antes, o con 90 minutos, no', () => {
+    expect(uno(sinEntreno({ carrera: { fecha: JUEVES, minutos: 120 } }), 'carrera')).toMatchObject({ minutos: h('13:00'), conviene: { que: 'carrera' } });
+    expect(de(sinEntreno({ carrera: { fecha: JUEVES, minutos: 90 } }), 'carrera')).toEqual([]);
+    expect(de(sinEntreno({ carrera: { fecha: MIERCOLES, minutos: 120 } }), 'carrera')).toEqual([]);
+  });
+
+  it('la hora del almuerzo corre con lo que anotaste hoy, y anotar el almuerzo no lo calla', () => {
+    expect(uno(sinEntreno({ partidos: [{ dia: MIERCOLES }], eventos: { desayuno: h('9:00') } }), 'partido').minutos).toBe(h('14:30'));
+    const almorzaste = elDia(TODOS, { sesiones: [], partidos: [{ dia: MIERCOLES }], anotadas: new Set<Comida>(['desayuno', 'almuerzo']), eventos: { desayuno: h('7:35'), almuerzo: h('13:00') } });
+    expect(almorzaste.map(([, id]) => id)).toContain('partido');
+  });
+
+  it('apagados de fábrica, nada con «sin déficit», y cuentan para el máximo como lo de entrenar', () => {
+    const partidos = [{ dia: MIERCOLES }];
+    expect(loQueConviene({ ...dia({ partidos }), ajustes: { dormir: si } })).toEqual([]);
+    expect(loQueConviene({ ...dia({ partidos, sesiones: [] }), ajustes: { partido: si } }).map((a) => a.id)).toEqual(['partido']);
+    expect(de(sinEntreno({ partidos, sinDeficit: true }), 'partido')).toEqual([]);
+    const ids = (maximo: number) => elDia({ ...TODOS, maximoPorDia: maximo }, { sesiones: [], partidos }).map(([, id]) => id);
+    expect(ids(8)).not.toContain('horario:almuerzo');
+    expect(ids(2)).toEqual(['partido', 'dormir']);
   });
 });
 
@@ -339,6 +378,9 @@ describe('lo que dice cada uno', () => {
     expect(dicho({ que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') })).toEqual(['Termina antes de las 21:00', 'Más tarde, que sea suave: te acuestas a las 23:00.']);
     expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Baja las luces', 'Luz tenue y cálida: a las 23:00, a la cama.']);
     expect(dicho({ que: 'recuperacion', porcentaje: 52, fuerte: false, dormido: 340 })).toEqual(['Recuperación: 52 %', 'Hoy, mejor suave: dormiste 5 h 40 min.']);
+    expect(dicho({ que: 'partido' })).toEqual(['Mañana juegas', 'Hoy y mañana, carbohidratos en cada comida.']);
+    expect(dicho({ que: 'carrera' })).toEqual(['Tu carrera es pasado mañana', 'Carbohidratos en todas tus comidas y menos fibra.']);
+    expect(dicho({ que: 'carrera' }, en as unknown as Rama)).toEqual(['Race in two days', 'Carbs at every meal, and less fiber.']);
     expect(dicho({ que: 'antesDeEntrenar', comida: 'almuerzo', a: h('13:00'), proteina: 40, carbohidratos: 75 }, en as unknown as Rama))
       .toEqual(['Eat before your workout', 'Lunch at 13:00: 75 g of carbs, 40 g of protein and little fat.']);
   });
@@ -365,6 +407,7 @@ describe('lo que dice cada uno', () => {
       { que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') }, { que: 'entrenarTarde', a: h('21:00'), entreno: h('21:15'), cama: h('23:00'), suave: true },
       { que: 'luces', cama: h('23:00') },
       { que: 'recuperacion', porcentaje: 87, fuerte: true }, { que: 'recuperacion', porcentaje: 52, fuerte: false, dormido: 340 }, { que: 'recuperacion', porcentaje: 40, fuerte: false },
+      { que: 'partido' }, { que: 'carrera' },
     ];
     for (const idioma of [es, en] as unknown as Rama[]) {
       for (const c of formas) {

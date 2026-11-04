@@ -11,6 +11,8 @@
 // un ejemplo marcado como ejemplo y cuánto falta para cada cosa; con pocas, lo que ya hay y los puntos.
 // Desde el 2/11/2026, el fondo es una noche oscura con auroras suaves (lo pediste: «como Alaska», sin
 // nieve, que se note que es de noche); los colores de cada cosa quedan, y no todo va en caja.
+// Según el deporte (3/11, para aprobar; deporte.js): con un día de ejemplo, su fecha y, debajo de la noche de
+// anoche, una línea sin caja (SegunElDeporte): el partido de noche, más carga con menos sueño o dormir más.
 
 const SeccionSueno = (() => {
   const DIAS = 14;
@@ -303,7 +305,12 @@ const SeccionSueno = (() => {
 .tel .sn-hoja .sn-abrir-atajos { margin: 12px 4px 2px; }
 .tel .sn-hoja .sn-automatizacion-cab .sn-afinar-textos { padding: 0; }
 .tel .sn-hoja .sn-pasos { margin: 12px 0 2px; }
+/* Según el deporte (para aprobar): una línea debajo de la noche, sin caja, con un trazo de la aurora al lado. */
+.sn-deporte { position: relative; margin: 12px 6px 4px; padding: 1px 0 1px 14px; font: 400 13.5px/1.45 var(--texto); color: var(--sn-2); text-wrap: pretty; }
+.sn-deporte::before { content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 2px; border-radius: 1px; background: linear-gradient(180deg, rgba(138, 219, 200, 0.8), rgba(112, 104, 226, 0.6)); }
+.sn-deporte.sn-entra { animation: sn-aparece 0.42s 0.12s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) {
+  .sn-deporte.sn-entra { animation: none; }
   .sn-scroll, .sn-medidor-pista > i, .sn-anillo .lleno, .sn-dd-col, .sn-dd-col i, .sueno .pg-como, .sn-camino .sn-otra, .sn-arco .tramo, .sueno .sn-porque-dentro { transition: none; }
   .sn-arco-centro.cambia { animation: none; }
   .sueno .sn-carta.sn-entra, .sueno .sn-noches.sn-entra, .sueno .sn-noches.sn-animar .sn-noche-barra > i, .sn-dd.sn-animar .sn-dd-col i.sobra, .sn-dd.sn-animar .sn-dd-col i.falta,
@@ -618,7 +625,9 @@ const SeccionSueno = (() => {
       const huella = `${s.clave}|${s.estado}|${sinReloj()}`;
       animar = huella !== s.dibujada && !quieto();
       s.dibujada = huella;
-      const hoy = u.partes(Datos.HOY);
+      // Con un día de ejemplo de «Según el deporte», es ese día (deporte.js).
+      const deporte = opciones.deporte ? opciones.deporte() : null;
+      const hoy = u.partes(deporte ? deporte.hoy : Datos.HOY);
       const cab = el('header', 'pg-cab');
       cab.append(el('div', 'pg-fecha', tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) })), el('h2', 'pg-titulo', tx('sueno.titulo')));
       cont.appendChild(cab);
@@ -634,6 +643,8 @@ const SeccionSueno = (() => {
       if (rec) cont.appendChild(recuperacion(rec));
       const noche = noches().find((n) => n.clave === s.clave) || null;
       if (conNoches) cont.appendChild(noche ? (noche.moss ? laNocheDeMoss(noche) : laNoche(noche)) : sinNoche(s.clave));
+      // Según el deporte: la línea de anoche, debajo de la noche (el partido de noche, más carga o dormir más).
+      if (deporte && deporte.linea && s.clave === Datos.HOY) cont.appendChild(lineaDelDeporte(deporte.linea));
       if (noche && noche.moss && !conMovimiento) cont.appendChild(cartaDeMovimiento());
       // La deuda va segunda: solo necesita cuánto dormiste, así que es lo que más gente tiene bien.
       cont.appendChild(deuda());
@@ -663,6 +674,14 @@ const SeccionSueno = (() => {
       if (quieto()) { cambiar(); return; }
       cont.classList.add('sn-fundiendo');
       setTimeout(() => { cambiar(); cont.classList.remove('sn-fundiendo'); }, 180);
+    }
+
+    /** La línea del deporte (SegunElDeporte): entra con un fundido solo cuando cambia. */
+    function lineaDelDeporte(c) {
+      const texto = SegunElDeporte.textoDelDeporte(c, { t: tx, numero });
+      const nueva = texto !== s.lineaVista && !quieto();
+      s.lineaVista = texto;
+      return el('p', 'sn-deporte' + (nueva ? ' sn-entra' : ''), texto);
     }
 
     function pocoSueno() {

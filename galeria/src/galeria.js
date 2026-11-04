@@ -446,8 +446,18 @@
 
   const opcionesDeSeccion = { textos: TEXTOS, idioma: () => escena.idioma, alCambiar: () => refrescarControles() };
 
+  // ------------------------------------------------------------ según el deporte (para aprobar)
+  // Los días de ejemplo de deporte.js: cada uno cambia «Para hoy» y la tarjeta de Inicio, la línea de Sueño, la
+  // pantalla bloqueada y Perfil › Entrenamiento (alCambiarElDeporte, más abajo). Sin ejemplo, todo como siempre.
+  const deporte = Deporte.crear({
+    sinNumeros: () => tel.classList.contains('sin-numeros'),
+    sinDeficit: () => !!(perfilSec && perfilSec.sinDeficit),
+    alCambiar: () => alCambiarElDeporte(),
+  });
+
   // ------------------------------------------------------------ las secciones nuevas
   inicio = SeccionInicio.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    deporte: () => deporte.paraInicio(),
     comida,
     persona,
     cielo: () => escena.hoy || { constelacion: LIRA, habitos: habitosLira() },
@@ -490,6 +500,7 @@
     medir: () => mas.ir('medidas'),
   }));
   sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    deporte: () => deporte.paraSueno(),
     noches: () => (soloIphone ? [] : Datos.NOCHES),
     sinReloj: () => soloIphone,
     metaDeSueno: 8 * 60,
@@ -576,6 +587,29 @@
   inicio.pintar(0);
   progreso.pintar();
 
+
+  // Un día de ejemplo del deporte (o ninguno): Perfil › Entrenamiento toma sus deportes, su horario, su partido y
+  // su carrera (sin ejemplo, vuelve lo de antes), y se pintan Inicio, Sueño y la pantalla bloqueada.
+  let entrenoAntesDelDeporte = null;
+  // Lo de Perfil sin «Qué comer antes y después», que va aparte.
+  const sinVer = (e) => { const x = Object.assign({}, e); delete x.ver; return x; };
+  function alCambiarElDeporte() {
+    const delEjemplo = deporte.paraPerfil();
+    if (delEjemplo) {
+      if (!entrenoAntesDelDeporte) entrenoAntesDelDeporte = comida.entreno;
+      comida.ponerEntreno(Object.assign(sinVer(entrenoAntesDelDeporte), delEjemplo, { tipo: Cuestionario.tipoDeSesion(delEjemplo.tipos) }));
+    } else if (entrenoAntesDelDeporte) {
+      comida.ponerEntreno(sinVer(entrenoAntesDelDeporte));
+      entrenoAntesDelDeporte = null;
+    }
+    inicio.pintar(0);
+    sueno.pintar();
+    perfilSec.pintar();
+    avisosBloqueo.ponerDeporte(deporte.paraBloqueo());
+    $$('#s-deporte button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === (deporte.clave || 'ninguno'))));
+    $$('#s-alcohol button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.valor === 'si') === deporte.alcohol)));
+    refrescarControles();
+  }
 
   // Vincular cambia la meta de hoy (el día de gimnasio), la recuperación en Sueño y la fila de Perfil.
   function vincular(si) {
@@ -1086,6 +1120,24 @@
     widgetsComida: () => { cerrarHojas(); widgets.ir('n-comida'); },
     widgetsCielo: () => { cerrarHojas(); widgets.ir('n-cielo'); },
     widgetsBloqueo: () => { cerrarHojas(); widgets.ir('n-bloqueo'); },
+    // Según el deporte (3/11, para aprobar): sin ejemplo elegido, el primero; cada lugar donde se ve.
+    deporte: () => { if (!deporte.clave) deporte.poner('vispera'); accionesSeccion.deporteInicio(); },
+    deporteInicio: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.bajar(); },
+    deporteTarjeta: () => { cerrarHojas(); deporte.poner('energia'); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
+    deporteSueno: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.sn-heroe'), 240); },
+    deporteBloqueo: () => {
+      cerrarHojas();
+      const d = deporte.paraBloqueo();
+      avisosBloqueo.abrir();
+      avisosBloqueo.poner(d ? { modo: 'dia', dia: 'deporte', hora: d.hora, otraHora: false, cenaTemprano: false, pocaProteina: false } : { modo: 'dia' });
+    },
+    deporteVispera: () => { deporte.poner('vispera'); accionesSeccion.deporteBloqueo(); },
+    deportePerfil: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirEntreno(); },
+    deporteCuestionario: () => {
+      cerrarHojas();
+      window.__cuestionario('entreno', { tipos: ['equipo'], partidos: true, diaDePartido: 6, horaDePartido: 21 * 60, de: { equipo: { dias: [2, 4], hora: 20 * 60, minutos: 90 } } });
+      entrada.irA('cuando');
+    },
   };
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
@@ -1152,6 +1204,9 @@
   window.__ascentEnPerfil = (si) => ponerAscentPrendida(si);
   window.__aparato = (v) => ponerAparato(v === 'iphone');
   segmento('s-estanc', (v) => { pocasSemanas = v === 'pocas'; ascent.pintar(); });
+  // Según el deporte: el día de ejemplo (o ninguno) y, el domingo después del partido, con o sin alcohol anotado.
+  segmento('s-deporte', (v) => { deporte.poner(v === 'ninguno' ? null : v); });
+  segmento('s-alcohol', (v) => { if (deporte.clave !== 'anoche') deporte.poner('anoche'); deporte.ponerAlcohol(v === 'si'); });
   segmento('s-calidad', (v) => escena.ponerCalidad(v));
   // Las kcal: lo elegido queda en el navegador (kcal.js), y el segmento arranca mostrándolo.
   const marcarKcal = () => $$('#s-kcal button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === Kcal.estilo)));
@@ -1373,6 +1428,16 @@
     pasos[accion]();
   };
   window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
+  // Según el deporte, para las capturas: elegir un día de ejemplo (o null), el alcohol del domingo, y cada lugar.
+  window.__deporte = (accion, arg) => {
+    const pasos = {
+      poner: () => deporte.poner(arg), alcohol: () => deporte.ponerAlcohol(arg),
+      inicio: () => accionesSeccion.deporteInicio(), tarjeta: () => accionesSeccion.deporteTarjeta(), sueno: () => accionesSeccion.deporteSueno(),
+      bloqueo: () => accionesSeccion.deporteBloqueo(), perfil: () => accionesSeccion.deportePerfil(), cuestionario: () => accionesSeccion.deporteCuestionario(),
+    };
+    pasos[accion]();
+    refrescarControles();
+  };
   window.__guia = (paso, extra) => guiaAtajos.irA(paso, extra);
   // «Para hoy» en otro momento del día, para las capturas (mediodia, tarde, nada, bien; null, el de la galería).
   window.__paraHoy = (e) => inicio.ejemplo(e);

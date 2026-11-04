@@ -1,7 +1,7 @@
 // Arma galeria/dist/index.html: un solo archivo con la página, los shaders del cielo, el
 // catálogo, los textos, los alimentos curados y los módulos de la app que usa (la comida, las
 // metas, el control, el cuerpo, el progreso, el sueño con y sin reloj, el rendimiento y los músculos
-// con Ascent, y las estadísticas de Hábitos), y para la sección «Tienda», el ícono y las capturas
+// con Ascent, las estadísticas de Hábitos y los consejos según el deporte), y para la sección «Tienda», el ícono y las capturas
 // de la App Store achicadas (capturas/tienda/vista). Todo lo demás se lee
 // de src/ y de assets/, que es lo mismo que usa la app: la galería nunca tiene una copia propia.
 // Uso: npm run galeria
@@ -18,7 +18,7 @@ const leerJson = (p) => (existsSync(join(raiz, p)) ? JSON.parse(leer(p)) : null)
 
 // Los módulos de src/dominio que puede importar otro módulo de la galería, con el nombre de su
 // constante. Van antes en el armado que los que los usan.
-const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', cuestionario: 'Cuestionario', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas', comidas: 'Comidas', luz: 'Luz', dias: 'Dias', habitos: 'Habitos', recordatorios: 'Recordatorios', loQueFalta: 'LoQueFalta', avisos: 'Avisos', alrededorDelEntreno: 'AlrededorDelEntreno', diagnostico: 'Diagnostico', fatiga: 'Fatiga', recuperado: 'Recuperado', estancados: 'Estancados' };
+const DEL_DOMINIO = { porciones: 'Porciones', recetaDeTexto: 'RecetaDeTexto', fechas: 'Fechas', metas: 'Metas', micronutrientes: 'Micronutrientes', dejaElDia: 'DejaElDia', plan: 'Plan', control: 'Control', cuerpo: 'Cuerpo', progreso: 'Progreso', sueno: 'Sueno', sinReloj: 'SinReloj', entrenamiento: 'Entrenamiento', cuestionario: 'Cuestionario', musculos: 'Musculos', rendimiento: 'Rendimiento', estadisticas: 'Estadisticas', comidas: 'Comidas', luz: 'Luz', dias: 'Dias', habitos: 'Habitos', recordatorios: 'Recordatorios', loQueFalta: 'LoQueFalta', avisos: 'Avisos', alrededorDelEntreno: 'AlrededorDelEntreno', diagnostico: 'Diagnostico', fatiga: 'Fatiga', recuperado: 'Recuperado', estancados: 'Estancados', segunElDeporte: 'SegunElDeporte' };
 
 // Un módulo de src/ pasado a JavaScript, como una constante con lo que exporta. Solo puede
 // importar otros módulos de la galería (DEL_DOMINIO), que se leen de su constante; los imports de
@@ -169,7 +169,6 @@ const js = [
   modulo('LoQueFalta', 'src/dominio/loQueFalta.ts'),
   modulo('Avisos', 'src/dominio/avisos.ts'),
   modulo('AlrededorDelEntreno', 'src/dominio/alrededorDelEntreno.ts'),
-  modulo('LoQueConviene', 'src/dominio/loQueConviene.ts'),
   modulo('Plan', 'src/dominio/plan.ts'),
   modulo('Metas', 'src/dominio/metas.ts'),
   modulo('ParaHoy', 'src/dominio/paraHoy.ts'),
@@ -182,6 +181,9 @@ const js = [
   modulo('SinReloj', 'src/dominio/sinReloj.ts'),
   modulo('Entrenamiento', 'src/dominio/entrenamiento.ts'),
   modulo('Cuestionario', 'src/dominio/cuestionario.ts'),
+  // Lo del deporte usa el cuestionario y los micronutrientes; lo que conviene (los avisos), lo del deporte.
+  modulo('SegunElDeporte', 'src/dominio/segunElDeporte.ts'),
+  modulo('LoQueConviene', 'src/dominio/loQueConviene.ts'),
   modulo('Musculos', 'src/dominio/musculos.ts'),
   modulo('Rendimiento', 'src/dominio/rendimiento.ts'),
   modulo('Fatiga', 'src/dominio/fatiga.ts'),
@@ -191,7 +193,7 @@ const js = [
   modulo('Premium', 'src/dominio/premium.ts'),
   modulo('SenalDeAscent', 'src/dominio/senalDeAscent.ts'),
   modulo('Diagnostico', 'src/dominio/diagnostico.ts'),
-  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'fotos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'avisos', 'suscripcion', 'widgets-nuevos', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
+  ...['motor', 'escena', 'entrada', 'util', 'luna', 'kcal', 'datos', 'fotos', 'comida', 'inicio', 'mas', 'progreso', 'sueno', 'perfil', 'ascent', 'habitos', 'atajos', 'avisos', 'deporte', 'suscripcion', 'widgets-nuevos', 'widgets', 'tienda', 'revision', 'galeria'].map((n) => leer(`galeria/src/${n}.js`)),
 ].join('\n');
 
 const html = leer('galeria/src/pagina.html').replace('/*@SCRIPTS*/', () => js);

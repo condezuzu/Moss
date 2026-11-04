@@ -86,15 +86,21 @@ export const DEPORTES: readonly Deporte[] = ['fuerza', 'equipo', 'resistencia', 
 export type SesionDicha = { tipo: Deporte; dias: DiaSemana[]; hora: number; minutos: number };
 
 /**
+ * El partido de cada semana: qué día y, si se sabe, a qué hora empieza (minutos desde la medianoche). La hora
+ * es opcional: sirve para saber si termina tarde, que esa noche se duerme menos (segunElDeporte.ts, regla 6).
+ */
+export type PartidoDicho = { dia: DiaSemana; hora?: number | null };
+
+/**
  * Cómo entrena: los deportes (de ahí salen los consejos, spec/entreno.md), las sesiones de cada uno (un día
- * puede tener dos), cuánto tarda en llegar, si juega partidos o compite y qué día (con partidos o choques), y
- * si compite por categoría de peso (con combate). Sin entrenar, null.
+ * puede tener dos), cuánto tarda en llegar, si juega partidos o compite, qué día y a qué hora (con partidos o
+ * choques), y si compite por categoría de peso (con combate). Sin entrenar, null.
  */
 export type EntrenoDicho = {
   tipos: Deporte[];
   sesiones: SesionDicha[];
   viaje: number;
-  partidos?: { dia: DiaSemana } | null;
+  partidos?: PartidoDicho | null;
   categoriaDePeso?: boolean | null;
 };
 
