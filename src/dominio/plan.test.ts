@@ -14,8 +14,8 @@ import { sumarDias } from './fechas';
 import type { Macros } from './metas';
 import {
   adaptar, adaptarRegistros, afinidadDe, cambiarPorOtra, combinadas, comidasDelPlan, diaPlaneadoDe, DIETAS, estaTachada, itemsDeComida, listaDeCompras, MINUTOS, opcionDePlantilla, opcionesTuyas,
-  permitida, planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, sugerenciaVencida, sugerenciasQueSobran, tachadasDe, tachar, type DiaPlaneado, type Opcion,
-  type Plantilla, type Preferencias, type Resolver,
+  permitida, planearDia, planearSemana, planificadoPorCompra, PLANTILLAS, PREFERENCIAS_DE_FABRICA, preferenciasDe, queFalta, recientesDe, REPARTO, sugerenciaVencida, sugerenciasQueSobran, tachadasDe, tachar, type DiaPlaneado, type Dieta,
+  type Opcion, type Plantilla, type Preferencias, type Resolver,
 } from './plan';
 import { gramosDe, itemDeAlimento, itemRapido, valoresDeCantidad, type Item, type Registro, type Valores } from './registros';
 
@@ -35,6 +35,36 @@ const TIPO = PLANTILLAS.map((p) => opcionDePlantilla(p, resolver, 'es')).filter(
 const COMBINADAS = combinadas();
 const COMBI = COMBINADAS.map((p) => opcionDePlantilla(p, resolver, 'es')).filter((op): op is Opcion => op !== null);
 const plantilla = (clave: string) => PLANTILLAS.find((p) => p.clave === clave) ?? COMBINADAS.find((p) => p.clave === clave)!;
+
+// Lo que lleva cada alimento de las comidas tipo y de las combinadas, para saber quién lo come. Lo
+// que no está en ninguna lista es vegetal.
+const CON_CARNE = new Set([
+  'Pechuga de pollo a la plancha', 'Pollo asado', 'Muslo de pollo con piel', 'Pechuga de pavo', 'Lomo', 'Bistec', 'Rib eye', 'Asado de tira',
+  'Hamburguesa de carne', 'Lomo de cerdo', 'Chuleta de cordero', 'Tocino', 'Jamón cocido', 'Jamón crudo', 'Salame', 'Chorizo',
+  'Milanesa de carne al horno', 'Salsa boloñesa', 'Polenta con salsa boloñesa', 'Guiso de lentejas', 'Empanada de carne', 'Sopa de pollo con verduras',
+]);
+const CON_PESCADO = new Set(['Atún en agua', 'Merluza', 'Salmón', 'Salmón ahumado']);
+// Lo de origen animal que no es carne ni pescado: el huevo, la leche y la miel (la granola puede llevarla).
+const CON_HUEVO_O_LECHE = new Set([
+  'Huevo', 'Huevo duro', 'Huevo a la plancha', 'Huevos revueltos', 'Clara de huevo', 'Omelet de queso', 'Tortilla de papas', 'Pascualina',
+  'Leche entera', 'Leche descremada', 'Café con leche', 'Proteína de suero', 'Yogur griego', 'Yogur griego descremado', 'Queso fresco',
+  'Queso cottage', 'Queso mozzarella', 'Queso rallado', 'Queso crema', 'Queso crema light', 'Queso gouda', 'Queso cheddar', 'Crema de leche',
+  'Mantequilla', 'Puré de papas', 'Ravioles', 'Hamburguesa vegetal', 'Miel', 'Granola',
+]);
+// Lo de origen animal que lleva algo vegetal (o la miel, que quien es carnívoro deja afuera).
+const CON_ALGO_VEGETAL = new Set([
+  'Milanesa de carne al horno', 'Salsa boloñesa', 'Polenta con salsa boloñesa', 'Guiso de lentejas', 'Empanada de carne', 'Sopa de pollo con verduras',
+  'Tortilla de papas', 'Pascualina', 'Café con leche', 'Proteína de suero', 'Puré de papas', 'Ravioles', 'Hamburguesa vegetal', 'Miel', 'Granola',
+]);
+/** Lo que come quien es carnívoro: solo lo de origen animal, sin nada vegetal. */
+const SOLO_ANIMAL = new Set([...CON_CARNE, ...CON_PESCADO, ...CON_HUEVO_O_LECHE].filter((nombre) => !CON_ALGO_VEGETAL.has(nombre)));
+const come = (dieta: Dieta, nombre: string): boolean => {
+  if (dieta === 'carnivora') return SOLO_ANIMAL.has(nombre);
+  if (dieta === 'vegana') return !CON_CARNE.has(nombre) && !CON_PESCADO.has(nombre) && !CON_HUEVO_O_LECHE.has(nombre);
+  if (dieta === 'vegetariana') return !CON_CARNE.has(nombre) && !CON_PESCADO.has(nombre);
+  return dieta === 'todo' || !CON_CARNE.has(nombre);
+};
+const dietasDe = (p: Plantilla) => DIETAS.filter((d) => p.items.every(([nombre]) => come(d, nombre)));
 
 const HOY = '2026-10-21';
 const META: Macros = { kcal: 2200, proteina: 140, carbohidratos: 250, grasas: 70 };
@@ -115,12 +145,32 @@ describe('las comidas tipo', () => {
     ]);
     // 150 g de tofu firme: 144 kcal cada 100 g.
     expect(op.items[0].valores.kcal).toBeCloseTo(216, 6);
-    expect(op).toMatchObject({ clave: 'tofu-revuelto', nombre: 'Tofu revuelto con espinaca y tostadas', comida: 'desayuno', origen: 'tipo', veces: 0, dietas: DIETAS, contiene: ['soja', 'gluten'] });
+    expect(op).toMatchObject({
+      clave: 'tofu-revuelto', nombre: 'Tofu revuelto con espinaca y tostadas', comida: 'desayuno', origen: 'tipo', veces: 0, dietas: DIETAS.filter((d) => d !== 'carnivora'), contiene: ['soja', 'gluten'],
+    });
     expect(opcionDePlantilla(plantilla('tofu-revuelto'), resolver, 'en')!.nombre).toBe('Tofu scramble with spinach on toast');
   });
 
   it('si falta un alimento en la base, no hay comida tipo', () => {
     expect(opcionDePlantilla(plantilla('avena-banana'), (nombre) => (nombre === 'Banana' ? null : resolver(nombre)), 'es')).toBeNull();
+  });
+
+  it('cada una, comida tipo o combinada, dice quién la come por lo que lleva: lo vegetal no es de quien es carnívoro, y lo solo de origen animal sí', () => {
+    // Así las otras dietas siguen con lo de antes: la carnívora solo suma lo que no tiene nada vegetal. Las que se
+    // armaron para ella son solo suyas (SOLO_CARNIVORA en plan.ts).
+    const soloSuya = (p: Plantilla) => p.dietas.join() === 'carnivora' && dietasDe(p).includes('carnivora');
+    const mal = [...PLANTILLAS, ...COMBINADAS].filter((p) => p.dietas.join() !== dietasDe(p).join() && !soloSuya(p)).map((p) => `${p.clave}: ${p.dietas.join(' ')}`);
+    expect(mal).toEqual([]);
+    expect(plantilla('pavo-queso').dietas).toEqual(['todo', 'carnivora']);
+    expect(plantilla('yogur-miel').dietas).toEqual(['todo', 'vegetariana', 'pescetariana']);
+    expect(plantilla('huevos-queso').dietas).toEqual(['carnivora']);
+    expect(plantilla('combinada:almuerzo:pollo-quinoa-brocoli').dietas).toEqual(['todo']);
+  });
+
+  it('lo armado para quien es carnívoro no le llega a nadie más: las otras dietas tienen las mismas comidas que antes', () => {
+    // De lo que puede comer quien es carnívoro, lo único que comparte con otra dieta es lo que ya estaba (pavo con queso).
+    const compartidas = [...PLANTILLAS, ...COMBINADAS].filter((p) => p.dietas.includes('carnivora') && p.dietas.length > 1).map((p) => p.clave);
+    expect(compartidas).toEqual(['pavo-queso']);
   });
 });
 
@@ -152,8 +202,21 @@ describe('las combinadas', () => {
     });
     expect(COMBINADAS.find((p) => p.clave === 'combinada:desayuno:soja-mani-kiwi')).toMatchObject({
       nombre: { es: 'Leche de soja, tostadas con mantequilla de maní y kiwi', en: 'Soy milk, toast with peanut butter and kiwi' },
-      dietas: DIETAS, contiene: ['gluten', 'mani', 'soja'],
+      dietas: DIETAS.filter((d) => d !== 'carnivora'), contiene: ['gluten', 'mani', 'soja'],
     });
+    // Las de quien es carnívoro (solo suyas): la carne con lo que la acompaña, los huevos con una carne y algo con
+    // leche, y un fiambre con queso.
+    expect(COMBINADAS.find((p) => p.clave === 'combinada:almuerzo:carne-fritos')).toMatchObject({
+      nombre: { es: 'Carne a la plancha con huevos fritos', en: 'Grilled steak with fried eggs' }, dietas: ['carnivora'], contiene: ['leche', 'huevo'], minutos: 13,
+    });
+    expect(COMBINADAS.find((p) => p.clave === 'combinada:desayuno:revueltos-tocino-yogur')).toMatchObject({
+      nombre: { es: 'Huevos revueltos con tocino y yogur griego', en: 'Scrambled eggs with bacon and Greek yogurt' }, dietas: ['carnivora'],
+    });
+    expect(COMBINADAS.find((p) => p.clave === 'combinada:snack:serrano-gouda')).toMatchObject({
+      nombre: { es: 'Jamón serrano con queso gouda', en: 'Prosciutto with Gouda' }, dietas: ['carnivora'], contiene: ['leche'],
+    });
+    // El pescado va solo con mantequilla o con crema.
+    expect(COMBINADAS.filter((p) => /^combinada:almuerzo:(merluza|salmon)-(fritos|derretido|tocino)$/.test(p.clave))).toEqual([]);
     // Lo que no va junto no está.
     expect(COMBINADAS.filter((p) => /garbanzos-pure|lentejas-pure|cafe-avena|cafe-granola|cottage-queso/.test(p.clave))).toEqual([]);
   });
@@ -350,6 +413,7 @@ describe('un día', () => {
       { ...TODO, dieta: 'vegana', alergias: ['gluten'] },
       { ...TODO, dieta: 'pescetariana', alergias: ['leche', 'huevo'] },
       { ...TODO, tiempo: 'poco', alergias: ['mani', 'frutosSecos'] },
+      { ...TODO, dieta: 'carnivora', tiempo: 'normal', alergias: ['pescado'] },
     ];
     for (const pref of casos) {
       for (const semilla of SEMILLAS.slice(0, 5)) {
@@ -419,6 +483,74 @@ describe('un día', () => {
   });
 });
 
+describe('quien es carnívoro', () => {
+  const CARNIVORA: Preferencias = { ...TODO, dieta: 'carnivora' };
+  const opciones = [...TIPO, ...COMBI];
+  const loVegetal = (dias: DiaPlaneado[]) => todasLasComidas(dias).flatMap((c) => c.items.map((it) => it.nombre)).filter((nombre) => !SOLO_ANIMAL.has(nombre));
+  // Con la meta de siempre y con una de pocos carbohidratos, como la que suele llevar esta dieta.
+  const METAS: Macros[] = [META, { kcal: 1800, proteina: 150, carbohidratos: 30, grasas: 120 }];
+
+  it('recibe un día que llega a la meta solo con lo de origen animal, con 3, 4 o 5 comidas y el tiempo que tenga', () => {
+    for (const comidas of [3, 4, 5] as const) for (const tiempo of ['poco', 'normal', 'mucho'] as const) for (const meta of METAS) {
+      const pref: Preferencias = { ...CARNIVORA, comidas, tiempo };
+      for (const semilla of SEMILLAS.slice(0, 6)) {
+        const dia = planearDia({ dia: HOY, meta, opciones, pref, semilla });
+        expect(dia.comidas.map((c) => c.comida)).toEqual(comidasDelPlan(comidas));
+        expect(cerca(dia.valores.kcal, meta.kcal, 0.05)).toBe(true);
+        expect(dia.valores.proteina).toBeGreaterThanOrEqual(0.9 * meta.proteina);
+        expect(dia.alcanza).toBe(true);
+        expect(loVegetal([dia])).toEqual([]);
+        for (const c of dia.comidas) expect(plantilla(c.opcion).minutos).toBeLessThanOrEqual(MINUTOS[tiempo]);
+      }
+    }
+    // Con las comidas tipo solas también llega: las combinadas quedan para cuando se acaban.
+    for (const semilla of SEMILLAS) expect(planearDia({ dia: HOY, meta: META, opciones: TIPO, pref: CARNIVORA, semilla }).alcanza).toBe(true);
+  });
+
+  it('y una semana, sin el mismo almuerzo o la misma cena dos días seguidos', () => {
+    for (const semilla of SEMILLAS.slice(0, 6)) {
+      const semana = planearSemana({ desde: HOY, metaDe: () => META, opciones, pref: { ...CARNIVORA, tiempo: 'normal' }, semilla });
+      expect(semana.every((d) => d.alcanza)).toBe(true);
+      expect(loVegetal(semana)).toEqual([]);
+      const grandes = semana.map((d) => d.comidas.filter((c) => c.comida === 'almuerzo' || c.comida === 'cena').map((c) => c.opcion));
+      for (let i = 1; i < 7; i++) expect(grandes[i].filter((clave) => grandes[i - 1].includes(clave))).toEqual([]);
+    }
+  });
+
+  it('sin leche, sin huevo o sin pescado, también tiene de cada comida', () => {
+    for (const alergia of ['leche', 'huevo', 'pescado'] as const) for (const comidas of [4, 5] as const) {
+      for (const semilla of SEMILLAS.slice(0, 5)) {
+        const dia = planearDia({ dia: HOY, meta: META, opciones, pref: { ...CARNIVORA, comidas, tiempo: 'normal', alergias: [alergia] }, semilla });
+        expect(dia.comidas.map((c) => c.comida)).toEqual(comidasDelPlan(comidas));
+        expect(dia.alcanza).toBe(true);
+        expect(dia.comidas.filter((c) => plantilla(c.opcion).contiene.includes(alergia)).map((c) => c.opcion)).toEqual([]);
+      }
+    }
+  });
+
+  it('«Otra» le propone otra, también de origen animal', () => {
+    const dia = planearDia({ dia: HOY, meta: META, opciones, pref: CARNIVORA, semilla: 3 });
+    for (const comida of comidasDelPlan(4)) {
+      const nuevo = cambiarPorOtra(dia, comida, { opciones, pref: CARNIVORA, meta: META, semilla: 7 })!;
+      const i = dia.comidas.findIndex((c) => c.comida === comida);
+      expect(dia.comidas.map((c) => c.opcion)).not.toContain(nuevo.comidas[i].opcion);
+      expect(loVegetal([nuevo])).toEqual([]);
+    }
+  });
+
+  it('a las demás dietas no les cambia nada: sin la carnívora en ninguna comida, el mismo plan', () => {
+    const sin = opciones.map((op) => ({ ...op, dietas: op.dietas.filter((d) => d !== 'carnivora') }));
+    for (const dieta of DIETAS.filter((d) => d !== 'carnivora')) {
+      for (const semilla of SEMILLAS.slice(0, 3)) {
+        const pref: Preferencias = { ...TODO, dieta };
+        const dia = planearDia({ dia: HOY, meta: META, opciones, pref, semilla });
+        expect(planearDia({ dia: HOY, meta: META, opciones: sin, pref, semilla })).toEqual(dia);
+        expect(cambiarPorOtra(dia, 'cena', { opciones: sin, pref, meta: META, semilla })).toEqual(cambiarPorOtra(dia, 'cena', { opciones, pref, meta: META, semilla }));
+      }
+    }
+  });
+});
+
 describe('la semana', () => {
   it('siete días seguidos, cada uno con su meta', () => {
     const alto = { ...META, kcal: 2600, carbohidratos: 350 };
@@ -467,7 +599,8 @@ describe('cambiar por otra', () => {
   it('nunca propone lo que no te gusta; sin nada parecido, algo menos parecido, y sin ninguna otra no hay cambio', () => {
     const dia = planearDia({ dia: HOY, meta: META, opciones: TIPO, pref: TODO, semilla: 4 });
     const enElDia = dia.comidas.map((c) => c.opcion);
-    const grandes = TIPO.filter((op) => (op.comida === 'almuerzo' || op.comida === 'cena') && !enElDia.includes(op.clave)).map((op) => op.clave);
+    // Las de quien come de todo (las de la carnívora no son suyas).
+    const grandes = TIPO.filter((op) => (op.comida === 'almuerzo' || op.comida === 'cena') && op.dietas.includes('todo') && !enElDia.includes(op.clave)).map((op) => op.clave);
     const noMeGusta = grandes.filter((_, i) => i % 2 === 0);
     for (const semilla of SEMILLAS) {
       const nuevo = cambiarPorOtra(dia, 'almuerzo', { opciones: TIPO, pref: { ...TODO, noMeGusta }, meta: META, semilla });
@@ -658,9 +791,10 @@ describe('lo que usa la app', () => {
     expect(preferenciasDe(null)).toBeNull();
     expect(preferenciasDe([])).toBeNull();
     expect(preferenciasDe({})).toEqual(PREFERENCIAS_DE_FABRICA);
-    expect(preferenciasDe({ dieta: 'carnivora', alergias: ['mani', 'polvo', 'mani'], comidas: 6, tiempo: 'poco', noMeGusta: ['a', 'a', 7, ''], meGusta: 'b' }))
+    expect(preferenciasDe({ dieta: 'frugivora', alergias: ['mani', 'polvo', 'mani'], comidas: 6, tiempo: 'poco', noMeGusta: ['a', 'a', 7, ''], meGusta: 'b' }))
       .toEqual({ dieta: 'todo', alergias: ['mani'], comidas: 4, tiempo: 'poco', noMeGusta: ['a'], meGusta: [] });
     expect(preferenciasDe({ dieta: 'vegana', comidas: 3 })).toMatchObject({ dieta: 'vegana', comidas: 3, tiempo: 'normal' });
+    expect(preferenciasDe({ dieta: 'carnivora' })).toMatchObject({ dieta: 'carnivora' });
   });
 
   it('lo planificado de un día, como un día del plan: por comida, con su opción', () => {

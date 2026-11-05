@@ -15,6 +15,80 @@ marcado **«derivado»** es una cuenta mía a partir de los datos citados, no un
 valor publicado. Lo marcado **«sin confirmar»** no tiene respaldo verificado. Las
 fuentes están al final, con su número entre corchetes.
 
+## Lo que cambió el 5/11/2026 (con la evidencia, para aprobar)
+
+Pediste que fuera «lo más confiable posible». El estudio de esa fecha (72 fuentes,
+con simulaciones propias marcadas como derivadas) revisó cada cuenta de esta
+sección y la de «Ascent en Progreso» de [`ascent.md`](ascent.md). Lo que sigue
+manda sobre lo de abajo, que queda como historia; la app todavía usa lo de antes,
+apagada con `CON_ASCENT`, y la galería ya muestra lo nuevo.
+
+**Lo que no se sostiene y se saca de la galería:**
+- **«Estás 87 % recuperado».** Ningún puntaje compuesto de recuperación está
+  validado contra el rendimiento (Doherty 2025), los pesos 40/40/20 y las franjas
+  (las de Oura) son convención, y la suma compensa: con noches de 4 h 30 a 6 h, el
+  97 % de las combinaciones daba «Bien» o «Muy bien». En su lugar, un **titular
+  sin porcentaje** con la regla del eslabón más débil (`titularDeHoy()` en
+  `recuperado.ts`): ya entrenaste, descansas, falta la noche, lo de hoy cargado
+  (más liviano u otra cosa), la noche corta (sin ir al fallo), cómo te sientes
+  (de 0 a 10) o como siempre. Debajo, tres filas con datos: el sueño, los músculos
+  de hoy y la comida. El número de antes queda en `recuperado()` solo para Sueño,
+  hasta que decidas.
+- **El rendimiento esperado (Δ con ± 3,3 %).** Pasa a una línea, solo con la noche
+  corta: «la fuerza máxima casi no cambia; las repeticiones pueden costar más»
+  (`lineaDelRendimiento()` en `rendimiento.ts`; Craven 2022: −2,85 % y −9,85 %).
+- **La probabilidad de marca.** No está calibrada: cuando decía 49 %, la marca
+  salía el 15 % de las veces, y decir la frecuencia de siempre acierta más (Brier
+  0,135 contra 0,183). Ahora: **cerca de tu marca** si tu nivel de hoy (la
+  tendencia) está a menos de tu ruido de un día a otro (`cercaDeLaMarca()`), lo
+  que acompaña en una lista (`condicionesDeLaMarca()`: más de 6 h sin
+  despertarte antes, los músculos descansados y una semana como siempre) y cada
+  cuánto haces marca (`frecuenciaDeMarcas()`).
+- **«Estancado» con 3 semanas.** Con el ruido de cada día, a quien sube un 1 % por
+  mes le decía «estancado» el 63 % de las veces. Ahora, **la tendencia de 12
+  semanas con su rango del 80 %** (`tendenciaDeFuerza()`): «sube», «sin subida
+  clara» o «todavía no se sabe» (con menos de 6 sesiones o 6 semanas). Estancado
+  es «sin subida clara» con 8 semanas o más y pasado el umbral de Ascent
+  (`estaEstancado()` en `estancados.ts`).
+- **Las razones de estancamiento,** ordenadas por lo más sólido: menos series
+  duras por semana del músculo (Pelland 2026), menos veces por semana, pocas series
+  pesadas (Lopez 2021; ACSM 2026), bajar más de un 1 % por semana o la definición,
+  la proteína contra 1,6 g por kilo (Morton 2018) y el sueño («puede influir»).
+  Cada una solo con datos y si la diferencia pasa dos errores estándar de lo que
+  cambia de una semana a otra. Se sacaron «comiste más por debajo», «poco descanso
+  entre sesiones» y «tus sesiones se achicaron».
+- **La fatiga en % y en horas.** El modelo erra hasta 7 puntos contra los
+  estudios: se dice en palabras (descansado, recuperándose o cargado) y en días
+  («probablemente mañana»: `cuandoListo()`), y en un cuerpo dibujado.
+
+**Arreglos claros (ya están, con sus tests):**
+1. `e1rm(peso, 1)` da el peso, como Ascent (antes le sumaba un 3,3 %).
+2. La comida sin anotar no vale 0: sin nada anotado ayer, no cuenta.
+3. τ crece de a poco con las series (×1 con 6, ×1,5 con 12), sin el salto de 69 a
+   107 h entre 9 y 10 series (`porLasSeries()`).
+4. En la app (`src/secciones/ascent/calculos.ts`): «entrenado» sale de la
+   historia de Ascent (la primera sesión o la marca más vieja, de hace 26 semanas o
+   más: `entrenadoSegunAscent()`), y lo mismo «novato» en la fatiga; las 8 horas
+   sin comer salen de lo anotado (`horasSinComer()`).
+5. El umbral de estancamiento es el de Ascent (6 semanas de fábrica), no 3.
+6. «Puedes ir más fuerte» ya no se dice: `comoEntrenar()` no lo devuelve.
+7. «Registra cómo dormiste: así puede llegar a 40» ya no está.
+8. Lo de comer cita bien sus fuentes (King 2022, Gardiner 2023, Frimpong 2021 y
+   Leota 2025).
+
+**Falta, de otros:** el corte del café de `alrededorDelEntreno.ts` (9 h con un café
+y 13 con un preentreno, Gardiner 2023) y los textos de Perfil › En qué se basa que
+siguen citando ACSM 2016 para el gramo por kilo antes de la fuerza.
+
+**Las series de trabajo:** cuenta toda serie con el 60 % del e1RM o más; la
+reserva estimada con Epley se sacó (el error entre personas es del tamaño de los
+cortes: Nuzzo 2024).
+
+**Los ejercicios:** el catálogo de Ascent entero (112, por su id: las migraciones
+8, 29, 56, 76 y 96), con su músculo principal y los que ayudan, en `CATALOGO` de
+`musculos.ts`; los propios (`propio_…`), por el grupo que eligió la persona. Un
+test compara las dos listas.
+
 ## Tres hechos que ordenan todo
 
 1. **El ruido de cada día es del tamaño de los efectos.**
@@ -296,15 +370,21 @@ entrenar, la fuerza máxima baja de 1 a 4 % [61].
 ### Ejercicio y músculos
 
 Ascent le da un solo grupo a cada ejercicio, y el modelo necesita el principal y
-los que ayudan. Va una tabla en el dominio de Moss (`src/dominio/musculos.ts`)
-con los ejercicios comunes:
-- por nombre, en español y en inglés;
-- con el grupo de Ascent como respaldo, para los que no estén.
+los que ayudan. Desde el 5/11/2026 las dos apps tienen la misma lista: el
+catálogo de Ascent entero, por su id, en `CATALOGO` de `src/dominio/musculos.ts`
+(una tabla de Moss: Moss no llama funciones de Ascent). Los ejercicios propios
+(`propio_…`, que se crean en Ascent si uno no está) van por el grupo que eligió
+la persona, y lo mismo uno nuevo que Moss todavía no tenga. El cardio no cansa
+músculos. Los nombres, en `ascent.ejercicios.<id>` de los textos (en inglés, los
+de `nucleo/ejerciciosEn.ts` de Ascent).
 
 Una marca opcional de «serie al fallo» en Ascent mejoraría la dosis [28][37].
 
 ### Cómo se ve
 
+Desde el 5/11/2026, en días y sin horas ni %: «Cuádriceps: todavía se recupera;
+probablemente vuelva a lo suyo mañana», en un cuerpo dibujado de frente y de
+espalda. Lo de antes:
 - En palabras, no solo con color:
   - «Piernas · recuperándose · listas en ~20 h»;
   - «Espalda baja · cargada (12 series el martes, una al fallo)».
@@ -316,6 +396,9 @@ Una marca opcional de «serie al fallo» en Ascent mejoraría la dosis [28][37].
     [46].
 
 ## 3. «Buen día para intentar marca»
+
+*Desde el 5/11/2026, sin probabilidad: ver «Lo que cambió», arriba. Lo de esta
+sección queda como historia y para la app de antes.*
 
 ### Lo que dicen los estudios
 

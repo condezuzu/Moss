@@ -97,6 +97,11 @@ export type Sueno = {
    * elegiste en «Tardo en dormirme»). La hora de ir a la cama es la de dormirte menos esto.
    */
   latencia?: number;
+  /**
+   * Lo que se suele estar despierto adentro de la noche, en minutos (despiertoDeLaNoche, en sueno.ts): para
+   * dormir lo que hace falta, de dormirse a despertarse tiene que pasar eso más. Sin saberlo, nada.
+   */
+  despierto?: number;
 };
 
 /**
@@ -137,7 +142,7 @@ export type Aviso = {
   texto?: TextoDeDormir;
   despertarA?: number;
   duerme?: number;
-  /** En el de dormir, la deuda en minutos, si el texto de esta noche la nombra. */
+  /** En el de dormir, la deuda en minutos (a la media hora), si el texto de esta noche la nombra. */
   deuda?: number;
 };
 
@@ -153,12 +158,14 @@ const DEUDA_QUE_SE_NOMBRA = 60;
 /**
  * El texto de cada noche: uno por vez hasta pasar por todos, así no vuelve hasta dentro de nueve
  * noches. Sale del día y nada más: reprogramar no lo cambia y el que ya se vio no se repite mañana.
+ * Con el aviso de las luces prendido, el de dormir no dice «Baja las luces» (ya lo dijo ese): rota entre
+ * los otros ocho.
  */
-export function textoDeDormir(dia: ClaveDia, deuda: number | null): TextoDeDormir {
+export function textoDeDormir(dia: ClaveDia, deuda: number | null, conLuces = false): TextoDeDormir {
   const n = diasEntre('2026-01-05', dia);
   if ((deuda ?? 0) >= DEUDA_QUE_SE_NOMBRA && ((n % 4) + 4) % 4 === 0) return 'deuda';
-  const largo = TEXTOS_DE_DORMIR.length;
-  return TEXTOS_DE_DORMIR[((n % largo) + largo) % largo];
+  const textos = conLuces ? TEXTOS_DE_DORMIR.filter((t) => t !== 'luces') : TEXTOS_DE_DORMIR;
+  return textos[((n % textos.length) + textos.length) % textos.length];
 }
 
 /** Lo que suena: un aviso, que dice una sola cosa. */
@@ -199,16 +206,19 @@ const aCinco = (x: number) => Math.round(x / 5) * 5;
 
 /**
  * La hora de dormirse esta noche, como la arma Rise (lo que hace falta dormir, la deuda y el reloj
- * del cuerpo), simplificada: la hora de despertarse mañana menos la necesidad, menos un tercio de la
- * deuda (hasta media hora: una hora de deuda lleva unos cuatro días, Kitamura y otros, 2016), y nunca
- * más de una hora antes de lo de siempre: antes de la hora habitual hay un rato en que el cuerpo no
- * se duerme (la «zona prohibida», Lavie 1986), así que se corre de a poco. En minutos desde las 18,
- * como las noches, y de a 5 minutos. Sin hora de despertarse, null: no hay aviso. Es una estimación.
+ * del cuerpo), simplificada: la hora de despertarse mañana menos la necesidad, menos lo que se suele
+ * estar despierto en la noche (la necesidad es de sueño, y adentro de la noche hay un rato despierto),
+ * menos un tercio de la deuda (hasta media hora: es una convención; en el laboratorio, una falta de
+ * cerca de una hora por noche se recuperó en unas cuatro noches con 12 h en la cama, Kitamura y otros,
+ * 2016), y nunca más de una hora antes de lo de siempre: antes de la hora habitual hay un rato en que
+ * el cuerpo no se duerme (la «zona prohibida», Lavie 1986), así que se corre de a poco. En minutos
+ * desde las 18, como las noches, y de a 5 minutos. Sin hora de despertarse, null: no hay aviso. Es una
+ * estimación.
  */
-export function horaDeDormir(d: { despertar: number | null; necesidad: number; deuda: number | null; habitual: number | null }): number | null {
+export function horaDeDormir(d: { despertar: number | null; necesidad: number; deuda: number | null; habitual: number | null; despierto?: number }): number | null {
   if (d.despertar === null) return null;
   const pago = Math.min(PAGO_MAXIMO, Math.max(0, d.deuda ?? 0) / 3);
-  const hora = d.despertar - d.necesidad - pago;
+  const hora = d.despertar - d.necesidad - (d.despierto ?? 0) - pago;
   return aCinco(d.habitual === null ? hora : Math.max(hora, d.habitual - ADELANTO_MAXIMO));
 }
 
@@ -216,9 +226,10 @@ export function horaDeDormir(d: { despertar: number | null; necesidad: number; d
  * A qué hora se despierta ese día, a qué hora dormirse esa noche y a qué hora ir a la cama para eso
  * (D33: dormirse menos lo que tardás), en minutos desde la medianoche del día (pasada la medianoche,
  * más de 1440). La mañana sale de la alarma de ese día o de lo de siempre; la noche, de la mañana
- * siguiente y de la deuda de hoy, que se rehace al reprogramar.
+ * siguiente y de la deuda de hoy, que se rehace al reprogramar. `despierto` es lo de la noche que no
+ * es sueño (Sueno.despierto), para lo que dormirías (duerme).
  */
-export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | null; dormir: number | null; acostarse: number | null; despertarManana: number | null } {
+export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | null; dormir: number | null; acostarse: number | null; despertarManana: number | null; despierto: number } {
   // La mañana de un día, en la cuenta de su noche (desde las 18 del anterior).
   const manana = (clave: ClaveDia): number | null => {
     const alarma = s.alarmas?.[diaDeLaSemana(clave)];
@@ -227,21 +238,24 @@ export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | nul
   const hoy = manana(dia);
   const siguiente = sumarDias(dia, 1);
   const despiertaManana = manana(siguiente);
-  const dormir = horaDeDormir({ despertar: despiertaManana, necesidad: s.necesidad, deuda: s.deuda, habitual: s.habitual(siguiente)?.dormirse ?? null });
+  const despierto = s.despierto ?? 0;
+  const dormir = horaDeDormir({ despertar: despiertaManana, necesidad: s.necesidad, deuda: s.deuda, habitual: s.habitual(siguiente)?.dormirse ?? null, despierto });
   return {
     despertar: hoy === null ? null : aCinco(hoy - MEDIANOCHE),
     dormir: dormir === null ? null : dormir + LAS_18,
     acostarse: dormir === null ? null : aCinco(dormir + LAS_18 - (s.latencia ?? 0)),
     despertarManana: despiertaManana === null ? null : aCinco(despiertaManana + LAS_18),
+    despierto,
   };
 }
 
 /**
- * Lo que dormirías esa noche, en minutos: de la hora de dormirte a la de despertarte mañana (horasDeSueno).
- * Es lo que dicen el aviso de dormir y Perfil: con deuda o lo de siempre tarde, no es la necesidad.
+ * Lo que dormirías esa noche, en minutos: de la hora de dormirte a la de despertarte mañana (horasDeSueno),
+ * menos lo que se suele estar despierto adentro. Es lo que dicen el aviso de dormir y Perfil: con deuda o lo
+ * de siempre tarde, no es la necesidad.
  */
-export const duerme = (h: { dormir: number | null; despertarManana: number | null }): number | null =>
-  h.dormir === null || h.despertarManana === null ? null : h.despertarManana - h.dormir;
+export const duerme = (h: { dormir: number | null; despertarManana: number | null; despierto?: number }): number | null =>
+  h.dormir === null || h.despertarManana === null ? null : h.despertarManana - h.dormir - (h.despierto ?? 0);
 
 // El horario y pesarse se eligen como un hábito: valen lo mismo. Lo de «sin anotar» es el respaldo.
 // Lo que conviene (3/11): lo de entrenar va antes que los hábitos (solo los días de entreno, y dice qué
@@ -349,18 +363,19 @@ export type DelDia = {
 export function avisosDelDia(op: DelDia): Notificacion[] {
   const { dia, ajustes } = op;
   const semana = diaDeLaSemana(dia);
-  const horas = op.sueno ? horasDeSueno(dia, op.sueno) : { despertar: null, dormir: null, acostarse: null, despertarManana: null };
+  const horas = op.sueno ? horasDeSueno(dia, op.sueno) : { despertar: null, dormir: null, acostarse: null, despertarManana: null, despierto: 0 };
   const fijos: Aviso[] = [];
   const conEvento: { aviso: Omit<Aviso, 'minutos'>; evento: Evento; despues: number }[] = [];
 
   // Un rato antes de la hora de ir a la cama, que ya descuenta lo que tardás en dormirte.
   if (ajustes.dormir?.encendido && horas.acostarse !== null) {
-    const texto = textoDeDormir(dia, op.sueno?.deuda ?? null);
+    const texto = textoDeDormir(dia, op.sueno?.deuda ?? null, !!ajustes.luces?.encendido);
     const dormidas = duerme(horas);
     fijos.push({
       id: 'dormir', tipo: 'dormir', minutos: horas.acostarse - (ajustes.dormir.antes ?? ANTES_DE_DORMIR), dormirA: horas.acostarse, texto,
       ...(horas.despertarManana !== null && dormidas !== null ? { despertarA: horas.despertarManana, duerme: dormidas } : {}),
-      ...(texto === 'deuda' ? { deuda: op.sueno?.deuda ?? 0 } : {}),
+      // La deuda es aproximada: se dice a la media hora, como en Sueño (redondearDeuda, en sueno.ts).
+      ...(texto === 'deuda' ? { deuda: Math.round((op.sueno?.deuda ?? 0) / 30) * 30 } : {}),
     });
   }
   const vistos = new Map<string, number>();

@@ -57,6 +57,11 @@ export type Contexto = {
   /** A qué hora se despierta y se duerme (lo de siempre), en minutos desde la medianoche; la noche puede pasar de 1440. */
   despertar: number | null;
   dormir: number | null;
+  /**
+   * A qué hora ir a la cama (horasDeSueno, en avisos.ts): el corte del café cuenta desde acá, como en los
+   * estudios. Sin saberla, desde la hora de dormirse.
+   */
+  acostarse?: number | null;
   /** Cuánta cafeína se toma de una vez, en mg, si se anotó seguido; si no, null. */
   cafeinaPorToma: number | null;
   /** Con «sin déficit» (un cuidado de salud), nada de esto aparece. */
@@ -95,10 +100,28 @@ export const DOBLE_SESION = 480;
 export const FALTA_PARA_DORMIR = 25;
 /** Lo que se lleva por hora en lo de más de 90 minutos. */
 export const DURANTE: [number, number] = [30, 60];
-/** El café, tantas horas antes de dormir: 8 hasta 200 mg, 12 con más (Gardiner 2023 y 2025). */
-const CORTE_DE_CAFEINA = { hasta200: 8 * 60, masDe200: 12 * 60 };
-/** El último café, según la hora de dormirse y lo que tiene una toma (sin saberlo, como uno de hasta 200 mg). */
-export const corteDeCafeina = (dormir: number, porToma: number | null) => dormir - (porToma !== null && porToma > 200 ? CORTE_DE_CAFEINA.masDe200 : CORTE_DE_CAFEINA.hasta200);
+/**
+ * El corte del café crece con la cafeína de una toma, como en el modelo de Gardiner 2023 (24 estudios): para no
+ * perder sueño, un café (107 mg) al menos 8,8 h antes de acostarse y un preentreno (217,5 mg), 13,2 h. Entre los
+ * dos, la recta que los une; fuera, esos topes. Sin saber la toma, como un café: 9 h (el número base queda para
+ * decidir: D1 de spec/estudio/momentos.md, Pendiente 4 de spec/entreno.md). Con 50 mg o menos (un té, una cola),
+ * sin corte.
+ */
+const CORTE = { cafe: { mg: 107, horas: 8.8 }, preentreno: { mg: 217.5, horas: 13.2 }, sinDato: 9, sinCorteHasta: 50 };
+
+/** Cuántas horas antes de ir a la cama, según los mg de una toma (null si no se sabe); sin corte, null. */
+export function horasDeCorte(mg: number | null): number | null {
+  if (mg === null) return CORTE.sinDato;
+  if (mg <= CORTE.sinCorteHasta) return null;
+  const { cafe, preentreno } = CORTE;
+  return Math.min(preentreno.horas, Math.max(cafe.horas, cafe.horas + ((mg - cafe.mg) * (preentreno.horas - cafe.horas)) / (preentreno.mg - cafe.mg)));
+}
+
+/** El último café, en minutos: la hora de ir a la cama menos eso, al cuarto de hora de antes (mejor antes que después). */
+export function corteDeCafeina(cama: number, mg: number | null): number | null {
+  const horas = horasDeCorte(mg);
+  return horas === null ? null : Math.floor((cama - horas * 60) / 15) * 15;
+}
 /** Como mucho tres líneas por día, y una por comida. */
 const MAXIMO_POR_DIA = 3;
 
@@ -174,9 +197,10 @@ function antes(c: Contexto, s: Sesion): Linea[] {
         : { ...base, comida: previa.comida, clase: 'snackPrevio', carbohidratos: carbohidratosDelSnack(c) };
   if (muyLarga(s)) linea.durantePorHora = DURANTE;
   // El café de antes de entrenar, si se toma seguido y cae tarde para el sueño.
-  if (c.cafeinaPorToma !== null && c.dormir !== null) {
-    const corte = c.dormir - (c.cafeinaPorToma > 200 ? CORTE_DE_CAFEINA.masDe200 : CORTE_DE_CAFEINA.hasta200);
-    if (s.inicio - 60 > corte) linea.cafeinaHasta = corte;
+  const cama = c.acostarse ?? c.dormir;
+  if (c.cafeinaPorToma !== null && cama !== null) {
+    const corte = corteDeCafeina(cama, c.cafeinaPorToma);
+    if (corte !== null && s.inicio - 60 > corte) linea.cafeinaHasta = corte;
   }
   return [linea];
 }

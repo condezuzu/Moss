@@ -18,7 +18,7 @@
 import { sesionesDeUnDia, type Deporte, type EntrenoDicho } from './cuestionario';
 import { diaDeLaSemana, diasEntre, lunesDe, sumarDias, type ClaveDia } from './fechas';
 import { MAYORIA_DE_EDAD, type Objetivo, type Sexo } from './metas';
-import { referenciaDe } from './micronutrientes';
+import { referenciaDe, requerimientoDe } from './micronutrientes';
 
 /** Un partido con su fecha: el de cada semana (partidosEntre) o uno de más, como un torneo. Horas en minutos. */
 export type Partido = { dia: ClaveDia; hora?: number | null; minutos?: number | null };
@@ -317,7 +317,8 @@ export function segunElDeporte(e: EntradaDelDeporte): ConsejoDelDeporte[] {
     };
     const hierroDia = deLos('hierro');
     const calcioDia = deLos('calcio');
-    const hierro = hierroDia !== null && hierroDia < meta('hierro');
+    // El hierro, contra el requerimiento promedio (EAR): debajo de la recomendada solo «probablemente» falta (IOM, 2000).
+    const hierro = hierroDia !== null && hierroDia < (requerimientoDe('hierro', quien) ?? meta('hierro'));
     const calcio = calcioDia !== null && calcioDia < (energia ? Math.max(meta('calcio'), CALCIO_CON_ENERGIA_BAJA) : meta('calcio'));
     if (hierro || calcio) lista.push({ que: 'minerales', donde: 'paraHoy', tema: 'minerales', hierro, calcio });
   }

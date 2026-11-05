@@ -253,7 +253,7 @@ export function actualizarWidgets(): Promise<void> {
 }
 
 /** Lo que muestran los widgets: si cambia, se escriben de nuevo. */
-const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos] : [])] as const;
+const queMuestran = (e: Estado) => [e.listo, e.hoy, e.corte, e.latencia, e.necesidad, e.perfil, e.habitos, e.periodos, e.dias, e.marcas, e.noches, e.salud, e.metas, ...(CON_WIDGETS_NUEVOS ? [e.registros, e.agua, e.pesos] : [])] as const;
 
 /**
  * En la raíz de la app: al estar listo el almacén, al volver a Moss y cuando cambia algo que muestran,

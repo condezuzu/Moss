@@ -1,9 +1,12 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { estadoDelControl, tendencia, ultimoDiaDeControl, type Pesada } from './control';
-import { sumarDias } from './fechas';
+import { diaDeLaSemana, diasEntre, sumarDias, type DiaSemana } from './fechas';
 import { estadoDeMacro, RITMOS } from './metas';
-import { balance, bordeDe, direccionDe, faltaParaEstimar, planPorEtapas, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoSemanal, SEMANAS_DE_MANTENIMIENTO, viabilidad, type EntradaDelPlazo } from './progreso';
+import {
+  balance, bordeDe, direccionDe, faltaParaEstimar, fechasDeLlegada, planPorEtapas, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoConRango, ritmoSemanal, SEMANAS_DE_MANTENIMIENTO, viabilidad,
+  type EntradaDelPlazo,
+} from './progreso';
 
 const HOY = '2026-10-21';
 /** Pesadas de todos los días hasta hoy, bajando `kgPorSemana` desde `inicial`. */
@@ -28,6 +31,110 @@ describe('el ritmo de la tendencia', () => {
     expect(ritmoSemanal(t, HOY)!).toBeGreaterThan(-0.3);
     const p = progresoAlObjetivo({ hoy: HOY, tendencia: t, pesadas, objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 70 });
     expect(p.ritmo!).toBeCloseTo(-0.5, 5);
+  });
+
+  it('pesándose solo los lunes, el del domingo es el real: no copia la última pesada hasta el domingo', () => {
+    // −0,5 kg por semana exactos; copiando el lunes hasta el domingo daba −0,395.
+    const domingo = '2026-10-25';
+    const lunes = Array.from({ length: 9 }, (_, i) => ({ fecha: sumarDias('2026-10-19', -7 * (8 - i)), kg: 85 - 0.5 * i }));
+    expect(Math.abs(ritmoSemanal(tendencia(lunes, domingo), domingo, lunes)! + 0.5)).toBeLessThanOrEqual(0.01);
+  });
+});
+
+// El peso con el ruido que describe la literatura (spec/estudio/progreso.md, anexo): 0,5 kg por día que dura unos
+// días (ρ = 0,6), el patrón de la semana (0,35 %) y medio kilo más cinco días de cada 28. Con semilla fija.
+function azar(semilla: number) {
+  let a = semilla >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const normal = (r: () => number) => Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+const INICIO = '2026-01-05';
+function conRuido(kgPorSemana: number, r: () => number, dias: number, cuando: 'todos' | DiaSemana[] = 'todos'): Pesada[] {
+  const lista: Pesada[] = [];
+  const fase = Math.floor(r() * 28);
+  let e = 0;
+  for (let t = 0; t <= dias; t++) {
+    e = t === 0 ? normal(r) * 0.5 : 0.6 * e + normal(r) * 0.5 * 0.8;
+    const fecha = sumarDias(INICIO, t);
+    const d = diaDeLaSemana(fecha);
+    const kg = 80 + (kgPorSemana / 7) * t + e + (0.0035 / 2) * 80 * Math.cos((2 * Math.PI * ((d + 6) % 7)) / 7) + ((t + fase) % 28 < 5 ? 0.45 : 0);
+    if (cuando === 'todos' || cuando.includes(d)) lista.push({ fecha, kg: Math.round(kg * 10) / 10 });
+  }
+  return lista;
+}
+// 500 series por caso: el estudio usó 2.000; los bordes de abajo tienen margen para el azar de 500.
+const SERIES = 500;
+const SEIS_SEMANAS = sumarDias(INICIO, 42);
+
+describe('el ritmo con su margen', () => {
+  it('una recta exacta da el ritmo exacto y el peso de hoy, también pesándose solo los lunes', () => {
+    const r = ritmoConRango(bajando(60, 78, -0.4), HOY)!;
+    expect(r.kgPorSemana).toBeCloseTo(-0.4, 9);
+    expect(Math.abs(r.nivelHoy - (78 - (0.4 / 7) * 60))).toBeLessThanOrEqual(0.05);
+    expect(r.semanas).toBe(6);
+    const lunes = bajando(60, 78, -0.4).filter((p) => diaDeLaSemana(p.fecha) === 1);
+    expect(ritmoConRango(lunes, HOY)!.kgPorSemana).toBeCloseTo(-0.4, 9);
+    expect(Math.abs(ritmoConRango(lunes, HOY)!.nivelHoy - (78 - (0.4 / 7) * 60))).toBeLessThanOrEqual(0.05);
+  });
+
+  it('el margen cubre el ritmo de verdad entre 75 y 90 veces de cada 100', () => {
+    const r = azar(7);
+    let cubre = 0;
+    for (let k = 0; k < SERIES; k++) {
+      const x = ritmoConRango(conRuido(-0.4, r, 42), SEIS_SEMANAS)!;
+      if (x.desde <= -0.4 && -0.4 <= x.hasta) cubre++;
+    }
+    expect(cubre / SERIES).toBeGreaterThanOrEqual(0.75);
+    expect(cubre / SERIES).toBeLessThanOrEqual(0.9);
+  });
+
+  const comoViene = (verdad: number, r: () => number) => {
+    const p = conRuido(-verdad, r, 42);
+    const x = ritmoConRango(p, SEIS_SEMANAS)!;
+    const plazo = plazoConRitmo({ hoy: SEIS_SEMANAS, pesoKg: x.nivelHoy, pesoMeta: 70, sexo: 'f', edad: 30, gasto: 2300, entrenaFuerza: true }, (0.4 / x.nivelHoy) * 100);
+    return planPorEtapas({ hoy: SEIS_SEMANAS, pesoKg: x.nivelHoy, objetivo: 'bajar', pesoMeta: 70, plazo, ritmo: x.kgPorSemana, rango: x }).comoVienes;
+  };
+
+  it('con el ritmo de verdad igual al plan, «al ritmo» al menos 9 de cada 10 veces a las seis semanas', () => {
+    const r = azar(11);
+    let alRitmo = 0;
+    for (let k = 0; k < SERIES; k++) if (comoViene(0.4, r) === 'alRitmo') alRitmo++;
+    expect(alRitmo / SERIES).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it('con el doble del plan, «adelantado» al menos 8 de cada 10 veces', () => {
+    const r = azar(13);
+    let adelantado = 0;
+    for (let k = 0; k < SERIES; k++) if (comoViene(0.8, r) === 'adelantado') adelantado++;
+    expect(adelantado / SERIES).toBeGreaterThanOrEqual(0.8);
+  });
+
+  it('manteniendo con el peso quieto, «cambiando» no más de 1 de cada 10 veces (con un ritmo sin margen, la mitad)', () => {
+    const r = azar(21);
+    let cambiando = 0;
+    for (let k = 0; k < SERIES; k++) {
+      const p = conRuido(0, r, 42);
+      // Manteniendo, el estado sale del ritmo con su margen: de la tendencia solo hace falta que haya peso hoy.
+      if (progresoAlObjetivo({ hoy: SEIS_SEMANAS, tendencia: new Map([[SEIS_SEMANAS, 80]]), pesadas: p, objetivo: 'mantener', ritmo: 'recomendado' }).estado === 'seMueve') cambiando++;
+    }
+    expect(cambiando / SERIES).toBeLessThanOrEqual(0.1);
+  });
+
+  it('con menos de tres semanas con pesadas no hay ritmo; con tres, el margen es ancho: todavía no se sabe', () => {
+    const r = azar(5);
+    const diez = conRuido(-0.4, r, 42).filter((p) => diasEntre(p.fecha, SEIS_SEMANAS) < 10);
+    expect(ritmoConRango(diez, SEIS_SEMANAS)).toBeNull();
+    const base = { hoy: SEIS_SEMANAS, objetivo: 'bajar' as const, ritmo: 'recomendado' as const, pesoMeta: 70 };
+    expect(progresoAlObjetivo({ ...base, tendencia: tendencia(diez, SEIS_SEMANAS), pesadas: diez }).estado).toBe('faltanDatos');
+    const tres = conRuido(-0.4, r, 42).filter((p) => diasEntre(p.fecha, SEIS_SEMANAS) < 17);
+    const p = progresoAlObjetivo({ ...base, tendencia: tendencia(tres, SEIS_SEMANAS), pesadas: tres });
+    expect(p).toMatchObject({ estado: 'todaviaNo', fecha: null, fechas: null });
+    expect(p.rango!.hasta - p.rango!.desde).toBeGreaterThan(0.8);
   });
 });
 
@@ -70,6 +177,24 @@ describe('el progreso al objetivo', () => {
     const p = progresoAlObjetivo({ hoy: HOY, tendencia: sube, objetivo: 'subir', ritmo: 'recomendado', pesoMeta: 75 });
     expect(p.estado).toBe('enCamino');
     expect(p.fecha).not.toBeNull();
+  });
+
+  it('lo que falta y la fecha salen del peso de hoy, no de la tendencia, que atrasa nueve días', () => {
+    const pesadas = bajando(60, 78, -0.4);
+    const verdad = 78 - (0.4 / 7) * 60;
+    const p = progresoAlObjetivo({ hoy: HOY, tendencia: tendencia(pesadas, HOY), pesadas, objetivo: 'bajar', ritmo: 'recomendado', pesoMeta: 71, pesoInicial: 78 });
+    expect(Math.abs(p.faltan! - (verdad - 71))).toBeLessThanOrEqual(0.05);
+    expect(Math.abs(diasEntre(sumarDias(HOY, Math.ceil(((verdad - 71) / 0.4) * 7)), p.fecha!))).toBeLessThanOrEqual(3);
+    // La tendencia va medio kilo atrás: con ella faltaba medio kilo más y la fecha caía nueve días tarde.
+    expect(p.peso! - verdad).toBeGreaterThan(0.4);
+    expect(p.nivel!).toBeCloseTo(verdad, 1);
+  });
+
+  it('la fecha es un rango: con 4 kg que faltan y entre 0,3 y 0,5 kg por semana, de 8 a 13⅓ semanas', () => {
+    expect(fechasDeLlegada(HOY, 4, 0.3, 0.5)).toEqual({ temprana: sumarDias(HOY, 56), tardia: sumarDias(HOY, 94) });
+    // Si el lento casi no avanza, o pasa de dos años, no hay fecha.
+    expect(fechasDeLlegada(HOY, 4, 0.05, 0.5)).toBeNull();
+    expect(fechasDeLlegada(HOY, 20, 0.15, 0.5)).toBeNull();
   });
 
   it('manteniendo, estable o moviéndose; sin meta de peso, el ritmo contra el plan', () => {
@@ -223,8 +348,17 @@ describe('la meta con plazo', () => {
     expect(sinDeficit.fechaConPiso).toBeNull();
     // Gastando 1.210, el piso deja 10 kcal por día: 8 kg en unos 17 años.
     expect(plazoConFecha({ ...ELLA, gasto: 1210 }, sumarDias(HOY, 70))!).toMatchObject({ avisos: ['pisoNoLlega'], fechaConPiso: null });
-    // Si el ritmo entra arriba del piso, nada que decir.
-    expect(plazoConRitmo({ ...ELLA, gasto: 1700 }, 0.5)!.avisos).toEqual([]);
+    // Si el ritmo entra arriba del piso, también al llegar, nada que decir.
+    expect(plazoConRitmo({ ...ELLA, gasto: 2300 }, 0.5)!.avisos).toEqual([]);
+  });
+
+  it('bajando, el gasto baja con el peso: hoy entra arriba del piso, pero cerca del final no', () => {
+    // 60 kg, gasto 1.700, meta 52 al 0,75 %: hoy 1.205 kcal; al llegar, unas 1.524 − 495 = 1.029.
+    const flaca: EntradaDelPlazo = { hoy: HOY, pesoKg: 60, pesoMeta: 52, sexo: 'f', edad: 34, gasto: 1700, entrenaFuerza: true };
+    expect(plazoConRitmo(flaca, 0.75)!.avisos).toEqual(['pisoAlFinal']);
+    expect(plazoConRitmo({ ...flaca, gasto: 2000 }, 0.75)!.avisos).toEqual([]);
+    // Con ELLA (80 kg, gasto 1.700, al 0,5 %): 1.700 − 22 × 8 − 440 = 1.084.
+    expect(plazoConRitmo({ ...ELLA, gasto: 1700 }, 0.5)!.avisos).toEqual(['pisoAlFinal']);
   });
 });
 
@@ -264,6 +398,29 @@ describe('el plan por etapas', () => {
     // Menos de cuatro semanas: solo la meta.
     const ya = plazoConRitmo({ ...ELLA, pesoMeta: 79 }, 0.5)!;
     expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 79, plazo: ya, ritmo: null }).hitos).toHaveLength(1);
+  });
+
+  it('los hitos van de a medio kilo: más fino sería precisión falsa', () => {
+    const raro = plazoConRitmo({ ...ELLA, pesoMeta: 72.7 }, 0.45)!;
+    const { hitos } = planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72.7, plazo: raro, ritmo: null });
+    expect(hitos.length).toBeGreaterThan(1);
+    for (const h of hitos.filter((x) => !x.meta)) expect(Number.isInteger(h.kg * 2)).toBe(true);
+  });
+
+  it('con el margen del ritmo: más lento o adelantado solo si todo el margen queda afuera; muy ancho, todavía no se sabe', () => {
+    // El plan es 0,4 kg por semana, con un cuarto (0,1) de margen.
+    const con = (ritmo: number, medio: number) => planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo, rango: { desde: ritmo - medio, hasta: ritmo + medio } });
+    expect(con(-0.2, 0).comoVienes).toBe('atrasado');
+    expect(con(-0.2, 0.15).comoVienes).toBe('alRitmo');
+    expect(con(-0.62, 0.1).comoVienes).toBe('adelantado');
+    expect(con(-0.62, 0.15).comoVienes).toBe('alRitmo');
+    expect(con(-0.4, 0.45).comoVienes).toBe('todaviaNo');
+    // La fecha a tu ritmo, como un rango: 8 kg entre 0,17 y 0,27 kg por semana.
+    const lento = con(-0.22, 0.05);
+    expect(lento.comoVienes).toBe('atrasado');
+    expect(lento.fechasATuRitmo).toEqual({ temprana: sumarDias(HOY, 208), tardia: sumarDias(HOY, 330) });
+    expect(lento.rango!.desde).toBeCloseTo(-0.27, 9);
+    expect(lento.rango!.hasta).toBeCloseTo(-0.17, 9);
   });
 
   it('cómo vienes: al ritmo con un cuarto de margen, más rápido, más lento o al revés', () => {

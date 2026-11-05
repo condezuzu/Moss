@@ -62,9 +62,10 @@ describe('para hoy', () => {
     expect(paraHoy(dia({ ahora: 14 * 60, agua: { ml: 250, meta: 2000 } }))).toEqual([]);
   });
 
-  it('con «sin déficit», solo anotar y el agua', () => {
+  it('con «sin déficit», solo anotar: el agua tampoco, porque con el riñón el líquido lo decide su equipo', () => {
     const e = dia({ sinDeficit: true, ahora: 18 * 60, sinAnotar: ['merienda'], comido: { kcal: 1300, proteina: 40, carbohidratos: 220, grasas: 30 }, agua: { ml: 500, meta: 2000 } });
-    expect(paraHoy(e).map((x) => x.tipo)).toEqual(['anotar', 'agua']);
+    expect(paraHoy(e).map((x) => x.tipo)).toEqual(['anotar']);
+    expect(paraHoy(dia({ sinDeficit: true, agua: { ml: 200, meta: 2000 }, ahora: 18 * 60 }))).toEqual([]);
   });
 
   it(`como mucho ${MAXIMO_DE_CONSEJOS}, en orden`, () => {
@@ -82,7 +83,7 @@ describe('para hoy, con lo del deporte', () => {
     ...extra,
   });
   const pesadas = { antes: { minutos: 6 * 60 + 50, kg: 58 }, despues: { minutos: 8 * 60 + 20, kg: 57.2 }, sesion: { inicio: 7 * 60, minutos: 75 } };
-  const minerales = Array.from({ length: 14 }, (_, i) => ({ dia: Fechas.sumarDias(HOY, -i), kcal: 1800, meta: 2000, hierro: 12, calcio: 1100 }));
+  const minerales = Array.from({ length: 14 }, (_, i) => ({ dia: Fechas.sumarDias(HOY, -i), kcal: 1800, meta: 2000, hierro: 7, calcio: 1100 }));
   const tipos = (lista: ConsejoDeHoy[]) => lista.map((x) => (x.tipo === 'deporte' ? x.consejo.que : x.tipo));
   const conProteina = { comido: { kcal: 1100, proteina: 110, carbohidratos: 90, grasas: 30 } };
 
@@ -113,7 +114,7 @@ describe('para hoy, con lo del deporte', () => {
     expect(tipos(paraHoy(dia({ deporte })))).toEqual(['carrera']);
   });
 
-  it('con «sin déficit», del deporte llega solo lo que no es de comer, y de lo suyo, anotar y el agua', () => {
+  it('con «sin déficit», del deporte llega solo lo que no es de comer, y de lo suyo, anotar', () => {
     const deporte = segunElDeporte(corredora({ pesadas, minerales, sinDeficit: true }));
     expect(tipos(paraHoy(dia({ deporte, sinDeficit: true, sinAnotar: ['merienda'], ahora: 18 * 60, comido: { kcal: 1300, proteina: 40, carbohidratos: 220, grasas: 30 }, agua: { ml: 500, meta: 2000 } })))).toEqual(['pesarse', 'anotar']);
   });

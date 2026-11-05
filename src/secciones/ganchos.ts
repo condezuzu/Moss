@@ -16,6 +16,6 @@ export function usePersona(): Persona {
 }
 
 export function useSueno(): Sueno {
-  const { hoy, perfil, salud, noches } = useEstado();
-  return useMemo(() => suenoDe(hoy, perfil, salud, noches), [hoy, perfil, salud, noches]);
+  const { hoy, perfil, salud, noches, necesidad } = useEstado();
+  return useMemo(() => suenoDe(hoy, perfil, salud, noches, necesidad), [hoy, perfil, salud, noches, necesidad]);
 }

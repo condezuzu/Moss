@@ -593,6 +593,10 @@ sigue gratis y sin IA.
   - **La ficha y `app.json`:** las respuestas de privacidad de App Store Connect suman
     fotos, y `spec/revision.md` también. Los textos de permisos dicen «Moss no sube tus
     fotos», así que cambian con una build: tocan la huella nativa.
+  - **Lo que dice Moss de sí misma:** «Ningún número sale de una IA» (`inicio.todo.pie`, al
+    pie de Todo lo de hoy) y «Por qué no calculamos tu comida con una foto» (Perfil › En qué
+    se basa Moss, `perfil.baseInfo.areas.fotos`) dejan de ser ciertos tal cual: pasan a decir
+    que reconocer es opcional, aproximado y que la porción la eliges tú.
 
 ## Las metas
 
@@ -618,10 +622,16 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
      subir, siempre dentro de 1,2–2,2. Nunca pasa del 40 % de las kcal: con
      mucho peso y pocas calorías se comería el resto.
    - **Grasas:** al menos el 27 % de las kcal y nunca menos de 0,6 g por kilo
-     (el rango recomendado es 20–35 %).
+     (el rango recomendado es 20–35 %). En la equilibrada y la baja en grasas, nunca
+     más del 35 % (desde el 5/11: con mucho peso y pocas calorías, los 0,6 g por kilo
+     llegaban al 47 %), y los macros suman las kcal.
+   - **El déficit, con tope:** bajando, nunca más de 1.000 kcal por día ni de 1 kg por
+     semana (`ajustePorRitmo`); una fecha que pida más usa el borde de «exigente».
    - **Carbohidratos:** el resto.
 3. **Tendencia del peso:** media móvil exponencial (α = 0,1, unas tres semanas).
-   Los días sin peso se rellenan en línea recta entre los vecinos.
+   Los días sin peso se rellenan en línea recta entre los vecinos; después de la
+   última pesada, ya no se repite: sigue con su pendiente hasta una semana (desde el
+   5/11; antes, con una pesada por semana, el control medía un 23 % menos del ritmo).
 4. **Control semanal**
    - **Automático:** corre solo en el teléfono el día de la semana del control;
      no hay que tocar nada. Ese día es el de la semana en que se fijó la primera
@@ -630,8 +640,14 @@ MacroFactor no está publicado. Está programado en `src/dominio/metas.ts` y
    - **Con las metas a mano:** mide el gasto igual, pero deja los macros.
    - **Qué mira:** días enteros, hasta ayer. Las últimas 3 semanas, o desde la
      primera pesada si hay menos; con menos de 7 días no mide.
-   - **Gasto real:** comida promedio − (cambio de la tendencia × 7.700 kcal/kg)
-     ÷ días.
+   - **Gasto real:** comida promedio − (cambio × 7.700 kcal/kg) ÷ días. Desde el 5/11,
+     el cambio sale de la recta por las pesadas de verdad del tramo, sin días
+     inventados; una pesada rara (más de 1,5 kg o del 2 % de lo esperado) cuenta con un
+     cuarto de su diferencia hasta que la siguiente la confirme (`pesadasQueCuentan`).
+     Con una sola pesada, o con la primera y la última a menos de 6 días, no mide
+     (`faltanDatos`). El control sigue la proteína y el ritmo que elegiste en el
+     cuestionario (`eleccionDe`). Lo que queda para decidir (el ajuste según la calidad
+     de los datos, con su rango) está en `spec/estudio/metas.md`, §3.2.
    - **Suaviza:** toma un cuarto de la diferencia entre el gasto medido y el
      anterior cada semana. Una caída de 500 kcal se nota de a poco, en unas tres
      o cuatro semanas.
@@ -678,8 +694,8 @@ aplica se saltea, y la constelación de los pasos cuenta solo lo que aparece (de
 | Salud | conectar o «Ahora no» | siempre | trae sexo, edad, altura, peso, pasos y noches |
 | Esto dice Salud | los cuatro datos en una tarjeta, para confirmar; cada uno se abre para cambiarlo | con Salud | el gasto en reposo |
 | Sexo, edad, altura y peso | de a uno, como antes (sexo, obligatorio; 16 o más) | sin Salud | el gasto en reposo |
-| ¿Alguno es tu caso? | embarazo o lactancia, una condición médica, nada | siempre | sin déficit, como antes |
-| ¿Sabes tu porcentaje de grasa? | No sé · Lo sé (el número) · Por imagen (nueve figuras dibujadas, cada una un rango) · Con cinta (cintura, cuello y, en mujeres, cadera: la Marina, `Cuerpo.rangoDeGrasa`) | desde los 18 y sin cuidados | Katch-McArdle y la proteína por la masa magra |
+| ¿Alguno es tu caso? | varios a la vez, en grupos: embarazo y lactancia (solo mujeres), prediabetes o diabetes tipo 2, diabetes tipo 1, presión alta, colesterol o triglicéridos, enfermedad renal crónica, cálculos, reflujo, celiaquía, gota, un trastorno de la alimentación, un medicamento para bajar de peso, otra o no decir; o nada. Lo que se pregunta además crece debajo de su grupo (la semana, el parto, la insulina, la diálisis) y, al marcar el primero, el consentimiento ocupa el lugar de «Seguir» | siempre | la meta y lo que dice Moss (`cuidados.ts`, abajo en «Cuidados de salud»); «sin déficit» sale de ahí |
+| ¿Sabes tu porcentaje de grasa? | No sé · Lo sé (el número) · Por imagen (nueve figuras dibujadas, cada una un rango) · Con cinta (cintura, cuello y, en mujeres, cadera: la Marina, `Cuerpo.rangoDeGrasa`) | desde los 18 y sin cuidados | el gasto en reposo por la masa magra (Cunningham, 1991, la de «Katch-McArdle») y la proteína por la masa magra |
 | ¿Cuánto te mueves en tu día? | casi todo el día sentado · de pie o caminando parte del día · un trabajo físico; con Salud, los pasos sugieren | siempre | lo que suma la vida diaria |
 | ¿Entrenas? | pesas o máquinas (también crossfit) · partidos (fútbol, básquetbol, hockey, vóley, tenis, pádel: intermitentes, nada de «aeróbico») · correr, bici o nadar · choques o combate (rugby, artes marciales, boxeo) · no entreno (o solo camino o hago yoga). Se elige más de uno | siempre | las kcal del entrenamiento y los consejos (salen de los deportes, `tipos`) |
 | ¿Cuándo entrenas? | con un deporte, sus días, la hora y cuánto dura; con dos o más, lo de cada uno, y se ve qué días tienen dos sesiones. Con partidos o choques, «¿Juegas partidos o compites?» y qué día (se suma a los días de ese deporte); con combate, «¿Compites por categoría de peso?». Y cuánto tardas en llegar (en casa, menos de 15, de 15 a 30, más de 30 minutos) | si entrena | las kcal de cada día, los consejos y los avisos |
@@ -687,18 +703,22 @@ aplica se saltea, y la constelación de los pasos cuenta solo lo que aparece (de
 | ¿Hace cuánto entrenas con pesas? | menos de un año · de 1 a 3 · más de 3 | al subir o recomponer, con pesas | el ritmo que se propone |
 | ¿A qué peso quieres llegar? | el peso (propone un 5 %; nunca debajo de un IMC de 18,5) y el ritmo: suave, recomendado y rápido, cada uno con su fecha, o «Elegir una fecha» con el ritmo que pide y qué tan exigente es (D35) | al bajar o subir | el plan |
 | Cuando llegues, ¿qué sigue? | mantener · ganar músculo · lo decido después, con el plan en una línea: hoy, la meta con su fecha y el final de las semanas en mantenimiento | al bajar o subir | la etapa que sigue en el plan de Progreso (`perfil.despues`, `planPorEtapas`) |
-| ¿Cómo quieres comer? | el reparto (con su barra), la proteína en gramos (más baja, recomendada, más alta) y qué comes (de todo, vegetariana, vegana, pescetariana) | siempre | los macros y el plan de comidas |
+| ¿Cómo quieres comer? | el reparto (con su barra), la proteína en gramos (más baja, recomendada, más alta) y qué comes (de todo, vegetariana, vegana, pescetariana, carnívora) | siempre | los macros y el plan de comidas |
 | ¿Cómo es tu día? | una línea del día: te despiertas, las cuatro comidas (tocar una dice «no suelo»), el entreno con la hora de salir, y te acuestas; el fin de semana, igual o más tarde | siempre; con 3 noches en Salud, el sueño se muestra y no se pregunta | los avisos: qué comer antes de entrenar, contando el viaje, y la hora de dormir |
 | Tu punto de partida | la meta, el plan en una línea («Bajar a 71 kg para el 4 de enero; después, mantener») y de dónde sale el gasto (en reposo, la vida diaria y el entrenamiento) | al final | |
 
 **Las cuentas** (`src/dominio/cuestionario.ts`, con sus tests):
 - **En reposo:** Mifflin-St Jeor; con la grasa (desde los 18, sin cuidados y dentro
-  de lo posible), Katch-McArdle: 370 + 21,6 × la masa magra.
+  de lo posible), la ecuación de Cunningham (1991), la que se conoce como de
+  Katch-McArdle: 370 + 21,6 × la masa magra.
 - **La vida diaria, sin el entrenamiento:** sentado 1,35 (el «poco» de siempre), de
-  pie 1,5 y un trabajo físico 1,7. Son las categorías del IOM (2005): la vida diaria
-  sola llega a 1,39; con un rato de caminar, de 1,4 a 1,59; con un trabajo de
-  esfuerzo, de 1,6 a 1,89. Los pasos de Salud sugieren la respuesta (Tudor-Locke y
-  Bassett, 2004: menos de 5.000 por día es sedentario; más de 10.000, activo).
+  pie 1,5 y un trabajo físico 1,7. Salieron de las categorías del IOM (2005); las
+  vigentes son las de NASEM (2023), de 8.600 mediciones con agua doblemente marcada,
+  con el «inactivo» de 1,00 a 1,53, y con su ecuación sentado queda bajo (el estudio
+  de las metas, D1, para decidir). Los pasos de Salud sugieren la respuesta
+  (Tudor-Locke y Bassett, 2004: menos de 5.000 por día es sedentario; más de 10.000,
+  activo); con correr, bici, nadar o partidos, no pasa de «de pie», para no contar
+  dos veces los pasos del entrenamiento.
 - **El entrenamiento, aparte y neto, día por día:** cada día suma lo de sus sesiones,
   (el MET − 1) × los kilos × las horas, y se promedian los siete días (`kcalDelDia`,
   `kcalDelEntreno`): un día con pesas y partido suma los dos, y un deporte de un solo día
@@ -748,10 +768,11 @@ mixto: `tipoDeSesion`, `horarioDeLosAvisos`) queda solo para el horario de los a
 de comer antes y después (`alrededorDelEntreno.ts`), que hoy lleva uno.
 
 **Lo que se decidió en la maqueta:**
-- Con un cuidado (embarazo, lactancia o una condición médica, que incluye un trastorno
-  de la alimentación) no se pregunta la grasa: las figuras y el porcentaje no le hacen
-  bien a quien cuida lo que come, y sin déficit no hace falta tanta precisión. Tampoco
-  se ofrece recomponer.
+- Con un cuidado (cualquiera de «Cuidados de salud», que incluye un trastorno de la
+  alimentación) no se pregunta la grasa: las figuras y el porcentaje no le hacen bien a
+  quien cuida lo que come, y sin déficit no hace falta tanta precisión. Sin déficit,
+  tampoco se ofrece recomponer; en el embarazo, tampoco subir (el extra ya suma lo que
+  hace falta).
 - La grasa nunca se muestra como una medida exacta: lo dicho se toma como una
   estimación, y la figura y la cinta son rangos.
 - El entreno va en dos pantallas: los cinco tipos con sus ejemplos no entran junto con
@@ -802,6 +823,101 @@ el [Compendio de Actividades Físicas (2024)](https://pacompendium.com/); IOM, *
 Reference Intakes for Energy* (2005); [Tudor-Locke y Bassett (2004)](https://pubmed.ncbi.nlm.nih.gov/14715035/);
 Morton y otros (2018); Barakat y otros (2020); Helms y otros, *The Muscle and Strength
 Pyramid: Nutrition* (el modelo de Aragon).
+
+## Cuidados de salud (5/11/2026, para aprobar)
+
+Lo pediste el 5/11: «si tienes algún problema lo marcas y, dependiendo de lo que tengas, se
+edita tu dieta». Hasta ahora «¿Alguno es tu caso?» tenía embarazo o lactancia, una condición
+médica o nada, y guardaba solo «sin déficit»: la misma regla para casos que piden lo contrario
+(en el embarazo hay que subir de peso, con diabetes tipo 2 conviene bajar, con el riñón la
+proteína tiene que bajar). El estudio, con cada guía y lo que no se pudo leer, está en
+[`estudio/cuidados.md`](estudio/cuidados.md). La regla es `src/dominio/cuidados.ts`, con sus
+tests; la pantalla, en la galería (el escenario `cuidados`). La app sigue con el sí/no hasta
+que lo apruebes (D44).
+
+**La línea que no se cruza.** Con un cuidado, Moss vuelve a lo que las guías recomiendan para
+toda la población y apaga lo que va más allá: el déficit, la proteína alta, keto, los avisos de
+comer más o de tomar más agua. Nunca da dosis (de insulina, remedios ni suplementos) ni dietas
+terapéuticas (muy baja en proteína, baja en FODMAP, restringir potasio, fósforo o líquidos), ni
+promete tratar nada; nunca deduce una condición, y las notificaciones, los widgets y la pantalla
+bloqueada nunca la nombran. Se dice «puede ayudar a vivir bien con…» (la FDA, 2026) y, con lo que
+es del equipo, «tu equipo de salud va primero». Cada una tiene su línea en la ficha
+(`cuidados.lineas`).
+
+**Lo que cambia cada una** (`parteDe`):
+
+| Condición | Bajar | Kcal y control | Proteína (g/kg) | Además | Se apaga · se prende |
+|---|---|---|---|---|---|
+| Embarazo (f) | no, ni subir | + NASEM 2023 desde la semana 14; el control, en pausa | hasta 1,6 | sin keto; cafeína ≤ 200 mg y nada de alcohol; listeria y mercurio a la vista; las referencias del embarazo; la banda del IOM 2009; antes de los 18, metas a mano | lo de entrenar, la noche corta, el reparto, lo que falta, «pasado» y pesarse |
+| Lactancia (f) | no las primeras 6 semanas; después, suave, con piso de 1.800 | + 400 hasta los 6 meses y 380 después; con fórmula, la mitad | hasta 1,6 | sin keto; cafeína ≤ 200 y alcohol ≤ 0,5 g/kg; la B12 si es vegana | las primeras 6 semanas, como el embarazo |
+| Prediabetes o diabetes tipo 2 | sí; con insulina u otro remedio que baja mucho el azúcar (o «no sé»), hasta el recomendado | igual | igual | sodio < 2.300 mg; bebidas azucaradas, saturadas y alcohol a la vista; con insulina, sin keto | — |
+| Diabetes tipo 1 | suave | igual | igual | sin keto; los carbohidratos de cada comida | lo de comer al entrenar |
+| Presión alta | sí | igual | igual | sodio < 2.000 mg y potasio ≥ 3.510 mg (OMS) | se prende «mucha sal» (D13) |
+| Colesterol o triglicéridos | sí | igual | igual | saturadas < 7 %, colesterol < 300 mg y de 25 a 40 g de fibra (ESC/EAS 2019) | se prende «muchas saturadas» (D13) |
+| Enfermedad renal crónica | no | igual | 0,8 fija, nunca > 1,3 (KDIGO 2024) | sodio < 2.000 mg; el potasio y el fósforo, sin meta; el agua no se pide; con diálisis, metas a mano | lo de entrenar, lo que falta, el reparto y el agua |
+| Cálculos | sí | igual | ≤ 1,0 | 2,5 L de agua (EAU 2026); sodio < 2.000 mg; el calcio a la vista | lo que falta de proteína · se prende el agua |
+| Reflujo | sí | igual | igual | — | se prende la última comida (ACG 2022) |
+| Celiaquía | sí | igual | igual | el gluten en «Lo que no comes»; el hierro, el folato, la D y la B12 | — |
+| Gota | sí | igual | igual | el alcohol y las bebidas azucaradas a la vista (ACR 2020) | — |
+| Un trastorno de la alimentación | no | el control nunca baja la meta | hasta 1,6 | sin keto; los números, ocultos de entrada; sin peso meta | lo que hoy apaga «sin déficit», «pasado» y pesarse |
+| Medicamento para bajar de peso | sí; piso de 1.800 en hombres | igual | ≥ 1,2 (con obesidad, hasta 120 g) | los micronutrientes que quedan cortos comiendo poco | se prende lo que falta de proteína y de calorías |
+| Otra o prefiero no decir | no | el control nunca baja la meta | ≤ 1,2 | sin keto; el agua no se pide | lo que hoy apaga «sin déficit» y el agua |
+
+**Con varias, la regla más cuidadosa:** el ritmo más lento; el piso más alto, el extra mayor y la
+cafeína y el alcohol más bajos; el control en pausa le gana a «nunca baja»; el máximo de proteína
+le gana al mínimo (el riñón al medicamento); los estilos que no van se suman; el sodio más bajo;
+el potasio sin meta (el riñón) le gana a la meta de la presión; no pedir el agua le gana a la meta
+de los cálculos; lo que se apaga se suma, y nunca se prende algo que otra apaga (con un trastorno
+de la alimentación y reflujo, no hay última comida). Con cualquier cuidado no se pregunta la grasa.
+
+**Las cuentas del embarazo.** El extra es el gasto del embarazo (con el peso de hoy y la semana)
+más el depósito (300, 200, 150 o −50 según el IMC de antes) menos el de antes (con el peso de
+antes), con las ecuaciones de NASEM 2023 (tabla 5-5) y los niveles de Moss en sus cuatro
+categorías: 30 años, 165 cm, de 65 a 68 kg, semana 20 y «algo» dan 410 kcal. Nunca menos de cero:
+con obesidad el depósito resta, pero Moss no propone bajar. La banda del IOM 2009, de 0,5 a 2 kg en
+el primer trimestre y, desde la semana 13, en línea recta hasta el total de la semana 40 (los ritmos
+por semana del IOM no suman sus propios totales: así la banda no salta); con gemelos o mellizos,
+solo el total provisorio desde la semana 37.
+
+**Sin nada marcado, todo como hoy:** `metaConCuidados`, `metaDelCuestionarioConCuidados` y
+`controlConCuidados` dan lo mismo que `metaPara`, `metaDelCuestionario` y `controlSemanal` (lo
+comprueban los tests).
+
+**La privacidad.** Una condición es un dato de salud (RGPD, art. 9; Ley 18.331, art. 18). Lo
+marcado y lo que se pregunta además quedan solo en el iPhone (la base local ya está fuera de la
+copia de iCloud), sin fila en `remoto.ts` ni regla en `mezclar.ts`. A la cuenta va solo lo que se
+deriva, sin nombrar nada (`loQueSube`): `sin_deficit` y, para el embarazo, un `control_en_pausa`
+que pide una migración. Al marcar el primero, el consentimiento: «Lo que marcas se guarda solo en
+este iPhone: no sube a tu cuenta y nadie más lo ve.» y «Guardar en este iPhone». No nombra a Ascent
+(«Moss es Moss»). Un test comprueba que ni `remoto.ts` ni las migraciones nombran un cuidado, y que
+los avisos y los widgets nunca nombran una condición.
+
+**En la galería.** En el cuestionario, los grupos en chips, lo que se pregunta además debajo de su
+grupo y el consentimiento en lugar de «Seguir»; el objetivo y el resultado salen de lo marcado. En
+Perfil › Cuidados, arriba «Cómo cambia tu dieta» (la meta de antes y la de ahora, el objetivo, la
+banda del embarazo, las metas nuevas, lo que mira primero, lo que te muestra, lo que deja de
+decirte y lo que te recuerda) y abajo la lista para marcar y desmarcar, cada una con su línea. Con
+los números ocultos, la meta dice solo si sube o baja.
+
+**Quedan afuera, con su porqué:** el hipotiroidismo (el control mide el gasto real), el SOP (ninguna
+dieta es mejor que otra: listarlo haría creer que sí), el colon irritable (la base no tiene FODMAP),
+la lactosa (va en «Lo que no comes»), la anemia y la osteoporosis (serían «Lo que quiero mirar»), la
+cirugía bariátrica (es del equipo: «Otra» y las metas a mano) y las alergias (ya están en «Lo que no
+comes»).
+
+**Lo que falta para la app**, después de aprobarlo:
+1. Guardar lo marcado en una tabla local `cuidados` (un bloque en `migrar()`), sin sincronizar.
+2. Usar las reglas: la meta, el cuestionario y el control (`almacen.ts`) con `cuidados.ts`; las
+   referencias con la etapa (`HojaRegistro.tsx:238` y `segunElDeporte.ts:313` arman la persona sin
+   ella); y que «Para hoy», lo que falta, lo que conviene, lo de alrededor del entreno, el deporte y
+   el diagnóstico miren `apagaConsejo`, `apagaLoQueFalta`, `apagaLoQueConviene` y `apagaLinea`.
+3. El agua de lo que falta: `loQueFaltaHoy` hoy no la pide con «sin déficit» (devuelve `[]` antes
+   de mirar nada); con cuidados, en lugar de esa salida, `apagaLoQueFalta` por cada cosa, y la meta
+   de `metaDeAgua` (2,5 L con cálculos; ninguna con el riñón u «otra») en lugar de `AGUA_META_ML`
+   en las dos cuentas del agua (los vasos que faltan y «debajo del 40 %»).
+4. Que Progreso no ofrezca keto con «sin déficit» (la meta ya no la usa: `estiloPermitido`).
+5. La migración de `control_en_pausa`, la política (`docs/`), las notas de revisión y la
+   clasificación por edad ([`revision.md`](revision.md)).
 
 ## La pantalla de comida
 
@@ -873,10 +989,13 @@ galería, sección 3.
   | ♡ | 1 | sale más seguido |
   | ✕ | 1 | no vuelve a proponerse (lo anotado no se toca) y se cambia ya por otra, con Deshacer |
 
-- **Tus comidas:** cómo comes (de todo, vegetariana, vegana o pescetariana), lo que
+- **Tus comidas:** cómo comes (de todo, vegetariana, vegana, pescetariana o
+  carnívora: solo lo de origen animal, sin la miel ni el café, desde el 5/11/2026), lo que
   no comes (los alérgenos que piden las etiquetas), cuántas comidas por día (3, 4 o
   5) y el tiempo para cocinar (15 minutos, 40, o lo que sea). Sin contestar: de
-  todo, cuatro comidas y tiempo normal. Va en el perfil y sube a la cuenta.
+  todo, cuatro comidas y tiempo normal. Va en el perfil y sube a la cuenta. Cada comida
+  tipo y cada parte de las combinadas dice quién la come por lo que lleva: lo que no
+  tiene nada vegetal también es de la carnívora.
 - **La lista de compras:** lo de las comidas planificadas desde hoy, sumado por
   alimento, para tachar en el súper; lo tachado queda en el teléfono.
 - **Cuando la meta cambia** (el control de la semana, la estrategia o las metas a

@@ -5,7 +5,7 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { buzon } from '@/almacen/buzonDeMoss';
 import { MOTIVOS, type Motivo } from '@/almacen/buzon';
@@ -16,8 +16,8 @@ import type { Macros } from '@/dominio/metas';
 import { destacados, GRUPOS, referenciaDe, UNIDAD, type Micro, type Micros, type ParaQuien } from '@/dominio/micronutrientes';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
-import { useTeclado } from '../teclado';
+import { CabezaQueBaja, useBajarParaCerrar } from '../arrastre';
+import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, Pastilla } from './comunes';
 import { numero } from './datos';
@@ -151,9 +151,10 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
     const espera = setTimeout(irse, 1700);
     return () => clearTimeout(espera);
   }, [enviado]);
-  // La nota se escribe con el teclado: la hoja sube con él.
-  const { animado: teclado } = useTeclado();
-  const estiloSube = useAnimatedStyle(() => ({ transform: [{ translateY: -Math.max(0, teclado.get() - abajo) }] }));
+  // La nota se escribe con el teclado: la ventana del alimento, que tiene adentro esta hoja, sube con él.
+  // Se baja con el dedo desde el título, como las otras hojas.
+  const reducido = useReducedMotion();
+  const deslizar = useBajarParaCerrar({ alCerrar, conScroll: false });
   const enviar = () => {
     if (!motivo) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -162,16 +163,24 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
   };
   return (
     <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={estilos.velo}>
+      <Animated.View style={[StyleSheet.absoluteFill, estilos.veloColor, deslizar.velo]} pointerEvents="none" />
       <Pressable style={StyleSheet.absoluteFill} onPress={alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
-      <Animated.View style={[estilos.reporteLugar, estiloSube]} pointerEvents="box-none">
-      <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.reporte, { paddingBottom: abajo + 10 }]}>
+      <View style={estilos.reporteLugar} pointerEvents="box-none">
+      <Animated.View
+        entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA}
+        exiting={reducido ? SALE_FUNDIDO : SALE_HOJA}
+        style={[estilos.reporte, { paddingBottom: abajo + 10 }, deslizar.estilo]}
+        onLayout={deslizar.medir}
+        accessibilityViewIsModal
+        onAccessibilityEscape={alCerrar}
+      >
         {enviado ? (
           <Aparece style={estilos.gracias}>
             <Text style={estilos.graciasTexto}>{t('comida.reportar.gracias')}</Text>
           </Aparece>
         ) : (
           <>
-            <View style={estilos.reporteCabeza}>
+            <CabezaQueBaja arrastre={deslizar} style={estilos.reporteCabeza}>
               <View style={{ flex: 1 }}>
                 <Text style={estilos.reporteTitulo}>{t('comida.reportar.titulo')}</Text>
                 <Text style={estilos.reporteNombre}>{nombre}</Text>
@@ -179,7 +188,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
               <Pressable onPress={alCerrar} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')}>
                 <Icono nombre="xmark" tam={14} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
               </Pressable>
-            </View>
+            </CabezaQueBaja>
             <View style={estilos.motivos}>
               {MOTIVOS.map((m) => <Pastilla key={m} texto={t(`comida.reportar.motivos.${m}`)} elegida={motivo === m} alTocar={() => setMotivo(m)} />)}
             </View>
@@ -190,13 +199,15 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
               placeholderTextColor="rgba(239, 230, 207, 0.4)"
               multiline
               maxLength={500}
+              selectionColor={colores.oro}
               style={estilos.notaCampo}
+              accessibilityLabel={t('comida.reportar.nota')}
             />
             <Boton tipo="grande" texto={t('comida.reportar.enviar')} alTocar={enviar} desactivado={!motivo} />
           </>
         )}
       </Animated.View>
-      </Animated.View>
+      </View>
     </Animated.View>
   );
 }
@@ -238,7 +249,8 @@ const estilos = StyleSheet.create({
   nota: { marginTop: 10, fontFamily: letras.texto, fontSize: 11, lineHeight: 15, color: 'rgba(239, 230, 207, 0.45)' },
   enlace: { alignSelf: 'center', marginTop: 14, paddingVertical: 6, paddingHorizontal: 10 },
   enlaceTexto: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.45)' },
-  velo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(5, 8, 18, 0.55)' },
+  velo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'flex-end' },
+  veloColor: { backgroundColor: 'rgba(5, 8, 18, 0.55)' },
   reporteLugar: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, justifyContent: 'flex-end' },
   reporte: {
     gap: 14, paddingTop: 16, paddingHorizontal: 18, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colores.ventana,
@@ -249,8 +261,9 @@ const estilos = StyleSheet.create({
   reporteNombre: { marginTop: 4, fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.55)' },
   redondo: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   motivos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // Crece con lo que se escribe hasta un tope, y de ahí se recorre adentro: así el botón de enviar no se va.
   notaCampo: {
-    minHeight: 72, paddingVertical: 11, paddingHorizontal: 13, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.55)',
+    minHeight: 72, maxHeight: 140, paddingVertical: 11, paddingHorizontal: 13, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.55)',
     color: colores.pergamino, fontFamily: letras.texto, fontSize: 14, textAlignVertical: 'top', outlineWidth: 0,
   },
   gracias: { minHeight: 180, alignItems: 'center', justifyContent: 'center' },

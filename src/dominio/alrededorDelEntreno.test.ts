@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { carbohidratosPrevios, comidasHabituales, larga, lineaDeNocheCorta, lineasDelDia, NOCHE_CORTA, proteinaDeComida, sesionesDelDia, type Contexto, type Sesion } from './alrededorDelEntreno';
+import { carbohidratosPrevios, comidasHabituales, corteDeCafeina, horasDeCorte, larga, lineaDeNocheCorta, lineasDelDia, NOCHE_CORTA, proteinaDeComida, sesionesDelDia, type Contexto, type Sesion } from './alrededorDelEntreno';
 import type { Comida } from './comidas';
 import { sumarDias } from './fechas';
 
@@ -12,7 +12,10 @@ const h = (texto: string) => {
 
 const NADA = { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 };
 
-/** Fuerza a la tarde, bajando: 70 kg, 30 años, 140 g de proteína y 180 de carbohidratos; pesas de 60 minutos a las 19. */
+/**
+ * Fuerza a la tarde, bajando: 70 kg, 30 años, 140 g de proteína y 180 de carbohidratos; pesas de 60 minutos a las 19.
+ * Se acuesta a las 23:30 y tarda un cuarto de hora en dormirse.
+ */
 const PESAS: Sesion = { inicio: h('19:00'), minutos: 60, tipo: 'fuerza' };
 const tarde = (extra: Partial<Contexto> = {}): Contexto => ({
   ahora: h('15:00'),
@@ -26,6 +29,7 @@ const tarde = (extra: Partial<Contexto> = {}): Contexto => ({
   edad: 30,
   despertar: h('7:30'),
   dormir: h('23:45'),
+  acostarse: h('23:30'),
   cafeinaPorToma: 95,
   sinDeficit: false,
   ...extra,
@@ -50,10 +54,36 @@ describe('la noche corta', () => {
   });
 });
 
+describe('el corte del café', () => {
+  it('crece con la cafeína de una toma, como en el modelo de Gardiner 2023, y va al cuarto de hora de antes', () => {
+    const cama = h('23:00');
+    // Sin saber la toma, como un café: 9 h antes de ir a la cama.
+    expect(corteDeCafeina(cama, null)).toBe(h('14:00'));
+    // Un café (107 mg), 8,8 h: las 14:12, que van a las 14:00.
+    expect(corteDeCafeina(cama, 107)).toBe(h('14:00'));
+    expect(corteDeCafeina(cama, 150)).toBe(h('12:15'));
+    // Desde el preentreno (217,5 mg), el tope: 13,2 h.
+    expect([corteDeCafeina(cama, 220), corteDeCafeina(cama, 400)]).toEqual([h('9:45'), h('9:45')]);
+    // Un té o una cola: sin corte.
+    expect(corteDeCafeina(cama, 47)).toBeNull();
+    expect([horasDeCorte(80), horasDeCorte(107), horasDeCorte(217.5), horasDeCorte(50)]).toEqual([8.8, 8.8, 13.2, null]);
+  });
+
+  it('en la línea de la comida cuenta desde la hora de ir a la cama, no desde la de dormirse', () => {
+    // A la cama a las 23:00 y 20 minutos para dormirse: el corte no se corre esos 20 minutos.
+    expect(lineasDelDia(tarde({ acostarse: h('23:00'), dormir: h('23:20') }))[0].cafeinaHasta).toBe(h('14:00'));
+    // Sin la hora de ir a la cama, desde la de dormirse.
+    expect(lineasDelDia(tarde({ acostarse: undefined, dormir: h('23:20') }))[0].cafeinaHasta).toBe(h('14:30'));
+    // Un preentreno, 13,2 h antes; un té, sin corte.
+    expect(lineasDelDia(tarde({ cafeinaPorToma: 250 }))[0].cafeinaHasta).toBe(h('10:15'));
+    expect(lineasDelDia(tarde({ cafeinaPorToma: 40 }))[0].cafeinaHasta).toBeUndefined();
+  });
+});
+
 describe('antes y después de entrenar', () => {
-  it('la merienda hora y media antes es la previa liviana: 60 g de carbohidratos, 20 de proteína y el café antes de las 15:45', () => {
+  it('la merienda hora y media antes es la previa liviana: 60 g de carbohidratos, 20 de proteína y el café antes de las 14:30', () => {
     expect(lineasDelDia(tarde())).toEqual([
-      { comida: 'merienda', clase: 'previaLiviana', hora: h('19:00'), proteina: 20, carbohidratos: 60, cafeinaHasta: h('15:45') },
+      { comida: 'merienda', clase: 'previaLiviana', hora: h('19:00'), proteina: 20, carbohidratos: 60, cafeinaHasta: h('14:30') },
     ]);
   });
 

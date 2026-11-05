@@ -364,21 +364,168 @@ const SeccionInicio = (() => {
       return c;
     }
 
-    // ------------------------------------------------------------ la energía baja, según el deporte
-    // Una sola vez, debajo de la luna, con el texto de spec/entreno.md (5.12) y de qué sale: sin números si están
-    // ocultos o con «sin déficit», y del peso nunca cuánto. «No mostrar más» la pliega, y no vuelve.
-    function energiaBaja(d) {
-      const c = carta('in-energia', tx('inicio.energiaBaja.titulo'));
-      const t = SegunElDeporte.tarjetaDeEnergia(d.tarjeta, paraElTexto());
-      c.append(el('p', 'in-energia-texto', t.texto), el('p', 'in-energia-sale', t.deQueSale));
-      const pie = el('div', 'in-energia-pie');
-      pie.appendChild(boton('in-energia-cerrar', tx('inicio.energiaBaja.noMostrar'), () => {
-        // Se pliega desde su alto, y recién después deja de estar.
-        c.style.height = `${c.offsetHeight}px`;
-        requestAnimationFrame(() => c.classList.add('saliendo'));
-        setTimeout(() => d.noMostrarMas(), quieto() ? 0 : 340);
-      }));
-      c.appendChild(pie);
+    // ------------------------------------------------------------ tu energía (5/11, para aprobar)
+    // El día entero, para leer rápido (Energia.energiaDelDia): la comida de estos días, el sueño (anoche y la
+    // deuda) y, con Ascent vinculada, los músculos de hoy, con la regla del eslabón más débil. Baja va arriba de
+    // todo, como advertencia; suficiente o alta, debajo de los macros; sin datos, cómo verla. Arriba, la batería,
+    // el título y una frase; abajo, cada parte con su estado. «Más» abre qué te conviene hoy y de dónde sale; se
+    // pliega en vez de «No mostrar más», así se puede volver a ver. Con Ascent, lleva su marca: es lo que hace Moss
+    // con el vínculo, en Inicio para no tener que abrir Ascent cada vez.
+    const PERSONA_DE_ENERGIA = { sexo: 'm', objetivo: 'bajar', pesoKg: 75, alturaCm: 178, grasaPct: 19.5 };
+    const NECESIDAD_DE_ENERGIA = 8 * 60;
+    // Los días de ejemplo: lo que queda por kg de masa magra después de entrenar, qué parte de la meta comió, lo
+    // dormido anoche y la deuda de las dos semanas (la que se dice, con lo que falta por noche).
+    const EJEMPLOS_DE_ENERGIA = {
+      baja: { porKg: 33, llega: 1, dormido: 320, deuda: { minutos: 300, porNoche: 40 } },
+      bajaComida: { porKg: 21, llega: 0.72, dormido: 455, deuda: { minutos: 60, porNoche: 8 } },
+      suficiente: { porKg: 33, llega: 0.84, dormido: 450, deuda: { minutos: 90, porNoche: 12 } },
+      alta: { porKg: 36, llega: 1, dormido: 485, deuda: { minutos: 0, porNoche: -5 } },
+      sinDatos: null,
+    };
+    const ICONO_DE_PARTE = { sueno: 'sueno', comida: 'comida', musculos: 'pesa' };
+    function energiaDeHoy(deporte) {
+      const ascent = opciones.ascentDeHoy ? opciones.ascentDeHoy() : null;
+      // Con un día de ejemplo del deporte, la señal de su peso (la del rugby) manda en la comida.
+      const ej = deporte && deporte.tarjeta ? EJEMPLOS_DE_ENERGIA.suficiente : EJEMPLOS_DE_ENERGIA[s.energia || 'suficiente'];
+      if (!ej) return { dia: null, ej: null, ascent, comoMusculos: null };
+      const magra = Energia.masaMagraEstimada(PERSONA_DE_ENERGIA);
+      const dias = Array.from({ length: 7 }, (_, i) => {
+        const entreno = 450 + (i % 3) * 40;
+        const kcal = ej.porKg * magra + entreno;
+        return { dia: Fechas.sumarDias(Datos.HOY, -(i + 1)), kcal, entreno, anotadas: 3, meta: kcal / ej.llega };
+      });
+      const deEstosDias = Energia.energiaDeEstosDias({ ...PERSONA_DE_ENERGIA, hoy: Datos.HOY, entrenaHoy: true, dias: deporte && deporte.tarjeta ? [] : dias, senal: deporte && deporte.tarjeta ? deporte.tarjeta.senal : null });
+      const sueno = {
+        anoche: Rendimiento.estadoDeLaNoche({ dormido: ej.dormido, necesidad: NECESIDAD_DE_ENERGIA, despertoAntes: null }),
+        seguidas: false,
+        deuda: Sueno.juicioDeLaDeuda(ej.deuda),
+      };
+      // Con Ascent, el titular de hoy de su sección: lo que entrenas hoy, cargado o no; y, para decirlo, si ya
+      // entrenaste o hoy descansas.
+      const musculos = ascent ? (ascent.que === 'cargado' ? 'cargados' : 'listos') : null;
+      const comoMusculos = ascent ? ({ cargado: 'cargados', hecha: 'entrenaste', descanso: 'descanso', sinHorario: 'descanso' }[ascent.que] || 'listos') : null;
+      return { dia: Energia.energiaDelDia({ deEstosDias, sueno, musculos, entrenaHoy: true }), ej, ascent, comoMusculos };
+    }
+    // La hora de ir a la cama esta noche, como la de los avisos (Avisos.horasDeSueno): se despierta a las 7 y se
+    // acuesta a las 23, tarda un cuarto de hora en dormirse y pasa media hora despierto en la noche.
+    function estaNoche(ej) {
+      const h = Avisos.horasDeSueno(Datos.HOY, { habitual: () => ({ dormirse: 5 * 60, despertar: 13 * 60 }), necesidad: NECESIDAD_DE_ENERGIA, deuda: ej ? ej.deuda.minutos : null, latencia: 15, despierto: 30 });
+      return { hora: Avisos.horaDeReloj(h.acostarse), despertar: Avisos.horaDeReloj(h.despertarManana) };
+    }
+    // La batería: una raya por nivel, la de baja con el color de «atención» (como las franjas de Ascent).
+    const bateria = (estado) => {
+      const n = { baja: 1, suficiente: 2, alta: 3 }[estado] || 0;
+      return `<svg class="in-energia-bateria" viewBox="0 0 30 18" aria-hidden="true"><rect x="1" y="1.5" width="24" height="15" rx="3.5"/><path d="M27.5 6.5v5"/>${[0, 1, 2].map((k) => `<rect class="${k < n ? 'llena' : 'vacia'}" x="${4 + k * 6.8}" y="4.5" width="5" height="9" rx="1.4"/>`).join('')}</svg>`;
+    };
+    function fraseDeEnergia(en) {
+      if (!en) return tx('inicio.energia.texto.sinDatos');
+      if (en.estado === 'baja') return tx('inicio.energia.texto.baja');
+      if (en.estado === 'suficiente') return tx(en.entrenaHoy ? 'inicio.energia.texto.suficienteEntrena' : 'inicio.energia.texto.suficiente');
+      // Alta: por qué, para el día y no solo para entrenar.
+      const sueno = en.deuda === 'muyBien' || en.deuda === 'bien' ? en.deuda : 'soloAnoche';
+      return tx(en.entrenaHoy ? 'inicio.energia.texto.altaEntrena' : 'inicio.energia.texto.alta', { comida: tx('inicio.energia.razon.comida.' + en.comida.como), sueno: tx('inicio.energia.razon.sueno.' + sueno) });
+    }
+    // Las partes, de un vistazo: el ícono, el nombre y cómo está cada una.
+    function partesDeEnergia(e) {
+      const en = e.dia;
+      const fila = el('div', 'in-energia-partes');
+      const partes = [['sueno', en.sueno], ['comida', en.comida]];
+      if (en.musculos) partes.push(['musculos', { parte: en.musculos === 'cargados' ? 'justa' : 'bien', como: e.comoMusculos || en.musculos }]);
+      partes.forEach(([k, p]) => {
+        const d = el('div', 'in-energia-parte ' + (p ? 'es-' + p.parte : 'sin'));
+        d.innerHTML = `<span class="ico">${icono(ICONO_DE_PARTE[k])}</span>`;
+        d.append(el('small', null, tx('inicio.energia.partes.' + k)), el('b', null, tx(`inicio.energia.como.${k}.${p ? p.como : 'sinDatos'}`)));
+        fila.appendChild(d);
+      });
+      return fila;
+    }
+    // Qué te conviene hoy: primero lo que la baja, después lo que la frena; si no, seguir así.
+    function consejosDeEnergia(e) {
+      const en = e.dia;
+      const lista = [];
+      const sueno = en.sueno;
+      if (sueno && (sueno.parte === 'baja' || sueno.como === 'algoCorta')) {
+        lista.push(tx('inicio.energia.consejo.dormir', estaNoche(e.ej)));
+        // Con la noche corta, sin ir al fallo (Craven 2022; Knowles 2022): lo mismo que dice Ascent.
+        if (sueno.parte === 'baja' && en.entrenaHoy) lista.push(tx('inicio.energia.consejo.sinFallo'));
+      } else if (sueno && sueno.como === 'deuda') lista.push(tx('inicio.energia.consejo.dormirDeuda', estaNoche(e.ej)));
+      if (en.comida && en.comida.parte === 'baja') lista.push(tx('inicio.energia.consejo.comerMas'));
+      else if (en.comida && en.comida.como === 'debajo') lista.push(tx('inicio.energia.consejo.llegar'));
+      if (en.musculos === 'cargados' && e.ascent) lista.push(e.ascent.texto);
+      if (!lista.length) lista.push(tx('inicio.energia.consejo.seguir'));
+      return lista;
+    }
+    // De dónde sale: una línea por parte, con sus números si se ven.
+    function detallesDeEnergia(e) {
+      const en = e.dia;
+      const ul = el('ul', 'in-energia-detalle');
+      const fila = (k, parte, texto) => {
+        const li = el('li', 'es-' + (parte || 'sin'));
+        li.innerHTML = `<span class="ico">${icono(ICONO_DE_PARTE[k])}</span>`;
+        li.appendChild(el('p', null, texto));
+        ul.appendChild(li);
+      };
+      fila('sueno', en.sueno && en.sueno.parte, e.ej ? tx('inicio.energia.detalle.sueno', { dormido: u.duracion(e.ej.dormido), deuda: en.deuda ? tx('inicio.energia.juicioDeuda.' + en.deuda) : '—' }) : tx('inicio.energia.detalle.suenoSinDatos'));
+      const c = en.deEstosDias;
+      const conNumeros = !tel.classList.contains('sin-numeros') && !(opciones.sinDeficit && opciones.sinDeficit());
+      const redondo = (x) => numero(Math.round(x / 10) * 10);
+      const comida = !c ? tx('inicio.energia.detalle.comidaSinDatos')
+        : c.porQue !== 'anotado' ? SegunElDeporte.tarjetaDeEnergia({ que: 'energiaBaja', donde: 'tarjeta', tema: 'energia', senal: c.porQue }, paraElTexto()).deQueSale
+          : !conNumeros ? tx('inicio.energia.detalle.comidaSinNumeros')
+            : tx(c.meta ? 'inicio.energia.detalle.comida' : 'inicio.energia.detalle.comidaSinMeta', { kcal: redondo(c.kcal), meta: c.meta ? redondo(c.meta) : '', entreno: redondo(c.entreno) });
+      fila('comida', en.comida && en.comida.parte, comida);
+      if (e.ascent && en.musculos) fila('musculos', en.musculos === 'cargados' ? 'justa' : 'bien', `${e.ascent.titulo}. ${e.ascent.texto}`);
+      return ul;
+    }
+    function tarjetaDeEnergia(e) {
+      const en = e.dia;
+      const estado = en ? en.estado : 'sinDatos';
+      const c = carta('in-energia in-energia-' + estado + (e.ascent ? ' con-ascent' : ''), null);
+      c.classList.toggle('plegada', !!s.energiaPlegada);
+      const cab = el('div', 'in-energia-cab');
+      const ico = el('span', 'in-energia-ico');
+      ico.innerHTML = bateria(estado);
+      const titulos = el('div', 'in-energia-titulos');
+      const etiqueta = el('span', 'in-energia-etq', tx(e.ascent ? 'inicio.energia.etiquetaAscent' : 'inicio.energia.etiqueta'));
+      // Con Ascent, su marca chica: la misma del ícono de Ascent.
+      if (e.ascent && opciones.marcaDeAscent) etiqueta.insertAdjacentHTML('afterbegin', opciones.marcaDeAscent());
+      titulos.append(etiqueta, el('b', 'in-energia-titulo', tx('inicio.energia.titulo.' + estado)));
+      const plegar = boton('in-energia-plegar', icono('abajo'), () => {
+        s.energiaPlegada = !s.energiaPlegada;
+        c.classList.toggle('plegada', s.energiaPlegada);
+        plegar.setAttribute('aria-expanded', String(!s.energiaPlegada));
+      }, tx(s.energiaPlegada ? 'inicio.energia.desplegar' : 'inicio.energia.plegar'));
+      plegar.setAttribute('aria-expanded', String(!s.energiaPlegada));
+      cab.append(ico, titulos, plegar);
+      const cuerpo = el('div', 'in-energia-cuerpo');
+      const dentro = el('div', 'in-energia-dentro');
+      dentro.appendChild(el('p', 'in-energia-texto', fraseDeEnergia(en)));
+      if (en) {
+        dentro.appendChild(partesDeEnergia(e));
+        const porque = el('div', 'in-energia-porque');
+        const consejos = el('ul', 'in-energia-consejos');
+        consejosDeEnergia(e).forEach((t) => consejos.appendChild(el('li', null, t)));
+        porque.append(el('h4', null, tx('inicio.energia.conviene')), consejos);
+        // Con la comida baja, cuándo hablarlo con alguien (el consenso del COI sobre REDs, 2023).
+        if (en.comida && en.comida.parte === 'baja') porque.appendChild(el('p', 'in-energia-chico', tx('inicio.energia.consejo.medico')));
+        porque.append(el('h4', null, tx(en.musculos ? 'inicio.energia.deQueSale' : 'inicio.energia.deQueSaleSinEntreno')), detallesDeEnergia(e), el('p', 'in-energia-chico', tx('inicio.energia.estimacion')));
+        porque.hidden = !s.energiaMas;
+        const mas = boton('in-energia-mas', `<span>${tx(s.energiaMas ? 'inicio.energia.menos' : 'inicio.energia.mas')}</span>`, () => {
+          s.energiaMas = !s.energiaMas;
+          mas.querySelector('span').textContent = tx(s.energiaMas ? 'inicio.energia.menos' : 'inicio.energia.mas');
+          mas.setAttribute('aria-expanded', String(s.energiaMas));
+          if (s.energiaMas) { porque.hidden = false; porque.classList.remove('entra', 'sale'); void porque.offsetWidth; porque.classList.add('entra'); } else {
+            const quieto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+            porque.classList.remove('entra');
+            porque.classList.add('sale');
+            setTimeout(() => { if (!s.energiaMas) porque.hidden = true; porque.classList.remove('sale'); }, quieto ? 0 : 220);
+          }
+        });
+        mas.setAttribute('aria-expanded', String(!!s.energiaMas));
+        dentro.append(mas, porque);
+      }
+      cuerpo.appendChild(dentro);
+      c.append(cab, cuerpo);
       return c;
     }
 
@@ -586,13 +733,12 @@ const SeccionInicio = (() => {
     }
 
     // «Para hoy» depende de lo anotado, del agua y de los números ocultos: se rehace solo ese bloque (y la
-    // tarjeta de la energía baja, que también los usa).
+    // energía, que también los usa).
     function refrescarConsejos() {
       const viejo = bloquesEl.querySelector('.in-consejos');
       if (viejo) viejo.replaceWith(consejos());
       const tarjeta = bloquesEl.querySelector('.in-energia');
-      const d = delDeporte();
-      if (tarjeta && d && d.tarjeta) tarjeta.replaceWith(energiaBaja(d));
+      if (tarjeta) tarjeta.replaceWith(tarjetaDeEnergia(energiaDeHoy(s.primerDia ? null : delDeporte())));
     }
 
     function pintar(ms) {
@@ -604,46 +750,23 @@ const SeccionInicio = (() => {
       bloquesEl.innerHTML = '';
       if (s.primerDia) [caloriasPrimerDia(), caminoPrimerDia(), cieloPrimerDia()].forEach((b) => bloquesEl.appendChild(b));
       else s.orden.filter((b) => s.visibles.has(b)).forEach((b) => bloquesEl.appendChild(ARMAR[b](ms)));
-      // El control, cuando se acerca, justo debajo de la luna; y debajo, la energía baja.
-      const control = s.primerDia ? null : controlCerca();
+      // Tu energía, debajo de los macros (la luna); si es baja, arriba de todo, como advertencia. Y el control,
+      // cuando se acerca, debajo de la luna y de la energía.
       const luna = bloquesEl.querySelector('.in-calorias');
-      if (control) bloquesEl.insertBefore(control, luna ? luna.nextSibling : bloquesEl.firstChild);
-      const energia = deporte && deporte.tarjeta ? energiaBaja(deporte) : null;
-      const arriba = control || luna;
-      if (energia) bloquesEl.insertBefore(energia, arriba ? arriba.nextSibling : bloquesEl.firstChild);
+      const en = s.primerDia ? null : energiaDeHoy(deporte);
+      const baja = !!(en && en.dia && en.dia.estado === 'baja');
+      const energia = en ? tarjetaDeEnergia(en) : null;
+      if (energia) bloquesEl.insertBefore(energia, baja ? bloquesEl.firstChild : luna ? luna.nextSibling : bloquesEl.firstChild);
+      const control = s.primerDia ? null : controlCerca();
+      const arriba = energia && !baja ? energia : luna;
+      if (control) bloquesEl.insertBefore(control, arriba ? arriba.nextSibling : bloquesEl.firstChild);
       // La invitación de Ascent (ascent.js), debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
       const invitacion = s.primerDia ? null : opciones.invitacionDeAscent();
       if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2 + (control ? 1 : 0) + (energia ? 1 : 0)] || null);
       const pie = zona.querySelector('.in-pie');
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));
-      // Abajo de todo, el musgo: donde termina el día, como en el cielo de Hábitos.
-      const suelo = zona.querySelector('.in-suelo');
-      if (!suelo.firstChild) suelo.appendChild(musgo());
-    }
-
-    // Un borde de musgo oscuro y apagado, con algunas esporas que toman la luz de la luna: poco verde,
-    // como lo pediste (sobria), y siempre igual (sin azar), para que no cambie al repintar.
-    function musgo() {
-      const caja = el('div', 'in-musgo');
-      caja.setAttribute('aria-hidden', 'true');
-      const ancho = 360;
-      let matas = '';
-      for (let x = -6, k = 0; x < ancho + 10; k++) {
-        const r = 7 + ((k * 37) % 11);
-        const alto = 14 + ((k * 53) % 13);
-        matas += `<ellipse cx="${x}" cy="${46 - alto / 2}" rx="${r}" ry="${alto / 1.6}"/>`;
-        x += r * 1.25;
-      }
-      let esporas = '';
-      for (let k = 0; k < 26; k++) {
-        const x = (k * 97) % ancho;
-        const y = 22 + ((k * 31) % 16);
-        const h = 6 + ((k * 13) % 7);
-        esporas += `<path d="M${x} ${y + h} q 1 ${-h / 2} 0 ${-h}"/><circle cx="${x}" cy="${y}" r="1.1"/>`;
-      }
-      caja.innerHTML = `<svg viewBox="0 0 ${ancho} 52" preserveAspectRatio="none"><g class="in-musgo-fondo">${matas}</g><rect class="in-musgo-suelo" x="0" y="40" width="${ancho}" height="12"/><g class="in-musgo-esporas">${esporas}</g></svg>`;
-      return caja;
+      // El musgo de abajo de todo se sacó el 5/11 (no te gustaba).
     }
 
     // ------------------------------------------------------------ personalizar
@@ -738,6 +861,13 @@ const SeccionInicio = (() => {
       refrescarConsejos,
       // «Para hoy» en otro momento del día (mediodia, tarde, nada, bien); null vuelve al de la galería.
       ejemplo(e) { s.ejemplo = e || null; refrescarConsejos(); },
+      // Tu energía de ejemplo (baja por el sueño, bajaComida, suficiente, alta o sinDatos), y abierta o plegada.
+      ponerEnergia(e, { plegada, mas } = {}) {
+        s.energia = e || 'suficiente';
+        if (plegada !== undefined) s.energiaPlegada = !!plegada;
+        if (mas !== undefined) s.energiaMas = !!mas;
+        pintar(0);
+      },
       abrirTodo,
       cerrarTodo: () => hojaTodo.cerrar(),
       bajarTodo: (selector) => {

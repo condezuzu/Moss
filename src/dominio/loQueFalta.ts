@@ -69,6 +69,8 @@ export type DeHoy = {
   alergias?: readonly Alergeno[];
   sinDeficit?: boolean;
   sinNumeros?: boolean;
+  /** Reflujo, en Cuidados: lo de la noche es liviano desde 3 h antes de la cama. */
+  reflujo?: boolean;
 };
 
 /** Menos que esto que falte, no es estar muy bajo. */
@@ -96,11 +98,24 @@ const DESPUES_DE_ANOTARLA = 45;
 /** Y al menos media hora antes de ir a la cama; sin hora de la cama, hasta las 23:30. */
 const ANTES_DE_LA_CAMA = 30;
 const ULTIMA_DE_LA_NOCHE = 23 * 60 + 30;
+/**
+ * A menos de 2 h de ir a la cama, nada grande; con reflujo, 3 h. La guía de reflujo del ACG 2022 pide evitar
+ * comidas 2 a 3 h antes de acostarse (condicional, con evidencia baja) y cenar a menos de 3 h se asoció con
+ * mucho más reflujo (Fujiwara 2005); para el sueño, cenar 1 h antes no cambió nada medido con polisomnografía
+ * (Gu 2020, n = 20). Lo de las calorías propone entonces una sola idea liviana. La última comida grande
+ * (loQueConviene.ts) cuenta lo mismo.
+ */
+export const CERCA_DE_LA_CAMA = 120;
+export const CERCA_DE_LA_CAMA_CON_REFLUJO = 180;
+export const cercaDeLaCama = (reflujo?: boolean) => (reflujo ? CERCA_DE_LA_CAMA_CON_REFLUJO : CERCA_DE_LA_CAMA);
+/** Liviano, hasta 250 kcal (derivado: de noche, algo de unas 150 kcal no perjudica; Kinsey y Ormsbee 2015). */
+const LIVIANO = 250;
 /** Las ideas lo resuelven si llegan a esta parte de lo que falta. */
 const ALCANZA = 0.8;
 const LARGO_MAXIMO = 30;
 
-type Lleva = Alergeno | 'carne';
+// 'vegetal': lo que tiene algo vegetal, que no come quien es carnívoro.
+type Lleva = Alergeno | 'carne' | 'vegetal';
 type DeLaLista = { id: string; proteina: number; kcal: number; lleva: readonly Lleva[] };
 
 const PARA_PROTEINA: readonly DeLaLista[] = [
@@ -108,27 +123,30 @@ const PARA_PROTEINA: readonly DeLaLista[] = [
   { id: 'huevos', proteina: 13, kcal: 155, lleva: ['huevo'] },
   { id: 'atun', proteina: 25, kcal: 120, lleva: ['pescado'] },
   { id: 'pollo', proteina: 45, kcal: 250, lleva: ['carne'] },
-  { id: 'lentejas', proteina: 18, kcal: 230, lleva: [] },
+  { id: 'lentejas', proteina: 18, kcal: 230, lleva: ['vegetal'] },
   { id: 'leche', proteina: 7, kcal: 120, lleva: ['leche'] },
-  { id: 'tofu', proteina: 15, kcal: 150, lleva: ['soja'] },
+  { id: 'tofu', proteina: 15, kcal: 150, lleva: ['soja', 'vegetal'] },
 ];
 const PARA_CALORIAS: readonly DeLaLista[] = [
-  { id: 'panConHuevo', proteina: 12, kcal: 260, lleva: ['gluten', 'huevo'] },
-  { id: 'avena', proteina: 10, kcal: 300, lleva: ['gluten', 'leche'] },
-  { id: 'sandwich', proteina: 15, kcal: 350, lleva: ['gluten'] },
-  { id: 'arrozConHuevo', proteina: 14, kcal: 420, lleva: ['huevo'] },
-  { id: 'frutaConYogur', proteina: 8, kcal: 200, lleva: ['leche'] },
-  { id: 'frutosSecos', proteina: 6, kcal: 180, lleva: ['frutosSecos'] },
-  { id: 'pasta', proteina: 15, kcal: 450, lleva: ['gluten'] },
+  { id: 'panConHuevo', proteina: 12, kcal: 260, lleva: ['gluten', 'huevo', 'vegetal'] },
+  { id: 'avena', proteina: 10, kcal: 300, lleva: ['gluten', 'leche', 'vegetal'] },
+  { id: 'sandwich', proteina: 15, kcal: 350, lleva: ['gluten', 'vegetal'] },
+  { id: 'arrozConHuevo', proteina: 14, kcal: 420, lleva: ['huevo', 'vegetal'] },
+  { id: 'frutaConYogur', proteina: 8, kcal: 200, lleva: ['leche', 'vegetal'] },
+  { id: 'frutosSecos', proteina: 6, kcal: 180, lleva: ['frutosSecos', 'vegetal'] },
+  { id: 'pasta', proteina: 15, kcal: 450, lleva: ['gluten', 'vegetal'] },
 ];
 /** Todas las claves de la lista: el test comprueba que cada una tenga su texto. */
 export const IDEAS_DE_LA_LISTA: readonly string[] = [...new Set([...PARA_PROTEINA, ...PARA_CALORIAS].map((i) => i.id))];
 
+// Quien es carnívoro no tiene ideas de la lista para las calorías: todas llevan algo vegetal, y le
+// quedan las de lo que come.
 const NO_COME: Record<Dieta, readonly Lleva[]> = {
   todo: [],
   pescetariana: ['carne'],
   vegetariana: ['carne', 'pescado', 'mariscos'],
   vegana: ['carne', 'pescado', 'mariscos', 'leche', 'huevo'],
+  carnivora: ['vegetal'],
 };
 
 const aCinco = (x: number) => Math.round(x / 5) * 5;
@@ -148,10 +166,13 @@ function caloriasBajas(meta: Macros, comido: Macros): boolean {
   return faltan >= CALORIAS_BAJAS && faltan >= PARTE_DE_CALORIAS * meta.kcal;
 }
 
-/** De lo que queda, primero lo tuyo que sirva, en una rueda que gira cada día; después, la lista. */
-function ideasPara(que: 'proteina' | 'calorias', cuanto: number, lugar: number, n: number, d: DeHoy): { ideas: Idea[]; alcanza: boolean } | null {
+/**
+ * De lo que queda, primero lo tuyo que sirva, en una rueda que gira cada día; después, la lista. `liviano`, cerca
+ * de la cama: una sola idea chica, que acerca y no resuelve.
+ */
+function ideasPara(que: 'proteina' | 'calorias', cuanto: number, lugar: number, n: number, d: DeHoy, liviano = false): { ideas: Idea[]; alcanza: boolean } | null {
   const valor = (i: { proteina: number; kcal: number }) => (que === 'proteina' ? i.proteina : i.kcal);
-  const entra = (i: { kcal: number }) => (que === 'proteina' ? i.kcal <= lugar * 1.1 : i.kcal <= cuanto * 1.2);
+  const entra = (i: { kcal: number }) => (que === 'proteina' ? i.kcal <= lugar * 1.1 : i.kcal <= (liviano ? LIVIANO : cuanto * 1.2));
   const propios = (d.propios ?? [])
     .filter((p) => p.nombre.length <= LARGO_MAXIMO && !(p.alcohol && p.alcohol > 0) && entra(p))
     .filter((p) => (que === 'proteina' ? p.proteina >= 8 && (4 * p.proteina) / Math.max(1, p.kcal) >= 0.2 : p.kcal >= 120 && (4 * (p.azucares ?? 0)) / Math.max(1, p.kcal) <= 0.5));
@@ -164,7 +185,7 @@ function ideasPara(que: 'proteina' | 'calorias', cuanto: number, lugar: number, 
   ];
   const [primera, ...resto] = opciones;
   if (!primera) return null;
-  if (primera.valor >= ALCANZA * cuanto) return { ideas: [primera.idea], alcanza: true };
+  if (liviano || primera.valor >= ALCANZA * cuanto) return { ideas: [primera.idea], alcanza: primera.valor >= ALCANZA * cuanto };
   // La segunda: la primera de la rueda que complete sin pasarse del lugar; si ninguna completa, la que más dé.
   const queda = cuanto - primera.valor;
   const entran = resto.filter((o) => (que === 'proteina' ? primera.kcal + o.kcal <= lugar * 1.1 : o.valor <= queda * 1.2));
@@ -181,14 +202,15 @@ export function loQueFaltaHoy(d: DeHoy): FaltaConHora[] {
   const toca = (q: QueFalta) => !(d.bajoAyer?.includes(q) && n % 2 === 1);
   const conLugar = (c: Macros) => d.meta.kcal - c.kcal;
 
-  const armar = (que: QueFalta, c: Macros): Falta | null => {
+  const armar = (que: QueFalta, c: Macros, cerca = false): Falta | null => {
     const base = { forma: n, ...(d.sinNumeros ? { sinNumeros: true as const } : {}) };
     if (que === 'agua') {
       const vasos = Math.ceil((AGUA_META_ML - (d.agua?.ml ?? 0)) / VASO_ML);
       return { que, cuanto: vasos, ideas: [], alcanza: false, ...base };
     }
     const faltan = que === 'proteina' ? aCinco(d.meta.proteina - c.proteina) : aCincuenta(d.meta.kcal - c.kcal);
-    const ideas = ideasPara(que, faltan, conLugar(c), n, d);
+    // La proteína de noche no cambia: 20 a 40 g antes de dormir no perjudican (Reis 2021; Kerksick 2017).
+    const ideas = ideasPara(que, faltan, conLugar(c), n, d, cerca && que === 'calorias');
     return ideas && { que, cuanto: faltan, ...ideas, ...base };
   };
 
@@ -219,12 +241,13 @@ export function loQueFaltaHoy(d: DeHoy): FaltaConHora[] {
   const cena = d.anotadas.cena;
   if (cena !== undefined) {
     const minutos = Math.max(d.horaDeCena + DESPUES_DE_LA_CENA, cena + DESPUES_DE_ANOTARLA);
-    if (minutos <= (d.acostarse ?? ULTIMA_DE_LA_NOCHE + ANTES_DE_LA_CAMA) - ANTES_DE_LA_CAMA) {
+    const cama = d.acostarse ?? ULTIMA_DE_LA_NOCHE + ANTES_DE_LA_CAMA;
+    if (minutos <= cama - ANTES_DE_LA_CAMA) {
       const que = (['proteina', 'calorias'] as const).find((q) => {
         if (q === dijo || !toca(q)) return false;
         return q === 'proteina' ? d.meta.proteina - d.comido.proteina >= PROTEINA_BAJA && conLugar(d.comido) >= LUGAR_MINIMO : caloriasBajas(d.meta, d.comido);
       });
-      const falta = que && armar(que, d.comido);
+      const falta = que && armar(que, d.comido, cama - minutos < cercaDeLaCama(d.reflujo));
       if (falta) salida.push({ minutos, falta });
     }
   }

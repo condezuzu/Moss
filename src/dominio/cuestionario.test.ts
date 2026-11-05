@@ -1,15 +1,16 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  actividadEquivalente, ajusteDeRecomposicion, diasConDosSesiones, entrenaFuerza, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
+  actividadEquivalente, ajusteDeRecomposicion, avisoDeRecomposicion, diasConDosSesiones, eleccionDe, entrenaFuerza, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
   horarioDeLosAvisos, katchMcArdle, kcalDelDia, kcalDelEntreno, masaMagra, MET_DEL_DEPORTE, metaDelCuestionario, movimientoPorPasos, NIVELES_DE_PROTEINA,
   objetivoGuardado, objetivoUsado, partesRedondas, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, PROTEINA_POR_NIVEL, proteinaDelNivel, rangoDelPesoMeta,
   ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
   type Deporte, type EntrenoDicho, type GrasaDicha, type ObjetivoDicho, type Respuestas, type SesionDicha,
 } from './cuestionario';
 import { KCAL_POR_KILO_Y_HORA } from './entrenamiento';
+import { sumarDias } from './fechas';
 import { ajusteDiario, gastoBasal, macrosPara, NIVELES, pesoMinimoSano, pisoDe } from './metas';
-import { kcalPorDia } from './progreso';
+import { bordeDe, kcalPorDia, plazoConFecha, plazoConRitmo } from './progreso';
 
 // La persona del ejemplo de la galería: 29 años, 172 cm y 74,5 kg, sentada casi todo el día y con pesas
 // tres veces por semana, una hora.
@@ -129,6 +130,14 @@ describe('el gasto de un día, por partes', () => {
     expect(movimientoPorPasos(0)).toBeNull();
   });
 
+  it('con correr o partidos, los pasos del entrenamiento no cuentan dos veces: no pasa de «de pie»', () => {
+    // 14.000 pasos por día corriendo cuatro veces por semana: el entrenamiento ya suma esos pasos.
+    expect(movimientoPorPasos(14000, ['resistencia'])).toBe('dePie');
+    expect(movimientoPorPasos(14000, ['fuerza', 'equipo'])).toBe('dePie');
+    expect(movimientoPorPasos(14000, ['fuerza'])).toBe('fisico');
+    expect(movimientoPorPasos(3800, ['resistencia'])).toBe('sentado');
+  });
+
   it('el viaje se guarda con el borde de arriba de cada tramo, y entrena con pesas si eligió el gimnasio', () => {
     expect(VIAJES).toEqual([0, 15, 30, 45]);
     expect(entrenaFuerza(PESAS)).toBe(true);
@@ -218,6 +227,23 @@ describe('la recomposición', () => {
   it('sin déficit, nada de bajar, tampoco con mucha grasa', () => {
     expect(ajusteDeRecomposicion({ ...BASE, sinDeficit: true, grasa: grasa(30) })).toBe(0);
   });
+
+  it('recomponer sin pesas trae el aviso: el músculo no crece sin estímulo', () => {
+    expect(avisoDeRecomposicion({ ...BASE, objetivo: 'recomponer', entreno: null })).toBe('sinFuerza');
+    expect(avisoDeRecomposicion({ ...BASE, objetivo: 'recomponer', entreno: entreno(sesion('resistencia', [1, 3])) })).toBe('sinFuerza');
+    expect(avisoDeRecomposicion({ ...BASE, objetivo: 'recomponer' })).toBeNull();
+    expect(avisoDeRecomposicion({ ...BASE, objetivo: 'mantener', entreno: null })).toBeNull();
+    // Sin déficit no hay recomposición: tampoco aviso.
+    expect(avisoDeRecomposicion({ ...BASE, objetivo: 'recomponer', entreno: null, sinDeficit: true })).toBeNull();
+  });
+
+  it('lo que el control tiene que seguir: la proteína del nivel y el −0,25 % con mucha grasa', () => {
+    expect(eleccionDe({ ...BASE, objetivo: 'recomponer', proteina: 'alta', grasa: grasa(28) })).toEqual({ proteinaPorKg: proteinaDelNivel({ ...BASE, objetivo: 'recomponer', proteina: 'alta', grasa: grasa(28) }) / 74.5, pct: -0.25 });
+    expect(eleccionDe({ ...BASE, objetivo: 'recomponer' }).pct).toBeNull();
+    expect(eleccionDe({ ...BASE, objetivo: 'bajar', pct: 0.62 }).pct).toBeCloseTo(-0.62, 9);
+    expect(eleccionDe({ ...BASE, objetivo: 'subir', pct: 0.3 }).pct).toBeCloseTo(0.3, 9);
+    expect(eleccionDe({ ...BASE, objetivo: 'bajar' })).toEqual({ proteinaPorKg: 2, pct: null });
+  });
 });
 
 describe('la meta de arranque', () => {
@@ -250,8 +276,30 @@ describe('la meta de arranque', () => {
     expect(pctDelPlan({ ...menor, sinDeficit: true })).toBeNull();
   });
 
+  it('una fecha que pide el 2 % por semana: la meta usa el borde de lo exigente y el plan llega más tarde', () => {
+    const conFecha: Respuestas = { ...BASE, objetivo: 'bajar', pct: 2 };
+    expect(pctDelPlan(conFecha)).toBe(1);
+    const deficit = gastoEstimado(conFecha).total - metaDelCuestionario(conFecha).metas.kcal;
+    expect(Math.abs(deficit - kcalPorDia(0.745))).toBeLessThanOrEqual(5);
+    // El plan: la fecha pedida (de 74,5 a 66,5 kg en cuatro semanas, el 2,7 %) se corre a la del 1 %.
+    const e = { hoy: '2026-10-29', pesoKg: 74.5, pesoMeta: 66.5, sexo: 'm' as const, edad: 29, gasto: 2400, entrenaFuerza: true };
+    const pedida = plazoConFecha(e, sumarDias(e.hoy, 28))!;
+    const usado = pctDelPlan({ ...conFecha, pct: pedida.pct })!;
+    expect(usado).toBe(1);
+    expect(plazoConRitmo(e, usado)!.fecha > pedida.fecha).toBe(true);
+    // Con 150 kg, el borde es el de las 1.000 kcal por día: un 0,61 %.
+    expect(pctDelPlan({ ...conFecha, pesoKg: 150 })).toBeCloseTo(bordeDe('bajar', 'exigente', 150), 9);
+    expect(pctDelPlan({ ...conFecha, pesoKg: 150 })).toBeCloseTo(((1000 * 7) / 7700 / 150) * 100, 9);
+  });
+
   it('sin déficit, bajar queda en mantener', () => {
     expect(metaDelCuestionario({ ...BASE, objetivo: 'bajar', sinDeficit: true }).metas.kcal).toBe(metaDelCuestionario(BASE).metas.kcal);
+  });
+
+  it('sin déficit, keto no: queda la equilibrada', () => {
+    const sin = { ...BASE, sinDeficit: true };
+    expect(metaDelCuestionario({ ...sin, estilo: 'keto' }).metas.carbohidratos).toBeGreaterThan(30);
+    expect(metaDelCuestionario({ ...sin, estilo: 'keto' }).metas).toEqual(metaDelCuestionario(sin).metas);
   });
 
   it('nunca baja del piso de calorías', () => {

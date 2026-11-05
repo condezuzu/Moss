@@ -22,7 +22,7 @@ import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
 import { EDAD_MINIMA, edadDe, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
 import { DIA_DEL_AVISO, DIAS_DE_PRUEBA } from '@/dominio/premium';
-import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
+import { deudaDeSueno, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { hayCompras } from '@/lib/premium';
 import { abrirPagina } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
@@ -506,7 +506,6 @@ function LaBase({ a, llegaA, reducido }: { a: Anclas; llegaA: number[]; reducido
       </View>
       <Animated.View entering={reducido ? undefined : FadeIn.delay(llegaA[2] + 300).duration(500)} style={[s.baseNota, lados, { top: y + BASE.hastaLasFilas + 3 * BASE.fila + 4 }]}>
         <Text style={s.baseVerificado}>{t('entrada.intro.base.verificado')}</Text>
-        <Text style={s.chip}>{t('entrada.intro.base.sinIA')}</Text>
       </Animated.View>
     </View>
   );
@@ -530,7 +529,7 @@ function LaNoche({ a, cruza, reducido }: { a: Anclas; cruza: [number, number]; r
   const datos: [string, string][] = [
     [t('entrada.intro.sueno.teDormiste'), horaDelDia(n.dormirse + 18 * 60)],
     [t('entrada.intro.sueno.teDespertaste'), horaDelDia(n.despertar + 18 * 60)],
-    [t('entrada.intro.sueno.deuda'), deuda ? duracion(deuda.minutos) : '—'],
+    [t('entrada.intro.sueno.deuda'), deuda ? duracion(redondearDeuda(deuda.minutos)) : '—'],
   ];
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -1060,7 +1059,6 @@ const s = StyleSheet.create({
   baseKcal: { fontFamily: letras.numero, fontSize: 14, color: 'rgba(239, 230, 207, 0.86)', fontVariant: ['tabular-nums'] },
   baseNota: { position: 'absolute', alignItems: 'center', gap: 7 },
   baseVerificado: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.7)' },
-  chip: { overflow: 'hidden', paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.5)', fontFamily: letras.texto, fontSize: 12.5, color: colores.oroClaro },
   noche: { position: 'absolute', paddingTop: 14, paddingBottom: 12, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.58)' },
   nocheCab: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
   nocheRotulo: { fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)' },

@@ -41,7 +41,7 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
     anotado[r.comida] = { hora: cuando, proteina: (antes?.proteina ?? 0) + r.valores.proteina, kcal: (antes?.kcal ?? 0) + r.valores.kcal };
   }
   const sueno = suenoParaAvisos(e);
-  const horas = sueno ? horasDeSueno(e.hoy, sueno) : { despertar: null, dormir: null };
+  const horas = sueno ? horasDeSueno(e.hoy, sueno) : { despertar: null, dormir: null, acostarse: null };
   const comido = totalDelDia(e.registros.values(), e.hoy, false);
   return {
     ahora: minutosEnElDia(ahora, e.hoy),
@@ -55,6 +55,8 @@ export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {
     edad: edadDe(e.perfil, e.hoy),
     despertar: horas.despertar,
     dormir: horas.dormir,
+    // El corte del café cuenta desde la hora de ir a la cama.
+    acostarse: horas.acostarse,
     cafeinaPorToma: cafeinaPorToma(e),
     sinDeficit: !!e.perfil.sinDeficit,
   };

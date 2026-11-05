@@ -3,14 +3,13 @@
 // rápida (calorías y macros, el agua, y los recientes y las comidas guardadas, que un toque registra
 // en la comida de esta hora con deshacer); al final, las medidas del cuerpo con la cinta, que
 // estiman la grasa corporal como un rango chico (src/dominio/cuerpo.ts). Se cierra tocando afuera o
-// bajándola con el dedo desde arriba.
+// bajándola con el dedo (arrastre.tsx): desde arriba, o desde lo de adentro con su scroll arriba.
 
 import * as Haptics from 'expo-haptics';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
-import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -22,12 +21,13 @@ import { medidaValida, rangoDeGrasa, SITIOS, ultimasMedidas, type Centimetros, t
 import { claveDeAlimento, itemsParaRegistrar, recientes, sumarValores, vigentes, type Item } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { CabezaQueBaja, ScrollQueBaja, seCierra, useArrastre, vuelta, type Arrastre } from './arrastre';
 import { Icono } from './comida/comunes';
 import { cantidadDeTexto, comidaDeAhora, fechaCorta, momentoDe, numero, sistemaDe, useEstado } from './comida/datos';
 import { abrirRegistro } from './comida/registro';
 import { Figura } from './Figura';
-import { ENTRA_PANEL, entre, subirOBajar } from './movimiento';
-import { useTeclado } from './teclado';
+import { ENTRA_FUNDIDO, ENTRA_PANEL, entre } from './movimiento';
+import { useCampoALaVista, useTeclado } from './teclado';
 
 export type VistaDelMas = 'menu' | 'peso' | 'medidas';
 type Vista = VistaDelMas;
@@ -61,27 +61,45 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   }, [abierta, alCambiarVista]);
   const cerrar = alCerrar;
 
+  // Con Reducir movimiento la hoja no viaja: entra y sale con un fundido (Secciones lleva `hoja` sin
+  // movimiento) y el dedo la baja con su propia bajada.
+  const reducido = useReducedMotion();
+  const bajada = useSharedValue(0);
+  useEffect(() => {
+    if (abierta) bajada.set(0);
+  }, [abierta, bajada]);
   const estiloFondo = useAnimatedStyle(() => ({ opacity: hoja.get() }));
   // Con el teclado (el peso, las medidas), la hoja sube con él: si no, tapaba lo que se escribe. Y se
   // achica lo mismo, para que lo de arriba (volver, la figura) no se vaya de la pantalla.
   const { animado: teclado } = useTeclado();
   const estiloHoja = useAnimatedStyle(() => {
     const sube = Math.max(0, teclado.get() - insets.bottom);
-    return { maxHeight: alto - insets.top - 24 - sube, transform: [{ translateY: (1 - hoja.get()) * (altoHoja.get() + 40) - sube }] };
+    const y = reducido ? bajada.get() : (1 - hoja.get()) * (altoHoja.get() + 40);
+    return { maxHeight: alto - insets.top - 24 - sube, opacity: reducido ? hoja.get() : 1, transform: [{ translateY: Math.max(0, y) - sube }] };
   });
-  // Bajarla con el dedo desde arriba: sigue al dedo y, al soltar, se cierra o vuelve.
-  const arrastre = usePanGesture({
-    activeOffsetY: [-10, 10],
-    onUpdate: (ev) => {
+  // Bajarla con el dedo: sigue al dedo (y lo de atrás, que se agranda) y, al soltar, se cierra o vuelve.
+  const arrastre = useArrastre({
+    bajada: () => {
       'worklet';
-      hoja.set(entre(1 - Math.max(0, ev.translationY) / (altoHoja.get() + 40), 0, 1));
+      return reducido ? bajada.get() : (1 - hoja.get()) * (altoHoja.get() + 40);
     },
-    onDeactivate: (ev) => {
+    mover: (y) => {
       'worklet';
-      if (ev.translationY > 90 || ev.velocityY > 600) scheduleOnRN(cerrar);
-      else hoja.set(subirOBajar(hoja.get(), 1));
+      if (reducido) bajada.set(y);
+      else hoja.set(entre(1 - y / (altoHoja.get() + 40), 0, 1));
     },
-  });
+    soltar: (y, velocidad, puedeCerrar) => {
+      'worklet';
+      if (puedeCerrar && seCierra(y, altoHoja.get(), velocidad)) scheduleOnRN(cerrar);
+      else if (reducido) bajada.set(vuelta(0, velocidad, true));
+      else hoja.set(vuelta(1, -velocidad / (altoHoja.get() + 40), false));
+    },
+  }, abierta);
+  // Cada vista trae su scroll, que empieza arriba.
+  const { scrollY } = arrastre;
+  useEffect(() => {
+    scrollY.set(0);
+  }, [vista, scrollY]);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={abierta ? 'auto' : 'none'}>
@@ -92,26 +110,25 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
         style={[estilos.hoja, { paddingBottom: insets.bottom + 18 }, estiloHoja]}
         onLayout={(ev) => altoHoja.set(ev.nativeEvent.layout.height)}
         accessibilityViewIsModal
+        onAccessibilityEscape={abierta ? cerrar : undefined}
       >
-        <GestureDetector gesture={arrastre}>
-          <View style={estilos.arriba}>
-            <View style={estilos.asa} />
-          </View>
-        </GestureDetector>
+        <CabezaQueBaja arrastre={arrastre} style={estilos.arriba}>
+          <View style={estilos.asa} />
+        </CabezaQueBaja>
         {/* Cambiar de vista nunca es de golpe: el peso y las medidas entran de costado; el menú, con un fundido. */}
         {vista === 'menu' && (
           <Animated.View key="menu" entering={FadeIn.duration(260)} style={estilos.vista}>
-            <Menu key={vez} alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />
+            <Menu key={vez} arrastre={arrastre} alCerrar={cerrar} alIr={alCambiarVista} avisar={avisar} />
           </Animated.View>
         )}
         {vista === 'peso' && (
-          <Animated.View key="peso" entering={ENTRA_PANEL} style={estilos.vista}>
-            <VistaDePeso alVolver={() => alCambiarVista('menu')} avisar={avisar} />
+          <Animated.View key="peso" entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} style={estilos.vista}>
+            <VistaDePeso arrastre={arrastre} alVolver={() => alCambiarVista('menu')} avisar={avisar} />
           </Animated.View>
         )}
         {vista === 'medidas' && (
-          <Animated.View key="medidas" entering={ENTRA_PANEL} style={estilos.vista}>
-            <VistaDeMedidas alVolver={() => alCambiarVista('menu')} avisar={avisar} />
+          <Animated.View key="medidas" entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} style={estilos.vista}>
+            <VistaDeMedidas arrastre={arrastre} alVolver={() => alCambiarVista('menu')} avisar={avisar} />
           </Animated.View>
         )}
         {aviso && (
@@ -138,7 +155,7 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
 }
 
 // ------------------------------------------------------------------ el menú
-function Menu({ alCerrar, alIr, avisar }: { alCerrar: () => void; alIr: (v: Vista) => void; avisar: (texto: string, deshacer?: () => void) => void }) {
+function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerrar: () => void; alIr: (v: Vista) => void; avisar: (texto: string, deshacer?: () => void) => void }) {
   const e = useEstado();
   const a = elAlmacen();
   const sistema = sistemaDe(e);
@@ -179,7 +196,7 @@ function Menu({ alCerrar, alIr, avisar }: { alCerrar: () => void; alIr: (v: Vist
   };
 
   return (
-    <ScrollView style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoAdentro} showsVerticalScrollIndicator={false}>
+    <ScrollQueBaja arrastre={arrastre} style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoAdentro} showsVerticalScrollIndicator={false}>
       {/* Decir la comida entera de una vez: lo más rápido para lo que no es de siempre. */}
       <View style={[estilos.fila, estilos.filaDecir]}>
         <Principal
@@ -276,7 +293,7 @@ function Menu({ alCerrar, alIr, avisar }: { alCerrar: () => void; alIr: (v: Vist
         {grasa && <Text style={estilos.medidasRango}>{t('cuerpo.rango', { desde: grasa.desde, hasta: grasa.hasta })}</Text>}
         <Icono nombre="chevron.right" tam={13} color={colores.pergaminoApagado} />
       </Pressable>
-    </ScrollView>
+    </ScrollQueBaja>
   );
 }
 
@@ -325,7 +342,7 @@ function Guardar({ alTocar, desactivado }: { alTocar: () => void; desactivado?: 
 }
 
 // ------------------------------------------------------------------ el peso
-function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (texto: string) => void }) {
+function VistaDePeso({ arrastre, alVolver, avisar }: { arrastre: Arrastre; alVolver: () => void; avisar: (texto: string) => void }) {
   const e = useEstado();
   const sistema = sistemaDe(e);
   const ultimo = e.pesos[e.pesos.length - 1];
@@ -334,14 +351,18 @@ function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (text
   const unidad = pesoCorporalEn(1, sistema).unidad;
   const deTendencia = ultimo ? tendencia(e.pesos, e.hoy).get(e.hoy) : undefined;
   const kg = pesoParaGuardar(escrito, valor, sistema);
+  // En un iPhone chico, con el teclado arriba no entra todo: el peso se recorre y el campo queda a la vista.
+  useCampoALaVista(arrastre.scroll, arrastre.scrollY);
   const paso = (signo: 1 | -1) => {
     setEscrito(null);
     setValor((v) => Math.round((v + 0.1 * signo) * 10) / 10);
   };
   return (
     <>
-      <Cabeza titulo={t('mas.registrarPeso')} alVolver={alVolver} />
-      <View style={estilos.peso}>
+      <CabezaQueBaja arrastre={arrastre}>
+        <Cabeza titulo={t('mas.registrarPeso')} alVolver={alVolver} />
+      </CabezaQueBaja>
+      <ScrollQueBaja arrastre={arrastre} style={estilos.cuerpo} contentContainerStyle={estilos.peso} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={estilos.pesoCifra}>
           <Pressable onPress={() => paso(-1)} style={estilos.paso} accessibilityRole="button" accessibilityLabel="−0,1">
             <SymbolView name="minus" size={16} weight="semibold" tintColor={colores.oroClaro} fallback={<Text style={estilos.atrasTexto}>−</Text>} />
@@ -357,6 +378,8 @@ function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (text
             onBlur={() => setEscrito((x) => (x !== null && pesoParaGuardar(x, valor, sistema) === null ? x : null))}
             keyboardType="decimal-pad"
             selectTextOnFocus
+            maxLength={6}
+            selectionColor={colores.oro}
             style={estilos.pesoEntrada}
             accessibilityLabel={t('mas.registrarPeso')}
           />
@@ -371,7 +394,7 @@ function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (text
           {deTendencia !== undefined && <Text style={estilos.detalleNumero}>{t('mas.tendencia', { peso: textoDePeso(deTendencia, sistema) })}</Text>}
         </View>
         <Text style={estilos.nota}>{t('mas.pesoNota')}</Text>
-      </View>
+      </ScrollQueBaja>
       <View style={estilos.pie}>
         <Guardar
           desactivado={kg === null}
@@ -394,7 +417,7 @@ function VistaDePeso({ alVolver, avisar }: { alVolver: () => void; avisar: (text
  * siempre van plegados. Lo que se estima sale de las medidas que hay: las de hoy y, si falta alguna,
  * la última.
  */
-function VistaDeMedidas({ alVolver, avisar }: { alVolver: () => void; avisar: (texto: string) => void }) {
+function VistaDeMedidas({ arrastre, alVolver, avisar }: { arrastre: Arrastre; alVolver: () => void; avisar: (texto: string) => void }) {
   const e = useEstado();
   const sistema = sistemaDe(e);
   const sexo = e.perfil?.sexo ?? 'm';
@@ -415,10 +438,14 @@ function VistaDeMedidas({ alVolver, avisar }: { alVolver: () => void; avisar: (t
   const rango = e.perfil ? rangoDeGrasa(e.perfil.sexo, e.perfil.alturaCm, { ...ultimas, ...nuevas }) : null;
   const unidad = largoEn(1, sistema).unidad;
   const como = t(`cuerpo.como.${sitio === 'cintura' ? (sexo === 'm' ? 'cinturaHombre' : 'cinturaMujer') : sitio}`);
+  // La hoja se achica con el teclado: la medida que se escribe no queda abajo del borde.
+  useCampoALaVista(arrastre.scroll, arrastre.scrollY);
   return (
     <>
-      <Cabeza titulo={t('mas.medidas')} alVolver={alVolver} />
-      <ScrollView style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoMedidas} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <CabezaQueBaja arrastre={arrastre}>
+        <Cabeza titulo={t('mas.medidas')} alVolver={alVolver} />
+      </CabezaQueBaja>
+      <ScrollQueBaja arrastre={arrastre} style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoMedidas} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
         <View style={estilos.tutorial}>
           <Figura activa={sitio} ancho={96} />
           <View style={estilos.crece}>
@@ -443,6 +470,8 @@ function VistaDeMedidas({ alVolver, avisar }: { alVolver: () => void; avisar: (t
               placeholder={ultimas[s] !== undefined ? decimal(largoEn(ultimas[s]!, sistema).valor, idioma()) : '—'}
               placeholderTextColor="rgba(239, 230, 207, 0.35)"
               keyboardType="decimal-pad"
+              maxLength={6}
+              selectionColor={colores.oro}
               style={[estilos.campoEntrada, sitio === s && estilos.campoElegido, malas.has(s) && estilos.campoMal]}
               accessibilityLabel={t(`cuerpo.sitios.${s}`)}
             />
@@ -455,7 +484,7 @@ function VistaDeMedidas({ alVolver, avisar }: { alVolver: () => void; avisar: (t
           <Text style={estilos.grasaRango}>{rango ? t('cuerpo.rango', { desde: rango.desde, hasta: rango.hasta }) : '—'}</Text>
           <Text style={estilos.grasaAviso}>{t('cuerpo.aviso')}</Text>
         </View>
-      </ScrollView>
+      </ScrollQueBaja>
       <View style={estilos.pie}>
         <Guardar
           desactivado={!Object.keys(nuevas).length}

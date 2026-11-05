@@ -220,7 +220,8 @@
           "Sí"
         ],
         "partidoHora": "A qué hora empieza",
-        "partidoVaria": "Varía"
+        "partidoVaria": "Varía",
+        "viajeNota": "Solo para avisarte a tiempo: el viaje no suma calorías."
       },
       "recomponer": "Ganar músculo y perder grasa",
       "recomponerTexto": "Con pesas y proteína alta, sin cambiar mucho tu peso.",
@@ -228,12 +229,10 @@
       "bajarNoSano": "Tu peso ya está en el borde de lo sano para tu altura.",
       "experiencia": {
         "titulo": "¿Hace cuánto entrenas con pesas?",
-        "texto": "Con los años de entrenamiento, el músculo llega más despacio: Moss ajusta tu plan a eso.",
+        "texto": "Con más años entrenando, el músculo llega más despacio: Moss ajusta el ritmo a eso.",
         "principiante": "Menos de un año",
         "intermedio": "De 1 a 3 años",
-        "avanzado": "Más de 3 años",
-        "avanzadoSubir": "Moss te propone subir más despacio: lo de más sería grasa.",
-        "avanzadoRecomponer": "La recomposición va más lenta: los cambios llegan de a poco."
+        "avanzado": "Más de 3 años"
       },
       "meta": {
         "titulo": "¿A qué peso quieres llegar?",
@@ -283,7 +282,18 @@
           "alta": "Más alta"
         },
         "gramos": "{n} g",
-        "dieta": "Qué comes"
+        "dieta": "Dieta",
+        "cuando": {
+          "equilibrada": "Para casi todos. Si no tienes una preferencia, elige esta: es la más fácil de sostener y acompaña bien el entrenamiento.",
+          "bajaEnGrasas": "Si te gustan el pan, el arroz, las pastas y la fruta, o entrenas mucho tiempo (correr, bici, partidos): deja más lugar a los carbohidratos.",
+          "bajaEnCarbohidratos": "Si te llenan más la carne, los huevos y los lácteos, o te sientes mejor con menos harinas. Con las mismas calorías, bajas lo mismo que con la equilibrada.",
+          "keto": "Casi sin carbohidratos. Solo si ya la conoces: cuesta sostenerla, no hace bajar más que las otras con las mismas calorías y puede bajar tu rendimiento si entrenas intenso."
+        },
+        "proteinaCuando": {
+          "baja": "Si te cuesta llegar a la recomendada o comes poca carne. Igual alcanza para cuidar tu músculo.",
+          "recomendada": "La que conviene a casi todos para tu objetivo. Si no sabes cuál elegir, deja esta.",
+          "alta": "Si estás bajando de peso y entrenas fuerte: ayuda a no perder músculo y quita hambre. Más que esto no suma."
+        }
       },
       "dia": {
         "titulo": "¿Cómo es tu día?",
@@ -317,7 +327,14 @@
       "masaMagra": "con tu masa magra",
       "menos": "Menos",
       "mas": "Más",
-      "fechaConAnio": "{num} de {mes} de {anio}"
+      "fechaConAnio": "{num} de {mes} de {anio}",
+      "revisar": {
+        "cerrar": "Cerrar",
+        "titulo": "Tu meta nueva",
+        "antes": "Antes eran {antes} kcal; ahora, {ahora}.",
+        "guardar": "Guardar"
+      },
+      "recomponerSinPesas": "Sin pesas, el músculo no tiene con qué crecer: recomponer queda casi como mantener."
     },
     "datos": {
       "titulo": "Tus datos son tuyos",
@@ -334,10 +351,11 @@
       "titulo": "¿Alguno es tu caso?",
       "embarazo": "Embarazo o lactancia",
       "condicion": "Una condición médica que cuida lo que como",
-      "condicionTexto": "Diabetes, problemas de riñón o un trastorno de la alimentación, por ejemplo.",
+      "condicionTexto": "Problemas de riñón o un trastorno de la alimentación, por ejemplo.",
       "nada": "Nada de esto",
       "aviso": "Moss no te propondrá comer menos de lo que gastas. Para cambiar tu peso, mejor con un profesional que te acompañe.",
-      "bajarNo": "En tu caso, bajar de peso es mejor con un profesional."
+      "bajarNo": "En tu caso, bajar de peso es mejor con un profesional.",
+      "marcaTodo": "Marca todo lo que sea tu caso: Moss ajusta tus metas a lo que recomiendan las guías."
     },
     "menor": {
       "titulo": "Moss es para mayores de 16",
@@ -363,7 +381,7 @@
       },
       "base": {
         "titulo": "Comida de verdad, sin adivinar",
-        "texto": "Una base revisada, con los nombres de tu país. Sin IA de fotos: tú eliges lo que comiste y ves de dónde sale cada número.",
+        "texto": "Una base revisada, con los nombres de tu país: tú eliges lo que comiste y ves de dónde sale cada número.",
         "busca": "palta",
         "filas": [
           "Palta o aguacate",
@@ -375,8 +393,7 @@
           "1 unidad",
           "1 cucharada"
         ],
-        "verificado": "Comparado con una segunda tabla oficial",
-        "sinIA": "Sin IA de fotos"
+        "verificado": "Comparado con una segunda tabla oficial"
       },
       "sueno": {
         "titulo": "Tu sueño, también",
@@ -797,7 +814,8 @@
         "todo": "De todo",
         "vegetariana": "Vegetariana",
         "vegana": "Vegana",
-        "pescetariana": "Pescetariana"
+        "pescetariana": "Pescetariana",
+        "carnivora": "Carnívora"
       },
       "alergias": "Lo que no comes",
       "alergenos": {
@@ -860,6 +878,11 @@
         "idioma": "Tu iPhone no reconoce este idioma sin conexión. Usa el micrófono del teclado: también funciona.",
         "otro": "No pude escucharte. Prueba de nuevo, o escríbelo."
       }
+    },
+    "letra": {
+      "p": "P",
+      "c": "C",
+      "g": "G"
     }
   },
   "inicio": {
@@ -917,7 +940,7 @@
       "decir": "Decirlo",
       "caloriasTexto": "Empieza por lo próximo que comas: en unos días, Moss conoce tus comidas y te las sugiere.",
       "camino": "Tu camino",
-      "caminoTexto": "A un ritmo viable, llegarías el {fecha}. Pésate mañana al despertarte: con dos semanas de pesadas, Moss mide tu ritmo de verdad.",
+      "caminoTexto": "A un ritmo viable, llegarías el {fecha}. Pésate mañana al despertarte: con dos semanas de pesadas, Moss empieza a ver hacia dónde vas; con cuatro a seis, a qué ritmo.",
       "pesarme": "Anotar mi peso",
       "cieloTexto": "Cada hábito que marques enciende una estrella; con todos, se dibuja la constelación de hoy.",
       "habitos": "Elegir mis hábitos"
@@ -974,11 +997,11 @@
         },
         "peso": {
           "titulo": "Tu peso",
-          "texto": "Moss mira la tendencia, no el número de un día: promedia tus pesadas, así el agua y la sal no la mueven. El ritmo sale de las últimas tres semanas."
+          "texto": "Moss mira la tendencia, no el número de un día: promedia tus pesadas, así el agua no la mueve tanto. El ritmo sale de tus últimas seis semanas, con un margen: con pocas, todavía no se sabe."
         },
         "grasa": {
           "titulo": "La grasa corporal",
-          "texto": "Con la cinta, por el método de la Marina de EE. UU. Por eso es un rango: contra un estudio de laboratorio, erra 3 o 4 puntos."
+          "texto": "Con la cinta, por el método de la Marina de EE. UU. Por eso es un rango: contra un estudio de laboratorio, puede errar unos 4 puntos o más."
         },
         "sueno": {
           "titulo": "Tu sueño",
@@ -1079,6 +1102,98 @@
         }
       },
       "noMostrar": "No mostrar más"
+    },
+    "energia": {
+      "etiqueta": "Tu energía · hoy",
+      "titulo": {
+        "baja": "Energía baja",
+        "suficiente": "Suficiente energía",
+        "alta": "Energía alta",
+        "sinDatos": "Tu energía"
+      },
+      "texto": {
+        "baja": "Según lo registrado, tu energía está muy baja.",
+        "suficiente": "Hoy tienes suficiente energía para tu día.",
+        "alta": "{comida}{sueno}: todo a favor para hoy.",
+        "altaEntrena": "{comida}{sueno}: todo a favor para un buen entrenamiento.",
+        "sinDatos": "Anota tus comidas unos días y aquí verás tu energía de cada día, junto con tu sueño.",
+        "suficienteEntrena": "Hoy tienes suficiente energía para entrenar de forma normal."
+      },
+      "mas": "Más",
+      "menos": "Menos",
+      "plegar": "Plegar",
+      "desplegar": "Desplegar",
+      "estimacion": "Es una estimación con lo que anotas y lo que miden tu teléfono o tu reloj: si te falta anotar algo, se ve más baja de lo que es.",
+      "etiquetaAscent": "Tu energía · con Ascent",
+      "razon": {
+        "comida": {
+          "llegaste": "Llegaste a tus calorías",
+          "deSobra": "Comiste de sobra para lo que entrenas",
+          "alcanza": "Comiste lo que necesitas"
+        },
+        "sueno": {
+          "muyBien": ", dormiste bien y no tienes deuda de sueño",
+          "bien": ", dormiste bien y tu deuda de sueño es baja",
+          "soloAnoche": " y dormiste bien"
+        }
+      },
+      "partes": {
+        "sueno": "Sueño",
+        "comida": "Comida",
+        "musculos": "Músculos"
+      },
+      "como": {
+        "sueno": {
+          "muyCorta": "Muy corto",
+          "corta": "Corto",
+          "seguidas": "Noches cortas",
+          "algoCorta": "Algo corto",
+          "deuda": "Con deuda",
+          "bien": "Bien",
+          "sinDatos": "Sin datos"
+        },
+        "comida": {
+          "senal": "Muy poco",
+          "muyPoco": "Muy poco",
+          "debajo": "Por debajo",
+          "llegaste": "Bien",
+          "deSobra": "De sobra",
+          "alcanza": "Bien",
+          "sinDatos": "Sin datos"
+        },
+        "musculos": {
+          "cargados": "Cargados",
+          "listos": "Listos",
+          "entrenaste": "Entrenaste",
+          "descanso": "Descanso"
+        }
+      },
+      "conviene": "Qué te conviene hoy",
+      "consejo": {
+        "dormir": "Esta noche, a la cama a las {hora} para despertarte a las {despertar}.",
+        "dormirDeuda": "Esta noche, a la cama a las {hora}: así empiezas a bajar tu deuda de sueño.",
+        "sinFallo": "Si entrenas, mejor sin llegar al fallo: las repeticiones cuestan más.",
+        "comerMas": "Come un poco más estos días, sobre todo antes y después de entrenar.",
+        "medico": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista del deporte.",
+        "llegar": "Te faltó llegar a tus calorías: una comida más o una porción más grande ayuda.",
+        "seguir": "Sigue así: come lo de siempre y duerme lo que necesitas."
+      },
+      "deQueSale": "Según tu sueño, tus comidas y tu entrenamiento",
+      "deQueSaleSinEntreno": "Según tu sueño y tus comidas",
+      "detalle": {
+        "sueno": "Anoche dormiste {dormido}. Deuda de sueño: {deuda}.",
+        "suenoSinDatos": "Todavía no hay noches: con unos días de sueño, Moss lo suma.",
+        "comida": "Estos días, unas {kcal} kcal por día de tus {meta}, y {entreno} de entrenar.",
+        "comidaSinMeta": "Estos días, unas {kcal} kcal por día, y {entreno} de entrenar.",
+        "comidaSinNumeros": "Lo que anotaste estos días, contra lo que piden tu día y tu entrenamiento.",
+        "comidaSinDatos": "Anota tus comidas unos días y Moss lo suma."
+      },
+      "juicioDeuda": {
+        "muyBien": "sin deuda",
+        "bien": "baja",
+        "algoAlta": "algo alta",
+        "alta": "alta"
+      }
     }
   },
   "mas": {
@@ -1148,7 +1263,7 @@
     "rango": "{desde} a {hasta} %",
     "rangoCorto": "{desde} a {hasta} %",
     "estimacion": "estimación con cinta",
-    "aviso": "Es una estimación a partir de tus medidas, no una medición: un estudio de laboratorio (DEXA) podría dar 3 o 4 puntos más o menos. Es menos precisa con muy poca grasa, mucho músculo o mucha grasa, y no sirve en el embarazo ni antes de los 18. Mide siempre igual y mira la tendencia.",
+    "aviso": "Es una estimación a partir de tus medidas, no una medición: un estudio de laboratorio (DEXA) podría dar unos 4 puntos más o menos, a veces más. En pocas semanas la cinta puede no notar un cambio de grasa, sobre todo en mujeres: tu cintura lo muestra mejor. Es menos precisa con muy poca grasa, mucho músculo o mucha grasa, y no sirve en el embarazo ni antes de los 18. Mide siempre igual y mira la tendencia.",
     "comoSeEstimaHombre": "Con el método de la Marina de EE. UU. (Hodgdon y Beckett, 1984): la densidad del cuerpo sale de la cintura menos el cuello y de tu altura, y la grasa, de la fórmula de Siri. El rango es la estimación más y menos lo que cambia si la cinta se corre 1 cm en la cintura y medio en el cuello, redondeado a puntos enteros. Con muy poca grasa o con mucha, se abre un punto más para cada lado.",
     "comoSeEstimaMujer": "Con el método de la Marina de EE. UU. (Hodgdon y Beckett, 1984): la densidad del cuerpo sale de la cintura más la cadera menos el cuello y de tu altura, y la grasa, de la fórmula de Siri. El rango es la estimación más y menos lo que cambia si la cinta se corre 1 cm en la cintura y en la cadera y medio en el cuello, redondeado a puntos enteros. Con muy poca grasa o con mucha, se abre un punto más para cada lado."
   },
@@ -1159,13 +1274,14 @@
       "llegaste": "Llegaste",
       "enCamino": "En camino",
       "despacio": "Más despacio",
-      "quieto": "Sin cambios",
+      "quieto": "Sin cambio claro",
       "alReves": "Al revés",
       "estable": "Estable",
       "seMueve": "Cambiando",
       "sinMeta": "Sin peso meta",
       "otroLado": "Revisa la meta",
-      "faltanDatos": "Faltan datos"
+      "faltanDatos": "Faltan datos",
+      "todaviaNo": "Todavía no se sabe"
     },
     "objetivoA": {
       "bajar": "Bajar a {kg} {unidad}",
@@ -1184,13 +1300,14 @@
       "llegaste": "Llegaste a tu peso meta. Si quieres quedarte ahí, cambia el objetivo a mantener.",
       "enCamino": "Vas a {ritmo} {unidad} por semana; el plan es {plan}. Te faltan {faltan} {unidad}: unas {semanas} semanas.",
       "despacio": "Vas a {ritmo} {unidad} por semana, menos de la mitad del plan ({plan}). Te faltan {faltan} {unidad}.",
-      "quieto": "Tu tendencia casi no se movió en las últimas tres semanas. El control de la semana ajusta las metas con eso.",
+      "quieto": "Todavía no se ve un cambio claro: tu peso puede estar quieto o moverse muy despacio. El control de la semana ajusta las metas con eso.",
       "alReves": "Tu tendencia va para el otro lado ({ritmo} {unidad} por semana). El control de la semana ajusta las metas con eso.",
       "estable": "Tu tendencia se mueve menos de 150 g por semana: estás manteniendo.",
       "seMueve": "Tu tendencia se mueve {ritmo} {unidad} por semana.",
       "sinMeta": "Vas a {ritmo} {unidad} por semana; el plan es {plan}. Elige un peso meta para ver cuándo llegarías.",
       "otroLado": "Tu peso meta quedó del otro lado de donde empezaste. Elige uno nuevo en la estrategia.",
-      "faltanDatos": "Hacen falta dos semanas de pesadas para medir el ritmo."
+      "faltanDatos": "Con dos semanas de pesadas, Moss empieza a ver hacia dónde vas; con cuatro a seis, a qué ritmo.",
+      "todaviaNo": "Todavía no se sabe a qué ritmo vas: con pocas semanas de pesadas, el margen es grande. Con unas semanas más, Moss te lo dice."
     },
     "peso": "Peso",
     "registrar": "Registrar",
@@ -1208,7 +1325,7 @@
     "kcalPorDia": "kcal por día",
     "controlDel": "Del control del {fecha}",
     "balanceTexto": "balance de {n} días: lo comido menos el gasto",
-    "comoSeCalculaTexto": "En los últimos {dias} días comiste en promedio {promedio} kcal por día y tu tendencia cambió {cambio} {unidad}. Moss toma un cuarto de la diferencia con lo que medía antes, para que la meta cambie de a poco.",
+    "comoSeCalculaTexto": "En los últimos {dias} días comiste en promedio {promedio} kcal por día y, por la recta de tus pesadas, tu peso cambió {cambio} {unidad}. Moss toma un cuarto de la diferencia con lo que medía antes, para que la meta cambie de a poco.",
     "estrategia": "Estrategia",
     "pesoMeta": "Peso meta",
     "sinPesoMeta": "Sin elegir",
@@ -1308,11 +1425,12 @@
       "kcalMenos": "Unas {n} kcal por día menos de lo que gastas.",
       "kcalMas": "Unas {n} kcal por día más de lo que gastas.",
       "avisos": {
-        "sinFuerzaBajar": "Sin entrenamiento de fuerza, una parte de lo que bajes es músculo; entrenando fuerza tres veces por semana, casi nada.",
+        "sinFuerzaBajar": "Sin entrenamiento de fuerza, una parte de lo que bajes es músculo; entrenando fuerza tres veces por semana, mucho menos.",
         "sinFuerzaSubir": "Sin entrenar fuerza, unos dos tercios de lo que subas es grasa.",
         "piso": "Con esa fecha comerías menos de {piso} kcal, y Moss no baja de ahí: llegarías el {fecha}.",
         "menor": "Antes de los 18, mejor un ritmo viable.",
-        "pisoNoLlega": "Moss no baja de {piso} kcal, y con lo que gastas eso deja poco o nada de déficit: así no llegarías en dos años."
+        "pisoNoLlega": "Moss no baja de {piso} kcal, y con lo que gastas eso deja poco o nada de déficit: así no llegarías en dos años.",
+        "pisoAlFinal": "Cerca del final comerías menos de {piso} kcal; Moss no baja de ahí y el último tramo va más lento."
       },
       "sinCamino": "Elige un peso meta para ver cuándo llegarías.",
       "caminoTexto": "La línea llena es tu tendencia; la punteada sigue hasta la meta, a tu ritmo."
@@ -1338,7 +1456,8 @@
         "llegaste": "Llegaste",
         "estable": "Estable",
         "seMueve": "Cambiando",
-        "faltanDatos": "Faltan datos"
+        "faltanDatos": "Faltan datos",
+        "todaviaNo": "Todavía no se sabe"
       },
       "etapas": {
         "bajar": "Bajar a {kg} kg",
@@ -1347,18 +1466,20 @@
       },
       "para": "para el {fecha}",
       "comoVienes": {
-        "alRitmo": "Vas al ritmo del plan: {ritmo} kg por semana.",
-        "adelantado": "Vas más rápido que el plan: {ritmo} kg por semana (el plan, {plan}). A este ritmo llegas el {fecha}.",
-        "atrasado": "Vas más lento que el plan: {ritmo} kg por semana (el plan, {plan}). A este ritmo llegas el {fecha}; el control ajusta tus calorías.",
-        "atrasadoSinFecha": "Vas más lento que el plan: {ritmo} kg por semana (el plan, {plan}). El control ajusta tus calorías.",
+        "alRitmo": "Vas al ritmo del plan: {ritmo} kg por semana, entre {desde} y {hasta} (el plan, {plan}).",
+        "adelantado": "Vas más rápido que el plan: {ritmo} kg por semana, entre {desde} y {hasta} (el plan, {plan}). A este ritmo llegarías {cuando}.",
+        "atrasado": "Vas más lento que el plan: {ritmo} kg por semana, entre {desde} y {hasta} (el plan, {plan}). A este ritmo llegarías {cuando}; el control ajusta tus calorías.",
+        "atrasadoSinFecha": "Vas más lento que el plan: {ritmo} kg por semana, entre {desde} y {hasta} (el plan, {plan}). El control ajusta tus calorías.",
         "alReves": "Tu peso va para el otro lado: el próximo control ajusta tus calorías.",
         "llegaste": "Llegaste a tu meta. Ahora, unas semanas en mantenimiento.",
         "estable": "Te mantienes: tu peso se mueve menos de 150 g por semana.",
-        "seMueve": "Tu peso se mueve {ritmo} kg por semana: el control ajusta tus calorías para mantenerlo.",
-        "faltanDatos": "Con dos semanas de pesadas, Moss te dice cómo vienes."
+        "seMueve": "Tu peso se mueve {ritmo} kg por semana (entre {desde} y {hasta}): el control ajusta tus calorías para mantenerlo.",
+        "faltanDatos": "Con dos semanas de pesadas, Moss empieza a ver hacia dónde vas; con cuatro a seis, a qué ritmo.",
+        "todaviaNo": "Todavía no se sabe cómo vienes: con lo que hay, entre {desde} y {hasta} kg por semana. Con unas semanas más de pesadas, el margen se achica.",
+        "seMueveSinAjustar": "Tu peso se mueve {ritmo} kg por semana (entre {desde} y {hasta})."
       },
       "despues": {
-        "bajar": "Después, {n} semanas en mantenimiento: comes lo que gastas y el peso se asienta.",
+        "bajar": "Después, {n} semanas en mantenimiento: comes lo que gastas. Es normal que el peso suba un poco esos días: es agua, no grasa.",
         "subir": "Después, {n} semanas en mantenimiento."
       },
       "ajusta": "El control de cada semana mira cómo vienes y ajusta tus calorías para seguir el plan.",
@@ -1368,7 +1489,12 @@
         "eliges": "Luego eliges cómo seguir.",
         "mantener": "Luego, quedarte en {kg} kg.",
         "musculo": "Luego, ganar músculo: subir despacio."
-      }
+      },
+      "cuando": {
+        "rango": "entre el {desde} y el {hasta}",
+        "mes": "en {mes}"
+      },
+      "comoSeCalcula": "El ritmo sale de la recta por el promedio de tus pesadas de cada semana, de las últimas seis. El margen es el de un 80 %: cuatro de cada cinco veces, tu ritmo de verdad cae ahí. Con más semanas de pesadas se achica y, mientras sea más ancho que tu plan, Moss no dice si vas adelantado o atrasado. Cuándo llegarías sale de lo que te falta, con el ritmo más rápido y el más lento del margen."
     },
     "control": {
       "titulo": "Control el {dia} · {cuando}",
@@ -1387,7 +1513,7 @@
       "textoHombre": "Con una cinta, en dos minutos: la cintura y el cuello. Con una vez alcanza; si quieres, cada mes.",
       "textoMujer": "Con una cinta, en dos minutos: la cintura, el cuello y la cadera. Con una vez alcanza; si quieres, cada mes.",
       "boton": "Medir",
-      "confianza": "Es una estimación con la cinta (la fórmula de la Marina de EE. UU.): puede errar 3 a 4 puntos. Sirve para ver cómo cambia."
+      "confianza": "Es una estimación con la cinta (la fórmula de la Marina de EE. UU.): puede errar unos 4 puntos o más. Para ver cómo cambia tu cuerpo, mira tu cintura."
     },
     "masDatos": {
       "titulo": "Más datos",
@@ -1463,7 +1589,7 @@
     "sinDeuda": "Sin deuda",
     "deudaDe": "menos de lo que necesitas ({necesidad} por noche)",
     "deudaNoches": "Con {n} de las últimas {de} noches",
-    "deudaTexto": "Lo que te faltó para lo que necesitas cada noche de las últimas dos semanas, pesando más las más recientes, menos lo que dormiste de más (hasta 2 horas por noche). Las siestas cuentan; las noches sin datos no suman ni restan.",
+    "deudaTexto": "Lo que te faltó para lo que necesitas cada noche de las últimas dos semanas, pesando más las más recientes, menos lo que dormiste de más (hasta 2 horas por noche). Las siestas cuentan. Se calcula con las noches que tienen datos: las que faltan no la bajan. Es aproximada: depende sobre todo de cuánto necesitas dormir.",
     "vitales": "De noche, según el reloj",
     "vital": {
       "frecuencia": "Frecuencia cardíaca",
@@ -1666,7 +1792,8 @@
     "pocoSueno": {
       "titulo": "Hace semanas que duermes poco",
       "texto": "En las últimas dos semanas dormiste menos de 6 horas por noche. Si sigue así, vale la pena hablarlo con un médico.",
-      "nota": "Es una estimación de Moss, no un diagnóstico."
+      "nota": "Es una estimación de Moss, no un diagnóstico.",
+      "textoMenor": "En las últimas dos semanas dormiste menos de 7 horas por noche, y a tu edad se recomiendan de 8 a 10. Si sigue así, vale la pena hablarlo con un médico."
     },
     "afinar": {
       "titulo": "Afinar",
@@ -1874,6 +2001,35 @@
       "partidoDeNoche": "Jugaste tarde: es normal dormirte tarde. Si puedes, duerme más esta noche o haz una siesta corta temprano.",
       "cargaYSueno": "Esta semana entrenas más y duermes menos: es la combinación que más se asocia con lesiones.",
       "dormirMas": "En semanas de partidos, una hora más de sueño es de lo que más ayuda."
+    },
+    "deudaAprox": "{t} aprox.",
+    "deudaPorNoche": "Duermes unas {duermes} por noche; necesitas unas {necesidad}.",
+    "dormidoAprox": "dormido, aprox.",
+    "sinRelojDespierto": "De esas horas, Moss descuenta unos {n} min: casi todos pasamos un rato despiertos en la noche, y el teléfono no lo ve.",
+    "regularidadAprox": "Con noches estimadas sin reloj, el ± incluye el error de cada estimación: es aproximado.",
+    "juicio": {
+      "titulo": {
+        "muyBien": "Muy bien",
+        "bien": "Bien",
+        "algoAlta": "Algo alta",
+        "alta": "Alta"
+      },
+      "texto": {
+        "muyBien": "Sin deuda: duermes lo que necesitas.",
+        "bien": "Unas {t}: está en un rango normal.",
+        "algoAlta": "Unas {t}: te falta un poco de sueño cada noche.",
+        "alta": "Unas {t}: hace días que duermes bastante menos de lo que necesitas, y puede que no lo notes."
+      }
+    },
+    "estaNoche": {
+      "titulo": "Esta noche",
+      "cama": "A la cama a las {hora}",
+      "camaTexto": "Para despertarte a las {despertar} habiendo dormido unas {horas}.",
+      "pago": "Son unos {min} min más de lo que necesitas, para ir bajando la deuda: se baja de a poco, no de una vez.",
+      "tope": "Moss la adelanta como mucho una hora de lo de siempre: el cuerpo no se duerme mucho antes de su hora.",
+      "comida": "Última comida grande, antes de las {hora}",
+      "comidaTexto": "Dos horas antes de acostarte; después, algo ligero.",
+      "comidaReflujo": "Con reflujo, tres horas antes de acostarte; después, algo ligero."
     }
   },
   "perfil": {
@@ -2121,7 +2277,7 @@
     "avisos": {
       "titulo": "Avisos",
       "dormir": "Hora de dormir",
-      "dormirTexto": "Esta noche, a la cama a las {hora}: para despertarte a las {despertar} habiendo dormido {horas}, con los {latencia} min que tardas en dormirte. Te avisa un rato antes.",
+      "dormirTexto": "Esta noche, a la cama a las {hora}: para despertarte a las {despertar} habiendo dormido {horas}, con los {latencia} min que tardas en dormirte y el rato que casi todos pasamos despiertos en la noche. Te avisa un rato antes.",
       "dormirSinDatos": "Te avisa un rato antes de la hora de ir a la cama. Para calcularla hace falta saber a qué hora te despiertas: con unas noches alcanza.",
       "antes": "{n} min antes",
       "tardo": "Tardo en dormirme",
@@ -2147,7 +2303,7 @@
       "cafe": "Café",
       "cafeTexto": "Hasta qué hora, para que no te quite sueño. Los días que entrenas, si conviene uno antes y a qué hora.",
       "ultimaComida": "Última comida grande",
-      "ultimaComidaTexto": "Tres horas antes de acostarte: cena antes de esa hora y, después, algo ligero.",
+      "ultimaComidaTexto": "Dos horas antes de acostarte (tres con reflujo): cena antes de esa hora y, después, algo ligero.",
       "entrenarTarde": "Si entrenas tarde",
       "entrenarTardeTexto": "Si terminarías a menos de dos horas de la cama: hasta qué hora entrenar fuerte.",
       "luces": "Bajar las luces",
@@ -2158,7 +2314,11 @@
       "partido": "La víspera del partido",
       "partidoTexto": "A la hora del almuerzo: carbohidratos en cada comida, hoy y mañana.",
       "carrera": "Antes de una carrera larga",
-      "carreraTexto": "Dos días antes de una carrera de más de hora y media, a la hora del almuerzo: carbohidratos y menos fibra."
+      "carreraTexto": "Dos días antes de una carrera de más de hora y media, a la hora del almuerzo: carbohidratos y menos fibra.",
+      "necesito": "Necesito dormir",
+      "necesitoEdad": "Lo de tu edad ({h})",
+      "necesitoTexto": "Las guías dicen de 7 a 9 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la hora de ir a la cama, la deuda y la calidad.",
+      "necesitoTextoMenor": "A tu edad se recomiendan de 8 a 10 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la hora de ir a la cama, la deuda y la calidad."
     },
     "cambiarCuenta": "Cambiar de cuenta",
     "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
@@ -2173,6 +2333,88 @@
     "corteALaHora": {
       "uno": "A la {hora}",
       "otros": "A las {hora}"
+    },
+    "respuestas": "Tus respuestas",
+    "respuestasTexto": "El cuestionario del principio: cámbialo cuando quieras y Moss rehace tu meta.",
+    "baseGrupo": "Cómo funciona",
+    "base": "En qué se basa Moss",
+    "baseSub": "De dónde sale cada número y cuánto confiar",
+    "baseInfo": {
+      "intro": "Ningún número de Moss sale de una caja negra: son fórmulas publicadas, guías de sociedades científicas y lo que tú anotas o mide tu reloj. Aquí está de dónde sale cada cosa y cuánto se puede confiar en ella.",
+      "comoTitulo": "Cómo ordenamos lo que llega",
+      "columnas": {
+        "llega": "Llega",
+        "hace": "Moss",
+        "ves": "Ves"
+      },
+      "llega": [
+        "Lo que anotas",
+        "Salud de Apple"
+      ],
+      "llegaAscent": "Ascent, si la vinculas",
+      "hace": [
+        "Lo pone en tu día",
+        "Elige la mejor fuente",
+        "Calcula con fórmulas publicadas"
+      ],
+      "ves": [
+        "Tu meta y tu energía",
+        "Tu peso y tu plan",
+        "Tu sueño",
+        "Tus avisos"
+      ],
+      "reglas": [
+        "Lo medido va antes que lo estimado, y lo estimado dice «aprox.».",
+        "Sin datos, Moss no inventa: te dice qué falta.",
+        "Tu día empieza a la hora que eliges (a las 4, de fábrica): lo de la madrugada es de la noche anterior.",
+        "Todo queda primero en tu teléfono; con tu cuenta, también en la nube, igual en tus otros teléfonos."
+      ],
+      "areasTitulo": "En qué nos basamos",
+      "fuentes": "Fuentes",
+      "areas": {
+        "sueno": {
+          "titulo": "Tu sueño",
+          "texto": "Para el sueño, Moss sigue las recomendaciones de la Academia Estadounidense de Medicina del Sueño y la Sleep Research Society (2015), que aconsejan 7 horas o más a los adultos, y las de la National Sleep Foundation (2015 y 2017), que dan los rangos para cada edad y qué cuenta como un sueño continuo. Con un reloj o un anillo, Moss usa sobre todo cuánto y cuándo dormiste, que es lo que mejor miden: en estudios contra polisomnografía detectan más del 90 % del sueño, pero se les escapa buena parte de los ratos despierto, y las etapas son bastante menos exactas (Schyvens y otros, 2025). La regularidad de tus horarios cuenta porque, en estudios grandes, se asocia con la salud, a veces más que la duración (Windred y otros, 2024). La calidad, la deuda y la regularidad son estimaciones para ver tendencias, no diagnósticos: la deuda depende sobre todo de cuánto necesitas dormir, que cambia de una persona a otra, y sin reloj Moss estima la noche con el teléfono y te pregunta para confirmarla o corregirla.",
+          "fuentes": "AASM y SRS, 2015 · National Sleep Foundation, 2015 y 2017 · Schyvens y otros, 2025 · Windred y otros, 2024"
+        },
+        "momentos": {
+          "titulo": "Cuándo hacer cada cosa",
+          "texto": "Los avisos que te dicen cuándo dejar el café, cuándo hacer la última comida grande, hasta qué hora entrenar fuerte y cuándo bajar las luces salen de revisiones de estudios y de consensos de expertos. El corte del café sigue el metaanálisis de Gardiner y su equipo (2023), que calculó cuántas horas antes de acostarte la cafeína deja de quitarte sueño según la cantidad; las luces, el consenso de 18 expertos en luz y sueño de Brown y otros (2022); y la comida alrededor del entrenamiento, el metaanálisis de King y su equipo (2022) para la fuerza y la postura del American College of Sports Medicine (2016) para la resistencia. Moss cuenta cada hora desde tu hora de ir a la cama y desde tu entrenamiento, así que es una guía aproximada: cada persona responde distinto, sobre todo a la cafeína y al alcohol. Son consejos para personas sanas; si hace meses que duermes mal, lo que más ayuda es la terapia cognitivo-conductual para el insomnio, y conviene que lo hables con un médico.",
+          "fuentes": "Gardiner y otros, 2023 · Brown y otros, 2022 · King y otros, 2022 · American College of Sports Medicine, 2016"
+        },
+        "fotos": {
+          "titulo": "Por qué no calculamos tu comida con una foto",
+          "texto": "Una foto muestra qué hay en el plato, pero no cuánto pesa ni lo que no se ve, como el aceite, la mantequilla o el relleno. En 52 fotos de platos pesados, tres IA de uso general erraron en promedio entre un 36 % y un 64 % de las calorías, y más en los platos grandes (Fridolfsson y colegas, 2025); otra IA, entrenada con miles de platos, casi triplicó su error cuando también tuvo que adivinar la porción (Thames y colegas, 2021). Por eso en Moss eliges el alimento de una base revisada, escaneas el código o la etiqueta, o dices lo que comiste, y Moss te pregunta lo que la foto no ve, como el aceite. Tampoco es exacto: una etiqueta puede alejarse hasta un 20 % de lo real (lo permiten las normas del Mercosur y de la Unión Europea), y lo calculado a ojo tiene su margen. Pero ese error lo puedes reducir pesando o eligiendo la porción y, si se repite parecido, el control de cada semana lo compensa con tu peso.",
+          "fuentes": "Fridolfsson y colegas, 2025 · Thames y colegas, 2021 · Mercosur, RDC 360/2003"
+        },
+        "ascent": {
+          "titulo": "Tu entrenamiento, con Ascent",
+          "texto": "La parte de Ascent cruza tus series de Ascent con tu sueño y tu comida, y usa lo que muestran los estudios más sólidos. Dormir 6 horas o menos baja poco la fuerza máxima y bastante más las repeticiones (Craven y otros, 2022, que reunieron 77 estudios); tu fuerza cambia de un día a otro alrededor de un 3 a 5 % sin ningún motivo (Grgic y otros, 2020), y hacer más series por semana trae más progreso, aunque cada vez menos (Pelland y otros, 2026). Como la validez de los puntajes de «recuperación» de relojes y anillos no está demostrada (Doherty y otros, 2025), Moss no te da un porcentaje: te muestra tus datos, te avisa cuando algo sale de lo común y te dice cuándo todavía no hay datos suficientes para saberlo. Es orientativo, no un diagnóstico.",
+          "fuentes": "Craven y otros, 2022 · Grgic y otros, 2020 · Pelland y otros, 2026 · Doherty y otros, 2025"
+        },
+        "metas": {
+          "titulo": "Tu meta y tus calorías",
+          "texto": "Para empezar, Moss estima lo que gastas con la fórmula de Mifflin-St Jeor (1990), la que mejor acierta en adultos, y le suma tu día y tu entrenamiento según las Academias Nacionales de Estados Unidos (2023): es un punto de partida que puede errar un 10 % o más, no tu número exacto. Después, cada semana, compara lo que anotas con la tendencia de tu peso y corrige la estimación; medir el balance de energía con pesadas repetidas se comprobó contra mediciones de laboratorio (Sanghvi, Hall y otros, 2015), y con tres o cuatro semanas de pesadas frecuentes la cifra se vuelve firme. La proteína sigue el metaanálisis de Morton y otros (2018), de 1,6 a 2,2 g por kilo si entrenas y nunca menos de 1,2, y las grasas, la fibra y las vitaminas siguen las referencias de las Academias Nacionales. Son guías para adultos sanos, no un diagnóstico: con embarazo, lactancia o una condición médica, Moss no te pone en déficit y te sugiere hablar con un profesional.",
+          "fuentes": "Mifflin y otros, 1990 · Academias Nacionales (NASEM), 2023 · Sanghvi y otros, 2015 · Morton y otros, 2018"
+        },
+        "progreso": {
+          "titulo": "Tu peso y tu cuerpo",
+          "texto": "Tu peso sube y baja de un día a otro por el agua, lo que comiste el día anterior y, en las mujeres, el ciclo menstrual, así que Moss no se fija en el número de un día: sigue la tendencia de tus pesadas y calcula tu ritmo de las últimas semanas con un margen, porque con pocas semanas de datos todavía es incierto (Hall y Chow, 2011). Los ritmos que te propone no pasan del 1 % de tu peso por semana, lo que la investigación usa para bajar grasa cuidando el músculo (Helms y otros, 2014), y nunca acepta un peso meta por debajo de un índice de masa corporal de 18,5, el límite de la OMS. La grasa corporal con cinta usa la fórmula de la Marina de EE. UU.: es una estimación que puede diferir unos 4 puntos o más de un estudio de laboratorio (Foulis y otros, 2023), así que tómala como orientación. Para ver cómo cambia tu cuerpo, mira tu cintura: la guía NICE (2025) recomienda que mida menos de la mitad de tu altura.",
+          "fuentes": "Hall y Chow, 2011 · Helms y otros, 2014 · OMS · Foulis y otros, 2023 · NICE, 2025"
+        },
+        "cuidados": {
+          "titulo": "Tus cuidados",
+          "texto": "Si marcas un cuidado de salud, Moss ajusta tus metas a las guías para toda la población y deja de proponerte lo que podría no convenirte, como comer menos o subir la proteína. Para el embarazo y la lactancia usa las referencias de las Academias Nacionales de Estados Unidos (2023) y los rangos de aumento de peso del IOM (2009); para la diabetes, las de la Asociación Americana de Diabetes (2026); y para los riñones, las de KDIGO (2024). Son cambios generales y aproximados: no reemplazan lo que te indique tu equipo de salud, y siempre puedes poner a mano las metas que te den. Lo que marcas se guarda solo en este iPhone.",
+          "fuentes": "NASEM, 2023 · IOM, 2009 · ADA, 2026 · KDIGO, 2024 · EAU, 2026 · ESC/EAS, 2019 · OMS"
+        }
+      },
+      "noHaceTitulo": "Lo que Moss no hace",
+      "noHace": [
+        "No diagnostica ni trata enfermedades: si algo te preocupa, habla con un médico.",
+        "No reemplaza a un nutricionista ni a un entrenador.",
+        "No recomienda suplementos ni medicamentos.",
+        "No presenta una estimación como si fuera exacta: cada número tiene su margen."
+      ]
     }
   },
   "fecha": {
@@ -2282,11 +2524,10 @@
   "ascent": {
     "flecha": "Abrir Ascent",
     "volver": "Volver al cielo",
-    "etiqueta": "Si usas Ascent",
-    "titulo": "Con Ascent",
+    "titulo": "Ascent",
     "sinVincular": "Sin vincular",
     "vinculadaDesde": "Vinculada desde el {fecha}",
-    "bajada": "Vincula las dos apps para entender tus entrenamientos y progresar mucho más rápido.",
+    "bajada": "Vincula las dos apps para progresar mucho más rápido y tener claro, en un solo lugar, qué te frena.",
     "vincular": "Vincular con Ascent",
     "conseguir": "¿No tienes Ascent? Búscala en la App Store",
     "permiso": "Vincular conecta tu cuenta de Moss con la de Ascent para que compartan datos: cada una sigue siendo una cuenta aparte, con lo suyo. Se quita desde Perfil.",
@@ -2347,7 +2588,7 @@
       "texto": "Un puntaje de cada día con tu sueño, tu comida y tu entrenamiento. Antes de entrenar, te dice si conviene ir fuerte o suave.",
       "hoy": "Hoy, antes de entrenar",
       "conviene": {
-        "fuerte": "Conviene ir fuerte",
+        "fuerte": "Puedes entrenar como siempre",
         "normal": "Conviene ir normal",
         "suave": "Conviene ir suave"
       },
@@ -2644,28 +2885,17 @@
         "sueno": "Ir a Sueño"
       }
     },
-    "graficos": {
-      "musculos": "Lo que le falta a cada músculo para volver a lo suyo, según lo que anotaste en Ascent."
-    },
     "y": "y",
     "recuperado": {
       "estas": "Estás",
-      "llegaste": "Llegaste",
       "palabra": {
         "m": "recuperado",
         "f": "recuperada"
       },
-      "asi": "Así llegaste a {sesion}, hoy a las {hora}.",
-      "desde": "Desde tu último entreno: {cuando}, {sesion}.",
       "cuando": {
         "hoy": "hoy",
         "ayer": "ayer",
         "dia": "el {dia}"
-      },
-      "queEs": {
-        "enlace": "¿Qué es este número?",
-        "texto": "Junta cómo dormiste, cuánto descansaron tus músculos desde tu último entreno y cómo comiste ayer. 100 % es dormir lo que necesitas, con los músculos descansados y la comida en tu meta. Es orientativo, no un diagnóstico.",
-        "ver": "Ver cómo se calcula"
       }
     },
     "bandas": {
@@ -2677,23 +2907,25 @@
         "atencion": "Hoy conviene ir suave en el gimnasio.",
         "aceptable": "Hoy, entrena normal y sin ir al fallo.",
         "bien": "Hoy puedes entrenar como siempre.",
-        "muyBien": "Hoy puedes ir fuerte."
+        "muyBien": "Hoy puedes entrenar como siempre."
       }
     },
     "entrada": {
       "sesion": "{sesion} · {hora}",
       "descanso": "Hoy descansas",
       "pista": "Desliza hacia abajo",
-      "etiqueta": "Abrir Ascent: {n} % {palabra}"
-    },
-    "vacio": {
-      "sinDatos": "Sin datos",
-      "recuperadoTitulo": "Cuánto estás recuperado",
-      "recuperado": "Tu sueño, tus músculos y tu comida, en un número: cuánto estás recuperado desde tu último entreno.",
-      "partes": "Sueño, fatiga muscular y alimentación, cada una con su franja y qué hacer.",
-      "marcas": "Qué ejercicios de hoy tienen buen día para intentar marca.",
-      "estancamiento": "Los ejercicios que no suben y sus razones más probables.",
-      "anio": "Cada día que entrenaste y cada marca, con el color de lo que trabajaste."
+      "titular": {
+        "hecha": "Ya entrenaste",
+        "descanso": "Hoy descansas",
+        "sinHorario": "Sin sesión hoy",
+        "faltaNoche": "Anota tu noche",
+        "cargado": "Más liviano hoy",
+        "suenoCorto": "Sin ir al fallo",
+        "teSientes": "Escúchate hoy",
+        "casi": "Como siempre",
+        "listo": "Todo listo para entrenar"
+      },
+      "etiquetaTitular": "Abrir Ascent: {titular}"
     },
     "foco": {
       "titulo": "Hoy, concéntrate en",
@@ -2717,177 +2949,422 @@
       },
       "entrenar": {
         "marca": "Buen día para intentar marca en {ejercicio}.",
-        "masFuerte": "Vienes muy bien: puedes ir un poco más fuerte de lo normal.",
         "comoSiempre": "Vienes bien: entrena como siempre.",
         "sinFallo": "No vayas al fallo: dormiste poco y las series pueden pesar más.",
-        "suave": {
-          "fatiga": "Mejor suave: lo que entrenas hoy todavía se está recuperando.",
-          "total": "Hoy conviene ir suave."
-        }
+        "masLiviano": "Lo de hoy sigue cansado: más liviano, u otra cosa.",
+        "escuchate": "Dijiste que no te sientes bien: escúchalo, más liviano también suma."
       },
       "terminar": {
         "titulo": "Termina antes de las {hora}",
-        "texto": "Te acuestas a las {dormir}: entrenar fuerte muy cerca de dormir retrasa el sueño."
+        "texto": "Te acuestas a las {dormir}: lo fuerte, por lo menos 2 horas antes de dormir y mejor 4 (antes de las {mejor})."
       },
       "dormir": {
         "titulo": "A la cama",
-        "texto": "Para dormir tus {horas}: el sueño es lo que más te falta."
+        "texto": "Para dormir tus {horas} esta noche."
       },
       "proteina": {
         "titulo": "Proteína"
       },
       "descanso": {
         "titulo": "Descanso",
-        "falta": "{musculo}: listo en {tiempo}."
+        "cuando": "Lo que todavía se recupera ({musculo}) probablemente esté listo {cuando}."
       },
       "faltaNoche": {
         "titulo": "Anota cómo dormiste",
-        "texto": "Sin tu noche no sale tu recuperación."
-      }
-    },
-    "partes": {
-      "titulo": "De qué sale",
-      "de": "{n} de {max}",
-      "sueno": {
-        "nombre": "Sueño",
-        "texto": "Dormiste {horas} de las {necesidad} que necesitas, y la calidad de la noche fue {calidad} de 100.",
-        "sinCalidad": "Dormiste {horas} de las {necesidad} que necesitas. Sin la calidad de la noche cuenta como regular: llega a 30.",
-        "registrar": "Registra cómo dormiste: así puede llegar a 40",
-        "corregir": "¿Dormiste distinto? Corrígelo en Sueño",
-        "consejos": {
-          "perfecto": "Perfecto: dormiste lo que necesitas, y bien.",
-          "casi": "Para que sea perfecto: {falta}.",
-          "faltaDormir": "dormir tus {horas}",
-          "faltaCalidad": "una noche más tranquila",
-          "bien": "Para que sea muy bueno: esta noche, a la cama a las {hora}.",
-          "aceptable": "Esta noche, a la cama a las {hora}: el sueño es lo que más te falta.",
-          "aceptableAntes": "En el gimnasio, sin ir al fallo; y esta noche, a la cama a las {hora}.",
-          "atencion": "Esta noche, a la cama a las {hora}.",
-          "atencionAntes": "Hoy, suave en el gimnasio; y esta noche, a la cama a las {hora}."
-        }
-      },
-      "fatiga": {
-        "nombre": "Fatiga muscular",
-        "niveles": {
-          "baja": "baja",
-          "moderada": "moderada",
-          "alta": "alta"
-        },
-        "texto": {
-          "hoy": "Fatiga {nivel} en lo que entrenas hoy: {musculos}.",
-          "recientes": "Fatiga {nivel} en lo que entrenaste estos 3 días: {musculos}.",
-          "hecha": "Fatiga {nivel} al empezar la sesión: {musculos}."
-        },
-        "consejos": {
-          "listos": "Tus músculos están bien recuperados: hoy puedes ir un poco más fuerte de lo normal.",
-          "listosPeroSueno": "Tus músculos están listos: lo que frena hoy es el sueño.",
-          "aceptable": "Todavía se están recuperando: entrena normal, sin ir al fallo.",
-          "atencion": "Están cargados: hoy mejor suave con {sesion}, o entrena otra cosa.",
-          "despues": "Lo de hoy necesita {tiempo} para recuperarse."
-        },
-        "rendimiento": "Rendimiento esperado: fuerza máxima {fuerza}; repeticiones, {reps} (± {n} %)."
-      },
-      "comida": {
-        "nombre": "Alimentación",
-        "texto": "Ayer: {p} de {meta} g de proteína y el {k} % de tus calorías.",
-        "textoSinNumeros": "Ayer: tu proteína y tus calorías, contra tu meta.",
-        "textoSinMetas": "Cuenta la proteína y lo que comiste ayer.",
-        "consejos": {
-          "perfecta": "Perfecta: llegaste a tu proteína y comiste lo suficiente.",
-          "casi": "Para que sea perfecta: los {g} g de proteína que faltaron ayer.",
-          "proteina": "Para subirla: llegar a tu proteína; ayer faltaron {g} g.",
-          "proteinaSinNumeros": "Para subirla: llegar a tu proteína.",
-          "calorias": "Ayer comiste menos del 80 % de tus calorías: hoy, que no falte.",
-          "caloriasAntes": "Ayer comiste menos del 80 % de tus calorías: hoy, que no falte la comida de antes de entrenar.",
-          "casiSinNumeros": "Para que sea perfecta: llegar a tu proteína."
-        }
-      }
-    },
-    "fatiga": {
-      "titulo": "Fatiga muscular, por músculo",
-      "hoy": "Hoy"
-    },
-    "marcas": {
-      "titulo": "Marcas",
-      "texto": "Los ejercicios de {sesion} de hoy: qué tan probable es hacer tu marca.",
-      "si": "Buen día para intentar marca.",
-      "no": "Hoy no: {razones}.",
-      "fallas": {
-        "cerca": "estás lejos de tu marca",
-        "recuperado": "los músculos todavía se recuperan",
-        "sueno": "dormiste poco",
-        "sinPico": "vienes con más series que de costumbre",
-        "comida": "la comida no acompaña",
-        "probabilidad": "la probabilidad no llega al 35 %"
-      },
-      "como": "Avisa cuando se dan las cinco (estás cerca de tu marca, los músculos se recuperaron, dormiste bien, sin pico de carga y la comida en orden) y la probabilidad pasa la línea del 35 %. Es una estimación, no una promesa.",
-      "sinSesion": "Hoy no entrenas: vuelve el día que te toque.",
-      "hecha": "Ya entrenaste {sesion} hoy: la próxima, el día que te toque.",
-      "sinNoche": "Sin tu noche no se puede medir: anota cómo dormiste."
-    },
-    "estancados": {
-      "titulo": "Razones de estancamiento",
-      "umbral": "Los ejercicios que Ascent ve sin subir hace {n} semanas o más: el umbral que elegiste en Ascent (de fábrica, 6).",
-      "semanas": "{n} semanas sin subir",
-      "definicion": "Estás en definición, bajando {kg} kg por semana: que la fuerza se mantenga ya es un buen resultado.",
-      "definicionSinRitmo": "Estás en definición: que la fuerza se mantenga ya es un buen resultado.",
-      "sinCausa": "Sin una causa clara en tu sueño ni en tu comida.",
-      "juntando": "Para el sueño y la comida, Moss todavía junta semanas: van {a} con marcas y {b} sin, de {min} de cada lado.",
-      "razones": {
-        "sueno": {
-          "titulo": "Dormiste menos",
-          "texto": "Ahora, {ahora} por noche; cuando subía, {antes}."
-        },
-        "proteina": {
-          "titulo": "Menos proteína",
-          "texto": "Ahora, {ahora} por día; cuando subía, {antes}."
-        },
-        "calorias": {
-          "titulo": "Comiste más por debajo",
-          "texto": "Ahora, {ahora} por día contra tu gasto; cuando subía, {antes}."
-        },
-        "cargado": {
-          "titulo": "Poco descanso entre sesiones",
-          "texto": "{musculo}, con carga al empezar: {veces} de tus últimas {de} sesiones."
-        },
-        "menosSeguido": {
-          "titulo": "Lo entrenas menos seguido",
-          "texto": "Ahora, {ahora} veces en 4 semanas; cuando subía, {antes}."
-        },
-        "sesionesMasCortas": {
-          "titulo": "Tus sesiones se achicaron",
-          "texto": "Ahora duran {ahora}; antes, {antes}."
-        }
-      },
-      "comunes": "En estas semanas, para todos",
-      "soloComunes": "Nada más propio de este ejercicio: lo de arriba.",
-      "leyenda": {
-        "antes": "Cuando subía",
-        "ahora": "Ahora"
+        "texto": "Con tu noche se sabe cómo llegas a entrenar."
       }
     },
     "comparten": {
       "titulo": "Lo que comparten las dos"
     },
-    "como": {
-      "titulo": "Cómo se calcula",
-      "partes": {
-        "sueno": "Sueño",
-        "musculos": "Músculos",
-        "comida": "Comida"
+    "titular": {
+      "cuando": {
+        "ya": "ya",
+        "hoy": "hoy",
+        "manana": "mañana",
+        "pasadoManana": "pasado mañana",
+        "enUnosDias": "en unos días"
       },
-      "suma": "{s} + {m} + {c} = {t} %",
-      "sueno": "Sueño, hasta 40: la mitad por cuánto dormiste contra lo que necesitas ({necesidad}) y la otra mitad por la calidad de la noche, la de tu reloj o la que anotas por la mañana. Sin la calidad cuenta como regular, así que llega a 30.",
-      "musculos": "Músculos, hasta 40: 40 menos tu fatiga muscular. La fatiga es lo que les falta a los músculos que entrenas hoy (o, sin sesión, a los de los últimos 3 días) sobre lo más que deja una sesión dura, según tus series en Ascent. Hoy: {f} % de fatiga, {m} de 40.",
-      "comida": "Comida, hasta 20: 10 por la proteína de ayer contra tu meta y 10 por haber comido al menos el 80 % de tus calorías.",
-      "franjas": "Las franjas: las mismas cuatro para el total y para cada parte. En el total, 85 o más es muy bien; de 70 a 84, bien; de 50 a 69, aceptable, y menos, atención. En la fatiga, al revés: hasta 15 % es baja.",
-      "cuando": "Cuándo: es un número del día, que se mira a la hora de tu sesión o, si no entrenas, por la mañana. Ascent muestra el mismo.",
-      "comer": "Lo de comer: alrededor de 1 g de carbohidratos por kilo entre 1 y 4 horas antes de entrenar (ACSM 2016) y de 20 a 40 g de proteína por comida (ISSN 2017). El café, hasta 8 horas antes de dormir (Gardiner 2023), y lo fuerte, que termine 2 horas antes de acostarte (Leota 2025).",
-      "orientativo": "Es orientativo: una suma a la vista de cosas medidas por separado, no un diagnóstico. Con tus datos se va a ir ajustando."
+      "hecha": {
+        "titulo": "Ya entrenaste {sesion}",
+        "texto": "Lo de hoy ({musculos}) probablemente esté listo {cuando}.",
+        "yaListos": "Lo de hoy ya está descansado."
+      },
+      "descanso": {
+        "titulo": "Hoy descansas",
+        "texto": "Lo que todavía se recupera ({musculo}) probablemente esté listo {cuando}.",
+        "listos": "Tus músculos ya están descansados."
+      },
+      "sinHorario": {
+        "titulo": "Hoy no hay sesión en Ascent"
+      },
+      "faltaNoche": {
+        "titulo": "Anota cómo dormiste",
+        "texto": "Con tu noche se sabe cómo llegas a {sesion}."
+      },
+      "cargado": {
+        "titulo": "Lo que entrenas hoy sigue cansado",
+        "texto": "Mejor más liviano, u otra cosa: lo de hoy ({musculos}) probablemente esté listo {cuando}."
+      },
+      "suenoCorto": {
+        "titulo": "Puedes entrenar, sin ir al fallo",
+        "poco": "Dormiste poco: la fuerza máxima casi no cambia; las repeticiones pueden costar más.",
+        "temprano": "Te despertaste antes de lo de siempre: la fuerza máxima casi no cambia; las repeticiones pueden costar más.",
+        "seguidas": "Vienes de noches cortas: la fuerza máxima casi no cambia; las repeticiones pueden costar más."
+      },
+      "teSientes": {
+        "titulo": "Dijiste que hoy no te sientes bien",
+        "texto": "Escúchalo: entrenar más liviano también suma."
+      },
+      "casi": {
+        "titulo": "Entrena como siempre",
+        "texto": "Lo de hoy ({musculos}) todavía se recupera un poco, pero no cambia la sesión."
+      },
+      "listo": {
+        "titulo": "Todo listo para {sesion}",
+        "texto": "Dormiste bien y lo que entrenas hoy está descansado."
+      }
     },
-    "tiempo": {
-      "horas": "~{n} h",
-      "dias": "~{n} días"
+    "decide": {
+      "noche": "Tu noche",
+      "musculos": "Lo de hoy",
+      "siente": "Cómo te sientes",
+      "sinNoche": "Sin anotar",
+      "estados": {
+        "recuperado": "Descansado",
+        "recuperandose": "Recuperándose",
+        "cargado": "Cargado"
+      }
+    },
+    "noche": {
+      "normal": "Bien",
+      "algoCorta": "Algo corta",
+      "corta": "Corta",
+      "muyCorta": "Muy corta",
+      "seguidas": "Noches cortas"
+    },
+    "siente": {
+      "pregunta": "¿Cómo te sientes para entrenar?",
+      "poco": "Sin energía",
+      "mucho": "Con mucha energía",
+      "respuesta": "{n} de 10"
+    },
+    "dia": {
+      "sesion": "Hoy · {sesion} · {hora}",
+      "hecha": "Hoy · {sesion}, hecha",
+      "descanso": "Hoy · descanso"
+    },
+    "ultimo": {
+      "titulo": "Tu último entreno",
+      "texto": "{dia}: {musculos}"
+    },
+    "porQueNo": {
+      "enlace": "¿Por qué no hay un porcentaje?",
+      "texto": "Ningún puntaje de recuperación está probado contra lo que rindes, y una suma esconde lo que importa: haber comido bien no compensa una noche corta. Por eso manda lo más flojo, y ves tus datos.",
+      "ver": "Ver en qué se basa"
+    },
+    "filas": {
+      "titulo": "De qué sale",
+      "sueno": {
+        "nombre": "Sueño",
+        "de": "{horas} de las ~{necesidad} que necesitas.",
+        "antes": "Te despertaste {tiempo} antes de lo de siempre.",
+        "seguidas": "Dos de tus últimas tres noches fueron de 6 h o menos.",
+        "calidad": "Calidad de la noche: {n} de 100. Es un dato: no cambia lo de hoy.",
+        "sinNoche": "Falta tu noche de anoche: con ella se sabe cómo llegas a entrenar.",
+        "seis": "6 h",
+        "tuyo": "{horas}",
+        "anotar": "Si quieres, anota cómo dormiste",
+        "corregir": "¿Dormiste distinto? Corrígelo en Sueño",
+        "consejos": {
+          "cortaAntes": "En el gimnasio, sin ir al fallo; y esta noche, a la cama a las {hora}.",
+          "corta": "Esta noche, a la cama a las {hora}.",
+          "algoCorta": "Esta noche, a la cama a las {hora}."
+        }
+      },
+      "musculos": {
+        "nombre": "Músculos de hoy",
+        "nada": "Hoy no hay músculos para mirar: no hay sesiones recientes.",
+        "texto": {
+          "prevista": "Lo que entrenas hoy, según tu rutina: {musculos}.",
+          "hecha": "Lo de hoy, al terminar: {musculos}.",
+          "descanso": "Lo que entrenaste estos 3 días: {musculos}."
+        },
+        "ultima": "Última vez: {cuando}, {n} series duras.",
+        "listos": "Lo de hoy probablemente esté listo {cuando}.",
+        "consejos": {
+          "recuperado": "Puedes entrenar como siempre.",
+          "recuperandose": "Puedes entrenar como siempre: todavía se recupera un poco.",
+          "cargado": "Más liviano hoy, u otra cosa: probablemente esté listo {cuando}."
+        },
+        "nota": "Según tus series en Ascent: es una cuenta, no una medición, y puede variar un día. El dolor no cuenta: la fuerza vuelve antes.",
+        "listosDescanso": "Lo de estos días probablemente esté listo {cuando}."
+      },
+      "comida": {
+        "nombre": "Comida",
+        "valor": "{g} g/kg",
+        "texto": "Proteína: {g} g por kilo por día, en los {n} días que anotaste esta semana.",
+        "ayer": "Ayer, {p} de {meta} g.",
+        "raya": "1,6",
+        "sinDatos": "Sin comida anotada esta semana: no se supone que no comiste.",
+        "sinNumeros": "Tu proteína de cada día, contra lo que suma para ganar fuerza.",
+        "sinMetas": "Lo que suma es comer lo suficiente cada día.",
+        "nota": "La comida de ayer no cambia tu fuerza de hoy: lo que suma es el total de cada día, desde ~1,6 g por kilo (Morton 2018)."
+      }
+    },
+    "cuerpo": {
+      "titulo": "Tus músculos",
+      "texto": "Cómo está cada músculo ahora, según tus series en Ascent. Toca uno.",
+      "frente": "De frente",
+      "espalda": "De espalda",
+      "estados": {
+        "recuperado": "Descansado",
+        "recuperandose": "Recuperándose",
+        "cargado": "Cargado"
+      },
+      "detalle": {
+        "recuperado": "{musculo}: nada por recuperar.",
+        "recuperandose": "{musculo}: todavía se recupera; probablemente vuelva a lo suyo {cuando}.",
+        "cargado": "{musculo}: con carga; probablemente vuelva a lo suyo {cuando}."
+      },
+      "todosDescansados": "Nada por recuperar: tus músculos están descansados.",
+      "semana": "Tu semana en Ascent",
+      "hoy": "Hoy · {nombre}",
+      "nota": "Cómo está cada músculo ahora: si mañana toca lo que ya está descansado, se ve."
+    },
+    "fuerza": {
+      "titulo": "Tu fuerza",
+      "semanas": "12 semanas",
+      "texto": "La tendencia de cada ejercicio en 12 semanas, con su rango: cada punto es una sesión.",
+      "sube": "Sube, ~{n} % por mes",
+      "rango": "entre {a} y {b}",
+      "sesiones": {
+        "uno": "1 sesión",
+        "otros": "{n} sesiones"
+      },
+      "sinSubidaClara": "Sin subida clara",
+      "enSemanas": "en {n} semanas",
+      "noSeSabe": "Todavía no se sabe",
+      "faltanSesiones": {
+        "uno": "1 sesión: hacen falta 6",
+        "otros": "{n} sesiones: hacen falta 6"
+      },
+      "faltanSemanas": "{n} semanas: hacen falta 6",
+      "ruido": "De un día a otro, la fuerza cambia ±3 % sin motivo; la tuya, ±{n} %. Por eso hacen falta semanas para saber si sube."
+    },
+    "marcas": {
+      "titulo": "Marcas",
+      "texto": "Los ejercicios de {sesion} de hoy: qué tan cerca estás de tu marca.",
+      "sinSesion": "Hoy no entrenas: vuelve el día que te toque.",
+      "hecha": "Ya entrenaste {sesion} hoy: la próxima, el día que te toque.",
+      "sinNoche": "Sin tu noche no se sabe si es un buen día: anota cómo dormiste.",
+      "cerca": "Cerca de tu marca",
+      "lejos": "A ~{n} % de tu marca",
+      "noSeSabe": "Todavía no se sabe",
+      "sinNivel": "Con series de 10 repeticiones o menos se puede comparar con tu marca.",
+      "nivel": "hoy ~{kg} kg",
+      "marca": "marca {kg} kg",
+      "condiciones": {
+        "sueno": "Dormiste más de 6 h",
+        "musculos": "Músculos descansados",
+        "semana": "Semana como siempre"
+      },
+      "fallas": {
+        "sueno": "dormiste poco",
+        "musculos": "lo de hoy todavía se recupera",
+        "semana": "vienes con más series que de costumbre"
+      },
+      "buenDia": "Buen día para intentarla.",
+      "hoyNo": "Hoy no: {razones}.",
+      "frecuencia": "Marca en {n} de tus últimas {de} sesiones.",
+      "entradaEnCalor": "Si tu serie de aproximación de siempre se siente más pesada, déjalo para otro día.",
+      "nota": "Sin probabilidad: ningún estudio predice el día de una marca. Los kilos son tu 1RM estimado, aprox.",
+      "sinNivelLista": "{ejercicios}: con series de 10 repeticiones o menos se podría comparar con tu marca."
+    },
+    "estancados": {
+      "titulo": "Razones de estancamiento",
+      "texto": "Los ejercicios sin subida clara en 8 semanas o más, ya pasado el umbral que elegiste en Ascent ({n} semanas sin marca).",
+      "ninguno": "Ningún ejercicio está estancado: con 12 semanas, todos suben o todavía no se sabe.",
+      "dato": "{n} semanas sin marca · {marca}",
+      "sinCausa": "Sin una causa clara en tus series, tu comida ni tu sueño.",
+      "faltan": "Para la comida y el sueño, Moss todavía junta semanas.",
+      "anios": "Con años de entrenamiento se sube más lento (Latella 2020): es contexto, no una causa.",
+      "leyenda": {
+        "antes": "Cuando subía",
+        "ahora": "Ahora"
+      },
+      "series": {
+        "titulo": "Menos series duras de {musculo}",
+        "texto": "Por semana, con todos sus ejercicios: es lo que más pesa en la fuerza (Pelland 2026)."
+      },
+      "frecuencia": {
+        "titulo": "Lo haces menos seguido",
+        "texto": "{antes} → {ahora} veces por semana."
+      },
+      "pesadas": {
+        "titulo": "Pocas series pesadas",
+        "raya": "un tercio",
+        "texto": "{n} de {de} con el 80 % de tu 1RM o más, o de 6 repeticiones o menos. Si buscas fuerza, conviene un tercio o más (Lopez 2021)."
+      },
+      "bajando": {
+        "titulo": "Estás bajando rápido",
+        "valor": "{n} % por semana",
+        "texto": "Más de un 1 % de tu peso por semana: que la fuerza se mantenga ya es un buen resultado (Garthe 2011)."
+      },
+      "definicion": {
+        "titulo": "Estás en definición",
+        "texto": "Con déficit, la fuerza puede mantenerse aunque no suba: ya es un buen resultado (Murphy y Koehler 2022)."
+      },
+      "proteina": {
+        "titulo": "Poca proteína",
+        "texto": "{g} g por kilo por día en estas semanas; para ganar fuerza, desde ~1,6 (Morton 2018)."
+      },
+      "sueno": {
+        "titulo": "Dormiste menos",
+        "texto": "{ahora} por noche; cuando subía, {antes}. Puede influir: lo que se sabe es de días, no de meses.",
+        "sinAntes": "{ahora} por noche. Puede influir: lo que se sabe es de días, no de meses."
+      },
+      "comunes": "En estas semanas, para todos",
+      "soloComunes": "Nada más propio de este ejercicio: lo de arriba."
+    },
+    "base": {
+      "titulo": "En qué se basa",
+      "porcentaje": "Por qué no hay un porcentaje: ningún puntaje de recuperación de relojes o anillos está validado contra el rendimiento (Doherty 2025), y una suma compensa: con noches de 4 h 30 a 6 h, casi siempre daba «bien». Por eso manda lo más flojo y ves tus datos.",
+      "titular": "El titular: primero lo que hoy cambia la sesión. Lo que entrenas, si todavía está cargado; la noche, si fue de 6 h o menos, si te despertaste una hora antes o si dos de tus últimas tres fueron cortas (Craven 2022; Kong 2025; Knowles 2018); y lo que dices de cómo te sientes, de 0 a 10 (Laurent 2011).",
+      "noche": "La noche corta: la fuerza máxima casi no cambia y las repeticiones pueden costar más (en 77 estudios, −3 % y −10 %: Craven 2022). Sin ir al fallo alcanza: para ganar fuerza no hace falta llegar (Grgic 2022). La calidad de la noche se muestra, pero no cuenta: casi ningún estudio la midió.",
+      "musculos": "Tus músculos: con tus series de Ascent, cada músculo como principal o como ayuda, y cuánto tarda en volver, más en las piernas y con más series (Belcher 2019; Bartolomei 2017). Se dice en días porque puede variar uno, y el dolor no cuenta: la fuerza vuelve antes (Soares 2015).",
+      "fuerza": "Tu fuerza: la tendencia de cada ejercicio en 12 semanas, con el 1RM estimado de tu mejor serie de cada sesión y su rango del 80 %. De un día a otro la fuerza cambia ~3 % sin motivo (Grgic 2020): con menos semanas o sesiones, todavía no se puede saber.",
+      "marca": "La marca: cerca es tu nivel de hoy (la tendencia) a menos de lo que cambia tu fuerza de un día a otro. Sin probabilidad: ningún estudio predice el día de una marca, y decir cada cuánto haces marca acierta más.",
+      "estancamiento": "El estancamiento: con 8 semanas sin subida clara y pasado el umbral de Ascent. Las razones van de la más a la menos sólida: las series duras por semana (Pelland 2026), cuántas veces, la carga pesada (Lopez 2021; ACSM 2026), bajar rápido (Garthe 2011), la proteína contra 1,6 g por kilo (Morton 2018) y el sueño. Siempre es una causa probable, no segura.",
+      "comer": "Lo de comer: alrededor de 1 g de carbohidratos por kilo antes de una sesión larga (King 2022) y de 20 a 40 g de proteína por comida. El café, unas 9 h antes de dormir con un café y 13 con un preentreno (Gardiner 2023); lo fuerte, mejor 4 h antes de dormir y por lo menos 2 (Frimpong 2021; Leota 2025).",
+      "orientativo": "Es orientativo, no un diagnóstico."
+    },
+    "vacio": {
+      "titular": "Cómo llegas a entrenar",
+      "titularTexto": "Lo que decide hoy, en una línea: tu noche, lo que entrenas y cómo te sientes. Sin porcentajes.",
+      "filas": "Tu sueño, tus músculos y tu comida, con sus datos.",
+      "cuerpo": "Cada músculo, descansado, recuperándose o cargado, según tus series.",
+      "fuerza": "Si cada ejercicio sube, con su rango, o si todavía no se sabe.",
+      "marcas": "Qué tan cerca estás de tu marca, sin probabilidades.",
+      "estancamiento": "Los ejercicios que no suben y sus razones, de la más a la menos sólida.",
+      "anio": "Cada día que entrenaste y cada marca, con el color de lo que trabajaste."
+    },
+    "linea": {
+      "suenoCorto": "Dormiste poco: la fuerza máxima casi no cambia; las repeticiones pueden costar más."
+    },
+    "ejercicios": {
+      "sentadilla": "Sentadilla",
+      "press_banca": "Press de banca",
+      "peso_muerto": "Peso muerto",
+      "sentadilla_frontal": "Sentadilla frontal",
+      "peso_muerto_rumano": "Peso muerto rumano",
+      "prensa": "Prensa",
+      "hip_thrust": "Hip thrust",
+      "zancadas": "Zancadas",
+      "extension_cuadriceps": "Extensión de cuádriceps",
+      "curl_femoral": "Curl femoral",
+      "gemelos": "Gemelos de pie",
+      "press_inclinado": "Press inclinado",
+      "press_mancuernas": "Press con mancuernas",
+      "aperturas": "Aperturas con mancuernas",
+      "fondos": "Fondos en paralelas",
+      "dominadas": "Dominadas",
+      "remo_barra": "Remo con barra",
+      "remo_mancuerna": "Remo con mancuerna",
+      "jalon": "Jalón al pecho",
+      "remo_polea": "Remo en polea",
+      "press_militar": "Press militar",
+      "press_arnold": "Press Arnold",
+      "elevaciones_laterales": "Elevaciones laterales",
+      "pajaros": "Pájaros",
+      "curl_barra": "Curl con barra",
+      "curl_mancuernas": "Curl con mancuernas",
+      "martillo": "Curl martillo",
+      "press_frances": "Press francés",
+      "triceps_polea": "Tríceps en polea",
+      "abdominales_polea": "Abdominales en polea",
+      "rueda_abdominal": "Rueda abdominal",
+      "sentadilla_bulgara": "Sentadilla búlgara",
+      "sentadilla_goblet": "Sentadilla goblet",
+      "sentadilla_hack": "Sentadilla hack",
+      "sentadilla_smith": "Sentadilla en Smith",
+      "peso_muerto_sumo": "Peso muerto sumo",
+      "peso_muerto_rigidas": "Peso muerto stiff",
+      "peso_muerto_una_pierna": "Peso muerto a una pierna",
+      "buenos_dias": "Good morning",
+      "prensa_una_pierna": "Prensa a una pierna",
+      "zancadas_caminando": "Zancadas caminando",
+      "zancada_inversa": "Zancada inversa",
+      "subida_cajon": "Step up",
+      "curl_femoral_pie": "Curl femoral de pie",
+      "gemelos_sentado": "Gemelos sentado",
+      "gemelos_prensa": "Gemelos en prensa",
+      "aductores": "Aductores en máquina",
+      "abductores": "Abductores en máquina",
+      "puente_gluteo": "Puente de glúteos",
+      "patada_gluteo": "Patada de glúteo en polea",
+      "press_declinado": "Press declinado",
+      "press_inclinado_mancuernas": "Press inclinado con mancuernas",
+      "press_pecho_maquina": "Press de pecho en máquina",
+      "cruce_polea_alta": "Cruces en polea alta",
+      "cruce_polea_baja": "Cruces en polea baja",
+      "pec_deck": "Peck deck",
+      "flexiones": "Flexiones",
+      "pullover": "Pullover con mancuerna",
+      "dominadas_supinas": "Dominadas supinas",
+      "dominadas_lastradas": "Dominadas con lastre",
+      "remo_invertido": "Remo invertido",
+      "remo_pendlay": "Remo Pendlay",
+      "remo_t": "Remo en T",
+      "remo_maquina": "Remo en máquina",
+      "remo_unilateral_polea": "Remo unilateral en polea",
+      "jalon_cerrado": "Jalón con agarre cerrado",
+      "jalon_unilateral": "Jalón unilateral",
+      "pullover_polea": "Pullover en polea",
+      "rack_pull": "Rack pull",
+      "hiperextensiones": "Hiperextensiones",
+      "press_militar_mancuernas": "Press militar con mancuernas",
+      "press_hombro_maquina": "Press de hombro en máquina",
+      "elevaciones_frontales": "Elevaciones frontales",
+      "elevaciones_polea": "Elevaciones laterales en polea",
+      "elevaciones_maquina": "Elevaciones laterales en máquina",
+      "face_pull": "Face pull",
+      "remo_menton": "Remo al mentón",
+      "rotacion_externa": "Rotación externa",
+      "encogimientos": "Shrugs",
+      "curl_predicador": "Curl predicador",
+      "curl_inclinado": "Curl inclinado",
+      "curl_concentrado": "Curl concentrado",
+      "curl_polea": "Curl en polea",
+      "curl_barra_z": "Curl con barra Z",
+      "curl_muneca": "Curl de muñeca",
+      "press_cerrado": "Press de banca agarre cerrado",
+      "triceps_mancuerna": "Extensión de tríceps con mancuerna",
+      "triceps_sobre_cabeza": "Tríceps sobre la cabeza en polea",
+      "patada_triceps": "Patada de tríceps",
+      "fondos_banco": "Fondos en banco",
+      "triceps_maquina": "Tríceps en máquina",
+      "plancha": "Plancha",
+      "plancha_lateral": "Plancha lateral",
+      "crunch": "Crunch",
+      "elevacion_piernas": "Elevación de piernas colgado",
+      "elevacion_rodillas": "Elevación de rodillas",
+      "giros_rusos": "Russian twist",
+      "bicicleta_abdominal": "Abdominales bicicleta",
+      "dead_bug": "Dead bug",
+      "press_pallof": "Press Pallof",
+      "crunch_declinado": "Crunch en banco declinado",
+      "cinta": "Cinta de correr",
+      "correr": "Correr afuera",
+      "caminar": "Caminar",
+      "bicicleta_fija": "Bicicleta fija",
+      "eliptica": "Elíptica",
+      "remo_ergometro": "Remo ergómetro",
+      "escaladora": "Escaladora",
+      "soga": "Saltar la cuerda",
+      "natacion": "Natación",
+      "press_plano_smith": "Press plano en Smith",
+      "press_inclinado_smith": "Press inclinado en Smith"
     }
   },
   "habitos": {
@@ -2995,7 +3472,7 @@
   },
   "recordatorios": {
     "dormirTextos": {
-      "enUnRato": "Deberías irte a dormir en {tiempo}.",
+      "enUnRato": "Ve preparándote: a la cama en {tiempo}.",
       "estaNoche": "Esta noche, a la cama a las {hora}.",
       "luces": "Baja las luces: a la cama en {tiempo}.",
       "paraDespertar": "Para despertarte a las {despertar}, a la cama a las {hora}.",
@@ -3004,7 +3481,7 @@
       "aLaHora": "A las {hora} te toca ir a la cama.",
       "duermes": "A la cama a las {hora} y duermes {horas}.",
       "bajaElRitmo": "Empieza a bajar el ritmo: a las {hora}, a la cama.",
-      "deuda": "Te faltan {deuda} de sueño: acostarte a las {hora} ayuda."
+      "deuda": "Para bajar tu deuda de sueño: a la cama a las {hora} y te despiertas a las {despertar}."
     },
     "dormirEn": {
       "15": "15 minutos",
@@ -3147,7 +3624,7 @@
       },
       "cafe": {
         "titulo": "Café antes de entrenar",
-        "antes": "Si tomas, a las {hora}: faltan {horas} para dormir.",
+        "antes": "Si tomas, a las {hora}: faltan {horas} para ir a la cama.",
         "tituloUltimo": "Último café",
         "ultimo": "Hasta las {hora}. Después, descafeinado.",
         "ultimoEntrenas": "Hasta las {hora}. Antes de entrenar a las {entreno}, mejor sin café."
@@ -3210,7 +3687,7 @@
       "reponer": "Con dos sesiones el mismo día, los carbohidratos entre una y otra te ayudan a llegar con energía a la segunda.",
       "antesDeDormir": "La proteína de antes de dormir también cuenta para el día: de 30 a 40 g, por ejemplo de yogur o leche.",
       "cafeina": "La cafeína tarda horas en irse: tomada tarde, le quita profundidad al sueño aunque te duermas igual.",
-      "fuentes": "Fuentes: ACSM, Academy of Nutrition and Dietetics y Dietitians of Canada (2016); ISSN, Kerksick y otros (2017) y Jäger y otros (2017); Morton y otros (2018); Schoenfeld y Aragon (2018); Gardiner y otros (2023).",
+      "fuentes": "Fuentes: King y otros (2022), para la fuerza; ACSM, Academy of Nutrition and Dietetics y Dietitians of Canada (2016), para la resistencia; ISSN, Kerksick y otros (2017) y Jäger y otros (2017); Morton y otros (2018); Schoenfeld y Aragon (2018); Gardiner y otros (2023).",
       "medico": "Es una guía general para personas sanas. No es un consejo médico.",
       "noMostrar": "No mostrar más",
       "volver": "Se vuelve a prender en Perfil › Entrenamiento.",
@@ -3307,20 +3784,21 @@
   "suscripcion": {
     "titulo": "Tu suscripción",
     "pago": {
-      "titulo": "Comida y sueño, juntos",
-      "texto": "Dormir poco da más hambre. Las apps de comida no ven tu noche y las de sueño no ven tu plato. Moss ve las dos.",
+      "titulo": "Siempre hay una versión mejor de ti",
+      "texto": "Moss mide cómo comes, cómo duermes y lo que haces cada día, y te muestra qué te frena y qué cambiar.",
       "todoTitulo": "Incluye todo Moss",
       "todo": [
-        "Anota tu comida en segundos, sin IA de fotos",
-        "Tus metas se ajustan cada semana",
-        "Tu sueño: cada noche, tu horario y tu deuda",
-        "Hábitos, tu cielo y los widgets"
+        "Anota tu comida en segundos",
+        "Seguimiento semanal para llegar a tu meta",
+        "Tu sueño, medido: ahí está el porqué de muchas cosas",
+        "Tus hábitos: lo que haces cada día te define, y Moss te lo muestra"
       ]
     },
     "ejemplo": {
       "anoche": "Anoche",
       "hoy": "Hoy",
-      "hambre": "Dormiste {h}: es normal tener más hambre hoy."
+      "hambre": "Dormiste {h}: es normal tener más hambre hoy.",
+      "deMeta": "de {meta}"
     },
     "vencida": {
       "tituloPrueba": "Tu prueba terminó",
@@ -3423,5 +3901,168 @@
     },
     "borrarConSuscripcion": "Tu suscripción la cobra Apple: borrar la cuenta no la cancela. Cancélala antes en Ajustes, o se seguirá cobrando.",
     "administrarSuscripcion": "Administrar suscripción"
+  },
+  "cuidados": {
+    "intro": "Si tienes algo de esto, márcalo: Moss ajusta tu dieta a lo que recomiendan las guías y deja de proponerte lo que podría no convenirte. Puedes cambiarlo cuando quieras.",
+    "grupos": {
+      "etapa": "Embarazo y lactancia",
+      "azucar": "Azúcar en sangre",
+      "corazon": "Corazón",
+      "rinones": "Riñones",
+      "digestion": "Digestión y articulaciones",
+      "masCuidado": "Lo que pide más cuidado"
+    },
+    "nombres": {
+      "embarazo": "Embarazo",
+      "lactancia": "Lactancia",
+      "diabetes2": "Prediabetes o diabetes tipo 2",
+      "diabetes1": "Diabetes tipo 1",
+      "presion": "Presión alta",
+      "colesterol": "Colesterol o triglicéridos altos",
+      "renal": "Enfermedad renal crónica",
+      "calculos": "Cálculos en los riñones",
+      "reflujo": "Reflujo",
+      "celiaquia": "Celiaquía",
+      "gota": "Gota",
+      "tca": "Un trastorno de la alimentación, ahora o antes",
+      "glp1": "Un medicamento para bajar de peso",
+      "otra": "Otra condición, o prefiero no decir"
+    },
+    "detalles": {
+      "glp1": "Como semaglutida o tirzepatida",
+      "otra": "Moss va por lo más cuidadoso"
+    },
+    "lineas": {
+      "embarazo": "Durante el embarazo, Moss no te propone bajar de peso, suma lo que piden el segundo y el tercer trimestre y pausa el control de cada semana. Tu equipo de salud sigue tu peso contigo.",
+      "lactancia": "Mientras amamantas, Moss suma unas 400 kcal por día. Si quieres bajar de peso, desde el segundo mes y despacio.",
+      "diabetes2": "Comer variado y, si lo necesitas, bajar un poco de peso puede ayudar a vivir bien con la diabetes tipo 2. Si usas insulina u otro medicamento para el azúcar, habla con tu equipo antes de comer menos.",
+      "diabetes1": "Moss te muestra los carbohidratos de cada comida, pero no calcula insulina ni te dice qué comer para entrenar: eso lo acuerdas con tu equipo.",
+      "presion": "Con la presión alta, Moss te muestra la sal y el potasio de lo que comes. Comer con poca sal y, si lo necesitas, bajar de peso puede ayudar a vivir bien con la presión alta.",
+      "colesterol": "Moss te muestra las grasas saturadas y la fibra de lo que comes. Si tu médico te pidió otras metas, puedes ponerlas a mano.",
+      "renal": "Con enfermedad renal, Moss no te sube la proteína: queda en 0,8 g por kilo, como recomienda KDIGO. Te muestra la sal, y no te pide comer menos ni tomar más agua. Lo demás lo decide tu equipo.",
+      "calculos": "Con cálculos en los riñones, lo que más se recomienda es tomar agua: Moss te pone una meta de 2,5 a 3 litros por día y te muestra la sal.",
+      "reflujo": "Con reflujo, Moss te recuerda terminar de comer unas 3 horas antes de acostarte.",
+      "celiaquia": "Con celiaquía, tu plan y las ideas de Moss van sin trigo, cebada, centeno ni avena. Moss no puede saber si un producto tiene gluten: fíjate en que tenga el sello de sin gluten.",
+      "gota": "Con gota, Moss te muestra el alcohol y las bebidas azucaradas de lo que anotas.",
+      "tca": "Moss no te propone comer menos, puede ocultar los números y no te avisa si comes de más o de menos. Si estás en tratamiento, usa Moss solo si tu equipo está de acuerdo.",
+      "glp1": "Con tu medicamento, Moss cuida que llegues a la proteína y te sugiere comidas más pequeñas; tu equipo de salud sigue tu tratamiento.",
+      "otra": "Moss no te propone comer menos de lo que gastas ni te pide más proteína o agua. Si tu equipo de salud te da metas, puedes ponerlas a mano."
+    },
+    "consentimiento": {
+      "texto": "Lo que marcas se guarda solo en este iPhone: no sube a tu cuenta y nadie más lo ve.",
+      "guardar": "Guardar en este iPhone",
+      "ahoraNo": "Ahora no"
+    },
+    "soloEnElIphone": "Se guarda solo en este iPhone.",
+    "preguntas": {
+      "semana": "¿De cuántas semanas estás?",
+      "semanaN": "Semana {n}",
+      "pesoAntes": "Tu peso antes del embarazo",
+      "noSe": "No lo sé",
+      "mellizos": "Gemelos o mellizos",
+      "parto": "¿Hace cuánto nació?",
+      "partoN": {
+        "uno": "Hace {n} semana",
+        "otros": "Hace {n} semanas"
+      },
+      "soloPecho": "Solo pecho",
+      "conFormula": "Pecho y fórmula",
+      "insulina": "¿Usas insulina u otro medicamento que puede bajarte mucho el azúcar?",
+      "dialisis": "¿Haces diálisis?",
+      "si": "Sí",
+      "no": "No",
+      "noLoSe": "No sé"
+    },
+    "cambia": {
+      "titulo": "Cómo cambia tu dieta",
+      "antes": "Antes",
+      "kcal": "Calorías",
+      "proteina": "Proteína",
+      "carbohidratos": "Carbohidratos",
+      "grasas": "Grasas",
+      "muestra": "Te muestra",
+      "dejaDe": "Deja de decirte",
+      "empieza": "Te recuerda",
+      "sodio": "Sodio: menos de {n} mg",
+      "potasio": "Potasio: {n} mg o más",
+      "potasioSinMeta": "El potasio y el fósforo, sin meta",
+      "saturadas": "Saturadas: menos del {n} %",
+      "colesterol": "Colesterol: menos de {n} mg",
+      "fibra": "Fibra: de {a} a {b} g",
+      "agua": "Agua: {n} L",
+      "aguaNoPedir": "El agua, la que diga tu equipo",
+      "cafeina": "Cafeína: hasta {n} mg",
+      "alcoholNada": "Alcohol: nada",
+      "alcoholTope": "Alcohol: hasta {n} g",
+      "sinKeto": "Sin keto",
+      "pausa": "El control de cada semana, en pausa",
+      "nuncaBaja": "El control nunca baja tu meta",
+      "piso": "Nunca menos de {n} kcal",
+      "extra": "{n} kcal más por día, aprox.",
+      "numerosOcultos": "Los números, ocultos de entrada",
+      "sinPesoMeta": "Sin peso meta",
+      "vitaminas": {
+        "embarazo": "Las vitaminas y minerales del embarazo",
+        "lactancia": "Las vitaminas y minerales de la lactancia"
+      },
+      "sinBajar": "Sin bajar de peso",
+      "hastaRitmo": "Bajar, hasta el ritmo {ritmo}",
+      "deficitDesde": "Bajar, desde el {fecha} y despacio",
+      "embarazo": "Semana {n}: lo esperado es subir de {a} a {b} kg desde antes del embarazo.",
+      "igual": "Tu meta no cambia: Moss te muestra lo que importa.",
+      "sube": "Sube",
+      "baja": "Baja",
+      "mismo": "Igual",
+      "mira": "Mira primero",
+      "sinMeta": "sin meta",
+      "hasta": "hasta {n} {u}"
+    },
+    "dice": {
+      "antesDeEntrenar": "Qué comer antes de entrenar",
+      "despuesDeEntrenar": "La proteína después de entrenar",
+      "ayunasLarga": "Entrenar en ayunas",
+      "deporte": "Lo de comer según tu deporte",
+      "nocheCorta": "Lo de la noche corta",
+      "reparto": "Cómo va el reparto de los macros",
+      "faltaProteina": "Que te falta proteína",
+      "faltaCalorias": "Que vas bajo en calorías",
+      "agua": "Que tomes más agua",
+      "pasado": "Que te pasaste de un macro",
+      "pesarse": "Que te peses",
+      "ultimaComida": "Terminar de comer 3 h antes de dormir",
+      "sal": "Si hoy vas con mucha sal",
+      "saturadas": "Si hoy vas con muchas saturadas"
+    },
+    "marcas": {
+      "alcohol": "El alcohol",
+      "cafeina": "La cafeína",
+      "listeria": "Lo que puede tener listeria",
+      "mercurio": "El pescado con mucho mercurio",
+      "azucaradas": "Las bebidas azucaradas",
+      "sodio": "La sal",
+      "potasio": "El potasio",
+      "saturadas": "Las grasas saturadas",
+      "colesterol": "El colesterol",
+      "fibra": "La fibra",
+      "carbohidratos": "Los carbohidratos de cada comida",
+      "proteina": "La proteína",
+      "gluten": "Tu plan, sin gluten"
+    },
+    "profesional": {
+      "necesario": "Tu equipo de salud va primero: si te da otras metas, ponlas a mano.",
+      "sugerido": "Conviene que lo hables con un profesional de la salud."
+    },
+    "manuales": {
+      "dialisis": "Con diálisis, Moss no calcula tus metas: pon a mano las de tu equipo.",
+      "menor": "Antes de los 18, en el embarazo Moss no calcula tus metas: pon a mano las de tu equipo."
+    },
+    "ponerAMano": "Poner metas a mano",
+    "marcados": {
+      "uno": "{n} marcado",
+      "otros": "{n} marcados"
+    },
+    "perfilSub": "Moss ajusta tu dieta a lo que marcas",
+    "alergias": "Las alergias van en Lo que no comes, en el plan.",
+    "subirNo": "En el embarazo, Moss ya suma lo que hace falta."
   }
 }

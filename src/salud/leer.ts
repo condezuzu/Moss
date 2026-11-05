@@ -9,7 +9,7 @@ import {
 
 import { CORTE_DE_FABRICA, diaLogico, partesDe } from '@/dominio/fechas';
 import { armarNoches, soloEnCama } from '@/dominio/sueno';
-import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, ultimaPorDia, type DeSalud, type LoDeSalud } from './convertir';
+import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, ultimaPorDia, type DeSalud, type LoDeSalud } from './convertir';
 import { saludPedida } from './salud';
 
 const DIA_MS = 86_400_000;
@@ -112,7 +112,7 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
     fuentes,
     aparatos,
     lecturas: { frecuencia: lecturasDe(frecuencia), variabilidad: lecturasDe(variabilidad), respiracion: lecturasDe(respiracion), reposo: ultimaPorDia(reposo) },
-    pesos: ultimaPorDia(pesos),
+    pesos: primeraPorDia(pesos, corte),
     pasosRecientes: pasosDe(recientes),
   };
 }

@@ -86,17 +86,20 @@ async function hojaDeVincular(sufijo = '') {
   await pagina.waitForTimeout(600);
 }
 // Ascent, arriba de Progreso (spec/ascent.md): el scroll de Progreso, cada parte de la sección y los
-// días de ejemplo.
+// días de ejemplo (los siete: con las piernas cargadas también).
 const bajarProgreso = (y) => pagina.evaluate((v) => { const s = document.querySelector('.pg-scroll'); s.scrollTop = v === 'fondo' ? s.scrollHeight : v; }, y);
-const DIAS_DE_ASCENT = ['corta', 'bien', 'entreno', 'descanso', 'sinSueno', 'sinCalidad'];
-const PARTES_DE_ASCENT = [['.as-foco', 'foco'], ['.as-partes', 'partes'], ['.as-fila-fatiga', 'partes-2'], ['.as-fatiga', 'fatiga'], ['.as-marcas', 'marcas'], ['.as-estanc', 'estancamiento'], ['.as-anio', 'anio'], ['.as-comparten', 'comparten']];
+const DIAS_DE_ASCENT = ['corta', 'bien', 'cargado', 'entreno', 'descanso', 'sinSueno', 'sinCalidad'];
+const PARTES_DE_ASCENT = [
+  ['.as-foco', 'foco'], ['.as-filas', 'filas'], ['.as-fila-comida', 'filas-2'], ['.as-musculos', 'musculos'], ['.as-semana', 'musculos-2'], ['.as-fuerza', 'fuerza'],
+  ['.as-marcas', 'marcas'], ['.as-estanc', 'estancamiento'], ['.as-estanc-ej:last-of-type', 'estancamiento-2'], ['.as-anio', 'anio'], ['.as-comparten', 'comparten'],
+];
 async function diasDeAscent(sufijo = '') {
   for (const d of DIAS_DE_ASCENT) {
     await ascent('dia', d);
     await ascent('subir');
     await pagina.waitForTimeout(900);
     await foto(`ascent-dia-${d}${sufijo}`);
-    await ascent('bajar', '.as-partes');
+    await ascent('bajar', '.as-filas');
     await pagina.waitForTimeout(400);
     await foto(`ascent-dia-${d}-2${sufijo}`);
   }
@@ -421,11 +424,26 @@ const pasos = {
   },
   // Progreso de arriba abajo (2/11/2026): el control en una línea y abierto, el plan con su línea y
   // cambiarlo, el peso, la grasa (cómo se estima, y sin medidas, la invitación) y «Más datos» abierto.
+  // Para aprobar (D1 del estudio de progreso): el ritmo con su margen y cómo se calcula, y las primeras
+  // semanas: con diez días, faltan datos; con tres semanas, todavía no se sabe; con cuatro, el margen ancho.
   async progreso() {
     await pestana(2);
     await progreso('subir');
     await pagina.waitForTimeout(1400);
     await foto('progreso');
+    await progreso('abrir', 'ritmo');
+    await progreso('bajar', '.pg-plan');
+    await pagina.waitForTimeout(500);
+    await foto('progreso-ritmo-como');
+    await progreso('abrir', null);
+    for (const [semanas, nombre] of [[1.5, 'progreso-diez-dias'], [3, 'progreso-tres-semanas'], [4, 'progreso-cuatro-semanas']]) {
+      await progreso('plazo', { datos: semanas });
+      await progreso('subir');
+      await pagina.waitForTimeout(500);
+      await foto(nombre);
+    }
+    await progreso('plazo', { datos: null });
+    await progreso('subir');
     await progreso('abrir', 'control');
     await pagina.waitForTimeout(500);
     await foto('progreso-control');
@@ -732,7 +750,8 @@ const pasos = {
     await pagina.waitForTimeout(1200);
   },
   // El ritmo y el plazo (D35): el ritmo del perfil, uno exigente, la fecha que pide uno muy agresivo
-  // (con el piso), entrenando fuerza, y el rango del peso.
+  // (con el piso), entrenando fuerza, y el rango del peso. Y cómo vienes contra un plan más rápido y uno
+  // más lento, con la fecha a tu ritmo como un rango (D1 del estudio de progreso).
   async plazo() {
     await pestana(2);
     await progreso('plazo', { pct: 0.5, fuerza: null });
@@ -758,8 +777,17 @@ const pasos = {
     await pagina.waitForTimeout(400);
     await foto('plazo-peso-mes');
     await progreso('rango', 'tresMeses');
+    for (const [pct, nombre] of [[0.85, 'plazo-al-ritmo-con-margen'], [1, 'plazo-mas-lento'], [0.25, 'plazo-adelantado']]) {
+      await progreso('plazo', { pct });
+      await progreso('abrir', null);
+      await progreso('cambiarPlan', false);
+      await progreso('subir');
+      await pagina.waitForTimeout(500);
+      await foto(nombre);
+    }
     await progreso('plazo', { pct: null, fuerza: null });
     await progreso('abrir', null);
+    await progreso('cambiarPlan', false);
     await progreso('subir');
   },
   // Sueño: anoche de arriba abajo, cómo sale la calidad, y las noches que faltan o se cortaron.
@@ -974,14 +1002,14 @@ const pasos = {
     await ascent('vincular', false);
     await ascent('cerrar');
   },
-  // Con Ascent (spec/rendimiento.md): la fatiga con el rendimiento esperado, los músculos por día de la
-  // rutina y las marcas, vinculada y sin vincular, cómo se calcula y la línea del rendimiento en Sueño.
+  // Con Ascent (spec/rendimiento.md): los músculos de hoy, el cuerpo con tu semana, tu fuerza y las marcas,
+  // vinculada y sin vincular, en qué se basa y la línea del rendimiento en Sueño.
   async rendimiento() {
     await pagina.evaluate(() => window.__aparato('reloj'));
     await ascent('vincular', true);
     await ascent('abrir');
     await pagina.waitForTimeout(900);
-    for (const [selector, nombre] of [['.as-fila-fatiga', 'rendimiento'], ['.as-fatiga', 'rendimiento-musculos'], ['.as-marcas', 'rendimiento-marca']]) {
+    for (const [selector, nombre] of [['.as-fila-musculos', 'rendimiento'], ['.as-musculos', 'rendimiento-musculos'], ['.as-fuerza', 'rendimiento-fuerza'], ['.as-marcas', 'rendimiento-marca']]) {
       await ascent('bajar', selector);
       await pagina.waitForTimeout(500);
       await foto(nombre);
@@ -998,7 +1026,7 @@ const pasos = {
     await ascent('vincular', false);
     await ascent('abrir');
     await pagina.waitForTimeout(900);
-    await ascent('bajar', '.as-partes-vacias');
+    await ascent('bajar', '.as-filas-vacias');
     await pagina.waitForTimeout(500);
     await foto('rendimiento-sin-vincular');
     await ascent('cerrar');
@@ -1512,7 +1540,7 @@ const pasos = {
     await arrastreVertical(196, 300, 196, 580, 'senal-deslizando');
     if (!(await ascentAbierta())) console.log('! arriba de todo, arrastrar para abajo no abrió Ascent');
     // En el medio de Ascent, empujar para arriba es del scroll: no la cierra.
-    await ascent('bajar', '.as-partes');
+    await ascent('bajar', '.as-filas');
     await pagina.waitForTimeout(300);
     await arrastreVertical(196, 600, 196, 350);
     if (!(await ascentAbierta())) console.log('! en el medio de Ascent, empujar para arriba la cerró');
@@ -1642,9 +1670,10 @@ const pasos = {
     await pagina.waitForTimeout(600);
   },
   // Ascent, arriba de Progreso: la entrada y el borde del planeta, el gesto a mitad de camino (con el dedo
-  // todavía abajo) para abrirla y para volver, sin vincular, la hoja de vincular, vinculada con los seis días
-  // de ejemplo y cada parte, «¿Qué es este número?» y «Cómo se calcula», tocar un día del año, «sin déficit»,
-  // los números ocultos y lo que cambia en Inicio, Sueño y Perfil con el vínculo.
+  // todavía abajo) para abrirla y para volver, sin vincular, la hoja de vincular, vinculada con los siete días
+  // de ejemplo y cada parte, «¿Cómo te sientes?» tocado, un músculo tocado, «¿Por qué no hay un porcentaje?»
+  // y «En qué se basa», tocar un día del año, «sin déficit», los números ocultos y lo que cambia en Inicio,
+  // Sueño y Perfil con el vínculo.
   async ascent() {
     await pestana(2);
     await pagina.waitForTimeout(2600);
@@ -1659,7 +1688,7 @@ const pasos = {
     await foto('ascent-de-vuelta');
     await ascent('abrir');
     await pagina.waitForTimeout(300);
-    for (const [selector, nombre] of [['.as-grupo', 'ascent-bloqueadas'], ['.as-fatiga', 'ascent-bloqueadas-2'], ['.as-estanc', 'ascent-bloqueadas-3']]) {
+    for (const [selector, nombre] of [['.as-grupo', 'ascent-bloqueadas'], ['.as-musculos', 'ascent-bloqueadas-2'], ['.as-fuerza', 'ascent-bloqueadas-3'], ['.as-estanc', 'ascent-bloqueadas-4']]) {
       await ascent('bajar', selector);
       await pagina.waitForTimeout(300);
       await foto(nombre);
@@ -1673,27 +1702,40 @@ const pasos = {
     await foto('ascent-vinculada');
     await diasDeAscent();
     await partesDeAscent();
-    // Un buen día para intentar marca, y con la sesión ya hecha, las piernas cargadas.
+    // Un buen día para intentar marca, y con la sesión ya hecha, las piernas cargadas en el cuerpo.
     await ascent('dia', 'bien');
     await ascent('bajar', '.as-marcas');
     await pagina.waitForTimeout(400);
     await foto('ascent-parte-marcas-buen-dia');
     await ascent('dia', 'entreno');
-    await ascent('bajar', '.as-fatiga');
+    await ascent('bajar', '.as-musculos');
     await pagina.waitForTimeout(400);
-    await foto('ascent-parte-fatiga-cargada');
+    await foto('ascent-parte-musculos-cargados');
+    // Tocar un músculo en el cuerpo: dice cómo está y cuándo vuelve a lo suyo. Los toques van por el DOM: el
+    // click de Playwright corre la tira de las secciones para mostrar lo tocado.
+    const tocar = (selector) => pagina.evaluate((s) => document.querySelector(s).dispatchEvent(new MouseEvent('click', { bubbles: true })), selector);
+    await tocar('.as-cuerpo .as-m[data-musculo="cuadriceps"]');
+    await pagina.waitForTimeout(600);
+    await foto('ascent-musculo-tocado');
+    // Durmió bien, pero dice que no se siente bien (3 de 10): el titular y lo de hoy cambian, con un fundido.
+    await ascent('dia', 'bien');
+    await ascent('subir');
+    await pagina.waitForTimeout(400);
+    await tocar('.as-siente-escala button:nth-child(4)');
+    await pagina.waitForTimeout(700);
+    await foto('ascent-te-sientes');
     await ascent('dia', 'corta');
     await ascent('subir');
-    // «¿Qué es este número?» y «Cómo se calcula», desplegados.
-    await pagina.click('.as-rec .as-enlace');
+    // «¿Por qué no hay un porcentaje?» y «En qué se basa», desplegados.
+    await tocar('.as-hoy > .as-enlace');
     await pagina.waitForTimeout(500);
-    await foto('ascent-que-es');
+    await foto('ascent-por-que-no');
     await ascent('como');
     await pagina.waitForTimeout(900);
-    await foto('ascent-como-se-calcula');
+    await foto('ascent-en-que-se-basa');
     await ascent('bajar', 'fondo');
     await pagina.waitForTimeout(400);
-    await foto('ascent-como-se-calcula-2');
+    await foto('ascent-en-que-se-basa-2');
     // Con pocas semanas, las razones del sueño y la comida todavía juntan información.
     await ascent('pocas', true);
     await ascent('bajar', '.as-estanc');
@@ -1983,6 +2025,222 @@ const pasos = {
     await pagina.evaluate(() => document.querySelector('.pf-scroll').scrollTo(0, 0));
     await pestana(0);
   },
+  // Tu energía en Inicio (5/11, para aprobar): el día entero, con el sueño y la comida. Baja arriba de todo (por
+  // el sueño, con «Más» y plegada; por la comida, con «Más»), suficiente y alta debajo de los macros (con «Más»),
+  // sin datos, sin números, en inglés y con Ascent vinculada (su marca y los músculos de hoy).
+  async energia() {
+    const energia = (v, extra) => pagina.evaluate(([a, b]) => window.__energia(a, b), [v, extra || {}]);
+    const centrar = () => pagina.evaluate(() => document.querySelector('.in-energia')?.scrollIntoView({ block: 'center' }));
+    await pagina.evaluate(() => window.__seccion('energia'));
+    await pagina.waitForTimeout(1000);
+    for (const [v, extra, nombre] of [['baja', {}, 'baja'], ['baja', { mas: true }, 'baja-mas'], ['baja', { mas: false, plegada: true }, 'baja-plegada'],
+      ['bajaComida', { plegada: false, mas: true }, 'baja-comida-mas'], ['suficiente', { mas: false }, 'suficiente'], ['suficiente', { mas: true }, 'suficiente-mas'],
+      ['alta', { mas: false }, 'alta'], ['alta', { mas: true }, 'alta-mas'], ['sinDatos', { mas: false }, 'sin-datos']]) {
+      await energia(v, extra);
+      await pagina.waitForTimeout(800);
+      if (v !== 'baja') await centrar();
+      await pagina.waitForTimeout(350);
+      await foto('energia-' + nombre);
+    }
+    await pagina.evaluate(() => window.__seguridad('numeros', false));
+    await energia('suficiente', { mas: true });
+    await pagina.waitForTimeout(700);
+    await centrar();
+    await pagina.waitForTimeout(350);
+    await foto('energia-sin-numeros');
+    await pagina.evaluate(() => window.__seguridad('numeros', true));
+    await pagina.evaluate(() => window.__idioma('en'));
+    await energia('baja', { mas: true });
+    await pagina.waitForTimeout(900);
+    await foto('energia-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    // Con Ascent vinculada: su marca en la etiqueta y los músculos de hoy como tercera parte.
+    await pagina.evaluate(() => window.__ascent('vincular', true));
+    await pagina.evaluate(() => window.__seccion('energia'));
+    for (const [v, nombre] of [['alta', 'ascent-alta-mas'], ['baja', 'ascent-baja-mas']]) {
+      await energia(v, { mas: true, plegada: false });
+      await pagina.waitForTimeout(800);
+      if (v !== 'baja') await centrar();
+      await pagina.waitForTimeout(350);
+      await foto('energia-' + nombre);
+    }
+    await pagina.evaluate(() => window.__ascent('vincular', false));
+    await energia('suficiente', { mas: false, plegada: false });
+    await pagina.waitForTimeout(500);
+  },
+
+  // En qué se basa Moss (5/11, para aprobar): la fila de abajo de todo de Perfil, la hoja con el dibujo y las
+  // reglas, cada área abierta y lo que Moss no hace, y en inglés.
+  async base() {
+    await pestana(5);
+    await pagina.waitForTimeout(1000);
+    await pagina.evaluate(() => { const f = [...document.querySelectorAll('.perfil .pf-grupo')].pop(); f?.scrollIntoView({ block: 'center' }); });
+    await pagina.waitForTimeout(500);
+    await foto('base-fila');
+    await pagina.evaluate(() => window.__seccion('base'));
+    await pagina.waitForTimeout(1100);
+    await foto('base');
+    const areas = await pagina.$$eval('.pf-base-area .pf-base-cab', (bs) => bs.length);
+    for (let i = 0; i < areas; i++) {
+      await pagina.evaluate((k) => document.querySelectorAll('.pf-base-area .pf-base-cab')[k].click(), i);
+      await pagina.waitForTimeout(700);
+      await pagina.evaluate(() => document.querySelector('.pf-base-area.abierta')?.scrollIntoView({ block: 'start' }));
+      await pagina.waitForTimeout(350);
+      await foto(`base-area-${i + 1}`);
+    }
+    await pagina.evaluate(() => [...document.querySelectorAll('.pf-base-reglas')].pop()?.scrollIntoView({ block: 'end' }));
+    await pagina.waitForTimeout(400);
+    await foto('base-abajo');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await pagina.evaluate(() => window.__seccion('base'));
+    await pagina.waitForTimeout(1000);
+    await foto('base-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => document.querySelector('.hb-cerrar')?.click());
+    await pagina.waitForTimeout(500);
+  },
+
+  // Cuidados (5/11, para aprobar: src/dominio/cuidados.ts): en el cuestionario, varios marcados, el
+  // consentimiento en lugar de «Seguir», lo que se pregunta además (el embarazo, la diálisis), el objetivo en el
+  // embarazo y el resultado con el riñón; en Perfil › Cuidados, la lista para marcar y desmarcar, el
+  // consentimiento y cómo cambia tu dieta con el riñón, con la diabetes y la presión, con un trastorno de la
+  // alimentación y reflujo (los números ocultos) y con el embarazo (la banda); la fila de Perfil, y en inglés.
+  async cuidados() {
+    const entrada = (paso) => pagina.evaluate((p) => window.__entrada(p), paso);
+    const responder = (r) => pagina.evaluate((x) => window.__cuestionario('responder', x), r);
+    const tocar = (selector) => pagina.evaluate((s) => document.querySelector('.ent-pantalla:not(.saliendo) ' + s).click(), selector);
+    const bajar = (y) => pagina.evaluate((v) => { const d = document.querySelector('.ent-pantalla:not(.saliendo) .ent-desliza'); if (d) d.scrollTop = typeof v === 'string' ? d.querySelector(v).offsetTop - d.offsetTop - 40 : v; }, y);
+    const enPerfil = (accion, arg) => pagina.evaluate(([a, x]) => window.__perfil(a, x), [accion, arg]);
+    const tocarEnPerfil = (selector) => pagina.evaluate((s) => document.querySelector(s).click(), selector);
+    const espera = (ms = 1300) => pagina.waitForTimeout(ms);
+    const DATOS = { semana: 24, pesoAntes: 60, mellizos: false, semanasParto: 8, soloPecho: true, bajaElAzucar: null, dialisis: false };
+    // El cuestionario: una mujer de 31 años, 165 cm y 64 kg.
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    await responder({ sexo: 'f', edad: 31, altura: 165, peso: 64 });
+    await entrada('cuidado');
+    await espera(1700);
+    await foto('cuidados-pregunta');
+    await tocar('.ent-cuidados [data-valor="diabetes2"]');
+    await tocar('.ent-cuidados [data-valor="presion"]');
+    await espera(900);
+    await foto('cuidados-consentimiento');
+    await tocar('.ent-consentimiento .ent-principal');
+    await espera(900);
+    await foto('cuidados-guardado');
+    await bajar(9999);
+    await espera(500);
+    await foto('cuidados-guardado-abajo');
+    await responder({ cuidados: ['embarazo'], consentido: true, datosCuidado: DATOS });
+    await entrada('cuidado');
+    await espera(1600);
+    await foto('cuidados-embarazo');
+    await entrada('objetivo');
+    await espera();
+    await foto('cuidados-objetivo-embarazo');
+    await responder({ cuidados: ['renal'], datosCuidado: { ...DATOS, dialisis: true } });
+    await entrada('cuidado');
+    await espera(1300);
+    await bajar('.ent-cuidados [data-valor="renal"]');
+    await espera(500);
+    await foto('cuidados-dialisis');
+    await responder({ cuidados: ['renal'], datosCuidado: DATOS, objetivo: 'bajar', pesoMeta: null });
+    await entrada('resultado');
+    await espera(2700);
+    await foto('cuidados-resultado-renal');
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    await pagina.evaluate(() => window.__entrada(null));
+    await espera(1200);
+    // Perfil › Cuidados: la lista, el consentimiento al marcar el primero y lo que cambia.
+    await pestana(5);
+    await enPerfil('cuidados', { marcados: [], consentido: false });
+    await hojaAbierta('pf-hoja');
+    await foto('cuidados-perfil-lista');
+    await enPerfil('bajarCuidados', '.pf-cuidados-grupo[data-grupo="rinones"]');
+    await espera(400);
+    await tocarEnPerfil('.pf-cuidado[data-cuidado="renal"] .in-llave');
+    await espera(900);
+    await foto('cuidados-perfil-consentimiento');
+    await tocarEnPerfil('.pf-consentir-si');
+    await espera(500);
+    await enPerfil('bajarCuidados', 0);
+    await espera(900);
+    await foto('cuidados-perfil-renal');
+    await enPerfil('bajarCuidados', '.pf-cuidados-grupo[data-grupo="rinones"]');
+    await espera(500);
+    await foto('cuidados-perfil-renal-lista');
+    // Tres casos distintos: arriba, cómo cambia tu dieta; después, la lista en el grupo del primero.
+    for (const [marcados, nombre, grupo, extra] of [
+      [['diabetes2', 'presion'], 'diabetes-presion', 'azucar', {}],
+      [['tca', 'reflujo'], 'tca-reflujo', 'digestion', { numeros: false }],
+      [['embarazo'], 'embarazo', 'etapa', { sexo: 'f', numeros: true, datos: { semana: 24, pesoAntes: 70 } }],
+    ]) {
+      await enPerfil('cuidados', { marcados, consentido: true, ...extra });
+      await espera(1000);
+      await foto('cuidados-perfil-' + nombre);
+      await enPerfil('bajarCuidados', `.pf-cuidados-grupo[data-grupo="${grupo}"]`);
+      await espera(500);
+      await foto(`cuidados-perfil-${nombre}-lista`);
+    }
+    await enPerfil('cerrarHoja');
+    await espera(600);
+    await enPerfil('bajar', '[data-fila="cuidado"]');
+    await espera(500);
+    await foto('cuidados-perfil-fila');
+    // En inglés: Perfil con el riñón y los cálculos, y la pregunta del cuestionario.
+    await pagina.evaluate(() => window.__idioma('en'));
+    await enPerfil('cuidados', { sexo: 'm', marcados: ['renal', 'calculos'], consentido: true });
+    await espera(1100);
+    await foto('cuidados-en-perfil');
+    await enPerfil('cerrarHoja');
+    await espera(600);
+    await responder({ sexo: 'f', cuidados: ['lactancia', 'celiaquia'], consentido: true, datosCuidado: DATOS });
+    await entrada('cuidado');
+    await espera(1600);
+    await foto('cuidados-en-pregunta');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => window.__cuestionario('reiniciar'));
+    await pagina.evaluate(() => window.__entrada(null));
+    await enPerfil('cuidados', { sexo: 'm', marcados: [], consentido: false, numeros: true, abrir: false });
+    await enPerfil('subir');
+    await espera(800);
+    await pestana(0);
+  },
+
+  // Tu rango en Ascent (5/11, para aprobar): la sección con el color de cada rango y su cuerpo como horizonte,
+  // vinculada; los cinco planetas del rango 4; sin vincular, arriba («Ascent» y la frase); y el logo, igual al
+  // ícono de Ascent, en la entrada de Progreso (sin vincular y vinculada) y en la invitación de Inicio.
+  async 'ascent-rangos'() {
+    await pestana(2);
+    await pagina.waitForTimeout(1800);
+    await foto('rango-entrada-sin-vincular');
+    await ascent('abrir');
+    await pagina.waitForTimeout(1000);
+    await foto('rango-sin-vincular');
+    await ascent('vincular', true);
+    await pagina.waitForTimeout(1600);
+    for (const [n, planeta] of [[1], [2], [3], [4, 'Ceres'], [4, 'Mercurio'], [4, 'Marte'], [4, 'Venus'], [4, 'Saturno'], [5], [6], [7]]) {
+      await ascent('rango', [n, planeta || null]);
+      await pagina.waitForTimeout(1000);
+      await foto(`rango-${n}${planeta ? '-' + planeta.toLowerCase() : ''}`);
+    }
+    await ascent('rango', [7, null]);
+    await ascent('bajar', 'fondo');
+    await pagina.waitForTimeout(500);
+    await foto('rango-7-abajo');
+    await ascent('rango', [3, null]);
+    await ascent('subir');
+    await ascent('cerrar');
+    await pagina.waitForTimeout(900);
+    await foto('rango-entrada-vinculada');
+    await ascent('vincular', false);
+    await ascent('volverAInvitar');
+    await pestana(0);
+    await pagina.waitForTimeout(1200);
+    await pagina.evaluate(() => document.querySelector('.as-invita')?.scrollIntoView({ block: 'center' }));
+    await pagina.waitForTimeout(500);
+    await foto('rango-invitacion');
+  },
+
   async 'ascent-ingles'() {
     await pagina.evaluate(() => window.__idioma('en'));
     await pestana(2);
@@ -2003,7 +2261,7 @@ const pasos = {
     await partesDeAscent('-ingles');
     await ascent('como');
     await pagina.waitForTimeout(900);
-    await foto('ascent-como-se-calcula-ingles');
+    await foto('ascent-en-que-se-basa-ingles');
     await ascent('vincular', false);
     await ascent('cerrar');
     await pagina.evaluate(() => window.__idioma('es'));
@@ -2148,10 +2406,14 @@ const pasos = {
     await deporte('inicio');
     await espera();
     await foto('deporte-2-anoche-inicio-sin-alcohol');
-    // La tarjeta, arriba de Inicio: con números, sin números, con «sin déficit», y al tocar «No mostrar más».
+    // La energía baja del rugby (la señal de su peso), arriba de Inicio (5/11: siempre a la vista, plegable): con
+    // «Más» abierto, con números, sin números y con «sin déficit», y plegada.
     await deporte('tarjeta');
     await espera(1100);
     await foto('deporte-tarjeta');
+    await pagina.click('.in-energia-mas');
+    await espera(600);
+    await foto('deporte-tarjeta-mas');
     await pagina.evaluate(() => window.__seguridad('numeros', false));
     await espera(700);
     await foto('deporte-tarjeta-sin-numeros');
@@ -2163,11 +2425,12 @@ const pasos = {
     await pagina.evaluate(() => window.__seguridad('sinDeficit', false));
     await deporte('tarjeta');
     await espera(1100);
-    await pagina.click('.in-energia-cerrar');
-    await espera(160);
-    await foto('deporte-tarjeta-plegandose');
-    await espera(900);
-    await foto('deporte-tarjeta-no-mostrar');
+    await pagina.click('.in-energia-plegar');
+    await espera(700);
+    await foto('deporte-tarjeta-plegada');
+    await pagina.click('.in-energia-plegar');
+    await espera(500);
+    await pagina.evaluate(() => window.__energia('suficiente', { plegada: false, mas: false }));
     // Perfil › Entrenamiento: el partido (qué día y a qué hora) y la próxima carrera (cuándo y cuánto dura).
     await deporte('poner', 'vispera');
     await deporte('perfil');

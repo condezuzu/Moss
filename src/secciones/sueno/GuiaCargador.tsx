@@ -6,7 +6,8 @@
 // mirar entera antes, y al volver sigue donde quedó. Termina probándolo con el cargador de verdad.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { AppState, Linking, Modal, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { Easing, FadeIn, FadeInRight, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,6 +15,7 @@ import { ATAJO_DEL_CARGADOR } from '@/lib/sitio';
 import { useSenales } from '@/salud/anclas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
 import { Icono } from '../comida/comunes';
 import { horaDelDia } from '../comida/datos';
 import { Aparece } from '../tarjetas';
@@ -237,6 +239,12 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
   const alVolver = useRef<number | null>(null);
   const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const enPrueba = paso >= pasos.length;
+  // Tiene la pestañita de las hojas: se baja con el dedo, como ellas.
+  const hoja = useBajarParaCerrar({ alCerrar, conScroll: abierta });
+  const { reiniciar } = hoja;
+  useEffect(() => {
+    if (abierta) reiniciar();
+  }, [abierta, reiniciar]);
 
   useEffect(() => {
     const suscripcion = AppState.addEventListener('change', (estado) => {
@@ -306,15 +314,18 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
   const actual = paso >= 0 && !enPrueba ? pasos[paso] : null;
 
   return (
-    <Modal visible={abierta} animationType={reducido ? 'fade' : 'slide'} onRequestClose={alCerrar}>
-      <View style={[st.raiz, { paddingTop: insets.top + 8 }]}>
-        <View style={st.arriba}>
+    // Transparente: al bajarla con el dedo, se ve la app detrás.
+    <Modal visible={abierta} transparent animationType={reducido ? 'fade' : 'slide'} onRequestClose={alCerrar}>
+      <GestureHandlerRootView style={st.fondo}>
+      <Animated.View style={[StyleSheet.absoluteFill, st.velo, hoja.velo]} pointerEvents="none" />
+      <Animated.View style={[st.raiz, { paddingTop: insets.top + 8 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={alCerrar}>
+        <CabezaQueBaja arrastre={hoja} style={st.arriba}>
           <View style={st.asa} />
           <Pressable onPress={alCerrar} style={st.cerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={8}>
             <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
           </Pressable>
-        </View>
-        <ScrollView style={st.cuerpo} contentContainerStyle={st.cuerpoAdentro} showsVerticalScrollIndicator={false}>
+        </CabezaQueBaja>
+        <ScrollQueBaja arrastre={hoja} lugar={st.cuerpo} style={st.cuerpo} contentContainerStyle={st.cuerpoAdentro} showsVerticalScrollIndicator={false}>
           {paso < 0 && (
             <Aparece key="presentacion">
               <Text style={st.titulo}>{t('sueno.afinar.cargador.guia.titulo')}</Text>
@@ -352,7 +363,7 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
               </Animated.View>
             </Aparece>
           )}
-        </ScrollView>
+        </ScrollQueBaja>
         <View style={[st.pie, { paddingBottom: insets.bottom + 12 }]}>
           {paso < 0 && (
             <>
@@ -391,13 +402,16 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
             </Aparece>
           )}
         </View>
-      </View>
+      </Animated.View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
 
 const IOS = '#0a66e4';
 const st = StyleSheet.create({
+  fondo: { flex: 1 },
+  velo: { backgroundColor: 'rgba(1, 2, 6, 0.6)' },
   raiz: { flex: 1, backgroundColor: '#0b1024' },
   arriba: { alignItems: 'center', minHeight: 36 },
   asa: { width: 38, height: 5, borderRadius: 3, marginTop: 4, backgroundColor: 'rgba(239, 230, 207, 0.22)' },

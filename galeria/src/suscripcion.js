@@ -34,6 +34,12 @@ const Suscripcion = (() => {
 .sb-j-union { width: 1px; height: 12px; margin: 3px 0 3px 23px; background: linear-gradient(180deg, rgba(232, 196, 106, 0.2), rgba(232, 196, 106, 0.7)); }
 .sb-j-luna { flex: none; width: 47px; height: 47px; display: grid; place-items: center; }
 .sb-j-luna .luna { overflow: visible; }
+.sb-j-hoy .sb-j-cifra small { margin-left: 6px; font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.55); }
+/* Los macros de hoy, como en Inicio pero en chico. */
+.sb-j-macros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.sb-j-macros .in-macro { gap: 4px; }
+.sb-j-macros .in-macro-barra { margin-top: 1px; }
+.sb-j-dice { margin: 10px 0 0; padding-top: 9px; border-top: 1px solid rgba(239, 230, 207, 0.07); font: 400 13.5px/1.32 var(--texto); color: var(--tinta); text-wrap: pretty; }
 
 .sb-todo { display: grid; gap: 5px; }
 .sb-rotulo { margin: 0 0 2px; font: 400 10px/1.2 var(--texto); letter-spacing: 0.15em; text-transform: uppercase; color: var(--oro-claro); }
@@ -144,9 +150,16 @@ const Suscripcion = (() => {
     ],
   };
 
-  /** Comida y sueño juntos, con un ejemplo: la noche de ayer y lo que eso le dice al día de hoy. También en la entrada. */
+  // Lo de hoy del ejemplo: lo comido hasta ahora contra la meta, con sus macros (5/11: que se vea que Moss también
+  // es una app de macros, no solo de sueño).
+  const DIA_DEL_EJEMPLO = { kcal: 1250, meta: 2300, macros: [['p', 'proteina', 66, 140], ['c', 'carbohidratos', 155, 260], ['g', 'grasas', 40, 70]] };
+
+  /**
+   * Comida y sueño juntos, con un ejemplo: la noche de ayer, lo de hoy con sus calorías y sus macros, y lo que una
+   * cosa le dice a la otra. También en la entrada.
+   */
   function ejemplo(u) {
-    const { tx, el, duracion } = u;
+    const { tx, el, duracion, numero } = u;
     const c = el('section', 'sb-juntos');
     const noche = el('div', 'sb-j-fila sb-j-noche');
     const cifras = el('div', 'sb-j-textos');
@@ -154,15 +167,32 @@ const Suscripcion = (() => {
     const grafico = el('div', 'sb-j-grafico');
     grafico.appendChild(Graficos.hipnograma(NOCHE_CORTA, { ancho: 210, alto: 40 }));
     noche.append(cifras, grafico);
+    const d = DIA_DEL_EJEMPLO;
     const hoy = el('div', 'sb-j-fila sb-j-hoy');
     const luna = el('div', 'sb-j-luna');
     const l = Luna.crear({ tam: 47 });
-    l.ir(0.16, 0);
+    l.ir(d.kcal / d.meta, 0);
     luna.appendChild(l.el);
     const textos = el('div', 'sb-j-textos largo');
-    textos.append(el('span', 'sb-j-rotulo', tx('suscripcion.ejemplo.hoy')), el('p', 'sb-j-texto', tx('suscripcion.ejemplo.hambre', { h: duracion(NOCHE_CORTA.dormido) })));
+    const cifra = el('span', 'sb-j-cifra', `${numero(d.kcal)} kcal`);
+    cifra.appendChild(el('small', null, tx('suscripcion.ejemplo.deMeta', { meta: numero(d.meta) })));
+    textos.append(el('span', 'sb-j-rotulo', tx('suscripcion.ejemplo.hoy')), cifra);
     hoy.append(luna, textos);
-    c.append(noche, el('div', 'sb-j-union'), hoy);
+    const macros = el('div', 'sb-j-macros');
+    const rellenos = [];
+    d.macros.forEach(([m, clave, comido, meta]) => {
+      const x = el('div', `in-macro in-macro-${m}`);
+      const barra = el('i', 'in-macro-barra');
+      const relleno = el('i');
+      barra.appendChild(relleno);
+      rellenos.push([relleno, `${Math.min(100, (comido / meta) * 100).toFixed(1)}%`]);
+      x.append(el('span', 'in-macro-nombre', tx('comida.' + clave)), barra, el('small', null, tx('comida.gramosDe', { n: numero(comido), meta: numero(meta) })));
+      macros.appendChild(x);
+    });
+    // Las barras se llenan al aparecer, como en Inicio.
+    requestAnimationFrame(() => requestAnimationFrame(() => rellenos.forEach(([r, w]) => { r.style.width = w; })));
+    Util.caber([...macros.querySelectorAll('.in-macro-nombre')], 12);
+    c.append(noche, el('div', 'sb-j-union'), hoy, macros, el('p', 'sb-j-dice', tx('suscripcion.ejemplo.hambre', { h: duracion(NOCHE_CORTA.dormido) })));
     return c;
   }
 

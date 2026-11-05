@@ -1,12 +1,13 @@
-// El progreso hacia el objetivo (spec/progreso.md): a qué ritmo va la tendencia del peso, si va en
-// camino y en qué fecha llegaría, y el balance entre lo comido y lo gastado. Todo se mide sobre la
-// tendencia, nunca sobre el peso de un día.
+// El progreso hacia el objetivo (spec/progreso.md): a qué ritmo va el peso, con su margen, si va en
+// camino y entre qué fechas llegaría, y el balance entre lo comido y lo gastado. Nunca sobre el peso de
+// un día: el ritmo sale de la recta por el promedio de cada semana, y mientras el margen sea ancho,
+// todavía no se sabe (spec/estudio/progreso.md, A4 a A6).
 
-import { cambioPorDia, type ComidaDelDia, type EstadoDelControl, type Pesada } from './control';
+import { atrasoDeLaTendencia, cambioPorDia, pesadasQueCuentan, recta, type ComidaDelDia, type EstadoDelControl, type Pesada } from './control';
 import { diasEntre, sumarDias, type ClaveDia } from './fechas';
-import { KCAL_POR_KG, MAYORIA_DE_EDAD, pisoDe, RITMOS, type Objetivo, type Ritmo, type Sexo } from './metas';
+import { DEFICIT_MAXIMO, KCAL_POR_KG, KG_POR_SEMANA_MAXIMOS, MAYORIA_DE_EDAD, pisoDe, RITMOS, type Objetivo, type Ritmo, type Sexo } from './metas';
 
-/** El ritmo se mide en las últimas tres semanas de tendencia, y hacen falta al menos dos. */
+/** Sin las pesadas, el ritmo se mide en las últimas tres semanas de tendencia, y hacen falta al menos dos. */
 const DIAS_DEL_RITMO = 21;
 const DIAS_MINIMOS = 14;
 /** A medio kilo de la meta ya llegaste: la tendencia se mueve más que eso en una semana común. */
@@ -20,10 +21,10 @@ const ESTABLE_KG_SEMANA = 0.15;
 const HORIZONTE_DIAS = 730;
 
 /**
- * Los kilos por semana de las últimas tres semanas (o desde que hay, si son dos o más). Con las
- * pesadas, sin el atraso de la tendencia en sus primeras semanas (cambioPorDia).
+ * Los kilos por semana de las últimas tres semanas (o desde que hay, si son dos o más): con las pesadas,
+ * la recta por ellas (cambioPorDia); sin ellas, lo que se movió la tendencia, que atrasa.
  */
-export function ritmoSemanal(tendencia: Map<ClaveDia, number>, hasta: ClaveDia, pesadas?: Pesada[]): number | null {
+export function ritmoSemanal(tendencia: Map<ClaveDia, number>, hasta: ClaveDia, pesadas?: readonly Pesada[]): number | null {
   const fin = tendencia.get(hasta);
   const primero = [...tendencia.keys()][0];
   if (fin === undefined || primero === undefined) return null;
@@ -34,20 +35,105 @@ export function ritmoSemanal(tendencia: Map<ClaveDia, number>, hasta: ClaveDia, 
   return (porDia ?? (fin - tendencia.get(desde)!) / dias) * 7;
 }
 
-/** «otroLado»: el peso meta quedó del otro lado de donde se empezó (por ejemplo, al pasar de bajar a subir). */
-export type EstadoDelObjetivo = 'llegaste' | 'enCamino' | 'despacio' | 'quieto' | 'alReves' | 'estable' | 'seMueve' | 'sinMeta' | 'otroLado' | 'faltanDatos';
+// ------------------------------------------------------------ el ritmo con su margen
+// De cada bloque de siete días que termina hoy, el promedio de sus pesadas (como cuentan, sin rellenar),
+// en el día promedio de esas pesadas; y la recta por esos promedios. El margen es el de un 80 %, con la t
+// de Student: con el ruido del peso, cubrió el ritmo de verdad 79 a 85 veces de cada 100 a las cuatro y
+// seis semanas (Hall y Chow, 2011; la simulación del estudio). Con menos de tres semanas con pesadas, no hay.
+
+export const SEMANAS_DEL_RITMO = 6;
+const SEMANAS_MINIMAS = 3;
+/** La t de Student del 80 % (de dos colas), por los grados de libertad: las semanas menos dos. */
+const T80: Record<number, number> = { 1: 3.078, 2: 1.886, 3: 1.638, 4: 1.533, 5: 1.476, 6: 1.44 };
+/** Con pocas semanas, el ruido medido puede salir casi cero: nunca menos de 0,2 kg. */
+const DESVIO_MINIMO = 0.2;
+/** Con medio margen más ancho que esto (o que el plan), todavía no se sabe. */
+const MARGEN_PARA_SABER = 0.25;
+
+export type RitmoConRango = {
+  /** En kilos por semana, con su signo (negativo es bajar), de `desde` a `hasta`. */
+  kgPorSemana: number;
+  desde: number;
+  hasta: number;
+  /** El peso de hoy en la recta: sin el atraso de la tendencia. */
+  nivelHoy: number;
+  semanas: number;
+};
+
+export function ritmoConRango(pesadas: readonly Pesada[], hoy: ClaveDia, semanas = SEMANAS_DEL_RITMO): RitmoConRango | null {
+  const cuentan = pesadasQueCuentan(pesadas.filter((p) => p.fecha <= hoy));
+  const atras = cuentan.map((p) => diasEntre(p.fecha, hoy));
+  const puntos: [number, number][] = [];
+  for (let s = 0; s < semanas; s++) {
+    let dias = 0;
+    let kg = 0;
+    let n = 0;
+    cuentan.forEach((p, i) => {
+      if (Math.floor(atras[i] / 7) !== s) return;
+      dias += atras[i];
+      kg += p.kg;
+      n++;
+    });
+    if (n) puntos.push([-dias / n, kg / n]);
+  }
+  const r = puntos.length >= SEMANAS_MINIMAS ? recta(puntos) : null;
+  if (!r) return null;
+  const libres = puntos.length - 2;
+  const desvio = Math.max(DESVIO_MINIMO, Math.sqrt(r.residuos / libres));
+  const medio = ((T80[libres] ?? T80[6]) * desvio * 7) / Math.sqrt(r.sxx);
+  const kgPorSemana = r.pendiente * 7;
+  return { kgPorSemana, desde: kgPorSemana - medio, hasta: kgPorSemana + medio, nivelHoy: r.y - r.pendiente * r.x, semanas: puntos.length };
+}
+
+/**
+ * El peso de hoy sin el atraso de la tendencia: el de la recta de las semanas o, con menos de tres, la
+ * tendencia más lo que atrasa con la pendiente de las pesadas.
+ */
+export function nivelDeHoy(tendencia: Map<ClaveDia, number>, hoy: ClaveDia, pesadas?: readonly Pesada[], conRango?: RitmoConRango | null): number | null {
+  if (conRango) return conRango.nivelHoy;
+  const t = tendencia.get(hoy);
+  if (t === undefined || !pesadas) return t ?? null;
+  const pendiente = cambioPorDia(pesadas, sumarDias(hoy, -(DIAS_DEL_RITMO - 1)), hoy);
+  const fechas = pesadas.filter((p) => p.fecha <= hoy).map((p) => p.fecha).sort();
+  if (pendiente === null || !fechas.length) return t;
+  return t + pendiente * atrasoDeLaTendencia(diasEntre(fechas[0], fechas[fechas.length - 1]));
+}
+
+export type Fechas = { temprana: ClaveDia; tardia: ClaveDia };
+
+/**
+ * Cuándo llegaría, como un rango: con el avance más rápido del margen y con el más lento, en kilos por
+ * semana hacia la meta. Sin fecha si el más lento casi no avanza, o si pasa de dos años.
+ */
+export function fechasDeLlegada(hoy: ClaveDia, faltan: number, lento: number, rapido: number): Fechas | null {
+  if (!(lento > QUIETO_KG_SEMANA)) return null;
+  const tardia = Math.ceil((faltan / lento) * 7);
+  if (tardia > HORIZONTE_DIAS) return null;
+  return { temprana: sumarDias(hoy, Math.ceil((faltan / rapido) * 7)), tardia: sumarDias(hoy, tardia) };
+}
+
+// ------------------------------------------------------------ el progreso al objetivo
+/**
+ * «otroLado»: el peso meta quedó del otro lado de donde se empezó (por ejemplo, al pasar de bajar a subir).
+ * «todaviaNo»: hay ritmo, pero su margen es más ancho que el plan: todavía no se sabe.
+ */
+export type EstadoDelObjetivo = 'llegaste' | 'enCamino' | 'despacio' | 'quieto' | 'alReves' | 'estable' | 'seMueve' | 'sinMeta' | 'otroLado' | 'todaviaNo' | 'faltanDatos';
 
 export type Progreso = {
   estado: EstadoDelObjetivo;
   /** El peso de la tendencia hoy. */
   peso: number | null;
-  /** Medido y el del plan, en kilos por semana (negativo es bajar). */
+  /** El de hoy sin el atraso de la tendencia: de ahí salen lo que falta, si llegaste y la fecha. */
+  nivel: number | null;
+  /** Medido, con su margen, y el del plan, en kilos por semana (negativo es bajar). */
   ritmo: number | null;
+  rango: { desde: number; hasta: number } | null;
   ritmoPlan: number;
   /** Los kilos que faltan, siempre positivos. */
   faltan: number | null;
-  /** Cuándo llegaría al ritmo medido. */
+  /** Cuándo llegaría al ritmo medido: entre `fechas`, y `fecha` en el medio. Con un margen que no alcanza, ninguna. */
   fecha: ClaveDia | null;
+  fechas: Fechas | null;
   /** Cuánto del camino ya se hizo, de 0 a 1, desde el peso con que se empezó. */
   hecho: number | null;
 };
@@ -55,8 +141,8 @@ export type Progreso = {
 export type EntradaDelProgreso = {
   hoy: ClaveDia;
   tendencia: Map<ClaveDia, number>;
-  /** Las pesadas de la tendencia, para medir el ritmo sin su atraso al principio. */
-  pesadas?: Pesada[];
+  /** Las pesadas: de ahí salen el ritmo con su margen y el peso de hoy sin atraso. */
+  pesadas?: readonly Pesada[];
   objetivo: Objetivo;
   ritmo: Ritmo;
   pesoMeta?: number | null;
@@ -66,18 +152,25 @@ export type EntradaDelProgreso = {
 
 export function progresoAlObjetivo(e: EntradaDelProgreso): Progreso {
   const peso = e.tendencia.get(e.hoy) ?? null;
-  const ritmo = ritmoSemanal(e.tendencia, e.hoy, e.pesadas);
+  // Sin las pesadas (lo de la galería que todavía no las pasa), el ritmo de la tendencia, sin margen.
+  const conRango = e.pesadas ? ritmoConRango(e.pesadas, e.hoy) : null;
+  const ritmo = e.pesadas ? (conRango?.kgPorSemana ?? null) : ritmoSemanal(e.tendencia, e.hoy);
+  const medio = conRango ? (conRango.hasta - conRango.desde) / 2 : 0;
+  const nivel = peso === null ? null : nivelDeHoy(e.tendencia, e.hoy, e.pesadas, conRango);
   const ritmoPlan = e.objetivo === 'mantener' || peso === null ? 0 : (RITMOS[e.objetivo][e.ritmo] / 100) * peso;
-  const base = { peso, ritmo, ritmoPlan, faltan: null, fecha: null, hecho: null };
-  if (peso === null) return { ...base, estado: 'faltanDatos' };
+  const rango = ritmo === null ? null : { desde: ritmo - medio, hasta: ritmo + medio };
+  const base = { peso, nivel, ritmo, rango, ritmoPlan, faltan: null, fecha: null, fechas: null, hecho: null };
+  if (peso === null || nivel === null) return { ...base, estado: 'faltanDatos' };
   if (e.objetivo === 'mantener') {
     if (ritmo === null) return { ...base, estado: 'faltanDatos' };
-    return { ...base, estado: Math.abs(ritmo) <= ESTABLE_KG_SEMANA ? 'estable' : 'seMueve' };
+    if (medio > MARGEN_PARA_SABER) return { ...base, estado: 'todaviaNo' };
+    // Cambiando, solo si todo el margen queda afuera de los 150 g por semana.
+    return { ...base, estado: ritmo - medio > ESTABLE_KG_SEMANA || ritmo + medio < -ESTABLE_KG_SEMANA ? 'seMueve' : 'estable' };
   }
   if (!e.pesoMeta) return { ...base, estado: ritmo === null ? 'faltanDatos' : 'sinMeta' };
 
   const direccion = e.objetivo === 'bajar' ? -1 : 1;
-  const faltan = Math.max(0, (e.pesoMeta - peso) * direccion);
+  const faltan = Math.max(0, (e.pesoMeta - nivel) * direccion);
   const camino = e.pesoInicial ? (e.pesoMeta - e.pesoInicial) * direccion : 0;
   const hecho = camino > 0 ? Math.min(1, Math.max(0, 1 - faltan / camino)) : null;
   if (faltan <= LLEGASTE_KG) {
@@ -86,15 +179,19 @@ export function progresoAlObjetivo(e: EntradaDelProgreso): Progreso {
     return { ...base, faltan, hecho: hecho === null ? null : 1, estado: 'llegaste' };
   }
   if (ritmo === null) return { ...base, faltan, hecho, estado: 'faltanDatos' };
+  const plan = Math.abs(ritmoPlan);
+  if (medio > Math.max(MARGEN_PARA_SABER, plan)) return { ...base, faltan, hecho, estado: 'todaviaNo' };
 
+  // El avance hacia la meta con su margen; para decir que no se mueve, nunca menos que lo que se llama quieto.
   const avance = ritmo * direccion;
-  const dias = avance > QUIETO_KG_SEMANA ? Math.ceil((faltan / avance) * 7) : null;
-  const fecha = dias !== null && dias <= HORIZONTE_DIAS ? sumarDias(e.hoy, dias) : null;
-  const estado: EstadoDelObjetivo = avance < -QUIETO_KG_SEMANA ? 'alReves'
-    : avance <= QUIETO_KG_SEMANA ? 'quieto'
-    : avance < DESPACIO * Math.abs(ritmoPlan) ? 'despacio'
+  const margen = Math.max(medio, QUIETO_KG_SEMANA);
+  const fechas = fechasDeLlegada(e.hoy, faltan, avance - medio, avance + medio);
+  const fecha = fechas ? sumarDias(e.hoy, Math.ceil((faltan / avance) * 7)) : null;
+  const estado: EstadoDelObjetivo = avance + margen < 0 ? 'alReves'
+    : avance - margen <= 0 ? 'quieto'
+    : avance + medio < DESPACIO * plan ? 'despacio'
     : 'enCamino';
-  return { ...base, faltan, hecho, fecha, estado };
+  return { ...base, faltan, hecho, fecha, fechas, estado };
 }
 
 export type Balance = {
@@ -152,11 +249,10 @@ export type Direccion = Exclude<Objetivo, 'mantener'>;
 
 /** Hasta dónde es viable y hasta dónde exigente, en % del peso por semana. */
 export const BORDES: Record<Direccion, readonly [number, number]> = { bajar: [0.5, 1], subir: [0.25, 0.5] };
-/** Bajando, más de 1 kg por semana o más de 1.000 kcal de déficit por día ya es muy agresivo. */
-const KG_POR_SEMANA_MAXIMOS = 1;
-const DEFICIT_MAXIMO = 1000;
 /** Con medio kilo o menos de diferencia no hay camino: es mantener (como LLEGASTE_KG). */
 const SIN_CAMINO_KG = LLEGASTE_KG;
+/** Cada kilo menos, unas 22 kcal menos de gasto por día (Hall y Chow, 2011; Hall, 2011, da unas 24). */
+const GASTO_POR_KG = 22;
 
 /** Las kcal por día de menos (o de más) que pide un ritmo en kg por semana. */
 export const kcalPorDia = (kgPorSemana: number) => (Math.abs(kgPorSemana) * KCAL_POR_KG) / 7;
@@ -180,9 +276,10 @@ export function bordeDe(direccion: Direccion, cual: 'viable' | 'exigente', pesoK
 /**
  * Lo que conviene saber de un plazo: sin entrenamiento de fuerza, bajando se pierde músculo y
  * subiendo, casi todo es grasa; con ese ritmo la comida quedaría debajo del piso; el piso deja tan
- * poco déficit (o nada) que no se llega en dos años; o es menor de edad y el ritmo no es el viable.
+ * poco déficit (o nada) que no se llega en dos años; hoy entra arriba del piso, pero con el gasto que
+ * baja al bajar de peso, cerca del final no; o es menor de edad y el ritmo no es el viable.
  */
-export type AvisoDelPlazo = 'sinFuerzaBajar' | 'sinFuerzaSubir' | 'piso' | 'pisoNoLlega' | 'menor';
+export type AvisoDelPlazo = 'sinFuerzaBajar' | 'sinFuerzaSubir' | 'piso' | 'pisoNoLlega' | 'pisoAlFinal' | 'menor';
 
 export type Plazo = {
   direccion: Direccion;
@@ -205,7 +302,7 @@ export type Plazo = {
 
 export type EntradaDelPlazo = {
   hoy: ClaveDia;
-  /** El peso de la tendencia hoy (o el último). */
+  /** El peso de hoy (el de la tendencia, o el último). */
   pesoKg: number;
   pesoMeta: number;
   sexo: Sexo;
@@ -235,6 +332,7 @@ function armarPlazo(e: EntradaDelPlazo, direccion: Direccion, pct: number, fecha
   const avisos: AvisoDelPlazo[] = [];
   if (noLlega) avisos.push('pisoNoLlega');
   else if (fechaConPiso) avisos.push('piso');
+  else if (direccion === 'bajar' && e.gasto - GASTO_POR_KG * faltan - kcal < pisoDe(e.sexo)) avisos.push('pisoAlFinal');
   if (e.edad < MAYORIA_DE_EDAD && cual !== 'viable') avisos.push('menor');
   if (e.entrenaFuerza !== true) avisos.push(direccion === 'bajar' ? 'sinFuerzaBajar' : 'sinFuerzaSubir');
   return {
@@ -265,22 +363,24 @@ export function plazoConFecha(e: EntradaDelPlazo, fecha: ClaveDia): Plazo | null
 // Lo pediste el 2/11/2026: arriba de Progreso, el plan («llegar acá en tanto tiempo; después, esto»),
 // que cambie según cómo vienes. Es el plazo (D35) con hitos cada cuatro semanas y lo que viene al
 // llegar: unas semanas en mantenimiento, comiendo lo que se gasta, para que el peso se asiente. Cómo
-// vienes compara el ritmo medido con el del plan; el control de cada semana ajusta las calorías para
-// seguirlo, así que la fecha del plan queda y lo que se mueve es a dónde llegarías a tu ritmo.
+// vienes compara el ritmo medido, con su margen, con el del plan; el control de cada semana ajusta las
+// calorías para seguirlo, así que la fecha del plan queda y lo que se mueve es a dónde llegarías.
 
 export type TipoDeEtapa = Objetivo;
 export type Etapa = { tipo: TipoDeEtapa; desde: ClaveDia; hasta: ClaveDia | null; pesoDesde: number; pesoHasta: number };
 export type Hito = { fecha: ClaveDia; kg: number; meta: boolean };
-export type ComoVienes = 'alRitmo' | 'adelantado' | 'atrasado' | 'alReves' | 'llegaste' | 'estable' | 'seMueve' | 'faltanDatos';
+export type ComoVienes = 'alRitmo' | 'adelantado' | 'atrasado' | 'alReves' | 'llegaste' | 'estable' | 'seMueve' | 'todaviaNo' | 'faltanDatos';
 export type PlanPorEtapas = {
   etapas: Etapa[];
   hitos: Hito[];
   comoVienes: ComoVienes;
-  /** El ritmo medido y el del plan, en kg por semana con su signo (negativo es bajar). */
+  /** El ritmo medido, con su margen, y el del plan, en kg por semana con su signo (negativo es bajar). */
   ritmo: number | null;
+  rango: { desde: number; hasta: number } | null;
   ritmoPlan: number;
-  /** A dónde llegarías a tu ritmo, si va para el lado de la meta y en menos de dos años. */
+  /** A dónde llegarías a tu ritmo, si va para el lado de la meta y en menos de dos años: entre `fechasATuRitmo`, y en el medio. */
   fechaATuRitmo: ClaveDia | null;
+  fechasATuRitmo: Fechas | null;
 };
 
 const SEMANAS_POR_HITO = 4;
@@ -293,28 +393,32 @@ const AL_RITMO_KG = 0.1;
 
 export function planPorEtapas(e: {
   hoy: ClaveDia;
-  /** El peso de la tendencia hoy. */
+  /** El peso de hoy (sin el atraso de la tendencia, si se sabe). */
   pesoKg: number;
   objetivo: Objetivo;
   pesoMeta?: number | null;
   /** El plazo de hoy (plazoConRitmo o plazoConFecha); sin camino, null. */
   plazo: Plazo | null;
-  /** El ritmo medido (ritmoSemanal), en kg por semana. */
+  /** El ritmo medido, en kg por semana, y su margen (ritmoConRango); sin margen, el ritmo solo. */
   ritmo: number | null;
+  rango?: { desde: number; hasta: number } | null;
   /** Lo que sigue después del mantenimiento, si lo dijo en el cuestionario: mantener, ganar músculo o decidirlo después. */
   despues?: 'mantener' | 'musculo' | 'despues' | null;
   /** El peso de la tendencia cuando se fijó el objetivo: si la meta ya estaba pasada al empezar, no se llegó. */
   pesoInicial?: number | null;
 }): PlanPorEtapas {
   const { hoy, pesoKg, plazo, ritmo } = e;
+  const medio = ritmo !== null && e.rango ? (e.rango.hasta - e.rango.desde) / 2 : 0;
+  const rango = ritmo === null ? null : { desde: ritmo - medio, hasta: ritmo + medio };
   if (e.objetivo === 'mantener' || !plazo) {
     const meta = e.objetivo === 'mantener' || !e.pesoMeta ? pesoKg : e.pesoMeta;
     // A medio kilo de la meta o pasándola, como progresoAlObjetivo; la meta del otro lado desde el principio no cuenta.
     const direccion = e.objetivo === 'bajar' ? -1 : 1;
     const llego = e.objetivo !== 'mantener' && !!e.pesoMeta && (e.pesoMeta - pesoKg) * direccion <= LLEGASTE_KG
       && !(e.pesoInicial && (e.pesoMeta - e.pesoInicial) * direccion <= 0);
-    const comoVienes: ComoVienes = llego ? 'llegaste' : ritmo === null ? 'faltanDatos' : Math.abs(ritmo) <= ESTABLE_KG_SEMANA ? 'estable' : 'seMueve';
-    return { etapas: [{ tipo: 'mantener', desde: hoy, hasta: null, pesoDesde: pesoKg, pesoHasta: meta }], hitos: [], comoVienes, ritmo, ritmoPlan: 0, fechaATuRitmo: null };
+    const comoVienes: ComoVienes = llego ? 'llegaste' : ritmo === null ? 'faltanDatos' : medio > MARGEN_PARA_SABER ? 'todaviaNo'
+      : ritmo - medio > ESTABLE_KG_SEMANA || ritmo + medio < -ESTABLE_KG_SEMANA ? 'seMueve' : 'estable';
+    return { etapas: [{ tipo: 'mantener', desde: hoy, hasta: null, pesoDesde: pesoKg, pesoHasta: meta }], hitos: [], comoVienes, ritmo, rango, ritmoPlan: 0, fechaATuRitmo: null, fechasATuRitmo: null };
   }
   const signo = plazo.direccion === 'bajar' ? -1 : 1;
   const meta = pesoKg + signo * plazo.faltan;
@@ -328,23 +432,27 @@ export function planPorEtapas(e: {
   if (e.despues === 'mantener' || e.despues === 'musculo') {
     etapas.push({ tipo: e.despues === 'musculo' ? 'subir' : 'mantener', desde: finDelMantenimiento, hasta: null, pesoDesde: meta, pesoHasta: meta });
   }
-  // Cada cuatro semanas, o repartidos si no entran; el último, la meta.
+  // Cada cuatro semanas, o repartidos si no entran; el último, la meta. De a medio kilo: más fino sería precisión falsa.
   const cuantos = Math.min(HITOS_MAXIMOS, Math.floor((dias - 1) / (SEMANAS_POR_HITO * 7)));
   const paso = cuantos > 0 ? (Math.floor((dias - 1) / (SEMANAS_POR_HITO * 7)) > HITOS_MAXIMOS ? dias / (cuantos + 1) : SEMANAS_POR_HITO * 7) : 0;
   const hitos: Hito[] = Array.from({ length: cuantos }, (_, i) => {
     const d = Math.round(paso * (i + 1));
-    return { fecha: sumarDias(hoy, d), kg: Math.round((pesoKg + (signo * plazo.faltan * d) / dias) * 10) / 10, meta: false };
+    return { fecha: sumarDias(hoy, d), kg: Math.round((pesoKg + (signo * plazo.faltan * d) / dias) * 2) / 2, meta: false };
   });
   hitos.push({ fecha: plazo.fecha, kg: meta, meta: true });
   const ritmoPlan = signo * plazo.kgPorSemana;
-  const base = { etapas, hitos, ritmo, ritmoPlan, fechaATuRitmo: null as ClaveDia | null };
+  const base = { etapas, hitos, ritmo, rango, ritmoPlan, fechaATuRitmo: null as ClaveDia | null, fechasATuRitmo: null as Fechas | null };
   if (ritmo === null) return { ...base, comoVienes: 'faltanDatos' };
+  const p = plazo.kgPorSemana;
+  if (medio > Math.max(MARGEN_PARA_SABER, p)) return { ...base, comoVienes: 'todaviaNo' };
   const avance = ritmo * signo;
-  const fechaATuRitmo = avance > QUIETO_KG_SEMANA && Math.ceil((plazo.faltan / avance) * 7) <= HORIZONTE_DIAS ? sumarDias(hoy, Math.ceil((plazo.faltan / avance) * 7)) : null;
-  const margen = Math.max(AL_RITMO * plazo.kgPorSemana, AL_RITMO_KG);
-  const comoVienes: ComoVienes = avance < -QUIETO_KG_SEMANA ? 'alReves'
-    : Math.abs(avance - plazo.kgPorSemana) <= margen ? 'alRitmo'
-    : avance > plazo.kgPorSemana ? 'adelantado'
-    : 'atrasado';
-  return { ...base, comoVienes, fechaATuRitmo };
+  const fechasATuRitmo = fechasDeLlegada(hoy, plazo.faltan, avance - medio, avance + medio);
+  const fechaATuRitmo = fechasATuRitmo ? sumarDias(hoy, Math.ceil((plazo.faltan / avance) * 7)) : null;
+  // Adelantado o más lento, solo si todo el margen queda afuera del plan con su cuarto.
+  const m = Math.max(AL_RITMO * p, AL_RITMO_KG);
+  const comoVienes: ComoVienes = avance + Math.max(medio, QUIETO_KG_SEMANA) < 0 ? 'alReves'
+    : avance - medio > p + m ? 'adelantado'
+    : avance + medio < p - m ? 'atrasado'
+    : 'alRitmo';
+  return { ...base, comoVienes, fechaATuRitmo, fechasATuRitmo };
 }

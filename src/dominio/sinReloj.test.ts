@@ -38,7 +38,11 @@ describe('la noche sin reloj', () => {
     expect(e.dormirse).toBe(min('2026-10-22 00:01'));
     expect(e.despertar).toBe(min('2026-10-22 07:14'));
     expect(e).toMatchObject({ confianza: 'alta', interrupciones: 0, motivos: [] });
-    expect(e.rango.dormirse).toEqual([e.dormirse - 20, e.dormirse + 20]);
+    // El rango, de la duda que queda al juntar las dos (35 y 60): ±39, sin antes de la última actividad ni
+    // después de la primera.
+    expect(e.margen).toEqual({ dormirse: 39, despertar: 34 });
+    expect(e.rango.dormirse).toEqual([min('2026-10-21 23:30'), e.dormirse + 39]);
+    expect(e.rango.despertar).toEqual([e.despertar - 34, min('2026-10-22 07:30')]);
   });
 
   it('usar el teléfono un rato a la madrugada no corta la noche: es una interrupción, y baja la confianza', () => {
@@ -122,6 +126,25 @@ describe('la noche sin reloj', () => {
 
   // Lo que avisan los Atajos y el despertador (spec/sueno-sin-esfuerzo.md).
   const senal = (que: Senal['que'], texto: string, segundos = 0): Senal => ({ id: `${que}-${texto}-${segundos}`, que, en: hora(texto) + segundos * 1000 });
+
+  it('el rango es el del 80 % del modelo: ±1,28 veces la duda que queda, más ancho con lo que más hace errar', () => {
+    // Con solo el teléfono y lo de siempre (dudas de 35 y 60), al menos ±38 al dormirte.
+    const e = estimar(dia('23:30', '07:30'))!;
+    expect(e.margen.dormirse).toBeGreaterThanOrEqual(38);
+    // Con «Me voy a dormir» (20) y lo de siempre, unos ±24.
+    const conAviso = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: deLasSenales([senal('meVoyADormir', '2026-10-21 23:30')], UY).anclas })!;
+    expect(conAviso.margen.dormirse).toBe(24);
+    // Con la alarma, el despertar es exacto: ±10.
+    expect(estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 06:50'), que: 'despertar' }] })!.margen.despertar).toBe(10);
+    // Dejar el teléfono tres horas antes que siempre agranda el de dormirte (Sahha: 153 minutos de error), no el de despertarte.
+    const temprano = estimar(dia('21:00', '07:30'))!;
+    expect(temprano.motivos).toContain('dejasteAntes');
+    expect(temprano.margen.dormirse).toBeGreaterThan(90);
+    expect(temprano.margen.despertar).toBe(e.margen.despertar);
+    // Usar el teléfono de noche agranda los dos, la mitad más.
+    const conUso = estimar(dia('23:30', '07:30', [uso('2026-10-22 03:00', '2026-10-22 03:06', 'moss')]))!;
+    expect(conUso.margen).toEqual({ dormirse: 58, despertar: 52 });
+  });
 
   describe('todas las señales juntas (lo pediste el 31/10/2026)', () => {
     /** Una noche con lo que avisó el cargador: `ultima` es lo último que hiciste con el teléfono. */
@@ -398,12 +421,43 @@ describe('las noches de Moss junto a las de Salud', () => {
 
   it('una noche de Moss no tiene etapas ni despertares; estimada con confianza baja no cuenta hasta confirmarla', () => {
     const n = nocheDeMoss(propia('2026-10-22', 'estimada', 'media'), UY)!;
-    expect(n).toMatchObject({ clave: '2026-10-22', dormido: 450, conEtapas: false, dormirse: 370, despertar: 820, fuente: { id: 'moss', tipo: 'moss' } });
+    // De 00:10 a 07:40 son 450 minutos, y adentro, unos 30 despierto que el teléfono no ve.
+    expect(n).toMatchObject({ clave: '2026-10-22', dormido: 420, despierto: 30, conEtapas: false, dormirse: 370, despertar: 820, fuente: { id: 'moss', tipo: 'moss' } });
     expect(n.confianza.duracion).toBe('media');
-    expect(n.moss).toMatchObject({ origen: 'estimada', confianza: 'media', rango: { dormirse: [335, 405] } });
+    // Sin el margen guardado (una noche de antes), el de su confianza.
+    expect(n.moss).toMatchObject({ origen: 'estimada', confianza: 'media', rango: { dormirse: [320, 420], despertar: [775, 865] } });
     expect(nocheDeMoss(propia('2026-10-22', 'estimada', 'baja'), UY)!.confianza.duracion).toBe('baja');
     expect(nocheDeMoss(propia('2026-10-22', 'confirmada'), UY)!.moss!.rango).toBeNull();
     expect(instanteDe('2026-10-22', UY, 370)).toBe(hora('2026-10-22 00:10'));
+  });
+
+  it('lo dormido es la noche menos lo despierto que el teléfono no ve: de 23:00 a 7:00, 450 dormido y 30 despierto', () => {
+    const noche = (despertar: string): NochePropia => ({
+      fecha: '2026-10-22', actualizado: '2026-10-22T09:00:00.000Z',
+      hora: { dormirse: new Date(hora('2026-10-21 23:00')).toISOString(), despertar: new Date(hora(despertar)).toISOString(), origen: 'confirmada', confianza: 'media' },
+    });
+    expect(nocheDeMoss(noche('2026-10-22 07:00'), UY)).toMatchObject({ dormido: 450, despierto: 30, dormirse: 300, despertar: 780 });
+    // Con 7 noches de un reloj o más, lo tuyo: la mediana de lo despierto de esas noches más lo que el reloj no ve.
+    const reloj: Fuente = { id: 'reloj', nombre: 'Apple Watch', tipo: 'reloj' };
+    const delReloj = Array.from({ length: 7 }, (_, i) => `2026-10-${String(12 + i).padStart(2, '0')}`).flatMap((dia, i) => [
+      { etapa: 'nucleo' as const, desde: hora(`${dia} 00:00`), hasta: hora(`${dia} 03:00`), fuente: 'reloj', zona: UY },
+      { etapa: 'nucleo' as const, desde: hora(`${dia} 03:${String(10 + i).padStart(2, '0')}`), hasta: hora(`${dia} 07:00`), fuente: 'reloj', zona: UY },
+    ]);
+    const conReloj = conNochesDeMoss(armarNoches(delReloj, [reloj]), [noche('2026-10-22 07:00')], UY).find((n) => n.clave === '2026-10-22')!;
+    // Despierto de 10 a 16 minutos esas noches: la mediana, 13, más 15.
+    expect(conReloj).toMatchObject({ dormido: 480 - 28, despierto: 28 });
+  });
+
+  it('el rango guardado con la noche, sin antes de la última actividad ni después de la primera', () => {
+    const iso = (texto: string) => new Date(hora(texto)).toISOString();
+    const np: NochePropia = {
+      fecha: '2026-10-22', actualizado: '2026-10-22T09:00:00.000Z',
+      hora: {
+        dormirse: iso('2026-10-22 00:01'), despertar: iso('2026-10-22 07:14'), origen: 'estimada', confianza: 'alta',
+        estimada: { dormirse: iso('2026-10-22 00:01'), despertar: iso('2026-10-22 07:14'), quieto: { desde: iso('2026-10-21 23:30'), hasta: iso('2026-10-22 07:30') }, margen: { dormirse: 39, despertar: 34 } },
+      },
+    };
+    expect(nocheDeMoss(np, UY)!.moss!.rango).toEqual({ dormirse: [min('2026-10-21 23:30'), min('2026-10-22 00:40')], despertar: [min('2026-10-22 06:40'), min('2026-10-22 07:30')] });
   });
 
   it('Salud gana a lo estimado; lo que confirmaste gana a lo anotado a mano en Salud', () => {
@@ -428,9 +482,9 @@ describe('las noches de Moss junto a las de Salud', () => {
     // Una de la semana anterior, de 23:00 a 7:00 con la hora de entonces.
     const antes = nocheDeMoss(noche('2026-10-29', '2026-10-29T03:00:00.000Z', '2026-10-29T11:00:00.000Z'), zonaDe)!;
     expect([antes.dormirse, antes.despertar]).toEqual([300, 780]);
-    // La del cambio: de 23:00 a 7:00 son 9 horas.
+    // La del cambio: de 23:00 a 7:00 son 9 horas (y adentro, la media hora despierto).
     const delCambio = nocheDeMoss(noche('2026-11-01', '2026-11-01T03:00:00.000Z', '2026-11-01T12:00:00.000Z'), zonaDe)!;
-    expect([delCambio.dormido, delCambio.dormirse, delCambio.despertar]).toEqual([540, 300, 780]);
+    expect([delCambio.dormido + delCambio.despierto, delCambio.dormirse, delCambio.despertar]).toEqual([540, 300, 780]);
     // Con una sola zona, la de después del cambio, esa noche se corría una hora.
     expect(nocheDeMoss(noche('2026-10-29', '2026-10-29T03:00:00.000Z', '2026-10-29T11:00:00.000Z'), -300)!.despertar).toBe(720);
   });

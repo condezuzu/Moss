@@ -1,12 +1,61 @@
-// «Estás 87 % recuperado» (spec/ascent.md, «Ascent en Progreso», para aprobar), con Ascent vinculada: tres
-// partes que suman 100, el sueño de anoche (40), lo que les falta a los músculos (40) y la comida de ayer (20).
-// Cuando se apruebe reemplaza a recuperacion() de entrenamiento.ts, que la app sigue usando hasta entonces; en
-// la app la va a calcular moss.recuperacion(fecha) con esta misma cuenta, así Ascent muestra el mismo número.
-// Es un número del día: se mira a la hora de la sesión de hoy o, sin sesión, a la mañana (como WHOOP), y
-// cada parte se dice con las mismas cuatro franjas que el total (como Oura). Las constantes son una propuesta
-// para calibrar con lo tuyo.
+// Cómo llegas a entrenar hoy (spec/ascent.md, «Ascent en Progreso», para aprobar), con Ascent vinculada.
+// Revisado con la evidencia el 5/11/2026 (spec/rendimiento.md, «Lo que cambió»): ningún puntaje compuesto de
+// «recuperación» está validado contra el rendimiento (Doherty 2025), y la suma compensa (con noches de 4 h 30
+// a 6 h, el 97 % de las combinaciones daba «Bien» o «Muy bien»). Lo que se propone ahora:
+// - el titular del día, sin porcentaje, con la regla del eslabón más débil: el primer caso que se cumple
+//   manda y nada lo compensa (titularDeHoy);
+// - debajo, tres filas con sus datos: el sueño, los músculos de hoy y la comida.
+// El número de antes («Estás 87 % recuperado», recuperado()) queda hasta que decidas, con la comida sin
+// anotar fuera de la cuenta. En la app lo va a calcular moss.recuperacion(fecha) con estas reglas, así
+// Ascent muestra lo mismo.
 
 import { calidadParaRecuperar } from './entrenamiento';
+import type { EstadoMuscular } from './musculos';
+import { suenoCorto, type Noche } from './rendimiento';
+
+// ------------------------------------------------------------ el titular
+
+export type QueTitular = 'hecha' | 'descanso' | 'sinHorario' | 'faltaNoche' | 'cargado' | 'suenoCorto' | 'teSientes' | 'casi' | 'listo';
+/** Lo que pone el límite hoy: lleva el único color de la sección. */
+export type Limita = 'sueno' | 'musculos' | 'teSientes' | null;
+export type Titular = { que: QueTitular; limita: Limita };
+
+/** «¿Cómo te sientes para entrenar?», de 0 a 10: 4 o menos es la mitad de abajo de la escala de Laurent 2011 (convención). */
+export const TE_SIENTES_BAJO = 4;
+
+/**
+ * El titular de hoy. Sigue la regla del eslabón más débil, y el orden pone primero lo que hoy cambia la
+ * sesión:
+ * - la sesión de hoy ya está anotada: «hecha»; sin sesión, «descanso» (o, si no se sabe cuándo entrenas,
+ *   «sinHorario»);
+ * - sin la noche, «faltaNoche»;
+ * - lo que entrenas hoy, cargado: «cargado» (más liviano u otra cosa);
+ * - la noche corta (estadoDeLaNoche, en rendimiento.ts) o dos de las últimas tres: «suenoCorto» (sin ir
+ *   al fallo);
+ * - dijiste que no te sientes recuperado: «teSientes»;
+ * - lo de hoy todavía se recupera: «casi» (como siempre);
+ * - si no, «listo».
+ */
+export function titularDeHoy(x: {
+  sesion: 'prevista' | 'hecha' | null;
+  sabeCuandoEntrena: boolean;
+  noche: Noche | null;
+  ultimas3: readonly number[];
+  /** El peor estado de los músculos de hoy (peorEstado de musculos.ts); null si no se sabe qué entrenas. */
+  musculos: EstadoMuscular | null;
+  comoTeSientes: number | null;
+}): Titular {
+  if (x.sesion === 'hecha') return { que: 'hecha', limita: null };
+  if (!x.sesion) return { que: x.sabeCuandoEntrena ? 'descanso' : 'sinHorario', limita: null };
+  if (!x.noche) return { que: 'faltaNoche', limita: null };
+  if (x.musculos === 'cargado') return { que: 'cargado', limita: 'musculos' };
+  if (suenoCorto(x.noche, x.ultimas3)) return { que: 'suenoCorto', limita: 'sueno' };
+  if (x.comoTeSientes !== null && x.comoTeSientes <= TE_SIENTES_BAJO) return { que: 'teSientes', limita: 'teSientes' };
+  if (x.musculos === 'recuperandose') return { que: 'casi', limita: null };
+  return { que: 'listo', limita: null };
+}
+
+// ------------------------------------------------------------ el número de antes (hasta que decidas)
 
 export const MAXIMOS = { sueno: 40, musculos: 40, comida: 20 } as const;
 export type Parte = keyof typeof MAXIMOS;
@@ -20,9 +69,7 @@ export const BANDAS: readonly Banda[] = ['atencion', 'aceptable', 'bien', 'muyBi
 
 /**
  * Dónde empieza y termina cada franja, de peor a mejor: el total, el sueño (de 40), la comida (de 20) y la
- * fatiga muscular (en %, al revés: menos es mejor). Muy bien desde 85, bien de 70 a 84, aceptable de 50 a
- * 69 y atención debajo; la fatiga, muy bien hasta 5 %, bien hasta 15 (baja), aceptable hasta 40 (moderada)
- * y atención con más (alta).
+ * fatiga muscular (en %, al revés: menos es mejor). Son las de Oura, prestadas (convención).
  */
 export const LIMITES = {
   total: [0, 50, 70, 85, 100],
@@ -69,8 +116,12 @@ export function suenoParaRecuperar(n: { dormido: number; necesidad: number; cali
 /** Los músculos, de 40: 40 × (1 − la fatiga). Sin fatiga, los 40. */
 export const musculosParaRecuperar = (fatiga: number) => Math.round(40 * (1 - Math.min(100, Math.max(0, fatiga)) / 100));
 
-/** La comida de ayer, de 20: 10 por la proteína contra la meta y 10 por haber comido al menos el 80 % de las calorías. */
-export function comidaParaRecuperar(c: { proteinaAyer: number; metaProteina: number; kcalAyer: number; metaKcal: number }) {
+/**
+ * La comida de ayer, de 20: 10 por la proteína contra la meta y 10 por haber comido al menos el 80 % de las
+ * calorías. Sin nada anotado, null: que no haya registro no quiere decir que no comiste.
+ */
+export function comidaParaRecuperar(c: { proteinaAyer: number | null; metaProteina: number; kcalAyer: number | null; metaKcal: number }) {
+  if (c.proteinaAyer === null || c.kcalAyer === null || c.kcalAyer <= 0) return null;
   const proteina = 10 * Math.min(1, c.proteinaAyer / c.metaProteina);
   const calorias = 10 * Math.min(1, c.kcalAyer / (0.8 * c.metaKcal));
   return { puntos: Math.round(proteina + calorias), proteina, calorias };
@@ -79,9 +130,10 @@ export function comidaParaRecuperar(c: { proteinaAyer: number; metaProteina: num
 export type Recuperado = {
   total: number;
   banda: Banda;
-  partes: Record<Parte, number>;
+  /** La comida, null sin nada anotado ayer: entonces el total sale del sueño y los músculos, sobre 80. */
+  partes: { sueno: number; musculos: number; comida: number | null };
   /** La franja de cada parte; la de los músculos sale de la fatiga. */
-  bandas: { sueno: Banda; fatiga: Banda; comida: Banda };
+  bandas: { sueno: Banda; fatiga: Banda; comida: Banda | null };
   /** La fatiga muscular, en % (0 a 100; menos es mejor). */
   fatiga: number;
   /** Si la noche tiene calidad (del reloj o de la mañana): sin ella, el sueño no pasa de 30. */
@@ -92,7 +144,7 @@ export type Recuperado = {
   loQueMasFalta: Parte;
 };
 
-/** La recuperación de un día: el sueño de anoche, la fatiga de los músculos de hoy y la comida de ayer. */
+/** El número de antes: el sueño de anoche, la fatiga de los músculos de hoy y la comida de ayer. */
 export function recuperado(d: {
   dormido: number;
   necesidad: number;
@@ -101,20 +153,24 @@ export function recuperado(d: {
   sentida: number | null;
   /** La fatiga muscular de hoy, en % (fatiga.ts). */
   fatiga: number;
-  proteinaAyer: number;
+  /** Lo de ayer; null sin nada anotado. */
+  proteinaAyer: number | null;
   metaProteina: number;
-  kcalAyer: number;
+  kcalAyer: number | null;
   metaKcal: number;
 }): Recuperado {
   const sueno = suenoParaRecuperar(d);
-  const partes = { sueno: sueno.puntos, musculos: musculosParaRecuperar(d.fatiga), comida: comidaParaRecuperar(d).puntos };
-  const total = partes.sueno + partes.musculos + partes.comida;
+  const comida = comidaParaRecuperar(d);
+  const partes = { sueno: sueno.puntos, musculos: musculosParaRecuperar(d.fatiga), comida: comida ? comida.puntos : null };
+  // Sin la comida, lo que hay se lleva a 100: un dato que falta no es un dato malo.
+  const total = partes.comida === null ? Math.round(((partes.sueno + partes.musculos) / (MAXIMOS.sueno + MAXIMOS.musculos)) * 100) : partes.sueno + partes.musculos + partes.comida;
   const banda = bandaDe(total, 'total');
-  const orden: Parte[] = ['sueno', 'comida', 'musculos'];
-  const loQueMasFalta = orden.reduce((a, b) => (partes[b] / MAXIMOS[b] < partes[a] / MAXIMOS[a] ? b : a));
+  const orden: Parte[] = partes.comida === null ? ['sueno', 'musculos'] : ['sueno', 'comida', 'musculos'];
+  const proporcion = (p: Parte) => (partes[p] ?? MAXIMOS[p]) / MAXIMOS[p];
+  const loQueMasFalta = orden.reduce((a, b) => (proporcion(b) < proporcion(a) ? b : a));
   return {
     total, banda, partes,
-    bandas: { sueno: bandaDe(partes.sueno, 'sueno'), fatiga: bandaDe(d.fatiga, 'fatiga'), comida: bandaDe(partes.comida, 'comida') },
+    bandas: { sueno: bandaDe(partes.sueno, 'sueno'), fatiga: bandaDe(d.fatiga, 'fatiga'), comida: partes.comida === null ? null : bandaDe(partes.comida, 'comida') },
     fatiga: Math.round(d.fatiga),
     conCalidad: sueno.conCalidad,
     conviene: banda === 'muyBien' ? 'fuerte' : banda === 'atencion' ? 'suave' : 'normal',

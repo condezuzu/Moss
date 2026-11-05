@@ -414,7 +414,7 @@
       serie: serieDe(t, 56),
       serieDesde: Fechas.sumarDias(hoy, -55),
       serie30: serieDe(t, 30),
-      progreso: Progreso.progresoAlObjetivo({ hoy, tendencia: t, objetivo: perfil.objetivo, ritmo: perfil.ritmo, pesoMeta: perfil.pesoMeta, pesoInicial: t.get([...t.keys()][0]) }),
+      progreso: Progreso.progresoAlObjetivo({ hoy, tendencia: t, pesadas: Datos.PESADAS, objetivo: perfil.objetivo, ritmo: perfil.ritmo, pesoMeta: perfil.pesoMeta, pesoInicial: t.get([...t.keys()][0]) }),
       gasto: controlHecho.gasto,
       control: controlHecho,
       balance: Progreso.balance(comidas, controlHecho.gasto, Fechas.sumarDias(hoy, -1), 7),
@@ -467,6 +467,9 @@
     medir: () => mas.ir('medidas'),
     ir: (i) => pestanas.ir(i),
     invitacionDeAscent: () => (ascent ? ascent.invitacion() : null),
+    // Tu energía, con Ascent vinculada y prendida: el titular de hoy de su sección (los músculos) y su marca.
+    ascentDeHoy: () => (vinculada && ascentPrendida && ascent ? ascent.titularDeHoy() : null),
+    marcaDeAscent: () => (ascent && ascent.marcaChica ? ascent.marcaChica() : ''),
     // «Sin déficit» es de Perfil, que se arma después.
     sinDeficit: () => !!(perfilSec && perfilSec.sinDeficit),
   }));
@@ -498,6 +501,8 @@
     ponerMeta: (m) => { metasAMano = !m || m.kcal !== metaDeMoss().kcal || m.proteina !== metaDeMoss().proteina; ponerMetaDeHoy(m); },
     registrarPeso: () => mas.ir('peso'),
     medir: () => mas.ir('medidas'),
+    // Con «sin déficit» (Perfil o Cuidados), ni el plan de bajar ni «el control ajusta tus calorías para mantenerlo».
+    sinDeficit: () => !!(perfilSec && perfilSec.sinDeficit),
   }));
   sueno = SeccionSueno.crear(tel, Object.assign({}, opcionesDeSeccion, {
     deporte: () => deporte.paraSueno(),
@@ -505,8 +510,13 @@
     sinReloj: () => soloIphone,
     metaDeSueno: 8 * 60,
     sexo: () => persona().perfil.sexo,
-    recuperacion: () => (ascent ? ascent.recuperacionDeHoy() : null),
-    rendimiento: () => (ascent ? ascent.rendimientoDeHoy() : null),
+    // Reflujo en Cuidados (Perfil): la última comida de esta noche, 3 h antes de la cama.
+    reflujo: () => !!(perfilSec && perfilSec.reflujo),
+    // «Necesito dormir», en Perfil › Avisos.
+    necesidadElegida: () => (perfilSec ? perfilSec.necesidad : null),
+    // Con Ascent: el titular de hoy, sin porcentaje, y la línea del rendimiento con la noche corta.
+    titular: () => (ascent ? ascent.titularDeHoy() : null),
+    linea: () => (ascent ? ascent.lineaDeHoy() : null),
     abrirAscent: () => abrirAscent(),
     // La cara de la mañana cambia la recuperación, que también está en Ascent.
     alCambiarCara: () => { if (ascent) ascent.pintar(); },
@@ -527,10 +537,20 @@
     // Comida, para Entrenamiento: cuándo entrenas cambia lo que dice cada comida.
     comida,
     persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length,
+    // Tus respuestas (5/11): el cuestionario con lo contestado; al guardar, la meta nueva y de vuelta a Perfil.
+    revisarCuestionario: () => {
+      cerrarHojas();
+      // Con lo que contestó la persona de la galería (en la app, lo guardado en el perfil).
+      const P = Datos.PERFIL;
+      window.__cuestionario('responder', { sexo: P.sexo, edad: Number(Datos.HOY.slice(0, 4)) - P.nacimiento, altura: P.alturaCm, peso: 75, objetivo: P.objetivo, pesoMeta: P.pesoMeta, estilo: P.estilo, movimiento: P.movimiento });
+      entrada.revisar({ kcalAntes: comida.meta.kcal, alGuardar: (m) => { comida.ponerMeta(m); pestanas.ir(5, true); perfilSec.pintar(); } });
+    },
     suscripcion: () => suscripcion.valorDeFila(), abrirSuscripcion: () => suscripcion.abrirHoja(),
     accesoDeSuscripcion: () => suscripcion.acceso,
     ascentPrendida: () => ascentPrendida,
     irAMetas: () => accionesSeccion.estrategia(),
+    // «Necesito dormir» cambia la deuda, la calidad y esta noche en Sueño.
+    alCambiarNecesidad: () => { if (sueno) sueno.pintar(); },
     // Los números ocultos (Perfil): sin calorías ni gramos en Inicio, Comida y la ventana del alimento.
     alNumeros: (si) => { tel.classList.toggle('sin-numeros', !si); inicio.refrescarConsejos(); },
   }));
@@ -1124,6 +1144,14 @@
     deporte: () => { if (!deporte.clave) deporte.poner('vispera'); accionesSeccion.deporteInicio(); },
     deporteInicio: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.bajar(); },
     deporteTarjeta: () => { cerrarHojas(); deporte.poner('energia'); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
+    // En qué se basa Moss (5/11, para aprobar): abajo de todo de Perfil.
+    base: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirBase(); },
+    // Tu energía (5/11, para aprobar): en Inicio, arriba si es baja y debajo de los macros si no.
+    energia: () => { cerrarHojas(); if (deporte.clave) deporte.poner(null); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
+    // La deuda en una palabra y esta noche (5/11, para aprobar): en Sueño, con la noche de hoy.
+    deudaEstaNoche: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.sn-deuda'), 240); },
+    // Cuidados (5/11, para aprobar): en Perfil, y también en el cuestionario.
+    cuidados: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirCuidados(); },
     deporteSueno: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.sn-heroe'), 240); },
     deporteBloqueo: () => {
       cerrarHojas();
@@ -1204,6 +1232,18 @@
   window.__ascentEnPerfil = (si) => ponerAscentPrendida(si);
   window.__aparato = (v) => ponerAparato(v === 'iphone');
   segmento('s-estanc', (v) => { pocasSemanas = v === 'pocas'; ascent.pintar(); });
+  // Tu rango en Ascent (5/11, para aprobar): el color de la sección y su horizonte. Un planeta lleva al rango 4.
+  const marcarRango = () => {
+    const r = ascent.rango;
+    $$('#s-rango button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.valor) === r.rango)));
+    $$('#s-planeta button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.valor === r.planeta)));
+  };
+  const ponerRango = (n, planeta) => { ascent.ponerRango(n, planeta); ascent.pintar(); marcarRango(); };
+  segmento('s-rango', (v) => ponerRango(Number(v), Number(v) === 4 ? 'Ceres' : null));
+  // Tu energía de ejemplo: baja, suficiente, alta o sin datos.
+  segmento('s-energia', (v) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v); });
+  window.__energia = (v, extra) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v, extra); };
+  segmento('s-planeta', (v) => ponerRango(4, v));
   // Según el deporte: el día de ejemplo (o ninguno) y, el domingo después del partido, con o sin alcohol anotado.
   segmento('s-deporte', (v) => { deporte.poner(v === 'ninguno' ? null : v); });
   segmento('s-alcohol', (v) => { if (deporte.clave !== 'anoche') deporte.poner('anoche'); deporte.ponerAlcohol(v === 'si'); });
@@ -1462,6 +1502,8 @@
       subir: () => ascent.subir(),
       iphone: () => ascent.ponerIphone(arg),
       dia: () => ascent.ponerDia(arg),
+      // [rango, planeta]: tu rango en Ascent.
+      rango: () => ponerRango(arg[0], arg[1]),
       asomar: () => ascent.asomar(true),
       como: () => ascent.abrirComo(),
       volverAInvitar: () => ascent.volverAInvitar(),

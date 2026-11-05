@@ -1,13 +1,185 @@
-// El rendimiento esperado de hoy y los días para intentar marca (spec/rendimiento.md), con Ascent
-// vinculada. No es una garantía: el ruido de cada día (un 3,3 % del 1RM en entrenados) es del tamaño
-// de casi todos los efectos, así que se dice «más o menos probable», nunca «hoy levantas X kg».
-// - Dos números, en % respecto de lo tuyo: la fuerza máxima (Δmáx) y las repeticiones (Δvol).
-// - Δ = S + D + Q + C + M + T, entre −15 y +4: el sueño de anoche (o las noches seguidas, lo peor de
-//   los dos), cómo dijiste que dormiste, la comida, la fatiga del músculo y la descarga.
-// - «Buen día para intentar marca»: cinco condiciones y P = 1 − Φ((g − Δmáx) / σ), con g la distancia
-//   a la marca. Después se vuelve tuyo con los días parecidos a los de tus marcas.
+// El rendimiento, la fuerza y las marcas (spec/rendimiento.md), con Ascent vinculada. Revisado con la
+// evidencia el 5/11/2026: lo de arriba es lo que se propone ahora, para aprobar en la galería; lo de abajo
+// («lo de antes») lo sigue usando la app, apagada con CON_ASCENT, hasta que se programe lo nuevo.
+// - La noche en una palabra, con los umbrales de los estudios (estadoDeLaNoche), y una sola línea del
+//   rendimiento, solo con la noche corta (lineaDelRendimiento).
+// - La fuerza: la tendencia de 12 semanas de cada ejercicio con su rango del 80 %, que dice «sube», «sin
+//   subida clara» o «todavía no se sabe» (tendenciaDeFuerza). Con 3 semanas, «estancado» era casi todo
+//   ruido.
+// - La marca, sin probabilidad: si tu nivel de hoy (la tendencia) está a menos de tu ruido de la marca, con
+//   las condiciones a la vista y cada cuánto haces marca (cercaDeLaMarca, frecuenciaDeMarcas). La
+//   probabilidad de antes no estaba calibrada: cuando decía 49 %, la marca salía el 15 % de las veces.
+
+import type { EstadoMuscular } from './musculos';
 
 const limitar = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
+
+// ------------------------------------------------------------ la noche
+
+/** 6 horas o menos es la pérdida de sueño de los estudios (Craven 2022); 4 h 30 o menos, muy corta. */
+export const NOCHE_CORTA = 6 * 60;
+export const NOCHE_MUY_CORTA = 4.5 * 60;
+/** Despertarse una hora o más antes de lo de siempre pesa más que acostarse tarde (Craven 2022; Kong 2025). */
+export const DESPERTO_ANTES = 60;
+
+export type Noche = {
+  dormido: number;
+  necesidad: number;
+  /** Cuántos minutos antes de lo de siempre te despertaste (null si no se sabe o no fue antes). */
+  despertoAntes: number | null;
+};
+export type EstadoDeLaNoche = 'normal' | 'algoCorta' | 'corta' | 'muyCorta';
+
+/**
+ * La noche en una palabra, con los umbrales de los estudios y no con una recta: normal hasta una hora por
+ * debajo de lo que necesitas; corta con 6 h o menos o despertándote una hora o más antes; muy corta con
+ * 4 h 30 o menos. Entre una hora menos y 6 h, algo corta: no cambia la sesión.
+ */
+export function estadoDeLaNoche(n: Noche): EstadoDeLaNoche {
+  if (n.dormido <= NOCHE_MUY_CORTA) return 'muyCorta';
+  if (n.dormido <= NOCHE_CORTA || (n.despertoAntes ?? 0) >= DESPERTO_ANTES) return 'corta';
+  return n.dormido < n.necesidad - 60 ? 'algoCorta' : 'normal';
+}
+
+/** Dos de las últimas tres noches de 6 h o menos: varias noches cortas bajan los multiarticulares (Knowles 2018; Reilly y Piercy 1994). */
+export const nochesCortasSeguidas = (ultimas3: readonly number[]) => ultimas3.filter((m) => m <= NOCHE_CORTA).length >= 2;
+
+/** Si la noche de hoy (o las de antes) es de las que cambian la sesión. */
+export const suenoCorto = (noche: Noche | null, ultimas3: readonly number[]) =>
+  !!noche && (['corta', 'muyCorta'].includes(estadoDeLaNoche(noche)) || nochesCortasSeguidas(ultimas3));
+
+/**
+ * El rendimiento de hoy, en una línea y solo con la noche corta: «la fuerza máxima casi no cambia; las
+ * repeticiones pueden costar más» (en los estudios, −2,85 % y −9,85 %: Craven 2022). Sin Δ, sin «± 3,3 %»
+ * y sin categorías: los multiplicadores de antes salían de subgrupos con intervalos que cruzan el cero.
+ */
+export const lineaDelRendimiento = (noche: Noche | null, ultimas3: readonly number[]): 'suenoCorto' | null => (suenoCorto(noche, ultimas3) ? 'suenoCorto' : null);
+
+// ------------------------------------------------------------ la fuerza: la tendencia de cada ejercicio
+
+/** Una sesión con el ejercicio: cuándo (en semanas, desde cualquier día fijo) y el 1RM estimado de su mejor serie. */
+export type PuntoDeFuerza = { t: number; e1rm: number };
+export type EstadoDeLaFuerza = 'sube' | 'sinSubidaClara' | 'noSeSabe';
+/** La recta de la tendencia, en logaritmos: lo que hace falta para dibujarla con su rango. */
+export type Ajuste = { tMedio: number; yMedio: number; b: number; s: number; n: number; sxx: number };
+export type TendenciaDeFuerza = {
+  estado: EstadoDeLaFuerza;
+  /** Las sesiones de la ventana y cuántas semanas van de la primera a la última. */
+  sesiones: number;
+  semanas: number;
+  /** Lo que sube por mes, en %, con su rango del 80 % (null si no se sabe). */
+  porMes: number | null;
+  rango: [number, number] | null;
+  /** Tu ruido de un día a otro, en %, acercado al de los estudios (sigmaTuyo). */
+  sigma: number;
+  /** Tu nivel de hoy, en kg de 1RM estimado: el de la tendencia (null con menos de 3 sesiones). */
+  nivel: number | null;
+  ajuste: Ajuste | null;
+  puntos: PuntoDeFuerza[];
+};
+
+/** La ventana: las últimas 12 semanas. */
+export const SEMANAS_DE_LA_TENDENCIA = 12;
+/** Para decir algo: 6 sesiones o más, y por lo menos 6 semanas de la primera a la última. */
+export const SESIONES_MINIMAS = 6;
+export const SEMANAS_MINIMAS_DE_HISTORIA = 6;
+/** «Sin subida clara»: ni el borde de arriba del rango llega a +0,3 % por semana. */
+export const SIN_SUBIDA_POR_SEMANA = 0.3;
+/** El rango del 80 %. */
+export const Z_80 = 1.2816;
+/** Semanas por mes (52,2 / 12). */
+const SEMANAS_POR_MES = 4.35;
+
+const porMesDe = (b: number) => (Math.exp(SEMANAS_POR_MES * b) - 1) * 100;
+
+/**
+ * La tendencia de la fuerza en un ejercicio: con las sesiones de las últimas 12 semanas, la recta de
+ * mínimos cuadrados de ln(e1RM) contra el tiempo, con su rango del 80 % (b ± 1,2816 · EE(b)).
+ * - «sube» si el borde de abajo pasa 0; «sin subida clara» si el de arriba no llega a +0,3 % por semana;
+ *   si no, o con menos de 6 sesiones o 6 semanas, «todavía no se sabe».
+ * - Con una sesión por semana y un ruido de 3,3 %: si subes un 1 % por mes, dice «sin subida clara» el
+ *   15 % de las veces (la regla de las 3 semanas, el 63 %); si no subes, «sube» el 12 %.
+ * - Tu ruido sale de lo que se aparta cada sesión de la recta (el error típico de Hopkins 2000), acercado
+ *   al de los estudios con el peso de 10 sesiones.
+ */
+export function tendenciaDeFuerza(todos: readonly PuntoDeFuerza[], o: { hoy: number; entrenado: boolean }): TendenciaDeFuerza {
+  const puntos = todos.filter((p) => p.t <= o.hoy && p.t > o.hoy - SEMANAS_DE_LA_TENDENCIA && p.e1rm > 0).sort((a, b) => a.t - b.t);
+  const n = puntos.length;
+  const semanas = n ? puntos[n - 1].t - puntos[0].t : 0;
+  const base = o.entrenado ? SIGMA.entrenado : SIGMA.novato;
+  const vacia: TendenciaDeFuerza = { estado: 'noSeSabe', sesiones: n, semanas, porMes: null, rango: null, sigma: base, nivel: null, ajuste: null, puntos };
+  if (n < 3 || semanas <= 0) return vacia;
+  const ys = puntos.map((p) => Math.log(p.e1rm));
+  const tMedio = puntos.reduce((s, p) => s + p.t, 0) / n;
+  const yMedio = ys.reduce((s, y) => s + y, 0) / n;
+  let sxx = 0, sxy = 0;
+  puntos.forEach((p, i) => { sxx += (p.t - tMedio) ** 2; sxy += (p.t - tMedio) * (ys[i] - yMedio); });
+  const b = sxy / sxx;
+  const residuos = puntos.map((p, i) => ys[i] - yMedio - b * (p.t - tMedio));
+  const sse = residuos.reduce((s, r) => s + r * r, 0);
+  const s = Math.sqrt(sse / Math.max(1, n - 2));
+  const ee = s / Math.sqrt(sxx);
+  const ajuste: Ajuste = { tMedio, yMedio, b, s, n, sxx };
+  const sigma = sigmaTuyo(residuos.map((r) => r * 100), o.entrenado);
+  const nivel = Math.exp(yMedio + b * (o.hoy - tMedio));
+  if (n < SESIONES_MINIMAS || semanas < SEMANAS_MINIMAS_DE_HISTORIA) return { ...vacia, sigma, nivel, ajuste };
+  const abajo = 100 * (b - Z_80 * ee), arriba = 100 * (b + Z_80 * ee);
+  const estado: EstadoDeLaFuerza = abajo > 0 ? 'sube' : arriba < SIN_SUBIDA_POR_SEMANA ? 'sinSubidaClara' : 'noSeSabe';
+  return { estado, sesiones: n, semanas, porMes: porMesDe(b), rango: [porMesDe(b - Z_80 * ee), porMesDe(b + Z_80 * ee)], sigma, nivel, ajuste, puntos };
+}
+
+/** La tendencia en un momento, en kg, con su rango del 80 % (para dibujarla). */
+export function nivelEn(a: Ajuste, t: number): { nivel: number; abajo: number; arriba: number } {
+  const y = a.yMedio + a.b * (t - a.tMedio);
+  const ee = a.s * Math.sqrt(1 / a.n + (t - a.tMedio) ** 2 / a.sxx);
+  return { nivel: Math.exp(y), abajo: Math.exp(y - Z_80 * ee), arriba: Math.exp(y + Z_80 * ee) };
+}
+
+/** El 1RM estimado se dice redondeado a 2,5 kg y con «aprox.»: Epley y Brzycki difieren más que el ruido de un día. */
+export const aDosYMedio = (kg: number) => Math.round(kg / 2.5) * 2.5;
+
+// ------------------------------------------------------------ la marca, sin probabilidad
+
+export type CercaDeLaMarca = { cerca: boolean; distancia: number | null };
+
+/**
+ * Cerca de tu marca: tu nivel de hoy (la tendencia) está a menos de tu ruido de un día a otro de lo que
+ * levantaste en tu marca: ln(marca) − ln(nivel) ≤ σ. Sin nivel, no se sabe.
+ */
+export function cercaDeLaMarca(x: { marca: number; nivel: number | null; sigma: number }): CercaDeLaMarca {
+  if (x.nivel === null || x.nivel <= 0 || x.marca <= 0) return { cerca: false, distancia: null };
+  const distancia = (Math.log(x.marca) - Math.log(x.nivel)) * 100;
+  return { cerca: distancia <= x.sigma, distancia };
+}
+
+export type CondicionesDeLaMarca = { sueno: boolean; musculos: boolean; semana: boolean };
+
+/**
+ * Lo que acompaña un buen día, en una lista: dormiste más de 6 h y no te despertaste antes (ni vienes de
+ * dos noches cortas de tres), los músculos del ejercicio descansados y una semana sin más series que de
+ * costumbre.
+ */
+export function condicionesDeLaMarca(x: { noche: Noche | null; ultimas3: readonly number[]; musculos: EstadoMuscular | null; seriesSemanaSobreMes: number | null }): CondicionesDeLaMarca {
+  const n = x.noche;
+  return {
+    sueno: !!n && n.dormido > NOCHE_CORTA && (n.despertoAntes ?? 0) < DESPERTO_ANTES && !nochesCortasSeguidas(x.ultimas3),
+    musculos: x.musculos === 'recuperado',
+    semana: x.seriesSemanaSobreMes === null || x.seriesSemanaSobreMes <= 1,
+  };
+}
+
+/**
+ * Cada cuánto haces marca: en cuántas de tus últimas sesiones con el ejercicio (hasta 20) hubo una marca
+ * ese día. Es lo que más acierta: decir la frecuencia de siempre le gana a la probabilidad de antes
+ * (Brier de 0,135 contra 0,183).
+ */
+export function frecuenciaDeMarcas(sesiones: readonly string[], marcas: readonly string[], ultimas = 20): { marcas: number; de: number } {
+  const dias = [...new Set(sesiones)].sort().slice(-ultimas);
+  const conMarca = new Set(marcas);
+  return { marcas: dias.filter((d) => conMarca.has(d)).length, de: dias.length };
+}
+
+// ------------------------------------------------------------ lo de antes (la app, hasta que se programe lo nuevo)
 
 /** El ruido de un día a otro en el 1RM (Grgic 2020): 3,3 % en entrenados, 5,5 % con menos de 6 meses. */
 export const SIGMA = { entrenado: 3.3, novato: 5.5 };

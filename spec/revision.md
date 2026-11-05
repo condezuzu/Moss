@@ -149,6 +149,16 @@ Other Data Types.
 Notas:
 - **Sensitive Info** incluye el embarazo: por eso Moss guarda solo «sin
   déficit», sin el motivo. Las alergias son **Health**, no Sensitive Info.
+- **Con Cuidados** (D44, para aprobar en la galería: marcar cuál, de una lista):
+  lo marcado (la condición, la semana del embarazo, la diálisis) queda solo en
+  el iPhone, y Apple no cuenta como recopilado lo que no sale del teléfono: la
+  etiqueta no cambia. Lo que se deriva y sube (`sin_deficit`, un
+  `control_en_pausa` para el embarazo y las metas) ya está en **Health**. Si algún
+  día subiera, el embarazo sería **Sensitive Info**. Al publicarlo cambian la
+  política («lo que marcas en Cuidados se queda en tu iPhone»), los términos, las
+  notas para quien revisa («Embarazo, lactancia o una condición médica sacan todo
+  déficit» pasa a ser la lista, con su línea) y la clasificación por edad
+  (*Medical or Treatment Information*, «Infrequent»; sigue en 16+).
 - **Ascent no cambia estas respuestas:** los tipos que comparte el vínculo ya
   están, y Apple no pregunta por apps del mismo desarrollador. Las de Ascent sí
   tienen que sumar lo que recibe de Moss.

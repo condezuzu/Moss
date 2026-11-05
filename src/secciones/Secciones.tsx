@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, interpolate, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -166,14 +166,17 @@ export default function Secciones() {
     subida.set(subirOBajar(subida.get(), 1));
     setAscentAbierta(true);
   }));
+  // Con Reducir movimiento la hoja del «+» no sube: aparece y se va con un fundido corto (HojaMas).
+  const reducido = useReducedMotion();
+  const llevarLaHoja = (hasta: 0 | 1) => hoja.set(reducido ? withTiming(hasta, { duration: 180, reduceMotion: ReduceMotion.Never }) : subirOBajar(hoja.get(), hasta));
   const abrirHoja = (vista: VistaDelMas = 'menu') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setVistaDelMas(vista);
-    hoja.set(subirOBajar(hoja.get(), 1));
+    llevarLaHoja(1);
     setHojaAbierta(true);
   };
   const cerrarHoja = () => {
-    hoja.set(subirOBajar(hoja.get(), 0));
+    llevarLaHoja(0);
     setHojaAbierta(false);
   };
   // Un aviso o un widget llevan a lo suyo: se cierra lo que estaba abierto encima, que lo taparía (la hoja
@@ -246,9 +249,9 @@ export default function Secciones() {
 
   const estiloVelo = useAnimatedStyle(() => ({ opacity: interpolate(posicion.get(), [0, 1, 2, 3, 4, 5], VELO, 'clamp') }));
   const estiloTira = useAnimatedStyle(() => ({ transform: [{ translateX: -posicion.get() * ancho }] }));
-  // Con una hoja abierta, lo de atrás se achica un poco, como en iOS.
+  // Con una hoja abierta, lo de atrás se achica un poco, como en iOS. Con Reducir movimiento, no: saltaba.
   const estiloAtras = useAnimatedStyle(() => {
-    const abierta = Math.max(hoja.get(), conRegistro.get());
+    const abierta = reducido ? 0 : Math.max(hoja.get(), conRegistro.get());
     return { transform: [{ scale: 1 - 0.07 * abierta }], borderRadius: 30 * abierta };
   });
 

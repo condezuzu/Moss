@@ -13,8 +13,9 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle
 import { actualizarSalud } from '@/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { edadDe } from '@/dominio/metas';
 import {
-  calidadDeNoche, deudaDeSueno, horario as horarioDe, MAXIMOS, MINIMOS, nivelDeLaNoche, pareceIncompleta, pocoSuenoSostenido, ultimasNoches, vitalDeNoche,
+  calidadDeNoche, deudaDeSueno, horario as horarioDe, MAXIMOS, MINIMOS, nivelDeLaNoche, pareceIncompleta, pocoSuenoSostenido, redondearDeuda, ultimasNoches, vitalDeNoche,
   type Confianza, type Fuente, type Noche, type NochePropia, type OrigenDeNoche, type TipoDeVital,
 } from '@/dominio/sueno';
 import { aprenderPersonal } from '@/dominio/sinReloj';
@@ -54,6 +55,9 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const anterioresA = (c: ClaveDia) => ultimasNoches(s.noches, sumarDias(c, -1), DIAS);
   const noche = s.noches.find((n) => n.clave === clave) ?? null;
   const interior = ancho - 40 - 34;
+  // Antes de los 18 el umbral de poco sueño es otro, y el texto también.
+  const edad = e.perfil ? edadDe(e.perfil, e.hoy) : undefined;
+  const menor = edad !== undefined && edad < 18;
   return (
     <View style={{ width: ancho }}>
       <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
@@ -62,10 +66,10 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} desde={e.metas[0]?.desde ?? null} />
         <Tira s={s} hoy={e.hoy} elegida={clave} alElegir={(c) => setElegida(c === e.hoy ? null : c)} />
         {/* Poco sueño por semanas: la sugerencia de un médico, arriba. Una estimación, no un diagnóstico. */}
-        {pocoSuenoSostenido(ultimasNoches(s.noches, e.hoy, DIAS)) && (
+        {pocoSuenoSostenido(ultimasNoches(s.noches, e.hoy, DIAS), edad) && (
           <Aparece>
             <Carta titulo={t('sueno.pocoSueno.titulo')}>
-              <Parrafo>{t('sueno.pocoSueno.texto')}</Parrafo>
+              <Parrafo>{t(menor ? 'sueno.pocoSueno.textoMenor' : 'sueno.pocoSueno.texto')}</Parrafo>
               <Parrafo chico>{t('sueno.pocoSueno.nota')}</Parrafo>
             </Carta>
           </Aparece>
@@ -197,7 +201,7 @@ function LaNocheDeMoss({ n, hoy, propia }: { n: Noche; hoy: ClaveDia; propia: No
     : 'linear-gradient(90deg, #6f86d6, #8fd3e8)';
   return (
     <Carta titulo={tituloDe(n.clave, hoy)} derecha={<Chip texto={t(`sueno.origen.${m.origen}`)} tipo={TIPO_DE_ORIGEN[m.origen]} />}>
-      <Cifra valor={duracion(n.dormido)} texto={t('sueno.dormido')} />
+      <Cifra valor={duracion(n.dormido)} texto={t('sueno.dormidoAprox')} />
       <Nota>{t('sueno.horas', { desde: reloj(n.dormirse), hasta: reloj(n.despertar) })}</Nota>
       <View style={st.franja}>
         <View style={[st.franjaBarra, { left: `${((a - desde) / (hasta - desde)) * 100}%`, width: `${((b - a) / (hasta - desde)) * 100}%` }, degradado(franja)]} />
@@ -205,6 +209,7 @@ function LaNocheDeMoss({ n, hoy, propia }: { n: Noche; hoy: ClaveDia; propia: No
       <Eje izquierda={reloj(desde)} derecha={reloj(hasta)} />
       {r && <Parrafo>{`${t('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${t(`sueno.seguridad.${m.confianza}`)}.`}</Parrafo>}
       {m.origen === 'estimada' && <Parrafo chico>{t('sueno.estimadaTexto', { latencia: personal.latencia, despertar: personal.alDespertar })}</Parrafo>}
+      {n.despierto > 0 && <Parrafo chico>{t('sueno.sinRelojDespierto', { n: Math.round(n.despierto) })}</Parrafo>}
       <Parrafo chico>{t('sueno.sinRelojEtapas')}</Parrafo>
       {editando ? (
         <Aparece style={st.editorNoche}>
@@ -369,6 +374,7 @@ function ElHorario({ noches, clave }: { noches: (Noche | null)[]; clave: ClaveDi
             )}
           </View>
           <Parrafo chico>{t('sueno.regularidadTexto', { n: h.noches })}</Parrafo>
+          {h.aprox && <Parrafo chico>{t('sueno.regularidadAprox')}</Parrafo>}
         </>
       )}
     </Carta>
@@ -381,11 +387,14 @@ function LaDeuda({ noches, necesidad }: { noches: (Noche | null)[]; necesidad: n
   const conDatos = noches.filter((n): n is Noche => n !== null);
   // Cuentan como en deudaDeSueno(): las de confianza baja no entran.
   const seguras = conDatos.filter((n) => n.confianza.duracion !== 'baja').length;
-  const conDeuda = d !== null && d.minutos >= 15;
+  // A la media hora y con «aprox.»: media hora de diferencia en lo que necesitas la cambia en casi 4 horas.
+  const redondeada = d ? redondearDeuda(d.minutos) : 0;
+  const conDeuda = redondeada > 0;
   return (
     <Carta titulo={t('sueno.deuda')}>
-      <Cifra valor={d ? (conDeuda ? duracion(Math.round(d.minutos)) : t('sueno.sinDeuda')) : '—'} texto={conDeuda ? t('sueno.deudaDe', { necesidad: duracion(necesidad) }) : undefined} />
+      <Cifra valor={d ? (conDeuda ? t('sueno.deudaAprox', { t: duracion(redondeada) }) : t('sueno.sinDeuda')) : '—'} texto={conDeuda ? t('sueno.deudaDe', { necesidad: duracion(necesidad) }) : undefined} />
       <Nota>{d ? t('sueno.deudaNoches', { n: d.noches, de: d.de }) : faltanNoches(seguras, conDatos.length, MINIMOS.deuda)}</Nota>
+      {d && <Parrafo chico>{t('sueno.deudaPorNoche', { duermes: duracion(Math.round(d.duermes / 10) * 10), necesidad: duracion(necesidad) })}</Parrafo>}
       <Parrafo chico>{t('sueno.deudaTexto')}</Parrafo>
     </Carta>
   );

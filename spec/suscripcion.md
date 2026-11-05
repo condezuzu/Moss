@@ -68,9 +68,17 @@ Introducción, tus datos, **iniciar sesión**, cuestionario, meta y **pantalla d
 (`galeria/src/entrada.js`, `src/secciones/entrada/Entrada.tsx`). Sin `PREMIUM_SALE`, la de siempre.
 
 La introducción: la frase, **Anota en segundos** (lo dicho, la luna que se llena), **Comida de
-verdad, sin adivinar** (la base, sin IA de fotos), **Tu sueño, también**, **Comida y sueño,
-juntos**, **Tus hábitos son estrellas** (el cielo real) y **Pruébala 7 días, gratis** (lo que
-cuesta). La estrella guía hace algo en cada una: vueltas a la luna, baja por los resultados, cruza
+verdad, sin adivinar** (la base revisada, con el chip «Comparado con una segunda tabla oficial»;
+desde el 5/11 ya no nombra la IA de fotos: el porqué está en Perfil › En qué se basa Moss), **Tu
+sueño, también**, **Comida y sueño, juntos**, **Tus hábitos son estrellas** (el cielo real) y
+**Pruébala 7 días, gratis** (lo que cuesta).
+
+La pantalla de pago, desde el 5/11 (para aprobar en la galería): arriba, «Siempre hay una versión
+mejor de ti» y «Moss mide cómo comes, cómo duermes y lo que haces cada día, y te muestra qué te
+frena y qué cambiar»; el dibujo junta la noche corta con lo de hoy, con las calorías y los tres
+macros, para que se vea que también es una app de macros; y «Incluye todo Moss»: anota tu comida
+en segundos, seguimiento semanal para llegar a tu meta, tu sueño medido («ahí está el porqué de
+muchas cosas») y tus hábitos («lo que haces cada día te define, y Moss te lo muestra»). La estrella guía hace algo en cada una: vueltas a la luna, baja por los resultados, cruza
 la noche, une la noche con el día, camina la prueba.
 
 ## La pantalla, con lo que pide Apple

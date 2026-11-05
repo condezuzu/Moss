@@ -9,8 +9,8 @@
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, LayoutAnimationConfig, useAnimatedStyle } from 'react-native-reanimated';
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
+import Animated, { FadeIn, FadeOut, LayoutAnimationConfig, useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
@@ -34,7 +34,8 @@ import {
 } from '@/dominio/registros';
 import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { ENTRA_HOJA, ENTRA_VELO, SALE_HOJA, SALE_VELO } from '../movimiento';
+import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
+import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { Aparece } from '../tarjetas';
 import { useTeclado } from '../teclado';
 import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './comunes';
@@ -219,6 +220,26 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     if (c) for (let k = 0; k < c.cuantos; k++) a.quitarDeCanasta(c.desde);
     cerrarRegistro();
   };
+  // Bajarla con el dedo la cierra, como tocar afuera. Con un panel para escribir (crear, la receta, la
+  // carga rápida, decir) o eligiendo el ingrediente de una receta, no: lo escrito se perdería, y de ahí
+  // se sale con «Atrás» o «Cancelar».
+  const reducido = useReducedMotion();
+  const conFormulario = eligiendo || (!!panel && panel !== 'revision' && panel !== 'guardadas');
+  const deslizar = useBajarParaCerrar({ alCerrar: cerrar, activo: !conFormulario });
+
+  // Lo que se abre encima (un panel, la ventana, el escáner) se lleva el teclado del buscador: si no,
+  // lo que se escribía iba a parar al buscador tapado.
+  const buscador = useRef<TextInputInstance>(null);
+  const encima = !!panel || !!ventana || !!escaner;
+  useEffect(() => {
+    if (encima) buscador.current?.blur();
+  }, [encima]);
+  // Eligiendo el ingrediente de una receta, lo que sigue es buscarlo: el buscador espera con el teclado.
+  useEffect(() => {
+    if (!eligiendo || panel) return;
+    const espera = setTimeout(() => buscador.current?.focus(), 280);
+    return () => clearTimeout(espera);
+  }, [eligiendo, panel]);
 
   // Lo que no encontró nada, sin decir de quién (src/almacen/buzon.ts): así se sabe qué le falta a la
   // base. Cuenta cuando se dejó de escribir, no letra por letra.
@@ -234,8 +255,9 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
 
   // ------------------------------------------------------------ lo que queda en el día
   const meta = metaDelDia(e, dia);
-  // Las referencias de las vitaminas y los minerales: para la edad y el sexo del perfil.
-  const persona: ParaQuien = { sexo: e.perfil?.sexo ?? 'f', edad: e.perfil ? edadDe(e.perfil, e.hoy) : 30 };
+  // Las referencias de las vitaminas y los minerales: para la edad y el sexo del perfil; con el último peso, el tope
+  // de cafeína antes de los 18 (3 mg por kilo, EFSA 2015).
+  const persona: ParaQuien = { sexo: e.perfil?.sexo ?? 'f', edad: e.perfil ? edadDe(e.perfil, e.hoy) : 30, pesoKg: e.pesos[e.pesos.length - 1]?.kg ?? null };
   const restar = (x: Macros, y: Macros): Macros => ({ kcal: x.kcal - y.kcal, proteina: x.proteina - y.proteina, carbohidratos: x.carbohidratos - y.carbohidratos, grasas: x.grasas - y.grasas });
   const restante = (kcal: number, sin = 0) => {
     if (!meta) return null;
@@ -505,30 +527,41 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     <>
       {/* Al cerrar, la hoja sigue armada sin su contenido lo que dura la salida (ver HojaRegistro). */}
       {abierta && (<>
-      <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={[StyleSheet.absoluteFill, estilos.fondo]}>
+      {/* El fondo se aclara mientras la hoja baja con el dedo; su fundido de salida va por fuera, así no vuelve a oscurecerse. */}
+      <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={StyleSheet.absoluteFill}>
+        <Animated.View style={[StyleSheet.absoluteFill, estilos.fondo, deslizar.velo]} pointerEvents="none" />
         <Pressable style={StyleSheet.absoluteFill} onPress={cerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
       </Animated.View>
-      <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.hoja, { top: insets.top + 12 }]} accessibilityViewIsModal>
+      <Animated.View
+        entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA}
+        exiting={reducido ? SALE_FUNDIDO : SALE_HOJA}
+        style={[estilos.hoja, { top: insets.top + 12 }, deslizar.estilo]}
+        onLayout={deslizar.medir}
+        accessibilityViewIsModal
+        onAccessibilityEscape={!panel && !ventana ? cerrar : undefined}
+      >
         {/* Lo de adentro se va con la hoja: sus propias salidas (las filas de «decir») no corren. */}
         <LayoutAnimationConfig skipExiting>
-        <View style={estilos.arriba}>
+        <CabezaQueBaja arrastre={deslizar} style={estilos.arriba}>
           <View style={estilos.asa} />
           {!panel && (
             <Pressable onPress={cerrar} style={estilos.cerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={6}>
               <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
             </Pressable>
           )}
-        </View>
+        </CabezaQueBaja>
 
         <View style={estilos.paneles}>
+          <CabezaQueBaja arrastre={deslizar}>
           {eligiendo && borrador && (
             <View style={estilos.eligiendo}>
               <Text style={estilos.eligiendoTexto} numberOfLines={1}>{t('comida.receta.eligeIngrediente', { receta: borrador.nombre.trim() || t('comida.receta.nueva') })}</Text>
               <Boton texto={t('comun.cancelar')} tipo="contorno" alTocar={() => { setEligiendo(false); setPanel('receta'); }} />
             </View>
           )}
+          {/* Con el teclado arriba, la comida se cambia al primer toque. */}
           {!eligiendo && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={estilos.chipsLugar} contentContainerStyle={estilos.chips}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={estilos.chipsLugar} contentContainerStyle={estilos.chips} keyboardShouldPersistTaps="handled">
               {COMIDAS.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={c === comida} alTocar={() => setComida(c)} estilo={estilos.chip} />)}
             </ScrollView>
           )}
@@ -540,6 +573,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
           <View style={estilos.busca}>
             <Icono nombre="magnifyingglass" tam={17} color="rgba(239, 230, 207, 0.5)" />
             <TextInput
+              ref={buscador}
               value={texto}
               onChangeText={setTexto}
               placeholder={t('comida.buscar')}
@@ -548,6 +582,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               autoCorrect={false}
               autoCapitalize="none"
               returnKeyType="search"
+              maxLength={100}
               selectionColor={colores.oro}
               style={estilos.entrada}
               accessibilityLabel={t('comida.buscar')}
@@ -579,7 +614,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               <Boton texto={t('comida.crearAlimento')} icono="pencil" alTocar={() => { setCrear({}); setPanel('crear'); }} />
             </ScrollView>
           )}
-          <ScrollView style={estilos.cuerpo} contentContainerStyle={[estilos.cuerpoAdentro, { paddingBottom: 14 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+          </CabezaQueBaja>
+          <ScrollQueBaja arrastre={deslizar} lugar={estilos.cuerpo} style={estilos.cuerpo} contentContainerStyle={[estilos.cuerpoAdentro, { paddingBottom: 14 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
             {!q && !eligiendo && siempre && (
               <Aparece>
                 <Pressable
@@ -665,7 +701,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                 </View>
               </View>
             )}
-          </ScrollView>
+          </ScrollQueBaja>
 
           {panel === 'revision' && e.canasta.length > 0 && (
             <PanelRevision
@@ -877,9 +913,6 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
 
         {ventana && (
           <>
-            <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={[StyleSheet.absoluteFill, estilos.velo]}>
-              <Pressable style={StyleSheet.absoluteFill} onPress={() => (soloEditar ? cerrar() : setVentana(null))} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
-            </Animated.View>
             <Ventana
               key={`${ventana.alimento.fuente}-${ventana.alimento.ref}-${ventana.modo.tipo}`}
               alimento={ventana.alimento}
@@ -1013,5 +1046,4 @@ const estilos = StyleSheet.create({
   bandejaDetalle: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.62)', fontVariant: ['tabular-nums'] },
   listo: { height: 42, paddingHorizontal: 24, borderRadius: 999, backgroundColor: colores.oro, alignItems: 'center', justifyContent: 'center' },
   listoTexto: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.tinta },
-  velo: { backgroundColor: 'rgba(2, 4, 10, 0.58)' },
 });

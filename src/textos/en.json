@@ -220,7 +220,8 @@
           "Yes"
         ],
         "partidoHora": "What time it starts",
-        "partidoVaria": "It varies"
+        "partidoVaria": "It varies",
+        "viajeNota": "Only so reminders come in time: the trip doesn't add calories."
       },
       "recomponer": "Build muscle and lose fat",
       "recomponerTexto": "With weights and high protein, without changing your weight much.",
@@ -231,9 +232,7 @@
         "texto": "With years of training, muscle comes more slowly: Moss fits your plan to that.",
         "principiante": "Less than a year",
         "intermedio": "1 to 3 years",
-        "avanzado": "More than 3 years",
-        "avanzadoSubir": "Moss suggests gaining more slowly: the extra would be fat.",
-        "avanzadoRecomponer": "Recomposition goes slower: changes come little by little."
+        "avanzado": "More than 3 years"
       },
       "meta": {
         "titulo": "What's your goal weight?",
@@ -283,7 +282,18 @@
           "alta": "Higher"
         },
         "gramos": "{n} g",
-        "dieta": "What you eat"
+        "dieta": "Diet",
+        "cuando": {
+          "equilibrada": "For almost everyone. If you have no preference, pick this one: it's the easiest to keep up and it supports your training well.",
+          "bajaEnGrasas": "If you like bread, rice, pasta and fruit, or you train for long (running, cycling, games): it leaves more room for carbs.",
+          "bajaEnCarbohidratos": "If meat, eggs and dairy fill you up more, or you feel better with fewer starches. At the same calories, you lose the same as with balanced.",
+          "keto": "Almost no carbs. Only if you already know it: it's hard to keep up, it doesn't make you lose more than the others at the same calories, and it can lower your performance if you train hard."
+        },
+        "proteinaCuando": {
+          "baja": "If reaching the recommended amount is hard or you eat little meat. It's still enough to protect your muscle.",
+          "recomendada": "What suits almost everyone for your goal. If you're not sure which to pick, leave this one.",
+          "alta": "If you're losing weight and training hard: it helps you keep muscle and curbs hunger. More than this adds nothing."
+        }
       },
       "dia": {
         "titulo": "What's your day like?",
@@ -317,7 +327,14 @@
       "masaMagra": "using your lean mass",
       "menos": "Less",
       "mas": "More",
-      "fechaConAnio": "{mes} {num}, {anio}"
+      "fechaConAnio": "{mes} {num}, {anio}",
+      "revisar": {
+        "cerrar": "Close",
+        "titulo": "Your new target",
+        "antes": "It was {antes} kcal; now it's {ahora}.",
+        "guardar": "Save"
+      },
+      "recomponerSinPesas": "Without weights, muscle has nothing to grow from: recomposition ends up close to maintenance."
     },
     "datos": {
       "titulo": "Your data is yours",
@@ -334,10 +351,11 @@
       "titulo": "Does any of these apply to you?",
       "embarazo": "Pregnancy or breastfeeding",
       "condicion": "A medical condition that affects what I eat",
-      "condicionTexto": "Diabetes, kidney problems or an eating disorder, for example.",
+      "condicionTexto": "Kidney problems or an eating disorder, for example.",
       "nada": "None of these",
       "aviso": "Moss won't suggest eating less than you burn. To change your weight, it's better with a professional by your side.",
-      "bajarNo": "In your case, losing weight is better with a professional."
+      "bajarNo": "In your case, losing weight is better with a professional.",
+      "marcaTodo": "Mark everything that applies: Moss adjusts your targets to what the guidelines recommend."
     },
     "menor": {
       "titulo": "Moss is for ages 16 and up",
@@ -363,7 +381,7 @@
       },
       "base": {
         "titulo": "Real food, no guessing",
-        "texto": "A reviewed database, with the names used where you live. No photo AI: you choose what you ate and see where every number comes from.",
+        "texto": "A reviewed database, with the names used where you live: you choose what you ate and see where every number comes from.",
         "busca": "avocado",
         "filas": [
           "Avocado",
@@ -375,8 +393,7 @@
           "1 regular",
           "1 tbsp"
         ],
-        "verificado": "Checked against a second official table",
-        "sinIA": "No photo AI"
+        "verificado": "Checked against a second official table"
       },
       "sueno": {
         "titulo": "Your sleep, too",
@@ -797,7 +814,8 @@
         "todo": "Everything",
         "vegetariana": "Vegetarian",
         "vegana": "Vegan",
-        "pescetariana": "Pescatarian"
+        "pescetariana": "Pescatarian",
+        "carnivora": "Carnivore"
       },
       "alergias": "What you don't eat",
       "alergenos": {
@@ -860,6 +878,11 @@
         "idioma": "Your iPhone can’t recognize this language offline. Use the keyboard’s microphone: it works too.",
         "otro": "I couldn’t hear you. Try again, or type it."
       }
+    },
+    "letra": {
+      "p": "P",
+      "c": "C",
+      "g": "F"
     }
   },
   "inicio": {
@@ -917,7 +940,7 @@
       "decir": "Say it",
       "caloriasTexto": "Start with the next thing you eat: in a few days, Moss knows your meals and suggests them.",
       "camino": "Your path",
-      "caminoTexto": "At a sustainable pace, you'd get there on {fecha}. Weigh in tomorrow when you wake up: with two weeks of weigh-ins, Moss measures your real pace.",
+      "caminoTexto": "At a sustainable pace, you'd get there on {fecha}. Weigh in tomorrow when you wake up: after two weeks of weigh-ins, Moss starts to see which way you're heading; after four to six, how fast.",
       "pesarme": "Log my weight",
       "cieloTexto": "Every habit you check lights up a star; with all of them, today's constellation is drawn.",
       "habitos": "Choose my habits"
@@ -974,11 +997,11 @@
         },
         "peso": {
           "titulo": "Your weight",
-          "texto": "Moss looks at the trend, not a single day's number: it averages your weigh-ins, so water and salt don't move it. Your pace comes from the last three weeks."
+          "texto": "Moss looks at the trend, not a single day's number: it averages your weigh-ins, so water doesn't move it as much. Your pace comes from your last six weeks, with a margin: with only a few, it's too early to tell."
         },
         "grasa": {
           "titulo": "Body fat",
-          "texto": "With a tape, using the US Navy method. That's why it's a range: against a lab scan, it's off by 3 or 4 points."
+          "texto": "With a tape, using the US Navy method. That's why it's a range: against a lab scan, it can be off by about 4 points or more."
         },
         "sueno": {
           "titulo": "Your sleep",
@@ -1079,6 +1102,98 @@
         }
       },
       "noMostrar": "Don't show again"
+    },
+    "energia": {
+      "etiqueta": "Your energy · today",
+      "titulo": {
+        "baja": "Low energy",
+        "suficiente": "Enough energy",
+        "alta": "High energy",
+        "sinDatos": "Your energy"
+      },
+      "texto": {
+        "baja": "Based on what you've logged, your energy is very low.",
+        "suficiente": "Today you have enough energy for your day.",
+        "alta": "{comida}{sueno}: everything's on your side today.",
+        "altaEntrena": "{comida}{sueno}: everything's set for a good workout.",
+        "sinDatos": "Log your meals for a few days and you'll see your energy here each day, along with your sleep.",
+        "suficienteEntrena": "Today you have enough energy to train as usual."
+      },
+      "mas": "More",
+      "menos": "Less",
+      "plegar": "Collapse",
+      "desplegar": "Expand",
+      "estimacion": "It's an estimate from what you log and what your phone or watch measures: if something's missing from your log, it looks lower than it is.",
+      "etiquetaAscent": "Your energy · with Ascent",
+      "razon": {
+        "comida": {
+          "llegaste": "You hit your calories",
+          "deSobra": "You ate plenty for your training",
+          "alcanza": "You ate what you need"
+        },
+        "sueno": {
+          "muyBien": ", slept well and have no sleep debt",
+          "bien": ", slept well and your sleep debt is low",
+          "soloAnoche": " and slept well"
+        }
+      },
+      "partes": {
+        "sueno": "Sleep",
+        "comida": "Food",
+        "musculos": "Muscles"
+      },
+      "como": {
+        "sueno": {
+          "muyCorta": "Very short",
+          "corta": "Short",
+          "seguidas": "Short nights",
+          "algoCorta": "A bit short",
+          "deuda": "In debt",
+          "bien": "Good",
+          "sinDatos": "No data"
+        },
+        "comida": {
+          "senal": "Too little",
+          "muyPoco": "Too little",
+          "debajo": "Below target",
+          "llegaste": "Good",
+          "deSobra": "Plenty",
+          "alcanza": "Good",
+          "sinDatos": "No data"
+        },
+        "musculos": {
+          "cargados": "Still tired",
+          "listos": "Ready",
+          "entrenaste": "Trained",
+          "descanso": "Rest day"
+        }
+      },
+      "conviene": "What helps today",
+      "consejo": {
+        "dormir": "Tonight, go to bed at {hora} to wake up at {despertar}.",
+        "dormirDeuda": "Tonight, go to bed at {hora}: that's how you start paying down your sleep debt.",
+        "sinFallo": "If you train, better not to go to failure: reps feel harder.",
+        "comerMas": "Eat a bit more these days, especially before and after training.",
+        "medico": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a sports dietitian.",
+        "llegar": "You fell short of your calories: one more meal or a bigger portion helps.",
+        "seguir": "Keep it up: eat as usual and sleep what you need."
+      },
+      "deQueSale": "Based on your sleep, your meals and your training",
+      "deQueSaleSinEntreno": "Based on your sleep and your meals",
+      "detalle": {
+        "sueno": "Last night you slept {dormido}. Sleep debt: {deuda}.",
+        "suenoSinDatos": "No nights yet: after a few days of sleep, Moss adds it in.",
+        "comida": "These days, about {kcal} kcal a day out of your {meta}, and {entreno} from training.",
+        "comidaSinMeta": "These days, about {kcal} kcal a day, and {entreno} from training.",
+        "comidaSinNumeros": "What you logged these days, against what your day and your training ask for.",
+        "comidaSinDatos": "Log your meals for a few days and Moss adds them in."
+      },
+      "juicioDeuda": {
+        "muyBien": "none",
+        "bien": "low",
+        "algoAlta": "a bit high",
+        "alta": "high"
+      }
     }
   },
   "mas": {
@@ -1148,7 +1263,7 @@
     "rango": "{desde} to {hasta}%",
     "rangoCorto": "{desde}–{hasta}%",
     "estimacion": "tape estimate",
-    "aviso": "This is an estimate from your measurements, not a measurement: a lab scan (DEXA) could read 3 or 4 points higher or lower. It’s less precise with very little fat, a lot of muscle or a lot of fat, and it doesn’t apply during pregnancy or under 18. Measure the same way every time and watch the trend.",
+    "aviso": "This is an estimate from your measurements, not a measurement: a lab scan (DEXA) could read about 4 points higher or lower, sometimes more. Over a few weeks the tape may miss a change in fat, especially in women: your waist shows it better. It’s less precise with very little fat, a lot of muscle or a lot of fat, and it doesn’t apply during pregnancy or under 18. Measure the same way every time and watch the trend.",
     "comoSeEstimaHombre": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and half a centimetre at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side.",
     "comoSeEstimaMujer": "With the US Navy method (Hodgdon and Beckett, 1984): body density comes from your waist plus your hips minus your neck and your height, and body fat from the Siri equation. The range is the estimate plus and minus how much it changes if the tape shifts 1 cm at the waist and hips and half a centimetre at the neck, rounded to whole points. With very little or a lot of fat, it opens one more point on each side."
   },
@@ -1159,13 +1274,14 @@
       "llegaste": "Reached",
       "enCamino": "On track",
       "despacio": "Slower",
-      "quieto": "No change",
+      "quieto": "No clear change",
       "alReves": "Wrong way",
       "estable": "Stable",
       "seMueve": "Changing",
       "sinMeta": "No goal weight",
       "otroLado": "Check your goal",
-      "faltanDatos": "Needs data"
+      "faltanDatos": "Needs data",
+      "todaviaNo": "Too early to tell"
     },
     "objetivoA": {
       "bajar": "Lose down to {kg} {unidad}",
@@ -1184,13 +1300,14 @@
       "llegaste": "You reached your goal weight. To stay there, switch your goal to maintain.",
       "enCamino": "You’re going {ritmo} {unidad} a week; the plan is {plan}. {faltan} {unidad} to go: about {semanas} weeks.",
       "despacio": "You’re going {ritmo} {unidad} a week, less than half the plan ({plan}). {faltan} {unidad} to go.",
-      "quieto": "Your trend has barely moved in the last three weeks. The weekly check-in adjusts your targets for that.",
+      "quieto": "No clear change yet: your weight may be steady or moving very slowly. The weekly check-in adjusts your targets for that.",
       "alReves": "Your trend is going the other way ({ritmo} {unidad} a week). The weekly check-in adjusts your targets for that.",
       "estable": "Your trend moves less than 150 g a week: you’re maintaining.",
       "seMueve": "Your trend is moving {ritmo} {unidad} a week.",
       "sinMeta": "You’re going {ritmo} {unidad} a week; the plan is {plan}. Pick a goal weight to see when you’d get there.",
       "otroLado": "Your goal weight is on the other side of where you started. Pick a new one in your strategy.",
-      "faltanDatos": "Two weeks of weigh-ins are needed to measure your pace."
+      "faltanDatos": "After two weeks of weigh-ins, Moss starts to see which way you're heading; after four to six, how fast.",
+      "todaviaNo": "It's too early to tell how fast you're going: with only a few weeks of weigh-ins, the margin is wide. A few more weeks and Moss will tell you."
     },
     "peso": "Weight",
     "registrar": "Log",
@@ -1208,7 +1325,7 @@
     "kcalPorDia": "kcal a day",
     "controlDel": "From the check-in on {fecha}",
     "balanceTexto": "{n}-day balance: eaten minus burned",
-    "comoSeCalculaTexto": "Over the last {dias} days you ate {promedio} kcal a day on average and your trend changed {cambio} {unidad}. Moss takes a quarter of the difference from its previous estimate, so your target changes gradually.",
+    "comoSeCalculaTexto": "Over the last {dias} days you ate {promedio} kcal a day on average and, going by the line through your weigh-ins, your weight changed {cambio} {unidad}. Moss takes a quarter of the difference from its previous estimate, so your target changes gradually.",
     "estrategia": "Strategy",
     "pesoMeta": "Goal weight",
     "sinPesoMeta": "Not set",
@@ -1308,11 +1425,12 @@
       "kcalMenos": "About {n} kcal a day below what you burn.",
       "kcalMas": "About {n} kcal a day above what you burn.",
       "avisos": {
-        "sinFuerzaBajar": "Without strength training, part of what you lose is muscle; training strength three times a week keeps almost all of it.",
+        "sinFuerzaBajar": "Without strength training, part of what you lose is muscle; training strength three times a week, much less.",
         "sinFuerzaSubir": "Without strength training, about two thirds of what you gain is fat.",
         "piso": "With that date you'd eat under {piso} kcal, and Moss doesn't go below that: you'd get there on {fecha}.",
         "menor": "Under 18, a sustainable pace is best.",
-        "pisoNoLlega": "Moss doesn't go below {piso} kcal, and with what you burn that leaves little or no deficit: you wouldn't get there within two years."
+        "pisoNoLlega": "Moss doesn't go below {piso} kcal, and with what you burn that leaves little or no deficit: you wouldn't get there within two years.",
+        "pisoAlFinal": "Near the end you'd eat less than {piso} kcal; Moss doesn't go below that, so the last stretch goes slower."
       },
       "sinCamino": "Pick a goal weight to see when you'd get there.",
       "caminoTexto": "The solid line is your trend; the dotted one goes on to your goal, at your pace."
@@ -1338,7 +1456,8 @@
         "llegaste": "Reached",
         "estable": "Steady",
         "seMueve": "Changing",
-        "faltanDatos": "Needs data"
+        "faltanDatos": "Needs data",
+        "todaviaNo": "Too early to tell"
       },
       "etapas": {
         "bajar": "Lose to {kg} kg",
@@ -1347,18 +1466,20 @@
       },
       "para": "by {fecha}",
       "comoVienes": {
-        "alRitmo": "You're on pace: {ritmo} kg a week.",
-        "adelantado": "You're ahead of the plan: {ritmo} kg a week (plan: {plan}). At this pace you get there on {fecha}.",
-        "atrasado": "You're slower than the plan: {ritmo} kg a week (plan: {plan}). At this pace you get there on {fecha}; the check-in adjusts your calories.",
-        "atrasadoSinFecha": "You're slower than the plan: {ritmo} kg a week (plan: {plan}). The check-in adjusts your calories.",
+        "alRitmo": "You're on pace: {ritmo} kg a week, between {desde} and {hasta} (plan: {plan}).",
+        "adelantado": "You're ahead of the plan: {ritmo} kg a week, between {desde} and {hasta} (plan: {plan}). At this pace you'd get there {cuando}.",
+        "atrasado": "You're slower than the plan: {ritmo} kg a week, between {desde} and {hasta} (plan: {plan}). At this pace you'd get there {cuando}; the check-in adjusts your calories.",
+        "atrasadoSinFecha": "You're slower than the plan: {ritmo} kg a week, between {desde} and {hasta} (plan: {plan}). The check-in adjusts your calories.",
         "alReves": "Your weight is going the other way: the next check-in adjusts your calories.",
         "llegaste": "You reached your goal. Next, a few weeks at maintenance.",
         "estable": "You're holding steady: your weight moves less than 150 g a week.",
-        "seMueve": "Your weight is moving {ritmo} kg a week: the check-in adjusts your calories to hold it.",
-        "faltanDatos": "With two weeks of weigh-ins, Moss tells you how you're doing."
+        "seMueve": "Your weight is moving {ritmo} kg a week (between {desde} and {hasta}): the check-in adjusts your calories to hold it.",
+        "faltanDatos": "After two weeks of weigh-ins, Moss starts to see which way you're heading; after four to six, how fast.",
+        "todaviaNo": "It's too early to tell how you're doing: so far, between {desde} and {hasta} kg a week. A few more weeks of weigh-ins and the margin narrows.",
+        "seMueveSinAjustar": "Your weight is moving {ritmo} kg a week (between {desde} and {hasta})."
       },
       "despues": {
-        "bajar": "Then {n} weeks at maintenance: you eat what you burn and your weight settles.",
+        "bajar": "Then {n} weeks at maintenance: you eat what you burn. It's normal for your weight to go up a little those days: it's water, not fat.",
         "subir": "Then {n} weeks at maintenance."
       },
       "ajusta": "Each weekly check-in looks at how you're doing and adjusts your calories to follow the plan.",
@@ -1368,7 +1489,12 @@
         "eliges": "After that, you choose how to go on.",
         "mantener": "After that, stay at {kg} kg.",
         "musculo": "After that, build muscle: gain slowly."
-      }
+      },
+      "cuando": {
+        "rango": "between {desde} and {hasta}",
+        "mes": "in {mes}"
+      },
+      "comoSeCalcula": "Your pace comes from a line through the average of each week's weigh-ins, over the last six weeks. The margin is an 80% one: four times out of five, your true pace falls inside it. It narrows with more weeks of weigh-ins and, while it's wider than your plan, Moss doesn't say whether you're ahead or behind. When you'd get there comes from what you have left, at the fastest and the slowest pace in the margin."
     },
     "control": {
       "titulo": "Check-in on {dia} · {cuando}",
@@ -1387,7 +1513,7 @@
       "textoHombre": "With a tape, in two minutes: your waist and neck. Once is enough; monthly if you like.",
       "textoMujer": "With a tape, in two minutes: your waist, neck and hips. Once is enough; monthly if you like.",
       "boton": "Measure",
-      "confianza": "It's an estimate from tape measurements (the US Navy formula): it can be off by 3 to 4 points. It's best for seeing how it changes."
+      "confianza": "It's a tape-measure estimate (the U.S. Navy formula): it can be off by about 4 points or more. To see how your body is changing, watch your waist."
     },
     "masDatos": {
       "titulo": "More data",
@@ -1463,7 +1589,7 @@
     "sinDeuda": "No debt",
     "deudaDe": "short of what you need ({necesidad} a night)",
     "deudaNoches": "From {n} of the last {de} nights",
-    "deudaTexto": "What you were short of what you need each night over the last two weeks, counting recent nights more, minus what you slept extra (up to 2 hours a night). Naps count; nights without data neither add nor subtract.",
+    "deudaTexto": "What you were short of what you need each night over the last two weeks, counting recent nights more, minus what you slept extra (up to 2 hours a night). Naps count. It's worked out from the nights with data, so missing nights don't lower it. It's approximate: it depends mostly on how much sleep you need.",
     "vitales": "Overnight, from the watch",
     "vital": {
       "frecuencia": "Heart rate",
@@ -1666,7 +1792,8 @@
     "pocoSueno": {
       "titulo": "You've slept little for weeks",
       "texto": "Over the last two weeks you slept less than 6 hours a night. If it continues, it's worth talking to a doctor.",
-      "nota": "It's an estimate from Moss, not a diagnosis."
+      "nota": "It's an estimate from Moss, not a diagnosis.",
+      "textoMenor": "Over the last two weeks you slept less than 7 hours a night, and 8 to 10 are recommended at your age. If it continues, it's worth talking to a doctor."
     },
     "afinar": {
       "titulo": "Fine-tune",
@@ -1874,6 +2001,35 @@
       "partidoDeNoche": "You played late: falling asleep late is normal. If you can, sleep more tonight or take a short nap early in the day.",
       "cargaYSueno": "This week you're training more and sleeping less: that's the combination most linked to injuries.",
       "dormirMas": "In weeks with games, an extra hour of sleep is one of the things that helps most."
+    },
+    "deudaAprox": "about {t}",
+    "deudaPorNoche": "You sleep about {duermes} a night; you need about {necesidad}.",
+    "dormidoAprox": "asleep, approx.",
+    "sinRelojDespierto": "Moss takes about {n} min off those hours: almost everyone spends a while awake during the night, and your phone can't see it.",
+    "regularidadAprox": "With nights estimated without a watch, the ± includes each estimate's error: it's approximate.",
+    "juicio": {
+      "titulo": {
+        "muyBien": "Very good",
+        "bien": "Good",
+        "algoAlta": "A bit high",
+        "alta": "High"
+      },
+      "texto": {
+        "muyBien": "No debt: you sleep what you need.",
+        "bien": "About {t}: within a normal range.",
+        "algoAlta": "About {t}: you're a bit short on sleep each night.",
+        "alta": "About {t}: for days you've slept quite a bit less than you need, and you may not notice it."
+      }
+    },
+    "estaNoche": {
+      "titulo": "Tonight",
+      "cama": "Bed at {hora}",
+      "camaTexto": "To wake up at {despertar} having slept about {horas}.",
+      "pago": "That's about {min} min more than you need, to start paying down the debt: it comes down little by little, not all at once.",
+      "tope": "Moss moves it at most an hour earlier than usual: the body doesn't fall asleep much before its usual time.",
+      "comida": "Last big meal, before {hora}",
+      "comidaTexto": "Two hours before bed; after that, something light.",
+      "comidaReflujo": "With reflux, three hours before bed; after that, something light."
     }
   },
   "perfil": {
@@ -2121,7 +2277,7 @@
     "avisos": {
       "titulo": "Reminders",
       "dormir": "Bedtime",
-      "dormirTexto": "Tonight, bed at {hora}: to wake up at {despertar} after {horas} of sleep, counting the {latencia} min it takes you to fall asleep. You get a reminder a little before.",
+      "dormirTexto": "Tonight, bed at {hora}: to wake up at {despertar} after {horas} of sleep, counting the {latencia} min it takes you to fall asleep and the time almost everyone spends awake during the night. You get a reminder a little before.",
       "dormirSinDatos": "You get a reminder a little before bedtime. To work it out, Moss needs to know when you wake up: a few nights is enough.",
       "antes": "{n} min before",
       "tardo": "Time to fall asleep",
@@ -2147,7 +2303,7 @@
       "cafe": "Coffee",
       "cafeTexto": "Until what time, so it doesn't cost you sleep. On training days, whether to have one before and when.",
       "ultimaComida": "Last big meal",
-      "ultimaComidaTexto": "Three hours before bed: have dinner before then and, after that, something light.",
+      "ultimaComidaTexto": "Two hours before bed (three with reflux): have dinner before then and, after that, something light.",
       "entrenarTarde": "If you train late",
       "entrenarTardeTexto": "If you'd finish less than two hours before bed: until what time to train hard.",
       "luces": "Dim the lights",
@@ -2158,7 +2314,11 @@
       "partido": "The day before a game",
       "partidoTexto": "At lunchtime: carbs at every meal, today and tomorrow.",
       "carrera": "Before a long race",
-      "carreraTexto": "Two days before a race of more than an hour and a half, at lunchtime: carbs and less fiber."
+      "carreraTexto": "Two days before a race of more than an hour and a half, at lunchtime: carbs and less fiber.",
+      "necesito": "I need to sleep",
+      "necesitoEdad": "For your age ({h})",
+      "necesitoTexto": "Guidelines say 7 to 9 hours, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your bedtime, your sleep debt and your sleep quality use it.",
+      "necesitoTextoMenor": "At your age 8 to 10 hours are recommended, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your bedtime, your sleep debt and your sleep quality use it."
     },
     "cambiarCuenta": "Switch account",
     "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account.",
@@ -2173,6 +2333,88 @@
     "corteALaHora": {
       "uno": "At {hora}",
       "otros": "At {hora}"
+    },
+    "respuestas": "Your answers",
+    "respuestasTexto": "The questionnaire from the start: change it whenever you want and Moss redoes your target.",
+    "baseGrupo": "How it works",
+    "base": "What Moss is based on",
+    "baseSub": "Where every number comes from and how much to trust it",
+    "baseInfo": {
+      "intro": "No number in Moss comes out of a black box: they're published formulas, guidelines from scientific societies and what you log or your watch measures. Here's where each one comes from and how much you can trust it.",
+      "comoTitulo": "How we organize what comes in",
+      "columnas": {
+        "llega": "In",
+        "hace": "Moss",
+        "ves": "You see"
+      },
+      "llega": [
+        "What you log",
+        "Apple Health"
+      ],
+      "llegaAscent": "Ascent, if you link it",
+      "hace": [
+        "Puts it in your day",
+        "Picks the best source",
+        "Calculates with published formulas"
+      ],
+      "ves": [
+        "Your target and your energy",
+        "Your weight and your plan",
+        "Your sleep",
+        "Your reminders"
+      ],
+      "reglas": [
+        "What's measured comes before what's estimated, and estimates say \"approx.\"",
+        "Without data, Moss doesn't make things up: it tells you what's missing.",
+        "Your day starts at the time you choose (4 a.m. by default): the small hours belong to the night before.",
+        "Everything stays on your phone first; with your account, in the cloud too, the same on your other phones."
+      ],
+      "areasTitulo": "What we rely on",
+      "fuentes": "Sources",
+      "areas": {
+        "sueno": {
+          "titulo": "Your sleep",
+          "texto": "For sleep, Moss follows the recommendations of the American Academy of Sleep Medicine and the Sleep Research Society (2015), which advise adults to sleep 7 hours or more, and those of the National Sleep Foundation (2015 and 2017), which set the ranges for each age and what counts as continuous sleep. With a watch or a ring, Moss relies mostly on how long and when you slept, which is what these devices measure best: in studies against polysomnography they detect more than 90% of sleep but miss much of the time spent awake, and sleep stages are much less accurate (Schyvens et al., 2025). The regularity of your schedule matters because, in large studies, it is linked to health, sometimes more strongly than duration (Windred et al., 2024). Quality, sleep debt and regularity are estimates for seeing trends, not diagnoses: debt depends mostly on how much sleep you need, which varies from person to person, and without a watch Moss estimates your night from your phone and asks you to confirm or correct it.",
+          "fuentes": "AASM and SRS, 2015 · National Sleep Foundation, 2015 and 2017 · Schyvens et al., 2025 · Windred et al., 2024"
+        },
+        "momentos": {
+          "titulo": "When to do each thing",
+          "texto": "The notifications that tell you when to stop caffeine, when to have your last big meal, how late to train hard and when to dim the lights come from reviews of studies and expert consensus. The caffeine cutoff follows the meta-analysis by Gardiner and colleagues (2023), which estimated how many hours before bed caffeine stops costing you sleep depending on the dose; the lighting advice follows a consensus of 18 light and sleep experts led by Brown (2022); and eating around training follows the meta-analysis by King and colleagues (2022) for strength and the American College of Sports Medicine position (2016) for endurance. Moss counts each time back from your bedtime and your training, so treat it as an approximate guide: people respond differently, especially to caffeine and alcohol. This is advice for healthy people; if you have slept badly for months, what helps most is cognitive behavioral therapy for insomnia, and it is worth talking to a doctor.",
+          "fuentes": "Gardiner et al., 2023 · Brown et al., 2022 · King et al., 2022 · American College of Sports Medicine, 2016"
+        },
+        "fotos": {
+          "titulo": "Why we don't calculate your food from a photo",
+          "texto": "A photo shows what's on the plate, but not how much it weighs or what you can't see, like oil, butter or a filling. In 52 photos of weighed meals, three general-purpose AIs missed the calories by 36% to 64% on average, and by more on larger plates (Fridolfsson and colleagues, 2025); another AI, trained on thousands of meals, nearly tripled its error when it also had to guess the portion (Thames and colleagues, 2021). That's why in Moss you pick the food from a reviewed database, scan the barcode or the label, or say what you ate, and Moss asks about what a photo can't see, like the oil. It isn't exact either: a label can be up to 20% off (Mercosur and EU rules allow it), and anything estimated by eye has its margin. But you can narrow that error by weighing or choosing the portion, and if it repeats in a similar way, the weekly check-in makes up for it with your weight.",
+          "fuentes": "Fridolfsson and colleagues, 2025 · Thames and colleagues, 2021 · Mercosur, RDC 360/2003"
+        },
+        "ascent": {
+          "titulo": "Your training, with Ascent",
+          "texto": "The Ascent section combines your sets from Ascent with your sleep and food, and relies on the strongest research available. Sleeping 6 hours or less lowers maximal strength only a little but reduces repetitions much more (Craven et al., 2022, pooling 77 studies); your strength also varies by about 3–5% from one day to the next for no particular reason (Grgic et al., 2020), and doing more sets per week brings more progress, though with diminishing returns (Pelland et al., 2026). Because the validity of wearable “recovery” scores hasn't been shown (Doherty et al., 2025), Moss doesn't give you a percentage: it shows your data, tells you when something is out of the ordinary, and says when there isn't enough data yet to know. It's guidance, not a diagnosis.",
+          "fuentes": "Craven et al., 2022 · Grgic et al., 2020 · Pelland et al., 2026 · Doherty et al., 2025"
+        },
+        "metas": {
+          "titulo": "Your target and your calories",
+          "texto": "To start, Moss estimates how much energy you use with the Mifflin-St Jeor equation (1990), the most accurate one for adults, and adds your daily activity and training following the US National Academies (2023): it is a starting point that can be off by 10% or more, not your exact number. Then, every week, it compares what you log with your weight trend and corrects the estimate; measuring energy balance from repeated weigh-ins has been checked against laboratory methods (Sanghvi, Hall and colleagues, 2015), and after three or four weeks of frequent weigh-ins the number becomes solid. Protein follows the meta-analysis by Morton and colleagues (2018), 1.6 to 2.2 g per kg if you train and never below 1.2, while fats, fiber and vitamins follow the National Academies' references. These are guidelines for healthy adults, not a diagnosis: if you are pregnant, breastfeeding or have a medical condition, Moss won't put you in a deficit and suggests talking to a professional.",
+          "fuentes": "Mifflin et al., 1990 · National Academies (NASEM), 2023 · Sanghvi et al., 2015 · Morton et al., 2018"
+        },
+        "progreso": {
+          "titulo": "Your weight and your body",
+          "texto": "Your weight goes up and down from day to day with water, what you ate the day before and, in women, the menstrual cycle, so Moss doesn't go by a single day's number: it follows the trend of your weigh-ins and calculates your rate over the last few weeks with a margin, because with only a few weeks of data it is still uncertain (Hall and Chow, 2011). The rates it suggests never go above 1% of your body weight per week, the range research uses to lose fat while protecting muscle (Helms et al., 2014), and it never accepts a goal weight below a body mass index of 18.5, the WHO threshold. Body fat from a tape measure uses the U.S. Navy formula: it is an estimate that can differ by about 4 points or more from a lab scan (Foulis et al., 2023), so take it as a guide. To see how your body is changing, watch your waist: the NICE guideline (2025) recommends keeping it under half your height.",
+          "fuentes": "Hall and Chow, 2011 · Helms et al., 2014 · WHO · Foulis et al., 2023 · NICE, 2025"
+        },
+        "cuidados": {
+          "titulo": "Your health conditions",
+          "texto": "If you mark a health condition, Moss adjusts your targets to guidelines for the general population and stops suggesting things that may not suit you, like eating less or pushing protein up. For pregnancy and breastfeeding it uses the US National Academies' references (2023) and the IOM's weight-gain ranges (2009); for diabetes, the American Diabetes Association's (2026); and for kidneys, KDIGO's (2024). These changes are general and approximate: they don't replace what your healthcare team tells you, and you can always enter the targets they give you. What you mark is stored only on this iPhone.",
+          "fuentes": "NASEM, 2023 · IOM, 2009 · ADA, 2026 · KDIGO, 2024 · EAU, 2026 · ESC/EAS, 2019 · WHO"
+        }
+      },
+      "noHaceTitulo": "What Moss doesn't do",
+      "noHace": [
+        "It doesn't diagnose or treat illnesses: if something worries you, talk to a doctor.",
+        "It doesn't replace a dietitian or a coach.",
+        "It doesn't recommend supplements or medication.",
+        "It doesn't present an estimate as if it were exact: every number has its margin."
+      ]
     }
   },
   "fecha": {
@@ -2282,11 +2524,10 @@
   "ascent": {
     "flecha": "Open Ascent",
     "volver": "Back to the sky",
-    "etiqueta": "If you use Ascent",
-    "titulo": "With Ascent",
+    "titulo": "Ascent",
     "sinVincular": "Not linked",
     "vinculadaDesde": "Linked since {fecha}",
-    "bajada": "Link both apps to understand your workouts and progress much faster.",
+    "bajada": "Link both apps to progress much faster and see clearly, in one place, what's holding you back.",
     "vincular": "Link with Ascent",
     "conseguir": "Don’t have Ascent? Find it on the App Store",
     "permiso": "Linking connects your Moss account with your Ascent account so they share data: each one stays a separate account, with its own data. You can undo it in Profile.",
@@ -2347,7 +2588,7 @@
       "texto": "A daily score from your sleep, your food and your training. Before you train, it tells you whether to go hard or easy.",
       "hoy": "Today, before training",
       "conviene": {
-        "fuerte": "Good day to go hard",
+        "fuerte": "Train as usual",
         "normal": "Train as usual",
         "suave": "Better to go easy"
       },
@@ -2644,28 +2885,17 @@
         "sueno": "Go to Sleep"
       }
     },
-    "graficos": {
-      "musculos": "How far each muscle is from its usual, based on what you logged in Ascent."
-    },
     "y": "and",
     "recuperado": {
       "estas": "You're",
-      "llegaste": "You came in",
       "palabra": {
         "m": "recovered",
         "f": "recovered"
       },
-      "asi": "That's how you started {sesion} today at {hora}.",
-      "desde": "Since your last workout: {cuando}, {sesion}.",
       "cuando": {
         "hoy": "today",
         "ayer": "yesterday",
         "dia": "{dia}"
-      },
-      "queEs": {
-        "enlace": "What is this number?",
-        "texto": "It brings together how you slept, how rested your muscles are since your last workout and how you ate yesterday. 100% means sleeping what you need, with rested muscles and food on target. It's a guide, not a diagnosis.",
-        "ver": "See how it's calculated"
       }
     },
     "bandas": {
@@ -2677,23 +2907,25 @@
         "atencion": "Today, go easy at the gym.",
         "aceptable": "Today, train as usual, without going to failure.",
         "bien": "You can train as usual today.",
-        "muyBien": "You can push hard today."
+        "muyBien": "You can train as usual today."
       }
     },
     "entrada": {
       "sesion": "{sesion} · {hora}",
       "descanso": "Rest day",
       "pista": "Pull down",
-      "etiqueta": "Open Ascent: {n}% {palabra}"
-    },
-    "vacio": {
-      "sinDatos": "No data",
-      "recuperadoTitulo": "How recovered you are",
-      "recuperado": "Your sleep, your muscles and your food in one number: how recovered you are since your last workout.",
-      "partes": "Sleep, muscle fatigue and food, each with its band and what to do.",
-      "marcas": "Which of today's exercises are worth a personal best attempt.",
-      "estancamiento": "The exercises that aren't moving and their most likely reasons.",
-      "anio": "Every day you trained and every personal best, colored by what you worked."
+      "titular": {
+        "hecha": "Trained today",
+        "descanso": "Rest day",
+        "sinHorario": "No session today",
+        "faltaNoche": "Log your night",
+        "cargado": "Go lighter today",
+        "suenoCorto": "No sets to failure",
+        "teSientes": "Listen to yourself",
+        "casi": "As usual",
+        "listo": "All set to train"
+      },
+      "etiquetaTitular": "Open Ascent: {titular}"
     },
     "foco": {
       "titulo": "Today, focus on",
@@ -2717,177 +2949,422 @@
       },
       "entrenar": {
         "marca": "A good day to go for a personal best in {ejercicio}.",
-        "masFuerte": "You're in great shape: you can go a bit harder than usual.",
         "comoSiempre": "You're doing well: train as usual.",
         "sinFallo": "Don't go to failure: you slept little and sets may feel heavier.",
-        "suave": {
-          "fatiga": "Take it easy: what you train today is still recovering.",
-          "total": "Today, go easy."
-        }
+        "masLiviano": "Today's muscles are still tired: go lighter, or train something else.",
+        "escuchate": "You said you don't feel good: listen to that, lighter still counts."
       },
       "terminar": {
         "titulo": "Finish before {hora}",
-        "texto": "You go to bed at {dormir}: hard training too close to bedtime delays sleep."
+        "texto": "You go to bed at {dormir}: hard training at least 2 hours before bed, and ideally 4 (before {mejor})."
       },
       "dormir": {
         "titulo": "Bedtime",
-        "texto": "To sleep your {horas}: sleep is what you're missing most."
+        "texto": "To sleep your {horas} tonight."
       },
       "proteina": {
         "titulo": "Protein"
       },
       "descanso": {
         "titulo": "Rest",
-        "falta": "{musculo}: ready in {tiempo}."
+        "cuando": "What's still recovering ({musculo}) will probably be ready {cuando}."
       },
       "faltaNoche": {
         "titulo": "Log how you slept",
-        "texto": "Without your night there's no recovery number."
-      }
-    },
-    "partes": {
-      "titulo": "What it's made of",
-      "de": "{n} of {max}",
-      "sueno": {
-        "nombre": "Sleep",
-        "texto": "You slept {horas} of the {necesidad} you need, and the night's quality was {calidad} out of 100.",
-        "sinCalidad": "You slept {horas} of the {necesidad} you need. Without the night's quality it counts as average: it tops out at 30.",
-        "registrar": "Log how you slept: then it can reach 40",
-        "corregir": "Slept differently? Fix it in Sleep",
-        "consejos": {
-          "perfecto": "Perfect: you slept what you need, and well.",
-          "casi": "To make it perfect: {falta}.",
-          "faltaDormir": "sleep your {horas}",
-          "faltaCalidad": "a calmer night",
-          "bien": "To make it very good: tonight, in bed by {hora}.",
-          "aceptable": "Tonight, in bed by {hora}: sleep is what you're missing most.",
-          "aceptableAntes": "At the gym, don't go to failure; and tonight, in bed by {hora}.",
-          "atencion": "Tonight, in bed by {hora}.",
-          "atencionAntes": "Today, go easy at the gym; and tonight, in bed by {hora}."
-        }
-      },
-      "fatiga": {
-        "nombre": "Muscle fatigue",
-        "niveles": {
-          "baja": "low",
-          "moderada": "moderate",
-          "alta": "high"
-        },
-        "texto": {
-          "hoy": "Fatigue is {nivel} in what you train today: {musculos}.",
-          "recientes": "Fatigue is {nivel} in what you trained these last 3 days: {musculos}.",
-          "hecha": "Fatigue was {nivel} when the session started: {musculos}."
-        },
-        "consejos": {
-          "listos": "Your muscles are well recovered: today you can go a bit harder than usual.",
-          "listosPeroSueno": "Your muscles are ready: what holds you back today is sleep.",
-          "aceptable": "They're still recovering: train normally, without going to failure.",
-          "atencion": "They're loaded: today, go easy on {sesion}, or train something else.",
-          "despues": "Today's work needs {tiempo} to recover."
-        },
-        "rendimiento": "Expected performance: max strength {fuerza}; reps, {reps} (± {n}%)."
-      },
-      "comida": {
-        "nombre": "Food",
-        "texto": "Yesterday: {p} of {meta} g of protein and {k}% of your calories.",
-        "textoSinNumeros": "Yesterday: your protein and calories, against your target.",
-        "textoSinMetas": "It counts the protein and what you ate yesterday.",
-        "consejos": {
-          "perfecta": "Perfect: you hit your protein and ate enough.",
-          "casi": "To make it perfect: the {g} g of protein you were short yesterday.",
-          "proteina": "To raise it: hit your protein; yesterday you were {g} g short.",
-          "proteinaSinNumeros": "To raise it: hit your protein.",
-          "calorias": "Yesterday you ate less than 80% of your calories: today, don't come up short.",
-          "caloriasAntes": "Yesterday you ate less than 80% of your calories: today, don't skip the meal before training.",
-          "casiSinNumeros": "To make it perfect: hit your protein."
-        }
-      }
-    },
-    "fatiga": {
-      "titulo": "Muscle fatigue, muscle by muscle",
-      "hoy": "Today"
-    },
-    "marcas": {
-      "titulo": "Personal bests",
-      "texto": "Today's {sesion} exercises: how likely a personal best is.",
-      "si": "A good day to go for it.",
-      "no": "Not today: {razones}.",
-      "fallas": {
-        "cerca": "you're far from your best",
-        "recuperado": "your muscles are still recovering",
-        "sueno": "you slept little",
-        "sinPico": "you've done more sets than usual",
-        "comida": "food isn't backing you up",
-        "probabilidad": "the chance doesn't reach 35%"
-      },
-      "como": "It tells you when all five line up (close to your best, muscles recovered, slept well, no load spike and food in order) and the chance passes the 35% line. It's an estimate, not a promise.",
-      "sinSesion": "No training today: come back on your next session day.",
-      "hecha": "You already trained {sesion} today: next time, on your next session day.",
-      "sinNoche": "Without your night it can't be measured: log how you slept."
-    },
-    "estancados": {
-      "titulo": "Why you're stuck",
-      "umbral": "The exercises Ascent sees stuck for {n} weeks or more: the threshold you chose in Ascent (6 by default).",
-      "semanas": "{n} weeks without progress",
-      "definicion": "You're cutting, losing {kg} kg a week: keeping your strength is already a good result.",
-      "definicionSinRitmo": "You're cutting: keeping your strength is already a good result.",
-      "sinCausa": "No clear cause in your sleep or food.",
-      "juntando": "For sleep and food, Moss is still gathering weeks: {a} with progress and {b} without, out of {min} each.",
-      "razones": {
-        "sueno": {
-          "titulo": "You slept less",
-          "texto": "Now {ahora} a night; when it was going up, {antes}."
-        },
-        "proteina": {
-          "titulo": "Less protein",
-          "texto": "Now {ahora} a day; when it was going up, {antes}."
-        },
-        "calorias": {
-          "titulo": "Bigger deficit",
-          "texto": "Now {ahora} a day against your expenditure; when it was going up, {antes}."
-        },
-        "cargado": {
-          "titulo": "Little rest between sessions",
-          "texto": "{musculo} still loaded at the start: {veces} of your last {de} sessions."
-        },
-        "menosSeguido": {
-          "titulo": "You train it less often",
-          "texto": "Now {ahora} times in 4 weeks; when it was going up, {antes}."
-        },
-        "sesionesMasCortas": {
-          "titulo": "Your sessions got shorter",
-          "texto": "Now they last {ahora}; before, {antes}."
-        }
-      },
-      "comunes": "These weeks, for all of them",
-      "soloComunes": "Nothing specific to this exercise: see above.",
-      "leyenda": {
-        "antes": "When it was going up",
-        "ahora": "Now"
+        "texto": "With your night, you'll know how you're coming into training."
       }
     },
     "comparten": {
       "titulo": "What the two share"
     },
-    "como": {
-      "titulo": "How it's calculated",
-      "partes": {
-        "sueno": "Sleep",
-        "musculos": "Muscles",
-        "comida": "Food"
+    "titular": {
+      "cuando": {
+        "ya": "already",
+        "hoy": "today",
+        "manana": "tomorrow",
+        "pasadoManana": "the day after tomorrow",
+        "enUnosDias": "in a few days"
       },
-      "suma": "{s} + {m} + {c} = {t}%",
-      "sueno": "Sleep, up to 40: half for how much you slept against what you need ({necesidad}) and half for the night's quality, from your watch or what you log in the morning. Without quality it counts as average, so it tops out at 30.",
-      "musculos": "Muscles, up to 40: 40 minus your muscle fatigue. Fatigue is what the muscles you train today (or, without a session, those of the last 3 days) still need to recover, over the most a hard session leaves, from your sets in Ascent. Today: {f}% fatigue, {m} of 40.",
-      "comida": "Food, up to 20: 10 for yesterday's protein against your target and 10 for eating at least 80% of your calories.",
-      "franjas": "The bands: the same four for the total and for each part. For the total, 85 or more is very good; 70 to 84, good; 50 to 69, fair; below that, pay attention. For fatigue it's the other way round: up to 15% is low.",
-      "cuando": "When: it's a daily number, taken at your session time or, if you don't train, in the morning. Ascent shows the same one.",
-      "comer": "Food around training: about 1 g of carbs per kilo 1 to 4 hours before training (ACSM 2016) and 20 to 40 g of protein per meal (ISSN 2017). Coffee, up to 8 hours before bed (Gardiner 2023), and hard training, finished 2 hours before bedtime (Leota 2025).",
-      "orientativo": "It's a guide: a visible sum of things measured separately, not a diagnosis. It will adjust with your data."
+      "hecha": {
+        "titulo": "You trained {sesion}",
+        "texto": "Today's work ({musculos}) will probably be ready {cuando}.",
+        "yaListos": "What you trained today is already rested."
+      },
+      "descanso": {
+        "titulo": "Rest day",
+        "texto": "What's still recovering ({musculo}) will probably be ready {cuando}.",
+        "listos": "Your muscles are already rested."
+      },
+      "sinHorario": {
+        "titulo": "No session in Ascent today"
+      },
+      "faltaNoche": {
+        "titulo": "Log how you slept",
+        "texto": "With your night, you'll know how you're coming into {sesion}."
+      },
+      "cargado": {
+        "titulo": "What you train today is still tired",
+        "texto": "Better go lighter, or train something else: today's muscles ({musculos}) will probably be ready {cuando}."
+      },
+      "suenoCorto": {
+        "titulo": "You can train, without going to failure",
+        "poco": "You slept little: maximal strength barely changes; reps may feel harder.",
+        "temprano": "You woke up earlier than usual: maximal strength barely changes; reps may feel harder.",
+        "seguidas": "You're coming off short nights: maximal strength barely changes; reps may feel harder."
+      },
+      "teSientes": {
+        "titulo": "You said you don't feel good today",
+        "texto": "Listen to that: training lighter still counts."
+      },
+      "casi": {
+        "titulo": "Train as usual",
+        "texto": "Today's muscles ({musculos}) are still recovering a little, but it doesn't change the session."
+      },
+      "listo": {
+        "titulo": "All set for {sesion}",
+        "texto": "You slept well and what you train today is rested."
+      }
     },
-    "tiempo": {
-      "horas": "~{n} h",
-      "dias": "~{n} days"
+    "decide": {
+      "noche": "Your night",
+      "musculos": "Today's muscles",
+      "siente": "How you feel",
+      "sinNoche": "Not logged",
+      "estados": {
+        "recuperado": "Rested",
+        "recuperandose": "Recovering",
+        "cargado": "Loaded"
+      }
+    },
+    "noche": {
+      "normal": "Good",
+      "algoCorta": "A bit short",
+      "corta": "Short",
+      "muyCorta": "Very short",
+      "seguidas": "Short nights"
+    },
+    "siente": {
+      "pregunta": "How do you feel for training?",
+      "poco": "No energy",
+      "mucho": "Lots of energy",
+      "respuesta": "{n} of 10"
+    },
+    "dia": {
+      "sesion": "Today · {sesion} · {hora}",
+      "hecha": "Today · {sesion}, done",
+      "descanso": "Today · rest"
+    },
+    "ultimo": {
+      "titulo": "Your last workout",
+      "texto": "{dia}: {musculos}"
+    },
+    "porQueNo": {
+      "enlace": "Why is there no percentage?",
+      "texto": "No recovery score has been proven against how you perform, and adding things up hides what matters: eating well doesn't make up for a short night. So the weakest link decides, and you see your data.",
+      "ver": "See what it's based on"
+    },
+    "filas": {
+      "titulo": "What it comes from",
+      "sueno": {
+        "nombre": "Sleep",
+        "de": "{horas} of the ~{necesidad} you need.",
+        "antes": "You woke up {tiempo} earlier than usual.",
+        "seguidas": "Two of your last three nights were 6 h or less.",
+        "calidad": "Night quality: {n} of 100. It's information: it doesn't change today.",
+        "sinNoche": "Last night is missing: with it, you'll know how you're coming into training.",
+        "seis": "6 h",
+        "tuyo": "{horas}",
+        "anotar": "If you want, log how you slept",
+        "corregir": "Slept differently? Fix it in Sleep",
+        "consejos": {
+          "cortaAntes": "At the gym, no sets to failure; and tonight, bed at {hora}.",
+          "corta": "Tonight, bed at {hora}.",
+          "algoCorta": "Tonight, bed at {hora}."
+        }
+      },
+      "musculos": {
+        "nombre": "Today's muscles",
+        "nada": "Nothing to check today: no recent sessions.",
+        "texto": {
+          "prevista": "What you train today, per your routine: {musculos}.",
+          "hecha": "Today's work, when you finished: {musculos}.",
+          "descanso": "What you trained in the last 3 days: {musculos}."
+        },
+        "ultima": "Last time: {cuando}, {n} hard sets.",
+        "listos": "Today's work will probably be ready {cuando}.",
+        "consejos": {
+          "recuperado": "You can train as usual.",
+          "recuperandose": "You can train as usual: it's still recovering a little.",
+          "cargado": "Go lighter today, or train something else: it will probably be ready {cuando}."
+        },
+        "nota": "From your sets in Ascent: it's an estimate, not a measurement, and it can be off by a day. Soreness doesn't count: strength comes back sooner.",
+        "listosDescanso": "What you trained these days will probably be ready {cuando}."
+      },
+      "comida": {
+        "nombre": "Food",
+        "valor": "{g} g/kg",
+        "texto": "Protein: {g} g per kilo per day, over the {n} days you logged this week.",
+        "ayer": "Yesterday, {p} of {meta} g.",
+        "raya": "1.6",
+        "sinDatos": "No food logged this week: Moss doesn't assume you didn't eat.",
+        "sinNumeros": "Your protein each day, against what helps you gain strength.",
+        "sinMetas": "What matters is eating enough each day.",
+        "nota": "Yesterday's food doesn't change today's strength: what adds up is each day's total, from ~1.6 g per kilo (Morton 2018)."
+      }
+    },
+    "cuerpo": {
+      "titulo": "Your muscles",
+      "texto": "How each muscle is right now, from your sets in Ascent. Tap one.",
+      "frente": "Front",
+      "espalda": "Back",
+      "estados": {
+        "recuperado": "Rested",
+        "recuperandose": "Recovering",
+        "cargado": "Loaded"
+      },
+      "detalle": {
+        "recuperado": "{musculo}: nothing to recover.",
+        "recuperandose": "{musculo}: still recovering; probably back to normal {cuando}.",
+        "cargado": "{musculo}: loaded; probably back to normal {cuando}."
+      },
+      "todosDescansados": "Nothing to recover: your muscles are rested.",
+      "semana": "Your week in Ascent",
+      "hoy": "Today · {nombre}",
+      "nota": "How each muscle is right now: if tomorrow's session hits what's already rested, you'll see it."
+    },
+    "fuerza": {
+      "titulo": "Your strength",
+      "semanas": "12 weeks",
+      "texto": "Each exercise's 12-week trend, with its range: each dot is a session.",
+      "sube": "Going up, ~{n}% a month",
+      "rango": "between {a} and {b}",
+      "sesiones": {
+        "uno": "1 session",
+        "otros": "{n} sessions"
+      },
+      "sinSubidaClara": "No clear increase",
+      "enSemanas": "over {n} weeks",
+      "noSeSabe": "Too early to tell",
+      "faltanSesiones": {
+        "uno": "1 session: 6 are needed",
+        "otros": "{n} sessions: 6 are needed"
+      },
+      "faltanSemanas": "{n} weeks: 6 are needed",
+      "ruido": "From one day to the next, strength varies ±3% for no reason; yours, ±{n}%. That's why it takes weeks to know if it's going up."
+    },
+    "marcas": {
+      "titulo": "Personal bests",
+      "texto": "The exercises in today's {sesion}: how close you are to your personal best.",
+      "sinSesion": "No training today: come back on your next session day.",
+      "hecha": "You already trained {sesion} today: the next one, on your next session day.",
+      "sinNoche": "Without your night there's no telling if it's a good day: log how you slept.",
+      "cerca": "Close to your best",
+      "lejos": "~{n}% from your best",
+      "noSeSabe": "Too early to tell",
+      "sinNivel": "Sets of 10 reps or fewer let you compare with your best.",
+      "nivel": "today ~{kg} kg",
+      "marca": "best {kg} kg",
+      "condiciones": {
+        "sueno": "Slept more than 6 h",
+        "musculos": "Rested muscles",
+        "semana": "Usual week"
+      },
+      "fallas": {
+        "sueno": "you slept little",
+        "musculos": "today's muscles are still recovering",
+        "semana": "you've done more sets than usual"
+      },
+      "buenDia": "A good day to go for it.",
+      "hoyNo": "Not today: {razones}.",
+      "frecuencia": "A best in {n} of your last {de} sessions.",
+      "entradaEnCalor": "If your usual warm-up set feels heavier, leave it for another day.",
+      "nota": "No probability: no study predicts the day of a personal best. Kilos are your estimated 1RM, approx.",
+      "sinNivelLista": "{ejercicios}: sets of 10 reps or fewer would let you compare with your best."
+    },
+    "estancados": {
+      "titulo": "Reasons for plateaus",
+      "texto": "Exercises with no clear increase in 8 weeks or more, past the threshold you chose in Ascent ({n} weeks without a best).",
+      "ninguno": "No exercise has plateaued: over 12 weeks, they're all going up or it's too early to tell.",
+      "dato": "{n} weeks without a best · {marca}",
+      "sinCausa": "No clear cause in your sets, your food or your sleep.",
+      "faltan": "For food and sleep, Moss is still gathering weeks.",
+      "anios": "With years of training, progress gets slower (Latella 2020): that's context, not a cause.",
+      "leyenda": {
+        "antes": "While it was going up",
+        "ahora": "Now"
+      },
+      "series": {
+        "titulo": "Fewer hard {musculo} sets",
+        "texto": "Per week, counting all its exercises: what weighs most for strength (Pelland 2026)."
+      },
+      "frecuencia": {
+        "titulo": "You do it less often",
+        "texto": "{antes} → {ahora} times a week."
+      },
+      "pesadas": {
+        "titulo": "Few heavy sets",
+        "raya": "a third",
+        "texto": "{n} of {de} at 80% of your 1RM or more, or 6 reps or fewer. If you're after strength, a third or more helps (Lopez 2021)."
+      },
+      "bajando": {
+        "titulo": "You're losing weight fast",
+        "valor": "{n}% a week",
+        "texto": "More than 1% of your weight a week: keeping your strength is already a good result (Garthe 2011)."
+      },
+      "definicion": {
+        "titulo": "You're cutting",
+        "texto": "In a deficit, strength can hold even if it doesn't go up: that's already a good result (Murphy and Koehler 2022)."
+      },
+      "proteina": {
+        "titulo": "Low protein",
+        "texto": "{g} g per kilo per day these weeks; for strength, ~1.6 or more (Morton 2018)."
+      },
+      "sueno": {
+        "titulo": "You slept less",
+        "texto": "{ahora} a night; while it was going up, {antes}. It may play a part: what's known is about days, not months.",
+        "sinAntes": "{ahora} a night. It may play a part: what's known is about days, not months."
+      },
+      "comunes": "These weeks, for all of them",
+      "soloComunes": "Nothing else specific to this exercise: see above."
+    },
+    "base": {
+      "titulo": "What it's based on",
+      "porcentaje": "Why there's no percentage: no recovery score from watches or rings has been validated against performance (Doherty 2025), and a sum compensates: with nights of 4.5 to 6 hours, it almost always said “good”. So the weakest link decides, and you see your data.",
+      "titular": "The headline: first, what changes today's session. What you train, if it's still loaded; your night, if it was 6 hours or less, if you woke up an hour early or if two of your last three were short (Craven 2022; Kong 2025; Knowles 2018); and how you say you feel, from 0 to 10 (Laurent 2011).",
+      "noche": "A short night: maximal strength barely changes and reps may feel harder (across 77 studies, −3% and −10%: Craven 2022). Not going to failure is enough: you don't need it to gain strength (Grgic 2022). Night quality is shown but doesn't count: almost no study measured it.",
+      "musculos": "Your muscles: from your sets in Ascent, each muscle as the main one or as a helper, and how long it takes to come back, longer for legs and with more sets (Belcher 2019; Bartolomei 2017). It's said in days because it can be off by one, and soreness doesn't count: strength comes back sooner (Soares 2015).",
+      "fuerza": "Your strength: each exercise's 12-week trend, with the estimated 1RM of your best set each session and its 80% range. Strength varies ~3% from day to day for no reason (Grgic 2020): with fewer weeks or sessions, it's too early to tell.",
+      "marca": "Personal bests: close means your level today (the trend) is within how much your strength varies from day to day. No probability: no study predicts the day of a best, and saying how often you hit one is more accurate.",
+      "estancamiento": "Plateaus: 8 weeks with no clear increase, past Ascent's threshold. The reasons go from most to least solid: hard sets per week (Pelland 2026), how often, heavy loads (Lopez 2021; ACSM 2026), losing weight fast (Garthe 2011), protein against 1.6 g per kilo (Morton 2018) and sleep. It's always a probable cause, not a sure one.",
+      "comer": "Food: about 1 g of carbs per kilo before a long session (King 2022) and 20 to 40 g of protein per meal. Coffee, about 9 hours before bed with one coffee and 13 with a pre-workout (Gardiner 2023); hard training, ideally 4 hours before bed and at least 2 (Frimpong 2021; Leota 2025).",
+      "orientativo": "It's guidance, not a diagnosis."
+    },
+    "vacio": {
+      "titular": "How you're coming into training",
+      "titularTexto": "What decides today, in one line: your night, what you train and how you feel. No percentages.",
+      "filas": "Your sleep, your muscles and your food, with their data.",
+      "cuerpo": "Each muscle, rested, recovering or loaded, from your sets.",
+      "fuerza": "Whether each exercise is going up, with its range, or if it's too early to tell.",
+      "marcas": "How close you are to your personal best, without probabilities.",
+      "estancamiento": "Exercises that aren't going up and their reasons, from most to least solid.",
+      "anio": "Each day you trained and each best, colored by what you worked."
+    },
+    "linea": {
+      "suenoCorto": "You slept little: maximal strength barely changes; reps may feel harder."
+    },
+    "ejercicios": {
+      "sentadilla": "Squat",
+      "press_banca": "Bench press",
+      "peso_muerto": "Deadlift",
+      "sentadilla_frontal": "Front squat",
+      "peso_muerto_rumano": "Romanian deadlift",
+      "prensa": "Leg press",
+      "hip_thrust": "Hip thrust",
+      "zancadas": "Lunges",
+      "extension_cuadriceps": "Leg extension",
+      "curl_femoral": "Leg curl",
+      "gemelos": "Standing calf raise",
+      "press_inclinado": "Incline bench press",
+      "press_mancuernas": "Dumbbell bench press",
+      "aperturas": "Dumbbell flyes",
+      "fondos": "Parallel bar dips",
+      "dominadas": "Pull-ups",
+      "remo_barra": "Barbell row",
+      "remo_mancuerna": "Dumbbell row",
+      "jalon": "Lat pulldown",
+      "remo_polea": "Cable row",
+      "press_militar": "Overhead press",
+      "press_arnold": "Arnold press",
+      "elevaciones_laterales": "Lateral raises",
+      "pajaros": "Rear delt flyes",
+      "curl_barra": "Barbell curl",
+      "curl_mancuernas": "Dumbbell curl",
+      "martillo": "Hammer curl",
+      "press_frances": "Skull crusher",
+      "triceps_polea": "Triceps pushdown",
+      "abdominales_polea": "Cable crunch",
+      "rueda_abdominal": "Ab wheel",
+      "sentadilla_bulgara": "Bulgarian split squat",
+      "sentadilla_goblet": "Goblet squat",
+      "sentadilla_hack": "Hack squat",
+      "sentadilla_smith": "Smith machine squat",
+      "peso_muerto_sumo": "Sumo deadlift",
+      "peso_muerto_rigidas": "Stiff-leg deadlift",
+      "peso_muerto_una_pierna": "Single-leg deadlift",
+      "buenos_dias": "Good morning",
+      "prensa_una_pierna": "Single-leg press",
+      "zancadas_caminando": "Walking lunges",
+      "zancada_inversa": "Reverse lunge",
+      "subida_cajon": "Step-up",
+      "curl_femoral_pie": "Standing leg curl",
+      "gemelos_sentado": "Seated calf raise",
+      "gemelos_prensa": "Leg press calf raise",
+      "aductores": "Adductor machine",
+      "abductores": "Abductor machine",
+      "puente_gluteo": "Glute bridge",
+      "patada_gluteo": "Cable glute kickback",
+      "press_declinado": "Decline bench press",
+      "press_inclinado_mancuernas": "Incline dumbbell press",
+      "press_pecho_maquina": "Machine chest press",
+      "cruce_polea_alta": "High cable crossover",
+      "cruce_polea_baja": "Low cable crossover",
+      "pec_deck": "Pec deck",
+      "flexiones": "Push-ups",
+      "pullover": "Dumbbell pullover",
+      "dominadas_supinas": "Chin-ups",
+      "dominadas_lastradas": "Weighted pull-ups",
+      "remo_invertido": "Inverted row",
+      "remo_pendlay": "Pendlay row",
+      "remo_t": "T-bar row",
+      "remo_maquina": "Machine row",
+      "remo_unilateral_polea": "Single-arm cable row",
+      "jalon_cerrado": "Close-grip pulldown",
+      "jalon_unilateral": "Single-arm pulldown",
+      "pullover_polea": "Cable pullover",
+      "rack_pull": "Rack pull",
+      "hiperextensiones": "Back extensions",
+      "press_militar_mancuernas": "Dumbbell shoulder press",
+      "press_hombro_maquina": "Machine shoulder press",
+      "elevaciones_frontales": "Front raises",
+      "elevaciones_polea": "Cable lateral raises",
+      "elevaciones_maquina": "Machine lateral raises",
+      "face_pull": "Face pull",
+      "remo_menton": "Upright row",
+      "rotacion_externa": "External rotation",
+      "encogimientos": "Shrugs",
+      "curl_predicador": "Preacher curl",
+      "curl_inclinado": "Incline curl",
+      "curl_concentrado": "Concentration curl",
+      "curl_polea": "Cable curl",
+      "curl_barra_z": "EZ-bar curl",
+      "curl_muneca": "Wrist curl",
+      "press_cerrado": "Close-grip bench press",
+      "triceps_mancuerna": "Dumbbell triceps extension",
+      "triceps_sobre_cabeza": "Overhead cable triceps extension",
+      "patada_triceps": "Triceps kickback",
+      "fondos_banco": "Bench dips",
+      "triceps_maquina": "Triceps machine",
+      "plancha": "Plank",
+      "plancha_lateral": "Side plank",
+      "crunch": "Crunch",
+      "elevacion_piernas": "Hanging leg raise",
+      "elevacion_rodillas": "Knee raise",
+      "giros_rusos": "Russian twist",
+      "bicicleta_abdominal": "Bicycle crunch",
+      "dead_bug": "Dead bug",
+      "press_pallof": "Pallof press",
+      "crunch_declinado": "Decline crunch",
+      "cinta": "Treadmill",
+      "correr": "Outdoor run",
+      "caminar": "Walk",
+      "bicicleta_fija": "Stationary bike",
+      "eliptica": "Elliptical",
+      "remo_ergometro": "Rowing machine",
+      "escaladora": "Stair climber",
+      "soga": "Jump rope",
+      "natacion": "Swimming",
+      "press_plano_smith": "Smith machine bench press",
+      "press_inclinado_smith": "Smith machine incline press"
     }
   },
   "habitos": {
@@ -2995,7 +3472,7 @@
   },
   "recordatorios": {
     "dormirTextos": {
-      "enUnRato": "You should head to bed in {tiempo}.",
+      "enUnRato": "Time to get ready: bed in {tiempo}.",
       "estaNoche": "Tonight, bed at {hora}.",
       "luces": "Dim the lights: bed in {tiempo}.",
       "paraDespertar": "To wake up at {despertar}, be in bed by {hora}.",
@@ -3004,7 +3481,7 @@
       "aLaHora": "Your bedtime tonight is {hora}.",
       "duermes": "In bed by {hora} and you sleep {horas}.",
       "bajaElRitmo": "Start winding down: bed at {hora}.",
-      "deuda": "You're {deuda} short on sleep: bed at {hora} helps."
+      "deuda": "To pay down your sleep debt: bed at {hora}, up at {despertar}."
     },
     "dormirEn": {
       "15": "15 minutes",
@@ -3147,7 +3624,7 @@
       },
       "cafe": {
         "titulo": "Coffee before your workout",
-        "antes": "If you have one, make it {hora}: that's {horas} before you sleep.",
+        "antes": "If you have one, make it {hora}: that's {horas} before bed.",
         "tituloUltimo": "Last coffee",
         "ultimo": "Until {hora}. After that, decaf.",
         "ultimoEntrenas": "Until {hora}. Before your {entreno} workout, better skip it."
@@ -3210,7 +3687,7 @@
       "reponer": "With two sessions on the same day, carbs in between help you start the second one with energy.",
       "antesDeDormir": "Protein before bed counts toward the day too: 30 to 40 g, for example from yogurt or milk.",
       "cafeina": "Caffeine takes hours to clear: late in the day, it makes sleep shallower even if you still fall asleep.",
-      "fuentes": "Sources: ACSM, Academy of Nutrition and Dietetics and Dietitians of Canada (2016); ISSN, Kerksick et al. (2017) and Jäger et al. (2017); Morton et al. (2018); Schoenfeld and Aragon (2018); Gardiner et al. (2023).",
+      "fuentes": "Sources: King et al. (2022), for strength; ACSM, Academy of Nutrition and Dietetics and Dietitians of Canada (2016), for endurance; ISSN, Kerksick et al. (2017) and Jäger et al. (2017); Morton et al. (2018); Schoenfeld and Aragon (2018); Gardiner et al. (2023).",
       "medico": "This is general guidance for healthy people. It is not medical advice.",
       "noMostrar": "Don’t show again",
       "volver": "You can turn it back on in Profile › Training.",
@@ -3307,20 +3784,21 @@
   "suscripcion": {
     "titulo": "Your subscription",
     "pago": {
-      "titulo": "Food and sleep, together",
-      "texto": "Sleeping too little makes you hungrier. Food apps can’t see your night and sleep apps can’t see your plate. Moss sees both.",
+      "titulo": "There's always a better version of you",
+      "texto": "Moss measures how you eat, how you sleep and what you do every day, and shows you what's holding you back and what to change.",
       "todoTitulo": "Includes all of Moss",
       "todo": [
-        "Log your food in seconds, with no photo AI",
-        "Targets that adjust every week",
-        "Your sleep: each night, your schedule and your debt",
-        "Habits, your sky and the widgets"
+        "Log your food in seconds",
+        "Weekly check-ins to reach your goal",
+        "Your sleep, measured: the reason behind so much",
+        "Your habits: what you do every day defines you, and Moss shows you"
       ]
     },
     "ejemplo": {
       "anoche": "Last night",
       "hoy": "Today",
-      "hambre": "You slept {h}: it’s normal to be hungrier today."
+      "hambre": "You slept {h}: it’s normal to be hungrier today.",
+      "deMeta": "of {meta}"
     },
     "vencida": {
       "tituloPrueba": "Your trial has ended",
@@ -3423,5 +3901,168 @@
     },
     "borrarConSuscripcion": "Apple bills your subscription: deleting your account doesn’t cancel it. Cancel it first in Settings, or you’ll keep being charged.",
     "administrarSuscripcion": "Manage subscription"
+  },
+  "cuidados": {
+    "intro": "If any of these applies to you, mark it: Moss adjusts your diet to what the guidelines recommend and stops suggesting what may not suit you. You can change it anytime.",
+    "grupos": {
+      "etapa": "Pregnancy and breastfeeding",
+      "azucar": "Blood sugar",
+      "corazon": "Heart",
+      "rinones": "Kidneys",
+      "digestion": "Digestion and joints",
+      "masCuidado": "What needs extra care"
+    },
+    "nombres": {
+      "embarazo": "Pregnancy",
+      "lactancia": "Breastfeeding",
+      "diabetes2": "Prediabetes or type 2 diabetes",
+      "diabetes1": "Type 1 diabetes",
+      "presion": "High blood pressure",
+      "colesterol": "High cholesterol or triglycerides",
+      "renal": "Chronic kidney disease",
+      "calculos": "Kidney stones",
+      "reflujo": "Reflux",
+      "celiaquia": "Celiac disease",
+      "gota": "Gout",
+      "tca": "An eating disorder, now or in the past",
+      "glp1": "A weight-loss medication",
+      "otra": "Another condition, or I'd rather not say"
+    },
+    "detalles": {
+      "glp1": "Like semaglutide or tirzepatide",
+      "otra": "Moss takes the most careful path"
+    },
+    "lineas": {
+      "embarazo": "During pregnancy, Moss won't suggest losing weight, adds what the second and third trimesters need and pauses the weekly check-in. Your healthcare team follows your weight with you.",
+      "lactancia": "While you breastfeed, Moss adds about 400 kcal a day. If you want to lose weight, start after the first month and go slowly.",
+      "diabetes2": "Eating a varied diet and, if you need to, losing a little weight may help you live well with type 2 diabetes. If you take insulin or another glucose-lowering medicine, talk to your healthcare team before eating less.",
+      "diabetes1": "Moss shows you the carbs in each meal, but it doesn't calculate insulin or tell you what to eat around exercise: that's for you and your healthcare team.",
+      "presion": "With high blood pressure, Moss shows you the salt and potassium in what you eat. Eating less salt and, if you need to, losing weight may help you live well with high blood pressure.",
+      "colesterol": "Moss shows you the saturated fat and fiber in what you eat. If your doctor gave you other targets, you can enter them yourself.",
+      "renal": "With kidney disease, Moss doesn't push protein up: it stays at 0.8 g per kilo, as KDIGO recommends. It shows you the salt, and it won't ask you to eat less or drink more water. Your healthcare team decides the rest.",
+      "calculos": "With kidney stones, drinking water is the top recommendation: Moss sets a goal of 2.5 to 3 liters a day and shows you the salt.",
+      "reflujo": "With reflux, Moss reminds you to finish eating about 3 hours before bed.",
+      "celiaquia": "With celiac disease, your plan and Moss's ideas skip wheat, barley, rye and oats. Moss can't tell whether a product has gluten: check for a certified gluten-free label.",
+      "gota": "With gout, Moss shows you the alcohol and sugary drinks in what you log.",
+      "tca": "Moss won't suggest eating less, can hide the numbers and won't nudge you about eating more or less. If you're in treatment, use Moss only if your team agrees.",
+      "glp1": "With your medication, Moss helps you reach your protein and suggests smaller meals; your healthcare team follows your treatment.",
+      "otra": "Moss won't suggest eating less than you burn or push more protein or water. If your healthcare team gives you targets, you can enter them yourself."
+    },
+    "consentimiento": {
+      "texto": "What you mark is stored only on this iPhone: it isn't uploaded to your account and no one else sees it.",
+      "guardar": "Save on this iPhone",
+      "ahoraNo": "Not now"
+    },
+    "soloEnElIphone": "Stored only on this iPhone.",
+    "preguntas": {
+      "semana": "How many weeks along are you?",
+      "semanaN": "Week {n}",
+      "pesoAntes": "Your weight before pregnancy",
+      "noSe": "I don't know",
+      "mellizos": "Twins",
+      "parto": "How long ago was the birth?",
+      "partoN": {
+        "uno": "{n} week ago",
+        "otros": "{n} weeks ago"
+      },
+      "soloPecho": "Breast milk only",
+      "conFormula": "Breast milk and formula",
+      "insulina": "Do you take insulin or another medicine that can drop your blood sugar a lot?",
+      "dialisis": "Are you on dialysis?",
+      "si": "Yes",
+      "no": "No",
+      "noLoSe": "Not sure"
+    },
+    "cambia": {
+      "titulo": "How your diet changes",
+      "antes": "Before",
+      "kcal": "Calories",
+      "proteina": "Protein",
+      "carbohidratos": "Carbs",
+      "grasas": "Fat",
+      "muestra": "Shows you",
+      "dejaDe": "Stops telling you",
+      "empieza": "Reminds you",
+      "sodio": "Sodium: under {n} mg",
+      "potasio": "Potassium: {n} mg or more",
+      "potasioSinMeta": "Potassium and phosphorus, with no target",
+      "saturadas": "Saturated fat: under {n}%",
+      "colesterol": "Cholesterol: under {n} mg",
+      "fibra": "Fiber: {a} to {b} g",
+      "agua": "Water: {n} L",
+      "aguaNoPedir": "Water: whatever your team says",
+      "cafeina": "Caffeine: up to {n} mg",
+      "alcoholNada": "Alcohol: none",
+      "alcoholTope": "Alcohol: up to {n} g",
+      "sinKeto": "No keto",
+      "pausa": "The weekly check-in, paused",
+      "nuncaBaja": "The check-in never lowers your target",
+      "piso": "Never under {n} kcal",
+      "extra": "{n} more kcal a day, approx.",
+      "numerosOcultos": "Numbers hidden from the start",
+      "sinPesoMeta": "No goal weight",
+      "vitaminas": {
+        "embarazo": "Pregnancy vitamins and minerals",
+        "lactancia": "Breastfeeding vitamins and minerals"
+      },
+      "sinBajar": "No weight loss",
+      "hastaRitmo": "Losing weight, up to the {ritmo} pace",
+      "deficitDesde": "Losing weight, from {fecha} and slowly",
+      "embarazo": "Week {n}: the expected gain is {a} to {b} kg over your weight before pregnancy.",
+      "igual": "Your target stays the same: Moss shows you what matters.",
+      "sube": "Up",
+      "baja": "Down",
+      "mismo": "Same",
+      "mira": "Looks at first",
+      "sinMeta": "no target",
+      "hasta": "up to {n} {u}"
+    },
+    "dice": {
+      "antesDeEntrenar": "What to eat before training",
+      "despuesDeEntrenar": "Protein after training",
+      "ayunasLarga": "Training on an empty stomach",
+      "deporte": "What to eat for your sport",
+      "nocheCorta": "The short-night note",
+      "reparto": "How your macros are split",
+      "faltaProteina": "That you're low on protein",
+      "faltaCalorias": "That you're low on calories",
+      "agua": "To drink more water",
+      "pasado": "That you went over a macro",
+      "pesarse": "To weigh yourself",
+      "ultimaComida": "Finish eating 3 h before bed",
+      "sal": "If you're high on salt today",
+      "saturadas": "If you're high on saturated fat today"
+    },
+    "marcas": {
+      "alcohol": "Alcohol",
+      "cafeina": "Caffeine",
+      "listeria": "What may carry listeria",
+      "mercurio": "Fish high in mercury",
+      "azucaradas": "Sugary drinks",
+      "sodio": "Salt",
+      "potasio": "Potassium",
+      "saturadas": "Saturated fat",
+      "colesterol": "Cholesterol",
+      "fibra": "Fiber",
+      "carbohidratos": "The carbs in each meal",
+      "proteina": "Protein",
+      "gluten": "Your plan, gluten-free"
+    },
+    "profesional": {
+      "necesario": "Your healthcare team comes first: if they give you other targets, enter them yourself.",
+      "sugerido": "It's worth talking it over with a health professional."
+    },
+    "manuales": {
+      "dialisis": "With dialysis, Moss doesn't calculate your targets: enter your team's yourself.",
+      "menor": "Under 18 and pregnant, Moss doesn't calculate your targets: enter your team's yourself."
+    },
+    "ponerAMano": "Enter targets yourself",
+    "marcados": {
+      "uno": "{n} marked",
+      "otros": "{n} marked"
+    },
+    "perfilSub": "Moss adjusts your diet to what you mark",
+    "alergias": "Allergies go in What you don't eat, in the plan.",
+    "subirNo": "During pregnancy, Moss already adds what you need."
   }
 }

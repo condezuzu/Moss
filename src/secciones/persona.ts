@@ -155,7 +155,7 @@ export type Sueno = {
   soloEnCama: Map<ClaveDia, { minutos: number; fuente: Fuente }>;
   lecturas: { frecuencia: Medida[]; variabilidad: Medida[]; respiracion: Medida[]; reposo: Map<ClaveDia, number> };
   fuentes: Fuente[];
-  /** Los minutos de sueño que se necesitan por la edad. */
+  /** Los minutos de sueño que se necesitan: lo elegido en «Necesito dormir», dentro de lo de tu edad; sin elegir, lo de tu edad. */
   necesidad: number;
 };
 
@@ -164,15 +164,15 @@ export type Sueno = {
  * corregidas a la mañana). Sin ninguna (recién instalada), las de ejemplo: así se ve cómo es la
  * sección, con el aviso de que no son tuyas.
  */
-export function suenoDe(hoy: ClaveDia, perfil: Perfil | null, salud: LoDeSalud | null = null, propias: Map<ClaveDia, NochePropia> = new Map()): Sueno {
+export function suenoDe(hoy: ClaveDia, perfil: Perfil | null, salud: LoDeSalud | null = null, propias: Map<ClaveDia, NochePropia> = new Map(), elegida: number | null = null): Sueno {
   const noches = conNochesDeMoss(salud?.noches ?? [], [...propias.values()], (ms) => -new Date(ms).getTimezoneOffset());
   if (noches.length) {
     const lecturas = salud?.lecturas ?? { frecuencia: [], variabilidad: [], respiracion: [], reposo: new Map() };
-    return { deEjemplo: false, noches, soloEnCama: salud?.soloEnCama ?? new Map(), lecturas, fuentes: salud?.fuentes ?? [], necesidad: necesidad(edadDe(perfil ?? ejemplo(hoy).perfil, hoy)) };
+    return { deEjemplo: false, noches, soloEnCama: salud?.soloEnCama ?? new Map(), lecturas, fuentes: salud?.fuentes ?? [], necesidad: necesidad(edadDe(perfil ?? ejemplo(hoy).perfil, hoy), elegida) };
   }
   const ej = ejemplo(hoy);
   return {
     deEjemplo: true, noches: ej.noches, soloEnCama: ej.soloEnCama, lecturas: ej.lecturas, fuentes: ej.fuentes,
-    necesidad: necesidad(edadDe(perfil ?? ej.perfil, hoy)),
+    necesidad: necesidad(edadDe(perfil ?? ej.perfil, hoy), elegida),
   };
 }

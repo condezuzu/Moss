@@ -253,24 +253,30 @@ describe('10. la energía baja', () => {
 
 describe('11. el hierro y el calcio', () => {
   const dias = (hierro: number | null, calcio: number | null, bien = 14) => Array.from({ length: 14 }, (_, i) => ({ dia: dia(-i), kcal: i < bien ? 1600 : 1400, meta: 2000, hierro, calcio }));
-  it('con 10 de 14 días bien anotados: el hierro debajo de 18 mg en mujeres, el calcio debajo de 1.000', () => {
-    expect(de(corredora({ minerales: dias(17.9, 1200) }), 'minerales')).toEqual({ que: 'minerales', donde: 'paraHoy', tema: 'minerales', hierro: true, calcio: false });
-    expect(de(corredora({ minerales: dias(18, 1200) }), 'minerales')).toBeUndefined();
+  it('con 10 de 14 días bien anotados: el hierro debajo del requerimiento promedio (8,1 mg en mujeres), el calcio debajo de 1.000', () => {
+    expect(de(corredora({ minerales: dias(8, 1200) }), 'minerales')).toEqual({ que: 'minerales', donde: 'paraHoy', tema: 'minerales', hierro: true, calcio: false });
+    expect(de(corredora({ minerales: dias(8.2, 1200) }), 'minerales')).toBeUndefined();
     expect(de(corredora({ minerales: dias(20, 999) }), 'minerales')).toMatchObject({ hierro: false, calcio: true });
-    expect(de(corredora({ minerales: dias(17, 900) }), 'minerales')).toMatchObject({ hierro: true, calcio: true });
+    expect(de(corredora({ minerales: dias(7, 900) }), 'minerales')).toMatchObject({ hierro: true, calcio: true });
     expect(de(corredora({ minerales: dias(12, 900, 10) }), 'minerales')).toBeDefined();
     expect(de(corredora({ minerales: dias(12, 900, 9) }), 'minerales')).toBeUndefined();
     // Sin datos del mineral, no se sabe.
     expect(de(corredora({ minerales: dias(null, null) }), 'minerales')).toBeUndefined();
   });
 
-  it('en hombres, debajo de 8 mg; solo para quien corre, las mujeres o quien no come carne', () => {
+  it('una mujer de 30 con 12 mg de hierro por día no recibe «viene bajo» (debajo de los 18 de la recomendada solo «probablemente» falta); con 7 mg, sí', () => {
+    const ella = (hierro: number) => de(corredora({ edad: 30, minerales: dias(hierro, 1200) }), 'minerales');
+    expect(ella(12)).toBeUndefined();
+    expect(ella(7)).toMatchObject({ hierro: true });
+  });
+
+  it('en hombres, debajo de 6 mg; solo para quien corre, las mujeres o quien no come carne', () => {
     const corredor = (hierro: number) => de(corredora({ sexo: 'm', minerales: dias(hierro, 1200) }), 'minerales');
-    expect(corredor(7.9)).toBeDefined();
-    expect(corredor(8)).toBeUndefined();
+    expect(corredor(5.9)).toBeDefined();
+    expect(corredor(6)).toBeUndefined();
     expect(de(futbolista({ minerales: dias(5, 500) }), 'minerales')).toBeUndefined();
     expect(de(futbolista({ minerales: dias(5, 1200), vegetariano: true }), 'minerales')).toBeDefined();
-    expect(de(futbolista({ sexo: 'f', minerales: dias(15, 1200) }), 'minerales')).toBeDefined();
+    expect(de(futbolista({ sexo: 'f', minerales: dias(8, 1200) }), 'minerales')).toBeDefined();
   });
 
   it('con energía baja, el calcio debajo de 1.500', () => {
@@ -288,7 +294,7 @@ describe('dónde y en qué orden', () => {
     sesionesDeHoy: [{ tipo: 'resistencia', minutos: 75 }],
     corridas: [{ dia: dia(-12), km: 12 }, { dia: dia(-1), km: 16 }],
     pesadas: { antes: { minutos: 6 * 60 + 50, kg: 58 }, despues: { minutos: 8 * 60 + 20, kg: 57.2 }, sesion: { inicio: 7 * 60, minutos: 75 } },
-    minerales: Array.from({ length: 14 }, (_, i) => ({ dia: dia(-1 - i), kcal: 1800, meta: 2000, hierro: 12, calcio: 1100 })),
+    minerales: Array.from({ length: 14 }, (_, i) => ({ dia: dia(-1 - i), kcal: 1800, meta: 2000, hierro: 7, calcio: 1100 })),
   });
 
   it('lo más urgente primero, y nunca dos del mismo tema: la carrera gana a los carbohidratos del día', () => {

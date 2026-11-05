@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { destacados, escalarMicros, microsValidos, parteDelDia, referenciaDe, sumarMicros } from './micronutrientes';
+import { destacados, escalarMicros, microsValidos, parteDelDia, referenciaDe, requerimientoDe, sumarMicros } from './micronutrientes';
 import { escalar, sumarValores, type Valores } from './registros';
 
 const ELLA = { sexo: 'f' as const, edad: 29 };
@@ -31,6 +31,33 @@ describe('las referencias del día', () => {
     expect(referenciaDe('cafeina', { ...ELLA, etapa: 'embarazo' })).toEqual({ tope: 200 });
     expect(referenciaDe('colesterol', EL)).toBeNull();
     expect(referenciaDe('monoinsaturadas', EL)).toBeNull();
+  });
+
+  it('de 14 a 18 años, las suyas: más calcio y fósforo; desde los 19, las de adultos', () => {
+    expect(referenciaDe('calcio', { sexo: 'f', edad: 17 })).toEqual({ meta: 1300 });
+    expect(referenciaDe('calcio', { sexo: 'f', edad: 18 })).toEqual({ meta: 1300 });
+    expect(referenciaDe('calcio', { sexo: 'f', edad: 19 })).toEqual({ meta: 1000 });
+    expect(referenciaDe('fosforo', { sexo: 'm', edad: 16 })).toEqual({ meta: 1250 });
+    expect(referenciaDe('hierro', { sexo: 'f', edad: 16 })).toEqual({ meta: 15 });
+    expect(referenciaDe('hierro', { sexo: 'm', edad: 16 })).toEqual({ meta: 11 });
+    expect(referenciaDe('potasio', { sexo: 'f', edad: 17 })).toEqual({ meta: 2300 });
+    expect(referenciaDe('vitaminaK', { sexo: 'm', edad: 17 })).toEqual({ meta: 75 });
+  });
+
+  it('la cafeína antes de los 18: 3 mg por kilo; sin el peso, no hay un tope que sirva', () => {
+    expect(referenciaDe('cafeina', { sexo: 'm', edad: 17, pesoKg: 60 })).toEqual({ tope: 180 });
+    expect(referenciaDe('cafeina', { sexo: 'm', edad: 17 })).toBeNull();
+    expect(referenciaDe('cafeina', { sexo: 'm', edad: 18, pesoKg: 60 })).toEqual({ tope: 400 });
+    expect(referenciaDe('cafeina', { sexo: 'f', edad: 17, pesoKg: 50, etapa: 'embarazo' })).toEqual({ tope: 150 });
+  });
+
+  it('el requerimiento promedio del hierro (EAR), para decir que viene bajo', () => {
+    expect(requerimientoDe('hierro', ELLA)).toBe(8.1);
+    expect(requerimientoDe('hierro', EL)).toBe(6);
+    expect(requerimientoDe('hierro', { ...ELLA, edad: 55 })).toBe(5);
+    expect(requerimientoDe('hierro', { ...ELLA, edad: 17 })).toBe(7.9);
+    expect(requerimientoDe('hierro', { ...ELLA, etapa: 'embarazo' })).toBe(22);
+    expect(requerimientoDe('calcio', ELLA)).toBeNull();
   });
 
   it('la parte del día: 9 mg de hierro son la mitad para ella y más que todo para él', () => {

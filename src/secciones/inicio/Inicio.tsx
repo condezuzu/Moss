@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -22,6 +22,7 @@ import { sumarDias } from '@/dominio/fechas';
 import { CON_ASCENT } from '@/lib/banderas';
 import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { CabezaQueBaja, useBajarParaCerrar } from '../arrastre';
 import { InvitacionDeAscent } from '../ascent/Invitacion';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
@@ -197,7 +198,7 @@ function Objetivo() {
         derecha={(
           <View style={estilos.chips}>
             {p.deEjemplo && <Chip texto={t('inicio.ejemplo')} tipo="tenue" />}
-            <Chip texto={t(`progreso.estados.${g.estado}`)} tipo={bien ? 'bien' : g.estado === 'faltanDatos' || g.estado === 'sinMeta' ? 'tenue' : 'atencion'} />
+            <Chip texto={t(`progreso.estados.${g.estado}`)} tipo={bien ? 'bien' : g.estado === 'faltanDatos' || g.estado === 'sinMeta' || g.estado === 'todaviaNo' ? 'tenue' : 'atencion'} />
           </View>
         )}
       />
@@ -369,6 +370,13 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
     arrastrada.set(-1);
     dy.set(0);
   }, [version, arrastrada, dy]);
+  // Se baja con el dedo desde arriba (la pestañita, el título y el texto): lo de abajo son las manijas, que ordenan.
+  const reducido = useReducedMotion();
+  const hoja = useBajarParaCerrar({ alCerrar, conScroll: false });
+  const { reiniciar } = hoja;
+  useEffect(() => {
+    if (abierta) reiniciar();
+  }, [abierta, reiniciar]);
   const guardar = (o: Bloque[], v: Set<Bloque>) => elAlmacen().ponerInicio({ orden: o, visibles: o.filter((b) => v.has(b)) });
   const mover = (desde: number, hasta: number) => {
     if (desde === hasta) return;
@@ -379,10 +387,12 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
     guardar(nuevo, visibles);
   };
   return (
-    <Modal visible={abierta} transparent animationType="slide" onRequestClose={alCerrar}>
+    <Modal visible={abierta} transparent animationType={reducido ? 'fade' : 'slide'} onRequestClose={alCerrar}>
       <GestureHandlerRootView style={estilos.modal}>
+        <Animated.View style={[StyleSheet.absoluteFill, estilos.modalVelo, hoja.velo]} pointerEvents="none" />
         <Pressable style={StyleSheet.absoluteFill} onPress={alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
-        <View style={[estilos.hoja, { paddingBottom: insets.bottom + 20 }]}>
+        <Animated.View style={[estilos.hoja, { paddingBottom: insets.bottom + 20 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={alCerrar}>
+          <CabezaQueBaja arrastre={hoja} style={estilos.hojaArriba}>
           <View style={estilos.asa} />
           <View style={estilos.hojaCabeza}>
             <Text style={estilos.hojaTitulo}>{t('inicio.personalizarTitulo')}</Text>
@@ -391,6 +401,7 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
             </Pressable>
           </View>
           <Text style={estilos.hojaTexto}>{t('inicio.personalizarTexto')}</Text>
+          </CabezaQueBaja>
           <View style={{ height: ALTO_FILA * orden.length }}>
             {orden.map((b, i) => (
               <FilaDeOrden
@@ -414,7 +425,7 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
             ))}
           </View>
           <Text style={estilos.hojaNota}>{t('inicio.personalizarNota')}</Text>
-        </View>
+        </Animated.View>
       </GestureHandlerRootView>
     </Modal>
   );
@@ -511,9 +522,12 @@ const estilos = StyleSheet.create({
   pie: { alignItems: 'center', marginTop: 18 },
   personalizar: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(8, 12, 26, 0.6)' },
   personalizarTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.72)' },
-  modal: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(1, 2, 6, 0.6)' },
-  hoja: { paddingTop: 8, paddingHorizontal: 20, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: '#0f1631', borderTopWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(232, 196, 106, 0.3)' },
+  modal: { flex: 1, justifyContent: 'flex-end' },
+  modalVelo: { backgroundColor: 'rgba(1, 2, 6, 0.6)' },
+  hoja: { paddingHorizontal: 20, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: '#0f1631', borderTopWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(232, 196, 106, 0.3)' },
   asa: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, marginBottom: 12, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
+  // La cabecera llega a los bordes de la hoja: desde ahí también se baja.
+  hojaArriba: { marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 8 },
   hojaCabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   hojaTitulo: { fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino },
   cerrar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },

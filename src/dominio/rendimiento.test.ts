@@ -1,15 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  caidaInicial, dosisDeLaSesion, e1rm, esfuerzoDeSerie, estadoDe, listoEn, mejorE1rm, musculosDe, residual, type SesionConBloques,
-} from './musculos';
-import {
-  buenDiaParaMarca, categoriaDe, normalAcumulada, porElSueno, porLaComida, porLaDescarga, porLasNoches, probabilidadTuya, rendimientoEsperado, seguridadDeMarcas, sigmaTuyo,
-  type EntradasDelRendimiento,
+  aDosYMedio, buenDiaParaMarca, categoriaDe, cercaDeLaMarca, condicionesDeLaMarca, frecuenciaDeMarcas, nivelEn, normalAcumulada, porElSueno, porLaComida, porLaDescarga, porLasNoches,
+  probabilidadTuya, rendimientoEsperado, seguridadDeMarcas, sigmaTuyo, tendenciaDeFuerza, type EntradasDelRendimiento, type PuntoDeFuerza,
 } from './rendimiento';
-
-const HORA = 3_600_000;
-const T0 = Date.parse('2026-10-19T21:00:00Z');
 
 /** Un día cualquiera: durmió bien, comió, nada cargado. */
 const NORMAL: EntradasDelRendimiento = {
@@ -121,46 +115,108 @@ describe('buen día para intentar marca', () => {
   });
 });
 
-describe('por músculo', () => {
-  const sesion = (horasAntes: number, bloques: SesionConBloques['bloques']): SesionConBloques => ({ inicio: T0 - horasAntes * HORA, bloques });
-  const sentadilla = (series: number, alFallo = false) => ({ ejercicio: 'Sentadilla', series: Array.from({ length: series }, () => ({ peso: 100, reps: null })), alFallo });
 
-  it('el ejercicio y sus músculos: el nombre más largo primero, y si no, el grupo de Ascent', () => {
-    expect(musculosDe('Peso muerto rumano')!.principal).toEqual(['isquios', 'gluteos']);
-    expect(musculosDe('Peso muerto')!.principal).toEqual(['isquios', 'gluteos', 'espaldaBaja']);
-    expect(musculosDe('Curl femoral')!.principal).toEqual(['isquios']);
-    expect(musculosDe('Curl de bíceps')!.principal).toEqual(['biceps']);
-    expect(musculosDe('Bench press')!.ayudan).toEqual(['triceps', 'hombros']);
-    expect(musculosDe('Máquina rara', 'piernas')!.principal).toEqual(['cuadriceps', 'gluteos', 'isquios']);
-    expect(musculosDe('Bici', 'cardio')).toBeNull();
+// ------------------------------------------------------------ la fuerza: la tendencia de cada ejercicio (5/11/2026)
+
+/** Un azar con semilla (mulberry32): las mismas series simuladas cada vez. */
+function azar(semilla: number) {
+  let s = semilla >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+/** Una normal con Box-Muller. */
+const normal = (r: () => number) => Math.sqrt(-2 * Math.log(r() || 1e-12)) * Math.cos(2 * Math.PI * r());
+
+/** 12 semanas, una sesión por semana: lo que sube de verdad (% por semana) y el ruido de cada día (%). */
+function simular(r: () => number, porSemana: number, ruido: number, semanas = 12): PuntoDeFuerza[] {
+  return Array.from({ length: semanas }, (_, w) => ({ t: w, e1rm: 100 * (1 + (porSemana / 100) * w) * (1 + (ruido / 100) * normal(r)) }));
+}
+const veces = (porSemana: number, estado: string, n = 2000) => {
+  const r = azar(20261105);
+  let k = 0;
+  for (let i = 0; i < n; i++) if (tendenciaDeFuerza(simular(r, porSemana, 3.3), { hoy: 11, entrenado: true }).estado === estado) k++;
+  return k / n;
+};
+
+describe('la tendencia de la fuerza, con su rango', () => {
+  it('con +0,5 % por semana, ruido de 3,3 % y una sesión por semana: «sin subida clara» menos del 5 % de las veces', () => {
+    expect(veces(0.5, 'sinSubidaClara')).toBeLessThan(0.05);
   });
 
-  it('lo que cae y cómo se recupera, contra los estudios: 6 series de sentadilla, recuperado a las 72 horas', () => {
-    expect(caidaInicial(6)).toBeCloseTo(15.83, 2);
-    const seis = [sesion(0, [sentadilla(6)])];
-    const a = (h: number) => residual('cuadriceps', seis, T0 + h * HORA);
-    expect([a(24), a(48), a(72)].map((x) => Math.round(x * 10) / 10)).toEqual([8.1, 4.2, 2.1]);
-    expect(estadoDe(a(24))).toBe('recuperandose');
-    expect(estadoDe(a(72))).toBe('recuperado');
-    // Con una serie al fallo tarda más: 4,2 % a las 72 horas.
-    expect(Math.round(residual('cuadriceps', [sesion(0, [sentadilla(6, true)])], T0 + 72 * HORA) * 10) / 10).toBe(4.2);
-    // El press de banca: 4,2 % a las 24 horas y 1,1 % a las 48.
-    const banca = [sesion(0, [{ ejercicio: 'Press banca', series: Array.from({ length: 6 }, () => ({ peso: 80, reps: null })) }])];
-    expect([24, 48].map((h) => Math.round(residual('pecho', banca, T0 + h * HORA) * 10) / 10)).toEqual([4.2, 1.1]);
-    // El que ayuda carga la mitad de la dosis.
-    expect(residual('triceps', banca, T0 + 24 * HORA)).toBeLessThan(residual('pecho', banca, T0 + 24 * HORA));
-    expect(listoEn('cuadriceps', seis, T0 + 24 * HORA)).toBe(36);
+  it('sin progreso, «sube» alrededor del 12 % (un rango del 80 %, de un solo lado, con 10 grados de libertad)', () => {
+    expect(veces(0, 'sube')).toBeLessThanOrEqual(0.13);
   });
 
-  it('con repeticiones, las series lejos del fallo cuentan menos y la entrada en calor no cuenta', () => {
-    expect(e1rm(100, 5)).toBeCloseTo(116.67, 2);
-    expect(e1rm(60, 15)).toBeNull();
-    const unoRM = 120;
-    expect(esfuerzoDeSerie({ peso: 100, reps: 5 }, unoRM)).toBe(1);
-    expect(esfuerzoDeSerie({ peso: 80, reps: 8 }, unoRM)).toBe(0.3);
-    expect(esfuerzoDeSerie({ peso: 50, reps: 10 }, unoRM)).toBe(0);
-    const s: SesionConBloques = { inicio: T0, bloques: [{ ejercicio: 'Sentadilla', series: [{ peso: 50, reps: 10 }, { peso: 100, reps: 5 }, { peso: 100, reps: 5 }] }] };
-    expect(dosisDeLaSesion(s, () => unoRM).get('cuadriceps')).toEqual({ dosis: 2, series: 2, alFallo: false });
-    expect(mejorE1rm([s], 'sentadilla')).toBeCloseTo(116.67, 2);
+  it('si sube un 1 % por mes, la regla de 3 semanas decía «estancado» el 63 % de las veces; la tendencia dice «sin subida clara» mucho menos', () => {
+    expect(veces(0.25, 'sinSubidaClara')).toBeLessThan(0.25);
+  });
+
+  it('con menos de 6 sesiones, o menos de 6 semanas de la primera a la última, todavía no se sabe', () => {
+    const cinco = [0, 2, 4, 6, 8].map((t) => ({ t, e1rm: 100 + t }));
+    expect(tendenciaDeFuerza(cinco, { hoy: 8, entrenado: true })).toMatchObject({ estado: 'noSeSabe', sesiones: 5, porMes: null, rango: null });
+    const juntas = [0, 0.5, 1, 1.5, 2, 2.5, 3].map((t) => ({ t, e1rm: 100 + 3 * t }));
+    expect(tendenciaDeFuerza(juntas, { hoy: 3, entrenado: true }).estado).toBe('noSeSabe');
+    // Con 3 o más hay nivel, aunque no se sepa si sube.
+    expect(tendenciaDeFuerza(cinco, { hoy: 8, entrenado: true }).nivel).toBeGreaterThan(100);
+  });
+
+  it('una subida clara: lo dice por mes, con su rango; lo de antes de las 12 semanas no cuenta', () => {
+    const puntos = Array.from({ length: 12 }, (_, w) => ({ t: w, e1rm: 100 * Math.exp(0.004 * w) * (1 + (w % 2 ? 0.01 : -0.01)) }));
+    const t = tendenciaDeFuerza([{ t: -20, e1rm: 300 }, ...puntos], { hoy: 11, entrenado: true });
+    expect(t.estado).toBe('sube');
+    expect(t.sesiones).toBe(12);
+    expect(t.porMes!).toBeCloseTo((Math.exp(4.35 * 0.004) - 1) * 100, 0);
+    expect(t.rango![0]).toBeGreaterThan(0);
+    expect(t.rango![0]).toBeLessThan(t.porMes!);
+    expect(t.rango![1]).toBeGreaterThan(t.porMes!);
+  });
+
+  it('plana: sin subida clara, con tu ruido acercado al de los estudios', () => {
+    const plana = Array.from({ length: 12 }, (_, w) => ({ t: w, e1rm: 100 * (1 + (w % 2 ? 0.01 : -0.01)) }));
+    const t = tendenciaDeFuerza(plana, { hoy: 11, entrenado: true });
+    expect(t.estado).toBe('sinSubidaClara');
+    // 12 sesiones con un 1 % de desvío: entre el 1 % y el 3,3 % de los estudios.
+    expect(t.sigma).toBeGreaterThan(1);
+    expect(t.sigma).toBeLessThan(3.3);
+    expect(tendenciaDeFuerza(plana, { hoy: 11, entrenado: false }).sigma).toBeGreaterThan(t.sigma);
+  });
+
+  it('la recta en un momento, con su rango, para dibujarla; y el 1RM estimado, de a 2,5 kg', () => {
+    const t = tendenciaDeFuerza(Array.from({ length: 10 }, (_, w) => ({ t: w, e1rm: 120 + w * (w % 2 ? 1.2 : 0.8) })), { hoy: 9, entrenado: true });
+    const a = nivelEn(t.ajuste!, 9);
+    expect(a.nivel).toBeCloseTo(t.nivel!, 6);
+    expect(a.abajo).toBeLessThan(a.nivel);
+    expect(a.arriba).toBeGreaterThan(a.nivel);
+    expect([aDosYMedio(121.2), aDosYMedio(123.8), aDosYMedio(125)]).toEqual([120, 125, 125]);
+  });
+});
+
+describe('la marca, sin probabilidad', () => {
+  it('cerca de la marca si tu nivel de hoy está a menos de tu ruido: con 3,3 %, 2,5 % es cerca y 5 % no', () => {
+    expect(cercaDeLaMarca({ marca: 102.5, nivel: 100, sigma: 3.3 }).cerca).toBe(true);
+    expect(cercaDeLaMarca({ marca: 105.2, nivel: 100, sigma: 3.3 }).cerca).toBe(false);
+    expect(cercaDeLaMarca({ marca: 100, nivel: 101, sigma: 3.3 })).toMatchObject({ cerca: true });
+    expect(cercaDeLaMarca({ marca: 100, nivel: null, sigma: 3.3 })).toEqual({ cerca: false, distancia: null });
+  });
+
+  it('lo que acompaña: más de 6 h sin despertarte antes, los músculos descansados y una semana como siempre', () => {
+    const bien = { noche: { dormido: 470, necesidad: 480, despertoAntes: null }, ultimas3: [470, 460, 455], musculos: 'recuperado' as const, seriesSemanaSobreMes: 0.9 };
+    expect(condicionesDeLaMarca(bien)).toEqual({ sueno: true, musculos: true, semana: true });
+    expect(condicionesDeLaMarca({ ...bien, noche: { dormido: 470, necesidad: 480, despertoAntes: 70 } }).sueno).toBe(false);
+    expect(condicionesDeLaMarca({ ...bien, ultimas3: [470, 340, 350] }).sueno).toBe(false);
+    expect(condicionesDeLaMarca({ ...bien, musculos: 'recuperandose' }).musculos).toBe(false);
+    expect(condicionesDeLaMarca({ ...bien, seriesSemanaSobreMes: 1.3 }).semana).toBe(false);
+    expect(condicionesDeLaMarca({ ...bien, noche: null }).sueno).toBe(false);
+  });
+
+  it('cada cuánto haces marca, en tus últimas 20 sesiones con el ejercicio', () => {
+    const sesiones = Array.from({ length: 25 }, (_, i) => `2026-${String(1 + Math.floor(i / 4)).padStart(2, '0')}-${String(1 + (i % 4) * 7).padStart(2, '0')}`);
+    const marcas = [sesiones[2], sesiones[10], sesiones[18], sesiones[24]];
+    expect(frecuenciaDeMarcas(sesiones, marcas)).toEqual({ marcas: 3, de: 20 });
+    expect(frecuenciaDeMarcas(sesiones.slice(0, 6), marcas)).toEqual({ marcas: 1, de: 6 });
   });
 });

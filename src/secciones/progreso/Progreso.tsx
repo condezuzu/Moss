@@ -10,7 +10,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from
 import { elAlmacen } from '@/almacen';
 import { conMayuscula } from '@/comida/buscar';
 import { KG_POR_LIBRA, largoEn, pesoCorporalEn, type Sistema } from '@/dominio/cantidades';
-import { cambioDe, cinturaAltura, rangoDeGrasa, SITIOS, ultimasMedidas } from '@/dominio/cuerpo';
+import { cambioDe, cinturaAltura, claseDeCintura, rangoDeGrasa, SITIOS, ultimasMedidas } from '@/dominio/cuerpo';
 import { diasEntre, sumarDias, type DiaSemana } from '@/dominio/fechas';
 import { ESTILOS, EXTRAS, objetivoPermitido, pesoMinimoSano, pisoDe, repartirSemana, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
 import type { EstadoDelObjetivo } from '@/dominio/progreso';
@@ -29,7 +29,7 @@ import {
 type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
 
 const TIPO_DE_ESTADO: Record<EstadoDelObjetivo, TipoDeChip | undefined> = {
-  llegaste: 'bien', enCamino: 'bien', estable: 'bien', despacio: 'atencion', quieto: 'atencion', alReves: 'atencion', seMueve: 'atencion', sinMeta: 'tenue', otroLado: 'atencion', faltanDatos: 'tenue',
+  llegaste: 'bien', enCamino: 'bien', estable: 'bien', despacio: 'atencion', quieto: 'atencion', alReves: 'atencion', seMueve: 'atencion', sinMeta: 'tenue', otroLado: 'atencion', todaviaNo: 'tenue', faltanDatos: 'tenue',
 };
 
 /** Los pesos en la unidad de cada uno: con lo redondeado para mostrar y sin redondear para las cuentas. */
@@ -48,7 +48,7 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   const [vista, setVista] = useState<'principal' | 'metas'>('principal');
   return (
     <View style={{ width: ancho }}>
-      <ScrollView key={vista} contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+      <ScrollView key={vista} contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         {vista === 'principal' ? <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} /> : <Metas alVolver={() => setVista('principal')} />}
       </ScrollView>
     </View>
@@ -139,7 +139,9 @@ function ElPeso({ p, u, ancho, alRegistrar }: { p: Persona; u: U; ancho: number;
 function LasMedidas({ p, hoy, sistema, alMedir }: { p: Persona; hoy: string; sistema: Sistema; alMedir: () => void }) {
   const sitios = SITIOS.filter((x) => p.ultimasMedidas[x] !== undefined);
   const ultima = p.medidas.reduce<Persona['medidas'][number] | null>((a, m) => (!a || m.fecha > a.fecha ? m : a), null);
-  const ratio = cinturaAltura(p.ultimasMedidas.cintura, p.perfil.alturaCm);
+  // Con un IMC de 35 o más, la cintura sobre la altura no dice nada más (NICE): no se muestra.
+  const conRatio = cinturaAltura(p.ultimasMedidas.cintura, p.perfil.alturaCm);
+  const ratio = conRatio !== null && p.pesoHoy !== null && claseDeCintura(conRatio, p.pesoHoy / (p.perfil.alturaCm / 100) ** 2) ? conRatio : null;
   return (
     <Carta titulo={t('progreso.medidas')} derecha={<BotonChico texto={t('progreso.medir')} icono="ruler" alTocar={alMedir} />}>
       {sitios.length ? (
@@ -531,6 +533,8 @@ function CampoDeMacro({ macro, gramos, alCambiar }: { macro: Macro; gramos: numb
         keyboardType="number-pad"
         returnKeyType="done"
         selectTextOnFocus
+        maxLength={4}
+        selectionColor={colores.oro}
         style={s.campoValor}
         accessibilityLabel={t(`comida.${macro}`)}
       />

@@ -2,7 +2,7 @@
 // cambia con un quinto de la pantalla o con un tirón rápido, el viaje dura 340 ms y la curva sale
 // rápido y frena largo.
 
-import { Easing, FadeIn, FadeOut, SlideInDown, SlideInRight, SlideOutDown, SlideOutRight, withTiming } from 'react-native-reanimated';
+import { Easing, FadeIn, FadeOut, ReduceMotion, SlideInDown, SlideInRight, SlideOutDown, SlideOutRight, withTiming } from 'react-native-reanimated';
 
 export const UMBRAL = 0.22;
 /** El tirón, en puntos por segundo: 0,35 por milisegundo, como en Ascent. */
@@ -27,9 +27,12 @@ export const ENTRA_HOJA = SlideInDown.duration(340).easing(LLEGA);
 export const SALE_HOJA = SlideOutDown.duration(230).easing(SE_VA);
 export const ENTRA_PANEL = SlideInRight.duration(300).easing(LLEGA);
 export const SALE_PANEL = SlideOutRight.duration(220).easing(SE_VA);
-/** El fondo oscuro detrás de una hoja. */
-export const ENTRA_VELO = FadeIn.duration(220);
-export const SALE_VELO = FadeOut.duration(200);
+/** El fondo oscuro detrás de una hoja. Un fundido no es movimiento: con Reducir movimiento también se ve. */
+export const ENTRA_VELO = FadeIn.duration(220).reduceMotion(ReduceMotion.Never);
+export const SALE_VELO = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
+/** Con Reducir movimiento, una hoja o un panel no viajan: entran y salen con un fundido corto (sin él, aparecían de golpe). */
+export const ENTRA_FUNDIDO = FadeIn.duration(180).reduceMotion(ReduceMotion.Never);
+export const SALE_FUNDIDO = FadeOut.duration(160).reduceMotion(ReduceMotion.Never);
 
 /** Ascent o la hoja del «+», que suben o bajan: más corto cuanto menos falta, como un resorte. */
 export function subirOBajar(desde: number, hasta: number) {

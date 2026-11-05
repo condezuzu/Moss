@@ -219,159 +219,171 @@ const Datos = (() => {
     return lista;
   })();
 
-  // Lo que Ascent tiene de la persona, para la sección de Ascent con el vínculo. Entrena los lunes
-  // (empuje), los miércoles (piernas), los viernes (torso) y los domingos (tirón), salvo algún
-  // viernes y algún domingo; hoy hizo piernas a las 18:40, una sesión más grande que las de
-  // siempre. El peso movido es como lo cuenta Ascent: la suma del peso de cada serie. El press
-  // banca no sube desde hace tres semanas: lo de Moss de las semanas en que subía (septiembre)
-  // está acá, y lo de estas tres semanas sale de lo comido y dormido de la galería.
-  // Cada sesión tiene sus ejercicios con sus series (peso y repeticiones), para el rendimiento, los
-  // músculos y la marca posible (spec/rendimiento.md). La semana pasada fue de descarga en piernas
-  // (menos series, la misma carga), y la sentadilla está a un paso de su marca.
+  // Lo que Ascent tiene de la persona, para la sección de Ascent con el vínculo (spec/ascent.md, «Ascent en
+  // Progreso»). Entrena cuatro días por semana desde mayo: los lunes empuje, los miércoles piernas, los
+  // viernes torso y los domingos tirón, salvo las vacaciones de fin de julio y algún día salteado; hoy toca
+  // piernas a las 18:40. Cada ejercicio es uno del catálogo de Ascent, por su id (Musculos.CATALOGO), con
+  // su nombre en Ascent y sus series (peso y repeticiones); el peso movido es como lo cuenta Ascent, la
+  // suma del peso de cada serie. La historia es inventada para que se vea cada caso de la sección:
+  // - la sentadilla sube y hoy está cerca de su marca, del 30 de septiembre; la semana pasada, una descarga
+  //   en piernas (menos series, la misma carga);
+  // - el press de banca no sube desde su marca del 10 de agosto, y desde ahí hay menos series de pecho (el
+  //   press inclinado del viernes salió de la rutina y el de mancuernas pasó de 4 a 3 series);
+  // - el press militar, plano y siempre de 8 a 10 repeticiones: pocas series pesadas;
+  // - el peso muerto entró los domingos el 20 de septiembre (antes, rack pull): todavía no se sabe.
   const ASCENT = (() => {
     const r = azar(17);
+    const DESDE = '2026-05-04';
     const RUTINA = {
-      1: { nombre: { es: 'Empuje', en: 'Push' }, series: 18, kilos: 990, minutos: 62, hora: 19 * 60 + 10 },
-      3: { nombre: { es: 'Piernas', en: 'Legs' }, series: 15, kilos: 1150, minutos: 56, hora: 18 * 60 + 45 },
-      5: { nombre: { es: 'Torso', en: 'Upper body' }, series: 16, kilos: 900, minutos: 54, hora: 19 * 60 },
-      0: { nombre: { es: 'Tirón', en: 'Pull' }, series: 13, kilos: 720, minutos: 44, hora: 11 * 60 + 5 },
+      1: { nombre: { es: 'Empuje', en: 'Push' }, minutos: 62, hora: 19 * 60 + 10 },
+      3: { nombre: { es: 'Piernas', en: 'Legs' }, minutos: 56, hora: 18 * 60 + 45 },
+      5: { nombre: { es: 'Torso', en: 'Upper body' }, minutos: 54, hora: 19 * 60 },
+      0: { nombre: { es: 'Tirón', en: 'Pull' }, minutos: 44, hora: 11 * 60 + 5 },
     };
-    const SALTEADOS = new Set(['2026-09-27', '2026-10-09']);
-    // Los ejercicios de cada día: nombre, series, peso y repeticiones.
-    const s = (n, peso, reps) => Array.from({ length: n }, () => ({ peso, reps }));
+    const VACACIONES = ['2026-07-27', '2026-08-09'];
+    const SALTEADOS = new Set(['2026-05-31', '2026-06-26', '2026-08-30', '2026-09-27', '2026-10-09']);
+    // El nombre de cada ejercicio en Ascent (el de su catálogo, en español: así llega a Moss).
+    const NOMBRE = {
+      press_banca: 'Press de banca', press_inclinado_mancuernas: 'Press inclinado con mancuernas', press_militar: 'Press militar', fondos: 'Fondos en paralelas',
+      triceps_polea: 'Tríceps en polea', sentadilla: 'Sentadilla', prensa: 'Prensa', curl_femoral: 'Curl femoral', extension_cuadriceps: 'Extensión de cuádriceps',
+      gemelos: 'Gemelos de pie', remo_barra: 'Remo con barra', press_inclinado: 'Press inclinado', dominadas: 'Dominadas', elevaciones_laterales: 'Elevaciones laterales',
+      curl_barra: 'Curl con barra', rack_pull: 'Rack pull', peso_muerto: 'Peso muerto', remo_mancuerna: 'Remo con mancuerna', face_pull: 'Face pull', zancadas: 'Zancadas',
+    };
+    const b = (id, n, peso, reps) => ({ ejercicio: NOMBRE[id], id, series: Array.from({ length: n }, () => ({ peso, reps })) });
+    const de25 = (kg) => Math.round(kg / 2.5) * 2.5;
+    /** De `a` kg en `desde` a `c` kg en `hasta`, de a 2,5 kg; después, `c`. */
+    const rampa = (fecha, desde, a, hasta, c) => {
+      const t = Math.min(1, Math.max(0, Fechas.diasEntre(desde, fecha) / Fechas.diasEntre(desde, hasta)));
+      return de25(a + (c - a) * t);
+    };
+    const MESETA_BANCA = '2026-08-10';
+    const RECORTE = '2026-08-11';
     const BLOQUES = {
-      1: () => [
-        { ejercicio: 'Press banca', series: s(4, 80, 5) }, { ejercicio: 'Press inclinado con mancuernas', series: s(3, 28, 8) },
-        { ejercicio: 'Press militar', series: s(3, 45, 8) }, { ejercicio: 'Fondos', series: s(3, 0, null) }, { ejercicio: 'Tríceps en polea', series: s(3, 25, 12) },
+      1: (f) => [
+        // El press de banca sube hasta 80 kg el 10 de agosto y desde ahí queda entre 77,5 y 80.
+        b('press_banca', 4, f <= MESETA_BANCA ? rampa(f, DESDE, 70, MESETA_BANCA, 80) : ['2026-08-31', '2026-09-21'].includes(f) ? 77.5 : 80, 5),
+        b('press_inclinado_mancuernas', f < RECORTE ? 4 : 3, 26, 8),
+        // El press militar no se mueve: de 8 a 10 repeticiones, nunca pesado.
+        b('press_militar', 3, Fechas.diasEntre(DESDE, f) % 21 === 14 ? 42.5 : 40, Fechas.diasEntre(DESDE, f) % 21 === 7 ? 9 : Fechas.diasEntre(DESDE, f) % 21 === 14 ? 8 : 10),
+        b('fondos', 3, 0, 10), b('triceps_polea', 3, 25, 12),
       ],
-      3: (semana) => [
-        { ejercicio: 'Sentadilla', series: s(4, 95 + 2.5 * semana, 5) }, { ejercicio: 'Prensa', series: s(3, 180, 10) },
-        { ejercicio: 'Curl femoral', series: s(3, 40, 12) }, { ejercicio: 'Extensión de piernas', series: s(3, 50, 12) }, { ejercicio: 'Pantorrillas', series: s(2, 60, 15) },
+      3: (f) => [
+        b('sentadilla', 4, f < '2026-08-12' ? rampa(f, DESDE, 90, '2026-08-12', 100) : f < '2026-09-02' ? 100 : f < '2026-09-30' ? 102.5 : 105, 5),
+        b('prensa', 3, rampa(f, DESDE, 160, '2026-10-14', 180), 10), b('curl_femoral', 3, 40, 12), b('extension_cuadriceps', 3, 50, 12), b('gemelos', 2, 60, 15),
       ],
-      5: () => [
-        { ejercicio: 'Remo con barra', series: s(4, 70, 8) }, { ejercicio: 'Press banca inclinado', series: s(3, 60, 8) },
-        { ejercicio: 'Dominadas', series: s(3, 0, null) }, { ejercicio: 'Elevaciones laterales', series: s(3, 10, 12) }, { ejercicio: 'Curl de bíceps', series: s(3, 14, 10) },
+      5: (f) => [
+        b('remo_barra', 4, rampa(f, DESDE, 62.5, '2026-10-16', 70), 8),
+        ...(f < RECORTE ? [b('press_inclinado', 3, 60, 8)] : []),
+        b('dominadas', 3, 0, 8), b('elevaciones_laterales', 3, 10, 12), b('curl_barra', 3, 30, 10),
       ],
-      0: () => [
-        { ejercicio: 'Peso muerto', series: s(3, 130, 5) }, { ejercicio: 'Dominadas', series: s(4, 0, null) },
-        { ejercicio: 'Remo con mancuerna', series: s(3, 30, 10) }, { ejercicio: 'Face pull', series: s(3, 20, 15) },
+      0: (f) => [
+        f < '2026-09-20' ? b('rack_pull', 3, 140, 5) : b('peso_muerto', 3, f === '2026-09-20' ? 135 : 130, 5),
+        b('dominadas', 4, 0, 6), b('remo_mancuerna', 3, 30, 10), b('face_pull', 3, 20, 15),
       ],
     };
-    // La descarga del miércoles 14: la sentadilla con la misma carga y menos series, sin lo demás.
+    // La descarga del miércoles 14: la sentadilla con la misma carga y menos series, y la prensa; nada más.
     const DESCARGA = '2026-10-14';
     const inicio = (fecha, hora) => Date.parse(fecha + 'T00:00:00.000Z') - ZONA * 60e3 + hora * 60e3;
-    const sesiones = [];
-    for (let fecha = '2026-09-14'; fecha < HOY; fecha = Fechas.sumarDias(fecha, 1)) {
-      const dia = Fechas.diaDeLaSemana(fecha);
+    const sesion = (fecha, dia, bloques, extra = {}) => {
       const d = RUTINA[dia];
-      if (!d || SALTEADOS.has(fecha)) continue;
-      const k = 0.92 + r() * 0.16;
-      const semana = Math.floor(Fechas.diasEntre('2026-09-14', fecha) / 7);
-      const bloques = fecha === DESCARGA ? [{ ejercicio: 'Sentadilla', series: s(2, 105, 5) }, { ejercicio: 'Prensa', series: s(2, 180, 10) }] : BLOQUES[dia](semana);
-      const series = bloques.reduce((t, b) => t + b.series.length, 0);
-      sesiones.push({ fecha, nombre: d.nombre, series, kilos: Math.round(d.kilos * k / 5) * 5, minutos: Math.round(d.minutos * (0.95 + r() * 0.1)), hora: d.hora, inicio: inicio(fecha, d.hora), bloques });
+      const series = bloques.reduce((t, x) => t + x.series.length, 0);
+      const kilos = bloques.reduce((t, x) => t + x.series.reduce((s, y) => s + y.peso, 0), 0);
+      return Object.assign({ fecha, nombre: d.nombre, series, kilos: Math.round(kilos / 5) * 5, minutos: Math.round(d.minutos * (0.95 + r() * 0.1)), hora: d.hora, inicio: inicio(fecha, d.hora), bloques }, extra);
+    };
+    const sesiones = [];
+    for (let fecha = DESDE; fecha < HOY; fecha = Fechas.sumarDias(fecha, 1)) {
+      const dia = Fechas.diaDeLaSemana(fecha);
+      if (!RUTINA[dia] || SALTEADOS.has(fecha) || (fecha >= VACACIONES[0] && fecha <= VACACIONES[1])) continue;
+      sesiones.push(sesion(fecha, dia, fecha === DESCARGA ? [b('sentadilla', 2, 105, 5), b('prensa', 2, 180, 10)] : BLOQUES[dia](fecha)));
     }
-    sesiones.push({
-      fecha: HOY, nombre: RUTINA[3].nombre, series: 17, kilos: 1290, minutos: 58, hora: 18 * 60 + 40, inicio: inicio(HOY, 18 * 60 + 40),
-      bloques: [{ ejercicio: 'Sentadilla', series: s(5, 105, 5) }, ...BLOQUES[3](5).slice(1)],
-    });
-    // Las marcas de Ascent (la tabla prs): la de la sentadilla es de agosto, y las veces que Moss avisó
-    // «buen día» y si hubo marca, para el historial de aciertos. Las de la prensa, el femoral, la
-    // extensión y las pantorrillas, para «Marcas» con todos los ejercicios de hoy.
-    const marcas = [
-      { ejercicio: 'Sentadilla', peso: 107.5, reps: 5, fecha: '2026-08-26' },
-      { ejercicio: 'Peso muerto', peso: 135, reps: 5, fecha: '2026-09-20' },
-      { ejercicio: 'Press banca', peso: 80, reps: 5, fecha: '2026-09-28' },
-      { ejercicio: 'Prensa', peso: 200, reps: 8, fecha: '2026-07-22' },
-      { ejercicio: 'Curl femoral', peso: 45, reps: 10, fecha: '2026-09-02' },
-      { ejercicio: 'Extensión de piernas', peso: 55, reps: 10, fecha: '2026-06-10' },
-      { ejercicio: 'Pantorrillas', peso: 70, reps: 10, fecha: '2026-05-13' },
+    // Hoy, la de piernas de las 18:40: una más grande que las de siempre, con una serie más de sentadilla.
+    sesiones.push(Object.assign(sesion(HOY, 3, [b('sentadilla', 5, 105, 5), ...BLOQUES[3](HOY).slice(1)]), { hora: 18 * 60 + 40, inicio: inicio(HOY, 18 * 60 + 40), minutos: 58 }));
+
+    // Las marcas de Ascent (la tabla prs, una fila por marca): las de antes de mayo, inventadas, y después cada
+    // vez que la mejor serie de una sesión le ganó a todas las anteriores (con una repetición, el peso; si no,
+    // Epley, como un_rm de Ascent). La primera vez de cada ejercicio no es marca: ya venía de antes.
+    const ANTES_DE_MAYO = [
+      { id: 'sentadilla', peso: 90, reps: 5, fecha: '2026-03-04' }, { id: 'press_banca', peso: 70, reps: 5, fecha: '2026-03-23' },
+      { id: 'press_militar', peso: 42.5, reps: 10, fecha: '2026-04-27' }, { id: 'prensa', peso: 200, reps: 8, fecha: '2026-04-15' },
+      { id: 'curl_femoral', peso: 45, reps: 10, fecha: '2026-02-04' }, { id: 'extension_cuadriceps', peso: 55, reps: 10, fecha: '2026-02-04' },
+      { id: 'gemelos', peso: 70, reps: 10, fecha: '2026-01-14' }, { id: 'remo_barra', peso: 60, reps: 8, fecha: '2026-04-03' },
+      { id: 'rack_pull', peso: 140, reps: 5, fecha: '2026-03-29' }, { id: 'peso_muerto', peso: 140, reps: 5, fecha: '2026-02-27' },
     ];
-    const avisos = {
-      Sentadilla: { veces: 4, marcas: 2, marcasEnTotal: 4, semanas: 7 },
-      Prensa: { veces: 1, marcas: 0, marcasEnTotal: 3, semanas: 7 },
-    };
-    // La rutina de Ascent (nucleo/rutinas.ts): qué se hace cada día de la semana, para la fatiga por día.
-    const rutina = Object.keys(RUTINA).map(Number).map((dia) => ({ dia, nombre: RUTINA[dia].nombre, hora: RUTINA[dia].hora, ejercicios: BLOQUES[dia](0).map((b) => b.ejercicio) }));
-    // Los ejercicios que Ascent ve estancados con el umbral que se eligió en sus Ajustes (3 semanas; de fábrica,
-    // 6), y lo que Ascent sabe de cada uno: cómo llegó el músculo principal a cada sesión (lo que le faltaba
-    // recuperar, en %), cada cuánto lo entrena (veces por semana) y cuánto duran las sesiones. Lo de Moss (el
-    // sueño, la proteína y el balance de cada semana) sale de lo comido y dormido de la galería.
-    const estancados = {
-      umbral: 3,
-      ejercicios: [
-        { ejercicio: 'Press banca', semanas: 3, desde: '2026-09-28', peso: 80, reps: 5, llegadas: [2.1, 1.4, 2.6], vecesPorSemana: { antes: 1, ahora: 1 }, minutos: { antes: 62, ahora: 61 } },
-        { ejercicio: 'Peso muerto', semanas: 4, desde: '2026-09-20', peso: 135, reps: 5, llegadas: [1.2, 0.8, 1.5], vecesPorSemana: { antes: 1.5, ahora: 0.75 }, minutos: { antes: 46, ahora: 44 } },
-        { ejercicio: 'Press militar', semanas: 5, desde: '2026-09-14', peso: 47.5, reps: 6, llegadas: [12.4, 11.2, 4.1, 13], vecesPorSemana: { antes: 1, ahora: 1 }, minutos: { antes: 62, ahora: 61 } },
-      ],
-    };
-    // Tu año: cada día del año hasta ayer, con el grupo principal de lo que entrenó (null, descanso), y las
-    // 21 marcas. El grupo de cada día es el de su rutina: pecho el lunes, piernas el miércoles y espalda el
-    // viernes y el domingo. Desde el 14 de septiembre son las sesiones de arriba; antes, la misma semana con
-    // días salteados, una semana enferma en marzo y dos de vacaciones en julio.
+    const unRm = (peso, reps) => (reps <= 1 ? peso : peso * (1 + reps / 30));
+    const marcas = ANTES_DE_MAYO.map((m) => Object.assign({ ejercicio: NOMBRE[m.id] }, m));
+    const mejores = new Map(ANTES_DE_MAYO.map((m) => [m.id, unRm(m.peso, m.reps)]));
+    for (const s of sesiones.filter((x) => x.fecha < HOY)) {
+      for (const bl of s.bloques) {
+        const serie = bl.series.filter((x) => x.peso > 0 && x.reps).reduce((a, x) => (!a || unRm(x.peso, x.reps) > unRm(a.peso, a.reps) ? x : a), null);
+        if (!serie) continue;
+        const v = unRm(serie.peso, serie.reps);
+        if (!mejores.has(bl.id)) { mejores.set(bl.id, v); continue; }
+        if (v > mejores.get(bl.id) + 1e-9) {
+          mejores.set(bl.id, v);
+          marcas.push({ id: bl.id, ejercicio: bl.ejercicio, peso: serie.peso, reps: serie.reps, fecha: s.fecha });
+        }
+      }
+    }
+
+    // La rutina de Ascent (nucleo/rutinas.ts): qué se hace cada día de la semana, la de ahora.
+    const rutina = Object.keys(RUTINA).map(Number).map((dia) => ({ dia, nombre: RUTINA[dia].nombre, hora: RUTINA[dia].hora, ejercicios: BLOQUES[dia](HOY).map((x) => ({ id: x.id, ejercicio: x.ejercicio })) }));
+    // El umbral de estancamiento que se eligió en los Ajustes de Ascent (6 de fábrica).
+    const umbral = 6;
+
+    // Tu año: cada día del año hasta ayer, con el grupo principal de lo que entrenó (null, descanso), y sus
+    // marcas. Desde mayo son las sesiones de arriba; antes, la misma semana con días salteados y una semana
+    // enferma en marzo, con marcas inventadas.
     const GRUPO_DEL_DIA = { 1: 'pecho', 3: 'piernas', 5: 'espalda', 0: 'espalda' };
-    const MARCAS_DEL_ANIO = {
-      piernas: ['2026-01-14', '2026-02-04', '2026-03-04', '2026-04-15', '2026-05-13', '2026-06-10', '2026-08-26'],
-      pecho: ['2026-01-19', '2026-02-16', '2026-03-23', '2026-04-27', '2026-06-01', '2026-07-06', '2026-09-28'],
-      espalda: ['2026-01-25', '2026-02-27', '2026-03-29', '2026-05-03', '2026-06-19', '2026-07-26', '2026-09-20'],
-    };
+    const MARCAS_DE_ANTES = new Set(['2026-01-14', '2026-02-04', '2026-03-04', '2026-04-15', '2026-01-19', '2026-02-16', '2026-03-23', '2026-04-27', '2026-01-25', '2026-02-27', '2026-03-29', '2026-04-03']);
+    const conMarca = new Set([...MARCAS_DE_ANTES, ...marcas.map((m) => m.fecha)]);
     const anioDias = (() => {
       const ra = azar(29);
-      const conMarca = new Set(Object.values(MARCAS_DEL_ANIO).flat());
       const lista = [];
       for (let fecha = '2026-01-01'; fecha < HOY; fecha = Fechas.sumarDias(fecha, 1)) {
         const dia = Fechas.diaDeLaSemana(fecha);
         const salteado = ra() < 0.12 && !conMarca.has(fecha);
-        const ausente = (fecha >= '2026-03-10' && fecha <= '2026-03-16') || (fecha >= '2026-07-27' && fecha <= '2026-08-09');
-        const entreno = fecha >= '2026-09-14' ? sesiones.some((x) => x.fecha === fecha) : !!GRUPO_DEL_DIA[dia] && !salteado && !ausente;
+        const ausente = fecha >= '2026-03-10' && fecha <= '2026-03-16';
+        const entreno = fecha >= DESDE ? sesiones.some((x) => x.fecha === fecha) : !!GRUPO_DEL_DIA[dia] && !salteado && !ausente;
         lista.push({ fecha, grupo: entreno ? GRUPO_DEL_DIA[dia] : null, marca: entreno && conMarca.has(fecha) });
       }
       return lista;
     })();
     // La última marca de cada grupo, con el ejercicio.
-    const ultimasMarcas = [
-      { grupo: 'piernas', ejercicio: 'Sentadilla', peso: 107.5, reps: 5, fecha: '2026-08-26' },
-      { grupo: 'pecho', ejercicio: 'Press banca', peso: 80, reps: 5, fecha: '2026-09-28' },
-      { grupo: 'espalda', ejercicio: 'Peso muerto', peso: 135, reps: 5, fecha: '2026-09-20' },
-    ];
-    // Las semanas en que el press banca subía, con lo que Moss guardó de cada una.
-    const semanasConMarcas = [
-      { sueno: 7 * 60 + 42, proteina: 151, balance: -280, diasConComida: 7, nochesConSueno: 7 },
-      { sueno: 7 * 60 + 35, proteina: 154, balance: -300, diasConComida: 6, nochesConSueno: 7 },
-      { sueno: 7 * 60 + 48, proteina: 149, balance: -270, diasConComida: 7, nochesConSueno: 6 },
-      { sueno: 7 * 60 + 38, proteina: 152, balance: -310, diasConComida: 5, nochesConSueno: 7 },
-    ];
-    // Los días de ejemplo del diagnóstico (spec/ascent.md, «El diagnóstico»), para elegir en la galería:
-    // a qué hora se mira, la noche, si hoy se entrena (la de piernas de las 18:40) y lo anotado.
-    const noche = (dormido, calidad, otras = {}) => ({ dormido, calidad, despertoAntes: false, seAcostoTarde: false, siesta: false, ...otras });
+    const ultimasMarcas = ['piernas', 'pecho', 'espalda'].map((grupo) => {
+      const de = marcas.filter((m) => GRUPO_DEL_DIA[Fechas.diaDeLaSemana(m.fecha)] === grupo).sort((a, c) => (a.fecha < c.fecha ? 1 : -1))[0];
+      return de ? { grupo, id: de.id, ejercicio: de.ejercicio, peso: de.peso, reps: de.reps, fecha: de.fecha } : null;
+    }).filter(Boolean);
+
+    // Los días de ejemplo (spec/ascent.md, «Ascent en Progreso»), para elegir en la galería: a qué hora se mira,
+    // la noche (cuántos minutos antes de lo de siempre se despertó, si fue antes), si hoy se entrena (la de
+    // piernas de las 18:40) y lo anotado. «Piernas cargadas» suma una sesión de piernas ayer, fuera de la rutina.
+    const noche = (dormido, calidad, otras = {}) => ({ dormido, calidad, despertoAntes: null, seAcostoTarde: false, siesta: false, ...otras });
     const MANANA = { desayuno: { hora: 8 * 60 + 5, p: 18, c: 60, g: 14, kcal: 430 }, almuerzo: { hora: 13 * 60, p: 28, c: 95, g: 28, kcal: 750 } };
+    const AYER = Fechas.sumarDias(HOY, -1);
     const dias = {
-      corta: { ahora: 14 * 60 + 30, sesion: 'prevista', cafe: 95, noche: noche(350, 46, { despertoAntes: true }), ultimas3: [350, 455, 470], deuda: 180, anotado: MANANA },
+      corta: { ahora: 14 * 60 + 30, sesion: 'prevista', cafe: 95, noche: noche(350, 46, { despertoAntes: 80 }), ultimas3: [350, 455, 470], deuda: 180, anotado: MANANA },
       bien: { ahora: 15 * 60 + 30, sesion: 'prevista', noche: noche(472, 84), ultimas3: [472, 455, 470], deuda: 40, anotado: MANANA },
+      cargado: {
+        ahora: 15 * 60, sesion: 'prevista', noche: noche(465, 80), ultimas3: [465, 455, 470], deuda: 40, anotado: MANANA,
+        sesionesExtra: [Object.assign(sesion(AYER, 3, [b('sentadilla', 5, 100, 5), b('prensa', 4, 180, 10), b('zancadas', 3, 20, 10)]), { hora: 19 * 60, inicio: inicio(AYER, 19 * 60) })],
+      },
       entreno: { ahora: 20 * 60 + 10, sesion: 'hecha', noche: noche(452, 78), ultimas3: [452, 455, 470], deuda: 40, anotado: { ...MANANA, merienda: { hora: 17 * 60 + 30, p: 15, c: 55, g: 15, kcal: 395 } } },
       descanso: { ahora: 15 * 60, sesion: null, noche: noche(445, 76), ultimas3: [445, 455, 470], deuda: 40, anotado: MANANA },
       sinSueno: { ahora: 15 * 60 + 30, sesion: 'prevista', noche: null, ultimas3: [], deuda: null, anotado: MANANA },
-      // Sin reloj y sin contestar a la mañana: la noche sin calidad, que cuenta como regular.
+      // Sin reloj y sin contestar a la mañana: la noche sin calidad. Es un dato que falta, no un dato malo.
       sinCalidad: { ahora: 9 * 60 + 10, sesion: 'prevista', noche: noche(470, null), ultimas3: [470, 455, 470], deuda: 40, anotado: { desayuno: MANANA.desayuno } },
     };
     return {
       vinculadaDesde: '2026-10-03',
+      // Las sesiones con detalle empiezan acá (en la app, Ascent manda las de 12 semanas o desde el 1 de enero).
+      desde: DESDE,
       dias,
-      // Los ejercicios son las claves de Musculos, en español; lo que se lee de ellos, en cada idioma.
-      nombresDeEjercicios: {
-        Sentadilla: { es: 'Sentadilla', en: 'Squat' }, Prensa: { es: 'Prensa', en: 'Leg press' }, 'Curl femoral': { es: 'Curl femoral', en: 'Leg curl' },
-        'Extensión de piernas': { es: 'Extensión de piernas', en: 'Leg extension' }, Pantorrillas: { es: 'Pantorrillas', en: 'Calf raise' },
-        'Press banca': { es: 'Press banca', en: 'Bench press' }, 'Peso muerto': { es: 'Peso muerto', en: 'Deadlift' }, 'Press militar': { es: 'Press militar', en: 'Overhead press' },
-      },
       sesiones,
       rutina,
-      estancados,
+      umbral,
       anioDias,
       ultimasMarcas,
       marcas,
-      avisos,
-      estancado: { ejercicio: { es: 'Press banca', en: 'Bench press' }, marca: '80 kg × 5', semanas: 3, desde: '2026-09-28' },
-      semanasConMarcas,
       // Lo de Moss del año también: la galería tiene la comida desde el 28 de septiembre, y antes
       // también registraba casi todos los días.
       anio: { entrenamientos: 148, marcas: 21, diasConHabitos: 47, diasConComida: 49 },

@@ -4,7 +4,9 @@ import { crearAlmacen, type Estado } from '@/almacen/almacen';
 import { repositorioEnMemoria } from '@/almacen/repositorio';
 import type { Constelacion } from '@/datos/catalogo';
 import datos from '@/datos/constelaciones.json';
+import { horasDeSueno } from '@/dominio/avisos';
 import { claveDeMarca } from '@/dominio/dias';
+import { sumarDias } from '@/dominio/fechas';
 import type { Habito } from '@/dominio/habitos';
 import type { MetaGuardada } from '@/dominio/metas';
 import type { Acceso, Suscripcion } from '@/dominio/premium';
@@ -37,7 +39,7 @@ jest.mock('@/lib/premium', () => ({
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { algunAviso, conLoQueFalta, LO_QUE_MUEVE_LOS_AVISOS, programarAvisos } = require('./programar') as typeof import('./programar');
+const { algunAviso, conLoQueFalta, LO_QUE_MUEVE_LOS_AVISOS, programarAvisos, suenoParaAvisos } = require('./programar') as typeof import('./programar');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { t } = require('@/textos') as typeof import('@/textos');
 const MERIENDA = () => t('recordatorios.horario.merienda');
@@ -201,6 +203,34 @@ describe('lo que vuelve a programar los avisos', () => {
     };
     expect(cambio(() => almacen.ponerLatencia(45))).toBe(true);
     expect(cambio(() => almacen.ponerCorte(0))).toBe(true);
+    expect(cambio(() => almacen.ponerNecesidad(420))).toBe(true);
     expect(cambio(() => almacen.ponerCalidad('baja'))).toBe(false);
+  });
+});
+
+describe('lo del sueño de los avisos', () => {
+  /** Una noche de 23:00 a 7:00 en la hora del teléfono, confirmada (sin reloj). */
+  const local = (clave: string, hora: number) => {
+    const [y, m, d] = clave.split('-').map(Number);
+    return new Date(y, m - 1, d, hora).toISOString();
+  };
+  const noches = new Map(Array.from({ length: 14 }, (_, i) => {
+    const fecha = sumarDias(HOY, -i);
+    return [fecha, { fecha, actualizado: '2026-11-02T09:00:00.000Z', hora: { dormirse: local(sumarDias(fecha, -1), 23), despertar: local(fecha, 7), origen: 'confirmada' as const, confianza: 'media' as const } }];
+  }));
+  const perfil = { nacimiento: 1994 };
+
+  it('con 7 h elegidas, la deuda y la hora de dormir usan 7 h, y lo despierto de la noche cuenta', () => {
+    const sinElegir = suenoParaAvisos(estado({ perfil, noches } as unknown as Partial<Estado>))!;
+    const conSiete = suenoParaAvisos(estado({ perfil, noches, necesidad: 420 } as unknown as Partial<Estado>))!;
+    expect([sinElegir.necesidad, conSiete.necesidad]).toEqual([480, 420]);
+    // Sin reloj, de las 8 h en la cama se duermen 7 h 30 (media hora despierto): con 8 h falta, con 7 sobra.
+    expect(conSiete.despierto).toBe(30);
+    expect(sinElegir.deuda).toBeCloseTo(30 * 7.5, 5);
+    expect(conSiete.deuda).toBe(0);
+    // A dormirse a las 23:30: las 7:00 menos 7 h y la media hora despierto.
+    expect(horasDeSueno(HOY, conSiete).dormir).toBe(23 * 60 + 30);
+    // Fuera de lo de tu edad no: a los 32, hasta 9 h.
+    expect(suenoParaAvisos(estado({ perfil, noches, necesidad: 600 } as unknown as Partial<Estado>))!.necesidad).toBe(540);
   });
 });

@@ -12,27 +12,22 @@ import {
 } from './entrenamiento';
 import { diasEntre, lunesDe, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import type { Macros, Sexo } from './metas';
-import { musculosDe, type GrupoDeAscent, type Musculo, type SesionConBloques } from './musculos';
+import { grupoDelEjercicio, unRmDeAscent, type GrupoDeAscent, type SesionConBloques } from './musculos';
 
 export type SerieDeAscent = { kilos: number | null; reps: number | null };
-export type EjercicioDeAscent = { nombre: string; musculos: string[]; series: SerieDeAscent[] };
+/** Un ejercicio de una sesión: el nombre de Ascent, su grupo (uno solo), sus series y su id ('sentadilla', o 'propio_…'). */
+export type EjercicioDeAscent = { nombre: string; musculos: string[]; series: SerieDeAscent[]; id?: string };
 /** Un día de gimnasio en Ascent; sin cronómetro llega con 0 series, 0 kilos, 0 minutos y sin ejercicios. */
 export type SesionDeAscent = Sesion & { ejercicios: EjercicioDeAscent[]; inicio?: string };
-export type MarcaDeAscent = { ejercicio: string; fecha: ClaveDia; kilos: number; reps: number };
+export type MarcaDeAscent = { ejercicio: string; fecha: ClaveDia; kilos: number; reps: number; id?: string };
 export type PesoCompartido = { fecha: ClaveDia; kg: number; de: 'moss' | 'ascent' };
 
 const GRUPOS: readonly GrupoDeAscent[] = ['pecho', 'espalda', 'hombros', 'brazos', 'piernas', 'core', 'cardio'];
-const GRUPO_DEL_MUSCULO: Record<Musculo, GrupoDeAscent> = {
-  cuadriceps: 'piernas', gluteos: 'piernas', isquios: 'piernas', aductores: 'piernas', pantorrillas: 'piernas', espaldaBaja: 'piernas',
-  espaldaAlta: 'espalda', pecho: 'pecho', hombros: 'hombros', biceps: 'brazos', triceps: 'brazos', antebrazos: 'brazos', abdomen: 'core',
-};
 
-/** El grupo de Ascent de un ejercicio: el que trae (uno solo) o, si no, el de su músculo principal. */
-export function grupoDe(e: Pick<EjercicioDeAscent, 'nombre' | 'musculos'>): GrupoDeAscent | undefined {
+/** El grupo de Ascent de un ejercicio: el que trae (uno solo) o, si no, el del catálogo por su id. */
+export function grupoDe(e: Pick<EjercicioDeAscent, 'musculos' | 'id'>): GrupoDeAscent | undefined {
   const dicho = e.musculos.map((m) => m.toLowerCase()).find((m): m is GrupoDeAscent => (GRUPOS as readonly string[]).includes(m));
-  if (dicho) return dicho;
-  const m = musculosDe(e.nombre);
-  return m ? GRUPO_DEL_MUSCULO[m.principal[0]] : undefined;
+  return dicho ?? grupoDelEjercicio({ id: e.id });
 }
 
 /** Los grupos de una sesión, del que tuvo más series al que menos: con eso se nombra («Piernas»). */
@@ -57,7 +52,7 @@ export function sesionesConBloques(sesiones: readonly SesionDeAscent[], inicioDe
   return sesiones.filter((s) => s.ejercicios.length).map((s) => ({
     fecha: s.fecha,
     inicio: inicioDe(s),
-    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps })) })),
+    bloques: s.ejercicios.map((e) => ({ ejercicio: e.nombre, ...(e.id ? { id: e.id } : {}), grupo: grupoDe(e), series: e.series.map((x) => ({ peso: x.kilos ?? 0, reps: x.reps })) })),
   }));
 }
 
@@ -147,12 +142,16 @@ export function cargaAntesDe(sesiones: readonly Sesion[], dia: ClaveDia): { kilo
 
 // ------------------------------------------------------------ por qué no subes
 
-/** Ascent avisa desde 3 semanas sin subir; con menos de 3 marcas no hay tendencia, hay puntos. */
-export const SEMANAS_SIN_SUBIR = 3;
+/**
+ * El umbral de fábrica de Ascent: 6 semanas sin subir (sus Ajustes dejan elegir 2, 3, 6 u 8). Antes eran 3:
+ * con el ruido de cada día, a quien sube un 1 % por mes le decía «estancado» el 63 % de las veces; con 6, el
+ * 38 %. Con menos de 3 marcas no hay tendencia, hay puntos.
+ */
+export const SEMANAS_SIN_SUBIR = 6;
 export const MARCAS_MINIMAS = 3;
 
 /** El 1RM de una marca como lo cuenta Ascent (Epley; con una repetición, el peso). */
-export const unRm = (m: Pick<MarcaDeAscent, 'kilos' | 'reps'>) => (m.reps <= 1 ? m.kilos : m.kilos * (1 + m.reps / 30));
+export const unRm = (m: Pick<MarcaDeAscent, 'kilos' | 'reps'>) => unRmDeAscent(m);
 
 export type Estancado = { ejercicio: string; semanas: number; mejor: MarcaDeAscent };
 
@@ -160,21 +159,21 @@ const semanasEntre = (desde: ClaveDia, hasta: ClaveDia) => Math.floor(diasEntre(
 
 /**
  * El ejercicio estancado, como lo detecta Ascent (nucleo/estancamiento.ts, «la marca quieta»): con 3
- * marcas o más, la mejor tiene 3 semanas o más y después hubo al menos otra (se siguió intentando y
- * no subió). Si hace 3 semanas que no aparece, no está estancado: se dejó. Con varios, el que lleva
- * más tiempo así.
+ * marcas o más, la mejor tiene el umbral de semanas o más (6 de fábrica) y después hubo al menos otra (se
+ * siguió intentando y no subió). Si hace ese tiempo que no aparece, no está estancado: se dejó. Con
+ * varios, el que lleva más tiempo así.
  */
-export function estancamiento(marcas: readonly MarcaDeAscent[], hoy: ClaveDia): Estancado | null {
+export function estancamiento(marcas: readonly MarcaDeAscent[], hoy: ClaveDia, umbral = SEMANAS_SIN_SUBIR): Estancado | null {
   const porEjercicio = new Map<string, MarcaDeAscent[]>();
   for (const m of marcas) porEjercicio.set(m.ejercicio, [...(porEjercicio.get(m.ejercicio) ?? []), m]);
   let peor: Estancado | null = null;
   for (const [ejercicio, suyas] of porEjercicio) {
     if (suyas.length < MARCAS_MINIMAS) continue;
     const ordenadas = [...suyas].sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
-    if (semanasEntre(ordenadas[ordenadas.length - 1].fecha, hoy) >= SEMANAS_SIN_SUBIR) continue;
+    if (semanasEntre(ordenadas[ordenadas.length - 1].fecha, hoy) >= umbral) continue;
     const mejor = ordenadas.reduce((a, b) => (unRm(b) > unRm(a) ? b : a));
     const semanas = semanasEntre(mejor.fecha, hoy);
-    if (semanas < SEMANAS_SIN_SUBIR || !ordenadas.some((m) => m.fecha > mejor.fecha)) continue;
+    if (semanas < umbral || !ordenadas.some((m) => m.fecha > mejor.fecha)) continue;
     if (!peor || semanas > peor.semanas) peor = { ejercicio, semanas, mejor };
   }
   return peor;
@@ -209,6 +208,31 @@ export function semanaDesde(lunes: ClaveDia, noches: ReadonlyMap<ClaveDia, numbe
     dias.flatMap((d) => (comidas.has(d) ? [comidas.get(d)!] : [])),
     gasto,
   );
+}
+
+// ------------------------------------------------------------ cuánto hace que no comes
+
+/**
+ * Las horas desde lo último anotado antes de un momento (los momentos de los registros, en ISO), mirando las
+ * 24 horas de antes: sin nada anotado en ese tiempo, null (no se sabe, y no se supone que no comiste).
+ */
+export function horasSinComer(momentos: readonly string[], en: number): number | null {
+  const antes = momentos.map((m) => Date.parse(m)).filter((t) => Number.isFinite(t) && t <= en && t > en - 24 * 3_600_000);
+  return antes.length ? (en - Math.max(...antes)) / 3_600_000 : null;
+}
+
+// ------------------------------------------------------------ cuánto hace que entrenas
+
+/** Desde las 26 semanas (6 meses) entrenando, el ruido es el de los entrenados (Grgic 2020) y la recuperación también (Newton 2008; Nosaka 2001). */
+export const SEMANAS_PARA_ENTRENADO = 26;
+
+/**
+ * Si entrena hace 6 meses o más, con lo que llegó de Ascent: la primera sesión o la marca más vieja (de cada
+ * ejercicio llega la mejor de siempre, aunque sea de antes de las sesiones que se piden). Sin nada, no.
+ */
+export function entrenadoSegunAscent(sesiones: readonly Pick<Sesion, 'fecha'>[], marcas: readonly Pick<MarcaDeAscent, 'fecha'>[], hoy: ClaveDia): boolean {
+  const fechas = [...sesiones.map((s) => s.fecha), ...marcas.map((m) => m.fecha)].sort();
+  return fechas.length > 0 && diasEntre(fechas[0], hoy) >= 7 * SEMANAS_PARA_ENTRENADO;
 }
 
 // ------------------------------------------------------------ el peso único

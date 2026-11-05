@@ -17,7 +17,7 @@
 // La estimación nunca se escribe en Salud (guía 5.1.3 de Apple).
 
 import { diaDeLaSemana, diasEntre, lunesDe, sumarDias, type ClaveDia } from './fechas';
-import { ceroDe, type Confianza, type Fuente, type Noche, type NochePropia } from './sueno';
+import { ceroDe, DESPIERTO_SIN_RELOJ, despiertoDeLaNoche, Z_DEL_80, type Confianza, type Fuente, type Noche, type NochePropia } from './sueno';
 
 const MIN = 60_000;
 
@@ -61,6 +61,8 @@ export type Estimacion = {
   /** La ventana tranquila: la última actividad y la primera. Se guarda para aprender lo tuyo (aprenderPersonal). */
   quieto: { desde: number; hasta: number };
   rango: { dormirse: [number, number]; despertar: [number, number] };
+  /** La mitad del rango de cada borde, en minutos (RANGO): se guarda con la noche, para calibrarlo. */
+  margen: { dormirse: number; despertar: number };
   confianza: Confianza;
   /** La probabilidad de que los dos bordes estén dentro de una hora (una propuesta, para calibrar). */
   probabilidad: number;
@@ -124,8 +126,18 @@ const ANTES_DE_DESCONECTAR = 10;
 const PUNTOS_POR_SENAL = 120;
 /** Sin ventana: la última actividad antes de las 2 y la primera después de las 4. */
 const SIN_VENTANA = { antesDe: 480, despuesDe: 600 };
-/** La mitad del rango que se muestra, en minutos, al dormirte y al despertarte. */
-const RANGO: Record<Confianza, [number, number]> = { alta: [20, 15], media: [35, 25], baja: [60, 45] };
+/**
+ * El rango que se muestra («entre 23:50 y 00:40») es el del 80 %: ±1,28 veces la duda que queda al juntar las
+ * señales de ese borde, por 1,5 si hay de lo que más hace errar en él (en Sahha, usar el teléfono de noche,
+ * dejarlo mucho antes o agarrarlo mucho después son el 74 % de los errores grandes; sin ventana, en los dos
+ * bordes), y ±10 minutos con un ancla exacta (la alarma). Es una propuesta, a calibrar con la prueba
+ * contra un reloj (spec/sueno.md): por eso el margen se guarda con la noche.
+ */
+const RANGO = { conMotivo: 1.5, ancla: 10 };
+/** Sin el margen guardado (una noche de antes, o que bajó de la cuenta), el de su confianza: lo típico del modelo. */
+const MARGEN_POR_CONFIANZA: Record<Confianza, { dormirse: number; despertar: number }> = {
+  alta: { dormirse: 40, despertar: 35 }, media: { dormirse: 50, despertar: 45 }, baja: { dormirse: 75, despertar: 65 },
+};
 /**
  * Cuánto pesa lo tuyo contra lo de fábrica (spec/sueno.md, «Aprender de cada persona»): un promedio
  * con contracción, `n·τ² / (n·τ² + σ²)`, con τ lo que cambia de una persona a otra y σ el ruido de
@@ -164,11 +176,14 @@ function medianaPesada(lista: { x: number; peso: number }[]): number | null {
 
 type Bloque = { desde: number; hasta: number; tipos: Actividad['tipo'][]; fin: boolean };
 
-/** Lo que proponen las señales, junto: un promedio pesado por 1/duda², y lo que pesó cada una. */
-function juntar(lista: { en: number; duda: number }[]): { en: number; pesos: number[] } {
+/**
+ * Lo que proponen las señales, junto: un promedio pesado por 1/duda², lo que pesó cada una y la duda que queda,
+ * (Σ 1/duda²)^(−1/2), que es menor que la de cualquiera de ellas.
+ */
+function juntar(lista: { en: number; duda: number }[]): { en: number; pesos: number[]; duda: number } {
   const inversa = lista.map((p) => 1 / p.duda ** 2);
   const total = inversa.reduce((s, x) => s + x, 0);
-  return { en: lista.reduce((s, p, i) => s + p.en * inversa[i], 0) / total, pesos: inversa.map((x) => x / total) };
+  return { en: lista.reduce((s, p, i) => s + p.en * inversa[i], 0) / total, pesos: inversa.map((x) => x / total), duda: 1 / Math.sqrt(total) };
 }
 
 /** La actividad en minutos desde las 18, dentro de lo que se mira, juntando lo que está pegado. */
@@ -349,12 +364,20 @@ export function estimarNoche(d: {
   }
   p = limitar(p, 0.05, 0.95);
   const confianza: Confianza = p >= 0.75 ? 'alta' : p >= 0.5 ? 'media' : 'baja';
+  // El margen de cada borde sale de la duda que quedó al juntar sus señales (RANGO).
+  const con = (...m: Motivo[]) => m.some((x) => motivos.includes(x));
+  const ancho = (duda: number, conMotivo: boolean) => Math.round(Z_DEL_80 * duda * (conMotivo ? RANGO.conMotivo : 1));
+  const margen = {
+    dormirse: ancho(alDormirse.duda, con('dejasteAntes', 'usoDeNoche', 'sinVentana')),
+    despertar: alDespertar ? RANGO.ancla : ancho(alLevantarte.duda, con('agarrasteTarde', 'usoDeNoche', 'sinVentana')),
+  };
   return {
     clave: d.clave,
     dormirse,
     despertar: despertarFinal,
     quieto: { desde: fin, hasta: principio },
-    rango: rangoDe(dormirse, despertarFinal, confianza),
+    rango: rangoDe(dormirse, despertarFinal, margen, { desde: fin, hasta: principio }),
+    margen,
     confianza,
     probabilidad: p,
     interrupciones,
@@ -381,10 +404,15 @@ export function estimarNoche(d: {
   };
 }
 
-/** El rango que se muestra («entre 23:50 y 00:40»), más ancho cuanto menos segura. */
-export function rangoDe(dormirse: number, despertar: number, confianza: Confianza): Estimacion['rango'] {
-  const [a, b] = RANGO[confianza];
-  return { dormirse: [dormirse - a, dormirse + a], despertar: [despertar - b, despertar + b] };
+/**
+ * El rango que se muestra («entre 23:50 y 00:40»): cada borde con su margen, sin pasar de lo que se sabe con la
+ * ventana tranquila (no estabas dormido antes de la última actividad ni después de la primera).
+ */
+export function rangoDe(dormirse: number, despertar: number, margen: Estimacion['margen'], quieto?: Estimacion['quieto']): Estimacion['rango'] {
+  return {
+    dormirse: [Math.max(dormirse - margen.dormirse, quieto?.desde ?? -Infinity), dormirse + margen.dormirse],
+    despertar: [despertar - margen.despertar, Math.min(despertar + margen.despertar, quieto?.hasta ?? Infinity)],
+  };
 }
 
 /**
@@ -469,11 +497,13 @@ export const MOSS: Fuente = { id: 'moss', nombre: 'Moss', tipo: 'moss' };
 export type Zona = number | ((ms: number) => number);
 
 /**
- * Una noche de Moss como las de Salud: sin etapas ni despertares, que el teléfono no sabe. Las
+ * Una noche de Moss como las de Salud: sin etapas ni despertares, que el teléfono no sabe. De dormirte a
+ * despertarte no es todo sueño: adentro hay un rato despierto que el teléfono no ve (`despierto`,
+ * despiertoDeLaNoche en sueno.ts), y lo dormido, lo que va a la deuda y a la calidad, es lo demás. Las
  * estimaciones con confianza baja no cuentan para la deuda ni el horario hasta que las confirmes.
  * Las horas, en la zona de cada momento (spec/sueno.md), como las de Salud.
  */
-export function nocheDeMoss(np: NochePropia, zona: Zona): Noche | null {
+export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = DESPIERTO_SIN_RELOJ): Noche | null {
   const h = np.hora;
   if (!h || np.borrado) return null;
   const desde = Date.parse(h.dormirse), hasta = Date.parse(h.despertar);
@@ -482,31 +512,41 @@ export function nocheDeMoss(np: NochePropia, zona: Zona): Noche | null {
   const cero = ceroDe(np.fecha, zonaDe(desde));
   const aMin = (ms: number) => (ms - cero) / MIN;
   // Si en la noche cambió la hora, despertar es la del reloj; el tramo va por el tiempo que pasó.
-  const despertar = aMin(hasta) + zonaDe(hasta) - zonaDe(desde);
-  const dormido = (hasta - desde) / MIN;
+  const aReloj = (ms: number) => aMin(ms) + zonaDe(ms) - zonaDe(desde);
+  const despertar = aReloj(hasta);
+  const periodo = (hasta - desde) / MIN;
+  const adentro = Math.min(periodo, Math.max(0, despierto));
+  const dormido = periodo - adentro;
   const estimada = h.origen === 'estimada';
   const cuenta: Confianza = estimada && h.confianza === 'baja' ? 'baja' : 'media';
+  const q = h.estimada?.quieto;
+  const quieto = q ? { desde: aMin(Date.parse(q.desde)), hasta: aReloj(Date.parse(q.hasta)) } : undefined;
   return {
     clave: np.fecha, fuente: MOSS, conEtapas: false,
     dormirse: aMin(desde), despertar, enCama: null,
-    dormido, despierto: 0, despertares: 0,
+    dormido, despierto: adentro, despertares: 0,
     etapas: { nucleo: 0, profundo: 0, rem: 0, sinEtapa: dormido },
     siestas: 0,
     tramos: [{ etapa: 'dormido', desde: aMin(desde), hasta: aMin(hasta) }],
     intervalos: [[desde, hasta]],
     confianza: { duracion: cuenta, horario: cuenta, despertares: 'baja', etapas: null, enCama: null },
-    moss: { origen: h.origen, confianza: h.confianza, rango: estimada ? rangoDe(aMin(desde), despertar, h.confianza) : null },
+    moss: {
+      origen: h.origen, confianza: h.confianza,
+      rango: estimada ? rangoDe(aMin(desde), despertar, h.estimada?.margen ?? MARGEN_POR_CONFIANZA[h.confianza], quieto) : null,
+    },
   };
 }
 
 /**
  * Las noches de Salud con las de Moss donde Salud no tiene nada. La hora que confirmaste o corregiste
- * gana también a lo anotado a mano en Salud: es de esa noche y la diste en Moss (spec/aparatos.md).
+ * gana también a lo anotado a mano en Salud: es de esa noche y la diste en Moss (spec/aparatos.md). Lo
+ * despierto de las de Moss es lo tuyo, si tuviste noches con un reloj o un anillo.
  */
 export function conNochesDeMoss(noches: Noche[], propias: NochePropia[], zona: Zona): Noche[] {
   const porClave = new Map(noches.map((n) => [n.clave, n]));
+  const despierto = despiertoDeLaNoche(noches);
   for (const np of propias) {
-    const n = nocheDeMoss(np, zona);
+    const n = nocheDeMoss(np, zona, despierto);
     if (!n) continue;
     const deSalud = porClave.get(np.fecha);
     if (deSalud && !(deSalud.aMano && n.moss!.origen !== 'estimada')) continue;

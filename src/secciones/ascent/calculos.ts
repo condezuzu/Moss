@@ -7,7 +7,7 @@ import type { Estado } from '@/almacen/almacen';
 import { metaVigente } from '@/almacen/almacen';
 import type { DeAscent } from '@/almacen/ascent';
 import {
-  cargaAntesDe, diasDeEntrenar, estancamiento, gruposDeLaSesion, metaDelDiaConAscent, semanaDesde, semanasParaComparar, sesionesConBloques, tuAnio,
+  cargaAntesDe, diasDeEntrenar, entrenadoSegunAscent, estancamiento, gruposDeLaSesion, horasSinComer, metaDelDiaConAscent, semanaDesde, semanasParaComparar, sesionesConBloques, tuAnio,
   type Estancado, type MetaConAscent, type SesionDeAscent, type TuAnio,
 } from '@/dominio/conAscent';
 import { ultimoDiaDeControl } from '@/dominio/control';
@@ -15,7 +15,9 @@ import { porQueNoSube, recuperacion, type PorQueNoSube, type Recuperacion } from
 import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import type { Habito } from '@/dominio/habitos';
 import type { Macros } from '@/dominio/metas';
-import { DE_PIERNAS, dosisDeLaSesion, estadoDe, listoEn, mejorE1rm, musculosDe, residual as residualDe, type EstadoMuscular, type GrupoDeAscent, type Musculo } from '@/dominio/musculos';
+import {
+  claveDelEjercicio, DE_PIERNAS, dosisDeLaSesion, estadoDe, listoEn, mejorE1rm, musculosDe, residual as residualDe, unRmDeAscent, type Bloque, type EstadoMuscular, type GrupoDeAscent, type Musculo,
+} from '@/dominio/musculos';
 import { buenDiaParaMarca, rendimientoEsperado, seguridadDeMarcas, type DiaDeMarca, type Rendimiento, type Seguridad } from '@/dominio/rendimiento';
 import { totalDelDia, vigentes } from '@/dominio/registros';
 import { habitualDe } from '@/dominio/sinReloj';
@@ -33,8 +35,9 @@ export const GRUPOS_DE_MUSCULOS = {
 export type GrupoDeMusculos = keyof typeof GRUPOS_DE_MUSCULOS;
 const grupoDelMusculo = (m: Musculo) => (Object.keys(GRUPOS_DE_MUSCULOS) as GrupoDeMusculos[]).find((g) => (GRUPOS_DE_MUSCULOS[g] as readonly Musculo[]).includes(m))!;
 
-const sinTildes = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
-const mismo = (a: string, b: string) => sinTildes(a) === sinTildes(b);
+/** El mismo ejercicio: por el id de Ascent si los dos lo tienen; si no, por el nombre (los avisos guardados no tienen id). */
+const mismo = (a: { id?: string; ejercicio: string }, b: { id?: string; ejercicio: string }) =>
+  a.id && b.id ? a.id === b.id : claveDelEjercicio({ ejercicio: a.ejercicio }) === claveDelEjercicio({ ejercicio: b.ejercicio });
 
 /** Un instante de un día a unos minutos de la hora local. */
 const instante = (dia: ClaveDia, minutos: number) => {
@@ -153,26 +156,30 @@ export function calcularVista({ e, d, sueno, persona, metaDe, soloSueno = false 
   const previas = conBloques.filter((x) => x.inicio < en);
   // El mejor 1RM de cada ejercicio se busca una vez: la fatiga lo pide por cada serie.
   const mejores = new Map<string, number | null>();
-  const unoRM = (ejercicio: string) => {
-    const k = sinTildes(ejercicio);
-    if (!mejores.has(k)) mejores.set(k, mejorE1rm(previas, ejercicio));
+  const unoRM = (b: Bloque) => {
+    const k = claveDelEjercicio(b);
+    if (!mejores.has(k)) mejores.set(k, mejorE1rm(previas, b));
     return mejores.get(k)!;
   };
+  // Con menos de 6 meses entrenando (la primera sesión o la marca más vieja), el ruido y la recuperación
+  // son los de quien empieza.
+  const entrenado = entrenadoSegunAscent(d.sesiones, d.marcas, hoy);
   // Para la fatiga alcanzan las últimas 3 semanas: lo de antes ya no pesa nada (la constante más
-  // larga es de 54 horas).
+  // larga es de 81 horas).
   const recientes = previas.filter((x) => x.inicio > en - 21 * DIA);
-  const residual = (m: Musculo) => residualDe(m, recientes, en, { unoRM });
+  const opciones = { unoRM, novato: !entrenado };
+  const residual = (m: Musculo) => residualDe(m, recientes, en, opciones);
   const musculos: MusculoDeHoy[] = soloSueno ? [] : (Object.keys(GRUPOS_DE_MUSCULOS) as GrupoDeMusculos[]).map((grupo) => {
     const lista = GRUPOS_DE_MUSCULOS[grupo] as readonly Musculo[];
     const peor = lista.reduce((a, b) => (residual(b) > residual(a) ? b : a));
     const r = residual(peor);
-    return { grupo, residual: r, estado: estadoDe(r), listo: listoEn(peor, recientes, en, { unoRM }) };
+    return { grupo, residual: r, estado: estadoDe(r), listo: listoEn(peor, recientes, en, opciones) };
   });
 
   // La de hoy o, si todavía no entrenó, la última de las 4 semanas anteriores en este día de la semana.
   const referencia = laDeHoy ?? [...previas].reverse().find((x) => diaDeLaSemana(x.fecha) === diaDeLaSemana(hoy) && x.fecha >= sumarDias(hoy, -28)) ?? null;
-  const bloque = referencia?.bloques.find((b) => b.series.length && musculosDe(b.ejercicio, b.grupo)) ?? null;
-  const musc = bloque ? musculosDe(bloque.ejercicio, bloque.grupo) : null;
+  const bloque = referencia?.bloques.find((b) => b.series.length && musculosDe(b)) ?? null;
+  const musc = bloque ? musculosDe(bloque) : null;
   let rendimiento: RendimientoDeHoy | null = null;
   let marca: MarcaPosible | null = null;
   if (referencia && bloque && musc) {
@@ -183,9 +190,11 @@ export function calcularVista({ e, d, sueno, persona, metaDe, soloSueno = false 
       }, 0);
     const conEllos = previas.filter((x) => musc.principal.some((m) => (dosisDeLaSesion(x, unoRM).get(m)?.series ?? 0) > 0));
     const ultima = conEllos[conEllos.length - 1] ?? null;
-    const conElEjercicio = previas.filter((x) => x.bloques.some((b) => mismo(b.ejercicio, bloque.ejercicio)));
+    const conElEjercicio = previas.filter((x) => x.bloques.some((b) => mismo(b, bloque)));
     const ultimoDelEjercicio = conElEjercicio[conElEjercicio.length - 1] ?? null;
-    const ultimoBloque = ultimoDelEjercicio?.bloques.find((b) => mismo(b.ejercicio, bloque.ejercicio)) ?? null;
+    const ultimoBloque = ultimoDelEjercicio?.bloques.find((b) => mismo(b, bloque)) ?? null;
+    // Llegar con 8 horas o más sin comer (King 2022): con lo anotado en las 24 horas de antes; sin nada, no se sabe.
+    const sinComer = horasSinComer(vigentes(e.registros.values()).filter((x) => !x.planificado).map((x) => x.momento), en);
     const habitual = habitualDe(noches, hoy);
     const ultimas3 = [0, 1, 2].flatMap((k) => noches.filter((n) => n.clave === sumarDias(hoy, -k)).map((n) => n.dormido));
     const deuda = deudaDeSueno(ultimasNoches(noches, hoy, 14), sueno.necesidad);
@@ -213,7 +222,7 @@ export function calcularVista({ e, d, sueno, persona, metaDe, soloSueno = false 
       multiarticular: musc.multiarticular, tren: musc.principal.some((m) => DE_PIERNAS.includes(m)) ? 'inferior' : 'superior',
       horaHabitual: e.entreno?.hora ?? null,
       comida: {
-        ayuno8h: false,
+        ayuno8h: sinComer !== null && sinComer >= 8,
         sesionLarga: (laDeHoy ? d.sesiones.find((s) => s.fecha === hoy)?.minutos ?? 0 : d.sesiones.find((s) => s.fecha === referencia.fecha)?.minutos ?? 0) > 45,
         carbosAyerPorKilo: comidoAyer.kcal > 0 ? comidoAyer.carbohidratos / pesoKg : null,
         mismosMusculosAyer: !!ayerSesion && musc.principal.reduce((s, m) => s + (dosisDeLaSesion(ayerSesion, unoRM).get(m)?.series ?? 0), 0) >= 10,
@@ -224,14 +233,14 @@ export function calcularVista({ e, d, sueno, persona, metaDe, soloSueno = false 
       descarga: {
         diasSinSeriesDuras: ultima ? Math.floor((en - ultima.inicio) / DIA) : 99,
         seriesSemanaSobreMes: mes ? semanaSeries / mes : null,
-        intensidadMantenida: !!ultimoBloque && ultimoBloque.series.some((x) => x.peso >= 0.85 * (unoRM(bloque.ejercicio) ?? Infinity)),
+        intensidadMantenida: !!ultimoBloque && ultimoBloque.series.some((x) => x.peso >= 0.85 * (unoRM(bloque) ?? Infinity)),
         diasSinElEjercicio: ultimoDelEjercicio ? Math.floor((en - ultimoDelEjercicio.inicio) / DIA) : 0,
       },
-      entrenado: true,
+      entrenado,
     });
     const primera = conBloques[0]?.fecha ?? hoy;
     const semanas = Math.max(1, Math.round(diasEntre(primera, hoy) / 7));
-    const prs = d.marcas.filter((m) => mismo(m.ejercicio, bloque.ejercicio));
+    const prs = d.marcas.filter((m) => mismo(m, bloque));
     const delEjercicio = conElEjercicio.length;
     const desdeElEjercicio = conElEjercicio[0]?.fecha ?? hoy;
     const seguridad = seguridadDeMarcas({ marcas: prs.length, sesiones: delEjercicio, semanas: Math.floor(diasEntre(desdeElEjercicio, hoy) / 7), leGanaALaGeneral: false });
@@ -241,18 +250,19 @@ export function calcularVista({ e, d, sueno, persona, metaDe, soloSueno = false 
       musculo: grupoDelMusculo(musc.principal[0]), anoche, seguridad, semanas,
     };
     if (prs.length) {
-      const mejor = prs.reduce((a, b) => (b.kilos * (1 + b.reps / 30) > a.kilos * (1 + a.reps / 30) ? b : a));
+      const mejor = prs.reduce((a, b) => (unRmDeAscent(b) > unRmDeAscent(a) ? b : a));
       const dia = buenDiaParaMarca({
-        marca: mejor.reps <= 1 ? mejor.kilos : mejor.kilos * (1 + mejor.reps / 30),
-        mejorReciente: mejorE1rm(recientes, bloque.ejercicio),
+        marca: unRmDeAscent(mejor),
+        mejorReciente: mejorE1rm(recientes, bloque),
         marcaEn8Semanas: prs.some((m) => m.fecha > sumarDias(hoy, -56)),
         recuperado: Math.max(...musc.principal.map(residual)) < 3,
         dormido: anoche ? anoche.dormido : null,
         despertoAntes: !!anoche && !!habitual && anoche.despertar < habitual.despertar - 60,
-        ultimas3, seriesSemanaSobreMes: mes ? semanaSeries / mes : null, ayunoSesionLarga: false,
+        ultimas3, seriesSemanaSobreMes: mes ? semanaSeries / mes : null,
+        ayunoSesionLarga: sinComer !== null && sinComer >= 8 && (d.sesiones.find((s) => s.fecha === referencia.fecha)?.minutos ?? 0) > 45,
         bajandoRapido: bajaSemanal !== null && bajaSemanal > 1, deltaMax: r.max, sigma: r.sigma,
       });
-      const avisos = d.avisos.filter((a) => mismo(a.ejercicio, bloque.ejercicio) && a.fecha < hoy);
+      const avisos = d.avisos.filter((a) => mismo({ ejercicio: a.ejercicio }, bloque) && a.fecha < hoy);
       marca = {
         ...dia, ejercicio: bloque.ejercicio, grupo: grupoDelMusculo(musc.principal[0]),
         dias: ultima ? Math.floor((en - ultima.inicio) / DIA) : 0,

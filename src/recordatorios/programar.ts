@@ -17,7 +17,7 @@ import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registro
 import { bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, type FaltaConHora } from '@/dominio/loQueFalta';
 import { aprenderPersonal, habitualDe } from '@/dominio/sinReloj';
 import { avisoDePrueba, avisosHasta } from '@/dominio/premium';
-import { deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
+import { despiertoDeLaNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
 import { accesoActual, hayPremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
 import { duracion, metaDelDia } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
@@ -50,22 +50,27 @@ export { horaDeReloj };
 
 /**
  * Lo del almacén que usan los avisos: cuando cambia algo de esto, el almacén los vuelve a programar
- * (src/almacen/index.ts). Lo que tardas en dormirte y la hora en que empieza el día también los mueven.
+ * (src/almacen/index.ts). Lo que tardas en dormirte, lo que necesitas dormir y la hora en que empieza el día
+ * también los mueven.
  */
-export const LO_QUE_MUEVE_LOS_AVISOS = ['hoy', 'corte', 'latencia', 'registros', 'recordatorios', 'avisos', 'habitos', 'marcas', 'perfil', 'salud', 'noches', 'metas', 'pesos', 'entreno', 'agua', 'numeros'] as const;
+export const LO_QUE_MUEVE_LOS_AVISOS = ['hoy', 'corte', 'latencia', 'necesidad', 'registros', 'recordatorios', 'avisos', 'habitos', 'marcas', 'perfil', 'salud', 'noches', 'metas', 'pesos', 'entreno', 'agua', 'numeros'] as const;
 
 type Para = Pick<Estado, (typeof LO_QUE_MUEVE_LOS_AVISOS)[number]>;
 
 /** Lo del sueño que usan los avisos: sin noches de verdad (las de ejemplo no valen), nada. */
-export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'latencia'>): SuenoDeAvisos | null {
-  const s = suenoDe(e.hoy, e.perfil, e.salud, e.noches);
+export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'noches' | 'latencia' | 'necesidad'>): SuenoDeAvisos | null {
+  // Con lo que elegiste en «Necesito dormir», dentro de lo de tu edad; sin elegir, lo de tu edad.
+  const s = suenoDe(e.hoy, e.perfil, e.salud, e.noches, e.necesidad);
   if (s.deEjemplo) return null;
+  const nec = s.necesidad;
   return {
     habitual: (clave) => habitualDe(s.noches, clave),
-    necesidad: s.necesidad,
-    deuda: deudaDeSueno(ultimasNoches(s.noches, e.hoy, 14), s.necesidad)?.minutos ?? null,
+    necesidad: nec,
+    deuda: deudaDeSueno(ultimasNoches(s.noches, e.hoy, 14), nec)?.minutos ?? null,
     // Lo que tardás en dormirte (D33): la hora de ir a la cama la descuenta.
     latencia: aprenderPersonal([...e.noches.values()], e.hoy, e.latencia).latencia,
+    // Y lo que se suele estar despierto en la noche: para dormir lo que necesitas, hay que estar en la cama eso más.
+    despierto: despiertoDeLaNoche(s.noches),
   };
 }
 

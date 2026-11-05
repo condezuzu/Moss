@@ -56,7 +56,8 @@ const AvisosBloqueo = (() => {
 
   // La persona de ejemplo: se despierta a las 7:00 y se acuesta a las 23:00; 75 kg, y tarda una hora en
   // llegar al gimnasio, como tú.
-  const SUENO = { habitual: () => ({ dormirse: 300, despertar: 780 }), necesidad: 480, deuda: 0 };
+  // Y, como casi todos, media hora despierta adentro de la noche (DESPIERTO_SIN_RELOJ): para dormir 8 horas, 8 y media en la cama.
+  const SUENO = { habitual: () => ({ dormirse: 300, despertar: 780 }), necesidad: 480, deuda: 0, despierto: 30 };
   const HORARIO = { desayuno: hm('7:30'), almuerzo: hm('13:00'), merienda: hm('17:30'), cena: hm('20:30') };
   const META = { kcal: 2400, proteina: 160, carbohidratos: 280, grasas: 75 };
   const VIAJE = 60;

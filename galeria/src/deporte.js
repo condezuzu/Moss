@@ -53,8 +53,9 @@ const Deporte = (() => {
       regla: {
         // Hoy, 18 km; la más larga de los 30 días anteriores, 15 (el 20 % más).
         corridas: [['2026-09-19', 13], ['2026-09-26', 14], ['2026-10-03', 15], ['2026-10-06', 8], ['2026-10-08', 8], ['2026-10-10', 15], ['2026-10-13', 8], ['2026-10-15', 8], ['2026-10-17', 18]].map(([dia, km]) => ({ dia, km })),
-        // Dos semanas bien anotadas con unos 11 mg de hierro por día, debajo de los 18 que piden las mujeres hasta los 50.
-        minerales: catorce('2026-10-17', (dia, i) => ({ dia, kcal: 1950, meta: 2150, hierro: 10.4 + (i % 3) * 0.6, calcio: 1080 })),
+        // Dos semanas bien anotadas con unos 7 mg de hierro por día: debajo de los 8,1 del requerimiento promedio (EAR) de
+        // las mujeres de 19 a 50, que es contra lo que se compara (no contra los 18 recomendados: IOM 2000).
+        minerales: catorce('2026-10-17', (dia, i) => ({ dia, kcal: 1950, meta: 2150, hierro: 6.6 + (i % 3) * 0.4, calcio: 1080 })),
       },
       paraHoy: { ahora: hm(12, 30), comido: { kcal: 640, proteina: 30, carbohidratos: 96, grasas: 16 }, sinAnotar: [], anotadas: 1, proxima: 'almuerzo' },
       bloqueo: { sesion: { inicio: hm(8), minutos: 100, tipo: 'resistencia' }, viaje: 0, hora: hm(12) },

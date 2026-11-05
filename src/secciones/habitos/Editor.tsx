@@ -144,8 +144,10 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
         placeholder={nombreDe(fuente) ?? t('habitos.nombreEjemplo')}
         placeholderTextColor="rgba(239, 230, 207, 0.35)"
         maxLength={80}
+        selectionColor={colores.oro}
         style={st.campo}
         returnKeyType="done"
+        accessibilityLabel={t('habitos.nombre')}
       />
 
       <EtiquetaDeGrupo>{t('habitos.como')}</EtiquetaDeGrupo>
@@ -172,23 +174,7 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
               <Pastilla key={meta} texto={textoDeMeta(fuente.dato as keyof typeof METAS, meta)} elegida={fuente.meta === meta} alTocar={() => cambiarFuente({ ...fuente, meta })} />
             ))}
           </View>
-          <TextInput
-            key={fuente.dato}
-            defaultValue={METAS[fuente.dato].includes(fuente.meta) ? '' : decimal(fuente.meta / ESCRITA_EN[fuente.dato], idioma())}
-            onChangeText={(x) => {
-              const dato = fuente.dato as keyof typeof METAS;
-              // Vacío vuelve a la del medio: si no, quedaba lo último que se borró («1 pasos»).
-              const n = Number(x.replace(',', '.'));
-              if (!x.trim()) cambiarFuente({ ...fuente, meta: METAS[dato][Math.floor(METAS[dato].length / 2)] });
-              else if (Number.isFinite(n) && n > 0) cambiarFuente({ ...fuente, meta: Math.max(1, Math.round(n * ESCRITA_EN[dato])) });
-            }}
-            placeholder={t(`habitos.metaPropia.${fuente.dato}`)}
-            placeholderTextColor="rgba(239, 230, 207, 0.35)"
-            keyboardType={ESCRITA_EN[fuente.dato] > 1 ? 'decimal-pad' : 'number-pad'}
-            maxLength={6}
-            style={[st.campo, st.mensaje]}
-            accessibilityLabel={t(`habitos.metaPropia.${fuente.dato}`)}
-          />
+          <MetaPropia key={fuente.dato} dato={fuente.dato} meta={fuente.meta} alCambiar={(meta) => cambiarFuente({ ...fuente, meta })} />
         </Aparece>
       )}
       {fuente.tipo === 'comida' && (
@@ -307,6 +293,8 @@ function EditorDeAviso({ aviso, dias, nombre, sinPermiso, alCambiar }: {
             placeholder={t('habitos.aviso.mensajeEjemplo', { habito: nombre || t('habitos.nombreEjemplo') })}
             placeholderTextColor="rgba(239, 230, 207, 0.35)"
             maxLength={120}
+            returnKeyType="done"
+            selectionColor={colores.oro}
             style={[st.campo, st.mensaje]}
             accessibilityLabel={t('habitos.aviso.mensaje')}
           />
@@ -315,6 +303,43 @@ function EditorDeAviso({ aviso, dias, nombre, sinPermiso, alCambiar }: {
         </Aparece>
       )}
     </>
+  );
+}
+
+/**
+ * La meta propia, escrita: lleva su propio texto. Antes salía de la meta, y escribir una igual a las
+ * de arriba («8000», «7» horas) vaciaba el campo a mitad de escribir. Elegir una de arriba sí lo vacía.
+ */
+function MetaPropia({ dato, meta, alCambiar }: { dato: keyof typeof METAS; meta: number; alCambiar: (meta: number) => void }) {
+  const deArriba = (m: number) => (METAS[dato].includes(m) ? '' : decimal(m / ESCRITA_EN[dato], idioma()));
+  const [texto, setTexto] = useState(() => deArriba(meta));
+  // La última meta que salió de lo escrito acá: si llega otra, la eligieron arriba.
+  const [escrita, setEscrita] = useState(meta);
+  const [antes, setAntes] = useState(meta);
+  if (meta !== antes) {
+    setAntes(meta);
+    if (meta !== escrita) setTexto(deArriba(meta));
+  }
+  return (
+    <TextInput
+      value={texto}
+      onChangeText={(x) => {
+        setTexto(x);
+        // Vacío vuelve a la del medio: si no, quedaba lo último que se borró («1 pasos»).
+        const n = Number(x.replace(',', '.'));
+        const nueva = !x.trim() ? METAS[dato][Math.floor(METAS[dato].length / 2)] : Number.isFinite(n) && n > 0 ? Math.max(1, Math.round(n * ESCRITA_EN[dato])) : null;
+        if (nueva === null) return;
+        setEscrita(nueva);
+        alCambiar(nueva);
+      }}
+      placeholder={t(`habitos.metaPropia.${dato}`)}
+      placeholderTextColor="rgba(239, 230, 207, 0.35)"
+      keyboardType={ESCRITA_EN[dato] > 1 ? 'decimal-pad' : 'number-pad'}
+      maxLength={6}
+      selectionColor={colores.oro}
+      style={[st.campo, st.mensaje]}
+      accessibilityLabel={t(`habitos.metaPropia.${dato}`)}
+    />
   );
 }
 

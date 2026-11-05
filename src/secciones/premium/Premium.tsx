@@ -25,6 +25,7 @@ import { duracion, fechaLarga } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { Hipnograma } from '../graficos/Graficos';
 import { HojaModal } from '../HojaModal';
+import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { borrarLaCuenta, exportarTodo, salirDeLaCuenta } from '../perfil/cuenta';
 import { Aparece, Parrafo } from '../tarjetas';
 
@@ -419,8 +420,9 @@ export function PantallaPremium({ conSecciones }: { conSecciones: boolean }) {
   if (!hayCompras() || !(p.abierta || sinAcceso)) return null;
   return (
     <Animated.View
-      entering={reducido ? FadeIn.duration(200) : SlideInDown.duration(340)}
-      exiting={reducido ? FadeOut.duration(160) : SlideOutDown.duration(280)}
+      // Con Reducir movimiento, el fundido (sin él, FadeIn también se saltea y la pantalla aparecía de golpe).
+      entering={reducido ? ENTRA_FUNDIDO : SlideInDown.duration(340)}
+      exiting={reducido ? SALE_FUNDIDO : SlideOutDown.duration(280)}
       style={[StyleSheet.absoluteFill, st.raiz, FONDO]}
       accessibilityViewIsModal
     >

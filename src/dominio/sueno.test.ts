@@ -1,7 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  armarNoches, calidadDeNoche, deudaDeSueno, horario, marcaDe, necesidad, nivelDeLaNoche, pareceIncompleta, pocoSuenoSostenido, soloEnCama, ultimasNoches, vitalDeNoche,
+  armarNoches, calidadDeNoche, DESPIERTO_SIN_RELOJ, despiertoDeLaNoche, deudaDeSueno, horario, marcaDe, necesidad, necesidadesPara, nivelDeLaNoche, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
+  soloEnCama, ultimasNoches, vitalDeNoche,
   type Etapa, type Fuente, type Muestra, type Noche,
 } from './sueno';
 
@@ -170,6 +171,17 @@ describe('las dos semanas', () => {
     expect(necesidad(31)).toBe(480);
     expect(necesidad(70)).toBe(450);
     expect(necesidad(31, 600)).toBe(540);
+    expect(necesidad(31, 420)).toBe(420);
+  });
+
+  it('antes de los 18, 9 horas de fábrica, y lo que elijas entre 8 y 10 (AASM 2016)', () => {
+    expect([necesidad(16), necesidad(17)]).toEqual([540, 540]);
+    expect([necesidad(17, 420), necesidad(17, 600), necesidad(17, 660)]).toEqual([480, 600, 600]);
+    expect(necesidad(18)).toBe(480);
+    // Lo que se puede elegir en «Necesito dormir», de media hora en media hora.
+    expect(necesidadesPara(16)).toEqual([480, 510, 540, 570, 600]);
+    expect(necesidadesPara(31)).toEqual([420, 450, 480, 510, 540]);
+    expect(necesidadesPara(70)).toEqual([420, 450, 480, 510, 540]);
   });
 
   it('el horario y qué tan regular es; el fin de semana más tarde', () => {
@@ -182,6 +194,26 @@ describe('las dos semanas', () => {
     expect(loco.regularidad).toBe('muyIrregular');
     // Con menos de 8 noches no se dice nada.
     expect(horario(semanas(7))).toBeNull();
+    expect(quieto.aprox).toBe(false);
+  });
+
+  it('con noches estimadas sin reloj es aproximada: el error de cada una se resta antes de decir que es irregular', () => {
+    /** Noches de Moss estimadas, con un rango de ±45 minutos (σ de unos 35). */
+    const estimadas = (corrimientos: number[]) => semanas(14, corrimientos).map((n) => ({
+      ...n!, fuente: { id: 'moss', nombre: 'Moss', tipo: 'moss' as const }, confianza: { ...n!.confianza, duracion: 'media' as const, horario: 'media' as const },
+      moss: { origen: 'estimada' as const, confianza: 'media' as const, rango: { dormirse: [n!.dormirse - 45, n!.dormirse + 45] as [number, number], despertar: [n!.despertar - 45, n!.despertar + 45] as [number, number] } },
+    }));
+    const alternados = (x: number) => Array.from({ length: 14 }, (_, i) => (i % 2 ? x : -x));
+    // A la misma hora con ±35 de ruido: no sale irregular.
+    expect(horario(estimadas(alternados(35)))).toMatchObject({ regularidad: 'regular', aprox: true });
+    // ±65: con un reloj sería irregular; con el ruido de la estimación, regular (y aproximada).
+    expect(horario(semanas(14, alternados(65)))!.regularidad).toBe('irregular');
+    expect(horario(estimadas(alternados(65)))).toMatchObject({ regularidad: 'regular', aprox: true });
+    // Aun restando el ruido pasa de hora y media: muy irregular.
+    expect(horario(estimadas(alternados(100)))!.regularidad).toBe('muyIrregular');
+    // Con menos de la mitad de Moss, como siempre.
+    const pocas = [...semanas(14, alternados(65)).slice(0, 8), ...estimadas(alternados(65)).slice(8)];
+    expect(horario(pocas)).toMatchObject({ regularidad: 'irregular', aprox: false });
   });
 
   it('la deuda pesa más lo de anoche, lo que sobra paga hasta 2 horas, y sin 5 noches no hay', () => {
@@ -193,12 +225,69 @@ describe('las dos semanas', () => {
     expect(deudaDeSueno([null, null, null, ...semanas(4, [], 420)], 480)).toBeNull();
   });
 
+  it('las noches sin datos no cuentan como si hubieras dormido lo que necesitas: usar menos el reloj no baja la deuda', () => {
+    // 7 h contra 8 todas las noches: con las 14 medidas o con la mitad (las impares sin datos), lo mismo.
+    const todas = deudaDeSueno(semanas(14, [], 420), 480)!;
+    const laMitad = deudaDeSueno(semanas(14, [], 420).map((n, i) => (i % 2 ? null : n)), 480)!;
+    expect(laMitad.noches).toBe(7);
+    expect(laMitad.minutos).toBeCloseTo(450, 5);
+    expect(todas.minutos).toBeCloseTo(450, 5);
+    // Con lo que faltó y lo que dormiste por noche, para decirlo así: «Duermes unas 7 h; necesitas unas 8».
+    expect(laMitad.porNoche).toBeCloseTo(60, 5);
+    expect(laMitad.duermes).toBeCloseTo(420, 5);
+    // Las últimas cinco solas tampoco la bajan: antes daban 4 h 17 min.
+    expect(deudaDeSueno([...Array.from({ length: 9 }, () => null), ...semanas(5, [], 420)], 480)!.minutos).toBeCloseTo(450, 5);
+  });
+
+  it('la deuda se dice a la media hora: «4 h 32 min» es precisión falsa', () => {
+    expect([redondearDeuda(272), redondearDeuda(284), redondearDeuda(14), redondearDeuda(15), redondearDeuda(0)]).toEqual([270, 270, 0, 30, 0]);
+  });
+
+  it('la deuda en una palabra, por lo que falta cada noche: muy bien, bien, algo alta o alta', () => {
+    // Redondeada a cero, o durmiendo de más: muy bien.
+    expect(juicioDeLaDeuda({ minutos: 10, porNoche: 1 })).toBe('muyBien');
+    expect(juicioDeLaDeuda({ minutos: 0, porNoche: -40 })).toBe('muyBien');
+    expect(juicioDeLaDeuda({ minutos: 29 * 7.5, porNoche: 29 })).toBe('bien');
+    expect(juicioDeLaDeuda({ minutos: 30 * 7.5, porNoche: 30 })).toBe('algoAlta');
+    expect(juicioDeLaDeuda({ minutos: 59 * 7.5, porNoche: 59 })).toBe('algoAlta');
+    expect(juicioDeLaDeuda({ minutos: 60 * 7.5, porNoche: 60 })).toBe('alta');
+    // Dos semanas de 7 h necesitando 8: una hora menos cada noche, alta.
+    expect(juicioDeLaDeuda(deudaDeSueno(semanas(14, [], 420), 480)!)).toBe('alta');
+  });
+
   it('con menos de 6 horas por semanas, sugiere un médico; con pocas noches o un par de malas, no', () => {
     expect(pocoSuenoSostenido(semanas(14, [], 330))).toBe(true);
     expect(pocoSuenoSostenido(semanas(14, [], 380))).toBe(false);
     expect(pocoSuenoSostenido([null, null, null, null, null, ...semanas(9, [], 300)])).toBe(false);
     const dosMalas = semanas(14, [], 450).map((n, i) => (i < 2 ? { ...n!, dormido: 240 } : n));
     expect(pocoSuenoSostenido(dosMalas)).toBe(false);
+  });
+
+  it('antes de los 18, con menos de 7 horas', () => {
+    expect([pocoSuenoSostenido(semanas(14, [], 400), 16), pocoSuenoSostenido(semanas(14, [], 400), 31)]).toEqual([true, false]);
+    expect(pocoSuenoSostenido(semanas(14, [], 430), 17)).toBe(false);
+  });
+});
+
+describe('lo despierto de la noche', () => {
+  it('sin noches de un reloj o un anillo, unos 30 minutos', () => {
+    expect(despiertoDeLaNoche([])).toBe(DESPIERTO_SIN_RELOJ);
+    expect(DESPIERTO_SIN_RELOJ).toBe(30);
+    // Con pocas noches del reloj, todavía lo de fábrica.
+    expect(despiertoDeLaNoche(semanas(6) as Noche[])).toBe(30);
+  });
+
+  it('con 7 noches o más, lo tuyo (la mediana de las últimas 14) más lo que el reloj no ve', () => {
+    // Las noches de mentira tienen 10 minutos despierto: 10 + 15.
+    expect(despiertoDeLaNoche(semanas(14) as Noche[])).toBe(25);
+    const viejas = (semanas(7) as Noche[]).map((n) => ({ ...n, clave: n.clave.replace('2026-10', '2026-09'), despierto: 60 }));
+    expect(despiertoDeLaNoche([...viejas, ...(semanas(14) as Noche[])])).toBe(25);
+    // Lo de Moss y lo anotado a mano no cuentan.
+    const deMoss = (semanas(14) as Noche[]).map((n) => ({ ...n, despierto: 0, moss: { origen: 'confirmada' as const, confianza: 'media' as const, rango: null } }));
+    expect(despiertoDeLaNoche(deMoss)).toBe(30);
+    expect(despiertoDeLaNoche((semanas(14) as Noche[]).map((n) => ({ ...n, aMano: true as const })))).toBe(30);
+    // Un aparato que nunca escribe un rato despierto no lo ve: lo de fábrica.
+    expect(despiertoDeLaNoche((semanas(14) as Noche[]).map((n) => ({ ...n, despierto: 0 })))).toBe(30);
   });
 });
 

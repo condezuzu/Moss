@@ -12,7 +12,8 @@ export type Ritmo = 'suave' | 'recomendado' | 'rapido';
 
 /**
  * Las respuestas del cuestionario de la entrada. `sinDeficit`: embarazo, lactancia o una condición
- * médica; no se guarda cuál, solo que Moss no pone en déficit (lo pediste el 22/10/2026).
+ * médica; no se guarda cuál, solo que Moss no pone en déficit (lo pediste el 22/10/2026). Para aprobar
+ * (5/11/2026), cuidados.ts sabe cuál, solo en el teléfono, y cambia más que el déficit.
  */
 export type Cuestionario = { edad: number; sexo: Sexo; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo; sinDeficit?: boolean };
 
@@ -69,6 +70,12 @@ export const RITMOS: Record<Exclude<Objetivo, 'mantener'>, Record<Ritmo, number>
 };
 
 export const KCAL_POR_KG = 7700;
+/**
+ * Bajando, nunca más de 1 kg por semana ni de 1.000 kcal de déficit por día (D35; spec/evidencia-1.1.md, 5):
+ * el tope va en la meta, no solo en el aviso (spec/estudio/metas.md, A2).
+ */
+export const KG_POR_SEMANA_MAXIMOS = 1;
+export const DEFICIT_MAXIMO = 1000;
 /** Por debajo, bajar «rápido» no está: se usa el ritmo recomendado. */
 export const MAYORIA_DE_EDAD = 18;
 /** El peso meta más bajo: el de un índice de masa corporal de 18,5, el borde de lo sano de la OMS. */
@@ -77,12 +84,16 @@ export const IMC_MINIMO = 18.5;
 /** Lo mínimo por día: 1.200 kcal para mujeres y 1.500 para hombres, el borde de abajo de la guía AHA/ACC/TOS 2013. */
 const PISOS: Record<Sexo, number> = { f: 1200, m: 1500 };
 /** Proteína por kilo según el objetivo; todas dentro del rango de 1,2 a 2,2 g. */
-const PROTEINA_POR_KG: Record<Objetivo, number> = { bajar: 2.0, mantener: 1.6, subir: 1.8 };
+export const PROTEINA_POR_KG: Record<Objetivo, number> = { bajar: 2.0, mantener: 1.6, subir: 1.8 };
 /** Con mucho peso y pocas calorías, la proteína por kilo se comería el resto: nunca pasa del 40 %. */
 const PROTEINA_MAXIMA = 0.4;
-/** Las grasas: al menos el 27 % de las kcal y nunca menos de 0,6 g por kilo. */
+/**
+ * Las grasas: al menos el 27 % de las kcal y 0,6 g por kilo, pero nunca más del 35 %, el borde de arriba
+ * del rango aceptable (IOM; NASEM, 2024): con mucho peso, el mínimo por kilo se llevaría las kcal.
+ */
 const GRASAS_MINIMAS = 0.27;
 const GRASAS_POR_KG = 0.6;
+const GRASAS_MAXIMAS = 0.35;
 /** Bajas en grasas es la punta de abajo del rango recomendado (20 a 35 %). */
 const GRASAS_BAJAS = 0.2;
 /** Menos del 26 % de las kcal en carbohidratos ya es «bajo en carbohidratos». */
@@ -94,8 +105,15 @@ const aDiez = (n: number) => Math.round(n / 10) * 10;
 
 export const pisoDe = (sexo: Sexo) => PISOS[sexo];
 
-/** La fibra: 14 g cada 1.000 kcal, la recomendación de las guías de Estados Unidos. Es una meta suave: nunca se marca en rojo. */
-export const metaDeFibra = (kcal: number) => Math.round((14 * kcal) / 1000);
+/**
+ * La fibra: 14 g cada 1.000 kcal (las guías de Estados Unidos) y, desde los 18, al menos 25 g (OMS, 2023;
+ * EFSA, 2017). Sin la edad, como un adulto. Es una meta suave: nunca se marca en rojo.
+ */
+export const FIBRA_MINIMA = 25;
+export function metaDeFibra(kcal: number, edad: number = MAYORIA_DE_EDAD): number {
+  const porKcal = Math.round((14 * kcal) / 1000);
+  return edad >= MAYORIA_DE_EDAD ? Math.max(FIBRA_MINIMA, porKcal) : porKcal;
+}
 
 /**
  * Cómo va cada macro contra su meta: brilla cuando se cumple lo pedido (el número redondeado llega
@@ -124,6 +142,13 @@ export function objetivoPermitido(c: Pick<Cuestionario, 'objetivo' | 'sinDeficit
   return c.objetivo === 'bajar' && c.sinDeficit ? 'mantener' : c.objetivo;
 }
 
+/**
+ * El reparto que se usa: sin déficit, keto no. La ADA (2026, 5.26) no recomienda lo muy bajo en
+ * carbohidratos en el embarazo, la lactancia, la enfermedad renal ni con un trastorno de la
+ * alimentación, y con el sí/no no se sabe cuál es: queda la equilibrada.
+ */
+export const estiloPermitido = (estilo: Estilo, sinDeficit?: boolean): Estilo => (sinDeficit && estilo === 'keto' ? 'equilibrada' : estilo);
+
 /** El peso meta más bajo que se acepta para una altura, en kg con un decimal (hacia arriba). */
 export const pesoMinimoSano = (alturaCm: number) => Math.ceil(IMC_MINIMO * (alturaCm / 100) ** 2 * 10) / 10;
 
@@ -135,10 +160,20 @@ export function motivoParaNo(m: Pick<Macros, 'kcal'>, sexo: Sexo): 'piso' | null
   return m.kcal < PISOS[sexo] ? 'piso' : null;
 }
 
+/**
+ * Las kcal por día de más o de menos que pide un ritmo en % del peso por semana, con su signo (negativo es
+ * bajar). Bajando, nunca más de un kilo por semana ni de 1.000 kcal por día: con 150 kg, el 0,75 % pediría
+ * 1.238.
+ */
+export function ajustePorRitmo(pct: number, pesoKg: number): number {
+  const kcal = ((pct / 100) * pesoKg * KCAL_POR_KG) / 7;
+  return pct < 0 ? -Math.min(-kcal, (KG_POR_SEMANA_MAXIMOS * KCAL_POR_KG) / 7, DEFICIT_MAXIMO) : kcal;
+}
+
 /** Las kcal por día de más o de menos que pide el objetivo. */
 export function ajusteDiario(objetivo: Objetivo, ritmo: Ritmo, pesoKg: number): number {
   if (objetivo === 'mantener') return 0;
-  return ((RITMOS[objetivo][ritmo] / 100) * pesoKg * KCAL_POR_KG) / 7;
+  return ajustePorRitmo(RITMOS[objetivo][ritmo], pesoKg);
 }
 
 /**
@@ -157,7 +192,8 @@ export function macrosConProteina(kcal: number, pesoKg: number, proteinaGramos: 
   const proteina = Math.round(Math.min(proteinaGramos, (kcal * PROTEINA_MAXIMA) / 4));
   if (estilo === 'equilibrada' || estilo === 'bajaEnGrasas') {
     const minimas = estilo === 'equilibrada' ? GRASAS_MINIMAS : GRASAS_BAJAS;
-    const grasas = Math.round(Math.max(pesoKg * GRASAS_POR_KG, (kcal * minimas) / 9));
+    // Con el techo de la proteína (40 %) y el de las grasas (35 %), siempre queda lugar: los macros suman las kcal.
+    const grasas = Math.round(Math.min((kcal * GRASAS_MAXIMAS) / 9, Math.max(pesoKg * GRASAS_POR_KG, (kcal * minimas) / 9)));
     const carbohidratos = Math.max(0, Math.round((kcal - proteina * 4 - grasas * 9) / 4));
     return { kcal, proteina, carbohidratos, grasas };
   }
@@ -166,11 +202,22 @@ export function macrosConProteina(kcal: number, pesoKg: number, proteinaGramos: 
   return { kcal, proteina, carbohidratos, grasas };
 }
 
+/**
+ * Lo que eligió el cuestionario nuevo y el control de cada semana respeta (cuestionario.ts, eleccionDe): los
+ * gramos de proteína por kilo del nivel elegido (o por la masa magra) y el ritmo en % del peso por semana,
+ * con su signo, de la fecha elegida o de la recomposición. Sin esto, el primer control volvería a la meta de
+ * fábrica (spec/estudio/metas.md, A4).
+ */
+export type Eleccion = { proteinaPorKg?: number | null; pct?: number | null };
+
 /** La meta para un gasto: el gasto más o menos el ritmo, nunca por debajo del piso ni en déficit si no se puede. */
-export function metaPara(gasto: number, c: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo' | 'sinDeficit'>, estilo: Estilo = 'equilibrada'): Macros {
+export function metaPara(gasto: number, c: Pick<Cuestionario, 'edad' | 'sexo' | 'pesoKg' | 'objetivo' | 'ritmo' | 'sinDeficit'>, estilo: Estilo = 'equilibrada', eleccion?: Eleccion): Macros {
   const objetivo = objetivoPermitido(c);
-  const kcal = Math.max(PISOS[c.sexo], aDiez(gasto + ajusteDiario(objetivo, ritmoPermitido({ ...c, objetivo }), c.pesoKg)));
-  return macrosPara(kcal, c.pesoKg, objetivo, estilo);
+  const pct = eleccion?.pct;
+  // Sin déficit, un ritmo elegido que baja tampoco baja (como objetivoPermitido).
+  const ajuste = pct != null ? (pct < 0 && c.sinDeficit ? 0 : ajustePorRitmo(pct, c.pesoKg)) : ajusteDiario(objetivo, ritmoPermitido({ ...c, objetivo }), c.pesoKg);
+  const kcal = Math.max(PISOS[c.sexo], aDiez(gasto + ajuste));
+  return macrosConProteina(kcal, c.pesoKg, c.pesoKg * (eleccion?.proteinaPorKg ?? PROTEINA_POR_KG[objetivo]), estiloPermitido(estilo, c.sinDeficit));
 }
 
 /** Las metas a mano: los gramos de cada macro y, si no se dan, las kcal que suman (4, 4 y 9 por gramo). */

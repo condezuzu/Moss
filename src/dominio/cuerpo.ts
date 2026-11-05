@@ -1,7 +1,7 @@
 // El cuerpo: las medidas con cinta y la grasa corporal que se estima con ellas (spec/progreso.md).
 // Es una estimación, nunca una medición: se muestra como un rango chico, con su aviso.
 
-import type { ClaveDia } from './fechas';
+import { diasEntre, type ClaveDia } from './fechas';
 import type { Sexo } from './metas';
 
 export type Sitio = 'cintura' | 'cuello' | 'cadera' | 'brazo' | 'pecho' | 'muslo';
@@ -49,18 +49,28 @@ const PUNTAS: Record<Sexo, readonly [number, number]> = { m: [10, 30], f: [18, 4
 /** Fuera de esto, alguna medida está mal tomada. */
 const POSIBLE: Record<Sexo, readonly [number, number]> = { m: [2, 60], f: [8, 65] };
 
-export type RangoDeGrasa = { desde: number; hasta: number; estimado: number };
+/** `fechasDistintas`: las medidas de la fórmula se tomaron con más de 60 días de diferencia. */
+export type RangoDeGrasa = { desde: number; hasta: number; estimado: number; fechasDistintas: boolean };
+
+/**
+ * Con medidas de fechas muy distintas, la estimación mezcla dos cuerpos: en ocho semanas el cuello de los
+ * hombres bajó medio centímetro, casi medio punto (Foulis y otros, 2023).
+ */
+const DIAS_ENTRE_MEDIDAS = 60;
 
 /**
  * El rango que se muestra: la estimación de la Marina más y menos lo que mueve el error de la
  * cinta en cada medida (sumados en cuadratura), redondeado hacia afuera a puntos enteros. Así
  * queda chico, de 2 a 4 puntos (5 en las puntas); lo que puede errar el método contra un
- * laboratorio, 3 o 4 puntos, va en el aviso, no en el rango (spec/progreso.md).
+ * laboratorio, unos 4 puntos o más, va en el aviso, no en el rango (spec/progreso.md). Con las
+ * fechas de cada medida (ultimasMedidas), dice si son de fechas muy distintas.
  */
-export function rangoDeGrasa(sexo: Sexo, alturaCm: number, m: Centimetros): RangoDeGrasa | null {
+export function rangoDeGrasa(sexo: Sexo, alturaCm: number, m: Centimetros & { fechas?: Partial<Record<Sitio, ClaveDia>> }): RangoDeGrasa | null {
   const estimado = grasaMarina(sexo, alturaCm, m);
   if (estimado === null || estimado < POSIBLE[sexo][0] || estimado > POSIBLE[sexo][1]) return null;
   const usadas: Sitio[] = sexo === 'm' ? ['cintura', 'cuello'] : ['cintura', 'cadera', 'cuello'];
+  const fechas = usadas.map((sitio) => m.fechas?.[sitio]).filter((f): f is ClaveDia => !!f).sort();
+  const fechasDistintas = fechas.length > 1 && diasEntre(fechas[0], fechas[fechas.length - 1]) > DIAS_ENTRE_MEDIDAS;
   let cuadrados = 0;
   for (const sitio of usadas) {
     const corrida = grasaMarina(sexo, alturaCm, { ...m, [sitio]: (m[sitio] ?? 0) + (ERROR_CM[sitio] ?? 0) });
@@ -68,7 +78,7 @@ export function rangoDeGrasa(sexo: Sexo, alturaCm: number, m: Centimetros): Rang
   }
   const enLaPunta = estimado < PUNTAS[sexo][0] || estimado > PUNTAS[sexo][1];
   const medio = Math.max(MEDIO_ANCHO_MINIMO, Math.sqrt(cuadrados)) + (enLaPunta ? 1 : 0);
-  return { desde: Math.max(0, Math.floor(estimado - medio)), hasta: Math.ceil(estimado + medio), estimado };
+  return { desde: Math.max(0, Math.floor(estimado - medio)), hasta: Math.ceil(estimado + medio), estimado, fechasDistintas };
 }
 
 /**
@@ -77,6 +87,16 @@ export function rangoDeGrasa(sexo: Sexo, alturaCm: number, m: Centimetros): Rang
  */
 export function cinturaAltura(cinturaCm: number | undefined, alturaCm: number): number | null {
   return cinturaCm && alturaCm > 0 ? cinturaCm / alturaCm : null;
+}
+
+export type ClaseDeCintura = 'sana' | 'aumentada' | 'alta';
+/** Desde un IMC de 35, NICE no usa la cintura sobre la altura (NG246, 1.9.14): el IMC ya dice el riesgo. */
+const IMC_SIN_CINTURA = 35;
+
+/** Qué dice la cintura sobre la altura, con los cortes de NICE (NG246, 1.9.15); con un IMC de 35 o más, nada. */
+export function claseDeCintura(ratio: number, imc: number): ClaseDeCintura | null {
+  if (!Number.isFinite(ratio) || !(imc < IMC_SIN_CINTURA)) return null;
+  return ratio < 0.5 ? 'sana' : ratio < 0.6 ? 'aumentada' : 'alta';
 }
 
 /** Las últimas medidas de cada sitio hasta `hasta`: no hace falta medir todo el mismo día. */

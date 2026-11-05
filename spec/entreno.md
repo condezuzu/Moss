@@ -369,6 +369,7 @@ type Contexto = {
   edad: number;
   despertar: number | null;    // medianas de las últimas 14 noches
   dormir: number | null;
+  acostarse?: number | null;   // la hora de ir a la cama: el corte del café cuenta desde acá
   dormidoAnoche: number | null; // minutos
   bajando: boolean;
   sinDeficit: boolean;
@@ -507,7 +508,7 @@ que queda.
 | A4 | Sesión a la mañana, sin comer desde que te despertaste, larga | `ayunasLarga` en el desayuno, antes de T | Como A3 | [18][20][21] | Moderada |
 | A5 | Lo mismo, pero corta | Nada antes | — | [19][21][22] | Moderada |
 | A6 | Resistencia o mixta de 90 min o más, prevista | Se agrega a la línea previa: lo de durante | 30 a 60 g por hora | [1][3] | Fuerte |
-| A7 | `cafeinaPorToma` y T − 60 min cae después del corte | Se agrega a la línea previa: la hora límite | Corte = dormir − 8 h (≤ 200 mg) o − 12 h (> 200 mg) | [28][29][30][31] | Fuerte que afecta; el corte es derivado |
+| A7 | `cafeinaPorToma` y T − 60 min cae después del corte | Se agrega a la línea previa: la hora límite | Corte = la hora de ir a la cama − 8,8 h (hasta 107 mg) a 13,2 h (217,5 mg o más), en recta entre los dos (el modelo de [28]); con 50 mg o menos, sin corte; al cuarto de hora de antes (`corteDeCafeina`, desde el 5/11) | [28][29][30][31] | Fuerte que afecta; el corte es derivado |
 | B1 | Hay comida posterior (hasta 4 h después del final) | `despues`: proteína; suben las sugerencias con proteína | P = `proteinaDeComida('despues')` | [1][2][3][12][13] | Fuerte |
 | B2 | Entre la previa y la posterior hay más de 4 h (6 si la previa fue grande), o se entrenó en ayunas | `despuesPronto` en la posterior: algo con proteína apenas se pueda | P = `proteinaDeComida('ayunas')`, al menos 25 g | [4] | Moderada |
 | B3 | La próxima sesión larga empieza menos de 8 h después del final | `reponer` en la posterior y en la siguiente: carbohidratos y proteína | C ≈ 1 g/kg en cada una (de 1 a 1,2 g/kg por hora en 4 h; el reparto es derivado) | [1][3][4] | Fuerte |
@@ -544,13 +545,15 @@ o el peso que falta.
 
 **1. Fuerza a la tarde, bajando.** 70 kg, 30 años; meta 140 g de proteína y 180
 g de carbohidratos; fuerza de 60 min a las 19:00 (3 de los últimos 4 martes);
-merienda 17:30, cena 21:30; se duerme a las 23:45; anota café (95 mg).
+merienda 17:30, cena 21:30; se acuesta a las 23:30 y se duerme a las 23:45; anota
+café (95 mg).
 - Merienda (Δ = 1 h 30): `previaLiviana`. P = 0,3 × 70 = 21 → 20 g. C = 1 g/kg
-  = 70 g, con tope en la mitad de lo que queda (120 g) → 60 g. Corte de café:
-  23:45 − 8 h = 15:45, y 19:00 − 60 min = 18:00 cae después → se agrega.
+  = 70 g, con tope en la mitad de lo que queda (120 g) → 60 g. Corte de café,
+  desde la cama: 23:30 − 8,8 h = 14:42 → 14:30, y 19:00 − 60 min = 18:00 cae
+  después → se agrega.
   - «Entrenas a las 19:00: mejor algo liviano, con poca grasa y poca fibra.
     Unos 60 g de carbohidratos y 20 g de proteína. Si tomas café antes, que sea
-    antes de las 15:45.»
+    antes de las 14:30.»
 - Cena (fin 20:00, cena a 1 h 30; previa y cena a 4 h): `despues`. P = máx(20,
   140 / 4 = 35) → 35 g. «Después de entrenar: unos 35 g de proteína en esta
   comida.»
@@ -859,7 +862,9 @@ Para decidir:
    la regla marca «sin déficit aunque estés bajando», pero la meta todavía no cambia.
 2. **Con la meta keto o baja en carbohidratos**, las reglas 1 a 3 se dicen igual (en
    «Para hoy», «pocos carbohidratos» calla con esas metas). ¿Se callan también?
-3. **Antes de los 18**, la regla 7 usa una necesidad de 9 h; Sueño (`sueno.ts`) sigue con 8.
+3. ~~**Antes de los 18**, la regla 7 usa una necesidad de 9 h; Sueño (`sueno.ts`) sigue con 8.~~
+   Desde el 5/11 Sueño también da 9 h antes de los 18 (`necesidad`, en `sueno.ts`): falta que la
+   regla 7 la tome de ahí.
 4. **La tarjeta de la energía baja** nombra la menstruación también a los hombres (es el
    texto de arriba): ¿se adapta según el sexo? Y ese día «Para hoy» puede decir «Vas bien hoy».
 5. **De dónde sale** la carga de cada semana (regla 8) y lo que corriste (regla 9): Salud o
@@ -906,6 +911,53 @@ https://doi.org/10.1113/jphysiol.2013.267419 · [D38] Burke 2017,
 https://doi.org/10.1113/JP273230 · [D39] McNulty 2020,
 https://doi.org/10.1007/s40279-020-01319-3
 
+### 5.13 Tu energía del día (5/11/2026, en la galería para aprobar)
+
+Lo pediste el 5/11: la tarjeta de la energía de Inicio (la regla 10, con la disponibilidad de
+energía de Loucks) pasa a ser la del día entero, para leer rápido sin abrir Progreso ni Ascent,
+y para todos, también para quien no va al gimnasio. La regla es `energiaDelDia`
+(`src/dominio/energia.ts`, con sus tests):
+
+- **Las partes:**
+  - **el sueño:** la noche de anoche en una palabra (`estadoDeLaNoche`, en `rendimiento.ts`:
+    corta con 6 h o menos o despertándote una hora antes de lo de siempre, Craven 2022), dos de
+    las últimas tres cortas (Knowles 2018) y la deuda en una palabra (`juicioDeLaDeuda`). La
+    noche corta la baja; algo corta o con la deuda algo alta o alta, la frena (la deuda sola no
+    la baja: una noche normal ya cuenta);
+  - **la comida de estos días:** la disponibilidad de energía de los últimos 7 días (`energiaDeEstosDias`,
+    como antes) y si llegaste a tus calorías (el 90 % de la meta de cada día, en promedio).
+    Debajo del piso, la baja; sin llegar a tus calorías, la frena; llegando o comiendo de sobra
+    para lo que entrenas, bien;
+  - **con Ascent vinculada, los músculos de hoy:** el titular de su sección
+    (`titularDeHoy`, en `recuperado.ts`). Cargados, no la dejan ser alta.
+- **El estado, con la regla del eslabón más débil** (como la recuperación de Ascent, y no una
+  suma: ningún puntaje compuesto está validado; `spec/estudio/ascent.md`): baja si una parte
+  está baja; alta si el sueño y la comida están bien y los músculos no están cargados; si no,
+  suficiente. Con una sola parte, nunca alta. Sin el sueño ni la comida, «Tu energía» con cómo
+  verla.
+- **Alta con déficit:** quien baja de peso y llega a sus calorías, durmiendo bien, ve «Energía
+  alta» aunque coma menos de lo que gasta (Loucks llama óptima a la de 45 o más). Es lo que
+  pediste: la tarjeta habla del día, no de la disponibilidad sola.
+- **Cómo se ve:** baja, arriba de todo, como advertencia; suficiente o alta, debajo de los
+  macros. La batería, «Energía baja», «Suficiente energía» o «Energía alta» y una frase:
+  - baja: «Según lo registrado, tu energía está muy baja.»;
+  - suficiente: «Hoy tienes suficiente energía para entrenar de forma normal.» (sin entrenar,
+    «para tu día»): sin hablar de la meta de cada uno;
+  - alta: por qué, del día: «Llegaste a tus calorías, dormiste bien y no tienes deuda de sueño:
+    todo a favor para un buen entrenamiento.» (sin entrenar, «para hoy»). No dice que puedas ir
+    más fuerte que siempre: eso no tiene evidencia (`spec/estudio/ascent.md`).
+
+  Debajo, cada parte con su ícono y su estado («Sueño · Corto», «Comida · Bien», «Músculos ·
+  Listos»); solo lo bajo lleva color. «Más» abre qué te conviene hoy (esta noche, a la cama a
+  tal hora; sin llegar al fallo con la noche corta; comer un poco más, con cuándo hablarlo con
+  un médico si la comida está baja; el texto de Ascent si los músculos están cargados) y de dónde
+  sale, una línea por parte, con sus números si se ven. Se pliega en vez de «No mostrar más».
+- **Con Ascent:** la etiqueta dice «Tu energía · con Ascent», con su marca, y suma los músculos:
+  es lo que hace Moss con el vínculo. Es un lugar nuevo donde se nombra Ascent (lo pediste).
+- **En la galería:** `galeria/src/inicio.js`, con cinco días de ejemplo (baja por el sueño,
+  baja por la comida, suficiente, alta y sin datos) y el escenario de capturas `energia`. La app
+  todavía no la tiene.
+
 ## 6. Lo que no pude verificar
 
 - **AIS** [25]: la hoja (comida 3 a 4 h antes, algo liviano 1 a 2 h, en la
@@ -942,8 +994,14 @@ https://doi.org/10.1007/s40279-020-01319-3
 2. **D24 y la meta base de proteína con «sin déficit»:** ¿se apaga D24? ¿Y la
    meta de 1,6 g/kg, que pasa el tope de KDIGO para la enfermedad renal?
 3. **La línea de la noche corta (C2):** programada el 2/11/2026, solo con la suscripción prendida, porque es el ejemplo de la pantalla de pago (D40; `lineaDeNocheCorta`, sin depender de que estés bajando y sin apagarla de fábrica). Falta que lo apruebes.
-4. **El corte de la cafeína:** 8 h para dosis de hasta 200 mg (conservador, del
-   metaanálisis) o 6 h para hasta 100 mg (del ensayo de 2025).
+4. **El corte de la cafeína:** desde el 5/11 cuenta desde la hora de ir a la cama y
+   crece con la toma, como en el modelo del metaanálisis (8,8 h con 107 mg, 13,2 con
+   217,5; el «8 h hasta 200 mg» de antes no salía de ninguna fuente). Lo que queda
+   para decidir es el número base, para un café o sin saber la toma: 9 h (el
+   metaanálisis redondeado; es lo de hoy, y lo recomendado), 8 h, o 6 h (el ensayo de
+   2025, solo para 100 mg y en hombres jóvenes que toman café moderado). Es la D1 de
+   [`estudio/momentos.md`](estudio/momentos.md), con la opción de «Me afecta el café:
+   poco, normal, mucho» en Perfil.
 5. **La hora a mano:** ¿en Perfil, por día de la semana? No toca el registro.
 6. **Mucha resistencia:** la meta de carbohidratos de Moss puede quedar debajo
    de lo de ACSM (5 a 10 g/kg por día). ¿Se dice algo, y dónde?

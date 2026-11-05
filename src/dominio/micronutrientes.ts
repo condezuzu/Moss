@@ -4,7 +4,7 @@
 // Nacionales de Estados Unidos, las mismas que usa USDA; de la cafeína, un tope. Sirven de guía:
 // Moss no pide llegar a cada una y nunca las usa para un diagnóstico.
 
-import type { Sexo } from './metas';
+import { MAYORIA_DE_EDAD, type Sexo } from './metas';
 
 /** El mismo orden que las columnas de la base (herramientas/alimentos.mjs, MICROS). */
 export const MICROS = [
@@ -43,7 +43,8 @@ export const GRUPOS = {
 } as const satisfies Record<string, readonly Micro[]>;
 
 export type Etapa = 'embarazo' | 'lactancia';
-export type ParaQuien = { sexo: Sexo; edad: number; etapa?: Etapa | null };
+/** Para quién es la referencia; el peso, para el tope de la cafeína antes de los 18. */
+export type ParaQuien = { sexo: Sexo; edad: number; etapa?: Etapa | null; pesoKg?: number | null };
 
 /** Cuánto por día: lo recomendado para llegar (`meta`) o lo que conviene no pasar (`tope`). */
 export type Referencia = { meta: number } | { tope: number };
@@ -74,6 +75,17 @@ const RECOMENDADO: Partial<Record<Micro, PorEdad>> = {
   vitaminaB12: igual({ m: 2.4, f: 2.4 }),
 };
 
+// De 14 a 18 años las Academias dan otras (NASEM, 2019, apéndice J): más calcio y fósforo, para el hueso
+// que crece, y algo menos de casi todo lo demás. Desde los 19, las de arriba.
+const HASTA_LOS_18 = 18;
+const DE_14_A_18: Partial<Record<Micro, PorSexo>> = {
+  calcio: { m: 1300, f: 1300 }, fosforo: { m: 1250, f: 1250 }, hierro: { m: 11, f: 15 }, magnesio: { m: 410, f: 360 },
+  potasio: { m: 3000, f: 2300 }, zinc: { m: 11, f: 9 }, selenio: { m: 55, f: 55 }, vitaminaA: { m: 900, f: 700 },
+  vitaminaC: { m: 75, f: 65 }, vitaminaD: { m: 15, f: 15 }, vitaminaE: { m: 15, f: 15 }, vitaminaK: { m: 75, f: 75 },
+  tiamina: { m: 1.2, f: 1 }, riboflavina: { m: 1.3, f: 1 }, niacina: { m: 16, f: 14 }, vitaminaB6: { m: 1.3, f: 1.2 },
+  folato: { m: 400, f: 400 }, vitaminaB12: { m: 2.4, f: 2.4 },
+};
+
 // En el embarazo y la lactancia cambian algunas; el magnesio, además, con la edad.
 const POR_ETAPA: Record<Etapa, Partial<Record<Micro, number>>> = {
   embarazo: { hierro: 27, potasio: 2900, zinc: 11, selenio: 60, vitaminaA: 770, vitaminaC: 85, tiamina: 1.4, riboflavina: 1.4, niacina: 18, vitaminaB6: 1.9, folato: 600, vitaminaB12: 2.6 },
@@ -81,21 +93,47 @@ const POR_ETAPA: Record<Etapa, Partial<Record<Micro, number>>> = {
 };
 const MAGNESIO_EN_ETAPA: Record<Etapa, [number, number]> = { embarazo: [350, 360], lactancia: [310, 320] };
 
-// La cafeína: hasta 400 mg por día en adultos; en el embarazo y la lactancia, 200 (FDA y EFSA).
+// La cafeína: hasta 400 mg por día en adultos; en el embarazo y la lactancia, 200 (FDA y EFSA). En la
+// lactancia, la CDC dice unos 300: 200 es lo prudente (cuidados.ts lo usa igual).
 const TOPE_DE_CAFEINA = 400;
-const TOPE_DE_CAFEINA_EN_ETAPA = 200;
+export const TOPE_DE_CAFEINA_EN_ETAPA = 200;
+/** Antes de los 18, 3 mg por kilo (EFSA, 2015): sin el peso, no hay un número que sirva. */
+const CAFEINA_POR_KG_ANTES_DE_LOS_18 = 3;
 
 const tramo = (edad: number) => (edad <= 30 ? 0 : edad <= 50 ? 1 : edad <= 70 ? 2 : 3);
+
+function topeDeCafeina(p: ParaQuien, etapa: Etapa | null): Referencia | null {
+  const porEdad = p.edad >= MAYORIA_DE_EDAD ? TOPE_DE_CAFEINA : p.pesoKg && p.pesoKg > 0 ? Math.round(CAFEINA_POR_KG_ANTES_DE_LOS_18 * p.pesoKg) : null;
+  if (etapa) return { tope: porEdad === null ? TOPE_DE_CAFEINA_EN_ETAPA : Math.min(porEdad, TOPE_DE_CAFEINA_EN_ETAPA) };
+  return porEdad === null ? null : { tope: porEdad };
+}
 
 /** La referencia del día para una persona; las grasas y el colesterol no tienen una que sirva sola. */
 export function referenciaDe(micro: Micro, p: ParaQuien): Referencia | null {
   const etapa = p.sexo === 'f' ? p.etapa ?? null : null;
-  if (micro === 'cafeina') return { tope: etapa ? TOPE_DE_CAFEINA_EN_ETAPA : TOPE_DE_CAFEINA };
+  if (micro === 'cafeina') return topeDeCafeina(p, etapa);
   if (etapa && micro === 'magnesio') return { meta: MAGNESIO_EN_ETAPA[etapa][p.edad <= 30 ? 0 : 1] };
   const deLaEtapa = etapa ? POR_ETAPA[etapa][micro] : undefined;
   if (deLaEtapa !== undefined) return { meta: deLaEtapa };
+  const deMenor = p.edad <= HASTA_LOS_18 ? DE_14_A_18[micro] : undefined;
+  if (deMenor) return { meta: deMenor[p.sexo] };
   const porEdad = RECOMENDADO[micro];
   return porEdad ? { meta: porEdad[tramo(p.edad)][p.sexo] } : null;
+}
+
+/**
+ * El requerimiento promedio (EAR) del hierro, de NASEM (2019, apéndice J): debajo, a una persona «muy
+ * probablemente» le falta; entre el EAR y la recomendada, solo «probablemente» (IOM, 2000). Con la
+ * recomendada (18 mg), «viene bajo» saltaba en casi todas las mujeres. De los demás, todavía no.
+ */
+const EAR_DEL_HIERRO = { hasta18: { m: 7.7, f: 7.9 }, hasta50: { m: 6, f: 8.1 }, despues: { m: 6, f: 5 } } as const;
+const EAR_DEL_HIERRO_EN_ETAPA: Record<Etapa, readonly [number, number]> = { embarazo: [23, 22], lactancia: [7, 6.5] };
+
+export function requerimientoDe(micro: Micro, p: ParaQuien): number | null {
+  if (micro !== 'hierro') return null;
+  const etapa = p.sexo === 'f' ? p.etapa ?? null : null;
+  if (etapa) return EAR_DEL_HIERRO_EN_ETAPA[etapa][p.edad <= HASTA_LOS_18 ? 0 : 1];
+  return EAR_DEL_HIERRO[p.edad <= HASTA_LOS_18 ? 'hasta18' : p.edad <= 50 ? 'hasta50' : 'despues'][p.sexo];
 }
 
 /** Qué parte de la referencia del día es una cantidad, de 0 en adelante (1 es el 100 %). */

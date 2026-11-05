@@ -7,9 +7,10 @@
 // para cambiar algo de la comida que se arma y para corregir un registro de la línea del día.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { baseDeAlimentos } from '@/comida/base';
 import { rindeAlCocinar, type Detalle } from '@/comida/detalle';
@@ -22,8 +23,10 @@ import type { ParaQuien } from '@/dominio/micronutrientes';
 import { gramosDe, valoresDeCantidad, type Cantidad, type Fuente, type Item, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { ENTRA_HOJA, SALE_HOJA } from '../movimiento';
+import { ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
+import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { Aparece } from '../tarjetas';
+import { useCampoALaVista, useTeclado } from '../teclado';
 import { ComoDeja, DeDonde, EnlaceReportar, Micronutrientes, Reporte, Sello } from './AntesDeSumar';
 import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
 import { compartir } from './compartir';
@@ -134,6 +137,24 @@ export function Ventana(p: Props) {
   const numeros = useNumeros();
   const modo = p.modo.tipo;
 
+  // Bajarla con el dedo la cierra. Con el teclado (la cantidad) sube con él y se achica lo mismo: así
+  // la cantidad y «Sumar» quedan arriba del teclado.
+  const reducido = useReducedMotion();
+  const deslizar = useBajarParaCerrar({ alCerrar: p.alCerrar });
+  const { bajada } = deslizar;
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  // El 90 % de la hoja de registro, que empieza abajo de la isla.
+  const tope = (height - insets.top - 12) * 0.9;
+  const { animado: teclado } = useTeclado();
+  const abajo = p.abajo;
+  const estiloVentana = useAnimatedStyle(() => {
+    const sube = Math.max(0, teclado.get() - abajo);
+    return { maxHeight: tope - sube, transform: [{ translateY: Math.max(0, bajada.get()) - sube }] };
+  });
+  const finDelPie = useRef<number | null>(null);
+  useCampoALaVista(deslizar.scroll, deslizar.scrollY, () => finDelPie.current);
+
   // Lo de la base trae además cómo se mide: las porciones, crudo o cocido, la cáscara, la densidad y el aceite.
   useEffect(() => {
     if (alimento.fuente !== 'base') return;
@@ -230,8 +251,21 @@ export function Ventana(p: Props) {
     : [];
 
   return (
-    <Animated.View entering={ENTRA_HOJA} exiting={SALE_HOJA} style={[estilos.ventana, { paddingBottom: p.abajo + 10 }]}>
-      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" bounces={false} automaticallyAdjustKeyboardInsets>
+    <>
+    {/* El fondo se aclara mientras la ventana baja con el dedo; su fundido de salida va por fuera. */}
+    <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={StyleSheet.absoluteFill}>
+      <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, deslizar.velo]} pointerEvents="none" />
+      <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
+    </Animated.View>
+    <Animated.View
+      entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA}
+      exiting={reducido ? SALE_FUNDIDO : SALE_HOJA}
+      style={[estilos.ventana, { paddingBottom: p.abajo + 10 }, estiloVentana]}
+      onLayout={deslizar.medir}
+      accessibilityViewIsModal
+      onAccessibilityEscape={p.alCerrar}
+    >
+      <ScrollQueBaja arrastre={deslizar} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={estilos.cabeza}>
           <View style={estilos.titulos}>
             <Text style={estilos.nombre}>{alimento.nombre}</Text>
@@ -265,7 +299,7 @@ export function Ventana(p: Props) {
         {versiones.length > 1 && (
           <Aparece>
             <Etiqueta estilo={estilos.etiquetaArriba}>{`${t('comida.medir.crudo')} · ${t('comida.medir.cocido')}`}</Etiqueta>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila} keyboardShouldPersistTaps="handled">
               {versiones.map((v) => <Pastilla key={v.id} texto={v.texto} elegida={v.id === Number(alimento.ref)} alTocar={() => v.id !== Number(alimento.ref) && pasarA(v.id)} />)}
             </ScrollView>
             <Rinde detalle={detalle} />
@@ -349,6 +383,7 @@ export function Ventana(p: Props) {
               onBlur={() => setEscrito(null)}
               keyboardType="decimal-pad"
               selectTextOnFocus
+              maxLength={7}
               style={estilos.valor}
               accessibilityLabel={t('comida.medir.escribir')}
             />
@@ -395,12 +430,13 @@ export function Ventana(p: Props) {
           </Text>
         )}
 
-        <View style={estilos.pie}>
+        {/* Con el teclado, la cantidad sube junto con esto: «Sumar» a la vista sin cerrar el teclado. */}
+        <View style={estilos.pie} onLayout={(ev) => { finDelPie.current = ev.nativeEvent.layout.y + ev.nativeEvent.layout.height; }}>
           <Boton tipo="grande" texto={p.modo.tipo === 'sumar' || p.modo.tipo === 'ingrediente' ? t('comida.sumar') : t('comun.guardar')} alTocar={listo} />
           {p.alQuitar && <Boton tipo="quitar" texto={t('comida.quitar')} alTocar={p.alQuitar} />}
         </View>
         {(alimento.fuente === 'base' || alimento.fuente === 'catalogo' || alimento.fuente === 'off') && <EnlaceReportar alTocar={() => setReportando(true)} />}
-      </ScrollView>
+      </ScrollQueBaja>
       {reportando && (
         <Reporte
           alimento={alimento.fuente === 'off' ? null : Number(alimento.ref)}
@@ -411,6 +447,7 @@ export function Ventana(p: Props) {
         />
       )}
     </Animated.View>
+    </>
   );
 }
 
@@ -434,8 +471,9 @@ function Rinde({ detalle }: { detalle: Detalle | null }) {
 }
 
 const estilos = StyleSheet.create({
+  velo: { backgroundColor: 'rgba(2, 4, 10, 0.58)' },
   ventana: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '90%', paddingTop: 16, paddingHorizontal: 18, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 16, paddingHorizontal: 18, borderTopLeftRadius: 24, borderTopRightRadius: 24,
     backgroundColor: colores.ventana, borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)',
     shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 25, shadowOffset: { width: 0, height: -18 },
   },

@@ -189,6 +189,20 @@ describe('los días', () => {
     expect(almacen.estado().corte).toBe(240);
   });
 
+  it('lo que necesitas dormir se elige y queda en el teléfono; solo vale lo que se puede elegir', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().necesidad).toBeNull();
+    almacen.ponerNecesidad(450);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().necesidad).toBe(450);
+    // Lo que no es una de las que se eligen queda sin elegir; null vuelve a lo de tu edad.
+    almacen.ponerNecesidad(455);
+    expect(almacen.estado().necesidad).toBeNull();
+    almacen.ponerNecesidad(420);
+    almacen.ponerNecesidad(null);
+    expect(almacen.estado().necesidad).toBeNull();
+  });
+
   it('la cena anotada a las 0:30 es del día anterior', async () => {
     const { almacen, ir } = await armar();
     ir('2026-10-22T03:30:00Z');
@@ -968,6 +982,17 @@ describe('el control y los pesos de Salud que llegan después', () => {
     // Lo que ya estaba no lo vuelve a hacer.
     almacen.ponerSalud(salud(pesadas));
     expect(almacen.estado().metas[1]).toBe(metas[1]);
+  });
+
+  it('si se guardó el de la noche y después Salud trae uno más temprano del mismo día, queda el de la mañana; el anotado a mano, no se toca', async () => {
+    const { almacen, ir } = await armar();
+    ir('2026-10-21T15:00:00Z');
+    almacen.revisarDia();
+    almacen.ponerSalud(salud([['2026-10-20', 71.2], ['2026-10-19', 70.6]]));
+    almacen.anotarPeso(70.9, 'manual');
+    almacen.ponerSalud(salud([['2026-10-20', 70.0], ['2026-10-19', 70.6], ['2026-10-21', 70.2]]));
+    const pesos = almacen.estado().pesos;
+    expect(pesos.map((p) => [p.fecha, p.kg, p.origen])).toEqual([['2026-10-19', 70.6, 'salud'], ['2026-10-20', 70, 'salud'], ['2026-10-21', 70.9, 'manual']]);
   });
 });
 

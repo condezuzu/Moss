@@ -2,7 +2,7 @@
 // sueño con su etapa, su fuente y la zona horaria de ese momento, y las lecturas del reloj. Sin nada
 // del teléfono, para probarlo.
 
-import { claveDelDia, type ClaveDia } from '@/dominio/fechas';
+import { claveDelDia, diaLogico, type ClaveDia } from '@/dominio/fechas';
 import { marcaDe, type Etapa, type Fuente, type Medida, type Muestra, type Noche, type TipoDeFuente } from '@/dominio/sueno';
 
 /** Lo que importa de una muestra de HealthKit. */
@@ -56,7 +56,7 @@ export function muestraDeSueno(s: DeSalud): Muestra | null {
 export const lecturasDe = (muestras: DeSalud[]): Medida[] =>
   muestras.flatMap((s) => (typeof s.quantity === 'number' && Number.isFinite(s.quantity) ? [{ en: s.startDate.getTime(), valor: s.quantity }] : []));
 
-/** De muchas muestras de un valor diario (la frecuencia en reposo, el peso), la última de cada día. */
+/** De muchas muestras de un valor diario (la frecuencia en reposo), la última de cada día. */
 export function ultimaPorDia(muestras: DeSalud[]): Map<ClaveDia, number> {
   const porDia = new Map<ClaveDia, { en: number; valor: number }>();
   for (const s of muestras) {
@@ -64,6 +64,21 @@ export function ultimaPorDia(muestras: DeSalud[]): Map<ClaveDia, number> {
     const dia = claveDelDia(s.startDate);
     const antes = porDia.get(dia);
     if (!antes || s.startDate.getTime() > antes.en) porDia.set(dia, { en: s.startDate.getTime(), valor: s.quantity });
+  }
+  return new Map([...porDia].map(([d, x]) => [d, x.valor]));
+}
+
+/**
+ * El peso de cada día de Moss: el primero, el de la mañana en ayunas (D34), que varía menos de un día a otro
+ * (Cheuvront y otros, 2004). Lo de antes de la hora de corte es del día anterior, como todo en Moss (D32).
+ */
+export function primeraPorDia(muestras: DeSalud[], corte: number): Map<ClaveDia, number> {
+  const porDia = new Map<ClaveDia, { en: number; valor: number }>();
+  for (const s of muestras) {
+    if (typeof s.quantity !== 'number' || !Number.isFinite(s.quantity)) continue;
+    const dia = diaLogico(s.startDate, corte);
+    const antes = porDia.get(dia);
+    if (!antes || s.startDate.getTime() < antes.en) porDia.set(dia, { en: s.startDate.getTime(), valor: s.quantity });
   }
   return new Map([...porDia].map(([d, x]) => [d, x.valor]));
 }
@@ -89,6 +104,6 @@ export type LoDeSalud = {
   aparatos: { fuente: Fuente; noches: number; conEtapas: boolean }[];
   /** Los pasos de las últimas 30 horas, muestra por muestra: sin reloj, con eso se estima la noche. */
   pasosRecientes: { desde: number; hasta: number; pasos: number }[];
-  /** El último peso de cada día, en kg. */
+  /** El primer peso de cada día de Moss, en kg. */
   pesos: Map<ClaveDia, number>;
 };

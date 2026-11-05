@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { cambioDe, cinturaAltura, grasaMarina, medidaValida, rangoDeGrasa, ultimasMedidas, type Medidas } from './cuerpo';
+import { cambioDe, cinturaAltura, claseDeCintura, grasaMarina, medidaValida, rangoDeGrasa, ultimasMedidas, type Medidas } from './cuerpo';
 
 describe('la grasa corporal con cinta (método de la Marina)', () => {
   it('un hombre de 178 cm, 85 de cintura y 38 de cuello: 16,4 %', () => {
@@ -79,6 +79,24 @@ describe('las medidas guardadas', () => {
   it('la cintura sobre la altura', () => {
     expect(cinturaAltura(85.5, 178)).toBeCloseTo(0.48, 2);
     expect(cinturaAltura(undefined, 178)).toBeNull();
+  });
+
+  it('la cintura sobre la altura con los cortes de NICE, y con un IMC de 35 o más, nada', () => {
+    expect(claseDeCintura(0.4999, 25)).toBe('sana');
+    expect(claseDeCintura(0.5, 25)).toBe('aumentada');
+    expect(claseDeCintura(0.5999, 25)).toBe('aumentada');
+    expect(claseDeCintura(0.6, 25)).toBe('alta');
+    expect(claseDeCintura(0.6, 34.9)).toBe('alta');
+    expect(claseDeCintura(0.6, 35)).toBeNull();
+  });
+
+  it('la grasa con medidas de fechas muy distintas lo dice: más de 60 días entre una y otra', () => {
+    const viejas = [m('2026-07-01', { cuello: 38.5 }), m('2026-09-15', { cintura: 86 })];
+    expect(rangoDeGrasa('m', 178, ultimasMedidas(viejas, '2026-10-21'))!.fechasDistintas).toBe(true);
+    const cerca = [m('2026-08-01', { cuello: 38.5 }), m('2026-09-15', { cintura: 86 })];
+    expect(rangoDeGrasa('m', 178, ultimasMedidas(cerca, '2026-10-21'))!.fechasDistintas).toBe(false);
+    // Sin las fechas (el cuestionario), no se sabe: no lo dice.
+    expect(rangoDeGrasa('m', 178, { cintura: 86, cuello: 38.5 })!.fechasDistintas).toBe(false);
   });
 
   it('los rangos de lo que se puede tipear', () => {

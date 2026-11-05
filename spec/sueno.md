@@ -139,20 +139,32 @@ cual con cuatro semanas de mentira.
 
 ## Las cuentas
 
-- **Lo que necesitás dormir** (`necesidad`):
+- **Lo que necesitás dormir** (`necesidad` y `rangoDeNecesidad`):
   - 8 horas, las mismas de la recuperación de Ascent;
   - 7 y media desde los 65;
-  - se cambia de 7 a 9.
+  - antes de los 18, 9 (desde el 5/11: Moss es desde los 16, y les daba 8, el borde
+    de abajo de lo recomendado);
+  - se elige en «Necesito dormir», de media hora en media hora, dentro de lo de tu
+    edad: de 7 a 9, y de 8 a 10 antes de los 18 (`necesidadesPara`). Queda en el
+    teléfono, como «Tardo en dormirme» (`necesidad` del almacén, `ponerNecesidad`);
+    los avisos, el widget, la línea de la comida y Sueño ya la usan (`suenoParaAvisos`
+    y `suenoDe`, en `persona.ts`, desde el 5/11). La pantalla, en Perfil › Avisos, está en la
+    galería para aprobar (5/11): «Lo de tu edad (8 h)» o de 7 a 9 horas.
 
-  Las guías: la AASM y la SRS piden 7 horas o más de 18 a 60 años; la National
-  Sleep Foundation, de 7 a 9.
+  Las guías: la AASM y la SRS piden 7 horas o más de 18 a 60 años (más de 9 puede
+  ser apropiado para jóvenes, quien se recupera de una deuda o está enfermo); la
+  National Sleep Foundation, de 7 a 9, y de 7 a 8 desde los 65; la AASM pediátrica
+  (Paruthi 2016), de 8 a 10 de los 13 a los 18. La necesidad cambia de una persona
+  a otra (Kitamura 2016: de 7,3 a 9,3 h en el laboratorio): por eso se elige.
 - **La calidad** (`calidadDeNoche`), de 0 a 100, en tres partes, como el puntaje
   de Apple (duración 50, horario 30, interrupciones 20), que no se puede leer:
   - **Duración (50):** 50 · (dormido − 4 h) / (necesidad − 4 h), entre 0 y 50.
   - **Horario (30):** d es el promedio de cuánto se corrieron la hora de dormirte
     y la de despertarte de las medianas de las noches anteriores. Da 30 · (90 − d) / 60:
-    todo hasta media hora y nada desde hora y media. Hora y media de desvío se
-    asocia con el doble de riesgo cardiovascular que media hora (Huang y otros, 2020).
+    todo hasta media hora y nada desde hora y media. Es una convención con la idea
+    de Huang y otros (2020), que midió otra cosa: el desvío de la hora de dormirse
+    en 7 días de actigrafía, y con más de 90 minutos contra 30 o menos, el doble de
+    eventos cardiovasculares (HR 2,11), no el corrimiento de una noche.
   - **Continuidad (20):** 10 · (60 − minutos despierto) / 40 más 10 · (4 −
     despertares) / 3, cada parte entre 0 y 10. Las guías de la National Sleep
     Foundation: como mucho un despertar y 20 minutos despierto.
@@ -167,18 +179,56 @@ cual con cuatro semanas de mentira.
   - es lo que faltó cada noche de las últimas 14, pesando más las recientes (anoche pesa 1 y hace 13 noches, 1/14);
   - menos lo que sobró, hasta 2 horas por noche;
   - nunca baja de cero;
-  - las siestas cuentan.
+  - las siestas cuentan;
+  - **las noches sin datos no cuentan como si hubieras dormido lo que necesitás**
+    (desde el 5/11): es el promedio con pesos de las noches medidas, llevado a las
+    dos semanas (por 7,5, la suma de los 14 pesos). Antes, con 1 h de falta cada
+    noche, 14 noches daban 7 h 30 de deuda y las últimas 5 solas, 4 h 17: usar menos
+    el reloj bajaba la deuda. Devuelve también lo que faltó y lo que dormiste por
+    noche (`porNoche`, `duermes`), para decirla como «Duermes unas 7 h; necesitas
+    unas 8», que es lo que tiene menos error;
+  - **se dice a la media hora y «aprox.»** (`redondearDeuda`): el número depende
+    sobre todo de la necesidad supuesta (media hora de diferencia la cambia en casi
+    4 horas), y «4 h 32 min» es precisión falsa. Menos de 15 minutos, sin deuda;
+  - **en una palabra** (`juicioDeLaDeuda`, lo pediste el 5/11/2026), por lo que falta
+    cada noche, que tiene menos error que el total: redondeada a cero, «Muy bien»;
+    menos de media hora por noche, «Bien» (es menos que el error de medir una noche);
+    de media hora a una, «Algo alta»; una hora o más, «Alta» (con 7 h en la cama en
+    vez de 8, el rendimiento bajó y se quedó abajo: Belenky 2003). Los cortes son una
+    convención. En la galería, para aprobar, la palabra va en grande y abajo cuánto:
+    «Bien · Unas 3 h 30 min: está en un rango normal»;
+  - **esta noche** (en la galería, para aprobar): debajo de la deuda, con la noche de
+    hoy elegida, a qué hora ir a la cama para despertarte a la hora de siempre habiendo
+    dormido lo que necesitas, con la deuda un poco más (`horasDeSueno`, la misma cuenta
+    del aviso de dormir), y la última comida grande, 2 h antes de la cama (3 con
+    reflujo, de Cuidados). Si el tope de una hora antes de lo de siempre no deja dormir
+    todo, lo dice.
 
-  Recuperar una hora de deuda lleva unos cuatro días (Kitamura y otros, 2016).
+  Que se acumule tiene base (Van Dongen 2003: el déficit crece casi en línea recta,
+  y casi no se nota); que se pague hora por hora, no (Banks 2010, Depner 2019). Lo
+  que paga la hora de dormir (un tercio, hasta 30 minutos) es una convención: en el
+  laboratorio, una falta de cerca de una hora por noche se recuperó en unas cuatro
+  noches con 12 h en la cama (Kitamura y otros, 2016).
+- **Poco sueño por semanas** (`pocoSuenoSostenido`): con 10 noches medidas de 14 y
+  menos de 6 horas de promedio, sugiere hablarlo con un médico. Antes de los 18,
+  menos de 7 (una convención: a esa edad se recomiendan de 8 a 10), con su texto
+  (`sueno.pocoSueno.textoMenor`); para eso, Sueño le tiene que pasar la edad.
 - **El horario y la regularidad** (`horario`):
   - el promedio y el desvío estándar de la hora de dormirte y de despertarte en las dos semanas;
-  - hasta 30 minutos es muy regular; hasta 60, regular; hasta 90, irregular; más, muy irregular;
-  - el fin de semana compara la mitad del sueño de las noches que terminan sábado y domingo con las de lunes a viernes, y dice que supone que esos días no trabajás.
+  - hasta 30 minutos es muy regular; hasta 60, regular; hasta 90, irregular; más, muy irregular (las categorías de Huang 2020, para el desvío de 7 días);
+  - el fin de semana compara la mitad del sueño de las noches que terminan sábado y domingo con las de lunes a viernes, y dice que supone que esos días no trabajás;
+  - **con la mitad o más de las noches sin reloj** (de Moss), es aproximada
+    (`aprox`, y el texto lo dice): el error de cada noche estimada suma al desvío
+    (desvío² ≈ el de verdad² + error², Fischer 2021: con 30 a 35 minutos de error,
+    ±20 de verdad se ven como ±36 a 40). Se resta el error de cada una (de su
+    rango), y no dice «irregular» ni «muy irregular» salvo que pase de 90 minutos
+    aun así.
 
   El índice de regularidad (SRI, Phillips y otros, 2017) predice mejor la
-  mortalidad que la duración, pero necesita días seguidos, es sensible a las
-  siestas, y dos calculadoras comunes difieren 18 puntos. Queda para después,
-  sin compararlo con nadie.
+  mortalidad que la duración (Windred y otros, 2024, en UK Biobank), pero
+  necesita días seguidos, es sensible a las siestas, y dos calculadoras comunes
+  dan valores muy distintos con los mismos datos (Czeisler y otros, 2026). Queda
+  para después, sin compararlo con nadie.
 - **Lo del reloj** (`vitalDeNoche`):
   - el promedio de lo medido mientras dormías, de la misma fuente;
   - hace falta una lectura de frecuencia cada media hora, y dos de variabilidad y de respiración;
@@ -302,6 +352,24 @@ arma la noche con lo que el teléfono guardó:
   dormir» en el aviso de la noche; los Atajos quedan como opcionales.
 - **Los despertares de la noche** quedan marcados como interrupciones, sin decir
   cuánto: el teléfono lo mide mal (48,8 minutos de error) [72].
+- **Lo despierto que el teléfono no ve** (desde el 5/11): la noche va de dormirte a
+  despertarte, y eso es el período de sueño, no el sueño. En adultos sanos, adentro
+  hay unos 30 minutos despierto (por polisomnografía, 32 a 38 en Robbins 2024; 31,5
+  en las noches de Apple 2025). Así que lo dormido de una noche de Moss, lo que va a
+  la deuda, al poco sueño y a la duración de la calidad, es la noche menos 30
+  minutos (`DESPIERTO_SIN_RELOJ`), o menos lo tuyo si tuviste noches con un reloj o
+  un anillo: su mediana más 15, lo que el reloj ve de menos (`despiertoDeLaNoche`).
+  En pantalla, «aprox.». Sin esto, la deuda sin reloj salía unas 4 h más baja en dos
+  semanas.
+- **El rango que se muestra** («entre 23:50 y 00:40», desde el 5/11) es el del 80 %
+  del modelo: ±1,28 veces la duda que queda al juntar las señales de ese borde,
+  (Σ 1/duda²)^(−1/2), por 1,5 si hay de lo que más hace errar en él (dejarlo antes,
+  agarrarlo tarde, usarlo de noche, sin ventana), y ±10 minutos con un ancla exacta;
+  nunca antes de la última actividad ni después de la primera. Con el teléfono y lo
+  de siempre (35 y 60) son ±39 al dormirte; con «Me voy a dormir», ±24. El de antes
+  (±20 con confianza alta) cubría menos de la mitad de las noches. El margen se
+  guarda con la noche, para calibrarlo (queda en el teléfono: la cuenta no lo
+  guarda); sin él, el de su confianza (alta ±40/35, media ±50/45, baja ±75/65).
 - **La confianza** (una propuesta, para calibrar con la prueba de abajo): parte de
   0,85 y baja sin historia (−0,15), sin pasos ni movimiento (−0,2), si dejaste el
   teléfono más de una hora antes de lo de siempre (hasta −0,3), si lo agarraste
@@ -492,7 +560,9 @@ Mientras no esté medido, Moss no publica ningún porcentaje de precisión (guí
   - Robbins y otros (2024, PMC11511193);
   - de Zambotti y otros (2024, Sleep);
   - Phillips y otros (2017), Windred y otros (2024);
-  - Fischer y otros (2021), Huang y otros (2020), Kitamura y otros (2016).
+  - Fischer y otros (2021), Huang y otros (2020), Kitamura y otros (2016);
+  - el estudio de la evidencia del sueño, con todas sus fuentes:
+    [`estudio/sueno.md`](estudio/sueno.md).
 - **Guías:**
   - AASM y SRS (2015);
   - National Sleep Foundation (2015, 2017 y 2025);

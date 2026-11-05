@@ -201,7 +201,7 @@ aparato con etapas antes que uno sin etapas: con este orden, WHOOP gana a Garmin
    |---|---|---|
    | Especificidad | 52–79 % | 41–75 % |
    | κ en cuatro etapas | 0,53–0,68 | 0,43–0,65 |
-   | Error en el total | +8 a +20 min | −9 a +1,5 min (−75 en mayores) |
+   | Error en el total | +8 a +40 min, según el modelo (+8 el Series 8 en sanos; +19,6 en una clínica; +39,5 el Series 6) | −9 a +1,5 min (−75 en mayores) |
 
    De fábrica gana el Apple Watch: escribe al despertar sin abrir ninguna app, y
    lo de la noche sale de la misma fuente.

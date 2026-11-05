@@ -176,6 +176,7 @@ export function PanelDecir(p: Props) {
         value={texto}
         onChangeText={setTexto}
         multiline
+        maxLength={500}
         autoFocus={!p.escuchar || !conMicrofono}
         placeholder={t('comida.decir.ejemplo')}
         placeholderTextColor="rgba(239, 230, 207, 0.32)"

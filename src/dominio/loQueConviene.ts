@@ -2,11 +2,12 @@
 // qué evitar, así no hace falta abrir Moss para saberlo. Cada uno dice una sola cosa y suena cuando hay que
 // hacerla. Salen del entreno de ese día (Perfil › Entrenamiento, con lo que tardás en llegar al gimnasio) y de
 // la hora de ir a la cama (horasDeSueno, en avisos.ts):
-// - Comer antes de entrenar: la comida de siempre que cae entre 1 y 4 h antes de salir; si ninguna cae, algo
-//   liviano 60 a 90 minutos antes de salir. Suena media hora antes de esa comida, con los gramos de
-//   alrededorDelEntreno.ts y poca grasa. La hora de esa comida, y las que caerían justo antes de salir o en
-//   medio del entreno, ya no suenan aparte: comer apenas salís no conviene.
-// - El café: una hora antes de entrenar, si todavía no le quita al sueño; si no, hasta qué hora.
+// - Comer antes de entrenar: la comida de siempre que cae desde 4 h antes de empezar hasta 1 h antes de salir;
+//   si ninguna cae, algo liviano 60 a 90 minutos antes de salir. Suena media hora antes de esa comida, con los
+//   gramos de alrededorDelEntreno.ts y poca grasa. La hora de esa comida, y las que caerían justo antes de salir
+//   o en medio del entreno, ya no suenan aparte: comer apenas salís no conviene.
+// - El café: una hora antes de entrenar, si todavía no le quita al sueño; si no, hasta qué hora (corteDeCafeina:
+//   desde la hora de ir a la cama y según la cafeína de una toma).
 // - La proteína de después, al terminar: en la comida que sigue o, si hace mucho que no comés, cuanto antes.
 // - Lo que cuenta hacia atrás desde la cama: la última comida grande (3 h antes), terminar lo fuerte (2 h
 //   antes) y bajar las luces (hora y media antes).
@@ -21,6 +22,7 @@
 import { carbohidratosPrevios, COMIDA_PREVIA, corteDeCafeina, cuenta, ENTRE_PREVIA_Y_POSTERIOR, POSTERIOR_HASTA, proteinaDeComida, type Contexto, type Principal, type Sesion } from './alrededorDelEntreno';
 import { avisosDelDia, horasDeSueno, type Aviso, type DelDia, type Notificacion } from './avisos';
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
+import { CERCA_DE_LA_CAMA, cercaDeLaCama } from './loQueFalta';
 import type { Macros } from './metas';
 import { DIAS_DE_CARGA, diasParaLaCarrera, partidoManana, type Carrera, type Partido } from './segunElDeporte';
 
@@ -32,7 +34,7 @@ export type QueConviene = (typeof QUE_CONVIENE)[number];
  * Lo que dice cada uno. Las horas, en minutos del día (lo de la noche puede pasar de 1440); los gramos, de a 5.
  * - antesDeEntrenar: qué comida (o algo liviano), a qué hora, si es más temprano que la de siempre y cuánto.
  * - despuesDeEntrenar: en qué comida y a qué hora o, sin comida cerca, antes de qué hora.
- * - cafe: antes de entrenar (a qué hora y cuánto falta para dormir) o el último del día (hasta qué hora).
+ * - cafe: antes de entrenar (a qué hora y cuánto falta para ir a la cama) o el último del día (hasta qué hora).
  * - entrenarTarde: hasta qué hora lo fuerte; `suave` si ya no da el tiempo.
  * - recuperacion: de 0 a 100; lo dormido anoche, solo si fue poco.
  * - partido y carrera: la víspera del partido y dos días antes de la carrera larga; el texto no lleva números.
@@ -51,8 +53,13 @@ export type Conviene =
 /** Lo que tardás en llegar al gimnasio si no se eligió, y lo que se puede elegir, en minutos. */
 export const VIAJE_DE_FABRICA = 15;
 export const VIAJES = [0, 15, 30, 45, 60] as const;
-/** La comida de antes, entre 1 y 4 h antes de salir (ACSM 2016: 1 a 4 h antes; con el viaje, desde que salís). */
-export const ANTES_DE_SALIR: readonly [number, number] = [60, 240];
+/**
+ * La comida de antes, de 1 a 4 h antes del ejercicio (ACSM 2016). Lo más cerca cuenta desde que salís (comer y
+ * salir enseguida no conviene) y lo más lejos, desde que empezás: con una hora de viaje, comer 5 h antes de
+ * empezar ya no es la comida de antes.
+ */
+export const ANTES_DE_SALIR = 60;
+export const ANTES_DE_EMPEZAR = 240;
 /** Sin comida en esas horas, algo liviano entre 60 y 90 minutos antes de salir: a los 75. */
 export const ALGO_ANTES_DE_SALIR = 75;
 /** El aviso de comer suena media hora antes de esa comida: da tiempo a elegir qué. */
@@ -62,17 +69,28 @@ export const CAFE_ANTES = 60;
 const AVISO_DE_CAFE = 15;
 /** El último del día suena media hora antes del corte (corteDeCafeina, en alrededorDelEntreno.ts). */
 const AVISO_DE_ULTIMO_CAFE = 30;
-/** La última comida grande, 3 h antes de ir a la cama (ACG 2022: 2 a 3 h; Fujiwara 2005). */
-export const ULTIMA_COMIDA = 180;
+/**
+ * La última comida grande, 2 h antes de ir a la cama, o 3 con reflujo (ACG 2022: 2 a 3 h; Fujiwara 2005), como lo
+ * de la noche en loQueFalta.ts (cercaDeLaCama). Se corre con la hora de la cama: con deuda, también ella.
+ */
+export const ULTIMA_COMIDA = CERCA_DE_LA_CAMA;
 /** Su aviso, 45 minutos antes de esa hora, o un cuarto de hora antes de tu cena si es más temprano. */
 const AVISO_DE_ULTIMA_COMIDA = 45;
 const ANTES_DE_LA_CENA = 15;
-/** Lo fuerte, que termine 2 h antes de la cama (Leota 2025, con Frimpong 2021); el aviso, media hora antes de salir. */
+/**
+ * Lo fuerte, que termine 2 h antes de la cama: lo intenso que termina 2 a 4 h antes no cambia el sueño (Frimpong
+ * 2021) y en la hora de antes, quizá sí (Stutz 2019). En noches reales, desde 4 h antes no se ve nada (Leota 2025,
+ * que recomienda 4 h). El aviso, media hora antes de salir.
+ */
 export const FIN_DE_LO_FUERTE = 120;
 const AVISO_DE_ENTRENO_TARDE = 30;
 /** Con menos de esto entre que empezás y esa hora, mejor algo suave. */
 const MINIMO_PARA_LO_FUERTE = 30;
-/** Las luces, hora y media antes de la cama (como Rise; Gooley 2011). */
+/**
+ * Las luces, hora y media antes de la cama, como Rise. El consenso de Brown 2022 pide luz baja desde al menos 3 h
+ * antes (D2 de spec/estudio/momentos.md); Gooley 2011 no da un horario: la luz de una habitación en las 8 h antes
+ * de dormir atrasó la melatonina y la acortó unos 90 minutos.
+ */
 export const LUCES = 90;
 /** La recuperación, media hora después de despertarte: pesarse va a los 10 y no se corre a antes de despertarte. */
 const AVISO_DE_RECUPERACION = 30;
@@ -108,6 +126,8 @@ export type DeLoQueConviene = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'horaDe
   cafeinaPorToma?: number | null;
   /** Un cuidado de salud: nada de comida ni de café para entrenar, ni de la última comida. */
   sinDeficit?: boolean;
+  /** Reflujo, en Cuidados: la última comida grande, 3 h antes de la cama en vez de 2. */
+  reflujo?: boolean;
   /** «Mostrar números» apagado: sin gramos. */
   sinNumeros?: boolean;
   /** Ascent prendida (CON_ASCENT) y vinculada: sin eso, no hay recuperación. */
@@ -145,7 +165,7 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
   const contexto = (s: Sesion): Contexto => ({
     ahora: 0, sesiones: [s], horaDeComida: hora, anotado: {}, meta: op.meta ?? NADA, comido: op.comido ?? NADA,
     comidasHabituales: op.comidasHabituales ?? 3, pesoKg: op.pesoKg ?? null, edad: op.edad ?? 30,
-    despertar, dormir, cafeinaPorToma: op.cafeinaPorToma ?? null, sinDeficit: !!op.sinDeficit,
+    despertar, dormir, acostarse: cama, cafeinaPorToma: op.cafeinaPorToma ?? null, sinDeficit: !!op.sinDeficit,
   });
   const gramos = (g: number | null) => (op.meta && !op.sinNumeros && g !== null && g > 0 ? g : undefined);
   const lista: Aviso[] = [];
@@ -153,8 +173,8 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
   /** La comida de antes de una sesión: cuál y a qué hora, y las que caerían encima de salir o del entreno. */
   const previaDe = (s: Sesion) => {
     const salida = s.inicio - viaje;
-    const enHora = CON_HORA.filter((c) => salida - hora[c] >= ANTES_DE_SALIR[0] && salida - hora[c] <= ANTES_DE_SALIR[1] && despierto(hora[c]));
-    const encima = CON_HORA.filter((c) => hora[c] > salida - ANTES_DE_SALIR[0] && hora[c] < s.inicio + s.minutos);
+    const enHora = CON_HORA.filter((c) => salida - hora[c] >= ANTES_DE_SALIR && s.inicio - hora[c] <= ANTES_DE_EMPEZAR && despierto(hora[c]));
+    const encima = CON_HORA.filter((c) => hora[c] > salida - ANTES_DE_SALIR && hora[c] < s.inicio + s.minutos);
     // De las que caen bien, la más cercana a la salida.
     const elegida = enHora.sort((a, b) => hora[b] - hora[a])[0];
     if (elegida) return { salida, encima, comida: elegida as Comida, a: hora[elegida], adelantada: false };
@@ -211,20 +231,21 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
     }
   });
 
-  if (prendido('cafe') && dormir !== null) {
-    const corte = aCinco(corteDeCafeina(dormir, op.cafeinaPorToma ?? null));
+  if (prendido('cafe') && cama !== null) {
+    // Desde la hora de ir a la cama y según lo que tiene una toma; con un té, sin corte (null).
+    const corte = corteDeCafeina(cama, op.cafeinaPorToma ?? null);
     // La primera sesión en la que el café de antes cae después de despertarte; con «sin déficit», ninguna.
     const s = op.sinDeficit ? undefined : sesiones.find((x) => despierto(x.inicio - CAFE_ANTES));
-    const a = s && s.inicio - CAFE_ANTES <= corte ? s.inicio - CAFE_ANTES : null;
+    const a = s && (corte === null || s.inicio - CAFE_ANTES <= corte) ? s.inicio - CAFE_ANTES : null;
     const minutos = a !== null ? desdeQueDespierta(a - AVISO_DE_CAFE) : null;
     // Si entrenaste a otra hora antes de que sonara, queda el último café del día; si ya había sonado, sobra.
     const yaSono = minutos !== null && entrenado !== null && entrenado >= minutos;
     if (a !== null && minutos !== null && (entrenado === null || yaSono)) {
       lista.push({
-        id: 'cafe', tipo: 'cafe', minutos, conviene: { que: 'cafe', forma: 'antes', a, faltan: dormir - a },
+        id: 'cafe', tipo: 'cafe', minutos, conviene: { que: 'cafe', forma: 'antes', a, faltan: cama - a },
         ...(entrenado !== null ? { sobra: true as const } : {}),
       });
-    } else if (despierto(corte - AVISO_DE_ULTIMO_CAFE)) {
+    } else if (corte !== null && despierto(corte - AVISO_DE_ULTIMO_CAFE)) {
       // Si ya entrenaste, queda solo el corte: lo de entrenar ya no viene al caso.
       const entreno = s && entrenado === null ? s.inicio : null;
       lista.push({
@@ -235,7 +256,7 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
   }
 
   if (prendido('ultimaComida') && cama !== null && !op.sinDeficit) {
-    const limite = cama - ULTIMA_COMIDA;
+    const limite = cama - cercaDeLaCama(op.reflujo);
     // Si entrenás en esas horas, comés después, y de eso habla el de después de entrenar; si el de antes o el de
     // después ya hablan de la cena, alcanza con ese.
     const deLaCena = lista.some((a) => a.comida === 'cena');

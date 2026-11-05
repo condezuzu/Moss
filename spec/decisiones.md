@@ -5,6 +5,53 @@ tomé por mi cuenta para poder avanzar (cualquiera se puede revertir).
 
 ## Pendientes
 
+### D44 · Cuidados de salud: marcar cuál y que cambie la dieta (para aprobar, 5/11/2026)
+
+Lo pediste el 5/11: «si tienes algún problema lo marcas y, dependiendo de lo que tengas, se
+edita tu dieta». En la galería, el escenario `cuidados`: la pregunta del cuestionario con varios
+marcados y el consentimiento, y Perfil › Cuidados con «Cómo cambia tu dieta». La regla está en
+`src/dominio/cuidados.ts`, con sus tests; qué cambia cada una, en
+[`nutricion.md`](nutricion.md) («Cuidados de salud»), y el estudio, en
+[`estudio/cuidados.md`](estudio/cuidados.md). La app no cambia hasta que lo apruebes.
+
+Lo armé como recomienda el estudio; cada punto es tuyo:
+- **Guardar cuál, solo en el teléfono** (D1): sí. A la cuenta va solo lo que se deriva:
+  `sin_deficit` y, para el embarazo, un `control_en_pausa` (pide una migración; la otra forma es
+  guardar la meta del embarazo como `manual`).
+- **La lista** (D2): 13 y «Otra», en los seis grupos del estudio (contó cinco, pero son seis).
+- **El embarazo** (D3): el control en pausa, el extra de NASEM desde la semana 14, la banda del
+  IOM sin juicios y, antes de los 18, metas a mano. Además, sin «subir»: el extra ya suma lo que
+  hace falta.
+- **La lactancia** (D4): sin déficit las primeras 6 semanas y después suave, con piso de 1.800;
+  400 y 380 kcal; con fórmula, la mitad; la cafeína en 200 mg (la CDC dice unos 300).
+- **La diabetes tipo 2 con insulina o sulfonilureas** (D5): hasta el ritmo recomendado y sin keto;
+  «no sé» va como «sí».
+- **La diabetes tipo 1** (D6): suave como mucho.
+- **El riñón** (D7): sin déficit, 0,8 g/kg fija y, con diálisis, metas a mano. El estudio apaga lo
+  de entrenar con el riñón en una tabla y solo la proteína de después en otra: fui por lo más
+  cuidadoso, todo lo de entrenar.
+- **Los cálculos** (D8): la proteína hasta 1 g/kg y 2,5 L de agua.
+- **Un trastorno de la alimentación** (D9): los números ocultos de entrada, sin peso meta, sin
+  pesarse, sin «pasado» y, además de lo del estudio, sin la noche corta (como hoy con «sin
+  déficit»). Sin números de teléfono de ayuda por país.
+- **El medicamento para bajar de peso** (D10): 1,2 g/kg y, con obesidad, hasta 120 g; piso de 1.800
+  en los hombres.
+- **«Otra»** (D11): la proteína hasta 1,2, sin agua y sin keto. El estudio recomienda aplicar ya el
+  1,2 al «sin déficit» de hoy: no lo hice, porque cambia la app.
+- **Los consejos nuevos de «Para hoy»** (D13): la sal con la presión y las saturadas con el
+  colesterol, sin alarmas. Están en la regla (`prender`), todavía sin texto en «Para hoy».
+- **Para más adelante:** leer el embarazo y la lactancia de Salud (D12), la clasificación por edad
+  (D14: *Medical or Treatment Information* pasa a «Infrequent» al publicarlo) y exportar los
+  cuidados en el CSV (D15).
+- **Lo que cambié del estudio:** el consentimiento no nombra a Ascent («Moss es Moss»): «Lo que
+  marcas se guarda solo en este iPhone: no sube a tu cuenta y nadie más lo ve.»; y en la celiaquía,
+  «el sello de sin gluten» en lugar de «sin TACC», que es rioplatense.
+
+Ya están, porque sirven con el sí/no de hoy (pueden ir por OTA): el ejemplo de la pregunta sin
+«Diabetes», sin keto con «sin déficit» (la meta ya no la usa; falta que Progreso no la ofrezca) y el
+control que nunca baja la meta con «sin déficit»; en la regla de «Para hoy», todavía en la galería,
+sin pedir agua con «sin déficit»; y la corrección de abajo (es un dato de salud).
+
 ### D40 · La suscripción: la maqueta, para aprobar (armada el 2/11/2026)
 
 Lo de cobrar ya está decidido (abajo, en «Resueltas»). Lo que falta aprobar es cómo se ve: en la galería, sección
@@ -719,10 +766,12 @@ Cómo anda, en [`nutricion.md`](nutricion.md), «El plan de comidas».
   dice menos, la entrada no sigue. Antes de los 18, bajar «rápido» no está. En
   App Store Connect, la clasificación sube a 16+ (spec/revision.md «h»).
 - **Sin déficit, sin guardar el porqué:** embarazo, lactancia o una condición
-  médica se preguntan juntos y solo se guarda «sin déficit» (lo mínimo, y no es
-  un dato de salud que haya que cuidar). Con eso, bajar de peso queda en
-  mantener, se dice por qué y se sugiere un profesional. El embarazo y la
-  lactancia se preguntan solo a las mujeres.
+  médica se preguntan juntos y solo se guarda «sin déficit». Es un dato de salud
+  (corregido el 5/11/2026: el RGPD cuenta todo lo que revela el estado de salud,
+  y lo declaramos como *Health*): por eso se guarda lo mínimo. Con eso, bajar de
+  peso queda en mantener, se dice por qué y se sugiere un profesional. El
+  embarazo y la lactancia se preguntan solo a las mujeres. La propuesta de
+  guardar cuál, solo en el teléfono, está en D44.
 - **El piso y el peso meta:** las metas a mano por debajo del piso (1.200 kcal
   para mujeres, 1.500 para hombres, desde la 1.1: el borde de abajo de la guía AHA/ACC/TOS 2013) no se guardan, y el peso meta no baja de un
   IMC de 18,5; en los dos casos, una frase corta dice por qué. El ritmo más

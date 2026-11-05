@@ -104,6 +104,29 @@ describe('a la noche', () => {
     expect(lista[0].falta).toMatchObject({ que: 'calorias', cuanto: 700 });
   });
 
+  it('a menos de 2 horas de la cama (3 con reflujo), las calorías no proponen una comida grande: una sola idea liviana, que acerca', () => {
+    const MILANESA = { nombre: 'Milanesa con puré', proteina: 40, kcal: 650 };
+    // Cenó a las 21:10 y se acuesta a las 23:30: suena a las 22:15, a hora y cuarto de la cama.
+    const bajas = { comidoALaTarde: macros(500, 40), comido: macros(1500, 100), propios: [MILANESA] };
+    for (let i = 0; i < 7; i++) {
+      const f = loQueFaltaHoy(deNoche({ ...bajas, dia: sumarDias(PAR, i) }))[0].falta;
+      expect(f).toMatchObject({ que: 'calorias', cuanto: 700, alcanza: false });
+      expect(f.ideas).toHaveLength(1);
+      expect(JSON.stringify(f.ideas)).not.toMatch(/pasta|arrozConHuevo|sandwich|avena|panConHuevo|Milanesa/);
+    }
+    // Sin hora de la cama, la de siempre: la medianoche.
+    expect(loQueFaltaHoy(deNoche({ ...bajas, acostarse: null }))[0].falta.ideas).toHaveLength(1);
+    // Con la cena temprano, más de 2 horas antes de la cama, como siempre: la milanesa lo resuelve.
+    const temprano = loQueFaltaHoy(deNoche({ ...bajas, horaDeCena: h('18:30'), anotadas: { desayuno: h('8:00'), almuerzo: h('12:00'), cena: h('18:30') } }));
+    expect(temprano[0]).toMatchObject({ minutos: h('19:45'), falta: { que: 'calorias', ideas: [{ nombre: 'Milanesa con puré' }], alcanza: true } });
+    // A dos horas y media de la cama todavía cabe una comida; con reflujo, ya no: una sola idea liviana.
+    const aLas = { horaDeCena: h('19:45'), anotadas: { desayuno: h('8:00'), almuerzo: h('12:00'), cena: h('19:45') } };
+    expect(loQueFaltaHoy(deNoche({ ...bajas, ...aLas }))[0]).toMatchObject({ minutos: h('21:00'), falta: { ideas: [{ nombre: 'Milanesa con puré' }] } });
+    const conReflujo = loQueFaltaHoy(deNoche({ ...bajas, ...aLas, reflujo: true }))[0].falta;
+    expect(conReflujo.ideas).toHaveLength(1);
+    expect(JSON.stringify(conReflujo.ideas)).not.toMatch(/Milanesa/);
+  });
+
   it('como mucho dos por día, y cada uno de algo distinto', () => {
     const lista = loQueFaltaHoy(base({ anotadas: { desayuno: h('8:00'), cena: h('15:00') }, comido: macros(900, 50), agua: null }));
     expect(lista.length).toBeLessThanOrEqual(2);
@@ -171,9 +194,18 @@ describe('las ideas', () => {
       const dia = sumarDias(PAR, i);
       const vegana = JSON.stringify(loQueFaltaHoy(deNoche({ dia, dieta: 'vegana' }))[0]?.falta.ideas);
       expect(vegana).not.toMatch(/pollo|atun|huevos|leche|yogur/i);
+      const carnivora = JSON.stringify(loQueFaltaHoy(deNoche({ dia, dieta: 'carnivora' }))[0]?.falta.ideas);
+      expect(carnivora).not.toMatch(/lentejas|tofu/i);
       const sinHuevo = JSON.stringify(loQueFaltaHoy(deNoche({ dia, alergias: ['huevo', 'pescado'] }))[0]?.falta.ideas);
       expect(sinHuevo).not.toMatch(/huevos|atun/i);
     }
+  });
+
+  it('a quien es carnívoro, nada vegetal: para las calorías, solo lo que come', () => {
+    const bajas = { comidoALaTarde: macros(500, 40), comido: macros(1500, 100), dieta: 'carnivora' as const };
+    expect(loQueFaltaHoy(deNoche(bajas))).toEqual([]);
+    const SALAME = { nombre: 'Salame', proteina: 10, kcal: 200 };
+    expect(loQueFaltaHoy(deNoche({ ...bajas, propios: [SALAME] }))[0].falta).toMatchObject({ que: 'calorias', ideas: [{ nombre: 'Salame' }] });
   });
 
   it('lo propuesto tiene que entrar en las calorías que quedan', () => {

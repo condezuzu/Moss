@@ -571,9 +571,10 @@ const Comida = (() => {
       const linea = c.plan && diaDe(c) === 0 ? lineasDeEntreno().get(c.tipo) : null;
       if (linea) art.appendChild(lineaDeEntreno(linea));
       const pie = el('footer');
+      // Cada macro con su color y su letra (5/11: el punto solo no decía cuál era).
       [['p', t.p], ['c', t.c], ['g', t.g]].forEach(([m, g]) => {
         const chip = el('span', 'cm-mini cm-mini-' + m);
-        chip.append(el('i'), `${numero(Math.round(g))} g`);
+        chip.append(el('i'), el('b', null, tx('comida.letra.' + m)), `${numero(Math.round(g))} g`);
         pie.appendChild(chip);
       });
       if (!c.plan) {

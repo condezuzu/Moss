@@ -191,6 +191,12 @@ const Entrada = (() => {
 .ent-pasito.sin-hora b { color: rgba(239, 230, 207, 0.4); }
 .ent-varia[aria-pressed='true'] { background: rgba(232, 196, 106, 0.16); border-color: rgba(232, 196, 106, 0.8); color: var(--oro-claro); }
 .ent-suma { margin: 14px 0 0; font: 400 12.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.6); }
+/* Revisándolo desde Perfil: «Cerrar», chico, arriba a la derecha. */
+.ent-cab-pasos { position: relative; }
+.ent-boton.ent-revisar-cerrar { position: absolute; right: 0; top: -4px; width: auto; min-height: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.22); background: rgba(6, 10, 22, 0.5); color: rgba(239, 230, 207, 0.85); font: 400 13px/1 var(--texto); box-shadow: none; }
+/* Cuándo conviene el reparto elegido y el nivel de proteína: debajo de sus opciones, a todo el ancho. */
+.ent-cuando-proteina { margin: 8px 2px 0; font: 400 12.5px/1.36 var(--texto); color: rgba(239, 230, 207, 0.72); text-wrap: pretty; }
+.ent-cuando-estilo { min-height: 3.6em; }
 
 /* El peso meta con su ritmo: cada ritmo con su fecha, o una fecha con el ritmo que pide. */
 .ent-ritmos { display: grid; gap: 6px; }
@@ -251,6 +257,35 @@ button.ent-dia-nombre { cursor: pointer; }
 /* El resultado: el plan en una línea, y de dónde sale el gasto. */
 .ent-plan-linea { margin: 10px auto 0; max-width: 320px; font: italic 400 16.5px/1.32 var(--titulos); color: var(--oro-claro); text-align: center; text-wrap: balance; text-shadow: 0 0 14px rgba(3, 5, 12, 0.9); }
 .ent-partes { margin: 4px 0 0; font: 400 11.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.5); text-wrap: balance; }
+
+/* ¿Alguno es tu caso? (5/11, para aprobar): varios a la vez, en grupos; lo que se pregunta además crece
+   debajo de su grupo, y el consentimiento ocupa el lugar de «Seguir» hasta guardarlo en este iPhone. */
+.ent-cuidado .ent-desliza { margin-top: 4px; }
+.ent-cuidado .ent-etiqueta { margin: 16px 0 8px; }
+.entrada .ent-opciones.ent-cuidados { gap: 7px; }
+.entrada .ent-cuidados .ent-opcion { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px 8px 9px; }
+.entrada .ent-cuidados .ent-opcion b { font: 400 14px/1.15 var(--texto); }
+.ent-cuidados .ent-opcion-marca { width: 18px; height: 18px; flex: none; }
+.ent-cuidados .ent-opcion-marca svg { width: 10px; height: 10px; }
+.entrada .ent-opciones.ent-cuidado-nada { margin-top: 20px; }
+.ent-extra { display: grid; gap: 9px; padding: 12px 2px 2px; }
+.ent-extra-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ent-extra-fila > span, .ent-extra > span { font: 400 13px/1.3 var(--texto); color: rgba(239, 230, 207, 0.76); }
+.ent-extra-lado { flex: none; display: flex; align-items: center; gap: 6px; }
+.ent-extra .ent-pasito b { min-width: 92px; font-size: 14.5px; }
+.entrada .ent-extra .ent-opciones { margin-top: 0; }
+.entrada .ent-extra .ent-segmento .ent-opcion { padding: 9px 4px; }
+.entrada .ent-extra-lado .ent-opciones.ent-par { width: 132px; flex: none; }
+.ent-extra .ent-varia { padding: 8px 12px; font-size: 12.5px; }
+.ent-cuidado-nota { margin: 12px 2px 0; font: 400 12.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.66); text-wrap: pretty; }
+.ent-cuidado-nota.privado { display: flex; align-items: center; gap: 7px; color: var(--salvia); }
+.ent-cuidado-nota svg, .ent-consentimiento p svg { flex: none; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ent-pie.ent-pie-cuidado { gap: 0; }
+.ent-consentimiento { display: grid; gap: 9px; padding: 14px 14px 12px; border-radius: 18px; border: 1px solid rgba(166, 191, 148, 0.42); background: rgba(6, 10, 22, 0.72); }
+.ent-consentimiento p { margin: 0 0 2px; display: flex; gap: 9px; text-align: left; font: 400 13.5px/1.42 var(--texto); color: var(--tinta); }
+.ent-consentimiento p svg { margin-top: 2px; color: var(--salvia); }
+.ent-consentimiento .ent-boton { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .ent-cuidados .ent-opcion-marca { transition: none; } }
 @media (prefers-reduced-motion: reduce) {
   .ent-aparece, .ent-busca span, .ent-base-fila i, .ent-noche-grafico, .ent-juntos-caja .sb-j-union, .ent-juntos-caja .sb-j-hoy, .ent-camino-hilo i, .ent-camino-puntos i { animation-duration: 0.01s; animation-delay: 0s; }
   .ent-opcion, .ent-tarjeta, .ent-figura, .ent-ritmo-fila, .ent-dia-fila, .ent-plan-hilo i { animation-duration: 0.01s; animation-delay: 0s; }
@@ -455,6 +490,8 @@ button.ent-dia-nombre { cursor: pointer; }
 
     let idioma = 'es';
     const u = Util.crear({ textos: opciones.textos, idioma: () => idioma });
+    // Revisando el cuestionario desde Perfil (5/11: se cambia cuando quieras): la meta de antes y qué hacer al guardar.
+    let revisando = null;
     const tx = (clave, vars) => {
       let s = clave.split('.').reduce((o, k) => (o ? o[k] : undefined), opciones.textos[idioma]);
       if (s == null) return clave;
@@ -477,6 +514,9 @@ button.ent-dia-nombre { cursor: pointer; }
     // espera por si cambia de idea). Una comida en noSuele no se suele hacer.
     const DE_FABRICA = {
       salud: false, edad: 29, sexo: null, altura: 172, peso: 74.5, sinDeficit: false, caso: 'nada',
+      // Los cuidados marcados (cuidados.ts), lo que se pregunta además y si ya se guardaron en este iPhone.
+      cuidados: [], consentido: false,
+      datosCuidado: { semana: 20, pesoAntes: null, mellizos: false, semanasParto: 8, soloPecho: true, bajaElAzucar: null, dialisis: false },
       grasaModo: 'no', grasaPct: 18, figura: null, cinta: { cintura: 86, cuello: 38, cadera: 98 },
       movimiento: 'sentado',
       entreno: {
@@ -503,7 +543,7 @@ button.ent-dia-nombre { cursor: pointer; }
     // Lo que sale de lo contestado, con la lógica de la app (src/dominio/cuestionario.ts).
     const sexo = () => r.sexo || 'm';
     const cambiaPeso = () => r.objetivo === 'bajar' || r.objetivo === 'subir';
-    const preguntaGrasa = () => !r.sinDeficit && r.edad >= Metas.MAYORIA_DE_EDAD;
+    const preguntaGrasa = () => !r.sinDeficit && !r.cuidados.length && r.edad >= Metas.MAYORIA_DE_EDAD;
     // Lo que se guarda: los deportes, la sesión de cada uno, el viaje, los partidos y la categoría de peso. Al
     // final, SOLO para el horario de los avisos (alrededorDelEntreno, que hoy lleva uno): el tipo reducido y
     // el horario principal; los consejos salen de los deportes y de las sesiones de cada día.
@@ -534,7 +574,12 @@ button.ent-dia-nombre { cursor: pointer; }
       return null;
     }
     const persona = () => ({ edad: r.edad, sexo: sexo(), alturaCm: r.altura, pesoKg: r.peso, sinDeficit: r.sinDeficit, grasa: grasaDicha() });
-    const gastoTotal = () => Cuestionario.gastoEstimado(Object.assign(persona(), { movimiento: r.movimiento, entreno: entrenoDicho() })).total;
+    // El movimiento de tu día: lo que elegiste o, si lo sugirieron los pasos de Salud y no lo cambiaste, esa sugerencia
+    // corregida con lo que entrenas: correr o los partidos ya están en los pasos (Cuestionario.movimientoPorPasos).
+    const movimientoUsado = () => (r.salud && r.movimientoSugerido && r.movimiento === r.movimientoSugerido
+      ? Cuestionario.movimientoPorPasos(DE_SALUD.pasos, (entrenoDicho() || { tipos: [] }).tipos) || r.movimiento
+      : r.movimiento);
+    const gastoTotal = () => Cuestionario.gastoEstimado(Object.assign(persona(), { movimiento: movimientoUsado(), entreno: entrenoDicho() })).total;
     const entradaDelPlazo = () => ({ hoy: Datos.HOY, pesoKg: r.peso, pesoMeta: r.pesoMeta, sexo: sexo(), edad: r.edad, gasto: gastoTotal(), entrenaFuerza: levantaPesas() });
     const pctDe = (ritmo) => Math.abs(Metas.RITMOS[r.objetivo][Metas.ritmoPermitido({ edad: r.edad, objetivo: r.objetivo, ritmo })]);
     const plazoDeRitmo = (ritmo) => (cambiaPeso() && r.pesoMeta != null ? Progreso.plazoConRitmo(entradaDelPlazo(), pctDe(ritmo)) : null);
@@ -545,17 +590,39 @@ button.ent-dia-nombre { cursor: pointer; }
       if (!r.fecha) return plazoDeRitmo(r.ritmo);
       const e = entradaDelPlazo();
       const conFecha = Progreso.plazoConFecha(e, r.fecha);
-      const usado = conFecha && Cuestionario.pctDelPlan({ edad: r.edad, objetivo: r.objetivo, sinDeficit: r.sinDeficit, pct: conFecha.pct });
+      const usado = conFecha && Cuestionario.pctDelPlan({ edad: r.edad, objetivo: r.objetivo, sinDeficit: r.sinDeficit, pct: conFecha.pct, pesoKg: r.peso });
       return usado && usado < conFecha.pct ? Progreso.plazoConRitmo(e, usado) : conFecha;
     }
     function respuestas() {
       const plazo = r.fecha ? plazoElegido() : null;
       return Object.assign(persona(), {
-        movimiento: r.movimiento, entreno: entrenoDicho(), objetivo: r.objetivo, ritmo: r.ritmo,
+        movimiento: movimientoUsado(), entreno: entrenoDicho(), objetivo: r.objetivo, ritmo: r.ritmo,
         pct: plazo ? plazo.pct : null, estilo: r.estilo, proteina: r.proteina,
       });
     }
-    const metaDeAhora = () => Cuestionario.metaDelCuestionario(respuestas());
+    // Con cuidados, la meta de cuidados.ts; con diálisis (o embarazada antes de los 18) Moss no calcula, y la
+    // pantalla del cuidado ya lo dijo: queda la de siempre, sin déficit.
+    const metaDeAhora = () => (r.cuidados.length && Cuidados.metaDelCuestionarioConCuidados(respuestas(), reglasDeAhora())) || Cuestionario.metaDelCuestionario(respuestas());
+    // Lo marcado, con lo que se preguntó además, como lo recibe la regla.
+    function datosDelCuidado() {
+      const d = r.datosCuidado;
+      return {
+        embarazo: { fechaProbable: Cuidados.fechaProbableDe(d.semana, Datos.HOY), pesoAntes: d.pesoAntes, mellizos: d.mellizos },
+        lactancia: { parto: Fechas.sumarDias(Datos.HOY, -7 * d.semanasParto), soloPecho: d.soloPecho },
+        diabetes2: { bajaElAzucar: d.bajaElAzucar },
+        renal: { dialisis: d.dialisis },
+      };
+    }
+    function reglasDeAhora() {
+      const actividad = Cuestionario.actividadEquivalente(Cuestionario.gastoEstimado(Object.assign(persona(), { grasa: null, movimiento: movimientoUsado(), entreno: entrenoDicho() })));
+      return Cuidados.reglasDe(r.cuidados, datosDelCuidado(), { sexo: sexo(), edad: r.edad, alturaCm: r.altura, pesoKg: r.peso, actividad, dieta: r.dieta }, Datos.HOY);
+    }
+    // Lo que queda como antes: «sin déficit» sale de lo marcado.
+    function actualizarCuidados() {
+      if (r.sexo !== 'f') r.cuidados = r.cuidados.filter((c) => c !== 'embarazo' && c !== 'lactancia');
+      r.sinDeficit = r.cuidados.length > 0 && Cuidados.sinDeficitDe(reglasDeAhora());
+      r.caso = r.cuidados.length ? 'condicion' : 'nada';
+    }
     // Las noches de Salud: con tres o más, el sueño no se pregunta (el horario, de Sueno.horario si alcanza).
     function suenoDeSalud() {
       if (!r.salud) return null;
@@ -574,7 +641,7 @@ button.ent-dia-nombre { cursor: pointer; }
       return {
         sexo: sexo(), edad: r.edad, alturaCm: r.altura, objetivo: x.objetivo, recomponer: x.recomponer, ritmo: r.ritmo, actividad: x.actividad,
         pesoMeta: cambiaPeso() ? r.pesoMeta : null, sinDeficit: r.sinDeficit, estilo: r.estilo, proteina: r.proteina,
-        movimiento: r.movimiento, entreno: entrenoDicho(), experiencia: levantaPesas() ? r.experiencia : null, grasaDicha: grasaDicha(),
+        movimiento: movimientoUsado(), entreno: entrenoDicho(), experiencia: levantaPesas() ? r.experiencia : null, grasaDicha: grasaDicha(),
         despues: cambiaPeso() ? r.despues : null, comer: { dieta: r.dieta },
         horarios: Object.fromEntries(Comidas.CON_HORA.map((c) => [c, r.noSuele[c] ? null : r.horarios[c]])),
         sueno: deSalud ? { despertar: deSalud.despertar, acostarse: deSalud.dormirse, finDeSemana: null } : copia(r.sueno),
@@ -947,6 +1014,8 @@ button.ent-dia-nombre { cursor: pointer; }
       // las preguntas: lo contestado encendido y la de ahora, prendiéndose.
       const cab = el('div', 'ent-cab-pasos');
       cab.append(constelacionDePasos(i, total), el('div', 'ent-paso', tx('entrada.cuestionario.paso', { n: i + 1, total })));
+      // Revisándolo desde Perfil, se puede cerrar en cualquier pregunta sin cambiar nada.
+      if (revisando) cab.appendChild(botonSeguir(tx('entrada.cuestionario.revisar.cerrar'), () => { revisando = null; salir(); }, 'ent-revisar-cerrar'));
       p.append(el('div', 'ent-progreso-hueco'), cab);
     }
 
@@ -1215,7 +1284,7 @@ button.ent-dia-nombre { cursor: pointer; }
         filas.appendChild(aparece(li, 300 + k * 160));
       });
       const nota = el('div', 'ent-fija ent-base-nota');
-      nota.append(el('span', null, tx('entrada.intro.base.verificado')), el('span', 'ent-chip', tx('entrada.intro.base.sinIA')));
+      nota.append(el('span', null, tx('entrada.intro.base.verificado')));
       p.append(busca, filas, aparece(nota, llegaA[2] + 300));
       const ultimo = centro(2);
       const tramos = [{ t0: 150, ms: LLEGA - 150, ...bezier(desde.pos, [a.W * 0.04, a.H * 0.82], [a.W * 0.02, centro(0)[1] + 60], centro(0)), facil: 'suave', estela: true, escala: [desde.escala, 0.8], brillo: [desde.brillo, 1] }];
@@ -1383,20 +1452,131 @@ button.ent-dia-nombre { cursor: pointer; }
       p.append(el('h2', 'ent-titulo', tx('entrada.menor.titulo')), el('p', 'ent-texto', tx('entrada.menor.texto')));
     }
 
-    // Embarazo, lactancia o una condición médica: sin déficit, y un profesional que acompañe. No se
-    // guarda cuál: solo que Moss no pone en déficit.
+    // ¿Alguno es tu caso? (5/11, para aprobar: src/dominio/cuidados.ts). Se marcan varios, en grupos (el
+    // embarazo y la lactancia, solo a las mujeres); lo que se pregunta además (la semana, el parto, la
+    // insulina, la diálisis) crece debajo de su grupo. Al marcar el primero, el pie pide guardarlo en este
+    // iPhone en lugar de «Seguir»: es el consentimiento explícito. Lo marcado no sube a la cuenta.
     function armarCuidado(p, { paso }) {
+      p.classList.add('ent-denso');
       cabezaDeCuestionario(p, paso);
-      p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuidado.titulo')));
-      const aviso = el('p', 'ent-texto ent-aviso' + (r.caso !== 'nada' ? ' visible' : ''), tx('entrada.cuidado.aviso'));
-      const casos = [
-        ...(r.sexo === 'f' ? [['embarazo', tx('entrada.cuidado.embarazo')]] : []),
-        ['condicion', tx('entrada.cuidado.condicion'), tx('entrada.cuidado.condicionTexto')],
-        ['nada', tx('entrada.cuidado.nada')],
-      ];
-      opcionesDe(p, casos, r.caso, (v) => { r.caso = v; r.sinDeficit = v !== 'nada'; aviso.classList.toggle('visible', r.sinDeficit); });
-      p.append(aviso, el('div', 'ent-pie'));
-      p.querySelector('.ent-pie').appendChild(botonSeguir(tx('entrada.seguir'), siguiente, 'ent-principal'));
+      p.append(el('h2', 'ent-titulo', tx('entrada.cuidado.titulo')), el('p', 'ent-texto', tx('entrada.cuidado.marcaTodo')));
+      const d = r.datosCuidado;
+      const desliza = el('div', 'ent-desliza');
+      const chips = [];
+      const extras = [];
+      let k = 0;
+      const chip = (valor, titulo) => {
+        const b = el('button', 'ent-opcion');
+        b.type = 'button';
+        b.dataset.valor = valor;
+        b.style.animationDelay = `${(0.3 + k++ * 0.035).toFixed(2)}s`;
+        const marca = el('i', 'ent-opcion-marca');
+        marca.innerHTML = Util.icono('listo');
+        b.append(marca, el('b', null, titulo));
+        return b;
+      };
+      const marcar = (c) => {
+        r.cuidados = r.cuidados.includes(c) ? r.cuidados.filter((x) => x !== c) : [...r.cuidados, c];
+        escena.haptico('suave');
+        pintar();
+      };
+      // Una fila de lo que se pregunta además: el texto y, a la derecha, cómo se contesta.
+      const fila = (texto, ...lado) => {
+        const f = el('div', 'ent-extra-fila');
+        const derecha = el('div', 'ent-extra-lado');
+        derecha.append(...lado);
+        f.append(el('span', null, texto), derecha);
+        return f;
+      };
+      const segmento = (lista, elegida, alElegir, clase) => {
+        const n = el('div');
+        opcionesDe(n, lista, elegida, (v) => { alElegir(v); pintar(); }, 'ent-segmento ' + (clase || ''));
+        return n.firstChild;
+      };
+      const siNo = (si, alElegir) => segmento([['si', tx('cuidados.preguntas.si')], ['no', tx('cuidados.preguntas.no')]], si ? 'si' : 'no', (v) => alElegir(v === 'si'), 'ent-par');
+      function preguntas(c) {
+        const caja = el('div', 'ent-extra');
+        if (c === 'embarazo') {
+          const semana = pasito(d.semana, { min: 1, max: 42, paso: 1, nombre: tx('cuidados.preguntas.semana'), formato: (n) => tx('cuidados.preguntas.semanaN', { n }), alCambiar: (n) => { d.semana = n; pintar(); } });
+          const noSe = el('button', 'ent-varia', tx('cuidados.preguntas.noSe'));
+          noSe.type = 'button';
+          const peso = pasito(d.pesoAntes ?? r.peso, { min: 35, max: 200, paso: 0.5, nombre: tx('cuidados.preguntas.pesoAntes'), formato: (x) => `${kg(x)} kg`, alCambiar: (x) => { d.pesoAntes = x; ponerNoSe(); pintar(); } });
+          const ponerNoSe = () => { noSe.setAttribute('aria-pressed', String(d.pesoAntes == null)); peso.classList.toggle('sin-hora', d.pesoAntes == null); };
+          noSe.addEventListener('click', () => { d.pesoAntes = d.pesoAntes == null ? r.peso : null; peso.poner(d.pesoAntes ?? r.peso); ponerNoSe(); escena.haptico('suave'); pintar(); });
+          ponerNoSe();
+          caja.append(fila(tx('cuidados.preguntas.semana'), semana), el('span', null, tx('cuidados.preguntas.pesoAntes')), fila('', noSe, peso), fila(tx('cuidados.preguntas.mellizos'), siNo(d.mellizos, (si) => { d.mellizos = si; })));
+        } else if (c === 'lactancia') {
+          const semanas = pasito(d.semanasParto, { min: 0, max: 104, paso: 1, nombre: tx('cuidados.preguntas.parto'), formato: (n) => u.plural('cuidados.preguntas.partoN', n), alCambiar: (n) => { d.semanasParto = n; pintar(); } });
+          caja.append(fila(tx('cuidados.preguntas.parto'), semanas), segmento([['si', tx('cuidados.preguntas.soloPecho')], ['no', tx('cuidados.preguntas.conFormula')]], d.soloPecho ? 'si' : 'no', (v) => { d.soloPecho = v === 'si'; }, 'ent-par'));
+        } else if (c === 'diabetes2') {
+          const valor = d.bajaElAzucar === true ? 'si' : d.bajaElAzucar === false ? 'no' : 'noSe';
+          caja.append(el('span', null, tx('cuidados.preguntas.insulina')), segmento([['si', tx('cuidados.preguntas.si')], ['no', tx('cuidados.preguntas.no')], ['noSe', tx('cuidados.preguntas.noLoSe')]], valor, (v) => { d.bajaElAzucar = v === 'si' ? true : v === 'no' ? false : null; }));
+        } else if (c === 'renal') {
+          caja.appendChild(fila(tx('cuidados.preguntas.dialisis'), siNo(d.dialisis, (si) => { d.dialisis = si; })));
+        }
+        return caja;
+      }
+      Cuidados.gruposPara(r.sexo === 'f' ? 'f' : 'm').forEach(({ grupo, cuidados }) => {
+        desliza.appendChild(etiqueta(tx('cuidados.grupos.' + grupo)));
+        const caja = el('div', 'ent-opciones ent-chips ent-cuidados');
+        cuidados.forEach((c) => {
+          const b = chip(c, tx('cuidados.nombres.' + c));
+          b.addEventListener('click', () => marcar(c));
+          chips.push(b);
+          caja.appendChild(b);
+        });
+        desliza.appendChild(caja);
+        cuidados.filter((c) => Cuidados.PREGUNTA[c]).forEach((c) => {
+          const pl = plegar(preguntas(c), r.cuidados.includes(c));
+          extras.push([c, pl]);
+          desliza.appendChild(pl.el);
+        });
+      });
+      const nada = el('div', 'ent-opciones ent-chips ent-cuidados ent-cuidado-nada');
+      const ninguno = chip('nada', tx('entrada.cuidado.nada'));
+      ninguno.addEventListener('click', () => { r.cuidados = []; escena.haptico('suave'); pintar(); });
+      nada.appendChild(ninguno);
+      desliza.appendChild(nada);
+      // Debajo, lo que hace falta saber: sin déficit, que Moss no propone comer menos; con diálisis, que no
+      // calcula; y ya guardado, que queda solo en este iPhone.
+      const aviso = plegar(el('p', 'ent-cuidado-nota', tx('entrada.cuidado.aviso')), false);
+      const aMano = el('p', 'ent-cuidado-nota');
+      const plAMano = plegar(aMano, false);
+      const privado = el('p', 'ent-cuidado-nota privado');
+      privado.innerHTML = Util.icono('candado');
+      privado.appendChild(el('span', null, tx('cuidados.soloEnElIphone')));
+      const plPrivado = plegar(privado, false);
+      desliza.append(aviso.el, plAMano.el, plPrivado.el);
+      const pedido = el('div', 'ent-consentimiento');
+      const texto = el('p');
+      texto.innerHTML = Util.icono('candado');
+      texto.appendChild(el('span', null, tx('cuidados.consentimiento.texto')));
+      pedido.append(
+        texto,
+        botonSeguir(tx('cuidados.consentimiento.guardar'), () => { r.consentido = true; escena.haptico('toque'); pintar(); }, 'ent-principal'),
+        botonSeguir(tx('cuidados.consentimiento.ahoraNo'), () => { r.cuidados = []; pintar(); }, 'ent-secundario'),
+      );
+      const plPedido = plegar(pedido, false);
+      const plSeguir = plegar(seguirBoton(), true);
+      const abajo = el('div', 'ent-pie ent-pie-cuidado');
+      abajo.append(plPedido.el, plSeguir.el);
+      p.append(desliza, abajo);
+      function pintar() {
+        actualizarCuidados();
+        const reglas = reglasDeAhora();
+        const hay = r.cuidados.length > 0;
+        const pendiente = hay && !r.consentido;
+        chips.forEach((b) => b.setAttribute('aria-pressed', String(r.cuidados.includes(b.dataset.valor))));
+        ninguno.setAttribute('aria-pressed', String(!hay));
+        extras.forEach(([c, pl]) => pl.abrir(r.cuidados.includes(c)));
+        aviso.abrir(hay && Cuidados.sinDeficitDe(reglas) && !reglas.manuales);
+        if (reglas.manuales) aMano.textContent = tx(r.cuidados.includes('renal') && d.dialisis ? 'cuidados.manuales.dialisis' : 'cuidados.manuales.menor');
+        plAMano.abrir(reglas.manuales);
+        plPrivado.abrir(hay && r.consentido);
+        plPedido.abrir(pendiente);
+        plSeguir.abrir(!pendiente);
+      }
+      pintar();
     }
 
     // La cuenta, solo con Apple. La estrella baja hasta la marca, pasa por encima mientras aparecen
@@ -1462,7 +1642,8 @@ button.ent-dia-nombre { cursor: pointer; }
       r.salud = true;
       desdeSalud = Object.assign({}, DE_SALUD);
       ['edad', 'sexo', 'altura', 'peso'].forEach((k) => { r[k] = DE_SALUD[k]; });
-      r.movimiento = Cuestionario.movimientoPorPasos(DE_SALUD.pasos) || r.movimiento;
+      r.movimientoSugerido = Cuestionario.movimientoPorPasos(DE_SALUD.pasos);
+      r.movimiento = r.movimientoSugerido || r.movimiento;
     }
 
     function armarSalud(p, { paso }) {
@@ -1891,7 +2072,9 @@ button.ent-dia-nombre { cursor: pointer; }
         bloque.append(chips[t], horas);
         desliza.appendChild(bloque);
       });
-      desliza.appendChild(plDobles.el);
+      // Lo que suma entrenar va pegado a las sesiones, que es de donde sale (5/11: debajo del viaje parecía que el
+      // viaje sumaba, y en auto no suma nada).
+      desliza.append(plDobles.el, suma);
       const siNo = tx('entrada.cuestionario.entreno.siNo');
       const pregunta = (clave, clase, si, alCambiar) => {
         const fila = el('div', 'ent-pregunta ' + clase);
@@ -1942,7 +2125,7 @@ button.ent-dia-nombre { cursor: pointer; }
       if (preguntas.categoriaDePeso) desliza.appendChild(pregunta('categoria', 'ent-categoria', e.categoriaDePeso, (si) => { e.categoriaDePeso = si; }));
       desliza.appendChild(etiqueta(tx('entrada.cuestionario.entreno.viaje')));
       opcionesDe(desliza, Cuestionario.VIAJES.map((min, k) => [String(min), tx('entrada.cuestionario.entreno.viajes')[k]]), String(e.viaje), (v) => { e.viaje = Number(v); }, 'ent-segmento ent-cuatro');
-      desliza.appendChild(suma);
+      desliza.appendChild(el('p', 'ent-suma', tx('entrada.cuestionario.entreno.viajeNota')));
       p.append(desliza, pie(seguir));
       pintar();
     }
@@ -1952,17 +2135,20 @@ button.ent-dia-nombre { cursor: pointer; }
       cabezaDeCuestionario(p, paso);
       p.appendChild(el('h2', 'ent-titulo', tx('entrada.cuestionario.objetivoTitulo')));
       const sinLugar = !Cuestionario.rangoDelPesoMeta(r.peso, r.altura, 'bajar');
+      // En el embarazo, subir tampoco: lo que hace falta ya lo suma Moss (cuidados.ts).
+      const sinSubir = r.cuidados.length > 0 && !reglasDeAhora().subir;
       // Sin déficit, ni bajar ni recomponer; sin lugar para bajar (el IMC de 18,5), tampoco bajar. Se dice por qué, corto.
-      if ((r.sinDeficit && (r.objetivo === 'bajar' || r.objetivo === 'recomponer')) || (sinLugar && r.objetivo === 'bajar')) r.objetivo = 'mantener';
+      if ((r.sinDeficit && (r.objetivo === 'bajar' || r.objetivo === 'recomponer')) || (sinLugar && r.objetivo === 'bajar') || (sinSubir && r.objetivo === 'subir')) r.objetivo = 'mantener';
       const lista = [
         ['bajar', tx('entrada.cuestionario.bajar'), r.sinDeficit ? tx('entrada.cuidado.bajarNo') : sinLugar ? tx('entrada.cuestionario.bajarNoSano') : null],
         ['mantener', tx('entrada.cuestionario.mantener')],
-        ['subir', tx('entrada.cuestionario.subir')],
-        ['recomponer', tx('entrada.cuestionario.recomponer'), tx(r.sinDeficit ? 'entrada.cuestionario.recomponerNo' : 'entrada.cuestionario.recomponerTexto')],
+        ['subir', tx('entrada.cuestionario.subir'), sinSubir ? tx('cuidados.subirNo') : null],
+        ['recomponer', tx('entrada.cuestionario.recomponer'), tx(r.sinDeficit ? 'entrada.cuestionario.recomponerNo' : Cuestionario.avisoDeRecomposicion({ objetivo: 'recomponer', sinDeficit: r.sinDeficit, entreno: entrenoDicho() }) === 'sinFuerza' ? 'entrada.cuestionario.recomponerSinPesas' : 'entrada.cuestionario.recomponerTexto')],
       ];
       const caja = opcionesDe(p, lista, r.objetivo, elegirObjetivo, '', ICONOS_DE.objetivo);
       if (r.sinDeficit || sinLugar) caja.querySelector('[data-valor="bajar"]').disabled = true;
       if (r.sinDeficit) caja.querySelector('[data-valor="recomponer"]').disabled = true;
+      if (sinSubir) caja.querySelector('[data-valor="subir"]').disabled = true;
       p.appendChild(pie(seguirBoton()));
     }
 
@@ -1981,12 +2167,12 @@ button.ent-dia-nombre { cursor: pointer; }
     // ¿Hace cuánto entrenas con pesas? Al subir, cambia el ritmo que se propone.
     function armarExperiencia(p, { paso }) {
       cabezaDeCuestionario(p, paso);
+      // Sin frase debajo de «Más de 3 años» (5/11: repetía lo de arriba); el texto de arriba lo dice para todos.
       p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.experiencia.titulo')), el('p', 'ent-texto', tx('entrada.cuestionario.experiencia.texto')));
-      const avanzado = tx(r.objetivo === 'subir' ? 'entrada.cuestionario.experiencia.avanzadoSubir' : 'entrada.cuestionario.experiencia.avanzadoRecomponer');
       opcionesDe(p, [
         ['principiante', tx('entrada.cuestionario.experiencia.principiante')],
         ['intermedio', tx('entrada.cuestionario.experiencia.intermedio')],
-        ['avanzado', tx('entrada.cuestionario.experiencia.avanzado'), avanzado],
+        ['avanzado', tx('entrada.cuestionario.experiencia.avanzado')],
       ], r.experiencia, (v) => {
         r.experiencia = v;
         if (!r.fecha) r.ritmo = Cuestionario.ritmoSugerido(r.objetivo, v);
@@ -2121,7 +2307,13 @@ button.ent-dia-nombre { cursor: pointer; }
       p.classList.add('ent-denso');
       cabezaDeCuestionario(p, paso);
       p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.comer.titulo')), etiqueta(tx('entrada.cuestionario.comer.reparto')));
-      const estilos = opcionesDe(p, Metas.ESTILOS.map((e) => [e, tx('progreso.metas.estilos.' + e)[0]]), r.estilo, (v) => { r.estilo = v; }, 'ent-cuadro ent-estilos');
+      // Debajo de los cuatro, cuándo conviene el elegido (5/11: sin saber de nutrición, que se entienda cuál elegir).
+      const cuandoEstilo = el('p', 'ent-cuando-proteina ent-cuando-estilo', tx('entrada.cuestionario.comer.cuando.' + r.estilo));
+      const estilos = opcionesDe(p, Metas.ESTILOS.map((e) => [e, tx('progreso.metas.estilos.' + e)[0]]), r.estilo, (v) => {
+        r.estilo = v;
+        cambiarTexto(cuandoEstilo, tx('entrada.cuestionario.comer.cuando.' + v));
+      }, 'ent-cuadro ent-estilos');
+      p.appendChild(cuandoEstilo);
       const barras = {};
       estilos.querySelectorAll('.ent-opcion').forEach((b) => {
         const barra = el('div', 'ent-barra-macros');
@@ -2129,7 +2321,13 @@ button.ent-dia-nombre { cursor: pointer; }
         b.querySelector('.ent-opcion-textos').appendChild(barra);
       });
       p.appendChild(etiqueta(tx('entrada.cuestionario.comer.proteina')));
-      const niveles = opcionesDe(p, Cuestionario.NIVELES_DE_PROTEINA.map((n) => [n, tx('entrada.cuestionario.comer.niveles.' + n), ' ']), r.proteina, (v) => { r.proteina = v; pintar(); }, 'ent-segmento');
+      const cuandoProteina = el('p', 'ent-cuando-proteina', tx('entrada.cuestionario.comer.proteinaCuando.' + r.proteina));
+      const niveles = opcionesDe(p, Cuestionario.NIVELES_DE_PROTEINA.map((n) => [n, tx('entrada.cuestionario.comer.niveles.' + n), ' ']), r.proteina, (v) => {
+        r.proteina = v;
+        cambiarTexto(cuandoProteina, tx('entrada.cuestionario.comer.proteinaCuando.' + v));
+        pintar();
+      }, 'ent-segmento');
+      p.appendChild(cuandoProteina);
       p.appendChild(etiqueta(tx('entrada.cuestionario.comer.dieta')));
       opcionesDe(p, Plan.DIETAS.map((d) => [d, tx('comida.plan.dietas.' + d)]), r.dieta, (v) => { r.dieta = v; }, 'ent-chips');
       p.appendChild(pie(seguirBoton()));
@@ -2230,7 +2428,7 @@ button.ent-dia-nombre { cursor: pointer; }
       const meta = metaDeAhora();
       const m = meta.metas;
       const partes = Cuestionario.partesRedondas(meta.gasto);
-      p.append(el('h2', 'ent-titulo', tx('entrada.cuestionario.resultadoTitulo')), el('p', 'ent-plan-linea', lineaDelPlan(meta)));
+      p.append(el('h2', 'ent-titulo', tx(revisando ? 'entrada.cuestionario.revisar.titulo' : 'entrada.cuestionario.resultadoTitulo')), el('p', 'ent-plan-linea', lineaDelPlan(meta)));
       const l = luna('ent-luna-grande');
       const kcalMacros = [m.proteina * 4, m.carbohidratos * 4, m.grasas * 9];
       const total = kcalMacros.reduce((x, y) => x + y, 0) || 1;
@@ -2249,8 +2447,20 @@ button.ent-dia-nombre { cursor: pointer; }
       });
       const enPartes = tx(partes.entreno ? 'entrada.cuestionario.partes' : 'entrada.cuestionario.partesSinEntreno', { reposo: numero(partes.reposo), vida: numero(partes.vida), entreno: numero(partes.entreno) })
         + (meta.gasto.conGrasa ? ` · ${tx('entrada.cuestionario.masaMagra')}` : '');
-      p.append(leyenda, el('p', 'ent-chico', tx('entrada.cuestionario.gasto', { n: numero(partes.total) })), el('p', 'ent-partes', enPartes), el('p', 'ent-texto', tx('entrada.cuestionario.resultadoTexto')));
-      p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.seguir'), () => (opciones.antesDeTerminar ? opciones.antesDeTerminar(terminar) : terminar()), 'ent-principal'));
+      p.append(leyenda, el('p', 'ent-chico', tx('entrada.cuestionario.gasto', { n: numero(partes.total) })), el('p', 'ent-partes', enPartes));
+      if (revisando) {
+        // Desde Perfil: la meta nueva al lado de la de antes, y «Guardar» vuelve a Perfil (sin la pantalla de pago).
+        if (revisando.kcalAntes) p.appendChild(el('p', 'ent-texto', tx('entrada.cuestionario.revisar.antes', { antes: numero(revisando.kcalAntes), ahora: numero(m.kcal) })));
+        p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.cuestionario.revisar.guardar'), () => {
+          const alGuardar = revisando.alGuardar;
+          revisando = null;
+          salir();
+          if (alGuardar) alGuardar(m);
+        }, 'ent-principal'));
+      } else {
+        p.appendChild(el('p', 'ent-texto', tx('entrada.cuestionario.resultadoTexto')));
+        p.appendChild(el('div', 'ent-pie')).appendChild(botonSeguir(tx('entrada.seguir'), () => (opciones.antesDeTerminar ? opciones.antesDeTerminar(terminar) : terminar()), 'ent-principal'));
+      }
       l.llenar(1600, 200);
       // La cifra cuenta hasta la meta.
       const t0 = performance.now() + 200;
@@ -2388,7 +2598,11 @@ button.ent-dia-nombre { cursor: pointer; }
     // Para las capturas: contestar sin tocar (lo dado se mezcla con lo contestado), conectar Salud o
     // volver a lo de fábrica. Con «salud», como al tocar «Conectar con Salud».
     window.__cuestionario = (accion, arg) => {
-      if (accion === 'responder') Object.assign(r, copia(arg));
+      if (accion === 'responder') {
+        Object.assign(r, copia(arg));
+        // Con los cuidados, «sin déficit» sale de ellos.
+        if ('cuidados' in arg) actualizarCuidados();
+      }
       else if (accion === 'salud') conectarSalud();
       // El entreno se mezcla aparte: lo de cada deporte, de a uno.
       else if (accion === 'entreno') {
@@ -2410,9 +2624,24 @@ button.ent-dia-nombre { cursor: pointer; }
         if (actual < 0) empezar();
         ir(i, true);
       },
+      // Desde Perfil: el cuestionario con lo contestado, desde tus datos hasta tu día; al final, «Guardar» con la
+      // meta nueva y la de antes, sin la pantalla de pago. `alGuardar` recibe la meta nueva.
+      revisar({ kcalAntes = null, alGuardar = null } = {}) {
+        revisando = { kcalAntes, alGuardar };
+        const i = PASOS.findIndex((p) => p.id === (r.salud ? 'tu' : 'sexo'));
+        idioma = escena.idioma;
+        if (actual < 0) empezar();
+        ir(i, true);
+      },
       // Para las capturas: Salud dice 16 años, o es su caso (sin déficit).
       menor() { r.edad = 15; desdeSalud.edad = 15; },
-      caso(v) { r.caso = v; r.sinDeficit = v !== 'nada'; if (v === 'embarazo') r.sexo = 'f'; },
+      // El caso de antes es uno de los cuidados: la condición sin decir es «otra». Queda guardado en este iPhone.
+      caso(v) {
+        if (v === 'embarazo') r.sexo = 'f';
+        r.cuidados = v === 'embarazo' ? ['embarazo'] : v === 'condicion' ? ['otra'] : [];
+        r.consentido = r.cuidados.length > 0;
+        actualizarCuidados();
+      },
       get paso() { return actual >= 0 ? PASOS[actual].id : null; },
       // La meta de arranque, como la del resultado, y lo que quedaría en el perfil.
       metas: () => { const x = metaDeAhora(); return Object.assign({ gasto: Cuestionario.partesRedondas(x.gasto).total }, x.metas); },

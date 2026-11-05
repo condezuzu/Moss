@@ -6,8 +6,9 @@
 // se guardan). Tiene los colores de Ascent, como la sección.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
-import { AppState, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View, type TextInputInstance, type ViewStyle } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,9 +17,11 @@ import { abrirLaApp, hayAscent, irALaAppStore } from '@/lib/ascent';
 import { sesionDeAscent, vigente, type SesionCompartida } from '@/lib/llavero';
 import { lista, t } from '@/textos';
 import { letras } from '@/tema';
+import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
 import { Icono } from '../comida/comunes';
 import { MarcaDeAscent } from '../MarcaDeAscent';
 import { Aparece } from '../tarjetas';
+import { useCampoALaVista } from '../teclado';
 import { C } from './colores';
 import { vincularConCorreo, type ErrorDeEntrar } from './cuentaDeAscent';
 
@@ -40,6 +43,15 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
   const [clave, setClave] = useState('');
   const [vinculando, setVinculando] = useState<Error['de'] | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const campoDeClave = useRef<TextInputInstance>(null);
+  // Se baja con el dedo, salvo mientras vincula: así queda a la vista si salió o no.
+  const hoja = useBajarParaCerrar({ alCerrar: () => alCerrar(false), activo: !vinculando, conScroll: abierta });
+  const { reiniciar } = hoja;
+  useEffect(() => {
+    if (abierta) reiniciar();
+  }, [abierta, reiniciar]);
+  // El correo y la clave van al final: con el teclado, el scroll los trae.
+  useCampoALaVista(hoja.scroll, hoja.scrollY);
 
   // El llavero se mira al abrir y al volver de Ascent: al entrar, Ascent deja ahí su sesión.
   useEffect(() => {
@@ -96,10 +108,12 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
 
   return (
     <Modal visible={abierta} transparent animationType={reducido ? 'fade' : 'slide'} onRequestClose={() => alCerrar(false)}>
-      <View style={st.fondo}>
+      <GestureHandlerRootView style={st.fondo}>
+        <Animated.View style={[StyleSheet.absoluteFill, st.velo, hoja.velo]} pointerEvents="none" />
         <Pressable style={StyleSheet.absoluteFill} onPress={() => alCerrar(false)} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ maxHeight: height - insets.top - 24 }}>
-          <View style={[st.hoja, { maxHeight: height - insets.top - 24 }]} accessibilityViewIsModal>
+          <Animated.View style={[st.hoja, { maxHeight: height - insets.top - 24 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={() => alCerrar(false)}>
+            <CabezaQueBaja arrastre={hoja} style={st.arriba}>
             <View style={st.asa} />
             <View style={st.cabeza}>
               <Text style={st.titulo} accessibilityRole="header">{t('ascent.vincularHoja.titulo')}</Text>
@@ -107,7 +121,8 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                 <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
               </Pressable>
             </View>
-            <ScrollView contentContainerStyle={[st.cuerpo, { paddingBottom: insets.bottom + 18 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            </CabezaQueBaja>
+            <ScrollQueBaja arrastre={hoja} contentContainerStyle={[st.cuerpo, { paddingBottom: insets.bottom + 18 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
               <Aparece key={vista} style={st.cuenta}>
                 <MarcaDeAscent tam={52} />
                 <View style={st.quien}>
@@ -175,10 +190,15 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                     autoCorrect={false}
                     autoComplete="email"
                     textContentType="username"
+                    maxLength={254}
                     returnKeyType="next"
+                    // «Siguiente» pasa a la clave sin bajar el teclado; antes lo cerraba.
+                    submitBehavior="submit"
+                    onSubmitEditing={() => campoDeClave.current?.focus()}
                     accessibilityLabel={t('ascent.vincularHoja.correo')}
                   />
                   <TextInput
+                    ref={campoDeClave}
                     value={clave}
                     onChangeText={setClave}
                     placeholder={t('ascent.vincularHoja.clave')}
@@ -188,6 +208,7 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                     autoCapitalize="none"
                     autoComplete="current-password"
                     textContentType="password"
+                    maxLength={128}
                     returnKeyType="go"
                     onSubmitEditing={entrar}
                     accessibilityLabel={t('ascent.vincularHoja.clave')}
@@ -205,10 +226,10 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                   <Text style={st.nota}>{t('ascent.vincularHoja.notaCorreo')}</Text>
                 </Aparece>
               )}
-            </ScrollView>
-          </View>
+            </ScrollQueBaja>
+          </Animated.View>
         </KeyboardAvoidingView>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
@@ -222,11 +243,14 @@ function Boton({ texto, alTocar, apagado }: { texto: string; alTocar: () => void
 }
 
 const st = StyleSheet.create({
-  fondo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(1, 2, 6, 0.6)' },
+  fondo: { flex: 1, justifyContent: 'flex-end' },
+  velo: { backgroundColor: 'rgba(1, 2, 6, 0.6)' },
   hoja: {
-    flexShrink: 1, paddingTop: 8, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: C.lineaFuerte, backgroundColor: '#0a0c12',
+    flexShrink: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: C.lineaFuerte, backgroundColor: '#0a0c12',
     ...((Platform.OS === 'web' ? { backgroundImage: DEGRADE } : { experimental_backgroundImage: DEGRADE }) as ViewStyle),
   },
+  // El relleno de arriba es parte de la cabecera: desde ahí también se baja.
+  arriba: { paddingTop: 8 },
   asa: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, marginBottom: 6, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
   cabeza: { alignItems: 'center', justifyContent: 'center', minHeight: 36, paddingHorizontal: 56 },
   titulo: { fontFamily: letras.numeroMedio, fontSize: 17, color: C.tinta, textAlign: 'center' },

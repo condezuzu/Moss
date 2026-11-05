@@ -421,7 +421,15 @@ Ascent (la recuperación) hacen la misma cuenta.
      enciende cuando `moss.ascent_sesiones(hoy)` trae el día de hoy.
    - Se revisa al abrir la app. Sube del musgo con la misma luz que los de Salud.
 
-### Ascent en Progreso, con «Estás 87 % recuperado» (para aprobar, lo pediste el 2/11/2026)
+### Ascent en Progreso (para aprobar, lo pediste el 2/11/2026; revisada con la evidencia el 5/11/2026)
+
+**Revisión del 5/11/2026.** Pediste que fuera «lo más confiable posible», más
+visual («que explique sin tener que leer mucho») y con las mismas listas de
+ejercicios que Ascent. El estudio de la evidencia (resumido en
+[`rendimiento.md`](rendimiento.md), «Lo que cambió») sacó el porcentaje de
+recuperación, la probabilidad de marca y el estancamiento de 3 semanas; lo de
+abajo ya está así en la galería. Donde dice «Estás 87 % recuperado», ahora va el
+titular del día.
 
 **Es una propuesta: está en la galería (sección 7) y la app todavía no cambia.** La
 app sigue como dicen «La sección de Ascent en Moss» y «Que se encuentre», apagada con
@@ -460,12 +468,13 @@ pantalla o `VELOCIDAD_MIN` 0,35 px/ms, y 8 puntos para decidir).
   desde Perfil y desde la recuperación en Sueño.
 - **Que se note que arriba está Ascent:**
   - **La entrada**, arriba a la derecha del encabezado de Progreso: el planeta de Ascent
-    con una órbita que es la recuperación de hoy y la luna de Moss en la punta del arco,
-    «82 % recuperado» y la sesión («Piernas · 18:40»; ya hecha, «Hoy: piernas»; sin
-    sesión, «Hoy descansas»). Sin vincular, la órbita punteada con la luna afuera, como
-    en el ícono, y «Vincular con Ascent» (sin Ascent en el iPhone, «Ascent»). Con la
-    franja «atención», el arco va en terracota. Tocarla abre Ascent; deslizar desde ella
-    también.
+    con su órbita cerrada (las dos apps, juntas) y la luna de Moss, el titular del día en
+    dos palabras, sin porcentaje («Sin ir al fallo», «Todo listo para entrenar», «Más
+    liviano hoy», «Hoy descansas»…) y la sesión («Piernas · 18:40»; ya hecha, «Hoy:
+    piernas»). Sin vincular, la órbita abierta con la luna afuera, como en el ícono, y
+    «Vincular con Ascent» (sin Ascent en el iPhone, «Ascent»). Si algo pone el límite hoy
+    (la noche corta, lo de hoy cargado o cómo te sientes), la órbita va en terracota.
+    Tocarla abre Ascent; deslizar desde ella también.
   - Debajo, «Desliza hacia abajo» con su flecha, hasta que se abre una vez: al volver a
     Progreso se pliega a la vista.
   - Arriba de todo de la pantalla asoma el borde del planeta, colgado: baja con el dedo y
@@ -481,28 +490,103 @@ pantalla o `VELOCIDAD_MIN` 0,35 px/ms, y 8 puntos para decidir).
 **Cómo se ve:** el lenguaje nuevo de Ascent (su `spec/estetica.md` y lo que contó su
 sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
 
-- Un número grande sin caja por pantalla (Outfit 200) y lo demás chico, sin caja.
+- Un titular grande sin caja por pantalla (Outfit 200) y lo demás chico, sin caja.
 - Línea de pelo y aire en vez de tarjetas; octágono de esquinas cortadas solo para la
   acción (y la hoja de vincular, cortada arriba); píldora para lo que se elige; lo
   secundario, subrayado.
 - Su planeta como horizonte abajo. El contenido se hunde detrás del horizonte.
 - Fondo `#05060a`, tinta `#e8ecf6`, secundario `#aab2c4`, apagado `#9098ab`, con piso
-  de contraste 4,5:1 en el texto. El acento es el del rango: en la maqueta, Luna
-  (`#7E8CA8`, `#C4C2BA`). **Falta decidir** si Moss recibe el rango de cada uno.
-- **Las franjas** (como Oura): las mismas cuatro en el total y en cada parte, con su
-  palabra siempre. Solo «atención» tiene color (terracota `#CB8569`); las otras van de
-  gris oscuro a crema, más claras cuanto mejor.
+  de contraste 4,5:1 en el texto. **El acento y el cuerpo del horizonte son los de tu rango
+  en Ascent** (lo propusiste el 5/11/2026; en la galería, para aprobar, con los siete rangos
+  y los cinco planetas del 4 en la sección 7): `src/dominio/rangoDeAscent.ts` es el espejo de
+  la regla de Ascent (el rango sale de la racha; en el 4, el planeta cambia cada cuatro días)
+  y la sección toma su paleta. Sin vincular, Luna (`#7E8CA8`, `#C4C2BA`). Para usarlo, Moss
+  tiene que leer la racha de Ascent con su función del vínculo (nunca una de Ascent): **falta
+  decidir** si se lee.
+- **El color:** solo lo que pone el límite hoy y lo cargado (terracota `#CB8569`); lo
+  que se recupera, en crema, y lo descansado, apenas. Sin franjas ni puntajes (las de
+  Oura se sacaron el 5/11/2026).
+- **Visual antes que texto:** la noche en una escala con la raya de las 6 h; los
+  músculos en un cuerpo dibujado de frente y de espalda (tocar uno dice cuándo vuelve a
+  lo suyo) y en píldoras con su estado; cada ejercicio con su tendencia en un dibujo
+  chico (cada sesión un punto, la recta con su rango); la marca como una raya contra tu
+  nivel de hoy con lo que cambia de un día a otro; cada cuánto haces marca en cuadros; y
+  las series de cada semana en barras, antes y ahora.
 - **Las letras:** Ascent usa Inter para leer y Geist Mono para los datos. La maqueta
   usa las que ya tiene Moss: Jost, y Outfit con cifras tabulares. **Falta decidir** si
   esta sección trae las de Ascent.
 
-**Sin vincular:** «Si usas Ascent», «Con Ascent» y la frase, «Vincula las dos apps para
-entender tus entrenamientos y progresar mucho más rápido.», también en la invitación de
-Inicio. El octágono «Vincular con Ascent» y, subrayado, la App Store. Debajo, «Solo con
-las dos»: cada parte vacía, con su candado y su línea (cuánto estás recuperado, de qué
-sale, la fatiga por músculo, las marcas, las razones de estancamiento y tu año).
+**Sin vincular:** arriba de todo, «Ascent», sin «Si usas Ascent» ni «Con» (lo pediste el
+5/11/2026), y la frase «Vincula las dos apps para progresar mucho más rápido y tener claro,
+en un solo lugar, qué te frena.». La invitación de Inicio sigue con la suya. El octágono «Vincular con Ascent» y, subrayado, la App Store. Debajo, «Solo con
+las dos»: cada parte vacía, con su candado y su línea (cómo llegas a entrenar, de qué
+sale, tus músculos con el cuerpo apagado, tu fuerza, las marcas, las razones de
+estancamiento y tu año).
 
-**Vinculada, en este orden:**
+**Vinculada, desde el 5/11/2026 (en la galería):**
+
+1. **El titular del día,** grande y sin porcentaje (`titularDeHoy()` en
+   `recuperado.ts`, con tests). Arriba, la sesión («Hoy · Piernas · 18:40»). Manda lo
+   más flojo y nada lo compensa, en este orden: ya entrenaste («Ya entrenaste piernas»,
+   y cuándo vuelve a estar lo de hoy), descansas, falta la noche («Anota cómo
+   dormiste»), lo de hoy cargado («Lo que entrenas hoy sigue cansado»: más liviano u
+   otra cosa), la noche corta («Puedes entrenar, sin ir al fallo»: 6 h o menos,
+   despertarte una hora antes o dos de tres noches cortas), dijiste que no te sientes
+   bien (4 o menos de 10), lo de hoy todavía se recupera («Entrena como siempre») o
+   «Todo listo para piernas».
+   - **Lo que decide hoy,** en tres con su ícono: tu noche, lo de hoy y cómo te
+     sientes; lo que pone el límite va en terracota.
+   - **Tu último entreno** (lo pediste el 5/11): «Lunes: Pecho, Hombros, Tríceps», los
+     músculos que trabajó como principales, de los que más series tuvieron a los que
+     menos (`musculosTrabajados()`), con un cuerpo chico que los muestra.
+   - **«¿Cómo te sientes para entrenar?»,** de 0 a 10 en píldoras (Laurent 2011): cambia
+     el titular y «Hoy, concéntrate en» con un fundido. Suma un toque: **para que
+     decidas** si va acá, en Ascent al abrir la sesión o junto a las caras de la mañana.
+   - «¿Por qué no hay un porcentaje?» despliega dos líneas y lleva a «En qué se basa».
+2. **Hoy, concéntrate en,** como antes, con `comoEntrenar()` por factor: sin ir al
+   fallo con la noche corta, más liviano con lo de hoy cargado, escúchate, la marca con
+   todo a favor o como siempre (nunca «más fuerte»). «Termina antes de las…» dice
+   «mejor 4 horas antes de dormir y por lo menos 2» (Frimpong 2021; Leota 2025).
+3. **De qué sale,** en tres filas con sus datos y sin puntos: el sueño (lo dormido en
+   una escala con la raya de las 6 h y lo tuyo, si te despertaste antes, la calidad
+   como dato que no cuenta, y lo que conviene), los músculos de hoy (en píldoras, la
+   última vez que los entrenaste con sus series y cuándo vuelven a estar) y la comida
+   (la proteína de la semana por kilo contra la raya de 1,6 y la de ayer, que no cambia
+   tu fuerza de hoy). Con «sin déficit», la comida sin metas.
+4. **Tus músculos:** el cuerpo de frente y de espalda con cada músculo descansado,
+   recuperándose o cargado (`todosLosMusculos()` en `fatiga.ts`); tocar uno dice
+   «Cuádriceps: con carga; probablemente vuelva a lo suyo pasado mañana». Debajo, tu
+   semana en Ascent: cada día de la rutina con sus músculos en píldoras.
+5. **Tu fuerza:** los multiarticulares de la rutina con marca en Ascent, cada uno con su
+   tendencia de 12 semanas (`tendenciaDeFuerza()`): «Sube, ~+2,7 % por mes · entre
+   +2,3 y +3,2 · 10 sesiones», «Sin subida clara en 10 semanas» o «Todavía no se sabe ·
+   4 sesiones: hacen falta 6», y tu ruido de un día a otro.
+6. **Marcas:** los ejercicios de la sesión de hoy: cerca de tu marca o a cuánto, tu
+   nivel de hoy contra tu marca (en 1RM estimado, de a 2,5 kg), lo que acompaña con
+   cerca (más de 6 h, los músculos descansados y una semana como siempre), cada cuánto
+   haces marca en cuadros y la regla de la serie de aproximación. Los de más de 10
+   repeticiones van juntos en una línea.
+7. **Razones de estancamiento:** los ejercicios sin subida clara en 8 semanas o más y
+   pasado el umbral de Ascent, con sus razones de la más a la menos sólida (las series
+   duras de su músculo por semana en barras, antes y ahora; las veces por semana; las
+   series pesadas contra un tercio; bajar rápido o la definición; la proteína contra
+   1,6; el sueño). Lo que es de la persona y les toca a todos va una vez, arriba; los
+   años de entrenamiento, al final, de contexto.
+8. **Tu año** y **Lo que comparten las dos,** como antes.
+9. **En qué se basa,** al final y desplegable: por qué no hay un porcentaje, el titular,
+   la noche corta, los músculos, la fuerza, la marca, el estancamiento y lo de comer,
+   con sus fuentes.
+
+**En la maqueta (5/11):** siete días de ejemplo (los de antes y «Piernas cargadas»,
+con una sesión de piernas ayer, que la galería suma al panel); las sesiones de Ascent
+desde mayo con los ejercicios del catálogo por su id, inventadas para que se vea cada
+caso (la sentadilla sube y está cerca de su marca; el press de banca no sube desde
+agosto, con menos series de pecho; el press militar, plano y sin series pesadas; el
+peso muerto, nuevo). **Sueño todavía muestra el número de antes:** el gancho nuevo es
+`titularDeHoy()` (y `lineaDeHoy()` para la línea del rendimiento) en la sección de
+Ascent de la galería.
+
+**Lo de antes (2/11/2026), como quedó hasta el 5/11:**
 
 1. **Cuánto estás recuperado** (`src/dominio/recuperado.ts`, puro y con tests; reemplaza a
    `recuperacion()` de `entrenamiento.ts` cuando se apruebe).
@@ -634,21 +718,30 @@ año antes del 14 de septiembre son inventados y lo dicen en `galeria/src/datos.
    teléfono, y sacar la señal de Hábitos.
 3. El borde del planeta arriba y el planeta como horizonte, en Skia, y el recorrido del
    cielo con Ascent bajando desde Progreso (hoy sube desde Hábitos).
-4. La sección nueva en `src/secciones/ascent/Vinculada.tsx`, sin tarjetas, con las
-   franjas y el mapa del año en `src/secciones/graficos/`.
-5. Con los datos de verdad: la noche, la calidad y la deuda de Salud, la cara de la
-   mañana, lo anotado y la meta de `src/almacen/`, y las sesiones de Ascent con sus
-   bloques (ya llegan con `moss.ascent_sesiones`). Las cuentas están listas y con tests:
-   `recuperado.ts`, `fatiga.ts`, `estancados.ts`, y `focoDeHoy()`, `comoEntrenar()`,
-   `ordenarMarcas()` y `queFalla()` en `diagnostico.ts`.
-6. En Supabase: `moss.recuperacion(fecha)` con esta cuenta; leer la rutina activa de
-   Ascent (`nucleo/rutinas.ts`; hoy no hay función); y de Ascent, **todos** los
-   ejercicios estancados con su umbral (su `detectar()` devuelve una sola señal). Lo de
-   cada sesión (cómo llegó el músculo, cada cuánto, los minutos) sale en Moss de
-   `moss.ascent_sesiones`.
-7. Los textos nuevos están en `ascent.*`; los de antes (`ascent.recuperacion.*`,
-   `ascent.estancamiento.*`, `ascent.gimnasio.*`, `ascent.diagnostico.*`) los sigue
-   usando la app y se limpian al programarlo.
+4. La sección nueva en `src/secciones/ascent/Vinculada.tsx`, sin tarjetas, con el
+   cuerpo dibujado, las escalas, la tendencia de cada ejercicio y el mapa del año en
+   `src/secciones/graficos/`.
+5. Con los datos de verdad: la noche, la calidad y la deuda de Salud, la hora de
+   despertarse de siempre, lo anotado y la meta de `src/almacen/`, y las sesiones de
+   Ascent con sus bloques y el id de cada ejercicio (ya llegan con
+   `moss.ascent_sesiones`; Ascent manda 12 semanas o desde el 1 de enero, lo que
+   alcanza para la tendencia). Las cuentas están listas y con tests: `titularDeHoy()`
+   en `recuperado.ts`, `tendenciaDeFuerza()`, `cercaDeLaMarca()`,
+   `condicionesDeLaMarca()` y `frecuenciaDeMarcas()` en `rendimiento.ts`, `fatiga.ts`
+   (en días), `estancados.ts` (las razones nuevas y `semanaDeEntreno()`), `CATALOGO` y
+   `musculosTrabajados()` en `musculos.ts`, y `focoDeHoy()`, `comoEntrenar()`,
+   `ordenarMarcas()` y `queFalla()` en `diagnostico.ts`. «¿Cómo te sientes?» se
+   guarda en el teléfono, si lo apruebas.
+6. En Supabase: `moss.recuperacion(fecha)` devuelve el titular y las filas, no un
+   número (así Ascent muestra lo mismo); leer la rutina activa de Ascent
+   (`nucleo/rutinas.ts`; hoy no hay función) y el umbral de estancamiento de sus
+   Ajustes. Lo de cada sesión (las series duras, las veces, las pesadas) sale en Moss
+   de `moss.ascent_sesiones`.
+7. Los textos nuevos están en `ascent.*` (y los nombres de los ejercicios en
+   `ascent.ejercicios.*`); los de antes (`ascent.recuperacion.*`,
+   `ascent.estancamiento.*`, `ascent.rendimiento.*`, `ascent.marca.*`,
+   `ascent.musculos.*`, `ascent.gimnasio.*`) los sigue usando la app y se limpian al
+   programarlo.
 8. Outfit 200 en la app, y Geist Mono e Inter si las querés. El acento del rango, si se
    decide que Moss lo recibe.
 

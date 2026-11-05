@@ -132,6 +132,27 @@ const SeccionPerfil = (() => {
 .pf-nota.pf-nota-tenue { color: rgba(239, 230, 207, 0.45); font-size: 12px; }
 .pf-lista.pf-tuyos .pf-fila-textos span { display: block; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.58); }
 .pf-lista.pf-tuyos .pf-fila-textos b { display: block; font: 400 15px/1.2 var(--texto); color: var(--tinta); }
+/* En qué se basa Moss: el dibujo de lo que llega, lo que hace Moss y lo que ves; cada área se abre de a una. */
+.pf-flujo { display: grid; grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr) 14px minmax(0, 1fr); align-items: center; gap: 4px; margin: 10px 0 2px; }
+.pf-flujo-col { display: grid; gap: 6px; align-content: center; }
+.pf-flujo-etq { font: 400 9.5px/1 var(--texto); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(239, 230, 207, 0.5); text-align: center; }
+.pf-flujo-item { display: block; padding: 7px 6px; border-radius: 10px; border: 1px solid rgba(239, 230, 207, 0.12); background: rgba(239, 230, 207, 0.04); font: 400 11.5px/1.25 var(--texto); color: var(--tinta); text-align: center; }
+.pf-flujo-col:nth-child(3) .pf-flujo-item { border-color: rgba(232, 196, 106, 0.4); background: rgba(232, 196, 106, 0.07); }
+.pf-flujo-flecha { display: grid; place-items: center; color: rgba(239, 230, 207, 0.4); }
+.pf-flujo-flecha svg { width: 12px; height: 12px; }
+.pf-base-reglas { margin: 10px 0 0; padding: 0 0 0 16px; display: grid; gap: 6px; font: 300 13px/1.42 var(--texto); color: rgba(239, 230, 207, 0.82); }
+.pf-base-areas { display: grid; gap: 6px; margin-top: 8px; }
+.pf-base-area { border-radius: 14px; border: 1px solid rgba(239, 230, 207, 0.1); background: rgba(8, 12, 26, 0.5); }
+.pf-base-cab { appearance: none; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 0; background: none; color: var(--tinta); font: 400 14.5px/1.25 var(--texto); text-align: left; }
+.pf-base-cab svg { width: 16px; height: 16px; flex: none; transition: transform 0.3s; }
+.pf-base-area.abierta .pf-base-cab svg { transform: rotate(180deg); }
+.pf-base-dentro { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.34s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.pf-base-area.abierta .pf-base-dentro { grid-template-rows: 1fr; }
+.pf-base-dentro > div { min-height: 0; overflow: hidden; padding: 0 14px; }
+.pf-base-area.abierta .pf-base-dentro > div { padding-bottom: 12px; }
+.pf-base-dentro .pf-texto { margin-top: 0; }
+.pf-base-fuentes { margin: 8px 0 0; font: 400 11.5px/1.4 var(--texto); color: rgba(239, 230, 207, 0.5); }
+@media (prefers-reduced-motion: reduce) { .pf-base-dentro, .pf-base-cab svg { transition: none; } }
 /* Según el deporte: el partido (qué día y a qué hora) y la próxima carrera (cuándo y cuánto dura). */
 .pf-deporte-etq { margin: 12px 0 0; font: 400 12.5px/1.2 var(--texto); color: rgba(239, 230, 207, 0.62); }
 .pf-hoja .pf-deporte-etq + .pf-dias, .pf-hoja .pf-deporte-etq + .pf-aviso-chips { margin-top: 8px; }
@@ -143,6 +164,76 @@ const SeccionPerfil = (() => {
 .pf-deporte-lado .fi-valor { min-width: 72px; font-size: 16px; }
 .pf-hoja .pf-varia { padding: 7px 10px; }
 .fi-stepper.pf-sin-valor .fi-valor { color: rgba(239, 230, 207, 0.45); }
+/* Cuidados (5/11, para aprobar): arriba, cómo cambia tu dieta, con la meta en cuatro mosaicos y lo demás en
+   chips; abajo, la lista en grupos. Lo que cambia se mueve en su lugar, y el consentimiento sube desde abajo. */
+.pf-plegable { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s; }
+.pf-plegable.abierto { grid-template-rows: 1fr; opacity: 1; }
+.pf-plegable.quieto { transition: none; }
+.pf-plegable > div { min-height: 0; overflow: hidden; }
+.tel .pf-hoja .pf-cuidados { padding-bottom: 0; }
+.pf-cuidados .pf-privado { display: flex; align-items: center; gap: 7px; margin: 2px 4px 10px; font: 400 12.5px/1.3 var(--texto); color: var(--salvia); }
+.pf-cuidados .pf-privado svg { flex: none; width: 15px; height: 15px; }
+.pf-cambia { margin: 2px 0 6px; padding: 14px 13px 13px; border-radius: 18px; border: 1px solid rgba(232, 196, 106, 0.22); background: linear-gradient(160deg, rgba(43, 53, 99, 0.6), rgba(17, 22, 47, 0.6)); }
+.pf-cambia h4 { margin: 0 0 10px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(239, 230, 207, 0.62); }
+.pf-cambia-macros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.pf-cambia-macro { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 8px; row-gap: 5px; min-width: 0; padding: 9px 11px 10px; border-radius: 12px; border: 1px solid rgba(239, 230, 207, 0.08); background: rgba(6, 10, 22, 0.35); transition: border-color 0.3s, background 0.3s; }
+.pf-cambia-macro span { grid-column: 1 / -1; font: 400 9px/1 var(--texto); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(239, 230, 207, 0.56); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-cambia-macro b { font: 400 18px/1.05 var(--numeros); font-variant-numeric: lining-nums tabular-nums; color: #fbf2d9; white-space: nowrap; transition: opacity 0.18s; }
+.pf-cambia-macro small { text-align: right; font: 400 10.5px/1.05 var(--numeros); font-variant-numeric: tabular-nums; color: rgba(239, 230, 207, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.18s; }
+.pf-cambia-macro.cambia { border-color: rgba(232, 196, 106, 0.55); background: rgba(232, 196, 106, 0.08); }
+.pf-cambia-macro .pf-cambiando { opacity: 0; }
+.pf-cambia-grupo > div > div { padding-top: 11px; }
+.pf-cambia-grupo span.pf-cambia-etq { display: block; margin-bottom: 6px; font: 400 9px/1 var(--texto); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(239, 230, 207, 0.5); }
+.pf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pf-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.13); background: rgba(239, 230, 207, 0.04); font: 400 12.5px/1.2 var(--texto); color: var(--tinta); }
+.pf-chip svg { flex: none; width: 12px; height: 12px; }
+.pf-chip.entra { animation: hj-aparece 0.32s ease both; }
+.pf-chip.saliendo { animation: pf-chip-sale 0.24s ease both; }
+@keyframes pf-chip-sale { to { opacity: 0; transform: scale(0.92); } }
+.pf-chip.meta { border-color: rgba(232, 196, 106, 0.42); color: var(--oro-claro); }
+.pf-chip.muestra { border-color: rgba(169, 196, 245, 0.36); color: #c9d8f8; }
+.pf-chip.apaga { color: rgba(239, 230, 207, 0.58); }
+.pf-chip.apaga svg { color: rgba(239, 230, 207, 0.42); }
+.pf-chip.prende { border-color: rgba(166, 191, 148, 0.48); color: #c6d9b6; }
+.pf-chip.objetivo { border-color: rgba(239, 230, 207, 0.2); }
+.pf-chip.objetivo.antes { color: rgba(239, 230, 207, 0.5); text-decoration: line-through; text-decoration-color: rgba(239, 230, 207, 0.3); }
+.pf-cambia-ritmo { margin-top: 10px; align-items: center; }
+.pf-cambia-ritmo > i { display: grid; color: rgba(239, 230, 207, 0.4); }
+.pf-cambia-ritmo > i svg { width: 12px; height: 12px; }
+.pf-banda { position: relative; height: 8px; margin: 9px 0 4px; border-radius: 4px; background: rgba(239, 230, 207, 0.08); }
+.pf-banda i { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: rgba(166, 191, 148, 0.55); transition: left 0.35s, width 0.35s; }
+.pf-banda b { position: absolute; top: -3px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: #fbf2d9; box-shadow: 0 0 8px rgba(251, 242, 217, 0.55); transition: left 0.35s; }
+.pf-cambia-nota { margin: 10px 0 0; font: 400 12.5px/1.42 var(--texto); color: rgba(239, 230, 207, 0.74); }
+.pf-cambia .pf-conectar { margin-top: 10px; }
+.pf-cuidados-grupo { border-radius: 16px; border: 1px solid rgba(239, 230, 207, 0.08); background: rgba(8, 12, 26, 0.5); }
+.pf-cuidado + .pf-cuidado { border-top: 1px solid rgba(239, 230, 207, 0.07); }
+.pf-cuidado-fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px 11px 14px; }
+.pf-cuidado-fila b { display: block; font: 400 15px/1.25 var(--texto); color: var(--tinta); }
+.pf-cuidado-fila small { display: block; margin-top: 2px; font: 400 11.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.5); }
+.pf-cuidado-dentro { display: grid; gap: 10px; padding: 0 14px 13px; }
+.pf-cuidado-dentro .pf-nota { margin: 0; font-size: 12.5px; line-height: 1.42; }
+.pf-cuidado-dentro > span { font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.68); }
+.pf-pregunta { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pf-pregunta > span { min-width: 0; font: 400 12.5px/1.3 var(--texto); color: rgba(239, 230, 207, 0.68); }
+.pf-pregunta-lado { flex: none; display: flex; align-items: center; gap: 6px; }
+.pf-pregunta-lado .fi-stepper { padding: 3px; }
+.pf-pregunta-lado .fi-paso { width: 30px; height: 30px; }
+.pf-pregunta-lado .fi-valor { min-width: 84px; font-size: 14.5px; }
+.pf-cuidado-dentro .fi-porciones { gap: 6px; }
+.pf-cuidado-dentro .fi-porcion { padding: 7px 11px; }
+.pf-cuidados-alergias { margin: 14px 4px 18px; }
+.pf-consentir-caja { position: sticky; bottom: 0; z-index: 2; }
+.pf-consentir { margin-top: 10px; padding: 14px 14px calc(var(--abajo) + 8px); border-radius: 18px 18px 0 0; border: 1px solid rgba(166, 191, 148, 0.4); border-bottom: 0; background: linear-gradient(180deg, #141d3b, #0b1128); }
+.pf-consentir p { display: flex; gap: 9px; margin: 0 0 11px; font: 400 13.5px/1.42 var(--texto); color: var(--tinta); }
+.pf-consentir p svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--salvia); }
+.pf-consentir-botones { display: flex; gap: 8px; }
+.pf-consentir-botones button { appearance: none; cursor: pointer; flex: 1; min-height: 42px; border-radius: 999px; font: 500 14px/1 var(--texto); }
+.pf-consentir-si { border: 0; background: var(--oro); color: #1a1406; }
+.pf-consentir-no { border: 1px solid rgba(239, 230, 207, 0.2); background: none; color: rgba(239, 230, 207, 0.8); }
+@media (prefers-reduced-motion: reduce) {
+  .pf-plegable, .pf-cambia-macro, .pf-cambia-macro b, .pf-cambia-macro small, .pf-banda i, .pf-banda b { transition: none; }
+  .pf-chip.entra, .pf-chip.saliendo { animation: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .pf-entra, .perfil .pf-sub.entra, .pf-lista.pf-filas li.pf-crece { animation: none; }
   .pf-mini, .pf-plan, .pf-fila { transition: none; }
@@ -165,7 +256,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: false, antes: 30, comidas: [], maximo: 6, horario: {}, pesarse: false, todos: false, latencia: null } };
+    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: false, antes: 30, comidas: [], maximo: 6, horario: {}, pesarse: false, todos: false, latencia: null, necesidad: null } };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -319,7 +410,9 @@ const SeccionPerfil = (() => {
         cuerpo.appendChild(caja);
       };
       const latencia = a.latencia === null ? 20 : a.latencia;
-      bloque('sueno', 'azul', tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: u.horaMin(7 * 60 + 30 - 480 - latencia), despertar: '07:30', horas: u.duracion(480), latencia }), a.dormir, (v) => { a.dormir = v; },
+      const edad = Number(Datos.HOY.slice(0, 4)) - Datos.PERFIL.nacimiento;
+      const nec = Sueno.necesidad(edad, a.necesidad);
+      bloque('sueno', 'azul', tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: u.horaMin(7 * 60 + 30 - nec - Sueno.DESPIERTO_SIN_RELOJ - latencia), despertar: '07:30', horas: u.duracion(nec), latencia }), a.dormir, (v) => { a.dormir = v; },
         chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
       // Tardo en dormirme (D33): lo que aprende Moss de tus respuestas, o un número fijo, como en la app.
       const tardo = el('section', 'pf-aviso');
@@ -329,6 +422,15 @@ const SeccionPerfil = (() => {
       tardoFila.appendChild(tardoNombre);
       tardo.append(tardoFila, chips([null, ...SinReloj.LATENCIAS], (n) => (n === null ? tx('perfil.avisos.tardoAprendido', { n: 20 }) : tx('perfil.avisos.minutos', { n })), (n) => a.latencia === n, (n) => { a.latencia = n; }), el('p', 'pf-nota', tx('perfil.avisos.tardoTexto')));
       cuerpo.appendChild(tardo);
+      // Necesito dormir (5/11, para aprobar): lo de tu edad o lo que elijas, de media hora en media hora y dentro de
+      // lo de tu edad (Sueno.necesidadesPara). Lo usan la hora de dormir, la deuda, la calidad y esta noche.
+      const necesito = el('section', 'pf-aviso');
+      const necesitoFila = el('div', 'pf-aviso-fila');
+      const necesitoNombre = el('span', 'pf-aviso-titulo');
+      necesitoNombre.append(cuadro('sueno', 'azul'), el('b', null, tx('perfil.avisos.necesito')));
+      necesitoFila.appendChild(necesitoNombre);
+      necesito.append(necesitoFila, chips([null, ...Sueno.necesidadesPara(edad)], (m) => (m === null ? tx('perfil.avisos.necesitoEdad', { h: u.duracion(Sueno.necesidad(edad)) }) : u.duracion(m)), (m) => a.necesidad === m, (m) => { a.necesidad = m; opciones.alCambiarNecesidad && opciones.alCambiarNecesidad(); }), el('p', 'pf-nota', tx(edad < 18 ? 'perfil.avisos.necesitoTextoMenor' : 'perfil.avisos.necesitoTexto')));
+      cuerpo.appendChild(necesito);
       // El horario de comidas: cada comida elegida, con su hora de a un cuarto de hora (como Perfil.tsx).
       const HORAS = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
       const reloj = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -562,14 +664,430 @@ const SeccionPerfil = (() => {
       } else if (cual === 'corte') {
         Fechas.CORTES.forEach((c) => opcion(nombreDelCorte(c), c === Fechas.CORTE_DE_FABRICA ? tx('perfil.corteDeFabrica') : null, s.corte === c, () => { s.corte = c; }));
         cuerpo.append(el('p', 'pf-texto', tx('perfil.corteTexto')), lista);
+      } else if (cual === 'base') {
+        pintarBase(cuerpo);
       } else {
         tx('perfil.privacidadTexto').forEach((p, i) => cuerpo.appendChild(el('p', 'pf-texto', conAscent() && i === 0 ? `${p} ${tx('perfil.privacidadConAscent')}` : p)));
       }
       h.append(cab, cuerpo);
     }
+
+    // En qué se basa Moss (5/11, para aprobar): cómo se ordena lo que llega (un dibujo: lo que llega, lo que hace
+    // Moss y lo que ves, y sus reglas), cada área con su porqué y sus fuentes (salen del estudio de la evidencia;
+    // se abren de a una) y lo que Moss no hace. Ascent, solo si la vinculación está prendida.
+    const AREAS_DE_LA_BASE = ['metas', 'progreso', 'sueno', 'momentos', 'ascent', 'cuidados', 'fotos'];
+    function pintarBase(cuerpo) {
+      const b = (k) => tx('perfil.baseInfo.' + k);
+      cuerpo.append(el('p', 'pf-texto', b('intro')), el('h4', 'pf-grupo', b('comoTitulo')));
+      const flujo = el('div', 'pf-flujo');
+      const columna = (clave, items) => {
+        const c = el('div', 'pf-flujo-col');
+        c.appendChild(el('span', 'pf-flujo-etq', b('columnas.' + clave)));
+        items.forEach((t) => c.appendChild(el('b', 'pf-flujo-item', t)));
+        return c;
+      };
+      const flecha = () => { const f = el('i', 'pf-flujo-flecha'); f.innerHTML = icono('adelante'); return f; };
+      flujo.append(columna('llega', [...b('llega'), ...(conAscent() ? [b('llegaAscent')] : [])]), flecha(), columna('hace', b('hace')), flecha(), columna('ves', b('ves')));
+      const reglas = el('ul', 'pf-base-reglas');
+      b('reglas').forEach((t) => reglas.appendChild(el('li', null, t)));
+      cuerpo.append(flujo, reglas, el('h4', 'pf-grupo', b('areasTitulo')));
+      const areas = el('div', 'pf-base-areas');
+      const existe = (k) => tx(`perfil.baseInfo.areas.${k}.titulo`) !== `perfil.baseInfo.areas.${k}.titulo`;
+      AREAS_DE_LA_BASE.filter((k) => existe(k) && (k !== 'ascent' || conAscent())).forEach((k) => {
+        const a = (x) => tx(`perfil.baseInfo.areas.${k}.${x}`);
+        const item = el('div', 'pf-base-area' + (s.baseAbierta === k ? ' abierta' : ''));
+        const cab = boton('pf-base-cab', `<span>${a('titulo')}</span>${icono('abajo')}`, () => {
+          s.baseAbierta = s.baseAbierta === k ? null : k;
+          areas.querySelectorAll('.pf-base-area').forEach((x) => {
+            const abierta = x === item && s.baseAbierta === k;
+            x.classList.toggle('abierta', abierta);
+            x.querySelector('.pf-base-cab').setAttribute('aria-expanded', String(abierta));
+          });
+        });
+        cab.setAttribute('aria-expanded', String(s.baseAbierta === k));
+        const dentro = el('div', 'pf-base-dentro');
+        const caja = el('div');
+        caja.append(el('p', 'pf-texto', a('texto')), el('p', 'pf-base-fuentes', `${b('fuentes')}: ${a('fuentes')}`));
+        dentro.appendChild(caja);
+        item.append(cab, dentro);
+        areas.appendChild(item);
+      });
+      const no = el('ul', 'pf-base-reglas');
+      b('noHace').forEach((t) => no.appendChild(el('li', null, t)));
+      cuerpo.append(areas, el('h4', 'pf-grupo', b('noHaceTitulo')), no);
+    }
     function abrirOpciones(cual) {
       s.opciones = cual;
       pintarOpciones();
+      hoja.abrir();
+      opciones.alCambiar();
+    }
+
+    // ------------------------------------------------------------ Cuidados (5/11, para aprobar)
+    // Lo que es tu caso, para marcar y desmarcar cuando quieras (src/dominio/cuidados.ts). Arriba, cómo cambia tu
+    // dieta: la meta de antes y la de ahora, lo que Moss te muestra, lo que deja de decirte y lo que te recuerda.
+    // Abajo, la lista en grupos, cada una con lo que se pregunta además y su línea. Al marcar la primera sube el
+    // consentimiento: se guarda solo en este iPhone, nunca en la cuenta. Al tocar, la hoja no se rearma: lo que
+    // cambia se mueve en su lugar.
+    Object.assign(s, { cuidados: [], consentido: false, datosCuidado: { semana: 20, pesoAntes: null, mellizos: false, semanasParto: 8, soloPecho: true, bajaElAzucar: null, dialisis: false } });
+    // Una campana tachada: lo que Moss deja de decir.
+    const CALLADO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 16.5V11a5.5 5.5 0 0 1 9-4.2M17.5 11.5v5l1.5 2H9"/><path d="M10.2 20.6a2 2 0 0 0 3.6 0M4.5 4.5l15 15"/></svg>';
+    const personaDelCuidado = () => {
+      const d = datosDe();
+      const p = opciones.persona();
+      return { sexo: d.sexo, edad: d.edad, alturaCm: d.alturaCm, pesoKg: p.pesoHoy, actividad: d.actividad, dieta: p.perfil.comer ? p.perfil.comer.dieta : undefined };
+    };
+    function datosDelCuidado() {
+      const d = s.datosCuidado;
+      return {
+        embarazo: { fechaProbable: Cuidados.fechaProbableDe(d.semana, Datos.HOY), pesoAntes: d.pesoAntes, mellizos: d.mellizos },
+        lactancia: { parto: Fechas.sumarDias(Datos.HOY, -7 * d.semanasParto), soloPecho: d.soloPecho },
+        diabetes2: { bajaElAzucar: d.bajaElAzucar },
+        renal: { dialisis: d.dialisis },
+      };
+    }
+    // Lo que cuenta es lo guardado: lo marcado antes del consentimiento todavía no cambia nada.
+    const cuidadosGuardados = () => (s.consentido ? s.cuidados : []);
+    const reglasDeCuidados = () => Cuidados.reglasDe(cuidadosGuardados(), datosDelCuidado(), personaDelCuidado(), Datos.HOY);
+    // Con un trastorno de la alimentación, los números se ocultan de entrada (D9); se vuelven a ver en Perfil.
+    function ocultarNumerosPorCuidado() {
+      if (s.numeros) { s.numeros = false; opciones.alNumeros(false); }
+    }
+    // Lo que crece y se achica en su lugar; `deUna`, sin transición (al armar la hoja).
+    function plegable(contenido, clase) {
+      const caja = el('div', 'pf-plegable' + (clase ? ' ' + clase : ''));
+      const adentro = el('div');
+      adentro.appendChild(contenido);
+      caja.appendChild(adentro);
+      return {
+        el: caja,
+        abrir(si, deUna) {
+          if (deUna) caja.classList.add('quieto');
+          caja.classList.toggle('abierto', !!si);
+          caja.inert = !si;
+          if (deUna) { void caja.offsetHeight; caja.classList.remove('quieto'); }
+        },
+      };
+    }
+    // Un texto que cambia se apaga, cambia y se prende (si cambia otra vez en el medio, queda el último).
+    function ponerTexto(n, texto) {
+      if ((n.dataset.texto ?? n.textContent) === texto) return;
+      n.dataset.texto = texto;
+      if (quieto() || !n.isConnected) { n.textContent = texto; return; }
+      if (n.dataset.cambiando) return;
+      n.dataset.cambiando = '1';
+      n.classList.add('pf-cambiando');
+      setTimeout(() => { n.textContent = n.dataset.texto; n.classList.remove('pf-cambiando'); delete n.dataset.cambiando; }, 180);
+    }
+    // Los chips de un grupo, por su clave: el que llega entra, el que se va sale y los demás quedan.
+    function sincronizar(cont, items) {
+      const vivos = new Map([...cont.children].filter((n) => !n.classList.contains('saliendo')).map((n) => [n.dataset.clave, n]));
+      items.forEach((it) => {
+        let n = vivos.get(it.clave);
+        if (n) vivos.delete(it.clave);
+        else {
+          n = el('span', 'pf-chip ' + it.clase + (quieto() || !cont.isConnected ? '' : ' entra'));
+          n.dataset.clave = it.clave;
+          if (it.icono) n.innerHTML = it.icono;
+          n.appendChild(el('span', null, it.texto));
+        }
+        cont.appendChild(n);
+      });
+      vivos.forEach((n) => {
+        if (quieto()) { n.remove(); return; }
+        n.classList.remove('entra');
+        n.classList.add('saliendo');
+        setTimeout(() => n.remove(), 240);
+      });
+    }
+
+    // Cómo cambia tu dieta: la meta (cuatro mosaicos, con la de antes debajo si cambió), el objetivo, la banda del
+    // embarazo, las metas nuevas, lo que mira primero, lo que te muestra, lo que deja de decirte y lo que te recuerda.
+    function panelDeCambios() {
+      const MACROS = ['kcal', 'proteina', 'carbohidratos', 'grasas'];
+      const caja = el('section', 'pf-cambia');
+      caja.appendChild(el('h4', null, tx('cuidados.cambia.titulo')));
+      const mosaicos = el('div', 'pf-cambia-macros');
+      const tiles = {};
+      MACROS.forEach((k) => {
+        const t = el('div', 'pf-cambia-macro');
+        t.dataset.macro = k;
+        const ahora = el('b');
+        const antes = el('small');
+        t.append(el('span', null, tx('cuidados.cambia.' + k)), ahora, antes);
+        tiles[k] = { t, ahora, antes };
+        mosaicos.appendChild(t);
+      });
+      const objetivo = el('div', 'pf-chips pf-cambia-ritmo');
+      const bandaTexto = el('p', 'pf-cambia-nota');
+      const banda = el('div', 'pf-banda');
+      const bandaRango = el('i');
+      const bandaHoy = el('b');
+      banda.append(bandaRango, bandaHoy);
+      const conBanda = el('div');
+      conBanda.append(bandaTexto, banda);
+      const plBanda = plegable(conBanda);
+      const grupoDe = (titulo) => {
+        const dentro = el('div');
+        if (titulo) dentro.appendChild(el('span', 'pf-cambia-etq', titulo));
+        const chips = el('div', 'pf-chips');
+        dentro.appendChild(chips);
+        const pl = plegable(dentro, 'pf-cambia-grupo');
+        return { el: pl.el, poner(items, deUna) { sincronizar(chips, items); pl.abrir(items.length > 0, deUna); } };
+      };
+      const metas = grupoDe(null);
+      const mira = grupoDe(tx('cuidados.cambia.mira'));
+      const muestra = grupoDe(tx('cuidados.cambia.muestra'));
+      const dejaDe = grupoDe(tx('cuidados.cambia.dejaDe'));
+      const recuerda = grupoDe(tx('cuidados.cambia.empieza'));
+      const nota = el('p', 'pf-cambia-nota');
+      const plAMano = plegable(boton('pf-conectar', tx('cuidados.ponerAMano'), () => { hoja.cerrar(); if (opciones.irAMetas) opciones.irAMetas(); }));
+      caja.append(mosaicos, objetivo, plBanda.el, metas.el, mira.el, muestra.el, dejaDe.el, recuerda.el, nota, plAMano.el);
+      const pl = plegable(caja);
+      const kilos = (x) => numero(x, Math.round(x * 10) % 10 ? 1 : 0);
+      return {
+        el: pl.el,
+        actualizar(deUna) {
+          const r = reglasDeCuidados();
+          pl.abrir(r.cuidados.length > 0, deUna);
+          if (!r.cuidados.length) return;
+          const p = opciones.persona();
+          const d = datosDe();
+          const c = { edad: d.edad, sexo: d.sexo, pesoKg: p.pesoHoy, objetivo: p.perfil.objetivo, ritmo: p.perfil.ritmo };
+          const estilo = p.perfil.estilo || 'equilibrada';
+          const antes = Metas.metaPara(p.gasto, c, estilo);
+          const ahora = Cuidados.metaConCuidados(p.gasto, c, estilo, r);
+          // Con los números ocultos, solo hacia dónde va cada uno.
+          MACROS.forEach((k) => {
+            const x = tiles[k];
+            const cambia = !ahora || ahora[k] !== antes[k];
+            const valor = (m) => (k === 'kcal' ? numero(m.kcal) : `${numero(m[k])} g`);
+            const hacia = !ahora ? '—' : ahora[k] > antes[k] ? tx('cuidados.cambia.sube') : ahora[k] < antes[k] ? tx('cuidados.cambia.baja') : tx('cuidados.cambia.mismo');
+            ponerTexto(x.ahora, !ahora ? '—' : s.numeros ? valor(ahora) : hacia);
+            ponerTexto(x.antes, cambia && s.numeros ? `${tx('cuidados.cambia.antes')} ${valor(antes)}` : '');
+            x.t.classList.toggle('cambia', cambia);
+          });
+          const nombre = (o, ritmo) => tx('progreso.objetivos.' + o) + (o === 'mantener' ? '' : ` · ${tx('progreso.ritmos.' + ritmo)}`);
+          const ritmoAntes = Metas.ritmoPermitido(c);
+          const de = nombre(c.objetivo, ritmoAntes);
+          const objetivoAhora = Cuidados.objetivoConCuidados(c.objetivo, r);
+          const ritmoAhora = Cuidados.ritmoConCuidados(ritmoAntes, objetivoAhora, r);
+          let a = nombre(objetivoAhora, ritmoAhora);
+          if (c.objetivo === 'bajar' && objetivoAhora === 'mantener') a = r.deficitDesde ? tx('cuidados.cambia.deficitDesde', { fecha: u.fechaCorta(r.deficitDesde) }) : tx('cuidados.cambia.sinBajar');
+          else if (ritmoAhora !== ritmoAntes) a = tx('cuidados.cambia.hastaRitmo', { ritmo: tx('progreso.ritmos.' + ritmoAhora).toLowerCase() });
+          const flecha = (o) => ic(o === 'bajar' ? 'abajo' : o === 'subir' ? 'arriba' : 'objetivo');
+          sincronizar(objetivo, a === de ? [{ clave: 'ahora:' + a, clase: 'objetivo', texto: a, icono: flecha(objetivoAhora) }]
+            : [{ clave: 'antes:' + de, clase: 'objetivo antes', texto: de, icono: flecha(c.objetivo) }, { clave: 'ahora:' + a, clase: 'objetivo meta', texto: a, icono: flecha(objetivoAhora) }]);
+          // El embarazo: la banda del IOM según la semana, sin juicios; el punto, si se sabe el peso de antes.
+          const dc = s.datosCuidado;
+          const rango = r.cuidados.includes('embarazo') ? Cuidados.rangoDelEmbarazo(Cuidados.imcDe(dc.pesoAntes ?? p.pesoHoy, d.alturaCm), dc.semana, dc.mellizos) : null;
+          if (rango) {
+            const alTermino = Cuidados.rangoDelEmbarazo(Cuidados.imcDe(dc.pesoAntes ?? p.pesoHoy, d.alturaCm), 40, dc.mellizos) || rango;
+            const escala = Math.max(rango[1], alTermino[1]) * 1.15;
+            ponerTexto(bandaTexto, tx('cuidados.cambia.embarazo', { n: dc.semana, a: kilos(rango[0]), b: kilos(rango[1]) }));
+            bandaRango.style.left = `${((rango[0] / escala) * 100).toFixed(1)}%`;
+            bandaRango.style.width = `${(((rango[1] - rango[0]) / escala) * 100).toFixed(1)}%`;
+            const subido = dc.pesoAntes == null ? null : p.pesoHoy - dc.pesoAntes;
+            bandaHoy.hidden = subido === null;
+            if (subido !== null) bandaHoy.style.left = `${(Math.min(1, Math.max(0, subido / escala)) * 100).toFixed(1)}%`;
+          }
+          plBanda.abrir(!!rango, deUna);
+          const lista = [];
+          const pon = (clave, texto) => lista.push({ clave, clase: 'meta', texto });
+          if (r.extraKcal > 0) pon('extra', tx('cuidados.cambia.extra', { n: numero(r.extraKcal) }));
+          if (r.piso && r.piso > Metas.pisoDe(c.sexo)) pon('piso', tx('cuidados.cambia.piso', { n: numero(r.piso) }));
+          if (r.control !== 'normal') pon('control', tx('cuidados.cambia.' + r.control));
+          if (r.sodioMax) pon('sodio', tx('cuidados.cambia.sodio', { n: numero(r.sodioMax) }));
+          if (typeof r.potasio === 'number') pon('potasio', tx('cuidados.cambia.potasio', { n: numero(r.potasio) }));
+          else if (r.potasio === 'sinMeta') pon('potasio', tx('cuidados.cambia.potasioSinMeta'));
+          if (r.saturadasMax) pon('saturadas', tx('cuidados.cambia.saturadas', { n: numero(r.saturadasMax * 100) }));
+          if (r.colesterolMax) pon('colesterol', tx('cuidados.cambia.colesterol', { n: numero(r.colesterolMax) }));
+          if (r.fibra) pon('fibra', tx('cuidados.cambia.fibra', { a: r.fibra[0], b: r.fibra[1] }));
+          if (r.agua === 'noPedir') pon('agua', tx('cuidados.cambia.aguaNoPedir'));
+          else if (r.agua) pon('agua', tx('cuidados.cambia.agua', { n: numero(r.agua / 1000, 1) }));
+          if (r.cafeinaTope) pon('cafeina', tx('cuidados.cambia.cafeina', { n: numero(r.cafeinaTope) }));
+          if (r.alcoholTope === 0) pon('alcohol', tx('cuidados.cambia.alcoholNada'));
+          else if (r.alcoholTope) pon('alcohol', tx('cuidados.cambia.alcoholTope', { n: numero(r.alcoholTope) }));
+          if (r.estilosSin.includes('keto')) pon('keto', tx('cuidados.cambia.sinKeto'));
+          if (r.etapa) pon('etapa', tx('cuidados.cambia.vitaminas.' + r.etapa));
+          if (r.numerosOcultos) pon('numeros', tx('cuidados.cambia.numerosOcultos'));
+          if (!r.pesoMeta) pon('pesoMeta', tx('cuidados.cambia.sinPesoMeta'));
+          metas.poner(lista, deUna);
+          // Lo que mira primero, con su referencia de ahora (la cafeína y el potasio ya están arriba).
+          const para = { sexo: d.sexo, edad: d.edad };
+          mira.poner(r.mirar.filter((m) => !(m === 'cafeina' && r.cafeinaTope) && !(m === 'potasio' && r.potasio !== null)).map((m) => {
+            const ref = Cuidados.referenciaConCuidados(m, para, r);
+            const unidad = Micronutrientes.UNIDAD[m];
+            const valor = !ref ? tx('cuidados.cambia.sinMeta') : 'meta' in ref ? `${numero(ref.meta, ref.meta % 1 ? 1 : 0)} ${unidad}` : tx('cuidados.cambia.hasta', { n: numero(ref.tope), u: unidad });
+            return { clave: 'mira:' + m, clase: 'muestra', texto: `${tx('comida.micros.nombres.' + m)} · ${valor}` };
+          }), deUna);
+          muestra.poner(r.marcar.map((m) => ({ clave: 'marca:' + m, clase: 'muestra', texto: tx('cuidados.marcas.' + m), icono: ic('ojo') })), deUna);
+          dejaDe.poner(r.apagar.map((x) => ({ clave: 'apaga:' + x, clase: 'apaga', texto: tx('cuidados.dice.' + x), icono: CALLADO })), deUna);
+          recuerda.poner(r.prender.map((x) => ({ clave: 'prende:' + x, clase: 'prende', texto: tx('cuidados.dice.' + x), icono: ic('campana') })), deUna);
+          const lineas = [];
+          if (r.manuales) lineas.push(tx(r.cuidados.includes('renal') && dc.dialisis ? 'cuidados.manuales.dialisis' : 'cuidados.manuales.menor'));
+          else if (a === de && MACROS.every((k) => ahora[k] === antes[k])) lineas.push(tx('cuidados.cambia.igual'));
+          if (r.profesional) lineas.push(tx('cuidados.profesional.' + r.profesional));
+          ponerTexto(nota, lineas.join(' '));
+          plAMano.abrir(r.manuales || r.profesional === 'necesario', deUna);
+        },
+      };
+    }
+
+    function pintarCuidados() {
+      const h = hoja.el;
+      h.innerHTML = '';
+      const cab = el('header', 'hb-cab');
+      cab.append(el('div', 'hb-asa'), el('h3', 'hb-titulo', tx('perfil.cuidado')), boton('hb-cerrar', icono('cerrar'), () => hoja.cerrar(), tx('comida.cerrar')));
+      const cuerpo = el('div', 'pf-avisos pf-cuidados');
+      const privado = el('p', 'pf-privado');
+      privado.innerHTML = icono('candado');
+      privado.appendChild(el('span', null, tx('cuidados.soloEnElIphone')));
+      cuerpo.append(el('p', 'pf-nota', tx('cuidados.intro')), privado);
+      const panel = panelDeCambios();
+      cuerpo.appendChild(panel.el);
+      const d = s.datosCuidado;
+      // Lo que se pregunta además de cada una, como en el cuestionario.
+      function preguntasDe(c) {
+        const fila = (texto, ...lado) => {
+          const f = el('div', 'pf-pregunta');
+          const l = el('div', 'pf-pregunta-lado');
+          l.append(...lado);
+          f.append(el('span', null, texto), l);
+          return f;
+        };
+        const pasos = (leer, formato, mover, nombre) => {
+          const caja = el('div', 'fi-stepper');
+          const v = el('b', 'fi-valor', formato(leer()));
+          const paso = (signo) => boton('fi-paso', icono(signo < 0 ? 'menos' : 'mas'), () => { mover(signo); v.textContent = formato(leer()); actualizar(); }, `${nombre} ${signo < 0 ? '−' : '+'}`);
+          caja.append(paso(-1), v, paso(1));
+          caja.valor = v;
+          return caja;
+        };
+        const chips = (lista, elegida, alElegir) => {
+          const f = el('div', 'fi-porciones');
+          lista.forEach(([valor, texto]) => {
+            const b = boton('fi-porcion', `<span>${texto}</span>`, () => {
+              alElegir(valor);
+              f.querySelectorAll('.fi-porcion').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+              actualizar();
+            });
+            b.setAttribute('aria-pressed', String(valor === elegida));
+            f.appendChild(b);
+          });
+          return f;
+        };
+        const llave = (prendida, alCambiar, nombre) => {
+          const l = boton('in-llave', '<i></i>', () => {
+            const si = l.getAttribute('aria-pressed') !== 'true';
+            l.setAttribute('aria-pressed', String(si));
+            alCambiar(si);
+            actualizar();
+          }, nombre);
+          l.setAttribute('aria-pressed', String(prendida));
+          return l;
+        };
+        if (c === 'embarazo') {
+          const base = () => Math.round(opciones.persona().pesoHoy * 2) / 2;
+          const kilos = (x) => `${numero(x, x % 1 ? 1 : 0)} kg`;
+          const peso = pasos(() => d.pesoAntes ?? base(), kilos, (signo) => {
+            d.pesoAntes = Math.min(200, Math.max(35, (d.pesoAntes ?? base()) + signo * 0.5));
+            ponerNoSe();
+          }, tx('cuidados.preguntas.pesoAntes'));
+          const noSe = boton('fi-porcion pf-varia', `<span>${tx('cuidados.preguntas.noSe')}</span>`, () => {
+            d.pesoAntes = d.pesoAntes == null ? base() : null;
+            peso.valor.textContent = kilos(d.pesoAntes ?? base());
+            ponerNoSe();
+            actualizar();
+          });
+          const ponerNoSe = () => { noSe.setAttribute('aria-pressed', String(d.pesoAntes == null)); peso.classList.toggle('pf-sin-valor', d.pesoAntes == null); };
+          ponerNoSe();
+          return [
+            fila(tx('cuidados.preguntas.semana'), pasos(() => d.semana, (n) => tx('cuidados.preguntas.semanaN', { n }), (signo) => { d.semana = Math.min(42, Math.max(1, d.semana + signo)); }, tx('cuidados.preguntas.semana'))),
+            el('span', null, tx('cuidados.preguntas.pesoAntes')),
+            fila('', noSe, peso),
+            fila(tx('cuidados.preguntas.mellizos'), llave(d.mellizos, (si) => { d.mellizos = si; }, tx('cuidados.preguntas.mellizos'))),
+          ];
+        }
+        if (c === 'lactancia') {
+          return [
+            fila(tx('cuidados.preguntas.parto'), pasos(() => d.semanasParto, (n) => u.plural('cuidados.preguntas.partoN', n), (signo) => { d.semanasParto = Math.min(104, Math.max(0, d.semanasParto + signo)); }, tx('cuidados.preguntas.parto'))),
+            chips([['si', tx('cuidados.preguntas.soloPecho')], ['no', tx('cuidados.preguntas.conFormula')]], d.soloPecho ? 'si' : 'no', (v) => { d.soloPecho = v === 'si'; }),
+          ];
+        }
+        if (c === 'diabetes2') {
+          const valor = d.bajaElAzucar === true ? 'si' : d.bajaElAzucar === false ? 'no' : 'noSe';
+          return [
+            el('span', null, tx('cuidados.preguntas.insulina')),
+            chips([['si', tx('cuidados.preguntas.si')], ['no', tx('cuidados.preguntas.no')], ['noSe', tx('cuidados.preguntas.noLoSe')]], valor, (v) => { d.bajaElAzucar = v === 'si' ? true : v === 'no' ? false : null; }),
+          ];
+        }
+        return [fila(tx('cuidados.preguntas.dialisis'), llave(d.dialisis, (si) => { d.dialisis = si; }, tx('cuidados.preguntas.dialisis')))];
+      }
+      const filas = [];
+      Cuidados.gruposPara(datosDe().sexo).forEach(({ grupo, cuidados }) => {
+        cuerpo.appendChild(el('h4', 'pf-grupo', tx('cuidados.grupos.' + grupo)));
+        const caja = el('section', 'pf-cuidados-grupo');
+        caja.dataset.grupo = grupo;
+        cuidados.forEach((c) => {
+          const item = el('div', 'pf-cuidado');
+          item.dataset.cuidado = c;
+          const fila = el('div', 'pf-cuidado-fila');
+          const textos = el('span');
+          textos.appendChild(el('b', null, tx('cuidados.nombres.' + c)));
+          const detalle = 'cuidados.detalles.' + c;
+          if (tx(detalle) !== detalle) textos.appendChild(el('small', null, tx(detalle)));
+          const llave = boton('in-llave', '<i></i>', () => alternar(c), tx('cuidados.nombres.' + c));
+          fila.append(textos, llave);
+          const dentro = el('div', 'pf-cuidado-dentro');
+          if (Cuidados.PREGUNTA[c]) dentro.append(...preguntasDe(c));
+          dentro.appendChild(el('p', 'pf-nota', tx('cuidados.lineas.' + c)));
+          const pl = plegable(dentro);
+          item.append(fila, pl.el);
+          caja.appendChild(item);
+          filas.push({ c, llave, pl });
+        });
+        cuerpo.appendChild(caja);
+      });
+      cuerpo.appendChild(el('p', 'pf-nota pf-nota-tenue pf-cuidados-alergias', tx('cuidados.alergias')));
+      const consentir = el('div', 'pf-consentir');
+      const texto = el('p');
+      texto.innerHTML = icono('candado');
+      texto.appendChild(el('span', null, tx('cuidados.consentimiento.texto')));
+      const botones = el('div', 'pf-consentir-botones');
+      botones.append(
+        boton('pf-consentir-si', tx('cuidados.consentimiento.guardar'), () => {
+          s.consentido = true;
+          if (s.cuidados.includes('tca')) ocultarNumerosPorCuidado();
+          actualizar();
+          pintar();
+        }),
+        boton('pf-consentir-no', tx('cuidados.consentimiento.ahoraNo'), () => { s.cuidados = []; actualizar(); }),
+      );
+      consentir.append(texto, botones);
+      const plConsentir = plegable(consentir, 'pf-consentir-caja');
+      cuerpo.appendChild(plConsentir.el);
+      h.append(cab, cuerpo);
+      function actualizar(deUna) {
+        filas.forEach((f) => {
+          const si = s.cuidados.includes(f.c);
+          f.llave.setAttribute('aria-pressed', String(si));
+          f.pl.abrir(si, deUna);
+        });
+        plConsentir.abrir(s.cuidados.length > 0 && !s.consentido, deUna);
+        panel.actualizar(deUna);
+      }
+      function alternar(c) {
+        const ya = s.cuidados.includes(c);
+        s.cuidados = ya ? s.cuidados.filter((x) => x !== c) : [...s.cuidados, c];
+        if (!ya && c === 'tca' && s.consentido) ocultarNumerosPorCuidado();
+        actualizar();
+        pintar();
+      }
+      actualizar(true);
+    }
+    function abrirCuidados() {
+      pintarCuidados();
       hoja.abrir();
       opciones.alCambiar();
     }
@@ -908,10 +1426,15 @@ const SeccionPerfil = (() => {
         { ico: 'perfil', color: 'azul', titulo: tx('perfil.sexo'), valor: tx('perfil.sexos.' + d.sexo), alTocar: abrirEditar },
         { ico: 'huellas', color: 'salvia', titulo: tx('perfil.actividad'), valor: tx('perfil.actividades.' + d.actividad), alTocar: abrirEditar },
         // Para qué comer antes y después de entrenar (Comida); con «sin déficit» no se ve.
-        !s.sinDeficit && opciones.comida && { clave: 'entreno', ico: 'pesa', color: 'oro', titulo: tx('entreno.perfil.titulo'), valor: resumenDeEntreno(opciones.comida.entreno), alTocar: abrirEntreno },
-        // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál).
-        { clave: 'cuidado', ico: 'escudo', color: 'rosa', titulo: tx('perfil.cuidado'), sub: s.sinDeficit ? tx('perfil.sinDeficitTexto') : null, valor: tx(s.sinDeficit ? 'perfil.sinDeficit' : 'perfil.ninguno'), tipo: s.sinDeficit ? 'ok' : null,
-          alTocar: () => conSalida([...cont.querySelectorAll(s.sinDeficit ? '[data-fila="cuidado"] .pf-sub' : '[data-fila="entreno"]')], () => { s.sinDeficit = !s.sinDeficit; pintar(); }) },
+        !s.sinDeficit && !reglasDeCuidados().apagar.includes('antesDeEntrenar') && opciones.comida && { clave: 'entreno', ico: 'pesa', color: 'oro', titulo: tx('entreno.perfil.titulo'), valor: resumenDeEntreno(opciones.comida.entreno), alTocar: abrirEntreno },
+        // Cuidados (5/11, para aprobar): lo marcado, guardado solo en este iPhone, abre su hoja. Con el sí/no de
+        // antes (las capturas de la seguridad), «Sin déficit».
+        { clave: 'cuidado', ico: 'escudo', color: 'rosa', titulo: tx('perfil.cuidado'),
+          sub: cuidadosGuardados().length ? tx('cuidados.perfilSub') : s.sinDeficit ? tx('perfil.sinDeficitTexto') : null,
+          valor: cuidadosGuardados().length ? u.plural('cuidados.marcados', cuidadosGuardados().length) : tx(s.sinDeficit ? 'perfil.sinDeficit' : 'perfil.ninguno'),
+          tipo: cuidadosGuardados().length || s.sinDeficit ? 'ok' : null, alTocar: abrirCuidados },
+        // El cuestionario del principio, para cambiarlo cuando quieras (5/11): con lo contestado y, al guardar, la meta nueva.
+        opciones.revisarCuestionario && { clave: 'respuestas', ico: 'objetivo', color: 'oro', titulo: tx('perfil.respuestas'), sub: tx('perfil.respuestasTexto'), alTocar: opciones.revisarCuestionario },
       ]);
       grupo('perfil.preferencias', [
         { ico: 'cinta', color: 'gris', titulo: tx('perfil.unidades'), valor: tx(s.sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => { s.sistema = s.sistema === 'imperial' ? 'metrico' : 'imperial'; pintar(); } },
@@ -965,6 +1488,8 @@ const SeccionPerfil = (() => {
         });
         cont.appendChild(conLasDos);
       }
+      // Abajo de todo, en qué se basa Moss (5/11): de dónde sale cada número y cómo se ordena lo que llega.
+      grupo('perfil.baseGrupo', [{ ico: 'info', color: 'gris', titulo: tx('perfil.base'), sub: tx('perfil.baseSub'), alTocar: () => abrirOpciones('base') }]);
       cont.appendChild(boton('pf-salir', tx('perfil.cambiarCuenta'), () => {}));
       cont.appendChild(boton('pf-salir', tx('perfil.cerrarSesion'), () => {}));
       cont.appendChild(el('p', 'pf-version', 'Moss 1.0 (1)'));
@@ -989,6 +1514,23 @@ const SeccionPerfil = (() => {
         sinNombre: () => { Object.assign(s, { nombre: arg ? opciones.persona().perfil.nombre : '', foto: null }); pintar(); },
         hoja: () => abrirOpciones(arg),
         cerrarHoja: () => hoja.cerrar(),
+        // Cuidados con lo marcado (y el sexo, para ver el embarazo y la lactancia), abierto salvo `abrir: false`.
+        cuidados: () => {
+          const a = arg || {};
+          if (a.sexo) s.datos = Object.assign({}, datosDe(), { sexo: a.sexo });
+          if (a.marcados) s.cuidados = [...a.marcados];
+          if (a.datos) Object.assign(s.datosCuidado, a.datos);
+          if ('consentido' in a) s.consentido = a.consentido;
+          if ('numeros' in a) { s.numeros = a.numeros; opciones.alNumeros(s.numeros); }
+          pintar();
+          if (a.abrir !== false) abrirCuidados();
+        },
+        // El scroll de Cuidados: hasta lo que se pida, arriba (0) o abajo de todo.
+        bajarCuidados: () => {
+          const c = hoja.el.querySelector('.pf-cuidados');
+          const n = typeof arg === 'string' ? hoja.el.querySelector(arg) : null;
+          if (c) c.scrollTop = n ? Math.max(0, n.offsetTop - c.offsetTop - 12) : arg === 0 ? 0 : c.scrollHeight;
+        },
         creditos: () => { s.creditos = arg !== false; pintar(); },
         bajar: () => { const n = cont.querySelector(arg); if (n) cont.scrollTo(0, Math.max(0, cont.scrollTop + n.getBoundingClientRect().top - 70)); },
         subir: () => cont.scrollTo(0, 0),
@@ -1002,11 +1544,19 @@ const SeccionPerfil = (() => {
       abrirAvisos,
       abrirEntreno,
       abrirEditar,
+      // En qué se basa Moss, con un área abierta (o ninguna).
+      abrirBase(area) { s.baseAbierta = area || null; abrirOpciones('base'); },
       // Para las capturas: los avisos encendidos.
       ponerAvisos(cambios) { Object.assign(s.avisos, cambios); if (hoja.abierta) pintarAvisos(); pintar(); },
       // Para las capturas: los números ocultos y sin déficit.
       poner(cambios) { Object.assign(s, cambios); if ('numeros' in cambios) opciones.alNumeros(s.numeros); pintar(); },
-      get sinDeficit() { return s.sinDeficit; },
+      // Sin déficit: el sí/no de antes o lo que sale de los cuidados guardados (lo que Moss subiría a la cuenta).
+      get sinDeficit() { return s.sinDeficit || Cuidados.sinDeficitDe(reglasDeCuidados()); },
+      // Lo elegido en «Necesito dormir» (null: lo de tu edad), para Sueño.
+      get necesidad() { return s.avisos.necesidad; },
+      // Reflujo en Cuidados: la última comida grande, 3 h antes de la cama en vez de 2.
+      get reflujo() { return cuidadosGuardados().includes('reflujo'); },
+      abrirCuidados,
       // Para las capturas: una marca desplegada.
       desplegar(m) { s.abierta = m; pintarAparatos(); },
       bajarHoja() { const c = hoja.el.querySelector('.pf-aparatos, .pf-avisos'); if (c) c.scrollTop = c.scrollHeight; },

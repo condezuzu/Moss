@@ -5,8 +5,9 @@
 // (inicio.paraHoy) y lo pone la interfaz.
 // - Cierto: solo habla de lo anotado. Sin nada anotado, no adivina: recuerda anotar cuando ya pasaron dos
 //   comidas, y si no, calla.
-// - Sin culpa: nunca reta ni pide comer menos. Con «sin déficit» (un cuidado de salud) solo quedan anotar y
-//   el agua; con los números ocultos, la interfaz los dice sin cifras.
+// - Sin culpa: nunca reta ni pide comer menos. Con «sin déficit» (un cuidado de salud) solo queda anotar:
+//   el agua tampoco (5/11/2026), porque con el riñón o una condición que no se dice el líquido lo decide su
+//   equipo; con los números ocultos, la interfaz los dice sin cifras.
 // - Según el deporte (3/11/2026, para aprobar): lo de segunElDeporte.ts que va en «Para hoy» va primero, en
 //   su orden, y ya llega con «sin déficit» y los números ocultos aplicados. Siguen siendo tres como mucho y
 //   nunca dos de lo mismo: si uno del deporte habla de carbohidratos, no va «pocos carbohidratos»; si habla
@@ -104,6 +105,6 @@ export function paraHoy(e: EntradaDeParaHoy): ConsejoDeHoy[] {
     if (!hablaDeProteina && e.ahora >= PROTEINA_DESDE && falta >= PROTEINA_QUE_FALTA) lista.push({ tipo: 'faltaProteina', gramos: Math.round(falta / 5) * 5, proxima: e.proxima });
   }
 
-  if (e.agua && e.ahora >= AGUA_DESDE && e.agua.ml < AGUA_BAJA * e.agua.meta && !temas.has('agua')) lista.push({ tipo: 'agua', vasos: Math.ceil((e.agua.meta - e.agua.ml) / VASO_ML) });
+  if (e.agua && !e.sinDeficit && e.ahora >= AGUA_DESDE && e.agua.ml < AGUA_BAJA * e.agua.meta && !temas.has('agua')) lista.push({ tipo: 'agua', vasos: Math.ceil((e.agua.meta - e.agua.ml) / VASO_ML) });
   return [...delDeporte, ...lista].slice(0, MAXIMO_DE_CONSEJOS);
 }

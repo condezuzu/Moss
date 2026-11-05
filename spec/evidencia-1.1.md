@@ -32,9 +32,13 @@ cantidad. «Derivado» es una cuenta hecha con las fuentes, sin un estudio que l
 - **La regla de Rise:** ir a la cama = despertar − necesidad − colchón − parte de la deuda. Necesidad
   de fábrica 8 h (la mediana de Rise en 1,95 millones de usuarios; Kitamura 2016 midió 8,41 h). El
   colchón (tardar en dormirse y lo despierto en la noche), 30 a 60 min según la eficiencia. Moss usa
-  lo que tardás en dormirte, aprendido.
-- **Deuda:** 14 noches, la última pesa el 15 %; meta, 5 h o menos. Una hora de deuda tarda unos 4 días
-  en recuperarse (Kitamura 2016).
+  lo que tardás en dormirte, aprendido, y desde el 5/11 también lo despierto de la noche: 30 min sin
+  reloj (por polisomnografía, 32 a 38 en adultos sanos; Robbins 2024), o la mediana de tus noches con
+  reloj más 15 (`despiertoDeLaNoche`, en `sueno.ts`).
+- **Deuda:** 14 noches, la última pesa el 15 %; meta, 5 h o menos. Lo que paga la hora de la cama (un
+  tercio de la deuda, hasta 30 min) es una convención. Kitamura 2016 no dice que una hora de deuda
+  tarde unos 4 días: en el laboratorio, una falta de cerca de una hora **por noche** (lo habitual
+  contra lo óptimo) se recuperó en unas 4 noches **con 12 h en la cama**.
 - **Límites:** dormirse cuesta en las 2 a 3 h antes de la hora habitual (Lavie 1986); la melatonina
   sube unas 2 h antes (Burgess 2003). Por eso nunca más de 1 h antes de lo de siempre.
 - **Cuánto antes avisar:** Apple deja de 15 min a 3 h; Sleep Cycle, 2 h; Rise sugiere bajar el ritmo 1

@@ -21,9 +21,14 @@ elegido queda en el teléfono (no sube a la cuenta).
 ## La hora de dormir
 
 - **La meta:** la hora de despertar de mañana, menos lo que necesitas dormir
-  (por tu edad), menos un tercio de la deuda de las dos semanas (como mucho 30
-  minutos). La deuda se paga despacio: una hora lleva unos cuatro días
-  (Kitamura, 2016, en [`sueno.md`](sueno.md)).
+  (por tu edad, o lo que elegiste: [`sueno.md`](sueno.md)), menos lo que se suele
+  estar despierto adentro de la noche (la necesidad es de sueño: sin reloj, 30
+  minutos; con reloj, la mediana de tus noches más 15, lo que el reloj no ve;
+  `despiertoDeLaNoche`), menos un tercio de la deuda de las dos semanas (como
+  mucho 30 minutos). El tercio es una convención: en el laboratorio, una falta de
+  cerca de una hora por noche se recuperó en unas cuatro noches con 12 h en la
+  cama (Kitamura, 2016, en [`sueno.md`](sueno.md)). Lo que dicen el aviso y
+  Perfil que vas a dormir es la necesidad, sin ese rato despierto.
 - **Sin adelantarse más de una hora** a tu hora de siempre: la tarde tiene una
   «zona prohibida» para dormir (Lavie, 1986), así que la meta se corre de a poco.
 - **La hora de despertar** es la alarma de ese día, si se sabe (después de la
@@ -34,7 +39,10 @@ elegido queda en el teléfono (no sube a la cuenta).
 - **Lo que dice** (lo pediste el 31/10/2026, repetía siempre lo mismo): cada noche otro
   texto, corto y con un dato de esa noche. Pasa por los nueve antes de repetir
   (`textoDeDormir`, en `avisos.ts`). Sale del día y nada más: reprogramar no lo cambia.
-  - «Deberías irte a dormir en una hora.»
+  Sin culpa: ninguno dice «deberías», «debes» ni «tienes que» (lo comprueba
+  `avisos.test.ts`). Con el aviso de las luces prendido, «Baja las luces: …» no
+  sale (ya lo dijo ese): pasa por los otros ocho.
+  - «Ve preparándote: a la cama en una hora.»
   - «Esta noche, a la cama a las 23:20.»
   - «Baja las luces: a la cama en media hora.»
   - «Para despertarte a las 7:30, a la cama a las 23:20.»
@@ -44,7 +52,7 @@ elegido queda en el teléfono (no sube a la cuenta).
   - «A la cama a las 23:20 y duermes 8 h.»
   - «Empieza a bajar el ritmo: a las 23:20, a la cama.»
   - Con una hora de deuda o más, una noche de cada cuatro: «Te faltan 1 h 30 min de
-    sueño: acostarte a las 23:20 ayuda.»
+    sueño: acostarte a las 23:20 ayuda.» La deuda va a la media hora: es aproximada.
 - **De Rise:** recuerda la rutina de la noche, la ventana de melatonina, cuándo dejar
   el café, la hora de dormir y bajar las luces, a una hora de su reloj del cuerpo
   [R1][R2]. **No encontré sus textos literales:** los de arriba son nuestros, con esa
@@ -118,6 +126,16 @@ en `src/dominio/loQueFalta.ts`.
   proteína de verdad, o calorías sin ser dulce ni alcohol); si no alcanza, una
   lista corta que respeta tu dieta y tus alergias. Rotan cada día. Si no llegan a
   cubrirlo, dice «te acercan» y no «lo resuelven».
+- **Cerca de la cama, nada grande:** si lo de la noche suena a menos de 3 h de ir
+  a la cama (sin hora de la cama, de la medianoche), lo de las calorías propone
+  una sola idea de hasta 250 kcal, que acerca: «Te faltan 700 kcal: fruta con
+  yogur te acerca.» Antes podía proponer un plato de pasta una hora antes de
+  acostarte, el mismo día en que «Última comida grande» decía «Después, algo
+  ligero». Son las mismas 3 h (`CERCA_DE_LA_CAMA`, en `loQueFalta.ts`): la guía
+  del ACG 2022 pide evitar comidas 2 a 3 h antes de acostarse, y algo de unas 150
+  kcal de noche no perjudica (Kinsey y Ormsbee 2015; las 250 son derivadas). La
+  proteína de noche no cambia: 20 a 40 g antes de dormir no perjudican (Reis
+  2021; Kerksick 2017).
 - **El agua:** solo si la sueles anotar. No propone comida: un vaso ahora.
 - **Con «Mostrar números» apagado**, sin números: «Vas bajo de proteína hoy: …».
 - **Se apaga** en Perfil › Avisos («Si voy muy bajo en algo»). Sin elegir, anda si
@@ -142,12 +160,16 @@ fábrica como todo lo demás.
 ### Comer antes de entrenar
 
 - **Qué comida:** la de siempre (la del horario de comidas si la elegiste; si no,
-  la hora en que la sueles anotar, o la típica) que cae **entre 1 y 4 h antes de
-  salir** al gimnasio: la hora de entrenar menos lo que tardas en llegar (Perfil ›
-  Entrenamiento, «Tardo en llegar al gimnasio»: en casa, 15, 30, 45 o 60 minutos;
-  15 de fábrica). De las que caen, la más cercana a la salida. Hoy, corrida por lo
-  que ya anotaste (como el horario), al cuarto de hora: desayunar cinco minutos
-  tarde no hace decir «almuerzo a las 13:05».
+  la hora en que la sueles anotar, o la típica) que cae **desde 4 h antes de
+  empezar hasta 1 h antes de salir** al gimnasio (la salida es la hora de entrenar
+  menos lo que tardas en llegar: Perfil › Entrenamiento, «Tardo en llegar al
+  gimnasio»: en casa, 15, 30, 45 o 60 minutos; 15 de fábrica). Lo más cerca cuenta
+  desde que sales (comer y salir enseguida no conviene) y lo más lejos, desde que
+  empiezas: hasta el 5/11 las 4 h contaban desde la salida, y con una hora de viaje
+  aceptaba una comida 5 h antes de empezar, fuera de lo de ACSM. De las que caen,
+  la más cercana a la salida. Hoy, corrida por lo que ya anotaste (como el
+  horario), al cuarto de hora: desayunar cinco minutos tarde no hace decir
+  «almuerzo a las 13:05».
 - **Si ninguna cae:** algo liviano 75 minutos antes de salir (entre 60 y 90). Si
   una comida caía justo antes de salir o en medio del entreno, es esa, más
   temprano: «Merienda más temprano, a las 16:15: …».
@@ -174,18 +196,26 @@ fábrica como todo lo demás.
 ### El café
 
 - **El corte:** el de la línea de la comida (`corteDeCafeina`, en
-  `alrededorDelEntreno.ts`): 8 h antes de dormirte, 12 h si una toma pasa de 200 mg
-  (Gardiner 2023: un café de 107 mg, al menos 8,8 h antes; un preentreno de 217 mg,
-  13,2 h. Drake 2013: 400 mg 6 h antes todavía le quitan sueño). La investigación
-  proponía 9 h; queda en 8 para no decir otra hora que la línea (Pendiente 4 de
-  `entreno.md`).
+  `alrededorDelEntreno.ts`), **desde la hora de ir a la cama** (como en los estudios;
+  desde la de dormirse cortaba 15 a 30 minutos tarde) y **según la cafeína de una
+  toma**, como en el modelo de Gardiner 2023 (24 estudios): un café de 107 mg, al
+  menos 8,8 h antes de acostarte; un preentreno de 217,5 mg, 13,2 h. En el medio, la
+  recta entre los dos; con más, 13,2; con menos, 8,8; sin saber la toma, como un
+  café: 9 h. Con 50 mg o menos (un té, una cola), sin corte: no hay último café, y
+  el de antes de entrenar va a su hora. Al cuarto de hora de antes. Con la cama a
+  las 23:00: sin saber la toma, las 14:00; con 150 mg, las 12:15; con 220 o más, las
+  9:45. El «8 h hasta 200 mg, 12 con más» de antes no salía de ninguna fuente.
+  Drake 2013: 400 mg 6 h antes todavía le quitan sueño; Gardiner 2025: nada de 400
+  mg en las 12 h previas. **El número base (9 h para un café) queda para decidir**
+  (D1 de [`estudio/momentos.md`](estudio/momentos.md), Pendiente 4 de `entreno.md`):
+  9 h (el metaanálisis, recomendado), 8 h o 6 h; se cambia en `CORTE`.
 - **Los días que entrenas,** si una hora antes de empezar (ISSN 2021: la cafeína
   rinde unos 60 minutos antes) todavía está antes del corte, un cuarto de hora
-  antes: «Café antes de entrenar · Si tomas, a las 15:00: faltan 8 h para dormir.»
-  Con tu hora de viaje, es al salir.
-- **Si entrenas tarde,** media hora antes del corte: «Último café · Hasta las 15:00.
+  antes: «Café antes de entrenar · Si tomas, a las 13:00: faltan 10 h para ir a la
+  cama.» Con tu hora de viaje, es al salir.
+- **Si entrenas tarde,** media hora antes del corte: «Último café · Hasta las 14:00.
   Antes de entrenar a las 20:30, mejor sin café.»
-- **Sin entreno,** media hora antes del corte: «Último café · Hasta las 15:00.
+- **Sin entreno,** media hora antes del corte: «Último café · Hasta las 14:00.
   Después, descafeinado.»
 - **Nunca una dosis** ni la idea de tomar cafeína a quien no toma ([`entreno.md`](entreno.md),
   3.4): dice la hora, y el interruptor lo prende quien toma café. Con «sin déficit»,
@@ -208,9 +238,12 @@ fábrica como todo lo demás.
 
 ### La última comida grande
 
-- **Cuándo:** 45 minutos antes del límite, que es 3 h antes de ir a la cama, o un
-  cuarto de hora antes de tu cena si cenas más temprano.
-- **Qué dice:** «Última comida grande · Cena antes de las 20:00: a las 23:00, a la
+- **Cuándo:** 45 minutos antes del límite, que es 2 h antes de ir a la cama (3 con
+  reflujo, en Cuidados), o un cuarto de hora antes de tu cena si cenas más temprano.
+  Hasta el 5/11 eran 3 h para todos: lo pediste a las 2 h y la guía dice de 2 a 3; las
+  3 h quedan para el reflujo, que es donde está la evidencia (Fujiwara 2005). Como la
+  hora de la cama se corre con la deuda, la de la última comida también.
+- **Qué dice:** «Última comida grande · Cena antes de las 21:00: a las 23:00, a la
   cama. Después, algo ligero.» Lo que pediste: a qué hora cenar, a qué hora
   acostarte y qué evitar. Reemplaza al comentario del saludo de Inicio («falta la
   cena y a las 22:20, a la cama»).
@@ -221,8 +254,10 @@ fábrica como todo lo demás.
   cena; sin datos del sueño; ni con «sin déficit».
 - **De dónde sale:** la guía de reflujo del ACG 2022 («evitar comidas 2 a 3 h antes
   de acostarse», condicional, evidencia baja); Fujiwara 2005 (cenar a menos de 3 h
-  de acostarse, 7,45 veces más reflujo que a 4 h o más); Kinsey y Ormsbee 2015 (un
-  snack de unas 150 kcal no perjudica: «algo ligero»).
+  de acostarse, 7,45 veces más reflujo que a 4 h o más); para el sueño, cenar 1 h
+  antes no cambió nada medido con polisomnografía (Gu 2020, 20 jóvenes sanos); Kinsey
+  y Ormsbee 2015 (un snack de unas 150 kcal no perjudica: «algo ligero»). Lo de la
+  noche de «lo que falta» cuenta lo mismo (`cercaDeLaCama`, en `loQueFalta.ts`).
 
 ### Si entrenas tarde
 
@@ -232,18 +267,25 @@ fábrica como todo lo demás.
   a las 23:00.» Si empiezas tan tarde que no quedan 30 minutos antes de esa hora:
   «Hoy, mejor suave · Entrenar fuerte a las 21:15 te quitaría sueño: te acuestas a
   las 23:00.»
-- **De dónde sale:** Leota 2025 (14.689 personas con WHOOP: cuanto más tarde y más
-  intenso, más tarde se duermen, menos y peor, con la VFC más baja; terminando 4 h
-  antes, nada), Frimpong 2021 (lo intenso que termina 2 a 4 h antes no altera el
-  sueño) y Stutz 2019 ([46] de `entreno.md`: el vigoroso a menos de 1 h, sí). Más
-  estricta que la hora de Rise.
+- **De dónde sale:** las 2 h, de los ensayos: lo intenso que termina 2 a 4 h antes
+  no altera el sueño (Frimpong 2021, metaanálisis de 15 estudios) y el vigoroso en
+  la hora antes, quizá sí (Stutz 2019, [46] de `entreno.md`). En noches reales
+  (Leota 2025, 14.689 personas con WHOOP), cuanto más tarde y más intenso, más
+  tarde se duermen, menos y peor, con la VFC más baja, y desde 4 h antes no se ve
+  nada: Leota recomienda 4 h, no 2 (2 h es el borde permisivo; decir «mejor 4 h» en
+  el porqué es la D3 de [`estudio/momentos.md`](estudio/momentos.md)). Más estricta
+  que la hora de Rise.
 
 ### Bajar las luces
 
 - Hora y media antes de ir a la cama: «Baja las luces · Luz tenue y cálida: a las
   23:00, a la cama.»
-- **De dónde sale:** Rise [R1]; Gooley 2011 (la luz de una habitación antes de dormir
-  atrasa la melatonina y la acorta unos 90 minutos).
+- **De dónde sale:** la hora y media, de Rise [R1]. El consenso de 18 expertos
+  (Brown 2022) pide luz muy baja desde al menos 3 h antes de la cama; 90 minutos o 3
+  h es la D2 de [`estudio/momentos.md`](estudio/momentos.md). Gooley 2011 no da un
+  horario: la luz de una habitación en las 8 h antes de dormir atrasó la melatonina
+  y la acortó unos 90 minutos.
+- Esas noches, el aviso de dormir no dice «Baja las luces» (ver «La hora de dormir»).
 
 ### Tu recuperación (con Ascent)
 
@@ -302,9 +344,10 @@ fábrica como todo lo demás.
   día, entre dos de lo que conviene hay al menos dos horas, y las luces quedan a una
   hora del de dormir.
 - **Tu día, con todo prendido y el horario de comidas** (máximo 8): 7:30 hora del
-  desayuno · 12:30 come antes de entrenar · 14:45 café · 17:00 proteína · 19:15
-  última comida grande · 21:30 luces · 22:10 leer · 22:30 a la cama. Entrenando a
-  las 20:30, las luces no entran.
+  desayuno · 12:30 come antes de entrenar · 13:30 último café (hasta las 14: el de
+  las 15, al salir, ya quitaría sueño) · 17:00 proteína · 20:15 última comida grande
+  · 21:30 luces · 22:10 leer · 22:30 a la cama. Entrenando a las 20:30, las luces no
+  entran.
 
 ## De a uno y con un máximo
 
@@ -365,6 +408,21 @@ y entrenar tarde, Sueño; la recuperación, Ascent.
   - Gooley JJ, et al. 2011. Exposure to room light before bedtime suppresses melatonin
     onset and shortens melatonin duration in humans. *J Clin Endocrinol Metab*
     96(3):E463–E472. https://doi.org/10.1210/jc.2010-2098
+  - Brown TM, Brainard GC, Cajochen C, et al. 2022. Recommendations for daytime,
+    evening, and nighttime indoor light exposure to best support physiology, sleep,
+    and wakefulness in healthy adults. *PLoS Biol* 20(3):e3001571.
+    https://doi.org/10.1371/journal.pbio.3001571
+  - Stutz J, Eiholzer R, Spengler CM. 2019. Effects of evening exercise on sleep in
+    healthy participants: a systematic review and meta-analysis. *Sports Med*
+    49(2):269–287. https://doi.org/10.1007/s40279-018-1015-0
+  - Gardiner CL, Weakley J, Burke LM, et al. 2025. Dose and timing effects of
+    caffeine on subsequent sleep: a randomized clinical crossover trial. *Sleep*
+    48(4):zsae230. https://doi.org/10.1093/sleep/zsae230
+  - Reis CEG, Loureiro LMR, Roschel H, da Costa THM. 2021. Effects of pre-sleep
+    protein consumption on muscle-related outcomes: a systematic review. *J Sci Med
+    Sport* 24(2):177–182. https://doi.org/10.1016/j.jsams.2020.07.016
+  - Las demás, y el estudio entero de los horarios, en
+    [`estudio/momentos.md`](estudio/momentos.md).
 
 ## Lo que queda
 
@@ -394,10 +452,12 @@ y entrenar tarde, Sueño; la recuperación, Ascent.
 - **Para decidir:**
   - De fábrica, apagados como todo, o que se prendan solos al cargar tu
     entrenamiento o la hora de dormir.
-  - Si el aviso de dormir deja de decir «Baja las luces» las noches que suena el de
-    las luces.
-  - El corte del café, 8 o 9 h, con la línea de la comida (Pendiente 4 de
-    `entreno.md`).
+  - ~~Si el aviso de dormir deja de decir «Baja las luces» las noches que suena el de
+    las luces.~~ Quedó (5/11, arreglo claro del estudio de los horarios): con el de las
+    luces prendido, no lo dice.
+  - El número base del corte del café, para la línea y el aviso: 9 h para un café
+    (lo de hoy, el metaanálisis), 8 o 6 (D1 de [`estudio/momentos.md`](estudio/momentos.md),
+    Pendiente 4 de `entreno.md`).
   - La recuperación: el umbral de 70 y el número, cuando se apruebe
     `recuperado.ts`.
   - Las horas de comer de los días de entreno: hoy salen de todos los días. Si los

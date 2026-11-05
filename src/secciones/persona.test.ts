@@ -76,6 +76,7 @@ describe('el sueño', () => {
     const s = suenoDe(HOY, null, null, propias);
     expect(s.deEjemplo).toBe(false);
     expect(s.noches).toHaveLength(1);
-    expect(s.noches[0]).toMatchObject({ clave: HOY, dormido: 450, fuente: { id: 'moss' }, moss: { origen: 'confirmada' } });
+    // De las 7 h 30 min en la cama, 30 min despierto (DESPIERTO_SIN_RELOJ): 7 h dormido.
+    expect(s.noches[0]).toMatchObject({ clave: HOY, dormido: 420, fuente: { id: 'moss' }, moss: { origen: 'confirmada' } });
   });
 });

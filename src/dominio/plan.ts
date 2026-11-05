@@ -13,8 +13,9 @@ import { diasEntre, sumarDias, type ClaveDia } from './fechas';
 import type { Macros } from './metas';
 import type { Cantidad, Fuente, Item, Registro, Secundarios, Valores } from './registros';
 
-export type Dieta = 'todo' | 'vegetariana' | 'vegana' | 'pescetariana';
-export const DIETAS: readonly Dieta[] = ['todo', 'vegetariana', 'vegana', 'pescetariana'];
+/** La carnívora (lo pediste el 5/11/2026) come solo lo de origen animal: ni cereales, ni legumbres, ni frutas, ni verduras, ni la miel ni el café. */
+export type Dieta = 'todo' | 'vegetariana' | 'vegana' | 'pescetariana' | 'carnivora';
+export const DIETAS: readonly Dieta[] = ['todo', 'vegetariana', 'vegana', 'pescetariana', 'carnivora'];
 
 /** Los alérgenos que piden declarar las etiquetas (los de la FDA y los de la Unión Europea que más se ven). */
 export type Alergeno = 'gluten' | 'leche' | 'huevo' | 'mani' | 'frutosSecos' | 'soja' | 'pescado' | 'mariscos' | 'sesamo';
@@ -89,16 +90,28 @@ export type Plantilla = {
   combinada?: true;
 };
 
-// Quién puede comer cada una: lo vegano, cualquiera; lo que tiene carne, solo quien come de todo.
-const VEGANA = DIETAS;
+// Quién puede comer cada una, por lo que lleva. Lo que tiene algo vegetal, nadie que sea carnívoro:
+// lo vegano, las otras cuatro; con huevo, leche o miel, quien no es vegano; con pescado, quien come
+// pescado; con carne, quien come de todo. Lo que no lleva nada vegetal (ANIMAL...) suma la carnívora;
+// la miel no, porque esa dieta la deja afuera.
+const VEGANA: readonly Dieta[] = ['todo', 'vegetariana', 'vegana', 'pescetariana'];
 const VEGETARIANA: readonly Dieta[] = ['todo', 'vegetariana', 'pescetariana'];
 const CON_PESCADO: readonly Dieta[] = ['todo', 'pescetariana'];
 const CON_CARNE: readonly Dieta[] = ['todo'];
+const ANIMAL: readonly Dieta[] = [...VEGETARIANA, 'carnivora'];
+const ANIMAL_CON_PESCADO: readonly Dieta[] = [...CON_PESCADO, 'carnivora'];
+const ANIMAL_CON_CARNE: readonly Dieta[] = [...CON_CARNE, 'carnivora'];
+// Las comidas que se armaron para quien es carnívoro (5/11) son solo suyas: así a quien come de todo, es
+// vegetariano o pescetariano el plan le sigue saliendo como antes (con ellas, el 31 % de lo que se le sugería
+// pasaba a ser de lo nuevo y sus carbohidratos bajaban de 231 a 168 g por día).
+const SOLO_CARNIVORA: readonly Dieta[] = ['carnivora'];
 
 /**
- * Para cuando lo tuyo no alcanza: lo de todos los días, de acá y de todas partes, para las cuatro
- * dietas y con opciones rápidas en cada comida. Los gramos caen justo en una porción cuando se
- * puede («2 rebanadas»). Los alérgenos van de más ante la duda: la avena cuenta como gluten.
+ * Para cuando lo tuyo no alcanza: lo de todos los días, de acá y de todas partes, para cada dieta
+ * y con opciones rápidas en cada comida. Los gramos caen justo en una porción cuando se puede
+ * («2 rebanadas»). Los alérgenos van de más ante la duda: la avena cuenta como gluten, y la
+ * mantequilla, como leche. Lo de quien es carnívoro se cocina con mantequilla o con su grasa, no
+ * con aceite: los huevos con tocino, en la del tocino, así hay un desayuno sin leche.
  */
 export const PLANTILLAS: readonly Plantilla[] = [
   // desayunos
@@ -127,6 +140,14 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Yogur griego descremado', 340], ['Avena', 40], ['Arándanos', 74]], dietas: VEGETARIANA, contiene: ['leche', 'gluten'], minutos: 3 },
   { clave: 'claras-pavo-tostada', nombre: { es: 'Revuelto de claras con pavo y tostadas', en: 'Egg white and turkey scramble on toast' }, comida: 'desayuno',
     items: [['Clara de huevo', 132], ['Huevo', 50], ['Pechuga de pavo', 60], ['Pan integral', 64], ['Aceite de oliva', 4.5]], dietas: CON_CARNE, contiene: ['huevo', 'gluten'], minutos: 10 },
+  { clave: 'huevos-tocino', nombre: { es: 'Huevos revueltos con tocino', en: 'Scrambled eggs with bacon' }, comida: 'desayuno',
+    items: [['Huevo', 150], ['Tocino', 16]], dietas: SOLO_CARNIVORA, contiene: ['huevo'], minutos: 10 },
+  { clave: 'bistec-huevos', nombre: { es: 'Bistec con huevos fritos', en: 'Steak and eggs' }, comida: 'desayuno',
+    items: [['Bistec', 120], ['Huevo a la plancha', 92], ['Mantequilla', 4.7]], dietas: SOLO_CARNIVORA, contiene: ['huevo', 'leche'], minutos: 15 },
+  { clave: 'omelet-jamon-queso', nombre: { es: 'Omelet de jamón y queso', en: 'Ham and cheese omelet' }, comida: 'desayuno',
+    items: [['Huevo', 150], ['Jamón cocido', 28], ['Queso mozzarella', 21], ['Mantequilla', 4.7]], dietas: SOLO_CARNIVORA, contiene: ['huevo', 'leche'], minutos: 10 },
+  { clave: 'salmon-queso-crema', nombre: { es: 'Salmón ahumado con queso crema', en: 'Smoked salmon with cream cheese' }, comida: 'desayuno',
+    items: [['Salmón ahumado', 100], ['Queso crema', 45]], dietas: SOLO_CARNIVORA, contiene: ['pescado', 'leche'], minutos: 3 },
 
   // meriendas
   { clave: 'tostada-queso-dulce', nombre: { es: 'Café con leche y tostada con queso y dulce de membrillo', en: 'Coffee with milk and toast with cheese and quince paste' }, comida: 'merienda',
@@ -145,6 +166,10 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Queso cottage', 210], ['Arándanos', 74]], dietas: VEGETARIANA, contiene: ['leche'], minutos: 2 },
   { clave: 'atun-galletas', nombre: { es: 'Atún con tomate y galletas de arroz', en: 'Tuna with tomato and rice cakes' }, comida: 'merienda',
     items: [['Atún en agua', 165], ['Tomate', 61.5], ['Galletas de arroz', 18]], dietas: CON_PESCADO, contiene: ['pescado'], minutos: 5 },
+  { clave: 'rollitos-jamon-queso', nombre: { es: 'Rollitos de jamón y queso', en: 'Ham and cheese roll-ups' }, comida: 'merienda',
+    items: [['Jamón cocido', 84], ['Queso mozzarella', 42]], dietas: SOLO_CARNIVORA, contiene: ['leche'], minutos: 3 },
+  { clave: 'atun-huevo', nombre: { es: 'Atún con huevo duro', en: 'Tuna with a hard-boiled egg' }, comida: 'merienda',
+    items: [['Atún en agua', 165], ['Huevo duro', 50]], dietas: SOLO_CARNIVORA, contiene: ['pescado', 'huevo'], minutos: 12 },
   // snacks
   { clave: 'manzana-almendras', nombre: { es: 'Manzana con almendras', en: 'Apple with almonds' }, comida: 'snack',
     items: [['Manzana', 182], ['Almendras', 14]], dietas: VEGANA, contiene: ['frutosSecos'], minutos: 1 },
@@ -161,7 +186,15 @@ export const PLANTILLAS: readonly Plantilla[] = [
   { clave: 'naranja-semillas', nombre: { es: 'Naranja con semillas de calabaza', en: 'Orange with pumpkin seeds' }, comida: 'snack',
     items: [['Naranja', 131], ['Semillas de calabaza', 15]], dietas: VEGANA, contiene: [], minutos: 1 },
   { clave: 'pavo-queso', nombre: { es: 'Pavo con queso fresco', en: 'Turkey with fresh cheese' }, comida: 'snack',
-    items: [['Pechuga de pavo', 60], ['Queso fresco', 30]], dietas: CON_CARNE, contiene: ['leche'], minutos: 1 },
+    items: [['Pechuga de pavo', 60], ['Queso fresco', 30]], dietas: ANIMAL_CON_CARNE, contiene: ['leche'], minutos: 1 },
+  { clave: 'huevos-queso', nombre: { es: 'Huevos duros con queso', en: 'Hard-boiled eggs with cheese' }, comida: 'snack',
+    items: [['Huevo duro', 100], ['Queso fresco', 30]], dietas: SOLO_CARNIVORA, contiene: ['huevo', 'leche'], minutos: 12 },
+  { clave: 'salame-queso', nombre: { es: 'Salame con queso', en: 'Salami and cheese' }, comida: 'snack',
+    items: [['Salame', 30], ['Queso fresco', 30]], dietas: SOLO_CARNIVORA, contiene: ['leche'], minutos: 1 },
+  { clave: 'yogur-natural', nombre: { es: 'Yogur griego natural', en: 'Plain Greek yogurt' }, comida: 'snack',
+    items: [['Yogur griego', 170]], dietas: SOLO_CARNIVORA, contiene: ['leche'], minutos: 1 },
+  { clave: 'huevo-serrano', nombre: { es: 'Huevo duro con jamón serrano', en: 'Hard-boiled egg with prosciutto' }, comida: 'snack',
+    items: [['Huevo duro', 50], ['Jamón crudo', 27.6]], dietas: SOLO_CARNIVORA, contiene: ['huevo'], minutos: 12 },
 
   // almuerzos
   { clave: 'pollo-arroz', nombre: { es: 'Pollo a la plancha con arroz y ensalada', en: 'Grilled chicken with rice and salad' }, comida: 'almuerzo',
@@ -201,6 +234,14 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Empanada de carne', 130], ['Lechuga', 35], ['Tomate', 123], ['Aceite de oliva', 4.5]], dietas: CON_CARNE, contiene: ['gluten', 'huevo'], minutos: 45 },
   { clave: 'polenta-tuco', nombre: { es: 'Polenta con salsa boloñesa', en: 'Polenta with meat sauce' }, comida: 'almuerzo',
     items: [['Polenta con salsa boloñesa', 460]], dietas: CON_CARNE, contiene: ['leche'], minutos: 30 },
+  { clave: 'rib-eye-mantequilla', nombre: { es: 'Rib eye a la plancha con mantequilla', en: 'Grilled ribeye with butter' }, comida: 'almuerzo',
+    items: [['Rib eye', 200], ['Mantequilla', 7]], dietas: SOLO_CARNIVORA, contiene: ['leche'], minutos: 15 },
+  { clave: 'asado-chorizo', nombre: { es: 'Asado de tira con chorizo', en: 'Grilled short ribs with chorizo' }, comida: 'almuerzo',
+    items: [['Asado de tira', 120], ['Chorizo', 75]], dietas: SOLO_CARNIVORA, contiene: [], minutos: 60 },
+  { clave: 'hamburguesa-queso-huevo', nombre: { es: 'Hamburguesa sin pan con queso y huevo frito', en: 'Bunless burger with cheese and a fried egg' }, comida: 'almuerzo',
+    items: [['Hamburguesa de carne', 120], ['Queso cheddar', 21], ['Huevo a la plancha', 46], ['Mantequilla', 4.7]], dietas: SOLO_CARNIVORA, contiene: ['leche', 'huevo'], minutos: 15 },
+  { clave: 'muslos-pollo', nombre: { es: 'Muslos de pollo al horno', en: 'Roast chicken thighs' }, comida: 'almuerzo',
+    items: [['Muslo de pollo con piel', 240]], dietas: SOLO_CARNIVORA, contiene: [], minutos: 45 },
 
   // cenas
   { clave: 'omelet-ensalada', nombre: { es: 'Omelet de queso con ensalada', en: 'Cheese omelet with salad' }, comida: 'cena',
@@ -219,6 +260,14 @@ export const PLANTILLAS: readonly Plantilla[] = [
     items: [['Hamburguesa vegetal', 100], ['Pan de hamburguesa', 44], ['Lechuga', 35], ['Tomate', 61.5]], dietas: VEGETARIANA, contiene: ['gluten', 'soja'], minutos: 15 },
   { clave: 'wrap-hummus', nombre: { es: 'Wrap de hummus, garbanzos y verduras', en: 'Hummus, chickpea and vegetable wrap' }, comida: 'cena',
     items: [['Tortilla de harina', 71], ['Hummus', 60], ['Garbanzos en lata', 76], ['Lechuga', 35], ['Tomate', 61.5], ['Zanahoria', 61]], dietas: VEGANA, contiene: ['gluten', 'sesamo'], minutos: 10 },
+  { clave: 'salmon-mantequilla', nombre: { es: 'Salmón con mantequilla', en: 'Salmon with butter' }, comida: 'cena',
+    items: [['Salmón', 140], ['Mantequilla', 7]], dietas: SOLO_CARNIVORA, contiene: ['pescado', 'leche'], minutos: 15 },
+  { clave: 'merluza-crema', nombre: { es: 'Merluza a la crema', en: 'Hake in cream sauce' }, comida: 'cena',
+    items: [['Merluza', 135], ['Crema de leche', 45]], dietas: SOLO_CARNIVORA, contiene: ['pescado', 'leche'], minutos: 20 },
+  { clave: 'chuletas-cordero', nombre: { es: 'Chuletas de cordero a la plancha', en: 'Grilled lamb chops' }, comida: 'cena',
+    items: [['Chuleta de cordero', 180]], dietas: SOLO_CARNIVORA, contiene: [], minutos: 15 },
+  { clave: 'pollo-crema', nombre: { es: 'Pollo a la crema', en: 'Chicken in cream sauce' }, comida: 'cena',
+    items: [['Pechuga de pollo a la plancha', 120], ['Crema de leche', 45]], dietas: SOLO_CARNIVORA, contiene: ['leche'], minutos: 20 },
 ];
 
 // ------------------------------------------------------------ las combinadas
@@ -231,13 +280,13 @@ const parte = (clave: string, es: string, en: string, items: Plantilla['items'],
 // Los gramos caen en una porción con nombre: 1 pechuga mediana, 1 filete, 1 taza. Las legumbres,
 // de lata: listas en minutos.
 const PROTEINAS: readonly Parte[] = [
-  parte('pollo', 'Pollo a la plancha', 'Grilled chicken', [['Pechuga de pollo a la plancha', 120]], CON_CARNE, [], 12),
-  parte('carne', 'Carne a la plancha', 'Grilled steak', [['Lomo', 160]], CON_CARNE, [], 10),
-  parte('cerdo', 'Cerdo a la plancha', 'Grilled pork', [['Lomo de cerdo', 120]], CON_CARNE, [], 12),
-  parte('merluza', 'Merluza', 'Hake', [['Merluza', 135]], CON_PESCADO, ['pescado'], 10),
-  parte('salmon', 'Salmón', 'Salmon', [['Salmón', 140]], CON_PESCADO, ['pescado'], 12),
-  parte('atun', 'Atún', 'Tuna', [['Atún en agua', 165]], CON_PESCADO, ['pescado'], 2),
-  parte('huevos', 'Huevos duros', 'Hard-boiled eggs', [['Huevo duro', 100]], VEGETARIANA, ['huevo'], 12),
+  parte('pollo', 'Pollo a la plancha', 'Grilled chicken', [['Pechuga de pollo a la plancha', 120]], ANIMAL_CON_CARNE, [], 12),
+  parte('carne', 'Carne a la plancha', 'Grilled steak', [['Lomo', 160]], ANIMAL_CON_CARNE, [], 10),
+  parte('cerdo', 'Cerdo a la plancha', 'Grilled pork', [['Lomo de cerdo', 120]], ANIMAL_CON_CARNE, [], 12),
+  parte('merluza', 'Merluza', 'Hake', [['Merluza', 135]], ANIMAL_CON_PESCADO, ['pescado'], 10),
+  parte('salmon', 'Salmón', 'Salmon', [['Salmón', 140]], ANIMAL_CON_PESCADO, ['pescado'], 12),
+  parte('atun', 'Atún', 'Tuna', [['Atún en agua', 165]], ANIMAL_CON_PESCADO, ['pescado'], 2),
+  parte('huevos', 'Huevos duros', 'Hard-boiled eggs', [['Huevo duro', 100]], ANIMAL, ['huevo'], 12),
   parte('tofu', 'Tofu a la plancha', 'Grilled tofu', [['Tofu firme', 150]], VEGANA, ['soja'], 10),
   parte('garbanzos', 'Garbanzos', 'Chickpeas', [['Garbanzos', 164]], VEGANA, [], 3),
   parte('lentejas', 'Lentejas', 'Lentils', [['Lentejas', 198]], VEGANA, [], 3),
@@ -263,9 +312,9 @@ const VERDURAS: readonly Parte[] = [
 ];
 // La granola puede llevar miel: vegetariana. Los alérgenos, de más ante la duda, como en PLANTILLAS.
 const BASES: readonly Parte[] = [
-  parte('yogur', 'Yogur griego', 'Greek yogurt', [['Yogur griego descremado', 170]], VEGETARIANA, ['leche'], 2),
-  parte('cottage', 'Queso cottage', 'Cottage cheese', [['Queso cottage', 113]], VEGETARIANA, ['leche'], 2),
-  parte('leche', 'Leche', 'Milk', [['Leche descremada', 206]], VEGETARIANA, ['leche'], 2),
+  parte('yogur', 'Yogur griego', 'Greek yogurt', [['Yogur griego descremado', 170]], ANIMAL, ['leche'], 2),
+  parte('cottage', 'Queso cottage', 'Cottage cheese', [['Queso cottage', 113]], ANIMAL, ['leche'], 2),
+  parte('leche', 'Leche', 'Milk', [['Leche descremada', 206]], ANIMAL, ['leche'], 2),
   parte('cafe', 'Café con leche', 'Coffee with milk', [['Café con leche', 252]], VEGETARIANA, ['leche'], 5),
   parte('soja', 'Leche de soja', 'Soy milk', [['Leche de soja', 206]], VEGANA, ['soja'], 2),
 ];
@@ -288,10 +337,53 @@ const FRUTAS: readonly Parte[] = [
 const PARA_PICAR: readonly Parte[] = [
   parte('almendras', 'almendras', 'almonds', [['Almendras', 28]], VEGANA, ['frutosSecos'], 1),
   parte('nueces', 'nueces', 'walnuts', [['Nueces', 28]], VEGANA, ['frutosSecos'], 1),
-  parte('yogur', 'yogur griego', 'Greek yogurt', [['Yogur griego descremado', 170]], VEGETARIANA, ['leche'], 1),
-  parte('queso', 'queso', 'cheese', [['Queso fresco', 30]], VEGETARIANA, ['leche'], 1),
+  parte('yogur', 'yogur griego', 'Greek yogurt', [['Yogur griego descremado', 170]], ANIMAL, ['leche'], 1),
+  parte('queso', 'queso', 'cheese', [['Queso fresco', 30]], ANIMAL, ['leche'], 1),
   parte('mani', 'mantequilla de maní', 'peanut butter', [['Mantequilla de maní', 16]], VEGANA, ['mani'], 1),
   parte('semillas', 'semillas de calabaza', 'pumpkin seeds', [['Semillas de calabaza', 15]], VEGANA, [], 1),
+];
+
+const partesDe = (lista: readonly Parte[], claves: readonly string[]) => lista.filter((p) => claves.includes(p.clave));
+
+// Lo de quien es carnívoro, sin nada vegetal: lo que acompaña una carne o un pescado; los huevos del
+// desayuno, con una carne y algo con leche; y lo que va con queso para picar.
+const FRITOS = parte('fritos', 'huevos fritos', 'fried eggs', [['Huevo a la plancha', 92], ['Mantequilla', 4.7]], ANIMAL, ['huevo', 'leche'], 5);
+const TOCINO = parte('tocino', 'tocino', 'bacon', [['Tocino', 16]], ANIMAL_CON_CARNE, [], 8);
+const MANTEQUILLA = parte('mantequilla', 'mantequilla', 'butter', [['Mantequilla', 14.2]], ANIMAL, ['leche'], 1);
+const CREMA = parte('crema', 'salsa de crema', 'cream sauce', [['Crema de leche', 45]], ANIMAL, ['leche'], 5);
+const JAMON = parte('jamon', 'jamón', 'ham', [['Jamón cocido', 84]], ANIMAL_CON_CARNE, [], 1);
+const SERRANO = parte('serrano', 'jamón serrano', 'prosciutto', [['Jamón crudo', 27.6]], ANIMAL_CON_CARNE, [], 1);
+const CON_LA_CARNE: readonly Parte[] = [
+  FRITOS,
+  parte('derretido', 'queso derretido', 'melted cheese', [['Queso mozzarella', 42]], ANIMAL, ['leche'], 5),
+  TOCINO,
+  MANTEQUILLA,
+  CREMA,
+];
+// El pescado, solo con mantequilla o con crema.
+const CON_EL_PESCADO: readonly Parte[] = [MANTEQUILLA, CREMA];
+const HUEVOS: readonly Parte[] = [
+  parte('revueltos', 'huevos revueltos', 'scrambled eggs', [['Huevo', 100], ['Mantequilla', 4.7]], ANIMAL, ['huevo', 'leche'], 8),
+  FRITOS,
+  parte('duros', 'huevos duros', 'hard-boiled eggs', [['Huevo duro', 100]], ANIMAL, ['huevo'], 12),
+];
+const CON_LOS_HUEVOS: readonly Parte[] = [TOCINO, JAMON, SERRANO];
+const LACTEOS: readonly Parte[] = [
+  ...partesDe(PARA_PICAR, ['yogur', 'queso']),
+  parte('vaso', 'un vaso de leche', 'a glass of milk', [['Leche entera', 206]], ANIMAL, ['leche'], 1),
+];
+const CON_QUESO: readonly Parte[] = [
+  JAMON,
+  SERRANO,
+  parte('salame', 'salame', 'salami', [['Salame', 30]], ANIMAL_CON_CARNE, [], 1),
+  parte('pavo', 'pavo', 'turkey', [['Pechuga de pavo', 60]], ANIMAL_CON_CARNE, [], 1),
+  parte('duro', 'huevo duro', 'a hard-boiled egg', [['Huevo duro', 50]], ANIMAL, ['huevo'], 12),
+];
+const QUESOS: readonly Parte[] = [
+  ...partesDe(PARA_PICAR, ['queso']),
+  parte('gouda', 'queso gouda', 'Gouda', [['Queso gouda', 21]], ANIMAL, ['leche'], 1),
+  parte('mozzarella', 'mozzarella', 'mozzarella', [['Queso mozzarella', 21]], ANIMAL, ['leche'], 1),
+  parte('cheddar', 'queso cheddar', 'cheddar', [['Queso cheddar', 21]], ANIMAL, ['leche'], 1),
 ];
 
 // Lo que no va junto: el puré con legumbres, la avena o la granola en el café, y dos quesos.
@@ -302,9 +394,11 @@ const mayuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /**
  * Las combinadas (lo pediste el 29/10/2026): una proteína, una guarnición y una verdura para el
  * almuerzo y la cena; algo con leche (o de soja), un cereal o tostadas y una fruta para el desayuno
- * y la merienda; y una fruta con algo para el snack. Salen cuando lo demás se acabó, así «Otra» no
- * se acaba nunca. Las que ya son una comida tipo no están. Se arman la primera vez que se piden: son
- * cientos y solo las usa el plan, así no pesan en cada arranque.
+ * y la merienda; y una fruta con algo para el snack. Y para quien es carnívoro (5/11/2026), sin nada
+ * vegetal: una carne o un pescado con lo que lo acompaña; huevos con una carne y algo con leche; y
+ * un fiambre o un huevo duro con queso. Salen cuando lo demás se acabó, así «Otra» no se acaba nunca.
+ * Las que ya son una comida tipo no están. Se arman la primera vez que se piden: son cientos y solo
+ * las usa el plan, así no pesan en cada arranque.
  */
 export function combinadas(): readonly Plantilla[] {
   return (yaArmadas ??= armarCombinadas());
@@ -314,7 +408,8 @@ let yaArmadas: readonly Plantilla[] | undefined;
 function armarCombinadas(): readonly Plantilla[] {
   const tipo = new Set(PLANTILLAS.map((p) => nombresDe(p.items)));
   const lista: Plantilla[] = [];
-  const agregar = (comida: Comida, partes: readonly Parte[], nombre: { es: string; en: string }) => {
+  // `solo`: de qué dietas puede ser, como mucho (las de la carnívora, solo suyas).
+  const agregar = (comida: Comida, partes: readonly Parte[], nombre: { es: string; en: string }, solo: readonly Dieta[] = DIETAS) => {
     if (partes.some((a, i) => partes.some((b, j) => j > i && NO_VAN.has(`${a.clave}+${b.clave}`)))) return;
     const items = partes.flatMap((p) => p.items);
     if (tipo.has(nombresDe(items))) return;
@@ -323,7 +418,7 @@ function armarCombinadas(): readonly Plantilla[] {
       nombre,
       comida,
       items,
-      dietas: DIETAS.filter((d) => partes.every((p) => p.dietas.includes(d))),
+      dietas: solo.filter((d) => partes.every((p) => p.dietas.includes(d))),
       contiene: ALERGENOS.filter((a) => partes.some((p) => p.contiene.includes(a))),
       // Lo de cada parte se hace a la vez: lo que más tarda, y un rato para servir.
       minutos: Math.max(...partes.map((p) => p.minutos)) + 3,
@@ -338,6 +433,16 @@ function armarCombinadas(): readonly Plantilla[] {
   }
   for (const f of FRUTAS) for (const x of PARA_PICAR) {
     agregar('snack', [f, x], { es: `${mayuscula(f.es)} con ${x.es}`, en: `${mayuscula(f.en)} with ${x.en}` });
+  }
+  // Las de quien es carnívoro, solo suyas.
+  const conAlgo = (p: Parte, a: Parte) => agregar('almuerzo', [p, a], { es: `${p.es} con ${a.es}`, en: `${p.en} with ${a.en}` }, SOLO_CARNIVORA);
+  for (const p of partesDe(PROTEINAS, ['pollo', 'carne', 'cerdo'])) for (const a of CON_LA_CARNE) conAlgo(p, a);
+  for (const p of partesDe(PROTEINAS, ['merluza', 'salmon'])) for (const a of CON_EL_PESCADO) conAlgo(p, a);
+  for (const h of HUEVOS) for (const c of CON_LOS_HUEVOS) for (const l of LACTEOS) {
+    agregar('desayuno', [h, c, l], { es: `${mayuscula(h.es)} con ${c.es} y ${l.es}`, en: `${mayuscula(h.en)} with ${c.en} and ${l.en}` }, SOLO_CARNIVORA);
+  }
+  for (const x of CON_QUESO) for (const q of QUESOS) {
+    agregar('snack', [x, q], { es: `${mayuscula(x.es)} con ${q.es}`, en: `${mayuscula(x.en)} with ${q.en}` }, SOLO_CARNIVORA);
   }
   return lista;
 }

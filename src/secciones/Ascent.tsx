@@ -75,7 +75,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar }: Props) {
           <MarcaDeAscent unida={vinculada} />
           <Animated.View key={vinculada ? 'con' : 'sin'} entering={ENTRA}>
             <View style={estilos.cabecera}>
-              <Text style={estilos.etiqueta}>{vinculada && vinculo.desde ? t('ascent.vinculadaDesde', { fecha: fechaDiaMes(claveDelDia(new Date(vinculo.desde))) }) : t('ascent.etiqueta')}</Text>
+              {vinculada && vinculo.desde ? <Text style={estilos.etiqueta}>{t('ascent.vinculadaDesde', { fecha: fechaDiaMes(claveDelDia(new Date(vinculo.desde))) })}</Text> : null}
               <Text style={estilos.titulo}>{t('ascent.titulo')}</Text>
               {!vinculada && (
                 <>

@@ -4,7 +4,8 @@
 // hoy, con quién las pone, cómo se reparten los macros y repartir la semana); después el peso con su
 // tendencia y la grasa corporal (o la invitación a medirla). Semana a semana, las medidas y el gasto
 // con el balance quedan plegados en «Más datos». Las cuentas son las de la app: Control, Progreso,
-// Cuerpo y Metas.
+// Cuerpo y Metas. Para aprobar (5/11/2026, spec/estudio/progreso.md, D1): el ritmo con su margen, la
+// fecha a tu ritmo como un rango (o un mes) y «todavía no se sabe» las primeras semanas.
 
 const SeccionProgreso = (() => {
   const SEMANA = [1, 2, 3, 4, 5, 6, 0];
@@ -22,7 +23,12 @@ const SeccionProgreso = (() => {
       pct: null, porFecha: false, fecha: null, fuerza: null, rango: 'tresMeses',
       // Plegados de fábrica: cambiar el plan y lo que se mira de vez en cuando. Sin medidas, para las capturas.
       cambiarPlan: false, masDatos: false, sinMedidas: false,
+      // Para ver las primeras semanas: con un número, solo las pesadas de esas últimas semanas.
+      semanasDeDatos: null,
     };
+    // «Sin déficit» es de Perfil: si la galería lo pasa, bajar queda en mantener y el plan no dice que el control ajusta.
+    const sinDeficit = () => !!(opciones.sinDeficit && opciones.sinDeficit());
+    const objetivoDe = (p) => (sinDeficit() && p.objetivo === 'bajar' ? 'mantener' : p.objetivo);
 
     const zona = el('section', 'progreso pagina-app');
     zona.innerHTML = '<div class="pg-scroll"></div>';
@@ -61,8 +67,21 @@ const SeccionProgreso = (() => {
       if (opciones.alPintar) opciones.alPintar();
     }
 
+    // La persona como la ve Progreso: con `semanasDeDatos`, como si hubiera empezado a pesarse hace esas semanas.
+    function vistaDe(d) {
+      if (!s.semanasDeDatos) return d;
+      const pesadas = d.pesadas.filter((p) => Fechas.diasEntre(p.fecha, Datos.HOY) < 7 * s.semanasDeDatos);
+      const t = Control.tendencia(pesadas, Datos.HOY);
+      const pesoHoy = t.get(Datos.HOY);
+      const antes = (n) => (t.has(Fechas.sumarDias(Datos.HOY, -n)) ? pesoHoy - t.get(Fechas.sumarDias(Datos.HOY, -n)) : null);
+      return Object.assign({}, d, { pesadas, tendencia: t, pesoHoy, pesoInicial: t.get([...t.keys()][0]), cambio7: antes(7), cambio30: antes(30) });
+    }
+    // El ritmo de las últimas seis semanas con su margen, y el peso de hoy sin el atraso de la tendencia.
+    const ritmoDe = (d) => Progreso.ritmoConRango(d.pesadas, Datos.HOY);
+    const nivelDe = (d) => Progreso.nivelDeHoy(d.tendencia, Datos.HOY, d.pesadas, ritmoDe(d)) ?? d.pesoHoy;
+
     function pintarPrincipal() {
-      const d = opciones.persona();
+      const d = vistaDe(opciones.persona());
       const hoy = u.partes(Datos.HOY);
       const cab = el('header', 'pg-cab');
       cab.append(el('div', 'pg-fecha', tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) })), el('h2', 'pg-titulo', tx('progreso.titulo')));
@@ -85,11 +104,25 @@ const SeccionProgreso = (() => {
     // ------------------------------------------------------------ el plan
     // A dónde llegar y cuándo, los hitos en una línea con lo que viene al llegar, cómo vienes y, ahí
     // mismo, cambiarlo (el objetivo, el peso meta, el ritmo y el plazo, y las metas de hoy).
-    const ESTADO_DEL_PLAN = { alRitmo: 'enCamino', adelantado: 'enCamino', atrasado: 'despacio', alReves: 'despacio', llegaste: 'enCamino', estable: 'enCamino', seMueve: '', faltanDatos: '' };
+    const ESTADO_DEL_PLAN = { alRitmo: 'enCamino', adelantado: 'enCamino', atrasado: 'despacio', alReves: 'despacio', llegaste: 'enCamino', estable: 'enCamino', seMueve: '', todaviaNo: '', faltanDatos: '' };
     const kgCorto = (kg) => numero(kg, kg % 1 ? 1 : 0);
     function planDe(d) {
       const p = d.perfil;
-      return Progreso.planPorEtapas({ hoy: Datos.HOY, pesoKg: d.pesoHoy, objetivo: p.objetivo, pesoMeta: p.pesoMeta, plazo: plazoActual(d), ritmo: d.progreso.ritmo, despues: p.despues, pesoInicial: d.pesoInicial });
+      const rango = ritmoDe(d);
+      return Progreso.planPorEtapas({
+        hoy: Datos.HOY, pesoKg: nivelDe(d), objetivo: objetivoDe(p), pesoMeta: p.pesoMeta, plazo: plazoActual(d),
+        ritmo: rango ? rango.kgPorSemana : null, rango, despues: p.despues, pesoInicial: d.pesoInicial,
+      });
+    }
+    // El margen del ritmo, del que menos cambia al que más: «entre −0,32 y −0,46».
+    function margenDe(r) {
+      const [a, b] = Math.abs(r.desde) <= Math.abs(r.hasta) ? [r.desde, r.hasta] : [r.hasta, r.desde];
+      return { desde: conSigno(a, 2), hasta: conSigno(b, 2) };
+    }
+    // Cuándo llegarías a tu ritmo: «en enero» si las dos puntas caen en el mismo mes; si no, «entre el 20 dic y el 25 ene».
+    function cuandoDe(f) {
+      if (f.temprana.slice(0, 7) === f.tardia.slice(0, 7)) return tx('progreso.plan.cuando.mes', { mes: tx('fecha.meses.' + u.partes(f.temprana).mes) });
+      return tx('progreso.plan.cuando.rango', { desde: u.fechaCorta(f.temprana), hasta: u.fechaCorta(f.tardia) });
     }
     function plan(d) {
       const pl = planDe(d);
@@ -98,16 +131,21 @@ const SeccionProgreso = (() => {
       c.appendChild(el('div', 'pg-plan-titulo', tx('progreso.plan.etapas.' + primera.tipo, { kg: kgCorto(primera.pesoHasta) })));
       if (primera.hasta) c.appendChild(el('div', 'pg-plan-para', tx('progreso.plan.para', { fecha: u.fechaLarga(primera.hasta) })));
       if (pl.hitos.length) c.appendChild(pista(d, pl));
-      const clave = pl.comoVienes === 'atrasado' && !pl.fechaATuRitmo ? 'atrasadoSinFecha' : pl.comoVienes;
-      c.appendChild(el('p', 'pg-texto pg-plan-como', tx('progreso.plan.comoVienes.' + clave, {
-        ritmo: pl.ritmo == null ? '' : conSigno(pl.ritmo, 2), plan: conSigno(pl.ritmoPlan, 2), fecha: pl.fechaATuRitmo ? u.fechaCorta(pl.fechaATuRitmo) : '',
-      })));
+      const clave = pl.comoVienes === 'atrasado' && !pl.fechasATuRitmo ? 'atrasadoSinFecha' : pl.comoVienes === 'seMueve' && sinDeficit() ? 'seMueveSinAjustar' : pl.comoVienes;
+      c.appendChild(el('p', 'pg-texto pg-plan-como', tx('progreso.plan.comoVienes.' + clave, Object.assign({
+        ritmo: pl.ritmo == null ? '' : conSigno(pl.ritmo, 2), plan: conSigno(pl.ritmoPlan, 2), cuando: pl.fechasATuRitmo ? cuandoDe(pl.fechasATuRitmo) : '',
+      }, pl.rango ? margenDe(pl.rango) : {}))));
+      // Cómo sale el ritmo con su margen, y de cuánto es (para aprobar el 80 %).
+      if (pl.rango) {
+        const [enlace, texto] = desplegable('ritmo', tx('progreso.plan.comoSeCalcula'));
+        c.append(enlace, texto);
+      }
       // Al llegar, el mantenimiento; y lo que sigue, si lo dijo en el cuestionario (perfil.despues).
       if (pl.etapas[1]) {
         const luego = pl.etapas[2] ? (pl.etapas[2].tipo === 'subir' ? 'musculo' : 'mantener') : 'eliges';
         c.appendChild(el('p', 'pg-texto pg-plan-despues', `${tx('progreso.plan.despues.' + primera.tipo, { n: Progreso.SEMANAS_DE_MANTENIMIENTO })} ${tx('progreso.plan.luego.' + luego, { kg: kgCorto(primera.pesoHasta) })}`));
       }
-      c.appendChild(el('p', 'pg-nota pg-plan-ajusta', tx('progreso.plan.ajusta')));
+      if (!sinDeficit()) c.appendChild(el('p', 'pg-nota pg-plan-ajusta', tx('progreso.plan.ajusta')));
       const cambiar = boton('cm-enlace pg-plan-cambiar' + (s.cambiarPlan ? ' abierto' : ''), `<span>${tx('progreso.plan.cambiar')}</span>${icono('adelante')}`, () => { s.cambiarPlan = !s.cambiarPlan; pintar(); });
       cambiar.setAttribute('aria-expanded', String(s.cambiarPlan));
       c.appendChild(cambiar);
@@ -143,9 +181,9 @@ const SeccionProgreso = (() => {
         const pt = el('div', 'pg-pista-punto ' + x.clase);
         pt.style.left = left.toFixed(1) + '%';
         pt.appendChild(el('i'));
-        // Hoy y la meta siempre llevan su etiqueta; los demás, si no pisan la anterior.
+        // Hoy y la meta siempre llevan su etiqueta; los demás, si no pisan la anterior ni la de la meta.
         const siempre = x.clase === 'hoy' || x.clase === 'meta';
-        if (siempre || left - ultima >= 17) {
+        if (siempre || (left - ultima >= 17 && pos(meta.fecha) - left >= 17)) {
           pt.append(el('small', null, x.etq), el('b', null, numero(x.kg, 1)));
           ultima = left;
         }
@@ -228,7 +266,8 @@ const SeccionProgreso = (() => {
       const c = carta('pg-peso', tx('progreso.peso'), boton('cm-anotar', `${icono('mas')}<span>${tx('progreso.registrar')}</span>`, () => opciones.registrarPeso()));
       const cifra = el('div', 'pg-cifra');
       cifra.append(el('b', null, numero(d.pesoHoy, 1)), el('span', null, ` kg · ${tx('progreso.tendencia')}`));
-      c.append(cifra, el('div', 'pg-nota', tx('progreso.cambios', { semana: conSigno(d.cambio7, 1), mes: conSigno(d.cambio30, 1) })));
+      const cambio = (x) => (x == null ? '—' : conSigno(x, 1));
+      c.append(cifra, el('div', 'pg-nota', tx('progreso.cambios', { semana: cambio(d.cambio7), mes: cambio(d.cambio30) })));
       // Cuánto se mira para atrás: un mes, tres o todo (con lo que haya).
       const rangos = segmento(RANGOS.map(([k]) => [k, tx('progreso.graficos.rangos.' + k)]), s.rango, (v) => { s.rango = v; pintar(); });
       rangos.classList.add('pg-rangos');
@@ -307,7 +346,8 @@ const SeccionProgreso = (() => {
       });
       c.appendChild(lista);
       const ratio = Cuerpo.cinturaAltura(d.ultimasMedidas.cintura, d.perfil.alturaCm);
-      if (ratio != null) c.appendChild(el('p', 'pg-texto', tx('progreso.cinturaAltura', { n: numero(ratio, 2) })));
+      // Con un IMC de 35 o más, NICE no la usa: no se muestra.
+      if (ratio != null && Cuerpo.claseDeCintura(ratio, d.pesoHoy / (d.perfil.alturaCm / 100) ** 2)) c.appendChild(el('p', 'pg-texto', tx('progreso.cinturaAltura', { n: numero(ratio, 2) })));
       const ultima = Datos.MEDIDAS[Datos.MEDIDAS.length - 1];
       if (ultima) c.appendChild(el('div', 'pg-nota tenue', tx('progreso.medidasDel', { fecha: u.fechaCorta(ultima.fecha) })));
       return c;
@@ -381,9 +421,9 @@ const SeccionProgreso = (() => {
       };
       const p = d.perfil;
       const alternar = (cual) => () => { s.abierto = s.abierto === cual ? null : cual; pintar(); };
-      fila('progreso.objetivo', tx('progreso.objetivos.' + p.objetivo), alternar('objetivo'), s.abierto === 'objetivo');
+      fila('progreso.objetivo', tx('progreso.objetivos.' + objetivoDe(p)), alternar('objetivo'), s.abierto === 'objetivo');
       if (s.abierto === 'objetivo') lista.appendChild(eleccionObjetivo(p));
-      if (p.objetivo !== 'mantener') {
+      if (objetivoDe(p) !== 'mantener') {
         const metaKg = p.pesoMeta;
         fila('progreso.pesoMeta', metaKg ? `${numero(metaKg, metaKg % 1 ? 1 : 0)} kg` : tx('progreso.sinPesoMeta'), alternar('pesoMeta'), s.abierto === 'pesoMeta');
         if (s.abierto === 'pesoMeta') lista.appendChild(eleccionPesoMeta(p));
@@ -426,8 +466,9 @@ const SeccionProgreso = (() => {
     // plazoConFecha, las cuentas de la app), con qué tan exigente es y lo que conviene saber.
     function plazoActual(d) {
       const p = d.perfil;
-      if (p.objetivo === 'mantener' || !p.pesoMeta) return null;
-      const e = { hoy: Datos.HOY, pesoKg: d.pesoHoy, pesoMeta: p.pesoMeta, sexo: p.sexo, edad: Number(Datos.HOY.slice(0, 4)) - p.nacimiento, gasto: d.gasto, entrenaFuerza: s.fuerza };
+      if (objetivoDe(p) === 'mantener' || !p.pesoMeta) return null;
+      // Lo que falta, desde el peso de hoy sin el atraso de la tendencia (spec/estudio/progreso.md, A5).
+      const e = { hoy: Datos.HOY, pesoKg: nivelDe(d), pesoMeta: p.pesoMeta, sexo: p.sexo, edad: Number(Datos.HOY.slice(0, 4)) - p.nacimiento, gasto: d.gasto, entrenaFuerza: s.fuerza };
       if (Progreso.direccionDe(e.pesoKg, e.pesoMeta) !== p.objetivo) return null;
       if (s.porFecha && s.fecha) return Progreso.plazoConFecha(e, s.fecha);
       return Progreso.plazoConRitmo(e, s.pct ?? Math.abs(Metas.RITMOS[p.objetivo][p.ritmo]));
@@ -501,8 +542,8 @@ const SeccionProgreso = (() => {
         fechaElegida.textContent = u.fechaCorta(x.fecha);
         marcas.querySelectorAll('.pg-marca').forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(Number(b.dataset.pct) - x.pct) < 0.005)));
         avisos.innerHTML = '';
-        // El del piso sin fecha se ve como el del piso.
-        x.avisos.forEach((a) => avisos.appendChild(el('p', 'pg-aviso pg-aviso-' + (a === 'pisoNoLlega' ? 'piso' : a), tx('progreso.plazo.avisos.' + a, {
+        // El del piso sin fecha y el del piso al final se ven como el del piso.
+        x.avisos.forEach((a) => avisos.appendChild(el('p', 'pg-aviso pg-aviso-' + (a === 'pisoNoLlega' || a === 'pisoAlFinal' ? 'piso' : a), tx('progreso.plazo.avisos.' + a, {
           piso: numero(Metas.pisoDe(p.sexo)), fecha: x.fechaConPiso ? u.fechaCorta(x.fechaConPiso) : '',
         }))));
         if (filaPlazo) filaPlazo.querySelector('b').textContent = valorDelPlazo(x);
@@ -640,9 +681,12 @@ const SeccionProgreso = (() => {
       repartir(si) { s.reparte = si; pintar(); },
       // Lo de la estrategia vive dentro del plan: abrirlo abre «Cambiar el plan».
       abrir(cual) { s.abierto = cual; if (['objetivo', 'pesoMeta', 'plazo'].includes(cual)) s.cambiarPlan = true; pintar(); },
-      // El ritmo y el plazo: { pct } o { semanas } (la fecha desde hoy), y si entrena fuerza.
+      // El ritmo y el plazo: { pct } o { semanas } (la fecha desde hoy), y si entrena fuerza. Con { datos: n }
+      // solo, como si se pesara hace n semanas (null, todas), sin abrir el plazo.
       plazo(o = {}) {
         const { semanas, fuerza } = o;
+        if ('datos' in o) s.semanasDeDatos = o.datos;
+        if (Object.keys(o).every((k) => k === 'datos')) { pintar(); return; }
         s.abierto = 'plazo';
         s.cambiarPlan = true;
         if ('pct' in o) { s.pct = o.pct; s.porFecha = false; }

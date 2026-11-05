@@ -7,7 +7,8 @@
 import type { Comida } from './comidas';
 import { MET_DE_LA_SESION, MET_EN_REPOSO } from './entrenamiento';
 import { SEMANA, type DiaSemana } from './fechas';
-import { ajusteDiario, gastoBasal, KCAL_POR_KG, macrosConProteina, MAYORIA_DE_EDAD, NIVELES, pesoMinimoSano, pisoDe, RANGOS_DEL_CUESTIONARIO, RITMOS, ritmoPermitido, type Actividad, type Estilo, type Macros, type Objetivo, type Ritmo, type Sexo } from './metas';
+import { ajusteDiario, estiloPermitido, gastoBasal, KCAL_POR_KG, macrosConProteina, MAYORIA_DE_EDAD, NIVELES, pesoMinimoSano, pisoDe, RANGOS_DEL_CUESTIONARIO, RITMOS, ritmoPermitido, type Actividad, type Eleccion, type Estilo, type Macros, type Objetivo, type Ritmo, type Sexo } from './metas';
+import { bordeDe } from './progreso';
 
 const aDiez = (n: number) => Math.round(n / 10) * 10;
 const limitar = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
@@ -46,7 +47,10 @@ export function usaGrasa(r: { edad: number; sexo: Sexo; sinDeficit?: boolean; gr
 
 export const masaMagra = (pesoKg: number, grasaPct: number) => pesoKg * (1 - grasaPct / 100);
 
-/** Katch-McArdle: el gasto en reposo por la masa magra, en kcal por día. */
+/**
+ * El gasto en reposo por la masa magra, en kcal por día: la ecuación de Cunningham (1991), que se conoce como
+ * de Katch-McArdle.
+ */
 export const katchMcArdle = (masaMagraKg: number) => 370 + 21.6 * masaMagraKg;
 
 // ------------------------------------------------------------ la vida diaria y el entrenamiento
@@ -55,21 +59,24 @@ export type Movimiento = 'sentado' | 'dePie' | 'fisico';
 export const MOVIMIENTOS: readonly Movimiento[] = ['sentado', 'dePie', 'fisico'];
 
 /**
- * Lo que la vida diaria multiplica el gasto en reposo, sin el entrenamiento (va aparte). Son las
- * categorías del IOM (2005): la vida de todos los días sola llega a 1,39; con un rato de caminar, de 1,4
- * a 1,59, y con un trabajo de esfuerzo, de 1,6 a 1,89. Sentado es el «poco» de siempre.
+ * Lo que la vida diaria multiplica el gasto en reposo, sin el entrenamiento (va aparte). Sentado es el
+ * «poco» de siempre. Salieron de las categorías del IOM (2005); las vigentes son las de NASEM (2023), de
+ * 8.600 mediciones con agua doblemente marcada, con el «inactivo» de 1,00 a 1,53, y con su ecuación
+ * sentado queda bajo (spec/estudio/metas.md, D1, para decidir).
  */
 export const FACTORES_DE_VIDA: Record<Movimiento, number> = { sentado: NIVELES.poco, dePie: 1.5, fisico: 1.7 };
 
 /**
  * Los pasos de Salud sugieren la respuesta (Tudor-Locke y Bassett, 2004): menos de 5.000 por día es
- * sedentario y más de 10.000, activo. Los pasos de correr también cuentan: es una sugerencia.
+ * sedentario y más de 10.000, activo. Con correr, bici, nadar o partidos, esos pasos ya están en el
+ * entrenamiento: la sugerencia no pasa de «de pie», para no contarlos dos veces.
  */
 export const PASOS_SENTADO = 5000;
 export const PASOS_MUCHO = 10000;
-export function movimientoPorPasos(pasosPorDia: number | null | undefined): Movimiento | null {
+export function movimientoPorPasos(pasosPorDia: number | null | undefined, deportes: readonly Deporte[] = []): Movimiento | null {
   if (pasosPorDia == null || !(pasosPorDia > 0)) return null;
-  return pasosPorDia < PASOS_SENTADO ? 'sentado' : pasosPorDia <= PASOS_MUCHO ? 'dePie' : 'fisico';
+  const sugerido: Movimiento = pasosPorDia < PASOS_SENTADO ? 'sentado' : pasosPorDia <= PASOS_MUCHO ? 'dePie' : 'fisico';
+  return sugerido === 'fisico' && deportes.some((d) => d === 'resistencia' || d === 'equipo') ? 'dePie' : sugerido;
 }
 
 /**
@@ -235,6 +242,14 @@ export function ajusteDeRecomposicion(r: PersonaDelCuestionario): number {
   return usaGrasa(r) && r.grasa!.pct >= GRASA_ALTA[r.sexo] ? ajusteDiario('bajar', 'suave', r.pesoKg) : 0;
 }
 
+/**
+ * Sin pesas, el músculo no tiene con qué crecer (Barakat y otros, 2020; Murphy y Koehler, 2022): recomponer
+ * queda casi como mantener, y se avisa. null si no hace falta.
+ */
+export function avisoDeRecomposicion(r: { objetivo: ObjetivoDicho; sinDeficit?: boolean; entreno: Pick<EntrenoDicho, 'tipos'> | null }): 'sinFuerza' | null {
+  return objetivoUsado(r) === 'recomponer' && !entrenaFuerza(r.entreno) ? 'sinFuerza' : null;
+}
+
 /** Hace cuánto entrena con pesas: menos de un año, de 1 a 3 o más de 3. */
 export type Experiencia = 'principiante' | 'intermedio' | 'avanzado';
 
@@ -334,17 +349,37 @@ export type MetaDelCuestionario = {
 };
 
 /**
- * El ritmo de la fecha elegida que usa la meta, en % del peso por semana: antes de los 18, bajando, una fecha
- * tampoco pide más que el ritmo recomendado (como ritmoPermitido). El plan que se muestra llega a ese ritmo.
- * Sin fecha, o si no cambia el peso, null.
+ * El ritmo de la fecha elegida que usa la meta, en % del peso por semana. Bajando, una fecha nunca pide más
+ * que el borde de lo exigente (el 1 %, sin pasar de un kilo por semana ni de 1.000 kcal por día) y, antes de
+ * los 18, más que el recomendado (como ritmoPermitido). El plan que se muestra llega a ese ritmo, más tarde
+ * que la fecha. Sin fecha, o si no cambia el peso, null.
  */
-export function pctDelPlan(r: Pick<Respuestas, 'edad' | 'objetivo' | 'pct' | 'sinDeficit'>): number | null {
+export function pctDelPlan(r: Pick<Respuestas, 'edad' | 'objetivo' | 'pct' | 'sinDeficit' | 'pesoKg'>): number | null {
   const objetivo = objetivoGuardado(objetivoUsado(r));
   if (objetivo === 'mantener' || r.pct == null || !(r.pct > 0)) return null;
-  return r.edad < MAYORIA_DE_EDAD && objetivo === 'bajar' ? Math.min(r.pct, Math.abs(RITMOS.bajar.recomendado)) : r.pct;
+  if (objetivo === 'subir') return r.pct;
+  const menor = r.edad < MAYORIA_DE_EDAD ? Math.abs(RITMOS.bajar.recomendado) : Infinity;
+  return Math.min(r.pct, bordeDe('bajar', 'exigente', r.pesoKg), menor);
 }
 
-/** El gasto más o menos el ritmo, nunca debajo del piso ni en déficit si no se puede, con la proteína del nivel elegido. */
+/**
+ * Lo que el control de cada semana tiene que seguir de lo elegido (metas.ts, Eleccion): la proteína del nivel,
+ * por kilo de hoy, y el ritmo con su signo, el de la fecha o el de la recomposición con mucha grasa. Con eso,
+ * metaPara da la misma meta que metaDelCuestionario; se guarda con el perfil cuando la app tenga el cuestionario nuevo.
+ */
+export function eleccionDe(r: Respuestas): Eleccion {
+  const usado = objetivoUsado(r);
+  const pct = pctDelPlan(r);
+  const conSigno = usado === 'recomponer' ? (ajusteDeRecomposicion(r) < 0 ? RITMOS.bajar.suave : null)
+    : pct === null ? null : objetivoGuardado(usado) === 'bajar' ? -pct : pct;
+  return { proteinaPorKg: proteinaDelNivel(r) / r.pesoKg, pct: conSigno };
+}
+
+/**
+ * El gasto más o menos el ritmo, nunca debajo del piso ni en déficit si no se puede, con la proteína del
+ * nivel elegido; sin déficit, sin keto (metas.ts, estiloPermitido). Con los cuidados marcados, la de
+ * cuidados.ts (metaDelCuestionarioConCuidados).
+ */
 export function metaDelCuestionario(r: Respuestas): MetaDelCuestionario {
   const gasto = gastoEstimado(r);
   const usado = objetivoUsado(r);
@@ -357,7 +392,7 @@ export function metaDelCuestionario(r: Respuestas): MetaDelCuestionario {
   const kcal = Math.max(pisoDe(r.sexo), aDiez(gasto.total + ajuste));
   return {
     gasto,
-    metas: macrosConProteina(kcal, r.pesoKg, proteinaDelNivel(r), r.estilo),
+    metas: macrosConProteina(kcal, r.pesoKg, proteinaDelNivel(r), estiloPermitido(r.estilo ?? 'equilibrada', r.sinDeficit)),
     objetivo,
     recomponer: usado === 'recomponer',
     actividad: actividadEquivalente(gasto),

@@ -70,8 +70,8 @@ export async function estimarAnoche(a: Almacen, ahora = new Date()): Promise<voi
   const iso = (minutos: number) => new Date(instanteDe(clave, zona, Math.round(minutos))).toISOString();
   const hora = {
     dormirse: iso(est.dormirse), despertar: iso(est.despertar), origen: 'estimada' as const, confianza: est.confianza,
-    // Con la ventana tranquila: cuando contestes «¿Dormiste de X a Y?», de ahí se aprende lo tuyo.
-    estimada: { dormirse: iso(est.dormirse), despertar: iso(est.despertar), quieto: { desde: iso(est.quieto.desde), hasta: iso(est.quieto.hasta) } },
+    // Con la ventana tranquila: cuando contestes «¿Dormiste de X a Y?», de ahí se aprende lo tuyo. Y el margen del rango, para calibrarlo.
+    estimada: { dormirse: iso(est.dormirse), despertar: iso(est.despertar), quieto: { desde: iso(est.quieto.desde), hasta: iso(est.quieto.hasta) }, margen: est.margen },
   };
   // Solo si cambió: cada cambio sube a la cuenta.
   if (antes?.hora && antes.hora.dormirse === hora.dormirse && antes.hora.despertar === hora.despertar && antes.hora.confianza === hora.confianza) return;

@@ -4,9 +4,9 @@
 // - Las comidas guardadas y las recetas, con la receta nueva (con su peso final).
 // - Crear un alimento: a mano, o con lo que se leyó de la etiqueta.
 
-import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type AutoCapitalize, type KeyboardTypeOptions, type TextInputInstance } from 'react-native';
+import Animated, { FadeIn, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
 
 import { baseDeAlimentos } from '@/comida/base';
 import type { Etiqueta as EtiquetaLeida, Leidos } from '@/comida/etiqueta';
@@ -16,8 +16,9 @@ import type { Sistema } from '@/dominio/cantidades';
 import { escalar, gramosDe, itemDeAlimento, itemRapido, sumarValores, valoresDeReceta, type AlimentoPropio, type Item, type Receta, type Valores } from '@/dominio/registros';
 import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { ENTRA_PANEL, SALE_PANEL } from '../movimiento';
+import { ENTRA_FUNDIDO, ENTRA_PANEL, SALE_FUNDIDO, SALE_PANEL } from '../movimiento';
 import { ACOMODA } from '../tarjetas';
+import { useCampoALaVista } from '../teclado';
 import { Boton, Etiqueta, Icono, MACROS, Punto } from './comunes';
 import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma } from './datos';
 
@@ -45,9 +46,33 @@ const paraCampo = (n: number) => String(Math.round(n * 10) / 10).replace('.', id
 /** Las kcal que dan los macros (4/4/9): las de un campo de kcal vacío. */
 const kcalDeMacros = (proteina: number, carbohidratos: number, grasas: number) => proteina * 4 + carbohidratos * 4 + grasas * 9;
 
+type Cadena = { registrar: (campo: RefObject<TextInputInstance | null>) => () => void; siguiente: (campo: RefObject<TextInputInstance | null>) => void };
+/** Los campos de un panel, en el orden en que se ven: «Siguiente» pasa al que sigue. */
+const CamposDelPanel = createContext<Cadena | null>(null);
+
 export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number }) {
+  const reducido = useReducedMotion();
+  // El panel ya se achica con el teclado (el lugar de abajo de la hoja crece con él): el scroll solo
+  // trae el campo que quedó tapado por su borde.
+  const scroll = useAnimatedRef<ScrollView>();
+  const scrollY = useScrollOffset(scroll);
+  useCampoALaVista(scroll, scrollY);
+  const campos = useRef<RefObject<TextInputInstance | null>[]>([]);
+  const cadena = useMemo<Cadena>(() => ({
+    registrar: (campo) => {
+      campos.current.push(campo);
+      return () => {
+        campos.current = campos.current.filter((x) => x !== campo);
+      };
+    },
+    siguiente: (campo) => {
+      const otro = campos.current[campos.current.indexOf(campo) + 1];
+      if (otro?.current) otro.current.focus();
+      else campo.current?.blur();
+    },
+  }), []);
   return (
-    <Animated.View entering={ENTRA_PANEL} exiting={SALE_PANEL} style={estilos.panel}>
+    <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={estilos.panel}>
       <View style={estilos.cabeza}>
         <Pressable onPress={alAtras} style={estilos.atras} accessibilityRole="button" accessibilityLabel={t('comun.atras')}>
           <Icono nombre="chevron.left" tam={18} peso="medium" />
@@ -55,24 +80,54 @@ export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: strin
         <Text style={estilos.titulo} numberOfLines={1}>{titulo}</Text>
         <View style={estilos.lugar} />
       </View>
-      <ScrollView style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoAdentro} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
-        {children}
-      </ScrollView>
+      <CamposDelPanel.Provider value={cadena}>
+        <ScrollView
+          ref={scroll}
+          style={estilos.cuerpo}
+          contentContainerStyle={estilos.cuerpoAdentro}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
+      </CamposDelPanel.Provider>
       {pie && <View style={[estilos.pie, { paddingBottom: abajo + 6 }]}>{pie}</View>}
     </Animated.View>
   );
 }
 
-function Campo({ etiqueta, valor, alCambiar, unidad, texto, ejemplo, mal }: { etiqueta: string; valor: string; alCambiar: (v: string) => void; unidad?: string; texto?: boolean; ejemplo?: string; mal?: boolean }) {
+type PropsDeCampo = {
+  etiqueta: string; valor: string; alCambiar: (v: string) => void; unidad?: string; texto?: boolean; ejemplo?: string; mal?: boolean;
+  /** Lo que manda la tecla de retorno («Listo»); sin esto, «Siguiente» pasa al campo que sigue. */
+  alListo?: () => void;
+  largo?: number; mayusculas?: AutoCapitalize; corrector?: boolean; teclado?: KeyboardTypeOptions; enfocado?: boolean;
+};
+
+function Campo({ etiqueta, valor, alCambiar, unidad, texto, ejemplo, mal, alListo, largo, mayusculas, corrector, teclado, enfocado }: PropsDeCampo) {
+  const cadena = useContext(CamposDelPanel);
+  const campo = useRef<TextInputInstance>(null);
+  useEffect(() => cadena?.registrar(campo), [cadena]);
   return (
     <View style={[estilos.campo, !unidad && estilos.campoTexto]}>
       <Text style={estilos.campoEtiqueta}>{etiqueta}</Text>
       <TextInput
+        ref={campo}
         value={valor}
         onChangeText={alCambiar}
         placeholder={ejemplo ?? (texto ? t('comida.opcional') : '0')}
         placeholderTextColor="rgba(239, 230, 207, 0.35)"
-        keyboardType={texto ? 'default' : 'decimal-pad'}
+        keyboardType={teclado ?? (texto ? 'default' : 'decimal-pad')}
+        maxLength={largo ?? (texto ? 80 : 8)}
+        autoCapitalize={mayusculas}
+        autoCorrect={corrector}
+        autoFocus={enfocado}
+        returnKeyType={alListo ? 'done' : 'next'}
+        // Al pasar al que sigue, el teclado no baja y vuelve a subir.
+        submitBehavior={alListo ? 'blurAndSubmit' : 'submit'}
+        onSubmitEditing={alListo ?? (() => cadena?.siguiente(campo))}
+        selectionColor={colores.oro}
         style={[estilos.campoEntrada, !unidad && estilos.campoEntradaTexto, mal && estilos.campoMal]}
         accessibilityLabel={etiqueta}
       />
@@ -147,7 +202,7 @@ export function PanelGuardarComo({ alGuardar, alAtras, abajo }: { alGuardar: (no
   const [nombre, setNombre] = useState('');
   return (
     <Panel titulo={t('comida.guardarComo.titulo')} alAtras={alAtras} abajo={abajo} pie={<Boton tipo="grande" texto={t('comun.guardar')} desactivado={!nombre.trim()} alTocar={() => alGuardar(nombre.trim())} />}>
-      <Campo etiqueta={t('comida.nombre')} valor={nombre} alCambiar={setNombre} texto ejemplo={t('comida.guardarComo.ejemplo')} />
+      <Campo etiqueta={t('comida.nombre')} valor={nombre} alCambiar={setNombre} texto ejemplo={t('comida.guardarComo.ejemplo')} enfocado alListo={() => { if (nombre.trim()) alGuardar(nombre.trim()); }} />
     </Panel>
   );
 }
@@ -186,7 +241,7 @@ export function PanelRapida({ directo, comida, inicial, alSumar, alQuitar, alAtr
       }
     >
       <Campo etiqueta={t('comida.nombre')} valor={c.nombre} alCambiar={poner('nombre')} texto />
-      <Campo etiqueta={t('comida.kcal')} valor={c.kcal} alCambiar={poner('kcal')} unidad="kcal" ejemplo={!c.kcal && kcal ? numero(Math.round(kcal)) : '0'} />
+      <Campo etiqueta={t('comida.kcal')} valor={c.kcal} alCambiar={poner('kcal')} unidad="kcal" ejemplo={!c.kcal && kcal ? numero(Math.round(kcal)) : '0'} enfocado={!inicial} />
       <Campo etiqueta={t('comida.proteina')} valor={c.proteina} alCambiar={poner('proteina')} unidad="g" />
       <Campo etiqueta={t('comida.carbohidratos')} valor={c.carbohidratos} alCambiar={poner('carbohidratos')} unidad="g" />
       <Campo etiqueta={t('comida.grasas')} valor={c.grasas} alCambiar={poner('grasas')} unidad="g" />
@@ -257,7 +312,7 @@ export function PanelReceta(p: {
   return (
     <Panel titulo={b.nombre.trim() || t('comida.receta.nueva')} alAtras={p.alAtras} abajo={p.abajo} pie={<Boton tipo="grande" texto={t('comida.receta.guardar')} desactivado={!listo} alTocar={p.alGuardar} />}>
       <Text style={estilos.texto}>{t('comida.receta.texto')}</Text>
-      <Campo etiqueta={t('comida.nombre')} valor={b.nombre} alCambiar={(nombre) => p.alCambiar({ ...b, nombre })} texto ejemplo={t('comida.receta.nombreEjemplo')} />
+      <Campo etiqueta={t('comida.nombre')} valor={b.nombre} alCambiar={(nombre) => p.alCambiar({ ...b, nombre })} texto ejemplo={t('comida.receta.nombreEjemplo')} enfocado={!b.nombre && !b.items.length} />
       <Campo etiqueta={t('comida.receta.porciones')} valor={b.porciones} alCambiar={(x) => p.alCambiar({ ...b, porciones: x })} unidad={t('comida.receta.porcionesUnidad')} />
       <Campo etiqueta={t('comida.receta.pesoFinal')} valor={b.pesoFinal} alCambiar={(x) => p.alCambiar({ ...b, pesoFinal: x })} unidad="g" ejemplo={t('comida.opcional')} />
       <Etiqueta estilo={estilos.separador}>{t('comida.receta.ingredientes')}</Etiqueta>
@@ -343,6 +398,7 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
         value={texto}
         onChangeText={setTexto}
         multiline
+        maxLength={6000}
         placeholder={t('comida.receta.ejemplo')}
         placeholderTextColor="rgba(239, 230, 207, 0.32)"
         style={estilos.pegar}
@@ -440,9 +496,9 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
     <Panel titulo={inicial.leida ? t('comida.etiquetaRevision.titulo') : t('comida.crear.titulo')} alAtras={alAtras} abajo={abajo} pie={<Boton tipo="grande" texto={t('comida.crear.guardar')} desactivado={!c.nombre.trim() || !gramos} alTocar={guardar} />}>
       <Text style={estilos.texto}>{inicial.leida ? t('comida.etiquetaRevision.leida') : t('comida.crear.texto')}</Text>
       {avisos.map((a) => <Text key={a} style={estilos.aviso}>{t(`comida.etiquetaRevision.${a}`)}</Text>)}
-      <Campo etiqueta={t('comida.nombre')} valor={c.nombre} alCambiar={poner('nombre')} texto ejemplo={t('comida.etiquetaRevision.nombreEjemplo')} />
-      <Campo etiqueta={t('comida.etiquetaRevision.marca')} valor={c.marca} alCambiar={poner('marca')} texto />
-      <Campo etiqueta={t('comida.crear.porcionNombre')} valor={c.porcionNombre} alCambiar={poner('porcionNombre')} texto ejemplo={t('comida.crear.porcionEjemplo')} />
+      <Campo etiqueta={t('comida.nombre')} valor={c.nombre} alCambiar={poner('nombre')} texto ejemplo={t('comida.etiquetaRevision.nombreEjemplo')} enfocado={!inicial.nombre && !inicial.leida} />
+      <Campo etiqueta={t('comida.etiquetaRevision.marca')} valor={c.marca} alCambiar={poner('marca')} texto largo={60} mayusculas="words" corrector={false} />
+      <Campo etiqueta={t('comida.crear.porcionNombre')} valor={c.porcionNombre} alCambiar={poner('porcionNombre')} texto largo={40} mayusculas="none" ejemplo={t('comida.crear.porcionEjemplo')} />
       <Campo etiqueta={t('comida.etiquetaRevision.porcion')} valor={c.porcionGramos} alCambiar={poner('porcionGramos')} unidad="g" mal={avisos.includes('sinPorcion')} />
       <Etiqueta estilo={estilos.separador}>{t('comida.etiquetaRevision.porPorcion')}</Etiqueta>
       {CAMPOS_DE_ETIQUETA.map(([k, unidad]) => (
@@ -456,7 +512,7 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
           mal={k === 'kcal' && avisos.includes('noCierra')}
         />
       ))}
-      <Campo etiqueta={t('comida.crear.codigo')} valor={c.codigo} alCambiar={poner('codigo')} unidad="#" />
+      <Campo etiqueta={t('comida.crear.codigo')} valor={c.codigo} alCambiar={poner('codigo')} unidad="#" teclado="number-pad" largo={14} />
     </Panel>
   );
 }

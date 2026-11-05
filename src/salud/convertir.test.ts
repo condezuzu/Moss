@@ -1,7 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { armarNoches } from '@/dominio/sueno';
-import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, tipoDeFuente, ultimaPorDia, type DeSalud } from './convertir';
+import { CORTE_DE_FABRICA } from '@/dominio/fechas';
+import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, tipoDeFuente, ultimaPorDia, type DeSalud } from './convertir';
 
 const reloj = { source: { name: 'Apple Watch de Ana', bundleIdentifier: 'com.apple.health.A1' }, productType: 'Watch7,3' };
 const iphone = { source: { name: 'iPhone de Ana', bundleIdentifier: 'com.apple.health.B2' }, productType: 'iPhone15,2' };
@@ -64,5 +65,15 @@ describe('de Salud al dominio', () => {
     const p = (quantity: number, desde: Date, hasta: Date): DeSalud => ({ quantity, startDate: desde, endDate: hasta, sourceRevision: iphone });
     expect(pasosDe([p(84, local('2026-10-22', '07:02'), local('2026-10-22', '07:04')), p(0, local('2026-10-22', '03:00'), local('2026-10-22', '03:01'))]))
       .toEqual([{ desde: local('2026-10-22', '07:02').getTime(), hasta: local('2026-10-22', '07:04').getTime(), pasos: 84 }]);
+  });
+
+  it('el peso de cada día es el primero, el de la mañana; lo de antes de la hora de corte es del día anterior', () => {
+    const kg = (quantity: number, desde: Date): DeSalud => ({ quantity, startDate: desde, endDate: desde, sourceRevision: iphone });
+    // Pesarse por la mañana y por la noche: queda el de la mañana, aunque llegue después.
+    expect(primeraPorDia([kg(71.2, local('2026-10-22', '22:30')), kg(70.0, local('2026-10-22', '07:05'))], CORTE_DE_FABRICA)).toEqual(new Map([['2026-10-22', 70.0]]));
+    // A las 2, antes del corte de las 4: es del día anterior.
+    expect(primeraPorDia([kg(70.4, local('2026-10-23', '02:00')), kg(70.1, local('2026-10-23', '07:00'))], CORTE_DE_FABRICA))
+      .toEqual(new Map([['2026-10-22', 70.4], ['2026-10-23', 70.1]]));
+    expect(primeraPorDia([kg(Number.NaN, local('2026-10-22', '07:00'))], CORTE_DE_FABRICA)).toEqual(new Map());
   });
 });

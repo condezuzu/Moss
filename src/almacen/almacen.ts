@@ -27,7 +27,7 @@ import {
 } from '@/dominio/registros';
 import { aplicar, ganadores, type Datos } from './mezclar';
 import type { LoDeSalud } from '@/salud/convertir';
-import type { Cara, NochePropia } from '@/dominio/sueno';
+import { NECESIDADES, type Cara, type NochePropia } from '@/dominio/sueno';
 import { LATENCIAS } from '@/dominio/sinReloj';
 import type { AvisoDeHabito, Avisos } from '@/dominio/avisos';
 import { DE_COMIDA, NOMBRE, nombreDeAjuste, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
@@ -106,6 +106,11 @@ export type Estado = MapasDeComida & {
    * null: Moss usa lo que aprende de tus respuestas (aprenderPersonal). Queda en el teléfono.
    */
   latencia: number | null;
+  /**
+   * Lo que necesitás dormir, en minutos, si lo elegiste («Necesito dormir»); sin elegir, null: vale lo de tu
+   * edad (necesidad, en sueno.ts, que además lo deja dentro de lo de tu edad). Queda en el teléfono.
+   */
+  necesidad: number | null;
   /** Para que cada usuario reciba su propio orden del catálogo. */
   semilla: string;
   /** Sube con cada cambio. */
@@ -153,6 +158,9 @@ const CORTE = 'corte';
 const LATENCIA = 'latencia';
 /** La latencia elegida; sin elegir (o lo que no es una de las que se eligen), null. */
 const latenciaDe = (x: string | undefined): number | null => LATENCIAS.find((l) => String(l) === x) ?? null;
+const NECESIDAD = 'necesidad';
+/** Lo que necesitás dormir, elegido; sin elegir (o lo que no es una de las que se eligen), null. */
+const necesidadDe = (x: string | undefined): number | null => NECESIDADES.find((m) => String(m) === x) ?? null;
 /** El corte guardado; lo que no es uno de los que se eligen, el de fábrica. */
 const corteDe = (x: string | undefined): number => CORTES.find((c) => String(c) === x) ?? CORTE_DE_FABRICA;
 /** Tres días de uso alcanzan para la noche de anoche. */
@@ -298,7 +306,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -404,7 +412,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
     revisarControl();
   }
 
@@ -838,10 +846,11 @@ export function crearAlmacen(op: Opciones) {
     ponerSalud(s: LoDeSalud) {
       const nuevos: Peso[] = [];
       for (const [fecha, kg] of s.pesos) {
-        if (kg >= 20 && kg <= 400 && !estado.pesos.some((p) => p.fecha === fecha)) nuevos.push({ fecha, kg: Math.round(kg * 10) / 10, origen: 'salud', momento: momento() });
+        // El de Salud es el primero del día (convertir.ts): uno de Salud guardado con otro valor se corrige; uno a mano o de Ascent, no.
+        if (kg >= 20 && kg <= 400 && !estado.pesos.some((p) => p.fecha === fecha && (p.origen !== 'salud' || p.kg === Math.round(kg * 10) / 10))) nuevos.push({ fecha, kg: Math.round(kg * 10) / 10, origen: 'salud', momento: momento() });
       }
       for (const peso of nuevos) guardar((r) => r.guardarPeso(peso));
-      const pesos = nuevos.length ? [...estado.pesos, ...nuevos].sort(porFecha((p) => p.fecha)) : estado.pesos;
+      const pesos = nuevos.length ? [...estado.pesos.filter((p) => !nuevos.some((n) => n.fecha === p.fecha)), ...nuevos].sort(porFecha((p) => p.fecha)) : estado.pesos;
       // Los valores se ven en las etiquetas del cielo: si cambian, se rearma.
       cambiar({ salud: s, pesos }, JSON.stringify(estado.salud?.valores ?? null) !== JSON.stringify(s.valores));
       rehacerElControlCon(nuevos);
@@ -1034,6 +1043,12 @@ export function crearAlmacen(op: Opciones) {
       const elegida = minutos === null ? null : latenciaDe(String(minutos));
       guardar((r) => r.guardarAjuste(LATENCIA, elegida === null ? '' : String(elegida)));
       cambiar({ latencia: elegida }, false);
+    },
+    /** «Necesito dormir»: los minutos elegidos (NECESIDADES, en sueno.ts), o null para lo de tu edad. */
+    ponerNecesidad(minutos: number | null) {
+      const elegida = minutos === null ? null : necesidadDe(String(minutos));
+      guardar((r) => r.guardarAjuste(NECESIDAD, elegida === null ? '' : String(elegida)));
+      cambiar({ necesidad: elegida }, false);
     },
     ponerNumeros(numeros: boolean) {
       guardar((r) => r.guardarAjuste(NUMEROS, numeros ? '' : 'no'));
