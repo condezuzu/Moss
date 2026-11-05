@@ -500,7 +500,11 @@ sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
   en Ascent** (lo propusiste el 5/11/2026; en la galería, para aprobar, con los siete rangos
   y los cinco planetas del 4 en la sección 7): `src/dominio/rangoDeAscent.ts` es el espejo de
   la regla de Ascent (el rango sale de la racha; en el 4, el planeta cambia cada cuatro días)
-  y la sección toma su paleta. Sin vincular, Luna (`#7E8CA8`, `#C4C2BA`). Para usarlo, Moss
+  y la sección toma su paleta. Sin vincular, el polvo: el rango 1, el día uno de Ascent (hasta el
+  5/11/2026 era la luna, que no te gustó). El polvo se dibuja como la nebulosa de Ascent
+  (`crearPolvo` y el modo 5 de su motor) pero a la manera de Moss: gas violeta y azul pegado al
+  horizonte, con vetas, calles oscuras y una estrella que nace, y granos que derivan despacio
+  por la curva, sin las cortinas de aurora. Para usarlo, Moss
   tiene que leer la racha de Ascent con su función del vínculo (nunca una de Ascent): **falta
   decidir** si se lee.
 - **El color:** solo lo que pone el límite hoy y lo cargado (terracota `#CB8569`); lo

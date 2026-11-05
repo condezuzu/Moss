@@ -92,6 +92,12 @@ const SeccionAscent = (() => {
 .as-horizonte.negro i { background: #020204; box-shadow: 0 0 36px rgba(167, 139, 250, 0.24), 0 0 10px rgba(255, 106, 0, 0.4); }
 .as-horizonte i > svg.entra { animation: as-cuerpo-entra 0.8s ease both; }
 @keyframes as-cuerpo-entra { from { opacity: 0; } }
+/* El polvo: los granos derivan despacio por la curva (su dibujo gira alrededor del centro del horizonte) y la
+   estrella que nace respira. */
+.as-horizonte i > svg.as-polvo-granos { animation: as-cuerpo-entra 0.8s ease both, as-polvo-deriva 80s ease-in-out -40s infinite alternate; will-change: transform; }
+@keyframes as-polvo-deriva { from { transform: rotate(-1deg); } to { transform: rotate(1deg); } }
+.as-polvo-estrella { transform-box: fill-box; transform-origin: center; animation: as-polvo-respira 7s ease-in-out infinite; }
+@keyframes as-polvo-respira { 50% { transform: scale(1.14); opacity: 0.82; } }
 .as-horizonte i::before { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 50%; background: conic-gradient(from -40deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 0deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.86) 24deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.34) 46deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.04) 70deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0) 320deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 360deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); }
 .tel.hoja-anim > .as-horizonte { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .tel.con-hoja > .as-horizonte { transform: scale(0.93); transform-origin: 50% 0; }
@@ -430,7 +436,7 @@ const SeccionAscent = (() => {
 .as-hoja-vincular:disabled, .as-hoja-entrar:disabled { opacity: 0.6; cursor: default; }
 .as-hoja-form.as-entra, .as-parte.as-entra { animation: as-entra 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .as-entrada-pista svg, .as-volver-abajo svg, .as-horizonte i > svg.entra { animation: none; }
+  .as-entrada-pista svg, .as-volver-abajo svg, .as-horizonte i > svg.entra, .as-polvo-estrella { animation: none; }
   .as-invita.entra, .as-contenido.as-entra, .as-hoja-form.as-entra, .as-parte.as-entra, .as-hoy-titulo.as-cambia, .as-hoy-texto.as-cambia, .as-decide-valor.as-cambia, .as-foco.as-cambia, .as-cuerpo-detalle.as-cambia { animation-duration: 0.01s; }
   .as-chica-orbita, .as-chica-luna, .as-orbita, .as-luna, .as-luna-halo, .as-arriba .as-marca, .as-entrada-pista, .as-orbe-arco, .as-orbe-luna, .as-orbe-pista,
   .as-decide-icono, .as-decide-valor, .as-escala-lleno, .as-escala-punto, .as-chip, .as-chip i, .as-m, .as-alcance-ruido, .as-alcance-nivel, .as-barras i,
@@ -535,19 +541,187 @@ const SeccionAscent = (() => {
         + '<path d="M -130 205 A 720 80 0 0 0 1310 205" fill="none" stroke="#cbbd96" stroke-width="7" opacity="0.4"/>',
     },
   };
+  // ------------------------------------------------------------ el polvo (rango 1): una nebulosa
+  // Lo pediste el 5/11/2026: la luna no te gustaba y el polvo estelar de Ascent sí. Como allá (crearPolvo en
+  // compartido/motor/escena.ts y el modo 5 de shaders.ts), no son puntos sueltos sino gas, con vetas finas (la curva
+  // de nivel del ruido), calles oscuras que lo tapan y un adentro cálido con una estrella que nace; encima, granos en
+  // grumos y en hebras. A la manera de Moss: pegado al borde del horizonte, sin las cortinas de aurora, con sus
+  // colores y los granos derivando despacio por la curva.
+  const PALETA_DEL_POLVO = ['#1d1436', '#2b3d8c', '#8a6bd6', '#eaa572'];
+  const ESTRELLA_DEL_POLVO = { x: 606, y: 30 };
+  const LUZ_DEL_POLVO = 1.3;
+  const suave = (a, b, x) => {
+    const t = clamp((x - a) / (b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  const aRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const entre = (a, b, f) => a.map((v, i) => v + (b[i] - v) * f);
+  /** Ruido de valor con semilla, sumado en octavas: entre 0 y 1, alrededor de 0,5. */
+  function ruidoCon(semilla) {
+    const r = azar(semilla);
+    const T = 256;
+    const tabla = Float32Array.from({ length: T * T }, () => r());
+    const s = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+    const en = (i, j) => tabla[(j & (T - 1)) * T + (i & (T - 1))];
+    const ruido = (x, y) => {
+      const i = Math.floor(x);
+      const j = Math.floor(y);
+      const u = s(x - i);
+      const v = s(y - j);
+      const a = en(i, j), b = en(i + 1, j), c = en(i, j + 1), d = en(i + 1, j + 1);
+      return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+    };
+    return (x, y, octavas = 4) => {
+      let suma = 0;
+      let amp = 0.5;
+      let f = 1;
+      let total = 0;
+      for (let k = 0; k < octavas; k++) {
+        suma += ruido(x * f + k * 17.3, y * f - k * 9.1) * amp;
+        total += amp;
+        amp *= 0.5;
+        f *= 2.03;
+      }
+      return suma / total;
+    };
+  }
+  let gasDelPolvo = null;
+  /**
+   * El gas, pintado una sola vez en un lienzo y puesto como imagen: el ruido por píxel es caro para un dibujo que se
+   * mueve con el dedo. Solo la franja que se ve del horizonte (x de 256 a 776, y hasta 150).
+   */
+  function gasDelHorizonte() {
+    if (gasDelPolvo) return gasDelPolvo;
+    const f = ruidoCon(7);
+    const pal = PALETA_DEL_POLVO.map(aRgb);
+    const X0 = 256, W = 520, H = 150;
+    const lienzo = document.createElement('canvas');
+    lienzo.width = W;
+    lienzo.height = H;
+    const ctx = lienzo.getContext('2d');
+    const img = ctx.createImageData(W, H);
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        const x = X0 + i + 0.5;
+        const y = j + 0.5;
+        const d = y - limbo(x);
+        if (d < 0) continue;
+        // El ruido, estirado a lo largo del horizonte y torcido por otro ruido: así parece gas y no manchas.
+        const qx = x / 150;
+        const qy = y / 93;
+        const wx = f(qx * 1.1 + 3.1, qy * 1.1) * 1.4;
+        const wy = f(qx * 1.1, qy * 1.1 + 7.7) * 1.4;
+        const base = f(qx * 1.6 + wx, qy * 1.6 + wy);
+        const fino = f(qx * 6.5 + wx * 0.6, qy * 6.5 + wy * 0.6, 3);
+        const hueco = suave(0.34, 0.52, f(qx * 1.3 + 11, qy * 1.3 + 11, 3));
+        const masa = suave(0.36, 0.62, base) * (0.45 + 0.75 * fino) * hueco;
+        // Las vetas: un filo fino donde el ruido cruza la mitad. Las calles tapan el gas de atrás.
+        const veta = (1 - Math.min(1, Math.abs(f(qx * 2.6 + wx * 0.9, qy * 2.6 + wy * 0.9) - 0.5) / 0.1)) ** 3;
+        const calle = suave(0.52, 0.64, f(qx * 3.2 - 7, qy * 3.2 + 3, 3));
+        const densidad = (masa * 0.55 + veta * masa * 1.7 + veta * 0.18) * (1 - calle * 0.75);
+        const capa = suave(0, 5, d) * (1 - suave(46, 140, d));
+        const nucleo = suave(1, 0, Math.hypot((x - ESTRELLA_DEL_POLVO.x) / 170, (y - ESTRELLA_DEL_POLVO.y) / 78));
+        const bordes = suave(258, 330, x) * suave(774, 716, x);
+        // Del violeta profundo al azul; el lila en los grumos finos y el cálido solo cerca de la estrella.
+        let color = entre(pal[0], pal[1], suave(0.38, 0.62, base));
+        color = entre(color, pal[2], suave(0.5, 0.72, fino));
+        color = entre(color, pal[3], Math.min(1, densidad) ** 2 * nucleo * 0.9);
+        const resplandor = nucleo * nucleo * 0.2 * capa * bordes;
+        color = entre(color, entre(pal[2], pal[3], 0.55), Math.min(1, resplandor * 2.5));
+        // Más luz de la que pide el dibujo solo: la sección le pone encima su velo para leer (.tel .ascent).
+        const k = (j * W + i) * 4;
+        img.data[k] = Math.min(255, color[0] * LUZ_DEL_POLVO);
+        img.data[k + 1] = Math.min(255, color[1] * LUZ_DEL_POLVO);
+        img.data[k + 2] = Math.min(255, color[2] * LUZ_DEL_POLVO);
+        img.data[k + 3] = Math.round(Math.min(0.95, (densidad * capa * (0.6 + 0.9 * nucleo) * bordes + resplandor) * 1.5) * 255);
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    gasDelPolvo = `<image href="${lienzo.toDataURL()}" x="${X0}" y="0" width="${W}" height="${H}" preserveAspectRatio="none"/>`;
+    return gasDelPolvo;
+  }
+  /** Los granos: en grumos, en hebras casi a lo largo del borde y sueltos; los grandes, con su halo. */
+  function granosDelPolvo() {
+    const r = azar(41);
+    const pal = PALETA_DEL_POLVO.map(aRgb);
+    const blanco = aRgb('#eef0ff');
+    const rgb = (c) => `rgb(${c.map(Math.round).join(',')})`;
+    const distancia = (a, b) => a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0);
+    const masParecido = (c) => pal.map((p, i) => [distancia(p, c), i]).sort((a, b) => a[0] - b[0])[0][1];
+    const grumos = Array.from({ length: 5 }, () => {
+      const x = 380 + r() * 360;
+      return { x, y: limbo(x) + 10 + r() * 34, rx: 26 + r() * 46, ry: 8 + r() * 14 };
+    });
+    const hebras = Array.from({ length: 3 }, () => {
+      const x = 360 + r() * 330;
+      const y = limbo(x) + 8 + r() * 30;
+      const a = Math.atan((x - MEDIO) / Math.sqrt(MEDIO * MEDIO - (x - MEDIO) ** 2)) + (r() - 0.5) * 0.5;
+      const largo = 110 + r() * 120;
+      return { x, y, dx: Math.cos(a) * largo, dy: Math.sin(a) * largo, largo };
+    });
+    let salida = '';
+    for (let k = 0; k < 460; k++) {
+      let x;
+      let y;
+      const dado = r();
+      if (dado < 0.28) {
+        const h = hebras[Math.floor(r() * hebras.length)];
+        const t = r();
+        const desvio = (r() - 0.5) * 7;
+        x = h.x + h.dx * t - (h.dy / h.largo) * desvio;
+        y = h.y + h.dy * t + (h.dx / h.largo) * desvio;
+      } else if (dado < 0.7) {
+        const g = grumos[Math.floor(r() * grumos.length)];
+        const a = r() * Math.PI * 2;
+        const dd = Math.pow(r(), 0.7);
+        x = g.x + Math.cos(a) * dd * g.rx;
+        y = g.y + Math.sin(a) * dd * g.ry;
+      } else {
+        x = 270 + r() * 490;
+        y = limbo(x) + 2 + Math.pow(r(), 1.5) * 120;
+      }
+      const d = y - limbo(x);
+      if (d < 1 || d > 135) continue;
+      const grande = r() < 0.045;
+      const radio = grande ? 1.5 + r() * 1.3 : 0.45 + Math.pow(r(), 2.2) * 1.15;
+      const brillo = grande ? 0.85 + r() * 0.15 : 0.18 + Math.pow(r(), 2) * 0.62;
+      const t = r();
+      const c = t < 0.42 ? entre(pal[1], pal[2], r())
+        : t < 0.72 ? entre(pal[2], pal[0], r() * 0.5)
+          : t < 0.96 ? entre(pal[3], pal[2], r() * 0.5)
+            : entre(blanco, pal[2], 0.3 + r() * 0.3);
+      // Más tenues lejos del borde: se hunden en el horizonte.
+      const op = Math.min(1, brillo * (1 - suave(40, 135, d) * 0.6) * LUZ_DEL_POLVO);
+      const cx = x.toFixed(1);
+      const cy = y.toFixed(1);
+      salida += grande
+        ? `<circle cx="${cx}" cy="${cy}" r="${(radio * 4).toFixed(1)}" fill="url(#asGrano${masParecido(c)})" opacity="${(op * 0.5).toFixed(3)}"/><circle cx="${cx}" cy="${cy}" r="${radio.toFixed(2)}" fill="${rgb(entre(c, blanco, 0.35))}" opacity="${op.toFixed(2)}"/>`
+        : `<circle cx="${cx}" cy="${cy}" r="${radio.toFixed(2)}" fill="${rgb(c)}" opacity="${op.toFixed(2)}"/>`;
+    }
+    return salida;
+  }
+  /** El polvo: el gas con la estrella que nace y, en su propio dibujo, los granos, que derivan (CSS). */
+  function polvoDelHorizonte() {
+    const { x, y } = ESTRELLA_DEL_POLVO;
+    const halos = PALETA_DEL_POLVO.map((h, i) => `<radialGradient id="asGrano${i}"><stop offset="0" stop-color="${h}" stop-opacity="0.9"/><stop offset="0.35" stop-color="${h}" stop-opacity="0.25"/><stop offset="1" stop-color="${h}" stop-opacity="0"/></radialGradient>`).join('');
+    const naciente = '<radialGradient id="asNaciente"><stop offset="0" stop-color="#fff1dc" stop-opacity="0.9"/><stop offset="0.14" stop-color="#f3b47c" stop-opacity="0.5"/><stop offset="0.45" stop-color="#c47a58" stop-opacity="0.14"/><stop offset="1" stop-color="#8a6bd6" stop-opacity="0"/></radialGradient>';
+    return `<svg class="entra" viewBox="0 0 ${LADO} ${LADO}" aria-hidden="true"><defs>${naciente}</defs>${gasDelHorizonte()}<g class="as-polvo-estrella"><circle cx="${x}" cy="${y}" r="36" fill="url(#asNaciente)"/><circle cx="${x}" cy="${y}" r="2.2" fill="#fff4e4"/></g></svg>`
+      + `<svg class="entra as-polvo-granos" viewBox="0 0 ${LADO} ${LADO}" aria-hidden="true"><defs>${halos}</defs>${granosDelPolvo()}</svg>`;
+  }
+
   /** El horizonte de un rango (RangoDeAscent.cuerpoDeAscent): el cuerpo, sus colores y sus detalles. */
   function cuerpoDelHorizonte(c) {
     const p = c.paleta;
     let defs = '';
     let dentro = '';
-    if (c.cuerpo === 'polvo' || c.cuerpo === 'galaxia') {
-      // Partículas: el polvo, desparramado; la galaxia, en una banda con su centro brillante.
-      const galaxia = c.cuerpo === 'galaxia';
-      defs = `<radialGradient id="asNube" cx="0.5" cy="0.04" r="0.3"><stop offset="0" stop-color="${galaxia ? '#e9dcff' : p.claro}" stop-opacity="${galaxia ? 0.55 : 0.3}"/><stop offset="0.4" stop-color="${p.principal}" stop-opacity="${galaxia ? 0.32 : 0.18}"/><stop offset="1" stop-color="${p.apagado}" stop-opacity="0"/></radialGradient>`;
+    if (c.cuerpo === 'polvo') return polvoDelHorizonte();
+    if (c.cuerpo === 'galaxia') {
+      // Partículas en una banda, con su centro brillante.
+      defs = `<radialGradient id="asNube" cx="0.5" cy="0.04" r="0.3"><stop offset="0" stop-color="#e9dcff" stop-opacity="0.55"/><stop offset="0.4" stop-color="${p.principal}" stop-opacity="0.32"/><stop offset="1" stop-color="${p.apagado}" stop-opacity="0"/></radialGradient>`;
       dentro = `<circle cx="${MEDIO}" cy="${MEDIO}" r="${MEDIO}" fill="url(#asNube)"/>`
-        + puntos(galaxia ? 420 : 300, galaxia ? 77 : 11, galaxia ? 3.2 : 1.4).map(({ x, y, a, b }) => {
+        + puntos(420, 77, 3.2).map(({ x, y, a, b }) => {
           const color = b < 0.5 ? p.claro : b < 0.8 ? p.principal : '#ffffff';
-          return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(0.6 + a * (galaxia ? 1.5 : 1.2)).toFixed(2)}" fill="${color}" opacity="${(0.25 + a * 0.6).toFixed(2)}"/>`;
+          return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(0.6 + a * 1.5).toFixed(2)}" fill="${color}" opacity="${(0.25 + a * 0.6).toFixed(2)}"/>`;
         }).join('');
     } else if (c.cuerpo === 'agujeroNegro') {
       // Negro absoluto; el naranja, solo en una línea fina pegada al borde (el disco), y el violeta afuera.
@@ -636,7 +810,8 @@ const SeccionAscent = (() => {
     // ------------------------------------------------------------ tu rango en Ascent (5/11, para aprobar)
     // La sección toma el color de tu rango y su horizonte es tu cuerpo, como en Ascent, donde cada rango tiñe la
     // app entera. El nombre del rango no se dice: allá «se ve, no se lee». La marca no cambia: es el ícono.
-    let rangoActual = { rango: 3, planeta: null };
+    // Sin vincular, y al abrir la galería, el polvo: el día uno de Ascent (antes, la luna, que no te gustaba).
+    let rangoActual = { rango: 1, planeta: null };
     function ponerRango(n, planeta) {
       const c = RangoDeAscent.cuerpoDeAscent(RangoDeAscent.rachaDe(n, planeta || null));
       rangoActual = { rango: c.rango, planeta: c.planeta };

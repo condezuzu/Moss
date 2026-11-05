@@ -2277,7 +2277,7 @@ const pasos = {
     await ascent('bajar', 'fondo');
     await pagina.waitForTimeout(500);
     await foto('rango-7-abajo');
-    await ascent('rango', [3, null]);
+    await ascent('rango', [1, null]);
     await ascent('subir');
     await ascent('cerrar');
     await pagina.waitForTimeout(900);
