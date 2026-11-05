@@ -24,16 +24,12 @@ const SeccionAscent = (() => {
   const DORMIR = 23 * 60 + 30;
   // Lo que tarda en dormirse: lo que aprendió Moss, como dice Perfil › Avisos.
   const LATENCIA = 20;
-  // El cuerpo de tu rango, arriba: cuánto cuelga del borde cuando se lo ve entero; cuánto más arriba queda lejos de
-  // arriba de todo (asoma apenas: del polvo, su luz) y cuánto hay que subir para verlo entero; y qué parte del camino
-  // de la sección hace al bajar (está más lejos).
-  const CUERPO_PX = 104;
-  const CUERPO_LEJOS = 80;
-  const NUBE_LEJOS = 210;
-  const CUERPO_SUBIR = 520;
+  // El cuerpo de tu rango, de fondo: cuánto se corre con todo el scroll (poco: está lejos) y qué parte del camino
+  // de la sección hace al bajar.
+  const CUERPO_CORRE = 70;
   const CUERPO_SIGUE = 0.38;
   // El polvo, una nube, en píxeles: su tamaño, cuánto se estira y, cuando se la ve entera, dónde queda su centro.
-  const NUBE = { ancho: 560, alto: 380, rx: 230, ry: 150, centro: 150 };
+  const NUBE = { ancho: 560, alto: 380, rx: 230, ry: 150, centro: 120 };
   // El borde del planeta que asoma arriba de Progreso: cuánto se ve quieto y cuánto baja con el dedo.
   const TECHO_PX = 7;
   const TECHO_BAJA = 150;
@@ -61,10 +57,9 @@ const SeccionAscent = (() => {
 .tel .ascent { visibility: hidden; color: var(--as-tinta); will-change: transform; background: linear-gradient(180deg, rgba(5, 6, 10, 0.5) 0, rgba(5, 6, 10, 0.42) 240px, rgba(5, 6, 10, 0.6) 100%); }
 .tel .ascent::after { display: none; }
 .as-velo { position: absolute; inset: 0; z-index: 2; background: #020308; opacity: 0; pointer-events: none; }
-/* Se llega por abajo: lo principal queda pegado abajo y, arriba, el cielo con tu cuerpo (el espacio de arriba es
-   para verlo entero). Lo que sube se apaga contra el borde de arriba. */
-.as-scroll { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + ${CUERPO_PX + 120}px) 22px calc(var(--pestanas) + 14px); scrollbar-width: none; touch-action: pan-y;
-  -webkit-mask-image: linear-gradient(180deg, transparent calc(var(--arriba) - 14px), #000 calc(var(--arriba) + 36px)); mask-image: linear-gradient(180deg, transparent calc(var(--arriba) - 14px), #000 calc(var(--arriba) + 36px)); }
+/* Se llega por abajo: lo principal queda pegado abajo. Sin máscara (como las otras secciones): una máscara en lo que
+   se mueve obliga a repintarlo en cada cuadro del scroll. */
+.as-scroll { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + 6px) 22px calc(var(--pestanas) + 14px); scrollbar-width: none; touch-action: pan-y; }
 .as-scroll::-webkit-scrollbar { display: none; }
 .as-contenido { margin-top: auto; }
 
@@ -90,31 +85,42 @@ const SeccionAscent = (() => {
 .as-chica-orbita { fill: none; stroke: #a7adb7; stroke-width: 1; stroke-linecap: round; }
 .as-chica-luna { fill: #f4f6f9; }
 
-/* El cuerpo de tu rango en Ascent, arriba, de fondo (lo pediste el 5/11/2026: subes desde Progreso y lo encuentras
-   arriba, como las estrellas). El polvo es una nube; los demás cuelgan del borde de arriba, como el borde que asoma
-   en Progreso (el mismo dibujo del horizonte, dado vuelta: cuerpoDelHorizonte). Va detrás del texto, baja con la
-   sección más despacio que ella (está más lejos) y se acerca a medida que subes. El borde y el resplandor toman el
-   color del rango. */
-.as-cielo { position: absolute; left: 0; right: 0; top: 0; height: 62%; z-index: 0; overflow: hidden; pointer-events: none; --baja: 0px; --cerca: 1; }
-.as-cielo i { opacity: var(--cerca); }
-.as-cielo i { position: absolute; left: 62%; top: ${CUERPO_PX - 944}px; width: 944px; height: 944px; margin-left: -472px; border-radius: 50%; overflow: hidden; background: #05060a; box-shadow: 0 0 30px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.15), inset 0 18px 44px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.07); transform: translateY(var(--baja)) rotate(180deg); will-change: transform; transition: box-shadow 0.8s; }
+/* El cuerpo de tu rango en Ascent, de fondo, como las estrellas (lo pediste el 5/11/2026: «quiero que acá sea el
+   fondo»): detrás del texto, arriba a la derecha y cortado por el borde, como en Ascent. El polvo es una nube; los
+   demás, el mismo dibujo del horizonte (cuerpoDelHorizonte), girado para que su luz mire a la pantalla. Baja con la
+   sección más despacio que ella y se corre apenas con el scroll: está lejos. El borde y el resplandor toman el color
+   del rango. */
+.as-cielo { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; --baja: 0px; }
+.as-cielo i { position: absolute; right: -140px; top: -110px; width: 360px; height: 360px; border-radius: 50%; overflow: hidden; background: #05060a; box-shadow: 0 0 30px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.15), inset 0 18px 44px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.07); opacity: 0.5; transform: translateY(var(--baja)) rotate(225deg); will-change: transform; transition: box-shadow 0.8s; }
 .as-cielo i > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 /* Sin el trazo de los íconos de la galería (.pagina-app svg). */
 .pagina-app .as-cielo svg { stroke: none !important; fill: none; }
 /* La galaxia no tiene cuerpo: son partículas, y el borde apenas se insinúa. */
 .as-cielo.sin-cuerpo i { background: transparent; box-shadow: none; }
 .as-cielo.sin-cuerpo i::before { opacity: 0.3; }
-.as-cielo.brilla i { box-shadow: 0 0 46px rgba(242, 194, 48, 0.42), 0 0 120px rgba(239, 159, 39, 0.2), inset 0 18px 44px rgba(255, 241, 194, 0.2); }
+.as-cielo.brilla i { opacity: 0.32; box-shadow: 0 0 46px rgba(242, 194, 48, 0.42), 0 0 120px rgba(239, 159, 39, 0.2), inset 0 18px 44px rgba(255, 241, 194, 0.2); }
 .as-cielo.negro i { background: #020204; box-shadow: 0 0 36px rgba(167, 139, 250, 0.24), 0 0 10px rgba(255, 106, 0, 0.4); }
 .as-cielo i > svg.entra { animation: as-cuerpo-entra 0.8s ease both; }
 @keyframes as-cuerpo-entra { from { opacity: 0; } }
 .as-cielo i::before { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 50%; background: conic-gradient(from -40deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 0deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.86) 24deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.34) 46deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.04) 70deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0) 320deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 360deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); }
-/* El polvo: una nube, sin círculo ni borde, con la estrella que nace en el medio, que respira; los granos derivan. */
-.as-cielo.polvo i { left: 66%; top: ${NUBE.centro - NUBE.alto / 2}px; width: ${NUBE.ancho}px; height: ${NUBE.alto}px; margin-left: -${NUBE.ancho / 2}px; border-radius: 0; overflow: visible; background: none; box-shadow: none; transform: translateY(var(--baja)); }
+/* El polvo: una nube, sin círculo ni borde. El gas gira alrededor de la estrella y late; los granos giran más rápido
+   (están más cerca), en tres grupos que titilan a destiempo; la estrella respira. Todo con transform y opacity, en
+   capas propias: nada se vuelve a pintar. */
+.as-cielo.polvo i { right: auto; left: 70%; top: ${NUBE.centro - NUBE.alto / 2}px; width: ${NUBE.ancho}px; height: ${NUBE.alto}px; margin-left: -${NUBE.ancho / 2}px; border-radius: 0; overflow: visible; background: none; box-shadow: none; opacity: 0.72; transform: translateY(var(--baja)); }
 .as-cielo.polvo i::before { display: none; }
-.as-cielo i > svg.as-polvo-granos { animation: as-cuerpo-entra 0.8s ease both, as-polvo-deriva 60s ease-in-out -30s infinite alternate; will-change: transform; }
-@keyframes as-polvo-deriva { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
-.as-polvo-estrella { position: absolute; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 241, 220, 0.85) 0, rgba(243, 180, 124, 0.42) 12%, rgba(196, 122, 88, 0.12) 34%, rgba(196, 122, 88, 0) 68%); mix-blend-mode: screen; animation: as-polvo-respira 7s ease-in-out infinite; will-change: transform, opacity; }
+/* El latido va en una capa y el giro en otra: las dos con transform (rotate y scale sueltos no siempre van por la
+   placa de video, y entonces se repinta todo en cada cuadro). */
+.as-polvo-late { position: absolute; inset: 0; animation: as-polvo-late 16s ease-in-out infinite alternate; will-change: transform; }
+.as-polvo-late > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.as-polvo-gas { animation: as-cuerpo-entra 0.8s ease both, as-polvo-gira 320s linear infinite; will-change: transform; }
+.as-polvo-granos { position: absolute; inset: 0; animation: as-cuerpo-entra 0.8s ease both, as-polvo-gira 200s linear infinite; will-change: transform; }
+.as-polvo-granos > svg { position: absolute; inset: 0; width: 100%; height: 100%; animation: as-polvo-titila 5s ease-in-out infinite alternate; will-change: opacity; }
+.as-polvo-granos > svg:nth-child(2) { animation-duration: 7s; animation-delay: -3s; }
+.as-polvo-granos > svg:nth-child(3) { animation-duration: 9.5s; animation-delay: -6s; }
+@keyframes as-polvo-gira { to { transform: rotate(360deg); } }
+@keyframes as-polvo-late { from { transform: scale(1); } to { transform: scale(1.06); } }
+@keyframes as-polvo-titila { from { opacity: 1; } to { opacity: 0.35; } }
+.as-polvo-estrella { position: absolute; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 241, 220, 0.85) 0, rgba(250, 196, 146, 0.42) 12%, rgba(255, 206, 168, 0.12) 34%, rgba(255, 206, 168, 0) 68%); animation: as-polvo-respira 7s ease-in-out infinite; will-change: transform, opacity; }
 .as-polvo-estrella::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #fff4e4; }
 @keyframes as-polvo-respira { 50% { transform: scale(1.14); opacity: 0.82; } }
 
@@ -273,6 +279,8 @@ const SeccionAscent = (() => {
 .as-m.cargado { fill: var(--as-lejos); }
 .as-m.trabajado { fill: var(--as-claro); fill-opacity: 0.85; }
 .as-m.elegido { stroke: var(--as-tinta); stroke-width: 1.3; }
+/* Las líneas que definen cada músculo por dentro (la gota del vasto interno, las dos cabezas): no se tocan. */
+.as-linea { fill: none; stroke: #07080d; stroke-width: 0.7; stroke-linecap: round; pointer-events: none; }
 .as-cuerpo-detalle { min-height: 38px; margin: 10px 0 0; font: 400 13px/1.4 var(--texto); color: var(--as-tinta); text-align: center; text-wrap: balance; }
 .as-leyenda-cuerpo { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font: 400 11px/1 var(--texto); color: var(--as-sub); }
 .as-leyenda-cuerpo span { display: inline-flex; align-items: center; gap: 6px; }
@@ -455,7 +463,7 @@ const SeccionAscent = (() => {
 .as-hoja-vincular:disabled, .as-hoja-entrar:disabled { opacity: 0.6; cursor: default; }
 .as-hoja-form.as-entra, .as-parte.as-entra { animation: as-entra 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .as-entrada-pista svg, .as-volver-abajo svg, .as-cielo i > svg.entra, .as-polvo-estrella { animation: none; }
+  .as-entrada-pista svg, .as-volver-abajo svg, .as-cielo i > svg.entra, .as-polvo-late, .as-polvo-gas, .as-polvo-granos, .as-polvo-granos > svg, .as-polvo-estrella { animation: none; }
   .as-invita.entra, .as-contenido.as-entra, .as-hoja-form.as-entra, .as-parte.as-entra, .as-hoy-titulo.as-cambia, .as-hoy-texto.as-cambia, .as-decide-valor.as-cambia, .as-foco.as-cambia, .as-cuerpo-detalle.as-cambia { animation-duration: 0.01s; }
   .as-chica-orbita, .as-chica-luna, .as-orbita, .as-luna, .as-luna-halo, .as-base > .as-marca, .as-entrada-pista, .as-orbe-arco, .as-orbe-luna, .as-orbe-pista,
   .as-decide-icono, .as-decide-valor, .as-escala-lleno, .as-escala-punto, .as-chip, .as-chip i, .as-m, .as-alcance-ruido, .as-alcance-nivel, .as-barras i,
@@ -664,7 +672,7 @@ const SeccionAscent = (() => {
     return gasDeLaNube;
   }
   let granosDeLaNube = null;
-  /** Los granos: en grumos, en hebras que cruzan la nube y sueltos; los grandes, con su halo. */
+  /** Los granos, en tres grupos que titilan a destiempo: en grumos, en hebras que cruzan la nube y sueltos; los grandes, con su halo. */
   function granosDelPolvo() {
     if (granosDeLaNube) return granosDeLaNube;
     const r = azar(41);
@@ -685,7 +693,7 @@ const SeccionAscent = (() => {
       const largo = 90 + r() * 160;
       return { x: o.x - (Math.cos(a) * largo) / 2, y: o.y - (Math.sin(a) * largo) / 2, dx: Math.cos(a) * largo, dy: Math.sin(a) * largo, largo };
     });
-    let salida = '';
+    const grupos = ['', '', ''];
     for (let k = 0; k < 420; k++) {
       let x;
       let y;
@@ -721,12 +729,12 @@ const SeccionAscent = (() => {
       const op = Math.min(1, brillo * dentro * LUZ_DEL_POLVO);
       const cx = x.toFixed(1);
       const cy = y.toFixed(1);
-      salida += grande
+      grupos[k % 3] += grande
         ? `<circle cx="${cx}" cy="${cy}" r="${(radio * 4).toFixed(1)}" fill="url(#asGrano${masParecido(c)})" opacity="${(op * 0.5).toFixed(3)}"/><circle cx="${cx}" cy="${cy}" r="${radio.toFixed(2)}" fill="${rgb(entre(c, blanco, 0.35))}" opacity="${op.toFixed(2)}"/>`
         : `<circle cx="${cx}" cy="${cy}" r="${radio.toFixed(2)}" fill="${rgb(c)}" opacity="${op.toFixed(2)}"/>`;
     }
-    granosDeLaNube = salida;
-    return salida;
+    granosDeLaNube = grupos;
+    return grupos;
   }
   /**
    * El polvo: el gas y los granos en dos dibujos (los granos derivan sin repintar el gas) y la estrella que nace, que
@@ -734,8 +742,11 @@ const SeccionAscent = (() => {
    */
   function nubeDelPolvo() {
     const halos = PALETA_DEL_POLVO.map((h, i) => `<radialGradient id="asGrano${i}"><stop offset="0" stop-color="${h}" stop-opacity="0.9"/><stop offset="0.35" stop-color="${h}" stop-opacity="0.25"/><stop offset="1" stop-color="${h}" stop-opacity="0"/></radialGradient>`).join('');
-    return `<svg class="entra" viewBox="0 0 ${NUBE.ancho} ${NUBE.alto}" aria-hidden="true">${gasDelPolvo()}</svg>`
-      + `<svg class="entra as-polvo-granos" viewBox="0 0 ${NUBE.ancho} ${NUBE.alto}" aria-hidden="true"><defs>${halos}</defs>${granosDelPolvo()}</svg>`
+    // Todo gira alrededor de la estrella; los degradés de los halos van una sola vez.
+    const centro = `transform-origin: ${ESTRELLA_DEL_POLVO.x}px ${ESTRELLA_DEL_POLVO.y}px`;
+    const granos = granosDelPolvo().map((g, i) => `<svg viewBox="0 0 ${NUBE.ancho} ${NUBE.alto}" aria-hidden="true">${i ? '' : `<defs>${halos}</defs>`}${g}</svg>`).join('');
+    return `<div class="as-polvo-late" style="${centro}"><svg class="entra as-polvo-gas" style="${centro}" viewBox="0 0 ${NUBE.ancho} ${NUBE.alto}" aria-hidden="true">${gasDelPolvo()}</svg></div>`
+      + `<div class="entra as-polvo-granos" style="${centro}">${granos}</div>`
       + `<b class="as-polvo-estrella" style="left: ${ESTRELLA_DEL_POLVO.x}px; top: ${ESTRELLA_DEL_POLVO.y}px"></b>`;
   }
 
@@ -1512,62 +1523,104 @@ const SeccionAscent = (() => {
     }
 
     // ------------------------------------------------------------ el cuerpo dibujado
-    // De frente y de espalda (cada figura de 100 × 190; la de espalda, corrida 110): cada músculo es una o dos
-    // formas con su clase. Lo que no es músculo va apenas, para que se lea un cuerpo.
-    const LADOS = (izq, der) => [izq, der];
-    const BRAZO = (cy, rx, ry, x, giro) => LADOS(`<ellipse cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${giro} ${x} ${cy})"/>`, `<ellipse cx="${100 - x}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${-giro} ${100 - x} ${cy})"/>`);
-    const PIERNA = (cy, rx, ry, x, giro = 0) => LADOS(`<ellipse cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${giro} ${x} ${cy})"/>`, `<ellipse cx="${100 - x}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${-giro} ${100 - x} ${cy})"/>`);
-    const FORMAS = {
-      frente: {
-        hombros: BRAZO(40, 7.4, 5.8, 32, -24),
-        pecho: LADOS('<path d="M50 35 C44 33.5 38 35 36.2 40 C35.2 46 39 51 45 51 C48 51 50 49.6 50 47 Z"/>', '<path d="M50 35 C56 33.5 62 35 63.8 40 C64.8 46 61 51 55 51 C52 51 50 49.6 50 47 Z"/>'),
-        biceps: BRAZO(58, 4.3, 9.6, 28.6, 10),
-        antebrazos: BRAZO(81, 3.6, 10.6, 24, 12),
-        abdomen: ['<rect x="43.6" y="53" width="12.8" height="31" rx="5"/>'],
-        aductores: PIERNA(104, 2.6, 9, 46.6),
-        cuadriceps: PIERNA(117, 6.6, 19, 41, 4),
-        pantorrillas: PIERNA(160, 4.2, 13.5, 41.5),
-      },
-      espalda: {
-        espaldaAlta: ['<path d="M36 34 Q50 30 64 34 L62.4 48 Q58 60 50 63 Q42 60 37.6 48 Z"/>'],
-        hombros: BRAZO(40, 7.4, 5.8, 32, -24),
-        triceps: BRAZO(58, 4.3, 9.6, 28.6, 10),
-        antebrazos: BRAZO(81, 3.6, 10.6, 24, 12),
-        espaldaBaja: ['<rect x="43" y="64" width="14" height="17" rx="4.5"/>'],
-        gluteos: PIERNA(91, 6.8, 7.6, 44),
-        isquios: PIERNA(119, 6.1, 17, 42, 3),
-        pantorrillas: PIERNA(157, 4.8, 12.5, 42),
-      },
-    };
+    // De frente y de espalda (cada figura de 100 × 190; la de espalda, corrida 110), rehecho el 5/11/2026 («más
+    // definido»: el abdomen era un rectángulo y se leía raro). Cada músculo llena su zona, separado por una línea de
+    // pelo, y unas líneas finas lo definen por dentro; se dibuja la mitad izquierda y la derecha en espejo. Lo que
+    // no es músculo (la cabeza, las rodillas, las manos y los pies) va apenas, para que se lea un cuerpo.
+    // La silueta: la mitad izquierda, del cuello al tiro, con los brazos separados del torso.
+    const MITAD = [
+      [45.4, 22.6], [44.8, 27.6], [40.4, 30.4], [33.6, 32.4], [28.6, 34.4], [25.6, 37.8], [24, 42.6], [23.4, 48.4],
+      [22.8, 55], [21.8, 62], [20.8, 68.4], [19.6, 76], [18.4, 85], [17.8, 92], [17.6, 96.4], [16.6, 100.6], [16.6, 105.6],
+      [18.2, 109.6], [20.6, 110], [21.8, 106.4], [22.2, 100.6], [22.2, 96.6], [23, 90], [24.8, 80], [26.6, 72.2], [27.6, 67],
+      [29.4, 60], [30.6, 52.4], [31.8, 47.4], [33.2, 54], [34.6, 62], [35.8, 70], [36.4, 78], [36.4, 83], [35.2, 88.6],
+      [33.4, 95.4], [32.5, 104], [32.8, 115.6], [34.2, 127.4], [35.4, 134.8], [35.6, 140.4], [34.7, 147.8], [35.3, 156.8], [37, 165.8],
+      [38.4, 172.8], [38, 178], [36.8, 182], [39.4, 184.6], [45.4, 184.4], [46.4, 181], [46.2, 175], [46.8, 166], [47.6, 156],
+      [47.3, 146], [46.8, 139.4], [47.2, 133], [48, 124], [48.8, 113], [49.4, 105.4], [50, 102.6],
+    ];
     /** Una curva suave y cerrada que pasa por unos puntos (Catmull-Rom llevada a Bézier). */
-    function suave(pts) {
+    function curvaCerrada(pts) {
       const n = pts.length;
       const p = (i) => pts[(i + n) % n];
       let d = `M${p(0)[0]} ${p(0)[1]}`;
       for (let i = 0; i < n; i++) {
         const [a, b, c, e] = [p(i - 1), p(i), p(i + 1), p(i + 2)];
-        d += ` C${(b[0] + (c[0] - a[0]) / 6).toFixed(1)} ${(b[1] + (c[1] - a[1]) / 6).toFixed(1)} ${(c[0] - (e[0] - b[0]) / 6).toFixed(1)} ${(c[1] - (e[1] - b[1]) / 6).toFixed(1)} ${c[0]} ${c[1]}`;
+        d += ` C${(b[0] + (c[0] - a[0]) / 6).toFixed(2)} ${(b[1] + (c[1] - a[1]) / 6).toFixed(2)} ${(c[0] - (e[0] - b[0]) / 6).toFixed(2)} ${(c[1] - (e[1] - b[1]) / 6).toFixed(2)} ${c[0]} ${c[1]}`;
       }
       return d + 'Z';
     }
-    // La silueta: la mitad izquierda, del cuello al tiro, y la derecha en espejo.
-    const MITAD = [
-      [45.5, 24], [44.5, 30], [38, 33], [31, 35.5], [27, 39], [25, 46], [24, 56], [22.5, 66], [20.5, 77], [19, 87], [18.5, 93], [19.5, 99], [22.5, 100], [24, 95],
-      [25.5, 86], [27.5, 75], [29.5, 64], [32, 55], [33, 62], [34.5, 72], [34, 84], [33.5, 94], [35, 108], [36.5, 124], [37.5, 138], [36.5, 150], [37.5, 162],
-      [39, 172], [37, 177], [40, 180], [45.5, 179.5], [45.5, 172], [46.5, 160], [47, 148], [47, 138], [48, 124], [49, 110], [50, 101],
-    ];
-    const SILUETA = suave([...MITAD, ...MITAD.slice(0, -1).reverse().map(([x, y]) => [100 - x, y])]);
-    const BASE = `<circle cx="50" cy="15" r="8.5"/><path d="${SILUETA}"/>`;
+    const SILUETA = curvaCerrada([...MITAD, ...MITAD.slice(0, -1).reverse().map(([x, y]) => [100 - x, y])]);
+    const BASE = `<ellipse cx="50" cy="13.8" rx="7.6" ry="9.2"/><path d="${SILUETA}"/>`;
+    // Cada músculo: su mitad izquierda (en la figura, x < 50), como puntos de una curva cerrada o como trazo; y las
+    // líneas que lo definen por dentro (la gota del vasto interno, las dos cabezas), sin relleno.
+    const FORMAS = {
+      frente: {
+        // El trapecio asoma de frente entre el cuello y el hombro.
+        espaldaAlta: [[[45.2, 27.8], [42.6, 29.6], [38.8, 31], [35.4, 32], [39.6, 32.8], [43, 33.2], [45.4, 33.2]]],
+        hombros: [[[34.2, 33.6], [30.6, 32.8], [27.4, 33.8], [25.2, 36.6], [24.2, 40.6], [24.1, 45], [24.8, 49.2], [26.2, 52.6], [27.8, 54.2], [29.4, 51], [30.8, 47.2], [32, 43.4], [33.2, 39.2]]],
+        pecho: [[[49.2, 35.4], [45.2, 34.4], [40.6, 34.2], [36.6, 34.8], [34.4, 36.6], [33.2, 39.6], [32.6, 43.2], [32.4, 46.6], [34.4, 50], [37.8, 52.6], [42, 54], [45.8, 54.2], [49.2, 53.2], [49.2, 47], [49.2, 41]]],
+        biceps: [[[30.6, 53.4], [28.4, 53.2], [26.2, 54.4], [24.8, 57.2], [24.2, 61], [24.4, 64.6], [25.4, 67.4], [27, 68.4], [28.4, 67.4], [29.6, 64.4], [30.4, 60.6], [30.8, 56.8]]],
+        antebrazos: [[[21.2, 69.6], [23.6, 68.8], [26.2, 68.9], [27.6, 70.6], [27.4, 74.8], [26.2, 80], [24.8, 85.6], [23.6, 90], [22.4, 94.4], [20.6, 94.9], [19, 94.2], [18.6, 89.6], [18.8, 84], [19.2, 78.6], [19.8, 74], [20.4, 71.4]]],
+        abdomen: [
+          // El recto en tres pares y la parte de abajo, con la línea del medio; los oblicuos, a los costados.
+          'M49.2 55.6 L49.2 61.8 C47.5 62.1 45.8 62 44.4 61.5 C44.2 59.6 44.3 57.8 44.7 56.1 C46.2 55.5 47.7 55.4 49.2 55.6 Z',
+          'M49.2 63 L49.2 69.2 C47.4 69.5 45.6 69.4 44.1 68.9 C43.9 67 44 65.1 44.3 63.4 C46 62.9 47.6 62.8 49.2 63 Z',
+          'M49.2 70.4 L49.2 76.8 C47.4 77.1 45.6 77 44.2 76.5 C44 74.6 44 72.7 44.2 70.9 C45.8 70.4 47.5 70.3 49.2 70.4 Z',
+          'M49.2 78 L49.2 87.4 C48.2 87.6 47.2 87 46.4 85.8 C45.3 83.8 44.6 80.9 44.4 78.5 C45.9 78.1 47.6 77.9 49.2 78 Z',
+          'M43 56.6 C40.6 57 38.2 58 36.3 59.6 C36.1 65 36.5 70.8 37.1 75.8 C37.5 79.8 38.5 83.8 40.3 87 C41.7 88.4 43.3 89.2 44.8 89.6 C43.9 85.6 43.3 81.4 43.1 77.2 C42.9 70.2 42.8 63.4 43 56.6 Z',
+        ],
+        aductores: [[[43.6, 98.4], [44, 104.4], [44.7, 110.4], [45.8, 116.2], [47, 120.6], [48.2, 120.8], [48.7, 114.4], [49.1, 108.6], [49.3, 103.6], [48.4, 100.4], [46.4, 98.8]]],
+        cuadriceps: [[[34.4, 95.8], [33.5, 100.6], [33.3, 106], [33.6, 112], [34.2, 118.4], [35, 124.4], [35.9, 129.6], [37, 133.6], [39.4, 135.8], [42.6, 135.8], [45.4, 134.6], [46.6, 131.2], [46.9, 126.6], [46.5, 121.6], [45.3, 117], [44.2, 111], [43.5, 104.6], [43.1, 99], [41, 97], [37.6, 95.8]]],
+        pantorrillas: [
+          [[35.8, 141.4], [35, 145.6], [34.9, 150.6], [35.5, 155.4], [36.6, 159.6], [38, 162.6], [38.8, 158], [39, 152], [38.6, 146.6], [37.6, 143]],
+          [[46.2, 140.8], [47.2, 144.6], [47.6, 149.8], [47.3, 155], [46.5, 159.4], [45.2, 162.8], [44.2, 158.4], [43.8, 152.6], [44, 147.4], [44.8, 143.4]],
+        ],
+      },
+      espalda: {
+        espaldaAlta: [
+          // El trapecio, del cuello al medio de la espalda; arriba del omóplato; y el dorsal, como un ala.
+          'M50 23.8 L50 58.6 C48.3 54.4 46.5 50.4 44.8 46.6 C42.6 42.6 40 39 36.8 36 C35.6 35 34.6 34.2 33.8 33.6 C37.2 32.6 40.8 31.2 43.6 29.6 C45.6 28.2 47.2 26 48 24 Z',
+          'M34.2 37.6 C37.4 39 40.4 41.8 42.2 45.6 C40.2 46.6 37.2 46.2 34.6 44.4 C33.9 42.2 33.9 39.8 34.2 37.6 Z',
+          'M32.6 45.2 C33.6 51 35 57 36.2 62.8 C37.4 67.8 38.6 72.6 40.2 76.8 C42.9 73.4 45.3 69.4 46.9 65.2 C45.7 60.8 44.1 56.3 42.5 52.3 C40.1 47.8 36.9 45.3 32.6 45.2 Z',
+        ],
+        hombros: ['M33.2 34.4 C29.6 34.2 26.4 36 25 39.4 C23.9 42.6 24.1 46.4 25.1 49.8 C25.9 52.2 27.2 53.6 28.3 53.8 C29.1 50.6 30.1 46.6 31.3 43 C32.1 40.4 32.9 37.6 33.2 34.4 Z'],
+        triceps: [[[24.6, 51], [23.6, 54.4], [23.4, 58.6], [23.8, 62.6], [24.8, 66], [26.4, 68.2], [28.2, 68], [29.6, 65.4], [30.4, 61.6], [30.6, 57.6], [30.2, 53.8], [28.8, 51.6], [26.6, 50.6]]],
+        antebrazos: [[[21.2, 69.6], [23.6, 68.8], [26.2, 68.9], [27.6, 70.6], [27.4, 74.8], [26.2, 80], [24.8, 85.6], [23.6, 90], [22.4, 94.4], [20.6, 94.9], [19, 94.2], [18.6, 89.6], [18.8, 84], [19.2, 78.6], [19.8, 74], [20.4, 71.4]]],
+        // Los erectores, a los dos lados de la columna, con la columna a la vista.
+        espaldaBaja: [[[48.8, 61], [48.8, 67], [48.8, 73], [48.8, 79], [48.8, 84.6], [48.8, 88], [46.2, 88.1], [43.4, 87.8], [41.6, 86.4], [42.2, 82.4], [43.4, 77.6], [44.6, 72], [45.6, 67], [46.8, 63.2]]],
+        gluteos: [[[49.2, 89.2], [49.2, 94], [49.2, 99], [49.2, 104.4], [46.4, 105.4], [42.6, 105.4], [39.2, 104], [36.4, 101.8], [34.8, 98.6], [34.6, 95.2], [35.6, 92], [37.8, 89.8], [41, 88.6], [45, 88.4]]],
+        isquios: [[[35.2, 106.4], [34.2, 111], [33.8, 116.6], [34.2, 122.4], [35.2, 127.6], [36.6, 131.8], [38.6, 134.8], [41.4, 135.6], [44.4, 135.2], [46.4, 133.2], [47.6, 129.2], [48.2, 124], [48.4, 118], [48.3, 112.4], [47.8, 108.2], [46.4, 106.2], [43, 105.8], [39, 106]]],
+        pantorrillas: [[[36.8, 140.4], [35.6, 143.6], [35.1, 148.4], [35.4, 153.4], [36.4, 157.6], [38.2, 160.6], [40.6, 162.4], [43, 163.4], [45, 164], [46.4, 161.4], [47.4, 157], [47.6, 151.8], [47.2, 146.6], [46.2, 142.8], [44.6, 140.4], [42, 139.8], [39.2, 139.8]]],
+      },
+    };
+    const LINEAS = {
+      frente: [
+        // El recto femoral y la gota del vasto interno; el braquiorradial en el antebrazo.
+        'M37.8 97.4 C38.6 108 39.2 120 40.6 131.6',
+        'M42.6 98.6 C43.2 106 43.8 113.4 43.6 120.4 C42.6 124.4 42.8 129.6 44.8 134.2',
+        'M26.6 71.6 C24.8 76.4 22.8 84 21.8 91.6',
+      ],
+      espalda: [
+        // Las dos cabezas del tríceps, de los isquios y del gemelo.
+        'M27.4 52.2 C27.8 57.2 27.8 62.6 27.2 67.4',
+        'M41.4 106.6 C41.2 115 41.8 124 43.4 133.6',
+        'M41.4 140.6 C41.4 147 41.8 154 42.8 162.4',
+      ],
+    };
+    const ESPEJO = 'matrix(-1 0 0 1 100 0)';
     /**
      * El cuerpo, con la clase de cada músculo (`clases[musculo]`: '', 'recuperandose', 'cargado' o 'trabajado').
      * Con `rotulos`, «De frente» y «De espalda» debajo.
      */
     function cuerpo(clases, { rotulos = false, etiqueta = '' } = {}) {
       const figura = (lado, dx) => {
-        const formas = Object.entries(FORMAS[lado]).map(([m, xs]) => xs.map((f) => f.replace(/^<(\w+)/, `<$1 class="as-m ${clases[m] || ''}" data-musculo="${m}"`)).join('')).join('');
-        return `<g transform="translate(${dx} 0)"><g class="as-cuerpo-base">${BASE}</g>${formas}${rotulos ? `<text class="as-cuerpo-rotulo" x="50" y="194">${tx('ascent.cuerpo.' + lado)}</text>` : ''}</g>`;
+        const formas = Object.entries(FORMAS[lado]).map(([m, xs]) => xs.map((x) => {
+          const a = `class="as-m ${clases[m] || ''}" data-musculo="${m}" d="${typeof x === 'string' ? x : curvaCerrada(x)}"`;
+          return `<path ${a}/><path ${a} transform="${ESPEJO}"/>`;
+        }).join('')).join('');
+        const lineas = LINEAS[lado].map((d) => `<path class="as-linea" d="${d}"/><path class="as-linea" d="${d}" transform="${ESPEJO}"/>`).join('');
+        return `<g transform="translate(${dx} 0)"><g class="as-cuerpo-base">${BASE}</g>${formas}${lineas}${rotulos ? `<text class="as-cuerpo-rotulo" x="50" y="197">${tx('ascent.cuerpo.' + lado)}</text>` : ''}</g>`;
       };
-      return `<svg class="as-cuerpo-svg" viewBox="0 0 210 ${rotulos ? 198 : 184}" role="img" aria-label="${etiqueta}">${figura('frente', 0)}${figura('espalda', 110)}</svg>`;
+      return `<svg class="as-cuerpo-svg" viewBox="0 0 210 ${rotulos ? 200 : 188}" role="img" aria-label="${etiqueta}">${figura('frente', 0)}${figura('espalda', 110)}</svg>`;
     }
 
     // ------------------------------------------------------------ el titular del día
@@ -2387,14 +2440,13 @@ const SeccionAscent = (() => {
     }
 
     // ------------------------------------------------------------ bajar y subir
-    // El cuerpo baja con la sección más despacio que ella (está más lejos). Lejos de arriba de todo apenas asoma, tenue,
-    // detrás del texto; en el último tramo para arriba baja entero y se enciende, en el cielo vacío de arriba.
+    // El cuerpo baja con la sección más despacio que ella y, con el scroll, se corre apenas: está lejos, de fondo.
     function ponerCielo() {
-      const lejos = clamp(cont.scrollTop / CUERPO_SUBIR, 0, 1);
-      const arriba = cielo.classList.contains('polvo') ? NUBE_LEJOS : CUERPO_LEJOS;
-      const baja = (1 - p) * (zona.clientHeight || 0) * (1 - CUERPO_SIGUE) - lejos * arriba;
+      const recorrido = Math.max(0, cont.scrollHeight - cont.clientHeight);
+      // 0 donde se llega (abajo de todo); 1 arriba de todo.
+      const subido = recorrido ? clamp((recorrido - cont.scrollTop) / recorrido, 0, 1) : 1;
+      const baja = (1 - p) * (zona.clientHeight || 0) * (1 - CUERPO_SIGUE) - (1 - subido) * CUERPO_CORRE;
       cielo.style.setProperty('--baja', `${baja.toFixed(1)}px`);
-      cielo.style.setProperty('--cerca', (1 - 0.45 * lejos).toFixed(3));
     }
     cont.addEventListener('scroll', ponerCielo, { passive: true });
     // Se llega por abajo, a lo principal.

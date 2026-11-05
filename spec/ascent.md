@@ -490,7 +490,7 @@ pantalla o `VELOCIDAD_MIN` 0,35 px/ms, y 8 puntos para decidir).
     asoma un poco más, como si alguien tirara. Una sola vez; con Reducir movimiento, nada.
 - **La transición:** Ascent baja siguiendo al dedo, con su parte de abajo primero, y
   Progreso baja pegado a ella, sin apagarse: es lo mismo que sigue para arriba. El cielo
-  sube con la cámara, como hacia tu universo, y el cuerpo de tu rango baja desde arriba,
+  sube con la cámara, como hacia tu universo, y el cuerpo de tu rango, de fondo, baja,
   más despacio que la sección (está más lejos). En Ascent van a tener una entrada a Moss
   arriba de Stats: son dos caras del mismo gesto.
 
@@ -501,11 +501,12 @@ sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
 - Línea de pelo y aire en vez de tarjetas; octágono de esquinas cortadas solo para la
   acción (y la hoja de vincular, cortada arriba); píldora para lo que se elige; lo
   secundario, subrayado.
-- El cuerpo de tu rango arriba, de fondo, detrás del texto (hasta el 5/11/2026 era un
-  horizonte que subía desde abajo). Lejos de arriba de todo apenas asoma, tenue; en el
-  último tramo para arriba baja entero y se enciende, en el cielo vacío de arriba. El
-  polvo es una nube; los demás cuelgan del borde de arriba, como el borde que asoma en
-  Progreso.
+- El cuerpo de tu rango **de fondo**, como las estrellas, detrás del texto: arriba a la
+  derecha y cortado por el borde, como en Ascent, sin espacio vacío arriba que lo vuelva
+  algo de la pantalla y sin colgar (lo pediste el 5/11/2026 a la noche: «quiero que acá
+  sea el fondo»; hasta esa tarde era un horizonte que subía desde abajo). Se corre apenas
+  con el scroll: está lejos. El polvo es una nube; los demás, el mismo dibujo, girado para
+  que su luz mire a la pantalla y más tenues (el sol, más todavía).
 - Fondo `#05060a`, tinta `#e8ecf6`, secundario `#aab2c4`, apagado `#9098ab`, con piso
   de contraste 4,5:1 en el texto. **El acento y el cuerpo de arriba son los de tu rango
   en Ascent** (lo propusiste el 5/11/2026; en la galería, para aprobar, con los siete rangos
@@ -515,8 +516,11 @@ sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
   5/11/2026 era la luna, que no te gustó). El polvo se dibuja como la nebulosa de Ascent
   (`crearPolvo` y el modo 5 de su motor) pero a la manera de Moss: una nube más o menos
   redonda, sin círculo ni borde, de gas violeta y azul con vetas, calles oscuras y una
-  estrella que nace en el medio, que respira, y granos que derivan despacio, sin las
-  cortinas de aurora. Para usarlo, Moss
+  estrella que nace en el medio, sin las cortinas de aurora. **Se mueve** (5/11/2026: «está
+  estático»): el gas gira despacio alrededor de la estrella (una vuelta en 5 minutos, como
+  el polvo de Ascent, que gira) y late; los granos giran más rápido, porque están más
+  cerca, en tres grupos que titilan a destiempo; la estrella respira. Con Reducir
+  movimiento, quieta. Para usarlo, Moss
   tiene que leer la racha de Ascent con su función del vínculo (nunca una de Ascent): **falta
   decidir** si se lee.
 - **El color:** solo lo que pone el límite hoy y lo cargado (terracota `#CB8569`); lo
@@ -528,6 +532,21 @@ sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
   chico (cada sesión un punto, la recta con su rango); la marca como una raya contra tu
   nivel de hoy con lo que cambia de un día a otro; cada cuánto haces marca en cuadros; y
   las series de cada semana en barras, antes y ahora.
+- **El cuerpo dibujado** (rehecho el 5/11/2026: el abdomen era un rectángulo y se leía
+  raro): cada músculo llena su zona, separado por una línea de pelo, y unas líneas finas
+  lo definen por dentro. De frente: el trapecio que asoma, los deltoides, los pectorales,
+  el bíceps, el antebrazo, el abdomen en seis con la parte de abajo y los oblicuos, los
+  aductores, el cuádriceps entero con el recto y la gota del vasto interno, y los gemelos
+  a los costados. De espalda: el trapecio en rombo, lo de arriba del omóplato, el dorsal
+  como un ala, el deltoides de atrás, el tríceps en herradura, los erectores a los dos
+  lados de la columna (se abren hacia los glúteos), los glúteos, los isquios con sus dos
+  cabezas y el gemelo en rombo. Se dibuja la mitad y la otra en espejo. En la app va con
+  `react-native-svg` o Skia, con los mismos trazos.
+- **Que ande en un teléfono viejo** (5/11/2026): todo lo que se mueve sin parar va en su
+  capa y solo cambia transform u opacity, así no se repinta nada en cada cuadro (el polvo,
+  las flechas que respiran); el gas del polvo se pinta una sola vez y queda como imagen; el
+  scroll de la sección no lleva máscara. En la app: el polvo, como imagen hecha una vez
+  (o un shader barato), girado en el hilo de la interfaz con Reanimated.
 - **Las letras:** Ascent usa Inter para leer y Geist Mono para los datos. La maqueta
   usa las que ya tiene Moss: Jost, y Outfit con cifras tabulares. **Falta decidir** si
   esta sección trae las de Ascent.
