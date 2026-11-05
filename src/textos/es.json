@@ -1243,7 +1243,8 @@
           "suficiente": "Ya es hora de ir bajando el ritmo.",
           "alta": "Buen día: ahora, a ir bajando el ritmo."
         }
-      }
+      },
+      "verEnSueno": "Tócalo para verla en Sueño."
     }
   },
   "mas": {
@@ -2079,7 +2080,12 @@
       "tope": "Moss la adelanta como mucho una hora de lo de siempre: el cuerpo no se duerme mucho antes de su hora.",
       "comida": "Última comida grande, antes de las {hora}",
       "comidaTexto": "Dos horas antes de acostarte; después, algo ligero.",
-      "comidaReflujo": "Con reflujo, tres horas antes de acostarte; después, algo ligero."
+      "comidaReflujo": "Con reflujo, tres horas antes de acostarte; después, algo ligero.",
+      "linea": "Esta noche, a la cama a las {hora}."
+    },
+    "deudaVer": {
+      "mas": "Más",
+      "menos": "Menos"
     }
   },
   "perfil": {

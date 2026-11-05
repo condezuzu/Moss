@@ -641,6 +641,14 @@ button.gc-fila { cursor: pointer; }
 .in-energia-porque p.in-energia-chico { margin: 0; font: 400 12px/1.4 var(--texto); color: rgba(239, 230, 207, 0.55); text-wrap: pretty; }
 .in-energia-baja { --e-color: #cb8569; border-color: rgba(203, 133, 105, 0.5); background: linear-gradient(180deg, rgba(203, 133, 105, 0.13), rgba(203, 133, 105, 0.03)), rgba(8, 12, 26, 0.72); }
 .in-energia-alta { --e-color: #e8c46a; }
+/* En Inicio, solo el aviso: minimizado, con su frase y una flecha a Sueño. */
+.in-energia-aviso { cursor: pointer; }
+.in-energia-aviso .in-energia-titulo { font-size: 21px; }
+.in-energia-linea { font: 300 13px/1.35 var(--texto); color: rgba(239, 230, 207, 0.85); }
+.in-energia-ir { flex: none; width: 24px; height: 24px; display: grid; place-items: center; color: rgba(242, 185, 162, 0.85); }
+.in-energia-ir svg { width: 16px; height: 16px; }
+/* En Sueño, la tarjeta de la energía va con la separación de las de Sueño. */
+.sueno .in-energia { cursor: default; }
 .in-energia-sinDatos { --e-color: rgba(239, 230, 207, 0.3); }
 /* El control cuando se acerca: una línea debajo de la luna. */
 .in-control { padding: 12px 14px; }
@@ -1983,7 +1991,8 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <div class="panel">
         <div class="controles">
           <button class="boton principal" type="button" data-seccion="deporte">Según el deporte</button>
-          <button class="boton" type="button" data-seccion="energia">Tu energía, en Inicio</button>
+          <button class="boton" type="button" data-seccion="energia">Tu energía, en Sueño</button>
+          <button class="boton" type="button" data-seccion="energiaInicio">La energía baja, en Inicio</button>
           <button class="boton" type="button" data-seccion="deudaEstaNoche">La deuda y esta noche</button>
           <button class="boton" type="button" data-seccion="cuidados">Cuidados, en Perfil</button>
           <button class="boton" type="button" data-seccion="base">En qué se basa Moss</button>
@@ -1992,7 +2001,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
           <button class="boton" type="button" data-seccion="deporteCuestionario">La hora del partido</button>
         </div>
         <div class="controles">
-          <div class="grupo"><span>Tu energía (5/11): baja va arriba de todo; suficiente y alta, debajo de los macros</span>
+          <div class="grupo"><span>Tu energía (5/11): vive en Sueño, debajo de la noche; en Inicio, solo baja, minimizada arriba de todo</span>
             <div class="segmento" id="s-energia"><button type="button" data-valor="baja" aria-pressed="false">Baja (sueño)</button><button type="button" data-valor="bajaComida" aria-pressed="false">Baja (comida)</button><button type="button" data-valor="atrasado" aria-pressed="false">Hoy atrasado</button><button type="button" data-valor="suficiente" aria-pressed="true">Suficiente</button><button type="button" data-valor="alta" aria-pressed="false">Alta</button><button type="button" data-valor="sinDatos" aria-pressed="false">Sin datos</button></div>
           </div>
           <div class="grupo"><span>A qué hora: según el momento del día cambia lo que dice, y lo de hoy se mide contra lo que sueles llevar a esa hora</span>
@@ -2079,6 +2088,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>Sueño, con la deuda arriba</b> (5/11 a la noche, para aprobar): la deuda de sueño es lo primero que se ve, compacta y del tamaño de la tira de los días («Bien · Unas 3 h 30 min», el medidor y «Esta noche, a la cama a las 22:05»); «Más» la despliega. Debajo, la noche, <b>tu energía</b>, que ahora vive en Sueño, y más abajo los días para elegir otra noche. En Inicio, la energía aparece solo si está baja: arriba de todo, minimizada, y tocarla te lleva a Sueño.</li>
         <li><b>Tu energía, según la hora</b> (5/11 a la noche, para aprobar): ya no te dice «energía baja» a la mañana por lo que todavía no comiste. Lo de <b>hoy</b> va aparte de lo de <b>estos días</b> y se mide contra lo que sueles haber comido a esa hora («Temprano», «Al día», «Atrasado» o, antes de entrenar, «Falta comer»). Lo que dice cambia con el momento: al despertar, de día (con el bajón de después de almorzar), antes de entrenar («Para entrenar a las 18:40…»), después (la comida con proteína) y la noche. Arriba, <b>la tira de tu día</b>: las comidas, la sesión y dónde estás. Elegí la hora con los botones de la energía, acá abajo, y probá «Hoy atrasado».</li>
         <li><b>La tarde del 5/11</b> (para aprobar): <b>tu energía, del día entero</b>: además de la comida, el sueño (anoche y la deuda) y, con Ascent vinculada, los músculos de hoy; manda lo más flojo. «Energía baja» arriba de todo («Según lo registrado, tu energía está muy baja.»); «Suficiente energía» («Hoy tienes suficiente energía para entrenar de forma normal.», sin hablar de la meta de cada uno) y «Energía alta» con el porqué del día, debajo de los macros. Cada parte con su estado de un vistazo, y «Más» con qué te conviene hoy y de dónde sale. Con Ascent dice «con Ascent» y suma los músculos (probalo vinculando). Elegí el estado arriba: baja por el sueño o por la comida. <b>La deuda de sueño</b> en una palabra y en grande («Muy bien», «Bien», «Algo alta» o «Alta», por lo que falta cada noche) y debajo <b>esta noche</b>: a qué hora a la cama para despertarte a la hora de siempre habiendo dormido lo que necesitas, y la última comida grande. <b>La última comida</b>, 2 h antes de la cama (3 con reflujo): la guía dice de 2 a 3, y las 3 quedan para el reflujo. El aviso con deuda dice a qué hora a la cama y a qué hora te despiertas. En Perfil › Avisos, <b>«Necesito dormir»</b>: lo de tu edad o de 7 a 9 horas, de media hora en media hora; lo usan la hora de dormir, la deuda, la calidad y esta noche. Y <b>Cuidados</b>: marcás lo que tengas (embarazo, lactancia, diabetes, presión, colesterol, riñón, reflujo, celiaquía, gota y más) en el cuestionario o en Perfil, y Moss ajusta tu meta y deja de proponerte lo que no te conviene, con «Cómo cambia tu dieta» a la vista; se guarda solo en el iPhone.</li>
         <li><b>Progreso con su margen</b> (5/11, para aprobar; <code>spec/estudio/progreso.md</code>): el ritmo con su rango («−0,41 kg por semana, entre −0,33 y −0,48») y la fecha como rango; «Todavía no se sabe» las primeras semanas, y «Al ritmo», «Adelantado» o «Más lento» solo cuando el rango lo deja claro (antes acertaba un tercio de las veces). El control mide con las pesadas de verdad (con una pesada por semana medía un 23 % menos), una pesada rara cuenta un cuarto hasta que la siguiente la confirme, y bajando nunca pide más de 1.000 kcal por día de déficit. La grasa con cinta dice que puede errar unos 4 puntos.</li>

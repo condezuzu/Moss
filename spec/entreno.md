@@ -980,7 +980,16 @@ y para todos, también para quien no va al gimnasio. La regla es `energiaDelDia`
   - **La tira de tu día:** de despertarte a la cama de esta noche, con cada comida (anotada, pasada
     sin anotar o por venir), la sesión y ahora. Las partes son el sueño, «Estos días», «Hoy» y, con
     Ascent, los músculos.
-- **En la galería:** `galeria/src/inicio.js`, con seis días de ejemplo (baja por el sueño, baja por
+- **Dónde vive** (lo pediste el 5/11 a la noche): en Sueño, debajo de la noche, con la noche de hoy;
+  con Ascent, ahí también trae los músculos y reemplaza a «Cómo llegas a entrenar». En Inicio, solo
+  cuando está baja: arriba de todo y minimizada (la batería, «Energía baja» y su frase), y tocarla
+  lleva a Sueño.
+- **Por qué sin porcentaje:** Rise da un «potencial de energía» en % con el modelo de los dos
+  procesos (la presión de sueño y el reloj del cuerpo, Borbély), pero no publica cómo lo calcula. Un
+  porcentaje que mezcle el sueño y la comida sería un puntaje compuesto, y ninguno de los 14 de 10
+  marcas que revisó Doherty 2025 tiene validez clara; además, una suma compensa (spec/estudio/ascent.md).
+  Cada parte sí tiene su evidencia; lo que se muestra es el estado, con el punto más flojo, y las partes.
+- **En la galería:** `galeria/src/inicio.js` (que la arma también para Sueño), con seis días de ejemplo (baja por el sueño, baja por
   la comida, hoy atrasado, suficiente, alta y sin datos), cinco momentos (7:30, 14:30, 17:15 antes
   de entrenar, 20:30 después y 22:00) y el escenario de capturas `energia`. La app todavía no la
   tiene.

@@ -1243,7 +1243,8 @@
           "suficiente": "Time to start winding down.",
           "alta": "Good day: now, start winding down."
         }
-      }
+      },
+      "verEnSueno": "Tap to see it in Sleep."
     }
   },
   "mas": {
@@ -2079,7 +2080,12 @@
       "tope": "Moss moves it at most an hour earlier than usual: the body doesn't fall asleep much before its usual time.",
       "comida": "Last big meal, before {hora}",
       "comidaTexto": "Two hours before bed; after that, something light.",
-      "comidaReflujo": "With reflux, three hours before bed; after that, something light."
+      "comidaReflujo": "With reflux, three hours before bed; after that, something light.",
+      "linea": "Tonight, bed at {hora}."
+    },
+    "deudaVer": {
+      "mas": "More",
+      "menos": "Less"
     }
   },
   "perfil": {

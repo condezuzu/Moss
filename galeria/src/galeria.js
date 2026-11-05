@@ -467,6 +467,8 @@
     medir: () => mas.ir('medidas'),
     ir: (i) => pestanas.ir(i),
     invitacionDeAscent: () => (ascent ? ascent.invitacion() : null),
+    // Tocar el aviso de la energía baja lleva a tu energía, en Sueño.
+    irAEnergia: () => accionesSeccion.energia(),
     // Tu energía, con Ascent vinculada y prendida: el titular de hoy de su sección (los músculos) y su marca.
     ascentDeHoy: () => (vinculada && ascentPrendida && ascent ? ascent.titularDeHoy() : null),
     marcaDeAscent: () => (ascent && ascent.marcaChica ? ascent.marcaChica() : ''),
@@ -510,6 +512,8 @@
     sinReloj: () => soloIphone,
     metaDeSueno: 8 * 60,
     sexo: () => persona().perfil.sexo,
+    // Tu energía vive en Sueño (5/11, a la noche): la arma Inicio, que tiene la persona y el día de ejemplo.
+    energia: () => (inicio ? inicio.tarjetaParaSueno() : null),
     // Reflujo en Cuidados (Perfil): la última comida de esta noche, 3 h antes de la cama.
     reflujo: () => !!(perfilSec && perfilSec.reflujo),
     // «Necesito dormir», en Perfil › Avisos.
@@ -552,7 +556,8 @@
     // «Necesito dormir» cambia la deuda, la calidad y esta noche en Sueño.
     alCambiarNecesidad: () => { if (sueno) sueno.pintar(); },
     // Los números ocultos (Perfil): sin calorías ni gramos en Inicio, Comida y la ventana del alimento.
-    alNumeros: (si) => { tel.classList.toggle('sin-numeros', !si); inicio.refrescarConsejos(); },
+    // Tu energía, que vive en Sueño, también los usa.
+    alNumeros: (si) => { tel.classList.toggle('sin-numeros', !si); inicio.refrescarConsejos(); if (sueno) sueno.pintar(); },
   }));
   ascent = SeccionAscent.crear(tel, Object.assign({}, opcionesDeSeccion, {
     comida,
@@ -1143,11 +1148,12 @@
     // Según el deporte (3/11, para aprobar): sin ejemplo elegido, el primero; cada lugar donde se ve.
     deporte: () => { if (!deporte.clave) deporte.poner('vispera'); accionesSeccion.deporteInicio(); },
     deporteInicio: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.bajar(); },
-    deporteTarjeta: () => { cerrarHojas(); deporte.poner('energia'); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
+    deporteTarjeta: () => { cerrarHojas(); deporte.poner('energia'); inicio.primerDia(false); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.in-energia'), 260); },
     // En qué se basa Moss (5/11, para aprobar): abajo de todo de Perfil.
     base: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirBase(); },
-    // Tu energía (5/11, para aprobar): en Inicio, arriba si es baja y debajo de los macros si no.
-    energia: () => { cerrarHojas(); if (deporte.clave) deporte.poner(null); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
+    // Tu energía (5/11, para aprobar): en Sueño, debajo de la noche; en Inicio, minimizada arriba de todo si es baja.
+    energia: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(3, true); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.in-energia'), 260); },
+    energiaInicio: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
     // La deuda en una palabra y esta noche (5/11, para aprobar): en Sueño, con la noche de hoy.
     deudaEstaNoche: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.sn-deuda'), 240); },
     // Cuidados (5/11, para aprobar): en Perfil, y también en el cuestionario.
@@ -1241,10 +1247,10 @@
   const ponerRango = (n, planeta) => { ascent.ponerRango(n, planeta); ascent.pintar(); marcarRango(); };
   segmento('s-rango', (v) => ponerRango(Number(v), Number(v) === 4 ? 'Ceres' : null));
   // Tu energía de ejemplo: baja, suficiente, alta o sin datos.
-  segmento('s-energia', (v) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v); });
-  window.__energia = (v, extra) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v, extra); };
+  segmento('s-energia', (v) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v); sueno.pintar(); });
+  window.__energia = (v, extra) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v, extra); sueno.pintar(); };
   // A qué hora (5/11, a la noche): el momento del día de la propuesta de tu energía.
-  segmento('s-energia-hora', (v) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(null, { hora: v }); });
+  segmento('s-energia-hora', (v) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(null, { hora: v }); sueno.pintar(); });
   segmento('s-planeta', (v) => ponerRango(4, v));
   // Según el deporte: el día de ejemplo (o ninguno) y, el domingo después del partido, con o sin alcohol anotado.
   segmento('s-deporte', (v) => { deporte.poner(v === 'ninguno' ? null : v); });
@@ -1462,6 +1468,7 @@
     const pasos = {
       noche: () => sueno.verNoche(arg), bajar: () => sueno.bajarA(arg), subir: () => sueno.subir(), abrir: () => sueno.abrir(arg),
       hora: () => sueno.preguntarHora(arg), editarHora: () => sueno.editarHora(), editarNoche: () => sueno.editarNoche(arg), olvidar: () => sueno.olvidarHoras(),
+      deuda: () => sueno.abrirDeuda(arg),
       afinar: () => (Array.isArray(arg) ? sueno.afinar(arg[0], arg[1]) : sueno.afinar(arg)),
       porque: () => sueno.porque(arg),
       cargador: () => sueno.cargador(arg),

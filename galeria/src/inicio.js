@@ -567,6 +567,28 @@ const SeccionInicio = (() => {
       if (e.ascent && en.musculos) fila('musculos', en.musculos === 'cargados' ? 'justa' : 'bien', `${e.ascent.titulo}. ${e.ascent.texto}`);
       return ul;
     }
+    // En Inicio, solo con la energía baja (5/11, a la noche): arriba de todo y minimizada, con su frase; tocarla lleva a
+    // tu energía completa, en Sueño.
+    function avisoDeEnergia(e) {
+      const c = carta('in-energia in-energia-baja in-energia-aviso', null, () => opciones.irAEnergia && opciones.irAEnergia());
+      const cab = el('div', 'in-energia-cab');
+      const ico = el('span', 'in-energia-ico');
+      ico.innerHTML = bateria('baja');
+      const titulos = el('div', 'in-energia-titulos');
+      const etiqueta = el('span', 'in-energia-etq');
+      etiqueta.appendChild(el('span', null, tx('inicio.energia.etiqueta', { cuando: tx('inicio.energia.cuando.' + cuandoEs(e)) })));
+      if (e.ascent) {
+        etiqueta.appendChild(el('span', null, '· ' + tx('inicio.energia.conAscent')));
+        if (opciones.marcaDeAscent) etiqueta.insertAdjacentHTML('afterbegin', opciones.marcaDeAscent());
+      }
+      const frase = fraseDeEnergia(e);
+      titulos.append(etiqueta, el('b', 'in-energia-titulo', tx('inicio.energia.titulo.baja')), el('span', 'in-energia-linea', frase));
+      cab.append(ico, titulos);
+      cab.insertAdjacentHTML('beforeend', `<span class="in-energia-ir" aria-hidden="true">${icono('adelante')}</span>`);
+      c.appendChild(cab);
+      c.setAttribute('aria-label', `${tx('inicio.energia.titulo.baja')}. ${frase} ${tx('inicio.energia.verEnSueno')}`);
+      return c;
+    }
     function tarjetaDeEnergia(e) {
       const en = e.dia;
       const estado = en ? en.estado : 'sinDatos';
@@ -830,7 +852,10 @@ const SeccionInicio = (() => {
       const viejo = bloquesEl.querySelector('.in-consejos');
       if (viejo) viejo.replaceWith(consejos());
       const tarjeta = bloquesEl.querySelector('.in-energia');
-      if (tarjeta) tarjeta.replaceWith(tarjetaDeEnergia(energiaDeHoy(s.primerDia ? null : delDeporte())));
+      if (tarjeta) {
+        const e = energiaDeHoy(s.primerDia ? null : delDeporte());
+        if (e.dia && e.dia.estado === 'baja') tarjeta.replaceWith(avisoDeEnergia(e));
+      }
     }
 
     function pintar(ms) {
@@ -845,16 +870,16 @@ const SeccionInicio = (() => {
       // Tu energía, debajo de los macros (la luna); si es baja, arriba de todo, como advertencia. Y el control,
       // cuando se acerca, debajo de la luna y de la energía.
       const luna = bloquesEl.querySelector('.in-calorias');
+      // Tu energía vive en Sueño (5/11, a la noche); acá, solo si está baja: arriba de todo y minimizada.
       const en = s.primerDia ? null : energiaDeHoy(deporte);
       const baja = !!(en && en.dia && en.dia.estado === 'baja');
-      const energia = en ? tarjetaDeEnergia(en) : null;
-      if (energia) bloquesEl.insertBefore(energia, baja ? bloquesEl.firstChild : luna ? luna.nextSibling : bloquesEl.firstChild);
+      if (baja) bloquesEl.insertBefore(avisoDeEnergia(en), bloquesEl.firstChild);
       const control = s.primerDia ? null : controlCerca();
-      const arriba = energia && !baja ? energia : luna;
+      const arriba = luna;
       if (control) bloquesEl.insertBefore(control, arriba ? arriba.nextSibling : bloquesEl.firstChild);
       // La invitación de Ascent (ascent.js), debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
       const invitacion = s.primerDia ? null : opciones.invitacionDeAscent();
-      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2 + (control ? 1 : 0) + (energia ? 1 : 0)] || null);
+      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2 + (control ? 1 : 0) + (baja ? 1 : 0)] || null);
       const pie = zona.querySelector('.in-pie');
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));
@@ -954,6 +979,8 @@ const SeccionInicio = (() => {
       // «Para hoy» en otro momento del día (mediodia, tarde, nada, bien); null vuelve al de la galería.
       ejemplo(e) { s.ejemplo = e || null; refrescarConsejos(); },
       // Tu energía de ejemplo (baja por el sueño, bajaComida, atrasado, suficiente, alta o sinDatos), a qué hora, y abierta o plegada.
+      // Tu energía completa, para Sueño (galeria.js la pasa como opciones.energia).
+      tarjetaParaSueno() { return tarjetaDeEnergia(energiaDeHoy(s.primerDia ? null : delDeporte())); },
       ponerEnergia(e, { plegada, mas, hora } = {}) {
         s.energia = e || s.energia || 'suficiente';
         // El momento del día de la propuesta: manana, mediodia, antes, despues o noche.

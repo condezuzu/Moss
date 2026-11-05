@@ -44,7 +44,11 @@ cual con cuatro semanas de mentira.
    - las siestas del día.
 3. **La deuda de sueño** de las dos semanas, con cuántas noches tiene. Va
    segunda (lo pediste el 22/10/2026): solo necesita cuánto dormiste, así que es
-   lo que más gente puede tener bien.
+   lo que más gente puede tener bien. En la galería, para aprobar (5/11 a la noche),
+   va arriba de todo, compacta y del tamaño de la tira de los días: cómo está en una
+   palabra, el medidor y «Esta noche, a la cama a las…»; «Más» despliega lo de cada
+   noche y esta noche con la última comida. Debajo, la noche, tu energía y, más
+   abajo, la tira de los días para elegir otra noche.
 4. **La calidad,** de 0 a 100, con sus tres partes y «Cómo se calcula».
 5. **El horario de las dos semanas:**
    - cada noche como una barra de cuándo te dormiste a cuándo te despertaste;

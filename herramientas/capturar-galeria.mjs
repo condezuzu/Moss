@@ -801,6 +801,13 @@ const pasos = {
       await pagina.waitForTimeout(400);
       await foto(nombre);
     }
+    // La deuda arriba de todo (5/11, a la noche): compacta, y desplegada con lo de cada noche y esta noche.
+    await sueno('deuda', true);
+    await sueno('bajar', '.sn-deuda');
+    await pagina.waitForTimeout(500);
+    await foto('sueno-deuda-abierta');
+    await sueno('deuda', false);
+    await sueno('subir');
     await sueno('abrir', 'calidad');
     await sueno('bajar', '.sn-calidad');
     await pagina.waitForTimeout(400);
@@ -886,9 +893,11 @@ const pasos = {
     await pagina.waitForTimeout(400);
     await foto('sueno-pagada-calidad');
     await estado('mucha');
+    await sueno('deuda', true);
     await sueno('bajar', '.sn-deuda');
     await pagina.waitForTimeout(1200);
     await foto('sueno-mucha');
+    await sueno('deuda', false);
     await sueno('subir');
     await pagina.evaluate(() => window.__idioma('en'));
     await estado('vacio');
@@ -2030,31 +2039,33 @@ const pasos = {
   // sin datos, sin números, en inglés y con Ascent vinculada (su marca y los músculos de hoy). Y según la hora (5/11, a la
   // noche): al despertar, el mediodía, antes y después de entrenar y la noche, también con lo de hoy atrasado.
   async energia() {
-    const energia = (v, extra) => pagina.evaluate(([a, b]) => window.__energia(a, b), [v, extra || {}]);
-    const centrar = () => pagina.evaluate(() => document.querySelector('.in-energia')?.scrollIntoView({ block: 'center' }));
+    const energia = (v, extra) => pagina.evaluate(([x, y]) => window.__energia(x, y), [v, extra || {}]);
+    // Tu energía vive en Sueño (5/11, a la noche), debajo de la noche: se baja hasta ella.
+    const centrar = () => pagina.evaluate(() => window.__sueno('bajar', '.in-energia'));
     await pagina.evaluate(() => window.__seccion('energia'));
     await pagina.waitForTimeout(1000);
     for (const [v, extra, nombre] of [['baja', {}, 'baja'], ['baja', { mas: true }, 'baja-mas'], ['baja', { mas: false, plegada: true }, 'baja-plegada'],
       ['bajaComida', { plegada: false, mas: true }, 'baja-comida-mas'], ['suficiente', { mas: false }, 'suficiente'], ['suficiente', { mas: true }, 'suficiente-mas'],
-      ['alta', { mas: false }, 'alta'], ['alta', { mas: true }, 'alta-mas'], ['sinDatos', { mas: false }, 'sin-datos']]) {
-      await energia(v, extra);
-      await pagina.waitForTimeout(800);
-      if (v !== 'baja') await centrar();
-      await pagina.waitForTimeout(350);
-      await foto('energia-' + nombre);
-    }
-    for (const [v, extra, nombre] of [['suficiente', { hora: 'manana', mas: true }, 'hora-despertar-mas'], ['alta', { hora: 'manana', mas: false }, 'hora-despertar-alta'],
+      ['alta', { mas: false }, 'alta'], ['alta', { mas: true }, 'alta-mas'], ['sinDatos', { mas: false }, 'sin-datos'],
+      ['suficiente', { hora: 'manana', mas: true }, 'hora-despertar-mas'], ['alta', { hora: 'manana', mas: false }, 'hora-despertar-alta'],
       ['atrasado', { hora: 'mediodia', mas: true }, 'hora-mediodia-atrasado-mas'], ['atrasado', { hora: 'antes', mas: true }, 'hora-antes-atrasado-mas'],
       ['suficiente', { hora: 'antes', mas: true }, 'hora-antes-mas'], ['suficiente', { hora: 'despues', mas: true }, 'hora-despues-mas'], ['suficiente', { hora: 'noche', mas: true }, 'hora-noche-mas']]) {
       await energia(v, extra);
       await pagina.waitForTimeout(800);
-      if (!(await pagina.evaluate(() => !!document.querySelector('.in-energia-baja')))) await centrar();
+      await centrar();
       await pagina.waitForTimeout(350);
       await foto('energia-' + nombre);
     }
-    await energia('suficiente', { hora: 'mediodia', mas: false });
+    // En Inicio, solo baja: arriba de todo y minimizada (por el sueño, por la comida y antes de entrenar sin comer).
+    for (const [v, extra, nombre] of [['baja', { hora: 'mediodia' }, 'inicio-baja'], ['bajaComida', { hora: 'manana' }, 'inicio-baja-comida'], ['atrasado', { hora: 'antes' }, 'inicio-antes-atrasado'], ['suficiente', { hora: 'mediodia' }, 'inicio-suficiente']]) {
+      await energia(v, extra);
+      await pagina.evaluate(() => window.__seccion('energiaInicio'));
+      await pagina.waitForTimeout(900);
+      await foto('energia-' + nombre);
+    }
+    await pagina.evaluate(() => window.__seccion('energia'));
+    await energia('suficiente', { hora: 'mediodia', mas: true });
     await pagina.evaluate(() => window.__seguridad('numeros', false));
-    await energia('suficiente', { mas: true });
     await pagina.waitForTimeout(700);
     await centrar();
     await pagina.waitForTimeout(350);
@@ -2063,15 +2074,20 @@ const pasos = {
     await pagina.evaluate(() => window.__idioma('en'));
     await energia('baja', { mas: true });
     await pagina.waitForTimeout(900);
+    await centrar();
+    await pagina.waitForTimeout(350);
     await foto('energia-ingles');
+    await pagina.evaluate(() => window.__seccion('energiaInicio'));
+    await pagina.waitForTimeout(900);
+    await foto('energia-inicio-ingles');
     await pagina.evaluate(() => window.__idioma('es'));
-    // Con Ascent vinculada: su marca en la etiqueta y los músculos de hoy como tercera parte.
+    // Con Ascent vinculada: su marca en la etiqueta y los músculos de hoy como cuarta parte.
     await pagina.evaluate(() => window.__ascent('vincular', true));
     await pagina.evaluate(() => window.__seccion('energia'));
     for (const [v, nombre] of [['alta', 'ascent-alta-mas'], ['baja', 'ascent-baja-mas']]) {
       await energia(v, { mas: true, plegada: false });
       await pagina.waitForTimeout(800);
-      if (v !== 'baja') await centrar();
+      await centrar();
       await pagina.waitForTimeout(350);
       await foto('energia-' + nombre);
     }
@@ -2079,6 +2095,7 @@ const pasos = {
     await energia('suficiente', { mas: false, plegada: false });
     await pagina.waitForTimeout(500);
   },
+
 
   // En qué se basa Moss (5/11, para aprobar): la fila de abajo de todo de Perfil, la hoja con el dibujo y las
   // reglas, cada área abierta y lo que Moss no hace, y en inglés.
@@ -2419,6 +2436,10 @@ const pasos = {
     await foto('deporte-2-anoche-inicio-sin-alcohol');
     // La energía baja del rugby (la señal de su peso), arriba de Inicio (5/11: siempre a la vista, plegable): con
     // «Más» abierto, con números, sin números y con «sin déficit», y plegada.
+    await deporte('poner', 'energia');
+    await pagina.evaluate(() => window.__seccion('energiaInicio'));
+    await espera(1100);
+    await foto('deporte-tarjeta-inicio');
     await deporte('tarjeta');
     await espera(1100);
     await foto('deporte-tarjeta');
