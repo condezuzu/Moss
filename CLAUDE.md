@@ -221,6 +221,7 @@ mirar una animación cuadro a cuadro está la cámara lenta
 | [spec/fuentes.md](spec/fuentes.md) | las segundas tablas oficiales de los curados: cuáles y por qué, cómo se comparan, lo que hay que mostrar en Créditos y lo que queda por revisar |
 | [spec/estudio.md](spec/estudio.md) | el estudio de la evidencia (5/11/2026): cada área refutada contra los mejores estudios (metas, peso, sueño, el momento de cada aviso, Ascent, cuidados y la IA de fotos, en `spec/estudio/`), lo que se sostiene, lo que cae, lo que se arregló y lo que decidís vos; de ahí sale «En qué se basa Moss» |
 | [spec/catalogo.md](spec/catalogo.md) | el catálogo por cantidad de estrellas, fuentes y licencias |
+| [spec/lo-que-te-toca.md](spec/lo-que-te-toca.md) | lo que hace el dueño y no Claude: aprobar en la galería, las decisiones abiertas, los pasos cuando Apple aprueba, la próxima build, App Store Connect, Ascent y lo del iPhone (al 5/11/2026; se actualiza al cerrar cada tanda) |
 
 ## Dónde está cada cosa
 
