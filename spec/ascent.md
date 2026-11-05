@@ -809,7 +809,7 @@ ningún gesto.
 | | Sin vincular, con Ascent en este iPhone | Sin vincular, sin Ascent | Vinculada |
 |---|---|---|---|
 | **Hábitos: la señal** | «Vincular con Ascent», con la luna afuera de la órbita | «Ascent», con la luna afuera | La última sesión de la semana («Hoy: piernas», «Ayer: empuje», «El lunes: empuje»), con la luna en la órbita; sin una, «Ascent» |
-| **Inicio: la invitación** | Hasta «Ahora no» | Nada | Nada |
+| **Inicio: la invitación** | Siempre; después de «Ahora no», 4 horas después | Nada | Nada |
 | **Perfil: la fila** | «Vincular» | «Vincular» | «@usuario» |
 | **La sección** | «Vincular con Ascent» | «Vincular con Ascent» y la App Store | Lo de hoy |
 
@@ -828,11 +828,14 @@ ningún gesto.
   - Una sesión más vieja que una semana ya no dice nada útil: vuelve a «Ascent».
 - **La invitación de Inicio**
   - Solo con Ascent en este iPhone (`canOpenURL`, ya declarado), con la cuenta de
-    Moss, sin vincular y sin haber dicho «Ahora no». Sin Ascent no se dice nada.
+    Moss y sin vincular. Sin Ascent no se dice nada. El título es una pregunta: «¿Tienes
+    Ascent en este iPhone?» (5/11/2026).
   - Va debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
   - «Vincular» abre la hoja sin salir de Inicio: dos toques, como pide D27.
-  - «Ahora no» queda guardado en este iPhone y no vuelve a aparecer. La señal y
-    Perfil siguen ahí. Al vincular, se va sola.
+  - «Ahora no» la guarda 4 horas (lo pediste el 5/11/2026: que vuelva sin molestar, así
+    se ve cuando vuelves a anotar una comida; `VUELVE_EN` en `senalDeAscent.ts`). Se
+    guarda la hora en este iPhone; lo que guardaba la 1.0 cuenta como un «Ahora no»
+    viejo. La señal y Perfil siguen ahí. Al vincular, se va sola.
 - **Perfil:** con la bandera prendida, Conexiones pasa a ser lo primero, debajo de
   tu foto, con Ascent en ella, como en la galería.
 - **Moss es Moss sigue valiendo:** la entrada, la ficha y lo de cada día no dependen

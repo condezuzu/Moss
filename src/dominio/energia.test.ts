@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { DIAS_ANOTADOS, energiaDeAhora, energiaDeEstosDias, energiaDelDia, enLaBarra, hoyParaLaEnergia, momentoDelDia, franjasDeLaBarra, masaMagraEstimada, type DiaDeEnergia, type EntradaDeEnergia } from './energia';
+import { curvaDelDia, DIAS_ANOTADOS, energiaDeAhora, energiaDeEstosDias, energiaDelDia, enLaBarra, hoyParaLaEnergia, momentoDelDia, franjasDeLaBarra, masaMagraEstimada, type DiaDeEnergia, type EntradaDeEnergia } from './energia';
 import { sumarDias } from './fechas';
 
 const HOY = '2026-11-05';
@@ -116,7 +116,7 @@ describe('la energía de ahora, según la hora', () => {
   const bien = { anoche: 'normal', seguidas: false, deuda: 'bien' } as const;
   const estosDias = energiaDeEstosDias({ ...ELLA, dias: dias(7, 35).map((d) => ({ ...d, meta: d.kcal })) });
   const ahora = (t: string, comido: number, ultima: string | null = null) =>
-    energiaDeAhora({ deEstosDias: estosDias, sueno: bien, ...DIA, almuerzo: h('13:00'), ahora: h(t), hoy: { meta: 2600, comido, comidas: COMIDAS, ultima: ultima === null ? null : h(ultima) } });
+    energiaDeAhora({ deEstosDias: estosDias, sueno: bien, ...DIA, ahora: h(t), hoy: { meta: 2600, comido, comidas: COMIDAS, ultima: ultima === null ? null : h(ultima) } });
 
   it('el momento: antes y después de entrenar primero; recién despierto la primera hora; la noche, 2 h antes de la cama', () => {
     expect(['7:30', '12:00', '15:00', '18:39', '19:55', '21:54', '21:56', '22:30'].map((t) => momentoDelDia({ ...DIA, ahora: h(t) })))
@@ -157,5 +157,49 @@ describe('la energía de ahora, según la hora', () => {
   it('la comida de estos días baja la energía a cualquier hora, también a la mañana', () => {
     const pocos = energiaDeEstosDias({ ...ELLA, dias: dias(7, 20) });
     expect(energiaDeAhora({ deEstosDias: pocos, sueno: bien, ...DIA, ahora: h('7:30'), hoy: { meta: 2600, comido: 0, comidas: COMIDAS } })).toMatchObject({ estado: 'baja', limita: ['comida'] });
+  });
+});
+
+describe('la curva del día', () => {
+  const h = (t: string) => { const [a, b] = t.split(':').map(Number); return a * 60 + b; };
+  const reloj = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+  const tramos = (c: ReturnType<typeof curvaDelDia>) => c.tramos.map((x) => `${x.que} ${reloj(x.desde)}-${reloj(x.hasta)}`);
+
+  it('de 7 a 23: la inercia la primera hora, el mejor momento a media mañana, el bajón de la tarde, el segundo pico y bajar el ritmo', () => {
+    expect(tramos(curvaDelDia({ despertar: h('7:00'), cama: h('23:00'), deuda: 'bien' }))).toEqual([
+      'inercia 7:00-8:00', 'pico 9:30-12:00', 'bajon 13:30-16:00', 'segundoPico 17:00-20:30', 'bajarElRitmo 21:00-23:00',
+    ]);
+  });
+
+  it('se corre con la hora de despertarte y de la cama', () => {
+    const c = curvaDelDia({ despertar: h('9:00'), cama: h('25:00'), deuda: 'bien' });
+    expect(c.tramos.find((x) => x.que === 'bajon')).toMatchObject({ desde: h('15:30'), hasta: h('18:00') });
+    expect(c.tramos.find((x) => x.que === 'bajarElRitmo')).toMatchObject({ desde: h('23:00'), hasta: h('25:00') });
+  });
+
+  it('la forma: baja al despertar, sube a media mañana, baja a la tarde y vuelve a subir', () => {
+    const c = curvaDelDia({ despertar: h('7:00'), cama: h('23:00'), deuda: 'muyBien' });
+    const en = (t: string) => c.puntos.find((p) => p.t === h(t))!.nivel;
+    expect(en('7:00')).toBeLessThan(en('8:00'));
+    expect(en('10:45')).toBeGreaterThan(en('14:45'));
+    expect(en('18:45')).toBeGreaterThan(en('14:45'));
+    expect(en('23:00')).toBeLessThan(en('21:00'));
+  });
+
+  it('con deuda, los picos más bajos y el bajón más hondo', () => {
+    const sin = curvaDelDia({ despertar: h('7:00'), cama: h('23:00'), deuda: 'muyBien' });
+    const con = curvaDelDia({ despertar: h('7:00'), cama: h('23:00'), deuda: 'alta' });
+    const en = (c: typeof sin, t: string) => c.puntos.find((p) => p.t === h(t))!.nivel;
+    expect(en(con, '10:45')).toBeLessThan(en(sin, '10:45'));
+    // Más hondo comparado con tu mejor momento: el bajón queda más lejos del pico.
+    expect(en(con, '14:45') / en(con, '10:45')).toBeLessThan(en(sin, '14:45') / en(sin, '10:45'));
+  });
+
+  it('en la energía de ahora, el tramo y lo que se dice: el mejor momento a media mañana', () => {
+    const e = energiaDeAhora({
+      deEstosDias: null, sueno: { anoche: 'normal', seguidas: false, deuda: 'bien' }, ahora: h('10:30'),
+      despertar: h('7:00'), cama: h('23:00'), sesion: null, hoy: null,
+    });
+    expect(e).toMatchObject({ tramo: 'pico', notas: ['pico'], momento: 'dia' });
   });
 });

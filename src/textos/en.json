@@ -1127,8 +1127,9 @@
       "razon": {
         "comida": {
           "llegaste": "These days you hit your calories",
-          "deSobra": "These days you ate plenty for your training",
-          "alcanza": "These days you ate what you need"
+          "deSobra": "These days you ate plenty",
+          "alcanza": "These days you ate what you need",
+          "deSobraEntrena": "These days you ate plenty for your training"
         },
         "sueno": {
           "muyBien": ", slept well and have no sleep debt",
@@ -1180,8 +1181,8 @@
         "dormir": "Tonight, go to bed at {hora} to wake up at {despertar}.",
         "dormirDeuda": "Tonight, go to bed at {hora}: that's how you start paying down your sleep debt.",
         "sinFallo": "If you train, better not to go to failure: reps feel harder.",
-        "comerMas": "Eat a bit more these days, especially before and after training.",
-        "medico": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a sports dietitian.",
+        "comerMas": "Eat a bit more these days: one more meal or a bigger portion helps.",
+        "medico": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a dietitian.",
         "llegar": "You fell short of your calories: one more meal or a bigger portion helps.",
         "seguir": "Keep it up: eat as usual and sleep what you need.",
         "comerAntesYa": "For your {hora} workout, eat something now: with carbs and some protein.",
@@ -1189,23 +1190,30 @@
         "atrasadoSinNumeros": "You're behind on food today: one more meal gets you back on track.",
         "comerAntes": "Eat something before {hora}: the pre-workout meal goes 1 to 4 h before training.",
         "comerDespues": "Now, a meal with protein: it helps you recover.",
-        "inercia": "Feeling slow right after waking is normal: it passes in about half an hour.",
-        "bajon": "Energy dips a little after lunch: it's normal, and daylight helps.",
+        "inercia": "Feeling slow right after waking is normal: it passes in about half an hour. Your best time starts at {desde}.",
+        "bajon": "Your afternoon dip, until {hasta}: it's normal, it comes from your body clock, and daylight helps.",
         "bajarElRitmo": "Dim lights from now on: bed at {cama}.",
-        "aLaCama": "It's time for bed: with dim light you fall asleep sooner."
+        "aLaCama": "It's time for bed: with dim light you fall asleep sooner.",
+        "pico": "This is your best time of day, until {hasta}: use it for what takes the most focus.",
+        "segundoPico": "Until {hasta}, your second good stretch of the day.",
+        "comerMasEntrena": "Eat a bit more these days, especially before and after training.",
+        "medicoEntrena": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a sports dietitian."
       },
       "deQueSale": "Based on your sleep, your meals and your training",
       "deQueSaleSinEntreno": "Based on your sleep and your meals",
       "detalle": {
         "sueno": "Last night you slept {dormido}. Sleep debt: {deuda}.",
         "suenoSinDatos": "No nights yet: after a few days of sleep, Moss adds it in.",
-        "comida": "These days, about {kcal} kcal a day out of your {meta}, and {entreno} from training.",
-        "comidaSinMeta": "These days, about {kcal} kcal a day, and {entreno} from training.",
-        "comidaSinNumeros": "What you logged these days, against what your day and your training ask for.",
+        "comida": "These days, about {kcal} kcal a day out of your {meta}.",
+        "comidaSinMeta": "These days, about {kcal} kcal a day.",
+        "comidaSinNumeros": "What you logged these days, against what your day asks for.",
         "comidaSinDatos": "Log your meals for a few days and Moss adds them in.",
         "hoy": "Today, about {comido} kcal of the {esperado} you usually have by this time.",
         "hoySinNumeros": "Today, what you logged against what you usually have by this time.",
-        "hoyTemprano": "Today is just starting: at this hour what you ate doesn't count yet."
+        "hoyTemprano": "Today is just starting: at this hour what you ate doesn't count yet.",
+        "comidaEntrena": "These days, about {kcal} kcal a day out of your {meta}, and {entreno} from training.",
+        "comidaSinMetaEntrena": "These days, about {kcal} kcal a day, and {entreno} from training.",
+        "comidaSinNumerosEntrena": "What you logged these days, against what your day and your training ask for."
       },
       "juicioDeuda": {
         "muyBien": "none",
@@ -1263,10 +1271,16 @@
         "titulo": "Which days it uses",
         "sueno": "Sleep: last night, the two nights before and your sleep debt over the last two weeks.",
         "comida": "These days: the average of the 7 days before today, with at least 4 well logged. It's an average, so one bad day weighs little: low energy shows up when you eat too little several days in a row, which is what studies measure (Loucks and Thuma 2003).",
-        "hoy": "Today: what you've logged so far, against what you usually have by this time. Before your first meal, it doesn't count."
+        "hoy": "Today: what you've logged so far, against what you usually have by this time. Before your first meal, it doesn't count.",
+        "curva": "The curve: it comes from when you wake up and go to bed, with the two-process model (Borbély 1982) and the afternoon dip (Monk 2005). It's approximate, it doesn't measure you; with sleep debt, the peaks are lower."
       },
       "cerrar": "Close",
-      "masEnSueno": "More in Sleep"
+      "masEnSueno": "More in Sleep",
+      "curva": {
+        "pico": "Your best time",
+        "bajon": "Dip",
+        "segundoPico": "Second peak"
+      }
     }
   },
   "mas": {
@@ -2622,7 +2636,7 @@
       "desliza": "Swipe up"
     },
     "invitacion": {
-      "titulo": "You have Ascent on this iPhone",
+      "titulo": "Do you have Ascent on this iPhone?",
       "texto": "Link it to understand your workouts and progress much faster.",
       "vincular": "Link",
       "ahoraNo": "Not now"

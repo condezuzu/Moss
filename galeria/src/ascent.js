@@ -1205,15 +1205,15 @@ const SeccionAscent = (() => {
     }
 
     // ------------------------------------------------------------ la invitación de Inicio
-    // Solo con Ascent en este iPhone y sin vincular, y «Ahora no» es para siempre (en el teléfono queda
-    // guardado; en la galería, hasta recargar o con su botón). «Vincular» abre la hoja: dos toques.
+    // Solo con Ascent en este iPhone y sin vincular; «Ahora no» la guarda 4 horas (en la galería, el botón
+    // «Pasaron 4 horas» la trae de vuelta). «Vincular» abre la hoja: dos toques.
     let descartada = false;
     let invitacionVista = false;
     // La que se está yendo sigue en su lugar: Inicio se vuelve a pintar entero en cualquier momento.
     let saliendo = null;
     function invitacion() {
       if (saliendo) return saliendo;
-      const invita = SenalDeAscent.invitarEnInicio({ conAscent: !opciones.prendida || opciones.prendida(), listo: true, conCuenta: esteIphone !== 'sinCuenta', vinculada, instalada: esteIphone !== 'sinAscent', descartada });
+      const invita = SenalDeAscent.invitarEnInicio({ conAscent: !opciones.prendida || opciones.prendida(), listo: true, conCuenta: esteIphone !== 'sinCuenta', vinculada, instalada: esteIphone !== 'sinAscent', descartada, ahora: Date.now() });
       if (!invita) { invitacionVista = false; return null; }
       const c = el('article', 'as-invita' + (invitacionVista ? '' : ' entra'));
       invitacionVista = true;
@@ -1223,7 +1223,7 @@ const SeccionAscent = (() => {
       const acciones = el('div', 'as-invita-acciones');
       acciones.append(
         boton('as-invita-si', tx('ascent.invitacion.vincular'), () => abrirVincular()),
-        boton('as-invita-no', tx('ascent.invitacion.ahoraNo'), () => { descartada = true; quitarInvitacion(); }),
+        boton('as-invita-no', tx('ascent.invitacion.ahoraNo'), () => { descartada = Date.now(); quitarInvitacion(); }),
       );
       c.append(textos, acciones);
       return c;
@@ -2305,6 +2305,7 @@ const SeccionAscent = (() => {
       // Mientras se desliza entre pestañas, el borde del planeta se va con Progreso.
       seguirPagina(x) { corrida = x; techo.style.translate = `${x.toFixed(1)}px 0`; ponerTecho(); },
       // Para los botones de la galería: «Ahora no» se olvida al recargar o con esto.
+      // Para los botones de la galería: como si hubieran pasado las 4 horas del «Ahora no».
       volverAInvitar() { descartada = false; opciones.repintarInicio(); },
       pintar,
       abrir,

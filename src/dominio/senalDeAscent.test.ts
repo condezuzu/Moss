@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { DIAS_DE_LA_SENAL, invitarEnInicio, senalDeAscent } from './senalDeAscent';
+import { DIAS_DE_LA_SENAL, invitarEnInicio, senalDeAscent, VUELVE_EN } from './senalDeAscent';
 
 const HOY = '2026-11-02';
 
@@ -40,7 +40,9 @@ describe('la señal de Hábitos', () => {
 });
 
 describe('la invitación de Inicio', () => {
-  const invita = (d: Partial<Parameters<typeof invitarEnInicio>[0]>) => invitarEnInicio({ conAscent: true, listo: true, conCuenta: true, vinculada: false, instalada: true, descartada: false, ...d });
+  const AHORA = Date.parse('2026-11-05T15:00:00Z');
+  const HORA = 60 * 60 * 1000;
+  const invita = (d: Partial<Parameters<typeof invitarEnInicio>[0]>) => invitarEnInicio({ conAscent: true, listo: true, conCuenta: true, vinculada: false, instalada: true, descartada: false, ahora: AHORA, ...d });
 
   it('invita a quien tiene las dos apps y no las unió', () => {
     expect(invita({})).toBe(true);
@@ -58,8 +60,12 @@ describe('la invitación de Inicio', () => {
     expect(invita({ vinculada: true })).toBe(false);
   });
 
-  it('después de «Ahora no», nunca más', () => {
-    expect(invita({ descartada: true })).toBe(false);
+  it('después de «Ahora no», vuelve a las 4 horas', () => {
+    expect(VUELVE_EN).toBe(4 * HORA);
+    expect(invita({ descartada: AHORA - 3.9 * HORA })).toBe(false);
+    expect(invita({ descartada: AHORA - 4 * HORA })).toBe(true);
+    // Lo que guardaba la 1.0 («1») vale como un «Ahora no» viejo: vuelve.
+    expect(invita({ descartada: 1 })).toBe(true);
   });
 
   it('sin la cuenta de Moss no se puede vincular', () => {

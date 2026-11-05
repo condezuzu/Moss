@@ -242,19 +242,71 @@ export function hoyParaLaEnergia(x: { ahora: number; meta: number; comido: numbe
   return x.momento === 'antesDeEntrenar' ? { parte: 'baja', como: 'sinComerParaEntrenar', ...base } : { parte: 'justa', como: 'atrasado', ...base };
 }
 
+// ------------------------------------------------------------ la curva del día
+
 /**
- * Lo que se dice según la hora, además de lo de cada parte: la inercia al despertar; el bajón de después de almorzar,
- * que es del reloj del cuerpo y no solo de la comida (Monk 2005), y que la luz del día ayuda (Kaida 2006); y a la
- * noche, ir bajando el ritmo.
+ * La curva de tu energía a lo largo del día (lo pediste el 5/11/2026, como Rise, y sin hablar de entrenar): la forma
+ * del modelo de los dos procesos (Borbély 1982): la presión de sueño, que sube desde que te despiertas, y el reloj del
+ * cuerpo, que baja después del mediodía (Monk 2005) y vuelve a subir unas horas antes de dormir, la «zona en que cuesta
+ * dormirse» (Strogatz 1987; Lavie 1986). Al despertar, la inercia, que suele pasar en 15 a 60 minutos (Hilditch y
+ * McHill 2019); a la noche, la melatonina sube unas 2 h antes de la hora de siempre (Burgess 2008). Los tramos se
+ * cuentan desde que te despiertas y desde la hora de la cama: son aproximados, no salen de medirte a ti. Con deuda,
+ * los picos son más bajos y el bajón más hondo: la presión de sueño se suma al reloj (Dijk 1992).
  */
-export type NotaDeLaHora = 'inercia' | 'bajon' | 'bajarElRitmo';
-export const BAJON = 180;
+export type TramoDeLaCurva = 'inercia' | 'pico' | 'bajon' | 'segundoPico' | 'bajarElRitmo';
+export type Tramo = { que: TramoDeLaCurva; desde: number; hasta: number };
+export type CurvaDelDia = { tramos: Tramo[]; puntos: { t: number; nivel: number }[] };
+/** Cuánto bajan los picos con la deuda (convención: la forma es del modelo; el tamaño, no). */
+const CON_DEUDA: Record<JuicioDeLaDeuda, number> = { muyBien: 1, bien: 0.95, algoAlta: 0.85, alta: 0.72 };
+
+/** En minutos desde la medianoche del día de Moss, de despertarte a la cama; los puntos, cada 15 minutos. */
+export function curvaDelDia(x: { despertar: number; cama: number; deuda: JuicioDeLaDeuda | null }): CurvaDelDia {
+  const D = x.despertar;
+  const C = Math.max(x.cama, D + 12 * 60);
+  const f = CON_DEUDA[x.deuda ?? 'bien'];
+  const fin2 = Math.max(D + 11 * 60, C - 150);
+  const tramos: Tramo[] = [
+    { que: 'inercia', desde: D, hasta: D + 60 },
+    { que: 'pico', desde: D + 150, hasta: D + 300 },
+    { que: 'bajon', desde: D + 390, hasta: D + 540 },
+    { que: 'segundoPico', desde: D + 600, hasta: Math.min(fin2, C - 120) },
+    { que: 'bajarElRitmo', desde: C - 120, hasta: C },
+  ];
+  const medio = (t: Tramo) => (t.desde + t.hasta) / 2;
+  // Los picos bajan con la deuda; el bajón, el doble.
+  const sube = (y: number, veces = 1) => 0.2 + (y - 0.2) * Math.pow(f, veces);
+  const anclas: [number, number][] = [
+    [D, 0.25], [D + 60, sube(0.55)], [medio(tramos[1]), sube(0.9)], [medio(tramos[2]), sube(0.55, 2)],
+    [medio(tramos[3]), sube(0.82)], [C - 120, sube(0.62)], [C, 0.3],
+  ];
+  const nivel = (t: number) => {
+    const i = anclas.findIndex(([a], k) => k < anclas.length - 1 && t >= a && t <= anclas[k + 1][0]);
+    if (i < 0) return t < D ? anclas[0][1] : anclas[anclas.length - 1][1];
+    const [a, ya] = anclas[i];
+    const [b, yb] = anclas[i + 1];
+    const u = b === a ? 0 : (t - a) / (b - a);
+    return ya + (yb - ya) * (1 - Math.cos(Math.PI * u)) / 2;
+  };
+  const puntos = [];
+  for (let t = D; t <= C; t += 15) puntos.push({ t, nivel: nivel(t) });
+  return { tramos, puntos };
+}
+
+/**
+ * Lo que se dice según la hora, además de lo de cada parte, con los tramos de la curva: la inercia al despertar; el
+ * mejor momento y el segundo; el bajón de la tarde, que es del reloj del cuerpo y no solo de la comida (Monk 2005), y
+ * que la luz del día ayuda (Kaida 2006); y a la noche, ir bajando el ritmo.
+ */
+export type NotaDeLaHora = 'inercia' | 'pico' | 'bajon' | 'segundoPico' | 'bajarElRitmo';
 
 export type EnergiaDeAhora = EnergiaDelDia & {
   momento: Momento;
   hoy: LoDeHoy | null;
   notas: NotaDeLaHora[];
   sesion: SesionDeHoy | null;
+  /** La curva de hoy y el tramo en que estás (sin la hora de despertarte o la de la cama, null). */
+  curva: CurvaDelDia | null;
+  tramo: TramoDeLaCurva | null;
   /** Antes de entrenar, sin nada anotado en las 4 h de antes de la sesión: comer algo antes. */
   comerAntes: boolean;
   /** Después de entrenar, sin nada anotado desde que terminaste: una comida con proteína. */
@@ -275,8 +327,6 @@ export function energiaDeAhora(x: {
   despertar: number | null;
   cama: number | null;
   sesion: SesionDeHoy | null;
-  /** La hora de siempre del almuerzo: el bajón es en las 3 h que siguen. */
-  almuerzo?: number | null;
   /** La meta y lo anotado de hoy, con las comidas de siempre y su parte del día, y la hora de lo último anotado. */
   hoy: { meta: number; comido: number; comidas: readonly ComidaDeSiempre[]; ultima?: number | null } | null;
 }): EnergiaDeAhora | null {
@@ -292,9 +342,12 @@ export function energiaDeAhora(x: {
   const justas: LoQueLimita[] = [...con('justa'), ...(musculos === 'cargados' ? (['musculos'] as const) : [])];
   const alta = sueno?.parte === 'bien' && comida?.parte === 'bien' && (!hoy || hoy.parte === 'bien') && musculos !== 'cargados';
   const estado: EstadoDeEnergia = bajas.length ? 'baja' : alta ? 'alta' : 'suficiente';
+  const curva = x.despertar !== null && x.cama !== null ? curvaDelDia({ despertar: x.despertar, cama: x.cama, deuda: x.sueno?.deuda ?? null }) : null;
+  const tramo = curva?.tramos.find((t) => x.ahora >= t.desde && x.ahora < t.hasta)?.que ?? null;
   const notas: NotaDeLaHora[] = [];
   if (momento === 'recienDespierto') notas.push('inercia');
-  if (momento === 'dia' && x.almuerzo != null && x.ahora >= x.almuerzo && x.ahora < x.almuerzo + BAJON) notas.push('bajon');
+  // De día, lo del tramo: el mejor momento, el bajón o el segundo pico.
+  if (momento === 'dia' && (tramo === 'pico' || tramo === 'bajon' || tramo === 'segundoPico')) notas.push(tramo);
   if (momento === 'noche') notas.push('bajarElRitmo');
   const ultima = x.hoy?.ultima ?? null;
   const comerAntes = momento === 'antesDeEntrenar' && !!x.sesion && (ultima === null || ultima < x.sesion.inicio - ANTES_DE_ENTRENAR);
@@ -302,6 +355,6 @@ export function energiaDeAhora(x: {
   return {
     estado, sueno, comida, musculos, deuda: x.sueno?.deuda ?? null, limita: [...bajas, ...justas],
     entrenaHoy: !!(x.entrenaHoy ?? x.sesion ?? x.deEstosDias?.entrenaHoy), deEstosDias: x.deEstosDias,
-    momento, hoy, notas, sesion: x.sesion, comerAntes, comerDespues,
+    momento, hoy, notas, sesion: x.sesion, comerAntes, comerDespues, curva, tramo,
   };
 }

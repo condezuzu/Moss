@@ -1127,8 +1127,9 @@
       "razon": {
         "comida": {
           "llegaste": "Estos días llegaste a tus calorías",
-          "deSobra": "Estos días comiste de sobra para lo que entrenas",
-          "alcanza": "Estos días comiste lo que necesitas"
+          "deSobra": "Estos días comiste de sobra",
+          "alcanza": "Estos días comiste lo que necesitas",
+          "deSobraEntrena": "Estos días comiste de sobra para lo que entrenas"
         },
         "sueno": {
           "muyBien": ", dormiste bien y no tienes deuda de sueño",
@@ -1180,8 +1181,8 @@
         "dormir": "Esta noche, a la cama a las {hora} para despertarte a las {despertar}.",
         "dormirDeuda": "Esta noche, a la cama a las {hora}: así empiezas a bajar tu deuda de sueño.",
         "sinFallo": "Si entrenas, mejor sin llegar al fallo: las repeticiones cuestan más.",
-        "comerMas": "Come un poco más estos días, sobre todo antes y después de entrenar.",
-        "medico": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista del deporte.",
+        "comerMas": "Come un poco más estos días: una comida más o una porción más grande ayuda.",
+        "medico": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista.",
         "llegar": "Te faltó llegar a tus calorías: una comida más o una porción más grande ayuda.",
         "seguir": "Sigue así: come lo de siempre y duerme lo que necesitas.",
         "comerAntesYa": "Para entrenar a las {hora}, come algo ya: con carbohidratos y algo de proteína.",
@@ -1189,23 +1190,30 @@
         "atrasadoSinNumeros": "Hoy vas atrasado con la comida: una comida más te pone al día.",
         "comerAntes": "Come algo antes de las {hora}: la comida de antes de entrenar va de 1 a 4 h antes.",
         "comerDespues": "Ahora, una comida con proteína: ayuda a recuperar.",
-        "inercia": "Recién despierto es normal sentirte lento: se pasa en una media hora.",
-        "bajon": "Después de almorzar baja un poco la energía: es normal, y la luz del día ayuda.",
+        "inercia": "Recién despierto es normal sentirte lento: se pasa en una media hora. Tu mejor momento llega a las {desde}.",
+        "bajon": "Tu bajón de la tarde, hasta las {hasta}: es normal, viene del reloj del cuerpo, y la luz del día ayuda.",
         "bajarElRitmo": "Luz baja desde ahora: a las {cama}, a la cama.",
-        "aLaCama": "Ya es hora de ir a la cama: con la luz baja te duermes antes."
+        "aLaCama": "Ya es hora de ir a la cama: con la luz baja te duermes antes.",
+        "pico": "Ahora es tu mejor momento del día, hasta las {hasta}: aprovéchalo para lo que te pide más concentración.",
+        "segundoPico": "Hasta las {hasta}, tu segundo buen momento del día.",
+        "comerMasEntrena": "Come un poco más estos días, sobre todo antes y después de entrenar.",
+        "medicoEntrena": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista del deporte."
       },
       "deQueSale": "Según tu sueño, tus comidas y tu entrenamiento",
       "deQueSaleSinEntreno": "Según tu sueño y tus comidas",
       "detalle": {
         "sueno": "Anoche dormiste {dormido}. Deuda de sueño: {deuda}.",
         "suenoSinDatos": "Todavía no hay noches: con unos días de sueño, Moss lo suma.",
-        "comida": "Estos días, unas {kcal} kcal por día de tus {meta}, y {entreno} de entrenar.",
-        "comidaSinMeta": "Estos días, unas {kcal} kcal por día, y {entreno} de entrenar.",
-        "comidaSinNumeros": "Lo que anotaste estos días, contra lo que piden tu día y tu entrenamiento.",
+        "comida": "Estos días, unas {kcal} kcal por día de tus {meta}.",
+        "comidaSinMeta": "Estos días, unas {kcal} kcal por día.",
+        "comidaSinNumeros": "Lo que anotaste estos días, contra lo que pide tu día.",
         "comidaSinDatos": "Anota tus comidas unos días y Moss lo suma.",
         "hoy": "Hoy, unas {comido} kcal de las {esperado} que sueles llevar a esta hora.",
         "hoySinNumeros": "Hoy, lo que anotaste contra lo que sueles llevar a esta hora.",
-        "hoyTemprano": "Hoy recién empieza: a esta hora todavía no se cuenta lo que comiste."
+        "hoyTemprano": "Hoy recién empieza: a esta hora todavía no se cuenta lo que comiste.",
+        "comidaEntrena": "Estos días, unas {kcal} kcal por día de tus {meta}, y {entreno} de entrenar.",
+        "comidaSinMetaEntrena": "Estos días, unas {kcal} kcal por día, y {entreno} de entrenar.",
+        "comidaSinNumerosEntrena": "Lo que anotaste estos días, contra lo que piden tu día y tu entrenamiento."
       },
       "juicioDeuda": {
         "muyBien": "sin deuda",
@@ -1263,10 +1271,16 @@
         "titulo": "De qué días sale",
         "sueno": "El sueño: anoche, las dos noches de antes y tu deuda de las últimas dos semanas.",
         "comida": "Estos días: el promedio de los 7 días de antes de hoy, con al menos 4 bien anotados. Es un promedio, así que un día malo pesa poco: la energía baja aparece cuando comes poco varios días seguidos, que es lo que miden los estudios (Loucks y Thuma 2003).",
-        "hoy": "Hoy: lo que anotaste hasta ahora, contra lo que sueles llevar a esta hora. Antes de tu primera comida, no cuenta."
+        "hoy": "Hoy: lo que anotaste hasta ahora, contra lo que sueles llevar a esta hora. Antes de tu primera comida, no cuenta.",
+        "curva": "La curva: sale de tu hora de despertarte y la de ir a la cama, con el modelo de los dos procesos (Borbély 1982) y el bajón de la tarde (Monk 2005). Es aproximada, no te mide a ti; con deuda, los picos son más bajos."
       },
       "cerrar": "Cerrar",
-      "masEnSueno": "Más en Sueño"
+      "masEnSueno": "Más en Sueño",
+      "curva": {
+        "pico": "Tu mejor momento",
+        "bajon": "Bajón",
+        "segundoPico": "Otro pico"
+      }
     }
   },
   "mas": {
@@ -2622,7 +2636,7 @@
       "desliza": "Desliza hacia arriba"
     },
     "invitacion": {
-      "titulo": "Tienes Ascent en este iPhone",
+      "titulo": "¿Tienes Ascent en este iPhone?",
       "texto": "Vincúlala para entender tus entrenamientos y progresar mucho más rápido.",
       "vincular": "Vincular",
       "ahoraNo": "Ahora no"

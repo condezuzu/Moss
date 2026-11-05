@@ -604,6 +604,16 @@ button.gc-fila { cursor: pointer; }
 .in-energia-partes.cuatro b { font-size: 12px; }
 /* La tira de tu día: de despertarte a ir a la cama, con las comidas, la sesión y ahora. */
 .in-energia-dia { margin-top: 14px; }
+/* La curva de tu energía hoy: el área suave, la línea que se dibuja al aparecer, el nombre de cada tramo y ahora. */
+.in-energia-dia .curva { position: relative; height: 56px; margin-bottom: 4px; }
+.in-energia-dia .curva svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pagina-app .in-energia-dia .curva path.area { fill: color-mix(in srgb, var(--e-color) 14%, transparent); stroke: none; }
+.pagina-app .in-energia-dia .curva path.linea { fill: none; stroke: color-mix(in srgb, var(--e-color) 85%, transparent); stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 1; animation: in-energia-traza 1.1s 0.15s cubic-bezier(0.3, 0.6, 0.2, 1) forwards; }
+@keyframes in-energia-traza { to { stroke-dashoffset: 0; } }
+.in-energia-dia .curva .tramo { position: absolute; top: -2px; transform: translateX(-50%); font: 400 9.5px/1 var(--texto); letter-spacing: 0.04em; color: rgba(239, 230, 207, 0.5); white-space: nowrap; }
+.in-energia-dia .curva .tramo.bajon { top: auto; bottom: 2px; }
+.in-energia-dia .curva .tramo.actual { color: var(--tinta); }
+.in-energia-dia .curva .punto { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: #fbf2d9; box-shadow: 0 0 0 3px rgba(9, 12, 26, 0.9), 0 0 10px var(--e-color); animation: sn-aparece 0.4s 1.1s ease both; }
 .in-energia-dia .pista { position: relative; height: 22px; }
 .in-energia-dia .pista::before { content: ''; position: absolute; left: 0; right: 0; top: 10px; height: 2px; border-radius: 1px; background: rgba(239, 230, 207, 0.12); }
 .in-energia-dia .hecho { position: absolute; left: 0; top: 10px; height: 2px; border-radius: 1px; background: rgba(239, 230, 207, 0.45); transform-origin: left; animation: in-energia-crece 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -620,7 +630,8 @@ button.gc-fila { cursor: pointer; }
 .in-energia-dia .horas span:first-child { left: 0; }
 .in-energia-dia .horas span:last-child { right: 0; }
 .in-energia-dia .horas .ahora-hora { transform: translateX(-50%); color: var(--tinta); }
-.in-energia-dia .horas .ahora-hora.al-borde { transform: none; }
+.in-energia-dia .horas .ahora-hora.a-la-derecha { transform: translateX(6px); }
+.in-energia-dia .horas .ahora-hora.a-la-izquierda { transform: translateX(calc(-100% - 6px)); }
 .in-energia-mas { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; margin-top: 13px; padding: 7px 13px 7px 11px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.18); background: none; color: rgba(239, 230, 207, 0.86); font: 500 12.5px/1 var(--texto); }
 .in-energia-mas::before { content: '+'; font: 400 15px/1 var(--texto); }
 .in-energia-mas[aria-expanded='true']::before { content: '−'; }
@@ -691,6 +702,8 @@ button.gc-fila { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .in-energia-velo, .in-energia-globo, .in-energia-globo > *, .in-energia-globo .in-energia-bateria rect.llena { transition: opacity 0.15s; transform: none; }
   .sueno .in-energia.resalta { animation: none; }
+  .pagina-app .in-energia-dia .curva path.linea { animation: none; stroke-dashoffset: 0; }
+  .in-energia-dia .curva .punto { animation: none; }
 }
 /* De qué días sale cada parte, en «Más». */
 .in-energia-cuando { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -2137,6 +2150,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>Tu energía, de tu día y no del gimnasio</b> (5/11 a la noche, para aprobar): sin Ascent, la tarjeta ya no dice «para entrenar de forma normal» ni nada del gimnasio: habla de tu día. Arriba, <b>la curva de tu energía hoy</b>, como Rise pero sin porcentaje: tu mejor momento a media mañana, el bajón de la tarde y otro pico antes de la noche, contados desde que te despertás, y dónde estás ahora; con deuda, los picos más bajos. Con Ascent vinculada aparece lo del gimnasio (antes y después de entrenar, los músculos, sin llegar al fallo): para eso se vincula. Y <b>la invitación de Ascent</b> pregunta «¿Tienes Ascent en este iPhone?» y, con «Ahora no», vuelve a las 4 horas.</li>
         <li><b>Sueño, con la deuda arriba</b> (5/11 a la noche, para aprobar): la deuda de sueño es lo primero que se ve, compacta y del tamaño de la tira de los días («Bien · Unas 3 h 30 min», el medidor y «Esta noche, a la cama a las 22:05»); «Más» la despliega. Debajo, la noche, <b>tu energía</b>, que ahora vive en Sueño, y más abajo los días para elegir otra noche. En Inicio, arriba a la derecha, <b>un botón redondo con la batería</b> y cómo está tu energía («Energía baja · Por el sueño», «Energía suficiente», «Energía alta · Todo a favor»): tocalo y <b>se abre ahí mismo un globo</b> que crece desde el botón, con lo básico; «Más en Sueño» se desliza a la tarjeta completa, sin saltos. En «Más», de qué días sale cada parte (el sueño, de anoche y de dos semanas; la comida, de la semana; lo de hoy, de hoy).</li>
         <li><b>Tu energía, según la hora</b> (5/11 a la noche, para aprobar): ya no te dice «energía baja» a la mañana por lo que todavía no comiste. Lo de <b>hoy</b> va aparte de lo de <b>estos días</b> y se mide contra lo que sueles haber comido a esa hora («Temprano», «Al día», «Atrasado» o, antes de entrenar, «Falta comer»). Lo que dice cambia con el momento: al despertar, de día (con el bajón de después de almorzar), antes de entrenar («Para entrenar a las 18:40…»), después (la comida con proteína) y la noche. Arriba, <b>la tira de tu día</b>: las comidas, la sesión y dónde estás. Elegí la hora con los botones de la energía, acá abajo, y probá «Hoy atrasado».</li>
         <li><b>La tarde del 5/11</b> (para aprobar): <b>tu energía, del día entero</b>: además de la comida, el sueño (anoche y la deuda) y, con Ascent vinculada, los músculos de hoy; manda lo más flojo. «Energía baja» arriba de todo («Según lo registrado, tu energía está muy baja.»); «Suficiente energía» («Hoy tienes suficiente energía para entrenar de forma normal.», sin hablar de la meta de cada uno) y «Energía alta» con el porqué del día, debajo de los macros. Cada parte con su estado de un vistazo, y «Más» con qué te conviene hoy y de dónde sale. Con Ascent dice «con Ascent» y suma los músculos (probalo vinculando). Elegí el estado arriba: baja por el sueño o por la comida. <b>La deuda de sueño</b> en una palabra y en grande («Muy bien», «Bien», «Algo alta» o «Alta», por lo que falta cada noche) y debajo <b>esta noche</b>: a qué hora a la cama para despertarte a la hora de siempre habiendo dormido lo que necesitas, y la última comida grande. <b>La última comida</b>, 2 h antes de la cama (3 con reflujo): la guía dice de 2 a 3, y las 3 quedan para el reflujo. El aviso con deuda dice a qué hora a la cama y a qué hora te despiertas. En Perfil › Avisos, <b>«Necesito dormir»</b>: lo de tu edad o de 7 a 9 horas, de media hora en media hora; lo usan la hora de dormir, la deuda, la calidad y esta noche. Y <b>Cuidados</b>: marcás lo que tengas (embarazo, lactancia, diabetes, presión, colesterol, riñón, reflujo, celiaquía, gota y más) en el cuestionario o en Perfil, y Moss ajusta tu meta y deja de proponerte lo que no te conviene, con «Cómo cambia tu dieta» a la vista; se guarda solo en el iPhone.</li>

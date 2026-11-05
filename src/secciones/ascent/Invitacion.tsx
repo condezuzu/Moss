@@ -5,7 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { useAscent } from '@/almacen/ascent';
@@ -24,13 +24,20 @@ const AHORA_NO = 'moss:invitarAVincularAhoraNo';
 export function InvitacionDeAscent() {
   const { listo, conCuenta, vinculo } = useAscent();
   const instalada = useHayAscent();
-  const [descartada, setDescartada] = useState<boolean | null>(null);
+  // Cuándo se tocó «Ahora no» (vuelve a las 4 horas: invitarEnInicio) y la hora con que se mira: al abrir Inicio y al
+  // volver a Moss. Lo de antes («1») cuenta como hace mucho.
+  const [descartada, setDescartada] = useState<number | false | null>(null);
+  const [ahora, setAhora] = useState(0);
   useEffect(() => {
-    AsyncStorage.getItem(AHORA_NO).then((x) => setDescartada(!!x)).catch(() => setDescartada(false));
+    AsyncStorage.getItem(AHORA_NO)
+      .then((x) => { setAhora(Date.now()); setDescartada(x ? Number(x) || 1 : false); })
+      .catch(() => { setAhora(Date.now()); setDescartada(false); });
+    const sub = AppState.addEventListener('change', (estado) => { if (estado === 'active') setAhora(Date.now()); });
+    return () => sub.remove();
   }, []);
   const [hoja, setHoja] = useState(false);
   const [vez, setVez] = useState(0);
-  const invita = invitarEnInicio({ conAscent: CON_ASCENT, listo, conCuenta, vinculada: vinculo.vinculada, instalada, descartada });
+  const invita = invitarEnInicio({ conAscent: CON_ASCENT, listo, conCuenta, vinculada: vinculo.vinculada, instalada, descartada, ahora });
   return (
     <>
       {invita && (
@@ -52,8 +59,10 @@ export function InvitacionDeAscent() {
               </Pressable>
               <Pressable
                 onPress={() => {
-                  setDescartada(true);
-                  AsyncStorage.setItem(AHORA_NO, '1').catch(() => {});
+                  const cuando = Date.now();
+                  setDescartada(cuando);
+                  setAhora(cuando);
+                  AsyncStorage.setItem(AHORA_NO, String(cuando)).catch(() => {});
                 }}
                 style={st.no}
                 accessibilityRole="button"

@@ -980,6 +980,21 @@ y para todos, también para quien no va al gimnasio. La regla es `energiaDelDia`
   - **La tira de tu día:** de despertarte a la cama de esta noche, con cada comida (anotada, pasada
     sin anotar o por venir), la sesión y ahora. Las partes son el sueño, «Estos días», «Hoy» y, con
     Ascent, los músculos.
+- **Tu día, no el gimnasio** (lo pediste el 5/11 a la noche: si Moss ya dice «para entrenar de
+  forma normal», vincular Ascent pierde sentido). Sin Ascent, la tarjeta habla de tu día: «Hoy
+  tienes suficiente energía para tu día», sin la sesión, sin «sin llegar al fallo» y sin los
+  momentos de antes y después de entrenar; «Estos días» se compara con tu meta, que ya trae lo que gastas
+  entrenando, sin nombrarlo. Con Ascent vinculada aparece la capa del gimnasio:
+  esos momentos, los músculos y lo de no llegar al fallo. El nombre queda «Tu energía»: «valor
+  energético» se descartó porque en las etiquetas son las calorías de un alimento.
+- **La curva del día** (como Rise, sin porcentaje): `curvaDelDia`, con sus tests. La forma del
+  modelo de los dos procesos (Borbély 1982), contada desde tu hora de despertarte y la de la cama:
+  la inercia la primera hora (Hilditch y McHill 2019), tu mejor momento a media mañana, el bajón
+  de la tarde (Monk 2005), otro pico antes de la noche (la zona en que cuesta dormirse: Strogatz
+  1987; Lavie 1986) y bajar el ritmo las 2 h antes de la cama (la melatonina: Burgess 2008). Con
+  deuda, los picos son más bajos y el bajón más hondo (Dijk 1992); el tamaño es una convención.
+  Se dibuja arriba de la tira de tu día, con el nombre de cada tramo y ahora, y «Más» dice qué
+  hacer según el tramo («Ahora es tu mejor momento del día, hasta las 12:00»).
 - **Dónde vive** (lo pediste el 5/11 a la noche): en Sueño, debajo de la noche, con la noche de hoy;
   con Ascent, ahí también trae los músculos y reemplaza a «Cómo llegas a entrenar». En Inicio, en
   todos los estados, un botón redondo arriba a la derecha con la batería y cómo está («Energía
