@@ -568,9 +568,60 @@ const SeccionInicio = (() => {
       return ul;
     }
     // Tu energía, de un vistazo (lo pediste el 5/11, a la noche): un botón redondo arriba a la derecha de Inicio, con la
-    // batería y cómo está, en todos los estados. Tocarlo lleva a tu energía, en Sueño, abierta y con «Más» cerrado.
+    // batería y cómo está, en todos los estados. Tocarlo abre ahí mismo un globo con lo básico, que crece desde el botón;
+    // abajo, «Más en Sueño» se desliza a la tarjeta completa. Nada salta: el globo crece y se achica, y el viaje a Sueño
+    // se desliza y baja suave.
     const botonDeEnergia = zona.querySelector('.in-energia-boton');
-    botonDeEnergia.addEventListener('click', () => opciones.irAEnergia && opciones.irAEnergia());
+    botonDeEnergia.addEventListener('click', () => (globo ? cerrarGlobo() : abrirGlobo()));
+    let globo = null;
+    let velo = null;
+    function abrirGlobo() {
+      const e = energiaDeHoy(s.primerDia ? null : delDeporte());
+      if (!e) return;
+      const en = e.dia;
+      const estado = en ? en.estado : 'sinDatos';
+      velo = el('div', 'in-energia-velo');
+      velo.addEventListener('click', () => cerrarGlobo());
+      globo = el('div', 'in-energia-globo ' + estado);
+      globo.setAttribute('role', 'dialog');
+      globo.setAttribute('aria-label', tx('inicio.energia.boton.' + estado));
+      // Debajo del botón, alineado a su derecha: de ahí crece.
+      const z = zona.getBoundingClientRect(), b = botonDeEnergia.getBoundingClientRect();
+      globo.style.top = `${(b.bottom - z.top + 6).toFixed(0)}px`;
+      globo.style.right = `${(z.right - b.right).toFixed(0)}px`;
+      const cab = el('div', 'in-energia-cab');
+      const ico = el('span', 'in-energia-ico');
+      ico.innerHTML = bateria(estado);
+      const titulos = el('div', 'in-energia-titulos');
+      titulos.append(el('span', 'in-energia-etq', tx('inicio.energia.etiqueta', { cuando: tx('inicio.energia.cuando.' + cuandoEs(e)) })), el('b', 'in-energia-titulo', tx('inicio.energia.titulo.' + estado)));
+      const cerrar = boton('in-energia-cerrar', icono('cerrar'), () => cerrarGlobo(), tx('inicio.energia.cerrar'));
+      cab.append(ico, titulos, cerrar);
+      globo.append(cab, el('p', 'in-energia-texto', fraseDeEnergia(e)));
+      if (en) globo.appendChild(partesDeEnergia(e));
+      const mas = boton('in-energia-globo-mas', `<span>${tx('inicio.energia.masEnSueno')}</span>${icono('adelante')}`, () => {
+        cerrarGlobo();
+        if (opciones.irAEnergia) opciones.irAEnergia();
+      });
+      globo.appendChild(mas);
+      zona.append(velo, globo);
+      botonDeEnergia.setAttribute('aria-expanded', 'true');
+      requestAnimationFrame(() => { velo.classList.add('abierto'); globo.classList.add('abierto'); });
+      // Al mover Inicio, el globo se va: se quedaría colgado lejos del botón.
+      zona.querySelector('.in-scroll').addEventListener('scroll', cerrarGlobo, { once: true });
+      if (opciones.alCambiar) opciones.alCambiar();
+    }
+    function cerrarGlobo() {
+      if (!globo) return;
+      const g = globo, v = velo;
+      globo = null;
+      velo = null;
+      botonDeEnergia.setAttribute('aria-expanded', 'false');
+      g.classList.remove('abierto');
+      v.classList.remove('abierto');
+      g.classList.add('saliendo');
+      setTimeout(() => { g.remove(); v.remove(); }, quieto() ? 0 : 220);
+      if (opciones.alCambiar) opciones.alCambiar();
+    }
     function pintarBotonDeEnergia(e) {
       if (!e) { botonDeEnergia.hidden = true; return; }
       const estado = e.dia ? e.dia.estado : 'sinDatos';
@@ -870,6 +921,7 @@ const SeccionInicio = (() => {
       // cuando se acerca, debajo de la luna y de la energía.
       const luna = bloquesEl.querySelector('.in-calorias');
       // Tu energía vive en Sueño (5/11, a la noche); acá, el botón de arriba a la derecha.
+      cerrarGlobo();
       pintarBotonDeEnergia(s.primerDia ? null : energiaDeHoy(deporte));
       const control = s.primerDia ? null : controlCerca();
       const arriba = luna;
@@ -976,6 +1028,10 @@ const SeccionInicio = (() => {
       // «Para hoy» en otro momento del día (mediodia, tarde, nada, bien); null vuelve al de la galería.
       ejemplo(e) { s.ejemplo = e || null; refrescarConsejos(); },
       // Tu energía de ejemplo (baja por el sueño, bajaComida, atrasado, suficiente, alta o sinDatos), a qué hora, y abierta o plegada.
+      // Para las capturas: el globo de tu energía, abierto o cerrado.
+      abrirEnergia: () => { if (!globo) abrirGlobo(); },
+      cerrarEnergia: () => cerrarGlobo(),
+      get globoAbierto() { return !!globo; },
       // Tu energía completa, para Sueño (galeria.js la pasa como opciones.energia).
       tarjetaParaSueno() { return tarjetaDeEnergia(energiaDeHoy(s.primerDia ? null : delDeporte())); },
       ponerEnergia(e, { plegada, mas, hora } = {}) {

@@ -1264,7 +1264,9 @@
         "sueno": "El sueño: anoche, las dos noches de antes y tu deuda de las últimas dos semanas.",
         "comida": "Estos días: el promedio de los 7 días de antes de hoy, con al menos 4 bien anotados. Es un promedio, así que un día malo pesa poco: la energía baja aparece cuando comes poco varios días seguidos, que es lo que miden los estudios (Loucks y Thuma 2003).",
         "hoy": "Hoy: lo que anotaste hasta ahora, contra lo que sueles llevar a esta hora. Antes de tu primera comida, no cuenta."
-      }
+      },
+      "cerrar": "Cerrar",
+      "masEnSueno": "Más en Sueño"
     }
   },
   "mas": {

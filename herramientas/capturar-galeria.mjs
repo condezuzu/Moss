@@ -2063,12 +2063,28 @@ const pasos = {
       await pagina.waitForTimeout(900);
       await foto('energia-' + nombre);
     }
-    await energia('baja', { hora: 'mediodia', plegada: true, mas: true });
+    // Tocar el botón abre el globo ahí mismo (crece desde el botón); «Más en Sueño» se desliza a la tarjeta, con «Más» abierto.
+    for (const [v, nombre] of [['baja', 'globo-baja'], ['suficiente', 'globo-suficiente'], ['alta', 'globo-alta']]) {
+      await energia(v, { hora: 'mediodia' });
+      await pagina.evaluate(() => window.__seccion('energiaInicio'));
+      await pagina.waitForTimeout(700);
+      await pagina.click('.in-energia-boton');
+      if (v === 'baja') { await pagina.waitForTimeout(90); await foto('energia-globo-creciendo'); }
+      await pagina.waitForTimeout(900);
+      await foto('energia-' + nombre);
+      await pagina.click('.in-energia-cerrar');
+      await pagina.waitForTimeout(400);
+    }
+    await energia('baja', { hora: 'mediodia', plegada: true, mas: false });
     await pagina.evaluate(() => window.__seccion('energiaInicio'));
     await pagina.waitForTimeout(700);
     await pagina.click('.in-energia-boton');
-    await pagina.waitForTimeout(1300);
-    await foto('energia-boton-tocado');
+    await pagina.waitForTimeout(900);
+    await pagina.click('.in-energia-globo-mas');
+    await pagina.waitForTimeout(250);
+    await foto('energia-globo-deslizando');
+    await pagina.waitForTimeout(1500);
+    await foto('energia-globo-a-sueno');
     await pagina.evaluate(() => window.__seccion('energia'));
     await energia('suficiente', { hora: 'mediodia', mas: true });
     await pagina.evaluate(() => window.__seguridad('numeros', false));

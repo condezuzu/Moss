@@ -1864,6 +1864,21 @@ const SeccionSueno = (() => {
       abrir(cual) { s.abierto = cual; pintar(); },
       // Para las capturas: la sugerencia de poco sueño por semanas.
       poco(si) { s.poco = si; pintar(); cont.scrollTop = 0; },
+      // Desde el globo de Inicio (5/11, a la noche): la noche de hoy, y baja suave hasta tu energía cuando la pestaña ya
+      // se deslizó; la tarjeta brilla un momento, así se ve adónde llegaste.
+      irAEnergia() {
+        s.clave = Datos.HOY;
+        s.editando = null;
+        pintar();
+        const ir = () => {
+          const n = cont.querySelector('.in-energia');
+          if (!n) return;
+          const top = Math.max(0, cont.scrollTop + n.getBoundingClientRect().top - cont.getBoundingClientRect().top - 70);
+          cont.scrollTo({ top, behavior: quieto() ? 'auto' : 'smooth' });
+          n.classList.add('resalta');
+        };
+        setTimeout(ir, quieto() ? 0 : 380);
+      },
       // Para las capturas: la deuda desplegada (true) o compacta.
       abrirDeuda(si) { s.deudaAbierta = !!si; pintar(); },
       bajarA(selector) {

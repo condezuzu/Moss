@@ -984,8 +984,10 @@ y para todos, también para quien no va al gimnasio. La regla es `energiaDelDia`
   con Ascent, ahí también trae los músculos y reemplaza a «Cómo llegas a entrenar». En Inicio, en
   todos los estados, un botón redondo arriba a la derecha con la batería y cómo está («Energía
   baja», «Energía suficiente» o «Energía alta», y debajo por qué: «Por el sueño», «Por la comida»,
-  «Por lo de hoy» o «Todo a favor»). Tocarlo lleva a la tarjeta, en Sueño, abierta y con «Más»
-  cerrado.
+  «Por lo de hoy» o «Todo a favor»). Tocarlo abre ahí mismo un globo que crece desde el botón, con
+  lo básico (cómo está, la frase y las partes) y «Más en Sueño», que se desliza a la tarjeta
+  completa y baja suave hasta ella, con «Más» abierto; se cierra con la ✕, tocando afuera o el
+  botón (5/11 a la noche: «nada de teletransportarse»).
 - **De qué días sale cada parte** (lo dice «Más»): el sueño, de anoche, las dos noches de antes y la
   deuda de dos semanas; «Estos días», del promedio de los 7 días de antes de hoy, porque la energía
   baja aparece cuando se come poco varios días seguidos (Loucks y Thuma 2003: 5 días con cada nivel

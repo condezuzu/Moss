@@ -657,6 +657,41 @@ button.gc-fila { cursor: pointer; }
 .in-energia-boton.sinDatos { --e-color: rgba(239, 230, 207, 0.3); }
 .in-energia-boton:active .in-energia-boton-circulo { transform: scale(0.95); }
 @media (prefers-reduced-motion: reduce) { .in-energia-boton { animation: none; } }
+/* El globo de tu energía: crece desde el botón (arriba a la derecha), con lo básico y «Más en Sueño». */
+.in-energia-velo { position: absolute; inset: 0; z-index: 40; background: rgba(4, 6, 14, 0); transition: background 0.25s ease; }
+.in-energia-velo.abierto { background: rgba(4, 6, 14, 0.35); }
+.in-energia-globo { position: absolute; z-index: 41; width: min(330px, calc(100% - 28px)); box-sizing: border-box; display: grid; gap: 10px; padding: 14px 14px 12px 16px; border-radius: 22px; background: rgba(12, 16, 32, 0.97); border: 1px solid rgba(239, 230, 207, 0.14); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55); --e-color: rgba(239, 230, 207, 0.8); transform-origin: top right; transform: scale(0.35) translateY(-10px); opacity: 0; transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1.12), opacity 0.22s ease; }
+.in-energia-globo.abierto { transform: none; opacity: 1; }
+.in-energia-globo.saliendo { transition: transform 0.2s ease-in, opacity 0.18s ease-in; transform: scale(0.5) translateY(-8px); opacity: 0; }
+.in-energia-globo.baja { --e-color: #cb8569; border-color: rgba(203, 133, 105, 0.45); background: linear-gradient(180deg, rgba(203, 133, 105, 0.14), rgba(203, 133, 105, 0.03)), rgba(12, 16, 32, 0.97); }
+.in-energia-globo.baja .in-energia-titulo { color: #f2b9a2; }
+.in-energia-globo.alta { --e-color: #e8c46a; }
+.in-energia-globo .in-energia-titulo { font-size: 21px; }
+.in-energia-globo .in-energia-texto { margin: 0; }
+.in-energia-globo .in-energia-partes { margin-top: 2px; }
+.in-energia-globo > * { opacity: 0; transform: translateY(4px); transition: opacity 0.25s ease, transform 0.25s ease; }
+.in-energia-globo.abierto > * { opacity: 1; transform: none; }
+.in-energia-globo.abierto > :nth-child(2) { transition-delay: 0.05s; }
+.in-energia-globo.abierto > :nth-child(3) { transition-delay: 0.1s; }
+.in-energia-globo.abierto > :nth-child(4) { transition-delay: 0.15s; }
+.in-energia-globo .in-energia-bateria rect.llena { transform-box: fill-box; transform-origin: center bottom; transform: scaleY(0); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.in-energia-globo.abierto .in-energia-bateria rect.llena { transform: none; }
+.in-energia-globo.abierto .in-energia-bateria rect.llena:nth-of-type(3) { transition-delay: 0.12s; }
+.in-energia-globo.abierto .in-energia-bateria rect.llena:nth-of-type(4) { transition-delay: 0.2s; }
+.in-energia-globo.abierto .in-energia-bateria rect.llena:nth-of-type(5) { transition-delay: 0.28s; }
+.in-energia-cerrar { appearance: none; cursor: pointer; flex: none; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 0; background: rgba(239, 230, 207, 0.08); color: rgba(239, 230, 207, 0.7); display: grid; place-items: center; }
+.in-energia-cerrar svg { width: 14px; height: 14px; }
+.in-energia-globo-mas { appearance: none; cursor: pointer; justify-self: start; display: inline-flex; align-items: center; gap: 3px; margin-top: 2px; padding: 6px 0 2px; border: 0; background: none; color: var(--oro-claro); font: 400 13.5px/1 var(--texto); }
+.in-energia-globo-mas svg { width: 15px; height: 15px; transition: transform 0.2s; }
+.in-energia-globo-mas:active svg { transform: translateX(3px); }
+.in-energia-boton[aria-expanded='true'] .in-energia-boton-circulo { border-color: var(--e-color); }
+/* Al llegar a tu energía en Sueño, brilla un momento: así se ve adónde llegaste. */
+.sueno .in-energia.resalta { animation: sn-aparece 0.45s 0.08s cubic-bezier(0.2, 0.7, 0.2, 1) both, in-energia-resalta 1.6s 0.45s ease both; }
+@keyframes in-energia-resalta { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 30% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--e-color) 50%, transparent), 0 0 24px color-mix(in srgb, var(--e-color) 30%, transparent); } }
+@media (prefers-reduced-motion: reduce) {
+  .in-energia-velo, .in-energia-globo, .in-energia-globo > *, .in-energia-globo .in-energia-bateria rect.llena { transition: opacity 0.15s; transform: none; }
+  .sueno .in-energia.resalta { animation: none; }
+}
 /* De qué días sale cada parte, en «Más». */
 .in-energia-cuando { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .in-energia-cuando li { font: 300 12.5px/1.45 var(--texto); color: rgba(239, 230, 207, 0.78); text-wrap: pretty; }
@@ -2102,7 +2137,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
-        <li><b>Sueño, con la deuda arriba</b> (5/11 a la noche, para aprobar): la deuda de sueño es lo primero que se ve, compacta y del tamaño de la tira de los días («Bien · Unas 3 h 30 min», el medidor y «Esta noche, a la cama a las 22:05»); «Más» la despliega. Debajo, la noche, <b>tu energía</b>, que ahora vive en Sueño, y más abajo los días para elegir otra noche. En Inicio, arriba a la derecha, <b>un botón redondo con la batería</b> y cómo está tu energía («Energía baja · Por el sueño», «Energía suficiente», «Energía alta · Todo a favor»): tocalo y te lleva a Sueño, con la tarjeta abierta. En «Más», de qué días sale cada parte (el sueño, de anoche y de dos semanas; la comida, de la semana; lo de hoy, de hoy).</li>
+        <li><b>Sueño, con la deuda arriba</b> (5/11 a la noche, para aprobar): la deuda de sueño es lo primero que se ve, compacta y del tamaño de la tira de los días («Bien · Unas 3 h 30 min», el medidor y «Esta noche, a la cama a las 22:05»); «Más» la despliega. Debajo, la noche, <b>tu energía</b>, que ahora vive en Sueño, y más abajo los días para elegir otra noche. En Inicio, arriba a la derecha, <b>un botón redondo con la batería</b> y cómo está tu energía («Energía baja · Por el sueño», «Energía suficiente», «Energía alta · Todo a favor»): tocalo y <b>se abre ahí mismo un globo</b> que crece desde el botón, con lo básico; «Más en Sueño» se desliza a la tarjeta completa, sin saltos. En «Más», de qué días sale cada parte (el sueño, de anoche y de dos semanas; la comida, de la semana; lo de hoy, de hoy).</li>
         <li><b>Tu energía, según la hora</b> (5/11 a la noche, para aprobar): ya no te dice «energía baja» a la mañana por lo que todavía no comiste. Lo de <b>hoy</b> va aparte de lo de <b>estos días</b> y se mide contra lo que sueles haber comido a esa hora («Temprano», «Al día», «Atrasado» o, antes de entrenar, «Falta comer»). Lo que dice cambia con el momento: al despertar, de día (con el bajón de después de almorzar), antes de entrenar («Para entrenar a las 18:40…»), después (la comida con proteína) y la noche. Arriba, <b>la tira de tu día</b>: las comidas, la sesión y dónde estás. Elegí la hora con los botones de la energía, acá abajo, y probá «Hoy atrasado».</li>
         <li><b>La tarde del 5/11</b> (para aprobar): <b>tu energía, del día entero</b>: además de la comida, el sueño (anoche y la deuda) y, con Ascent vinculada, los músculos de hoy; manda lo más flojo. «Energía baja» arriba de todo («Según lo registrado, tu energía está muy baja.»); «Suficiente energía» («Hoy tienes suficiente energía para entrenar de forma normal.», sin hablar de la meta de cada uno) y «Energía alta» con el porqué del día, debajo de los macros. Cada parte con su estado de un vistazo, y «Más» con qué te conviene hoy y de dónde sale. Con Ascent dice «con Ascent» y suma los músculos (probalo vinculando). Elegí el estado arriba: baja por el sueño o por la comida. <b>La deuda de sueño</b> en una palabra y en grande («Muy bien», «Bien», «Algo alta» o «Alta», por lo que falta cada noche) y debajo <b>esta noche</b>: a qué hora a la cama para despertarte a la hora de siempre habiendo dormido lo que necesitas, y la última comida grande. <b>La última comida</b>, 2 h antes de la cama (3 con reflujo): la guía dice de 2 a 3, y las 3 quedan para el reflujo. El aviso con deuda dice a qué hora a la cama y a qué hora te despiertas. En Perfil › Avisos, <b>«Necesito dormir»</b>: lo de tu edad o de 7 a 9 horas, de media hora en media hora; lo usan la hora de dormir, la deuda, la calidad y esta noche. Y <b>Cuidados</b>: marcás lo que tengas (embarazo, lactancia, diabetes, presión, colesterol, riñón, reflujo, celiaquía, gota y más) en el cuestionario o en Perfil, y Moss ajusta tu meta y deja de proponerte lo que no te conviene, con «Cómo cambia tu dieta» a la vista; se guarda solo en el iPhone.</li>
         <li><b>Progreso con su margen</b> (5/11, para aprobar; <code>spec/estudio/progreso.md</code>): el ritmo con su rango («−0,41 kg por semana, entre −0,33 y −0,48») y la fecha como rango; «Todavía no se sabe» las primeras semanas, y «Al ritmo», «Adelantado» o «Más lento» solo cuando el rango lo deja claro (antes acertaba un tercio de las veces). El control mide con las pesadas de verdad (con una pesada por semana medía un 23 % menos), una pesada rara cuenta un cuarto hasta que la siguiente la confirme, y bajando nunca pide más de 1.000 kcal por día de déficit. La grasa con cinta dice que puede errar unos 4 puntos.</li>

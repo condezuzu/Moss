@@ -1264,7 +1264,9 @@
         "sueno": "Sleep: last night, the two nights before and your sleep debt over the last two weeks.",
         "comida": "These days: the average of the 7 days before today, with at least 4 well logged. It's an average, so one bad day weighs little: low energy shows up when you eat too little several days in a row, which is what studies measure (Loucks and Thuma 2003).",
         "hoy": "Today: what you've logged so far, against what you usually have by this time. Before your first meal, it doesn't count."
-      }
+      },
+      "cerrar": "Close",
+      "masEnSueno": "More in Sleep"
     }
   },
   "mas": {

@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 40): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 41): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 1. Ahora (no espera a nada)
 
@@ -13,7 +13,7 @@ La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 
 **Del 5/11**
 - **Sueño con la deuda arriba:** compacta y del tamaño de la tira de los días, con «Esta noche», y «Más» para desplegarla; después la noche, tu energía y los días (spec/sueno.md, «Qué tiene la sección»).
-- **Tu energía, en Sueño y según la hora:** vive en Sueño; en Inicio, un botón redondo arriba a la derecha con la batería, que lleva a la tarjeta abierta; en «Más», de qué días sale cada parte; lo de hoy aparte de lo de estos días, medido contra lo que sueles llevar a esa hora; lo que dice al despertar, de día, antes y después de entrenar y a la noche; la tira de tu día. Baja va arriba de todo; suficiente y alta, debajo de los macros, con «Más». Vinculada, dice «con Ascent» (spec/entreno.md 5.13; escenario `energia`).
+- **Tu energía, en Sueño y según la hora:** vive en Sueño; en Inicio, un botón redondo arriba a la derecha con la batería, que abre un globo con lo básico y «Más en Sueño»; en «Más», de qué días sale cada parte; lo de hoy aparte de lo de estos días, medido contra lo que sueles llevar a esa hora; lo que dice al despertar, de día, antes y después de entrenar y a la noche; la tira de tu día. Baja va arriba de todo; suficiente y alta, debajo de los macros, con «Más». Vinculada, dice «con Ascent» (spec/entreno.md 5.13; escenario `energia`).
 - **La deuda de sueño** en una palabra, con «Esta noche» (a qué hora a la cama y la última comida), y «Necesito dormir» en Perfil › Avisos (spec/sueno.md, «Las cuentas»).
 - **Cuidados (D44):** marcar cuál en el cuestionario y en Perfil, con «Cómo cambia tu dieta» y el consentimiento (spec/nutricion.md «Cuidados de salud»; escenario `cuidados`).
 - **«En qué se basa Moss»,** abajo de todo en Perfil (spec/estudio.md; escenario `base`).

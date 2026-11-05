@@ -467,8 +467,8 @@
     medir: () => mas.ir('medidas'),
     ir: (i) => pestanas.ir(i),
     invitacionDeAscent: () => (ascent ? ascent.invitacion() : null),
-    // Tocar el botón de tu energía lleva a ella, en Sueño, abierta y con «Más» cerrado.
-    irAEnergia: () => accionesSeccion.energia(),
+    // «Más en Sueño», desde el globo: se desliza a Sueño y baja suave a tu energía, abierta y con «Más» abierto.
+    irAEnergia: () => accionesSeccion.energiaSuave(),
     // Tu energía, con Ascent vinculada y prendida: el titular de hoy de su sección (los músculos) y su marca.
     ascentDeHoy: () => (vinculada && ascentPrendida && ascent ? ascent.titularDeHoy() : null),
     marcaDeAscent: () => (ascent && ascent.marcaChica ? ascent.marcaChica() : ''),
@@ -1154,6 +1154,7 @@
     // Tu energía (5/11, para aprobar): en Sueño, debajo de la noche; en Inicio, el botón de arriba a la derecha.
     energia: () => { cerrarHojas(); inicio.primerDia(false); inicio.ponerEnergia(null, { plegada: false, mas: false }); pestanas.ir(3, true); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.in-energia'), 260); },
     energiaInicio: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
+    energiaSuave: () => { inicio.ponerEnergia(null, { plegada: false, mas: true }); pestanas.ir(3); sueno.irAEnergia(); },
     // La deuda en una palabra y esta noche (5/11, para aprobar): en Sueño, con la noche de hoy.
     deudaEstaNoche: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.sn-deuda'), 240); },
     // Cuidados (5/11, para aprobar): en Perfil, y también en el cuestionario.
