@@ -1,9 +1,10 @@
-// La sección de Ascent (spec/ascent.md, «Ascent en Progreso», para aprobar), arriba de Progreso: arriba de todo
-// del scroll de Progreso, arrastrar para abajo la baja siguiendo al dedo, como se sube a tu universo desde
-// Hábitos, y su planeta crece hasta ser el horizonte. En el encabezado de Progreso está la entrada: el planeta
-// de Ascent con su órbita y la luna de Moss, con lo de hoy en una línea; arriba de todo asoma el borde del
-// planeta. Se vuelve empujando para arriba abajo de todo, con la flecha de arriba, con «Volver a Progreso» o
-// tocando Progreso.
+// La sección de Ascent (spec/ascent.md, «Ascent en Progreso», para aprobar), arriba de Progreso, como si Progreso
+// siguiera para arriba (lo pediste el 5/11/2026): arriba de todo del scroll de Progreso, arrastrar para abajo la
+// baja siguiendo al dedo, como se sube a tu universo desde Hábitos, y Progreso baja pegado a ella. Se llega por
+// abajo, a lo principal (lo de hoy, o vincular); subiendo está el resto y, arriba de todo, de fondo, el cuerpo de
+// tu rango, como las estrellas. En el encabezado de Progreso está la entrada: el planeta de Ascent con su órbita y
+// la luna de Moss, con lo de hoy en una línea; arriba de todo asoma el borde del planeta. Volver es bajar: abajo
+// de todo, empujando para arriba (con la rueda, para abajo), con «Volver a Progreso» o tocando Progreso.
 // Tiene el lenguaje de Ascent (spec/estetica.md de su repo): un titular grande sin caja, línea y aire,
 // octágono donde algo es la acción, píldora para lo que se elige y lo secundario subrayado.
 // Revisada con la evidencia el 5/11/2026 (spec/rendimiento.md, «Lo que cambió»): sin porcentajes de
@@ -23,8 +24,16 @@ const SeccionAscent = (() => {
   const DORMIR = 23 * 60 + 30;
   // Lo que tarda en dormirse: lo que aprendió Moss, como dice Perfil › Avisos.
   const LATENCIA = 20;
-  // El planeta, en píxeles sobre la barra, cuando es el horizonte.
-  const HORIZONTE_PX = 74;
+  // El cuerpo de tu rango, arriba: cuánto cuelga del borde cuando se lo ve entero; cuánto más arriba queda lejos de
+  // arriba de todo (asoma apenas: del polvo, su luz) y cuánto hay que subir para verlo entero; y qué parte del camino
+  // de la sección hace al bajar (está más lejos).
+  const CUERPO_PX = 104;
+  const CUERPO_LEJOS = 80;
+  const NUBE_LEJOS = 210;
+  const CUERPO_SUBIR = 520;
+  const CUERPO_SIGUE = 0.38;
+  // El polvo, una nube, en píxeles: su tamaño, cuánto se estira y, cuando se la ve entera, dónde queda su centro.
+  const NUBE = { ancho: 560, alto: 380, rx: 230, ry: 150, centro: 150 };
   // El borde del planeta que asoma arriba de Progreso: cuánto se ve quieto y cuánto baja con el dedo.
   const TECHO_PX = 7;
   const TECHO_BAJA = 150;
@@ -52,13 +61,12 @@ const SeccionAscent = (() => {
 .tel .ascent { visibility: hidden; color: var(--as-tinta); will-change: transform; background: linear-gradient(180deg, rgba(5, 6, 10, 0.5) 0, rgba(5, 6, 10, 0.42) 240px, rgba(5, 6, 10, 0.6) 100%); }
 .tel .ascent::after { display: none; }
 .as-velo { position: absolute; inset: 0; z-index: 2; background: #020308; opacity: 0; pointer-events: none; }
-.as-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) - 18px) 22px calc(var(--pestanas) + ${HORIZONTE_PX + 34}px); scrollbar-width: none; touch-action: pan-y;
-  --hasta: calc(100% - var(--pestanas) - ${HORIZONTE_PX + 10}px); --hundido: calc(100% - var(--pestanas) - ${HORIZONTE_PX - 52}px);
-  -webkit-mask-image: linear-gradient(180deg, #000 var(--hasta), transparent var(--hundido)); mask-image: linear-gradient(180deg, #000 var(--hasta), transparent var(--hundido)); }
+/* Se llega por abajo: lo principal queda pegado abajo y, arriba, el cielo con tu cuerpo (el espacio de arriba es
+   para verlo entero). Lo que sube se apaga contra el borde de arriba. */
+.as-scroll { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--arriba) + ${CUERPO_PX + 120}px) 22px calc(var(--pestanas) + 14px); scrollbar-width: none; touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(180deg, transparent calc(var(--arriba) - 14px), #000 calc(var(--arriba) + 36px)); mask-image: linear-gradient(180deg, transparent calc(var(--arriba) - 14px), #000 calc(var(--arriba) + 36px)); }
 .as-scroll::-webkit-scrollbar { display: none; }
-.as-arriba { position: relative; display: grid; justify-items: center; height: 30px; }
-.as-volver { appearance: none; cursor: pointer; width: 64px; height: 30px; padding: 0; border: 0; background: none; color: var(--as-apagado); display: grid; place-items: center; }
-.as-volver svg { width: 22px; height: 22px; stroke-width: 1.5; }
+.as-contenido { margin-top: auto; }
 
 /* La marca: el ícono de Ascent tal cual (5/11, con el ícono de referencia): el planeta oscuro con la luz en el
    borde de arriba a la izquierda, la órbita plateada abierta a la izquierda y el punto blanco arriba a la derecha.
@@ -66,8 +74,11 @@ const SeccionAscent = (() => {
 /* Sin el trazo de los íconos de la galería (.pagina-app svg), que va después y les dibujaba un aro. */
 .pagina-app svg.as-marca, .pagina-app svg.as-marca-chica { stroke: none !important; fill: none; }
 .as-marca { overflow: visible; }
-.as-arriba .as-marca { position: absolute; right: -6px; top: 36px; width: 76px; height: 76px; transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1), height 0.7s cubic-bezier(0.16, 1, 0.3, 1), top 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
-.ascent.vinculada .as-arriba .as-marca { top: 24px; width: 46px; height: 46px; }
+/* Lo principal, abajo: con la marca arriba a la derecha y una línea de pelo que lo separa de lo que sigue arriba. */
+.as-base { position: relative; margin-top: 30px; padding-top: 14px; }
+.as-base::before { content: ''; position: absolute; left: -22px; right: -22px; top: 0; border-top: 1px solid var(--as-linea); }
+.as-base > .as-marca { position: absolute; right: -6px; top: 20px; width: 76px; height: 76px; transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1), height 0.7s cubic-bezier(0.16, 1, 0.3, 1), top 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+.ascent.vinculada .as-base > .as-marca { top: 8px; width: 46px; height: 46px; }
 .as-marca-brillo { filter: blur(1.8px); }
 .as-orbita { fill: none; stroke-width: 2.2; stroke-linecap: round; opacity: 0.6; transition: opacity 0.9s ease; }
 .as-marca.unida .as-orbita { opacity: 1; }
@@ -79,33 +90,41 @@ const SeccionAscent = (() => {
 .as-chica-orbita { fill: none; stroke: #a7adb7; stroke-width: 1; stroke-linecap: round; }
 .as-chica-luna { fill: #f4f6f9; }
 
-/* El cuerpo de tu rango en Ascent, que sube hasta ser el horizonte (el polvo, el asteroide, la luna, el planeta
-   del día, el sol, la galaxia o el agujero negro: cuerpoDelHorizonte). Debajo de la barra; lo de Moss sigue arriba.
-   El borde y el resplandor toman el color del rango. */
-.as-horizonte { position: absolute; left: 0; right: 0; bottom: 0; height: 62%; z-index: 2; overflow: hidden; pointer-events: none; visibility: hidden; --sube: 0px; --escala: 0.8; }
-.as-horizonte i { position: absolute; left: 66%; top: calc(100% - var(--pestanas) - var(--sube)); width: 1180px; height: 1180px; margin-left: -590px; border-radius: 50%; overflow: hidden; background: #05060a; box-shadow: 0 0 30px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.15), inset 0 18px 44px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.07); transform: scale(var(--escala)); transform-origin: 50% 0; will-change: transform, top; transition: box-shadow 0.8s; }
-.as-horizonte i > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-/* El polvo y la galaxia no tienen cuerpo: son partículas, y el borde apenas se insinúa. */
-.as-horizonte.sin-cuerpo i { background: transparent; box-shadow: none; }
-.as-horizonte.sin-cuerpo i::before { opacity: 0.3; }
-.as-horizonte.brilla i { box-shadow: 0 0 46px rgba(242, 194, 48, 0.42), 0 0 120px rgba(239, 159, 39, 0.2), inset 0 18px 44px rgba(255, 241, 194, 0.2); }
-.as-horizonte.negro i { background: #020204; box-shadow: 0 0 36px rgba(167, 139, 250, 0.24), 0 0 10px rgba(255, 106, 0, 0.4); }
-.as-horizonte i > svg.entra { animation: as-cuerpo-entra 0.8s ease both; }
+/* El cuerpo de tu rango en Ascent, arriba, de fondo (lo pediste el 5/11/2026: subes desde Progreso y lo encuentras
+   arriba, como las estrellas). El polvo es una nube; los demás cuelgan del borde de arriba, como el borde que asoma
+   en Progreso (el mismo dibujo del horizonte, dado vuelta: cuerpoDelHorizonte). Va detrás del texto, baja con la
+   sección más despacio que ella (está más lejos) y se acerca a medida que subes. El borde y el resplandor toman el
+   color del rango. */
+.as-cielo { position: absolute; left: 0; right: 0; top: 0; height: 62%; z-index: 0; overflow: hidden; pointer-events: none; --baja: 0px; --cerca: 1; }
+.as-cielo i { opacity: var(--cerca); }
+.as-cielo i { position: absolute; left: 62%; top: ${CUERPO_PX - 944}px; width: 944px; height: 944px; margin-left: -472px; border-radius: 50%; overflow: hidden; background: #05060a; box-shadow: 0 0 30px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.15), inset 0 18px 44px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.07); transform: translateY(var(--baja)) rotate(180deg); will-change: transform; transition: box-shadow 0.8s; }
+.as-cielo i > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Sin el trazo de los íconos de la galería (.pagina-app svg). */
+.pagina-app .as-cielo svg { stroke: none !important; fill: none; }
+/* La galaxia no tiene cuerpo: son partículas, y el borde apenas se insinúa. */
+.as-cielo.sin-cuerpo i { background: transparent; box-shadow: none; }
+.as-cielo.sin-cuerpo i::before { opacity: 0.3; }
+.as-cielo.brilla i { box-shadow: 0 0 46px rgba(242, 194, 48, 0.42), 0 0 120px rgba(239, 159, 39, 0.2), inset 0 18px 44px rgba(255, 241, 194, 0.2); }
+.as-cielo.negro i { background: #020204; box-shadow: 0 0 36px rgba(167, 139, 250, 0.24), 0 0 10px rgba(255, 106, 0, 0.4); }
+.as-cielo i > svg.entra { animation: as-cuerpo-entra 0.8s ease both; }
 @keyframes as-cuerpo-entra { from { opacity: 0; } }
-/* El polvo: los granos derivan despacio por la curva (su dibujo gira alrededor del centro del horizonte) y la
-   estrella que nace respira. */
-.as-horizonte i > svg.as-polvo-granos { animation: as-cuerpo-entra 0.8s ease both, as-polvo-deriva 80s ease-in-out -40s infinite alternate; will-change: transform; }
-@keyframes as-polvo-deriva { from { transform: rotate(-1deg); } to { transform: rotate(1deg); } }
-.as-polvo-estrella { transform-box: fill-box; transform-origin: center; animation: as-polvo-respira 7s ease-in-out infinite; }
+.as-cielo i::before { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 50%; background: conic-gradient(from -40deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 0deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.86) 24deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.34) 46deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.04) 70deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0) 320deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 360deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); }
+/* El polvo: una nube, sin círculo ni borde, con la estrella que nace en el medio, que respira; los granos derivan. */
+.as-cielo.polvo i { left: 66%; top: ${NUBE.centro - NUBE.alto / 2}px; width: ${NUBE.ancho}px; height: ${NUBE.alto}px; margin-left: -${NUBE.ancho / 2}px; border-radius: 0; overflow: visible; background: none; box-shadow: none; transform: translateY(var(--baja)); }
+.as-cielo.polvo i::before { display: none; }
+.as-cielo i > svg.as-polvo-granos { animation: as-cuerpo-entra 0.8s ease both, as-polvo-deriva 60s ease-in-out -30s infinite alternate; will-change: transform; }
+@keyframes as-polvo-deriva { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
+.as-polvo-estrella { position: absolute; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 241, 220, 0.85) 0, rgba(243, 180, 124, 0.42) 12%, rgba(196, 122, 88, 0.12) 34%, rgba(196, 122, 88, 0) 68%); mix-blend-mode: screen; animation: as-polvo-respira 7s ease-in-out infinite; will-change: transform, opacity; }
+.as-polvo-estrella::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #fff4e4; }
 @keyframes as-polvo-respira { 50% { transform: scale(1.14); opacity: 0.82; } }
-.as-horizonte i::before { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 50%; background: conic-gradient(from -40deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 0deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.86) 24deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.34) 46deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.04) 70deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0) 320deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.12) 360deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); }
-.tel.hoja-anim > .as-horizonte { transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.tel.con-hoja > .as-horizonte { transform: scale(0.93); transform-origin: 50% 0; }
 
 /* Arriba de Progreso asoma el borde del planeta, colgado: Ascent está arriba. Baja con el dedo. */
 .as-techo { position: absolute; left: 0; right: 0; top: 0; height: 190px; z-index: 2; overflow: hidden; pointer-events: none; opacity: 0; --baja: 0px; }
 .as-techo i { position: absolute; left: 62%; bottom: calc(100% - ${TECHO_PX}px - var(--baja)); width: 760px; height: 760px; margin-left: -380px; border-radius: 50%; background: radial-gradient(circle at 50% 100%, #161922 0, #0b0c12 30%, #05060a 64%); box-shadow: 0 6px 28px rgba(var(--rango-borde-rgb, 196, 194, 186), 0.16); }
 .as-techo i::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 120deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0) 0deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.45) 34deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.95) 58deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0.4) 82deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0) 118deg, rgba(var(--rango-borde-rgb, 232, 228, 212), 0) 360deg); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px)); }
+/* Del polvo asoma su luz, no un borde. */
+.as-techo.polvo i { background: radial-gradient(closest-side at 50% 100%, rgba(138, 107, 214, 0.5) 0, rgba(43, 61, 140, 0.22) 40%, rgba(5, 6, 10, 0) 100%); box-shadow: 0 8px 30px rgba(138, 107, 214, 0.22); }
+.as-techo.polvo i::before { display: none; }
 
 /* La entrada, en el encabezado de Progreso: lo de hoy a la izquierda y el planeta con su órbita. */
 .as-entrada { appearance: none; cursor: pointer; position: absolute; right: -6px; top: -8px; display: grid; grid-template-columns: auto 48px; align-items: center; column-gap: 9px; padding: 4px 6px 4px 10px; border: 0; background: none; color: var(--as-tinta); text-align: right; font: inherit; touch-action: none; }
@@ -399,12 +418,12 @@ const SeccionAscent = (() => {
 .as-como-cuerpo p { margin: 0 0 12px; font: 400 13px/1.45 var(--texto); color: var(--as-sub); text-wrap: pretty; }
 .as-como-cuerpo p b { font-weight: 500; color: var(--as-tinta); }
 
-/* El final: volver a Progreso, empujando para arriba o tocando. */
-.as-final { display: grid; justify-items: center; gap: 6px; margin-top: 34px; }
-.as-volver-abajo { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 4px; padding: 6px 12px; border: 0; background: none; color: var(--as-sub); font: 400 13px/1.2 var(--texto); }
-.as-volver-abajo svg { width: 20px; height: 20px; stroke-width: 1.6; animation: as-sube 2.8s ease-in-out infinite; }
-@keyframes as-sube { 50% { transform: translateY(-3px); opacity: 0.55; } }
-.as-pie { margin: 6px 0 0; font: 400 12px/1.4 var(--texto); color: var(--as-apagado); text-align: center; }
+/* El final, abajo, pegado a Progreso: volver es bajar (tocando, empujando para arriba o con la rueda, para abajo). */
+.as-final { display: grid; justify-items: center; gap: 6px; margin-top: 30px; }
+.as-volver-abajo { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 2px; padding: 6px 12px; border: 0; background: none; color: var(--as-sub); font: 400 13px/1.2 var(--texto); }
+.as-volver-abajo svg { width: 20px; height: 20px; stroke-width: 1.6; animation: as-baja 2.8s ease-in-out infinite; }
+@keyframes as-baja { 50% { transform: translateY(3px); opacity: 0.55; } }
+.as-pie { margin: 0; font: 400 12px/1.4 var(--texto); color: var(--as-apagado); text-align: center; }
 
 /* Vincular en dos toques: la hoja sube cortada arriba. */
 .tel .hb.as-hoja { border-radius: 0; border-top: 0; clip-path: ${CORTE_ARRIBA(16)}; background: linear-gradient(180deg, #0d1018 0%, #07080d 100%); color: var(--as-tinta); }
@@ -436,9 +455,9 @@ const SeccionAscent = (() => {
 .as-hoja-vincular:disabled, .as-hoja-entrar:disabled { opacity: 0.6; cursor: default; }
 .as-hoja-form.as-entra, .as-parte.as-entra { animation: as-entra 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .as-entrada-pista svg, .as-volver-abajo svg, .as-horizonte i > svg.entra, .as-polvo-estrella { animation: none; }
+  .as-entrada-pista svg, .as-volver-abajo svg, .as-cielo i > svg.entra, .as-polvo-estrella { animation: none; }
   .as-invita.entra, .as-contenido.as-entra, .as-hoja-form.as-entra, .as-parte.as-entra, .as-hoy-titulo.as-cambia, .as-hoy-texto.as-cambia, .as-decide-valor.as-cambia, .as-foco.as-cambia, .as-cuerpo-detalle.as-cambia { animation-duration: 0.01s; }
-  .as-chica-orbita, .as-chica-luna, .as-orbita, .as-luna, .as-luna-halo, .as-arriba .as-marca, .as-entrada-pista, .as-orbe-arco, .as-orbe-luna, .as-orbe-pista,
+  .as-chica-orbita, .as-chica-luna, .as-orbita, .as-luna, .as-luna-halo, .as-base > .as-marca, .as-entrada-pista, .as-orbe-arco, .as-orbe-luna, .as-orbe-pista,
   .as-decide-icono, .as-decide-valor, .as-escala-lleno, .as-escala-punto, .as-chip, .as-chip i, .as-m, .as-alcance-ruido, .as-alcance-nivel, .as-barras i,
   .as-siente-escala button, .as-como-cab svg { transition: none; }
 }`;
@@ -483,10 +502,10 @@ const SeccionAscent = (() => {
     <g class="as-orbe-luna"><circle class="as-orbe-halo" r="4.4"/><circle r="2.8" fill="url(#asOrbePunto)"/></g>
   </svg>`;
 
-  // ------------------------------------------------------------ el cuerpo de tu rango, como horizonte
-  // Lo que se ve del horizonte es la parte de arriba de un círculo de 1.180 px (x de 300 a 760, y hasta unos 260):
-  // ahí van los detalles. Cada cuerpo con los colores de Ascent (RangoDeAscent y su motor, compartido/motor/
-  // cuerpos.ts), simplificado: el horizonte se ve chico y abajo.
+  // ------------------------------------------------------------ el cuerpo de tu rango
+  // Se dibuja la parte de arriba de un círculo de 1.180 px (x de 300 a 760, y hasta unos 260), donde van los
+  // detalles; en la sección cuelga del borde de arriba, dado vuelta (.as-cielo). Cada cuerpo con los colores de
+  // Ascent (RangoDeAscent y su motor, compartido/motor/cuerpos.ts), simplificado: se ve chico y lejos.
   const LADO = 1180;
   const MEDIO = LADO / 2;
   const limbo = (x) => MEDIO - Math.sqrt(Math.max(0, MEDIO * MEDIO - (x - MEDIO) * (x - MEDIO)));
@@ -523,7 +542,7 @@ const SeccionAscent = (() => {
   }
   /**
    * Una esfera con la luz en el borde de arriba: los colores del más claro al más oscuro, hundidos hacia el fondo
-   * de Ascent (`oscuro`) para que el horizonte siga siendo un horizonte y el contenido se hunda en él.
+   * de Ascent (`oscuro`) para que el cuerpo quede de fondo y no le gane al texto.
    */
   const base = (id, colores, oscuro = 0.38) => `<radialGradient id="${id}" cx="0.5" cy="0" r="0.24">${colores.map((c, i) => `<stop offset="${(i / (colores.length - 1)).toFixed(2)}" stop-color="${mezcla(c, '#05060a', oscuro)}"/>`).join('')}</radialGradient>`;
   const esfera = (id) => `<circle cx="${MEDIO}" cy="${MEDIO}" r="${MEDIO}" fill="url(#${id})"/>`;
@@ -542,14 +561,16 @@ const SeccionAscent = (() => {
     },
   };
   // ------------------------------------------------------------ el polvo (rango 1): una nebulosa
-  // Lo pediste el 5/11/2026: la luna no te gustaba y el polvo estelar de Ascent sí. Como allá (crearPolvo en
+  // Lo pediste el 5/11/2026: la luna no te gustaba y el polvo estelar de Ascent sí; y que esté arriba, de fondo,
+  // como las estrellas, y no como un círculo que sube de abajo. Como en Ascent (crearPolvo en
   // compartido/motor/escena.ts y el modo 5 de shaders.ts), no son puntos sueltos sino gas, con vetas finas (la curva
-  // de nivel del ruido), calles oscuras que lo tapan y un adentro cálido con una estrella que nace; encima, granos en
-  // grumos y en hebras. A la manera de Moss: pegado al borde del horizonte, sin las cortinas de aurora, con sus
-  // colores y los granos derivando despacio por la curva.
+  // de nivel del ruido), calles oscuras que lo tapan y un adentro cálido con una estrella que nace; encima, granos
+  // en grumos y en hebras. A la manera de Moss: una nube más o menos redonda, sin las cortinas de aurora, con sus
+  // colores, y los granos derivan despacio.
   const PALETA_DEL_POLVO = ['#1d1436', '#2b3d8c', '#8a6bd6', '#eaa572'];
-  const ESTRELLA_DEL_POLVO = { x: 606, y: 30 };
-  const LUZ_DEL_POLVO = 1.3;
+  const NUBE_MEDIO = { x: NUBE.ancho / 2, y: NUBE.alto / 2 };
+  const ESTRELLA_DEL_POLVO = { x: NUBE_MEDIO.x + 14, y: NUBE_MEDIO.y + 6 };
+  const LUZ_DEL_POLVO = 1.15;
   const suave = (a, b, x) => {
     const t = clamp((x - a) / (b - a), 0, 1);
     return t * t * (3 - 2 * t);
@@ -585,30 +606,35 @@ const SeccionAscent = (() => {
       return suma / total;
     };
   }
-  let gasDelPolvo = null;
+  const formaDeLaNube = ruidoCon(3);
+  /** Qué tan afuera está un punto: 1 es el borde, comido por el ruido para que no sea una elipse. */
+  const radioDeLaNube = (x, y) => Math.hypot((x - NUBE_MEDIO.x) / NUBE.rx, (y - NUBE_MEDIO.y) / NUBE.ry) * (0.84 + 0.32 * formaDeLaNube(x / 95, y / 95, 3));
+  let gasDeLaNube = null;
   /**
-   * El gas, pintado una sola vez en un lienzo y puesto como imagen: el ruido por píxel es caro para un dibujo que se
-   * mueve con el dedo. Solo la franja que se ve del horizonte (x de 256 a 776, y hasta 150).
+   * El gas, pintado una sola vez en un lienzo a dos tercios del tamaño (es suave; los granos, nítidos, van aparte) y
+   * puesto como imagen: el ruido por píxel es caro.
    */
-  function gasDelHorizonte() {
-    if (gasDelPolvo) return gasDelPolvo;
+  function gasDelPolvo() {
+    if (gasDeLaNube) return gasDeLaNube;
     const f = ruidoCon(7);
     const pal = PALETA_DEL_POLVO.map(aRgb);
-    const X0 = 256, W = 520, H = 150;
+    const esc = 1.5;
+    const w = Math.round(NUBE.ancho / esc);
+    const h = Math.round(NUBE.alto / esc);
     const lienzo = document.createElement('canvas');
-    lienzo.width = W;
-    lienzo.height = H;
+    lienzo.width = w;
+    lienzo.height = h;
     const ctx = lienzo.getContext('2d');
-    const img = ctx.createImageData(W, H);
-    for (let j = 0; j < H; j++) {
-      for (let i = 0; i < W; i++) {
-        const x = X0 + i + 0.5;
-        const y = j + 0.5;
-        const d = y - limbo(x);
-        if (d < 0) continue;
-        // El ruido, estirado a lo largo del horizonte y torcido por otro ruido: así parece gas y no manchas.
-        const qx = x / 150;
-        const qy = y / 93;
+    const img = ctx.createImageData(w, h);
+    for (let j = 0; j < h; j++) {
+      for (let i = 0; i < w; i++) {
+        const x = (i + 0.5) * esc;
+        const y = (j + 0.5) * esc;
+        const borde = suave(1, 0.42, radioDeLaNube(x, y));
+        if (borde <= 0) continue;
+        // El ruido, torcido por otro ruido: así parece gas y no manchas.
+        const qx = x / 120;
+        const qy = y / 120;
         const wx = f(qx * 1.1 + 3.1, qy * 1.1) * 1.4;
         const wy = f(qx * 1.1, qy * 1.1 + 7.7) * 1.4;
         const base = f(qx * 1.6 + wx, qy * 1.6 + wy);
@@ -619,94 +645,98 @@ const SeccionAscent = (() => {
         const veta = (1 - Math.min(1, Math.abs(f(qx * 2.6 + wx * 0.9, qy * 2.6 + wy * 0.9) - 0.5) / 0.1)) ** 3;
         const calle = suave(0.52, 0.64, f(qx * 3.2 - 7, qy * 3.2 + 3, 3));
         const densidad = (masa * 0.55 + veta * masa * 1.7 + veta * 0.18) * (1 - calle * 0.75);
-        const capa = suave(0, 5, d) * (1 - suave(46, 140, d));
-        const nucleo = suave(1, 0, Math.hypot((x - ESTRELLA_DEL_POLVO.x) / 170, (y - ESTRELLA_DEL_POLVO.y) / 78));
-        const bordes = suave(258, 330, x) * suave(774, 716, x);
+        const nucleo = suave(1, 0, Math.hypot((x - ESTRELLA_DEL_POLVO.x) / (NUBE.rx * 0.7), (y - ESTRELLA_DEL_POLVO.y) / (NUBE.ry * 0.7)));
         // Del violeta profundo al azul; el lila en los grumos finos y el cálido solo cerca de la estrella.
         let color = entre(pal[0], pal[1], suave(0.38, 0.62, base));
         color = entre(color, pal[2], suave(0.5, 0.72, fino));
         color = entre(color, pal[3], Math.min(1, densidad) ** 2 * nucleo * 0.9);
-        const resplandor = nucleo * nucleo * 0.2 * capa * bordes;
+        const resplandor = nucleo * nucleo * 0.22;
         color = entre(color, entre(pal[2], pal[3], 0.55), Math.min(1, resplandor * 2.5));
-        // Más luz de la que pide el dibujo solo: la sección le pone encima su velo para leer (.tel .ascent).
-        const k = (j * W + i) * 4;
+        const k = (j * w + i) * 4;
         img.data[k] = Math.min(255, color[0] * LUZ_DEL_POLVO);
         img.data[k + 1] = Math.min(255, color[1] * LUZ_DEL_POLVO);
         img.data[k + 2] = Math.min(255, color[2] * LUZ_DEL_POLVO);
-        img.data[k + 3] = Math.round(Math.min(0.95, (densidad * capa * (0.6 + 0.9 * nucleo) * bordes + resplandor) * 1.5) * 255);
+        img.data[k + 3] = Math.round(clamp((densidad * (0.6 + 0.9 * nucleo) + resplandor) * borde * 1.35, 0, 0.95) * 255);
       }
     }
     ctx.putImageData(img, 0, 0);
-    gasDelPolvo = `<image href="${lienzo.toDataURL()}" x="${X0}" y="0" width="${W}" height="${H}" preserveAspectRatio="none"/>`;
-    return gasDelPolvo;
+    gasDeLaNube = `<image href="${lienzo.toDataURL()}" x="0" y="0" width="${NUBE.ancho}" height="${NUBE.alto}" preserveAspectRatio="none"/>`;
+    return gasDeLaNube;
   }
-  /** Los granos: en grumos, en hebras casi a lo largo del borde y sueltos; los grandes, con su halo. */
+  let granosDeLaNube = null;
+  /** Los granos: en grumos, en hebras que cruzan la nube y sueltos; los grandes, con su halo. */
   function granosDelPolvo() {
+    if (granosDeLaNube) return granosDeLaNube;
     const r = azar(41);
     const pal = PALETA_DEL_POLVO.map(aRgb);
     const blanco = aRgb('#eef0ff');
     const rgb = (c) => `rgb(${c.map(Math.round).join(',')})`;
     const distancia = (a, b) => a.reduce((t, v, i) => t + (v - b[i]) ** 2, 0);
     const masParecido = (c) => pal.map((p, i) => [distancia(p, c), i]).sort((a, b) => a[0] - b[0])[0][1];
-    const grumos = Array.from({ length: 5 }, () => {
-      const x = 380 + r() * 360;
-      return { x, y: limbo(x) + 10 + r() * 34, rx: 26 + r() * 46, ry: 8 + r() * 14 };
-    });
-    const hebras = Array.from({ length: 3 }, () => {
-      const x = 360 + r() * 330;
-      const y = limbo(x) + 8 + r() * 30;
-      const a = Math.atan((x - MEDIO) / Math.sqrt(MEDIO * MEDIO - (x - MEDIO) ** 2)) + (r() - 0.5) * 0.5;
-      const largo = 110 + r() * 120;
-      return { x, y, dx: Math.cos(a) * largo, dy: Math.sin(a) * largo, largo };
+    const enLaNube = () => {
+      const a = r() * Math.PI * 2;
+      const d = Math.sqrt(r()) * 0.9;
+      return { x: NUBE_MEDIO.x + Math.cos(a) * d * NUBE.rx, y: NUBE_MEDIO.y + Math.sin(a) * d * NUBE.ry };
+    };
+    const grumos = Array.from({ length: 6 }, () => ({ ...enLaNube(), rx: 18 + r() * 40, ry: 14 + r() * 28 }));
+    const hebras = Array.from({ length: 4 }, () => {
+      const o = enLaNube();
+      const a = r() * Math.PI;
+      const largo = 90 + r() * 160;
+      return { x: o.x - (Math.cos(a) * largo) / 2, y: o.y - (Math.sin(a) * largo) / 2, dx: Math.cos(a) * largo, dy: Math.sin(a) * largo, largo };
     });
     let salida = '';
-    for (let k = 0; k < 460; k++) {
+    for (let k = 0; k < 420; k++) {
       let x;
       let y;
       const dado = r();
-      if (dado < 0.28) {
+      if (dado < 0.26) {
         const h = hebras[Math.floor(r() * hebras.length)];
         const t = r();
-        const desvio = (r() - 0.5) * 7;
+        const desvio = (r() - 0.5) * 8;
         x = h.x + h.dx * t - (h.dy / h.largo) * desvio;
         y = h.y + h.dy * t + (h.dx / h.largo) * desvio;
-      } else if (dado < 0.7) {
+      } else if (dado < 0.66) {
         const g = grumos[Math.floor(r() * grumos.length)];
         const a = r() * Math.PI * 2;
         const dd = Math.pow(r(), 0.7);
         x = g.x + Math.cos(a) * dd * g.rx;
         y = g.y + Math.sin(a) * dd * g.ry;
       } else {
-        x = 270 + r() * 490;
-        y = limbo(x) + 2 + Math.pow(r(), 1.5) * 120;
+        const o = enLaNube();
+        x = o.x * 1.1 - NUBE_MEDIO.x * 0.1;
+        y = o.y * 1.1 - NUBE_MEDIO.y * 0.1;
       }
-      const d = y - limbo(x);
-      if (d < 1 || d > 135) continue;
+      // Más tenues hacia el borde: se pierden en el cielo.
+      const dentro = suave(1.15, 0.5, radioDeLaNube(x, y));
+      if (dentro <= 0.02 || x < 0 || x > NUBE.ancho || y < 0 || y > NUBE.alto) continue;
       const grande = r() < 0.045;
-      const radio = grande ? 1.5 + r() * 1.3 : 0.45 + Math.pow(r(), 2.2) * 1.15;
-      const brillo = grande ? 0.85 + r() * 0.15 : 0.18 + Math.pow(r(), 2) * 0.62;
+      const radio = grande ? 1.4 + r() * 1.2 : 0.42 + Math.pow(r(), 2.2) * 1.05;
+      const brillo = grande ? 0.85 + r() * 0.15 : 0.2 + Math.pow(r(), 2) * 0.6;
       const t = r();
       const c = t < 0.42 ? entre(pal[1], pal[2], r())
         : t < 0.72 ? entre(pal[2], pal[0], r() * 0.5)
           : t < 0.96 ? entre(pal[3], pal[2], r() * 0.5)
             : entre(blanco, pal[2], 0.3 + r() * 0.3);
-      // Más tenues lejos del borde: se hunden en el horizonte.
-      const op = Math.min(1, brillo * (1 - suave(40, 135, d) * 0.6) * LUZ_DEL_POLVO);
+      const op = Math.min(1, brillo * dentro * LUZ_DEL_POLVO);
       const cx = x.toFixed(1);
       const cy = y.toFixed(1);
       salida += grande
         ? `<circle cx="${cx}" cy="${cy}" r="${(radio * 4).toFixed(1)}" fill="url(#asGrano${masParecido(c)})" opacity="${(op * 0.5).toFixed(3)}"/><circle cx="${cx}" cy="${cy}" r="${radio.toFixed(2)}" fill="${rgb(entre(c, blanco, 0.35))}" opacity="${op.toFixed(2)}"/>`
         : `<circle cx="${cx}" cy="${cy}" r="${radio.toFixed(2)}" fill="${rgb(c)}" opacity="${op.toFixed(2)}"/>`;
     }
+    granosDeLaNube = salida;
     return salida;
   }
-  /** El polvo: el gas con la estrella que nace y, en su propio dibujo, los granos, que derivan (CSS). */
-  function polvoDelHorizonte() {
-    const { x, y } = ESTRELLA_DEL_POLVO;
+  /**
+   * El polvo: el gas y los granos en dos dibujos (los granos derivan sin repintar el gas) y la estrella que nace, que
+   * respira (CSS).
+   */
+  function nubeDelPolvo() {
     const halos = PALETA_DEL_POLVO.map((h, i) => `<radialGradient id="asGrano${i}"><stop offset="0" stop-color="${h}" stop-opacity="0.9"/><stop offset="0.35" stop-color="${h}" stop-opacity="0.25"/><stop offset="1" stop-color="${h}" stop-opacity="0"/></radialGradient>`).join('');
-    const naciente = '<radialGradient id="asNaciente"><stop offset="0" stop-color="#fff1dc" stop-opacity="0.9"/><stop offset="0.14" stop-color="#f3b47c" stop-opacity="0.5"/><stop offset="0.45" stop-color="#c47a58" stop-opacity="0.14"/><stop offset="1" stop-color="#8a6bd6" stop-opacity="0"/></radialGradient>';
-    return `<svg class="entra" viewBox="0 0 ${LADO} ${LADO}" aria-hidden="true"><defs>${naciente}</defs>${gasDelHorizonte()}<g class="as-polvo-estrella"><circle cx="${x}" cy="${y}" r="36" fill="url(#asNaciente)"/><circle cx="${x}" cy="${y}" r="2.2" fill="#fff4e4"/></g></svg>`
-      + `<svg class="entra as-polvo-granos" viewBox="0 0 ${LADO} ${LADO}" aria-hidden="true"><defs>${halos}</defs>${granosDelPolvo()}</svg>`;
+    return `<svg class="entra" viewBox="0 0 ${NUBE.ancho} ${NUBE.alto}" aria-hidden="true">${gasDelPolvo()}</svg>`
+      + `<svg class="entra as-polvo-granos" viewBox="0 0 ${NUBE.ancho} ${NUBE.alto}" aria-hidden="true"><defs>${halos}</defs>${granosDelPolvo()}</svg>`
+      + `<b class="as-polvo-estrella" style="left: ${ESTRELLA_DEL_POLVO.x}px; top: ${ESTRELLA_DEL_POLVO.y}px"></b>`;
   }
 
   /** El horizonte de un rango (RangoDeAscent.cuerpoDeAscent): el cuerpo, sus colores y sus detalles. */
@@ -714,7 +744,7 @@ const SeccionAscent = (() => {
     const p = c.paleta;
     let defs = '';
     let dentro = '';
-    if (c.cuerpo === 'polvo') return polvoDelHorizonte();
+    if (c.cuerpo === 'polvo') return nubeDelPolvo();
     if (c.cuerpo === 'galaxia') {
       // Partículas en una banda, con su centro brillante.
       defs = `<radialGradient id="asNube" cx="0.5" cy="0.04" r="0.3"><stop offset="0" stop-color="#e9dcff" stop-opacity="0.55"/><stop offset="0.4" stop-color="${p.principal}" stop-opacity="0.32"/><stop offset="1" stop-color="${p.apagado}" stop-opacity="0"/></radialGradient>`;
@@ -789,26 +819,25 @@ const SeccionAscent = (() => {
     const techo = el('div', 'as-techo');
     techo.innerHTML = '<i></i>';
     techo.setAttribute('aria-hidden', 'true');
-    const horizonte = el('div', 'as-horizonte');
-    horizonte.innerHTML = '<i></i>';
-    horizonte.setAttribute('aria-hidden', 'true');
     const velo = el('div', 'as-velo');
     const zona = el('section', 'ascent pagina-app');
     zona.setAttribute('aria-label', 'Ascent');
-    zona.innerHTML = `<div class="as-scroll"><div class="as-arriba"></div><div class="as-contenido"></div></div>`;
-    tel.append(techo, velo, horizonte, zona);
+    zona.innerHTML = `<div class="as-cielo" aria-hidden="true"><i></i></div><div class="as-scroll"><div class="as-contenido"></div></div>`;
+    tel.append(techo, velo, zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+    const cielo = zona.querySelector('.as-cielo');
     const cont = zona.querySelector('.as-scroll');
     const contenido = zona.querySelector('.as-contenido');
-    // La flecha para volver y el dibujo no se rearman: así el dibujo puede cambiar con una transición.
-    const arriba = zona.querySelector('.as-arriba');
-    const volver = boton('as-volver', icono('arriba'), () => cerrar());
-    arriba.appendChild(volver);
-    arriba.insertAdjacentHTML('beforeend', MARCA);
-    const marca = arriba.querySelector('.as-marca');
+    // La marca no se rearma (va con lo principal cada vez que se pinta): así el dibujo cambia con una transición.
+    const cajaDeLaMarca = document.createElement('div');
+    cajaDeLaMarca.innerHTML = MARCA;
+    const marca = cajaDeLaMarca.firstElementChild;
+    // Lo principal va siempre en el mismo nodo, con la marca adentro: así la marca cambia con una transición.
+    const principal = el('div', 'as-base');
+    principal.appendChild(marca);
 
     // ------------------------------------------------------------ tu rango en Ascent (5/11, para aprobar)
-    // La sección toma el color de tu rango y su horizonte es tu cuerpo, como en Ascent, donde cada rango tiñe la
+    // La sección toma el color de tu rango y en su cielo está tu cuerpo, como en Ascent, donde cada rango tiñe la
     // app entera. El nombre del rango no se dice: allá «se ve, no se lee». La marca no cambia: es el ícono.
     // Sin vincular, y al abrir la galería, el polvo: el día uno de Ascent (antes, la luna, que no te gustaba).
     let rangoActual = { rango: 1, planeta: null };
@@ -817,12 +846,14 @@ const SeccionAscent = (() => {
       rangoActual = { rango: c.rango, planeta: c.planeta };
       tel.style.setProperty('--rango-principal', c.paleta.principal);
       tel.style.setProperty('--rango-claro', c.paleta.claro);
-      // El borde del horizonte, más claro que el color del rango; en el agujero negro, el naranja del disco.
+      // El borde del cuerpo, más claro que el color del rango; en el agujero negro, el naranja del disco.
       tel.style.setProperty('--rango-borde-rgb', c.cuerpo === 'agujeroNegro' ? rgb(c.paleta.principal) : rgb(c.paleta.claro, 0.35));
-      horizonte.querySelector('i').innerHTML = cuerpoDelHorizonte(c);
-      horizonte.classList.toggle('sin-cuerpo', c.cuerpo === 'polvo' || c.cuerpo === 'galaxia');
-      horizonte.classList.toggle('brilla', c.cuerpo === 'sol');
-      horizonte.classList.toggle('negro', c.cuerpo === 'agujeroNegro');
+      cielo.querySelector('i').innerHTML = cuerpoDelHorizonte(c);
+      cielo.classList.toggle('polvo', c.cuerpo === 'polvo');
+      cielo.classList.toggle('sin-cuerpo', c.cuerpo === 'galaxia');
+      cielo.classList.toggle('brilla', c.cuerpo === 'sol');
+      cielo.classList.toggle('negro', c.cuerpo === 'agujeroNegro');
+      techo.classList.toggle('polvo', c.cuerpo === 'polvo');
     }
     ponerRango(rangoActual.rango);
 
@@ -2296,29 +2327,35 @@ const SeccionAscent = (() => {
     }
 
     // ------------------------------------------------------------ pintar
+    // El final, abajo, pegado a Progreso: volver es bajar, así que la flecha apunta para abajo.
     function pie() {
       const c = el('div', 'as-final');
-      c.appendChild(boton('as-volver-abajo', `${icono('arriba')}<span>${tx('ascent.volverAProgreso')}</span>`, () => cerrar()));
       if (vinculada) c.appendChild(linea('as-pie', tx('ascent.desvincular')));
+      c.appendChild(boton('as-volver-abajo', `<span>${tx('ascent.volverAProgreso')}</span>${icono('abajo')}`, () => cerrar()));
       return c;
     }
 
+    // Se llega por abajo: lo principal (con la marca) va abajo, pegado a Progreso, y el resto, subiendo, del más al
+    // menos importante; arriba de todo, el cielo. Al volver a pintar, se queda donde estaba contando desde abajo.
     function pintar() {
-      const scroll = cont.scrollTop;
-      contenido.innerHTML = '';
+      const desdeAbajo = cont.scrollHeight - cont.scrollTop;
+      [...contenido.children].forEach((n) => n !== principal && n.remove());
+      [...principal.children].forEach((n) => n !== marca && n.remove());
+      if (principal.parentNode !== contenido) contenido.appendChild(principal);
       zona.classList.toggle('vinculada', vinculada);
-      volver.setAttribute('aria-label', tx('ascent.volverAProgreso'));
       const d = elDia();
       if (vinculada) {
         const k = calcularDia(d);
-        contenido.append(...[
-          el('p', 'as-etq as-nombre', tx('ascent.titulo')), cabezaDelDia(d, k), parteFoco(d, k), parteFilas(d, k), parteCuerpo(d, k), parteFuerza(d, k),
-          parteMarcas(d, k), parteEstancamiento(d, k), parteAnio(), parteComparten(d), parteComo(), pie(),
-        ].filter(Boolean));
+        principal.append(el('p', 'as-etq as-nombre', tx('ascent.titulo')), cabezaDelDia(d, k));
+        const resto = [
+          parteFoco(d, k), parteFilas(d, k), parteCuerpo(d, k), parteFuerza(d, k), parteMarcas(d, k), parteEstancamiento(d, k),
+          parteAnio(), parteComparten(d), parteComo(),
+        ].filter(Boolean);
+        principal.before(...resto.reverse());
+        principal.after(pie());
       } else {
-        contenido.append(
-          cabezaSinVincular(),
-          el('h3', 'as-grupo', tx('ascent.soloConLasDos')),
+        principal.append(cabezaSinVincular());
+        const vacias = [
           vacia('as-hoy-vacio', tx('ascent.vacio.titular'), tx('ascent.vacio.titularTexto'), decideVacio()),
           vacia('as-filas-vacias', tx('ascent.filas.titulo'), tx('ascent.vacio.filas'), filasVacias()),
           vacia('as-musculos', tx('ascent.cuerpo.titulo'), tx('ascent.vacio.cuerpo'), cuerpoVacio()),
@@ -2326,11 +2363,13 @@ const SeccionAscent = (() => {
           vacia('as-marcas', tx('ascent.marcas.titulo'), tx('ascent.vacio.marcas'), null),
           vacia('as-estanc', tx('ascent.estancados.titulo'), tx('ascent.vacio.estancamiento'), null),
           vacia('as-anio', tx('ascent.anio.titulo'), tx('ascent.vacio.anio'), mapaDelAnio(false)),
-          pie(),
-        );
+        ];
+        principal.before(el('h3', 'as-grupo', tx('ascent.soloConLasDos')), ...vacias.reverse());
+        principal.after(pie());
       }
       pintarEntrada();
-      cont.scrollTop = scroll;
+      cont.scrollTop = cont.scrollHeight - desdeAbajo;
+      ponerCielo();
     }
 
     function abrirComo() {
@@ -2348,11 +2387,20 @@ const SeccionAscent = (() => {
     }
 
     // ------------------------------------------------------------ bajar y subir
-    function ponerHorizonte() {
-      const sube = HORIZONTE_PX * p;
-      horizonte.style.setProperty('--sube', `${sube.toFixed(1)}px`);
-      horizonte.style.setProperty('--escala', (0.8 + 0.2 * p).toFixed(3));
-      horizonte.style.visibility = sube > 0.1 ? 'visible' : 'hidden';
+    // El cuerpo baja con la sección más despacio que ella (está más lejos). Lejos de arriba de todo apenas asoma, tenue,
+    // detrás del texto; en el último tramo para arriba baja entero y se enciende, en el cielo vacío de arriba.
+    function ponerCielo() {
+      const lejos = clamp(cont.scrollTop / CUERPO_SUBIR, 0, 1);
+      const arriba = cielo.classList.contains('polvo') ? NUBE_LEJOS : CUERPO_LEJOS;
+      const baja = (1 - p) * (zona.clientHeight || 0) * (1 - CUERPO_SIGUE) - lejos * arriba;
+      cielo.style.setProperty('--baja', `${baja.toFixed(1)}px`);
+      cielo.style.setProperty('--cerca', (1 - 0.45 * lejos).toFixed(3));
+    }
+    cont.addEventListener('scroll', ponerCielo, { passive: true });
+    // Se llega por abajo, a lo principal.
+    function aterrizar() {
+      cont.scrollTop = cont.scrollHeight;
+      ponerCielo();
     }
     function poner(v) {
       p = clamp(v, 0, 1);
@@ -2360,7 +2408,7 @@ const SeccionAscent = (() => {
       zona.style.visibility = p > 0.0005 ? 'visible' : 'hidden';
       zona.inert = p === 0;
       velo.style.opacity = (0.32 * p).toFixed(3);
-      ponerHorizonte();
+      ponerCielo();
       ponerTecho();
       if (opciones.alMover) opciones.alMover(p);
     }
@@ -2383,7 +2431,7 @@ const SeccionAscent = (() => {
     }
     function listo() {
       if (!abierta) {
-        cont.scrollTop = 0;
+        aterrizar();
         queEs = false;
         como = false;
         // Ya se abrió una vez: al volver a Progreso, la pista se pliega a la vista.
@@ -2392,10 +2440,16 @@ const SeccionAscent = (() => {
       if (abierta && !yaSeAbrio) yaSeAbrio = true;
       if (opciones.alCambiar) opciones.alCambiar();
     }
-    function abrir(deUna) { if (!abierta) pintar(); ir(1, deUna); }
+    function abrir(deUna) {
+      if (!abierta) {
+        pintar();
+        aterrizar();
+      }
+      ir(1, deUna);
+    }
     function cerrar(deUna) { ir(0, deUna); }
 
-    // Para volver: empujar para arriba abajo de todo, siguiendo al dedo, o con la rueda; y la flecha.
+    // Para volver, bajar: empujar para arriba abajo de todo, siguiendo al dedo, o con la rueda; y la flecha.
     const alFondo = () => cont.scrollTop + cont.clientHeight >= cont.scrollHeight - 2;
     let tirando = null;
     zona.addEventListener('pointerdown', (ev) => {
@@ -2492,7 +2546,15 @@ const SeccionAscent = (() => {
       // Ocupada: abierta, bajando o subiendo. Mientras, las pestañas no se deslizan.
       get ocupada() { return abierta || p > 0 || !!animacion; },
       // El gesto desde Progreso (galeria.js): mientras el dedo baja, y al soltar.
-      arrastrar(fr) { cancelAnimationFrame(animacion); animacion = 0; if (!abierta && p === 0) pintar(); poner(fr); },
+      arrastrar(fr) {
+        cancelAnimationFrame(animacion);
+        animacion = 0;
+        if (!abierta && p === 0) {
+          pintar();
+          aterrizar();
+        }
+        poner(fr);
+      },
       soltar(abrirla) { ir(abrirla ? 1 : 0); },
       ponerVinculo(si) {
         vinculada = si;

@@ -96,7 +96,7 @@ const PARTES_DE_ASCENT = [
 async function diasDeAscent(sufijo = '') {
   for (const d of DIAS_DE_ASCENT) {
     await ascent('dia', d);
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     await pagina.waitForTimeout(900);
     await foto(`ascent-dia-${d}${sufijo}`);
     await ascent('bajar', '.as-filas');
@@ -111,7 +111,7 @@ async function partesDeAscent(sufijo = '') {
     await pagina.waitForTimeout(400);
     await foto(`ascent-parte-${nombre}${sufijo}`);
   }
-  await ascent('subir');
+  await ascent('bajar', 'fondo');
 }
 // Un arrastre con el mouse, como un dedo; con nombre, saca la foto con el dedo todavía abajo.
 async function arrastreVertical(x0, y0, x1, y1, nombre) {
@@ -1548,8 +1548,8 @@ const pasos = {
     // Arriba de todo de Progreso, arrastrar para abajo la baja, siguiendo al dedo.
     await arrastreVertical(196, 300, 196, 580, 'senal-deslizando');
     if (!(await ascentAbierta())) console.log('! arriba de todo, arrastrar para abajo no abrió Ascent');
-    // En el medio de Ascent, empujar para arriba es del scroll: no la cierra.
-    await ascent('bajar', '.as-filas');
+    // En el medio de Ascent, empujar para arriba es del scroll: no la cierra (sin vincular también está el cuerpo).
+    await ascent('bajar', '.as-musculos');
     await pagina.waitForTimeout(300);
     await arrastreVertical(196, 600, 196, 350);
     if (!(await ascentAbierta())) console.log('! en el medio de Ascent, empujar para arriba la cerró');
@@ -1702,7 +1702,7 @@ const pasos = {
       await pagina.waitForTimeout(300);
       await foto(nombre);
     }
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     // La hoja de vincular (D27): con la sesión de Ascent en el llavero, sin sesión, sin Ascent y sin
     // la cuenta de Moss; un error del servidor y entrar con la cuenta de Ascent.
     await hojaDeVincular();
@@ -1728,13 +1728,13 @@ const pasos = {
     await foto('ascent-musculo-tocado');
     // Durmió bien, pero dice que no se siente bien (3 de 10): el titular y lo de hoy cambian, con un fundido.
     await ascent('dia', 'bien');
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     await pagina.waitForTimeout(400);
     await tocar('.as-siente-escala button:nth-child(4)');
     await pagina.waitForTimeout(700);
     await foto('ascent-te-sientes');
     await ascent('dia', 'corta');
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     // «¿Por qué no hay un porcentaje?» y «En qué se basa», desplegados.
     await tocar('.as-hoy > .as-enlace');
     await pagina.waitForTimeout(500);
@@ -1742,7 +1742,7 @@ const pasos = {
     await ascent('como');
     await pagina.waitForTimeout(900);
     await foto('ascent-en-que-se-basa');
-    await ascent('bajar', 'fondo');
+    await ascent('bajar', '.as-como-cuerpo p:nth-of-type(5)');
     await pagina.waitForTimeout(400);
     await foto('ascent-en-que-se-basa-2');
     // Con pocas semanas, las razones del sueño y la comida todavía juntan información.
@@ -1757,7 +1757,7 @@ const pasos = {
     await pagina.click('.as-anio-dia.marca >> nth=-1');
     await pagina.waitForTimeout(300);
     await foto('ascent-anio-tocado');
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     await ascent('cerrar');
     // Con «sin déficit» no hay «Hoy, concéntrate en» ni metas de comida; con los números ocultos, sin gramos.
     await pagina.evaluate(() => window.__seguridad('sinDeficit', true));
@@ -1767,7 +1767,7 @@ const pasos = {
     await ascent('bajar', '.as-fila-comida');
     await pagina.waitForTimeout(300);
     await foto('ascent-sin-deficit-2');
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     await ascent('cerrar');
     await pagina.evaluate(() => window.__seguridad('sinDeficit', false));
     await pagina.evaluate(() => window.__seguridad('numeros', false));
@@ -1777,7 +1777,7 @@ const pasos = {
     await ascent('bajar', '.as-fila-comida');
     await pagina.waitForTimeout(300);
     await foto('ascent-sin-numeros-2');
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     await ascent('cerrar');
     await pagina.evaluate(() => window.__seguridad('numeros', true));
     await pestana(0);
@@ -2266,19 +2266,25 @@ const pasos = {
     await ascent('abrir');
     await pagina.waitForTimeout(1000);
     await foto('rango-sin-vincular');
+    await ascent('subir');
+    await pagina.waitForTimeout(800);
+    await foto('rango-sin-vincular-arriba');
     await ascent('vincular', true);
     await pagina.waitForTimeout(1600);
     for (const [n, planeta] of [[1], [2], [3], [4, 'Ceres'], [4, 'Mercurio'], [4, 'Marte'], [4, 'Venus'], [4, 'Saturno'], [5], [6], [7]]) {
       await ascent('rango', [n, planeta || null]);
+      await ascent('subir');
       await pagina.waitForTimeout(1000);
       await foto(`rango-${n}${planeta ? '-' + planeta.toLowerCase() : ''}`);
     }
     await ascent('rango', [7, null]);
     await ascent('bajar', 'fondo');
-    await pagina.waitForTimeout(500);
-    await foto('rango-7-abajo');
+    await pagina.waitForTimeout(300);
+    await foto('rango-7-llegada');
     await ascent('rango', [1, null]);
-    await ascent('subir');
+    await pagina.waitForTimeout(500);
+    await foto('rango-1-llegada');
+    await ascent('bajar', 'fondo');
     await ascent('cerrar');
     await pagina.waitForTimeout(900);
     await foto('rango-entrada-vinculada');
@@ -2302,7 +2308,7 @@ const pasos = {
     await ascent('bajar', '.as-grupo');
     await pagina.waitForTimeout(300);
     await foto('ascent-bloqueadas-ingles');
-    await ascent('subir');
+    await ascent('bajar', 'fondo');
     await hojaDeVincular('-ingles');
     await ascent('vincular', true);
     await pagina.waitForTimeout(1700);

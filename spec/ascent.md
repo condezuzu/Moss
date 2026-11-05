@@ -457,15 +457,22 @@ pantalla o `VELOCIDAD_MIN` 0,35 px/ms, y 8 puntos para decidir).
 | Progreso, arriba de todo | Baja Ascent, siguiendo al dedo | El scroll | Las pestañas |
 | Progreso, más abajo | El scroll | El scroll | Las pestañas |
 | La entrada del encabezado | Baja Ascent | Nada, o el scroll | Las pestañas |
-| Ascent, abajo de todo | El scroll | Ascent sube y vuelve Progreso | Nada |
+| Ascent, abajo de todo (donde se llega) | El scroll: subes por Ascent | Ascent sube y vuelve Progreso | Nada |
 | La barra | Nada: el borde de abajo es del gesto de inicio del iPhone | Nada | Nada |
 
 - **Con la rueda o el trackpad, lo mismo:** arriba de todo de Progreso, seguir subiendo
   la baja; abajo de todo de Ascent, seguir bajando la cierra. Lo que venía con inercia
   no cuenta: hace falta una pausa de 200 ms.
-- **Se vuelve** también con la flecha de arriba (apunta para arriba: Ascent se va por
-  donde vino), con «Volver a Progreso» al final o tocando Progreso. También se llega
-  desde Perfil y desde la recuperación en Sueño.
+- **Ascent sigue a Progreso para arriba** (lo pediste el 5/11/2026 a la noche: «subo y
+  quiero encontrarlo desde arriba»; «como si fuese una expansión de Progreso»). Se llega
+  por abajo, a lo principal: lo de hoy (o, sin vincular, vincular), pegado a Progreso.
+  Subiendo está el resto, del más al menos importante («Hoy, concéntrate en», de qué
+  sale, tus músculos, tu fuerza, marcas, estancamiento, tu año, lo que comparten y en qué
+  se basa) y, arriba de todo, de fondo, el cuerpo de tu rango, como las estrellas.
+- **Volver es bajar:** «Volver a Progreso», abajo de todo, con la flecha para abajo
+  (antes había una flecha arriba que apuntaba para arriba y te bajaba: no tenía
+  sentido), empujando para arriba abajo de todo, con la rueda para abajo o tocando
+  Progreso. También se llega desde Perfil y desde la recuperación en Sueño.
 - **Que se note que arriba está Ascent:**
   - **La entrada**, arriba a la derecha del encabezado de Progreso: el planeta de Ascent
     con su órbita cerrada (las dos apps, juntas) y la luna de Moss, el titular del día en
@@ -481,11 +488,11 @@ pantalla o `VELOCIDAD_MIN` 0,35 px/ms, y 8 puntos para decidir).
     se va a medida que Ascent llega. Se apaga al bajar el scroll y en las metas.
   - La primera vez que se llega a Progreso, Progreso baja 24 puntos y vuelve, y el borde
     asoma un poco más, como si alguien tirara. Una sola vez; con Reducir movimiento, nada.
-- **La transición:** Ascent baja siguiendo al dedo; Progreso se apaga en la primera mitad
-  y baja un poco (el 22 % de la pantalla con el gesto entero), como empujado; el cielo
-  sube con la cámara, como hacia tu universo, y el planeta sube desde abajo hasta ser el
-  horizonte. En Ascent van a tener una entrada a Moss arriba de Stats: son dos caras del
-  mismo gesto.
+- **La transición:** Ascent baja siguiendo al dedo, con su parte de abajo primero, y
+  Progreso baja pegado a ella, sin apagarse: es lo mismo que sigue para arriba. El cielo
+  sube con la cámara, como hacia tu universo, y el cuerpo de tu rango baja desde arriba,
+  más despacio que la sección (está más lejos). En Ascent van a tener una entrada a Moss
+  arriba de Stats: son dos caras del mismo gesto.
 
 **Cómo se ve:** el lenguaje nuevo de Ascent (su `spec/estetica.md` y lo que contó su
 sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
@@ -494,17 +501,22 @@ sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
 - Línea de pelo y aire en vez de tarjetas; octágono de esquinas cortadas solo para la
   acción (y la hoja de vincular, cortada arriba); píldora para lo que se elige; lo
   secundario, subrayado.
-- Su planeta como horizonte abajo. El contenido se hunde detrás del horizonte.
+- El cuerpo de tu rango arriba, de fondo, detrás del texto (hasta el 5/11/2026 era un
+  horizonte que subía desde abajo). Lejos de arriba de todo apenas asoma, tenue; en el
+  último tramo para arriba baja entero y se enciende, en el cielo vacío de arriba. El
+  polvo es una nube; los demás cuelgan del borde de arriba, como el borde que asoma en
+  Progreso.
 - Fondo `#05060a`, tinta `#e8ecf6`, secundario `#aab2c4`, apagado `#9098ab`, con piso
-  de contraste 4,5:1 en el texto. **El acento y el cuerpo del horizonte son los de tu rango
+  de contraste 4,5:1 en el texto. **El acento y el cuerpo de arriba son los de tu rango
   en Ascent** (lo propusiste el 5/11/2026; en la galería, para aprobar, con los siete rangos
   y los cinco planetas del 4 en la sección 7): `src/dominio/rangoDeAscent.ts` es el espejo de
   la regla de Ascent (el rango sale de la racha; en el 4, el planeta cambia cada cuatro días)
   y la sección toma su paleta. Sin vincular, el polvo: el rango 1, el día uno de Ascent (hasta el
   5/11/2026 era la luna, que no te gustó). El polvo se dibuja como la nebulosa de Ascent
-  (`crearPolvo` y el modo 5 de su motor) pero a la manera de Moss: gas violeta y azul pegado al
-  horizonte, con vetas, calles oscuras y una estrella que nace, y granos que derivan despacio
-  por la curva, sin las cortinas de aurora. Para usarlo, Moss
+  (`crearPolvo` y el modo 5 de su motor) pero a la manera de Moss: una nube más o menos
+  redonda, sin círculo ni borde, de gas violeta y azul con vetas, calles oscuras y una
+  estrella que nace en el medio, que respira, y granos que derivan despacio, sin las
+  cortinas de aurora. Para usarlo, Moss
   tiene que leer la racha de Ascent con su función del vínculo (nunca una de Ascent): **falta
   decidir** si se lee.
 - **El color:** solo lo que pone el límite hoy y lo cargado (terracota `#CB8569`); lo
@@ -720,8 +732,10 @@ año antes del 14 de septiembre son inventados y lo dicen en `galeria/src/datos.
 2. La entrada en el encabezado de `src/secciones/progreso/` (la órbita con el arco y la
    luna, en Skia o con vistas), la pista y el movimiento de la primera vez guardados en el
    teléfono, y sacar la señal de Hábitos.
-3. El borde del planeta arriba y el planeta como horizonte, en Skia, y el recorrido del
-   cielo con Ascent bajando desde Progreso (hoy sube desde Hábitos).
+3. El borde del planeta arriba de Progreso y, en Ascent, el cuerpo de tu rango arriba, de
+   fondo (el polvo, una nube), en Skia; Progreso bajando pegado a Ascent, el recorrido
+   del cielo con Ascent bajando desde Progreso (hoy sube desde Hábitos) y llegar abajo
+   de todo de su scroll.
 4. La sección nueva en `src/secciones/ascent/Vinculada.tsx`, sin tarjetas, con el
    cuerpo dibujado, las escalas, la tendencia de cada ejercicio y el mapa del año en
    `src/secciones/graficos/`.

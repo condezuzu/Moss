@@ -584,14 +584,12 @@
     // Los mismos umbrales que el gesto de abrirla (se declaran más abajo, con las pestañas).
     umbral: () => UMBRAL,
     velocidadMin: () => VELOCIDAD_MIN,
-    // Al bajar Ascent, el cielo sube con el dedo, más despacio (está más lejos), y Progreso se apaga y
-    // baja un poco, como empujado: Ascent queda sobre el mismo cielo, como «Tu universo».
+    // Al bajar Ascent, el cielo sube con el dedo, más despacio (está más lejos), y Progreso baja pegado a ella, como
+    // si siguiera para arriba (lo pediste el 5/11/2026): Ascent queda sobre el mismo cielo, como «Tu universo».
     alMover: (p) => {
       // Solo mientras Ascent se mueve: cerrada, la cámara es del cielo (hoy o el universo).
-      // Lo de Progreso se apaga en la primera mitad del gesto, así no se mezcla con lo de Ascent.
       if (p > 0 || subidaDeAscent > 0) {
-        progreso.zona.style.opacity = String(Math.max(0, 1 - p * 2.2));
-        progreso.zona.style.transform = p > 0 ? `translate3d(0, ${(p * 0.22 * (tel.clientHeight || 1)).toFixed(1)}px, 0)` : '';
+        progreso.zona.style.transform = p > 0 ? `translate3d(0, ${(p * (tel.clientHeight || 1)).toFixed(1)}px, 0)` : '';
         if (subidaDeAscent === 0) camaraConAscent = escena.zona() === 'hoy';
         if (camaraConAscent) {
           escena.velar(Math.min(1, p * 2));
