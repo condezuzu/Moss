@@ -1104,7 +1104,7 @@
       "noMostrar": "Don't show again"
     },
     "energia": {
-      "etiqueta": "Your energy · today",
+      "etiqueta": "Your energy · {cuando}",
       "titulo": {
         "baja": "Low energy",
         "suficiente": "Enough energy",
@@ -1124,12 +1124,11 @@
       "plegar": "Collapse",
       "desplegar": "Expand",
       "estimacion": "It's an estimate from what you log and what your phone or watch measures: if something's missing from your log, it looks lower than it is.",
-      "etiquetaAscent": "Your energy · with Ascent",
       "razon": {
         "comida": {
-          "llegaste": "You hit your calories",
-          "deSobra": "You ate plenty for your training",
-          "alcanza": "You ate what you need"
+          "llegaste": "These days you hit your calories",
+          "deSobra": "These days you ate plenty for your training",
+          "alcanza": "These days you ate what you need"
         },
         "sueno": {
           "muyBien": ", slept well and have no sleep debt",
@@ -1139,8 +1138,9 @@
       },
       "partes": {
         "sueno": "Sleep",
-        "comida": "Food",
-        "musculos": "Muscles"
+        "comida": "These days",
+        "musculos": "Muscles",
+        "hoy": "Today"
       },
       "como": {
         "sueno": {
@@ -1166,6 +1166,13 @@
           "listos": "Ready",
           "entrenaste": "Trained",
           "descanso": "Rest day"
+        },
+        "hoy": {
+          "temprano": "Early",
+          "alDia": "On track",
+          "atrasado": "Behind",
+          "sinComerParaEntrenar": "Eat first",
+          "sinDatos": "No data"
         }
       },
       "conviene": "What helps today",
@@ -1176,7 +1183,16 @@
         "comerMas": "Eat a bit more these days, especially before and after training.",
         "medico": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a sports dietitian.",
         "llegar": "You fell short of your calories: one more meal or a bigger portion helps.",
-        "seguir": "Keep it up: eat as usual and sleep what you need."
+        "seguir": "Keep it up: eat as usual and sleep what you need.",
+        "comerAntesYa": "For your {hora} workout, eat something now: with carbs and some protein.",
+        "atrasado": "You're behind on food today: about {kcal} kcal to catch up.",
+        "atrasadoSinNumeros": "You're behind on food today: one more meal gets you back on track.",
+        "comerAntes": "Eat something before {hora}: the pre-workout meal goes 1 to 4 h before training.",
+        "comerDespues": "Now, a meal with protein: it helps you recover.",
+        "inercia": "Feeling slow right after waking is normal: it passes in about half an hour.",
+        "bajon": "Energy dips a little after lunch: it's normal, and daylight helps.",
+        "bajarElRitmo": "Dim lights from now on: bed at {cama}.",
+        "aLaCama": "It's time for bed: with dim light you fall asleep sooner."
       },
       "deQueSale": "Based on your sleep, your meals and your training",
       "deQueSaleSinEntreno": "Based on your sleep and your meals",
@@ -1186,13 +1202,47 @@
         "comida": "These days, about {kcal} kcal a day out of your {meta}, and {entreno} from training.",
         "comidaSinMeta": "These days, about {kcal} kcal a day, and {entreno} from training.",
         "comidaSinNumeros": "What you logged these days, against what your day and your training ask for.",
-        "comidaSinDatos": "Log your meals for a few days and Moss adds them in."
+        "comidaSinDatos": "Log your meals for a few days and Moss adds them in.",
+        "hoy": "Today, about {comido} kcal of the {esperado} you usually have by this time.",
+        "hoySinNumeros": "Today, what you logged against what you usually have by this time.",
+        "hoyTemprano": "Today is just starting: at this hour what you ate doesn't count yet."
       },
       "juicioDeuda": {
         "muyBien": "none",
         "bien": "low",
         "algoAlta": "a bit high",
         "alta": "high"
+      },
+      "conAscent": "with Ascent",
+      "cuando": {
+        "alDespertar": "on waking",
+        "manana": "this morning",
+        "tarde": "this afternoon",
+        "antes": "before training",
+        "despues": "after training",
+        "noche": "tonight"
+      },
+      "momento": {
+        "manana": {
+          "baja": "Based on what you've logged, you're starting the day with very low energy.",
+          "suficiente": "To start the day, you have enough energy.",
+          "alta": "{comida}{sueno}: a good start to the day."
+        },
+        "antes": {
+          "baja": "For your {hora} workout, your energy is very low.",
+          "suficiente": "For your {hora} workout, you have enough energy.",
+          "alta": "{comida}{sueno}: everything's set for your {hora} workout."
+        },
+        "despues": {
+          "baja": "You trained with very low energy: now it's time to recover.",
+          "suficiente": "You trained: now it's time to recover.",
+          "alta": "You trained with everything on your side: now it's time to recover."
+        },
+        "noche": {
+          "baja": "Your energy was very low today: tonight, rest.",
+          "suficiente": "Time to start winding down.",
+          "alta": "Good day: now, start winding down."
+        }
       }
     }
   },

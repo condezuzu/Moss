@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { DIAS_ANOTADOS, energiaDeEstosDias, energiaDelDia, enLaBarra, franjasDeLaBarra, masaMagraEstimada, type DiaDeEnergia, type EntradaDeEnergia } from './energia';
+import { DIAS_ANOTADOS, energiaDeAhora, energiaDeEstosDias, energiaDelDia, enLaBarra, hoyParaLaEnergia, momentoDelDia, franjasDeLaBarra, masaMagraEstimada, type DiaDeEnergia, type EntradaDeEnergia } from './energia';
 import { sumarDias } from './fechas';
 
 const HOY = '2026-11-05';
@@ -105,5 +105,57 @@ describe('la energía del día: el sueño, la comida y, con Ascent, los músculo
 
   it('primero lo que la baja y después lo justo', () => {
     expect(energiaDelDia({ deEstosDias: conMeta(35, 0.8), sueno: { ...bien, anoche: 'muyCorta' }, musculos: 'cargados' })?.limita).toEqual(['sueno', 'comida', 'musculos']);
+  });
+});
+
+describe('la energía de ahora, según la hora', () => {
+  const h = (t: string) => { const [a, b] = t.split(':').map(Number); return a * 60 + b; };
+  // Se despierta a las 7, se acuesta a las 23 y entrena de 18:40 a 19:55; cuatro comidas, como REPARTO en plan.ts.
+  const DIA = { despertar: h('7:00'), cama: h('23:00'), sesion: { inicio: h('18:40'), minutos: 75 } };
+  const COMIDAS = [{ hora: h('7:30'), parte: 0.2 }, { hora: h('13:00'), parte: 0.35 }, { hora: h('17:00'), parte: 0.15 }, { hora: h('21:00'), parte: 0.3 }];
+  const bien = { anoche: 'normal', seguidas: false, deuda: 'bien' } as const;
+  const estosDias = energiaDeEstosDias({ ...ELLA, dias: dias(7, 35).map((d) => ({ ...d, meta: d.kcal })) });
+  const ahora = (t: string, comido: number, ultima: string | null = null) =>
+    energiaDeAhora({ deEstosDias: estosDias, sueno: bien, ...DIA, almuerzo: h('13:00'), ahora: h(t), hoy: { meta: 2600, comido, comidas: COMIDAS, ultima: ultima === null ? null : h(ultima) } });
+
+  it('el momento: antes y después de entrenar primero; recién despierto la primera hora; la noche, 2 h antes de la cama', () => {
+    expect(['7:30', '12:00', '15:00', '18:39', '19:55', '21:54', '21:56', '22:30'].map((t) => momentoDelDia({ ...DIA, ahora: h(t) })))
+      .toEqual(['recienDespierto', 'dia', 'antesDeEntrenar', 'antesDeEntrenar', 'despuesDeEntrenar', 'despuesDeEntrenar', 'noche', 'noche']);
+    // Entrenando temprano, lo de entrenar gana a recién despierto.
+    expect(momentoDelDia({ ...DIA, sesion: { inicio: h('8:00'), minutos: 60 }, ahora: h('7:15') })).toBe('antesDeEntrenar');
+  });
+
+  it('lo de hoy: antes de que toque la primera comida no se juzga; desde 400 kcal por debajo de lo de esta hora, atrasado', () => {
+    const hoy = (t: string, comido: number, momento: 'dia' | 'antesDeEntrenar' = 'dia') => hoyParaLaEnergia({ ahora: h(t), meta: 2600, comido, comidas: COMIDAS, momento });
+    expect(hoy('8:00', 0)?.como).toBe('temprano');
+    // A las 14:30 tocan el desayuno y el almuerzo: el 55 %, 1.430 kcal.
+    expect(hoy('14:30', 1100)).toMatchObject({ como: 'alDia', esperado: 1430, falta: 330 });
+    expect(hoy('14:30', 1000)).toMatchObject({ parte: 'justa', como: 'atrasado', falta: 430 });
+    expect(hoy('17:15', 600, 'antesDeEntrenar')).toMatchObject({ parte: 'baja', como: 'sinComerParaEntrenar' });
+    expect(hoyParaLaEnergia({ ahora: h('14:30'), meta: 0, comido: 0, comidas: COMIDAS, momento: 'dia' })).toBeNull();
+  });
+
+  it('a la mañana, lo de hoy no cuenta: con buen sueño y buenos días, alta aunque no hayas comido', () => {
+    expect(ahora('7:30', 0)).toMatchObject({ estado: 'alta', momento: 'recienDespierto', hoy: { como: 'temprano' }, notas: ['inercia'] });
+  });
+
+  it('a la tarde, atrasado con la comida la frena; antes de entrenar, la baja', () => {
+    expect(ahora('14:30', 600)).toMatchObject({ estado: 'suficiente', limita: ['hoy'], notas: ['bajon'] });
+    // Lo último, a las 13:20: nada en las 4 h de antes de la sesión de las 18:40.
+    expect(ahora('17:15', 600, '13:20')).toMatchObject({ estado: 'baja', limita: ['hoy'], momento: 'antesDeEntrenar', comerAntes: true });
+    expect(ahora('17:15', 1500, '15:30')).toMatchObject({ estado: 'alta', comerAntes: false });
+    // Al día, pero sin nada en las 4 h de antes de la sesión: que coma algo antes.
+    expect(ahora('17:15', 1500, '13:10')).toMatchObject({ estado: 'alta', comerAntes: true });
+  });
+
+  it('después de entrenar, la comida de después; a la noche, bajar el ritmo', () => {
+    expect(ahora('20:30', 1900, '17:10')).toMatchObject({ momento: 'despuesDeEntrenar', comerDespues: true });
+    expect(ahora('20:30', 1900, '20:10')).toMatchObject({ comerDespues: false });
+    expect(ahora('22:30', 2500, '21:05')).toMatchObject({ momento: 'noche', notas: ['bajarElRitmo'] });
+  });
+
+  it('la comida de estos días baja la energía a cualquier hora, también a la mañana', () => {
+    const pocos = energiaDeEstosDias({ ...ELLA, dias: dias(7, 20) });
+    expect(energiaDeAhora({ deEstosDias: pocos, sueno: bien, ...DIA, ahora: h('7:30'), hoy: { meta: 2600, comido: 0, comidas: COMIDAS } })).toMatchObject({ estado: 'baja', limita: ['comida'] });
   });
 });

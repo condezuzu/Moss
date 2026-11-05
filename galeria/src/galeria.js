@@ -1243,6 +1243,8 @@
   // Tu energía de ejemplo: baja, suficiente, alta o sin datos.
   segmento('s-energia', (v) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v); });
   window.__energia = (v, extra) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(v, extra); };
+  // A qué hora (5/11, a la noche): el momento del día de la propuesta de tu energía.
+  segmento('s-energia-hora', (v) => { if (deporte.clave) deporte.poner(null); inicio.ponerEnergia(null, { hora: v }); });
   segmento('s-planeta', (v) => ponerRango(4, v));
   // Según el deporte: el día de ejemplo (o ninguno) y, el domingo después del partido, con o sin alcohol anotado.
   segmento('s-deporte', (v) => { deporte.poner(v === 'ninguno' ? null : v); });

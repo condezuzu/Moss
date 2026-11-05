@@ -136,7 +136,7 @@ export type Parte = 'baja' | 'justa' | 'bien';
 export type ComoDormiste = 'muyCorta' | 'corta' | 'seguidas' | 'algoCorta' | 'deuda' | 'bien';
 export type ComoComiste = 'senal' | 'muyPoco' | 'debajo' | 'llegaste' | 'deSobra' | 'alcanza';
 export type Musculos = 'cargados' | 'listos';
-export type LoQueLimita = 'sueno' | 'comida' | 'musculos';
+export type LoQueLimita = 'sueno' | 'comida' | 'hoy' | 'musculos';
 /** El sueño de hoy: la noche de anoche en una palabra (null si no está), si hubo dos cortas de las últimas tres, y la deuda. */
 export type SuenoDeHoy = { anoche: EstadoDeLaNoche | null; seguidas: boolean; deuda: JuicioDeLaDeuda | null };
 
@@ -181,4 +181,127 @@ export function energiaDelDia(x: { deEstosDias: Energia | null; sueno: SuenoDeHo
   const justas: LoQueLimita[] = [...con('justa'), ...(musculos === 'cargados' ? (['musculos'] as const) : [])];
   const estado: EstadoDeEnergia = bajas.length ? 'baja' : sueno?.parte === 'bien' && comida?.parte === 'bien' && musculos !== 'cargados' ? 'alta' : 'suficiente';
   return { estado, sueno, comida, musculos, deuda: x.sueno?.deuda ?? null, limita: [...bajas, ...justas], entrenaHoy: !!(x.entrenaHoy ?? x.deEstosDias?.entrenaHoy), deEstosDias: x.deEstosDias };
+}
+
+// ------------------------------------------------------------ la energía de ahora, según la hora
+
+/**
+ * Según la hora (lo pediste el 5/11/2026, a la noche): no se tiene la misma energía a la mañana que a la tarde, y a la
+ * mañana no tiene sentido decir que comiste poco hoy, porque todavía no es hora. El momento sale de la hora de
+ * despertarte, la de ir a la cama y la sesión de hoy:
+ * - antes de entrenar, las 4 h de antes: la comida de antes va de 1 a 4 h antes (ACSM 2016; King 2022);
+ * - después de entrenar, las 2 h de después: la proteína de después (Jäger 2017), con una ventana amplia (Schoenfeld y
+ *   Aragon 2018);
+ * - recién despierto, la primera hora: la inercia del sueño suele pasar en 15 a 60 minutos (Hilditch y McHill 2019);
+ * - la noche, las 2 h antes de ir a la cama;
+ * - si no, el día.
+ * Lo de entrenar va primero: si entrenas a la mañana temprano, lo que importa es llegar a la sesión.
+ */
+export type Momento = 'recienDespierto' | 'antesDeEntrenar' | 'despuesDeEntrenar' | 'noche' | 'dia';
+export const RECIEN_DESPIERTO = 60;
+export const ANTES_DE_ENTRENAR = 240;
+export const DESPUES_DE_ENTRENAR = 120;
+export const ANTES_DE_LA_CAMA = 120;
+export type SesionDeHoy = { inicio: number; minutos: number };
+
+/** En minutos desde la medianoche del día de Moss (pasada la medianoche, más de 1.440). */
+export function momentoDelDia(x: { ahora: number; despertar: number | null; cama: number | null; sesion: SesionDeHoy | null }): Momento {
+  const { ahora, sesion } = x;
+  if (sesion) {
+    const fin = sesion.inicio + sesion.minutos;
+    if (ahora >= fin && ahora < fin + DESPUES_DE_ENTRENAR) return 'despuesDeEntrenar';
+    if (ahora >= sesion.inicio - ANTES_DE_ENTRENAR && ahora < sesion.inicio) return 'antesDeEntrenar';
+  }
+  if (x.despertar !== null && ahora >= x.despertar && ahora < x.despertar + RECIEN_DESPIERTO) return 'recienDespierto';
+  if (x.cama !== null && ahora >= x.cama - ANTES_DE_LA_CAMA) return 'noche';
+  return 'dia';
+}
+
+/**
+ * Lo de hoy, según la hora: lo que sueles haber comido a esta hora (la parte del día de cada comida, desde una hora
+ * después de su hora de siempre, como REPARTO en plan.ts) contra lo anotado. Atrasado desde 400 kcal: en deportistas,
+ * pasar muchas horas del día con más de 300 a 400 kcal de déficit se asoció con más cortisol, menos metabolismo en
+ * reposo y alteraciones del ciclo, aunque el total del día fuera el mismo (Fahrenholtz 2018; Torstveit 2018). Antes de
+ * que toque la primera comida, «temprano»: no se juzga. Antes de entrenar, atrasado baja la energía: llegar a la sesión
+ * sin comer (después de 8 h sin comer, los carbohidratos sí suben el volumen: King 2022).
+ */
+export const ATRASO = 400;
+export const DESPUES_DE_SU_HORA = 60;
+export type ComoVaHoy = 'temprano' | 'alDia' | 'atrasado' | 'sinComerParaEntrenar';
+export type ComidaDeSiempre = { hora: number; parte: number };
+export type LoDeHoy = { parte: Parte; como: ComoVaHoy; esperado: number; comido: number; falta: number };
+
+export function hoyParaLaEnergia(x: { ahora: number; meta: number; comido: number; comidas: readonly ComidaDeSiempre[]; momento: Momento }): LoDeHoy | null {
+  if (!(x.meta > 0) || !x.comidas.length) return null;
+  const parte = x.comidas.filter((c) => x.ahora >= c.hora + DESPUES_DE_SU_HORA).reduce((s, c) => s + c.parte, 0);
+  const esperado = Math.round(parte * x.meta);
+  const falta = Math.max(0, Math.round(esperado - x.comido));
+  const base = { esperado, comido: x.comido, falta };
+  if (parte === 0) return { parte: 'bien', como: 'temprano', ...base };
+  if (falta < ATRASO) return { parte: 'bien', como: 'alDia', ...base };
+  return x.momento === 'antesDeEntrenar' ? { parte: 'baja', como: 'sinComerParaEntrenar', ...base } : { parte: 'justa', como: 'atrasado', ...base };
+}
+
+/**
+ * Lo que se dice según la hora, además de lo de cada parte: la inercia al despertar; el bajón de después de almorzar,
+ * que es del reloj del cuerpo y no solo de la comida (Monk 2005), y que la luz del día ayuda (Kaida 2006); y a la
+ * noche, ir bajando el ritmo.
+ */
+export type NotaDeLaHora = 'inercia' | 'bajon' | 'bajarElRitmo';
+export const BAJON = 180;
+
+export type EnergiaDeAhora = EnergiaDelDia & {
+  momento: Momento;
+  hoy: LoDeHoy | null;
+  notas: NotaDeLaHora[];
+  sesion: SesionDeHoy | null;
+  /** Antes de entrenar, sin nada anotado en las 4 h de antes de la sesión: comer algo antes. */
+  comerAntes: boolean;
+  /** Después de entrenar, sin nada anotado desde que terminaste: una comida con proteína. */
+  comerDespues: boolean;
+};
+
+/**
+ * La energía de ahora: las partes de energiaDelDia (el sueño, la comida de estos días y los músculos) más lo de hoy
+ * según la hora, con la misma regla del eslabón más débil. A la mañana, antes de la primera comida, lo de hoy no
+ * cuenta; la comida de estos días sí, porque es de los días de antes.
+ */
+export function energiaDeAhora(x: {
+  deEstosDias: Energia | null;
+  sueno: SuenoDeHoy | null;
+  musculos?: Musculos | null;
+  entrenaHoy?: boolean;
+  ahora: number;
+  despertar: number | null;
+  cama: number | null;
+  sesion: SesionDeHoy | null;
+  /** La hora de siempre del almuerzo: el bajón es en las 3 h que siguen. */
+  almuerzo?: number | null;
+  /** La meta y lo anotado de hoy, con las comidas de siempre y su parte del día, y la hora de lo último anotado. */
+  hoy: { meta: number; comido: number; comidas: readonly ComidaDeSiempre[]; ultima?: number | null } | null;
+}): EnergiaDeAhora | null {
+  const momento = momentoDelDia(x);
+  const hoy = x.hoy ? hoyParaLaEnergia({ ...x.hoy, ahora: x.ahora, momento }) : null;
+  const sueno = x.sueno ? suenoParaLaEnergia(x.sueno) : null;
+  const comida = comidaParaLaEnergia(x.deEstosDias);
+  if (!sueno && !comida) return null;
+  const musculos = x.musculos ?? null;
+  const partes = { sueno, comida, hoy };
+  const con = (p: Parte) => (['sueno', 'comida', 'hoy'] as const).filter((k) => partes[k]?.parte === p);
+  const bajas = con('baja');
+  const justas: LoQueLimita[] = [...con('justa'), ...(musculos === 'cargados' ? (['musculos'] as const) : [])];
+  const alta = sueno?.parte === 'bien' && comida?.parte === 'bien' && (!hoy || hoy.parte === 'bien') && musculos !== 'cargados';
+  const estado: EstadoDeEnergia = bajas.length ? 'baja' : alta ? 'alta' : 'suficiente';
+  const notas: NotaDeLaHora[] = [];
+  if (momento === 'recienDespierto') notas.push('inercia');
+  if (momento === 'dia' && x.almuerzo != null && x.ahora >= x.almuerzo && x.ahora < x.almuerzo + BAJON) notas.push('bajon');
+  if (momento === 'noche') notas.push('bajarElRitmo');
+  const ultima = x.hoy?.ultima ?? null;
+  const comerAntes = momento === 'antesDeEntrenar' && !!x.sesion && (ultima === null || ultima < x.sesion.inicio - ANTES_DE_ENTRENAR);
+  const comerDespues = momento === 'despuesDeEntrenar' && !!x.sesion && (ultima === null || ultima < x.sesion.inicio + x.sesion.minutos);
+  return {
+    estado, sueno, comida, musculos, deuda: x.sueno?.deuda ?? null, limita: [...bajas, ...justas],
+    entrenaHoy: !!(x.entrenaHoy ?? x.sesion ?? x.deEstosDias?.entrenaHoy), deEstosDias: x.deEstosDias,
+    momento, hoy, notas, sesion: x.sesion, comerAntes, comerDespues,
+  };
 }

@@ -1104,7 +1104,7 @@
       "noMostrar": "No mostrar más"
     },
     "energia": {
-      "etiqueta": "Tu energía · hoy",
+      "etiqueta": "Tu energía · {cuando}",
       "titulo": {
         "baja": "Energía baja",
         "suficiente": "Suficiente energía",
@@ -1124,12 +1124,11 @@
       "plegar": "Plegar",
       "desplegar": "Desplegar",
       "estimacion": "Es una estimación con lo que anotas y lo que miden tu teléfono o tu reloj: si te falta anotar algo, se ve más baja de lo que es.",
-      "etiquetaAscent": "Tu energía · con Ascent",
       "razon": {
         "comida": {
-          "llegaste": "Llegaste a tus calorías",
-          "deSobra": "Comiste de sobra para lo que entrenas",
-          "alcanza": "Comiste lo que necesitas"
+          "llegaste": "Estos días llegaste a tus calorías",
+          "deSobra": "Estos días comiste de sobra para lo que entrenas",
+          "alcanza": "Estos días comiste lo que necesitas"
         },
         "sueno": {
           "muyBien": ", dormiste bien y no tienes deuda de sueño",
@@ -1139,8 +1138,9 @@
       },
       "partes": {
         "sueno": "Sueño",
-        "comida": "Comida",
-        "musculos": "Músculos"
+        "comida": "Estos días",
+        "musculos": "Músculos",
+        "hoy": "Hoy"
       },
       "como": {
         "sueno": {
@@ -1166,6 +1166,13 @@
           "listos": "Listos",
           "entrenaste": "Entrenaste",
           "descanso": "Descanso"
+        },
+        "hoy": {
+          "temprano": "Temprano",
+          "alDia": "Al día",
+          "atrasado": "Atrasado",
+          "sinComerParaEntrenar": "Falta comer",
+          "sinDatos": "Sin datos"
         }
       },
       "conviene": "Qué te conviene hoy",
@@ -1176,7 +1183,16 @@
         "comerMas": "Come un poco más estos días, sobre todo antes y después de entrenar.",
         "medico": "Si además se te cortó la menstruación (en hombres, si notas menos deseo sexual), tuviste una fractura por estrés o estás sin energía hace semanas, habla con un médico o un nutricionista del deporte.",
         "llegar": "Te faltó llegar a tus calorías: una comida más o una porción más grande ayuda.",
-        "seguir": "Sigue así: come lo de siempre y duerme lo que necesitas."
+        "seguir": "Sigue así: come lo de siempre y duerme lo que necesitas.",
+        "comerAntesYa": "Para entrenar a las {hora}, come algo ya: con carbohidratos y algo de proteína.",
+        "atrasado": "Hoy vas atrasado con la comida: te faltan unas {kcal} kcal para ir al día.",
+        "atrasadoSinNumeros": "Hoy vas atrasado con la comida: una comida más te pone al día.",
+        "comerAntes": "Come algo antes de las {hora}: la comida de antes de entrenar va de 1 a 4 h antes.",
+        "comerDespues": "Ahora, una comida con proteína: ayuda a recuperar.",
+        "inercia": "Recién despierto es normal sentirte lento: se pasa en una media hora.",
+        "bajon": "Después de almorzar baja un poco la energía: es normal, y la luz del día ayuda.",
+        "bajarElRitmo": "Luz baja desde ahora: a las {cama}, a la cama.",
+        "aLaCama": "Ya es hora de ir a la cama: con la luz baja te duermes antes."
       },
       "deQueSale": "Según tu sueño, tus comidas y tu entrenamiento",
       "deQueSaleSinEntreno": "Según tu sueño y tus comidas",
@@ -1186,13 +1202,47 @@
         "comida": "Estos días, unas {kcal} kcal por día de tus {meta}, y {entreno} de entrenar.",
         "comidaSinMeta": "Estos días, unas {kcal} kcal por día, y {entreno} de entrenar.",
         "comidaSinNumeros": "Lo que anotaste estos días, contra lo que piden tu día y tu entrenamiento.",
-        "comidaSinDatos": "Anota tus comidas unos días y Moss lo suma."
+        "comidaSinDatos": "Anota tus comidas unos días y Moss lo suma.",
+        "hoy": "Hoy, unas {comido} kcal de las {esperado} que sueles llevar a esta hora.",
+        "hoySinNumeros": "Hoy, lo que anotaste contra lo que sueles llevar a esta hora.",
+        "hoyTemprano": "Hoy recién empieza: a esta hora todavía no se cuenta lo que comiste."
       },
       "juicioDeuda": {
         "muyBien": "sin deuda",
         "bien": "baja",
         "algoAlta": "algo alta",
         "alta": "alta"
+      },
+      "conAscent": "con Ascent",
+      "cuando": {
+        "alDespertar": "al despertar",
+        "manana": "esta mañana",
+        "tarde": "esta tarde",
+        "antes": "antes de entrenar",
+        "despues": "después de entrenar",
+        "noche": "esta noche"
+      },
+      "momento": {
+        "manana": {
+          "baja": "Según lo registrado, empiezas el día con la energía muy baja.",
+          "suficiente": "Para empezar el día, tienes suficiente energía.",
+          "alta": "{comida}{sueno}: buen comienzo del día."
+        },
+        "antes": {
+          "baja": "Para entrenar a las {hora}, tu energía está muy baja.",
+          "suficiente": "Para entrenar a las {hora}, tienes suficiente energía.",
+          "alta": "{comida}{sueno}: todo a favor para entrenar a las {hora}."
+        },
+        "despues": {
+          "baja": "Ya entrenaste, con la energía muy baja: ahora toca recuperar.",
+          "suficiente": "Ya entrenaste: ahora toca recuperar.",
+          "alta": "Ya entrenaste, con todo a favor: ahora toca recuperar."
+        },
+        "noche": {
+          "baja": "Hoy tu energía estuvo muy baja: esta noche, a descansar.",
+          "suficiente": "Ya es hora de ir bajando el ritmo.",
+          "alta": "Buen día: ahora, a ir bajando el ritmo."
+        }
       }
     }
   },

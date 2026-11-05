@@ -954,9 +954,36 @@ y para todos, también para quien no va al gimnasio. La regla es `energiaDelDia`
   sale, una línea por parte, con sus números si se ven. Se pliega en vez de «No mostrar más».
 - **Con Ascent:** la etiqueta dice «Tu energía · con Ascent», con su marca, y suma los músculos:
   es lo que hace Moss con el vínculo. Es un lugar nuevo donde se nombra Ascent (lo pediste).
-- **En la galería:** `galeria/src/inicio.js`, con cinco días de ejemplo (baja por el sueño,
-  baja por la comida, suficiente, alta y sin datos) y el escenario de capturas `energia`. La app
-  todavía no la tiene.
+- **Según la hora** (lo pediste el 5/11 a la noche: no se tiene la misma energía a la mañana
+  que a la tarde, y a la mañana no tiene sentido decir que comiste poco hoy). La regla es
+  `energiaDeAhora`, con sus tests:
+  - **El momento:** antes de entrenar (las 4 h de antes: la comida de antes va de 1 a 4 h antes,
+    ACSM 2016 y King 2022), después de entrenar (las 2 h de después: la proteína, Jäger 2017, con
+    una ventana amplia, Schoenfeld y Aragon 2018), recién despierto (la primera hora: la inercia
+    del sueño suele pasar en 15 a 60 minutos, Hilditch y McHill 2019), la noche (las 2 h antes de
+    la cama de esta noche, la de los avisos, que con deuda es antes) y el día. Lo de entrenar va
+    primero.
+  - **Lo de hoy, aparte de lo de estos días:** lo anotado contra lo que sueles haber comido a esta
+    hora (la parte del día de cada comida, desde una hora después de su hora de siempre, como
+    `REPARTO` en `plan.ts`). Antes de que toque la primera comida, «Temprano»: no se juzga.
+    Desde 400 kcal por debajo, «Atrasado»: en deportistas, pasar muchas horas del día con más de
+    300 a 400 kcal de déficit se asoció con más cortisol, menos metabolismo en reposo y alteraciones
+    del ciclo, aunque el total del día fuera el mismo (Fahrenholtz 2018; Torstveit 2018). Antes de
+    entrenar, atrasado baja la energía («Falta comer»). La comida de estos días sí cuenta a
+    cualquier hora: es de los días de antes.
+  - **Lo que se dice según la hora:** al despertar, «Para empezar el día…» y que sentirse lento la
+    primera media hora es normal; de día, después de almorzar, que el bajón es normal (es del reloj
+    del cuerpo, no solo de la comida: Monk 2005) y que la luz del día ayuda (Kaida 2006); antes de
+    entrenar, «Para entrenar a las 18:40…» y, si no comiste en las 4 h de antes, que comas algo;
+    después, una comida con proteína si no la hubo; a la noche, ir bajando el ritmo y, pasada la
+    hora, que ya es hora de ir a la cama.
+  - **La tira de tu día:** de despertarte a la cama de esta noche, con cada comida (anotada, pasada
+    sin anotar o por venir), la sesión y ahora. Las partes son el sueño, «Estos días», «Hoy» y, con
+    Ascent, los músculos.
+- **En la galería:** `galeria/src/inicio.js`, con seis días de ejemplo (baja por el sueño, baja por
+  la comida, hoy atrasado, suficiente, alta y sin datos), cinco momentos (7:30, 14:30, 17:15 antes
+  de entrenar, 20:30 después y 22:00) y el escenario de capturas `energia`. La app todavía no la
+  tiene.
 
 ## 6. Lo que no pude verificar
 

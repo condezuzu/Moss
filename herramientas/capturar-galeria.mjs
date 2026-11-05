@@ -2027,7 +2027,8 @@ const pasos = {
   },
   // Tu energía en Inicio (5/11, para aprobar): el día entero, con el sueño y la comida. Baja arriba de todo (por
   // el sueño, con «Más» y plegada; por la comida, con «Más»), suficiente y alta debajo de los macros (con «Más»),
-  // sin datos, sin números, en inglés y con Ascent vinculada (su marca y los músculos de hoy).
+  // sin datos, sin números, en inglés y con Ascent vinculada (su marca y los músculos de hoy). Y según la hora (5/11, a la
+  // noche): al despertar, el mediodía, antes y después de entrenar y la noche, también con lo de hoy atrasado.
   async energia() {
     const energia = (v, extra) => pagina.evaluate(([a, b]) => window.__energia(a, b), [v, extra || {}]);
     const centrar = () => pagina.evaluate(() => document.querySelector('.in-energia')?.scrollIntoView({ block: 'center' }));
@@ -2042,6 +2043,16 @@ const pasos = {
       await pagina.waitForTimeout(350);
       await foto('energia-' + nombre);
     }
+    for (const [v, extra, nombre] of [['suficiente', { hora: 'manana', mas: true }, 'hora-despertar-mas'], ['alta', { hora: 'manana', mas: false }, 'hora-despertar-alta'],
+      ['atrasado', { hora: 'mediodia', mas: true }, 'hora-mediodia-atrasado-mas'], ['atrasado', { hora: 'antes', mas: true }, 'hora-antes-atrasado-mas'],
+      ['suficiente', { hora: 'antes', mas: true }, 'hora-antes-mas'], ['suficiente', { hora: 'despues', mas: true }, 'hora-despues-mas'], ['suficiente', { hora: 'noche', mas: true }, 'hora-noche-mas']]) {
+      await energia(v, extra);
+      await pagina.waitForTimeout(800);
+      if (!(await pagina.evaluate(() => !!document.querySelector('.in-energia-baja')))) await centrar();
+      await pagina.waitForTimeout(350);
+      await foto('energia-' + nombre);
+    }
+    await energia('suficiente', { hora: 'mediodia', mas: false });
     await pagina.evaluate(() => window.__seguridad('numeros', false));
     await energia('suficiente', { mas: true });
     await pagina.waitForTimeout(700);

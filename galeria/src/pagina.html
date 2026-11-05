@@ -568,9 +568,10 @@ button.gc-fila { cursor: pointer; }
 .in-energia-bateria rect.llena { fill: var(--e-color); stroke: none; }
 .in-energia-bateria rect.vacia { fill: rgba(239, 230, 207, 0.08); stroke: none; }
 .in-energia-titulos { flex: 1; min-width: 0; display: grid; gap: 4px; }
-.in-energia-etq { display: flex; align-items: center; gap: 6px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
+.in-energia-etq { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; font: 400 9.5px/1 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(239, 230, 207, 0.55); }
 /* Con Ascent: su marca chica, la del ícono de Ascent. */
 .in-energia-etq svg { flex: none; width: 13px; height: 13px; }
+.in-energia-etq span { white-space: nowrap; }
 .in-energia-titulo { font: 400 19px/1.15 var(--titulos); color: var(--tinta); }
 .in-energia-baja .in-energia-titulo { font-size: 25px; color: #f2b9a2; }
 .in-energia-alta .in-energia-titulo { color: #f6e3a6; }
@@ -596,6 +597,30 @@ button.gc-fila { cursor: pointer; }
 .in-energia-parte.es-baja .ico { color: #f2b9a2; background: rgba(203, 133, 105, 0.24); }
 .in-energia-parte.es-baja b { color: #f2b9a2; }
 .in-energia-parte.sin b { color: rgba(239, 230, 207, 0.4); }
+/* Con Ascent son cuatro: más angostas. */
+.in-energia-partes.cuatro { gap: 6px; }
+.in-energia-partes.cuatro .in-energia-parte { padding: 10px 2px 9px; }
+.in-energia-partes.cuatro small { font-size: 8.5px; letter-spacing: 0.08em; }
+.in-energia-partes.cuatro b { font-size: 12px; }
+/* La tira de tu día: de despertarte a ir a la cama, con las comidas, la sesión y ahora. */
+.in-energia-dia { margin-top: 14px; }
+.in-energia-dia .pista { position: relative; height: 22px; }
+.in-energia-dia .pista::before { content: ''; position: absolute; left: 0; right: 0; top: 10px; height: 2px; border-radius: 1px; background: rgba(239, 230, 207, 0.12); }
+.in-energia-dia .hecho { position: absolute; left: 0; top: 10px; height: 2px; border-radius: 1px; background: rgba(239, 230, 207, 0.45); transform-origin: left; animation: in-energia-crece 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes in-energia-crece { from { transform: scaleX(0); } }
+.in-energia-dia .sesion { position: absolute; top: 5px; height: 12px; border-radius: 6px; box-sizing: border-box; background: rgba(232, 196, 106, 0.14); border: 1px solid rgba(232, 196, 106, 0.45); }
+.in-energia-dia .sesion.hecha { background: rgba(232, 196, 106, 0.4); }
+.in-energia-dia .comida { position: absolute; top: 6px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; box-sizing: border-box; }
+.in-energia-dia .comida.anotada { background: #fbf2d9; }
+.in-energia-dia .comida.vencida { border: 1.5px solid #cb8569; background: #0b0f1f; }
+.in-energia-dia .comida.futura { border: 1.5px solid rgba(239, 230, 207, 0.35); background: #0b0f1f; }
+.in-energia-dia .ahora { position: absolute; top: 0; width: 2px; height: 22px; margin-left: -1px; border-radius: 1px; background: var(--e-color); box-shadow: 0 0 8px var(--e-color); }
+.in-energia-dia .horas { position: relative; height: 13px; margin-top: 5px; font: 400 10.5px/1 var(--texto); color: rgba(239, 230, 207, 0.45); font-variant-numeric: tabular-nums; }
+.in-energia-dia .horas span { position: absolute; top: 0; }
+.in-energia-dia .horas span:first-child { left: 0; }
+.in-energia-dia .horas span:last-child { right: 0; }
+.in-energia-dia .horas .ahora-hora { transform: translateX(-50%); color: var(--tinta); }
+.in-energia-dia .horas .ahora-hora.al-borde { transform: none; }
 .in-energia-mas { appearance: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; margin-top: 13px; padding: 7px 13px 7px 11px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.18); background: none; color: rgba(239, 230, 207, 0.86); font: 500 12.5px/1 var(--texto); }
 .in-energia-mas::before { content: '+'; font: 400 15px/1 var(--texto); }
 .in-energia-mas[aria-expanded='true']::before { content: '−'; }
@@ -1919,7 +1944,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
   .hj-siempre, .dc-resultado, .dc-bloque, .cm-entreno { animation-duration: 0.01s; }
   .escuchando .dc-aro { animation: none; opacity: 0.6; }
   .in-vasos i.nuevo { animation: none; }
-  .in-energia, .in-energia-porque.entra, .in-energia-porque.sale, .in-energia-parte { animation: none; }
+  .in-energia, .in-energia-porque.entra, .in-energia-porque.sale, .in-energia-parte, .in-energia-dia .hecho { animation: none; }
   .in-energia-cuerpo, .in-energia-plegar svg { transition: opacity 0.2s; }
   .sn-parte-barra i { transition: none; }
   /* Sin movimiento, el macro que se pasó no tiembla: queda con un aro. */
@@ -1968,7 +1993,10 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
         <div class="controles">
           <div class="grupo"><span>Tu energía (5/11): baja va arriba de todo; suficiente y alta, debajo de los macros</span>
-            <div class="segmento" id="s-energia"><button type="button" data-valor="baja" aria-pressed="false">Baja (sueño)</button><button type="button" data-valor="bajaComida" aria-pressed="false">Baja (comida)</button><button type="button" data-valor="suficiente" aria-pressed="true">Suficiente</button><button type="button" data-valor="alta" aria-pressed="false">Alta</button><button type="button" data-valor="sinDatos" aria-pressed="false">Sin datos</button></div>
+            <div class="segmento" id="s-energia"><button type="button" data-valor="baja" aria-pressed="false">Baja (sueño)</button><button type="button" data-valor="bajaComida" aria-pressed="false">Baja (comida)</button><button type="button" data-valor="atrasado" aria-pressed="false">Hoy atrasado</button><button type="button" data-valor="suficiente" aria-pressed="true">Suficiente</button><button type="button" data-valor="alta" aria-pressed="false">Alta</button><button type="button" data-valor="sinDatos" aria-pressed="false">Sin datos</button></div>
+          </div>
+          <div class="grupo"><span>A qué hora: según el momento del día cambia lo que dice, y lo de hoy se mide contra lo que sueles llevar a esa hora</span>
+            <div class="segmento" id="s-energia-hora"><button type="button" data-valor="manana" aria-pressed="false">7:30, al despertar</button><button type="button" data-valor="mediodia" aria-pressed="true">14:30</button><button type="button" data-valor="antes" aria-pressed="false">17:15, antes de entrenar</button><button type="button" data-valor="despues" aria-pressed="false">20:30, después</button><button type="button" data-valor="noche" aria-pressed="false">22:30</button></div>
           </div>
         </div>
         <div class="controles">
@@ -2051,6 +2079,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>Tu energía, según la hora</b> (5/11 a la noche, para aprobar): ya no te dice «energía baja» a la mañana por lo que todavía no comiste. Lo de <b>hoy</b> va aparte de lo de <b>estos días</b> y se mide contra lo que sueles haber comido a esa hora («Temprano», «Al día», «Atrasado» o, antes de entrenar, «Falta comer»). Lo que dice cambia con el momento: al despertar, de día (con el bajón de después de almorzar), antes de entrenar («Para entrenar a las 18:40…»), después (la comida con proteína) y la noche. Arriba, <b>la tira de tu día</b>: las comidas, la sesión y dónde estás. Elegí la hora con los botones de la energía, acá abajo, y probá «Hoy atrasado».</li>
         <li><b>La tarde del 5/11</b> (para aprobar): <b>tu energía, del día entero</b>: además de la comida, el sueño (anoche y la deuda) y, con Ascent vinculada, los músculos de hoy; manda lo más flojo. «Energía baja» arriba de todo («Según lo registrado, tu energía está muy baja.»); «Suficiente energía» («Hoy tienes suficiente energía para entrenar de forma normal.», sin hablar de la meta de cada uno) y «Energía alta» con el porqué del día, debajo de los macros. Cada parte con su estado de un vistazo, y «Más» con qué te conviene hoy y de dónde sale. Con Ascent dice «con Ascent» y suma los músculos (probalo vinculando). Elegí el estado arriba: baja por el sueño o por la comida. <b>La deuda de sueño</b> en una palabra y en grande («Muy bien», «Bien», «Algo alta» o «Alta», por lo que falta cada noche) y debajo <b>esta noche</b>: a qué hora a la cama para despertarte a la hora de siempre habiendo dormido lo que necesitas, y la última comida grande. <b>La última comida</b>, 2 h antes de la cama (3 con reflujo): la guía dice de 2 a 3, y las 3 quedan para el reflujo. El aviso con deuda dice a qué hora a la cama y a qué hora te despiertas. En Perfil › Avisos, <b>«Necesito dormir»</b>: lo de tu edad o de 7 a 9 horas, de media hora en media hora; lo usan la hora de dormir, la deuda, la calidad y esta noche. Y <b>Cuidados</b>: marcás lo que tengas (embarazo, lactancia, diabetes, presión, colesterol, riñón, reflujo, celiaquía, gota y más) en el cuestionario o en Perfil, y Moss ajusta tu meta y deja de proponerte lo que no te conviene, con «Cómo cambia tu dieta» a la vista; se guarda solo en el iPhone.</li>
         <li><b>Progreso con su margen</b> (5/11, para aprobar; <code>spec/estudio/progreso.md</code>): el ritmo con su rango («−0,41 kg por semana, entre −0,33 y −0,48») y la fecha como rango; «Todavía no se sabe» las primeras semanas, y «Al ritmo», «Adelantado» o «Más lento» solo cuando el rango lo deja claro (antes acertaba un tercio de las veces). El control mide con las pesadas de verdad (con una pesada por semana medía un 23 % menos), una pesada rara cuenta un cuarto hasta que la siguiente la confirme, y bajando nunca pide más de 1.000 kcal por día de déficit. La grasa con cinta dice que puede errar unos 4 puntos.</li>
         <li><b>Ascent, rehecha con la evidencia</b> (5/11, para aprobar; el estudio está en <code>spec/estudio/ascent.md</code>): <b>sin porcentaje</b> (ningún puntaje de recuperación está validado), arriba un titular que sale de lo más flojo («Todo listo para piernas», «Puedes entrenar, sin ir al fallo», «Lo que entrenas hoy sigue cansado») y <b>«Lo que decide hoy»</b> en tres íconos: tu noche, lo de hoy y cómo te sientes. Debajo, <b>tu último entreno</b> como pediste («Lunes: Pecho, Hombros, Tríceps») y <b>«¿Cómo te sientes para entrenar?»</b> de 0 a 10. <b>Tus músculos</b> en un cuerpo de frente y de espalda (tocá uno), <b>tu fuerza</b> con la tendencia de 12 semanas de cada ejercicio, <b>las marcas sin probabilidad</b>, el estancamiento por tendencia con sus razones en orden de evidencia y <b>«En qué se basa»</b>. <b>Los ejercicios son los de Ascent</b>: los 112 de su lista, con su músculo, y los tuyos por el grupo que elegiste. Sueño muestra el mismo titular, sin el número.</li>
