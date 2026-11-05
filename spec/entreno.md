@@ -981,9 +981,16 @@ y para todos, también para quien no va al gimnasio. La regla es `energiaDelDia`
     sin anotar o por venir), la sesión y ahora. Las partes son el sueño, «Estos días», «Hoy» y, con
     Ascent, los músculos.
 - **Dónde vive** (lo pediste el 5/11 a la noche): en Sueño, debajo de la noche, con la noche de hoy;
-  con Ascent, ahí también trae los músculos y reemplaza a «Cómo llegas a entrenar». En Inicio, solo
-  cuando está baja: arriba de todo y minimizada (la batería, «Energía baja» y su frase), y tocarla
-  lleva a Sueño.
+  con Ascent, ahí también trae los músculos y reemplaza a «Cómo llegas a entrenar». En Inicio, en
+  todos los estados, un botón redondo arriba a la derecha con la batería y cómo está («Energía
+  baja», «Energía suficiente» o «Energía alta», y debajo por qué: «Por el sueño», «Por la comida»,
+  «Por lo de hoy» o «Todo a favor»). Tocarlo lleva a la tarjeta, en Sueño, abierta y con «Más»
+  cerrado.
+- **De qué días sale cada parte** (lo dice «Más»): el sueño, de anoche, las dos noches de antes y la
+  deuda de dos semanas; «Estos días», del promedio de los 7 días de antes de hoy, porque la energía
+  baja aparece cuando se come poco varios días seguidos (Loucks y Thuma 2003: 5 días con cada nivel
+  de energía disponible) y un día malo pesa poco; «Hoy», de lo anotado hasta ahora contra lo de esa
+  hora.
 - **Por qué sin porcentaje:** Rise da un «potencial de energía» en % con el modelo de los dos
   procesos (la presión de sueño y el reloj del cuerpo, Borbély), pero no publica cómo lo calcula. Un
   porcentaje que mezcle el sueño y la comida sería un puntaje compuesto, y ninguno de los 14 de 10

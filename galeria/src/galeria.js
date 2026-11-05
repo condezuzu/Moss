@@ -467,7 +467,7 @@
     medir: () => mas.ir('medidas'),
     ir: (i) => pestanas.ir(i),
     invitacionDeAscent: () => (ascent ? ascent.invitacion() : null),
-    // Tocar el aviso de la energía baja lleva a tu energía, en Sueño.
+    // Tocar el botón de tu energía lleva a ella, en Sueño, abierta y con «Más» cerrado.
     irAEnergia: () => accionesSeccion.energia(),
     // Tu energía, con Ascent vinculada y prendida: el titular de hoy de su sección (los músculos) y su marca.
     ascentDeHoy: () => (vinculada && ascentPrendida && ascent ? ascent.titularDeHoy() : null),
@@ -1151,8 +1151,8 @@
     deporteTarjeta: () => { cerrarHojas(); deporte.poner('energia'); inicio.primerDia(false); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.in-energia'), 260); },
     // En qué se basa Moss (5/11, para aprobar): abajo de todo de Perfil.
     base: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirBase(); },
-    // Tu energía (5/11, para aprobar): en Sueño, debajo de la noche; en Inicio, minimizada arriba de todo si es baja.
-    energia: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(3, true); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.in-energia'), 260); },
+    // Tu energía (5/11, para aprobar): en Sueño, debajo de la noche; en Inicio, el botón de arriba a la derecha.
+    energia: () => { cerrarHojas(); inicio.primerDia(false); inicio.ponerEnergia(null, { plegada: false, mas: false }); pestanas.ir(3, true); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.in-energia'), 260); },
     energiaInicio: () => { cerrarHojas(); inicio.primerDia(false); pestanas.ir(0, true); inicio.subir(); },
     // La deuda en una palabra y esta noche (5/11, para aprobar): en Sueño, con la noche de hoy.
     deudaEstaNoche: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3, true); sueno.ponerEstado('datos'); sueno.verNoche(0); setTimeout(() => sueno.bajarA('.sn-deuda'), 240); },

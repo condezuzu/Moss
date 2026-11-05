@@ -1244,7 +1244,27 @@
           "alta": "Buen día: ahora, a ir bajando el ritmo."
         }
       },
-      "verEnSueno": "Tócalo para verla en Sueño."
+      "verEnSueno": "Tócalo para verla en Sueño.",
+      "boton": {
+        "baja": "Energía baja",
+        "suficiente": "Energía suficiente",
+        "alta": "Energía alta",
+        "sinDatos": "Tu energía"
+      },
+      "por": {
+        "sueno": "Por el sueño",
+        "comida": "Por la comida",
+        "hoy": "Por lo de hoy",
+        "musculos": "Músculos cargados",
+        "todo": "Todo a favor",
+        "sinDatos": "Sin datos todavía"
+      },
+      "deCuando": {
+        "titulo": "De qué días sale",
+        "sueno": "El sueño: anoche, las dos noches de antes y tu deuda de las últimas dos semanas.",
+        "comida": "Estos días: el promedio de los 7 días de antes de hoy, con al menos 4 bien anotados. Es un promedio, así que un día malo pesa poco: la energía baja aparece cuando comes poco varios días seguidos, que es lo que miden los estudios (Loucks y Thuma 2003).",
+        "hoy": "Hoy: lo que anotaste hasta ahora, contra lo que sueles llevar a esta hora. Antes de tu primera comida, no cuenta."
+      }
     }
   },
   "mas": {

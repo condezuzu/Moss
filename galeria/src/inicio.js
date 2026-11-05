@@ -32,7 +32,7 @@ const SeccionInicio = (() => {
     const guardar = () => { try { localStorage.setItem(GUARDADO, JSON.stringify({ orden: s.orden, visibles: [...s.visibles] })); } catch (_) { /* no pasa nada */ } };
 
     const zona = el('section', 'inicio pagina-app');
-    zona.innerHTML = '<div class="in-scroll"><header class="in-cab"><div class="in-fecha"></div><h2 class="in-titulo"></h2></header><div class="in-bloques"></div><div class="in-pie"></div><div class="in-suelo"></div></div>';
+    zona.innerHTML = '<div class="in-scroll"><header class="in-cab"><div class="in-fecha"></div><h2 class="in-titulo"></h2><button type="button" class="in-energia-boton" hidden></button></header><div class="in-bloques"></div><div class="in-pie"></div><div class="in-suelo"></div></div>';
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const bloquesEl = zona.querySelector('.in-bloques');
@@ -567,27 +567,25 @@ const SeccionInicio = (() => {
       if (e.ascent && en.musculos) fila('musculos', en.musculos === 'cargados' ? 'justa' : 'bien', `${e.ascent.titulo}. ${e.ascent.texto}`);
       return ul;
     }
-    // En Inicio, solo con la energía baja (5/11, a la noche): arriba de todo y minimizada, con su frase; tocarla lleva a
-    // tu energía completa, en Sueño.
-    function avisoDeEnergia(e) {
-      const c = carta('in-energia in-energia-baja in-energia-aviso', null, () => opciones.irAEnergia && opciones.irAEnergia());
-      const cab = el('div', 'in-energia-cab');
-      const ico = el('span', 'in-energia-ico');
-      ico.innerHTML = bateria('baja');
-      const titulos = el('div', 'in-energia-titulos');
-      const etiqueta = el('span', 'in-energia-etq');
-      etiqueta.appendChild(el('span', null, tx('inicio.energia.etiqueta', { cuando: tx('inicio.energia.cuando.' + cuandoEs(e)) })));
-      if (e.ascent) {
-        etiqueta.appendChild(el('span', null, '· ' + tx('inicio.energia.conAscent')));
-        if (opciones.marcaDeAscent) etiqueta.insertAdjacentHTML('afterbegin', opciones.marcaDeAscent());
-      }
-      const frase = fraseDeEnergia(e);
-      titulos.append(etiqueta, el('b', 'in-energia-titulo', tx('inicio.energia.titulo.baja')), el('span', 'in-energia-linea', frase));
-      cab.append(ico, titulos);
-      cab.insertAdjacentHTML('beforeend', `<span class="in-energia-ir" aria-hidden="true">${icono('adelante')}</span>`);
-      c.appendChild(cab);
-      c.setAttribute('aria-label', `${tx('inicio.energia.titulo.baja')}. ${frase} ${tx('inicio.energia.verEnSueno')}`);
-      return c;
+    // Tu energía, de un vistazo (lo pediste el 5/11, a la noche): un botón redondo arriba a la derecha de Inicio, con la
+    // batería y cómo está, en todos los estados. Tocarlo lleva a tu energía, en Sueño, abierta y con «Más» cerrado.
+    const botonDeEnergia = zona.querySelector('.in-energia-boton');
+    botonDeEnergia.addEventListener('click', () => opciones.irAEnergia && opciones.irAEnergia());
+    function pintarBotonDeEnergia(e) {
+      if (!e) { botonDeEnergia.hidden = true; return; }
+      const estado = e.dia ? e.dia.estado : 'sinDatos';
+      // Debajo, por qué: lo que la baja o la frena; con todo bien, «Todo a favor».
+      const por = !e.dia ? 'sinDatos' : estado === 'alta' ? 'todo' : e.dia.limita[0] || null;
+      botonDeEnergia.hidden = false;
+      botonDeEnergia.className = 'in-energia-boton ' + estado;
+      botonDeEnergia.innerHTML = '';
+      const textos = el('span', 'in-energia-boton-textos');
+      textos.appendChild(el('b', null, tx('inicio.energia.boton.' + estado)));
+      if (por) textos.appendChild(el('small', null, tx('inicio.energia.por.' + por)));
+      const circulo = el('span', 'in-energia-boton-circulo');
+      circulo.innerHTML = bateria(estado);
+      botonDeEnergia.append(textos, circulo);
+      botonDeEnergia.setAttribute('aria-label', `${tx('inicio.energia.boton.' + estado)}${por ? '. ' + tx('inicio.energia.por.' + por) : ''}. ${tx('inicio.energia.verEnSueno')}`);
     }
     function tarjetaDeEnergia(e) {
       const en = e.dia;
@@ -622,7 +620,12 @@ const SeccionInicio = (() => {
         porque.append(el('h4', null, tx('inicio.energia.conviene')), consejos);
         // Con la comida baja, cuándo hablarlo con alguien (el consenso del COI sobre REDs, 2023).
         if (en.comida && en.comida.parte === 'baja') porque.appendChild(el('p', 'in-energia-chico', tx('inicio.energia.consejo.medico')));
-        porque.append(el('h4', null, tx(en.musculos ? 'inicio.energia.deQueSale' : 'inicio.energia.deQueSaleSinEntreno')), detallesDeEnergia(e), el('p', 'in-energia-chico', tx('inicio.energia.estimacion')));
+        porque.append(el('h4', null, tx(en.musculos ? 'inicio.energia.deQueSale' : 'inicio.energia.deQueSaleSinEntreno')), detallesDeEnergia(e));
+        // De qué días sale cada parte (lo preguntaste el 5/11): el sueño, de anoche y de dos semanas; la comida, de la
+        // semana, porque un día malo no la baja; lo de hoy, de lo anotado hasta ahora.
+        const cuando = el('ul', 'in-energia-cuando');
+        ['sueno', 'comida', 'hoy'].forEach((k) => cuando.appendChild(el('li', null, tx('inicio.energia.deCuando.' + k))));
+        porque.append(el('h4', null, tx('inicio.energia.deCuando.titulo')), cuando, el('p', 'in-energia-chico', tx('inicio.energia.estimacion')));
         porque.hidden = !s.energiaMas;
         const mas = boton('in-energia-mas', `<span>${tx(s.energiaMas ? 'inicio.energia.menos' : 'inicio.energia.mas')}</span>`, () => {
           s.energiaMas = !s.energiaMas;
@@ -851,11 +854,7 @@ const SeccionInicio = (() => {
     function refrescarConsejos() {
       const viejo = bloquesEl.querySelector('.in-consejos');
       if (viejo) viejo.replaceWith(consejos());
-      const tarjeta = bloquesEl.querySelector('.in-energia');
-      if (tarjeta) {
-        const e = energiaDeHoy(s.primerDia ? null : delDeporte());
-        if (e.dia && e.dia.estado === 'baja') tarjeta.replaceWith(avisoDeEnergia(e));
-      }
+      pintarBotonDeEnergia(s.primerDia ? null : energiaDeHoy(delDeporte()));
     }
 
     function pintar(ms) {
@@ -870,16 +869,14 @@ const SeccionInicio = (() => {
       // Tu energía, debajo de los macros (la luna); si es baja, arriba de todo, como advertencia. Y el control,
       // cuando se acerca, debajo de la luna y de la energía.
       const luna = bloquesEl.querySelector('.in-calorias');
-      // Tu energía vive en Sueño (5/11, a la noche); acá, solo si está baja: arriba de todo y minimizada.
-      const en = s.primerDia ? null : energiaDeHoy(deporte);
-      const baja = !!(en && en.dia && en.dia.estado === 'baja');
-      if (baja) bloquesEl.insertBefore(avisoDeEnergia(en), bloquesEl.firstChild);
+      // Tu energía vive en Sueño (5/11, a la noche); acá, el botón de arriba a la derecha.
+      pintarBotonDeEnergia(s.primerDia ? null : energiaDeHoy(deporte));
       const control = s.primerDia ? null : controlCerca();
       const arriba = luna;
       if (control) bloquesEl.insertBefore(control, arriba ? arriba.nextSibling : bloquesEl.firstChild);
       // La invitación de Ascent (ascent.js), debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
       const invitacion = s.primerDia ? null : opciones.invitacionDeAscent();
-      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2 + (control ? 1 : 0) + (baja ? 1 : 0)] || null);
+      if (invitacion) bloquesEl.insertBefore(invitacion, bloquesEl.children[2 + (control ? 1 : 0)] || null);
       const pie = zona.querySelector('.in-pie');
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));

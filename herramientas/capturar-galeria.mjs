@@ -2056,13 +2056,19 @@ const pasos = {
       await pagina.waitForTimeout(350);
       await foto('energia-' + nombre);
     }
-    // En Inicio, solo baja: arriba de todo y minimizada (por el sueño, por la comida y antes de entrenar sin comer).
-    for (const [v, extra, nombre] of [['baja', { hora: 'mediodia' }, 'inicio-baja'], ['bajaComida', { hora: 'manana' }, 'inicio-baja-comida'], ['atrasado', { hora: 'antes' }, 'inicio-antes-atrasado'], ['suficiente', { hora: 'mediodia' }, 'inicio-suficiente']]) {
+    // En Inicio, el botón de arriba a la derecha en cada estado; tocarlo lleva a Sueño, con la tarjeta abierta y «Más» cerrado.
+    for (const [v, extra, nombre] of [['baja', { hora: 'mediodia' }, 'boton-baja'], ['suficiente', { hora: 'mediodia' }, 'boton-suficiente'], ['alta', { hora: 'mediodia' }, 'boton-alta'], ['atrasado', { hora: 'antes' }, 'boton-antes-atrasado'], ['sinDatos', {}, 'boton-sin-datos']]) {
       await energia(v, extra);
       await pagina.evaluate(() => window.__seccion('energiaInicio'));
       await pagina.waitForTimeout(900);
       await foto('energia-' + nombre);
     }
+    await energia('baja', { hora: 'mediodia', plegada: true, mas: true });
+    await pagina.evaluate(() => window.__seccion('energiaInicio'));
+    await pagina.waitForTimeout(700);
+    await pagina.click('.in-energia-boton');
+    await pagina.waitForTimeout(1300);
+    await foto('energia-boton-tocado');
     await pagina.evaluate(() => window.__seccion('energia'));
     await energia('suficiente', { hora: 'mediodia', mas: true });
     await pagina.evaluate(() => window.__seguridad('numeros', false));
@@ -2079,7 +2085,7 @@ const pasos = {
     await foto('energia-ingles');
     await pagina.evaluate(() => window.__seccion('energiaInicio'));
     await pagina.waitForTimeout(900);
-    await foto('energia-inicio-ingles');
+    await foto('energia-boton-ingles');
     await pagina.evaluate(() => window.__idioma('es'));
     // Con Ascent vinculada: su marca en la etiqueta y los músculos de hoy como cuarta parte.
     await pagina.evaluate(() => window.__ascent('vincular', true));

@@ -1244,7 +1244,27 @@
           "alta": "Good day: now, start winding down."
         }
       },
-      "verEnSueno": "Tap to see it in Sleep."
+      "verEnSueno": "Tap to see it in Sleep.",
+      "boton": {
+        "baja": "Low energy",
+        "suficiente": "Enough energy",
+        "alta": "High energy",
+        "sinDatos": "Your energy"
+      },
+      "por": {
+        "sueno": "Because of sleep",
+        "comida": "Because of food",
+        "hoy": "Because of today",
+        "musculos": "Tired muscles",
+        "todo": "All in your favor",
+        "sinDatos": "No data yet"
+      },
+      "deCuando": {
+        "titulo": "Which days it uses",
+        "sueno": "Sleep: last night, the two nights before and your sleep debt over the last two weeks.",
+        "comida": "These days: the average of the 7 days before today, with at least 4 well logged. It's an average, so one bad day weighs little: low energy shows up when you eat too little several days in a row, which is what studies measure (Loucks and Thuma 2003).",
+        "hoy": "Today: what you've logged so far, against what you usually have by this time. Before your first meal, it doesn't count."
+      }
     }
   },
   "mas": {
