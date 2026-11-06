@@ -9,9 +9,13 @@ import { useAlmacenListo } from '@/almacen';
 import { t } from '@/textos';
 import { colores } from '@/tema';
 import type { PropsDelCielo } from './Cielo';
+import { useCalidadLeida } from './dia';
 
 export default function PantallaDelCielo(props: PropsDelCielo) {
-  const listo = useAlmacenListo();
+  const almacen = useAlmacenListo();
+  // En la web no hay modelo ni calidad guardada: ya está leída (calidad.ts).
+  const calidad = useCalidadLeida();
+  const listo = almacen && calidad;
   const espera = (
     <View style={estilos.espera}>
       <Text style={estilos.texto}>{t('cielo.armandose')}</Text>

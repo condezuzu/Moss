@@ -12,7 +12,7 @@ import { claveDeMarca, luzAcumulada } from '@/dominio/dias';
 import { partesDe, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import { habitosDelDia, type Habito } from '@/dominio/habitos';
 import { semanaDe } from '@/dominio/semana';
-import { calidadAutomatica, oirLaAutomatica } from './calidad';
+import { calidadAutomatica, calidadLeida, oirLaAutomatica } from './calidad';
 import type { Calidad } from './mundo';
 
 /**
@@ -112,6 +112,11 @@ export function useCalidad(): Calidad {
   const elegida = useCalidadElegida();
   const automatica = useSyncExternalStore(oirLaAutomatica, calidadAutomatica);
   return elegida ?? automatica;
+}
+
+/** Si ya se leyó la calidad medida en otro arranque (calidad.ts). */
+export function useCalidadLeida(): boolean {
+  return useSyncExternalStore(oirLaAutomatica, calidadLeida);
 }
 
 /** Qué hábito de hoy está encendido, en el orden de las estrellas. */

@@ -203,6 +203,7 @@ Entre paréntesis, lo que recomienda el estudio o lo que está programado.
 - Su cuestionario de edad nuevo, si no lo contestó. Confirmá.
 - Prender Ascent en Moss (`CON_ASCENT`) recién con Ascent 1.2.0 en la tienda, mejor en una actualización de la tienda, con la cuenta de demostración, el video y las notas (spec/revision.md «f»).
 - Para esa revisión: re-sembrar la cuenta de demostración, probar vincular de las dos formas y grabar el video.
+- Junto con prender Ascent (o la suscripción): publicar el sitio desde `docs/`, que trae las dos. Lo publicado el 6/11/2026 es el de la 1.0 y no las nombra (CLAUDE.md, «Sitio»).
 - En el panel de Supabase: las claves nuevas antes de fin de 2026, el SMTP propio y el correo de contraseña de las dos apps. Confirmá.
 - Los datos nuevos que Ascent le pasaría a Moss: la reserva o «al fallo», «Lo intenté y no salió» y la semana de puesta a punto.
 - Sign in with Apple en Ascent, en pausa hasta elegir cómo saber de qué app es cada cuenta.
@@ -218,6 +219,7 @@ Entre paréntesis, lo que recomienda el estudio o lo que está programado.
 - El sueño sin reloj: el permiso de Movimiento y la prueba contra un reloj o tu anillo. Confirmá.
 - Si podés, en un iPad: la entrada con Apple, el cielo, el escáner y Salud.
 - Medir el rendimiento: los cuadros por segundo del cielo y los toques de cada registro. Confirmá.
+- La fluidez nueva (spec/fluidez.md), en un iPhone viejo con la build `telefono`: el cielo en baja, las hojas al abrir, cerrar y arrastrar, deslizar entre secciones y el «+» con el teclado en el peso.
 - El escáner de etiquetas con 50 etiquetas uruguayas, y la voz con frases de 3 a 5 personas. Confirmá.
 
 ## 7. Otros pendientes chicos

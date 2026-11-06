@@ -17,9 +17,14 @@ export type Calidad = 'alta' | 'media' | 'baja';
 export type AjustesDeCalidad = {
   /** Píxeles por punto del cielo fijo (la textura). */
   dprFondo: number;
+  /**
+   * La resolución del cielo de cada cuadro (la aurora, el titilar y la fugaz), como fracción de la
+   * de la pantalla. Por debajo de 1 se dibuja más chico y Skia lo agranda (Cielo.tsx).
+   */
+  escalaCielo: number;
   octavas: number;
   capas: number;
-  /** Cortinas de aurora. En el teléfono la aurora va a resolución completa, así que son menos. */
+  /** Cortinas de aurora. En el teléfono la aurora va a resolución completa (en baja, a la mitad), así que son menos. */
   cortinas: number;
   /** Fracción de celdas de 64 px con una estrella que titila. */
   densidad: number;
@@ -27,9 +32,9 @@ export type AjustesDeCalidad = {
 };
 
 export const CALIDADES: Record<Calidad, AjustesDeCalidad> = {
-  alta: { dprFondo: 2, octavas: 6, capas: 3, cortinas: 3, densidad: 0.42, particulas: 1 },
-  media: { dprFondo: 1.5, octavas: 5, capas: 3, cortinas: 2, densidad: 0.26, particulas: 0.6 },
-  baja: { dprFondo: 1, octavas: 4, capas: 2, cortinas: 1, densidad: 0.14, particulas: 0.3 },
+  alta: { dprFondo: 2, escalaCielo: 1, octavas: 6, capas: 3, cortinas: 3, densidad: 0.42, particulas: 1 },
+  media: { dprFondo: 1.5, escalaCielo: 1, octavas: 5, capas: 3, cortinas: 2, densidad: 0.26, particulas: 0.6 },
+  baja: { dprFondo: 1, escalaCielo: 0.5, octavas: 4, capas: 2, cortinas: 1, densidad: 0.14, particulas: 0.3 },
 };
 
 /** El rectángulo del mundo que cubre la textura del cielo fijo, con margen para la cámara. */

@@ -23,37 +23,48 @@ desarrollo, que la hacen más lenta).
   - La luz de la pestaña elegida se dibuja una vez y se guarda (`shouldRasterizeIOS` en `Barra.tsx`).
   - Los chips ya no recortan: el fondo redondeado no lo necesita (`Inicio.tsx`, `tarjetas.tsx`, `Comida.tsx`).
 
-## Lo que falta, del más al menos importante
+## Lo grande (6/11/2026)
 
-1. **El cielo de cada cuadro se dibuja a la resolución de la pantalla en todas las calidades**
-   (`Cielo.tsx`, el relleno con el shader; `mundo.ts` no tiene resolución para eso). En un XS son unos 3
-   millones de píxeles por cuadro, con la aurora, el titilar y el musgo encima. En baja (y quizá en media),
-   dibujarlo en un lienzo aparte a la mitad y agrandarlo; las líneas, las estrellas y el musgo, a resolución
-   completa. **Decidís vos** una más fuerte: en baja, congelar la aurora y el titilar en la textura del fondo.
-2. **Al deslizar entre secciones, la vecina nueva se arma en medio del viaje** (`Secciones.tsx`, `armada`): da
-   un tirón al final del gesto. Armar al instante solo el destino, y las vecinas unos 380 ms después.
-3. **Con una hoja abierta, todo lo de atrás se recorta con esquinas** (`Secciones.tsx`): iOS compone la pantalla
-   entera aparte en cada cuadro mientras anotas. Dejar solo la escala, o dibujar las esquinas con un marco negro
-   encima, que no recorta.
-4. **Animaciones de alto y ancho**, que pasan por React en cada cuadro: el alto máximo de la hoja del «+» sigue al
-   teclado aunque esté cerrada, el espacio del teclado en la hoja de registro y en la ventana, las barras de los
-   macros (`Relleno`, `width`), el `Camino` (`width` y `left`) y el alto del cuadro de Comida. Con `scaleX` y
-   `translate`; el teclado, con `translateY`; la hoja del «+» cerrada, sin seguirlo.
-5. **La cifra que cuenta** hace unos 30 renders, en Inicio y en Comida a la vez (`animados.tsx`): solo en la
-   sección que se ve y con menos pasos.
-6. **Cada cambio del almacén redibuja Comida entera** y sus lunas (`useEstado` devuelve todo el estado): memorizar
-   las lunas, guardar el último `calcularPersona` y llevar la canasta a un almacén propio.
-7. **Los gestos del cielo avisan en cada toque** (`escena.modify` sin `false`, `Cielo.tsx`): con el dedo, 120
-   veces por segundo. El lazo del cielo ya lo propaga una vez por cuadro.
-8. **El musgo se redibuja entero en cada cuadro**, con sus bordes desenfocados: hornear cada loma en una textura,
-   como el fondo.
-9. **El cielo sigue vivo debajo de una hoja abierta desde Hábitos** (el freno solo mira la tira y Ascent): frenarlo
-   también con las hojas.
-10. **La calidad automática** no se guarda (cada arranque vuelve a la de fábrica), solo mide en Hábitos con el dedo
-    y no tiene nada debajo de baja: guardar el escalón medido y sumar uno «mínima» con lo de 1 y 8.
-11. **La textura del fondo se rehace en cada arranque**, con el shader más caro: guardarla en disco por tamaño,
-    calidad y riqueza.
-12. **El cuadro de Comida** recorta con esquinas: recortar con una vista interior sin radio.
+Hecho, con tipos, lint, los tests (1403) y la app en la web (el cielo en baja, las hojas, las barras, deslizar):
+
+1. **El cielo en baja, a media resolución:** el relleno del cielo va en una capa del mismo lienzo que se dibuja a la
+   mitad y Skia agranda con un filtro lineal (`agrandar.ts`; `escalaCielo` en `mundo.ts`: 1 en alta y media, 0,5 en
+   baja). Las luces se siguen sumando encima como antes (con un lienzo aparte se pintaban encima y salían más
+   naranjas). Medido con CanvasKit: el cielo tarda la cuarta parte; la imagen difiere 0,35/255 de media. En la web,
+   React Native Skia no trae ese filtro y se arma con CanvasKit. Media sigue en 1 (sin probar 0,75 en un teléfono).
+   **Decidís vos** algo más fuerte: en baja, congelar la aurora y el titilar en la textura del fondo.
+2. **Las vecinas se arman después del viaje** (`Secciones.tsx`, `vecinasDe` a los 380 ms): el destino ya está; las
+   vecinas nuevas, al terminar.
+3. **Con una hoja abierta, lo de atrás ya no recorta con esquinas:** las dibuja un marco del color del fondo que no
+   recorta, y queda un recorte recto (barato) para que no asomen las secciones de al lado al achicarse.
+4. **Alto y ancho, en parte:** las barras de los macros (`Relleno`) y el `Camino` se mueven con `translateX`; la hoja
+   del «+» cerrada ya no sigue al teclado ni se vuelve a dibujar con cada teclado.
+5. **La cifra que cuenta**, en 10 pasos en vez de unos 30.
+6. **Las lunas de Comida** se rehacen solo si cambia lo que muestran, y la persona y el sueño se calculan una vez
+   para todos (`ganchos.ts`).
+7. **Los gestos del cielo** avisan una vez por cuadro (`modify(fn, false)`), y el lazo se despierta al empezar a
+   arrastrar.
+9. **El cielo se frena debajo de una hoja abierta** (la del «+» y la de registro: `tapado`) y vuelve al cerrarla; esos
+   cuadros no cuentan para medir la calidad.
+10. **La calidad automática se guarda**, atada al modelo del iPhone y por 30 días; si se mide con la que elegiste en
+    Perfil, no baja la automática.
+
+Lo que falta:
+
+- **El espacio del teclado** en la hoja de registro y en la ventana sigue animando el alto: hay que probarlo con un
+  teclado de verdad.
+- **La cifra que cuenta**, sin animar en la sección que no se ve (hace falta que `Secciones` les diga cuál se ve).
+- **La canasta en un almacén propio** (`almacen.ts`, `HojaRegistro.tsx` y sus tests): hoy cada cosa que se suma
+  redibuja todo lo que usa el estado.
+8. **El musgo se redibuja entero en cada cuadro**, con sus bordes desenfocados: hornear cada loma en una textura.
+11. **La textura del fondo se rehace en cada arranque**, con el shader más caro: guardarla en disco.
+12. **El cuadro de Comida** sigue recortando con esquinas y su alto sigue animado: sin eso, la semana y el mes asoman
+    al deslizar por fuera de lo redondeado (y el alto empuja lo de abajo).
+- Un escalón «mínima», con lo de 8.
+
+En un iPhone viejo con la build `telefono` (no la `dev`): el cielo en baja (que llene la pantalla; los rayos de las
+estrellas más brillantes pueden titilar un poco al arrastrar), las hojas al abrir, cerrar y arrastrar (las esquinas
+de atrás), deslizar entre secciones y el «+» con el teclado en el peso.
 
 ## Lo que ya está bien (no tocar)
 

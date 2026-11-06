@@ -35,6 +35,7 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
 import { riquezaDe } from '@/dominio/luz';
+import { pinturaQueAgranda } from './agrandar';
 import { bajarLaAutomatica } from './calidad';
 import { useCalidad, useCieloDeHoy, useEncendidos } from './dia';
 import { efectos } from './efectos';
@@ -98,6 +99,8 @@ export type PropsDelCielo = {
   /** Cuánto está corrida la pestaña Hábitos, en puntos. */
   paginaX?: SharedValue<number>;
   subida?: Subida;
+  /** Cuánto lo tapa una hoja abierta encima: 0 nada, 1 abierta del todo. Tapado del todo, queda quieto. */
+  tapado?: SharedValue<number>;
   /** Lo que ocupa la barra de pestañas abajo, con el borde del teléfono. */
   abajo?: number;
   /**
@@ -115,8 +118,10 @@ const RIQUEZA_DE_LA_ENTRADA = 0.6;
 const RIQUEZA_INICIAL = 0.6;
 /** Hasta que se toca una estrella por primera vez, Hábitos muestra cómo se marca un hábito. */
 const CLAVE_DEL_GLOBITO = 'moss:tocoUnaEstrella';
+/** La hoja abierta del todo, con margen para lo que le falta al resorte en sus últimos cuadros. */
+const TAPADO_DEL_TODO = 0.999;
 
-export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHabito, alIrAComida }: PropsDelCielo) {
+export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alEditarHabito, alIrAComida }: PropsDelCielo) {
   const soloCielo = !!entrada;
   const camaraDeLaEntrada = entrada?.camara;
   const { width: ancho, height: alto } = useWindowDimensions();
@@ -278,7 +283,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       for (const ev of eventos) {
         if (ev.tipo === 'cuadros') { medidor.poner({ fps: ev.valor, total: ev.total, reposo: false }); continue; }
         if (ev.tipo === 'reposo') { medidor.poner({ ...medidor.leer(), total: ev.total, reposo: true }); continue; }
-        if (ev.tipo === 'lento') { bajarLaAutomatica(); continue; }
+        if (ev.tipo === 'lento') { bajarLaAutomatica(calidad); continue; }
         if (ev.tipo === 'listo') { setFondoListo(true); continue; }
         if (ev.tipo === 'completo') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -323,7 +328,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         }
       }
     },
-    [dia, t, medidor, quitarGlobito, alIrAComida],
+    [dia, t, medidor, quitarGlobito, alIrAComida, calidad],
   );
   // Los cuadros le pasan los eventos a una función que no cambia: un lazo que siguió con un cuadro de
   // un render anterior igual los manda a lo de ahora (el día, los hábitos de hoy).
@@ -378,11 +383,13 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     'worklet';
     const corrida = paginaX ? paginaX.value : 0;
     const ascent = subida ? subida.progreso.value : 0;
+    const hoja = tapado ? tapado.value : 0;
     // Detrás de las otras secciones el cielo se ve velado y quieto: no se calcula ni se vuelve a
     // dibujar, así cada cuadro queda para la interfaz. Se mueve en Hábitos, mientras se llega o se
-    // va de ahí, con Ascent y en la entrada.
+    // va de ahí, con Ascent y en la entrada. Con una hoja abierta del todo encima, lo mismo.
     const antes = escena.value;
     if (!soloCielo && ascent === 0 && antes.velado === 0 && antes.aparicion >= 1 && Math.abs(corrida) >= ancho && Math.abs(antes.paginaX) >= ancho) return quedarQuieto();
+    if (!soloCielo && hoja >= TAPADO_DEL_TODO && antes.aparicion >= 1) return quedarQuieto();
     const subiendo = (ascent > 0 || antes.velado > 0) && Math.abs(antes.cam.y - CAMARA_DE_ASCENT * ascent) > 1e-4;
     const llevada = camaraDeLaEntrada ? camaraDeLaEntrada.value !== antes.cam.objetivo : false;
     const camara = antes.cam.arrastrando || antes.cam.v !== 0 || antes.cam.y !== antes.cam.objetivo;
@@ -396,8 +403,9 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
     ultimoCuadro.value = ahora;
     reposoAvisado.value = false;
     const hayFondo = fondo.value !== null;
-    // Para saber si el teléfono llega: solo a pleno y en Hábitos (no en la entrada ni con Ascent).
-    const muestra = aPleno && !soloCielo && corrida === 0 && ascent === 0;
+    // Para saber si el teléfono llega: solo a pleno y en Hábitos (no en la entrada, ni con Ascent, ni
+    // con una hoja que sube encima, que también cuesta y bajaría la calidad sin culpa del cielo).
+    const muestra = aPleno && !soloCielo && corrida === 0 && ascent === 0 && hoja === 0;
     escena.modify((e) => {
       'worklet';
       e.paginaX = corrida;
@@ -551,6 +559,13 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       if (antes !== null && ahora !== antes) despertar(VIVO_AL_TOCAR);
     },
   );
+  // La hoja que lo tapaba del todo empieza a irse: vuelve a correr.
+  useAnimatedReaction(
+    () => (tapado ? tapado.value >= TAPADO_DEL_TODO : false),
+    (ahora, antes) => {
+      if (antes && !ahora) despertar(VIVO_AL_TOCAR);
+    },
+  );
 
   // ------------------------------------------------------------------ gestos
   // Hasta dónde llega la señal de Ascent a cada lado: cambia con lo que dice.
@@ -606,12 +621,16 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
           modo.set('ascent');
         } else {
           modo.set('camara');
+          // Lo que sigue al dedo cambia la escena sin avisar: avisar en cada evento volvía a dibujar
+          // el lienzo cada vez, además del cuadro. Lo lleva a la pantalla el lazo, una vez por cuadro,
+          // y con el dedo apoyado no para (arrastrando); esto lo arranca si se había aquietado.
           escena.modify((e) => {
             'worklet';
             e.cam.arrastrando = true;
             e.cam.desde = e.cam.y - ev.translationY / e.alto;
             return e;
-          });
+          }, false);
+          despertar(VIVO_AL_TOCAR);
         }
       }
       if (modo.get() === 'ascent' && subida) {
@@ -626,7 +645,7 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
         e.cam.y = y;
         e.cam.v = 0;
         return e;
-      });
+      }, false);
     },
     onDeactivate: (ev) => {
       'worklet';
@@ -754,6 +773,19 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
   });
   const alfaUniversoHoy = useDerivedValue(() => (escena.value.completo ? 0.7 : 0));
 
+  // En baja, el cielo de cada cuadro va en una capa: adentro se dibuja más chico y, al soltarla, Skia
+  // lo agranda (agrandar.ts). Las estrellas que titilan quedan del mismo tamaño y en su lugar: el
+  // shader sigue en puntos de la pantalla y uDpr sigue siendo el de la pantalla.
+  const escalaCielo = ajustes.escalaCielo;
+  const capaQueAgranda = useMemo(() => (escalaCielo < 1 ? pinturaQueAgranda(1 / escalaCielo) : null), [escalaCielo]);
+  const cieloDelCuadro = (
+    <Fill>
+      <Shader source={ef.cielo} uniforms={uniformesCielo}>
+        <ImageShader image={fondo} sampling={MUESTREO} />
+      </Shader>
+    </Fill>
+  );
+
   // ------------------------------------------------------------------ acciones del panel de prueba
   const enLaEscena = (accion: (e: Escena) => void) => {
     scheduleOnUI(() => {
@@ -790,13 +822,11 @@ export default function Cielo({ paginaX, subida, abajo = 0, entrada, alEditarHab
       <GestureDetector gesture={gestos}>
         <View style={StyleSheet.absoluteFill} collapsable={false} pointerEvents={soloCielo ? 'none' : 'auto'}>
           <Canvas style={estilos.lleno}>
-            {fondoListo && (
-              <Fill>
-                <Shader source={ef.cielo} uniforms={uniformesCielo}>
-                  <ImageShader image={fondo} sampling={MUESTREO} />
-                </Shader>
-              </Fill>
-            )}
+            {fondoListo && (capaQueAgranda ? (
+              <Group layer={capaQueAgranda}>
+                <Group transform={[{ scale: escalaCielo }]}>{cieloDelCuadro}</Group>
+              </Group>
+            ) : cieloDelCuadro)}
             <Group transform={camaraCielo} opacity={opacidadDeHoy}>
               <Path path={plano.universo.pendientes} style="stroke" strokeWidth={0.7} color={PERGAMINO} opacity={0.15} blendMode="plus">
                 <DashPathEffect intervals={[2.5, 3.5]} />

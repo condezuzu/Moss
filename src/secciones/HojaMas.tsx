@@ -8,8 +8,8 @@
 import * as Haptics from 'expo-haptics';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -27,7 +27,7 @@ import { cantidadDeTexto, comidaDeAhora, fechaCorta, momentoDe, numero, sistemaD
 import { abrirRegistro } from './comida/registro';
 import { Figura } from './Figura';
 import { ENTRA_FUNDIDO, ENTRA_PANEL, entre } from './movimiento';
-import { useCampoALaVista, useTeclado } from './teclado';
+import { useCampoALaVista } from './teclado';
 
 export type VistaDelMas = 'menu' | 'peso' | 'medidas';
 type Vista = VistaDelMas;
@@ -70,12 +70,13 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   }, [abierta, bajada]);
   const estiloFondo = useAnimatedStyle(() => ({ opacity: hoja.get() }));
   // Con el teclado (el peso, las medidas), la hoja sube con él: si no, tapaba lo que se escribe. Y se
-  // achica lo mismo, para que lo de arriba (volver, la figura) no se vaya de la pantalla.
-  const { animado: teclado } = useTeclado();
+  // achica lo mismo, para que lo de arriba (volver, la figura) no se vaya de la pantalla. Del todo
+  // cerrada no lo sigue: el teclado de la hoja de registro le cambiaba el alto en cada cuadro.
+  const teclado = useTecladoAnimado();
+  const sube = useDerivedValue(() => (hoja.get() > 0 ? Math.max(0, teclado.get() - insets.bottom) : 0));
   const estiloHoja = useAnimatedStyle(() => {
-    const sube = Math.max(0, teclado.get() - insets.bottom);
     const y = reducido ? bajada.get() : (1 - hoja.get()) * (altoHoja.get() + 40);
-    return { maxHeight: alto - insets.top - 24 - sube, opacity: reducido ? hoja.get() : 1, transform: [{ translateY: Math.max(0, y) - sube }] };
+    return { maxHeight: alto - insets.top - 24 - sube.get(), opacity: reducido ? hoja.get() : 1, transform: [{ translateY: Math.max(0, y) - sube.get() }] };
   });
   // Bajarla con el dedo: sigue al dedo (y lo de atrás, que se agranda) y, al soltar, se cierra o vuelve.
   const arrastre = useArrastre({
@@ -152,6 +153,29 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
       </Animated.View>
     </View>
   );
+}
+
+// La curva del teclado de iOS, la de teclado.ts: arranca rápido y frena largo.
+const CURVA_DEL_TECLADO = Easing.bezier(0.2, 0.9, 0.3, 1);
+
+/**
+ * El alto del teclado como valor animado, con su misma duración, como `useTeclado` (teclado.ts) pero
+ * sin estado de React: la hoja está siempre armada, y con el estado se volvía a dibujar dos veces con
+ * cada teclado de la app, aunque estuviera cerrada.
+ */
+function useTecladoAnimado() {
+  const animado = useSharedValue(0);
+  useEffect(() => {
+    const ios = Platform.OS === 'ios';
+    const cambiar = (h: number, ms: number | undefined) => animado.set(withTiming(h, { duration: ms || 250, easing: CURVA_DEL_TECLADO }));
+    const mostrar = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', (ev) => cambiar(ev.endCoordinates.height, ev.duration));
+    const ocultar = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', (ev) => cambiar(0, ev.duration));
+    return () => {
+      mostrar.remove();
+      ocultar.remove();
+    };
+  }, [animado]);
+  return animado;
 }
 
 // ------------------------------------------------------------------ el menú

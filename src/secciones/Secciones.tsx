@@ -38,9 +38,17 @@ import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDePerfil } from './perfil/Perfil';
 import { PaginaDeProgreso } from './progreso/Progreso';
 import { PaginaDeSueno } from './sueno/Sueno';
-import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje } from './movimiento';
+import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje, VIAJE_MS } from './movimiento';
 
 const ULTIMA = PESTANAS.length - 1;
+const FONDO = '#000';
+// Con una hoja abierta, lo de atrás: cuánto se achica y el radio de sus esquinas.
+const ACHICA = 0.07;
+const RADIO = 30;
+// El ancho del borde del marco de las esquinas. Para tapar lo que queda afuera del radio alcanza con
+// RADIO × (√2 − 1), unos 12 puntos; más ancho, iOS dibuja más grande la imagen del borde, que rehace en
+// cada cuadro mientras el radio cambia.
+const MARCO = 16;
 
 // El enlace con el que se abrió Moss se atiende una sola vez: volver a la entrada y salir no lo repite.
 let inicialAtendido = false;
@@ -91,13 +99,20 @@ export default function Secciones() {
   }, [registro, conRegistro]);
   const aviso = useAviso();
   // Solo se arman la sección de ahora y sus vecinas (menos memoria y menos lienzos de Skia en un
-  // iPhone viejo); mientras se pasa de una a otra, también las de donde se viene.
+  // iPhone viejo). Al pasar a otra, el destino se arma al instante (casi siempre ya estaba, de vecina)
+  // y sus vecinas nuevas, cuando termina el viaje: armadas en medio, daban un tirón al final del gesto.
+  // Las de donde se viene quedan un rato más.
+  const [vecinasDe, setVecinasDe] = useState(0);
   const [anterior, setAnterior] = useState(0);
   useEffect(() => {
+    const llegada = setTimeout(() => setVecinasDe(actual), VIAJE_MS + 40);
     const espera = setTimeout(() => setAnterior(actual), 600);
-    return () => clearTimeout(espera);
+    return () => {
+      clearTimeout(llegada);
+      clearTimeout(espera);
+    };
   }, [actual]);
-  const armada = (i: number) => Math.abs(i - actual) <= 1 || Math.abs(i - anterior) <= 1;
+  const armada = (i: number) => i === actual || Math.abs(i - vecinasDe) <= 1 || Math.abs(i - anterior) <= 1;
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
   // La entrada: el cielo solo, con la cámara donde la pide cada pantalla. Hasta saber si hay perfil,
   // solo el cielo: así Inicio no asoma antes de la entrada. Solo este dato: con todo el estado, las
@@ -121,6 +136,7 @@ export default function Secciones() {
     setConSeccionesAntes(conSecciones);
     if (!conSecciones) {
       setActual(0);
+      setVecinasDe(0);
       setAnterior(0);
       setAscentAbierta(false);
       setHojaAbierta(false);
@@ -229,6 +245,9 @@ export default function Secciones() {
     onActivate: () => {
       'worklet';
       desde.set(Math.round(posicion.get()));
+      // Si se vuelve a deslizar antes de que se armen las vecinas, se arman ya: la que entra no llega vacía.
+      // Casi siempre ya están, y el estado no cambia.
+      scheduleOnRN(setVecinasDe, desde.get());
     },
     onUpdate: (ev) => {
       'worklet';
@@ -249,10 +268,16 @@ export default function Secciones() {
 
   const estiloVelo = useAnimatedStyle(() => ({ opacity: interpolate(posicion.get(), [0, 1, 2, 3, 4, 5], VELO, 'clamp') }));
   const estiloTira = useAnimatedStyle(() => ({ transform: [{ translateX: -posicion.get() * ancho }] }));
+  // Cuánto tapa una hoja (la del «+» o la de registro) lo de atrás: el cielo se frena debajo.
+  const tapado = useDerivedValue(() => Math.max(hoja.get(), conRegistro.get()));
   // Con una hoja abierta, lo de atrás se achica un poco, como en iOS. Con Reducir movimiento, no: saltaba.
-  const estiloAtras = useAnimatedStyle(() => {
-    const abierta = reducido ? 0 : Math.max(hoja.get(), conRegistro.get());
-    return { transform: [{ scale: 1 - 0.07 * abierta }], borderRadius: 30 * abierta };
+  const estiloAtras = useAnimatedStyle(() => ({ transform: [{ scale: 1 - ACHICA * (reducido ? 0 : tapado.get()) }] }));
+  // Sus esquinas se redondean con un marco encima, del color del fondo: recortarlas con un radio obligaba a
+  // iOS a componer aparte toda la pantalla (el cielo y las secciones) en cada cuadro mientras se anota.
+  // Cerrada la hoja, el marco no se dibuja.
+  const estiloMarco = useAnimatedStyle(() => {
+    const abierta = reducido ? 0 : tapado.get();
+    return { opacity: abierta > 0 ? 1 : 0, borderRadius: MARCO + RADIO * abierta, transform: [{ scale: 1 - ACHICA * abierta }] };
   });
 
   return (
@@ -270,6 +295,7 @@ export default function Secciones() {
               alCambiar: setAscentAbierta,
             } : undefined}
             entrada={entrada}
+            tapado={tapado}
             alEditarHabito={setEditando}
             alIrAComida={() => ir(PESTANAS.indexOf('comida'))}
           />
@@ -308,6 +334,7 @@ export default function Secciones() {
             </Animated.View>
           )}
         </Animated.View>
+        <Animated.View style={[estilos.marco, estiloMarco]} pointerEvents="none" />
         {/* Los primeros hábitos, solo si siguen los de ejemplo: los de una cuenta que ya tenía los suyos quedan. */}
         {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(soloLosDeEjemplo(elAlmacen().estado()))} />}
         {conSecciones && (
@@ -349,8 +376,13 @@ function BotonesDeHabitos({ ancho, arriba, subida, alNuevo, alMes }: { ancho: nu
 }
 
 const estilos = StyleSheet.create({
-  lleno: { flex: 1, backgroundColor: '#000' },
+  lleno: { flex: 1, backgroundColor: FONDO },
+  // Un recorte recto (sin radio) no se compone aparte: tapa las secciones de al lado y Ascent, que con lo
+  // de atrás achicado asomarían por los bordes.
   atras: { overflow: 'hidden', backgroundColor: colores.noche0 },
+  // Del tamaño de la pantalla más su borde, para que el borde quede justo afuera de lo de atrás: con el
+  // radio de afuera MARCO + r, el de adentro es r, el de las esquinas.
+  marco: { position: 'absolute', top: -MARCO, left: -MARCO, right: -MARCO, bottom: -MARCO, borderWidth: MARCO, borderColor: FONDO },
   velo: { backgroundColor: colores.noche0 },
   tira: { position: 'absolute', top: 0, bottom: 0, left: 0, flexDirection: 'row' },
   // En fila, como en la tira: la sección se estira a todo el alto.

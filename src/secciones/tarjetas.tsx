@@ -156,14 +156,21 @@ export const EtiquetaDeGrupo = ({ children }: { children: ReactNode }) => <Text 
 /** El camino al peso meta: de dónde se empezó a la meta, con hoy marcado. Las etiquetas: el inicio, hoy y la meta. */
 export function Camino({ hecho, etiquetas }: { hecho: number; etiquetas: readonly [string, string, string] }) {
   // Como la galería (.in-camino-pista i): el tramo hecho se recorre y la marca de hoy lo acompaña.
+  // Con transform, sin rehacer el layout en cada cuadro: el tramo es la pista entera, corrida a la
+  // izquierda dentro de un recorte con sus mismas esquinas (la pista no recorta: la marca sobresale),
+  // y la marca va en una capa del ancho de la pista que se corre lo mismo que se llena el tramo.
   const x = useFraccion(hecho);
-  const lleno = useAnimatedStyle(() => ({ width: `${x.get() * 100}%` }));
-  const marca = useAnimatedStyle(() => ({ left: `${x.get() * 100}%` }));
+  const lleno = useAnimatedStyle(() => ({ transform: [{ translateX: `${(x.get() - 1) * 100}%` }] }));
+  const marca = useAnimatedStyle(() => ({ transform: [{ translateX: `${x.get() * 100}%` }] }));
   return (
     <View style={e.camino}>
       <View style={e.caminoPista}>
-        <Animated.View style={[e.caminoLleno, lleno]} />
-        <Animated.View style={[e.caminoMarca, marca]} />
+        <View style={e.caminoRecorte}>
+          <Animated.View style={[e.caminoLleno, lleno]} />
+        </View>
+        <Animated.View style={[StyleSheet.absoluteFill, marca]} pointerEvents="none">
+          <View style={e.caminoMarca} />
+        </Animated.View>
       </View>
       <View style={e.caminoEtiquetas}>
         <Text style={e.caminoEtiqueta}>{etiquetas[0]}</Text>
@@ -214,8 +221,9 @@ export const e = StyleSheet.create({
   etiqueta: { marginTop: 22, marginBottom: 9, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   camino: { marginTop: 13 },
   caminoPista: { height: 4, borderRadius: 4, backgroundColor: 'rgba(239, 230, 207, 0.08)' },
-  caminoLleno: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 4, backgroundColor: colores.salvia },
-  caminoMarca: { position: 'absolute', top: -3.5, width: 11, height: 11, marginLeft: -5.5, borderRadius: 5.5, backgroundColor: colores.cifra, shadowColor: colores.cifra, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
+  caminoRecorte: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 4, overflow: 'hidden' },
+  caminoLleno: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 4, backgroundColor: colores.salvia },
+  caminoMarca: { position: 'absolute', left: 0, top: -3.5, width: 11, height: 11, marginLeft: -5.5, borderRadius: 5.5, backgroundColor: colores.cifra, shadowColor: colores.cifra, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
   caminoEtiquetas: { marginTop: 8, flexDirection: 'row', justifyContent: 'space-between' },
   caminoEtiqueta: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
   caminoAhora: { color: colores.pergamino },

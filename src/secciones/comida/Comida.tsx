@@ -13,6 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
 import { DIAS_DE_COMIDA, type Estado } from '@/almacen/almacen';
+import { deAscent } from '@/almacen/ascent';
 import { conMayuscula } from '@/comida/buscar';
 import { comidaDeLaHora, CON_HORA, horasCorridas, type Comida } from '@/dominio/comidas';
 import { diasEntre, lunesDe, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
@@ -66,14 +67,38 @@ const totalDelIndice = (e: Pick<Estado, 'registros' | 'hoy'>, dia: ClaveDia) => 
 /** Lo comido está en el teléfono solo de los últimos DIAS_DE_COMIDA días: lo de antes no se abre, porque se vería vacío. */
 const fueraDeLoCargado = (e: Pick<Estado, 'hoy'>, dia: ClaveDia) => dia < sumarDias(e.hoy, -DIAS_DE_COMIDA);
 
+/** Lo que miran las lunas chicas: lo comido de cada día y su meta, que sale de las metas, el perfil, el peso y lo de Ascent. */
+type ParaLunas = Pick<Estado, 'registros' | 'hoy' | 'metas' | 'perfil' | 'pesos'>;
+
 /** El día de un instante de la meta y lo comido, para la luna: llena es la meta. */
-function lunitaDe(e: Estado, dia: ClaveDia): Lunita {
+function lunitaDe(e: ParaLunas, dia: ClaveDia): Lunita {
   const registros = registrosDe(e, dia);
   const plan = registros.some((r) => r.planificado);
   const estado = dia > e.hoy && !plan ? 'futuro' : registros.length ? (plan ? 'plan' : 'comido') : 'vacio';
   const meta = metaDelDia(e, dia) ?? metaDelDia(e, e.hoy);
   const kcal = totalDelIndice(e, dia).kcal;
   return { estado, fraccion: meta ? kcal / meta.kcal : registros.length ? 1 : 0 };
+}
+
+const FUERA_DEL_MES: Lunita = { estado: 'fuera', fraccion: 0 };
+
+// Cada fila de lunas chicas (la tira y cada semana del mes) se arma una vez mientras no cambie lo que
+// miran: con cualquier otro cambio del almacén (la canasta mientras anotas, el agua) es la misma
+// lista, y Skia no rehace sus caminos ni la vuelve a dibujar. Lo de Ascent entra por su versión.
+let filasDeLunas: { de: readonly unknown[]; filas: Map<string, Lunita[]> } | undefined;
+
+/** Las lunas de unos días; con el mes, las de los días que no son de él quedan fuera. */
+function lunasDe(e: ParaLunas, dias: readonly ClaveDia[], mes?: readonly [ClaveDia, ClaveDia]): Lunita[] {
+  const de = [e.registros, e.hoy, e.metas, e.perfil, e.pesos, deAscent().estado().version];
+  const antes = filasDeLunas;
+  const guardadas = antes && de.every((x, i) => x === antes.de[i]) ? antes : (filasDeLunas = { de, filas: new Map() });
+  const clave = mes ? `${dias.join()}|${mes.join()}` : dias.join();
+  let lunas = guardadas.filas.get(clave);
+  if (!lunas) {
+    lunas = dias.map((d) => (mes && (d < mes[0] || d > mes[1]) ? FUERA_DEL_MES : lunitaDe(e, d)));
+    guardadas.filas.set(clave, lunas);
+  }
+  return lunas;
 }
 
 export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
@@ -151,7 +176,7 @@ function TiraDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alEleg
         </Pressable>
       ))}
       <View style={estilos.tiraLunas} pointerEvents="none">
-        <Lunitas lunas={dias.map((d) => lunitaDe(e, d))} ancho={ancho} tam={24} />
+        <Lunitas lunas={lunasDe(e, dias)} ancho={ancho} tam={24} />
       </View>
     </View>
   );
@@ -409,7 +434,7 @@ function PaginaDelMes({ e, dia, ancho, alElegir }: { e: Estado; dia: ClaveDia; a
               })}
             </View>
             <View style={estilos.calendarioLunas} pointerEvents="none">
-              <Lunitas lunas={semana.map((d) => (d < primero || d > ultimo ? { estado: 'fuera', fraccion: 0 } : lunitaDe(e, d)))} ancho={anchoGrilla} tam={26} />
+              <Lunitas lunas={lunasDe(e, semana, [primero, ultimo])} ancho={anchoGrilla} tam={26} />
             </View>
           </View>
         ))}

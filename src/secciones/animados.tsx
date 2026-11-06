@@ -9,10 +9,16 @@ import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useShared
 // La curva de las barras de la galería: cubic-bezier(0.2, 0.7, 0.2, 1).
 const LLENA = Easing.bezier(0.2, 0.7, 0.2, 1);
 const LLENA_MS = 1100;
+/** Cuántas veces cambia la cifra mientras cuenta: cada cambio vuelve a dibujar a quien la usa. */
+const PASOS = 10;
+/** Un relleno ocupa toda su pista y se corre: ver Relleno. */
+const ENTERO: ViewStyle = { width: '100%' };
 
 /**
  * Una cifra que, cuando cambia, cuenta desde lo que mostraba (anotar comida baja «te quedan» de a
- * poco). La primera vez aparece quieta. Solo se vuelve a dibujar quien la usa, unos 25 cuadros.
+ * poco). La primera vez aparece quieta. Cuenta de a pasos, diez en el mismo tiempo y con la misma
+ * curva, y no en cada cuadro: Inicio y Comida cuentan a la vez al anotar, y cada paso las vuelve a
+ * dibujar (uno por cuadro eran unos treinta).
  */
 export function useCuenta(valor: number, ms = 480): number {
   const reducido = useReducedMotion();
@@ -24,17 +30,15 @@ export function useCuenta(valor: number, ms = 480): number {
       desde.current = valor;
       return;
     }
-    const t0 = performance.now();
-    let cuadro = 0;
-    const paso = (ahora: number) => {
-      const k = Math.min(1, (ahora - t0) / ms);
-      const v = inicio + (valor - inicio) * (1 - (1 - k) ** 3);
+    let paso = 0;
+    const reloj = setInterval(() => {
+      paso++;
+      const v = paso < PASOS ? inicio + (valor - inicio) * (1 - (1 - paso / PASOS) ** 3) : valor;
       desde.current = v;
       setMostrado(v);
-      if (k < 1) cuadro = requestAnimationFrame(paso);
-    };
-    cuadro = requestAnimationFrame(paso);
-    return () => cancelAnimationFrame(cuadro);
+      if (paso >= PASOS) clearInterval(reloj);
+    }, ms / PASOS);
+    return () => clearInterval(reloj);
   }, [valor, ms, reducido]);
   return reducido ? valor : mostrado;
 }
@@ -50,11 +54,17 @@ export function useFraccion(fraccion: number): SharedValue<number> {
   return x;
 }
 
-/** El relleno de una barra: el estilo le da el alto, el color y el borde; el ancho lo anima. */
+/**
+ * El relleno de una barra: el estilo le da el alto, el color y el borde. Es tan ancho como su pista y
+ * se llena corriéndose desde la izquierda con transform, que no rehace el layout en cada cuadro (con
+ * el ancho, sí: seis barras cada vez que se anota). La pista tiene que recortar (overflow hidden, con
+ * las cuatro esquinas iguales): su borde hace de punta izquierda, y la derecha es la del relleno, la
+ * misma que cuando crecía.
+ */
 export function Relleno({ fraccion, style }: { fraccion: number; style?: StyleProp<ViewStyle> }) {
   const x = useFraccion(fraccion);
-  const ancho = useAnimatedStyle(() => ({ width: `${x.get() * 100}%` }));
-  return <Animated.View style={[style, ancho]} />;
+  const corrido = useAnimatedStyle(() => ({ transform: [{ translateX: `${(x.get() - 1) * 100}%` }] }));
+  return <Animated.View style={[style, ENTERO, corrido]} />;
 }
 
 /** Un vaso de agua: se llena con un fundido; los que pasan de la meta entran de a uno. */
