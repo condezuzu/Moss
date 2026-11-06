@@ -521,7 +521,8 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
 export const resumenDeCanasta = (canasta: Item[]) => plural('comida.agregados', canasta.length, { kcal: numero(Math.round(sumarValores(canasta.map((i) => i.valores)).kcal)) });
 
 const estilos = StyleSheet.create({
-  panel: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colores.hoja },
+  // Las esquinas de la hoja de registro, que no recorta lo de adentro.
+  panel: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderTopLeftRadius: 27, borderTopRightRadius: 27, backgroundColor: colores.hoja },
   cabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, height: 46, paddingTop: 2, paddingHorizontal: 12 },
   atras: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   lugar: { width: 38 },

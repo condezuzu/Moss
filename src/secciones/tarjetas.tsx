@@ -183,7 +183,7 @@ export const e = StyleSheet.create({
   carta: { marginTop: 12, borderRadius: 20, paddingTop: 14, paddingHorizontal: 16, paddingBottom: 15, backgroundColor: 'rgba(8, 12, 26, 0.72)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', gap: 6 },
   cab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 26 },
   titulo: { flexShrink: 1, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.6, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.6)' },
-  chip: { overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.6, color: 'rgba(239, 230, 207, 0.7)', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
+  chip: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.6, color: 'rgba(239, 230, 207, 0.7)', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   chipBien: { color: colores.salvia, backgroundColor: 'rgba(166, 191, 148, 0.1)' },
   chipAtencion: { color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.1)' },
   cifra: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8, rowGap: 2 },

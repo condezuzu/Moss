@@ -76,7 +76,8 @@ function Boton({ nombre, indice, posicion, elegida, alTocar }: {
         <SymbolView name={ICONOS[nombre]} size={21} weight="light" tintColor={colores.pergaminoApagado} />
         <Text style={estilos.nombre}>{texto}</Text>
       </View>
-      <Animated.View style={[estilos.capa, estilos.luz, estiloLuz]} pointerEvents="none">
+      {/* La luz es una sombra sin forma fija: dibujada una vez y guardada, iOS no la vuelve a calcular cuando algo se mueve debajo. */}
+      <Animated.View style={[estilos.capa, estilos.luz, estiloLuz]} pointerEvents="none" shouldRasterizeIOS>
         <SymbolView name={ICONOS[nombre]} size={21} weight="light" tintColor={colores.pergamino} />
         <Text style={[estilos.nombre, estilos.nombreLuz]}>{texto}</Text>
       </Animated.View>

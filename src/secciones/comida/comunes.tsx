@@ -133,9 +133,10 @@ export function Etiqueta({ children, estilo }: { children: ReactNode; estilo?: S
 }
 
 export const estilos = StyleSheet.create({
+  // Con fondo opaco: con alfa, iOS calcula la sombra píxel por píxel en cada cuadro.
   aviso: {
     position: 'absolute', alignSelf: 'center', maxWidth: '92%', flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 42,
-    paddingLeft: 16, paddingRight: 7, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(9, 14, 30, 0.95)',
+    paddingLeft: 16, paddingRight: 7, paddingVertical: 6, borderRadius: 999, backgroundColor: '#090e1e',
     borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)', shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 15, shadowOffset: { width: 0, height: 10 },
   },
   avisoTextoLugar: { flexShrink: 1, paddingVertical: 4 },

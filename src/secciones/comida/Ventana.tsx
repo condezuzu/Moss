@@ -471,7 +471,8 @@ function Rinde({ detalle }: { detalle: Detalle | null }) {
 }
 
 const estilos = StyleSheet.create({
-  velo: { backgroundColor: 'rgba(2, 4, 10, 0.58)' },
+  // Las esquinas de la hoja de registro, que no recorta lo de adentro.
+  velo: { borderTopLeftRadius: 27, borderTopRightRadius: 27, backgroundColor: 'rgba(2, 4, 10, 0.58)' },
   ventana: {
     position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 16, paddingHorizontal: 18, borderTopLeftRadius: 24, borderTopRightRadius: 24,
     backgroundColor: colores.ventana, borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)',

@@ -1005,9 +1005,12 @@ region();
 
 const estilos = StyleSheet.create({
   fondo: { backgroundColor: 'rgba(1, 2, 6, 0.6)' },
+  // Sin recortar ni sombra: con dos esquinas redondeadas y dos no, el recorte obliga a iOS a dibujar la hoja aparte en
+  // cada cambio (al escribir, con el cursor que titila), y la sombra no se veía. Los paneles y el velo de la ventana
+  // llevan las mismas esquinas.
   hoja: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden', borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colores.hoja,
-    borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.22)', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 30, shadowOffset: { width: 0, height: -24 },
+    position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colores.hoja,
+    borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.22)',
   },
   arriba: { height: 34 },
   asa: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, marginTop: 7, backgroundColor: 'rgba(239, 230, 207, 0.22)' },

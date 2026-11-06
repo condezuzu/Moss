@@ -729,7 +729,7 @@ const estilos = StyleSheet.create({
   tarjetaVacia: { gap: 11, paddingBottom: 13, backgroundColor: 'rgba(6, 10, 22, 0.35)', borderStyle: 'dashed', borderColor: 'rgba(232, 196, 106, 0.38)' },
   tarjetaCabeza: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 7 },
   tarjetaTitulo: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.pergamino },
-  etiquetaPlan: { alignSelf: 'center', fontFamily: letras.texto, fontSize: 9, letterSpacing: 1.3, textTransform: 'uppercase', color: colores.oro, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.4)', borderRadius: 999, overflow: 'hidden' },
+  etiquetaPlan: { alignSelf: 'center', fontFamily: letras.texto, fontSize: 9, letterSpacing: 1.3, textTransform: 'uppercase', color: colores.oro, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.4)', borderRadius: 999 },
   tarjetaKcal: { marginLeft: 'auto', fontFamily: letras.numeroMedio, fontSize: 16, color: colores.oroClaro, fontVariant: ['tabular-nums'] },
   tarjetaKcalUnidad: { fontFamily: letras.texto, fontSize: 10, color: 'rgba(239, 230, 207, 0.5)', letterSpacing: 0.6 },
   item: { flexDirection: 'row', alignItems: 'baseline', gap: 10, paddingVertical: 4, paddingHorizontal: 6, marginHorizontal: -6, borderRadius: 8 },
