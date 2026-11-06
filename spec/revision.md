@@ -5,7 +5,8 @@ privacidad de App Store Connect, los textos de los permisos, cada guía de Apple
 contra lo que hace la app, la ficha de la tienda, las capturas, las notas para
 quien revisa, la lista de pasos y la clasificación por edad. Armado el 22/10/2026
 y puesto al día el 26/10/2026, a la noche, para la build que va a revisión, con
-las fuentes de Apple de ese día (al final).
+las fuentes de Apple de ese día (al final). Cómo quedó todo en App Store Connect,
+revisado por la API el 6/11/2026, está en «i».
 
 **Lo que trae esta build** (decidido el 26/10/2026):
 - la cuenta **solo con Apple** (Sign in with Apple), sin correo ni contraseña;
@@ -979,6 +980,55 @@ padres que limitan por edad en Tiempo de uso no ven Moss si el límite es menor.
 **Cómo convive con la regla de adentro.** El cuestionario arranca en 16 y, si
 Salud dice menos, la entrada no sigue. Antes de los 18, bajar «rápido» no está
 (se usa el ritmo recomendado). Los términos, la app y la tienda dicen lo mismo.
+
+---
+
+## i) Cómo quedó en App Store Connect (revisado por la API el 6/11/2026)
+
+**El envío.** La 1.0.0 con la build 6 está en *Waiting for Review* desde el 5/11 a las 13:53 (UTC). Antes
+esperó del 28/10 al 5/11 sin que la tomaran; la sacaste y la volviste a mandar. No hubo rechazos ni hay
+mensajes en el Resolution Center. La publicación es manual. Ninguna razón de la ficha explica la espera: lo
+que está mal en una ficha se rechaza después de mirarla, no frena la fila.
+
+**Completo y coherente:**
+
+- **Acuerdos:** ningún aviso pendiente. Una app gratis no necesita el Paid Apps Agreement; la suscripción
+  sí (lo-que-te-toca, 4).
+- **La UE (DSA):** ningún país marca que falte el estado de comerciante, y Ascent se vende en todos.
+  `CANNOT_SELL` con `AVAILABLE_FOR_SALE_UNRELEASED_APP` en los 174 países es lo normal antes de salir: no
+  se vende porque todavía no se lanzó (Ascent, publicada, dice `AVAILABLE`). China está apagada.
+- **Precio:** gratis (0,0, manual, base EE. UU.), y disponible en los países nuevos.
+- **Build 6:** válida, elegida, sin cifrado propio (`usesNonExemptEncryption` en `false`), solo iPhone, desde
+  iOS 16.4; vence el 26/1/2027. Los textos de los permisos están en español y en inglés.
+- **La ficha** en los tres idiomas es igual a `store.config.json`: nombre, subtítulo, descripción, palabras
+  clave (100 de 100 bytes en inglés, 92 en español), texto promocional, soporte, marketing y privacidad. Sin
+  Ascent, sin precios y sin otras apps. Lo que describe estaba en la build 6 (armada el 28/10 a las 20:31):
+  decir lo que comí, pegar una receta, el plan, el despertador y los Atajos.
+- **El sitio:** las cinco páginas abren, la portada tiene el correo de ayuda, `#age` existe en los términos
+  en inglés y desde el 6/11 ya no nombra a Ascent (commit 872b39a de `condezuzu/moss-app`).
+- **App Privacy** (publicada el 28/10): los nueve tipos de «a», igual que el manifiesto de la build 6.
+- **Content Rights:** contenido de terceros, con los derechos. **Copyright:** «2026 Agustín Conde
+  Zuzulich». **Categorías:** Salud y forma física, y Estilo de vida.
+- **Edad:** 16+ por la subida, y «No» en las preguntas de redes sociales. Los iOS viejos muestran 17+, que es
+  la equivalencia de Apple. El alcohol quedó «None» y no «Infrequent» como recomienda «h»: no cambia el 16+.
+- **Dispositivo médico regulado:** la API no lo muestra, pero App Store Connect no deja mandar una app de
+  Salud sin declararlo (`CANNOT_SUBMIT_MISSING_REGULATED_MEDICAL_DEVICE_APP_DECLARATION`), así que está
+  declarado. Tiene que decir «No» en la UE, el Reino Unido y EE. UU. (App Information › App Store
+  Regulations & Permits).
+- **Las notas para quien revisa:** iguales a `.revision/notas-revisor.json` y sin Ascent.
+- **«Sign-in required» destildado es lo correcto.** La casilla es para dar un usuario y una contraseña de
+  prueba. Con solo Sign in with Apple no hay qué dar: quien revisa entra con su propio Apple ID, como dicen
+  las notas. Tildada, App Store Connect obliga a cargar credenciales que no existen.
+- **El servidor:** la base real tiene de la 0001 a la 0009, lo que usa la build 6 (la 0010 y la 0011 esperan a
+  la OTA), y `moss-borrar-cuenta` y `moss-vincular` están desplegadas desde el 28/10.
+
+**Lo que no está bien y no se puede tocar en revisión: las capturas.** Las cinco subidas son las tuyas
+(`capturas/tienda/propias`), las mismas en los tres idiomas: en inglés se ve todo en español, y los textos de
+arriba están de vos («Construí mejores hábitos», «Dormí mejor, viví mejor», «Seguí tu progreso», «Comé mejor,
+sin pensar»), que en España y México se leen como pasado. No es motivo de rechazo, pero mientras la versión
+está en revisión las capturas no se pueden cambiar: van con la versión siguiente, de tú en español y en
+inglés en `en-US`. Si Apple rechazara por 2.3.3 (capturas que no son la app), las de Lucía
+(`capturas/tienda/1320x2868/{es,en}`) salen de la app de ese día y no muestran nada de Ascent.
 
 ---
 

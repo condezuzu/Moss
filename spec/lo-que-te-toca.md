@@ -1,4 +1,4 @@
-# Lo que te toca a vos (al 5/11/2026)
+# Lo que te toca a vos (al 6/11/2026)
 
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
@@ -162,13 +162,17 @@ Entre paréntesis, lo que recomienda el estudio o lo que está programado.
 
 ## 2. Cuando Apple apruebe la build 6
 
+Mientras tanto: está en *Waiting for Review* desde el 5/11, y en App Store Connect está todo completo
+(spec/revision.md «i»). Si el 12/11 sigue igual, escribile a App Review desde Contact Us (el estado de la
+revisión) en vez de sacarla: volver a mandarla la pone al final de la fila.
+
 1. Avisame. Hasta entonces no sale ninguna OTA a `production`.
 2. Antes de lanzar, si no lo hiciste: Supabase en plan Pro (copias diarias) y el acuerdo de tratamiento de datos (DPA), que la política ya nombra (spec/revision.md «g», 1.8). Confirmá.
-3. Si el CLI de Supabase pide entrar (`npx supabase login`) o la contraseña de la base, la ponés vos en una pestaña de Terminal. Con eso yo aplico la 0010 y después la 0011, antes de cualquier OTA.
+3. Si el CLI de Supabase pide entrar (`npx supabase login`) o la contraseña de la base, la ponés vos en una pestaña de Terminal. Con eso, y con tu sí (el CLI de Supabase ahora lo pide para escribir en la base real), yo aplico la 0010 y después la 0011, antes de cualquier OTA.
 4. Yo comparo la huella y publico la OTA en `production` y en `preview`.
 5. Tocás «Release This Version» en App Store Connect (la publicación quedó manual). Mejor después de la OTA.
 6. Probás en tu iPhone, en la de la tienda y en la `telefono`: sin voseo, el día que cambia a las 4, que las noches suban, las marcas, los widgets del cielo y de la noche, y lo del estudio (el control, «Todavía no se sabe», la deuda «aprox.»).
-7. Para venderse en la UE falta el estado de comerciante (sección 4).
+7. La UE no espera nada: ningún país marca que falte el estado de comerciante (6/11).
 
 ## 3. Para la próxima build
 
@@ -180,13 +184,19 @@ Entre paréntesis, lo que recomienda el estudio o lo que está programado.
 - La prueba de sandbox en tu iPhone: empezar la prueba y cancelarla, cancelar en Ajustes, dejarla vencer y restaurar (spec/suscripcion.md, paso 7).
 - La captura de la pantalla de pago para la Review Information (paso 5).
 - Probar lo nuevo: el widget Hoy anotando sin abrir Moss, Anotar, Agua, los tamaños nuevos, el filtro de Concentración y el cargador al abrir (spec/widgets.md; spec/sueno-sin-esfuerzo.md).
-- Las capturas en inglés de la ficha (hoy van tus cinco en español).
+- Las capturas de la ficha: hoy van tus cinco, en español, en los tres idiomas, con los textos de arriba de vos
+  («Construí», «Dormí», «Seguí», «Comé»), que en España y México se leen como pasado. En la versión siguiente:
+  de tú en español y en inglés en `en-US` (con la 1.0 en revisión no se pueden tocar; spec/revision.md «i»).
 - Si Ascent 1.2.0 ya está en la tienda, prender Ascent (sección 5).
 - Mandarla a revisión con los dos productos (paso 6).
 
 ## 4. App Store Connect y Apple Developer
 
-- **El estado de comerciante de la UE (DSA)**, en Business: pendiente desde la 1.0; sin él, Moss no sale en la UE.
+- **El estado de comerciante de la UE (DSA)**, en Business: hoy no traba (6/11: Ascent se vende en la UE y
+  ningún país de Moss marca que falte). Si cobrás con la suscripción, lo más probable es que Apple te pida
+  declararte comerciante, con tu dirección, teléfono y correo a la vista en la ficha de la UE.
+- **El dispositivo médico regulado** (App Information › App Store Regulations & Permits): está declarado (sin eso
+  no se puede mandar), pero la API no lo muestra. Mirá que diga «No» en la UE, el Reino Unido y EE. UU. Confirmá.
 - **El Paid Apps Agreement**, en Business › Agreements, hasta que quede *Active* (solo el Account Holder).
 - **La cuenta donde cobrar** y **los formularios de impuestos** (el W-8BEN; lo de Uruguay, con tu contador).
 - **El Small Business Program**, antes de la primera venta: 15 % en vez de 30 %.

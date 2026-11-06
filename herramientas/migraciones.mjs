@@ -1,10 +1,13 @@
 // Las migraciones de Moss (supabase/moss/NNNN_*.sql) contra el proyecto real, con el CLI de Supabase
 // (antes, una vez: `npx supabase login` y `npx supabase link --project-ref okeanaihymbvbdmrdqph`).
 //
-//   npm run migraciones                 cuáles están aplicadas y cuáles faltan
-//   npm run migraciones -- --aplicar    aplica las que faltan, en orden, cada una en su transacción
-//   npm run migraciones -- --marcar 0003 0004   las anota como aplicadas sin correrlas (las que se
+//   npm run migraciones                 cuáles están aplicadas y cuáles faltan (solo lee)
+//   npm run migraciones -- --aplicar --yes    aplica las que faltan, en orden, cada una en su transacción
+//   npm run migraciones -- --marcar 0003 0004 --yes   las anota como aplicadas sin correrlas (las que se
 //                                       pegaron a mano en el SQL Editor)
+//
+// Desde la versión 3, el CLI no escribe en la base real sin `--yes`: corriendo desde un agente no puede
+// preguntar. El agente lo suma solo cuando el dueño dijo que sí.
 //
 // El historial del CLI (supabase_migrations.schema_migrations) es de Ascent: tiene sus versiones
 // 001…0NN y su `db push` se traba si aparecen versiones que su repo no tiene. Por eso Moss lleva el
@@ -27,18 +30,22 @@ function supabase(args) {
 const temporal = mkdtempSync(join(tmpdir(), 'moss-migracion-'));
 let consultas = 0;
 
+const confirmado = process.argv.includes('--yes');
+
 /** Corre SQL en la base del proyecto conectado: las filas, o el error. Siempre por archivo, así la shell no parte el SQL. */
-function consultar(sql, archivo) {
+function consultar(sql, archivo, { leer = false } = {}) {
   if (!archivo) {
     archivo = join(temporal, `consulta-${++consultas}.sql`);
     writeFileSync(archivo, sql);
   }
-  const r = supabase(['db', 'query', '--linked', '-f', archivo]);
+  const permiso = leer ? ['--read-only'] : confirmado ? ['--yes'] : [];
+  const r = supabase(['db', 'query', '--remote', ...permiso, '-f', archivo]);
   const json = r.datos.slice(r.datos.indexOf('{'), r.datos.lastIndexOf('}') + 1);
   try {
     if (!r.ok) throw new Error();
     return { filas: JSON.parse(json).rows ?? [] };
   } catch {
+    if (r.salida.includes('ConsentRequired')) return { error: 'El CLI de Supabase pide confirmar antes de escribir en la base real: con el sí del dueño, otra vez con --yes. No cambió nada.' };
     return { error: r.salida.slice(-2000) };
   }
 }
@@ -59,15 +66,15 @@ revoke all on moss.migraciones from anon, authenticated;`;
 const anotar = (l) => `${HISTORIAL}\ninsert into moss.migraciones (numero, nombre) values ('${l.numero}', '${l.nombre}') on conflict do nothing;`;
 
 // Postgres valida los nombres antes de correr: si la tabla no existe todavía, se pregunta aparte.
-const existe = consultar(`select to_regclass('moss.migraciones') is not null as hay`);
-const leidas = existe.filas?.[0]?.hay ? consultar('select numero from moss.migraciones') : existe.error ? existe : { filas: [] };
+const existe = consultar(`select to_regclass('moss.migraciones') is not null as hay`, null, { leer: true });
+const leidas = existe.filas?.[0]?.hay ? consultar('select numero from moss.migraciones', null, { leer: true }) : existe.error ? existe : { filas: [] };
 if (leidas.error) {
   console.log(`No pude leer la base:\n${leidas.error}`);
   process.exit(1);
 }
 const aplicadas = new Set(leidas.filas.map((f) => f.numero).filter(Boolean));
 
-const [modo, ...numeros] = process.argv.slice(2);
+const [modo, ...numeros] = process.argv.slice(2).filter((a) => a !== '--yes');
 
 if (modo === '--marcar') {
   for (const n of numeros) {
