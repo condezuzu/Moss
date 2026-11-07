@@ -288,10 +288,21 @@ export function useAlmacenListo(): boolean {
       if (mandaba && !mandarBusquedas) buzon().descartar('busqueda').catch(() => {});
       mandaba = mandarBusquedas;
     });
+    // Volver es venir del fondo: bajar el centro de control o de notificaciones, o una alerta del sistema,
+    // también dejan a la app «inactiva» un momento, y rehacerlo todo cada vez (Salud, los avisos, los
+    // widgets) se notaba como un tirón en un iPhone viejo.
+    let estadoAntes = AppState.currentState;
     const suscripcion = AppState.addEventListener('change', (estado) => {
+      const venia = estadoAntes;
+      estadoAntes = estado;
       if (estado === 'background' && a.estado().listo) a.anotarUso('cerrar');
-      if (estado !== 'active') return;
-      if (a.estado().listo) a.anotarUso('abrir');
+      if (estado !== 'active' || venia !== 'background') return;
+      // Si no pudo abrir sus datos al arrancar, lo vuelve a intentar.
+      if (!a.estado().listo) {
+        a.iniciar().then(actualizarSalud).catch((error) => console.warn('Moss no pudo abrir sus datos', error));
+        return;
+      }
+      a.anotarUso('abrir');
       a.revisarDia();
       cuenta.alVolver();
       actualizarSalud().catch(() => {});

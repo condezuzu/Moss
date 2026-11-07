@@ -4,10 +4,10 @@
 // están para sumarlos. Tocar un bloque lleva a su sección.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View, type ScrollViewInstance } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -15,19 +15,26 @@ import { elAlmacen } from '@/almacen';
 import { useCieloDeHoy, useEncendidos } from '@/cielo/dia';
 import { decimal } from '@/comida/porciones';
 import { pesoCorporalEn } from '@/dominio/cantidades';
-import { estadoDeMacro } from '@/dominio/metas';
+import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import { calidadDeNoche, ultimasNoches } from '@/dominio/sueno';
 import { aguaDelDia } from '@/dominio/registros';
 import { sumarDias } from '@/dominio/fechas';
 import { CON_ASCENT } from '@/lib/banderas';
 import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { anunciar } from '../anuncio';
 import { CabezaQueBaja, useBajarParaCerrar } from '../arrastre';
+import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { InvitacionDeAscent } from '../ascent/Invitacion';
+import { PESTANAS, type Pestana } from '../Barra';
+import { comidaEnHoy } from '../comida/Comida';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
+import { avisar } from '../comida/registro';
 import { usePersona, useSueno } from '../ganchos';
+import { useCerrarConLasCapas } from '../HojaModal';
+import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece, Camino } from '../tarjetas';
 import { Relleno, useCuenta, Vaso } from '../animados';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
@@ -35,10 +42,20 @@ import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
 export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'] as const;
 export type Bloque = (typeof BLOQUES)[number];
 const DE_FABRICA: Bloque[] = ['calorias', 'objetivo', 'peso', 'cielo'];
-// Adónde lleva cada bloque: las secciones de la barra.
-const SECCION: Partial<Record<Bloque, number>> = { calorias: 1, objetivo: 2, peso: 2, cielo: 4, sueno: 3 };
+// Adónde lleva cada bloque: las secciones de la barra. El agua no lleva a ninguna: es un bloque quieto, con su botón.
+const SECCION = { calorias: 'comida', objetivo: 'progreso', peso: 'progreso', cielo: 'habitos', sueno: 'sueno' } as const satisfies Record<Exclude<Bloque, 'agua'>, Pestana>;
+const INICIO = PESTANAS.indexOf('inicio');
 const VASO_ML = 250;
 const VASOS_META = 8;
+// Los bloques entran y salen al sumarlos o sacarlos: un fundido no es movimiento, también con Reducir movimiento.
+const ENTRA_BLOQUE = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
+const SALE_BLOQUE = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
+/** La cifra grande de lo que queda, con el texto grande: crece hasta 1,3 veces y, si no entra al lado de la luna, se achica. */
+const CIFRA_GRANDE = { maxFontSizeMultiplier: 1.3, numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.6 } as const;
+/** Las cifras de cada macro, en su tercio: en una línea, achicadas si no entran. */
+const EN_SU_COLUMNA = { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.7 } as const;
+
+type Ir = (a: Pestana) => void;
 
 /** Lo elegido, con lo que falte al final (un bloque nuevo aparece apagado). */
 function preferencias(guardadas: { orden: string[]; visibles: string[] } | null): { orden: Bloque[]; visibles: Set<Bloque> } {
@@ -52,44 +69,46 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
   const [personalizando, setPersonalizando] = useState(false);
   const { orden, visibles } = useMemo(() => preferencias(e.inicio), [e.inicio]);
   const anchoGrafico = Math.min(150, (ancho - 40 - 32) * 0.45);
+  const scroll = useRef<ScrollViewInstance>(null);
+  const reducido = useReducedMotion();
+  const esLaActual = useEsLaActual(INICIO);
+  // Tocar otra vez la pestaña: arriba de todo.
+  useEffect(() => alTocarDeNuevo(INICIO, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido]);
+  const ir: Ir = (a) => {
+    // Las calorías de hoy llevan a Comida en hoy y en «Día», aunque ahí hubiera quedado otro día elegido.
+    if (a === 'comida') comidaEnHoy();
+    alIr(PESTANAS.indexOf(a));
+  };
   const bloques: Record<Bloque, () => ReactNode> = {
-    calorias: () => <Calorias />,
-    objetivo: () => <Objetivo />,
-    peso: () => <Peso anchoGrafico={anchoGrafico} />,
-    cielo: () => <Cielo ancho={ancho - 40 - 32} />,
-    sueno: () => <SuenoDeAnoche anchoGrafico={anchoGrafico} />,
+    calorias: () => <Calorias alIr={ir} />,
+    objetivo: () => <Objetivo alIr={ir} />,
+    peso: () => <Peso anchoGrafico={anchoGrafico} alIr={ir} />,
+    cielo: () => <Cielo ancho={ancho - 40 - 32} alIr={ir} />,
+    sueno: () => <SuenoDeAnoche anchoGrafico={anchoGrafico} alIr={ir} />,
     agua: () => <Agua />,
   };
   return (
     <View style={{ width: ancho }}>
-      <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
+        showsVerticalScrollIndicator={false}
+        scrollsToTop={esLaActual}
+      >
         <Text style={estilos.fecha}>{fechaCorta(e.hoy)}</Text>
         <Text style={estilos.titulo}>{t('inicio.titulo')}</Text>
         {orden.filter((b) => visibles.has(b)).flatMap((b, i, enOrden) => {
-          const seccion = SECCION[b];
           // Sumar, sacar u ordenar bloques en Personalizar nunca es de golpe: entran, salen y se acomodan.
           const bloque = (
-            <Animated.View key={b} entering={FadeIn.duration(320)} exiting={FadeOut.duration(200)} layout={ACOMODA}>
-              {seccion === undefined ? (
-                // El agua no lleva a ninguna sección: es un bloque quieto, con su botón.
-                <View style={estilos.bloque}>{bloques[b]()}</View>
-              ) : (
-                <Pressable
-                  onPress={() => alIr(seccion)}
-                  style={({ pressed }) => [estilos.bloque, b === 'cielo' && estilos.bloqueCielo, pressed && estilos.apretado]}
-                  accessibilityRole="button"
-                  accessibilityLabel={t(`inicio.bloques.${b}`)}
-                >
-                  {bloques[b]()}
-                </Pressable>
-              )}
+            <Animated.View key={b} entering={ENTRA_BLOQUE} exiting={SALE_BLOQUE} layout={ACOMODA}>
+              {bloques[b]()}
             </Animated.View>
           );
           // La invitación de Ascent, debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
           return CON_ASCENT && i === Math.min(1, enOrden.length - 1) ? [bloque, <InvitacionDeAscent key="ascent" />] : [bloque];
         })}
         <View style={estilos.pie}>
-          <Pressable onPress={() => setPersonalizando(true)} style={estilos.personalizar} accessibilityRole="button">
+          <Pressable onPress={() => setPersonalizando(true)} style={({ pressed }) => [estilos.personalizar, pressed && estilos.botonApretado]} accessibilityRole="button">
             <Icono nombre="line.3.horizontal" tam={15} color="rgba(239, 230, 207, 0.72)" />
             <Text style={estilos.personalizarTexto}>{t('inicio.personalizar')}</Text>
           </Pressable>
@@ -99,6 +118,27 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
     </View>
   );
 }
+
+/**
+ * Un bloque que lleva a su sección. VoiceOver dice lo que muestra, con los valores a los que llega (no
+ * la cifra mientras cuenta), y adónde lleva: con el título solo, no se sabía qué había adentro.
+ */
+function Lleva({ a, alIr, etiqueta, cielo, children }: { a: Pestana; alIr: Ir; etiqueta: string; cielo?: boolean; children: ReactNode }) {
+  return (
+    <Pressable
+      onPress={() => alIr(a)}
+      style={({ pressed }) => [estilos.bloque, cielo && estilos.bloqueCielo, pressed && estilos.apretado]}
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      accessibilityHint={t('inicio.lector.lleva', { seccion: t(`pestanas.${a}`) })}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
+/** Lo que dice VoiceOver de un bloque: lo que hay, en frases, sin lo que no está. */
+const frases = (...partes: (string | false | null | undefined)[]) => partes.filter(Boolean).join('. ');
 
 function Cabeza({ titulo, derecha }: { titulo: string; derecha?: ReactNode }) {
   return (
@@ -114,39 +154,64 @@ const Chip = ({ texto, tipo }: { texto: string; tipo?: 'bien' | 'atencion' | 'te
 );
 
 // ------------------------------------------------------------------ calorías y macros: lo que queda
-function Calorias() {
+type Comido = ReturnType<typeof totalDe>;
+
+function Calorias({ alIr }: { alIr: Ir }) {
   const e = useEstado();
   const numeros = e.numeros;
   const meta = metaDelDia(e, e.hoy);
   const comido = totalDe(e.registros, e.hoy, e.hoy);
+  const titulo = t('inicio.bloques.calorias');
   if (!meta) {
     return (
-      <View style={estilos.calArriba}>
-        <Luna tam={124} fraccion={0} />
-        <View style={estilos.calCifra}>
-          <Text style={estilos.calEtiqueta}>{t('inicio.bloques.calorias')}</Text>
-          {numeros && <Text style={estilos.calNumero}>{numero(Math.round(comido.kcal))}</Text>}
-          <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>
+      <Lleva a={SECCION.calorias} alIr={alIr} etiqueta={frases(titulo, numeros && t('inicio.lector.llevas', { n: numero(Math.round(comido.kcal)) }), t('comida.sinMeta'))}>
+        <View style={estilos.calArriba}>
+          <Luna tam={124} fraccion={0} />
+          <View style={estilos.calCifra}>
+            <Text style={estilos.calEtiqueta}>{titulo}</Text>
+            {numeros && <Text style={estilos.calNumero} {...CIFRA_GRANDE}>{numero(Math.round(comido.kcal))}</Text>}
+            <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>
+          </View>
         </View>
-      </View>
+      </Lleva>
     );
   }
-  return <CaloriasConMeta numeros={numeros} comido={comido} meta={meta} />;
+  return (
+    <Lleva a={SECCION.calorias} alIr={alIr} etiqueta={frases(titulo, ...loQueQueda(comido, meta, numeros))}>
+      <CaloriasConMeta numeros={numeros} comido={comido} meta={meta} />
+    </Lleva>
+  );
+}
+
+/** Lo que queda del día, para VoiceOver: las calorías y cada macro, con lo que se ve al terminar de contar. */
+function loQueQueda(comido: Comido, meta: Macros, numeros: boolean): string[] {
+  const queda = Math.round(meta.kcal - comido.kcal);
+  const kcal = queda >= 0 ? t('inicio.lector.quedan', { n: numero(queda), meta: numero(meta.kcal) }) : t('inicio.lector.deMas', { n: numero(-queda), meta: numero(meta.kcal) });
+  const macros = MACROS.map((m) => {
+    const macro = t(`comida.${m}`);
+    const resto = Math.round(meta[m] - comido[m]);
+    const estado = estadoDeMacro(comido[m], meta[m]);
+    if (estado === 'cumplido') return t('inicio.lector.macroListo', { macro });
+    if (!numeros) return t(estado === 'falta' ? 'inicio.lector.macroFaltaSinNumeros' : 'inicio.lector.macroPasadoSinNumeros', { macro });
+    return estado === 'falta' ? t('inicio.lector.macroFalta', { macro, n: numero(resto) }) : t('inicio.lector.macroPasado', { macro, n: numero(-resto) });
+  });
+  return numeros ? [kcal, ...macros] : macros;
 }
 
 // Aparte, así el hook de la cifra que cuenta no depende de si hay meta.
-function CaloriasConMeta({ numeros, comido, meta }: { numeros: boolean; comido: ReturnType<typeof totalDe>; meta: NonNullable<ReturnType<typeof metaDelDia>> }) {
+function CaloriasConMeta({ numeros, comido, meta }: { numeros: boolean; comido: Comido; meta: Macros }) {
   const queda = meta.kcal - comido.kcal;
-  // Al anotar, «te quedan» cuenta hasta lo nuevo en vez de saltar.
-  const cifra = useCuenta(Math.abs(Math.round(queda)));
+  // Al anotar, «te quedan» cuenta hasta lo nuevo en vez de saltar. Con su signo: de «te quedan 120» a 80
+  // de más baja hasta cero y sube, y la etiqueta cambia cuando cambia lo que se ve (contaba 120 → 80 ya «de más»).
+  const cifra = Math.round(useCuenta(Math.round(queda)));
   return (
     <>
       <View style={estilos.calArriba}>
         <Luna tam={124} fraccion={comido.kcal / meta.kcal} />
         {numeros && (
           <Aparece style={estilos.calCifra}>
-            <Text style={estilos.calEtiqueta}>{t(queda >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')}</Text>
-            <Text style={estilos.calNumero}>{numero(Math.round(cifra))}</Text>
+            <Text style={estilos.calEtiqueta}>{t(cifra >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')}</Text>
+            <Text style={estilos.calNumero} {...CIFRA_GRANDE}>{numero(Math.abs(cifra))}</Text>
             <Text style={estilos.calDe}>{t('inicio.kcalDe', { comido: numero(Math.round(comido.kcal)), meta: numero(meta.kcal) })}</Text>
           </Aparece>
         )}
@@ -164,12 +229,12 @@ function CaloriasConMeta({ numeros, comido, meta }: { numeros: boolean; comido: 
                 </View>
                 <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
               </View>
-              {numeros && <Text style={estilos.macroValor}>{valor}</Text>}
+              {numeros && <Text style={estilos.macroValor} {...EN_SU_COLUMNA}>{valor}</Text>}
               <View style={estilos.barra}>
                 <Relleno fraccion={comido[m] / meta[m]} style={[estilos.barraLlena, { backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
               </View>
               {/* Lo comido y la meta siempre a la vista: también al pasarse (lo pediste el 30/10/2026). */}
-              {numeros && <Text style={estilos.macroDe}>{t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>}
+              {numeros && <Text style={estilos.macroDe} {...EN_SU_COLUMNA}>{t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) })}</Text>}
             </View>
           );
         })}
@@ -179,7 +244,7 @@ function CaloriasConMeta({ numeros, comido, meta }: { numeros: boolean; comido: 
 }
 
 // ------------------------------------------------------------------ el progreso al objetivo
-function Objetivo() {
+function Objetivo({ alIr }: { alIr: Ir }) {
   const p = usePersona();
   const e = useEstado();
   const sistema = sistemaDe(e);
@@ -191,59 +256,65 @@ function Objetivo() {
   const g = p.progreso;
   const metaKg = p.perfil.pesoMeta;
   const bien = g.estado === 'enCamino' || g.estado === 'llegaste' || g.estado === 'estable';
+  const titulo = t('inicio.bloques.objetivo');
+  const estado = t(`progreso.estados.${g.estado}`);
+  const [cifra, texto]: [string, string] = g.fecha && metaKg
+    ? [fechaDiaMes(g.fecha), t('inicio.llegarias', { kg: numero(pesoCorporalEn(metaKg, sistema).valor, metaKg % 1 ? 1 : 0), unidad })]
+    : g.estado === 'llegaste' && metaKg
+      ? [kg(metaKg, metaKg % 1 ? 1 : 0), t('inicio.yaLlegaste')]
+      : [g.peso === null ? '—' : kg(g.peso), t('inicio.tendencia')];
+  // Sin peso, la raya no se lee: se dice que todavía no hay pesadas.
+  const dato = cifra === '—' ? t('inicio.lector.sinPeso') : `${cifra}, ${texto}`;
   return (
-    <>
+    <Lleva a={SECCION.objetivo} alIr={alIr} etiqueta={frases(titulo, p.deEjemplo && t('inicio.ejemplo'), estado, dato)}>
       <Cabeza
-        titulo={t('inicio.bloques.objetivo')}
+        titulo={titulo}
         derecha={(
           <View style={estilos.chips}>
             {p.deEjemplo && <Chip texto={t('inicio.ejemplo')} tipo="tenue" />}
-            <Chip texto={t(`progreso.estados.${g.estado}`)} tipo={bien ? 'bien' : g.estado === 'faltanDatos' || g.estado === 'sinMeta' || g.estado === 'todaviaNo' ? 'tenue' : 'atencion'} />
+            <Chip texto={estado} tipo={bien ? 'bien' : g.estado === 'faltanDatos' || g.estado === 'sinMeta' || g.estado === 'todaviaNo' ? 'tenue' : 'atencion'} />
           </View>
         )}
       />
       <View style={estilos.objFila}>
-        {g.fecha && metaKg ? (
-          <>
-            <Text style={estilos.objCifra}>{fechaDiaMes(g.fecha)}</Text>
-            <Text style={estilos.objTexto}>{t('inicio.llegarias', { kg: numero(pesoCorporalEn(metaKg, sistema).valor, metaKg % 1 ? 1 : 0), unidad })}</Text>
-          </>
-        ) : g.estado === 'llegaste' && metaKg ? (
-          <>
-            <Text style={estilos.objCifra}>{kg(metaKg, metaKg % 1 ? 1 : 0)}</Text>
-            <Text style={estilos.objTexto}>{t('inicio.yaLlegaste')}</Text>
-          </>
-        ) : (
-          <>
-            <Text style={estilos.objCifra}>{g.peso === null ? '—' : kg(g.peso)}</Text>
-            <Text style={estilos.objTexto}>{t('inicio.tendencia')}</Text>
-          </>
-        )}
+        <Text style={estilos.objCifra}>{cifra}</Text>
+        <Text style={estilos.objTexto}>{texto}</Text>
       </View>
       {g.hecho !== null && p.pesoInicial !== null && g.peso !== null && metaKg ? (
         <Camino hecho={g.hecho} etiquetas={[numero(pesoCorporalEn(p.pesoInicial, sistema).valor, 1), numero(pesoCorporalEn(g.peso, sistema).valor, 1), numero(pesoCorporalEn(metaKg, sistema).valor, metaKg % 1 ? 1 : 0)]} />
       ) : null}
-    </>
+    </Lleva>
   );
 }
 
 // ------------------------------------------------------------------ el peso y el balance
-function Peso({ anchoGrafico }: { anchoGrafico: number }) {
+function Peso({ anchoGrafico, alIr }: { anchoGrafico: number; alIr: Ir }) {
   const p = usePersona();
   const e = useEstado();
   const sistema = sistemaDe(e);
   const v = p.pesoHoy !== null ? pesoCorporalEn(p.pesoHoy, sistema) : null;
   const cambio = p.cambio7 !== null ? pesoCorporalEn(Math.abs(p.cambio7), sistema).valor * Math.sign(p.cambio7) : null;
+  const titulo = t('inicio.bloques.peso');
+  const textoDelPeso = cambio === null ? t('inicio.tendencia') : t('inicio.enSieteDias', { n: conSigno(cambio, 1), unidad: pesoCorporalEn(1, sistema).unidad });
+  const dias = p.balance.dias.length;
+  const cifraDelBalance = e.numeros && dias > 0 && p.balance.promedio !== null ? `${conSigno(Math.round(p.balance.promedio))} ${t('inicio.kcalPorDia')}` : null;
+  const textoDelBalance = !dias ? t('progreso.sinBalance') : e.numeros ? plural('inicio.balanceCorto', dias) : plural('inicio.balanceDiasSinNumeros', dias);
+  const etiqueta = frases(
+    titulo,
+    p.deEjemplo && t('inicio.ejemplo'),
+    v ? `${numero(v.valor, 1)} ${v.unidad}, ${textoDelPeso}` : t('inicio.lector.sinPeso'),
+    p.gasto !== null && (cifraDelBalance ? `${cifraDelBalance}, ${textoDelBalance}` : textoDelBalance),
+  );
   return (
-    <>
-      <Cabeza titulo={t('inicio.bloques.peso')} derecha={p.deEjemplo ? <Chip texto={t('inicio.ejemplo')} tipo="tenue" /> : undefined} />
+    <Lleva a={SECCION.peso} alIr={alIr} etiqueta={etiqueta}>
+      <Cabeza titulo={titulo} derecha={p.deEjemplo ? <Chip texto={t('inicio.ejemplo')} tipo="tenue" /> : undefined} />
       <View style={estilos.fila}>
         <View style={estilos.dato}>
           <Text style={estilos.datoCifra}>
             {v ? numero(v.valor, 1) : '—'}
             <Text style={estilos.datoUnidad}>{v ? ` ${v.unidad}` : ''}</Text>
           </Text>
-          <Text style={estilos.datoTexto}>{cambio === null ? t('inicio.tendencia') : t('inicio.enSieteDias', { n: conSigno(cambio, 1), unidad: pesoCorporalEn(1, sistema).unidad })}</Text>
+          <Text style={estilos.datoTexto}>{textoDelPeso}</Text>
         </View>
         {/* Con una sola pesada no hay línea, solo un punto suelto. */}
         {p.serie30.filter((x) => x.punto !== null).length >= 2 && <Aparece><Linea serie={p.serie30} ancho={anchoGrafico} alto={44} /></Aparece>}
@@ -252,57 +323,62 @@ function Peso({ anchoGrafico }: { anchoGrafico: number }) {
         <View style={[estilos.fila, estilos.filaSegunda]}>
           <View style={estilos.dato}>
             {/* Sin días todavía, solo lo que falta: una raya y «kcal por día» no dicen nada. */}
-            {e.numeros && p.balance.dias.length > 0 && (
+            {e.numeros && dias > 0 && (
               <Text style={estilos.datoCifra}>
                 {p.balance.promedio === null ? '—' : conSigno(Math.round(p.balance.promedio))}
                 <Text style={estilos.datoUnidad}>{` ${t('inicio.kcalPorDia')}`}</Text>
               </Text>
             )}
-            <Text style={estilos.datoTexto}>
-              {!p.balance.dias.length
-                ? t('progreso.sinBalance')
-                : e.numeros
-                  ? plural('inicio.balanceCorto', p.balance.dias.length)
-                  : plural('inicio.balanceDiasSinNumeros', p.balance.dias.length)}
-            </Text>
+            <Text style={estilos.datoTexto}>{textoDelBalance}</Text>
           </View>
           {/* El balance llega hasta ayer (persona.ts): cada barra va en su día. */}
-          {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} hasta={sumarDias(e.hoy, -1)} gasto={p.gasto} ancho={anchoGrafico} alto={44} />}
+          {dias > 0 && <Balance dias={p.balance.dias} hasta={sumarDias(e.hoy, -1)} gasto={p.gasto} ancho={anchoGrafico} alto={44} />}
         </View>
       )}
-    </>
+    </Lleva>
   );
 }
 
 // ------------------------------------------------------------------ el día en el cielo
 /** La constelación de hoy en chico, con lo encendido: lo que llega de Salud está en Sueño y en Hábitos. */
-function Cielo({ ancho }: { ancho: number }) {
+function Cielo({ ancho, alIr }: { ancho: number; alIr: Ir }) {
   const dia = useCieloDeHoy();
   const encendidos = useEncendidos();
   const hechos = encendidos.filter(Boolean).length;
+  const titulo = t('inicio.bloques.cielo');
   return (
-    <>
-      <Cabeza titulo={t('inicio.bloques.cielo')} derecha={dia.habitos.length ? <Chip texto={t('inicio.encendidas', { n: hechos, total: dia.habitos.length })} /> : undefined} />
+    <Lleva a={SECCION.cielo} alIr={alIr} cielo etiqueta={frases(titulo, dia.habitos.length > 0 && t('inicio.lector.habitos', { n: hechos, total: dia.habitos.length }))}>
+      <Cabeza titulo={titulo} derecha={dia.habitos.length ? <Chip texto={t('inicio.encendidas', { n: hechos, total: dia.habitos.length })} /> : undefined} />
       {dia.constelacion ? <MiniCielo constelacion={dia.constelacion} encendidas={encendidos} ancho={ancho} alto={118} /> : <View style={{ height: 40 }} />}
-    </>
+    </Lleva>
   );
 }
 
 // ------------------------------------------------------------------ el sueño de anoche
-function SuenoDeAnoche({ anchoGrafico }: { anchoGrafico: number }) {
+function SuenoDeAnoche({ anchoGrafico, alIr }: { anchoGrafico: number; alIr: Ir }) {
   const s = useSueno();
   const e = useEstado();
   const noche = s.noches.find((n) => n.clave === e.hoy);
   const calidad = noche ? calidadDeNoche(noche, s.necesidad, ultimasNoches(s.noches, sumarDias(e.hoy, -1), 14)) : null;
+  const titulo = t('inicio.bloques.sueno');
+  const estimada = noche?.moss?.origen === 'estimada';
+  const horario = noche ? t('inicio.horario', { desde: horaDelDia(noche.dormirse + 18 * 60), hasta: horaDelDia(noche.despertar + 18 * 60) }) : '';
+  const etiqueta = frases(
+    titulo,
+    s.deEjemplo && t('inicio.ejemplo'),
+    estimada && t('sueno.origen.estimada'),
+    calidad && t('inicio.calidad', { n: calidad.puntos }),
+    noche ? `${duracion(noche.dormido)}, ${horario}` : t('sueno.sinNoche'),
+  );
   return (
-    <>
+    <Lleva a={SECCION.sueno} alIr={alIr} etiqueta={etiqueta}>
       <Cabeza
-        titulo={t('inicio.bloques.sueno')}
+        titulo={titulo}
         derecha={(
           <View style={estilos.chips}>
             {s.deEjemplo && <Chip texto={t('inicio.ejemplo')} tipo="tenue" />}
             {/* Sin reloj, si todavía es lo que estimó el teléfono, lo dice. */}
-            {noche?.moss?.origen === 'estimada' && <Chip texto={t('sueno.origen.estimada')} tipo="tenue" />}
+            {estimada && <Chip texto={t('sueno.origen.estimada')} tipo="tenue" />}
             {calidad && <Chip texto={t('inicio.calidad', { n: calidad.puntos })} />}
           </View>
         )}
@@ -311,14 +387,14 @@ function SuenoDeAnoche({ anchoGrafico }: { anchoGrafico: number }) {
         <View style={estilos.fila}>
           <View style={estilos.dato}>
             <Text style={estilos.datoCifra}>{duracion(noche.dormido)}</Text>
-            <Text style={estilos.datoTexto}>{t('inicio.horario', { desde: horaDelDia(noche.dormirse + 18 * 60), hasta: horaDelDia(noche.despertar + 18 * 60) })}</Text>
+            <Text style={estilos.datoTexto}>{horario}</Text>
           </View>
           <Hipnograma desde={noche.dormirse} hasta={noche.despertar} tramos={noche.tramos} ancho={anchoGrafico} alto={44} />
         </View>
       ) : (
         <Text style={estilos.nota}>{t('sueno.sinNoche')}</Text>
       )}
-    </>
+    </Lleva>
   );
 }
 
@@ -328,7 +404,7 @@ function Agua() {
   const ml = aguaDelDia(e.agua.values(), e.hoy);
   const vasos = Math.round(ml / VASO_ML);
   return (
-    <>
+    <View style={estilos.bloque}>
       <Cabeza titulo={t('inicio.bloques.agua')} />
       <View style={estilos.fila}>
         <Text style={estilos.datoCifra}>
@@ -340,10 +416,12 @@ function Agua() {
         </View>
         <Pressable
           onPress={() => {
-            elAlmacen().sumarAgua(VASO_ML);
+            const toma = elAlmacen().sumarAgua(VASO_ML);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+            // Un toque de más no queda: el aviso de la app lo deshace, como en el «+».
+            avisar(t('mas.vasoSumado'), () => elAlmacen().quitarAgua(toma.id));
           }}
-          style={estilos.aguaMas}
+          style={({ pressed }) => [estilos.aguaMas, pressed && estilos.botonApretado]}
           accessibilityRole="button"
           accessibilityLabel={t('mas.sumarVaso')}
           hitSlop={6}
@@ -351,14 +429,16 @@ function Agua() {
           <Icono nombre="plus" tam={15} peso="semibold" />
         </Pressable>
       </View>
-    </>
+    </View>
   );
 }
 
 // ------------------------------------------------------------------ personalizar
+/** El alto de cada fila con el texto de siempre; con el texto grande, todas crecen hasta la más alta. */
 const ALTO_FILA = 56;
+const LADO_CERRAR = 32;
 
-/** Una hoja con los bloques: la llave muestra u oculta, y se ordenan arrastrando de la manija. */
+/** Una hoja con los bloques: la llave muestra u oculta, y se ordenan arrastrando de la manija (o, con VoiceOver, con «Subir» y «Bajar»). */
 function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean; orden: Bloque[]; visibles: Set<Bloque>; alCerrar: () => void }) {
   const insets = useSafeAreaInsets();
   const arrastrada = useSharedValue(-1);
@@ -377,14 +457,27 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
   useEffect(() => {
     if (abierta) reiniciar();
   }, [abierta, reiniciar]);
+  // Es un Modal propio: un aviso o un widget que llevan a otro lado también la cierran.
+  useCerrarConLasCapas(abierta, alCerrar);
+  // Las filas van una debajo de otra con el mismo alto (así arrastrar cuenta de a una fila): el de la
+  // que más necesita, que con el texto grande pasa de los 56.
+  const [altosDelNombre, setAltosDelNombre] = useState<Partial<Record<Bloque, number>>>({});
+  const alto = Math.max(ALTO_FILA, ...orden.map((b) => (altosDelNombre[b] ?? 0) + 24));
+  const medir = (b: Bloque, h: number) => setAltosDelNombre((antes) => (antes[b] === h ? antes : { ...antes, [b]: h }));
   const guardar = (o: Bloque[], v: Set<Bloque>) => elAlmacen().ponerInicio({ orden: o, visibles: o.filter((b) => v.has(b)) });
   const mover = (desde: number, hasta: number) => {
-    if (desde === hasta) return;
+    if (desde === hasta || hasta < 0 || hasta >= orden.length) return;
     const nuevo = [...orden];
     const [b] = nuevo.splice(desde, 1);
     nuevo.splice(hasta, 0, b);
     Haptics.selectionAsync().catch(() => {});
     guardar(nuevo, visibles);
+  };
+  // Con VoiceOver se ordena con las acciones de la manija: dice dónde quedó.
+  const moverConElLector = (desde: number, hasta: number) => {
+    if (hasta < 0 || hasta >= orden.length) return;
+    mover(desde, hasta);
+    anunciar(t('inicio.lugar', { n: hasta + 1, total: orden.length }));
   };
   return (
     <Modal visible={abierta} transparent animationType={reducido ? 'fade' : 'slide'} onRequestClose={alCerrar}>
@@ -396,25 +489,34 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
           <View style={estilos.asa} />
           <View style={estilos.hojaCabeza}>
             <Text style={estilos.hojaTitulo}>{t('inicio.personalizarTitulo')}</Text>
-            <Pressable onPress={alCerrar} style={estilos.cerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')}>
+            <Pressable
+              onPress={alCerrar}
+              style={({ pressed }) => [estilos.cerrar, pressed && estilos.botonApretado]}
+              hitSlop={margenDeToque(LADO_CERRAR)}
+              accessibilityRole="button"
+              accessibilityLabel={t('comida.cerrar')}
+            >
               <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
             </Pressable>
           </View>
           <Text style={estilos.hojaTexto}>{t('inicio.personalizarTexto')}</Text>
           </CabezaQueBaja>
-          <View style={{ height: ALTO_FILA * orden.length }}>
+          <View style={{ height: alto * orden.length }}>
             {orden.map((b, i) => (
               <FilaDeOrden
                 key={b}
                 bloque={b}
                 indice={i}
                 total={orden.length}
+                alto={alto}
                 visible={visibles.has(b)}
                 arrastrada={arrastrada}
                 dy={dy}
                 version={version}
                 versionDelArrastre={versionDelArrastre}
                 alMover={mover}
+                alMoverConElLector={moverConElLector}
+                alMedirElNombre={(h) => medir(b, h)}
                 alCambiar={(si) => {
                   const v = new Set(visibles);
                   if (si) v.add(b);
@@ -432,10 +534,12 @@ function Personalizar({ abierta, orden, visibles, alCerrar }: { abierta: boolean
 }
 
 function FilaDeOrden(p: {
-  bloque: Bloque; indice: number; total: number; visible: boolean; arrastrada: SharedValue<number>; dy: SharedValue<number>;
-  version: string; versionDelArrastre: SharedValue<string>; alMover: (desde: number, hasta: number) => void; alCambiar: (si: boolean) => void;
+  bloque: Bloque; indice: number; total: number; alto: number; visible: boolean; arrastrada: SharedValue<number>; dy: SharedValue<number>;
+  version: string; versionDelArrastre: SharedValue<string>; alMover: (desde: number, hasta: number) => void; alMoverConElLector: (desde: number, hasta: number) => void;
+  alMedirElNombre: (alto: number) => void; alCambiar: (si: boolean) => void;
 }) {
-  const { indice, total, arrastrada, dy, version, versionDelArrastre, alMover } = p;
+  const { indice, total, alto, arrastrada, dy, version, versionDelArrastre, alMover } = p;
+  const nombre = t(`inicio.bloques.${p.bloque}`);
   const pan = usePanGesture({
     onActivate: () => {
       'worklet';
@@ -449,9 +553,9 @@ function FilaDeOrden(p: {
     },
     onDeactivate: (ev) => {
       'worklet';
-      const hasta = Math.max(0, Math.min(total - 1, indice + Math.round(ev.translationY / ALTO_FILA)));
+      const hasta = Math.max(0, Math.min(total - 1, indice + Math.round(ev.translationY / alto)));
       // Se suelta en su lugar nuevo y ahí queda hasta que llega el orden nuevo; sin moverse, vuelve al suyo.
-      dy.set(withTiming((hasta - indice) * ALTO_FILA, { duration: 150 }, (terminado) => {
+      dy.set(withTiming((hasta - indice) * alto, { duration: 150 }, (terminado) => {
         if (hasta !== indice) scheduleOnRN(alMover, indice, hasta);
         else if (terminado) arrastrada.set(-1);
       }));
@@ -463,19 +567,30 @@ function FilaDeOrden(p: {
     if (a >= 0 && versionDelArrastre.get() !== version) return { transform: [{ translateY: 0 }], zIndex: 1, opacity: 1 };
     if (a === indice) return { transform: [{ translateY: dy.get() }], zIndex: 2, opacity: 0.95 };
     if (a < 0) return { transform: [{ translateY: withTiming(0, { duration: 150 }) }], zIndex: 1, opacity: 1 };
-    const hasta = Math.max(0, Math.min(total - 1, a + Math.round(dy.get() / ALTO_FILA)));
-    const corre = a < hasta ? (indice > a && indice <= hasta ? -ALTO_FILA : 0) : indice < a && indice >= hasta ? ALTO_FILA : 0;
+    const hasta = Math.max(0, Math.min(total - 1, a + Math.round(dy.get() / alto)));
+    const corre = a < hasta ? (indice > a && indice <= hasta ? -alto : 0) : indice < a && indice >= hasta ? alto : 0;
     return { transform: [{ translateY: withTiming(corre, { duration: 150 }) }], zIndex: 1, opacity: 1 };
   });
+  const acciones = [
+    ...(indice > 0 ? [{ name: 'subir', label: t('inicio.subir') }] : []),
+    ...(indice < total - 1 ? [{ name: 'bajar', label: t('inicio.bajar') }] : []),
+  ];
   return (
-    <Animated.View style={[estilos.filaOrden, { top: indice * ALTO_FILA }, estilo]}>
+    <Animated.View style={[estilos.filaOrden, { top: indice * alto, height: alto }, estilo]}>
       <GestureDetector gesture={pan}>
-        <View style={estilos.manija} accessibilityLabel={t('inicio.mover')}>
+        {/* Ordenar era solo arrastrando: VoiceOver lo hace con las acciones «Subir» y «Bajar» de la manija. */}
+        <View
+          style={estilos.manija}
+          accessible
+          accessibilityLabel={t('inicio.moverBloque', { bloque: nombre })}
+          accessibilityActions={acciones}
+          onAccessibilityAction={(ev) => p.alMoverConElLector(indice, ev.nativeEvent.actionName === 'subir' ? indice - 1 : indice + 1)}
+        >
           <Icono nombre="line.3.horizontal" tam={16} color="rgba(239, 230, 207, 0.45)" />
         </View>
       </GestureDetector>
-      <Text style={estilos.filaNombre}>{t(`inicio.bloques.${p.bloque}`)}</Text>
-      <Switch value={p.visible} onValueChange={p.alCambiar} trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }} thumbColor={colores.pergamino} accessibilityLabel={t(`inicio.bloques.${p.bloque}`)} />
+      <Text style={estilos.filaNombre} maxFontSizeMultiplier={1.6} onLayout={(ev) => p.alMedirElNombre(ev.nativeEvent.layout.height)}>{nombre}</Text>
+      <Switch value={p.visible} onValueChange={p.alCambiar} trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }} thumbColor={colores.pergamino} accessibilityLabel={nombre} />
     </Animated.View>
   );
 }
@@ -486,6 +601,7 @@ const estilos = StyleSheet.create({
   bloque: { marginTop: 12, borderRadius: 20, paddingTop: 14, paddingHorizontal: 16, paddingBottom: 15, backgroundColor: 'rgba(8, 12, 26, 0.72)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', gap: 6 },
   bloqueCielo: { backgroundColor: 'rgba(14, 22, 48, 0.82)' },
   apretado: { opacity: 0.85 },
+  botonApretado: { opacity: 0.6, transform: [{ scale: 0.94 }] },
   cabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 26 },
   cabezaTitulo: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.6, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.6)' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
@@ -530,10 +646,10 @@ const estilos = StyleSheet.create({
   hojaArriba: { marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 8 },
   hojaCabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   hojaTitulo: { fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino },
-  cerrar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
+  cerrar: { width: LADO_CERRAR, height: LADO_CERRAR, borderRadius: LADO_CERRAR / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   hojaTexto: { marginTop: 6, marginBottom: 10, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
   hojaNota: { marginTop: 12, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.5)' },
-  filaOrden: { position: 'absolute', left: 0, right: 0, height: ALTO_FILA, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)', backgroundColor: '#0f1631' },
+  filaOrden: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)', backgroundColor: '#0f1631' },
   manija: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
   filaNombre: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
 });

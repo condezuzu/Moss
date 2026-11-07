@@ -45,6 +45,7 @@ const Mas = (() => {
     }
 
     function pintar() {
+      if (h.contains(document.activeElement)) document.activeElement.blur();
       h.innerHTML = '';
       h.dataset.vista = s.vista;
       h.appendChild(el('div', 'hb-asa'));
@@ -107,11 +108,32 @@ const Mas = (() => {
       agua.innerHTML = icono('gota');
       const txt = el('span', 'mas-agua-txt');
       txt.append(tx('mas.agua'), el('b', null, `${Porciones.decimal(a.litros, u.idioma())} L`));
-      agua.append(txt, boton('mas-agua-mas', icono('mas'), () => {
+      // Lo que hay de agua cambia con un fundido corto, para arriba al sumar y para abajo al quitar.
+      const ponerLitros = (sube) => {
+        const b = txt.querySelector('b');
+        b.textContent = `${Porciones.decimal(comida.agua().litros, u.idioma())} L`;
+        b.classList.remove('dt-sube', 'dt-baja');
+        void b.offsetWidth;
+        b.classList.add(sube ? 'dt-sube' : 'dt-baja');
+      };
+      const sumarVaso = boton('mas-agua-mas', icono('mas'), () => {
         comida.sumarAgua();
-        txt.querySelector('b').textContent = `${Porciones.decimal(comida.agua().litros, u.idioma())} L`;
-        aviso(tx('mas.vasoSumado'), () => { comida.quitarAgua(); txt.querySelector('b').textContent = `${Porciones.decimal(comida.agua().litros, u.idioma())} L`; });
-      }, tx('mas.sumarVaso')));
+        ponerLitros(true);
+        aviso(tx('mas.vasoSumado'), () => { comida.quitarAgua(); ponerLitros(false); });
+      }, tx('mas.sumarVaso'));
+      sumarVaso.setAttribute('aria-description', tx('mas.mantenerParaQuitar'));
+      agua.append(txt, sumarVaso);
+      // Restar un vaso (6/11, para aprobar): mantener apretado el agua quita el último de hoy, con «Deshacer».
+      Detalles.mantener(agua, {
+        alMantener: () => {
+          if (!comida.agua().vasos) return;
+          comida.quitarAgua();
+          comida.contarToque();
+          ponerLitros(false);
+          if (opciones.haptico) opciones.haptico('toque');
+          aviso(tx('mas.vasoQuitado'), () => { comida.sumarAgua(); ponerLitros(true); });
+        },
+      });
       rapidos.appendChild(agua);
       h.appendChild(rapidos);
 
@@ -164,8 +186,13 @@ const Mas = (() => {
       entrada.setAttribute('aria-label', tx('mas.registrarPeso'));
       const poner = () => { entrada.value = Porciones.decimal(Math.round(kg * 10) / 10, u.idioma()); };
       entrada.addEventListener('input', () => { const n = Number(entrada.value.replace(',', '.')); if (n > 0) kg = n; });
-      cifra.append(boton('fi-paso', icono('menos'), () => { kg = Math.max(20, kg - 0.1); poner(); }, '−0,1'), entrada, el('span', null, 'kg'), boton('fi-paso', icono('mas'), () => { kg = Math.min(400, kg + 0.1); poner(); }, '+0,1'));
+      entrada.addEventListener('focus', () => requestAnimationFrame(() => entrada.select()));
+      // Con el teclado arriba, los botones de al lado no le sacan el foco al número.
+      const sinFoco = (b) => { b.addEventListener('pointerdown', (ev) => { if (document.activeElement === entrada) ev.preventDefault(); }); return b; };
+      cifra.append(sinFoco(boton('fi-paso', icono('menos'), () => { kg = Math.max(20, kg - 0.1); poner(); }, '−0,1')), entrada, el('span', null, 'kg'), sinFoco(boton('fi-paso', icono('mas'), () => { kg = Math.min(400, kg + 0.1); poner(); }, '+0,1')));
       poner();
+      // «Listo» arriba del teclado de números (6/11, para aprobar).
+      if (opciones.teclado) opciones.teclado.encadenar([entrada], { contenedor: h });
       cuerpo.append(cifra, el('p', 'mas-peso-dia', tx('mas.pesoHoy')));
       const datos = el('div', 'mas-peso-datos');
       if (ultima) datos.append(el('span', null, tx('mas.ultimoPeso', { cuando: u.fechaCorta(ultima.fecha), peso: `${numero(ultima.kg, 1)} kg` })));
@@ -225,6 +252,7 @@ const Mas = (() => {
         b.disabled = !v.kcal;
       }
       pintarBoton();
+      if (opciones.teclado) opciones.teclado.encadenar([campos.nombre, campos.kcal, campos.p, campos.c, campos.g], { contenedor: h });
     }
 
     // ------------------------------------------------------------ las medidas del cuerpo
@@ -255,6 +283,7 @@ const Mas = (() => {
 
       const campos = el('div', 'mas-campos');
       const usadas = sexo === 'm' ? ['cintura', 'cuello'] : ['cintura', 'cuello', 'cadera'];
+      const entradas = [];
       Cuerpo.SITIOS.forEach((sitio) => {
         const f = el('label', 'cr-campo mas-campo' + (usadas.includes(sitio) ? ' usada' : ''));
         f.dataset.sitio = sitio;
@@ -275,8 +304,11 @@ const Mas = (() => {
         f.append(nombre, input, el('em', null, 'cm'));
         f.addEventListener('click', () => elegir(sitio));
         campos.appendChild(f);
+        entradas.push(input);
       });
       cuerpo.appendChild(campos);
+      // «Siguiente» pasa a la medida que sigue (y la cinta del dibujo con ella); «Listo» en la última.
+      if (opciones.teclado) opciones.teclado.encadenar(entradas, { contenedor: h });
       cuerpo.appendChild(el('p', 'cr-nota', tx(sexo === 'm' ? 'cuerpo.usaHombre' : 'cuerpo.usaMujer')));
 
       const resultado = el('article', 'mas-grasa');
@@ -344,12 +376,14 @@ const Mas = (() => {
       get vista() { return s.vista; },
       // Para las capturas y los botones de la galería.
       ir(vista) { if (!hoja.abierta) abrir(); ir(vista); },
-      medir(sitio, cm) {
+      medir(sitio, cm, conTeclado) {
         const f = h.querySelector(`.mas-campo[data-sitio="${sitio}"] input`);
         if (!f) return;
         f.focus({ preventScroll: true });
         f.value = Porciones.decimal(cm, u.idioma());
         f.dispatchEvent(new Event('input'));
+        // Para las capturas de siempre, sin el teclado (que tapa la grasa estimada).
+        if (!conTeclado) f.blur();
       },
       bajar() { const c = h.querySelector('.mas-cuerpo'); if (c) c.scrollTo(0, 99999); },
       tocarReciente() { const b = h.querySelector('.mas-chip'); if (b) b.click(); },

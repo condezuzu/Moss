@@ -17,8 +17,10 @@ import { abrirLaApp, hayAscent, irALaAppStore } from '@/lib/ascent';
 import { sesionDeAscent, vigente, type SesionCompartida } from '@/lib/llavero';
 import { lista, t } from '@/textos';
 import { letras } from '@/tema';
+import { anunciar } from '../anuncio';
 import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
 import { Icono } from '../comida/comunes';
+import { useCerrarConLasCapas } from '../HojaModal';
 import { MarcaDeAscent } from '../MarcaDeAscent';
 import { Aparece } from '../tarjetas';
 import { useCampoALaVista } from '../teclado';
@@ -29,6 +31,20 @@ type DelIphone = 'mirando' | 'sesion' | 'sinSesion' | 'sinAscent';
 type Error = { de: 'llavero' | 'correo'; cual: ErrorDeEntrar };
 
 const DEGRADE = 'linear-gradient(180deg, #0d1018 0%, #07080d 100%)';
+
+/** Lo que se espera a vincular: sin respuesta, es la conexión (antes esperaba para siempre). */
+const ESPERA_A_VINCULAR = 15_000;
+
+type AlVincular = { ok: true } | { ok: false; error: ErrorDeEntrar };
+
+/** Lo que contesta, o el error de red si no contesta a tiempo. */
+function aTiempo(promesa: Promise<AlVincular>): Promise<AlVincular> {
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  const tope = new Promise<AlVincular>((listo) => {
+    reloj = setTimeout(() => listo({ ok: false, error: 'red' }), ESPERA_A_VINCULAR);
+  });
+  return Promise.race([promesa, tope]).finally(() => clearTimeout(reloj));
+}
 
 /** `alCerrar(true)` cuando quedó vinculada: la sección hace entrar la luna en la órbita. */
 export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerrar: (vinculada: boolean) => void }) {
@@ -52,6 +68,16 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
   }, [abierta, reiniciar]);
   // El correo y la clave van al final: con el teclado, el scroll los trae.
   useCampoALaVista(hoja.scroll, hoja.scrollY);
+  // Un Modal propio: un aviso o un widget que llevan a otro lado también lo cierran.
+  useCerrarConLasCapas(abierta, () => alCerrar(false));
+  // Lo que contesta con la hoja ya cerrada (o con otra abierta) no se muestra ni la cierra.
+  const sigueAbierta = useRef(abierta);
+  useEffect(() => {
+    sigueAbierta.current = abierta;
+    return () => {
+      sigueAbierta.current = false;
+    };
+  }, [abierta]);
 
   // El llavero se mira al abrir y al volver de Ascent: al entrar, Ascent deja ahí su sesión.
   useEffect(() => {
@@ -79,23 +105,34 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     alCerrar(true);
   };
-  const conLlavero = async () => {
-    if (!sesion || vinculando) return;
-    setVinculando('llavero');
+  const enCamino = useRef(false);
+  const vincular = async (de: Error['de'], hacer: () => Promise<AlVincular>) => {
+    if (enCamino.current) return;
+    enCamino.current = true;
+    setVinculando(de);
     setError(null);
-    const r = await deAscent().vincular(sesion.token).catch(() => ({ ok: false as const, error: 'red' as const }));
+    const r = await aTiempo(hacer().catch((): AlVincular => ({ ok: false, error: 'red' })));
+    enCamino.current = false;
     setVinculando(null);
+    if (!sigueAbierta.current) return;
     if (r.ok) listo();
-    else setError({ de: 'llavero', cual: r.error });
+    else {
+      setError({ de, cual: r.error });
+      anunciar(t(`ascent.vincularHoja.errores.${r.error}`));
+    }
   };
-  const entrar = async () => {
-    if (vinculando || !correo.trim() || !clave) return;
-    setVinculando('correo');
-    setError(null);
-    const r = await vincularConCorreo(correo, clave);
-    setVinculando(null);
-    if (r.ok) listo();
-    else setError({ de: 'correo', cual: r.error });
+  const conLlavero = () => {
+    if (!sesion) return;
+    const token = sesion.token;
+    vincular('llavero', async () => {
+      const r = await deAscent().vincular(token);
+      return r.ok ? { ok: true } : r;
+    }).catch(() => {});
+  };
+  const sinDatos = !correo.trim() || !clave;
+  const entrar = () => {
+    if (sinDatos) return;
+    vincular('correo', () => vincularConCorreo(correo, clave)).catch(() => {});
   };
   const flecha = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(conCorreo ? '90deg' : '0deg', { duration: reducido ? 0 : 220 }) }] }));
 
@@ -122,7 +159,7 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
               </Pressable>
             </View>
             </CabezaQueBaja>
-            <ScrollQueBaja arrastre={hoja} contentContainerStyle={[st.cuerpo, { paddingBottom: insets.bottom + 18 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
+            <ScrollQueBaja arrastre={hoja} contentContainerStyle={[st.cuerpo, { paddingBottom: insets.bottom + 18 }]} showsVerticalScrollIndicator={false} scrollsToTop={false}>
               <Aparece key={vista} style={st.cuenta}>
                 <MarcaDeAscent tam={52} />
                 <View style={st.quien}>
@@ -186,6 +223,8 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                     placeholderTextColor={C.sub}
                     style={st.campo}
                     keyboardType="email-address"
+                    keyboardAppearance="dark"
+                    clearButtonMode="while-editing"
                     autoCapitalize="none"
                     autoCorrect={false}
                     autoComplete="email"
@@ -205,6 +244,7 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                     placeholderTextColor={C.sub}
                     style={st.campo}
                     secureTextEntry
+                    keyboardAppearance="dark"
                     autoCapitalize="none"
                     autoComplete="current-password"
                     textContentType="password"
@@ -216,10 +256,10 @@ export function HojaDeVincular({ abierta, alCerrar }: { abierta: boolean; alCerr
                   {aviso('correo')}
                   <Pressable
                     onPress={entrar}
-                    disabled={!!vinculando}
-                    style={({ pressed }) => [st.entrar, pressed && st.entrarApretado, (!correo.trim() || !clave || !!vinculando) && st.apagado]}
+                    disabled={sinDatos || !!vinculando}
+                    style={({ pressed }) => [st.entrar, pressed && st.entrarApretado, (sinDatos || !!vinculando) && st.apagado]}
                     accessibilityRole="button"
-                    accessibilityState={{ disabled: !!vinculando }}
+                    accessibilityState={{ disabled: sinDatos || !!vinculando, busy: vinculando === 'correo' }}
                   >
                     <Text style={st.entrarTexto}>{t(vinculando === 'correo' ? 'ascent.vincularHoja.vinculando' : 'ascent.vincularHoja.entrar')}</Text>
                   </Pressable>

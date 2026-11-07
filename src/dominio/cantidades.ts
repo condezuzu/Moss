@@ -130,12 +130,14 @@ export function pesoCorporalEn(kg: number, s: Sistema): { valor: number; unidad:
 export const aKg = (valor: number, s: Sistema) => (s === 'imperial' ? valor * KG_POR_LIBRA : valor);
 
 /**
- * El peso que guarda la hoja del «+», en kg con un decimal: lo escrito si se escribió, o lo de los
- * pasos. Lo escrito vacío o sin número no es el peso de antes: es nada, y no se guarda.
+ * El peso que guarda la hoja del «+», en kg con un decimal (en libras, con dos): lo escrito si se
+ * escribió, o lo de los pasos. Lo escrito vacío o sin número no es el peso de antes: es nada, y no se guarda.
  */
 export function pesoParaGuardar(escrito: string | null, valor: number, s: Sistema): number | null {
   const n = escrito === null ? valor : escrito.trim() ? Number(escrito.trim().replace(',', '.')) : NaN;
-  const kg = Math.round(aKg(n, s) * 10) / 10;
+  // Una décima de kilo son 0,22 lb: redondeadas así, 160 lb volvían como 160,1 y los pasos de 0,1 lb
+  // saltaban. Con una centésima (0,02 lb) vuelve lo mismo que se escribió.
+  const kg = s === 'imperial' ? Math.round(aKg(n, s) * 100) / 100 : Math.round(n * 10) / 10;
   return Number.isFinite(kg) && kg >= 20 && kg <= 400 ? kg : null;
 }
 

@@ -5,14 +5,17 @@
 // Moss. Las metas están en Progreso, con la estrategia.
 
 import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import type { SFSymbol } from 'expo-symbols';
-import { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AlertButton } from 'react-native';
+import * as Updates from 'expo-updates';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, AppState, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AlertButton, type ScrollViewInstance } from 'react-native';
+import Animated, { LayoutAnimationConfig, useReducedMotion } from 'react-native-reanimated';
 
-import { actualizarSalud, elAlmacen } from '@/almacen';
+import { actualizarSalud, elAlmacen, oirLaSesion } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
-import { abrirPagina } from '@/lib/sitio';
+import { abrirPagina, CORREO } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
 import { CM_POR_PULGADA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
@@ -20,23 +23,27 @@ import type { Comida } from '@/dominio/comidas';
 import { CORTE_DE_FABRICA, CORTES, type DiaSemana } from '@/dominio/fechas';
 import { edadDe, RANGOS_DEL_CUESTIONARIO, type Actividad, type Perfil as DatosDelPerfil, type Sexo } from '@/dominio/metas';
 import { LARGO_DEL_NOMBRE } from '@/dominio/nombre';
-import { algunAviso, conLoQueFalta, horaDeReloj, horasDeComida, pedirPermisoDeAvisos, suenoParaAvisos } from '@/recordatorios/programar';
+import { algunAviso, conLoQueFalta, horaDeReloj, horasDeComida, pedirPermisoDeAvisosConMotivo, suenoParaAvisos } from '@/recordatorios/programar';
 import { duerme, horasDeSueno, MAXIMO_POR_DIA } from '@/dominio/avisos';
 import { aprenderPersonal, LATENCIAS } from '@/dominio/sinReloj';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { anunciar } from '../anuncio';
+import { alTocarDeNuevo, useEsLaActual } from '../arriba';
+import { PESTANAS } from '../Barra';
 import { Boton, Icono, Pastilla } from '../comida/comunes';
 import { duracion, numero, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
+import { BotonDePaso } from '../paso';
 import { aparatoPrincipal, Aparatos } from './Aparatos';
 import { useFilaDeAscent } from '../ascent/filaDePerfil';
 import { hayCompras, useEstadoDePremium } from '@/lib/premium';
 import { avisoAlBorrarLaCuenta, HojaDeSuscripcion, valorDeSuscripcion } from '../premium/Premium';
-import { Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
-import { borrarLaCuenta, borrarMisDatos, correoDeLaCuenta, exportarTodo, salirDeLaCuenta } from './cuenta';
+import { ACOMODA, Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
+import { borrarLaCuenta, borrarMisDatos, correoDeLaCuenta, correoSabido, exportarTodo, salirDeLaCuenta } from './cuenta';
 import { borrarFotoDePerfil, elegirFotoDePerfil, fotoDePerfil, guardarFotoDePerfil, hayFotoDePerfil } from './foto';
 import { Avatar, Persona } from './Persona';
 
@@ -52,24 +59,79 @@ const FUNCIONES_CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'protein
   { clave: 'gimnasio', icono: 'star' },
 ];
 
+/** La versión, la de abajo de Perfil y la del correo de ayuda: «1.0.0 (6)». */
+const VERSION = `${Constants.expoConfig?.version ?? '1.0.0'} (${Constants.expoConfig?.ios?.buildNumber ?? '1'})`;
+
+/**
+ * «Ayuda y contacto»: un correo con lo que ayuda a encontrar un problema (la versión, la actualización, el
+ * iPhone y iOS); sin Mail, la página de contacto, como antes. Se abre directo: canOpenURL dice que no a
+ * los esquemas que no están en LSApplicationQueriesSchemes (app.json), y eso pide otra build.
+ */
+function escribirnos() {
+  const cuerpo = t('perfil.correo.cuerpo', {
+    version: VERSION,
+    actualizacion: Updates.updateId?.slice(0, 8) ?? '—',
+    modelo: Device.modelName ?? Device.modelId ?? 'iPhone',
+    ios: Device.osVersion ?? String(Platform.Version),
+  });
+  const url = `mailto:${CORREO}?subject=${encodeURIComponent(t('perfil.correo.asunto'))}&body=${encodeURIComponent(cuerpo)}`;
+  Linking.openURL(url).catch(() => abrirPagina('contacto'));
+}
+
+/** Con Salud ya pedida, iOS no vuelve a preguntar: «Conectada» abre Salud, donde se cambia qué lee Moss. Sin Salud, nada. */
+function abrirSalud() {
+  Linking.openURL('x-apple-health://').catch(() => {});
+}
+
+const PERFIL = PESTANAS.indexOf('perfil');
+
+/** «Edad» → «edad», para «Menos edad». */
+const minuscula = (texto: string) => texto.charAt(0).toLocaleLowerCase() + texto.slice(1);
+
 export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
   const e = useEstado();
   const ascent = useFilaDeAscent();
   const sistema = sistemaDe(e);
-  const [correo, setCorreo] = useState<string | null>(null);
+  // undefined mientras no se sabe: Persona no dice «Sin cuenta» un instante antes del correo.
+  const [correo, setCorreo] = useState<string | null | undefined>(correoSabido);
+  const conCuenta = correo !== null && correo !== undefined;
   const [salud, setSalud] = useState(false);
   const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | 'suscripcion' | null>(null);
   // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
   const [foto, setFoto] = useState(fotoDePerfil);
   const premium = useEstadoDePremium();
+  const scroll = useRef<ScrollViewInstance>(null);
+  const reducido = useReducedMotion();
+  // Solo el scroll de la sección que se ve sube con un toque en la hora; tocar otra vez la pestaña, arriba de todo.
+  const esLaActual = useEsLaActual(PERFIL);
+  useEffect(() => alTocarDeNuevo(PERFIL, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido]);
   useEffect(() => {
-    correoDeLaCuenta().then(setCorreo).catch(() => {});
+    let vigente = true;
+    let vez = 0;
+    // El correo cambia con la sesión (al entrar, al salir, al renovarla cuando vuelve la conexión) y se
+    // vuelve a mirar al volver a Moss: vale lo último que se pidió.
+    const leer = () => {
+      const esta = ++vez;
+      correoDeLaCuenta().then((c) => {
+        if (vigente && esta === vez) setCorreo(c);
+      }).catch(() => {});
+    };
+    leer();
+    const dejar = oirLaSesion(leer);
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') leer();
+    });
     saludPedida().then(setSalud).catch(() => {});
+    return () => {
+      vigente = false;
+      dejar();
+      sub.remove();
+    };
   }, []);
 
   const p = e.perfil;
   const altura = (cm: number) => (sistema === 'imperial' ? piesYPulgadas(cm) : `${numero(cm)} cm`);
-  // false es un error; null, que se canceló (la hoja de Apple al borrar la cuenta): no se dice nada.
+  // false es un error; null, que se canceló (la hoja de Apple al borrar la cuenta) o que ya estaba en camino: no se dice nada.
   const confirmar = (titulo: string, texto: string, accion: () => Promise<boolean | null | void>, otros: AlertButton[] = []) =>
     Alert.alert(titulo, texto, [
       { text: t('comun.cancelar'), style: 'cancel' },
@@ -82,6 +144,10 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
     ...(haySalud() ? [{
       clave: 'salud', titulo: t('perfil.salud'), valor: salud ? t('perfil.conectada') : t('perfil.conectar'), tipo: salud ? 'ok' as const : 'accion' as const,
       alTocar: () => {
+        if (salud) {
+          abrirSalud();
+          return;
+        }
         pedirPermisos().then((si) => {
           setSalud(si);
           if (si) actualizarSalud().catch(() => {});
@@ -120,7 +186,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
     ]],
     ...(CON_ASCENT ? [] : [conexiones]),
     ['perfil.tusDatosParaLlevar', [
-      { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', alTocar: () => { exportarTodo(e.hoy).catch(() => avisar(t('perfil.errorBorrar'))); } },
+      { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', alTocar: () => { exportarTodo(e.hoy).catch(() => avisar(t('perfil.errorExportar'))); } },
       { clave: 'privacidad', titulo: t('perfil.privacidad'), alTocar: () => setHoja('privacidad') },
       // Sin la cuenta, y solo si se elige (guía 5.1.1 de Apple): src/almacen/buzon.ts.
       {
@@ -129,90 +195,103 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       },
       { clave: 'politica', titulo: t('perfil.politica'), alTocar: () => abrirPagina('privacidad') },
       { clave: 'terminos', titulo: t('perfil.terminos'), alTocar: () => abrirPagina('terminos') },
-      { clave: 'contacto', titulo: t('perfil.contacto'), alTocar: () => abrirPagina('contacto') },
+      { clave: 'contacto', titulo: t('perfil.contacto'), alTocar: escribirnos },
       { clave: 'borrarDatos', titulo: t('perfil.borrarDatos'), tipo: 'peligro', alTocar: () => confirmar(t('perfil.borrarDatosTitulo'), t('perfil.borrarDatosTexto'), borrarMisDatos) },
-      ...(correo !== null ? [{ clave: 'borrarCuenta', titulo: t('perfil.borrarCuenta'), tipo: 'peligro' as const, alTocar: () => {
+      ...(conCuenta ? [{ clave: 'borrarCuenta', titulo: t('perfil.borrarCuenta'), tipo: 'peligro' as const, alTocar: () => {
         const aviso = avisoAlBorrarLaCuenta(ascent.tipo === 'ok' ? `${t('perfil.borrarCuentaTexto')} ${t('perfil.borrarCuentaConAscent')}` : t('perfil.borrarCuentaTexto'));
         confirmar(t('perfil.borrarCuentaTitulo'), aviso.texto, borrarLaCuenta, aviso.botones);
       } }] : []),
     ]],
   ];
-  const version = `${Constants.expoConfig?.version ?? '1.0.0'} (${Constants.expoConfig?.ios?.buildNumber ?? '1'})`;
 
   return (
     <View style={{ width: ancho }}>
-      <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
-        <Persona nombre={e.nombre?.valor ?? ''} correo={correo} foto={foto} alTocar={() => setHoja('editar')} />
-        {grupos.filter(([, filas]) => filas.length).map(([titulo, filas]) => (
-          <View key={titulo}>
-            <Text style={st.grupo}>{t(titulo as 'perfil.tusDatos')}</Text>
-            <View style={st.lista}>
-              {filas.map((f, i) => (
-                <Pressable
-                  key={f.clave}
-                  onPress={f.alTocar}
-                  disabled={!f.alTocar}
-                  style={({ pressed }) => [st.fila, i > 0 && st.filaSeparada, pressed && { opacity: 0.7 }]}
-                  accessibilityRole={f.alTocar ? 'button' : 'text'}
-                >
-                  <View style={st.filaTextos}>
-                    <Text style={[st.filaTitulo, f.tipo === 'peligro' && st.peligro]}>{f.titulo}</Text>
-                    {f.detalle ? <Aparece><Text style={st.filaDetalle}>{f.detalle}</Text></Aparece> : null}
-                  </View>
-                  {f.valor ? <Text style={[st.filaValor, f.tipo === 'ok' && { color: colores.salvia }, f.tipo === 'accion' && { color: colores.oroClaro }]}>{f.valor}</Text> : null}
-                  {f.alTocar && f.tipo !== 'peligro' ? <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" /> : null}
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        ))}
-        <Text style={st.grupo}>{t('perfil.creditos')}</Text>
-        <View style={st.lista}>
-          {(['usda', 'off', 'taco', 'ciqual', 'cofid', 'estrellas'] as const).map((f, i) => (
-            <Text key={f} style={[st.credito, i > 0 && st.filaSeparada]}>{t(`perfil.fuentes.${f}`)}</Text>
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
+        showsVerticalScrollIndicator={false}
+        scrollsToTop={esLaActual}
+      >
+        <Persona nombre={e.nombre?.valor ?? ''} correo={correo === undefined ? '' : correo} foto={foto} alTocar={() => setHoja('editar')} />
+        {/* Al armar Perfil todo está en su lugar (y al irse, se va entero); en el medio, lo que aparece (la fila
+            de borrar la cuenta cuando llega el correo, un detalle) entra con un fundido y lo de abajo se acomoda. */}
+        <LayoutAnimationConfig skipEntering skipExiting>
+          {grupos.filter(([, filas]) => filas.length).map(([titulo, filas]) => (
+            <Aparece key={titulo}>
+              <Text style={st.grupo}>{t(titulo as 'perfil.tusDatos')}</Text>
+              <Animated.View layout={ACOMODA} style={st.lista}>
+                {filas.map((f, i) => (
+                  <Aparece key={f.clave} style={i > 0 && st.filaSeparada}>
+                    <Pressable
+                      onPress={f.alTocar}
+                      disabled={!f.alTocar}
+                      style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]}
+                      accessibilityRole={f.alTocar ? 'button' : 'text'}
+                    >
+                      <View style={st.filaTextos}>
+                        <Text style={[st.filaTitulo, f.tipo === 'peligro' && st.peligro]}>{f.titulo}</Text>
+                        {f.detalle ? <Aparece><Text style={st.filaDetalle}>{f.detalle}</Text></Aparece> : null}
+                      </View>
+                      {f.valor ? (
+                        <Text style={[st.filaValor, f.tipo === 'ok' && { color: colores.salvia }, f.tipo === 'accion' && { color: colores.oroClaro }]} numberOfLines={1}>{f.valor}</Text>
+                      ) : null}
+                      {f.alTocar && f.tipo !== 'peligro' ? <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" /> : null}
+                    </Pressable>
+                  </Aparece>
+                ))}
+              </Animated.View>
+            </Aparece>
           ))}
-        </View>
-        {/* Al final, lo que anda solo si vinculas Ascent: información, no una función de Perfil. */}
-        {CON_ASCENT && (
-          <>
-            <Text style={st.grupo}>{t('perfil.informacion')}</Text>
-            <Text style={st.informacion}>{t('perfil.informacionAscent')}</Text>
+          <Animated.View layout={ACOMODA}>
+            <Text style={st.grupo}>{t('perfil.creditos')}</Text>
             <View style={st.lista}>
-              {FUNCIONES_CON_ASCENT.map((f, i) => (
-                <View key={f.clave} style={[st.funcion, i > 0 && st.filaSeparada]}>
-                  <Icono nombre={f.icono} tam={18} color="rgba(239, 230, 207, 0.6)" peso="light" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={st.funcionTitulo}>{t(`ascent.funciones.${f.clave}.titulo`)}</Text>
-                    <Text style={st.funcionTexto}>{t(`ascent.funciones.${f.clave}.texto`)}</Text>
-                  </View>
-                </View>
+              {(['usda', 'off', 'taco', 'ciqual', 'cofid', 'estrellas'] as const).map((f, i) => (
+                <Text key={f} style={[st.credito, i > 0 && st.filaSeparada]}>{t(`perfil.fuentes.${f}`)}</Text>
               ))}
             </View>
-          </>
-        )}
-        {correo !== null && (
-          <Aparece>
-          <Boton
-            tipo="contorno"
-            texto={t('perfil.cambiarCuenta')}
-            alTocar={() => Alert.alert(t('perfil.cambiarCuenta'), t('perfil.cambiarCuentaTexto'), [
-              { text: t('comun.cancelar'), style: 'cancel' },
-              { text: t('perfil.cambiarCuenta'), onPress: () => salirDeLaCuenta() },
-            ])}
-            estilo={st.salir}
-          />
-          <Boton
-            tipo="contorno"
-            texto={t('perfil.cerrarSesion')}
-            alTocar={() => Alert.alert(t('perfil.cerrarSesionTitulo'), t('perfil.cerrarSesionTexto'), [
-              { text: t('comun.cancelar'), style: 'cancel' },
-              { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: () => salirDeLaCuenta() },
-            ])}
-            estilo={st.salir}
-          />
-          </Aparece>
-        )}
-        <Text style={st.version}>{t('perfil.version', { v: version })}</Text>
+          </Animated.View>
+          {/* Al final, lo que anda solo si vinculas Ascent: información, no una función de Perfil. */}
+          {CON_ASCENT && (
+            <Animated.View layout={ACOMODA}>
+              <Text style={st.grupo}>{t('perfil.informacion')}</Text>
+              <Text style={st.informacion}>{t('perfil.informacionAscent')}</Text>
+              <View style={st.lista}>
+                {FUNCIONES_CON_ASCENT.map((f, i) => (
+                  <View key={f.clave} style={[st.funcion, i > 0 && st.filaSeparada]}>
+                    <Icono nombre={f.icono} tam={18} color="rgba(239, 230, 207, 0.6)" peso="light" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={st.funcionTitulo}>{t(`ascent.funciones.${f.clave}.titulo`)}</Text>
+                      <Text style={st.funcionTexto}>{t(`ascent.funciones.${f.clave}.texto`)}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </Animated.View>
+          )}
+          {conCuenta && (
+            <Aparece>
+            <Boton
+              tipo="contorno"
+              texto={t('perfil.cambiarCuenta')}
+              alTocar={() => Alert.alert(t('perfil.cambiarCuenta'), t('perfil.cambiarCuentaTexto'), [
+                { text: t('comun.cancelar'), style: 'cancel' },
+                { text: t('perfil.cambiarCuenta'), onPress: () => salirDeLaCuenta() },
+              ])}
+              estilo={st.salir}
+            />
+            <Boton
+              tipo="contorno"
+              texto={t('perfil.cerrarSesion')}
+              alTocar={() => Alert.alert(t('perfil.cerrarSesionTitulo'), t('perfil.cerrarSesionTexto'), [
+                { text: t('comun.cancelar'), style: 'cancel' },
+                { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: () => salirDeLaCuenta() },
+              ])}
+              estilo={st.salir}
+            />
+            </Aparece>
+          )}
+          <Animated.Text layout={ACOMODA} style={st.version}>{t('perfil.version', { v: VERSION })}</Animated.Text>
+        </LayoutAnimationConfig>
       </ScrollView>
       {hoja === 'editar' && (
         <EditarPerfil perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} nombreGuardado={e.nombre?.valor ?? ''} foto={foto} alGuardarFoto={setFoto} alCerrar={() => setHoja(null)} />
@@ -280,9 +359,12 @@ function EditarPerfil({ perfil, hoy, imperial, nombreGuardado, foto, alGuardarFo
   };
   const paso = imperial ? CM_POR_PULGADA : 1;
   const altura = imperial ? piesYPulgadas(alturaCm) : `${numero(alturaCm)} cm`;
+  const [edadMinima, edadMaxima] = RANGOS_DEL_CUESTIONARIO.edad;
+  const [alturaMinima, alturaMaxima] = RANGOS_DEL_CUESTIONARIO.alturaCm;
   return (
     <HojaModal abierta titulo={t('perfil.editar.titulo')} alCerrar={alCerrar} pie={<Boton tipo="principal" texto={t('comun.guardar')} alTocar={guardar} />}>
-      <View style={st.foto}>
+      {/* «Quitar foto» aparece con la foto: lo de abajo se acomoda en vez de saltar. */}
+      <Animated.View layout={ACOMODA} style={st.foto}>
         <Avatar foto={laFoto} nombre={nombre} tam={96} />
         {hayFotoDePerfil && (
           <>
@@ -297,43 +379,74 @@ function EditarPerfil({ perfil, hoy, imperial, nombreGuardado, foto, alGuardarFo
                 </Pressable>
               </Aparece>
             )}
-            <Text style={st.fotoNota}>{t('perfil.editar.fotoNota')}</Text>
+            <Animated.Text layout={ACOMODA} style={st.fotoNota}>{t('perfil.editar.fotoNota')}</Animated.Text>
           </>
         )}
-      </View>
-      <EtiquetaDeGrupo>{t('perfil.editar.nombre')}</EtiquetaDeGrupo>
-      {/* Sin un nombre guardado (Apple no lo trajo), Moss lo pide. */}
-      {!nombreGuardado && <Text style={st.pedido}>{t('perfil.editar.sinNombre')}</Text>}
-      <TextInput
-        value={nombre}
-        onChangeText={setNombre}
-        placeholder={t('perfil.editar.nombreCampo')}
-        placeholderTextColor="rgba(239, 230, 207, 0.35)"
-        maxLength={LARGO_DEL_NOMBRE}
-        autoCapitalize="words"
-        autoComplete="name"
-        textContentType="name"
-        returnKeyType="done"
-        selectionColor={colores.oro}
-        style={st.campo}
-        accessibilityLabel={t('perfil.editar.nombre')}
-      />
-      {perfil && <>
-      <EtiquetaDeGrupo>{t('perfil.sexo')}</EtiquetaDeGrupo>
-      <Segmento<Sexo> opciones={[['f', t('perfil.sexos.f')], ['m', t('perfil.sexos.m')]]} elegida={sexo} alElegir={setSexo} />
-      <EtiquetaDeGrupo>{t('perfil.edad')}</EtiquetaDeGrupo>
-      <Pasos valor={t('perfil.anios', { n: edad })} alBajar={() => setEdad((x) => Math.max(RANGOS_DEL_CUESTIONARIO.edad[0], x - 1))} alSubir={() => setEdad((x) => Math.min(RANGOS_DEL_CUESTIONARIO.edad[1], x + 1))} />
-      <EtiquetaDeGrupo>{t('perfil.altura')}</EtiquetaDeGrupo>
-      <Pasos valor={altura} alBajar={() => setAlturaCm((x) => Math.max(RANGOS_DEL_CUESTIONARIO.alturaCm[0], Math.round((x - paso) * 10) / 10))} alSubir={() => setAlturaCm((x) => Math.min(RANGOS_DEL_CUESTIONARIO.alturaCm[1], Math.round((x + paso) * 10) / 10))} />
-      <EtiquetaDeGrupo>{t('perfil.actividad')}</EtiquetaDeGrupo>
-      <View style={{ gap: 8 }}>
-        {(['poco', 'algo', 'activo', 'muy'] as const).map((a) => {
-          const [titulo, detalle] = lista(`entrada.cuestionario.actividad.${a}`);
-          return <Opcion key={a} titulo={titulo} detalle={detalle} elegida={a === actividad} alTocar={() => setActividad(a)} />;
-        })}
-      </View>
-      <Parrafo chico>{t('perfil.tusDatosNota')}</Parrafo>
-      </>}
+      </Animated.View>
+      <Animated.View layout={ACOMODA}>
+        <EtiquetaDeGrupo>{t('perfil.editar.nombre')}</EtiquetaDeGrupo>
+        {/* Sin un nombre guardado (Apple no lo trajo), Moss lo pide. */}
+        {!nombreGuardado && <Text style={st.pedido}>{t('perfil.editar.sinNombre')}</Text>}
+        <TextInput
+          value={nombre}
+          onChangeText={setNombre}
+          placeholder={t('perfil.editar.nombreCampo')}
+          placeholderTextColor="rgba(239, 230, 207, 0.35)"
+          maxLength={LARGO_DEL_NOMBRE}
+          autoCapitalize="words"
+          // Un nombre no se corrige: el corrector cambiaba los que no conoce.
+          autoCorrect={false}
+          spellCheck={false}
+          autoComplete="name"
+          textContentType="name"
+          clearButtonMode="while-editing"
+          keyboardAppearance="dark"
+          returnKeyType="done"
+          selectionColor={colores.oro}
+          style={st.campo}
+          accessibilityLabel={t('perfil.editar.nombre')}
+        />
+        {perfil && <>
+        <EtiquetaDeGrupo>{t('perfil.sexo')}</EtiquetaDeGrupo>
+        <Segmento<Sexo> opciones={[['f', t('perfil.sexos.f')], ['m', t('perfil.sexos.m')]]} elegida={sexo} alElegir={setSexo} />
+        <EtiquetaDeGrupo>{t('perfil.edad')}</EtiquetaDeGrupo>
+        <Pasos
+          valor={t('perfil.anios', { n: edad })}
+          menos={t('comun.menos', { que: minuscula(t('perfil.edad')) })}
+          mas={t('comun.mas', { que: minuscula(t('perfil.edad')) })}
+          alBajar={() => {
+            if (edad <= edadMinima) return false;
+            setEdad((x) => Math.max(edadMinima, x - 1));
+          }}
+          alSubir={() => {
+            if (edad >= edadMaxima) return false;
+            setEdad((x) => Math.min(edadMaxima, x + 1));
+          }}
+        />
+        <EtiquetaDeGrupo>{t('perfil.altura')}</EtiquetaDeGrupo>
+        <Pasos
+          valor={altura}
+          menos={t('comun.menos', { que: minuscula(t('perfil.altura')) })}
+          mas={t('comun.mas', { que: minuscula(t('perfil.altura')) })}
+          alBajar={() => {
+            if (alturaCm <= alturaMinima) return false;
+            setAlturaCm((x) => Math.max(alturaMinima, Math.round((x - paso) * 10) / 10));
+          }}
+          alSubir={() => {
+            if (alturaCm >= alturaMaxima) return false;
+            setAlturaCm((x) => Math.min(alturaMaxima, Math.round((x + paso) * 10) / 10));
+          }}
+        />
+        <EtiquetaDeGrupo>{t('perfil.actividad')}</EtiquetaDeGrupo>
+        <View style={{ gap: 8 }}>
+          {(['poco', 'algo', 'activo', 'muy'] as const).map((a) => {
+            const [titulo, detalle] = lista(`entrada.cuestionario.actividad.${a}`);
+            return <Opcion key={a} titulo={titulo} detalle={detalle} elegida={a === actividad} alTocar={() => setActividad(a)} />;
+          })}
+        </View>
+        <Parrafo chico>{t('perfil.tusDatosNota')}</Parrafo>
+        </>}
+      </Animated.View>
     </HojaModal>
   );
 }
@@ -382,9 +495,22 @@ const COMIDAS_QUE_AVISAN: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda
 
 const MINUTOS_ANTES_DE_DORMIR = [15, 30, 45, 60] as const;
 const MAXIMOS_POR_DIA = [2, 3, 4, 6, 8] as const;
-/** El horario de comidas se mueve de a un cuarto de hora. */
+/** El horario de comidas se mueve de a un cuarto de hora, entre las 5:00 y las 23:45. */
 const CUARTO = 15;
+const PRIMERA_HORA = 5 * 60;
+const ULTIMA_HORA = 23 * 60 + 45;
 const aCuarto = (m: number) => Math.round(m / CUARTO) * CUARTO;
+
+/** Las llaves de los avisos que piden permiso para encenderse. */
+type Llave = 'dormir' | 'horario' | 'pesarse' | 'falta' | 'comidas';
+
+/** Sin permiso para avisar (iOS ya no vuelve a preguntar), se dice dónde darlo. */
+function avisarSinPermiso() {
+  Alert.alert(t('perfil.sinPermisoTitulo'), t('perfil.recordatoriosSinPermiso'), [
+    { text: t('comun.cancelar'), style: 'cancel' },
+    { text: t('perfil.abrirAjustes'), onPress: () => { Linking.openSettings().catch(() => {}); } },
+  ]);
+}
 
 /**
  * Los avisos (lo pediste el 22/10): la hora de dormir, como Rise; el horario de comidas, para comer
@@ -394,24 +520,30 @@ const aCuarto = (m: number) => Math.round(m / CUARTO) * CUARTO;
 function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const comidas = e.recordatorios;
   const [sinPermiso, setSinPermiso] = useState(false);
-  // Encender cualquiera pide permiso primero; sin permiso, queda apagado y se dice cómo darlo.
-  const conPermiso = (hacer: () => void) => {
-    pedirPermisoDeAvisos().then((ok) => {
-      setSinPermiso(!ok);
-      if (ok) hacer();
-    }).catch(() => setSinPermiso(true));
+  // La llave que se prende queda prendida mientras se pide el permiso (antes volvía sola a apagado, también
+  // con el diálogo de iOS arriba); si se niega, se apaga. Si se había negado antes (iOS ya no pregunta), se
+  // dice cómo darlo desde Ajustes; recién negado en el diálogo, no hace falta repetirlo.
+  const [pidiendo, setPidiendo] = useState<Llave | null>(null);
+  const conPermiso = (llave: Llave, hacer: () => void) => {
+    setPidiendo(llave);
+    pedirPermisoDeAvisosConMotivo().then((motivo) => {
+      setSinPermiso(motivo !== 'si');
+      if (motivo === 'si') hacer();
+      else if (motivo === 'soloEnAjustes') avisarSinPermiso();
+    }).catch(() => setSinPermiso(true)).finally(() => setPidiendo(null));
   };
+  const prendida = (llave: Llave, si: boolean) => pidiendo === llave || si;
   const encender = (si: boolean) => {
     if (!si) {
       elAlmacen().ponerRecordatorios(null);
       return;
     }
-    conPermiso(() => elAlmacen().ponerRecordatorios(['desayuno', 'almuerzo', 'cena']));
+    conPermiso('comidas', () => elAlmacen().ponerRecordatorios(['desayuno', 'almuerzo', 'cena']));
   };
   const dormir = e.avisos.dormir;
   const encenderDormir = (si: boolean) => {
     if (!si) elAlmacen().ponerAvisos({ dormir: { encendido: false, antes: dormir?.antes } });
-    else conPermiso(() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
+    else conPermiso('dormir', () => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
   };
   const sueno = suenoParaAvisos(e);
   // La hora de ir a la cama esta noche y de dónde sale: la de despertarte mañana, lo que vas a dormir (como
@@ -428,147 +560,175 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const horaDe = horasDeComida(e);
   const encenderHorario = (si: boolean) => {
     if (!si) elAlmacen().ponerAvisos({ horario: undefined });
-    else conPermiso(() => elAlmacen().ponerAvisos({ horario: { desayuno: aCuarto(horaDe('desayuno')), almuerzo: aCuarto(horaDe('almuerzo')), cena: aCuarto(horaDe('cena')) } }));
+    else conPermiso('horario', () => elAlmacen().ponerAvisos({ horario: { desayuno: aCuarto(horaDe('desayuno')), almuerzo: aCuarto(horaDe('almuerzo')), cena: aCuarto(horaDe('cena')) } }));
   };
   const ponerHora = (c: Comida, minutos: number | null) => {
     const { [c]: _sacada, ...resto } = horario;
-    const nuevo = minutos === null ? resto : { ...resto, [c]: Math.min(23 * 60 + 45, Math.max(5 * 60, minutos)) };
+    const nuevo = minutos === null ? resto : { ...resto, [c]: Math.min(ULTIMA_HORA, Math.max(PRIMERA_HORA, minutos)) };
     elAlmacen().ponerAvisos({ horario: Object.keys(nuevo).length ? nuevo : undefined });
   };
   const pesarse = e.avisos.pesarse;
   const encenderPesarse = (si: boolean) => {
     if (!si) elAlmacen().ponerAvisos({ pesarse: { encendido: false, todos: pesarse?.todos } });
-    else conPermiso(() => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: pesarse?.todos } }));
+    else conPermiso('pesarse', () => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: pesarse?.todos } }));
   };
   const alternar = (c: Comida) => {
     const lista = comidas ?? [];
     const nueva = lista.includes(c) ? lista.filter((x) => x !== c) : COMIDAS_QUE_AVISAN.filter((x) => x === c || lista.includes(x));
     elAlmacen().ponerRecordatorios(nueva.length ? nueva : null);
   };
+  // Cada parte se acomoda cuando la de arriba crece (las pastillas de dormir, el horario, el permiso).
   return (
     <HojaModal abierta titulo={t('perfil.avisos.titulo')} alCerrar={alCerrar}>
-      <View style={st.llave}>
-        <Text style={st.llaveTexto}>{t('perfil.avisos.dormir')}</Text>
-        <Switch
-          value={!!dormir?.encendido}
-          onValueChange={encenderDormir}
-          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
-          thumbColor={colores.pergamino}
-          accessibilityLabel={t('perfil.avisos.dormir')}
-        />
-      </View>
-      <Parrafo chico>
-        {estaNoche !== null && manana !== null && dormidas !== null
-          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(dormidas), latencia: personal.latencia })
-          : t('perfil.avisos.dormirSinDatos')}
-      </Parrafo>
-      {!!dormir?.encendido && (
-        <Aparece>
-          <View style={st.comidas}>
-            {MINUTOS_ANTES_DE_DORMIR.map((n) => (
-              <Pastilla key={n} texto={t('perfil.avisos.antes', { n })} elegida={(dormir.antes ?? 30) === n} alTocar={() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: n } })} />
-            ))}
-          </View>
-        </Aparece>
-      )}
+      <Animated.View layout={ACOMODA}>
+        <View style={st.llave}>
+          <Text style={st.llaveTexto}>{t('perfil.avisos.dormir')}</Text>
+          <Switch
+            value={prendida('dormir', !!dormir?.encendido)}
+            onValueChange={encenderDormir}
+            trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+            thumbColor={colores.pergamino}
+            accessibilityLabel={t('perfil.avisos.dormir')}
+          />
+        </View>
+        <Parrafo chico>
+          {estaNoche !== null && manana !== null && dormidas !== null
+            ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(dormidas), latencia: personal.latencia })
+            : t('perfil.avisos.dormirSinDatos')}
+        </Parrafo>
+        {!!dormir?.encendido && (
+          <Aparece>
+            <View style={st.comidas}>
+              {MINUTOS_ANTES_DE_DORMIR.map((n) => (
+                <Pastilla key={n} texto={t('perfil.avisos.antes', { n })} elegida={(dormir.antes ?? 30) === n} alTocar={() => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: n } })} />
+              ))}
+            </View>
+          </Aparece>
+        )}
+      </Animated.View>
       {/* Tardo en dormirme (D33): lo que aprende Moss de tus respuestas, o un número fijo. */}
-      <Text style={[st.llaveTexto, { marginTop: 18 }]}>{t('perfil.avisos.tardo')}</Text>
-      <View style={st.comidas}>
-        <Pastilla texto={t('perfil.avisos.tardoAprendido', { n: personal.aprendida })} elegida={e.latencia === null} alTocar={() => elAlmacen().ponerLatencia(null)} />
-        {LATENCIAS.map((n) => (
-          <Pastilla key={n} texto={t('perfil.avisos.minutos', { n })} elegida={e.latencia === n} alTocar={() => elAlmacen().ponerLatencia(n)} />
-        ))}
-      </View>
-      <Parrafo chico>{t('perfil.avisos.tardoTexto')}</Parrafo>
-      <View style={st.llave}>
-        <Text style={st.llaveTexto}>{t('perfil.avisos.horario')}</Text>
-        <Switch
-          value={conHorario}
-          onValueChange={encenderHorario}
-          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
-          thumbColor={colores.pergamino}
-          accessibilityLabel={t('perfil.avisos.horario')}
-        />
-      </View>
-      <Parrafo chico>{t('perfil.avisos.horarioTexto')}</Parrafo>
-      {conHorario && (
-        <Aparece style={st.horario}>
-          {COMIDAS_QUE_AVISAN.map((c) => {
-            const minutos = horario[c];
-            return (
-              <View key={c} style={st.horarioFila}>
-                <Pastilla texto={t(`comida.comidas.${c}`)} elegida={minutos !== undefined} alTocar={() => ponerHora(c, minutos !== undefined ? null : aCuarto(horaDe(c)))} />
-                {minutos !== undefined && (
-                  <Aparece>
-                    <Pasos valor={horaDeReloj(minutos)} alBajar={() => ponerHora(c, minutos - CUARTO)} alSubir={() => ponerHora(c, minutos + CUARTO)} />
-                  </Aparece>
-                )}
-              </View>
-            );
-          })}
-        </Aparece>
-      )}
-      <View style={st.llave}>
-        <Text style={st.llaveTexto}>{t('perfil.avisos.pesarse')}</Text>
-        <Switch
-          value={!!pesarse?.encendido}
-          onValueChange={encenderPesarse}
-          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
-          thumbColor={colores.pergamino}
-          accessibilityLabel={t('perfil.avisos.pesarse')}
-        />
-      </View>
-      <Parrafo chico>{t('perfil.avisos.pesarseTexto')}</Parrafo>
-      {!!pesarse?.encendido && (
-        <Aparece>
-          <View style={st.comidas}>
-            <Pastilla texto={t('perfil.avisos.pesarseControl')} elegida={!pesarse.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true } })} />
-            <Pastilla texto={t('perfil.avisos.pesarseTodos')} elegida={!!pesarse.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: true } })} />
-          </View>
-        </Aparece>
-      )}
-      <View style={st.llave}>
-        <Text style={st.llaveTexto}>{t('perfil.avisos.falta')}</Text>
-        <Switch
-          value={conLoQueFalta(e.avisos, algunAviso(e))}
-          onValueChange={(si) => (si ? conPermiso(() => elAlmacen().ponerAvisos({ falta: { encendido: true } })) : elAlmacen().ponerAvisos({ falta: { encendido: false } }))}
-          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
-          thumbColor={colores.pergamino}
-          accessibilityLabel={t('perfil.avisos.falta')}
-        />
-      </View>
-      <Parrafo chico>{t('perfil.avisos.faltaTexto')}</Parrafo>
-      <View style={st.llave}>
-        <Text style={st.llaveTexto}>{t('perfil.recordatoriosLlave')}</Text>
-        <Switch
-          value={!!comidas?.length}
-          onValueChange={encender}
-          trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
-          thumbColor={colores.pergamino}
-          accessibilityLabel={t('perfil.recordatoriosLlave')}
-        />
-      </View>
-      <Parrafo chico>{t('perfil.recordatoriosTexto')}</Parrafo>
-      {sinPermiso && (
-        <Aparece>
-          <Pressable onPress={() => { Linking.openSettings().catch(() => {}); }} accessibilityRole="button">
-            <Parrafo>{t('perfil.recordatoriosSinPermiso')}</Parrafo>
-          </Pressable>
-        </Aparece>
-      )}
-      {!!comidas?.length && (
-        <Aparece>
-          <EtiquetaDeGrupo>{t('perfil.recordatoriosComidas')}</EtiquetaDeGrupo>
-          <View style={st.comidas}>
-            {COMIDAS_QUE_AVISAN.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={comidas.includes(c)} alTocar={() => alternar(c)} />)}
-          </View>
-        </Aparece>
-      )}
-      <EtiquetaDeGrupo>{t('perfil.avisos.maximo')}</EtiquetaDeGrupo>
-      <View style={st.comidas}>
-        {MAXIMOS_POR_DIA.map((n) => <Pastilla key={n} texto={String(n)} elegida={maximo === n} alTocar={() => elAlmacen().ponerAvisos({ maximoPorDia: n })} />)}
-      </View>
-      <Parrafo chico>{t('perfil.avisos.maximoTexto')}</Parrafo>
+      <Animated.View layout={ACOMODA}>
+        <Text style={[st.llaveTexto, { marginTop: 18 }]}>{t('perfil.avisos.tardo')}</Text>
+        <View style={st.comidas}>
+          <Pastilla texto={t('perfil.avisos.tardoAprendido', { n: personal.aprendida })} elegida={e.latencia === null} alTocar={() => elAlmacen().ponerLatencia(null)} />
+          {LATENCIAS.map((n) => (
+            <Pastilla key={n} texto={t('perfil.avisos.minutos', { n })} elegida={e.latencia === n} alTocar={() => elAlmacen().ponerLatencia(n)} />
+          ))}
+        </View>
+        <Parrafo chico>{t('perfil.avisos.tardoTexto')}</Parrafo>
+      </Animated.View>
+      <Animated.View layout={ACOMODA}>
+        <View style={st.llave}>
+          <Text style={st.llaveTexto}>{t('perfil.avisos.horario')}</Text>
+          <Switch
+            value={prendida('horario', conHorario)}
+            onValueChange={encenderHorario}
+            trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+            thumbColor={colores.pergamino}
+            accessibilityLabel={t('perfil.avisos.horario')}
+          />
+        </View>
+        <Parrafo chico>{t('perfil.avisos.horarioTexto')}</Parrafo>
+        {conHorario && (
+          <Aparece style={st.horario}>
+            {COMIDAS_QUE_AVISAN.map((c) => {
+              const minutos = horario[c];
+              const nombre = t(`comida.comidas.${c}`);
+              return (
+                <Animated.View key={c} layout={ACOMODA} style={st.horarioFila}>
+                  <Pastilla texto={nombre} elegida={minutos !== undefined} alTocar={() => ponerHora(c, minutos !== undefined ? null : aCuarto(horaDe(c)))} />
+                  {minutos !== undefined && (
+                    <Aparece>
+                      <Pasos
+                        valor={horaDeReloj(minutos)}
+                        menos={t('perfil.pasos.temprano', { que: nombre })}
+                        mas={t('perfil.pasos.tarde', { que: nombre })}
+                        alBajar={() => {
+                          if (minutos <= PRIMERA_HORA) return false;
+                          ponerHora(c, minutos - CUARTO);
+                        }}
+                        alSubir={() => {
+                          if (minutos >= ULTIMA_HORA) return false;
+                          ponerHora(c, minutos + CUARTO);
+                        }}
+                      />
+                    </Aparece>
+                  )}
+                </Animated.View>
+              );
+            })}
+          </Aparece>
+        )}
+      </Animated.View>
+      <Animated.View layout={ACOMODA}>
+        <View style={st.llave}>
+          <Text style={st.llaveTexto}>{t('perfil.avisos.pesarse')}</Text>
+          <Switch
+            value={prendida('pesarse', !!pesarse?.encendido)}
+            onValueChange={encenderPesarse}
+            trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+            thumbColor={colores.pergamino}
+            accessibilityLabel={t('perfil.avisos.pesarse')}
+          />
+        </View>
+        <Parrafo chico>{t('perfil.avisos.pesarseTexto')}</Parrafo>
+        {!!pesarse?.encendido && (
+          <Aparece>
+            <View style={st.comidas}>
+              <Pastilla texto={t('perfil.avisos.pesarseControl')} elegida={!pesarse.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true } })} />
+              <Pastilla texto={t('perfil.avisos.pesarseTodos')} elegida={!!pesarse.todos} alTocar={() => elAlmacen().ponerAvisos({ pesarse: { encendido: true, todos: true } })} />
+            </View>
+          </Aparece>
+        )}
+      </Animated.View>
+      <Animated.View layout={ACOMODA}>
+        <View style={st.llave}>
+          <Text style={st.llaveTexto}>{t('perfil.avisos.falta')}</Text>
+          <Switch
+            value={prendida('falta', conLoQueFalta(e.avisos, algunAviso(e)))}
+            onValueChange={(si) => (si ? conPermiso('falta', () => elAlmacen().ponerAvisos({ falta: { encendido: true } })) : elAlmacen().ponerAvisos({ falta: { encendido: false } }))}
+            trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+            thumbColor={colores.pergamino}
+            accessibilityLabel={t('perfil.avisos.falta')}
+          />
+        </View>
+        <Parrafo chico>{t('perfil.avisos.faltaTexto')}</Parrafo>
+      </Animated.View>
+      <Animated.View layout={ACOMODA}>
+        <View style={st.llave}>
+          <Text style={st.llaveTexto}>{t('perfil.recordatoriosLlave')}</Text>
+          <Switch
+            value={prendida('comidas', !!comidas?.length)}
+            onValueChange={encender}
+            trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
+            thumbColor={colores.pergamino}
+            accessibilityLabel={t('perfil.recordatoriosLlave')}
+          />
+        </View>
+        <Parrafo chico>{t('perfil.recordatoriosTexto')}</Parrafo>
+        {sinPermiso && (
+          <Aparece>
+            <Pressable onPress={() => { Linking.openSettings().catch(() => {}); }} accessibilityRole="button">
+              <Parrafo>{t('perfil.recordatoriosSinPermiso')}</Parrafo>
+            </Pressable>
+          </Aparece>
+        )}
+        {!!comidas?.length && (
+          <Aparece>
+            <EtiquetaDeGrupo>{t('perfil.recordatoriosComidas')}</EtiquetaDeGrupo>
+            <View style={st.comidas}>
+              {COMIDAS_QUE_AVISAN.map((c) => <Pastilla key={c} texto={t(`comida.comidas.${c}`)} elegida={comidas.includes(c)} alTocar={() => alternar(c)} />)}
+            </View>
+          </Aparece>
+        )}
+      </Animated.View>
+      <Animated.View layout={ACOMODA}>
+        <EtiquetaDeGrupo>{t('perfil.avisos.maximo')}</EtiquetaDeGrupo>
+        <View style={st.comidas}>
+          {MAXIMOS_POR_DIA.map((n) => <Pastilla key={n} texto={String(n)} elegida={maximo === n} alTocar={() => elAlmacen().ponerAvisos({ maximoPorDia: n })} />)}
+        </View>
+        <Parrafo chico>{t('perfil.avisos.maximoTexto')}</Parrafo>
+      </Animated.View>
     </HojaModal>
   );
 }
@@ -577,6 +737,9 @@ const DURACIONES = [30, 45, 60, 90, 120] as const;
 const TIPOS = ['fuerza', 'resistencia', 'mixta'] as const;
 /** Lunes primero, como en la galería. */
 const DIAS_DE_LA_SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
+/** La hora de entrenar, de a un cuarto de hora entre las 5:00 y las 23:00. */
+const PRIMER_ENTRENO = 5 * 60;
+const ULTIMO_ENTRENO = 23 * 60;
 
 /** Si suena algún aviso: los de comidas sin anotar, dormir, el horario, pesarse, un hábito o lo que falta, si se prendió. */
 function hayAvisos(e: Estado): boolean {
@@ -618,7 +781,19 @@ function CuandoEntrenas({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       {entreno.dias.length > 0 && (
         <Aparece>
           <EtiquetaDeGrupo>{t('entreno.perfil.hora')}</EtiquetaDeGrupo>
-          <Pasos valor={horaDeReloj(entreno.hora)} alBajar={() => poner({ hora: Math.max(5 * 60, entreno.hora - 15) })} alSubir={() => poner({ hora: Math.min(23 * 60, entreno.hora + 15) })} />
+          <Pasos
+            valor={horaDeReloj(entreno.hora)}
+            menos={t('perfil.pasos.temprano', { que: t('entreno.perfil.titulo') })}
+            mas={t('perfil.pasos.tarde', { que: t('entreno.perfil.titulo') })}
+            alBajar={() => {
+              if (entreno.hora <= PRIMER_ENTRENO) return false;
+              poner({ hora: Math.max(PRIMER_ENTRENO, entreno.hora - 15) });
+            }}
+            alSubir={() => {
+              if (entreno.hora >= ULTIMO_ENTRENO) return false;
+              poner({ hora: Math.min(ULTIMO_ENTRENO, entreno.hora + 15) });
+            }}
+          />
           <EtiquetaDeGrupo>{t('entreno.perfil.duracion')}</EtiquetaDeGrupo>
           <View style={st.comidas}>
             {DURACIONES.map((m) => <Pastilla key={m} texto={t('entreno.perfil.minutos', { n: m })} elegida={entreno.minutos === m} alTocar={() => poner({ minutos: m })} />)}
@@ -644,16 +819,32 @@ function CuandoEntrenas({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   );
 }
 
-function Pasos({ valor, alBajar, alSubir }: { valor: string; alBajar: () => void; alSubir: () => void }) {
+/**
+ * Un valor con «−» y «+»: mantenidos, repiten (de 7:00 a 12:00 eran veinte toques). Cada botón dice qué
+ * cambia y, con VoiceOver, después de cada paso se dice el valor nuevo. `alBajar` y `alSubir` dan false en
+ * el tope: ahí no vibra y deja de repetir.
+ */
+function Pasos({ valor, menos, mas, alBajar, alSubir }: { valor: string; menos: string; mas: string; alBajar: () => boolean | void; alSubir: () => boolean | void }) {
+  const tocado = useRef(false);
+  useEffect(() => {
+    if (!tocado.current) return;
+    tocado.current = false;
+    anunciar(valor);
+  }, [valor]);
+  const conAnuncio = (hacer: () => boolean | void) => () => {
+    const dio = hacer();
+    if (dio !== false) tocado.current = true;
+    return dio;
+  };
   return (
     <View style={st.pasos}>
-      <Pressable onPress={alBajar} style={st.paso} accessibilityRole="button" accessibilityLabel="−" hitSlop={6}>
+      <BotonDePaso alPaso={conAnuncio(alBajar)} etiqueta={menos} style={st.paso}>
         <Icono nombre="minus" tam={16} peso="semibold" />
-      </Pressable>
+      </BotonDePaso>
       <Text style={st.pasoValor}>{valor}</Text>
-      <Pressable onPress={alSubir} style={st.paso} accessibilityRole="button" accessibilityLabel="+" hitSlop={6}>
+      <BotonDePaso alPaso={conAnuncio(alSubir)} etiqueta={mas} style={st.paso}>
         <Icono nombre="plus" tam={16} peso="semibold" />
-      </Pressable>
+      </BotonDePaso>
     </View>
   );
 }
@@ -675,7 +866,8 @@ const st = StyleSheet.create({
   filaTextos: { flex: 1, paddingVertical: 12 },
   filaTitulo: { fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaDetalle: { marginTop: 4, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.5)' },
-  filaValor: { fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)' },
+  // Con el texto grande, el valor se corta antes que dejar al título sin lugar.
+  filaValor: { flexShrink: 1, maxWidth: '55%', fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)' },
   peligro: { color: '#f0a58a' },
   informacion: { marginBottom: 10, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
   funcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },

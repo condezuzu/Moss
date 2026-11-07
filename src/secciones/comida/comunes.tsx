@@ -1,13 +1,15 @@
 // Las piezas chicas de la comida: los íconos (SF Symbols, con un signo en la web de prueba), el
 // aviso con «Deshacer», los puntos de color de cada macro y los botones de la galería.
 
+import * as Haptics from 'expo-haptics';
 import { SymbolView, type SFSymbol, type SymbolWeight } from 'expo-symbols';
 import { useEffect, useEffectEvent, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
 
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { anunciar, conLector } from '../anuncio';
 
 // En la web no hay SF Symbols: un signo parecido, para ver dónde va cada cosa en las capturas.
 const EN_LA_WEB: Partial<Record<string, string>> = {
@@ -49,12 +51,15 @@ export type Aviso = { texto: string; deshacer?: () => void; vez: number };
  * la barra ni lo que se toca después; abajo, dentro de una hoja. Se va solo, o con un toque.
  */
 export function AvisoFlotante({ aviso, alIrse, arriba, abajo = 0 }: { aviso: Aviso | null; alIrse: () => void; arriba?: number; abajo?: number }) {
+  const reducido = useReducedMotion();
   // Solo un aviso nuevo vuelve a contar: si el tiempo dependiera de la función para irse, cada vez
   // que la pantalla se vuelve a dibujar (una letra en el buscador) empezaría de nuevo.
   const irse = useEffectEvent(() => alIrse());
   useEffect(() => {
     if (!aviso) return;
-    const espera = setTimeout(irse, aviso.deshacer ? 3200 : 2200);
+    // VoiceOver no ve lo que aparece: se lo dice. Y con lector, «Deshacer» espera a que se llegue a tocarlo.
+    anunciar(aviso.texto);
+    const espera = setTimeout(irse, aviso.deshacer ? (conLector() ? 10000 : 3200) : conLector() ? 4000 : 2200);
     return () => clearTimeout(espera);
   }, [aviso]);
   if (!aviso) return null;
@@ -62,8 +67,8 @@ export function AvisoFlotante({ aviso, alIrse, arriba, abajo = 0 }: { aviso: Avi
   return (
     <Animated.View
       key={aviso.vez}
-      entering={(desdeArriba ? FadeInDown : FadeInUp).duration(220)}
-      exiting={FadeOut.duration(180)}
+      entering={(reducido ? FadeIn : desdeArriba ? FadeInDown : FadeInUp).duration(220).reduceMotion(ReduceMotion.Never)}
+      exiting={FadeOut.duration(180).reduceMotion(ReduceMotion.Never)}
       style={[estilos.aviso, desdeArriba ? { top: arriba } : { bottom: abajo }]}
       pointerEvents="box-none"
     >
@@ -100,25 +105,36 @@ export function Boton({ texto, alTocar, icono, tipo = 'contorno', estilo, desact
       accessibilityRole="button"
       accessibilityLabel={etiqueta ?? texto}
       accessibilityState={{ disabled: !!desactivado }}
+      // Los de 34 puntos llegan a los 44 que se tocan.
+      hitSlop={5}
       style={({ pressed }) => [estilos.boton, estilos[tipo], desactivado && estilos.desactivado, pressed && estilos.apretado, estilo]}
     >
       {icono && <Icono nombre={icono} tam={tipo === 'grande' ? 18 : 15} color={lleno ? colores.tinta : colores.oroClaro} peso="semibold" />}
-      <Text style={[estilos.botonTexto, lleno && estilos.botonTextoLleno, tipo === 'grande' && estilos.botonTextoGrande, tipo === 'quitar' && estilos.botonTextoQuitar]}>{texto}</Text>
+      <Text
+        style={[estilos.botonTexto, lleno && estilos.botonTextoLleno, tipo === 'grande' && estilos.botonTextoGrande, tipo === 'quitar' && estilos.botonTextoQuitar]}
+        maxFontSizeMultiplier={1.4}
+      >
+        {texto}
+      </Text>
     </Pressable>
   );
 }
 
-/** Una pastilla que se elige: las comidas, las porciones, crudo o cocido. */
+/** Una pastilla que se elige: las comidas, las porciones, crudo o cocido. Elegir otra vibra apenas, como un selector de iOS. */
 export function Pastilla({ texto, detalle, elegida, alTocar, estilo }: { texto: string; detalle?: string; elegida: boolean; alTocar: () => void; estilo?: StyleProp<ViewStyle> }) {
   return (
     <Pressable
-      onPress={alTocar}
+      onPress={() => {
+        if (!elegida) Haptics.selectionAsync().catch(() => {});
+        alTocar();
+      }}
       accessibilityRole="button"
       accessibilityState={{ selected: elegida }}
+      hitSlop={6}
       style={({ pressed }) => [estilos.pastilla, elegida && estilos.pastillaElegida, pressed && estilos.apretado, estilo]}
     >
-      <Text style={[estilos.pastillaTexto, elegida && estilos.pastillaTextoElegida]} numberOfLines={1}>{texto}</Text>
-      {detalle ? <Text style={estilos.pastillaDetalle}>{detalle}</Text> : null}
+      <Text style={[estilos.pastillaTexto, elegida && estilos.pastillaTextoElegida]} numberOfLines={1} maxFontSizeMultiplier={1.4}>{texto}</Text>
+      {detalle ? <Text style={estilos.pastillaDetalle} maxFontSizeMultiplier={1.4}>{detalle}</Text> : null}
     </Pressable>
   );
 }
@@ -143,12 +159,13 @@ export const estilos = StyleSheet.create({
   avisoTexto: { fontFamily: letras.texto, fontSize: 13, color: colores.pergamino, paddingRight: 9 },
   avisoBoton: { paddingHorizontal: 11, paddingVertical: 9, borderRadius: 999, backgroundColor: 'rgba(232, 196, 106, 0.12)' },
   avisoBotonTexto: { fontFamily: letras.textoMedio, fontSize: 11, letterSpacing: 1.1, textTransform: 'uppercase', color: colores.oro },
-  boton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 34, paddingHorizontal: 13, borderRadius: 999 },
+  // Con el alto mínimo y no fijo: con el texto grande de iOS el botón crece en vez de cortar el texto.
+  boton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 34, paddingHorizontal: 13, paddingVertical: 4, borderRadius: 999 },
   principal: { backgroundColor: colores.oro },
   secundario: { borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.36)', backgroundColor: 'rgba(232, 196, 106, 0.06)' },
   contorno: { borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.06)' },
-  grande: { height: 52, backgroundColor: colores.oro, shadowColor: colores.oro, shadowOpacity: 0.24, shadowRadius: 13, shadowOffset: { width: 0, height: 8 } },
-  quitar: { height: 44, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)' },
+  grande: { minHeight: 52, backgroundColor: colores.oro, shadowColor: colores.oro, shadowOpacity: 0.24, shadowRadius: 13, shadowOffset: { width: 0, height: 8 } },
+  quitar: { minHeight: 44, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)' },
   desactivado: { opacity: 0.4 },
   apretado: { opacity: 0.75, transform: [{ scale: 0.97 }] },
   botonTexto: { fontFamily: letras.texto, fontSize: 13, color: colores.oroClaro },

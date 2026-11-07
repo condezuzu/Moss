@@ -12,7 +12,12 @@ import type { MetaGuardada } from '@/dominio/metas';
 import type { Acceso, Suscripcion } from '@/dominio/premium';
 import type { Registro } from '@/dominio/registros';
 
-const programadas: { content: { body: string; data: { tipo: string; que?: string } }; trigger: { date: Date } }[] = [];
+type Disparador = { type: string; date?: Date; year?: number; month?: number; day?: number; hour?: number; minute?: number };
+/** Lo programado, con la fecha en que suena (de un disparador de calendario o de fecha). */
+const programadas: { content: { body: string; data: { tipo: string; que?: string } }; trigger: { date: Date }; tipo: string }[] = [];
+/** Los avisos que ya llegaron (el centro de notificaciones) y los que Moss sacó de ahí. */
+let mockLlegados: { date: number; request: { identifier: string; content: { data: Record<string, unknown> } } }[] = [];
+const mockSacados: string[] = [];
 /** Lo que dice Apple, para cada test: de fábrica, que hay acceso y ninguna suscripción. */
 let mockPremium: { sabe: boolean; hay: boolean; suscripcion: Suscripcion | null; acceso: Acceso } = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
 
@@ -23,11 +28,17 @@ jest.mock('expo-notifications', () => ({
   }),
   getPermissionsAsync: jest.fn(async () => ({ granted: true })),
   setNotificationCategoryAsync: jest.fn(async () => {}),
-  scheduleNotificationAsync: jest.fn(async (p: (typeof programadas)[number]) => {
-    programadas.push(p);
+  scheduleNotificationAsync: jest.fn(async (p: { content: (typeof programadas)[number]['content']; trigger: Disparador }) => {
+    const d = p.trigger;
+    const date = d.date ?? new Date(d.year!, d.month! - 1, d.day!, d.hour!, d.minute!);
+    programadas.push({ content: p.content, trigger: { date }, tipo: d.type });
     return 'id';
   }),
-  SchedulableTriggerInputTypes: { DATE: 'date' },
+  getPresentedNotificationsAsync: jest.fn(async () => mockLlegados),
+  dismissNotificationAsync: jest.fn(async (id: string) => {
+    mockSacados.push(id);
+  }),
+  SchedulableTriggerInputTypes: { DATE: 'date', CALENDAR: 'calendar' },
 }));
 jest.mock('@/almacen', () => ({ elAlmacen: jest.fn() }));
 jest.mock('@/almacen/ascent', () => ({ estadoConAscent: jest.fn(), metaConAscent: (m: unknown) => m, suscribirConAscent: jest.fn() }));
@@ -175,6 +186,29 @@ describe('los avisos que se programan', () => {
     mockPremium = { ...mockPremium, acceso: 'regalo' };
     await programarAvisos(estado());
     expect(programadas.some((p) => p.trigger.date.getTime() >= vence)).toBe(true);
+  });
+
+  it('suenan a la hora del reloj (calendario), no «dentro de tantos segundos»: así siguen la zona horaria', async () => {
+    await programarAvisos(estado());
+    expect(programadas.length).toBeGreaterThan(0);
+    expect(programadas.every((p) => p.tipo === 'calendar')).toBe(true);
+  });
+
+  it('los que ya llegaron y no dicen nada salen del centro de notificaciones', async () => {
+    const llegado = (identifier: string, cuando: Date, data: Record<string, unknown>) => ({ date: cuando.getTime(), request: { identifier, content: { data } } });
+    const ayer = new Date(2026, 10, 1, 21, 0);
+    mockLlegados = [
+      llegado('cena-ayer', ayer, { tipo: 'horario', comida: 'cena', dia: '2026-11-01' }),
+      llegado('desayuno-hoy', a(9), { tipo: 'horario', comida: 'desayuno', dia: HOY }),
+      llegado('merienda-hoy', a(9, 30), { tipo: 'horario', comida: 'merienda', dia: HOY }),
+      llegado('peso-hoy', a(8), { tipo: 'pesarse' }),
+      llegado('prueba', ayer, { tipo: 'prueba' }),
+    ];
+    mockSacados.length = 0;
+    await programarAvisos(estado({ registros: new Map([registro('desayuno', 8, 20, 400)]), pesos: [{ fecha: HOY, kg: 70 }] as unknown as Estado['pesos'] }));
+    // La cena de ayer (otro día), el desayuno ya anotado y el peso ya puesto; la merienda sin anotar y el fin de la prueba quedan.
+    expect(mockSacados.sort()).toEqual(['cena-ayer', 'desayuno-hoy', 'peso-hoy']);
+    mockLlegados = [];
   });
 
   it('mientras Apple no contesta, lo programado queda como estaba', async () => {

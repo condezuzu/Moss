@@ -33,13 +33,22 @@ if (hayAvisos) {
 }
 
 export async function pedirPermisoDeAvisos(): Promise<boolean> {
-  if (!hayAvisos) return false;
+  return (await pedirPermisoDeAvisosConMotivo()) === 'si';
+}
+
+/**
+ * Como `pedirPermisoDeAvisos`, y sin permiso dice por qué: 'no' si se acaba de negar en el diálogo de
+ * iOS, 'soloEnAjustes' si se negó antes (iOS ya no vuelve a preguntar: solo se da desde Ajustes).
+ */
+export async function pedirPermisoDeAvisosConMotivo(): Promise<'si' | 'no' | 'soloEnAjustes'> {
+  if (!hayAvisos) return 'no';
   try {
     const actual = await Notifications.getPermissionsAsync();
-    if (actual.granted) return true;
-    return (await Notifications.requestPermissionsAsync()).granted;
+    if (actual.granted) return 'si';
+    if (!actual.canAskAgain) return 'soloEnAjustes';
+    return (await Notifications.requestPermissionsAsync()).granted ? 'si' : 'no';
   } catch {
-    return false;
+    return 'no';
   }
 }
 
@@ -158,8 +167,32 @@ export function programarAvisos(e: Para): Promise<void> {
   return enCurso;
 }
 
+/**
+ * Los avisos que ya llegaron y ya no dicen nada salen del centro de notificaciones y de la pantalla
+ * bloqueada: «¿Anotaste la cena?» con la cena anotada, «pesarse» con el peso de hoy, y los de días
+ * anteriores (salvo el del fin de la prueba).
+ */
+async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
+  const llegados = await Notifications.getPresentedNotificationsAsync().catch(() => [] as Notifications.Notification[]);
+  if (!llegados.length) return;
+  const hoy = diaLogico(new Date(), e.corte);
+  const anotadas = new Set(vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).map((r) => r.comida));
+  const pesadoHoy = e.pesos.some((p) => p.fecha === hoy);
+  for (const n of llegados) {
+    const datos = n.request.content.data as Partial<AlTocarUnAviso> | undefined;
+    if (!datos?.tipo) continue;
+    const dia = datos.dia ?? diaLogico(new Date(n.date), e.corte);
+    const deOtroDia = dia < hoy && datos.tipo !== 'prueba';
+    const comidaHecha = (datos.tipo === 'comida' || datos.tipo === 'horario') && !!datos.comida && dia === hoy && anotadas.has(datos.comida);
+    const pesoHecho = datos.tipo === 'pesarse' && pesadoHoy;
+    if (deOtroDia || comidaHecha || pesoHecho) await Notifications.dismissNotificationAsync(n.request.identifier).catch(() => {});
+  }
+}
+
 async function programar(e: Para, vieja: () => boolean): Promise<void> {
   if (!hayAvisos || vieja()) return;
+  await sacarLosQueYaNoDicenNada(e);
+  if (vieja()) return;
   // Mientras Apple y la cuenta no contestan no se sabe si hay acceso: lo programado queda como estaba, y
   // se rehace cuando contestan (el almacén oye alCambiarPremium). Borrarlo dejaba la semana sin avisos.
   if (!seSabeElAcceso()) return;
@@ -210,7 +243,9 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
           title: 'Moss', body: textoDe(n, e), data: { tipo: aviso.tipo, ...(aviso.comida ? { comida: aviso.comida, dia: n.dia } : {}), ...(aviso.falta ? { que: aviso.falta.que } : {}) },
           ...(aviso.tipo === 'dormir' ? { categoryIdentifier: CATEGORIA_DORMIR } : {}),
         },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fecha },
+        // A la hora del reloj y no «dentro de tantos segundos» (eso hace DATE en iOS): quien viaja a otra
+        // zona horaria, o pasa el cambio de hora sin abrir Moss, lo recibe a la hora que dice.
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.CALENDAR, year: a, month: m, day: d, hour: c.hora, minute: c.minuto, second: 0, repeats: false },
       });
     } catch {
       // Uno que no se pudo programar no deja sin los demás.

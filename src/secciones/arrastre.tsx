@@ -14,6 +14,7 @@ import {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { entre, LLEGA } from './movimiento';
+import { bajarTeclado, tecladoArriba } from './teclado';
 
 /** Un tirón hacia abajo más rápido que esto (puntos por segundo) cierra aunque la hoja haya bajado poco. */
 const TIRON = 650;
@@ -86,6 +87,12 @@ export function useArrastre(m: Movimiento, activo: boolean, conScroll = true): A
 
   const empezar = (traslado: number, adentro: boolean) => {
     'worklet';
+    // Con el teclado arriba, el gesto de bajar es el de iOS para esconderlo: baja el teclado y la hoja
+    // queda, con lo escrito. El próximo arrastre ya baja la hoja.
+    if (tecladoArriba.get()) {
+      scheduleOnRN(bajarTeclado);
+      return;
+    }
     arrastrando.set(true);
     porAdentro.set(adentro);
     // Desde donde está y sin el trecho que hizo falta para arrancar: así no salta.
@@ -199,14 +206,23 @@ type PropsDelScroll = Omit<ComponentProps<typeof ScrollView>, 'ref' | 'simultane
 
 /**
  * El scroll de una hoja: arriba de todo, bajarlo baja la hoja; si no, es scroll. No rebota: arriba,
- * el dedo que baja ya baja la hoja.
+ * el dedo que baja ya baja la hoja. Arrastrarlo baja el teclado, y el primer toque en un botón con el
+ * teclado arriba ya cuenta (no se pierde en bajar el teclado).
  */
 export function ScrollQueBaja({ arrastre: { contenido, scroll: scrollRef }, lugar, children, ...props }: PropsDelScroll) {
   const gesto = usePanGesture(contenido);
   return (
     <GestureDetector gesture={gesto}>
       <View collapsable={false} style={[estilos.lugar, lugar]}>
-        <ScrollView ref={scrollRef} simultaneousWith={gesto} bounces={false} scrollEventThrottle={16} {...props}>
+        <ScrollView
+          ref={scrollRef}
+          simultaneousWith={gesto}
+          bounces={false}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          {...props}
+        >
           {children}
         </ScrollView>
       </View>

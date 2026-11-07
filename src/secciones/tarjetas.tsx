@@ -3,9 +3,10 @@
 // las notas, el «Cómo se calcula» que se despliega, los segmentos y los días de la semana. Nada
 // aparece ni desaparece de golpe: lo que cambia entra con un fundido y la tarjeta se acomoda.
 
+import * as Haptics from 'expo-haptics';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, LinearTransition, ReduceMotion, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import type { DiaSemana } from '@/dominio/fechas';
 import { lista, t } from '@/textos';
@@ -38,10 +39,18 @@ export const Chip = ({ texto, tipo }: { texto: string; tipo?: TipoDeChip }) => (
   <Text style={[e.chip, tipo === 'bien' && e.chipBien, tipo === 'atencion' && e.chipAtencion]}>{texto}</Text>
 );
 
-/** Lo que aparece o desaparece con un toque: entra con un fundido, sale igual y lo de alrededor se acomoda. */
+/**
+ * Lo que aparece o desaparece con un toque: entra con un fundido, sale igual y lo de alrededor se acomoda.
+ * Un fundido no es movimiento: con Reducir movimiento también se ve (si no, aparecía de golpe).
+ */
 export function Aparece({ children, style, demora = 0 }: { children: ReactNode; style?: StyleProp<ViewStyle>; demora?: number }) {
   return (
-    <Animated.View entering={FadeIn.duration(280).delay(demora)} exiting={FadeOut.duration(180)} layout={LinearTransition.duration(260)} style={style}>
+    <Animated.View
+      entering={FadeIn.duration(280).delay(demora).reduceMotion(ReduceMotion.Never)}
+      exiting={FadeOut.duration(180).reduceMotion(ReduceMotion.Never)}
+      layout={LinearTransition.duration(260)}
+      style={style}
+    >
       {children}
     </Animated.View>
   );
@@ -116,8 +125,12 @@ export function Segmento<T extends string | number>({ opciones, elegida, alElegi
       {opciones.map(([valor, texto]) => (
         <Pressable
           key={String(valor)}
-          onPress={() => alElegir(valor)}
-          style={[e.seg, valor === elegida && e.segElegido]}
+          onPress={() => {
+            if (valor !== elegida) Haptics.selectionAsync().catch(() => {});
+            alElegir(valor);
+          }}
+          style={({ pressed }) => [e.seg, valor === elegida && e.segElegido, pressed && valor !== elegida && e.apretado]}
+          hitSlop={{ top: 8, bottom: 8 }}
           accessibilityRole="radio"
           accessibilityState={{ selected: valor === elegida }}
         >
@@ -128,22 +141,31 @@ export function Segmento<T extends string | number>({ opciones, elegida, alElegi
   );
 }
 
-/** Los siete días, de lunes a domingo, con su inicial. */
-export function Dias({ elegidos, alTocar }: { elegidos: readonly DiaSemana[]; alTocar: (d: DiaSemana) => void }) {
+/**
+ * Los siete días, de lunes a domingo, con su inicial. `uno`: se elige uno solo (el día del control),
+ * y VoiceOver lo dice como una opción y no como una casilla. `posibles`: los que se pueden tocar (los
+ * otros se ven apagados).
+ */
+export function Dias({ elegidos, alTocar, uno, posibles }: { elegidos: readonly DiaSemana[]; alTocar: (d: DiaSemana) => void; uno?: boolean; posibles?: readonly DiaSemana[] }) {
   return (
-    <View style={e.dias}>
+    <View style={e.dias} accessibilityRole={uno ? 'radiogroup' : undefined}>
       {SEMANA.map((d) => {
         const si = elegidos.includes(d);
+        const puede = !posibles || posibles.includes(d);
         return (
           <Pressable
             key={d}
-            onPress={() => alTocar(d)}
-            style={[e.dia, si && e.diaElegido]}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: si }}
+            disabled={!puede}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              alTocar(d);
+            }}
+            style={({ pressed }) => [e.dia, si && e.diaElegido, pressed && e.apretado, !puede && e.diaApagado]}
+            accessibilityRole={uno ? 'radio' : 'checkbox'}
+            accessibilityState={uno ? { selected: si, disabled: !puede } : { checked: si, disabled: !puede }}
             accessibilityLabel={lista('fecha.dias')[d]}
           >
-            <Text style={[e.diaTexto, si && e.diaTextoElegido]}>{lista('fecha.diasCortos')[d].charAt(0)}</Text>
+            <Text style={[e.diaTexto, si && e.diaTextoElegido]} maxFontSizeMultiplier={1.3}>{lista('fecha.diasCortos')[d].charAt(0)}</Text>
           </Pressable>
         );
       })}
@@ -218,6 +240,8 @@ export const e = StyleSheet.create({
   diaElegido: { borderColor: colores.oro, backgroundColor: colores.oro },
   diaTexto: { fontFamily: letras.textoMedio, fontSize: 13, color: 'rgba(239, 230, 207, 0.7)' },
   diaTextoElegido: { color: colores.tinta },
+  diaApagado: { opacity: 0.3 },
+  apretado: { opacity: 0.6 },
   etiqueta: { marginTop: 22, marginBottom: 9, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   camino: { marginTop: 13 },
   caminoPista: { height: 4, borderRadius: 4, backgroundColor: 'rgba(239, 230, 207, 0.08)' },

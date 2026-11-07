@@ -5,6 +5,7 @@
 // riqueza del cielo, y la textura del cielo fijo también, porque depende de la calidad.
 
 import { Skia, type SkPath } from '@shopify/react-native-skia';
+import { PixelRatio } from 'react-native';
 
 import type { Texto } from '@/datos/catalogo';
 import type { EstrellaDelUniverso } from './escena';
@@ -16,6 +17,10 @@ export type Lado = 'abajo' | 'arriba' | 'der' | 'izq';
 
 /** La distancia mínima entre dos estrellas de hoy, en puntos: más cerca, cuesta tocar la que se quiere. */
 const SEPARACION = 60;
+/** El ancho de la etiqueta de una estrella (Interfaz.tsx): un nombre más largo sigue en una segunda línea, y ahí termina con «…». */
+export const ANCHO_DE_ETIQUETA = 180;
+/** Hasta cuánto crecen las etiquetas y la cabecera del cielo con el texto grande de iOS (Interfaz.tsx). */
+export const LETRA_MAXIMA = 1.3;
 
 export type Plano = {
   ancho: number;
@@ -46,7 +51,7 @@ export type PlanoDelMusgo = {
 
 const HUECOS_DEL_UNIVERSO: Punto[] = [[-0.55, 0.3], [0.5, 0.24], [-0.06, 0.07], [-0.58, -0.12], [0.52, -0.1], [-0.24, -0.32], [0.42, -0.36]];
 
-export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo): Plano {
+export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo, escalaDeLetra = PixelRatio.getFontScale()): Plano {
   const aspecto = ancho / alto;
   const aPantalla = ([x, y]: Punto): Punto => [ancho / 2 + x * alto, alto / 2 - y * alto];
 
@@ -64,15 +69,18 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo): Plano
   let x0 = Infinity, x1 = -Infinity;
   estrellas.forEach(([x]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); });
   const anchoFigura = Math.max(x1 - x0, 1e-6);
-  // Con un poco de margen, y con lugar para la segunda línea de los automáticos (Interfaz.tsx).
-  const cajaDe = (lado: Lado, anchoEtiqueta: number) => (lado === 'abajo' ? [-anchoEtiqueta / 2 - 6, 8, anchoEtiqueta / 2 + 6, 46]
-    : lado === 'arriba' ? [-anchoEtiqueta / 2 - 6, -46, anchoEtiqueta / 2 + 6, -8]
-      : lado === 'der' ? [16, -16, 28 + anchoEtiqueta, 24]
-        : [-28 - anchoEtiqueta, -16, -16, 24]);
-  const entra = (lado: Lado, sx: number, sy: number, anchoEtiqueta: number) =>
+  // Con el texto grande de iOS, las letras de las etiquetas crecen hasta LETRA_MAXIMA: las cajas también.
+  const letra = Math.min(LETRA_MAXIMA, Math.max(1, escalaDeLetra));
+  // Con un poco de margen, y con lugar para la segunda línea de los automáticos (Interfaz.tsx). `crece`:
+  // lo que la etiqueta pasa del alto de siempre (las letras más grandes, o el nombre en dos líneas).
+  const cajaDe = (lado: Lado, anchoEtiqueta: number, crece: number) => (lado === 'abajo' ? [-anchoEtiqueta / 2 - 6, 8, anchoEtiqueta / 2 + 6, 46 + crece]
+    : lado === 'arriba' ? [-anchoEtiqueta / 2 - 6, -46 - crece, anchoEtiqueta / 2 + 6, -8]
+      : lado === 'der' ? [16, -16, 28 + anchoEtiqueta, 24 + crece]
+        : [-28 - anchoEtiqueta, -16, -16, 24 + crece]);
+  const entra = (lado: Lado, sx: number, sy: number, anchoEtiqueta: number, crece: number) =>
     lado === 'der' ? sx + 22 + anchoEtiqueta <= ancho - 8
       : lado === 'izq' ? sx - 22 - anchoEtiqueta >= 8
-        : lado === 'arriba' ? sy - 46 >= alto * 0.2
+        : lado === 'arriba' ? sy - 46 - crece >= alto * 0.2
           : true;
   // Lo que ya ocupa lugar en la pantalla: las estrellas y las etiquetas puestas. En un iPhone chico,
   // o en una constelación apretada como la Corona Boreal, dos etiquetas vecinas se encimaban.
@@ -87,23 +95,26 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo): Plano
   const etiquetas = estrellas.map((p, i) => {
     const [sx, sy] = enPantallaTodas[i];
     const h = dia.habitos[i];
-    const largo = h.nombre.length;
-    const anchoEtiqueta = 18 + 6.4 * largo;
+    // El ícono y las letras (11,5 pt, unos 6,4 puntos cada una). Lo que no entra en el ancho va en una
+    // segunda línea, y ahí se corta (Interfaz.tsx): la etiqueta ocupa todo el ancho y una línea más.
+    const natural = 18 + 6.4 * letra * h.nombre.length;
+    const anchoEtiqueta = Math.min(ANCHO_DE_ETIQUETA, natural);
+    const crece = 28 * (letra - 1) + (natural > ANCHO_DE_ETIQUETA ? 15 * letra : 0);
     const dx = (p[0] - centro[0]) / anchoFigura;
     let lado: Lado = estrellas.length < 2 || Math.abs(dx) < 0.22 ? 'abajo' : dx > 0 ? 'der' : 'izq';
-    if (!entra(lado, sx, sy, anchoEtiqueta)) lado = 'abajo';
+    if (!entra(lado, sx, sy, anchoEtiqueta, crece)) lado = 'abajo';
     const enPantalla = (l: Lado) => {
-      const c = cajaDe(l, anchoEtiqueta);
+      const c = cajaDe(l, anchoEtiqueta, crece);
       return [sx + c[0], sy + c[1], sx + c[2], sy + c[3]];
     };
     // Si tapa algo, el lado que menos tapa (a igualdad, el de siempre).
     if (encima(enPantalla(lado), i) > 0) {
       for (const l of ['abajo', 'der', 'izq', 'arriba'] as Lado[]) {
-        if (l !== lado && entra(l, sx, sy, anchoEtiqueta) && encima(enPantalla(l), i) < encima(enPantalla(lado), i)) lado = l;
+        if (l !== lado && entra(l, sx, sy, anchoEtiqueta, crece) && encima(enPantalla(l), i) < encima(enPantalla(lado), i)) lado = l;
       }
     }
     ocupado.push(enPantalla(lado));
-    return { x: sx, y: sy, lado, caja: cajaDe(lado, anchoEtiqueta) };
+    return { x: sx, y: sy, lado, caja: cajaDe(lado, anchoEtiqueta, crece) };
   });
 
   const constructorFantasmas = Skia.PathBuilder.Make();

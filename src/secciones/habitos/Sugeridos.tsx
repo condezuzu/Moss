@@ -1,13 +1,16 @@
 // Los primeros hábitos (spec/plan.md, etapa 9): apenas termina la entrada, se eligen de 3 a 5 de
 // una lista corta, entre ellos los de comida, y arman la primera constelación. Los de ejemplo se
-// archivan. Después se cambian con el editor.
+// archivan. Después se cambian con el editor. Mientras sigan solo los de ejemplo, se vuelven a
+// ofrecer al llegar a Hábitos (useVolverAOfrecer).
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import type { SFSymbol } from 'expo-symbols';
-import { useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
+import { soloLosDeEjemplo } from '@/almacen/almacen';
 import { avisoDeFabrica } from '@/dominio/avisos';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
@@ -35,9 +38,36 @@ const SUGERIDOS: readonly Sugerido[] = [
 ];
 const DE_FABRICA = ['proteina', 'registrar', 'dormir', 'pasos'];
 const MINIMO = 3;
+/** Si se cerró la hoja con la cruz: es un «no, gracias», y no se vuelve a ofrecer. */
+const CERRADA_SIN_ELEGIR = 'moss:primerosHabitosCerrados';
+
+/**
+ * Mientras sigan solo los hábitos de ejemplo, los primeros hábitos se vuelven a ofrecer al llegar a
+ * Hábitos (`enHabitos`): que un aviso lleve a otro lado o que iOS cierre Moss con la hoja abierta no los
+ * pierde. Cerrada con la cruz, no vuelve: quien se queda con los de ejemplo no la ve todos los días. La
+ * hoja la abre Secciones, con `ofrecer`.
+ */
+export function useVolverAOfrecer(enHabitos: boolean, ofrecer: () => void) {
+  const alOfrecer = useEffectEvent(ofrecer);
+  useEffect(() => {
+    if (!enHabitos || !soloLosDeEjemplo(elAlmacen().estado())) return;
+    let vigente = true;
+    AsyncStorage.getItem(CERRADA_SIN_ELEGIR).then((cerrada) => {
+      if (vigente && !cerrada && soloLosDeEjemplo(elAlmacen().estado())) alOfrecer();
+    }).catch(() => {});
+    return () => {
+      vigente = false;
+    };
+  }, [enHabitos]);
+}
 
 export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
   const [elegidos, setElegidos] = useState<string[]>(DE_FABRICA);
+  // La cruz: un «no, gracias», y la hoja no se vuelve a ofrecer.
+  const cerrarSinElegir = () => {
+    AsyncStorage.setItem(CERRADA_SIN_ELEGIR, elAlmacen().estado().hoy).catch(() => {});
+    alCerrar();
+  };
   const alternar = (clave: string) => {
     Haptics.selectionAsync().catch(() => {});
     setElegidos((antes) => (antes.includes(clave) ? antes.filter((x) => x !== clave) : [...antes, clave]));
@@ -61,10 +91,13 @@ export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
   };
   const listos = elegidos.length >= MINIMO;
   return (
+    // Bajarla o tocar afuera no la cierran: es fácil hacerlo sin querer, y los primeros hábitos se perdían.
     <HojaModal
       abierta
       titulo={t('habitos.sugeridos.titulo')}
-      alCerrar={alCerrar}
+      alCerrar={cerrarSinElegir}
+      activo={false}
+      cerrarAfuera={false}
       pie={(
         <>
           <Text style={st.cuantos}>{t('habitos.sugeridos.cuantos', { n: elegidos.length })}</Text>
@@ -78,7 +111,7 @@ export function Sugeridos({ alCerrar }: { alCerrar: () => void }) {
           const si = elegidos.includes(s.clave);
           const nombre = s.nombre?.() ?? nombreDe(s.fuente) ?? '';
           return (
-            <Pressable key={s.clave} onPress={() => alternar(s.clave)} style={[st.fila, si && st.filaElegida]} accessibilityRole="checkbox" accessibilityState={{ checked: si }}>
+            <Pressable key={s.clave} onPress={() => alternar(s.clave)} style={({ pressed }) => [st.fila, si && st.filaElegida, pressed && st.filaApretada]} accessibilityRole="checkbox" accessibilityState={{ checked: si }}>
               <Icono nombre={s.icono} tam={18} color={si ? colores.oroClaro : 'rgba(239, 230, 207, 0.6)'} />
               <View style={st.textos}>
                 <Text style={st.nombre}>{nombre}</Text>
@@ -99,6 +132,7 @@ const st = StyleSheet.create({
   lista: { marginTop: 14, gap: 8 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.45)' },
   filaElegida: { borderColor: 'rgba(232, 196, 106, 0.6)', backgroundColor: 'rgba(232, 196, 106, 0.08)' },
+  filaApretada: { opacity: 0.7 },
   textos: { flex: 1, gap: 2 },
   nombre: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.pergamino },
   detalle: { fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.5)' },

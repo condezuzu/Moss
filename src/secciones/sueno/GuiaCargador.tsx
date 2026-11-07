@@ -8,16 +8,19 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState, Linking, Modal, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { Easing, FadeIn, FadeInRight, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInRight, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ATAJO_DEL_CARGADOR } from '@/lib/sitio';
 import { useSenales } from '@/salud/anclas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { anunciar } from '../anuncio';
 import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
 import { Icono } from '../comida/comunes';
 import { horaDelDia } from '../comida/datos';
+import { useCerrarConLasCapas } from '../HojaModal';
+import { ENTRA_FUNDIDO } from '../movimiento';
 import { Aparece } from '../tarjetas';
 
 type Tocar = 'instalar' | 'llave' | 'anadir' | 'mas' | 'cargador' | 'siguiente' | 'atajo' | 'accion';
@@ -96,6 +99,7 @@ function Fila({ texto, marca }: { texto: string; marca?: 'si' | 'no' }) {
 
 /** El iPhone dibujado: una pantalla de la app Atajos, con lo que hay que tocar latiendo. */
 function IphoneDibujado({ paso, llave, alTocar }: { paso: Paso; llave: boolean; alTocar: () => void }) {
+  const reducido = useReducedMotion();
   const { toca, pantalla } = paso;
   const fila = (texto: string, id?: Tocar) => (id ? (
     <Tocable id={id} toca={toca} alTocar={alTocar} style={st.iosFila} etiqueta={texto}><Fila texto={texto} /></Tocable>
@@ -204,7 +208,13 @@ function IphoneDibujado({ paso, llave, alTocar }: { paso: Paso; llave: boolean; 
   }
   return (
     <Aparece style={st.marco}>
-      <Animated.View key={paso.id} entering={FadeInRight.duration(320)} exiting={FadeOut.duration(140)} style={[st.pantalla, pantalla === 'moss' && st.pantallaMoss, (pantalla === 'importar' || pantalla === 'importarListo' || pantalla === 'importarSimple') && st.pantallaHoja]}>
+      {/* Cada pantalla entra de costado, como en el iPhone; con Reducir movimiento, con un fundido. */}
+      <Animated.View
+        key={paso.id}
+        entering={reducido ? ENTRA_FUNDIDO : FadeInRight.duration(320)}
+        exiting={FadeOut.duration(140).reduceMotion(ReduceMotion.Never)}
+        style={[st.pantalla, pantalla === 'moss' && st.pantallaMoss, (pantalla === 'importar' || pantalla === 'importarListo' || pantalla === 'importarSimple') && st.pantallaHoja]}
+      >
         {contenido}
       </Animated.View>
       <View style={st.isla} />
@@ -214,7 +224,8 @@ function IphoneDibujado({ paso, llave, alTocar }: { paso: Paso; llave: boolean; 
 
 function Llave({ prendida }: { prendida: boolean }) {
   const perilla = useAnimatedStyle(() => ({ transform: [{ translateX: withTiming(prendida ? 14 : 0, { duration: 240 }) }] }), [prendida]);
-  const fondo = useAnimatedStyle(() => ({ backgroundColor: withTiming(prendida ? '#34c759' : '#bfc0c8', { duration: 240 }) }), [prendida]);
+  // El color se funde también con Reducir movimiento; la perilla, que viaja, no.
+  const fondo = useAnimatedStyle(() => ({ backgroundColor: withTiming(prendida ? '#34c759' : '#bfc0c8', { duration: 240, reduceMotion: ReduceMotion.Never }) }), [prendida]);
   return (
     <Animated.View style={[st.llave, fondo]}>
       <Animated.View style={[st.perilla, perilla]} />
@@ -245,6 +256,8 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
   useEffect(() => {
     if (abierta) reiniciar();
   }, [abierta, reiniciar]);
+  // Es otra ventana, arriba de la app: un aviso o un widget que llevan a otro lado la cierran, como a las hojas.
+  useCerrarConLasCapas(abierta, alCerrar);
 
   useEffect(() => {
     const suscripcion = AppState.addEventListener('change', (estado) => {
@@ -312,6 +325,13 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
   const llego = enPrueba ? senales?.filter((s) => (s.que === 'cargadorConectado' || s.que === 'cargadorDesconectado') && s.en >= desde).at(-1) : undefined;
   const horaDe = (ms: number) => { const f = new Date(ms); return horaDelDia(f.getHours() * 60 + f.getMinutes()); };
   const actual = paso >= 0 && !enPrueba ? pasos[paso] : null;
+  const estadoDeLaPrueba = llego ? t(llego.que === 'cargadorConectado' ? 'sueno.afinar.cargador.guia.probar.llego' : 'sueno.afinar.cargador.guia.probar.llegoDesconectado', { hora: horaDe(llego.en) })
+    : t(tarde ? 'sueno.afinar.cargador.guia.probar.noLlego' : 'sueno.afinar.cargador.guia.probar.esperando');
+  // La señal que llegó (o que tarda) cambia sin que se toque nada: VoiceOver la dice.
+  const cambioLaPrueba = enPrueba && (!!llego || tarde);
+  useEffect(() => {
+    if (cambioLaPrueba) anunciar(estadoDeLaPrueba);
+  }, [cambioLaPrueba, estadoDeLaPrueba]);
 
   return (
     // Transparente: al bajarla con el dedo, se ve la app detrás.
@@ -325,7 +345,7 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
             <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
           </Pressable>
         </CabezaQueBaja>
-        <ScrollQueBaja arrastre={hoja} lugar={st.cuerpo} style={st.cuerpo} contentContainerStyle={st.cuerpoAdentro} showsVerticalScrollIndicator={false}>
+        <ScrollQueBaja arrastre={hoja} lugar={st.cuerpo} style={st.cuerpo} contentContainerStyle={st.cuerpoAdentro} showsVerticalScrollIndicator={false} scrollsToTop={false}>
           {paso < 0 && (
             <Aparece key="presentacion">
               <Text style={st.titulo}>{t('sueno.afinar.cargador.guia.titulo')}</Text>
@@ -354,12 +374,9 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
             <Aparece key="probar" style={st.prueba}>
               <Text style={st.titulo}>{t('sueno.afinar.cargador.guia.probar.titulo')}</Text>
               <Text style={st.texto}>{t('sueno.afinar.cargador.guia.probar.texto')}</Text>
-              <Animated.View key={llego ? 'llego' : tarde ? 'tarde' : 'esperando'} entering={FadeIn.duration(240)} style={st.estado} accessibilityLiveRegion="polite">
+              <Animated.View key={llego ? 'llego' : tarde ? 'tarde' : 'esperando'} entering={FadeIn.duration(240).reduceMotion(ReduceMotion.Never)} style={st.estado}>
                 <View style={[st.estadoPunto, llego && st.estadoPuntoLlego]} />
-                <Text style={[st.estadoTexto, !!llego && st.estadoTextoLlego]}>
-                  {llego ? t(llego.que === 'cargadorConectado' ? 'sueno.afinar.cargador.guia.probar.llego' : 'sueno.afinar.cargador.guia.probar.llegoDesconectado', { hora: horaDe(llego.en) })
-                    : t(tarde ? 'sueno.afinar.cargador.guia.probar.noLlego' : 'sueno.afinar.cargador.guia.probar.esperando')}
-                </Text>
+                <Text style={[st.estadoTexto, !!llego && st.estadoTextoLlego]}>{estadoDeLaPrueba}</Text>
               </Animated.View>
             </Aparece>
           )}
@@ -381,13 +398,13 @@ export function GuiaCargador({ abierta, alCerrar }: { abierta: boolean; alCerrar
           )}
           {paso >= 0 && !llego && (
             <Aparece key="fila" style={st.pieFila}>
-              <Pressable onPress={atras} style={st.atras} accessibilityRole="button" hitSlop={6}>
+              <Pressable onPress={atras} style={({ pressed }) => [st.atras, pressed && st.atrasApretado]} accessibilityRole="button" hitSlop={{ top: 6, bottom: 6, left: 10, right: 6 }}>
                 <Icono nombre="chevron.left" tam={14} color="rgba(239, 230, 207, 0.65)" peso="medium" />
                 <Text style={st.atrasTexto}>{t('sueno.afinar.cargador.guia.atras')}</Text>
               </Pressable>
               {(version === 'aMano' || (version === 26 && paso >= 1)) && !enPrueba && !mirando && (
                 <Aparece key="abrirAtajos">
-                  <Pressable onPress={() => { Linking.openURL('shortcuts://').catch(() => {}); }} style={({ pressed }) => [st.abrirAtajos, pressed && st.principalApretado]} accessibilityRole="button">
+                  <Pressable onPress={() => { Linking.openURL('shortcuts://').catch(() => {}); }} style={({ pressed }) => [st.abrirAtajos, pressed && st.principalApretado]} accessibilityRole="button" hitSlop={3}>
                     <Text style={st.abrirAtajosTexto}>{t('sueno.afinar.atajos.abrir')}</Text>
                   </Pressable>
                 </Aparece>
@@ -429,6 +446,7 @@ const st = StyleSheet.create({
   pie: { gap: 8, paddingHorizontal: 22, paddingTop: 10 },
   pieFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 40 },
   atras: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingRight: 8 },
+  atrasApretado: { opacity: 0.55 },
   atrasTexto: { fontFamily: letras.texto, fontSize: 13.5, color: 'rgba(239, 230, 207, 0.65)' },
   abrirAtajos: { minHeight: 38, paddingHorizontal: 16, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colores.pergamino },
   abrirAtajosTexto: { fontFamily: letras.textoMedio, fontSize: 14, color: '#0b0f1d' },

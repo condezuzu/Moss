@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { avivar, crearEscena, debeSeguir, estrellaEn, hayMovimiento, paso, ponerEncendidos, RADIO_DE_TOQUE, saludar, tocar, VIVO_AL_LLEGAR, VIVO_AL_TOCAR } from './escena';
+import { avivar, crearEscena, debeSeguir, estrellaEn, hayMovimiento, paso, ponerEncendidos, RADIO_DE_TOQUE, saludar, tocar, tocarHabito, VIVO_AL_LLEGAR, VIVO_AL_TOCAR } from './escena';
 
 const escena = (encendidos: boolean[], movimientoReducido = false) =>
   crearEscena({
@@ -125,5 +125,24 @@ describe('tocar una estrella', () => {
     const sx = 393 / 2, sy = 852 / 2 - 0.1 * 852;
     expect(estrellaEn(e, sx + 140, sy + 5)).toBe(0);
     expect(estrellaEn(e, sx + 170, sy + 5)).toBe(-1);
+  });
+
+  it('desde VoiceOver, por su número, hace lo mismo que el toque', () => {
+    const e = escena([false, true]);
+    expect(tocarHabito(e, 0)).toBe(0);
+    expect(e.habitos[0].encendido).toBe(true);
+    expect(e.eventos).toEqual([{ tipo: 'encendida', indice: 0 }, { tipo: 'completo' }]);
+    expect(tocarHabito(e, 1)).toBe(1);
+    expect(e.habitos[1].encendido).toBe(false);
+    expect(e.eventos.slice(2)).toEqual([{ tipo: 'apagada', indice: 1 }, { tipo: 'incompleto' }]);
+    expect(tocarHabito(e, 5)).toBe(-1);
+  });
+
+  it('la de un hábito de comida no se enciende con el toque: dice de dónde sale su luz', () => {
+    const e = escena([false]);
+    e.habitos[0].fija = true;
+    expect(tocarHabito(e, 0)).toBe(0);
+    expect(e.habitos[0].encendido).toBe(false);
+    expect(e.eventos).toEqual([{ tipo: 'automatico', indice: 0 }]);
   });
 });

@@ -46,14 +46,25 @@ export function Barra({ posicion, subida, actual, abajo, alTocar, alMas }: Props
     <Boton key={n} nombre={n} indice={i} posicion={posicion} elegida={i === actual} alTocar={alTocar} />
   ));
   return (
-    <View style={[estilos.barra, { height: ALTO_BARRA + abajo, paddingBottom: abajo }]}>
+    // «tabbar» es el único rol que en iOS le dice a VoiceOver que es una barra de pestañas («pestaña, 1 de 7»).
+    <View style={[estilos.barra, { height: ALTO_BARRA + abajo, paddingBottom: abajo }]} accessibilityRole="tabbar">
       <View style={[StyleSheet.absoluteFill, estilos.fondo]} pointerEvents="none" />
       <Animated.View style={[StyleSheet.absoluteFill, estilos.solida, estiloSolida]} pointerEvents="none" />
       {botones.slice(0, 3)}
-      <Pressable onPress={alMas} style={estilos.mas} accessibilityRole="button" accessibilityLabel={t('pestanas.mas')} hitSlop={6}>
-        <View style={estilos.masCirculo}>
-          <Icono nombre="plus" tam={17} />
-        </View>
+      <Pressable
+        onPress={alMas}
+        style={estilos.mas}
+        accessibilityRole="button"
+        accessibilityLabel={t('pestanas.mas')}
+        accessibilityShowsLargeContentViewer
+        accessibilityLargeContentTitle={t('pestanas.mas')}
+        hitSlop={6}
+      >
+        {({ pressed }) => (
+          <View style={[estilos.masCirculo, pressed && estilos.masApretado]}>
+            <Icono nombre="plus" tam={17} />
+          </View>
+        )}
       </Pressable>
       {botones.slice(3)}
     </View>
@@ -71,15 +82,24 @@ function Boton({ nombre, indice, posicion, elegida, alTocar }: {
   const estiloLuz = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - Math.abs(posicion.value - indice)) }));
   const texto = t(`pestanas.${nombre}`);
   return (
-    <Pressable onPress={() => alTocar(indice)} style={estilos.boton} accessibilityRole="tab" accessibilityLabel={texto} accessibilityState={{ selected: elegida }}>
+    // Con el texto grande, la barra no crece (no entraría): mantener apretada una pestaña la muestra en grande, como en iOS.
+    <Pressable
+      onPress={() => alTocar(indice)}
+      style={estilos.boton}
+      accessibilityRole="tab"
+      accessibilityLabel={texto}
+      accessibilityState={{ selected: elegida }}
+      accessibilityShowsLargeContentViewer
+      accessibilityLargeContentTitle={texto}
+    >
       <View style={estilos.capa}>
         <SymbolView name={ICONOS[nombre]} size={21} weight="light" tintColor={colores.pergaminoApagado} />
-        <Text style={estilos.nombre}>{texto}</Text>
+        <Text style={estilos.nombre} numberOfLines={1} maxFontSizeMultiplier={1.15}>{texto}</Text>
       </View>
       {/* La luz es una sombra sin forma fija: dibujada una vez y guardada, iOS no la vuelve a calcular cuando algo se mueve debajo. */}
       <Animated.View style={[estilos.capa, estilos.luz, estiloLuz]} pointerEvents="none" shouldRasterizeIOS>
         <SymbolView name={ICONOS[nombre]} size={21} weight="light" tintColor={colores.pergamino} />
-        <Text style={[estilos.nombre, estilos.nombreLuz]}>{texto}</Text>
+        <Text style={[estilos.nombre, estilos.nombreLuz]} numberOfLines={1} maxFontSizeMultiplier={1.15}>{texto}</Text>
       </Animated.View>
     </Pressable>
   );
@@ -96,4 +116,5 @@ const estilos = StyleSheet.create({
   nombreLuz: { color: colores.pergamino },
   mas: { flex: 1, minHeight: 50, alignItems: 'center', justifyContent: 'center' },
   masCirculo: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.55)', alignItems: 'center', justifyContent: 'center' },
+  masApretado: { opacity: 0.7, transform: [{ scale: 0.94 }] },
 });

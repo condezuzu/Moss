@@ -5,10 +5,18 @@
 
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 
-import { idioma } from '@/textos';
+import { idioma, t } from '@/textos';
 import { region } from './datos';
+
+/** iOS pregunta por el micrófono una sola vez: si ya se dijo que no, la única salida es Ajustes. */
+function ofrecerAjustes() {
+  Alert.alert(t('comida.decir.titulo'), t('comida.decir.error.permiso'), [
+    { text: t('comun.cancelar'), style: 'cancel' },
+    { text: t('comida.escaner.abrirAjustes'), onPress: () => { Linking.openSettings().catch(() => {}); } },
+  ]);
+}
 
 export type ErrorDelDictado = 'permiso' | 'idioma' | 'otro';
 
@@ -82,8 +90,14 @@ export function useDictado(op: { alTexto: (texto: string) => void; alTerminar: (
   const empezar = async (contexto: readonly string[]) => {
     setError(null);
     try {
-      const permiso = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      if (!permiso.granted) return setError('permiso');
+      // Si recién se le dijo que no a la pregunta de iOS, alcanza con el texto del panel; si ya se había
+      // dicho antes, iOS no vuelve a preguntar y se ofrece ir a Ajustes.
+      const antes = await ExpoSpeechRecognitionModule.getPermissionsAsync();
+      const permiso = antes.granted ? antes : await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!permiso.granted) {
+        if (!antes.canAskAgain) ofrecerAjustes();
+        return setError('permiso');
+      }
       const lang = await idiomaDelDictado();
       if (!lang) return setError('idioma');
       ExpoSpeechRecognitionModule.start({

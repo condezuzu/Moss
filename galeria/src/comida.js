@@ -218,6 +218,9 @@ const Comida = (() => {
       s.agua[k] = k === 0 ? 5 : k < 0 && plantilla ? 6 + ((-k * 7) % 4) : 0;
     }
     Object.values(s.dias).forEach((l) => l.forEach((c) => { if (c.plan) c.opcion = 'galeria:' + c.tipo; }));
+    // Las comidas guardadas y los alimentos tuyos: se cambian y se borran desde Guardadas (6/11, para aprobar).
+    s.guardadas = GUARDADAS.map((g, k) => ({ id: 'g' + k, nombre: Object.assign({}, g.nombre), items: g.items.map(([n, v, p]) => item(n, v, p)).filter(Boolean) }));
+    s.propios = [];
     FAVORITOS.forEach(([n]) => { const a = porNombre.get(n); if (a) s.favoritos.add(a.id); });
     Object.entries(USOS).forEach(([n, veces]) => { const a = porNombre.get(n); if (a) s.usos.set(a.id, veces); });
     // La última porción de cada alimento: la de los días de mentira, del más viejo al más nuevo.
@@ -517,6 +520,11 @@ const Comida = (() => {
         }
         // Una comida registrada ahora ya marca la hora: «ahora» va solo si no la hay.
         if (!entradas.some((x) => x.comida && Math.abs(x.hora - AHORA) < 1)) entradas.push({ ahora: true, hora: AHORA - 0.5 });
+      } else {
+        // Otro día, como en la app: cada comida que falta, con «Agregar» para anotarla en ese día (6/11).
+        Object.entries(HORA_TIPICA).forEach(([tipo, h]) => {
+          if (!entradas.some((x) => x.comida && x.comida.tipo === tipo)) entradas.push({ vacia: tipo, hora: h });
+        });
       }
       entradas.sort((a, b) => a.hora - b.hora);
       let antes = null;
@@ -533,6 +541,7 @@ const Comida = (() => {
         // El hueco de la comida que falta, si es la de ahora, va sin hora: está justo debajo de «ahora».
         fila.append(el('div', 'cm-hora', x.vacia && x.hora === AHORA ? '' : hora(Math.round(x.hora))), el('div', 'cm-nodo'));
         fila.appendChild(x.vacia ? tarjetaVacia(x.vacia) : tarjeta(x.comida));
+        fila._comida = x.comida || null;
         if (x.vacia) fila.classList.add('vacia');
         if (x.comida && x.comida.plan) fila.classList.add('plan');
         cont.appendChild(fila);
@@ -542,10 +551,13 @@ const Comida = (() => {
     function tarjeta(c) {
       const t = sumar(c.items);
       const art = el('article', 'cm-tarjeta' + (c.entra ? ' entra' : ''));
+      art._comida = c;
       delete c.entra;
       const cab = el('header');
       const titulo = el('b', null, tx('comida.comidas.' + c.tipo));
       cab.appendChild(titulo);
+      // Mantener apretada la cabecera (6/11, para aprobar): la comida entera se levanta, con su menú.
+      if (!c.plan && opciones.menu) Detalles.mantener(cab, { alMantener: () => menuDeComida(c, art), visual: art, puede: () => !s.hoja });
       if (c.plan) cab.appendChild(el('em', 'cm-etiqueta', tx(c.opcion ? 'comida.plan.sugerida' : 'comida.planificado')));
       const total = el('span', 'cm-tk');
       total.append(numero(Math.round(t.kcal)), el('small', null, ' kcal'));
@@ -563,6 +575,12 @@ const Comida = (() => {
         if (cant) txt.append(el('em', null, ` · ${cant}`));
         li.append(txt, el('span', 'cm-item-k', numero(Math.round(valoresDe(it).kcal))));
         li.addEventListener('click', (ev) => { ev.stopPropagation(); editar(c, it); });
+        li._item = it;
+        // Lo anotado (6/11, para aprobar): mantenido, se levanta con su menú; deslizado a la izquierda, se borra.
+        if (!c.plan && opciones.menu) {
+          Detalles.mantener(li, { alMantener: () => menuDeItem(c, it, li), puede: () => !s.hoja });
+          li._desliza = Detalles.deslizar(li, { etiqueta: tx('comida.menu.borrar'), haptico: escena.haptico, puede: () => !s.hoja, alBorrar: () => quitarItems(c, [it], { yaColapsado: true }) });
+        }
         lista.appendChild(li);
         delete it.nuevo;
       });
@@ -846,12 +864,178 @@ const Comida = (() => {
       const linea = s.dia === 0 ? lineasDeEntreno().get(tipo) : null;
       if (linea) art.appendChild(lineaDeEntreno(linea));
       const acciones = el('div', 'cm-acciones');
-      acciones.append(
-        boton('cm-accion principal', `${icono('mas')}<span>${tx('comida.agregar')}</span>`, () => abrirHoja({ comida: tipo })),
-        boton('cm-accion', `${icono('copiar')}<span>${tx('comida.copiarDeAyer')}</span>`, () => copiarDeAyer(tipo)),
-      );
+      // En otro día, la hoja se abre para ese día; «Copiar de ayer» es solo de hoy, como en la app.
+      const dia = s.dia;
+      acciones.appendChild(boton('cm-accion principal', `${icono('mas')}<span>${tx('comida.agregar')}</span>`, () => abrirHoja({ comida: tipo, dia })));
+      if (dia === 0) acciones.appendChild(boton('cm-accion', `${icono('copiar')}<span>${tx('comida.copiarDeAyer')}</span>`, () => copiarDeAyer(tipo)));
       art.appendChild(acciones);
       return art;
+    }
+
+    // ------------------------------------------------------------ mantener apretado y deslizar (6/11, para aprobar)
+    // Sobre lo anotado o la cabecera de una comida: «Copiar a…», «Mover a…» (otra comida u otro día) y «Borrar»,
+    // sin «¿Seguro?»: lo hecho se deshace desde el aviso. Deslizar a la izquierda un alimento lo borra igual.
+    const menu = opciones.menu;
+    const nodoDeItem = (it) => [...zona.querySelectorAll('.cm-item')].find((n) => n._item === it) || null;
+    const nodoDeComida = (c) => [...zona.querySelectorAll('.cm-entrada')].find((n) => n._comida === c) || null;
+    /** Cierra los nodos (si están a la vista) y después hace lo que sigue. */
+    function cerrarNodos(nodos, despues) {
+      const vivos = nodos.filter(Boolean);
+      if (!vivos.length) { despues(); return; }
+      let faltan = vivos.length;
+      vivos.forEach((n) => Detalles.colapsar(n, () => { if (--faltan === 0) despues(); }));
+    }
+    /** La comida de ese tipo en ese día (la anotada, no la sugerida); si no hay, una nueva a su hora. */
+    function comidaDelDia(dia, tipo) {
+      if (!s.dias[String(dia)]) s.dias[String(dia)] = [];
+      const lista = s.dias[String(dia)];
+      let destino = lista.find((x) => x.tipo === tipo && !x.plan);
+      let creada = false;
+      if (!destino) {
+        const hora = dia === 0 && Comidas.comidaDeLaHora(AHORA) === tipo ? AHORA : (HORA_TIPICA[tipo] ?? 11 * 60);
+        destino = { tipo, hora, items: [] };
+        lista.push(destino);
+        creada = true;
+      }
+      return { destino, creada, quitar: () => { const i = lista.indexOf(destino); if (i >= 0 && !destino.items.length) lista.splice(i, 1); } };
+    }
+    /** «a la cena de mañana»: a dónde fue, visto desde el día que se está mirando. */
+    function dondeTexto(dia, tipo) {
+      const f = fechaDe(dia);
+      const cual = dia === s.dia ? 'mismo' : dia === 0 ? 'hoy' : dia === -1 ? 'ayer' : dia === 1 ? 'manana' : 'otro';
+      return tx('comida.menu.donde.' + cual, { aLa: tx('comida.aLa.' + tipo), comida: tx('comida.comidas.' + tipo).toLowerCase(), dia: `${tx('fecha.dias.' + f.dia)} ${f.num}` });
+    }
+    const etiquetaDeDia = (k) => {
+      if (k >= -1 && k <= 1) return tx('comida.dias.' + { '-1': 'ayer', 0: 'hoy', 1: 'manana' }[k]);
+      const f = fechaDe(k);
+      return Buscar.conMayuscula(tx('comida.tituloDia', { dia: tx('fecha.diasCortos.' + f.dia), num: f.num }));
+    };
+    function opcionesDelMenu(c, items, alBorrar) {
+      return [
+        { texto: tx('comida.menu.copiarA'), icono: 'copiar', sub: (cont, volver) => destinos(cont, volver, 'copiar', c, items) },
+        { texto: tx('comida.menu.moverA'), icono: 'mover', sub: (cont, volver) => destinos(cont, volver, 'mover', c, items) },
+        { texto: tx('comida.menu.borrar'), icono: 'basura', tipo: 'peligro', separada: true, accion: alBorrar },
+      ];
+    }
+    function menuDeItem(c, it, li) {
+      if (!menu || menu.abierto) return;
+      menu.abrir(li, { opciones: opcionesDelMenu(c, [it], () => quitarItems(c, [it])) });
+    }
+    function menuDeComida(c, art) {
+      if (!menu || menu.abierto) return;
+      menu.abrir(art, { opciones: opcionesDelMenu(c, c.items.slice(), () => quitarComida(c)) });
+    }
+    /** Copiar o mover: el día (ayer, hoy, mañana, o el de la comida si es otro) y la comida, de un toque. */
+    function destinos(cont, volver, modo, c, items) {
+      const origen = diaDe(c);
+      let dia = origen;
+      const cab = el('div', 'dt-menu-cab');
+      cab.append(boton('dt-menu-volver', icono('atras'), volver, tx('comun.atras')), el('b', null, tx(modo === 'copiar' ? 'comida.menu.copiarTitulo' : 'comida.menu.moverTitulo')), el('span'));
+      const dias = el('div', 'dt-menu-dias');
+      const lista = el('div', 'dt-menu-sub');
+      const pintarLista = () => {
+        lista.innerHTML = '';
+        Comidas.COMIDAS.forEach((tipo) => {
+          const b = el('button', 'dt-menu-fila');
+          b.type = 'button';
+          b.setAttribute('role', 'menuitem');
+          b.appendChild(el('span', null, tx('comida.comidas.' + tipo)));
+          // Mover a donde ya está no hace nada.
+          if (modo === 'mover' && dia === origen && tipo === c.tipo) { b.disabled = true; b.appendChild(el('small', null, tx('comida.menu.aca'))); }
+          b.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const elegido = dia;
+            menu.cerrar(() => (modo === 'copiar' ? copiarA : moverA)(c, items, elegido, tipo));
+          });
+          lista.appendChild(b);
+        });
+      };
+      [...new Set([-1, 0, 1, origen])].filter((k) => k >= PRIMER_DIA && k <= ULTIMO_DIA).sort((a, b) => a - b).forEach((k) => {
+        const b = boton('dt-menu-dia', etiquetaDeDia(k), () => {
+          dia = k;
+          dias.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          escena.haptico('suave');
+          pintarLista();
+        });
+        b.setAttribute('aria-pressed', String(k === dia));
+        dias.appendChild(b);
+      });
+      pintarLista();
+      cont.append(cab, dias, lista);
+    }
+    function copiarA(c, items, dia, tipo) {
+      const { destino, quitar } = comidaDelDia(dia, tipo);
+      const copias = items.map((it) => Object.assign({}, it, { nuevo: true }));
+      destino.items.push(...copias);
+      escena.haptico('suave');
+      pintarZona(700);
+      avisarCambio();
+      avisarZona(tx('comida.menu.copiado', { donde: dondeTexto(dia, tipo) }), () => {
+        copias.forEach((x) => { const i = destino.items.indexOf(x); if (i >= 0) destino.items.splice(i, 1); });
+        quitar();
+        pintarZona(500);
+        avisarCambio();
+      });
+    }
+    function moverA(c, items, dia, tipo) {
+      const lugares = items.map((it) => ({ it, i: c.items.indexOf(it) }));
+      const toda = items.length === c.items.length;
+      // Primero se va de donde estaba (sin saltar); después aparece en su lugar nuevo.
+      cerrarNodos(toda ? [nodoDeComida(c)] : items.map(nodoDeItem), () => {
+        const listaOrigen = comidasDe(diaDe(c));
+        items.forEach((it) => { const i = c.items.indexOf(it); if (i >= 0) c.items.splice(i, 1); });
+        const iComida = listaOrigen.indexOf(c);
+        const sinNada = !c.items.length;
+        if (sinNada && iComida >= 0) listaOrigen.splice(iComida, 1);
+        const { destino, quitar } = comidaDelDia(dia, tipo);
+        items.forEach((it) => { it.nuevo = true; });
+        destino.items.push(...items);
+        escena.haptico('suave');
+        pintarZona(700);
+        avisarCambio();
+        avisarZona(tx('comida.menu.movido', { donde: dondeTexto(dia, tipo) }), () => {
+          items.forEach((x) => { const i = destino.items.indexOf(x); if (i >= 0) destino.items.splice(i, 1); });
+          quitar();
+          if (sinNada) { c.entra = true; listaOrigen.splice(Math.min(iComida, listaOrigen.length), 0, c); }
+          lugares.sort((a, b) => a.i - b.i).forEach(({ it, i }) => { it.nuevo = true; c.items.splice(Math.min(i, c.items.length), 0, it); });
+          pintarZona(600);
+          avisarCambio();
+        });
+      });
+    }
+    /** Borrar lo anotado: se cierra su renglón (o la comida, si era lo último) y el aviso lo deshace. */
+    function quitarItems(c, items, { yaColapsado } = {}) {
+      if (items.length >= c.items.length) { quitarComida(c); return; }
+      const lugares = items.map((it) => ({ it, i: c.items.indexOf(it) }));
+      const fuera = () => {
+        items.forEach((it) => { const i = c.items.indexOf(it); if (i >= 0) c.items.splice(i, 1); });
+        escena.haptico('suave');
+        pintarZona(700);
+        avisarCambio();
+        avisarZona(tx('comida.quitado', { alimento: nombreDeItem(items[0]) }), () => {
+          lugares.sort((a, b) => a.i - b.i).forEach(({ it, i }) => { it.nuevo = true; c.items.splice(Math.min(i, c.items.length), 0, it); });
+          pintarZona(600);
+          avisarCambio();
+        });
+      };
+      if (yaColapsado) fuera(); else cerrarNodos(items.map(nodoDeItem), fuera);
+    }
+    function quitarComida(c) {
+      const lista = comidasDe(diaDe(c));
+      const i = lista.indexOf(c);
+      cerrarNodos([nodoDeComida(c)], () => {
+        const j = lista.indexOf(c);
+        if (j >= 0) lista.splice(j, 1);
+        escena.haptico('suave');
+        pintarZona(700);
+        avisarCambio();
+        avisarZona(plural('comida.menu.comidaBorrada', c.items.length, { comida: tx('comida.comidas.' + c.tipo) }), () => {
+          c.entra = true;
+          lista.splice(Math.min(i, lista.length), 0, c);
+          pintarZona(600);
+          avisarCambio();
+        });
+      });
     }
 
     // ------------------------------------------------------------ la semana
@@ -967,7 +1151,7 @@ const Comida = (() => {
     hoja.setAttribute('role', 'dialog');
     hoja.setAttribute('aria-modal', 'true');
     hoja.innerHTML = `
-      <div class="hj-arriba"><div class="hj-asa"></div><span class="hj-cerrar-lugar"></span></div>
+      <div class="hj-arriba"><span class="hj-dia" hidden></span><div class="hj-asa"></div><span class="hj-cerrar-lugar"></span></div>
       <div class="hj-paneles">
         <div class="hj-panel hj-lista">
           <header class="hj-cab"><div class="hj-chips"></div></header>
@@ -1011,10 +1195,32 @@ const Comida = (() => {
     hoja.addEventListener('click', (ev) => { if (ev.target.closest('[data-toque]')) s.toques++; }, true);
     zona.addEventListener('click', (ev) => { if (ev.target.closest('[data-toque]')) s.toques++; }, true);
 
-    // `revisar` abre directo la revisión (copiar de ayer); `soloEditar`, la ventana de un registro.
-    function abrirHoja({ comida, revisar, soloEditar }) {
+    // El día de la hoja (6/11, para aprobar): abierta para otro día, la cabecera y el botón lo dicen («Tu cena ·
+    // ayer», «Agregar a la cena de ayer»); para hoy, como siempre.
+    const diaDeLaHoja = () => (s.hoja && s.hoja.dia) || 0;
+    function sufijoDelDia(k) {
+      if (!k) return '';
+      const f = fechaDe(k);
+      return ` · ${k === -1 ? tx('comida.delDia.ayer') : k === 1 ? tx('comida.delDia.manana') : tx('comida.delDia.otro', { dia: tx('fecha.dias.' + f.dia), num: f.num })}`;
+    }
+    const tuComidaDe = (tipo, k = diaDeLaHoja()) => tx('comida.tuComida.' + tipo) + sufijoDelDia(k);
+    function agregarADe(tipo, k = diaDeLaHoja()) {
+      if (!k) return tx('comida.agregarA.' + tipo);
+      const f = fechaDe(k);
+      return tx('comida.agregarADia.' + (k === -1 ? 'ayer' : k === 1 ? 'manana' : 'otro'), { aLa: tx('comida.aLa.' + tipo), comida: tx('comida.comidas.' + tipo).toLowerCase(), dia: `${tx('fecha.dias.' + f.dia)} ${f.num}` });
+    }
+    function pintarDiaDeLaHoja() {
+      const n = $h('.hj-dia');
+      const k = diaDeLaHoja();
+      n.hidden = !k;
+      if (k) n.textContent = etiquetaDeDia(k);
+    }
+
+    // `revisar` abre directo la revisión (copiar de ayer); `soloEditar`, la ventana de un registro; `dia`, otro día.
+    function abrirHoja({ comida, revisar, soloEditar, dia }) {
       if (s.hoja || escena.viajando || escena.modo === 'entrada') return false;
-      s.hoja = { comida: comida || Comidas.comidaDeLaHora(AHORA), sub: null, ventana: null, agregado: false, soloEditar: !!soloEditar };
+      s.hoja = { comida: comida || Comidas.comidaDeLaHora(AHORA), dia: dia || 0, sub: null, ventana: null, agregado: false, soloEditar: !!soloEditar };
+      pintarDiaDeLaHoja();
       entrada.value = '';
       entrada.placeholder = tx('comida.buscar');
       escanear.setAttribute('aria-label', tx('comida.escanear'));
@@ -1045,6 +1251,9 @@ const Comida = (() => {
     function cerrarHoja() {
       if (!s.hoja) return;
       const agregado = s.hoja.agregado;
+      const diaAgregado = s.hoja.dia || 0;
+      if (hoja.contains(document.activeElement)) document.activeElement.blur();
+      if (opciones.teclado) opciones.teclado.ocultar();
       // La foto recién sacada que no se anotó queda en el día: nunca se pierde una foto sin querer.
       const sinAnotar = s.hoja.foto && fotos.pendiente(s.hoja.foto) ? s.hoja.foto : null;
       s.hoja = null;
@@ -1055,8 +1264,8 @@ const Comida = (() => {
       tel.classList.remove('con-hoja');
       hoja.classList.add('saliendo');
       setTimeout(() => { if (!s.hoja) { hoja.hidden = true; fondo.hidden = true; cerrarVentana(true); } tel.classList.remove('hoja-anim'); }, 420);
-      // Lo nuevo se ve llegar: la luna se llena y la cifra baja.
-      if (agregado) { s.dia = 0; s.vista = 'dia'; pintarZona(1100); avisarCambio(); }
+      // Lo nuevo se ve llegar: la luna se llena y la cifra baja (en el día al que se agregó).
+      if (agregado) { s.dia = diaAgregado; s.vista = 'dia'; pintarZona(1100); avisarCambio(); }
       // Sin registrar nada, la cuenta de toques empieza de nuevo.
       s.toques = 0;
       s.escribio = false;
@@ -1080,8 +1289,9 @@ const Comida = (() => {
     function pintarAtajos() {
       const cont = $h('.hj-atajos');
       cont.innerHTML = '';
+      // En la hoja de otro día, «Cena de ayer» copiaría la de anteayer con un nombre que confunde: va solo hoy.
+      if (diaDeLaHoja() === 0) cont.appendChild(boton('hj-atajo', `${icono('copiar')}<span>${tx('comida.deAyer.' + s.hoja.comida)}</span>`, () => sumarDeAyer(s.hoja.comida)));
       cont.append(
-        boton('hj-atajo', `${icono('copiar')}<span>${tx('comida.deAyer.' + s.hoja.comida)}</span>`, () => sumarDeAyer(s.hoja.comida)),
         boton('hj-atajo', `${icono('guardadas')}<span>${tx('comida.guardadasCorto')}</span>`, () => abrirGuardadas()),
         boton('hj-atajo', `${icono('rayo')}<span>${tx('comida.cargaRapida')}</span>`, () => abrirRapida()),
       );
@@ -1127,7 +1337,7 @@ const Comida = (() => {
         const siempre = deSiempre(s.hoja.comida);
         if (siempre) {
           const b = boton('hj-siempre', '', () => {
-            const r = registrarDirecto(siempre, tx('comida.deSiempre.' + s.hoja.comida), s.hoja.comida);
+            const r = registrarDirecto(siempre, tx('comida.deSiempre.' + s.hoja.comida), s.hoja.comida, AHORA, diaDeLaHoja());
             const tipo = s.hoja.comida;
             cerrarHoja();
             avisarZona(tx('comida.deSiempre.' + tipo), r.deshacer);
@@ -1199,12 +1409,13 @@ const Comida = (() => {
       const normal = Buscar.normalizar(texto);
       const palabras = normal.split(' ').filter(Boolean);
       if (!palabras.length) return [];
-      const candidatos = corpus.filter((t) => palabras.every((p) => t.palabras.some((w) => w.startsWith(p)))).map((t) => Object.assign({}, t, { aproximado: false }));
+      // Lo tuyo que borraste ya no aparece (vuelve con «Deshacer»).
+      const candidatos = corpus.filter((t) => !porId.get(t.alimento).borrado && palabras.every((p) => t.palabras.some((w) => w.startsWith(p)))).map((t) => Object.assign({}, t, { aproximado: false }));
       if (normal.length >= 3 && new Set(candidatos.map((c) => c.alimento)).size < Buscar.POCOS) {
         const buscados = new Set();
         palabras.forEach((p) => { for (let k = 0; k + 3 <= p.length; k++) buscados.add(p.slice(k, k + 3)); });
         corpus.forEach((t) => {
-          if (t.idioma !== idioma || ![...buscados].some((g) => t.trigramas.has(g))) return;
+          if (t.idioma !== idioma || porId.get(t.alimento).borrado || ![...buscados].some((g) => t.trigramas.has(g))) return;
           if (Buscar.parecido(texto, t.texto) >= Buscar.PARECIDO_MINIMO) candidatos.push(Object.assign({}, t, { aproximado: true }));
         });
       }
@@ -1253,8 +1464,9 @@ const Comida = (() => {
     function agregarCanasta() {
       if (!s.hoja || !s.canasta.length) return;
       const tipo = s.hoja.comida;
-      sacarLoSugerido(tipo);
-      const c = comidaDeHoy(tipo);
+      const k = diaDeLaHoja();
+      if (k === 0) sacarLoSugerido(tipo);
+      const c = k === 0 ? comidaDeHoy(tipo) : comidaDelDia(k, tipo).destino;
       const items = s.canasta.map((it) => Object.assign({}, it, { nuevo: true }));
       c.items.push(...items);
       items.forEach((it) => {
@@ -1328,7 +1540,7 @@ const Comida = (() => {
       hoja.classList.add('con-bandeja');
       b.innerHTML = '';
       const textos = el('div', 'hj-bandeja-txt');
-      textos.append(el('b', null, tx('comida.tuComida.' + s.hoja.comida)), el('span', null, plural('comida.agregados', s.canasta.length, { kcal: numero(Math.round(t.kcal)) })));
+      textos.append(el('b', null, tuComidaDe(s.hoja.comida)), el('span', null, plural('comida.agregados', s.canasta.length, { kcal: numero(Math.round(t.kcal)) })));
       b.append(textos, boton('hj-listo', tx('comun.listo'), () => abrirRevision()));
       if (late) {
         b.classList.remove('late');
@@ -1340,6 +1552,7 @@ const Comida = (() => {
     // ------------------------------------------------------------ los paneles: revisión, carga rápida y guardadas
     function abrirSub(clase, armar) {
       const sub = $h('.hj-sub');
+      if (sub.contains(document.activeElement)) document.activeElement.blur();
       sub.className = 'hj-panel hj-sub ' + clase;
       sub.innerHTML = '';
       armar(sub);
@@ -1353,6 +1566,7 @@ const Comida = (() => {
     }
     function cerrarSub(deUna) {
       const sub = $h('.hj-sub');
+      if (sub.contains(document.activeElement)) document.activeElement.blur();
       hoja.classList.remove('en-sub');
       if (s.hoja) s.hoja.sub = null;
       if (deUna) { sub.hidden = true; sub.innerHTML = ''; return; }
@@ -1369,11 +1583,11 @@ const Comida = (() => {
     function abrirRevision() {
       if (!s.hoja || !s.canasta.length) return;
       abrirSub('hj-revision', (sub) => {
-        cabezaDeSub(sub, tx('comida.tuComida.' + s.hoja.comida));
+        cabezaDeSub(sub, tuComidaDe(s.hoja.comida));
         sub.appendChild(el('div', 'rv-cuerpo'));
         const pie = el('footer', 'fi-pie');
         pie.append(
-          boton('fi-agregar', tx('comida.agregarA.' + s.hoja.comida), () => agregarCanasta()),
+          boton('fi-agregar', agregarADe(s.hoja.comida), () => agregarCanasta()),
           boton('fi-quitar', tx('comida.guardarComida'), () => avisarHoja('Galería: guardar esta comida con un nombre, para la próxima.')),
         );
         sub.appendChild(pie);
@@ -1409,7 +1623,7 @@ const Comida = (() => {
       const total = el('div', 'rv-total');
       const kcal = el('div', 'fi-kcal');
       kcal.append(el('b', null, numero(Math.round(t.kcal))), el('span', null, tx('comida.kcal')));
-      const restante = META.kcal - totalDe(0).kcal - t.kcal;
+      const restante = META.kcal - totalDe(diaDeLaHoja()).kcal - t.kcal;
       total.append(kcal, el('div', 'fi-queda', tx(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })), chipsDeMacros(t));
       cuerpo.appendChild(total);
     }
@@ -1471,6 +1685,8 @@ const Comida = (() => {
           sumarB.disabled = !v.kcal;
         }
         pintar();
+        // «Siguiente» de un campo al otro, y «Listo» en las grasas (6/11, para aprobar).
+        if (opciones.teclado) opciones.teclado.encadenar([campos.nombre, campos.kcal, campos.p, campos.c, campos.g], { contenedor: hoja });
         setTimeout(() => campos.kcal.focus({ preventScroll: true }), 60);
       });
     }
@@ -1552,47 +1768,238 @@ const Comida = (() => {
           sumarACanasta([{ alimento: a.id, porcion: 0, veces: 1 }], `${nombre} · ${nombrePorcion}`);
         }));
         sub.appendChild(pie);
-        setTimeout(() => campos.nombre.focus({ preventScroll: true }), 60);
+        if (opciones.teclado) opciones.teclado.encadenar(['nombre', 'marca', 'porcion', 'kcal', 'c', 'p', 'g', 'saturadas', 'fibra', 'sodio'].map((k) => campos[k]), { contenedor: hoja });
+        // Con la etiqueta leída no sube el teclado solo, como en la app (PanelCrear): primero se revisa.
       });
     }
 
-    // Las comidas guardadas: un toque suma todo a la comida que se arma.
-    function abrirGuardadas() {
-      abrirSub('hj-guardadas', (sub) => {
+    // Las comidas guardadas: un toque en el «+» suma todo a la comida que se arma. Tocar la fila (6/11, para
+    // aprobar) abre su edición, con «Borrar» abajo; lo borrado vuelve con «Deshacer». Lo mismo las recetas y
+    // los alimentos tuyos (los que creaste con la etiqueta).
+    const nombreDeGuardada = (x) => (typeof x.nombre === 'string' ? x.nombre : x.nombre[idioma] || x.nombre.es);
+    /** Cambia el panel de adentro de la hoja, deslizándose (para atrás, desde la izquierda). */
+    function cambiarSub(clase, armar, atras) {
+      if (!hoja.classList.contains('en-sub')) { abrirSub(clase, armar); return; }
+      const sub = $h('.hj-sub');
+      if (sub.contains(document.activeElement)) document.activeElement.blur();
+      sub.className = 'hj-panel hj-sub ' + clase;
+      sub.innerHTML = '';
+      armar(sub);
+      void sub.offsetWidth;
+      sub.classList.add(atras ? 'dt-sub-atras' : 'dt-sub-adelante');
+      s.hoja.sub = clase;
+    }
+    // Una receta y un alimento tuyo de ejemplo, para ver cómo se cambian y se borran.
+    function sembrarGuardadas() {
+      if (s.sembradas) return;
+      s.sembradas = true;
+      const ingredientes = [['Arroz blanco cocido', 600], ['Pechuga de pollo a la plancha', 450], ['Salsa de tomate', 200], ['Aceite de oliva', 20]]
+        .map(([n, g]) => porNombre.get(n) && { alimento: porNombre.get(n).id, gramos: g }).filter(Boolean);
+      if (ingredientes.length) s.recetas.unshift({ id: 'r-ejemplo', nombre: { es: 'Arroz con pollo de la casa', en: 'Homemade chicken and rice' }, porciones: 4, pesoFinal: 1200, items: ingredientes });
+      const a = {
+        id: -(100000 + ++creados), es: 'Barrita de avena y miel', en: 'Oat and honey bar', cat: 'etiqueta', marcaPropia: 'Casera',
+        v: [400, 8, 60, 15], s: [5, 22, 3, 120, null], p: [['1 barrita', '1 bar', 30]], d: 0, t: [['es', '', 1, 'Barrita de avena y miel'], ['en', '', 1, 'Oat and honey bar']],
+      };
+      ALIMENTOS.push(a);
+      porId.set(a.id, a);
+      porNombre.set(a.es, a);
+      corpus.push(...textosDe(a));
+      s.propios.push(a);
+    }
+    const propiosVivos = () => s.propios.filter((a) => !a.borrado);
+    function filaGuardada(clave, nombre, detalle, alSumar, alAbrir, etiqueta) {
+      const f = el('div', 'hj-fila');
+      f.dataset.guardada = clave;
+      f.dataset.toque = '';
+      f.tabIndex = 0;
+      f.setAttribute('role', 'button');
+      const textos = el('div', 'hj-fila-txt');
+      textos.append(el('b', null, nombre), el('span', null, detalle));
+      const mas = boton('hj-mas', icono('mas'), () => alSumar(mas), etiqueta);
+      f.append(textos, mas);
+      f.addEventListener('click', () => alAbrir());
+      f.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') alAbrir(); });
+      return f;
+    }
+    /** `saliendo`: lo recién borrado, que se ve un momento en su lugar y se cierra; `crece`, lo que volvió. */
+    function abrirGuardadas(op = {}) {
+      sembrarGuardadas();
+      const armar = (sub) => {
         cabezaDeSub(sub, tx('comida.guardadas'));
         const cuerpo = el('div', 'hj-cuerpo');
-        GUARDADAS.forEach((g) => {
-          const items = g.items.map(([n, v, p]) => item(n, v, p)).filter(Boolean);
-          const t = sumar(items);
-          const f = el('div', 'hj-fila');
-          const textos = el('div', 'hj-fila-txt');
-          textos.append(el('b', null, g.nombre[idioma]), el('span', null, `${items.map(nombreDeItem).join(', ')} · ${numero(Math.round(t.kcal))} kcal`));
-          const mas = boton('hj-mas', icono('mas'), () => {
-            sumarACanasta(items.map((it) => Object.assign({}, it)), g.nombre[idioma], mas);
-            setTimeout(() => cerrarSub(), 500);
-          }, tx('comida.sumarAlimento', { alimento: g.nombre[idioma] }));
-          f.append(textos, mas);
-          cuerpo.appendChild(f);
+        cuerpo.appendChild(el('p', 'hj-pegar-texto', tx('comida.guardadasEditar.tocaParaCambiar')));
+        const con = (lista, tipo) => {
+          const x = op.saliendo && op.saliendo.tipo === tipo ? op.saliendo : null;
+          if (!x) return lista;
+          const copia = lista.slice();
+          copia.splice(Math.min(x.i, copia.length), 0, x.cosa);
+          return copia;
+        };
+        con(s.guardadas, 'comida').forEach((g) => {
+          const t = sumar(g.items);
+          cuerpo.appendChild(filaGuardada(g.id, nombreDeGuardada(g), `${g.items.map(nombreDeItem).join(', ')} · ${numero(Math.round(t.kcal))} kcal`,
+            (mas) => { sumarACanasta(g.items.map((it) => Object.assign({}, it)), nombreDeGuardada(g), mas); setTimeout(() => cerrarSub(), 500); },
+            () => editarGuardada('comida', g), tx('comida.sumarAlimento', { alimento: nombreDeGuardada(g) })));
         });
         // Las recetas: un toque suma un plato (lo de la olla dividido por lo que rinde).
-        if (s.recetas.length) cuerpo.appendChild(el('div', 'fi-etq hj-etq-recetas', tx('comida.recetas')));
-        s.recetas.forEach((r) => {
+        const recetas = con(s.recetas, 'receta');
+        if (recetas.length) cuerpo.appendChild(el('div', 'fi-etq hj-etq-recetas', tx('comida.recetas')));
+        recetas.forEach((r) => {
           const plato = r.items.map((it) => Object.assign({}, it, { gramos: Math.max(1, Math.round(it.gramos / r.porciones)) }));
-          const f = el('div', 'hj-fila');
-          const textos = el('div', 'hj-fila-txt');
-          textos.append(el('b', null, r.nombre), el('span', null, tx('comida.receta.porPlato', { kcal: numero(Math.round(sumar(plato).kcal)) })));
-          const mas = boton('hj-mas', icono('mas'), () => {
-            sumarACanasta(plato, `${r.nombre} · ${tx('comida.receta.plato')}`, mas);
-            setTimeout(() => cerrarSub(), 500);
-          }, tx('comida.receta.sumarPlato'));
-          f.append(textos, mas);
-          cuerpo.appendChild(f);
+          cuerpo.appendChild(filaGuardada(r.id, nombreDeGuardada(r), tx('comida.receta.porPlato', { kcal: numero(Math.round(sumar(plato).kcal)) }),
+            (mas) => { sumarACanasta(plato, `${nombreDeGuardada(r)} · ${tx('comida.receta.plato')}`, mas); setTimeout(() => cerrarSub(), 500); },
+            () => editarGuardada('receta', r), tx('comida.receta.sumarPlato')));
+        });
+        const propios = con(propiosVivos(), 'propio');
+        if (propios.length) cuerpo.appendChild(el('div', 'fi-etq hj-etq-recetas', tx('comida.guardadasEditar.tusAlimentos')));
+        propios.forEach((a) => {
+          const it = { alimento: a.id, porcion: 0, veces: 1 };
+          cuerpo.appendChild(filaGuardada('a' + a.id, nombreDe(a), `${cantidadDe(it)} · ${numero(Math.round(valoresDe(it).kcal))} kcal`,
+            (mas) => { sumarACanasta([it], `${nombreDe(a)} · ${cantidadDe(it)}`, mas); setTimeout(() => cerrarSub(), 500); },
+            () => editarGuardada('propio', a), tx('comida.sumarAlimento', { alimento: nombreDe(a) })));
         });
         sub.appendChild(cuerpo);
         const pie = el('footer', 'fi-pie');
         pie.appendChild(boton('fi-secundario', `${icono('copiar')}<span>${tx('comida.receta.pegar')}</span>`, () => abrirPegarReceta()));
         sub.appendChild(pie);
+        const marcar = (clave, fn) => { const f = clave && sub.querySelector(`[data-guardada="${clave}"]`); if (f) fn(f); };
+        marcar(op.crece, (f) => f.classList.add('dt-crece'));
+        if (op.saliendo) setTimeout(() => marcar(op.saliendo.clave, (f) => Detalles.colapsar(f, () => f.remove())), 340);
+      };
+      if (op.cambiar) cambiarSub('hj-guardadas', armar, op.atras); else abrirSub('hj-guardadas', armar);
+    }
+
+    /** La edición de una comida guardada, una receta o un alimento tuyo: lo suyo, «Guardar» y «Borrar» abajo. */
+    function editarGuardada(tipo, x) {
+      const volver = (op) => abrirGuardadas(Object.assign({ cambiar: true, atras: true }, op));
+      cambiarSub('hj-editar', (sub) => {
+        const nombreAntes = tipo === 'propio' ? nombreDe(x) : nombreDeGuardada(x);
+        cabezaDeSub(sub, nombreAntes, null, () => volver());
+        const cuerpo = el('div', 'fi-cuerpo dt-editar');
+        const campos = [];
+        const campo = (etiqueta, valor, unidad, texto) => {
+          const fila = el('label', 'cr-campo');
+          const input = el('input');
+          input.type = 'text';
+          if (texto) input.placeholder = tx('comida.opcional');
+          else { input.inputMode = 'decimal'; input.placeholder = '0'; }
+          if (valor != null) input.value = texto ? valor : Porciones.decimal(Math.round(valor * 10) / 10, idioma);
+          fila.append(el('span', null, etiqueta), input);
+          if (unidad) fila.appendChild(el('em', null, unidad));
+          // «porciones» no entra en la columna de «g» o «kcal».
+          if (unidad && unidad.length > 4) fila.classList.add('dt-unidad-larga');
+          cuerpo.appendChild(fila);
+          campos.push(input);
+          return input;
+        };
+        const leer = (input) => (input.value.trim() === '' ? null : Number(input.value.replace(/\./g, '').replace(',', '.')));
+        const nombre = campo(tx('comida.nombre'), nombreAntes, '', true);
+        let borrador = null;
+        let guardar;
+        if (tipo === 'propio') {
+          const g = x.p[0][2];
+          const f = g / 100;
+          const marca = campo(tx('comida.etiquetaRevision.marca'), x.marcaPropia || '', '', true);
+          const porcion = campo(tx('comida.etiquetaRevision.porcion'), g, 'g');
+          cuerpo.appendChild(el('div', 'fi-etq', tx('comida.etiquetaRevision.porPorcion')));
+          const kcal = campo(tx('comida.kcal'), x.v[0] * f, 'kcal');
+          const c = campo(tx('comida.carbohidratos'), x.v[2] * f, 'g');
+          const p = campo(tx('comida.proteina'), x.v[1] * f, 'g');
+          const gr = campo(tx('comida.grasas'), x.v[3] * f, 'g');
+          guardar = () => {
+            const gramos = leer(porcion) || g;
+            const k = 100 / gramos;
+            x.v = [(leer(kcal) ?? 0) * k, (leer(p) ?? 0) * k, (leer(c) ?? 0) * k, (leer(gr) ?? 0) * k];
+            x.p = [[x.p[0][0], x.p[0][1], gramos]];
+            x.marcaPropia = marca.value.trim();
+            if (nombre.value.trim()) { x[idioma] = nombre.value.trim(); if (idioma === 'es') porNombre.set(x.es, x); }
+            return nombreDe(x);
+          };
+        } else {
+          // Lo que lleva, para sacar algo: el renglón se cierra.
+          borrador = x.items.slice();
+          let rinde = null, pesoFinal = null;
+          if (tipo === 'receta') {
+            rinde = campo(tx('comida.receta.porciones'), x.porciones, tx('comida.receta.porcionesUnidad'));
+            pesoFinal = campo(tx('comida.receta.pesoFinal'), x.pesoFinal || null, 'g');
+            pesoFinal.placeholder = tx('comida.opcional');
+          }
+          cuerpo.appendChild(el('div', 'fi-etq', tx(tipo === 'receta' ? 'comida.receta.ingredientes' : 'comida.guardadasEditar.loQueLleva')));
+          const lista = el('div', 'dt-lleva');
+          const total = el('div', 'rv-total');
+          const pintarTotal = () => {
+            total.innerHTML = '';
+            const porciones = rinde ? (leer(rinde) || 1) : 1;
+            // Un plato como lo suma la lista de Guardadas (cada ingrediente en gramos redondeados): el mismo número acá y allá.
+            const plato = borrador.map((it) => (it.gramos != null
+              ? Object.assign({}, it, { gramos: Math.max(1, Math.round(it.gramos / porciones)) })
+              : Object.assign({}, it, { veces: (it.veces || 1) / porciones })));
+            const v = sumar(rinde ? plato : borrador);
+            const kcal = el('div', 'fi-kcal');
+            // En la receta, el número ya es de un plato: «kcal por plato» va al lado y no se repite abajo.
+            kcal.append(el('b', null, numero(Math.round(v.kcal))), el('span', null, rinde ? tx('comida.receta.porPlato', { kcal: '' }).trim() : tx('comida.kcal')));
+            total.append(kcal, el('div', 'fi-queda', borrador.length ? '' : tx('comida.guardadasEditar.vacia')), chipsDeMacros(v));
+          };
+          borrador.forEach((it) => {
+            const f = el('div', 'hj-fila');
+            const textos = el('div', 'hj-fila-txt');
+            textos.append(el('b', null, nombreDeItem(it)), el('span', null, [cantidadDe(it), `${numero(Math.round(valoresDe(it).kcal))} kcal`].filter(Boolean).join(' · ')));
+            f.append(textos, boton('rv-quitar', icono('cerrar'), () => {
+              borrador = borrador.filter((y) => y !== it);
+              escena.haptico('suave');
+              Detalles.colapsar(f, () => f.remove());
+              pintarTotal();
+            }, tx('comida.quitar')));
+            lista.appendChild(f);
+          });
+          cuerpo.append(lista, total);
+          pintarTotal();
+          if (rinde) rinde.addEventListener('input', pintarTotal);
+          guardar = () => {
+            x.items = borrador;
+            if (rinde) x.porciones = Math.max(1, Math.round(leer(rinde) || x.porciones));
+            if (pesoFinal) x.pesoFinal = leer(pesoFinal);
+            const n = nombre.value.trim();
+            if (n) x.nombre = typeof x.nombre === 'string' ? n : Object.assign({}, x.nombre, { [idioma]: n });
+            return nombreDeGuardada(x);
+          };
+        }
+        sub.appendChild(cuerpo);
+        if (opciones.teclado) opciones.teclado.encadenar(campos, { contenedor: hoja });
+        const pie = el('footer', 'fi-pie');
+        pie.append(
+          boton('fi-agregar', tx('comun.guardar'), () => {
+            const n = guardar();
+            escena.haptico('suave');
+            volver({ crece: null });
+            avisarHoja(tx('comida.crear.guardado', { nombre: n }));
+          }),
+          boton('fi-quitar dt-borrar', tx('comida.guardadasEditar.' + { comida: 'borrarComida', receta: 'borrarReceta', propio: 'borrarAlimento' }[tipo]), () => borrarGuardada(tipo, x)),
+        );
+        sub.appendChild(pie);
       });
+    }
+
+    /** Borrar sin «¿Seguro?»: vuelve a Guardadas, su fila se cierra, y el aviso lo deshace. */
+    function borrarGuardada(tipo, x) {
+      const lista = tipo === 'comida' ? s.guardadas : tipo === 'receta' ? s.recetas : null;
+      const nombre = tipo === 'propio' ? nombreDe(x) : nombreDeGuardada(x);
+      const clave = tipo === 'propio' ? 'a' + x.id : x.id;
+      let i;
+      if (lista) { i = lista.indexOf(x); lista.splice(i, 1); } else { i = propiosVivos().indexOf(x); x.borrado = true; }
+      escena.haptico('suave');
+      abrirGuardadas({ cambiar: true, atras: true, saliendo: { tipo, cosa: x, i, clave } });
+      avisarDeshacer();
+      avisarCambio();
+      function avisarDeshacer() {
+        avisarHoja(tx('comida.guardadasEditar.borrada', { nombre }), {
+          deshacer: () => {
+            if (lista) lista.splice(Math.min(i, lista.length), 0, x); else x.borrado = false;
+            avisarCambio();
+            if (s.hoja && s.hoja.sub === 'hj-guardadas') abrirGuardadas({ cambiar: true, crece: clave });
+          },
+        });
+      }
     }
 
     // Pegar una receta: el texto como venga (RecetaDeTexto, el mismo lector que la app), cada
@@ -1659,7 +2066,7 @@ const Comida = (() => {
           if (!leida) return;
           const items = leida.lineas.filter((x) => x.a && x.gramos && !x.fuera).map((x) => ({ alimento: x.a.id, gramos: Math.round(x.gramos) }));
           if (!items.length) return;
-          s.recetas.push({ nombre: leida.nombre, porciones: leida.porciones, items });
+          s.recetas.push({ id: 'r' + Date.now().toString(36), nombre: leida.nombre, porciones: leida.porciones, items });
           escena.haptico('toque');
           avisarHoja(tx('comida.receta.guardada', { nombre: leida.nombre }));
           abrirGuardadas();
@@ -1834,7 +2241,7 @@ const Comida = (() => {
           const listos = lista && entendido === area.value.trim() ? lista.filter((x) => x.opciones.length) : [];
           agregarB.hidden = !listos.length;
           entenderB.hidden = !!listos.length;
-          if (listos.length) agregarB.textContent = `${tx('comida.agregarA.' + comidaDicha)} · ${numero(Math.round(sumar(listos.map((x) => x.opciones[x.elegida])).kcal))} kcal`;
+          if (listos.length) agregarB.textContent = `${foto ? tx('comida.agregarA.' + comidaDicha) : agregarADe(comidaDicha)} · ${numero(Math.round(sumar(listos.map((x) => x.opciones[x.elegida])).kcal))} kcal`;
         }
         function pintar() {
           resultado.innerHTML = '';
@@ -1884,7 +2291,7 @@ const Comida = (() => {
         function agregar() {
           const items = lista.filter((x) => x.opciones.length).map((x) => Object.assign({}, x.opciones[x.elegida]));
           if (!items.length) return;
-          const r = registrarDirecto(items, area.value.trim(), comidaDicha, foto ? foto.hora : undefined);
+          const r = registrarDirecto(items, area.value.trim(), comidaDicha, foto ? foto.hora : undefined, foto ? 0 : diaDeLaHoja());
           if (foto) fotos.anotar(foto, r.tipo, r.nuevos);
           cerrarHoja();
           // Deshacer saca lo anotado; la foto no se pierde: vuelve a quedar sin anotar.
@@ -2069,6 +2476,7 @@ const Comida = (() => {
     function cerrarVentana(deUna) {
       const soloEditar = !deUna && s.hoja && s.hoja.soloEditar;
       if (s.hoja) s.hoja.ventana = null;
+      if (ventana.contains(document.activeElement)) document.activeElement.blur();
       hoja.classList.remove('con-ventana');
       const esconder = () => { if (!s.hoja || !s.hoja.ventana) { ventana.hidden = true; velo.hidden = true; ventana.innerHTML = ''; } };
       // Un reporte a medio escribir se va con la ventana.
@@ -2205,7 +2613,8 @@ const Comida = (() => {
       ventana.append(cab, deDonde, cifras, queda, deja, secundarios, ...(tieneMicros ? [microsEtq, microsChips, microsTodo] : []),
         el('div', 'fi-etq', tx('comida.porcion')), porciones, el('div', 'fi-etq', tx('comida.cantidad')), cantidad, gramosTxt, pie, reportar);
 
-      const pintar = () => {
+      // `desdeElCampo`: lo cambió lo que se escribe en la cantidad, que queda como está.
+      const pintar = (desdeElCampo) => {
         const it = elegido();
         const v = valoresDe(it);
         contar(kcalB, v.kcal, kcalB.dataset.valor ? 300 : 0);
@@ -2213,7 +2622,7 @@ const Comida = (() => {
         const restarV = (x, y) => ({ kcal: x.kcal - y.kcal, p: x.p - y.p, c: x.c - y.c, g: x.g - y.g });
         const sumarV = (x, y) => ({ kcal: x.kcal + y.kcal, p: x.p + y.p, c: x.c + y.c, g: x.g + y.g });
         const juntado = restarV(sumar(s.canasta), enCanasta ? valoresDe(enCanasta) : { kcal: 0, p: 0, c: 0, g: 0 });
-        const antesDia = editando ? restarV(totalDe(diaDe(editando.comida)), valoresDe(editando.item)) : sumarV(totalDe(0), juntado);
+        const antesDia = editando ? restarV(totalDe(diaDe(editando.comida)), valoresDe(editando.item)) : sumarV(totalDe(diaDeLaHoja()), juntado);
         const restante = META.kcal - antesDia.kcal - v.kcal;
         queda.textContent = tx(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) });
         const aMacros = (x) => ({ kcal: x.kcal, proteina: x.p, carbohidratos: x.c, grasas: x.g });
@@ -2254,22 +2663,54 @@ const Comida = (() => {
         enGramos.setAttribute('aria-pressed', String(f.gramos != null));
         porciones.appendChild(enGramos);
 
-        cantidad.innerHTML = '';
-        const paso = f.gramos != null ? 10 : 0.5;
-        const menos = boton('fi-paso', icono('menos'), () => { if (f.gramos != null) f.gramos = Math.max(5, f.gramos - paso); else f.veces = Math.max(0.5, f.veces - paso); pintar(); });
-        const mas = boton('fi-paso', icono('mas'), () => { if (f.gramos != null) f.gramos += paso; else f.veces += paso; pintar(); });
-        const valor = el('b', 'fi-valor', f.gramos != null ? `${Porciones.decimal(f.gramos, idioma)} g` : Porciones.numeroDePorcion(f.veces) || Porciones.decimal(f.veces, idioma));
-        const pasos = el('div', 'fi-stepper');
-        pasos.append(menos, valor, mas);
-        cantidad.appendChild(pasos);
-        if (f.gramos == null) {
-          const rapidas = el('div', 'fi-rapidas');
-          [0.5, 1, 1.5, 2].forEach((n) => {
-            const b = boton('fi-rapida', Porciones.numeroDePorcion(n), () => { f.veces = n; pintar(); });
-            b.setAttribute('aria-pressed', String(Math.abs(f.veces - n) < 1e-9));
-            rapidas.appendChild(b);
+        // La cantidad se escribe (6/11, para aprobar), con el teclado de números y «Listo» arriba. Mientras se
+        // escribe, el campo queda: los botones de al lado no le sacan el foco y solo cambian lo escrito.
+        const textoDelValor = () => (f.gramos != null ? Porciones.decimal(f.gramos, idioma) : Porciones.numeroDePorcion(f.veces) || Porciones.decimal(f.veces, idioma));
+        const campo = cantidad.querySelector('input.fi-valor');
+        const escribiendo = !!campo && document.activeElement === campo && campo.dataset.gramos === String(f.gramos != null);
+        if (escribiendo) {
+          if (!desdeElCampo) { campo.value = textoDelValor(); campo.select(); }
+          cantidad.querySelectorAll('.fi-rapida').forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(f.veces - Number(b.dataset.veces)) < 1e-9)));
+        } else {
+          const enfocar = !!campo && document.activeElement === campo;
+          cantidad.innerHTML = '';
+          const paso = f.gramos != null ? 10 : 0.5;
+          const sinFoco = (b) => { b.addEventListener('pointerdown', (ev) => { if (document.activeElement && document.activeElement.classList.contains('fi-valor')) ev.preventDefault(); }); return b; };
+          const menos = sinFoco(boton('fi-paso', icono('menos'), () => { if (f.gramos != null) f.gramos = Math.max(5, f.gramos - paso); else f.veces = Math.max(0.5, f.veces - paso); pintar(); }, '−'));
+          const mas = sinFoco(boton('fi-paso', icono('mas'), () => { if (f.gramos != null) f.gramos += paso; else f.veces += paso; pintar(); }, '+'));
+          const valor = el('input', 'fi-valor');
+          valor.type = 'text';
+          valor.inputMode = 'decimal';
+          valor.autocomplete = 'off';
+          valor.dataset.gramos = String(f.gramos != null);
+          valor.value = textoDelValor();
+          valor.setAttribute('aria-label', tx('comida.cantidad'));
+          valor.addEventListener('focus', () => requestAnimationFrame(() => valor.select()));
+          valor.addEventListener('input', () => {
+            const n = Number(valor.value.replace(',', '.'));
+            if (!(n > 0)) return;
+            if (f.gramos != null) f.gramos = Math.min(5000, n); else f.veces = Math.min(50, n);
+            pintar(true);
           });
-          cantidad.appendChild(rapidas);
+          // Al terminar, lo escrito queda como se muestra siempre (½ en vez de 0,5).
+          valor.addEventListener('blur', () => setTimeout(() => { if (valor.isConnected && document.activeElement !== valor) valor.value = textoDelValor(); }, 0));
+          const pasos = el('div', 'fi-stepper');
+          pasos.append(menos, valor);
+          if (f.gramos != null) pasos.appendChild(el('span', 'fi-unidad', 'g'));
+          pasos.appendChild(mas);
+          cantidad.appendChild(pasos);
+          if (opciones.teclado) opciones.teclado.encadenar([valor], { contenedor: hoja });
+          if (f.gramos == null) {
+            const rapidas = el('div', 'fi-rapidas');
+            [0.5, 1, 1.5, 2].forEach((n) => {
+              const b = sinFoco(boton('fi-rapida', Porciones.numeroDePorcion(n), () => { f.veces = n; pintar(); }));
+              b.dataset.veces = n;
+              b.setAttribute('aria-pressed', String(Math.abs(f.veces - n) < 1e-9));
+              rapidas.appendChild(b);
+            });
+            cantidad.appendChild(rapidas);
+          }
+          if (enfocar) valor.focus({ preventScroll: true });
         }
         gramosTxt.textContent = f.gramos != null ? '' : `${cantidadDe(it)} = ${Porciones.decimal(gramosDe(it), idioma)} g`;
       };
@@ -2436,9 +2877,10 @@ const Comida = (() => {
 
     // Registrar de un toque, sin la revisión: lo que sale de la hoja del «+» (los recientes, las
     // guardadas, la carga rápida). Queda en la comida de esta hora y se puede deshacer.
-    function registrarDirecto(items, texto, tipo = comidaDeAhora(), cuando = AHORA) {
-      const devolver = sacarLoSugerido(tipo);
-      const c = comidaDeHoy(tipo, cuando);
+    function registrarDirecto(items, texto, tipo = comidaDeAhora(), cuando = AHORA, dia = 0) {
+      // Para otro día (la hoja abierta para ayer o mañana), en la comida de ese día.
+      const devolver = dia === 0 ? sacarLoSugerido(tipo) : () => {};
+      const c = dia === 0 ? comidaDeHoy(tipo, cuando) : comidaDelDia(dia, tipo).destino;
       const nuevos = items.map((it) => Object.assign({}, it, { nuevo: true }));
       c.items.push(...nuevos);
       nuevos.forEach((it) => {
@@ -2448,16 +2890,17 @@ const Comida = (() => {
       });
       escena.haptico('toque');
       registrado(texto);
-      if (s.dia === 0 && s.vista === 'dia') pintarZona(900);
+      if (s.dia === dia && s.vista === 'dia') pintarZona(900);
       avisarCambio();
       return {
         tipo,
         nuevos,
         deshacer() {
           nuevos.forEach((it) => { const i = c.items.indexOf(it); if (i >= 0) c.items.splice(i, 1); });
-          if (!c.items.length) comidasDe(0).splice(comidasDe(0).indexOf(c), 1);
+          const lista = comidasDe(dia);
+          if (!c.items.length && lista.includes(c)) lista.splice(lista.indexOf(c), 1);
           devolver();
-          if (s.dia === 0 && s.vista === 'dia') pintarZona(600);
+          if (s.dia === dia && s.vista === 'dia') pintarZona(600);
           avisarCambio();
         },
       };
@@ -2499,10 +2942,7 @@ const Comida = (() => {
     }
 
     function listaGuardadas() {
-      return GUARDADAS.map((g, i) => {
-        const items = g.items.map(([n, v, p]) => item(n, v, p)).filter(Boolean);
-        return { i, nombre: g.nombre[idioma], kcal: sumar(items).kcal, items };
-      });
+      return s.guardadas.map((g, i) => ({ i, nombre: nombreDeGuardada(g), kcal: sumar(g.items).kcal, items: g.items }));
     }
 
     // ------------------------------------------------------------ arranque
@@ -2608,6 +3048,28 @@ const Comida = (() => {
       },
       teclado,
       dictar,
+      // Los detalles (6/11, para aprobar), para las capturas y los botones de la galería: mantener apretado un
+      // alimento (por su nombre) o una comida, deslizar uno, la hoja para otro día y la edición de lo guardado.
+      nodoDelAlimento(nombre) { return [...zona.querySelectorAll('.cm-item')].find((n) => n._item && nombreDeItem(n._item) === nombre) || zona.querySelector('.cm-item.dt-desliza'); },
+      mantenerAlimento(nombre) {
+        const n = this.nodoDelAlimento(nombre);
+        const c = n && n.closest('.cm-tarjeta')._comida;
+        if (c) menuDeItem(c, n._item, n);
+      },
+      mantenerComida(tipo) {
+        const art = [...zona.querySelectorAll('.cm-tarjeta')].find((a) => a._comida && a._comida.tipo === tipo && !a._comida.plan);
+        if (art) menuDeComida(art._comida, art);
+      },
+      deslizarAlimento(nombre, px) { const n = this.nodoDelAlimento(nombre); if (n && n._desliza) { if (px === 'abrir') n._desliza.abrir(); else if (px === 'borrar') n._desliza.borrar(); else n._desliza.llevar(px); } },
+      abrirHojaPara(dia, tipo) { verDia(dia); return abrirHoja({ comida: tipo, dia }); },
+      guardadasEditar(tipo, i = 0) {
+        if (!s.hoja && !abrirHoja({ revisar: true })) return;
+        abrirGuardadas();
+        sembrarGuardadas();
+        const x = tipo === 'comida' ? s.guardadas[i] : tipo === 'receta' ? s.recetas[i] : propiosVivos()[i];
+        if (x) setTimeout(() => editarGuardada(tipo, x), 420);
+      },
+      borrarGuardadaActual() { const b = $h('.hj-editar .dt-borrar'); if (b) b.click(); },
     };
   }
 

@@ -3,11 +3,38 @@
 // cuando ya terminó de subir. Y lo que se escribe queda a la vista (useCampoALaVista).
 
 import { useEffect, useEffectEvent, useState } from 'react';
-import { Keyboard, Platform, TextInput, type ScrollView } from 'react-native';
-import { Easing, useReducedMotion, useSharedValue, withTiming, type AnimatedRef, type SharedValue } from 'react-native-reanimated';
+import { Keyboard, Platform, TextInput, type KeyboardEvent, type ScrollView } from 'react-native';
+import { Easing, makeMutable, useReducedMotion, useSharedValue, withTiming, type AnimatedRef, type SharedValue } from 'react-native-reanimated';
+
+import { t } from '@/textos';
 
 // La curva del teclado de iOS, aproximada: arranca rápido y frena largo.
 const CURVA = Easing.bezier(0.2, 0.9, 0.3, 1);
+
+/**
+ * Si el teclado está arriba (o subiendo), para los gestos: con el teclado arriba, bajar una hoja con
+ * el dedo solo baja el teclado, como en iOS, y lo escrito no se pierde.
+ */
+export const tecladoArriba = makeMutable(false);
+if (Platform.OS === 'ios') {
+  Keyboard.addListener('keyboardWillShow', () => tecladoArriba.set(true));
+  Keyboard.addListener('keyboardWillHide', () => tecladoArriba.set(false));
+}
+
+/** Para llamar desde un worklet con `scheduleOnRN`. */
+export const bajarTeclado = () => Keyboard.dismiss();
+
+/**
+ * Los teclados de números de iOS no tienen tecla de retorno. React Native les pone arriba una barra
+ * nativa con un botón cuando el campo trae `returnKeyType`: acá, con el texto en el idioma de Moss
+ * (sin la etiqueta, salía «Done» o «Next» en inglés). «Siguiente» pasa al campo que sigue con
+ * `onSubmitEditing` (con `submitBehavior="submit"`, el teclado queda); «Listo» lo cierra.
+ */
+export function tecladoDeNumeros(siguiente = false) {
+  return siguiente
+    ? ({ returnKeyType: 'next', inputAccessoryViewButtonLabel: t('comun.siguiente'), submitBehavior: 'submit', keyboardAppearance: 'dark' } as const)
+    : ({ returnKeyType: 'done', inputAccessoryViewButtonLabel: t('comun.listo'), submitBehavior: 'blurAndSubmit', keyboardAppearance: 'dark' } as const);
+}
 
 export function useTeclado(): { alto: number; animado: SharedValue<number> } {
   const [alto, setAlto] = useState(0);
@@ -39,7 +66,7 @@ const AIRE = 16;
  */
 export function useCampoALaVista(scroll: AnimatedRef<ScrollView>, scrollY: SharedValue<number>, junto?: () => number | null) {
   const reducido = useReducedMotion();
-  const traer = useEffectEvent(() => {
+  const traer = useEffectEvent((arriba: number | null) => {
     const s = scroll.current;
     const campo = TextInput.State.currentlyFocusedInput();
     const adentro = s?.getInnerViewRef();
@@ -47,8 +74,7 @@ export function useCampoALaVista(scroll: AnimatedRef<ScrollView>, scrollY: Share
     // Un campo de afuera de este scroll no es su hijo: measureLayout falla y no se mueve nada.
     campo.measureLayout(adentro, (_x, y, _ancho, h) => {
       s.getNativeScrollRef()?.measureInWindow((_sx, sy, _sw, sh) => {
-        const teclado = Keyboard.metrics();
-        const visible = (teclado ? Math.min(sy + sh, teclado.screenY) : sy + sh) - sy;
+        const visible = (arriba !== null ? Math.min(sy + sh, arriba) : sy + sh) - sy;
         if (visible < 60) return;
         const actual = scrollY.get();
         const fin = Math.max(y + h, junto?.() ?? 0);
@@ -64,10 +90,12 @@ export function useCampoALaVista(scroll: AnimatedRef<ScrollView>, scrollY: Share
     // En la web no hay teclado que tape.
     if (Platform.OS === 'web') return;
     let espera: ReturnType<typeof setTimeout> | undefined;
-    // Un respiro: la hoja termina de subir o de achicarse con el teclado.
-    const acomodar = () => {
+    // Un respiro: la hoja termina de subir o de achicarse con el teclado. Dónde empieza el teclado sale
+    // del evento: `Keyboard.metrics()` no se pone al día cuando el teclado cambia de alto.
+    const acomodar = (ev: KeyboardEvent) => {
       clearTimeout(espera);
-      espera = setTimeout(traer, 80);
+      const arriba = ev.endCoordinates.height > 0 ? ev.endCoordinates.screenY : null;
+      espera = setTimeout(() => traer(arriba), 80);
     };
     const subs = [Keyboard.addListener('keyboardDidShow', acomodar), Keyboard.addListener('keyboardDidChangeFrame', acomodar)];
     return () => {

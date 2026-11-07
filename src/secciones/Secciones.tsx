@@ -6,9 +6,9 @@
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Keyboard, Linking, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, interpolate, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, interpolate, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -19,6 +19,7 @@ import { CON_ASCENT } from '@/lib/banderas';
 import { t } from '@/textos';
 import { colores } from '@/tema';
 import { useAlTocarUnAviso } from '@/recordatorios/programar';
+import { ponerSeccionActual, tocarDeNuevo } from './arriba';
 import { Ascent } from './Ascent';
 import { alAbrirAscent } from './ascent/abrir';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
@@ -31,14 +32,16 @@ import { leerEnlace, type Enlace } from './enlaces';
 import { Entrada } from './entrada/Entrada';
 import { EditorDeHabito } from './habitos/Editor';
 import { Mes } from './habitos/Mes';
-import { Sugeridos } from './habitos/Sugeridos';
+import { Sugeridos, useVolverAOfrecer } from './habitos/Sugeridos';
 import { HojaMas, type VistaDelMas } from './HojaMas';
+import { cerrarLasHojas } from './HojaModal';
 import { PantallaPremium } from './premium/Premium';
 import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDePerfil } from './perfil/Perfil';
 import { PaginaDeProgreso } from './progreso/Progreso';
 import { PaginaDeSueno } from './sueno/Sueno';
 import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje, VIAJE_MS } from './movimiento';
+import { bajarTeclado } from './teclado';
 
 const ULTIMA = PESTANAS.length - 1;
 const FONDO = '#000';
@@ -89,6 +92,8 @@ export default function Secciones() {
   // La pestaña, con decimales mientras se desliza; Ascent y la hoja del «+», de 0 (abajo) a 1.
   const posicion = useSharedValue(0);
   const desde = useSharedValue(0);
+  // La sección de donde arrancó el dedo (la más cercana, si la tira venía viajando).
+  const base = useSharedValue(0);
   const subida = useSharedValue(0);
   const hoja = useSharedValue(0);
   // La hoja de registro de la comida: se abre desde Comida, Inicio o el «+».
@@ -113,6 +118,10 @@ export default function Secciones() {
     };
   }, [actual]);
   const armada = (i: number) => i === actual || Math.abs(i - vecinasDe) <= 1 || Math.abs(i - anterior) <= 1;
+  const conHojaEncima = hojaAbierta || !!registro;
+  useEffect(() => {
+    ponerSeccionActual(actual, conHojaEncima);
+  }, [actual, conHojaEncima]);
   const paginaX = useDerivedValue(() => (HABITOS - posicion.get()) * ancho);
   // La entrada: el cielo solo, con la cámara donde la pide cada pantalla. Hasta saber si hay perfil,
   // solo el cielo: así Inicio no asoma antes de la entrada. Solo este dato: con todo el estado, las
@@ -123,6 +132,8 @@ export default function Secciones() {
   });
   const enEntrada = fase === 'entrada';
   const conSecciones = fase === 'secciones';
+  // Si los primeros hábitos se cerraron sin elegir (un aviso llevó a otro lado, o iOS cerró Moss), vuelven al llegar a Hábitos.
+  useVolverAOfrecer(conSecciones && actual === HABITOS, () => setSugeridos(true));
   const camaraDeLaEntrada = useSharedValue(0);
   const entrada = useMemo(() => (enEntrada ? { camara: camaraDeLaEntrada } : undefined), [enEntrada, camaraDeLaEntrada]);
   const sinSecciones = useSharedValue(true);
@@ -154,19 +165,28 @@ export default function Secciones() {
   // Con Ascent arriba, una hoja abierta o sin las secciones (en la entrada), las pestañas no se deslizan.
   const deslizable = useDerivedValue(() => subida.get() === 0 && hoja.get() === 0 && conRegistro.get() === 0 && !sinSecciones.get());
 
-  const cambiarDePestana = (i: number) => {
-    if (i !== actual) Haptics.selectionAsync().catch(() => {});
+  const cambiarDePestana = (i: number, vibrar = true) => {
+    if (i !== actual && vibrar) Haptics.selectionAsync().catch(() => {});
     setActual(i);
   };
 
-  const ir = (i: number) => {
+  // `vibrar` en false cuando no hay un toque (un aviso o un widget llevan a la sección).
+  const ir = (i: number, vibrar = true) => {
+    // El teclado de un campo de la sección que se deja quedaría tapando la que llega.
+    Keyboard.dismiss();
     // Con Ascent arriba, Hábitos la baja; otra pestaña la saca de una.
     if (subida.get() > 0) {
       subida.set(i === HABITOS ? subirOBajar(subida.get(), 0) : 0);
       setAscentAbierta(false);
     }
-    cambiarDePestana(i);
+    cambiarDePestana(i, vibrar);
     posicion.set(viaje(i));
+  };
+
+  // Tocar la pestaña en la que ya estás la sube arriba de todo, como en iOS.
+  const tocarPestana = (i: number) => {
+    if (i === actual && subida.get() === 0) tocarDeNuevo(i);
+    else ir(i);
   };
 
   const cerrarAscent = () => {
@@ -177,7 +197,7 @@ export default function Secciones() {
   useEffect(() => alAbrirAscent(() => {
     if (actual !== HABITOS) {
       cambiarDePestana(HABITOS);
-      posicion.set(HABITOS);
+      posicion.set(viaje(HABITOS));
     }
     subida.set(subirOBajar(subida.get(), 1));
     setAscentAbierta(true);
@@ -185,23 +205,29 @@ export default function Secciones() {
   // Con Reducir movimiento la hoja del «+» no sube: aparece y se va con un fundido corto (HojaMas).
   const reducido = useReducedMotion();
   const llevarLaHoja = (hasta: 0 | 1) => hoja.set(reducido ? withTiming(hasta, { duration: 180, reduceMotion: ReduceMotion.Never }) : subirOBajar(hoja.get(), hasta));
-  const abrirHoja = (vista: VistaDelMas = 'menu') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  const abrirHoja = (vista: VistaDelMas = 'menu', vibrar = true) => {
+    if (vibrar) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setVistaDelMas(vista);
     llevarLaHoja(1);
     setHojaAbierta(true);
   };
   const cerrarHoja = () => {
+    // El teclado del peso o de las medidas no se queda solo, encima de la sección, mientras la hoja baja.
+    Keyboard.dismiss();
     llevarLaHoja(0);
     setHojaAbierta(false);
   };
-  // Un aviso o un widget llevan a lo suyo: se cierra lo que estaba abierto encima, que lo taparía (la hoja
-  // del «+» y los modales de Hábitos: el editor, «Tu mes» y los primeros hábitos).
-  const cerrarCapas = () => {
+  // Un aviso o un widget llevan a lo suyo: se cierra lo que estaba abierto encima, que lo taparía: la hoja
+  // del «+», los modales de Hábitos (el editor, «Tu mes» y los primeros hábitos), las hojas de las
+  // secciones y, si lo que sigue no es anotar, la de registro.
+  const cerrarCapas = (anota: boolean) => {
+    Keyboard.dismiss();
     if (hojaAbierta) cerrarHoja();
     setEditando(undefined);
     setVerMes(false);
     setSugeridos(false);
+    cerrarLasHojas();
+    if (!anota) cerrarRegistro();
   };
 
   // Tocar un aviso lleva a lo suyo: anotar esa comida, el cielo de Hábitos, el peso o el sueño.
@@ -212,28 +238,60 @@ export default function Secciones() {
       almacenListo().then(() => guardarSenales([{ id, que: 'meVoyADormir', en }])).then(() => avisar(t('recordatorios.buenasNoches'))).catch(() => {});
       return;
     }
-    cerrarCapas();
-    // La comida de su día: un aviso de la cena tocado después de medianoche anota la cena de ayer.
-    if ((a.tipo === 'horario' || a.tipo === 'comida') && a.comida) abrirRegistro({ comida: a.comida, ...(a.dia ? { dia: a.dia } : {}) });
-    // Lo que falta: para anotar lo que propone. Del agua, a Inicio, donde se suman los vasos.
-    else if (a.tipo === 'falta') {
-      if (a.que === 'agua') ir(PESTANAS.indexOf('inicio'));
-      else abrirRegistro({});
+    const sueno = PESTANAS.indexOf('sueno');
+    switch (a.tipo) {
+      // La comida de su día: un aviso de la cena tocado después de medianoche anota la cena de ayer.
+      case 'horario':
+      case 'comida':
+      case 'antesDeEntrenar':
+      case 'despuesDeEntrenar':
+      case 'ultimaComida':
+        cerrarCapas(true);
+        abrirRegistro({ ...(a.comida ? { comida: a.comida } : {}), ...(a.dia ? { dia: a.dia } : {}) });
+        return;
+      // Lo que falta: para anotar lo que propone. El agua, en el «+», que siempre la tiene (en Inicio puede no estar).
+      case 'falta':
+        cerrarCapas(a.que !== 'agua');
+        if (a.que === 'agua') abrirHoja('menu', false);
+        else abrirRegistro({});
+        return;
+      case 'pesarse':
+        cerrarCapas(false);
+        abrirHoja('peso', false);
+        return;
+      // El fin de la prueba: en Perfil está tu suscripción, y cómo cancelarla.
+      case 'prueba':
+        cerrarCapas(false);
+        ir(PESTANAS.indexOf('perfil'), false);
+        return;
+      // Lo de la noche y la recuperación, en Sueño; el partido y la carrera, en Inicio.
+      case 'dormir':
+      case 'cafe':
+      case 'luces':
+      case 'entrenarTarde':
+      case 'recuperacion':
+        cerrarCapas(false);
+        ir(sueno, false);
+        return;
+      case 'partido':
+      case 'carrera':
+        cerrarCapas(false);
+        ir(PESTANAS.indexOf('inicio'), false);
+        return;
+      default:
+        cerrarCapas(false);
+        ir(HABITOS, false);
     }
-    else if (a.tipo === 'pesarse') abrirHoja('peso');
-    // El fin de la prueba: en Perfil está tu suscripción, y cómo cancelarla.
-    else if (a.tipo === 'prueba') ir(PESTANAS.indexOf('perfil'));
-    else ir(a.tipo === 'dormir' ? PESTANAS.indexOf('sueno') : HABITOS);
   });
 
   // Tocar un widget lleva a lo suyo: su sección, o anotar justo ahí.
   useEnlaces(conSecciones, (e) => {
-    cerrarCapas();
     if ('seccion' in e) {
-      cerrarRegistro();
-      ir(PESTANAS.indexOf(e.seccion));
+      cerrarCapas(false);
+      ir(PESTANAS.indexOf(e.seccion), false);
       return;
     }
+    cerrarCapas(true);
     const { comida, via } = e.anotar;
     abrirRegistro({ ...(comida ? { comida } : {}), ...(via && via !== 'buscar' ? { panel: via } : {}) });
   });
@@ -242,12 +300,18 @@ export default function Secciones() {
     enabled: deslizable,
     activeOffsetX: [-14, 14],
     failOffsetY: [-10, 10],
-    onActivate: () => {
+    onActivate: (ev) => {
       'worklet';
-      desde.set(Math.round(posicion.get()));
+      // Desde donde está y sin el trecho que hizo falta para arrancar: así no salta, tampoco si la tira
+      // venía viajando de un deslizamiento anterior.
+      const p = posicion.get();
+      desde.set(p + ev.translationX / ancho);
+      base.set(Math.round(p));
       // Si se vuelve a deslizar antes de que se armen las vecinas, se arman ya: la que entra no llega vacía.
       // Casi siempre ya están, y el estado no cambia.
-      scheduleOnRN(setVecinasDe, desde.get());
+      scheduleOnRN(setVecinasDe, base.get());
+      // El teclado de un campo de la sección que se deja quedaría tapando la que llega.
+      scheduleOnRN(bajarTeclado);
     },
     onUpdate: (ev) => {
       'worklet';
@@ -258,11 +322,13 @@ export default function Secciones() {
     },
     onDeactivate: (ev) => {
       'worklet';
-      const lejos = Math.abs(ev.translationX) >= ancho * UMBRAL;
-      const rapido = Math.abs(ev.velocityX) >= VELOCIDAD_MINIMA && Math.sign(ev.velocityX) === Math.sign(ev.translationX);
-      const destino = lejos || rapido ? entre(desde.get() + (ev.translationX < 0 ? 1 : -1), 0, ULTIMA) : desde.get();
+      // Se cambia con un quinto de la pantalla o con un tirón rápido hacia ese lado.
+      const movido = posicion.get() - base.get();
+      const lejos = Math.abs(movido) >= UMBRAL;
+      const rapido = Math.abs(ev.velocityX) >= VELOCIDAD_MINIMA && Math.sign(-ev.velocityX) === Math.sign(movido);
+      const destino = lejos || rapido ? entre(base.get() + (movido > 0 ? 1 : -1), 0, ULTIMA) : base.get();
       posicion.set(viaje(destino));
-      scheduleOnRN(cambiarDePestana, destino);
+      scheduleOnRN(cambiarDePestana, destino, true);
     },
   });
 
@@ -280,80 +346,106 @@ export default function Secciones() {
     return { opacity: abierta > 0 ? 1 : 0, borderRadius: MARCO + RADIO * abierta, transform: [{ scale: 1 - ACHICA * abierta }] };
   });
 
+  // Con la hoja del «+» o la de registro abiertas, VoiceOver no recorre lo de atrás: no son sus hermanas,
+  // y `accessibilityViewIsModal` solo esconde a las hermanas.
+  const atrasTapado = conHojaEncima;
+  // El texto del cielo (la cabecera y los nombres de las estrellas) solo existe para VoiceOver en Hábitos.
+  const cieloOculto = atrasTapado || (conSecciones && actual !== HABITOS);
   return (
-    <GestureDetector gesture={tira}>
-      <View style={estilos.lleno}>
-        <Animated.View style={[StyleSheet.absoluteFill, estilos.atras, estiloAtras]}>
-          <PantallaDelCielo
-            paginaX={paginaX}
-            abajo={abajo}
-            // Sin la vinculación (src/lib/banderas.ts), el cielo no tiene ni el gesto ni la flecha de Ascent.
-            subida={CON_ASCENT ? {
-              progreso: subida,
-              limiteY: alto - abajo - 8,
-              flecha: { x: ancho / 2, y: alto - abajo - 24 },
-              alCambiar: setAscentAbierta,
-            } : undefined}
-            entrada={entrada}
-            tapado={tapado}
-            alEditarHabito={setEditando}
-            alIrAComida={() => ir(PESTANAS.indexOf('comida'))}
-          />
-          {conSecciones && (
-            <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
-              <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
-              <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
-                {/* Las secciones de al lado quedan armadas pero fuera de la pantalla: VoiceOver no las recorre. */}
-                {PESTANAS.map((n, i) => (
-                  <View
-                    key={n}
-                    style={[estilos.pagina, { width: ancho }]}
-                    pointerEvents="box-none"
-                    accessibilityElementsHidden={i !== actual}
-                    importantForAccessibility={i === actual ? 'auto' : 'no-hide-descendants'}
-                  >
-                    {i === HABITOS ? (
-                      <BotonesDeHabitos ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
-                    ) : !armada(i) ? (
-                      <View style={{ width: ancho }} pointerEvents="none" />
-                    ) : n === 'comida' ? (
-                      <PaginaDeComida ancho={ancho} arriba={insets.top} abajo={abajo} />
-                    ) : n === 'inicio' ? (
-                      <PaginaDeInicio ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
-                    ) : n === 'progreso' ? (
-                      <PaginaDeProgreso ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
-                    ) : n === 'sueno' ? (
-                      <PaginaDeSueno ancho={ancho} arriba={insets.top} abajo={abajo} />
-                    ) : (
-                      <PaginaDePerfil ancho={ancho} arriba={insets.top} abajo={abajo} />
-                    )}
-                  </View>
-                ))}
+    <View style={estilos.lleno}>
+      <GestureDetector gesture={tira}>
+        <View style={StyleSheet.absoluteFill}>
+          <Animated.View
+            style={[StyleSheet.absoluteFill, estilos.atras, estiloAtras]}
+            accessibilityElementsHidden={atrasTapado}
+            importantForAccessibility={atrasTapado ? 'no-hide-descendants' : 'auto'}
+          >
+            <View
+              style={StyleSheet.absoluteFill}
+              pointerEvents="box-none"
+              accessibilityElementsHidden={cieloOculto}
+              importantForAccessibility={cieloOculto ? 'no-hide-descendants' : 'auto'}
+            >
+              <PantallaDelCielo
+                paginaX={paginaX}
+                abajo={abajo}
+                // Sin la vinculación (src/lib/banderas.ts), el cielo no tiene ni el gesto ni la flecha de Ascent.
+                subida={CON_ASCENT ? {
+                  progreso: subida,
+                  limiteY: alto - abajo - 8,
+                  flecha: { x: ancho / 2, y: alto - abajo - 24 },
+                  alCambiar: setAscentAbierta,
+                } : undefined}
+                entrada={entrada}
+                tapado={tapado}
+                alEditarHabito={setEditando}
+                alIrAComida={() => ir(PESTANAS.indexOf('comida'))}
+              />
+            </View>
+            {conSecciones && (
+              <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(240).reduceMotion(ReduceMotion.Never)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+                <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
+                <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
+                  {/* Las secciones de al lado quedan armadas pero fuera de la pantalla: VoiceOver no las recorre. */}
+                  {PESTANAS.map((n, i) => (
+                    <View
+                      key={n}
+                      style={[estilos.pagina, { width: ancho }]}
+                      pointerEvents="box-none"
+                      accessibilityElementsHidden={i !== actual}
+                      importantForAccessibility={i === actual ? 'auto' : 'no-hide-descendants'}
+                    >
+                      {i === HABITOS ? (
+                        <BotonesDeHabitos ancho={ancho} arriba={insets.top} subida={subida} alNuevo={() => setEditando(null)} alMes={() => setVerMes(true)} />
+                      ) : !armada(i) ? (
+                        <View style={{ width: ancho }} pointerEvents="none" />
+                      ) : n === 'comida' ? (
+                        <PaginaDeComida ancho={ancho} arriba={insets.top} abajo={abajo} />
+                      ) : n === 'inicio' ? (
+                        <PaginaDeInicio ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
+                      ) : n === 'progreso' ? (
+                        <PaginaDeProgreso ancho={ancho} arriba={insets.top} abajo={abajo} alAbrirMas={abrirHoja} />
+                      ) : n === 'sueno' ? (
+                        <PaginaDeSueno ancho={ancho} arriba={insets.top} abajo={abajo} />
+                      ) : (
+                        <PaginaDePerfil ancho={ancho} arriba={insets.top} abajo={abajo} />
+                      )}
+                    </View>
+                  ))}
+                </Animated.View>
+                {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
               </Animated.View>
-              {CON_ASCENT && <Ascent subida={subida} abierta={ascentAbierta} abajo={abajo} alCerrar={cerrarAscent} />}
+            )}
+          </Animated.View>
+          <Animated.View style={[estilos.marco, estiloMarco]} pointerEvents="none" />
+          {/* Los primeros hábitos, solo si siguen los de ejemplo: los de una cuenta que ya tenía los suyos quedan. */}
+          {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(soloLosDeEjemplo(elAlmacen().estado()))} />}
+          {conSecciones && (
+            <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(240).reduceMotion(ReduceMotion.Never)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
+              <View
+                style={StyleSheet.absoluteFill}
+                pointerEvents="box-none"
+                accessibilityElementsHidden={atrasTapado}
+                importantForAccessibility={atrasTapado ? 'no-hide-descendants' : 'auto'}
+              >
+                <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={tocarPestana} alMas={() => abrirHoja()} />
+              </View>
+              <AvisoFlotante aviso={aviso} alIrse={quitarAviso} arriba={insets.top + 8} />
+              {/* Cerrada, la hoja del «+» sigue armada abajo: VoiceOver no la recorre. */}
+              <View style={StyleSheet.absoluteFill} pointerEvents="box-none" accessibilityElementsHidden={!hojaAbierta} importantForAccessibility={hojaAbierta ? 'auto' : 'no-hide-descendants'}>
+                <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
+              </View>
+              <HojaRegistro />
             </Animated.View>
           )}
-        </Animated.View>
-        <Animated.View style={[estilos.marco, estiloMarco]} pointerEvents="none" />
-        {/* Los primeros hábitos, solo si siguen los de ejemplo: los de una cuenta que ya tenía los suyos quedan. */}
-        {enEntrada && <Entrada camara={camaraDeLaEntrada} alTerminar={() => setSugeridos(soloLosDeEjemplo(elAlmacen().estado()))} />}
-        {conSecciones && (
-          <Animated.View entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
-            <Barra posicion={posicion} subida={subida} actual={actual} abajo={insets.bottom} alTocar={ir} alMas={() => abrirHoja()} />
-            <AvisoFlotante aviso={aviso} alIrse={quitarAviso} arriba={insets.top + 8} />
-            {/* Cerrada, la hoja del «+» sigue armada abajo: VoiceOver no la recorre. */}
-            <View style={StyleSheet.absoluteFill} pointerEvents="box-none" accessibilityElementsHidden={!hojaAbierta} importantForAccessibility={hojaAbierta ? 'auto' : 'no-hide-descendants'}>
-              <HojaMas hoja={hoja} abierta={hojaAbierta} alCerrar={cerrarHoja} vista={vistaDelMas} alCambiarVista={setVistaDelMas} />
-            </View>
-            <HojaRegistro />
-          </Animated.View>
-        )}
-        {editando !== undefined && <EditorDeHabito key={editando ?? 'nuevo'} id={editando} alCerrar={() => setEditando(undefined)} />}
-        {verMes && <Mes alCerrar={() => setVerMes(false)} />}
-        {sugeridos && <Sugeridos alCerrar={() => setSugeridos(false)} />}
-        <PantallaPremium conSecciones={conSecciones} />
-      </View>
-    </GestureDetector>
+          {editando !== undefined && <EditorDeHabito key={editando ?? 'nuevo'} id={editando} alCerrar={() => setEditando(undefined)} />}
+          {verMes && <Mes alCerrar={() => setVerMes(false)} />}
+          {sugeridos && <Sugeridos alCerrar={() => setSugeridos(false)} />}
+        </View>
+      </GestureDetector>
+      {/* Afuera del gesto de la tira: deslizar sobre la pantalla de pago no cambia la sección de atrás. */}
+      <PantallaPremium conSecciones={conSecciones} />
+    </View>
   );
 }
 

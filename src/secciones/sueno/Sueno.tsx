@@ -7,8 +7,9 @@
 // pregunta de la hora si no está segura, junto a las caras de la mañana. Hasta tener noches, las de
 // ejemplo, con su aviso.
 
-import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { actualizarSalud } from '@/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
@@ -23,6 +24,8 @@ import { pedirMovimiento, permisoDeMovimiento } from '../../../modules/movimient
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Relleno } from '../animados';
+import { alTocarDeNuevo, useEsLaActual } from '../arriba';
+import { PESTANAS } from '../Barra';
 import { Icono } from '../comida/comunes';
 import { duracion, fechaCorta, fechaDiaMes, horaDelDia, letraDelDia, numero, useEstado } from '../comida/datos';
 import { useSueno } from '../ganchos';
@@ -34,6 +37,7 @@ import { EditorDeHora, LaManana, ponerHora } from './Manana';
 import { RecuperacionEnSueno } from '../ascent/EnSueno';
 
 const DIAS = 14;
+const SUENO = PESTANAS.indexOf('sueno');
 const AZUL = { claro: '#8fd3e8', medio: '#6f86d6', hondo: '#4b4fa8' };
 const TIPO_DE_CONFIANZA: Record<Confianza, TipoDeChip> = { alta: 'bien', media: 'atencion', baja: 'tenue' };
 
@@ -58,9 +62,14 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   // Antes de los 18 el umbral de poco sueño es otro, y el texto también.
   const edad = e.perfil ? edadDe(e.perfil, e.hoy) : undefined;
   const menor = edad !== undefined && edad < 18;
+  const reducido = useReducedMotion();
+  const esLaActual = useEsLaActual(SUENO);
+  const scroll = useRef<ScrollViewInstance>(null);
+  // Tocar otra vez la pestaña sube arriba de todo.
+  useEffect(() => alTocarDeNuevo(SUENO, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido]);
   return (
     <View style={{ width: ancho }}>
-      <ScrollView contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scroll} contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false} scrollsToTop={esLaActual}>
         <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('sueno.titulo')} />
         {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
         <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} desde={e.metas[0]?.desde ?? null} />
@@ -117,14 +126,25 @@ function Tira({ s, hoy, elegida, alElegir }: { s: Sueno; hoy: ClaveDia; elegida:
         const cama = !n ? s.soloEnCama.get(clave) : undefined;
         const alto = n ? Math.max(6, (n.dormido / maximo) * 100) : cama ? Math.max(6, (cama.minutos / maximo) * 100) : 100;
         const esta = clave === elegida;
+        // Para VoiceOver, cada noche con cuánto dormiste: la barra no se lee.
+        const cuanto = n ? `${duracion(n.dormido)} ${t(n.moss?.origen === 'estimada' ? 'sueno.dormidoAprox' : 'sueno.dormido')}`
+          : cama ? `${duracion(cama.minutos)}, ${t('sueno.enCama').toLowerCase()}` : t('sueno.sinDatos');
         return (
-          <Pressable key={clave} onPress={() => alElegir(clave)} style={[st.noche, esta && st.nocheElegida]} accessibilityRole="button" accessibilityState={{ selected: esta }} accessibilityLabel={t('sueno.elegirNoche', { fecha: fechaDiaMes(clave) })}>
+          <Pressable
+            key={clave}
+            onPress={() => alElegir(clave)}
+            style={({ pressed }) => [st.noche, esta && st.nocheElegida, pressed && !esta && st.nocheApretada]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: esta }}
+            accessibilityLabel={`${t('sueno.elegirNoche', { fecha: fechaDiaMes(clave) })}, ${cuanto}`}
+          >
             <View style={st.barra}>
               <View style={[st.barraLlena, { height: `${alto}%` }, !n && (cama ? st.barraCama : st.barraVacia), n && esta && { backgroundColor: AZUL.claro }, n?.moss?.origen === 'estimada' && st.barraEstimada]} />
               <View style={[st.barraMeta, { bottom: `${(s.necesidad / maximo) * 100}%` }]} />
             </View>
-            <Text style={[st.nocheLetra, esta && st.nocheTextoElegido]}>{letraDelDia(clave)}</Text>
-            <Text style={[st.nocheNumero, esta && st.nocheTextoElegido]}>{Number(clave.slice(8))}</Text>
+            {/* Catorce columnas en el ancho de la pantalla: con el texto grande, crecen poco. */}
+            <Text style={[st.nocheLetra, esta && st.nocheTextoElegido]} maxFontSizeMultiplier={1.25}>{letraDelDia(clave)}</Text>
+            <Text style={[st.nocheNumero, esta && st.nocheTextoElegido]} maxFontSizeMultiplier={1.25}>{Number(clave.slice(8))}</Text>
           </Pressable>
         );
       })}
@@ -223,7 +243,7 @@ function LaNocheDeMoss({ n, hoy, propia }: { n: Noche; hoy: ClaveDia; propia: No
           />
         </Aparece>
       ) : (
-        <Pressable onPress={() => setEditando(true)} style={tarjeta.enlace} hitSlop={6} accessibilityRole="button">
+        <Pressable onPress={() => setEditando(true)} style={({ pressed }) => [tarjeta.enlace, pressed && st.enlaceApretado]} hitSlop={{ top: 8, bottom: 14, left: 10, right: 10 }} accessibilityRole="button">
           <Text style={tarjeta.enlaceTexto}>{t('sueno.cambiarHora')}</Text>
         </Pressable>
       )}
@@ -250,6 +270,7 @@ function ElMovimiento() {
               actualizarSalud().catch(() => {});
             }}
             style={({ pressed }) => [st.permitir, pressed && st.permitirApretado]}
+            hitSlop={4}
             accessibilityRole="button"
           >
             <Text style={st.permitirTexto}>{t('sueno.movimiento.permitir')}</Text>
@@ -477,9 +498,10 @@ function LasFuentes({ n, s, clave }: { n: Noche | null; s: Sueno; clave: ClaveDi
   return (
     <Carta titulo={t('sueno.fuentes')}>
       <View style={st.precision}>
-        <View style={st.precisionFila}>
+        {/* Los cinco puntos no se leen: VoiceOver dice el título con cuántos están llenos. */}
+        <View style={st.precisionFila} accessible accessibilityLabel={t('sueno.precision.titulo')} accessibilityValue={{ text: t('sueno.precision.deCinco', { n: nivel }) }}>
           <Text style={st.precisionTitulo}>{t('sueno.precision.titulo')}</Text>
-          <View style={st.puntos} accessibilityLabel={`${nivel} / 5`}>
+          <View style={st.puntos}>
             {[1, 2, 3, 4, 5].map((i) => <View key={i} style={[st.punto, i <= nivel && st.puntoLleno]} />)}
           </View>
         </View>
@@ -504,6 +526,8 @@ const st = StyleSheet.create({
   tira: { marginTop: 14, flexDirection: 'row', gap: 3, paddingTop: 10, paddingHorizontal: 6, paddingBottom: 8, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(8, 12, 26, 0.6)' },
   noche: { flex: 1, alignItems: 'center', gap: 4, paddingTop: 3, paddingBottom: 4, borderRadius: 9 },
   nocheElegida: { backgroundColor: 'rgba(239, 230, 207, 0.08)' },
+  nocheApretada: { backgroundColor: 'rgba(239, 230, 207, 0.04)' },
+  enlaceApretado: { opacity: 0.6 },
   barra: { width: 9, height: 54, borderRadius: 5, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: 'rgba(239, 230, 207, 0.05)' },
   barraLlena: { width: '100%', borderRadius: 5, backgroundColor: AZUL.medio },
   barraVacia: { backgroundColor: 'rgba(239, 230, 207, 0.06)' },

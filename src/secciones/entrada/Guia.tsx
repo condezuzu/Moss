@@ -6,7 +6,7 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -112,7 +112,13 @@ export function Guia({ recorrido, reloj, anclas: a, reducido, tocable, lista, al
         />
       )}
       {tocable && pista && (
-        <Animated.Text entering={FadeIn.duration(900)} exiting={FadeOut.duration(300)} style={[st.pista, { top: a.descanso[1] + 44 }]} pointerEvents="none">
+        <Animated.Text
+          entering={FadeIn.duration(900).reduceMotion(ReduceMotion.Never)}
+          exiting={FadeOut.duration(300).reduceMotion(ReduceMotion.Never)}
+          style={[st.pista, { top: a.descanso[1] + 44 }]}
+          pointerEvents="none"
+          maxFontSizeMultiplier={1.2}
+        >
           {t('entrada.tocaLaEstrella')}
         </Animated.Text>
       )}

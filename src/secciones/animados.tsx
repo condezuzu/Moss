@@ -1,10 +1,11 @@
 // Lo que cambia con un toque se mueve hasta lo nuevo en vez de saltar, como en la galería: las
 // cifras cuentan (galeria/src/comida.js, contar), las barras se llenan (.in-macro-barra i) y los
-// vasos de agua se llenan de a uno (.in-vasos i). Con Reducir movimiento, todo va directo.
+// vasos de agua se llenan de a uno (.in-vasos i). Con Reducir movimiento, las cifras y las barras van
+// directo; los vasos, que se llenan con un fundido, no: un fundido no es movimiento.
 
 import { useEffect, useRef, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
 // La curva de las barras de la galería: cubic-bezier(0.2, 0.7, 0.2, 1).
 const LLENA = Easing.bezier(0.2, 0.7, 0.2, 1);
@@ -13,6 +14,7 @@ const LLENA_MS = 1100;
 const PASOS = 10;
 /** Un relleno ocupa toda su pista y se corre: ver Relleno. */
 const ENTERO: ViewStyle = { width: '100%' };
+const VASO_DE_MAS = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
 
 /**
  * Una cifra que, cuando cambia, cuenta desde lo que mostraba (anotar comida baja «te quedan» de a
@@ -69,10 +71,9 @@ export function Relleno({ fraccion, style }: { fraccion: number; style?: StylePr
 
 /** Un vaso de agua: se llena con un fundido; los que pasan de la meta entran de a uno. */
 export function Vaso({ lleno, extra, style, llenoStyle }: { lleno: boolean; extra: boolean; style: StyleProp<ViewStyle>; llenoStyle: StyleProp<ViewStyle> }) {
-  const reducido = useReducedMotion();
-  const opacidad = useAnimatedStyle(() => ({ opacity: reducido ? (lleno ? 1 : 0) : withTiming(lleno ? 1 : 0, { duration: 320 }) }));
+  const opacidad = useAnimatedStyle(() => ({ opacity: withTiming(lleno ? 1 : 0, { duration: 320, reduceMotion: ReduceMotion.Never }) }));
   return (
-    <Animated.View entering={extra && !reducido ? FadeIn.duration(320) : undefined} style={[style, { overflow: 'hidden' }]}>
+    <Animated.View entering={extra ? VASO_DE_MAS : undefined} style={[style, { overflow: 'hidden' }]}>
       <Animated.View style={[{ position: 'absolute', top: -1, left: -1, right: -1, bottom: -1 }, llenoStyle, opacidad]} />
     </Animated.View>
   );

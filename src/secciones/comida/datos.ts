@@ -89,8 +89,8 @@ export function hora(minutos: number): string {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
-/** La comida que toca ahora. */
-export const comidaDeAhora = (): Comida => comidaDeLaHora(minutosDe(new Date()));
+/** La comida que toca ahora, con la hora a la que empieza el día (D32): a las 5:30 con el corte a las 6, todavía no es el desayuno. */
+export const comidaDeAhora = (): Comida => comidaDeLaHora(minutosDe(new Date()), elAlmacen().estado().corte);
 
 /**
  * La meta de un día, sin lo que no son macros, con la semana repartida si se reparte y, con Ascent
@@ -157,13 +157,13 @@ export function horasDeComer(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'>): (
  * con el nombre de otra comida (D41): así no corre lo que sigue. La cena pasada la medianoche, antes del
  * corte, es la de la hora.
  */
-export function momentoDe(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'>, dia: ClaveDia, comida: Comida): string | undefined {
+export function momentoDe(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'> & Partial<Pick<Estado, 'corte'>>, dia: ClaveDia, comida: Comida): string | undefined {
   const horaDe = horasDeComer(e);
   const p = partesDe(dia);
   const enElDia = (minutos: number) => new Date(p.anio, p.mes, p.dia, Math.floor(minutos / 60), minutos % 60).toISOString();
   if (dia !== e.hoy) return enElDia(horaDe(comida));
   const ahora = minutosEnElDia(new Date(), dia);
-  if (comida === 'snack' || comida === comidaDeLaHora(ahora) || (comida === 'cena' && ahora >= 24 * 60)) return undefined;
+  if (comida === 'snack' || comida === comidaDeLaHora(ahora, e.corte) || (comida === 'cena' && ahora >= 24 * 60)) return undefined;
   const minuto = minutoDeLoDicho(horaDe(comida), ahora);
   return minuto === null ? undefined : enElDia(minuto);
 }

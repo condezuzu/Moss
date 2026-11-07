@@ -313,20 +313,30 @@ export function estrellaEn(e: Escena, px: number, py: number): number {
   return -1;
 }
 
+/**
+ * Lo que hace un toque en la estrella del hábito `i`: la enciende o la apaga. También desde VoiceOver,
+ * que la toca por su etiqueta (Interfaz.tsx). Devuelve el hábito, o -1 si no está.
+ */
+export function tocarHabito(e: Escena, i: number): number {
+  'worklet';
+  const h = e.habitos[i];
+  if (!h) return -1;
+  // Lo de la comida lo decide lo anotado: si el toque la encendiera, el almacén la volvería a apagar.
+  if (h.fija) {
+    e.efectos.push({ tipo: 2, x: h.x, y: h.y, t0: e.t, dur: 0.4 });
+    e.eventos.push({ tipo: 'automatico', indice: i });
+    return i;
+  }
+  cambiarHabito(e, i, !h.encendido, false);
+  return i;
+}
+
 /** Un toque en (px, py), en puntos. Devuelve el hábito tocado, o -1. */
 export function tocar(e: Escena, px: number, py: number): number {
   'worklet';
   const mejor = estrellaEn(e, px, py);
   if (mejor < 0) return -1;
-  const h = e.habitos[mejor];
-  // Lo de la comida lo decide lo anotado: si el toque la encendiera, el almacén la volvería a apagar.
-  if (h.fija) {
-    e.efectos.push({ tipo: 2, x: h.x, y: h.y, t0: e.t, dur: 0.4 });
-    e.eventos.push({ tipo: 'automatico', indice: mejor });
-    return mejor;
-  }
-  cambiarHabito(e, mejor, !h.encendido, false);
-  return mejor;
+  return tocarHabito(e, mejor);
 }
 
 /** La luz que sube desde el musgo hasta el primer hábito automático apagado. */

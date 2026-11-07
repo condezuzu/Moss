@@ -4,6 +4,7 @@
 
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { FadeInLeft, FadeInRight, LayoutAnimationConfig, useReducedMotion } from 'react-native-reanimated';
 
 import { buscarConstelacion, type Constelacion } from '@/datos/catalogo';
 import { cumplimiento, diasDelMes, resumenDelMes } from '@/dominio/estadisticas';
@@ -14,7 +15,8 @@ import { Icono } from '../comida/comunes';
 import { numero, useEstado } from '../comida/datos';
 import { MesDeCielos, type CeldaDelMes } from '../graficos/Graficos';
 import { HojaModal } from '../HojaModal';
-import { EtiquetaDeGrupo, SEMANA } from '../tarjetas';
+import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
+import { ACOMODA, Aparece, EtiquetaDeGrupo, SEMANA } from '../tarjetas';
 
 const constelacionDe = (id: string | null): Constelacion | null => {
   if (!id) return null;
@@ -25,16 +27,25 @@ const constelacionDe = (id: string | null): Constelacion | null => {
   }
 };
 
+/** Los números de los días van en celdas fijas: con el texto grande, crecen poco. */
+const LETRA_DE_CELDA = 1.2;
+
 export function Mes({ alCerrar }: { alCerrar: () => void }) {
   const e = useEstado();
   const { width } = useWindowDimensions();
+  const reducido = useReducedMotion();
   const [hoyAnio, hoyMes] = [Number(e.hoy.slice(0, 4)), Number(e.hoy.slice(5, 7)) - 1];
   const [visto, setVisto] = useState({ anio: hoyAnio, mes: hoyMes });
+  // Hacia dónde se fue: el mes que llega entra de ese lado.
+  const [hacia, setHacia] = useState<1 | -1>(1);
   const esteMes = visto.anio === hoyAnio && visto.mes === hoyMes;
-  const mover = (d: 1 | -1) => setVisto(({ anio, mes }) => {
-    const m = mes + d;
-    return { anio: anio + Math.floor(m / 12), mes: ((m % 12) + 12) % 12 };
-  });
+  const mover = (d: 1 | -1) => {
+    setHacia(d);
+    setVisto(({ anio, mes }) => {
+      const m = mes + d;
+      return { anio: anio + Math.floor(m / 12), mes: ((m % 12) + 12) % 12 };
+    });
+  };
 
   const ancho = width - 40;
   const lado = ancho / 7;
@@ -61,65 +72,92 @@ export function Mes({ alCerrar }: { alCerrar: () => void }) {
   const vigentes = e.habitos.filter((h) => !h.hasta || h.hasta >= e.hoy).sort((a, b) => a.orden - b.orden);
 
   const titulo = `${lista('fecha.meses')[visto.mes]} ${visto.anio}`;
+  const clave = `${visto.anio}-${visto.mes}`;
+  // Cambiar de mes no es de golpe: el que llega entra del lado de la flecha y el que se va se funde;
+  // con Reducir movimiento, los dos se funden.
+  const entra = reducido ? ENTRA_FUNDIDO : (hacia > 0 ? FadeInRight : FadeInLeft).duration(260);
   return (
     <HojaModal
       abierta
       titulo={t('habitos.mes.titulo')}
       alCerrar={alCerrar}
     >
+      {/* Al abrir, el mes llega con la hoja: lo que entra al cambiar de mes no se mueve esa primera vez. */}
+      <LayoutAnimationConfig skipEntering>
       <View style={st.navegar}>
-        <Pressable onPress={() => mover(-1)} style={st.flecha} accessibilityRole="button" accessibilityLabel={t('habitos.mes.anterior')} hitSlop={8}>
+        <Pressable onPress={() => mover(-1)} style={({ pressed }) => [st.flecha, pressed && st.apretado]} accessibilityRole="button" accessibilityLabel={t('habitos.mes.anterior')} hitSlop={8}>
           <Icono nombre="chevron.left" tam={15} color={colores.pergamino} />
         </Pressable>
-        <Text style={st.mes}>{titulo.charAt(0).toUpperCase() + titulo.slice(1)}</Text>
-        <Pressable onPress={() => !esteMes && mover(1)} disabled={esteMes} style={[st.flecha, esteMes && { opacity: 0.3 }]} accessibilityRole="button" accessibilityLabel={t('habitos.mes.siguiente')} hitSlop={8}>
+        <Animated.Text key={clave} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.mes} accessibilityRole="header">
+          {titulo.charAt(0).toUpperCase() + titulo.slice(1)}
+        </Animated.Text>
+        <Pressable
+          onPress={() => !esteMes && mover(1)}
+          disabled={esteMes}
+          style={({ pressed }) => [st.flecha, esteMes && { opacity: 0.3 }, pressed && st.apretado]}
+          accessibilityRole="button"
+          accessibilityLabel={t('habitos.mes.siguiente')}
+          accessibilityState={{ disabled: esteMes }}
+          hitSlop={8}
+        >
           <Icono nombre="chevron.right" tam={15} color={colores.pergamino} />
         </Pressable>
       </View>
       <View style={st.semana}>
-        {SEMANA.map((d) => <Text key={d} style={[st.letra, { width: lado }]}>{lista('fecha.diasCortos')[d].charAt(0)}</Text>)}
+        {SEMANA.map((d) => <Text key={d} style={[st.letra, { width: lado }]} maxFontSizeMultiplier={LETRA_DE_CELDA}>{lista('fecha.diasCortos')[d].charAt(0)}</Text>)}
       </View>
-      <View style={{ width: ancho, height: filas * alto }}>
-        <MesDeCielos celdas={celdas} ancho={ancho} alto={filas * alto} />
-        {celdas.map((c) => (
-          <Text
-            key={c.clave}
-            style={[st.numero, { left: c.x + 4, top: c.y + 3 }, c.clave === e.hoy && st.numeroHoy, c.clave > e.hoy && st.numeroFuturo]}
-            accessibilityLabel={c.completo ? `${Number(c.clave.slice(8))} ✓` : undefined}
-          >
-            {Number(c.clave.slice(8))}
-          </Text>
-        ))}
-      </View>
-      {resumen.conHabitos === 0 && <Text style={st.vacio}>{t('habitos.mes.sinDatos')}</Text>}
+      {/* Un mes de 5 filas y uno de 6: la grilla se acomoda, y lo de abajo con ella. */}
+      <Animated.View layout={ACOMODA} style={{ width: ancho, height: filas * alto }}>
+        <Animated.View key={clave} entering={entra} exiting={SALE_FUNDIDO} style={StyleSheet.absoluteFill}>
+          <MesDeCielos celdas={celdas} ancho={ancho} alto={filas * alto} />
+          {celdas.map((c) => (
+            <Text
+              key={c.clave}
+              style={[st.numero, { left: c.x + 4, top: c.y + 3 }, c.clave === e.hoy && st.numeroHoy, c.clave > e.hoy && st.numeroFuturo]}
+              maxFontSizeMultiplier={LETRA_DE_CELDA}
+              accessibilityLabel={c.completo ? t('habitos.mes.diaCompleto', { n: Number(c.clave.slice(8)) }) : undefined}
+            >
+              {Number(c.clave.slice(8))}
+            </Text>
+          ))}
+        </Animated.View>
+      </Animated.View>
+      <Animated.View layout={ACOMODA}>
+        {resumen.conHabitos === 0 && (
+          <Aparece>
+            <Text style={st.vacio}>{t('habitos.mes.sinDatos')}</Text>
+          </Aparece>
+        )}
 
-      <View style={st.cifras}>
-        <Cifra valor={resumen.completos} texto={t('habitos.mes.completos')} />
-        <Cifra valor={resumen.conLuz} texto={t('habitos.mes.conLuz')} />
-        <Cifra valor={resumen.luz} texto={t('habitos.mes.luz')} />
-      </View>
+        <View style={st.cifras}>
+          <Cifra valor={resumen.completos} texto={t('habitos.mes.completos')} />
+          <Cifra valor={resumen.conLuz} texto={t('habitos.mes.conLuz')} />
+          <Cifra valor={resumen.luz} texto={t('habitos.mes.luz')} />
+        </View>
 
-      {vigentes.length > 0 && (
-        <>
-          <EtiquetaDeGrupo>{t('habitos.mes.porHabito')}</EtiquetaDeGrupo>
-          {vigentes.map((h) => {
-            const c = cumplimiento(h.id, e.dias, e.hoy, 30);
-            const k = c.total ? c.hechos / c.total : 0;
-            return (
-              <View key={h.id} style={st.habito}>
-                <View style={st.habitoFila}>
-                  <Icono nombre={h.icono as 'star'} tam={14} color="rgba(239, 230, 207, 0.6)" />
-                  <Text style={st.habitoNombre} numberOfLines={1}>{h.nombre}</Text>
-                  <Text style={st.habitoCuenta}>{t('habitos.mes.deVeces', { hechos: numero(c.hechos), total: numero(c.total) })}</Text>
+        {vigentes.length > 0 && (
+          <>
+            <EtiquetaDeGrupo>{t('habitos.mes.porHabito')}</EtiquetaDeGrupo>
+            {vigentes.map((h) => {
+              const c = cumplimiento(h.id, e.dias, e.hoy, 30);
+              const k = c.total ? c.hechos / c.total : 0;
+              return (
+                <View key={h.id} style={st.habito}>
+                  <View style={st.habitoFila}>
+                    <Icono nombre={h.icono as 'star'} tam={14} color="rgba(239, 230, 207, 0.6)" />
+                    <Text style={st.habitoNombre} numberOfLines={1}>{h.nombre}</Text>
+                    <Text style={st.habitoCuenta}>{t('habitos.mes.deVeces', { hechos: numero(c.hechos), total: numero(c.total) })}</Text>
+                  </View>
+                  <View style={st.pista}>
+                    <View style={[st.pistaLlena, { width: `${k * 100}%` }]} />
+                  </View>
                 </View>
-                <View style={st.pista}>
-                  <View style={[st.pistaLlena, { width: `${k * 100}%` }]} />
-                </View>
-              </View>
-            );
-          })}
-        </>
-      )}
+              );
+            })}
+          </>
+        )}
+      </Animated.View>
+      </LayoutAnimationConfig>
     </HojaModal>
   );
 }
@@ -134,6 +172,7 @@ const Cifra = ({ valor, texto }: { valor: number; texto: string }) => (
 const st = StyleSheet.create({
   navegar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, marginBottom: 10 },
   flecha: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.06)' },
+  apretado: { opacity: 0.55 },
   mes: { fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino },
   semana: { flexDirection: 'row', marginBottom: 4 },
   letra: { textAlign: 'center', fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 1, color: 'rgba(239, 230, 207, 0.45)' },

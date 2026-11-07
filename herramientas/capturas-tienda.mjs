@@ -65,6 +65,8 @@ const menus = (idioma) => Object.fromEntries(Object.entries(MENUS).map(([c, ms])
 
 /** Se guarda en el navegador antes de la primera carga, con el formato de src/almacen/abrir.web.ts. */
 function sembrar([menus, horas]) {
+  // Lucía ya pasó por los primeros hábitos: no se le vuelven a ofrecer en Hábitos.
+  localStorage.setItem('moss:primerosHabitosCerrados', '2026-01-01');
   const d = new Date();
   const clave = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
   const momento = d.toISOString();

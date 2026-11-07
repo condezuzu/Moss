@@ -236,6 +236,20 @@
     escena.ponerConstelacion(LIRA, habitosLira());
   }
 
+  // ------------------------------------------------------------ los detalles (6/11, para aprobar)
+  // Uno solo para todo el teléfono: el teclado dibujado (con «Listo» y «Siguiente» arriba del de números) y el
+  // menú de mantener apretado (detalles.js).
+  const txDetalles = (clave, vars) => {
+    let t = clave.split('.').reduce((o, k) => (o ? o[k] : undefined), TEXTOS[escena.idioma]);
+    if (typeof t !== 'string') return clave;
+    if (vars) t = t.replace(/\{(\w+)\}/g, (_, k) => (vars[k] == null ? '' : vars[k]));
+    return t;
+  };
+  const teclado = Detalles.teclado(tel, { tx: txDetalles, idioma: () => escena.idioma, haptico });
+  const menuDetalles = Detalles.menu(tel, { haptico, icono: Util.icono });
+  // Un día sin hábitos que toquen: el cielo sin constelación, y lo dice donde va el globito.
+  const SIN_HABITOS = { id: 'ninguna', tipo: 'estrella', nombres: { es: '', en: '' }, estrellas: [{ id: 'ninguna', nombre: '', ra: 0, dec: 0, mag: 4 }], lineas: [] };
+
   // ------------------------------------------------------------ la entrada a la app
   let avanceSolo = false;
   // La suscripción (D40) y la guía del cargador: maquetas, para aprobar. La pantalla de pago va al terminar
@@ -272,6 +286,8 @@
   comida = Comida.crear(tel, escena, {
     textos: TEXTOS,
     alimentos: (typeof ALIMENTOS !== 'undefined' && ALIMENTOS) || [],
+    teclado,
+    menu: menuDetalles,
     alCambiar: () => refrescarControles(),
     alCambiarComida: () => repintar(900),
     // Cada registro, con los toques que llevó desde el «+» o desde Comida: para compararlos con la especificación.
@@ -444,7 +460,7 @@
     else repintar();
   }
 
-  const opcionesDeSeccion = { textos: TEXTOS, idioma: () => escena.idioma, alCambiar: () => refrescarControles() };
+  const opcionesDeSeccion = { textos: TEXTOS, idioma: () => escena.idioma, alCambiar: () => refrescarControles(), teclado, haptico };
 
   // ------------------------------------------------------------ según el deporte (para aprobar)
   // Los días de ejemplo de deporte.js: cada uno cambia «Para hoy» y la tarjeta de Inicio, la línea de Sueño, la
@@ -609,6 +625,10 @@
   // Inicio y Progreso se pintaron antes de que existiera Ascent, y su invitación y su entrada salen de ahí.
   inicio.pintar(0);
   progreso.pintar();
+  // La franja bajo la hora (6/11, para aprobar): lo que pasa por debajo de la hora y la isla al hacer scroll se
+  // separa con un degradado del color del fondo; con todo arriba no se ve.
+  [[inicio.zona, '.in-scroll'], [comida.zona, '.cm-scroll'], [progreso.zona, '.pg-scroll'], [sueno.zona, '.sn-scroll', '5, 9, 22'], [perfilSec.zona, '.pf-scroll']]
+    .forEach(([zona, scroll, rgb]) => Detalles.franja(zona, zona.querySelector(scroll), rgb));
 
 
   // Un día de ejemplo del deporte (o ninguno): Perfil › Entrenamiento toma sus deportes, su horario, su partido y
@@ -736,6 +756,9 @@
   }
 
   const cerrarHojas = () => {
+    if (menuDetalles.abierto) menuDetalles.cerrar();
+    if (document.activeElement && tel.contains(document.activeElement)) document.activeElement.blur();
+    teclado.ocultar();
     if (widgets && widgets.vista) widgets.cerrar();
     if (comida.hojaAbierta) comida.cerrarHoja();
     if (comida.hojaPlanAbierta) comida.cerrarPlan();
@@ -897,7 +920,8 @@
     // El gesto se mira antes que nadie (en captura): si es de costado, es de las pestañas, y ni las
     // listas ni el cielo se enteran.
     // Con los avisos de la pantalla bloqueada arriba, tampoco: el gesto se quedaría con el deslizador de la hora.
-    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta || escena.viajando || ascent.ocupada || avisosBloqueo.abierta);
+    // Con un menú de mantener apretado, una alerta o un velo de espera arriba, tampoco (detalles.js).
+    const bloqueado = () => !!(entrada.paso || comida.hojaAbierta || mas.abierta || inicio.editando || habitosSec.abierta || escena.viajando || ascent.ocupada || avisosBloqueo.abierta || Detalles.ocupado);
     tel.addEventListener('pointerdown', (ev) => {
       gesto = null;
       if (bloqueado() || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
@@ -911,6 +935,8 @@
       if (!g.decidido) {
         if (escena.arrastrando || (subida && subida.decidido)) { gesto = null; return; }
         if (Math.abs(dx) < DECIDE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        // Un alimento de Comida que se desliza a la izquierda (o que ya está abierto) es suyo, no de las pestañas.
+        if (Detalles.gestoPropio(ev.target, dx)) { gesto = null; return; }
         g.decidido = true;
         g.desde = performance.now();
         cancelAnimationFrame(animacion);
@@ -1171,7 +1197,41 @@
       window.__cuestionario('entreno', { tipos: ['equipo'], partidos: true, diaDePartido: 6, horaDePartido: 21 * 60, de: { equipo: { dias: [2, 4], hora: 20 * 60, minutos: 90 } } });
       entrada.irA('cuando');
     },
+    // Los detalles de app profesional (6/11, para aprobar): cada uno donde va, como en la app.
+    dtVentana: () => { cerrarHojas(); conHoja(() => { comida.ficha('Banana'); setTimeout(() => enfocar('.hj-ventana input.fi-valor'), 420); }); },
+    dtPeso: () => { cerrarHojas(); pestanas.ir(0); mas.ir('peso'); setTimeout(() => enfocar('.mas-peso-cifra input'), 480); },
+    dtMedidas: () => { cerrarHojas(); pestanas.ir(0); mas.ir('medidas'); setTimeout(() => enfocar('.mas-campo[data-sitio="cintura"] input'), 480); },
+    dtCrear: () => { cerrarHojas(); conHoja(() => { comida.etiqueta(); setTimeout(() => enfocar('.hj-etiqueta input[data-clave="kcal"]'), 420); }); },
+    dtMantener: () => { enLaZona(() => { comida.verDia(0); comida.bajarA('dia'); setTimeout(() => comida.mantenerAlimento('Milanesa'), 380); }); },
+    dtMantenerComida: () => { enLaZona(() => { comida.verDia(0); comida.bajarA('dia'); setTimeout(() => comida.mantenerComida('almuerzo'), 380); }); },
+    dtDeslizar: () => { enLaZona(() => { comida.verDia(0); comida.bajarA('dia'); setTimeout(() => comida.deslizarAlimento('Manzana', 'abrir'), 380); }); },
+    dtGuardadas: () => { enLaZona(() => comida.guardadasEditar('comida', 0)); },
+    dtAyer: () => { enLaZona(() => comida.abrirHojaPara(-1, 'cena')); },
+    dtManana: () => { enLaZona(() => { comida.verDia(1); comida.bajarA('dia'); }); },
+    dtAgua: () => { cerrarHojas(); pestanas.ir(0); inicio.poner('agua', true); inicio.bajar(); },
+    dtAguaMas: () => { cerrarHojas(); pestanas.ir(0); comida.empezarCuenta(); mas.abrir(); },
+    dtAtras: () => { cerrarHojas(); entrada.irA('movimiento'); },
+    dtFranja: () => { cerrarHojas(); pestanas.ir(0); inicio.subir(); setTimeout(() => { const s = inicio.zona.querySelector('.in-scroll'); s.scrollTo({ top: 140, behavior: 'smooth' }); }, 360); },
+    dtApple: () => { cerrarHojas(); entrada.irA('cuenta'); },
+    dtBorrarCuenta: () => { cerrarHojas(); pestanas.ir(5); perfilSec.borrarCuenta(); },
+    dtCerrarSesion: () => { cerrarHojas(); pestanas.ir(5); perfilSec.cerrarSesion(); },
+    dtExportar: () => { cerrarHojas(); pestanas.ir(5); bajarEnPerfil('[data-fila="exportar"]'); setTimeout(() => perfilSec.exportar(), 450); },
+    dtCancelar: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.editarNoche(0); setTimeout(() => sueno.bajarA('.sn-editor'), 300); },
+    dtTirar: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.subir(); setTimeout(() => sueno.tirarParaLeer(), 400); },
+    dtSinHabitos: () => { cerrarHojas(); escena.irA('hoy'); pestanas.ir(HABITOS); escena.ponerConstelacion(SIN_HABITOS, []); },
+    dtConHabitos: () => { cerrarHojas(); cargarLira(); pestanas.ir(HABITOS); },
+    dtPerfil: () => { cerrarHojas(); pestanas.ir(5); bajarEnPerfil('[data-fila="numeros"]'); },
   };
+  // Bajar hasta una fila de Perfil, suave (nada de teletransportarse); con Reducir movimiento, de una.
+  function bajarEnPerfil(selector) {
+    const s = perfilSec.zona.querySelector('.pf-scroll');
+    const n = s && s.querySelector(selector);
+    if (!n) return;
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    s.scrollTo({ top: Math.max(0, s.scrollTop + n.getBoundingClientRect().top - s.getBoundingClientRect().top - 160), behavior: quieto ? 'auto' : 'smooth' });
+  }
+  // Pone el foco en un campo, como al tocarlo: sube el teclado que le toca.
+  function enfocar(selector) { const n = tel.querySelector(selector); if (n) n.focus({ preventScroll: true }); }
 
   // Lo del cielo pasa en Hábitos: los botones de la galería llevan ahí primero.
   const enHabitos = (fn) => () => { cerrarHojas(); pestanas.ir(HABITOS); fn(); };
@@ -1564,4 +1624,27 @@
     return r;
   };
   window.__viajando = () => escena.viajando;
+  // Los detalles de app profesional (6/11), para las capturas: cada propuesta por su nombre (accionesSeccion, con
+  // «dt» adelante) y lo que se toca adentro: el teclado, el menú de mantener apretado, deslizar y tirar para abajo.
+  window.__detalles = (accion, arg) => {
+    const pasos = {
+      enfocar: () => enfocar(arg),
+      barra: () => teclado.texto,
+      tocarBarra: () => teclado.tocarBarra(),
+      bajarTeclado: () => { if (document.activeElement) document.activeElement.blur(); teclado.ocultar(); },
+      mantenerAlimento: () => comida.mantenerAlimento(arg),
+      mantenerLaComida: () => comida.mantenerComida(arg),
+      deslizarAlimento: () => comida.deslizarAlimento(arg[0], arg[1]),
+      cerrarMenu: () => menuDetalles.cerrar(),
+      hojaPara: () => comida.abrirHojaPara(arg[0], arg[1]),
+      editarGuardada: () => comida.guardadasEditar(arg[0], arg[1]),
+      borrarGuardada: () => comida.borrarGuardadaActual(),
+      tirarHasta: () => sueno.tirarParaLeer(arg),
+      soltar: () => sueno.soltarTirar(),
+      enPerfil: () => perfilSec[arg](),
+    };
+    const r = pasos[accion] ? pasos[accion]() : accionesSeccion['dt' + accion[0].toUpperCase() + accion.slice(1)]();
+    refrescarControles();
+    return r;
+  };
 })();

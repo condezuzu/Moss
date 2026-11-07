@@ -5,8 +5,8 @@
 
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { Pressable, StyleSheet, Text, View, type AccessibilityActionEvent } from 'react-native';
+import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import type { ClaveDia } from '@/dominio/fechas';
@@ -16,7 +16,9 @@ import { useSenales } from '@/salud/anclas';
 import { DESDE_LAS } from '@/salud/nocheSinReloj';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { anunciar } from '../anuncio';
 import { horaDelDia } from '../comida/datos';
+import { BotonDePaso } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Caras } from './Caras';
 import { PorQueLaHora } from './PorQueLaHora';
@@ -54,23 +56,62 @@ export function EditorDeHora({ desde, hasta, alGuardar, soloDormirse }: {
   const [a, setA] = useState(Math.round(desde / 5) * 5);
   const [b, setB] = useState(Math.round(hasta / 5) * 5);
   const [cambiadas, setCambiadas] = useState(false);
-  const fila = (texto: string, valor: number, mover: (d: number) => void) => (
-    <View style={st.editorFila}>
+  // Entre las 18 de ayer y las 18 de hoy, con una hora al menos entre las dos. Mantener apretado un
+  // botón repite, y en el tope se frena (BotonDePaso). VoiceOver dice la hora nueva.
+  const moverA = (d: number) => {
+    const nueva = Math.max(Math.min(0, a), Math.min(b - 60, a + d));
+    if (nueva === a) return false;
+    setCambiadas(true);
+    setA(nueva);
+    anunciar(reloj(nueva));
+    return true;
+  };
+  const moverB = (d: number) => {
+    const nueva = Math.min(Math.max(24 * 60, b), Math.max(a + 60, b + d));
+    if (nueva === b) return false;
+    setCambiadas(true);
+    setB(nueva);
+    anunciar(reloj(nueva));
+    return true;
+  };
+  // Para VoiceOver, cada hora con sus dos botones es una sola cosa, que se ajusta deslizando para arriba o para abajo.
+  const fila = (texto: string, valor: number, mover: (d: number) => boolean) => (
+    <View
+      style={st.editorFila}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={texto}
+      accessibilityValue={{ text: reloj(valor) }}
+      accessibilityActions={[{ name: 'increment', label: t('sueno.manana.despues') }, { name: 'decrement', label: t('sueno.manana.antes') }]}
+      onAccessibilityAction={(ev: AccessibilityActionEvent) => {
+        if (ev.nativeEvent.actionName === 'increment') mover(5);
+        else if (ev.nativeEvent.actionName === 'decrement') mover(-5);
+      }}
+    >
       <Text style={st.editorTexto}>{texto}</Text>
-      <Pressable onPress={() => mover(-5)} style={({ pressed }) => [st.paso, pressed && st.apretado]} accessibilityRole="button" accessibilityLabel={`${texto}: ${t('sueno.manana.antes')}`}>
+      <BotonDePaso alPaso={() => mover(-5)} etiqueta={`${texto}: ${t('sueno.manana.antes')}`} lado={40} style={st.paso}>
         <Text style={st.pasoTexto}>−</Text>
-      </Pressable>
-      <Text style={st.editorValor} accessibilityLiveRegion="polite">{reloj(valor)}</Text>
-      <Pressable onPress={() => mover(5)} style={({ pressed }) => [st.paso, pressed && st.apretado]} accessibilityRole="button" accessibilityLabel={`${texto}: ${t('sueno.manana.despues')}`}>
+      </BotonDePaso>
+      <Text style={st.editorValor} maxFontSizeMultiplier={1.3}>{reloj(valor)}</Text>
+      <BotonDePaso alPaso={() => mover(5)} etiqueta={`${texto}: ${t('sueno.manana.despues')}`} lado={40} style={st.paso}>
         <Text style={st.pasoTexto}>+</Text>
-      </Pressable>
+      </BotonDePaso>
     </View>
   );
   return (
     <View style={st.editor}>
-      {fila(t('sueno.manana.teDormiste'), a, (d) => { setCambiadas(true); setA((x) => Math.min(b - 60, x + d)); })}
-      {!soloDormirse && fila(t('sueno.manana.teDespertaste'), b, (d) => { setCambiadas(true); setB((x) => Math.max(a + 60, x + d)); })}
-      <Pressable onPress={() => (cambiadas ? alGuardar(a, soloDormirse ? hasta : b, true) : alGuardar(desde, hasta, false))} style={({ pressed }) => [st.principal, pressed && st.principalApretado]} accessibilityRole="button">
+      {fila(t('sueno.manana.teDormiste'), a, moverA)}
+      {!soloDormirse && fila(t('sueno.manana.teDespertaste'), b, moverB)}
+      <Pressable
+        onPress={() => {
+          // Como «Sí»: guardar la hora vibra apenas.
+          Haptics.selectionAsync().catch(() => {});
+          if (cambiadas) alGuardar(a, soloDormirse ? hasta : b, true);
+          else alGuardar(desde, hasta, false);
+        }}
+        style={({ pressed }) => [st.principal, pressed && st.principalApretado]}
+        accessibilityRole="button"
+      >
         <Text style={st.principalTexto}>{t('sueno.manana.guardar')}</Text>
       </Pressable>
     </View>
@@ -111,8 +152,9 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
 
   return (
     <>
+      {/* Un fundido no es movimiento: con Reducir movimiento también se ve (si no, aparecía de golpe). */}
       {(modo || conCaras) && (
-        <Animated.View entering={FadeIn.duration(320)} exiting={FadeOut.duration(220)} layout={ACOMODA} style={st.carta}>
+        <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(220).reduceMotion(ReduceMotion.Never)} layout={ACOMODA} style={st.carta}>
           {modo && noche && (
             <Aparece key={`hora-${modo}-${editando}`}>
               {modo === 'proponer' && !editando ? (
@@ -185,7 +227,8 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
               setCambiando(false);
               setOculta((n) => n + 1);
             }}
-            style={st.ahoraNo}
+            style={({ pressed }) => [st.ahoraNo, pressed && st.textoApretado]}
+            hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
             accessibilityRole="button"
           >
             <Text style={st.ahoraNoTexto}>{t('sueno.manana.ahoraNo')}</Text>
@@ -196,7 +239,12 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
         <Aparece style={st.hecha}>
           <Caras caras={[cara]} colores={[colores.oroClaro]} ancho={24} tam={22} />
           <Text style={st.hechaTexto}>{t('sueno.manana.respondida', { cara: nombres[cara - 1].toLowerCase() })}</Text>
-          <Pressable onPress={() => { ocultas.delete(hoy); setCambiando(true); }} hitSlop={8} accessibilityRole="button">
+          <Pressable
+            onPress={() => { ocultas.delete(hoy); setCambiando(true); }}
+            style={({ pressed }) => pressed && st.textoApretado}
+            hitSlop={{ top: 13, bottom: 13, left: 12, right: 12 }}
+            accessibilityRole="button"
+          >
             <Text style={st.cambiar}>{t('sueno.manana.cambiar')}</Text>
           </Pressable>
         </Aparece>
@@ -225,6 +273,7 @@ const st = StyleSheet.create({
   caraNombre: { flex: 1, textAlign: 'center', fontFamily: letras.texto, fontSize: 11, color: TENUE },
   caraNombreElegida: { color: colores.oroClaro },
   ahoraNo: { alignSelf: 'center', marginTop: 8, paddingVertical: 8, paddingHorizontal: 12 },
+  textoApretado: { opacity: 0.55 },
   ahoraNoTexto: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.45)' },
   hecha: { marginTop: 14, marginHorizontal: 2, flexDirection: 'row', alignItems: 'center', gap: 10 },
   hechaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.72)' },

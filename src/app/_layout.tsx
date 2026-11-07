@@ -16,6 +16,11 @@ import { colores } from '@/tema';
 import { useWidgets } from '@/widgets';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// Se va con un fundido (en iOS, de fábrica se iba de golpe) y recién cuando el cielo está para dibujarse
+// (PantallaDelCielo): al irse apenas cargaban las letras, quedaba un momento la pantalla vacía.
+SplashScreen.setOptions({ fade: true, duration: 250 });
+/** Por si el cielo no llega (el almacén no pudo abrir), no se queda para siempre. */
+const TOPE_DEL_ARRANQUE = 3000;
 
 // Un enlace (moss://compartido) abre encima de las secciones: al volver, están ahí.
 export const unstable_settings = { initialRouteName: 'index' };
@@ -34,7 +39,9 @@ export default function Raiz() {
   });
 
   useEffect(() => {
-    if (cargadas || error) SplashScreen.hideAsync().catch(() => {});
+    if (!cargadas && !error) return;
+    const tope = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), TOPE_DEL_ARRANQUE);
+    return () => clearTimeout(tope);
   }, [cargadas, error]);
 
   // Los widgets aplican lo tocado en ellos y quedan al día; la tarea de fondo los refresca con Moss cerrada.

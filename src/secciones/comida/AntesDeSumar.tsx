@@ -18,6 +18,7 @@ import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { CabezaQueBaja, useBajarParaCerrar } from '../arrastre';
 import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VELO } from '../movimiento';
+import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, Pastilla } from './comunes';
 import { numero } from './datos';
@@ -110,7 +111,7 @@ export function Micronutrientes({ micros, persona }: { micros: Micros; persona: 
           </View>
         ))}
         {!lo.length && <Text style={estilos.poco}>{t('comida.micros.poco')}</Text>}
-        <Pressable onPress={() => setTodo(!todo)} accessibilityRole="button" accessibilityState={{ expanded: todo }} hitSlop={8}>
+        <Pressable onPress={() => setTodo(!todo)} style={({ pressed }) => pressed && estilos.apretado} accessibilityRole="button" accessibilityState={{ expanded: todo }} hitSlop={8}>
           <Text style={estilos.ver}>{t(todo ? 'comida.micros.verMenos' : 'comida.micros.verTodo')}</Text>
         </Pressable>
       </View>
@@ -185,7 +186,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
                 <Text style={estilos.reporteTitulo}>{t('comida.reportar.titulo')}</Text>
                 <Text style={estilos.reporteNombre}>{nombre}</Text>
               </View>
-              <Pressable onPress={alCerrar} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')}>
+              <Pressable onPress={alCerrar} style={({ pressed }) => [estilos.redondo, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={margenDeToque(36)}>
                 <Icono nombre="xmark" tam={14} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
               </Pressable>
             </CabezaQueBaja>
@@ -200,6 +201,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
               multiline
               maxLength={500}
               selectionColor={colores.oro}
+              keyboardAppearance="dark"
               style={estilos.notaCampo}
               accessibilityLabel={t('comida.reportar.nota')}
             />
@@ -215,7 +217,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
 /** El enlace al pie de la ventana. */
 export function EnlaceReportar({ alTocar }: { alTocar: () => void }) {
   return (
-    <Pressable onPress={alTocar} accessibilityRole="button" style={estilos.enlace} hitSlop={6}>
+    <Pressable onPress={alTocar} accessibilityRole="button" style={({ pressed }) => [estilos.enlace, pressed && estilos.apretado]} hitSlop={6}>
       <Text style={estilos.enlaceTexto}>{t('comida.reportar.boton')}</Text>
     </Pressable>
   );
@@ -248,6 +250,7 @@ const estilos = StyleSheet.create({
   microParte: { width: 92, textAlign: 'right', fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)' },
   nota: { marginTop: 10, fontFamily: letras.texto, fontSize: 11, lineHeight: 15, color: 'rgba(239, 230, 207, 0.45)' },
   enlace: { alignSelf: 'center', marginTop: 14, paddingVertical: 6, paddingHorizontal: 10 },
+  apretado: { opacity: 0.6 },
   enlaceTexto: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.45)' },
   velo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'flex-end' },
   veloColor: { backgroundColor: 'rgba(5, 8, 18, 0.55)' },

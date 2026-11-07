@@ -136,8 +136,19 @@ describe('el peso de la hoja del «+»', () => {
 
   it('lo escrito gana sobre lo de los pasos, con coma o punto y en libras', () => {
     expect(pesoParaGuardar('72,34', 74.5, 'metrico')).toBe(72.3);
-    expect(pesoParaGuardar('160', 74.5, 'imperial')).toBe(72.6);
+    expect(pesoParaGuardar('160', 74.5, 'imperial')).toBe(72.57);
     expect(pesoParaGuardar(null, 74.5, 'metrico')).toBe(74.5);
+  });
+
+  it('en libras vuelve lo mismo que se escribió, y cada paso de 0,1 lb se ve', () => {
+    // Con el kilo redondeado a una décima, 160 lb se veían 160,1 y de 160,1 a 160,2 no cambiaba nada.
+    for (let decimas = 1000; decimas <= 4000; decimas++) {
+      const lb = decimas / 10;
+      const kg = pesoParaGuardar(null, lb, 'imperial');
+      if (kg === null) continue;
+      expect(pesoCorporalEn(kg, 'imperial').valor).toBe(lb);
+    }
+    expect(pesoCorporalEn(pesoParaGuardar('160', 74.5, 'imperial')!, 'imperial').valor).toBe(160);
   });
 
   it('lo imposible no se guarda', () => {

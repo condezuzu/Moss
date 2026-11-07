@@ -393,6 +393,9 @@ const SeccionSueno = (() => {
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.sn-scroll');
+    // Deslizar para abajo, arriba de todo, vuelve a leer Salud (6/11, para aprobar): la ruedita de iOS se arma de a
+    // un rayo mientras baja y gira al soltar; en la galería, lo que tardaría Salud.
+    const tirar = Detalles.tirar(zona, cont, { tx, haptico: opciones.haptico, alLeer: (listo) => setTimeout(listo, 1300) });
 
     // ------------------------------------------------------------ sin reloj (spec/sueno.md, «Sin reloj»)
     // Lo que contestó cada mañana sobre la hora (confirmada, corregida o escrita) queda en este
@@ -440,7 +443,7 @@ const SeccionSueno = (() => {
      * Las dos horas, de a 5 minutos, con «Guardar». `alGuardar(dormirse, despertar, cambiadas)`, en
      * minutos desde las 18: guardar sin mover nada es confirmar lo que había, con sus horas exactas.
      */
-    function editorDeHora(desde, hasta, alGuardar, soloDormirse) {
+    function editorDeHora(desde, hasta, alGuardar, soloDormirse, alCancelar) {
       const caja = el('div', 'sn-editor');
       let a = Math.round(desde / 5) * 5, b = Math.round(hasta / 5) * 5;
       let cambiadas = false;
@@ -454,7 +457,13 @@ const SeccionSueno = (() => {
       caja.append(fila(tx('sueno.manana.teDormiste'), () => a, (d) => { a = Math.min(b - 60, a + d); }));
       // Con la hora de despertar sacada de un ancla (la alarma parada), solo la de dormirte.
       if (!soloDormirse) caja.append(fila(tx('sueno.manana.teDespertaste'), () => b, (d) => { b = Math.max(a + 60, b + d); }));
-      caja.append(boton('sn-guardar', tx('sueno.manana.guardar'), () => (cambiadas ? alGuardar(a, soloDormirse ? hasta : b, true) : alGuardar(desde, hasta, false))));
+      const guardar = boton('sn-guardar', tx('sueno.manana.guardar'), () => (cambiadas ? alGuardar(a, soloDormirse ? hasta : b, true) : alGuardar(desde, hasta, false)));
+      // «Cancelar» al lado de «Guardar» (6/11, para aprobar): vuelve a lo de antes sin cambiar nada.
+      if (alCancelar) {
+        const acciones = el('div', 'sn-hora-acciones sn-editor-acciones');
+        acciones.append(boton('sn-otra', tx('comun.cancelar'), alCancelar), guardar);
+        caja.append(acciones);
+      } else caja.append(guardar);
       return caja;
     }
     /** La pregunta de la hora: «¿Dormiste de 00:30 a 08:10?» con «Sí» y «Cambiar», o las horas sin proponer nada. */
@@ -496,7 +505,7 @@ const SeccionSueno = (() => {
         // Sin proponer, lo escrito siempre es tuyo; si no, sin mover nada es un «Sí».
         ponerHora(clave, x, y, modo === 'sinProponer' ? 'manual' : cambiadas ? 'corregida' : 'confirmada');
         listo();
-      }, s.soloDormirse));
+      }, s.soloDormirse, modo === 'proponer' ? () => { s.editandoHora = false; pintar(); } : null));
       return b;
     }
     /** Cómo llegó a esa hora (lo pediste el 31/10/2026): cada señal, su hora y cuánto pesó (`pistas` de SinReloj.estimarNoche). */
@@ -1100,7 +1109,7 @@ const SeccionSueno = (() => {
           if (cambiadas || m.origen === 'estimada') ponerHora(n.clave, x, y, cambiadas ? 'corregida' : 'confirmada');
           s.editando = null;
           colapsar(ed, pintar, 380);
-        });
+        }, false, () => { s.editando = null; colapsar(ed, pintar, 380); });
         ed.classList.add('sn-editor-noche');
         c.appendChild(ed);
       } else {
@@ -1855,6 +1864,9 @@ const SeccionSueno = (() => {
       porque(si) { s.porque = si !== false; pintar(); },
       cargador(estado) { s.cargador = estado; pintar(); },
       editarNoche(k) { s.clave = typeof k === 'number' ? Fechas.sumarDias(Datos.HOY, k) : k; s.editando = s.clave; pintar(); },
+      // Deslizar para abajo para volver a leer Salud: hasta `px` sin soltar, o de una (sin `px`).
+      tirarParaLeer(px) { if (px == null) tirar.leer(); else tirar.tirarHasta(px); },
+      soltarTirar() { tirar.soltar(); },
       olvidarHoras() {
         horas = {};
         conMovimiento = false;

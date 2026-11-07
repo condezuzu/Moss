@@ -26,12 +26,24 @@ const columnas = () => ({
   origen: t('exportar.columnas.origen'), desde: t('exportar.columnas.desde'), gasto: t('exportar.columnas.gasto'), motivo: t('exportar.columnas.motivo'),
 });
 
+/** Exportando: con dos toques se abría Vista Rápida dos veces, y la segunda daba un error. */
+let exportando = false;
+
 /**
  * Lo comido, el peso y las metas, cada uno en su CSV. En el iPhone se abren juntos en Vista Rápida,
  * que tiene el botón de compartir; si no se puede, se comparte lo comido.
  */
 export async function exportarTodo(hoy: string): Promise<void> {
-  if (Platform.OS === 'web') return;
+  if (Platform.OS === 'web' || exportando) return;
+  exportando = true;
+  try {
+    await exportar(hoy);
+  } finally {
+    exportando = false;
+  }
+}
+
+async function exportar(hoy: string): Promise<void> {
   const datos = await elAlmacen().paraExportar();
   const c = columnas();
   const archivos: [string, string][] = [
@@ -52,12 +64,37 @@ export async function exportarTodo(hoy: string): Promise<void> {
   await Share.share({ url: lista[0].uri });
 }
 
-/** El correo de la cuenta con sesión, o null (sin sesión o sin Supabase). */
+/**
+ * El último correo que se supo, en este teléfono: sin conexión y con la sesión vencida, getSession no la
+ * trae, y Perfil decía «Sin cuenta» y escondía cerrar sesión y borrar.
+ */
+const ULTIMO_CORREO = 'moss:correoDeLaCuenta';
+let correoGuardado: string | null | undefined;
+
+function recordarCorreo(correo: string | null) {
+  if (correo === correoGuardado) return;
+  correoGuardado = correo;
+  (correo !== null ? AsyncStorage.setItem(ULTIMO_CORREO, correo) : AsyncStorage.removeItem(ULTIMO_CORREO)).catch(() => {});
+}
+
+/** Lo que ya se sabe del correo, sin esperar; undefined si todavía no se leyó: así Perfil no dice «Sin cuenta» un instante. */
+export const correoSabido = (): string | null | undefined => correoGuardado;
+
+/**
+ * El correo de la cuenta con sesión, o null (sin sesión o sin Supabase); '' con sesión y sin correo. Si la
+ * sesión sigue pero ahora no se puede confirmar (como en laSesion), el último que se supo.
+ */
 export async function correoDeLaCuenta(): Promise<string | null> {
   if (!haySupabase()) return null;
   try {
-    const { data } = await supabase().auth.getSession();
-    return data.session?.user.email ?? (data.session ? '' : null);
+    const { data, error } = await supabase().auth.getSession();
+    if (error && isAuthRetryableFetchError(error)) {
+      correoGuardado ??= await AsyncStorage.getItem(ULTIMO_CORREO).catch(() => null);
+      return correoGuardado ?? '';
+    }
+    const correo = data.session ? (data.session.user.email ?? '') : null;
+    recordarCorreo(correo);
+    return correo;
   } catch {
     return null;
   }
@@ -77,18 +114,32 @@ async function laSesion(): Promise<Session | null | undefined> {
 /** La lista de compras tachada (Plan.tsx). */
 const COMPRADAS = 'moss:compradas';
 
-/** Todo lo de la persona en el teléfono: el almacén (con tu nombre), las fotos de las comidas, tu foto, lo tachado y lo que esperaba en el buzón. */
+/** Todo lo de la persona en el teléfono: el almacén (con tu nombre), las fotos de las comidas, tu foto, tu correo, lo tachado y lo que esperaba en el buzón. */
 async function borrarElTelefono() {
   await elAlmacen().olvidarTodo();
   borrarFotos();
   borrarFotoDePerfil();
+  recordarCorreo(null);
   await AsyncStorage.removeItem(COMPRADAS).catch(() => {});
   await buzon().vaciar().catch(() => {});
 }
 
-/** «Borrar mis datos de Moss»: en la cuenta (la cuenta queda) y en el teléfono. */
-export async function borrarMisDatos(): Promise<boolean> {
-  return sinSincronizar(async () => {
+/** Borrar o salir, ya en camino: el segundo pedido (un doble toque, o dos avisos) no hace nada y da null. */
+let enCurso = false;
+
+async function deAUno<T>(hacer: () => Promise<T>): Promise<T | null> {
+  if (enCurso) return null;
+  enCurso = true;
+  try {
+    return await hacer();
+  } finally {
+    enCurso = false;
+  }
+}
+
+/** «Borrar mis datos de Moss»: en la cuenta (la cuenta queda) y en el teléfono. null si ya se estaba borrando. */
+export async function borrarMisDatos(): Promise<boolean | null> {
+  return deAUno(() => sinSincronizar(async () => {
     if (haySupabase()) {
       const sesion = await laSesion();
       if (sesion === undefined) return false;
@@ -99,16 +150,21 @@ export async function borrarMisDatos(): Promise<boolean> {
     }
     await borrarElTelefono();
     return true;
-  });
+  }));
 }
 
 /**
  * «Borrar la cuenta» de Moss, con todo lo de Moss, en el servidor y en el teléfono. La cuenta de
  * Ascent, si la hay, sigue intacta y deja de recibir lo de Moss (spec/ascent.md, «Dos cuentas»). Si
  * la cuenta usa Apple, primero se confirma con Apple, así el servidor revoca la autorización antes de
- * borrar (cuentaApple.ts). Cancelar la hoja de Apple no borra nada y devuelve null: no es un error.
+ * borrar (cuentaApple.ts). Cancelar la hoja de Apple no borra nada y devuelve null: no es un error (y
+ * también null si ya se estaba borrando).
  */
 export async function borrarLaCuenta(): Promise<boolean | null> {
+  return deAUno(borrarLaCuentaAhora);
+}
+
+async function borrarLaCuentaAhora(): Promise<boolean | null> {
   if (!haySupabase()) {
     await borrarElTelefono();
     return true;
@@ -148,14 +204,19 @@ async function codigoNuevoDeApple(): Promise<string | null> {
 /** Cerrar sesión: si lo último no llegó a la cuenta, se avisa antes de perderlo; sin conexión, no se puede. */
 export function salirDeLaCuenta(alSalir?: () => void) {
   const errorDeSalir = () => Alert.alert(t('perfil.errorBorrar'));
-  cerrarSesion().then((r) => {
+  // null: ya se estaba cerrando (un doble toque), y no se dice nada.
+  const alTerminar = (r: AlCerrarSesion | null) => {
     if (r === 'listo') alSalir?.();
-    else if (r === 'sinSubir') {
+    else if (r !== null) errorDeSalir();
+  };
+  cerrarSesion().then((r) => {
+    if (r === 'sinSubir') {
       Alert.alert(t('perfil.sinSubirTitulo'), t('perfil.sinSubirTexto'), [
         { text: t('comun.cancelar'), style: 'cancel' },
-        { text: t('perfil.cerrarIgual'), style: 'destructive', onPress: () => { cerrarSesion(true).then((x) => { if (x === 'listo') alSalir?.(); }).catch(errorDeSalir); } },
+        // Sin conexión, «Cerrar igual» tampoco puede: se dice, como al cerrar.
+        { text: t('perfil.cerrarIgual'), style: 'destructive', onPress: () => { cerrarSesion(true).then(alTerminar).catch(errorDeSalir); } },
       ]);
-    } else errorDeSalir();
+    } else alTerminar(r);
   }).catch(errorDeSalir);
 }
 
@@ -167,9 +228,13 @@ export type AlCerrarSesion = 'listo' | 'sinSubir' | 'sinConexion';
 
 /**
  * Cerrar sesión borra lo del teléfono: los datos quedan en la cuenta. Por eso antes sube lo que
- * falta, salvo que se elija perderlo.
+ * falta, salvo que se elija perderlo. null si ya se estaba cerrando o borrando.
  */
-export async function cerrarSesion(aunqueSePierda = false): Promise<AlCerrarSesion> {
+export async function cerrarSesion(aunqueSePierda = false): Promise<AlCerrarSesion | null> {
+  return deAUno(() => cerrarSesionAhora(aunqueSePierda));
+}
+
+async function cerrarSesionAhora(aunqueSePierda: boolean): Promise<AlCerrarSesion> {
   if (!haySupabase()) {
     await borrarElTelefono();
     return 'listo';

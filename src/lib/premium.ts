@@ -89,7 +89,18 @@ function cambiar(nuevo: Partial<EstadoDePremium>) {
   oyentes.forEach((o) => o());
 }
 
-export async function leerPrecios(): Promise<void> {
+/** Lo que está en camino: dos toques en «Reintentar» (o volver a la app mientras tanto) esperan al mismo pedido. */
+let leyendoPrecios: Promise<void> | null = null;
+let restaurando: Promise<ResultadoDeRestaurar> | null = null;
+
+export function leerPrecios(): Promise<void> {
+  leyendoPrecios ??= leerLosPrecios().finally(() => {
+    leyendoPrecios = null;
+  });
+  return leyendoPrecios;
+}
+
+async function leerLosPrecios(): Promise<void> {
   if (!tienda) return;
   try {
     const lista = await tienda.productos(Object.values(PRODUCTOS));
@@ -205,8 +216,18 @@ export async function comprar(plan: Plan): Promise<ResultadoDeCompra> {
   }
 }
 
-/** Busca lo comprado con este Apple ID. Puede pedir entrar a la cuenta de Apple. */
-export async function restaurar(): Promise<ResultadoDeRestaurar> {
+/**
+ * Busca lo comprado con este Apple ID. Puede pedir entrar a la cuenta de Apple: con dos toques seguidos
+ * la pedía dos veces, y ahora el segundo espera al primero.
+ */
+export function restaurar(): Promise<ResultadoDeRestaurar> {
+  restaurando ??= restaurarAhora().finally(() => {
+    restaurando = null;
+  });
+  return restaurando;
+}
+
+async function restaurarAhora(): Promise<ResultadoDeRestaurar> {
   if (!tienda) return 'nada';
   try {
     const s = await tienda.restaurar();

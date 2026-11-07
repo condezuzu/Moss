@@ -717,9 +717,12 @@ export function crearAlmacen(op: Opciones) {
       oyentes.add(oyente);
       return () => oyentes.delete(oyente);
     },
-    /** Se puede llamar varias veces: arranca una sola. */
+    /** Se puede llamar varias veces: arranca una sola. Si falló, la próxima vez lo vuelve a intentar. */
     iniciar() {
-      iniciando ??= arrancar();
+      iniciando ??= arrancar().catch((error: unknown) => {
+        iniciando = undefined;
+        throw error;
+      });
       return iniciando;
     },
     /** Todo lo guardado, para exportarlo: también lo comido de hace más de cuatro meses, que no está en memoria. */

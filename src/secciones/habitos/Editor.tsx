@@ -3,30 +3,41 @@
 // Salud (pasos, sueño, agua, atención plena) o solo con la comida. Un día que cambia de cantidad pasa
 // a otra constelación.
 
+import * as Haptics from 'expo-haptics';
 import type { SFSymbol } from 'expo-symbols';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View, type AccessibilityActionEvent } from 'react-native';
 
 import { elAlmacen } from '@/almacen';
 import { useAscent } from '@/almacen/ascent';
 import type { AvisoDeHabito, Cuando, Evento } from '@/dominio/avisos';
 import { pedirPermisoDeAvisos } from '@/recordatorios/programar';
 import type { DiaSemana } from '@/dominio/fechas';
-import { cantidadesPorDia, type DatoDeSalud, type Fuente, type Habito } from '@/dominio/habitos';
+import { cantidadesPorDia, metaEscrita, metaParaEscribir, type DatoDeSalud, type Fuente, type Habito } from '@/dominio/habitos';
 import { catalogo } from '@/datos/catalogo';
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { decimal } from '@/comida/porciones';
+import { anunciar } from '../anuncio';
 import { Boton, Icono, Pastilla } from '../comida/comunes';
 import { numero, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { HojaModal } from '../HojaModal';
+import { BotonDePaso } from '../paso';
 import { Aparece, Dias, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
+import { tecladoDeNumeros } from '../teclado';
 
-export const ICONOS: readonly SFSymbol[] = [
+export const ICONOS = [
   'star', 'figure.walk', 'figure.run', 'dumbbell', 'bicycle', 'figure.mind.and.body', 'moon', 'bed.double', 'book', 'pencil', 'drop', 'cup.and.saucer',
   'fork.knife', 'leaf', 'heart', 'brain.head.profile', 'pills', 'sun.max', 'music.note', 'paintbrush', 'graduationcap', 'phone.down', 'pawprint', 'house',
-];
+] as const satisfies readonly SFSymbol[];
+/** Cómo se llama cada ícono para VoiceOver: el nombre del símbolo es en inglés («figure.walk»). */
+const NOMBRE_DEL_ICONO = {
+  star: 'estrella', 'figure.walk': 'caminar', 'figure.run': 'correr', dumbbell: 'pesas', bicycle: 'bicicleta', 'figure.mind.and.body': 'meditar',
+  moon: 'luna', 'bed.double': 'cama', book: 'libro', pencil: 'lapiz', drop: 'agua', 'cup.and.saucer': 'taza',
+  'fork.knife': 'comida', leaf: 'hoja', heart: 'corazon', 'brain.head.profile': 'mente', pills: 'pastillas', 'sun.max': 'sol',
+  'music.note': 'musica', paintbrush: 'pincel', graduationcap: 'estudio', 'phone.down': 'sinTelefono', pawprint: 'mascota', house: 'casa',
+} as const satisfies Record<(typeof ICONOS)[number], string>;
 
 /** Las metas que se ofrecen de cada dato de Salud: pasos, minutos de sueño, ml de agua y minutos de atención plena. */
 export const METAS: Record<Exclude<DatoDeSalud, 'acostarse'>, readonly number[]> = {
@@ -89,6 +100,10 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
   };
   const nombreFinal = nombre.trim() || nombreDe(fuente) || '';
   const valido = nombreFinal.length > 0 && nombreFinal.length <= 80 && dias.length > 0;
+  // Con algo cambiado, bajar la hoja o tocar afuera no la cierran: lo hecho no se pierde (la cruz, sí).
+  const firma = JSON.stringify([nombre.trim(), icono, [...dias].sort(), fuente, aviso && { ...aviso, dias: [...aviso.dias].sort(), mensaje: aviso.mensaje?.trim() || undefined }]);
+  const [inicial] = useState(firma);
+  const hayCambios = firma !== inicial;
 
   const guardar = () => {
     if (!valido) return;
@@ -106,6 +121,7 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
     const diasDelAviso = aviso ? aviso.dias.filter((d) => dias.includes(d)) : [];
     const mensaje = aviso?.mensaje?.trim();
     if (habito && (aviso || guardado)) elAlmacen().ponerAvisoDeHabito(habito, aviso ? { cuando: aviso.cuando, dias: diasDelAviso, ...(mensaje ? { mensaje } : {}) } : null);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     avisar(t('habitos.guardado', { habito: nombreFinal }));
     alCerrar();
   };
@@ -118,7 +134,8 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
       return;
     }
     elAlmacen().archivarHabito(original.id);
-    avisar(t('habitos.archivado', { habito: original.nombre }));
+    // Deshacer lo devuelve como estaba, desde el día en que empezó.
+    avisar(t('habitos.archivado', { habito: original.nombre }), () => elAlmacen().ponerHabito(original));
     alCerrar();
   };
 
@@ -127,6 +144,8 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
       abierta
       titulo={original ? t('habitos.editar') : t('habitos.nuevo')}
       alCerrar={alCerrar}
+      activo={!hayCambios}
+      cerrarAfuera={!hayCambios}
       pie={(
         <>
           <Boton tipo="principal" texto={t('habitos.guardar')} alTocar={guardar} desactivado={!valido} />
@@ -202,9 +221,19 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
       />
 
       <EtiquetaDeGrupo>{t('habitos.icono')}</EtiquetaDeGrupo>
-      <View style={st.iconos}>
+      <View style={st.iconos} accessibilityRole="radiogroup">
         {ICONOS.map((x) => (
-          <Pressable key={x} onPress={() => setIcono(x)} style={[st.icono, icono === x && st.iconoElegido]} accessibilityRole="radio" accessibilityState={{ selected: icono === x }} accessibilityLabel={x}>
+          <Pressable
+            key={x}
+            onPress={() => {
+              if (icono !== x) Haptics.selectionAsync().catch(() => {});
+              setIcono(x);
+            }}
+            style={({ pressed }) => [st.icono, icono === x && st.iconoElegido, pressed && icono !== x && st.apretado]}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: icono === x }}
+            accessibilityLabel={t(`habitos.iconos.${NOMBRE_DEL_ICONO[x]}`)}
+          >
             <Icono nombre={x} tam={19} color={icono === x ? colores.oroClaro : 'rgba(239, 230, 207, 0.7)'} />
           </Pressable>
         ))}
@@ -222,6 +251,9 @@ const CUANDO_DE_FABRICA: Record<Cuando['tipo'], Cuando> = {
 };
 const EVENTOS: readonly Exclude<Evento, 'entrenamiento'>[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 const SEMANA: readonly DiaSemana[] = [1, 2, 3, 4, 5, 6, 0];
+/** Cada cuánto se mueve la hora de un aviso, en minutos. */
+const PASO_DE_LA_HORA = 15;
+const hhmm = (minutos: number) => `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
 
 /**
  * El aviso de un hábito (lo pediste el 22/10): a una hora, al despertar, antes de dormir o después de
@@ -234,6 +266,15 @@ function EditorDeAviso({ aviso, dias, nombre, sinPermiso, alCambiar }: {
   const poner = (cuando: Cuando) => aviso && alCambiar({ ...aviso, cuando });
   const c = aviso?.cuando;
   const enLosDias = aviso && aviso.dias.length ? aviso.dias.filter((d) => dias.includes(d)) : dias;
+  // La hora del aviso, de a 15 minutos y dando la vuelta al día. VoiceOver dice la nueva.
+  const moverLaHora = (signo: 1 | -1) => {
+    if (c?.tipo !== 'hora') return;
+    const minutos = (c.minutos + 1440 + PASO_DE_LA_HORA * signo) % 1440;
+    poner({ ...c, minutos });
+    anunciar(hhmm(minutos));
+  };
+  const antes = t('habitos.aviso.minutosAntes', { n: PASO_DE_LA_HORA });
+  const despues = t('habitos.aviso.minutosDespues', { n: PASO_DE_LA_HORA });
   return (
     <>
       <EtiquetaDeGrupo>{t('habitos.aviso.titulo')}</EtiquetaDeGrupo>
@@ -250,14 +291,26 @@ function EditorDeAviso({ aviso, dias, nombre, sinPermiso, alCambiar }: {
       {aviso && c && (
         <Aparece key={c.tipo} style={st.opciones}>
           {c.tipo === 'hora' && (
-            <View style={st.hora}>
-              <Pressable onPress={() => poner({ ...c, minutos: (c.minutos + 1440 - 15) % 1440 })} style={st.paso} accessibilityRole="button" accessibilityLabel="−15" hitSlop={6}>
+            // Para VoiceOver, la hora con sus dos botones es una sola cosa, que se ajusta deslizando para arriba o para abajo.
+            <View
+              style={st.hora}
+              accessible
+              accessibilityRole="adjustable"
+              accessibilityLabel={t('habitos.aviso.horaDelAviso')}
+              accessibilityValue={{ text: hhmm(c.minutos) }}
+              accessibilityActions={[{ name: 'increment', label: despues }, { name: 'decrement', label: antes }]}
+              onAccessibilityAction={(ev: AccessibilityActionEvent) => {
+                if (ev.nativeEvent.actionName === 'increment') moverLaHora(1);
+                else if (ev.nativeEvent.actionName === 'decrement') moverLaHora(-1);
+              }}
+            >
+              <BotonDePaso alPaso={() => moverLaHora(-1)} etiqueta={antes} style={st.paso}>
                 <Icono nombre="minus" tam={16} peso="semibold" />
-              </Pressable>
-              <Text style={st.horaTexto}>{`${String(Math.floor(c.minutos / 60)).padStart(2, '0')}:${String(c.minutos % 60).padStart(2, '0')}`}</Text>
-              <Pressable onPress={() => poner({ ...c, minutos: (c.minutos + 15) % 1440 })} style={st.paso} accessibilityRole="button" accessibilityLabel="+15" hitSlop={6}>
+              </BotonDePaso>
+              <Text style={st.horaTexto} maxFontSizeMultiplier={1.3}>{hhmm(c.minutos)}</Text>
+              <BotonDePaso alPaso={() => moverLaHora(1)} etiqueta={despues} style={st.paso}>
                 <Icono nombre="plus" tam={16} peso="semibold" />
-              </Pressable>
+              </BotonDePaso>
             </View>
           )}
           {c.tipo === 'evento' && (
@@ -277,8 +330,10 @@ function EditorDeAviso({ aviso, dias, nombre, sinPermiso, alCambiar }: {
               ))}
             </View>
           )}
+          {/* Solo los días del hábito: los otros se ven apagados y no se tocan. */}
           <Dias
             elegidos={enLosDias}
+            posibles={dias}
             alTocar={(d) => {
               if (!dias.includes(d)) return;
               const nuevos = enLosDias.includes(d) ? enLosDias.filter((x) => x !== d) : SEMANA.filter((x) => x === d || enLosDias.includes(x));
@@ -311,7 +366,10 @@ function EditorDeAviso({ aviso, dias, nombre, sinPermiso, alCambiar }: {
  * de arriba («8000», «7» horas) vaciaba el campo a mitad de escribir. Elegir una de arriba sí lo vacía.
  */
 function MetaPropia({ dato, meta, alCambiar }: { dato: keyof typeof METAS; meta: number; alCambiar: (meta: number) => void }) {
-  const deArriba = (m: number) => (METAS[dato].includes(m) ? '' : decimal(m / ESCRITA_EN[dato], idioma()));
+  // Pasos y minutos se escriben con el teclado de solo dígitos; horas y litros, con decimales.
+  const entera = ESCRITA_EN[dato] === 1;
+  // Sin separar los miles: «9.000» se volvía a leer como 9 (metaParaEscribir).
+  const deArriba = (m: number) => (METAS[dato].includes(m) ? '' : metaParaEscribir(m / ESCRITA_EN[dato], idioma()));
   const [texto, setTexto] = useState(() => deArriba(meta));
   // La última meta que salió de lo escrito acá: si llega otra, la eligieron arriba.
   const [escrita, setEscrita] = useState(meta);
@@ -326,15 +384,16 @@ function MetaPropia({ dato, meta, alCambiar }: { dato: keyof typeof METAS; meta:
       onChangeText={(x) => {
         setTexto(x);
         // Vacío vuelve a la del medio: si no, quedaba lo último que se borró («1 pasos»).
-        const n = Number(x.replace(',', '.'));
-        const nueva = !x.trim() ? METAS[dato][Math.floor(METAS[dato].length / 2)] : Number.isFinite(n) && n > 0 ? Math.max(1, Math.round(n * ESCRITA_EN[dato])) : null;
+        const n = metaEscrita(x, idioma(), entera);
+        const nueva = !x.trim() ? METAS[dato][Math.floor(METAS[dato].length / 2)] : n !== null && n > 0 ? Math.max(1, Math.round(n * ESCRITA_EN[dato])) : null;
         if (nueva === null) return;
         setEscrita(nueva);
         alCambiar(nueva);
       }}
       placeholder={t(`habitos.metaPropia.${dato}`)}
       placeholderTextColor="rgba(239, 230, 207, 0.35)"
-      keyboardType={ESCRITA_EN[dato] > 1 ? 'decimal-pad' : 'number-pad'}
+      keyboardType={entera ? 'number-pad' : 'decimal-pad'}
+      {...tecladoDeNumeros()}
       maxLength={6}
       selectionColor={colores.oro}
       style={[st.campo, st.mensaje]}
@@ -355,6 +414,7 @@ const st = StyleSheet.create({
   iconos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   icono: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.45)' },
   iconoElegido: { borderColor: 'rgba(232, 196, 106, 0.75)', backgroundColor: 'rgba(232, 196, 106, 0.12)' },
+  apretado: { opacity: 0.6 },
   nota: { marginTop: 16, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.5)' },
   mensaje: { width: '100%', marginTop: 4 },
   hora: { flexDirection: 'row', alignItems: 'center', gap: 14 },

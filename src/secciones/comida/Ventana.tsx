@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { baseDeAlimentos } from '@/comida/base';
 import { rindeAlCocinar, type Detalle } from '@/comida/detalle';
-import { cantidadDePorcion, decimal, numeroDePorcion } from '@/comida/porciones';
+import { cantidadDePorcion, decimal, leerNumero, numeroDePorcion } from '@/comida/porciones';
 import {
   ACEITE, AJUSTES, aGramos, ajustar, aMl, aOjoDeFabrica, comestible, gramosDeMl, GRAMOS_POR_ONZA, ML_POR_ONZA_LIQUIDA, pasoDeCantidad, pasoDePorcion, unidadDePeso, unidadDeVolumen, type Sistema,
 } from '@/dominio/cantidades';
@@ -25,8 +25,9 @@ import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
 import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VELO } from '../movimiento';
+import { BotonDePaso, margenDeToque } from '../paso';
 import { Aparece } from '../tarjetas';
-import { useCampoALaVista, useTeclado } from '../teclado';
+import { tecladoDeNumeros, useCampoALaVista, useTeclado } from '../teclado';
 import { ComoDeja, DeDonde, EnlaceReportar, Micronutrientes, Reporte, Sello } from './AntesDeSumar';
 import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
 import { compartir } from './compartir';
@@ -70,15 +71,6 @@ function diferencia(nombre: string, otro: string): string {
   const corte = nombre.lastIndexOf(' ', i);
   const resto = corte > 0 ? nombre.slice(corte + 1).replace(/^[,\s]+/, '') : nombre;
   return resto ? resto.charAt(0).toUpperCase() + resto.slice(1) : nombre;
-}
-
-/** Un número escrito como se dice: «1,5», «1.5», «1½», «½». */
-function leerNumero(texto: string): number | null {
-  const FRACCION: Record<string, number> = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3, '⅛': 0.125 };
-  const m = texto.trim().match(/^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔⅛])?$/);
-  if (!m || (!m[1] && !m[2])) return null;
-  const n = (m[1] ? Number(m[1].replace(',', '.')) : 0) + (m[2] ? FRACCION[m[2]] : 0);
-  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 /** La medición con la que abre la ventana: la de la cantidad que trae, o la porción de siempre. */
@@ -154,6 +146,12 @@ export function Ventana(p: Props) {
   });
   const finDelPie = useRef<number | null>(null);
   useCampoALaVista(deslizar.scroll, deslizar.scrollY, () => finDelPie.current);
+  // El fondo no responde mientras la ventana entra: un segundo toque rápido en la fila la cerraba apenas abría.
+  const [entro, setEntro] = useState(false);
+  useEffect(() => {
+    const espera = setTimeout(() => setEntro(true), reducido ? 180 : 340);
+    return () => clearTimeout(espera);
+  }, [reducido]);
 
   // Lo de la base trae además cómo se mide: las porciones, crudo o cocido, la cáscara, la densidad y el aceite.
   useEffect(() => {
@@ -197,11 +195,10 @@ export function Ventana(p: Props) {
   const aOjo = estimado ?? aOjoDeFabrica(cantidad);
   const restante = p.restante(valores.kcal);
 
-  /** Pasar a la otra versión (crudo o cocido): el peso que se pesó sigue siendo el mismo. */
+  /** Pasar a la otra versión (crudo o cocido): el peso que se pesó sigue siendo el mismo. La pastilla ya vibró al tocarla. */
   const pasarA = (id: number) => {
     baseDeAlimentos.detalle(id, opcionesDeIdioma()).then((d) => {
       if (!d) return;
-      Haptics.selectionAsync().catch(() => {});
       const gramos = gramosDe(cantidad) ?? 100;
       setAlimento({ fuente: 'base', ref: String(d.id), nombre: d.nombre, por100g: d.por100g, porciones: d.porciones, origen: origenDe(d) });
       setDetalle(d);
@@ -219,9 +216,14 @@ export function Ventana(p: Props) {
     p.alListo(item);
   };
 
+  const pasoDe = (m: Medicion, signo: 1 | -1): Medicion => (m.tipo === 'porcion' ? { ...m, veces: pasoDePorcion(m.veces, signo) } : { ...m, valor: pasoDeCantidad(m.valor, signo, m.tipo, p.sistema) });
+  const cuanto = (m: Medicion) => (m.tipo === 'porcion' ? m.veces : m.valor);
+  /** Un paso con − o +. En el tope (un cuarto, medio gramo) no cambia: devuelve false, y el botón no vibra ni repite. */
   const paso = (signo: 1 | -1) => {
+    if (cuanto(pasoDe(medicion, signo)) === cuanto(medicion)) return false;
     setEscrito(null);
-    setMedicion((m) => (m.tipo === 'porcion' ? { ...m, veces: pasoDePorcion(m.veces, signo) } : { ...m, valor: pasoDeCantidad(m.valor, signo, m.tipo, p.sistema) }));
+    setMedicion((m) => pasoDe(m, signo));
+    return true;
   };
   const multiplicar = (factor: number) => {
     setEscrito(null);
@@ -231,11 +233,12 @@ export function Ventana(p: Props) {
   const escribir = (texto: string) => {
     setEscrito(texto);
     const n = leerNumero(texto);
-    if (n === null) return;
+    if (n === null || n <= 0) return;
     setMedicion((m) => (m.tipo === 'porcion' ? { ...m, veces: n } : { ...m, valor: n }));
   };
 
-  const valorTexto = medicion.tipo === 'porcion' ? (numeroDePorcion(medicion.veces) ?? decimal(medicion.veces, idioma())) : decimal(medicion.valor, idioma());
+  // En el campo, sin separar los miles: corregir «1500» por «1750» no se lee como 1,75.
+  const valorTexto = medicion.tipo === 'porcion' ? (numeroDePorcion(medicion.veces) ?? decimal(medicion.veces, idioma(), false)) : decimal(medicion.valor, idioma(), false);
   const unidadTexto = medicion.tipo === 'peso' ? unidadPeso : medicion.tipo === 'volumen' ? (unidadVolumen === 'floz' ? 'fl oz' : 'ml') : '';
   const comoGramos = medicion.tipo === 'porcion'
     ? `${cantidadDePorcion(medicion.veces, porciones[medicion.indice]?.nombre ?? '', idioma())} = ${decimal(gramosDe(cantidad) ?? 0, idioma())} g`
@@ -255,7 +258,7 @@ export function Ventana(p: Props) {
     {/* El fondo se aclara mientras la ventana baja con el dedo; su fundido de salida va por fuera. */}
     <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={StyleSheet.absoluteFill}>
       <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, deslizar.velo]} pointerEvents="none" />
-      <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
+      <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} disabled={!entro} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
     </Animated.View>
     <Animated.View
       entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA}
@@ -271,7 +274,7 @@ export function Ventana(p: Props) {
             <Text style={estilos.nombre}>{alimento.nombre}</Text>
             <Pressable
               onPress={() => setDeDonde(!deDonde)}
-              style={estilos.origenFila}
+              style={({ pressed }) => [estilos.origenFila, pressed && estilos.apretado]}
               accessibilityRole="button"
               accessibilityLabel={t('comida.deDonde.titulo')}
               accessibilityState={{ expanded: deDonde }}
@@ -281,14 +284,27 @@ export function Ventana(p: Props) {
             </Pressable>
           </View>
           {(alimento.fuente === 'receta' || alimento.fuente === 'propio') && (
-            <Pressable onPress={() => { compartir(alimento.fuente, alimento.ref).catch(() => {}); }} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('compartir.boton')}>
+            <Pressable
+              onPress={() => { compartir(alimento.fuente, alimento.ref).catch(() => {}); }}
+              style={({ pressed }) => [estilos.redondo, pressed && estilos.apretado]}
+              accessibilityRole="button"
+              accessibilityLabel={t('compartir.boton')}
+              hitSlop={margenDeToque(36)}
+            >
               <Icono nombre="square.and.arrow.up" tam={17} color={colores.oroClaro} />
             </Pressable>
           )}
-          <Pressable onPress={p.alFavorito} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('comida.favorito')} accessibilityState={{ selected: p.favorito }}>
+          <Pressable
+            onPress={p.alFavorito}
+            style={({ pressed }) => [estilos.redondo, pressed && estilos.apretado]}
+            accessibilityRole="button"
+            accessibilityLabel={t('comida.favorito')}
+            accessibilityState={{ selected: p.favorito }}
+            hitSlop={margenDeToque(36)}
+          >
             <Icono nombre={p.favorito ? 'star.fill' : 'star'} tam={19} color={p.favorito ? colores.oro : colores.oroClaro} />
           </Pressable>
-          <Pressable onPress={p.alCerrar} style={estilos.redondo} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')}>
+          <Pressable onPress={p.alCerrar} style={({ pressed }) => [estilos.redondo, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={margenDeToque(36)}>
             <Icono nombre="xmark" tam={14} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
           </Pressable>
         </View>
@@ -299,7 +315,7 @@ export function Ventana(p: Props) {
         {versiones.length > 1 && (
           <Aparece>
             <Etiqueta estilo={estilos.etiquetaArriba}>{`${t('comida.medir.crudo')} · ${t('comida.medir.cocido')}`}</Etiqueta>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila} keyboardShouldPersistTaps="handled">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila} keyboardShouldPersistTaps="handled" scrollsToTop={false}>
               {versiones.map((v) => <Pastilla key={v.id} texto={v.texto} elegida={v.id === Number(alimento.ref)} alTocar={() => v.id !== Number(alimento.ref) && pasarA(v.id)} />)}
             </ScrollView>
             <Rinde detalle={detalle} />
@@ -314,7 +330,8 @@ export function Ventana(p: Props) {
             </Text>
             <View style={estilos.macros}>
               {MACROS.map((m) => (
-                <View key={m} style={estilos.macro}>
+                // Para VoiceOver, cada macro es uno solo y con su nombre: «Proteína 12 g».
+                <View key={m} style={estilos.macro} accessible accessibilityLabel={`${t(`comida.${m}`)} ${gramosDeMacro(valores[m])} g`}>
                   <Punto macro={m} />
                   <Text style={estilos.macroTexto}>{`${gramosDeMacro(valores[m])} g`}</Text>
                 </View>
@@ -334,7 +351,7 @@ export function Ventana(p: Props) {
         {numeros && valores.micros && <Micronutrientes micros={valores.micros} persona={p.persona} />}
 
         <Etiqueta estilo={estilos.etiqueta}>{t('comida.porcion')}</Etiqueta>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila} keyboardShouldPersistTaps="handled">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.fila} keyboardShouldPersistTaps="handled" scrollsToTop={false}>
           {porciones.map((x, i) => (
             <Pastilla
               key={`${x.nombre}-${x.gramos}`}
@@ -374,28 +391,31 @@ export function Ventana(p: Props) {
         <Etiqueta estilo={estilos.etiqueta}>{t('comida.cantidad')}</Etiqueta>
         <View style={estilos.cantidad}>
           <View style={estilos.pasos}>
-            <Pressable onPress={() => paso(-1)} style={estilos.paso} accessibilityRole="button" accessibilityLabel="−">
+            <BotonDePaso alPaso={() => paso(-1)} etiqueta={t('comun.menos', { que: alimento.nombre })} style={estilos.paso}>
               <Icono nombre="minus" tam={16} peso="semibold" />
-            </Pressable>
+            </BotonDePaso>
+            {/* Al tocarlo se elige todo: se escribe encima. «Listo» solo baja el teclado; sumar es «Sumar». */}
             <TextInput
               value={escrito ?? valorTexto}
               onChangeText={escribir}
               onBlur={() => setEscrito(null)}
               keyboardType="decimal-pad"
+              {...tecladoDeNumeros()}
               selectTextOnFocus
               maxLength={7}
+              maxFontSizeMultiplier={1.3}
               style={estilos.valor}
               accessibilityLabel={t('comida.medir.escribir')}
             />
-            {unidadTexto ? <Text style={estilos.unidad}>{unidadTexto}</Text> : null}
-            <Pressable onPress={() => paso(1)} style={estilos.paso} accessibilityRole="button" accessibilityLabel="+">
+            {unidadTexto ? <Text style={estilos.unidad} maxFontSizeMultiplier={1.3}>{unidadTexto}</Text> : null}
+            <BotonDePaso alPaso={() => paso(1)} etiqueta={t('comun.mas', { que: alimento.nombre })} style={estilos.paso}>
               <Icono nombre="plus" tam={16} peso="semibold" />
-            </Pressable>
+            </BotonDePaso>
           </View>
           <View style={estilos.ajustes}>
             {AJUSTES.map((f) => (
-              <Pressable key={f} onPress={() => multiplicar(f)} style={estilos.ajuste} accessibilityRole="button">
-                <Text style={estilos.ajusteTexto}>{`×${numeroDePorcion(f)}`}</Text>
+              <Pressable key={f} onPress={() => multiplicar(f)} style={({ pressed }) => [estilos.ajuste, pressed && estilos.apretado]} accessibilityRole="button" hitSlop={4}>
+                <Text style={estilos.ajusteTexto} maxFontSizeMultiplier={1.5}>{`×${numeroDePorcion(f)}`}</Text>
               </Pressable>
             ))}
           </View>
@@ -484,6 +504,7 @@ const estilos = StyleSheet.create({
   origenFila: { marginTop: 5, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   origen: { fontFamily: letras.texto, fontSize: 11, lineHeight: 14, color: 'rgba(239, 230, 207, 0.48)' },
   redondo: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
+  apretado: { opacity: 0.6 },
   cifras: { marginTop: 14, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
   kcal: { fontFamily: letras.numeroLiviano, fontSize: 48, lineHeight: 50, letterSpacing: -1, color: colores.cifra, fontVariant: ['tabular-nums'] },
   kcalUnidad: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2, color: 'rgba(239, 230, 207, 0.6)' },
@@ -503,7 +524,8 @@ const estilos = StyleSheet.create({
   valor: { width: 66, paddingHorizontal: 4, outlineWidth: 0, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino, fontVariant: ['tabular-nums'] },
   unidad: { marginLeft: -4, marginRight: 4, fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.6)' },
   ajustes: { flexDirection: 'row', gap: 6 },
-  ajuste: { minWidth: 46, height: 36, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', alignItems: 'center', justifyContent: 'center' },
+  // Con el alto mínimo: con el texto grande de iOS crece en vez de cortar.
+  ajuste: { minWidth: 46, minHeight: 36, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', alignItems: 'center', justifyContent: 'center' },
   ajusteTexto: { fontFamily: letras.texto, fontSize: 15, color: 'rgba(239, 230, 207, 0.8)' },
   comoGramos: { marginTop: 11, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
   nota: { flexShrink: 1, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.6)' },

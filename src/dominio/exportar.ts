@@ -30,7 +30,12 @@ function horaLocal(iso: string): string {
   const dos = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())} ${dos(d.getHours())}:${dos(d.getMinutes())}`;
 }
-const csv = (cabeza: string[], filas: Valor[][]) => [cabeza, ...filas].map((f) => f.map(campo).join(',')).join('\n') + '\n';
+/**
+ * La marca de orden de bytes de UTF-8, al principio: sin ella, Excel lee el archivo en otra codificación y
+ * muestra «ProteÃ­na». Las demás planillas la saltean.
+ */
+export const BOM = '\uFEFF';
+const csv = (cabeza: string[], filas: Valor[][]) => BOM + [cabeza, ...filas].map((f) => f.map(campo).join(',')).join('\n') + '\n';
 
 /** Lo comido, sin lo borrado, en el orden del día. */
 export function csvDeRegistros(

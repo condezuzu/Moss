@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
@@ -15,18 +15,18 @@ import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { lunesDe, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
   afinidadDe, ALERGENOS, cambiarPorOtra, combinadas, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra,
-  PLANTILLAS, PREFERENCIAS_DE_FABRICA, queFalta, recientesDe, tachadasDe, tachar as tacharEn, type Afinidad, type DiaPlaneado, type Tachadas, type Opcion,
+  PLANTILLAS, PREFERENCIAS_DE_FABRICA, queFalta, recientesDe, tachadasDe, tachar as tacharEn, type Afinidad, type Tachadas, type Opcion,
   type Preferencias, type Resolver,
 } from '@/dominio/plan';
-import { totalDelDia } from '@/dominio/registros';
+import { totalDelDia, type Registro } from '@/dominio/registros';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { HojaModal } from '../HojaModal';
+import { margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Etiqueta, Icono, Pastilla } from './comunes';
 import { cantidadDeTexto, metaDelDia, opcionesDeIdioma, sistemaDe, type ComidaDelDia } from './datos';
-
-type Avisar = (texto: string, deshacer?: () => void) => void;
+import { avisar } from './registro';
 
 /** A qué hora va lo que se arma: la de siempre de cada comida; el snack, a media mañana. */
 export const horaDe = (c: Comida) => (c === 'snack' ? 11 * 60 : HORA_TIPICA[c]);
@@ -78,8 +78,11 @@ function useOpciones(e: Estado): Opcion[] | null {
 const afinidadCon = (e: Estado, opciones: readonly Opcion[], pref: Preferencias): Afinidad =>
   afinidadDe({ opciones, pref, registros: e.registros.values(), hoy: e.hoy });
 
-/** Arma lo que falta de un día con lo que queda de la meta, y lo guarda planificado. null si no había nada que armar. */
-function armarUnDia(e: Estado, dia: ClaveDia, opciones: readonly Opcion[]): DiaPlaneado | null {
+/**
+ * Arma lo que falta de un día con lo que queda de la meta, y lo guarda planificado: devuelve si llega
+ * a la meta y lo que guardó (para deshacerlo). null si no había nada que armar.
+ */
+function armarUnDia(e: Estado, dia: ClaveDia, opciones: readonly Opcion[]): { alcanza: boolean; registros: Registro[] } | null {
   const meta = metaDelDia(e, dia);
   if (!meta) return null;
   const pref = comoCome(e);
@@ -90,12 +93,14 @@ function armarUnDia(e: Estado, dia: ClaveDia, opciones: readonly Opcion[]): DiaP
     afinidad: afinidadCon(e, opciones, pref),
   });
   if (!armado.comidas.length) return null;
-  elAlmacen().planificar(dia, armado.comidas, horaDe);
-  return armado;
+  return { alcanza: armado.alcanza, registros: elAlmacen().planificar(dia, armado.comidas, horaDe) };
 }
 
+/** Deshacer lo que se armó: lo sugerido se va, como si no se hubiera tocado. */
+const sacarLoArmado = (registros: readonly Registro[]) => () => registros.forEach((r) => elAlmacen().borrarRegistro(r.id));
+
 /** Arriba de la línea, de hoy en adelante: «Armar el día» si falta alguna comida, y «Tus comidas». */
-export function ArmarElDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: Avisar }) {
+export function ArmarElDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   const opciones = useOpciones(e);
   const [hoja, setHoja] = useState(false);
   if (dia < e.hoy) return null;
@@ -108,17 +113,17 @@ export function ArmarElDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisa
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    if (!armado.alcanza) avisar(t('comida.plan.noAlcanza'));
+    avisar(t(armado.alcanza ? 'comida.plan.armadoDia' : 'comida.plan.noAlcanza'), sacarLoArmado(armado.registros));
   };
   return (
     <Animated.View layout={ACOMODA} style={estilos.armar}>
       {falta && (
-        <Animated.View entering={FadeIn.duration(260)} exiting={FadeOut.duration(200)} layout={ACOMODA}>
+        <Animated.View entering={FadeIn.duration(260).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(200).reduceMotion(ReduceMotion.Never)} layout={ACOMODA}>
           <Boton texto={t('comida.plan.armarDia')} icono="sparkles" tipo="secundario" alTocar={armar} desactivado={!opciones} />
         </Animated.View>
       )}
       <Animated.View layout={ACOMODA}>
-        <Pressable onPress={() => setHoja(true)} hitSlop={8} accessibilityRole="button">
+        <Pressable onPress={() => setHoja(true)} hitSlop={8} accessibilityRole="button" style={({ pressed }) => pressed && estilos.enlaceApretado}>
           <Text style={estilos.enlace}>{t('comida.plan.tusComidas')}</Text>
         </Pressable>
       </Animated.View>
@@ -134,6 +139,7 @@ function BotonRedondo({ icono, etiqueta, elegido, alTocar }: { icono: 'hand.thum
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       accessibilityState={elegido === undefined ? undefined : { selected: elegido }}
+      hitSlop={margenDeToque(LADO_REDONDO)}
       style={({ pressed }) => [estilos.redondo, elegido && estilos.redondoElegido, pressed && estilos.apretado]}
     >
       <Icono nombre={icono} tam={14} peso="semibold" />
@@ -150,7 +156,7 @@ const VISTAS = new Map<string, string[]>();
  * vez; y me gusta y no me gusta, que cambian lo que Moss sugiere de acá en adelante: lo que no te
  * gusta no vuelve y se cambia ya por otra, y lo que lleva sale menos (afinidadDe).
  */
-export function AccionesDelPlan({ e, c, dia, avisar }: { e: Estado; c: ComidaDelDia; dia: ClaveDia; avisar: Avisar }) {
+export function AccionesDelPlan({ e, c, dia }: { e: Estado; c: ComidaDelDia; dia: ClaveDia }) {
   const opciones = useOpciones(e);
   const clave = c.registros.find((r) => r.plan)?.plan ?? `planificada:${c.comida}`;
   const pref = comoCome(e);
@@ -174,8 +180,13 @@ export function AccionesDelPlan({ e, c, dia, avisar }: { e: Estado; c: ComidaDel
     avisar(t('comida.plan.anotado'), () => elAlmacen().volverAPlanificar(ids));
   };
   const cambiar = () => {
-    if (otra(pref)) Haptics.selectionAsync().catch(() => {});
-    else avisar(t('comida.plan.sinOtra'));
+    const deshacer = otra(pref);
+    if (!deshacer) {
+      avisar(t('comida.plan.sinOtra'));
+      return;
+    }
+    Haptics.selectionAsync().catch(() => {});
+    avisar(t('comida.plan.cambiada'), deshacer);
   };
   const meGusta = () => {
     Haptics.selectionAsync().catch(() => {});
@@ -189,6 +200,7 @@ export function AccionesDelPlan({ e, c, dia, avisar }: { e: Estado; c: ComidaDel
       avisar(t('comida.plan.sinOtra'));
       return;
     }
+    Haptics.selectionAsync().catch(() => {});
     elAlmacen().ponerComer(sinEsta);
     avisar(t('comida.plan.quitada'), () => {
       deshacer();
@@ -207,7 +219,7 @@ export function AccionesDelPlan({ e, c, dia, avisar }: { e: Estado; c: ComidaDel
 }
 
 /** Debajo de las barras de la semana, si no pasó: armar lo que falta hasta el domingo y la lista de compras. */
-export function PlanDeLaSemana({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: Avisar }) {
+export function PlanDeLaSemana({ e, dia }: { e: Estado; dia: ClaveDia }) {
   const opciones = useOpciones(e);
   const [compras, setCompras] = useState(false);
   const lunes = lunesDe(dia);
@@ -215,11 +227,15 @@ export function PlanDeLaSemana({ e, dia, avisar }: { e: Estado; dia: ClaveDia; a
   if (domingo < e.hoy) return null;
   const armar = () => {
     if (!opciones) return;
-    let alguno = false;
+    const armados: Registro[] = [];
     // Cada día con lo que ya quedó armado el anterior: así evita repetir.
-    for (let d = lunes < e.hoy ? e.hoy : lunes; d <= domingo; d = sumarDias(d, 1)) alguno = !!armarUnDia(elAlmacen().estado(), d, opciones) || alguno;
+    for (let d = lunes < e.hoy ? e.hoy : lunes; d <= domingo; d = sumarDias(d, 1)) armados.push(...(armarUnDia(elAlmacen().estado(), d, opciones)?.registros ?? []));
+    if (!armados.length) {
+      avisar(t('comida.plan.nadaQueArmar'));
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    avisar(t(alguno ? 'comida.plan.armadaSemana' : 'comida.plan.nadaQueArmar'));
+    avisar(t('comida.plan.armadaSemana'), sacarLoArmado(armados));
   };
   return (
     <View style={estilos.semana}>
@@ -300,7 +316,7 @@ function HojaCompras({ e, abierta, alCerrar }: { e: Estado; abierta: boolean; al
                 accessibilityState={{ checked: hecha }}
               >
                 <View style={[estilos.marca, hecha && estilos.marcaHecha]}>
-                  {hecha && <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)}><Icono nombre="checkmark" tam={11} color={colores.tinta} peso="bold" /></Animated.View>}
+                  {hecha && <Animated.View entering={FadeIn.duration(160).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(120).reduceMotion(ReduceMotion.Never)}><Icono nombre="checkmark" tam={11} color={colores.tinta} peso="bold" /></Animated.View>}
                 </View>
                 <Text style={[estilos.nombre, hecha && estilos.nombreHecho]} numberOfLines={2}>{x.nombre}</Text>
                 <Text style={estilos.cuanto}>
@@ -315,11 +331,14 @@ function HojaCompras({ e, abierta, alCerrar }: { e: Estado; abierta: boolean; al
   );
 }
 
+const LADO_REDONDO = 34;
+
 const estilos = StyleSheet.create({
   armar: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
   enlace: { paddingVertical: 8, fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.62)', textDecorationLine: 'underline', textDecorationColor: 'rgba(239, 230, 207, 0.25)' },
+  enlaceApretado: { opacity: 0.55 },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10 },
-  redondo: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.06)' },
+  redondo: { width: LADO_REDONDO, height: LADO_REDONDO, borderRadius: LADO_REDONDO / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.28)', backgroundColor: 'rgba(232, 196, 106, 0.06)' },
   redondoElegido: { borderColor: 'rgba(232, 196, 106, 0.6)', backgroundColor: 'rgba(232, 196, 106, 0.16)' },
   apretado: { opacity: 0.75, transform: [{ scale: 0.97 }] },
   semana: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },

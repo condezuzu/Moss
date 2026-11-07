@@ -33,7 +33,11 @@
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Tu universo",
     "globito": "Toca una estrella para marcar su hábito",
-    "seEnciendeConAscent": "Se enciende sola con Ascent"
+    "seEnciendeConAscent": "Se enciende sola con Ascent",
+    "lector": {
+      "lleva": "llevas {valor}",
+      "pista": "Enciende o apaga su estrella."
+    }
   },
   "entrada": {
     "frase": "Primero hacemos nuestros hábitos, después nuestros hábitos nos hacen a nosotros.",
@@ -835,7 +839,9 @@
         "poco": "Poco",
         "normal": "Normal",
         "mucho": "Mucho"
-      }
+      },
+      "armadoDia": "El día, sugerido.",
+      "cambiada": "Te sugerimos otra."
     },
     "deSiempre": {
       "desayuno": "Tu desayuno de siempre",
@@ -883,7 +889,11 @@
       "p": "P",
       "c": "C",
       "g": "G"
-    }
+    },
+    "lector": {
+      "macro": "{macro}: {n} g"
+    },
+    "quitarAlimento": "Quitar {alimento}"
   },
   "inicio": {
     "titulo": "Hoy",
@@ -1281,7 +1291,24 @@
         "bajon": "Bajón",
         "segundoPico": "Otro pico"
       }
-    }
+    },
+    "lector": {
+      "lleva": "Te lleva a {seccion}",
+      "quedan": "Te quedan {n} de {meta} kcal",
+      "deMas": "{n} kcal arriba de la meta de {meta}",
+      "llevas": "Llevas {n} kcal",
+      "macroFalta": "{macro}: faltan {n} g",
+      "macroPasado": "{macro}: {n} g de más",
+      "macroListo": "{macro}: listo",
+      "macroFaltaSinNumeros": "{macro}: falta",
+      "macroPasadoSinNumeros": "{macro}: de más",
+      "sinPeso": "Todavía sin pesadas",
+      "habitos": "{n} de {total} hábitos hechos"
+    },
+    "moverBloque": "Mover {bloque}",
+    "subir": "Subir",
+    "bajar": "Bajar",
+    "lugar": "Posición {n} de {total}"
   },
   "mas": {
     "titulo": "Agregar",
@@ -1483,8 +1510,6 @@
     "ejemplo": "Son datos de ejemplo: cuando registres tu peso (o conectes Salud) y completes el cuestionario, aparecen los tuyos.",
     "sinMedidas": "Todavía no hay medidas. Con la cintura y el cuello (y la cadera, en las mujeres), Moss estima tu grasa corporal.",
     "gastoInicial": "Lo estimado con tus respuestas. El control de cada semana lo mide con tu peso y lo que comes.",
-    "bajarMeta": "Bajar el peso meta",
-    "subirMeta": "Subir el peso meta",
     "sinBalance": "Registra lo que comes unos días para ver el balance.",
     "limites": {
       "piso": "Menos de {n} kcal por día, no: es menos de lo que el cuerpo necesita para funcionar.",
@@ -1870,7 +1895,8 @@
         "Medida, con etapas",
         "Con etapas y lo de la noche",
         "Conexión directa"
-      ]
+      ],
+      "deCinco": "{n} de 5"
     },
     "porMoss": "Estimada por Moss",
     "porTi": "Confirmada por ti",
@@ -1905,7 +1931,10 @@
         "ajustes": "Abrir Ajustes",
         "error": "No se pudo poner el despertador. Prueba de nuevo.",
         "alarma": "Buenos días",
-        "detener": "Detener"
+        "detener": "Detener",
+        "horaDelDespertador": "Hora del despertador",
+        "horaAntes": "1 hora antes",
+        "horaDespues": "1 hora después"
       },
       "atajos": {
         "titulo": "Atajos automáticos",
@@ -2173,7 +2202,9 @@
       "sacarFoto": "Sacar foto",
       "elegirFoto": "Elegir foto",
       "quitarFoto": "Quitar foto",
-      "fotoNota": "Tu foto queda en este iPhone: no sube a tu cuenta."
+      "fotoNota": "Tu foto queda en este iPhone: no sube a tu cuenta.",
+      "sinCamaraTitulo": "Moss no tiene acceso a la cámara",
+      "sinCamara": "Para sacar tu foto, actívala en los Ajustes del iPhone."
     },
     "conectar": "Conectar",
     "pronto": "Pronto",
@@ -2507,6 +2538,17 @@
         "No recomienda suplementos ni medicamentos.",
         "No presenta una estimación como si fuera exacta: cada número tiene su margen."
       ]
+    },
+    "errorExportar": "No se pudo exportar. Inténtalo de nuevo.",
+    "abrirAjustes": "Abrir Ajustes",
+    "sinPermisoTitulo": "Moss no puede avisarte",
+    "correo": {
+      "asunto": "Ayuda con Moss",
+      "cuerpo": "\n\n\n—\nEstos datos nos ayudan a encontrar el problema:\nMoss {version} · {actualizacion}\n{modelo} · iOS {ios}"
+    },
+    "pasos": {
+      "temprano": "{que}, más temprano",
+      "tarde": "{que}, más tarde"
     }
   },
   "fecha": {
@@ -2567,7 +2609,10 @@
     "cancelar": "Cancelar",
     "guardar": "Guardar",
     "listo": "Listo",
-    "atras": "Atrás"
+    "atras": "Atrás",
+    "siguiente": "Siguiente",
+    "menos": "Menos {que}",
+    "mas": "Más {que}"
   },
   "diagnostico": {
     "salud": "Simular Salud",
@@ -3519,7 +3564,8 @@
       "luz": "de luz juntada",
       "porHabito": "Cada hábito, los últimos 30 días",
       "deVeces": "{hechos} de {total}",
-      "sinDatos": "Todavía no hay días en este mes."
+      "sinDatos": "Todavía no hay días en este mes.",
+      "diaCompleto": "{n}, día completo"
     },
     "mas": "Nuevo hábito",
     "aviso": {
@@ -3534,7 +3580,10 @@
       "antes": "{n} min antes",
       "mensaje": "Mensaje",
       "mensajeEjemplo": "{habito}, cuando puedas.",
-      "texto": "Suena los días que elijas del hábito, y no si ya está hecho. Moss junta los que caen cerca y no pasa del máximo por día (Perfil › Avisos)."
+      "texto": "Suena los días que elijas del hábito, y no si ya está hecho. Moss junta los que caen cerca y no pasa del máximo por día (Perfil › Avisos).",
+      "horaDelAviso": "Hora del aviso",
+      "minutosAntes": "{n} minutos antes",
+      "minutosDespues": "{n} minutos después"
     },
     "minimo": "Hacen falta al menos 3 hábitos: la constelación cambia según cuántos son.",
     "metaPropia": {
@@ -3543,7 +3592,33 @@
       "agua": "Otra meta, en litros",
       "mindfulness": "Otra meta, en minutos"
     },
-    "demasiados": "Un día tiene hasta {n} hábitos: es lo que tiene la constelación más grande."
+    "demasiados": "Un día tiene hasta {n} hábitos: es lo que tiene la constelación más grande.",
+    "iconos": {
+      "estrella": "Estrella",
+      "caminar": "Caminar",
+      "correr": "Correr",
+      "pesas": "Pesas",
+      "bicicleta": "Bicicleta",
+      "meditar": "Meditar",
+      "luna": "Luna",
+      "cama": "Cama",
+      "libro": "Libro",
+      "lapiz": "Lápiz",
+      "agua": "Agua",
+      "taza": "Taza",
+      "comida": "Comida",
+      "hoja": "Hoja",
+      "corazon": "Corazón",
+      "mente": "Mente",
+      "pastillas": "Pastillas",
+      "sol": "Sol",
+      "musica": "Música",
+      "pincel": "Pincel",
+      "estudio": "Estudio",
+      "sinTelefono": "Sin teléfono",
+      "mascota": "Mascota",
+      "casa": "Casa"
+    }
   },
   "compartir": {
     "boton": "Compartir",

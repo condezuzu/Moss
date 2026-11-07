@@ -4,16 +4,18 @@
 // Moss, con lo que llegó estos días (la lista sirve también para ver que andan).
 
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { AppState, Linking, Pressable, StyleSheet, Switch, Text, View, type AccessibilityActionEvent } from 'react-native';
 
 import { claveDelDia, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import { estadoDelCargador, esProgramado, type EstadoDelCargador, type QueSenal, type Senal } from '@/dominio/sinReloj';
 import { useSenales } from '@/salud/anclas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { anunciar } from '../anuncio';
 import { Icono } from '../comida/comunes';
 import { horaDelDia } from '../comida/datos';
 import { HojaModal } from '../HojaModal';
+import { BotonDePaso } from '../paso';
 import { Aparece, Carta, Dias, EtiquetaDeGrupo, Parrafo } from '../tarjetas';
 import { alarmaPuesta, hayDespertador, pedirAlarmas, permisoDeAlarmas, ponerAlarma, sacarAlarma, type Alarma, type PermisoDeAlarmas } from './despertador';
 import { GuiaCargador } from './GuiaCargador';
@@ -53,14 +55,26 @@ function textoDelCargador(e: EstadoDelCargador, hoy: ClaveDia): string {
   return t('sueno.afinar.cargador.sinArmar');
 }
 
-/** El despertador: lo que está puesto en el sistema, el permiso y lo que se está eligiendo. */
+/**
+ * El despertador: lo que está puesto en el sistema, el permiso y lo que se está eligiendo. `pendiente`:
+ * lo que se pidió con el interruptor mientras el sistema lo hace (el permiso, AlarmKit): el interruptor
+ * queda ahí, no se puede volver a tocar y, si falla, vuelve a como estaba.
+ */
 function useDespertador() {
   const disponible = hayDespertador();
   const [puesta, setPuesta] = useState<Alarma | null>(null);
   const [permiso, setPermiso] = useState<PermisoDeAlarmas>('sinPedir');
   const [elegida, setElegida] = useState<Alarma>({ hora: 7, minuto: 0, dias: SEMANA_LABORAL });
   const [error, setError] = useState(false);
+  const [pendiente, setPendiente] = useState<boolean | null>(null);
+  const ocupado = useRef(false);
   const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Poner y sacar van de a uno, en orden: si no, dos toques seguidos los mandaban a la vez.
+  const cola = useRef<Promise<void>>(Promise.resolve());
+  const enOrden = (hacer: () => Promise<void>) => {
+    cola.current = cola.current.then(hacer, hacer);
+    return cola.current;
+  };
 
   useEffect(() => {
     if (!disponible) return;
@@ -98,16 +112,28 @@ function useDespertador() {
       setError(true);
     }
   };
+  const sacar = async () => {
+    setError(false);
+    try {
+      await sacarAlarma();
+      setPuesta(null);
+    } catch {
+      setError(true);
+    }
+  };
   return {
-    disponible, puesta, permiso, elegida, error,
+    disponible, puesta, permiso, elegida, error, pendiente,
     async prender(si: boolean) {
-      if (si) return poner(elegida);
-      setError(false);
+      if (ocupado.current) return;
+      ocupado.current = true;
+      // Lo que iba a volver a ponerse por un cambio de hora ya no va: manda el interruptor.
+      clearTimeout(espera.current);
+      setPendiente(si);
       try {
-        await sacarAlarma();
-        setPuesta(null);
-      } catch {
-        setError(true);
+        await enOrden(si ? () => poner(elegida) : sacar);
+      } finally {
+        ocupado.current = false;
+        setPendiente(null);
       }
     },
     /** Cambia la hora o los días; si está prendido, la vuelve a poner cuando se dejan de tocar. */
@@ -115,7 +141,9 @@ function useDespertador() {
       setElegida(a);
       if (!puesta) return;
       clearTimeout(espera.current);
-      espera.current = setTimeout(() => poner(a), 700);
+      espera.current = setTimeout(() => {
+        enOrden(() => poner(a)).catch(() => {});
+      }, 700);
     },
   };
 }
@@ -154,12 +182,13 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
       <Parrafo chico>{t('sueno.afinar.texto')}</Parrafo>
       {d.disponible && (
         <View style={[st.fila, st.separada]}>
-          <Pressable onPress={() => setHoja('despertador')} style={st.filaTextos} accessibilityRole="button">
+          <Pressable onPress={() => setHoja('despertador')} style={({ pressed }) => [st.filaTextos, pressed && st.textoApretado]} accessibilityRole="button">
             <Text style={st.filaTitulo}>{t('sueno.afinar.despertador.titulo')}</Text>
             <Text style={st.filaDetalle}>{d.puesta ? resumen(d.puesta) : t('sueno.afinar.despertador.apagado')}</Text>
           </Pressable>
           <Switch
-            value={!!d.puesta}
+            value={d.pendiente ?? !!d.puesta}
+            disabled={d.pendiente !== null}
             onValueChange={(si) => { d.prender(si).catch(() => {}); }}
             trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
             thumbColor={colores.pergamino}
@@ -195,23 +224,31 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
   );
 }
 
+/** Lo que mueve la hora del despertador cada acción de VoiceOver: deslizar de a 5 minutos, y las acciones de a una hora. */
+const MINUTOS_DE: Partial<Record<string, number>> = { increment: 5, decrement: -5, masUnaHora: 60, menosUnaHora: -60 };
+
 function ElDespertador({ d }: { d: ReturnType<typeof useDespertador> }) {
   const a = d.elegida;
+  // Da la vuelta al día. VoiceOver dice la hora nueva.
   const mover = (minutos: number) => {
     const total = (((a.hora * 60 + a.minuto + minutos) % 1440) + 1440) % 1440;
-    d.cambiar({ ...a, hora: Math.floor(total / 60), minuto: total % 60 });
+    const nueva = { ...a, hora: Math.floor(total / 60), minuto: total % 60 };
+    d.cambiar(nueva);
+    anunciar(reloj(nueva));
   };
-  const paso = (texto: string, etiqueta: string, alTocar: () => void) => (
-    <Pressable onPress={alTocar} style={({ pressed }) => [st.paso, pressed && st.apretada]} accessibilityRole="button" accessibilityLabel={etiqueta} hitSlop={4}>
+  // Un toque, un paso; mantenido, repite (BotonDePaso).
+  const paso = (texto: string, etiqueta: string, minutos: number) => (
+    <BotonDePaso alPaso={() => mover(minutos)} etiqueta={etiqueta} lado={40} style={st.paso}>
       <Text style={st.pasoTexto}>{texto}</Text>
-    </Pressable>
+    </BotonDePaso>
   );
   return (
     <View style={st.hoja}>
       <View style={st.fila}>
         <Text style={[st.filaTitulo, st.filaTextos]}>{t('sueno.afinar.despertador.titulo')}</Text>
         <Switch
-          value={!!d.puesta}
+          value={d.pendiente ?? !!d.puesta}
+          disabled={d.pendiente !== null}
           onValueChange={(si) => { d.prender(si).catch(() => {}); }}
           trackColor={{ true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' }}
           thumbColor={colores.pergamino}
@@ -219,12 +256,29 @@ function ElDespertador({ d }: { d: ReturnType<typeof useDespertador> }) {
         />
       </View>
       <EtiquetaDeGrupo>{t('sueno.afinar.despertador.hora')}</EtiquetaDeGrupo>
-      <View style={st.hora}>
-        {paso('−', '−1 h', () => mover(-60))}
-        {paso('−5', '−5 min', () => mover(-5))}
-        <Text style={st.horaValor} accessibilityLiveRegion="polite">{reloj(a)}</Text>
-        {paso('+5', '+5 min', () => mover(5))}
-        {paso('+', '+1 h', () => mover(60))}
+      {/* Para VoiceOver, la hora con sus botones es una sola cosa: se desliza de a 5 minutos, y una hora va en sus acciones. */}
+      <View
+        style={st.hora}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={t('sueno.afinar.despertador.horaDelDespertador')}
+        accessibilityValue={{ text: reloj(a) }}
+        accessibilityActions={[
+          { name: 'increment', label: t('sueno.manana.despues') },
+          { name: 'decrement', label: t('sueno.manana.antes') },
+          { name: 'masUnaHora', label: t('sueno.afinar.despertador.horaDespues') },
+          { name: 'menosUnaHora', label: t('sueno.afinar.despertador.horaAntes') },
+        ]}
+        onAccessibilityAction={(ev: AccessibilityActionEvent) => {
+          const minutos = MINUTOS_DE[ev.nativeEvent.actionName];
+          if (minutos) mover(minutos);
+        }}
+      >
+        {paso('−', t('sueno.afinar.despertador.horaAntes'), -60)}
+        {paso('−5', t('sueno.manana.antes'), -5)}
+        <Text style={st.horaValor} maxFontSizeMultiplier={1.3}>{reloj(a)}</Text>
+        {paso('+5', t('sueno.manana.despues'), 5)}
+        {paso('+', t('sueno.afinar.despertador.horaDespues'), 60)}
       </View>
       <EtiquetaDeGrupo>{t('sueno.afinar.despertador.dias')}</EtiquetaDeGrupo>
       <Dias elegidos={a.dias} alTocar={(x) => d.cambiar({ ...a, dias: a.dias.includes(x) ? a.dias.filter((y) => y !== x) : [...a.dias, x] })} />
@@ -232,7 +286,7 @@ function ElDespertador({ d }: { d: ReturnType<typeof useDespertador> }) {
       {d.permiso === 'denegado' && (
         <Aparece style={st.aviso}>
           <Parrafo>{t('sueno.afinar.despertador.sinPermiso')}</Parrafo>
-          <Pressable onPress={() => { Linking.openSettings().catch(() => {}); }} accessibilityRole="button" hitSlop={6}>
+          <Pressable onPress={() => { Linking.openSettings().catch(() => {}); }} style={({ pressed }) => pressed && st.textoApretado} accessibilityRole="button" hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
             <Text style={st.enlace}>{t('sueno.afinar.despertador.ajustes')}</Text>
           </Pressable>
         </Aparece>
@@ -263,7 +317,7 @@ function LosAtajos({ senales, hoy }: { senales: Senal[]; hoy: ClaveDia }) {
         const esta = abierta === cual;
         return (
           <View key={cual} style={st.separada}>
-            <Pressable onPress={() => setAbierta(esta ? null : cual)} style={st.fila} accessibilityRole="button" accessibilityState={{ expanded: esta }}>
+            <Pressable onPress={() => setAbierta(esta ? null : cual)} style={({ pressed }) => [st.fila, pressed && st.textoApretado]} accessibilityRole="button" accessibilityState={{ expanded: esta }}>
               <View style={st.filaTextos}>
                 <Text style={st.filaTitulo}>{t(`sueno.afinar.atajos.cuales.${cual}.titulo`)}</Text>
                 <Text style={[st.filaDetalle, llego && st.llego]}>{llego ? t('sueno.afinar.atajos.llego', { cuando: cuando(llego.en, hoy) }) : t('sueno.afinar.atajos.noLlego')}</Text>
@@ -307,6 +361,7 @@ const st = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
   separada: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
   apretada: { backgroundColor: 'rgba(239, 230, 207, 0.05)' },
+  textoApretado: { opacity: 0.6 },
   filaTextos: { flex: 1, paddingVertical: 10 },
   filaTitulo: { fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaDetalle: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },

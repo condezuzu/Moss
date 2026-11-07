@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { cantidadDePorcion, conUnaUnidad, decimal, numeroDePorcion, pluralDePorcion, singularDePorcion } from './porciones';
+import { cantidadDePorcion, conUnaUnidad, decimal, leerNumero, numeroDePorcion, pluralDePorcion, singularDePorcion } from './porciones';
 
 describe('singularDePorcion', () => {
   it('en español, hasta la preposición', () => {
@@ -72,6 +72,72 @@ describe('decimal', () => {
     expect(decimal(1250, 'es')).toBe('1.250');
     expect(decimal(1250, 'en')).toBe('1,250');
     expect(decimal(177, 'es')).toBe('177');
+  });
+
+  it('sin los miles, para un campo que se corrige', () => {
+    expect(decimal(1500, 'es', false)).toBe('1500');
+    expect(decimal(1500, 'en', false)).toBe('1500');
+    expect(decimal(1250.5, 'es', false)).toBe('1250,5');
+    expect(decimal(1250.5, 'en', false)).toBe('1250.5');
+  });
+});
+
+describe('leerNumero', () => {
+  it('lee la coma y el punto como decimales, también sin el cero', () => {
+    expect(leerNumero('1,5')).toBe(1.5);
+    expect(leerNumero('1.5')).toBe(1.5);
+    expect(leerNumero(',5')).toBe(0.5);
+    expect(leerNumero('.5')).toBe(0.5);
+    expect(leerNumero('0,500')).toBe(0.5);
+    expect(leerNumero('1.25')).toBe(1.25);
+    expect(leerNumero('1.2345')).toBe(1.2345);
+    expect(leerNumero('150')).toBe(150);
+    expect(leerNumero(' 12,5 ')).toBe(12.5);
+  });
+
+  it('un separador seguido de exactamente tres cifras son los miles', () => {
+    expect(leerNumero('1.500')).toBe(1500);
+    expect(leerNumero('1.750')).toBe(1750);
+    expect(leerNumero('1,500')).toBe(1500);
+    expect(leerNumero('12.345.678')).toBe(12345678);
+    expect(leerNumero('1 500')).toBe(1500);
+  });
+
+  it('con coma y punto, el último es el decimal', () => {
+    expect(leerNumero('1.050,5')).toBe(1050.5);
+    expect(leerNumero('1,050.5')).toBe(1050.5);
+    expect(leerNumero('1,5.3')).toBeNull();
+  });
+
+  it('lee las fracciones, solas o con un entero', () => {
+    expect(leerNumero('½')).toBe(0.5);
+    expect(leerNumero('1½')).toBe(1.5);
+    expect(leerNumero('1 ½')).toBe(1.5);
+    expect(leerNumero('2¼')).toBe(2.25);
+    expect(leerNumero('⅓')).toBeCloseTo(1 / 3);
+    expect(leerNumero('1,5½')).toBeNull();
+  });
+
+  it('mientras se escribe, el separador del final no cambia el número', () => {
+    expect(leerNumero('5,')).toBe(5);
+    expect(leerNumero('5.')).toBe(5);
+  });
+
+  it('lo que no es un número es null', () => {
+    expect(leerNumero('')).toBeNull();
+    expect(leerNumero('   ')).toBeNull();
+    expect(leerNumero(',')).toBeNull();
+    expect(leerNumero('abc')).toBeNull();
+    expect(leerNumero('-5')).toBeNull();
+    expect(leerNumero('1.2.3')).toBeNull();
+    expect(leerNumero('1.234.5')).toBeNull();
+  });
+
+  it('lo que muestra un campo sin los miles se vuelve a leer igual', () => {
+    for (const n of [1500, 1750, 0.5, 12.5, 1250.25]) {
+      expect(leerNumero(decimal(n, 'es', false))).toBe(n);
+      expect(leerNumero(decimal(n, 'en', false))).toBe(n);
+    }
   });
 });
 

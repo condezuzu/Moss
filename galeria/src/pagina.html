@@ -2044,7 +2044,7 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 
   <div class="columna-texto">
     <header>
-      <div class="etiqueta">Moss · galería privada · <span id="fecha-galeria">21 de octubre de 2026</span></div>
+      <div class="etiqueta">Moss · galería privada · versión 46 · <span id="fecha-galeria">21 de octubre de 2026</span></div>
       <h1>Las seis secciones, <em>para aprobar</em></h1>
       <p class="bajada">Prototipo interactivo con datos de mentira. Es la referencia visual que después se pasa a la app: los shaders del cielo, los textos, los alimentos y el buscador son los mismos archivos, y los tiempos y proporciones también.</p>
       <p class="lema">“Do so much volume that it will be unreasonable to fail.”<span>El lema de Moss</span></p>
@@ -2054,6 +2054,41 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
       <h2><span class="n">1.1</span>Lo nuevo, para aprobar</h2>
       <p>Lo que pediste el 2/11 a la noche (lo que dictaste mirando la galería) y el 3/11, para aprobar: probalo acá y, si te cierra, se programa. La app no cambia hasta que lo apruebes. Lo que no es visual ya está en la rama <b>mejoras-1.1</b> y va por OTA cuando Apple apruebe la 1.0: las marcas nuevas (con los productos de código uruguayo), el arreglo de «Si voy muy bajo en algo» (apagarlo no se guardaba) y lo de la tanda anterior.</p>
       <div class="panel">
+        <div class="grupo"><span>Detalles de app profesional (6/11, para aprobar): cada uno donde va</span>
+          <div class="controles">
+            <button class="boton principal" type="button" data-seccion="dtVentana">«Listo» arriba del teclado</button>
+            <button class="boton" type="button" data-seccion="dtMedidas">«Siguiente», en las medidas</button>
+            <button class="boton" type="button" data-seccion="dtPeso">El peso</button>
+            <button class="boton" type="button" data-seccion="dtCrear">Crear un alimento</button>
+          </div>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="dtMantener">Mantener apretado</button>
+          <button class="boton" type="button" data-seccion="dtMantenerComida">Una comida entera</button>
+          <button class="boton" type="button" data-seccion="dtDeslizar">Deslizar para borrar</button>
+          <button class="boton" type="button" data-seccion="dtGuardadas">Cambiar o borrar lo guardado</button>
+          <button class="boton" type="button" data-seccion="dtAyer">La hoja para ayer</button>
+          <button class="boton" type="button" data-seccion="dtManana">Mañana, con «Agregar»</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="dtAgua">Restar un vaso, en Inicio</button>
+          <button class="boton" type="button" data-seccion="dtAguaMas">En el «+»</button>
+          <button class="boton" type="button" data-seccion="dtAtras">«Atrás» en el cuestionario</button>
+          <button class="boton" type="button" data-seccion="dtFranja">La franja bajo la hora</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="dtApple">Entrando…</button>
+          <button class="boton" type="button" data-seccion="dtBorrarCuenta">Borrar la cuenta</button>
+          <button class="boton" type="button" data-seccion="dtCerrarSesion">Cerrar sesión</button>
+          <button class="boton" type="button" data-seccion="dtExportar">Exportar</button>
+        </div>
+        <div class="controles">
+          <button class="boton principal" type="button" data-seccion="dtCancelar">«Cancelar» en la hora</button>
+          <button class="boton" type="button" data-seccion="dtTirar">Volver a leer Salud</button>
+          <button class="boton" type="button" data-seccion="dtSinHabitos">Un día sin hábitos</button>
+          <button class="boton" type="button" data-seccion="dtConHabitos">Volver a la Lira</button>
+          <button class="boton" type="button" data-seccion="dtPerfil">Perfil, sin flechas de más</button>
+        </div>
         <div class="controles">
           <button class="boton principal" type="button" data-seccion="deporte">Según el deporte</button>
           <button class="boton" type="button" data-seccion="energia">Tu energía, en Sueño</button>
@@ -2153,6 +2188,17 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
         </div>
       </div>
       <ul class="lista">
+        <li><b>«Listo» y «Siguiente» arriba del teclado de números</b> (6/11, para aprobar): el teclado de números de iOS no tiene tecla de retorno, así que arriba va la barra nativa, oscura, con «Siguiente» si hay otro campo después y «Listo» en el último. La cantidad de la ventana del alimento ahora se escribe; en el «+», el peso y las medidas («Siguiente» pasa a la que sigue, y la cinta del dibujo con ella); al crear un alimento, de las kcal a lo último. «Listo» baja el teclado y la hoja vuelve a su lugar.</li>
+        <li><b>Mantener apretado en Comida</b> (6/11, para aprobar): un alimento anotado o la cabecera de una comida se levanta apenas y sale un menú corto: «Copiar a…», «Mover a…» (elegís el día, ayer, hoy o mañana, y la comida) y «Borrar» en rojo suave, abajo. Sin «¿Seguro?»: el aviso trae «Deshacer». En la computadora, también con clic derecho.</li>
+        <li><b>Deslizar a la izquierda para borrar</b> (6/11, para aprobar): suelto a la mitad, queda abierto con «Borrar»; pasado el tope (un poco más de la mitad del renglón) vibra, se llena y al soltar se borra, con «Deshacer». Para la derecha sigue siendo cambiar de sección.</li>
+        <li><b>Guardadas, para cambiar y borrar</b> (6/11, para aprobar): tocá una comida guardada, una receta o un alimento tuyo y se abre su edición (el nombre, lo que lleva, lo que rinde o lo de cada porción), con «Guardar» y «Borrar» abajo; su fila se cierra y el aviso lo deshace.</li>
+        <li><b>La hoja para otro día</b> (6/11, para aprobar): abierta para ayer o mañana, arriba dice «Ayer», la comida que se arma dice «Tu cena · ayer» y el botón, «Agregar a la cena de ayer»; para hoy, igual que siempre. En la hoja de otro día no va el atajo «Cena de ayer», que copiaría la de anteayer con ese nombre. Otro día ahora muestra las comidas que faltan con «Agregar», como en la app.</li>
+        <li><b>Restar un vaso de agua</b> (6/11, para aprobar): mantené apretado el agua, en Inicio o en el «+», y se quita el último vaso de hoy (se vacía), con «Deshacer». Elegí mantener apretado y no un «−» al lado: lo de recién ya lo arregla «Deshacer», restar más tarde es raro, y un «−» fijo junto al «+» se toca sin querer y le suma ruido a un bloque chico; además es el mismo gesto que en Comida. De paso, Inicio ya no salta arriba al sumar o quitar un vaso.</li>
+        <li><b>«Atrás» en el cuestionario</b> (6/11, para aprobar): desde la segunda pregunta, una flecha fina a la altura de «n de N» vuelve a la anterior con lo que contestaste; la pantalla llega desde arriba y la estrella retrocede en la barra.</li>
+        <li><b>La franja bajo la hora</b> (6/11, para aprobar): al hacer scroll en Inicio, Comida, Progreso, Sueño y Perfil, un degradado del color del fondo separa lo que pasa por debajo de la hora y la isla; con todo arriba no se ve.</li>
+        <li><b>Esperar sin dudas</b> (6/11, para aprobar): «Continuar con Apple» con la ruedita y «Entrando…»; borrar la cuenta y cerrar sesión, después de la alerta de iOS, con un velo y «Borrando…» o «Cerrando sesión…»; exportar, con la ruedita en vez de «CSV».</li>
+        <li><b>Sueño y Hábitos</b> (6/11, para aprobar): «Cancelar» al lado de «Guardar» al cambiar la hora de una noche; arriba de todo de Sueño, deslizar para abajo vuelve a leer Salud (la ruedita de iOS se arma de a un rayo y gira al soltar); y un día sin hábitos que toquen dice «Hoy no toca ningún hábito», chico, donde va el globito.</li>
+        <li><b>Perfil</b> (6/11, para aprobar): lo que cambia ahí mismo ya no lleva la flecha de entrar: «Mandar lo que no encuentro» con su llave, y «Unidades» y «Los números» con su valor (Visibles u Ocultos, como en la app: con una llave prendida al lado de «Sin calorías ni gramos» se leería al revés). Cuidados sigue con flecha porque abre su hoja (la propuesta del 5/11); si esa no va, vuelve a ser un sí/no con llave.</li>
         <li><b>Ascent, como si Progreso siguiera para arriba</b> (5/11 a la noche, para aprobar): deslizas desde arriba de Progreso y Ascent baja con su parte de abajo primero, con Progreso pegado debajo. Llegas abajo, a lo principal (lo de hoy, o vincular), con <b>«Volver a Progreso» y la flecha para abajo</b>: volver es bajar. Subiendo está el resto. Detrás de todo, <b>de fondo como las estrellas</b>, el polvo estelar: una nube como la nebulosa de Ascent pero propia, sin círculo, arriba a la derecha, que <b>se mueve</b>: el gas gira despacio alrededor de la estrella que nace y late, y los granos giran más rápido y titilan. Sin vincular también es el polvo (antes, la luna). En los otros rangos, el cuerpo también va de fondo, más tenue (sección 7).</li>
         <li><b>Tus músculos, dibujados de nuevo</b> (5/11 a la noche, para aprobar): cada músculo llena su zona y unas líneas finas lo definen: el abdomen en seis con los oblicuos (ya no es un rectángulo), el cuádriceps entero con la gota de arriba de la rodilla, los isquios y los gemelos con sus dos cabezas, el trapecio, los dorsales y el tríceps en herradura. Y todo lo que se mueve sin parar va sin repintar, para que ande en un teléfono viejo.</li>
         <li><b>Tu energía, de tu día y no del gimnasio</b> (5/11 a la noche, para aprobar): sin Ascent, la tarjeta ya no dice «para entrenar de forma normal» ni nada del gimnasio: habla de tu día. Arriba, <b>la curva de tu energía hoy</b>, como Rise pero sin porcentaje: tu mejor momento a media mañana, el bajón de la tarde y otro pico antes de la noche, contados desde que te despertás, y dónde estás ahora; con deuda, los picos más bajos. Con Ascent vinculada aparece lo del gimnasio (antes y después de entrenar, los músculos, sin llegar al fallo): para eso se vincula. Y <b>la invitación de Ascent</b> pregunta «¿Tienes Ascent en este iPhone?» y, con «Ahora no», vuelve a las 4 horas.</li>

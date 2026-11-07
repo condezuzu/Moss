@@ -40,6 +40,10 @@ const Util = (() => {
     objetivo: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/>',
     pesa: '<path d="M3.5 9v6M6.5 7v10M17.5 7v10M20.5 9v6M6.5 12h11"/>',
     estrella: '<path d="m12 4.5 2 5.1 5.4.3-4.2 3.4 1.4 5.2L12 15.6l-4.6 2.9 1.4-5.2-4.2-3.4 5.4-.3z"/>',
+    // Los del menú de mantener apretado (detalles.js).
+    copiar: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M5 15.5V6.5A1.5 1.5 0 0 1 6.5 5h9"/>',
+    mover: '<path d="M6 5v6.5A2.5 2.5 0 0 0 8.5 14H18"/><path d="m14.5 10.5 3.5 3.5-3.5 3.5"/>',
+    basura: '<path d="M5 7h14M10 7V5.5A1.5 1.5 0 0 1 11.5 4h1A1.5 1.5 0 0 1 14 5.5V7M7 7l.8 11.2a1.5 1.5 0 0 0 1.5 1.3h5.4a1.5 1.5 0 0 0 1.5-1.3L17 7"/><path d="M10.2 10.5v5.5M13.8 10.5v5.5"/>',
   };
   const icono = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[n] || ''}</svg>`;
 
@@ -124,6 +128,8 @@ const Util = (() => {
       cerrar(deUna) {
         if (!abierta) return;
         abierta = false;
+        // Con un campo escrito, el teclado baja con la hoja.
+        if (h.contains(document.activeElement)) document.activeElement.blur();
         if (deUna) {
           h.hidden = true;
           fondo.hidden = true;

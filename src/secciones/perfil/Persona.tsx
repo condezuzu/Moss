@@ -4,7 +4,7 @@
 
 import { Image } from 'expo-image';
 import { Platform, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
 
 import { inicialDe } from '@/dominio/nombre';
 import { t } from '@/textos';
@@ -12,6 +12,9 @@ import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
 
 const ORO_DE_LA_INICIAL = 'linear-gradient(160deg, #fdeebf 0%, #e8c46a 72%)';
+// Un fundido no es movimiento: con Reducir movimiento también se ve.
+const ENTRA = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
+const SALE = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
 
 /** El círculo: tu foto, la inicial de tu nombre en oro o, sin ninguno de los dos, la silueta. */
 export function Avatar({ foto, nombre, tam }: { foto: string | null; nombre: string; tam: number }) {
@@ -22,7 +25,7 @@ export function Avatar({ foto, nombre, tam }: { foto: string | null; nombre: str
   const clave = foto ?? (inicial ? `inicial-${inicial}` : 'vacio');
   return (
     <View style={[forma, st.marco]}>
-      <Animated.View key={clave} entering={FadeIn.duration(320)} exiting={FadeOut.duration(200)} style={[StyleSheet.absoluteFill, st.centro, forma, !foto && (inicial ? st.oro : st.vacio)]}>
+      <Animated.View key={clave} entering={ENTRA} exiting={SALE} style={[StyleSheet.absoluteFill, st.centro, forma, !foto && (inicial ? st.oro : st.vacio)]}>
         {foto ? (
           <Image source={{ uri: foto }} style={forma} contentFit="cover" transition={reducido ? 0 : 250} accessibilityIgnoresInvertColors />
         ) : inicial ? (
@@ -47,11 +50,15 @@ export function Persona({ nombre, correo, foto, alTocar }: { nombre: string; cor
     >
       <Avatar foto={foto} nombre={nombre} tam={54} />
       <View style={st.textos}>
-        <Animated.Text key={nombre} entering={FadeIn.duration(320)} style={nombre ? st.nombre : st.sinNombre} numberOfLines={1}>
+        <Animated.Text key={nombre} entering={ENTRA} style={nombre ? st.nombre : st.sinNombre} numberOfLines={1}>
           {nombre || t('perfil.agregarNombre')}
         </Animated.Text>
-        {/* El correo de la cuenta; sin cuenta (la web de prueba), se dice. */}
-        {correo !== '' && <Text style={st.correo} numberOfLines={1} ellipsizeMode="middle">{correo ?? t('perfil.sinCuenta')}</Text>}
+        {/* El correo de la cuenta; sin cuenta (la web de prueba), se dice. Llega después de armar Perfil: entra con un fundido. */}
+        {correo !== '' && (
+          <Animated.Text key={correo ?? ''} entering={ENTRA} exiting={SALE} style={st.correo} numberOfLines={1} ellipsizeMode="middle">
+            {correo ?? t('perfil.sinCuenta')}
+          </Animated.Text>
+        )}
       </View>
       <Icono nombre="chevron.right" tam={13} color="rgba(239, 230, 207, 0.4)" peso="semibold" />
     </Pressable>

@@ -6,11 +6,14 @@
 
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import { Platform, Pressable, StyleSheet, Text, View, type AccessibilityActionEvent } from 'react-native';
+import Animated, { FadeIn, FadeInDown, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { anunciar, conLector } from '@/secciones/anuncio';
+import { useEsLaActual } from '@/secciones/arriba';
 import { SenalDeAscent } from '@/secciones/ascent/SenalDeAscent';
+import { HABITOS } from '@/secciones/Barra';
 import { lista, t } from '@/textos';
 import { colores } from '@/tema';
 import type { Escena } from './escena';
@@ -18,11 +21,14 @@ import { luzDelDia } from '@/dominio/luz';
 import type { DiaDelCielo } from './dia';
 import type { Medidor } from './latido';
 import { PARALAJE, type Calidad } from './mundo';
-import type { Plano } from './plano';
+import { ANCHO_DE_ETIQUETA, LETRA_MAXIMA, type Lado, type Plano } from './plano';
 import { nombreEn, valorCorto } from './textosDelCielo';
 
-/** `accion`: un botón al lado del texto (el de un hábito de comida lleva a Comida). */
-export type Aviso = { texto: string; clave: number; accion?: { texto: string; alTocar: () => void } };
+/**
+ * `accion`: un botón al lado del texto (el de un hábito de comida lleva a Comida). `paraElLector`: lo
+ * que VoiceOver dice después del texto y no se ve (el día completo, que no tiene texto propio).
+ */
+export type Aviso = { texto: string; clave: number; accion?: { texto: string; alTocar: () => void }; paraElLector?: string };
 
 type Acciones = {
   salud: () => void;
@@ -55,6 +61,9 @@ type Props = {
   subida?: SharedValue<number>;
   /** La señal de Ascent: sin la vinculación, no está. */
   senal?: { alAbrir: () => void; medio: SharedValue<number> };
+  /** Con VoiceOver, la etiqueta de la estrella `i` hace lo de su estrella: tocarla y mantenerla apretada. */
+  marcar: (i: number) => void;
+  editar: (i: number) => void;
 };
 
 // Las riquezas del panel de prueba: el primer día, tres meses (la de la galería) y la plena.
@@ -69,8 +78,13 @@ function suave(a: number, b: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
+// Un nombre largo sigue en una segunda línea alineada como su etiqueta (plano.ts).
+const ALINEADO: Record<Lado, 'center' | 'left' | 'right'> = { abajo: 'center', arriba: 'center', der: 'left', izq: 'right' };
+
 export function Interfaz(p: Props) {
   const insets = useSafeAreaInsets();
+  const reducido = useReducedMotion();
+  const enHabitos = useEsLaActual(HABITOS);
   const { alto } = p.plano;
   const hechos = p.encendidos.filter(Boolean).length;
   const c = p.dia.constelacion;
@@ -92,10 +106,10 @@ export function Interfaz(p: Props) {
     const momento = e.completo ? suave(0.6, 1.4, dc) * (1 - suave(7.5, 9.0, dc)) : 0;
     return { transform: [{ translateX: e.paginaX }, { translateY: e.cam.y * alto }], opacity: (1 - suave(0.15, 0.6, e.cam.y)) * (1 - 0.55 * momento) * (1 - e.velado) };
   });
-  // Mientras está el globito, la frase se aparta: van en el mismo lugar.
+  // Mientras está el globito, la frase se aparta: van en el mismo lugar. Es un fundido: con Reducir movimiento también.
   const conFrase = useSharedValue(p.globito ? 0 : 1);
   useEffect(() => {
-    conFrase.set(withTiming(p.globito ? 0 : 1, { duration: 400 }));
+    conFrase.set(withTiming(p.globito ? 0 : 1, { duration: 400, reduceMotion: ReduceMotion.Never }));
   }, [p.globito, conFrase]);
   const estiloFrase = useAnimatedStyle(() => ({ transform: [{ translateX: escena.value.paginaX }, { translateY: escena.value.cam.y * PARALAJE.lomas[2] * alto }], opacity: (1 - escena.value.velado) * conFrase.get() }));
   // El panel de prueba es de Hábitos: no se ve encima de las otras secciones.
@@ -116,9 +130,19 @@ export function Interfaz(p: Props) {
   const cerrarAviso = useEffectEvent(() => p.alCerrarAviso());
   useEffect(() => {
     if (!p.aviso) return;
-    const espera = setTimeout(cerrarAviso, p.aviso.accion ? 4200 : 2600);
+    // VoiceOver no ve lo que aparece: se lo dice (el «·» se lee como una pausa).
+    anunciar(p.aviso.texto.replace(/ · /g, ', '));
+    if (p.aviso.paraElLector) anunciar(p.aviso.paraElLector);
+    // Con VoiceOver, el que tiene un botón espera a que se llegue a tocarlo: se va con otro aviso, con el
+    // botón, con el gesto de salir o al dejar Hábitos.
+    if (conLector() && p.aviso.accion) return;
+    const espera = setTimeout(cerrarAviso, p.aviso.accion ? 4200 : conLector() ? 4000 : 2600);
     return () => clearTimeout(espera);
   }, [p.aviso]);
+  useEffect(() => {
+    if (!enHabitos) cerrarAviso();
+  }, [enHabitos]);
+  const accionesDeEtiqueta = [{ name: 'longpress', label: t('habitos.editar') }];
 
   const fecha = t('cielo.fecha', {
     dia: lista('fecha.dias')[p.dia.fecha.diaSemana],
@@ -136,35 +160,59 @@ export function Interfaz(p: Props) {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <Animated.View style={[estilos.capa, estiloUniverso]} pointerEvents="none">
-        <Text style={[estilos.universoTitulo, { left: p.plano.universo.titulo[0] - 150, top: p.plano.universo.titulo[1] - 18 }]}>
+        <Text style={[estilos.universoTitulo, { left: p.plano.universo.titulo[0] - 150, top: p.plano.universo.titulo[1] - 18 }]} maxFontSizeMultiplier={LETRA_MAXIMA}>
           {t('cielo.tuUniverso')}
         </Text>
         {p.plano.universo.etiquetas.map((u) => (
           <View key={u.dia} style={[estilos.universoEtiqueta, { left: u.x - 80, top: u.y }]}>
-            <Text style={[estilos.universoDia, u.hoy && estilos.universoHoy]}>{lista('fecha.diasCortos')[u.dia]}</Text>
-            <Text style={[estilos.universoNombre, u.hoy && estilos.universoNombreHoy]}>{nombreEn(u.nombre)}</Text>
+            <Text style={[estilos.universoDia, u.hoy && estilos.universoHoy]} maxFontSizeMultiplier={LETRA_MAXIMA}>{lista('fecha.diasCortos')[u.dia]}</Text>
+            <Text style={[estilos.universoNombre, u.hoy && estilos.universoNombreHoy]} maxFontSizeMultiplier={LETRA_MAXIMA}>{nombreEn(u.nombre)}</Text>
           </View>
         ))}
       </Animated.View>
 
+      {/* Los toques los resuelve el lienzo de abajo (Cielo.tsx). Para VoiceOver, cada etiqueta es su estrella:
+          tocarla dos veces la enciende o la apaga, y su acción abre el editor, como mantenerla apretada. */}
       <Animated.View style={[estilos.capa, estiloEtiquetas]} pointerEvents="none">
         {p.plano.etiquetas.map((e, i) => {
           const h = p.dia.habitos[i];
           const encendida = p.encendidos[i];
           // Lo que lleva hoy un automático, solo mientras no llegó: encendido, ya lo dice la estrella.
           const textoAuto = !h.auto || encendida ? '' : valorCorto(h);
+          const mitad = ANCHO_DE_ETIQUETA / 2;
           const posicion =
-            e.lado === 'abajo' ? { left: e.x - 90, top: e.y + 14, width: 180, alignItems: 'center' as const }
-              : e.lado === 'arriba' ? { left: e.x - 90, top: e.y - 46, height: 34, width: 180, alignItems: 'center' as const, justifyContent: 'flex-end' as const }
-              : e.lado === 'der' ? { left: e.x + 22, top: e.y - 9, width: 180, alignItems: 'flex-start' as const }
-                : { left: e.x - 202, top: e.y - 9, width: 180, alignItems: 'flex-end' as const };
+            e.lado === 'abajo' ? { left: e.x - mitad, top: e.y + 14, width: ANCHO_DE_ETIQUETA, alignItems: 'center' as const }
+              : e.lado === 'arriba' ? { left: e.x - mitad, top: e.y - 46, height: 34, width: ANCHO_DE_ETIQUETA, alignItems: 'center' as const, justifyContent: 'flex-end' as const }
+              : e.lado === 'der' ? { left: e.x + 22, top: e.y - 9, width: ANCHO_DE_ETIQUETA, alignItems: 'flex-start' as const }
+                : { left: e.x - 22 - ANCHO_DE_ETIQUETA, top: e.y - 9, width: ANCHO_DE_ETIQUETA, alignItems: 'flex-end' as const };
           return (
-            <View key={i} style={[estilos.etiqueta, posicion]}>
+            <View
+              key={i}
+              style={[estilos.etiqueta, posicion]}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={textoAuto ? `${h.nombre}, ${t('cielo.lector.lleva', { valor: textoAuto })}` : h.nombre}
+              accessibilityState={{ checked: encendida }}
+              accessibilityHint={h.auto === 'comida' ? t(`cielo.seEnciendeCon.${h.comida ?? 'registrar'}`) : t('cielo.lector.pista')}
+              accessibilityActions={accionesDeEtiqueta}
+              onAccessibilityTap={() => p.marcar(i)}
+              onAccessibilityAction={(ev: AccessibilityActionEvent) => {
+                if (ev.nativeEvent.actionName === 'longpress') p.editar(i);
+                else if (ev.nativeEvent.actionName === 'activate') p.marcar(i);
+              }}
+            >
               <View style={estilos.etiquetaFila}>
                 <SymbolView name={h.icono as SFSymbol} size={11} tintColor={encendida ? colores.oroClaro : colores.pergaminoTenue} />
-                <Text style={[estilos.etiquetaNombre, encendida && estilos.etiquetaEncendida]}>{h.nombre}</Text>
+                <Text
+                  style={[estilos.etiquetaNombre, { textAlign: ALINEADO[e.lado] }, encendida && estilos.etiquetaEncendida]}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                  maxFontSizeMultiplier={LETRA_MAXIMA}
+                >
+                  {h.nombre}
+                </Text>
               </View>
-              {textoAuto ? <Text style={[estilos.etiquetaAuto, encendida && { opacity: 0.7 }]}>{textoAuto}</Text> : null}
+              {textoAuto ? <Text style={[estilos.etiquetaAuto, encendida && { opacity: 0.7 }]} maxFontSizeMultiplier={LETRA_MAXIMA}>{textoAuto}</Text> : null}
             </View>
           );
         })}
@@ -179,19 +227,19 @@ export function Interfaz(p: Props) {
       >
         <View style={estilos.cabeceraFila}>
           <View>
-            <Text style={estilos.fecha}>{fecha}</Text>
-            {c && <Text style={estilos.nombre}>{nombreEn(c.nombres)}</Text>}
+            <Text style={estilos.fecha} maxFontSizeMultiplier={LETRA_MAXIMA}>{fecha}</Text>
+            {c && <Text style={estilos.nombre} maxFontSizeMultiplier={LETRA_MAXIMA}>{nombreEn(c.nombres)}</Text>}
           </View>
           <View style={estilos.luz}>
-            <Text style={estilos.luzNumero}>{luz}</Text>
-            <Text style={estilos.luzTexto}>{t('cielo.luzDeHoy')}</Text>
+            <Text style={estilos.luzNumero} maxFontSizeMultiplier={LETRA_MAXIMA}>{luz}</Text>
+            <Text style={estilos.luzTexto} maxFontSizeMultiplier={LETRA_MAXIMA}>{t('cielo.luzDeHoy')}</Text>
           </View>
         </View>
       </Animated.View>
 
       <Animated.View style={[estilos.frase, { bottom: p.abajo ? p.abajo + (p.senal ? 46 : 38) : insets.bottom + 12 }, estiloFrase]} pointerEvents="none">
-        <Text style={estilos.fraseTexto}>{`“${nombreEn(p.dia.frase.texto)}”`}</Text>
-        <Text style={estilos.fraseAutor}>{nombreEn(p.dia.frase.autor)}</Text>
+        <Text style={estilos.fraseTexto} maxFontSizeMultiplier={LETRA_MAXIMA}>{`“${nombreEn(p.dia.frase.texto)}”`}</Text>
+        <Text style={estilos.fraseAutor} maxFontSizeMultiplier={LETRA_MAXIMA}>{nombreEn(p.dia.frase.autor)}</Text>
       </Animated.View>
 
       {/* No toma toques: los resuelven los gestos del cielo (Cielo.tsx). */}
@@ -201,18 +249,29 @@ export function Interfaz(p: Props) {
         </Animated.View>
       )}
 
-      {/* El aviso y el globito son de Hábitos: se van con su página. */}
+      {/* El aviso y el globito son de Hábitos: se van con su página. Con Reducir movimiento no suben: se funden. */}
       <Animated.View style={[StyleSheet.absoluteFill, estiloPanel]} pointerEvents="box-none">
       {p.globito && !p.aviso && (
-        <Animated.View entering={FadeInDown.duration(320).delay(500)} exiting={FadeOut.duration(260)} style={[estilos.aviso, estilos.globito, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 40) : insets.bottom + 40 }]} pointerEvents="none">
+        <Animated.View
+          entering={(reducido ? FadeIn : FadeInDown).duration(320).delay(500).reduceMotion(ReduceMotion.Never)}
+          exiting={FadeOut.duration(260).reduceMotion(ReduceMotion.Never)}
+          style={[estilos.aviso, estilos.globito, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 40) : insets.bottom + 40 }]}
+          pointerEvents="none"
+        >
           <Text style={estilos.avisoTexto} numberOfLines={2}>{t('cielo.globito')}</Text>
         </Animated.View>
       )}
       {p.aviso && (
-        <Animated.View key={p.aviso.clave} entering={FadeInDown.duration(220)} exiting={FadeOut.duration(200)} style={[estilos.aviso, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 24) : insets.bottom + 96 }]}>
+        <Animated.View
+          key={p.aviso.clave}
+          entering={(reducido ? FadeIn : FadeInDown).duration(220).reduceMotion(ReduceMotion.Never)}
+          exiting={FadeOut.duration(200).reduceMotion(ReduceMotion.Never)}
+          style={[estilos.aviso, { bottom: p.abajo ? p.abajo + (p.senal ? 52 : 24) : insets.bottom + 96 }]}
+          onAccessibilityEscape={p.alCerrarAviso}
+        >
           <Text style={estilos.avisoTexto} numberOfLines={2}>{p.aviso.texto}</Text>
           {p.aviso.accion && (
-            <Pressable onPress={p.aviso.accion.alTocar} style={estilos.avisoBoton} accessibilityRole="button" hitSlop={8}>
+            <Pressable onPress={p.aviso.accion.alTocar} style={({ pressed }) => [estilos.avisoBoton, pressed && estilos.apretado]} accessibilityRole="button" hitSlop={8}>
               <Text style={estilos.avisoBotonTexto}>{p.aviso.accion.texto}</Text>
             </Pressable>
           )}
@@ -300,7 +359,7 @@ const estilos = StyleSheet.create({
 
   etiqueta: { position: 'absolute' },
   etiquetaFila: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  etiquetaNombre: { fontFamily: 'Jost_400Regular', fontSize: 11.5, color: 'rgba(239, 230, 207, 0.66)', ...SOMBRA },
+  etiquetaNombre: { flexShrink: 1, fontFamily: 'Jost_400Regular', fontSize: 11.5, color: 'rgba(239, 230, 207, 0.66)', ...SOMBRA },
   etiquetaEncendida: { color: '#f3dc9b' },
   etiquetaAuto: { marginTop: 3, fontFamily: 'Jost_400Regular', fontSize: 10, color: colores.musgoLuz, fontVariant: ['tabular-nums'], ...SOMBRA },
 
@@ -324,6 +383,7 @@ const estilos = StyleSheet.create({
   avisoTexto: { flexShrink: 1, fontFamily: 'Jost_400Regular', fontSize: 13, color: colores.pergamino },
   globito: { paddingRight: 16, borderColor: 'rgba(232, 196, 106, 0.32)' },
   avisoBoton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(232, 196, 106, 0.12)' },
+  apretado: { opacity: 0.6 },
   avisoBotonTexto: { fontFamily: 'Jost_500Medium', fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase', color: colores.oro },
 
   panel: { position: 'absolute', right: 12, alignItems: 'flex-end' },

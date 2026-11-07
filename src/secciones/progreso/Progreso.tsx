@@ -4,8 +4,10 @@
 // el día que se elige. «Metas de hoy» abre las metas: quién las pone, cómo se reparten los macros y
 // repartir la semana. Sin datos propios, la persona de ejemplo, con su aviso arriba.
 
-import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AccessibilityActionEvent, type ScrollViewInstance } from 'react-native';
+import Animated, { LayoutAnimationConfig, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import { conMayuscula } from '@/comida/buscar';
@@ -16,17 +18,25 @@ import { ESTILOS, EXTRAS, objetivoPermitido, pesoMinimoSano, pisoDe, repartirSem
 import type { EstadoDelObjetivo } from '@/dominio/progreso';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { anunciar } from '../anuncio';
+import { alTocarDeNuevo, useEsLaActual } from '../arriba';
+import { PESTANAS } from '../Barra';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto, type Macro } from '../comida/comunes';
 import { conSigno, fechaCorta, fechaDiaMes, fechaLarga, numero, sistemaDe, useEstado } from '../comida/datos';
 import { usePersona } from '../ganchos';
 import { Balance, Linea } from '../graficos/Graficos';
 import type { VistaDelMas } from '../HojaMas';
+import { ENTRA_FUNDIDO, ENTRA_PANEL, SALE_FUNDIDO, SALE_PANEL } from '../movimiento';
+import { BotonDePaso } from '../paso';
 import type { Persona } from '../persona';
 import {
   Aparece, AvisoDeEjemplo, BotonChico, Cabecera, Camino, Carta, Chip, Cifra, ComoSeCalcula, Dias, Eje, EtiquetaDeGrupo, Nota, Parrafo, Recuadro, SEMANA, Segmento, type TipoDeChip,
 } from '../tarjetas';
+import { tecladoDeNumeros } from '../teclado';
 
 type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
+
+const PROGRESO = PESTANAS.indexOf('progreso');
 
 const TIPO_DE_ESTADO: Record<EstadoDelObjetivo, TipoDeChip | undefined> = {
   llegaste: 'bien', enCamino: 'bien', estable: 'bien', despacio: 'atencion', quieto: 'atencion', alReves: 'atencion', seMueve: 'atencion', sinMeta: 'tenue', otroLado: 'atencion', todaviaNo: 'tenue', faltanDatos: 'tenue',
@@ -46,11 +56,45 @@ function unidades(sistema: Sistema) {
 
 export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   const [vista, setVista] = useState<'principal' | 'metas'>('principal');
+  const reducido = useReducedMotion();
+  const esLaActual = useEsLaActual(PROGRESO);
+  const scroll = useRef<ScrollViewInstance>(null);
+  // Tocar otra vez la pestaña: desde las metas vuelve a Progreso; en Progreso, sube arriba de todo.
+  useEffect(() => alTocarDeNuevo(PROGRESO, () => {
+    if (vista === 'metas') setVista('principal');
+    else scroll.current?.scrollTo({ y: 0, animated: !reducido });
+  }), [vista, reducido]);
+  // Progreso queda armado debajo de las metas, donde estaba y con lo que tenía abierto: se funde
+  // mientras las metas entran de costado, y vuelve igual.
+  const enMetas = useSharedValue(0);
+  useEffect(() => {
+    enMetas.set(withTiming(vista === 'metas' ? 1 : 0, { duration: vista === 'metas' ? 240 : 220, reduceMotion: ReduceMotion.Never }));
+  }, [vista, enMetas]);
+  const estiloPrincipal = useAnimatedStyle(() => ({ opacity: 1 - enMetas.get() }));
+  const conMetas = vista === 'metas';
+  const relleno = { paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 };
   return (
     <View style={{ width: ancho }}>
-      <ScrollView key={vista} contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
-        {vista === 'principal' ? <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} /> : <Metas alVolver={() => setVista('principal')} />}
-      </ScrollView>
+      <Animated.View
+        style={[s.vista, estiloPrincipal]}
+        pointerEvents={conMetas ? 'none' : 'auto'}
+        accessibilityElementsHidden={conMetas}
+        importantForAccessibility={conMetas ? 'no-hide-descendants' : 'auto'}
+      >
+        <ScrollView ref={scroll} contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual && !conMetas}>
+          <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} />
+        </ScrollView>
+      </Animated.View>
+      {conMetas && (
+        <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={StyleSheet.absoluteFill}>
+          <ScrollView contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual}>
+            {/* Las metas entran enteras con su panel: lo de adentro no se funde además. */}
+            <LayoutAnimationConfig skipEntering>
+              <Metas alVolver={() => setVista('principal')} />
+            </LayoutAnimationConfig>
+          </ScrollView>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -235,13 +279,15 @@ function ElGasto({ p, u, abierto, alAbrir }: { p: Persona; u: U; abierto: boolea
 
 // ------------------------------------------------------------------ la estrategia
 function Fila({ titulo, valor, abierta, alTocar }: { titulo: string; valor: string; abierta?: boolean; alTocar: () => void }) {
+  // La flecha gira al abrir y al cerrar, como la de «Cómo se calcula».
+  const flecha = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '90deg' : '0deg', { duration: 220 }) }] }), [abierta]);
   return (
     <Pressable onPress={alTocar} style={({ pressed }) => [s.estrategiaFila, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
       <Text style={s.estrategiaTitulo}>{titulo}</Text>
       <Text style={s.estrategiaValor} numberOfLines={1}>{valor}</Text>
-      <View style={{ transform: [{ rotate: abierta ? '90deg' : '0deg' }] }}>
+      <Animated.View style={flecha}>
         <Icono nombre="chevron.right" tam={13} color="rgba(239, 230, 207, 0.4)" peso="semibold" />
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -302,14 +348,18 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
           {abierto === 'pesoMeta' && (
             <Eleccion>
               <PasosDelPesoMeta
-                kg={metaKg ?? Math.round(p.pesoHoy ?? 70)}
+                // Sin meta, desde el peso de hoy; con bajo peso, desde el primero que se puede.
+                kg={metaKg ?? Math.max(Math.round(p.pesoHoy ?? 70), primeroPermitido(minimo, u.unidad === 'lb'))}
                 u={u}
                 minimo={minimo}
                 alCambiar={(pesoMeta) => {
                   setEnElMinimo(false);
                   ponerEstrategia({ pesoMeta });
                 }}
-                alMinimo={() => setEnElMinimo(true)}
+                alMinimo={() => {
+                  setEnElMinimo(true);
+                  anunciar(t('progreso.limites.imc', { n: u.peso(minimo, 1), unidad: u.unidad }));
+                }}
               />
               <Parrafo chico>{t('progreso.pesoMetaNota')}</Parrafo>
               {enElMinimo && (
@@ -331,23 +381,63 @@ function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: 
   );
 }
 
-/** El peso meta de a medio kilo, o de a una libra, no por debajo de `minimo` (un IMC de 18,5). */
+/** Una libra en kg, redondeado a 0,1 kg: lo que guarda la cuenta. */
+const deLibras = (lb: number) => Math.round(lb * KG_POR_LIBRA * 10) / 10;
+
+/** El peso meta más bajo que se puede elegir con los pasos: el medio kilo, o la libra, de arriba del mínimo. */
+function primeroPermitido(minimo: number, enLibras: boolean): number {
+  if (!enLibras) return Math.ceil(minimo * 2) / 2;
+  const libras = Math.ceil(minimo / KG_POR_LIBRA);
+  // Redondeada a 0,1 kg, esa libra puede quedar apenas por debajo: entonces, la que sigue.
+  return deLibras(libras) >= minimo ? deLibras(libras) : deLibras(libras + 1);
+}
+
+/**
+ * El peso meta de a medio kilo, o de a una libra, no por debajo de `minimo` (un IMC de 18,5). Solo se
+ * frena al bajar: con bajo peso, subir desde abajo del mínimo salta al primero que se puede.
+ */
 function PasosDelPesoMeta({ kg, u, minimo, alCambiar, alMinimo }: { kg: number; u: U; minimo: number; alCambiar: (kg: number) => void; alMinimo: () => void }) {
-  const cambiar = (signo: 1 | -1) => {
+  const enLibras = u.unidad === 'lb';
+  const cambiar = (signo: 1 | -1): boolean => {
     // En libras, desde la libra que se ve: redondeado a 0,1 kg (lo que guarda la cuenta), vuelve a esa libra.
-    const nuevo = u.unidad === 'lb' ? Math.round((Math.round(u.enUnidad(kg)) + signo) * KG_POR_LIBRA * 10) / 10 : Math.round((kg + 0.5 * signo) * 2) / 2;
-    if (nuevo < minimo) alMinimo();
-    else if (nuevo <= 400) alCambiar(nuevo);
+    let nuevo = enLibras ? deLibras(Math.round(u.enUnidad(kg)) + signo) : Math.round((kg + 0.5 * signo) * 2) / 2;
+    if (nuevo < minimo) {
+      if (signo < 0) {
+        alMinimo();
+        return false;
+      }
+      nuevo = primeroPermitido(minimo, enLibras);
+    }
+    if (nuevo > 400) return false;
+    alCambiar(nuevo);
+    anunciar(`${u.meta(nuevo)} ${u.unidad}`);
+    return true;
   };
+  const paso = enLibras ? '1 lb' : `${numero(0.5, 1)} kg`;
+  const menos = t('comun.menos', { que: paso });
+  const mas = t('comun.mas', { que: paso });
+  const valor = `${u.meta(kg)} ${u.unidad}`;
   return (
-    <View style={s.pasos}>
-      <Pressable onPress={() => cambiar(-1)} style={s.paso} accessibilityRole="button" accessibilityLabel={t('progreso.bajarMeta')}>
+    // Para VoiceOver, el valor con sus dos botones es uno solo, que se ajusta deslizando para arriba o para abajo.
+    <View
+      style={s.pasos}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={t('progreso.pesoMeta')}
+      accessibilityValue={{ text: valor }}
+      accessibilityActions={[{ name: 'increment', label: mas }, { name: 'decrement', label: menos }]}
+      onAccessibilityAction={(ev: AccessibilityActionEvent) => {
+        if (ev.nativeEvent.actionName === 'increment') cambiar(1);
+        else if (ev.nativeEvent.actionName === 'decrement') cambiar(-1);
+      }}
+    >
+      <BotonDePaso alPaso={() => cambiar(-1)} etiqueta={menos} style={s.paso}>
         <Icono nombre="minus" tam={16} peso="semibold" />
-      </Pressable>
-      <Text style={s.pasoValor}>{`${u.meta(kg)} ${u.unidad}`}</Text>
-      <Pressable onPress={() => cambiar(1)} style={s.paso} accessibilityRole="button" accessibilityLabel={t('progreso.subirMeta')}>
+      </BotonDePaso>
+      <Text style={s.pasoValor} maxFontSizeMultiplier={1.4}>{valor}</Text>
+      <BotonDePaso alPaso={() => cambiar(1)} etiqueta={mas} style={s.paso}>
         <Icono nombre="plus" tam={16} peso="semibold" />
-      </Pressable>
+      </BotonDePaso>
     </View>
   );
 }
@@ -393,7 +483,7 @@ function ElControl({ p }: { p: Persona }) {
       </View>
       <Parrafo>{t(estado === 'alcanza' ? 'progreso.controlListo' : estado === 'enCurso' ? 'progreso.controlEnCurso' : ec.tramoCorto ? 'progreso.controlPrimero' : 'progreso.controlFalta', { n: quedan })}</Parrafo>
       <EtiquetaDeGrupo>{t('progreso.diaDelControl')}</EtiquetaDeGrupo>
-      <Dias elegidos={[p.diaDelControl]} alTocar={(d) => elAlmacen().ponerEstrategia({ diaDelControl: d })} />
+      <Dias elegidos={[p.diaDelControl]} uno alTocar={(d) => elAlmacen().ponerEstrategia({ diaDelControl: d })} />
       <Parrafo chico>{t('progreso.diaDelControlNota')}</Parrafo>
     </Carta>
   );
@@ -409,11 +499,13 @@ function Metas({ alVolver }: { alVolver: () => void }) {
   const m = p.meta ?? { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 };
   const semana = p.perfil.semana;
   const estilo = p.perfil.estilo ?? 'equilibrada';
-  // A mano, por debajo del piso no se guarda (motivoParaNo): se dice por qué.
+  // A mano, por debajo del piso no se guarda (motivoParaNo): se dice por qué, al terminar de escribir.
+  // Mientras se escribe pasa por números que no van («1» camino a «150»): esos no lo dicen.
   const [bajoElPiso, setBajoElPiso] = useState(false);
-  const aMano = (macros: Omit<Macros, 'kcal'>) => {
+  const aMano = (macros: Omit<Macros, 'kcal'>, alTerminar: boolean) => {
     const guardada = almacen.ponerMetasAMano(macros) !== null;
-    setBajoElPiso(!guardada);
+    if (guardada || alTerminar) setBajoElPiso(!guardada);
+    if (!guardada && alTerminar) anunciar(t('progreso.limites.piso', { n: numero(pisoDe(p.perfil.sexo)) }));
     return guardada;
   };
   const cambiarAltos = (d: DiaSemana) => {
@@ -425,7 +517,7 @@ function Metas({ alVolver }: { alVolver: () => void }) {
   return (
     <>
       <View style={s.metasCab}>
-        <Pressable onPress={alVolver} style={s.atras} accessibilityRole="button" accessibilityLabel={t('comun.atras')} hitSlop={6}>
+        <Pressable onPress={alVolver} style={({ pressed }) => [s.atras, pressed && { opacity: 0.6 }]} accessibilityRole="button" accessibilityLabel={t('comun.atras')} hitSlop={6}>
           <Icono nombre="chevron.left" tam={20} color={colores.pergamino} />
         </Pressable>
         <Text style={s.metasTitulo}>{t('progreso.metas.titulo')}</Text>
@@ -460,8 +552,11 @@ function Metas({ alVolver }: { alVolver: () => void }) {
               return (
                 <Pressable
                   key={x}
-                  onPress={() => almacen.ponerEstrategia({ estilo: x })}
-                  style={[s.estilo, i > 0 && s.estiloSeparado]}
+                  onPress={() => {
+                    if (!elegido) Haptics.selectionAsync().catch(() => {});
+                    almacen.ponerEstrategia({ estilo: x });
+                  }}
+                  style={({ pressed }) => [s.estilo, i > 0 && s.estiloSeparado, pressed && !elegido && { opacity: 0.7 }]}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: elegido }}
                 >
@@ -479,7 +574,7 @@ function Metas({ alVolver }: { alVolver: () => void }) {
         <Aparece key="aMano">
           <EtiquetaDeGrupo>{t('progreso.metas.tusMacros')}</EtiquetaDeGrupo>
           {MACROS.map((macro) => (
-            <CampoDeMacro key={`${macro}-${m[macro]}`} macro={macro} gramos={m[macro]} alCambiar={(g) => aMano({ proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, [macro]: g })} />
+            <CampoDeMacro key={macro} macro={macro} gramos={m[macro]} alCambiar={(g, alTerminar) => aMano({ proteina: m.proteina, carbohidratos: m.carbohidratos, grasas: m.grasas, [macro]: g }, alTerminar)} />
           ))}
           {bajoElPiso && (
             <Aparece>
@@ -513,25 +608,62 @@ function Metas({ alVolver }: { alVolver: () => void }) {
   );
 }
 
-/** Un macro a mano: se guarda al terminar de escribir. */
-function CampoDeMacro({ macro, gramos, alCambiar }: { macro: Macro; gramos: number; alCambiar: (g: number) => boolean }) {
+/** Lo que espera lo escrito en un macro antes de guardarse. */
+const ESPERA_AL_ESCRIBIR = 600;
+
+/**
+ * Un macro a mano: se guarda mientras se escribe, después de una espera corta, y al salir del campo.
+ * Así lo escrito no se pierde si la pantalla se va antes (con «Atrás» y el teclado arriba).
+ */
+function CampoDeMacro({ macro, gramos, alCambiar }: { macro: Macro; gramos: number; alCambiar: (g: number, alTerminar: boolean) => boolean }) {
   const [texto, setTexto] = useState(String(gramos));
-  const guardar = () => {
-    // Vacío no es cero; y lo que no se guardó (bajo el piso) no queda escrito: vuelve a lo que había.
-    const g = texto.trim() ? Math.round(Number(texto.replace(',', '.'))) : Number.NaN;
-    if (!(Number.isFinite(g) && g >= 0 && g <= 1000 && g !== gramos && alCambiar(g))) setTexto(String(gramos));
-  };
+  // Lo último que se guardó desde acá: si llega otro valor (las metas de Moss, otro teléfono), el campo lo muestra.
+  const [propio, setPropio] = useState(gramos);
+  const [antes, setAntes] = useState(gramos);
+  if (gramos !== antes) {
+    setAntes(gramos);
+    if (gramos !== propio) setTexto(String(gramos));
+  }
+  const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Lo escrito que todavía espera, y lo de este render para guardarlo cuando llegue la hora.
+  const pendiente = useRef<string | null>(null);
+  const actual = useRef({ gramos, alCambiar });
+  useEffect(() => {
+    actual.current = { gramos, alCambiar };
+  });
+  const guardar = useCallback((escrito: string, alTerminar: boolean): boolean => {
+    clearTimeout(espera.current);
+    pendiente.current = null;
+    // Vacío no es cero.
+    const g = escrito.trim() ? Math.round(Number(escrito.replace(',', '.'))) : Number.NaN;
+    if (!(Number.isFinite(g) && g >= 0 && g <= 1000)) return false;
+    if (g === actual.current.gramos) return true;
+    if (!actual.current.alCambiar(g, alTerminar)) return false;
+    setPropio(g);
+    return true;
+  }, []);
+  const guardarLoPendiente = useCallback(() => {
+    if (pendiente.current !== null) guardar(pendiente.current, true);
+  }, [guardar]);
+  useEffect(() => guardarLoPendiente, [guardarLoPendiente]);
   return (
     <View style={s.campo}>
       <View style={[s.campoPunto, { backgroundColor: COLOR_DE_MACRO[macro] }]} />
       <Text style={s.campoNombre}>{t(`comida.${macro}`)}</Text>
       <TextInput
         value={texto}
-        onChangeText={setTexto}
-        onEndEditing={guardar}
-        onSubmitEditing={guardar}
+        onChangeText={(x) => {
+          setTexto(x);
+          pendiente.current = x;
+          clearTimeout(espera.current);
+          espera.current = setTimeout(() => guardar(x, false), ESPERA_AL_ESCRIBIR);
+        }}
+        // Lo que no se pudo guardar (bajo el piso, o sin número) no queda escrito: vuelve a lo que había.
+        onEndEditing={() => {
+          if (!guardar(texto, true)) setTexto(String(gramos));
+        }}
         keyboardType="number-pad"
-        returnKeyType="done"
+        {...tecladoDeNumeros()}
         selectTextOnFocus
         maxLength={4}
         selectionColor={colores.oro}
@@ -550,11 +682,12 @@ function Barras({ reparto, altos }: { reparto: Record<DiaSemana, Macros>; altos:
     <View style={s.barras}>
       {SEMANA.map((d) => (
         <View key={d} style={s.barra}>
-          <Text style={s.barraKcal}>{numero(reparto[d].kcal)}</Text>
+          {/* Siete columnas en el ancho de la pantalla: con el texto grande, las kcal crecen poco. */}
+          <Text style={s.barraKcal} maxFontSizeMultiplier={1.2}>{numero(reparto[d].kcal)}</Text>
           <View style={s.barraPista}>
             <View style={[s.barraLlena, { height: `${(reparto[d].kcal / maximo) * 100}%` }, altos.includes(d) && s.barraAlta]} />
           </View>
-          <Text style={s.barraDia}>{lista('fecha.diasCortos')[d].charAt(0)}</Text>
+          <Text style={s.barraDia} maxFontSizeMultiplier={1.2}>{lista('fecha.diasCortos')[d].charAt(0)}</Text>
         </View>
       ))}
     </View>
@@ -562,6 +695,7 @@ function Barras({ reparto, altos }: { reparto: Record<DiaSemana, Macros>; altos:
 }
 
 const s = StyleSheet.create({
+  vista: { flex: 1 },
   seccion: { marginTop: 28, marginHorizontal: 2, fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino },
   objetivoTitulo: { fontFamily: letras.numeroMedio, fontSize: 19, lineHeight: 22, color: colores.pergamino },
   grafico: { marginTop: 8 },

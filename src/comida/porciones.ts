@@ -18,11 +18,65 @@ const INVARIABLES: Record<Idioma, Set<string>> = {
 /** En español, las palabras que vienen después de estas no van en plural: «2 porciones de referencia». */
 const PREPOSICIONES = new Set(['de', 'del', 'en', 'con', 'a', 'al', 'para', 'sin', 'por']);
 
-/** Con coma o punto según el idioma, hasta dos decimales y con separador de miles. */
-export function decimal(n: number, idioma: Idioma): string {
+/**
+ * Con coma o punto según el idioma y hasta dos decimales. Con `conMiles` en false, sin separar los
+ * miles: así queda un número que se corrige en un campo y `leerNumero` lo vuelve a leer igual.
+ */
+export function decimal(n: number, idioma: Idioma, conMiles = true): string {
   const [entero, decimales] = String(Math.round(n * 100) / 100).split('.');
-  const miles = entero.replace(/\B(?=(\d{3})+(?!\d))/g, idioma === 'es' ? '.' : ',');
+  const miles = conMiles ? entero.replace(/\B(?=(\d{3})+(?!\d))/g, idioma === 'es' ? '.' : ',') : entero;
   return decimales ? `${miles}${idioma === 'es' ? ',' : '.'}${decimales}` : miles;
+}
+
+/** Las fracciones que se escriben con un solo signo. */
+const FRACCION_ESCRITA: Record<string, number> = {
+  '½': 1 / 2, '⅓': 1 / 3, '⅔': 2 / 3, '¼': 1 / 4, '¾': 3 / 4, '⅕': 1 / 5, '⅖': 2 / 5, '⅗': 3 / 5, '⅘': 4 / 5,
+  '⅙': 1 / 6, '⅚': 5 / 6, '⅛': 1 / 8, '⅜': 3 / 8, '⅝': 5 / 8, '⅞': 7 / 8,
+};
+
+/** Miles separados con `sep`: «1.500», «12.345.678». El primer grupo no empieza con 0: «0,500» es medio. */
+const conMiles = (s: string, sep: string) => new RegExp(`^[1-9]\\d{0,2}(?:\\${sep}\\d{3})+$`).test(s);
+
+/** La parte de cifras de un número escrito: decimales con coma o con punto, y los miles. */
+function leerCifras(s: string): number | null {
+  const ultimo = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'));
+  let entero = s;
+  let decimales = '';
+  if (s.includes(',') && s.includes('.')) {
+    // Con coma y punto, el último separa los decimales y el otro, los miles: «1,050.5», «1.050,5».
+    const miles = s[ultimo] === ',' ? '.' : ',';
+    entero = s.slice(0, ultimo);
+    decimales = s.slice(ultimo + 1);
+    if (!conMiles(entero, miles)) return null;
+    entero = entero.split(miles).join('');
+  } else if (ultimo >= 0) {
+    const sep = s[ultimo];
+    if (conMiles(s, sep)) entero = s.split(sep).join('');
+    else if (s.indexOf(sep) !== ultimo) return null;
+    else {
+      entero = s.slice(0, ultimo);
+      decimales = s.slice(ultimo + 1);
+    }
+  }
+  if ((!entero && !decimales) || !/^\d*$/.test(entero) || !/^\d*$/.test(decimales)) return null;
+  const n = Number(`${entero || '0'}.${decimales || '0'}`);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Un número como se escribe en un campo: con coma o con punto («1,5», «1.5», «,5»), con una fracción
+ * («1½», «½») y con los miles separados («1.500», «1,500», «1.050,5»): un separador seguido de
+ * exactamente tres cifras separa los miles. Lo que no es un número, null.
+ */
+export function leerNumero(texto: string): number | null {
+  const m = /^([\d.,]*?)([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])?$/u.exec(texto.replace(/\s/g, ''));
+  if (!m || (!m[1] && !m[2])) return null;
+  const fraccion = m[2] ? FRACCION_ESCRITA[m[2]] : 0;
+  if (!m[1]) return fraccion;
+  // Con fracción, delante va un entero: «1½»; «1,5½» no es nada.
+  if (m[2] && !/^\d+$/.test(m[1])) return null;
+  const n = leerCifras(m[1]);
+  return n === null ? null : n + fraccion;
 }
 
 /** Un número como se escribe en una porción (1, ½, 1½, 2¼…), o null si no es un entero ni una fracción común. */

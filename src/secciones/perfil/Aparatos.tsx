@@ -16,7 +16,7 @@ import { Icono } from '../comida/comunes';
 import { useEstado } from '../comida/datos';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
-import { Aparece, EtiquetaDeGrupo, Parrafo } from '../tarjetas';
+import { ACOMODA, Aparece, EtiquetaDeGrupo, Parrafo } from '../tarjetas';
 
 /** Las marcas de la lista, en el orden en que miden mejor el sueño (spec/aparatos.md, «El orden»). */
 const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'anillo', 'coros', 'suunto', 'eightSleep', 'samsung'] as const;
@@ -43,11 +43,11 @@ function Puntos({ nivel }: { nivel: number }) {
   );
 }
 
-/** Una marca que se despliega con lo que llega de ella; la flecha gira. */
+/** Una marca que se despliega con lo que llega de ella; la flecha gira y las de abajo se acomodan. */
 function DeCadaUno({ marca, abierta, alTocar, primera }: { marca: ConTexto; abierta: boolean; alTocar: () => void; primera: boolean }) {
   const giro = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '90deg' : '0deg', { duration: 260 }) }] }), [abierta]);
   return (
-    <View style={!primera && st.separada}>
+    <Animated.View layout={ACOMODA} style={!primera && st.separada}>
       <Pressable onPress={alTocar} style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
         <Text style={st.filaTitulo}>{t(`perfil.aparatos.marcas.${marca}.nombre`)}</Text>
         <Animated.View style={giro}>
@@ -59,7 +59,7 @@ function DeCadaUno({ marca, abierta, alTocar, primera }: { marca: ConTexto; abie
           <Text style={st.marcaTexto}>{t(`perfil.aparatos.marcas.${marca}.texto`)}</Text>
         </Aparece>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -68,7 +68,7 @@ function NoLlego() {
   const [abierta, setAbierta] = useState(false);
   const giro = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '90deg' : '0deg', { duration: 260 }) }] }), [abierta]);
   return (
-    <View style={[st.lista, st.noLlego]}>
+    <Animated.View layout={ACOMODA} style={[st.lista, st.noLlego]}>
       <Pressable onPress={() => setAbierta((x) => !x)} style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
         <Text style={st.filaTitulo}>{t('perfil.aparatos.noLlego.titulo')}</Text>
         <Animated.View style={giro}>
@@ -80,7 +80,7 @@ function NoLlego() {
           {listaDeTextos('perfil.aparatos.noLlego.pasos').map((paso, i) => <Text key={paso} style={st.marcaTexto}>{`${i + 1}. ${paso}`}</Text>)}
         </Aparece>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -121,22 +121,27 @@ export function Aparatos({ alCerrar }: { alCerrar: () => void }) {
         )}
       </View>
       <NoLlego />
-      {aparatos.length > 1 && (
-        <Aparece>
-          <EtiquetaDeGrupo>{t('perfil.aparatos.laNoche')}</EtiquetaDeGrupo>
-          <View style={{ gap: 8 }}>
-            <Opcion titulo={t('perfil.aparatos.automatica')} detalle={t('perfil.aparatos.automaticaTexto')} elegida={!e.fuenteDelSueno} alTocar={() => elegir(null)} />
-            {aparatos.map((a) => <Opcion key={a.fuente.id} titulo={nombreDe(a.fuente)} elegida={e.fuenteDelSueno === a.fuente.id} alTocar={() => elegir(a.fuente.id)} />)}
-          </View>
-        </Aparece>
-      )}
-      <EtiquetaDeGrupo>{t('perfil.aparatos.cadaUno')}</EtiquetaDeGrupo>
-      <View style={st.lista}>
-        {lista.map((m, i) => (
-          <DeCadaUno key={m} marca={m} abierta={abierta === m} primera={i === 0} alTocar={() => setAbierta((x) => (x === m ? null : m))} />
-        ))}
-      </View>
-      <Parrafo chico>{t('perfil.aparatos.varios')}</Parrafo>
+      {/* Lo de abajo de «No llega» (y de cada marca) se acomoda cuando se despliega. */}
+      <Animated.View layout={ACOMODA}>
+        {aparatos.length > 1 && (
+          <Aparece>
+            <EtiquetaDeGrupo>{t('perfil.aparatos.laNoche')}</EtiquetaDeGrupo>
+            <View style={{ gap: 8 }}>
+              <Opcion titulo={t('perfil.aparatos.automatica')} detalle={t('perfil.aparatos.automaticaTexto')} elegida={!e.fuenteDelSueno} alTocar={() => elegir(null)} />
+              {aparatos.map((a) => <Opcion key={a.fuente.id} titulo={nombreDe(a.fuente)} elegida={e.fuenteDelSueno === a.fuente.id} alTocar={() => elegir(a.fuente.id)} />)}
+            </View>
+          </Aparece>
+        )}
+        <EtiquetaDeGrupo>{t('perfil.aparatos.cadaUno')}</EtiquetaDeGrupo>
+        <Animated.View layout={ACOMODA} style={st.lista}>
+          {lista.map((m, i) => (
+            <DeCadaUno key={m} marca={m} abierta={abierta === m} primera={i === 0} alTocar={() => setAbierta((x) => (x === m ? null : m))} />
+          ))}
+        </Animated.View>
+        <Animated.View layout={ACOMODA}>
+          <Parrafo chico>{t('perfil.aparatos.varios')}</Parrafo>
+        </Animated.View>
+      </Animated.View>
     </HojaModal>
   );
 }

@@ -6,10 +6,11 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type AutoCapitalize, type KeyboardTypeOptions, type TextInputInstance } from 'react-native';
-import Animated, { FadeIn, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
+import Animated, { FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
 
 import { baseDeAlimentos } from '@/comida/base';
 import type { Etiqueta as EtiquetaLeida, Leidos } from '@/comida/etiqueta';
+import { decimal, leerNumero } from '@/comida/porciones';
 import { gramosDeLinea, leerReceta, type LineaDeReceta } from '@/comida/recetaDeTexto';
 import type { Comida } from '@/dominio/comidas';
 import type { Sistema } from '@/dominio/cantidades';
@@ -17,31 +18,31 @@ import { escalar, gramosDe, itemDeAlimento, itemRapido, sumarValores, valoresDeR
 import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { ENTRA_FUNDIDO, ENTRA_PANEL, SALE_FUNDIDO, SALE_PANEL } from '../movimiento';
+import { margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
-import { useCampoALaVista } from '../teclado';
+import { tecladoDeNumeros, useCampoALaVista } from '../teclado';
 import { Boton, Etiqueta, Icono, MACROS, Punto } from './comunes';
-import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma } from './datos';
+import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma, useNumeros } from './datos';
 
-/** Un número escrito con coma o con punto; vacío es null. */
-const leer = (texto: string): number | null => {
-  let limpio = texto.trim().replace(/\s/g, '');
-  if (limpio.includes(',') && limpio.includes('.')) {
-    // Con coma y punto, el último separa los decimales y el otro, los miles: «1,050.5», «1.050,5».
-    limpio = limpio.lastIndexOf(',') > limpio.lastIndexOf('.') ? limpio.replace(/\./g, '') : limpio.replace(/,/g, '');
-  } else if (idioma() === 'en') {
-    // En inglés la coma separa los miles («1,520»); el punto es el decimal.
-    if (/^[1-9]\d{0,2}(,\d{3})+$/.test(limpio)) limpio = limpio.replace(/,/g, '');
-  } else {
-    limpio = limpio.replace(/\.(?=\d{3}(\D|$))/g, '');
+/** Un número para llenar un campo: con el decimal del idioma y sin separar los miles, así `leerNumero` lo lee igual. */
+const paraCampo = (n: number) => decimal(Math.round(n * 10) / 10, idioma(), false);
+
+// Cada cosa de una lista con su clave, aunque no tenga id (lo de la comida que se arma, los ingredientes,
+// lo entendido de una frase): así, al quitar una, las de abajo no se rearman y solo esa se va.
+const claves = new WeakMap<object, number>();
+let ultimaClave = 0;
+export function claveDe(x: object): number {
+  let k = claves.get(x);
+  if (k === undefined) {
+    k = ++ultimaClave;
+    claves.set(x, k);
   }
-  limpio = limpio.replace(',', '.');
-  if (!limpio) return null;
-  const n = Number(limpio);
-  return Number.isFinite(n) && n >= 0 ? n : null;
-};
-
-/** Un número para llenar un campo: con el decimal del idioma y sin separar los miles, así `leer` lo lee igual. */
-const paraCampo = (n: number) => String(Math.round(n * 10) / 10).replace('.', idioma() === 'es' ? ',' : '.');
+  return k;
+}
+/** Lo que reemplaza a otra cosa (la misma, corregida) sigue con su clave: se cambia en su lugar, sin irse y volver. */
+export function heredarClave(de: object, a: object) {
+  claves.set(a, claveDe(de));
+}
 
 /** Las kcal que dan los macros (4/4/9): las de un campo de kcal vacío. */
 const kcalDeMacros = (proteina: number, carbohidratos: number, grasas: number) => proteina * 4 + carbohidratos * 4 + grasas * 9;
@@ -50,6 +51,11 @@ type Cadena = { registrar: (campo: RefObject<TextInputInstance | null>) => () =>
 /** Los campos de un panel, en el orden en que se ven: «Siguiente» pasa al que sigue. */
 const CamposDelPanel = createContext<Cadena | null>(null);
 
+/**
+ * Un panel, sobre la lista de la hoja. `abajo` es el borde de abajo del teléfono: la hoja ya lo deja
+ * debajo de la lista (o el teclado), y el panel baja hasta el borde por detrás de ese lugar, así su pie
+ * llega abajo de todo sin contarlo dos veces. Con el teclado arriba, lo que baja queda detrás del teclado.
+ */
 export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number }) {
   const reducido = useReducedMotion();
   // El panel ya se achica con el teclado (el lugar de abajo de la hoja crece con él): el scroll solo
@@ -72,9 +78,16 @@ export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: strin
     },
   }), []);
   return (
-    <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={estilos.panel}>
+    <Animated.View
+      entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL}
+      exiting={reducido ? SALE_FUNDIDO : SALE_PANEL}
+      style={[estilos.panel, { bottom: -abajo }]}
+      // Tapa la lista de la hoja: VoiceOver no la recorre, y el gesto de escape vuelve atrás.
+      accessibilityViewIsModal
+      onAccessibilityEscape={alAtras}
+    >
       <View style={estilos.cabeza}>
-        <Pressable onPress={alAtras} style={estilos.atras} accessibilityRole="button" accessibilityLabel={t('comun.atras')}>
+        <Pressable onPress={alAtras} style={({ pressed }) => [estilos.atras, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comun.atras')} hitSlop={margenDeToque(38)}>
           <Icono nombre="chevron.left" tam={18} peso="medium" />
         </Pressable>
         <Text style={estilos.titulo} numberOfLines={1}>{titulo}</Text>
@@ -90,7 +103,8 @@ export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: strin
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          {children}
+          {/* Lo que ya está cuando el panel entra viene con él; lo que llega o se va después, con su fundido. */}
+          <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
         </ScrollView>
       </CamposDelPanel.Provider>
       {pie && <View style={[estilos.pie, { paddingBottom: abajo + 6 }]}>{pie}</View>}
@@ -102,13 +116,17 @@ type PropsDeCampo = {
   etiqueta: string; valor: string; alCambiar: (v: string) => void; unidad?: string; texto?: boolean; ejemplo?: string; mal?: boolean;
   /** Lo que manda la tecla de retorno («Listo»); sin esto, «Siguiente» pasa al campo que sigue. */
   alListo?: () => void;
+  /** El último del panel: su tecla dice «Listo» y baja el teclado. */
+  ultimo?: boolean;
   largo?: number; mayusculas?: AutoCapitalize; corrector?: boolean; teclado?: KeyboardTypeOptions; enfocado?: boolean;
 };
 
-function Campo({ etiqueta, valor, alCambiar, unidad, texto, ejemplo, mal, alListo, largo, mayusculas, corrector, teclado, enfocado }: PropsDeCampo) {
+function Campo({ etiqueta, valor, alCambiar, unidad, texto, ejemplo, mal, alListo, ultimo, largo, mayusculas, corrector, teclado, enfocado }: PropsDeCampo) {
   const cadena = useContext(CamposDelPanel);
   const campo = useRef<TextInputInstance>(null);
   useEffect(() => cadena?.registrar(campo), [cadena]);
+  // «Siguiente» pasa al que sigue sin que el teclado baje y vuelva a subir; «Listo» lo baja.
+  const siguiente = !alListo && !ultimo;
   return (
     <View style={[estilos.campo, !unidad && estilos.campoTexto]}>
       <Text style={estilos.campoEtiqueta}>{etiqueta}</Text>
@@ -123,15 +141,15 @@ function Campo({ etiqueta, valor, alCambiar, unidad, texto, ejemplo, mal, alList
         autoCapitalize={mayusculas}
         autoCorrect={corrector}
         autoFocus={enfocado}
-        returnKeyType={alListo ? 'done' : 'next'}
-        // Al pasar al que sigue, el teclado no baja y vuelve a subir.
-        submitBehavior={alListo ? 'blurAndSubmit' : 'submit'}
-        onSubmitEditing={alListo ?? (() => cadena?.siguiente(campo))}
+        {...tecladoDeNumeros(siguiente)}
+        onSubmitEditing={alListo ?? (siguiente ? () => cadena?.siguiente(campo) : undefined)}
         selectionColor={colores.oro}
+        // Los de números tienen el ancho fijo: con el texto más grande de iOS, la letra crece hasta un tope que todavía entra.
+        maxFontSizeMultiplier={unidad ? 1.4 : undefined}
         style={[estilos.campoEntrada, !unidad && estilos.campoEntradaTexto, mal && estilos.campoMal]}
         accessibilityLabel={etiqueta}
       />
-      {unidad ? <Text style={estilos.campoUnidad}>{unidad}</Text> : null}
+      {unidad ? <Text style={estilos.campoUnidad} maxFontSizeMultiplier={1.4}>{unidad}</Text> : null}
     </View>
   );
 }
@@ -140,7 +158,7 @@ function ChipsDeMacros({ v }: { v: Valores }) {
   return (
     <View style={estilos.chips}>
       {MACROS.map((m) => (
-        <View key={m} style={estilos.chip}>
+        <View key={m} style={estilos.chip} accessible accessibilityLabel={`${t(`comida.${m}`)} ${gramosDeMacro(v[m])} g`}>
           <Punto macro={m} />
           <Text style={estilos.chipCifra}>{`${gramosDeMacro(v[m])} g`}</Text>
           <Text style={estilos.chipNombre} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
@@ -155,6 +173,8 @@ export function PanelRevision(p: {
   comida: Comida; canasta: Item[]; sistema: Sistema; restante: (kcal: number) => number | null; abajo: number;
   alEditar: (i: number) => void; alQuitar: (i: number) => void; alAgregar: () => void; alGuardarComo: () => void; alAtras: () => void;
 }) {
+  // Sin los números (Perfil › Los números), lo que quedaría del día no se dice, como en la galería.
+  const numeros = useNumeros();
   const total = sumarValores(p.canasta.map((i) => i.valores));
   const restante = p.restante(total.kcal);
   return (
@@ -170,30 +190,43 @@ export function PanelRevision(p: {
       }
     >
       <Text style={estilos.texto}>{t('comida.revisarTexto')}</Text>
-      {p.canasta.map((item, i) => (
-        <Pressable
-          key={i}
-          onPress={() => item.fuente !== 'rapida' && p.alEditar(i)}
-          style={estilos.fila}
-          accessibilityRole="button"
-        >
-          <View style={estilos.filaTextos}>
-            <Text style={estilos.filaNombre} numberOfLines={1}>{item.nombre}</Text>
-            <Text style={estilos.filaDetalle} numberOfLines={1}>{[cantidadDeTexto(item.cantidad, p.sistema), `${numero(Math.round(item.valores.kcal))} kcal`].filter(Boolean).join(' · ')}</Text>
-          </View>
-          <Pressable onPress={() => p.alQuitar(i)} style={estilos.quitar} accessibilityRole="button" accessibilityLabel={t('comida.quitar')} hitSlop={6}>
-            <Icono nombre="xmark" tam={12} color="rgba(239, 230, 207, 0.62)" peso="semibold" />
-          </Pressable>
-        </Pressable>
-      ))}
-      <View style={estilos.total}>
+      {p.canasta.map((item, i) => {
+        const sePuedeCambiar = item.fuente !== 'rapida';
+        return (
+          <Animated.View key={claveDe(item)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
+            <Pressable
+              onPress={() => sePuedeCambiar && p.alEditar(i)}
+              style={({ pressed }) => [estilos.fila, pressed && sePuedeCambiar && estilos.filaApretada]}
+              accessibilityRole={sePuedeCambiar ? 'button' : undefined}
+              // La fila es un solo elemento para VoiceOver: quitar va como una acción suya.
+              accessibilityActions={[{ name: 'quitar', label: t('comida.quitar') }]}
+              onAccessibilityAction={(ev) => ev.nativeEvent.actionName === 'quitar' && p.alQuitar(i)}
+            >
+              <View style={estilos.filaTextos}>
+                <Text style={estilos.filaNombre} numberOfLines={1}>{item.nombre}</Text>
+                <Text style={estilos.filaDetalle} numberOfLines={1}>{[cantidadDeTexto(item.cantidad, p.sistema), `${numero(Math.round(item.valores.kcal))} kcal`].filter(Boolean).join(' · ')}</Text>
+              </View>
+              <Pressable
+                onPress={() => p.alQuitar(i)}
+                style={({ pressed }) => [estilos.quitar, pressed && estilos.apretado]}
+                accessibilityRole="button"
+                accessibilityLabel={t('comida.quitarAlimento', { alimento: item.nombre })}
+                hitSlop={margenDeToque(32)}
+              >
+                <Icono nombre="xmark" tam={12} color="rgba(239, 230, 207, 0.62)" peso="semibold" />
+              </Pressable>
+            </Pressable>
+          </Animated.View>
+        );
+      })}
+      <Animated.View layout={ACOMODA} style={estilos.total}>
         <Text style={estilos.kcal}>
           {numero(Math.round(total.kcal))}
           <Text style={estilos.kcalUnidad}>{`  ${t('comida.kcal').toUpperCase()}`}</Text>
         </Text>
-        {restante !== null && <Text style={estilos.queda}>{t(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })}</Text>}
+        {numeros && restante !== null && <Text style={estilos.queda}>{t(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })}</Text>}
         <ChipsDeMacros v={total} />
-      </View>
+      </Animated.View>
     </Panel>
   );
 }
@@ -218,11 +251,11 @@ export function PanelRapida({ directo, comida, inicial, alSumar, alQuitar, alAtr
     return { nombre: inicial?.nombre ?? '', kcal: campo(v?.kcal), proteina: campo(v?.proteina), carbohidratos: campo(v?.carbohidratos), grasas: campo(v?.grasas) };
   });
   const poner = (k: keyof typeof c) => (v: string) => setC((x) => ({ ...x, [k]: v }));
-  const proteina = leer(c.proteina) ?? 0;
-  const carbohidratos = leer(c.carbohidratos) ?? 0;
-  const grasas = leer(c.grasas) ?? 0;
+  const proteina = leerNumero(c.proteina) ?? 0;
+  const carbohidratos = leerNumero(c.carbohidratos) ?? 0;
+  const grasas = leerNumero(c.grasas) ?? 0;
   // Sin las calorías, salen de los macros.
-  const kcal = leer(c.kcal) ?? kcalDeMacros(proteina, carbohidratos, grasas);
+  const kcal = leerNumero(c.kcal) ?? kcalDeMacros(proteina, carbohidratos, grasas);
   return (
     <Panel
       titulo={t('comida.cargaRapida')}
@@ -244,7 +277,7 @@ export function PanelRapida({ directo, comida, inicial, alSumar, alQuitar, alAtr
       <Campo etiqueta={t('comida.kcal')} valor={c.kcal} alCambiar={poner('kcal')} unidad="kcal" ejemplo={!c.kcal && kcal ? numero(Math.round(kcal)) : '0'} enfocado={!inicial} />
       <Campo etiqueta={t('comida.proteina')} valor={c.proteina} alCambiar={poner('proteina')} unidad="g" />
       <Campo etiqueta={t('comida.carbohidratos')} valor={c.carbohidratos} alCambiar={poner('carbohidratos')} unidad="g" />
-      <Campo etiqueta={t('comida.grasas')} valor={c.grasas} alCambiar={poner('grasas')} unidad="g" />
+      <Campo etiqueta={t('comida.grasas')} valor={c.grasas} alCambiar={poner('grasas')} unidad="g" ultimo />
       <Text style={estilos.nota}>{t('comida.cargaRapidaTexto')}</Text>
     </Panel>
   );
@@ -276,7 +309,13 @@ export function PanelGuardadas(p: {
               <Text style={estilos.filaNombre} numberOfLines={1}>{r.nombre}</Text>
               <Text style={estilos.filaDetalle} numberOfLines={1}>{`${r.items.map((i) => i.nombre).join(', ')} · ${numero(Math.round(total.kcal))} kcal`}</Text>
             </View>
-            <Pressable onPress={() => p.alSumarComida(r)} style={estilos.mas} accessibilityRole="button" accessibilityLabel={t('comida.sumarAlimento', { alimento: r.nombre })}>
+            <Pressable
+              onPress={() => p.alSumarComida(r)}
+              style={({ pressed }) => [estilos.mas, pressed && estilos.apretado]}
+              accessibilityRole="button"
+              accessibilityLabel={t('comida.sumarAlimento', { alimento: r.nombre })}
+              hitSlop={margenDeToque(36)}
+            >
               <Icono nombre="plus" tam={17} peso="semibold" />
             </Pressable>
           </View>
@@ -286,7 +325,7 @@ export function PanelGuardadas(p: {
       {recetas.map((r) => {
         const { porcion } = valoresDeReceta(r);
         return (
-          <Pressable key={r.id} onPress={() => p.alAbrirReceta(r)} style={estilos.fila} accessibilityRole="button">
+          <Pressable key={r.id} onPress={() => p.alAbrirReceta(r)} style={({ pressed }) => [estilos.fila, pressed && estilos.filaApretada]} accessibilityRole="button">
             <View style={estilos.filaTextos}>
               <Text style={estilos.filaNombre} numberOfLines={1}>{r.nombre}</Text>
               <Text style={estilos.filaDetalle} numberOfLines={1}>{t('comida.receta.porPlato', { kcal: numero(Math.round(porcion.kcal)) })}</Text>
@@ -303,44 +342,54 @@ export function PanelGuardadas(p: {
 export type Borrador = { id?: string; nombre: string; porciones: string; pesoFinal: string; items: Item[] };
 
 export function PanelReceta(p: {
-  borrador: Borrador; sistema: Sistema; alCambiar: (b: Borrador) => void; alAgregarIngrediente: () => void; alPegar: () => void; alGuardar: () => void; alAtras: () => void; abajo: number;
+  borrador: Borrador; sistema: Sistema; alCambiar: (b: Borrador) => void; alQuitar: (i: number) => void; alAgregarIngrediente: () => void; alPegar: () => void; alGuardar: () => void; alAtras: () => void; abajo: number;
 }) {
   const b = p.borrador;
   const total = sumarValores(b.items.map((i) => i.valores));
-  const porciones = leer(b.porciones) ?? 0;
+  const porciones = leerNumero(b.porciones) ?? 0;
   const listo = !!b.nombre.trim() && b.items.length > 0 && porciones > 0;
   return (
     <Panel titulo={b.nombre.trim() || t('comida.receta.nueva')} alAtras={p.alAtras} abajo={p.abajo} pie={<Boton tipo="grande" texto={t('comida.receta.guardar')} desactivado={!listo} alTocar={p.alGuardar} />}>
       <Text style={estilos.texto}>{t('comida.receta.texto')}</Text>
       <Campo etiqueta={t('comida.nombre')} valor={b.nombre} alCambiar={(nombre) => p.alCambiar({ ...b, nombre })} texto ejemplo={t('comida.receta.nombreEjemplo')} enfocado={!b.nombre && !b.items.length} />
       <Campo etiqueta={t('comida.receta.porciones')} valor={b.porciones} alCambiar={(x) => p.alCambiar({ ...b, porciones: x })} unidad={t('comida.receta.porcionesUnidad')} />
-      <Campo etiqueta={t('comida.receta.pesoFinal')} valor={b.pesoFinal} alCambiar={(x) => p.alCambiar({ ...b, pesoFinal: x })} unidad="g" ejemplo={t('comida.opcional')} />
+      <Campo etiqueta={t('comida.receta.pesoFinal')} valor={b.pesoFinal} alCambiar={(x) => p.alCambiar({ ...b, pesoFinal: x })} unidad="g" ejemplo={t('comida.opcional')} ultimo />
       <Etiqueta estilo={estilos.separador}>{t('comida.receta.ingredientes')}</Etiqueta>
       {b.items.map((item, i) => (
-        <View key={i} style={estilos.fila}>
+        <Animated.View key={claveDe(item)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.fila}>
           <View style={estilos.filaTextos}>
             <Text style={estilos.filaNombre} numberOfLines={1}>{item.nombre}</Text>
             <Text style={estilos.filaDetalle} numberOfLines={1}>{`${cantidadDeTexto(item.cantidad, p.sistema)} · ${numero(Math.round(item.valores.kcal))} kcal`}</Text>
           </View>
-          <Pressable onPress={() => p.alCambiar({ ...b, items: b.items.filter((_, k) => k !== i) })} style={estilos.quitar} accessibilityRole="button" accessibilityLabel={t('comida.quitar')}>
+          <Pressable
+            onPress={() => p.alQuitar(i)}
+            style={({ pressed }) => [estilos.quitar, pressed && estilos.apretado]}
+            accessibilityRole="button"
+            accessibilityLabel={t('comida.quitarAlimento', { alimento: item.nombre })}
+            hitSlop={margenDeToque(32)}
+          >
             <Icono nombre="xmark" tam={12} color="rgba(239, 230, 207, 0.62)" peso="semibold" />
           </Pressable>
-        </View>
+        </Animated.View>
       ))}
-      {!b.items.length && <Text style={estilos.nota}>{t('comida.receta.sinIngredientes')}</Text>}
-      <View style={estilos.agregarIngrediente}>
+      {!b.items.length && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.nota}>{t('comida.receta.sinIngredientes')}</Animated.Text>}
+      <Animated.View layout={ACOMODA} style={estilos.agregarIngrediente}>
         <Boton texto={t('comida.receta.agregarIngrediente')} icono="plus" tipo="secundario" alTocar={p.alAgregarIngrediente} />
-        {!b.items.length && <Boton texto={t('comida.receta.pegar')} icono="doc.on.doc" tipo="contorno" alTocar={p.alPegar} />}
-      </View>
+        {!b.items.length && (
+          <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO}>
+            <Boton texto={t('comida.receta.pegar')} icono="doc.on.doc" tipo="contorno" alTocar={p.alPegar} />
+          </Animated.View>
+        )}
+      </Animated.View>
       {b.items.length > 0 && porciones > 0 && (
-        <View style={estilos.total}>
+        <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.total}>
           <Text style={estilos.kcal}>
             {numero(Math.round(total.kcal / porciones))}
             <Text style={estilos.kcalUnidad}>{`  ${t('comida.kcal').toUpperCase()}`}</Text>
           </Text>
           <Text style={estilos.queda}>{t('comida.receta.porPlato', { kcal: numero(Math.round(total.kcal / porciones)) })}</Text>
           <ChipsDeMacros v={escalar(total, 1 / porciones)} />
-        </View>
+        </Animated.View>
       )}
     </Panel>
   );
@@ -401,12 +450,13 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
         maxLength={6000}
         placeholder={t('comida.receta.ejemplo')}
         placeholderTextColor="rgba(239, 230, 207, 0.32)"
+        keyboardAppearance="dark"
         style={estilos.pegar}
         textAlignVertical="top"
         accessibilityLabel={t('comida.receta.pegar')}
       />
       {leida && (
-        <Animated.View entering={FadeIn.duration(300)} layout={ACOMODA}>
+        <Animated.View entering={FadeIn.duration(300).reduceMotion(ReduceMotion.Never)} layout={ACOMODA}>
           {leida.lineas.length ? (
             <>
               <Text style={estilos.nota}>{t('comida.receta.encontrados', { n: leida.lineas.filter((x) => x.item && (gramosDe(x.item.cantidad) ?? 0) > 0).length, total: leida.lineas.length })}</Text>
@@ -418,7 +468,7 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
                     key={i}
                     disabled={!sirve}
                     onPress={() => setLeida({ ...leida, lineas: leida.lineas.map((y, k) => (k === i ? { ...y, fuera: !y.fuera } : y)) })}
-                    style={[estilos.fila, x.fuera && estilos.fuera]}
+                    style={({ pressed }) => [estilos.fila, x.fuera && estilos.fuera, pressed && (x.fuera ? estilos.fueraApretada : estilos.filaApretada)]}
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: sirve && !x.fuera, disabled: !sirve }}
                   >
@@ -443,8 +493,8 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
 
 /** El borrador de una receta, como receta para guardar; sin lo necesario, null. */
 export function recetaDe(b: Borrador): Omit<Receta, 'id' | 'actualizado' | 'borrado'> & { id?: string } | null {
-  const porciones = leer(b.porciones);
-  const pesoFinal = leer(b.pesoFinal);
+  const porciones = leerNumero(b.porciones);
+  const pesoFinal = leerNumero(b.pesoFinal);
   if (!b.nombre.trim() || !b.items.length || !porciones) return null;
   return { ...(b.id ? { id: b.id } : {}), tipo: 'receta', nombre: b.nombre.trim(), items: b.items, porciones, pesoFinal: pesoFinal && pesoFinal > 0 ? pesoFinal : null };
 }
@@ -473,15 +523,15 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
     };
   });
   const poner = (k: string) => (x: string) => setC((antes) => ({ ...antes, [k]: x }));
-  const gramos = leer(c.porcionGramos);
+  const gramos = leerNumero(c.porcionGramos);
   const avisos = inicial.leida?.avisos ?? [];
   // Sin las kcal (no se leyeron o no se escribieron), salen de los macros, como en la carga rápida.
-  const kcalDerivadas = kcalDeMacros(leer(c.proteina) ?? 0, leer(c.carbohidratos) ?? 0, leer(c.grasas) ?? 0);
+  const kcalDerivadas = kcalDeMacros(leerNumero(c.proteina) ?? 0, leerNumero(c.carbohidratos) ?? 0, leerNumero(c.grasas) ?? 0);
   const guardar = () => {
     if (!c.nombre.trim() || !gramos) return;
     const f = 100 / gramos;
     const por100 = (k: string) => {
-      const x = leer(c[k]);
+      const x = leerNumero(c[k]);
       return x === null ? undefined : x * f;
     };
     const por100g: Valores = { kcal: por100('kcal') ?? kcalDerivadas * f, proteina: por100('proteina') ?? 0, carbohidratos: por100('carbohidratos') ?? 0, grasas: por100('grasas') ?? 0 };
@@ -512,7 +562,7 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
           mal={k === 'kcal' && avisos.includes('noCierra')}
         />
       ))}
-      <Campo etiqueta={t('comida.crear.codigo')} valor={c.codigo} alCambiar={poner('codigo')} unidad="#" teclado="number-pad" largo={14} />
+      <Campo etiqueta={t('comida.crear.codigo')} valor={c.codigo} alCambiar={poner('codigo')} unidad="#" teclado="number-pad" largo={14} ultimo />
     </Panel>
   );
 }
@@ -534,6 +584,8 @@ const estilos = StyleSheet.create({
   nota: { marginTop: 14, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.55)' },
   aviso: { marginTop: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, backgroundColor: 'rgba(232, 196, 106, 0.1)', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.32)', fontFamily: letras.texto, fontSize: 13, lineHeight: 17.5, color: colores.oroClaro },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingVertical: 7, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
+  filaApretada: { opacity: 0.7 },
+  apretado: { opacity: 0.6 },
   filaTextos: { flex: 1, gap: 4, minWidth: 0 },
   filaNombre: { fontFamily: letras.texto, fontSize: 15.5, color: colores.pergamino },
   filaDetalle: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
@@ -550,13 +602,15 @@ const estilos = StyleSheet.create({
   campo: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
   campoTexto: {},
   campoEtiqueta: { flex: 1, fontFamily: letras.texto, fontSize: 14.5, color: colores.pergamino },
-  campoEntrada: { width: 118, height: 40, outlineWidth: 0, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)', backgroundColor: 'rgba(239, 230, 207, 0.06)', paddingHorizontal: 12, textAlign: 'right', fontFamily: letras.texto, fontSize: 16, color: colores.pergamino },
+  // Con el alto mínimo: con el texto grande de iOS, el campo crece en vez de cortar lo escrito.
+  campoEntrada: { width: 118, minHeight: 40, outlineWidth: 0, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)', backgroundColor: 'rgba(239, 230, 207, 0.06)', paddingHorizontal: 12, textAlign: 'right', fontFamily: letras.texto, fontSize: 16, color: colores.pergamino },
   campoEntradaTexto: { flex: 2, width: undefined, textAlign: 'left' },
   campoMal: { borderColor: 'rgba(232, 196, 106, 0.7)', color: colores.oroClaro },
-  campoUnidad: { width: 30, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
+  campoUnidad: { minWidth: 30, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
   separador: { marginTop: 22, marginBottom: 4 },
   pegar: { marginTop: 10, minHeight: 150, maxHeight: 260, padding: 12, outlineWidth: 0, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)', backgroundColor: 'rgba(6, 10, 22, 0.6)', fontFamily: letras.texto, fontSize: 14, lineHeight: 20, color: colores.pergamino },
   fuera: { opacity: 0.35 },
+  fueraApretada: { opacity: 0.25 },
   tachado: { textDecorationLine: 'line-through' },
   sinEncontrar: { fontStyle: 'italic', color: 'rgba(239, 230, 207, 0.5)' },
   totalPegado: { marginTop: 12, textAlign: 'right', fontFamily: letras.textoMedio, fontSize: 14, color: colores.oroClaro },

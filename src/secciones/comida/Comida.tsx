@@ -6,9 +6,9 @@
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
@@ -20,14 +20,16 @@ import { diasEntre, lunesDe, minutosEnElDia, partesDe, sumarDias, type ClaveDia 
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import type { Linea } from '@/dominio/alrededorDelEntreno';
 import { sugerenciaVencida } from '@/dominio/plan';
-import { delDia, sumarValores, totalDelDia, type Registro, type Valores } from '@/dominio/registros';
+import { confirmar, delDia, sumarValores, totalDelDia, type Registro, type Valores } from '@/dominio/registros';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { HojaModal } from '../HojaModal';
 import { entre, viaje } from '../movimiento';
+import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Relleno, useCuenta } from '../animados';
-import { AvisoFlotante, Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Aviso, type Macro } from './comunes';
+import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Macro } from './comunes';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
 import {
   cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, horasDeComer, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
@@ -37,10 +39,30 @@ import { Luna, Lunitas, type Lunita } from './Luna';
 import { AccionesDelPlan, ArmarElDia, PlanDeLaSemana } from './Plan';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
-import { abrirRegistro } from './registro';
+import { abrirRegistro, avisar } from './registro';
 
 const VISTAS = ['dia', 'semana', 'mes'] as const;
 type Vista = (typeof VISTAS)[number];
+/** Comida en la barra (arriba.ts). */
+const SECCION = 1;
+// Lo que entra y sale de la línea del día: un fundido no es movimiento, también con Reducir movimiento.
+const ENTRA = FadeIn.duration(300).reduceMotion(ReduceMotion.Never);
+const ENTRA_ALIMENTO = FadeIn.duration(280).reduceMotion(ReduceMotion.Never);
+const ENTRA_ACCIONES = FadeIn.duration(260).reduceMotion(ReduceMotion.Never);
+const SALE = FadeOut.duration(180).reduceMotion(ReduceMotion.Never);
+/** El alto de los textos de Día, Semana y Mes, y el de cada alimento de la línea: los toques llegan a 44. */
+const ALTO_PUNTO = 27;
+const ALTO_ALIMENTO = 26;
+/** Con el texto grande, las cifras grandes crecen hasta acá: más, no entran en su lugar (al lado de la luna, en el cuadro). */
+const CIFRA_GRANDE = 1.3;
+
+// Inicio › Calorías lleva a hoy y a «Día»: Comida escucha mientras está armada (si no, ya abre en hoy).
+const alVolverAHoy = new Set<() => void>();
+
+/** Que Comida muestre hoy, en «Día»: lo de otro día que quedó elegido ahí no es lo de hoy. */
+export function comidaEnHoy() {
+  alVolverAHoy.forEach((volver) => volver());
+}
 
 // Lo de cada día, armado una vez por cada versión de los registros (el almacén cambia el Map entero
 // en cada cambio): la semana y el mes miran decenas de días cada vez que se pinta la pestaña.
@@ -103,39 +125,63 @@ function lunasDe(e: ParaLunas, dias: readonly ClaveDia[], mes?: readonly [ClaveD
 
 export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
   const e = useEstado();
-  const [elegido, setElegido] = useState<ClaveDia | null>(null);
-  const [vista, setVista] = useState<Vista>('dia');
-  const [aviso, setAviso] = useState<Aviso | null>(null);
-  // Sin elegir, hoy: así, al cambiar el día a la medianoche, la pestaña sigue en hoy.
-  const dia = elegido ?? e.hoy;
+  // Otro día o la vista, con el día en que se eligieron: pasada la hora de corte vale otra vez hoy, en
+  // «Día» (lo elegido ayer quedaba de un día para otro).
+  const [eleccion, setEleccion] = useState<{ dia: ClaveDia; vista: Vista; hoy: ClaveDia } | null>(null);
+  const vigente = eleccion?.hoy === e.hoy ? eleccion : null;
+  const dia = vigente?.dia ?? e.hoy;
+  const vista = vigente?.vista ?? 'dia';
   const anchoCuadro = ancho - 40;
+  const scroll = useRef<ScrollViewInstance>(null);
+  const reducido = useReducedMotion();
+  const esLaActual = useEsLaActual(SECCION);
+  useEffect(() => {
+    const volver = () => setEleccion(null);
+    alVolverAHoy.add(volver);
+    return () => {
+      alVolverAHoy.delete(volver);
+    };
+  }, []);
+  // Tocar otra vez la pestaña: arriba de todo, en hoy y en «Día».
+  useEffect(() => alTocarDeNuevo(SECCION, () => {
+    scroll.current?.scrollTo({ y: 0, animated: !reducido });
+    setEleccion(null);
+  }), [reducido]);
 
   const verDia = (d: ClaveDia) => {
     if (fueraDeLoCargado(e, d)) return;
     Haptics.selectionAsync().catch(() => {});
-    setElegido(d === e.hoy ? null : d);
-    setVista('dia');
+    setEleccion({ dia: d, vista: 'dia', hoy: e.hoy });
   };
-  const avisar = (texto: string, deshacer?: () => void) => setAviso((antes) => ({ texto, deshacer, vez: (antes?.vez ?? 0) + 1 }));
+  const verVista = (v: Vista) => setEleccion({ dia, vista: v, hoy: e.hoy });
 
   return (
     <View style={{ width: ancho }}>
       <ScrollView
+        ref={scroll}
         style={estilos.lleno}
         contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 48 }}
         showsVerticalScrollIndicator={false}
+        scrollsToTop={esLaActual}
       >
         <Text style={estilos.fecha}>{fechaCorta(dia)}</Text>
         <Text style={estilos.titulo}>{tituloDelDia(dia, e.hoy)}</Text>
         <TiraDeLaSemana e={e} dia={dia} alElegir={verDia} />
-        <Cuadro ancho={anchoCuadro} vista={vista} alCambiar={setVista}>
+        <Cuadro ancho={anchoCuadro} vista={vista} alCambiar={verVista}>
           <PaginaDelDia e={e} dia={dia} />
-          <PaginaDeLaSemana e={e} dia={dia} alElegir={verDia} avisar={avisar} />
+          <PaginaDeLaSemana e={e} dia={dia} alElegir={verDia} />
           <PaginaDelMes e={e} dia={dia} ancho={anchoCuadro} alElegir={verDia} />
         </Cuadro>
         <View style={estilos.puntos}>
           {VISTAS.map((v) => (
-            <Pressable key={v} onPress={() => setVista(v)} style={estilos.punto} accessibilityRole="button" accessibilityState={{ selected: v === vista }}>
+            <Pressable
+              key={v}
+              onPress={() => verVista(v)}
+              style={({ pressed }) => [estilos.punto, pressed && v !== vista && estilos.apretado]}
+              hitSlop={{ ...margenDeToque(ALTO_PUNTO), left: 2, right: 2 }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: v === vista }}
+            >
               <View style={[estilos.puntoMarca, v === vista && estilos.puntoMarcaElegido]} />
               <Text style={[estilos.puntoTexto, v === vista && estilos.puntoTextoElegido]}>{t(`comida.vistas.${v}`)}</Text>
             </Pressable>
@@ -144,11 +190,10 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
         <Text style={estilos.seccion}>{t('comida.tuDia')}</Text>
         {dia > e.hoy && <Text style={estilos.nota}>{t('comida.planificadoTexto')}</Text>}
         {!metaDelDia(e, dia) && <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>}
-        <ArmarElDia e={e} dia={dia} avisar={avisar} />
-        <LineaDelDia e={e} dia={dia} avisar={avisar} />
-        <AccionesDelDia e={e} dia={dia} avisar={avisar} />
+        <ArmarElDia e={e} dia={dia} />
+        <LineaDelDia e={e} dia={dia} />
+        <AccionesDelDia e={e} dia={dia} />
       </ScrollView>
-      <AvisoFlotante aviso={aviso} alIrse={() => setAviso(null)} arriba={arriba + 8} />
     </View>
   );
 }
@@ -156,26 +201,29 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
 // ------------------------------------------------------------------ la tira de la semana
 function TiraDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alElegir: (d: ClaveDia) => void }) {
   const [ancho, setAncho] = useState(0);
+  // Las lunas van sobre el lugar que les deja cada día, debajo de la letra: con el texto grande la letra
+  // crece y el lugar baja, así que se mide en vez de suponerlo.
+  const [arribaDeLunas, setArribaDeLunas] = useState<number | null>(null);
   const lunes = lunesDe(dia);
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
   return (
     <View style={estilos.tira} onLayout={(ev) => setAncho(ev.nativeEvent.layout.width)}>
-      {dias.map((d) => (
+      {dias.map((d, i) => (
         <Pressable
           key={d}
           onPress={() => alElegir(d)}
           disabled={fueraDeLoCargado(e, d)}
-          style={[estilos.tiraDia, d === dia && estilos.tiraDiaElegido]}
+          style={({ pressed }) => [estilos.tiraDia, d === dia && estilos.tiraDiaElegido, pressed && d !== dia && estilos.apretado]}
           accessibilityRole="button"
           accessibilityLabel={fechaCorta(d)}
           accessibilityState={{ selected: d === dia, disabled: fueraDeLoCargado(e, d) }}
         >
-          <Text style={estilos.tiraLetra}>{letraDelDia(d)}</Text>
-          <View style={estilos.tiraLugar} />
-          <Text style={[estilos.tiraNumero, d === e.hoy && estilos.hoy]}>{partesDe(d).dia}</Text>
+          <Text style={estilos.tiraLetra} numberOfLines={1}>{letraDelDia(d)}</Text>
+          <View style={estilos.tiraLugar} onLayout={i === 0 ? (ev) => setArribaDeLunas(ev.nativeEvent.layout.y) : undefined} />
+          <Text style={[estilos.tiraNumero, d === e.hoy && estilos.hoy]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{partesDe(d).dia}</Text>
         </Pressable>
       ))}
-      <View style={estilos.tiraLunas} pointerEvents="none">
+      <View style={[estilos.tiraLunas, arribaDeLunas !== null && { top: arribaDeLunas }]} pointerEvents="none">
         <Lunitas lunas={lunasDe(e, dias)} ancho={ancho} tam={24} />
       </View>
     </View>
@@ -232,6 +280,7 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
     const f = p - i;
     return { height: a[i] * (1 - f) + a[Math.min(2, i + 1)] * f };
   });
+  const actual = VISTAS.indexOf(vista);
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={[estilos.cuadro, estiloAlto]}>
@@ -240,6 +289,9 @@ function Cuadro({ ancho, vista, alCambiar, children }: { ancho: number; vista: V
             <View
               key={i}
               style={[estilos.pagina, { width: ancho }]}
+              // Las otras dos quedan armadas al costado, fuera del cuadro: VoiceOver no las recorre.
+              accessibilityElementsHidden={i !== actual}
+              importantForAccessibility={i === actual ? 'auto' : 'no-hide-descendants'}
               onLayout={(ev) => {
                 medidas.current[i] = ev.nativeEvent.layout.height;
                 altos.set([...medidas.current]);
@@ -271,7 +323,11 @@ export function BarrasDeMacros({ comido, meta, conEstado }: { comido: Pick<Valor
               </View>
               <Text style={estilos.macroNombreTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t(`comida.${m}`)}</Text>
             </View>
-            {numeros && <Text style={estilos.macroCifra}>{meta ? t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) }) : `${numero(Math.round(comido[m]))} g`}</Text>}
+            {numeros && (
+              <Text style={estilos.macroCifra} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                {meta ? t('comida.gramosDe', { n: numero(Math.round(comido[m])), meta: numero(meta[m]) }) : `${numero(Math.round(comido[m]))} g`}
+              </Text>
+            )}
             <View style={estilos.barra}>
               <Relleno fraccion={lleno} style={[estilos.barraLlena, { backgroundColor: COLOR_DE_MACRO[m], opacity: estado === 'falta' ? 0.75 : 1 }]} />
             </View>
@@ -299,7 +355,7 @@ function PaginaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
         </View>
         <View style={estilos.resumenTextos}>
           {e.numeros && (
-            <Text style={estilos.resumenCifra}>
+            <Text style={estilos.resumenCifra} maxFontSizeMultiplier={CIFRA_GRANDE} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
               {numero(Math.round(kcal))}
               {meta && <Text style={estilos.resumenDe}>{`  ${t('comida.deMetaCorto', { meta: numero(meta.kcal) })}`}</Text>}
             </Text>
@@ -346,7 +402,7 @@ function CabezaDePromedio({ titulo, fechas, promedio, dias, metaSinDias }: { tit
       {promedio.n ? (
         <>
           {numeros && (
-            <Text style={estilos.promedioCifra}>
+            <Text style={estilos.promedioCifra} maxFontSizeMultiplier={CIFRA_GRANDE} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
               {numero(Math.round(promedio.kcal))}
               <Text style={estilos.promedioUnidad}>{` ${t('comida.kcal')}`}</Text>
             </Text>
@@ -361,7 +417,7 @@ function CabezaDePromedio({ titulo, fechas, promedio, dias, metaSinDias }: { tit
   );
 }
 
-function PaginaDeLaSemana({ e, dia, alElegir, avisar }: { e: Estado; dia: ClaveDia; alElegir: (d: ClaveDia) => void; avisar: (texto: string, deshacer?: () => void) => void }) {
+function PaginaDeLaSemana({ e, dia, alElegir }: { e: Estado; dia: ClaveDia; alElegir: (d: ClaveDia) => void }) {
   const lunes = lunesDe(dia);
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
   const desde = partesDe(lunes);
@@ -386,18 +442,25 @@ function PaginaDeLaSemana({ e, dia, alElegir, avisar }: { e: Estado; dia: ClaveD
           const plan = registrosDe(e, d).some((r) => r.planificado);
           const alto = (v: number, objetivo: number | undefined) => `${(Math.min(1.2, objetivo ? v / objetivo : 0) / 1.2) * 100}%` as const;
           return (
-            <Pressable key={d} onPress={() => alElegir(d)} disabled={fueraDeLoCargado(e, d)} style={estilos.graficaDia} accessibilityRole="button" accessibilityLabel={fechaCorta(d)}>
+            <Pressable
+              key={d}
+              onPress={() => alElegir(d)}
+              disabled={fueraDeLoCargado(e, d)}
+              style={({ pressed }) => [estilos.graficaDia, pressed && estilos.apretado]}
+              accessibilityRole="button"
+              accessibilityLabel={fechaCorta(d)}
+            >
               <View style={[estilos.graficaBarras, plan && estilos.tenue]}>
                 <View style={[estilos.graficaBarra, { height: alto(total.kcal, m?.kcal), backgroundColor: '#e6dfcc' }]} />
                 {MACROS.map((x) => <View key={x} style={[estilos.graficaBarra, { height: alto(total[x], m?.[x]), backgroundColor: COLOR_DE_MACRO[x] }]} />)}
               </View>
-              <Text style={estilos.tiraLetra}>{letraDelDia(d)}</Text>
-              <Text style={[estilos.tiraNumero, d === e.hoy && estilos.hoy]}>{partesDe(d).dia}</Text>
+              <Text style={estilos.tiraLetra} numberOfLines={1}>{letraDelDia(d)}</Text>
+              <Text style={[estilos.tiraNumero, d === e.hoy && estilos.hoy]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{partesDe(d).dia}</Text>
             </Pressable>
           );
         })}
       </View>
-      <PlanDeLaSemana e={e} dia={dia} avisar={avisar} />
+      <PlanDeLaSemana e={e} dia={dia} />
     </View>
   );
 }
@@ -426,9 +489,16 @@ function PaginaDelMes({ e, dia, ancho, alElegir }: { e: Estado; dia: ClaveDia; a
               {semana.map((d) => {
                 const fuera = d < primero || d > ultimo;
                 return (
-                  <Pressable key={d} disabled={fuera || fueraDeLoCargado(e, d)} onPress={() => alElegir(d)} style={[estilos.calendarioDia, d === e.hoy && estilos.calendarioHoy]} accessibilityRole="button" accessibilityLabel={fechaCorta(d)}>
+                  <Pressable
+                    key={d}
+                    disabled={fuera || fueraDeLoCargado(e, d)}
+                    onPress={() => alElegir(d)}
+                    style={({ pressed }) => [estilos.calendarioDia, d === e.hoy && estilos.calendarioHoy, pressed && estilos.apretado]}
+                    accessibilityRole="button"
+                    accessibilityLabel={fechaCorta(d)}
+                  >
                     <View style={estilos.calendarioLugar} />
-                    {!fuera && <Text style={[estilos.tiraNumero, d === e.hoy && estilos.hoy]}>{partesDe(d).dia}</Text>}
+                    {!fuera && <Text style={[estilos.tiraNumero, d === e.hoy && estilos.hoy]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{partesDe(d).dia}</Text>}
                   </Pressable>
                 );
               })}
@@ -450,7 +520,7 @@ type Entrada = { minutos: number } & ({ tipo: 'comida'; comida: ComidaDelDia } |
  * Las comidas sobre una línea de horas, con el espacio entre una y otra según el tiempo que pasó.
  * Hoy, la comida que falta espera en «ahora»; otro día, las que faltan se pueden agregar.
  */
-function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (texto: string, deshacer?: () => void) => void }) {
+function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   const sistema = sistemaDe(e);
   const comidas = comidasDelDia(e.registros, dia, e.hoy);
   const entradas: Entrada[] = comidas.map((c) => ({ tipo: 'comida', comida: c, minutos: c.minutos }));
@@ -468,7 +538,7 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
     if (comidas.some((c) => c.comida === tipo)) continue;
     if (dia !== e.hoy) entradas.push({ tipo: 'vacia', comida: tipo, ahora: false, minutos });
     else {
-      const actual = comidaDeLaHora(ahora) === tipo;
+      const actual = comidaDeLaHora(ahora, e.corte) === tipo;
       if (minutos <= ahora || actual || lineas.has(tipo)) entradas.push({ tipo: 'vacia', comida: tipo, ahora: actual, minutos: actual ? ahora : minutos });
     }
   }
@@ -500,11 +570,11 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
         const planificada = x.tipo === 'comida' && x.comida.planificada;
         // Lo que se registra, se borra o se planifica entra, sale y se acomoda: nada salta.
         return (
-          <Animated.View key={clave} entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)} layout={ACOMODA} style={{ marginTop: separacion }}>
+          <Animated.View key={clave} entering={ENTRA} exiting={SALE} layout={ACOMODA} style={{ marginTop: separacion }}>
             <Text style={estilos.hora}>{x.tipo === 'vacia' && x.ahora ? '' : hora(Math.round(x.minutos))}</Text>
             <View style={[estilos.nodo, x.tipo === 'vacia' && estilos.nodoVacio, planificada && estilos.nodoPlan]} />
             {x.tipo === 'comida'
-              ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} e={e} avisar={avisar} linea={x.comida.planificada ? lineas.get(x.comida.comida) : undefined} />
+              ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} e={e} linea={x.comida.planificada ? lineas.get(x.comida.comida) : undefined} />
               : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} linea={lineas.get(x.comida)} />}
           </Animated.View>
         );
@@ -513,9 +583,7 @@ function LineaDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (te
   );
 }
 
-function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
-  c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe>; e: Estado; avisar: (texto: string, deshacer?: () => void) => void; linea?: Linea;
-}) {
+function Tarjeta({ c, dia, sistema, e, linea }: { c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe>; e: Estado; linea?: Linea }) {
   const numeros = useNumeros();
   // La foto, opcional y solo en el teléfono (D10): un toque en la comida ya registrada.
   const [foto, setFoto] = useState(() => fotoDe(dia, c.comida));
@@ -538,19 +606,20 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
       {/* Lo planificado se ve tenue; lo que se hace con lo armado, no. */}
       <View style={c.planificada && estilos.tenueDePlan}>
       <View style={estilos.tarjetaCabeza}>
-        <Text style={estilos.tarjetaTitulo}>{t(`comida.comidas.${c.comida}`)}</Text>
-        {c.planificada && <Text style={estilos.etiquetaPlan}>{t(delPlan ? 'comida.plan.sugerida' : 'comida.planificado')}</Text>}
+        {/* En inglés, «Afternoon snack» con «Suggested» no entraban: el título se achica y lo demás queda. */}
+        <Text style={[estilos.tarjetaTitulo, estilos.tarjetaTituloEnFila]} numberOfLines={1}>{t(`comida.comidas.${c.comida}`)}</Text>
+        {c.planificada && <Text style={estilos.etiquetaPlan} numberOfLines={1}>{t(delPlan ? 'comida.plan.sugerida' : 'comida.planificado')}</Text>}
         {numeros && (
-          <Text style={estilos.tarjetaKcal}>
+          <Text style={estilos.tarjetaKcal} numberOfLines={1}>
             {numero(Math.round(total.kcal))}
             <Text style={estilos.tarjetaKcalUnidad}> kcal</Text>
           </Text>
         )}
       </View>
       {linea && <LineaDeEntreno linea={linea} />}
-      {c.registros.map((r) => (
-        <Animated.View key={r.id} entering={FadeIn.duration(280)} exiting={FadeOut.duration(180)} layout={ACOMODA}>
-          <FilaDeRegistro r={r} sistema={sistema} tenue={mezclada && r.planificado} />
+      {c.registros.map((r, i) => (
+        <Animated.View key={r.id} entering={ENTRA_ALIMENTO} exiting={SALE} layout={ACOMODA}>
+          <FilaDeRegistro r={r} sistema={sistema} tenue={mezclada && r.planificado} primera={i === 0 && !linea} ultima={i === c.registros.length - 1} />
         </Animated.View>
       ))}
       {foto && (
@@ -562,7 +631,8 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
       )}
       <View style={estilos.tarjetaPie}>
         {MACROS.map((m) => (
-          <View key={m} style={estilos.mini}>
+          // VoiceOver leía «32 g, 50 g, 20 g» sin decir de qué: cada uno, con su macro.
+          <View key={m} style={estilos.mini} accessible={numeros} accessibilityLabel={numeros ? t('comida.lector.macro', { macro: t(`comida.${m}`), n: gramosDeMacro(total[m]) }) : undefined}>
             <Punto macro={m} tam={5} />
             {numeros && <Text style={estilos.miniTexto}>{`${gramosDeMacro(total[m])} g`}</Text>}
           </View>
@@ -575,8 +645,8 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
       </View>
       </View>
       {delPlan && (
-        <Animated.View entering={FadeIn.duration(260)} exiting={FadeOut.duration(180)}>
-          <AccionesDelPlan e={e} c={c} dia={dia} avisar={avisar} />
+        <Animated.View entering={ENTRA_ACCIONES} exiting={SALE}>
+          <AccionesDelPlan e={e} c={c} dia={dia} />
         </Animated.View>
       )}
       {foto && (
@@ -599,14 +669,18 @@ function Tarjeta({ c, dia, sistema, e, avisar, linea }: {
   );
 }
 
-function FilaDeRegistro({ r, sistema, tenue }: { r: Registro; sistema: ReturnType<typeof sistemaDe>; tenue: boolean }) {
+/** Un alimento de la línea. Van pegados uno a otro: el toque crece hacia afuera de la lista, no sobre el vecino. */
+function FilaDeRegistro({ r, sistema, tenue, primera, ultima }: { r: Registro; sistema: ReturnType<typeof sistemaDe>; tenue: boolean; primera: boolean; ultima: boolean }) {
   const cantidad = cantidadDeTexto(r.cantidad, sistema);
   const numeros = useNumeros();
+  const { top = 0, bottom = 0 } = margenDeToque(ALTO_ALIMENTO);
   return (
     <Pressable
       onPress={() => abrirRegistro({ editar: r.id, comida: r.comida, dia: r.dia })}
       style={({ pressed }) => [estilos.item, tenue && estilos.tenueDePlan, pressed && estilos.itemApretado]}
+      hitSlop={{ top: primera ? Math.min(top, 7) : 0, bottom: ultima ? Math.min(bottom, 7) : 0, left: 6, right: 6 }}
       accessibilityRole="button"
+      accessibilityLabel={[r.nombre, cantidad, numeros ? `${numero(Math.round(r.valores.kcal))} ${t('comida.kcal')}` : '', tenue ? t('comida.planificado') : ''].filter(Boolean).join(', ')}
     >
       <Text style={estilos.itemTexto} numberOfLines={1}>
         {r.nombre}
@@ -641,7 +715,7 @@ function TarjetaVacia({ comida, dia, hoy, e, linea }: { comida: Comida; dia: Cla
 }
 
 /** Debajo de la línea: confirmar lo planificado cuando llega el día (o después, si quedó sin confirmar), y copiar el día a hoy o a mañana. */
-function AccionesDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: (texto: string, deshacer?: () => void) => void }) {
+function AccionesDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   const [copiando, setCopiando] = useState(false);
   const registros = registrosDe(e, dia);
   // Lo que armó el plan se anota de a una comida, con «Comí esto»: confirmar todo junto anotaría también la cena que falta.
@@ -654,30 +728,33 @@ function AccionesDelDia({ e, dia, avisar }: { e: Estado; dia: ClaveDia; avisar: 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     avisar(plural('comida.copiado', copia.length, { dia: tituloDelDia(hacia, e.hoy).toLowerCase() }), () => copia.forEach((r) => elAlmacen().borrarRegistro(r.id)));
   };
+  const confirmarTodo = () => {
+    // Los que confirma confirmarPlanificados, que devuelve cuántos: lo planificado a mano del día, sin lo del plan.
+    const ids = confirmar(elAlmacen().estado().registros.values(), dia, '').filter((r) => !r.plan).map((r) => r.id);
+    const n = elAlmacen().confirmarPlanificados(dia);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    avisar(plural('comida.confirmados', n), n ? () => elAlmacen().volverAPlanificar(ids) : undefined);
+  };
+  // Nada cambia de golpe: «Copiar el día» y «Copiar a…» se funden uno en otro, y lo de alrededor se acomoda.
   return (
-    <View style={estilos.accionesDelDia}>
+    <Aparece style={estilos.accionesDelDia}>
       {planificados > 0 && (
-        <Boton
-          texto={t('comida.confirmar')}
-          icono="checkmark"
-          tipo="principal"
-          alTocar={() => {
-            const n = elAlmacen().confirmarPlanificados(dia);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-            avisar(plural('comida.confirmados', n));
-          }}
-        />
+        <Aparece>
+          <Boton texto={t('comida.confirmar')} icono="checkmark" tipo="principal" alTocar={confirmarTodo} />
+        </Aparece>
       )}
       {copiando ? (
-        <View style={estilos.acciones}>
+        <Aparece key="destinos" style={estilos.acciones}>
           <Text style={estilos.copiarA}>{t('comida.copiarA')}</Text>
           {destinos.map((d) => <Boton key={d} texto={tituloDelDia(d, e.hoy)} tipo="secundario" alTocar={() => copiar(d)} />)}
           <Boton texto={t('comun.cancelar')} tipo="contorno" alTocar={() => setCopiando(false)} />
-        </View>
+        </Aparece>
       ) : (
-        <Boton texto={t('comida.copiarDia')} icono="doc.on.doc" tipo="contorno" alTocar={() => setCopiando(true)} />
+        <Aparece key="copiar">
+          <Boton texto={t('comida.copiarDia')} icono="doc.on.doc" tipo="contorno" alTocar={() => setCopiando(true)} />
+        </Aparece>
       )}
-    </View>
+    </Aparece>
   );
 }
 
@@ -686,6 +763,7 @@ const estilos = StyleSheet.create({
   fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)' },
   titulo: { marginTop: 6, fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino },
   hoy: { color: colores.oroClaro },
+  apretado: { opacity: 0.6 },
   tira: { marginTop: 16, flexDirection: 'row', gap: 4 },
   tiraDia: { flex: 1, alignItems: 'center', paddingTop: 8, paddingBottom: 9, borderRadius: 14, borderWidth: 1, borderColor: 'transparent' },
   tiraDiaElegido: { backgroundColor: 'rgba(239, 230, 207, 0.07)', borderColor: 'rgba(239, 230, 207, 0.16)' },
@@ -754,6 +832,7 @@ const estilos = StyleSheet.create({
   tarjetaVacia: { gap: 11, paddingBottom: 13, backgroundColor: 'rgba(6, 10, 22, 0.35)', borderStyle: 'dashed', borderColor: 'rgba(232, 196, 106, 0.38)' },
   tarjetaCabeza: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 7 },
   tarjetaTitulo: { fontFamily: letras.textoMedio, fontSize: 15, color: colores.pergamino },
+  tarjetaTituloEnFila: { flexShrink: 1 },
   etiquetaPlan: { alignSelf: 'center', fontFamily: letras.texto, fontSize: 9, letterSpacing: 1.3, textTransform: 'uppercase', color: colores.oro, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.4)', borderRadius: 999 },
   tarjetaKcal: { marginLeft: 'auto', fontFamily: letras.numeroMedio, fontSize: 16, color: colores.oroClaro, fontVariant: ['tabular-nums'] },
   tarjetaKcalUnidad: { fontFamily: letras.texto, fontSize: 10, color: 'rgba(239, 230, 207, 0.5)', letterSpacing: 0.6 },

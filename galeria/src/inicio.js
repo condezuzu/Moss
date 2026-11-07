@@ -36,6 +36,8 @@ const SeccionInicio = (() => {
     tel.appendChild(zona);
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const bloquesEl = zona.querySelector('.in-bloques');
+    // El aviso con «Deshacer» de Comida, también acá (lo del agua).
+    const avisar = Detalles.aviso(zona, tx);
     // La figura de las kcal, en el estilo elegido (kcal.js). Se rehace solo al cambiar de estilo, así
     // anima de lo que mostraba a lo nuevo.
     let figura = null;
@@ -189,6 +191,8 @@ const SeccionInicio = (() => {
     function cielo() {
       const { constelacion, habitos } = opciones.cielo();
       const c = carta('in-cielo', tx('inicio.bloques.cielo'), 4);
+      // Un día sin hábitos que toquen (6/11, para aprobar): lo dice, chico, en vez de la constelación.
+      if (!habitos.length) { c.appendChild(el('p', 'in-nota', tx('cielo.sinHabitosHoy'))); return c; }
       const hechos = habitos.filter((h) => h.encendido).length;
       c.querySelector('header').appendChild(el('em', 'in-cuenta', tx('inicio.encendidas', { n: hechos, total: habitos.length })));
       const lienzo = el('canvas', 'in-mini-cielo');
@@ -275,11 +279,23 @@ const SeccionInicio = (() => {
       cifra.append(el('b', null, Porciones.decimal(a.litros, u.idioma())), el('small', null, ' ' + tx('inicio.deLitros', { meta: Porciones.decimal(a.meta, u.idioma()) })));
       izq.appendChild(cifra);
       const vasos = el('div', 'in-vasos');
-      // El que se acaba de sumar se llena con un fundido; los demás ya estaban.
-      for (let i = 0; i < Math.max(a.vasosMeta, a.vasos); i++) vasos.appendChild(el('i', i < a.vasos ? (vasosAntes != null && i >= vasosAntes ? 'lleno nuevo' : 'lleno') : null));
+      // El que se acaba de sumar se llena con un fundido, y el que se quitó se vacía; los demás ya estaban.
+      for (let i = 0; i < Math.max(a.vasosMeta, a.vasos); i++) {
+        vasos.appendChild(el('i', i < a.vasos ? (vasosAntes != null && i >= vasosAntes ? 'lleno nuevo' : 'lleno') : vasosAntes != null && i < vasosAntes ? 'sale' : null));
+      }
       vasosAntes = a.vasos;
       const mas = boton('in-agua-mas', icono('mas'), () => { opciones.comida.sumarAgua(); }, tx('mas.sumarVaso'));
+      mas.setAttribute('aria-description', tx('mas.mantenerParaQuitar'));
       fila.append(izq, vasos, mas);
+      // Restar un vaso (6/11, para aprobar): mantener apretado el agua quita el último de hoy, con «Deshacer».
+      Detalles.mantener(fila, {
+        alMantener: () => {
+          if (!opciones.comida.agua().vasos) return;
+          opciones.comida.quitarAgua();
+          if (opciones.haptico) opciones.haptico('toque');
+          avisar(tx('mas.vasoQuitado'), () => opciones.comida.sumarAgua());
+        },
+      });
       c.appendChild(fila);
       return c;
     }
@@ -957,6 +973,9 @@ const SeccionInicio = (() => {
       const hoy = u.partes(deporte ? deporte.hoy : Datos.HOY);
       zona.querySelector('.in-fecha').textContent = tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) });
       zona.querySelector('.in-titulo').textContent = tx('inicio.titulo');
+      // Al vaciar los bloques el scroll se iba arriba de golpe (al sumar o quitar un vaso abajo): vuelve a donde estaba.
+      const scroll = zona.querySelector('.in-scroll');
+      const posicion = scroll ? scroll.scrollTop : 0;
       bloquesEl.innerHTML = '';
       if (s.primerDia) [caloriasPrimerDia(), caminoPrimerDia(), cieloPrimerDia()].forEach((b) => bloquesEl.appendChild(b));
       else s.orden.filter((b) => s.visibles.has(b)).forEach((b) => bloquesEl.appendChild(ARMAR[b](ms)));
@@ -976,6 +995,7 @@ const SeccionInicio = (() => {
       pie.innerHTML = '';
       pie.appendChild(boton('in-personalizar', `${icono('asa')}<span>${tx('inicio.personalizar')}</span>`, () => abrirPersonalizar()));
       // El musgo de abajo de todo se sacó el 5/11 (no te gustaba).
+      if (scroll) scroll.scrollTop = posicion;
     }
 
     // ------------------------------------------------------------ personalizar

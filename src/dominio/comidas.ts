@@ -13,6 +13,7 @@ export const HORA_TIPICA: Record<Exclude<Comida, 'snack'>, number> = { desayuno:
 /** Desde qué minuto del día toca cada una, en la hora local. Entre las comidas y de madrugada, snack. */
 const FRANJAS: readonly (readonly [number, Comida])[] = [
   [0, 'snack'],
+  // Con el día que empieza más tarde (D32), el desayuno empieza con el día: ver comidaDeLaHora.
   [4 * 60, 'desayuno'],
   [10 * 60 + 30, 'snack'],
   [12 * 60, 'almuerzo'],
@@ -70,10 +71,13 @@ export function horasCorridas(base: Partial<Record<Comida, number>>, anotadas: P
 /**
  * La comida que toca a una hora, en minutos desde la medianoche. Lo de después de la medianoche en la
  * cuenta del día anterior (D32: la 1470 son las 0:30) es de madrugada, como a esa hora del reloj.
+ * `corte` es la hora a la que empieza el día (D32): el desayuno empieza a las 4 o, si el día empieza
+ * más tarde, con el día. Antes todavía es el día anterior, y lo de esa hora es un snack, no un segundo
+ * desayuno de ayer.
  */
-export function comidaDeLaHora(minutos: number): Comida {
+export function comidaDeLaHora(minutos: number, corte = 0): Comida {
   const reloj = ((minutos % 1440) + 1440) % 1440;
   let elegida: Comida = 'snack';
-  for (const [desde, comida] of FRANJAS) if (reloj >= desde) elegida = comida;
+  for (const [desde, comida] of FRANJAS) if (reloj >= (comida === 'desayuno' ? Math.max(desde, corte) : desde)) elegida = comida;
   return elegida;
 }

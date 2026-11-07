@@ -23,6 +23,8 @@ const errores = [];
 
 // La misma persona de capturar-app.mjs, que ya pasó la entrada.
 function persona() {
+  // Ya pasó por los primeros hábitos y se quedó con los de ejemplo: no se le vuelven a ofrecer en Hábitos.
+  localStorage.setItem('moss:primerosHabitosCerrados', '2026-01-01');
   if (localStorage.getItem('moss:datos')) return;
   const d = new Date();
   const clave = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;

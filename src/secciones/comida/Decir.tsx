@@ -7,7 +7,7 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import { baseDeAlimentos } from '@/comida/base';
@@ -20,11 +20,13 @@ import type { Comida } from '@/dominio/comidas';
 import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Cantidad, type Item } from '@/dominio/registros';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
+import { BotonDePaso, margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Icono, Pastilla } from './comunes';
 import { cantidadDeTexto, numero, opcionesDeIdioma, useEstado } from './datos';
 import { hayDictado, useDictado } from './dictado';
-import { Panel } from './Paneles';
+import { claveDe, Panel } from './Paneles';
 
 type Props = {
   comida: Comida;
@@ -37,10 +39,18 @@ type Props = {
   /** Lo entendido, para anotarlo en la comida (la dicha, si se dijo: «en el almuerzo»). */
   /** `ayer`: se dijo «anoche» o «ayer», y va al día anterior. */
   alAgregar: (items: Item[], comida: Comida, ayer: boolean) => void;
-  /** Lo que no se encontró se busca a mano; lo que sí, espera en la canasta. */
-  alBuscar: (texto: string, encontrados: Item[], comida: Comida) => void;
+  /**
+   * Lo que no se encontró se busca a mano; lo que sí, espera en la canasta. `pendientes`: lo demás que
+   * tampoco se encontró, para buscarlo después; `ayer`, si se dijo «anoche».
+   */
+  alBuscar: (texto: string, encontrados: Item[], comida: Comida, otros: { ayer: boolean; pendientes: string[] }) => void;
+  /** El aviso de la hoja, con «Deshacer». */
+  alAvisar: (texto: string, deshacer?: () => void) => void;
   abajo: number;
 };
+
+/** Lo que mide una cantidad: las veces de una porción, o los gramos. */
+const cuantoDe = (c: Exclude<Cantidad, null>) => ('porcion' in c ? c.veces : c.gramos);
 
 /** La cantidad de una opción, un paso más o menos: las porciones de a una, los gramos por tramos. */
 function otraCantidad(o: Opcion, signo: 1 | -1): Opcion {
@@ -137,12 +147,25 @@ export function PanelDecir(p: Props) {
   }, []);
 
   const cambiar = (i: number, cambio: (x: Entendido) => Entendido) => setEntendidos((lista) => lista && lista.map((x, k) => (k === i ? cambio(x) : x)));
-  const elegir = (i: number, k: number) => {
-    Haptics.selectionAsync().catch(() => {});
-    cambiar(i, (x) => ({ ...x, elegida: k }));
+  // La pastilla ya vibra al elegir otra.
+  const elegir = (i: number, k: number) => cambiar(i, (x) => ({ ...x, elegida: k }));
+  /** Un paso con − o +; en el tope no cambia, y el botón no vibra ni repite. */
+  const mover = (i: number, signo: 1 | -1) => {
+    const x = entendidos?.[i];
+    const o = x?.opciones[x.elegida];
+    if (!o || cuantoDe(otraCantidad(o, signo).cantidad) === cuantoDe(o.cantidad)) return false;
+    cambiar(i, (y) => ({ ...y, supuesto: false, opciones: y.opciones.map((op, k) => (k === y.elegida ? otraCantidad(op, signo) : op)) }));
+    return true;
   };
-  const mover = (i: number, signo: 1 | -1) => cambiar(i, (x) => ({ ...x, supuesto: false, opciones: x.opciones.map((o, k) => (k === x.elegida ? otraCantidad(o, signo) : o)) }));
-  const quitar = (i: number) => setEntendidos((lista) => lista && lista.filter((_, k) => k !== i));
+  // Lo quitado se puede deshacer: vuelve a su lugar.
+  const quitar = (i: number) => {
+    const x = entendidos?.[i];
+    if (!x) return;
+    setEntendidos((lista) => lista && lista.filter((_, k) => k !== i));
+    p.alAvisar(t('comida.quitado', { alimento: x.opciones[x.elegida]?.alimento.nombre ?? x.dicho.buscado }), () => {
+      setEntendidos((lista) => lista && [...lista.slice(0, i), x, ...lista.slice(i)]);
+    });
+  };
 
   const elegidas = (entendidos ?? []).flatMap((x) => (x.opciones[x.elegida] ? [{ x, o: x.opciones[x.elegida] }] : []));
   const total = sumarValores(elegidas.map(({ o }) => o.valores));
@@ -157,6 +180,12 @@ export function PanelDecir(p: Props) {
     return elegidas.map(({ o }) => ({ ...itemDeAlimento('base', o.alimento.ref, o.alimento.nombre, o.alimento.por100g, o.cantidad), estimado: true as const }));
   };
   const agregar = () => p.alAgregar(confirmar(), comida, ayer);
+  /** «Buscarlo»: lo demás que tampoco se encontró se busca después, y lo dicho «anoche» sigue yendo a ayer. */
+  const buscar = (i: number) => {
+    const lista = entendidos ?? [];
+    const pendientes = lista.filter((y, k) => k !== i && !y.opciones[y.elegida]).map((y) => y.dicho.buscado);
+    p.alBuscar(lista[i].dicho.buscado, confirmar(), comida, { ayer, pendientes });
+  };
 
   return (
     <Panel
@@ -170,16 +199,18 @@ export function PanelDecir(p: Props) {
       {conMicrofono && <Microfono escuchando={dictado.escuchando} alTocar={hablar} />}
       <Text style={st.ayuda}>{dictado.escuchando ? t('comida.decir.teEscucho') : conMicrofono ? t('comida.decir.ayuda') : t('comida.decir.ayudaTeclado')}</Text>
       {dictado.error && (
-        <Animated.Text entering={FadeIn.duration(200)} style={st.error}>{t(`comida.decir.error.${dictado.error}`)}</Animated.Text>
+        <Animated.Text entering={FadeIn.duration(200).reduceMotion(ReduceMotion.Never)} exiting={SALE_FUNDIDO} style={st.error}>{t(`comida.decir.error.${dictado.error}`)}</Animated.Text>
       )}
       <TextInput
         value={texto}
         onChangeText={setTexto}
         multiline
         maxLength={500}
-        autoFocus={!p.escuchar || !conMicrofono}
+        // Con lo que se escribió en el buscador, abre entendiéndolo: el teclado no sube a taparlo.
+        autoFocus={!p.textoInicial && (!p.escuchar || !conMicrofono)}
         placeholder={t('comida.decir.ejemplo')}
         placeholderTextColor="rgba(239, 230, 207, 0.32)"
+        keyboardAppearance="dark"
         style={st.frase}
         textAlignVertical="top"
         returnKeyType="done"
@@ -188,11 +219,11 @@ export function PanelDecir(p: Props) {
         accessibilityLabel={t('comida.decir.titulo')}
       />
       {entendidos && (
-        <Animated.View entering={FadeIn.duration(260)} layout={ACOMODA}>
-          {entendidos.length === 0 && <Text style={st.nota}>{t('comida.decir.nada')}</Text>}
+        <Animated.View entering={FadeIn.duration(260).reduceMotion(ReduceMotion.Never)} layout={ACOMODA}>
+          {entendidos.length === 0 && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.nota}>{t('comida.decir.nada')}</Animated.Text>}
           {entendidos.map((x, i) => (
-            <Animated.View key={`${x.dicho.texto}-${i}`} entering={FadeIn.duration(240)} exiting={FadeOut.duration(160)} layout={ACOMODA}>
-              <Fila x={x} sistema={p.sistema} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => p.alBuscar(x.dicho.buscado, confirmar(), comida)} />
+            <Animated.View key={claveDe(x.dicho)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
+              <Fila x={x} sistema={p.sistema} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => buscar(i)} />
             </Animated.View>
           ))}
         </Animated.View>
@@ -226,7 +257,7 @@ function Microfono({ escuchando, alTocar }: { escuchando: boolean; alTocar: () =
 
 /** Una cosa entendida: el alimento, su cantidad con − y +, sus kcal y, si hace falta, la pregunta. */
 function Fila({ x, sistema, alMover, alQuitar, alElegir, alBuscar }: {
-  x: Entendido; sistema: Sistema; alMover: (signo: 1 | -1) => void; alQuitar: () => void; alElegir: (k: number) => void; alBuscar: () => void;
+  x: Entendido; sistema: Sistema; alMover: (signo: 1 | -1) => boolean; alQuitar: () => void; alElegir: (k: number) => void; alBuscar: () => void;
 }) {
   const o = x.opciones[x.elegida];
   if (!o) {
@@ -234,11 +265,11 @@ function Fila({ x, sistema, alMover, alQuitar, alElegir, alBuscar }: {
       <View style={st.fila}>
         <View style={st.textos}>
           <Text style={[st.nombre, st.sinEncontrar]} numberOfLines={1}>{t('comida.decir.noEncontre', { que: x.dicho.buscado })}</Text>
-          <Pressable onPress={alBuscar} accessibilityRole="button" hitSlop={6}>
+          <Pressable onPress={alBuscar} style={({ pressed }) => pressed && st.apretado} accessibilityRole="button" hitSlop={{ top: 12, bottom: 12 }}>
             <Text style={st.buscar}>{t('comida.decir.buscar')}</Text>
           </Pressable>
         </View>
-        <Quitar alTocar={alQuitar} />
+        <Quitar que={x.dicho.buscado} alTocar={alQuitar} />
       </View>
     );
   }
@@ -253,19 +284,19 @@ function Fila({ x, sistema, alMover, alQuitar, alElegir, alBuscar }: {
           </Text>
         </View>
         <View style={st.pasos}>
-          <Pressable onPress={() => alMover(-1)} style={st.paso} accessibilityRole="button" accessibilityLabel="−" hitSlop={4}>
+          <BotonDePaso alPaso={() => alMover(-1)} etiqueta={t('comun.menos', { que: o.alimento.nombre })} lado={32} style={st.paso}>
             <Icono nombre="minus" tam={14} peso="semibold" />
-          </Pressable>
-          <Pressable onPress={() => alMover(1)} style={st.paso} accessibilityRole="button" accessibilityLabel="+" hitSlop={4}>
+          </BotonDePaso>
+          <BotonDePaso alPaso={() => alMover(1)} etiqueta={t('comun.mas', { que: o.alimento.nombre })} lado={32} style={st.paso}>
             <Icono nombre="plus" tam={14} peso="semibold" />
-          </Pressable>
+          </BotonDePaso>
         </View>
-        <Quitar alTocar={alQuitar} />
+        <Quitar que={o.alimento.nombre} alTocar={alQuitar} />
       </View>
       {x.pregunta && (
-        <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} layout={ACOMODA}>
+        <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
           <Text style={st.pregunta}>{preguntaDe(x)}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.opciones} keyboardShouldPersistTaps="handled">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.opciones} keyboardShouldPersistTaps="handled" scrollsToTop={false}>
             {x.opciones.map((op, k) => (
               <Pastilla
                 key={k}
@@ -296,9 +327,15 @@ function preguntaDe(x: Entendido): string {
   return t(x.pregunta === 'cual' ? 'comida.decir.cual' : 'comida.decir.cuanto', { que });
 }
 
-function Quitar({ alTocar }: { alTocar: () => void }) {
+function Quitar({ que, alTocar }: { que: string; alTocar: () => void }) {
   return (
-    <Pressable onPress={alTocar} style={st.quitar} accessibilityRole="button" accessibilityLabel={t('comida.quitar')} hitSlop={6}>
+    <Pressable
+      onPress={alTocar}
+      style={({ pressed }) => [st.quitar, pressed && st.apretado]}
+      accessibilityRole="button"
+      accessibilityLabel={t('comida.quitarAlimento', { alimento: que })}
+      hitSlop={margenDeToque(28)}
+    >
       <Icono nombre="xmark" tam={12} color="rgba(239, 230, 207, 0.55)" peso="semibold" />
     </Pressable>
   );

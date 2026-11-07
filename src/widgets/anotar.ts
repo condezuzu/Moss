@@ -29,7 +29,7 @@ export function lineaDeAnotar(ahora: Date, d: {
 }): Entrada[] {
   const entradas: Entrada[] = [];
   const comun = { acciones: d.acciones, decirTitulo: d.decirTitulo, fondo: d.fondo ?? '' };
-  const comidaEn = (f: Date) => comidaDeLaHora(f.getHours() * 60 + f.getMinutes());
+  const comidaEn = (f: Date) => comidaDeLaHora(f.getHours() * 60 + f.getMinutes(), d.corte);
   const entrada = (f: Date, comida: Comida, dia: ClaveDia): Entrada => ({ date: f, props: { ...comun, titulo: d.titulos[comida], queda: d.queda(dia), url: d.url.replace('{comida}', comida) } });
   let antes = { comida: comidaEn(ahora), dia: diaLogico(ahora, d.corte) };
   entradas.push(entrada(ahora, antes.comida, antes.dia));

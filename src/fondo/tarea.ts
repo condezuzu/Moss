@@ -9,6 +9,7 @@ import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
 import { arrancarLoDePremium, elAlmacen } from '@/almacen';
+import { programarAvisos } from '@/recordatorios/programar';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { actualizarWidgets } from '@/widgets';
@@ -46,6 +47,9 @@ async function correr(): Promise<void> {
     await estimarAnoche(a).catch(() => {});
   }
   await actualizarWidgets();
+  // Los avisos, ya con el día y los hábitos de Salud al día (un hábito de pasos cumplido no avisa). Acá
+  // y no después: iOS suele suspender Moss apenas termina la tarea, y el almacén los rehace con una espera.
+  await programarAvisos(a.estado()).catch(() => {});
   await a.esperar();
 }
 

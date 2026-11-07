@@ -252,7 +252,8 @@ const pasos = {
     // tarjeta), elige su figura, quiere bajar y sigue hasta el resultado, con el plan en una línea.
     const tocarEnLaEntrada = (selector) => pagina.evaluate((s) => document.querySelector('.ent-pantalla:not(.saliendo) ' + s).click(), selector);
     const seguir = async (nombre, antes) => {
-      await tocarEnLaEntrada('.ent-pie .ent-principal');
+      // En «¿Alguno es tu caso?» el pie trae antes, plegado, el «Guardar» del consentimiento: se toca «Seguir».
+      await tocarEnLaEntrada('.ent-pie .ent-principal:not(.ent-consentimiento *)');
       await pagina.waitForTimeout(1300);
       if (antes) { await antes(); await pagina.waitForTimeout(600); }
       await foto('entrada-' + nombre);
@@ -414,6 +415,8 @@ const pasos = {
     await pagina.waitForTimeout(400);
     await foto('personalizar-cambiado');
     await enInicio('cerrar');
+    // Inicio ya no se va arriba solo al repintarse (6/11): la foto es de arriba, con el cielo primero.
+    await enInicio('subir');
     await pagina.waitForTimeout(700);
     await foto('inicio-personalizado');
     await enInicio('bajar');
@@ -2661,6 +2664,334 @@ const pasos = {
     await foto('wn-abrir-moss');
     await widgets('olvidar');
     await pagina.evaluate(() => window.__aparato('reloj'));
+    await pagina.evaluate(() => window.__accion('reiniciar'));
+    await espera(800);
+    await pestana(0);
+  },
+  // Los detalles de app profesional (6/11, para aprobar), cada uno donde va: «Listo» y «Siguiente» arriba del
+  // teclado de números, mantener apretado y deslizar en Comida, cambiar y borrar lo guardado, la hoja para otro
+  // día, restar un vaso, «Atrás» en el cuestionario, la franja bajo la hora, las esperas, Sueño y Hábitos y
+  // Perfil. Lo de mantener y deslizar, con el mouse como un dedo. El 1, el 2, el 5 y el 7, también en inglés.
+  async detalles() {
+    const det = (a, x) => pagina.evaluate(([a, x]) => window.__detalles(a, x), [a, x]);
+    const espera = (ms) => pagina.waitForTimeout(ms);
+    const idioma = (v) => pagina.evaluate((x) => window.__idioma(x), v);
+    const centro = (s, kx = 0.5) => pagina.evaluate(([s, kx]) => {
+      const n = document.querySelector(s);
+      if (!n) return null;
+      const b = n.getBoundingClientRect();
+      return [b.left + b.width * kx, b.top + b.height / 2];
+    }, [s, kx]);
+    const tocar = async (s) => { const c = await centro(s); if (!c) throw new Error('No está ' + s); await pagina.mouse.click(c[0], c[1]); await pagina.mouse.move(1, 1); };
+    // Apretar y mantener, como un dedo; con `nombre`, la foto se saca con el dedo todavía abajo.
+    const mantenerEn = async (s, nombre) => {
+      const c = await centro(s);
+      if (!c) throw new Error('No está ' + s);
+      await pagina.mouse.move(c[0], c[1]);
+      await pagina.mouse.down();
+      await espera(650);
+      if (nombre) await foto(nombre);
+      await pagina.mouse.up();
+      await pagina.mouse.move(1, 1);
+    };
+    // Deslizar desde el 60 % de algo, `dx` y `dy`; con `nombre`, la foto con el dedo todavía abajo.
+    const deslizarEn = async (s, dx, dy, nombre) => {
+      const c = await centro(s, 0.6);
+      if (!c) throw new Error('No está ' + s);
+      await pagina.mouse.move(c[0], c[1]);
+      await pagina.mouse.down();
+      await pagina.mouse.move(c[0] + dx, c[1] + dy, { steps: 16 });
+      await espera(350);
+      if (nombre) await foto(nombre);
+      await pagina.mouse.up();
+      await pagina.mouse.move(1, 1);
+    };
+    const opcion = async (texto) => { await pagina.locator('.dt-menu button', { hasText: texto }).first().click(); await pagina.mouse.move(1, 1); };
+
+    // 1. «Listo» y «Siguiente» arriba del teclado de números.
+    await det('ventana');
+    await espera(1700);
+    await foto('detalles-01-ventana-listo');
+    await tocar('.dt-tk-num .dt-tk:nth-child(2)');
+    await espera(700);
+    await foto('detalles-01-ventana-escrito');
+    await tocar('.dt-tk-boton');
+    await espera(800);
+    await foto('detalles-01-ventana-bajo');
+    await det('peso');
+    await espera(1700);
+    await foto('detalles-01-peso-listo');
+    await det('medidas');
+    await espera(1700);
+    await foto('detalles-01-medidas-siguiente');
+    await tocar('.dt-tk-boton');
+    await espera(1100);
+    await foto('detalles-01-medidas-cuello');
+    await det('enfocar', '.mas-campo[data-sitio="muslo"] input');
+    await espera(1400);
+    await foto('detalles-01-medidas-listo');
+    await det('crear');
+    await espera(1900);
+    await foto('detalles-01-crear-siguiente');
+    await det('enfocar', '.hj-etiqueta input[data-clave="sodio"]');
+    await espera(1500);
+    await foto('detalles-01-crear-listo');
+    await det('enfocar', '.hj-etiqueta input[data-clave="nombre"]');
+    await espera(1200);
+    await foto('detalles-01-crear-letras');
+    await idioma('en');
+    await det('ventana');
+    await espera(1700);
+    await foto('detalles-01-ventana-ingles');
+    await det('medidas');
+    await espera(1700);
+    await foto('detalles-01-medidas-ingles');
+    await idioma('es');
+    await det('bajarTeclado');
+    await pagina.evaluate(() => { window.__mas('cerrar'); window.__comida('cerrar'); });
+    await espera(700);
+
+    // 2. Mantener apretado en Comida: lo apretado se levanta y sale el menú; copiar, mover y borrar, con «Deshacer».
+    await pestana(1);
+    await comida('dia', 0);
+    await comida('bajar', 'dia');
+    await espera(700);
+    await mantenerEn('.comida .cm-tarjeta:not(.vacia) li.cm-item:nth-child(1)', 'detalles-02-menu');
+    await espera(400);
+    await opcion('Copiar a');
+    await espera(700);
+    await foto('detalles-02-copiar-a');
+    await opcion('Mañana');
+    await espera(500);
+    await foto('detalles-02-copiar-manana');
+    await opcion('Cena');
+    await espera(1300);
+    await foto('detalles-02-copiado');
+    await det('mantenerLaComida', 'almuerzo');
+    await espera(1100);
+    await foto('detalles-02-comida-menu');
+    await opcion('Mover a');
+    await espera(700);
+    await foto('detalles-02-mover-a');
+    await pagina.evaluate(() => window.__detalles('cerrarMenu'));
+    await espera(600);
+    await det('mantenerAlimento', 'Puré de papas');
+    await espera(1000);
+    await opcion('Borrar');
+    await espera(1000);
+    await foto('detalles-02-borrado');
+    await tocar('.comida .cm-aviso-btn');
+    await espera(1000);
+    await foto('detalles-02-deshecho');
+    await idioma('en');
+    await comida('bajar', 'dia');
+    await det('mantenerAlimento', 'Mashed potatoes');
+    await espera(1100);
+    await foto('detalles-02-menu-ingles');
+    await opcion('Copy to');
+    await espera(700);
+    await foto('detalles-02-copiar-a-ingles');
+    await pagina.evaluate(() => window.__detalles('cerrarMenu'));
+    await espera(500);
+    await idioma('es');
+
+    // 3. Deslizar a la izquierda un alimento: abierto, pasado el tope (con el dedo abajo) y borrado.
+    await comida('bajar', 'dia');
+    await espera(500);
+    await deslizarEn('.comida .cm-tarjeta:not(.vacia) li.cm-item:nth-child(2)', -70, 0);
+    await espera(500);
+    await foto('detalles-03-abierta');
+    await deslizarEn('.comida .cm-tarjeta:not(.vacia) li.cm-item:nth-child(3)', -235, 0, 'detalles-03-tope');
+    await espera(1100);
+    await foto('detalles-03-borrada');
+
+    // 4. Cambiar y borrar lo guardado: una comida, una receta y un alimento tuyo; borrar, y la fila se cierra.
+    await det('guardadas');
+    await espera(1700);
+    await foto('detalles-04-editar-comida');
+    await det('editarGuardada', ['receta', 0]);
+    await espera(1200);
+    await foto('detalles-04-editar-receta');
+    await det('editarGuardada', ['propio', 0]);
+    await espera(1200);
+    await foto('detalles-04-editar-alimento');
+    await det('editarGuardada', ['comida', 0]);
+    await espera(1200);
+    await det('borrarGuardada');
+    await espera(420);
+    await foto('detalles-04-borrando');
+    await espera(1000);
+    await foto('detalles-04-borrada');
+    await comida('cerrar');
+    await espera(700);
+
+    // 5. La hoja para otro día: ayer, con la cena que se arma y el botón; y mañana, con las comidas que faltan.
+    await det('ayer');
+    await espera(1300);
+    await foto('detalles-05-hoja-ayer');
+    await comida('ficha', 'Helado de vainilla');
+    await espera(700);
+    await comida('sumar');
+    await espera(900);
+    await foto('detalles-05-bandeja-ayer');
+    await comida('listo');
+    await espera(800);
+    await foto('detalles-05-revision-ayer');
+    await comida('confirmar');
+    await espera(900);
+    await comida('bajar', 'ahora');
+    await espera(500);
+    await foto('detalles-05-agregado-ayer');
+    await det('manana');
+    await espera(1300);
+    await foto('detalles-05-manana');
+    // Con el dedo: «Agregar» en la merienda que falta abre la hoja de mañana.
+    await tocar('.comida .cm-tarjeta.vacia .cm-accion.principal');
+    await espera(1300);
+    await foto('detalles-05-hoja-manana');
+    await comida('cerrar');
+    await espera(700);
+    await idioma('en');
+    await det('ayer');
+    await espera(1100);
+    await comida('ficha', 'Banana');
+    await espera(600);
+    await comida('sumar');
+    await espera(700);
+    await comida('listo');
+    await espera(800);
+    await foto('detalles-05-revision-ingles');
+    await comida('cerrar');
+    await espera(600);
+    await idioma('es');
+    await comida('dia', 0);
+
+    // 6. Restar un vaso de agua: mantener apretado el agua, en Inicio y en el «+».
+    await det('agua');
+    await espera(1300);
+    await mantenerEn('.inicio .in-agua .in-vasos');
+    await espera(160);
+    await foto('detalles-06-inicio-quitado');
+    // Que el aviso de Inicio se vaya solo antes de abrir el «+», así no quedan dos iguales en la foto.
+    await espera(4300);
+    await det('aguaMas');
+    await espera(1200);
+    await mantenerEn('.mas .mas-agua');
+    await espera(250);
+    await foto('detalles-06-mas-quitado');
+    await mas('cerrar');
+    await espera(600);
+
+    // 7. «Atrás» en el cuestionario: la flecha a la altura del paso y lo que pasa al tocarla.
+    await det('atras');
+    await espera(2600);
+    await foto('detalles-07-atras');
+    await tocar('.ent-pantalla:not(.saliendo) .ent-atras');
+    await espera(380);
+    await foto('detalles-07-volviendo');
+    await espera(1500);
+    await foto('detalles-07-anterior');
+    await idioma('en');
+    await det('atras');
+    await espera(2600);
+    await foto('detalles-07-atras-ingles');
+    await idioma('es');
+    await pagina.evaluate(() => window.__entrada(null));
+    await espera(800);
+
+    // 8. La franja bajo la hora: con todo arriba no se ve; al hacer scroll, separa lo que pasa por debajo.
+    for (const [i, nombre, scroll, y] of [[0, 'inicio', '.in-scroll', 0], [0, 'inicio', '.in-scroll', 150], [1, 'comida', '.cm-scroll', 320], [2, 'progreso', '.pg-scroll', 260], [3, 'sueno', '.sn-scroll', 240], [5, 'perfil', '.pf-scroll', 300]]) {
+      await pestana(i);
+      await pagina.evaluate(([s, v]) => { document.querySelector(s).scrollTop = v; }, [scroll, y]);
+      await espera(500);
+      await foto(`detalles-08-${nombre}${y ? '' : '-arriba'}`);
+      await pagina.evaluate((s) => { document.querySelector(s).scrollTop = 0; }, scroll);
+    }
+
+    // 9. Las esperas: «Entrando…», borrar la cuenta y cerrar sesión (la alerta y el velo) y exportar.
+    await det('apple');
+    await espera(3000);
+    await tocar('.ent-apple');
+    await espera(450);
+    await foto('detalles-09-entrando');
+    await espera(500);
+    await pagina.evaluate(() => window.__entrada(null));
+    await espera(800);
+    await det('borrarCuenta');
+    await espera(700);
+    await foto('detalles-09-alerta-borrar');
+    await tocar('.dt-alerta-botones .peligro');
+    await espera(700);
+    await foto('detalles-09-borrando');
+    await espera(3200);
+    await det('cerrarSesion');
+    await espera(700);
+    await foto('detalles-09-alerta-cerrar');
+    await tocar('.dt-alerta-botones .peligro');
+    await espera(700);
+    await foto('detalles-09-cerrando');
+    await espera(3200);
+    // Baja hasta «Exportar todo» y la toca: la ruedita en vez de «CSV».
+    await det('exportar');
+    await espera(900);
+    await foto('detalles-09-exportando');
+    await espera(1600);
+
+    // 10. Sueño y Hábitos: «Cancelar» en la hora (de una noche y de la pregunta de la mañana), tirar para volver a
+    // leer Salud y un día sin hábitos.
+    await det('cancelar');
+    await espera(1400);
+    await foto('detalles-10-cancelar');
+    await sueno('hora', 'proponer');
+    await sueno('editarHora');
+    await sueno('subir');
+    await espera(900);
+    await foto('detalles-10-cancelar-manana');
+    await pagina.evaluate(() => window.__aparato('reloj'));
+    await pestana(3);
+    await sueno('subir');
+    await espera(700);
+    const arriba = await centro('.sueno .sn-scroll');
+    await pagina.mouse.move(arriba[0], 260);
+    await pagina.mouse.down();
+    // Pasado el umbral (unos 125 px de dedo, como iOS): la ruedita entera y, al soltar, lee.
+    await pagina.mouse.move(arriba[0], 430, { steps: 18 });
+    await espera(300);
+    await foto('detalles-10-tirando');
+    await pagina.mouse.up();
+    await pagina.mouse.move(1, 1);
+    await espera(500);
+    await foto('detalles-10-leyendo');
+    // «Al día con Salud» dura un segundo: la foto, apenas aparece (el render por software es lento y una espera fija se lo perdía).
+    await pagina.waitForSelector('.dt-tirar.listo', { timeout: 6000 }).catch(() => {});
+    await espera(200);
+    await foto('detalles-10-al-dia');
+    await det('sinHabitos');
+    await espera(2600);
+    await foto('detalles-10-sin-habitos');
+    await det('conHabitos');
+    await espera(800);
+
+    // 11. Perfil: lo que cambia ahí mismo, sin la flecha de entrar: la llave se mueve al tocar la fila, y los
+    // números y las unidades cambian su valor.
+    await det('perfil');
+    await espera(900);
+    await foto('detalles-11-perfil');
+    await tocar('[data-fila="mejorarBase"] .pf-fila');
+    await espera(130);
+    await foto('detalles-11-llave');
+    await espera(600);
+    await tocar('[data-fila="mejorarBase"] .pf-fila');
+    await espera(600);
+    await tocar('[data-fila="numeros"] .pf-fila');
+    await espera(450);
+    await foto('detalles-11-numeros');
+    await tocar('[data-fila="numeros"] .pf-fila');
+    await espera(700);
+    await pagina.evaluate(() => window.__perfil('bajar', '[data-fila="unidades"]'));
+    await espera(600);
+    await foto('detalles-11-unidades');
+    await pagina.evaluate(() => window.__perfil('subir'));
     await pagina.evaluate(() => window.__accion('reiniciar'));
     await espera(800);
     await pestana(0);

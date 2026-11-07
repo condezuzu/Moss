@@ -30,6 +30,26 @@ describe('comidaDeLaHora', () => {
     expect(a(0)).toBe('snack');
     expect(a(2, 15)).toBe('snack');
   });
+
+  it('con el día que empieza a las 5 o a las 6 (D32), el desayuno empieza con el día: antes es snack de ayer', () => {
+    const conCorte = (h: number, m: number, corte: number) => comidaDeLaHora(h * 60 + m, corte * 60);
+    expect(conCorte(5, 30, 6)).toBe('snack');
+    // Las 5:30 en la cuenta del día anterior, que todavía no terminó.
+    expect(comidaDeLaHora(24 * 60 + 5 * 60 + 30, 6 * 60)).toBe('snack');
+    expect(conCorte(6, 0, 6)).toBe('desayuno');
+    expect(conCorte(4, 59, 5)).toBe('snack');
+    expect(conCorte(5, 0, 5)).toBe('desayuno');
+    // Lo demás no cambia con el corte.
+    expect(conCorte(10, 30, 6)).toBe('snack');
+    expect(conCorte(13, 0, 6)).toBe('almuerzo');
+  });
+
+  it('con el corte a las 4 o antes, el desayuno empieza a las 4', () => {
+    expect(comidaDeLaHora(4 * 60, 0)).toBe('desayuno');
+    expect(comidaDeLaHora(4 * 60, 2 * 60)).toBe('desayuno');
+    expect(comidaDeLaHora(4 * 60, 4 * 60)).toBe('desayuno');
+    expect(comidaDeLaHora(3 * 60 + 59, 4 * 60)).toBe('snack');
+  });
 });
 
 describe('horasCorridas: lo que falta corre con la última que comiste', () => {

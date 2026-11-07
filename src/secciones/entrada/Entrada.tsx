@@ -12,15 +12,15 @@
 
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { AppState, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
 import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
-import { EDAD_MINIMA, edadDe, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { EDAD_MINIMA, edadDe, MAYORIA_DE_EDAD, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, ritmoPermitido, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
 import { DIA_DEL_AVISO, DIAS_DE_PRUEBA } from '@/dominio/premium';
 import { deudaDeSueno, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { hayCompras } from '@/lib/premium';
@@ -29,11 +29,15 @@ import { haySupabase } from '@/lib/supabase';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
+import { useCuenta } from '../animados';
+import { anunciar } from '../anuncio';
 import { COLOR_DE_MACRO, Icono, MACROS } from '../comida/comunes';
 import { duracion, horaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { ejemplo } from '../ejemplo';
 import { Hipnograma } from '../graficos/Graficos';
+import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
+import { BotonDePaso } from '../paso';
 import { entrarConApple, hayApple, type ErrorDeCuenta } from './cuenta';
 import { Guia } from './Guia';
 import {
@@ -97,6 +101,18 @@ const ARRIBA = 28;
 /** Lo que deja cada pantalla a los costados. */
 const LADOS = 26;
 const CASIOPEA = buscarConstelacion('cassiopeia');
+/**
+ * Lo más que crece el texto grande en lo que tiene su lugar medido a mano (las cifras grandes, la marca y
+ * la introducción, que la estrella recorre): con más, «174,5 kg» y sus ± no entraban.
+ */
+const TOPE = 1.2;
+/** Lo que se contesta se guarda con esta espera: el deslizador cambia muchas veces por segundo. */
+const ESPERA_DEL_AVANCE = 400;
+/** Un fundido no es movimiento: con Reducir movimiento también se ve (si no, aparecía de golpe). */
+const fundido = (demora: number, ms: number) => FadeIn.delay(demora).duration(ms).reduceMotion(ReduceMotion.Never);
+/** Lo que entra subiendo; con Reducir movimiento, solo con el fundido. */
+const subiendo = (reducido: boolean, demora: number, ms: number) => (reducido ? fundido(demora, ms) : FadeInDown.delay(demora).duration(ms));
+const SE_APAGA = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
 
 function vibrar(e: Evento) {
   if (e === 'completo') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -188,9 +204,65 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const conLaCuenta = conPerfil && i > pasos.findIndex((p) => p.id === 'salud');
   const saliendo = terminando || conLaCuenta;
 
+  // El avance se guarda al cambiar de pantalla; lo que se contesta en la misma, con una espera corta (el
+  // deslizador cambia muchas veces por segundo, y cada vez se escribía) o al irse Moss a segundo plano.
+  const avancePendiente = useRef<(() => void) | null>(null);
+  const pantallaGuardada = useRef<number | null>(null);
   useEffect(() => {
-    if (!saliendo) elAlmacen().ponerAvanceDeEntrada({ i, id: paso.id, r, deSalud: [...deSalud] });
+    if (saliendo) {
+      avancePendiente.current = null;
+      return;
+    }
+    const guardar = () => {
+      avancePendiente.current = null;
+      elAlmacen().ponerAvanceDeEntrada({ i, id: paso.id, r, deSalud: [...deSalud] });
+    };
+    avancePendiente.current = guardar;
+    if (pantallaGuardada.current !== i) {
+      pantallaGuardada.current = i;
+      guardar();
+      return;
+    }
+    const espera = setTimeout(guardar, ESPERA_DEL_AVANCE);
+    return () => clearTimeout(espera);
   }, [i, paso.id, r, deSalud, saliendo]);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado !== 'active') avancePendiente.current?.();
+    });
+    return () => {
+      sub.remove();
+      avancePendiente.current?.();
+    };
+  }, []);
+
+  // Salud dijo menos de 16: al volver a esa pregunta (o a Moss), se le pregunta de nuevo, por si cambió la
+  // fecha de nacimiento. Si ya no la tiene, la edad se elige a mano.
+  const edadDeSalud = paso.id === 'edad' && deSalud.has('edad');
+  useEffect(() => {
+    if (!edadDeSalud) return;
+    let vigente = true;
+    const releer = () => {
+      datosDelCuestionario().then((d) => {
+        if (!vigente) return;
+        const edad = d.edad;
+        if (edad !== undefined) setR((antes) => (antes.edad === edad ? antes : { ...antes, edad }));
+        else setDeSalud((antes) => {
+          const nuevo = new Set(antes);
+          nuevo.delete('edad');
+          return nuevo;
+        });
+      }).catch(() => {});
+    };
+    releer();
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') releer();
+    });
+    return () => {
+      vigente = false;
+      sub.remove();
+    };
+  }, [edadDeSalud]);
 
   useEffect(() => {
     camara.set(paso.camara);
@@ -204,8 +276,12 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const siguiente = () => {
     if (i < pasos.length - 1) irA(i + 1);
   };
+  // «Empezar» va una vez: mientras Apple contesta (hasta tres segundos), un segundo toque abría la pantalla
+  // de pago otra vez o guardaba las respuestas dos veces.
+  const empezo = useRef(false);
   // Se borró la cuenta o se cerró la sesión desde la pantalla de pago: desde el principio, sin lo contestado.
   const reiniciar = () => {
+    empezo.current = false;
     setR(DE_FABRICA);
     setDeSalud(new Set());
     irA(0);
@@ -233,7 +309,10 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     }, reducido ? 200 : 1100);
   };
   const terminar = () => {
-    if (saliendo || !r.sexo) return;
+    if (saliendo || !r.sexo) {
+      empezo.current = false;
+      return;
+    }
     setTerminando(true);
     // La estrella sube y se va, como en la galería antes del flum.
     setGuion(guionDeSalida(lugarDeAhora()));
@@ -244,6 +323,11 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
       alTerminar?.();
     });
   };
+  const empezar = () => {
+    if (empezo.current || saliendo) return;
+    empezo.current = true;
+    ofrecerPremium(terminar, reiniciar);
+  };
   useEffect(() => {
     if (!conLaCuenta || terminando) return;
     const espera = salir(() => elAlmacen().terminarEntrada());
@@ -252,9 +336,10 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conLaCuenta]);
 
+  // Con Reducir movimiento, la entrada se apaga igual (de fábrica, withTiming lo saltearía) pero sin agrandarse.
   const estiloSalida = useAnimatedStyle(() => ({
-    opacity: withTiming(saliendo ? 0 : 1, { duration: 700 }),
-    transform: [{ scale: withTiming(saliendo ? 1.06 : 1, { duration: 900 }) }],
+    opacity: withTiming(saliendo ? 0 : 1, { duration: 700, reduceMotion: ReduceMotion.Never }),
+    transform: [{ scale: reducido ? 1 : withTiming(saliendo ? 1.06 : 1, { duration: 900 }) }],
   }));
 
   const enCuestionario = CUESTIONARIO.indexOf(paso.id);
@@ -262,13 +347,21 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   // La frase, las diapositivas y la cuenta tienen lo suyo en un lugar fijo, el que recorre la estrella: no corren.
   const fija = esDiapositiva(paso.id) || paso.id === 'cuenta';
   const conPago = hayCompras();
+  // Sin déficit, bajar de peso queda en mantener; antes de los 18, bajando, «Rápido» queda en el recomendado.
+  const objetivo: Objetivo = r.caso !== 'nada' && r.objetivo === 'bajar' ? 'mantener' : r.objetivo;
+  const ritmo = ritmoPermitido({ edad: r.edad, objetivo, ritmo: r.ritmo });
   return (
     <Animated.View style={[StyleSheet.absoluteFill, estiloSalida]} pointerEvents={saliendo ? 'none' : 'box-none'}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Animated.View key={paso.id} entering={FadeInDown.delay(i === 0 ? 120 : 280).duration(620)} exiting={FadeOut.duration(320)} style={{ flex: 1 }}>
+        <Animated.View
+          key={paso.id}
+          entering={reducido ? ENTRA_FUNDIDO : FadeInDown.delay(i === 0 ? 120 : 280).duration(620)}
+          exiting={reducido ? SALE_FUNDIDO : FadeOut.duration(320)}
+          style={{ flex: 1 }}
+        >
           {fija ? (
             <>
-              {paso.id === 'frase' && <Frase a={a} reducido={reducido} />}
+              {paso.id === 'frase' && <Frase a={a} />}
               {paso.id === 'habitos' && guion.casiopea && (
                 <View style={StyleSheet.absoluteFill} pointerEvents="none">
                   <Casiopea escena={guion.casiopea} reloj={reloj} reducido={reducido} ancho={a.W} alto={a.H} />
@@ -322,18 +415,20 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
             {paso.id === 'cuidado' && <Cuidado sexo={r.sexo} caso={r.caso} alElegir={(v) => poner('caso', v)} alSeguir={siguiente} />}
             {paso.id === 'objetivo' && (
               <ElObjetivo
-                objetivo={r.caso !== 'nada' && r.objetivo === 'bajar' ? 'mantener' : r.objetivo}
-                ritmo={r.ritmo}
+                objetivo={objetivo}
+                ritmo={ritmo}
                 sinDeficit={r.caso !== 'nada'}
+                menor={r.edad < MAYORIA_DE_EDAD}
                 alObjetivo={(v) => poner('objetivo', v)}
                 alRitmo={(v) => poner('ritmo', v)}
                 alSeguir={() => {
-                  if (r.caso !== 'nada' && r.objetivo === 'bajar') poner('objetivo', 'mantener');
+                  if (objetivo !== r.objetivo) poner('objetivo', objetivo);
+                  if (ritmo !== r.ritmo) poner('ritmo', ritmo);
                   siguiente();
                 }}
               />
             )}
-            {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={() => ofrecerPremium(terminar, reiniciar)} boton={conPago ? t('entrada.seguir') : t('entrada.cuestionario.empezar')} reducido={reducido} />}
+            {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={empezar} boton={conPago ? t('entrada.seguir') : t('entrada.cuestionario.empezar')} reducido={reducido} />}
           </ScrollView>
           )}
         </Animated.View>
@@ -341,9 +436,9 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
       <Guia recorrido={recorrido} reloj={reloj} anclas={a} reducido={reducido} tocable={esDiapositiva(paso.id) && !saliendo} lista={espera} alTocar={siguiente} />
       {/* Saltar lleva a lo que cuesta: el cuestionario es trabajo, y antes hay que saber que Moss es de pago. */}
       {conPago && i < dondeCuesta && !saliendo && (
-        <Animated.View entering={FadeIn.duration(320)} exiting={FadeOut.duration(320)} style={[s.saltar, { top: insets.top + 4 }]}>
+        <Animated.View entering={fundido(0, 320)} exiting={SE_APAGA} style={[s.saltar, { top: insets.top + 4 }]}>
           <Pressable onPress={() => irA(dondeCuesta)} accessibilityRole="button" hitSlop={10}>
-            <Text style={s.saltarTexto}>{t('entrada.intro.saltar')}</Text>
+            <Text style={s.saltarTexto} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.saltar')}</Text>
           </Pressable>
         </Animated.View>
       )}
@@ -352,8 +447,13 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
 }
 
 // Como en la galería, la frase, las diapositivas, la cuenta y el resultado van centrados; el cuestionario, a la izquierda.
-const Titulo = ({ children, centrado }: { children: ReactNode; centrado?: boolean }) => <Text style={[s.titulo, centrado && s.centrado]} accessibilityRole="header">{children}</Text>;
-const Texto = ({ children, centrado }: { children: ReactNode; centrado?: boolean }) => <Text style={[s.texto, centrado && s.centrado]}>{children}</Text>;
+// `tope`: en las pantallas fijas, lo de abajo tiene su lugar medido y el texto grande lo taparía.
+const Titulo = ({ children, centrado, tope }: { children: ReactNode; centrado?: boolean; tope?: boolean }) => (
+  <Text style={[s.titulo, centrado && s.centrado]} accessibilityRole="header" maxFontSizeMultiplier={tope ? TOPE : undefined}>{children}</Text>
+);
+const Texto = ({ children, centrado, tope }: { children: ReactNode; centrado?: boolean; tope?: boolean }) => (
+  <Text style={[s.texto, centrado && s.centrado]} maxFontSizeMultiplier={tope ? TOPE : undefined}>{children}</Text>
+);
 const Pie = ({ children }: { children: ReactNode }) => <View style={s.pie}>{children}</View>;
 const Espacio = () => <View style={{ flex: 1, minHeight: 24 }} />;
 
@@ -368,17 +468,20 @@ function Avance({ n, total }: { n: number; total: number }) {
 }
 
 // ------------------------------------------------------------------ la frase y las diapositivas
-/** La frase, centrada en el 44 % del alto: las palabras aparecen mientras la estrella la presenta desde arriba. */
-function Frase({ a, reducido }: { a: Anclas; reducido: boolean }) {
+/**
+ * La frase, centrada en el 44 % del alto: las palabras aparecen mientras la estrella la presenta desde arriba.
+ * Con Reducir movimiento también se encienden de a una: es un fundido, y la estrella sigue el mismo reloj.
+ */
+function Frase({ a }: { a: Anclas }) {
   const palabras = t('entrada.frase').split(' ');
   return (
     <View style={[s.frase, { height: a.H * 0.88 }]} pointerEvents="none">
       <View style={s.fraseTexto} accessible accessibilityLabel={t('entrada.frase')}>
         {palabras.map((p, k) => (
-          <Animated.Text key={k} entering={reducido ? undefined : FadeIn.delay(PALABRAS.desde + k * PALABRAS.cada).duration(900)} style={s.palabra}>{p}</Animated.Text>
+          <Animated.Text key={k} entering={fundido(PALABRAS.desde + k * PALABRAS.cada, 900)} style={s.palabra} maxFontSizeMultiplier={TOPE}>{p}</Animated.Text>
         ))}
       </View>
-      <Animated.Text entering={reducido ? undefined : FadeIn.delay(PALABRAS.autor).duration(1000)} style={s.autor}>{t('entrada.fraseAutor')}</Animated.Text>
+      <Animated.Text entering={fundido(PALABRAS.autor, 1000)} style={s.autor} maxFontSizeMultiplier={TOPE}>{t('entrada.fraseAutor')}</Animated.Text>
     </View>
   );
 }
@@ -386,8 +489,8 @@ function Frase({ a, reducido }: { a: Anclas; reducido: boolean }) {
 function Encabezado({ titulo, texto }: { titulo: string; texto: string }) {
   return (
     <>
-      <Titulo centrado>{titulo}</Titulo>
-      <Texto centrado>{texto}</Texto>
+      <Titulo centrado tope>{titulo}</Titulo>
+      <Texto centrado tope>{texto}</Texto>
     </>
   );
 }
@@ -413,10 +516,10 @@ function Marca({ a, letras: cuando, reducido }: { a: Anclas; letras?: number[]; 
     <View style={[s.marcaCaja, { top: a.marca[1] - 36 }]} pointerEvents="none">
       <View style={s.marca} accessible accessibilityRole="header" accessibilityLabel="Moss">
         {'Moss'.split('').map((letra, k) => (
-          <Animated.Text key={k} entering={reducido ? undefined : FadeInDown.delay(cuando?.[k] ?? 150 + k * 120).duration(1100)} style={s.marcaLetra}>{letra}</Animated.Text>
+          <Animated.Text key={k} entering={subiendo(reducido, cuando?.[k] ?? 150 + k * 120, 1100)} style={s.marcaLetra} maxFontSizeMultiplier={TOPE}>{letra}</Animated.Text>
         ))}
       </View>
-      <Animated.Text entering={reducido ? undefined : FadeIn.delay(1900).duration(1000)} style={s.lema}>{t('entrada.cuenta.lema')}</Animated.Text>
+      <Animated.Text entering={fundido(1900, 1000)} style={s.lema} maxFontSizeMultiplier={TOPE}>{t('entrada.cuenta.lema')}</Animated.Text>
     </View>
   );
 }
@@ -441,7 +544,7 @@ function ConstelacionDeIntro({ i, arriba }: { i: number; arriba: number }) {
 /** Lo dicho, arriba de la luna, y lo que anotó: cada vuelta de la estrella deja un alimento. */
 function LoDicho({ a, luna, reducido }: { a: Anclas; luna: EscenaDeLuna; reducido: boolean }) {
   const lados = { left: a.barra.x0, right: a.barra.x0 };
-  const aparece = (ms: number) => (reducido ? undefined : FadeInDown.delay(ms).duration(550));
+  const aparece = (ms: number) => subiendo(reducido, ms, 550);
   const porciones = lista('entrada.intro.comida.porciones');
   // Debajo de la luna, midiendo desde ella: tres filas de 33 y lo que suman.
   const filas = luna.centro[1] + LUNA.radios[2] + 12;
@@ -450,18 +553,18 @@ function LoDicho({ a, luna, reducido }: { a: Anclas; luna: EscenaDeLuna; reducid
       {a.H >= ALTO_PARA_LO_DICHO && (
         <Animated.View entering={aparece(500)} style={[s.dicho, lados, { top: a.H * INTRO.dicho }]}>
           <Icono nombre="mic" tam={16} color={colores.oroClaro} />
-          <Text style={s.dichoTexto}>{t('entrada.intro.comida.frase')}</Text>
+          <Text style={s.dichoTexto} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.comida.frase')}</Text>
         </Animated.View>
       )}
       <View style={[s.dichoFilas, lados, { top: filas }]}>
         {lista('entrada.intro.comida.filas').map((nombre, k) => (
           <Animated.View key={nombre} entering={aparece(luna.vueltas[k][1] - 200)} style={s.dichoFila}>
-            <Text style={s.dichoNombre} numberOfLines={1}>{nombre}<Text style={s.dichoPorcion}>{`  ${porciones[k]}`}</Text></Text>
-            <Text style={s.dichoKcal}>{`${numero(KCAL_DEL_DICHO[k])} kcal`}</Text>
+            <Text style={s.dichoNombre} numberOfLines={1} maxFontSizeMultiplier={TOPE}>{nombre}<Text style={s.dichoPorcion}>{`  ${porciones[k]}`}</Text></Text>
+            <Text style={s.dichoKcal} maxFontSizeMultiplier={TOPE}>{`${numero(KCAL_DEL_DICHO[k])} kcal`}</Text>
           </Animated.View>
         ))}
       </View>
-      <Animated.Text entering={aparece(luna.vueltas[2][1] + 150)} style={[s.dichoTotal, lados, { top: filas + 3 * 33 + 12 }]}>
+      <Animated.Text entering={aparece(luna.vueltas[2][1] + 150)} style={[s.dichoTotal, lados, { top: filas + 3 * 33 + 12 }]} maxFontSizeMultiplier={TOPE}>
         {t('entrada.intro.comida.total', { n: numero(KCAL_DEL_DICHO.reduce((x, y) => x + y, 0)) })}
       </Animated.Text>
     </View>
@@ -477,35 +580,35 @@ function LaBase({ a, llegaA, reducido }: { a: Anclas; llegaA: number[]; reducido
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <View style={[s.busca, lados, { top: y }]}>
         <Icono nombre="magnifyingglass" tam={15} color="rgba(239, 230, 207, 0.6)" />
-        <Text style={s.buscaTexto}>{t('entrada.intro.base.busca')}</Text>
+        <Text style={s.buscaTexto} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.base.busca')}</Text>
       </View>
       <View style={[s.baseFilas, lados, { top: y + BASE.hastaLasFilas }]}>
         {lista('entrada.intro.base.filas').map((nombre, k) => {
           const [kcal, proteina, carbohidratos, grasas] = DE_LA_BASE[k];
           const total = proteina * 4 + carbohidratos * 4 + grasas * 9;
           return (
-            <Animated.View key={nombre} entering={reducido ? undefined : FadeInDown.delay(300 + k * 160).duration(550)} style={s.baseFila}>
+            <Animated.View key={nombre} entering={subiendo(reducido, 300 + k * 160, 550)} style={s.baseFila}>
               <View style={s.baseMarca}>
-                <Animated.View entering={reducido ? undefined : FadeIn.delay(llegaA[k]).duration(450)} style={s.baseMarcaLuz}>
+                <Animated.View entering={fundido(llegaA[k], 450)} style={s.baseMarcaLuz}>
                   <Icono nombre="checkmark" tam={11} color={colores.oroClaro} peso="semibold" />
                 </Animated.View>
               </View>
               <View style={s.baseTextos}>
-                <Text style={s.baseNombre} numberOfLines={1}>{nombre}</Text>
-                <Text style={s.basePorcion}>{porciones[k]}</Text>
+                <Text style={s.baseNombre} numberOfLines={1} maxFontSizeMultiplier={TOPE}>{nombre}</Text>
+                <Text style={s.basePorcion} numberOfLines={1} maxFontSizeMultiplier={TOPE}>{porciones[k]}</Text>
                 <View style={s.baseMacros}>
                   <View style={{ flex: (proteina * 4) / total, backgroundColor: COLOR_DE_MACRO.proteina }} />
                   <View style={{ flex: (carbohidratos * 4) / total, backgroundColor: COLOR_DE_MACRO.carbohidratos }} />
                   <View style={{ flex: (grasas * 9) / total, backgroundColor: COLOR_DE_MACRO.grasas }} />
                 </View>
               </View>
-              <Text style={s.baseKcal}>{`${numero(kcal)} kcal`}</Text>
+              <Text style={s.baseKcal} maxFontSizeMultiplier={TOPE}>{`${numero(kcal)} kcal`}</Text>
             </Animated.View>
           );
         })}
       </View>
-      <Animated.View entering={reducido ? undefined : FadeIn.delay(llegaA[2] + 300).duration(500)} style={[s.baseNota, lados, { top: y + BASE.hastaLasFilas + 3 * BASE.fila + 4 }]}>
-        <Text style={s.baseVerificado}>{t('entrada.intro.base.verificado')}</Text>
+      <Animated.View entering={fundido(llegaA[2] + 300, 500)} style={[s.baseNota, lados, { top: y + BASE.hastaLasFilas + 3 * BASE.fila + 4 }]}>
+        <Text style={s.baseVerificado} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.base.verificado')}</Text>
       </Animated.View>
     </View>
   );
@@ -533,25 +636,25 @@ function LaNoche({ a, cruza, reducido }: { a: Anclas; cruza: [number, number]; r
   ];
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Animated.View entering={reducido ? undefined : FadeInDown.delay(250).duration(550)} style={[s.noche, lados, { top: a.H * INTRO.noche }]}>
+      <Animated.View entering={subiendo(reducido, 250, 550)} style={[s.noche, lados, { top: a.H * INTRO.noche }]}>
         <View style={[s.nocheCab, { height: NOCHE.hastaElGrafico - 26 }]}>
-          <Text style={s.nocheRotulo}>{t('entrada.intro.sueno.anoche')}</Text>
-          <Text style={s.nocheCifra}>{duracion(n.dormido)}</Text>
+          <Text style={s.nocheRotulo} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.sueno.anoche')}</Text>
+          <Text style={s.nocheCifra} maxFontSizeMultiplier={TOPE}>{duracion(n.dormido)}</Text>
         </View>
         <Animated.View style={[s.nocheGrafico, estiloDelGrafico]}>
           <Hipnograma desde={n.dormirse} hasta={n.despertar} tramos={n.tramos} ancho={interior} alto={NOCHE.grafico} guias />
         </Animated.View>
-        <Animated.View entering={reducido ? undefined : FadeIn.delay(llega + tarda - 100).duration(450)} style={s.nocheDatos}>
+        <Animated.View entering={fundido(llega + tarda - 100, 450)} style={s.nocheDatos}>
           {datos.map(([titulo, valor]) => (
             <View key={titulo} style={s.nocheDato}>
-              <Text style={s.nocheDatoTitulo}>{titulo}</Text>
-              <Text style={s.nocheDatoValor}>{valor}</Text>
+              <Text style={s.nocheDatoTitulo} maxFontSizeMultiplier={TOPE}>{titulo}</Text>
+              <Text style={s.nocheDatoValor} maxFontSizeMultiplier={TOPE}>{valor}</Text>
             </View>
           ))}
         </Animated.View>
       </Animated.View>
-      <Animated.View entering={reducido ? undefined : FadeIn.delay(llega + tarda).duration(500)} style={[lados, s.nochesCaja, { top: a.H * INTRO.noche + 214 }]}>
-        <Text style={s.nocheRotulo}>{t('entrada.intro.sueno.semanas')}</Text>
+      <Animated.View entering={fundido(llega + tarda, 500)} style={[lados, s.nochesCaja, { top: a.H * INTRO.noche + 214 }]}>
+        <Text style={s.nocheRotulo} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.sueno.semanas')}</Text>
         <View style={s.noches}>
           {noches.map((x, k) => <View key={k} style={[s.nocheBarra, x ? { height: Math.max(3, (x.dormido / maximo) * 46) } : s.nocheVacia, x && x.dormido >= 8 * 60 * 0.9 && s.nocheBien]} />)}
         </View>
@@ -601,15 +704,15 @@ function ElCamino({ a, cuando, reducido }: { a: Anclas; cuando: number[]; reduci
           {puntos.map(([titulo, texto], k) => (
             <View key={titulo} style={s.caminoPunto}>
               <View style={s.caminoNodo}>
-                <Animated.View entering={reducido ? undefined : FadeIn.delay(cuando[k]).duration(350)} style={s.caminoNodoLuz} />
+                <Animated.View entering={fundido(cuando[k], 350)} style={s.caminoNodoLuz} />
               </View>
-              <Text style={s.caminoTitulo}>{titulo}</Text>
-              <Text style={s.caminoTexto}>{texto}</Text>
+              <Text style={s.caminoTitulo} maxFontSizeMultiplier={TOPE}>{titulo}</Text>
+              <Text style={s.caminoTexto} maxFontSizeMultiplier={TOPE}>{texto}</Text>
             </View>
           ))}
         </View>
       )}
-      <Animated.Text entering={reducido ? undefined : FadeIn.delay(cuando[2] + 200).duration(500)} style={[s.caminoNota, lados, { top: a.H * INTRO.nota }]}>{t('entrada.intro.precio.nota')}</Animated.Text>
+      <Animated.Text entering={fundido(cuando[2] + 200, 500)} style={[s.caminoNota, lados, { top: a.H * INTRO.nota }]} maxFontSizeMultiplier={TOPE}>{t('entrada.intro.precio.nota')}</Animated.Text>
     </View>
   );
 }
@@ -617,28 +720,36 @@ function ElCamino({ a, cuando, reducido }: { a: Anclas; cuando: number[]; reduci
 // ------------------------------------------------------------------ la cuenta
 /** Solo con Apple (la v1 no ofrece correo: la lógica sigue en cuenta.ts, sin usar). */
 function Cuenta({ alEntrar }: { alEntrar: () => void }) {
+  const reducido = useReducedMotion();
   const [apple, setApple] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<ErrorDeCuenta | null>(null);
+  // El segundo toque llega antes de que el estado se dibuje: la hoja de Apple se pedía dos veces.
+  const enCamino = useRef(false);
   useEffect(() => {
     hayApple().then(setApple).catch(() => {});
   }, []);
   const entrar = async () => {
-    if (ocupado) return;
+    if (enCamino.current) return;
+    enCamino.current = true;
     setOcupado(true);
     setError(null);
     const resultado = await entrarConApple();
+    enCamino.current = false;
     setOcupado(false);
     if (resultado.ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       alEntrar();
-    } else setError(resultado.error);
+    } else {
+      setError(resultado.error);
+      if (resultado.error) anunciar(t(`entrada.cuenta.errores.${resultado.error}`));
+    }
   };
   // La marca va arriba (Marca); abajo, Apple y lo que se acepta.
   return (
     <>
       <Espacio />
-      <Animated.View entering={FadeInDown.delay(2100).duration(800)} style={s.botones}>
+      <Animated.View entering={subiendo(reducido, 2100, 800)} style={s.botones}>
         {apple ? (
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
@@ -651,7 +762,7 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
           <Boton tipo="apple" texto={t('entrada.cuenta.apple')} alTocar={entrar} desactivado={ocupado} icono={<Icono nombre="applelogo" tam={17} color="#000" />} />
         )}
         {error && (
-          <Animated.Text entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)} style={s.error} accessibilityLiveRegion="polite">
+          <Animated.Text entering={fundido(0, 300)} exiting={SE_APAGA} style={s.error} accessibilityLiveRegion="polite">
             {t(`entrada.cuenta.errores.${error}`)}
           </Animated.Text>
         )}
@@ -685,13 +796,14 @@ function Legal() {
  * acá: empieza apagado y se prende en Perfil.
  */
 function TusDatos({ alSeguir }: { alSeguir: () => void }) {
+  const reducido = useReducedMotion();
   return (
     <>
       <Titulo>{t('entrada.datos.titulo')}</Titulo>
       <Texto>{t('entrada.datos.texto')}</Texto>
       <View style={s.datos}>
         {lista('entrada.datos.lineas').map((linea, k) => (
-          <Animated.View key={linea} entering={FadeInDown.delay(500 + k * 140).duration(600)} style={s.datoFila}>
+          <Animated.View key={linea} entering={subiendo(reducido, 500 + k * 140, 600)} style={s.datoFila}>
             <View style={s.datoPunto} />
             <Text style={s.datoTexto}>{linea}</Text>
           </Animated.View>
@@ -732,7 +844,7 @@ function Cuidado({ sexo, caso, alElegir, alSeguir }: { sexo: Sexo | null; caso: 
         {casos.map((c) => <Opcion key={c.caso} titulo={c.titulo} detalle={c.detalle} elegida={c.caso === caso} alTocar={() => alElegir(c.caso)} />)}
       </View>
       {caso !== 'nada' && (
-        <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
+        <Animated.View entering={fundido(0, 300)} exiting={SE_APAGA}>
           <Texto>{t('entrada.cuidado.aviso')}</Texto>
         </Animated.View>
       )}
@@ -749,8 +861,11 @@ const ICONOS_DE_SALUD = ['figure.walk', 'moon.zzz', 'brain.head.profile', 'drop'
 
 function Salud({ alSeguir, alLeer }: { alSeguir: () => void; alLeer: (d: Partial<Pick<Respuestas, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>>) => void }) {
   const [ocupado, setOcupado] = useState(false);
+  const enCamino = useRef(false);
   const hay = haySalud();
   const conectar = async () => {
+    if (enCamino.current) return;
+    enCamino.current = true;
     setOcupado(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     if (await pedirPermisos()) {
@@ -766,7 +881,7 @@ function Salud({ alSeguir, alLeer }: { alSeguir: () => void; alLeer: (d: Partial
       <Texto>{t('entrada.cuestionario.saludTexto')}</Texto>
       <View style={s.iconosDeSalud}>
         {ICONOS_DE_SALUD.map((nombre, k) => (
-          <Animated.View key={nombre} entering={FadeIn.delay(200 + k * 160).duration(600)} style={s.iconoDeSalud}>
+          <Animated.View key={nombre} entering={fundido(200 + k * 160, 600)} style={s.iconoDeSalud}>
             <Icono nombre={nombre} tam={19} color="rgba(239, 230, 207, 0.55)" />
           </Animated.View>
         ))}
@@ -780,34 +895,59 @@ function Salud({ alSeguir, alLeer }: { alSeguir: () => void; alLeer: (d: Partial
   );
 }
 
-const ChipDeSalud = () => <Text style={s.deSalud}>{t('entrada.cuestionario.deSalud')}</Text>;
+/**
+ * Lo que vino de Salud. Si se cambia a mano, el chip se apaga pero deja su lugar: al irse, el deslizador
+ * subía de golpe con el dedo encima.
+ */
+function ChipDeSalud({ encendido, izquierda }: { encendido: boolean; izquierda?: boolean }) {
+  const [estuvo] = useState(encendido);
+  const luz = useAnimatedStyle(() => ({ opacity: withTiming(encendido ? 1 : 0, { duration: 240, reduceMotion: ReduceMotion.Never }) }), [encendido]);
+  if (!estuvo) return null;
+  return (
+    <Animated.View
+      style={[s.chipFila, izquierda && { justifyContent: 'flex-start' }, luz]}
+      accessibilityElementsHidden={!encendido}
+      importantForAccessibility={encendido ? 'auto' : 'no-hide-descendants'}
+    >
+      <Text style={s.deSalud}>{t('entrada.cuestionario.deSalud')}</Text>
+    </Animated.View>
+  );
+}
 
 type PropsDeNumero = {
   titulo: string; texto?: string; valor: number; min: number; max: number; paso: number; decimales: number; unidad: string; deSalud: boolean;
   alCambiar: (v: number) => void; alSeguir: () => void; mostrar?: (v: number) => string;
 };
 
-/** Las preguntas de un número: el número grande, el deslizador y un paso fino a cada lado. */
+/** Las preguntas de un número: el número grande, el deslizador y un paso fino a cada lado (mantenido, repite). */
 function Numero({ titulo, texto, valor, min, max, paso, decimales, unidad, deSalud, alCambiar, alSeguir, mostrar }: PropsDeNumero) {
-  const fino = (signo: 1 | -1) => alCambiar(Math.min(max, Math.max(min, Math.round((valor + signo * paso) * 100) / 100)));
+  const textoDe = (v: number) => (mostrar ? mostrar(v) : `${numero(v, decimales)} ${unidad}`);
+  const fino = (signo: 1 | -1) => {
+    const nuevo = Math.min(max, Math.max(min, Math.round((valor + signo * paso) * 100) / 100));
+    if (nuevo === valor) return false;
+    alCambiar(nuevo);
+    anunciar(textoDe(nuevo));
+  };
   return (
     <>
       <Titulo>{titulo}</Titulo>
       {texto ? <Texto>{texto}</Texto> : null}
       <View style={s.numero}>
-        <Pressable onPress={() => fino(-1)} style={s.fino} accessibilityRole="button" accessibilityLabel={`− ${numero(paso, decimales)}`} hitSlop={6}>
+        <BotonDePaso alPaso={() => fino(-1)} etiqueta={`− ${numero(paso, decimales)}`} lado={40} style={s.fino}>
           <Icono nombre="minus" tam={16} peso="semibold" />
-        </Pressable>
+        </BotonDePaso>
         <View style={s.numeroCentro}>
-          <Text style={s.numeroValor}>{mostrar ? mostrar(valor) : numero(valor, decimales)}</Text>
-          {!mostrar && <Text style={s.numeroUnidad}>{unidad}</Text>}
+          <Text style={s.numeroValor} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={TOPE}>
+            {mostrar ? mostrar(valor) : numero(valor, decimales)}
+          </Text>
+          {!mostrar && <Text style={s.numeroUnidad} maxFontSizeMultiplier={TOPE}>{unidad}</Text>}
         </View>
-        <Pressable onPress={() => fino(1)} style={s.fino} accessibilityRole="button" accessibilityLabel={`+ ${numero(paso, decimales)}`} hitSlop={6}>
+        <BotonDePaso alPaso={() => fino(1)} etiqueta={`+ ${numero(paso, decimales)}`} lado={40} style={s.fino}>
           <Icono nombre="plus" tam={16} peso="semibold" />
-        </Pressable>
+        </BotonDePaso>
       </View>
-      {deSalud && <View style={s.chipFila}><ChipDeSalud /></View>}
-      <Deslizador valor={valor} min={min} max={max} paso={paso} alCambiar={alCambiar} etiqueta={titulo} />
+      <ChipDeSalud encendido={deSalud} />
+      <Deslizador valor={valor} min={min} max={max} paso={paso} alCambiar={alCambiar} etiqueta={titulo} textoDe={textoDe} pasoDeAccesibilidad={1} />
       <Espacio />
       <Pie>
         <Boton texto={t('entrada.seguir')} alTocar={alSeguir} />
@@ -844,7 +984,7 @@ function Peso({ kg, deSalud, alCambiar, alSeguir }: { kg: number; deSalud: boole
   const imperial = sistemaDe(useEstado()) === 'imperial';
   const comun = { titulo: t('entrada.cuestionario.pesoTitulo'), texto: t('entrada.cuestionario.pesoTexto'), deSalud, alSeguir, decimales: 1 };
   if (!imperial) return <Numero {...comun} valor={kg} min={RANGOS_DEL_CUESTIONARIO.pesoKg[0]} max={RANGOS_DEL_CUESTIONARIO.pesoKg[1]} paso={0.1} unidad="kg" alCambiar={(v) => alCambiar(Math.round(v * 10) / 10)} />;
-  return <Numero {...comun} valor={Math.round((kg / KG_POR_LIBRA) * 10) / 10} min={Math.ceil(RANGOS_DEL_CUESTIONARIO.pesoKg[0] / KG_POR_LIBRA)} max={Math.floor(RANGOS_DEL_CUESTIONARIO.pesoKg[1] / KG_POR_LIBRA)} paso={0.2} unidad="lb" alCambiar={(lb) => alCambiar(Math.round(lb * KG_POR_LIBRA * 10) / 10)} />;
+  return <Numero {...comun} valor={Math.round((kg / KG_POR_LIBRA) * 10) / 10} min={Math.ceil(RANGOS_DEL_CUESTIONARIO.pesoKg[0] / KG_POR_LIBRA)} max={Math.floor(RANGOS_DEL_CUESTIONARIO.pesoKg[1] / KG_POR_LIBRA)} paso={0.2} unidad="lb" alCambiar={(lb) => alCambiar(Math.round(lb * KG_POR_LIBRA * 100) / 100)} />;
 }
 
 function ElSexo({ sexo, deSalud, alElegir, alSeguir }: { sexo: Sexo | null; deSalud: boolean; alElegir: (s: Sexo) => void; alSeguir: () => void }) {
@@ -856,7 +996,7 @@ function ElSexo({ sexo, deSalud, alElegir, alSeguir }: { sexo: Sexo | null; deSa
         <Opcion titulo={t('entrada.cuestionario.femenino')} elegida={sexo === 'f'} alTocar={() => alElegir('f')} centrada />
         <Opcion titulo={t('entrada.cuestionario.masculino')} elegida={sexo === 'm'} alTocar={() => alElegir('m')} centrada />
       </View>
-      {deSalud && <View style={[s.chipFila, { justifyContent: 'flex-start' }]}><ChipDeSalud /></View>}
+      <ChipDeSalud encendido={deSalud} izquierda />
       <Espacio />
       <Pie>
         <Boton texto={t('entrada.seguir')} alTocar={alSeguir} desactivado={!sexo} />
@@ -885,8 +1025,8 @@ function LaActividad({ actividad, alElegir, alSeguir }: { actividad: Actividad; 
   );
 }
 
-function ElObjetivo({ objetivo, ritmo, sinDeficit, alObjetivo, alRitmo, alSeguir }: {
-  objetivo: Objetivo; ritmo: Ritmo; sinDeficit: boolean; alObjetivo: (o: Objetivo) => void; alRitmo: (r: Ritmo) => void; alSeguir: () => void;
+function ElObjetivo({ objetivo, ritmo, sinDeficit, menor, alObjetivo, alRitmo, alSeguir }: {
+  objetivo: Objetivo; ritmo: Ritmo; sinDeficit: boolean; menor: boolean; alObjetivo: (o: Objetivo) => void; alRitmo: (r: Ritmo) => void; alSeguir: () => void;
 }) {
   return (
     <>
@@ -905,10 +1045,14 @@ function ElObjetivo({ objetivo, ritmo, sinDeficit, alObjetivo, alRitmo, alSeguir
         ))}
       </View>
       {objetivo !== 'mantener' && (
-        <Animated.View entering={FadeIn.duration(300)} style={s.ritmo}>
+        <Animated.View entering={fundido(0, 300)} exiting={SE_APAGA} style={s.ritmo}>
           <Text style={s.paso}>{t('entrada.cuestionario.ritmo')}</Text>
           <View style={[s.opciones, s.tres]} accessibilityRole="radiogroup">
-            {(['suave', 'recomendado', 'rapido'] as const).map((x) => <Opcion key={x} titulo={t(`entrada.cuestionario.${x}`)} elegida={x === ritmo} alTocar={() => alRitmo(x)} centrada />)}
+            {(['suave', 'recomendado', 'rapido'] as const).map((x) => {
+              // Antes de los 18, bajar rápido no está (ritmoPermitido): se dice desde cuándo, corto.
+              const no = menor && objetivo === 'bajar' && x === 'rapido';
+              return <Opcion key={x} titulo={t(`entrada.cuestionario.${x}`)} detalle={no ? t('entrada.cuestionario.meta.desde18') : undefined} desactivada={no} elegida={x === ritmo} alTocar={() => alRitmo(x)} centrada />;
+            })}
           </View>
           <Text style={s.chico}>{t('entrada.cuestionario.ritmoTexto', { pct: numero(Math.abs(RITMOS[objetivo][ritmo]), 2) })}</Text>
         </Animated.View>
@@ -927,22 +1071,16 @@ function ElResultado({ r, alEmpezar, boton, reducido }: { r: Respuestas; alEmpez
   const kcal = [metas.proteina * 4, metas.carbohidratos * 4, metas.grasas * 9];
   const total = kcal.reduce((a, b) => a + b, 0) || 1;
   const [llena, setLlena] = useState(false);
-  const [cuenta, setCuenta] = useState(reducido ? metas.kcal : 0);
+  // La cifra cuenta desde cero hasta la meta, de a pasos (useCuenta) y no en cada cuadro.
+  const [hasta, setHasta] = useState(reducido ? metas.kcal : 0);
+  const cuenta = Math.round(useCuenta(hasta, 1400));
   useEffect(() => {
-    const id = setTimeout(() => setLlena(true), 200);
-    if (reducido) return () => clearTimeout(id);
-    // La cifra cuenta hasta la meta.
-    const t0 = Date.now() + 200;
-    const reloj = setInterval(() => {
-      const u = Math.min(1, Math.max(0, (Date.now() - t0) / 1400));
-      setCuenta(Math.round(metas.kcal * (1 - Math.pow(1 - u, 3))));
-      if (u >= 1) clearInterval(reloj);
-    }, 32);
-    return () => {
-      clearTimeout(id);
-      clearInterval(reloj);
-    };
-  }, [metas.kcal, reducido]);
+    const id = setTimeout(() => {
+      setLlena(true);
+      setHasta(metas.kcal);
+    }, 200);
+    return () => clearTimeout(id);
+  }, [metas.kcal]);
   return (
     <>
       <Titulo centrado>{t('entrada.cuestionario.resultadoTitulo')}</Titulo>
@@ -951,8 +1089,8 @@ function ElResultado({ r, alEmpezar, boton, reducido }: { r: Respuestas; alEmpez
         <Anillos tam={196} reparto={[kcal[0] / total, kcal[1] / total, kcal[2] / total]} ms={reducido ? 0 : 1600} demora={200} />
       </View>
       <View style={s.kcal}>
-        <Text style={s.kcalNumero}>{numero(cuenta)}</Text>
-        <Text style={s.kcalTexto}>{t('entrada.cuestionario.kcal')}</Text>
+        <Text style={s.kcalNumero} maxFontSizeMultiplier={TOPE}>{numero(cuenta)}</Text>
+        <Text style={s.kcalTexto} maxFontSizeMultiplier={TOPE}>{t('entrada.cuestionario.kcal')}</Text>
       </View>
       <View style={s.macros}>
         {MACROS.map((m) => (
@@ -1012,8 +1150,8 @@ const s = StyleSheet.create({
   iconosDeSalud: { marginTop: 38, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   iconoDeSalud: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.25)', alignItems: 'center', justifyContent: 'center' },
   numero: { marginTop: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14 },
-  numeroCentro: { flexDirection: 'row', alignItems: 'baseline', gap: 8, minWidth: 170, justifyContent: 'center' },
-  numeroValor: { fontFamily: letras.numeroLiviano, fontSize: 68, lineHeight: 74, letterSpacing: -1.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
+  numeroCentro: { flexShrink: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8, minWidth: 170, justifyContent: 'center' },
+  numeroValor: { flexShrink: 1, fontFamily: letras.numeroLiviano, fontSize: 68, lineHeight: 74, letterSpacing: -1.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
   numeroUnidad: { fontFamily: letras.texto, fontSize: 16, color: 'rgba(239, 230, 207, 0.6)' },
   fino: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   chipFila: { marginTop: 10, flexDirection: 'row', justifyContent: 'center' },

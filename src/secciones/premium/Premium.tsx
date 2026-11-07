@@ -7,9 +7,9 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ActionSheetIOS, ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type AlertButton, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, useAnimatedStyle, useReducedMotion, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ReduceMotion, SlideInDown, SlideOutDown, useAnimatedStyle, useReducedMotion, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
@@ -24,6 +24,7 @@ import { colores, letras } from '@/tema';
 import { duracion, fechaLarga } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { Hipnograma } from '../graficos/Graficos';
+import { anunciar } from '../anuncio';
 import { HojaModal } from '../HojaModal';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { borrarLaCuenta, exportarTodo, salirDeLaCuenta } from '../perfil/cuenta';
@@ -201,7 +202,7 @@ function Enlace({ texto, alTocar, peligro, rol = 'button' }: { texto: string; al
 }
 
 // Lo que no se paga: llevarse los datos, salir y borrar la cuenta (guía 5.1.1 de Apple).
-const exportar = () => { exportarTodo(elAlmacen().estado().hoy).catch(() => Alert.alert(t('perfil.errorBorrar'))); };
+const exportar = () => { exportarTodo(elAlmacen().estado().hoy).catch(() => Alert.alert(t('perfil.errorExportar'))); };
 const salir = () => Alert.alert(t('perfil.cerrarSesionTitulo'), t('perfil.cerrarSesionTexto'), [
   { text: t('comun.cancelar'), style: 'cancel' },
   { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: () => salirDeLaCuenta(olvidado) },
@@ -256,7 +257,16 @@ function Pago({ e }: { e: EstadoDePremium }) {
   const { width } = useWindowDimensions();
   const [plan, setPlan] = useState<Plan>('anual');
   const [ocupado, setOcupado] = useState(false);
+  // Restaurando, «Empezar» no se toca (sin cambiar lo que dice): las dos a la vez pedían dos veces la cuenta de Apple.
+  const [restaurando, setRestaurando] = useState(false);
+  // El segundo toque llega antes de que el estado se dibuje: esto lo frena ya.
+  const enCamino = useRef(false);
   const [nota, setNota] = useState<string | null>(null);
+  // La nota se ve y, con VoiceOver, se dice.
+  const decir = (texto: string) => {
+    setNota(texto);
+    anunciar(texto);
+  };
   const acceso = accesoDe(e);
   const vencida = acceso === 'vencida';
   const p = losPrecios(e);
@@ -269,12 +279,14 @@ function Pago({ e }: { e: EstadoDePremium }) {
   const precioCon = t(`suscripcion.${plan}.precioDe`, { precio });
 
   const empezar = async () => {
-    if (ocupado || !producto) return;
+    if (enCamino.current || !producto) return;
+    enCamino.current = true;
     setOcupado(true);
     setNota(null);
     const antes = quedarAbierta();
     const r = await comprar(plan);
     enCompra = false;
+    enCamino.current = false;
     setOcupado(false);
     if (r === 'comprado') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -282,25 +294,31 @@ function Pago({ e }: { e: EstadoDePremium }) {
       return;
     }
     cambiar({ abierta: antes });
-    if (r === 'cancelado') setNota(t('suscripcion.notas.cancelada'));
-    else if (r === 'pendiente') setNota(t('suscripcion.notas.pendiente'));
-    else setNota(t('suscripcion.notas.error'));
+    if (r === 'cancelado') decir(t('suscripcion.notas.cancelada'));
+    else if (r === 'pendiente') decir(t('suscripcion.notas.pendiente'));
+    else decir(t('suscripcion.notas.error'));
   };
   const alRestaurar = async () => {
+    if (enCamino.current) return;
+    enCamino.current = true;
+    setRestaurando(true);
     setNota(null);
     const antes = quedarAbierta();
     const r = await restaurar();
     enCompra = false;
+    enCamino.current = false;
+    setRestaurando(false);
     if (r === 'restaurada') {
       cambiar({ vista: 'restaurada' });
       return;
     }
     cambiar({ abierta: antes });
-    setNota(t(r === 'nada' ? 'suscripcion.notas.nada' : 'suscripcion.notas.errorRestaurar'));
+    decir(t(r === 'nada' ? 'suscripcion.notas.nada' : 'suscripcion.notas.errorRestaurar'));
   };
+  const apagado = ocupado || restaurando || (!producto && !sinConexion);
 
   return (
-    <Animated.View exiting={FadeOut.duration(160)} style={st.pantalla}>
+    <Animated.View exiting={FadeOut.duration(160).reduceMotion(ReduceMotion.Never)} style={st.pantalla}>
       <ScrollView style={st.scroll} contentContainerStyle={[st.adentro, { paddingTop: insets.top + 18 }]} showsVerticalScrollIndicator={false}>
         <Text style={st.titulo} accessibilityRole="header">{vencida ? t(e.ultima?.prueba ? 'suscripcion.vencida.tituloPrueba' : 'suscripcion.vencida.titulo') : t('suscripcion.pago.titulo')}</Text>
         <Text style={st.bajada}>{vencida ? t('suscripcion.vencida.texto') : t('suscripcion.pago.texto')}</Text>
@@ -328,10 +346,10 @@ function Pago({ e }: { e: EstadoDePremium }) {
         )}
         <Pressable
           onPress={() => { if (sinConexion) leerPrecios().catch(() => {}); else empezar().catch(() => {}); }}
-          disabled={ocupado || (!producto && !sinConexion)}
-          style={({ pressed }) => [st.principal, pressed && st.principalApretado, (ocupado || (!producto && !sinConexion)) && st.apagado]}
+          disabled={apagado}
+          style={({ pressed }) => [st.principal, pressed && st.principalApretado, apagado && st.apagado]}
           accessibilityRole="button"
-          accessibilityState={{ busy: ocupado }}
+          accessibilityState={{ busy: ocupado || restaurando, disabled: apagado }}
         >
           {ocupado && <ActivityIndicator color="#0b0f1d" />}
           <Text style={st.principalTexto}>{ocupado ? t('suscripcion.enCurso') : sinConexion ? t('suscripcion.reintentar') : conPrueba ? t('suscripcion.empezar', { n: dias }) : t('suscripcion.suscribirme')}</Text>
@@ -355,7 +373,7 @@ function Pago({ e }: { e: EstadoDePremium }) {
 function Listo({ titulo, texto, nota }: { titulo: string; texto: string; nota?: string | null }) {
   const insets = useSafeAreaInsets();
   return (
-    <Animated.View entering={FadeIn.duration(320)} style={[st.listo, { paddingBottom: insets.bottom + 12 }]}>
+    <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} style={[st.listo, { paddingBottom: insets.bottom + 12 }]}>
       <View style={st.estrella} />
       <Text style={st.listoTitulo} accessibilityRole="header">{titulo}</Text>
       <Text style={st.listoTexto}>{texto}</Text>
@@ -459,6 +477,19 @@ export function HojaDeSuscripcion({ alCerrar }: { alCerrar: () => void }) {
   const acceso = accesoDe(e);
   const s = e.suscripcion ?? e.ultima;
   const [nota, setNota] = useState<string | null>(null);
+  // Dos toques en «Restaurar» pedían dos veces la cuenta de Apple: el segundo no hace nada.
+  const restaurando = useRef(false);
+  const alRestaurar = () => {
+    if (restaurando.current) return;
+    restaurando.current = true;
+    restaurar().then((r) => {
+      const texto = r === 'restaurada' ? t('suscripcion.restaurada.titulo') : t(r === 'nada' ? 'suscripcion.notas.nada' : 'suscripcion.notas.errorRestaurar');
+      setNota(texto);
+      anunciar(texto);
+    }).catch(() => {}).finally(() => {
+      restaurando.current = false;
+    });
+  };
   const plan = s ? planDe(s) : null;
   const p = losPrecios(e);
   const cancelada = s?.renueva === false;
@@ -479,7 +510,7 @@ export function HojaDeSuscripcion({ alCerrar }: { alCerrar: () => void }) {
       )}
       {!!nota && <Aparece key={nota}><Text style={st.nota}>{nota}</Text></Aparece>}
       <View style={st.enlaces}>
-        <Enlace texto={t('suscripcion.restaurar')} alTocar={() => { restaurar().then((r) => setNota(r === 'restaurada' ? t('suscripcion.restaurada.titulo') : t(r === 'nada' ? 'suscripcion.notas.nada' : 'suscripcion.notas.errorRestaurar'))).catch(() => {}); }} />
+        <Enlace texto={t('suscripcion.restaurar')} alTocar={alRestaurar} />
         <Enlace texto={t('suscripcion.terminos')} alTocar={() => abrirPagina('terminos')} rol="link" />
         <Enlace texto={t('suscripcion.privacidad')} alTocar={() => abrirPagina('privacidad')} rol="link" />
       </View>

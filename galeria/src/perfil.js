@@ -1365,15 +1365,20 @@ const SeccionPerfil = (() => {
       b.insertAdjacentHTML('beforeend', icono('adelante'));
       return b;
     }
-    /** Una fila: su cuadrito, lo que es, debajo qué hace si hace falta, cómo está y la flecha. */
-    function filaDe({ clave, ico, color, titulo, sub, valor, punto, tipo, alTocar, flecha = true }) {
+    /**
+     * Una fila: su cuadrito, lo que es, debajo qué hace si hace falta, cómo está y la flecha. Lo que se prende y
+     * apaga ahí mismo (6/11, para aprobar) no lleva flecha, que es de lo que abre otra pantalla: `interruptor`
+     * (sí o no) muestra la llave, y `flecha: 'valor'` deja solo el valor. `esperando`: la ruedita en vez del valor.
+     */
+    function filaDe({ clave, ico, color, titulo, sub, valor, punto, tipo, alTocar, flecha = true, interruptor, esperando }) {
       const li = el('li');
       if (clave) li.dataset.fila = clave;
       // La fila que no estaba crece; si ya estaba, entra lo que cambió de ella.
       const nueva = filasAntes.size > 0 && !filasAntes.has(titulo);
       if (nueva) li.classList.add('pf-crece');
       filasAhora.add(titulo);
-      const b = boton('pf-fila' + (tipo ? ' ' + tipo : ''), '', alTocar || (() => {}));
+      const sinFlecha = interruptor != null || flecha === 'valor';
+      const b = boton('pf-fila' + (tipo ? ' ' + tipo : '') + (sinFlecha ? ' dt-sin-flecha' : ''), '', alTocar || (() => {}));
       const textos = el('span', 'pf-fila-textos');
       textos.appendChild(el('span', 'pf-fila-titulo', titulo));
       if (sub) {
@@ -1383,16 +1388,62 @@ const SeccionPerfil = (() => {
       }
       vistos.set('sub:' + titulo, !!sub);
       b.append(cuadro(ico, color), textos);
+      if (interruptor != null) {
+        // Toda la fila prende y apaga, como el interruptor de Ajustes; la llave se mueve en el toque.
+        b.setAttribute('role', 'switch');
+        b.setAttribute('aria-checked', String(interruptor));
+        const llave = el('span', 'in-llave');
+        llave.innerHTML = '<i></i>';
+        llave.setAttribute('aria-pressed', String(interruptor));
+        llave.setAttribute('aria-hidden', 'true');
+        b.appendChild(llave);
+        li.appendChild(b);
+        return li;
+      }
       const v = el('b', 'pf-fila-valor');
-      if (punto) v.appendChild(el('i'));
-      if (valor) v.append(valor);
-      if (!nueva && cambio('valor:' + titulo, valor || '')) v.classList.add('pf-entra');
-      else vistos.set('valor:' + titulo, valor || '');
+      if (esperando) {
+        v.appendChild(Detalles.ruedita('chica'));
+        v.setAttribute('aria-label', tx('perfil.exportando'));
+      } else {
+        if (punto) v.appendChild(el('i'));
+        if (valor) v.append(valor);
+      }
+      const firma = esperando ? '…' : valor || '';
+      if (!nueva && cambio('valor:' + titulo, firma)) v.classList.add('pf-entra');
+      else vistos.set('valor:' + titulo, firma);
       b.appendChild(v);
-      if (flecha) b.insertAdjacentHTML('beforeend', icono('adelante'));
-      else b.appendChild(el('span', 'sin-flecha'));
+      if (flecha === true) b.insertAdjacentHTML('beforeend', icono('adelante'));
+      else if (!sinFlecha) b.appendChild(el('span', 'sin-flecha'));
       li.appendChild(b);
       return li;
+    }
+    /** Prende o apaga una fila: la llave se mueve ya y lo demás cambia cuando terminó de moverse. */
+    function alternar(ev, actual, aplicar) {
+      const llave = ev && ev.currentTarget && ev.currentTarget.querySelector('.in-llave');
+      if (llave) { llave.setAttribute('aria-pressed', String(!actual)); ev.currentTarget.setAttribute('aria-checked', String(!actual)); }
+      if (opciones.haptico) opciones.haptico('suave');
+      setTimeout(() => { aplicar(); pintar(); }, llave ? 220 : 0);
+    }
+    // Esperar sin dudas (6/11, para aprobar): exportar muestra la ruedita en vez de «CSV»; borrar la cuenta y cerrar
+    // sesión, después de la alerta de iOS, un velo con lo que está pasando. En la galería no se borra ni se sale.
+    const velo = Detalles.velo(tel);
+    function exportar() {
+      if (s.exportando) return;
+      s.exportando = true;
+      pintar();
+      // En la app, acá se abre la hoja de compartir de iOS con el archivo.
+      setTimeout(() => { s.exportando = false; pintar(); }, 1700);
+    }
+    function conVelo(texto) {
+      velo.mostrar(texto);
+      setTimeout(() => velo.listo(tx('comun.listo')), 2200);
+    }
+    function borrarCuenta() {
+      const texto = opciones.vinculada && opciones.vinculada() && conAscent() ? `${tx('perfil.borrarCuentaTexto')} ${tx('perfil.borrarCuentaConAscent')}` : tx('perfil.borrarCuentaTexto');
+      return Detalles.alerta(tel, { titulo: tx('perfil.borrarCuentaTitulo'), texto, cancelar: tx('comun.cancelar'), confirmar: tx('perfil.alertaBorrar'), alConfirmar: () => conVelo(tx('perfil.borrando')) });
+    }
+    function cerrarSesion() {
+      return Detalles.alerta(tel, { titulo: tx('perfil.cerrarSesionTitulo'), texto: tx('perfil.cerrarSesionTexto'), cancelar: tx('comun.cancelar'), confirmar: tx('perfil.cerrarSesion'), alConfirmar: () => conVelo(tx('perfil.cerrandoSesion')) });
     }
     function grupo(clave, filas) {
       cont.appendChild(el('h3', 'pf-grupo', tx(clave)));
@@ -1437,27 +1488,29 @@ const SeccionPerfil = (() => {
         opciones.revisarCuestionario && { clave: 'respuestas', ico: 'objetivo', color: 'oro', titulo: tx('perfil.respuestas'), sub: tx('perfil.respuestasTexto'), alTocar: opciones.revisarCuestionario },
       ]);
       grupo('perfil.preferencias', [
-        { ico: 'cinta', color: 'gris', titulo: tx('perfil.unidades'), valor: tx(s.sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => { s.sistema = s.sistema === 'imperial' ? 'metrico' : 'imperial'; pintar(); } },
+        // Lo que cambia ahí mismo va sin flecha (6/11): las unidades y los números, con su valor.
+        { clave: 'unidades', ico: 'cinta', color: 'gris', titulo: tx('perfil.unidades'), valor: tx(s.sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), flecha: 'valor', alTocar: () => { if (opciones.haptico) opciones.haptico('suave'); s.sistema = s.sistema === 'imperial' ? 'metrico' : 'imperial'; pintar(); } },
         // El idioma es el del teléfono; en la galería, el botón de idioma.
         { ico: 'globo', color: 'azul', titulo: tx('perfil.idioma'), valor: tx('perfil.idiomaDelTelefono'), alTocar: () => { const otro = document.querySelector('#s-idioma button[aria-pressed="false"]'); if (otro) otro.click(); } },
         { ico: 'amanecer', color: 'oro', titulo: tx('perfil.corte'), valor: nombreDelCorte(s.corte), alTocar: () => abrirOpciones('corte') },
         { ico: 'estrella', color: 'violeta', titulo: tx('perfil.calidad'), valor: tx('perfil.calidades.' + (s.calidad || 'automatica')), alTocar: () => abrirOpciones('calidad') },
         { ico: 'campana', color: 'rosa', titulo: tx('perfil.recordatorios'), valor: tx(s.avisos.dormir || s.avisos.comidas.length || Object.keys(s.avisos.horario).length || s.avisos.pesarse
           || ['antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion'].some((k) => s.avisos[k]) ? 'perfil.encendidos' : 'perfil.apagados'), alTocar: abrirAvisos },
-        // Ocultar los números: sin calorías ni gramos, solo las figuras y las barras.
-        { ico: 'ojo', color: 'gris', titulo: tx('perfil.numeros'), sub: tx('perfil.numerosTexto'), valor: tx(s.numeros ? 'perfil.visibles' : 'perfil.ocultos'), alTocar: () => { s.numeros = !s.numeros; opciones.alNumeros(s.numeros); pintar(); } },
+        // Ocultar los números: sin calorías ni gramos, solo las figuras y las barras. Con su valor, como en la app, y
+        // no con una llave: el texto de abajo dice cómo es ocultarlos, y una llave prendida al lado se leería al revés.
+        { clave: 'numeros', ico: 'ojo', color: 'gris', titulo: tx('perfil.numeros'), sub: tx('perfil.numerosTexto'), valor: tx(s.numeros ? 'perfil.visibles' : 'perfil.ocultos'), flecha: 'valor', alTocar: () => { if (opciones.haptico) opciones.haptico('suave'); s.numeros = !s.numeros; opciones.alNumeros(s.numeros); pintar(); } },
       ]);
       grupo('perfil.tusDatosParaLlevar', [
-        { ico: 'exportar', color: 'azul', titulo: tx('perfil.exportar'), valor: 'CSV' },
+        { clave: 'exportar', ico: 'exportar', color: 'azul', titulo: tx('perfil.exportar'), valor: 'CSV', esperando: !!s.exportando, alTocar: exportar },
         { ico: 'candado', color: 'salvia', titulo: tx('perfil.privacidad'), alTocar: () => abrirOpciones('privacidad') },
-        // Lo que se busca y no se encuentra sale sin la cuenta, solo si se elige (guía 5.1.1 de Apple).
-        { ico: 'lupa', color: 'violeta', titulo: tx('perfil.mejorarBase'), sub: tx('perfil.mejorarBaseTexto'), valor: tx(s.buscar ? 'perfil.si' : 'perfil.no'), alTocar: () => { s.buscar = !s.buscar; pintar(); } },
+        // Lo que se busca y no se encuentra sale sin la cuenta, solo si se elige (guía 5.1.1 de Apple): sí o no, con su llave.
+        { clave: 'mejorarBase', ico: 'lupa', color: 'violeta', titulo: tx('perfil.mejorarBase'), sub: tx('perfil.mejorarBaseTexto'), interruptor: s.buscar, alTocar: (ev) => alternar(ev, s.buscar, () => { s.buscar = !s.buscar; }) },
         { ico: 'documento', color: 'gris', titulo: tx('perfil.politica') },
         { ico: 'documento', color: 'gris', titulo: tx('perfil.terminos') },
         { ico: 'sobre', color: 'gris', titulo: tx('perfil.contacto') },
         { ico: 'basura', color: 'rosa', titulo: tx('perfil.borrarDatos'), tipo: 'peligro', flecha: false },
         // Borra la cuenta de Moss; vinculada, el aviso dice que Ascent sigue intacta (spec/ascent.md, «Dos cuentas»).
-        { ico: 'basura', color: 'rosa', titulo: tx('perfil.borrarCuenta'), tipo: 'peligro', flecha: false },
+        { clave: 'borrarCuenta', ico: 'basura', color: 'rosa', titulo: tx('perfil.borrarCuenta'), tipo: 'peligro', flecha: false, alTocar: () => borrarCuenta() },
       ]);
       // De dónde salen los alimentos y las estrellas, con su licencia: se despliega, como una marca en Aparatos.
       cont.appendChild(el('h3', 'pf-grupo', tx('perfil.creditos')));
@@ -1491,7 +1544,7 @@ const SeccionPerfil = (() => {
       // Abajo de todo, en qué se basa Moss (5/11): de dónde sale cada número y cómo se ordena lo que llega.
       grupo('perfil.baseGrupo', [{ ico: 'info', color: 'gris', titulo: tx('perfil.base'), sub: tx('perfil.baseSub'), alTocar: () => abrirOpciones('base') }]);
       cont.appendChild(boton('pf-salir', tx('perfil.cambiarCuenta'), () => {}));
-      cont.appendChild(boton('pf-salir', tx('perfil.cerrarSesion'), () => {}));
+      cont.appendChild(boton('pf-salir', tx('perfil.cerrarSesion'), () => cerrarSesion()));
       cont.appendChild(el('p', 'pf-version', 'Moss 1.0 (1)'));
       cont.scrollTop = arriba;
     }
@@ -1540,6 +1593,11 @@ const SeccionPerfil = (() => {
     return {
       zona,
       pintar,
+      // Los detalles (6/11, para aprobar): exportar con la ruedita, y la alerta y el velo de borrar la cuenta y de
+      // cerrar sesión (devuelven la alerta, para confirmarla en las capturas).
+      exportar,
+      borrarCuenta,
+      cerrarSesion,
       abrirAparatos,
       abrirAvisos,
       abrirEntreno,

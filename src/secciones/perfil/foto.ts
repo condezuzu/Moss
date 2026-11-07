@@ -7,6 +7,9 @@
 import { FilterMode, ImageFormat, MipmapMode, Skia, type SkData } from '@shopify/react-native-skia';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import { Alert, Linking } from 'react-native';
+
+import { t } from '@/textos';
 
 export const hayFotoDePerfil = true;
 
@@ -53,7 +56,16 @@ export async function elegirFotoDePerfil(desde: 'camara' | 'carrete'): Promise<s
   const opciones: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.9 };
   let r: ImagePicker.ImagePickerResult;
   if (desde === 'camara') {
-    const permiso = await ImagePicker.requestCameraPermissionsAsync();
+    // Negada antes, iOS ya no pregunta y no pasaba nada: se dice dónde darla.
+    const antes = await ImagePicker.getCameraPermissionsAsync();
+    if (!antes.granted && !antes.canAskAgain) {
+      Alert.alert(t('perfil.editar.sinCamaraTitulo'), t('perfil.editar.sinCamara'), [
+        { text: t('comun.cancelar'), style: 'cancel' },
+        { text: t('perfil.abrirAjustes'), onPress: () => { Linking.openSettings().catch(() => {}); } },
+      ]);
+      return null;
+    }
+    const permiso = antes.granted ? antes : await ImagePicker.requestCameraPermissionsAsync();
     if (!permiso.granted) return null;
     r = await ImagePicker.launchCameraAsync({ ...opciones, cameraType: ImagePicker.CameraType.front });
   } else {

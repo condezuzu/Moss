@@ -6,12 +6,20 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { leerFotoDeEtiqueta } from '../../../modules/leer-etiqueta';
+import { anunciar } from '../anuncio';
+import { margenDeToque } from '../paso';
 import { Boton, Icono } from './comunes';
+
+/** Lo que no salió (no se leyó la etiqueta, no anda acá): vibra como un aviso y VoiceOver lo dice. */
+function noSalio(texto: string) {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+  anunciar(texto);
+}
 
 type Props = {
   modo: 'codigo' | 'etiqueta';
@@ -36,10 +44,14 @@ export function Escaner(p: Props) {
   // El código llega varias veces por segundo: el primero alcanza.
   const visto = useRef<string | null>(null);
 
+  const fallo = (texto: string) => {
+    setError(texto);
+    noSalio(texto);
+  };
   const sacarFoto = async () => {
     if (!camara.current || leyendo) return;
     if (!leerFotoDeEtiqueta) {
-      setError(t('comida.escaner.soloIphone'));
+      fallo(t('comida.escaner.soloIphone'));
       return;
     }
     setLeyendo(true);
@@ -49,9 +61,9 @@ export function Escaner(p: Props) {
       const foto = await camara.current.takePictureAsync({ quality: 0.8, shutterSound: false });
       const lineas = await leerFotoDeEtiqueta(foto.uri);
       if (lineas.length) p.alEtiqueta(lineas);
-      else setError(t('comida.escaner.noSeLeyo'));
+      else fallo(t('comida.escaner.noSeLeyo'));
     } catch {
-      setError(t('comida.escaner.noSeLeyo'));
+      fallo(t('comida.escaner.noSeLeyo'));
     } finally {
       setLeyendo(false);
     }
@@ -61,7 +73,14 @@ export function Escaner(p: Props) {
   const ocupado = p.ocupado || leyendo;
 
   return (
-    <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(200)} style={estilos.escaner}>
+    <Animated.View
+      entering={FadeIn.duration(220).reduceMotion(ReduceMotion.Never)}
+      exiting={FadeOut.duration(200).reduceMotion(ReduceMotion.Never)}
+      style={estilos.escaner}
+      // Tapa la hoja: VoiceOver se queda en el escáner, y el gesto de escape lo cierra.
+      accessibilityViewIsModal
+      onAccessibilityEscape={p.alCerrar}
+    >
       {permiso?.granted ? (
         <CameraView
           ref={camara}
@@ -97,7 +116,7 @@ export function Escaner(p: Props) {
       )}
 
       <View style={[estilos.arriba, { paddingTop: p.arriba }]} pointerEvents="box-none">
-        <Pressable onPress={p.alCerrar} style={estilos.cerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')}>
+        <Pressable onPress={p.alCerrar} style={({ pressed }) => [estilos.cerrar, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={margenDeToque(36)}>
           <Icono nombre="xmark" tam={15} color={colores.pergamino} peso="semibold" />
         </Pressable>
         <View style={estilos.modos}>
@@ -109,9 +128,10 @@ export function Escaner(p: Props) {
                 visto.current = null;
                 p.alCambiarModo(m);
               }}
-              style={[estilos.modo, p.modo === m && estilos.modoElegido]}
+              style={({ pressed }) => [estilos.modo, p.modo === m && estilos.modoElegido, pressed && estilos.apretado]}
               accessibilityRole="button"
               accessibilityState={{ selected: p.modo === m }}
+              hitSlop={{ top: 6, bottom: 6 }}
             >
               <Text style={[estilos.modoTexto, p.modo === m && estilos.modoTextoElegido]}>{t(m === 'codigo' ? 'comida.escaner.codigoTitulo' : 'comida.escaner.etiquetaTitulo')}</Text>
             </Pressable>
@@ -127,7 +147,13 @@ export function Escaner(p: Props) {
           <Text style={estilos.texto}>{leyendo ? t('comida.escaner.leyendo') : mensaje}</Text>
         </View>
         {p.modo === 'etiqueta' && permiso?.granted && (
-          <Pressable onPress={sacarFoto} disabled={!lista || leyendo} style={[estilos.disparo, (!lista || leyendo) && estilos.apagado]} accessibilityRole="button" accessibilityLabel={t('comida.escaner.sacarFoto')}>
+          <Pressable
+            onPress={sacarFoto}
+            disabled={!lista || leyendo}
+            style={({ pressed }) => [estilos.disparo, (!lista || leyendo) && estilos.apagado, pressed && estilos.apretado]}
+            accessibilityRole="button"
+            accessibilityLabel={t('comida.escaner.sacarFoto')}
+          >
             <View style={estilos.disparoAdentro} />
           </Pressable>
         )}
@@ -152,8 +178,9 @@ const estilos = StyleSheet.create({
   sinPermiso: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
   arriba: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   cerrar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.45)' },
+  apretado: { opacity: 0.6 },
   modos: { flexDirection: 'row', gap: 6 },
-  modo: { height: 32, paddingHorizontal: 12, borderRadius: 999, justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.45)' },
+  modo: { minHeight: 32, paddingHorizontal: 12, borderRadius: 999, justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.45)' },
   modoElegido: { backgroundColor: 'rgba(232, 196, 106, 0.22)', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.62)' },
   modoTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.8)' },
   modoTextoElegido: { color: colores.oroClaro },

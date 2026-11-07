@@ -56,6 +56,7 @@ import {
   saludar,
   simularSalud,
   tocar,
+  tocarHabito,
   VIVO_AL_LLEGAR,
   VIVO_AL_TOCAR,
   type Escena,
@@ -68,6 +69,9 @@ import { CALIDADES, HORIZONTE, PARALAJE, VIA_LACTEA, ZONA_UNIVERSO, type Calidad
 import type { Brote } from './musgo';
 import { armarPlano, armarPlanoDelMusgo, type Plano } from './plano';
 import { useTextos } from './textosDelCielo';
+import { anunciar } from '@/secciones/anuncio';
+import { alTocarDeNuevo } from '@/secciones/arriba';
+import { HABITOS } from '@/secciones/Barra';
 import { entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from '@/secciones/movimiento';
 import { colores } from '@/tema';
 
@@ -124,7 +128,7 @@ const TAPADO_DEL_TODO = 0.999;
 export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alEditarHabito, alIrAComida }: PropsDelCielo) {
   const soloCielo = !!entrada;
   const camaraDeLaEntrada = entrada?.camara;
-  const { width: ancho, height: alto } = useWindowDimensions();
+  const { width: ancho, height: alto, fontScale } = useWindowDimensions();
   const dpr = PixelRatio.get();
   // La elegida en Perfil manda; si no, la automática, que arranca según el modelo y baja un
   // escalón si el teléfono no llega. El panel de prueba la puede forzar.
@@ -155,7 +159,8 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
     return () => suscripcion.remove();
   }, []);
 
-  const plano: Plano = useMemo(() => armarPlano(ancho, alto, dia), [ancho, alto, dia]);
+  // Con la escala de letra: si cambia con Moss abierta, las cajas para tocar las estrellas crecen con las etiquetas.
+  const plano: Plano = useMemo(() => armarPlano(ancho, alto, dia, fontScale), [ancho, alto, dia, fontScale]);
   const musgo = useMemo(() => armarPlanoDelMusgo(ancho, alto, riqueza), [ancho, alto, riqueza]);
 
   // Solo en la web, que es donde se prueba: dónde quedó cada estrella, para las capturas automáticas.
@@ -280,6 +285,11 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
   // ------------------------------------------------------------------ eventos de la escena
   const alEventos = useCallback(
     (eventos: Evento[]) => {
+      // El día completo vibra una vez, con la de éxito: junto con la de encender la última estrella, sonaban dos.
+      const completa = eventos.some((x) => x.tipo === 'completo');
+      // VoiceOver lo dice después del aviso de la estrella que lo completó (Interfaz.tsx) o, sin aviso, solo.
+      const delDia = completa ? { paraElLector: t.t('cielo.completa') } : {};
+      let conAviso = false;
       for (const ev of eventos) {
         if (ev.tipo === 'cuadros') { medidor.poner({ fps: ev.valor, total: ev.total, reposo: false }); continue; }
         if (ev.tipo === 'reposo') { medidor.poner({ ...medidor.leer(), total: ev.total, reposo: true }); continue; }
@@ -316,17 +326,19 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
         }
         const prendida = ev.tipo !== 'apagada';
         elAlmacen().marcar(h.id, prendida, ev.tipo === 'salud' ? 'salud' : 'toque');
+        conAviso = true;
         if (ev.tipo === 'salud') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
-          setAviso({ texto: t.t('cielo.desdeSalud', { habito: nombre }), clave: Date.now() });
+          if (!completa) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
+          setAviso({ texto: t.t('cielo.desdeSalud', { habito: nombre }), clave: Date.now(), ...delDia });
         } else {
-          if (prendida) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-          else Haptics.selectionAsync().catch(() => {});
+          if (!prendida) Haptics.selectionAsync().catch(() => {});
+          else if (!completa) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
           quitarGlobito();
           // Sin «Deshacer»: tocar otra vez la estrella la apaga.
-          setAviso({ texto: t.t(prendida ? 'cielo.encendida' : 'cielo.apagada', { habito: nombre }), clave: Date.now() });
+          setAviso({ texto: t.t(prendida ? 'cielo.encendida' : 'cielo.apagada', { habito: nombre }), clave: Date.now(), ...delDia });
         }
       }
+      if (completa && !conAviso) anunciar(t.t('cielo.completa'));
     },
     [dia, t, medidor, quitarGlobito, alIrAComida, calidad],
   );
@@ -814,6 +826,28 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
     riqueza: setRiquezaForzada,
   };
 
+  // Con VoiceOver, la etiqueta de una estrella (Interfaz.tsx) hace lo mismo que un toque en ella.
+  const marcarDesdeElLector = (i: number) => {
+    scheduleOnUI(() => {
+      'worklet';
+      escena.modify((e) => {
+        'worklet';
+        tocarHabito(e, i);
+        return e;
+      }, true);
+      despertar(VIVO_AL_TOCAR);
+      drenar();
+    });
+  };
+
+  // Tocar otra vez la pestaña de Hábitos vuelve la cámara a hoy, desde tu universo.
+  const volverAHoy = useEffectEvent(() => enLaEscena((e) => {
+    'worklet';
+    e.cam.objetivo = 0;
+    e.cam.v = 0;
+  }));
+  useEffect(() => (soloCielo ? undefined : alTocarDeNuevo(HABITOS, () => volverAHoy())), [soloCielo]);
+
   // Los gestos van solo sobre el lienzo: si envolvieran también a la interfaz, un toque en un
   // botón (Deshacer, el panel de prueba) le llegaría además al cielo y encendería la estrella que
   // tiene abajo. Lo que no se toca en la interfaz (etiquetas, frase) deja pasar el toque.
@@ -880,6 +914,8 @@ export default function Cielo({ paginaX, subida, tapado, abajo = 0, entrada, alE
             subida.alCambiar(true);
           },
         } : undefined}
+        marcar={marcarDesdeElLector}
+        editar={editar}
       />}
     </View>
   );

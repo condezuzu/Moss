@@ -38,6 +38,8 @@ anotarErrores(pagina);
 // Sin perfil aparece la entrada: se guarda uno antes de la primera carga (en src/almacen/abrir.web.ts,
 // el mismo formato). Solo si no hay nada, así recargar no borra lo que se tocó.
 await pagina.addInitScript(() => {
+  // Ya pasó por los primeros hábitos y se quedó con los de ejemplo: no se le vuelven a ofrecer en Hábitos.
+  localStorage.setItem('moss:primerosHabitosCerrados', '2026-01-01');
   if (localStorage.getItem('moss:datos')) return;
   const d = new Date();
   const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

@@ -193,6 +193,20 @@ const Entrada = (() => {
 .ent-suma { margin: 14px 0 0; font: 400 12.5px/1.35 var(--texto); color: rgba(239, 230, 207, 0.6); }
 /* Revisándolo desde Perfil: «Cerrar», chico, arriba a la derecha. */
 .ent-cab-pasos { position: relative; }
+/* «Atrás» (6/11, para aprobar): una flecha fina a la altura del paso, que vuelve a la pregunta anterior con lo contestado. */
+.ent-atras { appearance: none; cursor: pointer; flex: none; width: 32px; height: 32px; margin: -2px -2px -2px -6px; padding: 0; border: 1px solid rgba(239, 230, 207, 0.16); border-radius: 50%; background: rgba(6, 10, 22, 0.45); color: rgba(239, 230, 207, 0.78); display: grid; place-items: center; pointer-events: auto; animation: ent-sube 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; transition: transform 0.15s, background 0.2s; }
+.ent-atras svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ent-atras:active { transform: scale(0.92); background: rgba(239, 230, 207, 0.08); }
+/* Para atrás, la pantalla entra desde arriba y la de antes se va para abajo: al revés que al seguir. */
+.ent-pantalla.atras { animation-name: ent-entra-atras; }
+.ent-pantalla.saliendo.atras { animation-name: ent-sale-atras; }
+@keyframes ent-entra-atras { from { opacity: 0; transform: translateY(-26px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes ent-sale-atras { to { opacity: 0; transform: translateY(34px); filter: blur(6px); } }
+/* «Continuar con Apple» mientras entra: la ruedita y «Entrando…», sin cambiar de tamaño. */
+.ent-apple.esperando { cursor: default; }
+.ent-apple .ent-apple-contenido { display: inline-flex; align-items: center; justify-content: center; gap: 8px; animation: ent-cambia 0.22s ease both; }
+@keyframes ent-cambia { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ent-pantalla.atras, .ent-pantalla.saliendo.atras, .ent-atras { animation-duration: 0.01s; } }
 .ent-boton.ent-revisar-cerrar { position: absolute; right: 0; top: -4px; width: auto; min-height: 0; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(239, 230, 207, 0.22); background: rgba(6, 10, 22, 0.5); color: rgba(239, 230, 207, 0.85); font: 400 13px/1 var(--texto); box-shadow: none; }
 /* Cuándo conviene el reparto elegido y el nivel de proteína: debajo de sus opciones, a todo el ancho. */
 .ent-cuando-proteina { margin: 8px 2px 0; font: 400 12.5px/1.36 var(--texto); color: rgba(239, 230, 207, 0.72); text-wrap: pretty; }
@@ -1013,6 +1027,15 @@ button.ent-dia-nombre { cursor: pointer; }
       // La barra es de la estrella (va por encima): acá queda su lugar. Debajo, la constelación de
       // las preguntas: lo contestado encendido y la de ahora, prendiéndose.
       const cab = el('div', 'ent-cab-pasos');
+      // «Atrás» desde la segunda pregunta: vuelve a la anterior con lo que contestaste (6/11, para aprobar).
+      if (anteriorDe(PASOS.indexOf(paso)) >= 0) {
+        const atras = el('button', 'ent-atras');
+        atras.type = 'button';
+        atras.innerHTML = Util.icono('atras');
+        atras.setAttribute('aria-label', tx('comun.atras'));
+        atras.addEventListener('click', () => anterior());
+        cab.appendChild(atras);
+      }
       cab.append(constelacionDePasos(i, total), el('div', 'ent-paso', tx('entrada.cuestionario.paso', { n: i + 1, total })));
       // Revisándolo desde Perfil, se puede cerrar en cualquier pregunta sin cambiar nada.
       if (revisando) cab.appendChild(botonSeguir(tx('entrada.cuestionario.revisar.cerrar'), () => { revisando = null; salir(); }, 'ent-revisar-cerrar'));
@@ -1595,9 +1618,23 @@ button.ent-dia-nombre { cursor: pointer; }
         marca.appendChild(s);
       });
       caja.append(marca, el('p', 'ent-lema', tx('entrada.cuenta.lema')));
-      const apple = botonSeguir('', siguiente, 'ent-apple');
-      apple.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8-.7 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.6zM14.1 5.5c.6-.8 1.1-1.9 1-3-1 0-2.2.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.6 2.8-1.4z"/></svg>';
-      apple.appendChild(el('span', null, tx('entrada.cuenta.apple')));
+      // Mientras entra (6/11, para aprobar): la ruedita y «Entrando…» en el mismo botón, que no se toca dos veces.
+      const apple = botonSeguir('', () => {
+        if (apple.classList.contains('esperando')) return;
+        apple.classList.add('esperando');
+        apple.setAttribute('aria-busy', 'true');
+        const espera = el('span', 'ent-apple-contenido');
+        espera.append(Detalles.ruedita('oscura'), el('span', null, tx('entrada.cuenta.entrando')));
+        apple.innerHTML = '';
+        apple.appendChild(espera);
+        // En la galería, lo que tardaría la cuenta; si se sale antes, no sigue (ir y salir lo cortan).
+        temporizador = despues(1400, siguiente);
+      }, 'ent-apple');
+      const contenido = el('span', 'ent-apple-contenido');
+      contenido.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8-.7 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.6zM14.1 5.5c.6-.8 1.1-1.9 1-3-1 0-2.2.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.6 2.8-1.4z"/></svg>';
+      contenido.appendChild(el('span', null, tx('entrada.cuenta.apple')));
+      contenido.style.animation = 'none';
+      apple.appendChild(contenido);
       const pie = el('div', 'ent-pie ent-pie-cuenta');
       pie.append(apple, el('p', 'ent-chico ent-legal', tx('entrada.cuenta.legal')));
       p.append(caja, pie);
@@ -2501,16 +2538,17 @@ button.ent-dia-nombre { cursor: pointer; }
     });
 
     // salto: se llegó desde los controles de la galería y no tocando; la estrella sale de donde
-    // habría quedado la pantalla anterior.
-    function ir(i, salto) {
+    // habría quedado la pantalla anterior. atras: se volvió con la flecha del cuestionario.
+    function ir(i, salto, atras) {
       clearTimeout(temporizador);
       clearTimeout(esperaPista);
       cancelAnimationFrame(animando);
       const a = anclas();
-      const desde = !salto && actual >= 0 && i > actual ? guia.vivo : reposo(i - 1, a);
+      const desde = !salto && actual >= 0 && (i > actual || atras) ? guia.vivo : reposo(i - 1, a);
       const vieja = raiz.querySelector('.ent-pantalla:not(.saliendo)');
       if (vieja) {
         vieja.classList.add('saliendo');
+        if (atras) vieja.classList.add('atras');
         setTimeout(() => vieja.remove(), 420);
       }
       actual = i;
@@ -2520,7 +2558,7 @@ button.ent-dia-nombre { cursor: pointer; }
       guia.mostrarBoton(!!paso.tocar);
       guia.saltar.classList.toggle('visible', i < SALTA_A);
       // La pantalla nueva entra cuando la cámara ya empezó a subir.
-      const p = pantalla('ent-' + paso.id + (paso.cuestionario ? ' ent-cuestionario' : '') + (paso.intro ? ' ent-intro' : ''));
+      const p = pantalla('ent-' + paso.id + (paso.cuestionario ? ' ent-cuestionario' : '') + (paso.intro ? ' ent-intro' : '') + (atras ? ' atras' : ''));
       p.style.animationDelay = vieja ? '0.26s' : '0.12s';
       let g = paso.armar(p, { a, desde, paso });
       if (paso.cuestionario) g = guionDeBarra(a, desde, paso);
@@ -2534,6 +2572,20 @@ button.ent-dia-nombre { cursor: pointer; }
       let i = actual + 1;
       while (i < PASOS.length - 1 && !aplica(PASOS[i])) i++;
       if (i < PASOS.length) ir(i);
+    }
+    // La pregunta de antes que aparece con lo contestado (−1 en la primera: antes no hay pregunta). Revisando
+    // desde Perfil, la primera es la de tus datos.
+    function anteriorDe(i) {
+      const primera = revisando ? PASOS.findIndex((p) => p.id === (r.salud ? 'tu' : 'sexo')) : -1;
+      let k = i - 1;
+      while (k >= 0 && PASOS[k].cuestionario && !aplica(PASOS[k])) k--;
+      return k >= 0 && PASOS[k].cuestionario && k >= primera ? k : -1;
+    }
+    function anterior() {
+      const k = anteriorDe(actual);
+      if (k < 0) return;
+      escena.haptico('suave');
+      ir(k, false, true);
     }
 
     function limpiar() {

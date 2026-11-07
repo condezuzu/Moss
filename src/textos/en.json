@@ -33,7 +33,11 @@
     "horasMinutos": "{h} h {m} min",
     "tuUniverso": "Your universe",
     "globito": "Tap a star to mark its habit",
-    "seEnciendeConAscent": "Lights up on its own with Ascent"
+    "seEnciendeConAscent": "Lights up on its own with Ascent",
+    "lector": {
+      "lleva": "{valor} so far",
+      "pista": "Turns its star on or off."
+    }
   },
   "entrada": {
     "frase": "We first make our habits, and then our habits make us.",
@@ -835,7 +839,9 @@
         "poco": "Little",
         "normal": "Some",
         "mucho": "Plenty"
-      }
+      },
+      "armadoDia": "The day, suggested.",
+      "cambiada": "Here's another one."
     },
     "deSiempre": {
       "desayuno": "Your usual breakfast",
@@ -883,7 +889,11 @@
       "p": "P",
       "c": "C",
       "g": "F"
-    }
+    },
+    "lector": {
+      "macro": "{macro}: {n} g"
+    },
+    "quitarAlimento": "Remove {alimento}"
   },
   "inicio": {
     "titulo": "Today",
@@ -1281,7 +1291,24 @@
         "bajon": "Dip",
         "segundoPico": "Second peak"
       }
-    }
+    },
+    "lector": {
+      "lleva": "Takes you to {seccion}",
+      "quedan": "{n} of {meta} kcal left",
+      "deMas": "{n} kcal above your goal of {meta}",
+      "llevas": "{n} kcal so far",
+      "macroFalta": "{macro}: {n} g to go",
+      "macroPasado": "{macro}: {n} g over",
+      "macroListo": "{macro}: done",
+      "macroFaltaSinNumeros": "{macro}: still to go",
+      "macroPasadoSinNumeros": "{macro}: over",
+      "sinPeso": "No weigh-ins yet",
+      "habitos": "{n} of {total} habits done"
+    },
+    "moverBloque": "Move {bloque}",
+    "subir": "Move up",
+    "bajar": "Move down",
+    "lugar": "Position {n} of {total}"
   },
   "mas": {
     "titulo": "Add",
@@ -1483,8 +1510,6 @@
     "ejemplo": "This is sample data: once you log your weight (or connect Health) and finish the questionnaire, yours shows up.",
     "sinMedidas": "No measurements yet. With your waist and neck (and hips, for women), Moss estimates your body fat.",
     "gastoInicial": "Estimated from your answers. Each weekly check-in measures it from your weight and what you eat.",
-    "bajarMeta": "Lower goal weight",
-    "subirMeta": "Raise goal weight",
     "sinBalance": "Log what you eat for a few days to see your balance.",
     "limites": {
       "piso": "Not below {n} kcal a day: that's less than your body needs to work.",
@@ -1870,7 +1895,8 @@
         "Measured, with stages",
         "Stages and the night’s vitals",
         "Direct connection"
-      ]
+      ],
+      "deCinco": "{n} of 5"
     },
     "porMoss": "Estimated by Moss",
     "porTi": "Confirmed by you",
@@ -1905,7 +1931,10 @@
         "ajustes": "Open Settings",
         "error": "The alarm couldn't be set. Try again.",
         "alarma": "Good morning",
-        "detener": "Stop"
+        "detener": "Stop",
+        "horaDelDespertador": "Alarm time",
+        "horaAntes": "1 hour earlier",
+        "horaDespues": "1 hour later"
       },
       "atajos": {
         "titulo": "Automatic shortcuts",
@@ -2173,7 +2202,9 @@
       "sacarFoto": "Take photo",
       "elegirFoto": "Choose photo",
       "quitarFoto": "Remove photo",
-      "fotoNota": "Your photo stays on this iPhone: it isn’t uploaded to your account."
+      "fotoNota": "Your photo stays on this iPhone: it isn’t uploaded to your account.",
+      "sinCamaraTitulo": "Moss can’t use the camera",
+      "sinCamara": "To take your photo, turn it on in the iPhone’s Settings."
     },
     "conectar": "Connect",
     "pronto": "Soon",
@@ -2507,6 +2538,17 @@
         "It doesn't recommend supplements or medication.",
         "It doesn't present an estimate as if it were exact: every number has its margin."
       ]
+    },
+    "errorExportar": "Couldn’t export. Try again.",
+    "abrirAjustes": "Open Settings",
+    "sinPermisoTitulo": "Moss can’t notify you",
+    "correo": {
+      "asunto": "Help with Moss",
+      "cuerpo": "\n\n\n—\nThese details help us find the problem:\nMoss {version} · {actualizacion}\n{modelo} · iOS {ios}"
+    },
+    "pasos": {
+      "temprano": "{que}, earlier",
+      "tarde": "{que}, later"
     }
   },
   "fecha": {
@@ -2567,7 +2609,10 @@
     "cancelar": "Cancel",
     "guardar": "Save",
     "listo": "Done",
-    "atras": "Back"
+    "atras": "Back",
+    "siguiente": "Next",
+    "menos": "Less {que}",
+    "mas": "More {que}"
   },
   "diagnostico": {
     "salud": "Simulate Health",
@@ -3519,7 +3564,8 @@
       "luz": "light gathered",
       "porHabito": "Each habit, the last 30 days",
       "deVeces": "{hechos} of {total}",
-      "sinDatos": "No days in this month yet."
+      "sinDatos": "No days in this month yet.",
+      "diaCompleto": "{n}, full day"
     },
     "mas": "New habit",
     "aviso": {
@@ -3534,7 +3580,10 @@
       "antes": "{n} min before",
       "mensaje": "Message",
       "mensajeEjemplo": "{habito}, when you can.",
-      "texto": "It rings on the days you choose, and not if it's already done. Moss groups the ones that fall close together and never goes over the daily maximum (Profile › Reminders)."
+      "texto": "It rings on the days you choose, and not if it's already done. Moss groups the ones that fall close together and never goes over the daily maximum (Profile › Reminders).",
+      "horaDelAviso": "Reminder time",
+      "minutosAntes": "{n} minutes earlier",
+      "minutosDespues": "{n} minutes later"
     },
     "minimo": "You need at least 3 habits: the constellation changes with how many there are.",
     "metaPropia": {
@@ -3543,7 +3592,33 @@
       "agua": "Another goal, in liters",
       "mindfulness": "Another goal, in minutes"
     },
-    "demasiados": "A day can have up to {n} habits: that's how many stars the largest constellation has."
+    "demasiados": "A day can have up to {n} habits: that's how many stars the largest constellation has.",
+    "iconos": {
+      "estrella": "Star",
+      "caminar": "Walking",
+      "correr": "Running",
+      "pesas": "Weights",
+      "bicicleta": "Cycling",
+      "meditar": "Meditation",
+      "luna": "Moon",
+      "cama": "Bed",
+      "libro": "Book",
+      "lapiz": "Pencil",
+      "agua": "Water",
+      "taza": "Cup",
+      "comida": "Food",
+      "hoja": "Leaf",
+      "corazon": "Heart",
+      "mente": "Mind",
+      "pastillas": "Pills",
+      "sol": "Sun",
+      "musica": "Music",
+      "pincel": "Paintbrush",
+      "estudio": "Study",
+      "sinTelefono": "No phone",
+      "mascota": "Pet",
+      "casa": "Home"
+    }
   },
   "compartir": {
     "boton": "Share",
