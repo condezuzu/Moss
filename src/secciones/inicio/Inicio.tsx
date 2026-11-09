@@ -1,13 +1,15 @@
 // Inicio, el de la galería (galeria/src/inicio.js; especificación, cambio 9): lo primero que se ve,
 // hecho de bloques que cada uno elige y ordena. De fábrica: las calorías y los macros que quedan,
 // el progreso al objetivo, el peso con el balance y el día en el cielo; el sueño de anoche y el agua
-// están para sumarlos. Tocar un bloque lleva a su sección.
+// están para sumarlos. Tocar un bloque lleva a su sección; mantener apretada el agua quita el último vaso.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View, type ScrollViewInstance } from 'react-native';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, {
+  FadeIn, FadeOut, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming, type SharedValue,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -32,12 +34,15 @@ import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
 import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { avisar } from '../comida/registro';
+import { FranjaBajoLaHora } from '../franja';
 import { usePersona, useSueno } from '../ganchos';
 import { useCerrarConLasCapas } from '../HojaModal';
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece, Camino } from '../tarjetas';
 import { Relleno, useCuenta, Vaso } from '../animados';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
+import { MANTENER_MS, quitarUltimoVaso } from './agua';
+import { Mantener } from './Mantener';
 
 export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'] as const;
 export type Bloque = (typeof BLOQUES)[number];
@@ -50,6 +55,8 @@ const VASOS_META = 8;
 // Los bloques entran y salen al sumarlos o sacarlos: un fundido no es movimiento, también con Reducir movimiento.
 const ENTRA_BLOQUE = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
 const SALE_BLOQUE = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
+/** El vaso de más de la meta que se quita se va como entró, con un fundido. */
+const SALE_VASO = FadeOut.duration(320).reduceMotion(ReduceMotion.Never);
 /** La cifra grande de lo que queda, con el texto grande: crece hasta 1,3 veces y, si no entra al lado de la luna, se achica. */
 const CIFRA_GRANDE = { maxFontSizeMultiplier: 1.3, numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.6 } as const;
 /** Las cifras de cada macro, en su tercio: en una línea, achicadas si no entran. */
@@ -69,11 +76,13 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
   const [personalizando, setPersonalizando] = useState(false);
   const { orden, visibles } = useMemo(() => preferencias(e.inicio), [e.inicio]);
   const anchoGrafico = Math.min(150, (ancho - 40 - 32) * 0.45);
-  const scroll = useRef<ScrollViewInstance>(null);
+  const scroll = useAnimatedRef<ScrollView>();
+  // Lo que bajó el scroll: con eso aparece la franja bajo la hora.
+  const scrollY = useScrollOffset(scroll);
   const reducido = useReducedMotion();
   const esLaActual = useEsLaActual(INICIO);
   // Tocar otra vez la pestaña: arriba de todo.
-  useEffect(() => alTocarDeNuevo(INICIO, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido]);
+  useEffect(() => alTocarDeNuevo(INICIO, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido, scroll]);
   const ir: Ir = (a) => {
     // Las calorías de hoy llevan a Comida en hoy y en «Día», aunque ahí hubiera quedado otro día elegido.
     if (a === 'comida') comidaEnHoy();
@@ -94,6 +103,7 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
         contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
+        scrollEventThrottle={16}
       >
         <Text style={estilos.fecha}>{fechaCorta(e.hoy)}</Text>
         <Text style={estilos.titulo}>{t('inicio.titulo')}</Text>
@@ -114,6 +124,7 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
           </Pressable>
         </View>
       </ScrollView>
+      <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
       <Personalizar abierta={personalizando} orden={orden} visibles={visibles} alCerrar={() => setPersonalizando(false)} />
     </View>
   );
@@ -403,16 +414,25 @@ function Agua() {
   const e = useEstado();
   const ml = aguaDelDia(e.agua.values(), e.hoy);
   const vasos = Math.round(ml / VASO_ML);
+  // Restar un vaso: mantener apretada la fila (o el «+») quita el último de hoy, con «Deshacer». Sin agua hoy, nada.
+  const quitar = () => {
+    quitarUltimoVaso(avisar);
+  };
   return (
     <View style={estilos.bloque}>
       <Cabeza titulo={t('inicio.bloques.agua')} />
-      <View style={estilos.fila}>
+      <Mantener alMantener={quitar} style={estilos.fila}>
         <Text style={estilos.datoCifra}>
           {decimal(ml / 1000, idioma())}
           <Text style={estilos.datoUnidad}>{` ${t('inicio.deLitros', { meta: decimal((VASOS_META * VASO_ML) / 1000, idioma()) })}`}</Text>
         </Text>
         <View style={estilos.vasos}>
-          {Array.from({ length: Math.max(VASOS_META, vasos) }, (_, i) => <Vaso key={i} lleno={i < vasos} extra={i >= VASOS_META} style={estilos.vaso} llenoStyle={estilos.vasoLleno} />)}
+          {Array.from({ length: Math.max(VASOS_META, vasos) }, (_, i) => (
+            // Los de más de la meta entran y se van de a uno, y los otros se corren para hacerles lugar.
+            <Animated.View key={i} layout={ACOMODA} exiting={i >= VASOS_META ? SALE_VASO : undefined}>
+              <Vaso lleno={i < vasos} extra={i >= VASOS_META} style={estilos.vaso} llenoStyle={estilos.vasoLleno} />
+            </Animated.View>
+          ))}
         </View>
         <Pressable
           onPress={() => {
@@ -421,14 +441,22 @@ function Agua() {
             // Un toque de más no queda: el aviso de la app lo deshace, como en el «+».
             avisar(t('mas.vasoSumado'), () => elAlmacen().quitarAgua(toma.id));
           }}
+          onLongPress={quitar}
+          delayLongPress={MANTENER_MS}
           style={({ pressed }) => [estilos.aguaMas, pressed && estilos.botonApretado]}
           accessibilityRole="button"
           accessibilityLabel={t('mas.sumarVaso')}
+          // Con VoiceOver, quitar el último vaso es una acción del «+» (mantener apretado no es la única forma).
+          accessibilityHint={ml > 0 ? t('mas.mantenerParaQuitar') : undefined}
+          accessibilityActions={ml > 0 ? [{ name: 'quitar', label: t('mas.quitarVaso') }] : undefined}
+          onAccessibilityAction={(ev) => {
+            if (ev.nativeEvent.actionName === 'quitar') quitar();
+          }}
           hitSlop={6}
         >
           <Icono nombre="plus" tam={15} peso="semibold" />
         </Pressable>
-      </View>
+      </Mantener>
     </View>
   );
 }

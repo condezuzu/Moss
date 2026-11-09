@@ -13,6 +13,7 @@ import {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { confirmarDescartar } from './descartar';
 import { entre, LLEGA } from './movimiento';
 import { bajarTeclado, tecladoArriba } from './teclado';
 
@@ -149,13 +150,19 @@ export function useArrastre(m: Movimiento, activo: boolean, conScroll = true): A
 /**
  * Una hoja que baja con el dedo y lleva su propia bajada: se cierra yéndose para abajo con la velocidad
  * del dedo y recién abajo llama a `alCerrar`. Con Reducir movimiento llama enseguida: el fundido de la
- * hoja (el del Modal o su `exiting`) la saca desde donde quedó.
+ * hoja (el del Modal o su `exiting`) la saca desde donde quedó. Con `sinGuardar`, soltarla para cerrar
+ * la devuelve a su lugar y pregunta si descartar lo escrito.
  */
-export function useBajarParaCerrar({ alCerrar, activo = true, conScroll = true }: { alCerrar: () => void; activo?: boolean; conScroll?: boolean }) {
+export function useBajarParaCerrar({ alCerrar, activo = true, conScroll = true, sinGuardar = false }: { alCerrar: () => void; activo?: boolean; conScroll?: boolean; sinGuardar?: boolean }) {
   const reducido = useReducedMotion();
   const alto = useSharedValue(0);
   const bajada = useSharedValue(0);
+  const conCambios = useSharedValue(sinGuardar);
+  useEffect(() => {
+    conCambios.set(sinGuardar);
+  }, [sinGuardar, conCambios]);
   const cerrar = () => alCerrar();
+  const preguntar = () => confirmarDescartar(alCerrar);
   const arrastre = useArrastre({
     bajada: () => {
       'worklet';
@@ -167,6 +174,11 @@ export function useBajarParaCerrar({ alCerrar, activo = true, conScroll = true }
     },
     soltar: (y, velocidad, puedeCerrar) => {
       'worklet';
+      if (puedeCerrar && seCierra(y, alto.get(), velocidad) && conCambios.get()) {
+        bajada.set(vuelta(0, velocidad, reducido));
+        scheduleOnRN(preguntar);
+        return;
+      }
       if (puedeCerrar && seCierra(y, alto.get(), velocidad)) {
         if (reducido) {
           scheduleOnRN(cerrar);

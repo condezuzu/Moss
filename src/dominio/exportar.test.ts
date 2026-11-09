@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import es from '../textos/es.json';
-import { BOM, csvDeMetas, csvDePesos, csvDeRegistros } from './exportar';
+import { csvDeMetas, csvDePesos, csvDeRegistros } from './exportar';
 import { metaDeFibra } from './metas';
 import { borrado, gramosPara, itemDeAlimento, itemRapido, type Registro } from './registros';
 
@@ -26,7 +26,7 @@ describe('exportar en CSV', () => {
       borrado(reg('c', '2026-10-21', '2026-10-21T12:00:00.000Z', banana), '2026-10-21T13:00:00.000Z'),
       reg('d', '2026-10-22', '2026-10-22T23:00:00.000Z', banana, { planificado: true }),
     ], op);
-    const lineas = texto.slice(BOM.length).trimEnd().split('\n');
+    const lineas = texto.trimEnd().split('\n');
     expect(lineas[0]).toBe('día,comida,momento,alimento,fuente,porción,veces,gramos,kcal,proteína (g),carbohidratos (g),grasas (g),fibra (g),azúcares (g),grasas saturadas (g),sodio (mg),alcohol (g),planificado');
     expect(lineas).toHaveLength(4);
     // Lo que tiene una coma va entre comillas; la carga rápida no tiene porción ni gramos.
@@ -39,25 +39,9 @@ describe('exportar en CSV', () => {
 
   it('el peso y las metas, de lo más viejo a lo más nuevo', () => {
     expect(csvDePesos([{ fecha: '2026-10-21', kg: 74.3, origen: 'salud', momento: '' }, { fecha: '2026-10-20', kg: 74.55, origen: 'manual', momento: '' }], es.exportar.columnas))
-      .toBe(BOM + 'fecha,kg,origen\n2026-10-20,74.55,manual\n2026-10-21,74.3,salud\n');
+      .toBe('fecha,kg,origen\n2026-10-20,74.55,manual\n2026-10-21,74.3,salud\n');
     expect(csvDeMetas([{ desde: '2026-10-14', kcal: 2770, proteina: 119, carbohidratos: 387, grasas: 83, gasto: 2770, motivo: 'inicial', momento: '' }], es.exportar.columnas))
-      .toBe(BOM + 'desde,kcal,proteína (g),carbohidratos (g),grasas (g),gasto (kcal),motivo\n2026-10-14,2770,119,387,83,2770,inicial\n');
-  });
-
-  it('empieza con la marca de UTF-8, una sola vez, para que Excel lea «proteína» y no «ProteÃ­na»', () => {
-    const archivos = [
-      csvDeRegistros([reg('a', '2026-10-21', '2026-10-21T11:00:00.000Z', banana)], op),
-      csvDePesos([{ fecha: '2026-10-21', kg: 74.3, origen: 'salud', momento: '' }], es.exportar.columnas),
-      csvDeMetas([], es.exportar.columnas),
-    ];
-    for (const texto of archivos) {
-      expect(texto.charCodeAt(0)).toBe(0xfeff);
-      expect(texto.split(BOM)).toHaveLength(2);
-      // Escrito en UTF-8, los tres bytes que Excel busca: EF BB BF.
-      expect([...Buffer.from(texto, 'utf8').subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
-    }
-    // La cabecera sigue igual después de la marca: el separador no cambia.
-    expect(csvDeMetas([], es.exportar.columnas)).toBe(BOM + 'desde,kcal,proteína (g),carbohidratos (g),grasas (g),gasto (kcal),motivo\n');
+      .toBe('desde,kcal,proteína (g),carbohidratos (g),grasas (g),gasto (kcal),motivo\n2026-10-14,2770,119,387,83,2770,inicial\n');
   });
 });
 

@@ -70,7 +70,8 @@
         "correo": "Enter your email.",
         "otro": "Couldn’t sign in. Try again."
       },
-      "enviado": "We sent you an email to reset your password."
+      "enviado": "We sent you an email to reset your password.",
+      "entrando": "Signing in…"
     },
     "cuestionario": {
       "paso": "{n} of {total}",
@@ -893,7 +894,52 @@
     "lector": {
       "macro": "{macro}: {n} g"
     },
-    "quitarAlimento": "Remove {alimento}"
+    "quitarAlimento": "Remove {alimento}",
+    "menu": {
+      "copiarA": "Copy to…",
+      "moverA": "Move to…",
+      "borrar": "Delete",
+      "copiarTitulo": "Copy to",
+      "moverTitulo": "Move to",
+      "copiado": "Copied {donde}",
+      "movido": "Moved {donde}",
+      "comidaBorrada": {
+        "uno": "{comida} · {n} food removed",
+        "otros": "{comida} · {n} foods removed"
+      },
+      "donde": {
+        "mismo": "{aLa}",
+        "hoy": "to today’s {comida}",
+        "ayer": "to yesterday’s {comida}",
+        "manana": "to tomorrow’s {comida}",
+        "otro": "to {comida} on {dia}"
+      },
+      "aca": "It’s here"
+    },
+    "delDia": {
+      "ayer": "yesterday",
+      "manana": "tomorrow",
+      "otro": "{dia} {num}"
+    },
+    "agregarADia": {
+      "ayer": "Log yesterday’s {comida}",
+      "manana": "Log tomorrow’s {comida}",
+      "otro": "Log {comida} for {dia}"
+    },
+    "guardadasEditar": {
+      "tusAlimentos": "Your foods",
+      "loQueLleva": "What’s in it",
+      "tocaParaCambiar": "Tap one to change or delete it.",
+      "borrarComida": "Delete this meal",
+      "borrarReceta": "Delete this recipe",
+      "borrarAlimento": "Delete this food",
+      "borrada": "Deleted “{nombre}”",
+      "vacia": "Nothing in it: add something or delete it."
+    },
+    "alimentos": {
+      "uno": "{n} food",
+      "otros": "{n} foods"
+    }
   },
   "inicio": {
     "titulo": "Today",
@@ -1340,7 +1386,10 @@
       "merienda": "Your usual afternoon snack",
       "cena": "What you usually have for dinner",
       "snack": "What you usually snack on"
-    }
+    },
+    "vasoQuitado": "One less glass of water",
+    "mantenerParaQuitar": "Touch and hold to remove the last glass",
+    "quitarVaso": "Remove the last glass"
   },
   "cuerpo": {
     "sitios": {
@@ -2151,6 +2200,10 @@
     "deudaVer": {
       "mas": "More",
       "menos": "Less"
+    },
+    "leer": {
+      "leyendo": "Reading Health…",
+      "listo": "Up to date with Health"
     }
   },
   "perfil": {
@@ -2549,7 +2602,12 @@
     "pasos": {
       "temprano": "{que}, earlier",
       "tarde": "{que}, later"
-    }
+    },
+    "borrando": "Deleting…",
+    "cerrandoSesion": "Signing out…",
+    "exportando": "Exporting…",
+    "alertaBorrar": "Delete",
+    "cuidadoCambiado": "Care: {valor}"
   },
   "fecha": {
     "dias": [
@@ -2612,7 +2670,10 @@
     "atras": "Back",
     "siguiente": "Next",
     "menos": "Less {que}",
-    "mas": "More {que}"
+    "mas": "More {que}",
+    "descartarTitulo": "Discard what you wrote?",
+    "descartar": "Discard",
+    "seguirEditando": "Keep editing"
   },
   "diagnostico": {
     "salud": "Simulate Health",

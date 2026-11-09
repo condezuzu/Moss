@@ -4,14 +4,15 @@
 // en la comida de esta hora con deshacer); al final, las medidas del cuerpo con la cinta, que
 // estiman la grasa corporal como un rango chico (src/dominio/cuerpo.ts). Se cierra tocando afuera o
 // bajándola con el dedo (arrastre.tsx): desde arriba, o desde lo de adentro con su scroll arriba.
-// Con el peso o una medida escritos y sin guardar, no: se perdería lo escrito.
+// Con el peso o una medida escritos y sin guardar, antes pregunta si descartarlo (descartar.ts).
 
 import * as Haptics from 'expo-haptics';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View, type TextInputInstance } from 'react-native';
 import Animated, {
-  Easing, FadeIn, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type LayoutAnimationFunction, type SharedValue,
+  Easing, FadeIn, FadeInDown, FadeInUp, LayoutAnimationConfig, ReduceMotion, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming,
+  type LayoutAnimationFunction, type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -29,7 +30,10 @@ import { CabezaQueBaja, ScrollQueBaja, seCierra, useArrastre, vuelta, type Arras
 import { AvisoFlotante, Icono, type Aviso } from './comida/comunes';
 import { cantidadDeTexto, comidaDeAhora, fechaCorta, momentoDe, numero, sistemaDe, useEstado } from './comida/datos';
 import { abrirRegistro, avisar as avisarEnLaApp } from './comida/registro';
+import { confirmarDescartar } from './descartar';
 import { Figura } from './Figura';
+import { MANTENER_MS, quitarUltimoVaso } from './inicio/agua';
+import { Mantener } from './inicio/Mantener';
 import { ENTRA_FUNDIDO, ENTRA_PANEL, entre, LLEGA, SALE_FUNDIDO, SALE_PANEL } from './movimiento';
 import { BotonDePaso, margenDeToque } from './paso';
 import { ACOMODA, Aparece } from './tarjetas';
@@ -51,6 +55,11 @@ const ENTRA_MENU = FadeIn.duration(260).reduceMotion(ReduceMotion.Never);
 const LADO_ATRAS = 38;
 const LADO_PASO = 38;
 const NINGUNO: ReadonlySet<string> = new Set();
+// Lo que hay de agua cambia con un fundido corto, para arriba al sumar y para abajo al quitar (la galería).
+// Con Reducir movimiento, solo el fundido.
+const LITROS_SUBEN = FadeInDown.duration(300).easing(LLEGA).withInitialValues({ transform: [{ translateY: 5 }] });
+const LITROS_BAJAN = FadeInUp.duration(300).easing(LLEGA).withInitialValues({ transform: [{ translateY: -5 }] });
+const LITROS_CAMBIAN = FadeIn.duration(220).reduceMotion(ReduceMotion.Never);
 
 export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Props) {
   const insets = useSafeAreaInsets();
@@ -59,10 +68,14 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const avisar: Avisar = (texto, deshacer) => setAviso((antes) => ({ texto, deshacer, vez: (antes?.vez ?? 0) + 1 }));
 
-  // El peso o una medida escritos y sin guardar (lo dice la vista que los tiene): la hoja no se baja
-  // con el dedo ni se cierra tocando afuera, que perdían lo escrito. «Atrás» y el gesto de VoiceOver para salir, sí.
+  // El peso o una medida escritos y sin guardar (lo dice la vista que los tiene): bajar la hoja, tocar afuera,
+  // «Atrás» o el gesto de VoiceOver para salir preguntan antes si descartarlo. Un aviso o un widget, no.
   const [conAlgoEscrito, setConAlgoEscrito] = useState(false);
   const sinGuardar = conAlgoEscrito && vista !== 'menu';
+  const conCambios = useSharedValue(false);
+  useEffect(() => {
+    conCambios.set(sinGuardar);
+  }, [sinGuardar, conCambios]);
 
   // Al cerrarla vuelve al menú, después de bajar: así no salta mientras se va. Si se vuelve a abrir
   // antes, la vuelta no corre: si no, pisaba la vista con que se abrió (el peso, desde Progreso). El
@@ -95,11 +108,8 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   useEffect(() => {
     if (!abierta) alCerrarseDeAfuera();
   }, [abierta]);
-  // Con algo sin guardar, tocar afuera no la cierra: con el teclado arriba, solo lo baja.
-  const tocarAfuera = () => {
-    if (sinGuardar) Keyboard.dismiss();
-    else cerrar();
-  };
+  const preguntar = () => confirmarDescartar(cerrar);
+  const intentarCerrar = () => (sinGuardar ? preguntar() : cerrar());
 
   // Al pasar de una vista a otra cambia el alto de la hoja: su borde de arriba se acomoda en vez de saltar.
   // Solo eso se anima: lo que cambia con el teclado (el tope de la hoja) va directo, porque animado
@@ -125,6 +135,8 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
     alCambiarVista(v);
   };
   const alMenu = () => irA('menu');
+  // «Atrás» con algo sin guardar pregunta; al guardar, se vuelve sin preguntar (alMenu).
+  const atras = () => (sinGuardar ? confirmarDescartar(alMenu) : alMenu());
 
   // Con Reducir movimiento la hoja no viaja: entra y sale con un fundido (Secciones lleva `hoja` sin
   // movimiento) y el dedo la baja con su propia bajada.
@@ -156,11 +168,17 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
     },
     soltar: (y, velocidad, puedeCerrar) => {
       'worklet';
-      if (puedeCerrar && seCierra(y, altoHoja.get(), velocidad)) scheduleOnRN(cerrar);
-      else if (reducido) bajada.set(vuelta(0, velocidad, true));
+      const cierra = puedeCerrar && seCierra(y, altoHoja.get(), velocidad);
+      if (cierra && !conCambios.get()) {
+        scheduleOnRN(cerrar);
+        return;
+      }
+      // Con algo sin guardar vuelve a su lugar y pregunta: «Descartar» la cierra.
+      if (cierra) scheduleOnRN(preguntar);
+      if (reducido) bajada.set(vuelta(0, velocidad, true));
       else hoja.set(vuelta(1, -velocidad / (altoHoja.get() + 40), false));
     },
-  }, abierta && !sinGuardar);
+  }, abierta);
   // Cada vista trae su scroll, que empieza arriba.
   const { scrollY } = arrastre;
   useEffect(() => {
@@ -170,14 +188,14 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={abierta ? 'auto' : 'none'}>
       <Animated.View style={[StyleSheet.absoluteFill, estilos.fondo, estiloFondo]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={tocarAfuera} accessibilityRole="button" accessibilityLabel={t('comun.cancelar')} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={intentarCerrar} accessibilityRole="button" accessibilityLabel={t('comun.cancelar')} />
       </Animated.View>
       <Animated.View
         style={[estilos.hoja, { paddingBottom: insets.bottom + 18 }, estiloHoja]}
         layout={acomodar}
         onLayout={(ev) => altoHoja.set(ev.nativeEvent.layout.height)}
         accessibilityViewIsModal
-        onAccessibilityEscape={abierta ? cerrar : undefined}
+        onAccessibilityEscape={abierta ? intentarCerrar : undefined}
       >
         <CabezaQueBaja arrastre={arrastre} style={estilos.arriba}>
           <View style={estilos.asa} />
@@ -191,12 +209,12 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
         )}
         {vista === 'peso' && (
           <Animated.View key="peso" entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={estilos.vista}>
-            <VistaDePeso arrastre={arrastre} alVolver={alMenu} avisar={avisar} alEscribir={setConAlgoEscrito} />
+            <VistaDePeso arrastre={arrastre} alVolver={alMenu} alAtras={atras} avisar={avisar} alEscribir={setConAlgoEscrito} />
           </Animated.View>
         )}
         {vista === 'medidas' && (
           <Animated.View key="medidas" entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={estilos.vista}>
-            <VistaDeMedidas arrastre={arrastre} alVolver={alMenu} avisar={avisar} alEscribir={setConAlgoEscrito} alCambiarElAlto={animarElAlto} />
+            <VistaDeMedidas arrastre={arrastre} alVolver={alMenu} alAtras={atras} avisar={avisar} alEscribir={setConAlgoEscrito} alCambiarElAlto={animarElAlto} />
           </Animated.View>
         )}
         <AvisoFlotante aviso={abierta ? aviso : null} alIrse={() => setAviso(null)} abajo={insets.bottom + 14} />
@@ -273,6 +291,10 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     avisar(t('mas.vasoSumado'), () => a.quitarAgua(toma.id));
   };
+  // Restar un vaso: mantener apretada el agua (o su «+») quita el último de hoy, con «Deshacer». Sin agua hoy, nada.
+  const quitarVaso = () => {
+    quitarUltimoVaso(avisar);
+  };
 
   return (
     <ScrollQueBaja arrastre={arrastre} style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoAdentro} showsVerticalScrollIndicator={false} scrollsToTop={false}>
@@ -313,22 +335,30 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
           <Icono nombre="bolt" tam={17} peso="light" />
           <Text style={estilos.rapidoTitulo}>{t('mas.caloriasYMacros')}</Text>
         </Pressable>
-        <View style={[estilos.rapido, estilos.mitad]}>
+        <Mantener alMantener={quitarVaso} lugar={estilos.mitad} style={[estilos.rapido, estilos.llena]}>
           <Icono nombre="drop" tam={17} peso="light" color="#bcd8f2" />
           <View style={estilos.crece}>
             <Text style={estilos.rapidoTitulo}>{t('mas.agua')}</Text>
-            <Text style={estilos.detalleNumero}>{`${decimal(agua / 1000, idioma())} L`}</Text>
+            <Litros ml={agua} />
           </View>
           <Pressable
             onPress={sumarAgua}
+            onLongPress={quitarVaso}
+            delayLongPress={MANTENER_MS}
             style={({ pressed }) => [estilos.aguaMas, pressed && estilos.botonApretado]}
             accessibilityRole="button"
             accessibilityLabel={t('mas.sumarVaso')}
+            // Con VoiceOver, quitar el último vaso es una acción del «+» (mantener apretado no es la única forma).
+            accessibilityHint={agua > 0 ? t('mas.mantenerParaQuitar') : undefined}
+            accessibilityActions={agua > 0 ? [{ name: 'quitar', label: t('mas.quitarVaso') }] : undefined}
+            onAccessibilityAction={(ev) => {
+              if (ev.nativeEvent.actionName === 'quitar') quitarVaso();
+            }}
             hitSlop={6}
           >
             <Icono nombre="plus" tam={14} peso="semibold" color="#d6e7f7" />
           </Pressable>
-        </View>
+        </Mantener>
       </View>
       {listaDeRecientes.length > 0 && (
         <>
@@ -397,6 +427,25 @@ function Principal({ icono, titulo, detalle, alTocar }: { icono: SFSymbol; titul
   );
 }
 
+/** Lo que hay de agua hoy: al cambiar, lo nuevo entra para arriba si se sumó y para abajo si se quitó. */
+function Litros({ ml }: { ml: number }) {
+  const reducido = useReducedMotion();
+  const [antes, setAntes] = useState(ml);
+  const [sube, setSube] = useState(true);
+  if (ml !== antes) {
+    setAntes(ml);
+    setSube(ml > antes);
+  }
+  return (
+    // Al armarse el menú, lo de siempre: solo lo que cambia después entra con su movimiento.
+    <LayoutAnimationConfig skipEntering>
+      <Animated.Text key={ml} entering={reducido ? LITROS_CAMBIAN : sube ? LITROS_SUBEN : LITROS_BAJAN} style={estilos.detalleNumero}>
+        {`${decimal(ml / 1000, idioma())} L`}
+      </Animated.Text>
+    </LayoutAnimationConfig>
+  );
+}
+
 function Chip({ titulo, detalle, hecho, alTocar }: { titulo: string; detalle: string; hecho: boolean; alTocar: () => void }) {
   return (
     <Pressable onPress={alTocar} style={({ pressed }) => [estilos.chip, hecho && estilos.chipHecho, pressed && estilos.apretado]} accessibilityRole="button" accessibilityState={{ checked: hecho }}>
@@ -441,7 +490,8 @@ function useAvisarLoEscrito(sinGuardar: boolean, alEscribir: (si: boolean) => vo
 }
 
 // ------------------------------------------------------------------ el peso
-function VistaDePeso({ arrastre, alVolver, avisar, alEscribir }: { arrastre: Arrastre; alVolver: () => void; avisar: Avisar; alEscribir: (si: boolean) => void }) {
+/** `alVolver`: al menú, después de guardar; `alAtras`: la flecha, que con algo sin guardar pregunta antes. */
+function VistaDePeso({ arrastre, alVolver, alAtras, avisar, alEscribir }: { arrastre: Arrastre; alVolver: () => void; alAtras: () => void; avisar: Avisar; alEscribir: (si: boolean) => void }) {
   const e = useEstado();
   const sistema = sistemaDe(e);
   const ultimo = e.pesos[e.pesos.length - 1];
@@ -477,7 +527,7 @@ function VistaDePeso({ arrastre, alVolver, avisar, alEscribir }: { arrastre: Arr
   return (
     <>
       <CabezaQueBaja arrastre={arrastre}>
-        <Cabeza titulo={t('mas.registrarPeso')} alVolver={alVolver} />
+        <Cabeza titulo={t('mas.registrarPeso')} alVolver={alAtras} />
       </CabezaQueBaja>
       <ScrollQueBaja arrastre={arrastre} style={estilos.cuerpo} contentContainerStyle={estilos.peso} showsVerticalScrollIndicator={false} scrollsToTop={false}>
         <View style={estilos.pesoCifra}>
@@ -528,8 +578,8 @@ function VistaDePeso({ arrastre, alVolver, avisar, alEscribir }: { arrastre: Arr
  * siempre van plegados. Lo que se estima sale de las medidas que hay: las de hoy y, si falta alguna,
  * la última.
  */
-function VistaDeMedidas({ arrastre, alVolver, avisar, alEscribir, alCambiarElAlto }: {
-  arrastre: Arrastre; alVolver: () => void; avisar: Avisar; alEscribir: (si: boolean) => void; alCambiarElAlto: () => void;
+function VistaDeMedidas({ arrastre, alVolver, alAtras, avisar, alEscribir, alCambiarElAlto }: {
+  arrastre: Arrastre; alVolver: () => void; alAtras: () => void; avisar: Avisar; alEscribir: (si: boolean) => void; alCambiarElAlto: () => void;
 }) {
   const e = useEstado();
   const sistema = sistemaDe(e);
@@ -558,7 +608,7 @@ function VistaDeMedidas({ arrastre, alVolver, avisar, alEscribir, alCambiarElAlt
   return (
     <>
       <CabezaQueBaja arrastre={arrastre}>
-        <Cabeza titulo={t('mas.medidas')} alVolver={alVolver} />
+        <Cabeza titulo={t('mas.medidas')} alVolver={alAtras} />
       </CabezaQueBaja>
       <ScrollQueBaja arrastre={arrastre} style={estilos.cuerpo} contentContainerStyle={estilos.cuerpoMedidas} showsVerticalScrollIndicator={false} scrollsToTop={false}>
         <View style={estilos.tutorial}>
@@ -666,6 +716,8 @@ const estilos = StyleSheet.create({
   grupo: { marginTop: 18, marginBottom: 8, marginLeft: 4, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   rapido: { flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: 48, paddingLeft: 13, paddingRight: 8, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(239, 230, 207, 0.04)' },
   mitad: { flex: 1 },
+  // Lo de adentro de lo que se mantiene apretado llena su lugar: así queda del alto del de al lado.
+  llena: { flexGrow: 1 },
   crece: { flex: 1, gap: 3, minWidth: 0 },
   rapidoTitulo: { fontFamily: letras.texto, fontSize: 13.5, color: colores.pergamino },
   detalle: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.55)' },

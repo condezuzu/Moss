@@ -6,8 +6,8 @@
 
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AccessibilityActionEvent, type ScrollViewInstance } from 'react-native';
-import Animated, { LayoutAnimationConfig, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AccessibilityActionEvent, type ViewStyle } from 'react-native';
+import Animated, { LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import { conMayuscula } from '@/comida/buscar';
@@ -23,6 +23,7 @@ import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { PESTANAS } from '../Barra';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto, type Macro } from '../comida/comunes';
 import { conSigno, fechaCorta, fechaDiaMes, fechaLarga, numero, sistemaDe, useEstado } from '../comida/datos';
+import { FranjaBajoLaHora } from '../franja';
 import { usePersona } from '../ganchos';
 import { Balance, Linea } from '../graficos/Graficos';
 import type { VistaDelMas } from '../HojaMas';
@@ -58,12 +59,13 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   const [vista, setVista] = useState<'principal' | 'metas'>('principal');
   const reducido = useReducedMotion();
   const esLaActual = useEsLaActual(PROGRESO);
-  const scroll = useRef<ScrollViewInstance>(null);
+  const scroll = useAnimatedRef<ScrollView>();
+  const scrollY = useScrollOffset(scroll);
   // Tocar otra vez la pestaña: desde las metas vuelve a Progreso; en Progreso, sube arriba de todo.
   useEffect(() => alTocarDeNuevo(PROGRESO, () => {
     if (vista === 'metas') setVista('principal');
     else scroll.current?.scrollTo({ y: 0, animated: !reducido });
-  }), [vista, reducido]);
+  }), [vista, reducido, scroll]);
   // Progreso queda armado debajo de las metas, donde estaba y con lo que tenía abierto: se funde
   // mientras las metas entran de costado, y vuelve igual.
   const enMetas = useSharedValue(0);
@@ -81,21 +83,35 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
         accessibilityElementsHidden={conMetas}
         importantForAccessibility={conMetas ? 'no-hide-descendants' : 'auto'}
       >
-        <ScrollView ref={scroll} contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual && !conMetas}>
+        <ScrollView ref={scroll} contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual && !conMetas} scrollEventThrottle={16}>
           <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} />
         </ScrollView>
+        {/* Cada scroll con su franja: esta se funde con Progreso y la de las metas entra con su panel. */}
+        <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
       </Animated.View>
       {conMetas && (
         <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={StyleSheet.absoluteFill}>
-          <ScrollView contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual}>
-            {/* Las metas entran enteras con su panel: lo de adentro no se funde además. */}
-            <LayoutAnimationConfig skipEntering>
-              <Metas alVolver={() => setVista('principal')} />
-            </LayoutAnimationConfig>
-          </ScrollView>
+          <ScrollDeMetas relleno={relleno} arriba={arriba} esLaActual={esLaActual} alVolver={() => setVista('principal')} />
         </Animated.View>
       )}
     </View>
+  );
+}
+
+/** Las metas tienen su propio scroll (Progreso queda armado debajo, donde estaba), con su franja bajo la hora. */
+function ScrollDeMetas({ relleno, arriba, esLaActual, alVolver }: { relleno: ViewStyle; arriba: number; esLaActual: boolean; alVolver: () => void }) {
+  const scroll = useAnimatedRef<ScrollView>();
+  const scrollY = useScrollOffset(scroll);
+  return (
+    <>
+      <ScrollView ref={scroll} contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual} scrollEventThrottle={16}>
+        {/* Las metas entran enteras con su panel: lo de adentro no se funde además. */}
+        <LayoutAnimationConfig skipEntering>
+          <Metas alVolver={alVolver} />
+        </LayoutAnimationConfig>
+      </ScrollView>
+      <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
+    </>
   );
 }
 

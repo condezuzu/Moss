@@ -6,15 +6,19 @@
 // 16 (y sin bajar «rápido» antes de los 18), y sin déficit en el embarazo, la lactancia o con una condición médica. La recorre una estrella
 // guía (Guia.tsx, con el guion de guion.ts): en la frase y las diapositivas espera abajo y tocarla es
 // seguir, así que no se saltean; con la suscripción, «Saltar» lleva a lo que cuesta, que no se saltea.
-// Cada pantalla tiene su lugar en el cielo: la cámara sube a medida
+// Desde la segunda pregunta, «Atrás» vuelve a la anterior con lo contestado. Cada pantalla tiene su
+// lugar en el cielo: la cámara sube a medida
 // que se avanza. Al final la estrella se va, la cámara baja hasta hoy, se guardan las respuestas (el
 // perfil, el peso de hoy y la meta) y aparece Inicio.
 
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { AppState, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
+import { ActivityIndicator, AppState, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, {
+  Easing, FadeIn, FadeInDown, FadeInUp, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming,
+  type EntryExitAnimationFunction, type SharedValue,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
@@ -37,7 +41,7 @@ import { Luna } from '../comida/Luna';
 import { ejemplo } from '../ejemplo';
 import { Hipnograma } from '../graficos/Graficos';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
-import { BotonDePaso } from '../paso';
+import { BotonDePaso, margenDeToque } from '../paso';
 import { entrarConApple, hayApple, type ErrorDeCuenta } from './cuenta';
 import { Guia } from './Guia';
 import {
@@ -113,6 +117,27 @@ const fundido = (demora: number, ms: number) => FadeIn.delay(demora).duration(ms
 /** Lo que entra subiendo; con Reducir movimiento, solo con el fundido. */
 const subiendo = (reducido: boolean, demora: number, ms: number) => (reducido ? fundido(demora, ms) : FadeInDown.delay(demora).duration(ms));
 const SE_APAGA = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
+/** La de antes se va para abajo al volver con «Atrás»: arranca suave y termina rápido, como en la galería. */
+const SE_VA_BAJANDO = Easing.in(Easing.quad);
+/** El lado de «Atrás»: el toque llega a 44 con el margen. */
+const LADO_ATRAS = 32;
+
+/**
+ * La pantalla que se va: al seguir, con un fundido; al volver con «Atrás», para abajo, mientras la nueva entra
+ * desde arriba (al revés que al seguir). La dirección se lee al irse: la pantalla se dibujó por última vez
+ * antes de saber adónde se iba.
+ */
+function salidaDeLaPantalla(haciaAtras: SharedValue<boolean>): EntryExitAnimationFunction {
+  return () => {
+    'worklet';
+    const baja = haciaAtras.get();
+    const como = baja ? { duration: 400, easing: SE_VA_BAJANDO } : { duration: 320 };
+    return {
+      initialValues: { opacity: 1, transform: [{ translateY: 0 }] },
+      animations: { opacity: withTiming(0, como), transform: [{ translateY: withTiming(baja ? 34 : 0, como) }] },
+    };
+  };
+}
 
 function vibrar(e: Evento) {
   if (e === 'completo') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -164,6 +189,10 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const [r, setR] = useState<Respuestas>(inicio.r);
   const [deSalud, setDeSalud] = useState<DeSalud>(inicio.deSalud);
   const [terminando, setTerminando] = useState(false);
+  // Si a la pantalla de ahora se llegó con «Atrás»: entra desde arriba y la de antes se va para abajo.
+  const [volviendo, setVolviendo] = useState(false);
+  const haciaAtras = useSharedValue(false);
+  const salida = useMemo(() => salidaDeLaPantalla(haciaAtras), [haciaAtras]);
   const paso = pasos[i];
 
   // La estrella guía: el guion de la pantalla de ahora y el reloj que lo recorre (ms desde que empezó).
@@ -268,8 +297,11 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     camara.set(paso.camara);
   }, [camara, paso.camara]);
 
-  const irA = (j: number) => {
+  const irA = (j: number, atras = false) => {
     setEspera(false);
+    setVolviendo(atras);
+    haciaAtras.set(atras);
+    // La estrella sale de donde está: en la barra, al volver, retrocede hasta la pregunta de antes.
     setGuion(guionPara(j, lugarDeAhora()));
     setI(j);
   };
@@ -343,6 +375,15 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   }));
 
   const enCuestionario = CUESTIONARIO.indexOf(paso.id);
+  // Salud dijo menos de 16: Moss no sigue (Menor), y tampoco se vuelve a la pregunta de antes.
+  const menor = paso.id === 'edad' && deSalud.has('edad') && r.edad < EDAD_MINIMA;
+  // «Atrás», desde la segunda pregunta: la de antes, con lo que ya contestaste (el avance se guarda por pantalla).
+  const anterior = enCuestionario > 0 && !menor ? pasos.findIndex((p) => p.id === CUESTIONARIO[enCuestionario - 1]) : -1;
+  const atras = () => {
+    if (anterior < 0 || saliendo) return;
+    Haptics.selectionAsync().catch(() => {});
+    irA(anterior, true);
+  };
   const relleno = { paddingTop: insets.top + ARRIBA, paddingBottom: insets.bottom + 24 };
   // La frase, las diapositivas y la cuenta tienen lo suyo en un lugar fijo, el que recorre la estrella: no corren.
   const fija = esDiapositiva(paso.id) || paso.id === 'cuenta';
@@ -355,8 +396,8 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View
           key={paso.id}
-          entering={reducido ? ENTRA_FUNDIDO : FadeInDown.delay(i === 0 ? 120 : 280).duration(620)}
-          exiting={reducido ? SALE_FUNDIDO : FadeOut.duration(320)}
+          entering={reducido ? ENTRA_FUNDIDO : (volviendo ? FadeInUp : FadeInDown).delay(i === 0 ? 120 : 280).duration(620)}
+          exiting={reducido ? SALE_FUNDIDO : salida}
           style={{ flex: 1 }}
         >
           {fija ? (
@@ -393,8 +434,10 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             bounces={false}
+            // Con VoiceOver, el gesto de escape también vuelve a la pregunta de antes.
+            onAccessibilityEscape={anterior >= 0 ? atras : undefined}
           >
-            {enCuestionario >= 0 && <Avance n={enCuestionario + 1} total={CUESTIONARIO.length} />}
+            {enCuestionario >= 0 && <Avance n={enCuestionario + 1} total={CUESTIONARIO.length} alAtras={anterior >= 0 ? atras : undefined} />}
             {paso.id === 'datos' && <TusDatos alSeguir={siguiente} />}
             {paso.id === 'salud' && (
               <Salud
@@ -405,7 +448,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 }}
               />
             )}
-            {paso.id === 'edad' && (deSalud.has('edad') && r.edad < EDAD_MINIMA ? <Menor /> : (
+            {paso.id === 'edad' && (menor ? <Menor /> : (
               <Numero titulo={t('entrada.cuestionario.edadTitulo')} valor={Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])} min={RANGOS_DEL_CUESTIONARIO.edad[0]} max={RANGOS_DEL_CUESTIONARIO.edad[1]} paso={1} decimales={0} unidad={t('entrada.cuestionario.anos')} deSalud={deSalud.has('edad')} alCambiar={(v) => poner('edad', v)} alSeguir={() => { poner('edad', Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])); siguiente(); }} />
             ))}
             {paso.id === 'sexo' && <ElSexo sexo={r.sexo} deSalud={deSalud.has('sexo')} alElegir={(v) => poner('sexo', v)} alSeguir={siguiente} />}
@@ -457,12 +500,29 @@ const Texto = ({ children, centrado, tope }: { children: ReactNode; centrado?: b
 const Pie = ({ children }: { children: ReactNode }) => <View style={s.pie}>{children}</View>;
 const Espacio = () => <View style={{ flex: 1, minHeight: 24 }} />;
 
-/** Cuánto falta del cuestionario. La barra es de la estrella (Guia.tsx), que va en su punta: acá queda su lugar. */
-function Avance({ n, total }: { n: number; total: number }) {
+/**
+ * Cuánto falta del cuestionario. La barra es de la estrella (Guia.tsx), que va en su punta: acá queda su lugar.
+ * Desde la segunda pregunta, a la altura de «n de N», la flecha fina de «Atrás». La fila tiene el mismo alto
+ * con flecha o sin ella: de la primera pregunta a la segunda no se corre nada.
+ */
+function Avance({ n, total, alAtras }: { n: number; total: number; alAtras?: () => void }) {
   return (
     <View>
       <View style={s.avance} />
-      <Text style={s.paso}>{t('entrada.cuestionario.paso', { n, total })}</Text>
+      <View style={s.avanceFila}>
+        {alAtras && (
+          <Pressable
+            onPress={alAtras}
+            style={({ pressed }) => [s.atras, pressed && s.atrasApretado]}
+            hitSlop={margenDeToque(LADO_ATRAS)}
+            accessibilityRole="button"
+            accessibilityLabel={t('comun.atras')}
+          >
+            <Icono nombre="chevron.left" tam={15} color="rgba(239, 230, 207, 0.78)" peso="medium" />
+          </Pressable>
+        )}
+        <Text style={[s.paso, s.pasoEnFila]}>{t('entrada.cuestionario.paso', { n, total })}</Text>
+      </View>
     </View>
   );
 }
@@ -735,32 +795,51 @@ function Cuenta({ alEntrar }: { alEntrar: () => void }) {
     setOcupado(true);
     setError(null);
     const resultado = await entrarConApple();
-    enCamino.current = false;
-    setOcupado(false);
     if (resultado.ok) {
+      // Sigue «Entrando…» hasta que la pantalla se va: el botón de Apple no vuelve a asomar.
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       alEntrar();
-    } else {
-      setError(resultado.error);
-      if (resultado.error) anunciar(t(`entrada.cuenta.errores.${resultado.error}`));
+      return;
     }
+    enCamino.current = false;
+    setOcupado(false);
+    setError(resultado.error);
+    if (resultado.error) anunciar(t(`entrada.cuenta.errores.${resultado.error}`));
   };
   // La marca va arriba (Marca); abajo, Apple y lo que se acepta.
   return (
     <>
       <Espacio />
       <Animated.View entering={subiendo(reducido, 2100, 800)} style={s.botones}>
-        {apple ? (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-            cornerRadius={25}
-            style={s.apple}
-            onPress={entrar}
-          />
-        ) : (
-          <Boton tipo="apple" texto={t('entrada.cuenta.apple')} alTocar={entrar} desactivado={ocupado} icono={<Icono nombre="applelogo" tam={17} color="#000" />} />
-        )}
+        <View>
+          {apple ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+              cornerRadius={25}
+              style={s.apple}
+              onPress={entrar}
+            />
+          ) : (
+            <Boton tipo="apple" texto={t('entrada.cuenta.apple')} alTocar={entrar} icono={<Icono nombre="applelogo" tam={17} color="#000" />} />
+          )}
+          {/* Mientras entra, la ruedita y «Entrando…» (aprobado en la galería el 9/11/2026). El botón de Apple no
+              puede decirlo: va uno igual encima, que además no deja tocarlo dos veces. */}
+          {ocupado && (
+            <Animated.View
+              entering={ENTRA_FUNDIDO}
+              exiting={SALE_FUNDIDO}
+              style={[StyleSheet.absoluteFill, s.entrando]}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={t('entrada.cuenta.entrando')}
+              accessibilityState={{ busy: true, disabled: true }}
+            >
+              <ActivityIndicator color="rgba(0, 0, 0, 0.72)" />
+              <Text style={s.entrandoTexto} maxFontSizeMultiplier={TOPE}>{t('entrada.cuenta.entrando')}</Text>
+            </Animated.View>
+          )}
+        </View>
         {error && (
           <Animated.Text entering={fundido(0, 300)} exiting={SE_APAGA} style={s.error} accessibilityLiveRegion="polite">
             {t(`entrada.cuenta.errores.${error}`)}
@@ -1130,7 +1209,15 @@ const s = StyleSheet.create({
   menor: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   pie: { gap: 10, width: '100%', maxWidth: 340, alignSelf: 'center', paddingTop: 18 },
   avance: { height: 2 },
+  avanceFila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: LADO_ATRAS - 4, marginTop: 12, marginBottom: 6 },
   paso: { marginTop: 16, marginBottom: 10, fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.5)' },
+  pasoEnFila: { marginTop: 0, marginBottom: 0 },
+  // Como en la galería: corrida a la izquierda, para que la flecha quede alineada con el texto de abajo.
+  atras: {
+    width: LADO_ATRAS, height: LADO_ATRAS, marginVertical: -2, marginLeft: -6, marginRight: -2, borderRadius: LADO_ATRAS / 2, borderWidth: 1,
+    borderColor: 'rgba(239, 230, 207, 0.16)', backgroundColor: 'rgba(6, 10, 22, 0.45)', alignItems: 'center', justifyContent: 'center',
+  },
+  atrasApretado: { transform: [{ scale: 0.92 }], backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   centrado: { textAlign: 'center', alignSelf: 'center' },
   fija: { flex: 1 },
   frase: { position: 'absolute', left: 28, right: 28, top: 0, alignItems: 'center', justifyContent: 'center' },
@@ -1146,6 +1233,9 @@ const s = StyleSheet.create({
   lema: { marginTop: 8, fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 18, color: 'rgba(239, 230, 207, 0.72)' },
   botones: { width: '100%', maxWidth: 330, alignSelf: 'center', gap: 10 },
   apple: { width: '100%', height: 50 },
+  // El botón blanco de Apple, con la ruedita y «Entrando…» en vez de su texto.
+  entrando: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 25, backgroundColor: '#fff' },
+  entrandoTexto: { fontFamily: letras.textoMedio, fontSize: 15.5, letterSpacing: 0.15, color: '#000' },
   error: { marginTop: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: '#f0a58a', textAlign: 'center' },
   iconosDeSalud: { marginTop: 38, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   iconoDeSalud: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.25)', alignItems: 'center', justifyContent: 'center' },

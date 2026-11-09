@@ -14,7 +14,6 @@ const Detalles = (() => {
   const TEXTOS_NUEVOS = {
     es: {
       comun: { siguiente: 'Siguiente' },
-      cielo: { sinHabitosHoy: 'Hoy no toca ningún hábito' },
       comida: {
         menu: {
           copiarA: 'Copiar a…', moverA: 'Mover a…', borrar: 'Borrar', copiarTitulo: 'Copiar a', moverTitulo: 'Mover a',
@@ -38,7 +37,6 @@ const Detalles = (() => {
     },
     en: {
       comun: { siguiente: 'Next' },
-      cielo: { sinHabitosHoy: 'No habits today' },
       comida: {
         menu: {
           copiarA: 'Copy to…', moverA: 'Move to…', borrar: 'Delete', copiarTitulo: 'Copy to', moverTitulo: 'Move to',
@@ -135,11 +133,6 @@ input.fi-valor:focus { background: rgba(239, 230, 207, 0.08); }
 /* Sueño: «Cancelar» al lado de «Guardar» en el editor de la hora. */
 .sn-editor-acciones { margin-top: 6px; }
 .sn-editor-acciones .sn-guardar { margin-top: 0; }
-
-/* Hábitos, un día sin hábitos que toquen: chico, donde va el globito, sin caja. */
-.tel .cielo-sin-habitos { position: absolute; left: 50%; bottom: calc(var(--pestanas) + 50px); translate: -50% 8px; opacity: 0; pointer-events: none; white-space: nowrap;
-  font: 400 12.5px/1.3 var(--texto); letter-spacing: 0.02em; color: rgba(239, 230, 207, 0.62); text-shadow: 0 0 12px #03050c, 0 0 4px #03050c; transition: opacity 0.5s ease, translate 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.tel .cielo-sin-habitos.visible { opacity: 1; translate: -50% 0; }
 
 /* El agua: el vaso que se quita se vacía, y lo que hay cambia para abajo o para arriba. */
 .in-vasos i.sale { animation: dt-vaso-vacia 0.34s ease-out both; }

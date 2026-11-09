@@ -6,11 +6,14 @@
 
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import * as Haptics from 'expo-haptics';
 import type { SFSymbol } from 'expo-symbols';
 import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AlertButton, type ScrollViewInstance } from 'react-native';
-import Animated, { LayoutAnimationConfig, useReducedMotion } from 'react-native-reanimated';
+import { ActivityIndicator, Alert, AppState, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AlertButton } from 'react-native';
+import Animated, {
+  FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset, withTiming, type EntryExitAnimationFunction,
+} from 'react-native-reanimated';
 
 import { actualizarSalud, elAlmacen, oirLaSesion } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
@@ -36,19 +39,45 @@ import { Boton, Icono, Pastilla } from '../comida/comunes';
 import { duracion, numero, sistemaDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { Opcion } from '../entrada/piezas';
+import { FranjaBajoLaHora } from '../franja';
 import { HojaModal } from '../HojaModal';
+import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { BotonDePaso } from '../paso';
 import { aparatoPrincipal, Aparatos } from './Aparatos';
 import { useFilaDeAscent } from '../ascent/filaDePerfil';
 import { hayCompras, useEstadoDePremium } from '@/lib/premium';
 import { avisoAlBorrarLaCuenta, HojaDeSuscripcion, valorDeSuscripcion } from '../premium/Premium';
 import { ACOMODA, Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
-import { borrarLaCuenta, borrarMisDatos, correoDeLaCuenta, correoSabido, exportarTodo, salirDeLaCuenta } from './cuenta';
+import { borrarLaCuenta, borrarMisDatos, correoDeLaCuenta, correoSabido, exportarTodo, salirDeLaCuenta, type Espera } from './cuenta';
 import { borrarFotoDePerfil, elegirFotoDePerfil, fotoDePerfil, guardarFotoDePerfil, hayFotoDePerfil } from './foto';
 import { Avatar, Persona } from './Persona';
 
-/** Una fila; `detalle` dice debajo, chico, qué hace. */
-type Fila = { clave: string; titulo: string; valor?: string; detalle?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion' };
+/**
+ * Una fila; `detalle` dice debajo, chico, qué hace. Lo que cambia ahí mismo no lleva la flecha de entrar
+ * (aprobado en la galería el 9/11/2026): `interruptor` muestra la llave, que mueve el toque de toda la fila,
+ * y `flecha` en false deja solo el valor. `esperando`: la ruedita en vez del valor.
+ */
+type Fila = {
+  clave: string; titulo: string; valor?: string; detalle?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion';
+  interruptor?: boolean; flecha?: boolean; esperando?: boolean;
+};
+
+/** Mientras se borra o se sale: lo que está pasando y, al terminar lo de la cuenta, «Listo». */
+type EnEspera = { texto: string; listo: boolean };
+
+const LLAVE = { true: colores.oro, false: 'rgba(239, 230, 207, 0.16)' };
+/** El valor que cambia en una fila entra con un fundido, que no es movimiento: también con Reducir movimiento. */
+const ENTRA_VALOR = FadeIn.duration(300).reduceMotion(ReduceMotion.Never);
+/** El «Listo» del velo aparece creciendo apenas, como en la galería. */
+const APARECE_LISTO: EntryExitAnimationFunction = () => {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.8 }] },
+    animations: { opacity: withTiming(1, { duration: 300 }), transform: [{ scale: withTiming(1, { duration: 300 }) }] },
+  };
+};
+/** Si el velo quedara (la entrada no llegó), se va solo después de «Listo». */
+const VELO_COMO_MUCHO = 4000;
 
 /** Lo que anda solo con las dos apps vinculadas (antes en la sección de Ascent). */
 const FUNCIONES_CON_ASCENT: { clave: 'peso' | 'calorias' | 'objetivo' | 'proteina' | 'gimnasio'; icono: SFSymbol }[] = [
@@ -100,11 +129,46 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
   const [foto, setFoto] = useState(fotoDePerfil);
   const premium = useEstadoDePremium();
-  const scroll = useRef<ScrollViewInstance>(null);
+  const scroll = useAnimatedRef<ScrollView>();
+  // Lo que bajó el scroll: con eso aparece la franja bajo la hora.
+  const scrollY = useScrollOffset(scroll);
   const reducido = useReducedMotion();
   // Solo el scroll de la sección que se ve sube con un toque en la hora; tocar otra vez la pestaña, arriba de todo.
   const esLaActual = useEsLaActual(PERFIL);
-  useEffect(() => alTocarDeNuevo(PERFIL, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido]);
+  useEffect(() => alTocarDeNuevo(PERFIL, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido, scroll]);
+  // Las esperas (aprobadas en la galería el 9/11/2026): exportar muestra la ruedita mientras arma los archivos;
+  // borrar y salir, después de la alerta de iOS, el velo hasta que termina.
+  const [exportando, setExportando] = useState(false);
+  const [espera, setEspera] = useState<EnEspera | null>(null);
+  const seVaSolo = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(seVaSolo.current), []);
+  /** El velo de lo que borra o sale, con lo que dice mientras espera. */
+  const velo = (texto: string): Espera => ({
+    empezar: () => {
+      clearTimeout(seVaSolo.current);
+      setEspera({ texto, listo: false });
+    },
+    listo: () => {
+      setEspera({ texto, listo: true });
+      // Con el teléfono vacío vuelve la entrada y el velo se va con Perfil.
+      seVaSolo.current = setTimeout(() => setEspera(null), VELO_COMO_MUCHO);
+    },
+    dejar: () => {
+      clearTimeout(seVaSolo.current);
+      setEspera(null);
+    },
+  });
+  const exportar = () => {
+    if (exportando) return;
+    setExportando(true);
+    const listo = () => setExportando(false);
+    exportarTodo(e.hoy, listo).catch(() => avisar(t('perfil.errorExportar'))).finally(listo);
+  };
+  /** Lo que se cambia ahí mismo vibra apenas, como elegir. */
+  const alternar = (cambiar: () => void) => () => {
+    Haptics.selectionAsync().catch(() => {});
+    cambiar();
+  };
   useEffect(() => {
     let vigente = true;
     let vez = 0;
@@ -132,12 +196,31 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   const p = e.perfil;
   const altura = (cm: number) => (sistema === 'imperial' ? piesYPulgadas(cm) : `${numero(cm)} cm`);
   // false es un error; null, que se canceló (la hoja de Apple al borrar la cuenta) o que ya estaba en camino: no se dice nada.
-  const confirmar = (titulo: string, texto: string, accion: () => Promise<boolean | null | void>, otros: AlertButton[] = []) =>
+  // Mientras borra, el velo con «Borrando…»; con lo de la cuenta borrado, «Listo», y vuelve la entrada.
+  const confirmar = (titulo: string, texto: string, accion: (alListo: () => void) => Promise<boolean | null>, otros: AlertButton[] = []) =>
     Alert.alert(titulo, texto, [
       { text: t('comun.cancelar'), style: 'cancel' },
       ...otros,
-      { text: t('perfil.borrar'), style: 'destructive', onPress: () => { accion().then((ok) => ok === false && avisar(t('perfil.errorBorrar'))).catch(() => avisar(t('perfil.errorBorrar'))); } },
+      {
+        text: t('perfil.borrar'), style: 'destructive', onPress: () => {
+          const v = velo(t('perfil.borrando'));
+          const fallo = () => {
+            v.dejar();
+            avisar(t('perfil.errorBorrar'));
+          };
+          v.empezar();
+          accion(v.listo).then((ok) => {
+            if (ok === false) fallo();
+            else if (ok === null) v.dejar();
+          }).catch(fallo);
+        },
+      },
     ]);
+  // Cuidados cambia la meta desde hoy: el aviso dice cómo quedó y lo deja deshacer.
+  const cambiarCuidado = (antes: boolean) => {
+    elAlmacen().ponerEstrategia({ sinDeficit: !antes });
+    avisar(t('perfil.cuidadoCambiado', { valor: minuscula(t(antes ? 'perfil.ninguno' : 'perfil.sinDeficit')) }), () => elAlmacen().ponerEstrategia({ sinDeficit: antes }));
+  };
 
   const filaDeSuscripcion: Fila = { clave: 'suscripcion', titulo: t('suscripcion.titulo'), valor: valorDeSuscripcion(premium), alTocar: () => setHoja('suscripcion') };
   const conexiones: [string, Fila[]] = ['perfil.conexiones', [
@@ -169,29 +252,37 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál). Cambia la meta desde hoy.
       // Para qué comer antes y después de entrenar (Comida); con «sin déficit» no se ve.
       ...(p.sinDeficit ? [] : [{ clave: 'entreno', titulo: t('entreno.perfil.titulo'), valor: resumenDeEntreno(e.entreno), alTocar: () => setHoja('entreno') }]),
+      // Se prende y apaga ahí mismo: una llave, con lo que hace siempre a la vista (una llave sola no lo dice).
       {
-        clave: 'cuidado', titulo: t('perfil.cuidado'), valor: t(p.sinDeficit ? 'perfil.sinDeficit' : 'perfil.ninguno'), tipo: p.sinDeficit ? 'ok' as const : undefined,
-        detalle: p.sinDeficit ? t('perfil.sinDeficitTexto') : undefined, alTocar: () => elAlmacen().ponerEstrategia({ sinDeficit: !p.sinDeficit }),
+        clave: 'cuidado', titulo: t('perfil.cuidado'), detalle: t('perfil.sinDeficitTexto'), interruptor: !!p.sinDeficit,
+        alTocar: alternar(() => cambiarCuidado(!!p.sinDeficit)),
       },
     ] : []],
     ...(hayCompras() ? [['suscripcion.perfil.titulo', [filaDeSuscripcion]] as [string, Fila[]]] : []),
     ['perfil.preferencias', [
-      { clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), alTocar: () => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial') },
+      // Las unidades y los números cambian ahí mismo: con su valor y sin la flecha de entrar.
+      {
+        clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), flecha: false,
+        alTocar: alternar(() => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial')),
+      },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
       { clave: 'idioma', titulo: t('perfil.idioma'), valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
       { clave: 'corte', titulo: t('perfil.corte'), valor: nombreDelCorte(e.corte), alTocar: () => setHoja('corte') },
       { clave: 'calidad', titulo: t('perfil.calidad'), valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
       { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
-      { clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), alTocar: () => elAlmacen().ponerNumeros(!e.numeros) },
+      {
+        clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), flecha: false,
+        alTocar: alternar(() => elAlmacen().ponerNumeros(!e.numeros)),
+      },
     ]],
     ...(CON_ASCENT ? [] : [conexiones]),
     ['perfil.tusDatosParaLlevar', [
-      { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', alTocar: () => { exportarTodo(e.hoy).catch(() => avisar(t('perfil.errorExportar'))); } },
+      { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', esperando: exportando, alTocar: exportar },
       { clave: 'privacidad', titulo: t('perfil.privacidad'), alTocar: () => setHoja('privacidad') },
-      // Sin la cuenta, y solo si se elige (guía 5.1.1 de Apple): src/almacen/buzon.ts.
+      // Sin la cuenta, y solo si se elige (guía 5.1.1 de Apple): src/almacen/buzon.ts. Sí o no, con su llave.
       {
-        clave: 'mejorarBase', titulo: t('perfil.mejorarBase'), valor: t(e.mandarBusquedas ? 'perfil.si' : 'perfil.no'), detalle: t('perfil.mejorarBaseTexto'),
-        alTocar: () => elAlmacen().ponerMandarBusquedas(!e.mandarBusquedas),
+        clave: 'mejorarBase', titulo: t('perfil.mejorarBase'), detalle: t('perfil.mejorarBaseTexto'), interruptor: e.mandarBusquedas,
+        alTocar: alternar(() => elAlmacen().ponerMandarBusquedas(!e.mandarBusquedas)),
       },
       { clave: 'politica', titulo: t('perfil.politica'), alTocar: () => abrirPagina('privacidad') },
       { clave: 'terminos', titulo: t('perfil.terminos'), alTocar: () => abrirPagina('terminos') },
@@ -211,6 +302,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
+        scrollEventThrottle={16}
       >
         <Persona nombre={e.nombre?.valor ?? ''} correo={correo === undefined ? '' : correo} foto={foto} alTocar={() => setHoja('editar')} />
         {/* Al armar Perfil todo está en su lugar (y al irse, se va entero); en el medio, lo que aparece (la fila
@@ -222,21 +314,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
               <Animated.View layout={ACOMODA} style={st.lista}>
                 {filas.map((f, i) => (
                   <Aparece key={f.clave} style={i > 0 && st.filaSeparada}>
-                    <Pressable
-                      onPress={f.alTocar}
-                      disabled={!f.alTocar}
-                      style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]}
-                      accessibilityRole={f.alTocar ? 'button' : 'text'}
-                    >
-                      <View style={st.filaTextos}>
-                        <Text style={[st.filaTitulo, f.tipo === 'peligro' && st.peligro]}>{f.titulo}</Text>
-                        {f.detalle ? <Aparece><Text style={st.filaDetalle}>{f.detalle}</Text></Aparece> : null}
-                      </View>
-                      {f.valor ? (
-                        <Text style={[st.filaValor, f.tipo === 'ok' && { color: colores.salvia }, f.tipo === 'accion' && { color: colores.oroClaro }]} numberOfLines={1}>{f.valor}</Text>
-                      ) : null}
-                      {f.alTocar && f.tipo !== 'peligro' ? <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" /> : null}
-                    </Pressable>
+                    <FilaDePerfil f={f} />
                   </Aparece>
                 ))}
               </Animated.View>
@@ -275,7 +353,8 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
               texto={t('perfil.cambiarCuenta')}
               alTocar={() => Alert.alert(t('perfil.cambiarCuenta'), t('perfil.cambiarCuentaTexto'), [
                 { text: t('comun.cancelar'), style: 'cancel' },
-                { text: t('perfil.cambiarCuenta'), onPress: () => salirDeLaCuenta() },
+                // Cambiar de cuenta también cierra la sesión: el mismo velo.
+                { text: t('perfil.cambiarCuenta'), onPress: () => salirDeLaCuenta(undefined, velo(t('perfil.cerrandoSesion'))) },
               ])}
               estilo={st.salir}
             />
@@ -284,7 +363,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
               texto={t('perfil.cerrarSesion')}
               alTocar={() => Alert.alert(t('perfil.cerrarSesionTitulo'), t('perfil.cerrarSesionTexto'), [
                 { text: t('comun.cancelar'), style: 'cancel' },
-                { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: () => salirDeLaCuenta() },
+                { text: t('perfil.cerrarSesion'), style: 'destructive', onPress: () => salirDeLaCuenta(undefined, velo(t('perfil.cerrandoSesion'))) },
               ])}
               estilo={st.salir}
             />
@@ -293,6 +372,8 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
           <Animated.Text layout={ACOMODA} style={st.version}>{t('perfil.version', { v: VERSION })}</Animated.Text>
         </LayoutAnimationConfig>
       </ScrollView>
+      <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
+      <VeloDeEspera espera={espera} />
       {hoja === 'editar' && (
         <EditarPerfil perfil={p} hoy={e.hoy} imperial={sistema === 'imperial'} nombreGuardado={e.nombre?.valor ?? ''} foto={foto} alGuardarFoto={setFoto} alCerrar={() => setHoja(null)} />
       )}
@@ -314,6 +395,76 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   );
 }
 
+/** Una fila de Perfil: lo que es, debajo qué hace si hace falta, y su llave, su valor o la ruedita, y la flecha si abre algo. */
+function FilaDePerfil({ f }: { f: Fila }) {
+  const llave = f.interruptor !== undefined;
+  return (
+    <Pressable
+      onPress={f.alTocar}
+      disabled={!f.alTocar}
+      style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]}
+      accessibilityRole={llave ? 'switch' : f.alTocar ? 'button' : 'text'}
+      accessibilityState={llave ? { checked: f.interruptor } : f.esperando ? { busy: true } : undefined}
+    >
+      <View style={st.filaTextos}>
+        <Text style={[st.filaTitulo, f.tipo === 'peligro' && st.peligro]}>{f.titulo}</Text>
+        {f.detalle ? <Aparece><Text style={st.filaDetalle}>{f.detalle}</Text></Aparece> : null}
+      </View>
+      {llave ? (
+        // La llave se mira: la mueve el toque de toda la fila, como en Ajustes.
+        <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Switch value={f.interruptor} trackColor={LLAVE} thumbColor={colores.pergamino} />
+        </View>
+      ) : f.esperando ? (
+        <Animated.View key="esperando" entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} accessibilityLabel={t('perfil.exportando')}>
+          <ActivityIndicator size="small" color="rgba(239, 230, 207, 0.66)" />
+        </Animated.View>
+      ) : f.valor ? (
+        // Lo que cambia ahí mismo (las unidades, los números) entra con un fundido.
+        <Animated.Text
+          key={f.valor}
+          entering={ENTRA_VALOR}
+          style={[st.filaValor, f.tipo === 'ok' && { color: colores.salvia }, f.tipo === 'accion' && { color: colores.oroClaro }]}
+          numberOfLines={1}
+        >
+          {f.valor}
+        </Animated.Text>
+      ) : null}
+      {f.alTocar && f.tipo !== 'peligro' && !llave && f.flecha !== false ? <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" /> : null}
+    </Pressable>
+  );
+}
+
+/**
+ * Mientras se borra o se cierra la sesión (aprobado en la galería el 9/11/2026): un velo con la ruedita y lo
+ * que está pasando, que tapa todo (también la barra) y no deja tocar nada; con lo de la cuenta hecho, «Listo»,
+ * y vuelve la entrada. Es un Modal: lo de Perfil no llega más arriba.
+ */
+function VeloDeEspera({ espera }: { espera: EnEspera | null }) {
+  const reducido = useReducedMotion();
+  // Lo último que dijo: mientras se va con el fundido, no queda vacío.
+  const [dicha, setDicha] = useState(espera);
+  if (espera && espera !== dicha) setDicha(espera);
+  const listo = !!dicha?.listo;
+  useEffect(() => {
+    if (listo) anunciar(t('comun.listo'));
+  }, [listo]);
+  return (
+    <Modal visible={espera !== null} transparent animationType="fade" onRequestClose={() => {}} statusBarTranslucent>
+      <View style={st.velo} accessibilityViewIsModal>
+        {listo ? (
+          <Animated.View key="listo" entering={reducido ? ENTRA_FUNDIDO : APARECE_LISTO}>
+            <Icono nombre="checkmark" tam={28} color={colores.salvia} peso="medium" />
+          </Animated.View>
+        ) : (
+          <ActivityIndicator size="large" color="rgba(239, 230, 207, 0.85)" />
+        )}
+        <Text style={st.veloTexto}>{listo ? t('comun.listo') : dicha?.texto}</Text>
+      </View>
+    </Modal>
+  );
+}
+
 // Las pulgadas se redondean antes de partirlas: si no, 152 cm (5′ 0″) daba 4′ 0″.
 function piesYPulgadas(cm: number) {
   const pulgadas = Math.round(cm / CM_POR_PULGADA);
@@ -323,7 +474,8 @@ function piesYPulgadas(cm: number) {
 /**
  * Editar perfil, el de la galería: tu foto (solo en este teléfono), tu nombre (sin uno, Moss lo pide)
  * y tus datos, que antes tenían su hoja: el sexo, la edad, la altura y la actividad (las metas no
- * cambian por esto). Todo se guarda junto con «Guardar»; cerrar deja todo como estaba.
+ * cambian por esto). Todo se guarda junto con «Guardar»; cerrar deja todo como estaba y, con algo
+ * cambiado, antes pregunta si descartarlo.
  */
 function EditarPerfil({ perfil, hoy, imperial, nombreGuardado, foto, alGuardarFoto, alCerrar }: {
   perfil: DatosDelPerfil | null; hoy: string; imperial: boolean; nombreGuardado: string; foto: string | null; alGuardarFoto: (foto: string | null) => void; alCerrar: () => void;
@@ -337,6 +489,9 @@ function EditarPerfil({ perfil, hoy, imperial, nombreGuardado, foto, alGuardarFo
   const [alturaCm, setAlturaCm] = useState(perfil?.alturaCm ?? RANGOS_DEL_CUESTIONARIO.alturaCm[0]);
   const [actividad, setActividad] = useState<Actividad>(perfil?.actividad ?? 'algo');
   const laFoto = fotoNueva === undefined ? foto : fotoNueva;
+  // Lo cambiado y sin guardar: cerrar la hoja (con el dedo, tocando afuera o con la cruz) pregunta antes de descartarlo.
+  const sinGuardar = nombre.trim() !== nombreGuardado.trim() || laFoto !== foto
+    || (perfil !== null && (sexo !== perfil.sexo || edad !== edadDe(perfil, hoy) || alturaCm !== perfil.alturaCm || actividad !== perfil.actividad));
   // El selector se abre encima de la hoja, que queda abierta debajo.
   const elegir = (desde: 'camara' | 'carrete') => {
     if (eligiendo) return;
@@ -362,7 +517,7 @@ function EditarPerfil({ perfil, hoy, imperial, nombreGuardado, foto, alGuardarFo
   const [edadMinima, edadMaxima] = RANGOS_DEL_CUESTIONARIO.edad;
   const [alturaMinima, alturaMaxima] = RANGOS_DEL_CUESTIONARIO.alturaCm;
   return (
-    <HojaModal abierta titulo={t('perfil.editar.titulo')} alCerrar={alCerrar} pie={<Boton tipo="principal" texto={t('comun.guardar')} alTocar={guardar} />}>
+    <HojaModal abierta titulo={t('perfil.editar.titulo')} alCerrar={alCerrar} sinGuardar={sinGuardar} pie={<Boton tipo="principal" texto={t('comun.guardar')} alTocar={guardar} />}>
       {/* «Quitar foto» aparece con la foto: lo de abajo se acomoda en vez de saltar. */}
       <Animated.View layout={ACOMODA} style={st.foto}>
         <Avatar foto={laFoto} nombre={nombre} tam={96} />
@@ -869,6 +1024,9 @@ const st = StyleSheet.create({
   // Con el texto grande, el valor se corta antes que dejar al título sin lugar.
   filaValor: { flexShrink: 1, maxWidth: '55%', fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)' },
   peligro: { color: '#f0a58a' },
+  // Sin desenfoque (la galería lo tiene): más oscuro, así lo de atrás no distrae.
+  velo: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 40, backgroundColor: 'rgba(3, 5, 12, 0.8)' },
+  veloTexto: { textAlign: 'center', fontFamily: letras.texto, fontSize: 14.5, lineHeight: 19, color: 'rgba(239, 230, 207, 0.86)' },
   informacion: { marginBottom: 10, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
   funcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   funcionTitulo: { fontFamily: letras.texto, fontSize: 14.5, color: colores.pergamino },

@@ -88,21 +88,26 @@ necesita `react-native-keyboard-controller` (módulo nativo, cambia la huella): 
 - El texto grande de iOS: las cifras grandes y lo de tamaño fijo tienen un tope, los botones crecen en vez de
   cortar el texto, y mantener apretada una pestaña la muestra en grande.
 
-## Para aprobar en la galería (versión 46, «Detalles»)
+## Lo aprobado en la galería (versión 46, «Detalles»; lo aprobaste el 9/11/2026)
 
-Lo que se ve nuevo: mantener apretado un alimento o una comida (copiar, mover, borrar), deslizar para borrar,
-editar y borrar lo guardado, el día en la hoja de registro cuando no es hoy, restar un vaso, «Atrás» en el
-cuestionario, la franja bajo la hora, los estados de espera (entrar con Apple, borrar, exportar), «Cancelar»
-en la hora de la noche, deslizar para actualizar Sueño, «Hoy no toca ningún hábito» y las filas de Perfil que
-se prenden y apagan. También se ve la barra del teclado de números.
+Todo menos «Hoy no toca ningún hábito», que no va (salió de la galería). Ya en la app: mantener apretado un
+alimento o una comida (copiar, mover, borrar), deslizar para borrar, cambiar y borrar lo guardado, el día en
+la hoja de registro cuando no es hoy, restar un vaso (mantener apretado), «Atrás» en el cuestionario, la franja
+bajo la hora, los estados de espera (entrar con Apple, borrar, exportar), «Cancelar» en la hora de la noche,
+deslizar para volver a leer Salud en Sueño y las filas de Perfil que se prenden y apagan sin la flecha de entrar.
 
-## Lo que decidís vos
+En la web (solo para las capturas), dos cosas que en el iPhone no pasan: soltar después de deslizar una fila
+también llega como toque (la fila lo ignora: `FilaQueSeDesliza`), y al cerrarse el menú el navegador le devuelve
+el foco a la fila y corre la tira de las secciones un instante.
 
-- Con los números ocultos (Perfil, o D9), ¿la hoja de registro también esconde las kcal? Hoy solo se esconde
-  «Te quedarían…», como en la galería.
-- ¿Las hojas preguntan antes de descartar lo escrito? Hoy, con algo a medio escribir, no se cierran deslizando
-  ni tocando afuera; la cruz sí cierra.
-- El CSV: ¿punto y coma y coma decimal en español? (Ya lleva el BOM, así Excel muestra los tildes.)
+## Lo que decidiste (9/11/2026)
+
+- Con los números ocultos (Perfil, o D9), la hoja de registro también esconde las calorías y los gramos, no
+  solo «Te quedarían…».
+- Las hojas preguntan antes de descartar lo escrito, con la pregunta de iOS («Descartar», en rojo, y «Seguir
+  editando»), al bajarlas, al tocar afuera o la cruz (`confirmarDescartar` en `descartar.ts`; `sinGuardar`
+  en `HojaModal`). Un aviso o un widget que llevan a otro lado cierran sin preguntar.
+- Lo de Excel no va: el CSV queda como estaba (sin la marca para Excel que se había sumado).
 
 ## Para la próxima build (cambian la huella)
 
@@ -117,3 +122,12 @@ Con la build `telefono` y VoiceOver: escribir en el peso y en una medida y bajar
 hoja tiene que quedar), «Siguiente» y «Listo» arriba del teclado de números, el «+» al pasar del menú al peso
 con el teclado arriba, mantener apretado un «−/+», marcar un hábito del cielo con VoiceOver, un aviso tocado
 con una hoja de Perfil abierta, la hora tocada en cada sección, Reducir movimiento y el texto más grande.
+
+Lo del 9/11: en Comida, mantener apretado un alimento y la cabecera de una comida (que vibre, que se levante y
+que «Copiar a…», «Mover a…» y «Borrar» hagan lo suyo con «Deshacer»), deslizar un alimento a la izquierda (poco
+queda abierto con «Borrar»; hasta el tope vibra y borra al soltar) y que deslizar a la derecha siga cambiando
+de sección; mientras se desliza, que la lista no se mueva para arriba o abajo. La hoja de registro para ayer y
+mañana; editar y borrar en Guardadas; mantener apretado el agua en Inicio y en el «+»; bajar una hoja con algo
+escrito (la pregunta de iOS); «Atrás» en el cuestionario; la franja bajo la hora al hacer scroll; «Cancelar» en
+la hora de la noche; tirar para abajo en Sueño para leer Salud, y los interruptores de Perfil. Con los números
+ocultos, que la hoja de registro no muestre calorías ni gramos.

@@ -48,10 +48,11 @@ export function ponerHora(clave: ClaveDia, dormirse: number, despertar: number, 
 /**
  * Las dos horas, de a 5 minutos, con «Guardar» (en minutos desde las 18). `cambiadas` dice si se movió
  * alguna: guardar sin moverlas es confirmar lo que había, con sus horas exactas. Con `soloDormirse`
- * (la hora de despertar salió de un ancla), solo la de dormirte.
+ * (la hora de despertar salió de un ancla), solo la de dormirte. Con `alCancelar`, «Cancelar» al lado de
+ * «Guardar» vuelve a lo de antes sin guardar nada.
  */
-export function EditorDeHora({ desde, hasta, alGuardar, soloDormirse }: {
-  desde: number; hasta: number; alGuardar: (dormirse: number, despertar: number, cambiadas: boolean) => void; soloDormirse?: boolean;
+export function EditorDeHora({ desde, hasta, alGuardar, alCancelar, soloDormirse }: {
+  desde: number; hasta: number; alGuardar: (dormirse: number, despertar: number, cambiadas: boolean) => void; alCancelar?: () => void; soloDormirse?: boolean;
 }) {
   const [a, setA] = useState(Math.round(desde / 5) * 5);
   const [b, setB] = useState(Math.round(hasta / 5) * 5);
@@ -98,22 +99,32 @@ export function EditorDeHora({ desde, hasta, alGuardar, soloDormirse }: {
       </BotonDePaso>
     </View>
   );
+  const guardar = (
+    <Pressable
+      onPress={() => {
+        // Como «Sí»: guardar la hora vibra apenas.
+        Haptics.selectionAsync().catch(() => {});
+        if (cambiadas) alGuardar(a, soloDormirse ? hasta : b, true);
+        else alGuardar(desde, hasta, false);
+      }}
+      style={({ pressed }) => [st.principal, alCancelar ? st.accion : st.pie, pressed && st.principalApretado]}
+      accessibilityRole="button"
+    >
+      <Text style={st.principalTexto}>{t('sueno.manana.guardar')}</Text>
+    </Pressable>
+  );
   return (
     <View style={st.editor}>
       {fila(t('sueno.manana.teDormiste'), a, moverA)}
       {!soloDormirse && fila(t('sueno.manana.teDespertaste'), b, moverB)}
-      <Pressable
-        onPress={() => {
-          // Como «Sí»: guardar la hora vibra apenas.
-          Haptics.selectionAsync().catch(() => {});
-          if (cambiadas) alGuardar(a, soloDormirse ? hasta : b, true);
-          else alGuardar(desde, hasta, false);
-        }}
-        style={({ pressed }) => [st.principal, pressed && st.principalApretado]}
-        accessibilityRole="button"
-      >
-        <Text style={st.principalTexto}>{t('sueno.manana.guardar')}</Text>
-      </Pressable>
+      {alCancelar ? (
+        <View style={[st.acciones, st.pie]}>
+          <Pressable onPress={alCancelar} style={({ pressed }) => [st.secundario, st.accion, pressed && st.apretado]} accessibilityRole="button">
+            <Text style={st.secundarioTexto}>{t('comun.cancelar')}</Text>
+          </Pressable>
+          {guardar}
+        </View>
+      ) : guardar}
     </View>
   );
 }
@@ -197,6 +208,8 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
                           ponerHora(hoy, x, y, modo === 'sinProponer' ? 'manual' : cambiadas ? 'corregida' : 'confirmada', propia);
                           setEditando(false);
                         }}
+                        // Desde «Otra hora», «Cancelar» vuelve a la propuesta; sin proponer no hay a dónde volver.
+                        alCancelar={modo === 'proponer' ? () => setEditando(false) : undefined}
                       />
                     );
                   })()}
@@ -279,6 +292,7 @@ const st = StyleSheet.create({
   hechaTexto: { flex: 1, fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.72)' },
   cambiar: { fontFamily: letras.texto, fontSize: 13, color: colores.oroClaro },
   editor: { gap: 8 },
+  pie: { marginTop: 6 },
   editorFila: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   editorTexto: { flex: 1, fontFamily: letras.texto, fontSize: 14, color: colores.pergamino },
   editorValor: { width: 64, textAlign: 'center', fontFamily: letras.numero, fontSize: 18, color: colores.pergamino, fontVariant: ['tabular-nums'] },

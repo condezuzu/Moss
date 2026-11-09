@@ -191,8 +191,6 @@ const SeccionInicio = (() => {
     function cielo() {
       const { constelacion, habitos } = opciones.cielo();
       const c = carta('in-cielo', tx('inicio.bloques.cielo'), 4);
-      // Un día sin hábitos que toquen (6/11, para aprobar): lo dice, chico, en vez de la constelación.
-      if (!habitos.length) { c.appendChild(el('p', 'in-nota', tx('cielo.sinHabitosHoy'))); return c; }
       const hechos = habitos.filter((h) => h.encendido).length;
       c.querySelector('header').appendChild(el('em', 'in-cuenta', tx('inicio.encendidas', { n: hechos, total: habitos.length })));
       const lienzo = el('canvas', 'in-mini-cielo');

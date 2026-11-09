@@ -17,6 +17,7 @@ import { conCon, leerFrase, mismoNombre } from '@/comida/frase';
 import { TAMANOS as TAMANOS_DE_PLATO } from '@/comida/platos';
 import { pasoDeCantidad, pasoDePorcion, type Sistema } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
+import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Cantidad, type Item } from '@/dominio/registros';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -24,12 +25,15 @@ import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { BotonDePaso, margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Icono, Pastilla } from './comunes';
-import { cantidadDeTexto, numero, opcionesDeIdioma, useEstado } from './datos';
+import { cantidadDeTexto, numero, opcionesDeIdioma, useEstado, useNumeros } from './datos';
 import { hayDictado, useDictado } from './dictado';
-import { claveDe, Panel } from './Paneles';
+import { agregarADe } from './hoja';
+import { claveDe, Panel, useSinGuardar } from './Paneles';
 
 type Props = {
   comida: Comida;
+  /** El día de la hoja: lo dicho va ahí, salvo que se diga «anoche» o «ayer». */
+  dia: ClaveDia;
   sistema: Sistema;
   /** Abrió con el micrófono: escucha apenas aparece. */
   escuchar: boolean;
@@ -69,7 +73,10 @@ function otraCantidad(o: Opcion, signo: 1 | -1): Opcion {
 
 export function PanelDecir(p: Props) {
   const e = useEstado();
+  // Sin los números (Perfil › Los números), lo entendido va con sus cantidades, sin calorías.
+  const numeros = useNumeros();
   const [texto, setTexto] = useState(p.textoInicial ?? '');
+  useSinGuardar(!!texto.trim());
   const [entendidos, setEntendidos] = useState<Entendido[] | null>(null);
   const [entendiendo, setEntendiendo] = useState(false);
   const [comida, setComida] = useState(p.comida);
@@ -170,6 +177,8 @@ export function PanelDecir(p: Props) {
   const elegidas = (entendidos ?? []).flatMap((x) => (x.opciones[x.elegida] ? [{ x, o: x.opciones[x.elegida] }] : []));
   const total = sumarValores(elegidas.map(({ o }) => o.valores));
   const cambioElTexto = entendido !== null && texto.trim() !== entendido.trim();
+  // «Agregar a la cena» dice el día si no es hoy: el de la hoja, o ayer si se dijo «anoche».
+  const textoDeAgregar = agregarADe(comida, ayer ? sumarDias(e.hoy, -1) : p.dia, e.hoy);
 
   /** Lo elegido, como ítems. Cada respuesta se recuerda: la próxima vez, esas palabras ya no preguntan. */
   const confirmar = () => {
@@ -193,7 +202,7 @@ export function PanelDecir(p: Props) {
       alAtras={p.alAtras}
       abajo={p.abajo}
       pie={entendidos && !cambioElTexto && elegidas.length > 0
-        ? <Boton tipo="grande" texto={`${t(`comida.agregarA.${comida}`)} · ${numero(Math.round(total.kcal))} kcal`} alTocar={agregar} />
+        ? <Boton tipo="grande" texto={numeros ? `${textoDeAgregar} · ${numero(Math.round(total.kcal))} kcal` : textoDeAgregar} alTocar={agregar} />
         : <Boton tipo="secundario" texto={entendiendo ? t('comida.decir.entendiendo') : t('comida.decir.entender')} desactivado={!texto.trim() || entendiendo || dictado.escuchando} alTocar={() => entenderYa(texto)} />}
     >
       {conMicrofono && <Microfono escuchando={dictado.escuchando} alTocar={hablar} />}
@@ -223,7 +232,7 @@ export function PanelDecir(p: Props) {
           {entendidos.length === 0 && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={st.nota}>{t('comida.decir.nada')}</Animated.Text>}
           {entendidos.map((x, i) => (
             <Animated.View key={claveDe(x.dicho)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
-              <Fila x={x} sistema={p.sistema} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => buscar(i)} />
+              <Fila x={x} sistema={p.sistema} numeros={numeros} alMover={(s) => mover(i, s)} alQuitar={() => quitar(i)} alElegir={(k) => elegir(i, k)} alBuscar={() => buscar(i)} />
             </Animated.View>
           ))}
         </Animated.View>
@@ -255,9 +264,9 @@ function Microfono({ escuchando, alTocar }: { escuchando: boolean; alTocar: () =
   );
 }
 
-/** Una cosa entendida: el alimento, su cantidad con − y +, sus kcal y, si hace falta, la pregunta. */
-function Fila({ x, sistema, alMover, alQuitar, alElegir, alBuscar }: {
-  x: Entendido; sistema: Sistema; alMover: (signo: 1 | -1) => boolean; alQuitar: () => void; alElegir: (k: number) => void; alBuscar: () => void;
+/** Una cosa entendida: el alimento, su cantidad con − y +, sus kcal (sin los números, no) y, si hace falta, la pregunta. */
+function Fila({ x, sistema, numeros, alMover, alQuitar, alElegir, alBuscar }: {
+  x: Entendido; sistema: Sistema; numeros: boolean; alMover: (signo: 1 | -1) => boolean; alQuitar: () => void; alElegir: (k: number) => void; alBuscar: () => void;
 }) {
   const o = x.opciones[x.elegida];
   if (!o) {
@@ -279,7 +288,7 @@ function Fila({ x, sistema, alMover, alQuitar, alElegir, alBuscar }: {
         <View style={st.textos}>
           <Text style={st.nombre} numberOfLines={1}>{o.alimento.nombre}</Text>
           <Text style={st.detalle} numberOfLines={1}>
-            {`${cantidadDeTexto(o.cantidad, sistema)} · ${numero(Math.round(o.valores.kcal))} kcal`}
+            {numeros ? `${cantidadDeTexto(o.cantidad, sistema)} · ${numero(Math.round(o.valores.kcal))} kcal` : cantidadDeTexto(o.cantidad, sistema)}
             {x.supuesto ? <Text style={st.supuesto}>{` · ${t('comida.decir.supuesto')}`}</Text> : null}
           </Text>
         </View>
@@ -305,7 +314,7 @@ function Fila({ x, sistema, alMover, alQuitar, alElegir, alBuscar }: {
                     ? `${t(`comida.decir.tamanos.${TAMANOS_DE_PLATO[k]}`)} · ${cantidadDeTexto(op.cantidad, sistema)}`
                     : x.pregunta === 'cuanto' ? cantidadDeTexto(op.cantidad, sistema) : op.alimento.nombre
                 }
-                detalle={`${numero(Math.round(op.valores.kcal))} kcal`}
+                detalle={numeros ? `${numero(Math.round(op.valores.kcal))} kcal` : undefined}
                 elegida={k === x.elegida}
                 alTocar={() => alElegir(k)}
               />

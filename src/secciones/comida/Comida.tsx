@@ -1,14 +1,18 @@
 // La pestaña Comida, como en la galería (galeria/src/comida.js): arriba la tira de la semana, con
 // una luna chica por día que se toca para verlo; un cuadro que se desliza del día a la semana y al
 // mes, como MacroFactor; y abajo, la línea del día con sus comidas a la hora en que se comieron.
-// Lo que queda, con la luna grande, está en Inicio; el peso y el gasto, en Progreso.
+// Lo que queda, con la luna grande, está en Inicio; el peso y el gasto, en Progreso. Lo anotado se mantiene
+// apretado para copiarlo, moverlo o borrarlo (MenuFlotante), y se desliza a la izquierda para borrarlo
+// (FilaQueSeDesliza), como en la galería 46.
 
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
-import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue } from 'react-native-reanimated';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, type ViewInstance } from 'react-native';
+import { GestureDetector, useLongPressGesture, usePanGesture } from 'react-native-gesture-handler';
+import Animated, {
+  Easing, FadeIn, FadeOut, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { elAlmacen } from '@/almacen';
@@ -24,13 +28,16 @@ import { confirmar, delDia, sumarValores, totalDelDia, type Registro, type Valor
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
+import { FranjaBajoLaHora } from '../franja';
 import { HojaModal } from '../HojaModal';
 import { entre, viaje } from '../movimiento';
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Relleno, useCuenta } from '../animados';
 import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Macro } from './comunes';
+import { alTocarLaPagina, cerrarLaFilaAbierta, FilaQueSeDesliza } from './FilaQueSeDesliza';
 import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
+import { accionesDelMenu, borrarDeLaLinea, MenuFlotante, type PedidoDeMenu } from './MenuFlotante';
 import {
   cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, horasDeComer, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
   useEstado, type ComidaDelDia,
@@ -55,6 +62,12 @@ const ALTO_PUNTO = 27;
 const ALTO_ALIMENTO = 26;
 /** Con el texto grande, las cifras grandes crecen hasta acá: más, no entran en su lugar (al lado de la luna, en el cuadro). */
 const CIFRA_GRANDE = 1.3;
+/** Lo levantado al mantenerlo apretado, sobre el velo: opaco (así iOS calcula su sombra con la forma). */
+const FONDO_DE_FILA = '#0d1328';
+const FONDO_DE_TARJETA = '#090e1e';
+/** Mantener apretado: a los 350 ms abre el menú; mientras, se hunde apenas. */
+const MANTENER = 350;
+const HUNDE = 0.018;
 
 // Inicio › Calorías lleva a hoy y a «Día»: Comida escucha mientras está armada (si no, ya abre en hoy).
 const alVolverAHoy = new Set<() => void>();
@@ -132,9 +145,13 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
   const dia = vigente?.dia ?? e.hoy;
   const vista = vigente?.vista ?? 'dia';
   const anchoCuadro = ancho - 40;
-  const scroll = useRef<ScrollViewInstance>(null);
+  const scroll = useAnimatedRef<ScrollView>();
+  // La franja bajo la hora aparece con el scroll.
+  const scrollY = useScrollOffset(scroll);
   const reducido = useReducedMotion();
   const esLaActual = useEsLaActual(SECCION);
+  // Lo que se mantuvo apretado, con su menú encima.
+  const [menu, setMenu] = useState<PedidoDeMenu | null>(null);
   useEffect(() => {
     const volver = () => setEleccion(null);
     alVolverAHoy.add(volver);
@@ -144,9 +161,14 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
   }, []);
   // Tocar otra vez la pestaña: arriba de todo, en hoy y en «Día».
   useEffect(() => alTocarDeNuevo(SECCION, () => {
+    cerrarLaFilaAbierta();
     scroll.current?.scrollTo({ y: 0, animated: !reducido });
     setEleccion(null);
-  }), [reducido]);
+  }), [reducido, scroll]);
+  // Una fila abierta para borrar se cierra al dejar Comida, con una hoja encima o al tocar afuera de ella.
+  useEffect(() => {
+    if (!esLaActual) cerrarLaFilaAbierta();
+  }, [esLaActual]);
 
   const verDia = (d: ClaveDia) => {
     if (fueraDeLoCargado(e, d)) return;
@@ -156,13 +178,15 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
   const verVista = (v: Vista) => setEleccion({ dia, vista: v, hoy: e.hoy });
 
   return (
-    <View style={{ width: ancho }}>
+    // Un toque que empieza afuera de la fila abierta la cierra.
+    <View style={{ width: ancho }} onTouchStart={alTocarLaPagina}>
       <ScrollView
         ref={scroll}
         style={estilos.lleno}
         contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 48 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
+        scrollEventThrottle={16}
       >
         <Text style={estilos.fecha}>{fechaCorta(dia)}</Text>
         <Text style={estilos.titulo}>{tituloDelDia(dia, e.hoy)}</Text>
@@ -191,9 +215,11 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
         {dia > e.hoy && <Text style={estilos.nota}>{t('comida.planificadoTexto')}</Text>}
         {!metaDelDia(e, dia) && <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>}
         <ArmarElDia e={e} dia={dia} />
-        <LineaDelDia e={e} dia={dia} />
+        <LineaDelDia e={e} dia={dia} alMenu={setMenu} />
         <AccionesDelDia e={e} dia={dia} />
       </ScrollView>
+      <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
+      <MenuFlotante pedido={menu} alCerrar={() => setMenu(null)} />
     </View>
   );
 }
@@ -520,7 +546,7 @@ type Entrada = { minutos: number } & ({ tipo: 'comida'; comida: ComidaDelDia } |
  * Las comidas sobre una línea de horas, con el espacio entre una y otra según el tiempo que pasó.
  * Hoy, la comida que falta espera en «ahora»; otro día, las que faltan se pueden agregar.
  */
-function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
+function LineaDelDia({ e, dia, alMenu }: { e: Estado; dia: ClaveDia; alMenu: (p: PedidoDeMenu) => void }) {
   const sistema = sistemaDe(e);
   const comidas = comidasDelDia(e.registros, dia, e.hoy);
   const entradas: Entrada[] = comidas.map((c) => ({ tipo: 'comida', comida: c, minutos: c.minutos }));
@@ -574,7 +600,7 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
             <Text style={estilos.hora}>{x.tipo === 'vacia' && x.ahora ? '' : hora(Math.round(x.minutos))}</Text>
             <View style={[estilos.nodo, x.tipo === 'vacia' && estilos.nodoVacio, planificada && estilos.nodoPlan]} />
             {x.tipo === 'comida'
-              ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} e={e} linea={x.comida.planificada ? lineas.get(x.comida.comida) : undefined} />
+              ? <Tarjeta key={`${dia}-${x.comida.comida}`} c={x.comida} dia={dia} sistema={sistema} e={e} linea={x.comida.planificada ? lineas.get(x.comida.comida) : undefined} alMenu={alMenu} />
               : <TarjetaVacia comida={x.comida} dia={dia} hoy={e.hoy} e={e} linea={lineas.get(x.comida)} />}
           </Animated.View>
         );
@@ -583,11 +609,17 @@ function LineaDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   );
 }
 
-function Tarjeta({ c, dia, sistema, e, linea }: { c: ComidaDelDia; dia: ClaveDia; sistema: ReturnType<typeof sistemaDe>; e: Estado; linea?: Linea }) {
+type Sistema = ReturnType<typeof sistemaDe>;
+
+function Tarjeta({ c, dia, sistema, e, linea, alMenu }: { c: ComidaDelDia; dia: ClaveDia; sistema: Sistema; e: Estado; linea?: Linea; alMenu: (p: PedidoDeMenu) => void }) {
   const numeros = useNumeros();
+  const reducido = useReducedMotion();
   // La foto, opcional y solo en el teléfono (D10): un toque en la comida ya registrada.
   const [foto, setFoto] = useState(() => fotoDe(dia, c.comida));
   const [viendo, setViendo] = useState(false);
+  const tarjeta = useRef<ViewInstance>(null);
+  const apretando = useSharedValue(0);
+  const visible = useSharedValue(1);
   const sacar = () => {
     sacarFoto(dia, c.comida).then((uri) => uri && setFoto(uri)).catch(() => {});
   };
@@ -601,93 +633,265 @@ function Tarjeta({ c, dia, sistema, e, linea }: { c: ComidaDelDia; dia: ClaveDia
   const mezclada = !c.planificada && c.registros.some((r) => r.planificado);
   const total = mezclada && dia <= e.hoy ? sumarValores(c.registros.filter((r) => !r.planificado).map((r) => r.valores)) : c.total;
   const delPlan = c.registros.some((r) => r.planificado && r.plan);
+  // Lo que sugirió el plan tiene lo suyo («Comí esto», «Otra»): no se mantiene apretado, como en la galería.
+  const conMenu = !delPlan;
+  const etiqueta = [
+    t(`comida.comidas.${c.comida}`),
+    c.planificada ? t(delPlan ? 'comida.plan.sugerida' : 'comida.planificado') : '',
+    numeros ? `${numero(Math.round(total.kcal))} ${t('comida.kcal')}` : '',
+  ].filter(Boolean).join(', ');
+  // La comida entera se levanta con su menú. Se mide la tarjeta de afuera, que no se hunde.
+  const abrirMenu = (en?: 'copiar' | 'mover') => {
+    tarjeta.current?.measureInWindow((x, y, ancho, alto) => alMenu({
+      clave: `comida:${c.comida}`,
+      rect: { x, y, ancho, alto },
+      visible,
+      radio: 16,
+      fondo: FONDO_DE_TARJETA,
+      vista: <CopiaDeTarjeta c={c} total={total} mezclada={mezclada} sistema={sistema} numeros={numeros} linea={linea} foto={foto} />,
+      registros: c.registros,
+      dia,
+      hoy: e.hoy,
+      comida: c.comida,
+      entera: true,
+      en,
+    }));
+  };
+  const mantenida = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    abrirMenu();
+  };
+  // Mantener apretada la cabecera: la comida entera se hunde apenas y, a los 350 ms, se levanta con su menú.
+  const mantener = useLongPressGesture({
+    enabled: conMenu,
+    minDuration: MANTENER,
+    maxDistance: 10,
+    onBegin: () => {
+      'worklet';
+      if (!reducido) apretando.set(withTiming(1, { duration: MANTENER, easing: Easing.out(Easing.quad) }));
+    },
+    onActivate: () => {
+      'worklet';
+      scheduleOnRN(mantenida);
+    },
+    onFinalize: () => {
+      'worklet';
+      apretando.set(withTiming(0, { duration: 160 }));
+    },
+  });
+  const estiloTarjeta = useAnimatedStyle(() => ({ opacity: visible.get(), transform: [{ scale: 1 - HUNDE * apretando.get() }] }));
   return (
-    <Animated.View layout={ACOMODA} style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan]}>
-      {/* Lo planificado se ve tenue; lo que se hace con lo armado, no. */}
-      <View style={c.planificada && estilos.tenueDePlan}>
-      <View style={estilos.tarjetaCabeza}>
-        {/* En inglés, «Afternoon snack» con «Suggested» no entraban: el título se achica y lo demás queda. */}
-        <Text style={[estilos.tarjetaTitulo, estilos.tarjetaTituloEnFila]} numberOfLines={1}>{t(`comida.comidas.${c.comida}`)}</Text>
-        {c.planificada && <Text style={estilos.etiquetaPlan} numberOfLines={1}>{t(delPlan ? 'comida.plan.sugerida' : 'comida.planificado')}</Text>}
-        {numeros && (
-          <Text style={estilos.tarjetaKcal} numberOfLines={1}>
-            {numero(Math.round(total.kcal))}
-            <Text style={estilos.tarjetaKcalUnidad}> kcal</Text>
-          </Text>
-        )}
-      </View>
-      {linea && <LineaDeEntreno linea={linea} />}
-      {c.registros.map((r, i) => (
-        <Animated.View key={r.id} entering={ENTRA_ALIMENTO} exiting={SALE} layout={ACOMODA}>
-          <FilaDeRegistro r={r} sistema={sistema} tenue={mezclada && r.planificado} primera={i === 0 && !linea} ultima={i === c.registros.length - 1} />
-        </Animated.View>
-      ))}
-      {foto && (
-        <Aparece>
-          <Pressable onPress={() => setViendo(true)} accessibilityRole="imagebutton" accessibilityLabel={t('comida.fotos.ver')}>
-            <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />
-          </Pressable>
-        </Aparece>
-      )}
-      <View style={estilos.tarjetaPie}>
-        {MACROS.map((m) => (
-          // VoiceOver leía «32 g, 50 g, 20 g» sin decir de qué: cada uno, con su macro.
-          <View key={m} style={estilos.mini} accessible={numeros} accessibilityLabel={numeros ? t('comida.lector.macro', { macro: t(`comida.${m}`), n: gramosDeMacro(total[m]) }) : undefined}>
-            <Punto macro={m} tam={5} />
-            {numeros && <Text style={estilos.miniTexto}>{`${gramosDeMacro(total[m])} g`}</Text>}
-          </View>
-        ))}
-        {hayFotos && !c.planificada && !foto && (
-          <Pressable onPress={sacar} style={estilos.botonFoto} accessibilityRole="button" accessibilityLabel={t('comida.foto')} hitSlop={8}>
-            <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
-          </Pressable>
-        )}
-      </View>
-      </View>
-      {delPlan && (
-        <Animated.View entering={ENTRA_ACCIONES} exiting={SALE}>
-          <AccionesDelPlan e={e} c={c} dia={dia} />
-        </Animated.View>
-      )}
-      {foto && (
-        <HojaModal
-          abierta={viendo}
-          titulo={t('comida.fotos.ver')}
-          alCerrar={() => setViendo(false)}
-          pie={(
-            <>
-              <Boton tipo="contorno" texto={t('comida.fotos.cambiar')} alTocar={cambiarFoto} />
-              <Boton tipo="quitar" texto={t('comida.fotos.borrar')} alTocar={() => { borrarFoto(dia, c.comida); setFoto(null); setViendo(false); }} />
-            </>
+    // Se mide esta, que no se hunde ni se acomoda; la de adentro es la que se ve.
+    <View ref={tarjeta} collapsable={false}>
+      <Animated.View layout={ACOMODA} style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan, estiloTarjeta]}>
+        {/* Lo planificado se ve tenue; lo que se hace con lo armado, no. */}
+        <View style={c.planificada && estilos.tenueDePlan}>
+          <GestureDetector gesture={mantener}>
+            <View
+              collapsable={false}
+              style={estilos.tarjetaCabeza}
+              accessible
+              accessibilityRole="header"
+              accessibilityLabel={etiqueta}
+              accessibilityActions={conMenu ? accionesDelMenu() : undefined}
+              onAccessibilityAction={(ev) => {
+                const accion = ev.nativeEvent.actionName;
+                if (accion === 'borrar') borrarDeLaLinea(c.registros, true);
+                else if (accion === 'copiar' || accion === 'mover') abrirMenu(accion);
+              }}
+            >
+              <CabezaDeTarjeta c={c} total={total} delPlan={delPlan} numeros={numeros} />
+            </View>
+          </GestureDetector>
+          {linea && <LineaDeEntreno linea={linea} />}
+          {c.registros.map((r, i) => (
+            <Animated.View key={r.id} entering={ENTRA_ALIMENTO} exiting={SALE} layout={ACOMODA}>
+              <FilaDeRegistro r={r} c={c} dia={dia} hoy={e.hoy} sistema={sistema} tenue={mezclada && r.planificado} primera={i === 0 && !linea} ultima={i === c.registros.length - 1} alMenu={alMenu} />
+            </Animated.View>
+          ))}
+          {foto && (
+            <Aparece>
+              <Pressable onPress={() => setViendo(true)} accessibilityRole="imagebutton" accessibilityLabel={t('comida.fotos.ver')}>
+                <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />
+              </Pressable>
+            </Aparece>
           )}
-        >
-          <Image source={{ uri: foto }} style={estilos.fotoGrande} contentFit="cover" />
-          <Text style={estilos.fotoNota}>{t('comida.fotos.nota')}</Text>
-        </HojaModal>
-      )}
-    </Animated.View>
+          <PieDeTarjeta total={total} numeros={numeros}>
+            {hayFotos && !c.planificada && !foto && (
+              <Pressable onPress={sacar} style={estilos.botonFoto} accessibilityRole="button" accessibilityLabel={t('comida.foto')} hitSlop={8}>
+                <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
+              </Pressable>
+            )}
+          </PieDeTarjeta>
+        </View>
+        {delPlan && (
+          <Animated.View entering={ENTRA_ACCIONES} exiting={SALE}>
+            <AccionesDelPlan e={e} c={c} dia={dia} />
+          </Animated.View>
+        )}
+        {foto && (
+          <HojaModal
+            abierta={viendo}
+            titulo={t('comida.fotos.ver')}
+            alCerrar={() => setViendo(false)}
+            pie={(
+              <>
+                <Boton tipo="contorno" texto={t('comida.fotos.cambiar')} alTocar={cambiarFoto} />
+                <Boton tipo="quitar" texto={t('comida.fotos.borrar')} alTocar={() => { borrarFoto(dia, c.comida); setFoto(null); setViendo(false); }} />
+              </>
+            )}
+          >
+            <Image source={{ uri: foto }} style={estilos.fotoGrande} contentFit="cover" />
+            <Text style={estilos.fotoNota}>{t('comida.fotos.nota')}</Text>
+          </HojaModal>
+        )}
+      </Animated.View>
+    </View>
   );
 }
 
-/** Un alimento de la línea. Van pegados uno a otro: el toque crece hacia afuera de la lista, no sobre el vecino. */
-function FilaDeRegistro({ r, sistema, tenue, primera, ultima }: { r: Registro; sistema: ReturnType<typeof sistemaDe>; tenue: boolean; primera: boolean; ultima: boolean }) {
-  const cantidad = cantidadDeTexto(r.cantidad, sistema);
-  const numeros = useNumeros();
-  const { top = 0, bottom = 0 } = margenDeToque(ALTO_ALIMENTO);
+/** El nombre de la comida, si está planificada o sugerida, y sus calorías. */
+function CabezaDeTarjeta({ c, total, delPlan, numeros }: { c: ComidaDelDia; total: Valores; delPlan: boolean; numeros: boolean }) {
   return (
-    <Pressable
-      onPress={() => abrirRegistro({ editar: r.id, comida: r.comida, dia: r.dia })}
-      style={({ pressed }) => [estilos.item, tenue && estilos.tenueDePlan, pressed && estilos.itemApretado]}
-      hitSlop={{ top: primera ? Math.min(top, 7) : 0, bottom: ultima ? Math.min(bottom, 7) : 0, left: 6, right: 6 }}
-      accessibilityRole="button"
-      accessibilityLabel={[r.nombre, cantidad, numeros ? `${numero(Math.round(r.valores.kcal))} ${t('comida.kcal')}` : '', tenue ? t('comida.planificado') : ''].filter(Boolean).join(', ')}
-    >
+    <>
+      {/* En inglés, «Afternoon snack» con «Suggested» no entraban: el título se achica y lo demás queda. */}
+      <Text style={[estilos.tarjetaTitulo, estilos.tarjetaTituloEnFila]} numberOfLines={1}>{t(`comida.comidas.${c.comida}`)}</Text>
+      {c.planificada && <Text style={estilos.etiquetaPlan} numberOfLines={1}>{t(delPlan ? 'comida.plan.sugerida' : 'comida.planificado')}</Text>}
+      {numeros && (
+        <Text style={estilos.tarjetaKcal} numberOfLines={1}>
+          {numero(Math.round(total.kcal))}
+          <Text style={estilos.tarjetaKcalUnidad}> kcal</Text>
+        </Text>
+      )}
+    </>
+  );
+}
+
+/** Los gramos de cada macro y, al final, lo que se sume (la cámara). */
+function PieDeTarjeta({ total, numeros, children }: { total: Valores; numeros: boolean; children?: ReactNode }) {
+  return (
+    <View style={estilos.tarjetaPie}>
+      {MACROS.map((m) => (
+        // VoiceOver leía «32 g, 50 g, 20 g» sin decir de qué: cada uno, con su macro.
+        <View key={m} style={estilos.mini} accessible={numeros} accessibilityLabel={numeros ? t('comida.lector.macro', { macro: t(`comida.${m}`), n: gramosDeMacro(total[m]) }) : undefined}>
+          <Punto macro={m} tam={5} />
+          {numeros && <Text style={estilos.miniTexto}>{`${gramosDeMacro(total[m])} g`}</Text>}
+        </View>
+      ))}
+      {children}
+    </View>
+  );
+}
+
+/** El nombre y la cantidad de un alimento, y sus calorías. */
+function ContenidoDeFila({ r, cantidad, numeros }: { r: Registro; cantidad: string; numeros: boolean }) {
+  return (
+    <>
       <Text style={estilos.itemTexto} numberOfLines={1}>
         {r.nombre}
         {cantidad ? <Text style={estilos.itemCantidad}>{` · ${cantidad}`}</Text> : null}
       </Text>
       {numeros && <Text style={estilos.itemKcal}>{numero(Math.round(r.valores.kcal))}</Text>}
-    </Pressable>
+    </>
+  );
+}
+
+/** La comida entera como en la línea, quieta y sobre fondo opaco: la que se levanta al mantenerla apretada. */
+function CopiaDeTarjeta({ c, total, mezclada, sistema, numeros, linea, foto }: {
+  c: ComidaDelDia;
+  total: Valores;
+  mezclada: boolean;
+  sistema: Sistema;
+  numeros: boolean;
+  linea?: Linea;
+  foto: string | null;
+}) {
+  return (
+    <View style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan, estilos.tarjetaLevantada]}>
+      <View style={c.planificada && estilos.tenueDePlan}>
+        <View style={estilos.tarjetaCabeza}>
+          <CabezaDeTarjeta c={c} total={total} delPlan={false} numeros={numeros} />
+        </View>
+        {linea && <LineaDeEntreno linea={linea} />}
+        {c.registros.map((r) => (
+          <View key={r.id} style={[estilos.item, mezclada && r.planificado && estilos.tenueDePlan]}>
+            <ContenidoDeFila r={r} cantidad={cantidadDeTexto(r.cantidad, sistema)} numeros={numeros} />
+          </View>
+        ))}
+        {foto && <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />}
+        <PieDeTarjeta total={total} numeros={numeros}>
+          {hayFotos && !c.planificada && !foto && (
+            <View style={estilos.botonFoto}>
+              <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
+            </View>
+          )}
+        </PieDeTarjeta>
+      </View>
+    </View>
+  );
+}
+
+/** Un alimento de la línea. Van pegados uno a otro: el toque crece hacia afuera de la lista, no sobre el vecino. */
+function FilaDeRegistro({ r, c, dia, hoy, sistema, tenue, primera, ultima, alMenu }: {
+  r: Registro;
+  c: ComidaDelDia;
+  dia: ClaveDia;
+  hoy: ClaveDia;
+  sistema: Sistema;
+  tenue: boolean;
+  primera: boolean;
+  ultima: boolean;
+  alMenu: (p: PedidoDeMenu) => void;
+}) {
+  const cantidad = cantidadDeTexto(r.cantidad, sistema);
+  const numeros = useNumeros();
+  const { top = 0, bottom = 0 } = margenDeToque(ALTO_ALIMENTO);
+  const margen = { top: primera ? Math.min(top, 7) : 0, bottom: ultima ? Math.min(bottom, 7) : 0, left: 6, right: 6 };
+  const etiqueta = [r.nombre, cantidad, numeros ? `${numero(Math.round(r.valores.kcal))} ${t('comida.kcal')}` : '', tenue ? t('comida.planificado') : ''].filter(Boolean).join(', ');
+  const editar = () => abrirRegistro({ editar: r.id, comida: r.comida, dia: r.dia });
+  const contenido = <ContenidoDeFila r={r} cantidad={cantidad} numeros={numeros} />;
+  // Lo que sugirió el plan tiene lo suyo («Comí esto», «Otra»): no se mantiene apretado ni se desliza, como en la galería.
+  if (r.planificado && r.plan) {
+    return (
+      <Pressable
+        onPress={editar}
+        style={({ pressed }) => [estilos.item, tenue && estilos.tenueDePlan, pressed && estilos.itemApretado]}
+        hitSlop={margen}
+        accessibilityRole="button"
+        accessibilityLabel={etiqueta}
+      >
+        {contenido}
+      </Pressable>
+    );
+  }
+  // Lo último que le quedaba a la comida se la lleva: el aviso dice la comida, como en la galería.
+  const entera = c.registros.length === 1;
+  return (
+    <FilaQueSeDesliza
+      id={r.id}
+      etiqueta={etiqueta}
+      alTocar={editar}
+      alBorrar={() => borrarDeLaLinea([r], entera)}
+      alMenu={(rect, visible, en) => alMenu({
+        clave: r.id,
+        rect,
+        visible,
+        radio: 12,
+        fondo: FONDO_DE_FILA,
+        vista: <View style={[estilos.itemFrente, estilos.itemLevantado, tenue && estilos.tenueDePlan]}>{contenido}</View>,
+        registros: [r],
+        dia,
+        hoy,
+        comida: r.comida,
+        entera,
+        en,
+      })}
+      margen={margen}
+      estilo={[estilos.itemFrente, tenue && estilos.tenueDePlan]}
+      estiloApretado={estilos.itemApretado}
+    >
+      {contenido}
+    </FilaQueSeDesliza>
   );
 }
 
@@ -757,6 +961,9 @@ function AccionesDelDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
     </Aparece>
   );
 }
+
+/** Un alimento de la línea: el toque se ve en todo su ancho, con esquinas. */
+const FILA = { flexDirection: 'row', alignItems: 'baseline', gap: 10, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 8 } as const;
 
 const estilos = StyleSheet.create({
   lleno: { flex: 1 },
@@ -836,8 +1043,13 @@ const estilos = StyleSheet.create({
   etiquetaPlan: { alignSelf: 'center', fontFamily: letras.texto, fontSize: 9, letterSpacing: 1.3, textTransform: 'uppercase', color: colores.oro, paddingHorizontal: 7, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.4)', borderRadius: 999 },
   tarjetaKcal: { marginLeft: 'auto', fontFamily: letras.numeroMedio, fontSize: 16, color: colores.oroClaro, fontVariant: ['tabular-nums'] },
   tarjetaKcalUnidad: { fontFamily: letras.texto, fontSize: 10, color: 'rgba(239, 230, 207, 0.5)', letterSpacing: 0.6 },
-  item: { flexDirection: 'row', alignItems: 'baseline', gap: 10, paddingVertical: 4, paddingHorizontal: 6, marginHorizontal: -6, borderRadius: 8 },
+  item: { ...FILA, marginHorizontal: -6 },
+  // Lo de adelante de la fila que se desliza: el margen negativo lo lleva ella.
+  itemFrente: FILA,
+  // Levantado, con su aro: el borde se come un punto del relleno y lo de adentro queda en su lugar.
+  itemLevantado: { paddingVertical: 3, paddingHorizontal: 5, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', borderRadius: 12 },
   itemApretado: { backgroundColor: 'rgba(239, 230, 207, 0.06)' },
+  tarjetaLevantada: { backgroundColor: FONDO_DE_TARJETA },
   itemTexto: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 18, color: 'rgba(239, 230, 207, 0.9)' },
   itemCantidad: { color: 'rgba(239, 230, 207, 0.5)' },
   itemKcal: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.58)', fontVariant: ['tabular-nums'] },

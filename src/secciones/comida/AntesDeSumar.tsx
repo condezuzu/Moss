@@ -17,11 +17,13 @@ import { destacados, GRUPOS, referenciaDe, UNIDAD, type Micro, type Micros, type
 import { idioma, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { CabezaQueBaja, useBajarParaCerrar } from '../arrastre';
+import { confirmarDescartar } from '../descartar';
 import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, Pastilla } from './comunes';
 import { numero } from './datos';
+import { useSinGuardar } from './Paneles';
 
 // ------------------------------------------------------------ verificado y de dónde sale
 const TABLAS = ['cnf', 'taco', 'tbca', 'ciqual', 'cofid', 'afcd', 'argenfoods', 'uruguay'] as const;
@@ -153,9 +155,14 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
     return () => clearTimeout(espera);
   }, [enviado]);
   // La nota se escribe con el teclado: la ventana del alimento, que tiene adentro esta hoja, sube con él.
-  // Se baja con el dedo desde el título, como las otras hojas.
+  // Se baja con el dedo desde el título, como las otras hojas; con una nota escrita sin enviar, bajarla,
+  // tocar afuera o la cruz preguntan antes de descartarla.
   const reducido = useReducedMotion();
-  const deslizar = useBajarParaCerrar({ alCerrar, conScroll: false });
+  const sinGuardar = !!nota.trim() && !enviado;
+  // La hoja de registro también lo sabe: cerrarla desde arriba, con la nota escrita, pregunta.
+  useSinGuardar(sinGuardar);
+  const intentarCerrar = () => (sinGuardar ? confirmarDescartar(alCerrar) : alCerrar());
+  const deslizar = useBajarParaCerrar({ alCerrar, conScroll: false, sinGuardar });
   const enviar = () => {
     if (!motivo) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -165,7 +172,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
   return (
     <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={estilos.velo}>
       <Animated.View style={[StyleSheet.absoluteFill, estilos.veloColor, deslizar.velo]} pointerEvents="none" />
-      <Pressable style={StyleSheet.absoluteFill} onPress={alCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
+      <Pressable style={StyleSheet.absoluteFill} onPress={intentarCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
       <View style={estilos.reporteLugar} pointerEvents="box-none">
       <Animated.View
         entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA}
@@ -173,7 +180,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
         style={[estilos.reporte, { paddingBottom: abajo + 10 }, deslizar.estilo]}
         onLayout={deslizar.medir}
         accessibilityViewIsModal
-        onAccessibilityEscape={alCerrar}
+        onAccessibilityEscape={intentarCerrar}
       >
         {enviado ? (
           <Aparece style={estilos.gracias}>
@@ -186,7 +193,7 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
                 <Text style={estilos.reporteTitulo}>{t('comida.reportar.titulo')}</Text>
                 <Text style={estilos.reporteNombre}>{nombre}</Text>
               </View>
-              <Pressable onPress={alCerrar} style={({ pressed }) => [estilos.redondo, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={margenDeToque(36)}>
+              <Pressable onPress={intentarCerrar} style={({ pressed }) => [estilos.redondo, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={margenDeToque(36)}>
                 <Icono nombre="xmark" tam={14} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
               </Pressable>
             </CabezaQueBaja>

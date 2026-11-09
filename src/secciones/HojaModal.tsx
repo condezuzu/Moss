@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from './arrastre';
+import { confirmarDescartar } from './descartar';
 import { AvisoFlotante, Icono } from './comida/comunes';
 import { quitarAviso, useAviso } from './comida/registro';
 import { ENTRA_FUNDIDO, ENTRA_HOJA } from './movimiento';
@@ -39,17 +40,21 @@ export function useCerrarConLasCapas(abierta: boolean, alCerrar: () => void) {
 }
 
 /**
- * `activo` en false: no se baja con el dedo (mientras guarda, o con algo a medio escribir).
+ * `activo` en false: no se baja con el dedo (mientras guarda).
  * `cerrarAfuera` en false: tocar afuera no la cierra (lo que no vuelve a ofrecerse); la cruz sí.
+ * `sinGuardar`: hay algo escrito sin guardar; cerrarla (con el dedo, tocando afuera o con la cruz) pregunta
+ * antes si descartarlo.
  */
-type Props = { abierta: boolean; titulo: string; alCerrar: () => void; children: ReactNode; pie?: ReactNode; cabeza?: ReactNode; activo?: boolean; cerrarAfuera?: boolean };
+type Props = { abierta: boolean; titulo: string; alCerrar: () => void; children: ReactNode; pie?: ReactNode; cabeza?: ReactNode; activo?: boolean; cerrarAfuera?: boolean; sinGuardar?: boolean };
 
-export function HojaModal({ abierta, titulo, alCerrar, children, pie, cabeza, activo = true, cerrarAfuera = true }: Props) {
+export function HojaModal({ abierta, titulo, alCerrar, children, pie, cabeza, activo = true, cerrarAfuera = true, sinGuardar = false }: Props) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const reducido = useReducedMotion();
   const tope = height - insets.top - 24;
-  const hoja = useBajarParaCerrar({ alCerrar, activo, conScroll: abierta });
+  const hoja = useBajarParaCerrar({ alCerrar, activo, conScroll: abierta, sinGuardar });
+  // Un aviso o un widget la cierran sin preguntar (useCerrarConLasCapas); la persona, preguntando.
+  const intentarCerrar = () => (sinGuardar ? confirmarDescartar(alCerrar) : alCerrar());
   const { reiniciar } = hoja;
   // La que queda armada entre una vez y otra: si se cerró bajándola, vuelve a abrir en su lugar.
   useEffect(() => {
@@ -59,12 +64,12 @@ export function HojaModal({ abierta, titulo, alCerrar, children, pie, cabeza, ac
   useCerrarConLasCapas(abierta, alCerrar);
   return (
     // El fondo oscuro se funde y solo la hoja sube, como en la galería: con «slide», iOS subía también el fondo.
-    <Modal visible={abierta} transparent animationType="fade" onRequestClose={alCerrar}>
+    <Modal visible={abierta} transparent animationType="fade" onRequestClose={intentarCerrar}>
       <GestureHandlerRootView style={st.fondo}>
         <Animated.View style={[StyleSheet.absoluteFill, st.velo, hoja.velo]} pointerEvents="none" />
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={cerrarAfuera ? alCerrar : undefined}
+          onPress={cerrarAfuera ? intentarCerrar : undefined}
           accessible={cerrarAfuera}
           accessibilityRole="button"
           accessibilityLabel={t('comida.cerrar')}
@@ -73,13 +78,13 @@ export function HojaModal({ abierta, titulo, alCerrar, children, pie, cabeza, ac
             de la pantalla. El alto del teclado ya incluye el borde de abajo, que la hoja también deja: se descuenta. */}
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={-insets.bottom} style={{ maxHeight: tope }}>
           <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA} style={st.envoltura}>
-            <Animated.View style={[st.hoja, { maxHeight: tope, paddingBottom: pie ? 0 : insets.bottom + 16 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={alCerrar}>
+            <Animated.View style={[st.hoja, { maxHeight: tope, paddingBottom: pie ? 0 : insets.bottom + 16 }, hoja.estilo]} onLayout={hoja.medir} accessibilityViewIsModal onAccessibilityEscape={intentarCerrar}>
               <CabezaQueBaja arrastre={hoja} style={st.arriba}>
                 <View style={st.asa} />
                 <View style={st.cabeza}>
                   <Text style={st.titulo} accessibilityRole="header">{titulo}</Text>
                   {cabeza}
-                  <Pressable onPress={alCerrar} style={({ pressed }) => [st.cerrar, pressed && st.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={8}>
+                  <Pressable onPress={intentarCerrar} style={({ pressed }) => [st.cerrar, pressed && st.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={8}>
                     <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
                   </Pressable>
                 </View>

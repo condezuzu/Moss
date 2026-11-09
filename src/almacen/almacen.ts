@@ -930,6 +930,21 @@ export function crearAlmacen(op: Opciones) {
       return copia;
     },
     /**
+     * Algunos alimentos de una misma comida a otra comida u otro día (mantener apretado: «Copiar a…»; «Mover
+     * a…» es copiar y borrar lo de antes). Como `copiar`: si el día no llegó, planificados. Con `minutos`, a esa
+     * hora del día de destino (la de la comida a la que van); si no, a la misma hora que tenían.
+     */
+    copiarRegistros(ids: readonly string[], hacia: { dia: ClaveDia; comida: Comida; minutos?: number }): Registro[] {
+      const elegidos = ids.map((id) => estado.registros.get(id)).filter((r): r is Registro => !!r && !r.borrado);
+      if (!elegidos.length) return [];
+      const [primero] = elegidos;
+      const p = partesDe(hacia.dia);
+      const copia = copiar(elegidos.filter((r) => r.dia === primero.dia && r.comida === primero.comida), { dia: primero.dia, comida: primero.comida }, hacia, { hoy: estado.hoy, ahora: momento(), nuevoId })
+        .map((r, i) => (hacia.minutos === undefined ? r : { ...r, momento: new Date(p.anio, p.mes, p.dia, 0, hacia.minutos, 0, i).toISOString() }));
+      ponerComida('registros', copia);
+      return copia;
+    },
+    /**
      * Llegó el día: lo planificado a mano pasa a registrado. Devuelve cuántos. Lo que armó el plan se
      * anota de a una comida («Comí esto»): si no, se anotaría también la cena que todavía no se comió.
      */

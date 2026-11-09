@@ -100,7 +100,7 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
   };
   const nombreFinal = nombre.trim() || nombreDe(fuente) || '';
   const valido = nombreFinal.length > 0 && nombreFinal.length <= 80 && dias.length > 0;
-  // Con algo cambiado, bajar la hoja o tocar afuera no la cierran: lo hecho no se pierde (la cruz, sí).
+  // Con algo cambiado, cerrarla (bajarla, tocar afuera o la cruz) pregunta antes de descartarlo.
   const firma = JSON.stringify([nombre.trim(), icono, [...dias].sort(), fuente, aviso && { ...aviso, dias: [...aviso.dias].sort(), mensaje: aviso.mensaje?.trim() || undefined }]);
   const [inicial] = useState(firma);
   const hayCambios = firma !== inicial;
@@ -144,8 +144,7 @@ export function EditorDeHabito({ id, alCerrar }: { id: string | null; alCerrar: 
       abierta
       titulo={original ? t('habitos.editar') : t('habitos.nuevo')}
       alCerrar={alCerrar}
-      activo={!hayCambios}
-      cerrarAfuera={!hayCambios}
+      sinGuardar={hayCambios}
       pie={(
         <>
           <Boton tipo="principal" texto={t('habitos.guardar')} alTocar={guardar} desactivado={!valido} />

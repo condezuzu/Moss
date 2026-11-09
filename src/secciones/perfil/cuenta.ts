@@ -31,19 +31,20 @@ let exportando = false;
 
 /**
  * Lo comido, el peso y las metas, cada uno en su CSV. En el iPhone se abren juntos en Vista Rápida,
- * que tiene el botón de compartir; si no se puede, se comparte lo comido.
+ * que tiene el botón de compartir; si no se puede, se comparte lo comido. `alArmar` avisa cuando los
+ * archivos están, antes de abrirlos: Perfil muestra la ruedita hasta ahí.
  */
-export async function exportarTodo(hoy: string): Promise<void> {
+export async function exportarTodo(hoy: string, alArmar?: () => void): Promise<void> {
   if (Platform.OS === 'web' || exportando) return;
   exportando = true;
   try {
-    await exportar(hoy);
+    await exportar(hoy, alArmar);
   } finally {
     exportando = false;
   }
 }
 
-async function exportar(hoy: string): Promise<void> {
+async function exportar(hoy: string, alArmar?: () => void): Promise<void> {
   const datos = await elAlmacen().paraExportar();
   const c = columnas();
   const archivos: [string, string][] = [
@@ -57,6 +58,7 @@ async function exportar(hoy: string): Promise<void> {
     f.writeSync(texto);
     return f;
   });
+  alArmar?.();
   if (await File.canPreview(lista).catch(() => false)) {
     await File.preview(lista);
     return;
@@ -127,6 +129,12 @@ async function borrarElTelefono() {
 /** Borrar o salir, ya en camino: el segundo pedido (un doble toque, o dos avisos) no hace nada y da null. */
 let enCurso = false;
 
+/**
+ * Lo que se ve mientras se borra o se sale (el velo de Perfil): `empezar` al pedirlo, `listo` cuando lo de
+ * la cuenta ya está (justo antes de vaciar el teléfono, que lleva a la entrada) y `dejar` si no se hizo.
+ */
+export type Espera = { empezar: () => void; listo: () => void; dejar: () => void };
+
 async function deAUno<T>(hacer: () => Promise<T>): Promise<T | null> {
   if (enCurso) return null;
   enCurso = true;
@@ -137,8 +145,11 @@ async function deAUno<T>(hacer: () => Promise<T>): Promise<T | null> {
   }
 }
 
-/** «Borrar mis datos de Moss»: en la cuenta (la cuenta queda) y en el teléfono. null si ya se estaba borrando. */
-export async function borrarMisDatos(): Promise<boolean | null> {
+/**
+ * «Borrar mis datos de Moss»: en la cuenta (la cuenta queda) y en el teléfono. null si ya se estaba borrando.
+ * `alListo`: lo de la cuenta ya se borró y queda el teléfono.
+ */
+export async function borrarMisDatos(alListo?: () => void): Promise<boolean | null> {
   return deAUno(() => sinSincronizar(async () => {
     if (haySupabase()) {
       const sesion = await laSesion();
@@ -148,6 +159,7 @@ export async function borrarMisDatos(): Promise<boolean | null> {
         if (error) return false;
       }
     }
+    alListo?.();
     await borrarElTelefono();
     return true;
   }));
@@ -158,14 +170,15 @@ export async function borrarMisDatos(): Promise<boolean | null> {
  * Ascent, si la hay, sigue intacta y deja de recibir lo de Moss (spec/ascent.md, «Dos cuentas»). Si
  * la cuenta usa Apple, primero se confirma con Apple, así el servidor revoca la autorización antes de
  * borrar (cuentaApple.ts). Cancelar la hoja de Apple no borra nada y devuelve null: no es un error (y
- * también null si ya se estaba borrando).
+ * también null si ya se estaba borrando). `alListo`: la cuenta ya se borró en el servidor y queda el teléfono.
  */
-export async function borrarLaCuenta(): Promise<boolean | null> {
-  return deAUno(borrarLaCuentaAhora);
+export async function borrarLaCuenta(alListo?: () => void): Promise<boolean | null> {
+  return deAUno(() => borrarLaCuentaAhora(alListo));
 }
 
-async function borrarLaCuentaAhora(): Promise<boolean | null> {
+async function borrarLaCuentaAhora(alListo?: () => void): Promise<boolean | null> {
   if (!haySupabase()) {
+    alListo?.();
     await borrarElTelefono();
     return true;
   }
@@ -180,6 +193,7 @@ async function borrarLaCuentaAhora(): Promise<boolean | null> {
       },
     });
     if (borrada !== true) return borrada;
+    alListo?.();
     // La sesión que Ascent veía en el llavero compartido se va con la cuenta, aunque salir falle.
     await borrarMiSesion();
     // Solo esta sesión: si el usuario de Auth también es la cuenta de Ascent, sus sesiones siguen. Los
@@ -201,20 +215,34 @@ async function codigoNuevoDeApple(): Promise<string | null> {
   }
 }
 
-/** Cerrar sesión: si lo último no llegó a la cuenta, se avisa antes de perderlo; sin conexión, no se puede. */
-export function salirDeLaCuenta(alSalir?: () => void) {
-  const errorDeSalir = () => Alert.alert(t('perfil.errorBorrar'));
+/**
+ * Cerrar sesión: si lo último no llegó a la cuenta, se avisa antes de perderlo; sin conexión, no se puede.
+ * Con `espera` (Perfil), el velo está mientras se cierra y se va antes de cualquier pregunta o error.
+ */
+export function salirDeLaCuenta(alSalir?: () => void, espera?: Espera) {
+  const errorDeSalir = () => {
+    espera?.dejar();
+    Alert.alert(t('perfil.errorBorrar'));
+  };
   // null: ya se estaba cerrando (un doble toque), y no se dice nada.
   const alTerminar = (r: AlCerrarSesion | null) => {
     if (r === 'listo') alSalir?.();
     else if (r !== null) errorDeSalir();
+    else espera?.dejar();
   };
-  cerrarSesion().then((r) => {
+  espera?.empezar();
+  cerrarSesion(false, espera?.listo).then((r) => {
     if (r === 'sinSubir') {
+      espera?.dejar();
       Alert.alert(t('perfil.sinSubirTitulo'), t('perfil.sinSubirTexto'), [
         { text: t('comun.cancelar'), style: 'cancel' },
         // Sin conexión, «Cerrar igual» tampoco puede: se dice, como al cerrar.
-        { text: t('perfil.cerrarIgual'), style: 'destructive', onPress: () => { cerrarSesion(true).then(alTerminar).catch(errorDeSalir); } },
+        {
+          text: t('perfil.cerrarIgual'), style: 'destructive', onPress: () => {
+            espera?.empezar();
+            cerrarSesion(true, espera?.listo).then(alTerminar).catch(errorDeSalir);
+          },
+        },
       ]);
     } else alTerminar(r);
   }).catch(errorDeSalir);
@@ -228,14 +256,16 @@ export type AlCerrarSesion = 'listo' | 'sinSubir' | 'sinConexion';
 
 /**
  * Cerrar sesión borra lo del teléfono: los datos quedan en la cuenta. Por eso antes sube lo que
- * falta, salvo que se elija perderlo. null si ya se estaba cerrando o borrando.
+ * falta, salvo que se elija perderlo. null si ya se estaba cerrando o borrando. `alListo`: la sesión
+ * ya se cerró y queda vaciar el teléfono.
  */
-export async function cerrarSesion(aunqueSePierda = false): Promise<AlCerrarSesion | null> {
-  return deAUno(() => cerrarSesionAhora(aunqueSePierda));
+export async function cerrarSesion(aunqueSePierda = false, alListo?: () => void): Promise<AlCerrarSesion | null> {
+  return deAUno(() => cerrarSesionAhora(aunqueSePierda, alListo));
 }
 
-async function cerrarSesionAhora(aunqueSePierda: boolean): Promise<AlCerrarSesion> {
+async function cerrarSesionAhora(aunqueSePierda: boolean, alListo?: () => void): Promise<AlCerrarSesion> {
   if (!haySupabase()) {
+    alListo?.();
     await borrarElTelefono();
     return 'listo';
   }
@@ -252,6 +282,7 @@ async function cerrarSesionAhora(aunqueSePierda: boolean): Promise<AlCerrarSesio
     await supabase().auth.signOut({ scope: 'local' }).catch(() => {});
     // Si la sesión quedó, no se borra nada: seguiría sincronizando el teléfono vacío.
     if ((await laSesion()) !== null) return 'sinConexion';
+    alListo?.();
     await borrarElTelefono();
     return 'listo';
   });

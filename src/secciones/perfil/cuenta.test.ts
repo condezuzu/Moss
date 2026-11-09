@@ -1,5 +1,6 @@
 // Lo de Perfil que sale del teléfono: el correo sin conexión, borrar y salir de a uno, «Cerrar igual»
-// sin conexión y exportar con dos toques. La cuenta, el almacén y el teléfono van de mentira.
+// sin conexión, el velo de espera (cuándo empieza, cuándo dice «Listo» y cuándo se va) y exportar con dos
+// toques. La cuenta, el almacén y el teléfono van de mentira.
 
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AuthRetryableFetchError } from '@supabase/supabase-js';
@@ -13,6 +14,7 @@ const mockLeerSesion = jest.fn<() => Promise<AlLeer>>();
 const mockBorrarDatos = jest.fn<() => Promise<{ error: unknown }>>();
 const mockSubir = jest.fn<() => Promise<void>>();
 const mockVistaRapida = jest.fn<() => Promise<void>>();
+const mockOlvidar = jest.fn(async () => {});
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: async (k: string) => mockGuardado.get(k) ?? null,
@@ -35,7 +37,7 @@ class MockArchivo {
 
 jest.mock('expo-file-system', () => ({ Paths: { cache: 'cache' }, File: MockArchivo }));
 jest.mock('@/almacen', () => ({
-  elAlmacen: () => ({ olvidarTodo: async () => {}, paraExportar: async () => ({ registros: [], pesos: [], metas: [] }) }),
+  elAlmacen: () => ({ olvidarTodo: () => mockOlvidar(), paraExportar: async () => ({ registros: [], pesos: [], metas: [] }) }),
   sinSincronizar: (hacer: () => Promise<unknown>) => hacer(),
   subirLoQueFalta: () => mockSubir(),
 }));
@@ -138,7 +140,95 @@ describe('borrar y salir, de a uno', () => {
   });
 });
 
+describe('el velo mientras se borra o se sale', () => {
+  /** Lo que le pasa al velo y al teléfono, en orden. */
+  let pasos: string[] = [];
+  const espera = {
+    empezar: () => {
+      pasos.push('empezar');
+    },
+    listo: () => {
+      pasos.push('listo');
+    },
+    dejar: () => {
+      pasos.push('dejar');
+    },
+  };
+  const unRato = () => new Promise((listo) => setTimeout(listo, 0));
+
+  beforeEach(() => {
+    pasos = [];
+    mockGuardado.clear();
+    mockLeerSesion.mockReset();
+    mockBorrarDatos.mockReset();
+    mockSubir.mockReset();
+    mockOlvidar.mockReset();
+    mockOlvidar.mockImplementation(async () => {
+      pasos.push('vaciar');
+    });
+  });
+
+  it('al cerrar sesión empieza, dice «Listo» con la sesión ya cerrada y antes de vaciar el teléfono, y no se va', async () => {
+    const cuenta = otraVez();
+    mockSubir.mockResolvedValue(undefined);
+    // Con sesión antes de cerrarla, y sin sesión después.
+    mockLeerSesion.mockResolvedValueOnce(conSesion('lucia@ejemplo.com')).mockResolvedValueOnce(sinSesion());
+    const salio = jest.fn();
+    cuenta.salirDeLaCuenta(salio, espera);
+    await unRato();
+    expect(pasos).toEqual(['empezar', 'listo', 'vaciar']);
+    expect(salio).toHaveBeenCalledTimes(1);
+  });
+
+  it('sin subir lo último se va antes de preguntar y vuelve con «Cerrar igual»; sin conexión, se va antes de decirlo', async () => {
+    const cuenta = otraVez();
+    mockSubir.mockRejectedValue(new Error('sin conexión'));
+    mockLeerSesion.mockResolvedValue(sinConexion());
+    const avisos: { titulo: string | null | undefined; botones?: AlertButton[] }[] = [];
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation((titulo, _texto, botones) => {
+      pasos.push(`pregunta: ${titulo}`);
+      avisos.push({ titulo, botones });
+    });
+    cuenta.salirDeLaCuenta(undefined, espera);
+    await unRato();
+    expect(pasos).toEqual(['empezar', 'dejar', 'pregunta: perfil.sinSubirTitulo']);
+    avisos[0].botones?.find((b) => b.text === 'perfil.cerrarIgual')?.onPress?.();
+    await unRato();
+    expect(pasos.slice(3)).toEqual(['empezar', 'dejar', 'pregunta: perfil.errorBorrar']);
+    expect(mockOlvidar).not.toHaveBeenCalled();
+    alerta.mockRestore();
+  });
+
+  it('al borrar, «Listo» llega cuando lo de la cuenta ya se borró; si falla, no llega ni se vacía el teléfono', async () => {
+    const cuenta = otraVez();
+    mockLeerSesion.mockResolvedValue(conSesion('lucia@ejemplo.com'));
+    expect(await cuenta.borrarLaCuenta(espera.listo)).toBe(true);
+    expect(pasos).toEqual(['listo', 'vaciar']);
+    pasos = [];
+    mockBorrarDatos.mockResolvedValue({ error: new Error('sin conexión') });
+    expect(await cuenta.borrarMisDatos(espera.listo)).toBe(false);
+    expect(pasos).toEqual([]);
+  });
+});
+
 describe('exportar', () => {
+  beforeEach(() => {
+    mockVistaRapida.mockReset();
+  });
+
+  it('avisa cuando los archivos están, sin esperar a que se cierre Vista Rápida', async () => {
+    const cuenta = otraVez();
+    let cerrar: () => void = () => {};
+    mockVistaRapida.mockReturnValue(new Promise<void>((listo) => { cerrar = listo; }));
+    const armados = jest.fn();
+    const exportando = cuenta.exportarTodo('2026-11-06', armados);
+    await new Promise((listo) => setTimeout(listo, 0));
+    expect(armados).toHaveBeenCalledTimes(1);
+    cerrar();
+    await exportando;
+    expect(armados).toHaveBeenCalledTimes(1);
+  });
+
   it('con dos toques se abre una sola Vista Rápida, y el segundo no da error', async () => {
     const cuenta = otraVez();
     let cerrar: () => void = () => {};

@@ -5,6 +5,8 @@
 // recién «Agregar» lo registra. Lo juntado queda guardado si se cierra la hoja.
 // Tiene también los atajos: la comida de ayer, las guardadas y las recetas, la carga rápida, crear
 // un alimento, el código de barras y la foto de la etiqueta.
+// Abierta para otro día, lo dice arriba y en la comida que se arma («Tu cena · ayer»); con los números
+// ocultos, sin calorías ni gramos; y con algo escrito sin guardar, cerrarla pregunta antes (la galería 46).
 
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
@@ -36,6 +38,7 @@ import { idioma, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { CabezaQueBaja, ScrollQueBaja, useBajarParaCerrar } from '../arrastre';
+import { confirmarDescartar } from '../descartar';
 import { ENTRA_FUNDIDO, ENTRA_HOJA, ENTRA_VELO, SALE_FUNDIDO, SALE_HOJA, SALE_VELO } from '../movimiento';
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
@@ -44,10 +47,12 @@ import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './c
 import { PanelDecir } from './Decir';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
-import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoDe, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado } from './datos';
+import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoDe, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado, useNumeros } from './datos';
 import { Escaner } from './Escaner';
+import { etiquetaDelDia, porcionDePropio, tuComidaDe, type Guardada } from './hoja';
 import {
-  heredarClave, PanelCrear, PanelGuardadas, PanelGuardarComo, PanelPegarReceta, PanelRapida, PanelReceta, PanelRevision, recetaDe, resumenDeCanasta, type Borrador, type DatosDeEtiqueta,
+  heredarClave, MedirPie, PanelCrear, PanelGuardadas, PanelGuardarComo, PanelPegarReceta, PanelRapida, PanelReceta, PanelRevision, recetaDe, resumenDeCanasta, SinGuardar,
+  type Borrador, type DatosDeEtiqueta,
 } from './Paneles';
 import { avisar, cerrarRegistro, useRegistro, type Panel, type Pedido } from './registro';
 import { origenDe, Ventana, type AlimentoAbierto, type ModoDeVentana } from './Ventana';
@@ -157,6 +162,9 @@ const SALE_BANDEJA = FadeOutDown.duration(180);
 /** Lo que dura la salida más larga (SALE_HOJA), con un margen. */
 const SALIDA_MS = 280;
 
+/** El día de la hoja, arriba, aparece con un fundido suave (como en la galería): un fundido no es movimiento. */
+const ENTRA_DIA = FadeIn.duration(300).reduceMotion(ReduceMotion.Never);
+
 export function HojaRegistro() {
   const pedido = useRegistro();
   // Cerrada, la hoja sigue armada lo que dura su salida, con el contenido ya sacado: así el velo y la
@@ -189,6 +197,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const insets = useSafeAreaInsets();
   const { alto: teclado, animado: tecladoAnimado } = useTeclado();
   const sistema = sistemaDe(e);
+  // Sin los números (Perfil › Los números): sin calorías ni gramos de los macros; quedan los nombres y las porciones.
+  const numeros = useNumeros();
   // Lo dicho «anoche» que después se busca a mano sigue yendo a ayer.
   const [diaDicho, setDiaDicho] = useState<ClaveDia | null>(null);
   const dia = diaDicho ?? pedido.dia ?? e.hoy;
@@ -225,7 +235,10 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const [crear, setCrear] = useState<DatosDeEtiqueta | null>(null);
   const [escaner, setEscaner] = useState<EstadoDelEscaner | null>(pedido.panel === 'codigo' || pedido.panel === 'etiqueta' ? { modo: pedido.panel, mensaje: null, ocupado: false } : null);
   const soloEditar = !!pedido.editar;
-  const avisarAca = (textoDelAviso: string, deshacer?: () => void) => setAviso({ texto: textoDelAviso, deshacer, vez: otraVez() });
+  // Abierta para otro día, lo dice arriba, chico: «Ayer», «Mañana» o «Vie 16». Corrigiendo algo de la línea del
+  // día, no (como en la galería): se abrió desde ese día.
+  const delDiaArriba = soloEditar ? null : etiquetaDelDia(dia, e.hoy);
+  const avisarAca =(textoDelAviso: string, deshacer?: () => void) => setAviso({ texto: textoDelAviso, deshacer, vez: otraVez() });
 
   // Copiar de ayer: lo de ayer, a la comida que se arma, y directo a la revisión. Lo puesto así (cada
   // cosa, aunque se mueva o se corrija) sale si la hoja se cierra sin agregarlo, por donde se cierre: la
@@ -288,12 +301,16 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     Keyboard.dismiss();
     cerrarRegistro();
   };
-  // Bajarla con el dedo la cierra, como tocar afuera. Con un panel para escribir (crear, la receta, la
-  // carga rápida, decir) o eligiendo el ingrediente de una receta, no: lo escrito se perdería, y de ahí
-  // se sale con «Atrás» o «Cancelar».
+  // Lo escrito sin guardar: lo de un panel (crear un alimento, la etiqueta, la carga rápida, decir, pegar
+  // o cambiar una guardada; cada uno avisa) y la receta a medio armar, que vive acá.
+  const [escritoEnPanel, setEscritoEnPanel] = useState(false);
+  const recetaAMedias = !!borrador && (!!borrador.nombre.trim() || borrador.items.length > 0 || !!borrador.pesoFinal.trim());
+  const sinGuardar = escritoEnPanel || recetaAMedias;
+  // Bajarla con el dedo, tocar afuera o la cruz la cierran; con algo escrito sin guardar, antes pregunta
+  // («Descartar» o «Seguir editando»). Un aviso o un widget que la cierran desde afuera, no.
+  const intentarCerrar = () => (sinGuardar ? confirmarDescartar(cerrar) : cerrar());
   const reducido = useReducedMotion();
-  const conFormulario = eligiendo || (!!panel && panel !== 'revision' && panel !== 'guardadas');
-  const deslizar = useBajarParaCerrar({ alCerrar: cerrar, activo: !conFormulario });
+  const deslizar = useBajarParaCerrar({ alCerrar: cerrar, sinGuardar });
   const cancelarLaEleccion = () => {
     setEligiendo(false);
     setPanel('receta');
@@ -417,7 +434,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     if (!nuevos.length) return;
     copia.current.clear();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    const que = nuevos.length === 1 ? [nuevos[0].nombre, cantidadDeTexto(nuevos[0].cantidad, sistema)].filter(Boolean).join(' · ') : `${t(`comida.comidas.${comida}`)} · ${resumenDeCanasta(nuevos)}`;
+    const que = nuevos.length === 1 ? [nuevos[0].nombre, cantidadDeTexto(nuevos[0].cantidad, sistema)].filter(Boolean).join(' · ') : `${t(`comida.comidas.${comida}`)} · ${resumenDeCanasta(nuevos, numeros)}`;
     avisar(que, () => nuevos.forEach((r) => a.borrarRegistro(r.id)));
     cerrar();
   };
@@ -639,12 +656,26 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
   const estiloAbajo = useAnimatedStyle(() => ({ height: Math.max(borde, tecladoAnimado.get()) }));
   // Lo que mide la bandeja sin el borde: lo que la lista deja libre al final para que lo último no quede debajo.
   const [altoBandeja, setAltoBandeja] = useState(64);
-  // El aviso va arriba de lo de abajo: del pie de un panel (como en la galería), de la bandeja o del borde.
-  const avisoAbajo = Math.max(teclado, insets.bottom) + (panel ? 92 : conBandeja ? altoBandeja + 12 : 12);
+  // Lo que mide el pie del panel abierto, con el borde de abajo del teléfono (que el panel deja por detrás).
+  const [altoDelPie, setAltoDelPie] = useState<number | null>(null);
+  // El aviso va arriba de lo de abajo: de los botones del pie de un panel (como en la galería; con dos
+  // botones, más arriba), de la bandeja o del borde.
+  const avisoAbajo = Math.max(teclado, insets.bottom) + (panel ? (altoDelPie !== null ? altoDelPie - insets.bottom + 22 : 92) : conBandeja ? altoBandeja + 12 : 12);
 
-  const filaDeItem = (item: Item, i: number) => {
-    const detalle = [cantidadDeTexto(item.cantidad, sistema), `${numero(Math.round(item.valores.kcal))} kcal`].filter(Boolean).join(' · ');
-    return <Fila key={`${claveDeAlimento(item.fuente, item.ref)}-${i}`} nombre={item.nombre} detalle={detalle} alAbrir={() => abrirItem(item)} />;
+  /** «2 rebanadas · 140 kcal»; sin los números, la cantidad. */
+  const detalleDe = (cantidad: Cantidad, kcal: number) => [cantidadDeTexto(cantidad, sistema), numeros ? `${numero(Math.round(kcal))} kcal` : ''].filter(Boolean).join(' · ');
+  const filaDeItem = (item: Item, i: number) => (
+    <Fila key={`${claveDeAlimento(item.fuente, item.ref)}-${i}`} nombre={item.nombre} detalle={detalleDe(item.cantidad, item.valores.kcal)} alAbrir={() => abrirItem(item)} />
+  );
+  // Lo guardado se vuelve a guardar igual, con su id: al cambiarlo y al deshacer un borrado.
+  const guardarDeNuevo = (g: Guardada) => {
+    if (g.tipo === 'propio') {
+      const { id, nombre, marca, codigo, por100g, porciones, origen } = g.x;
+      a.guardarPropio({ id, nombre, marca, codigo, por100g, porciones, ...(origen ? { origen } : {}) });
+    } else {
+      const { id, tipo, nombre, items, porciones, pesoFinal } = g.x;
+      a.guardarReceta({ id, tipo, nombre, items, porciones, pesoFinal });
+    }
   };
 
   return (
@@ -654,8 +685,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
       {/* El fondo se aclara mientras la hoja baja con el dedo; su fundido de salida va por fuera, así no vuelve a oscurecerse. */}
       <Animated.View entering={ENTRA_VELO} exiting={SALE_VELO} style={StyleSheet.absoluteFill}>
         <Animated.View style={[StyleSheet.absoluteFill, estilos.fondo, deslizar.velo]} pointerEvents="none" />
-        {/* Con algo a medio escribir (o eligiendo el ingrediente de una receta), tocar afuera no la cierra: se perdería. */}
-        <Pressable style={StyleSheet.absoluteFill} onPress={cerrar} disabled={conFormulario} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
+        {/* Con algo escrito sin guardar, tocar afuera pregunta antes de cerrarla. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={intentarCerrar} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} />
       </Animated.View>
       <Animated.View
         entering={reducido ? ENTRA_FUNDIDO : ENTRA_HOJA}
@@ -666,19 +697,37 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
         accessibilityViewIsModal={!escaner}
         accessibilityElementsHidden={!!escaner}
         importantForAccessibility={escaner ? 'no-hide-descendants' : 'auto'}
-        onAccessibilityEscape={panel || ventana || escaner ? undefined : eligiendo ? cancelarLaEleccion : cerrar}
+        onAccessibilityEscape={panel || ventana || escaner ? undefined : eligiendo ? cancelarLaEleccion : intentarCerrar}
       >
         {/* Lo de adentro se va con la hoja: sus propias salidas (las filas de «decir») no corren. */}
         <LayoutAnimationConfig skipExiting>
         <CabezaQueBaja arrastre={deslizar} style={estilos.arriba}>
+          {delDiaArriba && (
+            <Animated.Text
+              key={delDiaArriba}
+              entering={ENTRA_DIA}
+              exiting={SALE_FUNDIDO}
+              style={estilos.dia}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.4}
+              accessibilityRole="header"
+              // En mayúsculas solo a la vista: VoiceOver lo dice como palabra.
+              accessibilityLabel={delDiaArriba}
+            >
+              {delDiaArriba}
+            </Animated.Text>
+          )}
           <View style={estilos.asa} />
           {!panel && (
-            <Pressable onPress={cerrar} style={({ pressed }) => [estilos.cerrar, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={margenDeToque(32)}>
+            <Pressable onPress={intentarCerrar} style={({ pressed }) => [estilos.cerrar, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.cerrar')} hitSlop={margenDeToque(32)}>
               <Icono nombre="xmark" tam={13} color="rgba(239, 230, 207, 0.75)" peso="semibold" />
             </Pressable>
           )}
         </CabezaQueBaja>
 
+        {/* Los paneles, y la nota de «Reportar un error» en la ventana, avisan si hay algo escrito sin guardar. */}
+        <SinGuardar.Provider value={setEscritoEnPanel}>
+        <MedirPie.Provider value={setAltoDelPie}>
         <View style={estilos.paneles}>
           <CabezaQueBaja arrastre={deslizar}>
           {eligiendo && borrador && (
@@ -749,9 +798,10 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
           </View>
           {!q && !eligiendo && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={estilos.atajosLugar} contentContainerStyle={estilos.atajos} keyboardShouldPersistTaps="handled" scrollsToTop={false}>
-              {/* Lo que ya está cuando aparecen los atajos viene con ellos; la comida de ayer, cuando ya no queda nada por sumar, se va. */}
+              {/* Lo que ya está cuando aparecen los atajos viene con ellos; la comida de ayer, cuando ya no queda nada por sumar, se va.
+                  En la hoja de otro día no va: «Cena de ayer» copiaría la del día anterior a ese, con un nombre que confunde. */}
               <LayoutAnimationConfig skipEntering>
-                {deAyerQueFalta.length > 0 && (
+                {dia === e.hoy && deAyerQueFalta.length > 0 && (
                   <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO}>
                     <Boton texto={t(`comida.deAyer.${comida}`)} icono="doc.on.doc" alTocar={() => sumarVarias(deAyerQueFalta, t(`comida.deAyer.${comida}`))} />
                   </Animated.View>
@@ -799,7 +849,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                   <View style={estilos.filaTextos}>
                     <Text style={estilos.siempreTitulo} numberOfLines={1}>{t(`comida.deSiempre.${comida}`)}</Text>
                     <Text style={estilos.filaDetalle} numberOfLines={2}>
-                      {`${siempre.map((i) => i.nombre).join(', ')} · ${numero(Math.round(sumarValores(siempre.map((i) => i.valores)).kcal))} kcal`}
+                      {[siempre.map((i) => i.nombre).join(', '), numeros ? `${numero(Math.round(sumarValores(siempre.map((i) => i.valores)).kcal))} kcal` : ''].filter(Boolean).join(' · ')}
                     </Text>
                   </View>
                   <View style={estilos.mas}>
@@ -838,7 +888,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                   key={`${tipo}-${x.id}`}
                   nombre={alimento.nombre}
                   extra={tipo === 'propio' ? t('comida.tuyo') : t('comida.receta.titulo')}
-                  detalle={`${cantidadDeTexto(cantidad, sistema)} · ${numero(Math.round(kcal))} kcal`}
+                  detalle={detalleDe(cantidad, kcal)}
                   alAbrir={() => abrirVentana({ alimento, inicial: ultimaCantidad(e.registros.values(), alimento.fuente, alimento.ref), modo: modoNuevo })}
                 />
               );
@@ -852,7 +902,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               // Si lo que coincidió es otro nombre («aguacate» para la palta), se muestra al lado.
               // De un producto, su marca si el nombre no la dice; de lo demás, cómo se llama lo que se buscó.
               const extra = r.marca ? (n(r.nombre).includes(n(r.marca)) ? undefined : r.marca) : n(r.coincide) !== n(r.nombre) && !n(r.nombre).includes(n(q)) && r.coincide.length < 28 ? r.coincide.toLowerCase() : undefined;
-              return <Fila key={r.id} nombre={r.nombre} extra={extra} detalle={`${cantidadDeTexto(cantidad, sistema)} · ${numero(Math.round(kcal))} kcal`} alAbrir={() => abrirResultado(r)} />;
+              return <Fila key={r.id} nombre={r.nombre} extra={extra} detalle={detalleDe(cantidad, kcal)} alAbrir={() => abrirResultado(r)} />;
             })}
             {q && hallado?.texto === q && !lista.length && !propiosHallados.length && (eligiendo || !pareceUnaComida(q)) && (
               <Aparece style={estilos.vacio}>
@@ -890,9 +940,10 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                         {t('comida.sumado', { alimento: recienSumado.texto })}
                       </Animated.Text>
                     ) : (
-                      <Animated.Text key="titulo" entering={FadeIn.duration(180).reduceMotion(ReduceMotion.Never)} style={estilos.bandejaTitulo} numberOfLines={1}>{t(`comida.tuComida.${comida}`)}</Animated.Text>
+                      // Otra comida u otro día cambian el título con su fundido.
+                      <Animated.Text key={`${comida}-${dia}`} entering={FadeIn.duration(180).reduceMotion(ReduceMotion.Never)} style={estilos.bandejaTitulo} numberOfLines={1}>{tuComidaDe(comida, dia, e.hoy)}</Animated.Text>
                     )}
-                    <Text style={estilos.bandejaDetalle}>{resumenDeCanasta(e.canasta)}</Text>
+                    <Text style={estilos.bandejaDetalle}>{resumenDeCanasta(e.canasta, numeros)}</Text>
                   </View>
                   <Pressable
                     onPress={() => {
@@ -913,6 +964,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
           {panel === 'revision' && e.canasta.length > 0 && (
             <PanelRevision
               comida={comida}
+              dia={dia}
+              hoy={e.hoy}
               canasta={e.canasta}
               sistema={sistema}
               restante={(kcal) => restante(kcal - sumarValores(e.canasta.map((i) => i.valores)).kcal)}
@@ -950,6 +1003,8 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
             <PanelRapida
               directo={!!pedido.directo}
               comida={comida}
+              dia={dia}
+              hoy={e.hoy}
               inicial={rapidaEditada}
               alQuitar={rapidaEditada ? () => {
                 const quitado = a.borrarRegistro(rapidaEditada.id);
@@ -978,14 +1033,31 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
           {panel === 'guardadas' && (
             <PanelGuardadas
               recetas={vigentes(e.recetas.values())}
+              // Tus alimentos son los que creaste (a mano o con la etiqueta), como en la galería; lo que se guardó
+              // solo al escanear un producto de Open Food Facts no.
+              propios={vigentes(e.propios.values()).filter((x) => x.origen !== 'off')}
+              sistema={sistema}
               abajo={insets.bottom}
               alAtras={() => (pedido.panel === 'guardadas' ? cerrar() : setPanel(null))}
-              alSumarComida={(r) => {
-                // Se cierra el panel: la bandeja dice «Sumado».
-                sumarVarias(itemsParaRegistrar(r, t('comida.receta.plato')), r.nombre);
+              alSumar={(g) => {
+                // De una receta, un plato; de un alimento tuyo, su porción. Se cierra el panel: la bandeja dice «Sumado».
+                if (g.tipo === 'propio') sumar(itemDeAlimento('propio', g.x.id, g.x.nombre, g.x.por100g, porcionDePropio(g.x)));
+                else if (g.tipo === 'receta') sumar(itemsParaRegistrar(g.x, t('comida.receta.plato'))[0]);
+                else sumarVarias(itemsParaRegistrar(g.x, t('comida.receta.plato')), g.x.nombre);
                 setPanel(null);
               }}
-              alAbrirReceta={(r) => abrirVentana({ alimento: alimentoDeReceta(r), inicial: ultimaCantidad(e.registros.values(), 'receta', r.id), modo: { tipo: 'sumar' } })}
+              alGuardar={(g) => {
+                guardarDeNuevo(g);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                avisarAca(t('comida.crear.guardado', { nombre: g.x.nombre }));
+              }}
+              alBorrar={(g) => {
+                // Sin preguntar: el aviso lo deshace, con lo de antes y el mismo id.
+                if (g.tipo === 'propio') a.borrarPropio(g.x.id);
+                else a.borrarReceta(g.x.id);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                avisarAca(t('comida.guardadasEditar.borrada', { nombre: g.x.nombre }), () => guardarDeNuevo(g));
+              }}
               alNuevaReceta={() => {
                 // Si había una a medio armar, sigue esa.
                 setBorrador((b) => b ?? { nombre: '', porciones: '4', pesoFinal: '', items: [] });
@@ -1001,6 +1073,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
           {panel === 'decir' && (
             <PanelDecir
               comida={comida}
+              dia={dia}
               sistema={sistema}
               escuchar={decirCon.escuchar}
               textoInicial={decirCon.texto}
@@ -1093,18 +1166,18 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               }}
               alGuardar={(propio) => {
                 const nuevo = a.guardarPropio({ ...propio, origen: crear.leida ? 'etiqueta' : 'mano' });
-                const porcion = nuevo.porciones[0];
                 setCrear(null);
                 setPanel(null);
                 if (eligiendo) {
                   abrirVentana({ alimento: alimentoDePropio(nuevo), modo: { tipo: 'ingrediente' } });
                   return;
                 }
-                sumar(itemDeAlimento('propio', nuevo.id, nuevo.nombre, nuevo.por100g, porcion ? { porcion: porcion.nombre, gramosPorcion: porcion.gramos, veces: 1 } : { gramos: 100 }));
+                sumar(itemDeAlimento('propio', nuevo.id, nuevo.nombre, nuevo.por100g, porcionDePropio(nuevo)));
               }}
             />
           )}
         </View>
+        </MedirPie.Provider>
 
         <Animated.View style={estiloAbajo} />
 
@@ -1151,6 +1224,7 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
             />
           </>
         )}
+        </SinGuardar.Provider>
         </LayoutAnimationConfig>
       </Animated.View>
 
@@ -1193,7 +1267,7 @@ function Fila({ nombre, extra, detalle, alAbrir }: { nombre: string; extra?: str
           {nombre}
           {extra ? <Text style={estilos.filaExtra}>{` · ${extra}`}</Text> : null}
         </Text>
-        <Text style={estilos.filaDetalle} numberOfLines={1}>{detalle}</Text>
+        {detalle ? <Text style={estilos.filaDetalle} numberOfLines={1}>{detalle}</Text> : null}
       </View>
       <View style={estilos.mas}>
         <Icono nombre="plus" tam={17} peso="semibold" />
@@ -1215,6 +1289,8 @@ const estilos = StyleSheet.create({
     borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.22)',
   },
   arriba: { height: 34 },
+  // Chico y en mayúsculas, a la izquierda de la pestañita (en la galería, `.hj-dia`).
+  dia: { position: 'absolute', left: 18, top: 9, maxWidth: '38%', fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: colores.oroClaro },
   asa: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, marginTop: 7, backgroundColor: 'rgba(239, 230, 207, 0.22)' },
   cerrar: { position: 'absolute', right: 12, top: 6, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   paneles: { flex: 1 },

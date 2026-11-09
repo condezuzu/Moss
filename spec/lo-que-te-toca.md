@@ -1,18 +1,15 @@
-# Lo que te toca a vos (al 6/11/2026)
+# Lo que te toca a vos (al 9/11/2026)
 
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 46): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 47): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 1. Ahora (no espera a nada)
 
 ### Aprobar en la galería
 
 La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
-
-**Del 6/11**
-- **Los detalles de app profesional:** «Listo» y «Siguiente» arriba del teclado de números (ya en la app); mantener apretado un alimento o una comida para copiar, mover o borrar, y deslizar para borrar; cambiar y borrar lo guardado; la hoja de registro para ayer o mañana; restar un vaso (mantener apretado); «Atrás» en el cuestionario; la franja bajo la hora; las esperas (entrar con Apple, borrar, exportar); «Cancelar» en la hora de la noche, deslizar para volver a leer Salud y «Hoy no toca ningún hábito»; Perfil sin flechas de más (spec/detalles.md; escenario `detalles`).
 
 **Del 5/11**
 - **Ascent, como si Progreso siguiera para arriba:** llegas abajo, a lo principal, con «Volver a Progreso» y la flecha para abajo; subiendo, el resto. Detrás, de fondo como las estrellas, el polvo estelar (una nube que gira despacio, propia) o el cuerpo de tu rango, más tenue. Progreso baja pegado a Ascent (spec/ascent.md, «Ascent en Progreso»).
@@ -56,10 +53,6 @@ Entre paréntesis, lo que recomienda el estudio o lo que está programado.
 
 **Lo del 5/11 que no está en un estudio**
 - **Energía alta con déficit:** quien baja de peso y llega a sus calorías durmiendo bien ve «Energía alta» (lo pediste así). En sentido estricto, la energía óptima es comer cerca de lo que gastás: ¿queda así? (spec/entreno.md 5.13).
-- **Las hojas que bajan arrastrando:** hoy, con algo a medio escribir, no se cierran deslizando ni tocando afuera (la cruz sí). ¿Preguntan antes de descartar? (spec/detalles.md).
-- **El teclado de números:** «Siguiente» y «Listo» ya están, con la barra nativa de iOS en español; se ven en la galería (spec/detalles.md).
-- **Los números ocultos en la hoja de registro:** con Perfil › Los números apagado (o D9), hoy solo se esconde «Te quedarían…», como en la galería. ¿También las kcal de cada fila, la bandeja y Guardadas?
-- **El CSV:** ya lleva el BOM (Excel muestra los tildes); ¿punto y coma y coma decimal en español?
 - **La carnívora:** si con esa dieta la meta pasa sola a keto; qué ideas le da «Si voy muy bajo en algo»; con dos alergias se queda sin desayunos; los nombres de sus comidas.
 
 **Suscripción**
@@ -228,6 +221,7 @@ revisión) en vez de sacarla: volver a mandarla la pone al final de la fila.
 
 - Las hojas que bajan arrastrando y el teclado, con la build `dev` (`npx expo start`): abrir el «+», la hoja de registrar o la ventana de un alimento y arrastrar para abajo desde arriba; escribir en un campo de número y ver que el teclado no lo tape.
 - Los detalles del 6/11 (spec/detalles.md, «Lo que hay que probar en un iPhone»): escribir el peso o una medida y bajar el teclado deslizando (la hoja tiene que quedar), «Siguiente» y «Listo» arriba del teclado de números, mantener apretado un «−/+», tocar otra vez la pestaña y tocar la hora, un aviso tocado con una hoja de Perfil abierta, y VoiceOver, Reducir movimiento y el texto más grande.
+- Lo aprobado el 9/11 (mismo lugar): en Comida, mantener apretado un alimento o una comida (copiar, mover, borrar) y deslizar para borrar, sin que se pelee con el scroll ni con el paso de sección; restar un vaso manteniendo apretado el agua; bajar una hoja con algo escrito (pregunta antes); la hoja para ayer y mañana; «Atrás» en el cuestionario; tirar para abajo en Sueño; los interruptores de Perfil.
 - TestFlight: aceptar la invitación de agustinconde@icloud.com. Confirmá.
 - El atajo «Moss: cargador»: armarlo en la build `telefono` y pasarme el enlace de iCloud (spec/sueno-sin-esfuerzo.md).
 - Da Rings: ver si escribe el sueño en Salud (spec/aparatos.md).

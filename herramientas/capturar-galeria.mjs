@@ -2966,11 +2966,6 @@ const pasos = {
     await pagina.waitForSelector('.dt-tirar.listo', { timeout: 6000 }).catch(() => {});
     await espera(200);
     await foto('detalles-10-al-dia');
-    await det('sinHabitos');
-    await espera(2600);
-    await foto('detalles-10-sin-habitos');
-    await det('conHabitos');
-    await espera(800);
 
     // 11. Perfil: lo que cambia ahí mismo, sin la flecha de entrar: la llave se mueve al tocar la fila, y los
     // números y las unidades cambian su valor.

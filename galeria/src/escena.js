@@ -224,7 +224,6 @@ const Escena = (() => {
       <div class="universo-titulo"></div>
       <div class="universo-etiquetas"></div>
       <div class="aviso globito" aria-hidden="true"><span class="aviso-txt"></span></div>
-      <div class="cielo-sin-habitos" role="status"></div>
       <div class="aviso" role="status"><span class="aviso-txt"></span><button type="button" class="aviso-btn"></button></div>
       <footer class="frase"><q></q><cite></cite></footer>
       <div class="fps" hidden></div>`;
@@ -234,7 +233,6 @@ const Escena = (() => {
       etiquetas: $('.etiquetas'), aviso: $('.aviso[role="status"]'), avisoTxt: $('.aviso[role="status"] .aviso-txt'),
       avisoBtn: $('.aviso-btn'), frase: $('.frase q'), cita: $('.frase cite'), fps: $('.fps'), cab: $('.cab'),
       uTitulo: $('.universo-titulo'), uEtiquetas: $('.universo-etiquetas'), pie: $('.frase'), globito: $('.globito'),
-      sinHabitos: $('.cielo-sin-habitos'),
     };
     // El globito va donde la frase, que se aparta mientras está.
     dom.globito.style.bottom = 'calc(var(--pestanas) + 40px)';
@@ -320,7 +318,6 @@ const Escena = (() => {
       dom.cab.setAttribute('aria-label', [dom.dia.textContent, dom.nombre.textContent,
         e.completo ? tx('cielo.completa') : tx('cielo.encendidas', { n: hechos, total: e.habitos.length }), luzDelDia(hechos) + ' ' + tx('cielo.luzDeHoy')].join(', '));
       dom.globito.querySelector('.aviso-txt').textContent = tx('cielo.globito');
-      dom.sinHabitos.textContent = tx('cielo.sinHabitosHoy');
       const f = opciones.frase;
       dom.frase.textContent = nombreDe(f.texto);
       dom.cita.textContent = nombreDe(f.autor);
@@ -1114,10 +1111,7 @@ const Escena = (() => {
       // El globito, solo en Hábitos y hasta tocar una estrella; mientras está, la frase se aparta.
       const conGlobito = globitoPendiente && e.modo === 'hoy' && e.paginaPx === 0 && e.habitos.length > 0 && e.cam.objetivo === 0 && e.velado === 0 && !dom.aviso.classList.contains('visible');
       dom.globito.classList.toggle('visible', conGlobito);
-      // Un día sin hábitos que toquen (6/11, para aprobar): lo dice, chico, donde va el globito.
-      const sinHabitos = e.modo === 'hoy' && e.paginaPx === 0 && e.habitos.length === 0 && e.cam.objetivo === 0 && e.velado === 0;
-      dom.sinHabitos.classList.toggle('visible', sinHabitos);
-      dom.pie.style.opacity = sinVelo * (conGlobito || sinHabitos ? 0 : 1);
+      dom.pie.style.opacity = sinVelo * (conGlobito ? 0 : 1);
     }
 
     // Safari descarta el contexto gráfico cuando la pestaña pasa mucho tiempo en segundo plano:

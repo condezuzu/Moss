@@ -1,31 +1,54 @@
 // Los paneles de la hoja de registro, como en la galería: entran desde la derecha, sobre la lista.
 // - La revisión de la comida que se arma, antes de agregarla, y guardarla para la próxima.
 // - La carga rápida: calorías y macros a mano.
-// - Las comidas guardadas y las recetas, con la receta nueva (con su peso final).
+// - Las comidas guardadas, las recetas y tus alimentos: el «+» suma de un toque, y tocar la fila la
+//   cambia o la borra (la galería 46); y la receta nueva (con su peso final).
 // - Crear un alimento: a mano, o con lo que se leyó de la etiqueta.
+// Con los números ocultos (Perfil › Los números), sin calorías ni gramos de los macros: quedan los
+// nombres y las porciones. Lo que se escribe (la carga rápida, la etiqueta) sigue a la vista.
 
+import * as Haptics from 'expo-haptics';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type AutoCapitalize, type KeyboardTypeOptions, type TextInputInstance } from 'react-native';
-import Animated, { FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
+import {
+  AccessibilityInfo, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type AutoCapitalize, type KeyboardTypeOptions, type TextInputInstance, type TextInstance,
+} from 'react-native';
+import Animated, { FadeIn, FadeInDown, FadeInLeft, FadeInRight, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
 
 import { baseDeAlimentos } from '@/comida/base';
 import type { Etiqueta as EtiquetaLeida, Leidos } from '@/comida/etiqueta';
-import { decimal, leerNumero } from '@/comida/porciones';
+import { leerNumero } from '@/comida/porciones';
 import { gramosDeLinea, leerReceta, type LineaDeReceta } from '@/comida/recetaDeTexto';
 import type { Comida } from '@/dominio/comidas';
 import type { Sistema } from '@/dominio/cantidades';
-import { escalar, gramosDe, itemDeAlimento, itemRapido, sumarValores, valoresDeReceta, type AlimentoPropio, type Item, type Receta, type Valores } from '@/dominio/registros';
-import { idioma, plural, t } from '@/textos';
+import type { ClaveDia } from '@/dominio/fechas';
+import { escalar, gramosDe, itemDeAlimento, itemRapido, sumarValores, valoresDeCantidad, valoresDeReceta, type AlimentoPropio, type Item, type Receta, type Valores } from '@/dominio/registros';
+import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { ENTRA_FUNDIDO, ENTRA_PANEL, SALE_FUNDIDO, SALE_PANEL } from '../movimiento';
+import { anunciar, conLector } from '../anuncio';
+import { ENTRA_FUNDIDO, ENTRA_PANEL, LLEGA, SALE_FUNDIDO, SALE_PANEL } from '../movimiento';
 import { margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
 import { tecladoDeNumeros, useCampoALaVista } from '../teclado';
 import { Boton, Etiqueta, Icono, MACROS, Punto } from './comunes';
 import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma, useNumeros } from './datos';
+import { agregarADe, cambioLaEdicion, conLoEditado, edicionDe, kcalDeMacros, paraCampo, porcionDePropio, tuComidaDe, type Edicion, type Guardada } from './hoja';
 
-/** Un número para llenar un campo: con el decimal del idioma y sin separar los miles, así `leerNumero` lo lee igual. */
-const paraCampo = (n: number) => decimal(Math.round(n * 10) / 10, idioma(), false);
+/**
+ * Si hay algo escrito sin guardar en el panel abierto: cerrar la hoja (bajarla, tocar afuera o la cruz)
+ * pregunta antes de descartarlo. La hoja da cómo avisarle; al irse el panel, ya no queda nada.
+ */
+export const SinGuardar = createContext<((hay: boolean) => void) | null>(null);
+
+export function useSinGuardar(hay: boolean) {
+  const avisar = useContext(SinGuardar);
+  useEffect(() => {
+    avisar?.(hay);
+  }, [avisar, hay]);
+  useEffect(() => () => avisar?.(false), [avisar]);
+}
+
+/** Lo que mide el pie del panel abierto: el aviso de la hoja va arriba de sus botones, no encima. */
+export const MedirPie = createContext<((alto: number) => void) | null>(null);
 
 // Cada cosa de una lista con su clave, aunque no tenga id (lo de la comida que se arma, los ingredientes,
 // lo entendido de una frase): así, al quitar una, las de abajo no se rearman y solo esa se va.
@@ -44,25 +67,48 @@ export function heredarClave(de: object, a: object) {
   claves.set(a, claveDe(de));
 }
 
-/** Las kcal que dan los macros (4/4/9): las de un campo de kcal vacío. */
-const kcalDeMacros = (proteina: number, carbohidratos: number, grasas: number) => proteina * 4 + carbohidratos * 4 + grasas * 9;
-
 type Cadena = { registrar: (campo: RefObject<TextInputInstance | null>) => () => void; siguiente: (campo: RefObject<TextInputInstance | null>) => void };
 /** Los campos de un panel, en el orden en que se ven: «Siguiente» pasa al que sigue. */
 const CamposDelPanel = createContext<Cadena | null>(null);
 
 /**
+ * Otra vista del mismo panel (Guardadas y la edición de una): lo de adentro entra deslizándose apenas,
+ * como en la galería; para atrás, desde la izquierda. Con Reducir movimiento, solo se funde.
+ */
+const VISTA_ADELANTE = FadeInRight.duration(260).easing(LLEGA).withInitialValues({ opacity: 0, transform: [{ translateX: 14 }] });
+const VISTA_ATRAS = FadeInLeft.duration(260).easing(LLEGA).withInitialValues({ opacity: 0, transform: [{ translateX: -14 }] });
+
+/**
  * Un panel, sobre la lista de la hoja. `abajo` es el borde de abajo del teléfono: la hoja ya lo deja
  * debajo de la lista (o el teclado), y el panel baja hasta el borde por detrás de ese lugar, así su pie
  * llega abajo de todo sin contarlo dos veces. Con el teclado arriba, lo que baja queda detrás del teclado.
+ * `vista`: cuál de sus vistas se ve; al cambiar, el título, lo de adentro y el pie entran de nuevo
+ * (`haciaAtras`, al volver a la anterior).
  */
-export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number }) {
+export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras }: {
+  titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number; vista?: string; haciaAtras?: boolean;
+}) {
   const reducido = useReducedMotion();
   // El panel ya se achica con el teclado (el lugar de abajo de la hoja crece con él): el scroll solo
   // trae el campo que quedó tapado por su borde.
   const scroll = useAnimatedRef<ScrollView>();
   const scrollY = useScrollOffset(scroll);
   useCampoALaVista(scroll, scrollY);
+  const medirPie = useContext(MedirPie);
+  const entra = reducido ? ENTRA_FUNDIDO : haciaAtras ? VISTA_ATRAS : VISTA_ADELANTE;
+  // La vista nueva empieza arriba, y VoiceOver pasa a su título: lo que tenía enfocado ya no está.
+  const titular = useRef<TextInstance>(null);
+  const vistaAntes = useRef(vista);
+  useEffect(() => {
+    if (vistaAntes.current === vista) return;
+    vistaAntes.current = vista;
+    scroll.current?.scrollTo({ y: 0, animated: false });
+    if (Platform.OS === 'web' || !conLector()) return;
+    const espera = setTimeout(() => {
+      if (titular.current) AccessibilityInfo.sendAccessibilityEvent(titular.current, 'focus');
+    }, 300);
+    return () => clearTimeout(espera);
+  }, [vista, scroll]);
   const campos = useRef<RefObject<TextInputInstance | null>[]>([]);
   const cadena = useMemo<Cadena>(() => ({
     registrar: (campo) => {
@@ -86,31 +132,57 @@ export function Panel({ titulo, alAtras, children, pie, abajo }: { titulo: strin
       accessibilityViewIsModal
       onAccessibilityEscape={alAtras}
     >
-      <View style={estilos.cabeza}>
-        <Pressable onPress={alAtras} style={({ pressed }) => [estilos.atras, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comun.atras')} hitSlop={margenDeToque(38)}>
-          <Icono nombre="chevron.left" tam={18} peso="medium" />
-        </Pressable>
-        <Text style={estilos.titulo} numberOfLines={1}>{titulo}</Text>
-        <View style={estilos.lugar} />
-      </View>
-      <CamposDelPanel.Provider value={cadena}>
-        <ScrollView
-          ref={scroll}
-          style={estilos.cuerpo}
-          contentContainerStyle={estilos.cuerpoAdentro}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Lo que ya está cuando el panel entra viene con él; lo que llega o se va después, con su fundido. */}
-          <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
-        </ScrollView>
-      </CamposDelPanel.Provider>
-      {pie && <View style={[estilos.pie, { paddingBottom: abajo + 6 }]}>{pie}</View>}
+      {/* Lo que ya está cuando el panel entra viene con él; otra vista, o lo que llega o se va después, con su animación. */}
+      <LayoutAnimationConfig skipEntering>
+        <View style={estilos.cabeza}>
+          <Pressable onPress={alAtras} style={({ pressed }) => [estilos.atras, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comun.atras')} hitSlop={margenDeToque(38)}>
+            <Icono nombre="chevron.left" tam={18} peso="medium" />
+          </Pressable>
+          <Animated.View key={vista} entering={entra} style={estilos.tituloLugar}>
+            <Text ref={titular} style={estilos.titulo} numberOfLines={1} accessibilityRole="header">{titulo}</Text>
+          </Animated.View>
+          <View style={estilos.lugar} />
+        </View>
+        <CamposDelPanel.Provider value={cadena}>
+          <ScrollView
+            ref={scroll}
+            style={estilos.cuerpo}
+            contentContainerStyle={estilos.cuerpoAdentro}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* La vista que se va, sin las salidas de lo suyo: no se cruza con la que entra. */}
+            <LayoutAnimationConfig key={vista} skipExiting>
+              <Animated.View entering={entra}>
+                <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
+              </Animated.View>
+            </LayoutAnimationConfig>
+          </ScrollView>
+        </CamposDelPanel.Provider>
+        {pie && (
+          <Animated.View key={vista} entering={entra} style={[estilos.pie, { paddingBottom: abajo + 6 }]} onLayout={(ev) => medirPie?.(ev.nativeEvent.layout.height)}>
+            {pie}
+          </Animated.View>
+        )}
+      </LayoutAnimationConfig>
     </Animated.View>
   );
 }
+
+/** «Borrar esta comida»: como el de quitar, en rojo suave (en la galería, `.dt-borrar`). Borra sin preguntar: el aviso lo deshace. */
+function BotonBorrar({ texto, alTocar }: { texto: string; alTocar: () => void }) {
+  return (
+    <Pressable onPress={alTocar} accessibilityRole="button" hitSlop={5} style={({ pressed }) => [estilos.borrar, pressed && estilos.borrarApretado]}>
+      <Text style={estilos.borrarTexto} maxFontSizeMultiplier={1.4}>{texto}</Text>
+    </Pressable>
+  );
+}
+
+/** «1 taza · 120 kcal»; sin los números, solo la cantidad. */
+const detalleDe = (item: Pick<Item, 'cantidad' | 'valores'>, sistema: Sistema, numeros: boolean) =>
+  [cantidadDeTexto(item.cantidad, sistema), numeros ? `${numero(Math.round(item.valores.kcal))} kcal` : ''].filter(Boolean).join(' · ');
 
 type PropsDeCampo = {
   etiqueta: string; valor: string; alCambiar: (v: string) => void; unidad?: string; texto?: boolean; ejemplo?: string; mal?: boolean;
@@ -170,21 +242,21 @@ function ChipsDeMacros({ v }: { v: Valores }) {
 
 // ------------------------------------------------------------------ la revisión
 export function PanelRevision(p: {
-  comida: Comida; canasta: Item[]; sistema: Sistema; restante: (kcal: number) => number | null; abajo: number;
+  comida: Comida; dia: ClaveDia; hoy: ClaveDia; canasta: Item[]; sistema: Sistema; restante: (kcal: number) => number | null; abajo: number;
   alEditar: (i: number) => void; alQuitar: (i: number) => void; alAgregar: () => void; alGuardarComo: () => void; alAtras: () => void;
 }) {
-  // Sin los números (Perfil › Los números), lo que quedaría del día no se dice, como en la galería.
+  // Sin los números (Perfil › Los números), ni el total ni lo que quedaría del día: lo que se juntó, con sus porciones.
   const numeros = useNumeros();
   const total = sumarValores(p.canasta.map((i) => i.valores));
   const restante = p.restante(total.kcal);
   return (
     <Panel
-      titulo={t(`comida.tuComida.${p.comida}`)}
+      titulo={tuComidaDe(p.comida, p.dia, p.hoy)}
       alAtras={p.alAtras}
       abajo={p.abajo}
       pie={
         <>
-          <Boton tipo="grande" texto={t(`comida.agregarA.${p.comida}`)} alTocar={p.alAgregar} />
+          <Boton tipo="grande" texto={agregarADe(p.comida, p.dia, p.hoy)} alTocar={p.alAgregar} />
           <Boton tipo="quitar" texto={t('comida.guardarComida')} alTocar={p.alGuardarComo} />
         </>
       }
@@ -192,6 +264,7 @@ export function PanelRevision(p: {
       <Text style={estilos.texto}>{t('comida.revisarTexto')}</Text>
       {p.canasta.map((item, i) => {
         const sePuedeCambiar = item.fuente !== 'rapida';
+        const detalle = detalleDe(item, p.sistema, numeros);
         return (
           <Animated.View key={claveDe(item)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
             <Pressable
@@ -204,7 +277,7 @@ export function PanelRevision(p: {
             >
               <View style={estilos.filaTextos}>
                 <Text style={estilos.filaNombre} numberOfLines={1}>{item.nombre}</Text>
-                <Text style={estilos.filaDetalle} numberOfLines={1}>{[cantidadDeTexto(item.cantidad, p.sistema), `${numero(Math.round(item.valores.kcal))} kcal`].filter(Boolean).join(' · ')}</Text>
+                {detalle ? <Text style={estilos.filaDetalle} numberOfLines={1}>{detalle}</Text> : null}
               </View>
               <Pressable
                 onPress={() => p.alQuitar(i)}
@@ -219,20 +292,23 @@ export function PanelRevision(p: {
           </Animated.View>
         );
       })}
-      <Animated.View layout={ACOMODA} style={estilos.total}>
-        <Text style={estilos.kcal}>
-          {numero(Math.round(total.kcal))}
-          <Text style={estilos.kcalUnidad}>{`  ${t('comida.kcal').toUpperCase()}`}</Text>
-        </Text>
-        {numeros && restante !== null && <Text style={estilos.queda}>{t(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })}</Text>}
-        <ChipsDeMacros v={total} />
-      </Animated.View>
+      {numeros && (
+        <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.total}>
+          <Text style={estilos.kcal}>
+            {numero(Math.round(total.kcal))}
+            <Text style={estilos.kcalUnidad}>{`  ${t('comida.kcal').toUpperCase()}`}</Text>
+          </Text>
+          {restante !== null && <Text style={estilos.queda}>{t(restante >= 0 ? 'comida.teQuedarian' : 'comida.tePasarias', { n: numero(Math.abs(Math.round(restante))) })}</Text>}
+          <ChipsDeMacros v={total} />
+        </Animated.View>
+      )}
     </Panel>
   );
 }
 
 export function PanelGuardarComo({ alGuardar, alAtras, abajo }: { alGuardar: (nombre: string) => void; alAtras: () => void; abajo: number }) {
   const [nombre, setNombre] = useState('');
+  useSinGuardar(!!nombre.trim());
   return (
     <Panel titulo={t('comida.guardarComo.titulo')} alAtras={alAtras} abajo={abajo} pie={<Boton tipo="grande" texto={t('comun.guardar')} desactivado={!nombre.trim()} alTocar={() => alGuardar(nombre.trim())} />}>
       <Campo etiqueta={t('comida.nombre')} valor={nombre} alCambiar={setNombre} texto ejemplo={t('comida.guardarComo.ejemplo')} enfocado alListo={() => { if (nombre.trim()) alGuardar(nombre.trim()); }} />
@@ -241,15 +317,17 @@ export function PanelGuardarComo({ alGuardar, alAtras, abajo }: { alGuardar: (no
 }
 
 // ------------------------------------------------------------------ la carga rápida
-export function PanelRapida({ directo, comida, inicial, alSumar, alQuitar, alAtras, abajo }: {
-  directo: boolean; comida: Comida; inicial?: { nombre: string; valores: Valores }; alSumar: (item: Item) => void; alQuitar?: () => void; alAtras: () => void; abajo: number;
+export function PanelRapida({ directo, comida, dia, hoy, inicial, alSumar, alQuitar, alAtras, abajo }: {
+  directo: boolean; comida: Comida; dia: ClaveDia; hoy: ClaveDia; inicial?: { nombre: string; valores: Valores }; alSumar: (item: Item) => void; alQuitar?: () => void; alAtras: () => void; abajo: number;
 }) {
   // Corrigiendo una carga rápida, abre con lo que tenía.
-  const [c, setC] = useState(() => {
+  const [antes] = useState(() => {
     const v = inicial?.valores;
     const campo = (x: number | undefined) => (x ? paraCampo(x) : '');
     return { nombre: inicial?.nombre ?? '', kcal: campo(v?.kcal), proteina: campo(v?.proteina), carbohidratos: campo(v?.carbohidratos), grasas: campo(v?.grasas) };
   });
+  const [c, setC] = useState(antes);
+  useSinGuardar((Object.keys(c) as (keyof typeof c)[]).some((k) => c[k] !== antes[k]));
   const poner = (k: keyof typeof c) => (v: string) => setC((x) => ({ ...x, [k]: v }));
   const proteina = leerNumero(c.proteina) ?? 0;
   const carbohidratos = leerNumero(c.carbohidratos) ?? 0;
@@ -265,7 +343,7 @@ export function PanelRapida({ directo, comida, inicial, alSumar, alQuitar, alAtr
         <>
           <Boton
             tipo="grande"
-            texto={inicial ? t('comun.guardar') : directo ? t(`comida.agregarA.${comida}`) : t('comida.sumar')}
+            texto={inicial ? t('comun.guardar') : directo ? agregarADe(comida, dia, hoy) : t('comida.sumar')}
             desactivado={!kcal}
             alTocar={() => alSumar(itemRapido(c.nombre.trim() || t('comida.cargaRapida'), { kcal, proteina, carbohidratos, grasas }))}
           />
@@ -283,17 +361,143 @@ export function PanelRapida({ directo, comida, inicial, alSumar, alQuitar, alAtr
   );
 }
 
-// ------------------------------------------------------------------ las guardadas y las recetas
+// ------------------------------------------------------------------ las guardadas, las recetas y tus alimentos
+/** Lo que vuelve a la lista (con «Deshacer») crece apenas desde arriba, como en la galería. */
+const ENTRA_FILA = FadeInDown.duration(340).easing(LLEGA).withInitialValues({ opacity: 0, transform: [{ translateY: -4 }] });
+/** Lo recién borrado se ve un momento en su lugar y recién ahí se cierra: así se ve qué se fue. */
+const SE_VE_ANTES_DE_IRSE_MS = 340;
+const BORRAR = { comida: 'borrarComida', receta: 'borrarReceta', propio: 'borrarAlimento' } as const;
+
+/** La lista con lo que se está yendo todavía en su lugar. */
+const enSuLugar = <T extends { id: string }>(lista: T[], x: T, i: number) => (lista.some((y) => y.id === x.id) ? lista : [...lista.slice(0, i), x, ...lista.slice(i)]);
+
+/**
+ * Las comidas guardadas, las recetas y tus alimentos (la galería 46). El «+» suma de un toque (de una
+ * receta, un plato; de un alimento tuyo, su porción); tocar la fila abre su edición en el mismo panel,
+ * con «Guardar» y «Borrar» abajo. Borrar no pregunta: la hoja avisa con «Deshacer».
+ */
 export function PanelGuardadas(p: {
-  recetas: Receta[]; alSumarComida: (r: Receta) => void; alAbrirReceta: (r: Receta) => void; alNuevaReceta: () => void; alPegarReceta: () => void; alAtras: () => void; abajo: number;
+  recetas: Receta[]; propios: AlimentoPropio[]; sistema: Sistema; abajo: number;
+  alSumar: (g: Guardada) => void; alGuardar: (g: Guardada) => void; alBorrar: (g: Guardada) => void;
+  alNuevaReceta: () => void; alPegarReceta: () => void; alAtras: () => void;
 }) {
+  const numeros = useNumeros();
+  const reducido = useReducedMotion();
+  const [editando, setEditando] = useState<{ g: Guardada; e: Edicion } | null>(null);
+  const [haciaAtras, setHaciaAtras] = useState(false);
+  const [saliendo, setSaliendo] = useState<{ g: Guardada; indice: number } | null>(null);
+  useEffect(() => {
+    if (!saliendo) return;
+    const espera = setTimeout(() => setSaliendo(null), SE_VE_ANTES_DE_IRSE_MS);
+    return () => clearTimeout(espera);
+  }, [saliendo]);
+  useSinGuardar(!!editando && cambioLaEdicion(editando.g, editando.e));
+
   const comidas = p.recetas.filter((r) => r.tipo === 'comida');
   const recetas = p.recetas.filter((r) => r.tipo === 'receta');
+  const abrir = (g: Guardada) => {
+    setHaciaAtras(false);
+    setEditando({ g, e: edicionDe(g) });
+  };
+  const volver = () => {
+    Keyboard.dismiss();
+    setHaciaAtras(true);
+    setEditando(null);
+  };
+  const cambiar = (cambio: Partial<Edicion>) => setEditando((x) => x && { ...x, e: { ...x.e, ...cambio } });
+  // Sacar algo de lo que lleva no se guarda hasta «Guardar»: «‹» lo deja como estaba.
+  const quitar = (i: number) => {
+    const item = editando?.e.items[i];
+    if (!item) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    anunciar(t('comida.quitado', { alimento: item.nombre }));
+    setEditando((x) => x && { ...x, e: { ...x.e, items: x.e.items.filter((y) => y !== item) } });
+  };
+  const borrar = (g: Guardada) => {
+    const lista: { id: string }[] = g.tipo === 'propio' ? p.propios : g.tipo === 'comida' ? comidas : recetas;
+    setSaliendo({ g, indice: Math.max(0, lista.findIndex((x) => x.id === g.x.id)) });
+    volver();
+    p.alBorrar(g);
+  };
+
+  if (editando) {
+    const { g, e } = editando;
+    const editado = conLoEditado(g, e);
+    return (
+      <Panel
+        titulo={g.x.nombre}
+        alAtras={volver}
+        abajo={p.abajo}
+        vista={`${g.tipo}:${g.x.id}`}
+        haciaAtras={haciaAtras}
+        pie={(
+          <>
+            <Boton
+              tipo="grande"
+              texto={t('comun.guardar')}
+              desactivado={!editado}
+              alTocar={() => {
+                if (!editado) return;
+                p.alGuardar(editado);
+                volver();
+              }}
+            />
+            <BotonBorrar texto={t(`comida.guardadasEditar.${BORRAR[g.tipo]}`)} alTocar={() => borrar(g)} />
+          </>
+        )}
+      >
+        <EdicionDeGuardada g={g} e={e} sistema={p.sistema} numeros={numeros} alCambiar={cambiar} alQuitar={quitar} />
+      </Panel>
+    );
+  }
+
+  const sale = saliendo;
+  const vistas = {
+    comidas: sale && sale.g.tipo === 'comida' ? enSuLugar(comidas, sale.g.x, sale.indice) : comidas,
+    recetas: sale && sale.g.tipo === 'receta' ? enSuLugar(recetas, sale.g.x, sale.indice) : recetas,
+    propios: sale && sale.g.tipo === 'propio' ? enSuLugar(p.propios, sale.g.x, sale.indice) : p.propios,
+  };
+  const hay = vistas.comidas.length + vistas.recetas.length + vistas.propios.length > 0;
+  const fila = (g: Guardada, detalle: string, etiquetaDelMas: string) => {
+    // Lo que se está yendo ya no se toca.
+    const seVa = sale?.g.tipo === g.tipo && sale.g.x.id === g.x.id;
+    return (
+      <Animated.View
+        key={`${g.tipo}:${g.x.id}`}
+        entering={reducido ? ENTRA_FUNDIDO : ENTRA_FILA}
+        exiting={SALE_FUNDIDO}
+        layout={ACOMODA}
+        style={estilos.filaGuardada}
+        pointerEvents={seVa ? 'none' : 'auto'}
+        accessibilityElementsHidden={seVa}
+        importantForAccessibility={seVa ? 'no-hide-descendants' : 'auto'}
+      >
+        <Pressable onPress={() => abrir(g)} style={({ pressed }) => [estilos.filaGuardadaTocable, pressed && estilos.filaApretada]} accessibilityRole="button">
+          <View style={estilos.filaTextos}>
+            <Text style={estilos.filaNombre} numberOfLines={1}>{g.x.nombre}</Text>
+            {detalle ? <Text style={estilos.filaDetalle} numberOfLines={1}>{detalle}</Text> : null}
+          </View>
+        </Pressable>
+        <Pressable
+          onPress={() => p.alSumar(g)}
+          style={({ pressed }) => [estilos.mas, pressed && estilos.apretado]}
+          accessibilityRole="button"
+          accessibilityLabel={etiquetaDelMas}
+          hitSlop={margenDeToque(36)}
+        >
+          <Icono nombre="plus" tam={17} peso="semibold" />
+        </Pressable>
+      </Animated.View>
+    );
+  };
+  const kcal = (v: Valores) => `${numero(Math.round(v.kcal))} kcal`;
   return (
     <Panel
       titulo={t('comida.guardadas')}
       alAtras={p.alAtras}
       abajo={p.abajo}
+      vista="lista"
+      haciaAtras={haciaAtras}
       pie={(
         <>
           <Boton tipo="quitar" texto={t('comida.receta.nueva')} alTocar={p.alNuevaReceta} />
@@ -301,41 +505,102 @@ export function PanelGuardadas(p: {
         </>
       )}
     >
-      {comidas.map((r) => {
-        const total = sumarValores(r.items.map((i) => i.valores));
+      {hay && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={estilos.texto}>{t('comida.guardadasEditar.tocaParaCambiar')}</Animated.Text>}
+      {vistas.comidas.map((r) => {
+        const nombres = r.items.map((i) => i.nombre).join(', ');
+        return fila({ tipo: 'comida', x: r }, numeros ? `${nombres} · ${kcal(sumarValores(r.items.map((i) => i.valores)))}` : nombres, t('comida.sumarAlimento', { alimento: r.nombre }));
+      })}
+      {vistas.recetas.length > 0 && (
+        <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
+          <Etiqueta estilo={estilos.separador}>{t('comida.recetas')}</Etiqueta>
+        </Animated.View>
+      )}
+      {/* Sin los números, de la receta queda lo que suma el «+»: un plato. */}
+      {vistas.recetas.map((r) => fila(
+        { tipo: 'receta', x: r },
+        numeros ? t('comida.receta.porPlato', { kcal: numero(Math.round(valoresDeReceta(r).porcion.kcal)) }) : t('comida.receta.plato'),
+        t('comida.receta.sumarPlato'),
+      ))}
+      {vistas.propios.length > 0 && (
+        <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA}>
+          <Etiqueta estilo={estilos.separador}>{t('comida.guardadasEditar.tusAlimentos')}</Etiqueta>
+        </Animated.View>
+      )}
+      {vistas.propios.map((a) => {
+        const cantidad = porcionDePropio(a);
+        return fila({ tipo: 'propio', x: a }, detalleDe({ cantidad, valores: valoresDeCantidad(a.por100g, cantidad) }, p.sistema, numeros), t('comida.sumarAlimento', { alimento: a.nombre }));
+      })}
+      {!hay && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={estilos.nota}>{t('comida.sinRegistros')}</Animated.Text>}
+    </Panel>
+  );
+}
+
+/** Lo que se cambia de una guardada: el nombre y lo que lleva (de una receta, también lo que rinde y lo que pesa), o lo de la etiqueta de un alimento tuyo. */
+function EdicionDeGuardada({ g, e, sistema, numeros, alCambiar, alQuitar }: {
+  g: Guardada; e: Edicion; sistema: Sistema; numeros: boolean; alCambiar: (cambio: Partial<Edicion>) => void; alQuitar: (i: number) => void;
+}) {
+  if (g.tipo === 'propio') {
+    const kcalDerivadas = kcalDeMacros(leerNumero(e.proteina) ?? 0, leerNumero(e.carbohidratos) ?? 0, leerNumero(e.grasas) ?? 0);
+    return (
+      <>
+        <Campo etiqueta={t('comida.nombre')} valor={e.nombre} alCambiar={(nombre) => alCambiar({ nombre })} texto />
+        <Campo etiqueta={t('comida.etiquetaRevision.marca')} valor={e.marca} alCambiar={(marca) => alCambiar({ marca })} texto largo={60} mayusculas="words" corrector={false} />
+        <Campo etiqueta={t('comida.etiquetaRevision.porcion')} valor={e.porcion} alCambiar={(porcion) => alCambiar({ porcion })} unidad="g" />
+        <Etiqueta estilo={estilos.separador}>{t('comida.etiquetaRevision.porPorcion')}</Etiqueta>
+        <Campo etiqueta={t('comida.kcal')} valor={e.kcal} alCambiar={(kcal) => alCambiar({ kcal })} unidad="kcal" ejemplo={!e.kcal && kcalDerivadas ? numero(Math.round(kcalDerivadas)) : undefined} />
+        <Campo etiqueta={t('comida.carbohidratos')} valor={e.carbohidratos} alCambiar={(carbohidratos) => alCambiar({ carbohidratos })} unidad="g" />
+        <Campo etiqueta={t('comida.proteina')} valor={e.proteina} alCambiar={(proteina) => alCambiar({ proteina })} unidad="g" />
+        <Campo etiqueta={t('comida.grasas')} valor={e.grasas} alCambiar={(grasas) => alCambiar({ grasas })} unidad="g" ultimo />
+      </>
+    );
+  }
+  const receta = g.tipo === 'receta';
+  const porciones = receta ? leerNumero(e.porciones) : 1;
+  // De una receta, un plato: lo de la olla dividido por lo que rinde, como lo suma la lista.
+  const deUno = escalar(sumarValores(e.items.map((i) => i.valores)), 1 / (porciones && porciones > 0 ? porciones : 1));
+  return (
+    <>
+      <Campo etiqueta={t('comida.nombre')} valor={e.nombre} alCambiar={(nombre) => alCambiar({ nombre })} texto ultimo={!receta} />
+      {receta && (
+        <>
+          <Campo etiqueta={t('comida.receta.porciones')} valor={e.porciones} alCambiar={(x) => alCambiar({ porciones: x })} unidad={t('comida.receta.porcionesUnidad')} />
+          <Campo etiqueta={t('comida.receta.pesoFinal')} valor={e.pesoFinal} alCambiar={(x) => alCambiar({ pesoFinal: x })} unidad="g" ejemplo={t('comida.opcional')} ultimo />
+        </>
+      )}
+      <Etiqueta estilo={estilos.separador}>{t(receta ? 'comida.receta.ingredientes' : 'comida.guardadasEditar.loQueLleva')}</Etiqueta>
+      {e.items.map((item, i) => {
+        const detalle = detalleDe(item, sistema, numeros);
         return (
-          <View key={r.id} style={estilos.fila}>
+          <Animated.View key={claveDe(item)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.fila}>
             <View style={estilos.filaTextos}>
-              <Text style={estilos.filaNombre} numberOfLines={1}>{r.nombre}</Text>
-              <Text style={estilos.filaDetalle} numberOfLines={1}>{`${r.items.map((i) => i.nombre).join(', ')} · ${numero(Math.round(total.kcal))} kcal`}</Text>
+              <Text style={estilos.filaNombre} numberOfLines={1}>{item.nombre}</Text>
+              {detalle ? <Text style={estilos.filaDetalle} numberOfLines={1}>{detalle}</Text> : null}
             </View>
             <Pressable
-              onPress={() => p.alSumarComida(r)}
-              style={({ pressed }) => [estilos.mas, pressed && estilos.apretado]}
+              onPress={() => alQuitar(i)}
+              style={({ pressed }) => [estilos.quitar, pressed && estilos.apretado]}
               accessibilityRole="button"
-              accessibilityLabel={t('comida.sumarAlimento', { alimento: r.nombre })}
-              hitSlop={margenDeToque(36)}
+              accessibilityLabel={t('comida.quitarAlimento', { alimento: item.nombre })}
+              hitSlop={margenDeToque(32)}
             >
-              <Icono nombre="plus" tam={17} peso="semibold" />
+              <Icono nombre="xmark" tam={12} color="rgba(239, 230, 207, 0.62)" peso="semibold" />
             </Pressable>
-          </View>
+          </Animated.View>
         );
       })}
-      {recetas.length > 0 && <Etiqueta estilo={estilos.separador}>{t('comida.recetas')}</Etiqueta>}
-      {recetas.map((r) => {
-        const { porcion } = valoresDeReceta(r);
-        return (
-          <Pressable key={r.id} onPress={() => p.alAbrirReceta(r)} style={({ pressed }) => [estilos.fila, pressed && estilos.filaApretada]} accessibilityRole="button">
-            <View style={estilos.filaTextos}>
-              <Text style={estilos.filaNombre} numberOfLines={1}>{r.nombre}</Text>
-              <Text style={estilos.filaDetalle} numberOfLines={1}>{t('comida.receta.porPlato', { kcal: numero(Math.round(porcion.kcal)) })}</Text>
-            </View>
-            <Icono nombre="chevron.right" tam={13} color={colores.pergaminoApagado} />
-          </Pressable>
-        );
-      })}
-      {!comidas.length && !recetas.length && <Text style={estilos.nota}>{t('comida.sinRegistros')}</Text>}
-    </Panel>
+      {numeros ? (
+        <Animated.View layout={ACOMODA} style={estilos.total}>
+          <Text style={estilos.kcal}>
+            {numero(Math.round(deUno.kcal))}
+            <Text style={estilos.kcalUnidad}>{`  ${(receta ? t('comida.receta.porPlato', { kcal: '' }).trim() : t('comida.kcal')).toUpperCase()}`}</Text>
+          </Text>
+          {!e.items.length && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={estilos.queda}>{t('comida.guardadasEditar.vacia')}</Animated.Text>}
+          <ChipsDeMacros v={deUno} />
+        </Animated.View>
+      ) : (
+        !e.items.length && <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.nota}>{t('comida.guardadasEditar.vacia')}</Animated.Text>
+      )}
+    </>
   );
 }
 
@@ -345,6 +610,7 @@ export function PanelReceta(p: {
   borrador: Borrador; sistema: Sistema; alCambiar: (b: Borrador) => void; alQuitar: (i: number) => void; alAgregarIngrediente: () => void; alPegar: () => void; alGuardar: () => void; alAtras: () => void; abajo: number;
 }) {
   const b = p.borrador;
+  const numeros = useNumeros();
   const total = sumarValores(b.items.map((i) => i.valores));
   const porciones = leerNumero(b.porciones) ?? 0;
   const listo = !!b.nombre.trim() && b.items.length > 0 && porciones > 0;
@@ -359,7 +625,7 @@ export function PanelReceta(p: {
         <Animated.View key={claveDe(item)} entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.fila}>
           <View style={estilos.filaTextos}>
             <Text style={estilos.filaNombre} numberOfLines={1}>{item.nombre}</Text>
-            <Text style={estilos.filaDetalle} numberOfLines={1}>{`${cantidadDeTexto(item.cantidad, p.sistema)} · ${numero(Math.round(item.valores.kcal))} kcal`}</Text>
+            <Text style={estilos.filaDetalle} numberOfLines={1}>{detalleDe(item, p.sistema, numeros)}</Text>
           </View>
           <Pressable
             onPress={() => p.alQuitar(i)}
@@ -381,7 +647,7 @@ export function PanelReceta(p: {
           </Animated.View>
         )}
       </Animated.View>
-      {b.items.length > 0 && porciones > 0 && (
+      {numeros && b.items.length > 0 && porciones > 0 && (
         <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} layout={ACOMODA} style={estilos.total}>
           <Text style={estilos.kcal}>
             {numero(Math.round(total.kcal / porciones))}
@@ -411,7 +677,9 @@ function tituloDe(texto: string, lineas: readonly LineaDeReceta[]): string {
  * la base con sus gramos, y la revisión (un toque saca una línea) antes de pasarla a la receta.
  */
 export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema: Sistema; alUsar: (r: RecetaPegada) => void; alAtras: () => void; abajo: number }) {
+  const numeros = useNumeros();
   const [texto, setTexto] = useState('');
+  useSinGuardar(!!texto.trim());
   const [leyendo, setLeyendo] = useState(false);
   const [leida, setLeida] = useState<{ nombre: string; porciones: number | null; pesoFinal: number | null; lineas: LineaBuscada[] } | null>(null);
   const leer = async () => {
@@ -476,11 +744,13 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
                       <Text style={[estilos.filaNombre, !sirve && estilos.sinEncontrar, x.fuera && estilos.tachado]} numberOfLines={1}>{x.item ? x.item.nombre : t('comida.receta.sinEncontrar')}</Text>
                       <Text style={estilos.filaDetalle} numberOfLines={1}>{x.linea.texto}</Text>
                     </View>
-                    <Text style={estilos.filaDetalle}>{sirve ? `${cantidadDeTexto(x.item!.cantidad, sistema)} · ${numero(Math.round(x.item!.valores.kcal))} kcal` : x.item ? t('comida.receta.sinCantidad') : ''}</Text>
+                    <Text style={estilos.filaDetalle}>{sirve ? detalleDe(x.item!, sistema, numeros) : x.item ? t('comida.receta.sinCantidad') : ''}</Text>
                   </Pressable>
                 );
               })}
-              {usables.length > 0 && <Text style={estilos.totalPegado}>{t('comida.receta.porPlato', { kcal: numero(Math.round(total.kcal / (leida.porciones ?? 1))) })}</Text>}
+              {numeros && usables.length > 0 && (
+                <Animated.Text entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO} style={estilos.totalPegado}>{t('comida.receta.porPlato', { kcal: numero(Math.round(total.kcal / (leida.porciones ?? 1))) })}</Animated.Text>
+              )}
             </>
           ) : (
             <Text style={estilos.nota}>{t('comida.receta.nadaLeido')}</Text>
@@ -522,6 +792,8 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
       ...Object.fromEntries(CAMPOS_DE_ETIQUETA.map(([k]) => [k, v[k] != null ? paraCampo(v[k]!) : ''])),
     };
   });
+  // Lo leído de la etiqueta o lo que ya venía (el nombre buscado, el código) también se perdería: cuenta como escrito.
+  useSinGuardar(Object.values(c).some((x) => !!x.trim()));
   const poner = (k: string) => (x: string) => setC((antes) => ({ ...antes, [k]: x }));
   const gramos = leerNumero(c.porcionGramos);
   const avisos = inicial.leida?.avisos ?? [];
@@ -568,7 +840,8 @@ export function PanelCrear({ inicial, alGuardar, alAtras, abajo }: { inicial: Da
 }
 
 /** Cuántos alimentos y kcal tiene la comida que se arma: «3 alimentos · 640 kcal». */
-export const resumenDeCanasta = (canasta: Item[]) => plural('comida.agregados', canasta.length, { kcal: numero(Math.round(sumarValores(canasta.map((i) => i.valores)).kcal)) });
+export const resumenDeCanasta = (canasta: Item[], numeros = true) =>
+  numeros ? plural('comida.agregados', canasta.length, { kcal: numero(Math.round(sumarValores(canasta.map((i) => i.valores)).kcal)) }) : plural('comida.alimentos', canasta.length);
 
 const estilos = StyleSheet.create({
   // Las esquinas de la hoja de registro, que no recorta lo de adentro.
@@ -576,7 +849,8 @@ const estilos = StyleSheet.create({
   cabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, height: 46, paddingTop: 2, paddingHorizontal: 12 },
   atras: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   lugar: { width: 38 },
-  titulo: { flex: 1, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino },
+  tituloLugar: { flex: 1, minWidth: 0 },
+  titulo: { textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino },
   cuerpo: { flex: 1 },
   cuerpoAdentro: { paddingHorizontal: 20, paddingBottom: 18 },
   pie: { gap: 8, paddingTop: 12, paddingHorizontal: 20, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(8, 12, 28, 0.94)' },
@@ -584,6 +858,9 @@ const estilos = StyleSheet.create({
   nota: { marginTop: 14, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.55)' },
   aviso: { marginTop: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, backgroundColor: 'rgba(232, 196, 106, 0.1)', borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.32)', fontFamily: letras.texto, fontSize: 13, lineHeight: 17.5, color: colores.oroClaro },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingVertical: 7, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
+  // En Guardadas, toda la fila (menos el «+») se toca para cambiarla: el alto va en lo que se toca.
+  filaGuardada: { flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
+  filaGuardadaTocable: { flex: 1, minWidth: 0, minHeight: 58, paddingVertical: 7, justifyContent: 'center' },
   filaApretada: { opacity: 0.7 },
   apretado: { opacity: 0.6 },
   filaTextos: { flex: 1, gap: 4, minWidth: 0 },
@@ -615,4 +892,7 @@ const estilos = StyleSheet.create({
   sinEncontrar: { fontStyle: 'italic', color: 'rgba(239, 230, 207, 0.5)' },
   totalPegado: { marginTop: 12, textAlign: 'right', fontFamily: letras.textoMedio, fontSize: 14, color: colores.oroClaro },
   agregarIngrediente: { marginTop: 12, alignItems: 'flex-start', gap: 8 },
+  borrar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44, paddingHorizontal: 13, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(240, 165, 138, 0.28)' },
+  borrarApretado: { opacity: 0.75, transform: [{ scale: 0.97 }] },
+  borrarTexto: { fontFamily: letras.texto, fontSize: 15, color: '#f0a58a' },
 });

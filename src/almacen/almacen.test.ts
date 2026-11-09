@@ -445,6 +445,26 @@ describe('lo que se come', () => {
     expect(vigentes(almacen.estado().registros.values()).filter((r) => r.planificado)).toEqual([]);
   });
 
+  it('copiar o mover alimentos sueltos: a otra comida a su hora, a mañana planificados, y mover se deshace', async () => {
+    const { almacen } = await armar();
+    const [pan, postre] = almacen.registrar([banana(), alfajor()], { comida: 'almuerzo' });
+    // El postre del almuerzo a la merienda de hoy, a las 17:30.
+    const [copia] = almacen.copiarRegistros([postre.id], { dia: '2026-10-21', comida: 'merienda', minutos: 17 * 60 + 30 });
+    expect(copia).toMatchObject({ dia: '2026-10-21', comida: 'merienda', nombre: postre.nombre, planificado: false });
+    expect(new Date(copia.momento).getHours() * 60 + new Date(copia.momento).getMinutes()).toBe(17 * 60 + 30);
+    // A mañana: planificado. Lo de otra comida que se cuele en los ids no se copia.
+    const manana = almacen.copiarRegistros([pan.id, copia.id], { dia: '2026-10-22', comida: 'almuerzo' });
+    expect(manana).toHaveLength(1);
+    expect(manana[0]).toMatchObject({ dia: '2026-10-22', planificado: true, nombre: pan.nombre });
+    // Mover = copiar y borrar; deshacer = borrar la copia y devolver lo de antes.
+    const [movido] = almacen.copiarRegistros([pan.id], { dia: '2026-10-21', comida: 'cena' });
+    almacen.borrarRegistro(pan.id);
+    expect(almacen.estado().registros.get(pan.id)?.borrado).toBe(true);
+    almacen.borrarRegistro(movido.id);
+    almacen.deshacerBorrado(pan.id);
+    expect(vigentes(almacen.estado().registros.values()).filter((r) => r.dia === '2026-10-21').map((r) => r.comida).sort()).toEqual(['almuerzo', 'almuerzo', 'merienda']);
+  });
+
   it('lo que armó el plan queda planificado aunque sea hoy, se anota de a una comida, y confirmar el día no lo toca', async () => {
     // El bug: «Confirmar lo planificado» anotaba también la cena armada que todavía no se comió.
     const { almacen } = await armar();

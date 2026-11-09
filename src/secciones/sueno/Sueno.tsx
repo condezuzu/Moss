@@ -5,11 +5,12 @@
 // dónde sale cada dato, con la precisión de la noche. Lo que falta va en gris: nunca se inventa.
 // Sin reloj, las noches que estima Moss con el teléfono (spec/sueno.md, «Sin reloj»): arriba, la
 // pregunta de la hora si no está segura, junto a las caras de la mañana. Hasta tener noches, las de
-// ejemplo, con su aviso.
+// ejemplo, con su aviso. Arriba de todo, tirar para abajo vuelve a leer Salud.
 
+import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
 
 import { actualizarSalud } from '@/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
@@ -20,14 +21,17 @@ import {
   type Confianza, type Fuente, type Noche, type NochePropia, type OrigenDeNoche, type TipoDeVital,
 } from '@/dominio/sueno';
 import { aprenderPersonal } from '@/dominio/sinReloj';
+import { saludPedida } from '@/salud/salud';
 import { pedirMovimiento, permisoDeMovimiento } from '../../../modules/movimiento';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Relleno } from '../animados';
+import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { PESTANAS } from '../Barra';
 import { Icono } from '../comida/comunes';
 import { duracion, fechaCorta, fechaDiaMes, horaDelDia, letraDelDia, numero, useEstado } from '../comida/datos';
+import { DE_LA_NOCHE, FranjaBajoLaHora } from '../franja';
 import { useSueno } from '../ganchos';
 import { Hipnograma } from '../graficos/Graficos';
 import type { Sueno } from '../persona';
@@ -48,6 +52,97 @@ const TIPO_DE_ORIGEN: Record<OrigenDeNoche, TipoDeChip> = { estimada: 'tenue', c
 /** Un degradado de fondo: en la web es CSS, en el teléfono el de React Native 0.88. */
 const degradado = (g: string) => (Platform.OS === 'web' ? { backgroundImage: g } : { experimental_backgroundImage: g }) as ViewStyle;
 
+// ------------------------------------------------------------------ volver a leer Salud
+// Arriba de todo, tirar para abajo vuelve a leer Salud (aprobado en la galería 46, Detalles.tirar): la
+// ruedita de iOS gira mientras lee; al terminar, «Al día con Salud» un momento en su lugar, y la página sube.
+
+/** Cómo va: girando, con «Al día con Salud» en el lugar de la ruedita, o con la página subiendo otra vez. */
+type Lectura = 'quieta' | 'leyendo' | 'alDia' | 'subiendo';
+/** La ruedita, del color de la de la galería. */
+const PERGAMINO = '239, 230, 207';
+const ALFA_DE_LA_RUEDITA = 0.85;
+/** Al terminar, la ruedita se apaga en estos pasos, de a 50 ms: iOS no deja fundirla, pero sí cambiarle el color. */
+const APAGAR = [0.6, 0.35, 0.12, 0];
+/** Lo mínimo que gira: si Salud contesta enseguida, no es un parpadeo. */
+const GIRA_AL_MENOS = 700;
+/** Cuánto queda «Al día con Salud» antes de que la página vuelva a subir, como en la galería. */
+const AL_DIA_MS = 1000;
+/** Lo que tarda iOS en subir la página: hasta entonces la ruedita sigue apagada, si no reaparece al irse. */
+const SUBE_MS = 600;
+/** El alto que iOS le da a la ruedita mientras gira: «Al día con Salud» va en su medio. */
+const ALTO_DE_LA_RUEDITA = 60;
+
+function useLeerSalud() {
+  const [lectura, setLectura] = useState<Lectura>('quieta');
+  // Cada lectura lleva su número: una que empieza mientras la anterior termina deja sin efecto a la anterior.
+  const vez = useRef(0);
+  const esperas = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => {
+    const pendientes = esperas.current;
+    return () => {
+      vez.current += 1;
+      pendientes.forEach(clearTimeout);
+      pendientes.clear();
+    };
+  }, []);
+  const esperar = (ms: number) => new Promise<void>((listo) => {
+    const id = setTimeout(() => {
+      esperas.current.delete(id);
+      listo();
+    }, ms);
+    esperas.current.add(id);
+  });
+  const leer = async () => {
+    vez.current += 1;
+    const esta = vez.current;
+    // Al armarse vibra como el tope de deslizar: desde iOS 17.4, la ruedita de React Native no vibra sola.
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setLectura('leyendo');
+    anunciar(t('sueno.leer.leyendo'));
+    const [, pedida] = await Promise.all([actualizarSalud().catch(() => {}), saludPedida(), esperar(GIRA_AL_MENOS)]);
+    if (esta !== vez.current) return;
+    // Sin Salud pedida no se leyó nada de ahí (sí la noche del teléfono): la ruedita se va sin decir que está al día.
+    if (!pedida) {
+      setLectura('quieta');
+      return;
+    }
+    setLectura('alDia');
+    anunciar(t('sueno.leer.listo'));
+    await esperar(AL_DIA_MS);
+    if (esta !== vez.current) return;
+    setLectura('subiendo');
+    await esperar(SUBE_MS);
+    if (esta === vez.current) setLectura('quieta');
+  };
+  return { lectura, leer };
+}
+
+/** La ruedita de iOS, debajo de la hora (`arriba`). Con «Al día con Salud» se apaga y queda así mientras la página sube. */
+function Ruedita({ lectura, alLeer, arriba }: { lectura: Lectura; alLeer: () => void; arriba: number }) {
+  const apagada = lectura === 'alDia' || lectura === 'subiendo';
+  const [paso, setPaso] = useState(0);
+  const [antes, setAntes] = useState(apagada);
+  if (apagada !== antes) {
+    setAntes(apagada);
+    setPaso(0);
+  }
+  useEffect(() => {
+    if (!apagada) return;
+    const pasos = APAGAR.map((_, i) => setTimeout(() => setPaso(i + 1), (i + 1) * 50));
+    return () => pasos.forEach(clearTimeout);
+  }, [apagada]);
+  const alfa = apagada && paso > 0 ? APAGAR[paso - 1] : ALFA_DE_LA_RUEDITA;
+  return (
+    <RefreshControl
+      refreshing={lectura === 'leyendo' || lectura === 'alDia'}
+      onRefresh={alLeer}
+      tintColor={`rgba(${PERGAMINO}, ${alfa})`}
+      // El scroll empieza arriba de todo: sin correrla, la ruedita quedaba debajo de la isla.
+      progressViewOffset={arriba}
+    />
+  );
+}
+
 export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
   const e = useEstado();
   const s = useSueno();
@@ -64,12 +159,22 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const menor = edad !== undefined && edad < 18;
   const reducido = useReducedMotion();
   const esLaActual = useEsLaActual(SUENO);
-  const scroll = useRef<ScrollViewInstance>(null);
+  const scroll = useAnimatedRef<ScrollView>();
+  const scrollY = useScrollOffset(scroll);
   // Tocar otra vez la pestaña sube arriba de todo.
-  useEffect(() => alTocarDeNuevo(SUENO, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido]);
+  useEffect(() => alTocarDeNuevo(SUENO, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido, scroll]);
+  const { lectura, leer } = useLeerSalud();
   return (
     <View style={{ width: ancho }}>
-      <ScrollView ref={scroll} contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }} showsVerticalScrollIndicator={false} scrollsToTop={esLaActual}>
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
+        showsVerticalScrollIndicator={false}
+        scrollsToTop={esLaActual}
+        scrollEventThrottle={16}
+        // En la web no hay Salud que leer.
+        refreshControl={Platform.OS === 'ios' ? <Ruedita lectura={lectura} alLeer={leer} arriba={arriba} /> : undefined}
+      >
         <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('sueno.titulo')} />
         {s.deEjemplo && <AvisoDeEjemplo texto={t('sueno.ejemplo')} />}
         <LaManana hoy={e.hoy} noche={s.noches.find((n) => n.clave === e.hoy) ?? null} propia={e.noches.get(e.hoy)} noches={s.noches} ancho={interior} desde={e.metas[0]?.desde ?? null} />
@@ -109,6 +214,20 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         <LasFuentes n={noche} s={s} clave={clave} />
         <Text style={st.pie}>{t('sueno.noMedico')}</Text>
       </ScrollView>
+      <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} rgb={DE_LA_NOCHE} />
+      {/* En el lugar de la ruedita, que ya se apagó: la fecha está más abajo, con la página bajada. VoiceOver ya lo dijo. */}
+      {lectura === 'alDia' && (
+        <Animated.View
+          entering={FadeIn.duration(250).reduceMotion(ReduceMotion.Never)}
+          exiting={FadeOut.duration(250).reduceMotion(ReduceMotion.Never)}
+          style={[st.alDia, { top: arriba }]}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Text style={st.alDiaTexto} numberOfLines={1} maxFontSizeMultiplier={1.3}>{t('sueno.leer.listo')}</Text>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -240,12 +359,17 @@ function LaNocheDeMoss({ n, hoy, propia }: { n: Noche; hoy: ClaveDia; propia: No
               if (cambiadas || m.origen === 'estimada') ponerHora(n.clave, d, h, cambiadas ? 'corregida' : 'confirmada', propia);
               setEditando(false);
             }}
+            // A diferencia de «Guardar» sin mover nada, no confirma la estimación: queda todo como estaba.
+            alCancelar={() => setEditando(false)}
           />
         </Aparece>
       ) : (
-        <Pressable onPress={() => setEditando(true)} style={({ pressed }) => [tarjeta.enlace, pressed && st.enlaceApretado]} hitSlop={{ top: 8, bottom: 14, left: 10, right: 10 }} accessibilityRole="button">
-          <Text style={tarjeta.enlaceTexto}>{t('sueno.cambiarHora')}</Text>
-        </Pressable>
+        // Al cerrar el editor, vuelve con un fundido mientras el editor se va.
+        <Aparece>
+          <Pressable onPress={() => setEditando(true)} style={({ pressed }) => [tarjeta.enlace, pressed && st.enlaceApretado]} hitSlop={{ top: 8, bottom: 14, left: 10, right: 10 }} accessibilityRole="button">
+            <Text style={tarjeta.enlaceTexto}>{t('sueno.cambiarHora')}</Text>
+          </Pressable>
+        </Aparece>
       )}
     </Carta>
   );
@@ -523,6 +647,8 @@ function LasFuentes({ n, s, clave }: { n: Noche | null; s: Sueno; clave: ClaveDi
 }
 
 const st = StyleSheet.create({
+  alDia: { position: 'absolute', left: 0, right: 0, height: ALTO_DE_LA_RUEDITA, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  alDiaTexto: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.55)' },
   tira: { marginTop: 14, flexDirection: 'row', gap: 3, paddingTop: 10, paddingHorizontal: 6, paddingBottom: 8, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(8, 12, 26, 0.6)' },
   noche: { flex: 1, alignItems: 'center', gap: 4, paddingTop: 3, paddingBottom: 4, borderRadius: 9 },
   nocheElegida: { backgroundColor: 'rgba(239, 230, 207, 0.08)' },

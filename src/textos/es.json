@@ -70,7 +70,8 @@
         "correo": "Escribe tu correo.",
         "otro": "No se pudo entrar. Inténtalo de nuevo."
       },
-      "enviado": "Te enviamos un correo para cambiar la contraseña."
+      "enviado": "Te enviamos un correo para cambiar la contraseña.",
+      "entrando": "Entrando…"
     },
     "cuestionario": {
       "paso": "{n} de {total}",
@@ -893,7 +894,52 @@
     "lector": {
       "macro": "{macro}: {n} g"
     },
-    "quitarAlimento": "Quitar {alimento}"
+    "quitarAlimento": "Quitar {alimento}",
+    "menu": {
+      "copiarA": "Copiar a…",
+      "moverA": "Mover a…",
+      "borrar": "Borrar",
+      "copiarTitulo": "Copiar a",
+      "moverTitulo": "Mover a",
+      "copiado": "Copiado {donde}",
+      "movido": "Movido {donde}",
+      "comidaBorrada": {
+        "uno": "{comida} · {n} alimento quitado",
+        "otros": "{comida} · {n} alimentos quitados"
+      },
+      "donde": {
+        "mismo": "{aLa}",
+        "hoy": "{aLa} de hoy",
+        "ayer": "{aLa} de ayer",
+        "manana": "{aLa} de mañana",
+        "otro": "{aLa} del {dia}"
+      },
+      "aca": "Está aquí"
+    },
+    "delDia": {
+      "ayer": "ayer",
+      "manana": "mañana",
+      "otro": "{dia} {num}"
+    },
+    "agregarADia": {
+      "ayer": "Agregar {aLa} de ayer",
+      "manana": "Agregar {aLa} de mañana",
+      "otro": "Agregar {aLa} del {dia}"
+    },
+    "guardadasEditar": {
+      "tusAlimentos": "Tus alimentos",
+      "loQueLleva": "Lo que lleva",
+      "tocaParaCambiar": "Toca una para cambiarla o borrarla.",
+      "borrarComida": "Borrar esta comida",
+      "borrarReceta": "Borrar esta receta",
+      "borrarAlimento": "Borrar este alimento",
+      "borrada": "Borraste «{nombre}»",
+      "vacia": "Sin alimentos: agrega alguno o bórrala."
+    },
+    "alimentos": {
+      "uno": "{n} alimento",
+      "otros": "{n} alimentos"
+    }
   },
   "inicio": {
     "titulo": "Hoy",
@@ -1340,7 +1386,10 @@
       "merienda": "Lo que sueles merendar",
       "cena": "Lo que sueles cenar",
       "snack": "Lo que sueles picar"
-    }
+    },
+    "vasoQuitado": "Un vaso de agua menos",
+    "mantenerParaQuitar": "Mantén apretado para quitar el último vaso",
+    "quitarVaso": "Quitar el último vaso"
   },
   "cuerpo": {
     "sitios": {
@@ -2151,6 +2200,10 @@
     "deudaVer": {
       "mas": "Más",
       "menos": "Menos"
+    },
+    "leer": {
+      "leyendo": "Leyendo Salud…",
+      "listo": "Al día con Salud"
     }
   },
   "perfil": {
@@ -2549,7 +2602,12 @@
     "pasos": {
       "temprano": "{que}, más temprano",
       "tarde": "{que}, más tarde"
-    }
+    },
+    "borrando": "Borrando…",
+    "cerrandoSesion": "Cerrando sesión…",
+    "exportando": "Exportando…",
+    "alertaBorrar": "Borrar",
+    "cuidadoCambiado": "Cuidados: {valor}"
   },
   "fecha": {
     "dias": [
@@ -2612,7 +2670,10 @@
     "atras": "Atrás",
     "siguiente": "Siguiente",
     "menos": "Menos {que}",
-    "mas": "Más {que}"
+    "mas": "Más {que}",
+    "descartarTitulo": "¿Descartar lo que escribiste?",
+    "descartar": "Descartar",
+    "seguirEditando": "Seguir editando"
   },
   "diagnostico": {
     "salud": "Simular Salud",
