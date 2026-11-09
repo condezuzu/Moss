@@ -165,6 +165,48 @@ con una segunda fuente y con controles automáticos sobre toda la base.
   el teléfono (`src/almacen/buzon.ts`) y salen con sesión por dos funciones de Moss;
   nadie las lee desde la app.
 
+### La base de la comunidad (9/11/2026)
+
+Lo pediste el 9/11/2026: lo que alguien carga y no estaba se vuelve de todos cuando
+varias personas cargan lo mismo. Servidor en `supabase/moss/0012_comunidad.sql`; en el
+teléfono, `src/comida/comunidad.ts` (lo que se revisa antes de mandar) y
+`src/comida/catalogo.ts` (cómo se busca y se muestra).
+
+- **Qué se propone.** Lo que se crea a mano o desde la etiqueta («Crear alimento»),
+  con «Mandar lo que no encuentro» prendido (el mismo sí de las búsquedas, que empieza
+  apagado por la guía 5.1.1 de Apple). No se propone lo que vino de Open Food Facts
+  (ya está allá), lo que llegó por un enlace de otra persona ni lo que lleva alcohol.
+- **Cuándo se publica.** Con código de barras: 3 personas distintas con calorías y
+  los tres macros parecidos (10 %, o hasta 1 g y 10 kcal en lo chico, porque las
+  etiquetas redondean). Sin código: 5 personas con el mismo nombre y marca y los
+  mismos valores; si no, queda solo en la cuenta de quien lo cargó (sus propios).
+  Se publica la mediana del grupo: uno raro no lo arruina. Cambiar de opinión pisa lo
+  tuyo: una persona nunca cuenta dos veces.
+- **Dónde queda.** En `moss.catalogo`, con `comunidad`, cuántas `personas` y de qué
+  `paises`. La app ya baja el catálogo (sin OTA nueva para cada alimento) y lo
+  encuentra al buscar y al escanear. Se muestra «Verificado por la comunidad», en oro
+  (el verde es lo que Moss comparó con una tabla oficial), y «¿De dónde sale esto?»
+  dice cuántas personas lo cargaron.
+- **Al buscar.** Va después de la base, salvo que lo escrito sea su nombre entero o
+  su marca; lo cargado desde otro país, al final.
+- **Reportar.** «Reportar un error» en algo de la comunidad va con la sesión: con 3
+  reportes de personas distintas se oculta (`retirado`, en todas las versiones de la
+  app). Después, propuestas nuevas pueden volver a publicarlo corregido. Lo de la base
+  y lo curado no se oculta solo: sus reportes siguen yendo sin nombre, para revisarlos
+  a mano (si no, tres personas podrían sacar «Banana» para todos).
+- **Contra la basura.** Solo con cuenta y por dos funciones (nadie lee ni escribe las
+  tablas directo); el código con su dígito verificador; el nombre con letras y sin
+  direcciones; valores posibles que cierran con 4/4/9; hasta 30 propuestas y 30
+  reportes por día y por cuenta; solo cuentan las cuentas de más de 24 horas; y el
+  acuerdo de varias personas.
+- **Los umbrales**, en `moss.comunidad_reglas` (una fila): `confirmaciones`,
+  `confirmaciones_sin_codigo`, `margen`, `margen_minimo_g`, `margen_minimo_kcal`,
+  `reportes_para_ocultar`, `propuestas_por_dia`, `reportes_por_dia` y
+  `antiguedad_minima`. Se cambian con un `update` en el SQL Editor, sin migración ni OTA.
+- **Privacidad.** Junto a cada propuesta y cada reporte de la comunidad queda la cuenta,
+  solo para contar personas distintas; nunca se muestra, se borra con «Borrar mis datos»
+  o con la cuenta, y lo publicado no dice de quién es. La política lo dice (`docs/`).
+
 ## Cómo se miden los alimentos (22/10/2026)
 
 Lo pediste el 22/10/2026. Lo que se guarda es siempre lo que se come, en gramos
@@ -250,6 +292,7 @@ detalles, separados con « · »:
 | `ml` | se toma: se escribe en ml. La densidad sale de la taza de USDA | `ml` · `densidad=1.03` |
 | `aceite` | salteado o a la plancha: pregunta por el aceite. `aceite=incluido`, frito | `aceite` |
 | `marca=` y `ean=` | un producto: su marca y sus códigos de barras | `marca=Conaprole · ean=…` |
+| `paises=` | dónde se vende, si no es en todos lados (códigos ISO). Para un archivo entero, `@paises=UY`; para una marca, `@paises Mostaza=AR PY UY` | `paises=AR UY` |
 | lo secundario | en lo que no es de USDA: fibra, azúcares, saturadas y sodio por 100 g | `fibra=2.1 · sodio=380` |
 
 ## La búsqueda (hecha)
@@ -292,7 +335,17 @@ no encontraban nada, porque el índice parte las palabras en el apóstrofo.
 **Cómo busca:** lo genérico primero («leche» es la leche). Si lo escrito nombra la marca (entera, sin signos, o desde la
 tercera letra), enseguida van sus productos en el orden de la marca: en una cadena, primero lo principal, después los combos
 y al final lo demás; en el súper, lo más escaneado. Con la marca nombrada se muestran hasta 200 resultados, para ver el menú
-entero. Cada resultado muestra su marca si el nombre no la dice. La base pesa 11,7 MB (el tope ahora es 14): va entera en
+entero. Cada resultado muestra su marca si el nombre no la dice.
+
+**Cada país, lo suyo (9/11/2026).** Moss es global y lo uruguayo es un agregado: la base dice dónde se vende lo que no
+hay en todos lados (la columna `paises`): lo del súper (`productos.txt` y `marcas.txt`) en Uruguay, y las cadenas
+regionales en sus países (Mostaza en Argentina, Paraguay y Uruguay; Grido, Freddo y las uruguayas, en el encabezado de
+`cadenas.txt`). Los genéricos, los platos de cada lugar y las cadenas globales, en todos lados. Con el país del teléfono
+conocido, lo que no se vende ahí va después de lo genérico y de lo que sí (`FUERA_DE_TU_PAIS` en `buscar.ts`) y nombrar
+su marca no lo sube ni agranda la lista: en México, «mostaza» es la mostaza y no el menú de Mostaza. En Uruguay, o sin
+saber el país, todo como antes.
+
+La base pesa 11,8 MB (el tope ahora es 14): va entera en
 la app y en la próxima actualización por aire.
 
 ### El stock de los súper (investigado el 2/11/2026)

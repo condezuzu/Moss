@@ -54,7 +54,8 @@ const SECUNDARIOS = [['fibra', 'g'], ['azucares', 'g'], ['saturadas', 'g'], ['so
 const ACEITES = [ACEITE.nada, ACEITE.cucharadita, ACEITE.cucharada, ACEITE.dosCucharadas];
 
 /** De dónde salen los valores de un alimento de la base, en una línea. */
-export function origenDe(d: Pick<Detalle, 'origen' | 'atribucion'> & Partial<Pick<Detalle, 'deDonde' | 'aproximado'>>): string {
+export function origenDe(d: Pick<Detalle, 'origen' | 'atribucion'> & Partial<Pick<Detalle, 'deDonde' | 'aproximado' | 'comunidad'>>): string {
+  if (d.comunidad) return t('comida.fuente.comunidad');
   // La comida de una cadena dice de dónde salen sus valores, y si son una estimación. Esa fuente está
   // escrita solo en español: en inglés va sin ella.
   const fuente = idioma() === 'es' ? d.deDonde : null;
@@ -280,7 +281,7 @@ export function Ventana(p: Props) {
               accessibilityState={{ expanded: deDonde }}
             >
               <Text style={estilos.origen}>{[detalle ? origenDe(detalle) : alimento.origen, detalle?.marca].filter(Boolean).join(' · ')}</Text>
-              {detalle && <Sello verificado={!!detalle.verificado} />}
+              {detalle && <Sello verificado={!!detalle.verificado} comunidad={!!detalle.comunidad} />}
             </Pressable>
           </View>
           {(alimento.fuente === 'receta' || alimento.fuente === 'propio') && (
@@ -462,6 +463,7 @@ export function Ventana(p: Props) {
           alimento={alimento.fuente === 'off' ? null : Number(alimento.ref)}
           codigo={alimento.fuente === 'off' ? alimento.ref : null}
           nombre={alimento.nombre}
+          comunidad={!!detalle?.comunidad}
           alCerrar={() => setReportando(false)}
           abajo={p.abajo}
         />

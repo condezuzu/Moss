@@ -1155,6 +1155,12 @@ const pasos = {
     await pagina.waitForTimeout(500);
     await foto('ventana-gracias');
     await pagina.waitForTimeout(1800);
+    // Lo que publicó la comunidad, con su sello y de dónde sale.
+    await comida('ficha', 'Barra de proteína de maní');
+    await pagina.waitForTimeout(900);
+    await pagina.click('.vt-fuente');
+    await pagina.waitForTimeout(600);
+    await foto('ventana-comunidad');
     await comida('cerrar');
     await pagina.waitForTimeout(800);
   },

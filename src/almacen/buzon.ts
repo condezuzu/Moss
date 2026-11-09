@@ -1,8 +1,12 @@
-// Lo que Moss manda sin decir de quién (supabase/moss/0006_alimentos.sql): las búsquedas que no
-// encontraron nada y los errores que se reportan en un alimento. Se guarda en el teléfono y sale
-// cuando hay sesión y conexión, en orden; lo que falla por la red espera a la próxima. No lleva
-// nada de la persona: ni la cuenta, ni la hora, ni el teléfono.
+// Lo que Moss manda para mejorar la base (supabase/moss/0006_alimentos.sql y 0012_comunidad.sql): las
+// búsquedas que no encontraron nada, los errores que se reportan en un alimento y, para la base de la
+// comunidad, lo que alguien crea y los reportes de lo que publicó la comunidad. Se guarda en el teléfono
+// y sale cuando hay sesión y conexión, en orden; lo que falla por la red espera a la próxima. Las
+// búsquedas y los reportes de la base no llevan nada de la persona. Las propuestas y los reportes de la
+// comunidad van con la sesión porque el servidor cuenta personas distintas: guarda la cuenta solo para
+// eso, nunca la muestra, y se borra con ella.
 
+import type { Propuesta } from '@/comida/comunidad';
 import type { ClaveDia } from '@/dominio/fechas';
 
 export type Motivo = 'valores' | 'porcion' | 'nombre' | 'otro';
@@ -10,7 +14,9 @@ export const MOTIVOS: readonly Motivo[] = ['valores', 'porcion', 'nombre', 'otro
 
 export type Carta =
   | { tipo: 'busqueda'; texto: string; idioma: 'es' | 'en'; region: string; dia: ClaveDia }
-  | { tipo: 'reporte'; alimento: number | null; codigo: string | null; nombre: string; motivo: Motivo; nota: string | null; version: string };
+  | { tipo: 'reporte'; alimento: number | null; codigo: string | null; nombre: string; motivo: Motivo; nota: string | null; version: string }
+  | { tipo: 'propuesta'; propuesta: Propuesta }
+  | { tipo: 'reporteComunidad'; alimento: number; motivo: Motivo; nota: string | null };
 
 /** Dónde queda lo que espera: un texto (AsyncStorage en la app). */
 export interface Guardado {

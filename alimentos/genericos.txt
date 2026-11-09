@@ -20,6 +20,12 @@
 //   «marca=…», «ean=7790000000000,…» y «off» (los datos son de Open Food Facts) en los productos;
 //   y en lo propio, lo secundario por 100 g: «fibra=2.1 · azucares=5 · saturadas=1.2 · sodio=380».
 // «# categoría» abre una categoría. Ningún nombre dice de qué país es: el catálogo es para todos.
+// Dónde se vende, para lo que no hay en todos lados (los productos de un súper, una cadena de un país):
+// «@paises=UY» vale para todo el archivo, «@paises Mostaza=AR PY UY» para las líneas de esa marca y el
+// detalle «paises=AR UY», para una línea; manda la línea, después la marca y después el archivo. Son
+// códigos ISO 3166-1 separados por espacio. Lo que no lo dice se vende en todos lados: los genéricos, los
+// platos de cada lugar (que se buscan por su nombre) y las cadenas globales. Afuera de esos países, la
+// búsqueda lo pone después de lo genérico y de lo que sí se vende ahí (src/comida/buscar.ts).
 
 # frutas
 Manzana | Apple | sr:Apples, raw, with skin | 1 mediana / 1 medium=182 · 1 pequeña / 1 small=149 · 1 grande / 1 large=223 · 1 taza en trozos / 1 cup chopped=125 |  | desecho

@@ -7,6 +7,9 @@
 // el historial es de cada usuario y no está en esta base.
 // Los productos de marca van después de lo genérico («leche» es la leche, antes que cada marca), salvo si
 // lo escrito nombra la marca: «mostaza» da la mostaza y enseguida el menú de Mostaza, en el orden de la marca.
+// Lo que se vende solo en algunos países (los productos de un súper, una cadena regional) va, afuera de ellos,
+// después de lo genérico y de lo que sí se vende ahí, y nombrar su marca no lo sube: en México, «mostaza» es
+// la mostaza y no el menú de una cadena argentina. Sin el país del teléfono, todo vale igual.
 // La galería usa este mismo archivo para ordenar (galeria/construir.mjs): no puede importar nada.
 
 /** Lo justo de expo-sqlite (o de cualquier SQLite) que necesita el buscador. */
@@ -44,7 +47,7 @@ export type Resultado = {
 
 export type Opciones = {
   idioma: Idioma;
-  /** El país del usuario (UY, MX, ES…), para los nombres de cada región. */
+  /** El país del usuario (UY, MX, ES…), para los nombres de cada región y lo que se vende ahí. */
   region?: string;
   limite?: number;
   /** Lo que suma el uso: más es mejor. Lo calcula quien tiene el historial. */
@@ -53,8 +56,20 @@ export type Opciones = {
   limiteDeMarca?: number;
 };
 
-/** Un nombre o alias que coincidió con lo escrito, con su rango de bm25 (más negativo, mejor). */
-export type Candidato = { alimento: number; idioma: Idioma; region: string | null; principal: number; texto: string; rango: number; aproximado: boolean; marca?: string | null; orden?: number | null };
+/**
+ * Un nombre o alias que coincidió con lo escrito, con su rango de bm25 (más negativo, mejor). `paises`: dónde se
+ * vende (UY, AR…); sin ellos, en todos lados.
+ */
+export type Candidato = {
+  alimento: number; idioma: Idioma; region: string | null; principal: number; texto: string; rango: number; aproximado: boolean;
+  marca?: string | null; orden?: number | null; paises?: string[] | null;
+};
+
+/** Si se vende en tu país. Sin saber tu país, o sin países, sí. */
+export const seVendeEnTuPais = (c: Pick<Candidato, 'paises'>, op: Pick<Opciones, 'region'>) => !op.region || !c.paises?.length || c.paises.includes(op.region);
+
+/** Lo que pierde lo que no se vende en tu país: más que ser de marca (+7) y no estar curado (+8) juntos. */
+const FUERA_DE_TU_PAIS = 30;
 
 /** Sin tildes, en minúsculas y con un solo espacio: así se compara lo escrito con los nombres. */
 export const normalizar = (texto: string) =>
@@ -124,7 +139,8 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
   const t = normalizar(c.texto);
   // Con la marca nombrada, en el orden de la marca: el largo y bm25 pondrían los postres antes que las hamburguesas.
   // La marca entera, antes que otra que empieza igual: «pepsi» es Pepsi, y después PepsiCo.
-  const nombrada = c.marca && !c.aproximado && c.idioma === op.idioma ? nombraLaMarca(escrito, c.marca) : null;
+  const enTuPais = seVendeEnTuPais(c, op);
+  const nombrada = c.marca && enTuPais && !c.aproximado && c.idioma === op.idioma ? nombraLaMarca(escrito, c.marca) : null;
   if (nombrada) return (nombrada === 'entera' ? 8 : 11) + (c.orden ?? 0) * 0.002 - (op.premio?.(c.alimento) ?? 0);
   let p: number;
   if (t === q) p = 0;
@@ -149,6 +165,7 @@ export function puntaje(c: Candidato, escrito: string, op: Opciones, curado: boo
   if (!curado) p += 8;
   // Un producto de marca, después de lo genérico.
   if (c.marca) p += 7;
+  if (!enTuPais) p += FUERA_DE_TU_PAIS;
   // El nombre de la región gana un poco; uno de otra región pierde (plátano es banana en España y otra cosa en Colombia).
   if (c.region) p += c.region !== op.region ? 4 : c.principal ? -2 : 0;
   p -= op.premio?.(c.alimento) ?? 0;
@@ -180,17 +197,19 @@ export function mejoresPorAlimento(candidatos: Candidato[], texto: string, op: O
 /** Un texto de búsqueda en la memoria, con sus palabras y trigramas ya armados: hace las veces de los dos índices. */
 export type TextoEnMemoria = Omit<Candidato, 'rango' | 'aproximado'> & { palabras: string[]; trigramas: Set<string> };
 
-export function textoEnMemoria(alimento: number, idioma: Idioma, region: string | null, principal: number, texto: string, marca?: string | null, orden?: number | null): TextoEnMemoria {
+export function textoEnMemoria(
+  alimento: number, idioma: Idioma, region: string | null, principal: number, texto: string, marca?: string | null, orden?: number | null, paises?: string[] | null,
+): TextoEnMemoria {
   const normal = normalizar(texto);
   const trigramas = new Set<string>();
   for (const p of normal.split(' ')) for (let k = 0; k + 3 <= p.length; k++) trigramas.add(p.slice(k, k + 3));
-  return { alimento, idioma, region, principal, texto, palabras: normal.split(' '), trigramas, marca, orden };
+  return { alimento, idioma, region, principal, texto, palabras: normal.split(' '), trigramas, marca, orden, paises };
 }
 
-/** Cuántos mostrar: más si lo mejor de la lista es de una marca nombrada, para que se vea el menú entero. */
+/** Cuántos mostrar: más si lo escrito nombra una marca que se vende en tu país, para que se vea el menú entero. */
 export function limiteDe(candidatos: Candidato[], texto: string, op: Opciones): number {
   const limite = op.limite ?? 25;
-  return op.limiteDeMarca && candidatos.some((c) => c.marca && nombraLaMarca(texto, c.marca)) ? Math.max(limite, op.limiteDeMarca) : limite;
+  return op.limiteDeMarca && candidatos.some((c) => c.marca && seVendeEnTuPais(c, op) && nombraLaMarca(texto, c.marca)) ? Math.max(limite, op.limiteDeMarca) : limite;
 }
 
 /**
@@ -202,7 +221,7 @@ export function candidatosEnMemoria(corpus: TextoEnMemoria[], texto: string, idi
   const palabras = normal.split(' ').filter(Boolean);
   if (!palabras.length) return [];
   const comoCandidato = (t: TextoEnMemoria, aproximado: boolean): Candidato => ({
-    alimento: t.alimento, idioma: t.idioma, region: t.region, principal: t.principal, texto: t.texto, rango: 0, aproximado, marca: t.marca, orden: t.orden,
+    alimento: t.alimento, idioma: t.idioma, region: t.region, principal: t.principal, texto: t.texto, rango: 0, aproximado, marca: t.marca, orden: t.orden, paises: t.paises,
   });
   const candidatos = corpus.filter((t) => palabras.every((p) => t.palabras.some((w) => w.startsWith(p)))).map((t) => comoCandidato(t, false));
   if (normal.length >= 3 && new Set(candidatos.map((c) => c.alimento)).size < POCOS) {
@@ -220,22 +239,25 @@ export async function buscarAlimentos(base: BaseDeAlimentos, texto: string, op: 
   const palabras = consultaDePalabras(texto);
   if (!palabras) return [];
   const candidatos: Candidato[] = [];
-  const porPalabras = await base.getAllAsync<Omit<Candidato, 'aproximado'>>(
-    `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(palabras) AS rango, a.marca, a.orden_marca AS orden
+  // En la base, los países van en un texto: «AR PY UY».
+  type FilaDeTexto = Omit<Candidato, 'aproximado' | 'paises'> & { paises: string | null };
+  const comoCandidato = ({ paises, ...c }: FilaDeTexto, aproximado: boolean): Candidato => ({ ...c, aproximado, paises: paises ? paises.split(' ') : null });
+  const porPalabras = await base.getAllAsync<FilaDeTexto>(
+    `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(palabras) AS rango, a.marca, a.orden_marca AS orden, a.paises
      FROM palabras JOIN textos t ON t.id = palabras.rowid JOIN alimentos a ON a.id = t.alimento WHERE palabras MATCH ? ORDER BY rango LIMIT 500`,
     palabras,
   );
-  candidatos.push(...porPalabras.map((c) => ({ ...c, aproximado: false })));
+  candidatos.push(...porPalabras.map((c) => comoCandidato(c, false)));
   // Los parecidos (errores de tipeo) solo hacen falta si lo que empieza igual es poco, y solo en el idioma de la app.
   const trigramas = normalizar(texto).length >= 3 ? consultaDeTrigramas(texto) : null;
   if (trigramas && new Set(porPalabras.map((c) => c.alimento)).size < POCOS) {
-    const porTrigramas = await base.getAllAsync<Omit<Candidato, 'aproximado'>>(
-      `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(trigramas) AS rango, a.marca, a.orden_marca AS orden
+    const porTrigramas = await base.getAllAsync<FilaDeTexto>(
+      `SELECT t.alimento, t.idioma, t.region, t.principal, t.texto, bm25(trigramas) AS rango, a.marca, a.orden_marca AS orden, a.paises
        FROM trigramas JOIN textos t ON t.id = trigramas.rowid JOIN alimentos a ON a.id = t.alimento WHERE trigramas MATCH ? AND t.idioma = ? ORDER BY rango LIMIT 150`,
       trigramas,
       op.idioma,
     );
-    for (const c of porTrigramas) if (parecidoSuficiente(texto, c.texto)) candidatos.push({ ...c, aproximado: true });
+    for (const c of porTrigramas) if (parecidoSuficiente(texto, c.texto)) candidatos.push(comoCandidato(c, true));
   }
   if (!candidatos.length) return [];
 

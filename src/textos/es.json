@@ -548,7 +548,8 @@
       "aproximado": "Aproximado · {fuente}",
       "deLaCadena": "Oficial · de la cadena",
       "estimacionDeMoss": "Aproximado · estimación de Moss",
-      "aproximadoOff": "Aproximado · Open Food Facts"
+      "aproximadoOff": "Aproximado · Open Food Facts",
+      "comunidad": "Producto · de la comunidad"
     },
     "favorito": "Favorito",
     "nombre": "Nombre",
@@ -939,6 +940,11 @@
     "alimentos": {
       "uno": "{n} alimento",
       "otros": "{n} alimentos"
+    },
+    "comunidad": {
+      "sello": "Verificado por la comunidad",
+      "deDonde": "Lo cargaron {n} personas por separado y sus valores coinciden. Moss no lo comparó con una tabla oficial.",
+      "reportar": "Si algo no está bien, repórtalo: con varios reportes deja de mostrarse."
     }
   },
   "inicio": {
@@ -2298,7 +2304,7 @@
       "Tus datos son tuyos. Moss guarda lo que anotas, tus respuestas, tu peso y tus noches en el teléfono y, con tu cuenta, en su servidor, para tus otros dispositivos. No los vende ni los comparte con terceros, no muestra publicidad y no te rastrea.",
       "De Salud, Moss lee pasos, sueño, agua, atención plena, peso, fecha de nacimiento, sexo y altura y, de la noche, frecuencia cardíaca, frecuencia en reposo, variabilidad y respiración. Con tu cuenta suben tu peso, tu año de nacimiento, tu sexo, tu altura, qué hábitos cumpliste y la hora estimada de tu noche; lo demás queda en el teléfono. Moss no escribe en Salud.",
       "Las fotos de la comida y la de tu perfil quedan en el teléfono. Al escanear un código que no está en Moss, se le pregunta a Open Food Facts solo por ese código.",
-      "Si lo eliges, lo que buscas y no encuentras se manda sin tu nombre; un error que reportas, también. Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
+      "Si lo eliges, lo que buscas y no encuentras se manda sin tu nombre, y lo que creas se propone para todos: el servidor guarda tu cuenta junto a la propuesta solo para contar personas distintas, nunca la muestra y la borra con tu cuenta. Un error que reportas va sin tu nombre; en lo de la comunidad, con tu cuenta, por lo mismo. Puedes exportar todo en CSV y borrar tus datos o tu cuenta desde aquí."
     ],
     "version": "Moss {v}",
     "encendidos": "Encendidos",
@@ -2446,7 +2452,7 @@
     "mejorarBase": "Mandar lo que no encuentro",
     "si": "Sí",
     "no": "No",
-    "mejorarBaseTexto": "Si buscas un alimento y Moss no lo tiene, manda solo lo que escribiste, sin tu nombre ni tu cuenta, para sumarlo.",
+    "mejorarBaseTexto": "Si buscas un alimento y Moss no lo tiene, manda lo que escribiste. Y si lo creas, lo propone para todos: cuando varias personas cargan lo mismo, queda en Moss. Nadie ve quién lo mandó.",
     "politica": "Política de privacidad",
     "terminos": "Términos",
     "contacto": "Ayuda y contacto",

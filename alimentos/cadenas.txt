@@ -12,6 +12,22 @@
 // producto de acá no es el mismo. Lo primero se consultó el 29/10/2026 y lo de más abajo (el resto de cada menú, los combos y las demás cadenas), el 2/11/2026; cada cadena dice sus URL. Los combos son la suma de sus partes.
 // Detalles propios de este archivo: «fuente=…» (cómo se muestra en la app: «Fuente: …») y «aproximado».
 // Los N de producto# van del 1001 al 1499.
+// Dónde está cada cadena regional (consultado el 9/11/2026): la búsqueda no ofrece su menú afuera de esos
+// países. Las globales (McDonald's, Burger King, Subway, Starbucks, KFC, Domino's, Sbarro, Cinnabon) no lo
+// dicen: están en todos lados, aunque sus valores sean de la tabla de Uruguay.
+// - Mostaza, de Argentina: también en Uruguay y Paraguay (descubre.vc/mostaza y su folleto de franquicias);
+//   Chile y Bolivia figuraban como planes, sin locales confirmados.
+// - Grido, de Argentina: también en Chile, Uruguay, Paraguay y Perú (es.wikipedia.org/wiki/Grido,
+//   gestion.pe, emol.com 2026); Bolivia, Brasil y México, solo en análisis.
+// - Freddo, de Argentina: también en Uruguay, Brasil, Chile, Perú, Paraguay, Panamá y Puerto Rico (cronista.com).
+// - La Pasiva, Il Mondo della Pizza, La Cigale y Porto Vanila: solo en Uruguay (no se encontró ningún local afuera).
+@paises Mostaza=AR PY UY
+@paises Grido=AR CL PE PY UY
+@paises Freddo=AR BR CL PA PE PR PY UY
+@paises La Pasiva=UY
+@paises Il Mondo della Pizza=UY
+@paises La Cigale=UY
+@paises Porto Vanila=UY
 
 # comida rapida
 // McDonald's: la tabla oficial de Uruguay, que está en la página de cada producto (botón «Información

@@ -12,6 +12,7 @@
 // - Marca lo verificado (spec/fuentes.md): los curados que coinciden con una segunda fuente
 //   oficial (alimentos/verificacion.txt, de `npm run alimentos:comparar`), los platos con todos sus
 //   ingredientes verificados y los productos cuya etiqueta pasa los controles.
+// - Anota dónde se vende lo que no hay en todos lados («@paises» y «paises=», ver genericos.txt).
 // - Arma los dos índices de búsqueda: palabras con prefijos y trigramas.
 // La arma el SQLite de Node, que es la misma versión que trae expo-sqlite (3.53).
 // Uso: npm run alimentos   → después, npm run alimentos:verificar
@@ -24,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ESQUEMA = 5;
+const ESQUEMA = 6;
 
 // Los micronutrientes, con su número de nutriente en FNDDS (el viejo) y su id en SR Legacy. Las
 // unidades son las de USDA: mg, salvo el selenio, la vitamina A (RAE), la D, la K, el folato (DFE)
@@ -319,7 +320,8 @@ function queSeDesecha(descripcion) {
 /**
  * alimentos/*.txt (genericos.txt primero): una línea por alimento, con los campos separados por
  * « | »: nombre en español | nombre en inglés | de dónde sale | porciones | alias | detalles.
- * Las líneas «# categoría» abren una categoría; las que empiezan con «//» son comentarios.
+ * Las líneas «# categoría» abren una categoría; las que empiezan con «//» son comentarios, y las de
+ * «@paises», dónde se vende lo de ese archivo (leerPaises).
  * Con SOLO=archivo.txt se arma con genericos.txt y ese archivo nada más (para revisar uno), y con
  * CARPETA=otra/carpeta, con los archivos de otra carpeta (los de un commit, por ejemplo).
  * verificacion.txt no es de alimentos: lo lee leerVerificacion().
@@ -334,9 +336,15 @@ function leerCurados() {
   const curados = [];
   for (const archivo of archivos) {
     let categoria = null;
+    const paises = { archivo: null, marcas: new Map() };
+    const delArchivo = [];
     readFileSync(join(carpeta, archivo), 'utf8').split(/\r?\n/).forEach((linea, i) => {
       const donde = `${archivo}:${i + 1}`;
       if (!linea.trim() || linea.startsWith('//')) return;
+      if (linea.startsWith('@')) {
+        leerPaises(linea, donde, paises);
+        return;
+      }
       if (linea.startsWith('# ')) {
         categoria = linea.slice(2).trim();
         return;
@@ -346,7 +354,7 @@ function leerCurados() {
       if (campos.length < 4) throw new Error(`${donde}: faltan campos`);
       const [es, en, origen, porciones, alias = '', detalles = ''] = campos;
       if (!es || !en) throw new Error(`${donde}: falta el nombre`);
-      curados.push({
+      delArchivo.push({
         donde, categoria, es, en, origen,
         // «1 mediana=118», o con el inglés: «1 mediana / 1 medium=118».
         porciones: porciones.split(' · ').filter(Boolean).map((x) => {
@@ -363,11 +371,46 @@ function leerCurados() {
         detalles: leerDetalles(detalles, donde),
       });
     });
+    // La línea manda sobre su marca, y la marca sobre el archivo.
+    for (const g of delArchivo) {
+      const suyos = g.detalles.paises ?? paises.marcas.get(g.detalles.marca)?.codigos ?? paises.archivo;
+      if (suyos) g.paises = codigosDePaises(suyos, g.donde);
+    }
+    for (const [marca, { donde }] of paises.marcas) {
+      if (!delArchivo.some((g) => g.detalles.marca === marca)) throw new Error(`${donde}: ninguna línea de ${archivo} es de la marca «${marca}»`);
+    }
+    curados.push(...delArchivo);
   }
   return curados;
 }
 
-const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'orden', 'ean', 'off', 'fuente', 'aproximado', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]);
+/**
+ * Dónde se vende lo de un archivo, con códigos ISO 3166-1 separados por espacio: «@paises=UY» vale para
+ * todas sus líneas y «@paises Mostaza=AR PY UY», para las de esa marca, estén arriba o abajo. Lo que no
+ * dice nada se vende en todos lados (los genéricos, las cadenas globales). La búsqueda lo usa para no
+ * ofrecer en México lo que solo hay en Uruguay (src/comida/buscar.ts).
+ */
+function leerPaises(linea, donde, paises) {
+  const m = linea.match(/^@paises(?: ([^=]+?))?\s*=\s*(.+)$/);
+  if (!m) throw new Error(`${donde}: no entiendo «${linea}»: es «@paises=UY» o «@paises Marca=AR UY»`);
+  const [, marca, codigos] = m;
+  codigosDePaises(codigos, donde);
+  if (!marca) {
+    if (paises.archivo) throw new Error(`${donde}: los países del archivo ya están dichos`);
+    paises.archivo = codigos;
+  } else if (paises.marcas.has(marca)) throw new Error(`${donde}: los países de «${marca}» ya están dichos`);
+  else paises.marcas.set(marca, { codigos, donde });
+}
+
+/** «UY AR  PY» → «AR PY UY»: ordenados y sin repetir, o un error si alguno no es un código de país. */
+function codigosDePaises(texto, donde) {
+  const codigos = [...new Set(String(texto).trim().split(/\s+/))];
+  const malos = codigos.filter((c) => !/^[A-Z]{2}$/.test(c));
+  if (malos.length) throw new Error(`${donde}: ${malos.map((c) => `«${c}»`).join(', ')} no es un código de país (ISO 3166-1, en mayúsculas)`);
+  return codigos.sort().join(' ');
+}
+
+const DETALLES = new Set(['crudo', 'desecho', 'ml', 'densidad', 'aceite', 'marca', 'orden', 'ean', 'off', 'fuente', 'aproximado', 'paises', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol', ...CLAVES_MICROS]);
 /** «crudo=Arroz blanco crudo · ml · marca=Conaprole»: cada detalle, con su valor o en true. */
 function leerDetalles(texto, donde) {
   const d = {};
@@ -546,7 +589,7 @@ for (const g of curados) {
     continue;
   }
   usados.set(alimento.id, g.donde);
-  Object.assign(alimento, { es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde });
+  Object.assign(alimento, { es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde, paises: g.paises ?? null });
   for (const a of g.alias) for (const region of a.regiones) alias.push({ alimento: alimento.id, texto: a.texto, region, principal: a.principal && region !== null });
 }
 
@@ -583,7 +626,7 @@ for (const g of recetas) {
     errores.push(`${g.donde}: «${g.es}» ya es otro alimento (${usados.get(porEspanol.get(g.es).id)})`);
     continue;
   }
-  const plato = { id, fuente: 'receta', descripcion: g.en, ...valores, es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde };
+  const plato = { id, fuente: 'receta', descripcion: g.en, ...valores, es: g.es, en: g.en, categoria: g.categoria, propias: g.porciones, detalles: g.detalles, donde: g.donde, paises: g.paises ?? null };
   alimentos.set(id, plato);
   porEspanol.set(g.es, plato);
   usados.set(id, g.donde);
@@ -755,6 +798,9 @@ db.exec(`
     -- cuya etiqueta cierra). Sin verificar, null.
     verificado TEXT,
     segunda TEXT,
+    -- Dónde se vende, en códigos ISO 3166-1 separados por espacio («AR PY UY»); null, en todos lados.
+    -- Lo dice su archivo de alimentos/, con «@paises» o «paises=».
+    paises TEXT,
     -- Los micronutrientes, en las unidades de USDA (herramientas/alimentos.mjs, MICROS); lo que no se sabe, null.
     ${CLAVES_MICROS.map((k) => `${k} REAL`).join(', ')}
   );
@@ -778,7 +824,7 @@ db.exec(`
 `);
 db.exec('BEGIN');
 const COLUMNAS = ['id', 'fuente', 'descripcion', 'nombre_es', 'nombre_en', 'categoria', 'kcal', 'proteina', 'carbohidratos', 'grasas', 'fibra', 'azucares', 'saturadas', 'sodio', 'alcohol',
-  'porcion', 'marca', 'orden_marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'fuente_texto', 'aproximado', 'verificado', 'segunda', ...CLAVES_MICROS];
+  'porcion', 'marca', 'orden_marca', 'densidad', 'desecho', 'desecho_es', 'desecho_en', 'aceite', 'crudo', 'atribucion', 'fuente_texto', 'aproximado', 'verificado', 'segunda', 'paises', ...CLAVES_MICROS];
 const ponerAlimento = db.prepare(`INSERT INTO alimentos (${COLUMNAS.join(', ')}) VALUES (${COLUMNAS.map(() => '?').join(', ')})`);
 const ponerPorcion = db.prepare('INSERT INTO porciones (alimento, en, es, gramos) VALUES (?, ?, ?, ?)');
 const ponerAlias = db.prepare('INSERT INTO alias VALUES (?, ?, ?, ?)');
@@ -794,7 +840,7 @@ for (const a of [...alimentos.values()].sort((x, y) => x.id - y.id)) {
     a.id, a.fuente, a.descripcion, a.es ?? null, a.en ?? null, a.categoria ?? null, redondo(a.kcal), redondo(a.proteina), redondo(a.carbohidratos), redondo(a.grasas),
     tal(a.fibra), tal(a.azucares), tal(a.saturadas), tal(a.sodio), tal(a.alcohol), null,
     a.marca ?? null, a.ordenMarca ?? null, a.densidad ?? null, a.desecho ?? null, a.queDesecho?.es ?? null, a.queDesecho?.en ?? null, a.aceite ?? null, a.crudo ?? null, a.atribucion ?? null, a.fuenteTexto ?? null, a.aproximado ?? null,
-    a.verificado ?? null, a.segunda ?? null, ...CLAVES_MICROS.map((k) => fino(a[k])),
+    a.verificado ?? null, a.segunda ?? null, a.paises ?? null, ...CLAVES_MICROS.map((k) => fino(a[k])),
   );
   // De los curados: primero sus porciones (la primera es la de siempre); de USDA, solo las que
   // tienen traducción. Una porción propia sin inglés toma el de la de USDA que pesa lo mismo.
@@ -860,6 +906,8 @@ console.log(`FNDDS: ${resumen.fndds.alimentos} alimentos (${resumen.fndds.afuera
 console.log(`SR Legacy: ${resumen.sr.alimentos} alimentos (${resumen.sr.afuera} afuera y ${resumen.sr.marcas} de marcas)`);
 console.log(`Curados: ${curados.length}, con ${alias.length} alias: ${recetas.length} platos como recetas, ${cuantos((a) => a.fuente === 'producto')} productos (${deOff} de Open Food Facts) y ${codigos.size} códigos de barras.`);
 console.log(`Cómo se miden: ${cuantos((a) => a.crudo)} cocidos con su versión cruda, ${cuantos((a) => a.desecho)} con parte que no se come, ${cuantos((a) => a.densidad)} líquidos y ${cuantos((a) => a.aceite === 'preguntar')} que preguntan por el aceite.`);
+const porPais = Map.groupBy([...alimentos.values()].filter((a) => a.paises), (a) => a.paises);
+console.log(`Solo en algunos países: ${[...porPais].map(([p, l]) => `${l.length} en ${p}`).join(', ') || 'nada'}; lo demás, en todos lados.`);
 console.log(`Porciones de USDA sin traducir en los curados: ${sinTraducir}.`);
 const verificadosPor = (segunda) => cuantos((a) => a.verificado && (segunda ? a.segunda === segunda : !['ingredientes', 'etiqueta'].includes(a.segunda)));
 console.log(`Verificados: ${verificadosPor()} con una segunda fuente, ${verificadosPor('ingredientes')} platos por sus ingredientes y ${verificadosPor('etiqueta')} productos por su etiqueta, de ${cuantos((a) => a.es)} curados.`);

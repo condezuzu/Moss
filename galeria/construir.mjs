@@ -39,7 +39,7 @@ function modulo(nombre, ruta) {
 // Los genéricos curados de assets/alimentos.db, compactos: la galería busca sobre ellos en la
 // memoria con el mismo orden que la app (src/comida/buscar.ts). Por alimento: id, nombres, valores
 // por 100 g (kcal, proteína, carbohidratos, grasas, y aparte lo secundario), porciones [es, en,
-// gramos], la de siempre y los textos de búsqueda [idioma, región, principal, texto].
+// gramos], la de siempre, los textos de búsqueda [idioma, región, principal, texto] y dónde se vende.
 function alimentosCurados() {
   // Con BASE=otra.db, la galería usa otra base (la de un archivo de alimentos en revisión).
   const ruta = join(raiz, process.env.BASE ?? 'assets/alimentos.db');
@@ -61,6 +61,8 @@ function alimentosCurados() {
       s: [a.fibra, a.azucares, a.saturadas, a.sodio, a.alcohol].map((n) => (n === null ? null : redondo(n))),
       // Los micronutrientes (MICROS) y lo verificado: [día, con qué], o null.
       u: microsDe(a), w: a.verificado && a.segunda ? [a.verificado, a.segunda] : null, f: a.fuente, o: a.atribucion, m: a.marca, b: a.orden_marca,
+      // Dónde se vende, si no es en todos lados: ["AR", "PY", "UY"].
+      ...(a.paises ? { n: a.paises.split(' ') } : {}),
       p: [], d: 0, t: [], porcion: a.porcion,
     }]));
   for (const p of db.prepare(`SELECT p.id, p.alimento, p.es, p.en, p.gramos FROM porciones p JOIN alimentos a ON a.id = p.alimento WHERE a.nombre_es IS NOT NULL ORDER BY p.id`).all()) {

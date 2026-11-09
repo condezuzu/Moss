@@ -33,8 +33,19 @@ const nombreDeTabla = (con: string) => {
 };
 const fechaLarga = (clave: string) => new Date(`${clave}T12:00:00`).toLocaleDateString(idioma() === 'es' ? 'es-UY' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 
-/** El sello junto a la fuente: verificado, o apagado si todavía no. */
-export function Sello({ verificado }: { verificado: boolean }) {
+/**
+ * El sello junto a la fuente: verificado, o apagado si todavía no. Lo que publicó la comunidad lo dice
+ * con su color (oro, no el verde de lo que Moss comparó con una tabla oficial).
+ */
+export function Sello({ verificado, comunidad = false }: { verificado: boolean; comunidad?: boolean }) {
+  if (comunidad) {
+    return (
+      <View style={[estilos.sello, estilos.selloComunidad]}>
+        <Icono nombre="checkmark" tam={9} color={colores.oroClaro} peso="bold" />
+        <Text style={[estilos.selloTexto, { color: colores.oroClaro }]}>{t('comida.comunidad.sello')}</Text>
+      </View>
+    );
+  }
   return (
     <View style={[estilos.sello, verificado && estilos.selloSi]}>
       {verificado && <Icono nombre="checkmark" tam={9} color={colores.salvia} peso="bold" />}
@@ -47,7 +58,9 @@ export function Sello({ verificado }: { verificado: boolean }) {
 export function DeDonde({ detalle, origen }: { detalle: Detalle | null; origen: string }) {
   const lineas: string[] = [];
   if (!detalle) lineas.push(origen);
-  else {
+  else if (detalle.comunidad) {
+    lineas.push(t('comida.comunidad.deDonde', { n: detalle.comunidad.personas }), t('comida.comunidad.reportar'));
+  } else {
     const d = detalle;
     lineas.push(d.origen === 'receta' && d.receta ? t('comida.deDonde.receta', { n: d.receta.ingredientes.length, g: numero(d.receta.pesoFinal) })
       : d.origen === 'producto' ? t(d.atribucion === 'off' ? 'comida.deDonde.off' : d.aproximado ? 'comida.deDonde.aproximado' : d.deDonde ? 'comida.deDonde.cadena' : 'comida.deDonde.producto')
@@ -143,8 +156,13 @@ export function Micronutrientes({ micros, persona }: { micros: Micros; persona: 
 }
 
 // ------------------------------------------------------------ reportar un error
-/** Sobre la ventana: qué está mal y una nota si quiere. Sale sin la cuenta (src/almacen/buzon.ts). */
-export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { alimento: number | null; codigo: string | null; nombre: string; alCerrar: () => void; abajo: number }) {
+/**
+ * Sobre la ventana: qué está mal y una nota si quiere. Sale sin la cuenta (src/almacen/buzon.ts); lo de
+ * la comunidad, con la sesión, porque varios reportes de personas distintas lo ocultan.
+ */
+export function Reporte({ alimento, codigo, nombre, comunidad = false, alCerrar, abajo }: {
+  alimento: number | null; codigo: string | null; nombre: string; comunidad?: boolean; alCerrar: () => void; abajo: number;
+}) {
   const [motivo, setMotivo] = useState<Motivo | null>(null);
   const [nota, setNota] = useState('');
   const [enviado, setEnviado] = useState(false);
@@ -166,7 +184,10 @@ export function Reporte({ alimento, codigo, nombre, alCerrar, abajo }: { aliment
   const enviar = () => {
     if (!motivo) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    buzon().echar({ tipo: 'reporte', alimento, codigo, nombre, motivo, nota: nota.trim().slice(0, 500) || null, version: VERSION_DE_LA_BASE }).catch(() => {});
+    const texto = nota.trim().slice(0, 500) || null;
+    buzon().echar(comunidad && alimento !== null
+      ? { tipo: 'reporteComunidad', alimento, motivo, nota: texto }
+      : { tipo: 'reporte', alimento, codigo, nombre, motivo, nota: texto, version: VERSION_DE_LA_BASE }).catch(() => {});
     setEnviado(true);
   };
   return (
@@ -233,6 +254,7 @@ export function EnlaceReportar({ alTocar }: { alTocar: () => void }) {
 const estilos = StyleSheet.create({
   sello: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 2, paddingLeft: 6, paddingRight: 7, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)' },
   selloSi: { borderColor: 'rgba(166, 191, 148, 0.45)' },
+  selloComunidad: { borderColor: 'rgba(232, 196, 106, 0.42)' },
   selloTexto: { fontFamily: letras.texto, fontSize: 10, color: 'rgba(239, 230, 207, 0.5)' },
   deDonde: { marginTop: 10 },
   deDondeTitulo: { marginBottom: 4, fontFamily: letras.textoMedio, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.85)' },

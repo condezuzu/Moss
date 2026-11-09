@@ -3,13 +3,16 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 47): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 48): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 1. Ahora (no espera a nada)
 
 ### Aprobar en la galería
 
 La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
+
+**Del 9/11**
+- **La base de la comunidad:** el sello «Verificado por la comunidad», en oro, y «¿De dónde sale esto?» con cuántas personas lo cargaron (escenario `ventana`, la barra de proteína de maní). Ya está programado: si no te gusta, se cambia antes de la OTA (spec/nutricion.md, «La base de la comunidad»).
 
 **Del 5/11**
 - **Ascent, como si Progreso siguiera para arriba:** llegas abajo, a lo principal, con «Volver a Progreso» y la flecha para abajo; subiendo, el resto. Detrás, de fondo como las estrellas, el polvo estelar (una nube que gira despacio, propia) o el cuerpo de tu rango, más tenue. Progreso baja pegado a Ascent (spec/ascent.md, «Ascent en Progreso»).
@@ -50,6 +53,11 @@ La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 ### Decisiones abiertas
 
 Entre paréntesis, lo que recomienda el estudio o lo que está programado.
+
+**La base de la comunidad (9/11)**
+- Las propuestas salen con el mismo sí de «Mandar lo que no encuentro», que empieza apagado (guía 5.1.1 de Apple): es lo más seguro, pero junta menos. La otra: preguntarlo en «Crear alimento», con el sí a la vista (suma una línea, no un toque).
+- Los umbrales (3 personas con código, 5 sin código, 10 %, 3 reportes, cuentas de más de 24 h): se cambian en `moss.comunidad_reglas` sin OTA.
+- Las marcas globales del súper (Coca-Cola, Oreo, Heinz) quedan como uruguayas, porque toda la lista de marcas es del mercado de acá: en otro país salen más abajo. Open Food Facts trae los países de cada producto; usarlos pide rearmar la lista de marcas. ¿Lo hago?
 
 **Lo del 5/11 que no está en un estudio**
 - **Energía alta con déficit:** quien baja de peso y llega a sus calorías durmiendo bien ve «Energía alta» (lo pediste así). En sentido estricto, la energía óptima es comer cerca de lo que gastás: ¿queda así? (spec/entreno.md 5.13).
@@ -166,7 +174,7 @@ revisión) en vez de sacarla: volver a mandarla la pone al final de la fila.
 
 1. Avisame. Hasta entonces no sale ninguna OTA a `production`.
 2. Antes de lanzar, si no lo hiciste: Supabase en plan Pro (copias diarias) y el acuerdo de tratamiento de datos (DPA), que la política ya nombra (spec/revision.md «g», 1.8). Confirmá.
-3. Si el CLI de Supabase pide entrar (`npx supabase login`) o la contraseña de la base, la ponés vos en una pestaña de Terminal. Con eso, y con tu sí (el CLI de Supabase ahora lo pide para escribir en la base real), yo aplico la 0010 y después la 0011, antes de cualquier OTA.
+3. Si el CLI de Supabase pide entrar (`npx supabase login`) o la contraseña de la base, la ponés vos en una pestaña de Terminal. Con eso, y con tu sí (el CLI de Supabase ahora lo pide para escribir en la base real), yo aplico la 0010, la 0011 y la 0012 (la base de la comunidad), antes de cualquier OTA. Con la 0012, en App Privacy «Customer Support» pasa a vinculado (los reportes de la comunidad van con la cuenta; las propuestas ya entran en «Other User Content»), y del sitio publicado se cambia solo el párrafo de la comunidad en la privacidad (está en `docs/`).
 4. Yo comparo la huella y publico la OTA en `production` y en `preview`.
 5. Tocás «Release This Version» en App Store Connect (la publicación quedó manual). Mejor después de la OTA.
 6. Probás en tu iPhone, en la de la tienda y en la `telefono`: sin voseo, el día que cambia a las 4, que las noches suban, las marcas, los widgets del cielo y de la noche, y lo del estudio (el control, «Todavía no se sabe», la deuda «aprox.»).

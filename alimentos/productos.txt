@@ -8,6 +8,8 @@
 // lo que se corrigió dice de dónde sale, y lo que no se pudo confirmar quedó afuera. Lo que se toma
 // pasó de 100 ml a 100 g con su densidad. Un producto en varios tamaños va en una línea con todos sus
 // códigos. La marca va en «marca=» y en el nombre solo cuando sin ella el nombre sería de cualquiera.
+// Todo es del mercado de Uruguay (la etiqueta de acá): afuera, la búsqueda lo pone después de lo de ahí.
+@paises=UY
 
 # frutas
 Duraznos en almíbar La Campagnola | La Campagnola peaches in syrup | producto#1 94 0 23 0 | 140 g / 140 g=140 |  | marca=La Campagnola · ean=7793360002007 · off · fibra=1.3 · azucares=20 · saturadas=0 · sodio=7.6

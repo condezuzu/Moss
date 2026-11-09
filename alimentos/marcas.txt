@@ -6,6 +6,8 @@
 // Lo que se toma va por 100 ml, como dicen las etiquetas, con densidad 1: la diferencia con la real es de menos de 5 %.
 // Armado el 2026-11-03.
 // Siguiente número: 4409. No baja nunca: el número de un producto que sale no se le da a otro.
+// Todo es del mercado de Uruguay, también lo de una etiqueta de otro país: afuera, la búsqueda lo pone después de lo de ahí.
+@paises=UY
 
 # alcohol
 Tinto de verano Schweppes | Tinto de verano Schweppes | producto#2000 18 0.1 4.1 0 | 1 envase (330 ml) / 1 package (330 ml)=330 |  | marca=Schweppes · orden=14 · ean=8410283312141 · off · aproximado · fuente=Open Food Facts, etiqueta de España · densidad=1 · azucares=3.8 · saturadas=0 · sodio=40

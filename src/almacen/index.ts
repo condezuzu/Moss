@@ -280,12 +280,15 @@ export function useAlmacenListo(): boolean {
       antes = ahora;
       reprogramar();
     });
-    // Si dejas de elegir que se manden las búsquedas que no encuentran nada, las que esperaban ya no salen.
+    // Si dejas de elegir que se mande lo que no encuentras, lo que esperaba (búsquedas y lo creado) ya no sale.
     let mandaba = false;
     const sinOirBusquedas = a.suscribir(() => {
       const { listo, mandarBusquedas } = a.estado();
       if (!listo) return;
-      if (mandaba && !mandarBusquedas) buzon().descartar('busqueda').catch(() => {});
+      if (mandaba && !mandarBusquedas) {
+        buzon().descartar('busqueda').catch(() => {});
+        buzon().descartar('propuesta').catch(() => {});
+      }
       mandaba = mandarBusquedas;
     });
     // Volver es venir del fondo: bajar el centro de control o de notificaciones, o una alerta del sistema,

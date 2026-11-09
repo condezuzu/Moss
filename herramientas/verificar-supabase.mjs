@@ -31,7 +31,11 @@
 //   (src/lib/ascentRemoto.ts) vinculando por la función moss-vincular de verdad;
 // - y las dos cuentas (D29), con moss-vincular y moss-borrar-cuenta de verdad: vincular con el mismo
 //   correo y con correos distintos, borrar en Moss (solo de Moss, o la misma cuenta que Ascent),
-//   borrar en Ascent (dos usuarios, o el mismo) y desvincular.
+//   borrar en Ascent (dos usuarios, o el mismo) y desvincular;
+// - y la comida de la comunidad (0012_comunidad.sql): que nadie lee ni escribe las propuestas, los
+//   reportes ni los umbrales desde la app; cuántas personas publican, con y sin código, con la mediana
+//   y sin el raro; lo que se rechaza; el tope por día; las cuentas nuevas; ocultar con reportes y
+//   volver a publicar; cambiar un umbral; y borrar los datos o la cuenta sin tocar lo publicado.
 // Uso: npm run supabase:verificar   → sale con código 1 si algo falla.
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -107,7 +111,8 @@ await db.exec(`
   create role authenticated nologin;
   create role service_role nologin bypassrls;
   create schema auth;
-  create table auth.users (id uuid primary key);
+  -- created_at, como en Supabase: la comunidad (0012_comunidad.sql) solo cuenta las cuentas con cierta antigüedad.
+  create table auth.users (id uuid primary key, created_at timestamptz default now());
   -- Solo para el Auth de mentira de la sección 8: las migraciones no la nombran.
   create table auth.identities (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users (id) on delete cascade, provider text not null);
   create function auth.uid() returns uuid language sql stable as $$
@@ -1252,6 +1257,167 @@ await db.exec(`delete from auth.users where id = '${ASCENT}'`);
 const sinAscent = await vinculos();
 await db.exec(`delete from auth.users where id = '${SOLA}'`);
 comprobar(sinAscent.includes('e4-e4-moss') && !sinAscent.includes('e1-') && !(await vinculos()).includes('e4-'), 'vínculo: borrar el usuario de Auth (el de Ascent, el de Moss o el mismo de las dos) borra el vínculo');
+
+// ------------------------------------------------------------ 9. La comida de la comunidad (0012_comunidad.sql)
+// Doce cuentas de hace un mes (las que cuentan) y una de recién.
+const vecino = (n) => `00000000-0000-4000-8000-00000000c0${n.toString(16).padStart(2, '0')}`;
+const V = Array.from({ length: 12 }, (_, i) => vecino(i + 1));
+const RECIEN = vecino(0x20);
+await db.exec(`insert into auth.users (id, created_at) values ${V.map((v) => `('${v}', now() - interval '30 days')`).join(', ')};
+  insert into auth.users (id) values ('${RECIEN}')`);
+/** El código con su dígito verificador (EAN-8, UPC-A o EAN-13, según el largo de la base). */
+const gtin = (base) => base + (10 - ([...base].reverse().reduce((s, d, i) => s + Number(d) * (i % 2 === 0 ? 3 : 1), 0) % 10)) % 10;
+const argumentos = (v) => [v.codigo ?? null, v.nombre, v.marca ?? null, v.kcal, v.p, v.c, v.g, v.fibra ?? null, null, null, v.sodio ?? null, v.porcion ?? null, v.gramos ?? null, v.region ?? ''];
+const proponer = (u, v) => como(u, 'select moss.proponer_alimento($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) as r', argumentos(v)).then((r) => r.rows[0].r);
+/** El código de error con que se rechaza, o null si entra. */
+const rechazo = (u, v) => proponer(u, v).then(() => null, (e) => e.code);
+const reportar = (u, id, motivo = 'valores') => como(u, 'select moss.reportar_de_la_comunidad($1, $2, $3) as r', [id, motivo, '  Las calorías están mal  ']).then((r) => r.rows[0].r);
+const deLaComunidad = async (donde = '') => (await comoServicio(`select * from moss.catalogo where comunidad ${donde} order by id`)).rows;
+const filaDelCatalogo = async (id) => (await comoServicio('select * from moss.catalogo where id = $1', [id])).rows[0];
+
+comprobar(
+  await falla(V[0], 'select * from moss.propuestas') && await falla(V[0], 'select * from moss.reportes_comunidad')
+    && await falla(V[0], 'select * from moss.comunidad_reglas') && await falla(V[0], 'select * from moss.comunidad')
+    && await falla(V[0], `insert into moss.propuestas (clave, nombre, kcal, proteina, carbohidratos, grasas) values ('codigo:12345670', 'Pan', 250, 8, 50, 2)`)
+    && await falla(V[0], 'update moss.comunidad_reglas set confirmaciones = 2') && await falla(V[0], `select moss.evaluar_propuesta('codigo:12345670')`)
+    && await falla('anon', `select moss.proponer_alimento('', 'Pan', null, 250, 8, 50, 2)`) && await falla('anon', 'select moss.reportar_de_la_comunidad(1, $1)', ['valores']),
+  'comunidad: nadie lee ni escribe las propuestas, los reportes ni los umbrales desde la app, ni publica salteándose las reglas; sin sesión, nada',
+);
+
+// El mismo producto, como EAN-13 y como UPC-A (lo que lee el escáner de un iPhone o de otro).
+const upc = gtin('03600029145');
+const ean = '0' + upc;
+const galleta = { codigo: ean, nombre: 'Galletitas Maná Vainilla', marca: 'Arcor', kcal: 400, p: 10, c: 60, g: 13, porcion: '3 galletitas', gramos: 25, region: 'UY' };
+const primeras = [
+  await proponer(V[0], galleta),
+  await proponer(V[1], { ...galleta, nombre: 'galletitas mana vainilla', kcal: 410, p: 10.5, c: 61, g: 13.5, porcion: null, gramos: null, region: 'uy' }),
+  await proponer(V[3], { ...galleta, nombre: 'Otra cosa', kcal: 250, p: 5, c: 40, g: 8, region: 'BR' }),
+];
+const antesDeLaTercera = (await deLaComunidad()).length;
+const tercera = await proponer(V[2], { ...galleta, codigo: upc, nombre: 'Galletas de vainilla', kcal: 420, p: 11, c: 62, g: 14, region: 'AR' });
+const [publicada] = await deLaComunidad();
+comprobar(
+  primeras.every((r) => r === 'guardada') && antesDeLaTercera === 0 && tercera === 'publicada',
+  'comunidad: dos personas no publican y un valor raro no suma; la tercera parecida, sí (con el código como EAN-13 o como UPC-A)',
+);
+comprobar(
+  publicada?.kcal === 410 && publicada.proteina === 10.5 && publicada.carbohidratos === 61 && publicada.grasas === 13.5 && publicada.personas === 3
+    && publicada.nombre_es === 'Galletitas Maná Vainilla' && publicada.nombre_en === publicada.nombre_es && publicada.marca === 'Arcor'
+    && publicada.paises.join() === 'AR,UY' && publicada.codigos.join() === [ean, upc].sort().join()
+    && publicada.porciones.length === 1 && publicada.porciones[0].es === '3 galletitas' && publicada.porciones[0].gramos === 25
+    && publicada.retirado === false && Number(publicada.id) >= 9e9 && Number.isSafeInteger(Number(publicada.id))
+    && (await como(V[9], 'select id from moss.catalogo where comunidad')).rows.length === 1,
+  'comunidad: se publica la mediana del grupo (sin el raro), el nombre más repetido, la porción de la primera, los países y los dos códigos, con un id aparte, y la ve cualquiera',
+);
+
+const yogur = { codigo: gtin('779123456789'), nombre: 'Yogur bebible', kcal: 80, p: 3, c: 12, g: 2 };
+const tresVeces = [await proponer(V[4], yogur), await proponer(V[4], { ...yogur, kcal: 82 }), await proponer(V[4], yogur)];
+const filasDelYogur = (await comoServicio('select count(*)::int as n from moss.propuestas where codigo = $1', [yogur.codigo])).rows[0].n;
+comprobar(
+  tresVeces.every((r) => r === 'guardada') && filasDelYogur === 1 && !(await deLaComunidad(`and codigos @> array['${yogur.codigo}']`)).length,
+  'comunidad: una persona que propone tres veces no publica: pisa la suya',
+);
+
+const formas = ['Tarta de la abuela', 'tarta de la Abuela', 'TARTA DE LA ABUELA!', 'Tarta  de la abuela', 'Tárta de la abuela'];
+const sinCodigo = [];
+for (const [i, nombre] of formas.entries()) sinCodigo.push(await proponer(V[i], { nombre, marca: i % 2 ? 'casera' : 'Casera', kcal: 300 + i, p: 6, c: 35, g: 15 }));
+comprobar(
+  sinCodigo.slice(0, 4).every((r) => r === 'guardada') && sinCodigo[4] === 'publicada'
+    && (await deLaComunidad(`and nombre_es = 'Tarta de la abuela' and marca = 'Casera' and codigos = '{}' and personas = 5`)).length === 1,
+  'comunidad: sin código hacen falta cinco con el mismo nombre y marca (sin importar mayúsculas, tildes ni signos)',
+);
+
+const valido = gtin('779000111222');
+const rechazos = [
+  await rechazo(V[5], { ...yogur, codigo: valido.slice(0, -1) + ((Number(valido.slice(-1)) + 1) % 10) }),
+  await rechazo(V[5], { ...yogur, codigo: '12345' }),
+  await rechazo(V[5], { ...yogur, codigo: gtin('779000111') }),
+  await rechazo(V[5], { ...yogur, nombre: 'Promo en www.ofertas.com' }),
+  await rechazo(V[5], { ...yogur, nombre: 'Escribime a yo@correo' }),
+  await rechazo(V[5], { ...yogur, nombre: '12345 %' }),
+  await rechazo(V[5], { ...yogur, kcal: 100, p: 30, c: 30, g: 10 }),
+  await rechazo(V[5], { ...yogur, kcal: 950 }),
+  await rechazo(V[5], { ...yogur, kcal: 490, p: 50, c: 50, g: 10 }),
+  await rechazo(V[5], { ...yogur, kcal: 'NaN' }),
+  await rechazo(V[5], { ...yogur, porcion: '1 vaso', gramos: null }),
+];
+comprobar(
+  rechazos.every((c) => c === '22023') && (await rechazo(V[5], { ...yogur, nombre: 'Leche 拿铁', porcion: '1 vaso', gramos: 200 })) === null,
+  `comunidad: se rechazan con 22023 el dígito verificador malo, un largo que no es GTIN, una dirección o una arroba en el nombre, un nombre sin letras, kcal que no cierran con 4/4/9, valores imposibles y la porción a medias (${rechazos.join()})`,
+);
+
+await comoServicio('update moss.comunidad_reglas set propuestas_por_dia = 3');
+const conTope = [];
+for (let i = 0; i < 4; i++) conTope.push(await rechazo(V[6], { ...yogur, codigo: gtin(`77955500000${i}`) }));
+const cambiarLaPrimera = await rechazo(V[6], { ...yogur, codigo: gtin('779555000000'), kcal: 81 });
+await comoServicio('update moss.comunidad_reglas set propuestas_por_dia = 30');
+comprobar(
+  conTope.slice(0, 3).every((c) => c === null) && conTope[3] === '22023' && cambiarLaPrimera === null,
+  'comunidad: el tope por día (en las reglas) rechaza la de más, y cambiar una que ya estaba no lo gasta',
+);
+
+const descremada = { codigo: gtin('779777000001'), nombre: 'Leche descremada', kcal: 35, p: 3.3, c: 5, g: 0.1 };
+const conLaRecien = [await proponer(V[0], descremada), await proponer(V[1], descremada), await proponer(RECIEN, descremada)];
+await db.exec(`update auth.users set created_at = now() - interval '2 days' where id = '${RECIEN}'`);
+const yaNoEsRecien = await proponer(RECIEN, descremada);
+comprobar(
+  conLaRecien.every((r) => r === 'guardada') && yaNoEsRecien === 'publicada',
+  'comunidad: una cuenta de recién no cuenta; con la antigüedad mínima, su propuesta sí',
+);
+
+const idGalleta = publicada.id;
+const laMisma = [await reportar(V[0], idGalleta), await reportar(V[0], idGalleta, 'porcion'), await reportar(V[0], idGalleta)];
+const conUnaPersona = (await filaDelCatalogo(idGalleta)).retirado;
+const segundo = await reportar(V[1], idGalleta);
+const tercero = await reportar(V[2], idGalleta);
+const unReporte = (await comoServicio('select nota, motivo from moss.reportes_comunidad where usuario = $1', [V[0]])).rows;
+comprobar(
+  laMisma.every((r) => r === false) && conUnaPersona === false && segundo === false && tercero === true && (await filaDelCatalogo(idGalleta)).retirado === true
+    && unReporte.length === 1 && unReporte[0].nota === 'Las calorías están mal' && unReporte[0].motivo === 'valores',
+  'comunidad: tres reportes de la misma persona cuentan una vez y no la ocultan; tres de personas distintas, sí (retirado)',
+);
+const reporteMalo = (u, id, motivo) => reportar(u, id, motivo).then(() => null, (e) => e.code);
+comprobar(
+  (await reporteMalo(V[3], -200001, 'valores')) === '22023' && (await reporteMalo(V[3], idGalleta, 'me cae mal')) === '22023',
+  'comunidad: solo se reporta lo de la comunidad, con un motivo conocido',
+);
+
+const corregida = { ...galleta, kcal: 450, p: 10, c: 65, g: 16 };
+const vuelta = [await proponer(V[4], corregida), await proponer(V[5], { ...corregida, kcal: 455 })];
+const todaviaOculta = (await filaDelCatalogo(idGalleta)).retirado;
+vuelta.push(await proponer(V[6], { ...corregida, kcal: 460 }));
+const republicada = await filaDelCatalogo(idGalleta);
+comprobar(
+  vuelta.join() === 'guardada,guardada,publicada' && todaviaOculta === true && republicada.retirado === false && republicada.kcal === 455 && republicada.personas === 3,
+  'comunidad: oculta, lo propuesto antes no cuenta, y tres propuestas nuevas la vuelven a publicar corregida, con el mismo id',
+);
+comprobar((await reportar(V[0], idGalleta)) === false, 'comunidad: los reportes de antes de volver a publicarse dejan de contar');
+
+const cafe = { codigo: gtin('779888000001'), nombre: 'Café molido', kcal: 2, p: 0.1, c: 0.3, g: 0 };
+await comoServicio('update moss.comunidad_reglas set confirmaciones = 2');
+const conDos = [await proponer(V[7], cafe), await proponer(V[8], cafe)];
+await comoServicio('update moss.comunidad_reglas set confirmaciones = 3');
+comprobar(conDos.join() === 'guardada,publicada', 'comunidad: cambiar un umbral es un update en las reglas: con dos confirmaciones, publica con dos');
+await comoServicio(`update moss.catalogo set retirado = true where codigos @> array['${cafe.codigo}']`);
+await proponer(V[9], cafe);
+comprobar((await deLaComunidad(`and codigos @> array['${cafe.codigo}']`))[0]?.retirado === true, 'comunidad: lo que Moss retira a mano no lo vuelve a publicar una propuesta');
+
+await reportar(V[7], idGalleta);
+const deUnaCuenta = async (u) => Number((await comoServicio(`select (select count(*) from moss.propuestas where usuario = $1)
+  + (select count(*) from moss.reportes_comunidad where usuario = $1) as n`, [u])).rows[0].n);
+const conLoSuyo = await deUnaCuenta(V[7]);
+const publicadas = JSON.stringify(await deLaComunidad());
+await como(V[7], 'select moss.borrar_mis_datos()');
+comprobar(
+  conLoSuyo === 2 && (await deUnaCuenta(V[7])) === 0 && (await deUnaCuenta(V[8])) === 1 && JSON.stringify(await deLaComunidad()) === publicadas,
+  'comunidad: «borrar mis datos» borra tus propuestas y tus reportes, y nada de otro; lo publicado queda',
+);
+const deV0 = await deUnaCuenta(V[0]);
+await db.exec(`delete from auth.users where id = '${V[0]}'`);
+comprobar(
+  deV0 > 0 && (await deUnaCuenta(V[0])) === 0 && JSON.stringify(await deLaComunidad()) === publicadas,
+  'comunidad: borrar el usuario de Auth borra sus propuestas y reportes en cascada, sin tocar lo publicado',
+);
 
 await db.close();
 console.log(fallas ? `\n${fallas} comprobaciones fallaron.` : '\nTodo bien.');

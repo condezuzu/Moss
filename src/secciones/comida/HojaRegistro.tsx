@@ -20,6 +20,7 @@ import { textoDeBusqueda } from '@/almacen/buzon';
 import { buzon } from '@/almacen/buzonDeMoss';
 import { baseDeAlimentos } from '@/comida/base';
 import { normalizar, type Resultado } from '@/comida/buscar';
+import { propuestaDe } from '@/comida/comunidad';
 import { formasDelCodigo, type Detalle } from '@/comida/detalle';
 import { leerEtiqueta, type Leidos, type Nutriente } from '@/comida/etiqueta';
 import { conUnaUnidad } from '@/comida/porciones';
@@ -1166,6 +1167,9 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               }}
               alGuardar={(propio) => {
                 const nuevo = a.guardarPropio({ ...propio, origen: crear.leida ? 'etiqueta' : 'mano' });
+                // Con «Mandar lo que no encuentro», lo creado sale como propuesta a la base de la comunidad.
+                const propuesta = e.mandarBusquedas ? propuestaDe(nuevo, region()) : null;
+                if (propuesta) buzon().echar({ tipo: 'propuesta', propuesta }).catch(() => {});
                 setCrear(null);
                 setPanel(null);
                 if (eligiendo) {

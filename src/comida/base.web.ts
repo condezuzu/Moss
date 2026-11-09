@@ -13,6 +13,8 @@ type AlimentoWeb = {
   id: number; f: string; es: string; en: string; v: [number, number, number, number]; s: (number | null)[];
   p: [string | null, string, number][]; t: [string, string, number, string][];
   m: string | null; b?: number | null; d: number | null; x: [number, string, string] | null; a: string | null; c: number | null; o: string | null; q?: string; z?: 1;
+  /** Dónde se vende (UY, AR…), si no es en todos lados. */
+  n?: string[];
   /** Los micronutrientes en el orden de MICROS, sin los null del final; y verificado: [día, con qué]. */
   u?: (number | null)[]; w?: [string, string] | null;
 };
@@ -26,7 +28,7 @@ function cargar(): Promise<Cargados> {
     .then((r) => r.json() as Promise<DatosWeb>)
     .then((d) => ({
       porId: new Map(d.alimentos.map((a) => [a.id, a])),
-      corpus: d.alimentos.flatMap((a) => a.t.map(([i, region, principal, texto]) => textoEnMemoria(a.id, i === 'en' ? 'en' : 'es', region || null, principal, texto, a.m, a.b))),
+      corpus: d.alimentos.flatMap((a) => a.t.map(([i, region, principal, texto]) => textoEnMemoria(a.id, i === 'en' ? 'en' : 'es', region || null, principal, texto, a.m, a.b, a.n))),
       recetas: d.recetas,
       codigos: d.codigos,
     }));

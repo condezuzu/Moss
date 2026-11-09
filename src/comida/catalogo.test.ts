@@ -56,3 +56,36 @@ describe('el catálogo del servidor', () => {
     expect(codigoDelCatalogo(filas, '7730000000017')).toBeNull();
   });
 });
+
+describe('lo que publicó la comunidad', () => {
+  const comunidad = (x: Partial<FilaDelCatalogo> & Pick<FilaDelCatalogo, 'id' | 'nombre_es'>) =>
+    fila({ nombre_en: x.nombre_es, comunidad: true, personas: 3, paises: ['UY'], marca: 'Granix', ...x });
+
+  it('va después de la base, salvo que lo escrito lo nombre; lo de otro país, al final', () => {
+    const filas = [
+      comunidad({ id: 9_000_000_001, nombre_es: 'Galletitas de avena' }),
+      comunidad({ id: 9_000_000_002, nombre_es: 'Galletitas de arroz', paises: ['MX'] }),
+      fila({ id: -20001, nombre_es: 'Galletitas de chocolate', nombre_en: 'Chocolate cookies' }),
+    ];
+    const base = [resultado(10, 'Galletitas dulces')];
+    expect(conElCatalogo(base, filas, 'galletitas', op).map((r) => r.id)).toEqual([-20001, 10, 9_000_000_001, 9_000_000_002]);
+    expect(conElCatalogo(base, filas, 'galletitas de avena', op).map((r) => r.id)[0]).toBe(9_000_000_001);
+    // Sin saber el país, ninguno es de otro.
+    expect(conElCatalogo(base, filas, 'galletitas', { idioma: 'es' }).map((r) => r.id)).toEqual([-20001, 10, 9_000_000_001, 9_000_000_002]);
+    const deMexico = conElCatalogo(base, filas, 'galletitas de arroz', { idioma: 'es', region: 'MX' });
+    // Nombrado y de ahí: antes que la base (lo que agregó Moss, que se le parece, sigue primero).
+    const ids = deMexico.map((r) => r.id);
+    expect(ids.indexOf(9_000_000_002)).toBeLessThan(ids.indexOf(10));
+    expect(deMexico.find((r) => r.id === 9_000_000_001)?.curado).toBe(false);
+  });
+
+  it('el detalle dice que es de la comunidad y no lo da por verificado por Moss', () => {
+    const filas = [comunidad({ id: 9_000_000_001, nombre_es: 'Galletitas de avena', verificado: '2026-11-09', segunda: 'etiqueta' })];
+    const d = detalleDelCatalogo(filas, 9_000_000_001, op)!;
+    expect(d.comunidad).toEqual({ personas: 3 });
+    expect(d.verificado).toBeNull();
+    expect(d.origen).toBe('producto');
+    // Oculto por los reportes: no se abre.
+    expect(detalleDelCatalogo([{ ...filas[0], retirado: true }], 9_000_000_001, op)).toBeNull();
+  });
+});

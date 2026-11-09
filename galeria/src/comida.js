@@ -118,6 +118,11 @@ const Comida = (() => {
 
   function crear(tel, escena, opciones) {
     const ALIMENTOS = opciones.alimentos || [];
+    // Lo que publicó la comunidad (cuatro personas cargaron lo mismo, supabase/moss/0012_comunidad.sql): de mentira, para ver su sello.
+    if (!ALIMENTOS.some((x) => x.cm)) ALIMENTOS.push({
+      id: 9000000001, es: 'Barra de proteína de maní', en: 'Peanut protein bar', cm: 4,
+      v: [380, 30, 35, 13], s: [6, 12, 4, 210, null], p: [['1 barra', '1 bar', 45]], d: 0, t: [['es', '', 1, 'Barra de proteína de maní'], ['en', '', 1, 'Peanut protein bar']],
+    });
     const porId = new Map(ALIMENTOS.map((a) => [a.id, a]));
     const porNombre = new Map(ALIMENTOS.map((a) => [a.es, a]));
     const esTactil = window.matchMedia('(pointer: coarse)').matches;
@@ -1402,7 +1407,7 @@ const Comida = (() => {
       const normal = Buscar.normalizar(texto);
       const trigramas = new Set();
       normal.split(' ').forEach((p) => { for (let k = 0; k + 3 <= p.length; k++) trigramas.add(p.slice(k, k + 3)); });
-      return { alimento: a.id, idioma: i, region: region || null, principal, texto, palabras: normal.split(' '), trigramas, rango: 0, marca: a.m, orden: a.b };
+      return { alimento: a.id, idioma: i, region: region || null, principal, texto, palabras: normal.split(' '), trigramas, rango: 0, marca: a.m, orden: a.b, paises: a.n };
     });
     const corpus = ALIMENTOS.flatMap(textosDe);
     function buscar(texto) {
@@ -1422,7 +1427,7 @@ const Comida = (() => {
       // Lo usado sube; lo tuyo (creado desde la etiqueta), también: lo buscás porque lo cargaste.
       const premio = (id) => (s.usos.has(id) ? 2.5 * Math.log1p(s.usos.get(id)) : 0) + (porId.get(id).cat === 'etiqueta' ? 5 : 0);
       return Buscar.mejoresPorAlimento(candidatos, texto, { idioma, region: REGION, premio }, () => true)
-        .slice(0, Buscar.limiteDe(candidatos, texto, { limite: 12, limiteDeMarca: 200 }))
+        .slice(0, Buscar.limiteDe(candidatos, texto, { region: REGION, limite: 12, limiteDeMarca: 200 }))
         .map((c) => ({ a: porId.get(c.alimento), coincide: c.texto }));
     }
 
@@ -2499,10 +2504,10 @@ const Comida = (() => {
       const cab = el('header', 'vt-cab');
       const titulos = el('div', 'vt-titulos');
       // Los ids dicen de dónde sale: receta#N es -(5000 + N) y producto#N, -(10000 + N) (herramientas/alimentos.mjs).
-      const fuente = a.cat === 'etiqueta' ? 'etiqueta' : a.id <= -10000 ? 'producto' : a.id <= -5000 ? 'receta' : a.id < 0 ? 'propio' : 'usda';
+      const fuente = a.cm ? 'comunidad' : a.cat === 'etiqueta' ? 'etiqueta' : a.id <= -10000 ? 'producto' : a.id <= -5000 ? 'receta' : a.id < 0 ? 'propio' : 'usda';
       // La fuente y si está verificado; al tocarla se abre «¿De dónde sale esto?» (spec/fuentes.md).
       const verificado = !!a.w;
-      const lineaFuente = boton('vt-fuente', `<span>${tx('comida.fuente.' + (fuente === 'producto' && a.o === 'off' ? 'productoOff' : fuente))}</span><span class="vt-sello${verificado ? ' si' : ''}">${verificado ? icono('listo') : ''}${tx(verificado ? 'comida.verificado' : 'comida.sinVerificar')}</span>`, () => {
+      const lineaFuente = boton('vt-fuente', `<span>${tx('comida.fuente.' + (fuente === 'producto' && a.o === 'off' ? 'productoOff' : fuente))}</span>${a.cm ? `<span class="vt-sello comunidad">${icono('listo')}${tx('comida.comunidad.sello')}</span>` : `<span class="vt-sello${verificado ? ' si' : ''}">${verificado ? icono('listo') : ''}${tx(verificado ? 'comida.verificado' : 'comida.sinVerificar')}</span>`}`, () => {
         lineaFuente.setAttribute('aria-expanded', String(deDonde.classList.toggle('abierto')));
       }, tx('comida.deDonde.titulo'));
       lineaFuente.setAttribute('aria-expanded', 'false');
@@ -2510,11 +2515,11 @@ const Comida = (() => {
       const deDonde = el('div', 'vt-plegable vt-dedonde');
       const deDondeTexto = el('div');
       deDondeTexto.appendChild(el('b', null, tx('comida.deDonde.titulo')));
-      const origen = fuente === 'receta' && a.r ? tx('comida.deDonde.receta', { n: a.r[1], g: numero(a.r[0]) })
+      const origen = a.cm ? tx('comida.comunidad.deDonde', { n: a.cm }) : fuente === 'receta' && a.r ? tx('comida.deDonde.receta', { n: a.r[1], g: numero(a.r[0]) })
         : fuente === 'producto' ? tx(a.o === 'off' ? 'comida.deDonde.off' : a.z ? 'comida.deDonde.aproximado' : a.q ? 'comida.deDonde.cadena' : 'comida.deDonde.producto')
           : fuente === 'propio' ? tx('comida.deDonde.propio') : tx('comida.deDonde.usda');
       deDondeTexto.appendChild(el('p', null, origen));
-      const conQue = !a.w ? tx('comida.deDonde.sin') : a.w[1] === 'ingredientes' ? tx('comida.deDonde.ingredientes') : a.w[1] === 'etiqueta' ? tx('comida.deDonde.etiqueta')
+      const conQue = a.cm ? tx('comida.comunidad.reportar') : !a.w ? tx('comida.deDonde.sin') : a.w[1] === 'ingredientes' ? tx('comida.deDonde.ingredientes') : a.w[1] === 'etiqueta' ? tx('comida.deDonde.etiqueta')
         : tx('comida.deDonde.con', { tabla: tx('comida.tablas.' + a.w[1].split(':')[0]) === 'comida.tablas.' + a.w[1].split(':')[0] ? tx('comida.tablas.otra') : tx('comida.tablas.' + a.w[1].split(':')[0]),
           fecha: new Date(a.w[0] + 'T12:00:00').toLocaleDateString(idioma === 'es' ? 'es-UY' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) });
       deDondeTexto.appendChild(el('p', null, conQue));

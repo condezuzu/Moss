@@ -6,7 +6,7 @@
 
 import { microsValidos, type Micros } from '@/dominio/micronutrientes';
 
-import { candidatosEnMemoria, conMayuscula, mejoresPorAlimento, textoEnMemoria, type Opciones, type Resultado } from './buscar';
+import { candidatosEnMemoria, conMayuscula, mejoresPorAlimento, nombraLaMarca, normalizar, textoEnMemoria, type Candidato, type Opciones, type Resultado } from './buscar';
 import { formasDelCodigo, type Detalle, type Valores100 } from './detalle';
 
 /** Una fila de moss.catalogo, como llega de Supabase. */
@@ -39,6 +39,13 @@ export type FilaDelCatalogo = {
   crudo: number | null;
   retirado: boolean;
   actualizado: string;
+  /**
+   * Desde 0012: lo publicó la comunidad (varias personas cargaron lo mismo, 0012_comunidad.sql), cuántas
+   * eran y de qué países; si no, false, null y [].
+   */
+  comunidad?: boolean;
+  personas?: number | null;
+  paises?: string[];
 };
 
 /** Lo que se tiene del catálogo: las filas y hasta qué hora del servidor se bajó. */
@@ -64,9 +71,16 @@ const valoresDe = (f: FilaDelCatalogo): Valores100 => {
 
 const nombreDe = (f: FilaDelCatalogo, idioma: 'es' | 'en') => (idioma === 'es' ? f.nombre_es : f.nombre_en);
 
+/** Lo de la comunidad que va antes que la base: lo que se escribió es su nombre entero o nombra su marca. */
+function loNombra(f: FilaDelCatalogo, texto: string): boolean {
+  const q = normalizar(texto);
+  return normalizar(f.nombre_es) === q || normalizar(f.nombre_en) === q || (!!f.marca && nombraLaMarca(texto, f.marca) === 'entera');
+}
+
 /**
  * Los resultados de la base con el catálogo encima: lo retirado se va, lo corregido toma los
- * valores nuevos y lo que se agregó y coincide con lo escrito va primero.
+ * valores nuevos y lo que Moss agregó y coincide con lo escrito va primero. Lo de la comunidad no está
+ * revisado por Moss: va después de la base, salvo que lo escrito lo nombre; y lo de otro país, al final.
  */
 export function conElCatalogo(resultados: Resultado[], filas: FilaDelCatalogo[], texto: string, op: Opciones): Resultado[] {
   if (!filas.length) return resultados;
@@ -74,7 +88,7 @@ export function conElCatalogo(resultados: Resultado[], filas: FilaDelCatalogo[],
   const comoResultado = (f: FilaDelCatalogo, coincide: string): Resultado => {
     const porcion = f.porciones[0];
     return {
-      id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), coincide, curado: true, verificado: !!f.verificado, ...(f.marca ? { marca: f.marca } : {}), ...valoresDe(f),
+      id: f.id, nombre: conMayuscula(nombreDe(f, op.idioma)), coincide, curado: !f.comunidad, verificado: !!f.verificado && !f.comunidad, ...(f.marca ? { marca: f.marca } : {}), ...valoresDe(f),
       porcion: porcion ? { nombre: op.idioma === 'es' ? porcion.es : porcion.en, gramos: porcion.gramos } : null,
     };
   };
@@ -84,15 +98,29 @@ export function conElCatalogo(resultados: Resultado[], filas: FilaDelCatalogo[],
     return f.retirado ? [] : [comoResultado(f, r.coincide)];
   });
   const yaEstan = new Set(resultados.map((r) => r.id));
-  const corpus = filas.filter((f) => !f.retirado && !yaEstan.has(f.id)).flatMap((f) => [
-    textoEnMemoria(f.id, 'es', null, 0, f.nombre_es, f.marca),
-    textoEnMemoria(f.id, 'en', null, 0, f.nombre_en, f.marca),
-    ...(f.marca ? [textoEnMemoria(f.id, 'es', null, 0, `${f.nombre_es} ${f.marca}`), textoEnMemoria(f.id, 'en', null, 0, `${f.nombre_en} ${f.marca}`)] : []),
-    ...f.alias.map((a) => textoEnMemoria(f.id, 'es', null, 0, a)),
-  ]);
-  const nuevos = mejoresPorAlimento(candidatosEnMemoria(corpus, texto, op.idioma), texto, op, () => true).map((c) => comoResultado(porId.get(c.alimento)!, c.texto));
+  const corpus = filas.filter((f) => !f.retirado && !yaEstan.has(f.id)).flatMap((f) => {
+    const paises = f.paises?.length ? f.paises : null;
+    return [
+      textoEnMemoria(f.id, 'es', null, 0, f.nombre_es, f.marca, null, paises),
+      textoEnMemoria(f.id, 'en', null, 0, f.nombre_en, f.marca, null, paises),
+      ...(f.marca ? [textoEnMemoria(f.id, 'es', null, 0, `${f.nombre_es} ${f.marca}`, null, null, paises), textoEnMemoria(f.id, 'en', null, 0, `${f.nombre_en} ${f.marca}`, null, null, paises)] : []),
+      ...f.alias.map((a) => textoEnMemoria(f.id, 'es', null, 0, a, null, null, paises)),
+    ];
+  });
+  const nuevos = mejoresPorAlimento(candidatosEnMemoria(corpus, texto, op.idioma), texto, op, (id) => !porId.get(id)?.comunidad);
+  const fila = (c: Candidato) => porId.get(c.alimento)!;
+  const sale = (c: Candidato) => comoResultado(fila(c), c.texto);
+  const deAca = (c: Candidato) => {
+    const paises = fila(c).paises;
+    return !op.region || !paises?.length || paises.includes(op.region);
+  };
+  const deMoss = nuevos.filter((c) => !fila(c).comunidad);
+  const comunidad = nuevos.filter((c) => fila(c).comunidad);
+  const nombrados = comunidad.filter((c) => deAca(c) && loNombra(fila(c), texto));
+  const resto = comunidad.filter((c) => !nombrados.includes(c));
   // Con una marca nombrada, buscarAlimentos ya trajo el menú entero (limiteDe): no se vuelve a cortar.
-  return [...nuevos, ...corregidos].slice(0, Math.max(op.limite ?? 25, resultados.length));
+  return [...deMoss.map(sale), ...nombrados.map(sale), ...corregidos, ...resto.filter(deAca).map(sale), ...resto.filter((c) => !deAca(c)).map(sale)]
+    .slice(0, Math.max(op.limite ?? 25, resultados.length));
 }
 
 /** El detalle de un alimento del catálogo, o null si no está (o se retiró: entonces no se muestra). */
@@ -111,7 +139,8 @@ export function detalleDelCatalogo(filas: FilaDelCatalogo[], id: number, op: { i
     crudo: crudo ? { id: crudo.id, nombre: nombreDe(crudo, op.idioma) } : null,
     cocidos: filas.filter((x) => x.crudo === f.id && !x.retirado).map((x) => ({ id: x.id, nombre: nombreDe(x, op.idioma) })),
     receta: null,
-    verificado: f.verificado && f.segunda ? { fecha: f.verificado, con: f.segunda } : null,
+    verificado: !f.comunidad && f.verificado && f.segunda ? { fecha: f.verificado, con: f.segunda } : null,
+    comunidad: f.comunidad ? { personas: f.personas ?? 0 } : null,
   };
 }
 

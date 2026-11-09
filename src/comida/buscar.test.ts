@@ -8,7 +8,7 @@ import { describe, expect, it } from '@jest/globals';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 
-import { buscarAlimentos, consultaDePalabras, consultaDeTrigramas, normalizar, parecido, type Opciones } from './buscar';
+import { buscarAlimentos, candidatosEnMemoria, consultaDePalabras, consultaDeTrigramas, mejoresPorAlimento, normalizar, parecido, textoEnMemoria, type Opciones } from './buscar';
 
 const db = new DatabaseSync(join(__dirname, '../../assets/alimentos.db'), { readOnly: true });
 const base = { getAllAsync: async <T,>(sql: string, ...parametros: (string | number)[]) => db.prepare(sql).all(...parametros) as T[] };
@@ -227,5 +227,83 @@ describe('las marcas', () => {
   it('una marca que se llama como una palabra no se come lo genérico', async () => {
     const lista = await nombres('pan');
     expect(lista.slice(0, 3).some((n) => /^Pan\b/.test(n))).toBe(true);
+  });
+});
+
+describe('lo que se vende en cada país (paises en la base)', () => {
+  const paisesDe = new Map((db.prepare('SELECT id, paises FROM alimentos WHERE paises IS NOT NULL').all() as { id: number; paises: string }[]).map((f) => [f.id, f.paises.split(' ')]));
+  const soloEnUruguay = (id: number) => paisesDe.get(id)?.length === 1 && paisesDe.get(id)![0] === 'UY';
+  const marcas = (marca: string) => db.prepare('SELECT paises FROM alimentos WHERE marca = ?').all(marca) as { paises: string | null }[];
+
+  it('lo del súper de Uruguay y las cadenas regionales dicen sus países; lo genérico y las cadenas globales, ninguno', () => {
+    expect(marcas('Conaprole').every((f) => f.paises === 'UY')).toBe(true);
+    expect(marcas('Mostaza').every((f) => f.paises === 'AR PY UY')).toBe(true);
+    expect(marcas('La Pasiva').every((f) => f.paises === 'UY')).toBe(true);
+    for (const global of ["McDonald's", 'Burger King', 'Starbucks', 'KFC', 'Subway']) expect(marcas(global).every((f) => f.paises === null)).toBe(true);
+    expect(db.prepare("SELECT count(*) AS n FROM alimentos WHERE paises IS NOT NULL AND marca IS NULL").get()).toEqual({ n: 0 });
+    expect(paisesDe.has(idDe('Chivito'))).toBe(false);
+  });
+
+  it.each(['MX', 'ES'])('en %s, «mostaza» es la mostaza y no el menú de la cadena', async (region) => {
+    const lista = await buscar('mostaza', { region, limite: 10, limiteDeMarca: 40 });
+    expect(lista[0].nombre).toBe('Mostaza');
+    // Nombrar la marca no la sube ni agranda la lista: Mostaza no está ahí.
+    expect(lista).toHaveLength(10);
+    expect(lista.slice(0, 5).some((r) => r.marca === 'Mostaza')).toBe(false);
+    expect(lista.slice(0, 3).every((r) => !r.marca)).toBe(true);
+  });
+
+  it.each(['MX', 'ES'])('en %s, «leche» y «galletitas» no traen productos de Uruguay entre los primeros 10', async (region) => {
+    for (const q of ['leche', 'galletitas', 'galletas', 'yogur', 'queso']) {
+      const lista = await buscar(q, { region, limite: 10 });
+      expect(lista).toHaveLength(10);
+      expect(lista.filter((r) => soloEnUruguay(r.id)).map((r) => r.nombre)).toEqual([]);
+    }
+  });
+
+  it('en Uruguay, lo de siempre: la mostaza y enseguida el menú de Mostaza, con la lista larga', async () => {
+    const lista = await buscar('mostaza', { limite: 10, limiteDeMarca: 40 });
+    expect(lista[0].nombre).toBe('Mostaza');
+    expect(lista.length).toBeGreaterThan(10);
+    expect(lista.slice(0, 6).some((r) => r.marca === 'Mostaza' && /^Hamburguesa/.test(r.nombre))).toBe(true);
+  });
+
+  it('en Argentina y Paraguay, Mostaza sí está', async () => {
+    for (const region of ['AR', 'PY']) expect((await buscar('mostaza', { region })).slice(0, 6).some((r) => r.marca === 'Mostaza')).toBe(true);
+  });
+
+  it('sin saber el país, como en Uruguay: nada se esconde', async () => {
+    const sinPais = await buscar('mostaza', { region: undefined, limite: 10, limiteDeMarca: 40 });
+    expect(sinPais.slice(0, 6).some((r) => r.marca === 'Mostaza')).toBe(true);
+    expect((await buscar('leche conaprole', { region: undefined }))[0].marca).toBe('Conaprole');
+  });
+
+  it.each(['UY', 'MX', 'ES', 'US', 'AR', undefined])('«big mac» y «whopper» se encuentran en cualquier país (%s)', async (region) => {
+    expect((await buscar('big mac', { region }))[0].nombre).toBe('Big Mac');
+    expect((await buscar('whopper', { region }))[0].nombre).toBe('Whopper');
+    expect((await buscar('big mac', { idioma: 'en', region }))[0].nombre).toBe('Big Mac');
+  });
+
+  it('en inglés, con Estados Unidos, lo genérico queda igual: solo baja lo que se vende en otro lado', async () => {
+    for (const q of ['milk', 'mustard', 'cookies', 'chicken breast', 'cheese', 'yogurt']) {
+      const conPais = (await buscar(q, { idioma: 'en', region: 'US', limite: 60 })).filter((r) => !paisesDe.has(r.id)).map((r) => r.id);
+      const sinPais = (await buscar(q, { idioma: 'en', region: undefined, limite: 60 })).filter((r) => !paisesDe.has(r.id)).map((r) => r.id);
+      const n = Math.min(conPais.length, sinPais.length, 20);
+      expect(conPais.slice(0, n)).toEqual(sinPais.slice(0, n));
+    }
+    expect((await buscar('milk', { idioma: 'en', region: 'US' })).slice(0, 10).filter((r) => soloEnUruguay(r.id))).toEqual([]);
+  });
+
+  it('en la memoria (la web y la galería), igual: los países llegan del texto al candidato', () => {
+    const corpus = [
+      textoEnMemoria(1, 'es', null, 0, 'Mostaza'),
+      textoEnMemoria(2, 'es', null, 0, 'Hamburguesa Mostaza', 'Mostaza', 0, ['AR', 'PY', 'UY']),
+      textoEnMemoria(3, 'es', null, 0, 'Salsa de mostaza'),
+    ];
+    const orden = (region?: string) => mejoresPorAlimento(candidatosEnMemoria(corpus, 'mostaza', 'es'), 'mostaza', { idioma: 'es', region }, () => true).map((c) => c.alimento);
+    expect(candidatosEnMemoria(corpus, 'mostaza', 'es').find((c) => c.alimento === 2)?.paises).toEqual(['AR', 'PY', 'UY']);
+    expect(orden('UY')).toEqual([1, 2, 3]);
+    expect(orden(undefined)).toEqual([1, 2, 3]);
+    expect(orden('MX')).toEqual([1, 3, 2]);
   });
 });

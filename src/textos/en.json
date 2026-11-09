@@ -548,7 +548,8 @@
       "aproximado": "Approximate · {fuente}",
       "deLaCadena": "Official · from the chain",
       "estimacionDeMoss": "Approximate · Moss estimate",
-      "aproximadoOff": "Approximate · Open Food Facts"
+      "aproximadoOff": "Approximate · Open Food Facts",
+      "comunidad": "Product · from the community"
     },
     "favorito": "Favorite",
     "nombre": "Name",
@@ -939,6 +940,11 @@
     "alimentos": {
       "uno": "{n} food",
       "otros": "{n} foods"
+    },
+    "comunidad": {
+      "sello": "Verified by the community",
+      "deDonde": "{n} people entered it separately and their values match. Moss hasn't compared it with an official table.",
+      "reportar": "If something's wrong, report it: after several reports it stops showing."
     }
   },
   "inicio": {
@@ -2298,7 +2304,7 @@
       "Your data is yours. Moss stores what you log, your answers, your weight and your nights on your phone and, with your account, on its server, for your other devices. It doesn't sell them or share them with third parties, show ads or track you.",
       "From Apple Health, Moss reads steps, sleep, water, mindful minutes, weight, date of birth, sex and height and, at night, heart rate, resting heart rate, heart rate variability and respiratory rate. With your account, your weight, birth year, sex, height, which habits you completed and the estimated time of your night are uploaded; everything else stays on your phone. Moss never writes to Apple Health.",
       "Meal photos and your profile photo stay on your phone. When you scan a code that isn't in Moss, Open Food Facts is asked about that code only.",
-      "If you choose to, what you search for and don't find is sent without your name; so is a mistake you report. You can export everything as CSV and delete your data or your account here."
+      "If you choose to, what you search for and don't find is sent without your name, and what you create is proposed for everyone: the server keeps your account with the proposal only to count different people, never shows it and deletes it with your account. A mistake you report goes without your name; for community foods, with your account, for the same reason. You can export everything as CSV and delete your data or your account here."
     ],
     "version": "Moss {v}",
     "encendidos": "On",
@@ -2446,7 +2452,7 @@
     "mejorarBase": "Send what I don't find",
     "si": "Yes",
     "no": "No",
-    "mejorarBaseTexto": "When you search for a food Moss doesn't have, it sends only what you typed, with no name or account, so it can be added.",
+    "mejorarBaseTexto": "When you search for a food Moss doesn't have, it sends what you typed. And if you create it, it's proposed for everyone: when several people enter the same thing, it stays in Moss. No one sees who sent it.",
     "politica": "Privacy policy",
     "terminos": "Terms",
     "contacto": "Help and contact",

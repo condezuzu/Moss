@@ -248,7 +248,7 @@ const yaEstan = { codigos: new Set(), nombres: new Set(), sinMarca: new Set(), n
 for (const archivo of readdirSync(join(raiz, 'alimentos'))) {
   if (!archivo.endsWith('.txt') || archivo === 'marcas.txt' || archivo === 'verificacion.txt') continue;
   for (const linea of readFileSync(join(raiz, 'alimentos', archivo), 'utf8').split(/\r?\n/)) {
-    if (!linea.trim() || linea.startsWith('//') || linea.startsWith('#')) continue;
+    if (!linea.trim() || linea.startsWith('//') || linea.startsWith('#') || linea.startsWith('@')) continue;
     const n = linea.match(/\bproducto#(\d+)/);
     if (n) yaEstan.numeros.add(Number(n[1]));
     yaEstan.nombres.add(llano(linea.split('|')[0]));
@@ -386,6 +386,8 @@ const lineas = [
   '// Lo que se toma va por 100 ml, como dicen las etiquetas, con densidad 1: la diferencia con la real es de menos de 5 %.',
   `// Armado el ${new Date().toISOString().slice(0, 10)}.`,
   `// Siguiente número: ${siguiente}. No baja nunca: el número de un producto que sale no se le da a otro.`,
+  '// Todo es del mercado de Uruguay, también lo de una etiqueta de otro país: afuera, la búsqueda lo pone después de lo de ahí.',
+  '@paises=UY',
 ];
 let categoria = null;
 for (const p of elegidos) {

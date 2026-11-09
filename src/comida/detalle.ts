@@ -56,6 +56,8 @@ export type Detalle = {
    * ingredientes ('ingredientes') o su etiqueta ('etiqueta'). Sin verificar, null.
    */
   verificado: { fecha: string; con: string } | null;
+  /** Lo publicó la comunidad (src/comida/comunidad.ts): cuántas personas cargaron lo mismo. */
+  comunidad?: { personas: number } | null;
 };
 
 /** Los micronutrientes de una fila: lo que no es null. Sin ninguno, undefined. */
