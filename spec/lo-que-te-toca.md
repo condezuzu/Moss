@@ -55,7 +55,6 @@ La app no cambia hasta que digas. Sección 1.1, salvo que diga otra.
 Entre paréntesis, lo que recomienda el estudio o lo que está programado.
 
 **La base de la comunidad (9/11)**
-- Las propuestas salen con el mismo sí de «Mandar lo que no encuentro», que empieza apagado (guía 5.1.1 de Apple): es lo más seguro, pero junta menos. La otra: preguntarlo en «Crear alimento», con el sí a la vista (suma una línea, no un toque).
 - Los umbrales (3 personas con código, 5 sin código, 10 %, 3 reportes, cuentas de más de 24 h): se cambian en `moss.comunidad_reglas` sin OTA.
 - Las marcas globales del súper (Coca-Cola, Oreo, Heinz) quedan como uruguayas, porque toda la lista de marcas es del mercado de acá: en otro país salen más abajo. Open Food Facts trae los países de cada producto; usarlos pide rearmar la lista de marcas. ¿Lo hago?
 

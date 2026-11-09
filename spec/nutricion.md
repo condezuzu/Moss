@@ -174,7 +174,7 @@ teléfono, `src/comida/comunidad.ts` (lo que se revisa antes de mandar) y
 
 - **Qué se propone.** Lo que se crea a mano o desde la etiqueta («Crear alimento»),
   con «Mandar lo que no encuentro» prendido (el mismo sí de las búsquedas, que empieza
-  apagado por la guía 5.1.1 de Apple). No se propone lo que vino de Open Food Facts
+  apagado por la guía 5.1.1 de Apple; lo decidiste el 9/11/2026, en vez de preguntarlo al crear). No se propone lo que vino de Open Food Facts
   (ya está allá), lo que llegó por un enlace de otra persona ni lo que lleva alcohol.
 - **Cuándo se publica.** Con código de barras: 3 personas distintas con calorías y
   los tres macros parecidos (10 %, o hasta 1 g y 10 kcal en lo chico, porque las
