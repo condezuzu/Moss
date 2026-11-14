@@ -5,6 +5,27 @@ Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar
 
 Galería (versión 48): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
+## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
+
+Apple aprobó la 1.0 (build 6). Pediste subir todo lo que va por aire y armar la 1.1 para revisión.
+
+Hecho:
+- Migraciones 0010, 0011 y 0012 aplicadas en la base real (14/11); los permisos de las funciones nuevas, revisados
+  en solo lectura. La prueba de borrado en producción (`herramientas/probar-borrado-en-produccion.sql`) no se
+  corrió: escribe y deshace, y el CLI pide tu sí con `--yes`.
+- OTA publicada en `production` y en `preview` (huella fc0d415b, commit 71cc553): todo lo de `mejoras-1.1`.
+  La suscripción sigue apagada (`EXPO_PUBLIC_PREMIUM_SALE` no está en EAS) y Ascent también.
+- La privacidad publicada (`condezuzu/moss-app`, 2c4980f) ya tiene el párrafo de la comunidad.
+
+Falta, en este orden (lo que dice «vos» espera por ti):
+1. Vos: entrar a Apple en una pestaña de Terminal (`node C:\Users\agusc\asc3\entrar.cjs`: contraseña y código).
+   La sesión que deja EAS venció el 14/11.
+2. Yo, con esa sesión: App Privacy, «Customer Support» pasa a vinculado; crear el grupo «Moss» y los dos
+   productos (spec/suscripcion.md); la versión 1.1 en App Store Connect con su ficha y las notas.
+3. Yo: la 1.1 en el código (versión, widgets nuevos, lo nativo de los detalles) y la build `store`
+   (la primera con la extensión pide entrar a Apple: vos).
+4. Vos: «Release This Version» de la 1.0 cuando la pruebes en tu iPhone con la OTA.
+
 ## 1. Ahora (no espera a nada)
 
 ### Aprobar en la galería
