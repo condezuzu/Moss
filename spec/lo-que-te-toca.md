@@ -21,6 +21,17 @@ Hecho:
   parches de Expo (expo-doctor 20 de 20). Cambia la huella: lo que vaya por aire a la build 6 sale de la rama
   `ota-build6` (b6eedba). Build de simulador para probar lo nativo: https://expo.dev/accounts/condeag/projects/moss/builds/88c13371-bd59-4fb0-838a-c0a456726ba2
 
+- App Privacy: «Customer Support» vinculado y publicado (14/11).
+- La suscripción en App Store Connect: grupo «Moss» (22579299), `uy.moss.suscripcion.anual` (6834829982) y
+  `.mensual` (6834829839), sin Family Sharing, textos en en-US, es-MX y es-ES, precio en los 174 países de la app
+  (los equivalentes de Apple a 39,99 y 9,99 USD) y la prueba gratis de una semana en cada país. Scripts en
+  `C:Usersaguscasc3` (`suscripcion-a.cjs` y `suscripcion-b.cjs`, que se pueden volver a correr). Falta la captura
+  de la pantalla de pago para cada producto (Review Information).
+- El corte de la suscripción: `EXPO_PUBLIC_PREMIUM_SALE=2026-11-14` en EAS (production y preview): las cuentas
+  creadas antes del 14/11 quedan gratis. Se cambia por OTA a la 1.1. Una OTA a la build 6 con esa variable no
+  muestra la pantalla de pago (no tiene StoreKit) y Moss sigue abierta.
+- La build de simulador de la 1.1 compiló bien (15/11 por la hora de EAS).
+
 Falta, en este orden (lo que dice «vos» espera por ti):
 1. Vos: entrar a Apple en una pestaña de Terminal (`node C:\Users\agusc\asc3\entrar.cjs`: contraseña y código).
    La sesión que deja EAS venció el 14/11.
