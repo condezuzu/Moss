@@ -35,14 +35,19 @@ Hecho:
   (spec/revision.md «d»), las notas para quien revisa de «f» sin nombrar Ascent y las seis capturas de tú
   (capturas/tienda/1320x2868) en es-MX, es-ES y en-US. Scripts: `version-11.cjs`, `ficha-11.cjs` y `capturas-11.cjs`.
 
-Falta, en este orden (lo que dice «vos» espera por ti):
-1. Vos: entrar a Apple en una pestaña de Terminal (`node C:\Users\agusc\asc3\entrar.cjs`: contraseña y código).
-   La sesión que deja EAS venció el 14/11.
-2. Yo, con esa sesión: App Privacy, «Customer Support» pasa a vinculado; crear el grupo «Moss» y los dos
-   productos (spec/suscripcion.md); la versión 1.1 en App Store Connect con su ficha y las notas.
-3. Yo: la 1.1 en el código (versión, widgets nuevos, lo nativo de los detalles) y la build `store`
-   (la primera con la extensión pide entrar a Apple: vos).
-4. Vos: «Release This Version» de la 1.0 cuando la pruebes en tu iPhone con la OTA.
+- La build 7 asignada a la versión 1.1, y la captura de la pantalla de pago (la de la galería, en inglés, a
+  1320×2868) en los dos productos (`revision-11.cjs`). Los productos siguen en *Missing Metadata* al 14/11 aunque
+  tienen textos, precios, prueba, países y captura: o Apple recalcula más tarde o espera el Paid Apps Agreement.
+  Mirá qué dice la página de cada producto.
+
+Falta (vos):
+1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
+   el Paid Apps Agreement quede *Active*; y el Small Business Program (15 % en vez de 30 %).
+2. Probar la compra con una cuenta de sandbox en la build `telefono` (hace falta una build `telefono` nueva de la 1.1:
+   `npx eas-cli@latest build --profile telefono --platform ios`; la de ahora es de la 1.0) (spec/suscripcion.md, 7).
+3. En la página de la 1.1: *In-App Purchases and Subscriptions* › sumar los dos productos, y *Add for Review*.
+4. Si querés regalarle Moss a todos los que se anoten durante la 1.0: cuando Apple apruebe la 1.1, una OTA con el
+   corte (`EXPO_PUBLIC_PREMIUM_SALE`) en el día que la publiques. Antes no: quien revisa tiene que ver la pantalla de pago.
 
 ## 1. Ahora (no espera a nada)
 
