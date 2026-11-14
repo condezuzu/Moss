@@ -12,7 +12,7 @@ export const CON_ASCENT = false;
  * Los widgets que se suman con la próxima build (D43): Hoy, Anotar y Agua. Cada uno se declara en
  * app.json, y eso cambia la huella: lo prende herramientas/preparar-proxima-build.mjs, junto con app.json.
  */
-export const CON_WIDGETS_NUEVOS = false;
+export const CON_WIDGETS_NUEVOS = true;
 
 /**
  * El día en que Moss pasa a ser de pago (AAAA-MM-DD): prenderlo es poner la fecha, y quien tiene cuenta de

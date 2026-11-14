@@ -3,7 +3,7 @@
     "name": "Moss",
     "slug": "moss",
     "owner": "condeag",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -29,7 +29,9 @@
         "NSMotionUsageDescription": "Si no usas reloj, Moss mira la actividad del teléfono (quieto, caminando o en auto) para estimar a qué hora te dormiste y te despertaste. Esa actividad no sale del teléfono: solo se guarda la hora estimada.",
         "NSAlarmKitUsageDescription": "Moss suena a la hora que eliges en Sueño y anota cuándo paras la alarma, para saber a qué hora te despertaste.",
         "LSApplicationQueriesSchemes": [
-          "ascent"
+          "ascent",
+          "mailto",
+          "x-apple-health"
         ],
         "NSPhotoLibraryAddUsageDescription": "Moss guarda en tus fotos solo una imagen que tú eliges guardar."
       },
@@ -237,7 +239,9 @@
               "ios": {
                 "supportedFamilies": [
                   "systemSmall",
-                  "systemMedium"
+                  "systemMedium",
+                  "systemLarge",
+                  "accessoryCircular"
                 ]
               }
             },
@@ -247,7 +251,75 @@
               "description": "La noche que estimó Moss, para confirmarla con un toque.",
               "ios": {
                 "supportedFamilies": [
+                  "systemSmall",
+                  "accessoryCircular",
                   "accessoryRectangular"
+                ]
+              }
+            },
+            {
+              "name": "Hoy",
+              "displayName": "Hoy",
+              "description": "Lo que te queda de hoy y tus comidas, para anotarlas de un toque.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge",
+                  "accessoryCircular",
+                  "accessoryRectangular",
+                  "accessoryInline"
+                ]
+              }
+            },
+            {
+              "name": "Anotar",
+              "displayName": "Anotar",
+              "description": "Buscar, decir, escanear o leer una etiqueta, de un toque.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "accessoryCircular"
+                ],
+                "configuration": {
+                  "title": "Anotar",
+                  "description": "Qué abre el widget chico.",
+                  "parameters": {
+                    "accion": {
+                      "title": "Al tocar",
+                      "type": "enum",
+                      "default": "decir",
+                      "values": [
+                        {
+                          "name": "Decir lo que comí",
+                          "value": "decir"
+                        },
+                        {
+                          "name": "Buscar",
+                          "value": "buscar"
+                        },
+                        {
+                          "name": "Código de barras",
+                          "value": "codigo"
+                        },
+                        {
+                          "name": "Foto de la etiqueta",
+                          "value": "etiqueta"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Agua",
+              "displayName": "Agua",
+              "description": "Un vaso más, de un toque.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall"
                 ]
               }
             }
@@ -256,7 +328,9 @@
       ],
       "expo-app-intents",
       "expo-background-task",
-      "./plugins/con-alarmkit"
+      "./plugins/con-alarmkit",
+      "expo-asset",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
