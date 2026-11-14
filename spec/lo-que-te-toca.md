@@ -17,6 +17,10 @@ Hecho:
   La suscripción sigue apagada (`EXPO_PUBLIC_PREMIUM_SALE` no está en EAS) y Ascent también.
 - La privacidad publicada (`condezuzu/moss-app`, 2c4980f) ya tiene el párrafo de la comunidad.
 
+- La 1.1 en el código (4d3a85e): versión 1.1.0, los widgets nuevos, `mailto` y `x-apple-health`, `expo-asset` y los
+  parches de Expo (expo-doctor 20 de 20). Cambia la huella: lo que vaya por aire a la build 6 sale de la rama
+  `ota-build6` (b6eedba). Build de simulador para probar lo nativo: https://expo.dev/accounts/condeag/projects/moss/builds/88c13371-bd59-4fb0-838a-c0a456726ba2
+
 Falta, en este orden (lo que dice «vos» espera por ti):
 1. Vos: entrar a Apple en una pestaña de Terminal (`node C:\Users\agusc\asc3\entrar.cjs`: contraseña y código).
    La sesión que deja EAS venció el 14/11.
