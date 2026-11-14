@@ -30,7 +30,10 @@ Hecho:
 - El corte de la suscripción: `EXPO_PUBLIC_PREMIUM_SALE=2026-11-14` en EAS (production y preview): las cuentas
   creadas antes del 14/11 quedan gratis. Se cambia por OTA a la 1.1. Una OTA a la build 6 con esa variable no
   muestra la pantalla de pago (no tiene StoreKit) y Moss sigue abierta.
-- La build de simulador de la 1.1 compiló bien (15/11 por la hora de EAS).
+- La build de simulador de la 1.1 compiló bien. La build `store` 1.1.0 (7) está subida a App Store Connect (14/11).
+- La versión 1.1.0 en App Store Connect: novedades en los tres idiomas, la descripción y el texto promocional de pago
+  (spec/revision.md «d»), las notas para quien revisa de «f» sin nombrar Ascent y las seis capturas de tú
+  (capturas/tienda/1320x2868) en es-MX, es-ES y en-US. Scripts: `version-11.cjs`, `ficha-11.cjs` y `capturas-11.cjs`.
 
 Falta, en este orden (lo que dice «vos» espera por ti):
 1. Vos: entrar a Apple en una pestaña de Terminal (`node C:\Users\agusc\asc3\entrar.cjs`: contraseña y código).
