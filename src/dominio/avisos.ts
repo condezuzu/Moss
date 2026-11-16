@@ -19,6 +19,9 @@
 //   noche es 1455. Cada día se agrupa aparte.
 // - Lo que conviene hacer (el 3/11, como Rise: comer antes de entrenar, el café, la última comida
 //   grande, las luces...) lo arma loQueConviene.ts y entra acá, en el mismo máximo, con su prioridad.
+// - El día que sigue tu despertar (el 16/11: «pesarte» sonó antes de que te despertaras): con
+//   Sueno.despertarReal, nada de la mañana suena hasta saber a qué hora te despertaste ese día, y la noche se
+//   arma con esa hora. Lo nuevo de la mañana y de la noche lo arma sigueElDespertar.ts y entra como lo que conviene.
 
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import { claveDeMarca, type Marca } from './dias';
@@ -26,6 +29,7 @@ import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia, type DiaSemana } fr
 import { tocaElDia, type Fuente, type Habito } from './habitos';
 import type { Conviene } from './loQueConviene';
 import type { FaltaConHora, Falta } from './loQueFalta';
+import type { DelDespertar } from './sigueElDespertar';
 import { DESPUES_MIN, DIAS } from './recordatorios';
 
 /** Lo que pasa en el día y puede llamar al aviso de un hábito: anotar una comida o entrenar con Ascent. */
@@ -77,6 +81,12 @@ export type Avisos = {
   /** Según el deporte (segunElDeporte.ts): la víspera del partido y dos días antes de una carrera larga. */
   partido?: { encendido: boolean };
   carrera?: { encendido: boolean };
+  /** El día que sigue tu despertar (sigueElDespertar.ts): la deuda al despertarte y lo de la noche, desde la melatonina. */
+  deuda?: { encendido: boolean };
+  melatonina?: { encendido: boolean };
+  revoluciones?: { encendido: boolean };
+  descarga?: { encendido: boolean };
+  gafas?: { encendido: boolean };
 };
 
 /** Lo del sueño que usan los avisos. */
@@ -102,6 +112,12 @@ export type Sueno = {
    * dormir lo que hace falta, de dormirse a despertarse tiene que pasar eso más. Sin saberlo, nada.
    */
   despierto?: number;
+  /**
+   * El día que sigue tu despertar: a qué hora te despertaste de verdad ese día, en minutos desde la medianoche, o
+   * null mientras no se sabe (lo primero que llegue: el final de la noche en Salud, el despertador, el atajo o
+   * abrir Moss de mañana). Con esto, lo de la mañana espera al despertar y la noche se arma con él.
+   */
+  despertarReal?: (dia: ClaveDia) => number | null;
 };
 
 /**
@@ -117,9 +133,12 @@ export type Aviso = {
   /** Su hora, en minutos desde la medianoche del día; lo de la noche puede pasar de 1440. */
   minutos: number;
   tipo: 'dormir' | 'habito' | 'comida' | 'horario' | 'pesarse' | 'falta'
-    | 'antesDeEntrenar' | 'despuesDeEntrenar' | 'cafe' | 'ultimaComida' | 'entrenarTarde' | 'luces' | 'recuperacion' | 'partido' | 'carrera';
+    | 'antesDeEntrenar' | 'despuesDeEntrenar' | 'cafe' | 'ultimaComida' | 'entrenarTarde' | 'luces' | 'recuperacion' | 'partido' | 'carrera'
+    | 'deuda' | 'desayuno' | 'melatonina' | 'revoluciones' | 'descarga' | 'gafas';
   /** En los de lo que conviene: qué dice (loQueConviene.ts). */
   conviene?: Conviene;
+  /** En los del día que sigue tu despertar: qué dice (sigueElDespertar.ts). */
+  despertar?: DelDespertar;
   /** Los avisos de ese día que este deja sin sentido: el de comer antes de entrenar reemplaza la hora de esa comida. */
   reemplaza?: readonly string[];
   /**
@@ -194,6 +213,12 @@ export const ANTES_DE_DORMIR = 30;
 export const PAGO_MAXIMO = 30;
 /** Nunca más que esto antes de la hora de siempre. */
 export const ADELANTO_MAXIMO = 60;
+/**
+ * Lo que la hora de siempre de dormirte se corre por cada minuto que te despertaste más tarde que siempre. La mitad
+ * es una convención (D8 de spec/estudio/momentos.md): el inicio de la melatonina sigue a la hora de despertarte
+ * (Burgess y Eastman 2005), pero no hay un estudio de cuánto lo corre una sola mañana tarde.
+ */
+export const CORRE_CON_EL_DESPERTAR = 0.5;
 export const MENSAJE_MAXIMO = 120;
 
 const DIA = 24 * 60;
@@ -235,11 +260,18 @@ export function horasDeSueno(dia: ClaveDia, s: Sueno): { despertar: number | nul
     const alarma = s.alarmas?.[diaDeLaSemana(clave)];
     return alarma != null ? alarma + MEDIANOCHE : (s.habitual(clave)?.despertar ?? null);
   };
-  const hoy = manana(dia);
+  const deSiempre = manana(dia);
+  // Con el día que sigue tu despertar, la mañana es la de verdad y, mientras no se sabe, ninguna.
+  const real = s.despertarReal ? s.despertarReal(dia) : undefined;
+  const hoy = real === undefined ? deSiempre : real === null ? null : real + MEDIANOCHE;
   const siguiente = sumarDias(dia, 1);
   const despiertaManana = manana(siguiente);
   const despierto = s.despierto ?? 0;
-  const dormir = horaDeDormir({ despertar: despiertaManana, necesidad: s.necesidad, deuda: s.deuda, habitual: s.habitual(siguiente)?.dormirse ?? null, despierto });
+  // Despertarte más tarde que siempre corre la hora de siempre de dormirte, que pone el límite de lo que la noche se
+  // adelanta: con un despertar tarde, dormirte temprano cuesta.
+  const tarde = hoy !== null && real != null && deSiempre !== null ? Math.max(0, hoy - deSiempre) * CORRE_CON_EL_DESPERTAR : 0;
+  const deSiempreDormirse = s.habitual(siguiente)?.dormirse;
+  const dormir = horaDeDormir({ despertar: despiertaManana, necesidad: s.necesidad, deuda: s.deuda, habitual: deSiempreDormirse == null ? null : deSiempreDormirse + tarde, despierto });
   return {
     despertar: hoy === null ? null : aCinco(hoy - MEDIANOCHE),
     dormir: dormir === null ? null : dormir + LAS_18,
@@ -264,6 +296,9 @@ export const duerme = (h: { dormir: number | null; despertarManana: number | nul
 const CATEGORIA: Record<Aviso['tipo'], number> = {
   dormir: 0, antesDeEntrenar: 1, despuesDeEntrenar: 1, recuperacion: 1, partido: 1, carrera: 1, horario: 2, habito: 2, pesarse: 2,
   entrenarTarde: 3, ultimaComida: 4, cafe: 5, luces: 6, comida: 7, falta: 8,
+  // El día que sigue tu despertar: la deuda y el desayuno valen como pesarse y el horario; la melatonina, como lo
+  // primero que cuenta desde la cama; lo demás de la noche, como las luces.
+  deuda: 2, desayuno: 2, melatonina: 3, revoluciones: 6, descarga: 6, gafas: 6,
 };
 const porHora = (a: Aviso, b: Aviso) => a.minutos - b.minutos || CATEGORIA[a.tipo] - CATEGORIA[b.tipo] || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const redondo = <T extends { minutos: number }>(a: T): T => ({ ...a, minutos: Math.round(a.minutos) });
@@ -366,6 +401,10 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   const horas = op.sueno ? horasDeSueno(dia, op.sueno) : { despertar: null, dormir: null, acostarse: null, despertarManana: null, despierto: 0 };
   const fijos: Aviso[] = [];
   const conEvento: { aviso: Omit<Aviso, 'minutos'>; evento: Evento; despues: number }[] = [];
+  // El día que sigue tu despertar: pesarse lo pone sigueElDespertar.ts, después de la deuda, y mientras no se sabe a
+  // qué hora te despertaste no suena nada de la mañana.
+  const sigue = !!op.sueno?.despertarReal;
+  const esperaElDespertar = sigue && horas.despertar === null;
 
   // Un rato antes de la hora de ir a la cama, que ya descuenta lo que tardás en dormirte.
   if (ajustes.dormir?.encendido && horas.acostarse !== null) {
@@ -390,26 +429,30 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     const c = r.cuando;
     if (c.tipo === 'evento') conEvento.push({ aviso, evento: c.evento, despues: c.despues });
     else if (c.tipo === 'hora') fijos.push({ ...aviso, minutos: c.minutos < (op.corte ?? 0) ? c.minutos + DIA : c.minutos });
-    else if (c.tipo === 'despertar') fijos.push({ ...aviso, minutos: (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues });
+    else if (c.tipo === 'despertar') { if (!esperaElDespertar) fijos.push({ ...aviso, minutos: (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues }); }
     else if (c.tipo === 'dormir') fijos.push({ ...aviso, minutos: (horas.acostarse ?? DORMIR_SIN_SUENO) - c.antes });
   }
   // Hoy, lo que falta corre con la última comida que anotaste (lo pediste el 29/10/2026): desayunar
   // hora y media tarde corre el aviso del almuerzo y el de la cena lo mismo. Corre con cualquiera de las
   // cuatro, elegida o no, contra su hora del horario o la de siempre, que es la misma a la que va lo que se
   // anota tarde (como en loQueConviene.ts). Lo que ya sonó no se mueve, y nada sale del horario.
-  const anotadasHoy = Object.fromEntries(Object.entries(op.eventos ?? {}).filter(([k]) => k !== 'entrenamiento')) as Partial<Record<Comida, number>>;
+  // El día que sigue tu despertar: el desayuno, a la hora que sea, deja las demás a su hora de siempre (un despertar
+  // tarde no corre el almuerzo); si no desayunas, la primera que anotes las corre.
+  const anotadasHoy = Object.fromEntries(Object.entries(op.eventos ?? {}).filter(([k]) => k !== 'entrenamiento' && !(sigue && k === 'desayuno'))) as Partial<Record<Comida, number>>;
   const base: Partial<Record<Comida, number>> = { ...Object.fromEntries(CON_HORA.map((c) => [c, op.horaDeComida(c)])), ...ajustes.horario };
   const corridas = horasCorridas(base, anotadasHoy, true);
   const horario = (Object.keys(ajustes.horario ?? {}) as Comida[]).map((c) => [c, corridas[c]] as [Comida, number]).filter(([, m]) => Number.isFinite(m));
-  for (const [comida, minutos] of horario) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });
+  const deLaManana = (c: Comida) => esperaElDespertar && c === 'desayuno';
+  for (const [comida, minutos] of horario) if (!deLaManana(comida)) fijos.push({ id: `horario:${comida}`, tipo: 'horario', comida, minutos });
   for (const comida of ajustes.comidas ?? []) {
+    if (deLaManana(comida)) continue;
     const enHorario = ajustes.horario?.[comida] !== undefined ? corridas[comida] : undefined;
     const minutos = Math.min(ULTIMO_DE_COMIDA, (corridas[comida] ?? op.horaDeComida(comida)) + DESPUES_MIN);
     // Con una comida tarde en el horario, el de «sin anotar» sonaría con el de su hora o antes: alcanza con ese.
     if (enHorario !== undefined && minutos - enHorario <= SEPARACION) continue;
     fijos.push({ id: `comida:${comida}`, tipo: 'comida', comida, minutos });
   }
-  if (ajustes.pesarse?.encendido) {
+  if (ajustes.pesarse?.encendido && !sigue) {
     const control = op.diaDelControl === semana;
     if (control || ajustes.pesarse.todos) {
       // Al rato de despertarte y antes de desayunar (lo pediste el 29/10/2026): si desayunás enseguida,
@@ -598,14 +641,45 @@ function textoDeLoQueConviene(c: Conviene, h: ParaElTexto): { titulo: string; te
   }
 }
 
+const DESPERTAR = 'recordatorios.despertar';
+
+/**
+ * Lo del día que sigue tu despertar. La deuda, el desayuno y las comidas llevan el nombre de la app, como pesarse y
+ * el horario; lo de la noche, como lo que conviene, dice en el título qué hacer.
+ */
+function textoDelDespertar(d: DelDespertar, h: ParaElTexto): { titulo: string; texto: string } {
+  const de = (clave: string, valores?: Record<string, string | number>) => h.t(`${DESPERTAR}.${clave}`, valores);
+  switch (d.que) {
+    case 'deuda': {
+      const forma = d.ahora === 0 ? (d.antes ? 'cero' : 'sin') : d.antes === null ? 'es' : d.ahora < d.antes ? 'bajo' : d.ahora > d.antes ? 'subio' : 'igual';
+      return { titulo: 'Moss', texto: de(`deuda.${forma}`, { deuda: h.duracion(d.ahora) }) };
+    }
+    case 'desayuno':
+      return { titulo: 'Moss', texto: de('desayuno.pregunta') };
+    case 'comida': {
+      // «al almuerzo, a la merienda y a la cena»
+      const nombres = d.van.map((c) => de(`a.${c}`));
+      const lista = nombres.length < 2 ? nombres[0] : de('y', { a: nombres.slice(0, -1).join(', '), b: nombres[nombres.length - 1] });
+      const hora = h.t(`recordatorios.horario.${d.comida}`);
+      return { titulo: 'Moss', texto: d.kcal ? de('comida.conKcal', { hora, kcal: d.kcal, lista }) : de('comida.sinNumeros', { hora, lista }) };
+    }
+    case 'descarga':
+      return { titulo: de('descarga.titulo'), texto: de('descarga.texto') };
+    default:
+      return { titulo: de(`${d.que}.titulo`), texto: de(`${d.que}.texto`, { cama: horaDeReloj(d.cama) }) };
+  }
+}
+
 /** El título de un aviso: lo que conviene dice ahí qué hacer; los demás llevan el nombre de la app. */
 export function tituloDelAviso(n: Notificacion, h: ParaElTexto): string {
+  if (n.aviso.despertar) return textoDelDespertar(n.aviso.despertar, h).titulo;
   return n.aviso.conviene ? textoDeLoQueConviene(n.aviso.conviene, h).titulo : 'Moss';
 }
 
 /** Lo que dice un aviso: una sola cosa, sin culpa. */
 export function textoDelAviso(n: Notificacion, h: ParaElTexto): string {
   const a = n.aviso;
+  if (a.despertar) return textoDelDespertar(a.despertar, h).texto;
   if (a.conviene) return textoDeLoQueConviene(a.conviene, h).texto;
   if (a.tipo === 'dormir') {
     const cama = a.dormirA ?? a.minutos;

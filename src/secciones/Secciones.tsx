@@ -408,7 +408,7 @@ export default function Secciones() {
                       ) : n === 'sueno' ? (
                         <PaginaDeSueno ancho={ancho} arriba={insets.top} abajo={abajo} />
                       ) : (
-                        <PaginaDePerfil ancho={ancho} arriba={insets.top} abajo={abajo} />
+                        <PaginaDePerfil ancho={ancho} arriba={insets.top} abajo={abajo} alIr={ir} />
                       )}
                     </View>
                   ))}

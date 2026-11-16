@@ -256,7 +256,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: false, antes: 30, comidas: [], maximo: 6, horario: {}, pesarse: false, todos: false, latencia: null, necesidad: null } };
+    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: true, antes: 30, comidas: [], maximo: SigueElDespertar.MAXIMO_QUE_SIGUE_EL_DESPERTAR, horario: { desayuno: 8 * 60, almuerzo: 13 * 60, cena: 21 * 60 }, pesarse: false, todos: false, latencia: null, necesidad: null, deuda: true, melatonina: true, revoluciones: true, luces: true } };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -382,6 +382,11 @@ const SeccionPerfil = (() => {
       const DIBUJOS = {
         taza: '<path d="M5 9.5h11v4.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M9 3.5c-.8 1 .8 2 0 3M12.5 3.5c-.8 1 .8 2 0 3"/>',
         foco: '<path d="M9.5 17.5h5M10.5 20.5h3"/><path d="M12 3.5a5.5 5.5 0 0 0-3.3 9.9c.6.5.8 1.1.8 1.8v.3h5v-.3c0-.7.2-1.3.8-1.8A5.5 5.5 0 0 0 12 3.5z"/>',
+        // La luna de la melatonina, el dial que baja, el lápiz de lo pendiente y las gafas.
+        luna: '<path d="M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z"/>',
+        baja: '<path d="M4.5 16a7.5 7.5 0 0 1 15 0"/><path d="M12 16l-3.5-3.5"/><path d="M4.5 19.5h15"/>',
+        lapiz: '<path d="M15.5 4.5l4 4L9 19H5v-4z"/><path d="M13 7l4 4"/>',
+        gafas: '<circle cx="7" cy="14" r="3.5"/><circle cx="17" cy="14" r="3.5"/><path d="M10.5 14h3M3.5 13l1.5-5M20.5 13l-1.5-5"/>',
       };
       const cuadroDe = (ico, color) => {
         const c = cuadro(DIBUJOS[ico] ? 'reloj' : ico, color);
@@ -412,25 +417,13 @@ const SeccionPerfil = (() => {
       const latencia = a.latencia === null ? 20 : a.latencia;
       const edad = Number(Datos.HOY.slice(0, 4)) - Datos.PERFIL.nacimiento;
       const nec = Sueno.necesidad(edad, a.necesidad);
-      bloque('sueno', 'azul', tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: u.horaMin(7 * 60 + 30 - nec - Sueno.DESPIERTO_SIN_RELOJ - latencia), despertar: '07:30', horas: u.duracion(nec), latencia }), a.dormir, (v) => { a.dormir = v; },
-        chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
-      // Tardo en dormirme (D33): lo que aprende Moss de tus respuestas, o un número fijo, como en la app.
-      const tardo = el('section', 'pf-aviso');
-      const tardoFila = el('div', 'pf-aviso-fila');
-      const tardoNombre = el('span', 'pf-aviso-titulo');
-      tardoNombre.append(cuadro('reloj', 'violeta'), el('b', null, tx('perfil.avisos.tardo')));
-      tardoFila.appendChild(tardoNombre);
-      tardo.append(tardoFila, chips([null, ...SinReloj.LATENCIAS], (n) => (n === null ? tx('perfil.avisos.tardoAprendido', { n: 20 }) : tx('perfil.avisos.minutos', { n })), (n) => a.latencia === n, (n) => { a.latencia = n; }), el('p', 'pf-nota', tx('perfil.avisos.tardoTexto')));
-      cuerpo.appendChild(tardo);
-      // Necesito dormir (5/11, para aprobar): lo de tu edad o lo que elijas, de media hora en media hora y dentro de
-      // lo de tu edad (Sueno.necesidadesPara). Lo usan la hora de dormir, la deuda, la calidad y esta noche.
-      const necesito = el('section', 'pf-aviso');
-      const necesitoFila = el('div', 'pf-aviso-fila');
-      const necesitoNombre = el('span', 'pf-aviso-titulo');
-      necesitoNombre.append(cuadro('sueno', 'azul'), el('b', null, tx('perfil.avisos.necesito')));
-      necesitoFila.appendChild(necesitoNombre);
-      necesito.append(necesitoFila, chips([null, ...Sueno.necesidadesPara(edad)], (m) => (m === null ? tx('perfil.avisos.necesitoEdad', { h: u.duracion(Sueno.necesidad(edad)) }) : u.duracion(m)), (m) => a.necesidad === m, (m) => { a.necesidad = m; opciones.alCambiarNecesidad && opciones.alCambiarNecesidad(); }), el('p', 'pf-nota', tx(edad < 18 ? 'perfil.avisos.necesitoTextoMenor' : 'perfil.avisos.necesitoTexto')));
-      cuerpo.appendChild(necesito);
+      // El día que sigue tu despertar (16/11, para aprobar; SigueElDespertar): en «Tu día», lo que viene prendido, en el
+      // orden del día; en «Más avisos», lo apagado de fábrica.
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.tuDia')));
+      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.tuDiaTexto')));
+      bloque('sueno', 'azul', tx('perfil.avisos.deuda'), tx('perfil.avisos.deudaTexto'), !!a.deuda, (v) => { a.deuda = v; });
+      bloque('balanza', 'salvia', tx('perfil.avisos.pesarse'), tx('perfil.avisos.pesarseTexto'), a.pesarse, (v) => { a.pesarse = v; },
+        chips([false, true], (todos) => tx(todos ? 'perfil.avisos.pesarseTodos' : 'perfil.avisos.pesarseControl'), (todos) => a.todos === todos, (todos) => { a.todos = todos; }));
       // El horario de comidas: cada comida elegida, con su hora de a un cuarto de hora (como Perfil.tsx).
       const HORAS = { desayuno: 8 * 60, almuerzo: 13 * 60, merienda: 17 * 60 + 30, cena: 21 * 60 };
       const reloj = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -452,32 +445,52 @@ const SeccionPerfil = (() => {
         }
         filas.appendChild(fila);
       });
-      bloque('comida', 'oro', tx('perfil.avisos.horario'), tx('perfil.avisos.horarioTexto'), Object.keys(a.horario).length > 0,
+      bloque('comida', 'oro', tx('perfil.avisos.horario'), `${tx('perfil.avisos.horarioTexto')} ${tx('perfil.avisos.horarioTextoDia')}`, Object.keys(a.horario).length > 0,
         (v) => { a.horario = v ? { desayuno: HORAS.desayuno, almuerzo: HORAS.almuerzo, cena: HORAS.cena } : {}; }, filas);
-      bloque('balanza', 'salvia', tx('perfil.avisos.pesarse'), tx('perfil.avisos.pesarseTexto'), a.pesarse, (v) => { a.pesarse = v; },
-        chips([false, true], (todos) => tx(todos ? 'perfil.avisos.pesarseTodos' : 'perfil.avisos.pesarseControl'), (todos) => a.todos === todos, (todos) => { a.todos = todos; }));
-      bloque('campana', 'rosa', tx('perfil.recordatoriosLlave'), tx('perfil.recordatoriosTexto'), a.comidas.length > 0, (v) => { a.comidas = v ? ['desayuno', 'almuerzo', 'cena'] : []; },
-        chips(['desayuno', 'almuerzo', 'merienda', 'cena'], (c) => tx('comida.comidas.' + c), (c) => a.comidas.includes(c),
-          (c) => { a.comidas = a.comidas.includes(c) ? a.comidas.filter((x) => x !== c) : [...a.comidas, c]; }));
-      // Si vas muy bajo en algo (src/dominio/loQueFalta.ts): aparte del máximo, con su propio tope.
-      bloque('rayo', 'violeta', tx('perfil.avisos.falta'), tx('perfil.avisos.faltaTexto'), a.falta !== false, (v) => { a.falta = v; });
+      bloque('luna', 'violeta', tx('perfil.avisos.melatonina'), tx('perfil.avisos.melatoninaTexto'), !!a.melatonina, (v) => { a.melatonina = v; });
+      bloque('foco', 'gris', tx('perfil.avisos.luces'), tx('perfil.avisos.lucesTexto'), !!a.luces, (v) => { a.luces = v; });
+      bloque('baja', 'salvia', tx('perfil.avisos.revoluciones'), tx('perfil.avisos.revolucionesTexto'), !!a.revoluciones, (v) => { a.revoluciones = v; });
+      bloque('sueno', 'azul', tx('perfil.avisos.dormir'), tx('perfil.avisos.dormirTexto', { hora: u.horaMin(7 * 60 + 30 - nec - Sueno.DESPIERTO_SIN_RELOJ - latencia), despertar: '07:30', horas: u.duracion(nec), latencia }), a.dormir, (v) => { a.dormir = v; },
+        chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
+      // Tardo en dormirme (D33): lo que aprende Moss de tus respuestas, o un número fijo, como en la app.
+      const tardo = el('section', 'pf-aviso');
+      const tardoFila = el('div', 'pf-aviso-fila');
+      const tardoNombre = el('span', 'pf-aviso-titulo');
+      tardoNombre.append(cuadro('reloj', 'violeta'), el('b', null, tx('perfil.avisos.tardo')));
+      tardoFila.appendChild(tardoNombre);
+      tardo.append(tardoFila, chips([null, ...SinReloj.LATENCIAS], (n) => (n === null ? tx('perfil.avisos.tardoAprendido', { n: 20 }) : tx('perfil.avisos.minutos', { n })), (n) => a.latencia === n, (n) => { a.latencia = n; }), el('p', 'pf-nota', tx('perfil.avisos.tardoTexto')));
+      cuerpo.appendChild(tardo);
+      // Necesito dormir (5/11, para aprobar): lo de tu edad o lo que elijas, de media hora en media hora y dentro de
+      // lo de tu edad (Sueno.necesidadesPara). Lo usan la hora de dormir, la deuda, la calidad y esta noche.
+      const necesito = el('section', 'pf-aviso');
+      const necesitoFila = el('div', 'pf-aviso-fila');
+      const necesitoNombre = el('span', 'pf-aviso-titulo');
+      necesitoNombre.append(cuadro('sueno', 'azul'), el('b', null, tx('perfil.avisos.necesito')));
+      necesitoFila.appendChild(necesitoNombre);
+      necesito.append(necesitoFila, chips([null, ...Sueno.necesidadesPara(edad)], (m) => (m === null ? tx('perfil.avisos.necesitoEdad', { h: u.duracion(Sueno.necesidad(edad)) }) : u.duracion(m)), (m) => a.necesidad === m, (m) => { a.necesidad = m; opciones.alCambiarNecesidad && opciones.alCambiarNecesidad(); }), el('p', 'pf-nota', tx(edad < 18 ? 'perfil.avisos.necesitoTextoMenor' : 'perfil.avisos.necesitoTexto')));
+      cuerpo.appendChild(necesito);
+      cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.mas')));
+      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.masTexto')));
       // Lo que conviene hacer (src/dominio/loQueConviene.ts), apagado de fábrica como lo demás. La recuperación,
       // solo con Ascent vinculada y sin nombrarla.
-      cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.conviene')));
-      cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.convieneTexto')));
       // Según el deporte (para aprobar): la víspera del partido, con partidos o choques, y la carrera larga, con
       // correr, bici o nadar (segunElDeporte.ts).
       const tipos = opciones.comida.entreno.tipos || [];
       const conviene = [
-        ['antesDeEntrenar', 'pesa', 'oro'], ['despuesDeEntrenar', 'pesa', 'salvia'], ['cafe', 'taza', 'rosa'],
-        ['ultimaComida', 'comida', 'violeta'], ['entrenarTarde', 'cronometro', 'azul'], ['luces', 'foco', 'gris'],
+        ['descarga', 'lapiz', 'oro'], ['gafas', 'gafas', 'gris'], ['cafe', 'taza', 'rosa'], ['entrenarTarde', 'cronometro', 'azul'],
+        ['ultimaComida', 'comida', 'violeta'], ['antesDeEntrenar', 'pesa', 'oro'], ['despuesDeEntrenar', 'pesa', 'salvia'],
         ...(tipos.includes('equipo') || tipos.includes('contacto') ? [['partido', 'rayo', 'oro']] : []),
         ...(tipos.includes('resistencia') ? [['carrera', 'objetivo', 'salvia']] : []),
         ...(conAscent() && opciones.vinculada && opciones.vinculada() ? [['recuperacion', 'onda', 'ascent']] : []),
       ];
       for (const [que, ico, color] of conviene) bloque(ico, color, tx('perfil.avisos.' + que), tx(`perfil.avisos.${que}Texto`), !!a[que], (v) => { a[que] = v; });
+      bloque('campana', 'rosa', tx('perfil.recordatoriosLlave'), tx('perfil.recordatoriosTexto'), a.comidas.length > 0, (v) => { a.comidas = v ? ['desayuno', 'almuerzo', 'cena'] : []; },
+        chips(['desayuno', 'almuerzo', 'merienda', 'cena'], (c) => tx('comida.comidas.' + c), (c) => a.comidas.includes(c),
+          (c) => { a.comidas = a.comidas.includes(c) ? a.comidas.filter((x) => x !== c) : [...a.comidas, c]; }));
+      // Si vas muy bajo en algo (src/dominio/loQueFalta.ts): aparte del máximo, con su propio tope.
+      bloque('rayo', 'violeta', tx('perfil.avisos.falta'), tx('perfil.avisos.faltaTexto'), a.falta !== false, (v) => { a.falta = v; });
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.maximo')));
-      cuerpo.appendChild(chips([2, 3, 4, 6, 8], String, (n) => a.maximo === n, (n) => { a.maximo = n; }));
+      cuerpo.appendChild(chips([2, 3, 4, 6, 8, 10], String, (n) => a.maximo === n, (n) => { a.maximo = n; }));
       // Con lo que conviene cambia quién queda primero (avisos.ts, CATEGORIA).
       cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoTextoConviene')));
       h.append(cab, cuerpo);

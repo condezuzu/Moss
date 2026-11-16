@@ -713,7 +713,8 @@
         "yogur": "Fruit yogurt with granola and a banana",
         "pizza": "Two slices of cheese pizza",
         "pollo": "Grilled chicken breast with rice"
-      }
+      },
+      "ayudaTeclado": "Type what it is, or use the keyboard’s microphone. Moss works it out from its food database."
     },
     "verificado": "Verified",
     "sinVerificar": "Not verified",
@@ -2500,7 +2501,22 @@
       "necesito": "I need to sleep",
       "necesitoEdad": "For your age ({h})",
       "necesitoTexto": "Guidelines say 7 to 9 hours, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your bedtime, your sleep debt and your sleep quality use it.",
-      "necesitoTextoMenor": "At your age 8 to 10 hours are recommended, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your bedtime, your sleep debt and your sleep quality use it."
+      "necesitoTextoMenor": "At your age 8 to 10 hours are recommended, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your bedtime, your sleep debt and your sleep quality use it.",
+      "tuDia": "Your day",
+      "tuDiaTexto": "It follows when you wake up: nothing from the morning goes off until Moss knows you’re up, and the night is set from that time and your sleep debt.",
+      "mas": "More notifications",
+      "masTexto": "Off by default: turn on the ones that help you.",
+      "deuda": "Your sleep debt",
+      "deudaTexto": "When you wake up, in one line: whether it went down or up.",
+      "horarioTextoDia": "When you wake up, it asks whether you’re having breakfast. If not, breakfast is shared among the meals left, and the first one you log moves the rest.",
+      "melatonina": "Melatonin window",
+      "melatoninaTexto": "About two hours before you usually fall asleep, when melatonin starts to rise. It’s an estimate.",
+      "revoluciones": "Wind down",
+      "revolucionesTexto": "An hour before bed: something calm, no bright screens.",
+      "descarga": "Write down your to-dos",
+      "descargaTexto": "When you get into bed: five minutes on paper with tomorrow’s list, so it doesn’t keep you up.",
+      "gafas": "Blue-light glasses",
+      "gafasTexto": "Two hours before bed, if you have them. The evidence is still thin."
     },
     "cambiarCuenta": "Switch account",
     "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account.",
@@ -3890,6 +3906,47 @@
       "carrera": {
         "titulo": "Race in two days",
         "texto": "Carbs at every meal, and less fiber."
+      }
+    },
+    "despertar": {
+      "deuda": {
+        "bajo": "Your sleep debt went down to {deuda}.",
+        "subio": "Your sleep debt went up to {deuda}.",
+        "igual": "Your sleep debt is still {deuda}.",
+        "es": "Your sleep debt is {deuda}.",
+        "cero": "Your sleep debt is down to zero.",
+        "sin": "You have no sleep debt."
+      },
+      "desayuno": {
+        "pregunta": "Having breakfast today?",
+        "si": "Yes",
+        "directo": "Straight to lunch"
+      },
+      "comida": {
+        "conKcal": "{hora}: about {kcal} kcal. What you didn’t eat at breakfast goes to {lista}.",
+        "sinNumeros": "{hora}. What you didn’t eat at breakfast goes to {lista}."
+      },
+      "a": {
+        "almuerzo": "lunch",
+        "merienda": "your afternoon snack",
+        "cena": "dinner"
+      },
+      "y": "{a} and {b}",
+      "melatonina": {
+        "titulo": "Your melatonin window",
+        "texto": "Around now your melatonin starts to rise: bed at {cama}."
+      },
+      "revoluciones": {
+        "titulo": "Wind down",
+        "texto": "Something calm, no bright screens: bed at {cama}."
+      },
+      "gafas": {
+        "titulo": "Blue-light glasses",
+        "texto": "If you use them, now’s a good time: bed at {cama}."
+      },
+      "descarga": {
+        "titulo": "Write down your to-dos",
+        "texto": "Five minutes on paper with tomorrow’s list: it tends to help you fall asleep sooner."
       }
     }
   },

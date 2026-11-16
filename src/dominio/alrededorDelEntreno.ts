@@ -5,6 +5,7 @@
 // «sin déficit» no aparece nada.
 
 import type { Comida } from './comidas';
+import type { Deporte, PartidoDicho, SesionDicha } from './cuestionario';
 import { diaDeLaSemana, diasEntre, type ClaveDia, type DiaSemana } from './fechas';
 import type { Macros } from './metas';
 
@@ -20,7 +21,17 @@ export type Principal = Exclude<Comida, 'snack'>;
  * Cuándo entrenás, puesto a mano en Perfil: qué días, a qué hora, cuánto dura y de qué tipo. `viaje` es
  * cuánto tardás en llegar al gimnasio, en minutos: los avisos de antes cuentan desde que salís (loQueConviene.ts).
  */
-export type Entreno = { dias: DiaSemana[]; hora: number; minutos: number; tipo: Exclude<TipoDeSesion, 'suave'>; viaje?: number };
+export type Entreno = {
+  dias: DiaSemana[]; hora: number; minutos: number; tipo: Exclude<TipoDeSesion, 'suave'>; viaje?: number;
+  /**
+   * Lo del cuestionario nuevo (cuestionario.ts, deportesDe): los deportes, la sesión de cada uno, el partido y la
+   * categoría de peso. Los de arriba son el horario de los avisos que sale de ahí (horarioDeLosAvisos).
+   */
+  tipos?: Deporte[];
+  sesiones?: SesionDicha[];
+  partidos?: PartidoDicho | null;
+  categoriaDePeso?: boolean | null;
+};
 
 /** Las sesiones de un día: la del horario, si ese día se entrena. */
 export function sesionesDelDia(entreno: Entreno | null, dia: ClaveDia): Sesion[] {

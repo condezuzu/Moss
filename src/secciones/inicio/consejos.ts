@@ -5,7 +5,7 @@ import type { Estado } from '@/almacen/almacen';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import { comidasHabituales } from '@/dominio/alrededorDelEntreno';
 import { CON_HORA, type Comida } from '@/dominio/comidas';
-import type { EntrenoDicho } from '@/dominio/cuestionario';
+import { deportesDe } from '@/dominio/cuestionario';
 import { DESPUES_DE_SU_HORA } from '@/dominio/energia';
 import { diasEntre, minutosEnElDia, sumarDias } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
@@ -20,14 +20,8 @@ export const META_DE_AGUA = 2000;
 /** El agua cuenta si se anotó alguna vez en la última semana: si no, no se le pide a quien no la anota. */
 const DIAS_DEL_AGUA = 7;
 
-/**
- * Lo de Perfil › Entrenamiento, como lo del cuestionario: un solo tipo. «Mixta» no dice qué deporte es (pesas con
- * fútbol no es pesas con bici), así que no cuenta: las reglas del deporte callan antes que adivinar.
- */
-export function entrenoDicho(e: Entreno | null): Pick<EntrenoDicho, 'tipos' | 'sesiones' | 'partidos'> | null {
-  if (!e || e.tipo === 'mixta' || !e.dias.length) return null;
-  return { tipos: [e.tipo], sesiones: [{ tipo: e.tipo, dias: e.dias, hora: e.hora, minutos: e.minutos }], partidos: null };
-}
+/** Los deportes de lo guardado: los del cuestionario o, si se cambió a mano en Perfil › Entrenamiento, ese tipo (deportesDe). */
+export const entrenoDicho = (e: Entreno | null) => deportesDe(e);
 
 /** El hierro o el calcio de un día: lo que suman los registros que lo traen; si ninguno lo trae, no se sabe. */
 function mineral(lista: readonly Registro[], k: 'hierro' | 'calcio'): number | null {

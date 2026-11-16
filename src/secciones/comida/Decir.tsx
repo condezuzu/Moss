@@ -17,6 +17,7 @@ import { conCon, leerFrase, mismoNombre } from '@/comida/frase';
 import { TAMANOS as TAMANOS_DE_PLATO } from '@/comida/platos';
 import { pasoDeCantidad, pasoDePorcion, type Sistema } from '@/dominio/cantidades';
 import type { Comida } from '@/dominio/comidas';
+import type { FotoDeComida } from '@/dominio/fotos';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { itemDeAlimento, premios, recientes, sumarValores, ultimaCantidad, valoresDeCantidad, type Cantidad, type Item } from '@/dominio/registros';
 import { t } from '@/textos';
@@ -25,10 +26,12 @@ import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { BotonDePaso, margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Icono, Pastilla } from './comunes';
+import { CabezaDeFoto } from './FotosDelDia';
 import { cantidadDeTexto, numero, opcionesDeIdioma, useEstado, useNumeros } from './datos';
 import { hayDictado, useDictado } from './dictado';
 import { agregarADe } from './hoja';
 import { claveDe, Panel, useSinGuardar } from './Paneles';
+import type { Rect } from './Visor';
 
 type Props = {
   comida: Comida;
@@ -51,6 +54,11 @@ type Props = {
   /** El aviso de la hoja, con «Deshacer». */
   alAvisar: (texto: string, deshacer?: () => void) => void;
   abajo: number;
+  /**
+   * «¿Qué es? Dilo o escríbelo» (spec/nutricion.md, «La foto de la comida»): lo mismo, con la miniatura
+   * arriba, que vuela `desde` el visor, y «Anotar después». Lo dicho va al día de la foto.
+   */
+  foto?: { f: FotoDeComida; desde: Rect | null; alOtra: () => void; alBorrar: () => void; alDespues: () => void };
 };
 
 /** Lo que mide una cantidad: las veces de una porción, o los gramos. */
@@ -178,7 +186,7 @@ export function PanelDecir(p: Props) {
   const total = sumarValores(elegidas.map(({ o }) => o.valores));
   const cambioElTexto = entendido !== null && texto.trim() !== entendido.trim();
   // «Agregar a la cena» dice el día si no es hoy: el de la hoja, o ayer si se dijo «anoche».
-  const textoDeAgregar = agregarADe(comida, ayer ? sumarDias(e.hoy, -1) : p.dia, e.hoy);
+  const textoDeAgregar = agregarADe(comida, p.foto ? p.foto.f.dia : ayer ? sumarDias(e.hoy, -1) : p.dia, e.hoy);
 
   /** Lo elegido, como ítems. Cada respuesta se recuerda: la próxima vez, esas palabras ya no preguntan. */
   const confirmar = () => {
@@ -196,17 +204,37 @@ export function PanelDecir(p: Props) {
     p.alBuscar(lista[i].dicho.buscado, confirmar(), comida, { ayer, pendientes });
   };
 
+  const foto = p.foto;
+  const principal = entendidos && !cambioElTexto && elegidas.length > 0
+    ? <Boton tipo="grande" texto={numeros ? `${textoDeAgregar} · ${numero(Math.round(total.kcal))} kcal` : textoDeAgregar} alTocar={agregar} />
+    : <Boton tipo="secundario" texto={entendiendo ? t('comida.decir.entendiendo') : t('comida.decir.entender')} desactivado={!texto.trim() || entendiendo || dictado.escuchando} alTocar={() => entenderYa(texto)} />;
+  // Con la foto, se puede no decir nada todavía: la foto queda en el día, sin anotar.
+  const conFoto = (accion: () => void) => () => {
+    if (dictado.escuchando) dictado.parar();
+    accion();
+  };
+  const ayuda = dictado.escuchando
+    ? t('comida.decir.teEscucho')
+    : foto ? t(conMicrofono ? 'comida.fotoDiario.ayuda' : 'comida.fotoDiario.ayudaTeclado') : conMicrofono ? t('comida.decir.ayuda') : t('comida.decir.ayudaTeclado');
+
   return (
     <Panel
-      titulo={t('comida.decir.titulo')}
-      alAtras={p.alAtras}
+      titulo={foto ? t('comida.fotoDiario.queEs') : t('comida.decir.titulo')}
+      alAtras={foto ? conFoto(foto.alDespues) : p.alAtras}
       abajo={p.abajo}
-      pie={entendidos && !cambioElTexto && elegidas.length > 0
-        ? <Boton tipo="grande" texto={numeros ? `${textoDeAgregar} · ${numero(Math.round(total.kcal))} kcal` : textoDeAgregar} alTocar={agregar} />
-        : <Boton tipo="secundario" texto={entendiendo ? t('comida.decir.entendiendo') : t('comida.decir.entender')} desactivado={!texto.trim() || entendiendo || dictado.escuchando} alTocar={() => entenderYa(texto)} />}
+      fundido={!!foto?.desde}
+      pie={foto ? (
+        <>
+          {principal}
+          <Pressable onPress={conFoto(foto.alDespues)} style={({ pressed }) => [st.despues, pressed && st.apretado]} accessibilityRole="button">
+            <Text style={st.despuesTexto}>{t('comida.fotoDiario.despues')}</Text>
+          </Pressable>
+        </>
+      ) : principal}
     >
+      {foto && <CabezaDeFoto f={foto.f} desde={foto.desde} alOtra={conFoto(foto.alOtra)} alBorrar={conFoto(foto.alBorrar)} />}
       {conMicrofono && <Microfono escuchando={dictado.escuchando} alTocar={hablar} />}
-      <Text style={st.ayuda}>{dictado.escuchando ? t('comida.decir.teEscucho') : conMicrofono ? t('comida.decir.ayuda') : t('comida.decir.ayudaTeclado')}</Text>
+      <Text style={st.ayuda}>{ayuda}</Text>
       {dictado.error && (
         <Animated.Text entering={FadeIn.duration(200).reduceMotion(ReduceMotion.Never)} exiting={SALE_FUNDIDO} style={st.error}>{t(`comida.decir.error.${dictado.error}`)}</Animated.Text>
       )}
@@ -225,7 +253,7 @@ export function PanelDecir(p: Props) {
         returnKeyType="done"
         submitBehavior="blurAndSubmit"
         onSubmitEditing={() => entenderYa(texto)}
-        accessibilityLabel={t('comida.decir.titulo')}
+        accessibilityLabel={foto ? t('comida.fotoDiario.queEs') : t('comida.decir.titulo')}
       />
       {entendidos && (
         <Animated.View entering={FadeIn.duration(260).reduceMotion(ReduceMotion.Never)} layout={ACOMODA}>
@@ -376,4 +404,6 @@ const st = StyleSheet.create({
   quitar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   pregunta: { marginTop: 2, marginBottom: 6, fontFamily: letras.texto, fontSize: 13, color: colores.oroClaro },
   opciones: { gap: 8, paddingBottom: 8, paddingRight: 8 },
+  despues: { height: 34, alignItems: 'center', justifyContent: 'center' },
+  despuesTexto: { fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.72)' },
 });

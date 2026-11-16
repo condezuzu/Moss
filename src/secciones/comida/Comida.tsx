@@ -6,7 +6,6 @@
 // (FilaQueSeDesliza), como en la galería 46.
 
 import * as Haptics from 'expo-haptics';
-import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import { GestureDetector, useLongPressGesture, usePanGesture } from 'react-native-gesture-handler';
@@ -21,6 +20,7 @@ import { deAscent } from '@/almacen/ascent';
 import { conMayuscula } from '@/comida/buscar';
 import { comidaDeLaHora, CON_HORA, horasCorridas, type Comida } from '@/dominio/comidas';
 import { diasEntre, lunesDe, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { fotoDeLaComida, type FotoDeComida } from '@/dominio/fotos';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import type { Linea } from '@/dominio/alrededorDelEntreno';
 import { sugerenciaVencida } from '@/dominio/plan';
@@ -29,14 +29,14 @@ import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { FranjaBajoLaHora } from '../franja';
-import { HojaModal } from '../HojaModal';
 import { entre, viaje } from '../movimiento';
 import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Relleno, useCuenta } from '../animados';
 import { Boton, COLOR_DE_MACRO, Etiqueta, Icono, MACROS, Punto, type Macro } from './comunes';
 import { alTocarLaPagina, cerrarLaFilaAbierta, FilaQueSeDesliza } from './FilaQueSeDesliza';
-import { borrarFoto, fotoDe, hayFotos, sacarFoto } from './fotos';
+import { useFotos } from './fotos';
+import { HojaDeFoto, MiniaturaDeFoto, TiraDeFotos } from './FotosDelDia';
 import { accionesDelMenu, borrarDeLaLinea, MenuFlotante, type PedidoDeMenu } from './MenuFlotante';
 import {
   cantidadDeTexto, comidasDelDia, fechaCorta, gramosDeMacro, hora, HORA_TIPICA, horasDeComer, letraDelDia, metaDelDia, numero, sistemaDe, tituloDelDia, totalDe, useNumeros,
@@ -211,6 +211,7 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
             </Pressable>
           ))}
         </View>
+        <TiraDeFotos dia={dia} />
         <Text style={estilos.seccion}>{t('comida.tuDia')}</Text>
         {dia > e.hoy && <Text style={estilos.nota}>{t('comida.planificadoTexto')}</Text>}
         {!metaDelDia(e, dia) && <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>}
@@ -220,6 +221,7 @@ export function PaginaDeComida({ ancho, arriba, abajo }: { ancho: number; arriba
       </ScrollView>
       <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
       <MenuFlotante pedido={menu} alCerrar={() => setMenu(null)} />
+      <HojaDeFoto />
     </View>
   );
 }
@@ -614,20 +616,13 @@ type Sistema = ReturnType<typeof sistemaDe>;
 function Tarjeta({ c, dia, sistema, e, linea, alMenu }: { c: ComidaDelDia; dia: ClaveDia; sistema: Sistema; e: Estado; linea?: Linea; alMenu: (p: PedidoDeMenu) => void }) {
   const numeros = useNumeros();
   const reducido = useReducedMotion();
-  // La foto, opcional y solo en el teléfono (D10): un toque en la comida ya registrada.
-  const [foto, setFoto] = useState(() => fotoDe(dia, c.comida));
-  const [viendo, setViendo] = useState(false);
+  // La foto, opcional y solo en el teléfono (D10): la cámara de la comida ya registrada abre el visor y,
+  // con foto, su miniatura abre la hoja de la foto (FotosDelDia.tsx).
+  const foto = fotoDeLaComida(useFotos(), dia, c.comida);
+  const sacar = () => abrirRegistro({ panel: 'foto', comida: c.comida, dia, foto: { paraComida: { comida: c.comida, minutos: c.minutos } } });
   const tarjeta = useRef<ViewInstance>(null);
   const apretando = useSharedValue(0);
   const visible = useSharedValue(1);
-  const sacar = () => {
-    sacarFoto(dia, c.comida).then((uri) => uri && setFoto(uri)).catch(() => {});
-  };
-  // La cámara espera a que se vaya la hoja de la foto: iOS no abre una pantalla mientras otra se está cerrando.
-  const cambiarFoto = () => {
-    setViendo(false);
-    setTimeout(sacar, 600);
-  };
   // Lo planificado que quedó en una comida con algo ya comido (un café a la hora del almuerzo armado)
   // se ve tenue y no suma hasta confirmarlo, como en el total del día.
   const mezclada = !c.planificada && c.registros.some((r) => r.planificado);
@@ -709,18 +704,15 @@ function Tarjeta({ c, dia, sistema, e, linea, alMenu }: { c: ComidaDelDia; dia: 
               <FilaDeRegistro r={r} c={c} dia={dia} hoy={e.hoy} sistema={sistema} tenue={mezclada && r.planificado} primera={i === 0 && !linea} ultima={i === c.registros.length - 1} alMenu={alMenu} />
             </Animated.View>
           ))}
-          {foto && (
-            <Aparece>
-              <Pressable onPress={() => setViendo(true)} accessibilityRole="imagebutton" accessibilityLabel={t('comida.fotos.ver')}>
-                <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />
-              </Pressable>
-            </Aparece>
-          )}
           <PieDeTarjeta total={total} numeros={numeros}>
-            {hayFotos && !c.planificada && !foto && (
-              <Pressable onPress={sacar} style={estilos.botonFoto} accessibilityRole="button" accessibilityLabel={t('comida.foto')} hitSlop={8}>
-                <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
-              </Pressable>
+            {foto ? (
+              <MiniaturaDeFoto key={foto.id} f={foto} />
+            ) : !c.planificada && (
+              <Animated.View entering={ENTRA} style={estilos.botonFotoLugar}>
+                <Pressable onPress={sacar} style={({ pressed }) => [estilos.botonFoto, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.foto')} hitSlop={8}>
+                  <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
+                </Pressable>
+              </Animated.View>
             )}
           </PieDeTarjeta>
         </View>
@@ -728,22 +720,6 @@ function Tarjeta({ c, dia, sistema, e, linea, alMenu }: { c: ComidaDelDia; dia: 
           <Animated.View entering={ENTRA_ACCIONES} exiting={SALE}>
             <AccionesDelPlan e={e} c={c} dia={dia} />
           </Animated.View>
-        )}
-        {foto && (
-          <HojaModal
-            abierta={viendo}
-            titulo={t('comida.fotos.ver')}
-            alCerrar={() => setViendo(false)}
-            pie={(
-              <>
-                <Boton tipo="contorno" texto={t('comida.fotos.cambiar')} alTocar={cambiarFoto} />
-                <Boton tipo="quitar" texto={t('comida.fotos.borrar')} alTocar={() => { borrarFoto(dia, c.comida); setFoto(null); setViendo(false); }} />
-              </>
-            )}
-          >
-            <Image source={{ uri: foto }} style={estilos.fotoGrande} contentFit="cover" />
-            <Text style={estilos.fotoNota}>{t('comida.fotos.nota')}</Text>
-          </HojaModal>
         )}
       </Animated.View>
     </View>
@@ -804,7 +780,7 @@ function CopiaDeTarjeta({ c, total, mezclada, sistema, numeros, linea, foto }: {
   sistema: Sistema;
   numeros: boolean;
   linea?: Linea;
-  foto: string | null;
+  foto: FotoDeComida | null;
 }) {
   return (
     <View style={[estilos.tarjeta, c.planificada && estilos.tarjetaPlan, estilos.tarjetaLevantada]}>
@@ -818,10 +794,9 @@ function CopiaDeTarjeta({ c, total, mezclada, sistema, numeros, linea, foto }: {
             <ContenidoDeFila r={r} cantidad={cantidadDeTexto(r.cantidad, sistema)} numeros={numeros} />
           </View>
         ))}
-        {foto && <Image source={{ uri: foto }} style={estilos.foto} contentFit="cover" />}
         <PieDeTarjeta total={total} numeros={numeros}>
-          {hayFotos && !c.planificada && !foto && (
-            <View style={estilos.botonFoto}>
+          {foto ? <MiniaturaDeFoto f={foto} quieta /> : !c.planificada && (
+            <View style={[estilos.botonFoto, estilos.botonFotoLugar]}>
               <Icono nombre="camera" tam={14} color="rgba(239, 230, 207, 0.6)" />
             </View>
           )}
@@ -1054,10 +1029,9 @@ const estilos = StyleSheet.create({
   itemCantidad: { color: 'rgba(239, 230, 207, 0.5)' },
   itemKcal: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.58)', fontVariant: ['tabular-nums'] },
   tarjetaPie: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 7, paddingTop: 8, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
-  botonFoto: { marginLeft: 'auto', width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.06)' },
-  foto: { marginTop: 8, height: 140, borderRadius: 12, backgroundColor: 'rgba(239, 230, 207, 0.05)' },
-  fotoGrande: { width: '100%', aspectRatio: 3 / 4, borderRadius: 16, backgroundColor: 'rgba(239, 230, 207, 0.05)' },
-  fotoNota: { marginTop: 12, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)' },
+  // Como en la galería: la cámara sin fondo, del alto de la miniatura que la reemplaza.
+  botonFoto: { width: 30, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  botonFotoLugar: { marginLeft: 'auto' },
   mini: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   miniTexto: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.62)', fontVariant: ['tabular-nums'] },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },

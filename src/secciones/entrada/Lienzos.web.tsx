@@ -3,7 +3,7 @@
 import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import { View } from 'react-native';
 
-import type { PropsDeAnillos, PropsDeCasiopea, PropsDeEstela } from './LienzosSkia';
+import type { PropsDeAnillos, PropsDeCasiopea, PropsDeEstela, PropsDeFigura } from './LienzosSkia';
 
 const opciones = { locateFile: (archivo: string) => `/${archivo}` };
 
@@ -46,4 +46,15 @@ export function Halo() {
 
 export function Cuerpo() {
   return <WithSkiaWeb opts={opciones} getComponent={async () => ({ default: (await import('./LienzosSkia')).CuerpoSkia })} fallback={<View style={{ width: 54, height: 54 }} />} />;
+}
+
+export function Figura(props: PropsDeFigura) {
+  return (
+    <WithSkiaWeb<PropsDeFigura>
+      opts={opciones}
+      getComponent={async () => ({ default: (await import('./LienzosSkia')).FiguraSkia })}
+      fallback={<View style={{ width: props.ancho, height: props.alto }} />}
+      componentProps={props}
+    />
+  );
 }

@@ -1,20 +1,20 @@
 // La entrada a la app, la de la galería (galeria/src/entrada.js): la frase de apertura, dos
 // diapositivas (con la suscripción prendida, la introducción más larga: la comida, la base, el sueño,
 // los dos juntos, los hábitos y lo que cuesta, y al final la pantalla de pago), tus datos (qué guarda
-// Moss y el consentimiento para los datos de salud), la cuenta
-// (solo con Apple) y el cuestionario que arma la meta inicial de comida, con lo que cuida: mayores de
-// 16 (y sin bajar «rápido» antes de los 18), y sin déficit en el embarazo, la lactancia o con una condición médica. La recorre una estrella
-// guía (Guia.tsx, con el guion de guion.ts): en la frase y las diapositivas espera abajo y tocarla es
-// seguir, así que no se saltean; con la suscripción, «Saltar» lleva a lo que cuesta, que no se saltea.
-// Desde la segunda pregunta, «Atrás» vuelve a la anterior con lo contestado. Cada pantalla tiene su
-// lugar en el cielo: la cámara sube a medida
-// que se avanza. Al final la estrella se va, la cámara baja hasta hoy, se guardan las respuestas (el
-// perfil, el peso de hoy y la meta) y aparece Inicio.
+// Moss y el consentimiento para los datos de salud), la cuenta (solo con Apple) y el cuestionario nuevo,
+// como el de MacroFactor (Preguntas.tsx): Salud, tus datos, los cuidados (D44), la grasa, cuánto te mueves,
+// el entreno y cuándo, lo que quieres lograr, el peso meta con su ritmo o su fecha, lo que sigue, cómo
+// quieres comer y tu día. Lo que no aplica se saltea. La recorre una estrella guía (Guia.tsx, con el guion
+// de guion.ts): en la frase y las diapositivas espera abajo y tocarla es seguir, así que no se saltean; con
+// la suscripción, «Saltar» lleva a lo que cuesta, que no se saltea. Desde la segunda pregunta, «Atrás»
+// vuelve a la anterior con lo contestado. Cada pantalla tiene su lugar en el cielo: la cámara sube a medida
+// que se avanza. Al final la estrella se va, la cámara baja hasta hoy, se guarda todo (el perfil, el peso de
+// hoy, la meta y, en el teléfono, lo nuevo y los cuidados) y aparece Inicio.
 
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { ActivityIndicator, AppState, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { ActivityIndicator, AppState, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing, FadeIn, FadeInDown, FadeInUp, FadeOut, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming,
   type EntryExitAnimationFunction, type SharedValue,
@@ -23,8 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
 import { buscarConstelacion } from '@/datos/catalogo';
-import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
-import { EDAD_MINIMA, edadDe, MAYORIA_DE_EDAD, metasIniciales, RANGOS_DEL_CUESTIONARIO, RITMOS, ritmoPermitido, type Actividad, type Objetivo, type Ritmo, type Sexo } from '@/dominio/metas';
+import { EDAD_MINIMA } from '@/dominio/metas';
 import { DIA_DEL_AVISO, DIAS_DE_PRUEBA } from '@/dominio/premium';
 import { deudaDeSueno, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { hayCompras } from '@/lib/premium';
@@ -33,15 +32,13 @@ import { haySupabase } from '@/lib/supabase';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { useCuenta } from '../animados';
 import { anunciar } from '../anuncio';
-import { COLOR_DE_MACRO, Icono, MACROS } from '../comida/comunes';
-import { duracion, horaDelDia, numero, sistemaDe, useEstado } from '../comida/datos';
+import { COLOR_DE_MACRO, Icono } from '../comida/comunes';
+import { duracion, horaDelDia, numero } from '../comida/datos';
 import { Luna } from '../comida/Luna';
 import { ejemplo } from '../ejemplo';
 import { Hipnograma } from '../graficos/Graficos';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
-import { BotonDePaso, margenDeToque } from '../paso';
 import { entrarConApple, hayApple, type ErrorDeCuenta } from './cuenta';
 import { Guia } from './Guia';
 import {
@@ -50,7 +47,9 @@ import {
 } from './guion';
 import { EjemploDeJuntos, ofrecerPremium, usePreciosDeLaEntrada } from '../premium/Premium';
 import { Anillos, Casiopea } from './Lienzos';
-import { Boton, Deslizador, Opcion } from './piezas';
+import { Boton } from './piezas';
+import { Cabeza, Desliza, Espacio, PantallaDePregunta, Pie, Resultado, Texto, Titulo, TOPE, type DeSalud } from './Preguntas';
+import { aplica, DE_FABRICA, desdeLoGuardado, lugarDe, paraGuardar, PREGUNTAS, type Contestado, type Pregunta } from './respuestas';
 
 /** Cada pantalla y dónde queda la cámara: sube a medida que se avanza, como en la galería. */
 const PASOS: readonly { id: Paso; camara: number }[] = [
@@ -60,16 +59,25 @@ const PASOS: readonly { id: Paso; camara: number }[] = [
   { id: 'datos', camara: 0.98 },
   { id: 'cuenta', camara: 1.08 },
   { id: 'salud', camara: 1.16 },
+  { id: 'tu', camara: 1.18 },
+  { id: 'sexo', camara: 1.18 },
   { id: 'edad', camara: 1.19 },
-  { id: 'sexo', camara: 1.22 },
-  { id: 'altura', camara: 1.25 },
-  { id: 'peso', camara: 1.28 },
-  { id: 'actividad', camara: 1.31 },
-  { id: 'cuidado', camara: 1.325 },
-  { id: 'objetivo', camara: 1.34 },
+  { id: 'altura', camara: 1.2 },
+  { id: 'peso', camara: 1.21 },
+  { id: 'cuidado', camara: 1.22 },
+  { id: 'grasa', camara: 1.235 },
+  { id: 'movimiento', camara: 1.25 },
+  { id: 'entreno', camara: 1.26 },
+  { id: 'cuando', camara: 1.27 },
+  { id: 'objetivo', camara: 1.28 },
+  { id: 'experiencia', camara: 1.29 },
+  { id: 'meta', camara: 1.3 },
+  { id: 'despues', camara: 1.315 },
+  { id: 'comer', camara: 1.33 },
+  { id: 'dia', camara: 1.345 },
   { id: 'resultado', camara: 1.37 },
 ];
-const CUESTIONARIO: readonly Paso[] = ['salud', 'edad', 'sexo', 'altura', 'peso', 'actividad', 'cuidado', 'objetivo'];
+const esPregunta = (p: Paso | undefined): p is Pregunta => !!p && PREGUNTAS.some((x) => x.id === p);
 
 /** Con la suscripción, la introducción más larga: lo que Moss hace, los dos juntos y lo que cuesta. Cada cámara, como en la galería. */
 const PASOS_CON_PAGO: readonly { id: Paso; camara: number }[] = [
@@ -95,21 +103,11 @@ const pasosDeEstaVersion = () => {
   return haySupabase() ? pasos : pasos.filter((p) => p.id !== 'cuenta');
 };
 
-/** Embarazo o lactancia, una condición médica o nada: de eso solo se guarda si va sin déficit. */
-type Caso = 'nada' | 'embarazo' | 'condicion';
-type Respuestas = { edad: number; sexo: Sexo | null; alturaCm: number; pesoKg: number; actividad: Actividad; objetivo: Objetivo; ritmo: Ritmo; caso: Caso };
-const DE_FABRICA: Respuestas = { edad: 29, sexo: null, alturaCm: 172, pesoKg: 74.5, actividad: 'activo', objetivo: 'mantener', ritmo: 'recomendado', caso: 'nada' };
-type DeSalud = ReadonlySet<'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>;
 /** Lo que deja cada pantalla arriba, debajo del borde del teléfono. */
 const ARRIBA = 28;
 /** Lo que deja cada pantalla a los costados. */
 const LADOS = 26;
 const CASIOPEA = buscarConstelacion('cassiopeia');
-/**
- * Lo más que crece el texto grande en lo que tiene su lugar medido a mano (las cifras grandes, la marca y
- * la introducción, que la estrella recorre): con más, «174,5 kg» y sus ± no entraban.
- */
-const TOPE = 1.2;
 /** Lo que se contesta se guarda con esta espera: el deslizador cambia muchas veces por segundo. */
 const ESPERA_DEL_AVANCE = 400;
 /** Un fundido no es movimiento: con Reducir movimiento también se ve (si no, aparecía de golpe). */
@@ -119,8 +117,6 @@ const subiendo = (reducido: boolean, demora: number, ms: number) => (reducido ? 
 const SE_APAGA = FadeOut.duration(200).reduceMotion(ReduceMotion.Never);
 /** La de antes se va para abajo al volver con «Atrás»: arranca suave y termina rápido, como en la galería. */
 const SE_VA_BAJANDO = Easing.in(Easing.quad);
-/** El lado de «Atrás»: el toque llega a 44 con el margen. */
-const LADO_ATRAS = 32;
 
 /**
  * La pantalla que se va: al seguir, con un fundido; al volver con «Atrás», para abajo, mientras la nueva entra
@@ -145,17 +141,19 @@ function vibrar(e: Evento) {
   else Haptics.selectionAsync().catch(() => {});
 }
 
-type Retomar = { i: number; r: Respuestas; deSalud: DeSalud };
+type Retomar = { i: number; r: Contestado; deSalud: DeSalud };
 
 /**
  * Dónde sigue lo guardado en el paso `id`: la lista cambia con la suscripción (y sin cuenta), así que el
- * mismo número puede ser otra pantalla. Si esta versión no tiene ese paso, el anterior más cercano que sí.
+ * mismo número puede ser otra pantalla. Si esta versión no tiene ese paso, el anterior más cercano que sí;
+ * una pregunta del cuestionario de antes (la actividad), desde Salud.
  */
 function retomarEn(id: string, pasos: readonly { id: Paso }[]): number {
   const aca = pasos.findIndex((p) => p.id === id);
   if (aca >= 0) return aca;
-  // La lista con suscripción tiene todos los pasos.
-  for (let k = PASOS_CON_PAGO.findIndex((p) => p.id === id) - 1; k >= 0; k--) {
+  const enLaLarga = PASOS_CON_PAGO.findIndex((p) => p.id === id);
+  if (enLaLarga < 0) return Math.max(0, pasos.findIndex((p) => p.id === 'salud'));
+  for (let k = enLaLarga - 1; k >= 0; k--) {
     const anterior = pasos.findIndex((p) => p.id === PASOS_CON_PAGO[k].id);
     if (anterior >= 0) return anterior;
   }
@@ -164,18 +162,14 @@ function retomarEn(id: string, pasos: readonly { id: Paso }[]): number {
 
 function avanceInicial(pasos: readonly { id: Paso }[]): Retomar {
   const e = elAlmacen().estado();
-  const a = e.avanceDeEntrada as { i?: unknown; id?: unknown; r?: Partial<Respuestas>; deSalud?: unknown } | null;
+  const a = e.avanceDeEntrada as { i?: unknown; id?: unknown; r?: Partial<Contestado>; deSalud?: unknown } | null;
   // Lo guardado antes, sin el id del paso, sigue con el número.
   const i = typeof a?.id === 'string' ? retomarEn(a.id, pasos) : typeof a?.i === 'number' && a.i >= 0 && a.i < pasos.length ? a.i : null;
   if (a && i !== null && a.r) {
     return { i, r: { ...DE_FABRICA, ...a.r }, deSalud: new Set(Array.isArray(a.deSalud) ? a.deSalud : []) as DeSalud };
   }
-  const p = e.perfil;
-  const peso = e.pesos[e.pesos.length - 1]?.kg;
-  const r: Respuestas = p
-    ? { ...DE_FABRICA, edad: edadDe(p, e.hoy), sexo: p.sexo, alturaCm: p.alturaCm, actividad: p.actividad, objetivo: p.objetivo, ritmo: p.ritmo, caso: p.sinDeficit ? 'condicion' : 'nada', ...(peso ? { pesoKg: peso } : {}) }
-    : DE_FABRICA;
-  return { i: 0, r, deSalud: new Set() };
+  // Si la cuenta ya tenía un perfil, sus respuestas vienen llenas.
+  return { i: 0, r: e.perfil ? desdeLoGuardado(e) : DE_FABRICA, deSalud: new Set() };
 }
 
 export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; alTerminar?: () => void }) {
@@ -183,10 +177,10 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const { width: W, height: H } = useWindowDimensions();
   const reducido = useReducedMotion();
   const [pasos] = useState(pasosDeEstaVersion);
-  // Se retoma donde quedó; si la cuenta ya tenía un perfil, sus respuestas vienen llenas.
+  // Se retoma donde quedó.
   const [inicio] = useState(() => avanceInicial(pasos));
   const [i, setI] = useState(inicio.i);
-  const [r, setR] = useState<Respuestas>(inicio.r);
+  const [r, setR] = useState<Contestado>(inicio.r);
   const [deSalud, setDeSalud] = useState<DeSalud>(inicio.deSalud);
   const [terminando, setTerminando] = useState(false);
   // Si a la pantalla de ahora se llegó con «Atrás»: entra desde arriba y la de antes se va para abajo.
@@ -194,16 +188,21 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   const haciaAtras = useSharedValue(false);
   const salida = useMemo(() => salidaDeLaPantalla(haciaAtras), [haciaAtras]);
   const paso = pasos[i];
+  const hoy = useSyncExternalStore(elAlmacen().suscribir, () => elAlmacen().estado().hoy);
+  const noches = useSyncExternalStore(elAlmacen().suscribir, () => elAlmacen().estado().salud?.noches ?? SIN_NOCHES);
 
   // La estrella guía: el guion de la pantalla de ahora y el reloj que lo recorre (ms desde que empezó).
   const a = useMemo(() => medirAnclas(W, H, insets.top, insets.bottom, ARRIBA, LADOS), [W, H, insets.top, insets.bottom]);
   const recorrido = useSharedValue<Recorrido | null>(null);
   const reloj = useSharedValue(0);
-  const kDe = (j: number) => {
-    const c = CUESTIONARIO.indexOf(pasos[j]?.id);
-    return c >= 0 ? (c + 1) / CUESTIONARIO.length : 0;
+  // Lo que lleva la barra: el lugar de la pregunta entre las que aparecen con lo contestado.
+  const kDe = (j: number, x: Contestado = r) => {
+    const id = pasos[j]?.id;
+    if (!esPregunta(id)) return 0;
+    const l = lugarDe(id, x);
+    return (l.i + 1) / l.total;
   };
-  const guionPara = (j: number, desde: Lugar) => guionDe(pasos[j].id, a, desde, kDe(j), CASIOPEA, hayCompras());
+  const guionPara = (j: number, desde: Lugar, x?: Contestado) => guionDe(pasos[j].id, a, desde, kDe(j, x), CASIOPEA, hayCompras());
   // Al abrir (o retomar), sale de donde habría quedado la pantalla anterior.
   const [guion, setGuion] = useState<Guion>(() => guionPara(inicio.i, reposo(pasos[inicio.i - 1]?.id, a, kDe(inicio.i - 1))));
   // En la frase y las diapositivas: ya terminó su parte y espera que la toquen.
@@ -267,7 +266,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
 
   // Salud dijo menos de 16: al volver a esa pregunta (o a Moss), se le pregunta de nuevo, por si cambió la
   // fecha de nacimiento. Si ya no la tiene, la edad se elige a mano.
-  const edadDeSalud = paso.id === 'edad' && deSalud.has('edad');
+  const edadDeSalud = (paso.id === 'tu' || paso.id === 'edad') && deSalud.has('edad');
   useEffect(() => {
     if (!edadDeSalud) return;
     let vigente = true;
@@ -297,16 +296,19 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     camara.set(paso.camara);
   }, [camara, paso.camara]);
 
-  const irA = (j: number, atras = false) => {
+  const irA = (j: number, atras = false, x?: Contestado) => {
     setEspera(false);
     setVolviendo(atras);
     haciaAtras.set(atras);
     // La estrella sale de donde está: en la barra, al volver, retrocede hasta la pregunta de antes.
-    setGuion(guionPara(j, lugarDeAhora()));
+    setGuion(guionPara(j, lugarDeAhora(), x));
     setI(j);
   };
-  const siguiente = () => {
-    if (i < pasos.length - 1) irA(i + 1);
+  // La que sigue entre las que aparecen con lo contestado; lo de la pantalla de ahora ya está en `r`.
+  const siguiente = (x: Contestado = r) => {
+    let j = i + 1;
+    while (j < pasos.length - 1 && esPregunta(pasos[j].id) && !aplica(pasos[j].id as Pregunta, x)) j++;
+    if (j < pasos.length) irA(j, false, x);
   };
   // «Empezar» va una vez: mientras Apple contesta (hasta tres segundos), un segundo toque abría la pantalla
   // de pago otra vez o guardaba las respuestas dos veces.
@@ -319,16 +321,18 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     irA(0);
   };
   const dondeCuesta = pasos.findIndex((p) => p.id === 'precio');
-  const poner = <K extends keyof Respuestas>(clave: K, valor: Respuestas[K]) => {
-    setR((antes) => ({ ...antes, [clave]: valor }));
+  const poner = useCallback((cambio: (x: Contestado) => Contestado, deSaludQueSeVa?: 'edad' | 'sexo' | 'alturaCm' | 'pesoKg') => {
+    setR(cambio);
     // Lo que se cambia a mano ya no es de Salud.
-    setDeSalud((antes) => {
-      if (!antes.has(clave as never)) return antes;
-      const nuevo = new Set(antes);
-      nuevo.delete(clave as never);
-      return nuevo;
-    });
-  };
+    if (deSaludQueSeVa) {
+      setDeSalud((antes) => {
+        if (!antes.has(deSaludQueSeVa)) return antes;
+        const nuevo = new Set(antes);
+        nuevo.delete(deSaludQueSeVa);
+        return nuevo;
+      });
+    }
+  }, []);
 
   // El final: la cámara baja hasta hoy, la entrada se apaga y se guarda todo; con el perfil
   // guardado, Secciones deja la entrada y aparece Inicio.
@@ -348,10 +352,9 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     setTerminando(true);
     // La estrella sube y se va, como en la galería antes del flum.
     setGuion(guionDeSalida(lugarDeAhora()));
-    const sexo = r.sexo;
-    const { caso, ...respuestas } = r;
+    const { c, nuevo } = paraGuardar(r, hoy, noches);
     salir(() => {
-      elAlmacen().responderCuestionario({ ...respuestas, sexo, sinDeficit: caso !== 'nada' }, deSalud.has('pesoKg') ? 'salud' : 'manual');
+      elAlmacen().responderCuestionario(c, deSalud.has('pesoKg') ? 'salud' : 'manual', nuevo);
       alTerminar?.();
     });
   };
@@ -374,11 +377,19 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
     transform: [{ scale: reducido ? 1 : withTiming(saliendo ? 1.06 : 1, { duration: 900 }) }],
   }));
 
-  const enCuestionario = CUESTIONARIO.indexOf(paso.id);
+  const pregunta = esPregunta(paso.id) ? paso.id : null;
   // Salud dijo menos de 16: Moss no sigue (Menor), y tampoco se vuelve a la pregunta de antes.
-  const menor = paso.id === 'edad' && deSalud.has('edad') && r.edad < EDAD_MINIMA;
-  // «Atrás», desde la segunda pregunta: la de antes, con lo que ya contestaste (el avance se guarda por pantalla).
-  const anterior = enCuestionario > 0 && !menor ? pasos.findIndex((p) => p.id === CUESTIONARIO[enCuestionario - 1]) : -1;
+  const menor = (paso.id === 'edad' || paso.id === 'tu') && deSalud.has('edad') && r.edad < EDAD_MINIMA;
+  // «Atrás», desde la segunda pregunta: la de antes que aparece con lo contestado (el avance se guarda por pantalla).
+  let anterior = -1;
+  if (pregunta && !menor) {
+    for (let j = i - 1; j >= 0 && esPregunta(pasos[j].id); j--) {
+      if (aplica(pasos[j].id as Pregunta, r)) {
+        anterior = j;
+        break;
+      }
+    }
+  }
   const atras = () => {
     if (anterior < 0 || saliendo) return;
     Haptics.selectionAsync().catch(() => {});
@@ -388,9 +399,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   // La frase, las diapositivas y la cuenta tienen lo suyo en un lugar fijo, el que recorre la estrella: no corren.
   const fija = esDiapositiva(paso.id) || paso.id === 'cuenta';
   const conPago = hayCompras();
-  // Sin déficit, bajar de peso queda en mantener; antes de los 18, bajando, «Rápido» queda en el recomendado.
-  const objetivo: Objetivo = r.caso !== 'nada' && r.objetivo === 'bajar' ? 'mantener' : r.objetivo;
-  const ritmo = ritmoPermitido({ edad: r.edad, objetivo, ritmo: r.ritmo });
+  const lugar = pregunta ? lugarDe(pregunta, r) : null;
   return (
     <Animated.View style={[StyleSheet.absoluteFill, estiloSalida]} pointerEvents={saliendo ? 'none' : 'box-none'}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -424,59 +433,33 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
                 {paso.id === 'sueno' && <Encabezado titulo={t('entrada.intro.sueno.titulo')} texto={t('entrada.intro.sueno.texto')} />}
                 {paso.id === 'juntos' && <Encabezado titulo={t('entrada.intro.juntos.titulo')} texto={t('entrada.intro.juntos.texto')} />}
                 {paso.id === 'precio' && <LoQueCuesta />}
-                {paso.id === 'cuenta' && <Cuenta alEntrar={siguiente} />}
+                {paso.id === 'cuenta' && <Cuenta alEntrar={() => siguiente()} />}
               </View>
               {conPago && INTRODUCCION.includes(paso.id) && <ConstelacionDeIntro i={INTRODUCCION.indexOf(paso.id)} arriba={insets.top + 4} />}
             </>
           ) : (
-          <ScrollView
-            contentContainerStyle={[s.pantalla, relleno]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            bounces={false}
             // Con VoiceOver, el gesto de escape también vuelve a la pregunta de antes.
-            onAccessibilityEscape={anterior >= 0 ? atras : undefined}
-          >
-            {enCuestionario >= 0 && <Avance n={enCuestionario + 1} total={CUESTIONARIO.length} alAtras={anterior >= 0 ? atras : undefined} />}
-            {paso.id === 'datos' && <TusDatos alSeguir={siguiente} />}
-            {paso.id === 'salud' && (
-              <Salud
-                alSeguir={siguiente}
-                alLeer={(d) => {
-                  setR((antes) => ({ ...antes, ...d }));
-                  setDeSalud(new Set(Object.keys(d) as ('edad' | 'sexo' | 'alturaCm' | 'pesoKg')[]));
-                }}
-              />
-            )}
-            {paso.id === 'edad' && (menor ? <Menor /> : (
-              <Numero titulo={t('entrada.cuestionario.edadTitulo')} valor={Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])} min={RANGOS_DEL_CUESTIONARIO.edad[0]} max={RANGOS_DEL_CUESTIONARIO.edad[1]} paso={1} decimales={0} unidad={t('entrada.cuestionario.anos')} deSalud={deSalud.has('edad')} alCambiar={(v) => poner('edad', v)} alSeguir={() => { poner('edad', Math.max(r.edad, RANGOS_DEL_CUESTIONARIO.edad[0])); siguiente(); }} />
-            ))}
-            {paso.id === 'sexo' && <ElSexo sexo={r.sexo} deSalud={deSalud.has('sexo')} alElegir={(v) => poner('sexo', v)} alSeguir={siguiente} />}
-            {paso.id === 'altura' && <Altura cm={r.alturaCm} deSalud={deSalud.has('alturaCm')} alCambiar={(v) => poner('alturaCm', v)} alSeguir={siguiente} />}
-            {paso.id === 'peso' && <Peso kg={r.pesoKg} deSalud={deSalud.has('pesoKg')} alCambiar={(v) => poner('pesoKg', v)} alSeguir={siguiente} />}
-            {paso.id === 'actividad' && <LaActividad actividad={r.actividad} alElegir={(v) => poner('actividad', v)} alSeguir={siguiente} />}
-            {paso.id === 'cuidado' && <Cuidado sexo={r.sexo} caso={r.caso} alElegir={(v) => poner('caso', v)} alSeguir={siguiente} />}
-            {paso.id === 'objetivo' && (
-              <ElObjetivo
-                objetivo={objetivo}
-                ritmo={ritmo}
-                sinDeficit={r.caso !== 'nada'}
-                menor={r.edad < MAYORIA_DE_EDAD}
-                alObjetivo={(v) => poner('objetivo', v)}
-                alRitmo={(v) => poner('ritmo', v)}
-                alSeguir={() => {
-                  if (objetivo !== r.objetivo) poner('objetivo', objetivo);
-                  if (ritmo !== r.ritmo) poner('ritmo', ritmo);
-                  siguiente();
-                }}
-              />
-            )}
-            {paso.id === 'resultado' && <ElResultado r={r} alEmpezar={empezar} boton={conPago ? t('entrada.seguir') : t('entrada.cuestionario.empezar')} reducido={reducido} />}
-          </ScrollView>
+            <View style={[s.pantalla, relleno]} onAccessibilityEscape={anterior >= 0 ? atras : undefined}>
+              {lugar && <Cabeza i={lugar.i} total={lugar.total} alAtras={anterior >= 0 ? atras : undefined} />}
+              {paso.id === 'datos' && <TusDatos alSeguir={() => siguiente()} />}
+              {paso.id === 'salud' && (
+                <Salud
+                  alSeguir={siguiente}
+                  alLeer={(d) => {
+                    const x: Contestado = { ...r, ...d, salud: true };
+                    setR(x);
+                    setDeSalud(new Set(Object.keys(d) as ('edad' | 'sexo' | 'alturaCm' | 'pesoKg')[]));
+                    return x;
+                  }}
+                />
+              )}
+              {pregunta && pregunta !== 'salud' && <PantallaDePregunta id={pregunta} r={r} poner={poner} deSalud={deSalud} hoy={hoy} noches={noches} alSeguir={() => siguiente()} />}
+              {paso.id === 'resultado' && <Resultado r={r} hoy={hoy} alEmpezar={empezar} boton={conPago ? t('entrada.seguir') : t('entrada.cuestionario.empezar')} />}
+            </View>
           )}
         </Animated.View>
       </KeyboardAvoidingView>
-      <Guia recorrido={recorrido} reloj={reloj} anclas={a} reducido={reducido} tocable={esDiapositiva(paso.id) && !saliendo} lista={espera} alTocar={siguiente} />
+      <Guia recorrido={recorrido} reloj={reloj} anclas={a} reducido={reducido} tocable={esDiapositiva(paso.id) && !saliendo} lista={espera} alTocar={() => siguiente()} />
       {/* Saltar lleva a lo que cuesta: el cuestionario es trabajo, y antes hay que saber que Moss es de pago. */}
       {conPago && i < dondeCuesta && !saliendo && (
         <Animated.View entering={fundido(0, 320)} exiting={SE_APAGA} style={[s.saltar, { top: insets.top + 4 }]}>
@@ -489,43 +472,7 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
   );
 }
 
-// Como en la galería, la frase, las diapositivas, la cuenta y el resultado van centrados; el cuestionario, a la izquierda.
-// `tope`: en las pantallas fijas, lo de abajo tiene su lugar medido y el texto grande lo taparía.
-const Titulo = ({ children, centrado, tope }: { children: ReactNode; centrado?: boolean; tope?: boolean }) => (
-  <Text style={[s.titulo, centrado && s.centrado]} accessibilityRole="header" maxFontSizeMultiplier={tope ? TOPE : undefined}>{children}</Text>
-);
-const Texto = ({ children, centrado, tope }: { children: ReactNode; centrado?: boolean; tope?: boolean }) => (
-  <Text style={[s.texto, centrado && s.centrado]} maxFontSizeMultiplier={tope ? TOPE : undefined}>{children}</Text>
-);
-const Pie = ({ children }: { children: ReactNode }) => <View style={s.pie}>{children}</View>;
-const Espacio = () => <View style={{ flex: 1, minHeight: 24 }} />;
-
-/**
- * Cuánto falta del cuestionario. La barra es de la estrella (Guia.tsx), que va en su punta: acá queda su lugar.
- * Desde la segunda pregunta, a la altura de «n de N», la flecha fina de «Atrás». La fila tiene el mismo alto
- * con flecha o sin ella: de la primera pregunta a la segunda no se corre nada.
- */
-function Avance({ n, total, alAtras }: { n: number; total: number; alAtras?: () => void }) {
-  return (
-    <View>
-      <View style={s.avance} />
-      <View style={s.avanceFila}>
-        {alAtras && (
-          <Pressable
-            onPress={alAtras}
-            style={({ pressed }) => [s.atras, pressed && s.atrasApretado]}
-            hitSlop={margenDeToque(LADO_ATRAS)}
-            accessibilityRole="button"
-            accessibilityLabel={t('comun.atras')}
-          >
-            <Icono nombre="chevron.left" tam={15} color="rgba(239, 230, 207, 0.78)" peso="medium" />
-          </Pressable>
-        )}
-        <Text style={[s.paso, s.pasoEnFila]}>{t('entrada.cuestionario.paso', { n, total })}</Text>
-      </View>
-    </View>
-  );
-}
+const SIN_NOCHES: never[] = [];
 
 // ------------------------------------------------------------------ la frase y las diapositivas
 /**
@@ -878,6 +825,7 @@ function TusDatos({ alSeguir }: { alSeguir: () => void }) {
   const reducido = useReducedMotion();
   return (
     <>
+      <Desliza>
       <Titulo>{t('entrada.datos.titulo')}</Titulo>
       <Texto>{t('entrada.datos.texto')}</Texto>
       <View style={s.datos}>
@@ -891,45 +839,9 @@ function TusDatos({ alSeguir }: { alSeguir: () => void }) {
       <Pressable onPress={() => abrirPagina('privacidad')} accessibilityRole="link" hitSlop={8}>
         <Text style={[s.chico, s.enlace, s.izquierda]}>{t('entrada.datos.politica')}</Text>
       </Pressable>
-      <Espacio />
+      </Desliza>
       <Pie>
         <Boton texto={t('entrada.datos.acepto')} alTocar={alSeguir} />
-      </Pie>
-    </>
-  );
-}
-
-/** Menos de 16, según Salud: Moss no sigue (lo pediste el 22/10/2026). */
-function Menor() {
-  return (
-    <View style={s.menor}>
-      <Titulo centrado>{t('entrada.menor.titulo')}</Titulo>
-      <Texto centrado>{t('entrada.menor.texto')}</Texto>
-    </View>
-  );
-}
-
-/** Embarazo o lactancia (solo se pregunta a las mujeres), una condición médica o nada. */
-function Cuidado({ sexo, caso, alElegir, alSeguir }: { sexo: Sexo | null; caso: Caso; alElegir: (c: Caso) => void; alSeguir: () => void }) {
-  const casos: { caso: Caso; titulo: string; detalle?: string }[] = [
-    ...(sexo === 'f' ? [{ caso: 'embarazo' as const, titulo: t('entrada.cuidado.embarazo') }] : []),
-    { caso: 'condicion', titulo: t('entrada.cuidado.condicion'), detalle: t('entrada.cuidado.condicionTexto') },
-    { caso: 'nada', titulo: t('entrada.cuidado.nada') },
-  ];
-  return (
-    <>
-      <Titulo>{t('entrada.cuidado.titulo')}</Titulo>
-      <View style={s.opciones} accessibilityRole="radiogroup">
-        {casos.map((c) => <Opcion key={c.caso} titulo={c.titulo} detalle={c.detalle} elegida={c.caso === caso} alTocar={() => alElegir(c.caso)} />)}
-      </View>
-      {caso !== 'nada' && (
-        <Animated.View entering={fundido(0, 300)} exiting={SE_APAGA}>
-          <Texto>{t('entrada.cuidado.aviso')}</Texto>
-        </Animated.View>
-      )}
-      <Espacio />
-      <Pie>
-        <Boton texto={t('entrada.seguir')} alTocar={alSeguir} />
       </Pie>
     </>
   );
@@ -938,7 +850,8 @@ function Cuidado({ sexo, caso, alElegir, alSeguir }: { sexo: Sexo | null; caso: 
 // ------------------------------------------------------------------ el cuestionario
 const ICONOS_DE_SALUD = ['figure.walk', 'moon.zzz', 'brain.head.profile', 'drop', 'scalemass'] as const;
 
-function Salud({ alSeguir, alLeer }: { alSeguir: () => void; alLeer: (d: Partial<Pick<Respuestas, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>>) => void }) {
+/** Conectar con Salud trae la edad, el sexo, la altura y el peso: con eso, la pregunta que sigue es «Esto dice Salud». */
+function Salud({ alSeguir, alLeer }: { alSeguir: (x?: Contestado) => void; alLeer: (d: Partial<Pick<Contestado, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>>) => Contestado }) {
   const [ocupado, setOcupado] = useState(false);
   const enCamino = useRef(false);
   const hay = haySalud();
@@ -947,15 +860,17 @@ function Salud({ alSeguir, alLeer }: { alSeguir: () => void; alLeer: (d: Partial
     enCamino.current = true;
     setOcupado(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    let x: Contestado | undefined;
     if (await pedirPermisos()) {
-      alLeer(await datosDelCuestionario());
+      x = alLeer(await datosDelCuestionario());
       actualizarSalud().catch(() => {});
     }
     setOcupado(false);
-    alSeguir();
+    alSeguir(x);
   };
   return (
     <>
+      <Desliza>
       <Titulo>{t('entrada.cuestionario.saludTitulo')}</Titulo>
       <Texto>{t('entrada.cuestionario.saludTexto')}</Texto>
       <View style={s.iconosDeSalud}>
@@ -965,227 +880,10 @@ function Salud({ alSeguir, alLeer }: { alSeguir: () => void; alLeer: (d: Partial
           </Animated.View>
         ))}
       </View>
-      <Espacio />
+      </Desliza>
       <Pie>
         {hay && <Boton texto={t('entrada.cuestionario.conectar')} alTocar={conectar} desactivado={ocupado} />}
-        <Boton tipo={hay ? 'secundario' : 'principal'} texto={hay ? t('entrada.cuestionario.ahoraNo') : t('entrada.seguir')} alTocar={alSeguir} desactivado={ocupado} />
-      </Pie>
-    </>
-  );
-}
-
-/**
- * Lo que vino de Salud. Si se cambia a mano, el chip se apaga pero deja su lugar: al irse, el deslizador
- * subía de golpe con el dedo encima.
- */
-function ChipDeSalud({ encendido, izquierda }: { encendido: boolean; izquierda?: boolean }) {
-  const [estuvo] = useState(encendido);
-  const luz = useAnimatedStyle(() => ({ opacity: withTiming(encendido ? 1 : 0, { duration: 240, reduceMotion: ReduceMotion.Never }) }), [encendido]);
-  if (!estuvo) return null;
-  return (
-    <Animated.View
-      style={[s.chipFila, izquierda && { justifyContent: 'flex-start' }, luz]}
-      accessibilityElementsHidden={!encendido}
-      importantForAccessibility={encendido ? 'auto' : 'no-hide-descendants'}
-    >
-      <Text style={s.deSalud}>{t('entrada.cuestionario.deSalud')}</Text>
-    </Animated.View>
-  );
-}
-
-type PropsDeNumero = {
-  titulo: string; texto?: string; valor: number; min: number; max: number; paso: number; decimales: number; unidad: string; deSalud: boolean;
-  alCambiar: (v: number) => void; alSeguir: () => void; mostrar?: (v: number) => string;
-};
-
-/** Las preguntas de un número: el número grande, el deslizador y un paso fino a cada lado (mantenido, repite). */
-function Numero({ titulo, texto, valor, min, max, paso, decimales, unidad, deSalud, alCambiar, alSeguir, mostrar }: PropsDeNumero) {
-  const textoDe = (v: number) => (mostrar ? mostrar(v) : `${numero(v, decimales)} ${unidad}`);
-  const fino = (signo: 1 | -1) => {
-    const nuevo = Math.min(max, Math.max(min, Math.round((valor + signo * paso) * 100) / 100));
-    if (nuevo === valor) return false;
-    alCambiar(nuevo);
-    anunciar(textoDe(nuevo));
-  };
-  return (
-    <>
-      <Titulo>{titulo}</Titulo>
-      {texto ? <Texto>{texto}</Texto> : null}
-      <View style={s.numero}>
-        <BotonDePaso alPaso={() => fino(-1)} etiqueta={`− ${numero(paso, decimales)}`} lado={40} style={s.fino}>
-          <Icono nombre="minus" tam={16} peso="semibold" />
-        </BotonDePaso>
-        <View style={s.numeroCentro}>
-          <Text style={s.numeroValor} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={TOPE}>
-            {mostrar ? mostrar(valor) : numero(valor, decimales)}
-          </Text>
-          {!mostrar && <Text style={s.numeroUnidad} maxFontSizeMultiplier={TOPE}>{unidad}</Text>}
-        </View>
-        <BotonDePaso alPaso={() => fino(1)} etiqueta={`+ ${numero(paso, decimales)}`} lado={40} style={s.fino}>
-          <Icono nombre="plus" tam={16} peso="semibold" />
-        </BotonDePaso>
-      </View>
-      <ChipDeSalud encendido={deSalud} />
-      <Deslizador valor={valor} min={min} max={max} paso={paso} alCambiar={alCambiar} etiqueta={titulo} textoDe={textoDe} pasoDeAccesibilidad={1} />
-      <Espacio />
-      <Pie>
-        <Boton texto={t('entrada.seguir')} alTocar={alSeguir} />
-      </Pie>
-    </>
-  );
-}
-
-function Altura({ cm, deSalud, alCambiar, alSeguir }: { cm: number; deSalud: boolean; alCambiar: (cm: number) => void; alSeguir: () => void }) {
-  const imperial = sistemaDe(useEstado()) === 'imperial';
-  if (!imperial) {
-    return <Numero titulo={t('entrada.cuestionario.alturaTitulo')} valor={cm} min={RANGOS_DEL_CUESTIONARIO.alturaCm[0]} max={RANGOS_DEL_CUESTIONARIO.alturaCm[1]} paso={1} decimales={0} unidad="cm" deSalud={deSalud} alCambiar={alCambiar} alSeguir={alSeguir} />;
-  }
-  // En pulgadas, y se muestra en pies y pulgadas: 5′ 9″.
-  const pulgadas = Math.round(cm / CM_POR_PULGADA);
-  return (
-    <Numero
-      titulo={t('entrada.cuestionario.alturaTitulo')}
-      valor={pulgadas}
-      min={Math.ceil(RANGOS_DEL_CUESTIONARIO.alturaCm[0] / CM_POR_PULGADA)}
-      max={Math.floor(RANGOS_DEL_CUESTIONARIO.alturaCm[1] / CM_POR_PULGADA)}
-      paso={1}
-      decimales={0}
-      unidad="in"
-      deSalud={deSalud}
-      alCambiar={(p) => alCambiar(Math.round(p * CM_POR_PULGADA))}
-      alSeguir={alSeguir}
-      mostrar={(p) => `${Math.floor(p / 12)}′ ${p % 12}″`}
-    />
-  );
-}
-
-function Peso({ kg, deSalud, alCambiar, alSeguir }: { kg: number; deSalud: boolean; alCambiar: (kg: number) => void; alSeguir: () => void }) {
-  const imperial = sistemaDe(useEstado()) === 'imperial';
-  const comun = { titulo: t('entrada.cuestionario.pesoTitulo'), texto: t('entrada.cuestionario.pesoTexto'), deSalud, alSeguir, decimales: 1 };
-  if (!imperial) return <Numero {...comun} valor={kg} min={RANGOS_DEL_CUESTIONARIO.pesoKg[0]} max={RANGOS_DEL_CUESTIONARIO.pesoKg[1]} paso={0.1} unidad="kg" alCambiar={(v) => alCambiar(Math.round(v * 10) / 10)} />;
-  return <Numero {...comun} valor={Math.round((kg / KG_POR_LIBRA) * 10) / 10} min={Math.ceil(RANGOS_DEL_CUESTIONARIO.pesoKg[0] / KG_POR_LIBRA)} max={Math.floor(RANGOS_DEL_CUESTIONARIO.pesoKg[1] / KG_POR_LIBRA)} paso={0.2} unidad="lb" alCambiar={(lb) => alCambiar(Math.round(lb * KG_POR_LIBRA * 100) / 100)} />;
-}
-
-function ElSexo({ sexo, deSalud, alElegir, alSeguir }: { sexo: Sexo | null; deSalud: boolean; alElegir: (s: Sexo) => void; alSeguir: () => void }) {
-  return (
-    <>
-      <Titulo>{t('entrada.cuestionario.sexoTitulo')}</Titulo>
-      <Texto>{t('entrada.cuestionario.sexoTexto')}</Texto>
-      <View style={[s.opciones, s.dos]} accessibilityRole="radiogroup">
-        <Opcion titulo={t('entrada.cuestionario.femenino')} elegida={sexo === 'f'} alTocar={() => alElegir('f')} centrada />
-        <Opcion titulo={t('entrada.cuestionario.masculino')} elegida={sexo === 'm'} alTocar={() => alElegir('m')} centrada />
-      </View>
-      <ChipDeSalud encendido={deSalud} izquierda />
-      <Espacio />
-      <Pie>
-        <Boton texto={t('entrada.seguir')} alTocar={alSeguir} desactivado={!sexo} />
-      </Pie>
-    </>
-  );
-}
-
-const ACTIVIDADES: readonly Actividad[] = ['poco', 'algo', 'activo', 'muy'];
-
-function LaActividad({ actividad, alElegir, alSeguir }: { actividad: Actividad; alElegir: (a: Actividad) => void; alSeguir: () => void }) {
-  return (
-    <>
-      <Titulo>{t('entrada.cuestionario.actividadTitulo')}</Titulo>
-      <View style={s.opciones} accessibilityRole="radiogroup">
-        {ACTIVIDADES.map((a) => {
-          const [titulo, detalle] = lista(`entrada.cuestionario.actividad.${a}`);
-          return <Opcion key={a} titulo={titulo} detalle={detalle} elegida={a === actividad} alTocar={() => alElegir(a)} />;
-        })}
-      </View>
-      <Espacio />
-      <Pie>
-        <Boton texto={t('entrada.seguir')} alTocar={alSeguir} />
-      </Pie>
-    </>
-  );
-}
-
-function ElObjetivo({ objetivo, ritmo, sinDeficit, menor, alObjetivo, alRitmo, alSeguir }: {
-  objetivo: Objetivo; ritmo: Ritmo; sinDeficit: boolean; menor: boolean; alObjetivo: (o: Objetivo) => void; alRitmo: (r: Ritmo) => void; alSeguir: () => void;
-}) {
-  return (
-    <>
-      <Titulo>{t('entrada.cuestionario.objetivoTitulo')}</Titulo>
-      <View style={s.opciones} accessibilityRole="radiogroup">
-        {/* Sin déficit, bajar de peso no se elige acá: se dice por qué, corto. */}
-        {(['bajar', 'mantener', 'subir'] as const).map((o) => (
-          <Opcion
-            key={o}
-            titulo={t(`entrada.cuestionario.${o}`)}
-            detalle={o === 'bajar' && sinDeficit ? t('entrada.cuidado.bajarNo') : undefined}
-            desactivada={o === 'bajar' && sinDeficit}
-            elegida={o === objetivo}
-            alTocar={() => alObjetivo(o)}
-          />
-        ))}
-      </View>
-      {objetivo !== 'mantener' && (
-        <Animated.View entering={fundido(0, 300)} exiting={SE_APAGA} style={s.ritmo}>
-          <Text style={s.paso}>{t('entrada.cuestionario.ritmo')}</Text>
-          <View style={[s.opciones, s.tres]} accessibilityRole="radiogroup">
-            {(['suave', 'recomendado', 'rapido'] as const).map((x) => {
-              // Antes de los 18, bajar rápido no está (ritmoPermitido): se dice desde cuándo, corto.
-              const no = menor && objetivo === 'bajar' && x === 'rapido';
-              return <Opcion key={x} titulo={t(`entrada.cuestionario.${x}`)} detalle={no ? t('entrada.cuestionario.meta.desde18') : undefined} desactivada={no} elegida={x === ritmo} alTocar={() => alRitmo(x)} centrada />;
-            })}
-          </View>
-          <Text style={s.chico}>{t('entrada.cuestionario.ritmoTexto', { pct: numero(Math.abs(RITMOS[objetivo][ritmo]), 2) })}</Text>
-        </Animated.View>
-      )}
-      <Espacio />
-      <Pie>
-        <Boton texto={t('entrada.seguir')} alTocar={alSeguir} />
-      </Pie>
-    </>
-  );
-}
-
-// ------------------------------------------------------------------ el resultado
-function ElResultado({ r, alEmpezar, boton, reducido }: { r: Respuestas; alEmpezar: () => void; boton: string; reducido: boolean }) {
-  const { gasto, metas } = metasIniciales({ ...r, sexo: r.sexo ?? 'm' });
-  const kcal = [metas.proteina * 4, metas.carbohidratos * 4, metas.grasas * 9];
-  const total = kcal.reduce((a, b) => a + b, 0) || 1;
-  const [llena, setLlena] = useState(false);
-  // La cifra cuenta desde cero hasta la meta, de a pasos (useCuenta) y no en cada cuadro.
-  const [hasta, setHasta] = useState(reducido ? metas.kcal : 0);
-  const cuenta = Math.round(useCuenta(hasta, 1400));
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setLlena(true);
-      setHasta(metas.kcal);
-    }, 200);
-    return () => clearTimeout(id);
-  }, [metas.kcal]);
-  return (
-    <>
-      <Titulo centrado>{t('entrada.cuestionario.resultadoTitulo')}</Titulo>
-      <View style={[s.lunaGrande, s.lunaResultado]}>
-        <Luna tam={100} fraccion={llena ? 1 : 0.06} ms={reducido ? 0 : 1600} />
-        <Anillos tam={196} reparto={[kcal[0] / total, kcal[1] / total, kcal[2] / total]} ms={reducido ? 0 : 1600} demora={200} />
-      </View>
-      <View style={s.kcal}>
-        <Text style={s.kcalNumero} maxFontSizeMultiplier={TOPE}>{numero(cuenta)}</Text>
-        <Text style={s.kcalTexto} maxFontSizeMultiplier={TOPE}>{t('entrada.cuestionario.kcal')}</Text>
-      </View>
-      <View style={s.macros}>
-        {MACROS.map((m) => (
-          <View key={m} style={s.macro}>
-            <View style={[s.macroPunto, { backgroundColor: COLOR_DE_MACRO[m] }]} />
-            <Text style={s.macroNombre}>{t(`entrada.cuestionario.${m}`)}</Text>
-            <Text style={s.macroGramos}>{`${numero(metas[m])} g`}</Text>
-          </View>
-        ))}
-      </View>
-      <Text style={[s.chico, { textAlign: 'center' }]}>{t('entrada.cuestionario.gasto', { n: numero(gasto) })}</Text>
-      <Texto centrado>{t('entrada.cuestionario.resultadoTexto')}</Texto>
-      <Text style={s.chico}>{t('entrada.cuestionario.profesional')}</Text>
-      <Espacio />
-      <Pie>
-        <Boton texto={boton} alTocar={alEmpezar} />
+        <Boton tipo={hay ? 'secundario' : 'principal'} texto={hay ? t('entrada.cuestionario.ahoraNo') : t('entrada.seguir')} alTocar={() => alSeguir()} desactivado={ocupado} />
       </Pie>
     </>
   );
@@ -1194,7 +892,7 @@ function ElResultado({ r, alEmpezar, boton, reducido }: { r: Respuestas; alEmpez
 const SOMBRA = { textShadowColor: 'rgba(3, 5, 12, 0.95)', textShadowRadius: 14, textShadowOffset: { width: 0, height: 0 } };
 
 const s = StyleSheet.create({
-  pantalla: { flexGrow: 1, paddingHorizontal: 26 },
+  pantalla: { flex: 1, paddingHorizontal: 26 },
   titulo: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 32, lineHeight: 35, color: colores.pergamino, ...SOMBRA },
   texto: { marginTop: 12, maxWidth: 320, fontFamily: letras.textoLiviano, fontSize: 15, lineHeight: 22, color: 'rgba(239, 230, 207, 0.78)', ...SOMBRA },
   chico: { marginTop: 12, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)', textAlign: 'center' },
@@ -1206,18 +904,7 @@ const s = StyleSheet.create({
   // Un rombo chico, como una estrella lejana.
   datoPunto: { width: 5, height: 5, marginTop: 8.5, marginLeft: 2, backgroundColor: colores.oroClaro, transform: [{ rotate: '45deg' }], shadowColor: colores.oroClaro, shadowOpacity: 0.6, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
   datoTexto: { flex: 1, fontFamily: letras.textoLiviano, fontSize: 15, lineHeight: 21, color: 'rgba(239, 230, 207, 0.86)', ...SOMBRA },
-  menor: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   pie: { gap: 10, width: '100%', maxWidth: 340, alignSelf: 'center', paddingTop: 18 },
-  avance: { height: 2 },
-  avanceFila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: LADO_ATRAS - 4, marginTop: 12, marginBottom: 6 },
-  paso: { marginTop: 16, marginBottom: 10, fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.5)' },
-  pasoEnFila: { marginTop: 0, marginBottom: 0 },
-  // Como en la galería: corrida a la izquierda, para que la flecha quede alineada con el texto de abajo.
-  atras: {
-    width: LADO_ATRAS, height: LADO_ATRAS, marginVertical: -2, marginLeft: -6, marginRight: -2, borderRadius: LADO_ATRAS / 2, borderWidth: 1,
-    borderColor: 'rgba(239, 230, 207, 0.16)', backgroundColor: 'rgba(6, 10, 22, 0.45)', alignItems: 'center', justifyContent: 'center',
-  },
-  atrasApretado: { transform: [{ scale: 0.92 }], backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   centrado: { textAlign: 'center', alignSelf: 'center' },
   fija: { flex: 1 },
   frase: { position: 'absolute', left: 28, right: 28, top: 0, alignItems: 'center', justifyContent: 'center' },
@@ -1226,7 +913,6 @@ const s = StyleSheet.create({
   autor: { marginTop: 18, textAlign: 'center', fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 2.3, textTransform: 'uppercase', color: 'rgba(185, 227, 107, 0.75)' },
   lunaGrande: { width: 230, height: 230, alignItems: 'center', justifyContent: 'center' },
   lunaFija: { position: 'absolute' },
-  lunaResultado: { width: 196, height: 196, alignSelf: 'center', marginTop: 14 },
   marcaCaja: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   marca: { flexDirection: 'row' },
   marcaLetra: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 66, lineHeight: 72, color: colores.cifra, textShadowColor: 'rgba(232, 196, 106, 0.45)', textShadowRadius: 22, textShadowOffset: { width: 0, height: 0 } },
@@ -1239,25 +925,6 @@ const s = StyleSheet.create({
   error: { marginTop: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: '#f0a58a', textAlign: 'center' },
   iconosDeSalud: { marginTop: 38, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   iconoDeSalud: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.25)', alignItems: 'center', justifyContent: 'center' },
-  numero: { marginTop: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14 },
-  numeroCentro: { flexShrink: 1, flexDirection: 'row', alignItems: 'baseline', gap: 8, minWidth: 170, justifyContent: 'center' },
-  numeroValor: { flexShrink: 1, fontFamily: letras.numeroLiviano, fontSize: 68, lineHeight: 74, letterSpacing: -1.2, color: colores.cifra, fontVariant: ['tabular-nums'] },
-  numeroUnidad: { fontFamily: letras.texto, fontSize: 16, color: 'rgba(239, 230, 207, 0.6)' },
-  fino: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
-  chipFila: { marginTop: 10, flexDirection: 'row', justifyContent: 'center' },
-  deSalud: { overflow: 'hidden', paddingVertical: 5, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.4)', fontFamily: letras.texto, fontSize: 11, color: colores.salvia },
-  opciones: { marginTop: 22, gap: 10 },
-  dos: { flexDirection: 'row' },
-  tres: { marginTop: 0, flexDirection: 'row', gap: 6 },
-  ritmo: { marginTop: 20 },
-  kcal: { marginTop: 2, alignItems: 'center' },
-  kcalNumero: { fontFamily: letras.numeroLiviano, fontSize: 44, lineHeight: 48, letterSpacing: -0.8, color: colores.cifra, fontVariant: ['tabular-nums'], ...SOMBRA },
-  kcalTexto: { fontFamily: letras.texto, fontSize: 10.5, letterSpacing: 1.9, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.6)' },
-  macros: { marginTop: 22, alignSelf: 'center', width: '100%', maxWidth: 300, gap: 8 },
-  macro: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  macroPunto: { width: 8, height: 8, borderRadius: 4 },
-  macroNombre: { flex: 1, fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.8)' },
-  macroGramos: { fontFamily: letras.numero, fontSize: 14, color: colores.pergamino, fontVariant: ['tabular-nums'] },
   saltar: { position: 'absolute', right: 18, padding: 6 },
   saltarTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.62)' },
   constelacion: { position: 'absolute', left: 26, width: 92, height: 22 },

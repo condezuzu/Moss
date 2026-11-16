@@ -464,6 +464,29 @@ en `spec/estudio/momentos.md`: la melatonina sube unas 2 horas antes de la hora 
 (DLMO), y escribir lo pendiente antes de acostarse acortó el tiempo en dormirse en un ensayo chico
 (Scullin, 2018); se revisa antes de escribir los textos.
 
+**Dónde quedó (16/11, para aprobar en la galería; todavía no se programa en el teléfono):**
+
+- **La regla** está en `src/dominio/sigueElDespertar.ts`, con sus tests, y entra en `avisosDelDia` como lo que
+  conviene (`avisosQueSiguenElDespertar`). Se prende con `Sueno.despertarReal` (el despertar de verdad de cada día, o
+  null mientras no se sabe): sin él, todo sigue como antes.
+- **La mañana:** sin despertar, no suena pesarse, ni el desayuno, ni lo de un hábito «al despertar». Con él: la deuda
+  a esa hora («Tu deuda de sueño bajó a 1 h 30 min», a la media hora como en Sueño; subió, sigue, bajó a cero o no
+  hay), pesarse 20 minutos después (10 sin la deuda) y «¿Desayunas hoy?» 20 minutos después o a la hora del
+  desayuno, con «Sí» y «Voy directo al almuerzo». La pregunta reemplaza la hora del desayuno y su «falta anotar».
+- **Sin desayuno** (lo contestaste, o lo primero que anotaste es otra comida): cada comida que queda dice cuánto le
+  toca de lo que falta del día, con el reparto del plan (`REPARTO`): «Hora del almuerzo: unas 1050 kcal. Lo que no
+  comiste en el desayuno va al almuerzo, a la merienda y a la cena.» Lo anotado corre las demás (`horasCorridas`).
+  Con los números ocultos o sin meta, sin kcal.
+- **La noche:** la cama sale de mañana, la necesidad y la deuda, como siempre, y despertarte más tarde corre la mitad
+  la hora de siempre de dormirte (D8 de [`estudio/momentos.md`](estudio/momentos.md)). La melatonina, 2 h antes de
+  dormirte; las luces, hora y media antes de la cama; las revoluciones, una hora antes; la cama, como siempre. Las
+  gafas (2 h antes) y anotar lo pendiente (al acostarte), apagados. La evidencia, en la sección 10 de ese estudio.
+- **De fábrica** (`deFabrica`): la deuda, el horario (desayuno, almuerzo y cena), la melatonina, las revoluciones,
+  las luces y la cama, con un máximo de 10 (D9); pesarse, como lo elegiste.
+- **Para programarlo:** `programar.ts` tiene que pasar `despertarReal` (las anclas y la tarea de segundo plano), la
+  deuda de ayer, la respuesta del desayuno (los botones del aviso: una categoría de `expo-notifications` con dos
+  acciones) y la meta con lo comido; `leerAvisos`, los interruptores nuevos; y Perfil, los dos grupos.
+
 ## Lo que queda
 
 - Los avisos de después de entrenar (con Ascent) andan en la regla, pero la

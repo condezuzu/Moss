@@ -35,7 +35,11 @@ que hay en este commit **no está probado** (ni tipos ni tests). Hay que retomar
 Después: probar todo en la web contra la galería, `npm test`, typecheck, lint, export, la huella, la OTA a
 `production`, y juntar `visual-ota` con `mejoras-1.1` (para que la 1.1 también lo tenga).
 
-## Tanda 2 (sin empezar)
+## Tanda 2 (publicada el 16/11, salvo los avisos)
+
+En la app: el cuestionario nuevo con Cuidados y «Tus respuestas» (lo nuevo se guarda en el teléfono: ajustes `respuestas` y `cuidados`), Perfil (la tarjeta, Aparatos con «Conectar directo», Cuidados, «En qué se basa Moss») y la foto de la comida. Los avisos que siguen tu despertar: la regla está (`sigueElDespertar.ts`, 18 tests) y la propuesta en la galería (escenario `dia`), pero la app no le pasa el despertar real: se conecta en `src/recordatorios/programar.ts` cuando lo apruebes, con D8 a D10 de `spec/estudio/momentos.md`. Afuera: la pantalla de pago, Polar («Pronto»: no hay conexión detrás), la última foto del carrete en «Tus fotos» (pide `expo-media-library`) y los pasos de Salud para cuánto te mueves.
+
+Lo que se planeó:
 
 Primero, **el día que sigue tu despertar** (spec/avisos.md: lo pediste el 16/11, después de que «pesarte» sonara antes de que te despertaras). Después:
 

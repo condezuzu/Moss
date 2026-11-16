@@ -52,7 +52,7 @@ SDK y la memoria no alcanza.
   - `src/comida/buscar.ts`, `porciones.ts` y `etiqueta.ts`, que no importan nada, `recetaDeTexto.ts`, que usa `porciones.ts`, y `frase.ts`, que usa los dos;
   - de `src/dominio`: `comidas.ts`, `fechas.ts`, `metas.ts`, `micronutrientes.ts`, `dejaElDia.ts`, `control.ts`,
     `cuerpo.ts`, `progreso.ts`, `sueno.ts`, `sinReloj.ts`, `entrenamiento.ts`, `cuestionario.ts`, `cuidados.ts`, `alrededorDelEntreno.ts`,
-    `musculos.ts`, `rendimiento.ts`, `fatiga.ts`, `recuperado.ts`, `estancados.ts`, `estadisticas.ts`, `senalDeAscent.ts`, `diagnostico.ts`, `paraHoy.ts`, `segunElDeporte.ts`, `energia.ts`, `rangoDeAscent.ts`, `plan.ts` y `premium.ts`, que solo importan entre ellos (también `avisos.ts`, `loQueFalta.ts` y `loQueConviene.ts`, con `luz.ts`, `dias.ts`, `habitos.ts` y `recordatorios.ts`, que usan)
+    `musculos.ts`, `rendimiento.ts`, `fatiga.ts`, `recuperado.ts`, `estancados.ts`, `estadisticas.ts`, `senalDeAscent.ts`, `diagnostico.ts`, `paraHoy.ts`, `segunElDeporte.ts`, `energia.ts`, `rangoDeAscent.ts`, `plan.ts`, `premium.ts` y `sigueElDespertar.ts`, que solo importan entre ellos (también `avisos.ts`, `loQueFalta.ts` y `loQueConviene.ts`, con `luz.ts`, `dias.ts`, `habitos.ts` y `recordatorios.ts`, que usan)
     (`DEL_DOMINIO` en `construir.mjs`).
 - **Worklets**: el plugin captura lo que usa cada worklet al definirlo. Lo que
   usa una función tiene que estar definido antes que ella. Por eso `paso()` va

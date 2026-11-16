@@ -27,7 +27,8 @@ import { conUnaUnidad } from '@/comida/porciones';
 import { buscarEnOff, type Producto } from '@/comida/off';
 import { ACEITE_POR_100G } from '@/dominio/cantidades';
 import { COMIDAS, type Comida } from '@/dominio/comidas';
-import { sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { sinAnotar } from '@/dominio/fotos';
 import { edadDe, type Macros } from '@/dominio/metas';
 import type { ParaQuien } from '@/dominio/micronutrientes';
 import { SITIO } from '@/lib/sitio';
@@ -48,8 +49,9 @@ import { AvisoFlotante, Boton, Etiqueta, Icono, Pastilla, type Aviso } from './c
 import { PanelDecir } from './Decir';
 import { lineasDeHoy } from './entreno';
 import { LineaDeEntreno } from './LineaDeEntreno';
-import { cantidadDeTexto, comidaDeAhora, metaDelDia, momentoDe, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado, useNumeros } from './datos';
+import { cantidadDeTexto, comidaDeAhora, horasDeComer, metaDelDia, momentoDe, numero, opcionesDeIdioma, region, sistemaDe, totalDe, useEstado, useNumeros } from './datos';
 import { Escaner } from './Escaner';
+import { anotarFoto, desanotarFoto, fotoPorId, guardarFoto, quitarFoto, reemplazarFoto, useFotos } from './fotos';
 import { etiquetaDelDia, porcionDePropio, tuComidaDe, type Guardada } from './hoja';
 import {
   heredarClave, MedirPie, PanelCrear, PanelGuardadas, PanelGuardarComo, PanelPegarReceta, PanelRapida, PanelReceta, PanelRevision, recetaDe, resumenDeCanasta, SinGuardar,
@@ -57,6 +59,7 @@ import {
 } from './Paneles';
 import { avisar, cerrarRegistro, useRegistro, type Panel, type Pedido } from './registro';
 import { origenDe, Ventana, type AlimentoAbierto, type ModoDeVentana } from './Ventana';
+import { Visor, type Rect } from './Visor';
 
 type VentanaAbierta = { alimento: AlimentoAbierto; inicial?: Cantidad; estimado?: boolean; modo: ModoDeVentana };
 type EstadoDelEscaner = { modo: 'codigo' | 'etiqueta'; mensaje: string | null; ocupado: boolean; codigo?: string; parcial?: Producto | null };
@@ -222,6 +225,88 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
     setDecirCon(con);
     setPanel('decir');
   };
+
+  // La foto de la comida (spec/nutricion.md, «La foto de la comida»): un camino más, que no le suma un toque
+  // a ningún otro. La cámara abre el visor; al disparar, «¿Qué es?» con la miniatura arriba, ya escuchando.
+  // Lo dicho se anota con la foto; cerrar sin anotar la deja en el día, sin anotar.
+  const fotos = useFotos();
+  const [fotoId, setFotoId] = useState<string | null>(pedido.foto?.anotar ?? pedido.foto?.reemplazar ?? null);
+  const fotoEnCurso = fotoId ? (fotos.find((f) => f.id === fotoId) ?? null) : null;
+  const [reemplazar, setReemplazar] = useState(!!pedido.foto?.reemplazar);
+  const [desde, setDesde] = useState<Rect | null>(null);
+  // El visor queda debajo de «¿Qué es?» mientras entra encima: así no se ve la lista entre uno y otro.
+  const [visorDetras, setVisorDetras] = useState(false);
+  useEffect(() => {
+    if (!visorDetras) return;
+    const espera = setTimeout(() => setVisorDetras(false), 400);
+    return () => clearTimeout(espera);
+  }, [visorDetras]);
+  // La que se sacó en esta hoja: si se cierra sin anotarla, lo dice, con «Deshacer».
+  const recienSacada = useRef<string | null>(null);
+  const abrirVisor = (paraReemplazar: boolean) => {
+    Keyboard.dismiss();
+    setReemplazar(paraReemplazar);
+    setPanel('foto');
+  };
+  const aQueEs = (id: string, rect: Rect | null) => {
+    setFotoId(id);
+    setDesde(rect);
+    setDecirCon({ escuchar: true });
+    setVisorDetras(true);
+    setPanel('decir');
+  };
+  const alSacar = async (uri: string, rect: Rect | null) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    const paraComida = pedido.foto?.paraComida;
+    if (paraComida) {
+      const f = await guardarFoto(uri, { dia, minutos: paraComida.minutos, comida: paraComida.comida, registros: null });
+      cerrar();
+      setTimeout(() => avisar(t('comida.fotoDiario.agregada', { comida: t(`comida.aLa.${paraComida.comida}`) }), () => quitarFoto(f.id)), 380);
+      return;
+    }
+    if (reemplazar && fotoId) {
+      await reemplazarFoto(fotoId, uri);
+      const f = fotoPorId(fotoId);
+      if (f && !sinAnotar(f)) cerrar();
+      else aQueEs(fotoId, rect);
+      return;
+    }
+    // Ahora o, en la hoja de otro día, a la hora de esa comida.
+    const minutos = dia === e.hoy ? minutosEnElDia(new Date(), dia) : horasDeComer(e)(comida);
+    const f = await guardarFoto(uri, { dia, minutos, comida: null, registros: null });
+    recienSacada.current = f.id;
+    aQueEs(f.id, rect);
+  };
+  const borrarLaFoto = () => {
+    if (!fotoId) return;
+    recienSacada.current = null;
+    const devolver = quitarFoto(fotoId);
+    cerrar();
+    setTimeout(() => avisar(t('comida.fotoDiario.borrada'), devolver), 380);
+  };
+  /** Lo dicho, anotado con la foto: en su día y a la hora en que se sacó. Deshacer la devuelve a sin anotar. */
+  const anotarConFoto = (items: Item[], comidaDicha: Comida) => {
+    if (!fotoEnCurso) return;
+    const p = partesDe(fotoEnCurso.dia);
+    const momento = new Date(p.anio, p.mes, p.dia, 0, fotoEnCurso.minutos).toISOString();
+    const nuevos = a.registrar(items, { comida: comidaDicha, dia: fotoEnCurso.dia, momento });
+    anotarFoto(fotoEnCurso.id, comidaDicha, nuevos.map((r) => r.id));
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    const id = fotoEnCurso.id;
+    avisar(plural('comida.decir.anotado', nuevos.length, { comida: t(`comida.aLa.${comidaDicha}`) }), () => {
+      nuevos.forEach((r) => a.borrarRegistro(r.id));
+      desanotarFoto(id);
+    });
+    cerrar();
+  };
+  // Al irse la hoja (se desarma al cerrarse), por donde se cierre.
+  useEffect(() => () => {
+    const id = recienSacada.current;
+    const f = id ? fotoPorId(id) : null;
+    if (!f || !sinAnotar(f)) return;
+    setTimeout(() => avisar(t('comida.fotoDiario.quedo'), () => quitarFoto(f.id)), 380);
+  }, []);
+
   // Lo último que se sumó a la comida que se arma: la bandeja lo dice un momento, en lugar de un aviso.
   const [recienSumado, setRecienSumado] = useState<{ texto: string; vez: number } | null>(null);
   useEffect(() => {
@@ -777,6 +862,13 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
                   </Pressable>
                 </Animated.View>
               )}
+              {!eligiendo && (
+                <Animated.View entering={ENTRA_FUNDIDO} exiting={SALE_FUNDIDO}>
+                  <Pressable onPress={() => abrirVisor(false)} style={({ pressed }) => [estilos.icono, pressed && estilos.apretado]} accessibilityRole="button" accessibilityLabel={t('comida.fotoDiario.sacar')} hitSlop={margenDeToque(38)}>
+                    <Icono nombre="camera" tam={20} />
+                  </Pressable>
+                </Animated.View>
+              )}
             </LayoutAnimationConfig>
             <Pressable
               onPress={() => { Keyboard.dismiss(); setEscaner({ modo: 'codigo', mensaje: null, ocupado: false }); }}
@@ -1071,8 +1163,19 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               }}
             />
           )}
+          {(panel === 'foto' || (panel === 'decir' && visorDetras)) && (
+            <Visor
+              abajo={insets.bottom}
+              alSacar={(uri, rect) => {
+                alSacar(uri, rect).catch(() => {});
+              }}
+              // Desde la tarjeta o para sacar otra, volver es cerrar: la hoja se abrió para esto.
+              alAtras={() => (pedido.panel === 'foto' || reemplazar ? cerrar() : setPanel(null))}
+            />
+          )}
           {panel === 'decir' && (
             <PanelDecir
+              key={fotoEnCurso?.id ?? 'decir'}
               comida={comida}
               dia={dia}
               sistema={sistema}
@@ -1080,7 +1183,9 @@ function Hoja({ pedido, abierta }: { pedido: Pedido; abierta: boolean }) {
               textoInicial={decirCon.texto}
               abajo={insets.bottom}
               alAtras={() => (pedido.panel === 'decir' ? cerrar() : setPanel(null))}
+              foto={fotoEnCurso ? { f: fotoEnCurso, desde, alOtra: () => abrirVisor(true), alBorrar: borrarLaFoto, alDespues: cerrar } : undefined}
               alAgregar={(items, comidaDicha, ayer) => {
+                if (fotoEnCurso) return anotarConFoto(items, comidaDicha);
                 const elDia = ayer ? sumarDias(e.hoy, -1) : dia;
                 // Si se nombró otra comida, va a su hora: «el desayuno comí…», dicho a la tarde.
                 const nuevos = a.registrar(items, { comida: comidaDicha, dia: elDia, momento: momentoDe(e, elDia, comidaDicha) });

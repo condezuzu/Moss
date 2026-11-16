@@ -1,8 +1,9 @@
 // Perfil, la última sección (antes Ajustes), la de la galería (galeria/src/perfil.js): arriba, la
-// persona (tu foto o tu inicial y tu nombre), que abre Editar perfil; tus datos (con «sin déficit»),
-// las preferencias (con ocultar los números), Salud, los aparatos y Ascent, y tus datos para llevar
-// o borrar, con la política de privacidad, los términos, el contacto y los créditos de lo que usa
-// Moss. Las metas están en Progreso, con la estrategia.
+// tarjeta de la persona (tu foto o tu inicial, tu nombre, la edad, la altura y el peso de hoy), que abre
+// Editar perfil; las conexiones (Salud, los aparatos y Ascent); tus datos (con Cuidados y Tus respuestas),
+// las preferencias (con ocultar los números) y tus datos para llevar o borrar, con la política de
+// privacidad, los términos y el contacto; los créditos, que se despliegan, y abajo de todo, en qué se basa
+// Moss. Cada fila con su cuadrito de color. Las metas están en Progreso, con la estrategia.
 
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
@@ -12,15 +13,15 @@ import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AlertButton } from 'react-native';
 import Animated, {
-  FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset, withTiming, type EntryExitAnimationFunction,
+  FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, withTiming, type EntryExitAnimationFunction,
 } from 'react-native-reanimated';
 
 import { actualizarSalud, elAlmacen, oirLaSesion } from '@/almacen';
-import type { Estado } from '@/almacen/almacen';
+import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
 import { abrirPagina, CORREO } from '@/lib/sitio';
 import type { Calidad } from '@/cielo/mundo';
-import { CM_POR_PULGADA } from '@/dominio/cantidades';
+import { CM_POR_PULGADA, KG_POR_LIBRA } from '@/dominio/cantidades';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import type { Comida } from '@/dominio/comidas';
 import { CORTE_DE_FABRICA, CORTES, type DiaSemana } from '@/dominio/fechas';
@@ -43,23 +44,28 @@ import { FranjaBajoLaHora } from '../franja';
 import { HojaModal } from '../HojaModal';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
 import { BotonDePaso } from '../paso';
+import { usePersona } from '../ganchos';
 import { aparatoPrincipal, Aparatos } from './Aparatos';
+import { EnQueSeBasa } from './Base';
+import { Cuadro, type ColorDeCuadro } from './Cuadro';
+import { Cuidados } from './Cuidados';
 import { useFilaDeAscent } from '../ascent/filaDePerfil';
 import { hayCompras, useEstadoDePremium } from '@/lib/premium';
 import { avisoAlBorrarLaCuenta, HojaDeSuscripcion, valorDeSuscripcion } from '../premium/Premium';
 import { ACOMODA, Aparece, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { borrarLaCuenta, borrarMisDatos, correoDeLaCuenta, correoSabido, exportarTodo, salirDeLaCuenta, type Espera } from './cuenta';
 import { borrarFotoDePerfil, elegirFotoDePerfil, fotoDePerfil, guardarFotoDePerfil, hayFotoDePerfil } from './foto';
-import { Avatar, Persona } from './Persona';
+import { Avatar, Tarjeta } from './Persona';
+import { TusRespuestas } from '../entrada/TusRespuestas';
 
 /**
- * Una fila; `detalle` dice debajo, chico, qué hace. Lo que cambia ahí mismo no lleva la flecha de entrar
- * (aprobado en la galería el 9/11/2026): `interruptor` muestra la llave, que mueve el toque de toda la fila,
- * y `flecha` en false deja solo el valor. `esperando`: la ruedita en vez del valor.
+ * Una fila, con su cuadrito; `detalle` dice debajo, chico, qué hace. Lo que cambia ahí mismo no lleva la
+ * flecha de entrar (aprobado en la galería el 9/11/2026): `interruptor` muestra la llave, que mueve el toque
+ * de toda la fila, y `flecha` en false deja solo el valor. `esperando`: la ruedita en vez del valor.
  */
 type Fila = {
-  clave: string; titulo: string; valor?: string; detalle?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion';
-  interruptor?: boolean; flecha?: boolean; esperando?: boolean;
+  clave: string; titulo: string; icono: SFSymbol; color: ColorDeCuadro; valor?: string; detalle?: string; alTocar?: () => void; tipo?: 'ok' | 'peligro' | 'accion';
+  interruptor?: boolean; flecha?: boolean; esperando?: boolean; punto?: boolean;
 };
 
 /** Mientras se borra o se sale: lo que está pasando y, al terminar lo de la cuenta, «Listo». */
@@ -113,19 +119,28 @@ function abrirSalud() {
 }
 
 const PERFIL = PESTANAS.indexOf('perfil');
+const PROGRESO = PESTANAS.indexOf('progreso');
+const FUENTES = ['usda', 'off', 'taco', 'ciqual', 'cofid', 'estrellas'] as const;
+/** «31 años» en el número y su unidad, para que la unidad vaya más chica. */
+const partir = (texto: string): [string, string] => {
+  const m = /^(\S+)\s+(.+)$/.exec(texto);
+  return m ? [m[1], m[2]] : [texto, ''];
+};
 
 /** «Edad» → «edad», para «Menos edad». */
 const minuscula = (texto: string) => texto.charAt(0).toLocaleLowerCase() + texto.slice(1);
 
-export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
+export function PaginaDePerfil({ ancho, arriba, abajo, alIr }: { ancho: number; arriba: number; abajo: number; alIr?: (seccion: number) => void }) {
   const e = useEstado();
+  const persona = usePersona();
   const ascent = useFilaDeAscent();
   const sistema = sistemaDe(e);
+  const [creditos, setCreditos] = useState(false);
   // undefined mientras no se sabe: Persona no dice «Sin cuenta» un instante antes del correo.
   const [correo, setCorreo] = useState<string | null | undefined>(correoSabido);
   const conCuenta = correo !== null && correo !== undefined;
   const [salud, setSalud] = useState(false);
-  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | 'suscripcion' | null>(null);
+  const [hoja, setHoja] = useState<'editar' | 'privacidad' | 'recordatorios' | 'calidad' | 'corte' | 'aparatos' | 'entreno' | 'suscripcion' | 'cuidados' | 'base' | 'respuestas' | null>(null);
   // Tu foto queda solo en el teléfono, fuera del almacén (foto.ts): se lee al armar Perfil.
   const [foto, setFoto] = useState(fotoDePerfil);
   const premium = useEstadoDePremium();
@@ -140,23 +155,18 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   // borrar y salir, después de la alerta de iOS, el velo hasta que termina.
   const [exportando, setExportando] = useState(false);
   const [espera, setEspera] = useState<EnEspera | null>(null);
-  const seVaSolo = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(seVaSolo.current), []);
+  // Con el teléfono vacío vuelve la entrada y el velo se va con Perfil; si no, se va solo después de «Listo».
+  const listo = !!espera?.listo;
+  useEffect(() => {
+    if (!listo) return;
+    const id = setTimeout(() => setEspera(null), VELO_COMO_MUCHO);
+    return () => clearTimeout(id);
+  }, [listo]);
   /** El velo de lo que borra o sale, con lo que dice mientras espera. */
   const velo = (texto: string): Espera => ({
-    empezar: () => {
-      clearTimeout(seVaSolo.current);
-      setEspera({ texto, listo: false });
-    },
-    listo: () => {
-      setEspera({ texto, listo: true });
-      // Con el teléfono vacío vuelve la entrada y el velo se va con Perfil.
-      seVaSolo.current = setTimeout(() => setEspera(null), VELO_COMO_MUCHO);
-    },
-    dejar: () => {
-      clearTimeout(seVaSolo.current);
-      setEspera(null);
-    },
+    empezar: () => setEspera({ texto, listo: false }),
+    listo: () => setEspera({ texto, listo: true }),
+    dejar: () => setEspera(null),
   });
   const exportar = () => {
     if (exportando) return;
@@ -194,7 +204,6 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   }, []);
 
   const p = e.perfil;
-  const altura = (cm: number) => (sistema === 'imperial' ? piesYPulgadas(cm) : `${numero(cm)} cm`);
   // false es un error; null, que se canceló (la hoja de Apple al borrar la cuenta) o que ya estaba en camino: no se dice nada.
   // Mientras borra, el velo con «Borrando…»; con lo de la cuenta borrado, «Listo», y vuelve la entrada.
   const confirmar = (titulo: string, texto: string, accion: (alListo: () => void) => Promise<boolean | null>, otros: AlertButton[] = []) =>
@@ -216,16 +225,33 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         },
       },
     ]);
-  // Cuidados cambia la meta desde hoy: el aviso dice cómo quedó y lo deja deshacer.
-  const cambiarCuidado = (antes: boolean) => {
-    elAlmacen().ponerEstrategia({ sinDeficit: !antes });
-    avisar(t('perfil.cuidadoCambiado', { valor: minuscula(t(antes ? 'perfil.ninguno' : 'perfil.sinDeficit')) }), () => elAlmacen().ponerEstrategia({ sinDeficit: antes }));
+  // Los cuidados marcados (solo en este iPhone); sin ninguno, el «sin déficit» de antes, si estaba.
+  const marcados = e.cuidados?.marcados.length ?? 0;
+  const reglas = reglasDeCuidados(e);
+  const filaDeCuidados: Fila = {
+    clave: 'cuidado', titulo: t('perfil.cuidado'), icono: 'checkmark.shield', color: 'rosa', alTocar: () => setHoja('cuidados'),
+    ...(marcados ? { valor: plural('cuidados.marcados', marcados), detalle: t('cuidados.perfilSub'), tipo: 'ok' as const }
+      : p?.sinDeficit ? { valor: t('perfil.sinDeficit'), detalle: t('perfil.sinDeficitTexto'), tipo: 'ok' as const }
+        : { valor: t('perfil.ninguno') }),
   };
+  // Lo importante de un vistazo: la edad y la altura abren Editar perfil; el peso de hoy (la tendencia), Progreso.
+  const kg = persona.pesoHoy;
+  const [edadValor, edadUnidad] = partir(p ? t('perfil.anios', { n: edadDe(p, e.hoy) }) : '—');
+  const minis = [
+    { clave: 'edad', etiqueta: t('perfil.edad'), valor: edadValor, unidad: edadUnidad, alTocar: () => setHoja('editar') },
+    sistema === 'imperial'
+      ? { clave: 'altura', etiqueta: t('perfil.altura'), valor: p ? piesYPulgadas(p.alturaCm) : '—', alTocar: () => setHoja('editar') }
+      : { clave: 'altura', etiqueta: t('perfil.altura'), valor: p ? numero(p.alturaCm) : '—', unidad: 'cm', alTocar: () => setHoja('editar') },
+    {
+      clave: 'peso', etiqueta: t('perfil.mini.peso'), alTocar: () => alIr?.(PROGRESO),
+      ...(kg === null ? { valor: '—' } : sistema === 'imperial' ? { valor: numero(kg / KG_POR_LIBRA), unidad: 'lb' } : { valor: numero(kg, 1), unidad: 'kg' }),
+    },
+  ];
 
-  const filaDeSuscripcion: Fila = { clave: 'suscripcion', titulo: t('suscripcion.titulo'), valor: valorDeSuscripcion(premium), alTocar: () => setHoja('suscripcion') };
+  const filaDeSuscripcion: Fila = { clave: 'suscripcion', titulo: t('suscripcion.titulo'), icono: 'star', color: 'oro', valor: valorDeSuscripcion(premium), alTocar: () => setHoja('suscripcion') };
   const conexiones: [string, Fila[]] = ['perfil.conexiones', [
     ...(haySalud() ? [{
-      clave: 'salud', titulo: t('perfil.salud'), valor: salud ? t('perfil.conectada') : t('perfil.conectar'), tipo: salud ? 'ok' as const : 'accion' as const,
+      clave: 'salud', titulo: t('perfil.salud'), icono: 'heart' as const, color: 'rosa' as const, valor: salud ? t('perfil.conectada') : t('perfil.conectar'), punto: salud, tipo: salud ? 'ok' as const : 'accion' as const,
       alTocar: () => {
         if (salud) {
           abrirSalud();
@@ -237,58 +263,56 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         }).catch(() => {});
       },
     }] : []),
-    { clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos') },
+    {
+      clave: 'aparatos', titulo: t('perfil.aparatos.titulo'), icono: e.salud?.aparatos.some((a) => a.noches > 0) ? 'applewatch' : 'iphone', color: 'azul',
+      valor: aparatoPrincipal(e.salud?.aparatos ?? []), alTocar: () => setHoja('aparatos'),
+    },
     // Vinculada: con quién, y desvincular. Sin vincular, lleva a la sección de Ascent.
-    ...(CON_ASCENT ? [ascent] : []),
+    ...(CON_ASCENT ? [{ ...ascent, icono: 'circle.circle' as const, color: 'ascent' as const }] : []),
   ]];
   const grupos: [string, Fila[]][] = [
-    // Con la vinculación, Conexiones va primero: que Ascent se encuentre (spec/ascent.md, «Que se encuentre»).
-    ...(CON_ASCENT ? [conexiones] : []),
+    // Arriba, para que se encuentren: de dónde llega todo y, cuando se prenda, Ascent.
+    conexiones,
+    // La edad y la altura están en la tarjeta de arriba.
     ['perfil.tusDatos', p ? [
-      { clave: 'sexo', titulo: t('perfil.sexo'), valor: t(`perfil.sexos.${p.sexo}`), alTocar: () => setHoja('editar') },
-      { clave: 'edad', titulo: t('perfil.edad'), valor: t('perfil.anios', { n: edadDe(p, e.hoy) }), alTocar: () => setHoja('editar') },
-      { clave: 'altura', titulo: t('perfil.altura'), valor: altura(p.alturaCm), alTocar: () => setHoja('editar') },
-      { clave: 'actividad', titulo: t('perfil.actividad'), valor: t(`perfil.actividades.${p.actividad}`), alTocar: () => setHoja('editar') },
-      // Sin déficit: embarazo, lactancia o una condición médica (no se guarda cuál). Cambia la meta desde hoy.
-      // Para qué comer antes y después de entrenar (Comida); con «sin déficit» no se ve.
-      ...(p.sinDeficit ? [] : [{ clave: 'entreno', titulo: t('entreno.perfil.titulo'), valor: resumenDeEntreno(e.entreno), alTocar: () => setHoja('entreno') }]),
-      // Se prende y apaga ahí mismo: una llave, con lo que hace siempre a la vista (una llave sola no lo dice).
-      {
-        clave: 'cuidado', titulo: t('perfil.cuidado'), detalle: t('perfil.sinDeficitTexto'), interruptor: !!p.sinDeficit,
-        alTocar: alternar(() => cambiarCuidado(!!p.sinDeficit)),
-      },
+      { clave: 'sexo', titulo: t('perfil.sexo'), icono: 'person', color: 'azul', valor: t(`perfil.sexos.${p.sexo}`), alTocar: () => setHoja('editar') },
+      { clave: 'actividad', titulo: t('perfil.actividad'), icono: 'figure.walk', color: 'salvia', valor: t(`perfil.actividades.${p.actividad}`), alTocar: () => setHoja('editar') },
+      // Para qué comer antes y después de entrenar (Comida); con «sin déficit» o lo que apaga un cuidado, no se ve.
+      ...(p.sinDeficit || reglas?.apagar.includes('antesDeEntrenar') ? [] : [{ clave: 'entreno', titulo: t('entreno.perfil.titulo'), icono: 'dumbbell' as const, color: 'oro' as const, valor: resumenDeEntreno(e.entreno), alTocar: () => setHoja('entreno') }]),
+      filaDeCuidados,
+      // El cuestionario del principio, para cambiarlo cuando quieras: la hoja es de la entrada.
+      ...([{ clave: 'respuestas', titulo: t('perfil.respuestas'), icono: 'target' as const, color: 'oro' as const, detalle: t('perfil.respuestasTexto'), alTocar: () => setHoja('respuestas') }]),
     ] : []],
     ...(hayCompras() ? [['suscripcion.perfil.titulo', [filaDeSuscripcion]] as [string, Fila[]]] : []),
     ['perfil.preferencias', [
       // Las unidades y los números cambian ahí mismo: con su valor y sin la flecha de entrar.
       {
-        clave: 'unidades', titulo: t('perfil.unidades'), valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), flecha: false,
+        clave: 'unidades', titulo: t('perfil.unidades'), icono: 'ruler', color: 'gris', valor: t(sistema === 'imperial' ? 'perfil.imperial' : 'perfil.metrico'), flecha: false,
         alTocar: alternar(() => elAlmacen().ponerSistema(sistema === 'imperial' ? 'metrico' : 'imperial')),
       },
       // El idioma es el del teléfono: iOS deja elegir otro solo para Moss, en sus Ajustes.
-      { clave: 'idioma', titulo: t('perfil.idioma'), valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
-      { clave: 'corte', titulo: t('perfil.corte'), valor: nombreDelCorte(e.corte), alTocar: () => setHoja('corte') },
-      { clave: 'calidad', titulo: t('perfil.calidad'), valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
-      { clave: 'recordatorios', titulo: t('perfil.recordatorios'), valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
+      { clave: 'idioma', titulo: t('perfil.idioma'), icono: 'globe', color: 'azul', valor: t('perfil.idiomaDelTelefono'), alTocar: () => { Linking.openSettings().catch(() => {}); } },
+      { clave: 'corte', titulo: t('perfil.corte'), icono: 'sunrise', color: 'oro', valor: nombreDelCorte(e.corte), alTocar: () => setHoja('corte') },
+      { clave: 'calidad', titulo: t('perfil.calidad'), icono: 'star', color: 'violeta', valor: t(`perfil.calidades.${e.calidad ?? 'automatica'}`), alTocar: () => setHoja('calidad') },
+      { clave: 'recordatorios', titulo: t('perfil.recordatorios'), icono: 'bell', color: 'rosa', valor: hayAvisos(e) ? t('perfil.encendidos') : t('perfil.apagados'), alTocar: () => setHoja('recordatorios') },
       {
-        clave: 'numeros', titulo: t('perfil.numeros'), valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), flecha: false,
+        clave: 'numeros', titulo: t('perfil.numeros'), icono: 'eye', color: 'gris', valor: t(e.numeros ? 'perfil.visibles' : 'perfil.ocultos'), detalle: t('perfil.numerosTexto'), flecha: false,
         alTocar: alternar(() => elAlmacen().ponerNumeros(!e.numeros)),
       },
     ]],
-    ...(CON_ASCENT ? [] : [conexiones]),
     ['perfil.tusDatosParaLlevar', [
-      { clave: 'exportar', titulo: t('perfil.exportar'), valor: 'CSV', esperando: exportando, alTocar: exportar },
-      { clave: 'privacidad', titulo: t('perfil.privacidad'), alTocar: () => setHoja('privacidad') },
+      { clave: 'exportar', titulo: t('perfil.exportar'), icono: 'square.and.arrow.up', color: 'azul', valor: 'CSV', esperando: exportando, alTocar: exportar },
+      { clave: 'privacidad', titulo: t('perfil.privacidad'), icono: 'lock', color: 'salvia', alTocar: () => setHoja('privacidad') },
       // Sin la cuenta, y solo si se elige (guía 5.1.1 de Apple): src/almacen/buzon.ts. Sí o no, con su llave.
       {
-        clave: 'mejorarBase', titulo: t('perfil.mejorarBase'), detalle: t('perfil.mejorarBaseTexto'), interruptor: e.mandarBusquedas,
+        clave: 'mejorarBase', titulo: t('perfil.mejorarBase'), icono: 'magnifyingglass', color: 'violeta', detalle: t('perfil.mejorarBaseTexto'), interruptor: e.mandarBusquedas,
         alTocar: alternar(() => elAlmacen().ponerMandarBusquedas(!e.mandarBusquedas)),
       },
-      { clave: 'politica', titulo: t('perfil.politica'), alTocar: () => abrirPagina('privacidad') },
-      { clave: 'terminos', titulo: t('perfil.terminos'), alTocar: () => abrirPagina('terminos') },
-      { clave: 'contacto', titulo: t('perfil.contacto'), alTocar: escribirnos },
-      { clave: 'borrarDatos', titulo: t('perfil.borrarDatos'), tipo: 'peligro', alTocar: () => confirmar(t('perfil.borrarDatosTitulo'), t('perfil.borrarDatosTexto'), borrarMisDatos) },
-      ...(conCuenta ? [{ clave: 'borrarCuenta', titulo: t('perfil.borrarCuenta'), tipo: 'peligro' as const, alTocar: () => {
+      { clave: 'politica', titulo: t('perfil.politica'), icono: 'doc.text', color: 'gris', alTocar: () => abrirPagina('privacidad') },
+      { clave: 'terminos', titulo: t('perfil.terminos'), icono: 'doc.text', color: 'gris', alTocar: () => abrirPagina('terminos') },
+      { clave: 'contacto', titulo: t('perfil.contacto'), icono: 'envelope', color: 'gris', alTocar: escribirnos },
+      { clave: 'borrarDatos', titulo: t('perfil.borrarDatos'), icono: 'trash', color: 'rosa', tipo: 'peligro', alTocar: () => confirmar(t('perfil.borrarDatosTitulo'), t('perfil.borrarDatosTexto'), borrarMisDatos) },
+      ...(conCuenta ? [{ clave: 'borrarCuenta', titulo: t('perfil.borrarCuenta'), icono: 'trash' as const, color: 'rosa' as const, tipo: 'peligro' as const, alTocar: () => {
         const aviso = avisoAlBorrarLaCuenta(ascent.tipo === 'ok' ? `${t('perfil.borrarCuentaTexto')} ${t('perfil.borrarCuentaConAscent')}` : t('perfil.borrarCuentaTexto'));
         confirmar(t('perfil.borrarCuentaTitulo'), aviso.texto, borrarLaCuenta, aviso.botones);
       } }] : []),
@@ -304,7 +328,7 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
         scrollsToTop={esLaActual}
         scrollEventThrottle={16}
       >
-        <Persona nombre={e.nombre?.valor ?? ''} correo={correo === undefined ? '' : correo} foto={foto} alTocar={() => setHoja('editar')} />
+        <Tarjeta nombre={e.nombre?.valor ?? ''} correo={correo === undefined ? '' : correo} foto={foto} alTocar={() => setHoja('editar')} minis={minis} />
         {/* Al armar Perfil todo está en su lugar (y al irse, se va entero); en el medio, lo que aparece (la fila
             de borrar la cuenta cuando llega el correo, un detalle) entra con un fundido y lo de abajo se acomoda. */}
         <LayoutAnimationConfig skipEntering skipExiting>
@@ -313,20 +337,33 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
               <Text style={st.grupo}>{t(titulo as 'perfil.tusDatos')}</Text>
               <Animated.View layout={ACOMODA} style={st.lista}>
                 {filas.map((f, i) => (
-                  <Aparece key={f.clave} style={i > 0 && st.filaSeparada}>
-                    <FilaDePerfil f={f} />
+                  <Aparece key={f.clave}>
+                    <FilaDePerfil f={f} separada={i > 0} />
                   </Aparece>
                 ))}
               </Animated.View>
             </Aparece>
           ))}
+          {/* De dónde salen los alimentos y las estrellas, con su licencia: se despliega. */}
           <Animated.View layout={ACOMODA}>
             <Text style={st.grupo}>{t('perfil.creditos')}</Text>
-            <View style={st.lista}>
-              {(['usda', 'off', 'taco', 'ciqual', 'cofid', 'estrellas'] as const).map((f, i) => (
-                <Text key={f} style={[st.credito, i > 0 && st.filaSeparada]}>{t(`perfil.fuentes.${f}`)}</Text>
-              ))}
-            </View>
+            <Animated.View layout={ACOMODA} style={st.lista}>
+              <Pressable
+                onPress={() => setCreditos((x) => !x)}
+                style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: creditos }}
+              >
+                <Cuadro icono="info.circle" color="gris" />
+                <Text style={[st.filaTitulo, st.filaTextos]}>{t('perfil.mini.fuentes')}</Text>
+                <Flecha abierta={creditos} />
+              </Pressable>
+              {creditos && (
+                <Aparece style={st.creditos}>
+                  {FUENTES.map((f) => <Text key={f} style={st.credito}>{t(`perfil.fuentes.${f}`)}</Text>)}
+                </Aparece>
+              )}
+            </Animated.View>
           </Animated.View>
           {/* Al final, lo que anda solo si vinculas Ascent: información, no una función de Perfil. */}
           {CON_ASCENT && (
@@ -346,6 +383,13 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
               </View>
             </Animated.View>
           )}
+          {/* Abajo de todo, en qué se basa Moss: de dónde sale cada número y cómo se ordena lo que llega. */}
+          <Animated.View layout={ACOMODA}>
+            <Text style={st.grupo}>{t('perfil.baseGrupo')}</Text>
+            <View style={st.lista}>
+              <FilaDePerfil f={{ clave: 'base', titulo: t('perfil.base'), icono: 'info.circle', color: 'gris', detalle: t('perfil.baseSub'), alTocar: () => setHoja('base') }} />
+            </View>
+          </Animated.View>
           {conCuenta && (
             <Aparece>
             <Boton
@@ -383,6 +427,18 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
       {hoja === 'entreno' && <CuandoEntrenas e={e} alCerrar={() => setHoja(null)} />}
       {hoja === 'aparatos' && <Aparatos alCerrar={() => setHoja(null)} />}
       {hoja === 'suscripcion' && <HojaDeSuscripcion alCerrar={() => setHoja(null)} />}
+      {hoja === 'cuidados' && (
+        <Cuidados
+          e={e}
+          alCerrar={() => setHoja(null)}
+          alPonerAMano={() => {
+            setHoja(null);
+            alIr?.(PROGRESO);
+          }}
+        />
+      )}
+      {hoja === 'base' && <EnQueSeBasa alCerrar={() => setHoja(null)} />}
+      <TusRespuestas visible={hoja === 'respuestas'} alCerrar={() => setHoja(null)} />
       {hoja === 'privacidad' && (
         <HojaModal abierta titulo={t('perfil.privacidad')} alCerrar={() => setHoja(null)}>
           {lista('perfil.privacidadTexto').map((parrafo, i) => {
@@ -395,17 +451,32 @@ export function PaginaDePerfil({ ancho, arriba, abajo }: { ancho: number; arriba
   );
 }
 
-/** Una fila de Perfil: lo que es, debajo qué hace si hace falta, y su llave, su valor o la ruedita, y la flecha si abre algo. */
-function FilaDePerfil({ f }: { f: Fila }) {
+/** La flecha de lo que se despliega: gira al abrirse. */
+function Flecha({ abierta }: { abierta: boolean }) {
+  const giro = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '90deg' : '0deg', { duration: 260 }) }] }), [abierta]);
+  return (
+    <Animated.View style={giro}>
+      <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" />
+    </Animated.View>
+  );
+}
+
+/**
+ * Una fila de Perfil: su cuadrito, lo que es, debajo qué hace si hace falta, y su llave, su valor o la ruedita,
+ * y la flecha si abre algo. `separada`: la línea de arriba, que empieza después del cuadrito.
+ */
+function FilaDePerfil({ f, separada }: { f: Fila; separada?: boolean }) {
   const llave = f.interruptor !== undefined;
   return (
     <Pressable
       onPress={f.alTocar}
       disabled={!f.alTocar}
-      style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [st.fila, pressed && { backgroundColor: 'rgba(239, 230, 207, 0.05)' }]}
       accessibilityRole={llave ? 'switch' : f.alTocar ? 'button' : 'text'}
       accessibilityState={llave ? { checked: f.interruptor } : f.esperando ? { busy: true } : undefined}
     >
+      {separada && <View style={st.linea} />}
+      <Cuadro icono={f.icono} color={f.color} />
       <View style={st.filaTextos}>
         <Text style={[st.filaTitulo, f.tipo === 'peligro' && st.peligro]}>{f.titulo}</Text>
         {f.detalle ? <Aparece><Text style={st.filaDetalle}>{f.detalle}</Text></Aparece> : null}
@@ -427,7 +498,7 @@ function FilaDePerfil({ f }: { f: Fila }) {
           style={[st.filaValor, f.tipo === 'ok' && { color: colores.salvia }, f.tipo === 'accion' && { color: colores.oroClaro }]}
           numberOfLines={1}
         >
-          {f.valor}
+          {f.punto ? '● ' : ''}{f.valor}
         </Animated.Text>
       ) : null}
       {f.alTocar && f.tipo !== 'peligro' && !llave && f.flecha !== false ? <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" /> : null}
@@ -1016,9 +1087,11 @@ const st = StyleSheet.create({
   },
   grupo: { marginTop: 26, marginBottom: 8, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   lista: { borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(8, 12, 26, 0.72)' },
-  fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 16 },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: 11, minHeight: 52, paddingLeft: 13, paddingRight: 12 },
   filaSeparada: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
-  filaTextos: { flex: 1, paddingVertical: 12 },
+  linea: { position: 'absolute', top: 0, left: 54, right: 0, height: 1, backgroundColor: 'rgba(239, 230, 207, 0.07)' },
+  filaTextos: { flex: 1, paddingVertical: 10 },
+  creditos: { gap: 8, paddingLeft: 16, paddingRight: 14, paddingBottom: 14 },
   filaTitulo: { fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaDetalle: { marginTop: 4, fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.5)' },
   // Con el texto grande, el valor se corta antes que dejar al título sin lugar.
@@ -1031,7 +1104,7 @@ const st = StyleSheet.create({
   funcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   funcionTitulo: { fontFamily: letras.texto, fontSize: 14.5, color: colores.pergamino },
   funcionTexto: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: 'rgba(239, 230, 207, 0.55)' },
-  credito: { paddingVertical: 12, paddingHorizontal: 16, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.65)' },
+  credito: { fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.65)' },
   salir: { marginTop: 26 },
   version: { marginTop: 18, textAlign: 'center', fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.4)' },
   llave: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 6 },
