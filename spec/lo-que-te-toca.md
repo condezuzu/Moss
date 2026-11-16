@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 48): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 49): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -39,6 +39,11 @@ Hecho:
   1320×2868) en los dos productos (`revision-11.cjs`). Los productos siguen en *Missing Metadata* al 14/11 aunque
   tienen textos, precios, prueba, países y captura: o Apple recalcula más tarde o espera el Paid Apps Agreement.
   Mirá qué dice la página de cada producto.
+
+- Lo visual de la galería, por aire a la build 6 (16/11, rama `visual-ota`, juntada con `mejoras-1.1`): Inicio, Progreso,
+  Sueño, el «+», el cuestionario con Cuidados y «Tus respuestas», Perfil, la foto de la comida y los avisos que siguen
+  tu despertar (aprobados en la galería 49). Detalle y lo que quedó afuera en spec/ota-visual.md. Lo que vaya por aire a la
+  build 6 sale de `visual-ota`; la build 7 (1.1) no lo tiene adentro: le llega por OTA de `mejoras-1.1` cuando salga.
 
 Falta (vos):
 1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
