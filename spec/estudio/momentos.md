@@ -232,18 +232,20 @@ Leí cuatro páginas de Rise (al final, en «Fuentes»); su centro de ayuda dio 
   la expone.
 - **D7. Los nuevos** (sección 6): cuáles entran y si van como avisos de «Lo que conviene» o como hábitos de los
   primeros.
-- **D8. Cuánto corre la noche un despertar tarde** (sección 10). Hoy, la mitad: despertarte 2 h 30 min más tarde
+- **D8. Cuánto corre la noche un despertar tarde** (sección 10). **Aprobado el 16/11, con la galería 49: la
+  mitad.** Hoy, la mitad: despertarte 2 h 30 min más tarde
   corre 75 minutos la hora de siempre de dormirte, que pone el límite de cuánto se adelanta la cama
   (`CORRE_CON_EL_DESPERTAR`, en `avisos.ts`). Es una convención: el reloj del cuerpo sigue al despertar
   habitual (Burgess y Eastman 2005), pero no encontré cuánto lo corre una sola mañana. Opciones: la mitad
   (recomendado), nada (la cama de siempre, aunque cueste dormirse) o todo (la cama se corre lo mismo que el
   despertar, y la noche de mañana queda corta).
-- **D9. El máximo con el día que sigue tu despertar.** Con todo lo de fábrica y merienda, un día tiene diez
+- **D9. El máximo con el día que sigue tu despertar.** **Aprobado el 16/11: 10 de fábrica, con 10 entre las
+  opciones.** Con todo lo de fábrica y merienda, un día tiene diez
   avisos: la deuda, pesarse, el desayuno, cuatro comidas, la melatonina, las revoluciones, las luces y la cama.
   Con 6 se pierden lo de la noche y las comidas. Hoy, 10 de fábrica (`MAXIMO_QUE_SIGUE_EL_DESPERTAR`), con 10
   sumado a las opciones. Choca con lo que se sabe de cuántos avisos (sección 3: más avisos, más malestar; Pielot
   2014): la otra opción es dejar 6 y que lo de la noche se junte en un solo aviso.
-- **D10. Las gafas para la luz azul.** La sección 7 dice que Moss no nombra productos; lo pediste el 16/11 como
+- **D10. Las gafas para la luz azul.** **Aprobado el 16/11: apagadas de fábrica y sin marca.** La sección 7 dice que Moss no nombra productos; lo pediste el 16/11 como
   aviso apagado de fábrica («no todos las tienen»). Quedó así, sin marca y diciendo que la evidencia es poca
   (sección 10). Se puede sacar.
 

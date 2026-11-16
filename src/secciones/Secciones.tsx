@@ -238,11 +238,18 @@ export default function Secciones() {
       almacenListo().then(() => guardarSenales([{ id, que: 'meVoyADormir', en }])).then(() => avisar(t('recordatorios.buenasNoches'))).catch(() => {});
       return;
     }
+    // «¿Desayunas hoy?»: la respuesta corre el día (sigueElDespertar.ts). «Voy directo al almuerzo» no abre nada.
+    if (a.desayuno) {
+      const { desayuno } = a;
+      almacenListo().then(() => elAlmacen().ponerDesayuno(a.dia ?? elAlmacen().estado().hoy, desayuno)).catch(() => {});
+      if (desayuno === 'directo') return;
+    }
     const sueno = PESTANAS.indexOf('sueno');
     switch (a.tipo) {
       // La comida de su día: un aviso de la cena tocado después de medianoche anota la cena de ayer.
       case 'horario':
       case 'comida':
+      case 'desayuno':
       case 'antesDeEntrenar':
       case 'despuesDeEntrenar':
       case 'ultimaComida':
@@ -270,6 +277,11 @@ export default function Secciones() {
       case 'luces':
       case 'entrenarTarde':
       case 'recuperacion':
+      case 'deuda':
+      case 'melatonina':
+      case 'revoluciones':
+      case 'gafas':
+      case 'descarga':
         cerrarCapas(false);
         ir(sueno, false);
         return;

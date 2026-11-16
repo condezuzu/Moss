@@ -32,7 +32,11 @@ import type { LoDeSalud } from '@/salud/convertir';
 import { NECESIDADES, type Cara, type NochePropia } from '@/dominio/sueno';
 import { LATENCIAS } from '@/dominio/sinReloj';
 import type { AvisoDeHabito, Avisos } from '@/dominio/avisos';
+import { RESPUESTAS_DEL_DESAYUNO, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
 import { DE_COMIDA, NOMBRE, nombreDeAjuste, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
+
+/** A qué hora te despertaste y cuándo lo supo Moss, en minutos desde la medianoche de ese día. */
+export type Despertar = { despertar: number; sabido: number };
 
 /** Los avisos que se eligen; los de comida van aparte, en `recordatorios`. */
 export type AjustesDeAvisos = Omit<Avisos, 'comidas'>;
@@ -77,6 +81,12 @@ export type Estado = MapasDeComida & {
    * más exacto para saber que estabas despierto (spec/sueno.md, «Sin reloj»). Queda en el teléfono.
    */
   uso: [number, number][];
+  /**
+   * El día que sigue tu despertar (spec/avisos.md): a qué hora te despertaste de verdad cada día y cuándo lo supo Moss,
+   * en minutos desde la medianoche, y qué contestaste a «¿Desayunas hoy?». Las últimas dos semanas; quedan en el teléfono.
+   */
+  despertares: Partial<Record<ClaveDia, Despertar>>;
+  desayunos: Partial<Record<ClaveDia, RespuestaDelDesayuno>>;
   /** De cuál aparato sale la noche (su id en Salud), si se eligió en Perfil › Aparatos; sin elegir, la automática. Queda en el teléfono. */
   fuenteDelSueno: string | null;
   /** Los números de la comida (las calorías y los gramos), o solo las figuras y las barras. Queda en el teléfono. */
@@ -154,6 +164,10 @@ const AVISOS = 'avisos';
 const CALIDAD = 'calidad';
 const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
+const DESPERTARES = 'despertares';
+const DESAYUNOS = 'desayunos';
+/** Cuántos días de despertares y de respuestas del desayuno se guardan. */
+const DIAS_DEL_DESPERTAR = 14;
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 const NUMEROS = 'numeros';
 const KCAL = 'kcal';
@@ -217,12 +231,13 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     if (typeof x.maximoPorDia === 'number' && x.maximoPorDia >= 0) avisos.maximoPorDia = x.maximoPorDia;
     if (x.horario && typeof x.horario === 'object') {
       const horario = Object.fromEntries(Object.entries(x.horario as Record<string, unknown>).filter(([c, m]) => c in HORA_TIPICA && typeof m === 'number' && m >= 0 && m < 1440));
-      if (Object.keys(horario).length) avisos.horario = horario as AjustesDeAvisos['horario'];
+      // Vacío también: es el horario apagado, que así no vuelve al de fábrica (deFabrica, en sigueElDespertar.ts).
+      avisos.horario = horario as AjustesDeAvisos['horario'];
     }
     const pesarse = x.pesarse as AjustesDeAvisos['pesarse'];
     if (pesarse && typeof pesarse.encendido === 'boolean') avisos.pesarse = { encendido: pesarse.encendido, ...(pesarse.todos ? { todos: true } : {}) };
     // Los interruptores sueltos: lo que falta y los de lo que conviene hacer. Sin leerlos, apagarlos no duraba.
-    for (const clave of ['falta', 'antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion', 'partido', 'carrera'] as const) {
+    for (const clave of ['falta', 'antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion', 'partido', 'carrera', 'deuda', 'melatonina', 'revoluciones', 'descarga', 'gafas'] as const) {
       const v = x[clave] as { encendido?: unknown } | undefined;
       if (v && typeof v.encendido === 'boolean') avisos[clave] = { encendido: v.encendido };
     }
@@ -288,6 +303,23 @@ function leerUso(texto: string | undefined): [number, number][] {
   }
 }
 
+/** Lo guardado por día, si tiene forma: solo claves de día con un valor que se entiende. */
+function porDia<T>(texto: string | undefined, vale: (x: unknown) => x is T): Partial<Record<ClaveDia, T>> {
+  try {
+    const x: unknown = texto ? JSON.parse(texto) : {};
+    if (!x || typeof x !== 'object') return {};
+    return Object.fromEntries(Object.entries(x).filter(([d, v]) => /^\d{4}-\d{2}-\d{2}$/.test(d) && vale(v)));
+  } catch {
+    return {};
+  }
+}
+const esMinuto = (x: unknown): x is number => typeof x === 'number' && x >= 0 && x < 1440;
+const esDespertar = (x: unknown): x is Despertar => !!x && typeof x === 'object' && esMinuto((x as Despertar).despertar) && Number.isFinite((x as Despertar).sabido);
+const esRespuesta = (x: unknown): x is RespuestaDelDesayuno => (RESPUESTAS_DEL_DESAYUNO as readonly unknown[]).includes(x);
+/** Lo de las últimas dos semanas hasta hoy. */
+const recientes = <T,>(x: Partial<Record<ClaveDia, T>>, dia: ClaveDia) =>
+  Object.fromEntries(Object.entries(x).filter(([d]) => d > sumarDias(dia, -DIAS_DEL_DESPERTAR))) as Partial<Record<ClaveDia, T>>;
+
 function leerCanasta(texto: string | undefined): Item[] {
   try {
     return texto ? (JSON.parse(texto) as Item[]) : [];
@@ -351,7 +383,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -457,7 +489,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
     revisarControl();
   }
 
@@ -1219,6 +1251,26 @@ export function crearAlmacen(op: Opciones) {
       else return;
       guardar((r) => r.guardarAjuste(USO, JSON.stringify(uso)));
       cambiar({ uso }, false);
+    },
+    /**
+     * Te despertaste a esta hora ese día, y Moss lo supo a esta otra (minutos desde la medianoche). Queda lo más temprano
+     * que llegó: abrir Moss a las 7:40 y, después, la noche de Salud que terminó a las 7:10 dicen las 7:10. Cuándo se supo
+     * queda el de la primera vez: lo que ya sonó no se corre.
+     */
+    ponerDespertar(dia: ClaveDia, minutos: number, sabido: number) {
+      const antes = estado.despertares[dia];
+      if (!esMinuto(minutos) || !Number.isFinite(sabido) || (antes !== undefined && antes.despertar <= minutos)) return;
+      const nuevo: Despertar = { despertar: Math.round(minutos), sabido: antes?.sabido ?? Math.round(sabido) };
+      const despertares = recientes({ ...estado.despertares, [dia]: nuevo }, estado.hoy);
+      guardar((r) => r.guardarAjuste(DESPERTARES, JSON.stringify(despertares)));
+      cambiar({ despertares }, false);
+    },
+    /** Lo que contestaste a «¿Desayunas hoy?» ese día, con los botones del aviso. */
+    ponerDesayuno(dia: ClaveDia, respuesta: RespuestaDelDesayuno) {
+      if (estado.desayunos[dia] === respuesta) return;
+      const desayunos = recientes({ ...estado.desayunos, [dia]: respuesta }, estado.hoy);
+      guardar((r) => r.guardarAjuste(DESAYUNOS, JSON.stringify(desayunos)));
+      cambiar({ desayunos }, false);
     },
     ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
     cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),

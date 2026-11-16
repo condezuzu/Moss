@@ -118,7 +118,25 @@ export type Sueno = {
    * abrir Moss de mañana). Con esto, lo de la mañana espera al despertar y la noche se arma con él.
    */
   despertarReal?: (dia: ClaveDia) => number | null;
+  /**
+   * Cuándo lo supo Moss, en la misma cuenta: el teléfono se entera un rato después (abres Moss, llega la noche de Salud
+   * o corre la tarea de segundo plano), y lo de la mañana no puede sonar antes de saberlo. Sin esto, al despertar.
+   */
+  despertarSabido?: (dia: ClaveDia) => number | null;
 };
+
+/** Lo de la mañana suena desde dos minutos después de saber que te despertaste, como lo de después de un evento. */
+export const AL_SABERLO = 2;
+
+/**
+ * Cuándo puede empezar lo de la mañana: al despertarte o, si Moss se enteró después, un momento después de saberlo.
+ * null mientras no se sabe.
+ */
+export function inicioDeLaManana(dia: ClaveDia, s: Sueno, despertar: number | null): number | null {
+  if (despertar === null) return null;
+  const sabido = s.despertarSabido?.(dia) ?? null;
+  return sabido !== null && sabido + AL_SABERLO > despertar ? sabido + AL_SABERLO : despertar;
+}
 
 /**
  * Un aviso: el de dormir, el de un hábito, el de una comida (sin anotar o a su hora), el de pesarse, lo que
@@ -350,7 +368,7 @@ function acomodar(avisos: Aviso[], categoria = porTipo): Aviso[] {
  * de respiración» o «Entrenar al perro» no son entrenar, y siguen avisando los días de entreno.
  */
 const DE_ENTRENAR = /^(entrenar|entreno|entrenamiento|ir a entrenar|ir al gimnasio|gimnasio|gym|ir al gym|ejercicio|hacer ejercicio|workout|work out|training|exercise|go to the gym)$/i;
-const esDeEntrenar = (h: Habito) => h.icono === 'dumbbell' || DE_ENTRENAR.test(h.nombre.trim());
+export const esDeEntrenar = (h: Habito) => h.icono === 'dumbbell' || DE_ENTRENAR.test(h.nombre.trim());
 /** En este orden: anotada una, la de antes ya pasó. El snack va aparte: puede ser a cualquier hora. */
 const ORDEN_DE_COMIDAS: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 
@@ -405,6 +423,8 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
   // qué hora te despertaste no suena nada de la mañana.
   const sigue = !!op.sueno?.despertarReal;
   const esperaElDespertar = sigue && horas.despertar === null;
+  // Lo de «al despertarte» de un hábito, no antes de que Moss sepa que te despertaste.
+  const inicio = sigue && op.sueno ? inicioDeLaManana(dia, op.sueno, horas.despertar) : horas.despertar;
 
   // Un rato antes de la hora de ir a la cama, que ya descuenta lo que tardás en dormirte.
   if (ajustes.dormir?.encendido && horas.acostarse !== null) {
@@ -429,7 +449,7 @@ export function avisosDelDia(op: DelDia): Notificacion[] {
     const c = r.cuando;
     if (c.tipo === 'evento') conEvento.push({ aviso, evento: c.evento, despues: c.despues });
     else if (c.tipo === 'hora') fijos.push({ ...aviso, minutos: c.minutos < (op.corte ?? 0) ? c.minutos + DIA : c.minutos });
-    else if (c.tipo === 'despertar') { if (!esperaElDespertar) fijos.push({ ...aviso, minutos: (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues }); }
+    else if (c.tipo === 'despertar') { if (!esperaElDespertar) fijos.push({ ...aviso, minutos: Math.max(inicio ?? 0, (horas.despertar ?? DESPERTAR_SIN_SUENO) + c.despues) }); }
     else if (c.tipo === 'dormir') fijos.push({ ...aviso, minutos: (horas.acostarse ?? DORMIR_SIN_SUENO) - c.antes });
   }
   // Hoy, lo que falta corre con la última comida que anotaste (lo pediste el 29/10/2026): desayunar

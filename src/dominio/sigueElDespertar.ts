@@ -12,7 +12,7 @@
 // Entra en avisosDelDia como lo que conviene: el mismo máximo, de a uno y nada de lo que ya pasó. Acá van códigos;
 // el texto sale de textoDelAviso y tituloDelAviso (avisos.ts). Las fuentes, en spec/estudio/momentos.md.
 
-import { avisosDelDia, horasDeSueno, PESARSE_DESPUES, SEPARACION, type Aviso, type Avisos, type DelDia, type Notificacion } from './avisos';
+import { avisosDelDia, horasDeSueno, inicioDeLaManana, PESARSE_DESPUES, SEPARACION, type Aviso, type Avisos, type DelDia, type Notificacion } from './avisos';
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import { diaDeLaSemana } from './fechas';
 import { loQueConviene, type DeLoQueConviene } from './loQueConviene';
@@ -57,6 +57,11 @@ export const REVOLUCIONES = 60;
 export const GAFAS = 120;
 /** Anotar lo pendiente, al acostarte: cinco minutos antes de apagar la luz (Scullin 2018). */
 export const DESCARGA = 5;
+/**
+ * Si Moss se entera de tu despertar más de dos horas después, la deuda y pesarse ya no son «al despertarte»: no suenan.
+ * El desayuno sí pregunta. Es una convención.
+ */
+export const MANANA_QUE_SE_PASO = 120;
 
 const aCuarto = (x: number) => Math.round(x / 15) * 15;
 const aDiez = (x: number) => Math.round(x / 10) * 10;
@@ -96,17 +101,20 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
   const horas = horasDeSueno(op.dia, sueno);
   const lista: Aviso[] = [];
 
-  // La mañana, con el despertar de verdad: cada cosa a SEPARACION de la anterior, para que no se junten.
+  // La mañana, con el despertar de verdad: cada cosa a SEPARACION de la anterior, para que no se junten, y nada antes
+  // de que Moss sepa que te despertaste (inicioDeLaManana).
   const despertar = horas.despertar;
-  if (despertar !== null) {
-    let libre = despertar;
-    if (prendido('deuda') && sueno.deuda !== null) {
+  const inicio = inicioDeLaManana(op.dia, sueno, despertar);
+  if (despertar !== null && inicio !== null) {
+    let libre = inicio;
+    const aTiempo = inicio - despertar <= MANANA_QUE_SE_PASO;
+    if (aTiempo && prendido('deuda') && sueno.deuda !== null) {
       const antes = op.deudaAntes == null ? null : redondearDeuda(op.deudaAntes);
-      lista.push({ id: 'deuda', tipo: 'deuda', minutos: despertar, despertar: { que: 'deuda', ahora: redondearDeuda(sueno.deuda), antes } });
-      libre = despertar + SEPARACION;
+      lista.push({ id: 'deuda', tipo: 'deuda', minutos: inicio, despertar: { que: 'deuda', ahora: redondearDeuda(sueno.deuda), antes } });
+      libre = inicio + SEPARACION;
     }
     const control = op.diaDelControl === diaDeLaSemana(op.dia);
-    if (ajustes.pesarse?.encendido && (control || ajustes.pesarse.todos)) {
+    if (aTiempo && ajustes.pesarse?.encendido && (control || ajustes.pesarse.todos)) {
       const minutos = Math.max(libre, despertar + PESARSE_DESPUES);
       lista.push({ id: 'pesarse', tipo: 'pesarse', minutos, ...(control ? { control: true } : {}) });
       libre = minutos + SEPARACION;
@@ -157,4 +165,44 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
 /** Lo que suena un día que sigue tu despertar: avisosDelDia con lo que conviene y lo de este archivo adentro. */
 export function avisosQueSiguenElDespertar(op: Omit<DelDia, 'conviene' | 'sesiones'> & DeLoQueConviene & DeSigueElDespertar): Notificacion[] {
   return avisosDelDia({ ...op, conviene: [...loQueConviene(op), ...avisosDelDespertar(op)] });
+}
+
+/** Las anclas que dicen que te despertaste: parar la alarma o el despertador de Moss, o el atajo «Me desperté». */
+export const ANCLAS_DEL_DESPERTAR = ['alarmaParada', 'despertadorParado', 'meDesperte'] as const;
+/**
+ * El final de la noche en Salud y abrir Moss cuentan desde 3 h antes de tu despertar de siempre: abrirla a las 4:30
+ * para ver la hora, o un tramo de sueño que Salud cortó en la madrugada, no es despertarse. Es una convención.
+ */
+export const ANTES_DE_LO_DE_SIEMPRE = 180;
+/** Abrir Moss por primera vez pasado el mediodía y un rato no es «de mañana»: no dice a qué hora te despertaste. */
+export const APERTURA_HASTA = 13 * 60;
+
+/** Lo que dice a qué hora te despertaste un día, todo en minutos desde la medianoche de ese día. */
+export type SenalesDelDespertar = {
+  /** Cuándo terminó la noche de ese día en Salud; null sin noche. */
+  salud: number | null;
+  /** Cuándo llegó cada ancla del despertar (ANCLAS_DEL_DESPERTAR). */
+  anclas: readonly number[];
+  /** Cuándo se abrió Moss ese día. */
+  aperturas: readonly number[];
+  /** A qué hora empieza el día (D32): lo de antes es de la noche. */
+  corte: number;
+  /** Tu despertar de siempre, si se sabe. */
+  habitual: number | null;
+  ahora: number;
+};
+
+/**
+ * El despertar real de un día: lo más temprano de lo que llegó, sea el final de la noche en Salud, el despertador, el
+ * atajo o la primera vez que abriste Moss de mañana. Nada del futuro ni de antes del corte; null mientras no hay nada.
+ */
+export function despertarDelDia(s: SenalesDelDespertar): number | null {
+  const desde = Math.max(s.corte, s.habitual === null ? 0 : s.habitual - ANTES_DE_LO_DE_SIEMPRE);
+  const entre = (m: number, d: number, hasta: number) => Number.isFinite(m) && m >= d && m <= Math.min(hasta, s.ahora);
+  const candidatos = [
+    ...(s.salud !== null && entre(s.salud, desde, Infinity) ? [s.salud] : []),
+    ...s.anclas.filter((m) => entre(m, s.corte, Infinity)),
+    ...s.aperturas.filter((m) => entre(m, desde, APERTURA_HASTA)),
+  ];
+  return candidatos.length ? Math.round(Math.min(...candidatos)) : null;
 }

@@ -4,7 +4,7 @@ import { horasDeSueno, SEPARACION, textoDelAviso, tituloDelAviso, type Avisos, t
 import type { Comida } from './comidas';
 import type { Habito } from './habitos';
 import {
-  avisosDelDespertar, avisosQueSiguenElDespertar, DE_FABRICA, deFabrica, MAS, MAXIMO_QUE_SIGUE_EL_DESPERTAR, MELATONINA, REVOLUCIONES,
+  avisosDelDespertar, avisosQueSiguenElDespertar, DE_FABRICA, deFabrica, despertarDelDia, MAS, MAXIMO_QUE_SIGUE_EL_DESPERTAR, MELATONINA, REVOLUCIONES,
   type DeSigueElDespertar,
 } from './sigueElDespertar';
 import es from '../textos/es.json';
@@ -212,5 +212,53 @@ describe('las reglas de siempre', () => {
     const todos = (o: Rama): string[] => Object.values(o).flatMap((v) => (typeof v === 'string' ? [v] : todos(v)));
     for (const texto of todos((ES.recordatorios as Rama).despertar as Rama)) expect(texto).not.toMatch(/deber[ií]as|\bdebes\b|tienes que|\bvos\b|ten[ée]s/i);
     for (const texto of todos((EN.recordatorios as Rama).despertar as Rama)) expect(texto).not.toMatch(/\bshould\b|\bmust\b|have to/i);
+  });
+});
+
+describe('cuándo te despertaste de verdad', () => {
+  const de = (extra: Partial<Parameters<typeof despertarDelDia>[0]>) =>
+    despertarDelDia({ salud: null, anclas: [], aperturas: [], corte: h('4:00'), habitual: h('7:30'), ahora: h('11:00'), ...extra });
+
+  it('lo primero que llegó: la noche de Salud, el despertador, el atajo o abrir Moss de mañana', () => {
+    expect(de({})).toBeNull();
+    expect(de({ aperturas: [h('8:10')] })).toBe(h('8:10'));
+    expect(de({ aperturas: [h('8:10')], salud: h('7:40') })).toBe(h('7:40'));
+    expect(de({ aperturas: [h('8:10')], anclas: [h('7:20')], salud: h('7:40') })).toBe(h('7:20'));
+  });
+
+  it('abrir Moss de madrugada o pasado el mediodía no es despertarse; nada de antes del corte ni del futuro', () => {
+    // Tres horas antes de lo de siempre, a las 4:30, es mirar la hora y seguir durmiendo.
+    expect(de({ aperturas: [h('4:20'), h('9:00')] })).toBe(h('9:00'));
+    expect(de({ aperturas: [h('13:30')], ahora: h('14:00') })).toBeNull();
+    // El despertador sí, aunque sea temprano: lo paraste.
+    expect(de({ anclas: [h('3:50'), h('4:30')] })).toBe(h('4:30'));
+    expect(de({ salud: h('11:30') })).toBeNull();
+    // Sin noches para saber lo de siempre, desde el corte.
+    expect(de({ aperturas: [h('4:20')], habitual: null })).toBe(h('4:20'));
+  });
+});
+
+describe('lo de la mañana, desde que Moss lo sabe', () => {
+  const sabido = (cuando: number): Sueno => ({ ...conDespertar(h('8:00')), despertarSabido: (d) => (d === VIERNES ? cuando : null) });
+
+  it('si Moss se enteró después (la noche de Salud llegó más tarde), la mañana empieza dos minutos después de saberlo', () => {
+    const lista = dia({ sueno: sabido(h('8:40')) });
+    expect(aLa(lista, 'deuda')).toBe(h('8:42'));
+    expect(aLa(lista, 'pesarse')).toBe(h('9:02'));
+    // Saberlo no corre la noche: sale de la hora en que te despertaste.
+    expect(horasDeSueno(VIERNES, sabido(h('8:40'))).acostarse).toBe(horasDeSueno(VIERNES, conDespertar(h('8:00'))).acostarse);
+  });
+
+  it('enterarse al momento no cambia nada; más de dos horas tarde, ni la deuda ni pesarse, pero sí la pregunta', () => {
+    expect(aLa(dia({ sueno: sabido(h('7:00')) }), 'deuda')).toBe(h('8:00'));
+    const tarde = dia({ sueno: sabido(h('10:30')) });
+    expect(ids(tarde)).not.toContain('deuda');
+    expect(ids(tarde)).not.toContain('pesarse');
+    expect(aLa(tarde, 'desayuno')).toBe(h('10:32'));
+  });
+
+  it('lo de un hábito «al despertarte» tampoco suena antes de saberlo', () => {
+    const lista = dia({ sueno: sabido(h('8:40')), ajustes: { ...AJUSTES, habitos: [{ habito: 'meditar', cuando: { tipo: 'despertar', despues: 15 }, dias: [] }] }, habitos: [MEDITAR] });
+    expect(aLa(lista, 'habito:meditar:0')).toBeGreaterThanOrEqual(h('8:42'));
   });
 });

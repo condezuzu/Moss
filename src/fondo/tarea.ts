@@ -10,6 +10,7 @@ import { Platform } from 'react-native';
 
 import { arrancarLoDePremium, elAlmacen } from '@/almacen';
 import { programarAvisos } from '@/recordatorios/programar';
+import { buscarDespertar } from '@/salud/despertar';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { actualizarWidgets } from '@/widgets';
@@ -46,6 +47,9 @@ async function correr(): Promise<void> {
     a.ponerSalud(salud);
     await estimarAnoche(a).catch(() => {});
   }
+  // De mañana, con el teléfono desbloqueado, la noche de Salud o el despertador dicen que te despertaste: lo de la
+  // mañana se programa recién con eso (el día que sigue tu despertar).
+  await buscarDespertar(a).catch(() => {});
   await actualizarWidgets();
   // Los avisos, ya con el día y los hábitos de Salud al día (un hábito de pasos cumplido no avisa). Acá
   // y no después: iOS suele suspender Moss apenas termina la tarea, y el almacén los rehace con una espera.

@@ -130,6 +130,35 @@ describe('local primero', () => {
     expect((await armar(repositorio)).almacen.estado().avisos).toEqual({ partido: { encendido: true }, carrera: { encendido: false } });
   });
 
+  it('los del día que sigue tu despertar y el horario apagado (vacío) también se recuerdan', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerAvisos({ deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: {} });
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().avisos).toEqual({
+      deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: {},
+    });
+  });
+
+  it('el despertar de cada día: queda lo más temprano, con la hora en que se supo la primera vez, y dos semanas', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().despertares).toEqual({});
+    almacen.ponerDespertar('2026-10-21', 7 * 60 + 40, 7 * 60 + 40);
+    // Después llega la noche de Salud, que terminó antes: el despertar se corre, cuándo se supo no.
+    almacen.ponerDespertar('2026-10-21', 7 * 60 + 10, 8 * 60);
+    // Abrir Moss más tarde no cambia nada.
+    almacen.ponerDespertar('2026-10-21', 9 * 60, 9 * 60);
+    almacen.ponerDespertar('2026-10-01', 8 * 60, 8 * 60);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().despertares).toEqual({ '2026-10-21': { despertar: 7 * 60 + 10, sabido: 7 * 60 + 40 } });
+  });
+
+  it('lo que contestaste a «¿Desayunas hoy?» se recuerda en el teléfono', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerDesayuno('2026-10-21', 'directo');
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().desayunos).toEqual({ '2026-10-21': 'directo' });
+  });
+
   it('el aparato del que sale la noche se recuerda en el teléfono, y null vuelve a la automática', async () => {
     const { almacen, repositorio } = await armar();
     expect(almacen.estado().fuenteDelSueno).toBeNull();
