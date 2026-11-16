@@ -1,7 +1,7 @@
 // La hoja del «+» (cambio 9 de la especificación), la de la galería (galeria/src/mas.js): arriba, lo
 // principal (agregar comida, que abre la hoja de registro, y registrar el peso); abajo, la carga
-// rápida (calorías y macros, el agua, y los recientes y las comidas guardadas, que un toque registra
-// en la comida de esta hora con deshacer); al final, las medidas del cuerpo con la cinta, que
+// rápida (tu comida de siempre de esta hora, calorías y macros, el agua, lo que sueles comer a esta
+// hora y las comidas guardadas, que un toque registra en la comida de esta hora con deshacer); al final, las medidas del cuerpo con la cinta, que
 // estiman la grasa corporal como un rango chico (src/dominio/cuerpo.ts). Se cierra tocando afuera o
 // bajándola con el dedo (arrastre.tsx): desde arriba, o desde lo de adentro con su scroll arriba.
 // Con el peso o una medida escritos y sin guardar, antes pregunta si descartarlo (descartar.ts).
@@ -23,12 +23,12 @@ import { aCm, largoEn, pesoCorporalEn, pesoParaGuardar } from '@/dominio/cantida
 import { tendencia } from '@/dominio/control';
 import { medidaValida, rangoDeGrasa, SITIOS, ultimasMedidas, type Centimetros, type Sitio } from '@/dominio/cuerpo';
 import type { ClaveDia } from '@/dominio/fechas';
-import { claveDeAlimento, itemsParaRegistrar, recientes, sumarValores, vigentes, type Item } from '@/dominio/registros';
+import { claveDeAlimento, deEstaHora, deSiempre, itemsParaRegistrar, sumarValores, vigentes, type Item } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { CabezaQueBaja, ScrollQueBaja, seCierra, useArrastre, vuelta, type Arrastre } from './arrastre';
 import { AvisoFlotante, Icono, type Aviso } from './comida/comunes';
-import { cantidadDeTexto, comidaDeAhora, fechaCorta, momentoDe, numero, sistemaDe, useEstado } from './comida/datos';
+import { cantidadDeTexto, comidaDeAhora, fechaCorta, momentoDe, numero, sistemaDe, useEstado, useNumeros } from './comida/datos';
 import { abrirRegistro, avisar as avisarEnLaApp } from './comida/registro';
 import { confirmarDescartar } from './descartar';
 import { Figura } from './Figura';
@@ -204,7 +204,7 @@ export function HojaMas({ hoja, abierta, alCerrar, vista, alCambiarVista }: Prop
             fundido. Con Reducir movimiento, todo con un fundido. */}
         {vista === 'menu' && (
           <Animated.View key="menu" entering={ENTRA_MENU} exiting={SALE_FUNDIDO} style={estilos.vista}>
-            <Menu key={vez} arrastre={arrastre} alCerrar={cerrar} alIr={irA} avisar={avisar} />
+            <Menu key={vez} abierta={abierta} arrastre={arrastre} alCerrar={cerrar} alIr={irA} avisar={avisar} />
           </Animated.View>
         )}
         {vista === 'peso' && (
@@ -247,11 +247,18 @@ function useTecladoAnimado() {
 }
 
 // ------------------------------------------------------------------ el menú
-function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerrar: () => void; alIr: (v: Vista) => void; avisar: Avisar }) {
+function Menu({ abierta, arrastre, alCerrar, alIr, avisar }: { abierta: boolean; arrastre: Arrastre; alCerrar: () => void; alIr: (v: Vista) => void; avisar: Avisar }) {
   const e = useEstado();
   const a = elAlmacen();
+  const numeros = useNumeros();
   const sistema = sistemaDe(e);
   const comida = comidaDeAhora();
+  // Con la hoja abierta, lo de un toque no se reordena con lo que se anota: lo tocado no salta de lugar.
+  const [registros, setRegistros] = useState(e.registros);
+  if (!abierta && registros !== e.registros) setRegistros(e.registros);
+  // Tu comida de siempre de esta hora, de un toque (lo pediste el 2/11/2026: «tocas desayuno y se suma»).
+  const siempre = useMemo(() => deSiempre(registros.values(), comida, e.hoy), [registros, comida, e.hoy]);
+  const kcalDe = (items: Item[]) => (numeros ? `${numero(Math.round(sumarValores(items.map((i) => i.valores)).kcal))} kcal` : '');
   // Lo marcado con ✓, con el día en que se marcó: si pasa la hora de corte con la hoja abierta, lo de
   // ayer no sigue marcado (se reiniciaba solo al cerrarla).
   const [hechos, setHechos] = useState<{ dia: ClaveDia; claves: ReadonlySet<string> }>(() => ({ dia: e.hoy, claves: NINGUNO }));
@@ -261,7 +268,7 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
   const detallePeso = ultimo
     ? t('mas.ultimoPeso', { cuando: ultimo.fecha === e.hoy ? t('mas.hoy') : fechaCorta(ultimo.fecha), peso: textoDePeso(ultimo.kg, sistema) })
     : t('mas.hoy');
-  const listaDeRecientes = useMemo(() => recientes(e.registros.values(), 8), [e.registros]);
+  const deEstaComida = useMemo(() => deEstaHora(registros.values(), comida, e.hoy, 6), [registros, comida, e.hoy]);
   const guardadas = useMemo(() => vigentes(e.recetas.values()).filter((r) => r.tipo === 'comida'), [e.recetas]);
   const grasa = useMemo(() => {
     if (!e.perfil) return null;
@@ -323,6 +330,23 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
         <Principal icono="scalemass" titulo={t('mas.registrarPeso')} detalle={detallePeso} alTocar={() => alIr('peso')} />
       </View>
       <Text style={estilos.grupo}>{t('mas.cargaRapida')}</Text>
+      {siempre && (
+        <Pressable
+          onPress={() => registrar('siempre', t(`comida.deSiempre.${comida}`), siempre)}
+          style={({ pressed }) => [estilos.rapido, estilos.siempre, marcados.has('siempre') && estilos.chipHecho, pressed && estilos.apretado]}
+          accessibilityRole="button"
+          accessibilityState={{ checked: marcados.has('siempre') }}
+        >
+          <Icono nombre="fork.knife" tam={17} peso="light" />
+          <View style={estilos.crece}>
+            <Text style={estilos.rapidoTitulo} numberOfLines={1}>
+              {marcados.has('siempre') && <Text style={estilos.tilde}>{'✓ '}</Text>}
+              {t(`comida.deSiempre.${comida}`)}
+            </Text>
+            <Text style={estilos.siempreDetalle} numberOfLines={2}>{[siempre.map((i) => i.nombre).join(', '), kcalDe(siempre)].filter(Boolean).join(' · ')}</Text>
+          </View>
+        </Pressable>
+      )}
       <View style={estilos.fila}>
         <Pressable
           onPress={() => {
@@ -360,18 +384,18 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
           </Pressable>
         </Mantener>
       </View>
-      {listaDeRecientes.length > 0 && (
+      {deEstaComida.length > 0 && (
         <>
-          <Text style={estilos.grupo}>{t('mas.recientes')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.chips} scrollsToTop={false}>
-            {listaDeRecientes.map((item) => {
-              const clave = `r-${claveDeAlimento(item.fuente, item.ref)}`;
+          <Text style={estilos.grupo}>{t(`mas.aEstaHora.${comida}`)}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={estilos.carril} contentContainerStyle={estilos.chips} scrollsToTop={false}>
+            {deEstaComida.map((item) => {
+              const clave = `h-${claveDeAlimento(item.fuente, item.ref)}`;
               return (
                 <Chip
                   key={clave}
                   hecho={marcados.has(clave)}
                   titulo={item.nombre}
-                  detalle={[cantidadDeTexto(item.cantidad, sistema), `${numero(Math.round(item.valores.kcal))} kcal`].filter(Boolean).join(' · ')}
+                  detalle={[cantidadDeTexto(item.cantidad, sistema), kcalDe([item])].filter(Boolean).join(' · ')}
                   alTocar={() => registrar(clave, item.nombre, [item])}
                 />
               );
@@ -382,7 +406,7 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
       {guardadas.length > 0 && (
         <>
           <Text style={estilos.grupo}>{t('mas.guardadas')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.chips} scrollsToTop={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={estilos.carril} contentContainerStyle={estilos.chips} scrollsToTop={false}>
             {guardadas.map((r) => {
               const clave = `g-${r.id}`;
               const items = itemsParaRegistrar(r, t('comida.receta.plato'));
@@ -391,7 +415,7 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
                   key={clave}
                   hecho={marcados.has(clave)}
                   titulo={r.nombre}
-                  detalle={`${numero(Math.round(sumarValores(items.map((i) => i.valores)).kcal))} kcal`}
+                  detalle={kcalDe(items)}
                   alTocar={() => registrar(clave, r.nombre, items)}
                 />
               );
@@ -400,13 +424,13 @@ function Menu({ arrastre, alCerrar, alIr, avisar }: { arrastre: Arrastre; alCerr
         </>
       )}
       <Pressable onPress={() => alIr('medidas')} style={({ pressed }) => [estilos.medidas, pressed && estilos.apretado]} accessibilityRole="button">
-        <Icono nombre="ruler" tam={20} peso="light" />
+        <Icono nombre="ruler" tam={22} peso="light" />
         <View style={estilos.crece}>
           <Text style={estilos.medidasTitulo}>{t('mas.medidas')}</Text>
           <Text style={estilos.detalle}>{t('mas.medidasTexto')}</Text>
         </View>
         {grasa && <Text style={estilos.medidasRango}>{t('cuerpo.rango', { desde: grasa.desde, hasta: grasa.hasta })}</Text>}
-        <Icono nombre="chevron.right" tam={13} color={colores.pergaminoApagado} />
+        <Icono nombre="chevron.right" tam={15} color="rgba(239, 230, 207, 0.4)" />
       </Pressable>
     </ScrollQueBaja>
   );
@@ -420,7 +444,7 @@ const textoDePeso = (kg: number, sistema: ReturnType<typeof sistemaDe>) => {
 function Principal({ icono, titulo, detalle, alTocar }: { icono: SFSymbol; titulo: string; detalle: string; alTocar: () => void }) {
   return (
     <Pressable onPress={alTocar} style={({ pressed }) => [estilos.principal, pressed && estilos.apretado]} accessibilityRole="button">
-      <Icono nombre={icono} tam={22} peso="light" />
+      <Icono nombre={icono} tam={24} peso="light" />
       <Text style={estilos.principalTitulo}>{titulo}</Text>
       <Text style={estilos.detalle} numberOfLines={1}>{detalle}</Text>
     </Pressable>
@@ -439,7 +463,7 @@ function Litros({ ml }: { ml: number }) {
   return (
     // Al armarse el menú, lo de siempre: solo lo que cambia después entra con su movimiento.
     <LayoutAnimationConfig skipEntering>
-      <Animated.Text key={ml} entering={reducido ? LITROS_CAMBIAN : sube ? LITROS_SUBEN : LITROS_BAJAN} style={estilos.detalleNumero}>
+      <Animated.Text key={ml} entering={reducido ? LITROS_CAMBIAN : sube ? LITROS_SUBEN : LITROS_BAJAN} style={estilos.litros}>
         {`${decimal(ml / 1000, idioma())} L`}
       </Animated.Text>
     </LayoutAnimationConfig>
@@ -449,8 +473,11 @@ function Litros({ ml }: { ml: number }) {
 function Chip({ titulo, detalle, hecho, alTocar }: { titulo: string; detalle: string; hecho: boolean; alTocar: () => void }) {
   return (
     <Pressable onPress={alTocar} style={({ pressed }) => [estilos.chip, hecho && estilos.chipHecho, pressed && estilos.apretado]} accessibilityRole="button" accessibilityState={{ checked: hecho }}>
-      <Text style={estilos.chipTitulo} numberOfLines={1}>{`${hecho ? '✓ ' : ''}${titulo}`}</Text>
-      <Text style={estilos.chipDetalle} numberOfLines={1}>{detalle}</Text>
+      <Text style={estilos.chipTitulo} numberOfLines={1}>
+        {hecho && <Text style={estilos.tilde}>{'✓ '}</Text>}
+        {titulo}
+      </Text>
+      {!!detalle && <Text style={estilos.chipDetalle} numberOfLines={1}>{detalle}</Text>}
     </Pressable>
   );
 }
@@ -720,10 +747,16 @@ const estilos = StyleSheet.create({
   llena: { flexGrow: 1 },
   crece: { flex: 1, gap: 3, minWidth: 0 },
   rapidoTitulo: { fontFamily: letras.texto, fontSize: 13.5, color: colores.pergamino },
+  siempre: { minHeight: 56, marginBottom: 10, paddingVertical: 8, paddingRight: 10 },
+  siempreDetalle: { fontFamily: letras.texto, fontSize: 11, lineHeight: 13.2, color: 'rgba(239, 230, 207, 0.5)' },
+  tilde: { color: colores.oroClaro },
   detalle: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.55)' },
   detalleNumero: { fontFamily: letras.numeroMedio, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.62)', fontVariant: ['tabular-nums'] },
+  litros: { fontFamily: letras.numeroMedio, fontSize: 13, color: 'rgba(239, 230, 207, 0.7)', fontVariant: ['tabular-nums'] },
   aguaMas: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(188, 216, 242, 0.4)', backgroundColor: 'rgba(188, 216, 242, 0.08)', alignItems: 'center', justifyContent: 'center' },
-  chips: { gap: 8, paddingBottom: 2 },
+  // Los recientes y las guardadas corren hasta el borde de la hoja, como en la galería.
+  carril: { marginHorizontal: -16 },
+  chips: { gap: 8, paddingBottom: 2, paddingHorizontal: 16 },
   chip: { maxWidth: 190, gap: 3, paddingVertical: 9, paddingHorizontal: 13, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.12)', backgroundColor: 'rgba(239, 230, 207, 0.04)' },
   chipHecho: { borderColor: 'rgba(239, 230, 207, 0.42)', backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   chipTitulo: { fontFamily: letras.texto, fontSize: 14, color: colores.pergamino },

@@ -88,6 +88,14 @@ describe('local primero', () => {
     expect((await armar(repositorio)).almacen.estado().calidad).toBeNull();
   });
 
+  it('cómo se ven las calorías se recuerda; de fábrica, la luna', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().kcal).toBe('luna');
+    almacen.ponerKcal('macros');
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().kcal).toBe('macros');
+  });
+
   it('los avisos se recuerdan en el teléfono: la hora de dormir, el máximo y el de cada hábito', async () => {
     const { almacen, repositorio } = await armar();
     expect(almacen.estado().avisos).toEqual({});

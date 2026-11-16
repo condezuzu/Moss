@@ -4,7 +4,7 @@ import type { Comida } from './comidas';
 import { minutosEnElDia, sumarDias } from './fechas';
 import {
   aguaDelDia, borrado, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, deSiempre, escalar, gramosDe, itemDeAlimento, itemDeReceta, itemDeRecetaEnGramos, itemRapido,
-  itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
+  deEstaHora, itemsParaRegistrar, premios, recientes, restaurado, sueles, sumarValores, totalDelDia, ultimaCantidad, valoresDeReceta,
   type Item, type Receta, type Registro, type Valores,
 } from './registros';
 
@@ -279,6 +279,23 @@ describe('los atajos', () => {
     expect(deSiempre([reg(cafe, dias(1), 'desayuno', 8), reg(cafe, dias(2), 'desayuno', 8)], 'desayuno', HOY)).toBeNull();
     const viejas = [20, 21].flatMap((d) => [reg(cafe, dias(d), 'desayuno', 8), reg(banana(), dias(d), 'desayuno', 8)]);
     expect(deSiempre(viejas, 'desayuno', HOY)).toBeNull();
+  });
+
+  it('lo de esta hora: lo más comido en esa comida en dos semanas, con la última cantidad; después, lo de dos meses', () => {
+    const cafe = itemDeAlimento('base', '2', 'Café con leche', ARROZ, { gramos: 200 });
+    const lista = [
+      reg(cafe, dias(5), 'desayuno', 8), reg(banana(1), dias(4), 'desayuno', 8), reg(banana(2), dias(1), 'desayuno', 8),
+      reg(cafe, dias(2), 'desayuno', 8), reg(cafe, dias(3), 'desayuno', 8),
+      reg(arroz(), dias(0), 'almuerzo', 13), reg(itemRapido('Alfajor', ARROZ), dias(1), 'desayuno', 9),
+      reg(itemDeAlimento('base', '3', 'Avena', ARROZ, { gramos: 40 }), dias(30), 'desayuno', 8),
+      reg(itemDeAlimento('base', '3', 'Avena', ARROZ, { gramos: 40 }), dias(31), 'desayuno', 8),
+    ];
+    // Map#values() se recorre una sola vez: también tiene que andar con eso.
+    const deHoy = deEstaHora(new Map(lista.map((r) => [r.id, r])).values(), 'desayuno', HOY);
+    expect(deHoy.map((i) => i.nombre)).toEqual(['Café con leche', 'Banana', 'Avena']);
+    expect(deHoy[1].cantidad).toEqual({ porcion: '1 mediana', gramosPorcion: 118, veces: 2 });
+    expect(deEstaHora(lista, 'desayuno', HOY, 1).map((i) => i.nombre)).toEqual(['Café con leche']);
+    expect(deEstaHora(lista, 'cena', HOY)).toEqual([]);
   });
 
   it('el premio del buscador: lo usado sube, lo de esta semana un poco más, y tiene tope', () => {

@@ -4,7 +4,7 @@ import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import type { ComponentType } from 'react';
 import { View } from 'react-native';
 
-import type { PropsDeBalance, PropsDeHipnograma, PropsDeLinea, PropsDeMes, PropsDeMiniCielo } from './GraficosSkia';
+import type { PropsDeBalance, PropsDeBarras, PropsDeChispa, PropsDeColumnas, PropsDeHipnograma, PropsDeLinea, PropsDeMes, PropsDeMiniCielo } from './GraficosSkia';
 
 export type { CeldaDelMes, PuntoDeLinea } from './GraficosSkia';
 
@@ -25,6 +25,9 @@ function conSkia<P extends { ancho: number; alto: number }>(cargar: () => Promis
 
 export const Linea = conSkia<PropsDeLinea>(async () => (await import('./GraficosSkia')).LineaSkia);
 export const Balance = conSkia<PropsDeBalance>(async () => (await import('./GraficosSkia')).BalanceSkia);
-export const Hipnograma = conSkia<PropsDeHipnograma>(async () => (await import('./GraficosSkia')).HipnogramaSkia);
+export const Barras = conSkia<PropsDeBarras>(async () => (await import('./GraficosSkia')).BarrasSkia);
+export const Columnas = conSkia<PropsDeColumnas>(async () => (await import('./GraficosSkia')).ColumnasSkia);
+export const Chispa = conSkia<PropsDeChispa>(async () => (await import('./GraficosSkia')).ChispaSkia);
+export const Hipnograma =conSkia<PropsDeHipnograma>(async () => (await import('./GraficosSkia')).HipnogramaSkia);
 export const MiniCielo = conSkia<PropsDeMiniCielo>(async () => (await import('./GraficosSkia')).MiniCieloSkia);
 export const MesDeCielos = conSkia<PropsDeMes>(async () => (await import('./GraficosSkia')).MesSkia);

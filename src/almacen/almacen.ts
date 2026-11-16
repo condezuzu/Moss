@@ -79,6 +79,8 @@ export type Estado = MapasDeComida & {
   fuenteDelSueno: string | null;
   /** Los números de la comida (las calorías y los gramos), o solo las figuras y las barras. Queda en el teléfono. */
   numeros: boolean;
+  /** Cómo se ven las calorías del día (Todo lo de hoy): la luna, un anillo, un arco, la barra por comidas o los anillos de los macros. Queda en el teléfono. */
+  kcal: EstiloDeKcal;
   /** Cuándo entrenás, puesto a mano (Perfil › Entrenamiento); queda en el teléfono. */
   entreno: Entreno | null;
   /** Si se ve qué comer antes y después de entrenar («No mostrar más» lo apaga). */
@@ -148,6 +150,9 @@ const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 const NUMEROS = 'numeros';
+const KCAL = 'kcal';
+export const ESTILOS_DE_KCAL = ['luna', 'anillo', 'arco', 'barra', 'macros'] as const;
+export type EstiloDeKcal = (typeof ESTILOS_DE_KCAL)[number];
 const ENTRENO = 'entreno';
 const VER_ENTRENO = 'verEntreno';
 const ALIAS = 'alias';
@@ -306,7 +311,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -412,7 +417,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
     revisarControl();
   }
 
@@ -1067,6 +1072,11 @@ export function crearAlmacen(op: Opciones) {
       const elegida = minutos === null ? null : necesidadDe(String(minutos));
       guardar((r) => r.guardarAjuste(NECESIDAD, elegida === null ? '' : String(elegida)));
       cambiar({ necesidad: elegida }, false);
+    },
+    /** Cómo se ven las calorías del día. */
+    ponerKcal(kcal: EstiloDeKcal) {
+      guardar((r) => r.guardarAjuste(KCAL, kcal));
+      cambiar({ kcal }, false);
     },
     ponerNumeros(numeros: boolean) {
       guardar((r) => r.guardarAjuste(NUMEROS, numeros ? '' : 'no'));
