@@ -5,6 +5,7 @@
 
 import { encajar, proyectar, type Punto } from '@/cielo/mundo';
 import type { Estrella } from '@/datos/catalogo';
+import type { Pregunta } from './respuestas';
 
 export type Facil = 'lineal' | 'suave' | 'llega' | 'sale';
 export type Tramo = { t0: number; ms: number; lut: number[]; largo: number; facil: Facil; estela?: boolean; escala?: [number, number]; brillo?: [number, number] };
@@ -192,7 +193,7 @@ export function anclas(W: number, H: number, arriba: number, abajo: number, arri
   };
 }
 
-export type Paso = 'frase' | 'habitos' | 'comida' | 'base' | 'sueno' | 'juntos' | 'precio' | 'datos' | 'cuenta' | 'salud' | 'edad' | 'sexo' | 'altura' | 'peso' | 'actividad' | 'cuidado' | 'objetivo' | 'resultado';
+export type Paso = 'frase' | 'habitos' | 'comida' | 'base' | 'sueno' | 'juntos' | 'precio' | 'datos' | 'cuenta' | Pregunta | 'resultado';
 const DIAPOSITIVAS: readonly Paso[] = ['frase', 'habitos', 'comida', 'base', 'sueno', 'juntos', 'precio'];
 /** La frase y las diapositivas: la estrella espera abajo y tocarla es seguir. */
 export const esDiapositiva = (p: Paso) => DIAPOSITIVAS.includes(p);

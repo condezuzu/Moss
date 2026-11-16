@@ -1896,19 +1896,18 @@ const pasos = {
     await pagina.waitForTimeout(900);
     await foto('avisos-perfil');
     // El horario de comidas (lo pediste el 26/10) y pesarse, encendidos.
-    await pagina.getByRole('button', { name: 'Horario de comidas' }).click();
     await pagina.getByRole('button', { name: 'Pesarme por la mañana' }).click();
     await pagina.waitForTimeout(600);
     await foto('avisos-horario');
-    await pagina.getByRole('button', { name: 'Horario de comidas' }).click();
     await pagina.getByRole('button', { name: 'Pesarme por la mañana' }).click();
     // Lo que conviene hacer (3/11, para aprobar), cada uno con su llave, en español y en inglés; y en
     // Perfil › Entrenamiento, lo que tardas en llegar al gimnasio.
-    const conviene = ['Comer antes de entrenar', 'Proteína después de entrenar', 'Café', 'Última comida grande', 'Si entrenas tarde', 'Bajar las luces'];
+    // Las luces vienen prendidas desde el 16/11 (el día que sigue tu despertar): ya no se tocan.
+    const conviene = ['Comer antes de entrenar', 'Proteína después de entrenar', 'Café', 'Última comida grande', 'Si entrenas tarde'];
     const llaves = async () => { for (const nombre of conviene) await pagina.locator('.pf-hoja').getByRole('button', { name: nombre, exact: true }).click(); };
     const alGrupo = () => pagina.evaluate(() => {
       const c = document.querySelector('.pf-hoja .pf-avisos');
-      const g = [...document.querySelectorAll('.pf-hoja .pf-grupo')][0];
+      const g = [...document.querySelectorAll('.pf-hoja .pf-grupo')][1];
       if (c && g) c.scrollTop = g.offsetTop - c.offsetTop - 8;
     });
     await llaves();
@@ -2429,6 +2428,62 @@ const pasos = {
     await poner({ abajo: 'Después de entrenar' }, 'bloqueo-todos-ingles-2');
     await poner({ abajo: 'Si entrenas tarde' }, 'bloqueo-todos-ingles-3');
     await pagina.evaluate((x) => window.__avisosBloqueo(x), { modo: 'dia', idioma: 'es', dia: 'tarde', hora: hora(17, 5), ...nada });
+    await pagina.click('.ab-cerrar');
+    await pagina.waitForTimeout(400);
+  },
+
+  // El día que sigue tu despertar (16/11, para aprobar; spec/avisos.md): Perfil › Avisos con sus dos grupos, y la
+  // pantalla bloqueada de un día que se despierta a las 10 y no desayuna: nada antes, la deuda, pesarse, «¿Desayunas
+  // hoy?» con sus botones, las comidas con lo del desayuno repartido y la noche; con «Sí», en inglés y en «Todos».
+  async dia() {
+    const bajar = (cuanto) => pagina.evaluate((c) => {
+      const caja = document.querySelector('.pf-hoja .pf-avisos');
+      const grupo = typeof c === 'number' ? null : [...document.querySelectorAll('.pf-hoja .pf-grupo')][c === 'mas' ? 1 : 2];
+      if (caja) caja.scrollTop = grupo ? grupo.offsetTop - caja.offsetTop - 8 : c;
+    }, cuanto);
+    await seccion('avisos');
+    await pagina.waitForTimeout(900);
+    await foto('dia-perfil-1');
+    await bajar(640);
+    await pagina.waitForTimeout(400);
+    await foto('dia-perfil-2');
+    await bajar('mas');
+    await pagina.waitForTimeout(400);
+    await foto('dia-perfil-3');
+    await bajar(100000);
+    await pagina.waitForTimeout(400);
+    await foto('dia-perfil-4');
+    await pagina.evaluate(() => window.__idioma('en'));
+    await seccion('avisos');
+    await pagina.waitForTimeout(800);
+    await foto('dia-perfil-ingles');
+    await pagina.evaluate(() => window.__idioma('es'));
+    await pagina.evaluate(() => window.__accion('reiniciar'));
+    await pagina.waitForTimeout(600);
+
+    const poner = async (p, nombre, espera = 500) => {
+      await pagina.evaluate((x) => window.__avisosBloqueo(x), p);
+      await pagina.waitForTimeout(espera);
+      await foto(nombre);
+    };
+    const hora = (h, m = 0) => h * 60 + m;
+    await seccion('avisosBloqueo');
+    await pagina.waitForTimeout(500);
+    await poner({ modo: 'despertar', idioma: 'es', desayuno: 'directo', hora: hora(9, 30) }, 'dia-bloqueo-0930', 700);
+    await poner({ hora: hora(10) }, 'dia-bloqueo-1000');
+    await poner({ hora: hora(10, 40) }, 'dia-bloqueo-1040-pregunta');
+    await poner({ hora: hora(13, 5) }, 'dia-bloqueo-1305-almuerzo');
+    await poner({ hora: hora(17, 35) }, 'dia-bloqueo-1735-merienda');
+    await poner({ hora: hora(21, 5) }, 'dia-bloqueo-2105-cena');
+    await poner({ hora: hora(22, 50) }, 'dia-bloqueo-2250-noche', 700);
+    await poner({ abajo: 4000 }, 'dia-bloqueo-2250-noche-2');
+    await poner({ desayuno: 'si', hora: hora(22, 50) }, 'dia-bloqueo-con-desayuno', 700);
+    await poner({ abajo: 4000 }, 'dia-bloqueo-con-desayuno-2');
+    await poner({ desayuno: 'directo', idioma: 'en', hora: hora(22, 50) }, 'dia-bloqueo-ingles', 700);
+    await poner({ abajo: 4000 }, 'dia-bloqueo-ingles-2');
+    await poner({ modo: 'todos', idioma: 'es', abajo: 'Tu despertar' }, 'dia-bloqueo-todos', 700);
+    await poner({ modo: 'todos', idioma: 'en', abajo: 'Tu despertar' }, 'dia-bloqueo-todos-ingles', 700);
+    await pagina.evaluate((x) => window.__avisosBloqueo(x), { modo: 'dia', idioma: 'es', dia: 'tarde', hora: hora(17, 5), desayuno: 'directo' });
     await pagina.click('.ab-cerrar');
     await pagina.waitForTimeout(400);
   },

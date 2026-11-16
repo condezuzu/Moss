@@ -1,11 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  actividadEquivalente, ajusteDeRecomposicion, avisoDeRecomposicion, diasConDosSesiones, eleccionDe, entrenaFuerza, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
+  actividadEquivalente, ajusteDeRecomposicion, avisoDeRecomposicion, deportesDe, diasConDosSesiones, eleccionDe, entrenaFuerza, entrenoParaGuardar, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
   horarioDeLosAvisos, katchMcArdle, kcalDelDia, kcalDelEntreno, masaMagra, MET_DEL_DEPORTE, metaDelCuestionario, movimientoPorPasos, NIVELES_DE_PROTEINA,
   objetivoGuardado, objetivoUsado, partesRedondas, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, PROTEINA_POR_NIVEL, proteinaDelNivel, rangoDelPesoMeta,
-  ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
-  type Deporte, type EntrenoDicho, type GrasaDicha, type ObjetivoDicho, type Respuestas, type SesionDicha,
+  respuestasDe, ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
+  type Deporte, type EntrenoDicho, type GrasaDicha, type ObjetivoDicho, type Respuestas, type RespuestasGuardadas, type SesionDicha,
 } from './cuestionario';
 import { KCAL_POR_KILO_Y_HORA } from './entrenamiento';
 import { sumarDias } from './fechas';
@@ -335,5 +335,46 @@ describe('el peso meta', () => {
     expect(pesoMetaSugerido(56.5, 172, 'bajar')).toBe(55);
     expect(rangoDelPesoMeta(55.5, 172, 'bajar')).toBeNull();
     expect(pesoMetaSugerido(55.5, 172, 'bajar')).toBeNull();
+  });
+});
+
+describe('lo que queda guardado', () => {
+  const pesasYFutbol: EntrenoDicho = {
+    tipos: ['fuerza', 'equipo'],
+    sesiones: [{ tipo: 'fuerza', dias: [1, 3, 5], hora: 18 * 60, minutos: 60 }, { tipo: 'equipo', dias: [6], hora: 16 * 60, minutos: 90 }],
+    viaje: 15,
+    partidos: { dia: 6, hora: 16 * 60 },
+    categoriaDePeso: null,
+  };
+
+  it('el entreno guarda el horario de los avisos y, al lado, los deportes; los consejos los leen igual', () => {
+    const g = entrenoParaGuardar(pesasYFutbol)!;
+    expect(g).toMatchObject({ tipo: 'mixta', dias: [1, 3, 5, 6], hora: 18 * 60, minutos: 60, viaje: 15, tipos: ['fuerza', 'equipo'] });
+    expect(deportesDe(g)).toEqual({ tipos: ['fuerza', 'equipo'], sesiones: pesasYFutbol.sesiones, partidos: { dia: 6, hora: 16 * 60 } });
+    expect(entrenoParaGuardar(null)).toBeNull();
+  });
+
+  it('si el horario se cambió a mano en Perfil, vale el de Perfil; «mixta» sola no dice qué deporte es', () => {
+    const g = entrenoParaGuardar(pesasYFutbol)!;
+    expect(deportesDe({ ...g, hora: 7 * 60 })).toBeNull();
+    const soloPesas = entrenoParaGuardar({ ...pesasYFutbol, tipos: ['fuerza'], sesiones: [pesasYFutbol.sesiones[0]], partidos: null })!;
+    expect(deportesDe({ ...soloPesas, dias: [2, 4] })).toEqual({ tipos: ['fuerza'], sesiones: [{ tipo: 'fuerza', dias: [2, 4], hora: 18 * 60, minutos: 60 }], partidos: null });
+    expect(deportesDe({ dias: [1], hora: 600, minutos: 60, tipo: 'resistencia' })?.tipos).toEqual(['resistencia']);
+    expect(deportesDe({ dias: [], hora: 600, minutos: 60, tipo: 'fuerza' })).toBeNull();
+  });
+
+  it('las respuestas se leen como se guardaron, y lo que no se entiende queda afuera', () => {
+    const r: RespuestasGuardadas = {
+      movimiento: 'dePie', grasa: { como: 'cinta', pct: 21.5 }, experiencia: 'intermedio', despues: 'musculo', proteina: 'alta', recomponer: false,
+      fecha: '2027-01-04', eleccion: { proteinaPorKg: 2.2, pct: -0.6 }, horarios: { desayuno: 450, almuerzo: 780, merienda: null, cena: 1260 },
+      sueno: { despertar: 420, acostarse: 1380, finDeSemana: 'tarde' }, salud: true,
+    };
+    expect(respuestasDe(JSON.parse(JSON.stringify(r)))).toEqual(r);
+    expect(respuestasDe({ movimiento: 'volar' })).toBeNull();
+    expect(respuestasDe(null)).toBeNull();
+    expect(respuestasDe({ movimiento: 'sentado', grasa: { como: 'adivinada', pct: 20 }, proteina: 'muchisima', horarios: { cena: 3000 }, sueno: { despertar: 400 } })).toEqual({
+      movimiento: 'sentado', grasa: null, experiencia: null, despues: null, proteina: 'recomendada', recomponer: false, fecha: null,
+      eleccion: { proteinaPorKg: null, pct: null }, horarios: { desayuno: null, almuerzo: null, merienda: null, cena: null }, sueno: null, salud: false,
+    });
   });
 });

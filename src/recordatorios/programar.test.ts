@@ -14,7 +14,7 @@ import type { Registro } from '@/dominio/registros';
 
 type Disparador = { type: string; date?: Date; year?: number; month?: number; day?: number; hour?: number; minute?: number };
 /** Lo programado, con la fecha en que suena (de un disparador de calendario o de fecha). */
-const programadas: { content: { body: string; data: { tipo: string; que?: string } }; trigger: { date: Date }; tipo: string }[] = [];
+const programadas: { content: { title: string; body: string; data: { tipo: string; que?: string }; categoryIdentifier?: string }; trigger: { date: Date }; tipo: string }[] = [];
 /** Los avisos que ya llegaron (el centro de notificaciones) y los que Moss sacó de ahí. */
 let mockLlegados: { date: number; request: { identifier: string; content: { data: Record<string, unknown> } } }[] = [];
 const mockSacados: string[] = [];
@@ -50,7 +50,7 @@ jest.mock('@/lib/premium', () => ({
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { algunAviso, conLoQueFalta, LO_QUE_MUEVE_LOS_AVISOS, programarAvisos, suenoParaAvisos } = require('./programar') as typeof import('./programar');
+const { algunAviso, avisosDe, conLoQueFalta, LO_QUE_MUEVE_LOS_AVISOS, programarAvisos, suenoParaAvisos } = require('./programar') as typeof import('./programar');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { t } = require('@/textos') as typeof import('@/textos');
 const MERIENDA = () => t('recordatorios.horario.merienda');
@@ -69,9 +69,14 @@ const registro = (comida: Registro['comida'], hora: number, proteina: number, kc
   }];
 };
 
+/** Todo lo que viene prendido de fábrica, apagado a mano: sin esto, suena lo del día que sigue tu despertar. */
+const APAGADO = {
+  dormir: { encendido: false }, horario: {}, deuda: { encendido: false }, melatonina: { encendido: false }, revoluciones: { encendido: false }, luces: { encendido: false },
+};
+
 const estado = (extra: Partial<Estado> = {}) => ({
   hoy: HOY, corte: 240, latencia: null, registros: new Map(), recordatorios: [], habitos: [entrenar], marcas: new Map(), perfil: null, salud: null, noches: new Map(),
-  metas: [META], pesos: [], entreno: null, agua: new Map(), numeros: true,
+  metas: [META], pesos: [], entreno: null, agua: new Map(), numeros: true, despertares: {}, desayunos: {}, cuidados: null,
   avisos: { horario: { merienda: 17 * 60 + 30 }, habitos: [{ habito: 'entrenar', cuando: { tipo: 'hora', minutos: 17 * 60 + 35 }, dias: [] }] },
   ...extra,
 }) as unknown as Estado;
@@ -125,26 +130,35 @@ describe('los avisos que se programan', () => {
     expect(deHoy().some(([, texto]) => /proteína|protein/.test(String(texto)))).toBe(false);
   });
 
-  it('sin ningún aviso elegido, tampoco', async () => {
-    await programarAvisos(estado({ avisos: {}, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
+  it('con todo apagado, tampoco', async () => {
+    await programarAvisos(estado({ avisos: APAGADO, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
     expect(programadas).toEqual([]);
   });
 
+  it('sin tocar nada, suena lo de fábrica: el horario del desayuno, el almuerzo y la cena', async () => {
+    await programarAvisos(estado({ avisos: {}, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
+    const horario = (c: 'almuerzo' | 'cena') => t(`recordatorios.horario.${c}`);
+    expect(deHoy().map(([, texto]) => texto)).toEqual(expect.arrayContaining([horario('almuerzo'), horario('cena')]));
+    // Lo que elegiste se respeta: con el horario apagado (vacío), no vuelve.
+    await programarAvisos(estado({ avisos: { horario: {} }, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
+    expect(deHoy().map(([, texto]) => texto)).not.toContain(horario('almuerzo'));
+  });
+
   it('con «sin déficit», nunca', async () => {
-    await programarAvisos(estado({ perfil: { sinDeficit: true } as Estado['perfil'], avisos: { falta: { encendido: true } }, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
+    await programarAvisos(estado({ perfil: { sinDeficit: true } as Estado['perfil'], avisos: { ...APAGADO, falta: { encendido: true } }, registros: new Map([registro('desayuno', 8, 20, 400)]) }));
     expect(programadas).toEqual([]);
   });
 
   it('la llave de lo que falta, en Perfil, dice lo mismo que lo que se programa', async () => {
-    const llave = (e: Estado) => conLoQueFalta(e.avisos, algunAviso(e));
+    const llave = (e: Estado) => conLoQueFalta(avisosDe(e), algunAviso({ ...e, avisos: avisosDe(e) }));
     const desayuno = new Map([registro('desayuno', 8, 20, 400)]);
-    // Sin ningún aviso elegido se ve apagada, y no suena.
-    const nada = estado({ avisos: {}, registros: desayuno });
+    // Con todo apagado se ve apagada, y no suena.
+    const nada = estado({ avisos: APAGADO, registros: desayuno });
     expect(llave(nada)).toBe(false);
     await programarAvisos(nada);
     expect(programadas).toEqual([]);
     // Prendida a mano, suena sola.
-    const sola = estado({ avisos: { falta: { encendido: true } }, registros: desayuno });
+    const sola = estado({ avisos: { ...APAGADO, falta: { encendido: true } }, registros: desayuno });
     expect([algunAviso(sola), llave(sola)]).toEqual([false, true]);
     await programarAvisos(sola);
     expect(faltasDeHoy()).toEqual([[19 * 60, 'proteina']]);
@@ -239,6 +253,59 @@ describe('lo que vuelve a programar los avisos', () => {
     expect(cambio(() => almacen.ponerCorte(0))).toBe(true);
     expect(cambio(() => almacen.ponerNecesidad(420))).toBe(true);
     expect(cambio(() => almacen.ponerCalidad('baja'))).toBe(false);
+  });
+});
+
+describe('el día que sigue tu despertar, en el teléfono', () => {
+  /** Dos semanas durmiendo de 23:00 a 7:00, confirmadas (sin reloj). */
+  const local = (clave: string, hora: number) => {
+    const [y, m, d] = clave.split('-').map(Number);
+    return new Date(y, m - 1, d, hora).toISOString();
+  };
+  const noches = new Map(Array.from({ length: 14 }, (_, i) => {
+    const fecha = sumarDias(HOY, -i - 1);
+    return [fecha, { fecha, actualizado: '2026-11-01T09:00:00.000Z', hora: { dormirse: local(sumarDias(fecha, -1), 23), despertar: local(fecha, 7), origen: 'confirmada' as const, confianza: 'media' as const } }];
+  }));
+  const conNoches = (extra: Partial<Estado> = {}) =>
+    estado({ perfil: { nacimiento: 1994 }, noches, avisos: { pesarse: { encendido: true, todos: true } }, habitos: [], ...extra } as unknown as Partial<Estado>);
+  const dice = (tipo: string) => programadas.filter((p) => p.trigger.date.getDate() === 2 && p.content.data.tipo === tipo);
+  const hora = (p: (typeof programadas)[number] | undefined) => (p ? p.trigger.date.getHours() * 60 + p.trigger.date.getMinutes() : null);
+
+  beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] }).setSystemTime(a(6));
+    programadas.length = 0;
+    mockPremium = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('antes de saber que te despertaste no suena nada de la mañana; la noche sí', async () => {
+    await programarAvisos(conNoches());
+    for (const tipo of ['deuda', 'pesarse', 'desayuno']) expect(dice(tipo)).toEqual([]);
+    expect(dice('melatonina')).toHaveLength(1);
+    // Lo de la noche dice en el título qué hacer.
+    expect(dice('melatonina')[0].content.title).toBe(t('recordatorios.despertar.melatonina.titulo'));
+  });
+
+  it('con el despertar, de a uno desde que se supo: la deuda, pesarse y «¿Desayunas hoy?» con sus dos botones', async () => {
+    jest.setSystemTime(a(7, 40));
+    await programarAvisos(conNoches({ despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } } }));
+    expect(hora(dice('deuda')[0])).toBe(7 * 60 + 42);
+    expect(hora(dice('pesarse')[0])).toBe(8 * 60 + 2);
+    const pregunta = dice('desayuno')[0];
+    expect(pregunta.content.body).toBe(t('recordatorios.despertar.desayuno.pregunta'));
+    expect(pregunta.content.categoryIdentifier).toBe('desayuno');
+    // Reemplaza la hora del desayuno.
+    expect(dice('horario').some((p) => p.content.body === t('recordatorios.horario.desayuno'))).toBe(false);
+  });
+
+  it('«Voy directo al almuerzo»: ni la pregunta ni la hora del desayuno, y el almuerzo dice adónde va lo del desayuno', async () => {
+    jest.setSystemTime(a(9));
+    await programarAvisos(conNoches({ despertares: { [HOY]: { despertar: 7 * 60 + 30, sabido: 7 * 60 + 40 } }, desayunos: { [HOY]: 'directo' } }));
+    expect(dice('desayuno')).toEqual([]);
+    const almuerzo = dice('horario').find((p) => hora(p) === 13 * 60);
+    expect(almuerzo?.content.body).toMatch(/kcal/);
   });
 });
 

@@ -7,7 +7,7 @@ import es from '../textos/es.json';
 import { controlSemanal, type ComidaDelDia, type EntradaDelControl, type Pesada } from './control';
 import { metaDelCuestionario, NIVELES_DE_PROTEINA, type Respuestas } from './cuestionario';
 import {
-  apagaConsejo, apagaLinea, apagaLoQueConviene, apagaLoQueFalta, controlConCuidados, CUIDADOS, estadoConCuidados, extraDeLaLactancia, extraDelEmbarazo,
+  apagaConsejo, apagaLinea, apagaLoQueConviene, apagaLoQueFalta, controlConCuidados, cuidadosDe, CUIDADOS, estadoConCuidados, extraDeLaLactancia, extraDelEmbarazo,
   fechaProbableDe, GRUPOS, gruposPara, LO_QUE_DICE, loQueSube, metaConCuidados, metaDeAgua, metaDelCuestionarioConCuidados, objetivoConCuidados,
   preguntarSiNacio, rangoDelEmbarazo, referenciaConCuidados, reglasDe, semanaDeEmbarazo, sinDeficitDe,
   type Cuidado, type DatosDelCuidado, type Marca, type PersonaDelCuidado,
@@ -415,5 +415,15 @@ describe('los textos', () => {
       expect(de(es, `cuidados.lineas.${c}`)).not.toMatch(/trat(a|ar|amos) (tu|la|el)|control(a|ar) (tu|la|el)|mejora(r)? (tu|la|el)|revert|cura|dosis|\d+ ?(mg|µg|UI) de/i);
       expect(de(en, `cuidados.lineas.${c}`)).not.toMatch(/\btreat(s)? (your|the)|control(s)? (your|the)|improve(s)? (your|the)|revers|\bcure|\bdose|\d+ ?(mg|µg|IU) of/i);
     }
+  });
+});
+
+describe('lo que queda en el teléfono', () => {
+  it('se lee como se guardó, y lo que se preguntó además solo con su cuidado', () => {
+    const g = { marcados: ['embarazo', 'renal'] as const, datos: { embarazo: { fechaProbable: '2027-03-01', pesoAntes: 62, mellizos: false }, renal: { dialisis: true } } };
+    expect(cuidadosDe(JSON.parse(JSON.stringify(g)))).toEqual({ marcados: ['embarazo', 'renal'], datos: g.datos });
+    expect(cuidadosDe({ marcados: ['gota', 'inventada'], datos: { renal: { dialisis: true }, diabetes2: { bajaElAzucar: 'quizas' } } })).toEqual({ marcados: ['gota'], datos: {} });
+    expect(cuidadosDe({ marcados: ['diabetes2'], datos: { diabetes2: { bajaElAzucar: 'quizas' } } })?.datos).toEqual({ diabetes2: { bajaElAzucar: null } });
+    expect(cuidadosDe({})).toBeNull();
   });
 });

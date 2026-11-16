@@ -15,6 +15,7 @@ import { haySupabase, supabase } from '@/lib/supabase';
 import { accesoActual, alCambiarPremium, arrancarPremium, cuentaDePremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
 import { LO_QUE_MUEVE_LOS_AVISOS, programarAvisos } from '@/recordatorios/programar';
 import { yaNoEsDeMoss } from '@/secciones/perfil/cuentaApple';
+import { buscarDespertar } from '@/salud/despertar';
 import { leerSalud } from '@/salud/leer';
 import { estimarAnoche } from '@/salud/nocheSinReloj';
 import { idioma } from '@/textos';
@@ -198,6 +199,8 @@ export async function actualizarSalud(): Promise<void> {
   const s = await leerSalud(new Date(), elAlmacen().estado().fuenteDelSueno, elAlmacen().estado().corte).catch(() => null);
   if (s) elAlmacen().ponerSalud(s);
   await estimarAnoche(elAlmacen()).catch(() => {});
+  // Ya con la noche de Salud y la apertura anotada: a qué hora te despertaste hoy (el día que sigue tu despertar).
+  await buscarDespertar(elAlmacen()).catch(() => {});
 }
 
 /**

@@ -1,5 +1,5 @@
 // Los cuidados de salud (lo pediste el 5/11/2026: «si tienes algún problema lo marcas y, dependiendo de lo
-// que tengas, se edita tu dieta»), para aprobar en la galería: la app sigue con el sí/no de «sin déficit».
+// que tengas, se edita tu dieta»): se marcan en la entrada y en Perfil › Cuidados.
 // Cada condición cambia la meta y lo que Moss dice según su guía, y con varias gana la regla más cuidadosa.
 // La línea que no se cruza: Moss vuelve a lo que las guías recomiendan para toda la población y apaga lo que
 // va más allá (el déficit, la proteína alta, keto, los avisos de comer más o de tomar más agua); nunca da
@@ -60,7 +60,6 @@ export type DatosDelCuidado = {
 };
 
 export type PersonaDelCuidado = { sexo: Sexo; edad: number; alturaCm: number; pesoKg: number; actividad: Actividad; dieta?: Dieta };
-
 // ------------------------------------------------------------ lo que cambia
 /**
  * Lo que Moss dice y un cuidado puede apagar o prender. En la app: lo de comer antes y después de entrenar
@@ -530,3 +529,29 @@ export function apagaLinea(clase: Clase, r: Pick<Reglas, 'apagar'>): boolean {
 
 /** La barra que tiembla al pasarse (estadoDeMacro): con un trastorno de la alimentación, pasarse se ve como cumplido. */
 export const estadoConCuidados = (e: EstadoDeMacro, r: Pick<Reglas, 'apagar'>): EstadoDeMacro => (e === 'pasado' && r.apagar.includes('pasado') ? 'cumplido' : e);
+
+// ------------------------------------------------------------ lo que queda en el teléfono
+/** Lo marcado y lo que se preguntó además: queda solo en el teléfono (sin fila en la cuenta). */
+export type CuidadosGuardados = { marcados: Cuidado[]; datos: DatosDelCuidado };
+
+const esClave = (x: unknown): x is ClaveDia => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x);
+
+/** Lo guardado, si tiene forma: lo que no se entiende no está, y lo que se preguntó además solo con su cuidado. */
+export function cuidadosDe(x: unknown): CuidadosGuardados | null {
+  if (!x || typeof x !== 'object') return null;
+  const o = x as { marcados?: unknown; datos?: Record<string, Record<string, unknown> | undefined> };
+  if (!Array.isArray(o.marcados)) return null;
+  const marcados = CUIDADOS.filter((c) => (o.marcados as unknown[]).includes(c));
+  const d = o.datos ?? {};
+  const datos: DatosDelCuidado = {};
+  const e = d.embarazo;
+  if (marcados.includes('embarazo') && e && esClave(e.fechaProbable)) {
+    datos.embarazo = { fechaProbable: e.fechaProbable, pesoAntes: typeof e.pesoAntes === 'number' && e.pesoAntes > 0 ? e.pesoAntes : null, mellizos: e.mellizos === true };
+  }
+  const l = d.lactancia;
+  if (marcados.includes('lactancia') && l && esClave(l.parto)) datos.lactancia = { parto: l.parto, soloPecho: l.soloPecho !== false };
+  const a = d.diabetes2;
+  if (marcados.includes('diabetes2') && a) datos.diabetes2 = { bajaElAzucar: typeof a.bajaElAzucar === 'boolean' ? a.bajaElAzucar : null };
+  if (marcados.includes('renal') && d.renal) datos.renal = { dialisis: d.renal.dialisis === true };
+  return { marcados, datos };
+}

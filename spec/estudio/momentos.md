@@ -232,6 +232,22 @@ Leí cuatro páginas de Rise (al final, en «Fuentes»); su centro de ayuda dio 
   la expone.
 - **D7. Los nuevos** (sección 6): cuáles entran y si van como avisos de «Lo que conviene» o como hábitos de los
   primeros.
+- **D8. Cuánto corre la noche un despertar tarde** (sección 10). **Aprobado el 16/11, con la galería 49: la
+  mitad.** Hoy, la mitad: despertarte 2 h 30 min más tarde
+  corre 75 minutos la hora de siempre de dormirte, que pone el límite de cuánto se adelanta la cama
+  (`CORRE_CON_EL_DESPERTAR`, en `avisos.ts`). Es una convención: el reloj del cuerpo sigue al despertar
+  habitual (Burgess y Eastman 2005), pero no encontré cuánto lo corre una sola mañana. Opciones: la mitad
+  (recomendado), nada (la cama de siempre, aunque cueste dormirse) o todo (la cama se corre lo mismo que el
+  despertar, y la noche de mañana queda corta).
+- **D9. El máximo con el día que sigue tu despertar.** **Aprobado el 16/11: 10 de fábrica, con 10 entre las
+  opciones.** Con todo lo de fábrica y merienda, un día tiene diez
+  avisos: la deuda, pesarse, el desayuno, cuatro comidas, la melatonina, las revoluciones, las luces y la cama.
+  Con 6 se pierden lo de la noche y las comidas. Hoy, 10 de fábrica (`MAXIMO_QUE_SIGUE_EL_DESPERTAR`), con 10
+  sumado a las opciones. Choca con lo que se sabe de cuántos avisos (sección 3: más avisos, más malestar; Pielot
+  2014): la otra opción es dejar 6 y que lo de la noche se junte en un solo aviso.
+- **D10. Las gafas para la luz azul.** **Aprobado el 16/11: apagadas de fábrica y sin marca.** La sección 7 dice que Moss no nombra productos; lo pediste el 16/11 como
+  aviso apagado de fábrica («no todos las tienen»). Quedó así, sin marca y diciendo que la evidencia es poca
+  (sección 10). Se puede sacar.
 
 ---
 
@@ -505,3 +521,42 @@ secciones; «solo el resumen», el resumen.
 - Lavie 1986 y Kitamura 2016, que usa `horaDeDormir`: son del área del sueño y no los abrí.
 - El efecto exacto de los parámetros de Gardiner 2023 al corte (los «12 minutos») es una cuenta mía con los
   coeficientes publicados, sin la matriz de covarianza: es aproximada.
+
+---
+
+## 10. El día que sigue tu despertar (16/11/2026)
+
+Lo pediste el 16/11, después de que «pesarte» sonara antes de que te despertaras (`spec/avisos.md`, «El día que
+sigue tu despertar»). La regla está en `src/dominio/sigueElDespertar.ts`; acá, de dónde sale cada hora. Busqué en
+Europe PMC (su API) y abrí el artículo de PLoS ONE; lo que solo leí en el resumen, lo digo.
+
+| Aviso | Lo que hay | Lo que hace Moss | Fuerza |
+|---|---|---|---|
+| **La ventana de melatonina** | La melatonina empieza a subir con luz tenue (el DLMO) unas 2 h antes de dormirse, y esa distancia se mantuvo aunque se corriera la hora (Sletten 2010, 28 adultos jóvenes). Es la mejor marca del reloj del cuerpo (Pandi-Perumal 2007), y una regresión con la hora de despertarse la predijo a menos de 1,5 h en el 96 % de los que dormían a su aire (Burgess y Eastman 2005). En 170 adultos sanos, el inicio fue de las 18:13 a las 0:26, más temprano en quienes se despiertan más temprano (Burgess y Fogg 2008) | 2 h antes de la hora de dormirte de esa noche (`MELATONINA`), que sale de tu despertar y tu deuda. El texto dice «más o menos»: es un cálculo, no una medida (sección 7) | **Moderada** (la distancia de 2 h); **derivado** (que sirva de aviso) |
+| **El despertar corre la noche** | El DLMO sigue a la hora de despertarse (Burgess y Eastman 2005; Burgess y Fogg 2008), pero de despertares habituales, no de una mañana | La hora de siempre de dormirte se corre la mitad de lo que te despertaste más tarde (D8) | **Convención** |
+| **Bajar las revoluciones** | No hay estudios de cuánto antes; Rise dice de 1 a 2 h (en otra página, 30 a 60 minutos). La higiene del sueño sola no trata el insomnio (Edinger 2021) | Una hora antes de la cama, «algo tranquilo y sin pantallas brillantes» (`REVOLUCIONES`) | **Convención** |
+| **Anotar lo pendiente** | Escribir 5 minutos lo pendiente de mañana, al acostarse, durmió antes que escribir lo hecho, con polisomnografía (Scullin 2018, 57 adultos jóvenes; solo el resumen) | Al acostarte (5 minutos antes de la cama, `DESCARGA`), apagado de fábrica. Dice «suele ayudar», no que te va a dormir | **Moderada** (un ensayo chico) |
+| **Las gafas para la luz azul** | En 14 adultos con síntomas de insomnio, lentes ámbar 2 h antes de la cama durante una semana mejoraron el sueño frente a lentes claros (Shechter 2018, cruzado). La revisión Cochrane (Singh 2023, 6 ensayos y 148 personas): tres mejoraron el sueño y tres no; certeza muy baja | 2 h antes de la cama (`GAFAS`), apagado de fábrica y sin marca, diciendo que la evidencia es poca (D10) | **Débil** |
+| **La deuda al despertar, pesarse y el desayuno** | La deuda es la de Sueño (`deudaDeSueno`, a la media hora); pesarse, como siempre (al rato de despertarte y antes de desayunar); el desayuno no tiene una hora que la evidencia pida | De a uno, a 20 minutos (`SEPARACION`), desde el despertar de verdad | **Convención** (el orden) |
+
+**Fuentes de esta sección**
+
+- Sletten TL, Vincenzi S, Redman JR, Lockley SW, Rajaratnam SMW. 2010. Timing of sleep and its relationship with the
+  endogenous melatonin rhythm. *Front Neurol* 1:137. https://doi.org/10.3389/fneur.2010.00137 · **solo el resumen**.
+- Burgess HJ, Eastman CI. 2005. The dim light melatonin onset following fixed and free sleep schedules. *J Sleep Res*
+  14(3):229-237. https://doi.org/10.1111/j.1365-2869.2005.00470.x · **solo el resumen**.
+- Burgess HJ, Fogg LF. 2008. Individual differences in the amount and timing of salivary melatonin secretion. *PLoS
+  ONE* 3(8):e3055. https://doi.org/10.1371/journal.pone.0003055 · **en parte** (no da la distancia media entre el
+  DLMO y la hora de acostarse).
+- Pandi-Perumal SR, Smits M, Spence W, et al. 2007. Dim light melatonin onset (DLMO): a tool for the analysis of
+  circadian phase in human sleep and chronobiological disorders. *Prog Neuropsychopharmacol Biol Psychiatry*
+  31(1):1-11. https://doi.org/10.1016/j.pnpbp.2006.06.020 · **solo el resumen**.
+- Shechter A, Kim EW, St-Onge MP, Westwood AJ. 2018. Blocking nocturnal blue light for insomnia: a randomized
+  controlled trial. *J Psychiatr Res* 96:196-202. https://doi.org/10.1016/j.jpsychires.2017.10.015 · **solo el
+  resumen**.
+- Singh S, Keller PR, Busija L, et al. 2023. Blue-light filtering spectacle lenses for visual performance, sleep, and
+  macular health in adults. *Cochrane Database Syst Rev* 8:CD013244. https://doi.org/10.1002/14651858.CD013244.pub2 ·
+  **solo el resumen**.
+- Scullin 2018 y Edinger 2021, en la sección 9.
+
+**Lo que no verifiqué:** cuánto corre el reloj una sola mañana tarde (D8): no encontré un estudio de eso.

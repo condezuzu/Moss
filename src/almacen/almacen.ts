@@ -13,13 +13,15 @@ import { controlSemanal, ultimoDiaDeControl, type Peso } from '@/dominio/control
 import { claveDeMarca, mismoResumen, rehacerDia, resumirDia, type Dia, type Marca, type Origen } from '@/dominio/dias';
 import { CORTE_DE_FABRICA, CORTES, diaDeLaSemana, diaLogico, minutosEnElDia, partesDe, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
+import { DEPORTES, respuestasDe, type RespuestasGuardadas } from '@/dominio/cuestionario';
+import { controlConCuidados, cuidadosDe, reglasDe, sinDeficitDe, type CuidadosGuardados, type Reglas } from '@/dominio/cuidados';
 import { archivar, cantidadesPorDia, habitosDelDia, type Habito } from '@/dominio/habitos';
 import { logrosNuevos, type Logro } from '@/dominio/logros';
 import {
   edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil,
 } from '@/dominio/metas';
 import { limpiarNombre, type Nombre } from '@/dominio/nombre';
-import { adaptarRegistros, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
+import { adaptarRegistros, PREFERENCIAS_DE_FABRICA, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
 import { horasDeSiempre } from '@/dominio/recordatorios';
 import {
   borrado, claveDeFavorito, comidasParaElControl, confirmar, copiar, cumpleLaComida, delDia, restaurado,
@@ -30,7 +32,11 @@ import type { LoDeSalud } from '@/salud/convertir';
 import { NECESIDADES, type Cara, type NochePropia } from '@/dominio/sueno';
 import { LATENCIAS } from '@/dominio/sinReloj';
 import type { AvisoDeHabito, Avisos } from '@/dominio/avisos';
+import { RESPUESTAS_DEL_DESAYUNO, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
 import { DE_COMIDA, NOMBRE, nombreDeAjuste, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
+
+/** A qué hora te despertaste y cuándo lo supo Moss, en minutos desde la medianoche de ese día. */
+export type Despertar = { despertar: number; sabido: number };
 
 /** Los avisos que se eligen; los de comida van aparte, en `recordatorios`. */
 export type AjustesDeAvisos = Omit<Avisos, 'comidas'>;
@@ -75,12 +81,24 @@ export type Estado = MapasDeComida & {
    * más exacto para saber que estabas despierto (spec/sueno.md, «Sin reloj»). Queda en el teléfono.
    */
   uso: [number, number][];
+  /**
+   * El día que sigue tu despertar (spec/avisos.md): a qué hora te despertaste de verdad cada día y cuándo lo supo Moss,
+   * en minutos desde la medianoche, y qué contestaste a «¿Desayunas hoy?». Las últimas dos semanas; quedan en el teléfono.
+   */
+  despertares: Partial<Record<ClaveDia, Despertar>>;
+  desayunos: Partial<Record<ClaveDia, RespuestaDelDesayuno>>;
   /** De cuál aparato sale la noche (su id en Salud), si se eligió en Perfil › Aparatos; sin elegir, la automática. Queda en el teléfono. */
   fuenteDelSueno: string | null;
   /** Los números de la comida (las calorías y los gramos), o solo las figuras y las barras. Queda en el teléfono. */
   numeros: boolean;
-  /** Cuándo entrenás, puesto a mano (Perfil › Entrenamiento); queda en el teléfono. */
+  /** Cómo se ven las calorías del día (Todo lo de hoy): la luna, un anillo, un arco, la barra por comidas o los anillos de los macros. Queda en el teléfono. */
+  kcal: EstiloDeKcal;
+  /** Cuándo entrenás, del cuestionario o puesto a mano (Perfil › Entrenamiento); queda en el teléfono. */
   entreno: Entreno | null;
+  /** Lo del cuestionario nuevo que no va con el perfil (cuestionario.ts, RespuestasGuardadas). Queda en el teléfono. */
+  respuestas: RespuestasGuardadas | null;
+  /** Los cuidados de salud marcados (cuidados.ts): son datos de salud y quedan solo en el teléfono; a la cuenta va «sin déficit». */
+  cuidados: CuidadosGuardados | null;
   /** Si se ve qué comer antes y después de entrenar («No mostrar más» lo apaga). */
   verEntreno: boolean;
   /** Lo que cada uno quiere decir con sus palabras al decir la comida: «leche» es la descremada (por id). Queda en el teléfono. */
@@ -146,9 +164,18 @@ const AVISOS = 'avisos';
 const CALIDAD = 'calidad';
 const CALIDADES: readonly Calidad[] = ['alta', 'media', 'baja'];
 const USO = 'uso';
+const DESPERTARES = 'despertares';
+const DESAYUNOS = 'desayunos';
+/** Cuántos días de despertares y de respuestas del desayuno se guardan. */
+const DIAS_DEL_DESPERTAR = 14;
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 const NUMEROS = 'numeros';
+const KCAL = 'kcal';
+export const ESTILOS_DE_KCAL = ['luna', 'anillo', 'arco', 'barra', 'macros'] as const;
+export type EstiloDeKcal = (typeof ESTILOS_DE_KCAL)[number];
 const ENTRENO = 'entreno';
+const RESPUESTAS = 'respuestas';
+const CUIDADOS = 'cuidados';
 const VER_ENTRENO = 'verEntreno';
 const ALIAS = 'alias';
 const BUSQUEDAS = 'mandarBusquedas';
@@ -204,12 +231,13 @@ function leerAvisos(texto: string | undefined): AjustesDeAvisos {
     if (typeof x.maximoPorDia === 'number' && x.maximoPorDia >= 0) avisos.maximoPorDia = x.maximoPorDia;
     if (x.horario && typeof x.horario === 'object') {
       const horario = Object.fromEntries(Object.entries(x.horario as Record<string, unknown>).filter(([c, m]) => c in HORA_TIPICA && typeof m === 'number' && m >= 0 && m < 1440));
-      if (Object.keys(horario).length) avisos.horario = horario as AjustesDeAvisos['horario'];
+      // Vacío también: es el horario apagado, que así no vuelve al de fábrica (deFabrica, en sigueElDespertar.ts).
+      avisos.horario = horario as AjustesDeAvisos['horario'];
     }
     const pesarse = x.pesarse as AjustesDeAvisos['pesarse'];
     if (pesarse && typeof pesarse.encendido === 'boolean') avisos.pesarse = { encendido: pesarse.encendido, ...(pesarse.todos ? { todos: true } : {}) };
     // Los interruptores sueltos: lo que falta y los de lo que conviene hacer. Sin leerlos, apagarlos no duraba.
-    for (const clave of ['falta', 'antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion', 'partido', 'carrera'] as const) {
+    for (const clave of ['falta', 'antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion', 'partido', 'carrera', 'deuda', 'melatonina', 'revoluciones', 'descarga', 'gafas'] as const) {
       const v = x[clave] as { encendido?: unknown } | undefined;
       if (v && typeof v.encendido === 'boolean') avisos[clave] = { encendido: v.encendido };
     }
@@ -233,7 +261,17 @@ function leerEntreno(texto: string | undefined): Entreno | null {
     const x = texto ? (JSON.parse(texto) as Partial<Entreno>) : null;
     if (!x || !Array.isArray(x.dias) || typeof x.hora !== 'number' || typeof x.minutos !== 'number') return null;
     if (x.tipo !== 'fuerza' && x.tipo !== 'resistencia' && x.tipo !== 'mixta') return null;
-    return { dias: x.dias.filter((d): d is DiaSemana => Number.isInteger(d) && d >= 0 && d <= 6), hora: x.hora, minutos: x.minutos, tipo: x.tipo };
+    const dias = (l: unknown[]) => l.filter((d): d is DiaSemana => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6);
+    const entreno: Entreno = { dias: dias(x.dias), hora: x.hora, minutos: x.minutos, tipo: x.tipo, ...(typeof x.viaje === 'number' ? { viaje: x.viaje } : {}) };
+    // Lo del cuestionario: los deportes con sus sesiones, el partido y la categoría de peso.
+    const tipos = Array.isArray(x.tipos) ? DEPORTES.filter((d) => x.tipos!.includes(d)) : [];
+    const sesiones = Array.isArray(x.sesiones)
+      ? x.sesiones.filter((s) => s && tipos.includes(s.tipo) && Array.isArray(s.dias) && typeof s.hora === 'number' && typeof s.minutos === 'number').map((s) => ({ tipo: s.tipo, dias: dias(s.dias), hora: s.hora, minutos: s.minutos }))
+      : [];
+    if (!tipos.length || !sesiones.length) return entreno;
+    const p = x.partidos;
+    const partidos = p && Number.isInteger(p.dia) ? { dia: dias([p.dia])[0] ?? 6, hora: typeof p.hora === 'number' ? p.hora : null } : null;
+    return { ...entreno, tipos, sesiones, partidos, categoriaDePeso: typeof x.categoriaDePeso === 'boolean' ? x.categoriaDePeso : null };
   } catch {
     return null;
   }
@@ -265,6 +303,23 @@ function leerUso(texto: string | undefined): [number, number][] {
   }
 }
 
+/** Lo guardado por día, si tiene forma: solo claves de día con un valor que se entiende. */
+function porDia<T>(texto: string | undefined, vale: (x: unknown) => x is T): Partial<Record<ClaveDia, T>> {
+  try {
+    const x: unknown = texto ? JSON.parse(texto) : {};
+    if (!x || typeof x !== 'object') return {};
+    return Object.fromEntries(Object.entries(x).filter(([d, v]) => /^\d{4}-\d{2}-\d{2}$/.test(d) && vale(v)));
+  } catch {
+    return {};
+  }
+}
+const esMinuto = (x: unknown): x is number => typeof x === 'number' && x >= 0 && x < 1440;
+const esDespertar = (x: unknown): x is Despertar => !!x && typeof x === 'object' && esMinuto((x as Despertar).despertar) && Number.isFinite((x as Despertar).sabido);
+const esRespuesta = (x: unknown): x is RespuestaDelDesayuno => (RESPUESTAS_DEL_DESAYUNO as readonly unknown[]).includes(x);
+/** Lo de las últimas dos semanas hasta hoy. */
+const recientes = <T,>(x: Partial<Record<ClaveDia, T>>, dia: ClaveDia) =>
+  Object.fromEntries(Object.entries(x).filter(([d]) => d > sumarDias(dia, -DIAS_DEL_DESPERTAR))) as Partial<Record<ClaveDia, T>>;
+
 function leerCanasta(texto: string | undefined): Item[] {
   try {
     return texto ? (JSON.parse(texto) as Item[]) : [];
@@ -285,11 +340,33 @@ const esDeEjemplo = (h: Habito) => h.id.startsWith('ejemplo-');
  */
 export const soloLosDeEjemplo = (e: Pick<Estado, 'habitos' | 'hoy'>) => e.habitos.every((h) => (h.hasta !== undefined && h.hasta < e.hoy) || esDeEjemplo(h));
 
+/**
+ * Lo del cuestionario nuevo, al final de la entrada o desde «Tus respuestas»: lo que queda en el teléfono, el entreno
+ * (entrenoParaGuardar), la meta que salió y lo que va además con el perfil.
+ */
+export type CuestionarioNuevo = {
+  respuestas: RespuestasGuardadas;
+  cuidados: CuidadosGuardados;
+  entreno: Entreno | null;
+  /** La de metaDelCuestionario (o con cuidados); null: con diálisis o embarazada antes de los 18, van a mano. */
+  meta: { gasto: number; metas: Macros } | null;
+  /** El reparto, el peso meta (undefined lo quita: mantener no tiene) y la dieta. */
+  perfil?: { estilo?: Perfil['estilo']; pesoMeta?: number; dieta?: Preferencias['dieta'] };
+};
+
 /** La meta de comida que vale en un día: la última que empezó antes o ese mismo día. */
 export function metaVigente(e: Pick<Estado, 'metas'>, clave: ClaveDia): MetaGuardada | null {
   let vigente: MetaGuardada | null = null;
   for (const m of e.metas) if (m.desde <= clave) vigente = m;
   return vigente;
+}
+
+/** Las reglas de los cuidados marcados, para hoy (cuidados.ts); sin nada marcado, las de siempre. Sin perfil, null. */
+export function reglasDeCuidados(e: Pick<Estado, 'cuidados' | 'perfil' | 'pesos' | 'hoy'>, pesoKg = e.pesos[e.pesos.length - 1]?.kg): Reglas | null {
+  const p = e.perfil;
+  if (!p || pesoKg === undefined) return null;
+  const persona = { sexo: p.sexo, edad: edadDe(p, e.hoy), alturaCm: p.alturaCm, pesoKg, actividad: p.actividad, dieta: p.comer?.dieta };
+  return reglasDe(e.cuidados?.marcados ?? [], e.cuidados?.datos ?? {}, persona, e.hoy);
 }
 
 const porFecha = <T>(clave: (x: T) => string) => (a: T, b: T) => (clave(a) < clave(b) ? -1 : 1);
@@ -306,7 +383,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], fuenteDelSueno: null, numeros: true, entreno: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -412,7 +489,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', entreno: leerEntreno(g.ajustes[ENTRENO]), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
     revisarControl();
   }
 
@@ -458,6 +535,40 @@ export function crearAlmacen(op: Opciones) {
     guardar((r) => r.guardarMeta(meta));
     ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
     return true;
+  }
+
+  /**
+   * Lo contestado en el cuestionario: el perfil (con el reparto, el peso meta y la dieta del nuevo), el peso de hoy
+   * y, con el nuevo, lo que queda en el teléfono (las respuestas, los cuidados y el entreno). El peso de hoy se
+   * guarda siempre en la entrada; desde «Tus respuestas», solo si cambió.
+   */
+  function guardarRespuestas(c: Cuestionario, origenDelPeso: Peso['origen'], nuevo?: CuestionarioNuevo, siempreElPeso = true): Perfil {
+    const { edad: _edad, pesoKg, ...resto } = c;
+    const antes = estado.perfil;
+    const extra = nuevo?.perfil;
+    const perfil: Perfil = {
+      ...(antes ?? {}), ...resto,
+      ...(extra?.estilo ? { estilo: extra.estilo } : {}),
+      ...(extra?.dieta ? { comer: { ...(antes?.comer ?? PREFERENCIAS_DE_FABRICA), dieta: extra.dieta } } : {}),
+      nacimiento: Number(estado.hoy.slice(0, 4)) - c.edad, actualizado: momento(),
+    };
+    if (extra && 'pesoMeta' in extra) {
+      if (extra.pesoMeta === undefined) delete perfil.pesoMeta;
+      else perfil.pesoMeta = extra.pesoMeta;
+    }
+    guardar((r) => r.guardarPerfil(perfil));
+    const ultimo = estado.pesos[estado.pesos.length - 1]?.kg;
+    const peso: Peso | null = siempreElPeso || ultimo !== pesoKg ? { fecha: estado.hoy, kg: pesoKg, origen: origenDelPeso, momento: momento() } : null;
+    if (peso) guardar((r) => r.guardarPeso(peso));
+    cambiar({ perfil, pesos: peso ? [...estado.pesos.filter((p) => p.fecha !== peso.fecha), peso].sort(porFecha((p) => p.fecha)) : estado.pesos }, false);
+    if (nuevo) {
+      const { respuestas, cuidados, entreno } = nuevo;
+      guardar((r) => r.guardarAjuste(RESPUESTAS, JSON.stringify(respuestas)));
+      guardar((r) => r.guardarAjuste(CUIDADOS, JSON.stringify(cuidados)));
+      guardar((r) => r.guardarAjuste(ENTRENO, entreno ? JSON.stringify(entreno) : ''));
+      cambiar({ respuestas, cuidados, entreno }, false);
+    }
+    return perfil;
   }
 
   /** La entrada terminada en este teléfono: lo que se guardaba para retomarla ya no hace falta. */
@@ -508,10 +619,16 @@ export function crearAlmacen(op: Opciones) {
     const diaDelControl = ultimoDiaDeControl(hoy, perfil.diaDelControl ?? diaDeLaSemana(metas[0].desde));
     const pesoKg = pesos[pesos.length - 1]?.kg;
     if (diaDelControl <= ultima.desde || pesoKg === undefined) return;
-    const c = controlSemanal({
+    // Lo elegido en el cuestionario (la proteína del nivel y el ritmo de la fecha) y, con cuidados, su regla: en pausa, nada.
+    const eleccion = estado.respuestas?.eleccion;
+    const entrada = {
       hoy, pesadas: pesos, comidas: comidasParaElControl(estado.registros.values()), gastoAnterior: ultima.gasto, metasAnteriores: soloMacros(ultima),
       perfil: { edad: edadDe(perfil, hoy), sexo: perfil.sexo, pesoKg, objetivo: perfil.objetivo, ritmo: perfil.ritmo, sinDeficit: perfil.sinDeficit }, estilo: perfil.estilo,
-    });
+      ...(eleccion ? { eleccion } : {}),
+    };
+    const reglas = estado.cuidados?.marcados.length ? reglasDeCuidados(estado, pesoKg) : null;
+    const c = reglas ? controlConCuidados(entrada, reglas) : controlSemanal(entrada);
+    if (!c) return;
     const aMano = ultima.motivo === 'manual';
     const meta: MetaGuardada = { ...(aMano ? soloMacros(ultima) : c.metas), desde: hoy, gasto: c.gasto, motivo: aMano ? 'manual' : c.motivo, momento: momento() };
     controlDeHoy = meta;
@@ -780,25 +897,52 @@ export function crearAlmacen(op: Opciones) {
      * estilo, el peso meta, el día del control, la semana y cómo come) y las metas quedan. Devuelve
      * la meta que vale desde hoy, para mostrarla.
      */
-    responderCuestionario(c: Cuestionario, origenDelPeso: Peso['origen'] = 'manual'): MetaGuardada {
-      const { edad: _edad, pesoKg, ...resto } = c;
+    responderCuestionario(c: Cuestionario, origenDelPeso: Peso['origen'] = 'manual', nuevo?: CuestionarioNuevo): MetaGuardada {
       const antes = estado.perfil;
-      const perfil: Perfil = { ...(antes ?? {}), ...resto, nacimiento: Number(estado.hoy.slice(0, 4)) - c.edad, actualizado: momento() };
-      const peso: Peso = { fecha: estado.hoy, kg: pesoKg, origen: origenDelPeso, momento: momento() };
+      const perfil = guardarRespuestas(c, origenDelPeso, nuevo);
       terminarEntrada();
-      guardar((r) => r.guardarPerfil(perfil));
-      guardar((r) => r.guardarPeso(peso));
-      cambiar({ perfil, pesos: [...estado.pesos.filter((p) => p.fecha !== peso.fecha), peso].sort(porFecha((p) => p.fecha)) }, false);
       if (estado.metas.length) {
         // Con las metas de la cuenta, como en Progreso: solo un objetivo distinto (o sin déficit) las mueve.
         if (!metaDeLaEstrategia(antes ?? perfil, perfil)) cambiar(alDia(estado).estado, false);
         return metaVigente(estado, estado.hoy) ?? estado.metas[estado.metas.length - 1];
       }
-      const { gasto, metas } = metasIniciales(c);
-      const meta: MetaGuardada = { ...metas, desde: estado.hoy, gasto, motivo: 'inicial', momento: momento() };
+      const { gasto, metas } = nuevo?.meta ?? metasIniciales(c);
+      const meta: MetaGuardada = { ...metas, desde: estado.hoy, gasto: Math.round(gasto / 10) * 10, motivo: 'inicial', momento: momento() };
       guardar((r) => r.guardarMeta(meta));
       ponerMetas([meta]);
       return meta;
+    },
+    /**
+     * «Tus respuestas», desde Perfil: el cuestionario contestado otra vez. Guarda lo contestado como al final de la
+     * entrada y rehace la meta desde hoy con lo nuevo (sin meta, con diálisis o embarazada antes de los 18, quedan
+     * las que había: van a mano). Devuelve la meta que vale desde hoy.
+     */
+    cambiarRespuestas(c: Cuestionario, origenDelPeso: Peso['origen'], nuevo: CuestionarioNuevo): MetaGuardada | null {
+      if (!estado.perfil) return null;
+      guardarRespuestas(c, origenDelPeso, nuevo, false);
+      if (!nuevo.meta) {
+        cambiar(alDia(estado).estado, false);
+        return metaVigente(estado, estado.hoy);
+      }
+      const meta: MetaGuardada = { ...nuevo.meta.metas, desde: estado.hoy, gasto: Math.round(nuevo.meta.gasto / 10) * 10, motivo: 'objetivo', momento: momento() };
+      guardar((r) => r.guardarMeta(meta));
+      ponerMetas([...estado.metas.filter((m) => m.desde !== meta.desde), meta].sort(porFecha((m) => m.desde)));
+      return meta;
+    },
+    /**
+     * Perfil › Cuidados: lo marcado y lo que se preguntó además, solo en el teléfono. A la cuenta va «sin déficit»,
+     * y si cambia, la meta de hoy con él (como en Progreso).
+     */
+    ponerCuidados(cuidados: CuidadosGuardados) {
+      guardar((r) => r.guardarAjuste(CUIDADOS, JSON.stringify(cuidados)));
+      cambiar({ cuidados }, false);
+      const antes = estado.perfil;
+      const reglas = reglasDeCuidados(estado);
+      if (!antes || !reglas || !!antes.sinDeficit === sinDeficitDe(reglas)) return;
+      const perfil: Perfil = { ...antes, sinDeficit: sinDeficitDe(reglas), actualizado: momento() };
+      guardar((r) => r.guardarPerfil(perfil));
+      cambiar({ perfil }, false);
+      metaDeLaEstrategia(antes, perfil);
     },
     /**
      * La estrategia de Progreso: el objetivo y su ritmo, cómo se reparten los macros, el peso al que
@@ -815,6 +959,13 @@ export function crearAlmacen(op: Opciones) {
       const perfil: Perfil = { ...antes, ...resto, ...(sano && 'pesoMeta' in cambios ? { pesoMeta } : {}), actualizado: momento() };
       guardar((r) => r.guardarPerfil(perfil));
       cambiar({ perfil }, false);
+      // Otro objetivo u otro ritmo: la fecha y la proteína elegidas en el cuestionario ya no son las de ahora.
+      const r0 = estado.respuestas;
+      if (r0 && (perfil.objetivo !== antes.objetivo || perfil.ritmo !== antes.ritmo)) {
+        const respuestas: RespuestasGuardadas = { ...r0, fecha: null, recomponer: false, eleccion: { pct: null, proteinaPorKg: perfil.objetivo === antes.objetivo ? r0.eleccion.proteinaPorKg : null } };
+        guardar((r) => r.guardarAjuste(RESPUESTAS, JSON.stringify(respuestas)));
+        cambiar({ respuestas }, false);
+      }
       // El reparto de la semana cambia la meta de hoy, y con eso la estrella de las calorías.
       if (!metaDeLaEstrategia(antes, perfil) && 'semana' in cambios) cambiar(alDia(estado).estado, false);
     },
@@ -1068,6 +1219,11 @@ export function crearAlmacen(op: Opciones) {
       guardar((r) => r.guardarAjuste(NECESIDAD, elegida === null ? '' : String(elegida)));
       cambiar({ necesidad: elegida }, false);
     },
+    /** Cómo se ven las calorías del día. */
+    ponerKcal(kcal: EstiloDeKcal) {
+      guardar((r) => r.guardarAjuste(KCAL, kcal));
+      cambiar({ kcal }, false);
+    },
     ponerNumeros(numeros: boolean) {
       guardar((r) => r.guardarAjuste(NUMEROS, numeros ? '' : 'no'));
       cambiar({ numeros }, false);
@@ -1095,6 +1251,26 @@ export function crearAlmacen(op: Opciones) {
       else return;
       guardar((r) => r.guardarAjuste(USO, JSON.stringify(uso)));
       cambiar({ uso }, false);
+    },
+    /**
+     * Te despertaste a esta hora ese día, y Moss lo supo a esta otra (minutos desde la medianoche). Queda lo más temprano
+     * que llegó: abrir Moss a las 7:40 y, después, la noche de Salud que terminó a las 7:10 dicen las 7:10. Cuándo se supo
+     * queda el de la primera vez: lo que ya sonó no se corre.
+     */
+    ponerDespertar(dia: ClaveDia, minutos: number, sabido: number) {
+      const antes = estado.despertares[dia];
+      if (!esMinuto(minutos) || !Number.isFinite(sabido) || (antes !== undefined && antes.despertar <= minutos)) return;
+      const nuevo: Despertar = { despertar: Math.round(minutos), sabido: antes?.sabido ?? Math.round(sabido) };
+      const despertares = recientes({ ...estado.despertares, [dia]: nuevo }, estado.hoy);
+      guardar((r) => r.guardarAjuste(DESPERTARES, JSON.stringify(despertares)));
+      cambiar({ despertares }, false);
+    },
+    /** Lo que contestaste a «¿Desayunas hoy?» ese día, con los botones del aviso. */
+    ponerDesayuno(dia: ClaveDia, respuesta: RespuestaDelDesayuno) {
+      if (estado.desayunos[dia] === respuesta) return;
+      const desayunos = recientes({ ...estado.desayunos, [dia]: respuesta }, estado.hoy);
+      guardar((r) => r.guardarAjuste(DESAYUNOS, JSON.stringify(desayunos)));
+      cambiar({ desayunos }, false);
     },
     ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
     cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),

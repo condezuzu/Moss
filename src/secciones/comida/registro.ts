@@ -7,7 +7,7 @@ import type { Comida } from '@/dominio/comidas';
 import type { ClaveDia } from '@/dominio/fechas';
 import type { Item } from '@/dominio/registros';
 
-export type Panel = 'revision' | 'rapida' | 'guardadas' | 'crear' | 'receta' | 'pegar' | 'codigo' | 'etiqueta' | 'decir';
+export type Panel = 'revision' | 'rapida' | 'guardadas' | 'crear' | 'receta' | 'pegar' | 'codigo' | 'etiqueta' | 'decir' | 'foto';
 
 export type Pedido = {
   /** Sin comida, la de la hora. */
@@ -22,6 +22,11 @@ export type Pedido = {
   items?: Item[];
   /** Desde la hoja del «+»: la carga rápida registra sin pasar por la revisión. */
   directo?: boolean;
+  /**
+   * La foto de la comida (fotos.ts): «¿Qué es?» de una que quedó sin anotar (con el panel «decir»), o el
+   * visor (el panel «foto») para sacar otra en su lugar o, con `paraComida`, sumarle una a una comida ya anotada.
+   */
+  foto?: { anotar?: string; reemplazar?: string; paraComida?: { comida: Comida; minutos: number } };
 };
 
 let actual: (Pedido & { vez: number }) | null = null;

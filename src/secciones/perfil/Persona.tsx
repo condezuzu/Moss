@@ -1,6 +1,7 @@
-// La persona arriba de Perfil, la de la galería (galeria/src/perfil.js, pf-cab): su foto o su inicial
-// en oro (sin nombre ni foto, un círculo tenue con la silueta), su nombre y el correo de la cuenta.
-// Tocarla abre Editar perfil. Lo que cambia entra con un fundido sobre lo de antes.
+// La persona arriba de Perfil, la de la galería (galeria/src/perfil.js, pf-tarjeta): su foto o su inicial
+// en oro (sin nombre ni foto, un círculo tenue con la silueta), su nombre y el correo de la cuenta, y
+// debajo la edad, la altura y el peso de hoy. Tocarla abre Editar perfil. Lo que cambia entra con un
+// fundido sobre lo de antes.
 
 import { Image } from 'expo-image';
 import { Platform, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
@@ -38,6 +39,37 @@ export function Avatar({ foto, nombre, tam }: { foto: string | null; nombre: str
   );
 }
 
+export type Mini = { clave: string; etiqueta: string; valor: string; unidad?: string; alTocar: () => void };
+
+/**
+ * La tarjeta de arriba de Perfil (galeria/src/perfil.js, pf-tarjeta): la persona y, debajo, lo importante de
+ * un vistazo (la edad, la altura y el peso de hoy). El valor que cambia entra con un fundido.
+ */
+export function Tarjeta({ minis, ...persona }: Parameters<typeof Persona>[0] & { minis: Mini[] }) {
+  return (
+    <View style={st.tarjeta}>
+      <Persona {...persona} />
+      <View style={st.minis}>
+        {minis.map((m) => (
+          <Pressable
+            key={m.clave}
+            onPress={m.alTocar}
+            style={({ pressed }) => [st.mini, pressed && st.miniTocada]}
+            accessibilityRole="button"
+            accessibilityLabel={`${m.etiqueta}: ${m.valor}${m.unidad ? ` ${m.unidad}` : ''}`}
+          >
+            <Text style={st.miniEtiqueta} numberOfLines={1}>{m.etiqueta}</Text>
+            <Animated.Text key={m.valor + (m.unidad ?? '')} entering={ENTRA} style={st.miniValor} numberOfLines={1}>
+              {m.valor}
+              {m.unidad ? <Text style={st.miniUnidad}>{` ${m.unidad}`}</Text> : null}
+            </Animated.Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 /** La fila de arriba de Perfil: sin nombre, invita a ponerlo. */
 export function Persona({ nombre, correo, foto, alTocar }: { nombre: string; correo: string | null; foto: string | null; alTocar: () => void }) {
   return (
@@ -65,8 +97,20 @@ export function Persona({ nombre, correo, foto, alTocar }: { nombre: string; cor
   );
 }
 
+const FONDO_DE_LA_TARJETA = 'linear-gradient(150deg, #2b3563 0%, #1b2247 56%, #11162f 100%)';
+
 const st = StyleSheet.create({
-  persona: { marginTop: 10, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  tarjeta: {
+    marginTop: 2, paddingTop: 14, paddingHorizontal: 14, paddingBottom: 13, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.2)', backgroundColor: '#1b2247',
+    ...((Platform.OS === 'web' ? { backgroundImage: FONDO_DE_LA_TARJETA } : { experimental_backgroundImage: FONDO_DE_LA_TARJETA }) as ViewStyle),
+  },
+  minis: { flexDirection: 'row', gap: 8, marginTop: 13 },
+  mini: { flex: 1, minWidth: 0, gap: 6, paddingTop: 10, paddingHorizontal: 11, paddingBottom: 11, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(239, 230, 207, 0.055)' },
+  miniTocada: { transform: [{ scale: 0.97 }], backgroundColor: 'rgba(239, 230, 207, 0.09)' },
+  miniEtiqueta: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.64)' },
+  miniValor: { fontFamily: letras.numero, fontSize: 20, lineHeight: 22, color: '#fbf2d9', fontVariant: ['tabular-nums'] },
+  miniUnidad: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.72)' },
+  persona: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   marco: { overflow: 'hidden' },
   centro: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   oro: {
@@ -76,7 +120,7 @@ const st = StyleSheet.create({
   vacio: { backgroundColor: 'rgba(239, 230, 207, 0.06)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)' },
   inicial: { fontFamily: letras.numero, color: '#1a1406' },
   textos: { flex: 1, gap: 5 },
-  nombre: { fontFamily: letras.numeroMedio, fontSize: 24, color: colores.pergamino },
+  nombre: { fontFamily: letras.numeroMedio, fontSize: 23, color: colores.pergamino },
   sinNombre: { fontFamily: letras.numero, fontSize: 19, color: colores.oroClaro },
   correo: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
 });

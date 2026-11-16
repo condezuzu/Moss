@@ -424,13 +424,105 @@ y entrenar tarde, Sueño; la recuperación, Ascent.
   - Las demás, y el estudio entero de los horarios, en
     [`estudio/momentos.md`](estudio/momentos.md).
 
+## El día que sigue tu despertar (16/11/2026, lo pediste; aprobado en la galería 49 y programado)
+
+**Lo que pasó:** el 16/11 te llegó «Buen momento para pesarte» antes de despertarte. Los avisos se programan
+de antemano: pesarse va a tu despertar habitual + 10 min (`PESARSE_DESPUES`) o a las 8:00 sin noches
+(`PESARSE_SIN_SUENO`). Si ese día te despertás más tarde, suena igual.
+
+**Lo que pediste:** como Rise, que el día se acomode a cómo es el tuyo, y que cada día sea distinto.
+
+1. **El día arranca cuando te despertás de verdad.** El despertar real sale de lo primero que llegue: el final
+   de la noche en Salud, el despertador o el atajo (las anclas, `src/salud/anclas.ts`) o la primera vez que
+   abres Moss de mañana. La tarea de segundo plano (`src/fondo/`) lo busca de mañana, con el teléfono ya
+   desbloqueado. Hasta saberlo, no suena nada de la mañana: ni pesarse, ni el desayuno.
+2. **Al despertar, de a uno y separados:**
+   - tu deuda de sueño en una línea, sin festejar: «Tu deuda de sueño bajó a 1 h 20 min» (o subió);
+   - un rato después, pesarse, si lo tienes prendido;
+   - después, el desayuno: «¿Desayunas hoy?», con dos botones en el aviso: «Sí» y «Voy directo al almuerzo».
+3. **El día de comidas se ordena con la primera comida.** Si la primera que anotas es el desayuno, las demás
+   van a su hora de siempre. Si es el almuerzo, porque no desayunaste, la merienda y la cena se corren
+   (`horasCorridas` en `avisos.ts`) y lo que te queda del día se reparte entre ellas: «Lo que no comiste en
+   el desayuno va a la merienda y la cena». Sin culpa y sin pasarse del día.
+4. **La noche se arma con tu despertar y tu deuda.** Con la hora a la que te despertaste, cuánto necesitas
+   dormir y la deuda, Moss calcula la hora de ir a la cama de esa noche, y desde ahí, en orden:
+   - **tu ventana de melatonina** (de fábrica): cuándo te va a costar menos dormirte;
+   - **bajar las revoluciones** (de fábrica), una hora antes: lo tranquilo, sin pantallas brillantes;
+   - **bajar las luces** (de fábrica, como ahora);
+   - **la hora de ir a la cama** (de fábrica, como ahora).
+5. **Cada aviso con su interruptor en Perfil › Avisos**, en dos grupos:
+   - **de fábrica:** la deuda al despertar, pesarse (si lo elegiste), las comidas, la ventana de melatonina,
+     bajar las revoluciones, bajar las luces y la hora de dormir;
+   - **más (apagados de fábrica):** descargar lo que tienes en la cabeza antes de dormir, las gafas que
+     bloquean la luz azul (no todos las tienen), el café, no entrenar fuerte tan tarde y la última comida
+     grande.
+   Siguen las reglas de siempre: de a uno, con un máximo por día, y nada de lo que ya pasó.
+
+**Antes de programarlo:** lo visual (Perfil › Avisos con los dos grupos, los botones del desayuno y los textos
+nuevos) va primero a la galería. La ventana de melatonina y la descarga de pensamientos van con su evidencia
+en `spec/estudio/momentos.md`: la melatonina sube unas 2 horas antes de la hora habitual de dormirse
+(DLMO), y escribir lo pendiente antes de acostarse acortó el tiempo en dormirse en un ensayo chico
+(Scullin, 2018); se revisa antes de escribir los textos.
+
+**Aprobado el 16/11** en la galería 49 (escenario `dia`: Perfil › Avisos con sus dos grupos y la pantalla bloqueada),
+con D8 (la cama se corre la mitad de lo que te despertaste tarde), D9 (máximo de fábrica 10) y D10 (las gafas,
+apagadas y sin marca) de [`estudio/momentos.md`](estudio/momentos.md).
+
+**Cómo quedó:**
+
+- **La regla** está en `src/dominio/sigueElDespertar.ts`, con sus tests, y entra en `avisosDelDia` como lo que
+  conviene (`avisosQueSiguenElDespertar`). Se prende con `Sueno.despertarReal` (el despertar de verdad de cada día, o
+  null mientras no se sabe): sin él, todo sigue como antes.
+- **La mañana:** sin despertar, no suena pesarse, ni el desayuno, ni lo de un hábito «al despertar». Con él: la deuda
+  a esa hora («Tu deuda de sueño bajó a 1 h 30 min», a la media hora como en Sueño; subió, sigue, bajó a cero o no
+  hay), pesarse 20 minutos después (10 sin la deuda) y «¿Desayunas hoy?» 20 minutos después o a la hora del
+  desayuno, con «Sí» y «Voy directo al almuerzo». La pregunta reemplaza la hora del desayuno y su «falta anotar».
+- **Sin desayuno** (lo contestaste, o lo primero que anotaste es otra comida): cada comida que queda dice cuánto le
+  toca de lo que falta del día, con el reparto del plan (`REPARTO`): «Hora del almuerzo: unas 1050 kcal. Lo que no
+  comiste en el desayuno va al almuerzo, a la merienda y a la cena.» Lo anotado corre las demás (`horasCorridas`).
+  Con los números ocultos o sin meta, sin kcal.
+- **La noche:** la cama sale de mañana, la necesidad y la deuda, como siempre, y despertarte más tarde corre la mitad
+  la hora de siempre de dormirte (D8 de [`estudio/momentos.md`](estudio/momentos.md)). La melatonina, 2 h antes de
+  dormirte; las luces, hora y media antes de la cama; las revoluciones, una hora antes; la cama, como siempre. Las
+  gafas (2 h antes) y anotar lo pendiente (al acostarte), apagados. La evidencia, en la sección 10 de ese estudio.
+- **De fábrica** (`deFabrica`): la deuda, el horario (desayuno, almuerzo y cena), la melatonina, las revoluciones,
+  las luces y la cama, con un máximo de 10 (D9); pesarse, como lo elegiste.
+- **En el teléfono (16/11):**
+  - **El despertar real** (`despertarDelDia`, en `sigueElDespertar.ts`): lo más temprano entre el final de la noche
+    en Salud, las anclas del despertador o el atajo (`alarmaParada`, `despertadorParado`, `meDesperte`) y la
+    primera vez que abres Moss de mañana. Abrir Moss o un final de noche de Salud de más de 3 h antes de tu despertar
+    de siempre no cuentan (mirar la hora de madrugada no es despertarse), ni abrirla pasadas las 13; el despertador
+    sí, desde el corte. Lo busca `src/salud/despertar.ts` al abrir Moss y en la tarea de segundo plano, y queda en el
+    teléfono por día (`despertares`, dos semanas), con la hora en que Moss lo supo.
+  - **Lo de la mañana, desde que Moss lo sabe:** el teléfono se entera un rato después (abres Moss, llega la noche de
+    Salud, corre la tarea), y lo de antes ya no puede sonar. La deuda suena dos minutos después de saberlo
+    (`inicioDeLaManana`, en `avisos.ts`), y lo demás sigue desde ahí; lo de un hábito «al despertarte», igual. Si se
+    supo más de 2 h después de despertarte, la deuda y pesarse ya no suenan (`MANANA_QUE_SE_PASO`, una convención);
+    la pregunta del desayuno sí.
+  - **«¿Desayunas hoy?»** trae los dos botones (la categoría `desayuno` de `programar.ts`). «Sí» abre Moss en el
+    desayuno, para anotarlo; «Voy directo al almuerzo» se guarda sin abrirla (`desayunos`). Si iOS no le pasa la
+    respuesta a Moss, anotar el almuerzo primero dice lo mismo. Contestada, sale del centro de notificaciones.
+  - **`programar.ts`** arma cada día lo que conviene (`loQueConviene`) y lo del despertar (`avisosDelDespertar`), con
+    la deuda de ayer, la meta, lo comido, las sesiones, la cafeína por toma, el peso, la edad y los cuidados (lo que un
+    cuidado apaga no suena; con reflujo, la última comida 3 h antes). Lo que conviene y lo de la noche llevan su título.
+  - **De fábrica** (`avisosDe`, con `deFabrica`): vale para lo que nunca se tocó; lo elegido se respeta. El horario
+    apagado queda vacío (`{}`) y ya no vuelve al de fábrica. Quien lo había apagado antes del 16/11 lo guardaba sin
+    nada (igual que no haberlo tocado): le vuelve prendido.
+  - **Perfil › Avisos**, como en la galería: «Tu día» (la deuda, pesarse, el horario, la melatonina, las luces, las
+    revoluciones, la hora de dormir, «Tardo en dormirme» y «Necesito dormir») y «Más avisos» (anotar lo pendiente, las
+    gafas, el café, entrenar tarde, la última comida, comer antes y la proteína después de entrenar, las comidas sin
+    anotar y si vas muy bajo), y el máximo con 10. La víspera del partido y la carrera larga, todavía no (según el
+    deporte está para aprobar); la recuperación, con Ascent.
+
 ## Lo que queda
 
 - Los avisos de después de entrenar (con Ascent) andan en la regla, pero la
   conexión con Ascent está apagada en la v1.
 - La alarma propia de Moss (AlarmKit) y los Atajos para el sueño, después de la
   v1: ver [`sueno-sin-esfuerzo.md`](sueno-sin-esfuerzo.md).
-- **Para programar lo que conviene en el teléfono**, una vez aprobado en la galería:
+- **Para programar lo que conviene en el teléfono**, una vez aprobado en la galería. **Hecho el 16/11**, con el día
+  que sigue tu despertar (arriba), salvo la recuperación (con Ascent), el partido y la carrera (según el deporte, para
+  aprobar), «Tardo en llegar al gimnasio» en Perfil y el texto de Perfil › Entrenamiento:
   1. `src/recordatorios/programar.ts`: armar `loQueConviene` de cada día y pasarlo
      con `convieneDe` a `avisosDeLaSemana` (ya lo recibe). Lo que pide: las sesiones
      con su tipo (`sesionesDelDia`), el viaje (`Entreno.viaje`), cuándo entrenaste

@@ -5,7 +5,7 @@
 
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type AccessibilityActionEvent } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type AccessibilityActionEvent, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
@@ -27,6 +27,9 @@ import { PorQueLaHora } from './PorQueLaHora';
 const reloj = (minutos: number) => horaDelDia(minutos + 18 * 60);
 const CARAS = [1, 2, 3, 4, 5] as const;
 const TENUE = 'rgba(239, 230, 207, 0.62)';
+/** La pregunta de la mañana toma un poco de la aurora (galeria/src/sueno.js, .sn-manana). */
+const AURORA = 'linear-gradient(135deg, rgba(30, 92, 92, 0.3), rgba(30, 34, 92, 0.34))';
+const DE_LA_AURORA = (Platform.OS === 'web' ? { backgroundImage: AURORA } : { experimental_backgroundImage: AURORA }) as ViewStyle;
 
 /** «Ahora no» la esconde por hoy: queda mientras la app está abierta, sin recordatorios. */
 const ocultas = new Set<ClaveDia>();
@@ -165,7 +168,7 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
     <>
       {/* Un fundido no es movimiento: con Reducir movimiento también se ve (si no, aparecía de golpe). */}
       {(modo || conCaras) && (
-        <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(220).reduceMotion(ReduceMotion.Never)} layout={ACOMODA} style={st.carta}>
+        <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(220).reduceMotion(ReduceMotion.Never)} layout={ACOMODA} style={[st.carta, DE_LA_AURORA]}>
           {modo && noche && (
             <Aparece key={`hora-${modo}-${editando}`}>
               {modo === 'proponer' && !editando ? (
@@ -267,7 +270,7 @@ export function LaManana({ hoy, noche, propia, noches, ancho, desde }: {
 }
 
 const st = StyleSheet.create({
-  carta: { marginTop: 14, borderRadius: 20, paddingTop: 16, paddingHorizontal: 17, paddingBottom: 8, backgroundColor: 'rgba(8, 12, 26, 0.72)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', overflow: 'hidden' },
+  carta: { marginTop: 14, borderRadius: 20, paddingTop: 16, paddingHorizontal: 17, paddingBottom: 8, backgroundColor: 'rgba(12, 20, 46, 0.6)', borderWidth: 1, borderColor: 'rgba(120, 220, 200, 0.14)', overflow: 'hidden' },
   pregunta: { marginBottom: 12, fontFamily: letras.textoMedio, fontSize: 19, lineHeight: 23, color: colores.pergamino },
   nota: { marginTop: -6, marginBottom: 14, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)' },
   acciones: { flexDirection: 'row', gap: 8 },

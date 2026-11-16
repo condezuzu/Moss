@@ -7,7 +7,8 @@ import { diaDeLaSemana } from '../dominio/fechas';
 import type { Habito } from '../dominio/habitos';
 import { metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
 import { aguaDelDia, borrado, delDia, itemDeAlimento, itemRapido, totalDelDia, vigentes, type Registro, type Valores } from '../dominio/registros';
-import { crearAlmacen, metaVigente, soloLosDeEjemplo } from './almacen';
+import { entrenoParaGuardar } from '../dominio/cuestionario';
+import { crearAlmacen, metaVigente, reglasDeCuidados, soloLosDeEjemplo, type CuestionarioNuevo } from './almacen';
 import type { Datos } from './mezclar';
 import { repositorioEnMemoria, sinComida, type Repositorio } from './repositorio';
 
@@ -88,6 +89,14 @@ describe('local primero', () => {
     expect((await armar(repositorio)).almacen.estado().calidad).toBeNull();
   });
 
+  it('cómo se ven las calorías se recuerda; de fábrica, la luna', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().kcal).toBe('luna');
+    almacen.ponerKcal('macros');
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().kcal).toBe('macros');
+  });
+
   it('los avisos se recuerdan en el teléfono: la hora de dormir, el máximo y el de cada hábito', async () => {
     const { almacen, repositorio } = await armar();
     expect(almacen.estado().avisos).toEqual({});
@@ -119,6 +128,35 @@ describe('local primero', () => {
     almacen.ponerAvisos({ partido: { encendido: true }, carrera: { encendido: false } });
     await almacen.esperar();
     expect((await armar(repositorio)).almacen.estado().avisos).toEqual({ partido: { encendido: true }, carrera: { encendido: false } });
+  });
+
+  it('los del día que sigue tu despertar y el horario apagado (vacío) también se recuerdan', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerAvisos({ deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: {} });
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().avisos).toEqual({
+      deuda: { encendido: false }, melatonina: { encendido: true }, revoluciones: { encendido: false }, descarga: { encendido: true }, gafas: { encendido: false }, horario: {},
+    });
+  });
+
+  it('el despertar de cada día: queda lo más temprano, con la hora en que se supo la primera vez, y dos semanas', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().despertares).toEqual({});
+    almacen.ponerDespertar('2026-10-21', 7 * 60 + 40, 7 * 60 + 40);
+    // Después llega la noche de Salud, que terminó antes: el despertar se corre, cuándo se supo no.
+    almacen.ponerDespertar('2026-10-21', 7 * 60 + 10, 8 * 60);
+    // Abrir Moss más tarde no cambia nada.
+    almacen.ponerDespertar('2026-10-21', 9 * 60, 9 * 60);
+    almacen.ponerDespertar('2026-10-01', 8 * 60, 8 * 60);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().despertares).toEqual({ '2026-10-21': { despertar: 7 * 60 + 10, sabido: 7 * 60 + 40 } });
+  });
+
+  it('lo que contestaste a «¿Desayunas hoy?» se recuerda en el teléfono', async () => {
+    const { almacen, repositorio } = await armar();
+    almacen.ponerDesayuno('2026-10-21', 'directo');
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().desayunos).toEqual({ '2026-10-21': 'directo' });
   });
 
   it('el aparato del que sale la noche se recuerda en el teléfono, y null vuelve a la automática', async () => {
@@ -1074,5 +1112,78 @@ describe('tu nombre', () => {
     almacen.ponerNombre('Ana');
     await almacen.olvidarTodo();
     expect(almacen.estado().nombre).toBeNull();
+  });
+});
+
+describe('el cuestionario nuevo y los cuidados', () => {
+  const respuestas: Cuestionario = { edad: 31, sexo: 'f', alturaCm: 165, pesoKg: 64, actividad: 'algo', objetivo: 'mantener', ritmo: 'recomendado' };
+  const nuevo: CuestionarioNuevo = {
+    respuestas: {
+      movimiento: 'sentado', grasa: null, experiencia: null, despues: null, proteina: 'alta', recomponer: false, fecha: null,
+      eleccion: { proteinaPorKg: 2, pct: null }, horarios: { desayuno: 450, almuerzo: 780, merienda: null, cena: 1260 },
+      sueno: { despertar: 420, acostarse: 1380, finDeSemana: 'igual' }, salud: false,
+    },
+    cuidados: { marcados: ['celiaquia'], datos: {} },
+    entreno: entrenoParaGuardar({ tipos: ['fuerza', 'equipo'], sesiones: [{ tipo: 'fuerza', dias: [1, 3], hora: 1080, minutos: 60 }, { tipo: 'equipo', dias: [6], hora: 960, minutos: 90 }], viaje: 15, partidos: { dia: 6, hora: 960 } }),
+    meta: { gasto: 2104, metas: { kcal: 2100, proteina: 128, carbohidratos: 240, grasas: 70 } },
+    perfil: { estilo: 'bajaEnGrasas', dieta: 'vegetariana' },
+  };
+
+  it('el final de la entrada guarda lo nuevo en el teléfono, con la meta que salió, y se recuerda', async () => {
+    const { almacen, repositorio } = await armar();
+    const meta = almacen.responderCuestionario(respuestas, 'manual', nuevo);
+    expect(meta).toMatchObject({ kcal: 2100, proteina: 128, gasto: 2100, motivo: 'inicial' });
+    expect(almacen.estado().perfil).toMatchObject({ estilo: 'bajaEnGrasas', comer: { dieta: 'vegetariana', comidas: 4 } });
+    await almacen.esperar();
+    // Lo marcado no va a la cuenta: solo lo que va con el perfil.
+    expect(JSON.stringify(await repositorio.pendientes())).not.toContain('celiaquia');
+    const otra = (await armar(repositorio)).almacen.estado();
+    expect(otra.respuestas).toEqual(nuevo.respuestas);
+    expect(otra.cuidados).toEqual(nuevo.cuidados);
+    expect(otra.entreno).toEqual(nuevo.entreno);
+  });
+
+  it('«Tus respuestas» rehace la meta desde hoy, y el peso de hoy solo si cambió', async () => {
+    const { almacen, ir } = await armar();
+    almacen.responderCuestionario(respuestas, 'manual', nuevo);
+    ir('2026-10-25T15:00:00Z');
+    almacen.revisarDia();
+    const meta = almacen.cambiarRespuestas({ ...respuestas, objetivo: 'bajar' }, 'manual', { ...nuevo, meta: { gasto: 2100, metas: { kcal: 1800, proteina: 130, carbohidratos: 190, grasas: 60 } }, perfil: { pesoMeta: 60 } });
+    expect(meta).toMatchObject({ desde: '2026-10-25', kcal: 1800, motivo: 'objetivo' });
+    expect(almacen.estado().metas.map((m) => m.desde)).toEqual(['2026-10-21', '2026-10-25']);
+    expect(almacen.estado().pesos.map((p) => p.fecha)).toEqual(['2026-10-21']);
+    expect(almacen.estado().perfil).toMatchObject({ objetivo: 'bajar', pesoMeta: 60 });
+    almacen.cambiarRespuestas({ ...respuestas, objetivo: 'mantener' }, 'manual', { ...nuevo, perfil: { pesoMeta: undefined } });
+    expect(almacen.estado().perfil?.pesoMeta).toBeUndefined();
+  });
+
+  it('marcar un cuidado que no deja bajar pone «sin déficit» y mueve la meta, como en Progreso', async () => {
+    const { almacen } = await armar();
+    almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' }, 'manual', nuevo);
+    almacen.ponerCuidados({ marcados: ['renal'], datos: { renal: { dialisis: false } } });
+    expect(almacen.estado().perfil?.sinDeficit).toBe(true);
+    expect(almacen.estado().metas[almacen.estado().metas.length - 1]).toMatchObject({ motivo: 'objetivo' });
+    expect(reglasDeCuidados(almacen.estado())?.proteina.fija).toBe(0.8);
+  });
+
+  it('con el embarazo, el control queda en pausa: ninguna meta nueva', async () => {
+    const t = await armar();
+    t.ir('2026-10-14T15:00:00Z');
+    t.almacen.revisarDia();
+    t.almacen.responderCuestionario({ ...respuestas, sinDeficit: true }, 'manual', { ...nuevo, cuidados: { marcados: ['embarazo'], datos: { embarazo: { fechaProbable: '2027-03-01', pesoAntes: 60, mellizos: false } } } });
+    for (let d = 1; d < 14; d++) t.almacen.anotarPeso(64, 'salud', `2026-10-${String(d).padStart(2, '0')}`);
+    for (let d = 14; d <= 21; d++) {
+      t.ir(`2026-10-${d}T15:00:00Z`);
+      t.almacen.revisarDia();
+      t.almacen.anotarPeso(64, 'salud');
+    }
+    expect(t.almacen.estado().metas.map((m) => m.motivo)).toEqual(['inicial']);
+  });
+
+  it('cambiar el objetivo en Progreso olvida la fecha y el ritmo elegidos en el cuestionario', async () => {
+    const { almacen } = await armar();
+    almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' }, 'manual', { ...nuevo, respuestas: { ...nuevo.respuestas, fecha: '2027-01-04', eleccion: { proteinaPorKg: 2, pct: -0.6 } } });
+    almacen.ponerEstrategia({ objetivo: 'mantener' });
+    expect(almacen.estado().respuestas).toMatchObject({ fecha: null, eleccion: { pct: null, proteinaPorKg: null } });
   });
 });

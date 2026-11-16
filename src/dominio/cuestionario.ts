@@ -1,12 +1,13 @@
 // El cuestionario nuevo de la entrada (lo pediste el 2/11/2026: «las preguntas típicas que te hace
-// MacroFactor»), para aprobar en la galería: lo que se contesta y lo que sale de ahí. El gasto se arma
+// MacroFactor»): lo que se contesta y lo que sale de ahí. El gasto se arma
 // por partes, como en MacroFactor: el de reposo (con la grasa, por la masa magra), la vida diaria sin el
 // entrenamiento y el entrenamiento aparte. Cada pregunta, por qué y sus fuentes, en spec/nutricion.md
-// («El cuestionario nuevo»). La app todavía usa metasIniciales (metas.ts).
+// («El cuestionario nuevo»). Lo usan la entrada de la app (src/secciones/entrada/) y «Tus respuestas».
 
+import type { Entreno } from './alrededorDelEntreno';
 import type { Comida } from './comidas';
 import { MET_DE_LA_SESION, MET_EN_REPOSO } from './entrenamiento';
-import { SEMANA, type DiaSemana } from './fechas';
+import { SEMANA, type ClaveDia, type DiaSemana } from './fechas';
 import { ajusteDiario, estiloPermitido, gastoBasal, KCAL_POR_KG, macrosConProteina, MAYORIA_DE_EDAD, NIVELES, pesoMinimoSano, pisoDe, RANGOS_DEL_CUESTIONARIO, RITMOS, ritmoPermitido, type Actividad, type Eleccion, type Estilo, type Macros, type Objetivo, type Ritmo, type Sexo } from './metas';
 import { bordeDe } from './progreso';
 
@@ -396,5 +397,88 @@ export function metaDelCuestionario(r: Respuestas): MetaDelCuestionario {
     objetivo,
     recomponer: usado === 'recomponer',
     actividad: actividadEquivalente(gasto),
+  };
+}
+
+// ------------------------------------------------------------ lo que queda guardado
+/**
+ * Perfil › Entrenamiento con lo del cuestionario: el horario de los avisos (horarioDeLosAvisos, que hoy lleva
+ * uno) y, al lado, los deportes con sus sesiones, el viaje, el partido y la categoría de peso. Sin entrenar, null.
+ */
+export function entrenoParaGuardar(e: EntrenoDicho | null): Entreno | null {
+  const horario = e && horarioDeLosAvisos(e);
+  if (!e || !horario) return null;
+  return { ...horario, viaje: e.viaje, tipos: [...e.tipos], sesiones: e.sesiones.map((s) => ({ ...s, dias: [...s.dias] })), partidos: e.partidos ?? null, categoriaDePeso: e.categoriaDePeso ?? null };
+}
+
+/**
+ * Los deportes para los consejos (segunElDeporte.ts), de lo guardado. Con lo del cuestionario, sus deportes y
+ * sesiones, mientras el horario siga siendo el que sale de ellos (si se cambió a mano en Perfil, vale lo de
+ * Perfil). Con un solo tipo de Perfil, ese; «mixta» no dice qué deporte es (pesas con fútbol no es pesas con
+ * bici), así que no cuenta: las reglas del deporte callan antes que adivinar.
+ */
+export function deportesDe(e: Entreno | null | undefined): Pick<EntrenoDicho, 'tipos' | 'sesiones' | 'partidos'> | null {
+  if (!e || !e.dias.length) return null;
+  if (e.tipos?.length && e.sesiones?.length) {
+    const h = horarioDeLosAvisos({ tipos: e.tipos, sesiones: e.sesiones });
+    const igual = !!h && h.tipo === e.tipo && h.hora === e.hora && h.minutos === e.minutos && h.dias.length === e.dias.length && h.dias.every((d) => e.dias.includes(d));
+    if (igual) return { tipos: [...e.tipos], sesiones: e.sesiones, partidos: e.partidos ?? null };
+  }
+  if (e.tipo === 'mixta') return null;
+  return { tipos: [e.tipo], sesiones: [{ tipo: e.tipo, dias: e.dias, hora: e.hora, minutos: e.minutos }], partidos: null };
+}
+
+/**
+ * Lo del cuestionario nuevo que no tiene columna en la cuenta (moss.perfiles): queda en el teléfono. El objetivo,
+ * el ritmo, el reparto, el peso meta, la dieta y «sin déficit» van con el perfil; el entreno, en Perfil ›
+ * Entrenamiento (entrenoParaGuardar). `eleccion` es lo que el control de cada semana sigue de lo elegido.
+ */
+export type RespuestasGuardadas = {
+  movimiento: Movimiento;
+  grasa: GrasaDicha | null;
+  experiencia: Experiencia | null;
+  despues: Despues | null;
+  proteina: NivelDeProteina;
+  recomponer: boolean;
+  /** La fecha elegida para llegar al peso meta (D35); con un ritmo, null. */
+  fecha: ClaveDia | null;
+  eleccion: Eleccion;
+  horarios: Horarios;
+  /** Con las noches de Salud, de ahí (sin el fin de semana); si no, lo dicho. */
+  sueno: { despertar: number; acostarse: number; finDeSemana: SuenoDicho['finDeSemana'] | null } | null;
+  /** Si los datos vinieron de Salud. */
+  salud: boolean;
+};
+
+const unoDe = <T extends string>(lista: readonly T[], x: unknown): T | null => (lista.includes(x as T) ? (x as T) : null);
+const minutos = (x: unknown): number | null => (typeof x === 'number' && Number.isFinite(x) && x >= 0 && x < 1440 ? x : null);
+
+/** Lo guardado, si tiene forma: lo que no se entiende queda en lo de fábrica, y sin movimiento no hay nada. */
+export function respuestasDe(x: unknown): RespuestasGuardadas | null {
+  if (!x || typeof x !== 'object') return null;
+  const o = x as Record<string, unknown>;
+  const movimiento = unoDe(MOVIMIENTOS, o.movimiento);
+  if (!movimiento) return null;
+  const g = o.grasa as Partial<GrasaDicha> | null | undefined;
+  const grasa = g && unoDe(['dicha', 'imagen', 'cinta'] as const, g.como) && typeof g.pct === 'number' && Number.isFinite(g.pct) ? { como: g.como!, pct: g.pct } : null;
+  const el = (o.eleccion ?? {}) as Eleccion;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const h = (o.horarios ?? {}) as Record<string, unknown>;
+  const horarios = Object.fromEntries((['desayuno', 'almuerzo', 'merienda', 'cena'] as const).map((c) => [c, minutos(h[c])])) as Horarios;
+  const s = o.sueno as Record<string, unknown> | null | undefined;
+  const despertar = minutos(s?.despertar);
+  const acostarse = minutos(s?.acostarse);
+  return {
+    movimiento,
+    grasa,
+    experiencia: unoDe(['principiante', 'intermedio', 'avanzado'] as const, o.experiencia),
+    despues: unoDe(['mantener', 'musculo', 'despues'] as const, o.despues),
+    proteina: unoDe(NIVELES_DE_PROTEINA, o.proteina) ?? 'recomendada',
+    recomponer: o.recomponer === true,
+    fecha: typeof o.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.fecha) ? o.fecha : null,
+    eleccion: { proteinaPorKg: num(el.proteinaPorKg), pct: num(el.pct) },
+    horarios,
+    sueno: despertar !== null && acostarse !== null ? { despertar, acostarse, finDeSemana: unoDe(['igual', 'tarde'] as const, s?.finDeSemana) } : null,
+    salud: o.salud === true,
   };
 }

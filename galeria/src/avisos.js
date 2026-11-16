@@ -4,6 +4,9 @@
 //   (sin entreno, entrenando a las 16:00 como tú, con una hora de viaje, o a las 20:30) y lo que pasa en él
 //   (entrenar a otra hora, cenar temprano, comer poca proteína) cambia lo que suena después.
 // - «Todos»: cada aviso de la app, para revisar cómo dice cada cosa, en español y en inglés.
+// - «Tu despertar» (16/11, para aprobar): el día que sigue tu despertar (SigueElDespertar), uno que se despierta a
+//   las 10 y no desayuna. Hasta las 10 no suena nada; después, la deuda, pesarse y «¿Desayunas hoy?» con sus dos
+//   botones (tocarlos cambia el resto del día), las comidas con lo del desayuno repartido y la noche.
 // Lo que conviene (3/11, como Rise) lleva de título lo que hay que hacer; los demás, el nombre de la app.
 // Con un día de ejemplo de «Según el deporte» (deporte.js), «Deporte» es ese día: su fecha, su sesión, sus
 // partidos y su carrera, con «Mañana juegas» y «Tu carrera es pasado mañana» prendidos.
@@ -44,10 +47,14 @@ const AvisosBloqueo = (() => {
 .ab-chip { padding: 5px 9px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; background: none; color: rgba(255, 255, 255, 0.82); font: 500 12px/1.2 var(--letra, inherit); transition: background 180ms ease, color 180ms ease, border-color 180ms ease; }
 .ab-chip[aria-pressed='true'] { background: rgba(123, 167, 255, 0.26); border-color: rgba(123, 167, 255, 0.6); color: #fff; }
 .ab-nota { margin: 0; font: 400 12px/1.32 var(--letra, inherit); color: rgba(255, 255, 255, 0.66); }
+.ab-acciones { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 9px; animation: ab-abre 280ms ease; }
+.ab-acciones button { padding: 8px 6px; border: 0; border-radius: 12px; background: rgba(255, 255, 255, 0.12); color: #fff; font: 600 13px/1.2 var(--letra, inherit); transition: background 180ms ease, color 180ms ease, transform 120ms ease; }
+.ab-acciones button:active { transform: scale(0.97); }
+.ab-acciones button[aria-pressed='true'] { background: rgba(255, 255, 255, 0.9); color: #10162e; }
 @keyframes ab-abre { from { opacity: 0; transform: translateY(12px); } }
 @keyframes ab-entra { from { opacity: 0; transform: translateY(-14px) scale(0.97); } }
 @keyframes ab-sale { to { opacity: 0; transform: scale(0.96); } }
-@media (prefers-reduced-motion: reduce) { .tel .ab, .ab-aviso.entra, .ab-aviso.sale, .ab-vacio { animation-duration: 1ms; } .ab-reloj, .tel .ab.saliendo, .ab-seg button, .ab-chip { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .tel .ab, .ab-aviso.entra, .ab-aviso.sale, .ab-vacio, .ab-acciones { animation-duration: 1ms; } .ab-reloj, .tel .ab.saliendo, .ab-seg button, .ab-chip, .ab-acciones button { transition: none; } }
 `;
   const quieto = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const hm = (texto) => { const [h, m] = texto.split(':').map(Number); return h * 60 + m; };
@@ -81,8 +88,16 @@ const AvisosBloqueo = (() => {
   // deporte, con un ejemplo elegido: su sesión de ese día.
   const DIAS = [['no', 'Sin entreno', null], ['tarde', 'Entreno 16:00', hm('16:00')], ['noche', 'Entreno 20:30', hm('20:30')], ['deporte', 'Deporte', null]];
 
+  // El día que sigue tu despertar: siempre se duerme a las 23:15 y se despierta a las 7:30 (en la cuenta de las
+  // noches, desde las 18), necesita 8 h y tarda 15 minutos en dormirse. Hoy se despertó a las 10: la deuda bajó de
+  // 2 h 20 min a 1 h 30 min. Se pesa todos los días y almuerza a las 13:30.
+  const DESPIERTA = hm('10:00');
+  const SUENO_DEL_DESPERTAR = { habitual: () => ({ dormirse: hm('23:15') - 18 * 60, despertar: hm('7:30') + 6 * 60 }), necesidad: 480, deuda: 90, despierto: 30, latencia: 15 };
+  const HORARIO_DEL_DESPERTAR = { desayuno: hm('7:30'), almuerzo: hm('13:00'), merienda: hm('17:00'), cena: hm('20:30') };
+  const AJUSTES_DEL_DESPERTAR = SigueElDespertar.deFabrica({ pesarse: { encendido: true, todos: true }, horario: HORARIO_DEL_DESPERTAR }, (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'));
+
   function crear(tel, opciones) {
-    const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0, deporte: null };
+    const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0, deporte: null, desayuno: 'directo' };
     const conDeporte = () => s.dia === 'deporte' && !!s.deporte;
     const entrenoDe = (dia) => (dia === 'deporte' ? (s.deporte && s.deporte.sesion ? s.deporte.sesion.inicio : null) : DIAS.find(([clave]) => clave === dia)[2]);
     const diaDe = () => (conDeporte() ? s.deporte.dia : DIA);
@@ -179,15 +194,69 @@ const AvisosBloqueo = (() => {
       return llegados;
     }
 
+    // El día que sigue tu despertar, minuto a minuto con la regla de verdad. Antes de las 10 Moss no sabe que te
+    // despertaste; contestas «¿Desayunas hoy?» al minuto de que suena. Cada comida se anota a la hora de su aviso, salvo el almuerzo sin desayuno, a las 13:30: así corre la merienda y la cena.
+    const KCAL_DEL_DESPERTAR = { desayuno: 450, almuerzo: 950, merienda: 450, cena: 900 };
+    const suenoDelDespertar = (T) => ({ ...SUENO_DEL_DESPERTAR, despertarReal: (d) => (d === DIA && T >= DESPIERTA ? DESPIERTA : null) });
+    function lineaDelDespertar() {
+      const clave = JSON.stringify(['despertar', s.desayuno, en()]);
+      if (hechos.has(clave)) return hechos.get(clave);
+      const llegados = [];
+      const llego = {};
+      for (let T = hm('6:00'); T <= 24 * 60 + 30; T++) {
+        const contesto = llego.desayuno !== undefined && T > llego.desayuno;
+        const cuando = {
+          desayuno: contesto && s.desayuno === 'si' ? llego.desayuno + 10 : undefined,
+          almuerzo: s.desayuno === 'directo' && contesto ? hm('13:30') : llego['horario:almuerzo'],
+          merienda: llego['despertar:merienda'] ?? llego['horario:merienda'],
+          cena: llego['despertar:cena'] ?? llego['horario:cena'],
+        };
+        const eventos = Object.fromEntries(Object.entries(cuando).filter(([, m]) => Number.isFinite(m) && m < T));
+        const comido = { kcal: Object.keys(eventos).reduce((t, c) => t + KCAL_DEL_DESPERTAR[c], 0), proteina: 0, carbohidratos: 0, grasas: 0 };
+        const lista = SigueElDespertar.avisosQueSiguenElDespertar({
+          dia: DIA, ajustes: AJUSTES_DEL_DESPERTAR, habitos: [], sueno: suenoDelDespertar(T), horaDeComida: (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'),
+          anotadas: new Set(Object.keys(eventos)), eventos, ahora: T - 1, pesado: llego.pesarse !== undefined && T > llego.pesarse + 3,
+          deudaAntes: 140, desayuno: contesto ? s.desayuno : null, meta: META, comido, sesiones: [],
+        });
+        for (const n of lista) {
+          if (n.minutos !== T || llego[n.aviso.id] !== undefined) continue;
+          llego[n.aviso.id] = T;
+          llegados.push(n);
+        }
+      }
+      hechos.set(clave, llegados);
+      return llegados;
+    }
+
+    /** Lo que explica el día que sigue tu despertar: desde cuándo suena, qué se reparte y cuánto se corrió la noche. */
+    function notaDelDespertar(todos) {
+      const cama = (despierta) => Avisos.horasDeSueno(DIA, { ...SUENO_DEL_DESPERTAR, despertarReal: () => despierta }).acostarse;
+      const nota = [`Te despiertas a las ${u.horaMin(DESPIERTA)}: hasta entonces, nada. ${todos.length} avisos en todo el día.`];
+      if (s.desayuno === 'directo') nota.push('Sin desayuno, lo que queda del día se reparte entre las comidas que quedan; almorzar a las 13:30 corre la merienda y la cena media hora.');
+      else nota.push('Con «Sí», desayunas a las 10:50 y las demás comidas quedan a su hora: un despertar tarde no corre el almuerzo.');
+      nota.push(`A la cama a las ${u.horaMin(cama(DESPIERTA))}: despertándote a las 7:30 habría sido a las ${u.horaMin(cama(hm('7:30')))}.`);
+      return nota.join(' ');
+    }
+
     // Los avisos que ya están en pantalla, por su clave: los nuevos entran y los que se van, salen, sin saltos.
     const enPantalla = new Map();
-    function tarjeta(arriba, dice, hora) {
+    /** `acciones`: los botones del aviso, como [texto, apretado, al tocar] (los de «¿Desayunas hoy?»). */
+    function tarjeta(arriba, dice, hora, acciones) {
       const a = el('article', 'ab-aviso entra');
       const ic = el('i');
       if (typeof TIENDA !== 'undefined' && TIENDA && TIENDA.icono) ic.style.backgroundImage = `url(${TIENDA.icono})`;
       const cab = el('div', 'ab-titulo');
       cab.append(el('b', null, arriba), el('em', null, hora));
       a.append(ic, cab, el('p', null, dice));
+      if (acciones) {
+        const fila = el('div', 'ab-acciones');
+        for (const [nombre, apretado, alTocar] of acciones) {
+          const b = boton('', nombre, alTocar);
+          b.setAttribute('aria-pressed', String(apretado));
+          fila.appendChild(b);
+        }
+        a.appendChild(fila);
+      }
       a.addEventListener('animationend', (ev) => { if (ev.animationName === 'ab-entra') a.classList.remove('entra'); });
       return a;
     }
@@ -203,7 +272,7 @@ const AvisosBloqueo = (() => {
       }
       avisos.forEach((x, i) => {
         let nodo = enPantalla.get(x.clave);
-        if (!nodo) { nodo = tarjeta(x.titulo, x.texto, x.hora); enPantalla.set(x.clave, nodo); }
+        if (!nodo) { nodo = tarjeta(x.titulo, x.texto, x.hora, x.acciones); enPantalla.set(x.clave, nodo); }
         else {
           nodo.querySelector('.ab-titulo b').textContent = x.titulo;
           nodo.querySelector('.ab-titulo em').textContent = x.hora;
@@ -215,14 +284,23 @@ const AvisosBloqueo = (() => {
     }
 
     function pintarDia(cuerpo) {
-      const todos = linea();
+      const todos = s.modo === 'despertar' ? lineaDelDespertar() : linea();
       const llegados = todos.filter((n) => n.minutos <= s.hora).reverse();
       // La clave lleva el día: al cambiarlo, lo de antes sale y entra lo nuevo. Sin nada, sale lo que había.
-      const delDia = conDeporte() ? `deporte:${s.deporte.nombre}` : s.dia;
-      ponerAvisos(cuerpo, llegados.map((n) => ({ clave: `${delDia}|${n.aviso.id}`, titulo: titulo(n), texto: texto(n), hora: u.horaMin(n.minutos) })));
+      const delDia = s.modo === 'despertar' ? 'despertar' : conDeporte() ? `deporte:${s.deporte.nombre}` : s.dia;
+      // «¿Desayunas hoy?» con sus dos botones: contestado, el elegido queda apretado y el resto del día cambia con él.
+      const acciones = (n) => {
+        if (n.aviso.tipo !== 'desayuno') return undefined;
+        const contesto = s.hora > n.minutos;
+        return SigueElDespertar.RESPUESTAS_DEL_DESAYUNO.map((r) => [tx('recordatorios.despertar.desayuno.' + r), contesto && s.desayuno === r, () => { s.desayuno = r; if (!contesto) s.hora = n.minutos + 5; pintar(); }]);
+      };
+      ponerAvisos(cuerpo, llegados.map((n) => ({
+        clave: `${delDia}|${n.aviso.id}${n.aviso.tipo === 'desayuno' ? `|${s.hora > n.minutos ? s.desayuno : ''}` : ''}`,
+        titulo: titulo(n), texto: texto(n), hora: u.horaMin(n.minutos), acciones: acciones(n),
+      })));
       const vacio = cuerpo.querySelector('.ab-vacio');
       if (llegados.length) vacio?.remove();
-      else if (!vacio) cuerpo.appendChild(el('p', 'ab-vacio', 'Todavía no sonó nada.'));
+      else if (!vacio) cuerpo.appendChild(el('p', 'ab-vacio', s.modo === 'despertar' ? 'Moss todavía no sabe que te despertaste: no suena nada de la mañana.' : 'Todavía no sonó nada.'));
       return { todos, llegados };
     }
 
@@ -288,6 +366,15 @@ const AvisosBloqueo = (() => {
         ['Si vas muy bajo en algo', todasLasFalta().map((falta) => n({ tipo: 'falta', falta }))],
         ['Hábitos', [n({ tipo: 'habito', habito: 'entrenar' }), n({ tipo: 'habito', habito: 'leer' }), n({ tipo: 'habito', habito: 'leer', mensaje: en() ? 'One chapter, phone in the other room' : 'Un capítulo, con el teléfono en otra habitación' })]],
         ['Pesarte', [n({ tipo: 'pesarse' }), n({ tipo: 'pesarse', control: true })]],
+        ['Tu despertar', [
+          ...[[90, 140], [120, 90], [90, 90], [0, 60], [0, 0], [60, null]].map(([ahora, antes]) => n({ tipo: 'deuda', despertar: { que: 'deuda', ahora, antes } })),
+          n({ tipo: 'desayuno', despertar: { que: 'desayuno' } }),
+          n({ tipo: 'horario', despertar: { que: 'comida', comida: 'almuerzo', van: ['almuerzo', 'merienda', 'cena'], kcal: 1050 } }),
+          n({ tipo: 'horario', despertar: { que: 'comida', comida: 'merienda', van: ['merienda', 'cena'], kcal: 480 } }),
+          n({ tipo: 'horario', despertar: { que: 'comida', comida: 'cena', van: ['cena'] } }),
+          ...['melatonina', 'gafas', 'revoluciones'].map((que) => n({ tipo: que, despertar: { que, cama: hm('23:15') } })),
+          n({ tipo: 'descarga', despertar: { que: 'descarga' } }),
+        ]],
         ['La hora de dormir', [...Avisos.TEXTOS_DE_DORMIR, 'deuda'].map((cual) => n({ tipo: 'dormir', minutos: hm('23:00'), texto: cual, dormirA: hm('23:30'), despertarA: 24 * 60 + hm('7:30'), duerme: 480, deuda: 90 }))],
         ['La prueba', [{ titulo: 'Moss', texto: tx('recordatorios.pruebaTermina') }]],
       ];
@@ -320,12 +407,12 @@ const AvisosBloqueo = (() => {
 
     function pintar() {
       const scrollAntes = raiz.querySelector('.ab-lista')?.scrollTop ?? 0;
-      const listaDeAntes = s.modo === 'dia' ? raiz.querySelector('.ab-lista') : null;
+      const listaDeAntes = s.modo !== 'todos' ? raiz.querySelector('.ab-lista') : null;
       raiz.replaceChildren();
       const cab = el('header', 'ab-cab');
       cab.appendChild(boton('ab-cerrar', '×', cerrar));
       const seg = el('div', 'ab-seg');
-      for (const [modo, nombre] of [['dia', 'Un día'], ['todos', 'Todos']]) {
+      for (const [modo, nombre] of [['dia', 'Un día'], ['despertar', 'Tu despertar'], ['todos', 'Todos']]) {
         // La lista de un modo no sirve para el otro: se arma de nuevo.
         const b = boton('', nombre, () => { if (s.modo === modo) return; s.modo = modo; enPantalla.clear(); raiz.querySelector('.ab-lista')?.remove(); pintar(); });
         b.setAttribute('aria-pressed', String(s.modo === modo));
@@ -356,6 +443,7 @@ const AvisosBloqueo = (() => {
       const { todos, llegados } = pintarDia(cuerpo);
 
       const panel = el('div', 'ab-panel');
+      const despertar = s.modo === 'despertar';
       const dias = el('div', 'ab-seg');
       // «Deporte», solo con un día de ejemplo de «Según el deporte» elegido; con él, las horas solas, así entran en
       // una fila.
@@ -366,7 +454,7 @@ const AvisosBloqueo = (() => {
         b.setAttribute('aria-pressed', String(s.dia === clave));
         dias.appendChild(b);
       }
-      panel.appendChild(dias);
+      if (!despertar) panel.appendChild(dias);
       const hora = el('div', 'ab-hora');
       const rango = el('input');
       Object.assign(rango, { type: 'range', min: hm('6:00'), max: 24 * 60 + 30, step: 5, value: s.hora });
@@ -390,8 +478,8 @@ const AvisosBloqueo = (() => {
         c.setAttribute('aria-pressed', String(s[clave]));
         chips.appendChild(c);
       }
-      panel.appendChild(chips);
-      panel.appendChild(el('p', 'ab-nota', notaDelDia(todos)));
+      if (!despertar) panel.appendChild(chips);
+      panel.appendChild(el('p', 'ab-nota', despertar ? notaDelDespertar(todos) : notaDelDia(todos)));
       raiz.appendChild(panel);
       if (llegados.length) cuerpo.scrollTop = 0;
     }

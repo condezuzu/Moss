@@ -713,7 +713,8 @@
         "yogur": "Un yogur, granola y una banana",
         "pizza": "Dos porciones de pizza de queso",
         "pollo": "Pechuga de pollo a la plancha con arroz"
-      }
+      },
+      "ayudaTeclado": "Escribe qué es, o usa el micrófono del teclado. Moss lo calcula con su base de alimentos."
     },
     "verificado": "Verificado",
     "sinVerificar": "Sin verificar",
@@ -2500,7 +2501,22 @@
       "necesito": "Necesito dormir",
       "necesitoEdad": "Lo de tu edad ({h})",
       "necesitoTexto": "Las guías dicen de 7 a 9 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la hora de ir a la cama, la deuda y la calidad.",
-      "necesitoTextoMenor": "A tu edad se recomiendan de 8 a 10 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la hora de ir a la cama, la deuda y la calidad."
+      "necesitoTextoMenor": "A tu edad se recomiendan de 8 a 10 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la hora de ir a la cama, la deuda y la calidad.",
+      "tuDia": "Tu día",
+      "tuDiaTexto": "Sigue a tu despertar: nada de la mañana suena hasta que Moss sabe que te despertaste, y la noche se arma con esa hora y tu deuda.",
+      "mas": "Más avisos",
+      "masTexto": "Apagados de fábrica: prende los que te sirvan.",
+      "deuda": "Tu deuda de sueño",
+      "deudaTexto": "Al despertarte, en una línea: si bajó o subió.",
+      "horarioTextoDia": "Al despertarte te pregunta si desayunas. Si no, lo del desayuno se reparte entre las comidas que quedan, y la primera que anotas corre las demás.",
+      "melatonina": "Ventana de melatonina",
+      "melatoninaTexto": "Unas dos horas antes de la hora de dormirte, cuando la melatonina empieza a subir. Es una estimación.",
+      "revoluciones": "Bajar las revoluciones",
+      "revolucionesTexto": "Una hora antes de la cama: algo tranquilo y sin pantallas brillantes.",
+      "descarga": "Anotar lo pendiente",
+      "descargaTexto": "Al acostarte: cinco minutos con lo de mañana en un papel, para no darle vueltas en la cama.",
+      "gafas": "Gafas para la luz azul",
+      "gafasTexto": "Dos horas antes de la cama, si las tienes. La evidencia todavía es poca."
     },
     "cambiarCuenta": "Cambiar de cuenta",
     "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
@@ -3890,6 +3906,47 @@
       "carrera": {
         "titulo": "Tu carrera es pasado mañana",
         "texto": "Carbohidratos en todas tus comidas y menos fibra."
+      }
+    },
+    "despertar": {
+      "deuda": {
+        "bajo": "Tu deuda de sueño bajó a {deuda}.",
+        "subio": "Tu deuda de sueño subió a {deuda}.",
+        "igual": "Tu deuda de sueño sigue en {deuda}.",
+        "es": "Tu deuda de sueño es de {deuda}.",
+        "cero": "Tu deuda de sueño bajó a cero.",
+        "sin": "No tienes deuda de sueño."
+      },
+      "desayuno": {
+        "pregunta": "¿Desayunas hoy?",
+        "si": "Sí",
+        "directo": "Voy directo al almuerzo"
+      },
+      "comida": {
+        "conKcal": "{hora}: unas {kcal} kcal. Lo que no comiste en el desayuno va {lista}.",
+        "sinNumeros": "{hora}. Lo que no comiste en el desayuno va {lista}."
+      },
+      "a": {
+        "almuerzo": "al almuerzo",
+        "merienda": "a la merienda",
+        "cena": "a la cena"
+      },
+      "y": "{a} y {b}",
+      "melatonina": {
+        "titulo": "Tu ventana de melatonina",
+        "texto": "Más o menos ahora empieza a subir tu melatonina: a las {cama}, a la cama."
+      },
+      "revoluciones": {
+        "titulo": "Baja las revoluciones",
+        "texto": "Algo tranquilo y sin pantallas brillantes: a las {cama}, a la cama."
+      },
+      "gafas": {
+        "titulo": "Las gafas para la luz azul",
+        "texto": "Si las usas, buen momento: a las {cama}, a la cama."
+      },
+      "descarga": {
+        "titulo": "Anota lo pendiente",
+        "texto": "Cinco minutos con lo de mañana en un papel: suele ayudar a dormirse antes."
       }
     }
   },

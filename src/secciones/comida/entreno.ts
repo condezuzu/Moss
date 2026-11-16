@@ -5,25 +5,17 @@ import type { Estado } from '@/almacen/almacen';
 import { comidasHabituales, lineaDeNocheCorta, lineasDelDia, sesionesDelDia, type Contexto, type Linea, type Principal } from '@/dominio/alrededorDelEntreno';
 import { horasDeSueno } from '@/dominio/avisos';
 import type { Comida } from '@/dominio/comidas';
-import { diasEntre, minutosEnElDia, sumarDias } from '@/dominio/fechas';
+import { minutosEnElDia, sumarDias } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
 import { totalDelDia, vigentes } from '@/dominio/registros';
 import { pareceIncompleta, ultimasNoches } from '@/dominio/sueno';
 import { hayCompras } from '@/lib/premium';
-import { horaDeReloj, horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
+import { cafeinaPorToma, horaDeReloj, horasDeComida, suenoParaAvisos } from '@/recordatorios/programar';
 import { t } from '@/textos';
 import { suenoDe } from '../persona';
 import { duracion, metaDelDia } from './datos';
 
 const PRINCIPALES: readonly Principal[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
-
-/** La cafeína de una toma, si se anotó al menos tres de los últimos 14 días: la mediana, en mg. */
-function cafeinaPorToma(e: Pick<Estado, 'registros' | 'hoy'>): number | null {
-  const tomas = vigentes(e.registros.values()).filter((r) => !r.planificado && (r.valores.micros?.cafeina ?? 0) > 0 && diasEntre(r.dia, e.hoy) >= 0 && diasEntre(r.dia, e.hoy) < 14);
-  if (new Set(tomas.map((r) => r.dia)).size < 3) return null;
-  const mg = tomas.map((r) => r.valores.micros!.cafeina!).sort((a, b) => a - b);
-  return mg[Math.floor(mg.length / 2)];
-}
 
 /** El contexto de hoy para la regla; sin perfil, sin meta o sin sesiones hoy, null. */
 export function contextoDeHoy(e: Estado, ahora: Date): Contexto | null {

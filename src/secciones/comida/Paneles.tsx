@@ -83,10 +83,10 @@ const VISTA_ATRAS = FadeInLeft.duration(260).easing(LLEGA).withInitialValues({ o
  * debajo de la lista (o el teclado), y el panel baja hasta el borde por detrás de ese lugar, así su pie
  * llega abajo de todo sin contarlo dos veces. Con el teclado arriba, lo que baja queda detrás del teclado.
  * `vista`: cuál de sus vistas se ve; al cambiar, el título, lo de adentro y el pie entran de nuevo
- * (`haciaAtras`, al volver a la anterior).
+ * (`haciaAtras`, al volver a la anterior). `fundido`: entra en su lugar, sin venir de costado (el que reemplaza al visor de la foto).
  */
-export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras }: {
-  titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number; vista?: string; haciaAtras?: boolean;
+export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras, fundido }: {
+  titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number; vista?: string; haciaAtras?: boolean; fundido?: boolean;
 }) {
   const reducido = useReducedMotion();
   // El panel ya se achica con el teclado (el lugar de abajo de la hoja crece con él): el scroll solo
@@ -125,7 +125,7 @@ export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras
   }), []);
   return (
     <Animated.View
-      entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL}
+      entering={reducido || fundido ? ENTRA_FUNDIDO : ENTRA_PANEL}
       exiting={reducido ? SALE_FUNDIDO : SALE_PANEL}
       style={[estilos.panel, { bottom: -abajo }]}
       // Tapa la lista de la hoja: VoiceOver no la recorre, y el gesto de escape vuelve atrás.

@@ -369,6 +369,31 @@ export function deSiempre(registros: Iterable<Registro>, comida: Comida, hoy: Cl
   return mejor ? porDia.get(mejor.dia)!.sort(porMomento).map(itemDe) : null;
 }
 
+/**
+ * Lo que sueles comer a esta hora, para el «+» (la galería, 2/11/2026): lo que más comes en esa comida
+ * en las últimas dos semanas (los días en que estuvo y, entre iguales, lo más reciente), con la última
+ * cantidad; si no alcanza, lo que sueles comer en ella en los últimos dos meses. Nunca lo de otra
+ * comida: a la hora del almuerzo, lo último anotado es el desayuno.
+ */
+export function deEstaHora(registros: Iterable<Registro>, comida: Comida, hoy: ClaveDia, cuantos = 6): Item[] {
+  const todos = [...registros];
+  const porAlimento = new Map<string, { dias: Set<ClaveDia>; ultimo: Registro }>();
+  for (const r of comidos(todos).sort(masNuevoPrimero)) {
+    const dias = diasEntre(r.dia, hoy);
+    if (r.comida !== comida || dias < 0 || dias > VENTANA_DE_SIEMPRE) continue;
+    const clave = claveDeAlimento(r.fuente, r.ref);
+    const x = porAlimento.get(clave) ?? { dias: new Set<ClaveDia>(), ultimo: r };
+    x.dias.add(r.dia);
+    porAlimento.set(clave, x);
+  }
+  // El mapa ya va del más reciente al más viejo, y el orden se mantiene entre iguales.
+  const lista = [...porAlimento.values()].sort((a, b) => b.dias.size - a.dias.size).map((x) => itemDe(x.ultimo));
+  for (const i of sueles(todos, comida, hoy, cuantos)) {
+    if (!porAlimento.has(claveDeAlimento(i.fuente, i.ref))) lista.push(i);
+  }
+  return lista.slice(0, cuantos);
+}
+
 /** El premio más grande: alcanza para subir uno o dos escalones del orden del buscador, no más. */
 const PREMIO_MAXIMO = 10;
 

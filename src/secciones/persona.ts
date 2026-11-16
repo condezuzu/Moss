@@ -57,7 +57,7 @@ function serieDe(t: Map<ClaveDia, number>, pesos: Peso[], hoy: ClaveDia, dias: n
 }
 
 /** Lo comido de ejemplo: unos 500 kcal por debajo del gasto, con el ruido de todos los días. */
-function comidasDeEjemplo(hoy: ClaveDia): ComidaDelDia[] {
+export function comidasDeEjemplo(hoy: ClaveDia): ComidaDelDia[] {
   let s = 11;
   const azar = () => {
     s = (s * 16807) % 2147483647;

@@ -1,6 +1,7 @@
 // Los gráficos chicos de Inicio, Progreso y Sueño, los de la galería (galeria/src/inicio.js,
-// «Graficos»): una línea con su tendencia, el balance de la semana, el hipnograma de una noche y la
-// constelación de hoy en chico. Con los colores de la galería.
+// «Graficos»): una línea con su tendencia, el balance de la semana, las barras y las columnas de
+// cada semana, la línea chiquita de una medida, el hipnograma de una noche y la constelación de hoy
+// en chico. Con los colores de la galería.
 
 import { BlurMask, Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, Path, RadialGradient, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
@@ -100,7 +101,83 @@ export function BalanceSkia({ dias, hasta, gasto, ancho, alto }: PropsDeBalance)
   );
 }
 
-const FILAS: Record<Tramo['etapa'], number> = { despierto: 0, rem: 1, nucleo: 2, profundo: 3, dormido: 2 };
+export type PropsDeBarras = { valores: (number | null)[]; ancho: number; alto: number };
+
+/**
+ * Barras desde el cero: lo negativo baja y lo positivo sube (el cambio de cada semana). Si todo va
+ * para el mismo lado, el cero queda en el borde y las barras usan todo el alto.
+ */
+export function BarrasSkia({ valores, ancho, alto }: PropsDeBarras) {
+  const m = 3;
+  const hay = valores.filter((v): v is number => v !== null);
+  const max = Math.max(0.1, ...hay.map((v) => Math.abs(v)));
+  const cero = hay.every((v) => v <= 0) ? m : hay.every((v) => v >= 0) ? alto - m : alto / 2;
+  const lugar = Math.max(cero - m, alto - m - cero);
+  const paso = (ancho - 2 * m) / valores.length;
+  return (
+    <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
+      <Line p1={vec(m, cero)} p2={vec(ancho - m, cero)} color="rgba(239, 230, 207, 0.06)" strokeWidth={1} />
+      {valores.map((v, i) => {
+        if (v === null) return null;
+        const h = Math.max(1.5, (Math.abs(v) / max) * lugar);
+        return <RoundedRect key={i} x={m + i * paso + paso * 0.24} y={v < 0 ? cero : cero - h} width={paso * 0.52} height={h} r={2} color={v < 0 ? 'rgba(166, 191, 148, 0.75)' : 'rgba(232, 196, 106, 0.6)'} />;
+      })}
+    </Canvas>
+  );
+}
+
+export type PropsDeColumnas = { valores: (number | null)[]; meta: number; ancho: number; alto: number };
+
+/** Lo comido de cada semana contra la meta (la línea punteada): columnas que llegan o no. */
+export function ColumnasSkia({ valores, meta, ancho, alto }: PropsDeColumnas) {
+  const m = 3;
+  const max = Math.max(meta * 1.2, ...valores.map((v) => v ?? 0));
+  const Y = (v: number) => alto - m - (v / max) * (alto - 2 * m);
+  const paso = (ancho - 2 * m) / valores.length;
+  return (
+    <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
+      {valores.map((v, i) => {
+        const x = m + i * paso + paso * 0.24;
+        if (v === null) return <RoundedRect key={i} x={x} y={alto - m - 2} width={paso * 0.52} height={2} r={1} color="rgba(239, 230, 207, 0.12)" />;
+        const color = v > meta * 1.05 ? 'rgba(232, 196, 106, 0.65)' : v < meta * 0.9 ? 'rgba(239, 230, 207, 0.35)' : 'rgba(166, 191, 148, 0.6)';
+        return <RoundedRect key={i} x={x} y={Y(v)} width={paso * 0.52} height={alto - m - Y(v)} r={2} color={color} />;
+      })}
+      <Line p1={vec(m, Y(meta))} p2={vec(ancho - m, Y(meta))} color="rgba(239, 230, 207, 0.62)" strokeWidth={1.2}>
+        <DashPathEffect intervals={[3, 3]} />
+      </Line>
+    </Canvas>
+  );
+}
+
+export type PropsDeChispa = { valores: number[]; ancho: number; alto: number };
+
+/** Una línea chiquita, al lado de un número (las medidas), con el último punto encendido. */
+export function ChispaSkia({ valores, ancho, alto }: PropsDeChispa) {
+  const dibujo = useMemo(() => {
+    const m = 2.5;
+    if (valores.length < 2) return null;
+    const min = Math.min(...valores);
+    const max = Math.max(...valores);
+    const X = (i: number) => m + (i / (valores.length - 1)) * (ancho - 2 * m);
+    const Y = (v: number) => (max === min ? alto / 2 : m + (1 - (v - min) / (max - min)) * (alto - 2 * m));
+    const camino = Skia.PathBuilder.Make();
+    valores.forEach((v, i) => (i ? camino.lineTo(X(i), Y(v)) : camino.moveTo(X(i), Y(v))));
+    const ultimo = valores.length - 1;
+    return { camino: camino.detach(), fin: { x: X(ultimo), y: Y(valores[ultimo]) } };
+  }, [valores, ancho, alto]);
+  return (
+    <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
+      {dibujo && (
+        <Group>
+          <Path path={dibujo.camino} style="stroke" strokeWidth={1.8} strokeCap="round" strokeJoin="round" color="#f6e3a6" />
+          <Circle cx={dibujo.fin.x} cy={dibujo.fin.y} r={2} color="#fbf2d9" />
+        </Group>
+      )}
+    </Canvas>
+  );
+}
+
+const FILAS: Record<Tramo['etapa'], number> ={ despierto: 0, rem: 1, nucleo: 2, profundo: 3, dormido: 2 };
 const COLORES: Record<Tramo['etapa'], string> = { despierto: '#e7a07a', rem: '#8fd3e8', nucleo: '#6f86d6', dormido: '#6f86d6', profundo: '#4b4fa8' };
 
 export type PropsDeHipnograma = { desde: number; hasta: number; tramos: Tramo[]; ancho: number; alto: number; guias?: boolean };

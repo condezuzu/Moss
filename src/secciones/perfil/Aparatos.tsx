@@ -1,7 +1,7 @@
 // Perfil › Aparatos, el de la galería (galeria/src/perfil.js; spec/aparatos.md): los que escriben tu
 // sueño en Salud, con su precisión; de cuál sale la noche (la automática toma la más precisa de cada
-// noche); y qué llega de cada marca, que se despliega. Todo llega desde Salud: en la v1 no hay
-// conexiones directas.
+// noche); conectar directo, para lo que no llega a Salud (spec/aparatos.md: todavía ninguna, así que cada
+// marca dice «Pronto»); y qué llega de cada marca, que se despliega. Todo llega desde Salud.
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -17,6 +17,10 @@ import { useEstado } from '../comida/datos';
 import { Opcion } from '../entrada/piezas';
 import { HojaModal } from '../HojaModal';
 import { ACOMODA, Aparece, EtiquetaDeGrupo, Parrafo } from '../tarjetas';
+import { Cuadro } from './Cuadro';
+
+/** Las que se conectarán directo, en el orden de la galería: Polar no pide aprobación; las otras, sí. */
+const DIRECTAS = ['polar', 'oura', 'whoop', 'garmin'] as const;
 
 /** Las marcas de la lista, en el orden en que miden mejor el sueño (spec/aparatos.md, «El orden»). */
 const MARCAS = ['appleWatch', 'oura', 'google', 'whoop', 'polar', 'garmin', 'withings', 'ringconn', 'ultrahuman', 'amazfit', 'anillo', 'coros', 'suunto', 'eightSleep', 'samsung'] as const;
@@ -104,6 +108,7 @@ export function Aparatos({ alCerrar }: { alCerrar: () => void }) {
       <View style={st.lista}>
         {aparatos.length ? aparatos.map((a, i) => (
           <View key={a.fuente.id} style={[st.tuyo, i > 0 && st.separada]}>
+            <Cuadro icono={a.fuente.tipo === 'reloj' ? 'applewatch' : 'circle.circle'} color="azul" />
             <View style={{ flex: 1 }}>
               <Text style={st.filaTitulo}>{nombreDe(a.fuente)}</Text>
               <Text style={st.detalle}>{plural('perfil.aparatos.noches', a.noches, { n: a.noches })}</Text>
@@ -112,6 +117,7 @@ export function Aparatos({ alCerrar }: { alCerrar: () => void }) {
           </View>
         )) : (
           <View style={st.tuyo}>
+            <Cuadro icono="iphone" color="azul" />
             <View style={{ flex: 1 }}>
               <Text style={st.filaTitulo}>{t('perfil.aparatos.marcas.iphone.nombre')}</Text>
               <Text style={st.detalle}>{plural('perfil.aparatos.noches', deMoss, { n: deMoss })}</Text>
@@ -132,6 +138,21 @@ export function Aparatos({ alCerrar }: { alCerrar: () => void }) {
             </View>
           </Aparece>
         )}
+        <EtiquetaDeGrupo>{t('perfil.aparatos.directo.titulo')}</EtiquetaDeGrupo>
+        <Text style={st.nota}>{t('perfil.aparatos.directo.texto')}</Text>
+        <View style={st.lista}>
+          {DIRECTAS.map((m, i) => (
+            <View key={m} style={[st.tuyo, i > 0 && st.separada]}>
+              <Cuadro icono="applewatch" color="azul" />
+              <View style={{ flex: 1 }}>
+                <Text style={st.filaTitulo}>{t(`perfil.aparatos.directo.marcas.${m}.nombre`)}</Text>
+                <Text style={st.suma}>{t(`perfil.aparatos.directo.marcas.${m}.suma`)}</Text>
+              </View>
+              <Text style={st.pronto}>{t('perfil.aparatos.directo.pronto')}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={[st.nota, st.notaAbajo]}>{t('perfil.aparatos.directo.soloSalud')}</Text>
         <EtiquetaDeGrupo>{t('perfil.aparatos.cadaUno')}</EtiquetaDeGrupo>
         <Animated.View layout={ACOMODA} style={st.lista}>
           {lista.map((m, i) => (
@@ -155,6 +176,13 @@ const st = StyleSheet.create({
   filaTitulo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   detalle: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
   marcaTexto: { paddingHorizontal: 16, paddingBottom: 14, fontFamily: letras.texto, fontSize: 13, lineHeight: 19, color: 'rgba(239, 230, 207, 0.62)' },
+  nota: { marginBottom: 10, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.62)' },
+  notaAbajo: { marginTop: 10, marginBottom: 0 },
+  suma: { marginTop: 3, fontFamily: letras.texto, fontSize: 12, lineHeight: 16, color: 'rgba(239, 230, 207, 0.56)' },
+  pronto: {
+    paddingVertical: 6, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden', backgroundColor: 'rgba(239, 230, 207, 0.06)',
+    fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)',
+  },
   puntos: { flexDirection: 'row', gap: 5 },
   punto: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(239, 230, 207, 0.12)' },
   puntoLleno: { backgroundColor: '#8fd3e8', shadowColor: '#8fd3e8', shadowOpacity: 0.5, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } },
