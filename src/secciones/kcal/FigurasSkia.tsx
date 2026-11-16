@@ -3,13 +3,14 @@
 // Todas van de lo que muestran a lo nuevo, y pasada la meta quedan llenas y en oro.
 
 import {
-  Blur, Canvas, Circle, ColorMatrix, FractalNoise, Group, Mask, Oval, Paint, Path, RadialGradient, Skia, vec, type SkPath,
+  Blur, BlurMask, Canvas, Circle, ColorMatrix, DashPathEffect, FractalNoise, Group, Mask, Oval, Paint, Path, RadialGradient, Skia, vec, type SkPath,
 } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { useCalidad } from '@/cielo/dia';
 import { colores } from '@/tema';
+import { altoDelArco } from './medidas';
 
 const LLENO = '#ece4cf';
 const PISTA = 'rgba(239, 230, 207, 0.09)';
@@ -139,7 +140,7 @@ export function AnilloSkia({ tam, grueso, fraccion, ms = 1100 }: PropsDeAnillo) 
         <Path path={camino} style="stroke" strokeWidth={grueso} color={PISTA} />
         <Group opacity={se}>
           <Path path={camino} style="stroke" strokeWidth={grueso} strokeCap="round" color={color} start={0} end={fin} opacity={0.35}>
-            <Blur blur={3} />
+            <BlurMask blur={3} style="normal" />
           </Path>
           <Path path={camino} style="stroke" strokeWidth={grueso} strokeCap="round" color={color} start={0} end={fin} />
         </Group>
@@ -151,8 +152,6 @@ export function AnilloSkia({ tam, grueso, fraccion, ms = 1100 }: PropsDeAnillo) 
 // ------------------------------------------------------------ el arco
 export type PropsDeArco = { ancho: number; grueso: number; fraccion: number; estrella?: boolean; ms?: number };
 
-/** Lo que ocupa de alto un arco de 100 de ancho. */
-export const altoDelArco = (grueso: number) => 50 + grueso / 2 + 2;
 
 /** Medio círculo, como el cielo sobre el horizonte: lo comido sube de izquierda a derecha, con una estrella en la punta. */
 export function ArcoSkia({ ancho, grueso, fraccion, estrella = true, ms = 1100 }: PropsDeArco) {
@@ -173,13 +172,13 @@ export function ArcoSkia({ ancho, grueso, fraccion, estrella = true, ms = 1100 }
         <Path path={camino} style="stroke" strokeWidth={grueso} color={PISTA} />
         <Group opacity={se}>
           <Path path={camino} style="stroke" strokeWidth={grueso} strokeCap="round" color={color} start={0} end={fin} opacity={0.35}>
-            <Blur blur={3} />
+            <BlurMask blur={3} style="normal" />
           </Path>
           <Path path={camino} style="stroke" strokeWidth={grueso} strokeCap="round" color={color} start={0} end={fin} />
           {estrella && (
             <>
               <Circle cx={x} cy={y} r={radio * 2.4} color={colores.oro} opacity={0.4}>
-                <Blur blur={radio * 1.6} />
+                <BlurMask blur={radio * 1.6} style="normal" />
               </Circle>
               <Circle cx={x} cy={y} r={radio} color={deMas ? colores.oroClaro : colores.cifra} />
             </>
@@ -207,7 +206,7 @@ function UnAnillo({ r, grueso, fraccion, macro, ms }: { r: number; grueso: numbe
       <Path path={camino} style="stroke" strokeWidth={grueso} color={pista} />
       <Group opacity={se}>
         <Path path={camino} style="stroke" strokeWidth={grueso} strokeCap="round" color={color} start={0} end={fin} opacity={0.35}>
-          <Blur blur={3} />
+          <BlurMask blur={3} style="normal" />
         </Path>
         <Path path={camino} style="stroke" strokeWidth={grueso} strokeCap="round" color={color} start={0} end={fin} />
       </Group>
@@ -224,6 +223,44 @@ export function MacrosSkia({ tam, grueso, fracciones, ms = 1100 }: PropsDeMacros
           <UnAnillo key={m} macro={m} r={46 - grueso / 2 - i * (grueso + 2.5)} grueso={grueso} fraccion={fracciones[m]} ms={ms} />
         ))}
       </Group>
+    </Canvas>
+  );
+}
+
+// ------------------------------------------------------------ el camino del primer día
+export type PropsDelCamino = { ancho: number; alto: number; desde: number; meta: number };
+
+/**
+ * El camino del primer día (galeria/src/inicio.js, caminoPrimerDia): hoy y la meta, unidos por lo que falta (punteado),
+ * con la línea de la meta. Se dibuja de izquierda a derecha al aparecer.
+ */
+export function CaminoSkia({ ancho, alto, desde, meta }: PropsDelCamino) {
+  const reducido = useReducedMotion();
+  const trazo = useSharedValue(reducido ? 1 : 0);
+  useEffect(() => {
+    if (!reducido) trazo.set(withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) }));
+  }, [reducido, trazo]);
+  const m = 6;
+  const min = Math.min(desde, meta) - 0.4;
+  const max = Math.max(desde, meta) + 0.4;
+  const Y = (v: number) => m + (1 - (v - min) / (max - min)) * (alto - 2 * m);
+  const x0 = m;
+  const x1 = ancho - m;
+  const lineaMeta = Skia.Path.MakeFromSVGString(`M ${x0} ${Y(meta)} L ${x1} ${Y(meta)}`) ?? Skia.Path.Make();
+  const plan = Skia.Path.MakeFromSVGString(`M ${x0} ${Y(desde)} L ${x1} ${Y(meta)}`) ?? Skia.Path.Make();
+  const destino = useDerivedValue(() => (trazo.get() > 0.98 ? 1 : 0));
+  return (
+    <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
+      <Path path={lineaMeta} style="stroke" strokeWidth={1} color="rgba(239, 230, 207, 0.4)">
+        <DashPathEffect intervals={[3, 4]} />
+      </Path>
+      <Path path={plan} style="stroke" strokeWidth={1.6} strokeCap="round" color="rgba(246, 227, 166, 0.75)" start={0} end={trazo}>
+        <DashPathEffect intervals={[2, 4]} />
+      </Path>
+      <Circle cx={x0} cy={Y(desde)} r={7} color="rgba(246, 227, 166, 0.12)" />
+      <Circle cx={x0} cy={Y(desde)} r={4.6} color="rgba(246, 227, 166, 0.22)" />
+      <Circle cx={x0} cy={Y(desde)} r={3} color={colores.cifra} />
+      <Circle cx={x1} cy={Y(meta)} r={3.4} style="stroke" strokeWidth={1.4} color={colores.oroClaro} opacity={destino} />
     </Canvas>
   );
 }

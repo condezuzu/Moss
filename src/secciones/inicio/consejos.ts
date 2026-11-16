@@ -12,7 +12,7 @@ import { edadDe } from '@/dominio/metas';
 import { paraHoy, type ConsejoDeHoy, type EntradaDeParaHoy } from '@/dominio/paraHoy';
 import { totalDelDia, vigentes, type Registro } from '@/dominio/registros';
 import { segunElDeporte, textoDelDeporte, type EntradaDelDeporte } from '@/dominio/segunElDeporte';
-import { idioma, t } from '@/textos';
+import { idioma, t, type Clave } from '@/textos';
 import { horasDeComer, metaDelDia, numero } from '../comida/datos';
 
 /** La meta de agua de Inicio: ocho vasos de 250 ml. */
@@ -97,7 +97,7 @@ function enLista(nombres: readonly string[], ultimo: string): string {
 
 /** Lo que dice un consejo, sin cifras con los números ocultos. */
 export function textoDelConsejo(x: ConsejoDeHoy, numeros: boolean): string {
-  if (x.tipo === 'deporte') return textoDelDeporte(x.consejo, { t, numero });
+  if (x.tipo === 'deporte') return textoDelDeporte(x.consejo, { t: (clave, valores) => t(clave as Clave, valores), numero });
   if (x.tipo === 'anotar') {
     return t('inicio.paraHoy.anotar', { comidas: enLista(x.comidas.map((c) => t(`inicio.paraHoy.comidas.${c}`)), idioma() === 'es' ? ' ni ' : ' or ') });
   }

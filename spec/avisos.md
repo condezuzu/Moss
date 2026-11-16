@@ -424,6 +424,46 @@ y entrenar tarde, Sueño; la recuperación, Ascent.
   - Las demás, y el estudio entero de los horarios, en
     [`estudio/momentos.md`](estudio/momentos.md).
 
+## El día que sigue tu despertar (16/11/2026, lo pediste; para programar en la tanda 2)
+
+**Lo que pasó:** el 16/11 te llegó «Buen momento para pesarte» antes de despertarte. Los avisos se programan
+de antemano: pesarse va a tu despertar habitual + 10 min (`PESARSE_DESPUES`) o a las 8:00 sin noches
+(`PESARSE_SIN_SUENO`). Si ese día te despertás más tarde, suena igual.
+
+**Lo que pediste:** como Rise, que el día se acomode a cómo es el tuyo, y que cada día sea distinto.
+
+1. **El día arranca cuando te despertás de verdad.** El despertar real sale de lo primero que llegue: el final
+   de la noche en Salud, el despertador o el atajo (las anclas, `src/salud/anclas.ts`) o la primera vez que
+   abres Moss de mañana. La tarea de segundo plano (`src/fondo/`) lo busca de mañana, con el teléfono ya
+   desbloqueado. Hasta saberlo, no suena nada de la mañana: ni pesarse, ni el desayuno.
+2. **Al despertar, de a uno y separados:**
+   - tu deuda de sueño en una línea, sin festejar: «Tu deuda de sueño bajó a 1 h 20 min» (o subió);
+   - un rato después, pesarse, si lo tienes prendido;
+   - después, el desayuno: «¿Desayunas hoy?», con dos botones en el aviso: «Sí» y «Voy directo al almuerzo».
+3. **El día de comidas se ordena con la primera comida.** Si la primera que anotas es el desayuno, las demás
+   van a su hora de siempre. Si es el almuerzo, porque no desayunaste, la merienda y la cena se corren
+   (`horasCorridas` en `avisos.ts`) y lo que te queda del día se reparte entre ellas: «Lo que no comiste en
+   el desayuno va a la merienda y la cena». Sin culpa y sin pasarse del día.
+4. **La noche se arma con tu despertar y tu deuda.** Con la hora a la que te despertaste, cuánto necesitas
+   dormir y la deuda, Moss calcula la hora de ir a la cama de esa noche, y desde ahí, en orden:
+   - **tu ventana de melatonina** (de fábrica): cuándo te va a costar menos dormirte;
+   - **bajar las revoluciones** (de fábrica), una hora antes: lo tranquilo, sin pantallas brillantes;
+   - **bajar las luces** (de fábrica, como ahora);
+   - **la hora de ir a la cama** (de fábrica, como ahora).
+5. **Cada aviso con su interruptor en Perfil › Avisos**, en dos grupos:
+   - **de fábrica:** la deuda al despertar, pesarse (si lo elegiste), las comidas, la ventana de melatonina,
+     bajar las revoluciones, bajar las luces y la hora de dormir;
+   - **más (apagados de fábrica):** descargar lo que tienes en la cabeza antes de dormir, las gafas que
+     bloquean la luz azul (no todos las tienen), el café, no entrenar fuerte tan tarde y la última comida
+     grande.
+   Siguen las reglas de siempre: de a uno, con un máximo por día, y nada de lo que ya pasó.
+
+**Antes de programarlo:** lo visual (Perfil › Avisos con los dos grupos, los botones del desayuno y los textos
+nuevos) va primero a la galería. La ventana de melatonina y la descarga de pensamientos van con su evidencia
+en `spec/estudio/momentos.md`: la melatonina sube unas 2 horas antes de la hora habitual de dormirse
+(DLMO), y escribir lo pendiente antes de acostarse acortó el tiempo en dormirse en un ensayo chico
+(Scullin, 2018); se revisa antes de escribir los textos.
+
 ## Lo que queda
 
 - Los avisos de después de entrenar (con Ascent) andan en la regla, pero la

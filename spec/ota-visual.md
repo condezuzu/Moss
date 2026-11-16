@@ -7,7 +7,11 @@ fc0d415b): nada de paquetes, `package.json`, `app.json` ni `.gitignore`. Antes d
 solo la usa tu amigo). La suscripción está prendida en EAS, pero en la build 6 no hay módulo `Compras`, así que
 no aparece la pantalla de pago (`hayCompras()` en `src/lib/premium.ts`).
 
-## Tanda 1 (pausada el 16/11 a mitad de camino)
+## Tanda 1 (terminada y publicada el 16/11)
+
+Hecha y probada en la web (1496 tests, tipos, lint, Supabase, export y la huella fc0d415b). Quedó afuera: el ritmo o la fecha elegidos en Progreso no se guardan (pide una columna en `moss.perfiles`), «Cuando llegues» no se lee, la línea de Sueño según el deporte y los consejos del deporte salvo pesas y correr (piden el tipo de deporte del cuestionario nuevo), el reflujo en «Esta noche» (pide Cuidados) y la aurora de Sueño se desliza con la página.
+
+Lo que sigue es cómo se pausó:
 
 Cuatro agentes, uno por sección, con estas reglas: la galería es el diseño aprobado, la lógica de `src/dominio/`,
 los textos en es y en con `textos.cjs` (el que mezcla sin pisar), nada de golpe, nada de Ascent, números ocultos,
@@ -32,6 +36,8 @@ Después: probar todo en la web contra la galería, `npm test`, typecheck, lint,
 `production`, y juntar `visual-ota` con `mejoras-1.1` (para que la 1.1 también lo tenga).
 
 ## Tanda 2 (sin empezar)
+
+Primero, **el día que sigue tu despertar** (spec/avisos.md: lo pediste el 16/11, después de que «pesarte» sonara antes de que te despertaras). Después:
 
 El cuestionario nuevo y «Tus respuestas», Cuidados (D44), Perfil (la tarjeta, los créditos, las hojas y «En qué
 se basa Moss»), la foto de la comida, los consejos según el deporte y los avisos al estilo RISE. Afuera: Ascent

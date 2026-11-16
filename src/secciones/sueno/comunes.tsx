@@ -3,7 +3,7 @@
 // el ejemplo, los puntos de cuánto falta y las barras que crecen.
 
 import { useEffect, type ReactNode } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import type { ClaveDia } from '@/dominio/fechas';
@@ -19,6 +19,9 @@ export const SN = {
   linea: 'rgba(150, 178, 240, 0.15)',
   rem: '#a8e2f0', nucleo: '#6aa2f0', profundo: '#6a5fd6', despierto: '#efb08c', azul: '#6b8ff0', verde: '#2ea8a0', verdeClaro: '#8adbc8',
 } as const;
+
+/** Un degradado de fondo: en la web es CSS, en el teléfono el de React Native 0.88. */
+export const degradado = (g: string) => (Platform.OS === 'web' ? { backgroundImage: g } : { experimental_backgroundImage: g }) as ViewStyle;
 
 /** Una hora del sueño: los minutos se cuentan desde las 18 del día anterior. */
 export const reloj = (minutos: number) => horaDelDia(minutos + 18 * 60);

@@ -168,8 +168,8 @@ function Pista({ desde, hoy, pesoInicial, pesoHoy, plan, u }: { desde: ClaveDia;
   let ultima = -100;
   const conEtiqueta = puntos.map((x) => {
     const left = pos(x.f);
-    // Hoy y la meta siempre llevan su etiqueta; los demás, si no pisan la anterior ni la de la meta.
-    const si = x.clase === 'hoy' || x.clase === 'meta' || (left - ultima >= 17 && pos(meta.fecha) - left >= 17);
+    // Hoy y la meta siempre llevan su etiqueta; los demás, si no pisan la anterior, la de hoy ni la de la meta.
+    const si = x.clase === 'hoy' || x.clase === 'meta' || (left - ultima >= 17 && pos(meta.fecha) - left >= 17 && Math.abs(pos(hoy) - left) >= 14);
     if (si) ultima = left;
     return si;
   });
@@ -190,7 +190,7 @@ function Pista({ desde, hoy, pesoInicial, pesoHoy, plan, u }: { desde: ClaveDia;
       </View>
       {puntos.map((x, i) => (
         <Animated.View key={`${x.clase}-${x.f}`} entering={FadeIn.duration(400).delay(80 * i).reduceMotion(ReduceMotion.Never)} style={[s.punto, { left: `${pos(x.f)}%` }]}>
-          <View style={[s.puntoDentro, x.clase === 'inicio' ? s.puntoInicio : s.puntoCentrado]}>
+          <View style={[s.puntoDentro, x.clase === 'inicio' && s.puntoInicio]}>
             <View style={[s.bolita, x.clase === 'inicio' && s.bolitaInicio, x.clase === 'hoy' && s.bolitaHoy, x.clase === 'meta' && s.bolitaMeta]} />
             {conEtiqueta[i] && (
               <>
@@ -497,10 +497,10 @@ const s = StyleSheet.create({
   hecho: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 3 },
   mant: { position: 'absolute', top: 0, bottom: 0, flexDirection: 'row', gap: 3, overflow: 'hidden', borderTopRightRadius: 3, borderBottomRightRadius: 3 },
   trazo: { width: 4, height: 3, backgroundColor: 'rgba(166, 191, 148, 0.55)' },
-  punto: { position: 'absolute', top: 0 },
+  // Un ancho fijo, centrado en su día: cerca del borde, la etiqueta no se parte en dos renglones.
+  punto: { position: 'absolute', top: 0, width: 80, marginLeft: -40 },
   puntoDentro: { alignItems: 'center', gap: 3 },
-  puntoCentrado: { transform: [{ translateX: '-50%' }] },
-  puntoInicio: { alignItems: 'flex-start' },
+  puntoInicio: { alignItems: 'flex-start', marginLeft: 40 },
   bolita: { width: 9, height: 9, marginTop: 16, borderRadius: 4.5, backgroundColor: '#0b1122', borderWidth: 1.5, borderColor: 'rgba(239, 230, 207, 0.45)' },
   bolitaInicio: { width: 7, height: 7, marginTop: 17, borderRadius: 3.5, backgroundColor: colores.oroClaro, borderColor: colores.oroClaro },
   bolitaHoy: {
@@ -512,7 +512,7 @@ const s = StyleSheet.create({
   puntoKg: { fontFamily: letras.numero, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.85)', fontVariant: ['tabular-nums'] },
   puntoHoy: { color: colores.pergamino },
   puntoMeta: { color: colores.oroClaro },
-  mantEtq: { position: 'absolute', top: 2, transform: [{ translateX: '-50%' }] },
+  mantEtq: { position: 'absolute', top: 2, width: 80, marginLeft: -40, alignItems: 'center' },
   mantTexto: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 0.4, color: colores.salvia },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
   filaTitulo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },

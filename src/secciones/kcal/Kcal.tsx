@@ -12,8 +12,6 @@ import { colores, letras } from '@/tema';
 import { numero } from '../comida/datos';
 import { Anillo, Arco, Luna, Macros, type FraccionesDeMacros } from './Figuras';
 
-export { altoDelArco } from './Figuras';
-
 const MS = 1100;
 
 // ------------------------------------------------------------ la barra por comidas

@@ -1,59 +1,44 @@
-// Progreso, el de la galería (galeria/src/progreso.js; spec/progreso.md): el progreso al objetivo,
-// el peso con su tendencia, las medidas, el rango de grasa corporal y el gasto con el balance. Abajo,
-// la estrategia (el objetivo con su ritmo, el peso meta y las metas de hoy) y el próximo control con
-// el día que se elige. «Metas de hoy» abre las metas: quién las pone, cómo se reparten los macros y
-// repartir la semana. Sin datos propios, la persona de ejemplo, con su aviso arriba.
+// Progreso, el de la galería (galeria/src/progreso.js; spec/progreso.md, «Más simple, con el plan
+// arriba»): arriba el próximo control en una línea y tu plan por etapas, con la estrategia adentro
+// («Cambiar el plan»: el objetivo, el peso meta, el ritmo y el plazo, y las metas de hoy); después el
+// peso con su tendencia y la grasa corporal (o la invitación a medirla). Semana a semana, las medidas
+// y el gasto con el balance quedan plegados en «Más datos». «Metas de hoy» abre las metas: quién las
+// pone, cómo se reparten los macros y repartir la semana. Sin datos propios, la persona de ejemplo.
 
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type AccessibilityActionEvent, type ViewStyle } from 'react-native';
-import Animated, { LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ViewStyle } from 'react-native';
+import Animated, { FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
-import { conMayuscula } from '@/comida/buscar';
-import { KG_POR_LIBRA, largoEn, pesoCorporalEn, type Sistema } from '@/dominio/cantidades';
-import { cambioDe, cinturaAltura, claseDeCintura, rangoDeGrasa, SITIOS, ultimasMedidas } from '@/dominio/cuerpo';
-import { diasEntre, sumarDias, type DiaSemana } from '@/dominio/fechas';
-import { ESTILOS, EXTRAS, objetivoPermitido, pesoMinimoSano, pisoDe, repartirSemana, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
-import type { EstadoDelObjetivo } from '@/dominio/progreso';
-import { lista, plural, t } from '@/textos';
+import { rangoDeGrasa, ultimasMedidas } from '@/dominio/cuerpo';
+import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
+import { ESTILOS, EXTRAS, pisoDe, repartirSemana, type Macros } from '@/dominio/metas';
+import { comidasParaElControl } from '@/dominio/registros';
+import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { PESTANAS } from '../Barra';
-import { COLOR_DE_MACRO, Icono, MACROS, Punto, type Macro } from '../comida/comunes';
-import { conSigno, fechaCorta, fechaDiaMes, fechaLarga, numero, sistemaDe, useEstado } from '../comida/datos';
+import { COLOR_DE_MACRO, Icono, MACROS, type Macro } from '../comida/comunes';
+import { conSigno, fechaCorta, fechaDiaMes, numero, sistemaDe, useEstado, useNumeros } from '../comida/datos';
 import { FranjaBajoLaHora } from '../franja';
 import { usePersona } from '../ganchos';
-import { Balance, Linea } from '../graficos/Graficos';
+import { Linea } from '../graficos/Graficos';
 import type { VistaDelMas } from '../HojaMas';
 import { ENTRA_FUNDIDO, ENTRA_PANEL, SALE_FUNDIDO, SALE_PANEL } from '../movimiento';
-import { BotonDePaso } from '../paso';
-import type { Persona } from '../persona';
+import { comidasDeEjemplo, type Persona } from '../persona';
 import {
-  Aparece, AvisoDeEjemplo, BotonChico, Cabecera, Camino, Carta, Chip, Cifra, ComoSeCalcula, Dias, Eje, EtiquetaDeGrupo, Nota, Parrafo, Recuadro, SEMANA, Segmento, type TipoDeChip,
+  Aparece, AvisoDeEjemplo, BotonChico, Cabecera, Carta, Chip, Cifra, ComoSeCalcula, Dias, Eje, EtiquetaDeGrupo, Nota, Parrafo, SEMANA, Segmento,
 } from '../tarjetas';
 import { tecladoDeNumeros } from '../teclado';
+import { ElGasto, LasMedidas, MasDatos, Semanas } from './MasDatos';
+import { calcularPlan, ElPlan, Flecha, LaEstrategia, MacrosEnLinea, SIN_ELEGIR, type EleccionDelPlazo } from './Plan';
+import { unidades, type U } from './unidades';
 
 type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
 
 const PROGRESO = PESTANAS.indexOf('progreso');
-
-const TIPO_DE_ESTADO: Record<EstadoDelObjetivo, TipoDeChip | undefined> = {
-  llegaste: 'bien', enCamino: 'bien', estable: 'bien', despacio: 'atencion', quieto: 'atencion', alReves: 'atencion', seMueve: 'atencion', sinMeta: 'tenue', otroLado: 'atencion', todaviaNo: 'tenue', faltanDatos: 'tenue',
-};
-
-/** Los pesos en la unidad de cada uno: con lo redondeado para mostrar y sin redondear para las cuentas. */
-function unidades(sistema: Sistema) {
-  const unidad = pesoCorporalEn(1, sistema).unidad;
-  return {
-    unidad,
-    peso: (kg: number, decimales = 1) => numero(pesoCorporalEn(kg, sistema).valor, decimales),
-    /** El peso meta: de a medio kilo o de a una libra (PasosDelPesoMeta). */
-    meta: (kg: number) => numero(pesoCorporalEn(kg, sistema).valor, kg % 1 && sistema !== 'imperial' ? 1 : 0),
-    enUnidad: (kg: number) => (sistema === 'imperial' ? kg / KG_POR_LIBRA : kg),
-  };
-}
 
 export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   const [vista, setVista] = useState<'principal' | 'metas'>('principal');
@@ -118,119 +103,173 @@ function ScrollDeMetas({ relleno, arriba, esLaActual, alVolver }: { relleno: Vie
 function Principal({ ancho, alAbrirMas, alVerMetas }: { ancho: number; alAbrirMas: Props['alAbrirMas']; alVerMetas: () => void }) {
   const e = useEstado();
   const p = usePersona();
+  const numeros = useNumeros();
   const [abierto, setAbierto] = useState<string | null>(null);
+  const [cambiarPlan, setCambiarPlan] = useState(false);
+  const [masDatos, setMasDatos] = useState(false);
+  const [eleccion, setEleccion] = useState<EleccionDelPlazo>(SIN_ELEGIR);
   const alternar = (cual: string) => setAbierto((antes) => (antes === cual ? null : cual));
-  const u = unidades(sistemaDe(e));
+  const sistema = sistemaDe(e);
+  const u = useMemo(() => unidades(sistema), [sistema]);
   const interior = ancho - 40 - 34;
+  // Si entrena fuerza, de Perfil › Entrenamiento; sin decirlo, no se sabe y el plazo lo avisa.
+  const fuerza = e.entreno ? e.entreno.tipo !== 'resistencia' : null;
+  const calculo = useMemo(() => calcularPlan(p, e.hoy, eleccion, fuerza), [p, e.hoy, eleccion, fuerza]);
+  // Desde cuándo va la línea del plan: la primera meta (la entrada) si hay tendencia ese día; si no, la primera pesada.
+  const primera = [...p.tendencia.keys()][0] ?? e.hoy;
+  const empezo = !p.deEjemplo ? e.metas[0]?.desde : undefined;
+  const desde = empezo && p.tendencia.has(empezo) ? empezo : primera;
+  const comidas = useMemo(() => (p.deEjemplo ? comidasDeEjemplo(e.hoy) : comidasParaElControl(e.registros.values())), [p.deEjemplo, e.hoy, e.registros]);
   return (
     <>
       <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('progreso.titulo')} />
       {p.deEjemplo && <AvisoDeEjemplo texto={t('progreso.ejemplo')} />}
-      <ElObjetivo p={p} hoy={e.hoy} u={u} />
-      <ElPeso p={p} u={u} ancho={interior} alRegistrar={() => alAbrirMas('peso')} />
-      <LasMedidas p={p} hoy={e.hoy} sistema={sistemaDe(e)} alMedir={() => alAbrirMas('medidas')} />
-      <LaGrasa p={p} abierto={abierto === 'grasa'} alAbrir={() => alternar('grasa')} />
-      <ElGasto p={p} u={u} abierto={abierto === 'gasto'} alAbrir={() => alternar('gasto')} />
-      <Text style={s.seccion}>{t('progreso.estrategia')}</Text>
-      <LaEstrategia p={p} u={u} abierto={abierto} alternar={alternar} alVerMetas={alVerMetas} />
-      <ElControl p={p} />
+      <ControlCorto p={p} abierto={abierto === 'control'} alTocar={() => alternar('control')} />
+      {calculo && (
+        <ElPlan p={p} calculo={calculo} hoy={e.hoy} desde={desde} u={u} abierto={abierto} alternar={alternar} cambiarPlan={cambiarPlan} alCambiarPlan={() => setCambiarPlan((x) => !x)}>
+          <LaEstrategia p={p} calculo={calculo} hoy={e.hoy} u={u} numeros={numeros} abierto={abierto} alternar={alternar} eleccion={eleccion} alElegir={setEleccion} alVerMetas={alVerMetas} />
+        </ElPlan>
+      )}
+      <ElPeso p={p} hoy={e.hoy} u={u} ancho={interior} alRegistrar={() => alAbrirMas('peso')} />
+      <LaGrasa p={p} abierto={abierto === 'grasa'} alAbrir={() => alternar('grasa')} alMedir={() => alAbrirMas('medidas')} />
+      <MasDatos abierto={masDatos} alTocar={() => setMasDatos((x) => !x)}>
+        <Semanas p={p} hoy={e.hoy} comidas={comidas} ancho={interior} u={u} numeros={numeros} />
+        <LasMedidas p={p} hoy={e.hoy} sistema={sistema} alMedir={() => alAbrirMas('medidas')} />
+        {numeros && <ElGasto p={p} u={u} abierto={abierto === 'gasto'} alAbrir={() => alternar('gasto')} />}
+      </MasDatos>
     </>
   );
 }
 
-type U = ReturnType<typeof unidades>;
-
-// ------------------------------------------------------------------ el objetivo
-function ElObjetivo({ p, hoy, u }: { p: Persona; hoy: string; u: U }) {
-  const g = p.progreso;
-  const metaKg = p.perfil.pesoMeta;
-  // Sin déficit, bajar queda en mantener (objetivoPermitido): se muestra lo que se usa.
-  const objetivo = objetivoPermitido(p.perfil);
-  const titulo = objetivo === 'mantener'
-    ? t('progreso.mantenerEn', { kg: u.peso(p.pesoHoy ?? 0), unidad: u.unidad })
-    : metaKg ? t(objetivo === 'bajar' ? 'progreso.objetivoA.bajar' : 'progreso.objetivoA.subir', { kg: u.meta(metaKg), unidad: u.unidad }) : t(`progreso.objetivos.${objetivo}`);
+// ------------------------------------------------------------------ el próximo control, en una línea
+// Arriba de todo (lo pediste el 2/11/2026): cuándo, cómo viene y lo que le falta, en corto. Tocándolo
+// se abre lo demás: qué pasa ese día y qué día de la semana se hace.
+function ControlCorto({ p, abierto, alTocar }: { p: Persona; abierto: boolean; alTocar: () => void }) {
+  const ec = p.estadoControl;
+  if (!ec) return null;
+  // Mientras quedan días antes del control, todavía puede llegar: está en curso, no le falta nada.
+  const quedan = Math.max(0, ec.faltan - 1);
+  // Con el tramo corto (la primera semana), ese control no mide aunque lleguen los datos.
+  const estado = ec.alcanza ? 'alcanza' : !ec.tramoCorto && ec.diasConComida + quedan >= ec.minimos.diasConComida ? 'enCurso' : 'faltanDatos';
+  const cuando = ec.faltan === 0 ? t('progreso.hoy') : ec.faltan === 1 ? t('progreso.manana') : t('progreso.enDias', { n: ec.faltan });
+  // «2 de 4 días con comida · pesada ✓»: lo que tiene, en corto, y lo cumplido con su marca.
+  const comida = ec.diasConComida >= ec.minimos.diasConComida ? t('progreso.control.comidaLista') : t('progreso.control.comida', { n: ec.diasConComida, min: ec.minimos.diasConComida });
+  const pesadas = ec.pesadas >= ec.minimos.pesadas ? t('progreso.control.pesadaLista') : t('progreso.control.pesada');
   return (
-    <Carta titulo={t('progreso.objetivo')} derecha={<Chip texto={t(`progreso.estados.${g.estado}`)} tipo={TIPO_DE_ESTADO[g.estado]} />}>
-      <Text style={s.objetivoTitulo}>{titulo}</Text>
-      {g.fecha && <Cifra valor={fechaDiaMes(g.fecha)} texto={t('progreso.llegarias')} />}
-      {g.hecho !== null && p.pesoInicial !== null && g.peso !== null && metaKg ? (
-        <Camino
-          hecho={g.hecho}
-          etiquetas={[t('progreso.empezaste', { kg: u.peso(p.pesoInicial) }), u.peso(g.peso), t('progreso.meta', { kg: u.meta(metaKg) })]}
-        />
-      ) : null}
-      <Parrafo>
-        {t(`progreso.textos.${g.estado}`, {
-          ritmo: g.ritmo === null ? '' : conSigno(u.enUnidad(g.ritmo), 2), plan: conSigno(u.enUnidad(g.ritmoPlan), 2),
-          faltan: g.faltan === null ? '' : numero(u.enUnidad(g.faltan), 1), semanas: g.fecha ? Math.round(diasEntre(hoy, g.fecha) / 7) : '', unidad: u.unidad,
-        })}
-      </Parrafo>
+    <Carta estilo={s.control}>
+      <Pressable onPress={alTocar} style={({ pressed }) => [s.controlFila, pressed && { opacity: 0.75 }]} accessibilityRole="button" accessibilityState={{ expanded: abierto }}>
+        <Icono nombre="clock" tam={18} />
+        <View style={s.controlTextos}>
+          <Text style={s.controlTitulo}>{t('progreso.control.titulo', { dia: lista('fecha.dias')[diaDeLaSemana(ec.fecha)], cuando })}</Text>
+          <Text style={s.controlRequisitos}>{`${comida} · ${pesadas}`}</Text>
+        </View>
+        <Chip texto={t(`progreso.${estado}`)} tipo={estado === 'alcanza' ? 'bien' : estado === 'faltanDatos' ? 'atencion' : undefined} />
+        <Flecha abierta={abierto} grados={180} tam={13} color="rgba(239, 230, 207, 0.4)" />
+      </Pressable>
+      {abierto && (
+        <Aparece style={s.controlDentro}>
+          <Parrafo>{estado === 'faltanDatos' && ec.tramoCorto ? t('progreso.controlPrimero') : t(`progreso.control.textos.${estado}`)}</Parrafo>
+          <EtiquetaDeGrupo>{t('progreso.diaDelControl')}</EtiquetaDeGrupo>
+          <Dias elegidos={[p.diaDelControl]} uno alTocar={(d) => elAlmacen().ponerEstrategia({ diaDelControl: d })} />
+          <Parrafo chico>{t('progreso.diaDelControlNota')}</Parrafo>
+        </Aparece>
+      )}
     </Carta>
   );
 }
 
 // ------------------------------------------------------------------ el peso
-function ElPeso({ p, u, ancho, alRegistrar }: { p: Persona; u: U; ancho: number; alRegistrar: () => void }) {
+type Rango = 'mes' | 'tresMeses' | 'todo';
+const DIAS_DEL_RANGO: Record<Rango, number> = { mes: 30, tresMeses: 90, todo: 0 };
+
+/** Cuánto se mira para atrás: un segmento chico, del ancho de lo que dice. */
+function Rangos({ elegido, alElegir }: { elegido: Rango; alElegir: (r: Rango) => void }) {
+  return (
+    <View style={s.rangos} accessibilityRole="radiogroup">
+      {(['mes', 'tresMeses', 'todo'] as const).map((r) => (
+        <Pressable
+          key={r}
+          onPress={() => {
+            if (r !== elegido) Haptics.selectionAsync().catch(() => {});
+            alElegir(r);
+          }}
+          style={({ pressed }) => [s.rango, r === elegido && s.rangoElegido, pressed && r !== elegido && { opacity: 0.6 }]}
+          hitSlop={{ top: 6, bottom: 6 }}
+          accessibilityRole="radio"
+          accessibilityState={{ selected: r === elegido }}
+        >
+          <Text style={[s.rangoTexto, r === elegido && s.rangoTextoElegido]} numberOfLines={1}>{t(`progreso.graficos.rangos.${r}`)}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function ElPeso({ p, hoy, u, ancho, alRegistrar }: { p: Persona; hoy: ClaveDia; u: U; ancho: number; alRegistrar: () => void }) {
+  const [rango, setRango] = useState<Rango>('tresMeses');
+  // Los últimos días del rango (con lo que haya), con la pesada de cada día y la tendencia.
+  const { serie, dias } = useMemo(() => {
+    const primero = [...p.tendencia.keys()][0] ?? hoy;
+    const hay = diasEntre(primero, hoy) + 1;
+    const pedido = DIAS_DEL_RANGO[rango];
+    const n = Math.max(2, pedido ? Math.min(pedido, hay) : hay);
+    const porFecha = new Map(p.pesos.map((x) => [x.fecha, x.kg]));
+    return {
+      dias: n,
+      serie: Array.from({ length: n }, (_, i) => {
+        const f = sumarDias(hoy, i - n + 1);
+        return { x: i / (n - 1), punto: porFecha.get(f) ?? null, linea: p.tendencia.get(f) ?? null };
+      }),
+    };
+  }, [p.tendencia, p.pesos, hoy, rango]);
+  // Con una sola pesada no hay línea: era un punto suelto en un gráfico vacío.
+  const conLinea = p.pesos.length >= 2;
   return (
     <Carta titulo={t('progreso.peso')} derecha={<BotonChico texto={t('progreso.registrar')} icono="plus" alTocar={alRegistrar} />}>
       <Cifra valor={p.pesoHoy === null ? '—' : u.peso(p.pesoHoy)} texto={`${u.unidad} · ${t('progreso.tendencia')}`} />
       {p.cambio7 !== null && (
         <Nota>{t('progreso.cambios', { semana: conSigno(u.enUnidad(p.cambio7), 1), mes: p.cambio30 === null ? '—' : conSigno(u.enUnidad(p.cambio30), 1), unidad: u.unidad })}</Nota>
       )}
-      {/* Con una sola pesada no hay línea: era un punto suelto en un gráfico vacío. */}
-      {p.serie.filter((x) => x.punto !== null).length < 2 ? (
+      {conLinea ? (
+        <Aparece>
+          <Rangos elegido={rango} alElegir={setRango} />
+          {/* Otro rango es otro gráfico: entra con un fundido. */}
+          <Animated.View key={rango} entering={FadeIn.duration(260).reduceMotion(ReduceMotion.Never)} style={s.grafico}>
+            <Linea serie={serie} ancho={ancho} alto={92} meta={calculoDeMeta(p)} />
+            <Eje izquierda={fechaDiaMes(sumarDias(hoy, -(dias - 1)))} derecha={t('progreso.hoy')} />
+          </Animated.View>
+          <Parrafo chico>{t('progreso.pesoLeyenda')}</Parrafo>
+        </Aparece>
+      ) : (
         <Aparece>
           <Parrafo chico>{t('progreso.unaPesada')}</Parrafo>
         </Aparece>
-      ) : (
-        <Aparece>
-          <View style={s.grafico}>
-            <Linea serie={p.serie} ancho={ancho} alto={92} meta={objetivoPermitido(p.perfil) !== 'mantener' ? (p.perfil.pesoMeta ?? null) : null} />
-          </View>
-          <Eje izquierda={fechaDiaMes(p.serieDesde)} derecha={t('progreso.hoy')} />
-          <Parrafo chico>{t('progreso.pesoLeyenda')}</Parrafo>
-        </Aparece>
       )}
     </Carta>
   );
 }
 
-// ------------------------------------------------------------------ las medidas
-function LasMedidas({ p, hoy, sistema, alMedir }: { p: Persona; hoy: string; sistema: Sistema; alMedir: () => void }) {
-  const sitios = SITIOS.filter((x) => p.ultimasMedidas[x] !== undefined);
-  const ultima = p.medidas.reduce<Persona['medidas'][number] | null>((a, m) => (!a || m.fecha > a.fecha ? m : a), null);
-  // Con un IMC de 35 o más, la cintura sobre la altura no dice nada más (NICE): no se muestra.
-  const conRatio = cinturaAltura(p.ultimasMedidas.cintura, p.perfil.alturaCm);
-  const ratio = conRatio !== null && p.pesoHoy !== null && claseDeCintura(conRatio, p.pesoHoy / (p.perfil.alturaCm / 100) ** 2) ? conRatio : null;
-  return (
-    <Carta titulo={t('progreso.medidas')} derecha={<BotonChico texto={t('progreso.medir')} icono="ruler" alTocar={alMedir} />}>
-      {sitios.length ? (
-        <View>
-          {sitios.map((sitio, i) => {
-            const l = largoEn(p.ultimasMedidas[sitio]!, sistema);
-            const cambio = cambioDe(p.medidas, sitio, hoy, sumarDias(hoy, -30));
-            const c = cambio === null ? null : largoEn(Math.abs(cambio), sistema).valor * Math.sign(cambio);
-            return (
-              <View key={sitio} style={[s.fila, i === sitios.length - 1 && s.filaUltima]}>
-                <Text style={s.filaNombre}>{t(`cuerpo.sitios.${sitio}`)}</Text>
-                <Text style={s.filaValor}>{`${numero(l.valor, 1)} ${l.unidad}`}</Text>
-                <Text style={[s.filaCambio, c !== null && c < 0 && s.baja, c !== null && c > 0 && s.sube]}>{c === null ? '' : `${conSigno(c, 1)} ${l.unidad}`}</Text>
-              </View>
-            );
-          })}
-        </View>
-      ) : (
-        <Parrafo>{t('progreso.sinMedidas')}</Parrafo>
-      )}
-      {ratio !== null && <Parrafo>{t('progreso.cinturaAltura', { n: numero(ratio, 2) })}</Parrafo>}
-      {ultima && <Nota tenue>{t('progreso.medidasDel', { fecha: fechaDiaMes(ultima.fecha) })}</Nota>}
-    </Carta>
-  );
-}
+/** La meta punteada del gráfico: solo si se va a algún lado. */
+const calculoDeMeta = (p: Persona) => (p.perfil.objetivo !== 'mantener' && !(p.perfil.objetivo === 'bajar' && p.perfil.sinDeficit) ? (p.perfil.pesoMeta ?? null) : null);
 
 // ------------------------------------------------------------------ la grasa corporal
-function LaGrasa({ p, abierto, alAbrir }: { p: Persona; abierto: boolean; alAbrir: () => void }) {
+// En el medio de Progreso. Sin medidas, invita a medirla una vez, con lo que hace falta y que es una
+// estimación (lo pediste el 2/11/2026: casi nadie se mide seguido, y que no genere desconfianza).
+function LaGrasa({ p, abierto, alAbrir, alMedir }: { p: Persona; abierto: boolean; alAbrir: () => void; alMedir: () => void }) {
   const r = p.grasa;
+  if (!r) {
+    return (
+      <Carta titulo={t('progreso.grasa')}>
+        <Text style={s.invitaTitulo}>{t('progreso.grasaInvita.titulo')}</Text>
+        <Parrafo>{t(p.perfil.sexo === 'm' ? 'progreso.grasaInvita.textoHombre' : 'progreso.grasaInvita.textoMujer')}</Parrafo>
+        <Pressable onPress={alMedir} style={({ pressed }) => [s.invitaBoton, pressed && { opacity: 0.7 }]} accessibilityRole="button">
+          <Icono nombre="ruler" tam={16} />
+          <Text style={s.invitaBotonTexto}>{t('progreso.grasaInvita.boton')}</Text>
+        </Pressable>
+        <Text style={s.invitaNota}>{t('progreso.grasaInvita.confianza')}</Text>
+      </Carta>
+    );
+  }
   // Cómo vino cambiando: el rango de cada vez que se midió.
   const historia = [...p.medidas]
     .sort((a, b) => (a.fecha < b.fecha ? -1 : 1))
@@ -238,12 +277,11 @@ function LaGrasa({ p, abierto, alAbrir }: { p: Persona; abierto: boolean; alAbri
       const x = rangoDeGrasa(p.perfil.sexo, p.perfil.alturaCm, ultimasMedidas(p.medidas, m.fecha));
       return x ? [{ fecha: m.fecha, ...x }] : [];
     });
-  if (!r && !historia.length) return null;
   return (
-    <Carta titulo={t('progreso.grasa')}>
-      <Cifra valor={r ? t('cuerpo.rango', { desde: r.desde, hasta: r.hasta }) : '—'} texto={t('cuerpo.estimacion')} />
-      <Recuadro>{t('cuerpo.aviso')}</Recuadro>
-      {historia.length > 1 && (
+    <Carta titulo={t('progreso.grasa')} derecha={<BotonChico texto={t('progreso.medir')} icono="ruler" alTocar={alMedir} />}>
+      <Cifra valor={t('cuerpo.rango', { desde: r.desde, hasta: r.hasta })} texto={t('cuerpo.estimacion')} />
+      <Text style={s.aviso}>{t('progreso.grasaInvita.confianza')}</Text>
+      {historia.length > 0 && (
         <View style={s.historia}>
           {historia.map((h) => (
             <View key={h.fecha} style={s.historiaChip}>
@@ -256,251 +294,6 @@ function LaGrasa({ p, abierto, alAbrir }: { p: Persona; abierto: boolean; alAbri
       <ComoSeCalcula abierto={abierto} alTocar={alAbrir}>
         <Parrafo>{t(p.perfil.sexo === 'm' ? 'cuerpo.comoSeEstimaHombre' : 'cuerpo.comoSeEstimaMujer')}</Parrafo>
       </ComoSeCalcula>
-    </Carta>
-  );
-}
-
-// ------------------------------------------------------------------ el gasto y el balance
-function ElGasto({ p, u, abierto, alAbrir }: { p: Persona; u: U; abierto: boolean; alAbrir: () => void }) {
-  if (p.gasto === null) return null;
-  const k = p.control?.datos;
-  return (
-    <Carta titulo={t('progreso.gasto')}>
-      <Cifra valor={numero(p.gasto)} texto={t('progreso.kcalPorDia')} />
-      <Nota>{p.control ? t('progreso.controlDel', { fecha: fechaLarga(p.control.fecha) }) : t('progreso.gastoInicial')}</Nota>
-      <View style={s.balance}>
-        <View style={s.balanceTextos}>
-          <Text style={s.balanceCifra}>
-            {p.balance.promedio === null ? '—' : conSigno(Math.round(p.balance.promedio))}
-            <Text style={s.balanceUnidad}>{` ${t('inicio.kcalPorDia')}`}</Text>
-          </Text>
-          <Text style={s.balanceNota}>{p.balance.dias.length ? t('progreso.balanceTexto', { n: p.balance.dias.length }) : t('progreso.sinBalance')}</Text>
-        </View>
-        {p.balance.dias.length > 0 && <Balance dias={p.balance.dias} gasto={p.gasto} ancho={150} alto={52} />}
-      </View>
-      {p.control && k && k.gastoMedido === null && <Parrafo>{t('progreso.controlSinMedir')}</Parrafo>}
-      {p.control && k && k.gastoMedido !== null && (
-        <>
-          <Parrafo>{t('progreso.controlTexto', { gasto: numero(k.gastoMedido), antes: numero(p.control.gastoAntes), ahora: numero(p.gasto) })}</Parrafo>
-          <ComoSeCalcula abierto={abierto} alTocar={alAbrir}>
-            <Parrafo>
-              {t('progreso.comoSeCalculaTexto', { promedio: numero(k.comidaPromedio ?? 0), dias: k.dias ?? 21, cambio: conSigno(u.enUnidad(k.cambioDeTendencia ?? 0), 1), unidad: u.unidad })}
-            </Parrafo>
-          </ComoSeCalcula>
-        </>
-      )}
-    </Carta>
-  );
-}
-
-// ------------------------------------------------------------------ la estrategia
-function Fila({ titulo, valor, abierta, alTocar }: { titulo: string; valor: string; abierta?: boolean; alTocar: () => void }) {
-  // La flecha gira al abrir y al cerrar, como la de «Cómo se calcula».
-  const flecha = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '90deg' : '0deg', { duration: 220 }) }] }), [abierta]);
-  return (
-    <Pressable onPress={alTocar} style={({ pressed }) => [s.estrategiaFila, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
-      <Text style={s.estrategiaTitulo}>{titulo}</Text>
-      <Text style={s.estrategiaValor} numberOfLines={1}>{valor}</Text>
-      <Animated.View style={flecha}>
-        <Icono nombre="chevron.right" tam={13} color="rgba(239, 230, 207, 0.4)" peso="semibold" />
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-const Eleccion = ({ children }: { children: ReactNode }) => <Aparece style={s.eleccion}>{children}</Aparece>;
-
-function LaEstrategia({ p, u, abierto, alternar, alVerMetas }: { p: Persona; u: U; abierto: string | null; alternar: (cual: string) => void; alVerMetas: () => void }) {
-  const perfil = p.perfil;
-  const ponerEstrategia = elAlmacen().ponerEstrategia;
-  // El peso meta no baja de un IMC de 18,5: al llegar, se dice por qué.
-  const [enElMinimo, setEnElMinimo] = useState(false);
-  const minimo = pesoMinimoSano(perfil.alturaCm);
-  // Sin déficit, bajar queda en mantener (objetivoPermitido): se muestra lo que se usa.
-  const objetivo = objetivoPermitido(perfil);
-  const ritmo = objetivo === 'mantener' ? '' : ` · ${t(`progreso.ritmos.${perfil.ritmo}`)}`;
-  const metaKg = perfil.pesoMeta;
-  const m = p.meta;
-  return (
-    <Carta>
-      <Fila titulo={t('progreso.objetivo')} valor={t(`progreso.objetivos.${objetivo}`) + ritmo} abierta={abierto === 'objetivo'} alTocar={() => alternar('objetivo')} />
-      {abierto === 'objetivo' && (
-        <Eleccion>
-          <Segmento<Objetivo>
-            opciones={(['bajar', 'mantener', 'subir'] as const).map((o) => [o, t(`progreso.objetivos.${o}`)] as const)}
-            elegida={objetivo}
-            alElegir={(o) => {
-              // Sin déficit, bajar de peso no se elige acá (src/dominio/metas.ts, objetivoPermitido).
-              if (!(o === 'bajar' && perfil.sinDeficit)) ponerEstrategia({ objetivo: o });
-            }}
-          />
-          {perfil.sinDeficit && <Parrafo chico>{t('entrada.cuidado.bajarNo')}</Parrafo>}
-          {objetivo !== 'mantener' && (
-            <Aparece>
-              <Segmento<Ritmo>
-                opciones={(['suave', 'recomendado', 'rapido'] as const).map((r) => [r, t(`progreso.ritmos.${r}`)] as const)}
-                elegida={perfil.ritmo}
-                alElegir={(r) => ponerEstrategia({ ritmo: r })}
-              />
-              <Parrafo chico>
-                {t('progreso.ritmoTexto', {
-                  pct: numero(Math.abs(RITMOS[objetivo][perfil.ritmo]), 2),
-                  kg: numero(u.enUnidad(Math.abs((RITMOS[objetivo][perfil.ritmo] / 100) * (p.pesoHoy ?? 0))), 2), unidad: u.unidad,
-                })}
-              </Parrafo>
-            </Aparece>
-          )}
-          <Parrafo chico>{t('progreso.objetivoNota')}</Parrafo>
-        </Eleccion>
-      )}
-      {objetivo !== 'mantener' && (
-        <Aparece>
-          <Fila
-            titulo={t('progreso.pesoMeta')}
-            valor={metaKg ? `${u.meta(metaKg)} ${u.unidad}` : t('progreso.sinPesoMeta')}
-            abierta={abierto === 'pesoMeta'}
-            alTocar={() => alternar('pesoMeta')}
-          />
-          {abierto === 'pesoMeta' && (
-            <Eleccion>
-              <PasosDelPesoMeta
-                // Sin meta, desde el peso de hoy; con bajo peso, desde el primero que se puede.
-                kg={metaKg ?? Math.max(Math.round(p.pesoHoy ?? 70), primeroPermitido(minimo, u.unidad === 'lb'))}
-                u={u}
-                minimo={minimo}
-                alCambiar={(pesoMeta) => {
-                  setEnElMinimo(false);
-                  ponerEstrategia({ pesoMeta });
-                }}
-                alMinimo={() => {
-                  setEnElMinimo(true);
-                  anunciar(t('progreso.limites.imc', { n: u.peso(minimo, 1), unidad: u.unidad }));
-                }}
-              />
-              <Parrafo chico>{t('progreso.pesoMetaNota')}</Parrafo>
-              {enElMinimo && (
-                <Aparece>
-                  <Parrafo chico>{t('progreso.limites.imc', { n: u.peso(minimo, 1), unidad: u.unidad })}</Parrafo>
-                </Aparece>
-              )}
-            </Eleccion>
-          )}
-        </Aparece>
-      )}
-      {m && (
-        <>
-          <Fila titulo={t('progreso.metasActuales')} valor={`${numero(m.kcal)} kcal`} alTocar={alVerMetas} />
-          <MacrosEnLinea meta={m} />
-        </>
-      )}
-    </Carta>
-  );
-}
-
-/** Una libra en kg, redondeado a 0,1 kg: lo que guarda la cuenta. */
-const deLibras = (lb: number) => Math.round(lb * KG_POR_LIBRA * 10) / 10;
-
-/** El peso meta más bajo que se puede elegir con los pasos: el medio kilo, o la libra, de arriba del mínimo. */
-function primeroPermitido(minimo: number, enLibras: boolean): number {
-  if (!enLibras) return Math.ceil(minimo * 2) / 2;
-  const libras = Math.ceil(minimo / KG_POR_LIBRA);
-  // Redondeada a 0,1 kg, esa libra puede quedar apenas por debajo: entonces, la que sigue.
-  return deLibras(libras) >= minimo ? deLibras(libras) : deLibras(libras + 1);
-}
-
-/**
- * El peso meta de a medio kilo, o de a una libra, no por debajo de `minimo` (un IMC de 18,5). Solo se
- * frena al bajar: con bajo peso, subir desde abajo del mínimo salta al primero que se puede.
- */
-function PasosDelPesoMeta({ kg, u, minimo, alCambiar, alMinimo }: { kg: number; u: U; minimo: number; alCambiar: (kg: number) => void; alMinimo: () => void }) {
-  const enLibras = u.unidad === 'lb';
-  const cambiar = (signo: 1 | -1): boolean => {
-    // En libras, desde la libra que se ve: redondeado a 0,1 kg (lo que guarda la cuenta), vuelve a esa libra.
-    let nuevo = enLibras ? deLibras(Math.round(u.enUnidad(kg)) + signo) : Math.round((kg + 0.5 * signo) * 2) / 2;
-    if (nuevo < minimo) {
-      if (signo < 0) {
-        alMinimo();
-        return false;
-      }
-      nuevo = primeroPermitido(minimo, enLibras);
-    }
-    if (nuevo > 400) return false;
-    alCambiar(nuevo);
-    anunciar(`${u.meta(nuevo)} ${u.unidad}`);
-    return true;
-  };
-  const paso = enLibras ? '1 lb' : `${numero(0.5, 1)} kg`;
-  const menos = t('comun.menos', { que: paso });
-  const mas = t('comun.mas', { que: paso });
-  const valor = `${u.meta(kg)} ${u.unidad}`;
-  return (
-    // Para VoiceOver, el valor con sus dos botones es uno solo, que se ajusta deslizando para arriba o para abajo.
-    <View
-      style={s.pasos}
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel={t('progreso.pesoMeta')}
-      accessibilityValue={{ text: valor }}
-      accessibilityActions={[{ name: 'increment', label: mas }, { name: 'decrement', label: menos }]}
-      onAccessibilityAction={(ev: AccessibilityActionEvent) => {
-        if (ev.nativeEvent.actionName === 'increment') cambiar(1);
-        else if (ev.nativeEvent.actionName === 'decrement') cambiar(-1);
-      }}
-    >
-      <BotonDePaso alPaso={() => cambiar(-1)} etiqueta={menos} style={s.paso}>
-        <Icono nombre="minus" tam={16} peso="semibold" />
-      </BotonDePaso>
-      <Text style={s.pasoValor} maxFontSizeMultiplier={1.4}>{valor}</Text>
-      <BotonDePaso alPaso={() => cambiar(1)} etiqueta={mas} style={s.paso}>
-        <Icono nombre="plus" tam={16} peso="semibold" />
-      </BotonDePaso>
-    </View>
-  );
-}
-
-const MacrosEnLinea = ({ meta }: { meta: Macros }) => (
-  <View style={s.macros}>
-    {MACROS.map((m) => (
-      <View key={m} style={s.macro}>
-        <Punto macro={m} tam={7} />
-        <Text style={s.macroTexto}>{`${numero(meta[m])} g ${t(`comida.${m}`).toLowerCase()}`}</Text>
-      </View>
-    ))}
-  </View>
-);
-
-// ------------------------------------------------------------------ el próximo control
-function Requisito({ hecho, total, clave }: { hecho: number; total: number; clave: 'progreso.diasConComida' | 'progreso.pesadas' }) {
-  const ok = hecho >= total;
-  return (
-    <View style={s.req}>
-      <Text style={[s.reqNumero, ok && { color: colores.salvia }]}>{hecho}</Text>
-      <View style={s.reqTextos}>
-        <Text style={s.reqTexto}>{plural(clave, hecho)}</Text>
-        <Text style={s.reqMinimo}>{t('progreso.minimo', { n: total })}</Text>
-      </View>
-    </View>
-  );
-}
-
-function ElControl({ p }: { p: Persona }) {
-  const ec = p.estadoControl;
-  if (!ec) return null;
-  // Mientras quedan días antes del control, todavía puede llegar: está en curso, no le falta nada.
-  const quedan = Math.max(0, ec.faltan - 1);
-  // Con el tramo corto (la primera semana), ese control no mide aunque lleguen los datos.
-  const estado = ec.alcanza ? 'alcanza' : !ec.tramoCorto && ec.diasConComida + quedan >= ec.minimos.diasConComida ? 'enCurso' : 'faltanDatos';
-  return (
-    <Carta titulo={t('progreso.proximoControl')} derecha={<Chip texto={t(`progreso.${estado}`)} tipo={estado === 'alcanza' ? 'bien' : estado === 'faltanDatos' ? 'atencion' : undefined} />}>
-      <Cifra valor={conMayuscula(fechaLarga(ec.fecha))} texto={ec.faltan === 0 ? t('progreso.hoy') : ec.faltan === 1 ? t('progreso.manana') : t('progreso.enDias', { n: ec.faltan })} />
-      <View style={s.requisitos}>
-        <Requisito hecho={ec.diasConComida} total={ec.minimos.diasConComida} clave="progreso.diasConComida" />
-        <Requisito hecho={ec.pesadas} total={ec.minimos.pesadas} clave="progreso.pesadas" />
-      </View>
-      <Parrafo>{t(estado === 'alcanza' ? 'progreso.controlListo' : estado === 'enCurso' ? 'progreso.controlEnCurso' : ec.tramoCorto ? 'progreso.controlPrimero' : 'progreso.controlFalta', { n: quedan })}</Parrafo>
-      <EtiquetaDeGrupo>{t('progreso.diaDelControl')}</EtiquetaDeGrupo>
-      <Dias elegidos={[p.diaDelControl]} uno alTocar={(d) => elAlmacen().ponerEstrategia({ diaDelControl: d })} />
-      <Parrafo chico>{t('progreso.diaDelControlNota')}</Parrafo>
     </Carta>
   );
 }
@@ -712,41 +505,33 @@ function Barras({ reparto, altos }: { reparto: Record<DiaSemana, Macros>; altos:
 
 const s = StyleSheet.create({
   vista: { flex: 1 },
-  seccion: { marginTop: 28, marginHorizontal: 2, fontFamily: letras.numeroMedio, fontSize: 19, color: colores.pergamino },
-  objetivoTitulo: { fontFamily: letras.numeroMedio, fontSize: 19, lineHeight: 22, color: colores.pergamino },
-  grafico: { marginTop: 8 },
-  fila: { flexDirection: 'row', alignItems: 'baseline', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
-  filaUltima: { borderBottomWidth: 0 },
-  filaNombre: { flex: 1, fontFamily: letras.texto, fontSize: 14, color: colores.pergamino },
-  filaValor: { fontFamily: letras.numero, fontSize: 15, color: colores.pergamino, fontVariant: ['tabular-nums'] },
-  filaCambio: { width: 70, textAlign: 'right', fontFamily: letras.numero, fontSize: 12, color: 'rgba(239, 230, 207, 0.45)', fontVariant: ['tabular-nums'] },
-  baja: { color: colores.salvia },
-  sube: { color: colores.oroClaro },
+  control: { paddingTop: 2, paddingBottom: 2, paddingHorizontal: 14, gap: 0 },
+  controlFila: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11 },
+  controlTextos: { flex: 1, gap: 3, minWidth: 0 },
+  controlTitulo: { fontFamily: letras.textoMedio, fontSize: 14.5, lineHeight: 18, color: colores.pergamino },
+  controlRequisitos: { fontFamily: letras.texto, fontSize: 12, lineHeight: 15, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
+  controlDentro: { paddingBottom: 12 },
+  rangos: { alignSelf: 'flex-start', flexDirection: 'row', gap: 4, padding: 4, marginTop: 6, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.1)', backgroundColor: 'rgba(6, 10, 22, 0.55)' },
+  rango: { paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999 },
+  rangoElegido: { backgroundColor: 'rgba(239, 230, 207, 0.1)' },
+  rangoTexto: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.6)' },
+  rangoTextoElegido: { color: colores.pergamino },
+  grafico: { marginTop: 8, gap: 4 },
+  invitaTitulo: { fontFamily: letras.numeroMedio, fontSize: 18, lineHeight: 22, color: colores.pergamino },
+  invitaBoton: {
+    alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingVertical: 10, paddingHorizontal: 16,
+    borderRadius: 999, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.45)', backgroundColor: 'rgba(232, 196, 106, 0.1)',
+  },
+  invitaBotonTexto: { fontFamily: letras.textoMedio, fontSize: 14, color: colores.oroClaro },
+  invitaNota: { fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.5)' },
+  aviso: {
+    marginTop: 4, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(239, 230, 207, 0.04)',
+    fontFamily: letras.texto, fontSize: 12.5, lineHeight: 18, color: 'rgba(239, 230, 207, 0.66)', overflow: 'hidden',
+  },
   historia: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   historiaChip: { gap: 3, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 10, backgroundColor: 'rgba(239, 230, 207, 0.05)' },
   historiaFecha: { fontFamily: letras.texto, fontSize: 10.5, color: 'rgba(239, 230, 207, 0.48)' },
   historiaRango: { fontFamily: letras.numeroMedio, fontSize: 13, color: colores.pergamino, fontVariant: ['tabular-nums'] },
-  balance: { marginTop: 8, paddingTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
-  balanceTextos: { flex: 1, gap: 4, minWidth: 0 },
-  balanceCifra: { fontFamily: letras.numero, fontSize: 24, color: colores.cifra, fontVariant: ['tabular-nums'] },
-  balanceUnidad: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.55)' },
-  balanceNota: { fontFamily: letras.texto, fontSize: 11.5, lineHeight: 15, color: 'rgba(239, 230, 207, 0.55)' },
-  estrategiaFila: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
-  estrategiaTitulo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
-  estrategiaValor: { flexShrink: 1, fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)', textAlign: 'right' },
-  eleccion: { gap: 10, paddingTop: 12, paddingBottom: 14, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
-  pasos: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.14)' },
-  paso: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
-  pasoValor: { minWidth: 84, textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 18, color: colores.pergamino, fontVariant: ['tabular-nums'] },
-  macros: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 6, paddingTop: 12 },
-  macro: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  macroTexto: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.8)', fontVariant: ['tabular-nums'] },
-  requisitos: { flexDirection: 'row', gap: 8, marginTop: 6 },
-  req: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(239, 230, 207, 0.04)' },
-  reqNumero: { fontFamily: letras.numero, fontSize: 22, color: colores.oroClaro, fontVariant: ['tabular-nums'] },
-  reqTextos: { flex: 1, gap: 3 },
-  reqTexto: { fontFamily: letras.texto, fontSize: 12, lineHeight: 15, color: 'rgba(239, 230, 207, 0.6)' },
-  reqMinimo: { fontFamily: letras.texto, fontSize: 10.5, color: 'rgba(239, 230, 207, 0.42)' },
   metasCab: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: -12, marginTop: -6 },
   atras: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   metasTitulo: { fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino },

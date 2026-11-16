@@ -1,10 +1,12 @@
 // Inicio, el de la galería (galeria/src/inicio.js; especificación, cambio 9): lo primero que se ve,
 // hecho de bloques que cada uno elige y ordena. De fábrica: las calorías y los macros que quedan,
-// el progreso al objetivo, el peso con el balance y el día en el cielo; el sueño de anoche y el agua
-// están para sumarlos. Tocar un bloque lleva a su sección; mantener apretada el agua quita el último vaso.
+// el progreso al objetivo, el peso con el balance, el día en el cielo y, al final, «Para hoy»; el sueño
+// de anoche y el agua están para sumarlos. Tocar un bloque lleva a su sección; tocar la luna abre «Todo
+// lo de hoy»; mantener apretada el agua quita el último vaso. Cuando el control está cerca, va debajo
+// de la luna; arriba a la derecha, tu energía. El primer día, sin nada anotado, cada bloque dice qué hacer.
 
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -19,7 +21,7 @@ import { decimal } from '@/comida/porciones';
 import { pesoCorporalEn } from '@/dominio/cantidades';
 import { estadoDeMacro, type Macros } from '@/dominio/metas';
 import { calidadDeNoche, ultimasNoches } from '@/dominio/sueno';
-import { aguaDelDia } from '@/dominio/registros';
+import { aguaDelDia, vigentes } from '@/dominio/registros';
 import { sumarDias } from '@/dominio/fechas';
 import { CON_ASCENT } from '@/lib/banderas';
 import { idioma, plural, t } from '@/textos';
@@ -31,8 +33,7 @@ import { InvitacionDeAscent } from '../ascent/Invitacion';
 import { PESTANAS, type Pestana } from '../Barra';
 import { comidaEnHoy } from '../comida/Comida';
 import { COLOR_DE_MACRO, Icono, MACROS, Punto } from '../comida/comunes';
-import { conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
-import { Luna } from '../comida/Luna';
+import { comidasDelDia, conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
 import { FranjaBajoLaHora } from '../franja';
 import { usePersona, useSueno } from '../ganchos';
@@ -41,14 +42,23 @@ import { margenDeToque } from '../paso';
 import { ACOMODA, Aparece, Camino } from '../tarjetas';
 import { Relleno, useCuenta, Vaso } from '../animados';
 import { Balance, Hipnograma, Linea, MiniCielo } from '../graficos/Graficos';
+import { Luna } from '../kcal/Figuras';
+import { FiguraGrande } from '../kcal/Kcal';
+import { irAEnergia, useEnergia } from '../sueno/Energia';
 import { MANTENER_MS, quitarUltimoVaso } from './agua';
+import { bloques, Cabeza } from './comunes';
+import { ControlCerca } from './Control';
+import { BotonDeEnergia, GloboDeEnergia } from './Energia';
 import { Mantener } from './Mantener';
+import { ParaHoy } from './ParaHoy';
+import { PrimerDia } from './PrimerDia';
+import { TodoLoDeHoy } from './TodoLoDeHoy';
 
-export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua'] as const;
+export const BLOQUES = ['calorias', 'objetivo', 'peso', 'cielo', 'sueno', 'agua', 'consejos'] as const;
 export type Bloque = (typeof BLOQUES)[number];
-const DE_FABRICA: Bloque[] = ['calorias', 'objetivo', 'peso', 'cielo'];
-// Adónde lleva cada bloque: las secciones de la barra. El agua no lleva a ninguna: es un bloque quieto, con su botón.
-const SECCION = { calorias: 'comida', objetivo: 'progreso', peso: 'progreso', cielo: 'habitos', sueno: 'sueno' } as const satisfies Record<Exclude<Bloque, 'agua'>, Pestana>;
+const DE_FABRICA: Bloque[] = ['calorias', 'objetivo', 'peso', 'cielo', 'consejos'];
+// Adónde lleva cada bloque: las secciones de la barra. Las calorías abren «Todo lo de hoy»; el agua y «Para hoy» son quietos.
+const SECCION = { objetivo: 'progreso', peso: 'progreso', cielo: 'habitos', sueno: 'sueno' } as const satisfies Record<Exclude<Bloque, 'agua' | 'calorias' | 'consejos'>, Pestana>;
 const INICIO = PESTANAS.indexOf('inicio');
 const VASO_ML = 250;
 const VASOS_META = 8;
@@ -64,17 +74,33 @@ const EN_SU_COLUMNA = { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFon
 
 type Ir = (a: Pestana) => void;
 
-/** Lo elegido, con lo que falte al final (un bloque nuevo aparece apagado). */
+/** Lo elegido, con lo que falte al final: un bloque nuevo de fábrica aparece aunque haya algo guardado de antes; los otros, apagados. */
 function preferencias(guardadas: { orden: string[]; visibles: string[] } | null): { orden: Bloque[]; visibles: Set<Bloque> } {
   if (!guardadas) return { orden: [...BLOQUES], visibles: new Set(DE_FABRICA) };
   const orden = [...guardadas.orden.filter((b): b is Bloque => (BLOQUES as readonly string[]).includes(b)), ...BLOQUES.filter((b) => !guardadas.orden.includes(b))];
-  return { orden, visibles: new Set(guardadas.visibles.filter((b): b is Bloque => (BLOQUES as readonly string[]).includes(b))) };
+  const nuevos = DE_FABRICA.filter((b) => !guardadas.orden.includes(b));
+  return { orden, visibles: new Set([...guardadas.visibles.filter((b): b is Bloque => (BLOQUES as readonly string[]).includes(b)), ...nuevos]) };
 }
 
 export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; arriba: number; abajo: number; alIr: (seccion: number) => void }) {
   const e = useEstado();
   const [personalizando, setPersonalizando] = useState(false);
+  const [todo, setTodo] = useState(false);
   const { orden, visibles } = useMemo(() => preferencias(e.inicio), [e.inicio]);
+  // Recién instalada, sin nada anotado nunca: el primer día.
+  const primerDia = useMemo(() => !!metaDelDia(e, e.hoy) && !vigentes(e.registros.values()).some((r) => !r.planificado), [e]);
+  const energia = useEnergia();
+  // El globo de tu energía: dónde va (debajo del botón) y si se está cerrando.
+  const pagina = useRef<ComponentRef<typeof View>>(null);
+  const boton = useRef<ComponentRef<typeof View>>(null);
+  const [globo, setGlobo] = useState<{ arriba: number; derecha: number; cerrando: boolean } | null>(null);
+  const cerrarGlobo = useCallback(() => setGlobo((g) => (g && !g.cerrando ? { ...g, cerrando: true } : g)), []);
+  const quitarGlobo = useCallback(() => setGlobo(null), []);
+  const abrirGlobo = () => {
+    if (globo) return cerrarGlobo();
+    if (!boton.current || !pagina.current) return;
+    boton.current.measureLayout(pagina.current, (x, y, w, h) => setGlobo({ arriba: y + h + 6, derecha: ancho - (x + w), cerrando: false }));
+  };
   const anchoGrafico = Math.min(150, (ancho - 40 - 32) * 0.45);
   const scroll = useAnimatedRef<ScrollView>();
   // Lo que bajó el scroll: con eso aparece la franja bajo la hora.
@@ -83,39 +109,63 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
   const esLaActual = useEsLaActual(INICIO);
   // Tocar otra vez la pestaña: arriba de todo.
   useEffect(() => alTocarDeNuevo(INICIO, () => scroll.current?.scrollTo({ y: 0, animated: !reducido })), [reducido, scroll]);
+  // Al irse de Inicio, el globo se va: quedaría colgado al volver.
+  const [eraLaActual, setEraLaActual] = useState(esLaActual);
+  if (eraLaActual !== esLaActual) {
+    setEraLaActual(esLaActual);
+    if (!esLaActual) setGlobo(null);
+  }
   const ir: Ir = (a) => {
     // Las calorías de hoy llevan a Comida en hoy y en «Día», aunque ahí hubiera quedado otro día elegido.
     if (a === 'comida') comidaEnHoy();
     alIr(PESTANAS.indexOf(a));
   };
-  const bloques: Record<Bloque, () => ReactNode> = {
-    calorias: () => <Calorias alIr={ir} />,
+  const armar: Record<Bloque, () => ReactNode> = {
+    calorias: () => <Calorias alTocar={() => setTodo(true)} ancho={ancho - 40 - 34} />,
     objetivo: () => <Objetivo alIr={ir} />,
     peso: () => <Peso anchoGrafico={anchoGrafico} alIr={ir} />,
     cielo: () => <Cielo ancho={ancho - 40 - 32} alIr={ir} />,
     sueno: () => <SuenoDeAnoche anchoGrafico={anchoGrafico} alIr={ir} />,
     agua: () => <Agua />,
+    consejos: () => <ParaHoy />,
   };
+  const enOrden = orden.filter((b) => visibles.has(b));
+  const control = <ControlCerca key="control" alIr={() => ir('progreso')} />;
   return (
-    <View style={{ width: ancho }}>
+    <View style={{ width: ancho }} ref={pagina}>
       <ScrollView
         ref={scroll}
         contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
         scrollEventThrottle={16}
+        // Al mover Inicio, el globo se va: se quedaría colgado lejos del botón.
+        onScrollBeginDrag={cerrarGlobo}
       >
-        <Text style={estilos.fecha}>{fechaCorta(e.hoy)}</Text>
-        <Text style={estilos.titulo}>{t('inicio.titulo')}</Text>
-        {orden.filter((b) => visibles.has(b)).flatMap((b, i, enOrden) => {
+        <View style={estilos.cabecera}>
+          <View style={estilos.cabeceraTextos}>
+            <Text style={estilos.fecha}>{fechaCorta(e.hoy)}</Text>
+            <Text style={estilos.titulo}>{t('inicio.titulo')}</Text>
+          </View>
+          {!primerDia && energia && (
+            <View ref={boton} collapsable={false} style={estilos.energia}>
+              <BotonDeEnergia datos={energia} abierto={!!globo && !globo.cerrando} alTocar={abrirGlobo} />
+            </View>
+          )}
+        </View>
+        {primerDia ? (
+          <PrimerDia ancho={ancho - 40 - 34} alIr={ir} />
+        ) : enOrden.flatMap((b, i) => {
           // Sumar, sacar u ordenar bloques en Personalizar nunca es de golpe: entran, salen y se acomodan.
           const bloque = (
             <Animated.View key={b} entering={ENTRA_BLOQUE} exiting={SALE_BLOQUE} layout={ACOMODA}>
-              {bloques[b]()}
+              {armar[b]()}
             </Animated.View>
           );
+          // El control, cuando se acerca, debajo de la luna (o arriba de todo, sin la luna).
+          const lista = b === 'calorias' ? [bloque, control] : i === 0 && !visibles.has('calorias') ? [control, bloque] : [bloque];
           // La invitación de Ascent, debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
-          return CON_ASCENT && i === Math.min(1, enOrden.length - 1) ? [bloque, <InvitacionDeAscent key="ascent" />] : [bloque];
+          return CON_ASCENT && i === Math.min(1, enOrden.length - 1) ? [...lista, <InvitacionDeAscent key="ascent" />] : lista;
         })}
         <View style={estilos.pie}>
           <Pressable onPress={() => setPersonalizando(true)} style={({ pressed }) => [estilos.personalizar, pressed && estilos.botonApretado]} accessibilityRole="button">
@@ -125,7 +175,31 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
         </View>
       </ScrollView>
       <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
+      {globo && energia && (
+        <GloboDeEnergia
+          datos={energia}
+          arriba={globo.arriba}
+          derecha={globo.derecha}
+          anchoDePagina={ancho}
+          cerrando={globo.cerrando}
+          alCerrar={cerrarGlobo}
+          alCerrado={quitarGlobo}
+          alIrASueno={() => {
+            cerrarGlobo();
+            irAEnergia();
+            ir('sueno');
+          }}
+        />
+      )}
       <Personalizar abierta={personalizando} orden={orden} visibles={visibles} alCerrar={() => setPersonalizando(false)} />
+      <TodoLoDeHoy
+        abierta={todo}
+        alCerrar={() => setTodo(false)}
+        alVerComida={() => {
+          setTodo(false);
+          ir('comida');
+        }}
+      />
     </View>
   );
 }
@@ -138,7 +212,7 @@ function Lleva({ a, alIr, etiqueta, cielo, children }: { a: Pestana; alIr: Ir; e
   return (
     <Pressable
       onPress={() => alIr(a)}
-      style={({ pressed }) => [estilos.bloque, cielo && estilos.bloqueCielo, pressed && estilos.apretado]}
+      style={({ pressed }) => [bloques.bloque, cielo && bloques.bloqueCielo, pressed && bloques.apretado]}
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       accessibilityHint={t('inicio.lector.lleva', { seccion: t(`pestanas.${a}`) })}
@@ -151,15 +225,6 @@ function Lleva({ a, alIr, etiqueta, cielo, children }: { a: Pestana; alIr: Ir; e
 /** Lo que dice VoiceOver de un bloque: lo que hay, en frases, sin lo que no está. */
 const frases = (...partes: (string | false | null | undefined)[]) => partes.filter(Boolean).join('. ');
 
-function Cabeza({ titulo, derecha }: { titulo: string; derecha?: ReactNode }) {
-  return (
-    <View style={estilos.cabeza}>
-      <Text style={estilos.cabezaTitulo}>{titulo}</Text>
-      {derecha}
-    </View>
-  );
-}
-
 const Chip = ({ texto, tipo }: { texto: string; tipo?: 'bien' | 'atencion' | 'tenue' }) => (
   <Text style={[estilos.chip, tipo === 'bien' && estilos.chipBien, tipo === 'atencion' && estilos.chipAtencion]}>{texto}</Text>
 );
@@ -167,7 +232,22 @@ const Chip = ({ texto, tipo }: { texto: string; tipo?: 'bien' | 'atencion' | 'te
 // ------------------------------------------------------------------ calorías y macros: lo que queda
 type Comido = ReturnType<typeof totalDe>;
 
-function Calorias({ alIr }: { alIr: Ir }) {
+/** Las calorías: tocarlas abre «Todo lo de hoy». */
+function Abre({ alTocar, etiqueta, children }: { alTocar: () => void; etiqueta: string; children: ReactNode }) {
+  return (
+    <Pressable
+      onPress={alTocar}
+      style={({ pressed }) => [bloques.bloque, estilos.calorias, pressed && bloques.apretado]}
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      accessibilityHint={t('inicio.todo.titulo')}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
+function Calorias({ alTocar, ancho }: { alTocar: () => void; ancho: number }) {
   const e = useEstado();
   const numeros = e.numeros;
   const meta = metaDelDia(e, e.hoy);
@@ -175,7 +255,7 @@ function Calorias({ alIr }: { alIr: Ir }) {
   const titulo = t('inicio.bloques.calorias');
   if (!meta) {
     return (
-      <Lleva a={SECCION.calorias} alIr={alIr} etiqueta={frases(titulo, numeros && t('inicio.lector.llevas', { n: numero(Math.round(comido.kcal)) }), t('comida.sinMeta'))}>
+      <Abre alTocar={alTocar} etiqueta={frases(titulo, numeros && t('inicio.lector.llevas', { n: numero(Math.round(comido.kcal)) }), t('comida.sinMeta'))}>
         <View style={estilos.calArriba}>
           <Luna tam={124} fraccion={0} />
           <View style={estilos.calCifra}>
@@ -184,13 +264,13 @@ function Calorias({ alIr }: { alIr: Ir }) {
             <Text style={estilos.nota}>{t('comida.sinMeta')}</Text>
           </View>
         </View>
-      </Lleva>
+      </Abre>
     );
   }
   return (
-    <Lleva a={SECCION.calorias} alIr={alIr} etiqueta={frases(titulo, ...loQueQueda(comido, meta, numeros))}>
-      <CaloriasConMeta numeros={numeros} comido={comido} meta={meta} />
-    </Lleva>
+    <Abre alTocar={alTocar} etiqueta={frases(titulo, ...loQueQueda(comido, meta, numeros))}>
+      <CaloriasConMeta numeros={numeros} comido={comido} meta={meta} ancho={ancho} />
+    </Abre>
   );
 }
 
@@ -210,23 +290,33 @@ function loQueQueda(comido: Comido, meta: Macros, numeros: boolean): string[] {
 }
 
 // Aparte, así el hook de la cifra que cuenta no depende de si hay meta.
-function CaloriasConMeta({ numeros, comido, meta }: { numeros: boolean; comido: Comido; meta: Macros }) {
+function CaloriasConMeta({ numeros, comido, meta, ancho }: { numeros: boolean; comido: Comido; meta: Macros; ancho: number }) {
+  const e = useEstado();
+  const estilo = e.kcal;
   const queda = meta.kcal - comido.kcal;
+  const de = {
+    fraccion: comido.kcal / meta.kcal,
+    macros: { proteina: comido.proteina / meta.proteina, carbohidratos: comido.carbohidratos / meta.carbohidratos, grasas: comido.grasas / meta.grasas },
+    comidas: comidasDelDia(e.registros, e.hoy, e.hoy).filter((c) => !c.planificada).map((c) => c.total.kcal),
+  };
+  const figura = <FiguraGrande estilo={estilo} de={de} numeros={numeros} ancho={ancho} />;
   // Al anotar, «te quedan» cuenta hasta lo nuevo en vez de saltar. Con su signo: de «te quedan 120» a 80
   // de más baja hasta cero y sube, y la etiqueta cambia cuando cambia lo que se ve (contaba 120 → 80 ya «de más»).
   const cifra = Math.round(useCuenta(Math.round(queda)));
   return (
     <>
-      <View style={estilos.calArriba}>
-        <Luna tam={124} fraccion={comido.kcal / meta.kcal} />
+      {/* La luna, un anillo o los macros, al lado de la cifra; el arco, alrededor; la barra, abajo. */}
+      <Animated.View key={estilo} entering={ENTRA_BLOQUE} layout={ACOMODA} style={[estilos.calArriba, estilo === 'luna' && estilos.calConLuna, estilo === 'arco' && estilos.calConArco, estilo === 'barra' && estilos.calConBarra]}>
+        {estilo !== 'barra' && figura}
         {numeros && (
-          <Aparece style={estilos.calCifra}>
+          <Aparece style={[estilos.calCifra, estilo === 'arco' && estilos.calCifraEnArco]}>
             <Text style={estilos.calEtiqueta}>{t(cifra >= 0 ? 'inicio.teQuedan' : 'inicio.deMas')}</Text>
-            <Text style={estilos.calNumero} {...CIFRA_GRANDE}>{numero(Math.abs(cifra))}</Text>
+            <Text style={[estilos.calNumero, estilo === 'arco' && estilos.centrado]} {...CIFRA_GRANDE}>{numero(Math.abs(cifra))}</Text>
             <Text style={estilos.calDe}>{t('inicio.kcalDe', { comido: numero(Math.round(comido.kcal)), meta: numero(meta.kcal) })}</Text>
           </Aparece>
         )}
-      </View>
+        {estilo === 'barra' && figura}
+      </Animated.View>
       <View style={estilos.macros}>
         {MACROS.map((m) => {
           const estado = estadoDeMacro(comido[m], meta[m]);
@@ -419,7 +509,7 @@ function Agua() {
     quitarUltimoVaso(avisar);
   };
   return (
-    <View style={estilos.bloque}>
+    <View style={bloques.bloque}>
       <Cabeza titulo={t('inicio.bloques.agua')} />
       <Mantener alMantener={quitar} style={estilos.fila}>
         <Text style={estilos.datoCifra}>
@@ -626,17 +716,21 @@ function FilaDeOrden(p: {
 const estilos = StyleSheet.create({
   fecha: { fontFamily: letras.texto, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.58)' },
   titulo: { marginTop: 6, marginBottom: 4, fontFamily: letras.numeroMedio, fontSize: 28, letterSpacing: -0.3, color: colores.pergamino },
-  bloque: { marginTop: 12, borderRadius: 20, paddingTop: 14, paddingHorizontal: 16, paddingBottom: 15, backgroundColor: 'rgba(8, 12, 26, 0.72)', borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', gap: 6 },
-  bloqueCielo: { backgroundColor: 'rgba(14, 22, 48, 0.82)' },
-  apretado: { opacity: 0.85 },
+  cabecera: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
+  cabeceraTextos: { flexShrink: 1 },
+  energia: { marginTop: -2, marginRight: -4 },
   botonApretado: { opacity: 0.6, transform: [{ scale: 0.94 }] },
-  cabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 26 },
-  cabezaTitulo: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.6, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.6)' },
+  calorias: { paddingTop: 12 },
+  calConLuna: { marginLeft: -8 },
+  calConArco: { flexDirection: 'column', alignItems: 'center', paddingTop: 6 },
+  calConBarra: { flexDirection: 'column', alignItems: 'stretch', gap: 16, paddingTop: 4 },
+  calCifraEnArco: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+  centrado: { textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   chip: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 10, letterSpacing: 0.6, color: 'rgba(239, 230, 207, 0.7)', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   chipBien: { color: colores.salvia, backgroundColor: 'rgba(166, 191, 148, 0.1)' },
   chipAtencion: { color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.1)' },
-  calArriba: { flexDirection: 'row', alignItems: 'center', gap: 10, marginLeft: -8 },
+  calArriba: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   calCifra: { flex: 1, gap: 4, minWidth: 0 },
   calEtiqueta: { fontFamily: letras.texto, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.62)' },
   calNumero: { fontFamily: letras.numeroLiviano, fontSize: 54, lineHeight: 56, letterSpacing: -1.3, color: colores.cifra, fontVariant: ['tabular-nums'] },

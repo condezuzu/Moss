@@ -21,9 +21,9 @@ import { duracion, numero, useEstado, useNumeros } from '../comida/datos';
 import { useSueno } from '../ganchos';
 import { ACOMODA, Aparece } from '../tarjetas';
 import { Curva } from './Dibujos';
-import { energiaDeHoy, type DatosDeEnergia } from './energia';
+import { energiaDeHoy, type DatosDeEnergia } from './datosDeEnergia';
 
-export type { DatosDeEnergia } from './energia';
+export type { DatosDeEnergia } from './datosDeEnergia';
 export type EstadoDelBoton = EstadoDeEnergia | 'sinDatos';
 
 /** El color de cada estado: el de «atención» para la baja (como las franjas de Ascent) y el oro para la alta. */
@@ -261,7 +261,7 @@ export function TiraDelDia({ datos, ancho }: { datos: DatosDeEnergia; ancho: num
             if (!tr) return null;
             return (
               <EnX key={que} x={x((tr.desde + tr.hasta) / 2)} arriba={que === 'bajon' ? undefined : -2} abajo={que === 'bajon' ? 2 : undefined}>
-                <Text style={[st.tramo, datos.dia?.tramo === que && st.tramoActual]} numberOfLines={1} maxFontSizeMultiplier={1.2}>{t(`inicio.energia.curva.${que}`)}</Text>
+                <Text style={[st.tramo, datos.dia?.tramo === que && st.tramoActual]} maxFontSizeMultiplier={1.2}>{t(`inicio.energia.curva.${que}`)}</Text>
               </EnX>
             );
           })}
@@ -302,7 +302,9 @@ export function TiraDelDia({ datos, ancho }: { datos: DatosDeEnergia; ancho: num
 // ------------------------------------------------------------ la tarjeta
 /** La tarjeta entera. `ancho` es el de adentro; `resaltar` la hace brillar un momento (al llegar desde Inicio). */
 export function TarjetaDeEnergia({ datos, ancho, resaltar = 0 }: { datos: DatosDeEnergia; ancho: number; resaltar?: number }) {
-  const conNumeros = useNumeros() && !useEstado().perfil?.sinDeficit;
+  const numeros = useNumeros();
+  const perfil = useEstado().perfil;
+  const conNumeros = numeros && !perfil?.sinDeficit;
   const reducido = useReducedMotion();
   const [estaPlegada, setPlegada] = useState(plegada);
   const [mas, setMas] = useState(masAbierto);
