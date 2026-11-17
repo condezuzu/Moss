@@ -3,7 +3,7 @@
 Todo lo que no puedo hacer yo: aprobar, decidir, entrar con tus cuentas, tocar el iPhone y lo de Ascent.
 Entre paréntesis, dónde está el detalle. Lo marcado «confirmá» puede estar hecho: no lo puedo ver desde acá.
 
-Galería (versión 49): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
+Galería (versión 50): https://claude.ai/artifact/FcsCWWmMgfzmJ7G6eVSNYr
 
 ## 0. El lanzamiento y la 1.1 (desde el 14/11/2026): dónde quedé
 
@@ -44,6 +44,17 @@ Hecho:
   Sueño, el «+», el cuestionario con Cuidados y «Tus respuestas», Perfil, la foto de la comida y los avisos que siguen
   tu despertar (aprobados en la galería 49). Detalle y lo que quedó afuera en spec/ota-visual.md. Lo que vaya por aire a la
   build 6 sale de `visual-ota`; la build 7 (1.1) no lo tiene adentro: le llega por OTA de `mejoras-1.1` cuando salga.
+
+- El sueño, rehecho (17/11, lo pediste porque Moss te daba 16 h 30 de deuda y Rise 4 h): la tanda 1 está publicada por
+  aire en la build 6 (`visual-ota`, 5f3958f) y en la build 7 (`mejoras-1.1`, huella 13eb29e0): la noche sin reloj con un solo
+  margen de 15 min, el final de la noche, las noches largas, la deuda con pesos como los de Rise, las últimas cuatro semanas
+  rehechas, la tarjeta con el número y Baja / Media / Alta, la necesidad editable, y los textos en español neutro y sin
+  «a la cama». La investigación está en spec/estudio (rise.md, deuda-y-melatonina.md, auditoria-del-sueno.md).
+- Para aprobar en la galería 50 (tanda 2, escenario `melatonina`): tu periodo de melatonina en Sueño con «¿Qué es?», los
+  avisos con el título que dice qué hacer, «Lo que hay que hacer hoy» y la guía para conectar relojes y anillos. Al
+  programarlo: unir la cuenta del periodo de `melatonina.ts` con la de los avisos; decidir el máximo de avisos (con
+  los pendientes y las gafas un día llega a 13) y si el periodo se dice al minuto aunque el margen sea de ±1 h.
+- Para comprobar el sueño: pasame de Rise la hora de dormirte y despertarte de 3 o 4 noches y tu necesidad, y lo comparo.
 
 Falta (vos):
 1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
