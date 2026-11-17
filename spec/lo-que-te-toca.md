@@ -50,10 +50,11 @@ Hecho:
   margen de 15 min, el final de la noche, las noches largas, la deuda con pesos como los de Rise, las últimas cuatro semanas
   rehechas, la tarjeta con el número y Baja / Media / Alta, la necesidad editable, y los textos en español neutro y sin
   «a la cama». La investigación está en spec/estudio (rise.md, deuda-y-melatonina.md, auditoria-del-sueno.md).
-- Para aprobar en la galería 50 (tanda 2, escenario `melatonina`): tu periodo de melatonina en Sueño con «¿Qué es?», los
-  avisos con el título que dice qué hacer, «Lo que hay que hacer hoy» y la guía para conectar relojes y anillos. Al
-  programarlo: unir la cuenta del periodo de `melatonina.ts` con la de los avisos; decidir el máximo de avisos (con
-  los pendientes y las gafas un día llega a 13) y si el periodo se dice al minuto aunque el margen sea de ±1 h.
+- La tanda 2 del sueño, aprobada en la galería 50 y publicada por aire en las dos builds (17/11; `visual-ota` cc423b4): tu
+  periodo de melatonina en Sueño con «¿Qué es?», los avisos con el título que dice qué hacer y una sola cuenta de la
+  noche, «Lo que hay que hacer hoy» (la nota, el aviso de la mañana y la lista en Inicio), la guía para conectar relojes
+  y anillos, y el máximo de avisos que sube solo con los extras. Solo en el iPhone se puede probar: los botones del
+  aviso, que el aviso de la noche abra la nota con Moss cerrada y que la lista llegue sin abrir Moss.
 - Para comprobar el sueño: pasame de Rise la hora de dormirte y despertarte de 3 o 4 noches y tu necesidad, y lo comparo.
 
 Falta (vos):
