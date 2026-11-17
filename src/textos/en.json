@@ -1197,7 +1197,9 @@
         "sueno": {
           "muyBien": ", slept well and have no sleep debt",
           "bien": ", slept well and your sleep debt is low",
-          "soloAnoche": " and slept well"
+          "soloAnoche": " and slept well",
+          "sinDeuda": ", slept well and have no sleep debt",
+          "baja": ", slept well and your sleep debt is low"
         }
       },
       "partes": {
@@ -1282,7 +1284,10 @@
         "muyBien": "none",
         "bien": "low",
         "algoAlta": "a bit high",
-        "alta": "high"
+        "alta": "high",
+        "sinDeuda": "none",
+        "baja": "low",
+        "media": "medium"
       },
       "conAscent": "with Ascent",
       "cuando": {
@@ -1753,11 +1758,27 @@
     "regularidadTexto": "From {n} of the last 14 nights. The ± is how much your time moves from night to night: up to half an hour is very regular. The weekend compares the middle of your Friday and Saturday nights with the rest, assuming you don’t work those days.",
     "faltanNoches": "{n} nights measured; {minimo} are needed.",
     "pocoSegurasNoCuentan": "Low-confidence nights don’t count.",
-    "deuda": "Sleep debt",
+    "deuda": {
+      "titulo": "Sleep debt",
+      "juicio": {
+        "sinDeuda": "No debt",
+        "baja": "Low",
+        "media": "Medium",
+        "alta": "High"
+      },
+      "horasYMinutos": "{h} h {m}",
+      "duermes": "You sleep about {duermes}",
+      "necesitas": "You need {necesidad}",
+      "cambiar": "Change how much sleep you need",
+      "propuesta": "Your long nights run about {rondan}.",
+      "usar": "Use {usar}",
+      "conTelefono": "Estimated with your phone. A watch or a ring makes it more precise.",
+      "comoConTelefono": "Without a watch, Moss counts as sleep all the time your phone was still, minus your margin to fall asleep, which you can change in Fine-tune, further down."
+    },
     "sinDeuda": "No debt",
     "deudaDe": "short of what you need ({necesidad} a night)",
     "deudaNoches": "From {n} of the last {de} nights",
-    "deudaTexto": "What you were short of what you need each night over the last two weeks, counting recent nights more, minus what you slept extra (up to 2 hours a night). Naps count. It's worked out from the nights with data, so missing nights don't lower it. It's approximate: it depends mostly on how much sleep you need.",
+    "deudaTexto": "What you were short of what you need each night over the last two weeks. Recent nights count more: last night counts in full and the one two weeks ago, very little. Sleeping extra pays it down, up to an hour a night. Naps count. Nights without data don't lower it. Under 5 hours is low; 5 to 10, medium; 10 or more, high. It's approximate: half an hour more or less in what you need changes it by about 3 hours.",
     "vitales": "Overnight, from the watch",
     "vital": {
       "frecuencia": "Heart rate",
@@ -1916,8 +1937,9 @@
         "noCuenta": "doesn't count: you kept using it",
         "tardas": "You take about {n} min to fall asleep: learned from your answers.",
         "tardasFabrica": "Without your answers, it assumes {n} min to fall asleep. Each one teaches it yours.",
-        "nota": "Each signal suggests a time and counts according to how much doubt it leaves. Moss never has you asleep before the last thing you did on your phone, or awake after the first.",
-        "tardasElegida": "You take {n} min to fall asleep: you set it in Profile › Reminders."
+        "nota": "Moss never has you asleep before the last thing you did on your phone, or awake after the first. If you touch it (turn off the alarm, check the time) and it goes still again for 45 minutes or more, that doesn't end the night.",
+        "tardasElegida": "You take {n} min to fall asleep: you set it in Profile › Reminders.",
+        "margen": "It counts as sleep all the time your phone was still, minus your margin to fall asleep: {n} min. You can change it in Fine-tune, further down."
       }
     },
     "sinCalidadEstimada": "Moss isn’t sure about this night: confirm it or change it and the quality shows up.",
@@ -1927,7 +1949,7 @@
       "corregida": "Corrected",
       "manual": "Written"
     },
-    "estimadaTexto": "Without a watch, Moss takes the last time you used or moved your phone and adds how long you take to fall asleep ({latencia} min); in the morning, the first time minus how long you take to pick it up ({despertar} min). Each answer teaches it yours.",
+    "estimadaTexto": "Without a watch, Moss counts as sleep all the time your phone was still: from the last time you used or moved it, plus your margin to fall asleep ({margen} min), to the first time in the morning. You can change the margin in Fine-tune, further down.",
     "rango": "Between {a} and {b} falling asleep, and between {c} and {d} waking up.",
     "seguridad": {
       "alta": "Fairly sure",
@@ -1966,7 +1988,7 @@
     },
     "afinar": {
       "titulo": "Fine-tune",
-      "texto": "Without a watch, Moss estimates your night with your phone and learns how long you take to fall asleep. To know the exact time without setting anything up, use Moss's alarm or tap “Going to bed” on the bedtime notification. Shortcuts are optional.",
+      "texto": "Without a watch, Moss estimates your night with your phone: it counts as sleep all the time it was still. To know the exact time without setting anything up, use Moss's alarm or tap “Going to bed” on the bedtime notification. Shortcuts are optional.",
       "hoy": "today, {hora}",
       "ayer": "yesterday, {hora}",
       "dia": "{dia}, {hora}",
@@ -2167,6 +2189,11 @@
           },
           "minutoAMano": "A couple of minutes, just once."
         }
+      },
+      "margen": {
+        "titulo": "Margin to fall asleep",
+        "minutos": "{n} min",
+        "texto": "Moss counts as sleep all the time your phone is still, minus this margin. If you usually put your phone down a while before you fall asleep, raise this margin."
       }
     },
     "deporte": {
@@ -2177,7 +2204,7 @@
     "deudaAprox": "about {t}",
     "deudaPorNoche": "You sleep about {duermes} a night; you need about {necesidad}.",
     "dormidoAprox": "asleep, approx.",
-    "sinRelojDespierto": "Moss takes about {n} min off those hours: almost everyone spends a while awake during the night, and your phone can't see it.",
+    "sinRelojDespierto": "Moss takes about {n} min off those hours: the time you usually spend awake at night according to your watch or ring, which your phone can't see.",
     "regularidadAprox": "With nights estimated without a watch, the ± includes each estimate's error: it's approximate.",
     "juicio": {
       "titulo": {
@@ -2195,14 +2222,14 @@
     },
     "estaNoche": {
       "titulo": "Tonight",
-      "cama": "Bed at {hora}",
+      "cama": "Go to bed at {hora}",
       "camaTexto": "To wake up at {despertar} having slept about {horas}.",
       "pago": "That's about {min} min more than you need, to start paying down the debt: it comes down little by little, not all at once.",
       "tope": "Moss moves it at most an hour earlier than usual: the body doesn't fall asleep much before its usual time.",
       "comida": "Last big meal, before {hora}",
       "comidaTexto": "Two hours before bed; after that, something light.",
       "comidaReflujo": "With reflux, three hours before bed; after that, something light.",
-      "linea": "Tonight, bed at {hora}."
+      "linea": "Go to bed at {hora}"
     },
     "deudaVer": {
       "mas": "More",
@@ -2460,13 +2487,13 @@
     "avisos": {
       "titulo": "Reminders",
       "dormir": "Bedtime",
-      "dormirTexto": "Tonight, bed at {hora}: to wake up at {despertar} after {horas} of sleep, counting the {latencia} min it takes you to fall asleep and the time almost everyone spends awake during the night. You get a reminder a little before.",
+      "dormirTexto": "Tonight, go to bed at {hora}: to wake up at {despertar} after {horas} of sleep, with a {latencia} min margin to fall asleep. You get a reminder a little before.",
       "dormirSinDatos": "You get a reminder a little before bedtime. To work it out, Moss needs to know when you wake up: a few nights is enough.",
       "antes": "{n} min before",
       "tardo": "Time to fall asleep",
       "tardoAprendido": "What Moss learns ({n} min)",
       "minutos": "{n} min",
-      "tardoTexto": "From when you put your phone down until you fall asleep. Moss learns it every time you answer “Did you sleep from… to…?”.",
+      "tardoTexto": "From when you put your phone down until you fall asleep: the only part of the time your phone was still that Moss doesn't count as sleep. It's the same margin as in Sleep › Fine-tune.",
       "maximo": "Most reminders in a day",
       "maximoTexto": "Moss never reminds you more times than this in one day. If there are more, bedtime and your habits come first.",
       "horario": "Meal times",

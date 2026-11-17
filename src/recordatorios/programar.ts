@@ -23,7 +23,7 @@ import { avisosDelDespertar, deFabrica, RESPUESTAS_DEL_DESAYUNO, type DeSigueElD
 import { horasDeSiempre } from '@/dominio/recordatorios';
 import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
 import { bajoAlFinal, horaDeLaTarde, loQueFaltaHoy, type FaltaConHora } from '@/dominio/loQueFalta';
-import { aprenderPersonal, habitualDe } from '@/dominio/sinReloj';
+import { habitualDe, margenParaDormirte } from '@/dominio/sinReloj';
 import { avisoDePrueba, avisosHasta } from '@/dominio/premium';
 import { despiertoDeLaNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
 import { accesoActual, hayPremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
@@ -89,9 +89,9 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
     habitual: (clave) => habitualDe(s.noches, clave),
     necesidad: nec,
     deuda: deudaDeSueno(ultimasNoches(s.noches, e.hoy, 14), nec)?.minutos ?? null,
-    // Lo que tardás en dormirte (D33): la hora de ir a la cama la descuenta.
-    latencia: aprenderPersonal([...e.noches.values()], e.hoy, e.latencia).latencia,
-    // Y lo que se suele estar despierto en la noche: para dormir lo que necesitas, hay que estar en la cama eso más.
+    // Tu margen para dormirte: la hora de acostarte lo descuenta.
+    latencia: margenParaDormirte(e.latencia),
+    // Y, con un reloj o un anillo, lo que sueles estar despierto en la noche: para dormir lo que necesitas, hay que estar en la cama eso más.
     despierto: despiertoDeLaNoche(s.noches),
   };
 }

@@ -534,6 +534,10 @@
     reflujo: () => !!(perfilSec && perfilSec.reflujo),
     // «Necesito dormir», en Perfil › Avisos.
     necesidadElegida: () => (perfilSec ? perfilSec.necesidad : null),
+    // Lo que necesitas se cambia también en la tarjeta de la deuda, y el margen para dormirte, en Afinar (17/11).
+    ponerNecesidad: (m) => { if (perfilSec) perfilSec.ponerNecesidad(m); },
+    margenElegido: () => (perfilSec ? perfilSec.latencia : null),
+    ponerMargen: (m) => { if (perfilSec) perfilSec.ponerLatencia(m); },
     // Con Ascent: el titular de hoy, sin porcentaje, y la línea del rendimiento con la noche corta.
     titular: () => (ascent ? ascent.titularDeHoy() : null),
     linea: () => (ascent ? ascent.lineaDeHoy() : null),
@@ -548,7 +552,17 @@
   // Qué iOS muestra la guía: en iOS 27 el atajo trae la automatización; hasta iOS 26, se arma a mano.
   let versionDeLaGuia = 27;
   guiaAtajos = GuiaAtajos.crear(tel, Object.assign({}, opcionesDeSeccion, { alArmar: () => sueno.cargador('anda') }));
-  const avisosBloqueo = AvisosBloqueo.crear(tel, opcionesDeSeccion);
+  const avisosBloqueo = AvisosBloqueo.crear(tel, Object.assign({}, opcionesDeSeccion, {
+    // Tocar un aviso de lo pendiente (17/11): el de la noche abre la nota en Sueño; el de la mañana, Inicio, con la
+    // lista arriba de «Para hoy». La sección se desliza y recién después se abre la nota.
+    alTocarAviso: (cual) => {
+      avisosBloqueo.cerrar();
+      if (cual === 'anotar') { pestanas.ir(3); sueno.verNoche(0); setTimeout(() => sueno.periodo('nota'), 420); }
+      else { inicio.primerDia(false); pestanas.ir(0); setTimeout(() => inicio.bajar(), 420); }
+    },
+  }));
+  // Lo que se anota o se quita en la nota cambia la lista de Inicio.
+  Periodo.pendientes.alCambiar(() => inicio.refrescarConsejos());
   window.__avisosBloqueo = (p) => avisosBloqueo.poner(p);
   suscripcion = Suscripcion.crear(tel, Object.assign({}, opcionesDeSeccion, {
     alCambiar: () => { if (perfilSec) perfilSec.pintar(); refrescarControles(); },
@@ -557,6 +571,8 @@
     // Comida, para Entrenamiento: cuándo entrenas cambia lo que dice cada comida.
     comida,
     persona, vinculada: () => vinculada, abrirAscent: () => abrirAscent(), sinReloj: () => soloIphone, nochesSinReloj: () => Datos.PROPIAS_SIN_RELOJ.length,
+    // Las noches de Sueño, para la hora de acostarte de Avisos (tu periodo de melatonina).
+    noches: () => sueno.noches(),
     // Tus respuestas (5/11): el cuestionario con lo contestado; al guardar, la meta nueva y de vuelta a Perfil.
     revisarCuestionario: () => {
       cerrarHojas();
@@ -771,6 +787,7 @@
     if (suscripcion && suscripcion.hojaAbierta) suscripcion.cerrarHoja();
     if (guiaAtajos && guiaAtajos.abierta) guiaAtajos.cerrar();
     if (avisosBloqueo.abierta) avisosBloqueo.cerrar();
+    if (sueno && sueno.hojaDelPeriodoAbierta) sueno.cerrarHojasDelPeriodo();
   };
 
   // ------------------------------------------------------------ las seis secciones, como en Ascent
@@ -1133,6 +1150,16 @@
     hora: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('proponer'); sueno.verNoche(0); },
     horaSinProponer: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.preguntarHora('sinProponer'); sueno.verNoche(0); },
     aparatos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirAparatos(); },
+    // El sueño rehecho, tanda 2 (17/11, para aprobar): la deuda con su palabra y tu periodo de melatonina, la hoja
+    // «¿Qué es?», solo con el teléfono, los avisos reescritos, la nota de lo pendiente, su lista en Inicio y la guía
+    // para conectar un reloj o un anillo.
+    melatonina: () => { cerrarHojas(); ponerAparato(false); pestanas.ir(3); sueno.ponerEstado('datos'); sueno.verNoche(0); },
+    melatoninaHoja: () => { accionesSeccion.melatonina(); setTimeout(() => sueno.periodo('hoja'), 420); },
+    melatoninaTelefono: () => { cerrarHojas(); ponerAparato(true); pestanas.ir(3); sueno.ponerEstado('datos'); sueno.verNoche(0); },
+    avisosNuevos: () => { cerrarHojas(); avisosBloqueo.abrir(); avisosBloqueo.poner({ modo: 'despertar', hora: 22 * 60 + 50 }); },
+    pendientes: () => { cerrarHojas(); Periodo.pendientes.activar(true); pestanas.ir(3); sueno.verNoche(0); setTimeout(() => sueno.periodo('nota'), 420); },
+    pendientesInicio: () => { cerrarHojas(); Periodo.pendientes.activar(true); inicio.primerDia(false); pestanas.ir(0, true); inicio.bajar(); },
+    guiaAparatos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirAparatos(); perfilSec.desplegar('guia:oura'); },
     avisos: () => { cerrarHojas(); pestanas.ir(5); perfilSec.ponerAvisos({ dormir: true, comidas: ['almuerzo', 'cena'] }); perfilSec.abrirAvisos(); },
     entreno: () => { cerrarHojas(); pestanas.ir(5); perfilSec.abrirEntreno(); },
     // Lo nuevo de la 1.1, para aprobar.
@@ -1536,6 +1563,17 @@
     pasos[accion]();
   };
   window.__seccion = (nombre) => { accionesSeccion[nombre](); refrescarControles(); };
+  // El sueño rehecho (17/11), para las capturas: la hoja del periodo, la nota y lo que necesitas (`periodo`, con
+  // [acción, valor]); activar o reiniciar lo pendiente; y una marca de la guía de Aparatos desplegada.
+  window.__melatonina = (accion, arg) => {
+    const pasos = {
+      periodo: () => sueno.periodo(arg[0], arg[1]),
+      pendientes: () => { if (arg === 'reiniciar') Periodo.pendientes.reiniciar(false); else Periodo.pendientes.activar(arg); },
+      guia: () => perfilSec.desplegar(arg ? 'guia:' + arg : null),
+    };
+    pasos[accion]();
+    refrescarControles();
+  };
   // Según el deporte, para las capturas: elegir un día de ejemplo (o null), el alcohol del domingo, y cada lugar.
   window.__deporte = (accion, arg) => {
     const pasos = {

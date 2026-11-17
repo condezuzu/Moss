@@ -8,6 +8,39 @@ Estudio del 5/11/2026, área **sueño**. Leído en el repo (rama `mejoras-1.1`, 
 `sueno-sin-esfuerzo.md` y D19, D33 y D42 de `decisiones.md`. Todas las fuentes de abajo las abrí; al final
 dice de cada una si leí el texto entero o solo el resumen.
 
+## 0. Lo que se rehízo el 17/11/2026, y por qué
+
+Doce días después de este estudio, Moss le daba al dueño **16 h 30 de deuda y Rise, 4 h**. Tres informes
+nuevos lo explican, y de ahí salió la tanda 1 del sueño (que el número sea creíble):
+
+- [`auditoria-del-sueno.md`](auditoria-del-sueno.md): cómo leía Moss cada noche, con los casos simulados y la
+  lista de arreglos. La fórmula no era el problema: con el teléfono quieto 8 h justas, Moss decía «Alta. Unas
+  10 h».
+- [`rise.md`](rise.md): cómo lo hace Rise (los pesos de su calculadora, el margen, los tramos de menos de 5,
+  de 5 a 10 y más de 10 horas).
+- [`deuda-y-melatonina.md`](deuda-y-melatonina.md): la evidencia de la deuda, la necesidad, la ventana para
+  dormirse y el sueño con el teléfono.
+
+Lo que cambió, contra lo que este estudio había dejado (el detalle, en `spec/sueno.md`, «Las cuentas» y «Sin
+reloj»):
+
+| Qué | Como quedó el 5/11 | Desde el 17/11 | Por qué |
+|---|---|---|---|
+| Lo despierto sin reloj (el punto 5 del resumen y el arreglo 2) | La noche del teléfono menos 30 min fijos | No se resta nada sin reloj; con noches de un reloj, lo tuyo | El arreglo era correcto en el papel (el período de sueño no es el sueño), pero sumado a los 31 y 18 minutos de Sahha eran 79 minutos menos por noche: 9 h 53 de deuda para cualquiera. Rise no lo resta, y el dueño eligió leer la noche como Rise |
+| De dejar el teléfono a dormirte (2.7) | 31 min de Sahha, aprendidos de cada respuesta, o «Tardo en dormirme» | Un margen de 15 min de fábrica, que se elige (0 a 60) | Un «Sí» enseñaba lo que Moss ya suponía; el dueño pidió un solo margen, a la vista |
+| De despertarte a agarrar el teléfono | 18 min de Sahha, aprendidos | Nada: la noche termina con la actividad que sigue | Ídem. Y un toque tras el que el teléfono queda quieto 45 min o más (apagar la alarma) ya no la termina |
+| Tu hora de siempre | Una señal más de cada borde, pesada por 1/duda² (el punto 7) | No mueve las horas | Recortaba las noches largas: levantarse 2 h más tarde se creía 47 min, y lo corto se contaba entero |
+| Los pesos de la deuda (2.2) | Una rampa de 1 a 1/14 (7,5 noches) | e^(−i/7) (6,5 noches) | La constante del único modelo validado que la publica (7,0 ± 1,7 días, Ramakrishnan 2016), y los pesos de la calculadora de Rise |
+| Lo que sobra y lo que falta en una noche (D9) | Lo que sobra paga hasta 2 h; lo que falta, sin tope | Hasta 1 h y hasta 3 h (2 h si es del teléfono y sin confirmar) | Harrison y Horne 1996; una de cada siete noches estimadas tiene un borde errado en más de 2 h (Sahha 2026) |
+| La palabra de la deuda | Muy bien, bien, algo alta, alta, por lo que falta cada noche (alta desde 1 h) | Sin deuda, baja (menos de 5 h), media (5 a 10), alta (10 o más), por el número | Decisión del dueño, con los tramos de Rise. Es una convención |
+| La necesidad (D4, «Descubrir lo que necesitas») | 8 h, elegible en Perfil › Avisos | Sigue en 8 h, a la vista en la tarjeta de la deuda, y Moss propone el percentil 75 de tus noches | Decisión del dueño. La propuesta es una convención: no hay método validado en casa |
+| Las noches largas y la confianza (D2) | Bajaban a confianza baja y quedaban fuera | Bajan hasta media: se pregunta, y cuentan | Eran sobre todo las largas las que quedaban fuera |
+
+Sigue en pie de este estudio: una fuente por noche, las etapas fuera de la calidad, la necesidad por edad, las
+noches sin datos que no cuentan como perfectas, decir la deuda a la media hora, el rango del 80 % y la
+regularidad «aprox.» con noches estimadas. Y sigue pendiente la prueba en sombra contra un reloj (D10): los
+minutos de las reglas nuevas (45, 90, el margen de 15) son convenciones hasta medirlos.
+
 ## 1. Resumen
 
 1. **Lo que se sostiene:** las 8 horas de fábrica para adultos y las 7 y media desde los 65 (AASM/SRS

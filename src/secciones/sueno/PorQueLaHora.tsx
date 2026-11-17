@@ -1,6 +1,6 @@
 // «Cómo llegó Moss a esta hora», la de la galería (galeria/src/sueno.js): abajo de «¿Dormiste de… a…?»,
-// la noche en una línea y cada señal con su hora y cuánto pesó (`pistas` de estimarNoche). Si conectaste
-// el cargador y seguiste usando el teléfono, aparece tachado: no cuenta.
+// la noche en una línea y cada señal con su hora (`pistas` de estimarNoche), y tu margen para dormirte. Si
+// conectaste el cargador y seguiste usando el teléfono, aparece tachado: no cuenta.
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -46,7 +46,6 @@ function LineaDeLaNoche({ e }: { e: Estimacion }) {
 }
 
 function Borde({ titulo, hora, pistas }: { titulo: string; hora: number; pistas: Pista[] }) {
-  const varias = pistas.filter((p) => p.peso > 0).length > 1;
   return (
     <>
       <View style={st.cab}>
@@ -61,7 +60,6 @@ function Borde({ titulo, hora, pistas }: { titulo: string; hora: number; pistas:
           </View>
           {p.noCuenta ? <Text style={st.pistaNota}>{t('sueno.manana.porque.noCuenta')}</Text>
             : !p.peso ? <Text style={st.pistaNota}>{t('sueno.manana.porque.confirma')}</Text>
-            : varias ? <View style={st.peso}><View style={[st.pesoLleno, { width: `${p.peso * 100}%` }]} /></View>
             : null}
         </View>
       ))}
@@ -74,7 +72,7 @@ export function PorQueLaHora({ clave }: { clave: ClaveDia }) {
   const [abierto, setAbierto] = useState(false);
   const giro = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierto ? '180deg' : '0deg', { duration: 260 }) }] }), [abierto]);
   if (!comoLlego) return null;
-  const { estimacion: e, personal } = comoLlego;
+  const { estimacion: e, margen } = comoLlego;
   // Llega un rato después de abrir (estimarAnoche no se guarda): entra con su fundido.
   return (
     <Aparece style={st.caja}>
@@ -89,7 +87,7 @@ export function PorQueLaHora({ clave }: { clave: ClaveDia }) {
           <LineaDeLaNoche e={e} />
           <Borde titulo={t('sueno.manana.porque.dormirse')} hora={e.dormirse} pistas={e.pistas.dormirse} />
           <Borde titulo={t('sueno.manana.porque.despertar')} hora={e.despertar} pistas={e.pistas.despertar} />
-          <Text style={st.nota}>{t(personal.elegida ? 'sueno.manana.porque.tardasElegida' : personal.noches > 0 ? 'sueno.manana.porque.tardas' : 'sueno.manana.porque.tardasFabrica', { n: personal.latencia })}</Text>
+          <Text style={st.nota}>{t('sueno.manana.porque.margen', { n: margen })}</Text>
           <Text style={st.nota}>{t('sueno.manana.porque.nota')}</Text>
         </Aparece>
       )}
@@ -119,7 +117,5 @@ const st = StyleSheet.create({
   pistaNoCuenta: { textDecorationLine: 'line-through', color: 'rgba(239, 230, 207, 0.48)' },
   pistaHora: { fontFamily: letras.numero, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.7)', fontVariant: ['tabular-nums'] },
   pistaNota: { fontFamily: letras.texto, fontSize: 11, lineHeight: 14, color: 'rgba(239, 230, 207, 0.48)' },
-  peso: { height: 2, borderRadius: 1, overflow: 'hidden', backgroundColor: 'rgba(239, 230, 207, 0.1)' },
-  pesoLleno: { height: 2, backgroundColor: colores.oro },
   nota: { marginTop: 4, fontFamily: letras.texto, fontSize: 12, lineHeight: 17, color: 'rgba(239, 230, 207, 0.5)' },
 });

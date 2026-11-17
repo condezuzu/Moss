@@ -110,7 +110,7 @@ export function fraseDeEnergia(d: DatosDeEnergia): string {
     return t(`inicio.energia.momento.${momento}.${en.estado}`, { hora, cama: d.noche?.cama ?? '' });
   }
   // Alta: por qué, de estos días y de anoche.
-  const sueno = en.deuda === 'muyBien' || en.deuda === 'bien' ? en.deuda : 'soloAnoche';
+  const sueno = en.deuda === 'sinDeuda' || en.deuda === 'baja' ? en.deuda : 'soloAnoche';
   const como = en.comida?.como;
   const comida = como === 'deSobra' || como === 'llegaste' ? como : 'alcanza';
   const razones = { comida: t(`inicio.energia.razon.comida.${comida}`), sueno: t(`inicio.energia.razon.sueno.${sueno}`), hora };

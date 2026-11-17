@@ -44,9 +44,9 @@ export type NochePropia = {
   cara?: Cara;
   /**
    * `estimada` es lo que estimó el teléfono, con `quieto`, la ventana tranquila de esa noche (la última
-   * actividad y la primera): con eso se aprende cuánto tardás en dormirte (src/dominio/sinReloj.ts). Y
-   * `margen`, la mitad del rango de cada borde, en minutos, para calibrarlo: queda en el teléfono (la
-   * cuenta no lo guarda), y sin él el rango sale de la confianza.
+   * actividad y la primera): con eso una noche se puede volver a armar si cambia la regla o tu margen
+   * (sinLasRestas, en src/dominio/sinReloj.ts). Y `margen`, la mitad del rango de cada borde, en minutos,
+   * para calibrarlo: queda en el teléfono (la cuenta no lo guarda), y sin él el rango sale de la confianza.
    */
   hora?: {
     dormirse: string; despertar: string; origen: OrigenDeNoche; confianza: Confianza;
@@ -401,12 +401,6 @@ export const necesidadesPara = (edad: number): number[] => {
 /** Lo mínimo para cada cosa: el horario desde 5 noches previas, la deuda con 5 de 14, la regularidad con 8 de 14. */
 export const MINIMOS = { horarioDeLaCalidad: 5, deuda: 5, regularidad: 8, loTuyo: 7, finDeSemana: 2, semana: 4 };
 
-/**
- * Lo despierto adentro de la noche que el teléfono no ve: sin reloj, la noche va de dormirte a despertarte, y
- * en adultos sanos adentro hay unos 30 minutos despierto (por polisomnografía: 32 a 38, Robbins 2024; 31,5 en
- * las noches de Apple 2025). Lo dormido es eso menos.
- */
-export const DESPIERTO_SIN_RELOJ = 30;
 /** Lo despierto que el reloj ve de menos: de 10 a 21 minutos (Robbins 2024; Schyvens 2025). */
 const LO_QUE_EL_RELOJ_NO_VE = 15;
 /** El rango del 80 % es ±1,28 veces la duda (σ), si el error fuera normal. */
@@ -489,29 +483,48 @@ export type Deuda = {
   noches: number;
   de: number;
 };
-/** Lo que sobra en una noche paga deuda hasta 2 horas, no más. */
-const SOBRA_MAXIMA = 120;
+/**
+ * Lo que una noche puede sumar o pagar, en minutos (spec/estudio/deuda-y-melatonina.md, 1.5). Lo que sobra paga
+ * hasta una hora: con cama de sobra casi no se duerme más que eso por encima de lo que se necesita (Harrison y
+ * Horne 1996; Klerman y Dijk 2008). Lo que falta suma hasta 3 horas, y hasta 2 si la noche la estimó el teléfono
+ * y no la confirmaste: una de cada siete de esas tiene un borde errado en más de 2 horas (Sahha 2026). Los dos
+ * topes de lo que falta son una convención.
+ */
+export const TOPES_DE_UNA_NOCHE = { sobra: 60, falta: 180, faltaEstimada: 120 } as const;
+/**
+ * En cuántas noches una noche pierde casi dos tercios de su peso: 7, la constante con que sube y baja la deuda
+ * en el modelo validado que la publica (7,0 ± 1,7 días, Ramakrishnan 2016).
+ */
+const NOCHES_DEL_PESO = 7;
+
+/** Si la noche entra en la deuda: medida, confirmada o estimada con el teléfono con confianza media o alta. */
+const cuentaParaLaDeuda = (n: Noche | null): n is Noche => !!n && n.confianza.duracion !== 'baja';
+
+/** Lo que le faltó a una noche para tu necesidad (negativo si sobró), con sus topes: lo que entra en la deuda. */
+export function faltaDeLaNoche(noche: Noche, necesidadMin: number): number {
+  const tope = noche.moss?.origen === 'estimada' ? TOPES_DE_UNA_NOCHE.faltaEstimada : TOPES_DE_UNA_NOCHE.falta;
+  return Math.min(tope, Math.max(-TOPES_DE_UNA_NOCHE.sobra, necesidadMin - noche.dormido - noche.siestas));
+}
 
 /**
- * La deuda de las últimas dos semanas: lo que faltó para tu necesidad cada noche, pesando más las
- * últimas (anoche entera, hace dos semanas casi nada), menos lo que sobró. Las siestas cuentan. Una
- * noche sin datos no cuenta como si hubieras dormido lo que necesitás (así, usar menos el reloj bajaba la
- * deuda): es el promedio con pesos de las noches medidas, llevado a las dos semanas (por la suma de los
- * pesos de las 14, 7,5). Hacen falta 5 noches medidas de 14.
+ * La deuda de las últimas dos semanas (rehecha el 17/11/2026; spec/sueno.md, «Las cuentas»): lo que faltó para
+ * tu necesidad cada noche, con sus topes (faltaDeLaNoche), y las noches pesando e^(−i/7): anoche 1, la anterior
+ * 0,87… hasta 0,16 hace 13 noches. Suman 6,5, y son los pesos que publica Rise en su calculadora. Las siestas
+ * cuentan. Una noche sin datos no cuenta como si hubieras dormido lo que necesitas: es el promedio con pesos de
+ * las noches medidas, llevado a la suma de los pesos de las 14. Nunca menos de 0. Hacen falta 5 noches de 14.
  */
 export function deudaDeSueno(noches: (Noche | null)[], necesidadMin: number): Deuda | null {
   const n = noches.length;
-  const peso = (i: number) => 1 - (n - 1 - i) / n;
+  const peso = (i: number) => Math.exp(-(n - 1 - i) / NOCHES_DEL_PESO);
   const total = noches.reduce((s, _, i) => s + peso(i), 0);
   let falta = 0;
   let dormido = 0;
   let pesos = 0;
   let contadas = 0;
   noches.forEach((noche, i) => {
-    if (!noche || noche.confianza.duracion === 'baja') return;
-    const durmio = noche.dormido + noche.siestas;
-    falta += peso(i) * Math.max(-SOBRA_MAXIMA, necesidadMin - durmio);
-    dormido += peso(i) * durmio;
+    if (!cuentaParaLaDeuda(noche)) return;
+    falta += peso(i) * faltaDeLaNoche(noche, necesidadMin);
+    dormido += peso(i) * (noche.dormido + noche.siestas);
     pesos += peso(i);
     contadas++;
   });
@@ -521,23 +534,48 @@ export function deudaDeSueno(noches: (Noche | null)[], necesidadMin: number): De
 
 /**
  * La deuda como se dice, a la media hora: el número es aproximado (media hora de diferencia en lo que
- * necesitás lo cambia en casi 4 horas). Menos de 15 minutos es 0: sin deuda.
+ * necesitas lo cambia en más de 3 horas). Menos de 15 minutos es 0: sin deuda.
  */
 export const redondearDeuda = (minutos: number) => Math.max(0, Math.round(minutos / 30) * 30);
 
 /**
- * La deuda en una palabra (lo pediste el 5/11/2026), por lo que falta cada noche, que es lo que tiene menos error
- * y lo que mejor se entiende (spec/estudio/sueno.md, 2.2). Redondeada a cero, «muy bien». Menos de media hora por
- * noche, «bien»: es menos que el error de medir una noche. De media hora a una, «algo alta». Una hora o más,
- * «alta»: con 7 h en la cama en vez de 8, el rendimiento bajó y se quedó abajo (Belenky 2003), y con 6 el
- * déficit creció cada día sin que la gente lo notara (Van Dongen 2003). Los cortes son una convención.
+ * La deuda en una palabra, al lado del número (lo decidiste el 17/11/2026): sin deuda en 0; baja con menos de
+ * 5 horas; media de 5 a 10; alta desde 10. Son los tramos de Rise, que busca menos de 5 h: no hay un corte
+ * clínico de deuda alta, así que es una convención.
  */
-export type JuicioDeLaDeuda = 'muyBien' | 'bien' | 'algoAlta' | 'alta';
-export const FALTA_POR_NOCHE = { bien: 30, alta: 60 } as const;
-export function juicioDeLaDeuda(d: Pick<Deuda, 'minutos' | 'porNoche'>): JuicioDeLaDeuda {
-  if (redondearDeuda(d.minutos) === 0) return 'muyBien';
-  if (d.porNoche < FALTA_POR_NOCHE.bien) return 'bien';
-  return d.porNoche < FALTA_POR_NOCHE.alta ? 'algoAlta' : 'alta';
+export type JuicioDeLaDeuda = 'sinDeuda' | 'baja' | 'media' | 'alta';
+export const TRAMOS_DE_LA_DEUDA = { media: 5 * 60, alta: 10 * 60 } as const;
+export function juicioDeLaDeuda(d: Pick<Deuda, 'minutos'>): JuicioDeLaDeuda {
+  const minutos = redondearDeuda(d.minutos);
+  if (minutos === 0) return 'sinDeuda';
+  return minutos < TRAMOS_DE_LA_DEUDA.media ? 'baja' : minutos < TRAMOS_DE_LA_DEUDA.alta ? 'media' : 'alta';
+}
+
+/**
+ * Lo que hace falta para proponer otra necesidad: las noches medidas de las últimas 4 semanas (14 como mínimo),
+ * su percentil 75 y media hora o más de diferencia con la de ahora.
+ */
+export const PARA_PROPONER_LA_NECESIDAD = { dias: 28, noches: 14, percentil: 0.75, diferencia: 30 } as const;
+
+/**
+ * Una necesidad para proponerte, en minutos, desde tu historial (17/11/2026), o null si no hay con qué o es la
+ * que ya tienes: el percentil 75 de lo que dormiste las noches medidas de las últimas 4 semanas, a la media
+ * hora, si cae dentro de lo de tu edad. Fuera de eso no propone nada: a quien duerme 5 h 30 no se le dice que
+ * necesita 7. Es una convención, no un método validado: no hay ninguno para medir en casa cuánto necesita
+ * dormir alguien. El promedio se queda corto si hay deuda (casi todos duermen menos de lo que necesitan) y las
+ * noches libres exageran (el rebote); el percentil 75 queda entre los dos
+ * (spec/estudio/deuda-y-melatonina.md, 2.3). Moss la propone y nunca la cambia sola.
+ */
+export function necesidadPropuesta(noches: readonly Noche[], hoy: ClaveDia, edad: number, actual: number): number | null {
+  const p = PARA_PROPONER_LA_NECESIDAD;
+  const dormidas = ultimasNoches([...noches], hoy, p.dias).filter(cuentaParaLaDeuda).map((n) => n.dormido + n.siestas).sort((a, b) => a - b);
+  if (dormidas.length < p.noches) return null;
+  const lugar = p.percentil * (dormidas.length - 1);
+  const abajo = Math.floor(lugar);
+  const percentil = dormidas[abajo] + (dormidas[Math.min(abajo + 1, dormidas.length - 1)] - dormidas[abajo]) * (lugar - abajo);
+  const propuesta = Math.round(percentil / 30) * 30;
+  const r = rangoDeNecesidad(edad);
+  return propuesta >= r.desde && propuesta <= r.hasta && Math.abs(propuesta - actual) >= p.diferencia ? propuesta : null;
 }
 
 /**
@@ -555,9 +593,10 @@ export function pocoSuenoSostenido(noches: (Noche | null)[], edad?: number): boo
 }
 
 /**
- * Lo que solés estar despierto adentro de la noche, en minutos: con al menos 7 noches de un reloj o un anillo
- * (de las últimas 14 que hay), su mediana más lo que el reloj no ve; si no, DESPIERTO_SIN_RELOJ. Lo usan la
- * noche sin reloj (nocheDeMoss, en sinReloj.ts) y la hora de ir a la cama (horaDeDormir, en avisos.ts).
+ * Lo que sueles estar despierto adentro de la noche, en minutos: con al menos 7 noches de un reloj o un anillo
+ * (de las últimas 14 que hay), su mediana más lo que el reloj no ve. Sin eso, nada (desde el 17/11/2026): solo
+ * con el teléfono no se mide, y restarle media hora fija a todos sumaba más de 3 horas de deuda. Lo usan la
+ * noche sin reloj (nocheDeMoss, en sinReloj.ts) y la hora de acostarte (horaDeDormir, en avisos.ts).
  */
 export function despiertoDeLaNoche(noches: readonly Noche[]): number {
   const conAparato = noches
@@ -565,7 +604,7 @@ export function despiertoDeLaNoche(noches: readonly Noche[]): number {
     .sort((a, b) => (a.clave < b.clave ? -1 : 1))
     .slice(-14);
   // Un aparato que nunca escribe un rato despierto no dice que no lo hubo: no lo ve.
-  if (conAparato.length < MINIMOS.loTuyo || conAparato.every((n) => n.despierto === 0)) return DESPIERTO_SIN_RELOJ;
+  if (conAparato.length < MINIMOS.loTuyo || conAparato.every((n) => n.despierto === 0)) return 0;
   return Math.round(mediana(conAparato.map((n) => n.despierto))) + LO_QUE_EL_RELOJ_NO_VE;
 }
 

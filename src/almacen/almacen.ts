@@ -30,7 +30,7 @@ import {
 import { aplicar, ganadores, type Datos } from './mezclar';
 import type { LoDeSalud } from '@/salud/convertir';
 import { NECESIDADES, type Cara, type NochePropia } from '@/dominio/sueno';
-import { LATENCIAS } from '@/dominio/sinReloj';
+import { MARGENES, margenParaDormirte, NOCHES_QUE_SE_REARMAN, sinLasRestas } from '@/dominio/sinReloj';
 import type { AvisoDeHabito, Avisos } from '@/dominio/avisos';
 import { RESPUESTAS_DEL_DESAYUNO, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
 import { DE_COMIDA, NOMBRE, nombreDeAjuste, sinCambios, type Coleccion, type DeComida, type Guardado, type ListasDeComida, type Repositorio } from './repositorio';
@@ -120,10 +120,15 @@ export type Estado = MapasDeComida & {
    */
   corte: number;
   /**
-   * Cuánto tardás en dormirte (D33), en minutos, si lo elegiste en «Tardo en dormirme»; sin elegir,
-   * null: Moss usa lo que aprende de tus respuestas (aprenderPersonal). Queda en el teléfono.
+   * El margen para dormirte, en minutos, si lo elegiste en Sueño › Afinar (o en «Tardo en dormirme»: es el
+   * mismo ajuste); sin elegir, null: el de fábrica (margenParaDormirte, en sinReloj.ts). Queda en el teléfono.
    */
   latencia: number | null;
+  /**
+   * Si las noches estimadas de las últimas dos semanas ya se rehicieron con la regla del 17/11/2026
+   * (rehacerLasNoches, en src/salud/nocheSinReloj.ts): se hace una sola vez en cada teléfono.
+   */
+  suenoRehecho: boolean;
   /**
    * Lo que necesitás dormir, en minutos, si lo elegiste («Necesito dormir»); sin elegir, null: vale lo de tu
    * edad (necesidad, en sueno.ts, que además lo deja dentro de lo de tu edad). Queda en el teléfono.
@@ -183,8 +188,15 @@ const ENTRADA = 'entrada';
 const AVANCE = 'avanceDeEntrada';
 const CORTE = 'corte';
 const LATENCIA = 'latencia';
-/** La latencia elegida; sin elegir (o lo que no es una de las que se eligen), null. */
-const latenciaDe = (x: string | undefined): number | null => LATENCIAS.find((l) => String(l) === x) ?? null;
+/**
+ * El margen elegido; sin elegir, null. Lo elegido en «Tardo en dormirme» antes del 17/11/2026 (5, 10, 20 o 90
+ * minutos) vale como el más cercano de los de ahora.
+ */
+const latenciaDe = (x: string | undefined): number | null => {
+  const minutos = x ? Number(x) : NaN;
+  return Number.isFinite(minutos) ? [...MARGENES].sort((a, b) => Math.abs(a - minutos) - Math.abs(b - minutos))[0] : null;
+};
+const SUENO_REHECHO = 'suenoRehecho';
 const NECESIDAD = 'necesidad';
 /** Lo que necesitás dormir, elegido; sin elegir (o lo que no es una de las que se eligen), null. */
 const necesidadDe = (x: string | undefined): number | null => NECESIDADES.find((m) => String(m) === x) ?? null;
@@ -383,7 +395,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, necesidad: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -489,7 +501,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
     revisarControl();
   }
 
@@ -1207,11 +1219,25 @@ export function crearAlmacen(op: Opciones) {
       const hoy = diaLogico(ahora(), elegido, zona());
       if (estado.listo && hoy !== estado.hoy) cambiar(alDia({ ...estado, hoy }).estado, true);
     },
-    /** «Tardo en dormirme» (D33): los minutos elegidos, o null para lo que aprende Moss. */
+    /**
+     * El margen para dormirte: los minutos elegidos (MARGENES, en sinReloj.ts), o null para el de fábrica. Las
+     * noches estimadas y sin confirmar de las últimas cuatro semanas se arman de nuevo con él: si no, la deuda
+     * tardaría dos semanas en enterarse.
+     */
     ponerLatencia(minutos: number | null) {
       const elegida = minutos === null ? null : latenciaDe(String(minutos));
       guardar((r) => r.guardarAjuste(LATENCIA, elegida === null ? '' : String(elegida)));
       cambiar({ latencia: elegida }, false);
+      const desde = sumarDias(estado.hoy, -NOCHES_QUE_SE_REARMAN);
+      ponerComida('noches', [...estado.noches.values()].flatMap((n) => {
+        const hora = n.fecha >= desde && !n.borrado ? sinLasRestas(n.hora, margenParaDormirte(elegida)) : null;
+        return hora ? [{ ...n, hora, actualizado: momento() }] : [];
+      }));
+    },
+    /** Las noches de las últimas dos semanas ya se rehicieron con la regla nueva: no se vuelve a hacer. */
+    marcarSuenoRehecho() {
+      guardar((r) => r.guardarAjuste(SUENO_REHECHO, 'si'));
+      cambiar({ suenoRehecho: true }, false);
     },
     /** «Necesito dormir»: los minutos elegidos (NECESIDADES, en sueno.ts), o null para lo de tu edad. */
     ponerNecesidad(minutos: number | null) {

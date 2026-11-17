@@ -164,7 +164,7 @@ describe('la noche sale de tu despertar y tu deuda', () => {
     expect(aLa(lista, 'dormir')).toBe(h('22:45'));
     const noche = lista.filter((x) => x.minutos >= h('21:00')).map((x) => x.aviso.id);
     expect(noche).toEqual(['despertar:cena', 'melatonina', 'luces', 'revoluciones', 'dormir'].filter((id) => noche.includes(id)));
-    expect(dice(lista.find((x) => x.aviso.id === 'melatonina'))).toBe('Más o menos ahora empieza a subir tu melatonina: a las 23:15, a la cama.');
+    expect(dice(lista.find((x) => x.aviso.id === 'melatonina'))).toBe('Más o menos ahora empieza a subir tu melatonina: te acuestas a las 23:15.');
     expect(tituloDelAviso(lista.find((x) => x.aviso.id === 'revoluciones')!, para(ES))).toBe('Baja las revoluciones');
   });
 

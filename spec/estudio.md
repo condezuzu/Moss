@@ -28,6 +28,23 @@ sección 5 de cada estudio) con sus fuentes y lo que Moss no hace.
 | Cuidados | [`estudio/cuidados.md`](estudio/cuidados.md) | No preguntar la grasa con cuidados; nunca hablar de glucosa ni de insulina; la etiqueta de privacidad de hoy | Guardar solo «sin déficit» aplica la misma regla a casos opuestos (embarazo, riñón, agua); el ejemplo «Diabetes»; las referencias del embarazo y la lactancia no se usaban |
 | La IA de fotos | [`estudio/fotos.md`](estudio/fotos.md) | «Una foto sola no alcanza para medir lo que comes»: reconoce qué hay, no cuánto ni lo que no se ve (36 a 64 % de error en calorías, Fridolfsson 2025) | — |
 
+## Rehacer el sueño (17/11/2026)
+
+Moss te daba 16 h 30 de deuda de sueño y Rise, 4 h. Tres informes nuevos, y de ahí el plan que aprobaste:
+
+| Informe | Qué hay | Lo que salió |
+|---|---|---|
+| [`estudio/auditoria-del-sueno.md`](estudio/auditoria-del-sueno.md) | Cómo leía Moss cada noche sin reloj, con los casos simulados (las funciones del repo, con datos inventados), lo que muestra cada pantalla y la lista de arreglos por archivo y función | La fórmula no era el problema: Moss le restaba 79 minutos fijos a cada noche (9 h 53 de deuda para cualquiera), cortaba la noche en el primer toque de la mañana y casi no veía las noches largas |
+| [`estudio/rise.md`](estudio/rise.md) | Cómo hace Rise lo del sueño, con sus fuentes: los pesos de la deuda (los de su calculadora pública), la necesidad, la ventana de melatonina, la detección sin reloj y su margen, los avisos y cómo se ve | La deuda de Rise es una suma con pesos que caen (suman 6,5); sin reloj cuenta como sueño todo el rato quieto; busca menos de 5 h |
+| [`estudio/deuda-y-melatonina.md`](estudio/deuda-y-melatonina.md) | La evidencia: la deuda (los experimentos y los modelos con constantes publicadas), la necesidad de cada persona, la ventana para dormirse y el sueño medido solo con el teléfono | Pesos e^(−i/7) (7,0 ± 1,7 días, Ramakrishnan 2016); lo que sobra, hasta 1 h; no hay método validado para la necesidad en casa; ni con reloj se conoce la deuda a menos de ±3 h |
+
+**La tanda 1, hecha el 17/11 (que el número sea creíble):** la noche sin reloj como Rise (todo el rato quieto
+menos un margen de 15 minutos, que se elige), la noche que termina con la actividad que sigue y no con apagar
+la alarma, las noches largas enteras, la deuda con los pesos e^(−i/7) y sus topes, las palabras «Sin deuda»,
+«Baja», «Media» y «Alta», la necesidad a la vista con la propuesta de Moss, y las noches estimadas de antes
+(también las aceptadas con «Sí» sin cambiarlas) rehechas una sola vez. El detalle, en [`sueno.md`](sueno.md) («Las cuentas» y «Sin reloj») y en
+[`estudio/sueno.md`](estudio/sueno.md), sección 0.
+
 ## Lo que se programó
 
 - **Ya en la galería** (para aprobar): tu energía del día en Inicio (`energia.ts`: la comida, el sueño y, con

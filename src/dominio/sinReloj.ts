@@ -2,51 +2,44 @@
 // de la noche, así que la arma Moss cada mañana con lo que el teléfono ya guardó. De noche solo se
 // guarda la hora de un Atajo o del despertador de Moss (spec/sueno-sin-esfuerzo.md).
 // - La ventana tranquila es el hueco sin actividad (pasos, el teléfono en movimiento, Moss abierta, un
-//   Atajo) de 5 a 12 horas que empieza entre las 18 y las 4. Lo suelto de la madrugada no la corta: es
-//   una interrupción.
-// - Ninguna señal decide sola (lo pediste el 31/10/2026). Cada una propone una hora con su duda (la última
-//   actividad más lo que tardás, el cargador, lo que avisaste, tu hora de siempre; a la mañana la primera
-//   actividad, el cargador, la alarma) y Moss las junta: las de menos duda pesan más. Lo único que no se
-//   negocia es que no estabas dormido antes de la última actividad ni después de la primera.
-// - Esos dos ratos son tuyos (D33, lo pediste el 29/10/2026): empiezan en lo de Sahha (31 y 18 minutos)
-//   y se aprenden de cada «¿Dormiste de X a Y?» que contestás, o se eligen en «Tardo en dormirme». El de
-//   dormirte incluye el rato con el teléfono en la cama, que el movimiento no ve.
+//   Atajo) de 5 a 12 horas que empieza entre las 18 y las 4.
+// - Como Rise (lo decidiste el 17/11/2026; spec/estudio/auditoria-del-sueno.md): cuenta como sueño todo el
+//   rato que el teléfono estuvo quieto, menos UN margen para dormirte, de 15 minutos de fábrica, que se
+//   elige en Sueño › Afinar. Ya no se restan los 18 minutos antes de agarrarlo ni la media hora despierto,
+//   y tu hora de siempre no recorta la noche: una noche larga cuenta entera.
+// - La noche termina con la actividad que sigue. Apagar la alarma o mirar la hora, si el teléfono vuelve a
+//   quedar quieto 45 minutos o más, no la termina: es una interrupción. Levantarte (pasos, Moss abierta) sí,
+//   salvo que después quede quieto hora y media.
 // - Si conectaste el cargador y seguiste usando el teléfono, el cargador no cuenta: manda lo último que
-//   hiciste. Si dejaste el teléfono mucho antes que siempre, dice poco y pesa más tu hora de siempre.
+//   hiciste.
 // - Dice qué tan segura está, por qué señales llegó a esa hora y, si no lo está, pregunta a la mañana.
 // La estimación nunca se escribe en Salud (guía 5.1.3 de Apple).
 
 import { diaDeLaSemana, diasEntre, lunesDe, sumarDias, type ClaveDia } from './fechas';
-import { ceroDe, DESPIERTO_SIN_RELOJ, despiertoDeLaNoche, Z_DEL_80, type Confianza, type Fuente, type Noche, type NochePropia } from './sueno';
+import { ceroDe, despiertoDeLaNoche, Z_DEL_80, type Confianza, type Fuente, type Noche, type NochePropia } from './sueno';
 
 const MIN = 60_000;
 
 /**
  * Algo que dice que estabas despierto, en milisegundos: pasos, el teléfono en movimiento, Moss abierta o
  * un Atajo. Con `fin`, puede ser lo último del día y nunca es una interrupción. `cargador`, si el Atajo
- * fue conectarlo o desconectarlo.
+ * fue conectarlo o desconectarlo. `enMarcha`, si el movimiento fue caminar, correr, la bici o el auto, y no
+ * solo agarrar el teléfono.
  */
-export type Actividad = { desde: number; hasta: number; tipo: 'pasos' | 'movimiento' | 'moss' | 'atajo'; fin?: true; cargador?: 'conectado' | 'desconectado' };
+export type Actividad = { desde: number; hasta: number; tipo: 'pasos' | 'movimiento' | 'moss' | 'atajo'; fin?: true; cargador?: 'conectado' | 'desconectado'; enMarcha?: true };
 /** Lo que avisa un Atajo o el despertador de Moss: que te ibas a dormir o que te despertaste (deLasSenales). `de`, qué señal fue. */
 export type Ancla = { en: number; que: 'dormir' | 'despertar'; de?: QueSenal };
 /** Lo de siempre, en minutos desde las 18: la mediana de las últimas noches del mismo tipo (entre semana o fin de semana). */
 export type Habitual = { dormirse: number; despertar: number; noches: number };
-/**
- * Lo tuyo, en minutos (D33): cuánto tardás en dormirte después de la última actividad y en tocar el
- * teléfono después de despertarte. `aprendida` es la que aprendió Moss de tus respuestas; `latencia`,
- * la que se usa: la que elegiste en «Tardo en dormirme» o, sin elegir, la aprendida (`elegida` dice
- * cuál). `noches`, de cuántas respuestas aprendió.
- */
-export type Personal = { latencia: number; aprendida: number; elegida: boolean; alDespertar: number; noches: number };
 /** Por qué la estimación no es segura. */
 export type Motivo = 'sinHistoria' | 'pocosDatos' | 'dejasteAntes' | 'agarrasteTarde' | 'usoDeNoche' | 'distintaDeLoDeSiempre' | 'sinVentana' | 'seguisteUsando';
 /**
  * Una señal de las que se miraron para un borde de la noche. `en`, su hora en minutos desde las 18;
- * `peso`, de 0 a 1, cuánto pesó en la hora que quedó: 0 si no propone una hora sino que afirma a otra
- * (el cargador) y, con `noCuenta`, si no sirvió (conectaste y seguiste usándolo). `tipos`, qué se vio.
+ * `peso`, 1 si de ella sale la hora y 0 si solo la afirma (el cargador) o, con `noCuenta`, si no sirvió
+ * (conectaste y seguiste usándolo). `tipos`, qué se vio.
  */
 export type Pista = {
-  que: 'ultimaActividad' | 'primeraActividad' | 'habitual' | 'cargador' | 'desconectaste' | 'alarma' | 'despertador' | 'meDesperte' | 'meVoyADormir' | 'enfoque';
+  que: 'ultimaActividad' | 'primeraActividad' | 'cargador' | 'desconectaste' | 'alarma' | 'despertador' | 'meDesperte' | 'meVoyADormir' | 'enfoque';
   en: number;
   peso: number;
   noCuenta?: true;
@@ -55,10 +48,10 @@ export type Pista = {
 
 export type Estimacion = {
   clave: ClaveDia;
-  /** En minutos desde las 18 del día anterior, con lo tuyo. */
+  /** En minutos desde las 18 del día anterior: dormirte, la última actividad más tu margen; despertarte, la primera que sigue. */
   dormirse: number;
   despertar: number;
-  /** La ventana tranquila: la última actividad y la primera. Se guarda para aprender lo tuyo (aprenderPersonal). */
+  /** La ventana tranquila: la última actividad y la primera. Se guarda con la noche, para volver a armarla (sinLasRestas). */
   quieto: { desde: number; hasta: number };
   rango: { dormirse: [number, number]; despertar: [number, number] };
   /** La mitad del rango de cada borde, en minutos (RANGO): se guarda con la noche, para calibrarlo. */
@@ -78,60 +71,70 @@ export type Estimacion = {
 /** La ventana tranquila: de 5 a 12 horas, empezando entre las 18 y las 4 (en minutos desde las 18). */
 const VENTANA = { minimo: 300, maximo: 720, empiezaHasta: 600 };
 /**
- * Lo suelto de la madrugada: hasta 20 minutos, con hora y media de silencio de cada lado, después de
- * tu hora de siempre (o de las 0:30, sin historia). Antes, mirar el teléfono es lo último del día.
+ * Lo suelto de la noche: tocar el teléfono hasta 20 minutos (apagar la alarma, mirar la hora) con 45 minutos
+ * quietos antes y después. No corta la noche: es una interrupción. Si en ese rato te levantaste (diste pasos,
+ * abriste Moss), hace falta hora y media quieta después, como antes: quien se levanta y deja el teléfono en la
+ * mesa mientras desayuna no sigue durmiendo. Vale desde una hora después de tu hora de siempre de dormirte (o
+ * desde la 1:30, sin historia) y a hora y media o más de haber dejado el teléfono: antes, mirarlo es lo último
+ * del día. Si no, quien deja el teléfono lejos toda la tarde y lo mira antes de acostarse quedaba dormido
+ * desde la tarde, ahora que tu hora de siempre ya no corre la hora. Los minutos son una convención.
  */
-const SUELTO = { largo: 20, silencio: 90, antesDeLoDeSiempre: 15, sinHistoria: 390 };
+const SUELTO = { largo: 20, quieto: 45, quietoSiTeLevantaste: 90, desdeQueLoDejaste: 90, despuesDeLoDeSiempre: 60, sinHistoria: 450 };
 /** Lo que se mira: de las 12 del día anterior a las 14 (en minutos desde las 18). */
 const MIRA = { desde: -360, hasta: 1200 };
 /** Dos actividades separadas por menos de 5 minutos son una sola. */
 const JUNTAS = 5;
-/** De que te despertaste a la primera actividad de la mañana, sin nada aprendido (Sahha). */
-export const AL_DESPERTAR = 18;
 /**
- * De la última actividad a dormirte, sin nada aprendido: 31 minutos, lo de Sahha para quien deja el
- * teléfono a su hora de siempre.
+ * El margen para dormirte, de fábrica (lo decidiste el 17/11/2026): del rato que el teléfono estuvo quieto, lo
+ * único que no cuenta como sueño. Rise le dice «buffer» y en su captura muestra 30; para anotar a mano sugiere
+ * restar unos 20, y de intentar dormir a dormirse pasan unos 17 minutos por polisomnografía (Silva 2007).
  */
-export const LATENCIA = 31;
-/** Lo que se puede elegir en «Tardo en dormirme», en minutos (D33). */
-export const LATENCIAS = [5, 10, 15, 20, 30, 45, 60, 90] as const;
+export const MARGEN = 15;
+/** Los que se pueden elegir en Sueño › Afinar, en minutos. */
+export const MARGENES = [0, 15, 30, 45, 60] as const;
+/** El margen que se usa: el que elegiste (`latencia`, en el almacén) o el de fábrica. */
+export const margenParaDormirte = (elegido?: number | null): number => elegido ?? MARGEN;
 /** Con el teléfono dejado más de una hora antes de lo de costumbre, baja la confianza. */
 const TEMPRANO = { mas: 60 };
-/** Con el teléfono dejado después de tu hora de siempre, Sahha mide 18 minutos: lo tuyo, en esa proporción. */
-const TARDE = 18;
 /**
- * Cuánta duda deja cada señal, en minutos: una propuesta, para calibrar con la prueba contra un reloj
- * (spec/sueno.md). Sahha mide 24 minutos de error mediano en cada borde, unos 35 de desviación, y a la
- * mañana algo menos. Conectar el cargador de noche dice más que dejar el teléfono en la mesa; avisar
- * que te vas a dormir, más todavía.
+ * Cuánta duda deja cada señal, en minutos, para el rango que se muestra: una propuesta, para calibrar con la
+ * prueba contra un reloj (spec/sueno.md). Sahha mide 24 minutos de error mediano en cada borde, unos 35 de
+ * desviación, y a la mañana algo menos. Conectar el cargador de noche dice más que dejar el teléfono en la
+ * mesa; avisar que te vas a dormir, más todavía.
  */
-const DUDA = { quieto: 35, cargador: 28, aviso: 20, habitual: 60, pocaHistoria: 80, primera: 30, desconectar: 20 };
+const DUDA = { quieto: 35, cargador: 28, aviso: 20, primera: 30, desconectar: 20 };
 /**
- * Cuánto crece la duda del teléfono por cada minuto que lo dejaste antes de tu hora (más allá de 15),
- * o que lo agarraste después (más allá de 30). Con esto, dejarlo una hora y media o tres horas antes da
- * unos 70 y 160 minutos hasta dormirte: lo que mide Sahha (76 y 153). Conectado al cargador crece menos.
+ * Cuánto crece la duda del teléfono por cada minuto que lo dejaste antes de tu hora (más allá de 15), o que
+ * lo agarraste después (más allá de 30): el rato quieto de más puede no haber sido sueño. Conectado al
+ * cargador crece menos.
  */
 const CRECE = { noche: 1, conCargador: 0.5, margenNoche: 15, manana: 0.5, margenManana: 30 };
-/** Con tres respuestas o más, lo tuyo deja menos duda que lo de Sahha. */
-const CON_RESPUESTAS = 0.8;
 /** El cargador cuenta como haberte acostado si después de conectarlo no usaste el teléfono más de este rato. */
 export const USO_TOLERADO = 20;
 /** Conectado hasta 3 horas antes de lo último que hiciste: lo conectaste y seguiste usándolo. */
 const SEGUISTE = 180;
 /** Usar el teléfono hasta esto después de la hora en que Moss te daría dormido no es una interrupción: seguías despierto. */
 const SIGUE_DESPIERTO = 30;
-/** Desconectar el cargador es de lo primero: pasan como mucho estos minutos desde que te despertaste. */
-const ANTES_DE_DESCONECTAR = 10;
+/** «Me desperté» lo dijiste tú: vale aunque después el teléfono quede quieto, hasta hora y media. */
+const DIJISTE_QUE_TE_DESPERTASTE = 90;
 /** Entre dos huecos posibles, lo que suma haberse acostado o levantado con una señal: como 2 horas sobre lo de siempre. */
 const PUNTOS_POR_SENAL = 120;
-/** Sin ventana: la última actividad antes de las 2 y la primera después de las 4. */
-const SIN_VENTANA = { antesDe: 480, despuesDe: 600 };
 /**
- * El rango que se muestra («entre 23:50 y 00:40») es el del 80 %: ±1,28 veces la duda que queda al juntar las
- * señales de ese borde, por 1,5 si hay de lo que más hace errar en él (en Sahha, usar el teléfono de noche,
- * dejarlo mucho antes o agarrarlo mucho después son el 74 % de los errores grandes; sin ventana, en los dos
- * bordes), y ±10 minutos con un ancla exacta (la alarma). Es una propuesta, a calibrar con la prueba
- * contra un reloj (spec/sueno.md): por eso el margen se guarda con la noche.
+ * Sin ventana: de la última actividad antes de las 2 a la primera después de las 4 tras la que el teléfono ya
+ * no vuelve a quedar quieto hora y media.
+ */
+const SIN_VENTANA = { antesDe: 480, despuesDe: 600, quieto: 90 };
+/**
+ * Que la noche sea más larga o distinta de lo de siempre baja la confianza hasta media, nunca a baja: se
+ * pregunta, pero la noche cuenta (antes, las largas eran las que más quedaban fuera de la deuda).
+ */
+const PISO_POR_LARGA = 0.5;
+/**
+ * El rango que se muestra («entre 23:50 y 00:40») es el del 80 %: ±1,28 veces la duda de la señal de ese borde,
+ * por 1,5 si hay de lo que más hace errar en él (en Sahha, usar el teléfono de noche, dejarlo mucho antes o
+ * agarrarlo mucho después son el 74 % de los errores grandes; sin ventana, en los dos bordes), y ±10 minutos
+ * con un ancla exacta (la alarma). Es una propuesta, a calibrar con la prueba contra un reloj (spec/sueno.md):
+ * por eso el margen del rango se guarda con la noche.
  */
 const RANGO = { conMotivo: 1.5, ancla: 10 };
 /** Sin el margen guardado (una noche de antes, o que bajó de la cuenta), el de su confianza: lo típico del modelo. */
@@ -139,20 +142,10 @@ const MARGEN_POR_CONFIANZA: Record<Confianza, { dormirse: number; despertar: num
   alta: { dormirse: 40, despertar: 35 }, media: { dormirse: 50, despertar: 45 }, baja: { dormirse: 75, despertar: 65 },
 };
 /**
- * Cuánto pesa lo tuyo contra lo de fábrica (spec/sueno.md, «Aprender de cada persona»): un promedio
- * con contracción, `n·τ² / (n·τ² + σ²)`, con τ lo que cambia de una persona a otra y σ el ruido de
- * cada noche (Sahha mide 24 minutos de error mediano por borde). Con una corrección, un tercio; con
- * tres, más de la mitad; con siete, casi todo.
+ * Lo que se restaba hasta el 17/11/2026, sin nada aprendido: 31 minutos hasta dormirte y 18 antes de agarrar
+ * el teléfono (Sahha). Solo para deshacerlo en las noches de antes que no guardaron su ventana (sinLasRestas).
  */
-const ENTRE_PERSONAS = 25;
-const DE_CADA_NOCHE = 35;
-/**
- * Un «Sí» pesa un tercio de una corrección (dice poco: puede ser aceptar sin mirar); lo viejo pierde
- * la mitad del peso en 30 noches, y una noche de antes, sin la ventana guardada, pesa la mitad.
- */
-const PESO = { corregida: 1, confirmada: 1 / 3, vidaMedia: 30, sinVentana: 0.5 };
-/** Una corrección de más de tres horas es casi siempre un error (la mañana por la tarde): no enseña. */
-const CORRECCION_MAXIMA = 180;
+const DE_ANTES = { latencia: 31, alDespertar: 18 };
 
 const limitar = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 const mediana = (xs: number[]) => {
@@ -161,35 +154,13 @@ const mediana = (xs: number[]) => {
   return o.length % 2 ? o[k] : (o[k - 1] + o[k]) / 2;
 };
 
-/** La mediana con pesos: el valor donde se pasa la mitad del peso. null si no hay nada. */
-function medianaPesada(lista: { x: number; peso: number }[]): number | null {
-  const o = [...lista].sort((a, b) => a.x - b.x);
-  const total = o.reduce((s, v) => s + v.peso, 0);
-  if (!(total > 0)) return null;
-  let acumulado = 0;
-  for (const v of o) {
-    acumulado += v.peso;
-    if (acumulado >= total / 2) return v.x;
-  }
-  return o[o.length - 1].x;
-}
-
-type Bloque = { desde: number; hasta: number; tipos: Actividad['tipo'][]; fin: boolean };
-
-/**
- * Lo que proponen las señales, junto: un promedio pesado por 1/duda², lo que pesó cada una y la duda que queda,
- * (Σ 1/duda²)^(−1/2), que es menor que la de cualquiera de ellas.
- */
-function juntar(lista: { en: number; duda: number }[]): { en: number; pesos: number[]; duda: number } {
-  const inversa = lista.map((p) => 1 / p.duda ** 2);
-  const total = inversa.reduce((s, x) => s + x, 0);
-  return { en: lista.reduce((s, p, i) => s + p.en * inversa[i], 0) / total, pesos: inversa.map((x) => x / total), duda: 1 / Math.sqrt(total) };
-}
+/** `levantado`: en ese rato diste pasos, ibas en marcha o abriste Moss: no fue solo tocar el teléfono. */
+type Bloque = { desde: number; hasta: number; tipos: Actividad['tipo'][]; fin: boolean; levantado: boolean };
 
 /** La actividad en minutos desde las 18, dentro de lo que se mira, juntando lo que está pegado. */
 function bloques(actividad: Actividad[], cero: number): Bloque[] {
   const lista = actividad
-    .map((a) => ({ desde: (a.desde - cero) / MIN, hasta: (Math.max(a.hasta, a.desde + MIN) - cero) / MIN, tipo: a.tipo, fin: !!a.fin }))
+    .map((a) => ({ desde: (a.desde - cero) / MIN, hasta: (Math.max(a.hasta, a.desde + MIN) - cero) / MIN, tipo: a.tipo, fin: !!a.fin, levantado: a.tipo === 'pasos' || a.tipo === 'moss' || !!a.enMarcha }))
     .filter((a) => a.hasta > MIRA.desde && a.desde < MIRA.hasta)
     .sort((a, b) => a.desde - b.desde);
   const r: Bloque[] = [];
@@ -198,29 +169,30 @@ function bloques(actividad: Actividad[], cero: number): Bloque[] {
     if (ultimo && a.desde - ultimo.hasta < JUNTAS) {
       ultimo.hasta = Math.max(ultimo.hasta, a.hasta);
       ultimo.fin ||= a.fin;
+      ultimo.levantado ||= a.levantado;
       if (!ultimo.tipos.includes(a.tipo)) ultimo.tipos.push(a.tipo);
     } else {
-      r.push({ desde: a.desde, hasta: a.hasta, tipos: [a.tipo], fin: a.fin });
+      r.push({ desde: a.desde, hasta: a.hasta, tipos: [a.tipo], fin: a.fin, levantado: a.levantado });
     }
   }
   return r;
 }
 
-type Ventana = { desde: number; hasta: number; interrupciones: number };
+type Ventana = { desde: number; hasta: number };
 
-/** Los huecos entre actividades, saltando lo suelto de la madrugada (desde `desde`, en minutos desde las 18). */
+/**
+ * Los huecos entre actividades, saltando lo suelto de la noche (SUELTO; `desde`, en minutos desde las 18): el
+ * hueco termina en la primera actividad que sigue, no en un toque tras el que el teléfono vuelve a quedar quieto.
+ */
 function ventanas(b: Bloque[], desde: number): Ventana[] {
   const r: Ventana[] = [];
   for (let i = 0; i + 1 < b.length; i++) {
     let j = i + 1;
-    let interrupciones = 0;
     const suelto = (k: number) => k + 1 < b.length && !b[k].fin && b[k].desde >= desde && b[k].hasta - b[k].desde <= SUELTO.largo
-      && b[k].desde - b[k - 1].hasta >= SUELTO.silencio && b[k + 1].desde - b[k].hasta >= SUELTO.silencio;
-    while (suelto(j)) {
-      interrupciones++;
-      j++;
-    }
-    r.push({ desde: b[i].hasta, hasta: b[j].desde, interrupciones });
+      && b[k].desde - b[i].hasta >= SUELTO.desdeQueLoDejaste
+      && b[k].desde - b[k - 1].hasta >= SUELTO.quieto && b[k + 1].desde - b[k].hasta >= (b[k].levantado ? SUELTO.quietoSiTeLevantaste : SUELTO.quieto);
+    while (suelto(j)) j++;
+    r.push({ desde: b[i].hasta, hasta: b[j].desde });
   }
   return r;
 }
@@ -234,9 +206,10 @@ export function estimarNoche(d: {
   zona: number;
   actividad: Actividad[];
   anclas?: Ancla[];
+  /** Lo de siempre: para elegir entre dos huecos, para saber desde cuándo un toque es una interrupción y para la confianza. No mueve las horas. */
   habitual: Habitual | null;
-  /** Lo tuyo (aprenderPersonal); sin nada, lo de Sahha. */
-  personal?: Personal | null;
+  /** El margen para dormirte, en minutos (margenParaDormirte); sin nada, el de fábrica. */
+  margen?: number;
 }): Estimacion | null {
   const cero = ceroDe(d.clave, d.zona);
   const anclas = (d.anclas ?? []).map((a) => ({ en: (a.en - cero) / MIN, que: a.que, de: a.de }));
@@ -246,7 +219,7 @@ export function estimarNoche(d: {
   const conAnclas = [...d.actividad, ...(d.anclas ?? []).map((a): Actividad => ({ desde: a.en, hasta: a.en + MIN, tipo: 'atajo', ...(a.que === 'dormir' ? { fin: true as const } : {}) }))];
   const b = bloques(conAnclas, cero);
   const h = d.habitual;
-  const validas = ventanas(b, h ? h.dormirse - SUELTO.antesDeLoDeSiempre : SUELTO.sinHistoria).filter((v) => v.hasta - v.desde >= VENTANA.minimo && v.hasta - v.desde <= VENTANA.maximo && v.desde >= 0 && v.desde <= VENTANA.empiezaHasta);
+  const validas = ventanas(b, h ? h.dormirse + SUELTO.despuesDeLoDeSiempre : SUELTO.sinHistoria).filter((v) => v.hasta - v.desde >= VENTANA.minimo && v.hasta - v.desde <= VENTANA.maximo && v.desde >= 0 && v.desde <= VENTANA.empiezaHasta);
   // Con dos huecos posibles (el teléfono quedó en la mesa toda la tarde), el que más se parece a lo
   // de siempre; sin historia, el más largo.
   // Un hueco que empieza con el cargador o un aviso, o termina con ellos, se parece más a una noche.
@@ -254,70 +227,52 @@ export function estimarNoche(d: {
   const seAcosto = (v: Ventana) => cargadores.some((c) => c.que === 'conectado' && c.deNoche && c.en <= v.desde && v.desde - c.en <= USO_TOLERADO)
     || anclas.some((a) => a.que === 'dormir' && a.en <= v.desde && v.desde - a.en <= USO_TOLERADO);
   const seLevanto = (v: Ventana) => cargadores.some((c) => c.que === 'desconectado' && Math.abs(c.en - v.hasta) <= JUNTAS)
-    || anclas.some((a) => a.que === 'despertar' && a.en > v.desde + 60 && a.en <= v.hasta && v.hasta - a.en < SUELTO.silencio);
+    || anclas.some((a) => a.que === 'despertar' && a.en > v.desde + 60 && a.en <= v.hasta && v.hasta - a.en < SUELTO.quieto);
   const puntaje = (v: Ventana) => encima(v) + (seAcosto(v) ? PUNTOS_POR_SENAL : 0) + (seLevanto(v) ? PUNTOS_POR_SENAL : 0);
   let v: Ventana | undefined = [...validas].sort((x, y) => puntaje(y) - puntaje(x) || y.hasta - y.desde - (x.hasta - x.desde))[0];
   let sinVentana = false;
   if (!v) {
     const antes = b.filter((x) => x.hasta <= SIN_VENTANA.antesDe && x.hasta >= -60);
     const despues = b.filter((x) => x.desde >= SIN_VENTANA.despuesDe);
-    if (!antes.length || !despues.length) return null;
-    const desde = antes[antes.length - 1].hasta, hasta = despues[0].desde;
+    // La noche termina con la actividad que sigue: una tras la que el teléfono quedó quieto otro rato largo no es el final.
+    const final = despues.find((x, i) => i === despues.length - 1 || despues[i + 1].desde - x.hasta < SIN_VENTANA.quieto);
+    if (!antes.length || !final) return null;
+    const desde = antes[antes.length - 1].hasta, hasta = final.desde;
     if (hasta - desde < 180 || hasta - desde > VENTANA.maximo) return null;
-    v = { desde, hasta, interrupciones: b.filter((x) => x.desde > desde && x.hasta < hasta).length };
+    v = { desde, hasta };
     sinVentana = true;
   }
-  const tuya = d.personal?.latencia ?? LATENCIA;
+  const margenDeDormirte = Math.max(0, d.margen ?? MARGEN);
   const principio = v.hasta;
-  const dudaDeLoDeSiempre = h && h.noches >= 5 ? DUDA.habitual : DUDA.pocaHistoria;
-  const conRespuestas = (d.personal?.noches ?? 0) >= 3 ? CON_RESPUESTAS : 1;
 
-  /** Cuándo te dormiste, si lo último que hiciste fue a esta hora. */
-  const desde = (fin: number) => {
-    const adelanto = h ? h.dormirse - fin : null;
-    // Si lo dejaste después de tu hora de siempre, te dormís antes: en Sahha, 18 minutos contra 31.
-    const latencia = adelanto !== null && adelanto < 0 ? Math.round((tuya * TARDE) / LATENCIA) : tuya;
-    // «Me voy a dormir» o el Focus prendido justo al empezar el hueco.
-    const alDormir = anclas.filter((a) => a.que === 'dormir' && a.en <= fin && a.en >= fin - JUNTAS - 1).at(-1);
-    // El cargador: si seguiste usando el teléfono después de conectarlo, no dice nada.
-    const conectados = cargadores.filter((c) => c.que === 'conectado' && c.deNoche && c.en <= fin && fin - c.en <= SEGUISTE);
-    const alCargador = conectados.filter((c) => fin - c.en <= USO_TOLERADO).at(-1);
-    const sobra = Math.max(0, (adelanto ?? 0) - latencia - CRECE.margenNoche);
-    const duda = (alDormir ? DUDA.aviso : alCargador ? DUDA.cargador + CRECE.conCargador * sobra : DUDA.quieto + CRECE.noche * sobra) * conRespuestas;
-    // Lo de siempre solo si es después de lo último que hiciste: antes ya se sabe que no.
-    const propuestas = [{ en: fin + latencia, duda }, ...(h && h.dormirse > fin ? [{ en: h.dormirse, duda: dudaDeLoDeSiempre }] : [])];
-    return { fin, adelanto, latencia, alDormir, alCargador, seguiste: alCargador ? undefined : conectados.at(-1), propuestas, junto: juntar(propuestas) };
-  };
   // Lo que parecía una interrupción pero cae antes de dormirte, o casi, es que seguías despierto.
-  let noche = desde(v.desde);
-  let interrupciones = v.interrupciones;
+  let fin = v.desde;
   for (const x of b.filter((y) => y.desde > v!.desde && y.hasta < principio)) {
-    if (x.desde > noche.junto.en + SIGUE_DESPIERTO) break;
-    noche = desde(x.hasta);
-    interrupciones = Math.max(0, interrupciones - 1);
+    if (x.desde > fin + margenDeDormirte + SIGUE_DESPIERTO) break;
+    fin = x.hasta;
   }
-  const { fin, adelanto, latencia, alDormir, alCargador, seguiste, propuestas: paraDormirse, junto: alDormirse } = noche;
-  const temprano = h !== null && adelanto !== null && adelanto > latencia + TEMPRANO.mas;
-  // Nunca antes de la última actividad ni después de la primera.
-  const dormirse = limitar(Math.round(alDormirse.en), fin + 5, principio);
+  const adelanto = h ? h.dormirse - fin : null;
+  // «Me voy a dormir» o el Focus prendido justo al empezar el hueco.
+  const alDormir = anclas.filter((a) => a.que === 'dormir' && a.en <= fin && a.en >= fin - JUNTAS - 1).at(-1);
+  // El cargador: si seguiste usando el teléfono después de conectarlo, no dice nada.
+  const conectados = cargadores.filter((c) => c.que === 'conectado' && c.deNoche && c.en <= fin && fin - c.en <= SEGUISTE);
+  const alCargador = conectados.filter((c) => fin - c.en <= USO_TOLERADO).at(-1);
+  const seguiste = alCargador ? undefined : conectados.at(-1);
+  const temprano = adelanto !== null && adelanto > margenDeDormirte + TEMPRANO.mas;
+  // Todo el rato quieto menos el margen: nunca antes de la última actividad ni después de la primera.
+  const dormirse = Math.min(Math.round(fin + margenDeDormirte), principio);
 
-  // Cuándo te despertaste. La alarma, «Me desperté» o el Focus apagado lo dicen; si después hubo hora y
-  // media de silencio, te volviste a dormir y no cuenta.
+  // Cuándo te despertaste: la primera actividad que sigue. La alarma, el despertador o el Focus apagado lo dicen
+  // si son esa actividad; si después el teléfono quedó quieto 45 minutos o más, te volviste a dormir y no cuentan.
   const alDespertar = anclas
-    .filter((a) => a.que === 'despertar' && a.en > fin + 60 && a.en <= principio && principio - a.en < SUELTO.silencio)
+    .filter((a) => a.que === 'despertar' && a.en > fin + 60 && a.en <= principio && principio - a.en < (a.de === 'meDesperte' ? DIJISTE_QUE_TE_DESPERTASTE : SUELTO.quieto))
     .sort((x, y) => x.en - y.en)[0];
-  const tocar = d.personal?.alDespertar ?? AL_DESPERTAR;
   // Lo primero del día fue desconectar el cargador.
   const desconectaste = cargadores.find((c) => c.que === 'desconectado' && Math.abs(c.en - principio) <= JUNTAS);
-  const deMas = Math.max(0, (h ? principio - tocar - h.despertar : 0) - CRECE.margenManana) * CRECE.manana;
-  const primera = desconectaste
-    ? { en: desconectaste.en - Math.min(tocar, ANTES_DE_DESCONECTAR), duda: (DUDA.desconectar + deMas) * conRespuestas }
-    : { en: principio - tocar, duda: (DUDA.primera + deMas) * conRespuestas };
-  // Lo de siempre solo si es antes de lo primero que hiciste: después ya se sabe que no.
-  const paraDespertar = [primera, ...(h && h.despertar < principio ? [{ en: h.despertar, duda: dudaDeLoDeSiempre }] : [])];
-  const alLevantarte = juntar(paraDespertar);
-  const despertarFinal = alDespertar ? alDespertar.en : limitar(Math.round(alLevantarte.en), dormirse, principio);
-  if (despertarFinal - dormirse < 120) return null;
+  const despertar = alDespertar ? alDespertar.en : principio;
+  if (despertar - dormirse < 120) return null;
+  // Las veces que tocaste el teléfono adentro de la noche.
+  const interrupciones = b.filter((x) => x.desde > fin && x.desde < despertar).length;
 
   // Qué tan segura está: una propuesta que se calibra con la prueba contra un reloj (spec/sueno.md).
   const motivos: Motivo[] = [];
@@ -330,24 +285,9 @@ export function estimarNoche(d: {
     p -= 0.2;
     motivos.push('pocosDatos');
   }
-  if (temprano) {
-    p -= 0.15 * Math.min(2, (adelanto - latencia - TEMPRANO.mas) / 60 + 0.5);
-    motivos.push('dejasteAntes');
-  }
-  // Con tres respuestas o más, lo tuyo ya es tuyo.
-  if ((d.personal?.noches ?? 0) >= 3) p += 0.05;
-  const tarde = h ? v.hasta - AL_DESPERTAR - h.despertar : 0;
-  if (tarde > 60 && !alDespertar) {
-    p -= 0.1 * Math.min(3, (tarde - 60) / 60);
-    motivos.push('agarrasteTarde');
-  }
   if (interrupciones) {
     p -= 0.08 * Math.min(3, interrupciones);
     motivos.push('usoDeNoche');
-  }
-  if (h && Math.abs(despertarFinal - dormirse - (h.despertar - h.dormirse)) > 120) {
-    p -= 0.1;
-    motivos.push('distintaDeLoDeSiempre');
   }
   // Conectó y siguió: lo que hizo después sin mover el teléfono no se ve.
   if (seguiste) {
@@ -358,25 +298,44 @@ export function estimarNoche(d: {
   if (alDespertar) p += 0.1;
   else if (desconectaste) p += 0.05;
   if (alDormir || alCargador) p += 0.05;
+  // Lo que la hace más larga o distinta de lo de siempre: el rato quieto de más puede no haber sido sueño.
+  const sinLoLargo = p;
+  if (temprano) {
+    p -= 0.15 * Math.min(2, (adelanto - margenDeDormirte - TEMPRANO.mas) / 60 + 0.5);
+    motivos.push('dejasteAntes');
+  }
+  const tarde = h ? principio - h.despertar : 0;
+  if (tarde > 60 && !alDespertar) {
+    p -= 0.1 * Math.min(3, (tarde - 60) / 60);
+    motivos.push('agarrasteTarde');
+  }
+  if (h && Math.abs(despertar - dormirse - (h.despertar - h.dormirse)) > 120) {
+    p -= 0.1;
+    motivos.push('distintaDeLoDeSiempre');
+  }
+  if (sinLoLargo >= PISO_POR_LARGA) p = Math.max(p, PISO_POR_LARGA);
   if (sinVentana) {
     p = Math.min(p, 0.4);
     motivos.push('sinVentana');
   }
   p = limitar(p, 0.05, 0.95);
   const confianza: Confianza = p >= 0.75 ? 'alta' : p >= 0.5 ? 'media' : 'baja';
-  // El margen de cada borde sale de la duda que quedó al juntar sus señales (RANGO).
+  // El rango de cada borde sale de la duda de su señal (RANGO), que crece con el rato quieto de más.
   const con = (...m: Motivo[]) => m.some((x) => motivos.includes(x));
   const ancho = (duda: number, conMotivo: boolean) => Math.round(Z_DEL_80 * duda * (conMotivo ? RANGO.conMotivo : 1));
+  const sobra = Math.max(0, (adelanto ?? 0) - margenDeDormirte - CRECE.margenNoche);
+  const deMas = Math.max(0, tarde - CRECE.margenManana) * CRECE.manana;
   const margen = {
-    dormirse: ancho(alDormirse.duda, con('dejasteAntes', 'usoDeNoche', 'sinVentana')),
-    despertar: alDespertar ? RANGO.ancla : ancho(alLevantarte.duda, con('agarrasteTarde', 'usoDeNoche', 'sinVentana')),
+    dormirse: ancho(alDormir ? DUDA.aviso : alCargador ? DUDA.cargador + CRECE.conCargador * sobra : DUDA.quieto + CRECE.noche * sobra, con('dejasteAntes', 'usoDeNoche', 'sinVentana')),
+    despertar: alDespertar ? RANGO.ancla : ancho((desconectaste ? DUDA.desconectar : DUDA.primera) + deMas, con('agarrasteTarde', 'usoDeNoche', 'sinVentana')),
   };
   return {
     clave: d.clave,
     dormirse,
-    despertar: despertarFinal,
-    quieto: { desde: fin, hasta: principio },
-    rango: rangoDe(dormirse, despertarFinal, margen, { desde: fin, hasta: principio }),
+    despertar,
+    // Hasta la actividad con la que termina: con «Me desperté», esa, aunque el teléfono siguiera quieto.
+    quieto: { desde: fin, hasta: despertar },
+    rango: rangoDe(dormirse, despertar, margen, { desde: fin, hasta: despertar }),
     margen,
     confianza,
     probabilidad: p,
@@ -386,20 +345,18 @@ export function estimarNoche(d: {
     pistas: {
       dormirse: [
         alDormir
-          ? { que: alDormir.de === 'enfoqueEmpezo' ? 'enfoque' : 'meVoyADormir', en: alDormir.en, peso: alDormirse.pesos[0] }
-          : { que: 'ultimaActividad', en: fin, peso: alDormirse.pesos[0], tipos: b.find((x) => x.hasta === fin)?.tipos ?? [] },
+          ? { que: alDormir.de === 'enfoqueEmpezo' ? 'enfoque' : 'meVoyADormir', en: alDormir.en, peso: 1 }
+          : { que: 'ultimaActividad', en: fin, peso: 1, tipos: b.find((x) => x.hasta === fin)?.tipos ?? [] },
         ...(alCargador ? [{ que: 'cargador' as const, en: alCargador.en, peso: 0 }] : []),
         ...(seguiste ? [{ que: 'cargador' as const, en: seguiste.en, peso: 0, noCuenta: true as const }] : []),
-        ...(paraDormirse.length > 1 ? [{ que: 'habitual' as const, en: h!.dormirse, peso: alDormirse.pesos[1] }] : []),
       ],
-      despertar: alDespertar
-        ? [{ que: alDespertar.de === 'despertadorParado' ? 'despertador' : alDespertar.de === 'meDesperte' ? 'meDesperte' : alDespertar.de === 'enfoqueTermino' ? 'enfoque' : 'alarma', en: alDespertar.en, peso: 1 }]
-        : [
-          desconectaste
-            ? { que: 'desconectaste', en: desconectaste.en, peso: alLevantarte.pesos[0] }
-            : { que: 'primeraActividad', en: principio, peso: alLevantarte.pesos[0], tipos: b.find((x) => x.desde === principio)?.tipos ?? [] },
-          ...(paraDespertar.length > 1 ? [{ que: 'habitual' as const, en: h!.despertar, peso: alLevantarte.pesos[1] }] : []),
-        ],
+      despertar: [
+        alDespertar
+          ? { que: alDespertar.de === 'despertadorParado' ? 'despertador' : alDespertar.de === 'meDesperte' ? 'meDesperte' : alDespertar.de === 'enfoqueTermino' ? 'enfoque' : 'alarma', en: alDespertar.en, peso: 1 }
+          : desconectaste
+            ? { que: 'desconectaste', en: desconectaste.en, peso: 1 }
+            : { que: 'primeraActividad', en: principio, peso: 1, tipos: b.find((x) => x.desde === principio)?.tipos ?? [] },
+      ],
     },
   };
 }
@@ -430,41 +387,38 @@ export function habitualDe(noches: Pick<Noche, 'clave' | 'dormirse' | 'despertar
   return { dormirse: mediana(usadas.map((n) => n.dormirse)), despertar: mediana(usadas.map((n) => n.despertar)), noches: usadas.length };
 }
 
+/** Las noches estimadas que se vuelven a armar cuando cambia la regla o tu margen: las de las últimas cuatro semanas, lo que mira Moss. */
+export const NOCHES_QUE_SE_REARMAN = 28;
+
 /**
- * Lo tuyo (D33), de cada «¿Dormiste de X a Y?» que contestaste en los últimos cuatro meses: la hora que
- * diste contra la ventana tranquila de esa noche. Cuánto tardaste en dormirte es la hora en que te
- * dormiste menos la última actividad; en tocar el teléfono, la primera actividad menos la hora en que
- * te despertaste. De cada uno, la mediana con pesos (un dato raro no la mueve), mezclada con lo de
- * Sahha según cuántas respuestas hay (ENTRE_PERSONAS y DE_CADA_NOCHE). `elegida` es la de «Tardo en
- * dormirme», si se eligió: gana a la aprendida. Las noches de antes, sin la ventana guardada, la
- * toman de lo estimado y pesan la mitad.
+ * Una noche confirmada con «Sí» tal como Moss la propuso: las mismas horas que lo estimado. No es una medición
+ * tuya: aceptaste una propuesta. La que corregiste, aunque sea un minuto, es tuya.
  */
-export function aprenderPersonal(propias: readonly NochePropia[], clave: ClaveDia, elegida?: number | null): Personal {
-  const latencias: { x: number; peso: number }[] = [];
-  const despertares: { x: number; peso: number }[] = [];
-  for (const np of propias) {
-    const h = np.hora;
-    if (np.borrado || !h?.estimada || (h.origen !== 'confirmada' && h.origen !== 'corregida') || np.fecha >= clave) continue;
-    const edad = diasEntre(np.fecha, clave);
-    if (edad > 120) continue;
-    const q = h.estimada.quieto;
-    const desde = q ? Date.parse(q.desde) : Date.parse(h.estimada.dormirse) - LATENCIA * MIN;
-    const hasta = q ? Date.parse(q.hasta) : Date.parse(h.estimada.despertar) + AL_DESPERTAR * MIN;
-    const peso = (h.origen === 'corregida' ? PESO.corregida : PESO.confirmada) * 0.5 ** (edad / PESO.vidaMedia) * (q ? 1 : PESO.sinVentana);
-    const latencia = (Date.parse(h.dormirse) - desde) / MIN;
-    const alDespertar = (hasta - Date.parse(h.despertar)) / MIN;
-    // Lo que no puede ser (dormirte más de un cuarto de hora antes de la última actividad) no enseña nada.
-    if (latencia >= -15 && latencia - LATENCIA <= CORRECCION_MAXIMA) latencias.push({ x: Math.max(0, latencia), peso });
-    if (alDespertar >= -15 && alDespertar - AL_DESPERTAR <= CORRECCION_MAXIMA) despertares.push({ x: Math.max(0, alDespertar), peso });
-  }
-  const mezcla = (lista: { x: number; peso: number }[], previo: number, tope: number) => {
-    const m = medianaPesada(lista);
-    const n = lista.reduce((s, v) => s + v.peso, 0);
-    const tuyo = (n * ENTRE_PERSONAS ** 2) / (n * ENTRE_PERSONAS ** 2 + DE_CADA_NOCHE ** 2);
-    return m === null ? previo : Math.round(limitar(previo + tuyo * (m - previo), 0, tope));
-  };
-  const aprendida = mezcla(latencias, LATENCIA, 240);
-  return { latencia: elegida ?? aprendida, aprendida, elegida: elegida != null, alDespertar: mezcla(despertares, AL_DESPERTAR, 120), noches: Math.max(latencias.length, despertares.length) };
+export function aceptadaSinCambios(hora: NochePropia['hora']): boolean {
+  const e = hora?.estimada;
+  const igual = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) < MIN;
+  return !!hora && hora.origen === 'confirmada' && !!e && igual(hora.dormirse, e.dormirse) && igual(hora.despertar, e.despertar);
+}
+
+/**
+ * Una noche estimada con la regla de antes del 17/11/2026, con la de ahora y sin sus señales: todo el rato
+ * quieto de su ventana guardada, menos tu margen. Sin la ventana (las noches de las primeras versiones), se
+ * deshace lo que se restaba de fábrica, y la ventana queda guardada: así, hacerlo dos veces (en otro teléfono
+ * de la cuenta) da lo mismo. Solo lo estimado y sin confirmar: lo que corregiste o escribiste es tuyo. Con
+ * `aceptadas` (al rehacer las noches de antes, una sola vez), también las que aceptaste con «Sí» sin cambiarlas:
+ * la propuesta ya traía las restas de antes, y vuelven a ser estimadas. null si no hay nada que cambiar: una
+ * aceptada que ya es de la regla nueva queda confirmada.
+ */
+export function sinLasRestas(hora: NochePropia['hora'], margen = MARGEN, aceptadas = false): NonNullable<NochePropia['hora']> | null {
+  if (!hora || !(hora.origen === 'estimada' || (aceptadas && aceptadaSinCambios(hora)))) return null;
+  const e = hora.estimada ?? { dormirse: hora.dormirse, despertar: hora.despertar };
+  const desde = e.quieto ? Date.parse(e.quieto.desde) : Date.parse(e.dormirse) - DE_ANTES.latencia * MIN;
+  const hasta = e.quieto ? Date.parse(e.quieto.hasta) : Date.parse(e.despertar) + DE_ANTES.alDespertar * MIN;
+  const dormirse = desde + Math.max(0, margen) * MIN;
+  if (!(hasta - dormirse >= 120 * MIN)) return null;
+  const nueva = { dormirse: new Date(dormirse).toISOString(), despertar: new Date(hasta).toISOString() };
+  if (nueva.dormirse === hora.dormirse && nueva.despertar === hora.despertar) return null;
+  return { ...hora, ...nueva, origen: 'estimada', estimada: { ...e, ...nueva, quieto: { desde: new Date(desde).toISOString(), hasta: new Date(hasta).toISOString() } } };
 }
 
 /** Las dos primeras semanas con Moss se pregunta cada mañana (lo pediste el 22/10/2026): así aprende rápido cómo se corre en tu caso. */
@@ -498,12 +452,13 @@ export type Zona = number | ((ms: number) => number);
 
 /**
  * Una noche de Moss como las de Salud: sin etapas ni despertares, que el teléfono no sabe. De dormirte a
- * despertarte no es todo sueño: adentro hay un rato despierto que el teléfono no ve (`despierto`,
- * despiertoDeLaNoche en sueno.ts), y lo dormido, lo que va a la deuda y a la calidad, es lo demás. Las
+ * despertarte cuenta todo como sueño (desde el 17/11/2026, como Rise: si te despiertas y no tocas el teléfono,
+ * no se ve), salvo que tengas noches de un reloj o un anillo: entonces se descuenta lo que sueles estar
+ * despierto (`despierto`, despiertoDeLaNoche en sueno.ts), para que se parezcan a las medidas. Las
  * estimaciones con confianza baja no cuentan para la deuda ni el horario hasta que las confirmes.
  * Las horas, en la zona de cada momento (spec/sueno.md), como las de Salud.
  */
-export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = DESPIERTO_SIN_RELOJ): Noche | null {
+export function nocheDeMoss(np: NochePropia, zona: Zona, despierto = 0): Noche | null {
   const h = np.hora;
   if (!h || np.borrado) return null;
   const desde = Date.parse(h.dormirse), hasta = Date.parse(h.despertar);
@@ -568,7 +523,7 @@ export function actividadDelMovimiento(lista: Movimiento[], hasta: number): Acti
   return orden.flatMap((m, i) => {
     const fin = Math.min(orden[i + 1]?.en ?? hasta, hasta);
     if (!(fin > m.en)) return [];
-    if ((m.caminando || m.corriendo || m.bici || m.auto) && m.confianza >= 1) return [{ desde: m.en, hasta: fin, tipo: 'movimiento' as const }];
+    if ((m.caminando || m.corriendo || m.bici || m.auto) && m.confianza >= 1) return [{ desde: m.en, hasta: fin, tipo: 'movimiento' as const, enMarcha: true as const }];
     if (!m.quieto && !m.caminando && !m.corriendo && !m.bici && !m.auto) return [{ desde: m.en, hasta: Math.min(fin, m.en + 5 * MIN), tipo: 'movimiento' as const }];
     return [];
   });

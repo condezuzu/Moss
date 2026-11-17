@@ -103,8 +103,8 @@ export type Sueno = {
   /** La deuda de las dos semanas (deudaDeSueno), en minutos; null mientras no hay. */
   deuda: number | null;
   /**
-   * Cuánto tardás en dormirte desde que te acostás, en minutos (D33: lo que aprende Moss o lo que
-   * elegiste en «Tardo en dormirme»). La hora de ir a la cama es la de dormirte menos esto.
+   * Tu margen para dormirte desde que te acuestas, en minutos (margenParaDormirte, en sinReloj.ts: 15 de
+   * fábrica o el que elegiste en Sueño › Afinar). La hora de acostarte es la de dormirte menos esto.
    */
   latencia?: number;
   /**

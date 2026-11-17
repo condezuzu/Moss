@@ -394,13 +394,13 @@ describe('lo que dice cada uno', () => {
     expect(dicho({ que: 'antesDeEntrenar', comida: 'almuerzo', a: h('13:00'), proteina: 40, carbohidratos: 75 }))
       .toEqual(['Come antes de entrenar', 'Almuerzo a las 13:00: 75 g de carbohidratos, 40 g de proteína y poca grasa.']);
     expect(dicho({ que: 'antesDeEntrenar', comida: 'merienda', a: h('16:15'), adelantada: true, proteina: 25 })[1]).toBe('Merienda más temprano, a las 16:15: 25 g de proteína, carbohidratos y poca grasa.');
-    expect(dicho({ que: 'cafe', forma: 'antes', a: h('15:00'), faltan: 480 })).toEqual(['Café antes de entrenar', 'Si tomas, a las 15:00: faltan 8 h para ir a la cama.']);
+    expect(dicho({ que: 'cafe', forma: 'antes', a: h('15:00'), faltan: 480 })).toEqual(['Café antes de entrenar', 'Si tomas, a las 15:00: faltan 8 h para acostarte.']);
     expect(dicho({ que: 'cafe', forma: 'ultimoEntrenas', a: h('15:00'), entreno: h('20:30') })).toEqual(['Último café', 'Hasta las 15:00. Antes de entrenar a las 20:30, mejor sin café.']);
     expect(dicho({ que: 'despuesDeEntrenar', comida: 'merienda', a: h('17:30'), proteina: 40 })).toEqual(['Proteína después de entrenar', 'Unos 40 g, en la merienda de las 17:30.']);
     expect(dicho({ que: 'despuesDeEntrenar', a: h('19:00') })[1]).toBe('Algo con proteína, antes de las 19:00.');
-    expect(dicho({ que: 'ultimaComida', a: h('20:00'), cama: h('23:00') })).toEqual(['Última comida grande', 'Cena antes de las 20:00: a las 23:00, a la cama. Después, algo ligero.']);
+    expect(dicho({ que: 'ultimaComida', a: h('20:00'), cama: h('23:00') })).toEqual(['Última comida grande', 'Cena antes de las 20:00: te acuestas a las 23:00. Después, algo ligero.']);
     expect(dicho({ que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') })).toEqual(['Termina antes de las 21:00', 'Más tarde, que sea suave: te acuestas a las 23:00.']);
-    expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Baja las luces', 'Luz tenue y cálida: a las 23:00, a la cama.']);
+    expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Baja las luces', 'Luz tenue y cálida: te acuestas a las 23:00.']);
     expect(dicho({ que: 'recuperacion', porcentaje: 52, fuerte: false, dormido: 340 })).toEqual(['Recuperación: 52 %', 'Hoy, mejor suave: dormiste 5 h 40 min.']);
     expect(dicho({ que: 'partido' })).toEqual(['Mañana juegas', 'Hoy y mañana, carbohidratos en cada comida.']);
     expect(dicho({ que: 'carrera' })).toEqual(['Tu carrera es pasado mañana', 'Carbohidratos en todas tus comidas y menos fibra.']);

@@ -11,7 +11,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { actualizarSalud } from '@/almacen';
 import { lista, plural, t } from '@/textos';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
-import { aprenderPersonal } from '@/dominio/sinReloj';
+import { margenParaDormirte } from '@/dominio/sinReloj';
 import { pareceIncompleta, type Fuente, type Noche, type NochePropia } from '@/dominio/sueno';
 import { pedirPermisos } from '@/salud/salud';
 import { colores, letras } from '@/tema';
@@ -148,9 +148,8 @@ export function LaNoche({ n, hoy, ancho, anteriores, lista: noches, animar }: { 
 /** Cuánto y cuándo, de dónde sale la hora y, si es estimada, el rango con los bordes esfumados. */
 export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar }: { n: Noche; hoy: ClaveDia; propia: NochePropia | undefined; ancho: number; lista: (Noche | null)[]; animar: boolean }) {
   const [editando, setEditando] = useState(false);
-  // Cómo se mide (D33): la última y la primera actividad, con lo que tardás, que se aprende de tus respuestas.
-  const e = useEstado();
-  const personal = aprenderPersonal([...e.noches.values()], hoy, e.latencia);
+  // Cómo se mide: todo el rato que el teléfono estuvo quieto, menos tu margen para dormirte.
+  const margen = margenParaDormirte(useEstado().latencia);
   const m = n.moss!;
   const r = m.rango;
   return (
@@ -158,7 +157,7 @@ export function LaNocheDeMoss({ n, hoy, propia, ancho, lista: noches, animar }: 
       <ArcoDeLaNoche n={n} lista={noches} rango={r} centro={[duracion(Math.round(n.dormido)), t('sueno.dormidoAprox')]} ancho={ancho} animar={animar} />
       <HorasDelArco n={n} />
       {r && <Texto>{`${t('sueno.rango', { a: reloj(r.dormirse[0]), b: reloj(r.dormirse[1]), c: reloj(r.despertar[0]), d: reloj(r.despertar[1]) })} ${t(`sueno.seguridad.${m.confianza}`)}.`}</Texto>}
-      {m.origen === 'estimada' && <Nota>{t('sueno.estimadaTexto', { latencia: personal.latencia, despertar: personal.alDespertar })}</Nota>}
+      {m.origen === 'estimada' && <Nota>{t('sueno.estimadaTexto', { margen })}</Nota>}
       {n.despierto > 0 && <Nota>{t('sueno.sinRelojDespierto', { n: Math.round(n.despierto) })}</Nota>}
       <Nota>{t('sueno.sinRelojEtapas')}</Nota>
       {editando ? (

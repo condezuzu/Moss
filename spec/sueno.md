@@ -42,13 +42,22 @@ cual con cuatro semanas de mentira.
    - lo despierto y los despertares de 5 minutos o más;
    - el tiempo en cama, solo si alguna fuente lo escribió;
    - las siestas del día.
-3. **La deuda de sueño** de las dos semanas, con cuántas noches tiene. Va
-   segunda (lo pediste el 22/10/2026): solo necesita cuánto dormiste, así que es
-   lo que más gente puede tener bien. En la galería, para aprobar (5/11 a la noche),
-   va arriba de todo, compacta y del tamaño de la tira de los días: cómo está en una
-   palabra, el medidor y «Esta noche, a la cama a las…»; «Más» despliega lo de cada
-   noche y esta noche con la última comida. Debajo, la noche, tu energía y, más
-   abajo, la tira de los días para elegir otra noche.
+3. **La deuda de sueño** de las dos semanas, arriba de todo y compacta. Desde el
+   17/11/2026 (lo pediste así, cuando Moss te daba 16 h 30 y Rise 4 h):
+   - «Deuda de sueño» y el número de una («4 h», «6 h 30»; «Sin deuda» en 0), con
+     la palabra a la derecha en una pastilla: Baja, Media o Alta;
+   - debajo, «Duermes unas 7 h 10 · Necesitas 8 h». «Necesitas 8 h» se toca y se
+     cambia ahí mismo (el mismo ajuste de «Necesito dormir»), y si tu historial da
+     otra, una línea chica la propone: «Tus noches largas rondan 7 h 30. Usar 7 h 30»;
+   - solo con el teléfono, una línea: «Estimada con tu teléfono. Con un reloj o un
+     anillo es más precisa.», que abre Perfil › Aparatos;
+   - «Acuéstate a las 00:40» (la tanda 2 lo cambia por el periodo de melatonina);
+   - «Más» despliega lo de cada noche, esta noche con la última comida y cómo se
+     calcula. Ya no va el medidor ni la frase que juzgaba («hace días que duermes
+     bastante menos…»): el número es una estimación.
+
+   Debajo, la noche, tu energía y, más abajo, la tira de los días para elegir otra
+   noche.
 4. **La calidad,** de 0 a 100, con sus tres partes y «Cómo se calcula».
 5. **El horario de las dos semanas:**
    - cada noche como una barra de cuándo te dormiste a cuándo te despertaste;
@@ -153,7 +162,23 @@ cual con cuatro semanas de mentira.
     teléfono, como «Tardo en dormirme» (`necesidad` del almacén, `ponerNecesidad`);
     los avisos, el widget, la línea de la comida y Sueño ya la usan (`suenoParaAvisos`
     y `suenoDe`, en `persona.ts`, desde el 5/11). La pantalla, en Perfil › Avisos, está en la
-    galería para aprobar (5/11): «Lo de tu edad (8 h)» o de 7 a 9 horas.
+    galería para aprobar (5/11): «Lo de tu edad (8 h)» o de 7 a 9 horas;
+  - **a la vista y editable en la tarjeta de la deuda** (17/11): sigue en 8 h de
+    fábrica (lo decidiste así), pero «Necesitas 8 h» se toca y se cambia ahí, porque
+    media hora de necesidad son más de 3 horas de deuda;
+  - **Moss propone ajustarla** (`necesidadPropuesta`, 17/11) y nunca la cambia sola:
+    el percentil 75 de lo que dormiste las noches medidas de las últimas 4 semanas
+    (14 noches como mínimo), a la media hora, y solo si difiere media hora o más
+    de la que tienes y cae dentro de lo de tu edad: fuera de eso no propone nada (a
+    quien duerme 5 h 30 no se le dice que necesita 7). **Es una convención, no un
+    método validado**: no hay ninguno para medir en casa cuánto necesita dormir
+    alguien. El promedio se queda corto si hay deuda y las noches libres exageran
+    (el rebote); el percentil 75 queda entre los dos
+    ([`estudio/deuda-y-melatonina.md`](estudio/deuda-y-melatonina.md), 2.3). **Ojo:**
+    quien la acepta queda casi siempre con deuda baja, porque la necesidad pasa a
+    salir de lo que duerme. Queda para después lo que ese informe pide de más:
+    preferir las noches libres desde la segunda seguida, y sin reloj proponer solo
+    con la mitad de las noches confirmadas.
 
   Las guías: la AASM y la SRS piden 7 horas o más de 18 a 60 años (más de 9 puede
   ser apropiado para jóvenes, quien se recupera de una deuda o está enfermo); la
@@ -179,40 +204,58 @@ cual con cuatro semanas de mentira.
     cuánto deberían pesar.
   - **Palabras:** excelente desde 85, buena desde 70, regular desde 50 y baja
     debajo.
-- **La deuda** (`deudaDeSueno`):
-  - es lo que faltó cada noche de las últimas 14, pesando más las recientes (anoche pesa 1 y hace 13 noches, 1/14);
-  - menos lo que sobró, hasta 2 horas por noche;
+- **La deuda** (`deudaDeSueno`, rehecha el 17/11/2026: Moss te daba 16 h 30 y Rise
+  4 h; el porqué, en [`estudio/auditoria-del-sueno.md`](estudio/auditoria-del-sueno.md),
+  cómo lo hace Rise, en [`estudio/rise.md`](estudio/rise.md), y la evidencia, en
+  [`estudio/deuda-y-melatonina.md`](estudio/deuda-y-melatonina.md)):
+  - es lo que faltó para tu necesidad cada noche de las últimas 14, con las noches
+    pesando e^(−i/7): anoche 1, la anterior 0,87, después 0,75, 0,65, 0,56, 0,49,
+    0,42, 0,37, 0,32, 0,28, 0,24, 0,21, 0,18 y, hace 13 noches, 0,16. Suman 6,5. Son
+    los pesos que publica Rise en su calculadora, y la constante de 7 noches es la
+    del único modelo validado que la publica (7,0 ± 1,7 días, Ramakrishnan 2016).
+    Antes era una rampa (1 a 1/14, 7,5 en total);
+  - **lo que falta o sobra en una noche tiene topes** (`faltaDeLaNoche`,
+    `TOPES_DE_UNA_NOCHE`): lo que sobra paga hasta 1 hora (antes, 2: con cama de
+    sobra casi no se duerme más que eso por encima de lo que se necesita, Harrison
+    y Horne 1996); lo que falta suma hasta 3 horas, y hasta 2 si la noche la estimó
+    el teléfono y no la confirmaste (una de cada siete de esas tiene un borde errado
+    en más de 2 horas, Sahha 2026). Los dos topes de lo que falta son una convención;
   - nunca baja de cero;
   - las siestas cuentan;
-  - **las noches sin datos no cuentan como si hubieras dormido lo que necesitás**
-    (desde el 5/11): es el promedio con pesos de las noches medidas, llevado a las
-    dos semanas (por 7,5, la suma de los 14 pesos). Antes, con 1 h de falta cada
-    noche, 14 noches daban 7 h 30 de deuda y las últimas 5 solas, 4 h 17: usar menos
-    el reloj bajaba la deuda. Devuelve también lo que faltó y lo que dormiste por
-    noche (`porNoche`, `duermes`), para decirla como «Duermes unas 7 h; necesitas
-    unas 8», que es lo que tiene menos error;
-  - **se dice a la media hora y «aprox.»** (`redondearDeuda`): el número depende
-    sobre todo de la necesidad supuesta (media hora de diferencia la cambia en casi
-    4 horas), y «4 h 32 min» es precisión falsa. Menos de 15 minutos, sin deuda;
-  - **en una palabra** (`juicioDeLaDeuda`, lo pediste el 5/11/2026), por lo que falta
-    cada noche, que tiene menos error que el total: redondeada a cero, «Muy bien»;
-    menos de media hora por noche, «Bien» (es menos que el error de medir una noche);
-    de media hora a una, «Algo alta»; una hora o más, «Alta» (con 7 h en la cama en
-    vez de 8, el rendimiento bajó y se quedó abajo: Belenky 2003). Los cortes son una
-    convención. En la galería, para aprobar, la palabra va en grande y abajo cuánto:
-    «Bien · Unas 3 h 30 min: está en un rango normal»;
-  - **esta noche** (en la galería, para aprobar): debajo de la deuda, con la noche de
-    hoy elegida, a qué hora ir a la cama para despertarte a la hora de siempre habiendo
-    dormido lo que necesitas, con la deuda un poco más (`horasDeSueno`, la misma cuenta
-    del aviso de dormir), y la última comida grande, 2 h antes de la cama (3 con
-    reflujo, de Cuidados). Si el tope de una hora antes de lo de siempre no deja dormir
-    todo, lo dice.
+  - **las noches sin datos no cuentan como si hubieras dormido lo que necesitas**
+    (desde el 5/11): es el promedio con pesos de las noches medidas, llevado a la
+    suma de los pesos de las 14 (6,5). Las de confianza baja tampoco cuentan. Hacen
+    falta 5 noches. Devuelve también lo que faltó y lo que dormiste por noche
+    (`porNoche`, `duermes`), para decir «Duermes unas 7 h 10 · Necesitas 8 h»;
+  - **cuánto da:** dormir 7 h necesitando 8 da 6 h 30 (antes 7 h 30); 6 h, 13 h;
+    7 h 30, 3 h. Una noche de 4 h suma 3 h si fue anoche, 1 h 06 a la semana y media
+    hora a las dos semanas. Durmiendo justo lo que necesitas, baja a la mitad en
+    unas cuatro noches; con una hora de más, cuatro noches borran una falta de 1 h
+    por noche (lo que vio Kitamura 2016);
+  - **se dice a la media hora** (`redondearDeuda`): el número depende sobre todo
+    de la necesidad supuesta (media hora de diferencia la cambia en más de 3
+    horas), y «4 h 32 min» es precisión falsa. Menos de 15 minutos, sin deuda;
+  - **en una palabra, al lado del número** (`juicioDeLaDeuda`, lo decidiste el
+    17/11/2026), por el número como se dice: «Sin deuda» en 0, «Baja» con menos de
+    5 h, «Media» de 5 a 10 y «Alta» desde 10. Son los tramos de Rise, que busca
+    menos de 5 h: no hay un corte clínico, es una convención. Antes eran «Muy bien»,
+    «Bien», «Algo alta» y «Alta», por lo que faltaba cada noche, con «Alta» desde
+    una hora: con 8 h justas de teléfono quieto ya decía «Alta». La energía la usa
+    igual: con deuda media o alta, el sueño queda «justo» (`suenoParaLaEnergia`);
+  - **esta noche:** debajo de la deuda, con la noche de hoy elegida, «Acuéstate a
+    las…»: para despertarte a la hora de siempre habiendo dormido lo que necesitas,
+    con la deuda un poco más (`horasDeSueno`, la misma cuenta del aviso de dormir),
+    menos tu margen para dormirte; y la última comida grande, 2 h antes (3 con
+    reflujo, de Cuidados). Si el tope de una hora antes de lo de siempre no deja
+    dormir todo, lo dice.
 
   Que se acumule tiene base (Van Dongen 2003: el déficit crece casi en línea recta,
   y casi no se nota); que se pague hora por hora, no (Banks 2010, Depner 2019). Lo
   que paga la hora de dormir (un tercio, hasta 30 minutos) es una convención: en el
   laboratorio, una falta de cerca de una hora por noche se recuperó en unas cuatro
-  noches con 12 h en la cama (Kitamura y otros, 2016).
+  noches con 12 h en la cama (Kitamura y otros, 2016). Ni con reloj se conoce la
+  deuda a menos de ±3 h; solo con el teléfono, ±4 h: por eso la palabra va en tramos
+  anchos y el número, a la media hora.
 - **Poco sueño por semanas** (`pocoSuenoSostenido`): con 10 noches medidas de 14 y
   menos de 6 horas de promedio, sugiere hablarlo con un médico. Antes de los 18,
   menos de 7 (una convención: a esa edad se recomiendan de 8 a 10), con su texto
@@ -239,6 +282,44 @@ cual con cuatro semanas de mentira.
   - se compara con la mediana de tus últimas 28 noches (al menos 7) y se dice solo «lo usual», «más» o «menos»: más de 3 lpm, un 15 % de variabilidad o 1 respiración por minuto;
   - nunca se mezclan SDNN y RMSSD;
   - la frecuencia en reposo de Salud es del día entero, y lo dice.
+
+## Tu periodo de melatonina y la deuda con su palabra (17/11/2026, en la galería para aprobar)
+
+Lo pediste el 17/11, al rehacer el sueño: en lugar de «Esta noche, a la cama a las…», tu periodo de melatonina, como
+la ventana de Rise pero con palabras propias. La evidencia está en
+[`estudio/deuda-y-melatonina.md`](estudio/deuda-y-melatonina.md), sección 3.
+
+- **La regla** está en `src/dominio/melatonina.ts`, con sus tests. La usa la galería; la app, todavía no.
+  - Con las noches de los últimos 7 días (hacen falta 3), el inicio estimado de la melatonina es el punto medio
+    del sueño menos 6 h 30, y el periodo va de ese inicio + 2 h a + 3 h.
+  - Dice cuánto cambió desde ayer («9 min antes que ayer», «7 min más tarde que ayer»).
+  - La hora de acostarte es el comienzo del periodo menos tu margen para dormirte (15 min de fábrica, el de
+    `sinReloj.ts`), de a 5 minutos. Con deuda es la misma, y el texto dice que antes no: acostarse mucho antes
+    cuesta dormirse.
+  - Las noches estimadas con poca confianza en el horario no entran. Sin noches suficientes, nada.
+  - **Convenciones**, que no salen de un estudio: que dure una hora; que alcancen 3 noches (el informe proponía
+    5); y decirlo al minuto, como lo pediste, aunque el informe aconseja no dar una hora exacta.
+  - **El margen honesto es de ±1 h**: lo dice la hoja «¿Qué es?».
+- **En la galería** (escenario `melatonina`, `galeria/src/periodo.js` y `sueno.js`):
+  - **La deuda**, como quedó en la app: el número de una («4 h»; «Sin deuda» en 0), la palabra a la derecha en
+    una pastilla (Baja, Media o Alta), «Duermes unas 7 h 10 · Necesitas 8 h» con lo que necesitas cambiado ahí
+    mismo, lo que Moss propone y, solo con el teléfono, «Estimada con tu teléfono. Con un reloj o un anillo es
+    más precisa.», que lleva a Perfil › Aparatos. Sin el medidor y sin la frase de «puede que no lo notes».
+  - **La tarjeta del periodo**, debajo: «22:57 – 23:57», cuánto cambió desde ayer y «Acuéstate a las 22:40 para
+    estar dormido dentro de tu periodo». Con menos de 3 noches en la semana, cuántas faltan; sin noches, el de
+    ejemplo.
+  - **«¿Qué es?»**: una hoja con el dibujo de la noche y cinco partes cortas: qué es, cómo lo calcula Moss, con
+    qué margen y qué pasa si te acuestas antes o después.
+  - **«Más»** de la deuda conserva la última comida grande, ahora contada desde esa hora de acostarte.
+  - **En Afinar**, el margen para dormirte, como en la app.
+- **Para decidir:**
+  - Si la app pasa a acostarte con el periodo. Hoy los avisos salen de `horasDeSueno` (despertarte menos lo
+    que necesitas): al programarlo hay que unir las dos cuentas, para que la tarjeta y los avisos digan la
+    misma hora.
+  - En 0, la tarjeta dice «Sin deuda» en grande y sin pastilla, como en la app. La alternativa es «0 h» con la
+    pastilla «Sin deuda».
+  - Si el periodo se muestra más ancho o no se muestra con horarios muy irregulares (el informe lo sugiere con
+    más de 90 min de desvío): hoy se muestra siempre que haya 3 noches.
 
 ## Qué tan confiable es cada dato
 
@@ -305,86 +386,152 @@ arma la noche con lo que el teléfono guardó:
 4. **Opcional, «Afinar»**: un Atajo que avisa a Moss cuando prendés el Focus de
    Sueño, conectás el cargador o parás la alarma.
 
-**Las cuentas** (las reglas publicadas de Sahha como punto de partida [73]):
+**Las cuentas, rehechas el 17/11/2026** (lo decidiste así, para que el número de
+la deuda sea creíble): **como Rise, cuenta como sueño todo el rato que el teléfono
+estuvo quieto, menos un margen para dormirte**. Hasta ese día, Moss le restaba a
+cada noche 79 minutos fijos (31 hasta dormirte, 18 antes de agarrar el teléfono y
+30 despierto adentro), que solos eran 9 h 53 de deuda para cualquiera; cortaba la
+noche en el primer toque de la mañana, y a las noches más largas que lo de siempre
+les creía como mucho 47 minutos. El diagnóstico, con los casos simulados, está en
+[`estudio/auditoria-del-sueno.md`](estudio/auditoria-del-sueno.md); cómo lo hace
+Rise, en [`estudio/rise.md`](estudio/rise.md); y la evidencia, en
+[`estudio/deuda-y-melatonina.md`](estudio/deuda-y-melatonina.md) (sección 4).
 
 - **La ventana tranquila:** el hueco de 5 a 12 horas sin actividad que empieza
   entre las 18 y las 4; si hay dos (el teléfono quedó en la mesa toda la tarde),
-  el que más se parece a lo de siempre.
-  - La actividad suelta de la madrugada no lo corta: hasta 20 minutos, con más de
-    90 de silencio de cada lado y después de tu hora de siempre (sin historia,
-    de las 0:30). Antes de esa hora, mirar el teléfono es lo último del día.
-  - Sin hueco, de la última actividad antes de las 2 a la primera después de las
-    4, con confianza baja.
-- **Ninguna señal decide sola** (lo pediste el 31/10/2026). Cada una propone una
-  hora con su duda, en minutos, y la hora es el promedio pesado por 1/duda²: la de
-  menos duda pesa más. Lo único que no se negocia: no estabas dormido antes de lo
-  último que hiciste con el teléfono, ni después de lo primero. Las dudas son una
-  propuesta, a calibrar con la prueba de abajo (`DUDA` en `sinReloj.ts`).
-- **Cuándo te dormiste** (D33 y D42). Proponen dos:
-  - **El teléfono:** lo último que hiciste más lo que tardás en dormirte, que es
-    tuyo (abajo, «Aprender de cada persona»); sin respuestas, los 31 minutos de
-    Sahha [73]. Duda 35. Lo dejaste después de tu hora de siempre: lo que tardás se
-    achica como en Sahha (18 de cada 31) [73].
-  - **Tu hora de siempre**, si es después de lo último que hiciste. Duda 60; con
-    menos de 5 noches, 80.
-  - **Si dejaste el teléfono antes de tu hora**, la duda del teléfono crece un minuto
-    por minuto. Dejarlo una hora y media o tres horas antes da unos 70 y 160 minutos
-    hasta dormirte: lo que mide Sahha (76 y 153) [73].
+  el que más se parece a lo de siempre, y pesan las señales: empezar con el
+  cargador o un aviso, o terminar con ellos.
+- **Cuándo te dormiste:** lo último que hiciste con el teléfono **más tu margen
+  para dormirte**, y nada más.
+  - El margen son **15 minutos de fábrica** y se elige en Sueño › Afinar: 0, 15,
+    30, 45 o 60 (`MARGEN`, `MARGENES`, `margenParaDormirte`), con su texto: «Si
+    sueles dejar el teléfono un rato antes de dormirte, sube este margen». Es el
+    mismo ajuste de «Tardo en dormirme» de Perfil › Avisos (`latencia` en el
+    almacén): lo elegido antes (5, 10, 20 o 90 minutos) vale como el más cercano
+    de los de ahora. Rise le dice «buffer» y en su captura muestra 30; para anotar
+    a mano sugiere restar unos 20, y de intentar dormir a dormirse pasan unos 17
+    minutos por polisomnografía (Silva 2007). El número de fábrica es una
+    convención.
+  - **Cambiar el margen vuelve a armar** las noches estimadas y sin confirmar de
+    las últimas cuatro semanas (`ponerLatencia`, con `sinLasRestas`): la deuda
+    cambia en el momento.
+  - **Moss ya no aprende lo que tardas** de tus respuestas (era D33): un «Sí» le
+    enseñaba lo que ya suponía, y los 31 minutos se confirmaban solos. Si lo que
+    corriges enseña algo, se puede volver a sumar; hoy el margen es el que eliges.
+  - **Tu hora de siempre ya no mueve la hora**: antes tiraba de los dos bordes, y
+    recortaba las noches largas. Dejar el teléfono tres horas antes cuenta desde
+    ahí (lo que Rise dice de sí mismo: cuenta de más cuando estás quieto y
+    despierto): para eso está el margen, y Moss pregunta (abajo, la confianza).
   - **El cargador** conectado de noche, con hasta 20 minutos de uso después, afirma
-    que te acostaste: la duda baja a 28 y crece la mitad. **Si seguiste usando el
-    teléfono más que eso, no cuenta** y manda lo último que hiciste.
-  - **«Me voy a dormir» o el Focus prendido a mano:** duda 20.
-  - **Lo que parecía una interrupción** pero cae antes de la hora en que te daría
-    dormido, o hasta media hora después, es que seguías despierto: corre el final del
-    día.
-  - Con 3 respuestas o más, lo tuyo deja menos duda (por 0,8).
-- **Cuándo te despertaste.** Proponen dos:
-  - **Lo primero que hiciste** (pasos, movimiento, Moss) menos lo que tardás en
-    agarrar el teléfono (tuyo; sin respuestas, 18 minutos) [73]. Duda 30.
-  - **Desconectar el cargador**, si fue lo primero: hasta 10 minutos antes. Duda 20.
-  - **Tu hora de siempre**, si es antes de lo primero que hiciste. Duda 60.
-  - **Si agarraste el teléfono mucho más tarde que siempre**, la duda crece y pesa
-    más tu hora.
-  - **La alarma, el despertador de Moss, «Me desperté» o el Focus apagado a mano**
-    mandan: son la hora, salvo que después haya hora y media de silencio (te volviste a
-    dormir).
-- **Entre dos huecos posibles**, además de lo de siempre pesan las señales: empezar
-  con el cargador o un aviso, o terminar con ellos.
-- **Dice por qué:** `pistas` lleva cada señal con su hora y cuánto pesó. La vista está
-  en la galería (D39).
+    que te acostaste. **Si seguiste usando el teléfono más que eso, no cuenta** y
+    manda lo último que hiciste. «Me voy a dormir» o el Focus prendido a mano son lo
+    último del día, y nunca una interrupción.
+- **Cuándo te despertaste: con la actividad que sigue.** Ya no se restan los 18
+  minutos.
+  - **Tocar el teléfono y que vuelva a quedar quieto no termina la noche** (apagar
+    la alarma, mirar la hora): es una interrupción si dura hasta 20 minutos y el
+    teléfono quedó quieto 45 minutos antes y 45 después (`SUELTO`). Antes hacían
+    falta 90 de cada lado: apagar la alarma a las 7:30 y dormir hasta las 8:30
+    cortaba la noche a las 7:12, con confianza alta.
+  - **Si en ese rato te levantaste** (diste pasos, ibas caminando, abriste Moss),
+    hace falta hora y media quieta después, como antes: quien se levanta y deja el
+    teléfono en la mesa mientras desayuna no sigue durmiendo.
+  - **Vale desde una hora después de tu hora de siempre de dormirte** (sin
+    historia, desde la 1:30) y a hora y media o más de haber dejado el teléfono.
+    Antes de eso, mirarlo es lo último del día: si no, quien deja el teléfono lejos
+    toda la tarde y lo mira antes de acostarse quedaba dormido desde la tarde.
+  - **La alarma, el despertador de Moss o el Focus apagado a mano** son la hora si
+    son esa actividad que sigue; si después el teléfono quedó quieto 45 minutos o
+    más, te volviste a dormir y son una interrupción. «Me desperté» lo dijiste tú:
+    vale aunque después dejes el teléfono, hasta hora y media.
+  - **Sin ventana** (ningún hueco de 5 horas): de la última actividad antes de las
+    2 a la primera después de las 4 **tras la que el teléfono ya no vuelve a quedar
+    quieto hora y media**, con confianza baja: no cuenta hasta que la confirmes.
+    Antes tomaba la primera después de las 4, aunque quedaran cuatro horas quietas.
+  - Los minutos de estas reglas (45, 90, la hora después de lo de siempre) son una
+    convención, a calibrar con la prueba de abajo.
+- **Dice por qué:** `pistas` lleva la señal de cada borde con su hora (ya no hay
+  pesos: es una por borde, y el cargador la afirma), y «Cómo llegó Moss a esta
+  hora» dice tu margen.
 - **Sin armar nada**, las anclas exactas son el despertador de Moss y «Me voy a
   dormir» en el aviso de la noche; los Atajos quedan como opcionales.
 - **Los despertares de la noche** quedan marcados como interrupciones, sin decir
   cuánto: el teléfono lo mide mal (48,8 minutos de error) [72].
-- **Lo despierto que el teléfono no ve** (desde el 5/11): la noche va de dormirte a
-  despertarte, y eso es el período de sueño, no el sueño. En adultos sanos, adentro
-  hay unos 30 minutos despierto (por polisomnografía, 32 a 38 en Robbins 2024; 31,5
-  en las noches de Apple 2025). Así que lo dormido de una noche de Moss, lo que va a
-  la deuda, al poco sueño y a la duración de la calidad, es la noche menos 30
-  minutos (`DESPIERTO_SIN_RELOJ`), o menos lo tuyo si tuviste noches con un reloj o
-  un anillo: su mediana más 15, lo que el reloj ve de menos (`despiertoDeLaNoche`).
-  En pantalla, «aprox.». Sin esto, la deuda sin reloj salía unas 4 h más baja en dos
-  semanas.
-- **El rango que se muestra** («entre 23:50 y 00:40», desde el 5/11) es el del 80 %
-  del modelo: ±1,28 veces la duda que queda al juntar las señales de ese borde,
-  (Σ 1/duda²)^(−1/2), por 1,5 si hay de lo que más hace errar en él (dejarlo antes,
-  agarrarlo tarde, usarlo de noche, sin ventana), y ±10 minutos con un ancla exacta;
-  nunca antes de la última actividad ni después de la primera. Con el teléfono y lo
-  de siempre (35 y 60) son ±39 al dormirte; con «Me voy a dormir», ±24. El de antes
-  (±20 con confianza alta) cubría menos de la mitad de las noches. El margen se
-  guarda con la noche, para calibrarlo (queda en el teléfono: la cuenta no lo
-  guarda); sin él, el de su confianza (alta ±40/35, media ±50/45, baja ±75/65).
+- **Lo despierto que el teléfono no ve ya no se resta** (17/11): del 5/11 al
+  17/11 se restaban 30 minutos fijos a cada noche de Moss (`DESPIERTO_SIN_RELOJ`),
+  también a la hora que la persona escribía: 3 h 45 de deuda para todos. Rise no
+  lo resta (si te despiertas y no tocas el teléfono, no se ve). Queda solo lo
+  tuyo: si tuviste 7 noches o más con un reloj o un anillo, a las noches de Moss
+  se les descuenta su mediana de lo despierto más 15, lo que el reloj ve de menos
+  (`despiertoDeLaNoche`), para que se parezcan a las medidas. La hora de acostarte
+  tampoco suma ya esa media hora sin reloj.
+- **El rango que se muestra** («entre 23:50 y 00:40») es el del 80 % del modelo:
+  ±1,28 veces la duda de la señal de ese borde (35 minutos el teléfono, 28 con el
+  cargador, 20 con «Me voy a dormir»; 30 a la mañana, 20 al desconectar; `DUDA`),
+  que crece con el rato quieto de más (dejarlo antes de tu hora, agarrarlo
+  después), por 1,5 si hay de lo que más hace errar en él (dejarlo antes, agarrarlo
+  tarde, usarlo de noche, sin ventana), y ±10 minutos con un ancla exacta; nunca
+  antes de la última actividad ni después de la primera. Con solo el teléfono son
+  ±45 al dormirte y ±38 al despertarte. El margen del rango se guarda con la noche,
+  para calibrarlo (queda en el teléfono: la cuenta no lo guarda); sin él, el de su
+  confianza (alta ±40/35, media ±50/45, baja ±75/65).
 - **La confianza** (una propuesta, para calibrar con la prueba de abajo): parte de
-  0,85 y baja sin historia (−0,15), sin pasos ni movimiento (−0,2), si dejaste el
-  teléfono más de una hora antes de lo de siempre (hasta −0,3), si lo agarraste
-  más de una hora después de tu hora de despertarte (hasta −0,3), por cada uso de
-  noche (−0,08, hasta tres) y si la noche dura dos horas más o menos que la de
-  siempre (−0,1). Un ancla de despertar (la alarma, el despertador de Moss, «Me
-  desperté») suma 0,1, y una de dormir al empezar el hueco, 0,05; el cargador al
-  empezar o desconectarlo al terminar, 0,05, y conectarlo y seguir usándolo resta
-  0,05. Sin hueco, como mucho 0,4. Las cuentas están en `src/dominio/sinReloj.ts`,
-  con sus tests.
+  0,85 y baja sin historia (−0,15), sin pasos ni movimiento (−0,2) y por cada uso
+  de noche (−0,08, hasta tres). Un ancla de despertar suma 0,1, y una de dormir al
+  empezar el hueco, 0,05; el cargador al empezar o desconectarlo al terminar, 0,05,
+  y conectarlo y seguir usándolo resta 0,05. Sin hueco, como mucho 0,4.
+  - **Que la noche sea más larga o distinta de lo de siempre** (dejaste el teléfono
+    más de una hora antes, hasta −0,3; lo agarraste más de una hora después, hasta
+    −0,3; dura dos horas más o menos, −0,1) **baja la confianza hasta media, nunca
+    a baja**: Moss pregunta, pero la noche cuenta. Antes, las largas eran las que
+    más quedaban fuera de la deuda.
+  - Las cuentas están en `src/dominio/sinReloj.ts`, con sus tests, que incluyen los
+    casos de la auditoría.
 - **Las siestas** no se estiman.
+
+**Los casos de la auditoría, antes y ahora** (alguien que duerme de 00:45 a 8:30,
+con 8 h de necesidad y 14 noches iguales):
+
+| Caso | Antes: dormido y deuda | Ahora: dormido y deuda |
+|---|---|---|
+| (a) Lo deja a las 00:30 y lo agarra a las 8:30 | 6 h 41 · 9 h 53, «Alta» | 7 h 45 · 1 h 30, «Baja» |
+| (b) Igual, y mira la hora a las 5:10 | 6 h 41 · 9 h 53 | 7 h 45 · 1 h 30, con una interrupción |
+| (c) Lo usa en la cama hasta las 00:43 | 6 h 28 · 11 h 30 | 7 h 32 · 3 h, «Baja» |
+| (d1) Apaga la alarma a las 7:30 y duerme hasta las 8:30 | 5 h 41 · 17 h 23 | 7 h 45 · 1 h 30 |
+| (d2) Igual, con el despertador de Moss o el atajo | 5 h 59 · 15 h 08 | 7 h 45 · 1 h 30 |
+| (d3) Pospone a las 7:30, 7:39 y 7:48 y se levanta a las 8:00 | 5 h 41 · 17 h 23 | 6 h 45 · 8 h, «Media» |
+| (e) Lo deja cargando en otro cuarto a las 23:15 y lo agarra a las 9:00 | 8 h 26 · sin deuda | 9 h 30 · sin deuda |
+| (g) Dos toques, a las 3:00 y a las 3:50 | sin ventana: no contaba | 7 h 45, con dos interrupciones y confianza media |
+| (j) 25 minutos de teléfono a las 4:00 | de 01:01 a 03:42, 2 h 11 | de 00:45 a 8:30, con confianza baja: no cuenta hasta confirmarla |
+
+Lo que sigue pendiente de la auditoría (su sección 7): los dos toques a menos de
+hora y media de dejar el teléfono (h), los pasos que escriben otras fuentes (o, p),
+el movimiento sin clasificar (q), que con confianza baja no haya «Sí» de un toque,
+anotar las siestas y guardar las señales de cada noche. El caso (e) sigue contando
+de más: es el límite del método, el mismo de Rise, y para eso está el margen.
+
+**Rehacer las noches guardadas** (`rehacerLasNoches`, en `src/salud/nocheSinReloj.ts`):
+la primera vez que corre esta versión, una sola vez en cada teléfono (la marca
+`suenoRehecho` de los ajustes), vuelve a armar las noches estimadas de las últimas
+cuatro semanas, para que la deuda cambie ese mismo día:
+- las de los últimos seis días, **con sus señales** (el movimiento, que iOS guarda
+  siete días, y los pasos de Salud): así se arregla también la mañana cortada;
+- las demás, y las que ya no tienen pasos ni movimiento, con su ventana guardada:
+  todo el rato quieto menos el margen (`sinLasRestas`). Sin la ventana (las noches
+  de las primeras versiones), deshace los 31 y los 18 minutos de fábrica y deja la
+  ventana guardada: hecho otra vez en otro teléfono de la cuenta, da lo mismo;
+- **también las que aceptaste con «Sí» tal como Moss las propuso**
+  (`aceptadaSinCambios`: confirmadas con las mismas horas que lo estimado). El «Sí»
+  aceptaba una propuesta que ya traía los 31 y los 18 minutos de antes, así que no
+  es una medición tuya: se rehacen igual y **vuelven a ser estimadas** (en la
+  deuda suman hasta 2 h, y si eran poco seguras no cuentan hasta confirmarlas). Un
+  «Sí» a una propuesta que ya es de la regla nueva (las horas de su ventana) queda
+  confirmado;
+- **lo que corregiste o escribiste no se toca**: son tus horas. A esas solo se les
+  va la media hora despierto, que se restaba al leerlas.
+
+Cambiar el margen después (`ponerLatencia`) vuelve a armar solo las estimadas: lo
+que confirmes con la regla nueva ya no se mueve.
 
 **Qué tan bien anda, esperable:** entre el 46 % (solo los pasos) y el 66 % de
 las noches con los dos bordes dentro de una hora [73]. Con la confirmación de la
@@ -402,24 +549,20 @@ mañana cuando la confianza no es alta, la meta es la de un diario: 79 a 86 %
 ### Aprender de cada persona
 
 - **Lo de siempre:** la hora de dormirte y de despertarte de las últimas 14
-  noches, aparte entre semana y fin de semana [64][73].
-- **Lo que tardás en dormirte** después de dejar el teléfono, y lo que tardás en
-  agarrarlo al despertar: arrancan con los números de arriba y se ajustan con
-  tus correcciones [64][65][73].
-- **Las correcciones valen más que un «Sí»**, que puede ser por no pensar: un
-  «Sí» pesa un tercio de una corrección, y lo viejo pierde la mitad del peso en 30
-  días (propuesta, sin estudio directo). Lo que corrige más de 3 horas no enseña
-  nada: fue otra cosa.
-- **Con pocas respuestas, cerca de lo de Sahha:** lo tuyo se mueve de a poco
-  (encogido hacia lo general, con 25 minutos entre personas y 35 de una noche a
-  otra): con 3 noches, más de la mitad del camino; con 7, casi todo
-  (`aprenderPersonal`, `src/dominio/sinReloj.ts`).
-- **Se aprende de la ventana tranquila de cada noche**, que se guarda con lo
-  estimado y sube a la cuenta: lo que contestás en un teléfono enseña en el otro.
-- **«Tardo en dormirme»** en Perfil › Avisos deja elegir un número fijo en lugar
-  de lo aprendido.
-- **Las noches de viaje** o con cambio de huso no enseñan nada [73].
-- Los modelos personales le ganan a los generales: 91,8 contra 87,6 % [66].
+  noches, aparte entre semana y fin de semana [64][73]. Desde el 17/11/2026 ya no
+  mueve las horas de la noche: sirve para elegir entre dos huecos, para saber desde
+  cuándo un toque es una interrupción y para la confianza.
+- **El margen para dormirte** lo eliges tú (Sueño › Afinar, o «Tardo en dormirme»
+  en Perfil › Avisos: es el mismo ajuste), y la ventana tranquila de cada noche se
+  guarda con lo estimado y sube a la cuenta, así que la noche se puede volver a
+  armar con otro margen.
+- **Lo que se dejó de aprender (17/11):** hasta ese día, Moss aprendía de cada
+  «¿Dormiste de… a…?» lo que tardabas en dormirte y en agarrar el teléfono
+  (`aprenderPersonal`, D33), encogido hacia los 31 y 18 minutos de Sahha. Un «Sí»
+  enseñaba lo que Moss ya suponía y además lo hacía fiarse más. Los modelos
+  personales le ganan a los generales (91,8 contra 87,6 % [66]) y el sesgo de cada
+  persona es estable (Massar 2021): volver a aprender, solo de las correcciones y
+  desde los 15 minutos, queda para después.
 
 ### La confianza y la pregunta de la mañana
 

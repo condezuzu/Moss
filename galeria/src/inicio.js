@@ -348,6 +348,10 @@ const SeccionInicio = (() => {
     }
     function consejos() {
       const c = carta('in-consejos', tx('inicio.bloques.consejos'));
+      // Arriba de todo, lo que anotaste anoche (17/11, para aprobar; periodo.js): solo con el aviso de anotar lo
+      // pendiente activado y con algo anotado.
+      const pendientes = Periodo.listaDeHoy(u);
+      if (pendientes) c.appendChild(pendientes);
       const e = entradaDeParaHoy();
       const lista = ParaHoy.paraHoy(e);
       const sinNumeros = tel.classList.contains('sin-numeros');

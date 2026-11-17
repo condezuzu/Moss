@@ -1,52 +1,46 @@
-// La deuda de sueño, la de la galería (galeria/src/sueno.js, deuda; spec/sueno.md, «Las cuentas»): arriba de todo
-// y compacta, del tamaño de la tira de los días (lo pediste el 5/11/2026): cómo está en una palabra, el medidor y
-// a qué hora a la cama esta noche. «Más» despliega lo de cada noche, lo que duermes contra lo que necesitas,
-// esta noche con la última comida y cómo se calcula. Con pocas noches, cuántas faltan.
+// La deuda de sueño (spec/sueno.md, «Las cuentas»; rehecha el 17/11/2026), arriba de todo y compacta: el número
+// de una («4 h», «6 h 30»; «Sin deuda» en 0) con la palabra al lado en una pastilla, lo que duermes contra lo que
+// necesitas, que se cambia ahí mismo, y a qué hora acostarte esta noche. Solo con el teléfono, lo dice en una
+// línea. «Más» despliega lo de cada noche, esta noche con la última comida y cómo se calcula. Con pocas noches,
+// cuántas faltan.
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from 'react-native-reanimated';
 
+import { elAlmacen } from '@/almacen';
 import { duerme, horaDeReloj, horasDeSueno } from '@/dominio/avisos';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { cercaDeLaCama } from '@/dominio/loQueFalta';
 import { habitualDe } from '@/dominio/sinReloj';
-import { deudaDeSueno, despiertoDeLaNoche, juicioDeLaDeuda, MINIMOS, redondearDeuda, type Deuda, type Noche } from '@/dominio/sueno';
+import {
+  deudaDeSueno, despiertoDeLaNoche, faltaDeLaNoche, juicioDeLaDeuda, MINIMOS, necesidadesPara, necesidadPropuesta, redondearDeuda, type Deuda, type Noche,
+} from '@/dominio/sueno';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
-import { Relleno } from '../animados';
 import { Icono } from '../comida/comunes';
 import { duracion } from '../comida/datos';
-import { Aparece, ComoSeCalcula } from '../tarjetas';
+import { Aparatos } from '../perfil/Aparatos';
+import { Aparece, ComoSeCalcula, Segmento } from '../tarjetas';
 import { CartaDeSueno, ChipDeEjemplo, Crece, diaCorto, letraDe, Nota, Progreso, SN } from './comunes';
 
 const DIAS = 14;
 
-/** El medidor: la deuda contra una noche entera de lo que necesitas; si pasa, cada marca es una noche más. */
-function Medidor({ minutos, necesidad, pagada }: { minutos: number; necesidad: number; pagada: boolean }) {
-  const noches = Math.max(1, Math.ceil(minutos / necesidad));
-  const tope = noches * necesidad;
-  return (
-    <View style={st.medidor}>
-      <View style={st.medidorPista}>
-        <Relleno fraccion={minutos / tope} style={st.medidorLleno} />
-        {Array.from({ length: noches - 1 }, (_, i) => <View key={i} style={[st.medidorMarca, { left: `${((i + 1) / noches) * 100}%` }]} />)}
-        {pagada && <Aparece style={st.medidorCero}><View /></Aparece>}
-      </View>
-      <View style={st.medidorEjes}>
-        <Text style={st.eje}>{t('sueno.graficos.sinFaltar')}</Text>
-        <Text style={st.eje}>{plural('sueno.graficos.medidorFin', noches, { t: duracion(tope) })}</Text>
-      </View>
-    </View>
-  );
+/** Las horas como se dicen en la tarjeta, cortas: «4 h», «6 h 30»; menos de una hora, «30 min». */
+function enHoras(minutos: number): string {
+  const total = Math.round(minutos);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (!h) return t('fecha.minutos', { m });
+  return m ? t('sueno.deuda.horasYMinutos', { h, m: String(m).padStart(2, '0') }) : t('fecha.horas', { h });
 }
 
 /** Lo que sumó o pagó cada noche: lo que faltó baja de la línea de lo que necesitas y lo que sobró sube. Pesan más las recientes. */
 function Barras({ lista, necesidad, fin, primera, animar }: { lista: (Noche | null)[]; necesidad: number; fin: ClaveDia; primera: ClaveDia | null; animar: boolean }) {
   const [elegida, setElegida] = useState(DIAS - 1);
   const cuenta = (n: Noche | null) => !!n && n.confianza.duracion !== 'baja';
-  // Lo que sobra paga hasta 2 horas (SOBRA_MAXIMA en sueno.ts): la barra se corta ahí.
-  const difs = lista.map((n) => (n && cuenta(n) ? Math.min(120, n.dormido + n.siestas - necesidad) : null));
+  // Lo que entra en la deuda, con sus topes (faltaDeLaNoche): lo que sobra paga hasta una hora, y la barra se corta ahí.
+  const difs = lista.map((n) => (n && cuenta(n) ? -faltaDeLaNoche(n, necesidad) : null));
   const arriba = Math.max(30, ...difs.filter((d): d is number => d != null && d > 0));
   const abajo = Math.max(30, ...difs.filter((d): d is number => d != null && d < 0).map((d) => -d));
   const ALTO = 88;
@@ -102,9 +96,9 @@ function Barras({ lista, necesidad, fin, primera, animar }: { lista: (Noche | nu
 }
 
 /**
- * Esta noche (lo pediste el 5/11/2026): a qué hora ir a la cama para despertarte a la hora de siempre habiendo
+ * Esta noche (lo pediste el 5/11/2026): a qué hora acostarte para despertarte a la hora de siempre habiendo
  * dormido lo que necesitas, con la deuda un poco más (horasDeSueno, la misma cuenta de los avisos), y, contando
- * hacia atrás, la última comida grande: 2 h antes de la cama (cercaDeLaCama).
+ * hacia atrás, la última comida grande: 2 h antes (cercaDeLaCama).
  */
 export function estaNoche(noches: Noche[], hoy: ClaveDia, d: Deuda, necesidad: number, latencia: number) {
   const horas = horasDeSueno(hoy, { habitual: (c) => habitualDe(noches, c), necesidad, deuda: d.minutos, latencia, despierto: despiertoDeLaNoche(noches) });
@@ -140,10 +134,52 @@ function EstaNoche({ e }: { e: NonNullable<ReturnType<typeof estaNoche>> }) {
   );
 }
 
-export function LaDeuda({ noches, hoy, clave, necesidad, conNoches, muestra, latencia, animar }: {
+/**
+ * Lo que necesitas dormir, a la vista y con un toque para cambiarlo: el mismo ajuste de «Necesito dormir» de
+ * Perfil › Avisos. Debajo, si tu historial da otra (necesidadPropuesta), Moss la propone en una línea: se usa
+ * con un toque o se deja pasar.
+ */
+function LaNecesidad({ duermes, necesidad, edad, propuesta }: { duermes: number | null; necesidad: number; edad: number | undefined; propuesta: ReturnType<typeof necesidadPropuesta> }) {
+  const reducido = useReducedMotion();
+  const [abierta, setAbierta] = useState(false);
+  const flecha = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '180deg' : '0deg', { duration: reducido ? 0 : 240 }) }] }));
+  const necesitas = t('sueno.deuda.necesitas', { necesidad: enHoras(necesidad) });
+  return (
+    <>
+      <View style={st.linea}>
+        {duermes !== null && <Text style={st.lineaTexto}>{`${t('sueno.deuda.duermes', { duermes: enHoras(Math.round(duermes / 10) * 10) })} · `}</Text>}
+        {edad === undefined ? <Text style={st.lineaTexto}>{necesitas}</Text> : (
+          <Pressable onPress={() => setAbierta((a) => !a)} style={({ pressed }) => [st.necesitas, pressed && st.apretado]} hitSlop={10} accessibilityRole="button" accessibilityState={{ expanded: abierta }} accessibilityHint={t('sueno.deuda.cambiar')}>
+            <Text style={[st.lineaTexto, st.enlace]}>{necesitas}</Text>
+            <Animated.View style={flecha}><Icono nombre="chevron.down" tam={10} peso="semibold" /></Animated.View>
+          </Pressable>
+        )}
+      </View>
+      {abierta && edad !== undefined && (
+        <Aparece style={st.editor}>
+          <Segmento opciones={necesidadesPara(edad).map((m) => [m, enHoras(m)] as const)} elegida={necesidad} alElegir={(m) => elAlmacen().ponerNecesidad(m)} />
+          <Text style={st.chica}>{t(edad < 18 ? 'perfil.avisos.necesitoTextoMenor' : 'perfil.avisos.necesitoTexto')}</Text>
+        </Aparece>
+      )}
+      {propuesta !== null && (
+        <Aparece style={st.propuesta}>
+          <Text style={st.chica}>{t('sueno.deuda.propuesta', { rondan: enHoras(propuesta) })}</Text>
+          <Pressable onPress={() => elAlmacen().ponerNecesidad(propuesta)} style={({ pressed }) => pressed && st.apretado} hitSlop={10} accessibilityRole="button">
+            <Text style={[st.chica, st.enlace]}>{t('sueno.deuda.usar', { usar: enHoras(propuesta) })}</Text>
+          </Pressable>
+        </Aparece>
+      )}
+    </>
+  );
+}
+
+export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestra, latencia, animar }: {
   /** Las noches de verdad (sin las de ejemplo). */
   noches: Noche[];
-  hoy: ClaveDia; clave: ClaveDia; necesidad: number; conNoches: boolean;
+  hoy: ClaveDia; clave: ClaveDia; necesidad: number;
+  /** Para lo que se puede elegir en «Necesitas» y lo que Moss propone; sin cuestionario, no se cambia acá. */
+  edad: number | undefined;
+  conNoches: boolean;
   /** Sin noches, las de ejemplo de las dos semanas. */
   muestra: (Noche | null)[];
   latencia: number; animar: boolean;
@@ -151,42 +187,50 @@ export function LaDeuda({ noches, hoy, clave, necesidad, conNoches, muestra, lat
   const reducido = useReducedMotion();
   const [abierta, setAbierta] = useState(false);
   const [como, setComo] = useState(false);
+  const [aparatos, setAparatos] = useState(false);
   const lista = conNoches ? ultimasDe(noches, clave) : muestra;
   const fin = conNoches ? clave : hoy;
   const d = deudaDeSueno(lista, necesidad);
   const seguras = lista.filter((n) => n && n.confianza.duracion !== 'baja').length;
   const hay = lista.filter(Boolean).length;
-  // A la media hora y con «aprox.»: media hora de diferencia en lo que necesitas la cambia en casi 4 horas.
+  // A la media hora: media hora de diferencia en lo que necesitas la cambia en más de 3 horas.
   const redondeada = d ? redondearDeuda(d.minutos) : 0;
-  const sinDeuda = !!d && redondeada === 0;
   const juicio = d ? juicioDeLaDeuda(d) : null;
   const noche = d && conNoches && clave === hoy ? estaNoche(noches, hoy, d, necesidad, latencia) : null;
+  // Sin un reloj ni un anillo en las dos semanas, las noches las estimó Moss con el teléfono.
+  const conTelefono = conNoches && lista.some((n) => n?.moss) && !lista.some((n) => n && !n.moss && !n.aMano && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra'));
+  const propuesta = conNoches && edad !== undefined ? necesidadPropuesta(noches, hoy, edad, necesidad) : null;
   const flecha = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '180deg' : '0deg', { duration: reducido ? 0 : 300 }) }] }));
   const primera = noches.length ? noches.reduce((a, n) => (n.clave < a ? n.clave : a), noches[0].clave) : null;
   return (
-    <CartaDeSueno titulo={t('sueno.deuda')} derecha={conNoches ? undefined : <ChipDeEjemplo />}>
+    <CartaDeSueno titulo={t('sueno.deuda.titulo')} derecha={conNoches ? undefined : <ChipDeEjemplo />}>
       <View style={!conNoches && st.muestra}>
         {d && juicio ? (
-          <View style={st.juicio}>
-            <View style={st.juicioFila}>
-              {sinDeuda && <View style={st.sinDeuda}><Icono nombre="checkmark" tam={13} color="#0b2a26" peso="bold" /></View>}
-              <Text style={[st.juicioTitulo, (juicio === 'algoAlta' || juicio === 'alta') && st.juicioAlto]}>{t(`sueno.juicio.titulo.${juicio}`)}</Text>
-            </View>
-            <Text style={st.juicioTexto}>{t(`sueno.juicio.texto.${juicio}`, { t: duracion(redondeada) })}</Text>
-            <Medidor minutos={d.minutos} necesidad={necesidad} pagada={sinDeuda} />
+          <View style={st.cifraFila} accessible accessibilityLabel={juicio === 'sinDeuda' ? t('sueno.deuda.juicio.sinDeuda') : `${enHoras(redondeada)}, ${t(`sueno.deuda.juicio.${juicio}`)}`}>
+            <Text style={st.cifra}>{juicio === 'sinDeuda' ? t('sueno.deuda.juicio.sinDeuda') : enHoras(redondeada)}</Text>
+            {juicio !== 'sinDeuda' && <Text style={[st.pastilla, st[`pastilla_${juicio}`]]}>{t(`sueno.deuda.juicio.${juicio}`)}</Text>}
           </View>
         ) : (
           <>
             {/* Con pocas noches: cuántas faltan, en vez de un número que todavía no se puede saber. */}
-            <View style={st.juicioFila}>
+            <View style={st.faltanFila}>
               <Text style={st.faltan}>{plural('sueno.vacio.faltan', MINIMOS.deuda - seguras)}</Text>
               <Text style={st.paraSaber}>{t('sueno.vacio.paraSaber')}</Text>
             </View>
             <Progreso hay={conNoches ? seguras : 0} minimo={MINIMOS.deuda} texto={t('sueno.vacio.deuda', { minimo: MINIMOS.deuda }) + (conNoches && hay > seguras ? ` ${t('sueno.pocoSegurasNoCuentan')}` : '')} />
           </>
         )}
+        {(d || conNoches) && <LaNecesidad duermes={d ? d.duermes : null} necesidad={necesidad} edad={conNoches ? edad : undefined} propuesta={propuesta} />}
       </View>
-      {/* Con la noche de hoy, a qué hora a la cama, en una línea: el detalle, al desplegar. */}
+      {conTelefono && (
+        <Aparece>
+          <Pressable onPress={() => setAparatos(true)} style={({ pressed }) => [st.telefono, pressed && st.apretado]} hitSlop={6} accessibilityRole="button">
+            <Text style={[st.chica, st.telefonoTexto]}>{t('sueno.deuda.conTelefono')}</Text>
+            <Icono nombre="chevron.right" tam={11} peso="semibold" color={SN.tenue} />
+          </Pressable>
+        </Aparece>
+      )}
+      {/* Con la noche de hoy, a qué hora acostarte, en una línea: el detalle, al desplegar. */}
       {noche && !abierta && <Aparece><Text style={st.lineaDeLaNoche}>{t('sueno.estaNoche.linea', { hora: noche.hora })}</Text></Aparece>}
       <Pressable onPress={() => setAbierta((a) => !a)} style={({ pressed }) => [st.ver, pressed && st.apretado]} hitSlop={8} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
         <Text style={st.verTexto}>{t(abierta ? 'sueno.deudaVer.menos' : 'sueno.deudaVer.mas')}</Text>
@@ -199,16 +243,17 @@ export function LaDeuda({ noches, hoy, clave, necesidad, conNoches, muestra, lat
           </View>
           {d && conNoches && (
             <>
-              <Nota>{sinDeuda ? `${t('sueno.graficos.alDia')} ${t('sueno.deudaNoches', { n: d.noches, de: d.de })}.` : `${t('sueno.deudaNoches', { n: d.noches, de: d.de })}.`}</Nota>
-              <Nota>{t('sueno.deudaPorNoche', { duermes: duracion(Math.round(d.duermes / 10) * 10), necesidad: duracion(necesidad) })}</Nota>
+              <Nota>{`${t('sueno.deudaNoches', { n: d.noches, de: d.de })}.`}</Nota>
               {noche && <EstaNoche e={noche} />}
               <ComoSeCalcula abierto={como} alTocar={() => setComo((x) => !x)}>
-                <Text style={st.como}>{t('sueno.deudaTexto')}</Text>
+                <Text style={st.como}>{conTelefono ? `${t('sueno.deudaTexto')} ${t('sueno.deuda.comoConTelefono')}` : t('sueno.deudaTexto')}</Text>
               </ComoSeCalcula>
             </>
           )}
         </Aparece>
       )}
+      {/* Perfil › Aparatos, sin salir de Sueño: qué llega de un reloj o un anillo. */}
+      {aparatos && <Aparatos alCerrar={() => setAparatos(false)} />}
     </CartaDeSueno>
   );
 }
@@ -221,22 +266,25 @@ function ultimasDe(noches: Noche[], clave: ClaveDia): (Noche | null)[] {
 
 const st = StyleSheet.create({
   muestra: { opacity: 0.84 },
-  juicio: { gap: 6 },
-  juicioFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 2 },
-  juicioTitulo: { fontFamily: letras.numero, fontSize: 32, letterSpacing: -0.5, color: colores.cifra },
-  juicioAlto: { color: colores.oroClaro },
-  juicioTexto: { fontFamily: letras.textoLiviano, fontSize: 14, lineHeight: 20, color: 'rgba(239, 230, 207, 0.86)' },
-  sinDeuda: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: SN.verdeClaro },
+  cifraFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  cifra: { flexShrink: 1, fontFamily: letras.numero, fontSize: 34, letterSpacing: -0.5, color: colores.cifra, fontVariant: ['tabular-nums'] },
+  pastilla: { overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, fontFamily: letras.textoMedio, fontSize: 13, letterSpacing: 0.3 },
+  pastilla_baja: { color: '#b9d6fb', backgroundColor: 'rgba(120, 170, 240, 0.16)' },
+  pastilla_media: { color: colores.oroClaro, backgroundColor: 'rgba(232, 196, 106, 0.12)' },
+  pastilla_alta: { color: '#f3bd9d', backgroundColor: 'rgba(239, 176, 140, 0.16)' },
+  faltanFila: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 2 },
   faltan: { fontFamily: letras.numero, fontSize: 28, letterSpacing: -0.4, color: colores.cifra },
   paraSaber: { fontFamily: letras.texto, fontSize: 13, color: 'rgba(239, 230, 207, 0.58)' },
-  medidor: { gap: 5, marginTop: 8 },
-  medidorPista: { height: 10, borderRadius: 5, overflow: 'hidden', backgroundColor: 'rgba(107, 143, 240, 0.22)' },
-  medidorLleno: { height: 10, borderRadius: 5, backgroundColor: '#86a7f4' },
-  medidorMarca: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: '#1a2b66' },
-  medidorCero: { position: 'absolute', left: 0, top: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: SN.verdeClaro },
-  medidorEjes: { flexDirection: 'row', justifyContent: 'space-between' },
-  eje: { fontFamily: letras.texto, fontSize: 11, color: SN.tenue, fontVariant: ['tabular-nums'] },
-  lineaDeLaNoche: { marginTop: 2, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19, color: '#c9d8f5' },
+  linea: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: 6 },
+  lineaTexto: { fontFamily: letras.texto, fontSize: 14, lineHeight: 20, color: 'rgba(239, 230, 207, 0.86)', fontVariant: ['tabular-nums'] },
+  necesitas: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  enlace: { color: colores.oroClaro },
+  editor: { gap: 8, marginTop: 8 },
+  chica: { fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17.5, color: SN.tenue },
+  propuesta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, marginTop: 4 },
+  telefono: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  telefonoTexto: { flexShrink: 1 },
+  lineaDeLaNoche: { marginTop: 4, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19, color: '#c9d8f5' },
   ver: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 4 },
   verTexto: { fontFamily: letras.texto, fontSize: 13, color: colores.oroClaro },
   apretado: { opacity: 0.6 },

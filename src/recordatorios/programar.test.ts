@@ -310,27 +310,29 @@ describe('el día que sigue tu despertar, en el teléfono', () => {
 });
 
 describe('lo del sueño de los avisos', () => {
-  /** Una noche de 23:00 a 7:00 en la hora del teléfono, confirmada (sin reloj). */
-  const local = (clave: string, hora: number) => {
+  /** Una noche de 23:30 a 7:00 en la hora del teléfono, confirmada (sin reloj). */
+  const local = (clave: string, hora: number, minuto = 0) => {
     const [y, m, d] = clave.split('-').map(Number);
-    return new Date(y, m - 1, d, hora).toISOString();
+    return new Date(y, m - 1, d, hora, minuto).toISOString();
   };
   const noches = new Map(Array.from({ length: 14 }, (_, i) => {
     const fecha = sumarDias(HOY, -i);
-    return [fecha, { fecha, actualizado: '2026-11-02T09:00:00.000Z', hora: { dormirse: local(sumarDias(fecha, -1), 23), despertar: local(fecha, 7), origen: 'confirmada' as const, confianza: 'media' as const } }];
+    return [fecha, { fecha, actualizado: '2026-11-02T09:00:00.000Z', hora: { dormirse: local(sumarDias(fecha, -1), 23, 30), despertar: local(fecha, 7), origen: 'confirmada' as const, confianza: 'media' as const } }];
   }));
   const perfil = { nacimiento: 1994 };
 
-  it('con 7 h elegidas, la deuda y la hora de dormir usan 7 h, y lo despierto de la noche cuenta', () => {
+  it('con 7 h elegidas, la deuda y la hora de dormir usan 7 h, y sin reloj no se resta un rato despierto', () => {
     const sinElegir = suenoParaAvisos(estado({ perfil, noches } as unknown as Partial<Estado>))!;
     const conSiete = suenoParaAvisos(estado({ perfil, noches, necesidad: 420 } as unknown as Partial<Estado>))!;
     expect([sinElegir.necesidad, conSiete.necesidad]).toEqual([480, 420]);
-    // Sin reloj, de las 8 h en la cama se duermen 7 h 30 (media hora despierto): con 8 h falta, con 7 sobra.
-    expect(conSiete.despierto).toBe(30);
-    expect(sinElegir.deuda).toBeCloseTo(30 * 7.5, 5);
+    // Sin reloj cuenta la noche entera, 7 h 30: con 8 h falta media hora cada noche, con 7 sobra.
+    expect(conSiete.despierto).toBe(0);
+    expect(sinElegir.deuda).toBeCloseTo(30 * Array.from({ length: 14 }, (_, i) => Math.exp(-i / 7)).reduce((s, p) => s + p, 0), 5);
     expect(conSiete.deuda).toBe(0);
-    // A dormirse a las 23:30: las 7:00 menos 7 h y la media hora despierto.
-    expect(horasDeSueno(HOY, conSiete).dormir).toBe(23 * 60 + 30);
+    // El margen para dormirte, de fábrica: la hora de acostarte lo descuenta.
+    expect(conSiete.latencia).toBe(15);
+    // A dormirse a las 0:00: las 7:00 menos 7 h.
+    expect(horasDeSueno(HOY, conSiete).dormir).toBe(24 * 60);
     // Fuera de lo de tu edad no: a los 32, hasta 9 h.
     expect(suenoParaAvisos(estado({ perfil, noches, necesidad: 600 } as unknown as Partial<Estado>))!.necesidad).toBe(540);
   });

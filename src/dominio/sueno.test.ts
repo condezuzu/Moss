@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  armarNoches, calidadDeNoche, DESPIERTO_SIN_RELOJ, despiertoDeLaNoche, deudaDeSueno, horario, marcaDe, necesidad, necesidadesPara, nivelDeLaNoche, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
-  soloEnCama, ultimasNoches, vitalDeNoche,
+  armarNoches, calidadDeNoche, despiertoDeLaNoche, deudaDeSueno, faltaDeLaNoche, horario, marcaDe, necesidad, necesidadesPara, necesidadPropuesta, nivelDeLaNoche, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
+  soloEnCama, TOPES_DE_UNA_NOCHE, ultimasNoches, vitalDeNoche,
   type Etapa, type Fuente, type Muestra, type Noche,
 } from './sueno';
 
@@ -216,13 +216,58 @@ describe('las dos semanas', () => {
     expect(horario(pocas)).toMatchObject({ regularidad: 'irregular', aprox: false });
   });
 
-  it('la deuda pesa más lo de anoche, lo que sobra paga hasta 2 horas, y sin 5 noches no hay', () => {
-    // 7 h por noche contra 8: la última pesa 1, la primera 1/14.
-    const deuda = deudaDeSueno(semanas(14, [], 420), 480)!;
-    expect(deuda.minutos).toBeCloseTo(60 * (14 + 1) / 2, 5);
-    expect(deuda.noches).toBe(14);
+  /** La suma de los 14 pesos, e^(−i/7): 6,5. */
+  const PESOS = Array.from({ length: 14 }, (_, i) => Math.exp(-i / 7));
+  const SUMA = PESOS.reduce((s, p) => s + p, 0);
+  /** Las dos semanas con lo que se durmió cada noche, de la más vieja a anoche. */
+  const durmiendo = (dormidos: number[]) => semanas(14).map((n, i) => ({ ...n!, dormido: dormidos[i] }));
+
+  it('la deuda pesa las noches como e^(−i/7), los pesos que publica Rise: dormir 7 h necesitando 8 da 6 h 30, y 6 h, 13 h', () => {
+    // Anoche 1, la anterior 0,87… y hace 13 noches, 0,16: suman 6,5.
+    expect(PESOS.map((p) => Math.round(p * 100) / 100)).toEqual([1, 0.87, 0.75, 0.65, 0.56, 0.49, 0.42, 0.37, 0.32, 0.28, 0.24, 0.21, 0.18, 0.16]);
+    expect(SUMA).toBeCloseTo(6.5, 1);
+    const siete = deudaDeSueno(semanas(14, [], 420), 480)!;
+    expect(siete.minutos).toBeCloseTo(60 * SUMA, 5);
+    expect(redondearDeuda(siete.minutos)).toBe(6 * 60 + 30);
+    expect(siete).toMatchObject({ noches: 14, de: 14 });
+    expect(redondearDeuda(deudaDeSueno(semanas(14, [], 360), 480)!.minutos)).toBe(13 * 60);
+    expect(redondearDeuda(deudaDeSueno(semanas(14, [], 450), 480)!.minutos)).toBe(3 * 60);
+    // Nunca menos de 0, y sin 5 noches no hay.
     expect(deudaDeSueno(semanas(14, [], 900), 480)!.minutos).toBe(0);
     expect(deudaDeSueno([null, null, null, ...semanas(4, [], 420)], 480)).toBeNull();
+  });
+
+  it('una noche mala pesa menos cada día: 4 h anoche suman 3 h; hace una semana, 1 h 06; hace 13 noches, media hora', () => {
+    const con = (hace: number) => deudaDeSueno(durmiendo(Array.from({ length: 14 }, (_, i) => (i === 13 - hace ? 240 : 480))), 480)!.minutos;
+    // Lo que falta en una noche suma hasta 3 horas: de 4 h a 8 faltan 4.
+    expect(con(0)).toBeCloseTo(180, 5);
+    expect(con(7)).toBeCloseTo(180 * Math.exp(-1), 5);
+    expect(Math.round(con(7))).toBe(66);
+    expect(Math.round(con(13))).toBe(28);
+  });
+
+  it('lo que sobra paga hasta una hora por noche: con una falta de 1 h, cuatro noches con una hora de más la borran', () => {
+    // Diez noches de 7 h y cuatro de 9 h o de 11 h: lo mismo, la deuda en cero (Kitamura 2016: una falta así se recuperó en unas 4 noches).
+    const cuatroLargas = (largas: number) => deudaDeSueno(durmiendo(Array.from({ length: 14 }, (_, i) => (i >= 10 ? largas : 420))), 480)!;
+    expect(redondearDeuda(cuatroLargas(540).minutos)).toBe(0);
+    expect(cuatroLargas(660).minutos).toBeCloseTo(cuatroLargas(540).minutos, 5);
+    // Durmiendo justo lo que necesitas, baja a la mitad en unas cuatro noches.
+    const justas = (cuantas: number) => deudaDeSueno(durmiendo(Array.from({ length: 14 }, (_, i) => (i >= 14 - cuantas ? 480 : 420))), 480)!.minutos;
+    expect(justas(4) / justas(0)).toBeCloseTo(0.5, 1);
+    expect(faltaDeLaNoche({ ...semanas(1)[0]!, dormido: 700 }, 480)).toBe(-TOPES_DE_UNA_NOCHE.sobra);
+  });
+
+  it('una noche estimada con el teléfono y sin confirmar suma hasta 2 horas; confirmada, hasta 3, como las medidas', () => {
+    const deMoss = (origen: 'estimada' | 'confirmada'): Noche => ({
+      ...semanas(1)[0]!, dormido: 200, fuente: { id: 'moss', nombre: 'Moss', tipo: 'moss' }, confianza: { duracion: 'media', horario: 'media', despertares: 'baja', etapas: null, enCama: null },
+      moss: { origen, confianza: 'media', rango: null },
+    });
+    expect([faltaDeLaNoche(deMoss('estimada'), 480), faltaDeLaNoche(deMoss('confirmada'), 480), faltaDeLaNoche({ ...semanas(1)[0]!, dormido: 200 }, 480)]).toEqual([120, 180, 180]);
+    // Las siestas cuentan.
+    expect(faltaDeLaNoche({ ...semanas(1)[0]!, dormido: 400, siestas: 50 }, 480)).toBe(30);
+    // Dos semanas así: 2 h por noche, 13 h; con todas confirmadas, 3 h por noche.
+    expect(redondearDeuda(deudaDeSueno(Array.from({ length: 14 }, () => deMoss('estimada')), 480)!.minutos)).toBe(13 * 60);
+    expect(redondearDeuda(deudaDeSueno(Array.from({ length: 14 }, () => deMoss('confirmada')), 480)!.minutos)).toBe(19 * 60 + 30);
   });
 
   it('las noches sin datos no cuentan como si hubieras dormido lo que necesitas: usar menos el reloj no baja la deuda', () => {
@@ -230,29 +275,63 @@ describe('las dos semanas', () => {
     const todas = deudaDeSueno(semanas(14, [], 420), 480)!;
     const laMitad = deudaDeSueno(semanas(14, [], 420).map((n, i) => (i % 2 ? null : n)), 480)!;
     expect(laMitad.noches).toBe(7);
-    expect(laMitad.minutos).toBeCloseTo(450, 5);
-    expect(todas.minutos).toBeCloseTo(450, 5);
-    // Con lo que faltó y lo que dormiste por noche, para decirlo así: «Duermes unas 7 h; necesitas unas 8».
+    expect(laMitad.minutos).toBeCloseTo(todas.minutos, 5);
+    // Con lo que faltó y lo que dormiste por noche, para decirlo así: «Duermes unas 7 h · Necesitas 8 h».
     expect(laMitad.porNoche).toBeCloseTo(60, 5);
     expect(laMitad.duermes).toBeCloseTo(420, 5);
-    // Las últimas cinco solas tampoco la bajan: antes daban 4 h 17 min.
-    expect(deudaDeSueno([...Array.from({ length: 9 }, () => null), ...semanas(5, [], 420)], 480)!.minutos).toBeCloseTo(450, 5);
+    // Las últimas cinco solas tampoco la bajan, ni las de confianza baja cuentan.
+    expect(deudaDeSueno([...Array.from({ length: 9 }, () => null), ...semanas(5, [], 420)], 480)!.minutos).toBeCloseTo(todas.minutos, 5);
+    const conBajas = semanas(14, [], 420).map((n, i) => (i % 2 ? { ...n!, dormido: 100, confianza: { ...n!.confianza, duracion: 'baja' as const } } : n));
+    const sinLasBajas = deudaDeSueno(conBajas, 480)!;
+    expect(sinLasBajas.noches).toBe(7);
+    expect(sinLasBajas.duermes).toBeCloseTo(420, 5);
   });
 
   it('la deuda se dice a la media hora: «4 h 32 min» es precisión falsa', () => {
     expect([redondearDeuda(272), redondearDeuda(284), redondearDeuda(14), redondearDeuda(15), redondearDeuda(0)]).toEqual([270, 270, 0, 30, 0]);
   });
 
-  it('la deuda en una palabra, por lo que falta cada noche: muy bien, bien, algo alta o alta', () => {
-    // Redondeada a cero, o durmiendo de más: muy bien.
-    expect(juicioDeLaDeuda({ minutos: 10, porNoche: 1 })).toBe('muyBien');
-    expect(juicioDeLaDeuda({ minutos: 0, porNoche: -40 })).toBe('muyBien');
-    expect(juicioDeLaDeuda({ minutos: 29 * 7.5, porNoche: 29 })).toBe('bien');
-    expect(juicioDeLaDeuda({ minutos: 30 * 7.5, porNoche: 30 })).toBe('algoAlta');
-    expect(juicioDeLaDeuda({ minutos: 59 * 7.5, porNoche: 59 })).toBe('algoAlta');
-    expect(juicioDeLaDeuda({ minutos: 60 * 7.5, porNoche: 60 })).toBe('alta');
-    // Dos semanas de 7 h necesitando 8: una hora menos cada noche, alta.
-    expect(juicioDeLaDeuda(deudaDeSueno(semanas(14, [], 420), 480)!)).toBe('alta');
+  it('la deuda en una palabra: sin deuda en 0, baja con menos de 5 horas, media de 5 a 10 y alta desde 10', () => {
+    // Por el número como se dice, a la media hora.
+    expect([0, 14, 15, 284, 285, 300, 584, 585, 600, 990].map((minutos) => juicioDeLaDeuda({ minutos })))
+      .toEqual(['sinDeuda', 'sinDeuda', 'baja', 'baja', 'media', 'media', 'media', 'alta', 'alta', 'alta']);
+    // Dos semanas de 7 h necesitando 8 (6 h 30), media; de 7 h 30 (3 h), baja; de 6 h (13 h), alta; de 8 h, sin deuda.
+    expect([420, 450, 360, 480].map((dormido) => juicioDeLaDeuda(deudaDeSueno(semanas(14, [], dormido), 480)!))).toEqual(['media', 'baja', 'alta', 'sinDeuda']);
+  });
+
+  describe('la necesidad que Moss propone', () => {
+    /** Cuatro semanas hasta el 21 de octubre, con lo que se durmió cada noche. */
+    const cuatroSemanas = (dormidos: number[]): Noche[] => dormidos.map((dormido, i) => ({ ...semanas(1)[0]!, clave: new Date(Date.UTC(2026, 9, 21 - (dormidos.length - 1 - i))).toISOString().slice(0, 10), dormido }));
+    const HOY = '2026-10-21';
+
+    it('el percentil 75 de las noches medidas de las últimas 4 semanas, a la media hora, si difiere media hora o más', () => {
+      // La mitad de las noches de 6 h 40 y la mitad de 7 h 30: las largas rondan 7 h 30.
+      const noches = cuatroSemanas(Array.from({ length: 28 }, (_, i) => (i % 2 ? 450 : 400)));
+      expect(necesidadPropuesta(noches, HOY, 31, 480)).toBe(450);
+      // Con esa ya elegida, o a menos de media hora, nada.
+      expect(necesidadPropuesta(noches, HOY, 31, 450)).toBeNull();
+      // Las siestas cuentan, como en la deuda.
+      expect(necesidadPropuesta(noches.map((n) => ({ ...n, siestas: 30 })), HOY, 31, 450)).toBe(480);
+    });
+
+    it('con menos de 14 noches medidas no propone: ni las de confianza baja ni las de hace más de 4 semanas cuentan', () => {
+      expect(necesidadPropuesta(cuatroSemanas(Array.from({ length: 13 }, () => 420)), HOY, 31, 480)).toBeNull();
+      expect(necesidadPropuesta(cuatroSemanas(Array.from({ length: 14 }, () => 420)), HOY, 31, 480)).toBe(420);
+      const bajas = cuatroSemanas(Array.from({ length: 20 }, () => 420)).map((n, i) => (i < 7 ? { ...n, confianza: { ...n.confianza, duracion: 'baja' as const } } : n));
+      expect(necesidadPropuesta(bajas, HOY, 31, 480)).toBeNull();
+      // 40 noches: las 12 más viejas, de 9 h, ya no se miran.
+      expect(necesidadPropuesta(cuatroSemanas(Array.from({ length: 40 }, (_, i) => (i < 12 ? 540 : 420))), HOY, 31, 480)).toBe(420);
+    });
+
+    it('solo dentro de lo de tu edad (de 7 a 9 horas, y de 8 a 10 antes de los 18): a quien duerme 6 h no le propone 7', () => {
+      const cortas = cuatroSemanas(Array.from({ length: 20 }, () => 370));
+      expect(necesidadPropuesta(cortas, HOY, 31, 480)).toBeNull();
+      const largas = cuatroSemanas(Array.from({ length: 20 }, () => 590));
+      expect(necesidadPropuesta(largas, HOY, 31, 480)).toBeNull();
+      expect(necesidadPropuesta(largas, HOY, 16, 540)).toBe(600);
+      // Los bordes entran: 7 h y 9 h.
+      expect(necesidadPropuesta(cuatroSemanas(Array.from({ length: 20 }, () => 545)), HOY, 31, 480)).toBe(540);
+    });
   });
 
   it('con menos de 6 horas por semanas, sugiere un médico; con pocas noches o un par de malas, no', () => {
@@ -270,11 +349,10 @@ describe('las dos semanas', () => {
 });
 
 describe('lo despierto de la noche', () => {
-  it('sin noches de un reloj o un anillo, unos 30 minutos', () => {
-    expect(despiertoDeLaNoche([])).toBe(DESPIERTO_SIN_RELOJ);
-    expect(DESPIERTO_SIN_RELOJ).toBe(30);
-    // Con pocas noches del reloj, todavía lo de fábrica.
-    expect(despiertoDeLaNoche(semanas(6) as Noche[])).toBe(30);
+  it('sin noches de un reloj o un anillo, nada: solo con el teléfono no se mide, y ya no se resta media hora fija', () => {
+    expect(despiertoDeLaNoche([])).toBe(0);
+    // Con pocas noches del reloj, todavía nada.
+    expect(despiertoDeLaNoche(semanas(6) as Noche[])).toBe(0);
   });
 
   it('con 7 noches o más, lo tuyo (la mediana de las últimas 14) más lo que el reloj no ve', () => {
@@ -284,10 +362,10 @@ describe('lo despierto de la noche', () => {
     expect(despiertoDeLaNoche([...viejas, ...(semanas(14) as Noche[])])).toBe(25);
     // Lo de Moss y lo anotado a mano no cuentan.
     const deMoss = (semanas(14) as Noche[]).map((n) => ({ ...n, despierto: 0, moss: { origen: 'confirmada' as const, confianza: 'media' as const, rango: null } }));
-    expect(despiertoDeLaNoche(deMoss)).toBe(30);
-    expect(despiertoDeLaNoche((semanas(14) as Noche[]).map((n) => ({ ...n, aMano: true as const })))).toBe(30);
-    // Un aparato que nunca escribe un rato despierto no lo ve: lo de fábrica.
-    expect(despiertoDeLaNoche((semanas(14) as Noche[]).map((n) => ({ ...n, despierto: 0 })))).toBe(30);
+    expect(despiertoDeLaNoche(deMoss)).toBe(0);
+    expect(despiertoDeLaNoche((semanas(14) as Noche[]).map((n) => ({ ...n, aMano: true as const })))).toBe(0);
+    // Un aparato que nunca escribe un rato despierto no lo ve: nada.
+    expect(despiertoDeLaNoche((semanas(14) as Noche[]).map((n) => ({ ...n, despierto: 0 })))).toBe(0);
   });
 });
 
