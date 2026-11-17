@@ -39,6 +39,7 @@ import { PantallaPremium } from './premium/Premium';
 import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDePerfil } from './perfil/Perfil';
 import { PaginaDeProgreso } from './progreso/Progreso';
+import { abrirLaNota } from './sueno/Pendientes';
 import { PaginaDeSueno } from './sueno/Sueno';
 import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje, VIAJE_MS } from './movimiento';
 import { bajarTeclado } from './teclado';
@@ -271,7 +272,7 @@ export default function Secciones() {
         cerrarCapas(false);
         ir(PESTANAS.indexOf('perfil'), false);
         return;
-      // Lo de la noche y la recuperación, en Sueño; el partido y la carrera, en Inicio.
+      // Lo de la noche y la recuperación, en Sueño.
       case 'dormir':
       case 'cafe':
       case 'luces':
@@ -281,12 +282,19 @@ export default function Secciones() {
       case 'melatonina':
       case 'revoluciones':
       case 'gafas':
-      case 'descarga':
         cerrarCapas(false);
         ir(sueno, false);
         return;
+      // «Anota lo que tienes en la cabeza»: Sueño, con la nota abierta para escribir.
+      case 'descarga':
+        cerrarCapas(false);
+        ir(sueno, false);
+        abrirLaNota();
+        return;
+      // El partido y la carrera, en Inicio; «Lo que hay que hacer hoy» también: ahí está la lista para ir tachando.
       case 'partido':
       case 'carrera':
+      case 'pendientes':
         cerrarCapas(false);
         ir(PESTANAS.indexOf('inicio'), false);
         return;

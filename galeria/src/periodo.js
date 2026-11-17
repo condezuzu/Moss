@@ -2,8 +2,10 @@
 // Inicio.
 // - Tu periodo de melatonina (Melatonina, src/dominio/melatonina.ts): la tarjeta de Sueño, en lugar de «Esta
 //   noche, a la cama a las…», y la hoja «¿Qué es?».
-// - Los avisos de la noche y de la mañana reescritos: el título dice qué hacer y el cuerpo, el detalle con la hora.
-//   Cuándo suena cada uno lo sigue diciendo la regla de la app (Avisos y SigueElDespertar); acá, solo las palabras.
+// - Los avisos de la noche y de la mañana reescritos (el título dice qué hacer y el cuerpo, el detalle con la hora)
+//   ya están en la app, con sus palabras en src/textos (recordatorios): la pantalla bloqueada los toma de ahí
+//   (Avisos.tituloDelAviso y textoDelAviso), con el mismo periodo de melatonina de la tarjeta de Sueño. Los nombres
+//   de Perfil › Avisos también (perfil.avisos).
 // - «Lo que hay que hacer hoy»: los pendientes que anotas por la noche (quedan en este navegador, como quedarían
 //   en el teléfono), la nota donde se escriben y la lista que vuelve por la mañana, arriba de «Para hoy».
 // - La guía para que cada reloj o anillo escriba el sueño en Salud (Perfil › Aparatos): cada paso está confirmado
@@ -50,42 +52,7 @@ const Periodo = (() => {
         },
       },
       inicio: { pendientes: { titulo: 'Lo que hay que hacer hoy', hecho: 'Hecho' } },
-      recordatorios: {
-        nuevos: {
-          periodo: { titulo: 'Tu periodo de melatonina: {desde}', texto: 'De {desde} a {hasta} es cuando menos te cuesta dormirte: tu melatonina empieza a subir más o menos ahora.' },
-          ritmo: { titulo: 'Baja el ritmo', texto: 'Deja lo que te acelera y las pantallas brillantes. Te acuestas a las {cama}.' },
-          luces: { titulo: 'Baja las luces', texto: 'Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las {cama}.' },
-          gafas: { titulo: 'Ponte las gafas para la luz azul', texto: 'Si las tienes, úsalas desde ahora hasta acostarte, a las {cama}.' },
-          acostarte: {
-            titulo: 'Acuéstate a las {cama}',
-            texto: '{tiempo}. Así te duermes dentro de tu periodo de melatonina ({desde} – {hasta}).',
-            conDeuda: '{tiempo}. Con {deuda} de deuda de sueño, esta noche no lo dejes para más tarde.',
-            en: { 15: 'En 15 minutos', 30: 'En media hora', 45: 'En 45 minutos', 60: 'En una hora', otro: 'En {n} minutos', ya: 'Ahora' },
-          },
-          anotar: { titulo: 'Anota lo que tienes en la cabeza', texto: 'Escribe tus pendientes antes de acostarte: con la cabeza despejada cuesta menos dormirse. Mañana Moss te los recuerda.' },
-          deuda: {
-            titulo: 'Tu deuda de sueño: {deuda}', tituloSin: 'Sin deuda de sueño',
-            bajo: 'Bajó {cambio} desde ayer.', subio: 'Subió {cambio} desde ayer.', igual: 'Igual que ayer.',
-            es: 'Es lo que te falta dormir de las últimas dos semanas.', cero: 'Bajó a cero: dormiste lo que te faltaba.', sin: 'Duermes lo que necesitas.',
-          },
-          pesarte: { titulo: 'Pésate antes de desayunar', texto: 'Después de ir al baño y siempre igual: así se ve la tendencia.', tituloControl: 'Hoy es tu control: pésate', textoControl: 'Antes de desayunar, como siempre.' },
-          desayuno: { titulo: '¿Desayunas hoy?', texto: 'Si vas directo al almuerzo, lo del desayuno se reparte en el resto del día.' },
-          pendientes: { titulo: 'Lo que hay que hacer hoy', mas: 'y {n} más' },
-        },
-      },
       perfil: {
-        avisosNuevos: {
-          deudaTexto: 'Al despertarte: cuánta tienes y cuánto cambió desde ayer.',
-          periodo: 'Tu periodo de melatonina', periodoTexto: 'Unas dos horas antes, te dice a qué hora empieza: es cuando menos te cuesta dormirte. Es una estimación.',
-          luces: 'Bajar las luces', lucesTexto: 'Hora y media antes de acostarte: luz baja y cálida.',
-          ritmo: 'Bajar el ritmo', ritmoTexto: 'Una hora antes de acostarte: algo tranquilo y sin pantallas brillantes.',
-          acostarte: 'Acostarte',
-          acostarteTexto: 'Esta noche, acuéstate a las {hora}: con los {margen} min que tardas en dormirte, quedas dormido dentro de tu periodo de melatonina ({desde} – {hasta}). Te avisa un rato antes.',
-          acostarteSinPeriodo: 'A la hora que te deja dormido dentro de tu periodo de melatonina. Te avisa un rato antes.',
-          anotar: 'Anotar lo que tienes en la cabeza',
-          anotarTexto: 'Al acostarte, te invita a escribir tus pendientes en una nota corta, en Sueño. Por la mañana, después de despertarte, te llegan en un aviso: «Lo que hay que hacer hoy».',
-          gafasTexto: 'Dos horas antes de acostarte, si las tienes. La evidencia todavía es poca.',
-        },
         aparatos: {
           guia: {
             titulo: 'Conectar un reloj o un anillo',
@@ -219,42 +186,7 @@ const Periodo = (() => {
         },
       },
       inicio: { pendientes: { titulo: 'To do today', hecho: 'Done' } },
-      recordatorios: {
-        nuevos: {
-          periodo: { titulo: 'Your melatonin window: {desde}', texto: 'From {desde} to {hasta} is when falling asleep is easiest: your melatonin starts rising about now.' },
-          ritmo: { titulo: 'Wind down', texto: 'Drop whatever revs you up, and bright screens. Bedtime is {cama}.' },
-          luces: { titulo: 'Dim the lights', texto: 'Low, warm light from now on: bright light pushes your sleep later. Bedtime is {cama}.' },
-          gafas: { titulo: 'Put on your blue-light glasses', texto: 'If you have them, wear them from now until bedtime, {cama}.' },
-          acostarte: {
-            titulo: 'Go to bed at {cama}',
-            texto: '{tiempo}. That way you fall asleep within your melatonin window ({desde} – {hasta}).',
-            conDeuda: '{tiempo}. With {deuda} of sleep debt, don’t push it later tonight.',
-            en: { 15: 'In 15 minutes', 30: 'In half an hour', 45: 'In 45 minutes', 60: 'In an hour', otro: 'In {n} minutes', ya: 'Now' },
-          },
-          anotar: { titulo: 'Write down what’s on your mind', texto: 'Write your to-dos before bed: a clear head falls asleep more easily. Moss reminds you tomorrow.' },
-          deuda: {
-            titulo: 'Your sleep debt: {deuda}', tituloSin: 'No sleep debt',
-            bajo: 'Down {cambio} since yesterday.', subio: 'Up {cambio} since yesterday.', igual: 'Same as yesterday.',
-            es: 'It is the sleep you are missing from the last two weeks.', cero: 'Down to zero: you caught up.', sin: 'You sleep what you need.',
-          },
-          pesarte: { titulo: 'Weigh yourself before breakfast', texto: 'After the bathroom and always the same way: that is how the trend shows.', tituloControl: 'Check-in day: weigh yourself', textoControl: 'Before breakfast, as usual.' },
-          desayuno: { titulo: 'Having breakfast today?', texto: 'If you go straight to lunch, breakfast is spread over the rest of the day.' },
-          pendientes: { titulo: 'To do today', mas: 'and {n} more' },
-        },
-      },
       perfil: {
-        avisosNuevos: {
-          deudaTexto: 'When you wake up: how much you have and how it changed since yesterday.',
-          periodo: 'Your melatonin window', periodoTexto: 'About two hours ahead, it tells you when it starts: that is when falling asleep is easiest. It is an estimate.',
-          luces: 'Dim the lights', lucesTexto: 'An hour and a half before bed: low, warm light.',
-          ritmo: 'Wind down', ritmoTexto: 'An hour before bed: something calm, no bright screens.',
-          acostarte: 'Bedtime',
-          acostarteTexto: 'Tonight, go to bed at {hora}: with the {margen} min it takes you to fall asleep, you are asleep within your melatonin window ({desde} – {hasta}). It reminds you a while before.',
-          acostarteSinPeriodo: 'At the time that gets you asleep within your melatonin window. It reminds you a while before.',
-          anotar: 'Write down what’s on your mind',
-          anotarTexto: 'At bedtime, it invites you to write your to-dos in a short note, in Sleep. In the morning, after you wake up, you get them in a reminder: “To do today”.',
-          gafasTexto: 'Two hours before bed, if you have them. The evidence is still thin.',
-        },
         aparatos: {
           guia: {
             titulo: 'Connect a watch or a ring',
@@ -737,53 +669,8 @@ const Periodo = (() => {
     };
   }
 
-  // ------------------------------------------------------------ los avisos, reescritos
-  /**
-   * Lo que dice un aviso de la noche o de la mañana con las palabras nuevas, o null si no cambia (lo dice Avisos).
-   * `n` es la notificación de la regla; `c`, lo que hace falta para escribirlo: { tx, duracion, periodo(cama) →
-   * { desde, hasta } en minutos del día, pendientes: los textos de anoche }.
-   */
-  function aviso(n, c) {
-    const a = n.aviso, d = a.despertar;
-    const hora = Avisos.horaDeReloj;
-    const de = (clave, v) => c.tx('recordatorios.nuevos.' + clave, v);
-    const dos = (clave, v) => ({ titulo: de(clave + '.titulo', v), texto: de(clave + '.texto', v) });
-    const noche = (cama) => { const p = c.periodo(cama); return { cama: hora(cama), desde: hora(p.desde), hasta: hora(p.hasta) }; };
-    if (a.id === 'pendientes') {
-      const lista = c.pendientes || [];
-      const lineas = lista.slice(0, 4).map((t) => '· ' + t);
-      if (lista.length > 4) lineas.push(de('pendientes.mas', { n: lista.length - 4 }));
-      return { titulo: de('pendientes.titulo'), texto: lineas.join('\n') };
-    }
-    if (d) {
-      if (d.que === 'deuda') {
-        const forma = d.ahora === 0 ? (d.antes ? 'cero' : 'sin') : d.antes === null ? 'es' : d.ahora < d.antes ? 'bajo' : d.ahora > d.antes ? 'subio' : 'igual';
-        return {
-          titulo: d.ahora === 0 ? de('deuda.tituloSin') : de('deuda.titulo', { deuda: c.duracion(d.ahora) }),
-          texto: de('deuda.' + forma, { cambio: c.duracion(Math.abs(d.ahora - (d.antes || 0))) }),
-        };
-      }
-      if (d.que === 'desayuno') return dos('desayuno');
-      if (d.que === 'melatonina') return dos('periodo', noche(d.cama));
-      if (d.que === 'revoluciones') return dos('ritmo', noche(d.cama));
-      if (d.que === 'gafas') return dos('gafas', noche(d.cama));
-      if (d.que === 'descarga') return dos('anotar');
-      return null;
-    }
-    if (a.conviene) return a.conviene.que === 'luces' ? dos('luces', noche(a.conviene.cama)) : null;
-    if (a.tipo === 'pesarse') return a.control ? { titulo: de('pesarte.tituloControl'), texto: de('pesarte.textoControl') } : dos('pesarte');
-    if (a.tipo === 'dormir') {
-      const cama = a.dormirA == null ? a.minutos : a.dormirA;
-      const falta = Math.round(cama - a.minutos);
-      const tiempo = falta <= 0 ? de('acostarte.en.ya') : [15, 30, 45, 60].includes(falta) ? de('acostarte.en.' + falta) : de('acostarte.en.otro', { n: falta });
-      const v = Object.assign({ tiempo, deuda: c.duracion(a.deuda || 0) }, noche(cama));
-      return { titulo: de('acostarte.titulo', v), texto: de(a.texto === 'deuda' ? 'acostarte.conDeuda' : 'acostarte.texto', v) };
-    }
-    return null;
-  }
-
   // Las marcas de la guía, en el orden en que se muestran.
   const GUIA = ['appleWatch', 'oura', 'whoop', 'garmin', 'fitbit', 'polar', 'sleepCycle', 'autoSleep', 'otros'];
 
-  return { estilo, corta, corrido, pendientes, filaDePendientes, nota, listaDeHoy, hoja, aviso, GUIA };
+  return { estilo, corta, corrido, pendientes, filaDePendientes, nota, listaDeHoy, hoja, GUIA };
 })();

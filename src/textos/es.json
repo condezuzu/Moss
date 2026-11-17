@@ -1366,7 +1366,11 @@
     "moverBloque": "Mover {bloque}",
     "subir": "Subir",
     "bajar": "Bajar",
-    "lugar": "Posición {n} de {total}"
+    "lugar": "Posición {n} de {total}",
+    "pendientes": {
+      "titulo": "Lo que hay que hacer hoy",
+      "hecho": "Hecho"
+    }
   },
   "mas": {
     "titulo": "Agregar",
@@ -2238,6 +2242,58 @@
     "leer": {
       "leyendo": "Leyendo Salud…",
       "listo": "Al día con Salud"
+    },
+    "periodo": {
+      "titulo": "Tu periodo de melatonina",
+      "queEs": "¿Qué es?",
+      "antes": "{n} min antes que ayer",
+      "despues": "{n} min más tarde que ayer",
+      "igual": "Igual que ayer",
+      "acuestate": "Acuéstate a las {hora} para estar dormido dentro de tu periodo.",
+      "conDeuda": "Acuéstate a las {hora}, cuando empieza tu periodo. Antes no: te costaría dormirte.",
+      "faltan": {
+        "uno": "Falta {n} noche",
+        "otros": "Faltan {n} noches"
+      },
+      "paraSaber": "para estimarlo",
+      "faltanTexto": "Moss lo calcula con tus horarios: hacen falta {minimo} noches de la última semana.",
+      "hoja": {
+        "dibujo": {
+          "sube": "empieza a subir",
+          "periodo": "Tu periodo"
+        },
+        "queEs": "Qué es",
+        "queEsTexto": "Es la hora de la noche en que a tu cuerpo le cuesta menos dormirse. Un par de horas antes, con poca luz, empieza a subir la melatonina, la hormona que le avisa que es de noche.",
+        "como": "Cómo lo calcula Moss",
+        "comoTexto": "No lo mide: lo estima con tus horarios. Toma el punto medio de tu sueño de la última semana (las {medio}, con {noches}) y cuenta hacia atrás. Por eso cambia un poco cada día: si te duermes y te despiertas más tarde, tu periodo también se atrasa.",
+        "noches": {
+          "uno": "{n} noche",
+          "otros": "{n} noches"
+        },
+        "margen": "Con qué margen",
+        "margenTexto": "Es una estimación: el de verdad puede llegar hasta una hora antes o después. Con luz fuerte o pantallas hasta tarde, llega más tarde.",
+        "antes": "Si te acuestas antes",
+        "antesTexto": "Para tu cuerpo todavía es temprano y puede que tardes en dormirte. Si no tienes sueño, espera un rato con luz baja.",
+        "despues": "Si te acuestas después",
+        "despuesTexto": "Te duermes sin problema: el periodo no se cierra. Pero la noche queda más corta.",
+        "pie": "Si trabajas de noche o por turnos, esta cuenta no te sirve."
+      }
+    },
+    "pendientes": {
+      "fila": "Lo que tienes en la cabeza",
+      "filaVacia": "Anota tus pendientes antes de acostarte",
+      "filaCon": {
+        "uno": "{n} pendiente para mañana",
+        "otros": "{n} pendientes para mañana"
+      },
+      "titulo": "Lo que tienes en la cabeza",
+      "texto": "Escribe tus pendientes, uno por uno, y déjalos aquí. Mañana, después de despertarte, Moss te los recuerda.",
+      "campo": "Un pendiente",
+      "agregar": "Agregar",
+      "quitar": "Quitar",
+      "listo": "Listo",
+      "queda": "Queda en tu teléfono.",
+      "lleno": "Hasta {n}: es una lista corta."
     }
   },
   "perfil": {
@@ -2467,6 +2523,99 @@
         },
         "soloSalud": "RingConn, Amazfit, Xiaomi, Huawei, Da Rings y otros anillos llegan solo por Salud: en su app, activa Apple Health.",
         "nota": "Conectar te pide entrar a tu cuenta de esa marca. El permiso queda en tu iPhone y se quita con «Desconectar», que borra lo que trajo."
+      },
+      "guia": {
+        "titulo": "Conectar un reloj o un anillo",
+        "texto": "Moss lee tu sueño de la app Salud. Elige el tuyo y sigue los pasos para que lo escriba ahí.",
+        "marcas": {
+          "appleWatch": {
+            "nombre": "Apple Watch",
+            "pasos": [
+              "En el iPhone, abre Salud › Explorar › Sueño y sigue la configuración de Sueño.",
+              "En esa configuración, deja activado el seguimiento del sueño con el Apple Watch.",
+              "Si ya la habías hecho: en la app Watch › Mi reloj › Sueño, activa el seguimiento del sueño.",
+              "Duerme con el reloj puesto: tiene que tener al menos un 30 % de batería al acostarte."
+            ]
+          },
+          "oura": {
+            "nombre": "Oura",
+            "pasos": [
+              "En la app Oura, abre el menú de arriba a la izquierda y entra en «Ajustes».",
+              "En «Compartir datos», toca «Salud de Apple» y activa «Conectar con Salud de Apple».",
+              "Deja activado Sueño entre lo que Oura puede escribir."
+            ],
+            "nota": "Con un anillo Gen3 o posterior hace falta la membresía de Oura."
+          },
+          "whoop": {
+            "nombre": "WHOOP",
+            "pasos": [
+              "En la app WHOOP, entra en More › App Settings › Integrations › Apple Health y toca «Connect».",
+              "Activa las categorías, al menos Sueño, y toca «Permitir»."
+            ],
+            "nota": "Si reinstalas WHOOP, hay que volver a conectarla."
+          },
+          "garmin": {
+            "nombre": "Garmin",
+            "pasos": [
+              "En Garmin Connect, entra en Más › Configuración › Connect Apps › Apple Health y conéctala.",
+              "Activa Sueño y toca «Permitir».",
+              "Abre Garmin Connect por la mañana, después de sincronizar el reloj: solo envía los datos con la app abierta."
+            ]
+          },
+          "fitbit": {
+            "nombre": "Fitbit",
+            "pasos": [
+              "En la app Google Health, toca Conexiones › Apps y servicios.",
+              "Elige «Salud de Apple», toca «Comenzar» y acepta.",
+              "Activa las categorías de sueño y toca «Permitir»."
+            ],
+            "nota": "Hace falta iOS 16.4 o posterior y una cuenta de Google de adulto. Si reinstalas la app, hay que volver a conectarla."
+          },
+          "polar": {
+            "nombre": "Polar",
+            "pasos": [
+              "En Polar Flow, toca Más › Ajustes generales.",
+              "Activa «Apple Health».",
+              "Activa las categorías, al menos Sueño, y toca «Permitir»."
+            ],
+            "nota": "Llega cuánto dormiste y a qué hora, sin etapas. «Sincronizar ahora» vuelve a enviar las dos últimas semanas."
+          },
+          "sleepCycle": {
+            "nombre": "Sleep Cycle",
+            "pasos": [
+              "En Sleep Cycle, entra en Profile › More › Apple Health y toca «Connect».",
+              "En Salud › tu foto › Apps › Sleep Cycle, deja activados sus permisos."
+            ],
+            "nota": "Sleep Cycle ofrece conectarse con Salud después de la noche 15."
+          },
+          "autoSleep": {
+            "nombre": "AutoSleep",
+            "pasos": [
+              "AutoSleep guarda el sueño en Salud sin activar nada más: solo necesita los permisos.",
+              "En Salud › tu foto › Apps › AutoSleep, deja todo activado."
+            ],
+            "nota": "Con la actualización en segundo plano desactivada, solo escribe cuando abres AutoSleep."
+          },
+          "otros": {
+            "nombre": "Otro reloj, anillo o app",
+            "pasos": [
+              "En la app de tu aparato, busca la conexión con Salud (Apple Health) y actívala.",
+              "Deja que escriba Sueño.",
+              "Abre esa app por la mañana: muchas solo envían los datos al abrirlas."
+            ],
+            "nota": "Sirve cualquiera que escriba el sueño en Salud. El Galaxy Watch, el Galaxy Ring y el Pixel Watch no funcionan con iPhone."
+          }
+        },
+        "comprobar": {
+          "titulo": "Cómo comprobar que llegó",
+          "pasos": [
+            "Abre Salud › Explorar › Sueño: tiene que estar tu última noche.",
+            "Baja hasta el final de esa pantalla, a las fuentes de datos: ahí aparece cada app o aparato que escribe tu sueño.",
+            "Si escriben dos, Salud usa primero el de arriba: con «Editar» puedes cambiar el orden.",
+            "Lo que puede escribir cada app está en Salud › tu foto › Apps.",
+            "En Moss, en Sueño › «De dónde sale cada dato», ves de cuál salió la noche. Si la noche no está en Salud, a Moss no le llega."
+          ]
+        }
       }
     },
     "cuidado": "Cuidados",
@@ -2486,9 +2635,9 @@
     "contacto": "Ayuda y contacto",
     "avisos": {
       "titulo": "Avisos",
-      "dormir": "Hora de dormir",
-      "dormirTexto": "Esta noche, acuéstate a las {hora}: para despertarte a las {despertar} habiendo dormido {horas}, con {latencia} min de margen para dormirte. Te avisa un rato antes.",
-      "dormirSinDatos": "Te avisa un rato antes de la hora de acostarte. Para calcularla hace falta saber a qué hora te despiertas: con unas noches basta.",
+      "dormir": "Acostarte",
+      "dormirTexto": "Esta noche, acuéstate a las {hora}: con los {margen} min que tardas en dormirte, quedas dormido dentro de tu periodo de melatonina ({desde} – {hasta}). Te avisa un rato antes.",
+      "dormirSinDatos": "A la hora que te deja dormido dentro de tu periodo de melatonina. Te avisa un rato antes.",
       "antes": "{n} min antes",
       "tardo": "Tardo en dormirme",
       "tardoAprendido": "Lo que aprende Moss ({n} min)",
@@ -2517,7 +2666,7 @@
       "entrenarTarde": "Si entrenas tarde",
       "entrenarTardeTexto": "Si terminarías a menos de dos horas de acostarte: hasta qué hora entrenar fuerte.",
       "luces": "Bajar las luces",
-      "lucesTexto": "Hora y media antes de acostarte: luz tenue y cálida.",
+      "lucesTexto": "Hora y media antes de acostarte: luz baja y cálida.",
       "recuperacion": "Tu recuperación",
       "recuperacionTexto": "Al despertarte, los días que entrenas: si te conviene entrenar fuerte o suave.",
       "maximoTextoConviene": "Moss nunca te avisa más veces que esto en un día. Si hay más, quedan primero la hora de dormir, lo de entrenar y tus hábitos; lo que cuenta desde la hora de acostarte, al final.",
@@ -2527,23 +2676,25 @@
       "carreraTexto": "Dos días antes de una carrera de más de hora y media, a la hora del almuerzo: carbohidratos y menos fibra.",
       "necesito": "Necesito dormir",
       "necesitoEdad": "Lo de tu edad ({h})",
-      "necesitoTexto": "Las guías dicen de 7 a 9 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la hora de acostarte, la deuda y la calidad.",
-      "necesitoTextoMenor": "A tu edad se recomiendan de 8 a 10 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la hora de acostarte, la deuda y la calidad.",
+      "necesitoTexto": "Las guías dicen de 7 a 9 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la deuda y la calidad.",
+      "necesitoTextoMenor": "A tu edad se recomiendan de 8 a 10 horas, y cambia de una persona a otra. Si con lo de siempre te levantas cansado, prueba con media hora más: la usan la deuda y la calidad.",
       "tuDia": "Tu día",
       "tuDiaTexto": "Sigue a tu despertar: nada de la mañana suena hasta que Moss sabe que te despertaste, y la noche se calcula con esa hora y tu deuda.",
       "mas": "Más avisos",
       "masTexto": "Apagados de fábrica: enciende los que te sirvan.",
       "deuda": "Tu deuda de sueño",
-      "deudaTexto": "Al despertarte, en una línea: si bajó o subió.",
+      "deudaTexto": "Al despertarte: cuánta tienes y cuánto cambió desde ayer.",
       "horarioTextoDia": "Al despertarte te pregunta si desayunas. Si no, lo del desayuno se reparte entre las comidas que quedan, y la primera que anotas mueve las demás.",
-      "melatonina": "Ventana de melatonina",
-      "melatoninaTexto": "Unas dos horas antes de la hora de dormirte, cuando la melatonina empieza a subir. Es una estimación.",
-      "revoluciones": "Bajar las revoluciones",
+      "melatonina": "Tu periodo de melatonina",
+      "melatoninaTexto": "Unas dos horas antes, te dice a qué hora empieza: es cuando menos te cuesta dormirte. Es una estimación.",
+      "revoluciones": "Bajar el ritmo",
       "revolucionesTexto": "Una hora antes de acostarte: algo tranquilo y sin pantallas brillantes.",
-      "descarga": "Anotar lo pendiente",
-      "descargaTexto": "Al acostarte: cinco minutos con lo de mañana en un papel, para no darle vueltas después.",
+      "descarga": "Anotar lo que tienes en la cabeza",
+      "descargaTexto": "Al acostarte, te invita a escribir tus pendientes en una nota corta, en Sueño. Por la mañana, después de despertarte, te llegan en un aviso: «Lo que hay que hacer hoy».",
       "gafas": "Gafas para la luz azul",
-      "gafasTexto": "Dos horas antes de acostarte, si las tienes. La evidencia todavía es poca."
+      "gafasTexto": "Dos horas antes de acostarte, si las tienes. La evidencia todavía es poca.",
+      "dormirSinPeriodo": "Esta noche, acuéstate a las {hora}: para despertarte a las {despertar} habiendo dormido {horas}, con {latencia} min de margen para dormirte. Te avisa un rato antes.",
+      "maximoSolo": "Subió solo a {n} por los avisos que encendiste. Si eliges otro, queda el tuyo."
     },
     "cambiarCuenta": "Cambiar de cuenta",
     "cambiarCuentaTexto": "Se cierra esta sesión y entras con otra cuenta. Lo de este teléfono se borra; tus datos quedan en tu cuenta.",
@@ -3748,24 +3899,6 @@
     }
   },
   "recordatorios": {
-    "dormirTextos": {
-      "enUnRato": "Ve preparándote: te acuestas en {tiempo}.",
-      "estaNoche": "Esta noche, acuéstate a las {hora}.",
-      "luces": "Baja las luces: te acuestas en {tiempo}.",
-      "paraDespertar": "Para despertarte a las {despertar}, acuéstate a las {hora}.",
-      "enTiempo": "En {tiempo} te toca acostarte.",
-      "pantallas": "Ve dejando el teléfono: te acuestas a las {hora}.",
-      "aLaHora": "A las {hora} te toca acostarte.",
-      "duermes": "Acuéstate a las {hora} y duermes {horas}.",
-      "bajaElRitmo": "Empieza a bajar el ritmo: te acuestas a las {hora}.",
-      "deuda": "Para bajar tu deuda de sueño: acuéstate a las {hora} y te despiertas a las {despertar}."
-    },
-    "dormirEn": {
-      "15": "15 minutos",
-      "30": "media hora",
-      "45": "45 minutos",
-      "60": "una hora"
-    },
     "meVoyADormir": "Me voy a dormir",
     "buenasNoches": "Buenas noches. Moss anotó la hora.",
     "sinAnotar": {
@@ -3864,8 +3997,6 @@
       "snack": "Hora del snack"
     },
     "conPlan": "{hora}: {plan}",
-    "pesarse": "Buen momento para pesarte",
-    "pesarseControl": "Hoy es tu control: pésate antes de desayunar",
     "pruebaTermina": "Tu prueba de Moss termina en dos días",
     "conviene": {
       "antes": {
@@ -3918,7 +4049,7 @@
       },
       "luces": {
         "titulo": "Baja las luces",
-        "texto": "Luz tenue y cálida: te acuestas a las {cama}."
+        "texto": "Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las {cama}."
       },
       "recuperacion": {
         "titulo": "Recuperación: {pct} %",
@@ -3937,21 +4068,28 @@
     },
     "despertar": {
       "deuda": {
-        "bajo": "Tu deuda de sueño bajó a {deuda}.",
-        "subio": "Tu deuda de sueño subió a {deuda}.",
-        "igual": "Tu deuda de sueño sigue en {deuda}.",
-        "es": "Tu deuda de sueño es de {deuda}.",
-        "cero": "Tu deuda de sueño bajó a cero.",
-        "sin": "No tienes deuda de sueño."
+        "bajo": "Bajó {cambio} desde ayer.",
+        "subio": "Subió {cambio} desde ayer.",
+        "igual": "Igual que ayer.",
+        "es": "Es lo que te falta dormir de las últimas dos semanas.",
+        "cero": "Bajó a cero: dormiste lo que te faltaba.",
+        "sin": "Duermes lo que necesitas.",
+        "titulo": "Tu deuda de sueño: {deuda}",
+        "tituloSin": "Sin deuda de sueño"
       },
       "desayuno": {
-        "pregunta": "¿Desayunas hoy?",
         "si": "Sí",
-        "directo": "Voy directo al almuerzo"
+        "directo": "Voy directo al almuerzo",
+        "titulo": "¿Desayunas hoy?",
+        "texto": "Si vas directo al almuerzo, lo del desayuno se reparte en el resto del día."
       },
       "comida": {
-        "conKcal": "{hora}: unas {kcal} kcal. Lo que no comiste en el desayuno va {lista}.",
-        "sinNumeros": "{hora}. Lo que no comiste en el desayuno va {lista}."
+        "titulo": {
+          "almuerzo": "Almuerza unas {kcal} kcal",
+          "merienda": "Merienda unas {kcal} kcal",
+          "cena": "Cena unas {kcal} kcal"
+        },
+        "texto": "Lo que no comiste en el desayuno va {lista}."
       },
       "a": {
         "almuerzo": "al almuerzo",
@@ -3960,21 +4098,45 @@
       },
       "y": "{a} y {b}",
       "melatonina": {
-        "titulo": "Tu ventana de melatonina",
-        "texto": "Más o menos ahora empieza a subir tu melatonina: te acuestas a las {cama}."
+        "titulo": "Tu periodo de melatonina: {desde}",
+        "texto": "De {desde} a {hasta} es cuando menos te cuesta dormirte: tu melatonina empieza a subir más o menos ahora."
       },
       "revoluciones": {
-        "titulo": "Baja las revoluciones",
-        "texto": "Algo tranquilo y sin pantallas brillantes: te acuestas a las {cama}."
+        "titulo": "Baja el ritmo",
+        "texto": "Deja lo que te acelera y las pantallas brillantes. Te acuestas a las {cama}."
       },
       "gafas": {
-        "titulo": "Las gafas para la luz azul",
-        "texto": "Si las usas, buen momento: te acuestas a las {cama}."
+        "titulo": "Ponte las gafas para la luz azul",
+        "texto": "Si las tienes, úsalas desde ahora hasta acostarte, a las {cama}."
       },
       "descarga": {
-        "titulo": "Anota lo pendiente",
-        "texto": "Cinco minutos con lo de mañana en un papel: suele ayudar a dormirse antes."
+        "titulo": "Anota lo que tienes en la cabeza",
+        "texto": "Escribe tus pendientes antes de acostarte: con la cabeza despejada cuesta menos dormirse. Mañana Moss te los recuerda."
+      },
+      "pendientes": {
+        "titulo": "Lo que hay que hacer hoy",
+        "mas": "y {n} más"
       }
+    },
+    "acostarte": {
+      "titulo": "Acuéstate a las {cama}",
+      "texto": "{tiempo}. Así te duermes dentro de tu periodo de melatonina ({desde} – {hasta}).",
+      "conDeuda": "{tiempo}. Con {deuda} de deuda de sueño, esta noche no lo dejes para más tarde.",
+      "sinPeriodo": "{tiempo}. Así duermes {horas} y te despiertas a las {despertar}.",
+      "en": {
+        "15": "En 15 minutos",
+        "30": "En media hora",
+        "45": "En 45 minutos",
+        "60": "En una hora",
+        "otro": "En {n} minutos",
+        "ya": "Ahora"
+      }
+    },
+    "pesarte": {
+      "titulo": "Pésate antes de desayunar",
+      "texto": "Después de ir al baño y siempre igual: así se ve la tendencia.",
+      "tituloControl": "Hoy es tu control: pésate",
+      "textoControl": "Antes de desayunar, como siempre."
     }
   },
   "entreno": {

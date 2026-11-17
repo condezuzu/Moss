@@ -6,9 +6,13 @@
 // - La primera comida que anotas corre las demás (horasCorridas). Si no desayunaste («Voy directo al almuerzo», o
 //   la primera que anotaste es otra), lo que te queda del día se reparte entre las que quedan, con el reparto del
 //   plan de comidas, sin pasarse del día.
-// - La noche sale de tu despertar y tu deuda (horasDeSueno): la ventana de melatonina, bajar las revoluciones y,
-//   apagados de fábrica, las gafas para la luz azul y anotar lo pendiente. Las luces y la hora de dormir son las
-//   de siempre (loQueConviene.ts y avisosDelDia), ya con la hora de la cama de esta noche.
+// - La noche sale de tu periodo de melatonina (horasDeSueno, con Sueno.periodo: el mismo de la tarjeta de Sueño,
+//   aprobado el 17/11 con la galería 50): el aviso del periodo cuando la melatonina empieza a subir, bajar el ritmo
+//   y, apagados de fábrica, las gafas para la luz azul y anotar lo que tienes en la cabeza. Las luces y la hora de
+//   acostarte son las de siempre (loQueConviene.ts y avisosDelDia), con esa misma hora. Sin periodo (menos de 3
+//   noches en la semana), el aviso del periodo no suena y la hora es la de antes, con tu despertar y tu deuda.
+// - Lo que hay que hacer hoy (17/11): con «anotar lo que tienes en la cabeza» prendido, los pendientes de ese día
+//   vuelven a la mañana, 20 minutos después de la pregunta del desayuno.
 // Entra en avisosDelDia como lo que conviene: el mismo máximo, de a uno y nada de lo que ya pasó. Acá van códigos;
 // el texto sale de textoDelAviso y tituloDelAviso (avisos.ts). Las fuentes, en spec/estudio/momentos.md.
 
@@ -17,21 +21,26 @@ import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import { diaDeLaSemana } from './fechas';
 import { loQueConviene, type DeLoQueConviene } from './loQueConviene';
 import type { Macros } from './metas';
+import type { Pendiente } from './pendientes';
 import { REPARTO } from './plan';
 import { redondearDeuda } from './sueno';
 
 type ConHora = (typeof CON_HORA)[number];
+type SinDesayuno = Exclude<ConHora, 'desayuno'>;
 
 /**
  * Lo que dice cada uno. La deuda, a la media hora (redondearDeuda, como en Sueño), la de esta mañana y la de ayer;
- * en las comidas, a cuáles va lo que no comiste en el desayuno (desde esta) y, con números, las kcal de esta.
+ * en las comidas, a cuáles va lo que no comiste en el desayuno (desde esta) y, con números, las kcal de esta; en
+ * el periodo de melatonina, sus dos horas, en minutos del día; y en lo que hay que hacer hoy, lo que falta hacer.
  */
 export type DelDespertar =
   | { que: 'deuda'; ahora: number; antes: number | null }
   | { que: 'desayuno' }
-  | { que: 'comida'; comida: ConHora; van: ConHora[]; kcal?: number }
-  | { que: 'melatonina' | 'revoluciones' | 'gafas'; cama: number }
-  | { que: 'descarga' };
+  | { que: 'comida'; comida: SinDesayuno; van: SinDesayuno[]; kcal?: number }
+  | { que: 'melatonina'; desde: number; hasta: number }
+  | { que: 'revoluciones' | 'gafas'; cama: number }
+  | { que: 'descarga' }
+  | { que: 'pendientes'; lista: string[] };
 
 /** Las dos respuestas de «¿Desayunas hoy?», en los botones del aviso. */
 export const RESPUESTAS_DEL_DESAYUNO = ['si', 'directo'] as const;
@@ -43,19 +52,21 @@ export const MAS = ['descarga', 'gafas', 'cafe', 'entrenarTarde', 'ultimaComida'
 
 /**
  * Con todo lo de fábrica, un día con merienda llega a diez (la deuda, pesarse, el desayuno, cuatro comidas, la
- * melatonina, las revoluciones, las luces y la cama): con el máximo de siempre (6) se perdía la noche.
+ * melatonina, bajar el ritmo, las luces y acostarte): con el máximo de siempre (6) se perdía la noche.
  */
 export const MAXIMO_QUE_SIGUE_EL_DESPERTAR = 10;
 /**
- * La melatonina empieza a subir unas 2 h antes de la hora de dormirte (el DLMO; Sletten 2010: unas 2 h, constante
- * aunque se corra la hora). Es una estimación, no una medida.
+ * El máximo de quien nunca lo eligió: el de fábrica, que sube solo con lo que se prende aparte, como en la galería
+ * 50: dos por anotar lo que tienes en la cabeza (el de la noche y «Lo que hay que hacer hoy») y uno por las gafas.
+ * Sin eso, prenderlos dejaba afuera justo el aviso de anotar, y bajar el ritmo. El que se eligió a mano no se toca.
  */
-export const MELATONINA = 120;
-/** Bajar las revoluciones, una hora antes de la cama (Rise: de 1 a 2 h; es una convención). */
+export const maximoDeFabrica = (a: Pick<Avisos, 'descarga' | 'gafas'>): number =>
+  MAXIMO_QUE_SIGUE_EL_DESPERTAR + (a.descarga?.encendido ? 2 : 0) + (a.gafas?.encendido ? 1 : 0);
+/** Bajar el ritmo (`revoluciones`, en lo guardado), una hora antes de acostarte (Rise: de 1 a 2 h; es una convención). */
 export const REVOLUCIONES = 60;
-/** Las gafas, 2 h antes de la cama, como en el ensayo de Shechter 2018. */
+/** Las gafas, 2 h antes de acostarte, como en el ensayo de Shechter 2018. */
 export const GAFAS = 120;
-/** Anotar lo pendiente, al acostarte: cinco minutos antes de apagar la luz (Scullin 2018). */
+/** Anotar lo que tienes en la cabeza, al acostarte: cinco minutos antes de apagar la luz (Scullin 2018). */
 export const DESCARGA = 5;
 /**
  * Si Moss se entera de tu despertar más de dos horas después, la deuda y pesarse ya no son «al despertarte»: no suenan.
@@ -75,12 +86,15 @@ export type DeSigueElDespertar = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'hor
   meta?: Macros | null;
   comido?: Macros;
   sinNumeros?: boolean;
+  /** Los pendientes de ese día (pendientesPara, en pendientes.ts), hechos o no. */
+  pendientes?: readonly Pick<Pendiente, 'texto' | 'hecho'>[];
 };
 
 /**
  * Lo prendido de fábrica, para quien no eligió: la deuda, la melatonina, las revoluciones, las luces, la hora de
- * dormir, el horario con el desayuno, el almuerzo y la cena a sus horas de siempre, y el máximo de diez. Pesarse
- * sigue como lo elegiste; lo demás, apagado.
+ * dormir, el horario con el desayuno, el almuerzo y la cena a sus horas de siempre, y el máximo de diez, que sube
+ * con anotar lo que tienes en la cabeza y con las gafas (maximoDeFabrica). Pesarse sigue como lo elegiste; lo demás,
+ * apagado.
  */
 export function deFabrica(a: Avisos, horaDeComida: (c: Comida) => number): Avisos {
   const prendido = { encendido: true };
@@ -89,7 +103,7 @@ export function deFabrica(a: Avisos, horaDeComida: (c: Comida) => number): Aviso
     dormir: a.dormir ?? prendido, deuda: a.deuda ?? prendido, melatonina: a.melatonina ?? prendido,
     revoluciones: a.revoluciones ?? prendido, luces: a.luces ?? prendido,
     horario: a.horario ?? Object.fromEntries((['desayuno', 'almuerzo', 'cena'] as const).map((c) => [c, aCuarto(horaDeComida(c))])),
-    maximoPorDia: a.maximoPorDia ?? MAXIMO_QUE_SIGUE_EL_DESPERTAR,
+    maximoPorDia: a.maximoPorDia ?? maximoDeFabrica(a),
   };
 }
 
@@ -120,12 +134,21 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
       libre = minutos + SEPARACION;
     }
     if (ajustes.horario?.desayuno !== undefined) {
+      const minutos = Math.max(libre, ajustes.horario.desayuno);
       lista.push({
-        id: 'desayuno', tipo: 'desayuno', comida: 'desayuno', minutos: Math.max(libre, ajustes.horario.desayuno), despertar: { que: 'desayuno' },
+        id: 'desayuno', tipo: 'desayuno', comida: 'desayuno', minutos, despertar: { que: 'desayuno' },
         // Ya pregunta por el desayuno: el de su hora y el de «falta anotar», que contaban desde la hora de siempre
         // (con un despertar tarde, mientras dormías), no hacen falta.
         reemplaza: ['horario:desayuno', 'comida:desayuno'],
       });
+      libre = minutos + SEPARACION;
+    }
+    // Lo que hay que hacer hoy: lo que anotaste anoche, después de lo último de la mañana. Con todo hecho no suena,
+    // pero guarda su lugar en el máximo, como lo demás que ya pasó.
+    const pendientes = op.pendientes ?? [];
+    if (prendido('descarga') && pendientes.length) {
+      const sinHacer = pendientes.filter((p) => !p.hecho).map((p) => p.texto);
+      lista.push({ id: 'pendientes', tipo: 'pendientes', minutos: libre, despertar: { que: 'pendientes', lista: sinHacer }, ...(sinHacer.length ? {} : { sobra: true as const }) });
     }
   }
 
@@ -137,7 +160,7 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
     const base: Partial<Record<Comida, number>> = { ...Object.fromEntries(CON_HORA.map((c) => [c, op.horaDeComida(c)])), ...ajustes.horario };
     const corridas = horasCorridas(base, anotadas, true);
     const ultima = Math.max(-1, ...CON_HORA.map((c, i) => (comio(c) ? i : -1)));
-    const van = CON_HORA.filter((c, i) => c !== 'desayuno' && i > ultima && ajustes.horario?.[c] !== undefined);
+    const van = CON_HORA.filter((c, i): c is SinDesayuno => c !== 'desayuno' && i > ultima && ajustes.horario?.[c] !== undefined);
     const peso = (c: ConHora) => REPARTO[4][c] ?? 0;
     const total = van.reduce((s, c) => s + peso(c), 0);
     const queda = op.meta && !op.sinNumeros ? Math.max(0, op.meta.kcal - (op.comido?.kcal ?? 0)) : 0;
@@ -151,10 +174,13 @@ export function avisosDelDespertar(op: DeSigueElDespertar): Aviso[] {
     });
   }
 
-  // La noche, desde la hora de dormirte de esta noche, que ya sale de tu despertar y de tu deuda.
+  // La noche, desde la hora de acostarte de esta noche: la de tu periodo de melatonina o, sin él, la de antes.
   const cama = horas.acostarse;
-  if (cama !== null && horas.dormir !== null) {
-    if (prendido('melatonina')) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: horas.dormir - MELATONINA, despertar: { que: 'melatonina', cama } });
+  if (cama !== null) {
+    // El periodo se anuncia cuando la melatonina empieza a subir, unas dos horas antes de que empiece (PERIODO, en
+    // melatonina.ts), con las mismas horas que dice Sueño. Sin periodo, no suena.
+    const p = horas.periodo;
+    if (prendido('melatonina') && p) lista.push({ id: 'melatonina', tipo: 'melatonina', minutos: p.inicio, despertar: { que: 'melatonina', desde: p.desde, hasta: p.hasta } });
     if (prendido('gafas')) lista.push({ id: 'gafas', tipo: 'gafas', minutos: cama - GAFAS, despertar: { que: 'gafas', cama } });
     if (prendido('revoluciones')) lista.push({ id: 'revoluciones', tipo: 'revoluciones', minutos: cama - REVOLUCIONES, despertar: { que: 'revoluciones', cama } });
     if (prendido('descarga')) lista.push({ id: 'descarga', tipo: 'descarga', minutos: cama - DESCARGA, despertar: { que: 'descarga' } });

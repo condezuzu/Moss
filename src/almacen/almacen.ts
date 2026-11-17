@@ -21,6 +21,7 @@ import {
   edadDe, metaManual, metaPara, metaRepartida, metasIniciales, motivoParaNo, pesoMinimoSano, type Cuestionario, type Macros, type MetaGuardada, type Perfil,
 } from '@/dominio/metas';
 import { limpiarNombre, type Nombre } from '@/dominio/nombre';
+import { diaDeLosPendientes, limpiarPendiente, pendientesDe, pendientesLlenos, pendientesVigentes, type Pendiente } from '@/dominio/pendientes';
 import { adaptarRegistros, PREFERENCIAS_DE_FABRICA, sugerenciasQueSobran, type ComidaPlaneada, type Preferencias } from '@/dominio/plan';
 import { horasDeSiempre } from '@/dominio/recordatorios';
 import {
@@ -87,6 +88,11 @@ export type Estado = MapasDeComida & {
    */
   despertares: Partial<Record<ClaveDia, Despertar>>;
   desayunos: Partial<Record<ClaveDia, RespuestaDelDesayuno>>;
+  /**
+   * «Lo que hay que hacer hoy» (src/dominio/pendientes.ts): lo que anotas por la noche en Sueño, cada uno con el día
+   * en que hay que hacerlo. Los de la última semana; quedan en el teléfono.
+   */
+  pendientes: Pendiente[];
   /** De cuál aparato sale la noche (su id en Salud), si se eligió en Perfil › Aparatos; sin elegir, la automática. Queda en el teléfono. */
   fuenteDelSueno: string | null;
   /** Los números de la comida (las calorías y los gramos), o solo las figuras y las barras. Queda en el teléfono. */
@@ -173,6 +179,7 @@ const DESPERTARES = 'despertares';
 const DESAYUNOS = 'desayunos';
 /** Cuántos días de despertares y de respuestas del desayuno se guardan. */
 const DIAS_DEL_DESPERTAR = 14;
+const PENDIENTES = 'pendientes';
 const FUENTE_DEL_SUENO = 'fuenteDelSueno';
 const NUMEROS = 'numeros';
 const KCAL = 'kcal';
@@ -395,7 +402,7 @@ export function crearAlmacen(op: Opciones) {
   const vacio = (): Omit<Estado, 'version' | 'forma'> => ({
     listo: false, hoy: diaLogico(ahora(), CORTE_DE_FABRICA, zona()), habitos: [], periodos: [], dias: new Map(), marcas: new Map(), logros: [],
     perfil: null, nombre: null, metas: [], pesos: [], ...mapasDe({ registros: [], recetas: [], propios: [], favoritos: [], agua: [], medidas: [], noches: [] }), canasta: [], sistema: null, inicio: null,
-    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, semilla: '',
+    recordatorios: null, avisos: {}, calidad: null, uso: [], despertares: {}, desayunos: {}, fuenteDelSueno: null, numeros: true, kcal: 'luna', entreno: null, respuestas: null, cuidados: null, verEntreno: true, alias: {}, mandarBusquedas: false, entradaHecha: false, avanceDeEntrada: null, salud: null, corte: CORTE_DE_FABRICA, latencia: null, suenoRehecho: false, necesidad: null, pendientes: [], semilla: '',
   });
   let estado: Estado = { ...vacio(), version: 0, forma: 0 };
   const oyentes = new Set<() => void>();
@@ -501,7 +508,7 @@ export function crearAlmacen(op: Opciones) {
       perfil: g.perfil,
     });
     const sistema = g.ajustes[SISTEMA] === 'imperial' || g.ajustes[SISTEMA] === 'metrico' ? g.ajustes[SISTEMA] : null;
-    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), listo: true }, true);
+    cambiar({ ...nuevo, semilla, perfil: g.perfil, nombre: nombreDeAjuste(g.ajustes[NOMBRE]), metas: g.metas, pesos: g.pesos, ...comida, canasta: leerCanasta(g.ajustes[CANASTA]), sistema, inicio: leerInicio(g.ajustes[INICIO]), recordatorios: leerRecordatorios(g.ajustes[RECORDATORIOS]), avisos: leerAvisos(g.ajustes[AVISOS]), calidad: CALIDADES.find((c) => c === g.ajustes[CALIDAD]) ?? null, uso: leerUso(g.ajustes[USO]), despertares: porDia(g.ajustes[DESPERTARES], esDespertar), desayunos: porDia(g.ajustes[DESAYUNOS], esRespuesta), fuenteDelSueno: g.ajustes[FUENTE_DEL_SUENO] || null, numeros: g.ajustes[NUMEROS] !== 'no', kcal: ESTILOS_DE_KCAL.find((k) => k === g.ajustes[KCAL]) ?? 'luna', entreno: leerEntreno(g.ajustes[ENTRENO]), respuestas: respuestasDe(leerAvance(g.ajustes[RESPUESTAS])), cuidados: cuidadosDe(leerAvance(g.ajustes[CUIDADOS])), verEntreno: g.ajustes[VER_ENTRENO] !== 'no', alias: leerAlias(g.ajustes[ALIAS]), mandarBusquedas: g.ajustes[BUSQUEDAS] === 'si', entradaHecha: g.ajustes[ENTRADA] === 'hecha', avanceDeEntrada: leerAvance(g.ajustes[AVANCE]), corte, latencia: latenciaDe(g.ajustes[LATENCIA]), suenoRehecho: g.ajustes[SUENO_REHECHO] === 'si', necesidad: necesidadDe(g.ajustes[NECESIDAD]), pendientes: pendientesVigentes(pendientesDe(leerAvance(g.ajustes[PENDIENTES])), hoy), listo: true }, true);
     revisarControl();
   }
 
@@ -838,6 +845,13 @@ export function crearAlmacen(op: Opciones) {
   function ponerCanasta(canasta: Item[]) {
     guardar((r) => r.guardarAjuste(CANASTA, JSON.stringify(canasta)));
     cambiar({ canasta }, false);
+  }
+
+  /** Los pendientes, sin los de hace más de una semana. */
+  function ponerPendientes(lista: Pendiente[]) {
+    const pendientes = pendientesVigentes(lista, estado.hoy);
+    guardar((r) => r.guardarAjuste(PENDIENTES, JSON.stringify(pendientes)));
+    cambiar({ pendientes }, false);
   }
 
   return {
@@ -1297,6 +1311,25 @@ export function crearAlmacen(op: Opciones) {
       const desayunos = recientes({ ...estado.desayunos, [dia]: respuesta }, estado.hoy);
       guardar((r) => r.guardarAjuste(DESAYUNOS, JSON.stringify(desayunos)));
       cambiar({ desayunos }, false);
+    },
+    /**
+     * Un pendiente, anotado ahora: es para mañana (diaDeLosPendientes). Sin texto, o con la lista de ese día llena,
+     * no se anota y devuelve null.
+     */
+    ponerPendiente(texto: string): Pendiente | null {
+      const para = diaDeLosPendientes(estado.hoy);
+      const limpio = limpiarPendiente(texto);
+      if (!limpio || pendientesLlenos(estado.pendientes, para)) return null;
+      const nuevo: Pendiente = { id: nuevoId(), texto: limpio, hecho: false, para };
+      ponerPendientes([...estado.pendientes, nuevo]);
+      return nuevo;
+    },
+    quitarPendiente(id: string) {
+      if (estado.pendientes.some((p) => p.id === id)) ponerPendientes(estado.pendientes.filter((p) => p.id !== id));
+    },
+    /** Tachar uno en Inicio, o volver a dejarlo sin hacer. */
+    marcarPendiente(id: string, hecho: boolean) {
+      if (estado.pendientes.some((p) => p.id === id && p.hecho !== hecho)) ponerPendientes(estado.pendientes.map((p) => (p.id === id ? { ...p, hecho } : p)));
     },
     ponerEnCanasta: (item: Item) => ponerCanasta([...estado.canasta, item]),
     cambiarEnCanasta: (i: number, item: Item) => ponerCanasta(estado.canasta.map((x, k) => (k === i ? item : x))),

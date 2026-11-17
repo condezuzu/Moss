@@ -560,6 +560,9 @@
       if (cual === 'anotar') { pestanas.ir(3); sueno.verNoche(0); setTimeout(() => sueno.periodo('nota'), 420); }
       else { inicio.primerDia(false); pestanas.ir(0); setTimeout(() => inicio.bajar(), 420); }
     },
+    // Las noches de Sueño y el margen de Perfil: el periodo de melatonina de los avisos es el de la tarjeta de Sueño.
+    noches: () => sueno.noches(),
+    margenElegido: () => (perfilSec ? perfilSec.latencia : null),
   }));
   // Lo que se anota o se quita en la nota cambia la lista de Inicio.
   Periodo.pendientes.alCambiar(() => inicio.refrescarConsejos());

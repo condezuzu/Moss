@@ -400,7 +400,7 @@ describe('lo que dice cada uno', () => {
     expect(dicho({ que: 'despuesDeEntrenar', a: h('19:00') })[1]).toBe('Algo con proteína, antes de las 19:00.');
     expect(dicho({ que: 'ultimaComida', a: h('20:00'), cama: h('23:00') })).toEqual(['Última comida grande', 'Cena antes de las 20:00: te acuestas a las 23:00. Después, algo ligero.']);
     expect(dicho({ que: 'entrenarTarde', a: h('21:00'), entreno: h('20:30'), cama: h('23:00') })).toEqual(['Termina antes de las 21:00', 'Más tarde, que sea suave: te acuestas a las 23:00.']);
-    expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Baja las luces', 'Luz tenue y cálida: te acuestas a las 23:00.']);
+    expect(dicho({ que: 'luces', cama: h('23:00') })).toEqual(['Baja las luces', 'Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las 23:00.']);
     expect(dicho({ que: 'recuperacion', porcentaje: 52, fuerte: false, dormido: 340 })).toEqual(['Recuperación: 52 %', 'Hoy, mejor suave: dormiste 5 h 40 min.']);
     expect(dicho({ que: 'partido' })).toEqual(['Mañana juegas', 'Hoy y mañana, carbohidratos en cada comida.']);
     expect(dicho({ que: 'carrera' })).toEqual(['Tu carrera es pasado mañana', 'Carbohidratos en todas tus comidas y menos fibra.']);
@@ -409,8 +409,8 @@ describe('lo que dice cada uno', () => {
       .toEqual(['Eat before your workout', 'Lunch at 13:00: 75 g of carbs, 40 g of protein and little fat.']);
   });
 
-  it('los demás avisos siguen con el nombre de la app de título', () => {
-    expect(tituloDelAviso({ dia: DIA, minutos: 0, aviso: { id: 'dormir', minutos: 0, tipo: 'dormir' } }, para(es as unknown as Rama))).toBe('Moss');
+  it('el horario y los hábitos siguen con el nombre de la app de título', () => {
+    expect(tituloDelAviso({ dia: DIA, minutos: 0, aviso: { id: 'horario:cena', minutos: 0, tipo: 'horario', comida: 'cena' } }, para(es as unknown as Rama))).toBe('Moss');
   });
 
   it('todas las formas tienen su texto en los dos idiomas, sin nada sin completar y cortas', () => {

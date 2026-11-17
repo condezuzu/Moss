@@ -5,7 +5,8 @@ import type { ComponentType } from 'react';
 import { View } from 'react-native';
 
 import { ARCO } from './arco';
-import type { PropsDeLaCurva, PropsDeLasChispas, PropsDelAnillo, PropsDelArco } from './DibujosSkia';
+import { DIBUJO } from './dibujoDelPeriodo';
+import type { PropsDeLaCurva, PropsDeLasChispas, PropsDelAnillo, PropsDelArco, PropsDelPeriodo } from './DibujosSkia';
 
 export type { Chispa, ParteDelAnillo } from './DibujosSkia';
 
@@ -27,4 +28,5 @@ function conSkia<P extends object>(cargar: () => Promise<ComponentType<P>>, medi
 export const Arco = conSkia<PropsDelArco>(async () => (await import('./DibujosSkia')).ArcoSkia, (p) => ({ width: p.ancho, height: (ARCO.alto * p.ancho) / ARCO.ancho }));
 export const Anillo = conSkia<PropsDelAnillo>(async () => (await import('./DibujosSkia')).AnilloSkia, (p) => ({ width: p.tam, height: p.tam }));
 export const Curva = conSkia<PropsDeLaCurva>(async () => (await import('./DibujosSkia')).CurvaSkia, (p) => ({ width: p.ancho, height: p.alto }));
+export const Periodo = conSkia<PropsDelPeriodo>(async () => (await import('./DibujosSkia')).PeriodoSkia, (p) => ({ width: p.ancho, height: (DIBUJO.alto * p.ancho) / DIBUJO.ancho }));
 export const Chispas = conSkia<PropsDeLasChispas>(async () => (await import('./DibujosSkia')).ChispasSkia, (p) => ({ width: p.ancho, height: p.altoDeFila * p.filas.length }));

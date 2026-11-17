@@ -1,6 +1,7 @@
 // Los avisos, en el iPhone (src/dominio/avisos.ts dice cuáles y cuándo): la hora de dormir, los de
 // cada hábito, el horario de comidas, las comidas sin anotar, pesarse, lo que conviene hacer y el día que sigue
-// tu despertar (sigueElDespertar.ts: lo de la mañana espera a que te despiertes). Se programan los de la semana cada vez que se abre Moss y
+// tu despertar (sigueElDespertar.ts: lo de la mañana espera a que te despiertes, y la noche sale de tu periodo de
+// melatonina, el mismo de Sueño). Se programan los de la semana cada vez que se abre Moss y
 // cada vez que cambia algo que los mueve (lo anotado, lo hecho, los hábitos, las noches o los
 // avisos), así lo ya hecho no avisa. Son avisos locales: no pasan por ningún servidor.
 
@@ -18,7 +19,9 @@ import { apagaLoQueConviene } from '@/dominio/cuidados';
 import { claveDeMarca } from '@/dominio/dias';
 import { diaDeLaSemana, diaLogico, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { loQueConviene, QUE_CONVIENE, type DeLoQueConviene } from '@/dominio/loQueConviene';
+import { periodoDeMelatonina } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
+import { pendientesPara } from '@/dominio/pendientes';
 import { avisosDelDespertar, deFabrica, RESPUESTAS_DEL_DESAYUNO, type DeSigueElDespertar, type RespuestaDelDesayuno } from '@/dominio/sigueElDespertar';
 import { horasDeSiempre } from '@/dominio/recordatorios';
 import { aguaDelDia, recientes, totalDelDia, vigentes } from '@/dominio/registros';
@@ -75,6 +78,8 @@ export const LO_QUE_MUEVE_LOS_AVISOS = [
   // El día que sigue tu despertar: a qué hora te despertaste y qué contestaste a «¿Desayunas hoy?». Y los cuidados,
   // que apagan algo de lo que conviene (el reflujo corre la última comida).
   'despertares', 'desayunos', 'cuidados',
+  // Lo que anotaste para mañana, y lo que ya tachaste: «Lo que hay que hacer hoy» dice lo que falta.
+  'pendientes',
 ] as const;
 
 type Para = Pick<Estado, (typeof LO_QUE_MUEVE_LOS_AVISOS)[number]>;
@@ -85,14 +90,18 @@ export function suenoParaAvisos(e: Pick<Estado, 'hoy' | 'perfil' | 'salud' | 'no
   const s = suenoDe(e.hoy, e.perfil, e.salud, e.noches, e.necesidad);
   if (s.deEjemplo) return null;
   const nec = s.necesidad;
+  const deuda = deudaDeSueno(ultimasNoches(s.noches, e.hoy, 14), nec)?.minutos ?? null;
   return {
     habitual: (clave) => habitualDe(s.noches, clave),
     necesidad: nec,
-    deuda: deudaDeSueno(ultimasNoches(s.noches, e.hoy, 14), nec)?.minutos ?? null,
+    deuda,
     // Tu margen para dormirte: la hora de acostarte lo descuenta.
     latencia: margenParaDormirte(e.latencia),
     // Y, con un reloj o un anillo, lo que sueles estar despierto en la noche: para dormir lo que necesitas, hay que estar en la cama eso más.
     despierto: despiertoDeLaNoche(s.noches),
+    // Tu periodo de melatonina, la misma cuenta de la tarjeta de Sueño: así el aviso y la tarjeta dicen las mismas
+    // horas. Los días que vienen todavía no tienen noches: valen las de hoy.
+    periodo: (dia) => periodoDeMelatonina(s.noches, dia < e.hoy ? dia : e.hoy, { margen: e.latencia, deuda }),
   };
 }
 
@@ -149,7 +158,7 @@ const textoDe = (n: Notificacion, e: Pick<Estado, 'habitos' | 'registros'>): str
     duracion,
   });
 
-/** El título: lo que conviene y lo de la noche dicen ahí qué hacer; los demás, «Moss». */
+/** El título: lo de la noche, lo de la mañana y lo que conviene dicen ahí qué hacer; los demás, «Moss». */
 const tituloDe = (n: Notificacion): string =>
   tituloDelAviso(n, { t: t as (clave: string, valores?: Record<string, string | number>) => string, habito: () => '', plan: () => '', duracion });
 
@@ -251,7 +260,9 @@ async function sacarLosQueYaNoDicenNada(e: Para): Promise<void> {
     const pesoHecho = datos.tipo === 'pesarse' && pesadoHoy;
     // «¿Desayunas hoy?» ya contestado, o con otra comida anotada: ya no pregunta nada.
     const desayunoDicho = datos.tipo === 'desayuno' && dia === hoy && (!!e.desayunos[hoy] || anotadas.size > 0);
-    if (deOtroDia || comidaHecha || pesoHecho || desayunoDicho) await Notifications.dismissNotificationAsync(n.request.identifier).catch(() => {});
+    // «Lo que hay que hacer hoy», con todo tachado.
+    const todoHecho = datos.tipo === 'pendientes' && dia === hoy && pendientesPara(e.pendientes, hoy).every((p) => p.hecho);
+    if (deOtroDia || comidaHecha || pesoHecho || desayunoDicho || todoHecho) await Notifications.dismissNotificationAsync(n.request.identifier).catch(() => {});
   }
 }
 
@@ -302,7 +313,7 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
     desayuno: e.desayunos[hoy] ?? null, entrenado: entrenadoHoy ? minutosEnElDia(new Date(entrenadoHoy.momento), hoy) : null,
   };
   const convieneDe = (dia: ClaveDia): Aviso[] => {
-    const op = { ...comun, dia, sesiones: sesionesDelDia(e.entreno, dia), meta: metaDelDia(e, dia), ...(dia === hoy ? deHoyParaConviene : {}) };
+    const op = { ...comun, dia, sesiones: sesionesDelDia(e.entreno, dia), meta: metaDelDia(e, dia), pendientes: pendientesPara(e.pendientes, dia), ...(dia === hoy ? deHoyParaConviene : {}) };
     return [...loQueConviene(op), ...avisosDelDespertar(op)];
   };
   const lista = avisosDeLaSemana({

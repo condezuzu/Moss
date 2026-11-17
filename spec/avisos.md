@@ -20,6 +20,11 @@ elegido queda en el teléfono (no sube a la cuenta).
 
 ## La hora de dormir
 
+**Desde el 17/11/2026 (galería 50), con tu periodo de melatonina la hora es la suya:** te acuestas tu margen para
+dormirte antes de que empiece el periodo, la misma hora que dice la tarjeta de Sueño, y el aviso se llama «Acuéstate
+a las…» (ver «Los avisos reescritos», abajo). Lo que sigue es la cuenta de antes, que queda para cuando todavía no
+hay periodo (menos de 3 noches en la última semana).
+
 - **La meta:** la hora de despertar de mañana, menos lo que necesitas dormir
   (por tu edad, o lo que elegiste: [`sueno.md`](sueno.md)), menos lo que se suele
   estar despierto adentro de la noche (la necesidad es de sueño: sin reloj, 30
@@ -36,23 +41,13 @@ elegido queda en el teléfono (no sube a la cuenta).
   el despertar del sábado.
 - **El aviso** suena un rato antes (15, 30, 45 o 60 minutos; 30 de fábrica). Sin
   noches para saber cuándo te despertás, no hay aviso de dormir.
-- **Lo que dice** (lo pediste el 31/10/2026, repetía siempre lo mismo): cada noche otro
-  texto, corto y con un dato de esa noche. Pasa por los nueve antes de repetir
-  (`textoDeDormir`, en `avisos.ts`). Sale del día y nada más: reprogramar no lo cambia.
-  Sin culpa: ninguno dice «deberías», «debes» ni «tienes que» (lo comprueba
-  `avisos.test.ts`). Con el aviso de las luces prendido, «Baja las luces: …» no
-  sale (ya lo dijo ese): pasa por los otros ocho.
-  - «Ve preparándote: a la cama en una hora.»
-  - «Esta noche, a la cama a las 23:20.»
-  - «Baja las luces: a la cama en media hora.»
-  - «Para despertarte a las 7:30, a la cama a las 23:20.»
-  - «En 45 minutos te toca acostarte.»
-  - «Ve dejando el teléfono: a las 23:20, a la cama.»
-  - «A las 23:20 te toca ir a la cama.»
-  - «A la cama a las 23:20 y duermes 8 h.»
-  - «Empieza a bajar el ritmo: a las 23:20, a la cama.»
-  - Con una hora de deuda o más, una noche de cada cuatro: «Te faltan 1 h 30 min de
-    sueño: acostarte a las 23:20 ayuda.» La deuda va a la media hora: es aproximada.
+- **Lo que dice** (reescrito el 17/11/2026; antes rotaba entre nueve textos, que ya no están): el título, «Acuéstate
+  a las 23:15»; el cuerpo, cuánto falta y por qué esa hora: «En media hora. Así te duermes dentro de tu periodo de
+  melatonina (23:30 – 00:30).» Sin periodo: «En media hora. Así duermes 8 h y te despiertas a las 07:30.» Sin culpa:
+  ninguno dice «deberías», «debes» ni «tienes que», ni «a la cama» (lo comprueba `avisos.test.ts`).
+  - Con una hora de deuda o más, una noche de cada cuatro (`nombraLaDeuda`, en `avisos.ts`; sale del día y nada
+    más: reprogramar no lo cambia): «En media hora. Con 1 h 30 min de deuda de sueño, esta noche no lo dejes para
+    más tarde.» La deuda va a la media hora: es aproximada.
 - **De Rise:** recuerda la rutina de la noche, la ventana de melatonina, cuándo dejar
   el café, la hora de dormir y bajar las luces, a una hora de su reloj del cuerpo
   [R1][R2]. **No encontré sus textos literales:** los de arriba son nuestros, con esa
@@ -99,7 +94,8 @@ Al rato de despertarse (10 minutos; sin noches, a las 8), antes de desayunar: el
 día del control o todos los días. Si ya te pesaste, no suena: pesarse vuelve a
 programar los avisos, igual que cambiar el perfil o la meta. El día del control
 lo dice, sin prometer que pesarse en ese momento cambia la meta (el control ya
-corrió al abrir Moss).
+corrió al abrir Moss). Desde el 17/11, en dos partes: «Pésate antes de desayunar · Después de ir al baño y siempre
+igual: así se ve la tendencia.» y, el día del control, «Hoy es tu control: pésate · Antes de desayunar, como siempre.»
 
 ## Las comidas sin anotar
 
@@ -278,14 +274,13 @@ fábrica como todo lo demás.
 
 ### Bajar las luces
 
-- Hora y media antes de ir a la cama: «Baja las luces · Luz tenue y cálida: a las
-  23:00, a la cama.»
+- Hora y media antes de acostarte: «Baja las luces · Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño.
+  Te acuestas a las 23:00.» (reescrito el 17/11).
 - **De dónde sale:** la hora y media, de Rise [R1]. El consenso de 18 expertos
   (Brown 2022) pide luz muy baja desde al menos 3 h antes de la cama; 90 minutos o 3
   h es la D2 de [`estudio/momentos.md`](estudio/momentos.md). Gooley 2011 no da un
   horario: la luz de una habitación en las 8 h antes de dormir atrasó la melatonina
   y la acortó unos 90 minutos.
-- Esas noches, el aviso de dormir no dice «Baja las luces» (ver «La hora de dormir»).
 
 ### Tu recuperación (con Ascent)
 
@@ -361,8 +356,10 @@ fábrica como todo lo demás.
   momento. Antes esperaba un segundo y medio: con Moss de fondo ese reloj se paraba
   y sonaba igual lo que ya habías hecho. Esa era la causa más probable del aviso
   de entrenar después de haber entrenado.
-- **El máximo** cuenta las veces que suena (2, 3, 4, 6 u 8 por día; 6 de
-  fábrica, para que el horario de comidas no deje sin lugar a los hábitos). Si
+- **El máximo** cuenta las veces que suena (2, 3, 4, 6, 8, 10 o 12 por día; 10 de
+  fábrica desde el día que sigue tu despertar, D9 de `estudio/momentos.md`). Mientras no lo elijas a mano, el de
+  fábrica sube solo con lo que prendes aparte: dos por anotar lo que tienes en la cabeza y uno por las gafas, hasta
+  13 (`maximoDeFabrica`, en `sigueElDespertar.ts`). Si
   sobran, quedan primero el de dormir, después los de hábitos, el horario y
   pesarse, y al final los de comidas sin anotar, que casi siempre ya se anotaron.
   Lo de «muy bajo en algo» va aparte, con su propio tope. Lo que conviene entra en
@@ -382,9 +379,12 @@ fábrica como todo lo demás.
 Tocar un aviso abre lo suyo: el horario y las comidas, la hoja para anotar esa
 comida; pesarse, el peso del «+»; dormir, Sueño; un hábito, el cielo de Hábitos;
 lo que falta, la hoja para anotar; el fin de la prueba, Perfil, donde está tu suscripción y cómo cancelarla.
-Lo que conviene (cuando se programe): comer antes, después y la última comida, la
+Lo que conviene: comer antes, después y la última comida, la
 hoja para anotar esa comida (llevan su comida, como el horario); el café, las luces
-y entrenar tarde, Sueño; la recuperación, Ascent.
+y entrenar tarde, Sueño; la recuperación, Ascent. Lo del día que sigue tu despertar: la deuda, tu periodo de
+melatonina, bajar el ritmo y las gafas, Sueño; «¿Desayunas hoy?» y las comidas sin desayuno, la hoja para anotar esa
+comida; «Anota lo que tienes en la cabeza», Sueño con la nota abierta (`abrirLaNota`, de
+`src/secciones/sueno/Pendientes.tsx`); y «Lo que hay que hacer hoy», Inicio, donde está la lista para ir tachando.
 
 ## Fuentes de los textos
 
@@ -468,7 +468,9 @@ en `spec/estudio/momentos.md`: la melatonina sube unas 2 horas antes de la hora 
 con D8 (la cama se corre la mitad de lo que te despertaste tarde), D9 (máximo de fábrica 10) y D10 (las gafas,
 apagadas y sin marca) de [`estudio/momentos.md`](estudio/momentos.md).
 
-**Cómo quedó:**
+**Cómo quedó** (el 16/11; **desde el 17/11, las palabras de cada aviso y la cuenta de la noche son las de «Los avisos
+reescritos», abajo**: donde acá dice «la ventana de melatonina», «las revoluciones» o «la cama», léase tu periodo de
+melatonina, bajar el ritmo y acostarte):
 
 - **La regla** está en `src/dominio/sigueElDespertar.ts`, con sus tests, y entra en `avisosDelDia` como lo que
   conviene (`avisosQueSiguenElDespertar`). Se prende con `Sueno.despertarReal` (el despertar de verdad de cada día, o
@@ -514,13 +516,15 @@ apagadas y sin marca) de [`estudio/momentos.md`](estudio/momentos.md).
     anotar y si vas muy bajo), y el máximo con 10. La víspera del partido y la carrera larga, todavía no (según el
     deporte está para aprobar); la recuperación, con Ascent.
 
-## Los avisos reescritos y «Lo que hay que hacer hoy» (17/11/2026, en la galería para aprobar)
+## Los avisos reescritos y «Lo que hay que hacer hoy» (17/11/2026: aprobados con la galería 50 y programados)
 
 Lo pediste el 17/11: que el título diga qué hacer y el cuerpo dé el detalle con la hora, en español neutro, sin «a
-la cama» y con palabras propias. Está en la galería (escenario `melatonina`; `galeria/src/periodo.js` y
-`avisos.js`); la app no cambió. **Cuándo suena cada uno lo sigue diciendo la regla** (`avisos.ts` y
-`sigueElDespertar.ts`): cambian solo las palabras, que están en el diccionario de la galería con las claves que
-tendrían en `src/textos` (`recordatorios.nuevos`, `perfil.avisosNuevos`).
+la cama» y con palabras propias. Lo aprobaste en la galería 50 (escenario `melatonina`) y está en la app: las
+palabras, en `src/textos` (`recordatorios.acostarte`, `recordatorios.pesarte`, `recordatorios.despertar` y
+`recordatorios.conviene.luces`; los nombres de Perfil, en `perfil.avisos`), y las escriben `tituloDelAviso` y
+`textoDelAviso` (`avisos.ts`). La pantalla bloqueada de la galería las toma de ahí. El horario de comidas, las
+comidas sin anotar, lo que falta, los hábitos y lo demás de lo que conviene conservan su texto, con «Moss» de título
+los cuatro primeros.
 
 | Aviso | Título | Cuerpo |
 |---|---|---|
@@ -534,36 +538,90 @@ tendrían en `src/textos` (`recordatorios.nuevos`, `perfil.avisosNuevos`).
 | Pesarte | «Pésate antes de desayunar» | «Después de ir al baño y siempre igual: así se ve la tendencia.» |
 | El desayuno | «¿Desayunas hoy?» | «Si vas directo al almuerzo, lo del desayuno se reparte en el resto del día.», con «Sí» y «Voy directo al almuerzo» |
 | Lo que hay que hacer hoy (nuevo) | «Lo que hay que hacer hoy» | Tus pendientes, uno por línea: hasta cuatro, y «y 2 más» |
+| Las comidas sin desayuno (el título es nuevo, del 17/11) | «Almuerza unas 1050 kcal» («Merienda unas…», «Cena unas…») | «Lo que no comiste en el desayuno va al almuerzo, a la merienda y a la cena.» Sin números o sin meta, el título es «Hora del almuerzo» |
+| Acostarte sin periodo (el cuerpo es nuevo) | «Acuéstate a las 22:45» | «En media hora. Así duermes 8 h y te despiertas a las 07:00.» |
 
-- **En la pantalla bloqueada, el periodo empieza a la hora de dormirte de la regla** (la de acostarte más tu
-  margen) y dura una hora: así cierra con los demás avisos del día. En Sueño sale de `melatonina.ts`, con tus
-  noches. Al programarlo hay que unir las dos cuentas (ver `sueno.md`).
-- **Perfil › Avisos** lleva los mismos nombres: «Tu periodo de melatonina», «Bajar las luces», «Bajar el ritmo»,
-  «Acostarte» (con la hora de esta noche y tu periodo) y «Anotar lo que tienes en la cabeza». «Tardo en
-  dormirme» es el margen de Sueño › Afinar (0, 15, 30, 45 o 60 min).
+### Una sola cuenta de la noche
+
+El aviso del periodo, el de acostarte, la tarjeta de Sueño, Perfil › Avisos y la pantalla bloqueada de la galería
+dicen las mismas horas, porque salen de la misma cuenta: `periodoDeMelatonina` (`src/dominio/melatonina.ts`), con
+tus noches de los últimos 7 días y tu margen para dormirte.
+
+- **Cómo entra en la regla:** `Sueno.periodo(dia)` (`avisos.ts`) da el periodo de la noche que empieza ese día, y
+  `horasDeSueno` lo usa: te duermes cuando empieza (`desde`) y te acuestas tu margen antes (`acostarse`, de a 5
+  minutos). De esa hora cuentan todos: acostarte (un rato antes), las luces (hora y media antes), bajar el ritmo (una
+  hora), las gafas (dos), anotar lo que tienes en la cabeza (cinco minutos), la última comida grande, el corte del
+  café, entrenar tarde, lo que falta a la noche, los hábitos «antes de dormir» y el widget de la noche. En el
+  teléfono lo arma `suenoParaAvisos` (`programar.ts`) con las mismas noches, el mismo día y el mismo margen que la
+  tarjeta (`Sueno.tsx`); los días que vienen todavía no tienen noches y usan el de hoy.
+- **El aviso del periodo** suena cuando la melatonina empieza a subir (`inicio`: dos horas antes de que empiece el
+  periodo) y dice sus dos horas, al minuto: «Tu periodo de melatonina: 22:57 · De 22:57 a 23:57 es cuando menos te
+  cuesta dormirte…».
+- **Sin periodo** (menos de 3 noches en la última semana, o noches con poca confianza en el horario): el aviso del
+  periodo no suena, y «Acuéstate a las…» y lo demás de la noche usan la cuenta de antes («La hora de dormir»,
+  arriba), con el cuerpo que dice cuánto dormirías.
+- **La deuda ya no adelanta la hora** cuando hay periodo: antes del periodo cuesta dormirse (`melatonina.ts`). Una
+  noche de cada cuatro, el cuerpo dice que no lo dejes para más tarde. **Lo que necesitas dormir tampoco la mueve**:
+  sigue en la deuda y en la calidad, y el texto de «Necesito dormir», en Perfil, ya dice solo eso («la usan la deuda
+  y la calidad»).
+- **D8, la mitad de lo que te despertaste tarde:** con periodo, **no se aplica**. Correr la hora daría un «Acuéstate
+  a las…» distinto del de la tarjeta de Sueño y del de Perfil, que dicen el comienzo del periodo: lo contradice. Y el
+  periodo ya se corre solo con tu despertar, porque la noche de hoy entra en el punto medio de los 7 días:
+  despertarte 2 h 30 más tarde lo atrasa unos 11 minutos (con las 7 noches), que es la parte del reloj del cuerpo (el estudio la estima
+  en un 10 a 15 % para una sola mañana: `estudio/deuda-y-melatonina.md`, 3.3). La otra parte de D8 (hay menos horas
+  despierto encima) queda afuera. **Sin periodo, D8 sigue como estaba** (`CORRE_CON_EL_DESPERTAR`). Si prefieres que
+  también con periodo la hora se corra (hasta el final del periodo, para seguir durmiéndote dentro de él), es un
+  cambio chico en `horasDeSueno`, y la tarjeta de Sueño tendría que tomar la hora de ahí.
+
+### En Perfil › Avisos
+
+- Los mismos nombres: «Tu periodo de melatonina», «Bajar las luces», «Bajar el ritmo», «Acostarte» (con la hora de
+  esta noche y tu periodo; sin periodo, la hora de antes con su porqué; sin noches, que la calcula con tu periodo) y
+  «Anotar lo que tienes en la cabeza». «Tardo en dormirme» es el margen de Sueño › Afinar (0, 15, 30, 45 o 60 min).
+- Lo guardado no cambió de nombre (`melatonina`, `revoluciones`, `dormir`, `descarga`): lo que ya habías elegido
+  se respeta.
+- **El máximo que se muestra es el que vale:** el que elegiste o, sin elegir, el de fábrica, que es 10 y sube solo a
+  12 con anotar lo que tienes en la cabeza, a 11 con las gafas y a 13 con los dos. Las opciones son 2, 3, 4, 6, 8, 10
+  y 12; si quedó en 11 o 13, aparece entre ellas. Cuando subió solo, una línea lo dice: «Subió solo a 12 por los
+  avisos que encendiste. Si eliges otro, queda el tuyo.» Elegido a mano, se respeta tal cual, también si es menos.
 
 ### Lo que hay que hacer hoy
 
 - **A la noche**, «Anota lo que tienes en la cabeza» abre una nota corta en Sueño: escribes tus pendientes uno
   por uno (hasta 6, de hasta 60 letras), se quitan con la cruz y quedan en el teléfono. Con el aviso activado,
   Sueño muestra la fila «Lo que tienes en la cabeza», debajo del periodo, para abrirla cuando quieras.
-- **A la mañana**, después del despertar, llega «Lo que hay que hacer hoy» con esos puntos: 20 minutos después de
-  lo último de la mañana (la deuda, pesarte y el desayuno). En la galería entra en la regla como un aviso más
-  (de a uno y dentro del máximo); al programarlo va en `sigueElDespertar.ts`.
+- **A la mañana**, después del despertar, llega «Lo que hay que hacer hoy» con lo de ese día que todavía no
+  tachaste: 20 minutos después de «¿Desayunas hoy?» (sin la pregunta, después de lo último de la mañana; sin nada
+  más, al despertarte). Hasta cuatro líneas, y «y 2 más». Está en `sigueElDespertar.ts` (`avisosDelDespertar`, con
+  los pendientes del día: `pendientesPara`, de `src/dominio/pendientes.ts`): entra en la regla como un aviso más,
+  de a uno y dentro del máximo, y vale como pesarte o el horario. Como todo lo de la mañana, espera a que Moss sepa
+  que te despertaste. Con todo tachado no suena (y si ya había llegado, sale del centro de notificaciones).
+- **Al tocarlos:** el de la noche abre Sueño con la nota para escribir; el de la mañana, Inicio.
 - **Después se ven en Inicio**, arriba de «Para hoy», para ir tachando.
-- **Apagado de fábrica**, con «Anotar lo que tienes en la cabeza»: un solo interruptor para la nota, el aviso de
-  la noche, el de la mañana y la lista de Inicio.
+- **Apagado de fábrica**, con «Anotar lo que tienes en la cabeza»: un solo interruptor (`descarga`, en lo guardado)
+  para la nota, el aviso de la noche, el de la mañana y la lista de Inicio. Anotar o tachar un pendiente vuelve a
+  programar los avisos (`LO_QUE_MUEVE_LOS_AVISOS`).
 
-**Para decidir:**
+**Lo que se decidió (17/11):**
 
-- **El máximo.** Con «Anotar lo pendiente» son dos avisos más, y con las gafas, uno más: un día con merienda y
-  pesarte llega a 13, y con el máximo de 10 se caen los últimos de la noche. En la galería, el máximo sube con
-  ellos y Perfil › Avisos suma el 12. Las opciones: subir el máximo solo al activarlos, o que los dos de lo
-  pendiente no cuenten.
-- **Las gafas aprietan la noche**: cada aviso va a 20 minutos del anterior, y con las gafas activadas «Baja el
-  ritmo» tendría que esperar más de 45 y no suena.
-- Si los avisos de las comidas sin desayuno («Hora del almuerzo: unas 1050 kcal…») también pasan a título y
-  cuerpo: quedaron como estaban.
+- **El máximo:** de fábrica sigue en 10, sube solo con los extras (dos por anotar, uno por las gafas; hasta 13), como
+  en la pantalla bloqueada de la galería 50, y Perfil › Avisos suma el 12 a las opciones. El que elegiste a mano no
+  se toca. Así, prender «Anotar lo que tienes en la cabeza» no deja afuera ni ese aviso ni «Baja el ritmo», que eran
+  los primeros en caerse con diez (los últimos de los que menos valen).
+- **Las comidas sin desayuno** pasaron a título y cuerpo (la tabla de arriba).
+
+**Para tener en cuenta:**
+
+- **Si elegiste el máximo a mano, no sube solo.** De fábrica son ocho avisos (la deuda, el desayuno, el almuerzo, la
+  cena, el periodo, las luces, el ritmo y acostarte); con pesarte y la merienda, diez; con lo pendiente, doce. Quien
+  eligió 10 a mano y prende «Anotar» tiene que pasar a 12 para que suenen todos: los primeros en caerse son el de
+  anotar y bajar el ritmo.
+- **Las gafas aprietan la noche**: cada aviso va a 20 minutos del anterior, y el que tendría que esperar más de 45 no
+  suena. Con la cena a las 21:00 y acostarte a las 22:40 (el día de ejemplo de la galería), con las gafas se cae
+  «Baja el ritmo»; con la cena más temprano, entran todos.
+- **Solo se prueba en el iPhone:** los dos botones de «¿Desayunas hoy?» y «Me voy a dormir», que tocar el de la noche
+  abra la nota con Moss cerrada, y que la tarea de segundo plano encuentre tu despertar para que la lista de la
+  mañana llegue sin abrir Moss. La regla, los textos y lo que se programa tienen tests.
 
 ## Lo que queda
 

@@ -256,7 +256,7 @@ const SeccionPerfil = (() => {
     zona.addEventListener('pointerdown', (ev) => ev.stopPropagation());
     const cont = zona.querySelector('.pf-scroll');
     const hoja = Util.hoja(tel, 'pf-hoja', () => opciones.alCambiar());
-    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: true, antes: 30, comidas: [], maximo: SigueElDespertar.MAXIMO_QUE_SIGUE_EL_DESPERTAR, horario: { desayuno: 8 * 60, almuerzo: 13 * 60, cena: 21 * 60 }, pesarse: false, todos: false, latencia: null, necesidad: null, deuda: true, melatonina: true, revoluciones: true, luces: true } };
+    const s = { conectadas: new Set(), abierta: null, fuente: 'auto', sinDeficit: false, numeros: true, buscar: false, sistema: 'metrico', calidad: null, corte: Fechas.CORTE_DE_FABRICA, creditos: false, sinSalud: false, opciones: null, avisos: { dormir: true, antes: 30, comidas: [], maximo: null, horario: { desayuno: 8 * 60, almuerzo: 13 * 60, cena: 21 * 60 }, pesarse: false, todos: false, latencia: null, necesidad: null, deuda: true, melatonina: true, revoluciones: true, luces: true } };
 
     /** La precisión, en puntos: de 1 (estimada con el teléfono) a 4 (con etapas y lo de la noche). */
     const puntos = (nivel) => {
@@ -450,7 +450,7 @@ const SeccionPerfil = (() => {
       // orden del día; en «Más avisos», lo apagado de fábrica.
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.tuDia')));
       cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.tuDiaTexto')));
-      bloque('sueno', 'azul', tx('perfil.avisos.deuda'), tx('perfil.avisosNuevos.deudaTexto'), !!a.deuda, (v) => { a.deuda = v; });
+      bloque('sueno', 'azul', tx('perfil.avisos.deuda'), tx('perfil.avisos.deudaTexto'), !!a.deuda, (v) => { a.deuda = v; });
       bloque('balanza', 'salvia', tx('perfil.avisos.pesarse'), tx('perfil.avisos.pesarseTexto'), a.pesarse, (v) => { a.pesarse = v; },
         chips([false, true], (todos) => tx(todos ? 'perfil.avisos.pesarseTodos' : 'perfil.avisos.pesarseControl'), (todos) => a.todos === todos, (todos) => { a.todos = todos; }));
       // El horario de comidas: cada comida elegida, con su hora de a un cuarto de hora (como Perfil.tsx).
@@ -476,15 +476,16 @@ const SeccionPerfil = (() => {
       });
       bloque('comida', 'oro', tx('perfil.avisos.horario'), `${tx('perfil.avisos.horarioTexto')} ${tx('perfil.avisos.horarioTextoDia')}`, Object.keys(a.horario).length > 0,
         (v) => { a.horario = v ? { desayuno: HORAS.desayuno, almuerzo: HORAS.almuerzo, cena: HORAS.cena } : {}; }, filas);
-      // Lo de la noche, reescrito el 17/11 (para aprobar; periodo.js): tu periodo de melatonina, bajar las luces, bajar
-      // el ritmo y acostarte, a la hora que te deja dormido cuando empieza tu periodo (Melatonina).
-      const nuevo = (clave, valores) => tx('perfil.avisosNuevos.' + clave, valores);
+      // Lo de la noche, reescrito el 17/11 (aprobado con la galería 50 y ya en la app, con sus palabras en src/textos):
+      // tu periodo de melatonina, bajar las luces, bajar el ritmo y acostarte, a la hora que te deja dormido cuando
+      // empieza tu periodo (Melatonina). Las claves son las de lo guardado: `melatonina`, `revoluciones` y `dormir`.
+      const deAvisos = (clave, valores) => tx('perfil.avisos.' + clave, valores);
       const periodo = Melatonina.periodoDeMelatonina(opciones.noches ? opciones.noches() : Datos.NOCHES, Datos.HOY, { margen: latencia });
       const hora = (m) => u.horaMin(m + 18 * 60);
-      bloque('luna', 'violeta', nuevo('periodo'), nuevo('periodoTexto'), !!a.melatonina, (v) => { a.melatonina = v; });
-      bloque('foco', 'gris', nuevo('luces'), nuevo('lucesTexto'), !!a.luces, (v) => { a.luces = v; });
-      bloque('baja', 'salvia', nuevo('ritmo'), nuevo('ritmoTexto'), !!a.revoluciones, (v) => { a.revoluciones = v; });
-      bloque('sueno', 'azul', nuevo('acostarte'), periodo ? nuevo('acostarteTexto', { hora: hora(periodo.acostarse), margen: latencia, desde: hora(periodo.desde), hasta: hora(periodo.hasta) }) : nuevo('acostarteSinPeriodo'), a.dormir, (v) => { a.dormir = v; },
+      bloque('luna', 'violeta', deAvisos('melatonina'), deAvisos('melatoninaTexto'), !!a.melatonina, (v) => { a.melatonina = v; });
+      bloque('foco', 'gris', deAvisos('luces'), deAvisos('lucesTexto'), !!a.luces, (v) => { a.luces = v; });
+      bloque('baja', 'salvia', deAvisos('revoluciones'), deAvisos('revolucionesTexto'), !!a.revoluciones, (v) => { a.revoluciones = v; });
+      bloque('sueno', 'azul', deAvisos('dormir'), periodo ? deAvisos('dormirTexto', { hora: hora(periodo.acostarse), margen: latencia, desde: hora(periodo.desde), hasta: hora(periodo.hasta) }) : deAvisos('dormirSinDatos'), a.dormir, (v) => { a.dormir = v; },
         chips([15, 30, 45, 60], (n) => tx('perfil.avisos.antes', { n }), (n) => a.antes === n, (n) => { a.antes = n; }));
       // Tardo en dormirme: el margen para dormirte (SinReloj.MARGENES), el mismo de Sueño › Afinar, como en la app.
       const tardo = el('section', 'pf-aviso');
@@ -517,11 +518,9 @@ const SeccionPerfil = (() => {
         ...(tipos.includes('resistencia') ? [['carrera', 'objetivo', 'salvia']] : []),
         ...(conAscent() && opciones.vinculada && opciones.vinculada() ? [['recuperacion', 'onda', 'ascent']] : []),
       ];
-      // Anotar lo que tienes en la cabeza (17/11) también activa la nota de Sueño y la lista de Inicio (Periodo.pendientes).
-      const NUEVOS = { descarga: ['perfil.avisosNuevos.anotar', 'perfil.avisosNuevos.anotarTexto'], gafas: ['perfil.avisos.gafas', 'perfil.avisosNuevos.gafasTexto'] };
+      // Anotar lo que tienes en la cabeza (`descarga`, 17/11) también activa la nota de Sueño y la lista de Inicio (Periodo.pendientes).
       for (const [que, ico, color] of conviene) {
-        const [titulo, texto] = NUEVOS[que] || ['perfil.avisos.' + que, `perfil.avisos.${que}Texto`];
-        bloque(ico, color, tx(titulo), tx(texto), !!a[que], (v) => { a[que] = v; if (que === 'descarga') Periodo.pendientes.activar(v); });
+        bloque(ico, color, tx('perfil.avisos.' + que), tx(`perfil.avisos.${que}Texto`), !!a[que], (v) => { a[que] = v; if (que === 'descarga') Periodo.pendientes.activar(v); });
       }
       bloque('campana', 'rosa', tx('perfil.recordatoriosLlave'), tx('perfil.recordatoriosTexto'), a.comidas.length > 0, (v) => { a.comidas = v ? ['desayuno', 'almuerzo', 'cena'] : []; },
         chips(['desayuno', 'almuerzo', 'merienda', 'cena'], (c) => tx('comida.comidas.' + c), (c) => a.comidas.includes(c),
@@ -529,8 +528,13 @@ const SeccionPerfil = (() => {
       // Si vas muy bajo en algo (src/dominio/loQueFalta.ts): aparte del máximo, con su propio tope.
       bloque('rayo', 'violeta', tx('perfil.avisos.falta'), tx('perfil.avisos.faltaTexto'), a.falta !== false, (v) => { a.falta = v; });
       cuerpo.appendChild(el('h4', 'pf-grupo', tx('perfil.avisos.maximo')));
-      // Con anotar lo pendiente son dos más (el de la noche y «Lo que hay que hacer hoy»): por eso llega a 12.
-      cuerpo.appendChild(chips([2, 3, 4, 6, 8, 10, 12], String, (n) => a.maximo === n, (n) => { a.maximo = n; }));
+      // El que elegiste o, sin elegir (null), el de fábrica, que sube solo con anotar lo pendiente (dos más: el de la
+      // noche y «Lo que hay que hacer hoy») y con las gafas (SigueElDespertar.maximoDeFabrica), como en la app. Si
+      // quedó en 11 o 13, va entre los de siempre; y una línea dice que subió solo.
+      const maximo = a.maximo ?? SigueElDespertar.maximoDeFabrica({ descarga: { encendido: !!a.descarga }, gafas: { encendido: !!a.gafas } });
+      const maximos = [2, 3, 4, 6, 8, 10, 12];
+      cuerpo.appendChild(chips(maximos.includes(maximo) ? maximos : [...maximos, maximo].sort((x, y) => x - y), String, (n) => maximo === n, (n) => { a.maximo = n; }));
+      if (a.maximo == null && maximo > SigueElDespertar.MAXIMO_QUE_SIGUE_EL_DESPERTAR) cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoSolo', { n: maximo })));
       // Con lo que conviene cambia quién queda primero (avisos.ts, CATEGORIA).
       cuerpo.appendChild(el('p', 'pf-nota', tx('perfil.avisos.maximoTextoConviene')));
       h.append(cab, cuerpo);

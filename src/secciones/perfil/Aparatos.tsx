@@ -1,7 +1,8 @@
 // Perfil › Aparatos, el de la galería (galeria/src/perfil.js; spec/aparatos.md): los que escriben tu
-// sueño en Salud, con su precisión; de cuál sale la noche (la automática toma la más precisa de cada
-// noche); conectar directo, para lo que no llega a Salud (spec/aparatos.md: todavía ninguna, así que cada
-// marca dice «Pronto»); y qué llega de cada marca, que se despliega. Todo llega desde Salud.
+// sueño en Salud, con su precisión; la guía para conectar cada marca y cómo comprobar que llegó; de cuál sale
+// la noche (la automática toma la más precisa de cada noche); conectar directo, para lo que no llega a Salud
+// (spec/aparatos.md: todavía ninguna, así que cada marca dice «Pronto»); y qué llega de cada marca, que se
+// despliega. Todo llega desde Salud.
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -67,6 +68,80 @@ function DeCadaUno({ marca, abierta, alTocar, primera }: { marca: ConTexto; abie
   );
 }
 
+// ------------------------------------------------------------ la guía para conectar cada marca
+// Aprobada en la galería 50 (17/11/2026; galeria/src/periodo.js): los pasos para que cada reloj, anillo o app
+// escriba el sueño en Salud y, al final, cómo comprobar que llegó. Cada paso está confirmado en la ayuda de la
+// marca o de Apple (spec/aparatos.md, «Conectar cada marca»).
+
+/** Las marcas de la guía, en el orden en que se muestran. */
+const GUIA = ['appleWatch', 'oura', 'whoop', 'garmin', 'fitbit', 'polar', 'sleepCycle', 'autoSleep', 'otros'] as const;
+type DeLaGuia = (typeof GUIA)[number];
+/** Las que, además de los pasos, traen algo que conviene saber. */
+const CON_NOTA = ['oura', 'whoop', 'fitbit', 'polar', 'sleepCycle', 'autoSleep', 'otros'] as const satisfies readonly DeLaGuia[];
+const notaDe = (m: DeLaGuia) => {
+  const con = CON_NOTA.find((x) => x === m);
+  return con ? t(`perfil.aparatos.guia.marcas.${con}.nota`) : null;
+};
+
+/** Una fila de la guía que se despliega: los pasos numerados y, si hay, lo que conviene saber. */
+function PasosDeLaGuia({ titulo, pasos, nota, abierta, alTocar, primera, dorada }: {
+  titulo: string; pasos: readonly string[]; nota?: string | null; abierta: boolean; alTocar: () => void; primera?: boolean; dorada?: boolean;
+}) {
+  const giro = useAnimatedStyle(() => ({ transform: [{ rotate: withTiming(abierta ? '90deg' : '0deg', { duration: 260 }) }] }), [abierta]);
+  return (
+    <Animated.View layout={ACOMODA} style={!primera && st.separada}>
+      <Pressable onPress={alTocar} style={({ pressed }) => [st.fila, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
+        <Text style={[st.filaTitulo, dorada && st.dorada]}>{titulo}</Text>
+        <Animated.View style={giro}>
+          <Icono nombre="chevron.right" tam={12} color="rgba(239, 230, 207, 0.4)" peso="semibold" />
+        </Animated.View>
+      </Pressable>
+      {abierta && (
+        <Aparece style={st.pasos}>
+          {pasos.map((paso, i) => (
+            <View key={paso} style={st.paso}>
+              <Text style={st.pasoNumero}>{i + 1}</Text>
+              <Text style={st.pasoTexto}>{paso}</Text>
+            </View>
+          ))}
+          {nota ? <Text style={st.pasoNota}>{nota}</Text> : null}
+        </Aparece>
+      )}
+    </Animated.View>
+  );
+}
+
+function Guia() {
+  const [abierta, setAbierta] = useState<DeLaGuia | 'comprobar' | null>(null);
+  const tocar = (cual: DeLaGuia | 'comprobar') => setAbierta((x) => (x === cual ? null : cual));
+  return (
+    <>
+      <EtiquetaDeGrupo>{t('perfil.aparatos.guia.titulo')}</EtiquetaDeGrupo>
+      <Text style={st.nota}>{t('perfil.aparatos.guia.texto')}</Text>
+      <Animated.View layout={ACOMODA} style={st.lista}>
+        {GUIA.map((m, i) => (
+          <PasosDeLaGuia
+            key={m}
+            titulo={t(`perfil.aparatos.guia.marcas.${m}.nombre`)}
+            pasos={listaDeTextos(`perfil.aparatos.guia.marcas.${m}.pasos`)}
+            nota={notaDe(m)}
+            abierta={abierta === m}
+            alTocar={() => tocar(m)}
+            primera={i === 0}
+          />
+        ))}
+        <PasosDeLaGuia
+          titulo={t('perfil.aparatos.guia.comprobar.titulo')}
+          pasos={listaDeTextos('perfil.aparatos.guia.comprobar.pasos')}
+          abierta={abierta === 'comprobar'}
+          alTocar={() => tocar('comprobar')}
+          dorada
+        />
+      </Animated.View>
+    </>
+  );
+}
+
 /** Si un aparato no aparece, qué mirar y en qué orden: Moss solo lee lo que hay en Salud (spec/aparatos.md). */
 function NoLlego() {
   const [abierta, setAbierta] = useState(false);
@@ -126,8 +201,9 @@ export function Aparatos({ alCerrar }: { alCerrar: () => void }) {
           </View>
         )}
       </View>
+      <Guia />
       <NoLlego />
-      {/* Lo de abajo de «No llega» (y de cada marca) se acomoda cuando se despliega. */}
+      {/* Lo de abajo de la guía y de «No llega» (y de cada marca) se acomoda cuando se despliega. */}
       <Animated.View layout={ACOMODA}>
         {aparatos.length > 1 && (
           <Aparece>
@@ -176,6 +252,12 @@ const st = StyleSheet.create({
   filaTitulo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   detalle: { marginTop: 3, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
   marcaTexto: { paddingHorizontal: 16, paddingBottom: 14, fontFamily: letras.texto, fontSize: 13, lineHeight: 19, color: 'rgba(239, 230, 207, 0.62)' },
+  dorada: { color: colores.oroClaro },
+  pasos: { paddingHorizontal: 16, paddingBottom: 14 },
+  paso: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  pasoNumero: { width: 16, fontFamily: letras.numeroMedio, fontSize: 12.5, lineHeight: 19.6, color: colores.oroClaro, fontVariant: ['tabular-nums'] },
+  pasoTexto: { flex: 1, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19.6, color: 'rgba(239, 230, 207, 0.84)' },
+  pasoNota: { marginTop: 2, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 18, color: 'rgba(239, 230, 207, 0.55)' },
   nota: { marginBottom: 10, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.62)' },
   notaAbajo: { marginTop: 10, marginBottom: 0 },
   suma: { marginTop: 3, fontFamily: letras.texto, fontSize: 12, lineHeight: 16, color: 'rgba(239, 230, 207, 0.56)' },
