@@ -1,10 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  actividadDeLosPasos, actividadDelMovimiento, aprenderPersonal, conNochesDeMoss, deLasSenales, despertarAnclado, estadoDelCargador, estimarNoche, habitualDe, instanteDe, LATENCIA, nocheDeMoss, quePreguntar,
-  type Actividad, type Habitual, type Senal,
+  aceptadaSinCambios, actividadDeLosPasos, actividadDelMovimiento, conNochesDeMoss, deLasSenales, despertarAnclado, estadoDelCargador, estimarNoche, habitualDe, instanteDe, MARGEN, MARGENES, margenParaDormirte, nocheDeMoss,
+  quePreguntar, sinLasRestas,
+  type Actividad, type Estimacion, type Habitual, type Senal,
 } from './sinReloj';
-import { armarNoches, type Fuente, type NochePropia } from './sueno';
+import { armarNoches, deudaDeSueno, juicioDeLaDeuda, redondearDeuda, type Fuente, type NochePropia } from './sueno';
 
 const UY = -180;
 /** Un instante en hora de Uruguay: «2026-10-21 07:13». */
@@ -32,39 +33,48 @@ const estimar = (actividad: Actividad[], habitual: Habitual | null = SIEMPRE, ex
   estimarNoche({ clave: '2026-10-22', zona: UY, actividad, habitual, ...extra });
 
 describe('la noche sin reloj', () => {
-  it('sin nada aprendido, 31 minutos después de la última actividad y 18 antes de la primera, junto con tu hora de siempre', () => {
-    // Las dos señales casi coinciden: 00:01 y 0:00 al dormirte; 7:12 y 7:20 al despertarte, que pesa menos.
+  it('cuenta como sueño todo el rato que el teléfono estuvo quieto, menos el margen para dormirte: 15 minutos de fábrica', () => {
+    // Lo dejaste a las 23:30 y lo agarraste a las 7:30: dormido de 23:45 a 7:30. Tu hora de siempre (0:00 y 7:20) no mueve nada.
     const e = estimar(dia('23:30', '07:30'))!;
-    expect(e.dormirse).toBe(min('2026-10-22 00:01'));
-    expect(e.despertar).toBe(min('2026-10-22 07:14'));
+    expect(e.dormirse).toBe(min('2026-10-21 23:45'));
+    expect(e.despertar).toBe(min('2026-10-22 07:30'));
     expect(e).toMatchObject({ confianza: 'alta', interrupciones: 0, motivos: [] });
-    // El rango, de la duda que queda al juntar las dos (35 y 60): ±39, sin antes de la última actividad ni
-    // después de la primera.
-    expect(e.margen).toEqual({ dormirse: 39, despertar: 34 });
-    expect(e.rango.dormirse).toEqual([min('2026-10-21 23:30'), e.dormirse + 39]);
-    expect(e.rango.despertar).toEqual([e.despertar - 34, min('2026-10-22 07:30')]);
+    expect(e.quieto).toEqual({ desde: min('2026-10-21 23:30'), hasta: min('2026-10-22 07:30') });
+    // El rango, de la duda de cada señal (35 y 30): ±45 y ±38, sin antes de la última actividad ni después de la primera.
+    expect(e.margen).toEqual({ dormirse: 45, despertar: 38 });
+    expect(e.rango.dormirse).toEqual([min('2026-10-21 23:30'), e.dormirse + 45]);
+    expect(e.rango.despertar).toEqual([e.despertar - 38, min('2026-10-22 07:30')]);
+    // Una sola señal por borde: la última actividad y la primera.
+    expect(e.pistas.dormirse).toEqual([{ que: 'ultimaActividad', en: min('2026-10-21 23:30'), peso: 1, tipos: ['pasos'] }]);
+    expect(e.pistas.despertar).toEqual([{ que: 'primeraActividad', en: min('2026-10-22 07:30'), peso: 1, tipos: ['pasos'] }]);
+  });
+
+  it('el margen es el que elijas en Sueño › Afinar: 0, 15, 30, 45 o 60 minutos', () => {
+    expect([MARGEN, margenParaDormirte(null), margenParaDormirte(undefined), margenParaDormirte(0), margenParaDormirte(45)]).toEqual([15, 15, 15, 0, 45]);
+    expect(MARGENES).toEqual([0, 15, 30, 45, 60]);
+    const con = (margen: number) => estimar(dia('23:30', '07:30'), SIEMPRE, { margen })!;
+    expect(MARGENES.map((m) => con(m).dormirse)).toEqual(['23:30', '23:45', '00:00', '00:15', '00:30'].map((h) => min(`2026-10-2${h < '12' ? 2 : 1} ${h}`)));
+    // El margen no toca la mañana.
+    expect(con(60).despertar).toBe(min('2026-10-22 07:30'));
   });
 
   it('usar el teléfono un rato a la madrugada no corta la noche: es una interrupción, y baja la confianza', () => {
     const una = estimar(dia('23:30', '07:30', [uso('2026-10-22 03:00', '2026-10-22 03:06', 'moss')]))!;
-    expect(una.despertar).toBe(min('2026-10-22 07:14'));
+    expect(una.despertar).toBe(min('2026-10-22 07:30'));
     expect(una).toMatchObject({ interrupciones: 1, motivos: ['usoDeNoche'] });
     const dos = estimar(dia('23:30', '07:30', [uso('2026-10-22 02:00', '2026-10-22 02:05'), uso('2026-10-22 04:30', '2026-10-22 04:40')]))!;
     expect(dos).toMatchObject({ interrupciones: 2, confianza: 'media' });
   });
 
-  it('dejar el teléfono mucho antes de lo de siempre: te dormiste cerca de tu hora de siempre, y baja la confianza', () => {
-    // Lo dejaste a las 21:00 y siempre te dormís a las 0:00: tres horas antes. Más de dos horas y media
-    // después de dejarlo, como mide Sahha (153 minutos): casi todo el peso es de tu hora de siempre.
+  it('dejar el teléfono mucho antes de lo de siempre: todo ese rato cuenta, y Moss pregunta (confianza media, nunca baja)', () => {
+    // Lo dejaste a las 21:00 y siempre te duermes a las 0:00: como Rise, cuenta desde las 21:15. Para eso está el margen.
     const e = estimar(dia('21:00', '07:30'))!;
-    expect(e.dormirse).toBe(min('2026-10-21 23:43'));
-    expect(e.pistas.dormirse.find((p) => p.que === 'habitual')!.peso).toBeGreaterThan(0.8);
+    expect(e.dormirse).toBe(min('2026-10-21 21:15'));
     expect(e.confianza).toBe('media');
-    expect(e.motivos).toContain('dejasteAntes');
-    // Una hora antes no es «mucho antes», y pesan más parecido.
+    expect(e.motivos).toEqual(expect.arrayContaining(['dejasteAntes', 'distintaDeLoDeSiempre']));
+    // Una hora antes no es «mucho antes».
     const poco = estimar(dia('23:00', '07:30'))!;
-    expect(poco.dormirse).toBe(min('2026-10-21 23:43'));
-    expect(poco.pistas.dormirse.find((p) => p.que === 'habitual')!.peso).toBeLessThan(0.5);
+    expect(poco.dormirse).toBe(min('2026-10-21 23:15'));
     expect(poco.motivos).not.toContain('dejasteAntes');
   });
 
@@ -72,13 +82,13 @@ describe('la noche sin reloj', () => {
     const actividad = [uso('2026-10-21 18:20', '2026-10-21 18:30'), uso('2026-10-21 23:40', '2026-10-21 23:50'), uso('2026-10-22 07:40', '2026-10-22 08:00')];
     const e = estimar(actividad)!;
     expect(e.quieto.desde).toBe(min('2026-10-21 23:50'));
-    expect(e.dormirse).toBe(min('2026-10-22 00:16'));
+    expect(e.dormirse).toBe(min('2026-10-22 00:05'));
   });
 
   it('sin actividad a la mañana todavía no se sabe cuándo te despertaste; sin historia, confianza media', () => {
     expect(estimar([uso('2026-10-21 22:00', '2026-10-21 23:30')])).toBeNull();
     const e = estimar(dia('23:30', '07:30'), null)!;
-    expect(e.dormirse).toBe(min('2026-10-22 00:01'));
+    expect(e.dormirse).toBe(min('2026-10-21 23:45'));
     expect(e).toMatchObject({ confianza: 'media', motivos: ['sinHistoria'] });
   });
 
@@ -94,83 +104,98 @@ describe('la noche sin reloj', () => {
       uso('2026-10-22 03:30', '2026-10-22 04:00'), uso('2026-10-22 06:30', '2026-10-22 07:00'),
     ];
     const e = estimar(cortada)!;
-    expect(e.dormirse).toBe(min('2026-10-22 01:30') + 18);
+    expect(e.dormirse).toBe(min('2026-10-22 01:30') + 15);
+    expect(e.despertar).toBe(min('2026-10-22 06:30'));
     expect(e).toMatchObject({ confianza: 'baja', interrupciones: 1 });
     expect(e.motivos).toContain('sinVentana');
   });
 
   it('un Atajo: la alarma dice cuándo te despertaste, y la confianza sube', () => {
     const sin = estimar(dia('23:30', '07:30'))!;
-    const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 06:50'), que: 'despertar' }] })!;
-    expect(e.despertar).toBe(min('2026-10-22 06:50'));
+    const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 07:20'), que: 'despertar' }] })!;
+    expect(e.despertar).toBe(min('2026-10-22 07:20'));
     expect(e.anclada).toEqual({ dormirse: false, despertar: true });
     expect(e.probabilidad).toBeCloseTo(sin.probabilidad + 0.1, 5);
     expect(sin.anclada).toEqual({ dormirse: false, despertar: false });
   });
 
-  it('la alarma parada a la madrugada, si después te volviste a dormir, es una interrupción y no tu hora de despertar', () => {
-    const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 03:00'), que: 'despertar' }] })!;
-    expect(e.despertar).toBe(min('2026-10-22 07:14'));
-    expect(e).toMatchObject({ interrupciones: 1, anclada: { despertar: false } });
+  it('la alarma parada, si después el teléfono volvió a quedar quieto, es una interrupción y no tu hora de despertar', () => {
+    // A la madrugada, o a las 6:30 con el teléfono quieto hasta las 7:30: seguiste durmiendo.
+    for (const cuando of ['2026-10-22 03:00', '2026-10-22 06:30']) {
+      const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora(cuando), que: 'despertar', de: 'alarmaParada' }] })!;
+      expect(e.despertar).toBe(min('2026-10-22 07:30'));
+      expect(e).toMatchObject({ interrupciones: 1, anclada: { despertar: false } });
+    }
+    // Con menos de 45 minutos quietos después, sí es tu hora de despertar.
+    expect(estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 06:50'), que: 'despertar', de: 'alarmaParada' }] })!).toMatchObject({ despertar: min('2026-10-22 06:50'), anclada: { despertar: true } });
+    // «Me desperté» lo dijiste tú: vale aunque después dejes el teléfono un rato, y no es una interrupción.
+    const dicho = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 06:30'), que: 'despertar', de: 'meDesperte' }] })!;
+    expect(dicho).toMatchObject({ despertar: min('2026-10-22 06:30'), interrupciones: 0, anclada: { despertar: true } });
+    expect(dicho.quieto.hasta).toBe(min('2026-10-22 06:30'));
+  });
+
+  it('levantarte y dejar el teléfono en la mesa no es seguir durmiendo: con pasos o con Moss abierta, hace falta hora y media quieta', () => {
+    // Pasos a las 7:30 y el teléfono quieto hasta las 8:30 (el desayuno): te despertaste a las 7:30.
+    expect(estimar(dia('23:30', '07:30'))!.despertar).toBe(min('2026-10-22 07:30'));
+    // Lo mismo si lo que se movió fue el teléfono, pero caminando.
+    const caminando: Actividad = { ...uso('2026-10-22 07:30', '2026-10-22 07:35', 'movimiento'), enMarcha: true };
+    const noche = [uso('2026-10-21 23:00', '2026-10-21 23:30'), uso('2026-10-22 08:30', '2026-10-22 09:10')];
+    expect(estimar([...noche, caminando])!.despertar).toBe(min('2026-10-22 07:30'));
+    // Si solo lo tocaste (apagaste la alarma) y quedó quieto 55 minutos más, la noche sigue hasta las 8:30.
+    expect(estimar([...noche, uso('2026-10-22 07:30', '2026-10-22 07:35', 'movimiento')])!).toMatchObject({ despertar: min('2026-10-22 08:30'), interrupciones: 1 });
+    // Y unos pasos a las 5:00 (el baño) con dos horas y media quietas después son una interrupción.
+    expect(estimar(dia('23:30', '07:30', [uso('2026-10-22 05:00', '2026-10-22 05:03')]))!).toMatchObject({ despertar: min('2026-10-22 07:30'), interrupciones: 1 });
   });
 
   it('«Me voy a dormir» tarde es lo último del día, no una interrupción', () => {
-    // Sin ancla, lo suelto de las 00:40 sería una interrupción y la noche empezaría a las 22:00: como
-    // dejaste el teléfono dos horas antes que siempre, te dormiste cerca de tu hora.
+    // Sin ancla, lo suelto de las 00:40 no llega a una hora después de tu hora de siempre: es lo último del día.
     const suelto = estimar(dia('22:00', '07:30', [uso('2026-10-22 00:40', '2026-10-22 00:41', 'atajo')]))!;
-    expect(suelto.dormirse).toBe(min('2026-10-21 23:39'));
-    const e = estimar(dia('22:00', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 00:40'), que: 'dormir' }] })!;
-    expect(e.dormirse).toBe(min('2026-10-22 00:41') + 18);
+    expect(suelto).toMatchObject({ dormirse: min('2026-10-22 00:41') + 15, interrupciones: 0 });
+    // Más tarde sí es una interrupción, y la noche empieza a las 22:00, con su margen.
+    const tarde = estimar(dia('22:00', '07:30', [uso('2026-10-22 01:40', '2026-10-22 01:41', 'atajo')]))!;
+    expect(tarde).toMatchObject({ dormirse: min('2026-10-21 22:15'), interrupciones: 1 });
+    // Con «Me voy a dormir» a esa hora, es lo último del día.
+    const e = estimar(dia('22:00', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 01:40'), que: 'dormir' }] })!;
+    expect(e.dormirse).toBe(min('2026-10-22 01:41') + 15);
     expect(e.anclada).toEqual({ dormirse: true, despertar: false });
   });
 
   // Lo que avisan los Atajos y el despertador (spec/sueno-sin-esfuerzo.md).
   const senal = (que: Senal['que'], texto: string, segundos = 0): Senal => ({ id: `${que}-${texto}-${segundos}`, que, en: hora(texto) + segundos * 1000 });
 
-  it('el rango es el del 80 % del modelo: ±1,28 veces la duda que queda, más ancho con lo que más hace errar', () => {
-    // Con solo el teléfono y lo de siempre (dudas de 35 y 60), al menos ±38 al dormirte.
+  it('el rango es el del 80 % del modelo: ±1,28 veces la duda de la señal, más ancho con lo que más hace errar', () => {
+    // Con solo el teléfono (una duda de 35), ±45 al dormirte.
     const e = estimar(dia('23:30', '07:30'))!;
-    expect(e.margen.dormirse).toBeGreaterThanOrEqual(38);
-    // Con «Me voy a dormir» (20) y lo de siempre, unos ±24.
+    expect(e.margen.dormirse).toBe(45);
+    // Con «Me voy a dormir» (20), ±26.
     const conAviso = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: deLasSenales([senal('meVoyADormir', '2026-10-21 23:30')], UY).anclas })!;
-    expect(conAviso.margen.dormirse).toBe(24);
+    expect(conAviso.margen.dormirse).toBe(26);
     // Con la alarma, el despertar es exacto: ±10.
-    expect(estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 06:50'), que: 'despertar' }] })!.margen.despertar).toBe(10);
-    // Dejar el teléfono tres horas antes que siempre agranda el de dormirte (Sahha: 153 minutos de error), no el de despertarte.
+    expect(estimar(dia('23:30', '07:30'), SIEMPRE, { anclas: [{ en: hora('2026-10-22 07:20'), que: 'despertar' }] })!.margen.despertar).toBe(10);
+    // Dejar el teléfono tres horas antes que siempre agranda el de dormirte (ese rato puede no haber sido sueño), no el de despertarte.
     const temprano = estimar(dia('21:00', '07:30'))!;
     expect(temprano.motivos).toContain('dejasteAntes');
     expect(temprano.margen.dormirse).toBeGreaterThan(90);
     expect(temprano.margen.despertar).toBe(e.margen.despertar);
     // Usar el teléfono de noche agranda los dos, la mitad más.
     const conUso = estimar(dia('23:30', '07:30', [uso('2026-10-22 03:00', '2026-10-22 03:06', 'moss')]))!;
-    expect(conUso.margen).toEqual({ dormirse: 58, despertar: 52 });
+    expect(conUso.margen).toEqual({ dormirse: 67, despertar: 58 });
   });
 
-  describe('todas las señales juntas (lo pediste el 31/10/2026)', () => {
+  describe('las señales de cada borde', () => {
     /** Una noche con lo que avisó el cargador: `ultima` es lo último que hiciste con el teléfono. */
     const conCargador = (ultima: string, primera: string, senales: Senal[], habitual: Habitual | null = SIEMPRE) => {
       const a = deLasSenales(senales, UY);
       return estimar(dia(ultima, primera, a.actividad), habitual, { anclas: a.anclas })!;
     };
-    const pista = (e: ReturnType<typeof conCargador>, borde: 'dormirse' | 'despertar', que: string) => e.pistas[borde].find((p) => p.que === que);
-
-    it('ninguna decide sola: la última actividad y tu hora de siempre pesan, y los pesos suman 1', () => {
-      const e = estimar(dia('23:00', '07:30'))!;
-      const pesos = e.pistas.dormirse.map((p) => p.peso);
-      expect(e.pistas.dormirse.map((p) => p.que)).toEqual(['ultimaActividad', 'habitual']);
-      expect(pesos.every((x) => x > 0.2)).toBe(true);
-      expect(pesos.reduce((s, x) => s + x, 0)).toBeCloseTo(1, 5);
-      expect(e.pistas.dormirse[0].tipos).toEqual(['pasos']);
-    });
+    const pista = (e: Estimacion, borde: 'dormirse' | 'despertar', que: string) => e.pistas[borde].find((p) => p.que === que);
 
     it('conectar el cargador y no usar más el teléfono afirma la hora y sube la confianza', () => {
       const sin = estimar(dia('23:00', '07:30'))!;
       const e = conCargador('23:00', '07:30', [senal('cargadorConectado', '2026-10-21 23:00')]);
       expect(pista(e, 'dormirse', 'cargador')).toMatchObject({ en: min('2026-10-21 23:00'), peso: 0 });
       expect(pista(e, 'dormirse', 'cargador')!.noCuenta).toBeUndefined();
-      // Pesa más lo que dice el teléfono: te acostaste, no lo dejaste en la mesa.
-      expect(pista(e, 'dormirse', 'ultimaActividad')!.peso).toBeGreaterThan(pista(sin, 'dormirse', 'ultimaActividad')!.peso);
-      expect(e.dormirse).toBeLessThan(sin.dormirse);
+      expect(e.dormirse).toBe(min('2026-10-21 23:01') + 15);
       expect(e.probabilidad).toBeCloseTo(sin.probabilidad + 0.05, 5);
     });
 
@@ -178,18 +203,18 @@ describe('la noche sin reloj', () => {
       const e = conCargador('23:52', '07:30', [senal('cargadorConectado', '2026-10-21 23:10')]);
       expect(pista(e, 'dormirse', 'cargador')).toMatchObject({ en: min('2026-10-21 23:10'), noCuenta: true });
       expect(e.quieto.desde).toBe(min('2026-10-21 23:52'));
-      expect(e.dormirse).toBeGreaterThanOrEqual(min('2026-10-21 23:52') + 5);
+      expect(e.dormirse).toBe(min('2026-10-21 23:52') + 15);
       expect(e.motivos).toContain('seguisteUsando');
       expect(e.probabilidad).toBeCloseTo(estimar(dia('23:52', '07:30'))!.probabilidad - 0.05, 5);
     });
 
-    it('usar el teléfono justo antes de la hora en que te daría dormido es que seguías despierto, no una interrupción', () => {
-      // Lo dejaste a las 21:20 y a las 23:47 lo usaste 5 minutos: Moss te daba dormido a las 23:42.
+    it('mirar el teléfono cerca de tu hora de siempre, después de dejarlo lejos toda la tarde, es lo último del día y no una interrupción', () => {
+      // Lo dejaste a las 21:20 y a las 23:47 lo usaste 5 minutos: no estabas dormido desde las 21:35.
       const e = estimar(dia('23:52', '07:30'))!;
       expect(e.quieto.desde).toBe(min('2026-10-21 23:52'));
       expect(e.interrupciones).toBe(0);
-      expect(e.dormirse).toBeGreaterThan(min('2026-10-21 23:52'));
-      // Una hora después de dormirte, sí es una interrupción.
+      expect(e.dormirse).toBe(min('2026-10-22 00:07'));
+      // Una hora y media después de tu hora, sí es una interrupción.
       const despues = estimar(dia('23:00', '07:30', [uso('2026-10-22 01:30', '2026-10-22 01:35')]))!;
       expect(despues.quieto.desde).toBe(min('2026-10-21 23:00'));
       expect(despues.interrupciones).toBe(1);
@@ -203,30 +228,36 @@ describe('la noche sin reloj', () => {
 
     it('nunca te da dormido antes de lo último que hiciste, aunque tu hora de siempre sea antes', () => {
       const e = conCargador('01:10', '07:30', [senal('cargadorConectado', '2026-10-22 01:10')]);
-      expect(e.dormirse).toBeGreaterThan(min('2026-10-22 01:10'));
-      expect(pista(e, 'dormirse', 'habitual')).toBeUndefined();
+      expect(e.dormirse).toBe(min('2026-10-22 01:11') + 15);
     });
 
-    it('a la mañana: desconectar el cargador es de lo primero, y la confianza sube', () => {
+    it('a la mañana: desconectar el cargador es lo primero, y la confianza sube', () => {
       const sin = estimar(dia('23:30', '07:30'))!;
       const e = conCargador('23:30', '07:30', [senal('cargadorDesconectado', '2026-10-22 07:30')]);
-      expect(pista(e, 'despertar', 'desconectaste')).toMatchObject({ en: min('2026-10-22 07:30') });
-      expect(e.despertar).toBeGreaterThan(sin.despertar);
-      expect(e.despertar).toBeLessThanOrEqual(min('2026-10-22 07:30'));
+      expect(e.pistas.despertar).toEqual([{ que: 'desconectaste', en: min('2026-10-22 07:30'), peso: 1 }]);
+      expect(e.despertar).toBe(min('2026-10-22 07:30'));
       expect(e.probabilidad).toBeCloseTo(sin.probabilidad + 0.05, 5);
     });
 
-    it('a la mañana: agarrar el teléfono mucho más tarde que siempre dice menos, y pesa más tu hora', () => {
+    it('las noches largas cuentan enteras: agarrar el teléfono mucho más tarde que siempre no la recorta, y Moss pregunta', () => {
+      // Siempre te despiertas a las 7:20 y hoy lo agarraste a las 10:00: antes te creía hasta las 8:07.
       const e = estimar([uso('2026-10-21 23:00', '2026-10-21 23:30'), uso('2026-10-22 10:00', '2026-10-22 10:20')])!;
-      expect(pista(e, 'despertar', 'habitual')!.peso).toBeGreaterThan(0.5);
-      expect(e.despertar).toBeLessThan(min('2026-10-22 09:00'));
-      expect(e.motivos).toContain('agarrasteTarde');
+      expect(e.despertar).toBe(min('2026-10-22 10:00'));
+      expect(e.despertar - e.dormirse).toBe(10 * 60 + 15);
+      expect(e.motivos).toEqual(expect.arrayContaining(['agarrasteTarde', 'distintaDeLoDeSiempre']));
+      expect(e.confianza).toBe('media');
+      // Cuatro horas más tarde tampoco la saca de la cuenta: media, no baja.
+      const mas = estimar([uso('2026-10-21 23:00', '2026-10-21 23:30'), uso('2026-10-22 11:20', '2026-10-22 11:40')])!;
+      expect(mas).toMatchObject({ despertar: min('2026-10-22 11:20'), confianza: 'media', probabilidad: 0.5 });
+      // Y acostarte dos horas antes, lo mismo: entera.
+      const antes = estimar(dia('22:00', '07:30'))!;
+      expect(antes.dormirse).toBe(min('2026-10-21 22:15'));
     });
 
-    it('la alarma manda: es la hora, y la pista lo dice', () => {
-      const e = conCargador('23:30', '07:30', [senal('alarmaParada', '2026-10-22 06:50'), senal('cargadorDesconectado', '2026-10-22 07:30')]);
-      expect(e.despertar).toBe(min('2026-10-22 06:50'));
-      expect(e.pistas.despertar).toEqual([{ que: 'alarma', en: min('2026-10-22 06:50'), peso: 1 }]);
+    it('la alarma manda si es lo primero que hiciste: es la hora, y la pista lo dice', () => {
+      const e = conCargador('23:30', '07:30', [senal('alarmaParada', '2026-10-22 07:20'), senal('cargadorDesconectado', '2026-10-22 07:30')]);
+      expect(e.despertar).toBe(min('2026-10-22 07:20'));
+      expect(e.pistas.despertar).toEqual([{ que: 'alarma', en: min('2026-10-22 07:20'), peso: 1 }]);
     });
 
     it('sin historia, entre dos huecos gana el que empieza con el cargador, aunque sea más corto', () => {
@@ -237,11 +268,78 @@ describe('la noche sin reloj', () => {
       expect(e.quieto.desde).toBe(min('2026-10-21 23:41'));
     });
 
-    it('«Me voy a dormir» antes de lo de siempre: te creo, casi no pesa tu hora', () => {
+    it('«Me voy a dormir» antes de lo de siempre: te creo', () => {
       const a = deLasSenales([senal('meVoyADormir', '2026-10-21 22:00')], UY);
       const e = estimar(dia('22:00', '07:30'), SIEMPRE, { anclas: a.anclas })!;
-      expect(pista(e, 'dormirse', 'meVoyADormir')!.peso).toBeGreaterThan(0.85);
-      expect(e.dormirse).toBeLessThan(min('2026-10-21 22:50'));
+      expect(pista(e, 'dormirse', 'meVoyADormir')).toMatchObject({ en: min('2026-10-21 22:00'), peso: 1 });
+      expect(e.dormirse).toBe(min('2026-10-21 22:01') + 15);
+    });
+  });
+
+  // spec/estudio/auditoria-del-sueno.md, sección 2: alguien que duerme de verdad de 00:45 a 8:30, con 8 h de necesidad.
+  describe('los casos de la auditoría del 17/11/2026', () => {
+    const DE_SIEMPRE: Habitual = { dormirse: min('2026-10-22 00:45'), despertar: min('2026-10-22 08:30'), noches: 10 };
+    const movio = (desde: string, minutos = 2): Actividad => ({ desde: hora(desde), hasta: hora(desde) + minutos * 60_000, tipo: 'movimiento' });
+    /** La tarde, lo último de la noche, lo que pasó en el medio y la mañana desde `primera`, que sigue. */
+    const noche = (ultima: string, primera: string, medio: Actividad[] = []): Actividad[] => [
+      uso('2026-10-21 19:00', '2026-10-21 19:40'), uso('2026-10-21 22:10', '2026-10-21 22:40'),
+      { desde: hora(ultima) - 5 * 60_000, hasta: hora(ultima), tipo: 'movimiento' },
+      ...medio,
+      uso(primera, primera.replace(/\d\d:\d\d$/, '10:30')),
+    ];
+    /** Lo dormido como lo cuenta la deuda, y la deuda de 14 noches iguales. */
+    const resultado = (e: Estimacion) => {
+      const iso = (m: number) => new Date(instanteDe('2026-10-22', UY, m)).toISOString();
+      const n = nocheDeMoss({ fecha: '2026-10-22', actualizado: iso(900), hora: { dormirse: iso(e.dormirse), despertar: iso(e.despertar), origen: 'estimada', confianza: e.confianza } }, UY)!;
+      const deuda = deudaDeSueno(Array.from({ length: 14 }, () => n), 480)!;
+      return { de: e.dormirse, a: e.despertar, dormido: n.dormido, deuda: redondearDeuda(deuda.minutos), juicio: juicioDeLaDeuda(deuda), confianza: e.confianza, interrupciones: e.interrupciones };
+    };
+    const de = (ultima: string, primera: string, medio?: Actividad[], extra?: Partial<Parameters<typeof estimarNoche>[0]>, habitual = DE_SIEMPRE) =>
+      resultado(estimar(noche(ultima, primera, medio), habitual, extra)!);
+
+    it('(a) lo deja a las 00:30 y lo agarra a las 8:30: 7 h 45 dormido (antes 6 h 41), y 1 h 30 de deuda, baja (antes 9 h 53, «Alta»)', () => {
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30')).toEqual({
+        de: min('2026-10-22 00:45'), a: min('2026-10-22 08:30'), dormido: 7 * 60 + 45, deuda: 90, juicio: 'baja', confianza: 'alta', interrupciones: 0,
+      });
+    });
+
+    it('(b) igual, y mira la hora a las 5:10: lo mismo, con una interrupción', () => {
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 05:10')])).toMatchObject({ dormido: 465, deuda: 90, juicio: 'baja', confianza: 'alta', interrupciones: 1 });
+    });
+
+    it('(c) usa el teléfono en la cama hasta las 00:43: 7 h 32 (antes 6 h 28), y 3 h de deuda, baja (antes 11 h 30)', () => {
+      expect(de('2026-10-22 00:43', '2026-10-22 08:30')).toMatchObject({ de: min('2026-10-22 00:58'), dormido: 452, deuda: 180, juicio: 'baja' });
+    });
+
+    it('(d) apaga la alarma a las 7:30 y duerme hasta las 8:30: la noche termina a las 8:30 (antes, a las 7:12, y 17 h 23 de deuda)', () => {
+      // (d1) Sin atajo: el teléfono se movió cinco minutos.
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 07:30', 5)])).toMatchObject({ a: min('2026-10-22 08:30'), dormido: 465, deuda: 90, juicio: 'baja', interrupciones: 1 });
+      // (d2) Con el despertador de Moss o el atajo de la alarma: lo mismo.
+      const parada = { anclas: deLasSenales([senal('despertadorParado', '2026-10-22 07:30')], UY).anclas };
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [], parada)).toMatchObject({ a: min('2026-10-22 08:30'), dormido: 465, deuda: 90, interrupciones: 1 });
+      // (d3) Pospone a las 7:30, 7:39 y 7:48 y se levanta a las 8:00: ahí el teléfono no vuelve a quedar quieto un rato largo, y termina a las 7:30.
+      const pospone = [movio('2026-10-22 07:30', 1), movio('2026-10-22 07:39', 1), movio('2026-10-22 07:48', 1)];
+      expect(de('2026-10-22 00:30', '2026-10-22 08:00', pospone)).toMatchObject({ a: min('2026-10-22 07:30'), dormido: 405, deuda: 480, juicio: 'media' });
+      // (f) Lo mira a las 7:20 y sigue durmiendo.
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 07:20')])).toMatchObject({ dormido: 465, interrupciones: 1 });
+    });
+
+    it('(e) lo deja cargando en otro cuarto a las 23:15 y lo agarra a las 9:00: 9 h 30, y sin deuda (lo que sobra paga hasta una hora)', () => {
+      // Con su hora de siempre, la del teléfono: esas noches son todas iguales.
+      const suyo: Habitual = { dormirse: min('2026-10-21 23:30'), despertar: min('2026-10-22 09:00'), noches: 10 };
+      expect(de('2026-10-21 23:15', '2026-10-22 09:00', [], {}, suyo)).toEqual({
+        de: min('2026-10-21 23:30'), a: min('2026-10-22 09:00'), dormido: 9 * 60 + 30, deuda: 0, juicio: 'sinDeuda', confianza: 'alta', interrupciones: 0,
+      });
+    });
+
+    it('sin ventana tranquila: dos toques seguidos ya no la rompen, y 25 minutos de teléfono a las 4:00 no terminan la noche ahí', () => {
+      // (g) Dos toques, a las 3:00 y a las 3:50: antes, sin ventana; ahora, dos interrupciones.
+      expect(de('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 03:00'), movio('2026-10-22 03:50')])).toMatchObject({ dormido: 465, interrupciones: 2, confianza: 'media' });
+      // (j) 25 minutos de teléfono a las 4:00: no hay un hueco de 5 horas. Antes la noche iba de 01:01 a 03:42; ahora,
+      // hasta la actividad que sigue, a las 8:30, con confianza baja: no cuenta hasta que la confirmes.
+      const e = estimar(noche('2026-10-22 00:30', '2026-10-22 08:30', [movio('2026-10-22 04:00', 25)]), DE_SIEMPRE)!;
+      expect(e).toMatchObject({ dormirse: min('2026-10-22 00:45'), despertar: min('2026-10-22 08:30'), confianza: 'baja', interrupciones: 1 });
+      expect(e.motivos).toContain('sinVentana');
     });
   });
 
@@ -289,10 +387,10 @@ describe('la noche sin reloj', () => {
     expect(actividad.map((a) => !!a.fin)).toEqual([false, true, false, false]);
     // Conectarlo a las 00:40 dice que estabas despierto: la noche empieza ahí.
     const e = estimar(dia('22:00', '07:30', actividad.slice(1, 2)))!;
-    expect(e.dormirse).toBe(min('2026-10-22 00:41') + 18);
+    expect(e.dormirse).toBe(min('2026-10-22 00:41') + 15);
     // Desconectarlo y volver a conectarlo a la madrugada es usar el teléfono: una interrupción.
     const noche = estimar(dia('23:30', '07:30', actividad.slice(2)))!;
-    expect(noche).toMatchObject({ dormirse: min('2026-10-22 00:01'), interrupciones: 1 });
+    expect(noche).toMatchObject({ dormirse: min('2026-10-21 23:45'), interrupciones: 1 });
   });
 
   it('el enfoque Sueño a la misma hora varias noches es el horario y no cuenta; prendido a mano, sí', () => {
@@ -306,82 +404,12 @@ describe('la noche sin reloj', () => {
   });
 
   it('con la hora de despertar sacada de un ancla, a la mañana se pregunta solo la de dormirte', () => {
-    const { anclas } = deLasSenales([senal('alarmaParada', '2026-10-22 06:50', 30)], UY);
+    const { anclas } = deLasSenales([senal('alarmaParada', '2026-10-22 07:20', 30)], UY);
     const e = estimar(dia('23:30', '07:30'), SIEMPRE, { anclas })!;
     // Lo que se guarda es al minuto, como la noche de Moss.
     expect(despertarAnclado(anclas, '2026-10-22', UY, Math.round(e.despertar))).toBe(true);
     const sin = estimar(dia('23:30', '07:30'))!;
     expect(despertarAnclado(anclas, '2026-10-22', UY, Math.round(sin.despertar))).toBe(false);
-  });
-
-  describe('lo tuyo (D33): cuánto tardás en dormirte y en tocar el teléfono, de tus respuestas', () => {
-    const iso = (texto: string) => new Date(hora(texto)).toISOString();
-    /** Una noche del 19 al 20 con la ventana tranquila de 23:30 a 7:30, y lo que contestaste. */
-    const respuesta = (fecha: string, dormirse: string, despertar: string, origen: 'corregida' | 'confirmada' = 'corregida', conVentana = true): NochePropia => ({
-      fecha, actualizado: '2026-10-21T12:00:00.000Z',
-      hora: {
-        dormirse: iso(dormirse), despertar: iso(despertar), origen, confianza: 'media',
-        estimada: { dormirse: iso('2026-10-20 00:01'), despertar: iso('2026-10-20 07:12'), ...(conVentana ? { quieto: { desde: iso('2026-10-19 23:30'), hasta: iso('2026-10-20 07:30') } } : {}) },
-      },
-    });
-
-    it('sin respuestas, lo de Sahha: 31 y 18 minutos', () => {
-      expect(aprenderPersonal([], '2026-10-22')).toEqual({ latencia: LATENCIA, aprendida: LATENCIA, elegida: false, alDespertar: 18, noches: 0 });
-    });
-
-    it('las noches en que tardaste dos horas en dormirte: con tres, más de la mitad del camino; con siete, casi dos horas', () => {
-      // Te dormiste a la 1:30 con la última actividad a las 23:30: dos horas con el teléfono en la cama.
-      const dias = (n: number) => Array.from({ length: n }, (_, i) => `2026-10-${String(21 - i).padStart(2, '0')}`);
-      const p = aprenderPersonal(dias(3).map((f) => respuesta(f, '2026-10-20 01:30', '2026-10-20 07:20')), '2026-10-22');
-      expect(p.noches).toBe(3);
-      expect(p.latencia).toBeGreaterThan(31 + (120 - 31) / 2);
-      expect(p.latencia).toBeLessThan(100);
-      expect(p.alDespertar).toBeGreaterThanOrEqual(10);
-      expect(p.alDespertar).toBeLessThan(18);
-      const siete = aprenderPersonal(dias(7).map((f) => respuesta(f, '2026-10-20 01:30', '2026-10-20 07:20')), '2026-10-22');
-      expect(siete.latencia).toBeGreaterThan(95);
-      expect(siete.latencia).toBeLessThanOrEqual(120);
-      // Una corrección de más de tres horas (la tarde por la mañana) no enseña nada.
-      expect(aprenderPersonal([respuesta('2026-10-21', '2026-10-20 13:30', '2026-10-20 15:20')], '2026-10-22').latencia).toBe(LATENCIA);
-      // Y la noche de hoy se corre con eso: ya no media hora después de la última actividad, y lo tuyo
-      // pesa más que tu hora de siempre.
-      const e = estimar(dia('23:30', '07:30'), SIEMPRE, { personal: p })!;
-      const conLoTuyo = min('2026-10-21 23:30') + p.latencia;
-      expect(e.dormirse).toBeLessThan(conLoTuyo);
-      expect(conLoTuyo - e.dormirse).toBeLessThan(e.dormirse - SIEMPRE.dormirse);
-      expect(e.quieto).toEqual({ desde: min('2026-10-21 23:30'), hasta: min('2026-10-22 07:30') });
-    });
-
-    it('un dato raro no la mueve: la mediana con pesos', () => {
-      const noches = [
-        respuesta('2026-10-17', '2026-10-17 23:50', '2026-10-18 07:20'),
-        respuesta('2026-10-18', '2026-10-18 23:50', '2026-10-19 07:20'),
-        respuesta('2026-10-19', '2026-10-20 03:30', '2026-10-20 07:20'),
-      ].map((n, i) => ({ ...n, hora: { ...n.hora!, estimada: { ...n.hora!.estimada!, quieto: { desde: iso(`2026-10-${17 + i} 23:30`), hasta: iso(`2026-10-${18 + i} 07:30`) } } } }));
-      const p = aprenderPersonal(noches, '2026-10-22');
-      expect(p.latencia).toBeLessThan(31);
-    });
-
-    it('lo elegido en «Tardo en dormirme» gana, y lo aprendido se sigue mostrando', () => {
-      const noches = ['2026-10-19', '2026-10-20'].map((f) => respuesta(f, '2026-10-20 01:30', '2026-10-20 07:20'));
-      const p = aprenderPersonal(noches, '2026-10-22', 15);
-      expect(p.latencia).toBe(15);
-      expect(p.aprendida).toBeGreaterThan(60);
-      // Con respuestas, lo que se usa no siempre es lo aprendido: dice si se eligió («Cómo llegó Moss a esta hora»).
-      expect(p.elegida).toBe(true);
-      expect(aprenderPersonal(noches, '2026-10-22').elegida).toBe(false);
-      expect(aprenderPersonal(noches, '2026-10-22', null).elegida).toBe(false);
-    });
-
-    it('un «Sí» pesa menos que una corrección; lo de hace meses, nada; sin la ventana, de lo estimado y la mitad', () => {
-      const si = aprenderPersonal([respuesta('2026-10-21', '2026-10-20 01:30', '2026-10-20 07:20', 'confirmada')], '2026-10-22');
-      const corregida = aprenderPersonal([respuesta('2026-10-21', '2026-10-20 01:30', '2026-10-20 07:20')], '2026-10-22');
-      expect(si.latencia).toBeLessThan(corregida.latencia);
-      expect(aprenderPersonal([respuesta('2026-05-01', '2026-10-20 01:30', '2026-10-20 07:20')], '2026-10-22').latencia).toBe(LATENCIA);
-      const sinVentana = aprenderPersonal([respuesta('2026-10-21', '2026-10-20 01:30', '2026-10-20 07:20', 'corregida', false)], '2026-10-22');
-      expect(sinVentana.latencia).toBeGreaterThan(LATENCIA);
-      expect(sinVentana.latencia).toBeLessThan(corregida.latencia);
-    });
   });
 
   it('lo de siempre: la mediana de las dos semanas, aparte el fin de semana', () => {
@@ -413,6 +441,62 @@ describe('la noche sin reloj', () => {
   });
 });
 
+describe('las noches estimadas antes del 17/11/2026, con la regla nueva y sin sus señales', () => {
+  const iso = (texto: string) => new Date(hora(texto)).toISOString();
+  /** Como la guardaba la regla de antes: 31 minutos después de dejar el teléfono (23:30) y 18 antes de agarrarlo (7:30), con lo de siempre mezclado. */
+  const deAntes = (origen: 'estimada' | 'confirmada' | 'corregida' | 'manual', conVentana = true): NonNullable<NochePropia['hora']> => ({
+    dormirse: iso('2026-10-22 00:01'), despertar: iso('2026-10-22 07:14'), origen, confianza: 'alta',
+    estimada: {
+      dormirse: iso('2026-10-22 00:01'), despertar: iso('2026-10-22 07:14'), margen: { dormirse: 39, despertar: 34 },
+      ...(conVentana ? { quieto: { desde: iso('2026-10-21 23:30'), hasta: iso('2026-10-22 07:30') } } : {}),
+    },
+  });
+
+  it('con la ventana guardada: todo el rato quieto menos tu margen, de 23:45 a 7:30', () => {
+    const h = sinLasRestas(deAntes('estimada'))!;
+    expect([h.dormirse, h.despertar]).toEqual([iso('2026-10-21 23:45'), iso('2026-10-22 07:30')]);
+    expect(h).toMatchObject({ origen: 'estimada', confianza: 'alta', estimada: { dormirse: h.dormirse, despertar: h.despertar, quieto: { desde: iso('2026-10-21 23:30'), hasta: iso('2026-10-22 07:30') }, margen: { dormirse: 39, despertar: 34 } } });
+    // De 6 h 43 dormido (7 h 13 menos la media hora despierto) a 7 h 45.
+    expect(nocheDeMoss({ fecha: '2026-10-22', actualizado: h.despertar, hora: h }, UY)!.dormido).toBe(7 * 60 + 45);
+    // Con otro margen, el tuyo; y hecho otra vez (otro teléfono de la cuenta) no cambia nada.
+    expect(sinLasRestas(deAntes('estimada'), 45)!.dormirse).toBe(iso('2026-10-22 00:15'));
+    expect(sinLasRestas(h)).toBeNull();
+    expect(sinLasRestas(h, 45)!.dormirse).toBe(iso('2026-10-22 00:15'));
+  });
+
+  it('sin la ventana (las primeras versiones), se deshacen los 31 y los 18 minutos de fábrica, y queda guardada', () => {
+    const h = sinLasRestas(deAntes('estimada', false))!;
+    expect([h.dormirse, h.despertar]).toEqual([iso('2026-10-21 23:45'), iso('2026-10-22 07:32')]);
+    expect(h.estimada!.quieto).toEqual({ desde: iso('2026-10-21 23:30'), hasta: iso('2026-10-22 07:32') });
+    expect(sinLasRestas(h)).toBeNull();
+  });
+
+  it('lo que confirmaste, corregiste o escribiste no se toca; ni lo que quedaría en menos de dos horas', () => {
+    expect((['confirmada', 'corregida', 'manual'] as const).map((o) => sinLasRestas(deAntes(o)))).toEqual([null, null, null]);
+    expect(sinLasRestas(undefined)).toBeNull();
+    expect(sinLasRestas(deAntes('estimada'), 7 * 60)).toBeNull();
+  });
+
+  it('al rehacer las de antes, también la que aceptaste con «Sí» tal como Moss la propuso: vuelve a ser estimada', () => {
+    // El «Sí» aceptó una propuesta que ya traía los 31 y los 18 minutos: no es una medición tuya.
+    expect(aceptadaSinCambios(deAntes('confirmada'))).toBe(true);
+    const h = sinLasRestas(deAntes('confirmada'), MARGEN, true)!;
+    expect([h.dormirse, h.despertar, h.origen]).toEqual([iso('2026-10-21 23:45'), iso('2026-10-22 07:30'), 'estimada']);
+    // La que corregiste, aunque sea cinco minutos, es tuya; y la corregida o la escrita, también.
+    const movida = { ...deAntes('confirmada'), dormirse: iso('2026-10-22 00:06') };
+    expect(aceptadaSinCambios(movida)).toBe(false);
+    expect(sinLasRestas(movida, MARGEN, true)).toBeNull();
+    expect((['corregida', 'manual'] as const).map((o) => sinLasRestas(deAntes(o), MARGEN, true))).toEqual([null, null]);
+    // Sin lo estimado guardado no se sabe si la cambiaste: no se toca.
+    const { estimada: _sinEstimada, ...sola } = deAntes('confirmada');
+    expect([aceptadaSinCambios(sola), sinLasRestas(sola, MARGEN, true)]).toEqual([false, null]);
+    // Un «Sí» a una propuesta de la regla nueva (las horas de su ventana) queda confirmado.
+    const nueva = { dormirse: iso('2026-10-21 23:45'), despertar: iso('2026-10-22 07:30') };
+    const deAhora: NonNullable<NochePropia['hora']> = { ...deAntes('confirmada'), ...nueva, estimada: { ...deAntes('confirmada').estimada!, ...nueva } };
+    expect([aceptadaSinCambios(deAhora), sinLasRestas(deAhora, MARGEN, true)]).toEqual([true, null]);
+  });
+});
+
 describe('las noches de Moss junto a las de Salud', () => {
   const propia = (fecha: string, origen: 'estimada' | 'confirmada', confianza: 'alta' | 'media' | 'baja' = 'media'): NochePropia => ({
     fecha, actualizado: '2026-10-22T09:00:00.000Z',
@@ -421,8 +505,8 @@ describe('las noches de Moss junto a las de Salud', () => {
 
   it('una noche de Moss no tiene etapas ni despertares; estimada con confianza baja no cuenta hasta confirmarla', () => {
     const n = nocheDeMoss(propia('2026-10-22', 'estimada', 'media'), UY)!;
-    // De 00:10 a 07:40 son 450 minutos, y adentro, unos 30 despierto que el teléfono no ve.
-    expect(n).toMatchObject({ clave: '2026-10-22', dormido: 420, despierto: 30, conEtapas: false, dormirse: 370, despertar: 820, fuente: { id: 'moss', tipo: 'moss' } });
+    // De 00:10 a 07:40 son 450 minutos, y todos cuentan: ya no se resta media hora despierto.
+    expect(n).toMatchObject({ clave: '2026-10-22', dormido: 450, despierto: 0, conEtapas: false, dormirse: 370, despertar: 820, fuente: { id: 'moss', tipo: 'moss' } });
     expect(n.confianza.duracion).toBe('media');
     // Sin el margen guardado (una noche de antes), el de su confianza.
     expect(n.moss).toMatchObject({ origen: 'estimada', confianza: 'media', rango: { dormirse: [320, 420], despertar: [775, 865] } });
@@ -431,12 +515,13 @@ describe('las noches de Moss junto a las de Salud', () => {
     expect(instanteDe('2026-10-22', UY, 370)).toBe(hora('2026-10-22 00:10'));
   });
 
-  it('lo dormido es la noche menos lo despierto que el teléfono no ve: de 23:00 a 7:00, 450 dormido y 30 despierto', () => {
+  it('lo dormido es la noche entera; con noches de un reloj, menos lo que sueles estar despierto según él', () => {
     const noche = (despertar: string): NochePropia => ({
       fecha: '2026-10-22', actualizado: '2026-10-22T09:00:00.000Z',
       hora: { dormirse: new Date(hora('2026-10-21 23:00')).toISOString(), despertar: new Date(hora(despertar)).toISOString(), origen: 'confirmada', confianza: 'media' },
     });
-    expect(nocheDeMoss(noche('2026-10-22 07:00'), UY)).toMatchObject({ dormido: 450, despierto: 30, dormirse: 300, despertar: 780 });
+    expect(nocheDeMoss(noche('2026-10-22 07:00'), UY)).toMatchObject({ dormido: 480, despierto: 0, dormirse: 300, despertar: 780 });
+    expect(conNochesDeMoss([], [noche('2026-10-22 07:00')], UY)[0]).toMatchObject({ dormido: 480, despierto: 0 });
     // Con 7 noches de un reloj o más, lo tuyo: la mediana de lo despierto de esas noches más lo que el reloj no ve.
     const reloj: Fuente = { id: 'reloj', nombre: 'Apple Watch', tipo: 'reloj' };
     const delReloj = Array.from({ length: 7 }, (_, i) => `2026-10-${String(12 + i).padStart(2, '0')}`).flatMap((dia, i) => [
@@ -482,7 +567,7 @@ describe('las noches de Moss junto a las de Salud', () => {
     // Una de la semana anterior, de 23:00 a 7:00 con la hora de entonces.
     const antes = nocheDeMoss(noche('2026-10-29', '2026-10-29T03:00:00.000Z', '2026-10-29T11:00:00.000Z'), zonaDe)!;
     expect([antes.dormirse, antes.despertar]).toEqual([300, 780]);
-    // La del cambio: de 23:00 a 7:00 son 9 horas (y adentro, la media hora despierto).
+    // La del cambio: de 23:00 a 7:00 son 9 horas.
     const delCambio = nocheDeMoss(noche('2026-11-01', '2026-11-01T03:00:00.000Z', '2026-11-01T12:00:00.000Z'), zonaDe)!;
     expect([delCambio.dormido + delCambio.despierto, delCambio.dormirse, delCambio.despertar]).toEqual([540, 300, 780]);
     // Con una sola zona, la de después del cambio, esa noche se corría una hora.
@@ -501,7 +586,7 @@ describe('lo que guarda el teléfono', () => {
       { ...base, en: hora('2026-10-22 07:00'), caminando: true, confianza: 0 as const },
     ];
     expect(actividadDelMovimiento(lista, hora('2026-10-22 08:00'))).toEqual([
-      { desde: hora('2026-10-21 23:00'), hasta: hora('2026-10-21 23:10'), tipo: 'movimiento' },
+      { desde: hora('2026-10-21 23:00'), hasta: hora('2026-10-21 23:10'), tipo: 'movimiento', enMarcha: true },
       { desde: hora('2026-10-22 03:00'), hasta: hora('2026-10-22 03:05'), tipo: 'movimiento' },
     ]);
   });

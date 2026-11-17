@@ -359,13 +359,13 @@ describe('lo que dice cada uno', () => {
     expect(t({ ...p, que: 'partido', tema: 'carbohidratos', cuando: 'manana', sinDeficit: true })).toBe('Mañana juegas: hoy y mañana, carbohidratos en cada comida.');
     expect(t({ ...p, que: 'carrera', tema: 'carbohidratos', faltan: 2, sinDeficit: true })).toBe('Tu carrera es pasado mañana: carbohidratos en todas tus comidas y menos fibra.');
     expect(t({ ...p, que: 'carbohidratos', tema: 'carbohidratos' })).toBe('Hoy entrenas más de una hora: que tu plato tenga más carbohidratos.');
-    expect(t({ ...p, que: 'pesarse', tema: 'agua', kg: 1.2, litros: 1.5, conSal: true, masDurante: false })).toBe('Perdiste 1,2 kg: toma unos 1,5 L en las próximas horas, con algo salado.');
+    expect(t({ ...p, que: 'pesarse', tema: 'agua', kg: 1.2, litros: 1.5, conSal: true, masDurante: false })).toBe('Perdiste 1,2 kg: bebe unos 1,5 L en las próximas horas, con algo salado.');
     expect(t({ ...p, que: 'alcohol', tema: 'alcohol' })).toBe('Después de jugar, mucho alcohol frena la recuperación y empeora el sueño.');
     expect(t({ que: 'cargaYSueno', donde: 'sueno', tema: 'sueno' })).toBe('Esta semana entrenas más y duermes menos: es la combinación que más se asocia con lesiones.');
     expect(t({ que: 'dormirMas', donde: 'sueno', tema: 'sueno' })).toBe('En semanas de partidos, una hora más de sueño es de lo que más ayuda.');
     expect(t({ ...p, que: 'pico', tema: 'piernas' })).toBe('Fue tu carrera más larga del mes por bastante: subir poco a poco cuida tus piernas.');
     // El del hierro, sin género; el del partido de noche, para leerlo a la mañana siguiente («esta noche»).
-    expect(t({ ...p, que: 'minerales', tema: 'minerales', hierro: true, calcio: false })).toBe('Tu hierro viene bajo: carne, legumbres u hojas verdes con vitamina C. Si notas mucho cansancio, pide un análisis de ferritina.');
+    expect(t({ ...p, que: 'minerales', tema: 'minerales', hierro: true, calcio: false })).toBe('Tu hierro está bajo: carne, legumbres u hojas verdes con vitamina C. Si notas mucho cansancio, pide un análisis de ferritina.');
     expect(t({ que: 'partidoDeNoche', donde: 'sueno', tema: 'sueno' })).toBe('Jugaste tarde: es normal dormirte tarde. Si puedes, duerme más esta noche o haz una siesta corta temprano.');
     expect(tarjetaDeEnergia(TARJETAS[0], para('es')).texto).toMatch(/^En las últimas semanas comiste bastante menos de lo que pide tu entrenamiento\. Que pase unos días es normal;/);
     expect(tarjetaDeEnergia(TARJETAS[1], para('es')).deQueSale).toBe('Moss lo vio en tu peso de las últimas 3 semanas, con 5 sesiones por semana.');

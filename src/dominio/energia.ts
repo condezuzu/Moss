@@ -124,8 +124,8 @@ export const franjasDeLaBarra = (sexo: Sexo) => ({ suficiente: enLaBarra(DISPONI
  * una suma: ningún puntaje compuesto está validado contra el rendimiento (spec/estudio/ascent.md).
  * - El sueño: anoche corta (6 h o menos, o despertándote una hora antes de lo de siempre: Craven 2022, en
  *   estadoDeLaNoche) o dos de las últimas tres de 6 h o menos (Knowles 2018), baja. Algo corta (más de una hora
- *   menos de lo que necesitas) o con la deuda algo alta o alta, justa: la deuda sola no la baja, porque una
- *   noche normal ya cuenta. Sin la noche de anoche, solo dice algo si la deuda está alta.
+ *   menos de lo que necesitas) o con la deuda media o alta (5 horas o más, juicioDeLaDeuda), justa: la deuda
+ *   sola no la baja, porque una noche normal ya cuenta. Sin la noche de anoche, solo dice algo con esa deuda.
  * - La comida de estos días (energiaDeEstosDias): baja si lo que queda después de entrenar no alcanza; justa
  *   si alcanza pero no llegaste a tus calorías; bien si llegaste o comiste de sobra.
  * - Con Ascent, los músculos de hoy: cargados, no la dejan ser alta.
@@ -158,7 +158,7 @@ export function suenoParaLaEnergia(s: SuenoDeHoy): { parte: Parte; como: ComoDor
   if (s.anoche === 'muyCorta' || s.anoche === 'corta') return { parte: 'baja', como: s.anoche };
   if (s.seguidas) return { parte: 'baja', como: 'seguidas' };
   if (s.anoche === 'algoCorta') return { parte: 'justa', como: 'algoCorta' };
-  if (s.deuda === 'algoAlta' || s.deuda === 'alta') return { parte: 'justa', como: 'deuda' };
+  if (s.deuda === 'media' || s.deuda === 'alta') return { parte: 'justa', como: 'deuda' };
   return s.anoche === null ? null : { parte: 'bien', como: 'bien' };
 }
 
@@ -257,13 +257,13 @@ export type TramoDeLaCurva = 'inercia' | 'pico' | 'bajon' | 'segundoPico' | 'baj
 export type Tramo = { que: TramoDeLaCurva; desde: number; hasta: number };
 export type CurvaDelDia = { tramos: Tramo[]; puntos: { t: number; nivel: number }[] };
 /** Cuánto bajan los picos con la deuda (convención: la forma es del modelo; el tamaño, no). */
-const CON_DEUDA: Record<JuicioDeLaDeuda, number> = { muyBien: 1, bien: 0.95, algoAlta: 0.85, alta: 0.72 };
+const CON_DEUDA: Record<JuicioDeLaDeuda, number> = { sinDeuda: 1, baja: 0.95, media: 0.85, alta: 0.72 };
 
 /** En minutos desde la medianoche del día de Moss, de despertarte a la cama; los puntos, cada 15 minutos. */
 export function curvaDelDia(x: { despertar: number; cama: number; deuda: JuicioDeLaDeuda | null }): CurvaDelDia {
   const D = x.despertar;
   const C = Math.max(x.cama, D + 12 * 60);
-  const f = CON_DEUDA[x.deuda ?? 'bien'];
+  const f = CON_DEUDA[x.deuda ?? 'baja'];
   const fin2 = Math.max(D + 11 * 60, C - 150);
   const tramos: Tramo[] = [
     { que: 'inercia', desde: D, hasta: D + 60 },

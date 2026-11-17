@@ -33,7 +33,7 @@ import { apagaLoQueConviene } from '@/dominio/cuidados';
 import { QUE_CONVIENE, type QueConviene } from '@/dominio/loQueConviene';
 import { MAXIMO_QUE_SIGUE_EL_DESPERTAR } from '@/dominio/sigueElDespertar';
 import { necesidad, necesidadesPara } from '@/dominio/sueno';
-import { aprenderPersonal, LATENCIAS } from '@/dominio/sinReloj';
+import { MARGENES, margenParaDormirte } from '@/dominio/sinReloj';
 import { haySalud, pedirPermisos, saludPedida } from '@/salud/salud';
 import { lista, plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -815,7 +815,7 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const estaNoche = horas?.acostarse ?? null;
   const manana = horas?.despertarManana ?? null;
   const dormidas = horas ? duerme(horas) : null;
-  const personal = aprenderPersonal([...e.noches.values()], e.hoy, e.latencia);
+  const margen = margenParaDormirte(e.latencia);
   const edad = e.perfil ? edadDe(e.perfil, e.hoy) : null;
   const maximo = a.maximoPorDia ?? MAXIMO_POR_DIA;
   // El horario arranca con las comidas de siempre, a la hora en que se suelen anotar. Apagado queda vacío, no sin
@@ -896,7 +896,7 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       <TarjetaDeAviso
         icono="moon" color="azul" titulo={t('perfil.avisos.dormir')}
         texto={estaNoche !== null && manana !== null && dormidas !== null
-          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(dormidas), latencia: personal.latencia })
+          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(dormidas), latencia: margen })
           : t('perfil.avisos.dormirSinDatos')}
         prendido={prendida('dormir', !!dormir?.encendido)} alCambiar={encenderDormir}
       >
@@ -906,12 +906,11 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
           ))}
         </View>
       </TarjetaDeAviso>
-      {/* Tardo en dormirme (D33): lo que aprende Moss de tus respuestas, o un número fijo. */}
+      {/* Tardo en dormirme: el mismo margen de Sueño › Afinar (17/11/2026), de fábrica o el que elijas. */}
       <TarjetaDeAviso icono="clock" color="violeta" titulo={t('perfil.avisos.tardo')}>
         <View style={st.comidas}>
-          <Pastilla texto={t('perfil.avisos.tardoAprendido', { n: personal.aprendida })} elegida={e.latencia === null} alTocar={() => elAlmacen().ponerLatencia(null)} />
-          {LATENCIAS.map((n) => (
-            <Pastilla key={n} texto={t('perfil.avisos.minutos', { n })} elegida={e.latencia === n} alTocar={() => elAlmacen().ponerLatencia(n)} />
+          {MARGENES.map((n) => (
+            <Pastilla key={n} texto={t('perfil.avisos.minutos', { n })} elegida={margen === n} alTocar={() => elAlmacen().ponerLatencia(n)} />
           ))}
         </View>
         <Text style={st.avisoNota}>{t('perfil.avisos.tardoTexto')}</Text>

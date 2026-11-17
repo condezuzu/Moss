@@ -16,8 +16,8 @@ import { accesoActual, alCambiarPremium, arrancarPremium, cuentaDePremium, seSab
 import { LO_QUE_MUEVE_LOS_AVISOS, programarAvisos } from '@/recordatorios/programar';
 import { yaNoEsDeMoss } from '@/secciones/perfil/cuentaApple';
 import { buscarDespertar } from '@/salud/despertar';
-import { leerSalud } from '@/salud/leer';
-import { estimarAnoche } from '@/salud/nocheSinReloj';
+import { leerPasos, leerSalud } from '@/salud/leer';
+import { estimarAnoche, rehacerLasNoches } from '@/salud/nocheSinReloj';
 import { idioma } from '@/textos';
 import { abrirRepositorio } from './abrir';
 import { crearAlmacen, type Almacen } from './almacen';
@@ -198,6 +198,8 @@ export async function subirLoQueFalta(): Promise<void> {
 export async function actualizarSalud(): Promise<void> {
   const s = await leerSalud(new Date(), elAlmacen().estado().fuenteDelSueno, elAlmacen().estado().corte).catch(() => null);
   if (s) elAlmacen().ponerSalud(s);
+  // La primera vez con la regla del 17/11/2026, las noches estimadas de antes se arman de nuevo.
+  await rehacerLasNoches(elAlmacen(), new Date(), leerPasos).catch(() => {});
   await estimarAnoche(elAlmacen()).catch(() => {});
   // Ya con la noche de Salud y la apertura anotada: a qué hora te despertaste hoy (el día que sigue tu despertar).
   await buscarDespertar(elAlmacen()).catch(() => {});

@@ -985,7 +985,8 @@ const pasos = {
     await hojaAbierta('pf-hoja');
     await pagina.waitForTimeout(300);
     await foto('aparatos');
-    await pagina.click('.pf-marcas li:nth-child(2) .pf-marca');
+    // La de «Qué llega de cada uno»: arriba está la guía para conectar cada marca (escenario melatonina).
+    await pagina.click('.pf-marcas:not(.pf-guia):not(.pf-no-llego) li:nth-child(2) .pf-marca');
     await pagina.waitForTimeout(600);
     await foto('aparatos-oura');
     await pagina.evaluate(() => { const c = document.querySelector('.pf-aparatos'); c.scrollTop = c.scrollHeight; });
@@ -2486,6 +2487,198 @@ const pasos = {
     await pagina.evaluate((x) => window.__avisosBloqueo(x), { modo: 'dia', idioma: 'es', dia: 'tarde', hora: hora(17, 5), desayuno: 'directo' });
     await pagina.click('.ab-cerrar');
     await pagina.waitForTimeout(400);
+  },
+
+  // El sueño rehecho, tanda 2 (17/11, para aprobar; spec/sueno.md y spec/avisos.md): la tarjeta de la deuda con su
+  // palabra y lo que necesitas, cambiado ahí mismo; tu periodo de melatonina y la hoja «¿Qué es?»; sin deuda, con
+  // mucha, con pocas noches y sin noches; solo con el teléfono; en inglés la tarjeta y la hoja; los avisos reescritos
+  // en la pantalla bloqueada (la mañana, la noche, con «Anotar lo pendiente» y las gafas, y en «Todos»); la nota de lo
+  // pendiente, que se abre tocando el aviso de la noche; «Lo que hay que hacer hoy» en Inicio, tocando el de la
+  // mañana; Perfil › Avisos; y la guía de Aparatos para conectar un reloj o un anillo.
+  async melatonina() {
+    const m = (accion, arg) => pagina.evaluate(([a, x]) => window.__melatonina(a, x), [accion, arg]);
+    const espera = (ms = 600) => pagina.waitForTimeout(ms);
+    const hora = (h, min = 0) => h * 60 + min;
+    const bloqueo = async (p, nombre, ms = 600) => {
+      await pagina.evaluate((x) => window.__avisosBloqueo(x), p);
+      await espera(ms);
+      if (nombre) await foto(nombre);
+    };
+    const elegirNecesidad = (texto) => pagina.evaluate((t) => [...document.querySelectorAll('.sn-necesidades button')].find((b) => b.textContent === t).click(), texto);
+    const idioma = (v) => pagina.evaluate((x) => window.__idioma(x), v);
+    await m('pendientes', 'reiniciar');
+
+    // Sueño, con reloj: la deuda con su palabra y, debajo, tu periodo de melatonina.
+    await seccion('melatonina');
+    await espera(1400);
+    await foto('melatonina-sueno');
+    // Lo que necesitas dormir se cambia ahí mismo: el número y la palabra cambian con él.
+    await pagina.click('.sn-necesitas');
+    await espera(700);
+    await foto('melatonina-necesidad');
+    await elegirNecesidad('9 h');
+    await espera(600);
+    await foto('melatonina-necesidad-9');
+    await elegirNecesidad('8 h');
+    await espera(400);
+    await m('periodo', ['necesidad', false]);
+    // «Más»: lo de cada noche, la última comida y cómo se calcula.
+    await sueno('deuda', true);
+    await espera(900);
+    await sueno('bajar', '.sn-deuda-ver');
+    await espera(300);
+    await foto('melatonina-mas');
+    await sueno('deuda', false);
+    await sueno('subir');
+    // «¿Qué es?»: la hoja, arriba y abajo.
+    await m('periodo', ['hoja']);
+    await hojaAbierta('pe-hoja');
+    await espera(1700);
+    await foto('melatonina-hoja');
+    await m('periodo', ['bajarHoja']);
+    await espera(300);
+    await foto('melatonina-hoja-2');
+    await m('periodo', ['cerrar']);
+    await espera(600);
+    // Sin deuda, con mucha, con dos noches (faltan para el periodo) y sin noches (el ejemplo).
+    for (const [estado, nombre] of [['pagada', 'sin-deuda'], ['mucha', 'mucha'], ['dos', 'pocas'], ['vacio', 'sin-noches']]) {
+      await sueno('estado', estado);
+      await espera(900);
+      if (estado === 'vacio') { await sueno('bajar', '.sn-deuda'); await espera(300); }
+      await foto('melatonina-' + nombre);
+    }
+    await sueno('estado', 'datos');
+    await espera(600);
+    // Solo con el teléfono: lo dice debajo, y lleva a Aparatos.
+    await seccion('melatoninaTelefono');
+    await espera(1200);
+    await foto('melatonina-telefono');
+    // En inglés: la tarjeta y la hoja.
+    await idioma('en');
+    await seccion('melatonina');
+    await espera(1200);
+    await foto('melatonina-ingles');
+    await m('periodo', ['hoja']);
+    await hojaAbierta('pe-hoja');
+    await espera(1700);
+    await foto('melatonina-hoja-ingles');
+    await m('periodo', ['bajarHoja']);
+    await espera(300);
+    await foto('melatonina-hoja-ingles-2');
+    await m('periodo', ['cerrar']);
+    await idioma('es');
+    await espera(600);
+
+    // La pantalla bloqueada: la mañana (la deuda, pesarte y el desayuno) y la noche (el periodo, las luces, el ritmo
+    // y acostarte), con las palabras nuevas.
+    await seccion('avisosNuevos');
+    await espera(600);
+    await bloqueo({ modo: 'despertar', idioma: 'es', desayuno: 'directo', anotar: false, gafas: false, hora: hora(10, 45) }, 'melatonina-bloqueo-manana', 800);
+    await bloqueo({ hora: hora(23, 59) }, 'melatonina-bloqueo-noche', 800);
+    // Con «Anotar lo pendiente»: la lista a la mañana y, a la noche, el aviso que abre la nota. Y con las gafas.
+    await bloqueo({ anotar: true, gafas: false, hora: hora(11, 5) }, 'melatonina-bloqueo-pendientes-manana', 800);
+    await bloqueo({ hora: hora(23, 59) }, 'melatonina-bloqueo-pendientes-noche', 800);
+    await bloqueo({ abajo: 330 }, 'melatonina-bloqueo-pendientes-noche-2');
+    await bloqueo({ anotar: false, gafas: true, hora: hora(23, 59) }, 'melatonina-bloqueo-gafas', 800);
+    await bloqueo({ anotar: true, gafas: false, idioma: 'en', hora: hora(23, 59) }, 'melatonina-bloqueo-ingles', 800);
+    await bloqueo({ hora: hora(11, 5) }, 'melatonina-bloqueo-ingles-manana', 800);
+    // «Todos»: cada forma de los reescritos.
+    await bloqueo({ modo: 'todos', idioma: 'es', abajo: 'Bajar las luces' }, 'melatonina-todos-luces', 800);
+    await bloqueo({ abajo: 'Pesarte' }, 'melatonina-todos-pesarte');
+    await bloqueo({ abajo: 'Tu despertar' }, 'melatonina-todos-despertar');
+    await bloqueo({ abajo: 'La hora de dormir' }, 'melatonina-todos-acostarte');
+    await bloqueo({ modo: 'todos', idioma: 'en', abajo: 'Tu despertar' }, 'melatonina-todos-ingles', 800);
+    await bloqueo({ abajo: 'La hora de dormir' }, 'melatonina-todos-ingles-2');
+
+    // Tocar «Anota lo que tienes en la cabeza» abre la nota en Sueño: se escribe uno, se agrega, se quita otro.
+    await bloqueo({ modo: 'despertar', idioma: 'es', anotar: true, gafas: false, hora: hora(23, 59) }, null, 800);
+    await pagina.click('.ab-aviso.toca');
+    await hojaAbierta('pe-nota');
+    await espera(700);
+    await foto('melatonina-nota');
+    await pagina.fill('.pe-nota .hh-campo', 'Renovar el pasaporte');
+    await espera(300);
+    await foto('melatonina-nota-escribiendo');
+    await pagina.click('.pe-agregar');
+    await espera(600);
+    await foto('melatonina-nota-agregado');
+    await m('periodo', ['quitar']);
+    await espera(600);
+    await foto('melatonina-nota-quitado');
+    await pagina.click('.pe-listo');
+    await espera(800);
+    // En Sueño queda la fila, debajo del periodo.
+    await foto('melatonina-fila');
+
+    // A la mañana, tocar «Lo que hay que hacer hoy» abre Inicio, con la lista arriba de «Para hoy»; se tacha uno.
+    await seccion('avisosNuevos');
+    await bloqueo({ modo: 'despertar', idioma: 'es', anotar: true, gafas: false, hora: hora(11, 5) }, null, 800);
+    await pagina.click('.ab-aviso.toca');
+    await espera(1500);
+    await foto('melatonina-inicio');
+    await pagina.click('.pe-hoy-item');
+    await espera(700);
+    await foto('melatonina-inicio-hecho');
+
+    // Perfil › Avisos, con los nombres y los textos nuevos, y el interruptor de lo pendiente activado.
+    const bajarAvisos = (cuanto) => pagina.evaluate((c) => {
+      const caja = document.querySelector('.pf-hoja .pf-avisos');
+      const grupo = typeof c === 'number' ? null : [...document.querySelectorAll('.pf-hoja .pf-grupo')][1];
+      if (caja) caja.scrollTop = grupo ? grupo.offsetTop - caja.offsetTop - 8 : c;
+    }, cuanto);
+    await seccion('avisos');
+    await hojaAbierta('pf-hoja');
+    await espera(500);
+    await foto('melatonina-perfil-1');
+    await bajarAvisos(700);
+    await espera(400);
+    await foto('melatonina-perfil-2');
+    await bajarAvisos(1250);
+    await espera(400);
+    await foto('melatonina-perfil-3');
+    await bajarAvisos('mas');
+    await espera(400);
+    await foto('melatonina-perfil-4');
+    await bajarAvisos(100000);
+    await espera(400);
+    await foto('melatonina-perfil-5');
+
+    // Perfil › Aparatos: la guía, con una marca abierta por vez, y cómo comprobar que llegó.
+    const verGuia = async (marca, nombre) => {
+      await m('guia', marca);
+      await pagina.evaluate(() => {
+        const caja = document.querySelector('.pf-aparatos');
+        const guia = document.querySelector('.pf-guia');
+        const abierta = guia.querySelector('li.abierta');
+        caja.scrollTop = Math.max(0, (abierta && abierta.offsetTop > 330 ? abierta.offsetTop - 120 : guia.offsetTop - 110) - caja.offsetTop);
+      });
+      await espera(600);
+      await foto(nombre);
+    };
+    await seccion('guiaAparatos');
+    await hojaAbierta('pf-hoja');
+    await espera(500);
+    await foto('melatonina-aparatos');
+    await verGuia('oura', 'melatonina-aparatos-oura');
+    await verGuia('appleWatch', 'melatonina-aparatos-apple-watch');
+    await verGuia('garmin', 'melatonina-aparatos-garmin');
+    await verGuia('fitbit', 'melatonina-aparatos-fitbit');
+    await verGuia('sleepCycle', 'melatonina-aparatos-sleep-cycle');
+    await verGuia('otros', 'melatonina-aparatos-otros');
+    await verGuia('comprobar', 'melatonina-aparatos-comprobar');
+    await idioma('en');
+    await seccion('guiaAparatos');
+    await hojaAbierta('pf-hoja');
+    await verGuia('polar', 'melatonina-aparatos-ingles');
+    await verGuia('comprobar', 'melatonina-aparatos-ingles-comprobar');
+    await idioma('es');
+
+    // Todo como estaba.
+    await m('pendientes', 'reiniciar');
+    await pagina.evaluate(() => window.__avisosBloqueo({ modo: 'dia', idioma: 'es', dia: 'tarde', hora: 17 * 60 + 5, desayuno: 'directo', anotar: false, gafas: false }));
+    await pagina.evaluate(() => window.__accion('reiniciar'));
+    await espera(800);
+    await pestana(0);
   },
 
   // Según el deporte (3/11, para aprobar; spec/entreno.md 5.12): cada día de ejemplo en Inicio («Para hoy»,

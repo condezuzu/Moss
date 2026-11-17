@@ -159,7 +159,7 @@ const Datos = (() => {
         { desde: instante(clave, primero), hasta: instante(clave, primero + 1), tipo: 'atajo', cargador: 'desconectado' },
       );
       const noches = SinReloj.conNochesDeMoss([], propias, ZONA);
-      const e = SinReloj.estimarNoche({ clave, zona: ZONA, actividad, habitual: SinReloj.habitualDe(noches, clave), personal: SinReloj.aprenderPersonal(propias, clave) });
+      const e = SinReloj.estimarNoche({ clave, zona: ZONA, actividad, habitual: SinReloj.habitualDe(noches, clave) });
       if (!e) continue;
       ESTIMACIONES[clave] = e;
       // Como en la app (src/salud/nocheSinReloj.ts): lo estimado con la ventana tranquila, de donde se aprende lo suyo.

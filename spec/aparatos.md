@@ -184,6 +184,56 @@ y los precios de Junction (https://www.junction.com/pricing), Terra
 (https://www.thryve.health/pricing), Spike (https://www.spikeapi.com/pricing) y Sahha
 (https://sahha.ai/pricing).
 
+## Conectar cada marca: los pasos (17/11/2026, en la galería para aprobar)
+
+Lo pediste el 17/11: una guía por marca en Perfil › Aparatos, como la de Rise pero propia, para que cada reloj o
+anillo escriba el sueño en Salud, y cómo comprobar que llegó. Está en la galería (escenario `melatonina`;
+los textos, en `galeria/src/periodo.js`). Cada paso se leyó el 17/11/2026 en la ayuda de la marca o de Apple; lo
+que no se pudo confirmar no está.
+
+| Marca | Pasos | Lo que conviene saber | Fuente |
+|---|---|---|---|
+| Apple Watch | Salud › Explorar › Sueño › configurar Sueño, con el seguimiento del sueño con el reloj activado; o app Watch › Mi reloj › Sueño. Dormir con el reloj | Al menos un 30 % de batería al acostarse | [C1][C2] |
+| Oura | Menú › «Ajustes» › «Compartir datos» › «Salud de Apple» › «Conectar con Salud de Apple» | Gen3 o posterior, con membresía. Exporta duración, inicio, fin y etapas | [O1] |
+| WHOOP | More › App Settings › Integrations › Apple Health › Connect; elegir categorías y permitir | Al reinstalar hay que reconectar. Solo hay ayuda en inglés | [W1] |
+| Garmin | Garmin Connect › Más › Configuración › Connect Apps › Apple Health; permitir Sueño | Solo envía con Garmin Connect abierta, después de sincronizar el reloj | [C3] |
+| Fitbit | App Google Health › Conexiones › Apps y servicios › «Salud de Apple» › «Comenzar» › aceptar; categorías y permitir | iOS 16.4 o posterior y cuenta de Google de adulto. Al reinstalar hay que reconectar | [F1] |
+| Polar | Polar Flow › Más › Ajustes generales › «Apple Health»; categorías y permitir | Llega la duración y las horas de dormirse y despertar, sin etapas. «Sincronizar ahora» reenvía dos semanas | [P1] |
+| Sleep Cycle | Profile › More › Apple Health › Connect; permisos en Salud › foto › Apps | Lo ofrece después de la noche 15. Solo hay ayuda en inglés | [C4] |
+| AutoSleep | Sin interruptor propio: permisos en Salud › foto › Apps › AutoSleep | Con la actualización en segundo plano desactivada, solo escribe al abrirla | [C5] |
+| Otros | En la app del aparato, activar la conexión con Salud con Sueño, y abrirla a la mañana | — | — |
+
+**Cómo comprobar que llegó** [C6][C7]: Salud › Explorar › Sueño; abajo de esa pantalla están las fuentes de datos
+(en español de Latinoamérica, «Accesos y fuentes de datos»; en el de España, «Fuentes de datos y acceso»), con
+cada app o aparato que escribe sueño; la de arriba tiene prioridad, y se reordena con «Editar». Lo que puede
+escribir cada app está en Salud › tu foto › Apps. La guía no nombra ese rótulo, porque cambia con la región.
+
+**Lo que esta búsqueda corrige de la tabla de arriba:**
+
+- **Polar** no manda «solo la duración»: manda también la hora de dormirse y la de despertar [P1].
+- **Oura:** la frase sobre abrir la app, la actualización en segundo plano y el bajo consumo habla de lo que Oura
+  importa, no de lo que exporta. Que el sueño llegue recién al abrir Oura es una deducción, y la guía no lo dice.
+- **Eight Sleep:** su ayuda de hoy no dice que escriba en Salud el sueño de la funda [E1]: no está en la guía.
+- **Sleep Cycle:** la ruta de la ayuda de Rise (Settings › Advanced) no coincide con la de Sleep Cycle; vale la
+  de Sleep Cycle.
+- **Withings** está confirmado (Profile › Settings › Export health data to Apple Health; no es automático y las
+  cuentas nuevas necesitan Withings+ [Wi1]), pero la guía no lo lleva todavía. **RingConn, Amazfit y Ultrahuman**
+  no tienen pasos confirmados para el sueño: van en «Otro reloj, anillo o app».
+
+**Para revisar con un iPhone en la mano:** los rótulos de Apple cambian entre el español de Latinoamérica y el
+de España (el interruptor del reloj es «Monitor de sueño» o «Control del sueño»), así que la guía los describe
+sin citarlos. WHOOP y Sleep Cycle van con los menús en inglés, como en su ayuda.
+
+Fuentes nuevas (17/11/2026):
+
+- [C1] https://support.apple.com/es-lamr/108906
+- [C2] https://support.apple.com/es-lamr/guide/watch/apd830528336/watchos
+- [C3] https://support.garmin.com/es-ES/?faq=lK5FPB9iPF5PXFkIpFlFPA
+- [C4] https://support.sleepcycle.com/hc/en-us/articles/207388435-Does-Sleep-Cycle-support-the-Apple-Health-app
+- [C5] https://autosleepapp.tantsissa.com/faq
+- [C6] https://support.apple.com/es-lamr/108779
+- [C7] https://support.apple.com/es-lamr/guide/iphone/iph5ede58c3d/ios
+
 ## Una noche, una fuente
 
 ### El orden

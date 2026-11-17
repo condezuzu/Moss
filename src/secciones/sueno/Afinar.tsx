@@ -1,22 +1,24 @@
 // «Afinar», el de la galería (galeria/src/sueno.js; spec/sueno-sin-esfuerzo.md): sin reloj, lo que le
-// da a Moss horas exactas de la noche. El despertador de Moss (AlarmKit, iOS 26 o más), con su hora,
-// sus días y lo que hay que saber; y la guía para armar en Atajos las automatizaciones que avisan a
-// Moss, con lo que llegó estos días (la lista sirve también para ver que andan).
+// da a Moss horas exactas de la noche. El margen para dormirte (17/11/2026): lo único que Moss no cuenta
+// como sueño del rato que el teléfono estuvo quieto. El despertador de Moss (AlarmKit, iOS 26 o más), con
+// su hora, sus días y lo que hay que saber; y la guía para armar en Atajos las automatizaciones que avisan
+// a Moss, con lo que llegó estos días (la lista sirve también para ver que andan).
 
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Linking, Pressable, StyleSheet, Switch, Text, View, type AccessibilityActionEvent } from 'react-native';
 
+import { elAlmacen } from '@/almacen';
 import { claveDelDia, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
-import { estadoDelCargador, esProgramado, type EstadoDelCargador, type QueSenal, type Senal } from '@/dominio/sinReloj';
+import { estadoDelCargador, esProgramado, MARGENES, margenParaDormirte, type EstadoDelCargador, type QueSenal, type Senal } from '@/dominio/sinReloj';
 import { useSenales } from '@/salud/anclas';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { Icono } from '../comida/comunes';
-import { horaDelDia } from '../comida/datos';
+import { horaDelDia, useEstado } from '../comida/datos';
 import { HojaModal } from '../HojaModal';
 import { BotonDePaso } from '../paso';
-import { Aparece, Carta, Dias, EtiquetaDeGrupo, Parrafo } from '../tarjetas';
+import { Aparece, Carta, Dias, EtiquetaDeGrupo, Parrafo, Segmento } from '../tarjetas';
 import { alarmaPuesta, hayDespertador, pedirAlarmas, permisoDeAlarmas, ponerAlarma, sacarAlarma, type Alarma, type PermisoDeAlarmas } from './despertador';
 import { GuiaCargador } from './GuiaCargador';
 
@@ -161,6 +163,7 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
   }, []);
   const cargador = estadoDelCargador(senales ?? [], ahora);
   const abrirCargador = () => setGuia((g) => ({ abierta: true, vez: g.vez + 1 }));
+  const margen = margenParaDormirte(useEstado().latencia);
   return (
     <>
     {cargador.estado === 'dejoDeLlegar' && (
@@ -180,6 +183,11 @@ export function Afinar({ hoy }: { hoy: ClaveDia }) {
     )}
     <Carta titulo={t('sueno.afinar.titulo')}>
       <Parrafo chico>{t('sueno.afinar.texto')}</Parrafo>
+      <View style={[st.margen, st.separada]}>
+        <Text style={st.filaTitulo}>{t('sueno.afinar.margen.titulo')}</Text>
+        <Segmento opciones={MARGENES.map((n) => [n, t('sueno.afinar.margen.minutos', { n })] as const)} elegida={margen} alElegir={(n) => elAlmacen().ponerLatencia(n)} />
+        <Parrafo chico>{t('sueno.afinar.margen.texto')}</Parrafo>
+      </View>
       {d.disponible && (
         <View style={[st.fila, st.separada]}>
           <Pressable onPress={() => setHoja('despertador')} style={({ pressed }) => [st.filaTextos, pressed && st.textoApretado]} accessibilityRole="button">
@@ -360,6 +368,7 @@ function LosAtajos({ senales, hoy }: { senales: Senal[]; hoy: ClaveDia }) {
 const st = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
   separada: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
+  margen: { gap: 8, marginTop: 10, paddingTop: 12, paddingBottom: 12 },
   apretada: { backgroundColor: 'rgba(239, 230, 207, 0.05)' },
   textoApretado: { opacity: 0.6 },
   filaTextos: { flex: 1, paddingVertical: 10 },

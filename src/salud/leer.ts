@@ -54,6 +54,12 @@ async function categoria(id: CategoryTypeIdentifier, desde: Date, hasta: Date): 
   }
 }
 
+/** Los pasos de Salud entre dos momentos, muestra por muestra: para volver a estimar noches de días anteriores (rehacerLasNoches). Sin Salud, ninguno. */
+export async function leerPasos(desde: Date, hasta: Date): Promise<LoDeSalud['pasosRecientes']> {
+  if (!(await saludPedida())) return [];
+  return pasosDe(await cantidades('HKQuantityTypeIdentifierStepCount', 'count', desde, hasta));
+}
+
 /**
  * Todo lo de Salud que usa Moss, o null si Salud no se pidió en este teléfono. `elegida` es el
  * aparato del que sale la noche, si se eligió en Perfil › Aparatos. Los valores del día son los del

@@ -514,6 +514,57 @@ apagadas y sin marca) de [`estudio/momentos.md`](estudio/momentos.md).
     anotar y si vas muy bajo), y el máximo con 10. La víspera del partido y la carrera larga, todavía no (según el
     deporte está para aprobar); la recuperación, con Ascent.
 
+## Los avisos reescritos y «Lo que hay que hacer hoy» (17/11/2026, en la galería para aprobar)
+
+Lo pediste el 17/11: que el título diga qué hacer y el cuerpo dé el detalle con la hora, en español neutro, sin «a
+la cama» y con palabras propias. Está en la galería (escenario `melatonina`; `galeria/src/periodo.js` y
+`avisos.js`); la app no cambió. **Cuándo suena cada uno lo sigue diciendo la regla** (`avisos.ts` y
+`sigueElDespertar.ts`): cambian solo las palabras, que están en el diccionario de la galería con las claves que
+tendrían en `src/textos` (`recordatorios.nuevos`, `perfil.avisosNuevos`).
+
+| Aviso | Título | Cuerpo |
+|---|---|---|
+| Tu periodo de melatonina | «Tu periodo de melatonina: 23:30» | «De 23:30 a 00:30 es cuando menos te cuesta dormirte: tu melatonina empieza a subir más o menos ahora.» |
+| Bajar las luces | «Baja las luces» | «Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las 23:15.» |
+| Bajar el ritmo (antes, «las revoluciones») | «Baja el ritmo» | «Deja lo que te acelera y las pantallas brillantes. Te acuestas a las 23:15.» |
+| Acostarte | «Acuéstate a las 23:15» | «En media hora. Así te duermes dentro de tu periodo de melatonina (23:30 – 00:30).» Con la deuda: «En media hora. Con 4 h de deuda de sueño, esta noche no lo dejes para más tarde.» |
+| Anotar lo que tienes en la cabeza | «Anota lo que tienes en la cabeza» | «Escribe tus pendientes antes de acostarte: con la cabeza despejada cuesta menos dormirse. Mañana Moss te los recuerda.» |
+| Las gafas | «Ponte las gafas para la luz azul» | «Si las tienes, úsalas desde ahora hasta acostarte, a las 23:15.» |
+| La deuda al despertar | «Tu deuda de sueño: 4 h» | «Bajó 30 min desde ayer.» (o subió, igual, bajó a cero, y la primera vez, qué es) |
+| Pesarte | «Pésate antes de desayunar» | «Después de ir al baño y siempre igual: así se ve la tendencia.» |
+| El desayuno | «¿Desayunas hoy?» | «Si vas directo al almuerzo, lo del desayuno se reparte en el resto del día.», con «Sí» y «Voy directo al almuerzo» |
+| Lo que hay que hacer hoy (nuevo) | «Lo que hay que hacer hoy» | Tus pendientes, uno por línea: hasta cuatro, y «y 2 más» |
+
+- **En la pantalla bloqueada, el periodo empieza a la hora de dormirte de la regla** (la de acostarte más tu
+  margen) y dura una hora: así cierra con los demás avisos del día. En Sueño sale de `melatonina.ts`, con tus
+  noches. Al programarlo hay que unir las dos cuentas (ver `sueno.md`).
+- **Perfil › Avisos** lleva los mismos nombres: «Tu periodo de melatonina», «Bajar las luces», «Bajar el ritmo»,
+  «Acostarte» (con la hora de esta noche y tu periodo) y «Anotar lo que tienes en la cabeza». «Tardo en
+  dormirme» es el margen de Sueño › Afinar (0, 15, 30, 45 o 60 min).
+
+### Lo que hay que hacer hoy
+
+- **A la noche**, «Anota lo que tienes en la cabeza» abre una nota corta en Sueño: escribes tus pendientes uno
+  por uno (hasta 6, de hasta 60 letras), se quitan con la cruz y quedan en el teléfono. Con el aviso activado,
+  Sueño muestra la fila «Lo que tienes en la cabeza», debajo del periodo, para abrirla cuando quieras.
+- **A la mañana**, después del despertar, llega «Lo que hay que hacer hoy» con esos puntos: 20 minutos después de
+  lo último de la mañana (la deuda, pesarte y el desayuno). En la galería entra en la regla como un aviso más
+  (de a uno y dentro del máximo); al programarlo va en `sigueElDespertar.ts`.
+- **Después se ven en Inicio**, arriba de «Para hoy», para ir tachando.
+- **Apagado de fábrica**, con «Anotar lo que tienes en la cabeza»: un solo interruptor para la nota, el aviso de
+  la noche, el de la mañana y la lista de Inicio.
+
+**Para decidir:**
+
+- **El máximo.** Con «Anotar lo pendiente» son dos avisos más, y con las gafas, uno más: un día con merienda y
+  pesarte llega a 13, y con el máximo de 10 se caen los últimos de la noche. En la galería, el máximo sube con
+  ellos y Perfil › Avisos suma el 12. Las opciones: subir el máximo solo al activarlos, o que los dos de lo
+  pendiente no cuenten.
+- **Las gafas aprietan la noche**: cada aviso va a 20 minutos del anterior, y con las gafas activadas «Baja el
+  ritmo» tendría que esperar más de 45 y no suena.
+- Si los avisos de las comidas sin desayuno («Hora del almuerzo: unas 1050 kcal…») también pasan a título y
+  cuerpo: quedaron como estaban.
+
 ## Lo que queda
 
 - Los avisos de después de entrenar (con Ascent) andan en la regla, pero la

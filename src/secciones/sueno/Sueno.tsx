@@ -1,6 +1,6 @@
 // Sueño, el de la galería (galeria/src/sueno.js; spec/sueno.md): lo que Salud trae de cada noche, con las reglas
-// de src/dominio/sueno.ts, sobre una noche oscura con auroras. Arriba, la pregunta de la mañana y la deuda, en una
-// palabra y compacta, con «Esta noche» y «Más»; después la noche en un arco y, debajo, tu energía de ahora; las
+// de src/dominio/sueno.ts, sobre una noche oscura con auroras. Arriba, la pregunta de la mañana y la deuda, el
+// número con su palabra, compacta, con lo que necesitas, a qué hora acostarte y «Más»; después la noche en un arco y, debajo, tu energía de ahora; las
 // dos semanas para elegir otra noche, su calidad en un anillo, el horario, lo que mide el reloj y de dónde sale
 // cada dato. Sin reloj, las noches que estima Moss con el teléfono (spec/sueno.md, «Sin reloj»). Sin noches, la
 // invitación y, en cada tarjeta, el ejemplo marcado como ejemplo con cuánto falta. Lo que falta va en gris: nunca
@@ -15,7 +15,7 @@ import { actualizarSalud } from '@/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
-import { aprenderPersonal } from '@/dominio/sinReloj';
+import { margenParaDormirte } from '@/dominio/sinReloj';
 import { pocoSuenoSostenido, ultimasNoches, type Noche } from '@/dominio/sueno';
 import { saludPedida } from '@/salud/salud';
 import { plural, t } from '@/textos';
@@ -192,7 +192,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
     }, reducido ? 0 : 380);
   }, [reducido, scroll]);
   useIrAEnergia(irAEnergia);
-  const latencia = aprenderPersonal([...e.noches.values()], e.hoy, e.latencia).latencia;
+  const latencia = margenParaDormirte(e.latencia);
   const conEnergia = clave === e.hoy && conNoches && !!energia;
   return (
     <View style={{ width: ancho }}>
@@ -211,7 +211,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         {!conNoches && <Aparece><Invitacion muestra={muestra} ancho={interior} /></Aparece>}
         <LaManana hoy={e.hoy} noche={deHoy} propia={e.noches.get(e.hoy)} noches={reales} ancho={interior} desde={e.metas[0]?.desde ?? null} />
         {/* La deuda, arriba de todo (5/11, a la noche): es lo primero que se mira. */}
-        <LaDeuda noches={reales} hoy={e.hoy} clave={clave} necesidad={s.necesidad} conNoches={conNoches} muestra={muestra} latencia={latencia} animar={animar} />
+        <LaDeuda noches={reales} hoy={e.hoy} clave={clave} necesidad={s.necesidad} edad={edad} conNoches={conNoches} muestra={muestra} latencia={latencia} animar={animar} />
         {/* Poco sueño por semanas: la sugerencia de un médico, arriba. Una estimación, no un diagnóstico. */}
         {conNoches && pocoSuenoSostenido(ultimasNoches(s.noches, e.hoy, DIAS), edad) && (
           <Aparece>
