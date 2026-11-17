@@ -8,12 +8,13 @@
 //   las 10 y no desayuna. Hasta las 10 no suena nada; después, la deuda, pesarse y «¿Desayunas hoy?» con sus dos
 //   botones (tocarlos cambia el resto del día), las comidas con lo del desayuno repartido y la noche.
 // Lo que conviene (3/11, como Rise) lleva de título lo que hay que hacer; los demás, el nombre de la app.
-// Los de la noche y la mañana, reescritos (17/11, para aprobar; Periodo.aviso, en periodo.js): el título dice qué
-// hacer y el cuerpo, el detalle con la hora: tu periodo de melatonina, bajar el ritmo, bajar las luces, acostarte,
-// anotar lo que tienes en la cabeza, las gafas, la deuda al despertar, pesarte y el desayuno. Cuándo suena cada uno
-// lo sigue diciendo la regla. Con «Anotar lo pendiente» (apagado de fábrica), a la mañana llega «Lo que hay que
-// hacer hoy» con lo que anotaste: entra en la regla como un aviso más. Tocar el de la noche abre la nota en Sueño;
-// el de la mañana, Inicio.
+// Los de la noche y la mañana, reescritos (17/11, aprobados con la galería 50 y ya en la app: Avisos.tituloDelAviso
+// y textoDelAviso): el título dice qué hacer y el cuerpo, el detalle con la hora: tu periodo de melatonina, bajar el
+// ritmo, bajar las luces, acostarte, anotar lo que tienes en la cabeza, las gafas, la deuda al despertar, pesarte, el
+// desayuno y las comidas sin desayuno. En «Tu despertar», la noche sale de tu periodo de melatonina, el mismo de la
+// tarjeta de Sueño y de Perfil › Avisos (Melatonina, con las noches de la galería): los tres dicen las mismas horas.
+// Con «Anotar lo pendiente» (apagado de fábrica), a la mañana llega «Lo que hay que hacer hoy» con lo que anotaste
+// y no tachaste (SigueElDespertar). Tocar el de la noche abre la nota en Sueño; el de la mañana, Inicio.
 // Con un día de ejemplo de «Según el deporte» (deporte.js), «Deporte» es ese día: su fecha, su sesión, sus
 // partidos y su carrera, con «Mañana juegas» y «Tu carrera es pasado mañana» prendidos.
 
@@ -102,7 +103,7 @@ const AvisosBloqueo = (() => {
   const DESPIERTA = hm('10:00');
   const SUENO_DEL_DESPERTAR = { habitual: () => ({ dormirse: hm('23:15') - 18 * 60, despertar: hm('7:30') + 6 * 60 }), necesidad: 480, deuda: 90, despierto: 30, latencia: 15 };
   const HORARIO_DEL_DESPERTAR = { desayuno: hm('7:30'), almuerzo: hm('13:00'), merienda: hm('17:00'), cena: hm('20:30') };
-  const AJUSTES_DEL_DESPERTAR = SigueElDespertar.deFabrica({ pesarse: { encendido: true, todos: true }, horario: HORARIO_DEL_DESPERTAR }, (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'));
+  const ELEGIDO_DEL_DESPERTAR = { pesarse: { encendido: true, todos: true }, horario: HORARIO_DEL_DESPERTAR };
 
   function crear(tel, opciones) {
     const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0, deporte: null, desayuno: 'directo', anotar: false, gafas: false };
@@ -130,14 +131,14 @@ const AvisosBloqueo = (() => {
     const nombresDeHabitos = () => ({ entrenar: en() ? 'Work out' : 'Entrenar', leer: en() ? 'Read' : 'Leer', vitaminas: en() ? 'Take vitamins' : 'Vitaminas' });
     const habitos = () => Object.entries(nombresDeHabitos()).map(([id, nombre]) => ({ id, nombre, icono: id === 'entrenar' ? 'dumbbell' : 'star', dias: TODOS, fuente: { tipo: 'manual' }, orden: 0, desde: '2026-01-01' }));
     const paraElTexto = (plan) => ({ t: tx, habito: (id) => nombresDeHabitos()[id] || '', plan: plan || (() => ''), duracion: u.duracion });
-    // Las palabras nuevas de la noche y la mañana (Periodo.aviso); lo demás lo dice Avisos. El periodo empieza a la
-    // hora de dormirte de la regla: la de acostarte más lo que tardas en dormirte (en «Un día», nada).
-    const pendientesDeAnoche = () => Periodo.pendientes.items().map((x) => Periodo.pendientes.textoDe(x, u));
-    const decir = (n, plan) => {
-      const latencia = s.modo === 'dia' ? 0 : SUENO_DEL_DESPERTAR.latencia;
-      const nuevo = Periodo.aviso(n, { tx, duracion: u.duracion, periodo: (cama) => ({ desde: cama + latencia, hasta: cama + latencia + 60 }), pendientes: pendientesDeAnoche() });
-      return nuevo || { titulo: Avisos.tituloDelAviso(n, paraElTexto(plan)), texto: Avisos.textoDelAviso(n, paraElTexto(plan)) };
+    // Lo que anotaste anoche (Periodo.pendientes), como lo recibe la regla: el texto y si ya lo tachaste en Inicio.
+    const pendientesDeAnoche = () => Periodo.pendientes.items().map((x) => ({ texto: Periodo.pendientes.textoDe(x, u), hecho: !!x.hecho }));
+    // Tu periodo de melatonina, con las noches de Sueño y el margen de Perfil, como la tarjeta de Sueño.
+    const periodoDeHoy = () => {
+      const noches = opciones.noches ? opciones.noches() : [];
+      return Melatonina.periodoDeMelatonina(noches.length ? noches : Datos.NOCHES, Datos.HOY, { margen: opciones.margenElegido ? opciones.margenElegido() : null, deuda: SUENO_DEL_DESPERTAR.deuda });
     };
+    const decir = (n, plan) => ({ titulo: Avisos.tituloDelAviso(n, paraElTexto(plan)), texto: Avisos.textoDelAviso(n, paraElTexto(plan)) });
     const titulo = (n) => decir(n).titulo;
     const texto = (n) => decir(n).texto;
     const propios = () => (en()
@@ -213,14 +214,15 @@ const AvisosBloqueo = (() => {
     // El día que sigue tu despertar, minuto a minuto con la regla de verdad. Antes de las 10 Moss no sabe que te
     // despertaste; contestas «¿Desayunas hoy?» al minuto de que suena. Cada comida se anota a la hora de su aviso, salvo el almuerzo sin desayuno, a las 13:30: así corre la merienda y la cena.
     const KCAL_DEL_DESPERTAR = { desayuno: 450, almuerzo: 950, merienda: 450, cena: 900 };
-    const suenoDelDespertar = (T) => ({ ...SUENO_DEL_DESPERTAR, despertarReal: (d) => (d === DIA && T >= DESPIERTA ? DESPIERTA : null) });
+    const suenoDelDespertar = (T, periodo) => ({ ...SUENO_DEL_DESPERTAR, despertarReal: (d) => (d === DIA && T >= DESPIERTA ? DESPIERTA : null), periodo: () => periodo });
     function lineaDelDespertar() {
-      const conLista = s.anotar && pendientesDeAnoche().length > 0;
-      const clave = JSON.stringify(['despertar', s.desayuno, s.anotar, s.gafas, conLista, en()]);
-      // Con lo apagado de fábrica activado son más de diez: en la galería el máximo sube con ellos (dos por anotar lo
-      // pendiente y uno por las gafas). Con diez, se caerían los últimos de la noche.
-      const maximo = SigueElDespertar.MAXIMO_QUE_SIGUE_EL_DESPERTAR + (s.anotar ? 2 : 0) + (s.gafas ? 1 : 0);
-      const ajustes = { ...AJUSTES_DEL_DESPERTAR, ...(s.anotar ? { descarga: { encendido: true } } : {}), ...(s.gafas ? { gafas: { encendido: true } } : {}), maximoPorDia: maximo };
+      const pendientes = s.anotar ? pendientesDeAnoche() : [];
+      const periodo = periodoDeHoy();
+      const clave = JSON.stringify(['despertar', s.desayuno, s.anotar, s.gafas, pendientes, periodo && [periodo.desde, periodo.acostarse], en()]);
+      // Lo de fábrica, con lo que se activa aparte. Son más de diez: el máximo de fábrica sube solo con ellos, como en
+      // la app (SigueElDespertar.maximoDeFabrica: dos por anotar lo pendiente y uno por las gafas). Con diez, se
+      // caerían los últimos de la noche.
+      const ajustes = SigueElDespertar.deFabrica({ ...ELEGIDO_DEL_DESPERTAR, ...(s.anotar ? { descarga: { encendido: true } } : {}), ...(s.gafas ? { gafas: { encendido: true } } : {}) }, (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'));
       if (hechos.has(clave)) return hechos.get(clave);
       const llegados = [];
       const llego = {};
@@ -235,17 +237,11 @@ const AvisosBloqueo = (() => {
         const eventos = Object.fromEntries(Object.entries(cuando).filter(([, m]) => Number.isFinite(m) && m < T));
         const comido = { kcal: Object.keys(eventos).reduce((t, c) => t + KCAL_DEL_DESPERTAR[c], 0), proteina: 0, carbohidratos: 0, grasas: 0 };
         const op = {
-          dia: DIA, ajustes, habitos: [], sueno: suenoDelDespertar(T), horaDeComida: (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'),
+          dia: DIA, ajustes, habitos: [], sueno: suenoDelDespertar(T, periodo), horaDeComida: (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'),
           anotadas: new Set(Object.keys(eventos)), eventos, ahora: T - 1, pesado: llego.pesarse !== undefined && T > llego.pesarse + 3,
-          deudaAntes: 140, desayuno: contesto ? s.desayuno : null, meta: META, comido, sesiones: [],
+          deudaAntes: 140, desayuno: contesto ? s.desayuno : null, meta: META, comido, sesiones: [], pendientes,
         };
-        // Como SigueElDespertar.avisosQueSiguenElDespertar, con uno más: «Lo que hay que hacer hoy», a SEPARACION de lo
-        // último de la mañana. Entra en la regla como el aviso de un hábito: de a uno y dentro del máximo.
-        const delDespertar = SigueElDespertar.avisosDelDespertar(op);
-        const manana = delDespertar.filter((a) => a.tipo === 'deuda' || a.tipo === 'pesarse' || a.tipo === 'desayuno');
-        const deLaLista = conLista && manana.length ? [{ id: 'pendientes', tipo: 'habito', minutos: Math.max(...manana.map((a) => a.minutos)) + Avisos.SEPARACION }] : [];
-        const lista = Avisos.avisosDelDia({ ...op, conviene: [...LoQueConviene.loQueConviene(op), ...delDespertar, ...deLaLista] });
-        for (const n of lista) {
+        for (const n of SigueElDespertar.avisosQueSiguenElDespertar(op)) {
           if (n.minutos !== T || llego[n.aviso.id] !== undefined) continue;
           llego[n.aviso.id] = T;
           llegados.push(n);
@@ -257,14 +253,15 @@ const AvisosBloqueo = (() => {
 
     /** Lo que explica el día que sigue tu despertar: desde cuándo suena, qué se reparte y cuánto se corrió la noche. */
     function notaDelDespertar(todos) {
-      const cama = (despierta) => Avisos.horasDeSueno(DIA, { ...SUENO_DEL_DESPERTAR, despertarReal: () => despierta }).acostarse;
+      const horas = Avisos.horasDeSueno(DIA, suenoDelDespertar(DESPIERTA, periodoDeHoy()));
       const nota = [`Te despiertas a las ${u.horaMin(DESPIERTA)}: hasta entonces, nada. ${todos.length} avisos en todo el día.`];
       if (s.desayuno === 'directo') nota.push('Sin desayuno, lo que queda del día se reparte entre las comidas que quedan; almorzar a las 13:30 corre la merienda y la cena media hora.');
       else nota.push('Con «Sí», desayunas a las 10:50 y las demás comidas quedan a su hora: un despertar tarde no corre el almuerzo.');
-      nota.push(`Te acuestas a las ${u.horaMin(cama(DESPIERTA))}: despertándote a las 7:30 habría sido a las ${u.horaMin(cama(hm('7:30')))}.`);
+      if (horas.periodo) nota.push(`Te acuestas a las ${u.horaMin(horas.acostarse)}, para dormirte cuando empieza tu periodo de melatonina (${u.horaMin(horas.periodo.desde)} – ${u.horaMin(horas.periodo.hasta)}): las mismas horas de Sueño, te despiertes a la hora que te despiertes.`);
+      else nota.push(`Todavía no hay periodo de melatonina (menos de 3 noches en la semana): te acuestas a las ${u.horaMin(horas.acostarse)}, la hora de antes, que un despertar tarde corre la mitad.`);
       if (s.anotar) nota.push('Con «Anotar lo pendiente», dos más: el de la noche (tocarlo abre la nota en Sueño) y, a la mañana, «Lo que hay que hacer hoy», 20 minutos después de la pregunta del desayuno (tocarlo abre Inicio).');
       if (s.gafas) nota.push('Con las gafas, la noche queda apretada: cada aviso va a 20 minutos del anterior, y el que tendría que esperar más de 45 no suena.');
-      if (s.anotar || s.gafas) nota.push(`Acá el máximo sube a ${10 + (s.anotar ? 2 : 0) + (s.gafas ? 1 : 0)}: con 10 se caerían los últimos de la noche.`);
+      if (s.anotar || s.gafas) nota.push(`El máximo de fábrica sube solo a ${SigueElDespertar.maximoDeFabrica({ descarga: { encendido: s.anotar }, gafas: { encendido: s.gafas } })}: con 10 se caerían los últimos de la noche. Si lo elegiste a mano en Perfil, queda el tuyo.`);
       return nota.join(' ');
     }
 
@@ -402,15 +399,21 @@ const AvisosBloqueo = (() => {
         ['Tu despertar', [
           ...[[90, 150], [120, 90], [90, 90], [0, 60], [0, 0], [60, null]].map(([ahora, antes]) => n({ tipo: 'deuda', despertar: { que: 'deuda', ahora, antes } })),
           n({ tipo: 'desayuno', despertar: { que: 'desayuno' } }),
-          n({ id: 'pendientes', tipo: 'habito' }),
+          n({ tipo: 'pendientes', despertar: { que: 'pendientes', lista: pendientesDeAnoche().map((p) => p.texto) } }),
           n({ tipo: 'horario', despertar: { que: 'comida', comida: 'almuerzo', van: ['almuerzo', 'merienda', 'cena'], kcal: 1050 } }),
           n({ tipo: 'horario', despertar: { que: 'comida', comida: 'merienda', van: ['merienda', 'cena'], kcal: 480 } }),
           n({ tipo: 'horario', despertar: { que: 'comida', comida: 'cena', van: ['cena'] } }),
-          ...['melatonina', 'gafas', 'revoluciones'].map((que) => n({ tipo: que, despertar: { que, cama: hm('23:15') } })),
+          n({ tipo: 'melatonina', despertar: { que: 'melatonina', desde: hm('23:30'), hasta: hm('23:30') + 60 } }),
+          ...['gafas', 'revoluciones'].map((que) => n({ tipo: que, despertar: { que, cama: hm('23:15') } })),
           n({ tipo: 'descarga', despertar: { que: 'descarga' } }),
         ]],
-        // Acostarte: un cuarto de hora, media hora, tres cuartos o una hora antes, y la noche en que nombra la deuda.
-        ['La hora de dormir', [...[15, 30, 45, 60].map((antes) => n({ tipo: 'dormir', minutos: hm('23:15') - antes, dormirA: hm('23:15') })), n({ tipo: 'dormir', minutos: hm('22:45'), texto: 'deuda', dormirA: hm('23:15'), deuda: 240 })]],
+        // Acostarte: un cuarto de hora, media hora, tres cuartos o una hora antes, la noche en que nombra la deuda y,
+        // sin periodo de melatonina (menos de 3 noches en la semana), lo que dormirías.
+        ['La hora de dormir', [
+          ...[15, 30, 45, 60].map((antes) => n({ tipo: 'dormir', minutos: hm('23:15') - antes, dormirA: hm('23:15'), periodo: { desde: hm('23:30'), hasta: hm('23:30') + 60 } })),
+          n({ tipo: 'dormir', minutos: hm('22:45'), dormirA: hm('23:15'), deuda: 240 }),
+          n({ tipo: 'dormir', minutos: hm('22:45'), dormirA: hm('23:15'), despertarA: hm('7:30'), duerme: 480 }),
+        ]],
         ['La prueba', [{ titulo: 'Moss', texto: tx('recordatorios.pruebaTermina') }]],
       ];
       for (const [nombre, avisos] of grupos) {

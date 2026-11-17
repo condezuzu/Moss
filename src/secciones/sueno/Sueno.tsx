@@ -1,6 +1,7 @@
 // Sueño, el de la galería (galeria/src/sueno.js; spec/sueno.md): lo que Salud trae de cada noche, con las reglas
 // de src/dominio/sueno.ts, sobre una noche oscura con auroras. Arriba, la pregunta de la mañana y la deuda, el
-// número con su palabra, compacta, con lo que necesitas, a qué hora acostarte y «Más»; después la noche en un arco y, debajo, tu energía de ahora; las
+// número con su palabra, compacta, con lo que necesitas y «Más»; debajo, tu periodo de melatonina con la hora de
+// acostarte y la nota de lo pendiente; después la noche en un arco y, debajo, tu energía de ahora; las
 // dos semanas para elegir otra noche, su calidad en un anillo, el horario, lo que mide el reloj y de dónde sale
 // cada dato. Sin reloj, las noches que estima Moss con el teléfono (spec/sueno.md, «Sin reloj»). Sin noches, la
 // invitación y, en cada tarjeta, el ejemplo marcado como ejemplo con cuánto falta. Lo que falta va en gris: nunca
@@ -12,11 +13,12 @@ import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View
 import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
 
 import { actualizarSalud } from '@/almacen';
+import { reglasDeCuidados } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
+import { periodoDeMelatonina } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
-import { margenParaDormirte } from '@/dominio/sinReloj';
-import { pocoSuenoSostenido, ultimasNoches, type Noche } from '@/dominio/sueno';
+import { deudaDeSueno, pocoSuenoSostenido, ultimasNoches, type Noche } from '@/dominio/sueno';
 import { saludPedida } from '@/salud/salud';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
@@ -36,6 +38,8 @@ import { ElHorario, LaCalidad, LasFuentes, LoDelReloj, VitalesSinReloj } from '.
 import { TarjetaDeEnergia, useEnergia, useIrAEnergia } from './Energia';
 import { ElMovimiento, Invitacion, LaNoche, LaNocheDeMoss, SinNoche } from './LaNoche';
 import { LaManana } from './Manana';
+import { conPendientes, FilaDePendientes, LaNota, useAbrirLaNota } from './Pendientes';
+import { ElPeriodo } from './Periodo';
 
 const DIAS = 14;
 const SUENO = PESTANAS.indexOf('sueno');
@@ -192,7 +196,26 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
     }, reducido ? 0 : 380);
   }, [reducido, scroll]);
   useIrAEnergia(irAEnergia);
-  const latencia = margenParaDormirte(e.latencia);
+  // La nota de lo pendiente: se abre desde su fila o, desde afuera, con el aviso de la noche (abrirLaNota).
+  const [nota, setNota] = useState(false);
+  const [pedida, setPedida] = useState(0);
+  const abrirNota = useCallback(() => {
+    setElegida(null);
+    setPedida((n) => n + 1);
+  }, []);
+  useAbrirLaNota(abrirNota);
+  useEffect(() => {
+    if (!pedida) return;
+    // Un momento después: la sección ya se deslizó, y la hoja que estuviera abierta ya se cerró (iOS no abre una
+    // mientras cierra otra).
+    const espera = setTimeout(() => setNota(true), 420);
+    return () => clearTimeout(espera);
+  }, [pedida]);
+  // Tu periodo de melatonina de esta noche (melatonina.ts), con tus noches y tu margen para dormirte; sin noches
+  // tuyas, el de la persona de ejemplo, sin deuda.
+  const deudaDeHoy = conNoches ? deudaDeSueno(ultimasNoches(s.noches, e.hoy, DIAS), s.necesidad) : null;
+  const periodo = periodoDeMelatonina(s.noches, e.hoy, { margen: e.latencia, deuda: deudaDeHoy?.minutos ?? null });
+  const reflujo = !!reglasDeCuidados(e)?.cuidados.includes('reflujo');
   const conEnergia = clave === e.hoy && conNoches && !!energia;
   return (
     <View style={{ width: ancho }}>
@@ -211,7 +234,14 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         {!conNoches && <Aparece><Invitacion muestra={muestra} ancho={interior} /></Aparece>}
         <LaManana hoy={e.hoy} noche={deHoy} propia={e.noches.get(e.hoy)} noches={reales} ancho={interior} desde={e.metas[0]?.desde ?? null} />
         {/* La deuda, arriba de todo (5/11, a la noche): es lo primero que se mira. */}
-        <LaDeuda noches={reales} hoy={e.hoy} clave={clave} necesidad={s.necesidad} edad={edad} conNoches={conNoches} muestra={muestra} latencia={latencia} animar={animar} />
+        <LaDeuda noches={reales} hoy={e.hoy} clave={clave} necesidad={s.necesidad} edad={edad} conNoches={conNoches} muestra={muestra} acostarse={periodo?.acostarse ?? null} reflujo={reflujo} animar={animar} />
+        {/* Debajo, lo de esta noche (17/11): tu periodo de melatonina y, con su aviso activado, la nota de lo pendiente. */}
+        {clave === e.hoy && (
+          <Aparece>
+            <ElPeriodo periodo={periodo} noches={reales} hoy={e.hoy} conNoches={conNoches} />
+            {conPendientes(e) && <Aparece><FilaDePendientes alTocar={() => setNota(true)} /></Aparece>}
+          </Aparece>
+        )}
         {/* Poco sueño por semanas: la sugerencia de un médico, arriba. Una estimación, no un diagnóstico. */}
         {conNoches && pocoSuenoSostenido(ultimasNoches(s.noches, e.hoy, DIAS), edad) && (
           <Aparece>
@@ -269,6 +299,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         <Text style={st.pie}>{t('sueno.noMedico')}</Text>
       </ScrollView>
       <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} rgb={DE_LA_NOCHE} />
+      {nota && <LaNota alCerrar={() => setNota(false)} />}
       {/* En el lugar de la ruedita, que ya se apagó: la fecha está más abajo, con la página bajada. VoiceOver ya lo dijo. */}
       {lectura === 'alDia' && (
         <Animated.View

@@ -1,28 +1,24 @@
 // La deuda de sueño (spec/sueno.md, «Las cuentas»; rehecha el 17/11/2026), arriba de todo y compacta: el número
-// de una («4 h», «6 h 30»; «Sin deuda» en 0) con la palabra al lado en una pastilla, lo que duermes contra lo que
-// necesitas, que se cambia ahí mismo, y a qué hora acostarte esta noche. Solo con el teléfono, lo dice en una
-// línea. «Más» despliega lo de cada noche, esta noche con la última comida y cómo se calcula. Con pocas noches,
-// cuántas faltan.
+// de una («4 h», «6 h 30»; «Sin deuda» en 0) con la palabra al lado en una pastilla y lo que duermes contra lo que
+// necesitas, que se cambia ahí mismo. Solo con el teléfono, lo dice en una línea, que lleva a la guía para conectar
+// un reloj o un anillo. «Más» despliega lo de cada noche, la última comida de esta noche y cómo se calcula. Con
+// pocas noches, cuántas faltan. A qué hora acostarte va debajo, en tu periodo de melatonina (Periodo.tsx).
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
-import { duerme, horaDeReloj, horasDeSueno } from '@/dominio/avisos';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { cercaDeLaCama } from '@/dominio/loQueFalta';
-import { habitualDe } from '@/dominio/sinReloj';
-import {
-  deudaDeSueno, despiertoDeLaNoche, faltaDeLaNoche, juicioDeLaDeuda, MINIMOS, necesidadesPara, necesidadPropuesta, redondearDeuda, type Deuda, type Noche,
-} from '@/dominio/sueno';
+import { deudaDeSueno, faltaDeLaNoche, juicioDeLaDeuda, MINIMOS, necesidadesPara, necesidadPropuesta, redondearDeuda, type Noche } from '@/dominio/sueno';
 import { plural, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
 import { duracion } from '../comida/datos';
 import { Aparatos } from '../perfil/Aparatos';
 import { Aparece, ComoSeCalcula, Segmento } from '../tarjetas';
-import { CartaDeSueno, ChipDeEjemplo, Crece, diaCorto, letraDe, Nota, Progreso, SN } from './comunes';
+import { CartaDeSueno, ChipDeEjemplo, Crece, diaCorto, letraDe, Nota, Progreso, reloj, SN } from './comunes';
 
 const DIAS = 14;
 
@@ -96,40 +92,20 @@ function Barras({ lista, necesidad, fin, primera, animar }: { lista: (Noche | nu
 }
 
 /**
- * Esta noche (lo pediste el 5/11/2026): a qué hora acostarte para despertarte a la hora de siempre habiendo
- * dormido lo que necesitas, con la deuda un poco más (horasDeSueno, la misma cuenta de los avisos), y, contando
- * hacia atrás, la última comida grande: 2 h antes (cercaDeLaCama).
+ * Esta noche, en «Más»: la última comida grande, 2 h antes de acostarte, o 3 con reflujo (cercaDeLaCama). A qué
+ * hora acostarte ya no va acá (17/11/2026): es la tarjeta de tu periodo de melatonina, debajo (Periodo.tsx).
  */
-export function estaNoche(noches: Noche[], hoy: ClaveDia, d: Deuda, necesidad: number, latencia: number) {
-  const horas = horasDeSueno(hoy, { habitual: (c) => habitualDe(noches, c), necesidad, deuda: d.minutos, latencia, despierto: despiertoDeLaNoche(noches) });
-  const duerme_ = duerme(horas);
-  if (horas.acostarse === null || horas.despertarManana === null || duerme_ === null) return null;
-  // Lo de más para la deuda, a los 5 minutos; si la hora tope (una hora antes de lo de siempre) no deja, se dice.
-  const extra = Math.round((duerme_ - necesidad) / 5) * 5;
-  return {
-    hora: horaDeReloj(horas.acostarse),
-    despertar: horaDeReloj(horas.despertarManana),
-    horas: duracion(Math.round(duerme_ / 5) * 5),
-    porLaDeuda: extra >= 10 ? t('sueno.estaNoche.pago', { min: extra }) : extra <= -10 ? t('sueno.estaNoche.tope') : null,
-    comida: horaDeReloj(horas.acostarse - cercaDeLaCama(false)),
-  };
-}
-
-function EstaNoche({ e }: { e: NonNullable<ReturnType<typeof estaNoche>> }) {
-  const fila = (icono: 'moon.zzz' | 'fork.knife', titulo: string, ...textos: (string | null)[]) => (
-    <View style={st.estaFila}>
-      <View style={st.estaIco}><Icono nombre={icono} tam={15} color="#a8c8fa" /></View>
-      <View style={st.estaTextos}>
-        <Text style={st.estaTitulo}>{titulo}</Text>
-        {textos.filter(Boolean).map((x) => <Text key={x} style={st.estaTexto}>{x}</Text>)}
-      </View>
-    </View>
-  );
+function EstaNoche({ acostarse, reflujo }: { acostarse: number; reflujo: boolean }) {
   return (
     <Aparece demora={100} style={st.esta}>
       <Text style={st.h4}>{t('sueno.estaNoche.titulo')}</Text>
-      {fila('moon.zzz', t('sueno.estaNoche.cama', { hora: e.hora }), t('sueno.estaNoche.camaTexto', { despertar: e.despertar, horas: e.horas }), e.porLaDeuda)}
-      {fila('fork.knife', t('sueno.estaNoche.comida', { hora: e.comida }), t('sueno.estaNoche.comidaTexto'))}
+      <View style={st.estaFila}>
+        <View style={st.estaIco}><Icono nombre="fork.knife" tam={15} color="#a8c8fa" /></View>
+        <View style={st.estaTextos}>
+          <Text style={st.estaTitulo}>{t('sueno.estaNoche.comida', { hora: reloj(acostarse - cercaDeLaCama(reflujo)) })}</Text>
+          <Text style={st.estaTexto}>{t(reflujo ? 'sueno.estaNoche.comidaReflujo' : 'sueno.estaNoche.comidaTexto')}</Text>
+        </View>
+      </View>
     </Aparece>
   );
 }
@@ -173,7 +149,7 @@ function LaNecesidad({ duermes, necesidad, edad, propuesta }: { duermes: number 
   );
 }
 
-export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestra, latencia, animar }: {
+export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestra, acostarse, reflujo, animar }: {
   /** Las noches de verdad (sin las de ejemplo). */
   noches: Noche[];
   hoy: ClaveDia; clave: ClaveDia; necesidad: number;
@@ -182,7 +158,11 @@ export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestr
   conNoches: boolean;
   /** Sin noches, las de ejemplo de las dos semanas. */
   muestra: (Noche | null)[];
-  latencia: number; animar: boolean;
+  /** A qué hora acostarte esta noche, la de tu periodo de melatonina (en minutos desde las 18); sin periodo, null. */
+  acostarse: number | null;
+  /** Con reflujo marcado en Cuidados, la última comida va tres horas antes. */
+  reflujo: boolean;
+  animar: boolean;
 }) {
   const reducido = useReducedMotion();
   const [abierta, setAbierta] = useState(false);
@@ -196,7 +176,7 @@ export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestr
   // A la media hora: media hora de diferencia en lo que necesitas la cambia en más de 3 horas.
   const redondeada = d ? redondearDeuda(d.minutos) : 0;
   const juicio = d ? juicioDeLaDeuda(d) : null;
-  const noche = d && conNoches && clave === hoy ? estaNoche(noches, hoy, d, necesidad, latencia) : null;
+  const estaNoche = conNoches && clave === hoy ? acostarse : null;
   // Sin un reloj ni un anillo en las dos semanas, las noches las estimó Moss con el teléfono.
   const conTelefono = conNoches && lista.some((n) => n?.moss) && !lista.some((n) => n && !n.moss && !n.aMano && (n.fuente.tipo === 'reloj' || n.fuente.tipo === 'otra'));
   const propuesta = conNoches && edad !== undefined ? necesidadPropuesta(noches, hoy, edad, necesidad) : null;
@@ -230,8 +210,6 @@ export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestr
           </Pressable>
         </Aparece>
       )}
-      {/* Con la noche de hoy, a qué hora acostarte, en una línea: el detalle, al desplegar. */}
-      {noche && !abierta && <Aparece><Text style={st.lineaDeLaNoche}>{t('sueno.estaNoche.linea', { hora: noche.hora })}</Text></Aparece>}
       <Pressable onPress={() => setAbierta((a) => !a)} style={({ pressed }) => [st.ver, pressed && st.apretado]} hitSlop={8} accessibilityRole="button" accessibilityState={{ expanded: abierta }}>
         <Text style={st.verTexto}>{t(abierta ? 'sueno.deudaVer.menos' : 'sueno.deudaVer.mas')}</Text>
         <Animated.View style={flecha}><Icono nombre="chevron.down" tam={12} peso="semibold" /></Animated.View>
@@ -244,7 +222,7 @@ export function LaDeuda({ noches, hoy, clave, necesidad, edad, conNoches, muestr
           {d && conNoches && (
             <>
               <Nota>{`${t('sueno.deudaNoches', { n: d.noches, de: d.de })}.`}</Nota>
-              {noche && <EstaNoche e={noche} />}
+              {estaNoche !== null && <EstaNoche acostarse={estaNoche} reflujo={reflujo} />}
               <ComoSeCalcula abierto={como} alTocar={() => setComo((x) => !x)}>
                 <Text style={st.como}>{conTelefono ? `${t('sueno.deudaTexto')} ${t('sueno.deuda.comoConTelefono')}` : t('sueno.deudaTexto')}</Text>
               </ComoSeCalcula>
@@ -284,7 +262,6 @@ const st = StyleSheet.create({
   propuesta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, marginTop: 4 },
   telefono: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   telefonoTexto: { flexShrink: 1 },
-  lineaDeLaNoche: { marginTop: 4, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19, color: '#c9d8f5' },
   ver: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 4 },
   verTexto: { fontFamily: letras.texto, fontSize: 13, color: colores.oroClaro },
   apretado: { opacity: 0.6 },

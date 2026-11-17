@@ -1,6 +1,7 @@
 // «Para hoy», al final de Inicio (lo pediste el 2/11/2026), en vez del saludo de arriba: hasta tres comentarios
 // cortos de la comida, una idea cada uno, con lo del deporte primero (paraHoy.ts). Sin nada que decir, una línea
-// tranquila. Lo que falta anotar se anota de ahí mismo, en esa comida.
+// tranquila. Lo que falta anotar se anota de ahí mismo, en esa comida. Arriba de todo, «Lo que hay que hacer hoy»:
+// los pendientes que anotaste anoche (Pendientes.tsx).
 
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -17,6 +18,7 @@ import { abrirRegistro } from '../comida/registro';
 import { ACOMODA } from '../tarjetas';
 import { bloques, Cabeza } from './comunes';
 import { consejosDeHoy, textoDelConsejo } from './consejos';
+import { LoQueHayQueHacer, pendientesDeHoy } from './Pendientes';
 
 const AGUA = '#a9c4f5';
 const ICONO: Record<Exclude<ConsejoDeHoy['tipo'], 'deporte'>, SFSymbol> = {
@@ -44,9 +46,12 @@ export function ParaHoy() {
   const hoy = useMemo(() => consejosDeHoy(e, ahora), [e, ahora]);
   const titulo = t('inicio.bloques.consejos');
   if (!hoy) return null;
+  // Arriba de todo, lo que anotaste anoche (17/11): con el aviso de anotar lo pendiente activado y algo para hoy.
+  const pendientes = pendientesDeHoy(e);
   return (
     <View style={bloques.bloque}>
       <Cabeza titulo={titulo} />
+      {pendientes.length > 0 && <LoQueHayQueHacer lista={pendientes} />}
       {hoy.lista.length === 0 ? (
         <Animated.Text entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} style={st.nada}>
           {t(hoy.anotadas ? 'inicio.paraHoy.bien' : 'inicio.paraHoy.todaviaNada')}

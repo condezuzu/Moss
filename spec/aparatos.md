@@ -184,12 +184,20 @@ y los precios de Junction (https://www.junction.com/pricing), Terra
 (https://www.thryve.health/pricing), Spike (https://www.spikeapi.com/pricing) y Sahha
 (https://sahha.ai/pricing).
 
-## Conectar cada marca: los pasos (17/11/2026, en la galería para aprobar)
+## Conectar cada marca: los pasos (aprobado el 17/11/2026 en la galería 50, y en la app)
 
 Lo pediste el 17/11: una guía por marca en Perfil › Aparatos, como la de Rise pero propia, para que cada reloj o
-anillo escriba el sueño en Salud, y cómo comprobar que llegó. Está en la galería (escenario `melatonina`;
-los textos, en `galeria/src/periodo.js`). Cada paso se leyó el 17/11/2026 en la ayuda de la marca o de Apple; lo
-que no se pudo confirmar no está.
+anillo escriba el sueño en Salud, y cómo comprobar que llegó. Cada paso se leyó el 17/11/2026 en la ayuda de la
+marca o de Apple; lo que no se pudo confirmar no está.
+
+- **En la app** (`src/secciones/perfil/Aparatos.tsx`; los textos, en `src/textos`, `perfil.aparatos.guia`): debajo
+  de «Los que escriben tu sueño», «Conectar un reloj o un anillo» con una fila por marca (Apple Watch, Oura, WHOOP,
+  Garmin, Fitbit, Polar, Sleep Cycle, AutoSleep y «Otro reloj, anillo o app»). Cada una se despliega con sus pasos
+  numerados y, si hay, lo que conviene saber; la última, «Cómo comprobar que llegó». Después siguen «¿Usaste un
+  reloj o un anillo y no llegó nada?», de cuál sale la noche, conectar directo y qué llega de cada uno.
+- **Se llega también desde Sueño:** con las noches estimadas con el teléfono, la línea «Estimada con tu teléfono.
+  Con un reloj o un anillo es más precisa.» de la deuda abre Aparatos, con la guía arriba.
+- **En la galería:** escenario `melatonina`; los textos, en `galeria/src/periodo.js`.
 
 | Marca | Pasos | Lo que conviene saber | Fuente |
 |---|---|---|---|

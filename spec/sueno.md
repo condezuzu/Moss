@@ -50,14 +50,18 @@ cual con cuatro semanas de mentira.
      cambia ahí mismo (el mismo ajuste de «Necesito dormir»), y si tu historial da
      otra, una línea chica la propone: «Tus noches largas rondan 7 h 30. Usar 7 h 30»;
    - solo con el teléfono, una línea: «Estimada con tu teléfono. Con un reloj o un
-     anillo es más precisa.», que abre Perfil › Aparatos;
-   - «Acuéstate a las 00:40» (la tanda 2 lo cambia por el periodo de melatonina);
-   - «Más» despliega lo de cada noche, esta noche con la última comida y cómo se
-     calcula. Ya no va el medidor ni la frase que juzgaba («hace días que duermes
-     bastante menos…»): el número es una estimación.
+     anillo es más precisa.», que abre Perfil › Aparatos, con la guía para conectar
+     cada marca arriba (`spec/aparatos.md`, «Conectar cada marca»);
+   - «Más» despliega lo de cada noche, la última comida grande de esta noche (2 h
+     antes de acostarte; 3 con reflujo) y cómo se calcula. Ya no va el medidor ni la
+     frase que juzgaba («hace días que duermes bastante menos…»): el número es una
+     estimación. Tampoco «Acuéstate a las…»: la hora de acostarte va debajo, en tu
+     periodo de melatonina.
 
-   Debajo, la noche, tu energía y, más abajo, la tira de los días para elegir otra
-   noche.
+   Debajo, con la noche de hoy, **tu periodo de melatonina** y, con su aviso
+   activado, la fila de **«Lo que tienes en la cabeza»** (ver «Tu periodo de
+   melatonina» y «Lo que tienes en la cabeza», más abajo); después la noche, tu
+   energía y, más abajo, la tira de los días para elegir otra noche.
 4. **La calidad,** de 0 a 100, con sus tres partes y «Cómo se calcula».
 5. **El horario de las dos semanas:**
    - cada noche como una barra de cuándo te dormiste a cuándo te despertaste;
@@ -283,13 +287,14 @@ cual con cuatro semanas de mentira.
   - nunca se mezclan SDNN y RMSSD;
   - la frecuencia en reposo de Salud es del día entero, y lo dice.
 
-## Tu periodo de melatonina y la deuda con su palabra (17/11/2026, en la galería para aprobar)
+## Tu periodo de melatonina y la deuda con su palabra (aprobado el 17/11/2026 en la galería 50, y en la app)
 
 Lo pediste el 17/11, al rehacer el sueño: en lugar de «Esta noche, a la cama a las…», tu periodo de melatonina, como
 la ventana de Rise pero con palabras propias. La evidencia está en
 [`estudio/deuda-y-melatonina.md`](estudio/deuda-y-melatonina.md), sección 3.
 
-- **La regla** está en `src/dominio/melatonina.ts`, con sus tests. La usa la galería; la app, todavía no.
+- **La regla** está en `src/dominio/melatonina.ts`, con sus tests. La usan la galería y la app
+  (`src/secciones/sueno/Periodo.tsx`), con tus noches de verdad y tu margen para dormirte.
   - Con las noches de los últimos 7 días (hacen falta 3), el inicio estimado de la melatonina es el punto medio
     del sueño menos 6 h 30, y el periodo va de ese inicio + 2 h a + 3 h.
   - Dice cuánto cambió desde ayer («9 min antes que ayer», «7 min más tarde que ayer»).
@@ -300,26 +305,59 @@ la ventana de Rise pero con palabras propias. La evidencia está en
   - **Convenciones**, que no salen de un estudio: que dure una hora; que alcancen 3 noches (el informe proponía
     5); y decirlo al minuto, como lo pediste, aunque el informe aconseja no dar una hora exacta.
   - **El margen honesto es de ±1 h**: lo dice la hoja «¿Qué es?».
-- **En la galería** (escenario `melatonina`, `galeria/src/periodo.js` y `sueno.js`):
-  - **La deuda**, como quedó en la app: el número de una («4 h»; «Sin deuda» en 0), la palabra a la derecha en
-    una pastilla (Baja, Media o Alta), «Duermes unas 7 h 10 · Necesitas 8 h» con lo que necesitas cambiado ahí
-    mismo, lo que Moss propone y, solo con el teléfono, «Estimada con tu teléfono. Con un reloj o un anillo es
-    más precisa.», que lleva a Perfil › Aparatos. Sin el medidor y sin la frase de «puede que no lo notes».
-  - **La tarjeta del periodo**, debajo: «22:57 – 23:57», cuánto cambió desde ayer y «Acuéstate a las 22:40 para
-    estar dormido dentro de tu periodo». Con menos de 3 noches en la semana, cuántas faltan; sin noches, el de
-    ejemplo.
-  - **«¿Qué es?»**: una hoja con el dibujo de la noche y cinco partes cortas: qué es, cómo lo calcula Moss, con
-    qué margen y qué pasa si te acuestas antes o después.
+- **En la app y en la galería** (escenario `melatonina`, `galeria/src/periodo.js` y `sueno.js`; en la app,
+  `src/secciones/sueno/Deuda.tsx` y `Periodo.tsx`):
+  - **La deuda**: el número de una («4 h»; «Sin deuda» en 0), la palabra a la derecha en una pastilla (Baja,
+    Media o Alta), «Duermes unas 7 h 10 · Necesitas 8 h» con lo que necesitas cambiado ahí mismo, lo que Moss
+    propone y, solo con el teléfono, «Estimada con tu teléfono. Con un reloj o un anillo es más precisa.», que
+    lleva a Perfil › Aparatos, con la guía arriba. Sin el medidor y sin la frase de «puede que no lo notes».
+  - **La tarjeta del periodo**, debajo de la deuda y solo con la noche de hoy: «22:57 – 23:57», cuánto cambió
+    desde ayer, la noche en una línea (la melatonina que sube y el tramo del periodo, que crece al aparecer) y
+    «Acuéstate a las 22:40 para estar dormido dentro de tu periodo»; con deuda, «…cuando empieza tu periodo.
+    Antes no: te costaría dormirte». Con menos de 3 noches en la semana, cuántas faltan; sin noches, el de la
+    persona de ejemplo, con su chip y sin deuda.
+  - **«¿Qué es?»**: una hoja con el dibujo de la noche (la curva se traza y el tramo entra después) y cinco
+    partes cortas: qué es, cómo lo calcula Moss (con el punto medio de tu semana y con cuántas noches), con qué
+    margen y qué pasa si te acuestas antes o después. Se baja con el dedo, como las demás hojas.
   - **«Más»** de la deuda conserva la última comida grande, ahora contada desde esa hora de acostarte.
-  - **En Afinar**, el margen para dormirte, como en la app.
+  - **En Afinar**, el margen para dormirte.
+- **Lo que queda de las cuentas:** la hora de acostarte de Sueño sale del periodo (`acostarse`, en
+  `melatonina.ts`). Que los avisos de la noche digan esa misma hora es de los avisos (`spec/avisos.md`).
 - **Para decidir:**
-  - Si la app pasa a acostarte con el periodo. Hoy los avisos salen de `horasDeSueno` (despertarte menos lo
-    que necesitas): al programarlo hay que unir las dos cuentas, para que la tarjeta y los avisos digan la
-    misma hora.
-  - En 0, la tarjeta dice «Sin deuda» en grande y sin pastilla, como en la app. La alternativa es «0 h» con la
-    pastilla «Sin deuda».
+  - En 0, la tarjeta dice «Sin deuda» en grande y sin pastilla. La alternativa es «0 h» con la pastilla «Sin
+    deuda».
   - Si el periodo se muestra más ancho o no se muestra con horarios muy irregulares (el informe lo sugiere con
     más de 90 min de desvío): hoy se muestra siempre que haya 3 noches.
+
+## Lo que tienes en la cabeza y «Lo que hay que hacer hoy» (aprobado el 17/11/2026 en la galería 50, y en la app)
+
+Anotar los pendientes antes de acostarte, para sacártelos de la cabeza, y encontrarlos por la mañana. Los avisos
+(el de la noche, que abre la nota, y el de la mañana, con la lista) están en `spec/avisos.md`, «Lo que hay que hacer
+hoy»; acá, las pantallas.
+
+- **La regla** está en `src/dominio/pendientes.ts`, con sus tests:
+  - cada pendiente lleva su texto, si está hecho y **para qué día es**: lo que se anota es para el día que sigue al
+    de Moss, así que lo anotado a la noche es para mañana y lo anotado de madrugada, antes del corte, también;
+  - es una lista corta: hasta 6 por día, de hasta 60 letras cada uno;
+  - los de hace más de 7 días se olvidan.
+- **Quedan en el teléfono**, como un ajuste del almacén (`estado.pendientes`, con `ponerPendiente`,
+  `quitarPendiente` y `marcarPendiente`): no suben a la cuenta ni tienen tabla en Supabase.
+- **Un solo interruptor**, apagado de fábrica: el aviso «Anotar lo que tienes en la cabeza» (Perfil › Avisos).
+  Con él activado se ven la fila de Sueño y la lista de Inicio.
+- **En Sueño** (`src/secciones/sueno/Pendientes.tsx`), debajo de tu periodo de melatonina, la fila «Lo que tienes
+  en la cabeza» con cuántos hay para mañana. Abre la nota:
+  - se escriben de a uno: «Listo» en el teclado (o el «+») anota lo escrito y deja el campo para el próximo; sin
+    nada escrito, baja el teclado. El campo va en el pie de la hoja, que sube con el teclado: siempre a la vista;
+  - cada uno se quita con su cruz; el que entra y el que se va lo hacen con un fundido, y la hoja acompaña el alto;
+  - con los 6, el campo se apaga y dice «Hasta 6: es una lista corta.»;
+  - «Listo» cierra y, si quedó algo escrito sin agregar, lo anota. Cerrar de otra forma (la cruz, tocar afuera o
+    bajar la hoja) con algo escrito pregunta antes de descartarlo, como las demás hojas;
+  - el aviso de la noche la abre desde afuera con `abrirLaNota()`.
+- **En Inicio** (`src/secciones/inicio/Pendientes.tsx`), arriba de «Para hoy», «Lo que hay que hacer hoy»: los
+  de hoy, para ir tachando. Tocar uno lo tacha (el círculo se llena y la raya crece sobre el texto); tocarlo otra
+  vez lo deja como estaba. Sin pendientes para hoy, no ocupa lugar. Si «Para hoy» no está a la vista (el primer
+  día, sin nada anotado, o sacado en Personalizar), la lista va sola en su bloque: el aviso de la mañana lleva a
+  Inicio y tiene que estar.
 
 ## Qué tan confiable es cada dato
 

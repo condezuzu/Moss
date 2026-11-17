@@ -3,12 +3,13 @@
 // lienzo: en la web cada lienzo es un contexto de WebGL, y el navegador deja pocos. Lo escrito (las horas, el
 // centro) va encima, en la vista.
 
-import { Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, Mask, Path, Skia, vec, type SkPath } from '@shopify/react-native-skia';
+import { Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, Mask, Path, RoundedRect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import type { Noche } from '@/dominio/sueno';
 import { angulo, ARCO, CARRILES, estrellasDelArco, GRUESO, horasDelArco, punto, type Escala, type Rango } from './arco';
+import { curvaDelPeriodo, DIBUJO, xDelPeriodo } from './dibujoDelPeriodo';
 
 const COLOR_DE_ETAPA = { despierto: '#efb08c', rem: '#a8e2f0', nucleo: '#6aa2f0', profundo: '#6a5fd6' } as const;
 const PISTA = 'rgba(150, 178, 240, 0.09)';
@@ -210,6 +211,38 @@ export function CurvaSkia({ ancho, alto, base, puntos, rgb, alfa, animar }: Prop
     <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
       <Path path={area} color={`rgba(${rgb}, ${(alfa * 0.14).toFixed(3)})`} />
       <Path path={linea} style="stroke" strokeWidth={1.6} strokeJoin="round" color={`rgba(${rgb}, ${(alfa * 0.85).toFixed(3)})`} end={fin} />
+    </Canvas>
+  );
+}
+
+// ------------------------------------------------------------ tu periodo de melatonina
+/** Todo en minutos desde las 18, como el periodo (melatonina.ts). */
+export type PropsDelPeriodo = { ancho: number; inicio: number; desde: number; hasta: number; animar: boolean };
+
+/** La noche en un dibujo: la melatonina que sube, que se traza al aparecer, y el tramo del periodo, que entra después. */
+export function PeriodoSkia({ ancho, inicio, desde, hasta, animar }: PropsDelPeriodo) {
+  const s = ancho / DIBUJO.ancho;
+  const fin = useRevela(animar, 1100, 250);
+  const banda = useRevela(animar, 600, 700);
+  const d = useMemo(() => {
+    const x = xDelPeriodo(inicio, hasta);
+    const curva = Skia.PathBuilder.Make();
+    curvaDelPeriodo(inicio, hasta).forEach((q, i) => {
+      if (i) curva.lineTo(q.x, q.y);
+      else curva.moveTo(q.x, q.y);
+    });
+    return { curva: curva.detach(), x0: x(desde), x1: x(hasta), marcas: [inicio, desde, hasta].map(x) };
+  }, [inicio, desde, hasta]);
+  return (
+    <Canvas style={{ width: ancho, height: DIBUJO.alto * s }} pointerEvents="none">
+      <Group transform={[{ scale: s }]}>
+        <RoundedRect x={d.x0} y={DIBUJO.techo} width={d.x1 - d.x0} height={DIBUJO.base - DIBUJO.techo} r={7} opacity={banda}>
+          <LinearGradient start={vec(0, DIBUJO.techo)} end={vec(0, DIBUJO.base)} colors={['rgba(159, 182, 255, 0.34)', 'rgba(138, 219, 200, 0.08)']} />
+        </RoundedRect>
+        <Line p1={vec(DIBUJO.borde, DIBUJO.base)} p2={vec(DIBUJO.ancho - DIBUJO.borde, DIBUJO.base)} color="rgba(196, 212, 246, 0.26)" strokeWidth={1} />
+        <Path path={d.curva} style="stroke" strokeWidth={2} strokeCap="round" strokeJoin="round" color="#8adbc8" end={fin} />
+        {d.marcas.map((x) => <Line key={x} p1={vec(x, DIBUJO.base)} p2={vec(x, DIBUJO.base + 5)} color="rgba(196, 212, 246, 0.5)" strokeWidth={1} />)}
+      </Group>
     </Canvas>
   );
 }

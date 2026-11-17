@@ -724,7 +724,8 @@ function CorteDelDia({ elegido, alCerrar }: { elegido: number; alCerrar: () => v
 const COMIDAS_QUE_AVISAN: readonly Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
 
 const MINUTOS_ANTES_DE_DORMIR = [15, 30, 45, 60] as const;
-const MAXIMOS_POR_DIA = [2, 3, 4, 6, 8, MAXIMO_QUE_SIGUE_EL_DESPERTAR] as const;
+// Con anotar lo que tienes en la cabeza son dos más (el de la noche y «Lo que hay que hacer hoy»): por eso llega a 12.
+const MAXIMOS_POR_DIA: readonly number[] = [2, 3, 4, 6, 8, MAXIMO_QUE_SIGUE_EL_DESPERTAR, 12];
 /** El horario de comidas se mueve de a un cuarto de hora, entre las 5:00 y las 23:45. */
 const CUARTO = 15;
 const PRIMERA_HORA = 5 * 60;
@@ -770,10 +771,11 @@ function TarjetaDeAviso({ icono, color, titulo, texto, prendido, alCambiar, chil
 }
 
 /**
- * Los avisos (lo pediste el 22/10), con el día que sigue tu despertar (aprobado en la galería 49, el 16/11): en «Tu día»
- * lo que viene prendido, en el orden del día (la deuda, pesarse, el horario, la melatonina, las luces, las revoluciones
- * y la hora de dormir); en «Más avisos», lo apagado de fábrica. Lo que nunca se tocó muestra lo de fábrica (avisosDe);
- * lo elegido se respeta. Los de cada hábito se eligen en el hábito.
+ * Los avisos (lo pediste el 22/10), con el día que sigue tu despertar (aprobado en la galería 49, el 16/11) y los
+ * nombres de la galería 50 (el 17/11): en «Tu día» lo que viene prendido, en el orden del día (la deuda, pesarse, el
+ * horario, tu periodo de melatonina, bajar las luces, bajar el ritmo y acostarte); en «Más avisos», lo apagado de
+ * fábrica, con anotar lo que tienes en la cabeza, que también prende la nota de Sueño y «Lo que hay que hacer hoy».
+ * Lo que nunca se tocó muestra lo de fábrica (avisosDe); lo elegido se respeta. Los de cada hábito se eligen en el hábito.
  */
 function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
   const comidas = e.recordatorios;
@@ -808,16 +810,21 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
     if (!si) elAlmacen().ponerAvisos({ dormir: { encendido: false, antes: dormir?.antes } });
     else conPermiso('dormir', () => elAlmacen().ponerAvisos({ dormir: { encendido: true, antes: dormir?.antes ?? 30 } }));
   };
-  // La hora de ir a la cama esta noche y de dónde sale: la de despertarte mañana, lo que vas a dormir (como
-  // dice el aviso, con tu despertar de hoy, la deuda y lo de siempre) y lo que tardas en dormirte.
+  // La hora de acostarte esta noche y de dónde sale, como dice el aviso: de tu periodo de melatonina, con lo que
+  // tardas en dormirte, o, sin periodo, de la hora de despertarte mañana y lo que vas a dormir.
   const sueno = suenoDelDia(e);
   const horas = sueno ? horasDeSueno(e.hoy, sueno) : null;
+  const periodo = horas?.periodo ?? null;
   const estaNoche = horas?.acostarse ?? null;
   const manana = horas?.despertarManana ?? null;
   const dormidas = horas ? duerme(horas) : null;
   const margen = margenParaDormirte(e.latencia);
   const edad = e.perfil ? edadDe(e.perfil, e.hoy) : null;
+  // El máximo que vale: el que elegiste o, sin elegir, el de fábrica, que sube solo con anotar lo que tienes en la
+  // cabeza y con las gafas (maximoDeFabrica). Si quedó en uno que no está entre los de siempre (11 o 13), va con ellos.
   const maximo = a.maximoPorDia ?? MAXIMO_POR_DIA;
+  const subioSolo = e.avisos.maximoPorDia === undefined && maximo > MAXIMO_QUE_SIGUE_EL_DESPERTAR;
+  const maximos = MAXIMOS_POR_DIA.includes(maximo) ? MAXIMOS_POR_DIA : [...MAXIMOS_POR_DIA, maximo].sort((x, y) => x - y);
   // El horario arranca con las comidas de siempre, a la hora en que se suelen anotar. Apagado queda vacío, no sin
   // elegir: así no vuelve el de fábrica.
   const horario = a.horario ?? {};
@@ -895,9 +902,11 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       <TarjetaDeAviso icono="speedometer" color="salvia" titulo={t('perfil.avisos.revoluciones')} texto={t('perfil.avisos.revolucionesTexto')} {...suelto('revoluciones')} />
       <TarjetaDeAviso
         icono="moon" color="azul" titulo={t('perfil.avisos.dormir')}
-        texto={estaNoche !== null && manana !== null && dormidas !== null
-          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(dormidas), latencia: margen })
-          : t('perfil.avisos.dormirSinDatos')}
+        texto={estaNoche !== null && periodo
+          ? t('perfil.avisos.dormirTexto', { hora: horaDeReloj(estaNoche), margen, desde: horaDeReloj(periodo.desde), hasta: horaDeReloj(periodo.hasta) })
+          : estaNoche !== null && manana !== null && dormidas !== null
+            ? t('perfil.avisos.dormirSinPeriodo', { hora: horaDeReloj(estaNoche), despertar: horaDeReloj(manana), horas: duracion(dormidas), latencia: margen })
+            : t('perfil.avisos.dormirSinDatos')}
         prendido={prendida('dormir', !!dormir?.encendido)} alCambiar={encenderDormir}
       >
         <View style={st.comidas}>
@@ -950,8 +959,13 @@ function Avisos({ e, alCerrar }: { e: Estado; alCerrar: () => void }) {
       )}
       <Animated.Text layout={ACOMODA} style={st.grupo}>{t('perfil.avisos.maximo')}</Animated.Text>
       <Animated.View layout={ACOMODA} style={st.comidas}>
-        {MAXIMOS_POR_DIA.map((n) => <Pastilla key={n} texto={String(n)} elegida={maximo === n} alTocar={() => elAlmacen().ponerAvisos({ maximoPorDia: n })} />)}
+        {maximos.map((n) => (
+          <Aparece key={n}>
+            <Pastilla texto={String(n)} elegida={maximo === n} alTocar={() => elAlmacen().ponerAvisos({ maximoPorDia: n })} />
+          </Aparece>
+        ))}
       </Animated.View>
+      {subioSolo && <Aparece><Text style={[st.informacion, st.maximoSolo]}>{t('perfil.avisos.maximoSolo', { n: maximo })}</Text></Aparece>}
       <Animated.Text layout={ACOMODA} style={[st.informacion, st.maximoTexto]}>{t('perfil.avisos.maximoTextoConviene')}</Animated.Text>
     </HojaModal>
   );
@@ -1115,6 +1129,7 @@ const st = StyleSheet.create({
   avisoDebajo: { marginTop: 11 },
   grupoPrimero: { marginTop: 8 },
   maximoTexto: { marginTop: 10 },
+  maximoSolo: { marginTop: 10, marginBottom: 0 },
   llaveTexto: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   comidas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   horario: { gap: 8, marginBottom: 6 },

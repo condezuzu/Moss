@@ -159,6 +159,55 @@ describe('local primero', () => {
     expect((await armar(repositorio)).almacen.estado().desayunos).toEqual({ '2026-10-21': 'directo' });
   });
 
+  it('los pendientes: lo anotado es para mañana, se tachan, se quitan y quedan en el teléfono', async () => {
+    const { almacen, repositorio } = await armar();
+    expect(almacen.estado().pendientes).toEqual([]);
+    const dentista = almacen.ponerPendiente('  Llamar al   dentista ');
+    const luz = almacen.ponerPendiente('Pagar la luz');
+    expect(dentista).toEqual({ id: 'id1', texto: 'Llamar al dentista', hecho: false, para: '2026-10-22' });
+    // Sin texto no se anota nada.
+    expect(almacen.ponerPendiente('   ')).toBeNull();
+    almacen.marcarPendiente(luz!.id, true);
+    almacen.quitarPendiente(dentista!.id);
+    const esperado = [{ id: 'id2', texto: 'Pagar la luz', hecho: true, para: '2026-10-22' }];
+    expect(almacen.estado().pendientes).toEqual(esperado);
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().pendientes).toEqual(esperado);
+    // No suben a la cuenta: entre lo que falta subir no están.
+    expect(JSON.stringify(await repositorio.pendientes())).not.toContain('Pagar la luz');
+  });
+
+  it('los pendientes: de madrugada, antes del corte, también son para el día que sigue al de Moss; hasta seis por día', async () => {
+    const { almacen, ir } = await armar();
+    // La 1:30 del 22: para Moss todavía es el 21.
+    ir('2026-10-22T04:30:00Z');
+    almacen.revisarDia();
+    for (let i = 0; i < 8; i++) almacen.ponerPendiente(`Pendiente ${i}`);
+    expect(almacen.estado().pendientes.map((p) => p.para)).toEqual(Array(6).fill('2026-10-22'));
+    // Ya de mañana, lo que se anota es para el 23, y entra aunque el 22 esté lleno.
+    ir('2026-10-22T11:00:00Z');
+    almacen.revisarDia();
+    expect(almacen.ponerPendiente('Otro')?.para).toBe('2026-10-23');
+  });
+
+  it('los pendientes de hace más de una semana se olvidan, al anotar y al abrir', async () => {
+    const { almacen, repositorio, ir } = await armar();
+    almacen.ponerPendiente('Viejo');
+    ir('2026-10-25T15:00:00Z');
+    almacen.revisarDia();
+    almacen.ponerPendiente('De esta semana');
+    ir('2026-10-30T15:00:00Z');
+    almacen.revisarDia();
+    // El del 22 ya tiene más de una semana: al anotar otro, se va.
+    almacen.ponerPendiente('Nuevo');
+    expect(almacen.estado().pendientes.map((p) => p.texto)).toEqual(['De esta semana', 'Nuevo']);
+    // Al abrir (el 21), lo guardado para antes del 14 no vuelve, ni lo que no tiene forma.
+    await repositorio.guardarAjuste('pendientes', JSON.stringify([
+      { id: 'a', texto: 'De hace mucho', hecho: false, para: '2026-10-13' }, { id: 'b', texto: 'De hace una semana', hecho: true, para: '2026-10-14' }, { id: 'c', texto: 'Sin día' },
+    ]));
+    expect((await armar(repositorio)).almacen.estado().pendientes).toEqual([{ id: 'b', texto: 'De hace una semana', hecho: true, para: '2026-10-14' }]);
+  });
+
   it('el aparato del que sale la noche se recuerda en el teléfono, y null vuelve a la automática', async () => {
     const { almacen, repositorio } = await armar();
     expect(almacen.estado().fuenteDelSueno).toBeNull();

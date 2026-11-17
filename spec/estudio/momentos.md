@@ -238,13 +238,17 @@ Leí cuatro páginas de Rise (al final, en «Fuentes»); su centro de ayuda dio 
   (`CORRE_CON_EL_DESPERTAR`, en `avisos.ts`). Es una convención: el reloj del cuerpo sigue al despertar
   habitual (Burgess y Eastman 2005), pero no encontré cuánto lo corre una sola mañana. Opciones: la mitad
   (recomendado), nada (la cama de siempre, aunque cueste dormirse) o todo (la cama se corre lo mismo que el
-  despertar, y la noche de mañana queda corta).
+  despertar, y la noche de mañana queda corta). **Desde el 17/11 (galería 50), solo cuando no hay periodo de
+  melatonina**: con periodo, la hora de acostarte es la suya y D8 no se aplica (sección 10, «La cuenta única»).
 - **D9. El máximo con el día que sigue tu despertar.** **Aprobado el 16/11: 10 de fábrica, con 10 entre las
   opciones.** Con todo lo de fábrica y merienda, un día tiene diez
   avisos: la deuda, pesarse, el desayuno, cuatro comidas, la melatonina, las revoluciones, las luces y la cama.
   Con 6 se pierden lo de la noche y las comidas. Hoy, 10 de fábrica (`MAXIMO_QUE_SIGUE_EL_DESPERTAR`), con 10
   sumado a las opciones. Choca con lo que se sabe de cuántos avisos (sección 3: más avisos, más malestar; Pielot
-  2014): la otra opción es dejar 6 y que lo de la noche se junte en un solo aviso.
+  2014): la otra opción es dejar 6 y que lo de la noche se junte en un solo aviso. **El 17/11 se sumó el 12 a las
+  opciones**, y el de fábrica (10) **sube solo con los extras** mientras no se elija a mano: dos por anotar lo que
+  tienes en la cabeza y uno por las gafas, hasta 13 (`maximoDeFabrica`). Con diez, quien prendía anotar se quedaba
+  sin ese aviso y sin bajar el ritmo.
 - **D10. Las gafas para la luz azul.** **Aprobado el 16/11: apagadas de fábrica y sin marca.** La sección 7 dice que Moss no nombra productos; lo pediste el 16/11 como
   aviso apagado de fábrica («no todos las tienen»). Quedó así, sin marca y diciendo que la evidencia es poca
   (sección 10). Se puede sacar.
@@ -524,7 +528,7 @@ secciones; «solo el resumen», el resumen.
 
 ---
 
-## 10. El día que sigue tu despertar (16/11/2026)
+## 10. El día que sigue tu despertar (16/11/2026; la noche, con la cuenta única del 17/11)
 
 Lo pediste el 16/11, después de que «pesarte» sonara antes de que te despertaras (`spec/avisos.md`, «El día que
 sigue tu despertar»). La regla está en `src/dominio/sigueElDespertar.ts`; acá, de dónde sale cada hora. Busqué en
@@ -532,10 +536,10 @@ Europe PMC (su API) y abrí el artículo de PLoS ONE; lo que solo leí en el res
 
 | Aviso | Lo que hay | Lo que hace Moss | Fuerza |
 |---|---|---|---|
-| **La ventana de melatonina** | La melatonina empieza a subir con luz tenue (el DLMO) unas 2 h antes de dormirse, y esa distancia se mantuvo aunque se corriera la hora (Sletten 2010, 28 adultos jóvenes). Es la mejor marca del reloj del cuerpo (Pandi-Perumal 2007), y una regresión con la hora de despertarse la predijo a menos de 1,5 h en el 96 % de los que dormían a su aire (Burgess y Eastman 2005). En 170 adultos sanos, el inicio fue de las 18:13 a las 0:26, más temprano en quienes se despiertan más temprano (Burgess y Fogg 2008) | 2 h antes de la hora de dormirte de esa noche (`MELATONINA`), que sale de tu despertar y tu deuda. El texto dice «más o menos»: es un cálculo, no una medida (sección 7) | **Moderada** (la distancia de 2 h); **derivado** (que sirva de aviso) |
-| **El despertar corre la noche** | El DLMO sigue a la hora de despertarse (Burgess y Eastman 2005; Burgess y Fogg 2008), pero de despertares habituales, no de una mañana | La hora de siempre de dormirte se corre la mitad de lo que te despertaste más tarde (D8) | **Convención** |
-| **Bajar las revoluciones** | No hay estudios de cuánto antes; Rise dice de 1 a 2 h (en otra página, 30 a 60 minutos). La higiene del sueño sola no trata el insomnio (Edinger 2021) | Una hora antes de la cama, «algo tranquilo y sin pantallas brillantes» (`REVOLUCIONES`) | **Convención** |
-| **Anotar lo pendiente** | Escribir 5 minutos lo pendiente de mañana, al acostarse, durmió antes que escribir lo hecho, con polisomnografía (Scullin 2018, 57 adultos jóvenes; solo el resumen) | Al acostarte (5 minutos antes de la cama, `DESCARGA`), apagado de fábrica. Dice «suele ayudar», no que te va a dormir | **Moderada** (un ensayo chico) |
+| **Tu periodo de melatonina** (antes, «la ventana») | La melatonina empieza a subir con luz tenue (el DLMO) unas 2 h antes de dormirse, y esa distancia se mantuvo aunque se corriera la hora (Sletten 2010, 28 adultos jóvenes). Es la mejor marca del reloj del cuerpo (Pandi-Perumal 2007), y una regresión con la hora de despertarse la predijo a menos de 1,5 h en el 96 % de los que dormían a su aire (Burgess y Eastman 2005). En 170 adultos sanos, el inicio fue de las 18:13 a las 0:26, más temprano en quienes se despiertan más temprano (Burgess y Fogg 2008). La cuenta del periodo, en `deuda-y-melatonina.md`, sección 3 | Desde el 17/11: cuando la melatonina empieza a subir según `melatonina.ts` (el punto medio de tus noches de la semana menos 6 h 30), que son 2 h antes de que empiece el periodo. Dice las dos horas del periodo y «más o menos ahora»: es un cálculo, no una medida (sección 7). Sin periodo (menos de 3 noches en la semana), no suena | **Moderada** (la distancia de 2 a 3 h); **derivado** (que sirva de aviso) |
+| **El despertar corre la noche** | El DLMO sigue a la hora de despertarse (Burgess y Eastman 2005; Burgess y Fogg 2008), pero de despertares habituales, no de una mañana: de una sola, si fuera proporcional, un 10 a 15 % (`deuda-y-melatonina.md`, 3.3) | Con periodo, nada aparte: el promedio de 7 noches ya lo corre (2 h 30 tarde, unos 11 minutos). Sin periodo, la hora de siempre de dormirte se corre la mitad de lo que te despertaste más tarde (D8) | **Convención** |
+| **Bajar el ritmo** (antes, «las revoluciones») | No hay estudios de cuánto antes; Rise dice de 1 a 2 h (en otra página, 30 a 60 minutos). La higiene del sueño sola no trata el insomnio (Edinger 2021) | Una hora antes de acostarte: «Deja lo que te acelera y las pantallas brillantes» (`REVOLUCIONES`) | **Convención** |
+| **Anotar lo que tienes en la cabeza** | Escribir 5 minutos lo pendiente de mañana, al acostarse, durmió antes que escribir lo hecho, con polisomnografía (Scullin 2018, 57 adultos jóvenes; solo el resumen) | Al acostarte (5 minutos antes, `DESCARGA`), apagado de fábrica; abre una nota corta en Sueño, y lo anotado vuelve a la mañana en «Lo que hay que hacer hoy». Dice que con la cabeza despejada cuesta menos dormirse, no que te va a dormir | **Moderada** (un ensayo chico) |
 | **Las gafas para la luz azul** | En 14 adultos con síntomas de insomnio, lentes ámbar 2 h antes de la cama durante una semana mejoraron el sueño frente a lentes claros (Shechter 2018, cruzado). La revisión Cochrane (Singh 2023, 6 ensayos y 148 personas): tres mejoraron el sueño y tres no; certeza muy baja | 2 h antes de la cama (`GAFAS`), apagado de fábrica y sin marca, diciendo que la evidencia es poca (D10) | **Débil** |
 | **La deuda al despertar, pesarse y el desayuno** | La deuda es la de Sueño (`deudaDeSueno`, a la media hora); pesarse, como siempre (al rato de despertarte y antes de desayunar); el desayuno no tiene una hora que la evidencia pida | De a uno, a 20 minutos (`SEPARACION`), desde el despertar de verdad | **Convención** (el orden) |
 
@@ -560,3 +564,29 @@ Europe PMC (su API) y abrí el artículo de PLoS ONE; lo que solo leí en el res
 - Scullin 2018 y Edinger 2021, en la sección 9.
 
 **Lo que no verifiqué:** cuánto corre el reloj una sola mañana tarde (D8): no encontré un estudio de eso.
+
+### La cuenta única (aprobada el 17/11 con la galería 50, y programada)
+
+Hasta el 17/11 había dos cuentas de la noche: la de los avisos (`horasDeSueno`: despertarte mañana menos lo que
+necesitas, con la deuda y D8) y la de la tarjeta de Sueño (`melatonina.ts`). Decían horas distintas. Quedó una:
+
+- **Con periodo de melatonina, manda el periodo** (`Sueno.periodo`, que `horasDeSueno` usa): te duermes cuando
+  empieza y te acuestas tu margen antes. De ahí cuentan el aviso de acostarte, las luces (90 min antes), bajar el
+  ritmo (60), las gafas (120), anotar (5), la última comida grande, el corte del café y entrenar tarde. El aviso del
+  periodo suena cuando la melatonina empieza a subir, 2 h antes de que empiece.
+- **La deuda ya no adelanta la hora** (antes, un tercio y hasta 30 minutos): acostarse antes del periodo es dar
+  vueltas en la cama (Lavie 1986; Strogatz 1987; Shekleton 2013, en `deuda-y-melatonina.md`). Con una hora de deuda
+  o más, una noche de cada cuatro el aviso dice que no lo dejes para más tarde. **La necesidad tampoco la mueve**:
+  el texto de «Necesito dormir», en Perfil, pasó a decir que la usan la deuda y la calidad.
+- **D8 no se aplica con periodo.** Una hora de acostarte corrida la mitad de lo que te despertaste tarde sería
+  distinta de la que dicen la tarjeta de Sueño y Perfil (el comienzo del periodo menos tu margen). La parte de D8
+  que es del reloj del cuerpo ya está: la noche de hoy entra en el promedio de 7 noches y lo corre unos 11 minutos
+  con 2 h 30 de atraso (el 10 a 15 % que sale de Yang 2001 y de Crowley y Carskadon 2010 para una sola mañana, si
+  fuera proporcional). La otra parte, que hay menos horas despierto encima, era convención y queda afuera.
+- **Sin periodo** (menos de 3 noches en la última semana) sigue la cuenta de antes, con la deuda y con D8, y el aviso
+  del periodo no suena.
+- **Para decidir, si se extraña D8:** que también con periodo la hora se corra la mitad, sin pasar del final del
+  periodo (te sigues durmiendo dentro de él). Es convención en los dos casos; pide que la tarjeta de Sueño tome la
+  hora de `horasDeSueno`, para que sigan diciendo lo mismo.
+
+Cómo quedó cada texto y lo que se programa, en `spec/avisos.md`, «Los avisos reescritos».

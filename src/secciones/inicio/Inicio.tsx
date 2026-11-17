@@ -51,6 +51,7 @@ import { ControlCerca } from './Control';
 import { BotonDeEnergia, GloboDeEnergia } from './Energia';
 import { Mantener } from './Mantener';
 import { ParaHoy } from './ParaHoy';
+import { PendientesSolos } from './Pendientes';
 import { PrimerDia } from './PrimerDia';
 import { TodoLoDeHoy } from './TodoLoDeHoy';
 
@@ -167,6 +168,8 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
           // La invitación de Ascent, debajo del segundo bloque: se ve sin bajar y no tapa lo de hoy.
           return CON_ASCENT && i === Math.min(1, enOrden.length - 1) ? [...lista, <InvitacionDeAscent key="ascent" />] : lista;
         })}
+        {/* Sin «Para hoy» a la vista (el primer día, o sacado en Personalizar), lo que hay que hacer hoy va solo. */}
+        {(primerDia || !visibles.has('consejos')) && <PendientesSolos />}
         <View style={estilos.pie}>
           <Pressable onPress={() => setPersonalizando(true)} style={({ pressed }) => [estilos.personalizar, pressed && estilos.botonApretado]} accessibilityRole="button">
             <Icono nombre="line.3.horizontal" tam={15} color="rgba(239, 230, 207, 0.72)" />

@@ -1366,7 +1366,11 @@
     "moverBloque": "Move {bloque}",
     "subir": "Move up",
     "bajar": "Move down",
-    "lugar": "Position {n} of {total}"
+    "lugar": "Position {n} of {total}",
+    "pendientes": {
+      "titulo": "To do today",
+      "hecho": "Done"
+    }
   },
   "mas": {
     "titulo": "Add",
@@ -2238,6 +2242,58 @@
     "leer": {
       "leyendo": "Reading Health…",
       "listo": "Up to date with Health"
+    },
+    "periodo": {
+      "titulo": "Your melatonin window",
+      "queEs": "What is it?",
+      "antes": "{n} min earlier than yesterday",
+      "despues": "{n} min later than yesterday",
+      "igual": "Same as yesterday",
+      "acuestate": "Go to bed at {hora} to be asleep within your window.",
+      "conDeuda": "Go to bed at {hora}, when your window starts. Not earlier: you would struggle to fall asleep.",
+      "faltan": {
+        "uno": "{n} night to go",
+        "otros": "{n} nights to go"
+      },
+      "paraSaber": "to estimate it",
+      "faltanTexto": "Moss works it out from your schedule: it takes {minimo} nights from the last week.",
+      "hoja": {
+        "dibujo": {
+          "sube": "starts rising",
+          "periodo": "Your window"
+        },
+        "queEs": "What it is",
+        "queEsTexto": "It is the time of night when your body finds it easiest to fall asleep. A couple of hours earlier, in dim light, melatonin starts rising: the hormone that tells your body it is night.",
+        "como": "How Moss works it out",
+        "comoTexto": "It is not measured: Moss estimates it from your schedule. It takes the midpoint of your sleep over the last week ({medio}, from {noches}) and counts back. That is why it shifts a little every day: if you fall asleep and wake up later, your window moves later too.",
+        "noches": {
+          "uno": "{n} night",
+          "otros": "{n} nights"
+        },
+        "margen": "How precise it is",
+        "margenTexto": "It is an estimate: the real one can come up to an hour earlier or later. With bright light or screens late at night, it comes later.",
+        "antes": "If you go to bed earlier",
+        "antesTexto": "For your body it is still early and you may take a while to fall asleep. If you are not sleepy, wait a bit in dim light.",
+        "despues": "If you go to bed later",
+        "despuesTexto": "You will fall asleep just fine: the window does not close. But the night gets shorter.",
+        "pie": "If you work nights or shifts, this estimate does not work for you."
+      }
+    },
+    "pendientes": {
+      "fila": "What’s on your mind",
+      "filaVacia": "Write down your to-dos before bed",
+      "filaCon": {
+        "uno": "{n} to-do for tomorrow",
+        "otros": "{n} to-dos for tomorrow"
+      },
+      "titulo": "What’s on your mind",
+      "texto": "Write down your to-dos, one by one, and leave them here. Tomorrow, after you wake up, Moss reminds you.",
+      "campo": "A to-do",
+      "agregar": "Add",
+      "quitar": "Remove",
+      "listo": "Done",
+      "queda": "It stays on your phone.",
+      "lleno": "Up to {n}: it is a short list."
     }
   },
   "perfil": {
@@ -2467,6 +2523,99 @@
         },
         "soloSalud": "RingConn, Amazfit, Xiaomi, Huawei, Da Rings and other rings only come in through Health: turn on Apple Health in their app.",
         "nota": "Connecting asks you to sign in to that brand's account. The permission stays on your iPhone, and «Disconnect» removes it and deletes what it brought."
+      },
+      "guia": {
+        "titulo": "Connect a watch or a ring",
+        "texto": "Moss reads your sleep from the Health app. Pick yours and follow the steps so it writes there.",
+        "marcas": {
+          "appleWatch": {
+            "nombre": "Apple Watch",
+            "pasos": [
+              "On your iPhone, open Health › Browse › Sleep and follow the Sleep setup.",
+              "During setup, leave “Track Sleep with Apple Watch” on.",
+              "If you already set it up: in the Watch app › My Watch › Sleep, turn on sleep tracking.",
+              "Wear the watch to bed: it needs at least 30% battery at bedtime."
+            ]
+          },
+          "oura": {
+            "nombre": "Oura",
+            "pasos": [
+              "In the Oura app, open the menu in the top left corner and go to “Settings”.",
+              "Under “Data sharing”, tap “Apple Health” and turn on “Connect to Health”.",
+              "Leave Sleep on among what Oura can write."
+            ],
+            "nota": "A Gen3 ring or later needs an Oura membership."
+          },
+          "whoop": {
+            "nombre": "WHOOP",
+            "pasos": [
+              "In the WHOOP app, go to More › App Settings › Integrations › Apple Health and tap “Connect”.",
+              "Turn on the categories, at least Sleep, and tap “Allow”."
+            ],
+            "nota": "If you reinstall WHOOP, you have to connect it again."
+          },
+          "garmin": {
+            "nombre": "Garmin",
+            "pasos": [
+              "In Garmin Connect, go to More › Settings › Connect Apps › Apple Health and connect it.",
+              "Turn on Sleep and tap “Allow”.",
+              "Open Garmin Connect in the morning, after syncing your watch: it only sends data while the app is open."
+            ]
+          },
+          "fitbit": {
+            "nombre": "Fitbit",
+            "pasos": [
+              "In the Google Health app, tap Connections › Apps and services.",
+              "Choose “Apple Health”, tap “Get started” and agree.",
+              "Turn on the sleep categories and tap “Allow”."
+            ],
+            "nota": "It needs iOS 16.4 or later and an adult Google Account. If you reinstall the app, connect it again."
+          },
+          "polar": {
+            "nombre": "Polar",
+            "pasos": [
+              "In Polar Flow, tap More › General settings.",
+              "Turn on “Apple Health”.",
+              "Turn on the categories, at least Sleep, and tap “Allow”."
+            ],
+            "nota": "It sends how long you slept and when, without stages. “Sync now” resends the last two weeks."
+          },
+          "sleepCycle": {
+            "nombre": "Sleep Cycle",
+            "pasos": [
+              "In Sleep Cycle, go to Profile › More › Apple Health and tap “Connect”.",
+              "In Health › your picture › Apps › Sleep Cycle, leave its permissions on."
+            ],
+            "nota": "Sleep Cycle offers to connect with Health after your 15th night."
+          },
+          "autoSleep": {
+            "nombre": "AutoSleep",
+            "pasos": [
+              "AutoSleep saves sleep to Health with nothing else to turn on: it only needs the permissions.",
+              "In Health › your picture › Apps › AutoSleep, leave everything on."
+            ],
+            "nota": "With Background App Refresh off, it only writes when you open AutoSleep."
+          },
+          "otros": {
+            "nombre": "Another watch, ring or app",
+            "pasos": [
+              "In your device’s app, find the Health (Apple Health) connection and turn it on.",
+              "Let it write Sleep.",
+              "Open that app in the morning: many only send data when opened."
+            ],
+            "nota": "Anything that writes sleep to Health works. The Galaxy Watch, the Galaxy Ring and the Pixel Watch do not work with iPhone."
+          }
+        },
+        "comprobar": {
+          "titulo": "How to check it arrived",
+          "pasos": [
+            "Open Health › Browse › Sleep: your latest night should be there.",
+            "Scroll to the bottom of that screen, to the data sources: every app or device that writes your sleep is listed.",
+            "If two of them write, Health uses the top one first: “Edit” lets you change the order.",
+            "What each app can write is in Health › your picture › Apps.",
+            "In Moss, Sleep › “Where each number comes from” shows which one the night came from. If the night is not in Health, Moss does not get it."
+          ]
+        }
       }
     },
     "cuidado": "Care",
@@ -2487,8 +2636,8 @@
     "avisos": {
       "titulo": "Reminders",
       "dormir": "Bedtime",
-      "dormirTexto": "Tonight, go to bed at {hora}: to wake up at {despertar} after {horas} of sleep, with a {latencia} min margin to fall asleep. You get a reminder a little before.",
-      "dormirSinDatos": "You get a reminder a little before bedtime. To work it out, Moss needs to know when you wake up: a few nights is enough.",
+      "dormirTexto": "Tonight, go to bed at {hora}: with the {margen} min it takes you to fall asleep, you are asleep within your melatonin window ({desde} – {hasta}). It reminds you a while before.",
+      "dormirSinDatos": "At the time that gets you asleep within your melatonin window. It reminds you a while before.",
       "antes": "{n} min before",
       "tardo": "Time to fall asleep",
       "tardoAprendido": "What Moss learns ({n} min)",
@@ -2517,7 +2666,7 @@
       "entrenarTarde": "If you train late",
       "entrenarTardeTexto": "If you'd finish less than two hours before bed: until what time to train hard.",
       "luces": "Dim the lights",
-      "lucesTexto": "An hour and a half before bed: soft, warm light.",
+      "lucesTexto": "An hour and a half before bed: low, warm light.",
       "recuperacion": "Your recovery",
       "recuperacionTexto": "When you wake up on training days: whether to train hard or take it easy.",
       "maximoTextoConviene": "Moss never reminds you more times than this in one day. If there are more, bedtime, your training and your habits come first; what counts back from bedtime comes last.",
@@ -2527,23 +2676,25 @@
       "carreraTexto": "Two days before a race of more than an hour and a half, at lunchtime: carbs and less fiber.",
       "necesito": "I need to sleep",
       "necesitoEdad": "For your age ({h})",
-      "necesitoTexto": "Guidelines say 7 to 9 hours, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your bedtime, your sleep debt and your sleep quality use it.",
-      "necesitoTextoMenor": "At your age 8 to 10 hours are recommended, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your bedtime, your sleep debt and your sleep quality use it.",
+      "necesitoTexto": "Guidelines say 7 to 9 hours, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your sleep debt and your sleep quality use it.",
+      "necesitoTextoMenor": "At your age 8 to 10 hours are recommended, and it varies from person to person. If you wake up tired on your usual amount, try half an hour more: your sleep debt and your sleep quality use it.",
       "tuDia": "Your day",
       "tuDiaTexto": "It follows when you wake up: nothing from the morning goes off until Moss knows you’re up, and the night is set from that time and your sleep debt.",
       "mas": "More notifications",
       "masTexto": "Off by default: turn on the ones that help you.",
       "deuda": "Your sleep debt",
-      "deudaTexto": "When you wake up, in one line: whether it went down or up.",
+      "deudaTexto": "When you wake up: how much you have and how it changed since yesterday.",
       "horarioTextoDia": "When you wake up, it asks whether you’re having breakfast. If not, breakfast is shared among the meals left, and the first one you log moves the rest.",
-      "melatonina": "Melatonin window",
-      "melatoninaTexto": "About two hours before you usually fall asleep, when melatonin starts to rise. It’s an estimate.",
+      "melatonina": "Your melatonin window",
+      "melatoninaTexto": "About two hours ahead, it tells you when it starts: that is when falling asleep is easiest. It is an estimate.",
       "revoluciones": "Wind down",
       "revolucionesTexto": "An hour before bed: something calm, no bright screens.",
-      "descarga": "Write down your to-dos",
-      "descargaTexto": "When you get into bed: five minutes on paper with tomorrow’s list, so it doesn’t keep you up.",
+      "descarga": "Write down what’s on your mind",
+      "descargaTexto": "At bedtime, it invites you to write your to-dos in a short note, in Sleep. In the morning, after you wake up, you get them in a reminder: “To do today”.",
       "gafas": "Blue-light glasses",
-      "gafasTexto": "Two hours before bed, if you have them. The evidence is still thin."
+      "gafasTexto": "Two hours before bed, if you have them. The evidence is still thin.",
+      "dormirSinPeriodo": "Tonight, go to bed at {hora}: to wake up at {despertar} after {horas} of sleep, with a {latencia} min margin to fall asleep. You get a reminder a little before.",
+      "maximoSolo": "It went up to {n} on its own for the reminders you turned on. Pick another and yours stays."
     },
     "cambiarCuenta": "Switch account",
     "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account.",
@@ -3748,24 +3899,6 @@
     }
   },
   "recordatorios": {
-    "dormirTextos": {
-      "enUnRato": "Time to get ready: bed in {tiempo}.",
-      "estaNoche": "Tonight, bed at {hora}.",
-      "luces": "Dim the lights: bed in {tiempo}.",
-      "paraDespertar": "To wake up at {despertar}, be in bed by {hora}.",
-      "enTiempo": "Bedtime in {tiempo}.",
-      "pantallas": "Start putting your phone away: bed at {hora}.",
-      "aLaHora": "Your bedtime tonight is {hora}.",
-      "duermes": "In bed by {hora} and you sleep {horas}.",
-      "bajaElRitmo": "Start winding down: bed at {hora}.",
-      "deuda": "To pay down your sleep debt: bed at {hora}, up at {despertar}."
-    },
-    "dormirEn": {
-      "15": "15 minutes",
-      "30": "half an hour",
-      "45": "45 minutes",
-      "60": "an hour"
-    },
     "meVoyADormir": "Going to bed",
     "buenasNoches": "Good night. Moss noted the time.",
     "sinAnotar": {
@@ -3864,8 +3997,6 @@
       "snack": "Time for your snack"
     },
     "conPlan": "{hora}: {plan}",
-    "pesarse": "Good time to weigh in",
-    "pesarseControl": "Check-in day: weigh in before breakfast",
     "pruebaTermina": "Your Moss trial ends in two days",
     "conviene": {
       "antes": {
@@ -3918,7 +4049,7 @@
       },
       "luces": {
         "titulo": "Dim the lights",
-        "texto": "Soft, warm light: bed at {cama}."
+        "texto": "Low, warm light from now on: bright light pushes your sleep later. Bedtime is {cama}."
       },
       "recuperacion": {
         "titulo": "Recovery: {pct}%",
@@ -3937,21 +4068,28 @@
     },
     "despertar": {
       "deuda": {
-        "bajo": "Your sleep debt went down to {deuda}.",
-        "subio": "Your sleep debt went up to {deuda}.",
-        "igual": "Your sleep debt is still {deuda}.",
-        "es": "Your sleep debt is {deuda}.",
-        "cero": "Your sleep debt is down to zero.",
-        "sin": "You have no sleep debt."
+        "bajo": "Down {cambio} since yesterday.",
+        "subio": "Up {cambio} since yesterday.",
+        "igual": "Same as yesterday.",
+        "es": "It is the sleep you are missing from the last two weeks.",
+        "cero": "Down to zero: you caught up.",
+        "sin": "You sleep what you need.",
+        "titulo": "Your sleep debt: {deuda}",
+        "tituloSin": "No sleep debt"
       },
       "desayuno": {
-        "pregunta": "Having breakfast today?",
         "si": "Yes",
-        "directo": "Straight to lunch"
+        "directo": "Straight to lunch",
+        "titulo": "Having breakfast today?",
+        "texto": "If you go straight to lunch, breakfast is spread over the rest of the day."
       },
       "comida": {
-        "conKcal": "{hora}: about {kcal} kcal. What you didn’t eat at breakfast goes to {lista}.",
-        "sinNumeros": "{hora}. What you didn’t eat at breakfast goes to {lista}."
+        "titulo": {
+          "almuerzo": "Have about {kcal} kcal for lunch",
+          "merienda": "Have about {kcal} kcal for your snack",
+          "cena": "Have about {kcal} kcal for dinner"
+        },
+        "texto": "What you didn’t eat at breakfast goes to {lista}."
       },
       "a": {
         "almuerzo": "lunch",
@@ -3960,21 +4098,45 @@
       },
       "y": "{a} and {b}",
       "melatonina": {
-        "titulo": "Your melatonin window",
-        "texto": "Around now your melatonin starts to rise: bed at {cama}."
+        "titulo": "Your melatonin window: {desde}",
+        "texto": "From {desde} to {hasta} is when falling asleep is easiest: your melatonin starts rising about now."
       },
       "revoluciones": {
         "titulo": "Wind down",
-        "texto": "Something calm, no bright screens: bed at {cama}."
+        "texto": "Drop whatever revs you up, and bright screens. Bedtime is {cama}."
       },
       "gafas": {
-        "titulo": "Blue-light glasses",
-        "texto": "If you use them, now’s a good time: bed at {cama}."
+        "titulo": "Put on your blue-light glasses",
+        "texto": "If you have them, wear them from now until bedtime, {cama}."
       },
       "descarga": {
-        "titulo": "Write down your to-dos",
-        "texto": "Five minutes on paper with tomorrow’s list: it tends to help you fall asleep sooner."
+        "titulo": "Write down what’s on your mind",
+        "texto": "Write your to-dos before bed: a clear head falls asleep more easily. Moss reminds you tomorrow."
+      },
+      "pendientes": {
+        "titulo": "To do today",
+        "mas": "and {n} more"
       }
+    },
+    "acostarte": {
+      "titulo": "Go to bed at {cama}",
+      "texto": "{tiempo}. That way you fall asleep within your melatonin window ({desde} – {hasta}).",
+      "conDeuda": "{tiempo}. With {deuda} of sleep debt, don’t push it later tonight.",
+      "sinPeriodo": "{tiempo}. That way you sleep {horas} and wake up at {despertar}.",
+      "en": {
+        "15": "In 15 minutes",
+        "30": "In half an hour",
+        "45": "In 45 minutes",
+        "60": "In an hour",
+        "otro": "In {n} minutes",
+        "ya": "Now"
+      }
+    },
+    "pesarte": {
+      "titulo": "Weigh yourself before breakfast",
+      "texto": "After the bathroom and always the same way: that is how the trend shows.",
+      "tituloControl": "Check-in day: weigh yourself",
+      "textoControl": "Before breakfast, as usual."
     }
   },
   "entreno": {
