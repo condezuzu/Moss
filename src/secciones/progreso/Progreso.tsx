@@ -26,7 +26,7 @@ import { EntradaPronto, GloboPronto } from '../ascent/Pronto';
 import { PESTANAS } from '../Barra';
 import { COLOR_DE_MACRO, Icono, MACROS, type Macro } from '../comida/comunes';
 import { fechaCorta, fechaDiaMes, numero, sistemaDe, useEstado, useNumeros } from '../comida/datos';
-import { FranjaBajoLaHora } from '../franja';
+import { DEBAJO_DE_LA_HORA, FranjaBajoLaHora, LADOS } from '../franja';
 import { usePersona } from '../ganchos';
 import { Linea } from '../graficos/Graficos';
 import type { VistaDelMas } from '../HojaMas';
@@ -64,7 +64,7 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   }, [vista, enMetas]);
   const estiloPrincipal = useAnimatedStyle(() => ({ opacity: 1 - enMetas.get() }));
   const conMetas = vista === 'metas';
-  const relleno = { paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 };
+  const relleno = { paddingTop: arriba + DEBAJO_DE_LA_HORA, paddingHorizontal: LADOS, paddingBottom: abajo + 40 };
   // El globo de «Ascent · Pronto»: dónde va (debajo de la entrada) y si se está cerrando.
   const pagina = useRef<ComponentRef<typeof View>>(null);
   const entrada = useRef<ComponentRef<typeof View>>(null);
@@ -104,7 +104,8 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
       </Animated.View>
       {conMetas && (
         <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={StyleSheet.absoluteFill}>
-          <ScrollDeMetas relleno={relleno} arriba={arriba} esLaActual={esLaActual} alVolver={() => setVista('principal')} />
+          {/* Las metas, con su «Volver» arriba, bajan 20 más (la galería, `.en-metas`). */}
+          <ScrollDeMetas relleno={{ ...relleno, paddingTop: relleno.paddingTop + 20 }}arriba={arriba} esLaActual={esLaActual} alVolver={() => setVista('principal')} />
         </Animated.View>
       )}
       {globo && !conMetas && (
@@ -150,7 +151,7 @@ function Principal({ ancho, alAbrirMas, alVerMetas, ascent }: { ancho: number; a
   const alternar = (cual: string) => setAbierto((antes) => (antes === cual ? null : cual));
   const sistema = sistemaDe(e);
   const u = useMemo(() => unidades(sistema), [sistema]);
-  const interior = ancho - 40 - 34;
+  const interior = ancho - 2 * LADOS - 34;
   // Si entrena fuerza, de Perfil › Entrenamiento; sin decirlo, no se sabe y el plazo lo avisa.
   const fuerza = e.entreno ? e.entreno.tipo !== 'resistencia' : null;
   const despues = p.deEjemplo ? null : (delCuestionario?.despues ?? null);

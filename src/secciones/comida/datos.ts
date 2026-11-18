@@ -5,16 +5,15 @@ import { getLocales } from 'expo-localization';
 import { useSyncExternalStore } from 'react';
 
 import { elAlmacen } from '@/almacen';
-import { metaVigente, type Estado } from '@/almacen/almacen';
+import { horasDeComerDe, metaVigente, type Estado } from '@/almacen/almacen';
 import { estadoConAscent, metaConAscent, suscribirConAscent } from '@/almacen/ascent';
 import { conMayuscula } from '@/comida/buscar';
 import { cantidadDePorcion, decimal } from '@/comida/porciones';
-import { ACEITE, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
+import { ACEITE, pesoCorporalEn, pesoEn, sistemaDeRegion, volumenEn, type Sistema } from '@/dominio/cantidades';
 import { comidaDeLaHora, COMIDAS, minutoDeLoDicho, type Comida } from '@/dominio/comidas';
 import { diaDeLaSemana, minutosEnElDia, partesDe, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { metaRepartida, type Macros } from '@/dominio/metas';
 import { sugerenciaVencida } from '@/dominio/plan';
-import { horasDeSiempre } from '@/dominio/recordatorios';
 import { delDia, sumarValores, totalDelDia, type Cantidad, type Registro, type Valores } from '@/dominio/registros';
 import { idioma, lista, t } from '@/textos';
 
@@ -57,6 +56,21 @@ export function numero(n: number, decimales = 0): string {
     formatos.set(clave, f);
   }
   return f.format(n);
+}
+
+/**
+ * El peso del cuerpo fuera de Progreso, en la unidad de cada uno: «75» si es redondo y «75,4» si no (lo pediste
+ * el 18/11). Progreso lleva los decimales fijos de la galería (progreso/unidades.ts).
+ */
+export function cifraDePeso(kg: number, sistema: Sistema): { cifra: string; unidad: 'kg' | 'lb' } {
+  const p = pesoCorporalEn(kg, sistema);
+  return { cifra: numero(p.valor, 1), unidad: p.unidad };
+}
+
+/** «75 kg», «75,4 kg» o «166,2 lb». */
+export function textoDePeso(kg: number, sistema: Sistema): string {
+  const p = cifraDePeso(kg, sistema);
+  return `${p.cifra} ${p.unidad}`;
 }
 
 /** Los gramos de un macro: con decimal por debajo de 10 («2,5 g»), sin decimal arriba. */
@@ -145,12 +159,12 @@ export function cantidadDeTexto(c: Cantidad, sistema: Sistema): string {
 export { HORA_TIPICA } from '@/dominio/comidas';
 
 /**
- * La hora de cada comida, una sola para todo (lo que se anota, la línea y lo que corre al comer): la
- * del horario, si se eligió, o la de siempre, la que usan los avisos. El snack no tiene: a media mañana.
+ * La hora de cada comida, una sola para todo (lo que se anota, la línea, lo que corre al comer, el plan y los
+ * avisos): tus horas de comer (horasDeComer, en recordatorios.ts). El snack no tiene: a media mañana.
  */
-export function horasDeComer(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'>): (c: Comida) => number {
-  const deSiempre = horasDeSiempre(e.registros.values(), e.hoy);
-  return (c) => (c === 'snack' ? 11 * 60 : (e.avisos.horario?.[c] ?? deSiempre(c)));
+export function horasDeComer(e: Pick<Estado, 'hoy' | 'registros' | 'respuestas' | 'horasDeComer'>): (c: Comida) => number {
+  const tuyas = horasDeComerDe(e);
+  return (c) => (c === 'snack' ? 11 * 60 : tuyas(c).minutos);
 }
 
 /**
@@ -160,7 +174,7 @@ export function horasDeComer(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'>): (
  * con el nombre de otra comida (D41): así no corre lo que sigue. La cena pasada la medianoche, antes del
  * corte, es la de la hora.
  */
-export function momentoDe(e: Pick<Estado, 'hoy' | 'registros' | 'avisos'> & Partial<Pick<Estado, 'corte'>>, dia: ClaveDia, comida: Comida): string | undefined {
+export function momentoDe(e: Pick<Estado, 'hoy' | 'registros' | 'respuestas' | 'horasDeComer'> & Partial<Pick<Estado, 'corte'>>, dia: ClaveDia, comida: Comida): string | undefined {
   const horaDe = horasDeComer(e);
   const p = partesDe(dia);
   const enElDia = (minutos: number) => new Date(p.anio, p.mes, p.dia, Math.floor(minutos / 60), minutos % 60).toISOString();

@@ -87,6 +87,7 @@ const shaders = {
   fondo: leer('src/cielo/shaders/fondo.glsl'),
   aurora: leer('src/cielo/shaders/aurora.glsl'),
   vivo: leer('src/cielo/shaders/vivo.glsl'),
+  viaje: leer('src/cielo/shaders/viaje.glsl'),
 };
 
 const catalogo = leerJson('src/datos/constelaciones.json');

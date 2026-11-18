@@ -1,21 +1,23 @@
-// Las frases del día (especificación, «Contenido»): estoicos, frases modernas cortas y atribuidas,
-// y propias, sin fragmentos de mitos. La lista completa es de la etapa 11; por ahora, la de la galería.
+// Las frases del día (especificación, «Contenido»; plan, etapa 11): estoicos en traducciones propias,
+// frases cortas atribuidas con su fuente y propias de Moss, sin fragmentos de mitos. Los textos están
+// en src/textos (`frasesDelDia`), en es y en; el orden de es.json es el de los días: los autores se turnan.
 
 import type { Texto } from '@/datos/catalogo';
-import type { ClaveDia } from '@/dominio/fechas';
+import { diasEntre, type ClaveDia } from '@/dominio/fechas';
+import en from '@/textos/en.json';
+import es from '@/textos/es.json';
 
 export type Frase = { texto: Texto; autor: Texto };
 
-export const FRASES: Frase[] = [
-  {
-    texto: { es: 'Nada grande nace de golpe, ni siquiera un racimo de uvas o un higo.', en: 'No great thing is created suddenly, any more than a bunch of grapes or a fig.' },
-    autor: { es: 'Epicteto · Disertaciones I.15', en: 'Epictetus · Discourses I.15' },
-  },
-];
+type Id = keyof typeof es.frasesDelDia;
 
-/** Una por día, y siempre la misma ese día. */
+export const FRASES: Frase[] = (Object.keys(es.frasesDelDia) as Id[]).map((id) => ({
+  texto: { es: es.frasesDelDia[id].texto, en: en.frasesDelDia[id].texto },
+  autor: { es: es.frasesDelDia[id].autor, en: en.frasesDelDia[id].autor },
+}));
+
+/** Una por día, siempre la misma ese día, y ninguna vuelve hasta que pasaron todas. */
 export function fraseDelDia(clave: ClaveDia): Frase {
-  let h = 0;
-  for (let i = 0; i < clave.length; i++) h = (h * 31 + clave.charCodeAt(i)) >>> 0;
-  return FRASES[h % FRASES.length];
+  const n = FRASES.length;
+  return FRASES[((diasEntre('2026-01-01', clave) % n) + n) % n];
 }

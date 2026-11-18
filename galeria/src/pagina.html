@@ -474,8 +474,8 @@ section.item p { margin: 0; max-width: 64ch; }
 .gc-moss span { font: 400 12px/1 var(--texto); color: rgba(239, 230, 207, 0.6); }
 .gc-instalar { appearance: none; cursor: pointer; padding: 11px 18px; border: 0; border-radius: 13px; background: var(--tinta); color: #0b0f1d; font: 500 13px/1 var(--texto); }
 .gc-barra { display: flex; align-items: center; justify-content: space-between; min-height: 26px; }
-.gc-barra b { font: 700 17px/1.1 inherit; letter-spacing: -0.01em; }
-.gc-mas { appearance: none; cursor: pointer; width: 26px; height: 26px; border: 0; border-radius: 50%; background: none; color: #0a66e4; font: 400 22px/1 inherit; }
+.gc-barra b { font: 700 17px/1.1 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; letter-spacing: -0.01em; }
+.gc-mas { appearance: none; cursor: pointer; width: 26px; height: 26px; border: 0; border-radius: 50%; background: none; color: #0a66e4; font: 400 22px/1 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; }
 .gc-fila { appearance: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; min-height: 34px; padding: 6px 10px; border: 0; border-radius: 9px; background: #fff; color: inherit; font: inherit; text-align: left; }
 button.gc-fila { cursor: pointer; }
 .gc-fila em { font-style: normal; color: #a1a1aa; }
@@ -495,7 +495,7 @@ button.gc-fila { cursor: pointer; }
 .gc-llave::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1); }
 .gc-llave.si { background: #34c759; }
 .gc-llave.si::after { transform: translateX(14px); }
-.gc-principal { appearance: none; cursor: pointer; width: 100%; min-height: 36px; border: 0; border-radius: 11px; background: #0a66e4; color: #fff; font: 600 13px/1 inherit; }
+.gc-principal { appearance: none; cursor: pointer; width: 100%; min-height: 36px; border: 0; border-radius: 11px; background: #0a66e4; color: #fff; font: 600 13px/1 -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif; }
 .gc-toca { position: relative; z-index: 1; animation: gc-late 1.5s ease-in-out infinite; }
 @keyframes gc-late { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 150, 40, 0.0), 0 0 0 2px rgba(232, 150, 40, 0.75); } 50% { box-shadow: 0 0 0 7px rgba(232, 150, 40, 0.28), 0 0 0 2px rgba(232, 150, 40, 1); } }
 .gc-prueba { flex: 1; display: flex; flex-direction: column; justify-content: center; }
@@ -1484,8 +1484,9 @@ button.sn-afinar-fila { appearance: none; cursor: pointer; width: 100%; padding:
 .cm-tira-dia b, .cm-grafica-dia b, .cm-cal-dia b { font: 500 12.5px/1 var(--numeros); font-variant-numeric: tabular-nums; }
 .cm-tira-dia.hoy b, .cm-grafica-dia.hoy b, .cm-cal-dia.hoy b { color: var(--oro-claro); }
 .cm-lunita { width: 24px; height: 24px; display: block; }
-.cm-lunita-noche { fill: #141c36; }
-.cm-lunita-luz { fill: #ecdcb2; }
+/* Sin el trazo que heredan de `.comida svg`: el único aro es el borde fino (18/11). */
+.cm-lunita-noche { fill: #141c36; stroke: none; }
+.cm-lunita-luz { fill: #ecdcb2; stroke: none; }
 .cm-lunita-borde { fill: none; stroke: rgba(246, 227, 166, 0.3); stroke-width: 0.9; }
 .cm-lunita.plan .cm-lunita-luz { opacity: 0.35; }
 .cm-lunita.plan .cm-lunita-borde, .cm-lunita.futuro .cm-lunita-borde { stroke-dasharray: 2 2.2; }

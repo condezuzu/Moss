@@ -27,11 +27,11 @@ const SIN_PERIODO: Sueno = { habitual: () => ({ dormirse: n('23:15'), despertar:
 const PERIODO: PeriodoDeMelatonina = { inicio: n('21:30'), desde: n('23:30'), hasta: n('0:30'), corrido: 0, acostarse: n('23:15'), conDeuda: true, noches: 7 };
 const SUENO: Sueno = { ...SIN_PERIODO, periodo: () => PERIODO };
 const conDespertar = (despertar: number | null): Sueno => ({ ...SUENO, despertarReal: (d) => (d === VIERNES ? despertar : null) });
-const HORARIO = { desayuno: h('7:30'), almuerzo: h('13:00'), merienda: h('17:00'), cena: h('20:30') };
-const HORA: Record<Comida, number> = { ...HORARIO, snack: h('16:00') };
+const HORARIO: Comida[] = ['desayuno', 'almuerzo', 'merienda', 'cena'];
+const HORA: Record<Comida, number> = { desayuno: h('7:30'), almuerzo: h('13:00'), merienda: h('17:00'), cena: h('20:30'), snack: h('16:00') };
 const META = { kcal: 2400, proteina: 150, carbohidratos: 280, grasas: 75 };
 const NADA = { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 };
-const AJUSTES: Avisos = deFabrica({ pesarse: { encendido: true, todos: true }, horario: HORARIO }, (c) => HORA[c]);
+const AJUSTES: Avisos = deFabrica({ pesarse: { encendido: true, todos: true }, horario: HORARIO });
 const MEDITAR: Habito = { id: 'meditar', nombre: 'meditar', icono: 'star', dias: [0, 1, 2, 3, 4, 5, 6], fuente: { tipo: 'manual' }, orden: 0, desde: '2026-01-01' };
 
 const dia = (extra: Partial<DeSigueElDespertar & { ahora: number; habitos: Habito[] }> = {}): Notificacion[] =>
@@ -150,7 +150,7 @@ describe('sin desayuno, lo del desayuno se reparte', () => {
     const conFalta = { ...AJUSTES, comidas: ['desayuno' as const, 'cena' as const] };
     expect(ids(dia({ ajustes: conFalta }))).not.toContain('comida:desayuno');
     // Sin horario para el desayuno no hay pregunta, y el de «falta anotar» espera al despertar.
-    const sinHorario = { ...conFalta, horario: { almuerzo: HORARIO.almuerzo, cena: HORARIO.cena } };
+    const sinHorario = { ...conFalta, horario: ['almuerzo', 'cena'] as Comida[] };
     expect(ids(dia({ ajustes: sinHorario, sueno: conDespertar(null) }))).not.toContain('comida:desayuno');
   });
 });
@@ -216,7 +216,7 @@ describe('la noche sale de tu periodo de melatonina', () => {
 describe('lo que hay que hacer hoy', () => {
   // Sin elegir el máximo: con anotar prendido, el de fábrica sube solo a 12.
   const ELEGIDO: Avisos = { pesarse: { encendido: true, todos: true }, horario: HORARIO, descarga: { encendido: true } };
-  const conAnotar: Avisos = deFabrica(ELEGIDO, (c) => HORA[c]);
+  const conAnotar: Avisos = deFabrica(ELEGIDO);
   const anotados = (textos: string[], hechos: number[] = []) => textos.map((texto, i) => ({ texto, hecho: hechos.includes(i) }));
   const elAviso = (lista: Notificacion[]) => lista.find((x) => x.aviso.id === 'pendientes');
 
@@ -249,7 +249,7 @@ describe('lo que hay que hacer hoy', () => {
   it('espera a tu despertar, y sin la pregunta del desayuno va después de lo último de la mañana', () => {
     const pendientes = anotados(['Uno']);
     expect(elAviso(dia({ ajustes: conAnotar, pendientes, sueno: conDespertar(null) }))).toBeUndefined();
-    const sinDesayuno = { ...conAnotar, horario: { almuerzo: HORARIO.almuerzo, cena: HORARIO.cena } };
+    const sinDesayuno = { ...conAnotar, horario: ['almuerzo', 'cena'] as Comida[] };
     expect(aLa(dia({ ajustes: sinDesayuno, pendientes }), 'pendientes')).toBe(h('10:40'));
     // Sin nada más de la mañana, al despertarte.
     expect(aLa(dia({ ajustes: { ...sinDesayuno, deuda: { encendido: false }, pesarse: undefined }, pendientes }), 'pendientes')).toBe(h('10:00'));
@@ -267,7 +267,7 @@ describe('lo que hay que hacer hoy', () => {
   });
 
   it('el máximo que elegiste a mano se respeta tal cual', () => {
-    const conDiez = deFabrica({ ...ELEGIDO, maximoPorDia: 10 }, (c) => HORA[c]);
+    const conDiez = deFabrica({ ...ELEGIDO, maximoPorDia: 10 });
     const lista = ids(dia({ desayuno: 'directo', ajustes: conDiez, pendientes: anotados(['Uno']) }));
     expect(lista).toHaveLength(10);
     expect(lista).not.toContain('descarga');
@@ -277,21 +277,40 @@ describe('lo que hay que hacer hoy', () => {
 
 describe('las reglas de siempre', () => {
   it('lo de fábrica: la deuda, el horario, la melatonina, las revoluciones, las luces y la cama; lo demás, apagado', () => {
-    const f = deFabrica({}, (c) => HORA[c]);
+    const f = deFabrica({});
     expect([f.deuda, f.melatonina, f.revoluciones, f.luces, f.dormir].every((x) => x?.encendido)).toBe(true);
-    expect(Object.keys(f.horario ?? {})).toEqual(['desayuno', 'almuerzo', 'cena']);
+    expect(f.horario).toEqual(['desayuno', 'almuerzo', 'cena']);
     expect([f.descarga, f.gafas, f.cafe, f.entrenarTarde, f.ultimaComida, f.pesarse]).toEqual([undefined, undefined, undefined, undefined, undefined, undefined]);
     expect(f.maximoPorDia).toBe(MAXIMO_QUE_SIGUE_EL_DESPERTAR);
     // El máximo de fábrica sube solo con lo que se prende aparte: dos por anotar y uno por las gafas, hasta 13.
-    const maximo = (a: Avisos) => deFabrica(a, (c) => HORA[c]).maximoPorDia;
+    const maximo = (a: Avisos) => deFabrica(a).maximoPorDia;
     const si = { encendido: true };
     expect([maximo({ descarga: si }), maximo({ gafas: si }), maximo({ descarga: si, gafas: si }), maximo({ descarga: { encendido: false }, gafas: { encendido: false } })]).toEqual([12, 11, 13, 10]);
     expect(maximoDeFabrica({ descarga: si, gafas: si })).toBe(13);
     // El que elegiste, aunque sea menos, queda.
     expect([maximo({ descarga: si, gafas: si, maximoPorDia: 10 }), maximo({ descarga: si, maximoPorDia: 6 })]).toEqual([10, 6]);
     // Lo que elegiste no se toca.
-    expect(deFabrica({ luces: { encendido: false }, maximoPorDia: 4 }, (c) => HORA[c])).toMatchObject({ luces: { encendido: false }, maximoPorDia: 4 });
+    expect(deFabrica({ luces: { encendido: false }, maximoPorDia: 4 })).toMatchObject({ luces: { encendido: false }, maximoPorDia: 4 });
     expect([...DE_FABRICA, ...MAS]).toHaveLength(12);
+  });
+
+  it('con el café prendido, el máximo de fábrica sube uno: «Se acerca tu hora de acostarte» no se pierde', () => {
+    const conCafe = deFabrica({ pesarse: { encendido: true, todos: true }, horario: HORARIO, cafe: { encendido: true } });
+    expect(conCafe.maximoPorDia).toBe(MAXIMO_QUE_SIGUE_EL_DESPERTAR + 1);
+    expect(maximoDeFabrica({ descarga: { encendido: true }, gafas: { encendido: true }, cafe: { encendido: true } })).toBe(14);
+    const lista = ids(dia({ desayuno: 'directo', ajustes: conCafe }));
+    expect(lista).toHaveLength(11);
+    expect(lista).toEqual(expect.arrayContaining(['cafe', 'revoluciones', 'dormir']));
+    // Con diez, el café dejaba afuera bajar el ritmo.
+    expect(ids(dia({ desayuno: 'directo', ajustes: { ...conCafe, maximoPorDia: 10 } }))).not.toContain('revoluciones');
+  });
+
+  it('una comida que en tu día dice «No suelo» no avisa a su hora, aunque esté elegida', () => {
+    expect(deFabrica({}, (c) => c === 'desayuno').horario).toEqual(['almuerzo', 'cena']);
+    expect(deFabrica({ horario: HORARIO }, (c) => c === 'merienda').horario).toEqual(['desayuno', 'almuerzo', 'cena']);
+    const sinMerienda = dia({ ajustes: deFabrica({ horario: HORARIO }, (c) => c === 'merienda'), desayuno: 'si', anotadas: new Set(['desayuno']), eventos: { desayuno: h('10:45') }, ahora: h('10:46') });
+    expect(ids(sinMerienda)).toContain('horario:almuerzo');
+    expect(ids(sinMerienda)).not.toContain('horario:merienda');
   });
 
   it('el día entero entra en el máximo de fábrica; con 6, quedan primero la cama, la mañana y las comidas', () => {

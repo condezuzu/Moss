@@ -79,12 +79,14 @@ permiso se pide al elegirlos, y cada aviso se cambia o se saca en su hábito.
 
 ## El horario de comidas
 
-Cada comida elegida avisa a su hora (de a un cuarto de hora, entre las 5 y las
-23:45), si todavía no se anotó y no anotaste una posterior (con la cena anotada,
-la merienda ya fue): «Hora de la merienda». Si hay un plan para esa
+Cada comida elegida avisa a tu hora de comer, si todavía no se anotó y no anotaste una posterior (con la cena
+anotada, la merienda ya fue): «Hora de la merienda». Si hay un plan para esa
 comida, dice qué toca: «Hora del almuerzo: pollo a la plancha, arroz». Arranca
-con el desayuno, el almuerzo y la cena a la hora en que se suelen anotar. Con
-horario, el aviso de «sin anotar» de esa comida cuenta desde esta hora; si con
+con el desayuno, el almuerzo y la cena. Desde el 18/11 las horas son una sola lista para todo (`horasDeComer`, en
+`recordatorios.ts`; ver `entreno.md` 5.11): la que cambiaste a mano en Perfil › Tus respuestas, fija; si no, la
+mediana de lo anotado con 5 días o más en dos semanas, la de tu día o la típica. Perfil › Avisos las muestra y lleva a
+«¿Cómo es tu día?»; la que ahí dice «No suelo» no avisa. El horario de antes, con su hora, pasó a ser tus horas
+puestas a mano. El aviso de «sin anotar» de esa comida cuenta desde esta hora; si con
 una comida tarde caería a 20 minutos o menos del de su hora (o antes, por el tope
 de las 23:30), no suena: alcanza con el del horario.
 
@@ -358,8 +360,9 @@ fábrica como todo lo demás.
   de entrenar después de haber entrenado.
 - **El máximo** cuenta las veces que suena (2, 3, 4, 6, 8, 10 o 12 por día; 10 de
   fábrica desde el día que sigue tu despertar, D9 de `estudio/momentos.md`). Mientras no lo elijas a mano, el de
-  fábrica sube solo con lo que prendes aparte: dos por anotar lo que tienes en la cabeza y uno por las gafas, hasta
-  13 (`maximoDeFabrica`, en `sigueElDespertar.ts`). Si
+  fábrica sube solo con lo que prendes aparte: dos por anotar lo que tienes en la cabeza, uno por las gafas y uno por
+  el café (18/11: si no, el café dejaba afuera «Se acerca tu hora de acostarte»), hasta 14 (`maximoDeFabrica`, en
+  `sigueElDespertar.ts`). Si
   sobran, quedan primero el de dormir, después los de hábitos, el horario y
   pesarse, y al final los de comidas sin anotar, que casi siempre ya se anotaron.
   Lo de «muy bajo en algo» va aparte, con su propio tope. Lo que conviene entra en

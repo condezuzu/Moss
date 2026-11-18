@@ -3,7 +3,7 @@
 // vasos de agua se llenan de a uno (.in-vasos i). Con Reducir movimiento, las cifras y las barras van
 // directo; los vasos, que se llenan con un fundido, no: un fundido no es movimiento.
 
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, { Easing, FadeIn, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
@@ -17,6 +17,12 @@ const ENTERO: ViewStyle = { width: '100%' };
 const VASO_DE_MAS = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
 
 /**
+ * Si la sección de la cifra es la que se ve (lo pone Secciones): anotar desde el «+» cambia Inicio y
+ * Comida a la vez, y la de al lado no tiene por qué contar. Fuera de las secciones (la entrada), sí.
+ */
+export const SeccionVisible = createContext(true);
+
+/**
  * Una cifra que, cuando cambia, cuenta desde lo que mostraba (anotar comida baja «te quedan» de a
  * poco). La primera vez aparece quieta. Cuenta de a pasos, diez en el mismo tiempo y con la misma
  * curva, y no en cada cuadro: Inicio y Comida cuentan a la vez al anotar, y cada paso las vuelve a
@@ -24,11 +30,14 @@ const VASO_DE_MAS = FadeIn.duration(320).reduceMotion(ReduceMotion.Never);
  */
 export function useCuenta(valor: number, ms = 480): number {
   const reducido = useReducedMotion();
+  const visible = useContext(SeccionVisible);
   const [mostrado, setMostrado] = useState(valor);
   const desde = useRef(valor);
+  // En la sección que no se ve, la cifra pasa a lo nuevo sin contar: al volver ya está.
+  if (!visible && mostrado !== valor) setMostrado(valor);
   useEffect(() => {
     const inicio = desde.current;
-    if (reducido || inicio === valor) {
+    if (reducido || !visible || inicio === valor) {
       desde.current = valor;
       return;
     }
@@ -41,8 +50,8 @@ export function useCuenta(valor: number, ms = 480): number {
       if (paso >= PASOS) clearInterval(reloj);
     }, ms / PASOS);
     return () => clearInterval(reloj);
-  }, [valor, ms, reducido]);
-  return reducido ? valor : mostrado;
+  }, [valor, ms, reducido, visible]);
+  return reducido || !visible ? valor : mostrado;
 }
 
 /** Una fracción de 0 a 1 que llega con la curva de las barras; al aparecer, se llena desde cero. */

@@ -90,7 +90,7 @@ Jaca | Jackfruit | sr:Jackfruit, raw | 1 taza / 1 cup=165 | yaca · jackfruit
 Pulpa de açaí | Açaí pulp | propio#101 58 0.8 6.2 3.9 | 1 paquete (100 g) / 1 pack (100 g)=100 | açaí · asaí · acaí · pulpa de asaí | fibra=2.6
 Lulo | Naranjilla | sr:Naranjilla (lulo) pulp, frozen, unsweetened | 1 taza / 1 cup=120 | naranjilla* (EC)
 Tamarindo | Tamarind | sr:Tamarinds, raw | ¼ taza de pulpa / ¼ cup pulp=30 |  | desecho
-Ensalada de frutas | Fruit salad | fndds:Fruit salad, fresh or raw, including citrus fruits, no dressing | 1 taza / 1 cup=150 | macedonia* (ES) · salpicón de frutas (CO) · ensalada de fruta
+Ensalada de frutas | Fruit salad | fndds:Fruit salad, fresh or raw, including citrus fruits, no dressing | 1 taza / 1 cup=150 | macedonia* (ES) · salpicón de frutas (CO) · ensalada de fruta · fruta · frutas · fruta picada
 Frutos rojos congelados | Frozen mixed berries | fndds:Berries, frozen | 1 taza / 1 cup=150 | frutos del bosque* (ES AR UY CL PY) · berries congelados · frutos rojos
 Compota de manzana | Applesauce | fndds:Applesauce, regular | ½ taza / ½ cup=125 | puré de manzana
 Duraznos en almíbar | Canned peaches in syrup | sr:Peaches, canned, heavy syrup, drained | 1 mitad / 1 half=73 | melocotón en almíbar* (ES)
@@ -189,7 +189,7 @@ Nopal crudo | Raw nopal | sr:Nopales, raw | 1 taza en tiras / 1 cup sliced=86 | 
 Nopal | Nopal | sr:Nopales, cooked, without salt | 1 penca / 1 pad=29 · 1 taza / 1 cup=149 | nopales · nopalitos · nopales cocidos | crudo=Nopal crudo
 Jícama | Jicama | sr:Yambean (jicama), raw | 1 taza / 1 cup=130 |  | desecho=8 cáscara
 Verduras mixtas congeladas | Frozen mixed vegetables | sr:Vegetables, mixed, frozen, unprepared | 100 g / 100 g=100 | macedonia de verduras* (ES) · mix de verduras · vegetales mixtos
-Verduras mixtas cocidas | Cooked mixed vegetables | fndds:Classic mixed vegetables, frozen, cooked, no added fat | 1 taza / 1 cup=180 | vegetales mixtos cocidos · macedonia de verduras cocida | crudo=Verduras mixtas congeladas
+Verduras mixtas cocidas | Cooked mixed vegetables | fndds:Classic mixed vegetables, frozen, cooked, no added fat | 1 taza / 1 cup=180 | verduras · vegetales mixtos cocidos · macedonia de verduras cocida | crudo=Verduras mixtas congeladas
 Perejil | Parsley | sr:Parsley, fresh | 1 cucharada / 1 tbsp=3.8 · 1 taza picado / 1 cup chopped=60 | perejil fresco
 Cilantro | Cilantro | sr:Coriander (cilantro) leaves, raw | ¼ taza / ¼ cup=4 | culantro* (PE) · coriandro · cilantro fresco
 Albahaca | Basil | sr:Basil, fresh | 5 hojas / 5 leaves=2.5 · 2 cucharadas picada / 2 tbsp chopped=5.3 | albahaca fresca
@@ -569,7 +569,7 @@ Leche evaporada | Evaporated milk | fndds:Milk, evaporated, whole | ¼ taza / ¼
 Leche chocolatada | Chocolate milk | fndds:Chocolate milk, reduced fat (2%) | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 cajita (200 ml) / 1 carton (200 ml)=210 | chocolatada* (AR UY) · leche con chocolate | ml
 Chocolate caliente | Hot chocolate | fndds:Hot chocolate / cocoa, made with whole or reduced fat (2%) milk | 1 taza (240 ml) / 1 cup (240 ml)=252 | cocoa* (UY) · submarino (AR UY) · cocoa caliente | ml
 Kéfir | Kefir | fndds:Kefir | 1 vaso (200 ml) / 1 glass (200 ml)=206 |  | ml
-Yogur natural | Plain yogurt | fndds:Yogurt, whole milk, plain | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 · 1 taza / 1 cup=245 | yogurt natural · yoghurt
+Yogur natural | Plain yogurt | fndds:Yogurt, whole milk, plain | 1 envase / 1 container=170 · 1 envase pequeño / 1 small container=113 · 1 taza / 1 cup=245 | yogur · yogurt · yogurt natural · yoghurt
 Yogur descremado | Nonfat plain yogurt | fndds:Yogurt, nonfat milk, plain | 1 envase / 1 container=170 | yogur desnatado* (ES) · yogurt light
 Yogur saborizado | Flavored yogurt | fndds:Yogurt, low fat milk, flavors other than fruit | 1 envase / 1 container=170 | yogur de vainilla · yogurt saborizado
 Yogur con frutas | Fruit yogurt | fndds:Yogurt, low fat milk, fruit | 1 envase / 1 container=170 | yogurt de frutilla (AR UY) · yogur de fresa
@@ -814,11 +814,15 @@ Licuado | Fruit and milk smoothie | fndds:Licuado or Batido | 1 vaso (200 ml) / 
 Smoothie de frutas | Fruit smoothie | fndds:Fruit smoothie, with whole fruit, no dairy | 1 vaso (200 ml) / 1 glass (200 ml)=183 | smoothie | ml
 Malteada | Milkshake | fndds:Milk shake, home recipe, flavors other than chocolate | 1 vaso (200 ml) / 1 glass (200 ml)=189 · 1 malteada / 1 milkshake=280 | batido de helado · milkshake · merengada* (VE) | ml
 Atole | Atole | fndds:Atole | 1 taza (240 ml) / 1 cup (240 ml)=252 |  | ml
+// El café de olla: café con piloncillo y canela, hervidos juntos.
+Café de olla | Spiced coffee (café de olla) | receta#15 Café 240 · Panela 20 · Canela 1 | 1 taza (250 ml) / 1 cup (250 ml)=261 |  | ml
 Chocolate en polvo | Sweetened cocoa mix | sr:Beverages, Cocoa mix, powder | 1 porción / 1 serving=28 | cacao en polvo azucarado · cocoa en polvo endulzada · chocolate para leche
 Kombucha | Kombucha | fndds:Tea, kombucha | 1 vaso (200 ml) / 1 glass (200 ml)=210 · 1 botella (355 ml) / 1 bottle (355 ml)=372 |  | ml
 
 # alcohol
 Cerveza | Beer | fndds:Beer | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 · 1 botella (1 litro) / 1 bottle (1 liter)=1014 | birra · chela | ml
+// La caña: la cerveza chica de los bares de España.
+Caña | Small beer | receta#16 Cerveza 203 | 1 caña (200 ml) / 1 small beer (200 ml)=203 · 1 caña doble (400 ml) / 1 large beer (400 ml)=406 | caña de cerveza | ml · paises=ES
 Cerveza light | Light beer | fndds:Beer, light | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 |  | ml
 Cerveza sin alcohol | Non-alcoholic beer | fndds:Beer, nonalcoholic | 1 lata (355 ml) / 1 can (355 ml)=360 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 | cerveza 0,0 · cerveza cero | ml
 Cerveza artesanal | Craft beer | fndds:Beer, higher alcohol | 1 pinta (473 ml) / 1 pint (473 ml)=480 · 1 vaso (200 ml) / 1 glass (200 ml)=203 · 1 botella chica (330 ml) / 1 small bottle (330 ml)=335 | cerveza IPA · cerveza fuerte | ml

@@ -2810,7 +2810,11 @@
       "gafas": "Blue-light glasses",
       "gafasTexto": "Two hours before bed, if you have them. The evidence is still thin.",
       "dormirSinPeriodo": "Your bedtime tonight: {hora}. That would give you {horas} of sleep and a {despertar} wake-up, with a {latencia} min margin to fall asleep. You get a reminder a little before.",
-      "maximoSolo": "It went up to {n} on its own for the reminders you turned on. Pick another and yours stays."
+      "maximoSolo": "It went up to {n} on its own for the reminders you turned on. Pick another and yours stays.",
+      "horasTexto": "These are your meal times: at first, the ones from your day; then they adjust on their own to what you log. Any you change yourself stays fixed.",
+      "horasCambiar": "Change your meal times",
+      "horaAMano": "set by you",
+      "noSueles": "Usually skipped"
     },
     "cambiarCuenta": "Switch account",
     "cambiarCuentaTexto": "This session closes and you sign in with another account. What’s on this phone is deleted; your data stays in your account.",
@@ -4700,5 +4704,171 @@
     "perfilSub": "Moss adjusts your diet to what you mark",
     "alergias": "Allergies go in What you don't eat, in the plan.",
     "subirNo": "During pregnancy, Moss already adds what you need."
+  },
+  "frasesDelDia": {
+    "epicteto1": {
+      "texto": "No great thing is created suddenly, any more than a bunch of grapes or a fig.",
+      "autor": "Epictetus · Discourses I.15"
+    },
+    "moss1": {
+      "texto": "A little, but every day.",
+      "autor": "Moss"
+    },
+    "seneca1": {
+      "texto": "It is not that we have a short time to live, but that we waste a lot of it.",
+      "autor": "Seneca · On the Shortness of Life 1"
+    },
+    "aurelio1": {
+      "texto": "At dawn, when you are slow to rise, think: I am rising to do the work of a human being.",
+      "autor": "Marcus Aurelius · Meditations V.1"
+    },
+    "moss2": {
+      "texto": "One bad day doesn’t erase a good week.",
+      "autor": "Moss"
+    },
+    "aristoteles1": {
+      "texto": "We become just by doing just acts, and brave by doing brave acts.",
+      "autor": "Aristotle · Nicomachean Ethics II.1"
+    },
+    "epicteto2": {
+      "texto": "Every habit grows through its own acts: walking by walking, running by running.",
+      "autor": "Epictetus · Discourses II.18"
+    },
+    "moss3": {
+      "texto": "You don’t need a perfect day. You need to come back tomorrow.",
+      "autor": "Moss"
+    },
+    "seneca2": {
+      "texto": "While we put things off, life runs past.",
+      "autor": "Seneca · Letters to Lucilius 1"
+    },
+    "aurelio2": {
+      "texto": "Waste no more time arguing about what a good person should be. Be one.",
+      "autor": "Marcus Aurelius · Meditations X.16"
+    },
+    "moss4": {
+      "texto": "Sleeping well is training too.",
+      "autor": "Moss"
+    },
+    "laotse1": {
+      "texto": "A journey of a thousand miles begins beneath your feet.",
+      "autor": "Lao Tzu · Tao Te Ching 64"
+    },
+    "epicteto3": {
+      "texto": "First tell yourself who you want to be; then do what you have to do.",
+      "autor": "Epictetus · Discourses III.23"
+    },
+    "moss5": {
+      "texto": "What you write down, you can change.",
+      "autor": "Moss"
+    },
+    "seneca3": {
+      "texto": "Whoever is everywhere is nowhere.",
+      "autor": "Seneca · Letters to Lucilius 2"
+    },
+    "aurelio3": {
+      "texto": "Do not live as if you had ten thousand years ahead of you.",
+      "autor": "Marcus Aurelius · Meditations IV.17"
+    },
+    "moss6": {
+      "texto": "Consistency beats intensity.",
+      "autor": "Moss"
+    },
+    "durant1": {
+      "texto": "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+      "autor": "Will Durant · on Aristotle"
+    },
+    "epicteto4": {
+      "texto": "Some things are up to us, and some are not.",
+      "autor": "Epictetus · Enchiridion 1"
+    },
+    "moss7": {
+      "texto": "The sky lights up one star at a time.",
+      "autor": "Moss"
+    },
+    "seneca4": {
+      "texto": "We suffer more often in imagination than in reality.",
+      "autor": "Seneca · Letters to Lucilius 13"
+    },
+    "aurelio4": {
+      "texto": "The soul takes on the color of its thoughts.",
+      "autor": "Marcus Aurelius · Meditations V.16"
+    },
+    "moss8": {
+      "texto": "Your body listens to what you do more than to what you promise.",
+      "autor": "Moss"
+    },
+    "shakespeare1": {
+      "texto": "Sleep that knits up the ravelled sleeve of care.",
+      "autor": "Shakespeare · Macbeth"
+    },
+    "epicteto5": {
+      "texto": "How long will you wait before you demand the best of yourself?",
+      "autor": "Epictetus · Enchiridion 51"
+    },
+    "moss9": {
+      "texto": "Today counts, even if it’s a little.",
+      "autor": "Moss"
+    },
+    "seneca5": {
+      "texto": "If you don’t know which port you are sailing for, no wind is favorable.",
+      "autor": "Seneca · Letters to Lucilius 71"
+    },
+    "aurelio5": {
+      "texto": "What stands in the way becomes the way.",
+      "autor": "Marcus Aurelius · Meditations V.20"
+    },
+    "moss10": {
+      "texto": "Eating well isn’t eating perfectly.",
+      "autor": "Moss"
+    },
+    "james1": {
+      "texto": "The great thing is to make our nervous system our ally instead of our enemy.",
+      "autor": "William James · The Principles of Psychology"
+    },
+    "epicteto6": {
+      "texto": "If you want to be a good reader, read; if a writer, write.",
+      "autor": "Epictetus · Discourses II.18"
+    },
+    "moss11": {
+      "texto": "What you repeat becomes easy.",
+      "autor": "Moss"
+    },
+    "seneca6": {
+      "texto": "Hold every hour in your grasp.",
+      "autor": "Seneca · Letters to Lucilius 1"
+    },
+    "aurelio6": {
+      "texto": "If it is not right, do not do it; if it is not true, do not say it.",
+      "autor": "Marcus Aurelius · Meditations XII.17"
+    },
+    "moss12": {
+      "texto": "Rest is part of the plan too.",
+      "autor": "Moss"
+    },
+    "franklin1": {
+      "texto": "Early to bed and early to rise makes a man healthy, wealthy, and wise.",
+      "autor": "Benjamin Franklin · Poor Richard’s Almanack"
+    },
+    "moss13": {
+      "texto": "The next meal is always a fresh start.",
+      "autor": "Moss"
+    },
+    "moss14": {
+      "texto": "Moss grows slowly, and it doesn’t stop.",
+      "autor": "Moss"
+    },
+    "hormozi1": {
+      "texto": "Do so much volume that it will be unreasonable to fail.",
+      "autor": "Alex Hormozi"
+    },
+    "moss15": {
+      "texto": "A good night starts long before you go to bed.",
+      "autor": "Moss"
+    },
+    "moss16": {
+      "texto": "Your goal sets the direction; today’s number is just one step.",
+      "autor": "Moss"
+    }
   }
 }

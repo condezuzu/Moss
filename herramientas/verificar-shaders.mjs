@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fuenteCielo, fuenteFondo, fuenteHoja, fuenteMusgo } from '../src/cielo/sksl.ts';
+import { fuenteCielo, fuenteFondo, fuenteHoja, fuenteMusgo, fuenteViaje } from '../src/cielo/sksl.ts';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
@@ -16,8 +16,12 @@ const CanvasKitInit = require('canvaskit-wasm/bin/full/canvaskit.js');
 const ck = await CanvasKitInit({ locateFile: (archivo) => join(raiz, 'node_modules/canvaskit-wasm/bin/full', archivo) });
 
 const leer = (nombre) => readFileSync(join(raiz, 'src/cielo/shaders', nombre), 'utf8');
-const glsl = { comun: leer('comun.glsl'), fondo: leer('fondo.glsl'), aurora: leer('aurora.glsl'), vivo: leer('vivo.glsl') };
-const fuentes = { fondo: fuenteFondo(glsl), cielo: fuenteCielo(glsl), musgo: fuenteMusgo(glsl), hoja: fuenteHoja() };
+const glsl = { comun: leer('comun.glsl'), fondo: leer('fondo.glsl'), aurora: leer('aurora.glsl'), vivo: leer('vivo.glsl'), viaje: leer('viaje.glsl') };
+const fuentes = {
+  fondo: fuenteFondo(glsl), cielo: fuenteCielo(glsl), musgo: fuenteMusgo(glsl), hoja: fuenteHoja(),
+  // El viaje de la entrada a la app, con las muestras de cada calidad (src/cielo/Cielo.tsx).
+  viaje: fuenteViaje(glsl, 24), viaje16: fuenteViaje(glsl, 16), viaje10: fuenteViaje(glsl, 10),
+};
 
 const efectos = {};
 let fallas = 0;
@@ -81,7 +85,22 @@ for (const riqueza of [0, 0.6, 1]) {
 
   const sufijo = `-r${Math.round(riqueza * 100)}`;
   writeFileSync(join(carpeta, `fondo${sufijo}.png`), imagenFondo.encodeToBytes());
-  writeFileSync(join(carpeta, `cielo${sufijo}.png`), superficie.makeImageSnapshot().encodeToBytes());
+  const imagenCielo = superficie.makeImageSnapshot();
+  writeFileSync(join(carpeta, `cielo${sufijo}.png`), imagenCielo.encodeToBytes());
+
+  // El viaje sobre ese cielo, en la mitad (la estela más larga) y frenando.
+  if (riqueza === 0.6) {
+    for (const [nombre, zoom, estela, brillo, velo] of [['viaje-mitad', 2.5, 1.1, 1.35, 0.2], ['viaje-frena', 1.2, 0.4, 1.13, 0.07]]) {
+      const sup = ck.MakeSurface(ancho, alto);
+      const pinturaViaje = new ck.Paint();
+      const cuadro = imagenCielo.makeShaderOptions(ck.TileMode.Clamp, ck.TileMode.Clamp, ck.FilterMode.Linear, ck.MipmapMode.None);
+      pinturaViaje.setShader(efectos.viaje.makeShaderWithChildren(uniformes(efectos.viaje, {
+        uLienzo: [ancho, alto], uCentro: [ancho / 2, alto * 0.44], uZoom: zoom, uEstela: estela, uBrillo: brillo, uVelo: velo,
+      }), [cuadro]));
+      sup.getCanvas().drawRect(ck.XYWHRect(0, 0, ancho, alto), pinturaViaje);
+      writeFileSync(join(carpeta, `${nombre}.png`), sup.makeImageSnapshot().encodeToBytes());
+    }
+  }
 }
 
 const celda = 64;

@@ -216,8 +216,7 @@ const BANCO: Caso[] = [
   {
     f: 'en el desayuno me comí unos chilaquiles con huevo y un café de olla',
     region: 'MX', tipos: ['compuesto'],
-    items: [['desayuno', /chilaquil/i, null], ['desayuno', /huevo/i, null], ['desayuno', /caf[eé]/i, 1]],
-    falla: 'la base no tiene «café de olla»: sale «No encontré» con «Buscarlo», no un café cualquiera',
+    items: [['desayuno', /chilaquil/i, null], ['desayuno', /huevo/i, null], ['desayuno', /caf[eé] de olla/i, 1]],
   },
   {
     f: 'en la comida tres tacos de pastor y un agua de horchata',
@@ -247,7 +246,7 @@ const BANCO: Caso[] = [
     region: 'ES', tipos: ['varias', 'plato'], hora: 'cena',
     items: [['almuerzo', /lenteja/i, 1], ['almuerzo', /pollo/i, 1]],
   },
-  { f: 'de cena una tortilla de patatas y una caña', region: 'ES', tipos: ['compuesto'], items: [['cena', /tortilla/i, 1], ['cena', /cerveza|ca[ñn]a/i, 1]], falla: 'en la base, «caña» es el destilado de Uruguay también en España, donde es una cerveza chica' },
+  { f: 'de cena una tortilla de patatas y una caña', region: 'ES', tipos: ['compuesto'], items: [['cena', /tortilla/i, 1], ['cena', /^ca[ñn]a$/i, 1]] },
   { f: 'a media mañana un plátano', region: 'ES', tipos: ['varias'], hora: 'almuerzo', items: [['snack', /pl[aá]tano|banana/i, 1]] },
   { f: 'he desayunado un zumo de naranja y dos magdalenas', region: 'ES', tipos: ['lista'], hora: 'almuerzo', items: [['desayuno', /zumo|jugo/i, 1], ['desayuno', /magdalena|muffin|bizcocho/i, 2]] },
   { f: 'de merienda un bocadillo de jamón', region: 'ES', tipos: ['compuesto'], items: [['merienda', /bocadillo|s[aá]ndwich/i, 1]], falla: 'la base no tiene el bocadillo de España: «bocadillo» es el dulce de guayaba' },
@@ -361,8 +360,7 @@ const BANCO: Caso[] = [
   {
     f: 'desayuno: yogur y fruta; comida: lentejas; cena: pescado con verduras',
     region: 'ES', tipos: ['varias'], tanda: 2,
-    falla: 'el buscador pone primero el pisto («verduras guisadas») para «verduras»; las comidas salen bien',
-    items: [['desayuno', /yog/i, null], ['desayuno', /fruta/i, null], ['almuerzo', /lenteja/i, null], ['cena', /pescado|merluza/i, null], ['cena', /verdura/i, null]],
+    items: [['desayuno', /yogur natural/i, null], ['desayuno', /fruta|macedonia/i, null], ['almuerzo', /lenteja/i, null], ['cena', /pescado|merluza/i, null], ['cena', /verdura/i, null]],
   },
   {
     f: 'for breakfast a bagel with cream cheese and a coffee, for lunch a salad and then for dinner two slices of pizza',

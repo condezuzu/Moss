@@ -106,3 +106,26 @@ Lo que pediste:
    lo decido después.
 8. **Seguir mejorando cómo se registra la noche:** buscar una idea mejor que las que hay y probarla. Vas a usar el
    anillo de Da Rings: ver si su noche llega a Salud y, si llega, que Moss la tome.
+
+## Tanda 5 (18/11, tarde): lo que faltaba, con el plan aprobado
+
+Por aire a las dos builds, con la galería 54.
+- **Avisos:** con «Café» prendido, el máximo de fábrica sube uno, y «Se acerca tu hora de acostarte» ya no queda afuera.
+- **Una sola lista de horas de comer** (`horasDeComer` en `src/dominio/recordatorios.ts`): la puesta a mano queda fija; si
+  no, la mediana de lo anotado con 5 días o más en dos semanas; si no, la de tu día del cuestionario. Avisa a esa hora;
+  «No suelo» no avisa. El horario de avisos de antes pasa a horas puestas a mano. Se cambian en Tus respuestas (Perfil ›
+  Avisos lleva ahí); si solo cambian las horas, la meta no se rehace. Responde las cinco preguntas de la tanda 3.
+- **La base en España:** «caña» (curado nuevo, 200 ml, solo en España: el único sin marca con países), «café de olla»
+  (curado nuevo), «verduras», «fruta» (Macedonia) y «yogur» (natural).
+- **Detalles:** las lunitas con aro fino (en la galería era un accidente de su CSS), «Copiar el día» solo al mantener
+  apretado, el peso sin decimal de más fuera de Progreso (también en la galería), los márgenes de la galería en las seis
+  secciones y el cuadro de Comida sin esquinas animadas (spec/fluidez.md 12).
+- **Contra la galería:** el cuestionario (la regla de los deslizadores, la unidad, las tarjetas de «Cómo quieres comer»),
+  la introducción (las columnas del sueño y el ejemplo de hoy) y un error de CSS de la guía en la galería.
+- **El flum de la entrada** en la app (`src/cielo/shaders/viaje.glsl`, el mismo de la galería) e Inicio que llega del viaje.
+  Las estelas solo se ven en el iPhone: en la web no hay ese filtro.
+- **Frases del día:** 41, en es y en (`frasesDelDia` en los textos), una por día sin repetir.
+- **Fluidez:** la cifra que cuenta solo en la sección que se ve y la canasta en su propio almacén (spec/fluidez.md 13 y 14).
+
+Quedó afuera: el musgo horneado y el fondo en disco (hay que medir en un iPhone viejo), el título de Editar perfil a la
+izquierda y «Margen para dormirte» con chips (diferencias chicas con la galería), y lo que pide build.

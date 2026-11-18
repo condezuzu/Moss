@@ -64,6 +64,32 @@ describe('buscar alimentos', () => {
     expect((await primero('platano', { region: 'CO' })).id).toBe(idDe('Plátano verde'));
   });
 
+  const enCadaPais = ['ES', 'UY', 'AR', 'MX'];
+
+  it('«caña» en España es la cerveza chica, de 200 ml; en Uruguay, el destilado', async () => {
+    expect(await primero('caña', { region: 'ES' })).toMatchObject({ id: idDe('Caña'), porcion: { nombre: '1 caña (200 ml)', gramos: 203 } });
+    for (const region of ['UY', 'AR', 'MX']) expect((await primero('caña', { region })).id).toBe(idDe('Destilado'));
+  });
+
+  it.each(enCadaPais)('en %s, «café de olla» es el café con piloncillo y canela', async (region) => {
+    expect((await primero('café de olla', { region })).id).toBe(idDe('Café de olla'));
+    expect((await primero('cafe de olla', { region })).id).toBe(idDe('Café de olla'));
+  });
+
+  it.each(enCadaPais)('en %s, «verduras», «fruta» y «yogur» son lo genérico', async (region) => {
+    expect((await primero('verduras', { region })).id).toBe(idDe('Verduras mixtas cocidas'));
+    expect((await primero('fruta', { region })).id).toBe(idDe('Ensalada de frutas'));
+    expect((await primero('yogur', { region })).id).toBe(idDe('Yogur natural'));
+  });
+
+  it('en inglés, esas palabras no cambian lo de siempre', async () => {
+    const en = { idioma: 'en', region: 'US' } as const;
+    expect((await primero('coffee', en)).nombre).toBe('Coffee');
+    expect((await primero('beer', en)).nombre).toBe('Beer');
+    expect((await primero('café', en)).id).not.toBe(idDe('Café de olla'));
+    expect((await primero('cafe de olla', en)).id).toBe(idDe('Café de olla'));
+  });
+
   it('con errores de tipeo también encuentra', async () => {
     expect(await primero('frutila')).toMatchObject({ id: idDe('Fresas'), nombre: 'Frutillas' });
     expect((await primero('manzaan')).id).toBe(idDe('Manzana'));
@@ -240,7 +266,8 @@ describe('lo que se vende en cada país (paises en la base)', () => {
     expect(marcas('Mostaza').every((f) => f.paises === 'AR PY UY')).toBe(true);
     expect(marcas('La Pasiva').every((f) => f.paises === 'UY')).toBe(true);
     for (const global of ["McDonald's", 'Burger King', 'Starbucks', 'KFC', 'Subway']) expect(marcas(global).every((f) => f.paises === null)).toBe(true);
-    expect(db.prepare("SELECT count(*) AS n FROM alimentos WHERE paises IS NOT NULL AND marca IS NULL").get()).toEqual({ n: 0 });
+    // Sin marca, solo la caña, que se sirve en España.
+    expect(db.prepare("SELECT nombre_es FROM alimentos WHERE paises IS NOT NULL AND marca IS NULL").all()).toEqual([{ nombre_es: 'Caña' }]);
     expect(paisesDe.has(idDe('Chivito'))).toBe(false);
   });
 

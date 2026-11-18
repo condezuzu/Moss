@@ -2,6 +2,8 @@
 // cuestionario de la entrada (Preguntas.tsx) con lo contestado, desde tus datos hasta tu día. Se puede cerrar en
 // cualquier pregunta sin cambiar nada; al final, la meta nueva al lado de la de antes y «Guardar», que rehace la
 // meta desde hoy (almacen.cambiarRespuestas). Sin la estrella guía: la barra va dibujada.
+// Tus horas de comer (18/11): «¿Cómo es tu día?» muestra las de ahora (horasDeComerDe: a mano, de lo que anotas o de
+// tu día), y la que cambias queda fija (horasPuestasAMano). Perfil › Avisos lo abre ahí mismo, con `desde="dia"`.
 //
 // Perfil lo abre así: <TusRespuestas visible={abierta} alCerrar={() => setAbierta(false)} />
 
@@ -12,7 +14,9 @@ import Animated, { FadeInDown, FadeInUp, FadeOut, ReduceMotion, useReducedMotion
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { elAlmacen } from '@/almacen';
-import { metaVigente } from '@/almacen/almacen';
+import { horasDeComerDe, metaVigente } from '@/almacen/almacen';
+import { CON_HORA } from '@/dominio/comidas';
+import { horasPuestasAMano } from '@/dominio/recordatorios';
 import { t } from '@/textos';
 import { colores } from '@/tema';
 import { ENTRA_FUNDIDO, SALE_FUNDIDO } from '../movimiento';
@@ -22,27 +26,37 @@ import { desdeLoGuardado, lugarDe, paraGuardar, preguntasDe, type Contestado, ty
 const SIN_NOCHES: never[] = [];
 const NADA_DE_SALUD: DeSalud = new Set();
 
-export function TusRespuestas({ visible, alCerrar }: { visible: boolean; alCerrar: () => void }) {
+export function TusRespuestas({ visible, alCerrar, desde }: { visible: boolean; alCerrar: () => void; desde?: Pregunta }) {
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={alCerrar}>
-      {visible && <Cuestionario alCerrar={alCerrar} />}
+      {visible && <Cuestionario alCerrar={alCerrar} empezarEn={desde} />}
     </Modal>
   );
 }
 
-function Cuestionario({ alCerrar }: { alCerrar: () => void }) {
+/** Lo guardado, con tus horas de comer de ahora en «¿Cómo es tu día?» (las que no sueles hacer quedan como estaban). */
+function conTusHoras(): { r: Contestado; mostradas: Contestado['horarios'] } {
+  const e = elAlmacen().estado();
+  const r = desdeLoGuardado(e);
+  const hora = horasDeComerDe(e);
+  const mostradas = Object.fromEntries(CON_HORA.map((c) => [c, r.noSuele[c] ? r.horarios[c] : hora(c).minutos])) as Contestado['horarios'];
+  return { r: { ...r, horarios: mostradas }, mostradas };
+}
+
+function Cuestionario({ alCerrar, empezarEn }: { alCerrar: () => void; empezarEn?: Pregunta }) {
   const insets = useSafeAreaInsets();
   const reducido = useReducedMotion();
   const hoy = useSyncExternalStore(elAlmacen().suscribir, () => elAlmacen().estado().hoy);
   const noches = useSyncExternalStore(elAlmacen().suscribir, () => elAlmacen().estado().salud?.noches ?? SIN_NOCHES);
-  const [r, setR] = useState<Contestado>(() => desdeLoGuardado(elAlmacen().estado()));
+  const [inicio] = useState(conTusHoras);
+  const [r, setR] = useState<Contestado>(inicio.r);
   const [kcalAntes] = useState(() => {
     const e = elAlmacen().estado();
     return metaVigente(e, e.hoy)?.kcal ?? null;
   });
   // Con Salud, la primera es «Esto dice Salud»; si no, el sexo.
   const desde: Pregunta = r.salud ? 'tu' : 'sexo';
-  const [paso, setPaso] = useState<Pregunta | 'resultado'>(desde);
+  const [paso, setPaso] = useState<Pregunta | 'resultado'>(empezarEn ?? desde);
   const [volviendo, setVolviendo] = useState(false);
   const poner = useCallback((cambio: (x: Contestado) => Contestado) => setR(cambio), []);
 
@@ -61,8 +75,15 @@ function Cuestionario({ alCerrar }: { alCerrar: () => void }) {
       }
     : undefined;
   const guardar = () => {
-    const { c, nuevo } = paraGuardar(r, hoy, noches);
-    elAlmacen().cambiarRespuestas(c, 'manual', nuevo);
+    // Las horas que no tocaste quedan como las contestaste (siguen su regla); las que moviste, fijas.
+    const guardado = desdeLoGuardado(elAlmacen().estado());
+    const movida = (x: (typeof CON_HORA)[number]) => r.horarios[x] !== inicio.mostradas[x];
+    const horarios = Object.fromEntries(CON_HORA.map((x) => [x, movida(x) ? r.horarios[x] : guardado.horarios[x]])) as Contestado['horarios'];
+    const { c, nuevo } = paraGuardar({ ...r, horarios }, hoy, noches);
+    // Si solo cambiaron las horas de comer, la meta queda como está: cambiar cuándo comes no cambia cuánto.
+    const sinHoras = (x: Contestado) => JSON.stringify({ ...x, horarios: null, noSuele: null });
+    elAlmacen().cambiarRespuestas(c, 'manual', sinHoras(r) === sinHoras(inicio.r) ? { ...nuevo, meta: null } : nuevo);
+    elAlmacen().ponerHorasDeComer(horasPuestasAMano({ mostradas: inicio.mostradas, elegidas: r.horarios, noSuele: r.noSuele, antes: elAlmacen().estado().horasDeComer }));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     alCerrar();
   };

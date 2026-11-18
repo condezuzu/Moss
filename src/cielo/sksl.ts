@@ -130,3 +130,32 @@ vec4 main(vec2 p) {
   return vec4(c, 1.0);
 }`;
 }
+
+/**
+ * El viaje de la entrada a la app («flum»): un filtro de la capa que lleva todo el cielo, que la lee
+ * en `muestras` puntos camino al punto de fuga (viaje.glsl). Las muestras van fijas en el texto porque
+ * SkSL pide bucles con tope constante: menos en un teléfono con la calidad baja.
+ */
+export function fuenteViaje(f: { viaje: string }, muestras: number): string {
+  return `
+uniform shader imagen;
+uniform float2 uLienzo;
+uniform float2 uCentro;
+uniform float uZoom;
+uniform float uEstela;
+uniform float uBrillo;
+uniform float uVelo;
+${f.viaje}
+vec4 main(vec2 p) {
+  vec2 d = p - uCentro;
+  vec3 suma = vec3(0.0);
+  float peso = 0.0;
+  for (int i = 0; i < ${muestras}; i++) {
+    float t = float(i) / ${(muestras - 1).toFixed(1)};
+    float w = pesoDelViaje(t);
+    suma += imagen.eval(muestraDelViaje(d, uCentro, uZoom, uEstela, t)).rgb * w;
+    peso += w;
+  }
+  return vec4(terminarElViaje(suma / peso, p / uLienzo - 0.5, uEstela, uBrillo, uVelo), 1.0);
+}`;
+}

@@ -43,7 +43,7 @@ const uno = (lista: Aviso[], tipo: Aviso['tipo']) => {
 const elDia = (ajustes: Avisos, { ahora, ...extra }: Partial<DeLoQueConviene> & { ahora?: number } = {}) =>
   avisosConLoQueConviene({
     ...dia(extra), ahora, habitos: [],
-    ajustes: { dormir: si, horario: { desayuno: HORA.desayuno, almuerzo: HORA.almuerzo, merienda: HORA.merienda, cena: HORA.cena }, maximoPorDia: 8, ...ajustes },
+    ajustes: { dormir: si, horario: ['desayuno', 'almuerzo', 'merienda', 'cena'], maximoPorDia: 8, ...ajustes },
   }).map((x): [string, string] => [`${String(Math.floor(x.minutos / 60)).padStart(2, '0')}:${String(x.minutos % 60).padStart(2, '0')}`, x.aviso.id]);
 
 describe('tu día: almuerzas a las 13, entrenas a las 16 y tardas una hora en llegar', () => {
@@ -124,8 +124,8 @@ describe('comer antes de entrenar', () => {
     expect(de(conviene({ sesiones: [pesas('7:30')], viaje: 15 }), 'antesDeEntrenar')).toEqual([]);
   });
 
-  it('el horario de comidas gana a la hora de siempre, y hoy corre con lo que anotaste', () => {
-    const conHorario = uno(conviene({ ajustes: { ...TODOS, horario: { almuerzo: h('12:30') } } }), 'antesDeEntrenar');
+  it('va a tu hora de comer, y hoy corre con lo que anotaste', () => {
+    const conHorario = uno(conviene({ horaDeComida: (c) => (c === 'almuerzo' ? h('12:30') : HORA[c]) }), 'antesDeEntrenar');
     expect(conHorario.conviene).toMatchObject({ comida: 'almuerzo', a: h('12:30') });
     // Desayunaste hora y media tarde: el almuerzo sería a las 14:30, encima de salir; se adelanta.
     const tarde = uno(conviene({ eventos: { desayuno: h('9:00') } }), 'antesDeEntrenar');

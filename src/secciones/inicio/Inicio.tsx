@@ -33,9 +33,9 @@ import { InvitacionDeAscent } from '../ascent/Invitacion';
 import { PESTANAS, type Pestana } from '../Barra';
 import { comidaEnHoy } from '../comida/Comida';
 import { COLOR_DE_MACRO, Icono, MACROS, PuntoDeMacro } from '../comida/comunes';
-import { comidasDelDia, conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, totalDe, useEstado } from '../comida/datos';
+import { cifraDePeso, comidasDelDia, conSigno, duracion, fechaCorta, fechaDiaMes, horaDelDia, metaDelDia, numero, sistemaDe, textoDePeso, totalDe, useEstado } from '../comida/datos';
 import { avisar } from '../comida/registro';
-import { FranjaBajoLaHora } from '../franja';
+import { DEBAJO_DE_LA_HORA, FranjaBajoLaHora, LADOS } from '../franja';
 import { usePersona, useSueno } from '../ganchos';
 import { useCerrarConLasCapas } from '../HojaModal';
 import { margenDeToque } from '../paso';
@@ -103,7 +103,7 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
     if (!boton.current || !pagina.current) return;
     boton.current.measureLayout(pagina.current, (x, y, w, h) => setGlobo({ arriba: y + h + 6, derecha: ancho - (x + w), cerrando: false }));
   };
-  const anchoGrafico = Math.min(150, (ancho - 40 - 32) * 0.45);
+  const anchoGrafico = Math.min(150, (ancho - 2 * LADOS - 32) * 0.45);
   const scroll = useAnimatedRef<ScrollView>();
   // Lo que bajó el scroll: con eso aparece la franja bajo la hora.
   const scrollY = useScrollOffset(scroll);
@@ -123,10 +123,10 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
     alIr(PESTANAS.indexOf(a));
   };
   const armar: Record<Bloque, () => ReactNode> = {
-    calorias: () => <Calorias alTocar={() => setTodo(true)} ancho={ancho - 40 - 34} />,
+    calorias: () => <Calorias alTocar={() => setTodo(true)} ancho={ancho - 2 * LADOS - 34} />,
     objetivo: () => <Objetivo alIr={ir} />,
     peso: () => <Peso anchoGrafico={anchoGrafico} alIr={ir} />,
-    cielo: () => <Cielo ancho={ancho - 40 - 32} alIr={ir} />,
+    cielo: () => <Cielo ancho={ancho - 2 * LADOS - 32} alIr={ir} />,
     sueno: () => <SuenoDeAnoche anchoGrafico={anchoGrafico} alIr={ir} />,
     agua: () => <Agua />,
     consejos: () => <ParaHoy />,
@@ -137,7 +137,7 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
     <View style={{ width: ancho }} ref={pagina}>
       <ScrollView
         ref={scroll}
-        contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
+        contentContainerStyle={{ paddingTop: arriba + DEBAJO_DE_LA_HORA, paddingHorizontal: LADOS, paddingBottom: abajo + 40 }}
         showsVerticalScrollIndicator={false}
         scrollsToTop={esLaActual}
         scrollEventThrottle={16}
@@ -156,7 +156,7 @@ export function PaginaDeInicio({ ancho, arriba, abajo, alIr }: { ancho: number; 
           )}
         </View>
         {primerDia ? (
-          <PrimerDia ancho={ancho - 40 - 34} alIr={ir} />
+          <PrimerDia ancho={ancho - 2 * LADOS - 34} alIr={ir} />
         ) : enOrden.flatMap((b, i) => {
           // Sumar, sacar u ordenar bloques en Personalizar nunca es de golpe: entran, salen y se acomodan.
           const bloque = (
@@ -362,10 +362,7 @@ function Objetivo({ alIr }: { alIr: Ir }) {
   const p = usePersona();
   const e = useEstado();
   const sistema = sistemaDe(e);
-  const kg = (x: number, dec = 1) => {
-    const v = pesoCorporalEn(x, sistema);
-    return `${numero(v.valor, dec)} ${v.unidad}`;
-  };
+  const cifraDe = (x: number) => cifraDePeso(x, sistema).cifra;
   const unidad = pesoCorporalEn(1, sistema).unidad;
   const g = p.progreso;
   const metaKg = p.perfil.pesoMeta;
@@ -373,10 +370,10 @@ function Objetivo({ alIr }: { alIr: Ir }) {
   const titulo = t('inicio.bloques.objetivo');
   const estado = t(`progreso.estados.${g.estado}`);
   const [cifra, texto]: [string, string] = g.fecha && metaKg
-    ? [fechaDiaMes(g.fecha), t('inicio.llegarias', { kg: numero(pesoCorporalEn(metaKg, sistema).valor, metaKg % 1 ? 1 : 0), unidad })]
+    ? [fechaDiaMes(g.fecha), t('inicio.llegarias', { kg: cifraDe(metaKg), unidad })]
     : g.estado === 'llegaste' && metaKg
-      ? [kg(metaKg, metaKg % 1 ? 1 : 0), t('inicio.yaLlegaste')]
-      : [g.peso === null ? '—' : kg(g.peso), t('inicio.tendencia')];
+      ? [textoDePeso(metaKg, sistema), t('inicio.yaLlegaste')]
+      : [g.peso === null ? '—' : textoDePeso(g.peso, sistema), t('inicio.tendencia')];
   // Sin peso, la raya no se lee: se dice que todavía no hay pesadas.
   const dato = cifra === '—' ? t('inicio.lector.sinPeso') : `${cifra}, ${texto}`;
   return (
@@ -395,7 +392,7 @@ function Objetivo({ alIr }: { alIr: Ir }) {
         <Text style={estilos.objTexto}>{texto}</Text>
       </View>
       {g.hecho !== null && p.pesoInicial !== null && g.peso !== null && metaKg ? (
-        <Camino hecho={g.hecho} etiquetas={[numero(pesoCorporalEn(p.pesoInicial, sistema).valor, 1), numero(pesoCorporalEn(g.peso, sistema).valor, 1), numero(pesoCorporalEn(metaKg, sistema).valor, metaKg % 1 ? 1 : 0)]} />
+        <Camino hecho={g.hecho} etiquetas={[cifraDe(p.pesoInicial), cifraDe(g.peso), cifraDe(metaKg)]} />
       ) : null}
     </Lleva>
   );
@@ -406,7 +403,7 @@ function Peso({ anchoGrafico, alIr }: { anchoGrafico: number; alIr: Ir }) {
   const p = usePersona();
   const e = useEstado();
   const sistema = sistemaDe(e);
-  const v = p.pesoHoy !== null ? pesoCorporalEn(p.pesoHoy, sistema) : null;
+  const v = p.pesoHoy !== null ? cifraDePeso(p.pesoHoy, sistema) : null;
   const cambio = p.cambio7 !== null ? pesoCorporalEn(Math.abs(p.cambio7), sistema).valor * Math.sign(p.cambio7) : null;
   const titulo = t('inicio.bloques.peso');
   const textoDelPeso = cambio === null ? t('inicio.tendencia') : t('inicio.enSieteDias', { n: conSigno(cambio, 1), unidad: pesoCorporalEn(1, sistema).unidad });
@@ -416,7 +413,7 @@ function Peso({ anchoGrafico, alIr }: { anchoGrafico: number; alIr: Ir }) {
   const etiqueta = frases(
     titulo,
     p.deEjemplo && t('inicio.ejemplo'),
-    v ? `${numero(v.valor, 1)} ${v.unidad}, ${textoDelPeso}` : t('inicio.lector.sinPeso'),
+    v ? `${v.cifra} ${v.unidad}, ${textoDelPeso}` : t('inicio.lector.sinPeso'),
     p.gasto !== null && (cifraDelBalance ? `${cifraDelBalance}, ${textoDelBalance}` : textoDelBalance),
   );
   return (
@@ -425,7 +422,7 @@ function Peso({ anchoGrafico, alIr }: { anchoGrafico: number; alIr: Ir }) {
       <View style={estilos.fila}>
         <View style={estilos.dato}>
           <Text style={estilos.datoCifra}>
-            {v ? numero(v.valor, 1) : '—'}
+            {v ? v.cifra : '—'}
             <Text style={estilos.datoUnidad}>{v ? ` ${v.unidad}` : ''}</Text>
           </Text>
           <Text style={estilos.datoTexto}>{textoDelPeso}</Text>

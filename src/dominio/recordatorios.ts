@@ -49,6 +49,78 @@ export function horasDeSiempre(registros: Iterable<Registro>, hoy: ClaveDia): (c
   return (c) => horaHabitual(anotadas.get(c) ?? [], c === 'snack' ? 16 * 60 : HORA_TIPICA[c], c === 'cena' || c === 'merienda');
 }
 
+type ConHora = Exclude<Comida, 'snack'>;
+
+/** Con al menos estos días con esa comida anotada en las últimas dos semanas, su hora se acomoda a lo anotado. */
+export const DIAS_PARA_ACOMODARSE = 5;
+const DIAS_QUE_SE_MIRAN = 14;
+
+/** De dónde sale la hora de una comida: la que pusiste a mano, la de lo que anotas, la de tu día o la típica. */
+export type DeDondeSale = 'aMano' | 'anotado' | 'cuestionario' | 'tipica';
+
+export type HorasDeComer = {
+  registros: Iterable<Registro>;
+  hoy: ClaveDia;
+  /** Las que cambiaste a mano (Perfil › Tus respuestas): quedan fijas. */
+  aMano?: Partial<Record<ConHora, number>> | null;
+  /** Las de tu día, en el cuestionario; null es «No suelo». */
+  cuestionario?: Partial<Record<ConHora, number | null>> | null;
+};
+
+/**
+ * Tus horas de comer, una sola lista para todo (lo pediste el 18/11/2026): los avisos, lo que conviene, qué comer
+ * antes y después de entrenar, el plan, lo que se anota y la línea de Comida. Cada comida, la que cambiaste a mano,
+ * fija; si no, la mediana de lo anotado, con al menos DIAS_PARA_ACOMODARSE días con esa comida en las últimas dos
+ * semanas (sin hoy, así no cambia en el día), al cuarto de hora; si no, la de tu día en el cuestionario; si no, la
+ * típica. El snack, como siempre (horasDeSiempre).
+ */
+export function horasDeComer(o: HorasDeComer): (c: Comida) => { minutos: number; de: DeDondeSale } {
+  const desde = sumarDias(o.hoy, -DIAS_QUE_SE_MIRAN);
+  const registros = [...o.registros];
+  // De cada día, cuándo se anotó esa comida por primera vez: un almuerzo de cinco cosas cuenta una vez.
+  const porDia = new Map<ConHora, Map<ClaveDia, number>>();
+  for (const r of registros) {
+    if (r.borrado || r.planificado || r.comida === 'snack' || r.dia < desde || r.dia >= o.hoy) continue;
+    const minutos = minutosEnElDia(new Date(r.momento), r.dia);
+    const dias = porDia.get(r.comida) ?? new Map<ClaveDia, number>();
+    dias.set(r.dia, Math.min(dias.get(r.dia) ?? Infinity, minutos));
+    porDia.set(r.comida, dias);
+  }
+  const snack = horasDeSiempre(registros, o.hoy);
+  return (c) => {
+    if (c === 'snack') return { minutos: snack('snack'), de: 'tipica' };
+    const aMano = o.aMano?.[c];
+    if (aMano !== undefined) return { minutos: aMano, de: 'aMano' };
+    const dias = [...(porDia.get(c)?.values() ?? [])];
+    // Al cuarto de hora, como se cambian a mano, y no más tarde de las 23:45.
+    if (dias.length >= DIAS_PARA_ACOMODARSE) return { minutos: Math.min(23 * 60 + 45, Math.round(horaHabitual(dias, HORA_TIPICA[c], c === 'cena' || c === 'merienda') / 15) * 15), de: 'anotado' };
+    const dicha = o.cuestionario?.[c];
+    if (dicha != null) return { minutos: dicha, de: 'cuestionario' };
+    return { minutos: HORA_TIPICA[c], de: 'tipica' };
+  };
+}
+
+/**
+ * Lo que cambiaste en tu día (Perfil › Tus respuestas, que muestra tus horas de ahora): cada hora que moviste queda
+ * fija, a mano; las que no tocaste siguen su regla, y la que pasaste a «No suelo» deja de estar a mano.
+ */
+export function horasPuestasAMano(o: {
+  mostradas: Record<ConHora, number>;
+  elegidas: Record<ConHora, number>;
+  noSuele: Partial<Record<ConHora, boolean>>;
+  antes?: Partial<Record<ConHora, number>> | null;
+}): Partial<Record<ConHora, number>> {
+  const aMano: Partial<Record<ConHora, number>> = { ...o.antes };
+  for (const c of Object.keys(o.mostradas) as ConHora[]) {
+    if (o.noSuele[c]) delete aMano[c];
+    else if (o.elegidas[c] !== o.mostradas[c]) aMano[c] = o.elegidas[c];
+  }
+  return aMano;
+}
+
+/** «No suelo», en tu día: esa comida no avisa. */
+export const noSueleComer = (cuestionario: HorasDeComer['cuestionario'], c: Comida): boolean => c !== 'snack' && cuestionario?.[c] === null;
+
 export type Recordatorio = { dia: ClaveDia; comida: Comida; minutos: number };
 
 /** Los avisos de hoy y los próximos días, sin los que ya pasaron ni los de lo que hoy ya se anotó. */

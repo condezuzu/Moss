@@ -182,10 +182,10 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
   const cama = horas?.acostarse ?? null;
   const despierto = (m: number) => despertar === null || m >= despertar;
   const desdeQueDespierta = (m: number) => Math.max(m, despertar ?? m);
-  // Las horas de comer: las del horario o las de siempre; hoy, corridas por lo que ya anotaste (horasCorridas).
+  // Tus horas de comer (horasDeComer); hoy, corridas por lo que ya anotaste (horasCorridas).
   // Al cuarto de hora: desayunar cinco minutos tarde no hace decir «almuerzo a las 13:05».
   const anotadasHoy = Object.fromEntries(Object.entries(op.eventos ?? {}).filter(([k]) => k !== 'entrenamiento')) as Partial<Record<Comida, number>>;
-  const base = Object.fromEntries(CON_HORA.map((c) => [c, ajustes.horario?.[c] ?? op.horaDeComida(c)]));
+  const base = Object.fromEntries(CON_HORA.map((c) => [c, op.horaDeComida(c)]));
   const corridas = horasCorridas(base, anotadasHoy);
   const hora = Object.fromEntries(CON_HORA.map((c) => [c, aCuarto(corridas[c] ?? base[c])])) as Record<Principal, number>;
   const viaje = op.viaje ?? VIAJE_DE_FABRICA;

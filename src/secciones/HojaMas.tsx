@@ -29,7 +29,7 @@ import { idioma, lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { CabezaQueBaja, ScrollQueBaja, seCierra, useArrastre, vuelta, type Arrastre } from './arrastre';
 import { AvisoFlotante, Icono, type Aviso } from './comida/comunes';
-import { cantidadDeTexto, comidaDeAhora, fechaDiaMes, momentoDe, numero, sistemaDe, useEstado, useNumeros } from './comida/datos';
+import { cantidadDeTexto, comidaDeAhora, fechaDiaMes, momentoDe, numero, sistemaDe, textoDePeso, useEstado, useNumeros } from './comida/datos';
 import { abrirRegistro, avisar as avisarEnLaApp } from './comida/registro';
 import { confirmarDescartar } from './descartar';
 import { Figura } from './Figura';
@@ -431,11 +431,6 @@ function Menu({ abierta, arrastre, alCerrar, alIr, avisar }: { abierta: boolean;
     </ScrollQueBaja>
   );
 }
-
-const textoDePeso = (kg: number, sistema: ReturnType<typeof sistemaDe>) => {
-  const p = pesoCorporalEn(kg, sistema);
-  return `${numero(p.valor, 1)} ${p.unidad}`;
-};
 
 function Principal({ icono, titulo, detalle, alTocar }: { icono: SFSymbol; titulo: string; detalle: string; alTocar: () => void }) {
   return (

@@ -11,7 +11,6 @@ import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated
 import { elAlmacen } from '@/almacen';
 import type { Estado } from '@/almacen/almacen';
 import { baseDeAlimentos } from '@/comida/base';
-import { HORA_TIPICA, type Comida } from '@/dominio/comidas';
 import { lunesDe, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
   afinidadDe, ALERGENOS, cambiarPorOtra, combinadas, diaPlaneadoDe, DIETAS, estaTachada, listaDeCompras, opcionDePlantilla, opcionesTuyas, planearDia, planificadoPorCompra,
@@ -25,11 +24,9 @@ import { HojaModal } from '../HojaModal';
 import { margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
 import { Boton, Etiqueta, Icono, Pastilla } from './comunes';
-import { cantidadDeTexto, metaDelDia, opcionesDeIdioma, sistemaDe, type ComidaDelDia } from './datos';
+import { cantidadDeTexto, horasDeComer, metaDelDia, opcionesDeIdioma, sistemaDe, type ComidaDelDia } from './datos';
 import { avisar } from './registro';
 
-/** A qué hora va lo que se arma: la de siempre de cada comida; el snack, a media mañana. */
-export const horaDe = (c: Comida) => (c === 'snack' ? 11 * 60 : HORA_TIPICA[c]);
 const semillaNueva = () => Math.floor(Math.random() * 2 ** 31);
 const comoCome = (e: Pick<Estado, 'perfil'>): Preferencias => e.perfil?.comer ?? PREFERENCIAS_DE_FABRICA;
 
@@ -86,14 +83,14 @@ function armarUnDia(e: Estado, dia: ClaveDia, opciones: readonly Opcion[]): { al
   const meta = metaDelDia(e, dia);
   if (!meta) return null;
   const pref = comoCome(e);
-  const solo = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosEnElDia(new Date(), e.hoy), pref, horaDe });
+  const solo = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosEnElDia(new Date(), e.hoy), pref, horaDe: horasDeComer(e) });
   if (!solo.length) return null;
   const armado = planearDia({
     dia, meta, opciones, pref, semilla: semillaNueva(), solo, yaComido: totalDelDia(e.registros.values(), dia, true), recientes: recientesDe(e.registros.values(), dia),
     afinidad: afinidadCon(e, opciones, pref),
   });
   if (!armado.comidas.length) return null;
-  return { alcanza: armado.alcanza, registros: elAlmacen().planificar(dia, armado.comidas, horaDe) };
+  return { alcanza: armado.alcanza, registros: elAlmacen().planificar(dia, armado.comidas, horasDeComer(e)) };
 }
 
 /** Deshacer lo que se armó: lo sugerido se va, como si no se hubiera tocado. */
@@ -104,7 +101,7 @@ export function ArmarElDia({ e, dia }: { e: Estado; dia: ClaveDia }) {
   const opciones = useOpciones(e);
   const [hoja, setHoja] = useState(false);
   if (dia < e.hoy) return null;
-  const falta = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosEnElDia(new Date(), e.hoy), pref: comoCome(e), horaDe }).length > 0;
+  const falta = queFalta({ registros: e.registros.values(), dia, hoy: e.hoy, ahora: minutosEnElDia(new Date(), e.hoy), pref: comoCome(e), horaDe: horasDeComer(e) }).length > 0;
   const armar = () => {
     if (!opciones) return;
     const armado = armarUnDia(e, dia, opciones);
@@ -172,7 +169,7 @@ export function AccionesDelPlan({ e, c, dia }: { e: Estado; c: ComidaDelDia; dia
       opciones, pref: prefs, meta, semilla: semillaNueva(), vistas, afinidad: afinidadCon(e, opciones, prefs),
     });
     const cambiada = nuevo?.comidas.find((x) => x.comida === c.comida);
-    return cambiada ? elAlmacen().cambiarPlanificada(dia, cambiada, horaDe) : null;
+    return cambiada ? elAlmacen().cambiarPlanificada(dia, cambiada, horasDeComer(e)) : null;
   };
   const comi = () => {
     const ids = elAlmacen().confirmarComida(dia, c.comida);

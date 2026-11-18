@@ -82,7 +82,8 @@ const AvisosBloqueo = (() => {
   const MAXIMO = 8;
   const AJUSTES = {
     dormir: { encendido: true },
-    horario: HORARIO,
+    // Las comidas que avisan; cada una, a su hora de comer (HORARIO, una sola lista).
+    horario: Object.keys(HORARIO),
     comidas: ['cena'],
     maximoPorDia: MAXIMO,
     habitos: [{ habito: 'leer', cuando: { tipo: 'dormir', antes: 45 }, dias: [] }],
@@ -105,7 +106,7 @@ const AvisosBloqueo = (() => {
   const DESPIERTA = hm('10:00');
   const SUENO_DEL_DESPERTAR = { habitual: () => ({ dormirse: hm('23:15') - 18 * 60, despertar: hm('7:30') + 6 * 60 }), necesidad: 480, deuda: 90, despierto: 30, latencia: 15 };
   const HORARIO_DEL_DESPERTAR = { desayuno: hm('7:30'), almuerzo: hm('13:00'), merienda: hm('17:00'), cena: hm('20:30') };
-  const ELEGIDO_DEL_DESPERTAR = { pesarse: { encendido: true, todos: true }, horario: HORARIO_DEL_DESPERTAR };
+  const ELEGIDO_DEL_DESPERTAR = { pesarse: { encendido: true, todos: true }, horario: Object.keys(HORARIO_DEL_DESPERTAR) };
 
   function crear(tel, opciones) {
     const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0, deporte: null, desayuno: 'directo', anotar: false, gafas: false, cafe: false };
@@ -222,9 +223,9 @@ const AvisosBloqueo = (() => {
       const periodo = periodoDeHoy();
       const clave = JSON.stringify(['despertar', s.desayuno, s.anotar, s.gafas, s.cafe, pendientes, periodo && [periodo.desde, periodo.acostarse], en()]);
       // Lo de fábrica, con lo que se activa aparte. Son más de diez: el máximo de fábrica sube solo con ellos, como en
-      // la app (SigueElDespertar.maximoDeFabrica: dos por anotar lo pendiente y uno por las gafas). Con diez, se
-      // caerían los últimos de la noche.
-      const ajustes = SigueElDespertar.deFabrica({ ...ELEGIDO_DEL_DESPERTAR, ...(s.anotar ? { descarga: { encendido: true } } : {}), ...(s.gafas ? { gafas: { encendido: true } } : {}), ...(s.cafe ? { cafe: { encendido: true } } : {}) }, (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'));
+      // la app (SigueElDespertar.maximoDeFabrica: dos por anotar lo pendiente, uno por las gafas y uno por el café). Con
+      // diez, se caerían los últimos de la noche.
+      const ajustes = SigueElDespertar.deFabrica({ ...ELEGIDO_DEL_DESPERTAR, ...(s.anotar ? { descarga: { encendido: true } } : {}), ...(s.gafas ? { gafas: { encendido: true } } : {}), ...(s.cafe ? { cafe: { encendido: true } } : {}) });
       if (hechos.has(clave)) return hechos.get(clave);
       const llegados = [];
       const llego = {};
@@ -269,7 +270,7 @@ const AvisosBloqueo = (() => {
           ? `Con «Café», a las ${u.horaMin(cafe.minutos)}: tu periodo empieza a las ${u.horaMin(horas.periodo.desde)} y te acuestas a las ${u.horaMin(horas.acostarse)}; desde ahí, 9 h para un café (Gardiner 2023), 13 con un preentreno.`
           : 'Con «Café», sin lugar en el máximo de fábrica: no suena.');
       }
-      if (s.anotar || s.gafas) nota.push(`El máximo de fábrica sube solo a ${SigueElDespertar.maximoDeFabrica({ descarga: { encendido: s.anotar }, gafas: { encendido: s.gafas } })}: con 10 se caerían los últimos de la noche. Si lo elegiste a mano en Perfil, queda el tuyo.`);
+      if (s.anotar || s.gafas || s.cafe) nota.push(`El máximo de fábrica sube solo a ${SigueElDespertar.maximoDeFabrica({ descarga: { encendido: s.anotar }, gafas: { encendido: s.gafas }, cafe: { encendido: s.cafe } })}: con 10 se caerían los últimos de la noche. Si lo elegiste a mano en Perfil, queda el tuyo.`);
       return nota.join(' ');
     }
 
