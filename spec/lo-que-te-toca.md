@@ -81,9 +81,9 @@ Hecho:
   calidad del sueño queda como está (ya es el criterio de la National Sleep Foundation, Ohayon 2017); el ritmo o la fecha
   siguen moviendo la meta. Para decidir:
   - Ascent arriba de Progreso: APROBADA el 18/11 y publicada por aire en las dos builds (`visual-ota` 7f72585). Probala en el
-    iPhone (el gesto, el fondo, vinculada). Para que muestre todo, faltan funciones nuevas en `moss` (con tu sí): la rutina
-    de Ascent, el umbral de estancamiento, la racha para el rango y `moss.recuperacion` (spec/ota-visual.md, «Ascent arriba
-    de Progreso»). ¿Las escribo?
+    iPhone (el gesto, el fondo, vinculada). La rutina, el umbral de estancamiento y la racha para el rango llegan desde el
+    18/11: migración 0013 (`moss.ascent_rutina`, `moss.ascent_ajustes`) aplicada con tu sí y publicada en las dos builds
+    (`visual-ota` 06c4b94). Queda `moss.recuperacion`, para cuando Ascent la lea.
   - La «caña» es el único alimento sin marca que dice en qué países va (España), para que salga con 200 ml de entrada sin
     quitarle «caña» al destilado en Uruguay. ¿Así, o como un nombre más de la cerveza (con la lata de 355 ml de entrada)?
 
