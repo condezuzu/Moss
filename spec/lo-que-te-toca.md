@@ -75,9 +75,14 @@ Hecho:
     Hábitos; la nueva, arriba de Progreso, sigue para aprobar. La privacidad y los términos publicados ya nombran a Ascent
     (18/11, `condezuzu/moss-app` 7a8d1c2; sin la suscripción). App Privacy, revisado el 18/11 (`asc3/privacidad-leer.cjs`):
     ya cubre lo de Ascent (Fitness, Health, User ID, Name y Email, vinculados y para la app) y no cambia.
-  - Con el aviso del café prendido, el máximo de 10 avisos deja afuera «Se acerca tu hora de acostarte»: ¿sube uno?
-  - La calidad no baja con hasta 20 min despierto y un despertar: ¿endurecerla?
-  - La base: «caña» en España, «café de olla», «verduras» (pisto), «fruta» y «yogur» en España eligen mal.
+- La tanda 5 (18/11, tarde; aprobaste el plan): publicada en las dos builds (`visual-ota` 70f191c, `mejoras-1.1` 362e07f) y la
+  galería 54. Qué entró: spec/ota-visual.md, «Tanda 5». Decidido: el café sube el máximo uno; una sola lista de horas de comer
+  (responde las cinco preguntas de la tanda 3); la base en España; las lunitas, «Copiar el día», el peso y los márgenes; la
+  calidad del sueño queda como está (ya es el criterio de la National Sleep Foundation, Ohayon 2017); el ritmo o la fecha
+  siguen moviendo la meta. Para decidir:
+  - Ascent arriba de Progreso: te mandé las capturas el 18/11 (galería, escenarios `ascent` y `ascent-rangos`). ¿Entra?
+  - La «caña» es el único alimento sin marca que dice en qué países va (España), para que salga con 200 ml de entrada sin
+    quitarle «caña» al destilado en Uruguay. ¿Así, o como un nombre más de la cerveza (con la lata de 355 ml de entrada)?
 
 Falta (vos):
 1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
