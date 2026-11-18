@@ -3,12 +3,13 @@
 // macros alrededor de la luna. Lo que cambia en cada cuadro sale del reloj de la pantalla y del
 // guion (guion.ts), como en la galería. En la web llega con un import dinámico (Lienzos.web.tsx).
 
-import { Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, Path, RadialGradient, Rect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
+import { Canvas, Circle, DashPathEffect, Group, Line, LinearGradient, Oval, Path, RadialGradient, Rect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { colores } from '@/tema';
 import { COLOR_DE_MACRO } from '../comida/comunes';
+import { dibujoDeFigura, LIENZO_DE_FIGURA, type Elipse } from './figuras';
 import { enLut, estado, facil, limitar, mezclar, type EscenaDeCasiopea, type Recorrido } from './guion';
 
 // ------------------------------------------------------------------ la estrella guía
@@ -227,50 +228,47 @@ export function AnillosSkia({ tam, reparto, ms, demora = 250, vueltas, reloj }: 
 }
 
 // ------------------------------------------------------------------ las figuras de la grasa
+const TINTA = '#0a0f1f';
+const camino = (d: string) => Skia.Path.MakeFromSVGString(d)!;
+
 /**
- * Una figura de frente, de la cabeza a las rodillas, sin rasgos, como la de la galería: con más grasa (k de 0 a
- * 8), más ancha la cintura y, en las mujeres, la cadera. Sirve para comparar. En una caja de 52 × 80.
+ * Una figura de la grasa, la de la galería (figuras.ts): los brazos detrás, el cuerpo con su borde, la ropa, las
+ * líneas y el ombligo recortados al contorno, y la cabeza. La opacidad de la figura entera va en quien la lleva:
+ * así los brazos encima del torso no se suman.
  */
 function caminosDeFigura(sexo: 'f' | 'm', k: number) {
-  const t = k / 8;
-  const m = sexo === 'm';
-  const c = 26;
-  const w = {
-    cuello: 2.6,
-    hombro: m ? 14 + 1.6 * t : 11.6 + 1.6 * t,
-    pecho: m ? 11.8 + 3.2 * t : 10.6 + 3.4 * t,
-    cintura: m ? 8.6 + 9.4 * t : 7.6 + 8.6 * t,
-    cadera: m ? 10.2 + 6 * t : 12 + 8 * t,
-    muslo: m ? 9 + 4.6 * t : 9.8 + 6 * t,
+  const d = dibujoDeFigura(sexo, k);
+  return {
+    brazos: camino(d.brazos), contorno: camino(d.contorno), ropa: d.ropa.map(camino),
+    lineas: d.lineas.map((l) => ({ camino: camino(l.d), opacidad: l.opacidad })),
+    papada: d.papada ? { camino: camino(d.papada.d), opacidad: d.papada.opacidad } : null,
+    ombligo: d.ombligo, cabeza: d.cabeza,
   };
-  const lado: [number, number][] = [[w.cuello, 14.5], [w.hombro, 20], [w.pecho, 29], [w.cintura, 42], [w.cadera, 52], [w.muslo, 62], [w.muslo * 0.74, 78]];
-  const f = (p: readonly number[]) => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`;
-  // Catmull-Rom: una curva suave que pasa por cada punto.
-  const curva = (pts: [number, number][]) => pts.slice(0, -1).map((p1, i) => {
-    const p0 = pts[Math.max(0, i - 1)], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-    return ` C ${f([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6])} ${f([p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6])} ${f(p2)}`;
-  }).join('');
-  const izq = lado.map(([x, y]): [number, number] => [c - x, y]);
-  const der = lado.map(([x, y]): [number, number] => [c + x, y]).reverse();
-  const torso = `M ${f(izq[0])}${curva(izq)} L ${f([c - 1.4, 78])} L ${f([c, 63])} L ${f([c + 1.4, 78])} L ${f(der[0])}${curva(der)} Z`;
-  // Los brazos se abren con la cintura, para no taparla.
-  const fin = Math.max(w.hombro + 2.2, w.cintura + 3.2 + 1.2 * t);
-  const brazo = (s: number) => `M ${f([c + s * (w.hombro - 1.4), 21.5])} Q ${f([c + s * (w.hombro + 1.4 + t), 34])} ${f([c + s * fin, 51])}`;
-  return { torso: Skia.Path.MakeFromSVGString(torso)!, brazos: Skia.Path.MakeFromSVGString(`${brazo(-1)} ${brazo(1)}`)!, grosor: 3.4 + 2.2 * t };
 }
 
 export type PropsDeFigura = { sexo: 'f' | 'm'; k: number; color: string; ancho: number; alto: number };
 
 export function FiguraSkia({ sexo, k, color, ancho, alto }: PropsDeFigura) {
-  const { torso, brazos, grosor } = useMemo(() => caminosDeFigura(sexo, k), [sexo, k]);
-  const escala = Math.min(ancho / 52, alto / 80);
+  const f = useMemo(() => caminosDeFigura(sexo, k), [sexo, k]);
+  const { ancho: W, alto: H } = LIENZO_DE_FIGURA;
+  const escala = Math.min(ancho / W, alto / H);
+  const ovalo = (e: Elipse) => ({ x: e.cx - e.rx, y: e.cy - e.ry, width: 2 * e.rx, height: 2 * e.ry });
+  const borde = { style: 'stroke', strokeWidth: 0.8, strokeJoin: 'round', color: TINTA } as const;
   return (
     <Canvas style={{ width: ancho, height: alto }} pointerEvents="none">
-      <Group transform={[{ translateX: (ancho - 52 * escala) / 2 }, { scale: escala }]}>
-        <Path path={brazos} style="stroke" strokeWidth={grosor} strokeCap="round" color={color} />
-        <Path path={torso} color={color} />
-        <Path path={torso} style="stroke" strokeWidth={1.1} color="#0a0f1f" />
-        <Circle cx={26} cy={8.4} r={5.3} color={color} />
+      <Group transform={[{ translateX: (ancho - W * escala) / 2 }, { translateY: (alto - H * escala) / 2 }, { scale: escala }]}>
+        <Path path={f.brazos} color={color} />
+        <Path path={f.brazos} {...borde} />
+        <Path path={f.contorno} color={color} />
+        <Path path={f.contorno} {...borde} />
+        <Group clip={f.contorno}>
+          {f.ropa.map((r, i) => <Path key={i} path={r} color={TINTA} opacity={0.3} />)}
+          {f.lineas.map((l, i) => <Path key={i} path={l.camino} style="stroke" strokeWidth={0.75} strokeCap="round" color={TINTA} opacity={l.opacidad} />)}
+          <Oval rect={ovalo(f.ombligo)} color={TINTA} opacity={0.5} />
+        </Group>
+        <Oval rect={ovalo(f.cabeza)} color={color} />
+        <Oval rect={ovalo(f.cabeza)} {...borde} />
+        {f.papada && <Path path={f.papada.camino} style="stroke" strokeWidth={0.75} strokeCap="round" color={TINTA} opacity={f.papada.opacidad} />}
       </Group>
     </Canvas>
   );

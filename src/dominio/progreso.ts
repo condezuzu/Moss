@@ -3,6 +3,7 @@
 // un día: el ritmo sale de la recta por el promedio de cada semana, y mientras el margen sea ancho,
 // todavía no se sabe (spec/estudio/progreso.md, A4 a A6).
 
+import type { Despues } from './cuestionario';
 import { atrasoDeLaTendencia, cambioPorDia, pesadasQueCuentan, recta, type ComidaDelDia, type EstadoDelControl, type Pesada } from './control';
 import { diasEntre, sumarDias, type ClaveDia } from './fechas';
 import { DEFICIT_MAXIMO, KCAL_POR_KG, KG_POR_SEMANA_MAXIMOS, MAYORIA_DE_EDAD, pisoDe, RITMOS, type Objetivo, type Ritmo, type Sexo } from './metas';
@@ -403,7 +404,8 @@ export function pctParaLaMeta(direccion: Direccion, pct: number, pesoKg: number,
 // vienes compara el ritmo medido, con su margen, con el del plan; el control de cada semana ajusta las
 // calorías para seguirlo, así que la fecha del plan queda y lo que se mueve es a dónde llegarías.
 
-export type TipoDeEtapa = Objetivo;
+/** La recomposición solo aparece como lo que sigue a la meta: en mantenimiento, con la proteína alta. */
+export type TipoDeEtapa = Objetivo | 'recomponer';
 export type Etapa = { tipo: TipoDeEtapa; desde: ClaveDia; hasta: ClaveDia | null; pesoDesde: number; pesoHasta: number };
 export type Hito = { fecha: ClaveDia; kg: number; meta: boolean };
 export type ComoVienes = 'alRitmo' | 'adelantado' | 'atrasado' | 'alReves' | 'llegaste' | 'estable' | 'seMueve' | 'todaviaNo' | 'faltanDatos';
@@ -424,6 +426,7 @@ const SEMANAS_POR_HITO = 4;
 /** Los hitos antes de la meta: en un plan largo se reparten, así entran en una línea. */
 const HITOS_MAXIMOS = 3;
 export const SEMANAS_DE_MANTENIMIENTO = 2;
+const ETAPA_QUE_SIGUE: Record<Exclude<Despues, 'despues'>, TipoDeEtapa> = { mantener: 'mantener', grasa: 'bajar', recomponer: 'recomponer', musculo: 'subir' };
 /** Al ritmo es estar a un cuarto del plan, o a 100 g por semana con un plan lento. */
 const AL_RITMO = 0.25;
 const AL_RITMO_KG = 0.1;
@@ -439,8 +442,8 @@ export function planPorEtapas(e: {
   /** El ritmo medido, en kg por semana, y su margen (ritmoConRango); sin margen, el ritmo solo. */
   ritmo: number | null;
   rango?: { desde: number; hasta: number } | null;
-  /** Lo que sigue después del mantenimiento, si lo dijo en el cuestionario: mantener, ganar músculo o decidirlo después. */
-  despues?: 'mantener' | 'musculo' | 'despues' | null;
+  /** Lo que sigue después del mantenimiento, si lo dijo en el cuestionario (cuestionario.ts, Despues). */
+  despues?: Despues | null;
   /** El peso de la tendencia cuando se fijó el objetivo: si la meta ya estaba pasada al empezar, no se llegó. */
   pesoInicial?: number | null;
 }): PlanPorEtapas {
@@ -465,10 +468,10 @@ export function planPorEtapas(e: {
     { tipo: plazo.direccion, desde: hoy, hasta: plazo.fecha, pesoDesde: pesoKg, pesoHasta: meta },
     { tipo: 'mantener', desde: plazo.fecha, hasta: finDelMantenimiento, pesoDesde: meta, pesoHasta: meta },
   ];
-  // Lo que sigue, sin fecha de fin: quedarse ahí o ganar músculo (subir despacio). «Después» lo decide al llegar.
-  if (e.despues === 'mantener' || e.despues === 'musculo') {
-    etapas.push({ tipo: e.despues === 'musculo' ? 'subir' : 'mantener', desde: finDelMantenimiento, hasta: null, pesoDesde: meta, pesoHasta: meta });
-  }
+  // Lo que sigue, sin fecha de fin: quedarse ahí, perder grasa (bajar despacio), recomponer o ganar músculo (subir
+  // despacio). «Después» lo decide al llegar.
+  const siguiente = e.despues && e.despues !== 'despues' ? ETAPA_QUE_SIGUE[e.despues] : null;
+  if (siguiente) etapas.push({ tipo: siguiente, desde: finDelMantenimiento, hasta: null, pesoDesde: meta, pesoHasta: meta });
   // Cada cuatro semanas, o repartidos si no entran; el último, la meta. De a medio kilo: más fino sería precisión falsa.
   const cuantos = Math.min(HITOS_MAXIMOS, Math.floor((dias - 1) / (SEMANAS_POR_HITO * 7)));
   const paso = cuantos > 0 ? (Math.floor((dias - 1) / (SEMANAS_POR_HITO * 7)) > HITOS_MAXIMOS ? dias / (cuantos + 1) : SEMANAS_POR_HITO * 7) : 0;

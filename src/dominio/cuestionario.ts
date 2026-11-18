@@ -272,8 +272,31 @@ export function ritmoSugerido(objetivo: ObjetivoDicho, experiencia: Experiencia 
   return objetivo === 'subir' && experiencia === 'avanzado' ? 'suave' : 'recomendado';
 }
 
-/** Al llegar al peso meta, después de unas semanas en mantenimiento: quedarse, ganar músculo o decidirlo al llegar (planPorEtapas). */
-export type Despues = 'mantener' | 'musculo' | 'despues';
+/**
+ * Al llegar al peso meta, después de unas semanas en mantenimiento (planPorEtapas): quedarse, perder grasa sin perder
+ * músculo (bajar al ritmo suave, con proteína alta), recomponer (en mantenimiento, con proteína alta), ganar músculo
+ * (subir despacio) o decidirlo al llegar.
+ */
+export type Despues = 'mantener' | 'grasa' | 'recomponer' | 'musculo' | 'despues';
+export const DESPUES: readonly Despues[] = ['mantener', 'grasa', 'recomponer', 'musculo', 'despues'];
+/** Lo que sigue que necesita pesas: sin ellas, Moss lo dice al elegirlo. */
+export const PIDEN_PESAS: readonly Despues[] = ['grasa', 'recomponer', 'musculo'];
+/** Seguir bajando, solo si la meta queda al menos a esto (en kg) del peso sano mínimo. */
+export const LUGAR_PARA_SEGUIR_BAJANDO = 2;
+
+export type ParaLoQueSigue = { objetivo: ObjetivoDicho; pesoMeta: number | null; alturaCm: number; sinDeficit?: boolean };
+
+/**
+ * Lo que se puede elegir para después: sin déficit, ni perder grasa ni recomponer; bajando, perder grasa solo si
+ * la meta queda a 2 kg o más del peso sano mínimo.
+ */
+export function opcionesDeLoQueSigue(r: ParaLoQueSigue): Despues[] {
+  const lugarParaBajar = r.objetivo === 'subir' || (r.pesoMeta ?? 0) - pesoMinimoSano(r.alturaCm) >= LUGAR_PARA_SEGUIR_BAJANDO;
+  return DESPUES.filter((d) => !(r.sinDeficit && (d === 'grasa' || d === 'recomponer')) && !(d === 'grasa' && !lugarParaBajar));
+}
+
+/** Lo elegido, si se puede; si no (cambió algo antes), mantener. */
+export const loQueSigue = (r: ParaLoQueSigue, elegido: Despues): Despues => (opcionesDeLoQueSigue(r).includes(elegido) ? elegido : 'mantener');
 
 // ------------------------------------------------------------ la proteína
 export type NivelDeProteina = 'baja' | 'recomendada' | 'alta';
@@ -539,7 +562,7 @@ export function respuestasDe(x: unknown): RespuestasGuardadas | null {
     movimiento,
     grasa,
     experiencia: unoDe(['principiante', 'intermedio', 'avanzado'] as const, o.experiencia),
-    despues: unoDe(['mantener', 'musculo', 'despues'] as const, o.despues),
+    despues: unoDe(DESPUES, o.despues),
     proteina: unoDe(NIVELES_DE_PROTEINA, o.proteina) ?? 'recomendada',
     recomponer: o.recomponer === true,
     fecha: typeof o.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.fecha) ? o.fecha : null,

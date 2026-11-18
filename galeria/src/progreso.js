@@ -25,7 +25,7 @@ const SeccionProgreso = (() => {
       cambiarPlan: false, masDatos: false, sinMedidas: false,
       // Para ver las primeras semanas: con un número, solo las pesadas de esas últimas semanas.
       semanasDeDatos: null,
-      // Tanda 4 (para aprobar): lo que sigue a la meta, para las capturas; null, el del perfil.
+      // Lo que sigue a la meta (aprobado el 18/11), para las capturas; null, el del perfil.
       despues: null,
     };
     // «Sin déficit» es de Perfil: si la galería lo pasa, bajar queda en mantener y el plan no dice que el control ajusta.
@@ -108,13 +108,12 @@ const SeccionProgreso = (() => {
     // mismo, cambiarlo (el objetivo, el peso meta, el ritmo y el plazo, y las metas de hoy).
     const ESTADO_DEL_PLAN = { alRitmo: 'enCamino', adelantado: 'enCamino', atrasado: 'despacio', alReves: 'despacio', llegaste: 'enCamino', estable: 'enCamino', seMueve: '', todaviaNo: '', faltanDatos: '' };
     const kgCorto = (kg) => numero(kg, kg % 1 ? 1 : 0);
-    // Lo que sigue a la meta (tanda 4, para aprobar): mantener, perder grasa, recomponer, ganar músculo o decidirlo.
+    // Lo que sigue a la meta (aprobado el 18/11): mantener, perder grasa, recomponer, ganar músculo o decidirlo.
     const despuesDe = (p) => s.despues || p.despues || 'despues';
     function planDe(d) {
       const p = d.perfil;
       const rango = ritmoDe(d);
-      // Hasta que el dominio sepa las cinco, perder grasa y recomponer piden la etapa sin fin de mantener.
-      const despues = { grasa: 'mantener', recomponer: 'mantener' }[despuesDe(p)] || despuesDe(p);
+      const despues = despuesDe(p);
       return Progreso.planPorEtapas({
         hoy: Datos.HOY, pesoKg: nivelDe(d), objetivo: objetivoDe(p), pesoMeta: p.pesoMeta, plazo: plazoActual(d),
         ritmo: rango ? rango.kgPorSemana : null, rango, despues, pesoInicial: d.pesoInicial,

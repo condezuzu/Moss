@@ -411,11 +411,14 @@ describe('el plan por etapas', () => {
     ]);
   });
 
-  it('lo que sigue al mantenimiento, si lo dijo: quedarse ahí o ganar músculo, sin fecha de fin', () => {
+  it('lo que sigue al mantenimiento, si lo dijo: quedarse ahí, perder grasa, recomponer o ganar músculo, sin fecha de fin', () => {
     const fin = sumarDias(plazo.fecha, SEMANAS_DE_MANTENIMIENTO * 7);
     const conMusculo = planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'musculo' });
     expect(conMusculo.etapas[2]).toEqual({ tipo: 'subir', desde: fin, hasta: null, pesoDesde: 72, pesoHasta: 72 });
     expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'mantener' }).etapas[2].tipo).toBe('mantener');
+    // Perder grasa sigue bajando, despacio; recomponer, en mantenimiento con la proteína alta.
+    expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'grasa' }).etapas[2]).toEqual({ tipo: 'bajar', desde: fin, hasta: null, pesoDesde: 72, pesoHasta: 72 });
+    expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'recomponer' }).etapas[2].tipo).toBe('recomponer');
     // Sin decidirlo, el plan termina en el mantenimiento.
     expect(planPorEtapas({ hoy: HOY, pesoKg: 80, objetivo: 'bajar', pesoMeta: 72, plazo, ritmo: -0.4, despues: 'despues' }).etapas).toHaveLength(2);
   });

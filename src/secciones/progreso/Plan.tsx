@@ -5,7 +5,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, type AccessibilityActionEvent, type ViewStyle } from 'react-native';
-import Animated, { Easing, FadeIn, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import { KG_POR_LIBRA } from '@/dominio/cantidades';
@@ -14,13 +14,14 @@ import { diasEntre, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { edadDe, objetivoPermitido, pesoMinimoSano, pisoDe, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
 import {
   bordeDe, direccionDe, nivelDeHoy, planPorEtapas, plazoConFecha, plazoConRitmo, ritmoConRango, SEMANAS_DE_MANTENIMIENTO,
-  type ComoVienes, type Direccion, type EntradaDelPlazo, type Fechas, type PlanPorEtapas, type Plazo,
+  type ComoVienes, type Direccion, type EntradaDelPlazo, type Fechas, type PlanPorEtapas, type Plazo, type TipoDeEtapa,
 } from '@/dominio/progreso';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { Icono, MACROS, Punto } from '../comida/comunes';
 import { fechaDiaMes, fechaLarga, numero } from '../comida/datos';
+import { LoQueSigue, type LoQueSigueDibujado } from '../graficos/Graficos';
 import { BotonDePaso } from '../paso';
 import type { Persona } from '../persona';
 import { Aparece, Carta, Chip, Cifra, ComoSeCalcula, Parrafo, Segmento, type TipoDeChip } from '../tarjetas';
@@ -110,10 +111,11 @@ export function ElPlan({ p, calculo, hoy, desde, u, abierto, alternar, cambiarPl
     ritmo: pl.ritmo === null ? '' : conSignoFijo(u.enUnidad(pl.ritmo), 2), plan: conSignoFijo(u.enUnidad(pl.ritmoPlan), 2), cuando: pl.fechasATuRitmo ? cuandoDe(pl.fechasATuRitmo) : '', ...margen,
   });
   // Al llegar, el mantenimiento; y lo que sigue, si lo dijo en el cuestionario (sin decirlo, lo elige al llegar).
-  const luego = pl.etapas[2] ? (pl.etapas[2].tipo === 'subir' ? 'musculo' : 'mantener') : 'eliges';
+  const siguiente = loQueSigueDe(pl);
+  const luego = siguiente === 'despues' ? 'eliges' : siguiente;
   return (
     <Carta titulo={t('progreso.plan.titulo')} derecha={<Chip texto={t(`progreso.plan.estados.${pl.comoVienes}`)} tipo={TIPO_DEL_PLAN[pl.comoVienes]} />}>
-      <Text style={s.titulo}>{u.texto(t(`progreso.plan.etapas.${primera.tipo}`, { kg: u.corto(primera.pesoHasta) }))}</Text>
+      <Text style={s.titulo}>{u.texto(t(`progreso.plan.etapas.${primera.tipo as Objetivo}`, { kg: u.corto(primera.pesoHasta) }))}</Text>
       {primera.hasta && <Text style={s.para}>{t('progreso.plan.para', { fecha: fechaLarga(primera.hasta) })}</Text>}
       {pl.hitos.length > 0 && <Pista desde={desde} hoy={hoy} pesoInicial={p.pesoInicial ?? p.pesoHoy ?? primera.pesoDesde} pesoHoy={p.pesoHoy ?? primera.pesoDesde} plan={pl} u={u} />}
       <Aparece key={clave} style={s.como}>
@@ -148,20 +150,27 @@ function cuandoDe(f: Fechas): string {
 }
 
 // ------------------------------------------------------------------ la línea del plan
+const DE_LA_ETAPA: Record<TipoDeEtapa, LoQueSigueDibujado> = { mantener: 'mantener', bajar: 'grasa', recomponer: 'recomponer', subir: 'musculo' };
+/** Lo que sigue después del mantenimiento, por la etapa del plan; sin etapa, lo elige al llegar. */
+const loQueSigueDe = (pl: PlanPorEtapas): LoQueSigueDibujado => (pl.etapas[2] ? DE_LA_ETAPA[pl.etapas[2].tipo] : 'despues');
+/** Hasta dónde llega la línea, en %: lo último es para lo que sigue (como en la galería). */
+const ANCHO_DE_LA_LINEA = 70;
 const LLENA = Easing.bezier(0.2, 0.7, 0.2, 1);
 /** Los trazos del mantenimiento: sobran, el tramo los recorta. */
 const TRAZOS = Array.from({ length: 40 }, (_, i) => i);
 
 /**
  * Desde que empezaste (lo hecho, en oro) hasta hoy, los hitos y la meta, y el mantenimiento después,
- * más tenue. Cada punto con su fecha y su peso; los que no entran sin pisarse, sin etiqueta.
+ * más tenue. Cada punto con su fecha y su peso; los que no entran sin pisarse, sin etiqueta. Al final, lo
+ * que sigue: su dibujo y su nombre, sin fecha.
  */
 function Pista({ desde, hoy, pesoInicial, pesoHoy, plan, u }: { desde: ClaveDia; hoy: ClaveDia; pesoInicial: number; pesoHoy: number; plan: PlanPorEtapas; u: U }) {
   const reducido = useReducedMotion();
   const meta = plan.hitos[plan.hitos.length - 1];
   const fin = plan.etapas[1]?.hasta ?? meta.fecha;
   const total = Math.max(1, diasEntre(desde, fin));
-  const pos = (f: ClaveDia) => Math.min(100, Math.max(0, (diasEntre(desde, f) / total) * 100));
+  const ancho = ANCHO_DE_LA_LINEA;
+  const pos = (f: ClaveDia) => Math.min(ancho, Math.max(0, (diasEntre(desde, f) / total) * ancho));
   const puntos: { f: ClaveDia; kg: number; clase: 'inicio' | 'hoy' | 'hito' | 'meta'; etq: string }[] = [
     { f: desde, kg: pesoInicial, clase: 'inicio', etq: fechaDiaMes(desde) },
     { f: hoy, kg: pesoHoy, clase: 'hoy', etq: t('progreso.hoy') },
@@ -175,18 +184,20 @@ function Pista({ desde, hoy, pesoInicial, pesoHoy, plan, u }: { desde: ClaveDia;
     if (si) ultima = left;
     return si;
   });
-  const hasta = pos(hoy) / 100;
+  const hasta = pos(hoy) / ancho;
   const hecho = useSharedValue(reducido ? hasta : 0);
   useEffect(() => {
     hecho.set(reducido ? hasta : withTiming(hasta, { duration: 1200, easing: LLENA, reduceMotion: ReduceMotion.Never }));
   }, [hasta, reducido, hecho]);
   const lleno = useAnimatedStyle(() => ({ width: `${hecho.get() * 100}%` }));
   const mant = pos(meta.fecha);
+  // El mantenimiento, en la línea (que termina donde empieza lo que sigue).
+  const mantEnLinea = (mant / ancho) * 100;
   return (
     <View style={s.pista} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={s.linea}>
+      <View style={[s.linea, { right: `${100 - ancho}%` }]}>
         <Animated.View style={[s.hecho, DEGRADE_DEL_HECHO, lleno]} />
-        <View style={[s.mant, { left: `${mant}%`, width: `${100 - mant}%` }]}>
+        <View style={[s.mant, { left: `${mantEnLinea}%`, width: `${100 - mantEnLinea}%` }]}>
           {TRAZOS.map((i) => <View key={i} style={s.trazo} />)}
         </View>
       </View>
@@ -203,9 +214,43 @@ function Pista({ desde, hoy, pesoInicial, pesoHoy, plan, u }: { desde: ClaveDia;
           </View>
         </Animated.View>
       ))}
-      <View style={[s.mantEtq, { left: `${(mant + 100) / 2}%` }]}>
+      <View style={[s.mantEtq, { left: `${(mant + ancho) / 2}%` }]}>
         <Text style={s.mantTexto} maxFontSizeMultiplier={1.2}>{t('progreso.plan.mantener')}</Text>
       </View>
+      <Siguiente key={loQueSigueDe(plan)} que={loQueSigueDe(plan)} desde={ancho} />
+    </View>
+  );
+}
+
+/** El dibujo va en una caja de 90 × 24 y se traza después de la línea; su nombre aparece al final. */
+const CAJA_DE_LO_QUE_SIGUE = { ancho: 90, alto: 24 };
+const SE_TRAZA = Easing.bezier(0.4, 0, 0.2, 1);
+
+function Siguiente({ que, desde }: { que: LoQueSigueDibujado; desde: number }) {
+  const reducido = useReducedMotion();
+  const [lugar, setLugar] = useState(0);
+  const escala = Math.min(1, lugar / CAJA_DE_LO_QUE_SIGUE.ancho);
+  const ancho = CAJA_DE_LO_QUE_SIGUE.ancho * escala;
+  const trazo = useSharedValue(reducido ? 1 : 0);
+  useEffect(() => {
+    if (lugar) trazo.set(reducido ? 1 : withDelay(1000, withTiming(1, { duration: 900, easing: SE_TRAZA, reduceMotion: ReduceMotion.Never })));
+  }, [lugar, reducido, trazo]);
+  const recorte = useAnimatedStyle(() => ({ width: trazo.get() * ancho }));
+  return (
+    <View style={[s.luego, { left: `${desde}%` }]} onLayout={(e) => setLugar(e.nativeEvent.layout.width)}>
+      {lugar > 0 && (
+        <>
+          <Animated.View style={[s.luegoRecorte, recorte]}>
+            <View style={{ width: ancho, height: CAJA_DE_LO_QUE_SIGUE.alto }}>
+              <LoQueSigue que={que} ancho={ancho} alto={CAJA_DE_LO_QUE_SIGUE.alto} />
+              {que === 'despues' && <Text style={[s.luegoSigno, { left: 69.5 * escala - 6 }]} maxFontSizeMultiplier={1.2}>?</Text>}
+            </View>
+          </Animated.View>
+          <Animated.View entering={reducido ? undefined : FadeIn.delay(1400).duration(400)} style={s.luegoNombre}>
+            <Text style={s.luegoTexto} maxFontSizeMultiplier={1.2}>{t(`progreso.plan.siguiente.${que}`)}</Text>
+          </Animated.View>
+        </>
+      )}
     </View>
   );
 }
@@ -516,6 +561,11 @@ const s = StyleSheet.create({
   puntoMeta: { color: colores.oroClaro },
   mantEtq: { position: 'absolute', top: 2, width: 80, marginLeft: -40, alignItems: 'center' },
   mantTexto: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 0.4, color: colores.salvia },
+  luego: { position: 'absolute', right: 0, top: 8.5, alignItems: 'flex-end' },
+  luegoRecorte: { height: 24, overflow: 'hidden', alignSelf: 'flex-start' },
+  luegoSigno: { position: 'absolute', top: 3, width: 12, textAlign: 'center', fontFamily: letras.texto, fontSize: 14, lineHeight: 17, color: 'rgba(239, 230, 207, 0.55)' },
+  luegoNombre: { marginTop: 3.5 },
+  luegoTexto: { fontFamily: letras.texto, fontSize: 10.5, lineHeight: 12, color: colores.pergamino, opacity: 0.85 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
   filaTitulo: { flex: 1, fontFamily: letras.texto, fontSize: 15, color: colores.pergamino },
   filaValor: { flexShrink: 1, fontFamily: letras.texto, fontSize: 14, color: 'rgba(239, 230, 207, 0.6)', textAlign: 'right', fontVariant: ['tabular-nums'] },
