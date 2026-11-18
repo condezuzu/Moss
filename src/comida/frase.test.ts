@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { conCon, leerFrase, mismoNombre } from './frase';
+import { conCon, leerFrase, mismoNombre, porComida } from './frase';
 
 /** Lo que se busca y la cantidad de cada alimento: «2 huevo revuelto», «½ taza avena». */
 const resumen = (texto: string, esNombre?: (b: string) => boolean, idioma: 'es' | 'en' = 'es') =>
@@ -204,5 +204,62 @@ describe('la comida dicha de una vez', () => {
     expect(dicho.buscado).toBe('arroz y pollo');
     expect(dicho.partes?.map((x) => x.buscado)).toEqual(['arroz', 'pollo']);
     expect(leerFrase('un huevo', 'es').dichos[0].partes).toBeUndefined();
+  });
+});
+
+describe('varias comidas en una frase (lo pediste el 18/11/2026)', () => {
+  /** Cada grupo: su comida (o «hora»), « ayer» si es de ayer, y lo que se busca con su cantidad. */
+  const grupos = (texto: string, idioma: 'es' | 'en' = 'es') =>
+    leerFrase(texto, idioma).grupos.map((g) => [`${g.comida ?? 'hora'}${g.ayer ? ' ayer' : ''}`, g.dichos.map((d) => `${d.cantidad ?? '–'} ${d.buscado}`)]);
+
+  it('cada alimento va a su comida, con o sin puntuación', () => {
+    expect(grupos('en el desayuno dos huevos y un café en el almuerzo una milanesa y de merienda dos bizcochos')).toEqual([
+      ['desayuno', ['2 huevo', '1 café']], ['almuerzo', ['1 milanesa']], ['merienda', ['2 bizcocho']],
+    ]);
+    expect(grupos('Desayuno: avena. Almuerzo: pollo. Cena: una tarta.')).toEqual([['desayuno', ['– avena']], ['almuerzo', ['– pollo']], ['cena', ['1 tarta']]]);
+    expect(grupos('desayuné un café, almorcé una milanesa y a la noche una pizza')).toEqual([['desayuno', ['1 café']], ['almuerzo', ['1 milanesa']], ['cena', ['1 pizza']]]);
+    expect(grupos('for breakfast two eggs, for lunch a salad', 'en')).toEqual([['desayuno', ['2 egg']], ['almuerzo', ['1 salad']]]);
+  });
+
+  it('la comida que se nombra dos veces se suma, y lo que no dice comida queda para la de la hora', () => {
+    expect(grupos('en el desayuno dos huevos, en el almuerzo una milanesa y también en el desayuno un café')).toEqual([
+      ['desayuno', ['2 huevo', '1 café']], ['almuerzo', ['1 milanesa']],
+    ]);
+    expect(grupos('dos huevos y en el almuerzo una milanesa')).toEqual([['hora', ['2 huevo']], ['almuerzo', ['1 milanesa']]]);
+    expect(grupos('dos huevos y un café')).toEqual([['hora', ['2 huevo', '1 café']]]);
+  });
+
+  it('la comida al final se lleva lo de antes', () => {
+    expect(grupos('comí dos huevos en el desayuno y una milanesa en el almuerzo')).toEqual([['desayuno', ['2 huevo']], ['almuerzo', ['1 milanesa']]]);
+    expect(grupos('an apple as a snack', 'en')).toEqual([['snack', ['1 apple']]]);
+  });
+
+  it('«ayer» y «hoy» valen desde donde se dicen', () => {
+    expect(grupos('ayer en el desayuno dos huevos y hoy en el almuerzo una milanesa')).toEqual([['desayuno ayer', ['2 huevo']], ['almuerzo', ['1 milanesa']]]);
+    expect(grupos('en el desayuno un café y anoche una pizza')).toEqual([['desayuno', ['1 café']], ['cena ayer', ['1 pizza']]]);
+    expect(grupos('yesterday for lunch a burger', 'en')).toEqual([['almuerzo ayer', ['1 burger']]]);
+  });
+
+  it('lo dictado sin comas, las correcciones de alimento y los números con palabras', () => {
+    expect(grupos('2 huevos 1 tostada 1 café')).toEqual([['hora', ['2 huevo', '1 tostada', '1 café']]]);
+    expect(grupos('comí dos huevos una tostada y un café')).toEqual([['hora', ['2 huevo', '1 tostada', '1 café']]]);
+    expect(grupos('un café, no, mejor un té')).toEqual([['hora', ['1 té']]]);
+    expect(grupos('dos huevos no tres huevos')).toEqual([['hora', ['3 huevo']]]);
+    expect(grupos('una medialuna, no, mejor dos')).toEqual([['hora', ['2 medialuna']]]);
+    expect(leerFrase('ciento cincuenta gramos de pollo', 'es').dichos[0]).toMatchObject({ cantidad: 150, unidad: 'g' });
+    expect(leerFrase('two hundred grams of rice', 'en').dichos[0]).toMatchObject({ cantidad: 200, unidad: 'g' });
+  });
+
+  it('«con» y una cantidad es otra cosa; con dos «con», se corta donde queda un nombre de la base', () => {
+    expect(grupos('un café con leche con dos medialunas')).toEqual([['hora', ['1 café', '– leche', '2 medialuna']]]);
+    const conNombre = (b: string) => b === 'café con leche';
+    expect(leerFrase('un café con leche con tostadas', 'es', conNombre).dichos.map((d) => [d.buscado, d.acompanante ?? false])).toEqual([['café con leche', false], ['tostada', true]]);
+  });
+
+  it('porComida: lo que no dijo comida va a la de la hora y se junta con lo que ya iba ahí', () => {
+    const leida = leerFrase('dos huevos y en el almuerzo una milanesa', 'es');
+    expect(porComida(leida.grupos, 'almuerzo').map((g) => [g.comida, g.ayer, g.dichos.length])).toEqual([['almuerzo', false, 2]]);
+    expect(porComida(leida.grupos, 'desayuno').map((g) => [g.comida, g.dichos.length])).toEqual([['desayuno', 1], ['almuerzo', 1]]);
+    expect(porComida(leerFrase('y una banana', 'es').grupos, 'cena', true)).toMatchObject([{ comida: 'cena', ayer: true }]);
   });
 });

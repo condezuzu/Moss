@@ -106,4 +106,47 @@ export type LoDeSalud = {
   pasosRecientes: { desde: number; hasta: number; pasos: number }[];
   /** El primer peso de cada día de Moss, en kg. */
   pesos: Map<ClaveDia, number>;
+  /** Los entrenamientos de las últimas dos semanas; sin pedirlos todavía (quien pasó la entrada antes del 18/11/2026), ninguno. */
+  entrenamientos?: EntrenoDeSalud[];
 };
+
+// ------------------------------------------------------------ los entrenamientos
+// Un entrenamiento de Salud de ese día, de cualquier fuente (el reloj, un anillo, Strava, Fitness), cuenta como
+// «entrenaste» (lo pediste el 18/11/2026). Se lee el tipo, cuándo empezó y terminó, cuánto duró y las calorías
+// activas si vienen; nada más.
+
+/** Lo que importa de un entrenamiento de HealthKit (HKWorkout). */
+export type DeSaludEntreno = {
+  workoutActivityType: number;
+  startDate: Date;
+  endDate: Date;
+  duration?: { unit: string; quantity: number };
+  totalEnergyBurned?: { unit: string; quantity: number };
+};
+
+/** Un entrenamiento de Salud: el día de Moss en que empezó, el tipo (HKWorkoutActivityType), los instantes en ms y las kcal activas, si vienen. */
+export type EntrenoDeSalud = { dia: ClaveDia; tipo: number; desde: number; hasta: number; minutos: number; kcal: number | null };
+
+/**
+ * Lo que no es entrenar, aunque se anote como entrenamiento: caminar (52) y en silla a paso de caminar (70), enfriar
+ * (80), prepararse y recuperarse (33) y mente y cuerpo (29). Y menos de 10 minutos tampoco.
+ */
+const NO_ES_ENTRENAR: ReadonlySet<number> = new Set([52, 70, 80, 33, 29]);
+const MINUTOS_PARA_CONTAR = 10;
+
+/** Un entrenamiento de Salud, con el día de Moss en que empezó (lo de antes del corte es del día anterior). Lo que no se entiende queda afuera. */
+export function entrenoDeSalud(w: DeSaludEntreno, corte: number): EntrenoDeSalud | null {
+  const desde = w.startDate.getTime();
+  const hasta = w.endDate.getTime();
+  if (!(hasta > desde)) return null;
+  // La duración de Salud no cuenta las pausas; sin ella, de punta a punta.
+  const segundos = w.duration?.unit === 's' && Number.isFinite(w.duration.quantity) && w.duration.quantity > 0 ? w.duration.quantity : (hasta - desde) / 1000;
+  const kcal = w.totalEnergyBurned && Number.isFinite(w.totalEnergyBurned.quantity) && w.totalEnergyBurned.quantity > 0 ? Math.round(w.totalEnergyBurned.quantity) : null;
+  return { dia: diaLogico(w.startDate, corte), tipo: w.workoutActivityType, desde, hasta, minutos: Math.round(segundos / 60), kcal };
+}
+
+export const cuentaComoEntrenar = (e: EntrenoDeSalud) => e.minutos >= MINUTOS_PARA_CONTAR && !NO_ES_ENTRENAR.has(e.tipo);
+
+/** Los entrenamientos de un día de Moss que cuentan como entrenar, en orden. */
+export const entrenosDelDia = (lista: readonly EntrenoDeSalud[] | undefined, dia: ClaveDia): EntrenoDeSalud[] =>
+  (lista ?? []).filter((e) => e.dia === dia && cuentaComoEntrenar(e)).sort((a, b) => a.desde - b.desde);

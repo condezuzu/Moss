@@ -1,17 +1,17 @@
 // Leer Salud al abrir la app y al volver (spec/plan.md, etapa 8; spec/sueno.md): lo de hoy para los
 // hábitos que se encienden solos (pasos, agua, atención plena y lo dormido anoche), las noches de las
-// últimas cuatro semanas con lo que mide el reloj, y el peso. Solo si ya se pidió Salud: leer un
+// últimas cuatro semanas con lo que mide el reloj, el peso y los entrenamientos. Solo si ya se pidió Salud: leer un
 // tipo que no se pidió cierra la app. Lo que falla vuelve vacío: nunca se inventa.
 
 import {
-  queryCategorySamples, queryQuantitySamples, queryStatisticsForQuantity, type CategoryTypeIdentifier, type QuantityTypeIdentifier,
+  queryCategorySamples, queryQuantitySamples, queryStatisticsForQuantity, queryWorkoutSamples, type CategoryTypeIdentifier, type QuantityTypeIdentifier,
 } from '@kingstinct/react-native-healthkit';
 
 import { promedioDePasos } from '@/dominio/cuestionario';
 import { CORTE_DE_FABRICA, diaLogico, partesDe } from '@/dominio/fechas';
 import { armarNoches, soloEnCama } from '@/dominio/sueno';
-import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, ultimaPorDia, type DeSalud, type LoDeSalud } from './convertir';
-import { saludPedida } from './salud';
+import { entrenoDeSalud, fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, ultimaPorDia, type DeSalud, type DeSaludEntreno, type LoDeSalud } from './convertir';
+import { entrenamientosPedidos, saludPedida } from './salud';
 
 const DIA_MS = 86_400_000;
 
@@ -55,6 +55,16 @@ async function categoria(id: CategoryTypeIdentifier, desde: Date, hasta: Date): 
   }
 }
 
+/** Los entrenamientos entre dos momentos, solo si ya se pidieron: leerlos sin pedirlos cierra la app. */
+async function entrenamientos(desde: Date, hasta: Date): Promise<DeSaludEntreno[]> {
+  if (!(await entrenamientosPedidos())) return [];
+  try {
+    return (await queryWorkoutSamples({ limit: 0, filter: { date: { startDate: desde, endDate: hasta } } })) as unknown as DeSaludEntreno[];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Los pasos por día de las últimas dos semanas (sin hoy, que va por la mitad), para sugerir en el cuestionario
  * cuánto te mueves. Día por día y con la suma de Salud, que no cuenta dos veces lo del iPhone y lo del reloj.
@@ -86,7 +96,7 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
   const hace = (dias: number) => new Date(hoy.getTime() - dias * DIA_MS);
   // Las noches empiezan a las 18 del día anterior.
   const desdeLasNoches = new Date(hace(28).getTime() - 6 * 3_600_000);
-  const [pasos, agua, mindful, sueno, reposo, pesos, recientes] = await Promise.all([
+  const [pasos, agua, mindful, sueno, reposo, pesos, recientes, entrenos] = await Promise.all([
     suma('HKQuantityTypeIdentifierStepCount', 'count', hoy, finDelDia),
     suma('HKQuantityTypeIdentifierDietaryWater', 'mL', hoy, finDelDia),
     categoria('HKCategoryTypeIdentifierMindfulSession', hoy, finDelDia),
@@ -95,6 +105,8 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
     cantidades('HKQuantityTypeIdentifierBodyMass', 'kg', hace(60), ahora),
     // Sin reloj, los pasos de la noche y la mañana dicen cuándo estabas despierto (src/dominio/sinReloj.ts).
     cantidades('HKQuantityTypeIdentifierStepCount', 'count', new Date(ahora.getTime() - 30 * 3_600_000), ahora),
+    // Los entrenamientos de las dos semanas: cuentan como «entrenaste» y, con sus calorías, para tu energía.
+    entrenamientos(hace(14), ahora),
   ]);
   const muestras = sueno.flatMap((m) => muestraDeSueno(m) ?? []);
   const fuentes = fuentesDe(sueno);
@@ -131,5 +143,6 @@ export async function leerSalud(ahora: Date = new Date(), elegida: string | null
     lecturas: { frecuencia: lecturasDe(frecuencia), variabilidad: lecturasDe(variabilidad), respiracion: lecturasDe(respiracion), reposo: ultimaPorDia(reposo) },
     pesos: primeraPorDia(pesos, corte),
     pasosRecientes: pasosDe(recientes),
+    entrenamientos: entrenos.flatMap((w) => entrenoDeSalud(w, corte) ?? []),
   };
 }

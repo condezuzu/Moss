@@ -24,7 +24,8 @@
 //   arma con esa hora. Lo nuevo de la mañana y de la noche lo arma sigueElDespertar.ts y entra como lo que conviene.
 // - Una sola cuenta de la noche (el 17/11, con la galería 50): con tu periodo de melatonina (Sueno.periodo, de
 //   melatonina.ts), la hora de acostarte y las del periodo son las suyas, las mismas que dice Sueño (horasDeSueno).
-//   Y el título de cada aviso dice qué hacer; el cuerpo, el detalle con la hora.
+// - Sugieren, no mandan (lo pediste el 18/11/2026, en lugar del título que decía qué hacer): el dato primero (tu
+//   periodo de melatonina, cuánto falta, tu deuda) y, si hace falta, una sugerencia suave con su porqué.
 
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
 import { claveDeMarca, type Marca } from './dias';
@@ -611,9 +612,9 @@ export type ParaElTexto = {
 const ACOSTARTE = 'recordatorios.acostarte';
 
 /**
- * El de acostarte (reescrito el 17/11/2026): el título dice la hora y el cuerpo, cuánto falta y por qué esa: te
- * deja dormido dentro de tu periodo de melatonina. La noche que nombra la deuda, que no lo dejes para más tarde;
- * sin periodo, cuánto dormirías.
+ * El de acostarte (reescrito el 18/11/2026, sin mandar): el título dice tu hora y el cuerpo, cuánto falta y por qué
+ * esa: te deja dormido dentro de tu periodo de melatonina. La noche que nombra la deuda, que a tu hora ayuda a
+ * bajarla; sin periodo, cuánto dormirías.
  */
 function textoDeAcostarte(a: Aviso, h: ParaElTexto): { titulo: string; texto: string } {
   const cama = a.dormirA ?? a.minutos;
@@ -648,7 +649,7 @@ function textoDeLoQueFalta(f: Falta, h: ParaElTexto): string {
 const CONVIENE = 'recordatorios.conviene';
 
 /**
- * Lo que conviene, en dos partes, como Rise: el título dice qué hacer y el texto, a qué hora y cuánto.
+ * Lo que conviene, en dos partes, como Rise: el título dice de qué se trata y el texto, a qué hora, cuánto y por qué.
  * Sin gramos (sin meta o con los números ocultos), lo mismo sin números.
  */
 function textoDeLoQueConviene(c: Conviene, h: ParaElTexto): { titulo: string; texto: string } {
@@ -666,9 +667,13 @@ function textoDeLoQueConviene(c: Conviene, h: ParaElTexto): { titulo: string; te
       return { titulo: de('despues.titulo'), texto: c.proteina ? de('despues.cuanto', { p: c.proteina, donde }) : de('despues.sinNumeros', { donde }) };
     }
     case 'cafe':
+      // El corte nombra tu periodo de melatonina, del que sale; sin periodo, la hora de acostarte.
       return c.forma === 'antes'
-        ? { titulo: de('cafe.titulo'), texto: de('cafe.antes', { hora: horaDeReloj(c.a), horas: h.duracion(c.faltan ?? 0) }) }
-        : { titulo: de('cafe.tituloUltimo'), texto: de(`cafe.${c.forma}`, { hora: horaDeReloj(c.a), entreno: horaDeReloj(c.entreno ?? 0) }) };
+        ? { titulo: de('cafe.titulo'), texto: de('cafe.antes', { hora: horaDeReloj(c.a), horas: h.duracion(c.faltan) }) }
+        : {
+          titulo: de('cafe.tituloUltimo'),
+          texto: de(`cafe.${c.forma}.${c.periodo !== undefined ? 'periodo' : 'cama'}`, { periodo: horaDeReloj(c.periodo ?? 0), cama: horaDeReloj(c.cama), entreno: horaDeReloj(c.entreno ?? 0) }),
+        };
     case 'ultimaComida':
       return { titulo: de('ultimaComida.titulo'), texto: de('ultimaComida.texto', { hora: horaDeReloj(c.a), cama: horaDeReloj(c.cama) }) };
     case 'entrenarTarde':
@@ -693,9 +698,9 @@ const DESPERTAR = 'recordatorios.despertar';
 export const PENDIENTES_EN_EL_AVISO = 4;
 
 /**
- * Lo del día que sigue tu despertar (reescrito el 17/11/2026): el título dice qué hacer o lo que importa (la deuda,
- * la hora del periodo) y el cuerpo, el detalle. Sin desayuno, cada comida dice en el título cuánto le toca; sin
- * números, es la hora de esa comida.
+ * Lo del día que sigue tu despertar (reescrito el 18/11/2026, sin mandar): el título dice lo que importa (la deuda,
+ * la hora del periodo, cuánto falta) y el cuerpo, el detalle y el porqué. Sin desayuno, cada comida dice en el título
+ * cuánto le toca; sin números, es la hora de esa comida.
  */
 function textoDelDespertar(d: DelDespertar, h: ParaElTexto): { titulo: string; texto: string } {
   const de = (clave: string, valores?: Record<string, string | number>) => h.t(`${DESPERTAR}.${clave}`, valores);
@@ -729,7 +734,7 @@ function textoDelDespertar(d: DelDespertar, h: ParaElTexto): { titulo: string; t
   }
 }
 
-/** Los avisos que van en dos partes, el título con qué hacer y el cuerpo con el detalle; los demás, null. */
+/** Los avisos que van en dos partes, el título con lo que importa y el cuerpo con el detalle; los demás, null. */
 function enDosPartes(a: Aviso, h: ParaElTexto): { titulo: string; texto: string } | null {
   if (a.despertar) return textoDelDespertar(a.despertar, h);
   if (a.conviene) return textoDeLoQueConviene(a.conviene, h);
@@ -742,7 +747,7 @@ function enDosPartes(a: Aviso, h: ParaElTexto): { titulo: string; texto: string 
 }
 
 /**
- * El título de un aviso: lo de la noche, lo de la mañana y lo que conviene dicen ahí qué hacer; el horario, las
+ * El título de un aviso: lo de la noche, lo de la mañana y lo que conviene dicen ahí lo que importa; el horario, las
  * comidas sin anotar, lo que falta y los hábitos llevan el nombre de la app.
  */
 export function tituloDelAviso(n: Notificacion, h: ParaElTexto): string {

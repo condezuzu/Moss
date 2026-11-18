@@ -7,11 +7,13 @@
 // - «Tu despertar» (16/11, para aprobar): el día que sigue tu despertar (SigueElDespertar), uno que se despierta a
 //   las 10 y no desayuna. Hasta las 10 no suena nada; después, la deuda, pesarse y «¿Desayunas hoy?» con sus dos
 //   botones (tocarlos cambia el resto del día), las comidas con lo del desayuno repartido y la noche.
-// Lo que conviene (3/11, como Rise) lleva de título lo que hay que hacer; los demás, el nombre de la app.
-// Los de la noche y la mañana, reescritos (17/11, aprobados con la galería 50 y ya en la app: Avisos.tituloDelAviso
-// y textoDelAviso): el título dice qué hacer y el cuerpo, el detalle con la hora: tu periodo de melatonina, bajar el
-// ritmo, bajar las luces, acostarte, anotar lo que tienes en la cabeza, las gafas, la deuda al despertar, pesarte, el
-// desayuno y las comidas sin desayuno. En «Tu despertar», la noche sale de tu periodo de melatonina, el mismo de la
+// Lo que conviene (3/11, como Rise) lleva de título de qué se trata; los demás, el nombre de la app.
+// Los de la noche y la mañana, reescritos otra vez el 18/11 (Avisos.tituloDelAviso y textoDelAviso, las mismas
+// palabras de la app): sugieren, no mandan. El dato primero (tu periodo de melatonina, cuánto falta, tu deuda) y, si
+// hace falta, una sugerencia suave con su porqué: tu periodo de melatonina, bajar el ritmo, bajar las luces,
+// acostarte, anotar lo que tienes en la cabeza, las gafas, la deuda al despertar, pesarte, el desayuno y las comidas
+// sin desayuno. El café (18/11) suena en su corte, «Desde ahora, mejor sin cafeína», y el corte sale de tu periodo
+// de melatonina: en «Tu despertar», con «Café» prendido. En «Tu despertar», la noche sale de tu periodo de melatonina, el mismo de la
 // tarjeta de Sueño y de Perfil › Avisos (Melatonina, con las noches de la galería): los tres dicen las mismas horas.
 // Con «Anotar lo pendiente» (apagado de fábrica), a la mañana llega «Lo que hay que hacer hoy» con lo que anotaste
 // y no tachaste (SigueElDespertar). Tocar el de la noche abre la nota en Sueño; el de la mañana, Inicio.
@@ -106,7 +108,7 @@ const AvisosBloqueo = (() => {
   const ELEGIDO_DEL_DESPERTAR = { pesarse: { encendido: true, todos: true }, horario: HORARIO_DEL_DESPERTAR };
 
   function crear(tel, opciones) {
-    const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0, deporte: null, desayuno: 'directo', anotar: false, gafas: false };
+    const s = { modo: 'dia', hora: hm('17:05'), idioma: null, dia: 'tarde', otraHora: false, cenaTemprano: false, pocaProteina: false, cierre: 0, deporte: null, desayuno: 'directo', anotar: false, gafas: false, cafe: false };
     const conDeporte = () => s.dia === 'deporte' && !!s.deporte;
     const entrenoDe = (dia) => (dia === 'deporte' ? (s.deporte && s.deporte.sesion ? s.deporte.sesion.inicio : null) : DIAS.find(([clave]) => clave === dia)[2]);
     const diaDe = () => (conDeporte() ? s.deporte.dia : DIA);
@@ -218,11 +220,11 @@ const AvisosBloqueo = (() => {
     function lineaDelDespertar() {
       const pendientes = s.anotar ? pendientesDeAnoche() : [];
       const periodo = periodoDeHoy();
-      const clave = JSON.stringify(['despertar', s.desayuno, s.anotar, s.gafas, pendientes, periodo && [periodo.desde, periodo.acostarse], en()]);
+      const clave = JSON.stringify(['despertar', s.desayuno, s.anotar, s.gafas, s.cafe, pendientes, periodo && [periodo.desde, periodo.acostarse], en()]);
       // Lo de fábrica, con lo que se activa aparte. Son más de diez: el máximo de fábrica sube solo con ellos, como en
       // la app (SigueElDespertar.maximoDeFabrica: dos por anotar lo pendiente y uno por las gafas). Con diez, se
       // caerían los últimos de la noche.
-      const ajustes = SigueElDespertar.deFabrica({ ...ELEGIDO_DEL_DESPERTAR, ...(s.anotar ? { descarga: { encendido: true } } : {}), ...(s.gafas ? { gafas: { encendido: true } } : {}) }, (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'));
+      const ajustes = SigueElDespertar.deFabrica({ ...ELEGIDO_DEL_DESPERTAR, ...(s.anotar ? { descarga: { encendido: true } } : {}), ...(s.gafas ? { gafas: { encendido: true } } : {}), ...(s.cafe ? { cafe: { encendido: true } } : {}) }, (c) => HORARIO_DEL_DESPERTAR[c] ?? hm('16:00'));
       if (hechos.has(clave)) return hechos.get(clave);
       const llegados = [];
       const llego = {};
@@ -261,6 +263,12 @@ const AvisosBloqueo = (() => {
       else nota.push(`Todavía no hay periodo de melatonina (menos de 3 noches en la semana): te acuestas a las ${u.horaMin(horas.acostarse)}, la hora de antes, que un despertar tarde corre la mitad.`);
       if (s.anotar) nota.push('Con «Anotar lo pendiente», dos más: el de la noche (tocarlo abre la nota en Sueño) y, a la mañana, «Lo que hay que hacer hoy», 20 minutos después de la pregunta del desayuno (tocarlo abre Inicio).');
       if (s.gafas) nota.push('Con las gafas, la noche queda apretada: cada aviso va a 20 minutos del anterior, y el que tendría que esperar más de 45 no suena.');
+      if (s.cafe) {
+        const cafe = todos.find((x) => x.aviso.id === 'cafe');
+        nota.push(cafe && horas.periodo
+          ? `Con «Café», a las ${u.horaMin(cafe.minutos)}: tu periodo empieza a las ${u.horaMin(horas.periodo.desde)} y te acuestas a las ${u.horaMin(horas.acostarse)}; desde ahí, 9 h para un café (Gardiner 2023), 13 con un preentreno.`
+          : 'Con «Café», sin lugar en el máximo de fábrica: no suena.');
+      }
       if (s.anotar || s.gafas) nota.push(`El máximo de fábrica sube solo a ${SigueElDespertar.maximoDeFabrica({ descarga: { encendido: s.anotar }, gafas: { encendido: s.gafas } })}: con 10 se caerían los últimos de la noche. Si lo elegiste a mano en Perfil, queda el tuyo.`);
       return nota.join(' ');
     }
@@ -347,8 +355,11 @@ const AvisosBloqueo = (() => {
         ]],
         ['Café', [
           c({ que: 'cafe', forma: 'antes', a: hm('15:00'), faltan: 480 }),
-          c({ que: 'cafe', forma: 'ultimo', a: hm('15:00') }),
-          c({ que: 'cafe', forma: 'ultimoEntrenas', a: hm('15:00'), entreno: hm('20:30') }),
+          // El corte, con tu periodo de melatonina (empieza a las 00:00, te acuestas a las 23:45) y sin él.
+          c({ que: 'cafe', forma: 'ultimo', a: hm('14:45'), cama: hm('23:45'), periodo: 24 * 60 }),
+          c({ que: 'cafe', forma: 'ultimo', a: hm('14:00'), cama: hm('23:00') }),
+          c({ que: 'cafe', forma: 'ultimoEntrenas', a: hm('14:45'), cama: hm('23:45'), periodo: 24 * 60, entreno: hm('20:30') }),
+          c({ que: 'cafe', forma: 'ultimoEntrenas', a: hm('14:00'), cama: hm('23:00'), entreno: hm('20:30') }),
         ]],
         ['Después de entrenar', [
           c({ que: 'despuesDeEntrenar', comida: 'merienda', a: hm('17:30'), proteina: 40 }),
@@ -518,9 +529,9 @@ const AvisosBloqueo = (() => {
       }
       if (!despertar) panel.appendChild(chips);
       // En «Tu despertar», lo apagado de fábrica: anotar lo pendiente (también activa la nota de Sueño y la lista de
-      // Inicio) y las gafas.
+      // Inicio), las gafas y el café.
       const extras = el('div', 'ab-chips');
-      for (const [clave, nombre] of [['anotar', 'Anotar lo pendiente'], ['gafas', 'Gafas']]) {
+      for (const [clave, nombre] of [['anotar', 'Anotar lo pendiente'], ['gafas', 'Gafas'], ['cafe', 'Café']]) {
         const c = boton('ab-chip', nombre, () => { s[clave] = !s[clave]; if (clave === 'anotar') Periodo.pendientes.activar(s.anotar); pintar(); });
         c.setAttribute('aria-pressed', String(s[clave]));
         extras.appendChild(c);

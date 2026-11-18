@@ -17,11 +17,11 @@ import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
 import { deportesDe } from '@/dominio/cuestionario';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
-import { periodoDeMelatonina } from '@/dominio/melatonina';
+import { periodoDeMelatonina, seVeElPeriodo } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
 import { segunElDeporte, textoDelDeporte } from '@/dominio/segunElDeporte';
 import { deudaDeSueno, pocoSuenoSostenido, ultimasNoches, type Noche } from '@/dominio/sueno';
-import { saludPedida } from '@/salud/salud';
+import { pedirEntrenamientos, saludPedida } from '@/salud/salud';
 import { plural, t, type Clave } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
@@ -37,7 +37,7 @@ import { Afinar } from './Afinar';
 import { CartaDeSueno, Crece, degradado, letraDe, Nota, SN, Texto } from './comunes';
 import { LaDeuda } from './Deuda';
 import { ElHorario, LaCalidad, LasFuentes, LoDelReloj, VitalesSinReloj } from './Detalle';
-import { TarjetaDeEnergia, useEnergia, useIrAEnergia } from './Energia';
+import { TarjetaDeEnergia, useAhora, useEnergia, useIrAEnergia } from './Energia';
 import { ElMovimiento, Invitacion, LaNoche, LaNocheDeMoss, SinNoche } from './LaNoche';
 import { LaManana } from './Manana';
 import { conPendientes, FilaDePendientes, LaNota, useAbrirLaNota } from './Pendientes';
@@ -93,6 +93,8 @@ function useLeerSalud() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setLectura('leyendo');
     anunciar(t('sueno.leer.leyendo'));
+    // Si todavía no se pidieron los entrenamientos, primero eso: después se leen junto con lo demás.
+    await pedirEntrenamientos().catch(() => false);
     const [, pedida] = await Promise.all([actualizarSalud().catch(() => {}), saludPedida(), esperar(GIRA_AL_MENOS)]);
     if (esta !== vez.current) return;
     // Sin Salud pedida no se leyó nada de ahí (sí la noche del teléfono): la ruedita se va sin decir que está al día.
@@ -204,6 +206,8 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const e = useEstado();
   const s = useSueno();
   const energia = useEnergia();
+  // Al minuto: a las 19 aparece el periodo.
+  const ahora = useAhora(60_000);
   // Sin elegir, la de hoy: pasada la medianoche sigue siendo la de hoy, no la de ayer.
   const [elegida, setElegida] = useState<ClaveDia | null>(null);
   const clave = elegida ?? e.hoy;
@@ -225,6 +229,10 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const reducido = useReducedMotion();
   const animar = !reducido;
   const esLaActual = useEsLaActual(SUENO);
+  // Los entrenamientos de Salud se piden una vez al llegar acá a quien ya pasó la entrada, y con eso se vuelve a leer.
+  useEffect(() => {
+    if (esLaActual) pedirEntrenamientos().then((pedidos) => (pedidos ? actualizarSalud() : undefined)).catch(() => {});
+  }, [esLaActual]);
   const scroll = useAnimatedRef<ScrollView>();
   const scrollY = useScrollOffset(scroll);
   // Tocar otra vez la pestaña sube arriba de todo.
@@ -265,6 +273,7 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   // tuyas, el de la persona de ejemplo, sin deuda.
   const deudaDeHoy = conNoches ? deudaDeSueno(ultimasNoches(s.noches, e.hoy, DIAS), s.necesidad) : null;
   const periodo = periodoDeMelatonina(s.noches, e.hoy, { margen: e.latencia, deuda: deudaDeHoy?.minutos ?? null });
+  const deNoche = seVeElPeriodo(ahora, e.corte, reales);
   const reflujo = !!reglasDeCuidados(e)?.cuidados.includes('reflujo');
   const conEnergia = clave === e.hoy && conNoches && !!energia;
   const deporte = lineaDelDeporte(e, reales, s.necesidad);
@@ -288,7 +297,8 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         {/* Debajo, lo de esta noche (17/11): tu periodo de melatonina y, con su aviso activado, la nota de lo pendiente. */}
         {clave === e.hoy && (
           <Aparece>
-            <ElPeriodo periodo={periodo} noches={reales} hoy={e.hoy} conNoches={conNoches} />
+            {/* El periodo, solo de noche (18/11): desde las 19 hasta que te despiertas o el corte del día. */}
+            {deNoche && <Aparece><ElPeriodo periodo={periodo} noches={reales} hoy={e.hoy} conNoches={conNoches} /></Aparece>}
             {conPendientes(e) && <Aparece><FilaDePendientes alTocar={() => setNota(true)} /></Aparece>}
           </Aparece>
         )}

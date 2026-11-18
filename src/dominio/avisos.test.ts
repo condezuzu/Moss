@@ -639,22 +639,30 @@ describe('lo que dice cada aviso', () => {
     for (const aviso of [{ tipo: 'horario', comida: 'cena' }, { tipo: 'comida', comida: 'cena' }, { tipo: 'habito', habito: 'entrenar' }] as const) expect(dos({ minutos: 0, ...aviso })[0]).toBe('Moss');
   });
 
-  it('pesarte: el título dice qué hacer y el cuerpo, cómo', () => {
-    expect(dos({ tipo: 'pesarse', minutos: h('7:40') })).toEqual(['Pésate antes de desayunar', 'Después de ir al baño y siempre igual: así se ve la tendencia.']);
-    expect(dos({ tipo: 'pesarse', minutos: h('7:40'), control: true })).toEqual(['Hoy es tu control: pésate', 'Antes de desayunar, como siempre.']);
-    expect(dos({ tipo: 'pesarse', minutos: h('7:40') }, en as unknown as Rama)[0]).toBe('Weigh yourself before breakfast');
+  it('pesarte: el título lo sugiere y el cuerpo dice cómo y por qué', () => {
+    expect(dos({ tipo: 'pesarse', minutos: h('7:40') })).toEqual(['Buen momento para pesarte', 'Antes de desayunar y después de ir al baño, siempre igual: así se ve la tendencia.']);
+    expect(dos({ tipo: 'pesarse', minutos: h('7:40'), control: true })).toEqual(['Hoy es tu control', 'Un peso antes de desayunar, como siempre, y Moss revisa tu semana.']);
+    expect(dos({ tipo: 'pesarse', minutos: h('7:40') }, en as unknown as Rama)[0]).toBe('A good time to weigh yourself');
   });
 
-  it('acostarte: la hora en el título; en el cuerpo, cuánto falta y tu periodo de melatonina', () => {
+  it('acostarte: tu hora en el título; en el cuerpo, cuánto falta y tu periodo de melatonina, sin mandar', () => {
     const periodo = { desde: h('23:30'), hasta: 24 * 60 + h('0:30') };
     const aviso = (antes: number, extra: Partial<Aviso> = {}) => dos({ tipo: 'dormir', minutos: h('23:15') - antes, dormirA: h('23:15'), periodo, despertarA: 24 * 60 + h('7:30'), duerme: 480, ...extra });
-    expect(aviso(30)).toEqual(['Acuéstate a las 23:15', 'En media hora. Así te duermes dentro de tu periodo de melatonina (23:30 – 00:30).']);
-    expect([15, 45, 60, 20, 0].map((antes) => aviso(antes)[1].split('.')[0])).toEqual(['En 15 minutos', 'En 45 minutos', 'En una hora', 'En 20 minutos', 'Ahora']);
+    expect(aviso(30)).toEqual(['Tu hora de acostarte: 23:15', 'Falta media hora. Es la que te deja dormido dentro de tu periodo de melatonina (23:30 – 00:30).']);
+    expect([15, 45, 60, 20, 0].map((antes) => aviso(antes)[1].split('.')[0])).toEqual(['Faltan 15 minutos', 'Faltan 45 minutos', 'Falta una hora', 'Faltan 20 minutos', 'Es ahora']);
     // La noche que nombra la deuda.
-    expect(aviso(30, { deuda: 240 })[1]).toBe('En media hora. Con 240 min de deuda de sueño, esta noche no lo dejes para más tarde.');
+    expect(aviso(30, { deuda: 240 })[1]).toBe('Falta media hora. Tienes 240 min de deuda de sueño: acostarte a tu hora ayuda a bajarla.');
     // Sin periodo, cuánto dormirías.
-    expect(aviso(30, { periodo: undefined })[1]).toBe('En media hora. Así duermes 480 min y te despiertas a las 07:30.');
-    expect(dos({ tipo: 'dormir', minutos: h('22:45'), dormirA: h('23:15'), periodo }, en as unknown as Rama)).toEqual(['Go to bed at 23:15', 'In half an hour. That way you fall asleep within your melatonin window (23:30 – 00:30).']);
+    expect(aviso(30, { periodo: undefined })[1]).toBe('Falta media hora. A esa hora dormirías 480 min y te despertarías a las 07:30.');
+    expect(dos({ tipo: 'dormir', minutos: h('22:45'), dormirA: h('23:15'), periodo }, en as unknown as Rama)).toEqual(['Your bedtime: 23:15', 'Half an hour to go. It gets you asleep within your melatonin window (23:30 – 00:30).']);
+  });
+
+  it('los de la noche y la mañana sugieren, no mandan: ningún título empieza con una orden, y nunca «a la cama»', () => {
+    const titulos = (o: Rama, ruta = ''): string[] => Object.entries(o).flatMap(([k, v]) => (typeof v === 'string' ? (/titulo/i.test(ruta + k) ? [v] : []) : titulos(v, `${ruta}${k}.`)));
+    const r = (es as unknown as Rama).recordatorios as Rama;
+    const deLaNocheYLaManana = [r.acostarte, r.pesarte, (r.despertar as Rama), (r.conviene as Rama).cafe, (r.conviene as Rama).luces, (r.conviene as Rama).ultimaComida, (r.conviene as Rama).tarde, (r.conviene as Rama).antes] as Rama[];
+    for (const titulo of deLaNocheYLaManana.flatMap((x) => titulos(x))) expect(titulo).not.toMatch(/^(Acuéstate|Ve |Baja |Cena |Come |Pésate|Ponte|Anota |Termina|Almuerza|Merienda |Deja |A dormir)/);
+    expect(JSON.stringify(r)).not.toMatch(/a la cama/i);
   });
 
   it('con un plan, dice qué toca', () => {

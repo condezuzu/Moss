@@ -2104,7 +2104,8 @@ const Comida = (() => {
     // Decir o escribir la comida de una vez (Frase, el mismo lector que la app): en el iPhone escucha
     // el reconocimiento de voz del teléfono; acá la frase de ejemplo se escribe sola, como si se
     // dictara. Cada cosa se busca con el buscador de siempre (como entender.ts) y se revisa: su
-    // cantidad se cambia ahí, y se pregunta solo si cambia el número (40 kcal o un 15 %).
+    // cantidad se cambia ahí, y se pregunta solo si cambia el número (40 kcal o un 15 %). Con varias
+    // comidas en la frase (18/11/2026), cada cosa va a la suya y se revisa por comida.
     const llano = (t) => Buscar.normalizar(t).split(' ').map((p) => (p.length > 3 ? p.replace(/(?:es|s)$/, '') : p)).join(' ');
     const COCCION = /(?:plancha|horno|hervid|frit|asad|cocid|crud|revuelt|guisad|saltead|grill|baked|boiled|fried|roast|cooked|raw|scrambled)/;
     const cambiaElNumero = (a, b) => { const d = Math.abs(a - b); return d >= 40 || (d >= 15 && d >= 0.15 * Math.max(a, b)); };
@@ -2163,6 +2164,18 @@ const Comida = (() => {
       return sola;
     }
 
+    /** Lo entendido por comida, en el orden del día (lo de ayer primero): cada fila es { x, i }. */
+    function gruposDichos(filas) {
+      const gs = [];
+      filas.forEach((f) => {
+        const clave = (f.x.ayer ? 'ayer:' : 'hoy:') + f.x.comida;
+        let g = gs.find((y) => y.clave === clave);
+        if (!g) gs.push((g = { clave, comida: f.x.comida, ayer: f.x.ayer, filas: [] }));
+        g.filas.push(f);
+      });
+      return gs.sort((a, b) => Number(b.ayer) - Number(a.ayer) || Comidas.COMIDAS.indexOf(a.comida) - Comidas.COMIDAS.indexOf(b.comida));
+    }
+
     // Con `foto`, es «¿Qué es? Dilo o escríbelo» (fotos.js): lo mismo, con la miniatura arriba, y lo
     // anotado queda con esa foto. `desde` es de dónde vuela la miniatura.
     function abrirDecir({ escuchar, texto, foto, desde } = {}) {
@@ -2205,7 +2218,6 @@ const Comida = (() => {
         let escuchando = false;
         let reloj = 0;
         let lista = null;
-        let comidaDicha = s.hoja.comida;
         let entendido = null;
         area.addEventListener('input', () => pintarPie());
         function empezar() {
@@ -2236,8 +2248,9 @@ const Comida = (() => {
           if (!frase) return;
           const conNombre = new Set(Frase.conCon(frase, idioma).filter((b) => { const r = buscar(b)[0]; return r && Frase.mismoNombre(r.coincide, b); }));
           const leida = Frase.leerFrase(frase, idioma, (b) => conNombre.has(b));
-          if (leida.comida) comidaDicha = leida.comida;
-          lista = leida.dichos.map(entenderDicho);
+          // Lo que no dice comida va a la de la hoja; con la foto, todo va a una.
+          const grupos = foto ? [{ comida: leida.comida || s.hoja.comida, ayer: false, dichos: leida.dichos }] : Frase.porComida(leida.grupos, s.hoja.comida);
+          lista = grupos.flatMap((g) => g.dichos.map((d) => Object.assign(entenderDicho(d), { comida: g.comida, ayer: g.ayer })));
           entendido = frase;
           escena.haptico('suave');
           pintar();
@@ -2246,12 +2259,26 @@ const Comida = (() => {
           const listos = lista && entendido === area.value.trim() ? lista.filter((x) => x.opciones.length) : [];
           agregarB.hidden = !listos.length;
           entenderB.hidden = !!listos.length;
-          if (listos.length) agregarB.textContent = `${foto ? tx('comida.agregarA.' + comidaDicha) : agregarADe(comidaDicha)} · ${numero(Math.round(sumar(listos.map((x) => x.opciones[x.elegida])).kcal))} kcal`;
+          if (!listos.length) return;
+          // Con varias comidas, «Agregar todo»; con una, «Agregar al almuerzo», con su día.
+          const gs = gruposDichos(listos.map((x) => ({ x })));
+          const una = gs.length === 1 ? gs[0] : null;
+          const que = !una ? tx('comida.decir.agregarTodo') : foto ? tx('comida.agregarA.' + una.comida) : agregarADe(una.comida, una.ayer ? -1 : diaDeLaHoja());
+          agregarB.textContent = `${que} · ${numero(Math.round(sumar(listos.map((x) => x.opciones[x.elegida])).kcal))} kcal`;
         }
         function pintar() {
           resultado.innerHTML = '';
           if (!lista.length) resultado.appendChild(el('p', 'hj-pegar-texto', tx('comida.decir.nada')));
-          lista.forEach((x, i) => {
+          const orden = gruposDichos(lista.map((x, i) => ({ x, i })));
+          orden.forEach((g) => {
+          // Con una sola comida, «Agregar al almuerzo» ya la dice.
+          if (orden.length > 1) {
+            const nombre = tx('comida.comidas.' + g.comida);
+            const titulo = g.ayer ? tx('comida.decir.grupoAyer', { comida: nombre }) : nombre;
+            const kcal = sumar(g.filas.filter(({ x }) => x.opciones.length).map(({ x }) => x.opciones[x.elegida])).kcal;
+            resultado.appendChild(el('h4', 'hj-titulo dc-grupo', `${titulo} · ${numero(Math.round(kcal))} kcal`));
+          }
+          g.filas.forEach(({ x, i }) => {
             const bloque = el('div', 'dc-bloque');
             const fila = el('div', 'dc-fila');
             const textos = el('div', 'hj-fila-txt');
@@ -2291,16 +2318,20 @@ const Comida = (() => {
             }
             resultado.appendChild(bloque);
           });
+          });
           pintarPie();
         }
         function agregar() {
-          const items = lista.filter((x) => x.opciones.length).map((x) => Object.assign({}, x.opciones[x.elegida]));
-          if (!items.length) return;
-          const r = registrarDirecto(items, area.value.trim(), comidaDicha, foto ? foto.hora : undefined, foto ? 0 : diaDeLaHoja());
-          if (foto) fotos.anotar(foto, r.tipo, r.nuevos);
+          const gs = gruposDichos(lista.filter((x) => x.opciones.length).map((x) => ({ x })));
+          if (!gs.length) return;
+          // Cada comida en la suya, en su día (ayer, si se dijo «anoche»).
+          const rs = gs.map((g) => registrarDirecto(g.filas.map(({ x }) => Object.assign({}, x.opciones[x.elegida])), area.value.trim(), g.comida, foto ? foto.hora : undefined, foto ? 0 : g.ayer ? -1 : diaDeLaHoja()));
+          if (foto) fotos.anotar(foto, rs[0].tipo, rs[0].nuevos);
           cerrarHoja();
+          const n = rs.reduce((t, r) => t + r.nuevos.length, 0);
+          const texto = gs.length === 1 ? plural('comida.decir.anotado', n, { comida: tx('comida.aLa.' + gs[0].comida) }) : tx('comida.decir.anotadoVarias', { n, m: gs.length });
           // Deshacer saca lo anotado; la foto no se pierde: vuelve a quedar sin anotar.
-          avisarZona(plural('comida.decir.anotado', items.length, { comida: tx('comida.aLa.' + comidaDicha) }), foto ? () => { r.deshacer(); fotos.desanotar(foto); } : r.deshacer);
+          avisarZona(texto, () => { rs.forEach((r) => r.deshacer()); if (foto) fotos.desanotar(foto); });
         }
         if (escuchar) setTimeout(() => { if (s.hoja && s.hoja.sub === 'hj-decir') empezar(); }, 380);
         else if (texto) entenderYa();

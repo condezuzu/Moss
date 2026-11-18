@@ -1,5 +1,5 @@
 // Comida de cadenas de comida rápida y cafeterías: McDonald's, Burger King, Subway, Mostaza, La Pasiva, Starbucks,
-// KFC, Domino's, Grido, Sbarro y otras comunes en Uruguay. Mismo formato que productos.txt (ver el encabezado de genericos.txt): valores por 100 g y el
+// KFC, Domino's, Grido, Sbarro, Dean & Dennys, la Pizzería Kentucky, Donut City, los bares del chivito y otras comunes en Uruguay. Mismo formato que productos.txt (ver el encabezado de genericos.txt): valores por 100 g y el
 // sodio en mg. Las bebidas también van por 100 g, con su densidad (1,03 la leche; 1 las gaseosas, el café
 // sin leche y lo que lleva hielo).
 // De dónde salen, en este orden: la tabla nutricional oficial de la cadena en Uruguay; si no hay, la de
@@ -11,7 +11,8 @@
 // se anota arriba de cada línea), lo de una tabla sin el peso de la porción y lo de otro país cuando el
 // producto de acá no es el mismo. Lo primero se consultó el 29/10/2026 y lo de más abajo (el resto de cada menú, los combos y las demás cadenas), el 2/11/2026; cada cadena dice sus URL. Los combos son la suma de sus partes.
 // Detalles propios de este archivo: «fuente=…» (cómo se muestra en la app: «Fuente: …») y «aproximado».
-// Los N de producto# van del 1001 al 1499.
+// Los N de producto# van del 1001 al 1999 y, cuando se acaban, desde el 6000 (marcas.txt usa del 2000 en adelante y salta
+// los que ya están acá). El 18/11/2026 se sumaron, del 1124 al 1269, las cadenas y los locales de Uruguay que faltaban (al final).
 // Dónde está cada cadena regional (consultado el 9/11/2026): la búsqueda no ofrece su menú afuera de esos
 // países. Las globales (McDonald's, Burger King, Subway, Starbucks, KFC, Domino's, Sbarro, Cinnabon) no lo
 // dicen: están en todos lados, aunque sus valores sean de la tabla de Uruguay.
@@ -21,6 +22,9 @@
 //   gestion.pe, emol.com 2026); Bolivia, Brasil y México, solo en análisis.
 // - Freddo, de Argentina: también en Uruguay, Brasil, Chile, Perú, Paraguay, Panamá y Puerto Rico (cronista.com).
 // - La Pasiva, Il Mondo della Pizza, La Cigale y Porto Vanila: solo en Uruguay (no se encontró ningún local afuera).
+// - Dean & Dennys y la Pizzería Kentucky, de Argentina: también en Uruguay (dean.ar; Forbes Argentina e iProfesional, 18/11/2026).
+// - Donut City, Medialunas Calentitas, Confitería Carrera, Las Delicias, Don Peperone y los bares de un solo local (Facal,
+//   Tinkal, Chivitería Marcos y Bar Arocena): solo en Uruguay.
 @paises Mostaza=AR PY UY
 @paises Grido=AR CL PE PY UY
 @paises Freddo=AR BR CL PA PE PR PY UY
@@ -28,6 +32,17 @@
 @paises Il Mondo della Pizza=UY
 @paises La Cigale=UY
 @paises Porto Vanila=UY
+@paises Dean & Dennys=AR UY
+@paises Pizzería Kentucky=AR UY
+@paises Donut City=UY
+@paises Medialunas Calentitas=UY
+@paises Confitería Carrera=UY
+@paises Las Delicias=UY
+@paises Don Peperone=UY
+@paises Facal=UY
+@paises Tinkal=UY
+@paises Chivitería Marcos=UY
+@paises Bar Arocena=UY
 
 # comida rapida
 // McDonald's: la tabla oficial de Uruguay, que está en la página de cada producto (botón «Información
@@ -213,9 +228,9 @@ Flan con dulce de leche La Pasiva | La Pasiva flan with dulce de leche | product
 //   https://www.starbucks.com/menu/product/407/hot), con los valores de cada tamaño.
 // Aproximados: lo de la vitrina. En Uruguay y Argentina son productos de acá; los valores son los del
 // producto más parecido de Estados Unidos, con su peso.
-Caffè latte Tall Starbucks | Starbucks caffè latte, Tall | producto#1094 41.1 2.7 4.1 1.6 | 1 tall / 1 tall=365 | latte Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=3.8 · saturadas=1 · sodio=37
-Caffè latte Grande Starbucks | Starbucks caffè latte, Grande | producto#1095 39 2.7 3.9 1.4 | 1 grande / 1 grande=487 | latte Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=3.7 · saturadas=0.9 · sodio=34.9
-Caffè latte Venti Starbucks | Starbucks caffè latte, Venti | producto#1096 41.1 2.6 3.9 1.5 | 1 venti / 1 venti=609 | latte Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=3.8 · saturadas=1 · sodio=36.1
+Caffè latte Tall Starbucks | Starbucks caffè latte, Tall | producto#1094 41.1 2.7 4.1 1.6 | 1 tall / 1 tall=365 | latte Starbucks · café con leche Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=3.8 · saturadas=1 · sodio=37
+Caffè latte Grande Starbucks | Starbucks caffè latte, Grande | producto#1095 39 2.7 3.9 1.4 | 1 grande / 1 grande=487 | latte Starbucks · café con leche Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=3.7 · saturadas=0.9 · sodio=34.9
+Caffè latte Venti Starbucks | Starbucks caffè latte, Venti | producto#1096 41.1 2.6 3.9 1.5 | 1 venti / 1 venti=609 | latte Starbucks · café con leche Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=3.8 · saturadas=1 · sodio=36.1
 Cappuccino Tall Starbucks | Starbucks cappuccino, Tall | producto#1097 27.4 1.9 2.7 1.1 | 1 tall / 1 tall=365 | capuchino Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=2.5 · saturadas=0.7 · sodio=24.7
 Cappuccino Grande Starbucks | Starbucks cappuccino, Grande | producto#1098 28.7 1.8 2.9 1 | 1 grande / 1 grande=487 | capuchino Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=2.5 · saturadas=0.6 · sodio=24.6
 Cappuccino Venti Starbucks | Starbucks cappuccino, Venti | producto#1099 32.8 2.1 3.3 1.3 | 1 venti / 1 venti=609 | capuchino Starbucks | marca=Starbucks · fuente=Starbucks Estados Unidos, información del menú, 2026 (con leche 2 %) · densidad=1.03 · fibra=0 · azucares=3.1 · saturadas=0.8 · sodio=29.6
@@ -669,6 +684,10 @@ Pack Dúo Clásico con 2 McNuggets de 4 unidades McDonald's | McDonald's Classic
 Pack Dúo Hamburguesa con Queso y McNuggets de 10 unidades McDonald's | McDonald's cheeseburger Duo pack with 10 McNuggets | producto#6004 111.2 2.5 16 4.2 | 1 porción (1/2 del pack) / 1 serving (1/2 of the pack)=1089 · 1 pack / 1 pack=2178 | pack dúo hamburguesa con queso | marca=McDonald's · fuente=McDonald's Uruguay, información nutricional, 2026: la suma de sus partes (el peso de la gaseosa es estimado) · aproximado · fibra=1 · saturadas=0.9 · sodio=135
 // Pack Trío Clásico con McNuggets de 10 unidades McDonald's: Cuarto de Libra con queso 576 g, Chicken McNuggets de 10 unidades 160 g, papas medianas 300 g, Coca-Cola mediana 1500 g (2536 g).
 Pack Trío Clásico con McNuggets de 10 unidades McDonald's | McDonald's Classic Trio pack with 10 McNuggets | producto#6005 133.9 4.5 15.6 6.1 | 1 porción (1/3 del pack) / 1 serving (1/3 of the pack)=845.3 · 1 pack / 1 pack=2536 | pack trío clásico | marca=McDonald's · fuente=McDonald's Uruguay, información nutricional, 2026: la suma de sus partes (el peso de la gaseosa es estimado) · aproximado · fibra=1.3 · saturadas=2.1 · sodio=181
+// El Pack Familiar Clásico: la tabla de Uruguay (consultada el 18/11/2026 en https://www.mcdonalds.com.uy/menu/para-compartir/pack-familiar-clasico-cajita-feliz-mcnuggetsx10)
+// da 1139 g, justo la suma de dos Cuarto de Libra con queso (384 g), McNuggets de 10 (160 g), la Cajita Feliz con hamburguesa, papas
+// pequeñas y jugo (395 g) y dos papas medianas (200 g): las gaseosas del pack no están en la tabla. No da fibra ni saturadas.
+Pack Familiar Clásico con Cajita Feliz y McNuggets de 10 unidades McDonald's | McDonald's Classic Family pack with Happy Meal and 10 McNuggets | producto#1269 207.3 7 24 9.5 | 1 pack / 1 pack=1139 | pack familiar clásico · pack familiar McDonald's | marca=McDonald's · fuente=McDonald's Uruguay, información nutricional, 2026 (sin las gaseosas) · sodio=295
 // Combo Whopper doble con bacon y queso Burger King, papas grandes y Pepsi: Whopper doble con bacon y queso 412 g, papas grandes 142 g, Pepsi de 500 ml 500 g (1054 g).
 Combo Whopper doble con bacon y queso Burger King, papas grandes y Pepsi | Burger King double Whopper with bacon and cheese combo with large fries and Pepsi | producto#6006 157.9 6.5 15.3 8.2 | 1 combo / 1 combo=1054 | combo whopper ultra doble | marca=Burger King · fuente=Burger King Estados Unidos y Brasil: la suma de sus partes (el peso de la botella es estimado) · aproximado · fibra=0.9 · azucares=6.6 · saturadas=3 · sodio=260
 // Combo Mega Quarter 2.0 Burger King con papas grandes y Pepsi: Mega Quarter 2.0 304 g, papas grandes 142 g, Pepsi de 500 ml 500 g (946 g).
@@ -1302,6 +1321,22 @@ Porción de fugazzeta Il Mondo della Pizza | Il Mondo della Pizza fugazzeta slic
 Porción de fainá Il Mondo della Pizza | Il Mondo della Pizza fainá slice | producto#1943 236.3 9.3 24.1 11.1 | 1 porción / 1 slice=100 | fainá Il Mondo della Pizza | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=4.5 · azucares=4.5 · saturadas=1.6 · sodio=483
 // Porción de pizza con fainá Il Mondo della Pizza: los valores por 100 g de «Pizza con fainá» (assets/alimentos.db); el peso de la porción es estimado.
 Porción de pizza con fainá Il Mondo della Pizza | Il Mondo della Pizza pizza with fainá slice | producto#1944 255.6 10.7 30.1 10.2 | 1 porción / 1 slice=180 | muzza con fainá Il Mondo della Pizza | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=3.1 · azucares=3.9 · saturadas=3.5 · sodio=520
+// Porción de pizza con jamón Il Mondo della Pizza: porción de pizza con mozzarella 130 g, jamón cocido 15 g (145 g).
+Porción de pizza con jamón Il Mondo della Pizza | Il Mondo della Pizza ham pizza slice | producto#1261 249.9 12.7 27.2 9.8 | 1 porción / 1 slice=145 | pizza de jamón Il Mondo della Pizza | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=2 · saturadas=4.1 · sodio=629
+// Porción de pizza sin queso Il Mondo della Pizza: los valores por 100 g de «Pizza sin queso» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de pizza sin queso Il Mondo della Pizza | Il Mondo della Pizza cheeseless pizza slice | producto#1262 234.5 5.7 41 4.9 | 1 porción / 1 slice=110 | pizza común Il Mondo della Pizza* (UY) · pizza Il Mondo della Pizza | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.1 · azucares=2.3 · saturadas=0.6 · sodio=508
+// Porción de pizza de pepperoni Il Mondo della Pizza: los valores por 100 g de «Pizza de pepperoni» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de pizza de pepperoni Il Mondo della Pizza | Il Mondo della Pizza pepperoni pizza slice | producto#1263 282 11.7 32 11.9 | 1 porción / 1 slice=130 |  | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.3 · azucares=3.3 · saturadas=5.1 · sodio=620
+// Porción de fainá con mozzarella Il Mondo della Pizza: los valores por 100 g de «Fainá con mozzarella» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de fainá con mozzarella Il Mondo della Pizza | Il Mondo della Pizza fainá with mozzarella slice | producto#1264 257 14.3 17.3 14.4 | 1 porción / 1 slice=130 | fainá con muzzarella Il Mondo della Pizza | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.9 · azucares=3.6 · saturadas=5.1 · sodio=558
+// Calzone Il Mondo della Pizza: los valores por 100 g de «Calzone» (assets/alimentos.db); el peso de la porción es estimado.
+Calzone Il Mondo della Pizza | Il Mondo della Pizza calzone | producto#1265 343 14.8 31.3 17.7 | 1 calzone / 1 calzone=300 |  | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=0.6 · saturadas=5.7 · sodio=434
+// Chivito al pan Il Mondo della Pizza: los valores por 100 g de «Chivito» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al pan Il Mondo della Pizza | Il Mondo della Pizza chivito sandwich | producto#1266 225.1 16.4 12.5 12.1 | 1 sándwich / 1 sandwich=400 | chivito Il Mondo della Pizza | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.7 · sodio=445
+// Milanesa al pan Il Mondo della Pizza: los valores por 100 g de «Sándwich de milanesa completo» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa al pan Il Mondo della Pizza | Il Mondo della Pizza breaded steak sandwich | producto#1267 240.7 16 18.3 11.5 | 1 sándwich / 1 sandwich=320 | sándwich de milanesa Il Mondo della Pizza | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1 · azucares=2 · saturadas=3 · sodio=492
+// Milanesa con papas fritas Il Mondo della Pizza: los valores por 100 g de «Milanesa con papas fritas» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa con papas fritas Il Mondo della Pizza | Il Mondo della Pizza breaded steak with fries | producto#1268 292.9 15.8 26.1 13.8 | 1 plato / 1 plate=380 |  | marca=Il Mondo della Pizza · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.4 · azucares=0.8 · saturadas=2.6 · sodio=447
 
 # comida rapida
 // Grido en Uruguay: tiene página propia, con su carta y su buscador de locales (https://uruguay.gridohelado.com/ y https://uruguay.gridohelado.com/locales/).
@@ -1419,11 +1454,357 @@ Porción de torta de zanahoria Porto Vanila | Porto Vanila carrot cake slice | p
 // Porción de chocotorta Porto Vanila: los valores por 100 g de «Chocotorta» (assets/alimentos.db); el peso de la porción es estimado.
 Porción de chocotorta Porto Vanila | Porto Vanila chocotorta slice | producto#1998 335.2 5.9 43.8 15.6 | 1 porción / 1 slice=120 | torta chocotorta Porto Vanila | marca=Porto Vanila · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.1 · azucares=30 · saturadas=7.9 · sodio=329
 
+// ------------------------------------------------ Las cadenas y los locales de Uruguay que se sumaron el 18/11/2026
+
+# comida rapida
+// Dean & Dennys: cadena argentina de hamburguesas con más de 50 locales en Argentina y Uruguay (su página, https://dean.ar/);
+// en Uruguay, desde 2025, en Punta Carretas, Nuevocentro y Tres Cruces Shopping (Forbes Argentina, El Cronista). No publica
+// información nutricional: todo es aproximado, una receta típica con los ingredientes de assets/alimentos.db (USDA), anotada arriba
+// de cada línea. La carta: https://dean.ar/#menu y https://www.rappi.com.ar/restaurantes/230775-dean-y-dennys, consultadas el
+// 18/11/2026. Las carnes, cocidas: el medallón Urbano (70 g crudo) pesa 52 g, el Clásico (120 g) 90 g y cada smash, 55 g. Pan de 60 g,
+// feta de cheddar de 15 g, la salsa Dennys (cheddar y mayonesa) como salsa de queso y mayonesa. Las papas: chicas de 90 g, grandes
+// de 150 g, como «Papas fritas» de la base. Los combos de la carta son con papas y sin bebida.
+// Cheeseburger Urbana Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 52 g, cheddar (como queso americano) 15 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (142 g).
+Cheeseburger Urbana Dean & Dennys | Dean & Dennys Urbana cheeseburger | producto#1124 296.1 15.4 22.4 15.6 | 1 hamburguesa / 1 burger=142 | cheeseburger urbana | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.8 · azucares=3.6 · saturadas=5.3 · sodio=568
+// Dean Burger Urbana Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 52 g, cheddar (como queso americano) 15 g, lechuga 10 g, tomate 20 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (172 g).
+Dean Burger Urbana Dean & Dennys | Dean & Dennys Urbana Dean Burger | producto#1125 247.7 12.9 19.2 12.9 | 1 hamburguesa / 1 burger=172 | dean burger urbana | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.9 · azucares=3.4 · saturadas=4.4 · sodio=471
+// Bacon Cheeseburger Urbana Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 52 g, cheddar (como queso americano) 15 g, tocino 12 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (154 g).
+Bacon Cheeseburger Urbana Dean & Dennys | Dean & Dennys Urbana bacon cheeseburger | producto#1126 309.5 16.9 20.8 17.1 | 1 hamburguesa / 1 burger=154 | bacon cheeseburger urbana | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=3.3 · saturadas=5.8 · sodio=655
+// Cheeseburger doble Urbana Dean & Dennys: pan de hamburguesa 60 g, dos hamburguesas de carne 104 g, cheddar (como queso americano) 30 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (209 g).
+Cheeseburger doble Urbana Dean & Dennys | Dean & Dennys Urbana double cheeseburger | producto#1127 293.3 18 15.7 17.1 | 1 hamburguesa / 1 burger=209 | doble cheeseburger urbana | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.5 · azucares=2.8 · saturadas=6.4 · sodio=584
+// Cheeseburger triple Urbana Dean & Dennys: pan de hamburguesa 60 g, tres hamburguesas de carne 156 g, cheddar (como queso americano) 45 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (276 g).
+Cheeseburger triple Urbana Dean & Dennys | Dean & Dennys Urbana triple cheeseburger | producto#1128 291.8 19.4 12.3 17.8 | 1 hamburguesa / 1 burger=276 | triple cheeseburger urbana | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.4 · azucares=2.4 · saturadas=7 · sodio=592
+// Cheeseburger Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 90 g, cheddar (como queso americano) 15 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (180 g).
+Cheeseburger Dean & Dennys | Dean & Dennys cheeseburger | producto#1129 291 17.6 17.7 16.2 | 1 hamburguesa / 1 burger=180 | cheeseburger clásica · cheeseburger simple | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.9 · saturadas=5.6 · sodio=529
+// Cheeseburger doble Dean & Dennys: pan de hamburguesa 60 g, dos hamburguesas de carne 180 g, cheddar (como queso americano) 30 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (285 g).
+Cheeseburger doble Dean & Dennys | Dean & Dennys double cheeseburger | producto#1130 287.6 20 11.5 17.4 | 1 hamburguesa / 1 burger=285 | cheeseburger clásica doble | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.4 · azucares=2.1 · saturadas=6.6 · sodio=530
+// Dean Burger Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 90 g, cheddar (como queso americano) 15 g, lechuga 10 g, tomate 20 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (210 g).
+Dean Burger Dean & Dennys | Dean & Dennys Dean Burger | producto#1131 252.1 15.2 15.7 13.9 | 1 hamburguesa / 1 burger=210 | dean burger | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=2.8 · saturadas=4.8 · sodio=455
+// Dean Burger doble Dean & Dennys: pan de hamburguesa 60 g, dos hamburguesas de carne 180 g, cheddar (como queso americano) 30 g, lechuga 10 g, tomate 20 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (315 g).
+Dean Burger doble Dean & Dennys | Dean & Dennys double Dean Burger | producto#1132 262 18.2 10.8 15.7 | 1 hamburguesa / 1 burger=315 | doble dean burger | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.5 · azucares=2.1 · saturadas=6 · sodio=481
+// Bacon Cheeseburger Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 90 g, cheddar (como queso americano) 15 g, tocino 15 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (195 g).
+Bacon Cheeseburger Dean & Dennys | Dean & Dennys bacon cheeseburger | producto#1133 304.6 18.8 16.4 17.6 | 1 hamburguesa / 1 burger=195 | bacon cheeseburger clásica | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.6 · saturadas=6.1 · sodio=618
+// Bacon Cheeseburger doble Dean & Dennys: pan de hamburguesa 60 g, dos hamburguesas de carne 180 g, cheddar (como queso americano) 30 g, tocino 15 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (300 g).
+Bacon Cheeseburger doble Dean & Dennys | Dean & Dennys double bacon cheeseburger | producto#1134 296.6 20.7 11 18.3 | 1 hamburguesa / 1 burger=300 | bacon cheeseburger clásica doble | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.4 · azucares=1.9 · saturadas=6.9 · sodio=588
+// Super Bacon Burger Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 90 g, cheddar (como queso americano) 15 g, lechuga 10 g, tomate 20 g, tocino 15 g, salsa barbacoa 10 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (235 g).
+Super Bacon Burger Dean & Dennys | Dean & Dennys Super Bacon Burger | producto#1135 262.5 15.8 15.9 14.7 | 1 hamburguesa / 1 burger=235 | super bacon | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=3.9 · saturadas=5.1 · sodio=558
+// Bacon & Egg Burger Dean & Dennys: pan de hamburguesa 60 g, hamburguesa de carne 90 g, cheddar (como queso americano) 30 g, tocino 15 g, huevo frito 46 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (256 g).
+Bacon & Egg Burger Dean & Dennys | Dean & Dennys Bacon & Egg Burger | producto#1136 286.5 17.4 13.1 17.8 | 1 hamburguesa / 1 burger=256 | bacon and egg dean · hamburguesa con huevo Dean & Dennys | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.4 · azucares=2.3 · saturadas=6.3 · sodio=596
+// Cheeseburger Smash Dean & Dennys: pan de hamburguesa 60 g, dos hamburguesas smash 110 g, cheddar (como queso americano) 30 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (215 g).
+Cheeseburger Smash Dean & Dennys | Dean & Dennys Cheeseburger Smash | producto#1137 292.7 18.2 15.3 17.1 | 1 hamburguesa / 1 burger=215 | smash doble Dean & Dennys · cheese burger smash | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.5 · azucares=2.7 · saturadas=6.5 · sodio=578
+// Bacon Cheese Smash Dean & Dennys: pan de hamburguesa 60 g, dos hamburguesas smash 110 g, cheddar (como queso americano) 30 g, tocino 15 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (230 g).
+Bacon Cheese Smash Dean & Dennys | Dean & Dennys Bacon Cheese Smash | producto#1138 304.1 19.3 14.4 18.3 | 1 hamburguesa / 1 burger=230 | bacon cheeseburger smash | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.5 · azucares=2.5 · saturadas=6.8 · sodio=651
+// Crispy Onion Smash Dean & Dennys: pan de hamburguesa 60 g, dos hamburguesas smash 110 g, cheddar (como queso americano) 60 g, cebolla crispy (como aros de cebolla) 25 g, salsa Dean (como salsa rosada) 15 g (270 g).
+Crispy Onion Smash Dean & Dennys | Dean & Dennys Crispy Onion Smash | producto#1139 302 16.7 17.2 18.1 | 1 hamburguesa / 1 burger=270 | crispy onion smash burger | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=4 · saturadas=7.1 · sodio=690
+// Caesar Burger Dean & Dennys: pan de hamburguesa 60 g, pechuga de pollo a la plancha 100 g, lechuga 15 g, queso parmesano 8 g, aderezo César 15 g (198 g).
+Caesar Burger Dean & Dennys | Dean & Dennys Caesar Burger | producto#1140 231.8 19.6 15.8 9.3 | 1 hamburguesa / 1 burger=198 | hamburguesa de pollo Dean & Dennys | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=2.5 · saturadas=2 · sodio=469
+// Veggie Burger Dean & Dennys: pan de hamburguesa 60 g, medallón de hongos y queso (como hamburguesa vegetal) 100 g, cheddar (como queso americano) 15 g, lechuga 10 g, tomate 20 g, salsa Dennys (como salsa de queso) 8 g, y mayonesa 7 g (220 g).
+Veggie Burger Dean & Dennys | Dean & Dennys Veggie Burger | producto#1141 209.8 11.2 21.5 8.7 | 1 hamburguesa / 1 burger=220 | veggie mush burger · hamburguesa vegetariana Dean & Dennys | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.9 · azucares=3.1 · saturadas=2.4 · sodio=536
+// Papas fritas chicas Dean & Dennys: los valores por 100 g de «Papas fritas» (assets/alimentos.db); el peso de la porción es estimado.
+Papas fritas chicas Dean & Dennys | Dean & Dennys small fries | producto#1142 289 3.5 37.2 14 | 1 chica / 1 small=90 · 1 grande / 1 large=150 | classic fries · papas Dean & Dennys | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=3.9 · azucares=0.3 · saturadas=2.5 · sodio=357
+// Dennys Fries Dean & Dennys: papas fritas 150 g, salsa Dennys (como salsa de queso) 25 g, y mayonesa 15 g (190 g).
+Dennys Fries Dean & Dennys | Dean & Dennys Dennys Fries | producto#1143 303.3 3.2 30.4 18.7 | 1 porción / 1 serving=190 | papas con salsa dennys | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=3.1 · azucares=0.3 · saturadas=3.3 · sodio=418
+// Dean Fries Dean & Dennys: papas fritas 150 g, salsa Dennys (como salsa de queso) 25 g, y mayonesa 15 g, tocino 15 g (205 g).
+Dean Fries Dean & Dennys | Dean & Dennys Dean Fries | producto#1144 315.3 5.5 28.3 19.9 | 1 porción / 1 serving=205 | papas con salsa dennys y panceta | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.9 · azucares=0.3 · saturadas=3.9 · sodio=511
+// Papas con cebolla crispy Dean & Dennys: papas fritas 150 g, cebolla crispy (como aros de cebolla) 40 g, salsa Dean (como salsa rosada) 25 g (215 g).
+Papas con cebolla crispy Dean & Dennys | Dean & Dennys Crispy Onion Fries | producto#1145 311.2 3.3 35.1 17.6 | 1 porción / 1 serving=215 | crispy onion fries | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=3.3 · azucares=2.9 · saturadas=2.9 · sodio=468
+// Los nuggets: 8 por porción, de 17 g cada uno.
+// Nuggets de pollo Dean & Dennys: los valores por 100 g de «Nuggets de pollo» (assets/alimentos.db); el peso de la porción es estimado.
+Nuggets de pollo Dean & Dennys | Dean & Dennys chicken nuggets | producto#1146 307 15.9 14.9 20.4 | 8 unidades / 8 pieces=136 | dean nuggets | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.9 · azucares=0.1 · saturadas=3.6 · sodio=594
+// Combo Cheeseburger Urbana con papas chicas Dean & Dennys: la suma de sus partes, Cheeseburger Urbana 142 g, papas chicas 90 g (232 g).
+Combo Cheeseburger Urbana con papas chicas Dean & Dennys | Dean & Dennys Urbana cheeseburger combo with small fries | producto#1147 293.4 10.8 28.1 15 | 1 combo / 1 combo=232 |  | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2 · azucares=2.3 · saturadas=4.2 · sodio=486
+// Combo Bacon Cheeseburger Urbana con papas chicas Dean & Dennys: la suma de sus partes, Bacon Cheeseburger Urbana 154 g, papas chicas 90 g (244 g).
+Combo Bacon Cheeseburger Urbana con papas chicas Dean & Dennys | Dean & Dennys Urbana bacon cheeseburger combo with small fries | producto#1148 301.9 11.9 26.8 16 | 1 combo / 1 combo=244 |  | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.9 · azucares=2.2 · saturadas=4.6 · sodio=545
+// Combo Cheeseburger doble Urbana con papas chicas Dean & Dennys: la suma de sus partes, Cheeseburger doble Urbana 209 g, papas chicas 90 g (299 g).
+Combo Cheeseburger doble Urbana con papas chicas Dean & Dennys | Dean & Dennys Urbana double cheeseburger combo with small fries | producto#1149 292 13.7 22.2 16.2 | 1 combo / 1 combo=299 |  | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.5 · azucares=2 · saturadas=5.3 · sodio=516
+// Combo Cheeseburger con papas grandes Dean & Dennys: la suma de sus partes, Cheeseburger 180 g, papas grandes 150 g (330 g).
+Combo Cheeseburger con papas grandes Dean & Dennys | Dean & Dennys cheeseburger combo with large fries | producto#1150 290.1 11.2 26.5 15.2 | 1 combo / 1 combo=330 |  | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.1 · azucares=1.7 · saturadas=4.2 · sodio=451
+// Combo Dean Burger con papas grandes Dean & Dennys: la suma de sus partes, Dean Burger 210 g, papas grandes 150 g (360 g).
+Combo Dean Burger con papas grandes Dean & Dennys | Dean & Dennys Dean Burger combo with large fries | producto#1151 267.5 10.3 24.7 13.9 | 1 combo / 1 combo=360 |  | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2 · azucares=1.7 · saturadas=3.9 · sodio=414
+// Combo Super Bacon Burger con papas grandes Dean & Dennys: la suma de sus partes, Super Bacon Burger 235 g, papas grandes 150 g (385 g).
+Combo Super Bacon Burger con papas grandes Dean & Dennys | Dean & Dennys Super Bacon Burger combo with large fries | producto#1152 272.8 11 24.2 14.4 | 1 combo / 1 combo=385 |  | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.9 · azucares=2.5 · saturadas=4.1 · sodio=480
+// Combo Bacon Cheese Smash con papas Dean & Dennys: la suma de sus partes, Bacon Cheese Smash 230 g, papas grandes 150 g (380 g).
+Combo Bacon Cheese Smash con papas Dean & Dennys | Dean & Dennys Bacon Cheese Smash combo with fries | producto#1153 298.1 13 23.4 16.6 | 1 combo / 1 combo=380 |  | marca=Dean & Dennys · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.8 · azucares=1.6 · saturadas=5.1 · sodio=535
+
+# comida rapida
+// Kentucky: pizzería argentina de pizza al molde, desde 1942, con unos 76 locales en Argentina y tres en Montevideo (Forbes Argentina,
+// El Observador e iProfesional, 2022 a 2026). No publica información nutricional. Su carta es https://www.kentucky.com.ar/productos,
+// consultada el 18/11/2026. La marca va como «Pizzería Kentucky» y no como «Kentucky»: acá también se le dice así a KFC. Todo es
+// aproximado: la pizza al molde lleva más queso que la de la base, así que cada porción es una de «Pizza sin queso» (la masa
+// con salsa) de 100 g más su mozzarella y lo que lleva arriba, de assets/alimentos.db (USDA). La porción, 1/8 de la pizza grande.
+// Porción de mozzarella Pizzería Kentucky: pizza sin queso (masa y salsa) 100 g, queso mozzarella 50 g (150 g).
+Porción de mozzarella Pizzería Kentucky | Kentucky mozzarella pan pizza slice | producto#1154 255 11.7 28.8 10.1 | 1 porción / 1 slice=150 · 1 pizza grande (8 porciones) / 1 large pizza (8 slices)=1200 | muzzarella Kentucky* (AR UY) · muzza Kentucky · pizza de molde Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=2.1 · saturadas=4.3 · sodio=571
+// Porción de fugazzeta Pizzería Kentucky: los valores por 100 g de «Fugazzeta» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de fugazzeta Pizzería Kentucky | Kentucky fugazzeta slice | producto#1155 251.9 10.5 30.8 9.5 | 1 porción / 1 slice=150 | fugazzetta Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.6 · azucares=2.1 · saturadas=3.7 · sodio=462
+// Porción de fugazzeta de jamón Pizzería Kentucky: fugazzeta 140 g, jamón cocido 20 g (160 g).
+Porción de fugazzeta de jamón Pizzería Kentucky | Kentucky fugazzeta with ham slice | producto#1156 233.1 11.3 26.9 8.7 | 1 porción / 1 slice=160 | fugazzetta de jamón Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=1.8 · saturadas=3.4 · sodio=515
+// Porción de napolitana Pizzería Kentucky: los valores por 100 g de «Pizza napolitana» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de napolitana Pizzería Kentucky | Kentucky Neapolitan pizza slice | producto#1157 230.3 9.8 28 8.6 | 1 porción / 1 slice=160 | pizza napolitana Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.6 · azucares=2.2 · saturadas=3.4 · sodio=489
+// Porción de pizza de jamón y morrones Pizzería Kentucky: pizza sin queso (masa y salsa) 100 g, queso mozzarella 45 g, jamón cocido 15 g, morrones en conserva 12 g (172 g).
+Porción de pizza de jamón y morrones Pizzería Kentucky | Kentucky ham and red pepper pizza slice | producto#1158 223.8 11 25.3 8.5 | 1 porción / 1 slice=172 | especial Kentucky · jamón y morrones Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=1.8 · saturadas=3.5 · sodio=651
+// Porción de pizza de pepperoni Pizzería Kentucky: pizza sin queso (masa y salsa) 100 g, queso mozzarella 45 g, pepperoni 12 g (157 g).
+Porción de pizza de pepperoni Pizzería Kentucky | Kentucky pepperoni pizza slice | producto#1159 272.7 11.9 27.5 12.5 | 1 porción / 1 slice=157 | fugazzetta de pepperoni Kentucky · pepperoni Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=2 · saturadas=5.1 · sodio=645
+// Porción de pizza moderna Pizzería Kentucky: pizza sin queso (masa y salsa) 100 g, queso mozzarella 45 g, jamón crudo 12 g, rúcula 5 g, tomates secos 5 g (167 g).
+Porción de pizza moderna Pizzería Kentucky | Kentucky prosciutto and arugula pizza slice | producto#1160 242.6 12.3 27.5 9.1 | 1 porción / 1 slice=167 | moderna Kentucky · jamón crudo y rúcula Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=3 · saturadas=3.7 · sodio=690
+// Porción de pizza vegetariana Pizzería Kentucky: pizza sin queso (masa y salsa) 100 g, queso mozzarella 40 g, calabacín salteado 15 g, berenjena salteada 15 g, aceitunas negras 5 g (175 g).
+Porción de pizza vegetariana Pizzería Kentucky | Kentucky vegetarian pizza slice | producto#1161 213.4 8.9 25.5 8.3 | 1 porción / 1 slice=175 | vegetariana Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.6 · azucares=2.3 · saturadas=3.2 · sodio=495
+// Porción de pizza especial de cebolla Pizzería Kentucky: pizza sin queso (masa y salsa) 100 g, queso mozzarella 45 g, cebolla salteada 20 g, aceitunas negras 5 g (170 g).
+Porción de pizza especial de cebolla Pizzería Kentucky | Kentucky onion pizza slice | producto#1162 228.3 9.8 26.7 9 | 1 porción / 1 slice=170 | especial de cebolla Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.5 · azucares=2.4 · saturadas=3.6 · sodio=523
+// Porción de pizza alemana Pizzería Kentucky: pizza sin queso (masa y salsa) 100 g, queso mozzarella 45 g, salchicha parrillera (como salchicha) 20 g, cebolla caramelizada (como cebolla salteada) 15 g, mostaza 3 g (183 g).
+Porción de pizza alemana Pizzería Kentucky | Kentucky sausage and onion pizza slice | producto#1163 241.9 10.4 24.7 11.1 | 1 porción / 1 slice=183 | alemana Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=2.2 · saturadas=4.5 · sodio=570
+// Porción de fainá Pizzería Kentucky: los valores por 100 g de «Fainá» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de fainá Pizzería Kentucky | Kentucky fainá slice | producto#1164 236.3 9.3 24.1 11.1 | 1 porción / 1 slice=100 | faina Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=4.5 · azucares=4.5 · saturadas=1.6 · sodio=483
+// Empanada de carne Pizzería Kentucky: los valores por 100 g de «Empanada de carne al horno» (assets/alimentos.db); el peso de la porción es estimado.
+Empanada de carne Pizzería Kentucky | Kentucky beef empanada | producto#1165 279.2 12.4 26.1 13.5 | 1 empanada / 1 empanada=90 | empanada Kentucky | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=1.2 · saturadas=5.6 · sodio=520
+// Empanada de jamón y queso Pizzería Kentucky: los valores por 100 g de «Empanada de jamón y queso» (assets/alimentos.db); el peso de la porción es estimado.
+Empanada de jamón y queso Pizzería Kentucky | Kentucky ham and cheese empanada | producto#1166 304.3 16.6 24.6 15.2 | 1 empanada / 1 empanada=85 |  | marca=Pizzería Kentucky · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.8 · azucares=0.8 · saturadas=7.8 · sodio=724
+
+# cafe
+// Donut City: cadena uruguaya de donas y cafetería, con locales en Montevideo (Portones Shopping, https://portones.com.uy/locales) y
+// en las «Top marcas y cadenas» de Rappi. Su carta, https://www.rappi.com.uy/restaurantes/111405-donut-city, consultada el 18/11/2026 (sin
+// valores ni pesos). Todo es aproximado: una receta típica con los valores de assets/alimentos.db (USDA); la dona, de 60 g.
+// Fuera: lo que la carta no explica (Primavera, Rosquitella, Donut power, Tabla combinada, Chicken crunch) y las bebidas embotelladas.
+// Dona clásica Donut City: los valores por 100 g de «Donas» (assets/alimentos.db); el peso de la porción es estimado.
+Dona clásica Donut City | Donut City classic glazed donut | producto#1167 426 5.5 49.5 22.9 | 1 dona / 1 donut=60 | classic Donut City · donut glaseada Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.8 · azucares=23.5 · saturadas=9.9 · sodio=378
+// Dona clásica con granas Donut City: donas 60 g, granas de colores 4 g (64 g).
+Dona clásica con granas Donut City | Donut City classic donut with sprinkles | producto#1168 428.9 5.2 51.7 22.4 | 1 dona / 1 donut=64 | classic color Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=27.3 · saturadas=10 · sodio=355
+// Dona de canela Donut City: donas 60 g, azúcar con canela 4 g (64 g).
+Dona de canela Donut City | Donut City cinnamon donut | producto#1169 424.4 5.2 52.7 21.5 | 1 dona / 1 donut=64 | cinnamon Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=28.3 · saturadas=9.2 · sodio=354
+// Dona de chocolate Donut City: los valores por 100 g de «Dona bañada en chocolate» (assets/alimentos.db); el peso de la porción es estimado.
+Dona de chocolate Donut City | Donut City chocolate donut | producto#1170 452 4.9 51.3 25.3 | 1 dona / 1 donut=65 | choco donut Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.9 · azucares=26.7 · saturadas=13.5 · sodio=326
+// Dona de chocolate con granas Donut City: dona bañada en chocolate 65 g, granas de colores 4 g (69 g).
+Dona de chocolate con granas Donut City | Donut City chocolate donut with sprinkles | producto#1171 453.2 4.6 53.3 24.7 | 1 dona / 1 donut=69 | choco color Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.8 · azucares=30 · saturadas=13.4 · sodio=307
+// Dona de chocolate y brownie Donut City: dona bañada en chocolate 65 g, brownie 12 g (77 g).
+Dona de chocolate y brownie Donut City | Donut City chocolate brownie donut | producto#1172 444.7 4.9 53.3 23.9 | 1 dona / 1 donut=77 | choco brownie Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.9 · azucares=28.2 · saturadas=12 · sodio=320
+// Dona de chocolate y Oreo Donut City: dona bañada en chocolate 65 g, galletas Oreo (como galletas rellenas) 10 g (75 g).
+Dona de chocolate y Oreo Donut City | Donut City chocolate Oreo donut | producto#1173 453.6 5 54 24.4 | 1 dona / 1 donut=75 | choco oreo Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2 · azucares=28.5 · saturadas=12.4 · sodio=334
+// Dona Boston cream Donut City: los valores por 100 g de «Dona rellena de crema» (assets/alimentos.db); el peso de la porción es estimado.
+Dona Boston cream Donut City | Donut City Boston cream donut | producto#1174 363 5.2 42.9 18.9 | 1 dona / 1 donut=85 | boston cream Donut City · dona rellena de crema Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=21.6 · saturadas=7.8 · sodio=287
+// Dona de dulce de leche Donut City: los valores por 100 g de «Dona rellena de dulce de leche» (assets/alimentos.db); el peso de la porción es estimado.
+Dona de dulce de leche Donut City | Donut City dulce de leche donut | producto#1175 393.4 5.9 51.2 18.3 | 1 dona / 1 donut=85 | dona rellena de dulce de leche Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=31.2 · saturadas=8.3 · sodio=305
+// Donutella Donut City: donas 60 g, crema de avellanas 20 g (80 g).
+Donutella Donut City | Donut City hazelnut cream donut | producto#1176 454.2 5.5 52.7 24.6 | 1 dona / 1 donut=80 | dona de nutella Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.7 · azucares=31.1 · saturadas=14.5 · sodio=294
+// Dona de frambuesa Donut City: donas 60 g, mermelada de frambuesa (como de frutos rojos) 20 g (80 g).
+Dona de frambuesa Donut City | Donut City raspberry donut | producto#1177 388.4 4.3 54.2 17.3 | 1 dona / 1 donut=80 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.2 · azucares=33.5 · saturadas=7.4 · sodio=284
+// Dona lemon pie Donut City: donas 60 g, crema de limón (como crema pastelera) 15 g, merengue 8 g (83 g).
+Dona lemon pie Donut City | Donut City lemon pie donut | producto#1178 367.9 5.4 47.4 17.4 | 1 dona / 1 donut=83 | lemon pie Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=27.4 · saturadas=7.5 · sodio=290
+// Medialuna Donut City: los valores por 100 g de «Croissant» (assets/alimentos.db); el peso de la porción es estimado.
+Medialuna Donut City | Donut City croissant | producto#1179 406 8.2 45.8 21 | 1 unidad / 1 piece=40 · 1 medialunita / 1 mini croissant=20 | medialunita Donut City · croissant Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.6 · azucares=11.3 · saturadas=11.7 · sodio=300
+// Medialuna de jamón y queso Donut City: los valores por 100 g de «Croissant de jamón y queso» (assets/alimentos.db); el peso de la porción es estimado.
+Medialuna de jamón y queso Donut City | Donut City ham and cheese croissant | producto#1180 344.8 12.6 30.4 19.1 | 1 unidad / 1 piece=90 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=7.8 · saturadas=10.9 · sodio=491
+// Scone de queso Donut City: los valores por 100 g de «Scones de queso» (assets/alimentos.db); el peso de la porción es estimado.
+Scone de queso Donut City | Donut City cheese scone | producto#1181 344.4 10.4 43.7 13.8 | 1 unidad / 1 piece=70 | scon de queso Donut City* (UY AR) | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.5 · azucares=1.6 · saturadas=7.4 · sodio=618
+// Pancakes americanos Donut City: pancakes 150 g, miel de maple (como jarabe de arce) 30 g (180 g).
+Pancakes americanos Donut City | Donut City American pancakes | producto#1182 278.3 6.2 40.6 10.1 | 1 porción / 1 serving=180 | pancakes Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=16 · saturadas=2.5 · sodio=425
+// Pancakes de crema de avellanas Donut City: pancakes 150 g, crema de avellanas 30 g (180 g).
+Pancakes de crema de avellanas Donut City | Donut City hazelnut cream pancakes | producto#1183 324.8 7.1 39.8 15 | 1 porción / 1 serving=180 | pancakes de nutella Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.7 · azucares=14.9 · saturadas=7.2 · sodio=430
+// Pancakes de dulce de leche y chocolate Donut City: pancakes 150 g, dulce de leche 30 g, salsa de chocolate (como sirope) 10 g (190 g).
+Pancakes de dulce de leche y chocolate Donut City | Donut City dulce de leche and chocolate pancakes | producto#1184 286.5 6.9 40.2 10.7 | 1 porción / 1 serving=190 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=16.6 · saturadas=3.1 · sodio=429
+// Pancakes de frutos rojos Donut City: pancakes 150 g, mermelada de frutos rojos 30 g, crema batida 15 g (195 g).
+Pancakes de frutos rojos Donut City | Donut City berry pancakes | producto#1185 285.9 5.9 38.4 11.9 | 1 porción / 1 serving=195 | pancakes de frutos del bosque Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.1 · azucares=15.8 · saturadas=3.8 · sodio=393
+// Budín de limón Donut City: los valores por 100 g de «Panqué de limón» (assets/alimentos.db); el peso de la porción es estimado.
+Budín de limón Donut City | Donut City lemon loaf | producto#1186 383.4 5.2 49.3 18.3 | 1 porción / 1 slice=90 | panqué de limón Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=30.4 · saturadas=9.6 · sodio=232
+// Carrot cake Donut City: los valores por 100 g de «Pastel de zanahoria» (assets/alimentos.db); el peso de la porción es estimado.
+Carrot cake Donut City | Donut City carrot cake | producto#1187 374 2.5 51.8 17.5 | 1 porción / 1 slice=120 | torta de zanahoria Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.1 · azucares=38.5 · saturadas=3.2 · sodio=288
+// Brownie Donut City: los valores por 100 g de «Brownie» (assets/alimentos.db); el peso de la porción es estimado.
+Brownie Donut City | Donut City brownie | producto#1188 405 4.8 63.9 16.3 | 1 unidad / 1 piece=80 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.1 · azucares=36.6 · saturadas=4.2 · sodio=286
+// Rollo de canela Donut City: los valores por 100 g de «Rollo de canela» (assets/alimentos.db); el peso de la porción es estimado.
+Rollo de canela Donut City | Donut City cinnamon roll | producto#1189 452 4.5 48.6 26.6 | 1 unidad / 1 piece=100 | rolls Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.2 · azucares=25.7 · saturadas=12.7 · sodio=305
+// Cookie NY Donut City: los valores por 100 g de «Galletas con chispas de chocolate» (assets/alimentos.db); el peso de la porción es estimado.
+Cookie NY Donut City | Donut City NY cookie | producto#1190 492 5.1 65.4 24.7 | 1 cookie / 1 cookie=100 | cookie de chocolate Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2 · azucares=32.9 · saturadas=8.1 · sodio=311
+// Tostada con aguacate Donut City: pan de masa madre 70 g, palta 50 g (120 g).
+Tostada con aguacate Donut City | Donut City avocado toast | producto#1191 225.3 7.1 33.8 7.5 | 1 porción / 1 serving=120 | tostada con palta Donut City* (UY AR CL) | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=4.1 · azucares=3 · saturadas=1.2 · sodio=354
+// Huevos cremosos caprese Donut City: huevos revueltos 120 g, tomate 40 g, queso mozzarella 30 g, pan tostado 40 g (230 g).
+Huevos cremosos caprese Donut City | Donut City creamy caprese scrambled eggs | producto#1192 192.9 11.1 11.1 11.6 | 1 porción / 1 serving=230 | huevos revueltos Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=1.8 · saturadas=3.7 · sodio=297
+// Hamburguesa clásica Donut City: pan de hamburguesa 70 g, hamburguesa de carne 100 g, lechuga 10 g, tomate 20 g, mayonesa 10 g (210 g).
+Hamburguesa clásica Donut City | Donut City classic burger | producto#1193 257.6 15.5 17.3 13.5 | 1 hamburguesa / 1 burger=210 | burger classic Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.8 · azucares=2.8 · saturadas=4.2 · sodio=379
+// Cheeseburger Donut City: pan de hamburguesa 70 g, hamburguesa de carne 100 g, cheddar (como queso americano) 20 g, kétchup 10 g (200 g).
+Cheeseburger Donut City | Donut City cheeseburger | producto#1194 273.1 17.9 19.6 13.2 | 1 hamburguesa / 1 burger=200 | hamburguesa con queso Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=4.1 · saturadas=5.3 · sodio=554
+// Cheeseburger doble Donut City: pan de hamburguesa 70 g, hamburguesa de carne 200 g, cheddar (como queso americano) 40 g, kétchup 10 g (320 g).
+Cheeseburger doble Donut City | Donut City double cheeseburger | producto#1195 276.9 20.2 12.7 15.6 | 1 hamburguesa / 1 burger=320 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.4 · azucares=2.9 · saturadas=6.5 · sodio=555
+// Chivito Donut City: los valores por 100 g de «Chivito» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito Donut City | Donut City chivito sandwich | producto#1196 225.1 16.4 12.5 12.1 | 1 sándwich / 1 sandwich=350 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.7 · sodio=445
+// Wrap de pollo crocante Donut City: tortilla de harina 60 g, pollo crocante (como medallón de pollo empanado) 90 g, lechuga 15 g, tomate 20 g, mayonesa 10 g (195 g).
+Wrap de pollo crocante Donut City | Donut City crispy chicken wrap | producto#1197 264.9 9.6 21.8 15.4 | 1 wrap / 1 wrap=195 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=1.5 · saturadas=3.2 · sodio=496
+// Milanesa de carne con papas fritas Donut City: los valores por 100 g de «Milanesa con papas fritas» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa de carne con papas fritas Donut City | Donut City breaded steak with fries | producto#1198 292.9 15.8 26.1 13.8 | 1 plato / 1 plate=380 | milanesa clásica de carne Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.4 · azucares=0.8 · saturadas=2.6 · sodio=447
+// Milanesa de pollo con papas fritas Donut City: los valores por 100 g de «Milanesa de pollo con papas fritas» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa de pollo con papas fritas Donut City | Donut City breaded chicken with fries | producto#1199 265.2 13.4 25.1 12 | 1 plato / 1 plate=380 | milanesa clásica de pollo Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.4 · azucares=0.7 · saturadas=2 · sodio=406
+// Milanesa napolitana con papas fritas Donut City: los valores por 100 g de «Milanesa a la napolitana con papas fritas» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa napolitana con papas fritas Donut City | Donut City Neapolitan breaded steak with fries | producto#1200 263.2 12.6 17.7 15.6 | 1 plato / 1 plate=480 | milanesa napolitana de carne Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=0.9 · saturadas=4.4 · sodio=468
+// Papas fritas Donut City: los valores por 100 g de «Papas fritas» (assets/alimentos.db); el peso de la porción es estimado.
+Papas fritas Donut City | Donut City fries | producto#1201 289 3.5 37.2 14 | 1 porción / 1 serving=150 | papitas Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=3.9 · azucares=0.3 · saturadas=2.5 · sodio=357
+// Papas con cheddar y tocino Donut City: papas fritas 150 g, cheddar (como salsa de queso) 40 g, panceta 15 g (205 g).
+Papas con cheddar y tocino Donut City | Donut City fries with cheddar and bacon | producto#1202 277.5 5.6 28.9 15.4 | 1 porción / 1 serving=205 | papitas cheddar y panceta Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.9 · azucares=0.3 · saturadas=3.3 · sodio=512
+// Alitas BBQ Donut City: los valores por 100 g de «Alitas de pollo en salsa» (assets/alimentos.db); el peso de la porción es estimado.
+Alitas BBQ Donut City | Donut City BBQ wings | producto#1203 250 19 7.3 15.5 | 1 porción / 1 serving=200 | alitas de pollo Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.2 · azucares=5.9 · saturadas=4.2 · sodio=568
+// Jugo de naranja de 500 ml Donut City: los valores por 100 g de «Jugo de naranja» (assets/alimentos.db); el peso de la porción es estimado.
+Jugo de naranja de 500 ml Donut City | Donut City orange juice, 500 ml | producto#1204 47 0.8 10 0.4 | 1 vaso de 500 ml / 1 500 ml glass=520 | jugo de naranja Donut City | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1.04 · fibra=0.3 · azucares=8.1 · saturadas=0 · sodio=0
+// Limonada Donut City: los valores por 100 g de «Limonada» (assets/alimentos.db); el peso de la porción es estimado.
+Limonada Donut City | Donut City lemonade | producto#1205 46 0 12.1 0 | 1 vaso de 500 ml / 1 500 ml glass=500 |  | marca=Donut City · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1 · fibra=0 · azucares=11.7 · saturadas=0 · sodio=6
+
+# cafe
+// Medialunas Calentitas: cadena uruguaya de cafeterías nacida en Punta del Este, con locales allí, en La Barra, José Ignacio y
+// Montevideo (Miami New Times, Fodor's y Foursquare, consultados el 18/11/2026; está en la categoría Panadería de Rappi). No publica
+// su carta con valores ni pesos. Todo es aproximado: los valores por 100 g de lo de assets/alimentos.db y pesos estimados; la
+// medialuna de manteca, de 40 g.
+// Medialuna Medialunas Calentitas: los valores por 100 g de «Croissant glaseado» (assets/alimentos.db); el peso de la porción es estimado.
+Medialuna Medialunas Calentitas | Medialunas Calentitas croissant | producto#1206 405.7 7.7 48.9 19.8 | 1 unidad / 1 piece=40 · 6 unidades / 6 pieces=240 | medialuna Calentitas · medialuna de manteca Medialunas Calentitas · croissant Medialunas Calentitas | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.5 · azucares=16.3 · saturadas=11 · sodio=283
+// Medialuna de jamón y queso Medialunas Calentitas: los valores por 100 g de «Croissant de jamón y queso» (assets/alimentos.db); el peso de la porción es estimado.
+Medialuna de jamón y queso Medialunas Calentitas | Medialunas Calentitas ham and cheese croissant | producto#1207 344.8 12.6 30.4 19.1 | 1 unidad / 1 piece=85 | medialuna rellena de jamón y queso Medialunas Calentitas | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=7.8 · saturadas=10.9 · sodio=491
+// Medialuna de dulce de leche Medialunas Calentitas: los valores por 100 g de «Croissant con dulce de leche» (assets/alimentos.db); el peso de la porción es estimado.
+Medialuna de dulce de leche Medialunas Calentitas | Medialunas Calentitas dulce de leche croissant | producto#1208 382.4 7.9 48.3 17.5 | 1 unidad / 1 piece=60 | medialuna rellena de dulce de leche Medialunas Calentitas | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.9 · azucares=21.3 · saturadas=9.8 · sodio=256
+// Medialuna de chocolate Medialunas Calentitas: los valores por 100 g de «Croissant de chocolate» (assets/alimentos.db); el peso de la porción es estimado.
+Medialuna de chocolate Medialunas Calentitas | Medialunas Calentitas chocolate croissant | producto#1209 421 7.4 49.4 22.8 | 1 unidad / 1 piece=60 |  | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=3.3 · azucares=19.9 · saturadas=12.9 · sodio=242
+// Sándwich tostado de jamón y queso Medialunas Calentitas: los valores por 100 g de «Sándwich caliente de jamón y queso» (assets/alimentos.db); el peso de la porción es estimado.
+Sándwich tostado de jamón y queso Medialunas Calentitas | Medialunas Calentitas toasted ham and cheese sandwich | producto#1210 267.2 14.8 22.1 13.2 | 1 tostado / 1 sandwich=160 | tostado Medialunas Calentitas* (UY AR) | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.2 · azucares=3.1 · saturadas=7.2 · sodio=682
+// Café con leche Medialunas Calentitas: los valores por 100 g de «Café con leche» (assets/alimentos.db); el peso de la porción es estimado.
+Café con leche Medialunas Calentitas | Medialunas Calentitas coffee with milk | producto#1211 40 1.7 5.6 1.1 | 1 taza / 1 cup=250 | café Medialunas Calentitas | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1.03 · fibra=0 · azucares=4.8 · saturadas=0.7 · sodio=26
+// Cortado Medialunas Calentitas: los valores por 100 g de «Cortado» (assets/alimentos.db); el peso de la porción es estimado.
+Cortado Medialunas Calentitas | Medialunas Calentitas cortado | producto#1212 23 1.2 2.7 0.8 | 1 taza / 1 cup=100 |  | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1.02 · fibra=0 · azucares=1.6 · saturadas=0.5 · sodio=22
+// Chocolate caliente Medialunas Calentitas: los valores por 100 g de «Chocolate caliente» (assets/alimentos.db); el peso de la porción es estimado.
+Chocolate caliente Medialunas Calentitas | Medialunas Calentitas hot chocolate | producto#1213 91 2.7 16.5 1.5 | 1 taza / 1 cup=250 | submarino Medialunas Calentitas* (UY AR) | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1.03 · fibra=0 · azucares=15.2 · saturadas=0.9 · sodio=60
+// Jugo de naranja Medialunas Calentitas: los valores por 100 g de «Jugo de naranja» (assets/alimentos.db); el peso de la porción es estimado.
+Jugo de naranja Medialunas Calentitas | Medialunas Calentitas orange juice | producto#1214 47 0.8 10 0.4 | 1 vaso / 1 glass=310 |  | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1.04 · fibra=0.3 · azucares=8.1 · saturadas=0 · sodio=0
+// Desayuno de café con leche y dos medialunas Medialunas Calentitas: la suma de sus partes, café con leche 250 g, dos medialunas 80 g (330 g).
+Desayuno de café con leche y dos medialunas Medialunas Calentitas | Medialunas Calentitas breakfast with coffee and two croissants | producto#1215 128.7 3.1 16.1 5.7 | 1 desayuno / 1 breakfast=330 | desayuno Medialunas Calentitas | marca=Medialunas Calentitas · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=7.6 · saturadas=3.2 · sodio=88.3
+
+# cafe
+// Confitería Carrera: confitería uruguaya con locales en Montevideo Shopping, Punta Carretas Shopping, Plaza Italia, Cordón y el
+// Geant de Parque Roosevelt (https://montevideoshopping.com.uy/locales, la lista de Punta Carretas y el listado gastronómico del
+// BROU de 2022-23, consultados el 18/11/2026). No tiene carta en línea: lo de abajo es lo de cualquier confitería de acá. Todo es
+// aproximado: los valores por 100 g de lo de assets/alimentos.db y pesos estimados.
+// Sándwich de miga de jamón y queso Confitería Carrera: los valores por 100 g de «Sándwich de miga» (assets/alimentos.db); el peso de la porción es estimado.
+Sándwich de miga de jamón y queso Confitería Carrera | Confitería Carrera ham and cheese crustless sandwich | producto#1216 282.8 13.1 26.9 13.5 | 1 unidad / 1 piece=35 · 6 unidades / 6 pieces=210 | sándwich de miga Carrera* (UY AR) | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=3.5 · saturadas=7.2 · sodio=638
+// Medialuna Confitería Carrera: los valores por 100 g de «Croissant glaseado» (assets/alimentos.db); el peso de la porción es estimado.
+Medialuna Confitería Carrera | Confitería Carrera croissant | producto#1217 405.7 7.7 48.9 19.8 | 1 unidad / 1 piece=40 | medialuna dulce Carrera* (UY AR PY) | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.5 · azucares=16.3 · saturadas=11 · sodio=283
+// Bizcocho de grasa Confitería Carrera: los valores por 100 g de «Medialuna de grasa» (assets/alimentos.db); el peso de la porción es estimado.
+Bizcocho de grasa Confitería Carrera | Confitería Carrera lard pastry | producto#1218 390.3 6.9 51.6 16.8 | 1 unidad / 1 piece=30 | medialuna de grasa Carrera* (UY AR) | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2 · azucares=2.1 · saturadas=8.1 · sodio=453
+// Sándwich tostado de jamón y queso Confitería Carrera: los valores por 100 g de «Sándwich caliente de jamón y queso» (assets/alimentos.db); el peso de la porción es estimado.
+Sándwich tostado de jamón y queso Confitería Carrera | Confitería Carrera toasted ham and cheese sandwich | producto#1219 267.2 14.8 22.1 13.2 | 1 tostado / 1 sandwich=160 | tostado Carrera* (UY AR) | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.2 · azucares=3.1 · saturadas=7.2 · sodio=682
+// Empanada de carne Confitería Carrera: los valores por 100 g de «Empanada de carne al horno» (assets/alimentos.db); el peso de la porción es estimado.
+Empanada de carne Confitería Carrera | Confitería Carrera beef empanada | producto#1220 279.2 12.4 26.1 13.5 | 1 empanada / 1 empanada=90 |  | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.4 · azucares=1.2 · saturadas=5.6 · sodio=520
+// Porción de pascualina Confitería Carrera: los valores por 100 g de «Pascualina» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de pascualina Confitería Carrera | Confitería Carrera chard pie slice | producto#1221 213.2 7.9 23.6 9.9 | 1 porción / 1 slice=180 | pascualina Carrera | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.1 · azucares=1.5 · saturadas=2 · sodio=387
+// Porción de postre chajá Confitería Carrera: los valores por 100 g de «Postre chajá» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de postre chajá Confitería Carrera | Confitería Carrera chajá cake slice | producto#1222 250.2 3.4 35.5 10.8 | 1 porción / 1 slice=130 | chajá Carrera | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.5 · azucares=26.7 · saturadas=6 · sodio=200
+// Porción de torta de chocolate y dulce de leche Confitería Carrera: los valores por 100 g de «Pastel de chocolate con dulce de leche» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de torta de chocolate y dulce de leche Confitería Carrera | Confitería Carrera chocolate and dulce de leche cake slice | producto#1223 364.1 7 54.1 14 | 1 porción / 1 slice=120 | torta de chocolate Carrera | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=2.5 · azucares=37.9 · saturadas=7.6 · sodio=178
+// Porción de pastafrola Confitería Carrera: los valores por 100 g de «Pastafrola» (assets/alimentos.db); el peso de la porción es estimado.
+Porción de pastafrola Confitería Carrera | Confitería Carrera pastafrola slice | producto#1224 378.4 4.2 61.8 12.4 | 1 porción / 1 slice=80 | pasta frola Carrera | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=11 · saturadas=6.5 · sodio=141
+// Milhojas de dulce de leche Confitería Carrera: los valores por 100 g de «Milhojas de dulce de leche» (assets/alimentos.db); el peso de la porción es estimado.
+Milhojas de dulce de leche Confitería Carrera | Confitería Carrera dulce de leche mille-feuille | producto#1225 458.7 7 51 25.3 | 1 porción / 1 slice=100 | milhojas Carrera | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.9 · azucares=22.6 · saturadas=5 · sodio=198
+// Alfajor de maicena Confitería Carrera: los valores por 100 g de «Alfajor de maicena» (assets/alimentos.db); el peso de la porción es estimado.
+Alfajor de maicena Confitería Carrera | Confitería Carrera cornstarch alfajor | producto#1226 442.6 4.8 65.1 17.6 | 1 alfajor / 1 alfajor=45 |  | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.9 · azucares=28.9 · saturadas=9.8 · sodio=137
+// Café con leche Confitería Carrera: los valores por 100 g de «Café con leche» (assets/alimentos.db); el peso de la porción es estimado.
+Café con leche Confitería Carrera | Confitería Carrera coffee with milk | producto#1227 40 1.7 5.6 1.1 | 1 taza / 1 cup=250 |  | marca=Confitería Carrera · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1.03 · fibra=0 · azucares=4.8 · saturadas=0.7 · sodio=26
+
+# comida rapida
+// Las Delicias: heladería uruguaya de las más antiguas, con locales en Punta Carretas y Carrasco (Tripadvisor, Wanderlog y Culture
+// Trip, consultados el 18/11/2026; lasdelicias.com.uy abre vacía). Sin carta ni valores: todo es aproximado, helado artesanal de
+// USDA; la bocha, de 70 g; el cuarto kilo, de 250 g.
+// Helado de crema Las Delicias: los valores por 100 g de «Helado artesanal de vainilla» (assets/alimentos.db); el peso de la porción es estimado.
+Helado de crema Las Delicias | Las Delicias cream ice cream | producto#1228 249 3.5 22.3 16.2 | 1 bola / 1 scoop=70 · 1/4 kg / 1/4 kg=250 | helado de crema americana Las Delicias · helado Las Delicias | marca=Las Delicias · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0 · azucares=20.7 · saturadas=10.3 · sodio=61
+// Helado de chocolate Las Delicias: los valores por 100 g de «Helado artesanal de chocolate» (assets/alimentos.db); el peso de la porción es estimado.
+Helado de chocolate Las Delicias | Las Delicias chocolate ice cream | producto#1229 251 4.7 19.8 17 | 1 bola / 1 scoop=70 · 1/4 kg / 1/4 kg=250 |  | marca=Las Delicias · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.9 · azucares=17.4 · saturadas=10.4 · sodio=57
+// Helado de dulce de leche Las Delicias: los valores por 100 g de «Helado de dulce de leche» (assets/alimentos.db); el peso de la porción es estimado.
+Helado de dulce de leche Las Delicias | Las Delicias dulce de leche ice cream | producto#1230 281.6 4 22.7 19.4 | 1 bola / 1 scoop=70 · 1/4 kg / 1/4 kg=250 |  | marca=Las Delicias · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0 · azucares=20.3 · saturadas=11.3 · sodio=63.4
+// Helado de fresa Las Delicias: los valores por 100 g de «Helado de fresa» (assets/alimentos.db); el peso de la porción es estimado.
+Helado de fresa Las Delicias | Las Delicias strawberry ice cream | producto#1231 192 3.2 27.6 8.4 | 1 bola / 1 scoop=70 · 1/4 kg / 1/4 kg=250 | helado de frutilla Las Delicias* (UY AR) | marca=Las Delicias · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.9 · azucares=0 · saturadas=5.2 · sodio=60
+// Cono de helado de dos bolas Las Delicias: helado artesanal 140 g, cucurucho 12 g (152 g).
+Cono de helado de dos bolas Las Delicias | Las Delicias two-scoop ice cream cone | producto#1232 262.3 3.9 26.8 15.5 | 1 cono / 1 cone=152 | cucurucho Las Delicias* (UY AR) | marca=Las Delicias · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.2 · azucares=19.5 · saturadas=9.6 · sodio=76.4
+
+# comida rapida
+// Los bares y chiviterías más famosos de Montevideo, de un local cada uno: Facal (18 de Julio y Yí, desde 1882; es.wikipedia.org/wiki/Bar_Facal),
+// Tinkal (Palermo, por su chivito; TasteAtlas y lorenzigo.com), la Chivitería Marcos (Pocitos; Wanderlog) y el Bar Arocena (Carrasco,
+// desde 1923; lorenzigo.com), consultados el 18/11/2026. Ninguno publica valores ni pesos: lo de abajo son sus platos más pedidos, con los
+// valores por 100 g de los platos de assets/alimentos.db («Chivito» es el canadiense, con huevo y panceta; «Chivito común», sin) y
+// el peso de una porción de acá, estimado. Todo es aproximado.
+// Chivito canadiense al pan Facal: los valores por 100 g de «Chivito» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito canadiense al pan Facal | Facal chivito sandwich with bacon and egg | producto#1233 225.1 16.4 12.5 12.1 | 1 sándwich / 1 sandwich=400 | chivito Facal · chivito completo Facal | marca=Facal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.7 · sodio=445
+// Chivito al pan Facal: los valores por 100 g de «Chivito común» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al pan Facal | Facal chivito sandwich | producto#1234 232.5 16.9 16.2 11.1 | 1 sándwich / 1 sandwich=330 | chivito común Facal | marca=Facal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=2.8 · saturadas=3.5 · sodio=402
+// Chivito al plato Facal: los valores por 100 g de «Chivito al plato» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al plato Facal | Facal chivito plate | producto#1235 197.2 12.1 13 10.8 | 1 plato / 1 plate=650 |  | marca=Facal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=1.6 · saturadas=3 · sodio=355
+// Milanesa al pan Facal: los valores por 100 g de «Sándwich de milanesa completo» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa al pan Facal | Facal breaded steak sandwich | producto#1236 240.7 16 18.3 11.5 | 1 sándwich / 1 sandwich=320 | sándwich de milanesa Facal | marca=Facal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1 · azucares=2 · saturadas=3 · sodio=492
+// Café con leche Facal: los valores por 100 g de «Café con leche» (assets/alimentos.db); el peso de la porción es estimado.
+Café con leche Facal | Facal coffee with milk | producto#1237 40 1.7 5.6 1.1 | 1 taza / 1 cup=250 |  | marca=Facal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · densidad=1.03 · fibra=0 · azucares=4.8 · saturadas=0.7 · sodio=26
+
+# comida rapida
+// Tinkal: ver Facal, arriba.
+// Chivito canadiense al pan Tinkal: los valores por 100 g de «Chivito» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito canadiense al pan Tinkal | Tinkal chivito sandwich with bacon and egg | producto#1238 225.1 16.4 12.5 12.1 | 1 sándwich / 1 sandwich=420 | chivito Tinkal · chivito completo Tinkal · chivito bar Tinkal | marca=Tinkal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.7 · sodio=445
+// Chivito al pan Tinkal: los valores por 100 g de «Chivito común» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al pan Tinkal | Tinkal chivito sandwich | producto#1239 232.5 16.9 16.2 11.1 | 1 sándwich / 1 sandwich=340 | chivito simple Tinkal · chivito común Tinkal | marca=Tinkal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=2.8 · saturadas=3.5 · sodio=402
+// Chivito al plato Tinkal: los valores por 100 g de «Chivito al plato» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al plato Tinkal | Tinkal chivito plate | producto#1240 197.2 12.1 13 10.8 | 1 plato / 1 plate=650 |  | marca=Tinkal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=1.6 · saturadas=3 · sodio=355
+// Chivito de pollo al pan Tinkal: los valores por 100 g de «Chivito de pollo» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito de pollo al pan Tinkal | Tinkal chicken chivito sandwich | producto#1241 219.7 16.2 12.5 11.4 | 1 sándwich / 1 sandwich=400 | chivito de pollo Tinkal | marca=Tinkal · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.1 · sodio=441
+
+# comida rapida
+// Chivitería Marcos: ver Facal, arriba. El «Marcos completo» es su chivito canadiense.
+// Chivito canadiense al pan Chivitería Marcos: los valores por 100 g de «Chivito» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito canadiense al pan Chivitería Marcos | Chivitería Marcos chivito sandwich with bacon and egg | producto#1242 225.1 16.4 12.5 12.1 | 1 sándwich / 1 sandwich=420 | chivito marcos · marcos completo · chivito completo Marcos | marca=Chivitería Marcos · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.7 · sodio=445
+// Chivito al pan Chivitería Marcos: los valores por 100 g de «Chivito común» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al pan Chivitería Marcos | Chivitería Marcos chivito sandwich | producto#1243 232.5 16.9 16.2 11.1 | 1 sándwich / 1 sandwich=340 | chivito común Marcos | marca=Chivitería Marcos · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=2.8 · saturadas=3.5 · sodio=402
+// Chivito al plato Chivitería Marcos: los valores por 100 g de «Chivito al plato» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al plato Chivitería Marcos | Chivitería Marcos chivito plate | producto#1244 197.2 12.1 13 10.8 | 1 plato / 1 plate=650 | chivito al plato Marcos | marca=Chivitería Marcos · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=1.6 · saturadas=3 · sodio=355
+// Chivito de pollo al pan Chivitería Marcos: los valores por 100 g de «Chivito de pollo» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito de pollo al pan Chivitería Marcos | Chivitería Marcos chicken chivito sandwich | producto#1245 219.7 16.2 12.5 11.4 | 1 sándwich / 1 sandwich=400 | chivito de pollo Marcos | marca=Chivitería Marcos · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.1 · sodio=441
+
+# comida rapida
+// Bar Arocena: ver Facal, arriba.
+// Chivito canadiense al pan Bar Arocena: los valores por 100 g de «Chivito» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito canadiense al pan Bar Arocena | Bar Arocena chivito sandwich with bacon and egg | producto#1246 225.1 16.4 12.5 12.1 | 1 sándwich / 1 sandwich=420 | chivito Arocena · chivito completo Arocena | marca=Bar Arocena · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=2.2 · saturadas=3.7 · sodio=445
+// Chivito al pan Bar Arocena: los valores por 100 g de «Chivito común» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al pan Bar Arocena | Bar Arocena chivito sandwich | producto#1247 232.5 16.9 16.2 11.1 | 1 sándwich / 1 sandwich=340 | chivito común Arocena | marca=Bar Arocena · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.7 · azucares=2.8 · saturadas=3.5 · sodio=402
+// Chivito al plato Bar Arocena: los valores por 100 g de «Chivito al plato» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al plato Bar Arocena | Bar Arocena chivito plate | producto#1248 197.2 12.1 13 10.8 | 1 plato / 1 plate=650 | chivito al plato Arocena | marca=Bar Arocena · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=1.6 · saturadas=3 · sodio=355
+// Milanesa al pan Bar Arocena: los valores por 100 g de «Sándwich de milanesa completo» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa al pan Bar Arocena | Bar Arocena breaded steak sandwich | producto#1249 240.7 16 18.3 11.5 | 1 sándwich / 1 sandwich=320 | milanesa Arocena | marca=Bar Arocena · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1 · azucares=2 · saturadas=3 · sodio=492
+
+# comida rapida
+// Don Peperone: cadena uruguaya de restaurantes italianos (pizzas, pastas y minutas), en Montevideo Shopping, Punta Carretas Shopping
+// y Colonia del Sacramento, entre otros (https://montevideoshopping.com.uy/locales, la lista de Punta Carretas y Wanderlog, consultados el
+// 18/11/2026). Su carta no se pudo ver. Todo es aproximado: los valores por 100 g de los platos de assets/alimentos.db y el peso de un
+// plato de restaurante, estimado.
+// Pizza individual de mozzarella Don Peperone: los valores por 100 g de «Pizza casera con mozzarella» (assets/alimentos.db); el peso de la porción es estimado.
+Pizza individual de mozzarella Don Peperone | Don Peperone individual mozzarella pizza | producto#1250 267.1 12.2 30.3 10.5 | 1 pizza individual / 1 individual pizza=380 | pizza de muzzarella Don Peperone* (UY AR) | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.5 · azucares=2.2 · saturadas=4.4 · sodio=598
+// Pizza individual napolitana Don Peperone: los valores por 100 g de «Pizza napolitana» (assets/alimentos.db); el peso de la porción es estimado.
+Pizza individual napolitana Don Peperone | Don Peperone individual Neapolitan pizza | producto#1251 230.3 9.8 28 8.6 | 1 pizza individual / 1 individual pizza=420 |  | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.6 · azucares=2.2 · saturadas=3.4 · sodio=489
+// Sorrentinos con salsa de tomate Don Peperone: los valores por 100 g de «Sorrentinos con salsa de tomate» (assets/alimentos.db); el peso de la porción es estimado.
+Sorrentinos con salsa de tomate Don Peperone | Don Peperone sorrentinos with tomato sauce | producto#1252 130.7 7.9 13.2 5.1 | 1 plato / 1 plate=380 | sorrentinos Don Peperone | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.5 · azucares=1.8 · saturadas=2.6 · sodio=306
+// Ravioles con salsa de tomate Don Peperone: los valores por 100 g de «Ravioles con salsa de tomate» (assets/alimentos.db); el peso de la porción es estimado.
+Ravioles con salsa de tomate Don Peperone | Don Peperone ravioli with tomato sauce | producto#1253 139.6 6 16.9 5.3 | 1 plato / 1 plate=380 | ravioles Don Peperone | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1 · azucares=1.9 · saturadas=2.5 · sodio=592
+// Ñoquis con salsa de tomate Don Peperone: los valores por 100 g de «Ñoquis con salsa de tomate» (assets/alimentos.db); el peso de la porción es estimado.
+Ñoquis con salsa de tomate Don Peperone | Don Peperone gnocchi with tomato sauce | producto#1254 114.9 2.8 14 5.3 | 1 plato / 1 plate=380 | ñoquis Don Peperone | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.2 · azucares=2.4 · saturadas=2.7 · sodio=354
+// Tallarines con salsa mixta Don Peperone: los valores por 100 g de «Tallarines con salsa de tomate y crema» (assets/alimentos.db); el peso de la porción es estimado.
+Tallarines con salsa mixta Don Peperone | Don Peperone tagliatelle with tomato cream sauce | producto#1255 136 4.6 18.7 4.7 | 1 plato / 1 plate=380 | tallarines Don Peperone | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.4 · azucares=1.6 · saturadas=2.2 · sodio=144
+// Capeletis a la caruso Don Peperone: los valores por 100 g de «Capeletis a la caruso» (assets/alimentos.db); el peso de la porción es estimado.
+Capeletis a la caruso Don Peperone | Don Peperone cappelletti Caruso | producto#1256 218 8 14.4 14.4 | 1 plato / 1 plate=380 | capeletis Don Peperone | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.5 · azucares=1 · saturadas=7.8 · sodio=533
+// Lasaña Don Peperone: los valores por 100 g de «Lasaña de jamón y queso» (assets/alimentos.db); el peso de la porción es estimado.
+Lasaña Don Peperone | Don Peperone lasagna | producto#1257 151 9.7 10.2 7.9 | 1 porción / 1 serving=380 |  | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.4 · azucares=2.5 · saturadas=3.9 · sodio=452
+// Milanesa a la napolitana con papas fritas Don Peperone: los valores por 100 g de «Milanesa a la napolitana con papas fritas» (assets/alimentos.db); el peso de la porción es estimado.
+Milanesa a la napolitana con papas fritas Don Peperone | Don Peperone Neapolitan breaded steak with fries | producto#1258 263.2 12.6 17.7 15.6 | 1 plato / 1 plate=500 | milanesa napolitana Don Peperone | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.7 · azucares=0.9 · saturadas=4.4 · sodio=468
+// Chivito al plato Don Peperone: los valores por 100 g de «Chivito al plato» (assets/alimentos.db); el peso de la porción es estimado.
+Chivito al plato Don Peperone | Don Peperone chivito plate | producto#1259 197.2 12.1 13 10.8 | 1 plato / 1 plate=650 |  | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=1.3 · azucares=1.6 · saturadas=3 · sodio=355
+// Tiramisú Don Peperone: los valores por 100 g de «Tiramisú» (assets/alimentos.db); el peso de la porción es estimado.
+Tiramisú Don Peperone | Don Peperone tiramisu | producto#1260 353 5.7 29.4 23.9 | 1 porción / 1 serving=120 |  | marca=Don Peperone · fuente=Estimación de Moss: receta típica con valores de USDA · aproximado · fibra=0.6 · azucares=18.7 · saturadas=13.3 · sodio=173
+
 // LAS QUE NO ENTRARON. Se miraron el 2/11/2026 y no se sumaron:
 // - Pizza Hut, Johnny Rockets, Carl's Jr. y Popeyes: ninguna fuente dice que estén en Uruguay; no están en las listas de Punta Carretas, Montevideo ni Portones Shopping y sus .com.uy no existen o no responden.
 // - Dunkin': La Tercera (noviembre de 2025) da a Uruguay entre los países donde no está: https://www.latercera.com/pulso/noticia/la-franquicia-local-de-dunkin-se-expande-sin-pausa-y-se-pone-nuevos-objetivos/.
 // - Mr. Cheney: es de Brasil; nada dice que esté en Uruguay.
 // - Havanna: anunció un café en Punta Carretas en 2011 (El Observador), pero su página (https://www.havanna.com.ar/) no lista a Uruguay entre sus países y no está en las listas de Punta Carretas, Montevideo ni Portones; havanna.com.uy tiene el certificado vencido.
 // - Café Martínez: Forbes Argentina (enero de 2024) le da cuatro sucursales en Uruguay, pero en el HTML de su página de sucursales no aparece Uruguay y no se encontró su carta de acá.
-// - Lecadó: ninguna fuente; lecado.com.uy no resuelve. Las Delicias: lasdelicias.com.uy abre vacía, sin carta. Trouville y Tasende: sus páginas tienen el certificado vencido, no están en esas listas y no se pudo confirmar que sean cadenas.
-// - Dean & Dennys, Don Peperone, Crêpas, Le Pain Quotidien y las demás de la lista de Punta Carretas: están, pero se dejó lugar a las más comunes (los N llegan hasta 1999).
+// - Lecadó: ninguna fuente; lecado.com.uy no resuelve. Trouville y Tasende: sus páginas tienen el certificado vencido, no están en esas listas y no se pudo confirmar que sean cadenas.
+// - Crêpas, Le Pain Quotidien y las demás de la lista de Punta Carretas: están, pero se dejó lugar a las más comunes.
+// Se volvieron a mirar el 18/11/2026 (Dean & Dennys, la Pizzería Kentucky, Don Peperone, Las Delicias y las demás de arriba sí entraron):
+// - Pizza Hut, Papa John's, Popeyes, Wendy's, Dunkin' y Tim Hortons: siguen sin aparecer en Uruguay (ninguna nota, ninguna lista de
+//   shopping; de Papa John's, solo que buscaba franquiciado acá en 2016). McCafé es de McDonald's y ya está arriba.
+// - Manchester: el dueño de Facal dice que es el único bar de la vieja guardia que queda en 18 de Julio (El Observador, 14/6/2026).
+// - Café Misterio: un restaurante de un solo local, sin platos de todos los días; Mercado Ferrando: un mercado de varios puestos, sin carta propia.
+// - Lucca, Pizza Pala, La Bonbonniere y Dulce de Leche: no se encontró ninguna fuente que diga dónde están ni qué venden.
+// - Cantón Chino, El Emporio de los Sándwiches, La Croissantería y Chelato: están (Portones, Punta Carretas, Rappi), pero su carta no se
+//   pudo ver: Rappi pide cuenta después de unas pocas páginas y PedidosYa responde «Acceso denegado».

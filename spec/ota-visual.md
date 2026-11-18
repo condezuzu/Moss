@@ -85,3 +85,24 @@ recién abrió. Sin probar en un iPhone.
   pantalla nueva?
 - Sin revisar contra la galería: la entrada, el cuestionario, Cuidados, «En qué se basa Moss», la guía y Editar perfil.
 - Sin hacer (solo JS, para otra tanda): la lista completa de frases del día, el flum de la entrada y lo de fluidez.
+
+## Tanda 4 (pedida el 17/11, a la noche; se sigue el 18/11)
+
+Hecho sin publicar (en `mejoras-1.1`, sin commit): la tarjeta del periodo informa y no manda («Es el rato de la noche en
+que más fácil te duermes», sin «Acuéstate a las…»), en la app y en la galería.
+
+Lo que pediste:
+1. **Tu periodo de melatonina, solo de noche:** que la tarjeta aparezca desde las 19 o 20 h (cuando casi todos están en
+   casa), no todo el día.
+2. **Los avisos de la noche:** ¿también sin «Acuéstate a las…»? (pendiente tu respuesta).
+3. **«Decir lo que comí», lo más preciso posible:** varias comidas en una sola frase («en el desayuno comí…, en el
+   almuerzo…, de snack…»), volver a una comida ya nombrada («y también en el desayuno…») y que todo se sume bien, como
+   si hablaras con una IA. Sin IA por ahora (si Moss crece, una IA para esto y para la foto). Probarlo con muchas frases
+   reales.
+4. **Ascent prendida** por aire (vincular desde Moss con la cuenta de Ascent), aprobándola antes en la galería.
+5. **Los entrenamientos de Salud** (reloj o anillo) cuentan como «entrenaste»; con Ascent, también los de Ascent.
+6. **Las figuras de la grasa**, redibujadas: de 14 a 29 % casi no cambian.
+7. **«Cuando llegues»** con cinco opciones: mantener, perder grasa sin perder músculo, recomposición, ganar músculo y
+   lo decido después.
+8. **Seguir mejorando cómo se registra la noche:** buscar una idea mejor que las que hay y probarla. Vas a usar el
+   anillo de Da Rings: ver si su noche llega a Salud y, si llega, que Moss la tome.

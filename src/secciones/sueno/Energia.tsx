@@ -39,8 +39,8 @@ export const COLOR_DE_ENERGIA: Record<EstadoDelBoton, { color: string; rgb: stri
 
 export const estadoDe = (d: DatosDeEnergia | null): EstadoDelBoton => d?.dia?.estado ?? 'sinDatos';
 
-/** La hora cambia lo que se dice: se rehace cada cinco minutos. */
-function useAhora(ms = 5 * 60_000): Date {
+/** La hora cambia lo que se dice: se rehace cada `ms` (de fábrica, cinco minutos). */
+export function useAhora(ms = 5 * 60_000): Date {
   const [ahora, setAhora] = useState(() => new Date());
   useEffect(() => {
     const reloj = setInterval(() => setAhora(new Date()), ms);

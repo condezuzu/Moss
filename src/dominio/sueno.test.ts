@@ -127,6 +127,40 @@ describe('armar las noches', () => {
     expect(n.despierto).toBe(90);
   });
 
+  describe('la noche en dos tramos (18/11/2026: te dormiste a las 00:16, te despertaste a las 6:22, volviste a dormirte a las 6:30 y te despertaste a las 8:30)', () => {
+    const RINGS: Fuente = { id: 'com.moyoung.darings', nombre: 'Da Rings', tipo: 'otra' };
+    const r = (etapa: Etapa, desde: string, hasta: string, fuente = RINGS.id) => m(etapa, `2026-11-18 ${desde}`, `2026-11-18 ${hasta}`, fuente);
+    // 00:16 son 376 minutos desde las 18; 8:30, 870. Dormido: 366 + 120.
+    const UNA_NOCHE = { clave: '2026-11-18', dormirse: 376, despertar: 870, dormido: 486, despierto: 8, despertares: 1, siestas: 0 };
+    const ver = (n: Noche) => ({ clave: n.clave, dormirse: n.dormirse, despertar: n.despertar, dormido: n.dormido, despierto: n.despierto, despertares: n.despertares, siestas: n.siestas });
+
+    it('es una sola noche, del primer dormirte al último despertar, con el rato del medio despierto', () => {
+      // Los dos tramos sin etapas; el primero con etapas y el segundo sin; con «en cama» y «despierto» en el medio.
+      expect(armarNoches([r('dormido', '00:16', '06:22'), r('dormido', '06:30', '08:30')], [RINGS]).map(ver)).toEqual([UNA_NOCHE]);
+      expect(armarNoches([r('nucleo', '00:16', '03:00'), r('profundo', '03:00', '06:22'), r('dormido', '06:30', '08:30')], [RINGS]).map(ver)).toEqual([UNA_NOCHE]);
+      expect(armarNoches([r('dormido', '00:16', '06:22'), r('despierto', '06:22', '06:30'), r('enCama', '06:20', '08:30'), r('dormido', '06:30', '08:30')], [RINGS]).map(ver)).toEqual([UNA_NOCHE]);
+    });
+
+    it('la causa: otra fuente que solo vio el segundo tramo, con etapas, se quedaba con la noche (6:22 a 8:30)', () => {
+      const OTRA: Fuente = { id: 'com.ejemplo.rings', nombre: 'Rings', tipo: 'otra' };
+      const [n] = armarNoches([r('dormido', '00:16', '06:22'), r('dormido', '06:30', '08:30'), r('nucleo', '06:22', '08:30', OTRA.id)], [RINGS, OTRA]);
+      // Antes: { fuente: OTRA, dormirse: 742, despertar: 870, dormido: 128 }. La de las etapas no tiene la noche entera.
+      expect([n.fuente.id, ver(n)]).toEqual([RINGS.id, UNA_NOCHE]);
+    });
+
+    it('el segundo tramo escrito por otra fuente se pega a la noche, sin contar doble', () => {
+      const OTRA: Fuente = { id: 'Da Rings', nombre: 'Da Rings', tipo: 'otra' };
+      // Antes: la noche hasta las 6:22 y el segundo tramo como siesta.
+      const [n] = armarNoches([r('dormido', '00:16', '06:22'), r('dormido', '06:30', '08:30', OTRA.id)], [RINGS, OTRA]);
+      expect([n.fuente.id, ver(n)]).toEqual([RINGS.id, UNA_NOCHE]);
+    });
+
+    it('hasta una hora despierto es la misma noche; con más, el segundo tramo es otra cosa: una siesta', () => {
+      expect(ver(armarNoches([r('dormido', '00:16', '06:22'), r('dormido', '07:22', '08:30')], [RINGS])[0])).toMatchObject({ dormirse: 376, despertar: 870, despierto: 60, despertares: 1, siestas: 0 });
+      expect(ver(armarNoches([r('dormido', '00:16', '06:22'), r('dormido', '07:32', '08:30')], [RINGS])[0])).toEqual({ ...UNA_NOCHE, despertar: 742, dormido: 366, despierto: 0, despertares: 0, siestas: 58 });
+    });
+  });
+
   it('de viaje, la noche es del día en que te despertás en esa zona', () => {
     const [n] = armarNoches([m('nucleo', '2026-10-20 23:00', '2026-10-21 07:00', RELOJ.id, 60)], [RELOJ]);
     expect(n.clave).toBe('2026-10-21');

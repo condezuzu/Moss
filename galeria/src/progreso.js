@@ -25,6 +25,8 @@ const SeccionProgreso = (() => {
       cambiarPlan: false, masDatos: false, sinMedidas: false,
       // Para ver las primeras semanas: con un número, solo las pesadas de esas últimas semanas.
       semanasDeDatos: null,
+      // Tanda 4 (para aprobar): lo que sigue a la meta, para las capturas; null, el del perfil.
+      despues: null,
     };
     // «Sin déficit» es de Perfil: si la galería lo pasa, bajar queda en mantener y el plan no dice que el control ajusta.
     const sinDeficit = () => !!(opciones.sinDeficit && opciones.sinDeficit());
@@ -106,12 +108,16 @@ const SeccionProgreso = (() => {
     // mismo, cambiarlo (el objetivo, el peso meta, el ritmo y el plazo, y las metas de hoy).
     const ESTADO_DEL_PLAN = { alRitmo: 'enCamino', adelantado: 'enCamino', atrasado: 'despacio', alReves: 'despacio', llegaste: 'enCamino', estable: 'enCamino', seMueve: '', todaviaNo: '', faltanDatos: '' };
     const kgCorto = (kg) => numero(kg, kg % 1 ? 1 : 0);
+    // Lo que sigue a la meta (tanda 4, para aprobar): mantener, perder grasa, recomponer, ganar músculo o decidirlo.
+    const despuesDe = (p) => s.despues || p.despues || 'despues';
     function planDe(d) {
       const p = d.perfil;
       const rango = ritmoDe(d);
+      // Hasta que el dominio sepa las cinco, perder grasa y recomponer piden la etapa sin fin de mantener.
+      const despues = { grasa: 'mantener', recomponer: 'mantener' }[despuesDe(p)] || despuesDe(p);
       return Progreso.planPorEtapas({
         hoy: Datos.HOY, pesoKg: nivelDe(d), objetivo: objetivoDe(p), pesoMeta: p.pesoMeta, plazo: plazoActual(d),
-        ritmo: rango ? rango.kgPorSemana : null, rango, despues: p.despues, pesoInicial: d.pesoInicial,
+        ritmo: rango ? rango.kgPorSemana : null, rango, despues, pesoInicial: d.pesoInicial,
       });
     }
     // El margen del ritmo, del que menos cambia al que más: «entre −0,32 y −0,46».
@@ -142,7 +148,8 @@ const SeccionProgreso = (() => {
       }
       // Al llegar, el mantenimiento; y lo que sigue, si lo dijo en el cuestionario (perfil.despues).
       if (pl.etapas[1]) {
-        const luego = pl.etapas[2] ? (pl.etapas[2].tipo === 'subir' ? 'musculo' : 'mantener') : 'eliges';
+        const v = despuesDe(d.perfil);
+        const luego = v === 'despues' ? 'eliges' : v;
         c.appendChild(el('p', 'pg-texto pg-plan-despues', `${tx('progreso.plan.despues.' + primera.tipo, { n: Progreso.SEMANAS_DE_MANTENIMIENTO })} ${tx('progreso.plan.luego.' + luego, { kg: kgCorto(primera.pesoHasta) })}`));
       }
       if (!sinDeficit()) c.appendChild(el('p', 'pg-nota pg-plan-ajusta', tx('progreso.plan.ajusta')));
@@ -155,19 +162,22 @@ const SeccionProgreso = (() => {
 
     // La línea del plan: desde que empezaste (lo hecho, en oro) hasta hoy, los hitos y la meta, y el
     // mantenimiento después, más tenue. Cada punto con su fecha y su peso; los que no entran sin
-    // pisarse, sin etiqueta.
+    // pisarse, sin etiqueta. Al final (tanda 4), lo que sigue: su dibujo y su nombre, sin fecha.
     function pista(d, pl) {
       const desde = [...d.tendencia.keys()][0];
       const meta = pl.hitos[pl.hitos.length - 1];
       const fin = (pl.etapas[1] && pl.etapas[1].hasta) || meta.fecha;
       const total = Math.max(1, Fechas.diasEntre(desde, fin));
-      const pos = (f) => Math.min(100, Math.max(0, (Fechas.diasEntre(desde, f) / total) * 100));
+      const luego = pl.etapas[1] ? despuesDe(d.perfil) : null;
+      const ancho = luego ? 70 : 100;
+      const pos = (f) => Math.min(ancho, Math.max(0, (Fechas.diasEntre(desde, f) / total) * ancho));
       const caja = el('div', 'pg-pista');
       const linea = el('div', 'pg-pista-linea');
+      linea.style.right = (100 - ancho) + '%';
       const hecho = el('i', 'pg-pista-hecho');
       const mant = el('i', 'pg-pista-mant');
-      mant.style.left = pos(meta.fecha).toFixed(1) + '%';
-      mant.style.width = (100 - pos(meta.fecha)).toFixed(1) + '%';
+      mant.style.left = (pos(meta.fecha) / ancho * 100).toFixed(1) + '%';
+      mant.style.width = (100 - pos(meta.fecha) / ancho * 100).toFixed(1) + '%';
       linea.append(hecho, mant);
       caja.appendChild(linea);
       const puntos = [
@@ -191,10 +201,27 @@ const SeccionProgreso = (() => {
         caja.appendChild(pt);
       });
       const m = el('div', 'pg-pista-mant-etq', tx('progreso.plan.mantener'));
-      m.style.left = ((pos(meta.fecha) + 100) / 2).toFixed(1) + '%';
+      m.style.left = ((pos(meta.fecha) + ancho) / 2).toFixed(1) + '%';
       caja.appendChild(m);
-      requestAnimationFrame(() => { hecho.style.width = pos(Datos.HOY).toFixed(1) + '%'; });
+      if (luego) caja.appendChild(siguiente(luego, ancho));
+      requestAnimationFrame(() => { hecho.style.width = (pos(Datos.HOY) / ancho * 100).toFixed(1) + '%'; });
       return caja;
+    }
+    // Lo que sigue a la meta, dibujado como sigue el peso: baja despacio, se queda, sube despacio; la
+    // recomposición se queda con una flecha para cada lado, y «lo decides» se apaga en un signo.
+    const DIBUJO_DE_LO_QUE_SIGUE = {
+      mantener: '<path d="M0 12H84"/><circle cx="85" cy="12" r="2.4"/>',
+      grasa: '<path d="M0 12C30 12 50 15 84 20.5"/><circle cx="85" cy="20.7" r="2.4"/>',
+      musculo: '<path d="M0 12C30 12 50 9 84 3.5"/><circle cx="85" cy="3.3" r="2.4"/>',
+      recomponer: '<path d="M0 12H84"/><circle cx="85" cy="12" r="2.4"/><path class="pg-flecha" d="M62 9V2M59 5l3-3 3 3M72 15v7M69 19l3 3 3-3"/>',
+      despues: '<path class="pg-se-apaga" d="M0 12H52"/><text x="66" y="16.5">?</text>',
+    };
+    function siguiente(v, ancho) {
+      const n = el('div', 'pg-pista-luego ' + v);
+      n.style.left = ancho + '%';
+      n.innerHTML = `<svg viewBox="0 0 90 24" preserveAspectRatio="xMinYMid meet" aria-hidden="true">${DIBUJO_DE_LO_QUE_SIGUE[v]}</svg>`;
+      n.appendChild(el('small', null, tx('progreso.plan.siguiente.' + v)));
+      return n;
     }
 
     // ------------------------------------------------------------ el próximo control, en una línea
@@ -698,6 +725,7 @@ const SeccionProgreso = (() => {
       masDatos(si) { s.masDatos = si; pintar(); },
       cambiarPlan(si) { s.cambiarPlan = si; pintar(); },
       sinMedidas(si) { s.sinMedidas = si; pintar(); },
+      despues(v) { s.despues = v; pintar(); },
       bajarA(selector) {
         const n = cont.querySelector(selector);
         if (n) cont.scrollTo({ top: Math.max(0, cont.scrollTop + n.getBoundingClientRect().top - cont.getBoundingClientRect().top - 70), behavior: 'auto' });

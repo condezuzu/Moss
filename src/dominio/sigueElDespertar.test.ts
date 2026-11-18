@@ -118,19 +118,19 @@ describe('sin desayuno, lo del desayuno se reparte', () => {
     expect(kcal).toEqual([1050, 450, 900]);
     expect(kcal.reduce((s, x) => s + x, 0)).toBeLessThanOrEqual(META.kcal);
     for (const c of ['almuerzo', 'merienda', 'cena']) expect(ids(lista)).not.toContain(`horario:${c}`);
-    // El título dice qué hacer; el cuerpo, de dónde sale.
+    // El título dice cuánto le toca; el cuerpo, de dónde sale.
     expect(dos(lista.find((a) => a.aviso.id === 'despertar:almuerzo')))
-      .toEqual(['Almuerza unas 1050 kcal', 'Lo que no comiste en el desayuno va al almuerzo, a la merienda y a la cena.']);
+      .toEqual(['Tu almuerzo: unas 1050 kcal', 'Lo que no comiste en el desayuno va al almuerzo, a la merienda y a la cena.']);
     expect(dos(lista.find((a) => a.aviso.id === 'despertar:almuerzo'), EN))
-      .toEqual(['Have about 1050 kcal for lunch', 'What you didn’t eat at breakfast goes to lunch, your afternoon snack and dinner.']);
+      .toEqual(['Your lunch: about 1050 kcal', 'What you didn’t eat at breakfast goes to lunch, your afternoon snack and dinner.']);
   });
 
   it('la primera comida que anotas corre las demás, y lo que queda se reparte entre ellas', () => {
     const lista = dia({ desayuno: 'directo', anotadas: new Set(['almuerzo']), eventos: { almuerzo: h('13:30') }, comido: { ...NADA, kcal: 950 }, ahora: h('13:31') });
     expect(aLa(lista, 'despertar:merienda')).toBe(h('17:30'));
     expect(aLa(lista, 'despertar:cena')).toBe(h('21:00'));
-    expect(dos(lista.find((a) => a.aviso.id === 'despertar:merienda'))).toEqual(['Merienda unas 480 kcal', 'Lo que no comiste en el desayuno va a la merienda y a la cena.']);
-    expect(dos(lista.find((a) => a.aviso.id === 'despertar:cena'))).toEqual(['Cena unas 970 kcal', 'Lo que no comiste en el desayuno va a la cena.']);
+    expect(dos(lista.find((a) => a.aviso.id === 'despertar:merienda'))).toEqual(['Tu merienda: unas 480 kcal', 'Lo que no comiste en el desayuno va a la merienda y a la cena.']);
+    expect(dos(lista.find((a) => a.aviso.id === 'despertar:cena'))).toEqual(['Tu cena: unas 970 kcal', 'Lo que no comiste en el desayuno va a la cena.']);
   });
 
   it('con desayuno, aunque sea tarde, las demás quedan a su hora de siempre', () => {
@@ -184,12 +184,12 @@ describe('la noche sale de tu periodo de melatonina', () => {
     expect(noche).toEqual(['despertar:cena', 'melatonina', 'luces', 'revoluciones', 'dormir'].filter((id) => noche.includes(id)));
     // El aviso del periodo y el de acostarte dicen las mismas horas, las de Sueño.
     expect(dos(lista.find((x) => x.aviso.id === 'melatonina')))
-      .toEqual(['Tu periodo de melatonina: 23:30', 'De 23:30 a 00:30 es cuando menos te cuesta dormirte: tu melatonina empieza a subir más o menos ahora.']);
+      .toEqual(['Tu periodo de melatonina empieza a las 23:30', 'Hasta las 00:30, es cuando más fácil te duermes. Tu melatonina ya empieza a subir.']);
     expect(dos(lista.find((x) => x.aviso.id === 'dormir')))
-      .toEqual(['Acuéstate a las 23:15', 'En media hora. Así te duermes dentro de tu periodo de melatonina (23:30 – 00:30).']);
-    expect(dos(lista.find((x) => x.aviso.id === 'revoluciones'))).toEqual(['Baja el ritmo', 'Deja lo que te acelera y las pantallas brillantes. Te acuestas a las 23:15.']);
-    expect(dos(lista.find((x) => x.aviso.id === 'luces'))).toEqual(['Baja las luces', 'Luz baja y cálida desde ahora: la luz fuerte atrasa tu sueño. Te acuestas a las 23:15.']);
-    expect(dos(lista.find((x) => x.aviso.id === 'melatonina'), EN)[0]).toBe('Your melatonin window: 23:30');
+      .toEqual(['Tu hora de acostarte: 23:15', 'Falta media hora. Es la que te deja dormido dentro de tu periodo de melatonina (23:30 – 00:30).']);
+    expect(dos(lista.find((x) => x.aviso.id === 'revoluciones'))).toEqual(['Se acerca tu hora de acostarte', 'Es a las 23:15. Algo tranquilo y lejos de las pantallas brillantes hace más fácil dormirte.']);
+    expect(dos(lista.find((x) => x.aviso.id === 'luces'))).toEqual(['Buen momento para bajar la luz', 'Te acuestas a las 23:15. Con luz baja y cálida, tu melatonina sube a tiempo.']);
+    expect(dos(lista.find((x) => x.aviso.id === 'melatonina'), EN)[0]).toBe('Your melatonin window starts at 23:30');
   });
 
   it('sin periodo (menos de tres noches en la semana), el aviso del periodo no suena y lo demás cuenta desde la hora de antes', () => {
@@ -197,7 +197,7 @@ describe('la noche sale de tu periodo de melatonina', () => {
     expect(ids(lista)).not.toContain('melatonina');
     // Las luces, a las 20:45, caían a 15 minutos de la hora de la cena: esperan a estar a SEPARACION.
     expect([aLa(lista, 'luces'), aLa(lista, 'revoluciones'), aLa(lista, 'dormir')]).toEqual([h('20:30') + SEPARACION, h('21:15'), h('21:45')]);
-    expect(dos(lista.find((x) => x.aviso.id === 'dormir'))).toEqual(['Acuéstate a las 22:15', 'En media hora. Así duermes 8 h 30 min y te despiertas a las 07:30.']);
+    expect(dos(lista.find((x) => x.aviso.id === 'dormir'))).toEqual(['Tu hora de acostarte: 22:15', 'Falta media hora. A esa hora dormirías 8 h 30 min y te despertarías a las 07:30.']);
   });
 
   it('las gafas y anotar lo que tienes en la cabeza, solo si los prendes', () => {
@@ -206,8 +206,8 @@ describe('la noche sale de tu periodo de melatonina', () => {
     const conTodo = dia({ ajustes: { ...AJUSTES, gafas: { encendido: true }, descarga: { encendido: true }, maximoPorDia: 12 } });
     expect(aLa(conTodo, 'descarga')).toBe(h('23:10'));
     expect(aLa(conTodo, 'gafas')).toBeDefined();
-    expect(dos(conTodo.find((x) => x.aviso.id === 'descarga'))[0]).toBe('Anota lo que tienes en la cabeza');
-    expect(dos(conTodo.find((x) => x.aviso.id === 'gafas'))).toEqual(['Ponte las gafas para la luz azul', 'Si las tienes, úsalas desde ahora hasta acostarte, a las 23:15.']);
+    expect(dos(conTodo.find((x) => x.aviso.id === 'descarga'))[0]).toBe('¿Algo dando vueltas en la cabeza?');
+    expect(dos(conTodo.find((x) => x.aviso.id === 'gafas'))).toEqual(['Las gafas para la luz azul, si las tienes', 'Desde ahora hasta acostarte, a las 23:15, pueden ayudar a que tu melatonina suba a tiempo.']);
     // Con las gafas, la noche entra entera: cada uno a SEPARACION del anterior.
     expect(conTodo.filter((x) => x.minutos >= h('21:00')).map((x) => x.aviso.id)).toEqual(['gafas', 'melatonina', 'luces', 'revoluciones', 'dormir', 'descarga']);
   });

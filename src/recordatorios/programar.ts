@@ -30,6 +30,7 @@ import { habitualDe, margenParaDormirte } from '@/dominio/sinReloj';
 import { avisoDePrueba, avisosHasta } from '@/dominio/premium';
 import { despiertoDeLaNoche, deudaDeSueno, ultimasNoches } from '@/dominio/sueno';
 import { accesoActual, hayPremium, seSabeElAcceso, suscripcionActual } from '@/lib/premium';
+import { entrenosDelDia } from '@/salud/convertir';
 import { duracion, metaDelDia } from '@/secciones/comida/datos';
 import { suenoDe } from '@/secciones/persona';
 import { t } from '@/textos';
@@ -316,6 +317,9 @@ async function programar(e: Para, vieja: () => boolean): Promise<void> {
   const deHoy = vigentes(e.registros.values()).filter((r) => r.dia === hoy && !r.planificado).sort((a, b) => (a.momento < b.momento ? -1 : 1));
   const eventosHoy: Partial<Record<Evento, number>> = {};
   for (const r of deHoy) if (r.comida !== 'snack' && eventosHoy[r.comida] === undefined) eventosHoy[r.comida] = minutosDe(r);
+  // Un entrenamiento de Salud de hoy (el reloj, un anillo, Strava, Fitness) es haber entrenado: cuándo terminó el último.
+  const entrenoDeHoy = entrenosDelDia(e.salud?.entrenamientos, hoy).at(-1);
+  if (entrenoDeHoy) eventosHoy.entrenamiento = minutosEnElDia(new Date(entrenoDeHoy.hasta), hoy);
   const minutos = minutosEnElDia(ahora, hoy);
   const sueno = suenoDelDia(e);
   // El control es el día que se eligió o, sin elegir, el de la primera meta (como en el almacén).

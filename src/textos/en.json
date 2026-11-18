@@ -886,7 +886,10 @@
         "permiso": "To hear you, Moss needs the microphone and speech recognition: turn them on in iPhone Settings. Meanwhile, you can type.",
         "idioma": "Your iPhone can’t recognize this language offline. Use the keyboard’s microphone: it works too.",
         "otro": "I couldn’t hear you. Try again, or type it."
-      }
+      },
+      "agregarTodo": "Add all",
+      "grupoAyer": "{comida} · yesterday",
+      "anotadoVarias": "{n} foods logged in {m} meals"
     },
     "letra": {
       "p": "P",
@@ -1237,8 +1240,8 @@
         }
       },
       "consejo": {
-        "dormir": "Tonight, go to bed at {hora} to wake up at {despertar}.",
-        "dormirDeuda": "Tonight, go to bed at {hora}: that's how you start paying down your sleep debt.",
+        "dormir": "Your bedtime tonight: {hora}, to wake up at {despertar}.",
+        "dormirDeuda": "Going to bed at {hora} tonight helps bring your sleep debt down.",
         "sinFallo": "If you train, better not to go to failure: reps feel harder.",
         "comerMas": "Eat a bit more these days: one more meal or a bigger portion helps.",
         "medico": "If your period has also stopped (in men, if you notice less sex drive), you've had a stress fracture or you've felt drained for weeks, talk to a doctor or a dietitian.",
@@ -1247,8 +1250,8 @@
         "comerDespues": "Now, a meal with protein: it helps you recover.",
         "inercia": "Feeling slow right after waking is normal: it passes in about half an hour. Your best time starts at {desde}.",
         "bajon": "Your afternoon dip, until {hasta}: it's normal, it comes from your body clock, and daylight helps.",
-        "bajarElRitmo": "Dim lights from now on: bed at {cama}.",
-        "aLaCama": "It's time for bed: with dim light you fall asleep sooner.",
+        "bajarElRitmo": "Bedtime is {cama}: with dim light from now on, you fall asleep more easily.",
+        "aLaCama": "It's your bedtime: with dim light, sleep comes sooner.",
         "pico": "This is your best time of day, until {hasta}: use it for what takes the most focus.",
         "segundoPico": "Until {hasta}, your second good stretch of the day.",
         "comerMasEntrena": "Eat a bit more these days, especially before and after training.",
@@ -1324,7 +1327,7 @@
             "bien": "You slept what you need, or close, and your debt is under {deudaMedia}: sleep isn't holding you back."
           },
           "mira": "Moss looks at how much you slept last night, whether two of your last three nights were short, and your sleep debt over the last two weeks.",
-          "seguir": "Keep it up: tonight, go to bed at {hora}.",
+          "seguir": "You're doing well. Your bedtime tonight is {hora}.",
           "seguirSinHora": "Keep sleeping what you need."
         },
         "hoy": {
@@ -2300,8 +2303,6 @@
       "antes": "{n} min earlier than yesterday",
       "despues": "{n} min later than yesterday",
       "igual": "Same as yesterday",
-      "acuestate": "Go to bed at {hora} to be asleep within your window.",
-      "conDeuda": "Go to bed at {hora}, when your window starts. Not earlier: you would struggle to fall asleep.",
       "faltan": {
         "uno": "{n} night to go",
         "otros": "{n} nights to go"
@@ -2328,7 +2329,8 @@
         "despues": "If you go to bed later",
         "despuesTexto": "You will fall asleep just fine: the window does not close. But the night gets shorter.",
         "pie": "If you work nights or shifts, this estimate does not work for you."
-      }
+      },
+      "texto": "It's the time of night when you fall asleep most easily."
     },
     "pendientes": {
       "fila": "What’s on your mind",
@@ -2687,7 +2689,7 @@
     "avisos": {
       "titulo": "Reminders",
       "dormir": "Bedtime",
-      "dormirTexto": "Tonight, go to bed at {hora}: with the {margen} min it takes you to fall asleep, you are asleep within your melatonin window ({desde} – {hasta}). It reminds you a while before.",
+      "dormirTexto": "Your bedtime tonight: {hora}. With the {margen} min it takes you to fall asleep, you are asleep within your melatonin window ({desde} – {hasta}). It reminds you a while before.",
       "dormirSinDatos": "At the time that gets you asleep within your melatonin window. It reminds you a while before.",
       "antes": "{n} min before",
       "tardo": "Time to fall asleep",
@@ -2705,15 +2707,15 @@
       "falta": "If I'm running low on something",
       "faltaTexto": "A short notification with what's missing (protein, calories or water) and an idea of what to eat. One or two a day at most, and only on days you've logged something.",
       "conviene": "What to do, and when",
-      "convieneTexto": "They tell you what to do and when, without opening Moss. Only the ones that apply that day, within the daily limit.",
+      "convieneTexto": "Suggestions with their time and their reason, without opening Moss. Only the ones that apply that day, within the daily limit.",
       "antesDeEntrenar": "Eat before training",
       "antesDeEntrenarTexto": "Half an hour before the meal that suits you best: when and how much to eat. It counts the time it takes you to get to the gym.",
       "despuesDeEntrenar": "Protein after training",
       "despuesDeEntrenarTexto": "When you finish: how much, and at which meal.",
       "cafe": "Coffee",
-      "cafeTexto": "Until what time, so it doesn't cost you sleep. On training days, whether to have one before and when.",
+      "cafeTexto": "From what time caffeine could lower the quality of your sleep, counting back from your melatonin window. On training days, whether to have one before and when.",
       "ultimaComida": "Last big meal",
-      "ultimaComidaTexto": "Two hours before bed (three with reflux): have dinner before then and, after that, something light.",
+      "ultimaComidaTexto": "Two hours before bed (three with reflux): how late to have dinner so you go to sleep with it digested.",
       "entrenarTarde": "If you train late",
       "entrenarTardeTexto": "If you'd finish less than two hours before bed: until what time to train hard.",
       "luces": "Dim the lights",
@@ -2744,7 +2746,7 @@
       "descargaTexto": "At bedtime, it invites you to write your to-dos in a short note, in Sleep. In the morning, after you wake up, you get them in a reminder: “To do today”.",
       "gafas": "Blue-light glasses",
       "gafasTexto": "Two hours before bed, if you have them. The evidence is still thin.",
-      "dormirSinPeriodo": "Tonight, go to bed at {hora}: to wake up at {despertar} after {horas} of sleep, with a {latencia} min margin to fall asleep. You get a reminder a little before.",
+      "dormirSinPeriodo": "Your bedtime tonight: {hora}. That would give you {horas} of sleep and a {despertar} wake-up, with a {latencia} min margin to fall asleep. You get a reminder a little before.",
       "maximoSolo": "It went up to {n} on its own for the reminders you turned on. Pick another and yours stays."
     },
     "cambiarCuenta": "Switch account",
@@ -3437,8 +3439,8 @@
         "texto": "You go to bed at {dormir}: hard training at least 2 hours before bed, and ideally 4 (before {mejor})."
       },
       "dormir": {
-        "titulo": "Bedtime",
-        "texto": "To sleep your {horas} tonight."
+        "titulo": "Your night",
+        "texto": "What you need to sleep tonight: {horas}."
       },
       "proteina": {
         "titulo": "Protein"
@@ -3555,9 +3557,9 @@
         "anotar": "If you want, log how you slept",
         "corregir": "Slept differently? Fix it in Sleep",
         "consejos": {
-          "cortaAntes": "At the gym, no sets to failure; and tonight, bed at {hora}.",
-          "corta": "Tonight, bed at {hora}.",
-          "algoCorta": "Tonight, bed at {hora}."
+          "cortaAntes": "At the gym, better to stop short of failure. Your bedtime tonight: {hora}.",
+          "corta": "Your bedtime tonight: {hora}.",
+          "algoCorta": "Tonight, your bedtime is {hora}."
         }
       },
       "musculos": {
@@ -4084,7 +4086,7 @@
     "pruebaTermina": "Your Moss trial ends in two days",
     "conviene": {
       "antes": {
-        "titulo": "Eat before your workout",
+        "titulo": "Your pre-workout meal",
         "comida": {
           "desayuno": "Breakfast at {hora}",
           "almuerzo": "Lunch at {hora}",
@@ -4116,24 +4118,30 @@
       },
       "cafe": {
         "titulo": "Coffee before your workout",
-        "antes": "If you have one, make it {hora}: that's {horas} before bed.",
-        "tituloUltimo": "Last coffee",
-        "ultimo": "Until {hora}. After that, decaf.",
-        "ultimoEntrenas": "Until {hora}. Before your {entreno} workout, better skip it."
+        "antes": "If you have one, {hora} works well: an hour before you start and {horas} before bed.",
+        "tituloUltimo": "Best to skip caffeine from now",
+        "ultimo": {
+          "periodo": "Your melatonin window starts at {periodo}: caffeine could lower your sleep quality.",
+          "cama": "Bedtime is {cama}: caffeine from now on could lower your sleep quality."
+        },
+        "ultimoEntrenas": {
+          "periodo": "You train at {entreno}, but your melatonin window starts at {periodo} and caffeine lasts hours.",
+          "cama": "You train at {entreno}, but bedtime is {cama} and caffeine lasts hours."
+        }
       },
       "ultimaComida": {
         "titulo": "Last big meal",
-        "texto": "Have dinner before {hora}: bed at {cama}. After that, something light."
+        "texto": "If you have dinner before {hora}, you go to bed at {cama} with it digested."
       },
       "tarde": {
-        "titulo": "Finish by {hora}",
-        "texto": "After that, keep it easy: you go to bed at {cama}.",
+        "titulo": "Hard training: until {hora}",
+        "texto": "Bedtime is {cama}: training hard any later could cost you sleep.",
         "tituloSuave": "Keep it easy today",
-        "suave": "A hard workout at {entreno} would cost you sleep: bed at {cama}."
+        "suave": "Bedtime is {cama}: a hard workout at {entreno} could cost you sleep."
       },
       "luces": {
-        "titulo": "Dim the lights",
-        "texto": "Low, warm light from now on: bright light pushes your sleep later. Bedtime is {cama}."
+        "titulo": "A good time to dim the lights",
+        "texto": "Bedtime is {cama}. With low, warm light, your melatonin rises on time."
       },
       "recuperacion": {
         "titulo": "Recovery: {pct}%",
@@ -4169,9 +4177,9 @@
       },
       "comida": {
         "titulo": {
-          "almuerzo": "Have about {kcal} kcal for lunch",
-          "merienda": "Have about {kcal} kcal for your snack",
-          "cena": "Have about {kcal} kcal for dinner"
+          "almuerzo": "Your lunch: about {kcal} kcal",
+          "merienda": "Your afternoon snack: about {kcal} kcal",
+          "cena": "Your dinner: about {kcal} kcal"
         },
         "texto": "What you didn’t eat at breakfast goes to {lista}."
       },
@@ -4182,20 +4190,20 @@
       },
       "y": "{a} and {b}",
       "melatonina": {
-        "titulo": "Your melatonin window: {desde}",
-        "texto": "From {desde} to {hasta} is when falling asleep is easiest: your melatonin starts rising about now."
+        "titulo": "Your melatonin window starts at {desde}",
+        "texto": "Until {hasta}, it's when you fall asleep most easily. Your melatonin is starting to rise."
       },
       "revoluciones": {
-        "titulo": "Wind down",
-        "texto": "Drop whatever revs you up, and bright screens. Bedtime is {cama}."
+        "titulo": "Bedtime is getting close",
+        "texto": "It's at {cama}. Something calm, away from bright screens, makes it easier to fall asleep."
       },
       "gafas": {
-        "titulo": "Put on your blue-light glasses",
-        "texto": "If you have them, wear them from now until bedtime, {cama}."
+        "titulo": "Blue-light glasses, if you have them",
+        "texto": "From now until bedtime at {cama}, they may help your melatonin rise on time."
       },
       "descarga": {
-        "titulo": "Write down what’s on your mind",
-        "texto": "Write your to-dos before bed: a clear head falls asleep more easily. Moss reminds you tomorrow."
+        "titulo": "Anything on your mind?",
+        "texto": "Writing down your to-dos before bed helps you fall asleep sooner. Moss reminds you tomorrow."
       },
       "pendientes": {
         "titulo": "To do today",
@@ -4203,24 +4211,24 @@
       }
     },
     "acostarte": {
-      "titulo": "Go to bed at {cama}",
-      "texto": "{tiempo}. That way you fall asleep within your melatonin window ({desde} – {hasta}).",
-      "conDeuda": "{tiempo}. With {deuda} of sleep debt, don’t push it later tonight.",
-      "sinPeriodo": "{tiempo}. That way you sleep {horas} and wake up at {despertar}.",
+      "titulo": "Your bedtime: {cama}",
+      "texto": "{tiempo}. It gets you asleep within your melatonin window ({desde} – {hasta}).",
+      "conDeuda": "{tiempo}. You have {deuda} of sleep debt: going to bed on time helps bring it down.",
+      "sinPeriodo": "{tiempo}. That would give you {horas} of sleep and a {despertar} wake-up.",
       "en": {
-        "15": "In 15 minutes",
-        "30": "In half an hour",
-        "45": "In 45 minutes",
-        "60": "In an hour",
-        "otro": "In {n} minutes",
-        "ya": "Now"
+        "15": "15 minutes to go",
+        "30": "Half an hour to go",
+        "45": "45 minutes to go",
+        "60": "An hour to go",
+        "otro": "{n} minutes to go",
+        "ya": "It's now"
       }
     },
     "pesarte": {
-      "titulo": "Weigh yourself before breakfast",
-      "texto": "After the bathroom and always the same way: that is how the trend shows.",
-      "tituloControl": "Check-in day: weigh yourself",
-      "textoControl": "Before breakfast, as usual."
+      "titulo": "A good time to weigh yourself",
+      "texto": "Before breakfast and after the bathroom, always the same way: that is how the trend shows.",
+      "tituloControl": "Today is your check-in",
+      "textoControl": "One weigh-in before breakfast, as usual, and Moss reviews your week."
     }
   },
   "entreno": {
