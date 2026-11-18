@@ -27,7 +27,8 @@
 //   ellos con el repositorio SQLite del iPhone;
 // - el vínculo con Ascent (0008_vinculo.sql), contra tablas de Ascent de mentira con las columnas
 //   que lee: quién lo ve y quién lo escribe, vincular y volver a vincular, desvincular, que lo de
-//   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, y la app
+//   Ascent llega como lo cuenta Ascent y nunca lo de un tercero, el peso de las dos apps, la rutina y
+//   los ajustes de Ascent (0013_ascent_rutina.sql), y la app
 //   (src/lib/ascentRemoto.ts) vinculando por la función moss-vincular de verdad;
 // - y las dos cuentas (D29), con moss-vincular y moss-borrar-cuenta de verdad: vincular con el mismo
 //   correo y con correos distintos, borrar en Moss (solo de Moss, o la misma cuenta que Ascent),
@@ -121,11 +122,13 @@ await db.exec(`
   grant usage on schema auth to anon, authenticated, service_role;
   grant execute on function auth.uid() to anon, authenticated, service_role;
 `);
-// Lo de Ascent que lee 0008_vinculo.sql, solo con las columnas que lee, como en su schema.sql (versión
-// 96): cada alta crea un perfil sin nombre de usuario (on_auth_user_created), y desde Moss no se lee
-// nada directo, sin las funciones del vínculo.
+// Lo de Ascent que leen 0008_vinculo.sql y 0013_ascent_rutina.sql, solo con las columnas que leen, como
+// en su schema.sql (versión 102): cada alta crea un perfil sin nombre de usuario (on_auth_user_created),
+// y desde Moss no se lee nada directo, sin las funciones del vínculo.
 await db.exec(`
-  create table public.profiles (id uuid primary key references auth.users (id) on delete cascade, username text);
+  create table public.profiles (
+    id uuid primary key references auth.users (id) on delete cascade, username text, racha_actual int not null default 0,
+    umbral_estancamiento int not null default 6 check (umbral_estancamiento in (2, 3, 6, 8)));
   create table public.logs (
     id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
     fecha date not null, es_descanso boolean not null default false, unique (user_id, fecha));
@@ -133,7 +136,11 @@ await db.exec(`
     id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
     log_id uuid not null references public.logs (id) on delete cascade, inicio timestamptz not null default now(), fin timestamptz,
     estado text not null default 'corriendo', series int not null default 0, bloques jsonb not null default '[]');
-  create table public.ejercicios (id text primary key, nombre text not null, grupo text not null);
+  create table public.ejercicios (id text primary key, nombre text not null, grupo text not null, creado_por uuid references public.profiles (id) on delete cascade);
+  create table public.rutinas (
+    id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
+    nombre text not null, activa boolean not null default false, dias jsonb not null, creada timestamptz not null default now());
+  create unique index rutinas_una_activa on public.rutinas (user_id) where activa;
   create table public.prs (
     id uuid primary key default gen_random_uuid(), user_id uuid not null references public.profiles (id) on delete cascade,
     ejercicio text not null references public.ejercicios (id), peso numeric(6, 2) not null, reps int not null,
@@ -154,6 +161,7 @@ await db.exec(`
   alter table public.ejercicios enable row level security;
   alter table public.prs enable row level security;
   alter table public.weights enable row level security;
+  alter table public.rutinas enable row level security;
   grant usage on schema public to anon, authenticated, service_role;
 `);
 for (const archivo of migraciones) {
@@ -870,11 +878,27 @@ comprobar(delCatalogo?.nombre_es === 'Leche entera' && delCatalogo.densidad === 
 // nunca usó Ascent, SOLA una que usa las dos apps con la misma cuenta y TERCERO, alguien más.
 const [MOSS, ASCENT, OTRA, SOLA, TERCERO] = ['e1', 'e2', 'e3', 'e4', 'e5'].map((x) => `00000000-0000-4000-8000-0000000000${x}`);
 await db.exec(`insert into auth.users (id) values ('${MOSS}'), ('${ASCENT}'), ('${OTRA}'), ('${SOLA}'), ('${TERCERO}');
-  update public.profiles set username = 'agus' where id = '${ASCENT}';
-  update public.profiles set username = 'sola' where id = '${SOLA}';
-  update public.profiles set username = 'tercero' where id = '${TERCERO}';
-  insert into public.ejercicios (id, nombre, grupo) values ('sentadilla', 'Sentadilla', 'piernas'), ('press_mancuernas', 'Press con mancuernas', 'pecho'),
-    ('dominadas', 'Dominadas', 'espalda'), ('flexiones', 'Flexiones', 'pecho'), ('cinta', 'Cinta', 'cardio'), ('propio_abc', 'Mi máquina', 'espalda');`);
+  update public.profiles set username = 'agus', racha_actual = 37, umbral_estancamiento = 3 where id = '${ASCENT}';
+  update public.profiles set username = 'sola', racha_actual = 4 where id = '${SOLA}';
+  update public.profiles set username = 'tercero', racha_actual = 200, umbral_estancamiento = 8 where id = '${TERCERO}';
+  insert into public.ejercicios (id, nombre, grupo, creado_por) values ('sentadilla', 'Sentadilla', 'piernas', null), ('press_mancuernas', 'Press con mancuernas', 'pecho', null),
+    ('dominadas', 'Dominadas', 'espalda', null), ('flexiones', 'Flexiones', 'pecho', null), ('cinta', 'Cinta', 'cardio', null), ('propio_abc', 'Mi máquina', 'espalda', '${ASCENT}'),
+    ('propio_ajeno', 'La máquina del tercero', 'pecho', '${TERCERO}');`);
+// La rutina activa de ASCENT, con lo roto que Ascent tira (rutina_dias_limpios): el domingo un propio suyo y uno
+// ajeno (copiado de un amigo); el lunes series de texto, un ejercicio vacío, un número suelto y la cinta con
+// minutos; el martes descanso con un ejercicio que no cuenta; el miércoles series con decimales y repeticiones de
+// más; el jueves vacío y los demás faltan. Además, una rutina suya que no está activa y la de TERCERO.
+await db.query(`insert into public.rutinas (user_id, nombre, activa, dias) values ($1, 'Vieja', false, $2), ($1, 'Empuje y piernas', true, $3), ($4, 'Del tercero', true, $2)`, [
+  ASCENT, JSON.stringify([{ descanso: false, ejercicios: [{ ejercicio: 'flexiones', series: 9 }] }]),
+  JSON.stringify([
+    { descanso: false, ejercicios: [{ ejercicio: 'propio_abc', series: 4 }, { ejercicio: 'propio_ajeno', series: 3 }] },
+    { ejercicios: [{ ejercicio: 'sentadilla', series: 3, reps: 5 }, { ejercicio: 'press_mancuernas', series: '4' }, { ejercicio: '' }, 5, { ejercicio: 'cinta', series: 0, minutos: 30 }] },
+    { descanso: true, ejercicios: [{ ejercicio: 'sentadilla', series: 3 }] },
+    { descanso: 'no', ejercicios: [{ ejercicio: 'sentadilla', series: 2.6, reps: 150 }, { ejercicio: 'dominadas', series: 120, reps: 8 }] },
+    {},
+  ]),
+  TERCERO,
+]);
 const diaDeAscent = async (usuario, fecha, descanso = false) => (await db.query('insert into public.logs (user_id, fecha, es_descanso) values ($1, $2, $3) returning id', [usuario, fecha, descanso])).rows[0].id;
 const sesionDeAscent = (usuario, log, { inicio, minutos = null, estado = 'terminada', series, bloques }) => db.query(
   'insert into public.sesiones (user_id, log_id, inicio, fin, estado, series, bloques) values ($1, $2, $3, $4, $5, $6, $7)',
@@ -920,11 +944,21 @@ const sesionesDe = async (u, desde = '2026-10-01') => (await como(u, 'select mos
 const marcasDe = async (u, desde = '2026-09-01') => (await como(u, 'select moss.ascent_marcas($1) as r', [desde])).rows[0].r;
 const pesosDe = async (u, app = 'moss', desde = '2026-10-01') => (await como(u, 'select moss.pesos_compartidos($1, $2) as r', [desde, app])).rows[0].r;
 const pesosEnTexto = (lista) => lista.map((p) => `${p.fecha} ${Number(p.kg)} ${p.de}`).join(', ');
+const rutinaDe = async (u) => (await como(u, 'select moss.ascent_rutina() as r')).rows[0].r;
+const ajustesDe = async (u) => (await como(u, 'select moss.ascent_ajustes() as r')).rows[0].r;
+/** La rutina en una línea: cada día con su número, «descanso» o sus ejercicios (id:nombre:grupo:series, y minutos o repeticiones). */
+const rutinaEnTexto = (r) => r && `${r.nombre} | ${r.dias.map((d) => `${d.dia} ${d.descanso ? 'descanso' : d.ejercicios.map((e) => `${e.id}:${e.nombre}:${e.musculos.join('/')}:${e.series}${'minutos' in e ? `:${e.minutos}min` : ''}${'reps' in e ? `:${e.reps}reps` : ''}`).join(' ')}`).join(' | ')}`;
 
 comprobar(
   JSON.stringify(await estadoDe(MOSS)) === JSON.stringify({ desde: null, nombre: null, vinculada: false })
-    && !(await sesionesDe(MOSS)).length && !(await marcasDe(MOSS, '2000-01-01')).length && !(await pesosDe(MOSS)).length,
+    && !(await sesionesDe(MOSS)).length && !(await marcasDe(MOSS, '2000-01-01')).length && !(await pesosDe(MOSS)).length
+    && (await rutinaDe(MOSS)) === null && (await ajustesDe(MOSS)) === null,
   'vínculo: sin vincular, no está vinculada y las lecturas cruzadas no devuelven nada',
+);
+comprobar(
+  await falla('anon', 'select moss.ascent_rutina()') && await falla('anon', 'select moss.ascent_ajustes()')
+    && await falla(MOSS, 'select * from public.rutinas') && await falla(MOSS, 'select racha_actual from public.profiles'),
+  'vínculo: sin sesión no se pide la rutina ni los ajustes, y las tablas de Ascent no se leen directo',
 );
 comprobar(
   await falla(MOSS, `insert into moss.vinculo (moss, ascent, origen) values ('${MOSS}', '${ASCENT}', 'moss')`)
@@ -981,16 +1015,36 @@ comprobar(
     && !(await sesionesDe(TERCERO)).length && !(await marcasDe(TERCERO)).length && !(await pesosDe(TERCERO)).length,
   'vínculo: nunca llega nada de un tercero, y lo de Ascent lo lee solo la cuenta de Moss del vínculo',
 );
+const RUTINA_DE_ASCENT = 'Empuje y piernas | 0 propio_abc:Mi máquina:espalda:4 propio_ajeno:propio_ajeno::3'
+  + ' | 1 sentadilla:Sentadilla:piernas:3:5reps press_mancuernas:Press con mancuernas:pecho:0 cinta:Cinta:cardio:0:30min'
+  + ' | 2 descanso | 3 sentadilla:Sentadilla:piernas:3 dominadas:Dominadas:espalda:99:8reps | 4  | 5  | 6 ';
+comprobar(
+  rutinaEnTexto(await rutinaDe(MOSS)) === RUTINA_DE_ASCENT,
+  `vínculo: la rutina activa de Ascent, los siete días con sus ejercicios (el nombre de un propio ajeno no llega), con las reglas de Ascent para lo roto (${rutinaEnTexto(await rutinaDe(MOSS))})`,
+);
+comprobar(
+  JSON.stringify(await ajustesDe(MOSS)) === JSON.stringify({ racha: 37, umbral: 3 }),
+  `vínculo: el umbral de estancamiento y la racha de la cuenta de Ascent (${JSON.stringify(await ajustesDe(MOSS))})`,
+);
+comprobar(
+  (await rutinaDe(ASCENT)) === null && (await ajustesDe(ASCENT)) === null && (await rutinaDe(TERCERO)) === null && (await ajustesDe(TERCERO)) === null
+    && !JSON.stringify(await rutinaDe(MOSS)).includes('tercero') && !JSON.stringify(await rutinaDe(MOSS)).includes('flexiones'),
+  'vínculo: la rutina y los ajustes los lee solo la cuenta de Moss del vínculo: nunca los de un tercero ni una rutina que no está activa',
+);
+await db.query(`update public.rutinas set activa = false where user_id = $1`, [ASCENT]);
+comprobar((await rutinaDe(MOSS)) === null && (await ajustesDe(MOSS))?.umbral === 3, 'vínculo: sin rutina activa en Ascent, la rutina es null y los ajustes siguen');
+await db.query(`update public.rutinas set activa = true where user_id = $1 and nombre = 'Empuje y piernas'`, [ASCENT]);
 
 await vincularConLaClave(OTRA, ASCENT, 'ascent');
 comprobar(
-  (await vinculos()) === 'e3-e2-ascent' && !(await estadoDe(MOSS)).vinculada && !(await sesionesDe(MOSS)).length && (await sesionesDe(OTRA)).length === 4,
+  (await vinculos()) === 'e3-e2-ascent' && !(await estadoDe(MOSS)).vinculada && !(await sesionesDe(MOSS)).length && (await sesionesDe(OTRA)).length === 4
+    && (await rutinaDe(MOSS)) === null && (await ajustesDe(MOSS)) === null && rutinaEnTexto(await rutinaDe(OTRA)) === RUTINA_DE_ASCENT,
   'vínculo: vincular otra vez borra el vínculo anterior de esa cuenta de Ascent, y la de Moss de antes deja de leerla',
 );
 await vincularConLaClave(SOLA, SOLA, 'moss');
 comprobar(
   (await estadoDe(SOLA)).nombre === 'sola' && resumen(await sesionesDe(SOLA)) === '2026-10-22 2 40 30 09:00' && pesosEnTexto(await pesosDe(SOLA)) === '2026-10-22 60 ascent, 2026-10-23 59.5 moss'
-    && (await vinculos()) === 'e3-e2-ascent,e4-e4-moss',
+    && (await vinculos()) === 'e3-e2-ascent,e4-e4-moss' && (await rutinaDe(SOLA)) === null && JSON.stringify(await ajustesDe(SOLA)) === JSON.stringify({ racha: 4, umbral: 6 }),
   'vínculo: la misma cuenta en las dos apps se vincula consigo misma y lee lo suyo de Ascent',
 );
 await vincularConLaClave(SOLA, ASCENT, 'moss');
@@ -1074,6 +1128,19 @@ comprobar(
     && pesosEnLaApp.map((p) => `${p.fecha} ${p.kg} ${p.de}`).join() === '2026-10-20 80 ascent,2026-10-21 79.8 ascent,2026-10-23 79.5 ascent',
   'app: las marcas y el peso compartido llegan con la forma de src/lib/ascentRemoto.ts',
 );
+const rutinaEnLaApp = await ascentRemoto.rutinaDeAscent();
+const ajustesEnLaApp = await ascentRemoto.ajustesDeAscent();
+const lunesEnLaApp = rutinaEnLaApp?.dias.find((x) => x.dia === 1);
+comprobar(
+  rutinaEnLaApp?.nombre === 'Empuje y piernas' && rutinaEnLaApp.dias.length === 7 && rutinaEnLaApp.dias.find((x) => x.dia === 2)?.descanso === true
+    && JSON.stringify(lunesEnLaApp?.ejercicios) === JSON.stringify([
+      { id: 'sentadilla', nombre: 'Sentadilla', musculos: ['piernas'], series: 3, reps: 5 },
+      { id: 'press_mancuernas', nombre: 'Press con mancuernas', musculos: ['pecho'], series: 0 },
+      { id: 'cinta', nombre: 'Cinta', musculos: ['cardio'], series: 0, minutos: 30 },
+    ])
+    && JSON.stringify(ajustesEnLaApp) === JSON.stringify({ umbral: 3, racha: 37 }),
+  'app: la rutina de Ascent y sus ajustes llegan con la forma de src/lib/ascentRemoto.ts',
+);
 const desdeAscent = await funcionVincular.fetch(new Request('https://proyecto.supabase.co/functions/v1/moss-vincular', {
   method: 'POST', headers: { Authorization: `Bearer ${tokenDe(ASCENT)}` }, body: JSON.stringify({ otra: tokenDe(MOSS), desde: 'ascent' }),
 }));
@@ -1082,12 +1149,23 @@ await ascentRemoto.desvincular();
 comprobar(!(await ascentRemoto.estadoDelVinculo()).vinculada && !(await ascentRemoto.sesionesDeAscent('2026-10-01')).length && !(await vinculos()), 'app: desvincular desde Moss');
 ascentRemoto.probarCon(() => null);
 const sinSupabase = [await ascentRemoto.estadoDelVinculo(), await ascentRemoto.sesionesDeAscent('2026-10-01'), await ascentRemoto.marcasDeAscent('2026-10-01'),
-  await ascentRemoto.pesosCompartidos('2026-10-01'), await ascentRemoto.vincular(tokenDe(ASCENT)), await ascentRemoto.desvincular()];
+  await ascentRemoto.pesosCompartidos('2026-10-01'), await ascentRemoto.vincular(tokenDe(ASCENT)), await ascentRemoto.desvincular(),
+  await ascentRemoto.rutinaDeAscent(), await ascentRemoto.ajustesDeAscent()];
 ascentRemoto.probarCon(() => ({ ...conSesion(MOSS), rpc: async () => ({ data: null, error: { message: 'Failed to fetch' } }), functions: { invoke: async () => ({ data: null, error: new Error('FunctionsFetchError') }) } }));
-const sinConexion = [await ascentRemoto.sesionesDeAscent('2026-10-01').then(() => 'resolvió', () => 'rechazó'), await ascentRemoto.estadoDelVinculo().then(() => 'resolvió', () => 'rechazó'), (await ascentRemoto.vincular(tokenDe(ASCENT))).error];
+const rechaza = (promesa) => promesa.then(() => 'resolvió', () => 'rechazó');
+const sinConexion = [await rechaza(ascentRemoto.sesionesDeAscent('2026-10-01')), await rechaza(ascentRemoto.estadoDelVinculo()), (await ascentRemoto.vincular(tokenDe(ASCENT))).error,
+  await rechaza(ascentRemoto.rutinaDeAscent()), await rechaza(ascentRemoto.ajustesDeAscent())];
 comprobar(
-  JSON.stringify(sinSupabase) === JSON.stringify([{ vinculada: false, nombre: null, desde: null }, [], [], [], { ok: false, error: 'sin_sesion' }, null]) && sinConexion.join() === 'rechazó,rechazó,red',
+  JSON.stringify(sinSupabase) === JSON.stringify([{ vinculada: false, nombre: null, desde: null }, [], [], [], { ok: false, error: 'sin_sesion' }, null, null, null])
+    && sinConexion.join() === 'rechazó,rechazó,red,rechazó,rechazó',
   'app: sin Supabase no hay vínculo ni nada que leer; sin conexión las lecturas se rechazan (queda lo que había) y vincular dice «red»',
+);
+// La OTA puede llegar antes que 0013_ascent_rutina.sql: PostgREST contesta PGRST202 (no está la función). La lectura
+// se rechaza como sin conexión, y el teléfono se queda con lo que tenía (src/almacen/ascent.ts lo prueba).
+ascentRemoto.probarCon(() => ({ ...conSesion(MOSS), rpc: async () => ({ data: null, error: { code: 'PGRST202', message: 'Could not find the function moss.ascent_rutina' } }) }));
+comprobar(
+  (await rechaza(ascentRemoto.rutinaDeAscent())) === 'rechazó' && (await rechaza(ascentRemoto.ajustesDeAscent())) === 'rechazó',
+  'app: sin las funciones nuevas en la base, la rutina y los ajustes se rechazan sin romper nada',
 );
 globalThis.fetch = fetchDeVerdad;
 

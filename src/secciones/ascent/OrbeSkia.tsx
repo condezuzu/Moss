@@ -6,13 +6,14 @@ import { Canvas, Circle, Group, Path, RadialGradient, Skia, vec } from '@shopify
 import { useEffect, useMemo } from 'react';
 import { useDerivedValue, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { C } from './colores';
+import { C, useAcento } from './colores';
 
 export type PropsDelOrbe = { tam?: number; unida?: boolean; atencion?: boolean };
 
 export default function OrbeSkia({ tam = 48, unida = false, atencion = false }: PropsDelOrbe) {
   const abierta = useMemo(() => Skia.Path.MakeFromSVGString('M -7.36 -17.52 A 19 19 0 1 1 -16.45 9.5'), []);
   const reducido = useReducedMotion();
+  const { claro } = useAcento();
   const u = useSharedValue(unida ? 1 : 0);
   useEffect(() => {
     u.set(withTiming(unida ? 1 : 0, { duration: reducido ? 0 : 900 }));
@@ -27,7 +28,7 @@ export default function OrbeSkia({ tam = 48, unida = false, atencion = false }: 
         {abierta && <Path path={abierta} style="stroke" strokeWidth={1.7} strokeCap="round" color="#9ea4ae" opacity={opAbierta} />}
         <Circle cx={0} cy={0} r={19} style="stroke" strokeWidth={1.6} color="rgba(170, 178, 196, 0.22)" opacity={opCerrada} />
         <Group transform={[{ rotate: -Math.PI / 2 }]}>
-          <Path path={CIRCULO} style="stroke" strokeWidth={2.2} strokeCap="round" color={atencion ? C.lejos : C.claro} end={arco} opacity={opCerrada} />
+          <Path path={CIRCULO} style="stroke" strokeWidth={2.2} strokeCap="round" color={atencion ? C.lejos : claro} end={arco} opacity={opCerrada} />
         </Group>
         <Circle cx={0} cy={0} r={12.5}>
           <RadialGradient c={vec(3, 4)} r={20} colors={['#0d1016', '#1b1f2a', '#3b4251', '#98a1b5']} positions={[0, 0.58, 0.85, 1]} />

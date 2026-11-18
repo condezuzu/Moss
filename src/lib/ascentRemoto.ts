@@ -7,8 +7,11 @@
 // (sin conexión, por ejemplo), las lecturas y desvincular rechazan la promesa: quien llama se queda
 // con lo que tenía. Vincular nunca la rechaza: devuelve el error.
 
+import { leerAjustesDeAscent, leerRutinaDeAscent, type AjustesDeAscent, type RutinaDeAscent } from '@/dominio/conAscent';
 import type { ClaveDia } from '@/dominio/fechas';
 import { haySupabase, supabase } from '@/lib/supabase';
+
+export type { AjustesDeAscent, RutinaDeAscent };
 
 /**
  * Una serie: lo que se movió, en kilos, como lo cuenta Ascent (×2 con dos mancuernas o un lado por
@@ -192,6 +195,20 @@ export async function marcasDeAscent(desde: ClaveDia): Promise<MarcaDeAscent[]> 
     if (!ejercicio || !esClave(m.fecha) || kilos === null || reps === null) return [];
     return [{ ejercicio, fecha: m.fecha, kilos, reps, ...(id ? { id } : {}) }];
   });
+}
+
+/**
+ * La rutina activa de la cuenta de Ascent vinculada (supabase/moss/0013_ascent_rutina.sql): los siete días, con sus
+ * ejercicios y sus series. null sin vínculo o sin rutina activa. Si la base todavía no tiene la función, se rechaza
+ * como sin conexión.
+ */
+export async function rutinaDeAscent(): Promise<RutinaDeAscent | null> {
+  return leerRutinaDeAscent(await llamar('ascent_rutina'));
+}
+
+/** El umbral de estancamiento de los Ajustes de Ascent y la racha (para el rango). null sin vínculo. */
+export async function ajustesDeAscent(): Promise<AjustesDeAscent | null> {
+  return leerAjustesDeAscent(await llamar('ascent_ajustes'));
 }
 
 /**

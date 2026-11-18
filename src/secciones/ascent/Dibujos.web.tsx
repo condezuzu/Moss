@@ -4,7 +4,7 @@ import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import type { ComponentType } from 'react';
 import { View } from 'react-native';
 
-import type { PropsDeChispa, PropsDeMarca, PropsDelCuerpo } from './DibujosSkia';
+import type { PropsDeChispa, PropsDeMarca, PropsDelCuerpo, PropsDelRango } from './DibujosSkia';
 
 export type { EstadoDibujado } from './DibujosSkia';
 
@@ -26,3 +26,6 @@ function conSkia<P extends object>(cargar: () => Promise<ComponentType<P>>, tama
 export const Marca = conSkia<PropsDeMarca>(async () => (await import('./DibujosSkia')).MarcaSkia, (p) => ({ width: p.tam, height: p.tam }));
 export const Cuerpo = conSkia<PropsDelCuerpo>(async () => (await import('./DibujosSkia')).CuerpoSkia, (p) => ({ width: p.ancho, height: (p.ancho * 188) / 210 + (p.rotulos ? 16 : 0) }));
 export const Tendencia = conSkia<PropsDeChispa>(async () => (await import('./DibujosSkia')).TendenciaSkia, (p) => ({ width: p.ancho, height: p.alto }));
+const delRango = (p: PropsDelRango) => ({ width: p.lado + 2 * p.margen, height: p.lado + 2 * p.margen });
+export const CuerpoDelRango = conSkia<PropsDelRango>(async () => (await import('./DibujosSkia')).CuerpoDelRangoSkia, delRango);
+export const TechoDelRango = conSkia<PropsDelRango>(async () => (await import('./DibujosSkia')).TechoDelRangoSkia, delRango);

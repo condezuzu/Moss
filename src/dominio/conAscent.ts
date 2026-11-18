@@ -12,7 +12,7 @@ import {
 } from './entrenamiento';
 import { diasEntre, lunesDe, sumarDias, type ClaveDia, type DiaSemana } from './fechas';
 import type { Macros, Sexo } from './metas';
-import { grupoDelEjercicio, unRmDeAscent, type GrupoDeAscent, type SesionConBloques } from './musculos';
+import { claveDelEjercicio, grupoDelEjercicio, unRmDeAscent, type Bloque, type GrupoDeAscent, type SesionConBloques } from './musculos';
 
 export type SerieDeAscent = { kilos: number | null; reps: number | null };
 /** Un ejercicio de una sesión: el nombre de Ascent, su grupo (uno solo), sus series y su id ('sentadilla', o 'propio_…'). */
@@ -38,6 +38,85 @@ export function gruposDeLaSesion(s: Pick<SesionDeAscent, 'ejercicios'>): GrupoDe
     if (g) series.set(g, (series.get(g) ?? 0) + Math.max(1, e.series.length));
   }
   return [...series].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+}
+
+// ------------------------------------------------------------ la rutina y los ajustes de Ascent
+
+/** Un ejercicio de la rutina de Ascent: lo que dice la rutina, sin pesos (salen de la última vez, como en Ascent). */
+export type EjercicioDeLaRutina = { id: string; nombre: string; musculos: string[]; series: number; minutos?: number; reps?: number };
+/** Un día de la rutina: 0 es el domingo, como en Ascent. Uno de descanso no tiene ejercicios. */
+export type DiaDeLaRutina = { dia: DiaSemana; descanso: boolean; ejercicios: EjercicioDeLaRutina[] };
+/** La rutina activa de Ascent: su nombre y los días de la semana. */
+export type RutinaDeAscent = { nombre: string; dias: DiaDeLaRutina[] };
+/** De los Ajustes y el perfil de Ascent: el umbral de estancamiento (semanas sin marca) y la racha, de la que sale el rango. */
+export type AjustesDeAscent = { umbral: number; racha: number };
+
+/** Los umbrales de estancamiento que se eligen en Ascent. */
+const UMBRALES = [2, 3, 6, 8];
+
+type Objeto = Record<string, unknown>;
+const esObjeto = (x: unknown): x is Objeto => typeof x === 'object' && x !== null && !Array.isArray(x);
+const natural = (x: unknown): number | null => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? Math.round(x) : null);
+
+/** La rutina como llega (del servidor o de lo guardado), o null si no se entiende. */
+export function leerRutinaDeAscent(x: unknown): RutinaDeAscent | null {
+  if (!esObjeto(x) || typeof x.nombre !== 'string' || !Array.isArray(x.dias)) return null;
+  const dias = x.dias.filter(esObjeto).flatMap((d): DiaDeLaRutina[] => {
+    const dia = natural(d.dia);
+    if (dia === null || dia > 6) return [];
+    const descanso = d.descanso === true;
+    const ejercicios = descanso || !Array.isArray(d.ejercicios) ? [] : d.ejercicios.filter(esObjeto).flatMap((e): EjercicioDeLaRutina[] => {
+      const series = natural(e.series), minutos = natural(e.minutos), reps = natural(e.reps);
+      if (typeof e.id !== 'string' || !e.id || series === null) return [];
+      return [{
+        id: e.id,
+        nombre: typeof e.nombre === 'string' && e.nombre ? e.nombre : e.id,
+        musculos: Array.isArray(e.musculos) ? e.musculos.filter((m): m is string => typeof m === 'string') : [],
+        series,
+        ...(minutos !== null ? { minutos } : {}),
+        ...(reps ? { reps } : {}),
+      }];
+    });
+    return [{ dia: dia as DiaSemana, descanso, ejercicios }];
+  });
+  return { nombre: x.nombre, dias };
+}
+
+/** Los ajustes como llegan, o null si no se entienden. Un umbral que Ascent no ofrece queda en null. */
+export function leerAjustesDeAscent(x: unknown): AjustesDeAscent | null {
+  if (!esObjeto(x)) return null;
+  const umbral = natural(x.umbral), racha = natural(x.racha);
+  return umbral !== null && UMBRALES.includes(umbral) && racha !== null ? { umbral, racha } : null;
+}
+
+/** Los días de la semana que la rutina dice de entrenar: los que no son de descanso y tienen ejercicios. */
+export const diasDeLaRutina = (r: RutinaDeAscent): DiaSemana[] => r.dias.filter((d) => !d.descanso && d.ejercicios.length).map((d) => d.dia);
+
+/** Los grupos de un día de la rutina, del que tiene más series al que menos: con eso se nombra, como una sesión. */
+export function gruposDelDia(d: Pick<DiaDeLaRutina, 'ejercicios'>): GrupoDeAscent[] {
+  const series = new Map<GrupoDeAscent, number>();
+  for (const e of d.ejercicios) {
+    const g = grupoDe(e);
+    if (g) series.set(g, (series.get(g) ?? 0) + Math.max(1, e.series));
+  }
+  return [...series].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+}
+
+/**
+ * La sesión que toca según la rutina, como la arma Ascent: los ejercicios y las series de la rutina, con el peso y
+ * las repeticiones de la última vez que se hizo cada uno (las repeticiones objetivo, si la rutina las tiene). Lo que
+ * nunca se hizo, sin peso. Lo que se mide en minutos (el cardio) no lleva series.
+ */
+export function bloquesDeLaRutina(dia: Pick<DiaDeLaRutina, 'ejercicios'>, previas: readonly SesionConBloques[]): Bloque[] {
+  return dia.ejercicios.filter((e) => e.series > 0).map((e) => {
+    let ultima: Bloque | undefined;
+    for (let i = previas.length - 1; i >= 0 && !ultima; i--) ultima = [...previas[i].bloques].reverse().find((b) => claveDelEjercicio(b) === e.id && b.series.length);
+    const series = Array.from({ length: e.series }, (_, i) => {
+      const s = ultima?.series[Math.min(i, ultima.series.length - 1)];
+      return { peso: s?.peso ?? 0, reps: e.reps ?? s?.reps ?? null };
+    });
+    return { ejercicio: e.nombre, id: e.id, grupo: grupoDe(e), series };
+  });
 }
 
 /** Si el día se anotó sin cronómetro: se fue al gimnasio, pero no se sabe más. */

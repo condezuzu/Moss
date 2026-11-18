@@ -1,5 +1,6 @@
 // Lo de Ascent en el teléfono (spec/ascent.md): si la cuenta está vinculada y lo último que llegó de
-// Ascent por el vínculo (los días de gimnasio con sus series, las marcas y el peso de las dos apps).
+// Ascent por el vínculo (los días de gimnasio con sus series, las marcas, el peso de las dos apps, la
+// rutina y los ajustes).
 // Se guarda en los ajustes del almacén, que no suben a la cuenta ni van a la copia de iCloud: así
 // anda sin red y al abrir no parpadea. Se refresca al abrir la app, al cambiar la sesión y al
 // volver a primer plano. Con el vínculo, además, enciende el gimnasio automático y va guardando lo
@@ -8,7 +9,10 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { entrenoEl, metaDelDiaConAscent, pesoUnico, primerDiaQueHaceFalta, type MarcaDeAscent, type PesoCompartido, type SesionDeAscent } from '@/dominio/conAscent';
+import {
+  entrenoEl, leerAjustesDeAscent, leerRutinaDeAscent, metaDelDiaConAscent, pesoUnico, primerDiaQueHaceFalta,
+  type AjustesDeAscent, type MarcaDeAscent, type PesoCompartido, type RutinaDeAscent, type SesionDeAscent,
+} from '@/dominio/conAscent';
 import { ultimoDiaDeControl, type Peso } from '@/dominio/control';
 import { claveDeMarca } from '@/dominio/dias';
 import { diaDeLaSemana, sumarDias, type ClaveDia } from '@/dominio/fechas';
@@ -29,6 +33,8 @@ export type RemotoDeAscent = {
   sesionesDeAscent(desde: ClaveDia): Promise<SesionDeAscent[]>;
   marcasDeAscent(desde: ClaveDia): Promise<MarcaDeAscent[]>;
   pesosCompartidos(desde: ClaveDia): Promise<PesoCompartido[]>;
+  rutinaDeAscent(): Promise<RutinaDeAscent | null>;
+  ajustesDeAscent(): Promise<AjustesDeAscent | null>;
 };
 
 export type DeAscent = {
@@ -40,6 +46,10 @@ export type DeAscent = {
   sesiones: SesionDeAscent[];
   marcas: MarcaDeAscent[];
   pesos: PesoCompartido[];
+  /** La rutina activa de Ascent; null sin rutina o hasta que llegue (la base la da desde 0013_ascent_rutina.sql). */
+  rutina: RutinaDeAscent | null;
+  /** El umbral de estancamiento de sus Ajustes y la racha; null hasta que lleguen. */
+  ajustes: AjustesDeAscent | null;
   /** Desde qué día están las sesiones; null sin ninguna. */
   desde: ClaveDia | null;
   /** Cuándo llegó lo último de Ascent (ISO). */
@@ -67,7 +77,7 @@ const DIAS_DE_PESOS = 120;
 const DIAS_DE_NOCHES = 400;
 
 const SIN_VINCULO: EstadoDelVinculo = { vinculada: false, nombre: null, desde: null };
-const vacio = (): Omit<DeAscent, 'listo' | 'conCuenta' | 'version'> => ({ vinculo: SIN_VINCULO, sesiones: [], marcas: [], pesos: [], desde: null, llego: null, noches: {}, siente: null });
+const vacio = (): Omit<DeAscent, 'listo' | 'conCuenta' | 'version'> => ({ vinculo: SIN_VINCULO, sesiones: [], marcas: [], pesos: [], rutina: null, ajustes: null, desde: null, llego: null, noches: {}, siente: null });
 const porFecha = <T extends { fecha: ClaveDia }>(a: T, b: T) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
 
 type Guardado = ReturnType<typeof vacio> & { v: 1; usuario: string | null; conSeries?: number };
@@ -81,7 +91,9 @@ function leerGuardado(texto: string | null): Guardado | null {
     const siente = x.siente && typeof x.siente.n === 'number' && typeof x.siente.fecha === 'string' ? x.siente : null;
     // Lo guardado con menos semanas con series (la build 6 guardaba 9): se vuelve a pedir todo.
     const desde = x.conSeries === DIAS_CON_SERIES ? (x.desde ?? null) : null;
-    return { ...vacio(), ...x, v: 1, usuario: x.usuario ?? null, noches: x.noches ?? {}, siente, desde } as Guardado;
+    // Lo que guardó la build 6 no trae la rutina ni los ajustes: quedan en null hasta que lleguen.
+    const rutina = leerRutinaDeAscent(x.rutina), ajustes = leerAjustesDeAscent(x.ajustes);
+    return { ...vacio(), ...x, v: 1, usuario: x.usuario ?? null, noches: x.noches ?? {}, siente, desde, rutina, ajustes } as Guardado;
   } catch {
     return null;
   }
@@ -167,15 +179,18 @@ export function crearAscent(op: OpcionesDeAscent) {
         // corregir los días recientes).
         const ultimo = estado.desde && estado.desde <= primero && estado.sesiones.length ? estado.sesiones[estado.sesiones.length - 1].fecha : null;
         const desde = ultimo && sumarDias(ultimo, -7) > primero ? sumarDias(ultimo, -7) : primero;
-        const [sesiones, marcas, pesos] = await Promise.all([
+        const [sesiones, marcas, pesos, rutina, ajustes] = await Promise.all([
           op.remoto.sesionesDeAscent(desde),
           op.remoto.marcasDeAscent(sumarDias(hoy, -DIAS_DE_MARCAS)),
           op.remoto.pesosCompartidos(sumarDias(hoy, -DIAS_DE_PESOS)),
+          // La OTA puede llegar antes que sus funciones en la base: sin ellas queda lo que había, y lo demás llega igual.
+          op.remoto.rutinaDeAscent().catch(() => estado.rutina),
+          op.remoto.ajustesDeAscent().catch(() => estado.ajustes),
         ]);
         if (de !== generacion) return;
         cambiar({
           sesiones: [...estado.sesiones.filter((s) => s.fecha >= primero && s.fecha < desde), ...sesiones].sort(porFecha),
-          marcas, pesos, desde: primero, llego: ahora().toISOString(),
+          marcas, pesos, rutina, ajustes, desde: primero, llego: ahora().toISOString(),
         });
         guardar();
       } catch {

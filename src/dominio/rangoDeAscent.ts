@@ -3,7 +3,7 @@
 // por día, el sol, una galaxia y el agujero negro. La sección de Ascent en Moss toma ese color y ese cuerpo, y
 // nunca dice el nombre: en Ascent «el rango se ve, no se lee».
 // Es el espejo de la regla de Ascent (su `nucleo/reglas.ts`, `numeroDeRango` y `planetaDeDia`, y las paletas de
-// `nucleo/paletas.ts`): Moss leería solo la racha (`profiles.racha_actual`) con el vínculo y calcula lo demás
+// `nucleo/paletas.ts`): Moss lee solo la racha (`profiles.racha_actual`, con moss.ascent_ajustes) y calcula lo demás
 // igual que allá. Si Ascent cambia la escalera, cambia esto también (spec/ascent.md).
 
 export type Paleta = { apagado: string; principal: string; claro: string };

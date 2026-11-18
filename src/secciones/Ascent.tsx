@@ -21,11 +21,11 @@ import { PROTEINA_POR_KG } from '@/dominio/estancados';
 import { irALaAppStore } from '@/lib/ascent';
 import { t } from '@/textos';
 import { letras } from '@/tema';
-import { C } from './ascent/colores';
+import { C, useAcento } from './ascent/colores';
 import { Cuerpo, Marca } from './ascent/Dibujos';
 import { HojaDeVincular } from './ascent/HojaDeVincular';
 import { Accion, Candado, Escala, Parte, Pildoras, st as p, Una, useTitulares } from './ascent/piezas';
-import { Polvo } from './ascent/Polvo';
+import { CuerpoDeFondo } from './ascent/Polvo';
 import { useAhora, useHoyEnAscent } from './ascent/titularDeHoy';
 import { CabezaDelDia, DecideFila, MapaDelAnio, RestoVinculada, type IrA } from './ascent/Vinculada';
 import { Icono } from './comida/comunes';
@@ -162,7 +162,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
         accessibilityLabel="Ascent"
       >
         <View style={[StyleSheet.absoluteFill, st.cielo]} pointerEvents="none">
-          <Polvo baja={bajaDelCuerpo} activo={aLaVista} />
+          <CuerpoDeFondo baja={bajaDelCuerpo} activo={aLaVista} />
         </View>
         <GestureDetector gesture={cerrar}>
           <View collapsable={false} style={StyleSheet.absoluteFill}>
@@ -209,6 +209,7 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
 /** Lo principal, abajo: con la marca arriba a la derecha y una línea de pelo que lo separa de lo que sigue arriba. */
 function Principal({ vinculada, children }: { vinculada: boolean; children: ReactNode }) {
   const reducido = useReducedMotion();
+  const a = useAcento();
   const u = useSharedValue(vinculada ? 1 : 0);
   useEffect(() => {
     u.set(withTiming(vinculada ? 1 : 0, { duration: reducido ? 0 : 700, easing: Easing.bezier(0.16, 1, 0.3, 1) }));
@@ -220,7 +221,7 @@ function Principal({ vinculada, children }: { vinculada: boolean; children: Reac
       <Animated.View style={[st.marca, marca]} pointerEvents="none">
         <Marca tam={76} unida={vinculada} />
       </Animated.View>
-      {vinculada && <Text style={[p.etq, st.nombre]}>{t('ascent.titulo')}</Text>}
+      {vinculada && <Text style={[p.etq, st.nombre, { color: a.claro }]}>{t('ascent.titulo')}</Text>}
       {children}
     </View>
   );

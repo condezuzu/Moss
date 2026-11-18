@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  cargaAntesDe, entrenadoSegunAscent, entrenoEl, estancamiento, grupoDelAnio, gruposDeLaSesion, horasSinComer, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar,
+  bloquesDeLaRutina, cargaAntesDe, diasDeLaRutina, entrenadoSegunAscent, entrenoEl, estancamiento, grupoDelAnio, gruposDelDia, gruposDeLaSesion, horasSinComer, leerAjustesDeAscent, leerRutinaDeAscent, metaDelDiaConAscent, pesoUnico, SEMANAS_SIN_SUBIR, semanaDesde, semanasParaComparar,
   sesionesConBloques, tuAnio,
   type MarcaDeAscent, type SesionDeAscent,
 } from './conAscent';
@@ -143,5 +143,47 @@ describe('lo demás', () => {
       diasConComida: ['2026-02-01', '2025-12-31'],
     });
     expect(r).toEqual({ entrenamientos: 1, marcas: 1, diasConHabitos: 1, sueno: 450, diasConComida: 1 });
+  });
+});
+
+describe('la rutina y los ajustes de Ascent', () => {
+  const RUTINA = {
+    nombre: 'Entrenamiento 1',
+    dias: [
+      { dia: 1, descanso: false, ejercicios: [{ id: 'sentadilla', nombre: 'Sentadilla', musculos: ['piernas'], series: 4, reps: 5 }, { id: 'press_banca', nombre: 'Press de banca', musculos: ['pecho'], series: 2 }, { id: 'cinta', nombre: 'Cinta', musculos: ['cardio'], series: 0, minutos: 20 }] },
+      { dia: 2, descanso: true, ejercicios: [] },
+      { dia: 4, descanso: false, ejercicios: [] },
+    ],
+  };
+
+  it('se lee lo que se entiende: un día fuera de 0 a 6, un ejercicio sin id o sin series no están; un descanso no tiene ejercicios', () => {
+    expect(leerRutinaDeAscent(RUTINA)).toEqual(RUTINA);
+    const r = leerRutinaDeAscent({ nombre: 'x', dias: [{ dia: 7 }, { dia: 0, descanso: true, ejercicios: [{ id: 'a', series: 3 }] }, { dia: 3, ejercicios: [{ id: '', series: 3 }, { id: 'b', series: '3' }, { id: 'c', series: 2.4, reps: 0 }, 5] }] });
+    expect(r).toEqual({ nombre: 'x', dias: [{ dia: 0, descanso: true, ejercicios: [] }, { dia: 3, descanso: false, ejercicios: [{ id: 'c', nombre: 'c', musculos: [], series: 2 }] }] });
+    expect(leerRutinaDeAscent(null)).toBeNull();
+    expect(leerRutinaDeAscent({ nombre: 'x', dias: 'no' })).toBeNull();
+  });
+
+  it('los ajustes: solo un umbral de los que ofrece Ascent (2, 3, 6 u 8) y una racha', () => {
+    expect(leerAjustesDeAscent({ umbral: 3, racha: 37 })).toEqual({ umbral: 3, racha: 37 });
+    expect(leerAjustesDeAscent({ umbral: 5, racha: 37 })).toBeNull();
+    expect(leerAjustesDeAscent({ umbral: 6, racha: -1 })).toBeNull();
+    expect(leerAjustesDeAscent(null)).toBeNull();
+  });
+
+  it('los días que entrena, el nombre de cada uno por sus grupos y la sesión con el peso de la última vez', () => {
+    const r = leerRutinaDeAscent(RUTINA)!;
+    expect(diasDeLaRutina(r)).toEqual([1]);
+    expect(gruposDelDia(r.dias[0])).toEqual(['piernas', 'pecho', 'cardio']);
+    const previas = sesionesConBloques([sesion('2026-10-12', 6, 600, 50, [
+      { id: 'sentadilla', nombre: 'Sentadilla', musculos: ['piernas'], series: [{ kilos: 100, reps: 5 }, { kilos: 105, reps: 3 }] },
+    ])], () => 0);
+    const bloques = bloquesDeLaRutina(r.dias[0], previas);
+    // La cinta (en minutos) no lleva series; la sentadilla, las 4 de la rutina con el peso de la última vez y sus repeticiones objetivo.
+    expect(bloques.map((b) => b.id)).toEqual(['sentadilla', 'press_banca']);
+    expect(bloques[0].series).toEqual([{ peso: 100, reps: 5 }, { peso: 105, reps: 5 }, { peso: 105, reps: 5 }, { peso: 105, reps: 5 }]);
+    // El press de banca nunca se hizo: sin peso.
+    expect(bloques[1].series).toEqual([{ peso: 0, reps: null }, { peso: 0, reps: null }]);
+    expect(bloques[0].grupo).toBe('piernas');
   });
 });

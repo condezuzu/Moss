@@ -2,17 +2,20 @@
 // (galeria/src/ascent.js, calcularHoy y calcularDia), con lo que llega de Ascent y lo de Moss. Las cuentas son las
 // del dominio (recuperado.ts, diagnostico.ts, fatiga.ts, estancados.ts, musculos.ts, rendimiento.ts y conAscent.ts);
 // acá solo se juntan los datos.
-// Lo que Ascent todavía no manda (su rutina, el umbral de estancamiento de sus Ajustes y tu racha) no se inventa:
-// la sesión de hoy sale de tu horario de Perfil › Entrenamiento con la última de ese día de la semana, «Tu fuerza»
-// mira los ejercicios de las últimas cuatro semanas, el umbral es el de fábrica y «Tu semana en Ascent» no está.
+// Con la rutina de Ascent (moss.ascent_rutina), la sesión de hoy es la de la rutina, con el peso de la última vez;
+// «Tu fuerza» sigue los multiarticulares de la rutina y está «Tu semana en Ascent». Sin la rutina (la base sin
+// 0013_ascent_rutina.sql, o sin rutina activa) no se inventa: la sesión de hoy sale de tu horario de Perfil ›
+// Entrenamiento con la última de ese día de la semana, «Tu fuerza» mira los ejercicios de las últimas cuatro semanas
+// y «Tu semana en Ascent» no está. El umbral de estancamiento es el de sus Ajustes o, sin ellos, el de fábrica.
 
 import type { Estado } from '@/almacen/almacen';
 import { metaVigente } from '@/almacen/almacen';
 import type { DeAscent } from '@/almacen/ascent';
 import type { Contexto } from '@/dominio/alrededorDelEntreno';
 import {
-  diasDeEntrenar, entrenadoSegunAscent, grupoDelAnio, gruposDeLaSesion, metaDelDiaConAscent, sesionesConBloques, tuAnio,
-  type GrupoDelAnio, type MarcaDeAscent, type MetaConAscent, type TuAnio,
+  bloquesDeLaRutina, diasDeEntrenar, diasDeLaRutina, entrenadoSegunAscent, grupoDe, grupoDelAnio, gruposDelDia, gruposDeLaSesion, metaDelDiaConAscent,
+  sesionesConBloques, tuAnio,
+  type GrupoDelAnio, type MarcaDeAscent, type MetaConAscent, type RutinaDeAscent, type TuAnio,
 } from '@/dominio/conAscent';
 import { ultimoDiaDeControl } from '@/dominio/control';
 import { diagnostico, focoDeHoy, ordenarMarcas, buenDiaParaLaMarca, type Diagnostico, type Foco } from '@/dominio/diagnostico';
@@ -21,7 +24,7 @@ import {
   estaEstancado, puntosDelEjercicio, razonesDeEstancamiento, semanaDeEntreno, semanasParaLasRazones, UMBRAL_DE_ASCENT,
   type RazonesDeEstancamiento, type SemanaDeEntreno,
 } from '@/dominio/estancados';
-import { fatigaMuscular, musculosParaLaFatiga, todosLosMusculos, type MusculoAhora } from '@/dominio/fatiga';
+import { fatigaMuscular, fatigaPorDia, musculosParaLaFatiga, todosLosMusculos, type FatigaDelDia, type MusculoAhora } from '@/dominio/fatiga';
 import { diaDeLaSemana, diasEntre, minutosEnElDia, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import {
   CATALOGO, claveDelEjercicio, dosisDeLaSesion, esfuerzoDeSerie, grupoDelEjercicio, mejorE1rm, musculosDe, musculosTrabajados, peorEstado, residual, unRmDeAscent, estadoDe,
@@ -80,6 +83,8 @@ export type Hoy = {
   minuto: (t: number) => number;
   entrenado: boolean;
   unoRMEn: (en: number) => UnoRMDe;
+  /** La rutina de Ascent, si llegó y tiene algún día de entrenar. */
+  rutina: RutinaDeAscent | null;
 };
 
 /** Un instante de un día de Moss a unos minutos de su medianoche. */
@@ -96,11 +101,14 @@ export function calcularHoy({ e, d, sueno, ahora }: Entradas): Hoy {
   const minuto = (t: number) => minutosEnElDia(new Date(t), hoy);
   const entrenado = entrenadoSegunAscent(d.sesiones, d.marcas, hoy);
 
-  // La sesión de hoy: anotada en Ascent, hecha; si no, la que se espera según tu horario (o lo que sueles
-  // entrenar), con los ejercicios de la última de este día de la semana.
+  // La sesión de hoy: anotada en Ascent, hecha; si no, la que se espera según la rutina de Ascent (sus ejercicios,
+  // con el peso de la última vez) o, sin rutina, según tu horario (o lo que sueles entrenar), con los ejercicios de la
+  // última de este día de la semana. La hora no está en la rutina: sale de Perfil o de esa última.
+  const rutina = d.rutina && diasDeLaRutina(d.rutina).length ? d.rutina : null;
+  const deLaRutina = rutina?.dias.find((x) => x.dia === diaDeLaSemana(hoy) && !x.descanso && x.ejercicios.length) ?? null;
   const deHoy = d.sesiones.filter((s) => s.fecha === hoy);
   const conBloquesDeHoy = sesiones.filter((s) => s.fecha === hoy);
-  const dias = e.entreno?.dias ?? diasDeEntrenar(d.sesiones, hoy);
+  const dias = rutina ? diasDeLaRutina(rutina) : (e.entreno?.dias ?? diasDeEntrenar(d.sesiones, hoy));
   let sesion: SesionDelDia | null = null;
   if (deHoy.length) {
     const inicio = deHoy.find((s) => s.inicio)?.inicio;
@@ -114,15 +122,16 @@ export function calcularHoy({ e, d, sueno, ahora }: Entradas): Hoy {
   } else if (dias.includes(diaDeLaSemana(hoy))) {
     const referencia = [...d.sesiones].reverse().find((s) => diaDeLaSemana(s.fecha) === diaDeLaSemana(hoy) && s.fecha < hoy && s.fecha >= sumarDias(hoy, -DIAS_DE_LA_REFERENCIA)) ?? null;
     const conBloques = referencia ? sesiones.filter((s) => s.fecha === referencia.fecha) : [];
+    const bloques = deLaRutina ? bloquesDeLaRutina(deLaRutina, sesiones.filter((s) => s.fecha < hoy)) : conBloques.flatMap((s) => s.bloques);
     sesion = {
       como: 'prevista',
-      nombre: nombreDeSesion(referencia ? gruposDeLaSesion(referencia) : []),
+      nombre: nombreDeSesion(deLaRutina ? gruposDelDia(deLaRutina) : referencia ? gruposDeLaSesion(referencia) : []),
       inicio: e.entreno?.hora ?? (referencia?.inicio ? minutosEnElDia(new Date(referencia.inicio), referencia.fecha) : HORA_DE_FABRICA),
       minutos: e.entreno?.minutos ?? (referencia?.minutos || 60),
-      bloques: conBloques.length ? conBloques.flatMap((s) => s.bloques) : null,
+      bloques: bloques.length ? bloques : null,
     };
   }
-  const sabeCuandoEntrena = !!e.entreno || d.sesiones.length > 0;
+  const sabeCuandoEntrena = !!rutina || !!e.entreno || d.sesiones.length > 0;
   const en = sesion?.como === 'prevista' ? instante(hoy, sesion.inicio - ANTES_DE_LA_SESION) : ahoraMs;
 
   // El mejor 1RM de cada ejercicio con lo de antes de un momento, una vez por ejercicio: la fatiga lo pide por serie.
@@ -167,7 +176,7 @@ export function calcularHoy({ e, d, sueno, ahora }: Entradas): Hoy {
   return {
     hoy, sesion, sabeCuandoEntrena, noche, ultimas3, deuda, comoTeSientes, titular, f, despues, musculosHoy, ultima, trabajados,
     conEllos: musculosHoy.length && sesion?.como !== 'hecha' ? ultimaCon(previas, musculosHoy, unoRM) : null,
-    sesiones, en, ahora: ahoraMs, minuto, entrenado, unoRMEn,
+    sesiones, en, ahora: ahoraMs, minuto, entrenado, unoRMEn, rutina,
   };
 }
 
@@ -197,8 +206,12 @@ export type Todo = {
   foco: Foco[];
   comida: { dias: number; gPorKg: number | null; ayer: { p: number; meta: number } | null };
   todos: MusculoAhora[];
+  /** Tu semana en Ascent: cada día de la rutina, desde hoy, con sus músculos como están ahora. Sin rutina, vacía. */
+  semana: FatigaDelDia[];
   fuerza: DeLaFuerza[];
   marcas: DeLaMarca[];
+  /** Las semanas sin marca que eligió en los Ajustes de Ascent (sin ellos, las de fábrica). */
+  umbral: number;
   estancados: Estancado[];
   anio: { dias: DiaDelAnio[]; ultimas: (MarcaDeAscent & { grupo: GrupoDelAnio })[]; datos: TuAnio };
   comparten: { peso: { kg: number; fecha: ClaveDia } | null; conA: MetaConAscent | null };
@@ -248,17 +261,24 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
     return { t: tendenciaDeFuerza(puntos, { hoy: 0, entrenado: h.entrenado }), puntos };
   };
 
-  // Tu fuerza: los multiarticulares con marca en Ascent de las últimas 4 semanas, en el orden en que vuelven en la semana.
-  const desdeHoy = (f: ClaveDia) => (diaDeLaSemana(f) - diaDeLaSemana(hoy) + 7) % 7;
+  // Tu fuerza: los multiarticulares con marca en Ascent de la rutina (sin ella, de las últimas 4 semanas), en el orden
+  // en que vuelven en la semana.
+  const desdeHoy = (dia: number) => (dia - diaDeLaSemana(hoy) + 7) % 7;
   const vistos = new Set<string>();
   const ejercicios: Pick<Bloque, 'id' | 'ejercicio'>[] = [];
-  [...h.sesiones].filter((s) => s.fecha >= sumarDias(hoy, -DIAS_DE_LA_REFERENCIA)).reverse().sort((a, b) => desdeHoy(a.fecha) - desdeHoy(b.fecha)).forEach((s) => s.bloques.forEach((b) => {
+  const seguir = (b: Pick<Bloque, 'id' | 'ejercicio'>) => {
     const c = b.id ? CATALOGO[b.id] : undefined;
     const k = claveDelEjercicio(b);
     if (!c?.multiarticular || vistos.has(k) || !marcasDe(b).length) return;
     vistos.add(k);
     ejercicios.push({ id: b.id, ejercicio: b.ejercicio });
-  }));
+  };
+  if (h.rutina) {
+    [...h.rutina.dias].sort((a, b) => desdeHoy(a.dia) - desdeHoy(b.dia)).forEach((x) => x.ejercicios.forEach((y) => seguir({ id: y.id, ejercicio: y.nombre })));
+  } else {
+    [...h.sesiones].filter((s) => s.fecha >= sumarDias(hoy, -DIAS_DE_LA_REFERENCIA)).reverse()
+      .sort((a, b) => desdeHoy(diaDeLaSemana(a.fecha)) - desdeHoy(diaDeLaSemana(b.fecha))).forEach((s) => s.bloques.forEach(seguir));
+  }
   const fuerza = ejercicios.map((x) => ({ e: x, ...tendenciaDe(x) }));
 
   // Marcas: los ejercicios de la sesión de hoy, antes de entrenar.
@@ -325,10 +345,16 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
     ayer: comidoAyer.kcal > 0 && metaAyer ? { p: Math.round(comidoAyer.proteina), meta: metaAyer.proteina } : null,
   };
 
-  // Tus músculos, ahora.
-  const todos = todosLosMusculos({ sesiones: h.sesiones, en: h.ahora, unoRM: h.unoRMEn(h.ahora), novato: !h.entrenado, minuto: h.minuto(h.ahora) });
+  // Tus músculos, ahora, y tu semana en Ascent: cada día de la rutina con sus músculos como están ahora.
+  const opcionesAhora = { unoRM: h.unoRMEn(h.ahora), novato: !h.entrenado, minuto: h.minuto(h.ahora) };
+  const todos = todosLosMusculos({ sesiones: h.sesiones, en: h.ahora, ...opcionesAhora });
+  const semana = h.rutina ? fatigaPorDia({
+    rutina: h.rutina.dias.map((x) => ({ dia: x.dia, nombre: nombreDeSesion(gruposDelDia(x)), ejercicios: x.ejercicios.map((y) => ({ id: y.id, ejercicio: y.nombre, grupo: grupoDe(y) })) })),
+    hoy: diaDeLaSemana(hoy), sesiones: h.sesiones, en: h.ahora, ...opcionesAhora,
+  }) : [];
 
   // Razones de estancamiento: los de «Tu fuerza» sin subida clara, ya pasado el umbral de Ascent.
+  const umbral = d.ajustes?.umbral ?? UMBRAL_DE_ASCENT;
   const pasadas = h.sesiones.filter((s) => s.fecha < hoy);
   const conSesion = (lunes: ClaveDia) => pasadas.some((s) => s.fecha >= lunes && s.fecha < sumarDias(lunes, 7));
   const noches = new Map<ClaveDia, number>(Object.entries(d.noches));
@@ -349,7 +375,7 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
     if (!ultima) return [];
     const sinMarca = Math.floor(diasEntre(ultima.fecha, hoy) / 7);
     const musculo = musculosDe(x)?.principal[0];
-    if (!musculo || !estaEstancado(t, sinMarca, UMBRAL_DE_ASCENT)) return [];
+    if (!musculo || !estaEstancado(t, sinMarca, umbral)) return [];
     // Las semanas sin ninguna sesión (las vacaciones) no cuentan para comparar lo que se entrenaba.
     const s = semanasParaLasRazones(ultima.fecha, hoy);
     const semana = (l: ClaveDia) => semanaDeEntreno(pasadas, l, x, musculo);
@@ -367,9 +393,9 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
 
   // Tu año: cada día del año con el grupo de lo que más trabajaste y sus marcas; la última marca de cada grupo.
   const anio = Number(hoy.slice(0, 4));
-  const grupoDe = new Map<ClaveDia, GrupoDelAnio | null>();
-  for (const s of d.sesiones) if (s.fecha.startsWith(`${anio}-`)) grupoDe.set(s.fecha, grupoDe.get(s.fecha) ?? grupoDelAnio(gruposDeLaSesion(s)));
-  const dias: DiaDelAnio[] = [...grupoDe].map(([fecha, grupo]) => ({ fecha, grupo, marca: delAnio.has(fecha) }));
+  const grupoDelDia = new Map<ClaveDia, GrupoDelAnio | null>();
+  for (const s of d.sesiones) if (s.fecha.startsWith(`${anio}-`)) grupoDelDia.set(s.fecha, grupoDelDia.get(s.fecha) ?? grupoDelAnio(gruposDeLaSesion(s)));
+  const dias: DiaDelAnio[] = [...grupoDelDia].map(([fecha, grupo]) => ({ fecha, grupo, marca: delAnio.has(fecha) }));
   const ultimas = (['piernas', 'pecho', 'espalda'] as const).flatMap((grupo) => {
     const de = d.marcas.filter((m) => {
       const g = grupoDelEjercicio({ id: m.id });
@@ -383,7 +409,7 @@ export function calcularTodo(h: Hoy, { e, d, sueno, persona, ahora }: Entradas, 
 
   const peso = e.pesos[e.pesos.length - 1];
   return {
-    diag, foco, comida, todos, fuerza, marcas: ordenadas, estancados,
+    diag, foco, comida, todos, semana, fuerza, marcas: ordenadas, umbral, estancados,
     anio: { dias, ultimas, datos },
     comparten: { peso: peso ? { kg: peso.kg, fecha: peso.fecha } : null, conA: semanaConAscent(e, d) },
     pesoKg,
