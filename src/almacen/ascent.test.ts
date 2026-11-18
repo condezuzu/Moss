@@ -3,7 +3,7 @@
 
 import { describe, expect, it, jest } from '@jest/globals';
 
-import type { SesionDeAscent } from '../dominio/conAscent';
+import type { RutinaDeAscent, SesionDeAscent } from '../dominio/conAscent';
 import { crearAscent, type RemotoDeAscent } from './ascent';
 
 jest.mock('./index', () => ({ elAlmacen: () => undefined, oirLaSesion: () => () => {} }));
@@ -12,15 +12,27 @@ jest.mock('@/lib/ascentRemoto', () => ({}));
 const HOY = '2026-10-26';
 const sesion = (fecha: string): SesionDeAscent => ({ fecha, series: 16, kilos: 1000, minutos: 55, ejercicios: [{ nombre: 'Sentadilla', musculos: ['piernas'], series: [{ kilos: 100, reps: 5 }] }] });
 
+const RUTINA: RutinaDeAscent = {
+  nombre: 'Entrenamiento 1',
+  dias: [{ dia: 1, descanso: false, ejercicios: [{ id: 'sentadilla', nombre: 'Sentadilla', musculos: ['piernas'], series: 4, reps: 5 }] }, { dia: 2, descanso: true, ejercicios: [] }],
+};
+
 function servidor(vinculada = false) {
   const s = {
     vinculada,
     conexion: true,
+    /** La base ya tiene 0013_ascent_rutina.sql (la OTA puede llegar antes). */
+    conRutina: true,
+    rutina: RUTINA as RutinaDeAscent | null,
     pedidos: [] as string[],
     remoto: null as unknown as RemotoDeAscent,
   };
   const red = () => {
     if (!s.conexion) throw new Error('Failed to fetch');
+  };
+  const nueva = (funcion: string) => {
+    red();
+    if (!s.conRutina) throw new Error(`moss.${funcion}: PGRST202`);
   };
   s.remoto = {
     estadoDelVinculo: async () => (red(), s.vinculada ? { vinculada: true, nombre: 'agustin', desde: '2026-10-03T12:00:00.000Z' } : { vinculada: false, nombre: null, desde: null }),
@@ -36,6 +48,8 @@ function servidor(vinculada = false) {
     sesionesDeAscent: async (desde) => (red(), s.pedidos.push(desde), [sesion('2026-10-24'), sesion(HOY)].filter((x) => x.fecha >= desde)),
     marcasDeAscent: async () => [{ ejercicio: 'Sentadilla', fecha: '2026-10-01', kilos: 105, reps: 5 }],
     pesosCompartidos: async () => [{ fecha: '2026-10-25', kg: 80, de: 'ascent' }],
+    rutinaDeAscent: async () => (nueva('ascent_rutina'), s.vinculada ? s.rutina : null),
+    ajustesDeAscent: async () => (nueva('ascent_ajustes'), s.vinculada ? { umbral: 3, racha: 37 } : null),
   };
   return s;
 }
@@ -173,5 +187,52 @@ describe('lo de Ascent en el teléfono', () => {
     await otra.ponerSesion('u-1');
     expect(s.pedidos).toEqual(['2026-01-01']);
     expect('avisos' in otra.estado()).toBe(false);
+  });
+
+  it('la rutina y los ajustes llegan y quedan guardados; sin sus funciones en la base, lo demás llega igual y queda lo que había', async () => {
+    // La OTA antes que la migración: la base no tiene las funciones nuevas.
+    const s = servidor(true);
+    s.conRutina = false;
+    const guardado = { texto: null as string | null };
+    const a = crear(s.remoto, guardado);
+    await a.ponerSesion('u-1');
+    expect(a.estado()).toMatchObject({ vinculo: { vinculada: true }, rutina: null, ajustes: null });
+    expect(a.estado().sesiones).toHaveLength(2);
+    expect(a.estado().pesos).toHaveLength(1);
+
+    // Con la migración aplicada, llegan.
+    s.conRutina = true;
+    await a.refrescar();
+    expect(a.estado().rutina).toEqual(RUTINA);
+    expect(a.estado().ajustes).toEqual({ umbral: 3, racha: 37 });
+    // Vuelven al abrir, aunque no haya conexión; y si la base deja de contestar por la rutina, queda la de antes.
+    s.conexion = false;
+    const otra = crear(s.remoto, guardado);
+    await otra.ponerSesion('u-1');
+    expect(otra.estado()).toMatchObject({ rutina: RUTINA, ajustes: { umbral: 3, racha: 37 } });
+    s.conexion = true;
+    s.conRutina = false;
+    await otra.refrescar();
+    expect(otra.estado()).toMatchObject({ rutina: RUTINA, ajustes: { umbral: 3, racha: 37 } });
+    // Sin rutina activa en Ascent, se va.
+    s.conRutina = true;
+    s.rutina = null;
+    await otra.refrescar();
+    expect(otra.estado().rutina).toBeNull();
+    // Desvincular las saca.
+    await otra.desvincular();
+    expect(otra.estado()).toMatchObject({ rutina: null, ajustes: null });
+  });
+
+  it('lo guardado por la build 6 (sin rutina ni ajustes) sigue andando, y lo guardado roto se descarta', async () => {
+    const s = servidor(true);
+    s.conexion = false;
+    const g = { v: 1, usuario: 'u-1', conSeries: 126, vinculo: { vinculada: true, nombre: 'agustin', desde: '2026-10-03T12:00:00.000Z' }, sesiones: [sesion(HOY)], marcas: [], pesos: [], desde: '2026-01-01', llego: null, noches: {}, siente: null };
+    const deLaBuild6 = crear(s.remoto, { texto: JSON.stringify(g) });
+    await deLaBuild6.ponerSesion('u-1');
+    expect(deLaBuild6.estado()).toMatchObject({ vinculo: { vinculada: true }, rutina: null, ajustes: null, sesiones: [expect.objectContaining({ fecha: HOY })] });
+    const roto = crear(s.remoto, { texto: JSON.stringify({ ...g, rutina: { dias: 'x' }, ajustes: { umbral: 5, racha: 3 } }) });
+    await roto.ponerSesion('u-1');
+    expect(roto.estado()).toMatchObject({ rutina: null, ajustes: null });
   });
 });

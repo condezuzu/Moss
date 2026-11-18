@@ -143,8 +143,11 @@ Lo aprobaste con las capturas de la galería 54 («Sí, que entre»). Por aire a
 - **Las otras secciones:** el titular de hoy es uno (`src/secciones/ascent/titularDeHoy.ts`) y lo usan la sección, tu
   energía (Inicio y Sueño, con «con Ascent» y los músculos) y la tarjeta de Sueño sin tu energía. Perfil: la fila y el
   final como la galería; tocar la fila vinculada pregunta «Ver lo de Ascent» o «Desvincular».
-- **Pide servidor** (funciones nuevas en `moss`, con tu sí): la rutina de Ascent (para «Tu semana en Ascent», la sesión
-  exacta de hoy y la lista de «Tu fuerza»; mientras, sale de Perfil › Entrenamiento y de tu última sesión de ese día), el
-  umbral de estancamiento de sus ajustes (mientras, 6 semanas), la racha para el rango (mientras, el polvo del rango 1) y
-  `moss.recuperacion(fecha)` con el titular, para que Ascent diga lo mismo.
+- **Pide servidor** (dijiste que sí, 18/11): escritas en `supabase/moss/0013_ascent_rutina.sql` y usadas en la app, **falta
+  aplicarlas** (`npm run migraciones -- --aplicar --yes`, con tu sí). `moss.ascent_rutina()` trae la rutina de Ascent
+  («Tu semana en Ascent», la sesión exacta de hoy con el peso de la última vez y la lista de «Tu fuerza») y
+  `moss.ascent_ajustes()`, el umbral de estancamiento de sus Ajustes y la racha (el color y el cuerpo de tu rango, desde el
+  2 dibujados en Skia). Si la OTA llega antes, la app sigue como hasta ahora (Perfil › Entrenamiento y tu última sesión de
+  ese día, 6 semanas, el polvo del rango 1), sin errores. **Pendiente:** `moss.recuperacion(fecha)` con el titular, para
+  cuando Ascent la lea.
 - Sin probar en un iPhone: el gesto con el dedo, Skia y la letra Outfit 200 en el teléfono.

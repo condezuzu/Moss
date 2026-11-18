@@ -10,7 +10,7 @@ import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react
 import { deAscent, useAscent } from '@/almacen/ascent';
 import { CONDICIONES, queFalla, buenDiaParaLaMarca, type Foco } from '@/dominio/diagnostico';
 import { NOCHE_CORTA, SESIONES_MINIMAS, aDosYMedio } from '@/dominio/rendimiento';
-import { POCAS_PESADAS, PROTEINA_POR_KG, UMBRAL_DE_ASCENT, type Razon } from '@/dominio/estancados';
+import { POCAS_PESADAS, PROTEINA_POR_KG, type Razon } from '@/dominio/estancados';
 import { diasEntre, type ClaveDia } from '@/dominio/fechas';
 import type { Musculo } from '@/dominio/musculos';
 import type { MusculoAhora } from '@/dominio/fatiga';
@@ -19,7 +19,7 @@ import { letras } from '@/tema';
 import { Icono } from '../comida/comunes';
 import { conSigno, duracion, hora, numero, useEstado, useNumeros } from '../comida/datos';
 import { usePersona, useSueno } from '../ganchos';
-import { C, GRUPOS_DEL_ANIO } from './colores';
+import { C, GRUPOS_DEL_ANIO, useAcento } from './colores';
 import { Cuerpo, Tendencia, type EstadoDibujado } from './Dibujos';
 import { conMayuscula, cuandoDe, cuandoFue, cuandoTodos, enFrase, enLista, listaDeMusculos, nombreDelEjercicio, nombreDelMusculo, textosDelTitular, tx } from './palabras';
 import { Cambia, Desplegable, Enlace, Escala, Etiqueta, Flecha, Fundido, Nota, Parte, Pildoras, Una, useTitulares, type EstadoDePildora } from './piezas';
@@ -76,6 +76,7 @@ function usePersonaDeAscent() {
 
 // ------------------------------------------------------------ lo principal: el titular de hoy
 export function CabezaDelDia({ h, alVerComo }: { h: Hoy; alVerComo: () => void }) {
+  const a = useAcento();
   const fuente = useTitulares();
   const [queEs, setQueEs] = useState(false);
   const [titulo, texto] = textosDelTitular(h);
@@ -85,7 +86,7 @@ export function CabezaDelDia({ h, alVerComo }: { h: Hoy; alVerComo: () => void }
   return (
     <View style={st.hoy}>
       <Text style={st.hoySesion}>{linea}</Text>
-      <Cambia texto={titulo} style={[st.hoyTitulo, { fontFamily: fuente }]} />
+      <Cambia texto={titulo} style={[st.hoyTitulo, { fontFamily: fuente, color: a.claro }]} />
       <Cambia texto={texto} style={st.hoyTexto} />
       {s?.como === 'prevista' && <Decide h={h} />}
       {h.ultima && nombres.length > 0 && (
@@ -137,6 +138,7 @@ export function DecideFila({ items, vacio }: { items: [string, 'moon' | 'dumbbel
 
 /** «¿Cómo te sientes para entrenar?», de 0 a 10: cambia el titular al tocar. Queda en el teléfono, ese día. */
 function ComoTeSientes({ valor }: { valor: number | null }) {
+  const a = useAcento();
   const elegir = (n: number) => {
     Haptics.selectionAsync().catch(() => {});
     deAscent().ponerComoTeSientes(valor === n ? null : n);
@@ -146,7 +148,7 @@ function ComoTeSientes({ valor }: { valor: number | null }) {
       <Text style={st.sientePregunta}>{t('ascent.siente.pregunta')}</Text>
       <View style={st.sienteEscala} accessibilityRole="radiogroup" accessibilityLabel={t('ascent.siente.pregunta')}>
         {Array.from({ length: 11 }, (_, n) => (
-          <Pressable key={n} onPress={() => elegir(n)} style={[st.sienteBoton, valor === n && st.sienteElegido]} accessibilityRole="radio" accessibilityState={{ selected: valor === n }} hitSlop={{ top: 6, bottom: 6 }}>
+          <Pressable key={n} onPress={() => elegir(n)} style={[st.sienteBoton, valor === n && [st.sienteElegido, { backgroundColor: a.claro, borderColor: a.claro }]]} accessibilityRole="radio" accessibilityState={{ selected: valor === n }} hitSlop={{ top: 6, bottom: 6 }}>
             <Text style={[st.sienteNumero, valor === n && { color: C.fondo }]}>{n}</Text>
           </Pressable>
         ))}
@@ -196,6 +198,7 @@ function textosDelFoco(f: Foco, h: Hoy, todo: Todo, numeros: boolean): [string, 
 }
 
 function Concentrate({ h, todo, numeros, alIr }: { h: Hoy; todo: Todo; numeros: boolean; alIr: (a: IrA) => void }) {
+  const { claro } = useAcento();
   if (!todo.foco.length) return null;
   return (
     <View style={st.foco}>
@@ -205,7 +208,7 @@ function Concentrate({ h, todo, numeros, alIr }: { h: Hoy; todo: Todo; numeros: 
           const [titulo, texto] = textosDelFoco(f, h, todo, numeros);
           return (
             <View key={`${f.que}${i}`} style={[st.focoItem, i === 0 && st.focoPrimero]}>
-              <Text style={f.hora === null ? st.focoHoraSin : st.focoHora}>{f.hora === null ? t('ascent.foco.hoy') : hora(f.hora)}</Text>
+              <Text style={f.hora === null ? st.focoHoraSin : [st.focoHora, { color: claro }]}>{f.hora === null ? t('ascent.foco.hoy') : hora(f.hora)}</Text>
               <View style={st.crece}>
                 <Text style={st.focoTitulo}>{titulo}</Text>
                 {!!texto && <Text style={st.focoTexto}>{texto}</Text>}
@@ -335,6 +338,7 @@ function PildorasDeMusculos({ musculos, chicas }: { musculos: MusculoAhora[]; ch
 
 // ------------------------------------------------------------ tus músculos
 function TusMusculos({ todo }: { todo: Todo }) {
+  const a = useAcento();
   const peor = [...todo.todos].sort((a, b) => b.residual - a.residual)[0];
   const [elegido, setElegido] = useState<Musculo | null>(peor && peor.estado !== 'recuperado' ? peor.musculo : null);
   const m = elegido ? todo.todos.find((x) => x.musculo === elegido) : null;
@@ -350,12 +354,30 @@ function TusMusculos({ todo }: { todo: Todo }) {
         <View style={st.leyendaCuerpo}>
           {(['recuperado', 'recuperandose', 'cargado'] as const).map((x) => (
             <View key={x} style={st.leyendaItem}>
-              <View style={[st.leyendaPunto, x === 'recuperandose' && { backgroundColor: C.claro, opacity: 0.8 }, x === 'cargado' && { backgroundColor: C.lejos }]} />
+              <View style={[st.leyendaPunto, x === 'recuperandose' && { backgroundColor: a.claro, opacity: 0.8 }, x === 'cargado' && { backgroundColor: C.lejos }]} />
               <Text style={st.leyendaTexto}>{tx(`ascent.cuerpo.estados.${x}`)}</Text>
             </View>
           ))}
         </View>
       </View>
+      {/* Llega con la rutina de Ascent: entra con un fundido. */}
+      <Fundido clave={todo.semana.length ? 'con' : 'sin'}>
+        {todo.semana.length > 0 && (<>
+          <Etiqueta style={st.semanaTitulo}>{t('ascent.cuerpo.semana')}</Etiqueta>
+          <View style={st.semana}>
+            {todo.semana.map((x) => (
+              <View key={x.dia} style={st.semanaFila}>
+                <Text style={[st.semanaDia, x.hoy && { color: C.tinta }]}>{lista('fecha.diasCortos')[x.dia]}</Text>
+                <View style={st.semanaTextos}>
+                  <Text style={st.semanaNombre}>{x.hoy ? t('ascent.cuerpo.hoy', { nombre: x.nombre }) : x.nombre}</Text>
+                  <PildorasDeMusculos musculos={x.musculos} chicas />
+                </View>
+              </View>
+            ))}
+          </View>
+          <Nota>{t('ascent.cuerpo.nota')}</Nota>
+        </>)}
+      </Fundido>
     </Parte>
   );
 }
@@ -369,6 +391,7 @@ function veredicto(x: Todo['fuerza'][number]['t']): [string, string] {
 }
 
 function Fuerza({ todo }: { todo: Todo }) {
+  const a = useAcento();
   const sigmas = todo.fuerza.filter((x) => x.t.ajuste).map((x) => x.t.sigma);
   return (
     <Parte titulo={t('ascent.fuerza.titulo')} derecha={t('ascent.fuerza.semanas')}>
@@ -380,7 +403,7 @@ function Fuerza({ todo }: { todo: Todo }) {
             <View key={nombreDelEjercicio(e)} style={[st.fuerzaEj, i === 0 && st.sinBorde]} accessible accessibilityLabel={`${nombreDelEjercicio(e)}: ${v}. ${dato}`}>
               <View style={st.crece}>
                 <Text style={st.fuerzaNombre}>{nombreDelEjercicio(e)}</Text>
-                <Text style={[st.fuerzaVeredicto, x.estado === 'sube' && { color: C.claro }, x.estado === 'noSeSabe' && { color: C.sub }]}>{v}</Text>
+                <Text style={[st.fuerzaVeredicto, x.estado === 'sube' && { color: a.claro }, x.estado === 'noSeSabe' && { color: C.sub }]}>{v}</Text>
                 <Text style={st.fuerzaDato}>{dato}</Text>
               </View>
               <Tendencia t={x} puntos={puntos} ancho={128} alto={48} />
@@ -396,6 +419,7 @@ function Fuerza({ todo }: { todo: Todo }) {
 // ------------------------------------------------------------ marcas, sin probabilidad
 /** Tu nivel de hoy con lo que cambia de un día a otro, y tu marca como una raya, en kg de 1RM estimado. */
 function Alcance({ m }: { m: DeLaMarca }) {
+  const a = useAcento();
   const [ancho, setAncho] = useState(0);
   const marca = m.pr.reps <= 1 ? m.pr.kilos : m.pr.kilos * (1 + m.pr.reps / 30);
   const nivel = m.t.nivel!;
@@ -411,21 +435,22 @@ function Alcance({ m }: { m: DeLaMarca }) {
         <View style={st.alcancePista} />
         {ancho > 0 && (
           <>
-            <View style={[st.alcanceRuido, { left: x(nivel * Math.exp(-s)), width: x(nivel * Math.exp(s)) - x(nivel * Math.exp(-s)) }]} />
-            <View style={[st.alcanceMarca, { left: x(marca) - 1 }]} />
+            <View style={[st.alcanceRuido, { backgroundColor: a.claro, left: x(nivel * Math.exp(-s)), width: x(nivel * Math.exp(s)) - x(nivel * Math.exp(-s)) }]} />
+            <View style={[st.alcanceMarca, { backgroundColor: a.claro, left: x(marca) - 1 }]} />
             <View style={[st.alcanceNivel, { left: x(nivel) - 7.5 }]} />
           </>
         )}
       </View>
       <View style={st.alcanceEje}>
         <View style={st.alcanceEtq}><View style={st.alcanceEtqHoy} /><Text style={st.alcanceTexto}>{hoyTexto}</Text></View>
-        <View style={st.alcanceEtq}><View style={st.alcanceEtqMarca} /><Text style={st.alcanceTexto}>{marcaTexto}</Text></View>
+        <View style={st.alcanceEtq}><View style={[st.alcanceEtqMarca, { backgroundColor: a.claro }]} /><Text style={st.alcanceTexto}>{marcaTexto}</Text></View>
       </View>
     </View>
   );
 }
 
 function Marcas({ h, todo }: { h: Hoy; todo: Todo }) {
+  const a = useAcento();
   const s = h.sesion;
   if (!s) return <Parte titulo={t('ascent.marcas.titulo')}><Una>{t('ascent.marcas.sinSesion')}</Una></Parte>;
   if (s.como === 'hecha') return <Parte titulo={t('ascent.marcas.titulo')}><Una>{t('ascent.marcas.hecha', { sesion: enFrase(s.nombre) })}</Una></Parte>;
@@ -440,7 +465,7 @@ function Marcas({ h, todo }: { h: Hoy; todo: Todo }) {
           <View key={nombreDelEjercicio(m.bloque)} style={[st.marca, i === 0 && st.sinBorde]}>
             <View style={st.marcaCab}>
               <Text style={st.marcaNombre}>{nombreDelEjercicio(m.bloque)}</Text>
-              <Text style={[st.marcaEstado, m.cerca.cerca && { color: C.claro }]}>{m.cerca.cerca ? t('ascent.marcas.cerca') : t('ascent.marcas.lejos', { n: numero(Math.round(m.cerca.distancia!)) })}</Text>
+              <Text style={[st.marcaEstado, m.cerca.cerca && { color: a.claro }]}>{m.cerca.cerca ? t('ascent.marcas.cerca') : t('ascent.marcas.lejos', { n: numero(Math.round(m.cerca.distancia!)) })}</Text>
             </View>
             <Alcance m={m} />
             {m.cerca.cerca && (
@@ -466,7 +491,7 @@ function Marcas({ h, todo }: { h: Hoy; todo: Todo }) {
             {m.frecuencia.de > 0 && (
               <View style={st.frecuencia}>
                 <View style={st.cuadros}>
-                  {m.fechas.map((f) => <View key={f} style={[st.cuadro, m.conMarca.has(f) && st.cuadroLleno]} />)}
+                  {m.fechas.map((f) => <View key={f} style={[st.cuadro, m.conMarca.has(f) && [st.cuadroLleno, { backgroundColor: a.claro, borderColor: a.claro }]]} />)}
                 </View>
                 <Text style={st.frecuenciaTexto}>{t('ascent.marcas.frecuencia', { n: m.frecuencia.marcas, de: m.frecuencia.de })}</Text>
               </View>
@@ -485,8 +510,9 @@ function Marcas({ h, todo }: { h: Hoy; todo: Todo }) {
 const v1 = (n: number) => numero(Math.round(n * 10) / 10, Math.round(n * 10) % 10 ? 1 : 0);
 /** Las series duras de cada semana: las de cuando subía, llenas; las de ahora, huecas. */
 function Barras({ est }: { est: Estancado }) {
+  const a = useAcento();
   const tope = Math.max(1, ...est.antes.map((s) => s.series), ...est.ahora.map((s) => s.series));
-  const barra = (series: number, ahora: boolean, k: string) => <View key={k} style={[st.barra, ahora ? st.barraAhora : st.barraAntes, { height: `${Math.max(4, (series / tope) * 100)}%` }]} />;
+  const barra = (series: number, ahora: boolean, k: string) => <View key={k} style={[st.barra, ahora ? [st.barraAhora, { borderColor: a.principal }] : [st.barraAntes, { backgroundColor: a.claro }], { height: `${Math.max(4, (series / tope) * 100)}%` }]} />;
   return (
     <View style={st.barras}>
       {est.antes.map((s) => barra(s.series, false, `a${s.lunes}`))}
@@ -497,6 +523,7 @@ function Barras({ est }: { est: Estancado }) {
 }
 
 function RazonVista({ x, est }: { x: Razon; est: Estancado }) {
+  const a = useAcento();
   const cab = (titulo: string, valor?: string) => (
     <View style={st.razonCab}>
       <Text style={st.razonTitulo}>{titulo}</Text>
@@ -511,8 +538,8 @@ function RazonVista({ x, est }: { x: Razon; est: Estancado }) {
         {cab(t('ascent.estancados.series.titulo', { musculo: nombreDelMusculo(est.musculo).toLowerCase() }), `${v1(x.antes)} → ${v1(x.ahora)}`)}
         <View accessible accessibilityRole="image" accessibilityLabel={texto}><Barras est={est} /></View>
         <View style={st.leyendaRazon}>
-          <View style={st.leyendaItem}><View style={[st.leyendaCuadro, st.barraAntes]} /><Text style={st.leyendaTexto}>{t('ascent.estancados.leyenda.antes')}</Text></View>
-          <View style={st.leyendaItem}><View style={[st.leyendaCuadro, st.barraAhora]} /><Text style={st.leyendaTexto}>{t('ascent.estancados.leyenda.ahora')}</Text></View>
+          <View style={st.leyendaItem}><View style={[st.leyendaCuadro, st.barraAntes, { backgroundColor: a.claro }]} /><Text style={st.leyendaTexto}>{t('ascent.estancados.leyenda.antes')}</Text></View>
+          <View style={st.leyendaItem}><View style={[st.leyendaCuadro, st.barraAhora, { borderColor: a.principal }]} /><Text style={st.leyendaTexto}>{t('ascent.estancados.leyenda.ahora')}</Text></View>
         </View>
         {p(texto)}
       </View>
@@ -546,7 +573,7 @@ function Estancamiento({ todo }: { todo: Todo }) {
   const comunes = est.length > 1 ? DE_LA_PERSONA.filter((q) => est.every((e) => e.r.razones.some((x) => x.que === q))) : [];
   return (
     <Parte titulo={t('ascent.estancados.titulo')}>
-      <Una>{t('ascent.estancados.texto', { n: UMBRAL_DE_ASCENT })}</Una>
+      <Una>{t('ascent.estancados.texto', { n: todo.umbral })}</Una>
       {!est.length ? (
         <Text style={st.razonSin}>{t('ascent.estancados.ninguno')}</Text>
       ) : (
@@ -827,6 +854,13 @@ const st = StyleSheet.create({
   leyendaPunto: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: 'rgba(170, 178, 196, 0.28)' },
   leyendaCuadro: { width: 9, height: 9, borderRadius: 1.5, alignItems: 'center', justifyContent: 'center' },
   leyendaTexto: { fontFamily: letras.texto, fontSize: 11, color: C.sub },
+  // Tu semana en Ascent
+  semanaTitulo: { marginTop: 22 },
+  semana: { marginTop: 16 },
+  semanaFila: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.lineaSuave },
+  semanaDia: { width: 64, paddingTop: 2, fontFamily: letras.textoMedio, fontSize: 10.5, lineHeight: 13, letterSpacing: 1.7, textTransform: 'uppercase', color: C.sub },
+  semanaTextos: { flex: 1, minWidth: 0 },
+  semanaNombre: { fontFamily: letras.texto, fontSize: 13.5, lineHeight: 17.5, color: C.tinta },
   // Tu fuerza
   fuerzaLista: { marginTop: 8 },
   fuerzaEj: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1, borderTopColor: C.lineaSuave },

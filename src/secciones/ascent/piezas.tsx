@@ -14,7 +14,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import { t } from '@/textos';
 import { letras } from '@/tema';
 import { Icono } from '../comida/comunes';
-import { C } from './colores';
+import { C, useAcento } from './colores';
 
 /** Los titulares de Ascent van en Outfit 200; hasta que carga, en la más liviana que ya tiene Moss. */
 export function useTitulares(): string {
@@ -108,10 +108,11 @@ export function Octogono({ corte, color, soloArriba, children, style }: { corte:
 
 /** La acción de la pantalla: un octágono claro. */
 export function Accion({ texto, alTocar, apagado, estilo }: { texto: string; alTocar: () => void; apagado?: boolean; estilo?: StyleProp<ViewStyle> }) {
+  const a = useAcento();
   return (
     <Pressable onPress={alTocar} disabled={apagado} style={[st.accion, apagado && st.apagado, estilo]} accessibilityRole="button" accessibilityState={{ disabled: !!apagado }}>
       {({ pressed }) => (
-        <Octogono corte={11} color={pressed ? '#86839a' : C.claro} style={st.accionCaja}>
+        <Octogono corte={11} color={pressed ? '#86839a' : a.claro} style={st.accionCaja}>
           <Text style={st.accionTexto}>{texto}</Text>
         </Octogono>
       )}
@@ -165,6 +166,7 @@ export function Escala({ valor, tope, rayas, limita = false, zona = null, etique
 }) {
   const [ancho, setAncho] = useState(0);
   const reducido = useReducedMotion();
+  const a = useAcento();
   const x = (v: number) => (Math.min(tope, Math.max(0, v)) / tope) * ancho;
   const hasta = useSharedValue(0);
   useEffect(() => {
@@ -183,7 +185,7 @@ export function Escala({ valor, tope, rayas, limita = false, zona = null, etique
       ))}
       {valor !== null && (
         <>
-          <Animated.View style={[st.escalaLleno, limita && st.limitaFondo, lleno]} />
+          <Animated.View style={[st.escalaLleno, { backgroundColor: a.claro }, limita && st.limitaFondo, lleno]} />
           <Animated.View style={[st.escalaPunto, limita && st.limitaFondo, punto]} />
         </>
       )}
@@ -194,11 +196,12 @@ export function Escala({ valor, tope, rayas, limita = false, zona = null, etique
 export type EstadoDePildora = 'recuperado' | 'recuperandose' | 'cargado';
 /** Los músculos (u otra cosa) en píldoras, cada uno con su estado. */
 export function Pildoras({ items, chicas, apagadas }: { items: { clave: string; texto: string; estado: EstadoDePildora; etiqueta?: string }[]; chicas?: boolean; apagadas?: boolean }) {
+  const a = useAcento();
   return (
     <View style={[st.pildoras, chicas && st.pildorasChicas]}>
       {items.map((x) => (
         <View key={x.clave} style={[st.pildora, chicas && st.pildoraChica, x.estado === 'cargado' && st.pildoraCargada, apagadas && st.pildoraApagada]} accessible accessibilityLabel={x.etiqueta ?? x.texto}>
-          <View style={[st.pildoraPunto, x.estado === 'recuperandose' && { backgroundColor: C.claro }, x.estado === 'cargado' && { backgroundColor: C.lejos }]} />
+          <View style={[st.pildoraPunto, x.estado === 'recuperandose' && { backgroundColor: a.claro }, x.estado === 'cargado' && { backgroundColor: C.lejos }]} />
           <Text style={[st.pildoraTexto, chicas && st.pildoraTextoChico, apagadas && { color: C.apagado }]}>{x.texto}</Text>
         </View>
       ))}

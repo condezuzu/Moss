@@ -250,24 +250,28 @@ mismo al revés, con la sesión de Moss en el llavero.
 
 ## Qué lee cada app de la otra (con el vínculo)
 
-Las tres primeras están escritas, en
-[`0008_vinculo.sql`](../supabase/moss/0008_vinculo.sql); las demás, todavía no.
+Las cinco primeras están escritas: las tres primeras en
+[`0008_vinculo.sql`](../supabase/moss/0008_vinculo.sql) y la rutina y los ajustes
+en [`0013_ascent_rutina.sql`](../supabase/moss/0013_ascent_rutina.sql) (18/11/2026,
+todavía sin aplicar en la base real); las demás, todavía no.
 
 | Función | De dónde sale | La usa |
 |---|---|---|
 | `moss.ascent_sesiones(desde)` | `public.logs`, `public.sesiones` (con sus `bloques`) y `public.ejercicios` | Moss: gimnasio automático, calorías y proteína del día, recuperación, rendimiento y músculos |
 | `moss.ascent_marcas(desde)` | `public.prs` y `public.ejercicios` | Moss: los días para intentar marca |
 | `moss.pesos_compartidos(desde, app)` | `moss.pesos` y `public.weights` juntos | Moss (tendencia) y Ascent (DOTS, Stats › Peso) |
-| `moss.recuperacion(fecha)` | sueño y comida de Moss, más entrenamiento de Ascent | las dos |
+| `moss.ascent_rutina()` | `public.rutinas` (la activa) y `public.ejercicios` | Moss: «Tu semana en Ascent», la sesión de hoy y «Tu fuerza» |
+| `moss.ascent_ajustes()` | `public.profiles` (`umbral_estancamiento` y `racha_actual`) | Moss: el umbral de estancamiento y el color y el cuerpo de tu rango |
+| `moss.recuperacion(fecha)` | sueño y comida de Moss, más entrenamiento de Ascent | las dos. **Pendiente** (18/11/2026): no se escribe hasta que Ascent la lea; repetiría en SQL la cuenta del titular (`titularDeHoy.ts`), y mientras solo la usa Moss, que la hace en el teléfono |
 | `moss.semanas_para_ascent(desde)` | por semana: sueño promedio, proteína promedio por día y balance por día | las dos: «Por qué no subís» |
 | `moss.objetivo()` | objetivo y ritmo de Moss | Ascent: qué espera de la fuerza |
 | `moss.anio(anio)` y `moss.ascent_anio(anio)` | totales del año de cada app | el resumen anual, en las dos |
 
-### Lo que devuelven las tres escritas
+### Lo que devuelven las escritas
 
 Son `security definer` con `search_path` vacío: miran quién llama y el vínculo,
-y de Ascent solo leen. Sin vínculo devuelven una lista vacía. La forma, en la app,
-es la de `src/lib/ascentRemoto.ts`.
+y de Ascent solo leen. Sin vínculo devuelven una lista vacía (la rutina y los
+ajustes, null). La forma, en la app, es la de `src/lib/ascentRemoto.ts`.
 
 - **`moss.ascent_sesiones(desde)`**
   - La llama la cuenta de Moss del vínculo y lee la de Ascent. Desde el lado de
@@ -304,6 +308,32 @@ es la de `src/lib/ascentRemoto.ts`.
     último. Si un día hay de las dos, gana el de la app que pregunta: `app` es
     `'moss'` de fábrica y Ascent pasa `'ascent'`. Así cada una muestra lo que se
     anotó en ella.
+- **`moss.ascent_rutina()`** (`0013_ascent_rutina.sql`)
+  - La llama la cuenta de Moss del vínculo; desde el lado de Ascent, null.
+  - La rutina activa (`rutinas.activa`, una por cuenta desde la 75 de Ascent):
+    `{ nombre, dias }`, con los siete días en el orden de Ascent (`dia` 0 es el
+    domingo, como `Date.getDay()`), cada uno con `descanso` y sus `ejercicios`
+    en orden: `id`, `nombre` (el del catálogo o el del propio), `musculos` (su
+    grupo), `series` y, si los tiene, `minutos` (el cardio) o `reps` (las
+    repeticiones objetivo, desde la 95).
+  - Lo roto se saltea con las reglas de `rutina_dias_limpios` de Ascent (series
+    de 0 a 99, minutos hasta 600, repeticiones de 1 a 100, hasta 30 ejercicios).
+  - Un propio ajeno (copiado con la rutina de un amigo) no dice su nombre: va su
+    id, como en Ascent, donde solo lo ve quien lo creó (su migración 80).
+  - Sin rutina activa, null. **No tiene nombre por día ni hora**: Ascent no los
+    guarda. Moss nombra cada día por sus grupos («Pecho y hombros», como una
+    sesión) y la hora sale de Perfil › Entrenamiento o de la última sesión de
+    ese día de la semana.
+- **`moss.ascent_ajustes()`** (`0013_ascent_rutina.sql`)
+  - `{ umbral, racha }`: el umbral de estancamiento de sus Ajustes
+    (`profiles.umbral_estancamiento`: 2, 3, 6 u 8 semanas) y la racha que
+    muestra Ascent (`profiles.racha_actual`, que su barrido de cada hora pone al
+    día). El rango sale de la racha con `src/dominio/rangoDeAscent.ts`, el espejo
+    de `numeroDeRango` y `planetaDeDia` de su `nucleo/reglas.ts`.
+  - Sin vínculo (o desde el lado de Ascent), null.
+- **Si la OTA llega antes que la migración**, PostgREST contesta PGRST202 (no
+  está la función): la app se queda con lo que tenía (sin rutina: lo de antes) y
+  lo demás de Ascent llega igual (`src/almacen/ascent.ts`, con su test).
 
 ### Cada función conectada
 
@@ -434,11 +464,18 @@ titular del día.
 **Aprobada el 18/11/2026 (galería 54) y en la app, por aire:** reemplaza a «La sección de
 Ascent en Moss» y a la señal de Hábitos de «Que se encuentre», que se sacaron. Las cuentas
 de la app están en `src/secciones/ascent/vista.ts` (con el dominio de abajo) y el titular,
-el mismo en Progreso, Inicio y Sueño, en `titularDeHoy.ts`. Lo que Ascent todavía no manda
-no se inventa: su rutina (la sesión de hoy sale de Perfil › Entrenamiento con la última de
-ese día de la semana, «Tu fuerza» mira los ejercicios de las últimas 4 semanas y «Tu semana
-en Ascent» no está), el umbral de estancamiento de sus Ajustes (va el de fábrica, 6) y tu
-racha (va el polvo, el rango 1). El polvo son imágenes hechas una vez con
+el mismo en Progreso, Inicio y Sueño, en `titularDeHoy.ts`. Con `0013_ascent_rutina.sql`
+(18/11/2026) llegan su rutina, el umbral de estancamiento de sus Ajustes y tu racha: la
+sesión de hoy es la de la rutina, con el peso de la última vez de cada ejercicio (como la
+arma Ascent; la hora, de Perfil › Entrenamiento o de la última de ese día); «Tu fuerza»
+sigue los multiarticulares de la rutina; «Tu semana en Ascent» está, en «Tus músculos»; el
+estancamiento usa tu umbral, y la sección, la entrada y el borde de arriba de Progreso
+toman el color y el cuerpo de tu rango (desde el 2, dibujados en Skia como la galería:
+`CuerpoDelRangoSkia` y `TechoDelRangoSkia` en `DibujosSkia.tsx`). Hasta que llegan (la base
+sin la migración, o sin rutina activa) no se inventa: la sesión de hoy sale de Perfil ›
+Entrenamiento con la última de ese día de la semana, «Tu fuerza» mira los ejercicios de las
+últimas 4 semanas, «Tu semana en Ascent» no está, el umbral es el de fábrica (6) y va el
+polvo, el rango 1. El polvo son imágenes hechas una vez con
 `node herramientas/polvo-de-ascent.mjs`, de la galería tal cual.
 
 Lo pediste así (la segunda vuelta, el 2/11): Ascent **arriba** de Progreso, como tu
@@ -524,9 +561,8 @@ sesión; está sin publicar y puede ajustarse), con la sobriedad de Moss.
   estático»): el gas gira despacio alrededor de la estrella (una vuelta en 5 minutos, como
   el polvo de Ascent, que gira) y late; los granos giran más rápido, porque están más
   cerca, en tres grupos que titilan a destiempo; la estrella respira. Con Reducir
-  movimiento, quieta. Para usarlo, Moss
-  tiene que leer la racha de Ascent con su función del vínculo (nunca una de Ascent): **falta
-  decidir** si se lee.
+  movimiento, quieta. Moss lee la racha de Ascent con su función del vínculo
+  (`moss.ascent_ajustes()`, nunca una de Ascent; sí el 18/11/2026).
 - **El color:** solo lo que pone el límite hoy y lo cargado (terracota `#CB8569`); lo
   que se recupera, en crema, y lo descansado, apenas. Sin franjas ni puntajes (las de
   Oura se sacaron el 5/11/2026).
@@ -661,7 +697,8 @@ Ascent de la galería.
      la calidad de 50 y los cortes de las franjas.
    - **`moss.recuperacion(fecha)`, todavía sin escribir en Supabase, tiene que seguir
      esta cuenta** (con la fatiga por músculo, que necesita las series de Ascent), para
-     que Ascent muestre el mismo número.
+     que Ascent muestre el mismo número. **Pendiente** hasta que Ascent la use: escribirla
+     antes repetiría en SQL la cuenta del titular sin que nadie la lea.
 2. **Hoy, concéntrate en** (`focoDeHoy()` en `diagnostico.ts`, con tests): hasta tres
    cosas, cada una una sola idea, con su hora y en el orden del día.
    - Primero lo que falta saber («Anota cómo dormiste», si no hay noche) y lo que conviene
@@ -774,9 +811,10 @@ año antes del 14 de septiembre son inventados y lo dicen en `galeria/src/datos.
    `ordenarMarcas()` y `queFalla()` en `diagnostico.ts`. «¿Cómo te sientes?» se
    guarda en el teléfono, si lo apruebas.
 6. En Supabase: `moss.recuperacion(fecha)` devuelve el titular y las filas, no un
-   número (así Ascent muestra lo mismo); leer la rutina activa de Ascent
-   (`nucleo/rutinas.ts`; hoy no hay función) y el umbral de estancamiento de sus
-   Ajustes. Lo de cada sesión (las series duras, las veces, las pesadas) sale en Moss
+   número (así Ascent muestra lo mismo; pendiente hasta que Ascent la lea). La rutina
+   activa de Ascent y el umbral de estancamiento de sus Ajustes, con la racha, ya se
+   leen: `moss.ascent_rutina()` y `moss.ascent_ajustes()` (`0013_ascent_rutina.sql`).
+   Lo de cada sesión (las series duras, las veces, las pesadas) sale en Moss
    de `moss.ascent_sesiones`.
 7. Los textos nuevos están en `ascent.*` (y los nombres de los ejercicios en
    `ascent.ejercicios.*`); los de antes (`ascent.recuperacion.*`,
