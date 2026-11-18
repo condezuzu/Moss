@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
 import type { SFSymbol } from 'expo-symbols';
 
 import type { ConsejoDeHoy } from '@/dominio/paraHoy';
@@ -16,7 +16,7 @@ import { Icono } from '../comida/comunes';
 import { comidaDeAhora, useEstado } from '../comida/datos';
 import { abrirRegistro } from '../comida/registro';
 import { ACOMODA } from '../tarjetas';
-import { bloques, Cabeza } from './comunes';
+import { bloques, Cabeza, justo } from './comunes';
 import { consejosDeHoy, textoDelConsejo } from './consejos';
 import { LoQueHayQueHacer, pendientesDeHoy } from './Pendientes';
 
@@ -44,6 +44,7 @@ export function ParaHoy() {
   const e = useEstado();
   const ahora = useAhora();
   const hoy = useMemo(() => consejosDeHoy(e, ahora), [e, ahora]);
+  const reducido = useReducedMotion();
   const titulo = t('inicio.bloques.consejos');
   if (!hoy) return null;
   // Arriba de todo, lo que anotaste anoche (17/11): con el aviso de anotar lo pendiente activado y algo para hoy.
@@ -65,7 +66,8 @@ export function ParaHoy() {
             <Animated.View
               // La clave es el consejo: el que sigue igual no vuelve a entrar al cambiar los otros.
               key={x.tipo === 'deporte' ? `${x.tipo}-${x.consejo.que}` : x.tipo}
-              entering={FadeIn.duration(400).delay(60 * i).reduceMotion(ReduceMotion.Never)}
+              // Cada idea baja apenas al aparecer, una después de otra (sn-aparece); con Reducir movimiento, solo el fundido.
+              entering={reducido ? FadeIn.duration(400).delay(60 * i).reduceMotion(ReduceMotion.Never) : FadeInUp.duration(400).delay(60 * i).withInitialValues({ transform: [{ translateY: -6 }] })}
               layout={ACOMODA}
               style={[st.fila, i > 0 && st.filaSiguiente]}
             >
@@ -97,7 +99,7 @@ const st = StyleSheet.create({
   ico: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   texto: { flex: 1, marginTop: 3, fontFamily: letras.textoLiviano, fontSize: 14, lineHeight: 20.3, color: 'rgba(239, 230, 207, 0.86)' },
   accion: { alignSelf: 'center', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(232, 196, 106, 0.45)', backgroundColor: 'rgba(232, 196, 106, 0.08)' },
-  accionTexto: { fontFamily: letras.textoMedio, fontSize: 12.5, color: colores.oroClaro },
+  accionTexto: { fontFamily: letras.textoMedio, fontSize: 12.5, color: colores.oroClaro, ...justo('texto', 12.5) },
   apretado: { opacity: 0.6, transform: [{ scale: 0.96 }] },
   nada: { fontFamily: letras.textoLiviano, fontSize: 13.5, lineHeight: 19.5, color: 'rgba(239, 230, 207, 0.6)' },
 });

@@ -6,22 +6,25 @@
 // pone, cómo se reparten los macros y repartir la semana. Sin datos propios, la persona de ejemplo.
 
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, LayoutAnimationConfig, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { elAlmacen } from '@/almacen';
 import { rangoDeGrasa, ultimasMedidas } from '@/dominio/cuerpo';
+import { CON_ASCENT } from '@/lib/banderas';
 import { diaDeLaSemana, diasEntre, sumarDias, type ClaveDia, type DiaSemana } from '@/dominio/fechas';
 import { ESTILOS, EXTRAS, pisoDe, repartirSemana, type Macros } from '@/dominio/metas';
+import { plazoConFecha, plazoConRitmo, plazoVigente } from '@/dominio/progreso';
 import { comidasParaElControl } from '@/dominio/registros';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
+import { EntradaPronto, GloboPronto } from '../ascent/Pronto';
 import { PESTANAS } from '../Barra';
 import { COLOR_DE_MACRO, Icono, MACROS, type Macro } from '../comida/comunes';
-import { conSigno, fechaCorta, fechaDiaMes, numero, sistemaDe, useEstado, useNumeros } from '../comida/datos';
+import { fechaCorta, fechaDiaMes, numero, sistemaDe, useEstado, useNumeros } from '../comida/datos';
 import { FranjaBajoLaHora } from '../franja';
 import { usePersona } from '../ganchos';
 import { Linea } from '../graficos/Graficos';
@@ -34,7 +37,7 @@ import {
 import { tecladoDeNumeros } from '../teclado';
 import { ElGasto, LasMedidas, MasDatos, Semanas } from './MasDatos';
 import { calcularPlan, ElPlan, Flecha, LaEstrategia, MacrosEnLinea, SIN_ELEGIR, type EleccionDelPlazo } from './Plan';
-import { unidades, type U } from './unidades';
+import { conSignoFijo, unidades, type U } from './unidades';
 
 type Props = { ancho: number; arriba: number; abajo: number; alAbrirMas: (vista: VistaDelMas) => void };
 
@@ -60,16 +63,39 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
   const estiloPrincipal = useAnimatedStyle(() => ({ opacity: 1 - enMetas.get() }));
   const conMetas = vista === 'metas';
   const relleno = { paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 };
+  // El globo de «Ascent · Pronto»: dónde va (debajo de la entrada) y si se está cerrando.
+  const pagina = useRef<ComponentRef<typeof View>>(null);
+  const entrada = useRef<ComponentRef<typeof View>>(null);
+  const [globo, setGlobo] = useState<{ arriba: number; derecha: number; cerrando: boolean } | null>(null);
+  const cerrarGlobo = useCallback(() => setGlobo((g) => (g && !g.cerrando ? { ...g, cerrando: true } : g)), []);
+  const quitarGlobo = useCallback(() => setGlobo(null), []);
+  const abrirGlobo = () => {
+    if (globo) return cerrarGlobo();
+    if (!entrada.current || !pagina.current) return;
+    entrada.current.measureLayout(pagina.current, (x, y, w, h) => setGlobo({ arriba: y + h + 2, derecha: ancho - (x + w) + 6, cerrando: false }));
+  };
+  // Al irse de Progreso, el globo se va: quedaría colgado al volver.
+  const [eraLaActual, setEraLaActual] = useState(esLaActual);
+  if (eraLaActual !== esLaActual) {
+    setEraLaActual(esLaActual);
+    if (!esLaActual) setGlobo(null);
+  }
+  // Con Ascent apagada, solo se nombra así: la entrada que dice «Pronto» (y su fila en Perfil).
+  const ascent = CON_ASCENT ? null : (
+    <View ref={entrada} collapsable={false} style={s.ascent}>
+      <EntradaPronto abierto={!!globo && !globo.cerrando} alTocar={abrirGlobo} />
+    </View>
+  );
   return (
-    <View style={{ width: ancho }}>
+    <View style={{ width: ancho }} ref={pagina}>
       <Animated.View
         style={[s.vista, estiloPrincipal]}
         pointerEvents={conMetas ? 'none' : 'auto'}
         accessibilityElementsHidden={conMetas}
         importantForAccessibility={conMetas ? 'no-hide-descendants' : 'auto'}
       >
-        <ScrollView ref={scroll} contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual && !conMetas} scrollEventThrottle={16}>
-          <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} />
+        <ScrollView ref={scroll} contentContainerStyle={relleno} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets scrollsToTop={esLaActual && !conMetas} scrollEventThrottle={16} onScrollBeginDrag={cerrarGlobo}>
+          <Principal ancho={ancho} alAbrirMas={alAbrirMas} alVerMetas={() => setVista('metas')} ascent={ascent} />
         </ScrollView>
         {/* Cada scroll con su franja: esta se funde con Progreso y la de las metas entra con su panel. */}
         <FranjaBajoLaHora scrollY={scrollY} arriba={arriba} />
@@ -78,6 +104,9 @@ export function PaginaDeProgreso({ ancho, arriba, abajo, alAbrirMas }: Props) {
         <Animated.View entering={reducido ? ENTRA_FUNDIDO : ENTRA_PANEL} exiting={reducido ? SALE_FUNDIDO : SALE_PANEL} style={StyleSheet.absoluteFill}>
           <ScrollDeMetas relleno={relleno} arriba={arriba} esLaActual={esLaActual} alVolver={() => setVista('principal')} />
         </Animated.View>
+      )}
+      {globo && !conMetas && (
+        <GloboPronto arriba={globo.arriba} derecha={globo.derecha} anchoDePagina={ancho} cerrando={globo.cerrando} alCerrar={cerrarGlobo} alCerrado={quitarGlobo} />
       )}
     </View>
   );
@@ -100,21 +129,36 @@ function ScrollDeMetas({ relleno, arriba, esLaActual, alVolver }: { relleno: Vie
   );
 }
 
-function Principal({ ancho, alAbrirMas, alVerMetas }: { ancho: number; alAbrirMas: Props['alAbrirMas']; alVerMetas: () => void }) {
+function Principal({ ancho, alAbrirMas, alVerMetas, ascent }: { ancho: number; alAbrirMas: Props['alAbrirMas']; alVerMetas: () => void; ascent: ReactNode }) {
   const e = useEstado();
   const p = usePersona();
   const numeros = useNumeros();
   const [abierto, setAbierto] = useState<string | null>(null);
   const [cambiarPlan, setCambiarPlan] = useState(false);
   const [masDatos, setMasDatos] = useState(false);
-  const [eleccion, setEleccion] = useState<EleccionDelPlazo>(SIN_ELEGIR);
+  // Lo elegido en «Ritmo y plazo» queda en el teléfono (D35): lo de Progreso o, sin eso, la fecha del cuestionario.
+  // Con la persona de ejemplo no hay dónde guardar: dura lo que la pantalla.
+  const [deEjemplo, setDeEjemplo] = useState<EleccionDelPlazo>(SIN_ELEGIR);
+  const delCuestionario = e.respuestas;
+  const eleccion = useMemo<EleccionDelPlazo>(() => {
+    if (p.deEjemplo) return deEjemplo;
+    const vigente = plazoVigente(e.plazo, delCuestionario ? { fecha: delCuestionario.fecha, pct: delCuestionario.eleccion.pct } : null);
+    return vigente ? { pct: vigente.pct, porFecha: vigente.fecha !== null, fecha: vigente.fecha } : SIN_ELEGIR;
+  }, [p.deEjemplo, deEjemplo, e.plazo, delCuestionario]);
   const alternar = (cual: string) => setAbierto((antes) => (antes === cual ? null : cual));
   const sistema = sistemaDe(e);
   const u = useMemo(() => unidades(sistema), [sistema]);
   const interior = ancho - 40 - 34;
   // Si entrena fuerza, de Perfil › Entrenamiento; sin decirlo, no se sabe y el plazo lo avisa.
   const fuerza = e.entreno ? e.entreno.tipo !== 'resistencia' : null;
-  const calculo = useMemo(() => calcularPlan(p, e.hoy, eleccion, fuerza), [p, e.hoy, eleccion, fuerza]);
+  const despues = p.deEjemplo ? null : (delCuestionario?.despues ?? null);
+  const calculo = useMemo(() => calcularPlan(p, e.hoy, eleccion, fuerza, despues), [p, e.hoy, eleccion, fuerza, despues]);
+  const elegir = (x: EleccionDelPlazo) => {
+    if (p.deEjemplo) return setDeEjemplo(x);
+    const entrada = calculo?.entrada;
+    const plazo = !entrada ? null : x.porFecha && x.fecha ? plazoConFecha(entrada, x.fecha) : x.pct !== null ? plazoConRitmo(entrada, x.pct) : null;
+    elAlmacen().ponerPlazo(plazo ? { pct: Math.round(plazo.pct * 10000) / 10000, fecha: x.porFecha ? x.fecha : null } : null);
+  };
   // Desde cuándo va la línea del plan: la primera meta (la entrada) si hay tendencia ese día; si no, la primera pesada.
   const primera = [...p.tendencia.keys()][0] ?? e.hoy;
   const empezo = !p.deEjemplo ? e.metas[0]?.desde : undefined;
@@ -122,12 +166,17 @@ function Principal({ ancho, alAbrirMas, alVerMetas }: { ancho: number; alAbrirMa
   const comidas = useMemo(() => (p.deEjemplo ? comidasDeEjemplo(e.hoy) : comidasParaElControl(e.registros.values())), [p.deEjemplo, e.hoy, e.registros]);
   return (
     <>
-      <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('progreso.titulo')} />
+      <View style={s.cabecera}>
+        <View style={s.cabeceraTextos}>
+          <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('progreso.titulo')} />
+        </View>
+        {ascent}
+      </View>
       {p.deEjemplo && <AvisoDeEjemplo texto={t('progreso.ejemplo')} />}
       <ControlCorto p={p} abierto={abierto === 'control'} alTocar={() => alternar('control')} />
       {calculo && (
         <ElPlan p={p} calculo={calculo} hoy={e.hoy} desde={desde} u={u} abierto={abierto} alternar={alternar} cambiarPlan={cambiarPlan} alCambiarPlan={() => setCambiarPlan((x) => !x)}>
-          <LaEstrategia p={p} calculo={calculo} hoy={e.hoy} u={u} numeros={numeros} abierto={abierto} alternar={alternar} eleccion={eleccion} alElegir={setEleccion} alVerMetas={alVerMetas} />
+          <LaEstrategia p={p} calculo={calculo} hoy={e.hoy} u={u} numeros={numeros} abierto={abierto} alternar={alternar} eleccion={eleccion} alElegir={elegir} alVerMetas={alVerMetas} />
         </ElPlan>
       )}
       <ElPeso p={p} hoy={e.hoy} u={u} ancho={interior} alRegistrar={() => alAbrirMas('peso')} />
@@ -228,7 +277,7 @@ function ElPeso({ p, hoy, u, ancho, alRegistrar }: { p: Persona; hoy: ClaveDia; 
     <Carta titulo={t('progreso.peso')} derecha={<BotonChico texto={t('progreso.registrar')} icono="plus" alTocar={alRegistrar} />}>
       <Cifra valor={p.pesoHoy === null ? '—' : u.peso(p.pesoHoy)} texto={`${u.unidad} · ${t('progreso.tendencia')}`} />
       {p.cambio7 !== null && (
-        <Nota>{t('progreso.cambios', { semana: conSigno(u.enUnidad(p.cambio7), 1), mes: p.cambio30 === null ? '—' : conSigno(u.enUnidad(p.cambio30), 1), unidad: u.unidad })}</Nota>
+        <Nota>{t('progreso.cambios', { semana: conSignoFijo(u.enUnidad(p.cambio7), 1), mes: p.cambio30 === null ? '—' : conSignoFijo(u.enUnidad(p.cambio30), 1), unidad: u.unidad })}</Nota>
       )}
       {conLinea ? (
         <Aparece>
@@ -505,6 +554,10 @@ function Barras({ reparto, altos }: { reparto: Record<DiaSemana, Macros>; altos:
 
 const s = StyleSheet.create({
   vista: { flex: 1 },
+  cabecera: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
+  cabeceraTextos: { flexShrink: 1 },
+  // Como en la galería: la entrada sube y se corre un poco hacia el borde.
+  ascent: { marginTop: -8, marginRight: -6 },
   control: { paddingTop: 2, paddingBottom: 2, paddingHorizontal: 14, gap: 0 },
   controlFila: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11 },
   controlTextos: { flex: 1, gap: 3, minWidth: 0 },

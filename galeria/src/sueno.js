@@ -217,6 +217,21 @@ const SeccionSueno = (() => {
 .sn-dd-meta { position: absolute; left: 0; right: 0; height: 1px; background: rgba(239, 230, 207, 0.62); pointer-events: none; }
 .sn-lectura { min-height: 18px; margin-top: 8px; font: 400 12.5px/1.4 var(--texto); color: var(--tinta); font-variant-numeric: tabular-nums; }
 .sn-lectura.cambia { animation: sn-aparece 0.22s ease both; }
+/* La deuda noche por noche (17/11), en «Más»: el día, lo dormido, la diferencia, cuánto pesa y de dónde sale. */
+.sn-por-noche { display: grid; gap: 6px; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--sn-linea); }
+.sn-por-noche h4 { margin: 0; font: 400 9.5px/1.2 var(--texto); letter-spacing: 0.16em; text-transform: uppercase; color: var(--sn-2); }
+.sn-pn-fila { display: grid; grid-template-columns: 48px 52px 62px minmax(30px, 1fr) 68px; align-items: center; column-gap: 8px; padding: 5px 0; border-top: 1px solid rgba(150, 178, 240, 0.08); font-variant-numeric: tabular-nums; }
+.sn-pn-fila.titulos { padding: 0; border-top: 0; font: 400 10px/1.2 var(--texto); letter-spacing: 0.03em; color: var(--sn-3); }
+.sn-pn-fila.tenue { opacity: 0.5; }
+.sn-pn-fila .dia { font: 400 12.5px/1.2 var(--texto); color: var(--sn-2); }
+.sn-pn-fila b { font: 400 12.5px/1.2 var(--numeros); color: var(--tinta); white-space: nowrap; }
+.sn-pn-fila b.de-menos { color: #a9c0fa; }
+.sn-pn-fila b.de-mas { color: var(--sn-verde-claro); }
+.sn-pn-fila .pesa { height: 5px; border-radius: 2.5px; overflow: hidden; background: rgba(150, 178, 240, 0.12); }
+.sn-pn-fila .pesa i { display: block; height: 100%; border-radius: 2.5px; background: #a8c8fa; }
+.sn-pn-fila em { font: 400 10.5px/1.2 var(--texto); font-style: normal; text-align: right; color: var(--sn-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sn-pn-fila em.medida { color: #b9d6fb; }
+.sn-por-noche .sn-nota { margin: 0; }
 
 /* La calidad: el anillo, partido en lo que suma cada parte. */
 .sn-calidad-fila { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
@@ -655,11 +670,11 @@ const SeccionSueno = (() => {
       cab.append(el('div', 'pg-fecha', tx('cielo.fecha', { dia: tx('fecha.dias.' + hoy.dia), num: hoy.num, mes: tx('fecha.mesesCortos.' + hoy.mes) })), el('h2', 'pg-titulo', tx('sueno.titulo')));
       cont.appendChild(cab);
       const conNoches = hayNoches();
-      // Sin noches, primero lo que hace que aparezcan; la pregunta de la mañana va después.
+      // Sin noches, primero lo que hace que aparezcan.
       if (!conNoches) cont.appendChild(invitacion());
-      manana().forEach((nodo) => cont.appendChild(nodo));
-      // La deuda, arriba de todo (5/11, a la noche): es lo primero que se mira.
+      // La deuda, primera (17/11): es lo primero que se mira, y la pregunta de la mañana ya no la empuja para abajo.
       cont.appendChild(deuda());
+      manana().forEach((nodo) => cont.appendChild(nodo));
       // Debajo, lo de esta noche (17/11, para aprobar): tu periodo de melatonina y, con su aviso activado, la nota de
       // lo pendiente.
       if (s.clave === Datos.HOY) {
@@ -1376,6 +1391,47 @@ const SeccionSueno = (() => {
       lectura.textContent = textoDe(lista[DIAS - 1], fin);
       return [leyenda, dd, lectura];
     }
+    /**
+     * La cuenta noche por noche (lo pediste el 17/11/2026), para compararla con otra app: de anoche para atrás, el día,
+     * cuánto dormiste (con las siestas), la diferencia con lo que necesitas, cuánto pesa esa noche en una barrita y si la
+     * estimó el teléfono o la midió un reloj o un anillo. La cuenta es la de la deuda (Sueno.nochesDeLaDeuda).
+     */
+    function nochePorNoche(lista, nec, fin) {
+      const caja = el('div', 'sn-por-noche');
+      caja.appendChild(el('h4', null, tx('sueno.deuda.porNoche.titulo')));
+      const cab = el('div', 'sn-pn-fila titulos');
+      cab.setAttribute('aria-hidden', 'true');
+      ['noche', 'dormiste', 'diferencia', 'pesa'].forEach((k) => cab.appendChild(el('span', null, tx('sueno.deuda.porNoche.' + k))));
+      cab.appendChild(el('span'));
+      caja.appendChild(cab);
+      const filas = Sueno.nochesDeLaDeuda(lista, nec).map((f, i) => Object.assign({ clave: Fechas.sumarDias(fin, i - DIAS + 1) }, f)).reverse();
+      filas.forEach((f) => {
+        const fuente = !f.noche ? tx('sueno.deuda.porNoche.sinDatos')
+          : f.entra === null ? tx('sueno.deuda.porNoche.noCuenta')
+            : f.noche.moss ? tx('sueno.origen.' + f.noche.moss.origen)
+              : tx(f.noche.aMano ? 'sueno.deuda.porNoche.aMano' : 'sueno.deuda.porNoche.medida');
+        const justo = f.falta !== null && Math.abs(f.falta) < 5;
+        // Con asterisco, la noche que pasó el tope: en la deuda entra menos de lo que faltó o sobró.
+        const diferencia = f.falta === null ? '' : justo ? tx('sueno.deuda.porNoche.justo') : `${f.falta > 0 ? '−' : '+'}${Periodo.corta(u, Math.abs(f.falta))}${f.entra !== null && f.entra !== f.falta ? '*' : ''}`;
+        const fila = el('div', 'sn-pn-fila' + (f.entra === null ? ' tenue' : ''));
+        const pesa = el('span', 'pesa');
+        if (f.entra !== null) { const barra = el('i'); barra.style.width = `${Math.round(f.peso * 100)}%`; pesa.appendChild(barra); }
+        fila.append(
+          el('span', 'dia', diaCorto(f.clave)),
+          el('b', null, f.dormido === null ? '—' : Periodo.corta(u, f.dormido)),
+          el('b', f.entra === null || justo ? null : f.falta > 0 ? 'de-menos' : 'de-mas', diferencia),
+          pesa,
+          el('em', f.noche && f.entra !== null && !f.noche.moss && !f.noche.aMano ? 'medida' : null, fuente),
+        );
+        caja.appendChild(fila);
+      });
+      if (filas.some((f) => f.entra !== null && f.entra !== f.falta)) {
+        const T = Sueno.TOPES_DE_UNA_NOCHE;
+        caja.appendChild(el('p', 'sn-nota', tx('sueno.deuda.porNoche.tope', { falta: Periodo.corta(u, T.falta), estimada: Periodo.corta(u, T.faltaEstimada), sobra: Periodo.corta(u, T.sobra) })));
+      }
+      caja.appendChild(el('p', 'sn-nota', tx('sueno.deuda.porNoche.leyenda')));
+      return caja;
+    }
     // La deuda, lo primero que se mira, como la pediste el 17/11/2026 y como quedó en la app (Deuda.tsx): el número de
     // una («4 h»; «Sin deuda» en 0) con la palabra a la derecha en una pastilla (Sueno.juicioDeLaDeuda), lo que duermes
     // contra lo que necesitas, que se cambia ahí mismo, y, solo con el teléfono, que es una estimación. «Más» despliega
@@ -1420,6 +1476,7 @@ const SeccionSueno = (() => {
       const barras = barrasDeLaDeuda(lista, nec, fin);
       if (conNoches) mas.append(...barras);
       else { const envoltura = el('div', 'sn-muestra'); envoltura.append(...barras); mas.appendChild(envoltura); }
+      if (conNoches) mas.appendChild(nochePorNoche(lista, nec, fin));
       if (d && conNoches) {
         mas.appendChild(el('p', 'sn-nota', redondeada === 0 ? `${tx('sueno.graficos.alDia')} ${tx('sueno.deudaNoches', { n: d.noches, de: d.de })}.` : `${tx('sueno.deudaNoches', { n: d.noches, de: d.de })}.`));
         const p = s.clave === Datos.HOY ? periodoDeHoy() : null;

@@ -4,7 +4,8 @@ import { estadoDelControl, tendencia, ultimoDiaDeControl, type Pesada } from './
 import { diaDeLaSemana, diasEntre, sumarDias, type DiaSemana } from './fechas';
 import { estadoDeMacro, RITMOS } from './metas';
 import {
-  balance, bordeDe, direccionDe, faltaParaEstimar, fechasDeLlegada, planPorEtapas, plazoConFecha, plazoConRitmo, progresoAlObjetivo, ritmoConRango, ritmoSemanal, SEMANAS_DE_MANTENIMIENTO, viabilidad,
+  balance, bordeDe, direccionDe, faltaParaEstimar, fechasDeLlegada, pctParaLaMeta, planPorEtapas, plazoConFecha, plazoConRitmo, plazoElegidoDe, plazoVigente, progresoAlObjetivo, ritmoConRango, ritmoSemanal,
+  SEMANAS_DE_MANTENIMIENTO, viabilidad,
   type EntradaDelPlazo,
 } from './progreso';
 
@@ -359,6 +360,39 @@ describe('la meta con plazo', () => {
     expect(plazoConRitmo({ ...flaca, gasto: 2000 }, 0.75)!.avisos).toEqual([]);
     // Con ELLA (80 kg, gasto 1.700, al 0,5 %): 1.700 − 22 × 8 − 440 = 1.084.
     expect(plazoConRitmo({ ...ELLA, gasto: 1700 }, 0.5)!.avisos).toEqual(['pisoAlFinal']);
+  });
+});
+
+describe('el plazo elegido en Progreso', () => {
+  it('lo guardado se lee si tiene forma', () => {
+    expect(plazoElegidoDe({ pct: 0.62, fecha: null })).toEqual({ pct: 0.62, fecha: null });
+    expect(plazoElegidoDe({ pct: 0.4, fecha: '2027-02-09' })).toEqual({ pct: 0.4, fecha: '2027-02-09' });
+    // Una fecha que no es una fecha se descarta, y queda el ritmo.
+    expect(plazoElegidoDe({ pct: 0.4, fecha: 'febrero' })).toEqual({ pct: 0.4, fecha: null });
+    for (const malo of [null, undefined, 'x', {}, { pct: 0 }, { pct: -0.5 }, { pct: '0.5' }, { pct: Number.NaN }, { pct: 40 }]) expect(plazoElegidoDe(malo)).toBeNull();
+  });
+
+  it('vale lo elegido en Progreso; sin eso, lo del cuestionario; sin nada, el ritmo del perfil', () => {
+    const elegido = { pct: 0.62, fecha: null };
+    expect(plazoVigente(elegido, { fecha: '2027-02-09', pct: -0.4 })).toBe(elegido);
+    // El del cuestionario llega con signo (bajando, negativo): acá va el ritmo, siempre positivo.
+    expect(plazoVigente(null, { fecha: '2027-02-09', pct: -0.4 })).toEqual({ pct: 0.4, fecha: '2027-02-09' });
+    expect(plazoVigente(null, { fecha: null, pct: 0.3 })).toEqual({ pct: 0.3, fecha: null });
+    expect(plazoVigente(null, { fecha: null, pct: null })).toBeNull();
+    expect(plazoVigente(null, { fecha: null })).toBeNull();
+    expect(plazoVigente(null, null)).toBeNull();
+  });
+
+  it('la meta sigue el ritmo elegido con su signo, y bajando no pasa de lo exigente', () => {
+    expect(pctParaLaMeta('bajar', 0.62, 80, 30)).toBeCloseTo(-0.62);
+    expect(pctParaLaMeta('subir', 0.3, 80, 30)).toBeCloseTo(0.3);
+    // Muy agresivo en la regla: la meta se queda en el borde de lo exigente (el 1 %; con 130 kg, 1.000 kcal por día).
+    expect(pctParaLaMeta('bajar', 1.15, 80, 30)).toBeCloseTo(-bordeDe('bajar', 'exigente', 80));
+    expect(pctParaLaMeta('bajar', 1.15, 130, 30)).toBeCloseTo(-bordeDe('bajar', 'exigente', 130));
+    expect(bordeDe('bajar', 'exigente', 130)).toBeLessThan(1);
+    // Antes de los 18, bajando, nunca más que el recomendado.
+    expect(pctParaLaMeta('bajar', 0.75, 70, 17)).toBeCloseTo(RITMOS.bajar.recomendado);
+    expect(pctParaLaMeta('bajar', 0.3, 70, 17)).toBeCloseTo(-0.3);
   });
 });
 

@@ -5,7 +5,7 @@ import datos from '../datos/constelaciones.json';
 import { progresoPorConstelacion } from '../dominio/dias';
 import { diaDeLaSemana } from '../dominio/fechas';
 import type { Habito } from '../dominio/habitos';
-import { metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
+import { metaPara, metasIniciales, type Cuestionario, type MetaGuardada } from '../dominio/metas';
 import { aguaDelDia, borrado, delDia, itemDeAlimento, itemRapido, totalDelDia, vigentes, type Registro, type Valores } from '../dominio/registros';
 import { entrenoParaGuardar } from '../dominio/cuestionario';
 import { crearAlmacen, metaVigente, reglasDeCuidados, soloLosDeEjemplo, type CuestionarioNuevo } from './almacen';
@@ -1234,5 +1234,84 @@ describe('el cuestionario nuevo y los cuidados', () => {
     almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' }, 'manual', { ...nuevo, respuestas: { ...nuevo.respuestas, fecha: '2027-01-04', eleccion: { proteinaPorKg: 2, pct: -0.6 } } });
     almacen.ponerEstrategia({ objetivo: 'mantener' });
     expect(almacen.estado().respuestas).toMatchObject({ fecha: null, eleccion: { pct: null, proteinaPorKg: null } });
+  });
+
+  it('el ritmo o la fecha elegidos en Progreso quedan en el teléfono y la meta los sigue', async () => {
+    const repositorio = repositorioEnMemoria();
+    const { almacen } = await armar(repositorio);
+    almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' }, 'manual', { ...nuevo, cuidados: { marcados: [], datos: {} } });
+    const ultima = () => almacen.estado().metas[almacen.estado().metas.length - 1];
+    const gasto = ultima().gasto;
+    const persona = { edad: 31, sexo: 'f' as const, pesoKg: 64, objetivo: 'bajar' as const, ritmo: 'recomendado' as const };
+    const con = (pct: number) => metaPara(gasto, persona, 'bajaEnGrasas', { proteinaPorKg: 2, pct });
+    expect(almacen.estado().plazo).toBeNull();
+    almacen.ponerPlazo({ pct: 0.25, fecha: null });
+    expect(almacen.estado().plazo).toEqual({ pct: 0.25, fecha: null });
+    expect(ultima()).toMatchObject({ ...con(-0.25), motivo: 'objetivo', gasto });
+    // El mismo otra vez no cambia nada.
+    const antes = ultima();
+    almacen.ponerPlazo({ pct: 0.25, fecha: null });
+    expect(ultima()).toBe(antes);
+    // Muy agresivo: el plan lo muestra, pero la meta no pasa de lo exigente (el 1 %).
+    almacen.ponerPlazo({ pct: 1.15, fecha: '2026-12-20' });
+    expect(ultima()).toMatchObject(con(-1));
+    expect(con(-1).kcal).toBeLessThan(con(-0.25).kcal);
+    // Queda en el teléfono, y no sube a la cuenta.
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().plazo).toEqual({ pct: 1.15, fecha: '2026-12-20' });
+    expect(JSON.stringify(await repositorio.pendientes())).not.toContain('2026-12-20');
+    // Otro de los tres ritmos lo suelta, y la meta vuelve a ser la de ese ritmo.
+    almacen.ponerEstrategia({ ritmo: 'suave' });
+    expect(almacen.estado().plazo).toBeNull();
+    expect(ultima()).toMatchObject(metaPara(gasto, { ...persona, ritmo: 'suave' }, 'bajaEnGrasas'));
+  });
+
+  it('volver al ritmo del perfil suelta lo elegido en Progreso y la fecha del cuestionario', async () => {
+    const { almacen } = await armar();
+    almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' }, 'manual', { ...nuevo, cuidados: { marcados: [], datos: {} }, respuestas: { ...nuevo.respuestas, fecha: '2027-01-04', eleccion: { proteinaPorKg: 2, pct: -0.6 } } });
+    const ultima = () => almacen.estado().metas[almacen.estado().metas.length - 1];
+    const gasto = ultima().gasto;
+    almacen.ponerPlazo({ pct: 0.3, fecha: null });
+    almacen.ponerPlazo(null);
+    expect(almacen.estado().plazo).toBeNull();
+    // La proteína elegida en el cuestionario se queda; su fecha y su ritmo, no.
+    expect(almacen.estado().respuestas).toMatchObject({ fecha: null, eleccion: { pct: null, proteinaPorKg: 2 } });
+    expect(ultima()).toMatchObject(metaPara(gasto, { edad: 31, sexo: 'f', pesoKg: 64, objetivo: 'bajar', ritmo: 'recomendado' }, 'bajaEnGrasas', { proteinaPorKg: 2, pct: null }));
+  });
+
+  it('la próxima carrera de Perfil › Entrenamiento queda en el teléfono, y contestar otra vez el cuestionario no la pierde', async () => {
+    const repositorio = repositorioEnMemoria();
+    const { almacen } = await armar(repositorio);
+    const corre = entrenoParaGuardar({ tipos: ['fuerza', 'resistencia'], sesiones: [{ tipo: 'fuerza', dias: [1, 3], hora: 1080, minutos: 60 }, { tipo: 'resistencia', dias: [6], hora: 540, minutos: 90 }], viaje: 15 })!;
+    almacen.responderCuestionario(respuestas, 'manual', { ...nuevo, entreno: corre });
+    const carrera = { fecha: '2026-11-28', minutos: 120 };
+    almacen.ponerEntreno({ ...almacen.estado().entreno!, carrera });
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().entreno?.carrera).toEqual(carrera);
+    almacen.cambiarRespuestas(respuestas, 'manual', { ...nuevo, entreno: corre });
+    expect(almacen.estado().entreno?.carrera).toEqual(carrera);
+    // Si ya no corre, la carrera se va con el deporte.
+    almacen.cambiarRespuestas(respuestas, 'manual', nuevo);
+    expect(almacen.estado().entreno?.carrera).toBeUndefined();
+  });
+
+  it('el país de los alimentos queda en el teléfono; uno que no es un país vuelve al del teléfono', async () => {
+    const repositorio = repositorioEnMemoria();
+    const { almacen } = await armar(repositorio);
+    expect(almacen.estado().paisDeAlimentos).toBeNull();
+    almacen.ponerPaisDeAlimentos('MX');
+    await almacen.esperar();
+    expect((await armar(repositorio)).almacen.estado().paisDeAlimentos).toBe('MX');
+    almacen.ponerPaisDeAlimentos('México');
+    expect(almacen.estado().paisDeAlimentos).toBeNull();
+  });
+
+  it('con las metas a mano, el ritmo elegido en Progreso se guarda y las metas quedan', async () => {
+    const { almacen } = await armar();
+    almacen.responderCuestionario({ ...respuestas, objetivo: 'bajar' }, 'manual', { ...nuevo, cuidados: { marcados: [], datos: {} } });
+    const aMano = almacen.ponerMetasAMano({ proteina: 120, carbohidratos: 200, grasas: 60 });
+    almacen.ponerPlazo({ pct: 0.7, fecha: null });
+    expect(almacen.estado().plazo).toEqual({ pct: 0.7, fecha: null });
+    expect(almacen.estado().metas[almacen.estado().metas.length - 1]).toMatchObject({ motivo: 'manual', kcal: aMano?.kcal });
   });
 });

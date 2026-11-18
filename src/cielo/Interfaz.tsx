@@ -354,7 +354,8 @@ const estilos = StyleSheet.create({
   // El nombre de la constelación, chico y discreto: el cielo es el protagonista.
   nombre: { marginTop: 5, fontFamily: 'CormorantGaramond_400Regular_Italic', fontSize: 16, lineHeight: 19, color: 'rgba(239, 230, 207, 0.62)', ...SOMBRA },
   luz: { alignItems: 'flex-end' },
-  luzNumero: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 26, lineHeight: 27, color: colores.oroClaro, ...SOMBRA },
+  // La luz de hoy brilla en oro, como en la galería (`.cab-luz b`): su sombra es un resplandor, no un borde oscuro.
+  luzNumero: { fontFamily: 'CormorantGaramond_500Medium', fontSize: 26, lineHeight: 27, color: colores.oroClaro, textShadowColor: 'rgba(232, 196, 106, 0.35)', textShadowRadius: 18, textShadowOffset: { width: 0, height: 0 } },
   luzTexto: { marginTop: 4, fontFamily: 'Jost_400Regular', fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: colores.pergaminoTenue },
 
   etiqueta: { position: 'absolute' },

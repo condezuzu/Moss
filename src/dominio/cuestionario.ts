@@ -74,6 +74,15 @@ export const FACTORES_DE_VIDA: Record<Movimiento, number> = { sentado: NIVELES.p
  */
 export const PASOS_SENTADO = 5000;
 export const PASOS_MUCHO = 10000;
+/** Para sugerir, hacen falta al menos estos días con pasos: con uno o dos, un domingo de sillón no es tu semana. */
+export const DIAS_CON_PASOS = 3;
+
+/** Los pasos por día, de los de cada uno de los últimos días: solo los días con pasos (sin ellos, el teléfono no los contó). Con pocos, null. */
+export function promedioDePasos(porDia: readonly (number | null | undefined)[]): number | null {
+  const con = porDia.filter((p): p is number => typeof p === 'number' && p > 0);
+  return con.length >= DIAS_CON_PASOS ? Math.round(con.reduce((a, b) => a + b, 0) / con.length) : null;
+}
+
 export function movimientoPorPasos(pasosPorDia: number | null | undefined, deportes: readonly Deporte[] = []): Movimiento | null {
   if (pasosPorDia == null || !(pasosPorDia > 0)) return null;
   const sugerido: Movimiento = pasosPorDia < PASOS_SENTADO ? 'sentado' : pasosPorDia <= PASOS_MUCHO ? 'dePie' : 'fisico';
@@ -426,6 +435,64 @@ export function deportesDe(e: Entreno | null | undefined): Pick<EntrenoDicho, 't
   }
   if (e.tipo === 'mixta') return null;
   return { tipos: [e.tipo], sesiones: [{ tipo: e.tipo, dias: e.dias, hora: e.hora, minutos: e.minutos }], partidos: null };
+}
+
+/** Los deportes que muestra Perfil › Entrenamiento: los del cuestionario o, con el horario de antes, el de su tipo. */
+export function deportesDePerfil(e: Pick<Entreno, 'tipo' | 'tipos'>): Deporte[] {
+  if (e.tipos?.length) return DEPORTES.filter((d) => e.tipos!.includes(d));
+  return [e.tipo === 'resistencia' ? 'resistencia' : e.tipo === 'mixta' ? 'equipo' : 'fuerza'];
+}
+
+/** Lo que cambia Perfil › Entrenamiento: su horario (uno solo), los deportes, el viaje, el partido, la carrera y la categoría de peso. */
+export type CambiosDelEntreno = Partial<Pick<Entreno, 'dias' | 'hora' | 'minutos' | 'tipos' | 'viaje' | 'partidos' | 'carrera' | 'categoriaDePeso'>>;
+
+/**
+ * Perfil › Entrenamiento con un cambio. Perfil muestra un solo horario (el de los avisos) y el cuestionario guarda
+ * una sesión por deporte: para que los consejos del deporte sigan valiendo (deportesDe), las sesiones acompañan al
+ * horario. Un día nuevo va a la sesión principal y el que se saca sale de todas; la hora y la duración son las de la
+ * principal; un deporte nuevo entra con el horario que se ve y el que se saca se lleva su sesión (y sus días, si
+ * eran solo suyos). El partido queda solo con partidos o choques; la carrera, con correr, bici o nadar; la
+ * categoría de peso, con combate. Sin ningún deporte no hay cambio: al menos uno.
+ */
+export function entrenoConCambios(e: Entreno, cambios: CambiosDelEntreno): Entreno {
+  const deAntes = deportesDePerfil(e);
+  const validas = deportesDe(e);
+  // Las sesiones de ahora: las del cuestionario mientras valgan; si no, cada deporte con el horario que se ve.
+  let sesiones: SesionDicha[] = validas && e.tipos?.length
+    ? validas.sesiones.map((s) => ({ ...s, dias: [...s.dias] }))
+    : deAntes.map((tipo) => ({ tipo, dias: [...e.dias], hora: e.hora, minutos: e.minutos }));
+  let tipos = deAntes;
+  if (cambios.tipos) {
+    const nuevos = DEPORTES.filter((d) => cambios.tipos!.includes(d));
+    if (nuevos.length) {
+      sesiones = sesiones.filter((s) => nuevos.includes(s.tipo));
+      for (const tipo of nuevos) if (!sesiones.some((s) => s.tipo === tipo)) sesiones.push({ tipo, dias: [...e.dias], hora: e.hora, minutos: e.minutos });
+      tipos = nuevos;
+    }
+  }
+  // La principal, como en horarioDeLosAvisos: la de más días y, con empate, la primera.
+  const principal = () => sesiones.reduce((a, b) => (new Set(b.dias).size > new Set(a.dias).size ? b : a));
+  if (cambios.dias) {
+    const dias = SEMANA.filter((d) => cambios.dias!.includes(d));
+    const habia = new Set(sesiones.flatMap((s) => s.dias));
+    const p = principal();
+    p.dias = SEMANA.filter((d) => p.dias.includes(d) || (dias.includes(d) && !habia.has(d)));
+    for (const s of sesiones) s.dias = s.dias.filter((d) => dias.includes(d));
+  }
+  if (cambios.hora !== undefined) principal().hora = cambios.hora;
+  if (cambios.minutos !== undefined) principal().minutos = cambios.minutos;
+  const h = horarioDeLosAvisos({ tipos, sesiones })!;
+  const preguntas = preguntasDelEntreno(tipos);
+  const viaje = 'viaje' in cambios ? cambios.viaje : e.viaje;
+  const partidos = 'partidos' in cambios ? cambios.partidos : e.partidos;
+  const categoriaDePeso = 'categoriaDePeso' in cambios ? cambios.categoriaDePeso : e.categoriaDePeso;
+  const carrera = tipos.includes('resistencia') ? ('carrera' in cambios ? cambios.carrera : e.carrera) ?? null : null;
+  return {
+    ...h, ...(typeof viaje === 'number' ? { viaje } : {}), tipos, sesiones,
+    partidos: preguntas.partidos ? partidos ?? null : null,
+    categoriaDePeso: preguntas.categoriaDePeso ? categoriaDePeso ?? null : null,
+    ...(carrera ? { carrera } : {}),
+  };
 }
 
 /**

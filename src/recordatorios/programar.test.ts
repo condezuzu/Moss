@@ -5,6 +5,7 @@ import { repositorioEnMemoria } from '@/almacen/repositorio';
 import type { Constelacion } from '@/datos/catalogo';
 import datos from '@/datos/constelaciones.json';
 import { horasDeSueno } from '@/dominio/avisos';
+import { entrenoParaGuardar } from '@/dominio/cuestionario';
 import { claveDeMarca } from '@/dominio/dias';
 import { sumarDias } from '@/dominio/fechas';
 import { periodoDeMelatonina } from '@/dominio/melatonina';
@@ -48,6 +49,7 @@ jest.mock('@/lib/premium', () => ({
   hayPremium: () => mockPremium.hay,
   suscripcionActual: () => mockPremium.suscripcion,
   accesoActual: () => mockPremium.acceso,
+  hayCompras: () => false,
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -56,6 +58,8 @@ const { algunAviso, avisosDe, conLoQueFalta, LO_QUE_MUEVE_LOS_AVISOS, programarA
 const { t } = require('@/textos') as typeof import('@/textos');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { suenoDe } = require('@/secciones/persona') as typeof import('@/secciones/persona');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { lineasDeHoy } = require('@/secciones/comida/entreno') as typeof import('@/secciones/comida/entreno');
 const MERIENDA = () => t('recordatorios.horario.merienda');
 
 const HOY = '2026-11-02';
@@ -247,6 +251,122 @@ describe('los avisos que se programan', () => {
     mockPremium = { ...mockPremium, sabe: true };
     await programarAvisos(estado());
     expect(programadas).toEqual([]);
+  });
+});
+
+describe('las sesiones de cada día y lo del deporte', () => {
+  const si = { encendido: true };
+  const deTipo = (dia: number, tipo: string) => programadas.filter((p) => p.trigger.date.getDate() === dia && p.content.data.tipo === tipo);
+  const horas = (lista: typeof programadas) => lista.map((p) => p.trigger.date.getHours() * 60 + p.trigger.date.getMinutes());
+
+  beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] }).setSystemTime(a(10));
+    programadas.length = 0;
+    mockPremium = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('con dos deportes el mismo día, cada sesión lleva su aviso de antes y el de después', async () => {
+    // El martes 3, pesas a las 10 y partido a las 18; el horario único llevaba una sola sesión.
+    const entreno = entrenoParaGuardar({
+      tipos: ['fuerza', 'equipo'], viaje: 15,
+      sesiones: [{ tipo: 'fuerza', dias: [2, 4], hora: 10 * 60, minutos: 60 }, { tipo: 'equipo', dias: [2], hora: 18 * 60, minutos: 90 }],
+    });
+    await programarAvisos(estado({ entreno, habitos: [], avisos: { ...APAGADO, antesDeEntrenar: si, despuesDeEntrenar: si } }));
+    // Antes: el desayuno de las 8 y la merienda adelantada a las 16:30, media hora antes de cada una. Después, al terminar.
+    expect(horas(deTipo(3, 'antesDeEntrenar'))).toEqual([7 * 60 + 30, 16 * 60]);
+    expect(horas(deTipo(3, 'despuesDeEntrenar'))).toEqual([11 * 60, 19 * 60 + 30]);
+    // El jueves, solo las pesas.
+    expect(horas(deTipo(5, 'antesDeEntrenar'))).toEqual([7 * 60 + 30]);
+  });
+
+  it('«Mañana juegas», la víspera del partido de cada semana, y «Tu carrera es pasado mañana», con su interruptor', async () => {
+    // Fútbol con partido los sábados: el viernes 6, a la hora del almuerzo.
+    const conPartido = entrenoParaGuardar({
+      tipos: ['fuerza', 'equipo'], viaje: 15, partidos: { dia: 6, hora: 16 * 60 },
+      sesiones: [{ tipo: 'fuerza', dias: [1, 3], hora: 19 * 60, minutos: 60 }, { tipo: 'equipo', dias: [6], hora: 16 * 60, minutos: 90 }],
+    });
+    await programarAvisos(estado({ entreno: conPartido, habitos: [], avisos: { ...APAGADO, partido: si } }));
+    const partido = programadas.filter((p) => p.content.data.tipo === 'partido');
+    expect(partido.map((p) => [p.trigger.date.getDate(), p.trigger.date.getHours(), p.content.title, p.content.body])).toEqual([
+      [6, 13, t('recordatorios.conviene.partido.titulo'), t('recordatorios.conviene.partido.texto')],
+    ]);
+    // Apagado de fábrica.
+    await programarAvisos(estado({ entreno: conPartido, habitos: [], avisos: { ...APAGADO, antesDeEntrenar: si } }));
+    expect(programadas.some((p) => p.content.data.tipo === 'partido')).toBe(false);
+    // Corre, con una carrera de dos horas el viernes 6: el miércoles 4.
+    const corre = { dias: [2, 4], hora: 7 * 60, minutos: 45, tipo: 'resistencia', carrera: { fecha: '2026-11-06', minutos: 120 } } as Estado['entreno'];
+    await programarAvisos(estado({ entreno: corre, habitos: [], avisos: { ...APAGADO, carrera: si } }));
+    expect(programadas.filter((p) => p.content.data.tipo === 'carrera').map((p) => [p.trigger.date.getDate(), p.trigger.date.getHours(), p.content.title])).toEqual([
+      [4, 13, t('recordatorios.conviene.carrera.titulo')],
+    ]);
+    // Sin ese deporte, la carrera que quedó guardada no avisa.
+    await programarAvisos(estado({ entreno: { ...corre!, tipo: 'fuerza' }, habitos: [], avisos: { ...APAGADO, carrera: si } }));
+    expect(programadas).toEqual([]);
+  });
+});
+
+describe('los cuidados de salud, en los avisos', () => {
+  const PERFIL = { sexo: 'f', nacimiento: 1994, alturaCm: 165, actividad: 'algo' };
+  const con = (marcados: string[], extra: Partial<Estado> = {}) =>
+    estado({ perfil: PERFIL, pesos: [{ fecha: '2026-11-01', kg: 62 }], cuidados: { marcados, datos: {} }, habitos: [], ...extra } as unknown as Partial<Estado>);
+  const desayuno = () => new Map([registro('desayuno', 8, 20, 400)]);
+  const toma = { id: 'v', dia: HOY, ml: 500, momento: a(9).toISOString(), actualizado: a(9).toISOString() };
+
+  beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] }).setSystemTime(a(10));
+    programadas.length = 0;
+    mockPremium = { sabe: true, hay: true, suscripcion: null, acceso: 'regalo' };
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('lo que falta, cada cosa según lo marcado: con cálculos, el agua con su meta y no la proteína; con el riñón, nada', async () => {
+    const falta = { ...APAGADO, falta: { encendido: true } };
+    const agua = new Map([['v', toma]]) as unknown as Estado['agua'];
+    // Sin cuidados, con 20 g de proteína a las 10, avisa de la proteína (500 ml no son poca agua para 2 L).
+    await programarAvisos(con([], { avisos: falta, registros: desayuno(), agua }));
+    expect(faltasDeHoy()).toEqual([[19 * 60, 'proteina']]);
+    // Con cálculos: 500 ml sí son poca para 2,5 L, y de la proteína no se habla.
+    await programarAvisos(con(['calculos'], { avisos: falta, registros: desayuno(), agua }));
+    expect(faltasDeHoy()).toEqual([[19 * 60, 'agua']]);
+    expect(programadas.find((p) => p.content.data.tipo === 'falta')!.content.body).toMatch(/8 vasos|vaso|glass/);
+    // Con el riñón, ni comer más ni tomar más agua.
+    await programarAvisos(con(['renal'], { avisos: falta, registros: desayuno(), agua }));
+    expect(programadas).toEqual([]);
+    // Ningún aviso nombra la condición.
+    await programarAvisos(con(['calculos', 'reflujo'], { avisos: {}, registros: desayuno(), agua }));
+    expect(programadas.length).toBeGreaterThan(0);
+    expect(programadas.every((p) => !/cálculo|reflujo|riñ|kidney|reflux|stone/i.test(`${p.content.title} ${p.content.body}`))).toBe(true);
+  });
+
+  it('con reflujo, la última comida grande viene prendida, y lo elegido se respeta; con un trastorno de la alimentación, pesarte no suena', async () => {
+    expect(avisosDe(con(['reflujo'])).ultimaComida).toEqual({ encendido: true });
+    expect(avisosDe(con([])).ultimaComida).toBeUndefined();
+    expect(avisosDe(con(['reflujo'], { avisos: { ultimaComida: { encendido: false } } })).ultimaComida).toEqual({ encendido: false });
+    // Con otro cuidado que la apaga, no se prende.
+    expect(avisosDe(con(['reflujo', 'tca'])).ultimaComida).toBeUndefined();
+    // Pesarte, cada día a las 8: con un trastorno de la alimentación marcado, no.
+    const pesarse = { ...APAGADO, pesarse: { encendido: true, todos: true } };
+    jest.setSystemTime(a(6));
+    await programarAvisos(con([], { avisos: pesarse }));
+    expect(programadas.some((p) => p.content.data.tipo === 'pesarse')).toBe(true);
+    await programarAvisos(con(['tca'], { avisos: pesarse }));
+    expect(programadas.some((p) => p.content.data.tipo === 'pesarse')).toBe(false);
+  });
+
+  it('la línea de qué comer al entrenar, en Comida: cada una según lo marcado; con el «sin déficit» de antes, ninguna', () => {
+    // Pesas los lunes a las 19: a las 15, la merienda de las 17:30 lleva la línea de antes.
+    const entreno = { dias: [1], hora: 19 * 60, minutos: 60, tipo: 'fuerza' } as Estado['entreno'];
+    const lineas = (marcados: string[], perfil = PERFIL) => [...lineasDeHoy(con(marcados, { entreno, verEntreno: true, perfil } as unknown as Partial<Estado>), a(15)).values()].map((l) => [l.comida, l.clase]);
+    expect(lineas([])).toEqual([['merienda', 'previaLiviana']]);
+    expect(lineas(['calculos'])).toEqual([['merienda', 'previaLiviana']]);
+    // La diabetes tipo 1 apaga lo de comer al entrenar: va con su plan de insulina.
+    expect(lineas(['diabetes1'])).toEqual([]);
+    expect(lineas([], { ...PERFIL, sinDeficit: true } as typeof PERFIL)).toEqual([]);
   });
 });
 

@@ -496,6 +496,8 @@ export const TOPES_DE_UNA_NOCHE = { sobra: 60, falta: 180, faltaEstimada: 120 } 
  * en el modelo validado que la publica (7,0 ± 1,7 días, Ramakrishnan 2016).
  */
 const NOCHES_DEL_PESO = 7;
+/** Cuánto pesa la noche `i` de `n`, de la más vieja a anoche: anoche 1, y cada noche de antes, e^(−1/7) de la siguiente. */
+const pesoDeLaNoche = (i: number, n: number) => Math.exp(-(n - 1 - i) / NOCHES_DEL_PESO);
 
 /** Si la noche entra en la deuda: medida, confirmada o estimada con el teléfono con confianza media o alta. */
 const cuentaParaLaDeuda = (n: Noche | null): n is Noche => !!n && n.confianza.duracion !== 'baja';
@@ -515,7 +517,7 @@ export function faltaDeLaNoche(noche: Noche, necesidadMin: number): number {
  */
 export function deudaDeSueno(noches: (Noche | null)[], necesidadMin: number): Deuda | null {
   const n = noches.length;
-  const peso = (i: number) => Math.exp(-(n - 1 - i) / NOCHES_DEL_PESO);
+  const peso = (i: number) => pesoDeLaNoche(i, n);
   const total = noches.reduce((s, _, i) => s + peso(i), 0);
   let falta = 0;
   let dormido = 0;
@@ -530,6 +532,37 @@ export function deudaDeSueno(noches: (Noche | null)[], necesidadMin: number): De
   });
   if (contadas < MINIMOS.deuda) return null;
   return { minutos: Math.max(0, (falta / pesos) * total), porNoche: falta / pesos, duermes: dormido / pesos, noches: contadas, de: n };
+}
+
+/** Una noche en la cuenta de la deuda, para mirarla noche por noche. */
+export type NocheDeLaDeuda = {
+  noche: Noche | null;
+  /** Lo que dormiste, con las siestas; sin datos, null. */
+  dormido: number | null;
+  /** Lo que faltó para lo que necesitas (negativo si sobró), sin topes; sin datos, null. */
+  falta: number | null;
+  /** Lo que entra en la deuda, con los topes de una noche (faltaDeLaNoche); null si la noche no cuenta. */
+  entra: number | null;
+  /** Cuánto pesa esa noche, de 0 a 1: anoche, 1. */
+  peso: number;
+};
+
+/**
+ * La cuenta de la deuda noche por noche (lo pediste el 17/11/2026, para compararla con otra app): las mismas
+ * noches, los mismos topes y los mismos pesos que deudaDeSueno, de la más vieja a anoche. El promedio con pesos
+ * de `entra` (las noches que cuentan), por la suma de todos los pesos, es la deuda.
+ */
+export function nochesDeLaDeuda(noches: (Noche | null)[], necesidadMin: number): NocheDeLaDeuda[] {
+  return noches.map((noche, i) => {
+    const dormido = noche ? noche.dormido + noche.siestas : null;
+    return {
+      noche,
+      dormido,
+      falta: dormido === null ? null : necesidadMin - dormido,
+      entra: cuentaParaLaDeuda(noche) ? faltaDeLaNoche(noche, necesidadMin) : null,
+      peso: pesoDeLaNoche(i, noches.length),
+    };
+  });
 }
 
 /**

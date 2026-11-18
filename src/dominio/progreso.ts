@@ -359,6 +359,43 @@ export function plazoConFecha(e: EntradaDelPlazo, fecha: ClaveDia): Plazo | null
   return armarPlazo(e, direccion, pct, fecha);
 }
 
+// ------------------------------------------------------------ el plazo elegido
+/**
+ * El ritmo (en % del peso por semana, positivo) y, si se eligió por fecha, la fecha que se eligen en
+ * Progreso › Ritmo y plazo (D35). Queda en el teléfono, como un ajuste: no tiene columna en la cuenta.
+ */
+export type PlazoElegido = { pct: number; fecha: ClaveDia | null };
+
+/** Lo guardado, si tiene forma. */
+export function plazoElegidoDe(x: unknown): PlazoElegido | null {
+  if (!x || typeof x !== 'object') return null;
+  const o = x as Record<string, unknown>;
+  if (typeof o.pct !== 'number' || !Number.isFinite(o.pct) || !(o.pct > 0) || o.pct > 5) return null;
+  return { pct: o.pct, fecha: typeof o.fecha === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(o.fecha) ? o.fecha : null };
+}
+
+/**
+ * El plazo que vale hoy: el elegido en Progreso o, sin él, el del cuestionario (su fecha, con el ritmo que
+ * sigue el control, que llega con signo). Sin ninguno, null: vale el ritmo del perfil.
+ */
+export function plazoVigente(elegido: PlazoElegido | null, delCuestionario: { fecha: ClaveDia | null; pct?: number | null } | null): PlazoElegido | null {
+  if (elegido) return elegido;
+  const pct = delCuestionario?.pct;
+  if (pct == null || !Number.isFinite(pct) || pct === 0) return null;
+  return { pct: Math.abs(pct), fecha: delCuestionario?.fecha ?? null };
+}
+
+/**
+ * El ritmo que usa la meta con lo elegido, con su signo (metas.ts, Eleccion). Bajando, nunca más que el borde
+ * de lo exigente (el 1 %, sin pasar de un kilo por semana ni de 1.000 kcal por día) ni, antes de los 18, que el
+ * recomendado: como la fecha del cuestionario (pctDelPlan). El plan que se muestra sigue siendo el elegido.
+ */
+export function pctParaLaMeta(direccion: Direccion, pct: number, pesoKg: number, edad: number): number {
+  if (direccion === 'subir') return pct;
+  const menor = edad < MAYORIA_DE_EDAD ? Math.abs(RITMOS.bajar.recomendado) : Infinity;
+  return -Math.min(pct, bordeDe('bajar', 'exigente', pesoKg), menor);
+}
+
 // ------------------------------------------------------------ el plan por etapas
 // Lo pediste el 2/11/2026: arriba de Progreso, el plan («llegar acá en tanto tiempo; después, esto»),
 // que cambie según cómo vienes. Es el plazo (D35) con hitos cada cuatro semanas y lo que viene al

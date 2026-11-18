@@ -29,7 +29,7 @@ import { BotonDePaso, margenDeToque } from '../paso';
 import { Aparece } from '../tarjetas';
 import { tecladoDeNumeros, useCampoALaVista, useTeclado } from '../teclado';
 import { ComoDeja, DeDonde, EnlaceReportar, Micronutrientes, Reporte, Sello } from './AntesDeSumar';
-import { Boton, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
+import { Boton, degradado, Etiqueta, Icono, MACROS, Pastilla, Punto } from './comunes';
 import { compartir } from './compartir';
 import { gramosDeMacro, numero, opcionesDeIdioma, useNumeros } from './datos';
 
@@ -269,6 +269,7 @@ export function Ventana(p: Props) {
       accessibilityViewIsModal
       onAccessibilityEscape={p.alCerrar}
     >
+      <View style={[StyleSheet.absoluteFill, estilos.fondo]} pointerEvents="none" />
       <ScrollQueBaja arrastre={deslizar} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={estilos.cabeza}>
           <View style={estilos.titulos}>
@@ -497,9 +498,11 @@ const estilos = StyleSheet.create({
   velo: { borderTopLeftRadius: 27, borderTopRightRadius: 27, backgroundColor: 'rgba(2, 4, 10, 0.58)' },
   ventana: {
     position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 16, paddingHorizontal: 18, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    backgroundColor: colores.ventana, borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)',
+    backgroundColor: '#121a37', borderTopWidth: 1, borderColor: 'rgba(232, 196, 106, 0.24)',
     shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 25, shadowOffset: { width: 0, height: -18 },
   },
+  // El fondo de la galería (de #121a37 a #0b1127): un velo sin esquinas sobre el color de arriba, como en la hoja.
+  fondo: degradado('linear-gradient(180deg, rgba(11, 17, 39, 0) 0%, #0b1127 100%)'),
   cabeza: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   titulos: { flex: 1, minWidth: 0 },
   nombre: { marginTop: 2, fontFamily: letras.numeroMedio, fontSize: 24, lineHeight: 27, color: colores.pergamino },

@@ -1,12 +1,13 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  actividadEquivalente, ajusteDeRecomposicion, avisoDeRecomposicion, deportesDe, diasConDosSesiones, eleccionDe, entrenaFuerza, entrenoParaGuardar, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
-  horarioDeLosAvisos, katchMcArdle, kcalDelDia, kcalDelEntreno, masaMagra, MET_DEL_DEPORTE, metaDelCuestionario, movimientoPorPasos, NIVELES_DE_PROTEINA,
+  actividadEquivalente, ajusteDeRecomposicion, avisoDeRecomposicion, deportesDe, deportesDePerfil, diasConDosSesiones, eleccionDe, entrenaFuerza, entrenoConCambios, entrenoParaGuardar, FACTORES_DE_VIDA, FIGURAS, gastoEnReposo, gastoEstimado, grasaDeFigura,
+  horarioDeLosAvisos, katchMcArdle, kcalDelDia, kcalDelEntreno, masaMagra, MET_DEL_DEPORTE, metaDelCuestionario, movimientoPorPasos, NIVELES_DE_PROTEINA, promedioDePasos,
   objetivoGuardado, objetivoUsado, partesRedondas, pctDelPlan, pesoMetaSugerido, preguntasDelEntreno, PROTEINA_POR_NIVEL, proteinaDelNivel, rangoDelPesoMeta,
   respuestasDe, ritmoSugerido, sesionesDeUnDia, tipoDeSesion, usaGrasa, VIAJES,
   type Deporte, type EntrenoDicho, type GrasaDicha, type ObjetivoDicho, type Respuestas, type RespuestasGuardadas, type SesionDicha,
 } from './cuestionario';
+import type { Entreno } from './alrededorDelEntreno';
 import { KCAL_POR_KILO_Y_HORA } from './entrenamiento';
 import { sumarDias } from './fechas';
 import { ajusteDiario, gastoBasal, macrosPara, NIVELES, pesoMinimoSano, pisoDe } from './metas';
@@ -335,6 +336,87 @@ describe('el peso meta', () => {
     expect(pesoMetaSugerido(56.5, 172, 'bajar')).toBe(55);
     expect(rangoDelPesoMeta(55.5, 172, 'bajar')).toBeNull();
     expect(pesoMetaSugerido(55.5, 172, 'bajar')).toBeNull();
+  });
+});
+
+describe('los pasos de Salud', () => {
+  it('el promedio es de los días con pasos, y con menos de tres no se sugiere nada', () => {
+    expect(promedioDePasos([8000, null, 6000, 0, 7000, undefined])).toBe(7000);
+    expect(promedioDePasos([8000, 6000])).toBeNull();
+    expect(promedioDePasos([])).toBeNull();
+    expect(movimientoPorPasos(promedioDePasos([4000, 4500, 3900]))).toBe('sentado');
+    expect(movimientoPorPasos(promedioDePasos([12000, 11000, 13000]), ['resistencia'])).toBe('dePie');
+  });
+});
+
+describe('Perfil › Entrenamiento, con un cambio', () => {
+  // Pesas lunes y miércoles a las 18:00 y el partido el sábado a las 16:00, como sale del cuestionario.
+  const DICHO: EntrenoDicho = {
+    tipos: ['fuerza', 'equipo'], viaje: 15, partidos: { dia: 6, hora: 960 },
+    sesiones: [{ tipo: 'fuerza', dias: [1, 3], hora: 1080, minutos: 60 }, { tipo: 'equipo', dias: [6], hora: 960, minutos: 90 }],
+  };
+  const guardado = entrenoParaGuardar(DICHO)!;
+  const DE_ANTES: Entreno = { dias: [1, 3, 5], hora: 1140, minutos: 60, tipo: 'fuerza' };
+
+  it('los deportes que se ven: los del cuestionario o el del tipo de antes', () => {
+    expect(deportesDePerfil(guardado)).toEqual(['fuerza', 'equipo']);
+    expect(deportesDePerfil({ tipo: 'fuerza' })).toEqual(['fuerza']);
+    expect(deportesDePerfil({ tipo: 'resistencia' })).toEqual(['resistencia']);
+    expect(deportesDePerfil({ tipo: 'mixta' })).toEqual(['equipo']);
+  });
+
+  it('las sesiones acompañan al horario, y los consejos del deporte siguen valiendo', () => {
+    // Un día más va a la sesión principal (las pesas); la hora y la duración son las suyas.
+    const conViernes = entrenoConCambios(guardado, { dias: [1, 3, 5, 6] });
+    expect(conViernes).toMatchObject({ dias: [1, 3, 5, 6], hora: 1080, minutos: 60, tipo: 'mixta' });
+    expect(conViernes.sesiones).toEqual([{ tipo: 'fuerza', dias: [1, 3, 5], hora: 1080, minutos: 60 }, { tipo: 'equipo', dias: [6], hora: 960, minutos: 90 }]);
+    expect(deportesDe(conViernes)?.sesiones).toEqual(conViernes.sesiones);
+    // Sacar el sábado lo saca de la sesión que lo tenía.
+    const sinSabado = entrenoConCambios(guardado, { dias: [1, 3] });
+    expect(sinSabado.dias).toEqual([1, 3]);
+    expect(sinSabado.sesiones?.[1]).toEqual({ tipo: 'equipo', dias: [], hora: 960, minutos: 90 });
+    const otraHora = entrenoConCambios(guardado, { hora: 1110, minutos: 90 });
+    expect(otraHora).toMatchObject({ hora: 1110, minutos: 90, dias: [1, 3, 6] });
+    expect(otraHora.sesiones?.[0]).toEqual({ tipo: 'fuerza', dias: [1, 3], hora: 1110, minutos: 90 });
+    expect(deportesDe(otraHora)).not.toBeNull();
+    // Sin días se guarda igual: al elegir otro vuelve con su hora.
+    const sinDias = entrenoConCambios(guardado, { dias: [] });
+    expect(sinDias).toMatchObject({ dias: [], hora: 1080, tipos: ['fuerza', 'equipo'] });
+    expect(entrenoConCambios(sinDias, { dias: [2] })).toMatchObject({ dias: [2], hora: 1080, minutos: 60 });
+  });
+
+  it('un deporte nuevo entra con el horario que se ve; el que se saca se lleva su sesión y lo que era solo suyo', () => {
+    const conCorrer = entrenoConCambios(guardado, { tipos: ['resistencia', 'fuerza', 'equipo'] });
+    expect(conCorrer.tipos).toEqual(['fuerza', 'equipo', 'resistencia']);
+    expect(conCorrer.sesiones?.[2]).toEqual({ tipo: 'resistencia', dias: [1, 3, 6], hora: 1080, minutos: 60 });
+    expect(conCorrer).toMatchObject({ dias: [1, 3, 6], hora: 1080, minutos: 60, tipo: 'mixta', partidos: { dia: 6, hora: 960 } });
+    const soloPesas = entrenoConCambios(guardado, { tipos: ['fuerza'] });
+    expect(soloPesas).toMatchObject({ tipos: ['fuerza'], tipo: 'fuerza', dias: [1, 3], partidos: null, categoriaDePeso: null, viaje: 15 });
+    expect(soloPesas.sesiones).toEqual([{ tipo: 'fuerza', dias: [1, 3], hora: 1080, minutos: 60 }]);
+    // Sin ninguno no cambia: al menos un deporte.
+    expect(entrenoConCambios(guardado, { tipos: [] }).tipos).toEqual(['fuerza', 'equipo']);
+  });
+
+  it('el horario de antes (un tipo, sin deportes) pasa a tener su deporte y su sesión', () => {
+    const e = entrenoConCambios(DE_ANTES, { viaje: 30 });
+    expect(e).toEqual({ dias: [1, 3, 5], hora: 1140, minutos: 60, tipo: 'fuerza', viaje: 30, tipos: ['fuerza'], sesiones: [{ tipo: 'fuerza', dias: [1, 3, 5], hora: 1140, minutos: 60 }], partidos: null, categoriaDePeso: null });
+    expect(entrenoConCambios(DE_ANTES, { tipos: ['fuerza', 'contacto'] })).toMatchObject({ tipo: 'mixta', tipos: ['fuerza', 'contacto'], dias: [1, 3, 5] });
+  });
+
+  it('el partido, la carrera y la categoría de peso quedan solo con su deporte', () => {
+    const carrera = { fecha: '2026-11-28', minutos: 120 };
+    // Sin correr, bici o nadar, la carrera no se guarda.
+    expect(entrenoConCambios(guardado, { carrera }).carrera).toBeUndefined();
+    const corre = entrenoConCambios(entrenoConCambios(guardado, { tipos: ['fuerza', 'equipo', 'resistencia'] }), { carrera });
+    expect(corre.carrera).toEqual(carrera);
+    expect(entrenoConCambios(corre, { carrera: null }).carrera).toBeUndefined();
+    expect(entrenoConCambios(corre, { tipos: ['fuerza', 'equipo'] }).carrera).toBeUndefined();
+    // El partido se puede apagar y cambiar; la categoría de peso es de combate.
+    expect(entrenoConCambios(guardado, { partidos: null }).partidos).toBeNull();
+    expect(entrenoConCambios(guardado, { partidos: { dia: 0, hora: null } }).partidos).toEqual({ dia: 0, hora: null });
+    expect(entrenoConCambios(guardado, { categoriaDePeso: true }).categoriaDePeso).toBeNull();
+    const pelea = entrenoConCambios(guardado, { tipos: ['fuerza', 'contacto'] });
+    expect(entrenoConCambios(pelea, { categoriaDePeso: true }).categoriaDePeso).toBe(true);
   });
 });
 

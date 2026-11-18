@@ -1,11 +1,12 @@
 // «Para hoy» con lo guardado: arma la entrada de la regla (src/dominio/paraHoy.ts), con lo del deporte primero
 // (src/dominio/segunElDeporte.ts), y dice cada consejo en palabras, como la galería (galeria/src/inicio.js).
 
-import type { Estado } from '@/almacen/almacen';
+import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import type { Entreno } from '@/dominio/alrededorDelEntreno';
 import { comidasHabituales } from '@/dominio/alrededorDelEntreno';
 import { CON_HORA, type Comida } from '@/dominio/comidas';
 import { deportesDe } from '@/dominio/cuestionario';
+import { apagaConsejo, metaDeAgua } from '@/dominio/cuidados';
 import { DESPUES_DE_SU_HORA } from '@/dominio/energia';
 import { diasEntre, minutosEnElDia, sumarDias } from '@/dominio/fechas';
 import { edadDe } from '@/dominio/metas';
@@ -17,6 +18,8 @@ import { horasDeComer, metaDelDia, numero } from '../comida/datos';
 
 /** La meta de agua de Inicio: ocho vasos de 250 ml. */
 export const META_DE_AGUA = 2000;
+/** Con cuidados de salud (cuidados.ts), la suya: 2,5 L con cálculos; con el riñón u «otra», ninguna (null): Moss no la pide. */
+export const metaDeAguaDe = (e: Pick<Estado, 'cuidados' | 'perfil' | 'pesos' | 'hoy'>): number | null => metaDeAgua(reglasDeCuidados(e), META_DE_AGUA);
 /** El agua cuenta si se anotó alguna vez en la última semana: si no, no se le pide a quien no la anota. */
 const DIAS_DEL_AGUA = 7;
 
@@ -29,10 +32,18 @@ function mineral(lista: readonly Registro[], k: 'hierro' | 'calcio'): number | n
   return con.length ? con.reduce((s, r) => s + (r.valores.micros?.[k] ?? 0), 0) : null;
 }
 
-/** Lo que las reglas del deporte necesitan y la app tiene: el entrenamiento, quién eres y los minerales de dos semanas. */
+/**
+ * Lo que las reglas del deporte necesitan y la app tiene: el entrenamiento (con la próxima carrera), quién eres, el
+ * alcohol anotado ayer y hoy y los minerales de dos semanas. Pesarse antes y después de una sesión (la regla 4) no
+ * entra: Moss guarda un solo peso por día.
+ */
 export function entradaDelDeporte(e: Estado): EntradaDelDeporte | null {
   if (!e.perfil) return null;
   const comidos = vigentes(e.registros.values()).filter((r) => !r.planificado);
+  // El alcohol con su hora, para lo de después de jugar: la regla mira las 12 h que siguen al partido de ayer.
+  const ayer = sumarDias(e.hoy, -1);
+  const alcohol = comidos.filter((r) => (r.dia === ayer || r.dia === e.hoy) && (r.valores.alcohol ?? 0) > 0)
+    .map((r) => ({ dia: r.dia, minutos: minutosEnElDia(new Date(r.momento), r.dia), gramos: r.valores.alcohol ?? 0 }));
   const minerales = Array.from({ length: 14 }, (_, i) => sumarDias(e.hoy, -i)).flatMap((dia) => {
     const delDia = comidos.filter((r) => r.dia === dia);
     const meta = metaDelDia(e, dia);
@@ -47,6 +58,8 @@ export function entradaDelDeporte(e: Estado): EntradaDelDeporte | null {
     pesoKg: e.pesos[e.pesos.length - 1]?.kg ?? null,
     sinDeficit: !!e.perfil.sinDeficit,
     sinNumeros: !e.numeros,
+    carrera: e.entreno?.carrera ?? null,
+    alcohol,
     minerales,
   };
 }
@@ -64,6 +77,10 @@ export function entradaDeParaHoy(e: Estado, ahora: Date): EntradaDeParaHoy | nul
   const conAgua = vigentes(e.agua.values()).some((x) => diasEntre(x.dia, e.hoy) >= 0 && diasEntre(x.dia, e.hoy) < DIAS_DEL_AGUA);
   const ml = vigentes(e.agua.values()).filter((x) => x.dia === e.hoy).reduce((s, x) => s + x.ml, 0);
   const deporte = entradaDelDeporte(e);
+  // Con cuidados de salud marcados, en lugar de «sin déficit», cada consejo según lo que apagan (cuidados.ts).
+  const reglas = reglasDeCuidados(e);
+  const cuidados = reglas?.cuidados.length ? reglas : null;
+  const metaDelAgua = metaDeAguaDe(e);
   return {
     ahora: minutos,
     meta,
@@ -72,8 +89,8 @@ export function entradaDeParaHoy(e: Estado, ahora: Date): EntradaDeParaHoy | nul
     sinAnotar: deSiempre.filter((c) => !anotadas.has(c) && horaDe(c) + DESPUES_DE_SU_HORA <= minutos),
     anotadas: anotadas.size,
     proxima: deSiempre.find((c) => !anotadas.has(c) && horaDe(c) > minutos) ?? null,
-    agua: conAgua ? { ml, meta: META_DE_AGUA } : null,
-    sinDeficit: !!e.perfil?.sinDeficit,
+    agua: conAgua && metaDelAgua !== null ? { ml, meta: metaDelAgua } : null,
+    ...(cuidados ? { apaga: (c: ConsejoDeHoy) => apagaConsejo(c, cuidados) } : { sinDeficit: !!e.perfil?.sinDeficit }),
     deporte: deporte ? segunElDeporte(deporte) : [],
   };
 }

@@ -1,7 +1,7 @@
 // Sueño, el de la galería (galeria/src/sueno.js; spec/sueno.md): lo que Salud trae de cada noche, con las reglas
-// de src/dominio/sueno.ts, sobre una noche oscura con auroras. Arriba, la pregunta de la mañana y la deuda, el
-// número con su palabra, compacta, con lo que necesitas y «Más»; debajo, tu periodo de melatonina con la hora de
-// acostarte y la nota de lo pendiente; después la noche en un arco y, debajo, tu energía de ahora; las
+// de src/dominio/sueno.ts, sobre una noche oscura con auroras. Arriba, la deuda, el número con su palabra,
+// compacta, con lo que necesitas y «Más», y justo debajo la pregunta de la mañana; después, tu periodo de
+// melatonina con la hora de acostarte y la nota de lo pendiente; la noche en un arco y, debajo, tu energía de ahora; las
 // dos semanas para elegir otra noche, su calidad en un anillo, el horario, lo que mide el reloj y de dónde sale
 // cada dato. Sin reloj, las noches que estima Moss con el teléfono (spec/sueno.md, «Sin reloj»). Sin noches, la
 // invitación y, en cada tarjeta, el ejemplo marcado como ejemplo con cuánto falta. Lo que falta va en gris: nunca
@@ -9,27 +9,29 @@
 
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedRef, useReducedMotion, useScrollOffset } from 'react-native-reanimated';
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedRef, useAnimatedStyle, useReducedMotion, useScrollOffset, type SharedValue } from 'react-native-reanimated';
 
 import { actualizarSalud } from '@/almacen';
-import { reglasDeCuidados } from '@/almacen/almacen';
+import { reglasDeCuidados, type Estado } from '@/almacen/almacen';
 import { CON_ASCENT } from '@/lib/banderas';
+import { deportesDe } from '@/dominio/cuestionario';
 import { sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { periodoDeMelatonina } from '@/dominio/melatonina';
 import { edadDe } from '@/dominio/metas';
+import { segunElDeporte, textoDelDeporte } from '@/dominio/segunElDeporte';
 import { deudaDeSueno, pocoSuenoSostenido, ultimasNoches, type Noche } from '@/dominio/sueno';
 import { saludPedida } from '@/salud/salud';
-import { plural, t } from '@/textos';
+import { plural, t, type Clave } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { alTocarDeNuevo, useEsLaActual } from '../arriba';
 import { PESTANAS } from '../Barra';
-import { duracion, fechaCorta, fechaDiaMes, useEstado } from '../comida/datos';
+import { duracion, fechaCorta, fechaDiaMes, numero, useEstado } from '../comida/datos';
 import { DE_LA_NOCHE, FranjaBajoLaHora } from '../franja';
 import { useSueno } from '../ganchos';
 import type { Sueno } from '../persona';
-import { Aparece, Cabecera } from '../tarjetas';
+import { ACOMODA, Aparece, Cabecera } from '../tarjetas';
 import { RecuperacionEnSueno } from '../ascent/EnSueno';
 import { Afinar } from './Afinar';
 import { CartaDeSueno, Crece, degradado, letraDe, Nota, SN, Texto } from './comunes';
@@ -136,23 +138,66 @@ function Ruedita({ lectura, alLeer, arriba }: { lectura: Lectura; alLeer: () => 
 }
 
 // ------------------------------------------------------------ la noche de fondo
-// Casi negra, con algo del cielo detrás; arriba, la aurora: manchas suaves de verde agua, un poco de celeste y de
-// violeta, quietas (lo pediste el 2/11/2026: «como Alaska», sin nieve, que se note que es de noche).
-const NOCHE_DE_FONDO = 'linear-gradient(180deg, rgba(4, 8, 18, 0.93) 0%, rgba(5, 9, 22, 0.95) 46%, rgba(3, 5, 13, 0.97) 100%)';
-const AURORA = [
-  'radial-gradient(70% 34% at 50% -6%, rgba(36, 120, 112, 0.18) 0%, rgba(36, 120, 112, 0) 74%)',
-  'radial-gradient(40% 22% at 24% 16%, rgba(52, 196, 158, 0.16) 0%, rgba(52, 196, 158, 0) 100%)',
-  'radial-gradient(32% 18% at 52% 9%, rgba(64, 170, 196, 0.12) 0%, rgba(64, 170, 196, 0) 100%)',
-  'radial-gradient(38% 22% at 78% 15%, rgba(112, 104, 226, 0.12) 0%, rgba(112, 104, 226, 0) 100%)',
+// La de la galería (galeria/src/sueno.js, `.velo-sueno`): casi negra, con algo del cielo detrás; arriba, la aurora:
+// cortinas suaves de verde agua, un poco de celeste y de violeta, quietas, con sus pliegues (lo pediste el
+// 2/11/2026: «como Alaska», sin nieve, que se note que es de noche). No se desliza con la página: va detrás de la
+// tira de las secciones (Secciones.tsx) y se aclara y se apaga con el gesto, como el velo del cielo.
+const NOCHE_DE_FONDO = [
+  'radial-gradient(70% 34% at 50% -6%, rgba(36, 120, 112, 0.16) 0%, rgba(36, 120, 112, 0) 74%)',
+  'linear-gradient(180deg, rgba(4, 8, 18, 0.93) 0%, rgba(5, 9, 22, 0.95) 46%, rgba(3, 5, 13, 0.97) 100%)',
 ].join(', ');
+// En la galería las cortinas van desenfocadas (24 px); sin desenfoque, se apagan un poco más lejos.
+const CORTINAS = [
+  'radial-gradient(34% 50% at 26% 34%, rgba(52, 196, 158, 0.2) 0%, rgba(52, 196, 158, 0) 82%)',
+  'radial-gradient(28% 40% at 50% 20%, rgba(64, 170, 196, 0.15) 0%, rgba(64, 170, 196, 0) 82%)',
+  'radial-gradient(32% 42% at 74% 30%, rgba(112, 104, 226, 0.13) 0%, rgba(112, 104, 226, 0) 84%)',
+].join(', ');
+// Los pliegues: una raya cada 13 puntos, que se apaga lejos de su centro (en la galería, con una máscara). Allá son
+// de 2 px al 6 % y desenfocadas (3 px): acá, más anchas y más tenues, que es como quedan.
+const PLIEGUES = { cada: 13, ancho: 7, alfa: 0.014, x: 0.36, y: 0.32, rx: 0.48, ry: 0.46, hasta: 0.76 };
 
-function Fondo() {
+function Pliegues({ ancho, alto }: { ancho: number; alto: number }) {
+  const P = PLIEGUES;
+  const rayas = [];
+  for (let x = 0; x < ancho; x += P.cada) {
+    const dx = (x - P.x * ancho) / (P.rx * ancho);
+    if (Math.abs(dx) >= P.hasta) continue;
+    const medio = Math.sqrt(P.hasta ** 2 - dx ** 2) * P.ry * alto;
+    const alfa = (P.alfa * (1 - Math.abs(dx) / P.hasta)).toFixed(3);
+    rayas.push(<View key={x} style={[st.pliegue, { left: x, width: P.ancho, top: P.y * alto - medio, height: 2 * medio }, degradado(`linear-gradient(180deg, rgba(150, 236, 206, 0) 0%, rgba(150, 236, 206, ${alfa}) 50%, rgba(150, 236, 206, 0) 100%)`)]} />);
+  }
+  return <>{rayas}</>;
+}
+
+export function FondoDeSueno({ posicion }: { posicion: SharedValue<number> }) {
+  const { width: ancho, height: alto } = useWindowDimensions();
+  const estilo = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - Math.abs(posicion.get() - SUENO)) }));
+  const cortinas = { left: -0.22 * ancho, width: 1.44 * ancho, top: -0.08 * alto, height: 0.6 * alto };
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Animated.View style={[StyleSheet.absoluteFill, st.fondo, estilo]} pointerEvents="none">
       <View style={[StyleSheet.absoluteFill, degradado(NOCHE_DE_FONDO)]} />
-      <View style={[st.aurora, degradado(AURORA)]} />
-    </View>
+      <View style={[st.cortinas, cortinas, degradado(CORTINAS)]}>
+        <Pliegues ancho={cortinas.width} alto={cortinas.height} />
+      </View>
+    </Animated.View>
   );
+}
+
+// ------------------------------------------------------------ según el deporte
+const TRAZO_DE_LA_AURORA = 'linear-gradient(180deg, rgba(138, 219, 200, 0.8), rgba(112, 104, 226, 0.6))';
+
+/**
+ * La línea de Sueño según el deporte (spec/entreno.md 5.12; segunElDeporte.ts), con lo del cuestionario: el partido
+ * de noche, la mañana siguiente, y dormir más en semanas de partidos. «Más carga con poco sueño» (la regla 8) no
+ * sale: Moss todavía no lee la carga de cada semana.
+ */
+function lineaDelDeporte(e: Estado, noches: Noche[], necesidad: number): string | null {
+  if (!e.perfil) return null;
+  const consejo = segunElDeporte({
+    hoy: e.hoy, entreno: deportesDe(e.entreno), sexo: e.perfil.sexo, edad: edadDe(e.perfil, e.hoy), pesoKg: null, necesidad,
+    noches: ultimasNoches(noches, e.hoy, 7).map((n) => (n && n.confianza.duracion !== 'baja' ? n.dormido + n.siestas : null)),
+  }).find((c) => c.donde === 'sueno');
+  return consejo ? textoDelDeporte(consejo, { t: (clave, valores) => t(clave as Clave, valores), numero }) : null;
 }
 
 export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba: number; abajo: number }) {
@@ -187,14 +232,19 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const { lectura, leer } = useLeerSalud();
   // Desde el globo de Inicio: la noche de hoy, y baja suave hasta tu energía cuando la sección ya se deslizó; la tarjeta brilla.
   const yDeLaEnergia = useRef<number | null>(null);
+  // Mientras se llega, si la tarjeta se corre (lo de arriba todavía se acomoda), el scroll la sigue.
+  const llegando = useRef(false);
   const [resaltar, setResaltar] = useState(0);
+  const bajarALaEnergia = useCallback(() => {
+    if (yDeLaEnergia.current !== null) scroll.current?.scrollTo({ y: Math.max(0, yDeLaEnergia.current - arriba - 12), animated: !reducido });
+  }, [arriba, reducido, scroll]);
   const irAEnergia = useCallback(() => {
     setElegida(null);
     setResaltar((n) => n + 1);
-    setTimeout(() => {
-      if (yDeLaEnergia.current !== null) scroll.current?.scrollTo({ y: Math.max(0, yDeLaEnergia.current - 70), animated: !reducido });
-    }, reducido ? 0 : 380);
-  }, [reducido, scroll]);
+    llegando.current = true;
+    setTimeout(bajarALaEnergia, reducido ? 0 : 380);
+    setTimeout(() => { llegando.current = false; }, 1600);
+  }, [reducido, bajarALaEnergia]);
   useIrAEnergia(irAEnergia);
   // La nota de lo pendiente: se abre desde su fila o, desde afuera, con el aviso de la noche (abrirLaNota).
   const [nota, setNota] = useState(false);
@@ -217,9 +267,9 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
   const periodo = periodoDeMelatonina(s.noches, e.hoy, { margen: e.latencia, deuda: deudaDeHoy?.minutos ?? null });
   const reflujo = !!reglasDeCuidados(e)?.cuidados.includes('reflujo');
   const conEnergia = clave === e.hoy && conNoches && !!energia;
+  const deporte = lineaDelDeporte(e, reales, s.necesidad);
   return (
     <View style={{ width: ancho }}>
-      <Fondo />
       <ScrollView
         ref={scroll}
         contentContainerStyle={{ paddingTop: arriba + 18, paddingHorizontal: 20, paddingBottom: abajo + 40 }}
@@ -230,11 +280,11 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
         refreshControl={Platform.OS === 'ios' ? <Ruedita lectura={lectura} alLeer={leer} arriba={arriba} /> : undefined}
       >
         <Cabecera fecha={fechaCorta(e.hoy)} titulo={t('sueno.titulo')} />
-        {/* Sin noches, primero lo que hace que aparezcan; la pregunta de la mañana va después. */}
+        {/* Sin noches, primero lo que hace que aparezcan. */}
         {!conNoches && <Aparece><Invitacion muestra={muestra} ancho={interior} /></Aparece>}
-        <LaManana hoy={e.hoy} noche={deHoy} propia={e.noches.get(e.hoy)} noches={reales} ancho={interior} desde={e.metas[0]?.desde ?? null} />
-        {/* La deuda, arriba de todo (5/11, a la noche): es lo primero que se mira. */}
+        {/* La deuda, primera (17/11): es lo primero que se mira, y la pregunta de la mañana ya no la empuja para abajo. */}
         <LaDeuda noches={reales} hoy={e.hoy} clave={clave} necesidad={s.necesidad} edad={edad} conNoches={conNoches} muestra={muestra} acostarse={periodo?.acostarse ?? null} reflujo={reflujo} animar={animar} />
+        <LaManana hoy={e.hoy} noche={deHoy} propia={e.noches.get(e.hoy)} noches={reales} ancho={interior} desde={e.metas[0]?.desde ?? null} />
         {/* Debajo, lo de esta noche (17/11): tu periodo de melatonina y, con su aviso activado, la nota de lo pendiente. */}
         {clave === e.hoy && (
           <Aparece>
@@ -265,13 +315,28 @@ export function PaginaDeSueno({ ancho, arriba, abajo }: { ancho: number; arriba:
             {noche?.moss && <ElMovimiento />}
           </Aparece>
         )}
+        {/* Según el deporte: una línea debajo de la noche de anoche, sin caja, con un trazo de la aurora. */}
+        {clave === e.hoy && deporte && (
+          <Aparece key={deporte} demora={120} style={st.deporte}>
+            <View style={[st.deporteTrazo, degradado(TRAZO_DE_LA_AURORA)]} />
+            <Text style={st.deporteTexto}>{deporte}</Text>
+          </Aparece>
+        )}
         {/* Tu energía vive acá (5/11, a la noche), con la noche de hoy: la de ahora, según la hora. */}
         {conEnergia && energia && (
-          <Aparece>
-            <View onLayout={(ev) => { yDeLaEnergia.current = ev.nativeEvent.layout.y; }}>
-              <TarjetaDeEnergia datos={energia} ancho={interior} resaltar={resaltar} />
-            </View>
-          </Aparece>
+          // Como <Aparece>, con la medida en lo que cuelga del scroll: adentro de la envoltura, la `y` era siempre 0 y
+          // «Más en Sueño» quedaba arriba de todo.
+          <Animated.View
+            entering={FadeIn.duration(280).reduceMotion(ReduceMotion.Never)}
+            exiting={FadeOut.duration(180).reduceMotion(ReduceMotion.Never)}
+            layout={ACOMODA}
+            onLayout={(ev) => {
+              yDeLaEnergia.current = ev.nativeEvent.layout.y;
+              if (llegando.current) bajarALaEnergia();
+            }}
+          >
+            <TarjetaDeEnergia datos={energia} ancho={interior} resaltar={resaltar} />
+          </Animated.View>
         )}
         {/* Los días, para elegir otra noche: más abajo (5/11, a la noche). */}
         <Tira s={s} reales={reales} conNoches={conNoches} hoy={e.hoy} elegida={clave} primera={primera} alElegir={(c) => setElegida(c === e.hoy ? null : c)} />
@@ -382,7 +447,12 @@ function Tira({ s, reales, conNoches, hoy, elegida, primera, alElegir }: {
 }
 
 const st = StyleSheet.create({
-  aurora: { position: 'absolute', left: 0, right: 0, top: 0, height: 520 },
+  fondo: { overflow: 'hidden' },
+  cortinas: { position: 'absolute', transform: [{ skewX: '-16deg' }] },
+  pliegue: { position: 'absolute' },
+  deporte: { marginTop: 12, marginHorizontal: 6, marginBottom: 4, paddingVertical: 1, paddingLeft: 14 },
+  deporteTrazo: { position: 'absolute', left: 0, top: 3, bottom: 3, width: 2, borderRadius: 1 },
+  deporteTexto: { fontFamily: letras.texto, fontSize: 13.5, lineHeight: 19.5, color: SN.texto },
   alDia: { position: 'absolute', left: 0, right: 0, height: ALTO_DE_LA_RUEDITA, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   alDiaTexto: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.55)' },
   tira: { marginTop: 12, paddingTop: 10, paddingHorizontal: 6, paddingBottom: 8, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(150, 178, 240, 0.1)', backgroundColor: 'rgba(12, 20, 46, 0.42)' },

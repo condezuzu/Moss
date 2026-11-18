@@ -7,6 +7,7 @@ import {
   queryCategorySamples, queryQuantitySamples, queryStatisticsForQuantity, type CategoryTypeIdentifier, type QuantityTypeIdentifier,
 } from '@kingstinct/react-native-healthkit';
 
+import { promedioDePasos } from '@/dominio/cuestionario';
 import { CORTE_DE_FABRICA, diaLogico, partesDe } from '@/dominio/fechas';
 import { armarNoches, soloEnCama } from '@/dominio/sueno';
 import { fuentesDe, lecturasDe, minutosDe, muestraDeSueno, pasosDe, primeraPorDia, ultimaPorDia, type DeSalud, type LoDeSalud } from './convertir';
@@ -52,6 +53,16 @@ async function categoria(id: CategoryTypeIdentifier, desde: Date, hasta: Date): 
   } catch {
     return [];
   }
+}
+
+/**
+ * Los pasos por día de las últimas dos semanas (sin hoy, que va por la mitad), para sugerir en el cuestionario
+ * cuánto te mueves. Día por día y con la suma de Salud, que no cuenta dos veces lo del iPhone y lo del reloj.
+ */
+export async function pasosPorDia(ahora: Date = new Date(), dias = 14): Promise<number | null> {
+  if (!(await saludPedida())) return null;
+  const dia = (n: number) => new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - n);
+  return promedioDePasos(await Promise.all(Array.from({ length: dias }, (_, i) => suma('HKQuantityTypeIdentifierStepCount', 'count', dia(i + 1), dia(i)))));
 }
 
 /** Los pasos de Salud entre dos momentos, muestra por muestra: para volver a estimar noches de días anteriores (rehacerLasNoches). Sin Salud, ninguno. */

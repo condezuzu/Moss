@@ -40,7 +40,7 @@ import { PaginaDeInicio } from './inicio/Inicio';
 import { PaginaDePerfil } from './perfil/Perfil';
 import { PaginaDeProgreso } from './progreso/Progreso';
 import { abrirLaNota } from './sueno/Pendientes';
-import { PaginaDeSueno } from './sueno/Sueno';
+import { FondoDeSueno, PaginaDeSueno } from './sueno/Sueno';
 import { CEDE_EN_EL_BORDE, entre, LLEGA, subirOBajar, UMBRAL, VELOCIDAD_MINIMA, viaje, VIAJE_MS } from './movimiento';
 import { bajarTeclado } from './teclado';
 
@@ -405,6 +405,8 @@ export default function Secciones() {
             {conSecciones && (
               <Animated.View entering={FadeIn.duration(320).reduceMotion(ReduceMotion.Never)} exiting={FadeOut.duration(240).reduceMotion(ReduceMotion.Never)} style={StyleSheet.absoluteFill} pointerEvents="box-none">
                 <Animated.View style={[StyleSheet.absoluteFill, estilos.velo, estiloVelo]} pointerEvents="none" />
+                {/* La noche de Sueño sigue al dedo, como el velo: la página se desliza y el fondo no. */}
+                <FondoDeSueno posicion={posicion} />
                 <Animated.View style={[estilos.tira, { width: ancho * PESTANAS.length }, estiloTira]} pointerEvents="box-none">
                   {/* Las secciones de al lado quedan armadas pero fuera de la pantalla: VoiceOver no las recorre. */}
                   {PESTANAS.map((n, i) => (

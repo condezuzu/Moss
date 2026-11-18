@@ -54,7 +54,10 @@ export const arrancarLoDePremium = () =>
   arrancarPremium(async () => (haySupabase() ? cuentaDeMossDesde((await supabase().auth.getSession()).data.session?.user) : null));
 
 /** La sincronización con la cuenta mientras la app está abierta: Perfil la frena antes de borrar el teléfono. */
-let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void } | undefined;
+let deLaCuenta: { subirLoQueFalta(): Promise<void>; soltar(): Promise<void>; retomar(): void; deOtraCuenta(): boolean } | undefined;
+
+/** El teléfono tiene datos de otra cuenta y por eso no sincroniza (sincronizar.ts): Perfil lo dice. */
+export const datosDeOtraCuenta = (): boolean => deLaCuenta?.deOtraCuenta() ?? false;
 
 /** Lo más que se espera a la vuelta que esté en camino antes de borrar: después, lo que vuelva ya no se toca igual. */
 const ESPERA_AL_SOLTAR = 15_000;
@@ -156,6 +159,7 @@ function sincronizarConLaCuenta(a: Almacen) {
       suelta = false;
       seguir();
     },
+    deOtraCuenta: () => actual?.sincronizador.deOtraCuenta() ?? false,
   };
   return {
     alVolver: () => {

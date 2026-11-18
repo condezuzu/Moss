@@ -18,7 +18,7 @@ import { duracion, fechaDiaMes, metaDelDia, numero, sistemaDe, totalDe, useEstad
 import { usePersona, useSueno } from '../ganchos';
 import { HojaModal } from '../HojaModal';
 import { Muestra } from '../kcal/Kcal';
-import { EtiquetaDeGrupo } from '../tarjetas';
+import { justo } from './comunes';
 import { entradaDeParaHoy } from './consejos';
 
 const COMO = ['calorias', 'macros', 'peso', 'grasa', 'sueno', 'alimentos'] as const;
@@ -92,7 +92,7 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
 
   return (
     <>
-      <EtiquetaDeGrupo>{t('inicio.todo.estilo.titulo')}</EtiquetaDeGrupo>
+      <Text style={st.grupo}>{t('inicio.todo.estilo.titulo')}</Text>
       <View style={st.estilos}>
         {ESTILOS_DE_KCAL.map((k) => {
           const elegido = e.kcal === k;
@@ -115,7 +115,7 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
         })}
       </View>
 
-      <EtiquetaDeGrupo>{t('inicio.todo.hoy')}</EtiquetaDeGrupo>
+      <Text style={st.grupo}>{t('inicio.todo.hoy')}</Text>
       {meta && numeros && (
         <View style={st.tabla}>
           <View style={[st.fila, st.cabeza]}>
@@ -148,10 +148,10 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
 
       {sabe.length > 0 && (
         <>
-          <EtiquetaDeGrupo>{t('inicio.todo.sabe')}</EtiquetaDeGrupo>
+          <Text style={st.grupo}>{t('inicio.todo.sabe')}</Text>
           <View style={st.lista}>
             {sabe.map(([nombre, valor, origen], i) => (
-              <View key={nombre} style={[st.dato, i > 0 && st.filaConBorde]}>
+              <View key={nombre} style={[st.dato, i > 0 && st.datoConBorde]}>
                 <View style={st.datoTextos}>
                   <Text style={st.datoNombre}>{nombre}</Text>
                   <Text style={st.datoOrigen}>{origen}</Text>
@@ -163,7 +163,7 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
         </>
       )}
 
-      <EtiquetaDeGrupo>{t('inicio.todo.falta')}</EtiquetaDeGrupo>
+      <Text style={st.grupo}>{t('inicio.todo.falta')}</Text>
       {falta.length ? (
         <View style={st.faltas}>
           {falta.map((x) => (
@@ -179,7 +179,7 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
         <Text style={st.frase}>{t('inicio.todo.faltaNada')}</Text>
       )}
 
-      <EtiquetaDeGrupo>{t('inicio.todo.como')}</EtiquetaDeGrupo>
+      <Text style={st.grupo}>{t('inicio.todo.como')}</Text>
       {COMO.map((k) => (
         <Fragment key={k}>
           <View style={st.como}>
@@ -196,32 +196,36 @@ function Contenido({ alVerComida }: { alVerComida: () => void }) {
 const tenue = 'rgba(239, 230, 207, 0.6)';
 const st = StyleSheet.create({
   apretado: { opacity: 0.7 },
+  // El título de cada grupo (.pf-grupo): 20 arriba y 8 abajo de un renglón de 9,5 (los márgenes le sacan lo que sobra de la letra).
+  grupo: { marginTop: 17.9, marginBottom: 5.9, marginHorizontal: 4, fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.55)' },
   estilos: { flexDirection: 'row', gap: 6 },
   estilo: { flex: 1, alignItems: 'center', gap: 7, paddingTop: 10, paddingBottom: 9, paddingHorizontal: 2, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(239, 230, 207, 0.03)' },
   estiloElegido: { borderColor: 'rgba(232, 196, 106, 0.6)', backgroundColor: 'rgba(232, 196, 106, 0.08)' },
   muestra: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  estiloNombre: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.62)' },
+  estiloNombre: { fontFamily: letras.texto, fontSize: 11.5, color: 'rgba(239, 230, 207, 0.62)', ...justo('texto', 11.5) },
   estiloNombreElegido: { color: colores.oroClaro },
   tabla: { borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(239, 230, 207, 0.04)', paddingVertical: 4, paddingHorizontal: 12 },
   fila: { flexDirection: 'row', alignItems: 'baseline', gap: 6, paddingVertical: 9 },
   filaConBorde: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.06)' },
   cabeza: { paddingTop: 7, paddingBottom: 5 },
-  cabezaTexto: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.45)' },
-  celdaNombre: { flex: 1, minWidth: 0, fontFamily: letras.texto, fontSize: 13.5, color: colores.pergamino },
+  cabezaTexto: { fontFamily: letras.texto, fontSize: 9.5, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(239, 230, 207, 0.45)', ...justo('texto', 9.5) },
+  celdaNombre: { flex: 1, minWidth: 0, fontFamily: letras.texto, fontSize: 13.5, lineHeight: 16.2, color: colores.pergamino },
   nombreKcal: { fontFamily: letras.textoMedio },
   celda: { width: 62, textAlign: 'right', fontFamily: letras.numero, fontSize: 13, color: tenue, fontVariant: ['tabular-nums'] },
   celdaFuerte: { fontFamily: letras.numeroMedio, color: colores.pergamino },
   cumplido: { color: colores.salvia },
   pasado: { color: colores.oroClaro },
   frase: { marginTop: 10, marginHorizontal: 4, fontFamily: letras.textoLiviano, fontSize: 13.5, lineHeight: 20, color: 'rgba(239, 230, 207, 0.82)' },
-  enlace: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', marginTop: 8, marginHorizontal: 4 },
-  enlaceTexto: { fontFamily: letras.texto, fontSize: 14, color: colores.oroClaro },
-  lista: { borderRadius: 14, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(239, 230, 207, 0.04)' },
-  dato: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 10, paddingHorizontal: 14 },
+  enlace: { flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-start', marginTop: 12, marginHorizontal: 4 },
+  enlaceTexto: { fontFamily: letras.texto, fontSize: 13, color: colores.oroClaro, ...justo('texto', 13, 15) },
+  // Como las listas de Perfil (.pf-lista), que es como se ve en la galería.
+  lista: { borderRadius: 16, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.09)', backgroundColor: 'rgba(8, 12, 26, 0.72)' },
+  dato: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 13, paddingLeft: 16, paddingRight: 14 },
+  datoConBorde: { borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.07)' },
   datoTextos: { flex: 1, gap: 3, minWidth: 0 },
-  datoNombre: { fontFamily: letras.texto, fontSize: 14, color: colores.pergamino },
-  datoOrigen: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.48)' },
-  datoValor: { flexShrink: 0, maxWidth: '55%', textAlign: 'right', fontFamily: letras.numero, fontSize: 14, color: 'rgba(239, 230, 207, 0.8)', fontVariant: ['tabular-nums'] },
+  datoNombre: { fontFamily: letras.texto, fontSize: 14, lineHeight: 16.8, color: colores.pergamino },
+  datoOrigen: { fontFamily: letras.texto, fontSize: 11, lineHeight: 13.75, color: 'rgba(239, 230, 207, 0.48)' },
+  datoValor: { flexShrink: 0, maxWidth: '55%', textAlign: 'right', fontFamily: letras.texto, fontSize: 14, lineHeight: 16.8, color: 'rgba(239, 230, 207, 0.55)', fontVariant: ['tabular-nums'] },
   faltas: { gap: 8 },
   falta: { flexDirection: 'row', gap: 10, paddingHorizontal: 4 },
   rombo: { width: 5, height: 5, marginTop: 8, marginLeft: 3, transform: [{ rotate: '45deg' }], backgroundColor: colores.oroClaro, boxShadow: '0 0 6px rgba(246, 227, 166, 0.6)' },

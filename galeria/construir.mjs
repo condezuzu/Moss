@@ -170,7 +170,6 @@ const js = [
   modulo('Recordatorios', 'src/dominio/recordatorios.ts'),
   modulo('LoQueFalta', 'src/dominio/loQueFalta.ts'),
   modulo('Avisos', 'src/dominio/avisos.ts'),
-  modulo('AlrededorDelEntreno', 'src/dominio/alrededorDelEntreno.ts'),
   modulo('Plan', 'src/dominio/plan.ts'),
   modulo('Metas', 'src/dominio/metas.ts'),
   modulo('ParaHoy', 'src/dominio/paraHoy.ts'),
@@ -185,6 +184,8 @@ const js = [
   modulo('Melatonina', 'src/dominio/melatonina.ts'),
   modulo('Entrenamiento', 'src/dominio/entrenamiento.ts'),
   modulo('Cuestionario', 'src/dominio/cuestionario.ts'),
+  // Las sesiones de cada día salen de los deportes del cuestionario.
+  modulo('AlrededorDelEntreno', 'src/dominio/alrededorDelEntreno.ts'),
   // Los cuidados usan el cuestionario, el control y los micronutrientes.
   modulo('Cuidados', 'src/dominio/cuidados.ts'),
   // Lo del deporte usa el cuestionario y los micronutrientes; lo que conviene (los avisos), lo del deporte.

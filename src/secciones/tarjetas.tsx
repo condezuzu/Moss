@@ -5,7 +5,7 @@
 
 import * as Haptics from 'expo-haptics';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition, ReduceMotion, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import type { DiaSemana } from '@/dominio/fechas';
@@ -175,14 +175,19 @@ export function Dias({ elegidos, alTocar, uno, posibles }: { elegidos: readonly 
 
 export const EtiquetaDeGrupo = ({ children }: { children: ReactNode }) => <Text style={e.etiqueta}>{children}</Text>;
 
+// El tramo hecho del camino, de tenue a salvia (.in-camino-pista i). En la web, backgroundImage; en el teléfono, el de React Native.
+const DEGRADE = 'linear-gradient(90deg, rgba(166, 191, 148, 0.3), #a6bf94)';
+const DEGRADE_DEL_CAMINO = (Platform.OS === 'web' ? { backgroundImage: DEGRADE } : { experimental_backgroundImage: DEGRADE }) as ViewStyle;
+
 /** El camino al peso meta: de dónde se empezó a la meta, con hoy marcado. Las etiquetas: el inicio, hoy y la meta. */
 export function Camino({ hecho, etiquetas }: { hecho: number; etiquetas: readonly [string, string, string] }) {
   // Como la galería (.in-camino-pista i): el tramo hecho se recorre y la marca de hoy lo acompaña.
-  // Con transform, sin rehacer el layout en cada cuadro: el tramo es la pista entera, corrida a la
-  // izquierda dentro de un recorte con sus mismas esquinas (la pista no recorta: la marca sobresale),
-  // y la marca va en una capa del ancho de la pista que se corre lo mismo que se llena el tramo.
+  // Con transform, sin rehacer el layout en cada cuadro: el tramo es la pista entera, achicada desde la
+  // izquierda (así su degradado termina siempre en la marca) dentro de un recorte con sus mismas esquinas
+  // (la pista no recorta: la marca sobresale), y la marca va en una capa del ancho de la pista que se
+  // corre lo mismo que se llena el tramo.
   const x = useFraccion(hecho);
-  const lleno = useAnimatedStyle(() => ({ transform: [{ translateX: `${(x.get() - 1) * 100}%` }] }));
+  const lleno = useAnimatedStyle(() => ({ transform: [{ scaleX: Math.max(0.0001, x.get()) }] }));
   const marca = useAnimatedStyle(() => ({ transform: [{ translateX: `${x.get() * 100}%` }] }));
   return (
     <View style={e.camino}>
@@ -246,9 +251,10 @@ export const e = StyleSheet.create({
   camino: { marginTop: 13 },
   caminoPista: { height: 4, borderRadius: 4, backgroundColor: 'rgba(239, 230, 207, 0.08)' },
   caminoRecorte: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 4, overflow: 'hidden' },
-  caminoLleno: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 4, backgroundColor: colores.salvia },
-  caminoMarca: { position: 'absolute', left: 0, top: -3.5, width: 11, height: 11, marginLeft: -5.5, borderRadius: 5.5, backgroundColor: colores.cifra, shadowColor: colores.cifra, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
+  caminoLleno: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 4, transformOrigin: 'left', ...DEGRADE_DEL_CAMINO },
+  caminoMarca: { position: 'absolute', left: 0, top: -3.5, width: 11, height: 11, marginLeft: -5.5, borderRadius: 5.5, backgroundColor: colores.cifra, boxShadow: '0 0 0 3px rgba(251, 242, 217, 0.14), 0 0 10px rgba(251, 242, 217, 0.6)' },
   caminoEtiquetas: { marginTop: 8, flexDirection: 'row', justifyContent: 'space-between' },
-  caminoEtiqueta: { fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
+  // El renglón, justo como en la galería (11 de alto): se le saca lo que le sobra al alto natural de la letra.
+  caminoEtiqueta: { marginVertical: -2.45, fontFamily: letras.texto, fontSize: 11, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
   caminoAhora: { color: colores.pergamino },
 });

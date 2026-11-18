@@ -6,7 +6,8 @@
 // - Solo si hoy se anotó algo: sin eso no se sabe nada, y Moss no reta a quien no anota.
 // - Si ayer quedaste igual de bajo en lo mismo, día por medio: el mismo aviso todas las noches cansa.
 // - Con lo planificado para lo que queda: si la cena planeada ya lo resuelve, no hay nada que avisar.
-// - Con «sin déficit» (un cuidado de salud) no aparece nunca.
+// - Con «sin déficit» (el sí o no de antes) no aparece nunca. Con cuidados de salud marcados, cada cosa según lo
+//   que apagan (cuidados.ts): con el riñón, nada; con cálculos, no la proteína, y el agua con su meta de 2,5 L.
 // Las ideas salen primero de lo que comes y, si no alcanza, de una lista corta que respeta tu dieta y tus
 // alergias. Rotan cada día. Acá van códigos; el texto lo arma textoDelAviso, en avisos.ts.
 
@@ -15,7 +16,8 @@ import { diasEntre, type ClaveDia } from './fechas';
 import type { Macros } from './metas';
 import type { Alergeno, Dieta } from './plan';
 
-export type QueFalta = 'proteina' | 'calorias' | 'agua';
+export const QUE_FALTA = ['proteina', 'calorias', 'agua'] as const;
+export type QueFalta = (typeof QUE_FALTA)[number];
 
 /** Una idea: algo de lo que comes, por su nombre, o una de la lista, por su clave de texto. */
 export type Idea = { nombre: string } | { id: string };
@@ -71,6 +73,12 @@ export type DeHoy = {
   sinNumeros?: boolean;
   /** Reflujo, en Cuidados: lo de la noche es liviano desde 3 h antes de la cama. */
   reflujo?: boolean;
+  /**
+   * Con cuidados de salud marcados, en lugar de «sin déficit»: lo que apagan (apagaLoQueFalta, en cuidados.ts) y
+   * su meta de agua en ml (metaDeAgua: 2,5 L con cálculos; null, Moss no la pide). Sin decirla, la de siempre.
+   */
+  apagado?: readonly QueFalta[];
+  metaDeAgua?: number | null;
 };
 
 /** Menos que esto que falte, no es estar muy bajo. */
@@ -199,13 +207,14 @@ export function loQueFaltaHoy(d: DeHoy): FaltaConHora[] {
   if (d.sinDeficit || !Object.keys(d.anotadas).length) return [];
   // Cada día otra idea, y el mismo aviso seguido, día por medio.
   const n = Math.abs(diasEntre('2026-01-05', d.dia));
-  const toca = (q: QueFalta) => !(d.bajoAyer?.includes(q) && n % 2 === 1);
+  const toca = (q: QueFalta) => !d.apagado?.includes(q) && !(d.bajoAyer?.includes(q) && n % 2 === 1);
   const conLugar = (c: Macros) => d.meta.kcal - c.kcal;
+  const metaDeAgua = d.metaDeAgua === undefined ? AGUA_META_ML : d.metaDeAgua;
 
   const armar = (que: QueFalta, c: Macros, cerca = false): Falta | null => {
     const base = { forma: n, ...(d.sinNumeros ? { sinNumeros: true as const } : {}) };
     if (que === 'agua') {
-      const vasos = Math.ceil((AGUA_META_ML - (d.agua?.ml ?? 0)) / VASO_ML);
+      const vasos = Math.ceil(((metaDeAgua ?? 0) - (d.agua?.ml ?? 0)) / VASO_ML);
       return { que, cuanto: vasos, ideas: [], alcanza: false, ...base };
     }
     const faltan = que === 'proteina' ? aCinco(d.meta.proteina - c.proteina) : aCincuenta(d.meta.kcal - c.kcal);
@@ -223,7 +232,7 @@ export function loQueFaltaHoy(d: DeHoy): FaltaConHora[] {
   const deLaTarde = (c: Macros, ml: number | null | undefined): QueFalta | null => {
     const vaAQuedar = d.meta.proteina - c.proteina - (queQuedan.length * d.meta.proteina) / d.comidasHabituales;
     if (vaAQuedar >= PROTEINA_BAJA && conLugar(c) >= LUGAR_MINIMO && toca('proteina')) return 'proteina';
-    if (ml !== null && ml !== undefined && ml < AGUA_META_ML * AGUA_BAJA && toca('agua')) return 'agua';
+    if (ml !== null && ml !== undefined && metaDeAgua !== null && ml < metaDeAgua * AGUA_BAJA && toca('agua')) return 'agua';
     return null;
   };
 

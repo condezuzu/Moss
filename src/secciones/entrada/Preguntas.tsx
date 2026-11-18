@@ -601,6 +601,8 @@ function ElMovimiento({ r, poner, alSeguir }: PropsDePregunta) {
             return <Elegible key={m} titulo={titulo} detalle={detalle} icono={ICONOS_DEL_MOVIMIENTO[m]} elegida={r.movimiento === m} alTocar={() => poner((x) => ({ ...x, movimiento: m }))} demora={k * 80} />;
           })}
         </View>
+        {/* Con Salud, los pasos sugieren la respuesta: se dice de dónde sale. */}
+        {r.salud && !!r.pasosDeSalud && <Text style={s.notaDeSalud}>{t('entrada.cuestionario.movimiento.pasos', { n: numero(Math.round(r.pasosDeSalud / 100) * 100) })}</Text>}
       </Desliza>
       <Seguir alSeguir={alSeguir} />
     </>
@@ -1172,6 +1174,7 @@ const s = StyleSheet.create({
   estrellaHecha: { backgroundColor: colores.oro },
   estrellaAhora: { backgroundColor: colores.cifra, shadowColor: colores.cifra, shadowOpacity: 0.9, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
   chipFila: { marginTop: 10, flexDirection: 'row', justifyContent: 'center' },
+  notaDeSalud: { marginTop: 14, fontFamily: letras.texto, fontSize: 12.5, lineHeight: 17, color: colores.salvia },
   deSalud: { overflow: 'hidden', paddingVertical: 5, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(166, 191, 148, 0.4)', fontFamily: letras.texto, fontSize: 11, color: colores.salvia },
   menor: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   numero: { marginTop: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14 },

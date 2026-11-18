@@ -131,8 +131,10 @@ export function armarPlano(ancho: number, alto: number, dia: DiaDelCielo, escala
   const etiquetasDelUniverso: Plano['universo']['etiquetas'] = [];
   dia.semana.forEach((d, k) => {
     const hueco = HUECOS_DEL_UNIVERSO[k];
-    const centroDia: Punto = [hueco[0] * A * 0.92, ZONA_UNIVERSO + hueco[1]];
-    const pos = encajar(proyectar(d.constelacion.estrellas), centroDia, A * 0.62, 0.15);
+    // Un poco más arriba y más juntas, como en la galería (escena.js): abajo están las pestañas, y los nombres
+    // del sábado y el domingo quedaban detrás de la barra.
+    const centroDia: Punto = [hueco[0] * A * 0.92, ZONA_UNIVERSO + hueco[1] * 0.88 + 0.03];
+    const pos = encajar(proyectar(d.constelacion.estrellas), centroDia, A * 0.62, 0.14);
     pos.forEach(([x, y], i) => estrellasDelUniverso.push({ x, y, encendida: i < d.hechos, habito: d.hoy ? i : -1 }));
     const camino = d.hoy ? caminos.hoy : d.hechos >= pos.length ? caminos.hechas : caminos.pendientes;
     d.constelacion.lineas.forEach(([a, b]) => {

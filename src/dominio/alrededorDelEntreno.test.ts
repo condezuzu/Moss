@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { carbohidratosPrevios, comidasHabituales, corteDeCafeina, horasDeCorte, larga, lineaDeNocheCorta, lineasDelDia, NOCHE_CORTA, proteinaDeComida, sesionesDelDia, type Contexto, type Sesion } from './alrededorDelEntreno';
 import type { Comida } from './comidas';
+import { entrenoParaGuardar } from './cuestionario';
 import { sumarDias } from './fechas';
 
 /** «19:00» en minutos desde la medianoche. */
@@ -169,6 +170,30 @@ describe('el horario de entrenamiento', () => {
     expect(sesionesDelDia({ ...entreno, dias: [...entreno.dias] }, '2026-10-26')).toEqual([{ inicio: h('19:00'), minutos: 60, tipo: 'fuerza' }]);
     expect(sesionesDelDia({ ...entreno, dias: [...entreno.dias] }, '2026-10-27')).toEqual([]);
     expect(sesionesDelDia(null, '2026-10-26')).toEqual([]);
+  });
+
+  it('con los deportes del cuestionario, la sesión de cada uno que toca ese día: el sábado, las pesas y el partido', () => {
+    // Pesas lunes, miércoles y sábado a las 7:00; fútbol el sábado a las 16:00.
+    const entreno = entrenoParaGuardar({
+      tipos: ['fuerza', 'equipo'], viaje: 15, partidos: { dia: 6, hora: h('16:00') },
+      sesiones: [{ tipo: 'fuerza', dias: [1, 3, 6], hora: h('7:00'), minutos: 60 }, { tipo: 'equipo', dias: [6], hora: h('16:00'), minutos: 90 }],
+    })!;
+    // El horario único llevaba una sola, la de las pesas, también el sábado.
+    expect(entreno).toMatchObject({ tipo: 'mixta', dias: [1, 3, 6], hora: h('7:00'), minutos: 60 });
+    expect(sesionesDelDia(entreno, '2026-10-26')).toEqual([{ inicio: h('7:00'), minutos: 60, tipo: 'fuerza' }]);
+    expect(sesionesDelDia(entreno, '2026-10-31')).toEqual([{ inicio: h('7:00'), minutos: 60, tipo: 'fuerza' }, { inicio: h('16:00'), minutos: 90, tipo: 'mixta' }]);
+    expect(sesionesDelDia(entreno, '2026-10-27')).toEqual([]);
+    // Correr es resistencia; los choques, como los partidos, mixta.
+    const otro = entrenoParaGuardar({ tipos: ['resistencia', 'contacto'], viaje: 0, sesiones: [{ tipo: 'resistencia', dias: [2], hora: h('6:30'), minutos: 45 }, { tipo: 'contacto', dias: [2, 4], hora: h('20:00'), minutos: 90 }] })!;
+    expect(sesionesDelDia(otro, '2026-10-27').map((s) => [s.inicio, s.tipo])).toEqual([[h('6:30'), 'resistencia'], [h('20:00'), 'mixta']]);
+  });
+
+  it('si el horario se cambió a mano en Perfil, vale el horario: las sesiones del cuestionario ya no dicen cuándo', () => {
+    const entreno = entrenoParaGuardar({ tipos: ['fuerza', 'equipo'], viaje: 15, sesiones: [{ tipo: 'fuerza', dias: [1, 3, 6], hora: h('7:00'), minutos: 60 }, { tipo: 'equipo', dias: [6], hora: h('16:00'), minutos: 90 }] })!;
+    const aMano = { ...entreno, hora: h('18:30') };
+    expect(sesionesDelDia(aMano, '2026-10-31')).toEqual([{ inicio: h('18:30'), minutos: 60, tipo: 'mixta' }]);
+    // «Mixta» puesta a mano, sin deportes, también es su horario.
+    expect(sesionesDelDia({ dias: [6], hora: h('10:00'), minutos: 90, tipo: 'mixta' }, '2026-10-31')).toEqual([{ inicio: h('10:00'), minutos: 90, tipo: 'mixta' }]);
   });
 });
 

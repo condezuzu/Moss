@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  armarNoches, calidadDeNoche, despiertoDeLaNoche, deudaDeSueno, faltaDeLaNoche, horario, marcaDe, necesidad, necesidadesPara, necesidadPropuesta, nivelDeLaNoche, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
+  armarNoches, calidadDeNoche, despiertoDeLaNoche, deudaDeSueno, faltaDeLaNoche, horario, marcaDe, necesidad, necesidadesPara, necesidadPropuesta, nivelDeLaNoche, nochesDeLaDeuda, juicioDeLaDeuda, pareceIncompleta, pocoSuenoSostenido, redondearDeuda,
   soloEnCama, TOPES_DE_UNA_NOCHE, ultimasNoches, vitalDeNoche,
   type Etapa, type Fuente, type Muestra, type Noche,
 } from './sueno';
@@ -285,6 +285,28 @@ describe('las dos semanas', () => {
     const sinLasBajas = deudaDeSueno(conBajas, 480)!;
     expect(sinLasBajas.noches).toBe(7);
     expect(sinLasBajas.duermes).toBeCloseTo(420, 5);
+  });
+
+  it('la deuda noche por noche: las mismas noches, topes y pesos, y de ahí sale la misma deuda', () => {
+    // De la más vieja a anoche: una sin datos, una poco segura, una estimada muy corta, una larga con siesta y las demás de 7 h.
+    const estimada: Noche = { ...semanas(1)[0]!, dormido: 200, fuente: { id: 'moss', nombre: 'Moss', tipo: 'moss' }, confianza: { duracion: 'media', horario: 'media', despertares: 'baja', etapas: null, enCama: null }, moss: { origen: 'estimada', confianza: 'media', rango: null } };
+    const lista = semanas(14, [], 420).map((n, i) => (i === 2 ? null : i === 5 ? { ...n!, dormido: 100, confianza: { ...n!.confianza, duracion: 'baja' as const } } : i === 9 ? estimada : i === 12 ? { ...n!, dormido: 560, siestas: 40 } : n));
+    const filas = nochesDeLaDeuda(lista, 480);
+    expect(filas).toHaveLength(14);
+    // Los pesos: anoche 1 y hace 13 noches, 0,16.
+    expect(filas.map((f) => Math.round(f.peso * 100) / 100)).toEqual([...PESOS].reverse().map((p) => Math.round(p * 100) / 100));
+    // Sin datos, nada; la poco segura se muestra, pero no entra.
+    expect(filas[2]).toMatchObject({ noche: null, dormido: null, falta: null, entra: null });
+    expect(filas[5]).toMatchObject({ dormido: 100, falta: 380, entra: null });
+    // La estimada: faltaron 4 h 40 y entran 2 h; la larga: sobraron 2 h (con la siesta) y descuenta 1 h.
+    expect(filas[9]).toMatchObject({ dormido: 200, falta: 280, entra: 120 });
+    expect(filas[12]).toMatchObject({ dormido: 600, falta: -120, entra: -60 });
+    expect(filas[13]).toMatchObject({ dormido: 420, falta: 60, entra: 60 });
+    // El promedio con pesos de lo que entra, por la suma de todos los pesos, es la deuda.
+    const cuentan = filas.filter((f) => f.entra !== null);
+    const deuda = (cuentan.reduce((s, f) => s + f.peso * f.entra!, 0) / cuentan.reduce((s, f) => s + f.peso, 0)) * filas.reduce((s, f) => s + f.peso, 0);
+    expect(deudaDeSueno(lista, 480)).toMatchObject({ noches: 12, de: 14 });
+    expect(deuda).toBeCloseTo(deudaDeSueno(lista, 480)!.minutos, 5);
   });
 
   it('la deuda se dice a la media hora: «4 h 32 min» es precisión falsa', () => {

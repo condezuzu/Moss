@@ -9,6 +9,7 @@ import Animated, { Easing, FadeIn, ReduceMotion, useAnimatedStyle, useReducedMot
 
 import { elAlmacen } from '@/almacen';
 import { KG_POR_LIBRA } from '@/dominio/cantidades';
+import type { Despues } from '@/dominio/cuestionario';
 import { diasEntre, sumarDias, type ClaveDia } from '@/dominio/fechas';
 import { edadDe, objetivoPermitido, pesoMinimoSano, pisoDe, RITMOS, type Macros, type Objetivo, type Ritmo } from '@/dominio/metas';
 import {
@@ -19,14 +20,14 @@ import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
 import { Icono, MACROS, Punto } from '../comida/comunes';
-import { conSigno, fechaDiaMes, fechaLarga, numero } from '../comida/datos';
+import { fechaDiaMes, fechaLarga, numero } from '../comida/datos';
 import { BotonDePaso } from '../paso';
 import type { Persona } from '../persona';
 import { Aparece, Carta, Chip, Cifra, ComoSeCalcula, Parrafo, Segmento, type TipoDeChip } from '../tarjetas';
 import { Regla } from './Regla';
-import { type U } from './unidades';
+import { conSignoFijo, fijo, type U } from './unidades';
 
-/** El ritmo o la fecha que se eligen en «Ritmo y plazo»; sin tocar, el ritmo del perfil. */
+/** El ritmo o la fecha que se eligen en «Ritmo y plazo» (quedan guardados en el teléfono); sin tocar, el ritmo del perfil. */
 export type EleccionDelPlazo = { pct: number | null; porFecha: boolean; fecha: ClaveDia | null };
 export const SIN_ELEGIR: EleccionDelPlazo = { pct: null, porFecha: false, fecha: null };
 
@@ -36,15 +37,16 @@ export type Calculo = { plan: PlanPorEtapas; plazo: Plazo | null; entrada: Entra
 const TOPE: Record<Direccion, number> = { bajar: 1.15, subir: 0.7 };
 
 function plazoDe(e: EntradaDelPlazo, objetivo: Direccion, ritmo: Ritmo, x: EleccionDelPlazo): Plazo | null {
-  if (x.porFecha && x.fecha) return plazoConFecha(e, x.fecha);
-  return plazoConRitmo(e, x.pct ?? Math.abs(RITMOS[objetivo][ritmo]));
+  // Una fecha guardada que ya quedó a menos de una semana no da plazo: vale su ritmo.
+  const conFecha = x.porFecha && x.fecha ? plazoConFecha(e, x.fecha) : null;
+  return conFecha ?? plazoConRitmo(e, x.pct ?? Math.abs(RITMOS[objetivo][ritmo]));
 }
 
 /**
  * El plan de hoy: desde el peso de hoy sin el atraso de la tendencia (spec/estudio/progreso.md, A5),
- * con el ritmo medido y su margen. Sin un peso, ninguno.
+ * con el ritmo medido y su margen. `despues`: lo que dijo en el cuestionario que sigue al llegar. Sin un peso, ninguno.
  */
-export function calcularPlan(p: Persona, hoy: ClaveDia, eleccion: EleccionDelPlazo, entrenaFuerza: boolean | null): Calculo | null {
+export function calcularPlan(p: Persona, hoy: ClaveDia, eleccion: EleccionDelPlazo, entrenaFuerza: boolean | null, despues: Despues | null = null): Calculo | null {
   const rango = ritmoConRango(p.pesos, hoy);
   const nivel = nivelDeHoy(p.tendencia, hoy, p.pesos, rango) ?? p.pesoHoy;
   if (nivel === null) return null;
@@ -55,7 +57,7 @@ export function calcularPlan(p: Persona, hoy: ClaveDia, eleccion: EleccionDelPla
     ? { hoy, pesoKg: nivel, pesoMeta: meta, sexo: p.perfil.sexo, edad: edadDe(p.perfil, hoy), gasto: p.gasto, entrenaFuerza }
     : null;
   const plazo = entrada && objetivo !== 'mantener' ? plazoDe(entrada, objetivo, p.perfil.ritmo, eleccion) : null;
-  const plan = planPorEtapas({ hoy, pesoKg: nivel, objetivo, pesoMeta: meta, plazo, ritmo: rango?.kgPorSemana ?? null, rango, pesoInicial: p.pesoInicial });
+  const plan = planPorEtapas({ hoy, pesoKg: nivel, objetivo, pesoMeta: meta, plazo, ritmo: rango?.kgPorSemana ?? null, rango, despues, pesoInicial: p.pesoInicial });
   return { plan, plazo, entrada, objetivo };
 }
 
@@ -100,12 +102,12 @@ export function ElPlan({ p, calculo, hoy, desde, u, abierto, alternar, cambiarPl
   const margen = pl.rango
     ? (() => {
       const [a, b] = Math.abs(pl.rango.desde) <= Math.abs(pl.rango.hasta) ? [pl.rango.desde, pl.rango.hasta] : [pl.rango.hasta, pl.rango.desde];
-      return { desde: conSigno(u.enUnidad(a), 2), hasta: conSigno(u.enUnidad(b), 2) };
+      return { desde: conSignoFijo(u.enUnidad(a), 2), hasta: conSignoFijo(u.enUnidad(b), 2) };
     })()
     : {};
   const clave = pl.comoVienes === 'atrasado' && !pl.fechasATuRitmo ? 'atrasadoSinFecha' : pl.comoVienes === 'seMueve' && sinDeficit ? 'seMueveSinAjustar' : pl.comoVienes;
   const como = t(`progreso.plan.comoVienes.${clave}`, {
-    ritmo: pl.ritmo === null ? '' : conSigno(u.enUnidad(pl.ritmo), 2), plan: conSigno(u.enUnidad(pl.ritmoPlan), 2), cuando: pl.fechasATuRitmo ? cuandoDe(pl.fechasATuRitmo) : '', ...margen,
+    ritmo: pl.ritmo === null ? '' : conSignoFijo(u.enUnidad(pl.ritmo), 2), plan: conSignoFijo(u.enUnidad(pl.ritmoPlan), 2), cuando: pl.fechasATuRitmo ? cuandoDe(pl.fechasATuRitmo) : '', ...margen,
   });
   // Al llegar, el mantenimiento; y lo que sigue, si lo dijo en el cuestionario (sin decirlo, lo elige al llegar).
   const luego = pl.etapas[2] ? (pl.etapas[2].tipo === 'subir' ? 'musculo' : 'mantener') : 'eliges';
@@ -249,8 +251,8 @@ export function LaEstrategia({ p, calculo, hoy, u, numeros, abierto, alternar, e
             alElegir={(o) => {
               // Sin déficit, bajar de peso no se elige acá (src/dominio/metas.ts, objetivoPermitido).
               if (o === 'bajar' && perfil.sinDeficit) return;
-              alElegir(SIN_ELEGIR);
               ponerEstrategia({ objetivo: o });
+              alElegir(SIN_ELEGIR);
             }}
           />
           {perfil.sinDeficit && <Parrafo chico>{t('entrada.cuidado.bajarNo')}</Parrafo>}
@@ -269,7 +271,6 @@ export function LaEstrategia({ p, calculo, hoy, u, numeros, abierto, alternar, e
                 minimo={minimo}
                 alCambiar={(pesoMeta) => {
                   setEnElMinimo(false);
-                  alElegir(SIN_ELEGIR);
                   ponerEstrategia({ pesoMeta });
                 }}
                 alMinimo={() => {
@@ -285,7 +286,7 @@ export function LaEstrategia({ p, calculo, hoy, u, numeros, abierto, alternar, e
               )}
             </Eleccion>
           )}
-          <Fila titulo={t('progreso.plazo.fila')} valor={plazo ? `${numero(plazo.pct, 2)} % · ${fechaDiaMes(plazo.fecha)}` : '—'} abierta={abierto === 'plazo'} alTocar={() => alternar('plazo')} />
+          <Fila titulo={t('progreso.plazo.fila')} valor={plazo ? `${fijo(plazo.pct, 2)} % · ${fechaDiaMes(plazo.fecha)}` : '—'} abierta={abierto === 'plazo'} alTocar={() => alternar('plazo')} />
           {abierto === 'plazo' && (
             <Eleccion>
               {entrada && plazo ? (
@@ -367,7 +368,7 @@ function ElPlazo({ entrada, plazo, hoy, ritmo, sexo, u, numeros, eleccion, alMov
         viable={pos(bordeDe(dir, 'viable', entrada.pesoKg))}
         exigente={pos(bordeDe(dir, 'exigente', entrada.pesoKg))}
         etiqueta={t('progreso.plazo.ritmo')}
-        textoDe={(pct) => `${numero(pct, 2)} %`}
+        textoDe={(pct) => `${fijo(pct, 2)} %`}
         alMover={(pct) => alMover(pct)}
         alSoltar={(pct) => {
           alMover(null);
@@ -377,14 +378,15 @@ function ElPlazo({ entrada, plazo, hoy, ritmo, sexo, u, numeros, eleccion, alMov
           const pct = Math.abs(RITMOS[dir][r]);
           return {
             clave: r, texto: t(`progreso.ritmos.${r}`), pos: pos(pct), elegida: Math.abs(pct - plazo.pct) < 0.005,
+            // Uno de los tres es el ritmo del perfil: lo elegido a mano (un ritmo o una fecha) se suelta.
             alTocar: () => {
-              alElegir({ pct, porFecha: false, fecha: null });
               ponerEstrategia({ ritmo: r });
+              alElegir(SIN_ELEGIR);
             },
           };
         })}
       />
-      <Text style={s.nota}>{u.texto(t('progreso.plazo.porSemana', { pct: numero(plazo.pct, 2), kg: numero(u.enUnidad(plazo.kgPorSemana), 2) }))}</Text>
+      <Text style={s.nota}>{u.texto(t('progreso.plazo.porSemana', { pct: fijo(plazo.pct, 2), kg: fijo(u.enUnidad(plazo.kgPorSemana), 2) }))}</Text>
       <Parrafo>{t(`progreso.plazo.textos.${plazo.viabilidad}`, { exigente: fechaDiaMes(plazo.fechaExigente), viable: fechaDiaMes(plazo.fechaViable) })}</Parrafo>
       {numeros && <Text style={s.notaChica}>{t(dir === 'bajar' ? 'progreso.plazo.kcalMenos' : 'progreso.plazo.kcalMas', { n: numero(Math.round(plazo.kcal / 10) * 10) })}</Text>}
       <Enlace

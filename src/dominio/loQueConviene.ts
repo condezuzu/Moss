@@ -9,6 +9,9 @@
 // - El café: una hora antes de entrenar, si todavía no le quita al sueño; si no, hasta qué hora (corteDeCafeina:
 //   desde la hora de ir a la cama y según la cafeína de una toma).
 // - La proteína de después, al terminar: en la comida que sigue o, si hace mucho que no comés, cuanto antes.
+// - Con dos sesiones el mismo día (dos deportes, sesionesDelDia), cada una lleva lo suyo. Si la comida de después
+//   de una es la de antes de la otra, queda el de antes, que ya trae los carbohidratos; y haber entrenado es de
+//   una sola sesión.
 // - Lo que cuenta hacia atrás desde la cama: la última comida grande (3 h antes), terminar lo fuerte (2 h
 //   antes) y bajar las luces (hora y media antes).
 // - Con Ascent vinculada, la recuperación al despertarte, los días que entrenás.
@@ -16,15 +19,18 @@
 //   antes de una carrera de más de 90 minutos, «Tu carrera es pasado mañana», a la hora del almuerzo de
 //   siempre: carbohidratos en todas las comidas. Toman el lugar de la hora del almuerzo.
 // Es parte del plan del día, como lo demás de avisos.ts: lo hecho (la comida anotada, entrenar a otra hora)
-// no lo saca del plan, lo deja como que sobra. Con «sin déficit», nada de comida ni de café para entrenar.
+// no lo saca del plan, lo deja como que sobra. Con «sin déficit», nada de comida ni de café para entrenar; con
+// cuidados de salud marcados, lo que cada uno apaga (cuidados.ts).
 // Acá van códigos; el texto sale de textoDelAviso y tituloDelAviso (avisos.ts). Las fuentes, en spec/avisos.md.
 
-import { carbohidratosPrevios, COMIDA_PREVIA, corteDeCafeina, cuenta, ENTRE_PREVIA_Y_POSTERIOR, POSTERIOR_HASTA, proteinaDeComida, type Contexto, type Principal, type Sesion } from './alrededorDelEntreno';
+import { carbohidratosPrevios, COMIDA_PREVIA, corteDeCafeina, cuenta, ENTRE_PREVIA_Y_POSTERIOR, POSTERIOR_HASTA, proteinaDeComida, type Contexto, type Entreno, type Principal, type Sesion } from './alrededorDelEntreno';
 import { avisosDelDia, horasDeSueno, type Aviso, type DelDia, type Notificacion } from './avisos';
 import { CON_HORA, horasCorridas, type Comida } from './comidas';
+import { deportesDePerfil } from './cuestionario';
+import type { ClaveDia } from './fechas';
 import { CERCA_DE_LA_CAMA, cercaDeLaCama } from './loQueFalta';
 import type { Macros } from './metas';
-import { DIAS_DE_CARGA, diasParaLaCarrera, partidoManana, type Carrera, type Partido } from './segunElDeporte';
+import { DIAS_DE_CARGA, diasParaLaCarrera, partidoManana, partidosEntre, type Carrera, type Partido } from './segunElDeporte';
 
 /** Los de lo que conviene: cada uno tiene su interruptor en Perfil › Avisos (Avisos, en avisos.ts). */
 export const QUE_CONVIENE = ['antesDeEntrenar', 'despuesDeEntrenar', 'cafe', 'ultimaComida', 'entrenarTarde', 'luces', 'recuperacion', 'partido', 'carrera'] as const;
@@ -124,8 +130,13 @@ export type DeLoQueConviene = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'horaDe
   comidasHabituales?: 3 | 4;
   /** La cafeína de una toma, en mg, si se anota seguido: con más de 200 mg el corte es antes. */
   cafeinaPorToma?: number | null;
-  /** Un cuidado de salud: nada de comida ni de café para entrenar, ni de la última comida. */
+  /** «Sin déficit», el sí o no de antes: nada de comida ni de café para entrenar, ni de la última comida. */
   sinDeficit?: boolean;
+  /**
+   * Con cuidados de salud marcados (cuidados.ts), en lugar de «sin déficit»: si apagan lo de comer para entrenar.
+   * Entonces tampoco el café de antes; lo demás que apagan llega apagado en `ajustes`, y la última comida queda libre.
+   */
+  sinLoDeEntrenar?: boolean;
   /** Reflujo, en Cuidados: la última comida grande, 3 h antes de la cama en vez de 2. */
   reflujo?: boolean;
   /** «Mostrar números» apagado: sin gramos. */
@@ -138,6 +149,23 @@ export type DeLoQueConviene = Pick<DelDia, 'dia' | 'ajustes' | 'sueno' | 'horaDe
   partidos?: readonly Partido[];
   carrera?: Carrera | null;
 };
+
+/**
+ * Lo del deporte para los avisos, de lo guardado en Perfil › Entrenamiento: con partidos o choques, los partidos de
+ * cada semana entre dos fechas; con correr, bici o nadar, la próxima carrera. Sin ese deporte no hay aviso ni
+ * interruptor (`partido` y `carrera` dicen cuáles van en Perfil › Avisos). Los deportes son los que muestra Perfil ›
+ * Entrenamiento (deportesDePerfil), aunque la hora se haya cambiado a mano: el partido sigue siendo ese día.
+ */
+export function delDeporte(entreno: Entreno | null | undefined, desde: ClaveDia, hasta: ClaveDia): { partido: boolean; carrera: boolean; partidos: Partido[]; proximaCarrera: Carrera | null } {
+  const tipos = entreno?.dias.length ? deportesDePerfil(entreno) : [];
+  const partido = tipos.includes('equipo') || tipos.includes('contacto');
+  const carrera = tipos.includes('resistencia');
+  return {
+    partido, carrera,
+    partidos: partido && entreno ? partidosEntre({ sesiones: entreno.sesiones ?? [], partidos: entreno.partidos }, desde, hasta) : [],
+    proximaCarrera: (carrera && entreno?.carrera) || null,
+  };
+}
 
 /**
  * Lo que conviene hacer un día, como avisos para avisosDelDia (en `conviene`): solo los prendidos y los que
@@ -185,10 +213,18 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
     return { salida, encima, comida: (encima[0] ?? 'snack') as Comida, a, adelantada: encima.length > 0 };
   };
 
+  const previas = sesiones.map(previaDe);
+  const sinEntrenar = !!op.sinDeficit || !!op.sinLoDeEntrenar;
+  const conLoDeAntes = prendido('antesDeEntrenar') && !sinEntrenar;
+  // Con dos sesiones, haber entrenado es de una sola: la última que ya había empezado o, si fue antes de todas, la
+  // primera. La otra sigue en pie, con sus avisos.
+  const deLaMarca = entrenado === null ? -1 : sesiones.reduce((k, x, j) => (x.inicio <= entrenado ? j : k), 0);
+  const entrenadoLa = (i: number) => (i === deLaMarca ? entrenado : null);
   sesiones.forEach((s, i) => {
-    const previa = previaDe(s);
+    const previa = previas[i];
     const fin = s.inicio + s.minutos;
-    if (prendido('antesDeEntrenar') && !op.sinDeficit && previa) {
+    const hecha = entrenadoLa(i);
+    if (conLoDeAntes && previa) {
       const c = contexto(s);
       const minutosAntes = s.inicio - previa.a;
       const principal = previa.comida === 'snack' ? null : previa.comida;
@@ -205,10 +241,10 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
           ...(proteina ? { proteina } : {}), ...(carbohidratos ? { carbohidratos } : {}),
         },
         reemplaza: [...new Set([...(principal ? [`horario:${principal}`] : []), ...previa.encima.flatMap((x) => [`horario:${x}`, `comida:${x}`])])],
-        ...(entrenado !== null ? { sobra: true as const, sobraDesde: entrenado } : comioCerca ? { sobra: true as const } : {}),
+        ...(hecha !== null ? { sobra: true as const, sobraDesde: hecha } : comioCerca ? { sobra: true as const } : {}),
       });
     }
-    if (prendido('despuesDeEntrenar') && !op.sinDeficit) {
+    if (prendido('despuesDeEntrenar') && !sinEntrenar) {
       const posterior = CON_HORA.filter((c) => hora[c] >= fin && hora[c] <= fin + POSTERIOR_HASTA).sort((a, b) => hora[a] - hora[b])[0];
       // Lo último que comiste antes de entrenar: la comida de antes o, sin ella, la última de siempre antes de salir.
       const ultima = previa?.a ?? Math.max(-Infinity, ...CON_HORA.map((c) => hora[c]).filter((m) => m <= s.inicio - viaje));
@@ -216,8 +252,11 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
       const pronto = sinComer || (posterior ? hora[posterior] : fin + SIN_COMIDA_CERCA.normal) - ultima > ENTRE_PREVIA_Y_POSTERIOR;
       // En esa comida; si hace mucho que no comés, solo si cae enseguida.
       const enLa = posterior !== undefined && (!pronto || hora[posterior] - fin <= ENSEGUIDA) ? posterior : null;
+      // Con dos sesiones ese día, si esa comida es también la de antes de la otra, alcanza con ese aviso: ya dice a
+      // qué hora y cuánto, con los carbohidratos que piden dos sesiones seguidas.
+      const yaLoDiceElDeAntes = conLoDeAntes && !!enLa && previas.some((p, j) => j > i && p?.comida === enLa);
       const proteina = gramos(proteinaDeComida(contexto(s), pronto ? 'ayunas' : 'despues'));
-      lista.push({
+      if (!yaLoDiceElDeAntes) lista.push({
         id: `despuesDeEntrenar:${i}`, tipo: 'despuesDeEntrenar', minutos: fin,
         ...(enLa ? { comida: enLa } : {}),
         conviene: enLa
@@ -226,7 +265,7 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
         // La hora de esa comida, si cae enseguida, ya la dice este.
         ...(enLa && hora[enLa] - fin <= ENSEGUIDA ? { reemplaza: [`horario:${enLa}`] } : {}),
         // Entrenaste antes de la hora de tu sesión: el final de la sesión ya no es el tuyo.
-        ...(entrenado !== null && entrenado < s.inicio ? { sobra: true as const, sobraDesde: entrenado } : {}),
+        ...(hecha !== null && hecha < s.inicio ? { sobra: true as const, sobraDesde: hecha } : {}),
       });
     }
   });
@@ -235,19 +274,20 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
     // Desde la hora de ir a la cama y según lo que tiene una toma; con un té, sin corte (null).
     const corte = corteDeCafeina(cama, op.cafeinaPorToma ?? null);
     // La primera sesión en la que el café de antes cae después de despertarte; con «sin déficit», ninguna.
-    const s = op.sinDeficit ? undefined : sesiones.find((x) => despierto(x.inicio - CAFE_ANTES));
+    const s = sinEntrenar ? undefined : sesiones.find((x) => despierto(x.inicio - CAFE_ANTES));
     const a = s && (corte === null || s.inicio - CAFE_ANTES <= corte) ? s.inicio - CAFE_ANTES : null;
     const minutos = a !== null ? desdeQueDespierta(a - AVISO_DE_CAFE) : null;
     // Si entrenaste a otra hora antes de que sonara, queda el último café del día; si ya había sonado, sobra.
-    const yaSono = minutos !== null && entrenado !== null && entrenado >= minutos;
-    if (a !== null && minutos !== null && (entrenado === null || yaSono)) {
+    const hecha = s ? entrenadoLa(sesiones.indexOf(s)) : null;
+    const yaSono = minutos !== null && hecha !== null && hecha >= minutos;
+    if (a !== null && minutos !== null && (hecha === null || yaSono)) {
       lista.push({
         id: 'cafe', tipo: 'cafe', minutos, conviene: { que: 'cafe', forma: 'antes', a, faltan: cama - a },
-        ...(entrenado !== null ? { sobra: true as const } : {}),
+        ...(hecha !== null ? { sobra: true as const } : {}),
       });
     } else if (corte !== null && despierto(corte - AVISO_DE_ULTIMO_CAFE)) {
       // Si ya entrenaste, queda solo el corte: lo de entrenar ya no viene al caso.
-      const entreno = s && entrenado === null ? s.inicio : null;
+      const entreno = s && hecha === null ? s.inicio : null;
       lista.push({
         id: 'cafe', tipo: 'cafe', minutos: corte - AVISO_DE_ULTIMO_CAFE,
         conviene: { que: 'cafe', forma: entreno !== null ? 'ultimoEntrenas' : 'ultimo', a: corte, ...(entreno !== null ? { entreno } : {}) },
@@ -274,7 +314,7 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
       lista.push({
         id: `entrenarTarde:${i}`, tipo: 'entrenarTarde', minutos: s.inicio - viaje - AVISO_DE_ENTRENO_TARDE,
         conviene: { que: 'entrenarTarde', a: limite, entreno: s.inicio, cama, ...(suave ? { suave: true as const } : {}) },
-        ...(entrenado !== null ? { sobra: true as const } : {}),
+        ...(entrenadoLa(i) !== null ? { sobra: true as const } : {}),
       });
     });
   }
@@ -282,8 +322,8 @@ export function loQueConviene(op: DeLoQueConviene): Aviso[] {
   if (prendido('luces') && cama !== null) lista.push({ id: 'luces', tipo: 'luces', minutos: cama - LUCES, conviene: { que: 'luces', cama } });
 
   // Según el deporte: a la hora del almuerzo, sin esperar a que lo anotes (habla de todas las comidas), y en
-  // lugar de la hora del almuerzo, que ya dice. Con «sin déficit», nada: es de comer.
-  if (!op.sinDeficit) {
+  // lugar de la hora del almuerzo, que ya dice. Con «sin déficit» o sin lo de entrenar, nada: es de comer.
+  if (!sinEntrenar) {
     const almuerzo = () => ({ minutos: hora.almuerzo, reemplaza: ['horario:almuerzo'] });
     if (prendido('partido') && partidoManana(op.dia, op.partidos ?? [])) lista.push({ id: 'partido', tipo: 'partido', ...almuerzo(), conviene: { que: 'partido' } });
     if (prendido('carrera') && diasParaLaCarrera(op.dia, op.carrera) === DIAS_DE_CARGA) lista.push({ id: 'carrera', tipo: 'carrera', ...almuerzo(), conviene: { que: 'carrera' } });

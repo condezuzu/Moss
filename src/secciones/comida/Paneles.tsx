@@ -29,7 +29,7 @@ import { ENTRA_FUNDIDO, ENTRA_PANEL, LLEGA, SALE_FUNDIDO, SALE_PANEL } from '../
 import { margenDeToque } from '../paso';
 import { ACOMODA } from '../tarjetas';
 import { tecladoDeNumeros, useCampoALaVista } from '../teclado';
-import { Boton, Etiqueta, Icono, MACROS, Punto } from './comunes';
+import { Boton, degradado, Etiqueta, Icono, MACROS, Punto } from './comunes';
 import { cantidadDeTexto, gramosDeMacro, numero, opcionesDeIdioma, useNumeros } from './datos';
 import { agregarADe, cambioLaEdicion, conLoEditado, edicionDe, kcalDeMacros, paraCampo, porcionDePropio, tuComidaDe, type Edicion, type Guardada } from './hoja';
 
@@ -84,9 +84,10 @@ const VISTA_ATRAS = FadeInLeft.duration(260).easing(LLEGA).withInitialValues({ o
  * llega abajo de todo sin contarlo dos veces. Con el teclado arriba, lo que baja queda detrás del teclado.
  * `vista`: cuál de sus vistas se ve; al cambiar, el título, lo de adentro y el pie entran de nuevo
  * (`haciaAtras`, al volver a la anterior). `fundido`: entra en su lugar, sin venir de costado (el que reemplaza al visor de la foto).
+ * `destacado`: el título va con la letra de los títulos de la comida (el de la revisión, «Tu cena»).
  */
-export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras, fundido }: {
-  titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number; vista?: string; haciaAtras?: boolean; fundido?: boolean;
+export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras, fundido, destacado }: {
+  titulo: string; alAtras: () => void; children: ReactNode; pie?: ReactNode; abajo: number; vista?: string; haciaAtras?: boolean; fundido?: boolean; destacado?: boolean;
 }) {
   const reducido = useReducedMotion();
   // El panel ya se achica con el teclado (el lugar de abajo de la hoja crece con él): el scroll solo
@@ -132,6 +133,7 @@ export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras
       accessibilityViewIsModal
       onAccessibilityEscape={alAtras}
     >
+      <View style={[StyleSheet.absoluteFill, estilos.panelFondo]} pointerEvents="none" />
       {/* Lo que ya está cuando el panel entra viene con él; otra vista, o lo que llega o se va después, con su animación. */}
       <LayoutAnimationConfig skipEntering>
         <View style={estilos.cabeza}>
@@ -139,7 +141,7 @@ export function Panel({ titulo, alAtras, children, pie, abajo, vista, haciaAtras
             <Icono nombre="chevron.left" tam={18} peso="medium" />
           </Pressable>
           <Animated.View key={vista} entering={entra} style={estilos.tituloLugar}>
-            <Text ref={titular} style={estilos.titulo} numberOfLines={1} accessibilityRole="header">{titulo}</Text>
+            <Text ref={titular} style={[estilos.titulo, destacado && estilos.tituloDestacado]} numberOfLines={1} accessibilityRole="header">{titulo}</Text>
           </Animated.View>
           <View style={estilos.lugar} />
         </View>
@@ -196,14 +198,18 @@ type PropsDeCampo = {
 function Campo({ etiqueta, valor, alCambiar, unidad, texto, ejemplo, mal, alListo, ultimo, largo, mayusculas, corrector, teclado, enfocado }: PropsDeCampo) {
   const cadena = useContext(CamposDelPanel);
   const campo = useRef<TextInputInstance>(null);
+  // Con el cursor adentro, el borde se dora (la galería).
+  const [conFoco, setConFoco] = useState(false);
   useEffect(() => cadena?.registrar(campo), [cadena]);
   // «Siguiente» pasa al que sigue sin que el teclado baje y vuelva a subir; «Listo» lo baja.
   const siguiente = !alListo && !ultimo;
   return (
     <View style={[estilos.campo, !unidad && estilos.campoTexto]}>
-      <Text style={estilos.campoEtiqueta}>{etiqueta}</Text>
+      <Text style={[estilos.campoEtiqueta, !unidad && estilos.campoEtiquetaDeTexto]}>{etiqueta}</Text>
       <TextInput
         ref={campo}
+        onFocus={() => setConFoco(true)}
+        onBlur={() => setConFoco(false)}
         value={valor}
         onChangeText={alCambiar}
         placeholder={ejemplo ?? (texto ? t('comida.opcional') : '0')}
@@ -218,7 +224,7 @@ function Campo({ etiqueta, valor, alCambiar, unidad, texto, ejemplo, mal, alList
         selectionColor={colores.oro}
         // Los de números tienen el ancho fijo: con el texto más grande de iOS, la letra crece hasta un tope que todavía entra.
         maxFontSizeMultiplier={unidad ? 1.4 : undefined}
-        style={[estilos.campoEntrada, !unidad && estilos.campoEntradaTexto, mal && estilos.campoMal]}
+        style={[estilos.campoEntrada, !unidad && estilos.campoEntradaTexto, conFoco && estilos.campoConFoco, mal && estilos.campoMal]}
         accessibilityLabel={etiqueta}
       />
       {unidad ? <Text style={estilos.campoUnidad} maxFontSizeMultiplier={1.4}>{unidad}</Text> : null}
@@ -254,6 +260,7 @@ export function PanelRevision(p: {
       titulo={tuComidaDe(p.comida, p.dia, p.hoy)}
       alAtras={p.alAtras}
       abajo={p.abajo}
+      destacado
       pie={
         <>
           <Boton tipo="grande" texto={agregarADe(p.comida, p.dia, p.hoy)} alTocar={p.alAgregar} />
@@ -501,7 +508,7 @@ export function PanelGuardadas(p: {
       pie={(
         <>
           <Boton tipo="quitar" texto={t('comida.receta.nueva')} alTocar={p.alNuevaReceta} />
-          <Boton tipo="secundario" icono="doc.on.doc" texto={t('comida.receta.pegar')} alTocar={p.alPegarReceta} />
+          <Boton tipo="segundo" icono="doc.on.doc" texto={t('comida.receta.pegar')} alTocar={p.alPegarReceta} />
         </>
       )}
     >
@@ -705,7 +712,7 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
       abajo={abajo}
       pie={(
         <>
-          <Boton tipo="secundario" texto={t('comida.receta.leer')} desactivado={!texto.trim() || leyendo} alTocar={() => { leer().catch(() => setLeyendo(false)); }} />
+          <Boton tipo="segundo" texto={t('comida.receta.leer')} desactivado={!texto.trim() || leyendo} alTocar={() => { leer().catch(() => setLeyendo(false)); }} />
           {leida && <Boton tipo="grande" texto={t('comida.receta.usar')} desactivado={!usables.length} alTocar={() => alUsar({ nombre: leida.nombre, porciones: leida.porciones, pesoFinal: leida.pesoFinal, items: usables.map((x) => x.item!) })} />}
         </>
       )}
@@ -727,7 +734,12 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
         <Animated.View entering={FadeIn.duration(300).reduceMotion(ReduceMotion.Never)} layout={ACOMODA}>
           {leida.lineas.length ? (
             <>
-              <Text style={estilos.nota}>{t('comida.receta.encontrados', { n: leida.lineas.filter((x) => x.item && (gramosDe(x.item.cantidad) ?? 0) > 0).length, total: leida.lineas.length })}</Text>
+              {/* Lo leído, como en la galería: el nombre con lo que rinde, y cuántos ingredientes encontró. */}
+              <View style={estilos.pegadaCabeza}>
+                <Text style={estilos.pegadaNombre} numberOfLines={1}>{leida.nombre || t('comida.receta.titulo')}</Text>
+                {leida.porciones ? <Text style={estilos.pegadaRinde}>{`${t('comida.receta.porciones')} ${numero(leida.porciones)} ${t('comida.receta.porcionesUnidad')}`}</Text> : null}
+              </View>
+              <Text style={estilos.pegadaTexto}>{t('comida.receta.encontrados', { n: leida.lineas.filter((x) => x.item && (gramosDe(x.item.cantidad) ?? 0) > 0).length, total: leida.lineas.length })}</Text>
               {leida.lineas.map((x, i) => {
                 const gramos = x.item ? gramosDe(x.item.cantidad) ?? 0 : 0;
                 const sirve = !!x.item && gramos > 0;
@@ -744,7 +756,10 @@ export function PanelPegarReceta({ sistema, alUsar, alAtras, abajo }: { sistema:
                       <Text style={[estilos.filaNombre, !sirve && estilos.sinEncontrar, x.fuera && estilos.tachado]} numberOfLines={1}>{x.item ? x.item.nombre : t('comida.receta.sinEncontrar')}</Text>
                       <Text style={estilos.filaDetalle} numberOfLines={1}>{x.linea.texto}</Text>
                     </View>
-                    <Text style={estilos.filaDetalle}>{sirve ? detalleDe(x.item!, sistema, numeros) : x.item ? t('comida.receta.sinCantidad') : ''}</Text>
+                    <View style={estilos.pegadaCuanto}>
+                      <Text style={estilos.pegadaGramos}>{sirve ? cantidadDeTexto(x.item!.cantidad, sistema) : x.item ? t('comida.receta.sinCantidad') : ''}</Text>
+                      {sirve && numeros && <Text style={estilos.pegadaKcal}>{`${numero(Math.round(x.item!.valores.kcal))} kcal`}</Text>}
+                    </View>
                   </Pressable>
                 );
               })}
@@ -845,12 +860,16 @@ export const resumenDeCanasta = (canasta: Item[], numeros = true) =>
 
 const estilos = StyleSheet.create({
   // Las esquinas de la hoja de registro, que no recorta lo de adentro.
-  panel: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderTopLeftRadius: 27, borderTopRightRadius: 27, backgroundColor: colores.hoja },
+  panel: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderTopLeftRadius: 27, borderTopRightRadius: 27, backgroundColor: '#0e1631' },
+  // El fondo de la galería (de #0e1631 a #090f23): un velo sin esquinas sobre el color de arriba, como en la hoja.
+  panelFondo: degradado('linear-gradient(180deg, rgba(9, 15, 35, 0) 0%, #090f23 100%)'),
   cabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, height: 46, paddingTop: 2, paddingHorizontal: 12 },
   atras: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(239, 230, 207, 0.07)' },
   lugar: { width: 38 },
   tituloLugar: { flex: 1, minWidth: 0 },
-  titulo: { textAlign: 'center', fontFamily: letras.numeroMedio, fontSize: 17, color: colores.pergamino },
+  // Como en la galería: el de cada panel, en la letra del texto; el de la revisión, en la de los títulos de la comida.
+  titulo: { textAlign: 'center', fontFamily: letras.textoMedio, fontSize: 15, color: colores.pergamino },
+  tituloDestacado: { fontFamily: letras.numeroMedio, fontSize: 17 },
   cuerpo: { flex: 1 },
   cuerpoAdentro: { paddingHorizontal: 20, paddingBottom: 18 },
   pie: { gap: 8, paddingTop: 12, paddingHorizontal: 20, borderTopWidth: 1, borderColor: 'rgba(239, 230, 207, 0.08)', backgroundColor: 'rgba(8, 12, 28, 0.94)' },
@@ -881,7 +900,10 @@ const estilos = StyleSheet.create({
   campoEtiqueta: { flex: 1, fontFamily: letras.texto, fontSize: 14.5, color: colores.pergamino },
   // Con el alto mínimo: con el texto grande de iOS, el campo crece en vez de cortar lo escrito.
   campoEntrada: { width: 118, minHeight: 40, outlineWidth: 0, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(239, 230, 207, 0.16)', backgroundColor: 'rgba(239, 230, 207, 0.06)', paddingHorizontal: 12, textAlign: 'right', fontFamily: letras.texto, fontSize: 16, color: colores.pergamino },
-  campoEntradaTexto: { flex: 2, width: undefined, textAlign: 'left' },
+  // Lo que se escribe con letras ocupa todo lo que deja su etiqueta (`.cr-campo:not(:has(em))`).
+  campoEtiquetaDeTexto: { flex: 0 },
+  campoEntradaTexto: { flex: 1, width: undefined, textAlign: 'left' },
+  campoConFoco: { borderColor: 'rgba(232, 196, 106, 0.6)' },
   campoMal: { borderColor: 'rgba(232, 196, 106, 0.7)', color: colores.oroClaro },
   campoUnidad: { minWidth: 30, fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
   separador: { marginTop: 22, marginBottom: 4 },
@@ -890,6 +912,13 @@ const estilos = StyleSheet.create({
   fueraApretada: { opacity: 0.25 },
   tachado: { textDecorationLine: 'line-through' },
   sinEncontrar: { fontStyle: 'italic', color: 'rgba(239, 230, 207, 0.5)' },
+  pegadaCabeza: { marginTop: 16, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  pegadaNombre: { flexShrink: 1, fontFamily: letras.numeroMedio, fontSize: 16, color: colores.pergamino },
+  pegadaRinde: { fontFamily: letras.texto, fontSize: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
+  pegadaTexto: { marginTop: 6, marginBottom: 2, fontFamily: letras.texto, fontSize: 13, lineHeight: 18, color: 'rgba(239, 230, 207, 0.6)' },
+  pegadaCuanto: { alignItems: 'flex-end', gap: 3 },
+  pegadaGramos: { fontFamily: letras.textoMedio, fontSize: 13.5, color: colores.pergamino, fontVariant: ['tabular-nums'] },
+  pegadaKcal: { fontFamily: letras.texto, fontSize: 12, color: 'rgba(239, 230, 207, 0.5)', fontVariant: ['tabular-nums'] },
   totalPegado: { marginTop: 12, textAlign: 'right', fontFamily: letras.textoMedio, fontSize: 14, color: colores.oroClaro },
   agregarIngrediente: { marginTop: 12, alignItems: 'flex-start', gap: 8 },
   borrar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44, paddingHorizontal: 13, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(240, 165, 138, 0.28)' },

@@ -44,6 +44,8 @@ export type EntradaDeParaHoy = {
   sinDeficit?: boolean;
   /** Lo de hoy según el deporte (segunElDeporte), en su orden: acá entra lo que va en «Para hoy». */
   deporte?: readonly ConsejoDelDeporte[];
+  /** Con cuidados de salud marcados, en lugar de «sin déficit»: lo que apagan (apagaConsejo, en cuidados.ts) no ocupa lugar. */
+  apaga?: (c: ConsejoDeHoy) => boolean;
 };
 
 export const MAXIMO_DE_CONSEJOS = 3;
@@ -106,5 +108,5 @@ export function paraHoy(e: EntradaDeParaHoy): ConsejoDeHoy[] {
   }
 
   if (e.agua && !e.sinDeficit && e.ahora >= AGUA_DESDE && e.agua.ml < AGUA_BAJA * e.agua.meta && !temas.has('agua')) lista.push({ tipo: 'agua', vasos: Math.ceil((e.agua.meta - e.agua.ml) / VASO_ML) });
-  return [...delDeporte, ...lista].slice(0, MAXIMO_DE_CONSEJOS);
+  return [...delDeporte, ...lista].filter((c) => !e.apaga?.(c)).slice(0, MAXIMO_DE_CONSEJOS);
 }

@@ -474,8 +474,8 @@ export function controlConCuidados(e: EntradaDelControl, r: Reglas): Control | n
   return { ...c, metas };
 }
 
-/** El agua por día: la de lo marcado, la de siempre o, si Moss no la pide, null. */
-export const metaDeAgua = (r: Pick<Reglas, 'agua'>, deSiempre: number): number | null => (r.agua === 'noPedir' ? null : r.agua ?? deSiempre);
+/** El agua por día: la de lo marcado, la de siempre (también sin reglas: antes del cuestionario) o, si Moss no la pide, null. */
+export const metaDeAgua = (r: Pick<Reglas, 'agua'> | null, deSiempre: number): number | null => (r?.agua === 'noPedir' ? null : r?.agua ?? deSiempre);
 
 /** La referencia de un micronutriente con lo marcado: la etapa, el potasio de la presión, sin referencia con el riñón, el tope del colesterol y de la cafeína. */
 export function referenciaConCuidados(micro: Micro, p: ParaQuien, r: Reglas): Referencia | null {

@@ -157,6 +157,13 @@ const SeccionAscent = (() => {
 .as-entrada.sin .as-orbe-arco { opacity: 0; }
 .as-entrada.sin .as-orbe-luna { transform: rotate(50.2deg) translateY(-19px); opacity: 0.9; }
 .as-entrada:active .as-orbe { opacity: 0.75; }
+/* Con Ascent apagada (17/11): la entrada dice «Ascent · Pronto» y no lleva a ningún lado; al tocarla, un globo chico crece desde ella. */
+.as-entrada.pronto { touch-action: auto; }
+.as-entrada.pronto .as-entrada-pista { display: none; }
+.as-pronto-globo { position: absolute; right: 0; top: 46px; z-index: 6; max-width: min(270px, 100%); box-sizing: border-box; margin: 0; padding: 11px 14px; border-radius: 16px; background: rgba(11, 13, 19, 0.97); border: 1px solid rgba(138, 147, 168, 0.34); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55); color: #e8ecf6; font: 400 13.5px/1.4 var(--texto); text-align: left; transform-origin: top right; transform: scale(0.35) translateY(-8px); opacity: 0; transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1.12), opacity 0.22s ease; }
+.as-pronto-globo.abierto { transform: none; opacity: 1; }
+.as-pronto-globo.saliendo { transition: transform 0.2s ease-in, opacity 0.18s ease-in; transform: scale(0.5) translateY(-8px); opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .as-pronto-globo, .as-pronto-globo.saliendo { transform: none; transition: opacity 0.15s ease; } }
 
 .as-invita { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; align-items: start; padding: 14px 16px 12px; border-radius: 20px; border: 1px solid rgba(138, 147, 168, 0.2); background: rgba(8, 12, 26, 0.72); color: #e8ecf6; overflow: hidden; }
 .as-invita.entra { animation: as-entra 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -1360,13 +1367,58 @@ const SeccionAscent = (() => {
     const entrada = el('button', 'as-entrada');
     entrada.type = 'button';
     entrada.innerHTML = `<span class="as-entrada-textos"><b class="as-entrada-cifra"></b><small class="as-entrada-sub"></small></span>${ORBE}<span class="as-entrada-pista">${icono('abajo')}<span></span></span>`;
-    entrada.addEventListener('click', (ev) => { ev.stopPropagation(); abrir(); });
+    entrada.addEventListener('click', (ev) => { ev.stopPropagation(); if (apagada()) alternarPronto(); else abrir(); });
     const entradaCifra = entrada.querySelector('.as-entrada-cifra');
     const entradaSub = entrada.querySelector('.as-entrada-sub');
     const entradaPista = entrada.querySelector('.as-entrada-pista span');
     let firmaDeLaEntrada = '';
 
+    // Apagada (CON_ASCENT), Ascent solo dice «Pronto»: la entrada no abre nada, y al tocarla un globo chico crece
+    // desde ella con una línea. Cualquier toque lo cierra.
+    const apagada = () => !!opciones.prendida && !opciones.prendida();
+    let globoPronto = null;
+    function cerrarPronto() {
+      const g = globoPronto;
+      if (!g) return;
+      globoPronto = null;
+      document.removeEventListener('pointerdown', alTocarAfuera, true);
+      entrada.setAttribute('aria-expanded', 'false');
+      g.classList.add('saliendo');
+      setTimeout(() => g.remove(), 220);
+    }
+    function alTocarAfuera(ev) { if (!entrada.contains(ev.target)) cerrarPronto(); }
+    function alternarPronto() {
+      if (globoPronto) { cerrarPronto(); return; }
+      globoPronto = el('p', 'as-pronto-globo', tx('ascent.pronto.globo'));
+      globoPronto.setAttribute('role', 'status');
+      entrada.parentNode.appendChild(globoPronto);
+      entrada.setAttribute('aria-expanded', 'true');
+      void globoPronto.offsetWidth;
+      globoPronto.classList.add('abierto');
+      document.addEventListener('pointerdown', alTocarAfuera, true);
+    }
+
     function pintarEntrada() {
+      // Progreso se volvió a pintar y su encabezado es otro: el globo que hubiera ya no está.
+      if (globoPronto && !globoPronto.isConnected) { globoPronto = null; document.removeEventListener('pointerdown', alTocarAfuera, true); }
+      entrada.classList.toggle('pronto', apagada());
+      if (apagada()) {
+        entrada.classList.add('sin');
+        entrada.classList.remove('vinculo', 'atencion');
+        entrada.style.setProperty('--arco', '0');
+        entrada.style.setProperty('--giro', '50.2deg');
+        entrada.setAttribute('aria-label', `${tx('ascent.senal.marca')}. ${tx('ascent.pronto.valor')}`);
+        const firmaPronto = `pronto|${tx('ascent.pronto.valor')}`;
+        if (firmaPronto !== firmaDeLaEntrada) {
+          firmaDeLaEntrada = firmaPronto;
+          entradaCifra.textContent = tx('ascent.senal.marca');
+          entradaCifra.appendChild(el('span', null, `· ${tx('ascent.pronto.valor')}`));
+          entradaSub.textContent = '';
+        }
+        return;
+      }
+      cerrarPronto();
+      entrada.removeAttribute('aria-expanded');
       const d = elDia();
       const k = vinculada ? calcularHoy(d) : null;
       const instalada = esteIphone !== 'sinAscent';
@@ -1411,6 +1463,8 @@ const SeccionAscent = (() => {
     // y el planeta asoma un poco más. Una sola vez; con Reducir movimiento, nada.
     let yaAsomo = false;
     function asomar(otraVez) {
+      // Apagada, no hay planeta que asome.
+      if (apagada()) return;
       if (yaAsomo && !otraVez) return;
       yaAsomo = true;
       if (otraVez) { yaSeAbrio = false; plegarLaPista(false); }

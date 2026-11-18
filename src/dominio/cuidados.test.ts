@@ -266,6 +266,19 @@ describe('los riñones', () => {
     expect(metaConCuidados(2600, persona(EL), 'equilibrada', r)!.proteina).toBe(Math.round(1 * EL.pesoKg));
     expect(r.apagar).toEqual(['faltaProteina']);
     expect(r.prender).toEqual(['agua']);
+    // Sin reglas (antes del cuestionario), la de siempre.
+    expect(metaDeAgua(null, 2000)).toBe(2000);
+  });
+
+  it('en «Para hoy», lo que un cuidado apaga no ocupa lugar: con cálculos, el agua entra en vez de la proteína', () => {
+    const r = reglas(['calculos']);
+    const dia: EntradaDeParaHoy = {
+      ahora: 18 * 60, meta: { kcal: 2600, proteina: 150, carbohidratos: 325, grasas: 78 }, comido: { kcal: 1400, proteina: 45, carbohidratos: 230, grasas: 66 },
+      sinAnotar: ['merienda'], anotadas: 2, proxima: 'cena', agua: { ml: 500, meta: metaDeAgua(r, 2000)! },
+    };
+    // Son tres como mucho: sin cuidados, el agua no entraba.
+    expect(paraHoy(dia).map((c) => c.tipo)).toEqual(['anotar', 'pocaProteina', 'muchaGrasa']);
+    expect(paraHoy({ ...dia, apaga: (c) => apagaConsejo(c, r) })).toEqual([{ tipo: 'anotar', comidas: ['merienda'] }, { tipo: 'muchaGrasa', proxima: 'cena' }, { tipo: 'agua', vasos: 8 }]);
   });
 
   it('con el riñón y cálculos, el agua es del equipo: Moss no la pide', () => {

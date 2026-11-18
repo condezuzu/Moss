@@ -29,7 +29,9 @@ import { deudaDeSueno, redondearDeuda, ultimasNoches } from '@/dominio/sueno';
 import { hayCompras } from '@/lib/premium';
 import { abrirPagina } from '@/lib/sitio';
 import { haySupabase } from '@/lib/supabase';
+import { pasosPorDia } from '@/salud/leer';
 import { datosDelCuestionario, haySalud, pedirPermisos } from '@/salud/salud';
+import { movimientoPorPasos } from '@/dominio/cuestionario';
 import { lista, t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { anunciar } from '../anuncio';
@@ -445,8 +447,9 @@ export function Entrada({ camara, alTerminar }: { camara: SharedValue<number>; a
               {paso.id === 'salud' && (
                 <Salud
                   alSeguir={siguiente}
-                  alLeer={(d) => {
-                    const x: Contestado = { ...r, ...d, salud: true };
+                  alLeer={(d, pasos) => {
+                    const sugerido = movimientoPorPasos(pasos);
+                    const x: Contestado = { ...r, ...d, salud: true, pasosDeSalud: pasos, movimientoSugerido: sugerido, movimiento: sugerido ?? r.movimiento };
                     setR(x);
                     setDeSalud(new Set(Object.keys(d) as ('edad' | 'sexo' | 'alturaCm' | 'pesoKg')[]));
                     return x;
@@ -851,7 +854,7 @@ function TusDatos({ alSeguir }: { alSeguir: () => void }) {
 const ICONOS_DE_SALUD = ['figure.walk', 'moon.zzz', 'brain.head.profile', 'drop', 'scalemass'] as const;
 
 /** Conectar con Salud trae la edad, el sexo, la altura y el peso: con eso, la pregunta que sigue es «Esto dice Salud». */
-function Salud({ alSeguir, alLeer }: { alSeguir: (x?: Contestado) => void; alLeer: (d: Partial<Pick<Contestado, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>>) => Contestado }) {
+function Salud({ alSeguir, alLeer }: { alSeguir: (x?: Contestado) => void; alLeer: (d: Partial<Pick<Contestado, 'edad' | 'sexo' | 'alturaCm' | 'pesoKg'>>, pasos: number | null) => Contestado }) {
   const [ocupado, setOcupado] = useState(false);
   const enCamino = useRef(false);
   const hay = haySalud();
@@ -862,7 +865,9 @@ function Salud({ alSeguir, alLeer }: { alSeguir: (x?: Contestado) => void; alLee
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     let x: Contestado | undefined;
     if (await pedirPermisos()) {
-      x = alLeer(await datosDelCuestionario());
+      // Con los pasos de las últimas dos semanas, la respuesta de «¿Cuánto te mueves?» ya viene sugerida.
+      const [datos, pasos] = await Promise.all([datosDelCuestionario(), pasosPorDia().catch(() => null)]);
+      x = alLeer(datos, pasos);
       actualizarSalud().catch(() => {});
     }
     setOcupado(false);

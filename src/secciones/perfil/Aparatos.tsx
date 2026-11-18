@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import { actualizarSalud, elAlmacen } from '@/almacen';
+import type { Estado } from '@/almacen/almacen';
 import { sumarDias } from '@/dominio/fechas';
 import { marcaDe, NIVEL_DE_LA_MARCA, type Fuente } from '@/dominio/sueno';
 import { lista as listaDeTextos, plural, t } from '@/textos';
@@ -37,6 +38,14 @@ const nombreDe = (f: Fuente) => {
 export function aparatoPrincipal(aparatos: { fuente: Fuente; noches: number }[]): string {
   const con = aparatos.filter((a) => a.noches > 0).sort((a, b) => NIVEL_DE_LA_MARCA[marcaDe(b.fuente)] - NIVEL_DE_LA_MARCA[marcaDe(a.fuente)]);
   return con.length ? nombreDe(con[0].fuente) : t('perfil.aparatos.soloIphone');
+}
+
+/** Las noches del último mes de ese aparato, para la fila de Perfil: las del que mejor mide o, solo con el iPhone, las que tiene Moss. */
+export function nochesDelPrincipal(e: Pick<Estado, 'salud' | 'noches' | 'hoy'>): number {
+  const con = (e.salud?.aparatos ?? []).filter((a) => a.noches > 0).sort((a, b) => NIVEL_DE_LA_MARCA[marcaDe(b.fuente)] - NIVEL_DE_LA_MARCA[marcaDe(a.fuente)]);
+  if (con.length) return con[0].noches;
+  const desde = sumarDias(e.hoy, -30);
+  return [...e.noches.values()].filter((n) => n.hora && !n.borrado && n.fecha > desde).length;
 }
 
 /** La precisión, de 1 (estimada con el teléfono) a 5 (conexión directa, después de la v1), en puntos. */

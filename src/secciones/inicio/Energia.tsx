@@ -1,7 +1,8 @@
 // Tu energía, de un vistazo (lo pediste el 5/11, a la noche; galeria/src/inicio.js): un botón redondo arriba a la
-// derecha de Inicio, con la batería y cómo está, en todos los estados. Tocarlo abre ahí mismo un globo con lo básico,
-// que crece desde el botón; abajo, «Más en Sueño» se desliza a la tarjeta completa. Nada salta: el globo crece y se
-// achica. La regla y las piezas son las de Sueño (src/secciones/sueno/Energia.tsx), que tiene la tarjeta.
+// derecha de Inicio, con la batería y cómo está, en todos los estados: solo el título, sin por qué debajo (17/11).
+// Tocarlo abre ahí mismo un globo con lo básico, que crece desde el botón; abajo, «Más en Sueño» se desliza a la
+// tarjeta completa, que lo explica todo. Nada salta: el globo crece y se achica. La regla y las piezas son las de
+// Sueño (src/secciones/sueno/Energia.tsx), que tiene la tarjeta.
 
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,33 +12,28 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { t } from '@/textos';
 import { colores, letras } from '@/tema';
 import { Icono } from '../comida/comunes';
-import { Bateria, COLOR_DE_ENERGIA, cuandoEs, estadoDe, fraseDeEnergia, PartesDeEnergia, porQueDeLaEnergia, TiraDelDia, type DatosDeEnergia } from '../sueno/Energia';
+import { Bateria, COLOR_DE_ENERGIA, cuandoEs, estadoDe, fraseDeEnergia, PartesDeEnergia, TiraDelDia, type DatosDeEnergia } from '../sueno/Energia';
 
 const ROJIZO = '#f2b9a2';
 
 export function BotonDeEnergia({ datos, abierto, alTocar }: { datos: DatosDeEnergia; abierto: boolean; alTocar: () => void }) {
   const estado = estadoDe(datos);
-  const por = porQueDeLaEnergia(datos);
   const color = COLOR_DE_ENERGIA[estado];
   const titulo = t(`inicio.energia.boton.${estado}`);
-  const debajo = por ? t(`inicio.energia.por.${por}`) : null;
   return (
     <Animated.View entering={FadeIn.duration(450).delay(100).reduceMotion(ReduceMotion.Never)}>
       <Pressable
         onPress={alTocar}
         style={st.boton}
         accessibilityRole="button"
-        accessibilityLabel={`${titulo}${debajo ? `. ${debajo}` : ''}`}
+        accessibilityLabel={titulo}
         accessibilityHint={t('inicio.energia.verEnSueno')}
         accessibilityState={{ expanded: abierto }}
         hitSlop={6}
       >
         {({ pressed }) => (
           <>
-            <View style={st.textos}>
-              <Text style={[st.botonTitulo, estado === 'baja' && { color: ROJIZO }]} numberOfLines={1} maxFontSizeMultiplier={1.3}>{titulo}</Text>
-              {debajo && <Text style={st.botonPor} numberOfLines={1} maxFontSizeMultiplier={1.3}>{debajo}</Text>}
-            </View>
+            <Text style={[st.botonTitulo, estado === 'baja' && { color: ROJIZO }]} numberOfLines={1} maxFontSizeMultiplier={1.3}>{titulo}</Text>
             <View style={[st.circulo, { borderColor: `rgba(${color.rgb}, ${(0.55 * color.alfa).toFixed(2)})` }, estado === 'baja' && st.circuloBajo, pressed && st.apretado]}>
               <Bateria estado={estado} chica />
             </View>
@@ -117,9 +113,7 @@ export function GloboDeEnergia(p: {
 
 const st = StyleSheet.create({
   boton: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 4 },
-  textos: { alignItems: 'flex-end', gap: 4, maxWidth: 170 },
-  botonTitulo: { fontFamily: letras.textoMedio, fontSize: 13.5, lineHeight: 15, color: colores.pergamino },
-  botonPor: { fontFamily: letras.texto, fontSize: 11, lineHeight: 12.5, color: 'rgba(239, 230, 207, 0.55)' },
+  botonTitulo: { maxWidth: 170, fontFamily: letras.textoMedio, fontSize: 13.5, lineHeight: 15, color: colores.pergamino },
   circulo: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(8, 12, 26, 0.65)' },
   circuloBajo: { backgroundColor: 'rgba(203, 133, 105, 0.16)' },
   apretado: { transform: [{ scale: 0.95 }], opacity: 0.8 },

@@ -4,14 +4,16 @@
 // las estrellas) y el disco oscuro con su borde, que siempre muestra la meta. Pasada la meta, el
 // borde y el resplandor se doran. Se dibuja en una caja de 100 × 100 con el disco de radio 40; el
 // lienzo es más grande que la caja para que el resplandor no se corte.
-// Las lunas chicas de la semana y del mes son más simples: la noche, la luz y el borde.
+// Las lunas chicas de la semana y del mes son más simples: la noche, la luz y el aro; con otro estilo de
+// calorías (Todo lo de hoy), la mini de ese estilo.
 
 import {
-  Blur, Canvas, Circle, ColorMatrix, DashPathEffect, FractalNoise, Group, Mask, Oval, Paint, Path, RadialGradient, Skia, vec, type SkPath,
+  Blur, Canvas, Circle, ColorMatrix, DashPathEffect, FractalNoise, Group, Mask, Oval, Paint, Path, RadialGradient, RoundedRect, Skia, vec, type SkPath,
 } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import type { EstiloDeKcal } from '@/almacen/almacen';
 import { useCalidad } from '@/cielo/dia';
 
 /** La parte iluminada de una luna de radio r: p va de 0 (nueva) a 1 (llena). La misma de la galería. */
@@ -99,10 +101,54 @@ export type PropsDeLunitas = {
   ancho: number;
   /** El lado de cada luna. */
   tam: number;
+  /** Cómo se ven las calorías (Todo lo de hoy): la luna, o la mini de cada estilo (galeria/src/kcal.js). */
+  estilo?: EstiloDeKcal;
+  /** El día elegido: su aro va entero, como su número. */
+  elegida?: number;
 };
 
+// El aro de cada luna chica: en la galería, del color del texto de su día.
+const ARO = 'rgba(239, 230, 207, 0.72)';
+const ARO_ELEGIDO = '#efe6cf';
+const PUNTEADO = [2, 2.2];
+const MEDIO_ARCO = 'M -9.5 4 A 9.5 9.5 0 0 1 9.5 4';
+const VUELTA = 'M 0 -9 A 9 9 0 1 1 0 9 A 9 9 0 1 1 0 -9';
+
+/** La mini de un día con otro estilo: un anillo, un arco o una barrita que se llenan con lo comido; pasada la meta, en oro. */
+function Mini({ l, estilo }: { l: Lunita; estilo: Exclude<EstiloDeKcal, 'luna'> }) {
+  const conAlgo = l.estado === 'comido' || l.estado === 'plan';
+  const f = conAlgo ? Math.min(1, Math.max(0, l.fraccion)) : 0;
+  const lleno = conAlgo && l.fraccion > 1.0005 ? '#e8c46a' : '#e6dfcc';
+  const tenue = l.estado === 'plan' ? 0.35 : 1;
+  if (estilo === 'barra') {
+    const alto = 20 * f;
+    return (
+      <>
+        {l.estado === 'futuro' ? (
+          <RoundedRect x={-3.5} y={-10} width={7} height={20} r={3.5} style="stroke" strokeWidth={1} color="rgba(236, 230, 214, 0.2)">
+            <DashPathEffect intervals={PUNTEADO} />
+          </RoundedRect>
+        ) : (
+          <RoundedRect x={-3.5} y={-10} width={7} height={20} r={3.5} color={l.estado === 'vacio' ? 'rgba(236, 230, 214, 0.05)' : 'rgba(236, 230, 214, 0.1)'} />
+        )}
+        {alto > 0.3 && <RoundedRect x={-3.5} y={10 - alto} width={7} height={alto} r={Math.min(3.5, alto / 2)} color={lleno} opacity={tenue} />}
+      </>
+    );
+  }
+  // Los anillos de los macros, de a un día, son un anillo: tres vueltas no entran en 24 puntos.
+  const camino = estilo === 'arco' ? MEDIO_ARCO : VUELTA;
+  return (
+    <>
+      <Path path={camino} style="stroke" strokeWidth={2.2} color={l.estado === 'vacio' ? 'rgba(236, 230, 214, 0.1)' : 'rgba(236, 230, 214, 0.2)'}>
+        {(l.estado === 'plan' || l.estado === 'futuro') && <DashPathEffect intervals={PUNTEADO} />}
+      </Path>
+      {f > 0.004 && <Path path={camino} style="stroke" strokeWidth={2.2} strokeCap="round" color={lleno} opacity={tenue} start={0} end={f} />}
+    </>
+  );
+}
+
 /** Una fila de lunas chicas en un solo lienzo (la semana, o una fila del mes): más liviano que una por día. */
-export function LunitasSkia({ lunas, ancho, tam }: PropsDeLunitas) {
+export function LunitasSkia({ lunas, ancho, tam, estilo = 'luna', elegida }: PropsDeLunitas) {
   const caminos = useMemo(
     () => lunas.map((l) => (l.estado === 'comido' || l.estado === 'plan' ? Skia.Path.MakeFromSVGString(fase(Math.max(0.04, Math.min(1, l.fraccion)), 9.5)) : null)),
     [lunas],
@@ -116,13 +162,25 @@ export function LunitasSkia({ lunas, ancho, tam }: PropsDeLunitas) {
         if (l.estado === 'fuera') return null;
         const camino = caminos[i];
         const punteado = l.estado === 'plan' || l.estado === 'futuro';
+        const aro = i === elegida ? ARO_ELEGIDO : ARO;
         return (
           <Group key={i} transform={[{ translateX: columna * (i + 0.5) }, { translateY: tam / 2 }, { scale: s }]}>
-            {l.estado !== 'futuro' && <Circle cx={0} cy={0} r={9.5} color="#141c36" />}
-            {camino && <Path path={camino} color="#ecdcb2" opacity={l.estado === 'plan' ? 0.35 : 1} />}
-            <Circle cx={0} cy={0} r={9.5} style="stroke" strokeWidth={0.9} color={l.estado === 'vacio' ? 'rgba(246, 227, 166, 0.16)' : 'rgba(246, 227, 166, 0.3)'}>
-              {punteado && <DashPathEffect intervals={[2, 2.2]} />}
-            </Circle>
+            {estilo !== 'luna' ? <Mini l={l} estilo={estilo} /> : (
+              <>
+                {/* Como en la galería: la noche y la luz llevan el aro del color de su día, y encima va el borde fino. */}
+                {l.estado !== 'futuro' && <Circle cx={0} cy={0} r={9.5} color="#141c36" />}
+                <Circle cx={0} cy={0} r={9.5} style="stroke" strokeWidth={1.7} color={aro} />
+                {camino && (
+                  <Group opacity={l.estado === 'plan' ? 0.35 : 1}>
+                    <Path path={camino} color="#ecdcb2" />
+                    <Path path={camino} style="stroke" strokeWidth={1.7} strokeJoin="round" color={aro} />
+                  </Group>
+                )}
+                <Circle cx={0} cy={0} r={9.5} style="stroke" strokeWidth={0.9} color={l.estado === 'vacio' ? 'rgba(236, 230, 214, 0.16)' : 'rgba(246, 227, 166, 0.3)'}>
+                  {punteado && <DashPathEffect intervals={PUNTEADO} />}
+                </Circle>
+              </>
+            )}
           </Group>
         );
       })}
