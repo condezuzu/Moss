@@ -1,12 +1,13 @@
 // Los enlaces de los widgets: moss://habitos, moss://sueno, moss://comida, moss://inicio y
-// moss://anotar?comida=cena&via=decir. Solo arma y lee texto: lo usa también src/app/+native-intent.ts,
+// moss://anotar?comida=cena&via=decir, y moss://vincular, que abre Ascent arriba de Progreso con la hoja de vincular
+// (lo usa el botón de Ascent para vincular desde Moss). Solo arma y lee texto: lo usa también src/app/+native-intent.ts,
 // que corre antes que la app. moss://compartido no es de estos: sigue siendo una pantalla.
 
 import { COMIDAS, type Comida } from '@/dominio/comidas';
 
 export type Via = 'buscar' | 'decir' | 'codigo' | 'etiqueta';
 export type SeccionDeEnlace = 'inicio' | 'comida' | 'habitos' | 'sueno';
-export type Enlace = { seccion: SeccionDeEnlace } | { anotar: { comida?: Comida; via?: Via } };
+export type Enlace = { seccion: SeccionDeEnlace } | { anotar: { comida?: Comida; via?: Via } } | { vincular: true };
 
 const SECCIONES: readonly string[] = ['inicio', 'comida', 'habitos', 'sueno'];
 const VIAS: readonly string[] = ['buscar', 'decir', 'codigo', 'etiqueta'];
@@ -24,6 +25,7 @@ export function leerEnlace(url: string): Enlace | null {
   if (!m) return null;
   const donde = m[1].toLowerCase();
   if (SECCIONES.includes(donde)) return { seccion: donde as SeccionDeEnlace };
+  if (donde === 'vincular') return { vincular: true };
   if (donde !== 'anotar') return null;
   const parametros = new Map((m[2] ?? '').split('&').filter(Boolean).map((p) => p.split('=') as [string, string]));
   const comida = parametros.get('comida');

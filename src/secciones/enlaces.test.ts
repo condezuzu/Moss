@@ -7,6 +7,7 @@ describe('los enlaces de los widgets', () => {
   it('llevan a su sección, con la URL o con el camino', () => {
     expect(leerEnlace('moss://habitos')).toEqual({ seccion: 'habitos' });
     expect(leerEnlace('moss:///sueno')).toEqual({ seccion: 'sueno' });
+    expect(leerEnlace('moss://vincular')).toEqual({ vincular: true });
     expect(leerEnlace('/comida')).toEqual({ seccion: 'comida' });
     expect(leerEnlace(enlaceASeccion('inicio'))).toEqual({ seccion: 'inicio' });
   });

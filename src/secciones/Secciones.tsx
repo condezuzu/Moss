@@ -20,7 +20,7 @@ import { t } from '@/textos';
 import { colores } from '@/tema';
 import { useAlTocarUnAviso } from '@/recordatorios/programar';
 import { ponerSeccionActual, tocarDeNuevo } from './arriba';
-import { Ascent } from './Ascent';
+import { Ascent, pedirLaHojaDeVincular } from './Ascent';
 import { SeccionVisible } from './animados';
 import { alAbrirAscent } from './ascent/abrir';
 import { ALTO_BARRA, Barra, HABITOS, PESTANAS, VELO } from './Barra';
@@ -334,6 +334,13 @@ export default function Secciones() {
 
   // Tocar un widget lleva a lo suyo: su sección, o anotar justo ahí.
   useEnlaces(conSecciones, (e) => {
+    if ('vincular' in e) {
+      if (!CON_ASCENT) return;
+      cerrarCapas(false);
+      abrirAscent();
+      pedirLaHojaDeVincular();
+      return;
+    }
     if ('seccion' in e) {
       cerrarCapas(false);
       ir(PESTANAS.indexOf(e.seccion), false);
