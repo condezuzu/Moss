@@ -1076,6 +1076,9 @@ Necesita una build nativa nueva: va en una rama, como siempre que cambia
 11. **Esquemas y enlaces:**
     - `LSApplicationQueriesSchemes: ["moss"]` en `app.json`.
     - La ruta `ascent://vincular`.
+    - Del lado de Moss ya está `moss://vincular` (18/11/2026): abre Ascent arriba de Progreso con la hoja de
+      vincular (vinculada, solo la sección). El botón de Ascent para vincular desde Moss usa ese enlace, y
+      `https://apps.apple.com/app/id6828034537` si Moss no está.
 12. **Texto de borrar la cuenta:** que diga que borra la cuenta de Ascent y lo
     de Ascent, y que Moss, si la tiene, sigue intacta y deja de recibir sus
     datos (D29; en Moss, `perfil.borrarCuentaTexto` y

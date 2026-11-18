@@ -35,6 +35,10 @@ import { entre, subirOBajar, UMBRAL, VELOCIDAD_MINIMA } from './movimiento';
 const DEGRADE = 'linear-gradient(180deg, rgba(5, 6, 10, 0.5) 0px, rgba(5, 6, 10, 0.42) 240px, rgba(5, 6, 10, 0.6) 100%)';
 /** El cuerpo de tu rango, de fondo: qué parte del camino de la sección hace al bajar y cuánto se corre con todo el scroll (está lejos). */
 const CUERPO_SIGUE = 0.38;
+
+// moss://vincular (desde Ascent): Secciones abre la sección y esto, la hoja; vinculada, solo la sección.
+const alPedirVincular = new Set<() => void>();
+export const pedirLaHojaDeVincular = () => alPedirVincular.forEach((f) => f());
 const CUERPO_CORRE = 70;
 
 type Props = {
@@ -140,6 +144,15 @@ export function Ascent({ subida, abierta, abajo, alCerrar, alIr }: Props) {
     setVez((x) => x + 1);
     setHoja(true);
   };
+  useEffect(() => {
+    const pedir = () => {
+      if (!vinculo.vinculada) abrirHoja();
+    };
+    alPedirVincular.add(pedir);
+    return () => {
+      alPedirVincular.delete(pedir);
+    };
+  }, [vinculo.vinculada]);
   const verComo = () => {
     setComo(true);
     // Que se vea el título de «En qué se basa», con un poco de aire arriba.
