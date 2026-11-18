@@ -73,7 +73,8 @@ Hecho:
   aplica solo al llegar. Para decidir:
   - Ascent: PRENDIDA por aire el 18/11 en las dos builds (`visual-ota` 78da627, `mejoras-1.1` f348af5), con la sección de abajo de
     Hábitos; la nueva, arriba de Progreso, sigue para aprobar. La privacidad y los términos publicados ya nombran a Ascent
-    (18/11, `condezuzu/moss-app` 7a8d1c2; sin la suscripción). Falta revisar App Privacy en App Store Connect.
+    (18/11, `condezuzu/moss-app` 7a8d1c2; sin la suscripción). App Privacy, revisado el 18/11 (`asc3/privacidad-leer.cjs`):
+    ya cubre lo de Ascent (Fitness, Health, User ID, Name y Email, vinculados y para la app) y no cambia.
   - Con el aviso del café prendido, el máximo de 10 avisos deja afuera «Se acerca tu hora de acostarte»: ¿sube uno?
   - La calidad no baja con hasta 20 min despierto y un despertar: ¿endurecerla?
   - La base: «caña» en España, «café de olla», «verduras» (pisto), «fruta» y «yogur» en España eligen mal.
