@@ -67,6 +67,14 @@ Hecho:
   - Los márgenes de toda la app (20 a los lados y el título 16 pt más abajo que la galería) y el peso sin decimal fijo
     fuera de Progreso («75 kg» y no «75,0 kg»).
   - Separar «avisarme a esa hora» de «mis horas de comer»: cinco preguntas en spec/ota-visual.md.
+- La tanda 4 (18/11): publicada en las dos builds (`visual-ota` 9da8f89, `mejoras-1.1` 64508a1) y la galería 53: la noche en dos
+  tramos, el periodo desde las 19, los entrenamientos de Salud, los avisos como sugerencias (el café según el periodo),
+  decir varias comidas, 11 cadenas nuevas, las figuras de la grasa, «Cuando llegues» con cinco opciones y Moss que lo
+  aplica solo al llegar. Para decidir:
+  - Ascent: prenderla por aire (se vincula desde Moss con la cuenta de Ascent) con la sección vieja o la nueva de la galería.
+  - Con el aviso del café prendido, el máximo de 10 avisos deja afuera «Se acerca tu hora de acostarte»: ¿sube uno?
+  - La calidad no baja con hasta 20 min despierto y un despertar: ¿endurecerla?
+  - La base: «caña» en España, «café de olla», «verduras» (pisto), «fruta» y «yogur» en España eligen mal.
 
 Falta (vos):
 1. Business: la cuenta del banco y los formularios de impuestos (W-8BEN; lo de Uruguay con tu contador), hasta que
